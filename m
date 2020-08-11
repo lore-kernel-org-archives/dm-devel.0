@@ -1,148 +1,174 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-Subject: Re: [dm-devel] [RFC PATCH v5 00/11] Integrity Policy Enforcement
- LSM (IPE)
-Date: Mon, 10 Aug 2020 22:43:43 -0700
-Message-ID: <1597124623.30793.14.camel@HansenPartnership.com>
-References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
-         <20200802115545.GA1162@bug> <20200802140300.GA2975990@sasha-vm>
-         <20200802143143.GB20261@amd>
-         <1596386606.4087.20.camel@HansenPartnership.com>
-         <fb35a1f7-7633-a678-3f0f-17cf83032d2b@linux.microsoft.com>
-         <1596639689.3457.17.camel@HansenPartnership.com>
-         <alpine.LRH.2.21.2008050934060.28225@namei.org>
-         <b08ae82102f35936427bf138085484f75532cff1.camel@linux.ibm.com>
-         <329E8DBA-049E-4959-AFD4-9D118DEB176E@gmail.com>
-         <da6f54d0438ee3d3903b2c75fcfbeb0afdf92dc2.camel@linux.ibm.com>
-         <1597073737.3966.12.camel@HansenPartnership.com>
-         <6E907A22-02CC-42DD-B3CD-11D304F3A1A8@gmail.com>
+From: Chao Leng <lengchao@huawei.com>
+Subject: Re: nvme: explicitly use normal NVMe error handling when
+	appropriate
+Date: Tue, 11 Aug 2020 14:17:34 +0800
+Message-ID: <07bd0219-b39b-dcec-35f0-edc22df0d2ae@huawei.com>
+References: <20200806184057.GA27858@redhat.com>
+	<20200806191943.GA27868@redhat.com>
+	<6B826235-C504-4621-B8F7-34475B200979@netapp.com>
+	<20200807000755.GA28957@redhat.com>
+	<510f5aff-0437-b1ce-f7ab-c812edbea880@grimberg.me>
+	<20200807045015.GA29737@redhat.com>
+	<fec745aa-0091-ee1f-cb0f-da9e18cf0aa2@grimberg.me>
+	<20200810143620.GA19127@redhat.com> <20200810172209.GA19535@redhat.com>
+	<7f99724a-a1eb-6bec-f8ae-f9a4601b0487@huawei.com>
+	<20200811042000.GA22692@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <6E907A22-02CC-42DD-B3CD-11D304F3A1A8@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Chuck Lever <chucklever@gmail.com>
-Cc: Mimi Zohar <zohar@linux.ibm.com>, James Morris <jmorris@namei.org>, Deven Bowers <deven.desai@linux.microsoft.com>, Pavel Machek <pavel@ucw.cz>, Sasha Levin <sashal@kernel.org>, snitzer@redhat.com, dm-devel@redhat.com, tyhicks@linux.microsoft.com, agk@redhat.com, Paul Moore <paul@paul-moore.com>, Jonathan Corbet <corbet@lwn.net>, nramas@linux.microsoft.com, serge@hallyn.com, pasha.tatashin@soleen.com, Jann Horn <jannh@google.com>, linux-block@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, mdsakib@microsoft.com, open list <linux-kernel@vger.kernel.org>, eparis@redhat.com, linux-security-module@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-integrity@vger.kernel.org, jaskarankhurana@linu
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200811042000.GA22692@redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Sagi Grimberg <sagi@grimberg.me>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Ewan Milne <emilne@redhat.com>, Keith Busch <kbusch@kernel.org>, "Meneghini, John" <John.Meneghini@netapp.com>
 List-Id: dm-devel.ids
 
-On Mon, 2020-08-10 at 19:36 -0400, Chuck Lever wrote:
-> > On Aug 10, 2020, at 11:35 AM, James Bottomley
-> > <James.Bottomley@HansenPartnership.com> wrote:
-> > On Sun, 2020-08-09 at 13:16 -0400, Mimi Zohar wrote:
-> > > On Sat, 2020-08-08 at 13:47 -0400, Chuck Lever wrote:
-[...]
-> > > > The first priority (for me, anyway) therefore is getting the
-> > > > ability to move IMA metadata between NFS clients and servers
-> > > > shoveled into the NFS protocol, but that's been blocked for
-> > > > various legal reasons.
-> > > 
-> > > Up to now, verifying remote filesystem file integrity has been
-> > > out of scope for IMA.   With fs-verity file signatures I can at
-> > > least grasp how remote file integrity could possibly work.  I
-> > > don't understand how remote file integrity with existing IMA
-> > > formats could be supported. You might want to consider writing a
-> > > whitepaper, which could later be used as the basis for a patch
-> > > set cover letter.
-> > 
-> > I think, before this, we can help with the basics (and perhaps we
-> > should sort them out before we start documenting what we'll do).
+
+
+On 2020/8/11 12:20, Mike Snitzer wrote:
+> On Mon, Aug 10 2020 at 11:32pm -0400,
+> Chao Leng <lengchao@huawei.com> wrote:
 > 
-> Thanks for the help! I just want to emphasize that documentation
-> (eg, a specification) will be critical for remote filesystems.
+>>
+>>
+>> On 2020/8/11 1:22, Mike Snitzer wrote:
+>>> On Mon, Aug 10 2020 at 10:36am -0400,
+>>> Mike Snitzer <snitzer@redhat.com> wrote:
+>>>
+>>>> On Fri, Aug 07 2020 at  7:35pm -0400,
+>>>> Sagi Grimberg <sagi@grimberg.me> wrote:
+>>>>
+>>>>>
+>>>>>>> Hey Mike,
+>>> ...
+>>>>>> I think NVMe can easily fix this by having an earlier stage of checking,
+>>>>>> e.g. nvme_local_retry_req(), that shortcircuits ever getting to
+>>>>>> higher-level multipathing consideration (be it native NVMe or DM
+>>>>>> multipathing) for cases like NVME_SC_CMD_INTERRUPTED.
+>>>>>> To be clear: the "default" case of nvme_failover_req() that returns
+>>>>>> false to fallback to NVMe's "local" normal NVMe error handling -- that
+>>>>>> can stay.. but a more explicit handling of cases like
+>>>>>> NVME_SC_CMD_INTERRUPTED should be added to a nvme_local_retry_req()
+>>>>>> check that happens before nvme_failover_req() in nvme_complete_rq().
+>>>>>
+>>>>> I don't necessarily agree with having a dedicated nvme_local_retry_req().
+>>>>> a request that isn't failed over, goes to local error handling (retry or
+>>>>> not). I actually think that just adding the condition to
+>>>>> nvme_complete_req and having nvme_failover_req reject it would work.
+>>>>>
+>>>>> Keith?
+>>>>
+>>>> I think that is basically what I'm thinking too.
+>>>
+>>> From: Mike Snitzer <snitzer@redhat.com>
+>>> Subject: nvme: explicitly use normal NVMe error handling when appropriate
+>>>
+>>> Commit 764e9332098c0 ("nvme-multipath: do not reset on unknown
+>>> status"), among other things, fixed NVME_SC_CMD_INTERRUPTED error
+>>> handling by changing multipathing's nvme_failover_req() to short-circuit
+>>> path failover and then fallback to NVMe's normal error handling (which
+>>> takes care of NVME_SC_CMD_INTERRUPTED).
+>>>
+>>> This detour through native NVMe multipathing code is unwelcome because
+>>> it prevents NVMe core from handling NVME_SC_CMD_INTERRUPTED independent
+>>> of any multipathing concerns.
+>>>
+>>> Introduce nvme_status_needs_local_error_handling() to prioritize
+>>> non-failover retry, when appropriate, in terms of normal NVMe error
+>>> handling.  nvme_status_needs_local_error_handling() will naturely evolve
+>>> to include handling of any other errors that normal error handling must
+>>> be used for.
+>>>
+>>> nvme_failover_req()'s ability to fallback to normal NVMe error handling
+>>> has been preserved because it may be useful for future NVME_SC that
+>>> nvme_status_needs_local_error_handling() hasn't yet been trained for.
+>>>
+>>> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+>>> ---
+>>>   drivers/nvme/host/core.c | 16 ++++++++++++++--
+>>>   1 file changed, 14 insertions(+), 2 deletions(-)
+>>>
+>>> diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
+>>> index 88cff309d8e4..be749b690af7 100644
+>>> --- a/drivers/nvme/host/core.c
+>>> +++ b/drivers/nvme/host/core.c
+>>> @@ -252,6 +252,16 @@ static inline bool nvme_req_needs_retry(struct request *req)
+>>>   	return true;
+>>>   }
+>>> +static inline bool nvme_status_needs_local_error_handling(u16 status)
+>>> +{
+>>> +	switch (status & 0x7ff) {
+>>> +	case NVME_SC_CMD_INTERRUPTED:
+>>> +		return true;
+>>> +	default:
+>>> +		return false;
+>>> +	}
+>>> +}
+>>> +
+>>>   static void nvme_retry_req(struct request *req)
+>>>   {
+>>>   	struct nvme_ns *ns = req->q->queuedata;
+>>> @@ -270,7 +280,8 @@ static void nvme_retry_req(struct request *req)
+>>>   void nvme_complete_rq(struct request *req)
+>>>   {
+>>> -	blk_status_t status = nvme_error_status(nvme_req(req)->status);
+>>> +	u16 nvme_status = nvme_req(req)->status;
+>>> +	blk_status_t status = nvme_error_status(nvme_status);
+>>>   	trace_nvme_complete_rq(req);
+>>> @@ -280,7 +291,8 @@ void nvme_complete_rq(struct request *req)
+>>>   		nvme_req(req)->ctrl->comp_seen = true;
+>>>   	if (unlikely(status != BLK_STS_OK && nvme_req_needs_retry(req))) {
+>>> -		if ((req->cmd_flags & REQ_NVME_MPATH) && nvme_failover_req(req))
+>>> +		if (!nvme_status_needs_local_error_handling(nvme_status) &&
+>>> +		    (req->cmd_flags & REQ_NVME_MPATH) && nvme_failover_req(req))
+>>
+>> This looks no affect. if work with nvme multipath, now is already retry local.
 > 
-> If any of this is to be supported by a remote filesystem, then we
-> need an unencumbered description of the new metadata format rather
-> than code. GPL-encumbered formats cannot be contributed to the NFS
-> standard, and are probably difficult for other filesystems that are
-> not Linux-native, like SMB, as well.
-
-I don't understand what you mean by GPL encumbered formats.  The GPL is
-a code licence not a data or document licence.  The way the spec
-process works in Linux is that we implement or evolve a data format
-under a GPL implementaiton, but that implementation doesn't implicate
-the later standardisation of the data format and people are free to
-reimplement under any licence they choose.
-
-> > The first basic is that a merkle tree allows unit at a time
-> > verification. First of all we should agree on the unit.  Since we
-> > always fault a page at a time, I think our merkle tree unit should
-> > be a page not a block.
+> Not if NVMe is built without multipathing configured.
+If without nvme multipathing configured, now is also retry local, do not need
+!nvme_status_needs_local_error_handling(nvme_status).
 > 
-> Remote filesystems will need to agree that the size of that unit is
-> the same everywhere, or the unit size could be stored in the per-file
-> metadata.
+>> If work with dm-multipath, still return error.
 > 
+> Yes, I'm aware.  Use of REQ_FAILFAST_TRANSPORT isn't something that is
+> needed for NVMe, so why are you proposing hacks in NVMe to deal with it?
+I just describe the possible scenarios:1.nvme multipathing configured.
+2.without any multipath.3. with dm-multipath.
 > 
-> > Next, we should agree where the check gates for the per page
-> > accesses should be ... definitely somewhere in readpage, I suspect
-> > and finally we should agree how the merkle tree is presented at the
-> > gate.  I think there are three ways:
-> > 
-> >   1. Ahead of time transfer:  The merkle tree is transferred and
-> > verified
-> >      at some time before the accesses begin, so we already have a
-> >      verified copy and can compare against the lower leaf.
-> >   2. Async transfer:  We provide an async mechanism to transfer the
-> >      necessary components, so when presented with a unit, we check
-> > the
-> >      log n components required to get to the root
-> >   3. The protocol actually provides the capability of 2 (like the
-> > SCSI
-> >      DIF/DIX), so to IMA all the pieces get presented instead of
-> > IMA
-> >      having to manage the tree
+>>>   			return;
+>>>   		if (!blk_queue_dying(req->q)) {
+>>>
+>>
+>> Suggest:
+>> REQ_FAILFAST_TRANSPORT may be designed for scsi, because scsi protocol
+>> do not difine the local retry mechanism. SCSI implements a fuzzy local
+>> retry mechanism, so need the REQ_FAILFAST_TRANSPORT for multipath
+>> software, multipath software retry according error code is expected.
+>> nvme is different with scsi about this. It define local retry mechanism
+>> and path error code, so nvme should not care REQ_FAILFAST_TRANSPORT.
 > 
-> A Merkle tree is potentially large enough that it cannot be stored in
-> an extended attribute. In addition, an extended attribute is not a
-> byte stream that you can seek into or read small parts of, it is
-> retrieved in a single shot.
-
-Well you wouldn't store the tree would you, just the head hash.  The
-rest of the tree can be derived from the data.  You need to distinguish
-between what you *must* have to verify integrity (the head hash,
-possibly signed) and what is nice to have to speed up the verification
-process.  The choice for the latter is cache or reconstruct depending
-on the resources available.  If the tree gets cached on the server,
-that would be a server implementation detail invisible to the client.
-
-> For this reason, the idea was to save only the signature of the
-> tree's root on durable storage. The client would retrieve that
-> signature possibly at open time, and reconstruct the tree at that
-> time.
-
-Right that's the integrity data you must have.
-
-> Or the tree could be partially constructed on-demand at the time each
-> unit is to be checked (say, as part of 2. above).
-
-Whether it's reconstructed or cached can be an implementation detail. 
-You clearly have to reconstruct once, but whether you have to do it
-again depends on the memory available for caching and all the other
-resource calls in the system.
-
-> The client would have to reconstruct that tree again if memory
-> pressure caused some or all of the tree to be evicted, so perhaps an
-> on-demand mechanism is preferable.
-
-Right, but I think that's implementation detail.  Probably what we need
-is a way to get the log(N) verification hashes from the server and it's
-up to the client whether it caches them or not.
-
-> > There are also a load of minor things like how we get the head
-> > hash, which must be presented and verified ahead of time for each
-> > of the above 3.
+> Exactly.  Except by "nvme should not care REQ_FAILFAST_TRANSPORT." your
+> patch says you mean "nvme shouldn't disallow retry if
+> REQ_FAILFAST_TRANSPORT is it".  I'm saying: don't try to get such
+> changes into NVMe.
+no. the patch just mean: if path error, fail over to retry by multipath
+(nvme multipath or dm-multipath). Other need local retry local, retry
+after a defined time according to status(CRD) and CRDT. Now nvme multipath
+is already do like this, the patch make dm-multipath work like nvme multipath.
 > 
-> Also, changes to a file's content and its tree signature are not
-> atomic. If a file is mutable, then there is the period between when
-> the file content has changed and when the signature is updated.
-> Some discussion of how a client is to behave in those situations will
-> be necessary.
-
-For IMA, if you write to a checked file, it gets rechecked the next
-time the gate (open/exec/mmap) is triggered.  This means you must
-complete the update and have the new integrity data in-place before
-triggering the check.  I think this could apply equally to a merkel
-tree based system.  It's a sort of Doctor, Doctor it hurts when I do
-this situation.
-
-James
+> In general, aspects of your patch may have merit but overall it is doing
+> too much.
+> 
+> Mike
+> 
+> .
+> 
