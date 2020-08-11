@@ -1,13 +1,12 @@
 From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: Re: Recent multipath-tools patches from Huawei
-Date: Tue, 11 Aug 2020 09:14:46 +0800
-Message-ID: <60d7ea82-22ed-16f5-de7f-8280b90eeb7f@huawei.com>
-References: <140e431094a118a5276f6964921cc120bda2dc49.camel@suse.com>
+Subject: [PATCH V2] vector: return false if realloc fails in
+ vector_alloc_slot func
+Date: Tue, 11 Aug 2020 11:23:01 +0800
+Message-ID: <7556f86a-0b45-8274-b9e7-0576813ca1fe@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <140e431094a118a5276f6964921cc120bda2dc49.camel@suse.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,98 +17,165 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, linfeilong@huawei.com, Yanxiaodan <yanxiaodan@huawei.com>, lixiaokeng <lixiaokeng@huawei.com>
-Cc: dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>, christophe.varoqui@opensvc.com, kabelac@redhat.com
+Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
 List-Id: dm-devel.ids
 
 
+In vector_alloc_slot func, if REALLOC fails, it means new slot
+allocation fails. However, it just update v->allocated and then
+return the old v->slot without new slot. So, the caller will take
+the last old slot as the new allocated slot, and use it by calling
+vector_set_slot func. Finally, the data of last slot is lost.
 
-On 2020/8/10 22:34, Martin Wilck wrote:
-> Hi Liu,
-> 
-> thanks again for your valuable contributions and meticulous code
-> review. I've added your patches in my upstream-queue branch now:
-> 
-> https://github.com/openSUSE/multipath-tools/commits/upstream-queue
-> 
-> Not applied yet: 
-> 
->  - libmultipath: free pp if store_path fails in disassemble_map:
->    As noted before, this will be merged with my series for
->    disassemble_map().
->  - libmultipath: fix a memory leak in set_ble_device:
->    Please fix minor issues I mentioned
->  - vector: return null when realloc fails in vector_alloc_slot func
->    Needs improvement
-> 
-> Please double-check if I've missed anything. 
-> 
-> Next time, please send your patches as a series. That makes it
-> much easier for others to make sure they don't miss any.
-> And please, don't add "[dm-devel]" explicitly in your email
-> subject, mailman will take care of that.
-> 
-> Regards
-> Martin
-> 
-Thanks for your advise.
-I have checked recent patches. The following patch may be missed.
-- libmultipath: free pgp if add_pathgroup fails in disassemble_map func
-
-
-
-
-From e43d45a4ff838cab845bc5b5834d24743192eb75 Mon Sep 17 00:00:00 2001
-From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Date: Wed, 22 Jul 2020 14:31:15 +0800
-Subject: [PATCH] libmultipath: free pgp if add_pathgroup fails in disassemble_map
-
-In disassemble_map func, pgp will be added to mpp->pg by calling
-add_pathgroup after allocing a pathgroup (pgp) successfully. However,
-if add_pathgroup fails, the pgp is actually not inserted into mpp->pg.
-So, calling free_pgvec(mpp->pg) cannot free the pgp, then memory leak
-problem occurs.
-
-disassemble_map:
--> pgp = alloc_pathgroup()
--> if add_pathgroup(mpp, pgp) fails
-	-> goto out
-out:
-free_pgvec(mpp->pg, KEEP_PATHS);
-
-Here, we will call free_pathgroup(pgp) before going to out tag.
+Here, we rewrite vector_alloc_slot as suggested by Martin Wilck:
+ - increment v->allocated only after successful allocation,
+ - avoid the "if (v->slot)" conditional by just calling realloc(),
+ - make sure all newly allocated vector elements are set to NULL,
+ - change return value to bool.
 
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/dmparser.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ libmultipath/config.c       |  2 +-
+ libmultipath/foreign.c      |  2 +-
+ libmultipath/foreign/nvme.c |  6 +++---
+ libmultipath/vector.c       | 22 +++++++++-------------
+ libmultipath/vector.h       |  6 ++++--
+ 5 files changed, 18 insertions(+), 20 deletions(-)
 
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index ac13ec06..6225838b 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -268,8 +268,10 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
- 		if (!pgp)
- 			goto out;
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 49723add..4f5cefda 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -131,7 +131,7 @@ find_hwe (const struct _vector *hwtable,
+ 	vector_foreach_slot_backwards (hwtable, tmp, i) {
+ 		if (hwe_regmatch(tmp, vendor, product, revision))
+ 			continue;
+-		if (vector_alloc_slot(result) != NULL) {
++		if (vector_alloc_slot(result)) {
+ 			vector_set_slot(result, tmp);
+ 			n++;
+ 		}
+diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
+index 26f92672..c2335ed5 100644
+--- a/libmultipath/foreign.c
++++ b/libmultipath/foreign.c
+@@ -236,7 +236,7 @@ static int _init_foreign(const char *multipath_dir, const char *const enable)
+ 			goto dl_err;
+ 		}
 
--		if (add_pathgroup(mpp, pgp))
-+		if (add_pathgroup(mpp, pgp)) {
-+			free_pathgroup(pgp, KEEP_PATHS);
- 			goto out;
-+		}
+-		if (vector_alloc_slot(foreigns) == NULL) {
++		if (!vector_alloc_slot(foreigns)) {
+ 			goto dl_err;
+ 		}
 
- 		p += get_word(p, &word);
+diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
+index da85e515..88b6aee2 100644
+--- a/libmultipath/foreign/nvme.c
++++ b/libmultipath/foreign/nvme.c
+@@ -731,12 +731,12 @@ static void _find_controllers(struct context *ctx, struct nvme_map *map)
+ 		test_ana_support(map, path->ctl);
 
+ 		path->pg.gen.ops = &nvme_pg_ops;
+-		if (vector_alloc_slot(&path->pg.pathvec) == NULL) {
++		if (!vector_alloc_slot(&path->pg.pathvec)) {
+ 			cleanup_nvme_path(path);
+ 			continue;
+ 		}
+ 		vector_set_slot(&path->pg.pathvec, path);
+-		if (vector_alloc_slot(&map->pgvec) == NULL) {
++		if (!vector_alloc_slot(&map->pgvec)) {
+ 			cleanup_nvme_path(path);
+ 			continue;
+ 		}
+@@ -792,7 +792,7 @@ static int _add_map(struct context *ctx, struct udev_device *ud,
+ 	map->subsys = subsys;
+ 	map->gen.ops = &nvme_map_ops;
+
+-	if (vector_alloc_slot(ctx->mpvec) == NULL) {
++	if (!vector_alloc_slot(ctx->mpvec)) {
+ 		cleanup_nvme_map(map);
+ 		return FOREIGN_ERR;
+ 	}
+diff --git a/libmultipath/vector.c b/libmultipath/vector.c
+index 501cf4c5..39e2c20f 100644
+--- a/libmultipath/vector.c
++++ b/libmultipath/vector.c
+@@ -35,26 +35,22 @@ vector_alloc(void)
+ }
+
+ /* allocated one slot */
+-void *
++bool
+ vector_alloc_slot(vector v)
+ {
+ 	void *new_slot = NULL;
+
+ 	if (!v)
+-		return NULL;
+-
+-	v->allocated += VECTOR_DEFAULT_SIZE;
+-	if (v->slot)
+-		new_slot = REALLOC(v->slot, sizeof (void *) * v->allocated);
+-	else
+-		new_slot = (void *) MALLOC(sizeof (void *) * v->allocated);
++		return false;
+
++	new_slot = REALLOC(v->slot, sizeof (void *) * (v->allocated + VECTOR_DEFAULT_SIZE));
+ 	if (!new_slot)
+-		v->allocated -= VECTOR_DEFAULT_SIZE;
+-	else
+-		v->slot = new_slot;
++		return false;
+
+-	return v->slot;
++	v->slot = new_slot;
++	v->allocated += VECTOR_DEFAULT_SIZE;
++	v->slot[VECTOR_SIZE(v) - 1] = NULL;
++	return true;
+ }
+
+ int
+@@ -203,7 +199,7 @@ int vector_find_or_add_slot(vector v, void *value)
+
+ 	if (n >= 0)
+ 		return n;
+-	if (vector_alloc_slot(v) == NULL)
++	if (!vector_alloc_slot(v))
+ 		return -1;
+ 	vector_set_slot(v, value);
+ 	return VECTOR_SIZE(v) - 1;
+diff --git a/libmultipath/vector.h b/libmultipath/vector.h
+index e16ec461..cb64b7d6 100644
+--- a/libmultipath/vector.h
++++ b/libmultipath/vector.h
+@@ -23,6 +23,8 @@
+ #ifndef _VECTOR_H
+ #define _VECTOR_H
+
++#include <stdbool.h>
++
+ /* vector definition */
+ struct _vector {
+ 	int allocated;
+@@ -60,7 +62,7 @@ typedef struct _vector *vector;
+ 			__t = vector_alloc();				\
+ 		if (__t != NULL) {					\
+ 			vector_foreach_slot(__v, __j, __i) {		\
+-				if (vector_alloc_slot(__t) == NULL) {	\
++				if (!vector_alloc_slot(__t)) {	\
+ 					vector_free(__t);		\
+ 					__t = NULL;			\
+ 					break;				\
+@@ -73,7 +75,7 @@ typedef struct _vector *vector;
+
+ /* Prototypes */
+ extern vector vector_alloc(void);
+-extern void *vector_alloc_slot(vector v);
++extern bool vector_alloc_slot(vector v);
+ vector vector_reset(vector v);
+ extern void vector_free(vector v);
+ #define vector_free_const(x) vector_free((vector)(long)(x))
 -- 
 2.24.0.windows.2
-
-
-
-
-
-> 
-> 
-> .
-> 
