@@ -1,8 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 7/8] multipathd: unset mpp->hwe when removing
-	map
-Date: Tue, 11 Aug 2020 16:58:42 -0500
-Message-ID: <1597183123-15797-8-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 1/8] Makefile.inc: trim extra information from
+	systemd version
+Date: Tue, 11 Aug 2020 16:58:36 -0500
+Message-ID: <1597183123-15797-2-git-send-email-bmarzins@redhat.com>
 References: <1597183123-15797-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,39 +22,28 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-If the map doesn't unset its hwe pointer before orphaning all the paths,
-multipathd will print a warning message in orphan_path() because of
-commit "libmultipath: warn if freeing path that holds mpp->hwe".
+Some systemd versions print extra information in the
+"pkg-config --modversion" output, which confuses make. Trim this
+off.
 
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/structs_vec.c | 1 +
- multipathd/main.c          | 1 +
- 2 files changed, 2 insertions(+)
+ Makefile.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index ede14297..103ea11e 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -129,6 +129,7 @@ remove_map(struct multipath * mpp, struct vectors * vecs, int purge_vec)
- 	/*
- 	 * clear references to this map
- 	 */
-+	mpp->hwe = NULL;
- 	orphan_paths(vecs->pathvec, mpp, "map removed internally");
+diff --git a/Makefile.inc b/Makefile.inc
+index e7256e3a..8ea3352d 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -37,7 +37,7 @@ endif
  
- 	if (purge_vec &&
-diff --git a/multipathd/main.c b/multipathd/main.c
-index f014d2a1..2b0e2734 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -666,6 +666,7 @@ flush_map(struct multipath * mpp, struct vectors * vecs, int nopaths)
- 		condlog(2, "%s: map flushed", mpp->alias);
- 	}
- 
-+	mpp->hwe = NULL;
- 	orphan_paths(vecs->pathvec, mpp, "map flushed");
- 	remove_map_and_stop_waiter(mpp, vecs);
- 
+ ifndef SYSTEMD
+ 	ifeq ($(shell pkg-config --modversion libsystemd >/dev/null 2>&1 && echo 1), 1)
+-		SYSTEMD = $(shell pkg-config --modversion libsystemd)
++		SYSTEMD = $(shell pkg-config --modversion libsystemd | awk '{print $$1}')
+ 	else
+ 		ifeq ($(shell systemctl --version >/dev/null 2>&1 && echo 1), 1)
+ 			SYSTEMD = $(shell systemctl --version 2> /dev/null | \
 -- 
 2.17.2
