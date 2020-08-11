@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 6/8] multipath: deal with delegation failures
-	correctly
-Date: Tue, 11 Aug 2020 16:58:41 -0500
-Message-ID: <1597183123-15797-7-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 5/8] libmultipath: deal with flushing no maps
+Date: Tue, 11 Aug 2020 16:58:40 -0500
+Message-ID: <1597183123-15797-6-git-send-email-bmarzins@redhat.com>
 References: <1597183123-15797-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,37 +21,31 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-delegate_to_multipathd() was returning success, even if the multipathd
-command failed. Also, if the command was set to fail with NOT_DELEGATED,
-it shouldn't print any errors, since multipath will try to issue the
-command itself.
+dm_flush_maps() was failing if there were no device-mapper devices at
+all, instead of returning success, since there is nothing to do.
 
-Fixes: "multipath: delegate flushing maps to multipathd"
+Fixes: "libmultipath: make dm_flush_maps only return 0 on success"
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipath/main.c | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+ libmultipath/devmapper.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 4c43314e..3da692dc 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -861,9 +861,12 @@ int delegate_to_multipathd(enum mpath_cmds cmd,
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 126cd728..b8199cb5 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -1024,10 +1024,10 @@ int dm_flush_maps (int need_suspend, int retries)
+ 	if (!(names = dm_task_get_names (dmt)))
  		goto out;
- 	}
  
--	if (reply != NULL && *reply != '\0' && strcmp(reply, "ok\n"))
--		printf("%s", reply);
--	r = DELEGATE_OK;
-+	if (reply != NULL && *reply != '\0') {
-+		if (strcmp(reply, "fail\n"))
-+			r = DELEGATE_OK;
-+		if (r != NOT_DELEGATED && strcmp(reply, "ok\n"))
-+			printf("%s", reply);
-+	}
++	r = 0;
+ 	if (!names->dev)
+ 		goto out;
  
- out:
- 	FREE(reply);
+-	r = 0;
+ 	do {
+ 		if (need_suspend)
+ 			r |= dm_suspend_and_flush_map(names->name, retries);
 -- 
 2.17.2
