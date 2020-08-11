@@ -1,7 +1,8 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 2/8] kpartx: fix -Wsign-compare error
-Date: Tue, 11 Aug 2020 16:58:37 -0500
-Message-ID: <1597183123-15797-3-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 6/8] multipath: deal with delegation failures
+	correctly
+Date: Tue, 11 Aug 2020 16:58:41 -0500
+Message-ID: <1597183123-15797-7-git-send-email-bmarzins@redhat.com>
 References: <1597183123-15797-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,24 +22,37 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
+delegate_to_multipathd() was returning success, even if the multipathd
+command failed. Also, if the command was set to fail with NOT_DELEGATED,
+it shouldn't print any errors, since multipath will try to issue the
+command itself.
+
+Fixes: "multipath: delegate flushing maps to multipathd"
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- kpartx/kpartx.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipath/main.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index c24ad6d9..653ce0c8 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -738,7 +738,7 @@ struct block {
- /* blknr is always in 512 byte blocks */
- char *
- getblock (int fd, unsigned int blknr) {
--	unsigned int secsz = get_sector_size(fd);
-+	int secsz = get_sector_size(fd);
- 	unsigned int blks_per_sec = secsz / 512;
- 	unsigned int secnr = blknr / blks_per_sec;
- 	unsigned int blk_off = (blknr % blks_per_sec) * 512;
+diff --git a/multipath/main.c b/multipath/main.c
+index 4c43314e..3da692dc 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -861,9 +861,12 @@ int delegate_to_multipathd(enum mpath_cmds cmd,
+ 		goto out;
+ 	}
+ 
+-	if (reply != NULL && *reply != '\0' && strcmp(reply, "ok\n"))
+-		printf("%s", reply);
+-	r = DELEGATE_OK;
++	if (reply != NULL && *reply != '\0') {
++		if (strcmp(reply, "fail\n"))
++			r = DELEGATE_OK;
++		if (r != NOT_DELEGATED && strcmp(reply, "ok\n"))
++			printf("%s", reply);
++	}
+ 
+ out:
+ 	FREE(reply);
 -- 
 2.17.2
