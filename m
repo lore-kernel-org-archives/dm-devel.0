@@ -1,14 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH V2] vector: return false if realloc fails in
- vector_alloc_slot func
-Date: Tue, 11 Aug 2020 11:46:48 +0200
-Message-ID: <8254cda18f6f5e98f0c097d1065a39b937ce8628.camel@suse.com>
-References: <7556f86a-0b45-8274-b9e7-0576813ca1fe@huawei.com>
+Subject: Re: Recent multipath-tools patches from Huawei
+Date: Tue, 11 Aug 2020 11:49:54 +0200
+Message-ID: <eba3738594596c3e7d37ae6b8c2f35e9592864a8.camel@suse.com>
+References: <140e431094a118a5276f6964921cc120bda2dc49.camel@suse.com>
+	<60d7ea82-22ed-16f5-de7f-8280b90eeb7f@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <7556f86a-0b45-8274-b9e7-0576813ca1fe@huawei.com>
+In-Reply-To: <60d7ea82-22ed-16f5-de7f-8280b90eeb7f@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,75 +18,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zhiqiang Liu <liuzhiqiang26@huawei.com>, Benjamin Marzinski <bmarzins@redhat.com>, christophe.varoqui@opensvc.com, kabelac@redhat.com
-Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
+To: Zhiqiang Liu <liuzhiqiang26@huawei.com>, linfeilong@huawei.com, Yanxiaodan <yanxiaodan@huawei.com>, lixiaokeng <lixiaokeng@huawei.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, 2020-08-11 at 11:23 +0800, Zhiqiang Liu wrote:
-> In vector_alloc_slot func, if REALLOC fails, it means new slot
-> allocation fails. However, it just update v->allocated and then
-> return the old v->slot without new slot. So, the caller will take
-> the last old slot as the new allocated slot, and use it by calling
-> vector_set_slot func. Finally, the data of last slot is lost.
+On Tue, 2020-08-11 at 09:14 +0800, Zhiqiang Liu wrote:
 > 
-> Here, we rewrite vector_alloc_slot as suggested by Martin Wilck:
->  - increment v->allocated only after successful allocation,
->  - avoid the "if (v->slot)" conditional by just calling realloc(),
->  - make sure all newly allocated vector elements are set to NULL,
->  - change return value to bool.
-> 
-> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+> On 2020/8/10 22:34, Martin Wilck wrote:
+> > Hi Liu,
+> > 
+> > thanks again for your valuable contributions and meticulous code
+> > review. I've added your patches in my upstream-queue branch now:
+> > 
+> > https://github.com/openSUSE/multipath-tools/commits/upstream-queue
+> > 
+> > Not applied yet: 
+> > 
+> >  - libmultipath: free pp if store_path fails in disassemble_map:
+> >    As noted before, this will be merged with my series for
+> >    disassemble_map().
+> >  - libmultipath: fix a memory leak in set_ble_device:
+> >    Please fix minor issues I mentioned
+> >  - vector: return null when realloc fails in vector_alloc_slot func
+> >    Needs improvement
+> > 
+> > Please double-check if I've missed anything. 
+> > 
+> > Next time, please send your patches as a series. That makes it
+> > much easier for others to make sure they don't miss any.
+> > And please, don't add "[dm-devel]" explicitly in your email
+> > subject, mailman will take care of that.
+> > 
+> > Regards
+> > Martin
+> > 
+> Thanks for your advise.
+> I have checked recent patches. The following patch may be missed.
+> - libmultipath: free pgp if add_pathgroup fails in disassemble_map
+> func
 
-Thanks a lot, this is very nice. We're almost there (see below).
+Right. Sorry for overlooking it, I pushed it now.
 
-> diff --git a/libmultipath/vector.c b/libmultipath/vector.c
-> index 501cf4c5..39e2c20f 100644
-> --- a/libmultipath/vector.c
-> +++ b/libmultipath/vector.c
-> @@ -35,26 +35,22 @@ vector_alloc(void)
->  }
-> 
->  /* allocated one slot */
-> -void *
-> +bool
->  vector_alloc_slot(vector v)
->  {
->  	void *new_slot = NULL;
-> 
->  	if (!v)
-> -		return NULL;
-> -
-> -	v->allocated += VECTOR_DEFAULT_SIZE;
-> -	if (v->slot)
-> -		new_slot = REALLOC(v->slot, sizeof (void *) * v-
-> >allocated);
-> -	else
-> -		new_slot = (void *) MALLOC(sizeof (void *) * v-
-> >allocated);
-> +		return false;
-> 
-> +	new_slot = REALLOC(v->slot, sizeof (void *) * (v->allocated +
-> VECTOR_DEFAULT_SIZE));
-
-Please wrap this line. We basically still use a 80-columns limit, with
-the exception of string constants (mostly condlog() lines). We don't
-strictly enforce it, but 92 columns is a bit too much for my taste.
-
->  	if (!new_slot)
-> -		v->allocated -= VECTOR_DEFAULT_SIZE;
-> -	else
-> -		v->slot = new_slot;
-> +		return false;
-> 
-> -	return v->slot;
-> +	v->slot = new_slot;
-> +	v->allocated += VECTOR_DEFAULT_SIZE;
-> +	v->slot[VECTOR_SIZE(v) - 1] = NULL;
-
-This assumes that VECTOR_DEFAULT_SIZE == 1. While that has been true
-essentially forever, there's no guarantee for the future. Better use a
-for loop, or memset().
-
-Regards
+Regards,
 Martin
