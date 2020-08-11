@@ -1,13 +1,23 @@
-From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [PATCH V2] vector: return false if realloc fails in
- vector_alloc_slot func
-Date: Tue, 11 Aug 2020 11:23:01 +0800
-Message-ID: <7556f86a-0b45-8274-b9e7-0576813ca1fe@huawei.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: nvme: explicitly use normal NVMe error handling when
+	appropriate
+Date: Tue, 11 Aug 2020 00:20:00 -0400
+Message-ID: <20200811042000.GA22692@redhat.com>
+References: <20200806184057.GA27858@redhat.com>
+	<20200806191943.GA27868@redhat.com>
+	<6B826235-C504-4621-B8F7-34475B200979@netapp.com>
+	<20200807000755.GA28957@redhat.com>
+	<510f5aff-0437-b1ce-f7ab-c812edbea880@grimberg.me>
+	<20200807045015.GA29737@redhat.com>
+	<fec745aa-0091-ee1f-cb0f-da9e18cf0aa2@grimberg.me>
+	<20200810143620.GA19127@redhat.com>
+	<20200810172209.GA19535@redhat.com>
+	<7f99724a-a1eb-6bec-f8ae-f9a4601b0487@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <7f99724a-a1eb-6bec-f8ae-f9a4601b0487@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,165 +27,134 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>, christophe.varoqui@opensvc.com, kabelac@redhat.com
-Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
+Content-Disposition: inline
+To: Chao Leng <lengchao@huawei.com>
+Cc: Sagi Grimberg <sagi@grimberg.me>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Ewan Milne <emilne@redhat.com>, Keith Busch <kbusch@kernel.org>, "Meneghini, John" <John.Meneghini@netapp.com>
 List-Id: dm-devel.ids
 
+On Mon, Aug 10 2020 at 11:32pm -0400,
+Chao Leng <lengchao@huawei.com> wrote:
 
-In vector_alloc_slot func, if REALLOC fails, it means new slot
-allocation fails. However, it just update v->allocated and then
-return the old v->slot without new slot. So, the caller will take
-the last old slot as the new allocated slot, and use it by calling
-vector_set_slot func. Finally, the data of last slot is lost.
+> 
+> 
+> On 2020/8/11 1:22, Mike Snitzer wrote:
+> >On Mon, Aug 10 2020 at 10:36am -0400,
+> >Mike Snitzer <snitzer@redhat.com> wrote:
+> >
+> >>On Fri, Aug 07 2020 at  7:35pm -0400,
+> >>Sagi Grimberg <sagi@grimberg.me> wrote:
+> >>
+> >>>
+> >>>>>Hey Mike,
+> >...
+> >>>>I think NVMe can easily fix this by having an earlier stage of checking,
+> >>>>e.g. nvme_local_retry_req(), that shortcircuits ever getting to
+> >>>>higher-level multipathing consideration (be it native NVMe or DM
+> >>>>multipathing) for cases like NVME_SC_CMD_INTERRUPTED.
+> >>>>To be clear: the "default" case of nvme_failover_req() that returns
+> >>>>false to fallback to NVMe's "local" normal NVMe error handling -- that
+> >>>>can stay.. but a more explicit handling of cases like
+> >>>>NVME_SC_CMD_INTERRUPTED should be added to a nvme_local_retry_req()
+> >>>>check that happens before nvme_failover_req() in nvme_complete_rq().
+> >>>
+> >>>I don't necessarily agree with having a dedicated nvme_local_retry_req().
+> >>>a request that isn't failed over, goes to local error handling (retry or
+> >>>not). I actually think that just adding the condition to
+> >>>nvme_complete_req and having nvme_failover_req reject it would work.
+> >>>
+> >>>Keith?
+> >>
+> >>I think that is basically what I'm thinking too.
+> >
+> >From: Mike Snitzer <snitzer@redhat.com>
+> >Subject: nvme: explicitly use normal NVMe error handling when appropriate
+> >
+> >Commit 764e9332098c0 ("nvme-multipath: do not reset on unknown
+> >status"), among other things, fixed NVME_SC_CMD_INTERRUPTED error
+> >handling by changing multipathing's nvme_failover_req() to short-circuit
+> >path failover and then fallback to NVMe's normal error handling (which
+> >takes care of NVME_SC_CMD_INTERRUPTED).
+> >
+> >This detour through native NVMe multipathing code is unwelcome because
+> >it prevents NVMe core from handling NVME_SC_CMD_INTERRUPTED independent
+> >of any multipathing concerns.
+> >
+> >Introduce nvme_status_needs_local_error_handling() to prioritize
+> >non-failover retry, when appropriate, in terms of normal NVMe error
+> >handling.  nvme_status_needs_local_error_handling() will naturely evolve
+> >to include handling of any other errors that normal error handling must
+> >be used for.
+> >
+> >nvme_failover_req()'s ability to fallback to normal NVMe error handling
+> >has been preserved because it may be useful for future NVME_SC that
+> >nvme_status_needs_local_error_handling() hasn't yet been trained for.
+> >
+> >Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> >---
+> >  drivers/nvme/host/core.c | 16 ++++++++++++++--
+> >  1 file changed, 14 insertions(+), 2 deletions(-)
+> >
+> >diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
+> >index 88cff309d8e4..be749b690af7 100644
+> >--- a/drivers/nvme/host/core.c
+> >+++ b/drivers/nvme/host/core.c
+> >@@ -252,6 +252,16 @@ static inline bool nvme_req_needs_retry(struct request *req)
+> >  	return true;
+> >  }
+> >+static inline bool nvme_status_needs_local_error_handling(u16 status)
+> >+{
+> >+	switch (status & 0x7ff) {
+> >+	case NVME_SC_CMD_INTERRUPTED:
+> >+		return true;
+> >+	default:
+> >+		return false;
+> >+	}
+> >+}
+> >+
+> >  static void nvme_retry_req(struct request *req)
+> >  {
+> >  	struct nvme_ns *ns = req->q->queuedata;
+> >@@ -270,7 +280,8 @@ static void nvme_retry_req(struct request *req)
+> >  void nvme_complete_rq(struct request *req)
+> >  {
+> >-	blk_status_t status = nvme_error_status(nvme_req(req)->status);
+> >+	u16 nvme_status = nvme_req(req)->status;
+> >+	blk_status_t status = nvme_error_status(nvme_status);
+> >  	trace_nvme_complete_rq(req);
+> >@@ -280,7 +291,8 @@ void nvme_complete_rq(struct request *req)
+> >  		nvme_req(req)->ctrl->comp_seen = true;
+> >  	if (unlikely(status != BLK_STS_OK && nvme_req_needs_retry(req))) {
+> >-		if ((req->cmd_flags & REQ_NVME_MPATH) && nvme_failover_req(req))
+> >+		if (!nvme_status_needs_local_error_handling(nvme_status) &&
+> >+		    (req->cmd_flags & REQ_NVME_MPATH) && nvme_failover_req(req))
+>
+> This looks no affect. if work with nvme multipath, now is already retry local.
 
-Here, we rewrite vector_alloc_slot as suggested by Martin Wilck:
- - increment v->allocated only after successful allocation,
- - avoid the "if (v->slot)" conditional by just calling realloc(),
- - make sure all newly allocated vector elements are set to NULL,
- - change return value to bool.
+Not if NVMe is built without multipathing configured.
 
-Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
----
- libmultipath/config.c       |  2 +-
- libmultipath/foreign.c      |  2 +-
- libmultipath/foreign/nvme.c |  6 +++---
- libmultipath/vector.c       | 22 +++++++++-------------
- libmultipath/vector.h       |  6 ++++--
- 5 files changed, 18 insertions(+), 20 deletions(-)
+> If work with dm-multipath, still return error.
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 49723add..4f5cefda 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -131,7 +131,7 @@ find_hwe (const struct _vector *hwtable,
- 	vector_foreach_slot_backwards (hwtable, tmp, i) {
- 		if (hwe_regmatch(tmp, vendor, product, revision))
- 			continue;
--		if (vector_alloc_slot(result) != NULL) {
-+		if (vector_alloc_slot(result)) {
- 			vector_set_slot(result, tmp);
- 			n++;
- 		}
-diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
-index 26f92672..c2335ed5 100644
---- a/libmultipath/foreign.c
-+++ b/libmultipath/foreign.c
-@@ -236,7 +236,7 @@ static int _init_foreign(const char *multipath_dir, const char *const enable)
- 			goto dl_err;
- 		}
+Yes, I'm aware.  Use of REQ_FAILFAST_TRANSPORT isn't something that is
+needed for NVMe, so why are you proposing hacks in NVMe to deal with it?
 
--		if (vector_alloc_slot(foreigns) == NULL) {
-+		if (!vector_alloc_slot(foreigns)) {
- 			goto dl_err;
- 		}
+> >  			return;
+> >  		if (!blk_queue_dying(req->q)) {
+> >
+> 
+> Suggest:
+> REQ_FAILFAST_TRANSPORT may be designed for scsi, because scsi protocol
+> do not difine the local retry mechanism. SCSI implements a fuzzy local
+> retry mechanism, so need the REQ_FAILFAST_TRANSPORT for multipath
+> software, multipath software retry according error code is expected.
+> nvme is different with scsi about this. It define local retry mechanism
+> and path error code, so nvme should not care REQ_FAILFAST_TRANSPORT.
 
-diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
-index da85e515..88b6aee2 100644
---- a/libmultipath/foreign/nvme.c
-+++ b/libmultipath/foreign/nvme.c
-@@ -731,12 +731,12 @@ static void _find_controllers(struct context *ctx, struct nvme_map *map)
- 		test_ana_support(map, path->ctl);
+Exactly.  Except by "nvme should not care REQ_FAILFAST_TRANSPORT." your
+patch says you mean "nvme shouldn't disallow retry if
+REQ_FAILFAST_TRANSPORT is it".  I'm saying: don't try to get such
+changes into NVMe.
 
- 		path->pg.gen.ops = &nvme_pg_ops;
--		if (vector_alloc_slot(&path->pg.pathvec) == NULL) {
-+		if (!vector_alloc_slot(&path->pg.pathvec)) {
- 			cleanup_nvme_path(path);
- 			continue;
- 		}
- 		vector_set_slot(&path->pg.pathvec, path);
--		if (vector_alloc_slot(&map->pgvec) == NULL) {
-+		if (!vector_alloc_slot(&map->pgvec)) {
- 			cleanup_nvme_path(path);
- 			continue;
- 		}
-@@ -792,7 +792,7 @@ static int _add_map(struct context *ctx, struct udev_device *ud,
- 	map->subsys = subsys;
- 	map->gen.ops = &nvme_map_ops;
+In general, aspects of your patch may have merit but overall it is doing
+too much.
 
--	if (vector_alloc_slot(ctx->mpvec) == NULL) {
-+	if (!vector_alloc_slot(ctx->mpvec)) {
- 		cleanup_nvme_map(map);
- 		return FOREIGN_ERR;
- 	}
-diff --git a/libmultipath/vector.c b/libmultipath/vector.c
-index 501cf4c5..39e2c20f 100644
---- a/libmultipath/vector.c
-+++ b/libmultipath/vector.c
-@@ -35,26 +35,22 @@ vector_alloc(void)
- }
-
- /* allocated one slot */
--void *
-+bool
- vector_alloc_slot(vector v)
- {
- 	void *new_slot = NULL;
-
- 	if (!v)
--		return NULL;
--
--	v->allocated += VECTOR_DEFAULT_SIZE;
--	if (v->slot)
--		new_slot = REALLOC(v->slot, sizeof (void *) * v->allocated);
--	else
--		new_slot = (void *) MALLOC(sizeof (void *) * v->allocated);
-+		return false;
-
-+	new_slot = REALLOC(v->slot, sizeof (void *) * (v->allocated + VECTOR_DEFAULT_SIZE));
- 	if (!new_slot)
--		v->allocated -= VECTOR_DEFAULT_SIZE;
--	else
--		v->slot = new_slot;
-+		return false;
-
--	return v->slot;
-+	v->slot = new_slot;
-+	v->allocated += VECTOR_DEFAULT_SIZE;
-+	v->slot[VECTOR_SIZE(v) - 1] = NULL;
-+	return true;
- }
-
- int
-@@ -203,7 +199,7 @@ int vector_find_or_add_slot(vector v, void *value)
-
- 	if (n >= 0)
- 		return n;
--	if (vector_alloc_slot(v) == NULL)
-+	if (!vector_alloc_slot(v))
- 		return -1;
- 	vector_set_slot(v, value);
- 	return VECTOR_SIZE(v) - 1;
-diff --git a/libmultipath/vector.h b/libmultipath/vector.h
-index e16ec461..cb64b7d6 100644
---- a/libmultipath/vector.h
-+++ b/libmultipath/vector.h
-@@ -23,6 +23,8 @@
- #ifndef _VECTOR_H
- #define _VECTOR_H
-
-+#include <stdbool.h>
-+
- /* vector definition */
- struct _vector {
- 	int allocated;
-@@ -60,7 +62,7 @@ typedef struct _vector *vector;
- 			__t = vector_alloc();				\
- 		if (__t != NULL) {					\
- 			vector_foreach_slot(__v, __j, __i) {		\
--				if (vector_alloc_slot(__t) == NULL) {	\
-+				if (!vector_alloc_slot(__t)) {	\
- 					vector_free(__t);		\
- 					__t = NULL;			\
- 					break;				\
-@@ -73,7 +75,7 @@ typedef struct _vector *vector;
-
- /* Prototypes */
- extern vector vector_alloc(void);
--extern void *vector_alloc_slot(vector v);
-+extern bool vector_alloc_slot(vector v);
- vector vector_reset(vector v);
- extern void vector_free(vector v);
- #define vector_free_const(x) vector_free((vector)(long)(x))
--- 
-2.24.0.windows.2
+Mike
