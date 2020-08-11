@@ -1,11 +1,13 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 0/8] multipath cleanups
-Date: Tue, 11 Aug 2020 16:58:35 -0500
-Message-ID: <1597183123-15797-1-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH v2 2/8] kpartx: fix -Wsign-compare error
+Date: Tue, 11 Aug 2020 16:58:37 -0500
+Message-ID: <1597183123-15797-3-git-send-email-bmarzins@redhat.com>
+References: <1597183123-15797-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1597183123-15797-1-git-send-email-bmarzins@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,37 +21,24 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-Patches 0003 & 0004 fix an issue that I've seen with paths whose checker
-takes too long when multipathd is starting up and creating devices.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ kpartx/kpartx.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-The others are minor build fixes or small cleanups to my previous
-patchset.
-
-Changes in v2:
-- patch 0003 no longer refactors count_active_paths(), as suggested
-  by Martin Wilck
-- Added patches 0007 & 0008, which are both unrelated minor changes.
-
-Benjamin Marzinski (8):
-  Makefile.inc: trim extra information from systemd version
-  kpartx: fix -Wsign-compare error
-  libmultipath: refactor path counting
-  libmultipath: count pending paths as active on loads
-  libmultipath: deal with flushing no maps
-  multipath: deal with delegation failures correctly
-  multipathd: unset mpp->hwe when removing map
-  multipathd: log reason for calling domap()
-
- Makefile.inc                    |  2 +-
- kpartx/kpartx.c                 |  2 +-
- libmpathpersist/mpath_persist.c |  4 ++--
- libmultipath/devmapper.c        |  5 +++--
- libmultipath/structs.c          | 38 +++++++++++++++++++++------------
- libmultipath/structs.h          |  2 +-
- libmultipath/structs_vec.c      |  1 +
- multipath/main.c                |  9 +++++---
- multipathd/main.c               | 14 ++++++++----
- 9 files changed, 49 insertions(+), 28 deletions(-)
-
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index c24ad6d9..653ce0c8 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -738,7 +738,7 @@ struct block {
+ /* blknr is always in 512 byte blocks */
+ char *
+ getblock (int fd, unsigned int blknr) {
+-	unsigned int secsz = get_sector_size(fd);
++	int secsz = get_sector_size(fd);
+ 	unsigned int blks_per_sec = secsz / 512;
+ 	unsigned int secnr = blknr / blks_per_sec;
+ 	unsigned int blk_off = (blknr % blks_per_sec) * 512;
 -- 
 2.17.2
