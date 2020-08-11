@@ -1,8 +1,8 @@
 From: James Bottomley <James.Bottomley@HansenPartnership.com>
 Subject: Re: [dm-devel] [RFC PATCH v5 00/11] Integrity Policy Enforcement
  LSM (IPE)
-Date: Tue, 11 Aug 2020 08:53:38 -0700
-Message-ID: <1597161218.4325.38.camel@HansenPartnership.com>
+Date: Tue, 11 Aug 2020 11:28:29 -0700
+Message-ID: <1597170509.4325.55.camel@HansenPartnership.com>
 References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
          <20200802115545.GA1162@bug> <20200802140300.GA2975990@sasha-vm>
          <20200802143143.GB20261@amd>
@@ -20,184 +20,40 @@ References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-security-module-owner@vger.kernel.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <16C3BF97-A7D3-488A-9D26-7C9B18AD2084@gmail.com>
-Sender: owner-linux-security-module@vger.kernel.org
+Sender: linux-block-owner@vger.kernel.org
 To: Chuck Lever <chucklever@gmail.com>
 Cc: Mimi Zohar <zohar@linux.ibm.com>, James Morris <jmorris@namei.org>, Deven Bowers <deven.desai@linux.microsoft.com>, Pavel Machek <pavel@ucw.cz>, Sasha Levin <sashal@kernel.org>, snitzer@redhat.com, dm-devel@redhat.com, tyhicks@linux.microsoft.com, agk@redhat.com, Paul Moore <paul@paul-moore.com>, Jonathan Corbet <corbet@lwn.net>, nramas@linux.microsoft.com, serge@hallyn.com, pasha.tatashin@soleen.com, Jann Horn <jannh@google.com>, linux-block@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, mdsakib@microsoft.com, open list <linux-kernel@vger.kernel.org>, eparis@redhat.com, linux-security-module@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-integrity@vger.kernel.org, jaskarankhurana@linu
 List-Id: dm-devel.ids
 
 On Tue, 2020-08-11 at 10:48 -0400, Chuck Lever wrote:
-> > On Aug 11, 2020, at 1:43 AM, James Bottomley <James.Bottomley@Hanse
-> > nPartnership.com> wrote:
-> > 
-> > On Mon, 2020-08-10 at 19:36 -0400, Chuck Lever wrote:
-> > > > On Aug 10, 2020, at 11:35 AM, James Bottomley
-> > > > <James.Bottomley@HansenPartnership.com> wrote:
-[...]
-> > > > The first basic is that a merkle tree allows unit at a time
-> > > > verification. First of all we should agree on the unit.  Since
-> > > > we always fault a page at a time, I think our merkle tree unit
-> > > > should be a page not a block.
-> > > 
-> > > Remote filesystems will need to agree that the size of that unit
-> > > is the same everywhere, or the unit size could be stored in the
-> > > per-filemetadata.
-> > > 
-> > > 
-> > > > Next, we should agree where the check gates for the per page
-> > > > accesses should be ... definitely somewhere in readpage, I
-> > > > suspect and finally we should agree how the merkle tree is
-> > > > presented at the gate.  I think there are three ways:
-> > > > 
-> > > >  1. Ahead of time transfer:  The merkle tree is transferred and
-> > > > verified
-> > > >     at some time before the accesses begin, so we already have
-> > > > a
-> > > >     verified copy and can compare against the lower leaf.
-> > > >  2. Async transfer:  We provide an async mechanism to transfer
-> > > > the
-> > > >     necessary components, so when presented with a unit, we
-> > > > check the
-> > > >     log n components required to get to the root
-> > > >  3. The protocol actually provides the capability of 2 (like
-> > > > the SCSI
-> > > >     DIF/DIX), so to IMA all the pieces get presented instead of
-> > > > IMA
-> > > >     having to manage the tree
-> > > 
-> > > A Merkle tree is potentially large enough that it cannot be
-> > > stored in an extended attribute. In addition, an extended
-> > > attribute is not a byte stream that you can seek into or read
-> > > small parts of, it is retrieved in a single shot.
-> > 
-> > Well you wouldn't store the tree would you, just the head
-> > hash.  The rest of the tree can be derived from the data.  You need
-> > to distinguish between what you *must* have to verify integrity
-> > (the head hash, possibly signed)
-> 
-> We're dealing with an untrusted storage device, and for a remote
-> filesystem, an untrusted network.
-> 
 > Mimi's earlier point is that any IMA metadata format that involves
 > unsigned digests is exposed to an alteration attack at rest or in
 > transit, thus will not provide a robust end-to-end integrity
 > guarantee.
-> 
-> Therefore, tree root digests must be cryptographically signed to be
-> properly protected in these environments. Verifying that signature
-> should be done infrequently relative to reading a file's content.
 
-I'm not disagreeing there has to be a way for the relying party to
-trust the root hash.
+I don't believe that is Mimi's point, because it's mostly not correct:
+the xattr mechanism does provide this today.  The point is the
+mechanism we use for storing IMA hashes and signatures today is xattrs
+because they have robust security properties for local filesystems that
+the kernel enforces.  This use goes beyond IMA, selinux labels for
+instance use this property as well.
 
-> > and what is nice to have to speed up the verification
-> > process.  The choice for the latter is cache or reconstruct
-> > depending on the resources available.  If the tree gets cached on
-> > the server, that would be a server implementation detail invisible
-> > to the client.
-> 
-> We assume that storage targets (for block or file) are not trusted.
-> Therefore storage clients cannot rely on intermediate results (eg,
-> middle nodes in a Merkle tree) unless those results are generated
-> within the client's trust envelope.
+What I think you're saying is that NFS can't provide the robust
+security for xattrs we've been relying on, so you need some other
+mechanism for storing them.
 
-Yes, they can ... because supplied nodes can be verified.  That's the
-whole point of a merkle tree.  As long as I'm sure of the root hash I
-can verify all the rest even if supplied by an untrusted source.  If
-you consider a simple merkle tree covering 4 blocks:
-
-       R
-     /   \
-  H11     H12
-  / \     / \
-H21 H22 H23 H24
- |    |   |   |
-B1   B2  B3  B4
-
-Assume I have the verified root hash R.  If you supply B3 you also
-supply H24 and H11 as proof.  I verify by hashing B3 to produce H23
-then hash H23 and H24 to produce H12 and if H12 and your supplied H11
-hash to R the tree is correct and the B3 you supplied must likewise be
-correct.
-
-> So: if the storage target is considered inside the client's trust
-> envelope, it can cache or store durably any intermediate parts of
-> the verification process. If not, the network and file storage is
-> considered untrusted, and the client has to rely on nothing but the
-> signed digest of the tree root.
-> 
-> We could build a scheme around, say, fscache, that might save the
-> intermediate results durably and locally.
-
-I agree we want caching on the client, but we can always page in from
-the remote as long as we page enough to verify up to R, so we're always
-sure the remote supplied genuine information.
-
-> > > For this reason, the idea was to save only the signature of the
-> > > tree's root on durable storage. The client would retrieve that
-> > > signature possibly at open time, and reconstruct the tree at that
-> > > time.
-> > 
-> > Right that's the integrity data you must have.
-> > 
-> > > Or the tree could be partially constructed on-demand at the time
-> > > each unit is to be checked (say, as part of 2. above).
-> > 
-> > Whether it's reconstructed or cached can be an implementation
-> > detail. You clearly have to reconstruct once, but whether you have
-> > to do it again depends on the memory available for caching and all
-> > the other resource calls in the system.
-> > 
-> > > The client would have to reconstruct that tree again if memory
-> > > pressure caused some or all of the tree to be evicted, so perhaps
-> > > an on-demand mechanism is preferable.
-> > 
-> > Right, but I think that's implementation detail.  Probably what we
-> > need is a way to get the log(N) verification hashes from the server
-> > and it's up to the client whether it caches them or not.
-> 
-> Agreed, these are implementation details. But see above about the
-> trustworthiness of the intermediate hashes. If they are conveyed
-> on an untrusted network, then they can't be trusted either.
-
-Yes, they can, provided enough of them are asked for to verify.  If you
-look at the simple example above, suppose I have cached H11 and H12,
-but I've lost the entire H2X layer.  I want to verify B3 so I also ask
-you for your copy of H24.  Then I generate H23 from B3 and Hash H23 and
-H24.  If this doesn't hash to H12 I know either you supplied me the
-wrong block or lied about H24.  However, if it all hashes correctly I
-know you supplied me with both the correct B3 and the correct H24.
-
-> > > > There are also a load of minor things like how we get the head
-> > > > hash, which must be presented and verified ahead of time for
-> > > > each of the above 3.
-> > > 
-> > > Also, changes to a file's content and its tree signature are not
-> > > atomic. If a file is mutable, then there is the period between
-> > > when the file content has changed and when the signature is
-> > > updated. Some discussion of how a client is to behave in those
-> > > situations will be necessary.
-> > 
-> > For IMA, if you write to a checked file, it gets rechecked the next
-> > time the gate (open/exec/mmap) is triggered.  This means you must
-> > complete the update and have the new integrity data in-place before
-> > triggering the check.  I think this could apply equally to a merkel
-> > tree based system.  It's a sort of Doctor, Doctor it hurts when I
-> > do this situation.
-> 
-> I imagine it's a common situation where a "yum update" process is
-> modifying executables while clients are running them. To prevent
-> a read from pulling refreshed content before the new tree root is
-> available, it would have to block temporarily until the verification
-> process succeeds with the updated tree root.
-
-No ... it's not.  Yum specifically worries about that today because if
-you update running binaries, it causes a crash.  Yum constructs the
-entire new file then atomically links it into place and deletes the old
-inode to prevent these crashes.  It never allows you to get into the
-situation where you can execute something that will be modified. 
-That's also why you have to restart stuff after a yum update because if
-you didn't it would still be attached to the deleted inode.
+I think Mimi's other point is actually that IMA uses a flat hash which
+we derive by reading the entire file and then watching for mutations. 
+Since you cannot guarantee we get notice of mutation with NFS, the
+entire IMA mechanism can't really be applied in its current form and we
+have to resort to chunk at a time verifications that a Merkel tree
+would provide.  Doesn't this make moot any thinking about
+standardisation in NFS for the current IMA flat hash mechanism because
+we simply can't use it ... If I were to construct a prototype I'd have
+to work out and securely cache the hash of ever chunk when verifying
+the flat hash so I could recheck on every chunk read.  I think that's
+infeasible for large files.
 
 James
