@@ -1,8 +1,7 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 63/74] multipathd: deal with INIT_REMOVED
-	during path addition
-Date: Wed, 12 Aug 2020 13:35:07 +0200
-Message-ID: <20200812113511.26469-5-mwilck@suse.com>
+Subject: [PATCH v2 55/74] libmultipath: add uninitialize_path()
+Date: Wed, 12 Aug 2020 13:35:04 +0200
+Message-ID: <20200812113511.26469-2-mwilck@suse.com>
 References: <20200812113511.26469-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,165 +23,89 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-With the introduction of INIT_REMOVED, we have to deal with the situation
-when a path is re-added in this state. This enables us to detect the
-situation where a path is added while still part of a map after a failed
-removal, which we couldn't before. Dealing with this correctly requires
-some additional logic. There's a good case (re-added path is still mapped
-by a map with matching WWID) and a bad case (non-matching WWID).
+This helper clears all fields of struct path (except pp->udev) that must be
+re-ininitialized if the path ever is to be used again.
 
-The logic is very similar in uev_add_path() and cli_add_path().
-
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/cli_handlers.c | 54 +++++++++++++++++++++++++++++++++++--
- multipathd/main.c         | 57 ++++++++++++++++++++++++++++++++++++---
- 2 files changed, 105 insertions(+), 6 deletions(-)
+ libmultipath/structs.c     | 19 +++++++++++++++++--
+ libmultipath/structs.h     |  1 +
+ libmultipath/structs_vec.c |  9 +--------
+ 3 files changed, 19 insertions(+), 10 deletions(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 782bb00..c60182f 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -713,11 +713,61 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
- 		goto blacklisted;
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index d227ec0..28bf8eb 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -114,19 +114,34 @@ alloc_path (void)
+ }
  
- 	pp = find_path_by_dev(vecs->pathvec, param);
--	if (pp) {
-+	if (pp && pp->initialized != INIT_REMOVED) {
- 		condlog(2, "%s: path already in pathvec", param);
- 		if (pp->mpp)
- 			return 0;
--	} else {
-+	} else if (pp) {
-+		/* Trying to add a path in INIT_REMOVED state */
-+		struct multipath *prev_mpp;
+ void
+-free_path (struct path * pp)
++uninitialize_path(struct path *pp)
+ {
+ 	if (!pp)
+ 		return;
+ 
++	pp->dmstate = PSTATE_UNDEF;
++	pp->uid_attribute = NULL;
++	pp->getuid = NULL;
 +
-+		prev_mpp = pp->mpp;
-+		if (prev_mpp == NULL)
-+			condlog(0, "Bug: %s was in INIT_REMOVED state without being a multipath member",
-+				pp->dev);
-+		pp->mpp = NULL;
-+		pp->initialized = INIT_NEW;
-+		pp->wwid[0] = '\0';
-+		conf = get_multipath_config();
-+		pthread_cleanup_push(put_multipath_config, conf);
-+		r = pathinfo(pp, conf, DI_ALL | DI_BLACKLIST);
-+		pthread_cleanup_pop(1);
-+
-+		if (prev_mpp) {
-+			/* Similar logic as in uev_add_path() */
-+			pp->mpp = prev_mpp;
-+			if (r == PATHINFO_OK &&
-+			    !strncmp(prev_mpp->wwid, pp->wwid, WWID_SIZE)) {
-+				condlog(2, "%s: path re-added to %s", pp->dev,
-+					pp->mpp->alias);
-+				/* Have the checker reinstate this path asap */
-+				pp->tick = 1;
-+				return 0;
-+			} else if (!ev_remove_path(pp, vecs, true))
-+				/* Path removed in ev_remove_path() */
-+				pp = NULL;
-+			else {
-+				/* Init state is now INIT_REMOVED again */
-+				pp->dmstate = PSTATE_FAILED;
-+				dm_fail_path(pp->mpp->alias, pp->dev_t);
-+				condlog(1, "%s: failed to re-add path still mapped in %s",
-+					pp->dev, pp->mpp->alias);
-+				return 1;
-+			}
-+		} else {
-+			switch (r) {
-+			case PATHINFO_SKIPPED:
-+				goto blacklisted;
-+			case PATHINFO_OK:
-+				break;
-+			default:
-+				condlog(0, "%s: failed to get pathinfo", param);
-+				return 1;
-+			}
-+		}
+ 	if (checker_selected(&pp->checker))
+ 		checker_put(&pp->checker);
+ 
+ 	if (prio_selected(&pp->prio))
+ 		prio_put(&pp->prio);
+ 
+-	if (pp->fd >= 0)
++	if (pp->fd >= 0) {
+ 		close(pp->fd);
++		pp->fd = -1;
 +	}
++}
 +
-+	if (!pp) {
- 		struct udev_device *udevice;
- 
- 		udevice = udev_device_new_from_subsystem_sysname(udev,
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 2013f20..739cc05 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -842,9 +842,23 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
- 	pp = find_path_by_dev(vecs->pathvec, uev->kernel);
- 	if (pp) {
- 		int r;
-+		struct multipath *prev_mpp = NULL;
++void
++free_path (struct path * pp)
++{
++	if (!pp)
++		return;
 +
-+		if (pp->initialized == INIT_REMOVED) {
-+			condlog(3, "%s: re-adding removed path", pp->dev);
-+			pp->initialized = INIT_NEW;
-+			prev_mpp = pp->mpp;
-+			if (prev_mpp == NULL)
-+				condlog(0, "Bug: %s was in INIT_REMOVED state without being a multipath member",
-+					pp->dev);
-+			pp->mpp = NULL;
-+			/* make sure get_uid() is called */
-+			pp->wwid[0] = '\0';
-+		} else
-+			condlog(3,
-+				"%s: spurious uevent, path already in pathvec",
-+				uev->kernel);
++	uninitialize_path(pp);
  
--		condlog(3, "%s: spurious uevent, path already in pathvec",
--			uev->kernel);
- 		if (!pp->mpp && !strlen(pp->wwid)) {
- 			condlog(3, "%s: reinitialize path", uev->kernel);
- 			udev_device_unref(pp->udev);
-@@ -854,9 +868,44 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
- 			r = pathinfo(pp, conf,
- 				     DI_ALL | DI_BLACKLIST);
- 			pthread_cleanup_pop(1);
--			if (r == PATHINFO_OK)
-+			if (r == PATHINFO_OK && !prev_mpp)
- 				ret = ev_add_path(pp, vecs, need_do_map);
--			else if (r == PATHINFO_SKIPPED) {
-+			else if (r == PATHINFO_OK &&
-+				 !strncmp(pp->wwid, prev_mpp->wwid, WWID_SIZE)) {
-+				/*
-+				 * Path was unsuccessfully removed, but now
-+				 * re-added, and still belongs to the right map
-+				 * - all fine, reinstate asap
-+				 */
-+				pp->mpp = prev_mpp;
-+				pp->tick = 1;
-+				ret = 0;
-+			} else if (prev_mpp) {
-+				/*
-+				 * Bad: re-added path still hangs in wrong map
-+				 * Make another attempt to remove the path
-+				 */
-+				pp->mpp = prev_mpp;
-+				ret = ev_remove_path(pp, vecs, true);
-+				if (r == PATHINFO_OK && !ret)
-+					/*
-+					 * Path successfully freed, move on to
-+					 * "new path" code path below
-+					 */
-+					pp = NULL;
-+				else {
-+					/*
-+					 * Failure in ev_remove_path will keep
-+					 * path in pathvec in INIT_REMOVED state
-+					 * Fail the path to make sure it isn't
-+					 * used any more.
-+					 */
-+					pp->dmstate = PSTATE_FAILED;
-+					dm_fail_path(pp->mpp->alias, pp->dev_t);
-+					condlog(1, "%s: failed to re-add path still mapped in %s",
-+						pp->dev, pp->mpp->alias);
-+				}
-+			} else if (r == PATHINFO_SKIPPED) {
- 				condlog(3, "%s: remove blacklisted path",
- 					uev->kernel);
- 				i = find_slot(vecs->pathvec, (void *)pp);
+ 	if (pp->udev) {
+ 		udev_device_unref(pp->udev);
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 917e408..5f45f21 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -416,6 +416,7 @@ struct host_group {
+ struct path * alloc_path (void);
+ struct pathgroup * alloc_pathgroup (void);
+ struct multipath * alloc_multipath (void);
++void uninitialize_path(struct path *pp);
+ void free_path (struct path *);
+ void free_pathvec (vector vec, enum free_path_mode free_paths);
+ void free_pathgroup (struct pathgroup * pgp, enum free_path_mode free_paths);
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 2b7c154..ea84a20 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -103,14 +103,7 @@ void orphan_path(struct path *pp, const char *reason)
+ 		pp->mpp->hwe = NULL;
+ 	}
+ 	pp->mpp = NULL;
+-	pp->dmstate = PSTATE_UNDEF;
+-	pp->uid_attribute = NULL;
+-	pp->getuid = NULL;
+-	prio_put(&pp->prio);
+-	checker_put(&pp->checker);
+-	if (pp->fd >= 0)
+-		close(pp->fd);
+-	pp->fd = -1;
++	uninitialize_path(pp);
+ }
+ 
+ void orphan_paths(vector pathvec, struct multipath *mpp, const char *reason)
 -- 
 2.28.0
