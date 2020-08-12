@@ -1,14 +1,14 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 76/80] libmultipath: select_action(): force
-	udev reload for uninitialized maps
-Date: Wed, 12 Aug 2020 13:35:40 +0200
-Message-ID: <20200812113543.26576-2-mwilck@suse.com>
-References: <20200812113543.26576-1-mwilck@suse.com>
+Subject: [PATCH v2 58/74] libmultipath: verify_paths(): don't
+	delete paths from pathvec
+Date: Wed, 12 Aug 2020 13:35:05 +0200
+Message-ID: <20200812113511.26469-3-mwilck@suse.com>
+References: <20200812113511.26469-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200812113543.26576-1-mwilck@suse.com>
+In-Reply-To: <20200812113511.26469-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,133 +24,112 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-If we are in the reconfigure() code path, and we encounter maps to
-be reloaded, we usually set the DM_SUBSYSTEM_UDEV_FLAG0 flag to tell
-udev not to repeat device detection steps above the multipath layer.
-However, if the map was previously uninitialized, we have to force
-udev to reload.
+If we encounter a non-existing device verify_paths(), just set
+it to INIT_REMOVED state. Actual path deletion is postponed until
+we don't see that path in the kernel map any more.
+
+This allows us to get rid of the "pathvec" argument to this function.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 61 ++++++++++++++++++++++++----------------
- 1 file changed, 37 insertions(+), 24 deletions(-)
+ libmultipath/configure.c   |  2 +-
+ libmultipath/structs_vec.c | 16 +++++++++-------
+ libmultipath/structs_vec.h |  2 +-
+ multipathd/main.c          |  4 ++--
+ 4 files changed, 13 insertions(+), 11 deletions(-)
 
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index cc54818..ac57b88 100644
+index 5ecfae8..cc54818 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
-@@ -660,6 +660,32 @@ sysfs_set_max_sectors_kb(struct multipath *mpp, int is_reload)
- 	return err;
+@@ -1196,7 +1196,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 				set_bit_in_bitfield(i, size_mismatch_seen);
+ 			}
+ 		}
+-		verify_paths(mpp, vecs);
++		verify_paths(mpp);
+ 
+ 		params[0] = '\0';
+ 		if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index ee1004d..e0a84d4 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -499,11 +499,11 @@ out:
+ 	return NULL;
  }
  
-+static void
-+select_reload_action(struct multipath *mpp, const char *reason)
-+{
-+	struct udev_device *mpp_ud;
-+	const char *env;
-+
-+	/*
-+	 * MPATH_DEVICE_READY != 1 can mean two things:
-+	 *  (a) no usable paths
-+	 *  (b) device was never fully processed (e.g. udev killed)
-+	 * If we are in this code path (startup or forced reconfigure),
-+	 * (b) can mean that upper layers like kpartx have never been
-+	 * run for this map. Thus force udev reload.
-+	 */
-+
-+	mpp_ud = get_udev_for_mpp(cmpp);
-+	env = udev_device_get_property_value(mpp_ud, "MPATH_DEVICE_READY");
-+	if ((!env || strcmp(env, "1")) && count_active_paths(mpp) > 0)
-+		mpp->force_udev_reload = 1;
-+	udev_device_unref(mpp_ud);
-+	mpp->action = ACT_RELOAD;
-+	condlog(3, "%s: set ACT_RELOAD (%s%s)", mpp->alias,
-+		mpp->force_udev_reload ? "forced, " : "",
-+		reason);
-+}
-+
- static void
- select_action (struct multipath * mpp, vector curmp, int force_reload)
+-int verify_paths(struct multipath *mpp, struct vectors *vecs)
++int verify_paths(struct multipath *mpp)
  {
-@@ -728,9 +754,7 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 	if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF &&
- 	    !!strstr(mpp->features, "queue_if_no_path") !=
- 	    !!strstr(cmpp->features, "queue_if_no_path")) {
--		mpp->action =  ACT_RELOAD;
--		condlog(3, "%s: set ACT_RELOAD (no_path_retry change)",
--			mpp->alias);
-+		select_reload_action(cmpp, "no_path_retry change");
- 		return;
- 	}
- 	if ((mpp->retain_hwhandler != RETAIN_HWHANDLER_ON ||
-@@ -738,9 +762,7 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 	    (strlen(cmpp->hwhandler) != strlen(mpp->hwhandler) ||
- 	     strncmp(cmpp->hwhandler, mpp->hwhandler,
- 		    strlen(mpp->hwhandler)))) {
--		mpp->action = ACT_RELOAD;
--		condlog(3, "%s: set ACT_RELOAD (hwhandler change)",
--			mpp->alias);
-+		select_reload_action(cmpp, "hwhandler change");
- 		return;
- 	}
+ 	struct path * pp;
+ 	int count = 0;
+-	int i, j;
++	int i;
  
-@@ -748,9 +770,7 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 	    !!strstr(mpp->features, "retain_attached_hw_handler") !=
- 	    !!strstr(cmpp->features, "retain_attached_hw_handler") &&
- 	    get_linux_version_code() < KERNEL_VERSION(4, 3, 0)) {
--		mpp->action = ACT_RELOAD;
--		condlog(3, "%s: set ACT_RELOAD (retain_hwhandler change)",
--			mpp->alias);
-+		select_reload_action(cmpp, "retain_hwhandler change");
- 		return;
- 	}
+ 	if (!mpp)
+ 		return 0;
+@@ -518,7 +518,7 @@ int verify_paths(struct multipath *mpp, struct vectors *vecs)
+ 				condlog(1, "%s: removing valid path %s in state %d",
+ 					mpp->alias, pp->dev, pp->state);
+ 			} else {
+-				condlog(3, "%s: failed to access path %s",
++				condlog(2, "%s: failed to access path %s",
+ 					mpp->alias, pp->dev);
+ 			}
+ 			count++;
+@@ -531,10 +531,12 @@ int verify_paths(struct multipath *mpp, struct vectors *vecs)
+ 			 */
+ 			if (mpp->hwe == pp->hwe)
+ 				mpp->hwe = NULL;
+-			if ((j = find_slot(vecs->pathvec,
+-					   (void *)pp)) != -1)
+-				vector_del_slot(vecs->pathvec, j);
+-			free_path(pp);
++			/*
++			 * Don't delete path from pathvec yet. We'll do this
++			 * after the path has been removed from the map, in
++			 * sync_paths().
++			 */
++			set_path_removed(pp);
+ 		} else {
+ 			condlog(4, "%s: verified path %s dev_t %s",
+ 				mpp->alias, pp->dev, pp->dev_t);
+diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
+index 7f6dece..d7dfe32 100644
+--- a/libmultipath/structs_vec.h
++++ b/libmultipath/structs_vec.h
+@@ -20,7 +20,7 @@ void orphan_paths(vector pathvec, struct multipath *mpp,
+ void orphan_path (struct path * pp, const char *reason);
+ void set_path_removed(struct path *pp);
  
-@@ -762,9 +782,10 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
- 		remove_feature(&cmpp_feat, "queue_if_no_path");
- 		remove_feature(&cmpp_feat, "retain_attached_hw_handler");
- 		if (strncmp(mpp_feat, cmpp_feat, PARAMS_SIZE)) {
--			mpp->action =  ACT_RELOAD;
--			condlog(3, "%s: set ACT_RELOAD (features change)",
--				mpp->alias);
-+			select_reload_action(cmpp, "features change");
-+			FREE(cmpp_feat);
-+			FREE(mpp_feat);
-+			return;
- 		}
+-int verify_paths(struct multipath * mpp, struct vectors * vecs);
++int verify_paths(struct multipath *mpp);
+ int update_mpp_paths(struct multipath * mpp, vector pathvec);
+ int update_multipath_strings (struct multipath *mpp, vector pathvec,
+ 			      int is_daemon);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 2c5b982..0209db4 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -492,7 +492,7 @@ retry:
+ 		retries = -1;
+ 		goto fail;
  	}
- 	FREE(cmpp_feat);
-@@ -772,27 +793,19 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
+-	verify_paths(mpp, vecs);
++	verify_paths(mpp);
+ 	mpp->action = ACT_RELOAD;
  
- 	if (!cmpp->selector || strncmp(cmpp->selector, mpp->selector,
- 		    strlen(mpp->selector))) {
--		mpp->action = ACT_RELOAD;
--		condlog(3, "%s: set ACT_RELOAD (selector change)",
--			mpp->alias);
-+		select_reload_action(cmpp, "selector change");
- 		return;
- 	}
- 	if (cmpp->minio != mpp->minio) {
--		mpp->action = ACT_RELOAD;
--		condlog(3, "%s: set ACT_RELOAD (minio change, %u->%u)",
--			mpp->alias, cmpp->minio, mpp->minio);
-+		select_reload_action(cmpp, "minio change");
- 		return;
- 	}
- 	if (!cmpp->pg || VECTOR_SIZE(cmpp->pg) != VECTOR_SIZE(mpp->pg)) {
--		mpp->action = ACT_RELOAD;
--		condlog(3, "%s: set ACT_RELOAD (path group number change)",
--			mpp->alias);
-+		select_reload_action(cmpp, "path group number change");
- 		return;
- 	}
- 	if (pgcmp(mpp, cmpp)) {
--		mpp->action = ACT_RELOAD;
--		condlog(3, "%s: set ACT_RELOAD (path group topology change)",
--			mpp->alias);
-+		select_reload_action(cmpp, "path group topology change");
- 		return;
- 	}
- 	if (cmpp->nextpg != mpp->bestpg) {
+ 	if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
+@@ -960,7 +960,7 @@ rescan:
+ 		    find_slot(vecs->pathvec, pp) == -1)
+ 			goto fail; /* leave path added to pathvec */
+ 
+-		verify_paths(mpp, vecs);
++		verify_paths(mpp);
+ 		mpp->action = ACT_RELOAD;
+ 	} else {
+ 		if (!should_multipath(pp, vecs->pathvec, vecs->mpvec)) {
 -- 
 2.28.0
