@@ -1,12 +1,14 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 00/84] multipath-tools series part VII:
-	addional patches
-Date: Wed, 12 Aug 2020 13:35:57 +0200
-Message-ID: <20200812113601.26658-1-mwilck@suse.com>
+Subject: [PATCH v2 83/84] libmultipath: alias: static const
+	variable for BINDINGS_FILE_HEADER
+Date: Wed, 12 Aug 2020 13:36:00 +0200
+Message-ID: <20200812113601.26658-4-mwilck@suse.com>
+References: <20200812113601.26658-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200812113601.26658-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,35 +24,86 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This is part VI of a larger patch series for multipath-tools I've been preparing.
-It's based on the previously submitted part VI.
+... and fixup the header file.
 
-The full series will also be available here:
-https://github.com/mwilck/multipath-tools/tree/ups/submit-2008
-This part is tagged "submit-200812-7".
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/alias.c | 17 ++++++++++++++---
+ libmultipath/alias.h | 12 ++++--------
+ 2 files changed, 18 insertions(+), 11 deletions(-)
 
-This part contains patches added since the v1 submission of the series. One
-is Liu's fix for disassemble_map(), rebased on top of my previous changes
-to that function.
-
-84/84, related to inconsistent alias settings, belongs logically to part III.
-I couldn't add it there because it would have changed the numbering in the
-series wrt v1, which I wanted to avoid.
-
-Martin Wilck (3):
-  multipath: check_path_valid(): eliminate some failure modes
-  libmultipath: alias: static const variable for BINDINGS_FILE_HEADER
-  libmultipath: add consistency check for alias settings
-
-Zhiqiang Liu (1):
-  libmultipath: free pp if store_path fails in disassemble_map
-
- libmultipath/alias.c    | 274 +++++++++++++++++++++++++++++++++++++++-
- libmultipath/alias.h    |  15 +--
- libmultipath/dmparser.c |  12 +-
- multipath/main.c        |  21 +--
- multipathd/main.c       |   3 +
- 5 files changed, 301 insertions(+), 24 deletions(-)
-
+diff --git a/libmultipath/alias.c b/libmultipath/alias.c
+index 35f1beb..0759c4e 100644
+--- a/libmultipath/alias.c
++++ b/libmultipath/alias.c
+@@ -37,6 +37,17 @@
+  * See the file COPYING included with this distribution for more details.
+  */
+ 
++#define BINDINGS_FILE_HEADER		\
++"# Multipath bindings, Version : 1.0\n" \
++"# NOTE: this file is automatically maintained by the multipath program.\n" \
++"# You should not need to edit this file in normal circumstances.\n" \
++"#\n" \
++"# Format:\n" \
++"# alias wwid\n" \
++"#\n"
++
++static const char bindings_file_header[] = BINDINGS_FILE_HEADER;
++
+ int
+ valid_alias(const char *alias)
+ {
+@@ -287,7 +298,7 @@ use_existing_alias (const char *wwid, const char *file, const char *alias_old,
+ 	char buff[WWID_SIZE];
+ 	FILE *f;
+ 
+-	fd = open_file(file, &can_write, BINDINGS_FILE_HEADER);
++	fd = open_file(file, &can_write, bindings_file_header);
+ 	if (fd < 0)
+ 		return NULL;
+ 
+@@ -361,7 +372,7 @@ get_user_friendly_alias(const char *wwid, const char *file, const char *prefix,
+ 		return NULL;
+ 	}
+ 
+-	fd = open_file(file, &can_write, BINDINGS_FILE_HEADER);
++	fd = open_file(file, &can_write, bindings_file_header);
+ 	if (fd < 0)
+ 		return NULL;
+ 
+@@ -406,7 +417,7 @@ get_user_friendly_wwid(const char *alias, char *buff, const char *file)
+ 		return -1;
+ 	}
+ 
+-	fd = open_file(file, &unused, BINDINGS_FILE_HEADER);
++	fd = open_file(file, &unused, bindings_file_header);
+ 	if (fd < 0)
+ 		return -1;
+ 
+diff --git a/libmultipath/alias.h b/libmultipath/alias.h
+index 7c4b302..236b3ba 100644
+--- a/libmultipath/alias.h
++++ b/libmultipath/alias.h
+@@ -1,11 +1,5 @@
+-#define BINDINGS_FILE_HEADER \
+-"# Multipath bindings, Version : 1.0\n" \
+-"# NOTE: this file is automatically maintained by the multipath program.\n" \
+-"# You should not need to edit this file in normal circumstances.\n" \
+-"#\n" \
+-"# Format:\n" \
+-"# alias wwid\n" \
+-"#\n"
++#ifndef _ALIAS_H
++#define _ALIAS_H
+ 
+ int valid_alias(const char *alias);
+ char *get_user_friendly_alias(const char *wwid, const char *file,
+@@ -15,3 +9,5 @@ int get_user_friendly_wwid(const char *alias, char *buff, const char *file);
+ char *use_existing_alias (const char *wwid, const char *file,
+ 			  const char *alias_old,
+ 			  const char *prefix, int bindings_read_only);
++
++#endif /* _ALIAS_H */
 -- 
 2.28.0
