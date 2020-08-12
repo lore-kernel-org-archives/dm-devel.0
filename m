@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 81/84] multipath: check_path_valid():
-	eliminate some failure modes
-Date: Wed, 12 Aug 2020 13:35:58 +0200
-Message-ID: <20200812113601.26658-2-mwilck@suse.com>
+Subject: [PATCH v2 82/84] libmultipath: free pp if store_path
+	fails in disassemble_map
+Date: Wed, 12 Aug 2020 13:35:59 +0200
+Message-ID: <20200812113601.26658-3-mwilck@suse.com>
 References: <20200812113601.26658-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,55 +19,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Zhiqiang Liu <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-From: Martin Wilck <mwilck@suse.com>
+From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 
-The memory allocations can fail, and pathvec is not needed until the
-path_discovery() call. Eliminate the failure modes by not setting up
-pathvec before it's actually needed.
+In disassemble_map func, one pp will be allocated and stored in
+pgp->paths. However, if store_path fails, pp will not be freed,
+then memory leak problem occurs.
 
+Here, we will call free_path to free pp when store_path fails.
+
+Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/main.c | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
+ libmultipath/dmparser.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 9d6b482..9e65070 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -637,15 +637,6 @@ check_path_valid(const char *name, struct config *conf, bool is_uevent)
- 			 minor(devt));
- 	}
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 25e6a4a..c103161 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -306,11 +306,15 @@ int disassemble_map(const struct _vector *pathvec,
+ 					goto out1;
  
--	pathvec = vector_alloc();
--	if (!pathvec)
--		goto fail;
--
--	if (store_path(pathvec, pp) != 0) {
--		free_path(pp);
--		goto fail;
--	}
--
- 	if ((r == PATH_IS_VALID || r == PATH_IS_MAYBE_VALID) &&
- 	    released_to_systemd())
- 		r = PATH_IS_NOT_VALID;
-@@ -684,6 +675,15 @@ check_path_valid(const char *name, struct config *conf, bool is_uevent)
- 		goto out;
- 	}
+ 				strlcpy(pp->dev_t, word, BLK_DEV_SIZE);
+-			}
+-			FREE(word);
  
-+	pathvec = vector_alloc();
-+	if (!pathvec)
-+		goto fail;
+-			if (store_path(pgp->paths, pp))
+-				goto out;
++				if (store_path(pgp->paths, pp)) {
++					free_path(pp);
++					goto out1;
++				}
++			} else if (store_path(pgp->paths, pp))
++				goto out1;
 +
-+	if (store_path(pathvec, pp) != 0) {
-+		free_path(pp);
-+		goto fail;
-+	}
-+
- 	/* For find_multipaths = SMART, if there is more than one path
- 	 * matching the refwwid, then the path is valid */
- 	if (path_discovery(pathvec, DI_SYSFS | DI_WWID) < 0)
++			FREE(word);
+ 
+ 			pgp->id ^= (long)pp;
+ 			pp->pgindex = i + 1;
 -- 
 2.28.0
