@@ -1,14 +1,12 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 41/42] libmultipath: refuse reloading an
-	existing map with different WWID
-Date: Wed, 12 Aug 2020 13:34:05 +0200
-Message-ID: <20200812113405.26206-3-mwilck@suse.com>
-References: <20200812113405.26206-1-mwilck@suse.com>
+Subject: [PATCH v2 00/42] multipath-tools series part III:
+	duplicate alias
+Date: Wed, 12 Aug 2020 13:34:03 +0200
+Message-ID: <20200812113405.26206-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200812113405.26206-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,66 +22,50 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-If a map with given name (alias) already exists with a different WWID,
-reloading it with a new WWID is harmful. The existing paths would first
-be replaced by others with the new WWID. The WWIDs of the new paths wouldn't
-match the map WWID; thus the next time the map is disassembled, the (correct)
-path WWIDs would be overwritten by the different map WWID (with subsequent
-patches from this series, they'd be orphaned instead, which is better but
-still not ideal). When the map is reloaded later, paths with diffent WWIDs
-may be mixed, causing data corruption.
+Hi Christophe, hi Ben,
 
-Refuse reloading a map under such circumstances.
+This is part III of a larger patch series for multpath-tools I've been preparing.
+It contains fixes for a customer issue where the same alias was set for
+several maps with different WWIDs in the WWIDs file.
 
-Note: this patch doesn't change multipath-tools behavior in the case
-where valid map aliases are supposed to be swapped (typically if the bindings
-file differs between initrd and root FS). In this case, select_action()
-selects ACT_RENAME, which this patch doesn't affect. The user-visible behavior
-in this case remains as-is: the map renames fail, and the aliases remain
-unchanged, thus not matching the current bindings file, but art least
-internally consistent.
+Note that this does *not* break the scenario Ben described in his response to
+v1 of the part of the series. Details in the commit message of patch 41/42.
 
-To fully fix this use case, coalesce_paths() must cease setting up maps one
-by one. Instead, we'd need to build up a full set of maps-to-be-set-up,
-and create them in a single batch, figuring out a "rename strategy" beforehand
-to avoid clashes between existing and to-be-created maps (for example,
-a name swap A<->B would need to be carried out as B->tmp, A->B, tmp->A).
-Implementing that is out of the scope of this patch series.
+This part based on the previously submitted part II (which is completely
+unchanged from the v1 submission and not re-posted).
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
+The full series will also be available here:
+https://github.com/mwilck/multipath-tools/tree/ups/submit-2008
+This part is tagged "submit-200812-3".
+
+Changes v1 -> v2, as suggested by Ben Marzinski:
+
+ * 40/42 "libmultipath: refuse creating map with duplicate alias"
+    - dropped, as this breaks valid scenarios
+ * 40/42 "libmultipath: free_multipath(): remove mpp references"
+    - new patch added, required to avoid segfaults; inserted here to preserve
+      numbering
+ * 41/42 "libmultipath: refuse reloading an existing map with different WWID"
+    - unchanged, but not reviewed yet. Commit message improved.
+
+NOTE: part VI and VII of the the series contain patches related to the topic
+of this part, improving the handling of inconsistent alias settings further:
+
+  80/80 "libmultipath: select_action(): don't drop map if alias clashes"
+  84/84 "libmultipath: add consistency check for alias settings"
+
+Regards,
+Martin
+
+Martin Wilck (3):
+  libmultipath: free_multipath(): remove mpp references
+  libmultipath: refuse reloading an existing map with different WWID
+  libmultipath: dm_addmap(): refuse creating map with empty WWID
+
  libmultipath/configure.c | 19 +++++++++++++++----
- 1 file changed, 15 insertions(+), 4 deletions(-)
+ libmultipath/devmapper.c | 26 +++++++++++++++-----------
+ libmultipath/structs.c   | 15 +++++++++++++++
+ 3 files changed, 45 insertions(+), 15 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 315eb6a..5f60f74 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -897,10 +897,21 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
- 		return DOMAP_DRY;
- 	}
- 
--	if (mpp->action == ACT_CREATE &&
--	    dm_map_present(mpp->alias)) {
--		condlog(3, "%s: map already present", mpp->alias);
--		mpp->action = ACT_RELOAD;
-+	if (mpp->action == ACT_CREATE && dm_map_present(mpp->alias)) {
-+		char wwid[WWID_SIZE];
-+
-+		if (dm_get_uuid(mpp->alias, wwid, sizeof(wwid)) == 0) {
-+			if (!strncmp(mpp->wwid, wwid, sizeof(wwid))) {
-+				condlog(3, "%s: map already present",
-+					mpp->alias);
-+				mpp->action = ACT_RELOAD;
-+			} else {
-+				condlog(0, "%s: map \"%s\" already present with WWID %s, skipping",
-+					mpp->wwid, mpp->alias, wwid);
-+				condlog(0, "please check alias settings in config and bindings file");
-+				mpp->action = ACT_REJECT;
-+			}
-+		}
- 	}
- 
- 	switch (mpp->action) {
 -- 
 2.28.0
