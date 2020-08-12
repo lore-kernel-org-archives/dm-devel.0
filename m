@@ -1,17 +1,15 @@
 From: Martin Wilck <Martin.Wilck@suse.com>
-Subject: Re: [PATCH v2 7/8] multipathd: unset mpp->hwe when
-	removing map
-Date: Wed, 12 Aug 2020 09:28:14 +0000
-Message-ID: <6b8bb17983936f267f0b8ef05079dbac78e9e4fa.camel@suse.com>
+Subject: Re: [PATCH v2 0/8] multipath cleanups
+Date: Wed, 12 Aug 2020 09:31:33 +0000
+Message-ID: <2f55ef8f7d5178f14cf40af4171d4ced6df21884.camel@suse.com>
 References: <1597183123-15797-1-git-send-email-bmarzins@redhat.com>
-	<1597183123-15797-8-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-15"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1597183123-15797-8-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1597183123-15797-1-git-send-email-bmarzins@redhat.com>
 Content-Language: en-US
-Content-ID: <69A7897BE682994D8AF15688188A4F81@eurprd04.prod.outlook.com>
+Content-ID: <5C95B521B326B045AB914BA12F591251@eurprd04.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,53 +24,45 @@ Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 On Tue, 2020-08-11 at 16:58 -0500, Benjamin Marzinski wrote:
-> If the map doesn't unset its hwe pointer before orphaning all the
-> paths,
-> multipathd will print a warning message in orphan_path() because of
-> commit "libmultipath: warn if freeing path that holds mpp->hwe".
+> Patches 0003 & 0004 fix an issue that I've seen with paths whose
+> checker
+> takes too long when multipathd is starting up and creating devices.
 >=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-Do you have a specific reason to put "mpp->hwe =3D NULL" in the *callers*
-of orphan_paths()? I observed the same problem, and fixed it
-directly in orphan_paths() (the patch is part of in my upcoming v2
-series).
-
-Regards,
-Martin
-
-
-> ---
->  libmultipath/structs_vec.c | 1 +
->  multipathd/main.c          | 1 +
->  2 files changed, 2 insertions(+)
+> The others are minor build fixes or small cleanups to my previous
+> patchset.
 >=20
-> diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-> index ede14297..103ea11e 100644
-> --- a/libmultipath/structs_vec.c
-> +++ b/libmultipath/structs_vec.c
-> @@ -129,6 +129,7 @@ remove_map(struct multipath * mpp, struct vectors
-> * vecs, int purge_vec)
->  =09/*
->  =09 * clear references to this map
->  =09 */
-> +=09mpp->hwe =3D NULL;
->  =09orphan_paths(vecs->pathvec, mpp, "map removed internally");
-> =20
->  =09if (purge_vec &&
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index f014d2a1..2b0e2734 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -666,6 +666,7 @@ flush_map(struct multipath * mpp, struct vectors
-> * vecs, int nopaths)
->  =09=09condlog(2, "%s: map flushed", mpp->alias);
->  =09}
-> =20
-> +=09mpp->hwe =3D NULL;
->  =09orphan_paths(vecs->pathvec, mpp, "map flushed");
->  =09remove_map_and_stop_waiter(mpp, vecs);
-> =20
+> Changes in v2:
+> - patch 0003 no longer refactors count_active_paths(), as suggested
+>   by Martin Wilck
+> - Added patches 0007 & 0008, which are both unrelated minor changes.
+>=20
+> Benjamin Marzinski (8):
+>   Makefile.inc: trim extra information from systemd version
+>   kpartx: fix -Wsign-compare error
+>   libmultipath: refactor path counting
+>   libmultipath: count pending paths as active on loads
+>   libmultipath: deal with flushing no maps
+>   multipath: deal with delegation failures correctly
+>   multipathd: unset mpp->hwe when removing map
+>   multipathd: log reason for calling domap()
+>=20
+>  Makefile.inc                    |  2 +-
+>  kpartx/kpartx.c                 |  2 +-
+>  libmpathpersist/mpath_persist.c |  4 ++--
+>  libmultipath/devmapper.c        |  5 +++--
+>  libmultipath/structs.c          | 38 +++++++++++++++++++++--------
+> ----
+>  libmultipath/structs.h          |  2 +-
+>  libmultipath/structs_vec.c      |  1 +
+>  multipath/main.c                |  9 +++++---
+>  multipathd/main.c               | 14 ++++++++----
+>  9 files changed, 49 insertions(+), 28 deletions(-)
+>=20
+
+For the series, except 7/8 "multipathd: unset mpp->hwe when removing
+map":
+
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
 --=20
 Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
