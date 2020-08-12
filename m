@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 55/74] libmultipath: add uninitialize_path()
-Date: Wed, 12 Aug 2020 13:35:04 +0200
-Message-ID: <20200812113511.26469-2-mwilck@suse.com>
+Subject: [PATCH v2 64/74] libmultipath: orphan_paths(): avoid BUG
+	message
+Date: Wed, 12 Aug 2020 13:35:08 +0200
+Message-ID: <20200812113511.26469-6-mwilck@suse.com>
 References: <20200812113511.26469-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,89 +24,28 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This helper clears all fields of struct path (except pp->udev) that must be
-re-ininitialized if the path ever is to be used again.
+Since c44d769, we print a BUG message when we orphan a path that
+holds the mpp->hwe pointer. But if this called via orphan_paths(),
+this is expected and we shouldn't warn.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Fixes: c44d769 ("libmultipath: warn if freeing path that holds mpp->hwe")
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs.c     | 19 +++++++++++++++++--
- libmultipath/structs.h     |  1 +
- libmultipath/structs_vec.c |  9 +--------
- 3 files changed, 19 insertions(+), 10 deletions(-)
+ libmultipath/structs_vec.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index d227ec0..28bf8eb 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -114,19 +114,34 @@ alloc_path (void)
- }
- 
- void
--free_path (struct path * pp)
-+uninitialize_path(struct path *pp)
- {
- 	if (!pp)
- 		return;
- 
-+	pp->dmstate = PSTATE_UNDEF;
-+	pp->uid_attribute = NULL;
-+	pp->getuid = NULL;
-+
- 	if (checker_selected(&pp->checker))
- 		checker_put(&pp->checker);
- 
- 	if (prio_selected(&pp->prio))
- 		prio_put(&pp->prio);
- 
--	if (pp->fd >= 0)
-+	if (pp->fd >= 0) {
- 		close(pp->fd);
-+		pp->fd = -1;
-+	}
-+}
-+
-+void
-+free_path (struct path * pp)
-+{
-+	if (!pp)
-+		return;
-+
-+	uninitialize_path(pp);
- 
- 	if (pp->udev) {
- 		udev_device_unref(pp->udev);
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 917e408..5f45f21 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -416,6 +416,7 @@ struct host_group {
- struct path * alloc_path (void);
- struct pathgroup * alloc_pathgroup (void);
- struct multipath * alloc_multipath (void);
-+void uninitialize_path(struct path *pp);
- void free_path (struct path *);
- void free_pathvec (vector vec, enum free_path_mode free_paths);
- void free_pathgroup (struct pathgroup * pgp, enum free_path_mode free_paths);
 diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 2b7c154..ea84a20 100644
+index ba3165a..b644d3f 100644
 --- a/libmultipath/structs_vec.c
 +++ b/libmultipath/structs_vec.c
-@@ -103,14 +103,7 @@ void orphan_path(struct path *pp, const char *reason)
- 		pp->mpp->hwe = NULL;
- 	}
- 	pp->mpp = NULL;
--	pp->dmstate = PSTATE_UNDEF;
--	pp->uid_attribute = NULL;
--	pp->getuid = NULL;
--	prio_put(&pp->prio);
--	checker_put(&pp->checker);
--	if (pp->fd >= 0)
--		close(pp->fd);
--	pp->fd = -1;
-+	uninitialize_path(pp);
- }
+@@ -124,6 +124,8 @@ void orphan_paths(vector pathvec, struct multipath *mpp, const char *reason)
+ 	int i;
+ 	struct path * pp;
  
- void orphan_paths(vector pathvec, struct multipath *mpp, const char *reason)
++	/* Avoid BUG message from orphan_path() */
++	mpp->hwe = NULL;
+ 	vector_foreach_slot (pathvec, pp, i) {
+ 		if (pp->mpp == mpp) {
+ 			if (pp->initialized == INIT_REMOVED) {
 -- 
 2.28.0
