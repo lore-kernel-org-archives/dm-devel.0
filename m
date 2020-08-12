@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 65/74] libmultipath: add
-	update_pathvec_from_dm()
-Date: Wed, 12 Aug 2020 13:35:09 +0200
-Message-ID: <20200812113511.26469-7-mwilck@suse.com>
+Subject: [PATCH v2 66/74] libmultipath: update_pathvec_from_dm:
+	handle pp->mpp mismatch
+Date: Wed, 12 Aug 2020 13:35:10 +0200
+Message-ID: <20200812113511.26469-8-mwilck@suse.com>
 References: <20200812113511.26469-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,201 +24,63 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-It can happen in particular during boot or startup that we encounter
-paths as map members which haven't been discovered or fully initialized
-yet, and are thus not in the pathvec. These paths need special treatment
-in various ways. Currently this is dealt with in disassemble_map(). That's
-a layer violation, and the way it is done is suboptimal in various ways.
-
-As a preparation to change that, this patch introduces a new function,
-update_pathvec_from_dm(), that is supposed to deal with newly discovered
-paths from disassemble_map(). It has to be called after disassemble_map()
-has finished.
-
-The logic of the new function is similar but not identical to what
-disassemble_map() was doing before. Firstly, the function will simply
-remove path devices that don't exist - there's no point in carrying these
-around. Map reloads can't be called from this code for reasons of the
-overall program logic. But it's prepared to signal to the caller that
-a map reload is in order. Using this return value will be future work.
-
-Second, pathinfo() is now called on new paths rather than just setting
-pp->dev. The pathinfo flags can be passed as argument to make the function
-flexible for different callers.
-
-Finally, treatment of WWIDs is different now. There'll be only one attempt
-at guessing the map WWID if it's not set yet. If a non-matching path WWID
-is found, the path is removed, and a new uevent triggered (this is the
-most important change wrt the dangerous previous code that would simply
-overwrite the path WWID). If the path WWID is empty, it will still be
-set from the map WWID, which I consider not perfect, but no worse
-than what we did before.
+Treat this like a WWID mismatch.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs_vec.c | 136 +++++++++++++++++++++++++++++++++++++
- libmultipath/structs_vec.h |   2 +
- 2 files changed, 138 insertions(+)
+ libmultipath/structs_vec.c | 33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
 
 diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index b644d3f..bd2d13b 100644
+index bd2d13b..e7a8d53 100644
 --- a/libmultipath/structs_vec.c
 +++ b/libmultipath/structs_vec.c
-@@ -59,6 +59,142 @@ int update_mpp_paths(struct multipath *mpp, vector pathvec)
- 	return store_failure;
- }
+@@ -123,6 +123,23 @@ bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
+ 			goto delete_pg;
  
-+static bool guess_mpp_wwid(struct multipath *mpp)
-+{
-+	int i, j;
-+	struct pathgroup *pgp;
-+	struct path *pp;
+ 		vector_foreach_slot(pgp->paths, pp, j) {
 +
-+	if (strlen(mpp->wwid) || !mpp->pg)
-+		return true;
++			if (pp->mpp && pp->mpp != mpp) {
++				condlog(0, "BUG: %s: found path %s which is already in %s",
++					mpp->alias, pp->dev, pp->mpp->alias);
 +
-+	vector_foreach_slot(mpp->pg, pgp, i) {
-+		if (!pgp->paths)
-+			continue;
-+		vector_foreach_slot(pgp->paths, pp, j) {
-+			if (pp->initialized == INIT_OK && strlen(pp->wwid)) {
-+				strlcpy(mpp->wwid, pp->wwid, sizeof(mpp->wwid));
-+				condlog(2, "%s: guessed WWID %s from path %s",
-+					mpp->alias, mpp->wwid, pp->dev);
-+				return true;
-+			}
-+		}
-+	}
-+	condlog(1, "%s: unable to guess WWID", mpp->alias);
-+	return false;
-+}
-+
-+/*
-+ * update_pathvec_from_dm() - update pathvec after disassemble_map()
-+ *
-+ * disassemble_map() may return block devices that are members in
-+ * multipath maps but haven't been discovered. Check whether they
-+ * need to be added to pathvec or discarded.
-+ *
-+ * Returns: true if immediate map reload is desirable
-+ *
-+ * Side effects:
-+ * - may delete non-existing paths and empty pathgroups from mpp
-+ * - may set pp->wwid and / or mpp->wwid
-+ * - calls pathinfo() on existing paths is pathinfo_flags is not 0
-+ */
-+bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
-+	int pathinfo_flags)
-+{
-+	int i, j;
-+	struct pathgroup *pgp;
-+	struct path *pp;
-+	struct config *conf;
-+	bool mpp_has_wwid;
-+	bool must_reload = false;
-+
-+	if (!mpp->pg)
-+		return false;
-+
-+	/*
-+	 * This will initialize mpp->wwid with an educated guess,
-+	 * either from the dm uuid or from a member path with properly
-+	 * determined WWID.
-+	 */
-+	mpp_has_wwid = guess_mpp_wwid(mpp);
-+
-+	vector_foreach_slot(mpp->pg, pgp, i) {
-+		if (!pgp->paths)
-+			goto delete_pg;
-+
-+		vector_foreach_slot(pgp->paths, pp, j) {
-+			pp->mpp = mpp;
-+
-+			/*
-+			 * The way disassemble_map() works: If it encounters a
-+			 * path device which isn't found in pathvec, it adds an
-+			 * uninitialized struct path to pgp->paths, with only
-+			 * pp->dev_t filled in. Thus if pp->udev is set here,
-+			 * we know that the path is in pathvec already.
-+			 */
-+			if (pp->udev) {
-+				if (pathinfo_flags) {
-+					conf = get_multipath_config();
-+					pthread_cleanup_push(put_multipath_config,
-+							     conf);
-+					pathinfo(pp, conf, pathinfo_flags);
-+					pthread_cleanup_pop(1);
-+				}
++				/*
++				 * Either we added this path to the other mpp
++				 * explicitly, or we came by here earlier and
++				 * decided it belonged there. In both cases,
++				 * the path should remain in the other map,
++				 * and be deleted here.
++				 */
++				must_reload = true;
++				dm_fail_path(mpp->alias, pp->dev_t);
++				vector_del_slot(pgp->paths, j--);
 +				continue;
 +			}
-+
-+			/* If this fails, the device is not in sysfs */
-+			pp->udev = get_udev_device(pp->dev_t, DEV_DEVT);
-+			if (!pp->udev) {
-+				condlog(2, "%s: discarding non-existing path %s",
-+					mpp->alias, pp->dev_t);
-+				vector_del_slot(pgp->paths, j--);
-+				free_path(pp);
-+				must_reload = true;
-+			} else {
-+				int rc;
-+
-+				devt2devname(pp->dev, sizeof(pp->dev),
-+					     pp->dev_t);
-+				conf = get_multipath_config();
-+				pthread_cleanup_push(put_multipath_config,
-+						     conf);
-+				pp->checkint = conf->checkint;
-+				rc = pathinfo(pp, conf,
-+					      DI_SYSFS|DI_WWID|DI_BLACKLIST|
-+					      pathinfo_flags);
-+				pthread_cleanup_pop(1);
-+				if (rc != PATHINFO_OK) {
-+					condlog(1, "%s: error %d in pathinfo, discarding path",
-+						pp->dev, rc);
-+					vector_del_slot(pgp->paths, j--);
-+					free_path(pp);
-+					must_reload = true;
-+				} else {
-+					if (mpp_has_wwid && !strlen(pp->wwid)) {
-+						condlog(3, "%s: setting wwid from map: %s",
-+							pp->dev, mpp->wwid);
-+						strlcpy(pp->wwid, mpp->wwid,
-+							sizeof(pp->wwid));
-+					}
-+					condlog(2, "%s: adding new path %s",
-+						mpp->alias, pp->dev);
-+					store_path(pathvec, pp);
-+					pp->tick = 1;
-+				}
-+			}
-+		}
-+		if (VECTOR_SIZE(pgp->paths) != 0)
-+			continue;
-+	delete_pg:
-+		condlog(2, "%s: removing empty pathgroup %d", mpp->alias, i);
-+		vector_del_slot(mpp->pg, i--);
-+		free_pathgroup(pgp, KEEP_PATHS);
-+		must_reload = true;
-+	}
-+	return must_reload;
-+}
-+
- int adopt_paths(vector pathvec, struct multipath *mpp)
- {
- 	int i, ret;
-diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-index d7dfe32..6c79069 100644
---- a/libmultipath/structs_vec.h
-+++ b/libmultipath/structs_vec.h
-@@ -21,6 +21,8 @@ void orphan_path (struct path * pp, const char *reason);
- void set_path_removed(struct path *pp);
+ 			pp->mpp = mpp;
  
- int verify_paths(struct multipath *mpp);
-+bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
-+			    int pathinfo_flags);
- int update_mpp_paths(struct multipath * mpp, vector pathvec);
- int update_multipath_strings (struct multipath *mpp, vector pathvec,
- 			      int is_daemon);
+ 			/*
+@@ -170,6 +187,22 @@ bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
+ 					vector_del_slot(pgp->paths, j--);
+ 					free_path(pp);
+ 					must_reload = true;
++				} else if (mpp_has_wwid && pp->wwid[0] != '\0'
++					   && strcmp(mpp->wwid, pp->wwid)) {
++					condlog(0, "%s: path %s WWID %s doesn't match, removing from map",
++						mpp->wwid, pp->dev_t, pp->wwid);
++					/*
++					 * This path exists, but in the wrong map.
++					 * We can't reload the map from here.
++					 * Make sure it isn't used in this map
++					 * any more, and let the checker re-add
++					 * it as it sees fit.
++					 */
++					dm_fail_path(mpp->alias, pp->dev_t);
++					vector_del_slot(pgp->paths, j--);
++					orphan_path(pp, "WWID mismatch");
++					pp->tick = 1;
++					must_reload = true;
+ 				} else {
+ 					if (mpp_has_wwid && !strlen(pp->wwid)) {
+ 						condlog(3, "%s: setting wwid from map: %s",
 -- 
 2.28.0
