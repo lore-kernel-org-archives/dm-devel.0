@@ -1,8 +1,7 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 64/74] libmultipath: orphan_paths(): avoid BUG
-	message
-Date: Wed, 12 Aug 2020 13:35:08 +0200
-Message-ID: <20200812113511.26469-6-mwilck@suse.com>
+Subject: [PATCH v2 71/74] multipath: use update_pathvec_from_dm()
+Date: Wed, 12 Aug 2020 13:35:11 +0200
+Message-ID: <20200812113511.26469-9-mwilck@suse.com>
 References: <20200812113511.26469-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,28 +23,120 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Since c44d769, we print a BUG message when we orphan a path that
-holds the mpp->hwe pointer. But if this called via orphan_paths(),
-this is expected and we shouldn't warn.
+The multipath-specific function update_paths() can now be replaced with
+a call to update_pathvec_from_dm().
 
-Fixes: c44d769 ("libmultipath: warn if freeing path that holds mpp->hwe")
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs_vec.c | 2 ++
- 1 file changed, 2 insertions(+)
+ libmultipath/structs_vec.c |  2 +-
+ multipath/main.c           | 68 +++-----------------------------------
+ 2 files changed, 5 insertions(+), 65 deletions(-)
 
 diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index ba3165a..b644d3f 100644
+index 07027f5..2d85df9 100644
 --- a/libmultipath/structs_vec.c
 +++ b/libmultipath/structs_vec.c
-@@ -124,6 +124,8 @@ void orphan_paths(vector pathvec, struct multipath *mpp, const char *reason)
- 	int i;
- 	struct path * pp;
+@@ -150,7 +150,7 @@ bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
+ 			 * we know that the path is in pathvec already.
+ 			 */
+ 			if (pp->udev) {
+-				if (pathinfo_flags) {
++				if (pathinfo_flags & ~DI_NOIO) {
+ 					conf = get_multipath_config();
+ 					pthread_cleanup_push(put_multipath_config,
+ 							     conf);
+diff --git a/multipath/main.c b/multipath/main.c
+index a144bc3..9d6b482 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -187,63 +187,6 @@ usage (char * progname)
  
-+	/* Avoid BUG message from orphan_path() */
-+	mpp->hwe = NULL;
- 	vector_foreach_slot (pathvec, pp, i) {
- 		if (pp->mpp == mpp) {
- 			if (pp->initialized == INIT_REMOVED) {
+ }
+ 
+-static int
+-update_paths (struct multipath * mpp, int quick)
+-{
+-	int i, j;
+-	struct pathgroup * pgp;
+-	struct path * pp;
+-	struct config *conf;
+-
+-	if (!mpp->pg)
+-		return 0;
+-
+-	vector_foreach_slot (mpp->pg, pgp, i) {
+-		if (!pgp->paths)
+-			continue;
+-
+-		vector_foreach_slot (pgp->paths, pp, j) {
+-			if (!strlen(pp->dev)) {
+-				if (devt2devname(pp->dev, FILE_NAME_SIZE,
+-						 pp->dev_t)) {
+-					/*
+-					 * path is not in sysfs anymore
+-					 */
+-					pp->chkrstate = pp->state = PATH_DOWN;
+-					pp->offline = 1;
+-					continue;
+-				}
+-				pp->mpp = mpp;
+-				if (quick)
+-					continue;
+-				conf = get_multipath_config();
+-				if (pathinfo(pp, conf, DI_ALL))
+-					pp->state = PATH_UNCHECKED;
+-				put_multipath_config(conf);
+-				continue;
+-			}
+-			pp->mpp = mpp;
+-			if (quick)
+-				continue;
+-			if (pp->state == PATH_UNCHECKED ||
+-			    pp->state == PATH_WILD) {
+-				conf = get_multipath_config();
+-				if (pathinfo(pp, conf, DI_CHECKER))
+-					pp->state = PATH_UNCHECKED;
+-				put_multipath_config(conf);
+-			}
+-
+-			if (pp->priority == PRIO_UNDEF) {
+-				conf = get_multipath_config();
+-				if (pathinfo(pp, conf, DI_PRIO))
+-					pp->priority = PRIO_UNDEF;
+-				put_multipath_config(conf);
+-			}
+-		}
+-	}
+-	return 0;
+-}
+-
+ static int
+ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+ {
+@@ -273,13 +216,9 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+ 		condlog(3, "status = %s", status);
+ 
+ 		disassemble_map(pathvec, params, mpp);
+-
+-		/*
+-		 * disassemble_map() can add new paths to pathvec.
+-		 * If not in "fast list mode", we need to fetch information
+-		 * about them
+-		 */
+-		update_paths(mpp, (cmd == CMD_LIST_SHORT));
++		update_pathvec_from_dm(pathvec, mpp,
++				       (cmd == CMD_LIST_SHORT ?
++					DI_NOIO : DI_ALL));
+ 
+ 		if (cmd == CMD_LIST_LONG)
+ 			mpp->bestpg = select_path_group(mpp);
+@@ -353,6 +292,7 @@ static int check_usable_paths(struct config *conf,
+ 	dm_get_map(mpp->alias, &mpp->size, params);
+ 	dm_get_status(mpp->alias, status);
+ 	disassemble_map(pathvec, params, mpp);
++	update_pathvec_from_dm(pathvec, mpp, 0);
+ 	disassemble_status(status, mpp);
+ 
+ 	vector_foreach_slot (mpp->pg, pg, i) {
 -- 
 2.28.0
