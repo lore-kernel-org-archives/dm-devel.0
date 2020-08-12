@@ -1,13 +1,16 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH v2 3/8] libmultipath: refactor path counting
-Date: Tue, 11 Aug 2020 16:58:38 -0500
-Message-ID: <1597183123-15797-4-git-send-email-bmarzins@redhat.com>
-References: <1597183123-15797-1-git-send-email-bmarzins@redhat.com>
+From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Subject: Re: [PATCH V2] vector: return false if realloc fails in
+ vector_alloc_slot func
+Date: Wed, 12 Aug 2020 15:25:15 +0800
+Message-ID: <f4e1a7e4-b2f6-b165-d7a3-2b56142ef89f@huawei.com>
+References: <7556f86a-0b45-8274-b9e7-0576813ca1fe@huawei.com>
+	<8254cda18f6f5e98f0c097d1065a39b937ce8628.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1597183123-15797-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <8254cda18f6f5e98f0c097d1065a39b937ce8628.camel@suse.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,110 +20,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, christophe.varoqui@opensvc.com, kabelac@redhat.com
+Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
 List-Id: dm-devel.ids
 
-pathcountgr() is never used except by pathcount(), and neither is the
-special case for PATH_WILD. Simplify this and change it into a helper
-function that is called by pathcount, and will be used again in a future
-patch. Leave count_active_paths alone for the sake of compiler
-optimization.
 
-Also use count_active_paths() in mpath_persist.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmpathpersist/mpath_persist.c |  4 ++--
- libmultipath/structs.c          | 31 +++++++++++++++++--------------
- libmultipath/structs.h          |  1 -
- 3 files changed, 19 insertions(+), 17 deletions(-)
+On 2020/8/11 17:46, Martin Wilck wrote:
+> On Tue, 2020-08-11 at 11:23 +0800, Zhiqiang Liu wrote:
+> 
+>> diff --git a/libmultipath/vector.c b/libmultipath/vector.c
+>> index 501cf4c5..39e2c20f 100644
+>> --- a/libmultipath/vector.c
+>> +++ b/libmultipath/vector.c
+>> @@ -35,26 +35,22 @@ vector_alloc(void)
+>>  }
+>>
+>>  /* allocated one slot */
+>> -void *
+>> +bool
+>>  vector_alloc_slot(vector v)
+>>  {
+>>  	void *new_slot = NULL;
+>>
+>>  	if (!v)
+>> -		return NULL;
+>> -
+>> -	v->allocated += VECTOR_DEFAULT_SIZE;
+>> -	if (v->slot)
+>> -		new_slot = REALLOC(v->slot, sizeof (void *) * v-
+>>> allocated);
+>> -	else
+>> -		new_slot = (void *) MALLOC(sizeof (void *) * v-
+>>> allocated);
+>> +		return false;
+>>
+>> +	new_slot = REALLOC(v->slot, sizeof (void *) * (v->allocated +
+>> VECTOR_DEFAULT_SIZE));
+> 
+> Please wrap this line. We basically still use a 80-columns limit, with
+> the exception of string constants (mostly condlog() lines). We don't
+> strictly enforce it, but 92 columns is a bit too much for my taste.
+Thanks for your reply.
+I will introduce new var to shorten this line and init new slot with
+using loop in the v3 patch.
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 3da7a6cf..a132f4e9 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -436,7 +436,7 @@ int mpath_prout_reg(struct multipath *mpp,int rq_servact, int rq_scope,
- 
- 	all_tg_pt = (mpp->all_tg_pt == ALL_TG_PT_ON ||
- 		     paramp->sa_flags & MPATH_F_ALL_TG_PT_MASK);
--	active_pathcount = pathcount(mpp, PATH_UP) + pathcount(mpp, PATH_GHOST);
-+	active_pathcount = count_active_paths(mpp);
- 
- 	if (active_pathcount == 0) {
- 		condlog (0, "%s: no path available", mpp->wwid);
-@@ -648,7 +648,7 @@ int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
- 	if (!mpp)
- 		return MPATH_PR_DMMP_ERROR;
- 
--	active_pathcount = pathcount (mpp, PATH_UP) + pathcount (mpp, PATH_GHOST);
-+	active_pathcount = count_active_paths(mpp);
- 
- 	struct threadinfo thread[active_pathcount];
- 	memset(thread, 0, sizeof(thread));
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 2dd378c4..90874559 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -455,30 +455,33 @@ find_path_by_devt (const struct _vector *pathvec, const char * dev_t)
- 	return NULL;
- }
- 
--int pathcountgr(const struct pathgroup *pgp, int state)
-+static int do_pathcount(const struct multipath *mpp, const int *states,
-+			unsigned int nr_states)
- {
-+	struct pathgroup *pgp;
- 	struct path *pp;
- 	int count = 0;
--	int i;
-+	unsigned int i, j, k;
- 
--	vector_foreach_slot (pgp->paths, pp, i)
--		if ((pp->state == state) || (state == PATH_WILD))
--			count++;
-+	if (!mpp->pg || !nr_states)
-+		return count;
- 
-+	vector_foreach_slot (mpp->pg, pgp, i) {
-+		vector_foreach_slot (pgp->paths, pp, j) {
-+			for (k = 0; k < nr_states; k++) {
-+				if (pp->state == states[k]) {
-+					count++;
-+					break;
-+				}
-+			}
-+		}
-+	}
- 	return count;
- }
- 
- int pathcount(const struct multipath *mpp, int state)
- {
--	struct pathgroup *pgp;
--	int count = 0;
--	int i;
--
--	if (mpp->pg) {
--		vector_foreach_slot (mpp->pg, pgp, i)
--			count += pathcountgr(pgp, state);
--	}
--	return count;
-+	return do_pathcount(mpp, &state, 1);
- }
- 
- int count_active_paths(const struct multipath *mpp)
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index d69bc2e9..0c03e711 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -446,7 +446,6 @@ struct path * find_path_by_devt (const struct _vector *pathvec, const char *devt
- struct path * find_path_by_dev (const struct _vector *pathvec, const char *dev);
- struct path * first_path (const struct multipath *mpp);
- 
--int pathcountgr (const struct pathgroup *, int);
- int pathcount (const struct multipath *, int);
- int count_active_paths(const struct multipath *);
- int pathcmp (const struct pathgroup *, const struct pathgroup *);
--- 
-2.17.2
+Thanks again.
+
+Regards.
+Zhiqiang Liu
+
+> 
+>>  	if (!new_slot)
+>> -		v->allocated -= VECTOR_DEFAULT_SIZE;
+>> -	else
+>> -		v->slot = new_slot;
+>> +		return false;
+>>
+>> -	return v->slot;
+>> +	v->slot = new_slot;
+>> +	v->allocated += VECTOR_DEFAULT_SIZE;
+>> +	v->slot[VECTOR_SIZE(v) - 1] = NULL;
+> 
+> This assumes that VECTOR_DEFAULT_SIZE == 1. While that has been true
+> essentially forever, there's no guarantee for the future. Better use a
+> for loop, or memset().
+> 
+> Regards
+> Martin
+> 
+> 
+> 
+> .
+> 
