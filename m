@@ -1,123 +1,55 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 12/35] libmultipath: strlcpy()/strlcat():
- use restrict qualifier
-Date: Wed, 12 Aug 2020 13:01:17 -0500
-Message-ID: <20200812180117.GV19233@octiron.msp.redhat.com>
-References: <20200812113232.25962-1-mwilck@suse.com>
-	<20200812113232.25962-3-mwilck@suse.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200812113232.25962-3-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: mwilck@suse.com
-Cc: dm-devel@redhat.com
+From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+Subject: [PATCH 0/3] IMA: Infrastructure for measurement of critical kernel data
+Date: Wed, 12 Aug 2020 12:30:59 -0700
+Message-ID: <20200812193102.18636-1-tusharsu@linux.microsoft.com>
+Return-path: <linux-security-module-owner@vger.kernel.org>
+Sender: owner-linux-security-module@vger.kernel.org
+To: zohar@linux.ibm.com, stephen.smalley.work@gmail.com, casey@schaufler-ca.com, gmazyland@gmail.com
+Cc: tyhicks@linux.microsoft.com, sashal@kernel.org, jmorris@namei.org, linux-integrity@vger.kernel.org, selinux@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, nramas@linux.microsoft.com
 List-Id: dm-devel.ids
 
-On Wed, Aug 12, 2020 at 01:32:32PM +0200, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
-> 
-> Also remove the redundant local variables. It's not necessary to
-> make "restrict" work, but it makes the intention more clear.
-> 
+There are several kernel components that contain critical data which if
+accidentally or maliciously altered, can compromise the security of the
+kernel. Example of such components would include LSMs like SELinux, or
+AppArmor; or device-mapper targets like dm-crypt, dm-verity etc.
 
-Clearly, the way you wrote strlcat agrees with other implementations,
-so it's fine.
+Many of these components do not use the capabilities provided by kernel
+integrity subsystem (IMA), and thus they don't use the benefits of
+extended TPM PCR quotes and ultimately the benefits of remote attestation.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/util.c | 28 ++++++++++++----------------
->  libmultipath/util.h |  4 ++--
->  2 files changed, 14 insertions(+), 18 deletions(-)
-> 
-> diff --git a/libmultipath/util.c b/libmultipath/util.c
-> index 526869e..207e63c 100644
-> --- a/libmultipath/util.c
-> +++ b/libmultipath/util.c
-> @@ -113,46 +113,42 @@ get_word (const char *sentence, char **word)
->  	return skip + len;
->  }
->  
-> -size_t strlcpy(char *dst, const char *src, size_t size)
-> +size_t strlcpy(char * restrict dst, const char * restrict src, size_t size)
->  {
->  	size_t bytes = 0;
-> -	char *q = dst;
-> -	const char *p = src;
->  	char ch;
->  
-> -	while ((ch = *p++)) {
-> -		if (bytes+1 < size)
-> -			*q++ = ch;
-> +	while ((ch = *src++)) {
-> +		if (bytes + 1 < size)
-> +			*dst++ = ch;
->  		bytes++;
->  	}
->  
->  	/* If size == 0 there is no space for a final null... */
->  	if (size)
-> -		*q = '\0';
-> +		*dst = '\0';
->  	return bytes;
->  }
->  
-> -size_t strlcat(char *dst, const char *src, size_t size)
-> +size_t strlcat(char * restrict dst, const char * restrict src, size_t size)
->  {
->  	size_t bytes = 0;
-> -	char *q = dst;
-> -	const char *p = src;
->  	char ch;
->  
-> -	while (bytes < size && *q) {
-> -		q++;
-> +	while (bytes < size && *dst) {
-> +		dst++;
->  		bytes++;
->  	}
->  	if (bytes == size)
->  		return (bytes + strlen(src));
->  
-> -	while ((ch = *p++)) {
-> -		if (bytes+1 < size)
-> -		*q++ = ch;
-> +	while ((ch = *src++)) {
-> +		if (bytes + 1 < size)
-> +			*dst++ = ch;
->  		bytes++;
->  	}
->  
-> -	*q = '\0';
-> +	*dst = '\0';
->  	return bytes;
->  }
->  
-> diff --git a/libmultipath/util.h b/libmultipath/util.h
-> index a4f7c0a..52aa559 100644
-> --- a/libmultipath/util.h
-> +++ b/libmultipath/util.h
-> @@ -15,8 +15,8 @@ int basenamecpy (const char *src, char *dst, size_t size);
->  int filepresent (const char *run);
->  char *get_next_string(char **temp, const char *split_char);
->  int get_word (const char * sentence, char ** word);
-> -size_t strlcpy(char *dst, const char *src, size_t size);
-> -size_t strlcat(char *dst, const char *src, size_t size);
-> +size_t strlcpy(char * restrict dst, const char * restrict src, size_t size);
-> +size_t strlcat(char * restrict dst, const char * restrict src, size_t size);
->  int devt2devname (char *, int, const char *);
->  dev_t parse_devt(const char *dev_t);
->  char *convert_dev(char *dev, int is_path_device);
-> -- 
-> 2.28.0
+This series bridges this gap, so that potential kernel components that
+contain data critical to the security of the kernel could take advantage
+of IMA's measuring and quoting abilities - thus ultimately enabling
+remote attestation for their specific data.
+
+System administrators may want to pick and choose which kernel
+components they would want to enable for measurements, quoting, and
+remote attestation. To enable that, a new IMA policy is introduced.
+
+And lastly, the functionality is exposed through a function
+ima_measure_critical_data(). The functionality is generic enough to
+measure the data of any kernel component at runtime.
+
+This series is based on the following repo/branch:
+ repo: https://git.kernel.org/pub/scm/linux/kernel/git/zohar/linux-integrity.git
+ branch: next-integrity
+
+This series also has a dependency on the following patch series:
+ https://patchwork.kernel.org/patch/11709527/
+
+Tushar Sugandhi (3):
+  IMA: generalize keyring specific measurement constructs
+  IMA: add policy to support measuring critical data from kernel
+    components
+  IMA: define IMA hook to measure critical data from kernel components
+
+ Documentation/ABI/testing/ima_policy |   6 +-
+ include/linux/ima.h                  |   9 ++
+ security/integrity/ima/ima.h         |  12 +--
+ security/integrity/ima/ima_api.c     |   8 +-
+ security/integrity/ima/ima_main.c    |  46 +++++++---
+ security/integrity/ima/ima_policy.c  | 120 ++++++++++++++++++++-------
+ 6 files changed, 147 insertions(+), 54 deletions(-)
+
+-- 
+2.17.1
