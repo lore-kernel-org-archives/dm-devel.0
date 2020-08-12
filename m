@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 00/74] multipath-tools series part V: removed
-	path handling
-Date: Wed, 12 Aug 2020 13:35:03 +0200
-Message-ID: <20200812113511.26469-1-mwilck@suse.com>
+Subject: [PATCH v2 00/80] multipath-tools series part VI:
+	incomplete udev initialization
+Date: Wed, 12 Aug 2020 13:35:39 +0200
+Message-ID: <20200812113543.26576-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -24,103 +24,69 @@ From: Martin Wilck <mwilck@suse.com>
 
 Hi Christophe, hi Ben,
 
-This is part V of a larger patch series for multipath-tools I've been preparing.
-It's based on the previously submitted part IV.
+This is part VI of a larger patch series for multipath-tools I've been preparing.
+It's based on the previously submitted part V.
 
 The full series will also be available here:
 https://github.com/mwilck/multipath-tools/tree/ups/submit-2008
-This part is tagged "submit-200812-5".
+This part is tagged "submit-200812-6".
 
-The series addresses several issues with missing, unintialized, and removed
-paths. The motivation was that I strongly dislike the side effects of
-disassemble_map(), adding paths and setting WWIDs while parsing map
-parameters. IMO this has always been a layering violation. This patch set adds
-a new function dedicated to handling paths which have not been detected via
-udev but are present as members of dm maps. That makes it much easier to
-track and improve the logic applied when such devices are detected.
+The series handles an issue observed in certain partner installations, where
+DM devices were incompletely initialized by udev - during initrd procesing,
+the "add" event had been processed, but the subsequent "change" event had not,
+because udevd had been killed before getting around to handle them.
 
-I believe that the new logic will also fix the issue recently reported by
-Chongyun ("libmultipath/dmparser: add missing path with good status when sync
-state with dm kernel"). At least, the approach is very similar, although
-the call to pathinfo() for new devices now happens in update_pathvec_from_dm()
-rather than in disassemble_map().
+My first attempt to fix this was based on udev rules ("11-dm-mpath.rules: Fix
+udev rule processing during coldplug"), but this patch was wrong. We have to
+add logic in multipathd itself. The most important patch in the series that
+fixed the actual customer problem is patch 76. Patch 75 was supposed to handle
+a slightly different incarnation of the same problem, which so far hasn't been
+actually observed. But I think having this patch "just in case" doesn't hurt,
+either.
 
-The patch set also gets rid of the "is_daemon" argument for disassemble_map(),
-causing semantics in daemon and non-daemon mode. The reason for this parameter
-goes way back into history; it was avoiding to re-add manually removed paths
-because they were still showing up in maps. But OTOH we must add missing
-devices which we've failed to detect. The patch set handles this by tracking
-the state of "being removed" as a new init state, and only actually removing
-the paths from pathvec when they don't show up in maps any more.
+Patch 78 and 79 rename "update_path_groups()", which over time has grown
+to be the main entry point for reloading maps.
+
+Patch 80 fixes an issue which I observed while testing the first 3 patches.
+Logically, it rather belongs to part III.
 
 Changes v1 -> v2, as suggested by Ben Marzinski:
 
- * 55: "libmultipath: add uninitialize_path()"
- * 58: "libmultipath: verify_paths(): don't delete paths from pathvec"
+ * 76/80 "libmultipath: select_action(): force udev reload for uninitialized
+   maps"
+    - fetch udevice from cmpp, not mpp (was fixed in "libmultipath: log
+      dm_task_run() errors" in v1)
+    - force reload only if active paths are available
+ * 77/80 "libmultipath: log dm_task_run() errors"
+    - moved cmpp fix to previous patch, where it belongs
+    - remove pointless debug msg
+ * 79/80 "multipathd: rename update_path_groups() -> reload_and_sync_map()"
     - context changes
- * 61: "libmultipath: adopt_paths(): skip removed paths"
-    - set pp->mpp before checking for INIT_REMOVED
- * 63: "multipathd: deal with INIT_REMOVED during path addition"
-    - BUG message if path not mpp member
-    - set pp->tick to 1 to make sure paths are quickly reinstated
-    - remove "was_removed" variable
- * 64: "multipathd: check_path(): set retrigger_delay if necessary"
-    - drop, replace with "libmultipath: orphan_paths(): avoid BUG message"
- * 65: libmultipath: add update_pathvec_from_dm()
-    - add comment about pp->udev being initialized
-    - discard paths with pathinfo() errors
-    - set must_reload if pathgroup was removed
- * 66: "libmultipath: update_pathvec_from_dm: handle pp->mpp mismatch"
-    - handle the two failure cases "pp->mpp points to different map" and 
-      "wrong wwid" differently. In the latter case, use orphan_path()
- * 71: "multipath: use update_pathvec_from_dm()"
-    - use DI_NOIO for CMD_LIST_SHORT. In update_pathvec_from_dm, mask
-      out DI_NOIO when checking existing paths
+ * 80/80 "libmultipath: select_action(): don't drop map if alias clashes"
+    - fixed wrong strlcpy() (mpp->alias is a pointer)
 
-NOTE: In my v1 submission, I made a mistake when sending part V, so that
-*patch number 54 is present twice* in the full series.
-I deliberately didn't correct that this time, to preserve numbering.
-
-Regards
+Regards,
 Martin
 
-Martin Wilck (21):
-  libmultipath: protect use of pp->udev
-  libmultipath: add uninitialize_path()
-  multipath-tools: introduce INIT_REMOVED state
-  libmultipath: update_mpp_paths(): handle INIT_REMOVED
-  libmultipath: verify_paths(): don't delete paths from pathvec
-  libmultipath: sync_paths(): handle INIT_REMOVED
-  libmultipath: orphan_paths(): delete paths in INIT_REMOVED state
-  libmultipath: adopt_paths(): skip removed paths
-  multipathd: ev_remove_path(): use INIT_REMOVED
-  multipathd: deal with INIT_REMOVED during path addition
-  libmultipath: orphan_paths(): avoid BUG message
-  libmultipath: add update_pathvec_from_dm()
-  libmultipath: update_pathvec_from_dm: handle pp->mpp mismatch
-  libmultipath: disassemble_map(): always search paths by dev_t
-  libmultipath: disassemble_map(): require non-NULL pathvec
-  libmultipath: disassemble_map(): get rid of "is_daemon" argument
-  libmultipath: disassemble_map(): do not change pathvec and WWIDs
-  multipath: use update_pathvec_from_dm()
-  libmpathpersist: use update_pathvec_from_dm()
-  libmultipath: decrease loglevel in store_path()
-  libmultipath: dmparser: constify function arguments
+Martin Wilck (6):
+  multipathd: uev_trigger(): handle incomplete ADD events
+  libmultipath: select_action(): force udev reload for uninitialized
+    maps
+  libmultipath: log dm_task_run() errors
+  libmultipath: move reload_map() to multipathd
+  multipathd: rename update_path_groups() -> reload_and_sync_map()
+  libmultipath: select_action(): don't drop map if alias clashes
 
- libmpathpersist/mpath_persist.c       |  56 +----
- libmultipath/configure.c              |   2 +-
- libmultipath/discovery.c              |  15 +-
- libmultipath/dmparser.c               |  70 ++----
- libmultipath/dmparser.h               |   4 +-
- libmultipath/prioritizers/alua_rtpg.c |   6 +-
- libmultipath/structs.c                |  21 +-
- libmultipath/structs.h                |   6 +
- libmultipath/structs_vec.c            | 293 +++++++++++++++++++++++---
- libmultipath/structs_vec.h            |  11 +-
- multipath/main.c                      |  72 +------
- multipathd/cli_handlers.c             |  54 ++++-
- multipathd/main.c                     | 112 ++++++++--
- 13 files changed, 479 insertions(+), 243 deletions(-)
+ libmultipath/configure.c  | 112 +++++++++++++++-----------------------
+ libmultipath/configure.h  |   3 +-
+ libmultipath/devmapper.c  |  61 +++++++++++++++++----
+ libmultipath/devmapper.h  |   4 ++
+ multipathd/cli_handlers.c |   8 +--
+ multipathd/dmevents.c     |   4 +-
+ multipathd/main.c         |  71 ++++++++++++++++++++++--
+ multipathd/main.h         |   4 +-
+ multipathd/waiter.c       |   2 +
+ 9 files changed, 178 insertions(+), 91 deletions(-)
 
 -- 
 2.28.0
