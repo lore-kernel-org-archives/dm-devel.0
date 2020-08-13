@@ -1,234 +1,160 @@
-From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-Subject: [PATCH 2/3] IMA: add policy to support measuring critical data from kernel components
-Date: Wed, 12 Aug 2020 12:31:01 -0700
-Message-ID: <20200812193102.18636-3-tusharsu@linux.microsoft.com>
-References: <20200812193102.18636-1-tusharsu@linux.microsoft.com>
-Return-path: <linux-security-module-owner@vger.kernel.org>
-In-Reply-To: <20200812193102.18636-1-tusharsu@linux.microsoft.com>
-Sender: owner-linux-security-module@vger.kernel.org
-To: zohar@linux.ibm.com, stephen.smalley.work@gmail.com, casey@schaufler-ca.com, gmazyland@gmail.com
-Cc: tyhicks@linux.microsoft.com, sashal@kernel.org, jmorris@namei.org, linux-integrity@vger.kernel.org, selinux@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, nramas@linux.microsoft.com
+From: lixiaokeng <lixiaokeng@huawei.com>
+Subject: Re: [PATCH V2] libmultipath: fix a memory leak in
+ set_ble_device
+Date: Thu, 13 Aug 2020 14:17:30 +0800
+Message-ID: <33b9df21-ea6d-0ee9-9c41-f5461613fa66@huawei.com>
+References: <c6ff6ae5-8b58-4beb-b6c9-10db444ffce2@huawei.com>
+	<109bd950021918cce1c89d0e92d137ffa6336ea2.camel@suse.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <109bd950021918cce1c89d0e92d137ffa6336ea2.camel@suse.com>
+Content-Language: en-GB
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@redhat.com
+Cc: linfeilong@huawei.com, liuzhiqiang26@huawei.com, lutianxiong@huawei.com
 List-Id: dm-devel.ids
 
-There would be several candidate kernel components suitable for IMA
-measurement. Not all of them would be enlightened for IMA measurement.
-Also, system administrators may not want to measure data for all of
-them, even when they are enlightened for IMA measurements. An IMA policy
-specific to various kernel components is needed to measure their
-respective critical data.
+Hi,
+  Thanks for your advices. I will modify it.
 
-Add a new IMA policy CRITICAL_DATA+data_sources to support measuring
-various critical kernel components. This policy would enable the
-system administrators to limit the measurement to the components,
-if the components are enlightened for IMA measurement.
-
-Signed-off-by: Tushar Sugandhi <tusharsu@linux.microsoft.com>
----
- Documentation/ABI/testing/ima_policy |  6 +-
- security/integrity/ima/ima.h         |  1 +
- security/integrity/ima/ima_api.c     |  2 +-
- security/integrity/ima/ima_policy.c  | 84 ++++++++++++++++++++++------
- 4 files changed, 74 insertions(+), 19 deletions(-)
-
-diff --git a/Documentation/ABI/testing/ima_policy b/Documentation/ABI/testing/ima_policy
-index cd572912c593..a0dd0f108555 100644
---- a/Documentation/ABI/testing/ima_policy
-+++ b/Documentation/ABI/testing/ima_policy
-@@ -29,7 +29,7 @@ Description:
- 		base: 	func:= [BPRM_CHECK][MMAP_CHECK][CREDS_CHECK][FILE_CHECK][MODULE_CHECK]
- 				[FIRMWARE_CHECK]
- 				[KEXEC_KERNEL_CHECK] [KEXEC_INITRAMFS_CHECK]
--				[KEXEC_CMDLINE] [KEY_CHECK]
-+				[KEXEC_CMDLINE] [KEY_CHECK] [CRITICAL_DATA]
- 			mask:= [[^]MAY_READ] [[^]MAY_WRITE] [[^]MAY_APPEND]
- 			       [[^]MAY_EXEC]
- 			fsmagic:= hex value
-@@ -125,3 +125,7 @@ Description:
- 		keys added to .builtin_trusted_keys or .ima keyring:
- 
- 			measure func=KEY_CHECK keyrings=.builtin_trusted_keys|.ima
-+
-+		Example of measure rule using CRITICAL_DATA to measure critical data
-+
-+			measure func=CRITICAL_DATA data_sources=selinux|apparmor|dm-crypt
-diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
-index e2a151d6653d..99773dfa2541 100644
---- a/security/integrity/ima/ima.h
-+++ b/security/integrity/ima/ima.h
-@@ -200,6 +200,7 @@ static inline unsigned int ima_hash_key(u8 *digest)
- 	hook(POLICY_CHECK, policy)			\
- 	hook(KEXEC_CMDLINE, kexec_cmdline)		\
- 	hook(KEY_CHECK, key)				\
-+	hook(CRITICAL_DATA, critical_data)		\
- 	hook(MAX_CHECK, none)
- 
- #define __ima_hook_enumify(ENUM, str)	ENUM,
-diff --git a/security/integrity/ima/ima_api.c b/security/integrity/ima/ima_api.c
-index af218babd198..9917e1730cb6 100644
---- a/security/integrity/ima/ima_api.c
-+++ b/security/integrity/ima/ima_api.c
-@@ -176,7 +176,7 @@ void ima_add_violation(struct file *file, const unsigned char *filename,
-  *		subj=, obj=, type=, func=, mask=, fsmagic=
-  *	subj,obj, and type: are LSM specific.
-  *	func: FILE_CHECK | BPRM_CHECK | CREDS_CHECK | MMAP_CHECK | MODULE_CHECK
-- *	| KEXEC_CMDLINE | KEY_CHECK
-+ *	| KEXEC_CMDLINE | KEY_CHECK | CRITICAL_DATA
-  *	mask: contains the permission mask
-  *	fsmagic: hex value
-  *
-diff --git a/security/integrity/ima/ima_policy.c b/security/integrity/ima/ima_policy.c
-index 4efaf8956eb8..8451ccb2a775 100644
---- a/security/integrity/ima/ima_policy.c
-+++ b/security/integrity/ima/ima_policy.c
-@@ -22,17 +22,18 @@
- #include "ima.h"
- 
- /* flags definitions */
--#define IMA_FUNC	0x0001
--#define IMA_MASK	0x0002
--#define IMA_FSMAGIC	0x0004
--#define IMA_UID		0x0008
--#define IMA_FOWNER	0x0010
--#define IMA_FSUUID	0x0020
--#define IMA_INMASK	0x0040
--#define IMA_EUID	0x0080
--#define IMA_PCR		0x0100
--#define IMA_FSNAME	0x0200
--#define IMA_KEYRINGS	0x0400
-+#define IMA_FUNC		0x0001
-+#define IMA_MASK		0x0002
-+#define IMA_FSMAGIC		0x0004
-+#define IMA_UID			0x0008
-+#define IMA_FOWNER		0x0010
-+#define IMA_FSUUID		0x0020
-+#define IMA_INMASK		0x0040
-+#define IMA_EUID		0x0080
-+#define IMA_PCR			0x0100
-+#define IMA_FSNAME		0x0200
-+#define IMA_KEYRINGS		0x0400
-+#define IMA_DATA_SOURCES	0x0800
- 
- #define UNKNOWN		0
- #define MEASURE		0x0001	/* same as IMA_MEASURE */
-@@ -84,6 +85,7 @@ struct ima_rule_entry {
- 	} lsm[MAX_LSM_RULES];
- 	char *fsname;
- 	struct ima_rule_opt_list *keyrings; /* Measure keys added to these keyrings */
-+	struct ima_rule_opt_list *data_sources; /* Measure data from these sources */
- 	struct ima_template_desc *template;
- };
- 
-@@ -508,14 +510,23 @@ static bool ima_match_rules(struct ima_rule_entry *rule, struct inode *inode,
- {
- 	int i;
- 
--	if (func == KEY_CHECK) {
--		return (rule->flags & IMA_FUNC) && (rule->func == func) &&
--		       ima_match_rule_data(rule, rule->keyrings, func_data,
--					   true, cred);
--	}
- 	if ((rule->flags & IMA_FUNC) &&
- 	    (rule->func != func && func != POST_SETATTR))
- 		return false;
-+
-+	switch (func) {
-+	case KEY_CHECK:
-+		return ((rule->func == func) &&
-+			ima_match_rule_data(rule, rule->keyrings,
-+					    func_data, true, cred));
-+	case CRITICAL_DATA:
-+		return ((rule->func == func) &&
-+			ima_match_rule_data(rule, rule->data_sources,
-+					    func_data, false, cred));
-+	default:
-+		break;
-+	}
-+
- 	if ((rule->flags & IMA_MASK) &&
- 	    (rule->mask != mask && func != POST_SETATTR))
- 		return false;
-@@ -911,7 +922,7 @@ enum {
- 	Opt_uid_lt, Opt_euid_lt, Opt_fowner_lt,
- 	Opt_appraise_type, Opt_appraise_flag,
- 	Opt_permit_directio, Opt_pcr, Opt_template, Opt_keyrings,
--	Opt_err
-+	Opt_data_sources, Opt_err
- };
- 
- static const match_table_t policy_tokens = {
-@@ -948,6 +959,7 @@ static const match_table_t policy_tokens = {
- 	{Opt_pcr, "pcr=%s"},
- 	{Opt_template, "template=%s"},
- 	{Opt_keyrings, "keyrings=%s"},
-+	{Opt_data_sources, "data_sources=%s"},
- 	{Opt_err, NULL}
- };
- 
-@@ -1110,6 +1122,19 @@ static bool ima_validate_rule(struct ima_rule_entry *entry)
- 		if (ima_rule_contains_lsm_cond(entry))
- 			return false;
- 
-+		break;
-+	case CRITICAL_DATA:
-+		if (entry->action & ~(MEASURE | DONT_MEASURE))
-+			return false;
-+
-+		if (!(entry->flags & IMA_DATA_SOURCES) ||
-+		    (entry->flags & ~(IMA_FUNC | IMA_UID | IMA_PCR |
-+		    IMA_DATA_SOURCES)))
-+			return false;
-+
-+		if (ima_rule_contains_lsm_cond(entry))
-+			return false;
-+
- 		break;
- 	default:
- 		return false;
-@@ -1242,6 +1267,8 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
- 			else if (IS_ENABLED(CONFIG_IMA_MEASURE_ASYMMETRIC_KEYS) &&
- 				 strcmp(args[0].from, "KEY_CHECK") == 0)
- 				entry->func = KEY_CHECK;
-+			else if (strcmp(args[0].from, "CRITICAL_DATA") == 0)
-+				entry->func = CRITICAL_DATA;
- 			else
- 				result = -EINVAL;
- 			if (!result)
-@@ -1312,6 +1339,23 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
- 
- 			entry->flags |= IMA_KEYRINGS;
- 			break;
-+		case Opt_data_sources:
-+			ima_log_string(ab, "data_sources", args[0].from);
-+
-+			if (entry->data_sources) {
-+				result = -EINVAL;
-+				break;
-+			}
-+
-+			entry->data_sources = ima_alloc_rule_opt_list(args);
-+			if (IS_ERR(entry->data_sources)) {
-+				result = PTR_ERR(entry->data_sources);
-+				entry->data_sources = NULL;
-+				break;
-+			}
-+
-+			entry->flags |= IMA_DATA_SOURCES;
-+			break;
- 		case Opt_fsuuid:
- 			ima_log_string(ab, "fsuuid", args[0].from);
- 
-@@ -1692,6 +1736,12 @@ int ima_policy_show(struct seq_file *m, void *v)
- 		seq_puts(m, " ");
- 	}
- 
-+	if (entry->flags & IMA_DATA_SOURCES) {
-+		seq_puts(m, "data_sources=");
-+		ima_show_rule_opt_list(m, entry->data_sources);
-+		seq_puts(m, " ");
-+	}
-+
- 	if (entry->flags & IMA_PCR) {
- 		snprintf(tbuf, sizeof(tbuf), "%d", entry->pcr);
- 		seq_printf(m, pt(Opt_pcr), tbuf);
--- 
-2.17.1
+On 2020/8/11 17:32, Martin Wilck wrote:
+> Hi Liaxiaokeng,
+> 
+> thanks again. I still have minor issues, see below.
+> 
+> On Tue, 2020-08-11 at 15:23 +0800, lixiaokeng wrote:
+> 
+>> In set_ble_device func, if blist is NULL or ble is NULL,
+>> the vendor and product isn't freed. We think it is not
+>> reasonable that strdup(XXX) is used as set_ble_device
+>> and store_ble functions' parameter.
+>>
+>> Here we call strdup() in store_ble and set_ble_device
+>> functions and the string will be free if functions fail.
+>> Because constant string like "sdb" will be their parameter,
+>> char * is changed to const char *. This is base on
+>> upstream-queue branch in openSUSE/multipath-tools.
+>>
+>> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+>> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+>> ---
+>>  libmultipath/blacklist.c | 81 ++++++++++++++++++++++--------------
+>> ----
+>>  libmultipath/blacklist.h |  4 +-
+>>  tests/blacklist.c        | 31 +++++++--------
+>>  3 files changed, 59 insertions(+), 57 deletions(-)
+>>
+>> ...
+>>
+>> @@ -93,31 +100,40 @@ int set_ble_device(vector blist, char * vendor,
+>> char * product, int origin)
+>>  		return 1;
+>>
+>>  	if (vendor) {
+>> -		regex_str = check_invert(vendor, &ble->vendor_invert);
+>> -		if (regcomp(&ble->vendor_reg, regex_str,
+>> -			    REG_EXTENDED|REG_NOSUB)) {
+>> -			FREE(vendor);
+>> -			if (product)
+>> -				FREE(product);
+>> -			return 1;
+>> -		}
+>> -		ble->vendor = vendor;
+>> +		vendor_str = STRDUP(vendor);
+>> +		if (!vendor_str)
+>> +			goto out;
+>> +
+>> +		regex_str = check_invert(vendor_str, &ble-
+>>> vendor_invert);
+>> +		if (regcomp(&ble->vendor_reg, regex_str,
+>> REG_EXTENDED|REG_NOSUB))
+>> +			goto out;
+>> +
+>> +		ble->vendor = vendor_str;
+>>  	}
+>>  	if (product) {
+>> -		regex_str = check_invert(product, &ble-
+>>> product_invert);
+>> -		if (regcomp(&ble->product_reg, regex_str,
+>> -			    REG_EXTENDED|REG_NOSUB)) {
+>> -			FREE(product);
+>> -			if (vendor) {
+>> -				ble->vendor = NULL;
+>> -				FREE(vendor);
+>> -			}
+>> -			return 1;
+>> -		}
+>> -		ble->product = product;
+>> +		product_str = STRDUP(product);
+>> +		if (!product_str)
+>> +			goto out1;
+>> +
+>> +		regex_str = check_invert(product_str, &ble-
+>>> product_invert);
+>> +		if (regcomp(&ble->product_reg, regex_str,
+>> REG_EXTENDED|REG_NOSUB))
+>> +			goto out1;
+>> +
+>> +		ble->product = product_str;
+>>  	}
+>>  	ble->origin = origin;
+>>  	return 0;
+>> +out1:
+>> +	if (vendor_str)
+>> +		ble->vendor = NULL;
+>> +out:
+>> +       free(vendor_str);
+>> +       vendor_str = NULL;
+>> +
+>> +       free(product_str);
+>> +       product_str = NULL;
+>> +
+>> +       return 1;
+>>  }
+> 
+> Thinking about it again, I believe the error handling code should look
+> like this:
+> 
+>  out1:
+>         if (vendor) {
+>                 regfree(&ble->vendor_reg);
+>                 ble->vendor_reg = NULL;
+>                 ble->vendor = NULL;
+>         }
+>  out:
+>         free(vendor_str);
+>         free(product_str);
+> 	return 1;
+> 
+> Rationale: vendor_str and product_str are local variables, there's no
+> point in setting them to NULL. But the ble fields need careful
+> treatment, as vendor and product can either be set in a single call of
+> this function, or in two separate calls. You should test "vendor"
+> rather than "vendor_str" in the "out1" clause to make this logic
+> obvious, even though you never pass "out1" if allocating vendor_str
+> failed.
+> 
+> Note the regfree() I added. It's missing in the current code as well.
+> 
+> Regards,
+> Martin
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> 
+> .
+> 
