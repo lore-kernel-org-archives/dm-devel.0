@@ -1,103 +1,76 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [RESEND PATCH] nvme: explicitly use normal NVMe error
- handling when appropriate
-Date: Thu, 13 Aug 2020 10:48:11 -0400
-Message-ID: <20200813144811.GA5452@redhat.com>
-References: <E3390A8E-D582-47BA-A085-21663D883365@netapp.com>
-	<20200806184057.GA27858@redhat.com>
-	<20200806191943.GA27868@redhat.com>
-	<6B826235-C504-4621-B8F7-34475B200979@netapp.com>
-	<20200807000755.GA28957@redhat.com>
-	<510f5aff-0437-b1ce-f7ab-c812edbea880@grimberg.me>
-	<20200807045015.GA29737@redhat.com>
-	<fec745aa-0091-ee1f-cb0f-da9e18cf0aa2@grimberg.me>
-	<20200810143620.GA19127@redhat.com>
-	<20200810172209.GA19535@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200810172209.GA19535@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Sagi Grimberg <sagi@grimberg.me>
-Cc: linux-nvme@lists.infradead.org, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, Chao Leng <lengchao@huawei.com>, Keith Busch <kbusch@kernel.org>, "Meneghini,
-	John" <John.Meneghini@netapp.com>, Ewan Milne <emilne@redhat.com>
+From: Chuck Lever <chucklever@gmail.com>
+Subject: Re: [dm-devel] [RFC PATCH v5 00/11] Integrity Policy Enforcement LSM
+ (IPE)
+Date: Thu, 13 Aug 2020 10:56:17 -0400
+Message-ID: <49A45475-20D8-456E-92AD-F63DBC71F900@gmail.com>
+References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
+ <20200802115545.GA1162@bug> <20200802140300.GA2975990@sasha-vm>
+ <20200802143143.GB20261@amd> <1596386606.4087.20.camel@HansenPartnership.com>
+ <fb35a1f7-7633-a678-3f0f-17cf83032d2b@linux.microsoft.com>
+ <1596639689.3457.17.camel@HansenPartnership.com>
+ <alpine.LRH.2.21.2008050934060.28225@namei.org>
+ <b08ae82102f35936427bf138085484f75532cff1.camel@linux.ibm.com>
+ <329E8DBA-049E-4959-AFD4-9D118DEB176E@gmail.com>
+ <da6f54d0438ee3d3903b2c75fcfbeb0afdf92dc2.camel@linux.ibm.com>
+ <1597073737.3966.12.camel@HansenPartnership.com>
+ <6E907A22-02CC-42DD-B3CD-11D304F3A1A8@gmail.com>
+ <1597124623.30793.14.camel@HansenPartnership.com>
+ <16C3BF97-A7D3-488A-9D26-7C9B18AD2084@gmail.com>
+ <1597170509.4325.55.camel@HansenPartnership.com>
+ <2CA41152-6445-4716-B5EE-2D14E5C59368@gmail.com>
+ <1597246946.7293.9.camel@HansenPartnership.com>
+ <3F328A12-25DD-418B-A7D0-64DA09236E1C@gmail.com>
+ <1597329763.3708.13.camel@HansenPartnership.com>
+Mime-Version: 1.0 (Mac OS X Mail 13.4 \(3608.80.23.2.2\))
+Content-Type: text/plain;
+        charset=us-ascii
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <1597329763.3708.13.camel@HansenPartnership.com>
+Sender: owner-linux-security-module@vger.kernel.org
+To: James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: Mimi Zohar <zohar@linux.ibm.com>, James Morris <jmorris@namei.org>, Deven Bowers <deven.desai@linux.microsoft.com>, Pavel Machek <pavel@ucw.cz>, Sasha Levin <sashal@kernel.org>, snitzer@redhat.com, dm-devel@redhat.com, tyhicks@linux.microsoft.com, agk@redhat.com, Paul Moore <paul@paul-moore.com>, Jonathan Corbet <corbet@lwn.net>, nramas@linux.microsoft.com, serge@hallyn.com, pasha.tatashin@soleen.com, Jann Horn <jannh@google.com>, linux-block@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, mdsakib@microsoft.com, open list <linux-kernel@vger.kernel.org>, eparis@redhat.com, linux-security-module@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-integrity@vger.kernel.org, jaskarankhurana@linu
 List-Id: dm-devel.ids
 
-Commit 764e9332098c0 ("nvme-multipath: do not reset on unknown
-status"), among other things, fixed NVME_SC_CMD_INTERRUPTED error
-handling by changing multipathing's nvme_failover_req() to short-circuit
-path failover and then fallback to NVMe's normal error handling (which
-takes care of NVME_SC_CMD_INTERRUPTED).
 
-This detour through native NVMe multipathing code is unwelcome because
-it prevents NVMe core from handling NVME_SC_CMD_INTERRUPTED independent
-of any multipathing concerns.
 
-Introduce nvme_status_needs_local_error_handling() to prioritize
-non-failover retry, when appropriate, in terms of normal NVMe error
-handling.  nvme_status_needs_local_error_handling() will naturely evolve
-to include handling of any other errors that normal error handling must
-be used for.
+> On Aug 13, 2020, at 10:42 AM, James Bottomley =
+<James.Bottomley@HansenPartnership.com> wrote:
+>=20
+> On Thu, 2020-08-13 at 10:21 -0400, Chuck Lever wrote:
+>>> On Aug 12, 2020, at 11:42 AM, James Bottomley <James.Bottomley@Hans
+>>> enPartnership.com> wrote:
+> [...]
+>>> For most people the security mechanism of local xattrs is
+>>> sufficient.  If you're paranoid, you don't believe it is and you
+>>> use EVM.
+>>=20
+>> When IMA metadata happens to be stored in local filesystems in
+>> a trusted xattr, it's going to enjoy the protection you describe
+>> without needing the addition of a cryptographic signature.
+>>=20
+>> However, that metadata doesn't live its whole life there. It
+>> can reside in a tar file, it can cross a network, it can live
+>> on a back-up tape. I think we agree that any time that metadata
+>> is in transit or at rest outside of a Linux local filesystem, it
+>> is exposed.
+>>=20
+>> Thus I'm interested in a metadata protection mechanism that does
+>> not rely on the security characteristics of a particular storage
+>> container. For me, a cryptographic signature fits that bill
+>> nicely.
+>=20
+> Sure, but one of the points about IMA is a separation of mechanism =
+from
+> policy.  Signed hashes (called appraisal in IMA terms) is just one
+> policy you can decide to require or not or even make it conditional on
+> other things.
 
-nvme_failover_req()'s ability to fallback to normal NVMe error handling
-has been preserved because it may be useful for future NVME_SC that
-nvme_status_needs_local_error_handling() hasn't been trained for yet.
+AFAICT, the current EVM_IMA_DIGSIG and EVM_PORTABLE_DIGSIG formats are
+always signed. The policy choice is whether or not to verify the
+signature, not whether or not the metadata format is signed.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/nvme/host/core.c | 16 ++++++++++++++--
- 1 file changed, 14 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index 88cff309d8e4..be749b690af7 100644
---- a/drivers/nvme/host/core.c
-+++ b/drivers/nvme/host/core.c
-@@ -252,6 +252,16 @@ static inline bool nvme_req_needs_retry(struct request *req)
- 	return true;
- }
- 
-+static inline bool nvme_status_needs_local_error_handling(u16 status)
-+{
-+	switch (status & 0x7ff) {
-+	case NVME_SC_CMD_INTERRUPTED:
-+		return true;
-+	default:
-+		return false;
-+	}
-+}
-+
- static void nvme_retry_req(struct request *req)
- {
- 	struct nvme_ns *ns = req->q->queuedata;
-@@ -270,7 +280,8 @@ static void nvme_retry_req(struct request *req)
- 
- void nvme_complete_rq(struct request *req)
- {
--	blk_status_t status = nvme_error_status(nvme_req(req)->status);
-+	u16 nvme_status = nvme_req(req)->status;
-+	blk_status_t status = nvme_error_status(nvme_status);
- 
- 	trace_nvme_complete_rq(req);
- 
-@@ -280,7 +291,8 @@ void nvme_complete_rq(struct request *req)
- 		nvme_req(req)->ctrl->comp_seen = true;
- 
- 	if (unlikely(status != BLK_STS_OK && nvme_req_needs_retry(req))) {
--		if ((req->cmd_flags & REQ_NVME_MPATH) && nvme_failover_req(req))
-+		if (!nvme_status_needs_local_error_handling(nvme_status) &&
-+		    (req->cmd_flags & REQ_NVME_MPATH) && nvme_failover_req(req))
- 			return;
- 
- 		if (!blk_queue_dying(req->q)) {
--- 
-2.18.0
+--
+Chuck Lever
+chucklever@gmail.com
