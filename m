@@ -1,16 +1,14 @@
-From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: Re: [PATCH V2] libmultipath: fix a memory leak in
- set_ble_device
-Date: Thu, 13 Aug 2020 16:00:50 +0800
-Message-ID: <c074551f-ae1f-ea69-a012-95777007b1b5@huawei.com>
-References: <c6ff6ae5-8b58-4beb-b6c9-10db444ffce2@huawei.com>
-	<109bd950021918cce1c89d0e92d137ffa6336ea2.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH V3] libmultipath: fix a memory leak in
+	set_ble_device
+Date: Thu, 13 Aug 2020 13:40:23 +0200
+Message-ID: <d543c9405fe1292b87616f110a5fc9069891f8b1.camel@suse.com>
+References: <3ef7d87d-1682-459a-16e9-82a01555ef29@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <109bd950021918cce1c89d0e92d137ffa6336ea2.camel@suse.com>
-Content-Language: en-GB
+In-Reply-To: <3ef7d87d-1682-459a-16e9-82a01555ef29@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,53 +18,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@redhat.com
+To: lixiaokeng <lixiaokeng@huawei.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@redhat.com
 Cc: linfeilong@huawei.com, liuzhiqiang26@huawei.com, lutianxiong@huawei.com
 List-Id: dm-devel.ids
 
-Hi  Martin
-   I'm sorry for send  "[PATCH V3] libmultipath: fix a memory leak in set_ble_device"
-to you  before finishing compile. Here is some question in ble->vendor_reg = NULL.
-The type of ble->vendor_reg is regex_t but not void *, so it can not be set to
-NULL. Do you have any good idea about how to set ble->vendor_reg. You can ignore
-the email [PATCH V3] libmultipath: fix a memory leak in set_ble_device.
+On Thu, 2020-08-13 at 14:40 +0800, lixiaokeng wrote:
+> In set_ble_device func, if blist is NULL or ble is NULL,
+> the vendor and product isn't freed. We think it is not
+> reasonable that strdup(XXX) is used as set_ble_device
+> and store_ble functions' parameter.
+> 
+> Here we call strdup() in store_ble and set_ble_device
+> functions and the string will be free if functions fail.
+> Because constant string like "sdb" will be their parameter,
+> char * is changed to const char *. This is base on
+> upstream-queue branch in openSUSE/multipath-tools.
+> 
+> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 
-Lixiaokeng
+Thank you.
 
-
-> Thinking about it again, I believe the error handling code should look
-> like this:
-> 
->  out1:
->         if (vendor) {
->                 regfree(&ble->vendor_reg);
->                 ble->vendor_reg = NULL;
->                 ble->vendor = NULL;
->         }
->  out:
->         free(vendor_str);
->         free(product_str);
-> 	return 1;
-> 
-> Rationale: vendor_str and product_str are local variables, there's no
-> point in setting them to NULL. But the ble fields need careful
-> treatment, as vendor and product can either be set in a single call of
-> this function, or in two separate calls. You should test "vendor"
-> rather than "vendor_str" in the "out1" clause to make this logic
-> obvious, even though you never pass "out1" if allocating vendor_str
-> failed.
-> 
-> Note the regfree() I added. It's missing in the current code as well.
-> 
-> Regards,
-> Martin
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-> 
-> .
-> 
+Reviewed-by: Martin Wilck <mwilck@suse.com>
