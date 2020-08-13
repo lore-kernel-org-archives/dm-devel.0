@@ -1,16 +1,24 @@
-From: "McIntyre, Vincent (CASS, Marsfield)" <Vincent.Mcintyre@csiro.au>
-Subject: Re: Promise and ALUA
-Date: Thu, 13 Aug 2020 23:51:43 +0000
-Message-ID: <20200813235143.GB2644@mayhem.atnf.CSIRO.AU>
-References: <20200810043316.GH21810@mayhem.atnf.CSIRO.AU>
-	<8c910ecb-ddf8-0a91-4310-4daedb85cd89@gmail.com>
+From: "Meneghini, John" <John.Meneghini@netapp.com>
+Subject: Re: [RESEND PATCH] nvme: explicitly use normal NVMe
+ error handling when appropriate
+Date: Thu, 13 Aug 2020 15:29:00 +0000
+Message-ID: <A90B4EF6-354C-4735-9E5A-45BF27F520E2@netapp.com>
+References: <E3390A8E-D582-47BA-A085-21663D883365@netapp.com>
+	<20200806184057.GA27858@redhat.com> <20200806191943.GA27868@redhat.com>
+	<6B826235-C504-4621-B8F7-34475B200979@netapp.com>
+	<20200807000755.GA28957@redhat.com>
+	<510f5aff-0437-b1ce-f7ab-c812edbea880@grimberg.me>
+	<20200807045015.GA29737@redhat.com>
+	<fec745aa-0091-ee1f-cb0f-da9e18cf0aa2@grimberg.me>
+	<20200810143620.GA19127@redhat.com> <20200810172209.GA19535@redhat.com>
+	<20200813144811.GA5452@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8c910ecb-ddf8-0a91-4310-4daedb85cd89@gmail.com>
+In-Reply-To: <20200813144811.GA5452@redhat.com>
 Content-Language: en-US
-Content-ID: <3DCC61EC5FA6BB469026F334A210DAC8@ausprd01.prod.outlook.com>
+Content-ID: <3882C5DF93795248980DB4250D0A399D@namprd06.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,279 +28,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>, Sagi Grimberg <sagi@grimberg.me>
+Cc: "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Christoph Hellwig <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Chao Leng <lengchao@huawei.com>, Keith Busch <kbusch@kernel.org>, "Meneghini,
+	John" <John.Meneghini@netapp.com>, Ewan Milne <emilne@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Aug 13, 2020 at 10:07:49PM +0200, Xose Vazquez Perez wrote:
->On 8/10/20 6:33 AM, McIntyre, Vincent (CASS, Marsfield) wrote:
->
->>for many years we have been operating some Promise VTrak arrays
->>without any use of the ALUA feature (largely so we don't have to
->>specify LUN affinities as well, which seems to be required).
->>
->>In the process of upgrading to Debian Buster
->>(multipath-tools 0.7.9 and kernel 4.19)
->>I find that I can no longer connect to our Promise arrays.
->>They are detected but the only useful output I get is
->>
->>  multipathd[986]: reconfigure (operator)
->>  multipathd[986]: sdc: alua not supported
->>  multipathd[986]: sdd: alua not supported
->>  multipathd[986]: sdr: alua not supported
->>  multipathd[986]: sde: alua not supported
->>  multipathd[986]: sdf: alua not supported
->>  multipathd[986]: sdg: alua not supported
->>  multipathd[986]: sdh: alua not supported
->>  multipathd[986]: sdi: alua not supported
->>
->>
->>I found the note in the manpage about alua being selected by
->>default for these arrays[1], but I'm taken aback that I'm not
->>allowed to override this.
->>
->>Is there really no support any more for choosing whether to use
->>ALUA or not?
->>
->>I have tried messing about with detect_prio, dectect_checker
->>and whatnot, to no avail.
->
->>[1] 9b5ea2eda85ae072cb697310807611c693713c2b
->>     libmultipath: retain_attached_hw_handler obsolete with 4.3+
->
->With the next array config and an empty /etc/multipath.conf,
->reboot the linux host and put the output of "multipath -ll"
->Redundancy Type: Active-Active
->LUN Affinity: Enable
->ALUA: Enable
-
-TL;DR I found a way forward, manually running multipath -a.
-Details below, and a suggested tweak to the manpage.
-
-I created a new LUN on the vtrak and mapped it to the test host.
-The host sees it, but as expected there's no new multipath yet.
-lsscsi does not show a new set of scsi devices either,
-which is also expected.
-
- qla2xxx [0000:04:00.0]-107ff:1: qla2x00_fcport_event_handler: schedule
- qla2xxx [0000:04:00.0]-107ff:1: qla_scan_work_fn: schedule loop resync
- qla2xxx [0000:04:00.0]-280e:1: HBA in F P2P topology.
- qla2xxx [0000:04:00.0]-2814:1: Configure loop -- dpc flags = 0x60.
- qla2xxx [0000:04:00.0]-107ff:1: qla2x00_fcport_event_handler: schedule
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250100015553ce36 pn 260700015553ce36 portid=1e0260.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250100015553ce36 pn 260600015553ce36 portid=1e0280.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250000015553ce36 pn 260200015553ce36 portid=1e02a0.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250000015553ce36 pn 260300015553ce36 portid=1e02c0.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250000015553ce36 pn 260100015553ce36 portid=1e0300.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250000015553ce36 pn 260000015553ce36 portid=1e0320.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250100015553ce36 pn 260500015553ce36 portid=1e0340.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250100015553ce36 pn 260400015553ce36 portid=1e0360.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 20000024ff002350 pn 21000024ff002350 portid=1e0500.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 203300a098b16b5f portid=1e08a0.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 203200a098b16b5f portid=1e08a1.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 206300a098b16b5f portid=1e08c0.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 204200a098b16b5f portid=1e08c1.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 204300a098b16b5f portid=1e0900.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 205200a098b16b5f portid=1e0920.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 205300a098b16b5f portid=1e0940.
- qla2xxx [0000:04:00.0]-107ff:1: qla_scan_work_fn: schedule loop resync
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 206200a098b16b5f portid=1e0960.
- qla2xxx [0000:04:00.0]-286a:1: qla2x00_configure_loop *** FAILED ***.
- qla2xxx [0000:04:00.0]-280e:1: HBA in F P2P topology.
- qla2xxx [0000:04:00.0]-2814:1: Configure loop -- dpc flags = 0x60.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250100015553ce36 pn 260700015553ce36 portid=1e0260.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250100015553ce36 pn 260600015553ce36 portid=1e0280.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250000015553ce36 pn 260200015553ce36 portid=1e02a0.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250000015553ce36 pn 260300015553ce36 portid=1e02c0.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250000015553ce36 pn 260100015553ce36 portid=1e0300.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250000015553ce36 pn 260000015553ce36 portid=1e0320.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250100015553ce36 pn 260500015553ce36 portid=1e0340.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 250100015553ce36 pn 260400015553ce36 portid=1e0360.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 20000024ff002350 pn 21000024ff002350 portid=1e0500.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 203300a098b16b5f portid=1e08a0.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 203200a098b16b5f portid=1e08a1.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 206300a098b16b5f portid=1e08c0.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 204200a098b16b5f portid=1e08c1.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 204300a098b16b5f portid=1e0900.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 205200a098b16b5f portid=1e0920.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 205300a098b16b5f portid=1e0940.
- qla2xxx [0000:04:00.0]-2858:1: GID_PT entry - nn 200200a098b16b5f pn 206200a098b16b5f portid=1e0960.
- qla2xxx [0000:04:00.0]-289f:1: Device wrap (1e0960).
- qla2xxx [0000:04:00.0]-2869:1: LOOP READY.
- qla2xxx [0000:04:00.0]-286b:1: qla2x00_configure_loop: exiting normally.
-
-I emptied /etc/multipath.conf, ran update-initramfs -u and rebooted.
-lsscsi shows multiple paths to the new LUN, but there's no new
-multipath - all those shown below were already known to the system.
-On earlier versions, the new multipath usually appeared automatically.
-
-# multipath -ll
-
-3600a098000b173f60000079e5da82d73 dm-12 DELL,MD38xxf
-size=40T features='5 queue_if_no_path pg_init_retries 50 queue_mode mq' hwhandler='1 rdac' wp=rw
-|-+- policy='service-time 0' prio=14 status=active
-| |- 1:0:10:0  sdaa 65:160 active ready running
-| |- 1:0:12:0  sdac 65:192 active ready running
-| |- 1:0:14:0  sdae 65:224 active ready running
-| `- 1:0:8:0   sdy  65:128 active ready running
-`-+- policy='service-time 0' prio=9 status=enabled
-  |- 1:0:11:0  sdab 65:176 active ready running
-  |- 1:0:13:0  sdad 65:208 active ready running
-  |- 1:0:7:0   sdx  65:112 active ready running
-  `- 1:0:9:0   sdz  65:144 active ready running
-Aug 14 09:33:02 | sdd: alua not supported
-Aug 14 09:33:02 | sdg: alua not supported
-Aug 14 09:33:02 | sdag: alua not supported
-Aug 14 09:33:02 | sdj: alua not supported
-Aug 14 09:33:02 | sdm: alua not supported
-Aug 14 09:33:02 | sdp: alua not supported
-Aug 14 09:33:02 | sds: alua not supported
-Aug 14 09:33:02 | sdv: alua not supported
-222e300015555469c dm-10 Promise,VTrak E830f
-size=20T features='3 queue_if_no_path queue_mode mq' hwhandler='0' wp=rw
-`-+- policy='service-time 0' prio=-1 status=active
-  |- 1:0:0:20  sdd  8:48   active ready running
-  |- 1:0:1:20  sdg  8:96   active ready running
-  |- 1:0:15:20 sdag 66:0   active ready running
-  |- 1:0:2:20  sdj  8:144  active ready running
-  |- 1:0:3:20  sdm  8:192  active ready running
-  |- 1:0:4:20  sdp  8:240  active ready running
-  |- 1:0:5:20  sds  65:32  active ready running
-  `- 1:0:6:20  sdv  65:80  active ready running
-Aug 14 09:33:02 | sdc: alua not supported
-Aug 14 09:33:02 | sdf: alua not supported
-Aug 14 09:33:02 | sdaf: alua not supported
-Aug 14 09:33:02 | sdi: alua not supported
-Aug 14 09:33:02 | sdl: alua not supported
-Aug 14 09:33:02 | sdo: alua not supported
-Aug 14 09:33:02 | sdr: alua not supported
-Aug 14 09:33:02 | sdu: alua not supported
-2221f000155c0792e dm-11 Promise,VTrak E830f
-size=20T features='3 queue_if_no_path queue_mode mq' hwhandler='0' wp=rw
-`-+- policy='service-time 0' prio=-1 status=active
-  |- 1:0:0:5   sdc  8:32   active ready running
-  |- 1:0:1:5   sdf  8:80   active ready running
-  |- 1:0:15:5  sdaf 65:240 active ready running
-  |- 1:0:2:5   sdi  8:128  active ready running
-  |- 1:0:3:5   sdl  8:176  active ready running
-  |- 1:0:4:5   sdo  8:224  active ready running
-  |- 1:0:5:5   sdr  65:16  active ready running
-  `- 1:0:6:5   sdu  65:64  active ready running
-
-However I find that I can do this:
-
-# multipath -v 3 -a 2228a0001558b1855
-Aug 14 09:35:56 | set open fds limit to 1048576/1048576
-Aug 14 09:35:56 | loading //lib/multipath/libchecktur.so checker
-Aug 14 09:35:56 | checker tur: message table size = 3
-Aug 14 09:35:56 | loading //lib/multipath/libprioconst.so prioritizer
-Aug 14 09:35:56 | foreign library "nvme" loaded successfully
-Aug 14 09:35:56 | libdevmapper version 1.02.155 (2018-12-18)
-Aug 14 09:35:56 | DM multipath kernel driver v1.13.0
-Aug 14 09:35:56 | No matching alias [2228a0001558b1855] in bindings file.
-Aug 14 09:35:56 | wrote wwid 2228a0001558b1855 to wwids file
-wwid '2228a0001558b1855' added
-Aug 14 09:35:56 | unloading const prioritizer
-Aug 14 09:35:56 | unloading tur checker
-
-# multipath -v3 -r
-Aug 14 09:36:24 | set open fds limit to 1048576/1048576
-Aug 14 09:36:24 | loading //lib/multipath/libchecktur.so checker
-Aug 14 09:36:24 | checker tur: message table size = 3
-Aug 14 09:36:24 | loading //lib/multipath/libprioconst.so prioritizer
-Aug 14 09:36:24 | foreign library "nvme" loaded successfully
-Aug 14 09:36:24 | delegating command to multipathd
-
-and now the multipath device for the new LUN appears.
-
-# multipath -ll
-3600a098000b173f60000079e5da82d73 dm-12 DELL,MD38xxf
-size=40T features='5 queue_if_no_path pg_init_retries 50 queue_mode mq' hwhandler='1 rdac' wp=rw
-|-+- policy='service-time 0' prio=14 status=active
-| |- 1:0:10:0  sdaa 65:160 active ready running
-| |- 1:0:12:0  sdac 65:192 active ready running
-| |- 1:0:14:0  sdae 65:224 active ready running
-| `- 1:0:8:0   sdy  65:128 active ready running
-`-+- policy='service-time 0' prio=9 status=enabled
-  |- 1:0:11:0  sdab 65:176 active ready running
-  |- 1:0:13:0  sdad 65:208 active ready running
-  |- 1:0:7:0   sdx  65:112 active ready running
-  `- 1:0:9:0   sdz  65:144 active ready running
-Aug 14 09:36:35 | sdd: alua not supported
-Aug 14 09:36:35 | sdg: alua not supported
-Aug 14 09:36:35 | sdag: alua not supported
-Aug 14 09:36:35 | sdj: alua not supported
-Aug 14 09:36:35 | sdm: alua not supported
-Aug 14 09:36:35 | sdp: alua not supported
-Aug 14 09:36:35 | sds: alua not supported
-Aug 14 09:36:35 | sdv: alua not supported
-222e300015555469c dm-10 Promise,VTrak E830f
-size=20T features='3 queue_if_no_path queue_mode mq' hwhandler='0' wp=rw
-`-+- policy='service-time 0' prio=-1 status=active
-  |- 1:0:0:20  sdd  8:48   active ready running
-  |- 1:0:1:20  sdg  8:96   active ready running
-  |- 1:0:15:20 sdag 66:0   active ready running
-  |- 1:0:2:20  sdj  8:144  active ready running
-  |- 1:0:3:20  sdm  8:192  active ready running
-  |- 1:0:4:20  sdp  8:240  active ready running
-  |- 1:0:5:20  sds  65:32  active ready running
-  `- 1:0:6:20  sdv  65:80  active ready running
-Aug 14 09:36:35 | sde: alua not supported
-Aug 14 09:36:35 | sdh: alua not supported
-Aug 14 09:36:35 | sdah: alua not supported
-Aug 14 09:36:35 | sdk: alua not supported
-Aug 14 09:36:35 | sdn: alua not supported
-Aug 14 09:36:35 | sdq: alua not supported
-Aug 14 09:36:35 | sdt: alua not supported
-Aug 14 09:36:35 | sdw: alua not supported
-2228a0001558b1855 dm-14 Promise,VTrak E830f
-size=20T features='3 queue_if_no_path queue_mode mq' hwhandler='0' wp=rw
-`-+- policy='service-time 0' prio=-1 status=active
-  |- 1:0:0:21  sde  8:64   active ready running
-  |- 1:0:1:21  sdh  8:112  active ready running
-  |- 1:0:15:21 sdah 66:16  active ready running
-  |- 1:0:2:21  sdk  8:160  active ready running
-  |- 1:0:3:21  sdn  8:208  active ready running
-  |- 1:0:4:21  sdq  65:0   active ready running
-  |- 1:0:5:21  sdt  65:48  active ready running
-  `- 1:0:6:21  sdw  65:96  active ready running
-Aug 14 09:36:35 | sdc: alua not supported
-Aug 14 09:36:35 | sdf: alua not supported
-Aug 14 09:36:35 | sdaf: alua not supported
-Aug 14 09:36:35 | sdi: alua not supported
-Aug 14 09:36:35 | sdl: alua not supported
-Aug 14 09:36:35 | sdo: alua not supported
-Aug 14 09:36:35 | sdr: alua not supported
-Aug 14 09:36:35 | sdu: alua not supported
-2221f000155c0792e dm-11 Promise,VTrak E830f
-size=20T features='3 queue_if_no_path queue_mode mq' hwhandler='0' wp=rw
-`-+- policy='service-time 0' prio=-1 status=active
-  |- 1:0:0:5   sdc  8:32   active ready running
-  |- 1:0:1:5   sdf  8:80   active ready running
-  |- 1:0:15:5  sdaf 65:240 active ready running
-  |- 1:0:2:5   sdi  8:128  active ready running
-  |- 1:0:3:5   sdl  8:176  active ready running
-  |- 1:0:4:5   sdo  8:224  active ready running
-  |- 1:0:5:5   sdr  65:16  active ready running
-  `- 1:0:6:5   sdu  65:64  active ready running
-
-So it seems that multipath can be made to work, but perhaps
-the manual page could be enhanced a little to cover this case.
-
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 05a5e8ff..718dd16a 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -1516,6 +1516,9 @@ handler to known devices (which includes all devices supporting SCSI-3 ALUA)
- and disallow changing the handler
- afterwards. Setting \fBhardware_handler\fR for such devices on these kernels
- has no effect.
-+.PP
-+If your device has been configured to disable ALUA support,
-+\fBhardware_handler\fR will be set to \fI0\fR.
- .RE
- .
- .
-
-Kind regards
-Vince
+TWlrZSwgCgpJIGRvbid0IHNlZSB5b3VyIHBhdGNoIGF0OgoKaHR0cHM6Ly9wYXRjaHdvcmsua2Vy
+bmVsLm9yZy9wcm9qZWN0L2xpbnV4LWJsb2NrL2xpc3QvP3N1Ym1pdHRlcj0xNjQzCgpDYW4geW91
+IHBsZWFzZSB1cGxvYWQgdGhpcyBwYXRjaCB0aGVyZT8KClRoYW5rcywKCi9Kb2huCgrvu79PbiA4
+LzEzLzIwLCAxMDo0OCBBTSwgIk1pa2UgU25pdHplciIgPHNuaXR6ZXJAcmVkaGF0LmNvbT4gd3Jv
+dGU6CgogICAgQ29tbWl0IDc2NGU5MzMyMDk4YzAgKCJudm1lLW11bHRpcGF0aDogZG8gbm90IHJl
+c2V0IG9uIHVua25vd24KICAgIHN0YXR1cyIpLCBhbW9uZyBvdGhlciB0aGluZ3MsIGZpeGVkIE5W
+TUVfU0NfQ01EX0lOVEVSUlVQVEVEIGVycm9yCiAgICBoYW5kbGluZyBieSBjaGFuZ2luZyBtdWx0
+aXBhdGhpbmcncyBudm1lX2ZhaWxvdmVyX3JlcSgpIHRvIHNob3J0LWNpcmN1aXQKICAgIHBhdGgg
+ZmFpbG92ZXIgYW5kIHRoZW4gZmFsbGJhY2sgdG8gTlZNZSdzIG5vcm1hbCBlcnJvciBoYW5kbGlu
+ZyAod2hpY2gKICAgIHRha2VzIGNhcmUgb2YgTlZNRV9TQ19DTURfSU5URVJSVVBURUQpLgoKICAg
+IFRoaXMgZGV0b3VyIHRocm91Z2ggbmF0aXZlIE5WTWUgbXVsdGlwYXRoaW5nIGNvZGUgaXMgdW53
+ZWxjb21lIGJlY2F1c2UKICAgIGl0IHByZXZlbnRzIE5WTWUgY29yZSBmcm9tIGhhbmRsaW5nIE5W
+TUVfU0NfQ01EX0lOVEVSUlVQVEVEIGluZGVwZW5kZW50CiAgICBvZiBhbnkgbXVsdGlwYXRoaW5n
+IGNvbmNlcm5zLgoKICAgIEludHJvZHVjZSBudm1lX3N0YXR1c19uZWVkc19sb2NhbF9lcnJvcl9o
+YW5kbGluZygpIHRvIHByaW9yaXRpemUKICAgIG5vbi1mYWlsb3ZlciByZXRyeSwgd2hlbiBhcHBy
+b3ByaWF0ZSwgaW4gdGVybXMgb2Ygbm9ybWFsIE5WTWUgZXJyb3IKICAgIGhhbmRsaW5nLiAgbnZt
+ZV9zdGF0dXNfbmVlZHNfbG9jYWxfZXJyb3JfaGFuZGxpbmcoKSB3aWxsIG5hdHVyZWx5IGV2b2x2
+ZQogICAgdG8gaW5jbHVkZSBoYW5kbGluZyBvZiBhbnkgb3RoZXIgZXJyb3JzIHRoYXQgbm9ybWFs
+IGVycm9yIGhhbmRsaW5nIG11c3QKICAgIGJlIHVzZWQgZm9yLgoKICAgIG52bWVfZmFpbG92ZXJf
+cmVxKCkncyBhYmlsaXR5IHRvIGZhbGxiYWNrIHRvIG5vcm1hbCBOVk1lIGVycm9yIGhhbmRsaW5n
+CiAgICBoYXMgYmVlbiBwcmVzZXJ2ZWQgYmVjYXVzZSBpdCBtYXkgYmUgdXNlZnVsIGZvciBmdXR1
+cmUgTlZNRV9TQyB0aGF0CiAgICBudm1lX3N0YXR1c19uZWVkc19sb2NhbF9lcnJvcl9oYW5kbGlu
+ZygpIGhhc24ndCBiZWVuIHRyYWluZWQgZm9yIHlldC4KCiAgICBTaWduZWQtb2ZmLWJ5OiBNaWtl
+IFNuaXR6ZXIgPHNuaXR6ZXJAcmVkaGF0LmNvbT4KICAgIC0tLQogICAgIGRyaXZlcnMvbnZtZS9o
+b3N0L2NvcmUuYyB8IDE2ICsrKysrKysrKysrKysrLS0KICAgICAxIGZpbGUgY2hhbmdlZCwgMTQg
+aW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKCiAgICBkaWZmIC0tZ2l0IGEvZHJpdmVycy9u
+dm1lL2hvc3QvY29yZS5jIGIvZHJpdmVycy9udm1lL2hvc3QvY29yZS5jCiAgICBpbmRleCA4OGNm
+ZjMwOWQ4ZTQuLmJlNzQ5YjY5MGFmNyAxMDA2NDQKICAgIC0tLSBhL2RyaXZlcnMvbnZtZS9ob3N0
+L2NvcmUuYwogICAgKysrIGIvZHJpdmVycy9udm1lL2hvc3QvY29yZS5jCiAgICBAQCAtMjUyLDYg
+KzI1MiwxNiBAQCBzdGF0aWMgaW5saW5lIGJvb2wgbnZtZV9yZXFfbmVlZHNfcmV0cnkoc3RydWN0
+IHJlcXVlc3QgKnJlcSkKICAgICAgICAgICAgcmV0dXJuIHRydWU7CiAgICAgfQoKICAgICtzdGF0
+aWMgaW5saW5lIGJvb2wgbnZtZV9zdGF0dXNfbmVlZHNfbG9jYWxfZXJyb3JfaGFuZGxpbmcodTE2
+IHN0YXR1cykKICAgICt7CiAgICArICAgICAgIHN3aXRjaCAoc3RhdHVzICYgMHg3ZmYpIHsKICAg
+ICsgICAgICAgY2FzZSBOVk1FX1NDX0NNRF9JTlRFUlJVUFRFRDoKICAgICsgICAgICAgICAgICAg
+ICByZXR1cm4gdHJ1ZTsKICAgICsgICAgICAgZGVmYXVsdDoKICAgICsgICAgICAgICAgICAgICBy
+ZXR1cm4gZmFsc2U7CiAgICArICAgICAgIH0KICAgICt9CiAgICArCiAgICAgc3RhdGljIHZvaWQg
+bnZtZV9yZXRyeV9yZXEoc3RydWN0IHJlcXVlc3QgKnJlcSkKICAgICB7CiAgICAgICAgICAgIHN0
+cnVjdCBudm1lX25zICpucyA9IHJlcS0+cS0+cXVldWVkYXRhOwogICAgQEAgLTI3MCw3ICsyODAs
+OCBAQCBzdGF0aWMgdm9pZCBudm1lX3JldHJ5X3JlcShzdHJ1Y3QgcmVxdWVzdCAqcmVxKQoKICAg
+ICB2b2lkIG52bWVfY29tcGxldGVfcnEoc3RydWN0IHJlcXVlc3QgKnJlcSkKICAgICB7CiAgICAt
+ICAgICAgIGJsa19zdGF0dXNfdCBzdGF0dXMgPSBudm1lX2Vycm9yX3N0YXR1cyhudm1lX3JlcShy
+ZXEpLT5zdGF0dXMpOwogICAgKyAgICAgICB1MTYgbnZtZV9zdGF0dXMgPSBudm1lX3JlcShyZXEp
+LT5zdGF0dXM7CiAgICArICAgICAgIGJsa19zdGF0dXNfdCBzdGF0dXMgPSBudm1lX2Vycm9yX3N0
+YXR1cyhudm1lX3N0YXR1cyk7CgogICAgICAgICAgICB0cmFjZV9udm1lX2NvbXBsZXRlX3JxKHJl
+cSk7CgogICAgQEAgLTI4MCw3ICsyOTEsOCBAQCB2b2lkIG52bWVfY29tcGxldGVfcnEoc3RydWN0
+IHJlcXVlc3QgKnJlcSkKICAgICAgICAgICAgICAgICAgICBudm1lX3JlcShyZXEpLT5jdHJsLT5j
+b21wX3NlZW4gPSB0cnVlOwoKICAgICAgICAgICAgaWYgKHVubGlrZWx5KHN0YXR1cyAhPSBCTEtf
+U1RTX09LICYmIG52bWVfcmVxX25lZWRzX3JldHJ5KHJlcSkpKSB7CiAgICAtICAgICAgICAgICAg
+ICAgaWYgKChyZXEtPmNtZF9mbGFncyAmIFJFUV9OVk1FX01QQVRIKSAmJiBudm1lX2ZhaWxvdmVy
+X3JlcShyZXEpKQogICAgKyAgICAgICAgICAgICAgIGlmICghbnZtZV9zdGF0dXNfbmVlZHNfbG9j
+YWxfZXJyb3JfaGFuZGxpbmcobnZtZV9zdGF0dXMpICYmCiAgICArICAgICAgICAgICAgICAgICAg
+IChyZXEtPmNtZF9mbGFncyAmIFJFUV9OVk1FX01QQVRIKSAmJiBudm1lX2ZhaWxvdmVyX3JlcShy
+ZXEpKQogICAgICAgICAgICAgICAgICAgICAgICAgICAgcmV0dXJuOwoKICAgICAgICAgICAgICAg
+ICAgICBpZiAoIWJsa19xdWV1ZV9keWluZyhyZXEtPnEpKSB7CiAgICAtLQogICAgMi4xOC4wCgoK
+Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
+LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
