@@ -1,118 +1,99 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-Subject: Re: [dm-devel] [RFC PATCH v5 00/11] Integrity Policy Enforcement
- LSM (IPE)
-Date: Thu, 13 Aug 2020 08:10:16 -0700
-Message-ID: <1597331416.3708.26.camel@HansenPartnership.com>
-References: <20200728213614.586312-1-deven.desai@linux.microsoft.com>
-         <20200802115545.GA1162@bug> <20200802140300.GA2975990@sasha-vm>
-         <20200802143143.GB20261@amd>
-         <1596386606.4087.20.camel@HansenPartnership.com>
-         <fb35a1f7-7633-a678-3f0f-17cf83032d2b@linux.microsoft.com>
-         <1596639689.3457.17.camel@HansenPartnership.com>
-         <alpine.LRH.2.21.2008050934060.28225@namei.org>
-         <b08ae82102f35936427bf138085484f75532cff1.camel@linux.ibm.com>
-         <329E8DBA-049E-4959-AFD4-9D118DEB176E@gmail.com>
-         <da6f54d0438ee3d3903b2c75fcfbeb0afdf92dc2.camel@linux.ibm.com>
-         <1597073737.3966.12.camel@HansenPartnership.com>
-         <6E907A22-02CC-42DD-B3CD-11D304F3A1A8@gmail.com>
-         <1597124623.30793.14.camel@HansenPartnership.com>
-         <16C3BF97-A7D3-488A-9D26-7C9B18AD2084@gmail.com>
-         <1597161218.4325.38.camel@HansenPartnership.com>
-         <02D551EF-C975-4B91-86CA-356FA0FF515C@gmail.com>
-         <1597247482.7293.18.camel@HansenPartnership.com>
-         <D470BA4B-EF1A-49CA-AFB9-0F7FFC4C6001@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [RESEND PATCH] nvme: explicitly use normal NVMe
+ error handling when appropriate
+Date: Thu, 13 Aug 2020 11:43:20 -0400
+Message-ID: <20200813154320.GA5707@redhat.com>
+References: <20200806191943.GA27868@redhat.com>
+	<6B826235-C504-4621-B8F7-34475B200979@netapp.com>
+	<20200807000755.GA28957@redhat.com>
+	<510f5aff-0437-b1ce-f7ab-c812edbea880@grimberg.me>
+	<20200807045015.GA29737@redhat.com>
+	<fec745aa-0091-ee1f-cb0f-da9e18cf0aa2@grimberg.me>
+	<20200810143620.GA19127@redhat.com>
+	<20200810172209.GA19535@redhat.com>
+	<20200813144811.GA5452@redhat.com>
+	<A90B4EF6-354C-4735-9E5A-45BF27F520E2@netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <D470BA4B-EF1A-49CA-AFB9-0F7FFC4C6001@gmail.com>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Chuck Lever <chucklever@gmail.com>
-Cc: Mimi Zohar <zohar@linux.ibm.com>, James Morris <jmorris@namei.org>, Deven Bowers <deven.desai@linux.microsoft.com>, Pavel Machek <pavel@ucw.cz>, Sasha Levin <sashal@kernel.org>, snitzer@redhat.com, dm-devel@redhat.com, tyhicks@linux.microsoft.com, agk@redhat.com, Paul Moore <paul@paul-moore.com>, Jonathan Corbet <corbet@lwn.net>, nramas@linux.microsoft.com, serge@hallyn.com, pasha.tatashin@soleen.com, Jann Horn <jannh@google.com>, linux-block@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, mdsakib@microsoft.com, open list <linux-kernel@vger.kernel.org>, eparis@redhat.com, linux-security-module@vger.kernel.org, linux-audit@redhat.com, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-integrity@vger.kernel.org, jaskarankhurana@linu
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <A90B4EF6-354C-4735-9E5A-45BF27F520E2@netapp.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: "Meneghini, John" <John.Meneghini@netapp.com>
+Cc: Sagi Grimberg <sagi@grimberg.me>, Ewan Milne <emilne@redhat.com>, Christoph Hellwig <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Chao Leng <lengchao@huawei.com>, Keith Busch <kbusch@kernel.org>
 List-Id: dm-devel.ids
 
-On Thu, 2020-08-13 at 10:42 -0400, Chuck Lever wrote:
-> > On Aug 12, 2020, at 11:51 AM, James Bottomley <James.Bottomley@Hans
-> > enPartnership.com> wrote:
-> > On Wed, 2020-08-12 at 10:15 -0400, Chuck Lever wrote:
-> > > > On Aug 11, 2020, at 11:53 AM, James Bottomley
-> > > > <James.Bottomley@HansenPartnership.com> wrote:
-> > > > On Tue, 2020-08-11 at 10:48 -0400, Chuck Lever wrote:
-[...]
-> > > > > > > The client would have to reconstruct that tree again if
-> > > > > > > memory pressure caused some or all of the tree to be
-> > > > > > > evicted, so perhaps an on-demand mechanism is preferable.
-> > > > > > 
-> > > > > > Right, but I think that's implementation detail.  Probably
-> > > > > > what we need is a way to get the log(N) verification hashes
-> > > > > > from the server and it's up to the client whether it caches
-> > > > > > them or not.
-> > > > > 
-> > > > > Agreed, these are implementation details. But see above about
-> > > > > the trustworthiness of the intermediate hashes. If they are
-> > > > > conveyed on an untrusted network, then they can't be trusted
-> > > > > either.
-> > > > 
-> > > > Yes, they can, provided enough of them are asked for to
-> > > > verify.  If you look at the simple example above, suppose I
-> > > > have cached H11 and H12, but I've lost the entire H2X layer.  I
-> > > > want to verify B3 so I also ask you for your copy of H24.  Then
-> > > > I generate H23 from B3 and Hash H23 and H24.  If this doesn't
-> > > > hash to H12 I know either you supplied me the wrong block or
-> > > > lied about H24.  However, if it all hashes correctly I know you
-> > > > supplied me with both the correct B3 and the correct H24.
-> > > 
-> > > My point is there is a difference between a trusted cache and an
-> > > untrusted cache. I argue there is not much value in a cache where
-> > > the hashes have to be verified again.
-> > 
-> > And my point isn't about caching, it's about where the tree comes
-> > from. I claim and you agree the client can get the tree from the
-> > server a piece at a time (because it can path verify it) and
-> > doesn't have to generate it itself.
-> 
-> OK, let's focus on where the tree comes from. It is certainly
-> possible to build protocol to exchange parts of a Merkle tree.
-
-Which is what I think we need to extend IMA to do.
-
->  The question is how it might be stored on the server.
-
-I think the only thing the server has to guarantee to store is the head
-hash, possibly signed.
-
->  There are some underlying assumptions about the metadata storage
-> mechanism that should be stated up front.
-> 
-> Current forms of IMA metadata are limited in size and stored in a
-> container that is read and written in a single operation. If we stick
-> with that container format, I don't see a way to store a Merkle tree
-> in there for all file sizes.
-
-Well, I don't think you need to.  The only thing that needs to be
-stored is the head hash.  Everything else can be reconstructed.  If you
-asked me to implement it locally, I'd probably put the head hash in an
-xattr but use a CAM based cache for the merkel trees and construct the
-tree on first access if it weren't already in the cache.
-
-However, the above isn't what fs-verity does: it stores the tree in a
-hidden section of the file.  That's why I don't think we'd mandate
-anything about tree storage.  Just describe the partial retrieval
-properties we'd like and leave the rest as an implementation detail.
-
-> Thus it seems to me that we cannot begin to consider the tree-on-the-
-> server model unless there is a proposed storage mechanism for that
-> whole tree. Otherwise, the client must have the primary role in
-> unpacking and verifying the tree.
-
-Well, as I said,  I don't think you need to store the tree.  You
-certainly could decide to store the entire tree (as fs-verity does) if
-it fitted your use case, but it's not required.  Perhaps even in my
-case I'd make the CAM based cache persistent, like android's dalvik
-cache.
-
-James
-
-
-> Storing only the tree root in the metadata means the metadata format
-> is nicely bounded in size.
+TWF5YmUgYmVjYXVzZSBJIGRpZG4ndCBjYyBsaW51eC1ibG9jaz8KT25seSB3YXkgdGhhdCBJIGtu
+b3cgdG8gInVwbG9hZCB0aGlzIHBhdGNoIHRoZXJlIiBpcyB0byBoYXZlIGNjJ2QKbGludXgtYmxv
+Y2suCgpCdXQgdGhlIHBhdGNoIGlzIGluIGRtLWRldmVsJ3MgcGF0Y2h3b3JrIGhlcmU6Cmh0dHBz
+Oi8vcGF0Y2h3b3JrLmtlcm5lbC5vcmcvcGF0Y2gvMTE3MTI1NjMvCgpJcyB0aGF0IHN1ZmZpY2ll
+bnQgZm9yIHlvdXIgbmVlZHM/CgpUaGFua3MsCk1pa2UKCk9uIFRodSwgQXVnIDEzIDIwMjAgYXQg
+MTE6MjlhbSAtMDQwMCwKTWVuZWdoaW5pLCBKb2huIDxKb2huLk1lbmVnaGluaUBuZXRhcHAuY29t
+PiB3cm90ZToKCj4gTWlrZSwgCj4gCj4gSSBkb24ndCBzZWUgeW91ciBwYXRjaCBhdDoKPiAKPiBo
+dHRwczovL3BhdGNod29yay5rZXJuZWwub3JnL3Byb2plY3QvbGludXgtYmxvY2svbGlzdC8/c3Vi
+bWl0dGVyPTE2NDMKPiAKPiBDYW4geW91IHBsZWFzZSB1cGxvYWQgdGhpcyBwYXRjaCB0aGVyZT8K
+PiAKPiBUaGFua3MsCj4gCj4gL0pvaG4KPiAKPiDvu79PbiA4LzEzLzIwLCAxMDo0OCBBTSwgIk1p
+a2UgU25pdHplciIgPHNuaXR6ZXJAcmVkaGF0LmNvbT4gd3JvdGU6Cj4gCj4gICAgIENvbW1pdCA3
+NjRlOTMzMjA5OGMwICgibnZtZS1tdWx0aXBhdGg6IGRvIG5vdCByZXNldCBvbiB1bmtub3duCj4g
+ICAgIHN0YXR1cyIpLCBhbW9uZyBvdGhlciB0aGluZ3MsIGZpeGVkIE5WTUVfU0NfQ01EX0lOVEVS
+UlVQVEVEIGVycm9yCj4gICAgIGhhbmRsaW5nIGJ5IGNoYW5naW5nIG11bHRpcGF0aGluZydzIG52
+bWVfZmFpbG92ZXJfcmVxKCkgdG8gc2hvcnQtY2lyY3VpdAo+ICAgICBwYXRoIGZhaWxvdmVyIGFu
+ZCB0aGVuIGZhbGxiYWNrIHRvIE5WTWUncyBub3JtYWwgZXJyb3IgaGFuZGxpbmcgKHdoaWNoCj4g
+ICAgIHRha2VzIGNhcmUgb2YgTlZNRV9TQ19DTURfSU5URVJSVVBURUQpLgo+IAo+ICAgICBUaGlz
+IGRldG91ciB0aHJvdWdoIG5hdGl2ZSBOVk1lIG11bHRpcGF0aGluZyBjb2RlIGlzIHVud2VsY29t
+ZSBiZWNhdXNlCj4gICAgIGl0IHByZXZlbnRzIE5WTWUgY29yZSBmcm9tIGhhbmRsaW5nIE5WTUVf
+U0NfQ01EX0lOVEVSUlVQVEVEIGluZGVwZW5kZW50Cj4gICAgIG9mIGFueSBtdWx0aXBhdGhpbmcg
+Y29uY2VybnMuCj4gCj4gICAgIEludHJvZHVjZSBudm1lX3N0YXR1c19uZWVkc19sb2NhbF9lcnJv
+cl9oYW5kbGluZygpIHRvIHByaW9yaXRpemUKPiAgICAgbm9uLWZhaWxvdmVyIHJldHJ5LCB3aGVu
+IGFwcHJvcHJpYXRlLCBpbiB0ZXJtcyBvZiBub3JtYWwgTlZNZSBlcnJvcgo+ICAgICBoYW5kbGlu
+Zy4gIG52bWVfc3RhdHVzX25lZWRzX2xvY2FsX2Vycm9yX2hhbmRsaW5nKCkgd2lsbCBuYXR1cmVs
+eSBldm9sdmUKPiAgICAgdG8gaW5jbHVkZSBoYW5kbGluZyBvZiBhbnkgb3RoZXIgZXJyb3JzIHRo
+YXQgbm9ybWFsIGVycm9yIGhhbmRsaW5nIG11c3QKPiAgICAgYmUgdXNlZCBmb3IuCj4gCj4gICAg
+IG52bWVfZmFpbG92ZXJfcmVxKCkncyBhYmlsaXR5IHRvIGZhbGxiYWNrIHRvIG5vcm1hbCBOVk1l
+IGVycm9yIGhhbmRsaW5nCj4gICAgIGhhcyBiZWVuIHByZXNlcnZlZCBiZWNhdXNlIGl0IG1heSBi
+ZSB1c2VmdWwgZm9yIGZ1dHVyZSBOVk1FX1NDIHRoYXQKPiAgICAgbnZtZV9zdGF0dXNfbmVlZHNf
+bG9jYWxfZXJyb3JfaGFuZGxpbmcoKSBoYXNuJ3QgYmVlbiB0cmFpbmVkIGZvciB5ZXQuCj4gCj4g
+ICAgIFNpZ25lZC1vZmYtYnk6IE1pa2UgU25pdHplciA8c25pdHplckByZWRoYXQuY29tPgo+ICAg
+ICAtLS0KPiAgICAgIGRyaXZlcnMvbnZtZS9ob3N0L2NvcmUuYyB8IDE2ICsrKysrKysrKysrKysr
+LS0KPiAgICAgIDEgZmlsZSBjaGFuZ2VkLCAxNCBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygt
+KQo+IAo+ICAgICBkaWZmIC0tZ2l0IGEvZHJpdmVycy9udm1lL2hvc3QvY29yZS5jIGIvZHJpdmVy
+cy9udm1lL2hvc3QvY29yZS5jCj4gICAgIGluZGV4IDg4Y2ZmMzA5ZDhlNC4uYmU3NDliNjkwYWY3
+IDEwMDY0NAo+ICAgICAtLS0gYS9kcml2ZXJzL252bWUvaG9zdC9jb3JlLmMKPiAgICAgKysrIGIv
+ZHJpdmVycy9udm1lL2hvc3QvY29yZS5jCj4gICAgIEBAIC0yNTIsNiArMjUyLDE2IEBAIHN0YXRp
+YyBpbmxpbmUgYm9vbCBudm1lX3JlcV9uZWVkc19yZXRyeShzdHJ1Y3QgcmVxdWVzdCAqcmVxKQo+
+ICAgICAgICAgICAgIHJldHVybiB0cnVlOwo+ICAgICAgfQo+IAo+ICAgICArc3RhdGljIGlubGlu
+ZSBib29sIG52bWVfc3RhdHVzX25lZWRzX2xvY2FsX2Vycm9yX2hhbmRsaW5nKHUxNiBzdGF0dXMp
+Cj4gICAgICt7Cj4gICAgICsgICAgICAgc3dpdGNoIChzdGF0dXMgJiAweDdmZikgewo+ICAgICAr
+ICAgICAgIGNhc2UgTlZNRV9TQ19DTURfSU5URVJSVVBURUQ6Cj4gICAgICsgICAgICAgICAgICAg
+ICByZXR1cm4gdHJ1ZTsKPiAgICAgKyAgICAgICBkZWZhdWx0Ogo+ICAgICArICAgICAgICAgICAg
+ICAgcmV0dXJuIGZhbHNlOwo+ICAgICArICAgICAgIH0KPiAgICAgK30KPiAgICAgKwo+ICAgICAg
+c3RhdGljIHZvaWQgbnZtZV9yZXRyeV9yZXEoc3RydWN0IHJlcXVlc3QgKnJlcSkKPiAgICAgIHsK
+PiAgICAgICAgICAgICBzdHJ1Y3QgbnZtZV9ucyAqbnMgPSByZXEtPnEtPnF1ZXVlZGF0YTsKPiAg
+ICAgQEAgLTI3MCw3ICsyODAsOCBAQCBzdGF0aWMgdm9pZCBudm1lX3JldHJ5X3JlcShzdHJ1Y3Qg
+cmVxdWVzdCAqcmVxKQo+IAo+ICAgICAgdm9pZCBudm1lX2NvbXBsZXRlX3JxKHN0cnVjdCByZXF1
+ZXN0ICpyZXEpCj4gICAgICB7Cj4gICAgIC0gICAgICAgYmxrX3N0YXR1c190IHN0YXR1cyA9IG52
+bWVfZXJyb3Jfc3RhdHVzKG52bWVfcmVxKHJlcSktPnN0YXR1cyk7Cj4gICAgICsgICAgICAgdTE2
+IG52bWVfc3RhdHVzID0gbnZtZV9yZXEocmVxKS0+c3RhdHVzOwo+ICAgICArICAgICAgIGJsa19z
+dGF0dXNfdCBzdGF0dXMgPSBudm1lX2Vycm9yX3N0YXR1cyhudm1lX3N0YXR1cyk7Cj4gCj4gICAg
+ICAgICAgICAgdHJhY2VfbnZtZV9jb21wbGV0ZV9ycShyZXEpOwo+IAo+ICAgICBAQCAtMjgwLDcg
+KzI5MSw4IEBAIHZvaWQgbnZtZV9jb21wbGV0ZV9ycShzdHJ1Y3QgcmVxdWVzdCAqcmVxKQo+ICAg
+ICAgICAgICAgICAgICAgICAgbnZtZV9yZXEocmVxKS0+Y3RybC0+Y29tcF9zZWVuID0gdHJ1ZTsK
+PiAKPiAgICAgICAgICAgICBpZiAodW5saWtlbHkoc3RhdHVzICE9IEJMS19TVFNfT0sgJiYgbnZt
+ZV9yZXFfbmVlZHNfcmV0cnkocmVxKSkpIHsKPiAgICAgLSAgICAgICAgICAgICAgIGlmICgocmVx
+LT5jbWRfZmxhZ3MgJiBSRVFfTlZNRV9NUEFUSCkgJiYgbnZtZV9mYWlsb3Zlcl9yZXEocmVxKSkK
+PiAgICAgKyAgICAgICAgICAgICAgIGlmICghbnZtZV9zdGF0dXNfbmVlZHNfbG9jYWxfZXJyb3Jf
+aGFuZGxpbmcobnZtZV9zdGF0dXMpICYmCj4gICAgICsgICAgICAgICAgICAgICAgICAgKHJlcS0+
+Y21kX2ZsYWdzICYgUkVRX05WTUVfTVBBVEgpICYmIG52bWVfZmFpbG92ZXJfcmVxKHJlcSkpCj4g
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgIHJldHVybjsKPiAKPiAgICAgICAgICAgICAgICAg
+ICAgIGlmICghYmxrX3F1ZXVlX2R5aW5nKHJlcS0+cSkpIHsKPiAgICAgLS0KPiAgICAgMi4xOC4w
+Cj4gCj4gCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
+czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
