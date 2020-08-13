@@ -1,23 +1,14 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RESEND PATCH] nvme: explicitly use normal NVMe
- error handling when appropriate
-Date: Thu, 13 Aug 2020 15:03:42 -0400
-Message-ID: <20200813190342.GA6607@redhat.com>
-References: <20200807000755.GA28957@redhat.com>
-	<510f5aff-0437-b1ce-f7ab-c812edbea880@grimberg.me>
-	<20200807045015.GA29737@redhat.com>
-	<fec745aa-0091-ee1f-cb0f-da9e18cf0aa2@grimberg.me>
-	<20200810143620.GA19127@redhat.com>
-	<20200810172209.GA19535@redhat.com>
-	<20200813144811.GA5452@redhat.com>
-	<20200813153623.GA30905@infradead.org>
-	<20200813174704.GA6137@redhat.com>
-	<20200813184349.GA8191@infradead.org>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: Promise and ALUA
+Date: Thu, 13 Aug 2020 22:07:49 +0200
+Message-ID: <8c910ecb-ddf8-0a91-4310-4daedb85cd89@gmail.com>
+References: <20200810043316.GH21810@mayhem.atnf.CSIRO.AU>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200813184349.GA8191@infradead.org>
+In-Reply-To: <20200810043316.GH21810@mayhem.atnf.CSIRO.AU>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,34 +18,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Sagi Grimberg <sagi@grimberg.me>, linux-nvme@lists.infradead.org, dm-devel@redhat.com, Ewan Milne <emilne@redhat.com>, Chao Leng <lengchao@huawei.com>, Keith Busch <kbusch@kernel.org>, "Meneghini, John" <John.Meneghini@netapp.com>
+To: "McIntyre, Vincent (CASS, Marsfield)" <Vincent.Mcintyre@csiro.au>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Aug 13 2020 at  2:43pm -0400,
-Christoph Hellwig <hch@infradead.org> wrote:
+On 8/10/20 6:33 AM, McIntyre, Vincent (CASS, Marsfield) wrote:
 
-> On Thu, Aug 13, 2020 at 01:47:04PM -0400, Mike Snitzer wrote:
-> > This is just a tweak to improve the high-level fault tree of core NVMe
-> > error handling.  No functional change, but for such basic errors,
-> > avoiding entering nvme_failover_req is meaningful on a code flow level.
-> > Makes code to handle errors that need local retry clearer by being more
-> > structured, less circuitous.
-> > 
-> > Allows NVMe core's handling of such errors to be more explicit and live
-> > in core.c rather than multipath.c -- so things like ACRE handling can be
-> > made explicitly part of core and not nested under nvme_failover_req's
-> > relatively obscure failsafe that returns false for anything it doesn't
-> > care about.
+> for many years we have been operating some Promise VTrak arrays
+> without any use of the ALUA feature (largely so we don't have to
+> specify LUN affinities as well, which seems to be required).
 > 
-> If we're going that way I'd rather do something like the (untested)
-> patch below that adds a dispostion function with a function that
-> decides it and then just switches on it:
+> In the process of upgrading to Debian Buster
+> (multipath-tools 0.7.9 and kernel 4.19)
+> I find that I can no longer connect to our Promise arrays.
+> They are detected but the only useful output I get is
+> 
+>   multipathd[986]: reconfigure (operator)
+>   multipathd[986]: sdc: alua not supported
+>   multipathd[986]: sdd: alua not supported
+>   multipathd[986]: sdr: alua not supported
+>   multipathd[986]: sde: alua not supported
+>   multipathd[986]: sdf: alua not supported
+>   multipathd[986]: sdg: alua not supported
+>   multipathd[986]: sdh: alua not supported
+>   multipathd[986]: sdi: alua not supported
+> 
+> 
+> I found the note in the manpage about alua being selected by
+> default for these arrays[1], but I'm taken aback that I'm not
+> allowed to override this.
+> 
+> Is there really no support any more for choosing whether to use
+> ALUA or not?
+> 
+> I have tried messing about with detect_prio, dectect_checker
+> and whatnot, to no avail.
 
-YES!  That is such a huge improvement (certainly on a code clarity
-level).  I haven't reviewed or tested the relative performance or
-function of before vs after (will do) but I really like this approach.
+> [1] 9b5ea2eda85ae072cb697310807611c693713c2b
+>      libmultipath: retain_attached_hw_handler obsolete with 4.3+
 
-Thanks,
-Mike
+With the next array config and an empty /etc/multipath.conf,
+reboot the linux host and put the output of "multipath -ll"
+Redundancy Type: Active-Active
+LUN Affinity: Enable
+ALUA: Enable
