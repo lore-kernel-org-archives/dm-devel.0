@@ -1,14 +1,15 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: Promise and ALUA
-Date: Thu, 13 Aug 2020 22:07:49 +0200
-Message-ID: <8c910ecb-ddf8-0a91-4310-4daedb85cd89@gmail.com>
-References: <20200810043316.GH21810@mayhem.atnf.CSIRO.AU>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH v2 40/42] libmultipath: free_multipath():
+ remove mpp references
+Date: Thu, 13 Aug 2020 16:32:52 -0500
+Message-ID: <20200813213252.GW19233@octiron.msp.redhat.com>
+References: <20200812113405.26206-1-mwilck@suse.com>
+	<20200812113405.26206-2-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200810043316.GH21810@mayhem.atnf.CSIRO.AU>
-Content-Language: en-US
+In-Reply-To: <20200812113405.26206-2-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,46 +19,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "McIntyre, Vincent (CASS, Marsfield)" <Vincent.Mcintyre@csiro.au>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Disposition: inline
+To: mwilck@suse.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 8/10/20 6:33 AM, McIntyre, Vincent (CASS, Marsfield) wrote:
-
-> for many years we have been operating some Promise VTrak arrays
-> without any use of the ALUA feature (largely so we don't have to
-> specify LUN affinities as well, which seems to be required).
+On Wed, Aug 12, 2020 at 01:34:04PM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
 > 
-> In the process of upgrading to Debian Buster
-> (multipath-tools 0.7.9 and kernel 4.19)
-> I find that I can no longer connect to our Promise arrays.
-> They are detected but the only useful output I get is
+> If free_paths is false, make sure no references to the dropped
+> multipath remain. Otherwise multipathd may crash later when
+> trying to access these.
 > 
->   multipathd[986]: reconfigure (operator)
->   multipathd[986]: sdc: alua not supported
->   multipathd[986]: sdd: alua not supported
->   multipathd[986]: sdr: alua not supported
->   multipathd[986]: sde: alua not supported
->   multipathd[986]: sdf: alua not supported
->   multipathd[986]: sdg: alua not supported
->   multipathd[986]: sdh: alua not supported
->   multipathd[986]: sdi: alua not supported
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmultipath/structs.c | 15 +++++++++++++++
+>  1 file changed, 15 insertions(+)
 > 
-> 
-> I found the note in the manpage about alua being selected by
-> default for these arrays[1], but I'm taken aback that I'm not
-> allowed to override this.
-> 
-> Is there really no support any more for choosing whether to use
-> ALUA or not?
-> 
-> I have tried messing about with detect_prio, dectect_checker
-> and whatnot, to no avail.
-
-> [1] 9b5ea2eda85ae072cb697310807611c693713c2b
->      libmultipath: retain_attached_hw_handler obsolete with 4.3+
-
-With the next array config and an empty /etc/multipath.conf,
-reboot the linux host and put the output of "multipath -ll"
-Redundancy Type: Active-Active
-LUN Affinity: Enable
-ALUA: Enable
+> diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+> index da898b7..d227ec0 100644
+> --- a/libmultipath/structs.c
+> +++ b/libmultipath/structs.c
+> @@ -258,6 +258,21 @@ free_multipath (struct multipath * mpp, enum free_path_mode free_paths)
+>  		mpp->dmi = NULL;
+>  	}
+>  
+> +	if (!free_paths && mpp->pg) {
+> +		struct pathgroup *pgp;
+> +		struct path *pp;
+> +		int i, j;
+> +
+> +		/*
+> +		 * Make sure paths carry no reference to this mpp any more
+> +		 */
+> +		vector_foreach_slot(mpp->pg, pgp, i) {
+> +			vector_foreach_slot(pgp->paths, pp, j)
+> +				if (pp->mpp == mpp)
+> +					pp->mpp = NULL;
+> +		}
+> +	}
+> +
+>  	free_pathvec(mpp->paths, free_paths);
+>  	free_pgvec(mpp->pg, free_paths);
+>  	FREE_PTR(mpp->mpcontext);
+> -- 
+> 2.28.0
