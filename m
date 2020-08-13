@@ -1,9 +1,10 @@
-From: Mike Snitzer <snitzer@redhat.com>
+From: Christoph Hellwig <hch@infradead.org>
 Subject: Re: [RESEND PATCH] nvme: explicitly use normal NVMe
  error handling when appropriate
-Date: Thu, 13 Aug 2020 11:43:20 -0400
-Message-ID: <20200813154320.GA5707@redhat.com>
-References: <20200806191943.GA27868@redhat.com>
+Date: Thu, 13 Aug 2020 16:36:23 +0100
+Message-ID: <20200813153623.GA30905@infradead.org>
+References: <20200806184057.GA27858@redhat.com>
+	<20200806191943.GA27868@redhat.com>
 	<6B826235-C504-4621-B8F7-34475B200979@netapp.com>
 	<20200807000755.GA28957@redhat.com>
 	<510f5aff-0437-b1ce-f7ab-c812edbea880@grimberg.me>
@@ -12,12 +13,11 @@ References: <20200806191943.GA27868@redhat.com>
 	<20200810143620.GA19127@redhat.com>
 	<20200810172209.GA19535@redhat.com>
 	<20200813144811.GA5452@redhat.com>
-	<A90B4EF6-354C-4735-9E5A-45BF27F520E2@netapp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <A90B4EF6-354C-4735-9E5A-45BF27F520E2@netapp.com>
+In-Reply-To: <20200813144811.GA5452@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,72 +28,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-To: "Meneghini, John" <John.Meneghini@netapp.com>
-Cc: Sagi Grimberg <sagi@grimberg.me>, Ewan Milne <emilne@redhat.com>, Christoph Hellwig <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Chao Leng <lengchao@huawei.com>, Keith Busch <kbusch@kernel.org>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Sagi Grimberg <sagi@grimberg.me>, Ewan Milne <emilne@redhat.com>, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, linux-nvme@lists.infradead.org, Chao Leng <lengchao@huawei.com>, Keith Busch <kbusch@kernel.org>, "Meneghini,
+	John" <John.Meneghini@netapp.com>
 List-Id: dm-devel.ids
 
-TWF5YmUgYmVjYXVzZSBJIGRpZG4ndCBjYyBsaW51eC1ibG9jaz8KT25seSB3YXkgdGhhdCBJIGtu
-b3cgdG8gInVwbG9hZCB0aGlzIHBhdGNoIHRoZXJlIiBpcyB0byBoYXZlIGNjJ2QKbGludXgtYmxv
-Y2suCgpCdXQgdGhlIHBhdGNoIGlzIGluIGRtLWRldmVsJ3MgcGF0Y2h3b3JrIGhlcmU6Cmh0dHBz
-Oi8vcGF0Y2h3b3JrLmtlcm5lbC5vcmcvcGF0Y2gvMTE3MTI1NjMvCgpJcyB0aGF0IHN1ZmZpY2ll
-bnQgZm9yIHlvdXIgbmVlZHM/CgpUaGFua3MsCk1pa2UKCk9uIFRodSwgQXVnIDEzIDIwMjAgYXQg
-MTE6MjlhbSAtMDQwMCwKTWVuZWdoaW5pLCBKb2huIDxKb2huLk1lbmVnaGluaUBuZXRhcHAuY29t
-PiB3cm90ZToKCj4gTWlrZSwgCj4gCj4gSSBkb24ndCBzZWUgeW91ciBwYXRjaCBhdDoKPiAKPiBo
-dHRwczovL3BhdGNod29yay5rZXJuZWwub3JnL3Byb2plY3QvbGludXgtYmxvY2svbGlzdC8/c3Vi
-bWl0dGVyPTE2NDMKPiAKPiBDYW4geW91IHBsZWFzZSB1cGxvYWQgdGhpcyBwYXRjaCB0aGVyZT8K
-PiAKPiBUaGFua3MsCj4gCj4gL0pvaG4KPiAKPiDvu79PbiA4LzEzLzIwLCAxMDo0OCBBTSwgIk1p
-a2UgU25pdHplciIgPHNuaXR6ZXJAcmVkaGF0LmNvbT4gd3JvdGU6Cj4gCj4gICAgIENvbW1pdCA3
-NjRlOTMzMjA5OGMwICgibnZtZS1tdWx0aXBhdGg6IGRvIG5vdCByZXNldCBvbiB1bmtub3duCj4g
-ICAgIHN0YXR1cyIpLCBhbW9uZyBvdGhlciB0aGluZ3MsIGZpeGVkIE5WTUVfU0NfQ01EX0lOVEVS
-UlVQVEVEIGVycm9yCj4gICAgIGhhbmRsaW5nIGJ5IGNoYW5naW5nIG11bHRpcGF0aGluZydzIG52
-bWVfZmFpbG92ZXJfcmVxKCkgdG8gc2hvcnQtY2lyY3VpdAo+ICAgICBwYXRoIGZhaWxvdmVyIGFu
-ZCB0aGVuIGZhbGxiYWNrIHRvIE5WTWUncyBub3JtYWwgZXJyb3IgaGFuZGxpbmcgKHdoaWNoCj4g
-ICAgIHRha2VzIGNhcmUgb2YgTlZNRV9TQ19DTURfSU5URVJSVVBURUQpLgo+IAo+ICAgICBUaGlz
-IGRldG91ciB0aHJvdWdoIG5hdGl2ZSBOVk1lIG11bHRpcGF0aGluZyBjb2RlIGlzIHVud2VsY29t
-ZSBiZWNhdXNlCj4gICAgIGl0IHByZXZlbnRzIE5WTWUgY29yZSBmcm9tIGhhbmRsaW5nIE5WTUVf
-U0NfQ01EX0lOVEVSUlVQVEVEIGluZGVwZW5kZW50Cj4gICAgIG9mIGFueSBtdWx0aXBhdGhpbmcg
-Y29uY2VybnMuCj4gCj4gICAgIEludHJvZHVjZSBudm1lX3N0YXR1c19uZWVkc19sb2NhbF9lcnJv
-cl9oYW5kbGluZygpIHRvIHByaW9yaXRpemUKPiAgICAgbm9uLWZhaWxvdmVyIHJldHJ5LCB3aGVu
-IGFwcHJvcHJpYXRlLCBpbiB0ZXJtcyBvZiBub3JtYWwgTlZNZSBlcnJvcgo+ICAgICBoYW5kbGlu
-Zy4gIG52bWVfc3RhdHVzX25lZWRzX2xvY2FsX2Vycm9yX2hhbmRsaW5nKCkgd2lsbCBuYXR1cmVs
-eSBldm9sdmUKPiAgICAgdG8gaW5jbHVkZSBoYW5kbGluZyBvZiBhbnkgb3RoZXIgZXJyb3JzIHRo
-YXQgbm9ybWFsIGVycm9yIGhhbmRsaW5nIG11c3QKPiAgICAgYmUgdXNlZCBmb3IuCj4gCj4gICAg
-IG52bWVfZmFpbG92ZXJfcmVxKCkncyBhYmlsaXR5IHRvIGZhbGxiYWNrIHRvIG5vcm1hbCBOVk1l
-IGVycm9yIGhhbmRsaW5nCj4gICAgIGhhcyBiZWVuIHByZXNlcnZlZCBiZWNhdXNlIGl0IG1heSBi
-ZSB1c2VmdWwgZm9yIGZ1dHVyZSBOVk1FX1NDIHRoYXQKPiAgICAgbnZtZV9zdGF0dXNfbmVlZHNf
-bG9jYWxfZXJyb3JfaGFuZGxpbmcoKSBoYXNuJ3QgYmVlbiB0cmFpbmVkIGZvciB5ZXQuCj4gCj4g
-ICAgIFNpZ25lZC1vZmYtYnk6IE1pa2UgU25pdHplciA8c25pdHplckByZWRoYXQuY29tPgo+ICAg
-ICAtLS0KPiAgICAgIGRyaXZlcnMvbnZtZS9ob3N0L2NvcmUuYyB8IDE2ICsrKysrKysrKysrKysr
-LS0KPiAgICAgIDEgZmlsZSBjaGFuZ2VkLCAxNCBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygt
-KQo+IAo+ICAgICBkaWZmIC0tZ2l0IGEvZHJpdmVycy9udm1lL2hvc3QvY29yZS5jIGIvZHJpdmVy
-cy9udm1lL2hvc3QvY29yZS5jCj4gICAgIGluZGV4IDg4Y2ZmMzA5ZDhlNC4uYmU3NDliNjkwYWY3
-IDEwMDY0NAo+ICAgICAtLS0gYS9kcml2ZXJzL252bWUvaG9zdC9jb3JlLmMKPiAgICAgKysrIGIv
-ZHJpdmVycy9udm1lL2hvc3QvY29yZS5jCj4gICAgIEBAIC0yNTIsNiArMjUyLDE2IEBAIHN0YXRp
-YyBpbmxpbmUgYm9vbCBudm1lX3JlcV9uZWVkc19yZXRyeShzdHJ1Y3QgcmVxdWVzdCAqcmVxKQo+
-ICAgICAgICAgICAgIHJldHVybiB0cnVlOwo+ICAgICAgfQo+IAo+ICAgICArc3RhdGljIGlubGlu
-ZSBib29sIG52bWVfc3RhdHVzX25lZWRzX2xvY2FsX2Vycm9yX2hhbmRsaW5nKHUxNiBzdGF0dXMp
-Cj4gICAgICt7Cj4gICAgICsgICAgICAgc3dpdGNoIChzdGF0dXMgJiAweDdmZikgewo+ICAgICAr
-ICAgICAgIGNhc2UgTlZNRV9TQ19DTURfSU5URVJSVVBURUQ6Cj4gICAgICsgICAgICAgICAgICAg
-ICByZXR1cm4gdHJ1ZTsKPiAgICAgKyAgICAgICBkZWZhdWx0Ogo+ICAgICArICAgICAgICAgICAg
-ICAgcmV0dXJuIGZhbHNlOwo+ICAgICArICAgICAgIH0KPiAgICAgK30KPiAgICAgKwo+ICAgICAg
-c3RhdGljIHZvaWQgbnZtZV9yZXRyeV9yZXEoc3RydWN0IHJlcXVlc3QgKnJlcSkKPiAgICAgIHsK
-PiAgICAgICAgICAgICBzdHJ1Y3QgbnZtZV9ucyAqbnMgPSByZXEtPnEtPnF1ZXVlZGF0YTsKPiAg
-ICAgQEAgLTI3MCw3ICsyODAsOCBAQCBzdGF0aWMgdm9pZCBudm1lX3JldHJ5X3JlcShzdHJ1Y3Qg
-cmVxdWVzdCAqcmVxKQo+IAo+ICAgICAgdm9pZCBudm1lX2NvbXBsZXRlX3JxKHN0cnVjdCByZXF1
-ZXN0ICpyZXEpCj4gICAgICB7Cj4gICAgIC0gICAgICAgYmxrX3N0YXR1c190IHN0YXR1cyA9IG52
-bWVfZXJyb3Jfc3RhdHVzKG52bWVfcmVxKHJlcSktPnN0YXR1cyk7Cj4gICAgICsgICAgICAgdTE2
-IG52bWVfc3RhdHVzID0gbnZtZV9yZXEocmVxKS0+c3RhdHVzOwo+ICAgICArICAgICAgIGJsa19z
-dGF0dXNfdCBzdGF0dXMgPSBudm1lX2Vycm9yX3N0YXR1cyhudm1lX3N0YXR1cyk7Cj4gCj4gICAg
-ICAgICAgICAgdHJhY2VfbnZtZV9jb21wbGV0ZV9ycShyZXEpOwo+IAo+ICAgICBAQCAtMjgwLDcg
-KzI5MSw4IEBAIHZvaWQgbnZtZV9jb21wbGV0ZV9ycShzdHJ1Y3QgcmVxdWVzdCAqcmVxKQo+ICAg
-ICAgICAgICAgICAgICAgICAgbnZtZV9yZXEocmVxKS0+Y3RybC0+Y29tcF9zZWVuID0gdHJ1ZTsK
-PiAKPiAgICAgICAgICAgICBpZiAodW5saWtlbHkoc3RhdHVzICE9IEJMS19TVFNfT0sgJiYgbnZt
-ZV9yZXFfbmVlZHNfcmV0cnkocmVxKSkpIHsKPiAgICAgLSAgICAgICAgICAgICAgIGlmICgocmVx
-LT5jbWRfZmxhZ3MgJiBSRVFfTlZNRV9NUEFUSCkgJiYgbnZtZV9mYWlsb3Zlcl9yZXEocmVxKSkK
-PiAgICAgKyAgICAgICAgICAgICAgIGlmICghbnZtZV9zdGF0dXNfbmVlZHNfbG9jYWxfZXJyb3Jf
-aGFuZGxpbmcobnZtZV9zdGF0dXMpICYmCj4gICAgICsgICAgICAgICAgICAgICAgICAgKHJlcS0+
-Y21kX2ZsYWdzICYgUkVRX05WTUVfTVBBVEgpICYmIG52bWVfZmFpbG92ZXJfcmVxKHJlcSkpCj4g
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgIHJldHVybjsKPiAKPiAgICAgICAgICAgICAgICAg
-ICAgIGlmICghYmxrX3F1ZXVlX2R5aW5nKHJlcS0+cSkpIHsKPiAgICAgLS0KPiAgICAgMi4xOC4w
-Cj4gCj4gCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
-czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Thu, Aug 13, 2020 at 10:48:11AM -0400, Mike Snitzer wrote:
+> Commit 764e9332098c0 ("nvme-multipath: do not reset on unknown
+> status"), among other things, fixed NVME_SC_CMD_INTERRUPTED error
+> handling by changing multipathing's nvme_failover_req() to short-circuit
+> path failover and then fallback to NVMe's normal error handling (which
+> takes care of NVME_SC_CMD_INTERRUPTED).
+> 
+> This detour through native NVMe multipathing code is unwelcome because
+> it prevents NVMe core from handling NVME_SC_CMD_INTERRUPTED independent
+> of any multipathing concerns.
+> 
+> Introduce nvme_status_needs_local_error_handling() to prioritize
+> non-failover retry, when appropriate, in terms of normal NVMe error
+> handling.  nvme_status_needs_local_error_handling() will naturely evolve
+> to include handling of any other errors that normal error handling must
+> be used for.
+> 
+> nvme_failover_req()'s ability to fallback to normal NVMe error handling
+> has been preserved because it may be useful for future NVME_SC that
+> nvme_status_needs_local_error_handling() hasn't been trained for yet.
+> 
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+
+I don't see how this would change anything.  nvme_failover_req simply
+retuns false for NVME_SC_CMD_INTERRUPTED, so your change is a no-op.
