@@ -1,15 +1,24 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 65/74] libmultipath: add
-	update_pathvec_from_dm()
-Date: Fri, 14 Aug 2020 00:08:25 -0500
-Message-ID: <20200814050825.GE19233@octiron.msp.redhat.com>
-References: <20200812113511.26469-1-mwilck@suse.com>
-	<20200812113511.26469-7-mwilck@suse.com>
+From: Sagi Grimberg <sagi@grimberg.me>
+Subject: Re: [RESEND PATCH] nvme: explicitly use normal NVMe
+ error handling when appropriate
+Date: Thu, 13 Aug 2020 23:53:14 -0700
+Message-ID: <96aff2d0-5907-f5c9-9164-8fea0d030d95@grimberg.me>
+References: <6B826235-C504-4621-B8F7-34475B200979@netapp.com>
+	<20200807000755.GA28957@redhat.com>
+	<510f5aff-0437-b1ce-f7ab-c812edbea880@grimberg.me>
+	<20200807045015.GA29737@redhat.com>
+	<fec745aa-0091-ee1f-cb0f-da9e18cf0aa2@grimberg.me>
+	<20200810143620.GA19127@redhat.com> <20200810172209.GA19535@redhat.com>
+	<20200813144811.GA5452@redhat.com>
+	<20200813153623.GA30905@infradead.org>
+	<20200813174704.GA6137@redhat.com>
+	<20200813184349.GA8191@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200812113511.26469-7-mwilck@suse.com>
+In-Reply-To: <20200813184349.GA8191@infradead.org>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,210 +28,155 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: mwilck@suse.com
-Cc: dm-devel@redhat.com
+To: Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>
+Cc: linux-nvme@lists.infradead.org, dm-devel@redhat.com, Ewan Milne <emilne@redhat.com>, Chao Leng <lengchao@huawei.com>, Keith Busch <kbusch@kernel.org>, "Meneghini,
+	John" <John.Meneghini@netapp.com>
 List-Id: dm-devel.ids
 
-On Wed, Aug 12, 2020 at 01:35:09PM +0200, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
-> 
-> It can happen in particular during boot or startup that we encounter
-> paths as map members which haven't been discovered or fully initialized
-> yet, and are thus not in the pathvec. These paths need special treatment
-> in various ways. Currently this is dealt with in disassemble_map(). That's
-> a layer violation, and the way it is done is suboptimal in various ways.
-> 
-> As a preparation to change that, this patch introduces a new function,
-> update_pathvec_from_dm(), that is supposed to deal with newly discovered
-> paths from disassemble_map(). It has to be called after disassemble_map()
-> has finished.
-> 
-> The logic of the new function is similar but not identical to what
-> disassemble_map() was doing before. Firstly, the function will simply
-> remove path devices that don't exist - there's no point in carrying these
-> around. Map reloads can't be called from this code for reasons of the
-> overall program logic. But it's prepared to signal to the caller that
-> a map reload is in order. Using this return value will be future work.
-> 
-> Second, pathinfo() is now called on new paths rather than just setting
-> pp->dev. The pathinfo flags can be passed as argument to make the function
-> flexible for different callers.
-> 
-> Finally, treatment of WWIDs is different now. There'll be only one attempt
-> at guessing the map WWID if it's not set yet. If a non-matching path WWID
-> is found, the path is removed, and a new uevent triggered (this is the
-> most important change wrt the dangerous previous code that would simply
-> overwrite the path WWID). If the path WWID is empty, it will still be
-> set from the map WWID, which I consider not perfect, but no worse
-> than what we did before.
-> 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/structs_vec.c | 136 +++++++++++++++++++++++++++++++++++++
->  libmultipath/structs_vec.h |   2 +
->  2 files changed, 138 insertions(+)
-> 
-> diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-> index b644d3f..bd2d13b 100644
-> --- a/libmultipath/structs_vec.c
-> +++ b/libmultipath/structs_vec.c
-> @@ -59,6 +59,142 @@ int update_mpp_paths(struct multipath *mpp, vector pathvec)
->  	return store_failure;
->  }
->  
-> +static bool guess_mpp_wwid(struct multipath *mpp)
+
+> +static inline enum nvme_disposition nvme_req_disposition(struct request *req)
 > +{
-> +	int i, j;
-> +	struct pathgroup *pgp;
-> +	struct path *pp;
+> +	if (likely(nvme_req(req)->status == 0))
+> +		return COMPLETE;
 > +
-> +	if (strlen(mpp->wwid) || !mpp->pg)
-> +		return true;
+> +	if (blk_noretry_request(req) ||
+> +	    (nvme_req(req)->status & NVME_SC_DNR) ||
+> +	    nvme_req(req)->retries >= nvme_max_retries)
+> +		return COMPLETE;
 > +
-> +	vector_foreach_slot(mpp->pg, pgp, i) {
-> +		if (!pgp->paths)
-> +			continue;
-> +		vector_foreach_slot(pgp->paths, pp, j) {
-> +			if (pp->initialized == INIT_OK && strlen(pp->wwid)) {
-> +				strlcpy(mpp->wwid, pp->wwid, sizeof(mpp->wwid));
-> +				condlog(2, "%s: guessed WWID %s from path %s",
-> +					mpp->alias, mpp->wwid, pp->dev);
-> +				return true;
-> +			}
+> +	if (req->cmd_flags & REQ_NVME_MPATH) {
+> +		switch (nvme_req(req)->status & 0x7ff) {
+> +		case NVME_SC_ANA_TRANSITION:
+> +		case NVME_SC_ANA_INACCESSIBLE:
+> +		case NVME_SC_ANA_PERSISTENT_LOSS:
+> +			return REDIRECT_ANA;
+> +		case NVME_SC_HOST_PATH_ERROR:
+> +		case NVME_SC_HOST_ABORTED_CMD:
+> +			return REDIRECT_TMP;
 > +		}
 > +	}
-> +	condlog(1, "%s: unable to guess WWID", mpp->alias);
-> +	return false;
+> +
+> +	if (blk_queue_dying(req->q))
+> +		return COMPLETE;
+> +	return RETRY;
 > +}
 > +
-> +/*
-> + * update_pathvec_from_dm() - update pathvec after disassemble_map()
-> + *
-> + * disassemble_map() may return block devices that are members in
-> + * multipath maps but haven't been discovered. Check whether they
-> + * need to be added to pathvec or discarded.
-> + *
-> + * Returns: true if immediate map reload is desirable
-> + *
-> + * Side effects:
-> + * - may delete non-existing paths and empty pathgroups from mpp
-> + * - may set pp->wwid and / or mpp->wwid
-> + * - calls pathinfo() on existing paths is pathinfo_flags is not 0
-> + */
-> +bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
-> +	int pathinfo_flags)
-> +{
-> +	int i, j;
-> +	struct pathgroup *pgp;
-> +	struct path *pp;
-> +	struct config *conf;
-> +	bool mpp_has_wwid;
-> +	bool must_reload = false;
+> +static inline void nvme_complete_req(struct request *req)
+>   {
+>   	blk_status_t status = nvme_error_status(nvme_req(req)->status);
+>   
+> -	trace_nvme_complete_rq(req);
+> +	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) &&
+> +	    req_op(req) == REQ_OP_ZONE_APPEND)
+> +		req->__sector = nvme_lba_to_sect(req->q->queuedata,
+> +			le64_to_cpu(nvme_req(req)->result.u64));
 > +
-> +	if (!mpp->pg)
-> +		return false;
+> +	nvme_trace_bio_complete(req, status);
+> +	blk_mq_end_request(req, status);
+> +}
+>   
+> +void nvme_complete_rq(struct request *req)
+> +{
+> +	trace_nvme_complete_rq(req);
+>   	nvme_cleanup_cmd(req);
+>   
+>   	if (nvme_req(req)->ctrl->kas)
+>   		nvme_req(req)->ctrl->comp_seen = true;
+>   
+> -	if (unlikely(status != BLK_STS_OK && nvme_req_needs_retry(req))) {
+> -		if ((req->cmd_flags & REQ_NVME_MPATH) && nvme_failover_req(req))
+> -			return;
+> -
+> -		if (!blk_queue_dying(req->q)) {
+> -			nvme_retry_req(req);
+> -			return;
+> -		}
+> -	} else if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) &&
+> -		   req_op(req) == REQ_OP_ZONE_APPEND) {
+> -		req->__sector = nvme_lba_to_sect(req->q->queuedata,
+> -			le64_to_cpu(nvme_req(req)->result.u64));
+> +	switch (nvme_req_disposition(req)) {
+> +	case COMPLETE:
+> +		nvme_complete_req(req);
+
+nvme_complete_rq calling nvme_complete_req... Maybe call it
+__nvme_complete_rq instead?
+
+> +		return;
+> +	case RETRY:
+> +		nvme_retry_req(req);
+> +		return;
+> +	case REDIRECT_ANA:
+> +		nvme_failover_req(req, true);
+> +		return;
+> +	case REDIRECT_TMP:
+> +		nvme_failover_req(req, false);
+> +		return;
+>   	}
+> -
+> -	nvme_trace_bio_complete(req, status);
+> -	blk_mq_end_request(req, status);
+>   }
+>   EXPORT_SYMBOL_GPL(nvme_complete_rq);
+>   
+> diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
+> index 3ded54d2c9c6ad..0c22b2c88687a2 100644
+> --- a/drivers/nvme/host/multipath.c
+> +++ b/drivers/nvme/host/multipath.c
+> @@ -65,51 +65,32 @@ void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
+>   	}
+>   }
+>   
+> -bool nvme_failover_req(struct request *req)
+> +void nvme_failover_req(struct request *req, bool is_ana_status)
+>   {
+>   	struct nvme_ns *ns = req->q->queuedata;
+> -	u16 status = nvme_req(req)->status;
+>   	unsigned long flags;
+>   
+> -	switch (status & 0x7ff) {
+> -	case NVME_SC_ANA_TRANSITION:
+> -	case NVME_SC_ANA_INACCESSIBLE:
+> -	case NVME_SC_ANA_PERSISTENT_LOSS:
+> -		/*
+> -		 * If we got back an ANA error we know the controller is alive,
+> -		 * but not ready to serve this namespaces.  The spec suggests
+> -		 * we should update our general state here, but due to the fact
+> -		 * that the admin and I/O queues are not serialized that is
+> -		 * fundamentally racy.  So instead just clear the current path,
+> -		 * mark the the path as pending and kick of a re-read of the ANA
+> -		 * log page ASAP.
+> -		 */
+> -		nvme_mpath_clear_current_path(ns);
+> -		if (ns->ctrl->ana_log_buf) {
+> -			set_bit(NVME_NS_ANA_PENDING, &ns->flags);
+> -			queue_work(nvme_wq, &ns->ctrl->ana_work);
+> -		}
+> -		break;
+> -	case NVME_SC_HOST_PATH_ERROR:
+> -	case NVME_SC_HOST_ABORTED_CMD:
+> -		/*
+> -		 * Temporary transport disruption in talking to the controller.
+> -		 * Try to send on a new path.
+> -		 */
+> -		nvme_mpath_clear_current_path(ns);
+> -		break;
+> -	default:
+> -		/* This was a non-ANA error so follow the normal error path. */
+> -		return false;
+> +	nvme_mpath_clear_current_path(ns);
 > +
 > +	/*
-> +	 * This will initialize mpp->wwid with an educated guess,
-> +	 * either from the dm uuid or from a member path with properly
-> +	 * determined WWID.
+> +	 * If we got back an ANA error we know the controller is alive, but not
+> +	 * ready to serve this namespaces.  The spec suggests we should update
+> +	 * our general state here, but due to the fact that the admin and I/O
+> +	 * queues are not serialized that is fundamentally racy.  So instead
+> +	 * just clear the current path, mark the the path as pending and kick
+> +	 * of a re-read of the ANA log page ASAP.
 > +	 */
-> +	mpp_has_wwid = guess_mpp_wwid(mpp);
-> +
-> +	vector_foreach_slot(mpp->pg, pgp, i) {
-> +		if (!pgp->paths)
-> +			goto delete_pg;
-> +
-> +		vector_foreach_slot(pgp->paths, pp, j) {
-> +			pp->mpp = mpp;
-> +
-> +			/*
-> +			 * The way disassemble_map() works: If it encounters a
-> +			 * path device which isn't found in pathvec, it adds an
-> +			 * uninitialized struct path to pgp->paths, with only
-> +			 * pp->dev_t filled in. Thus if pp->udev is set here,
-> +			 * we know that the path is in pathvec already.
-> +			 */
-> +			if (pp->udev) {
-> +				if (pathinfo_flags) {
-> +					conf = get_multipath_config();
-> +					pthread_cleanup_push(put_multipath_config,
-> +							     conf);
-> +					pathinfo(pp, conf, pathinfo_flags);
-> +					pthread_cleanup_pop(1);
-> +				}
-> +				continue;
-> +			}
-> +
-> +			/* If this fails, the device is not in sysfs */
-> +			pp->udev = get_udev_device(pp->dev_t, DEV_DEVT);
-> +			if (!pp->udev) {
-> +				condlog(2, "%s: discarding non-existing path %s",
-> +					mpp->alias, pp->dev_t);
-> +				vector_del_slot(pgp->paths, j--);
-> +				free_path(pp);
-> +				must_reload = true;
-> +			} else {
-> +				int rc;
-> +
-> +				devt2devname(pp->dev, sizeof(pp->dev),
-> +					     pp->dev_t);
-> +				conf = get_multipath_config();
-> +				pthread_cleanup_push(put_multipath_config,
-> +						     conf);
-> +				pp->checkint = conf->checkint;
-> +				rc = pathinfo(pp, conf,
-> +					      DI_SYSFS|DI_WWID|DI_BLACKLIST|
-> +					      pathinfo_flags);
-> +				pthread_cleanup_pop(1);
-> +				if (rc != PATHINFO_OK) {
-> +					condlog(1, "%s: error %d in pathinfo, discarding path",
-> +						pp->dev, rc);
-> +					vector_del_slot(pgp->paths, j--);
-> +					free_path(pp);
-> +					must_reload = true;
-> +				} else {
-> +					if (mpp_has_wwid && !strlen(pp->wwid)) {
-> +						condlog(3, "%s: setting wwid from map: %s",
-> +							pp->dev, mpp->wwid);
-> +						strlcpy(pp->wwid, mpp->wwid,
-> +							sizeof(pp->wwid));
-> +					}
-> +					condlog(2, "%s: adding new path %s",
-> +						mpp->alias, pp->dev);
-> +					store_path(pathvec, pp);
-> +					pp->tick = 1;
-> +				}
-> +			}
-> +		}
-> +		if (VECTOR_SIZE(pgp->paths) != 0)
-> +			continue;
-> +	delete_pg:
-> +		condlog(2, "%s: removing empty pathgroup %d", mpp->alias, i);
-> +		vector_del_slot(mpp->pg, i--);
-> +		free_pathgroup(pgp, KEEP_PATHS);
-> +		must_reload = true;
-> +	}
-> +	return must_reload;
-> +}
-> +
->  int adopt_paths(vector pathvec, struct multipath *mpp)
->  {
->  	int i, ret;
-> diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-> index d7dfe32..6c79069 100644
-> --- a/libmultipath/structs_vec.h
-> +++ b/libmultipath/structs_vec.h
-> @@ -21,6 +21,8 @@ void orphan_path (struct path * pp, const char *reason);
->  void set_path_removed(struct path *pp);
->  
->  int verify_paths(struct multipath *mpp);
-> +bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
-> +			    int pathinfo_flags);
->  int update_mpp_paths(struct multipath * mpp, vector pathvec);
->  int update_multipath_strings (struct multipath *mpp, vector pathvec,
->  			      int is_daemon);
-> -- 
-> 2.28.0
+> +	if (is_ana_status && ns->ctrl->ana_log_buf) {
+
+Maybe call nvme_req_disposition again locally here to not carry
+the is_ana_status. But not a biggy..
+
+Overall this looks good I think.
