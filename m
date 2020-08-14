@@ -1,25 +1,18 @@
-From: "Meneghini, John" <John.Meneghini@netapp.com>
-Subject: Re: [RESEND PATCH] nvme: explicitly use normal NVMe
- error handling when appropriate
-Date: Fri, 14 Aug 2020 04:26:29 +0000
-Message-ID: <7A5B9516-373E-41A3-94F8-5ED16BB968CE@netapp.com>
-References: <6B826235-C504-4621-B8F7-34475B200979@netapp.com>
-	<20200807000755.GA28957@redhat.com>
-	<510f5aff-0437-b1ce-f7ab-c812edbea880@grimberg.me>
-	<20200807045015.GA29737@redhat.com>
-	<fec745aa-0091-ee1f-cb0f-da9e18cf0aa2@grimberg.me>
-	<20200810143620.GA19127@redhat.com> <20200810172209.GA19535@redhat.com>
-	<20200813144811.GA5452@redhat.com>
-	<20200813153623.GA30905@infradead.org>
-	<20200813174704.GA6137@redhat.com>
-	<20200813184349.GA8191@infradead.org>
+From: "McIntyre, Vincent (CASS, Marsfield)" <Vincent.Mcintyre@csiro.au>
+Subject: Re: Promise and ALUA
+Date: Fri, 14 Aug 2020 02:18:35 +0000
+Message-ID: <20200814021835.GD2644@mayhem.atnf.CSIRO.AU>
+References: <20200810043316.GH21810@mayhem.atnf.CSIRO.AU>
+	<8c910ecb-ddf8-0a91-4310-4daedb85cd89@gmail.com>
+	<20200813235143.GB2644@mayhem.atnf.CSIRO.AU>
+	<f9f8c62f-fa97-dbcb-52dd-503d392df95f@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200813184349.GA8191@infradead.org>
+In-Reply-To: <f9f8c62f-fa97-dbcb-52dd-503d392df95f@gmail.com>
 Content-Language: en-US
-Content-ID: <66C07CD1A8013D478B4CAB755053F779@namprd06.prod.outlook.com>
+Content-ID: <CD314DBDE1DFCD4084F70AA64B708D51@ausprd01.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,259 +22,254 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>
-Cc: Sagi Grimberg <sagi@grimberg.me>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Ewan Milne <emilne@redhat.com>, Chao Leng <lengchao@huawei.com>, Busch <kbusch@kernel.org>, "Meneghini,
-	John" <John.Meneghini@netapp.com>, Keith
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 8/13/20, 2:44 PM, "Christoph Hellwig" <hch@infradead.org> wrote:
+On Fri, Aug 14, 2020 at 02:24:08AM +0200, Xose Vazquez Perez wrote:
+>
+>If E830f is an Active-Active array without ALUA support,
+>add to /etc/multipath.conf:
+>
+>devices {
+>        device {
+>                vendor "Promise"
+>                product "VTrak"
+>                product_blacklist "VTrak V-LUN"
+>                path_grouping_policy "multibus"
+>                detect_prio "no"
+>                hardware_handler ""
+>                prio "const"
+>                failback "manual"
+>                no_path_retry 30
+>        }
+>}
+>
+>run update-initramfs, and reboot.
 
-    On Thu, Aug 13, 2020 at 01:47:04PM -0400, Mike Snitzer wrote:
-    > This is just a tweak to improve the high-level fault tree of core NVMe
-    > error handling.  No functional change, but for such basic errors,
-    > avoiding entering nvme_failover_req is meaningful on a code flow level.
-    > Makes code to handle errors that need local retry clearer by being more
-    > structured, less circuitous.
-  
-I don't understand how entering nvme_failover_req() is circuitous. 
+I updated multipath.conf as above, ran update-initramfs.
+# cat /etc/multipath.conf
+devices {
+        device {
+                vendor "Promise"
+                product "VTrak"
+                product_blacklist "VTrak V-LUN"
+                path_grouping_policy "multibus"
+                detect_prio "no"
+                hardware_handler ""
+                prio "const"
+                failback "manual"
+                no_path_retry 30
+        }
+}
 
-This code path is only taken if REQ_NVME_MPATH is set which - unless I am mistaken - in
-the case that you care about it will not be set.
+Also, I removed the wwid of the test LUN
 
-    > Allows NVMe core's handling of such errors to be more explicit and live
-    > in core.c rather than multipath.c -- so things like ACRE handling can be
-    > made explicitly part of core and not nested under nvme_failover_req's
-    > relatively obscure failsafe that returns false for anything it doesn't
-    > care about.
+# multipath -v 3 -w 2228a0001558b1855
+Aug 14 11:52:54 | set open fds limit to 1048576/1048576
+Aug 14 11:52:54 | loading //lib/multipath/libchecktur.so checker
+Aug 14 11:52:54 | checker tur: message table size = 3
+Aug 14 11:52:54 | loading //lib/multipath/libprioconst.so prioritizer
+Aug 14 11:52:54 | foreign library "nvme" loaded successfully
+Aug 14 11:52:54 | libdevmapper version 1.02.155 (2018-12-18)
+Aug 14 11:52:54 | DM multipath kernel driver v1.13.0
+Aug 14 11:52:54 | removing line '/2228a0001558b1855/
+' from wwids file
+Aug 14 11:52:54 | found '/2228a0001558b1855/
+'
+wwid '2228a0001558b1855' removed
+Aug 14 11:52:54 | unloading const prioritizer
+Aug 14 11:52:54 | unloading tur checker
 
-The ACRE handling is already explicitly a part of the core.  I don't understand what
-you are after here Mike.  Are you saying that you don't want the ACRE code to run
-when REQ_NVME_MPATH is clear?
+# cat /etc/multipath/wwids
+# Multipath wwids, Version : 1.0
+# NOTE: This file is automatically maintained by multipath and multipathd.
+# You should not need to edit this file in normal circumstances.
+#
+# Valid WWIDs:
+/2221f000155c0792e/
+/3600a098000b173f60000079e5da82d73/
+/222e300015555469c/
+#2228a0001558b1855/
 
-    If we're going that way I'd rather do something like the (untested)
-    patch below that adds a dispostion function with a function that
-    decides it and then just switches on it:
+# multipath -F
+# multipath -l
+(no output)
+# multipath -r
+# multpath -l |grep dm-
+3600a098000b173f60000079e5da82d73 dm-10 DELL,MD38xxf
 
-Christoph, it looks like you've moved a lot of stuff around here, with no actual
-functional change.... but it's really hard for me to tell.  Please be sure to cc me if this
-becomes a real patch.
+# reboot
 
-How does your patch solve the problem of making dm-multipath work with command retries?
+# multipath -ll
+3600a098000b173f60000079e5da82d73 dm-10 DELL,MD38xxf
+size=40T features='5 queue_if_no_path pg_init_retries 50 queue_mode mq' hwhandler='1 rdac' wp=rw
+|-+- policy='service-time 0' prio=14 status=active
+| |- 1:0:10:0  sdaa 65:160 active ready running
+| |- 1:0:12:0  sdac 65:192 active ready running
+| |- 1:0:14:0  sdae 65:224 active ready running
+| `- 1:0:8:0   sdy  65:128 active ready running
+`-+- policy='service-time 0' prio=9 status=enabled
+  |- 1:0:11:0  sdab 65:176 active ready running
+  |- 1:0:13:0  sdad 65:208 active ready running
+  |- 1:0:7:0   sdx  65:112 active ready running
+  `- 1:0:9:0   sdz  65:144 active ready running
 
-Mike, do you want the nvme-core driver to retry commands on the same path, with CRD, for the dm-multipath
-use case... or are you looking for a different treatment of REQ_FAILFAST_DEV... or what? 
+#  multipath -T
+defaults {
+        verbosity 2
+        polling_interval 5
+        max_polling_interval 20
+        reassign_maps "no"
+        multipath_dir "//lib/multipath"
+        path_selector "service-time 0"
+        path_grouping_policy "failover"
+        uid_attribute "ID_SERIAL"
+        prio "const"
+        prio_args ""
+        features "0"
+        path_checker "tur"
+        alias_prefix "mpath"
+        failback "manual"
+        rr_min_io 1000
+        rr_min_io_rq 1
+        max_fds "max"
+        rr_weight "uniform"
+        queue_without_daemon "no"
+        flush_on_last_del "no"
+        user_friendly_names "no"
+        fast_io_fail_tmo 5
+        bindings_file "/etc/multipath/bindings"
+        wwids_file "/etc/multipath/wwids"
+        prkeys_file "/etc/multipath/prkeys"
+        log_checker_err always
+        all_tg_pt "no"
+        retain_attached_hw_handler "yes"
+        detect_prio "yes"
+        detect_checker "yes"
+        force_sync "no"
+        strict_timing "no"
+        deferred_remove "no"
+        config_dir "/etc/multipath/conf.d"
+        delay_watch_checks "no"
+        delay_wait_checks "no"
+        marginal_path_err_sample_time "no"
+        marginal_path_err_rate_threshold "no"
+        marginal_path_err_recheck_gap_time "no"
+        marginal_path_double_failed_time "no"
+        find_multipaths "strict"
+        uxsock_timeout 4000
+        retrigger_tries 0
+        retrigger_delay 10
+        missing_uev_wait_timeout 30
+        skip_kpartx "no"
+        disable_changed_wwids "yes"
+        remove_retries 0
+        ghost_delay "no"
+        find_multipaths_timeout -10
+}
+blacklist {
+        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st|dcssblk)[0-9]"
+        devnode "^(td|hd|vd)[a-z]"
+        devnode "^cciss!c[0-9]d[0-9]*"
+        device {
+                vendor "SGI"
+                product "Universal Xport"
+        }
+        device {
+                vendor "^DGC"
+                product "LUNZ"
+        }
+        device {
+                vendor "EMC"
+                product "LUNZ"
+        }
+        device {
+                vendor "DELL"
+                product "Universal Xport"
+        }
+        device {
+                vendor "IBM"
+                product "Universal Xport"
+        }
+        device {
+                vendor "IBM"
+                product "S/390"
+        }
+        device {
+                vendor "(NETAPP|LSI|ENGENIO)"
+                product "Universal Xport"
+        }
+        device {
+                vendor "STK"
+                product "Universal Xport"
+        }
+        device {
+                vendor "SUN"
+                product "Universal Xport"
+        }
+        device {
+                vendor "(Intel|INTEL)"
+                product "VTrak V-LUN"
+        }
+        device {
+                vendor "Promise"
+                product "Vess V-LUN"
+        }
+        device {
+                vendor "Promise"
+                product "VTrak V-LUN"
+        }
+}
+blacklist_exceptions {
+        property "(SCSI_IDENT_|ID_WWN)"
+}
+devices {
+        device {
+                vendor "Promise"
+                product "VTrak"
+                product_blacklist "VTrak V-LUN"
+                path_grouping_policy "multibus"
+                hardware_handler ""
+                prio "const"
+                failback "manual"
+                no_path_retry 30
+                detect_prio "no"
+        }
+        device {
+                vendor "DELL"
+                product "^MD3"
+                product_blacklist "Universal Xport"
+                path_grouping_policy "group_by_prio"
+                path_checker "rdac"
+                features "2 pg_init_retries 50"
+                hardware_handler "1 rdac"
+                prio "rdac"
+                failback "immediate"
+                no_path_retry 30
+        }
+}
+overrides {
+}
+multipaths {
+        multipath {
+                wwid "3600a098000b173f60000079e5da82d73"
+        }
+}
 
-Maybe I'm not seeing it.
 
-/John
+This is the device section I had before for the Promise
+        device {
+                vendor "Promise"
+                product "VTrak"
+                product_blacklist "VTrak V-LUN"
+                path_grouping_policy "multibus"
+                path_selector "service-time 0"
+                path_checker "tur"
+                prio "alua"
+                failback "immediate"
+                no_path_retry 30
+        }
+The only real differences are the prio and failback.
 
-    diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-    index 88cff309d8e4f0..a740320f0d4ee7 100644
-    --- a/drivers/nvme/host/core.c
-    +++ b/drivers/nvme/host/core.c
-    @@ -241,17 +241,6 @@ static blk_status_t nvme_error_status(u16 status)
-            }
-     }
-
-    -static inline bool nvme_req_needs_retry(struct request *req)
-    -{
-    -       if (blk_noretry_request(req))
-    -               return false;
-    -       if (nvme_req(req)->status & NVME_SC_DNR)
-    -               return false;
-    -       if (nvme_req(req)->retries >= nvme_max_retries)
-    -               return false;
-    -       return true;
-    -}
-    -
-     static void nvme_retry_req(struct request *req)
-     {
-            struct nvme_ns *ns = req->q->queuedata;
-    @@ -268,33 +257,75 @@ static void nvme_retry_req(struct request *req)
-            blk_mq_delay_kick_requeue_list(req->q, delay);
-     }
-
-    -void nvme_complete_rq(struct request *req)
-    +enum nvme_disposition {
-    +       COMPLETE,
-    +       RETRY,
-    +       REDIRECT_ANA,
-    +       REDIRECT_TMP,
-    +};
-    +
-    +static inline enum nvme_disposition nvme_req_disposition(struct request *req)
-    +{
-    +       if (likely(nvme_req(req)->status == 0))
-    +               return COMPLETE;
-    +
-    +       if (blk_noretry_request(req) ||
-    +           (nvme_req(req)->status & NVME_SC_DNR) ||
-    +           nvme_req(req)->retries >= nvme_max_retries)
-    +               return COMPLETE;
-    +
-    +       if (req->cmd_flags & REQ_NVME_MPATH) {
-    +               switch (nvme_req(req)->status & 0x7ff) {
-    +               case NVME_SC_ANA_TRANSITION:
-    +               case NVME_SC_ANA_INACCESSIBLE:
-    +               case NVME_SC_ANA_PERSISTENT_LOSS:
-    +                       return REDIRECT_ANA;
-    +               case NVME_SC_HOST_PATH_ERROR:
-    +               case NVME_SC_HOST_ABORTED_CMD:
-    +                       return REDIRECT_TMP;
-    +               }
-    +       }
-    +
-    +       if (blk_queue_dying(req->q))
-    +               return COMPLETE;
-    +       return RETRY;
-    +}
-    +
-    +static inline void nvme_complete_req(struct request *req)
-     {
-            blk_status_t status = nvme_error_status(nvme_req(req)->status);
-
-    -       trace_nvme_complete_rq(req);
-    +       if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) &&
-    +           req_op(req) == REQ_OP_ZONE_APPEND)
-    +               req->__sector = nvme_lba_to_sect(req->q->queuedata,
-    +                       le64_to_cpu(nvme_req(req)->result.u64));
-    +
-    +       nvme_trace_bio_complete(req, status);
-    +       blk_mq_end_request(req, status);
-    +}
-
-    +void nvme_complete_rq(struct request *req)
-    +{
-    +       trace_nvme_complete_rq(req);
-            nvme_cleanup_cmd(req);
-
-            if (nvme_req(req)->ctrl->kas)
-                    nvme_req(req)->ctrl->comp_seen = true;
-
-    -       if (unlikely(status != BLK_STS_OK && nvme_req_needs_retry(req))) {
-    -               if ((req->cmd_flags & REQ_NVME_MPATH) && nvme_failover_req(req))
-    -                       return;
-    -
-    -               if (!blk_queue_dying(req->q)) {
-    -                       nvme_retry_req(req);
-    -                       return;
-    -               }
-    -       } else if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) &&
-    -                  req_op(req) == REQ_OP_ZONE_APPEND) {
-    -               req->__sector = nvme_lba_to_sect(req->q->queuedata,
-    -                       le64_to_cpu(nvme_req(req)->result.u64));
-    +       switch (nvme_req_disposition(req)) {
-    +       case COMPLETE:
-    +               nvme_complete_req(req);
-    +               return;
-    +       case RETRY:
-    +               nvme_retry_req(req);
-    +               return;
-    +       case REDIRECT_ANA:
-    +               nvme_failover_req(req, true);
-    +               return;
-    +       case REDIRECT_TMP:
-    +               nvme_failover_req(req, false);
-    +               return;
-            }
-    -
-    -       nvme_trace_bio_complete(req, status);
-    -       blk_mq_end_request(req, status);
-     }
-     EXPORT_SYMBOL_GPL(nvme_complete_rq);
-
-    diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
-    index 3ded54d2c9c6ad..0c22b2c88687a2 100644
-    --- a/drivers/nvme/host/multipath.c
-    +++ b/drivers/nvme/host/multipath.c
-    @@ -65,51 +65,32 @@ void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
-            }
-     }
-
-    -bool nvme_failover_req(struct request *req)
-    +void nvme_failover_req(struct request *req, bool is_ana_status)
-     {
-            struct nvme_ns *ns = req->q->queuedata;
-    -       u16 status = nvme_req(req)->status;
-            unsigned long flags;
-
-    -       switch (status & 0x7ff) {
-    -       case NVME_SC_ANA_TRANSITION:
-    -       case NVME_SC_ANA_INACCESSIBLE:
-    -       case NVME_SC_ANA_PERSISTENT_LOSS:
-    -               /*
-    -                * If we got back an ANA error we know the controller is alive,
-    -                * but not ready to serve this namespaces.  The spec suggests
-    -                * we should update our general state here, but due to the fact
-    -                * that the admin and I/O queues are not serialized that is
-    -                * fundamentally racy.  So instead just clear the current path,
-    -                * mark the the path as pending and kick of a re-read of the ANA
-    -                * log page ASAP.
-    -                */
-    -               nvme_mpath_clear_current_path(ns);
-    -               if (ns->ctrl->ana_log_buf) {
-    -                       set_bit(NVME_NS_ANA_PENDING, &ns->flags);
-    -                       queue_work(nvme_wq, &ns->ctrl->ana_work);
-    -               }
-    -               break;
-    -       case NVME_SC_HOST_PATH_ERROR:
-    -       case NVME_SC_HOST_ABORTED_CMD:
-    -               /*
-    -                * Temporary transport disruption in talking to the controller.
-    -                * Try to send on a new path.
-    -                */
-    -               nvme_mpath_clear_current_path(ns);
-    -               break;
-    -       default:
-    -               /* This was a non-ANA error so follow the normal error path. */
-    -               return false;
-    +       nvme_mpath_clear_current_path(ns);
-    +
-    +       /*
-    +        * If we got back an ANA error we know the controller is alive, but not
-    +        * ready to serve this namespaces.  The spec suggests we should update
-    +        * our general state here, but due to the fact that the admin and I/O
-    +        * queues are not serialized that is fundamentally racy.  So instead
-    +        * just clear the current path, mark the the path as pending and kick
-    +        * of a re-read of the ANA log page ASAP.
-    +        */
-    +       if (is_ana_status && ns->ctrl->ana_log_buf) {
-    +               set_bit(NVME_NS_ANA_PENDING, &ns->flags);
-    +               queue_work(nvme_wq, &ns->ctrl->ana_work);
-            }
-
-            spin_lock_irqsave(&ns->head->requeue_lock, flags);
-            blk_steal_bios(&ns->head->requeue_list, req);
-            spin_unlock_irqrestore(&ns->head->requeue_lock, flags);
-    -       blk_mq_end_request(req, 0);
-
-    +       blk_mq_end_request(req, 0);
-            kblockd_schedule_work(&ns->head->requeue_work);
-    -       return true;
-     }
-
-     void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl)
-    diff --git a/drivers/nvme/host/nvme.h b/drivers/nvme/host/nvme.h
-    index ebb8c3ed388554..aeff1c491ac2ef 100644
-    --- a/drivers/nvme/host/nvme.h
-    +++ b/drivers/nvme/host/nvme.h
-    @@ -629,7 +629,7 @@ void nvme_mpath_wait_freeze(struct nvme_subsystem *subsys);
-     void nvme_mpath_start_freeze(struct nvme_subsystem *subsys);
-     void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
-                            struct nvme_ctrl *ctrl, int *flags);
-    -bool nvme_failover_req(struct request *req);
-    +void nvme_failover_req(struct request *req, bool is_ana_status);
-     void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl);
-     int nvme_mpath_alloc_disk(struct nvme_ctrl *ctrl,struct nvme_ns_head *head);
-     void nvme_mpath_add_disk(struct nvme_ns *ns, struct nvme_id_ns *id);
-    @@ -688,9 +688,8 @@ static inline void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
-            sprintf(disk_name, "nvme%dn%d", ctrl->instance, ns->head->instance);
-     }
-
-    -static inline bool nvme_failover_req(struct request *req)
-    +static inline void nvme_failover_req(struct request *req, bool is_ana_status)
-     {
-    -       return false;
-     }
-     static inline void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl)
-     {
+Vince
