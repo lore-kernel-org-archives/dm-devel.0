@@ -1,8 +1,8 @@
 From: "Meneghini, John" <John.Meneghini@netapp.com>
 Subject: Re: [RESEND PATCH] nvme: explicitly use normal NVMe
  error handling when appropriate
-Date: Thu, 13 Aug 2020 15:29:00 +0000
-Message-ID: <A90B4EF6-354C-4735-9E5A-45BF27F520E2@netapp.com>
+Date: Fri, 14 Aug 2020 03:23:47 +0000
+Message-ID: <FE38832C-9966-4455-BE4D-74745AD1AEB1@netapp.com>
 References: <E3390A8E-D582-47BA-A085-21663D883365@netapp.com>
 	<20200806184057.GA27858@redhat.com> <20200806191943.GA27868@redhat.com>
 	<6B826235-C504-4621-B8F7-34475B200979@netapp.com>
@@ -13,12 +13,12 @@ References: <E3390A8E-D582-47BA-A085-21663D883365@netapp.com>
 	<20200810143620.GA19127@redhat.com> <20200810172209.GA19535@redhat.com>
 	<20200813144811.GA5452@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20200813144811.GA5452@redhat.com>
 Content-Language: en-US
-Content-ID: <3882C5DF93795248980DB4250D0A399D@namprd06.prod.outlook.com>
+Content-ID: <54BD68F19977E84E8DFC5E2383C18431@namprd06.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -33,59 +33,92 @@ Cc: "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Christoph
 	John" <John.Meneghini@netapp.com>, Ewan Milne <emilne@redhat.com>
 List-Id: dm-devel.ids
 
-TWlrZSwgCgpJIGRvbid0IHNlZSB5b3VyIHBhdGNoIGF0OgoKaHR0cHM6Ly9wYXRjaHdvcmsua2Vy
-bmVsLm9yZy9wcm9qZWN0L2xpbnV4LWJsb2NrL2xpc3QvP3N1Ym1pdHRlcj0xNjQzCgpDYW4geW91
-IHBsZWFzZSB1cGxvYWQgdGhpcyBwYXRjaCB0aGVyZT8KClRoYW5rcywKCi9Kb2huCgrvu79PbiA4
-LzEzLzIwLCAxMDo0OCBBTSwgIk1pa2UgU25pdHplciIgPHNuaXR6ZXJAcmVkaGF0LmNvbT4gd3Jv
-dGU6CgogICAgQ29tbWl0IDc2NGU5MzMyMDk4YzAgKCJudm1lLW11bHRpcGF0aDogZG8gbm90IHJl
-c2V0IG9uIHVua25vd24KICAgIHN0YXR1cyIpLCBhbW9uZyBvdGhlciB0aGluZ3MsIGZpeGVkIE5W
-TUVfU0NfQ01EX0lOVEVSUlVQVEVEIGVycm9yCiAgICBoYW5kbGluZyBieSBjaGFuZ2luZyBtdWx0
-aXBhdGhpbmcncyBudm1lX2ZhaWxvdmVyX3JlcSgpIHRvIHNob3J0LWNpcmN1aXQKICAgIHBhdGgg
-ZmFpbG92ZXIgYW5kIHRoZW4gZmFsbGJhY2sgdG8gTlZNZSdzIG5vcm1hbCBlcnJvciBoYW5kbGlu
-ZyAod2hpY2gKICAgIHRha2VzIGNhcmUgb2YgTlZNRV9TQ19DTURfSU5URVJSVVBURUQpLgoKICAg
-IFRoaXMgZGV0b3VyIHRocm91Z2ggbmF0aXZlIE5WTWUgbXVsdGlwYXRoaW5nIGNvZGUgaXMgdW53
-ZWxjb21lIGJlY2F1c2UKICAgIGl0IHByZXZlbnRzIE5WTWUgY29yZSBmcm9tIGhhbmRsaW5nIE5W
-TUVfU0NfQ01EX0lOVEVSUlVQVEVEIGluZGVwZW5kZW50CiAgICBvZiBhbnkgbXVsdGlwYXRoaW5n
-IGNvbmNlcm5zLgoKICAgIEludHJvZHVjZSBudm1lX3N0YXR1c19uZWVkc19sb2NhbF9lcnJvcl9o
-YW5kbGluZygpIHRvIHByaW9yaXRpemUKICAgIG5vbi1mYWlsb3ZlciByZXRyeSwgd2hlbiBhcHBy
-b3ByaWF0ZSwgaW4gdGVybXMgb2Ygbm9ybWFsIE5WTWUgZXJyb3IKICAgIGhhbmRsaW5nLiAgbnZt
-ZV9zdGF0dXNfbmVlZHNfbG9jYWxfZXJyb3JfaGFuZGxpbmcoKSB3aWxsIG5hdHVyZWx5IGV2b2x2
-ZQogICAgdG8gaW5jbHVkZSBoYW5kbGluZyBvZiBhbnkgb3RoZXIgZXJyb3JzIHRoYXQgbm9ybWFs
-IGVycm9yIGhhbmRsaW5nIG11c3QKICAgIGJlIHVzZWQgZm9yLgoKICAgIG52bWVfZmFpbG92ZXJf
-cmVxKCkncyBhYmlsaXR5IHRvIGZhbGxiYWNrIHRvIG5vcm1hbCBOVk1lIGVycm9yIGhhbmRsaW5n
-CiAgICBoYXMgYmVlbiBwcmVzZXJ2ZWQgYmVjYXVzZSBpdCBtYXkgYmUgdXNlZnVsIGZvciBmdXR1
-cmUgTlZNRV9TQyB0aGF0CiAgICBudm1lX3N0YXR1c19uZWVkc19sb2NhbF9lcnJvcl9oYW5kbGlu
-ZygpIGhhc24ndCBiZWVuIHRyYWluZWQgZm9yIHlldC4KCiAgICBTaWduZWQtb2ZmLWJ5OiBNaWtl
-IFNuaXR6ZXIgPHNuaXR6ZXJAcmVkaGF0LmNvbT4KICAgIC0tLQogICAgIGRyaXZlcnMvbnZtZS9o
-b3N0L2NvcmUuYyB8IDE2ICsrKysrKysrKysrKysrLS0KICAgICAxIGZpbGUgY2hhbmdlZCwgMTQg
-aW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKCiAgICBkaWZmIC0tZ2l0IGEvZHJpdmVycy9u
-dm1lL2hvc3QvY29yZS5jIGIvZHJpdmVycy9udm1lL2hvc3QvY29yZS5jCiAgICBpbmRleCA4OGNm
-ZjMwOWQ4ZTQuLmJlNzQ5YjY5MGFmNyAxMDA2NDQKICAgIC0tLSBhL2RyaXZlcnMvbnZtZS9ob3N0
-L2NvcmUuYwogICAgKysrIGIvZHJpdmVycy9udm1lL2hvc3QvY29yZS5jCiAgICBAQCAtMjUyLDYg
-KzI1MiwxNiBAQCBzdGF0aWMgaW5saW5lIGJvb2wgbnZtZV9yZXFfbmVlZHNfcmV0cnkoc3RydWN0
-IHJlcXVlc3QgKnJlcSkKICAgICAgICAgICAgcmV0dXJuIHRydWU7CiAgICAgfQoKICAgICtzdGF0
-aWMgaW5saW5lIGJvb2wgbnZtZV9zdGF0dXNfbmVlZHNfbG9jYWxfZXJyb3JfaGFuZGxpbmcodTE2
-IHN0YXR1cykKICAgICt7CiAgICArICAgICAgIHN3aXRjaCAoc3RhdHVzICYgMHg3ZmYpIHsKICAg
-ICsgICAgICAgY2FzZSBOVk1FX1NDX0NNRF9JTlRFUlJVUFRFRDoKICAgICsgICAgICAgICAgICAg
-ICByZXR1cm4gdHJ1ZTsKICAgICsgICAgICAgZGVmYXVsdDoKICAgICsgICAgICAgICAgICAgICBy
-ZXR1cm4gZmFsc2U7CiAgICArICAgICAgIH0KICAgICt9CiAgICArCiAgICAgc3RhdGljIHZvaWQg
-bnZtZV9yZXRyeV9yZXEoc3RydWN0IHJlcXVlc3QgKnJlcSkKICAgICB7CiAgICAgICAgICAgIHN0
-cnVjdCBudm1lX25zICpucyA9IHJlcS0+cS0+cXVldWVkYXRhOwogICAgQEAgLTI3MCw3ICsyODAs
-OCBAQCBzdGF0aWMgdm9pZCBudm1lX3JldHJ5X3JlcShzdHJ1Y3QgcmVxdWVzdCAqcmVxKQoKICAg
-ICB2b2lkIG52bWVfY29tcGxldGVfcnEoc3RydWN0IHJlcXVlc3QgKnJlcSkKICAgICB7CiAgICAt
-ICAgICAgIGJsa19zdGF0dXNfdCBzdGF0dXMgPSBudm1lX2Vycm9yX3N0YXR1cyhudm1lX3JlcShy
-ZXEpLT5zdGF0dXMpOwogICAgKyAgICAgICB1MTYgbnZtZV9zdGF0dXMgPSBudm1lX3JlcShyZXEp
-LT5zdGF0dXM7CiAgICArICAgICAgIGJsa19zdGF0dXNfdCBzdGF0dXMgPSBudm1lX2Vycm9yX3N0
-YXR1cyhudm1lX3N0YXR1cyk7CgogICAgICAgICAgICB0cmFjZV9udm1lX2NvbXBsZXRlX3JxKHJl
-cSk7CgogICAgQEAgLTI4MCw3ICsyOTEsOCBAQCB2b2lkIG52bWVfY29tcGxldGVfcnEoc3RydWN0
-IHJlcXVlc3QgKnJlcSkKICAgICAgICAgICAgICAgICAgICBudm1lX3JlcShyZXEpLT5jdHJsLT5j
-b21wX3NlZW4gPSB0cnVlOwoKICAgICAgICAgICAgaWYgKHVubGlrZWx5KHN0YXR1cyAhPSBCTEtf
-U1RTX09LICYmIG52bWVfcmVxX25lZWRzX3JldHJ5KHJlcSkpKSB7CiAgICAtICAgICAgICAgICAg
-ICAgaWYgKChyZXEtPmNtZF9mbGFncyAmIFJFUV9OVk1FX01QQVRIKSAmJiBudm1lX2ZhaWxvdmVy
-X3JlcShyZXEpKQogICAgKyAgICAgICAgICAgICAgIGlmICghbnZtZV9zdGF0dXNfbmVlZHNfbG9j
-YWxfZXJyb3JfaGFuZGxpbmcobnZtZV9zdGF0dXMpICYmCiAgICArICAgICAgICAgICAgICAgICAg
-IChyZXEtPmNtZF9mbGFncyAmIFJFUV9OVk1FX01QQVRIKSAmJiBudm1lX2ZhaWxvdmVyX3JlcShy
-ZXEpKQogICAgICAgICAgICAgICAgICAgICAgICAgICAgcmV0dXJuOwoKICAgICAgICAgICAgICAg
-ICAgICBpZiAoIWJsa19xdWV1ZV9keWluZyhyZXEtPnEpKSB7CiAgICAtLQogICAgMi4xOC4wCgoK
-Ci0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3
-LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 8/13/20, 10:48 AM, "Mike Snitzer" <snitzer@redhat.com> wrote:
+
+    Commit 764e9332098c0 ("nvme-multipath: do not reset on unknown
+    status"), among other things, fixed NVME_SC_CMD_INTERRUPTED error
+    handling by changing multipathing's nvme_failover_req() to short-circuit
+    path failover and then fallback to NVMe's normal error handling (which
+    takes care of NVME_SC_CMD_INTERRUPTED).
+
+    This detour through native NVMe multipathing code is unwelcome because
+    it prevents NVMe core from handling NVME_SC_CMD_INTERRUPTED independent
+    of any multipathing concerns.
+
+    Introduce nvme_status_needs_local_error_handling() to prioritize
+    non-failover retry, when appropriate, in terms of normal NVMe error
+    handling.  nvme_status_needs_local_error_handling() will naturely evolve
+    to include handling of any other errors that normal error handling must
+    be used for.
+
+How is this any better than blk_path_error()? 
+
+    nvme_failover_req()'s ability to fallback to normal NVMe error handling
+    has been preserved because it may be useful for future NVME_SC that
+    nvme_status_needs_local_error_handling() hasn't been trained for yet.
+
+    Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+    ---
+     drivers/nvme/host/core.c | 16 ++++++++++++++--
+     1 file changed, 14 insertions(+), 2 deletions(-)
+
+    diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
+    index 88cff309d8e4..be749b690af7 100644
+    --- a/drivers/nvme/host/core.c
+    +++ b/drivers/nvme/host/core.c
+    @@ -252,6 +252,16 @@ static inline bool nvme_req_needs_retry(struct request *req)
+            return true;
+     }
+
+    +static inline bool nvme_status_needs_local_error_handling(u16 status)
+    +{
+    +       switch (status & 0x7ff) {
+    +       case NVME_SC_CMD_INTERRUPTED:
+    +               return true;
+    +       default:
+    +               return false;
+    +       }
+    +}
+
+I assume that what you mean by nvme_status_needs_local_error_handling is - do you want the nvme core 
+driver to handle the command retry.
+
+If this is true, I don't think this function will ever work correctly because,. as discussed, whether or
+not the command needs to be retried has nothing to do with the NVMe Status Code Field itself, it
+has to so with the DNR bit, the CRD field, and the Status Code Type field - in that order.
+
+    +
+     static void nvme_retry_req(struct request *req)
+     {
+            struct nvme_ns *ns = req->q->queuedata;
+    @@ -270,7 +280,8 @@ static void nvme_retry_req(struct request *req)
+
+     void nvme_complete_rq(struct request *req)
+     {
+    -       blk_status_t status = nvme_error_status(nvme_req(req)->status);
+    +       u16 nvme_status = nvme_req(req)->status;
+    +       blk_status_t status = nvme_error_status(nvme_status);
+
+            trace_nvme_complete_rq(req);
+
+    @@ -280,7 +291,8 @@ void nvme_complete_rq(struct request *req)
+                    nvme_req(req)->ctrl->comp_seen = true;
+
+            if (unlikely(status != BLK_STS_OK && nvme_req_needs_retry(req))) {
+    -               if ((req->cmd_flags & REQ_NVME_MPATH) && nvme_failover_req(req))
+    +               if (!nvme_status_needs_local_error_handling(nvme_status) &&
+
+This defeats the nvme-multipath logic by inserting  a second evaluation of the NVMe Status Code into the retry logic.
+
+This is basically another version of  blk_path_error().
+
+In fact, in your case REQ_NVME_MPATH is probably not set, so I don't see what difference this would make at all.
+
+/John
+
+    +                   (req->cmd_flags & REQ_NVME_MPATH) && nvme_failover_req(req))
+                            return;
+
+                    if (!blk_queue_dying(req->q)) {
+    --
+    2.18.0
