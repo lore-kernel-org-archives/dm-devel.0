@@ -1,25 +1,25 @@
 From: "Meneghini, John" <John.Meneghini@netapp.com>
 Subject: Re: [RESEND PATCH] nvme: explicitly use normal NVMe
  error handling when appropriate
-Date: Thu, 13 Aug 2020 15:59:22 +0000
-Message-ID: <5A6AA63E-77FE-45CB-A16B-67AAB9346531@netapp.com>
-References: <20200806191943.GA27868@redhat.com>
-	<6B826235-C504-4621-B8F7-34475B200979@netapp.com>
+Date: Fri, 14 Aug 2020 04:26:29 +0000
+Message-ID: <7A5B9516-373E-41A3-94F8-5ED16BB968CE@netapp.com>
+References: <6B826235-C504-4621-B8F7-34475B200979@netapp.com>
 	<20200807000755.GA28957@redhat.com>
 	<510f5aff-0437-b1ce-f7ab-c812edbea880@grimberg.me>
 	<20200807045015.GA29737@redhat.com>
 	<fec745aa-0091-ee1f-cb0f-da9e18cf0aa2@grimberg.me>
 	<20200810143620.GA19127@redhat.com> <20200810172209.GA19535@redhat.com>
 	<20200813144811.GA5452@redhat.com>
-	<A90B4EF6-354C-4735-9E5A-45BF27F520E2@netapp.com>
-	<20200813154320.GA5707@redhat.com>
+	<20200813153623.GA30905@infradead.org>
+	<20200813174704.GA6137@redhat.com>
+	<20200813184349.GA8191@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200813154320.GA5707@redhat.com>
+In-Reply-To: <20200813184349.GA8191@infradead.org>
 Content-Language: en-US
-Content-ID: <5E473B514C6C5E4FB04E642ABC4C6758@namprd06.prod.outlook.com>
+Content-ID: <66C07CD1A8013D478B4CAB755053F779@namprd06.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,83 +29,259 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Sagi Grimberg <sagi@grimberg.me>, Christoph, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, Hellwig <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Chao Leng <lengchao@huawei.com>, Keith Busch <kbusch@kernel.org>, "Meneghini, John" <John.Meneghini@netapp.com>, Ewan Milne <emilne@redhat.com>
+To: Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>
+Cc: Sagi Grimberg <sagi@grimberg.me>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Ewan Milne <emilne@redhat.com>, Chao Leng <lengchao@huawei.com>, Busch <kbusch@kernel.org>, "Meneghini,
+	John" <John.Meneghini@netapp.com>, Keith
 List-Id: dm-devel.ids
 
-VGhhdCB3b3JrcyBNaWtlLiAKClVuZm9ydHVuYXRlbHksIEkgaGF2ZSB0byB3b3JrIHdpdGggdGhl
-IGNvcnBvcmF0ZSBNUyBvZmZpY2UgZW1haWwgaGFuZGxlciAod2hpY2ggc3Vja3MpICBhbmQgZG93
-bmxvYWRpbmcgdGhlIC5wYXRjaCBmaWxlIHdvcmtzIG11Y2ggYmV0dGVyIGZvciBtZS4KClRoYW5r
-cywKCi9Kb2huCgrvu79PbiA4LzEzLzIwLCAxMTo0MyBBTSwgIk1pa2UgU25pdHplciIgPHNuaXR6
-ZXJAcmVkaGF0LmNvbT4gd3JvdGU6CgogICAgTWF5YmUgYmVjYXVzZSBJIGRpZG4ndCBjYyBsaW51
-eC1ibG9jaz8KICAgIE9ubHkgd2F5IHRoYXQgSSBrbm93IHRvICJ1cGxvYWQgdGhpcyBwYXRjaCB0
-aGVyZSIgaXMgdG8gaGF2ZSBjYydkCiAgICBsaW51eC1ibG9jay4KCiAgICBCdXQgdGhlIHBhdGNo
-IGlzIGluIGRtLWRldmVsJ3MgcGF0Y2h3b3JrIGhlcmU6CiAgICBodHRwczovL3BhdGNod29yay5r
-ZXJuZWwub3JnL3BhdGNoLzExNzEyNTYzLwoKICAgIElzIHRoYXQgc3VmZmljaWVudCBmb3IgeW91
-ciBuZWVkcz8KCiAgICBUaGFua3MsCiAgICBNaWtlCgogICAgT24gVGh1LCBBdWcgMTMgMjAyMCBh
-dCAxMToyOWFtIC0wNDAwLAogICAgTWVuZWdoaW5pLCBKb2huIDxKb2huLk1lbmVnaGluaUBuZXRh
-cHAuY29tPiB3cm90ZToKCiAgICA+IE1pa2UsCiAgICA+CiAgICA+IEkgZG9uJ3Qgc2VlIHlvdXIg
-cGF0Y2ggYXQ6CiAgICA+CiAgICA+IGh0dHBzOi8vcGF0Y2h3b3JrLmtlcm5lbC5vcmcvcHJvamVj
-dC9saW51eC1ibG9jay9saXN0Lz9zdWJtaXR0ZXI9MTY0MwogICAgPgogICAgPiBDYW4geW91IHBs
-ZWFzZSB1cGxvYWQgdGhpcyBwYXRjaCB0aGVyZT8KICAgID4KICAgID4gVGhhbmtzLAogICAgPgog
-ICAgPiAvSm9obgogICAgPgogICAgPiBPbiA4LzEzLzIwLCAxMDo0OCBBTSwgIk1pa2UgU25pdHpl
-ciIgPHNuaXR6ZXJAcmVkaGF0LmNvbT4gd3JvdGU6CiAgICA+CiAgICA+ICAgICBDb21taXQgNzY0
-ZTkzMzIwOThjMCAoIm52bWUtbXVsdGlwYXRoOiBkbyBub3QgcmVzZXQgb24gdW5rbm93bgogICAg
-PiAgICAgc3RhdHVzIiksIGFtb25nIG90aGVyIHRoaW5ncywgZml4ZWQgTlZNRV9TQ19DTURfSU5U
-RVJSVVBURUQgZXJyb3IKICAgID4gICAgIGhhbmRsaW5nIGJ5IGNoYW5naW5nIG11bHRpcGF0aGlu
-ZydzIG52bWVfZmFpbG92ZXJfcmVxKCkgdG8gc2hvcnQtY2lyY3VpdAogICAgPiAgICAgcGF0aCBm
-YWlsb3ZlciBhbmQgdGhlbiBmYWxsYmFjayB0byBOVk1lJ3Mgbm9ybWFsIGVycm9yIGhhbmRsaW5n
-ICh3aGljaAogICAgPiAgICAgdGFrZXMgY2FyZSBvZiBOVk1FX1NDX0NNRF9JTlRFUlJVUFRFRCku
-CiAgICA+CiAgICA+ICAgICBUaGlzIGRldG91ciB0aHJvdWdoIG5hdGl2ZSBOVk1lIG11bHRpcGF0
-aGluZyBjb2RlIGlzIHVud2VsY29tZSBiZWNhdXNlCiAgICA+ICAgICBpdCBwcmV2ZW50cyBOVk1l
-IGNvcmUgZnJvbSBoYW5kbGluZyBOVk1FX1NDX0NNRF9JTlRFUlJVUFRFRCBpbmRlcGVuZGVudAog
-ICAgPiAgICAgb2YgYW55IG11bHRpcGF0aGluZyBjb25jZXJucy4KICAgID4KICAgID4gICAgIElu
-dHJvZHVjZSBudm1lX3N0YXR1c19uZWVkc19sb2NhbF9lcnJvcl9oYW5kbGluZygpIHRvIHByaW9y
-aXRpemUKICAgID4gICAgIG5vbi1mYWlsb3ZlciByZXRyeSwgd2hlbiBhcHByb3ByaWF0ZSwgaW4g
-dGVybXMgb2Ygbm9ybWFsIE5WTWUgZXJyb3IKICAgID4gICAgIGhhbmRsaW5nLiAgbnZtZV9zdGF0
-dXNfbmVlZHNfbG9jYWxfZXJyb3JfaGFuZGxpbmcoKSB3aWxsIG5hdHVyZWx5IGV2b2x2ZQogICAg
-PiAgICAgdG8gaW5jbHVkZSBoYW5kbGluZyBvZiBhbnkgb3RoZXIgZXJyb3JzIHRoYXQgbm9ybWFs
-IGVycm9yIGhhbmRsaW5nIG11c3QKICAgID4gICAgIGJlIHVzZWQgZm9yLgogICAgPgogICAgPiAg
-ICAgbnZtZV9mYWlsb3Zlcl9yZXEoKSdzIGFiaWxpdHkgdG8gZmFsbGJhY2sgdG8gbm9ybWFsIE5W
-TWUgZXJyb3IgaGFuZGxpbmcKICAgID4gICAgIGhhcyBiZWVuIHByZXNlcnZlZCBiZWNhdXNlIGl0
-IG1heSBiZSB1c2VmdWwgZm9yIGZ1dHVyZSBOVk1FX1NDIHRoYXQKICAgID4gICAgIG52bWVfc3Rh
-dHVzX25lZWRzX2xvY2FsX2Vycm9yX2hhbmRsaW5nKCkgaGFzbid0IGJlZW4gdHJhaW5lZCBmb3Ig
-eWV0LgogICAgPgogICAgPiAgICAgU2lnbmVkLW9mZi1ieTogTWlrZSBTbml0emVyIDxzbml0emVy
-QHJlZGhhdC5jb20+CiAgICA+ICAgICAtLS0KICAgID4gICAgICBkcml2ZXJzL252bWUvaG9zdC9j
-b3JlLmMgfCAxNiArKysrKysrKysrKysrKy0tCiAgICA+ICAgICAgMSBmaWxlIGNoYW5nZWQsIDE0
-IGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pCiAgICA+CiAgICA+ICAgICBkaWZmIC0tZ2l0
-IGEvZHJpdmVycy9udm1lL2hvc3QvY29yZS5jIGIvZHJpdmVycy9udm1lL2hvc3QvY29yZS5jCiAg
-ICA+ICAgICBpbmRleCA4OGNmZjMwOWQ4ZTQuLmJlNzQ5YjY5MGFmNyAxMDA2NDQKICAgID4gICAg
-IC0tLSBhL2RyaXZlcnMvbnZtZS9ob3N0L2NvcmUuYwogICAgPiAgICAgKysrIGIvZHJpdmVycy9u
-dm1lL2hvc3QvY29yZS5jCiAgICA+ICAgICBAQCAtMjUyLDYgKzI1MiwxNiBAQCBzdGF0aWMgaW5s
-aW5lIGJvb2wgbnZtZV9yZXFfbmVlZHNfcmV0cnkoc3RydWN0IHJlcXVlc3QgKnJlcSkKICAgID4g
-ICAgICAgICAgICAgcmV0dXJuIHRydWU7CiAgICA+ICAgICAgfQogICAgPgogICAgPiAgICAgK3N0
-YXRpYyBpbmxpbmUgYm9vbCBudm1lX3N0YXR1c19uZWVkc19sb2NhbF9lcnJvcl9oYW5kbGluZyh1
-MTYgc3RhdHVzKQogICAgPiAgICAgK3sKICAgID4gICAgICsgICAgICAgc3dpdGNoIChzdGF0dXMg
-JiAweDdmZikgewogICAgPiAgICAgKyAgICAgICBjYXNlIE5WTUVfU0NfQ01EX0lOVEVSUlVQVEVE
-OgogICAgPiAgICAgKyAgICAgICAgICAgICAgIHJldHVybiB0cnVlOwogICAgPiAgICAgKyAgICAg
-ICBkZWZhdWx0OgogICAgPiAgICAgKyAgICAgICAgICAgICAgIHJldHVybiBmYWxzZTsKICAgID4g
-ICAgICsgICAgICAgfQogICAgPiAgICAgK30KICAgID4gICAgICsKICAgID4gICAgICBzdGF0aWMg
-dm9pZCBudm1lX3JldHJ5X3JlcShzdHJ1Y3QgcmVxdWVzdCAqcmVxKQogICAgPiAgICAgIHsKICAg
-ID4gICAgICAgICAgICAgc3RydWN0IG52bWVfbnMgKm5zID0gcmVxLT5xLT5xdWV1ZWRhdGE7CiAg
-ICA+ICAgICBAQCAtMjcwLDcgKzI4MCw4IEBAIHN0YXRpYyB2b2lkIG52bWVfcmV0cnlfcmVxKHN0
-cnVjdCByZXF1ZXN0ICpyZXEpCiAgICA+CiAgICA+ICAgICAgdm9pZCBudm1lX2NvbXBsZXRlX3Jx
-KHN0cnVjdCByZXF1ZXN0ICpyZXEpCiAgICA+ICAgICAgewogICAgPiAgICAgLSAgICAgICBibGtf
-c3RhdHVzX3Qgc3RhdHVzID0gbnZtZV9lcnJvcl9zdGF0dXMobnZtZV9yZXEocmVxKS0+c3RhdHVz
-KTsKICAgID4gICAgICsgICAgICAgdTE2IG52bWVfc3RhdHVzID0gbnZtZV9yZXEocmVxKS0+c3Rh
-dHVzOwogICAgPiAgICAgKyAgICAgICBibGtfc3RhdHVzX3Qgc3RhdHVzID0gbnZtZV9lcnJvcl9z
-dGF0dXMobnZtZV9zdGF0dXMpOwogICAgPgogICAgPiAgICAgICAgICAgICB0cmFjZV9udm1lX2Nv
-bXBsZXRlX3JxKHJlcSk7CiAgICA+CiAgICA+ICAgICBAQCAtMjgwLDcgKzI5MSw4IEBAIHZvaWQg
-bnZtZV9jb21wbGV0ZV9ycShzdHJ1Y3QgcmVxdWVzdCAqcmVxKQogICAgPiAgICAgICAgICAgICAg
-ICAgICAgIG52bWVfcmVxKHJlcSktPmN0cmwtPmNvbXBfc2VlbiA9IHRydWU7CiAgICA+CiAgICA+
-ICAgICAgICAgICAgIGlmICh1bmxpa2VseShzdGF0dXMgIT0gQkxLX1NUU19PSyAmJiBudm1lX3Jl
-cV9uZWVkc19yZXRyeShyZXEpKSkgewogICAgPiAgICAgLSAgICAgICAgICAgICAgIGlmICgocmVx
-LT5jbWRfZmxhZ3MgJiBSRVFfTlZNRV9NUEFUSCkgJiYgbnZtZV9mYWlsb3Zlcl9yZXEocmVxKSkK
-ICAgID4gICAgICsgICAgICAgICAgICAgICBpZiAoIW52bWVfc3RhdHVzX25lZWRzX2xvY2FsX2Vy
-cm9yX2hhbmRsaW5nKG52bWVfc3RhdHVzKSAmJgogICAgPiAgICAgKyAgICAgICAgICAgICAgICAg
-ICAocmVxLT5jbWRfZmxhZ3MgJiBSRVFfTlZNRV9NUEFUSCkgJiYgbnZtZV9mYWlsb3Zlcl9yZXEo
-cmVxKSkKICAgID4gICAgICAgICAgICAgICAgICAgICAgICAgICAgIHJldHVybjsKICAgID4KICAg
-ID4gICAgICAgICAgICAgICAgICAgICBpZiAoIWJsa19xdWV1ZV9keWluZyhyZXEtPnEpKSB7CiAg
-ICA+ICAgICAtLQogICAgPiAgICAgMi4xOC4wCiAgICA+CiAgICA+CgoKCi0tCmRtLWRldmVsIG1h
-aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFp
-bG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 8/13/20, 2:44 PM, "Christoph Hellwig" <hch@infradead.org> wrote:
+
+    On Thu, Aug 13, 2020 at 01:47:04PM -0400, Mike Snitzer wrote:
+    > This is just a tweak to improve the high-level fault tree of core NVMe
+    > error handling.  No functional change, but for such basic errors,
+    > avoiding entering nvme_failover_req is meaningful on a code flow level.
+    > Makes code to handle errors that need local retry clearer by being more
+    > structured, less circuitous.
+  
+I don't understand how entering nvme_failover_req() is circuitous. 
+
+This code path is only taken if REQ_NVME_MPATH is set which - unless I am mistaken - in
+the case that you care about it will not be set.
+
+    > Allows NVMe core's handling of such errors to be more explicit and live
+    > in core.c rather than multipath.c -- so things like ACRE handling can be
+    > made explicitly part of core and not nested under nvme_failover_req's
+    > relatively obscure failsafe that returns false for anything it doesn't
+    > care about.
+
+The ACRE handling is already explicitly a part of the core.  I don't understand what
+you are after here Mike.  Are you saying that you don't want the ACRE code to run
+when REQ_NVME_MPATH is clear?
+
+    If we're going that way I'd rather do something like the (untested)
+    patch below that adds a dispostion function with a function that
+    decides it and then just switches on it:
+
+Christoph, it looks like you've moved a lot of stuff around here, with no actual
+functional change.... but it's really hard for me to tell.  Please be sure to cc me if this
+becomes a real patch.
+
+How does your patch solve the problem of making dm-multipath work with command retries?
+
+Mike, do you want the nvme-core driver to retry commands on the same path, with CRD, for the dm-multipath
+use case... or are you looking for a different treatment of REQ_FAILFAST_DEV... or what? 
+
+Maybe I'm not seeing it.
+
+/John
+
+    diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
+    index 88cff309d8e4f0..a740320f0d4ee7 100644
+    --- a/drivers/nvme/host/core.c
+    +++ b/drivers/nvme/host/core.c
+    @@ -241,17 +241,6 @@ static blk_status_t nvme_error_status(u16 status)
+            }
+     }
+
+    -static inline bool nvme_req_needs_retry(struct request *req)
+    -{
+    -       if (blk_noretry_request(req))
+    -               return false;
+    -       if (nvme_req(req)->status & NVME_SC_DNR)
+    -               return false;
+    -       if (nvme_req(req)->retries >= nvme_max_retries)
+    -               return false;
+    -       return true;
+    -}
+    -
+     static void nvme_retry_req(struct request *req)
+     {
+            struct nvme_ns *ns = req->q->queuedata;
+    @@ -268,33 +257,75 @@ static void nvme_retry_req(struct request *req)
+            blk_mq_delay_kick_requeue_list(req->q, delay);
+     }
+
+    -void nvme_complete_rq(struct request *req)
+    +enum nvme_disposition {
+    +       COMPLETE,
+    +       RETRY,
+    +       REDIRECT_ANA,
+    +       REDIRECT_TMP,
+    +};
+    +
+    +static inline enum nvme_disposition nvme_req_disposition(struct request *req)
+    +{
+    +       if (likely(nvme_req(req)->status == 0))
+    +               return COMPLETE;
+    +
+    +       if (blk_noretry_request(req) ||
+    +           (nvme_req(req)->status & NVME_SC_DNR) ||
+    +           nvme_req(req)->retries >= nvme_max_retries)
+    +               return COMPLETE;
+    +
+    +       if (req->cmd_flags & REQ_NVME_MPATH) {
+    +               switch (nvme_req(req)->status & 0x7ff) {
+    +               case NVME_SC_ANA_TRANSITION:
+    +               case NVME_SC_ANA_INACCESSIBLE:
+    +               case NVME_SC_ANA_PERSISTENT_LOSS:
+    +                       return REDIRECT_ANA;
+    +               case NVME_SC_HOST_PATH_ERROR:
+    +               case NVME_SC_HOST_ABORTED_CMD:
+    +                       return REDIRECT_TMP;
+    +               }
+    +       }
+    +
+    +       if (blk_queue_dying(req->q))
+    +               return COMPLETE;
+    +       return RETRY;
+    +}
+    +
+    +static inline void nvme_complete_req(struct request *req)
+     {
+            blk_status_t status = nvme_error_status(nvme_req(req)->status);
+
+    -       trace_nvme_complete_rq(req);
+    +       if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) &&
+    +           req_op(req) == REQ_OP_ZONE_APPEND)
+    +               req->__sector = nvme_lba_to_sect(req->q->queuedata,
+    +                       le64_to_cpu(nvme_req(req)->result.u64));
+    +
+    +       nvme_trace_bio_complete(req, status);
+    +       blk_mq_end_request(req, status);
+    +}
+
+    +void nvme_complete_rq(struct request *req)
+    +{
+    +       trace_nvme_complete_rq(req);
+            nvme_cleanup_cmd(req);
+
+            if (nvme_req(req)->ctrl->kas)
+                    nvme_req(req)->ctrl->comp_seen = true;
+
+    -       if (unlikely(status != BLK_STS_OK && nvme_req_needs_retry(req))) {
+    -               if ((req->cmd_flags & REQ_NVME_MPATH) && nvme_failover_req(req))
+    -                       return;
+    -
+    -               if (!blk_queue_dying(req->q)) {
+    -                       nvme_retry_req(req);
+    -                       return;
+    -               }
+    -       } else if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) &&
+    -                  req_op(req) == REQ_OP_ZONE_APPEND) {
+    -               req->__sector = nvme_lba_to_sect(req->q->queuedata,
+    -                       le64_to_cpu(nvme_req(req)->result.u64));
+    +       switch (nvme_req_disposition(req)) {
+    +       case COMPLETE:
+    +               nvme_complete_req(req);
+    +               return;
+    +       case RETRY:
+    +               nvme_retry_req(req);
+    +               return;
+    +       case REDIRECT_ANA:
+    +               nvme_failover_req(req, true);
+    +               return;
+    +       case REDIRECT_TMP:
+    +               nvme_failover_req(req, false);
+    +               return;
+            }
+    -
+    -       nvme_trace_bio_complete(req, status);
+    -       blk_mq_end_request(req, status);
+     }
+     EXPORT_SYMBOL_GPL(nvme_complete_rq);
+
+    diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
+    index 3ded54d2c9c6ad..0c22b2c88687a2 100644
+    --- a/drivers/nvme/host/multipath.c
+    +++ b/drivers/nvme/host/multipath.c
+    @@ -65,51 +65,32 @@ void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
+            }
+     }
+
+    -bool nvme_failover_req(struct request *req)
+    +void nvme_failover_req(struct request *req, bool is_ana_status)
+     {
+            struct nvme_ns *ns = req->q->queuedata;
+    -       u16 status = nvme_req(req)->status;
+            unsigned long flags;
+
+    -       switch (status & 0x7ff) {
+    -       case NVME_SC_ANA_TRANSITION:
+    -       case NVME_SC_ANA_INACCESSIBLE:
+    -       case NVME_SC_ANA_PERSISTENT_LOSS:
+    -               /*
+    -                * If we got back an ANA error we know the controller is alive,
+    -                * but not ready to serve this namespaces.  The spec suggests
+    -                * we should update our general state here, but due to the fact
+    -                * that the admin and I/O queues are not serialized that is
+    -                * fundamentally racy.  So instead just clear the current path,
+    -                * mark the the path as pending and kick of a re-read of the ANA
+    -                * log page ASAP.
+    -                */
+    -               nvme_mpath_clear_current_path(ns);
+    -               if (ns->ctrl->ana_log_buf) {
+    -                       set_bit(NVME_NS_ANA_PENDING, &ns->flags);
+    -                       queue_work(nvme_wq, &ns->ctrl->ana_work);
+    -               }
+    -               break;
+    -       case NVME_SC_HOST_PATH_ERROR:
+    -       case NVME_SC_HOST_ABORTED_CMD:
+    -               /*
+    -                * Temporary transport disruption in talking to the controller.
+    -                * Try to send on a new path.
+    -                */
+    -               nvme_mpath_clear_current_path(ns);
+    -               break;
+    -       default:
+    -               /* This was a non-ANA error so follow the normal error path. */
+    -               return false;
+    +       nvme_mpath_clear_current_path(ns);
+    +
+    +       /*
+    +        * If we got back an ANA error we know the controller is alive, but not
+    +        * ready to serve this namespaces.  The spec suggests we should update
+    +        * our general state here, but due to the fact that the admin and I/O
+    +        * queues are not serialized that is fundamentally racy.  So instead
+    +        * just clear the current path, mark the the path as pending and kick
+    +        * of a re-read of the ANA log page ASAP.
+    +        */
+    +       if (is_ana_status && ns->ctrl->ana_log_buf) {
+    +               set_bit(NVME_NS_ANA_PENDING, &ns->flags);
+    +               queue_work(nvme_wq, &ns->ctrl->ana_work);
+            }
+
+            spin_lock_irqsave(&ns->head->requeue_lock, flags);
+            blk_steal_bios(&ns->head->requeue_list, req);
+            spin_unlock_irqrestore(&ns->head->requeue_lock, flags);
+    -       blk_mq_end_request(req, 0);
+
+    +       blk_mq_end_request(req, 0);
+            kblockd_schedule_work(&ns->head->requeue_work);
+    -       return true;
+     }
+
+     void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl)
+    diff --git a/drivers/nvme/host/nvme.h b/drivers/nvme/host/nvme.h
+    index ebb8c3ed388554..aeff1c491ac2ef 100644
+    --- a/drivers/nvme/host/nvme.h
+    +++ b/drivers/nvme/host/nvme.h
+    @@ -629,7 +629,7 @@ void nvme_mpath_wait_freeze(struct nvme_subsystem *subsys);
+     void nvme_mpath_start_freeze(struct nvme_subsystem *subsys);
+     void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
+                            struct nvme_ctrl *ctrl, int *flags);
+    -bool nvme_failover_req(struct request *req);
+    +void nvme_failover_req(struct request *req, bool is_ana_status);
+     void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl);
+     int nvme_mpath_alloc_disk(struct nvme_ctrl *ctrl,struct nvme_ns_head *head);
+     void nvme_mpath_add_disk(struct nvme_ns *ns, struct nvme_id_ns *id);
+    @@ -688,9 +688,8 @@ static inline void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
+            sprintf(disk_name, "nvme%dn%d", ctrl->instance, ns->head->instance);
+     }
+
+    -static inline bool nvme_failover_req(struct request *req)
+    +static inline void nvme_failover_req(struct request *req, bool is_ana_status)
+     {
+    -       return false;
+     }
+     static inline void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl)
+     {
