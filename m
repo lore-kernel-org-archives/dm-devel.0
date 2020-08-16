@@ -1,15 +1,20 @@
-From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [PATCH 3/6] multipathd: adopt static char* arr in
- sd_notify_status func
-Date: Sun, 16 Aug 2020 09:44:02 +0800
-Message-ID: <2d7cd13e-d1df-5fc7-9403-1f845faf64d7@huawei.com>
-References: <351fa23b-b730-ce22-7e89-24f26a693a6a@huawei.com>
+From: "McIntyre, Vincent (CASS, Marsfield)" <Vincent.Mcintyre@csiro.au>
+Subject: Re: Promise and ALUA
+Date: Sun, 16 Aug 2020 02:30:43 +0000
+Message-ID: <20200816023037.GA13633@mayhem.atnf.CSIRO.AU>
+References: <20200810043316.GH21810@mayhem.atnf.CSIRO.AU>
+	<8c910ecb-ddf8-0a91-4310-4daedb85cd89@gmail.com>
+	<20200813235143.GB2644@mayhem.atnf.CSIRO.AU>
+	<f9f8c62f-fa97-dbcb-52dd-503d392df95f@gmail.com>
+	<20200814021835.GD2644@mayhem.atnf.CSIRO.AU>
+	<30d53099-24dd-254a-13f2-9f1a488c1773@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <351fa23b-b730-ce22-7e89-24f26a693a6a@huawei.com>
+In-Reply-To: <30d53099-24dd-254a-13f2-9f1a488c1773@gmail.com>
 Content-Language: en-US
+Content-ID: <6D588B6AD3CABD418084F22E2995AF86@ausprd01.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,60 +24,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: bmarzins@redhat.com, Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>, liuzhiqiang26@huawei.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Sat, Aug 15, 2020 at 10:36:52PM +0200, Xose Vazquez Perez wrote:
+>On 8/14/20 4:18 AM, McIntyre, Vincent (CASS, Marsfield) wrote:
+>
+>>This is the device section I had before for the Promise
+>>         device {
+>>                 vendor "Promise"
+>>                 product "VTrak"
+>>                 product_blacklist "VTrak V-LUN"
+>                   path_grouping_policy "multibus" <---------
+>>                 path_selector "service-time 0"
+>>                 path_checker "tur"
+>                   prio "alua"                     <---------
+>>                 failback "immediate"
+>>                 no_path_retry 30
+>>         }
+>>The only real differences are the prio and failback.
+>
+>"multibus" and "prio alua" are incompatible!
 
-We adopt static char* array (sd_notify_status_msg) in
-sd_notify_status func, so it looks more simpler and easier
-to expand.
+Promise recommend the multibus option,
+prio alua was introduced by me messing about.
 
-Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
----
- multipathd/main.c | 26 ++++++++++++--------------
- 1 file changed, 12 insertions(+), 14 deletions(-)
+So a compatible configuration would be either what Promise recommend
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index cab1d0d..a09ccd1 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -177,23 +177,21 @@ daemon_status(void)
-  * I love you too, systemd ...
-  */
- #ifdef USE_SYSTEMD
-+static const char *sd_notify_status_msg[DAEMON_STATUS_SIZE] = {
-+	[DAEMON_INIT] = "STATUS=init",
-+	[DAEMON_START] = "STATUS=startup",
-+	[DAEMON_CONFIGURE] = "STATUS=configure",
-+	[DAEMON_IDLE] = "STATUS=up",
-+	[DAEMON_RUNNING] = "STATUS=up",
-+	[DAEMON_SHUTDOWN] = "STATUS=shutdown",
-+};
-+
- static const char *
- sd_notify_status(enum daemon_status state)
- {
--	switch (state) {
--	case DAEMON_INIT:
--		return "STATUS=init";
--	case DAEMON_START:
--		return "STATUS=startup";
--	case DAEMON_CONFIGURE:
--		return "STATUS=configure";
--	case DAEMON_IDLE:
--	case DAEMON_RUNNING:
--		return "STATUS=up";
--	case DAEMON_SHUTDOWN:
--		return "STATUS=shutdown";
--	}
--	return NULL;
-+	if (state < DAEMON_INIT || state >= DAEMON_STATUS_SIZE)
-+		return NULL;
-+	return sd_notify_status_msg[state];
- }
+  detect_prio          no       #not explicit, implied by prio const
+  prio                 const
+  path_grouping_policy multibus
+  failback             immediate
+  hardware_handler     "0"
 
- static void do_sd_notify(enum daemon_status old_state,
--- 
-1.8.3.1
+or (with alua support enabled, the multipath-tools defaults)
+
+  detect_prio          yes
+  prio                 alua
+  path_grouping_policy group_by_prio
+  failback             manual
+  hardware_handler     "1 alua"
+
+?
+
+From your tests and Promise docs, it looks like it's an Active-Passive array
+>with ALUA support.
+>It should use latest firmware [1]. And ALUA must be enabled to get the best
+>performance and stability.
+>Otherwise, the array will work with only one path per LUN.
+>[1] https://www.promise.com/Support/DownloadCenter/VTrak/Ex30/E830f#Firmware
+>
+>The multipath-tools default settings is already optimized for the ALUA config.
+
+Thanks for your analysis. The model is VTrak E830f (VTE830fD).
+The unit is definitely set to active-active controllers.
+The firmware could use an update however, the latest release
+seems to have been overlooked. I'll try updating and look
+into enabling ALUA support.
+
+One question about the man page though.
+it seems from the current text that putting
+  hardware_handler     "0"
+in the config would be ignored for arrays that are
+assumed to have ALUA support.
+However if the array has ALUA support turned off and
+multipathd detects this, then the package falls back to using
+  hardware_handler     "0"
+of its own accord?
+If that's correct, could that be added to the man page?
+
+Cheers
+Vince
