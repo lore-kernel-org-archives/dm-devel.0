@@ -1,8 +1,8 @@
 From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [PATCH 4/6] libmultipath: check blist before calling
- MALLOC in alloc_ble_device func
-Date: Sun, 16 Aug 2020 09:45:06 +0800
-Message-ID: <4127cfc2-413f-32d9-cf76-0c0453524aeb@huawei.com>
+Subject: [PATCH 5/6] vector: add lower boundary check in
+ vector_foreach_slot_after
+Date: Sun, 16 Aug 2020 09:45:49 +0800
+Message-ID: <df68c7c3-2b86-ce72-62e9-c43ef80a2bc8@huawei.com>
 References: <351fa23b-b730-ce22-7e89-24f26a693a6a@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,40 +24,34 @@ Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-d
 List-Id: dm-devel.ids
 
 
-In alloc_ble_device func, ble is firstly allocated by calling MALLOC,
-and then input blist is checked whether it is valid. If blist is not
-valid, ble will be freed without using.
-
-Here, we should check blist firstly.
+In vector_foreach_slot_after macro, i is the input var, which
+may have a illegal value (i < 0). So we should add lower boundary
+check in vector_foreach_slot_after macro.
 
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
 ---
- libmultipath/blacklist.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ libmultipath/vector.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
-index db58ccc..bedcc7e 100644
---- a/libmultipath/blacklist.c
-+++ b/libmultipath/blacklist.c
-@@ -66,12 +66,16 @@ out:
+diff --git a/libmultipath/vector.h b/libmultipath/vector.h
+index 2862dc2..45dbfc1 100644
+--- a/libmultipath/vector.h
++++ b/libmultipath/vector.h
+@@ -38,11 +38,11 @@ typedef struct _vector *vector;
+ #define VECTOR_LAST_SLOT(V)   (((V) && VECTOR_SIZE(V) > 0) ? (V)->slot[(VECTOR_SIZE(V) - 1)] : NULL)
 
- int alloc_ble_device(vector blist)
- {
--	struct blentry_device * ble = MALLOC(sizeof(struct blentry_device));
-+	struct blentry_device *ble;
+ #define vector_foreach_slot(v,p,i) \
+-	for (i = 0; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); i++)
++	for ((i) = 0; (v) && (int)(i) < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); (i)++)
+ #define vector_foreach_slot_after(v,p,i) \
+-	for (; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); i++)
++	for (; (v) && (int)(i) < VECTOR_SIZE(v) && (int)(i) >= 0 && ((p) = (v)->slot[i]); (i)++)
+ #define vector_foreach_slot_backwards(v,p,i) \
+-	for (i = VECTOR_SIZE(v) - 1; (int)i >= 0 && ((p) = (v)->slot[i]); i--)
++	for ((i) = VECTOR_SIZE(v) - 1; (int)(i) >= 0 && ((p) = (v)->slot[i]); (i)--)
 
-+	if (!blist)
-+		return 1;
-+
-+	ble = MALLOC(sizeof(struct blentry_device));
- 	if (!ble)
- 		return 1;
-
--	if (!blist || !vector_alloc_slot(blist)) {
-+	if (!vector_alloc_slot(blist)) {
- 		FREE(ble);
- 		return 1;
- 	}
+ #define identity(x) (x)
+ /*
 -- 
 1.8.3.1
