@@ -1,8 +1,8 @@
 From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [PATCH 5/6] vector: add lower boundary check in
- vector_foreach_slot_after
-Date: Sun, 16 Aug 2020 09:45:49 +0800
-Message-ID: <df68c7c3-2b86-ce72-62e9-c43ef80a2bc8@huawei.com>
+Subject: [PATCH 6/6] multipathd: return NULL if MALLOC fails in
+ alloc_waiteri, func
+Date: Sun, 16 Aug 2020 09:46:29 +0800
+Message-ID: <a0d6c479-7802-eb30-9f5d-0075ca1397f9@huawei.com>
 References: <351fa23b-b730-ce22-7e89-24f26a693a6a@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,34 +24,30 @@ Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-d
 List-Id: dm-devel.ids
 
 
-In vector_foreach_slot_after macro, i is the input var, which
-may have a illegal value (i < 0). So we should add lower boundary
-check in vector_foreach_slot_after macro.
+In alloc_waiter func, if MALLOC fails, wp is equal to NULL.
+If now we call memset(wp), segmentation fault will occur.
 
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
 ---
- libmultipath/vector.h | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ multipathd/waiter.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/vector.h b/libmultipath/vector.h
-index 2862dc2..45dbfc1 100644
---- a/libmultipath/vector.h
-+++ b/libmultipath/vector.h
-@@ -38,11 +38,11 @@ typedef struct _vector *vector;
- #define VECTOR_LAST_SLOT(V)   (((V) && VECTOR_SIZE(V) > 0) ? (V)->slot[(VECTOR_SIZE(V) - 1)] : NULL)
+diff --git a/multipathd/waiter.c b/multipathd/waiter.c
+index e645766..80e6e6e 100644
+--- a/multipathd/waiter.c
++++ b/multipathd/waiter.c
+@@ -33,8 +33,10 @@ static struct event_thread *alloc_waiter (void)
+ 	struct event_thread *wp;
 
- #define vector_foreach_slot(v,p,i) \
--	for (i = 0; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); i++)
-+	for ((i) = 0; (v) && (int)(i) < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); (i)++)
- #define vector_foreach_slot_after(v,p,i) \
--	for (; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); i++)
-+	for (; (v) && (int)(i) < VECTOR_SIZE(v) && (int)(i) >= 0 && ((p) = (v)->slot[i]); (i)++)
- #define vector_foreach_slot_backwards(v,p,i) \
--	for (i = VECTOR_SIZE(v) - 1; (int)i >= 0 && ((p) = (v)->slot[i]); i--)
-+	for ((i) = VECTOR_SIZE(v) - 1; (int)(i) >= 0 && ((p) = (v)->slot[i]); (i)--)
+ 	wp = (struct event_thread *)MALLOC(sizeof(struct event_thread));
+-	memset(wp, 0, sizeof(struct event_thread));
++	if (!wp)
++		return NULL;
 
- #define identity(x) (x)
- /*
++	memset(wp, 0, sizeof(struct event_thread));
+ 	return wp;
+ }
+
 -- 
 1.8.3.1
