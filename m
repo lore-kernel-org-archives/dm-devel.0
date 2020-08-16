@@ -1,8 +1,8 @@
 From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [PATCH 1/6] checker: remove useless name check in
-	checker_get func
-Date: Sun, 16 Aug 2020 09:42:05 +0800
-Message-ID: <2d9db95b-bb88-0d22-1c2d-df459415ee3d@huawei.com>
+Subject: [PATCH 2/6] multipathd: adopt static char* arr in
+	daemon_status
+Date: Sun, 16 Aug 2020 09:42:44 +0800
+Message-ID: <b6e1e24f-5695-f29f-ce88-bff2d5e3fac1@huawei.com>
 References: <351fa23b-b730-ce22-7e89-24f26a693a6a@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,37 +24,78 @@ Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-d
 List-Id: dm-devel.ids
 
 
-In checker_get func, input name will be checked before
-calling checker_class_lookup func, in which name will
-also be checked.
-
-Here, we just remove useless input name check in checker_get func.
+We adopt static char* array (demon_status_msg) in daemon_status func,
+so it looks more simpler and easier to expand.
 
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
 ---
- libmultipath/checkers.c | 9 ++++-----
- 1 file changed, 4 insertions(+), 5 deletions(-)
+ multipathd/main.c | 30 +++++++++++++++---------------
+ multipathd/main.h |  3 ++-
+ 2 files changed, 17 insertions(+), 16 deletions(-)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index f7ddd53..ac41d64 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -361,11 +361,10 @@ void checker_get(const char *multipath_dir, struct checker *dst,
- 	if (!dst)
- 		return;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 9ec6585..cab1d0d 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -153,24 +153,24 @@ static volatile sig_atomic_t exit_sig;
+ static volatile sig_atomic_t reconfig_sig;
+ static volatile sig_atomic_t log_reset_sig;
 
--	if (name && strlen(name)) {
--		src = checker_class_lookup(name);
--		if (!src)
--			src = add_checker_class(multipath_dir, name);
--	}
-+	src = checker_class_lookup(name);
-+	if (!src)
-+		src = add_checker_class(multipath_dir, name);
++static const char *demon_status_msg[DAEMON_STATUS_SIZE] = {
++	[DAEMON_INIT] = "init",
++	[DAEMON_START] = "startup",
++	[DAEMON_CONFIGURE] = "configure",
++	[DAEMON_IDLE] = "idle",
++	[DAEMON_RUNNING] = "running",
++	[DAEMON_SHUTDOWN] = "shutdown",
++};
 +
- 	dst->cls = src;
- 	if (!src)
- 		return;
+ const char *
+ daemon_status(void)
+ {
+-	switch (get_running_state()) {
+-	case DAEMON_INIT:
+-		return "init";
+-	case DAEMON_START:
+-		return "startup";
+-	case DAEMON_CONFIGURE:
+-		return "configure";
+-	case DAEMON_IDLE:
+-		return "idle";
+-	case DAEMON_RUNNING:
+-		return "running";
+-	case DAEMON_SHUTDOWN:
+-		return "shutdown";
+-	}
+-	return NULL;
++	enum daemon_status status = get_running_state();
++
++	if (status < DAEMON_INIT || status >= DAEMON_STATUS_SIZE)
++		return NULL;
++
++	return demon_status_msg[status];
+ }
+
+ /*
+diff --git a/multipathd/main.h b/multipathd/main.h
+index 5dff17e..6a5592c 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -4,12 +4,13 @@
+ #define MAPGCINT 5
+
+ enum daemon_status {
+-	DAEMON_INIT,
++	DAEMON_INIT = 0,
+ 	DAEMON_START,
+ 	DAEMON_CONFIGURE,
+ 	DAEMON_IDLE,
+ 	DAEMON_RUNNING,
+ 	DAEMON_SHUTDOWN,
++	DAEMON_STATUS_SIZE,
+ };
+
+ struct prout_param_descriptor;
 -- 
 1.8.3.1
