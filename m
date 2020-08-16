@@ -1,72 +1,56 @@
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: Promise and ALUA
-Date: Sun, 16 Aug 2020 05:50:09 +0200
-Message-ID: <a00b22c2-64ba-4c2b-03a5-cc955d6c476c@gmail.com>
-References: <20200810043316.GH21810@mayhem.atnf.CSIRO.AU>
-	<8c910ecb-ddf8-0a91-4310-4daedb85cd89@gmail.com>
-	<20200813235143.GB2644@mayhem.atnf.CSIRO.AU>
-	<f9f8c62f-fa97-dbcb-52dd-503d392df95f@gmail.com>
-	<20200814021835.GD2644@mayhem.atnf.CSIRO.AU>
-	<30d53099-24dd-254a-13f2-9f1a488c1773@gmail.com>
-	<20200816023037.GA13633@mayhem.atnf.CSIRO.AU>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200816023037.GA13633@mayhem.atnf.CSIRO.AU>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "McIntyre, Vincent (CASS, Marsfield)" <Vincent.Mcintyre@csiro.au>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+Subject: [PATCH 0/2] dm-devel:dm-crypt: infrastructure for measurement of DM target data using IMA
+Date: Sun, 16 Aug 2020 14:02:48 -0700
+Message-ID: <20200816210250.11506-1-tusharsu@linux.microsoft.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: zohar@linux.ibm.com, agk@redhat.com, snitzer@redhat.com, gmazyland@gmail.com
+Cc: tyhicks@linux.microsoft.com, sashal@kernel.org, jmorris@namei.org, nramas@linux.microsoft.com, linux-integrity@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 8/16/20 4:30 AM, McIntyre, Vincent (CASS, Marsfield) wrote:
+There are several device-mapper targets which contribute to verify
+the integrity of the mapped devices e.g. dm-integrity, dm-verity,
+dm-crypt etc.
 
-> Promise recommend the multibus option,
+But they do not use the capabilities provided by kernel integrity
+subsystem (IMA). For instance, the IMA capability that measures several
+in-memory constructs and files to detect if they have been accidentally
+or maliciously altered, both remotely and locally. IMA also has the
+capability to include these measurements in the IMA measurement list and
+use them to extend a TPM PCR so that it can be quoted. These TPM PCR
+extend operations ensure that the tampering with the order of constructs
+being measured, and tampering with the measured constructs themselves -
+doesn't go undetected. In general, this capability is used for remote
+attestation of in-memory constructs and files of interest. As of today,
+device-mapper targets don't use the benefits of extended TPM PCR
+quotes and ultimately the benefits of remote attestation.
 
-Promise docs are a bit messy. The multibus example is a mistake.
+This series bridges this gap, so that all device-mapper targets
+could take advantage of IMA's measuring and quoting abilities - thus
+ultimately enabling remote attestation for device-mapper targets.
 
-There are only two options for this array: failover or group_by_prio.
-There are plenty of examples, for old distributions, at
-"Linux PerfectPath - Promise Multipath Driver", under:
-https://www.promise.com/Support/DownloadCenter/VTrak/Ex30/E830f#Utilities
+This series is based on the following repo/branch:
+ repo: https://git.kernel.org/pub/scm/linux/kernel/git/zohar/linux-integrity.git
+ branch: next-integrity
+ commit 3db0d0c276a7 ("integrity: remove redundant initialization of variable ret")
 
-> Thanks for your analysis. The model is VTrak E830f (VTE830fD).
-> The unit is definitely set to active-active controllers.
+This series also has a dependency on the following patch series and
+should be applied in the following order:
+ 1. https://patchwork.kernel.org/patch/11709527/
+ 2. https://patchwork.kernel.org/patch/11711249/
+ 3. https://patchwork.kernel.org/patch/11712729/
 
-Yep, it's a dual controller array. But the controllers are no able to
-access to a LUN at the same time, and from all paths.
+Tushar Sugandhi (2):
+  dm-devel: collect target data and submit to IMA to measure
+  dm-crypt: collect data and submit to DM to measure
 
-Only high-end arrays(3PAR, Symmetrix, DS8000, ONTAP, VSP, ...) do this.
+ drivers/md/Makefile            |   1 +
+ drivers/md/dm-crypt.c          | 170 +++++++++++++++++++
+ drivers/md/dm-ima.c            | 296 +++++++++++++++++++++++++++++++++
+ include/linux/device-mapper.h  |  58 +++++++
+ security/integrity/ima/Kconfig |   2 +-
+ 5 files changed, 526 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/md/dm-ima.c
 
-In VTrak arrays, one LUN is owned only by one controller.
-
-> The firmware could use an update however, the latest release
-> seems to have been overlooked. I'll try updating and look
-> into enabling ALUA support.
-
-If ALUA is not used, multipathd must be configured with the
-"failover" option for "path_grouping_policy"
-
-> One question about the man page though.
-> it seems from the current text that putting
->    hardware_handler     "0"
-> in the config would be ignored for arrays that are
-> assumed to have ALUA support.
-> However if the array has ALUA support turned off and
-> multipathd detects this, then the package falls back to using
->    hardware_handler     "0"
-> of its own accord?
-> If that's correct, could that be added to the man page?
-
-Debian 10 is using a very old multipath-tools release (0.7.9 - nov 2018)
-without any upstream fixes. I don't know if it's an old bug or
-the default setting "hardware_handler = 1 alua" was interfering.
+-- 
+2.17.1
