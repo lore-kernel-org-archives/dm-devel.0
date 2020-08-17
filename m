@@ -1,18 +1,16 @@
 From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: Re: [PATCH 1/6] checker: remove useless name check in
- checker_get func
-Date: Mon, 17 Aug 2020 23:49:05 +0800
-Message-ID: <a7c534cd-6a4b-7d2d-8b74-a6c94e43699f@huawei.com>
+Subject: Re: [PATCH 5/6] vector: add lower boundary check in
+ vector_foreach_slot_after
+Date: Mon, 17 Aug 2020 23:58:32 +0800
+Message-ID: <a745e588-748e-c5d2-3396-d1d57c6ebc7f@huawei.com>
 References: <351fa23b-b730-ce22-7e89-24f26a693a6a@huawei.com>
-	<2d9db95b-bb88-0d22-1c2d-df459415ee3d@huawei.com>
-	<71d49c03470fbb70cc37f757e4804380566fba12.camel@suse.com>
-	<dd79ea15-f7fd-81a9-8e3d-4840f2d94422@huawei.com>
-	<708dd1bae5ec1c7c2b477a1b3f6f2b05318399dd.camel@suse.com>
+	<df68c7c3-2b86-ce72-62e9-c43ef80a2bc8@huawei.com>
+	<13e2afb835ace628a990ffc6de03fab195833c3a.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <708dd1bae5ec1c7c2b477a1b3f6f2b05318399dd.camel@suse.com>
+In-Reply-To: <13e2afb835ace628a990ffc6de03fab195833c3a.camel@suse.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -29,110 +27,65 @@ List-Id: dm-devel.ids
 
 
 
-On 2020/8/17 23:25, Martin Wilck wrote:
-> On Mon, 2020-08-17 at 23:12 +0800, Zhiqiang Liu wrote:
->> On 2020/8/17 16:05, Martin Wilck wrote:
->>> On Sun, 2020-08-16 at 09:42 +0800, Zhiqiang Liu wrote:
->>>> In checker_get func, input name will be checked before
->>>> calling checker_class_lookup func, in which name will
->>>> also be checked.
->>>>
->>>> Here, we just remove useless input name check in checker_get
->>>> func.
->>>>
->>>> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
->>>> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
->>>> ---
->>>>  libmultipath/checkers.c | 9 ++++-----
->>>>  1 file changed, 4 insertions(+), 5 deletions(-)
->>>
->>> Nack. Better safe than sorry. If you look at the generated
->>> assembly,
->>> you'll see that the compiler optimizes this double check away, so
->>> doesn't inflict runtime overhead, while it makes it easier to
->>> verify
->>> the code.
->>>
->>> I'd ack this if we had a solid convention in the multipath-tools
->>> code
->>> to check parameters always (only) in the callee. But so far we
->>> don't.
->>> I guess if we want to do that, we'd first need to agree on and
->>> implement a common convention for return values, too.
->>>
->> I agree with you.
->> The location of the parameter check is not uniform.
->> Are we dealing with it now? or add it in your TODO list?
+On 2020/8/17 17:11, Martin Wilck wrote:
+> On Sun, 2020-08-16 at 09:45 +0800, Zhiqiang Liu wrote:
+>> In vector_foreach_slot_after macro, i is the input var, which
+>> may have a illegal value (i < 0). So we should add lower boundary
+>> check in vector_foreach_slot_after macro.
+>>
+>> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+>> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+>> ---
+>>  libmultipath/vector.h | 6 +++---
+>>  1 file changed, 3 insertions(+), 3 deletions(-)
 > 
-> We don't have an official todo list. I tend to handle such "style"
-> things incrementally - when I touch some code for some non-trivial
-> reason, I also add "style" changes as appropriate (look at "constify"
-> changes in recent multipath-tools commits, for example).
+> Perhaps we should write this instead? I'm unsure if compilers can
+> optimize away the repeated extra check in all cases.
 > 
-> I believe that most functions in multipath-tools already check the
-> passed arguments (in the callee), and I believe that this is where it
-> should be done. Let's have an eye on this for some time to come.
-> Eventually we can audit the entire code to make sure all functions do
-> this properly, and once that's done, we can start removing the
-> respective checks in callers, at least some.
+> #define vector_foreach_slot_after(v,p,i) \
+> 	if ((v) && (int)(i) >= 0)        \
+> 		for (; (int)(i) < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); (i)++)
 > 
-> Does that make sense?
-> 
-> Cheers,
+> Regards,
 > Martin
 > 
+Thanks for your advice.
+When I modified the vector_foreach_slot_after func, I just focused
+on the basic functionality, and the performance is totally not considered.
+I learn a lesson from your advice.
 
-Thank you for your patience.
-Because I am learning and reviewing multipath-tools code,
-I'll be happy to push a patch to handle such "style" things.
+Thanks again.
 
 Regards
 Zhiqiang Liu
 
-
-> 
-> 
-> 
-> 
 >>
+>> diff --git a/libmultipath/vector.h b/libmultipath/vector.h
+>> index 2862dc2..45dbfc1 100644
+>> --- a/libmultipath/vector.h
+>> +++ b/libmultipath/vector.h
+>> @@ -38,11 +38,11 @@ typedef struct _vector *vector;
+>>  #define VECTOR_LAST_SLOT(V)   (((V) && VECTOR_SIZE(V) > 0) ? (V)-
+>>> slot[(VECTOR_SIZE(V) - 1)] : NULL)
 >>
->>> If checker_class_lookup() was non-static and/or the code was
->>> executed
->>> very often, things would also look different to me. But both is not
->>> the
->>> case.
->>>
+>>  #define vector_foreach_slot(v,p,i) \
+>> -	for (i = 0; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)-
+>>> slot[i]); i++)
+>> +	for ((i) = 0; (v) && (int)(i) < VECTOR_SIZE(v) && ((p) = (v)-
+>>> slot[i]); (i)++)
+>>  #define vector_foreach_slot_after(v,p,i) \
+>> -	for (; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]);
+>> i++)
+>> +	for (; (v) && (int)(i) < VECTOR_SIZE(v) && (int)(i) >= 0 &&
+>> ((p) = (v)->slot[i]); (i)++)
+>>  #define vector_foreach_slot_backwards(v,p,i) \
+>> -	for (i = VECTOR_SIZE(v) - 1; (int)i >= 0 && ((p) = (v)-
+>>> slot[i]); i--)
+>> +	for ((i) = VECTOR_SIZE(v) - 1; (int)(i) >= 0 && ((p) = (v)-
+>>> slot[i]); (i)--)
 >>
->>
->>> Regards,
->>> Martin
->>>
->>>
->>>
->>>> diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
->>>> index f7ddd53..ac41d64 100644
->>>> --- a/libmultipath/checkers.c
->>>> +++ b/libmultipath/checkers.c
->>>> @@ -361,11 +361,10 @@ void checker_get(const char *multipath_dir,
->>>> struct checker *dst,
->>>>  	if (!dst)
->>>>  		return;
->>>>
->>>> -	if (name && strlen(name)) {
->>>> -		src = checker_class_lookup(name);
->>>> -		if (!src)
->>>> -			src = add_checker_class(multipath_dir, name);
->>>> -	}
->>>> +	src = checker_class_lookup(name);
->>>> +	if (!src)
->>>> +		src = add_checker_class(multipath_dir, name);
->>>> +
->>>>  	dst->cls = src;
->>>>  	if (!src)
->>>>  		return;
->>>
->>> .
->>>
+>>  #define identity(x) (x)
+>>  /*
 > 
 > 
 > 
