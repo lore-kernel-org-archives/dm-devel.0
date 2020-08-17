@@ -1,15 +1,15 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 83/84] libmultipath: alias: static const
- variable for BINDINGS_FILE_HEADER
-Date: Mon, 17 Aug 2020 17:06:07 -0500
-Message-ID: <20200817220606.GL19233@octiron.msp.redhat.com>
+Subject: Re: [PATCH v2 82/84] libmultipath: free pp if store_path
+ fails in disassemble_map
+Date: Mon, 17 Aug 2020 17:05:38 -0500
+Message-ID: <20200817220538.GK19233@octiron.msp.redhat.com>
 References: <20200812113601.26658-1-mwilck@suse.com>
-	<20200812113601.26658-4-mwilck@suse.com>
+	<20200812113601.26658-3-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200812113601.26658-4-mwilck@suse.com>
+In-Reply-To: <20200812113601.26658-3-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,93 +21,49 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
 To: mwilck@suse.com
-Cc: dm-devel@redhat.com
+Cc: dm-devel@redhat.com, Zhiqiang Liu <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-On Wed, Aug 12, 2020 at 01:36:00PM +0200, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
+On Wed, Aug 12, 2020 at 01:35:59PM +0200, mwilck@suse.com wrote:
+> From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 > 
-> ... and fixup the header file.
+> In disassemble_map func, one pp will be allocated and stored in
+> pgp->paths. However, if store_path fails, pp will not be freed,
+> then memory leak problem occurs.
+> 
+> Here, we will call free_path to free pp when store_path fails.
 > 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/alias.c | 17 ++++++++++++++---
->  libmultipath/alias.h | 12 ++++--------
->  2 files changed, 18 insertions(+), 11 deletions(-)
+>  libmultipath/dmparser.c | 12 ++++++++----
+>  1 file changed, 8 insertions(+), 4 deletions(-)
 > 
-> diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-> index 35f1beb..0759c4e 100644
-> --- a/libmultipath/alias.c
-> +++ b/libmultipath/alias.c
-> @@ -37,6 +37,17 @@
->   * See the file COPYING included with this distribution for more details.
->   */
+> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+> index 25e6a4a..c103161 100644
+> --- a/libmultipath/dmparser.c
+> +++ b/libmultipath/dmparser.c
+> @@ -306,11 +306,15 @@ int disassemble_map(const struct _vector *pathvec,
+>  					goto out1;
 >  
-> +#define BINDINGS_FILE_HEADER		\
-> +"# Multipath bindings, Version : 1.0\n" \
-> +"# NOTE: this file is automatically maintained by the multipath program.\n" \
-> +"# You should not need to edit this file in normal circumstances.\n" \
-> +"#\n" \
-> +"# Format:\n" \
-> +"# alias wwid\n" \
-> +"#\n"
+>  				strlcpy(pp->dev_t, word, BLK_DEV_SIZE);
+> -			}
+> -			FREE(word);
+>  
+> -			if (store_path(pgp->paths, pp))
+> -				goto out;
+> +				if (store_path(pgp->paths, pp)) {
+> +					free_path(pp);
+> +					goto out1;
+> +				}
+> +			} else if (store_path(pgp->paths, pp))
+> +				goto out1;
 > +
-> +static const char bindings_file_header[] = BINDINGS_FILE_HEADER;
-> +
->  int
->  valid_alias(const char *alias)
->  {
-> @@ -287,7 +298,7 @@ use_existing_alias (const char *wwid, const char *file, const char *alias_old,
->  	char buff[WWID_SIZE];
->  	FILE *f;
+> +			FREE(word);
 >  
-> -	fd = open_file(file, &can_write, BINDINGS_FILE_HEADER);
-> +	fd = open_file(file, &can_write, bindings_file_header);
->  	if (fd < 0)
->  		return NULL;
->  
-> @@ -361,7 +372,7 @@ get_user_friendly_alias(const char *wwid, const char *file, const char *prefix,
->  		return NULL;
->  	}
->  
-> -	fd = open_file(file, &can_write, BINDINGS_FILE_HEADER);
-> +	fd = open_file(file, &can_write, bindings_file_header);
->  	if (fd < 0)
->  		return NULL;
->  
-> @@ -406,7 +417,7 @@ get_user_friendly_wwid(const char *alias, char *buff, const char *file)
->  		return -1;
->  	}
->  
-> -	fd = open_file(file, &unused, BINDINGS_FILE_HEADER);
-> +	fd = open_file(file, &unused, bindings_file_header);
->  	if (fd < 0)
->  		return -1;
->  
-> diff --git a/libmultipath/alias.h b/libmultipath/alias.h
-> index 7c4b302..236b3ba 100644
-> --- a/libmultipath/alias.h
-> +++ b/libmultipath/alias.h
-> @@ -1,11 +1,5 @@
-> -#define BINDINGS_FILE_HEADER \
-> -"# Multipath bindings, Version : 1.0\n" \
-> -"# NOTE: this file is automatically maintained by the multipath program.\n" \
-> -"# You should not need to edit this file in normal circumstances.\n" \
-> -"#\n" \
-> -"# Format:\n" \
-> -"# alias wwid\n" \
-> -"#\n"
-> +#ifndef _ALIAS_H
-> +#define _ALIAS_H
->  
->  int valid_alias(const char *alias);
->  char *get_user_friendly_alias(const char *wwid, const char *file,
-> @@ -15,3 +9,5 @@ int get_user_friendly_wwid(const char *alias, char *buff, const char *file);
->  char *use_existing_alias (const char *wwid, const char *file,
->  			  const char *alias_old,
->  			  const char *prefix, int bindings_read_only);
-> +
-> +#endif /* _ALIAS_H */
+>  			pgp->id ^= (long)pp;
+>  			pp->pgindex = i + 1;
 > -- 
 > 2.28.0
