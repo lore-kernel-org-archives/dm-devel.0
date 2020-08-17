@@ -1,69 +1,63 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 82/84] libmultipath: free pp if store_path
- fails in disassemble_map
-Date: Mon, 17 Aug 2020 17:05:38 -0500
-Message-ID: <20200817220538.GK19233@octiron.msp.redhat.com>
-References: <20200812113601.26658-1-mwilck@suse.com>
-	<20200812113601.26658-3-mwilck@suse.com>
+From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+Subject: Re: [PATCH 2/3] IMA: add policy to support measuring critical data
+ from kernel components
+Date: Mon, 17 Aug 2020 15:27:27 -0700
+Message-ID: <5275268e-2ce8-0129-b11d-8419ac384262@linux.microsoft.com>
+References: <20200812193102.18636-1-tusharsu@linux.microsoft.com>
+ <20200812193102.18636-3-tusharsu@linux.microsoft.com>
+ <591b5f09c7df8ef0378866eaf3afde7a7cb4e82f.camel@linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=iso-8859-15; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200812113601.26658-3-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: mwilck@suse.com
-Cc: dm-devel@redhat.com, Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <591b5f09c7df8ef0378866eaf3afde7a7cb4e82f.camel@linux.ibm.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mimi Zohar <zohar@linux.ibm.com>, stephen.smalley.work@gmail.com, casey@schaufler-ca.com, gmazyland@gmail.com
+Cc: tyhicks@linux.microsoft.com, sashal@kernel.org, jmorris@namei.org, linux-integrity@vger.kernel.org, selinux@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, nramas@linux.microsoft.com
 List-Id: dm-devel.ids
 
-On Wed, Aug 12, 2020 at 01:35:59PM +0200, mwilck@suse.com wrote:
-> From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+
+
+On 2020-08-17 1:43 p.m., Mimi Zohar wrote:
+> On Wed, 2020-08-12 at 12:31 -0700, Tushar Sugandhi wrote:
+>> There would be several candidate kernel components suitable for IMA
+>> measurement. Not all of them would be enlightened for IMA measurement.
+>> Also, system administrators may not want to measure data for all of
+>> them, even when they are enlightened for IMA measurements. An IMA policy
+>> specific to various kernel components is needed to measure their
+>> respective critical data.
+>>
+>> Add a new IMA policy CRITICAL_DATA+data_sources to support measuring
+>> various critical kernel components. This policy would enable the
+>> system administrators to limit the measurement to the components,
+>> if the components are enlightened for IMA measurement.
 > 
-> In disassemble_map func, one pp will be allocated and stored in
-> pgp->paths. However, if store_path fails, pp will not be freed,
-> then memory leak problem occurs.
+> "enlightened", really?  Please find a different term, maybe something
+> like "supported".
+Thanks for the feedback Mimi. Will do.
 > 
-> Here, we will call free_path to free pp when store_path fails.
+> Before posting a patch set, please look at the patches line by line,
+> like anyone reviewing the code needs to do.  Please minimize code
+> change.   Unnecessary formatting changes are unacceptible.   For
+> example, like the "#define", below, or in 3/3 the
+Thanks for the feedback Mimi.
+We extensively reviewed the patches internally before submitting for
+upstream review.
+We believed adding an extra tab was necessary so that all the previous
+values were aligned with the new one - #define IMA_DATA_SOURCES.
+We can certainly revert back to only IMA_DATA_SOURCES to have an extra
+tab.
+> "process_buffer_measurement()" change from void to int.
 > 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/dmparser.c | 12 ++++++++----
->  1 file changed, 8 insertions(+), 4 deletions(-)
+This was also intentional, and was reviewed internally.
+The feedback was we should let the consumers of
+process_buffer_measurement() decide whether to use the return
+value or not. With void, we are not giving them any choice.
+
+> scripts/Lindent isn't as prevalent as it used to be, but it's still
+> included in Documentation/process/coding-style.rst.  Use it as a guide.
+Thanks for the pointer. We'll use scripts/Lindent going forward.
 > 
-> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-> index 25e6a4a..c103161 100644
-> --- a/libmultipath/dmparser.c
-> +++ b/libmultipath/dmparser.c
-> @@ -306,11 +306,15 @@ int disassemble_map(const struct _vector *pathvec,
->  					goto out1;
->  
->  				strlcpy(pp->dev_t, word, BLK_DEV_SIZE);
-> -			}
-> -			FREE(word);
->  
-> -			if (store_path(pgp->paths, pp))
-> -				goto out;
-> +				if (store_path(pgp->paths, pp)) {
-> +					free_path(pp);
-> +					goto out1;
-> +				}
-> +			} else if (store_path(pgp->paths, pp))
-> +				goto out1;
-> +
-> +			FREE(word);
->  
->  			pgp->id ^= (long)pp;
->  			pp->pgindex = i + 1;
-> -- 
-> 2.28.0
+> Mimi
+> 
