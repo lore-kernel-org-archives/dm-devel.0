@@ -1,93 +1,43 @@
-From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: Re: [PATCH 5/6] vector: add lower boundary check in
- vector_foreach_slot_after
-Date: Mon, 17 Aug 2020 23:58:32 +0800
-Message-ID: <a745e588-748e-c5d2-3396-d1d57c6ebc7f@huawei.com>
-References: <351fa23b-b730-ce22-7e89-24f26a693a6a@huawei.com>
-	<df68c7c3-2b86-ce72-62e9-c43ef80a2bc8@huawei.com>
-	<13e2afb835ace628a990ffc6de03fab195833c3a.camel@suse.com>
+From: Mimi Zohar <zohar@linux.ibm.com>
+Subject: Re: [PATCH 2/3] IMA: add policy to support measuring critical data
+ from kernel components
+Date: Mon, 17 Aug 2020 16:43:02 -0400
+Message-ID: <591b5f09c7df8ef0378866eaf3afde7a7cb4e82f.camel@linux.ibm.com>
+References: <20200812193102.18636-1-tusharsu@linux.microsoft.com>
+         <20200812193102.18636-3-tusharsu@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <13e2afb835ace628a990ffc6de03fab195833c3a.camel@suse.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, bmarzins@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200812193102.18636-3-tusharsu@linux.microsoft.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tushar Sugandhi <tusharsu@linux.microsoft.com>, stephen.smalley.work@gmail.com, casey@schaufler-ca.com, gmazyland@gmail.com
+Cc: tyhicks@linux.microsoft.com, sashal@kernel.org, jmorris@namei.org, linux-integrity@vger.kernel.org, selinux@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, nramas@linux.microsoft.com
 List-Id: dm-devel.ids
 
+On Wed, 2020-08-12 at 12:31 -0700, Tushar Sugandhi wrote:
+> There would be several candidate kernel components suitable for IMA
+> measurement. Not all of them would be enlightened for IMA measurement.
+> Also, system administrators may not want to measure data for all of
+> them, even when they are enlightened for IMA measurements. An IMA policy
+> specific to various kernel components is needed to measure their
+> respective critical data.
+> 
+> Add a new IMA policy CRITICAL_DATA+data_sources to support measuring
+> various critical kernel components. This policy would enable the
+> system administrators to limit the measurement to the components,
+> if the components are enlightened for IMA measurement.
 
+"enlightened", really?  Please find a different term, maybe something
+like "supported".
 
-On 2020/8/17 17:11, Martin Wilck wrote:
-> On Sun, 2020-08-16 at 09:45 +0800, Zhiqiang Liu wrote:
->> In vector_foreach_slot_after macro, i is the input var, which
->> may have a illegal value (i < 0). So we should add lower boundary
->> check in vector_foreach_slot_after macro.
->>
->> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
->> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
->> ---
->>  libmultipath/vector.h | 6 +++---
->>  1 file changed, 3 insertions(+), 3 deletions(-)
-> 
-> Perhaps we should write this instead? I'm unsure if compilers can
-> optimize away the repeated extra check in all cases.
-> 
-> #define vector_foreach_slot_after(v,p,i) \
-> 	if ((v) && (int)(i) >= 0)        \
-> 		for (; (int)(i) < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); (i)++)
-> 
-> Regards,
-> Martin
-> 
-Thanks for your advice.
-When I modified the vector_foreach_slot_after func, I just focused
-on the basic functionality, and the performance is totally not considered.
-I learn a lesson from your advice.
+Before posting a patch set, please look at the patches line by line,
+like anyone reviewing the code needs to do.  Please minimize code
+change.   Unnecessary formatting changes are unacceptible.   For
+example, like the "#define", below, or in 3/3 the
+"process_buffer_measurement()" change from void to int.
 
-Thanks again.
+scripts/Lindent isn't as prevalent as it used to be, but it's still
+included in Documentation/process/coding-style.rst.  Use it as a guide.
 
-Regards
-Zhiqiang Liu
-
->>
->> diff --git a/libmultipath/vector.h b/libmultipath/vector.h
->> index 2862dc2..45dbfc1 100644
->> --- a/libmultipath/vector.h
->> +++ b/libmultipath/vector.h
->> @@ -38,11 +38,11 @@ typedef struct _vector *vector;
->>  #define VECTOR_LAST_SLOT(V)   (((V) && VECTOR_SIZE(V) > 0) ? (V)-
->>> slot[(VECTOR_SIZE(V) - 1)] : NULL)
->>
->>  #define vector_foreach_slot(v,p,i) \
->> -	for (i = 0; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)-
->>> slot[i]); i++)
->> +	for ((i) = 0; (v) && (int)(i) < VECTOR_SIZE(v) && ((p) = (v)-
->>> slot[i]); (i)++)
->>  #define vector_foreach_slot_after(v,p,i) \
->> -	for (; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]);
->> i++)
->> +	for (; (v) && (int)(i) < VECTOR_SIZE(v) && (int)(i) >= 0 &&
->> ((p) = (v)->slot[i]); (i)++)
->>  #define vector_foreach_slot_backwards(v,p,i) \
->> -	for (i = VECTOR_SIZE(v) - 1; (int)i >= 0 && ((p) = (v)-
->>> slot[i]); i--)
->> +	for ((i) = VECTOR_SIZE(v) - 1; (int)(i) >= 0 && ((p) = (v)-
->>> slot[i]); (i)--)
->>
->>  #define identity(x) (x)
->>  /*
-> 
-> 
-> 
-> .
-> 
+Mimi
