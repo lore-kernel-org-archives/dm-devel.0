@@ -1,15 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 4/6] libmultipath: check blist before calling
- MALLOC in alloc_ble_device func
-Date: Mon, 17 Aug 2020 10:51:49 +0200
-Message-ID: <dbe521bcacbc746969437612d639387663898f88.camel@suse.com>
+Subject: Re: [PATCH 5/6] vector: add lower boundary check in
+ vector_foreach_slot_after
+Date: Mon, 17 Aug 2020 11:11:34 +0200
+Message-ID: <13e2afb835ace628a990ffc6de03fab195833c3a.camel@suse.com>
 References: <351fa23b-b730-ce22-7e89-24f26a693a6a@huawei.com>
-	<4127cfc2-413f-32d9-cf76-0c0453524aeb@huawei.com>
+	<df68c7c3-2b86-ce72-62e9-c43ef80a2bc8@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4127cfc2-413f-32d9-cf76-0c0453524aeb@huawei.com>
+In-Reply-To: <df68c7c3-2b86-ce72-62e9-c43ef80a2bc8@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,55 +24,50 @@ Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-d
 List-Id: dm-devel.ids
 
 On Sun, 2020-08-16 at 09:45 +0800, Zhiqiang Liu wrote:
-> In alloc_ble_device func, ble is firstly allocated by calling MALLOC,
-> and then input blist is checked whether it is valid. If blist is not
-> valid, ble will be freed without using.
-> 
-> Here, we should check blist firstly.
+> In vector_foreach_slot_after macro, i is the input var, which
+> may have a illegal value (i < 0). So we should add lower boundary
+> check in vector_foreach_slot_after macro.
 > 
 > Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 > Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
 > ---
->  libmultipath/blacklist.c | 8 ++++++--
->  1 file changed, 6 insertions(+), 2 deletions(-)
+>  libmultipath/vector.h | 6 +++---
+>  1 file changed, 3 insertions(+), 3 deletions(-)
 
-This patch isn't wrong, but it fixes code which isn't buggy. It's
-rather a style thing, an optimization for an extremely unlikely error
-case. I agree with you in the sense that I prefer the "new" style over
-the old (I generally dislike expressions that can fail, like malloc()
-calls, being used as variable initializers), but I'm not sure if we
-should start applying patches for cases like this. So far we've been
-rather conservative with "style" patches, because they tend to make it
-unnecessarily hard to track code history.
+Perhaps we should write this instead? I'm unsure if compilers can
+optimize away the repeated extra check in all cases.
 
-Ben, Christophe, what's your take on this matter?
+#define vector_foreach_slot_after(v,p,i) \
+	if ((v) && (int)(i) >= 0)        \
+		for (; (int)(i) < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); (i)++)
 
 Regards,
 Martin
 
-
 > 
-> diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
-> index db58ccc..bedcc7e 100644
-> --- a/libmultipath/blacklist.c
-> +++ b/libmultipath/blacklist.c
-> @@ -66,12 +66,16 @@ out:
+> diff --git a/libmultipath/vector.h b/libmultipath/vector.h
+> index 2862dc2..45dbfc1 100644
+> --- a/libmultipath/vector.h
+> +++ b/libmultipath/vector.h
+> @@ -38,11 +38,11 @@ typedef struct _vector *vector;
+>  #define VECTOR_LAST_SLOT(V)   (((V) && VECTOR_SIZE(V) > 0) ? (V)-
+> >slot[(VECTOR_SIZE(V) - 1)] : NULL)
 > 
->  int alloc_ble_device(vector blist)
->  {
-> -	struct blentry_device * ble = MALLOC(sizeof(struct
-> blentry_device));
-> +	struct blentry_device *ble;
+>  #define vector_foreach_slot(v,p,i) \
+> -	for (i = 0; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)-
+> >slot[i]); i++)
+> +	for ((i) = 0; (v) && (int)(i) < VECTOR_SIZE(v) && ((p) = (v)-
+> >slot[i]); (i)++)
+>  #define vector_foreach_slot_after(v,p,i) \
+> -	for (; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]);
+> i++)
+> +	for (; (v) && (int)(i) < VECTOR_SIZE(v) && (int)(i) >= 0 &&
+> ((p) = (v)->slot[i]); (i)++)
+>  #define vector_foreach_slot_backwards(v,p,i) \
+> -	for (i = VECTOR_SIZE(v) - 1; (int)i >= 0 && ((p) = (v)-
+> >slot[i]); i--)
+> +	for ((i) = VECTOR_SIZE(v) - 1; (int)(i) >= 0 && ((p) = (v)-
+> >slot[i]); (i)--)
 > 
-> +	if (!blist)
-> +		return 1;
-> +
-> +	ble = MALLOC(sizeof(struct blentry_device));
->  	if (!ble)
->  		return 1;
-> 
-> -	if (!blist || !vector_alloc_slot(blist)) {
-> +	if (!vector_alloc_slot(blist)) {
->  		FREE(ble);
->  		return 1;
->  	}
+>  #define identity(x) (x)
+>  /*
