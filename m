@@ -1,15 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 1/6] checker: remove useless name check in
- checker_get func
-Date: Mon, 17 Aug 2020 10:05:51 +0200
-Message-ID: <71d49c03470fbb70cc37f757e4804380566fba12.camel@suse.com>
+Subject: Re: [PATCH 2/6] multipathd: adopt static char* arr in
+	daemon_status
+Date: Mon, 17 Aug 2020 10:23:15 +0200
+Message-ID: <35379f7fa5ad143f4fc49340783a1549c96d5203.camel@suse.com>
 References: <351fa23b-b730-ce22-7e89-24f26a693a6a@huawei.com>
-	<2d9db95b-bb88-0d22-1c2d-df459415ee3d@huawei.com>
+	<b6e1e24f-5695-f29f-ce88-bff2d5e3fac1@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2d9db95b-bb88-0d22-1c2d-df459415ee3d@huawei.com>
+In-Reply-To: <b6e1e24f-5695-f29f-ce88-bff2d5e3fac1@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,56 +24,57 @@ Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-d
 List-Id: dm-devel.ids
 
 On Sun, 2020-08-16 at 09:42 +0800, Zhiqiang Liu wrote:
-> In checker_get func, input name will be checked before
-> calling checker_class_lookup func, in which name will
-> also be checked.
-> 
-> Here, we just remove useless input name check in checker_get func.
+> We adopt static char* array (demon_status_msg) in daemon_status func,
+> so it looks more simpler and easier to expand.
 > 
 > Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 > Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
 > ---
->  libmultipath/checkers.c | 9 ++++-----
->  1 file changed, 4 insertions(+), 5 deletions(-)
-
-Nack. Better safe than sorry. If you look at the generated assembly,
-you'll see that the compiler optimizes this double check away, so
-doesn't inflict runtime overhead, while it makes it easier to verify
-the code.
-
-I'd ack this if we had a solid convention in the multipath-tools code
-to check parameters always (only) in the callee. But so far we don't.
-I guess if we want to do that, we'd first need to agree on and
-implement a common convention for return values, too.
-
-If checker_class_lookup() was non-static and/or the code was executed
-very often, things would also look different to me. But both is not the
-case.
-
-Regards,
-Martin
-
-
-
+>  multipathd/main.c | 30 +++++++++++++++---------------
+>  multipathd/main.h |  3 ++-
+>  2 files changed, 17 insertions(+), 16 deletions(-)
 > 
-> diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-> index f7ddd53..ac41d64 100644
-> --- a/libmultipath/checkers.c
-> +++ b/libmultipath/checkers.c
-> @@ -361,11 +361,10 @@ void checker_get(const char *multipath_dir,
-> struct checker *dst,
->  	if (!dst)
->  		return;
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 9ec6585..cab1d0d 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -153,24 +153,24 @@ static volatile sig_atomic_t exit_sig;
+>  static volatile sig_atomic_t reconfig_sig;
+>  static volatile sig_atomic_t log_reset_sig;
 > 
-> -	if (name && strlen(name)) {
-> -		src = checker_class_lookup(name);
-> -		if (!src)
-> -			src = add_checker_class(multipath_dir, name);
-> -	}
-> +	src = checker_class_lookup(name);
-> +	if (!src)
-> +		src = add_checker_class(multipath_dir, name);
+> +static const char *demon_status_msg[DAEMON_STATUS_SIZE] = {
+> +	[DAEMON_INIT] = "init",
+> +	[DAEMON_START] = "startup",
+> +	[DAEMON_CONFIGURE] = "configure",
+> +	[DAEMON_IDLE] = "idle",
+> +	[DAEMON_RUNNING] = "running",
+> +	[DAEMON_SHUTDOWN] = "shutdown",
+> +};
 > +
->  	dst->cls = src;
->  	if (!src)
->  		return;
+>  const char *
+>  daemon_status(void)
+>  {
+> -	switch (get_running_state()) {
+> -	case DAEMON_INIT:
+> -		return "init";
+> -	case DAEMON_START:
+> -		return "startup";
+> -	case DAEMON_CONFIGURE:
+> -		return "configure";
+> -	case DAEMON_IDLE:
+> -		return "idle";
+> -	case DAEMON_RUNNING:
+> -		return "running";
+> -	case DAEMON_SHUTDOWN:
+> -		return "shutdown";
+> -	}
+> -	return NULL;
+> +	enum daemon_status status = get_running_state();
+> +
+> +	if (status < DAEMON_INIT || status >= DAEMON_STATUS_SIZE)
+> +		return NULL;
+
+I'd rather use "int" as the type of "status", because (not technically,
+but logically), an "enum daemon_status" cannot be outside this range.
+
+Martin
