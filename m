@@ -1,15 +1,15 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 71/74] multipath: use
-	update_pathvec_from_dm()
-Date: Mon, 17 Aug 2020 16:00:03 -0500
-Message-ID: <20200817210003.GG19233@octiron.msp.redhat.com>
-References: <20200812113511.26469-1-mwilck@suse.com>
-	<20200812113511.26469-9-mwilck@suse.com>
+Subject: Re: [PATCH v2 76/80] libmultipath: select_action():
+ force udev reload for uninitialized maps
+Date: Mon, 17 Aug 2020 16:31:05 -0500
+Message-ID: <20200817213105.GH19233@octiron.msp.redhat.com>
+References: <20200812113543.26576-1-mwilck@suse.com>
+	<20200812113543.26576-2-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200812113511.26469-9-mwilck@suse.com>
+In-Reply-To: <20200812113543.26576-2-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,124 +24,147 @@ To: mwilck@suse.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Aug 12, 2020 at 01:35:11PM +0200, mwilck@suse.com wrote:
+On Wed, Aug 12, 2020 at 01:35:40PM +0200, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> The multipath-specific function update_paths() can now be replaced with
-> a call to update_pathvec_from_dm().
+> If we are in the reconfigure() code path, and we encounter maps to
+> be reloaded, we usually set the DM_SUBSYSTEM_UDEV_FLAG0 flag to tell
+> udev not to repeat device detection steps above the multipath layer.
+> However, if the map was previously uninitialized, we have to force
+> udev to reload.
+
+Actually, this patch looks all broken now. select_reload_action()
+doesn't have a cmpp argument, but still has
+
+mpp_ud = get_udev_for_mpp(cmpp);
+
+Also, it's setting the action on cmpp from select_action, not mpp. I'm
+pretty sure that the next patch makes everything work o.k. again.
+
+-Ben
+
 > 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/structs_vec.c |  2 +-
->  multipath/main.c           | 68 +++-----------------------------------
->  2 files changed, 5 insertions(+), 65 deletions(-)
+>  libmultipath/configure.c | 61 ++++++++++++++++++++++++----------------
+>  1 file changed, 37 insertions(+), 24 deletions(-)
 > 
-> diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-> index 07027f5..2d85df9 100644
-> --- a/libmultipath/structs_vec.c
-> +++ b/libmultipath/structs_vec.c
-> @@ -150,7 +150,7 @@ bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
->  			 * we know that the path is in pathvec already.
->  			 */
->  			if (pp->udev) {
-> -				if (pathinfo_flags) {
-> +				if (pathinfo_flags & ~DI_NOIO) {
->  					conf = get_multipath_config();
->  					pthread_cleanup_push(put_multipath_config,
->  							     conf);
-> diff --git a/multipath/main.c b/multipath/main.c
-> index a144bc3..9d6b482 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -187,63 +187,6 @@ usage (char * progname)
->  
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index cc54818..ac57b88 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -660,6 +660,32 @@ sysfs_set_max_sectors_kb(struct multipath *mpp, int is_reload)
+>  	return err;
 >  }
 >  
-> -static int
-> -update_paths (struct multipath * mpp, int quick)
-> -{
-> -	int i, j;
-> -	struct pathgroup * pgp;
-> -	struct path * pp;
-> -	struct config *conf;
-> -
-> -	if (!mpp->pg)
-> -		return 0;
-> -
-> -	vector_foreach_slot (mpp->pg, pgp, i) {
-> -		if (!pgp->paths)
-> -			continue;
-> -
-> -		vector_foreach_slot (pgp->paths, pp, j) {
-> -			if (!strlen(pp->dev)) {
-> -				if (devt2devname(pp->dev, FILE_NAME_SIZE,
-> -						 pp->dev_t)) {
-> -					/*
-> -					 * path is not in sysfs anymore
-> -					 */
-> -					pp->chkrstate = pp->state = PATH_DOWN;
-> -					pp->offline = 1;
-> -					continue;
-> -				}
-> -				pp->mpp = mpp;
-> -				if (quick)
-> -					continue;
-> -				conf = get_multipath_config();
-> -				if (pathinfo(pp, conf, DI_ALL))
-> -					pp->state = PATH_UNCHECKED;
-> -				put_multipath_config(conf);
-> -				continue;
-> -			}
-> -			pp->mpp = mpp;
-> -			if (quick)
-> -				continue;
-> -			if (pp->state == PATH_UNCHECKED ||
-> -			    pp->state == PATH_WILD) {
-> -				conf = get_multipath_config();
-> -				if (pathinfo(pp, conf, DI_CHECKER))
-> -					pp->state = PATH_UNCHECKED;
-> -				put_multipath_config(conf);
-> -			}
-> -
-> -			if (pp->priority == PRIO_UNDEF) {
-> -				conf = get_multipath_config();
-> -				if (pathinfo(pp, conf, DI_PRIO))
-> -					pp->priority = PRIO_UNDEF;
-> -				put_multipath_config(conf);
-> -			}
-> -		}
-> -	}
-> -	return 0;
-> -}
-> -
->  static int
->  get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+> +static void
+> +select_reload_action(struct multipath *mpp, const char *reason)
+> +{
+> +	struct udev_device *mpp_ud;
+> +	const char *env;
+> +
+> +	/*
+> +	 * MPATH_DEVICE_READY != 1 can mean two things:
+> +	 *  (a) no usable paths
+> +	 *  (b) device was never fully processed (e.g. udev killed)
+> +	 * If we are in this code path (startup or forced reconfigure),
+> +	 * (b) can mean that upper layers like kpartx have never been
+> +	 * run for this map. Thus force udev reload.
+> +	 */
+> +
+> +	mpp_ud = get_udev_for_mpp(cmpp);
+> +	env = udev_device_get_property_value(mpp_ud, "MPATH_DEVICE_READY");
+> +	if ((!env || strcmp(env, "1")) && count_active_paths(mpp) > 0)
+> +		mpp->force_udev_reload = 1;
+> +	udev_device_unref(mpp_ud);
+> +	mpp->action = ACT_RELOAD;
+> +	condlog(3, "%s: set ACT_RELOAD (%s%s)", mpp->alias,
+> +		mpp->force_udev_reload ? "forced, " : "",
+> +		reason);
+> +}
+> +
+>  static void
+>  select_action (struct multipath * mpp, vector curmp, int force_reload)
 >  {
-> @@ -273,13 +216,9 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
->  		condlog(3, "status = %s", status);
+> @@ -728,9 +754,7 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
+>  	if (mpp->no_path_retry != NO_PATH_RETRY_UNDEF &&
+>  	    !!strstr(mpp->features, "queue_if_no_path") !=
+>  	    !!strstr(cmpp->features, "queue_if_no_path")) {
+> -		mpp->action =  ACT_RELOAD;
+> -		condlog(3, "%s: set ACT_RELOAD (no_path_retry change)",
+> -			mpp->alias);
+> +		select_reload_action(cmpp, "no_path_retry change");
+>  		return;
+>  	}
+>  	if ((mpp->retain_hwhandler != RETAIN_HWHANDLER_ON ||
+> @@ -738,9 +762,7 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
+>  	    (strlen(cmpp->hwhandler) != strlen(mpp->hwhandler) ||
+>  	     strncmp(cmpp->hwhandler, mpp->hwhandler,
+>  		    strlen(mpp->hwhandler)))) {
+> -		mpp->action = ACT_RELOAD;
+> -		condlog(3, "%s: set ACT_RELOAD (hwhandler change)",
+> -			mpp->alias);
+> +		select_reload_action(cmpp, "hwhandler change");
+>  		return;
+>  	}
 >  
->  		disassemble_map(pathvec, params, mpp);
-> -
-> -		/*
-> -		 * disassemble_map() can add new paths to pathvec.
-> -		 * If not in "fast list mode", we need to fetch information
-> -		 * about them
-> -		 */
-> -		update_paths(mpp, (cmd == CMD_LIST_SHORT));
-> +		update_pathvec_from_dm(pathvec, mpp,
-> +				       (cmd == CMD_LIST_SHORT ?
-> +					DI_NOIO : DI_ALL));
+> @@ -748,9 +770,7 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
+>  	    !!strstr(mpp->features, "retain_attached_hw_handler") !=
+>  	    !!strstr(cmpp->features, "retain_attached_hw_handler") &&
+>  	    get_linux_version_code() < KERNEL_VERSION(4, 3, 0)) {
+> -		mpp->action = ACT_RELOAD;
+> -		condlog(3, "%s: set ACT_RELOAD (retain_hwhandler change)",
+> -			mpp->alias);
+> +		select_reload_action(cmpp, "retain_hwhandler change");
+>  		return;
+>  	}
 >  
->  		if (cmd == CMD_LIST_LONG)
->  			mpp->bestpg = select_path_group(mpp);
-> @@ -353,6 +292,7 @@ static int check_usable_paths(struct config *conf,
->  	dm_get_map(mpp->alias, &mpp->size, params);
->  	dm_get_status(mpp->alias, status);
->  	disassemble_map(pathvec, params, mpp);
-> +	update_pathvec_from_dm(pathvec, mpp, 0);
->  	disassemble_status(status, mpp);
+> @@ -762,9 +782,10 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
+>  		remove_feature(&cmpp_feat, "queue_if_no_path");
+>  		remove_feature(&cmpp_feat, "retain_attached_hw_handler");
+>  		if (strncmp(mpp_feat, cmpp_feat, PARAMS_SIZE)) {
+> -			mpp->action =  ACT_RELOAD;
+> -			condlog(3, "%s: set ACT_RELOAD (features change)",
+> -				mpp->alias);
+> +			select_reload_action(cmpp, "features change");
+> +			FREE(cmpp_feat);
+> +			FREE(mpp_feat);
+> +			return;
+>  		}
+>  	}
+>  	FREE(cmpp_feat);
+> @@ -772,27 +793,19 @@ select_action (struct multipath * mpp, vector curmp, int force_reload)
 >  
->  	vector_foreach_slot (mpp->pg, pg, i) {
+>  	if (!cmpp->selector || strncmp(cmpp->selector, mpp->selector,
+>  		    strlen(mpp->selector))) {
+> -		mpp->action = ACT_RELOAD;
+> -		condlog(3, "%s: set ACT_RELOAD (selector change)",
+> -			mpp->alias);
+> +		select_reload_action(cmpp, "selector change");
+>  		return;
+>  	}
+>  	if (cmpp->minio != mpp->minio) {
+> -		mpp->action = ACT_RELOAD;
+> -		condlog(3, "%s: set ACT_RELOAD (minio change, %u->%u)",
+> -			mpp->alias, cmpp->minio, mpp->minio);
+> +		select_reload_action(cmpp, "minio change");
+>  		return;
+>  	}
+>  	if (!cmpp->pg || VECTOR_SIZE(cmpp->pg) != VECTOR_SIZE(mpp->pg)) {
+> -		mpp->action = ACT_RELOAD;
+> -		condlog(3, "%s: set ACT_RELOAD (path group number change)",
+> -			mpp->alias);
+> +		select_reload_action(cmpp, "path group number change");
+>  		return;
+>  	}
+>  	if (pgcmp(mpp, cmpp)) {
+> -		mpp->action = ACT_RELOAD;
+> -		condlog(3, "%s: set ACT_RELOAD (path group topology change)",
+> -			mpp->alias);
+> +		select_reload_action(cmpp, "path group topology change");
+>  		return;
+>  	}
+>  	if (cmpp->nextpg != mpp->bestpg) {
 > -- 
 > 2.28.0
