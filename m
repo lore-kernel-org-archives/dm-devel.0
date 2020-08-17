@@ -1,15 +1,15 @@
-From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: Re: [PATCH 5/5] libmultipath fix daemon memory leak in
- disassemble_map
-Date: Tue, 18 Aug 2020 21:11:07 +0800
-Message-ID: <61f78db1-c481-292f-eb6f-bce69d66b8ab@huawei.com>
-References: <5ef5f58e-3a27-8959-3abb-4b4c401cc309@huawei.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 3/6] multipathd: adopt static char* arr in
+ sd_notify_status func
+Date: Mon, 17 Aug 2020 10:35:40 +0200
+Message-ID: <e5de8fe451462738776acb8c4107e729828e87a2.camel@suse.com>
+References: <351fa23b-b730-ce22-7e89-24f26a693a6a@huawei.com>
+	<2d7cd13e-d1df-5fc7-9403-1f845faf64d7@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5ef5f58e-3a27-8959-3abb-4b4c401cc309@huawei.com>
-Content-Language: en-GB
+In-Reply-To: <2d7cd13e-d1df-5fc7-9403-1f845faf64d7@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,88 +19,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
-Cc: linfeilong@huawei.com, liuzhiqiang26@huawei.com
+To: Zhiqiang Liu <liuzhiqiang26@huawei.com>, bmarzins@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
 List-Id: dm-devel.ids
 
-When one iscsi device logs in and logs out with the "multipath -r"
-executed at the same time, memory leak happens in multipathd
-process.
+On Sun, 2020-08-16 at 09:44 +0800, Zhiqiang Liu wrote:
+> We adopt static char* array (sd_notify_status_msg) in
+> sd_notify_status func, so it looks more simpler and easier
+> to expand.
+> 
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+> ---
+>  multipathd/main.c | 26 ++++++++++++--------------
+>  1 file changed, 12 insertions(+), 14 deletions(-)
+> 
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index cab1d0d..a09ccd1 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -177,23 +177,21 @@ daemon_status(void)
+>   * I love you too, systemd ...
+>   */
+>  #ifdef USE_SYSTEMD
+> +static const char *sd_notify_status_msg[DAEMON_STATUS_SIZE] = {
+> +	[DAEMON_INIT] = "STATUS=init",
+> +	[DAEMON_START] = "STATUS=startup",
+> +	[DAEMON_CONFIGURE] = "STATUS=configure",
+> +	[DAEMON_IDLE] = "STATUS=up",
+> +	[DAEMON_RUNNING] = "STATUS=up",
+> +	[DAEMON_SHUTDOWN] = "STATUS=shutdown",
+> +};
+> +
 
-The reason is following. When "multipath -r" is executed, the path
-will be free in configure function. Before path_discovery executed,
-iscsi device logs out. Then path_discovery will not find any path and
-there is no path in the gvecs->pathvec. When map_discovery function
-is executed, disassemble_map function will be called. Because
-gvecs->pathvec->slot is empty and is_deamon is 1, a path will be
-allocated and is not stored in gvecs->pathvec but store in
-mpp->pg. But when the mpp is removed and freed by remove_map
-function, the path will not be free and can't be find anymore.
+This repetition of "STATUS=" looks clumsy. It's not your fault, because
+the current code does the same thing. But if you want to clean this up,
+please create the notification string in a dynamic buffer, and use
+daemon_status() for those cases where it applies.
 
-The procedure details given as follows,
-1."multipath -r" is executed
-main
-	->child
-		->reconfigure
-			->configure
-				->path_discovery //after iscsi logout
-				->map_discovery
-					->update_multipath_table
-						->disassemble_map
-							->alloc_path
-2.then "multipath -r" is executed again
-main
-main
-	->child
-		->reconfigure
-			->remove_maps_and_stop_waiters
-				->remove_maps
+Regards
+Martin
 
-If checking is_deamon is deleted, there are many other things need be done like in
-https://www.redhat.com/archives/dm-devel/2020-July/msg00245.html. And this
-branch develops from 0.8.3 but upstream_queue is mainline which develops from
-0.8.4.
-Here, we skip alloc_path if pp isn't find in pathvec and process is daemon.  In
-daemon, we should not store path with incomplete information to pathvec.  The
-pathvec stores all paths in daemon, so it is reasonable keep same with pathvec.
-
-Reported-by: Tianxiong Li <lutianxiong@huawei.com>
-Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
-Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
----
- libmultipath/dmparser.c | 14 ++++++++++++--
- 1 file changed, 12 insertions(+), 2 deletions(-)
-
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index f02c551..0f370e9 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -314,6 +314,16 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
- 			}
-
- 			if (!pp) {
-+				/* daemon should keep same with pathvec */
-+				/* pp is not find in pathvec, skip it */
-+				if (is_daemon) {
-+					FREE(word);
-+					for (k = 0; k < num_paths_args; k++) {
-+						p += get_word(p, NULL);
-+					}
-+					continue;
-+				}
-+
- 				pp_unfound = 1;
- 				pp = alloc_path();
-
-@@ -326,8 +336,8 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
- 					strncpy(pp->wwid, mpp->wwid,
- 						WWID_SIZE - 1);
- 				}
--				/* Only call this in multipath client mode */
--				if (!is_daemon && store_path(pathvec, pp)) {
-+
-+				if (store_path(pathvec, pp)) {
- 					free_path(pp);
- 					goto out1;
- 				}
---
+>  static const char *
+>  sd_notify_status(enum daemon_status state)
+>  {
+> -	switch (state) {
+> -	case DAEMON_INIT:
+> -		return "STATUS=init";
+> -	case DAEMON_START:
+> -		return "STATUS=startup";
+> -	case DAEMON_CONFIGURE:
+> -		return "STATUS=configure";
+> -	case DAEMON_IDLE:
+> -	case DAEMON_RUNNING:
+> -		return "STATUS=up";
+> -	case DAEMON_SHUTDOWN:
+> -		return "STATUS=shutdown";
+> -	}
+> -	return NULL;
+> +	if (state < DAEMON_INIT || state >= DAEMON_STATUS_SIZE)
+> +		return NULL;
+> +	return sd_notify_status_msg[state];
+>  }
+> 
+>  static void do_sd_notify(enum daemon_status old_state,
