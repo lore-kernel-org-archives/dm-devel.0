@@ -1,50 +1,29 @@
-From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-Subject: Re: [PATCH 0/2] dm-devel:dm-crypt: infrastructure for measurement of
- DM target data using IMA
-Date: Mon, 17 Aug 2020 15:45:17 -0700
-Message-ID: <f252a595-7b6a-9e20-bf08-97f102c41c01@linux.microsoft.com>
-References: <20200816210250.11506-1-tusharsu@linux.microsoft.com>
- <5f12cc89c535ccfc6c3d63efa2bf716a1fdd966d.camel@linux.ibm.com>
+From: Mimi Zohar <zohar@linux.ibm.com>
+Subject: Re: [PATCH 2/3] IMA: add policy to support measuring critical data
+ from kernel components
+Date: Mon, 17 Aug 2020 19:43:18 -0400
+Message-ID: <97d25609b6a87f104cc88a2ff8ae52d3f2e4e387.camel@linux.ibm.com>
+References: <20200812193102.18636-1-tusharsu@linux.microsoft.com>
+         <20200812193102.18636-3-tusharsu@linux.microsoft.com>
+         <591b5f09c7df8ef0378866eaf3afde7a7cb4e82f.camel@linux.ibm.com>
+         <5275268e-2ce8-0129-b11d-8419ac384262@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15; format=flowed
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5f12cc89c535ccfc6c3d63efa2bf716a1fdd966d.camel@linux.ibm.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mimi Zohar <zohar@linux.ibm.com>, agk@redhat.com, snitzer@redhat.com, gmazyland@gmail.com
-Cc: tyhicks@linux.microsoft.com, sashal@kernel.org, jmorris@namei.org, nramas@linux.microsoft.com, linux-integrity@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <5275268e-2ce8-0129-b11d-8419ac384262@linux.microsoft.com>
+Sender: owner-linux-security-module@vger.kernel.org
+To: Tushar Sugandhi <tusharsu@linux.microsoft.com>, stephen.smalley.work@gmail.com, casey@schaufler-ca.com, gmazyland@gmail.com
+Cc: tyhicks@linux.microsoft.com, sashal@kernel.org, jmorris@namei.org, linux-integrity@vger.kernel.org, selinux@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, nramas@linux.microsoft.com
 List-Id: dm-devel.ids
 
+On Mon, 2020-08-17 at 15:27 -0700, Tushar Sugandhi wrote:
 
+> > scripts/Lindent isn't as prevalent as it used to be, but it's still
+> > included in Documentation/process/coding-style.rst.  Use it as a guide.
+> Thanks for the pointer. We'll use scripts/Lindent going forward
 
-On 2020-08-17 2:46 p.m., Mimi Zohar wrote:
-> On Sun, 2020-08-16 at 14:02 -0700, Tushar Sugandhi wrote:
->> There are several device-mapper targets which contribute to verify
->> the integrity of the mapped devices e.g. dm-integrity, dm-verity,
->> dm-crypt etc.
->>
->> But they do not use the capabilities provided by kernel integrity
->> subsystem (IMA). For instance, the IMA capability that measures several
->> in-memory constructs and files to detect if they have been accidentally
->> or maliciously altered, both remotely and locally. IMA also has the
->> capability to include these measurements in the IMA measurement list and
->> use them to extend a TPM PCR so that it can be quoted.
-> 
-> "both remotely" refers to measurement and attestation, while "locally"
-> refers to integrity enforcement, based on hashes or signatures.  Is
-> this patch set adding both IMA-measurement and IMA-appraisal?
-> 
-> Mimi
-> 
-Thanks Mimi for looking at this patch set.
+Please don't change existing code to conform to it.  Use it as a
+guide/suggestion for new code.
 
-I added both "remotely" and "locally" in the description, so that
-people less familiar with IMA would get a general overview of whats
-possible with IMA.
-
-In this patch set we are only adding support for measurement and
-attestation. In the next iteration, I will remove the references to
-"local" detection.
-~Tushar
-<snip>
+Mimi
