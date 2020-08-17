@@ -1,16 +1,16 @@
 From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: Re: [PATCH 6/6] multipathd: return NULL if MALLOC fails
- in alloc_waiteri, func
-Date: Mon, 17 Aug 2020 22:42:49 +0800
-Message-ID: <e80c36ed-6034-1a4e-59f0-4de34965e55a@huawei.com>
+Subject: Re: [PATCH 1/6] checker: remove useless name check in
+ checker_get func
+Date: Mon, 17 Aug 2020 23:12:56 +0800
+Message-ID: <dd79ea15-f7fd-81a9-8e3d-4840f2d94422@huawei.com>
 References: <351fa23b-b730-ce22-7e89-24f26a693a6a@huawei.com>
-	<a0d6c479-7802-eb30-9f5d-0075ca1397f9@huawei.com>
-	<d1268e158e8c063c12e7f5ab1e8a72109c4a336a.camel@suse.com>
+	<2d9db95b-bb88-0d22-1c2d-df459415ee3d@huawei.com>
+	<71d49c03470fbb70cc37f757e4804380566fba12.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d1268e158e8c063c12e7f5ab1e8a72109c4a336a.camel@suse.com>
+In-Reply-To: <71d49c03470fbb70cc37f757e4804380566fba12.camel@suse.com>
 Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -25,47 +25,69 @@ To: Martin Wilck <mwilck@suse.com>, bmarzins@redhat.com, Christophe Varoqui <chr
 Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
 List-Id: dm-devel.ids
 
-
-
-On 2020/8/17 17:21, Martin Wilck wrote:
-> On Sun, 2020-08-16 at 09:46 +0800, Zhiqiang Liu wrote:
->> In alloc_waiter func, if MALLOC fails, wp is equal to NULL.
->> If now we call memset(wp), segmentation fault will occur.
+On 2020/8/17 16:05, Martin Wilck wrote:
+> On Sun, 2020-08-16 at 09:42 +0800, Zhiqiang Liu wrote:
+>> In checker_get func, input name will be checked before
+>> calling checker_class_lookup func, in which name will
+>> also be checked.
+>>
+>> Here, we just remove useless input name check in checker_get func.
 >>
 >> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 >> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
 >> ---
->>  multipathd/waiter.c | 4 +++-
->>  1 file changed, 3 insertions(+), 1 deletion(-)
->>
->> diff --git a/multipathd/waiter.c b/multipathd/waiter.c
->> index e645766..80e6e6e 100644
->> --- a/multipathd/waiter.c
->> +++ b/multipathd/waiter.c
->> @@ -33,8 +33,10 @@ static struct event_thread *alloc_waiter (void)
->>  	struct event_thread *wp;
->>
->>  	wp = (struct event_thread *)MALLOC(sizeof(struct
->> event_thread));
->> -	memset(wp, 0, sizeof(struct event_thread));
->> +	if (!wp)
->> +		return NULL;
->>
->> +	memset(wp, 0, sizeof(struct event_thread));
->>  	return wp;
->>  }
->>
+>>  libmultipath/checkers.c | 9 ++++-----
+>>  1 file changed, 4 insertions(+), 5 deletions(-)
 > 
-> This is correct, but while you're at it, please also remove the
-> superfluous memset() call (counterintuitively, MALLOC(x) maps to
-> calloc(1, x)).
+> Nack. Better safe than sorry. If you look at the generated assembly,
+> you'll see that the compiler optimizes this double check away, so
+> doesn't inflict runtime overhead, while it makes it easier to verify
+> the code.
 > 
+> I'd ack this if we had a solid convention in the multipath-tools code
+> to check parameters always (only) in the callee. But so far we don't.
+> I guess if we want to do that, we'd first need to agree on and
+> implement a common convention for return values, too.
+> 
+I agree with you.
+The location of the parameter check is not uniform.
+Are we dealing with it now? or add it in your TODO list?
+
+
+> If checker_class_lookup() was non-static and/or the code was executed
+> very often, things would also look different to me. But both is not the
+> case.
+> 
+
+
+
+> Regards,
 > Martin
 > 
-Thanks for your suggestion.
-I will remove the memset() call in v2 patch.
-
-Zhiqiang
+> 
+> 
+>>
+>> diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+>> index f7ddd53..ac41d64 100644
+>> --- a/libmultipath/checkers.c
+>> +++ b/libmultipath/checkers.c
+>> @@ -361,11 +361,10 @@ void checker_get(const char *multipath_dir,
+>> struct checker *dst,
+>>  	if (!dst)
+>>  		return;
+>>
+>> -	if (name && strlen(name)) {
+>> -		src = checker_class_lookup(name);
+>> -		if (!src)
+>> -			src = add_checker_class(multipath_dir, name);
+>> -	}
+>> +	src = checker_class_lookup(name);
+>> +	if (!src)
+>> +		src = add_checker_class(multipath_dir, name);
+>> +
+>>  	dst->cls = src;
+>>  	if (!src)
+>>  		return;
 > 
 > 
 > .
