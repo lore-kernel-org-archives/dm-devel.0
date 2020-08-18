@@ -1,52 +1,47 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH RESEND] blk-mq: insert request not through ->queue_rq
- into sw/scheduler queue
-Date: Tue, 18 Aug 2020 11:20:22 -0400
-Message-ID: <20200818152022.GB6842@redhat.com>
-References: <20200818090728.2696802-1-ming.lei@redhat.com>
- <92162ee6-0fa0-dafd-69b1-af285ee61044@kernel.dk>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 1/5 v4] libmultipath fix a memory leak in
+	set_ble_device
+Date: Tue, 18 Aug 2020 17:57:27 +0200
+Message-ID: <3d99bd1341a4bded6785a8c67fe0907e8260a871.camel@suse.com>
+References: <5ef5f58e-3a27-8959-3abb-4b4c401cc309@huawei.com>
+	<a3e11ab6-c81c-d136-68ea-3d36fc59c810@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <92162ee6-0fa0-dafd-69b1-af285ee61044@kernel.dk>
-Sender: linux-block-owner@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>, Ming Lei <ming.lei@redhat.com>
-Cc: linux-block@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <a3e11ab6-c81c-d136-68ea-3d36fc59c810@huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: lixiaokeng <lixiaokeng@huawei.com>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
+Cc: linfeilong@huawei.com, liuzhiqiang26@huawei.com
 List-Id: dm-devel.ids
 
-On Tue, Aug 18 2020 at 10:50am -0400,
-Jens Axboe <axboe@kernel.dk> wrote:
-
-> On 8/18/20 2:07 AM, Ming Lei wrote:
-> > c616cbee97ae ("blk-mq: punt failed direct issue to dispatch list") supposed
-> > to add request which has been through ->queue_rq() to the hw queue dispatch
-> > list, however it adds request running out of budget or driver tag to hw queue
-> > too. This way basically bypasses request merge, and causes too many request
-> > dispatched to LLD, and system% is unnecessary increased.
-> > 
-> > Fixes this issue by adding request not through ->queue_rq into sw/scheduler
-> > queue, and this way is safe because no ->queue_rq is called on this request
-> > yet.
-> > 
-> > High %system can be observed on Azure storvsc device, and even soft lock
-> > is observed. This patch reduces %system during heavy sequential IO,
-> > meantime decreases soft lockup risk.
+On Tue, 2020-08-18 at 21:02 +0800, lixiaokeng wrote:
+> In set_ble_device func, if blist is NULL or ble is NULL,
+> the vendor and product isn't freed. We think it is not
+> reasonable that strdup(XXX) is used as set_ble_device
+> and store_ble functions' parameter.
 > 
-> Applied, thanks Ming.
+> Here we call strdup() in store_ble and set_ble_device
+> functions and the string will be free if functions fail.
+> Because constant string like "sdb" will be their parameter,
+> char * is changed to const char *. This is base on
+> upstream-queue branch in openSUSE/multipath-tools.
+> 
+> The type of ble->vendor_reg is regex_t struct but not a
+> pointer, so it can not be set NULL.
 
-Hmm, strikes me as strange that this is occurring given the direct
-insertion into blk-mq queue (bypassing scheduler) is meant to avoid 2
-layers of IO merging when dm-mulipath is stacked on blk-mq path(s).  The
-dm-mpath IO scheduler does all merging and underlying paths' blk-mq
-request_queues are meant to just dispatch the top-level's requests.
+Ups. Right. Thanks for correcting me.
 
-So this change concerns me.  Feels like this design has broken down.
+> 
+> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 
-Could be that some other entry point was added for the
-__blk_mq_try_issue_directly() code?  And it needs to be untangled away
-from the dm-multipath use-case?
-
-Apologies for not responding to this patch until now.
-
-Mike
+Reviewed-by: Martin Wilck <mwilck@suse.com>
