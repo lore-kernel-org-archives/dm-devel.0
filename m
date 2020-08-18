@@ -1,40 +1,64 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [git pull] device mapper changes for 5.9
-Date: Tue, 18 Aug 2020 14:22:57 -0700
-Message-ID: <CAHk-=wj95eQxPOEMHe8j3zmpZYHbv8kZ0nz8fUUCO6acENTs0w@mail.gmail.com>
-References: <20200807160327.GA977@redhat.com> <CAHk-=wiC=g-0yZW6QrEXRH53bUVAwEFgYxd05qgOnDLJYdzzcA@mail.gmail.com>
- <20200807204015.GA2178@redhat.com> <CAMeeMh_=M3Z7bLPN3_SD+VxNbosZjXgC_H2mZq1eCeZG0kUx1w@mail.gmail.com>
- <CALrw=nHD81X4YCpuk-Pp9_FSFba6LZEVUwo-YkYh1nL9pEbzpA@mail.gmail.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH RESEND] blk-mq: insert request not through ->queue_rq
+ into sw/scheduler queue
+Date: Wed, 19 Aug 2020 07:52:20 +0800
+Message-ID: <20200818235220.GA2712797@T590>
+References: <20200818090728.2696802-1-ming.lei@redhat.com>
+ <92162ee6-0fa0-dafd-69b1-af285ee61044@kernel.dk>
+ <20200818152022.GB6842@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <CALrw=nHD81X4YCpuk-Pp9_FSFba6LZEVUwo-YkYh1nL9pEbzpA@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20200818152022.GB6842@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Ignat Korchagin <ignat@cloudflare.com>
-Cc: John Dorminy <jdorminy@redhat.com>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-block <linux-block@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, Damien Le Moal <damien.lemoal@wdc.com>, JeongHyeon Lee <jhs2.lee@samsung.com>, Johannes Thumshirn <johannes.thumshirn@wdc.com>, Mikulas Patocka <mpatocka@redhat.com>, Ming Lei <ming.lei@redhat.com>, yangerkun <yangerkun@huawei.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Aug 18, 2020 at 2:12 PM Ignat Korchagin <ignat@cloudflare.com> wrote:
->
-> Additionally if one cares about latency
+On Tue, Aug 18, 2020 at 11:20:22AM -0400, Mike Snitzer wrote:
+> On Tue, Aug 18 2020 at 10:50am -0400,
+> Jens Axboe <axboe@kernel.dk> wrote:
+> 
+> > On 8/18/20 2:07 AM, Ming Lei wrote:
+> > > c616cbee97ae ("blk-mq: punt failed direct issue to dispatch list") supposed
+> > > to add request which has been through ->queue_rq() to the hw queue dispatch
+> > > list, however it adds request running out of budget or driver tag to hw queue
+> > > too. This way basically bypasses request merge, and causes too many request
+> > > dispatched to LLD, and system% is unnecessary increased.
+> > > 
+> > > Fixes this issue by adding request not through ->queue_rq into sw/scheduler
+> > > queue, and this way is safe because no ->queue_rq is called on this request
+> > > yet.
+> > > 
+> > > High %system can be observed on Azure storvsc device, and even soft lock
+> > > is observed. This patch reduces %system during heavy sequential IO,
+> > > meantime decreases soft lockup risk.
+> > 
+> > Applied, thanks Ming.
+> 
+> Hmm, strikes me as strange that this is occurring given the direct
+> insertion into blk-mq queue (bypassing scheduler) is meant to avoid 2
+> layers of IO merging when dm-mulipath is stacked on blk-mq path(s).  The
+> dm-mpath IO scheduler does all merging and underlying paths' blk-mq
+> request_queues are meant to just dispatch the top-level's requests.
+> 
+> So this change concerns me.  Feels like this design has broken down.
+> 
 
-I think everybody really deep down cares about latency, they just
-don't always know it, and the benchmarks are very seldom about it
-because it's so much harder to measure.
+'bypass_insert' is 'true' when blk_insert_cloned_request() is
+called from device mapper code, so this patch doesn't affect dm.
 
-> they will not use HDDs for the workflow and HDDs have much higher IO latency than CPU scheduling.
+> Could be that some other entry point was added for the
+> __blk_mq_try_issue_directly() code?  And it needs to be untangled away
+> from the dm-multipath use-case?
 
-I think by now we can just say that anybody who uses HDD's don't care
-about performance as a primary issue.
+__blk_mq_try_issue_directly() can be called from blk-mq directly, that
+is the case this patch is addressing, if one request can't be queued to
+LLD because of running out of budget or driver tag, it should be added to
+scheduler queue for improving io merge, meantime we can avoid too many
+requests dispatched to hardware.
 
-I don't think they are really interesting as a benchmark target - at
-least from the standpoint of what the kernel should optimize for.
 
-People have HDD's for legacy reasons or because they care much more
-about capacity than performance.  Why should _we_ then worry about
-performance that the user doesn't worry about?
-
-I'm not saying we should penalize HDD's, but I don't think they are
-things we should primarily care deeply about any more.
-
-               Linus
+Thanks,
+Ming
