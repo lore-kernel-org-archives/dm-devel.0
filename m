@@ -1,97 +1,52 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 3/6] multipathd: adopt static char* arr in
- sd_notify_status func
-Date: Mon, 17 Aug 2020 17:44:41 +0200
-Message-ID: <dbec56af9d3e25ab7c3806abf8ac86f4c160302f.camel@suse.com>
-References: <351fa23b-b730-ce22-7e89-24f26a693a6a@huawei.com>
-	<2d7cd13e-d1df-5fc7-9403-1f845faf64d7@huawei.com>
-	<e5de8fe451462738776acb8c4107e729828e87a2.camel@suse.com>
-	<d44fd311-e66b-b196-6735-919f02e39ff4@huawei.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH RESEND] blk-mq: insert request not through ->queue_rq
+ into sw/scheduler queue
+Date: Tue, 18 Aug 2020 11:20:22 -0400
+Message-ID: <20200818152022.GB6842@redhat.com>
+References: <20200818090728.2696802-1-ming.lei@redhat.com>
+ <92162ee6-0fa0-dafd-69b1-af285ee61044@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d44fd311-e66b-b196-6735-919f02e39ff4@huawei.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Zhiqiang Liu <liuzhiqiang26@huawei.com>, bmarzins@redhat.com, Christophe Varoqui <christophe.varoqui@opensvc.com>, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <92162ee6-0fa0-dafd-69b1-af285ee61044@kernel.dk>
+Sender: linux-block-owner@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>, Ming Lei <ming.lei@redhat.com>
+Cc: linux-block@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 2020-08-17 at 23:33 +0800, Zhiqiang Liu wrote:
-> 
-> On 2020/8/17 16:35, Martin Wilck wrote:
-> > On Sun, 2020-08-16 at 09:44 +0800, Zhiqiang Liu wrote:
-> > > We adopt static char* array (sd_notify_status_msg) in
-> > > sd_notify_status func, so it looks more simpler and easier
-> > > to expand.
-> > > 
-> > > Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> > > Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
-> > > ---
-> > >  multipathd/main.c | 26 ++++++++++++--------------
-> > >  1 file changed, 12 insertions(+), 14 deletions(-)
-> > > 
-> > > diff --git a/multipathd/main.c b/multipathd/main.c
-> > > index cab1d0d..a09ccd1 100644
-> > > --- a/multipathd/main.c
-> > > +++ b/multipathd/main.c
-> > > @@ -177,23 +177,21 @@ daemon_status(void)
-> > >   * I love you too, systemd ...
-> > >   */
-> > >  #ifdef USE_SYSTEMD
-> > > +static const char *sd_notify_status_msg[DAEMON_STATUS_SIZE] = {
-> > > +	[DAEMON_INIT] = "STATUS=init",
-> > > +	[DAEMON_START] = "STATUS=startup",
-> > > +	[DAEMON_CONFIGURE] = "STATUS=configure",
-> > > +	[DAEMON_IDLE] = "STATUS=up",
-> > > +	[DAEMON_RUNNING] = "STATUS=up",
-> > > +	[DAEMON_SHUTDOWN] = "STATUS=shutdown",
-> > > +};
-> > > +
-> > 
-> > This repetition of "STATUS=" looks clumsy. It's not your fault,
-> > because
-> > the current code does the same thing. But if you want to clean this
-> > up,
-> > please create the notification string in a dynamic buffer, and use
-> > daemon_status() for those cases where it applies.
-> > 
-> > Regards
-> > Martin
-> > 
-> Thanks for your reply.
-> Besides the prefixes "STATUS=", there are also some differences
-> between
-> sd_notify_status_msg[DAEMON_IDLE|DAEMON_RUNNING] and
-> demon_status_msg[DAEMON_IDLE|DAEMON_RUNNING].
-> 
-> For example,
-> sd_notify_status_msg[DAEMON_RUNNING] = "STATUS=up",
-> demon_status_msg[DAEMON_RUNNING] = "running"
-> 
-> So if we create the notification string in a dynamic buffer with
-> using daemon_status, we have to make some special judgement
-> on DAEMON_RUNNING and DAEMON_IDLE status. This may be why
-> the sd_notify_status func was created.
-> 
-> We can implement both solutions. Martin, which one do you prefer?
+On Tue, Aug 18 2020 at 10:50am -0400,
+Jens Axboe <axboe@kernel.dk> wrote:
 
-That's what I meant with "where it applies". You treat the IDLE and
-RUNNING cases first (probably in a switch statement), and use
-daemon_status() for the "default" case.
+> On 8/18/20 2:07 AM, Ming Lei wrote:
+> > c616cbee97ae ("blk-mq: punt failed direct issue to dispatch list") supposed
+> > to add request which has been through ->queue_rq() to the hw queue dispatch
+> > list, however it adds request running out of budget or driver tag to hw queue
+> > too. This way basically bypasses request merge, and causes too many request
+> > dispatched to LLD, and system% is unnecessary increased.
+> > 
+> > Fixes this issue by adding request not through ->queue_rq into sw/scheduler
+> > queue, and this way is safe because no ->queue_rq is called on this request
+> > yet.
+> > 
+> > High %system can be observed on Azure storvsc device, and even soft lock
+> > is observed. This patch reduces %system during heavy sequential IO,
+> > meantime decreases soft lockup risk.
+> 
+> Applied, thanks Ming.
 
-The  reason we don't differentiate between "running" and "idle" in the
-sd_notify() code path is that the daemon switches between these states
-very often (at least once per tick) and these notifications causes lots
-of dbus traffic without much value.
+Hmm, strikes me as strange that this is occurring given the direct
+insertion into blk-mq queue (bypassing scheduler) is meant to avoid 2
+layers of IO merging when dm-mulipath is stacked on blk-mq path(s).  The
+dm-mpath IO scheduler does all merging and underlying paths' blk-mq
+request_queues are meant to just dispatch the top-level's requests.
 
-Regards
-Martin
+So this change concerns me.  Feels like this design has broken down.
+
+Could be that some other entry point was added for the
+__blk_mq_try_issue_directly() code?  And it needs to be untangled away
+from the dm-multipath use-case?
+
+Apologies for not responding to this patch until now.
+
+Mike
