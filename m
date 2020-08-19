@@ -1,12 +1,13 @@
 From: mwilck@suse.com
-Subject: [PATCH v3 00/35] multipath-tools series part I: minor
-	changes
-Date: Wed, 19 Aug 2020 15:17:19 +0200
-Message-ID: <20200819131720.13290-1-mwilck@suse.com>
+Subject: [PATCH v3 77/80] libmultipath: log dm_task_run() errors
+Date: Wed, 19 Aug 2020 15:17:47 +0200
+Message-ID: <20200819131747.13400-3-mwilck@suse.com>
+References: <20200819131747.13400-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200819131747.13400-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,159 +23,282 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Hi Christophe, hi Ben,
+Log the ioctl error messages from libdm.
 
-This is part I of a larger patch series for multpath-tools I've been preparing.
-It contains self-contained fixes and cleanups, and unit test additions.
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/devmapper.c | 61 ++++++++++++++++++++++++++++++++--------
+ libmultipath/devmapper.h |  4 +++
+ multipathd/dmevents.c    |  4 ++-
+ multipathd/waiter.c      |  2 ++
+ 4 files changed, 58 insertions(+), 13 deletions(-)
 
-This is v3 of the series I posted on 2020-07-09 and 2020-08-12.
-To avoid spamming, I will resend only the patches that have changed wrt v2
-(including context changes). There are changes only in part 1, 6, and 7.
-I took care to make sure the numbering is preserved. 
-
-The full series will be available here:
-https://github.com/mwilck/multipath-tools/tree/ups/submit-200819
-There are tags in that repo for each part of the series.
-This part is tagged "submit-200819-1".
-
-The series is based on 0.8.4, plus the following set of previously
-submitted and reviewed patches (latest first):
-
- - [PATCH 4/5] multipathd: disable queueing for recreated map in uev_remove_map
-   (lixiaokeng)
- - [PATCH 4/6] libmultipath: check blist before calling MALLOC in alloc_ble_device func
-   (Zihiqiang)
- - [PATCH 1/5 v4] libmultipath fix a memory leak in set_ble_device (From:
-   (lixiaokeng)
- - [PATCH v2 0/8] multipath cleanups (v2 8-part series from Ben,
-       without 7/8 "multipathd: unset mpp->hwe when removing map")
- - [PATCH v3] vector: return false if realloc fails in vector_alloc_slot func (Zhiqiang Liu)
- - libmultipath: free pgp if add_pathgroup fails in disassemble_map func (Zhiqiang Liu)
- - checker: add input check of state in checker_state_name func (Zhiqiang Liu)
- - libmultipath: fix null dereference in add (lixiaokeng)
- - tests/hwtable: fix a memory free in replicate_config (Zhiqiang Liu)
- - vector: fix upper boundary check of vector size in vector_del_slot (Zhiqiang Liu)
- - vector: add lower bound check of E in VECTOR_SLOT (Zhiqiang Liu)
- - devmapper: remove useless using of memset in dm_get_info func (Zhiqiang Liu)
- - libmultipath: fix a memory leak in dm_get_maps (lixiaokeng)
- - libmultipath: fix a memory leak in disassemble_status func (Zhiqiang Liu)
- - [PATCH 0/4] Fix segfault on access to mpp->hwe (4-part series, me)
-
-(below is where the v1 series was based on)
-
- - libmultipath: add device to hwtable.c (Steve Schremmer)
- - [PATCH v3 0/7] Fix muitpath/multipathd flush issue (v3 7-part series, Ben)
- - [PATCH v2 0/4] misc patches (v2 4-part series, Ben)
- - multipath: Fix compiler warnings when built without systemd. (Marius Bakke)
- - [PATCH v2 0/3] multipath: change default devnode blacklist
-   (v2 3-part series, Ben)
- - multipath: add "-e" option to enable foreign libraries (me)
- - libmultipath: set "enable_foreign" to NONE by default (me)
- - libmultipath: fix condlog NULL argument in uevent_get_env_var (Ben)
- - fix boolean value with json-c 0.14 (Christian Hesse) 
- - [PATCH v3 0/6] multipath: path validation library prep work
-   (v3 6-part series, me)
- - [PATCH 0/2] More minor libmultipath fixes (2-part series, me)
- - [PATCH 00/11] Minor fixes for multipath-tools (11-part series, me)
- - libmpathpersist: depend on libmultipath (Christian Hesse)
- - [PATCH v2 0/2] multipath-tools: fixes for kpartx.rules and skip_kpartx
-   (v2 2-part series, me)
- - libmultipath: allow force reload with no active paths (Ben)
- - libmutipath: don't close fd on dm_lib_release (Ben)-
- - libmultipath: assign variable to make gcc happy (Ben)
- - [PATCH v2 0/4] libmpathpersist allocation size fixes (v2 4-part series, me)
-
-You can find a full tree of the code this is based on here:
-https://github.com/openSUSE/multipath-tools/tree/upstream-queue
-
-Regards, Martin
-
-Changes v2 -> v3:
-
- * 13/35 "libmultipath: constify blacklist code"
-    - rebased
-
-Changes v1 -> v2, as suggested by Ben Marzinski:
-
- *  8/35 "libmultipath: create bitfield abstraction"
-    - return NULL for 0 bitfield size
-    - fixed error handling for bf == NULL
-    - removed unused find_first_set() and related tests
- * 12/35 "libmultipath: strlcpy()/strlcat(): use restrict qualifier"
-    - unchanged, but resubmitting as it has no Reviewed-by: tag yet
-      (corner case of unterminated "dst" still unresolved, but if at
-       all, it should be changed in a separate patch).
-
-Martin Wilck (35):
-  multipath-tools tests/util: separate group for bitmask tests
-  multipath-tools tests/directio: fix missing initializers
-  tests: __wrap_dlog: use check_expected()
-  multipath tools tests: add strchop() test
-  libmultipath: improve strchop()
-  multipath-tools tests: add test for devt2devname
-  libmultipath: devt2devname(): simplify using libudev
-  libmultipath: create bitfield abstraction
-  libmultipath: use bitfields in group_by_match()
-  libmultipath: util: constify function arguments
-  multipath-tools tests: add unit tests for strlcat
-  libmultipath: strlcpy()/strlcat(): use restrict qualifier
-  libmultipath: constify blacklist code
-  libmultipath: rlookup_binding(): remove newline in log message
-  libmultipath: fix missing initializer warning from clang 3.9
-  libmultipath: fix gcc -Wstringop-overflow warning
-  libmultipath: remove uevent listener failback
-  libmultipath: uevent: use static linkage where possible
-  libmultipath: uevent: inline trivial functions
-  libmultipath: decrease log level of "SCSI target" log message
-  libmultipath: get_udev_uid(): more appropriate error code
-  libmultipath: get_uid(): improve log message on udev failure
-  libmultipath: make sysfs_pathinfo() static and use const
-  libmultipath: pathinfo(): improve a log message
-  libmultipath: pathinfo(): don't filter emtpy devnode names
-  libmultipath: io_err_stat_handle_pathfail(): less error conditions
-  libmultipath: improve libdm logging
-  libmultipath: snprint_devices(): use udev_enumerate
-  libmultipath: snprint_devices(): print hidden/foreign status
-  libmultipath: alloc_path(): initialize pp->initialized
-  libmultipath: alloc_path_with_pathinfo(): treat devname overflow as
-    error
-  libmultipath: log table params in addmap()
-  multipathd: remove set_multipath_wwid()
-  kpartx: print an error message if removing a partition fails
-  kpartx: add missing newline
-
- kpartx/devmapper.c               |   2 +-
- kpartx/kpartx.c                  |   2 +
- libmultipath/alias.c             |   2 +-
- libmultipath/blacklist.c         |  34 +-
- libmultipath/blacklist.h         |  17 +-
- libmultipath/checkers/directio.c |   2 +-
- libmultipath/configure.c         |  11 +-
- libmultipath/defaults.h          |   2 +
- libmultipath/devmapper.c         |  27 +-
- libmultipath/discovery.c         |  30 +-
- libmultipath/dmparser.c          |   2 +-
- libmultipath/io_err_stat.c       |  25 +-
- libmultipath/parser.c            |   2 +-
- libmultipath/pgpolicies.c        |  12 +-
- libmultipath/print.c             |  90 ++---
- libmultipath/print.h             |   2 +-
- libmultipath/propsel.c           |   6 +
- libmultipath/structs.c           |   1 +
- libmultipath/uevent.c            | 324 ++----------------
- libmultipath/uevent.h            |  47 ++-
- libmultipath/util.c              | 155 +++------
- libmultipath/util.h              |  72 +++-
- multipathd/main.c                |  14 +-
- tests/Makefile                   |   3 +-
- tests/alias.c                    |   4 +-
- tests/devt.c                     | 192 +++++++++++
- tests/directio.c                 |  28 +-
- tests/test-log.c                 |   5 +-
- tests/uevent.c                   |   4 -
- tests/util.c                     | 554 ++++++++++++++++++++++++++++---
- 30 files changed, 1035 insertions(+), 636 deletions(-)
- create mode 100644 tests/devt.c
-
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index 38d1990..cc2de1d 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -182,6 +182,7 @@ dm_tgt_version (unsigned int * version, char * str)
+ 	dm_task_no_open_count(dmt);
+ 
+ 	if (!dm_task_run(dmt)) {
++		dm_log_error(2, DM_DEVICE_LIST_VERSIONS, dmt);
+ 		condlog(0, "Can not communicate with kernel DM");
+ 		goto out;
+ 	}
+@@ -320,6 +321,8 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync, uint16_t
+ 		goto out;
+ 
+ 	r = dm_task_run (dmt);
++	if (!r)
++		dm_log_error(2, task, dmt);
+ 
+ 	if (udev_wait_flag)
+ 			dm_udev_wait(cookie);
+@@ -410,6 +413,8 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
+ 		goto freeout;
+ 
+ 	r = dm_task_run (dmt);
++	if (!r)
++		dm_log_error(2, task, dmt);
+ 
+ 	if (task == DM_DEVICE_CREATE)
+ 			dm_udev_wait(cookie);
+@@ -522,8 +527,10 @@ do_get_info(const char *name, struct dm_info *info)
+ 
+ 	dm_task_no_open_count(dmt);
+ 
+-	if (!dm_task_run(dmt))
++	if (!dm_task_run(dmt)) {
++		dm_log_error(3, DM_DEVICE_INFO, dmt);
+ 		goto out;
++	}
+ 
+ 	if (!dm_task_get_info(dmt, info))
+ 		goto out;
+@@ -562,6 +569,7 @@ int dm_get_map(const char *name, unsigned long long *size, char *outparams)
+ 
+ 	errno = 0;
+ 	if (!dm_task_run(dmt)) {
++		dm_log_error(3, DM_DEVICE_TABLE, dmt);
+ 		if (dm_task_get_errno(dmt) == ENXIO)
+ 			r = DMP_NOT_FOUND;
+ 		goto out;
+@@ -602,8 +610,10 @@ dm_get_prefixed_uuid(const char *name, char *uuid, int uuid_len)
+ 	if (!dm_task_set_name (dmt, name))
+ 		goto uuidout;
+ 
+-	if (!dm_task_run(dmt))
++	if (!dm_task_run(dmt)) {
++		dm_log_error(3, DM_DEVICE_INFO, dmt);
+ 		goto uuidout;
++	}
+ 
+ 	uuidtmp = dm_task_get_uuid(dmt);
+ 	if (uuidtmp)
+@@ -672,6 +682,7 @@ int dm_get_status(const char *name, char *outstatus)
+ 
+ 	errno = 0;
+ 	if (!dm_task_run(dmt)) {
++		dm_log_error(3, DM_DEVICE_STATUS, dmt);
+ 		if (dm_task_get_errno(dmt) == ENXIO)
+ 			r = DMP_NOT_FOUND;
+ 		goto out;
+@@ -723,8 +734,10 @@ int dm_type(const char *name, char *type)
+ 
+ 	dm_task_no_open_count(dmt);
+ 
+-	if (!dm_task_run(dmt))
++	if (!dm_task_run(dmt)) {
++		dm_log_error(3, DM_DEVICE_TABLE, dmt);
+ 		goto out;
++	}
+ 
+ 	/* Fetch 1st target */
+ 	if (dm_get_next_target(dmt, NULL, &start, &length,
+@@ -765,8 +778,10 @@ int dm_is_mpath(const char *name)
+ 
+ 	dm_task_no_open_count(dmt);
+ 
+-	if (!dm_task_run(dmt))
++	if (!dm_task_run(dmt)) {
++		dm_log_error(3, DM_DEVICE_TABLE, dmt);
+ 		goto out_task;
++	}
+ 
+ 	if (!dm_task_get_info(dmt, &info))
+ 		goto out_task;
+@@ -827,8 +842,10 @@ dm_map_present_by_uuid(const char *uuid)
+ 	if (!dm_task_set_uuid(dmt, prefixed_uuid))
+ 		goto out_task;
+ 
+-	if (!dm_task_run(dmt))
++	if (!dm_task_run(dmt)) {
++		dm_log_error(3, DM_DEVICE_INFO, dmt);
+ 		goto out_task;
++	}
+ 
+ 	if (!dm_task_get_info(dmt, &info))
+ 		goto out_task;
+@@ -871,8 +888,10 @@ dm_get_opencount (const char * mapname)
+ 	if (!dm_task_set_name(dmt, mapname))
+ 		goto out;
+ 
+-	if (!dm_task_run(dmt))
++	if (!dm_task_run(dmt)) {
++		dm_log_error(3, DM_DEVICE_INFO, dmt);
+ 		goto out;
++	}
+ 
+ 	if (!dm_task_get_info(dmt, &info))
+ 		goto out;
+@@ -1029,8 +1048,10 @@ int dm_flush_maps (int need_suspend, int retries)
+ 
+ 	dm_task_no_open_count(dmt);
+ 
+-	if (!dm_task_run (dmt))
++	if (!dm_task_run (dmt)) {
++		dm_log_error(3, DM_DEVICE_LIST, dmt);
+ 		goto out;
++	}
+ 
+ 	if (!(names = dm_task_get_names (dmt)))
+ 		goto out;
+@@ -1073,8 +1094,10 @@ dm_message(const char * mapname, char * message)
+ 
+ 	dm_task_no_open_count(dmt);
+ 
+-	if (!dm_task_run(dmt))
++	if (!dm_task_run(dmt)) {
++		dm_log_error(2, DM_DEVICE_TARGET_MSG, dmt);
+ 		goto out;
++	}
+ 
+ 	r = 0;
+ out:
+@@ -1191,8 +1214,10 @@ dm_get_maps (vector mp)
+ 
+ 	dm_task_no_open_count(dmt);
+ 
+-	if (!dm_task_run(dmt))
++	if (!dm_task_run(dmt)) {
++		dm_log_error(3, DM_DEVICE_LIST, dmt);
+ 		goto out;
++	}
+ 
+ 	if (!(names = dm_task_get_names(dmt)))
+ 		goto out;
+@@ -1283,6 +1308,7 @@ dm_mapname(int major, int minor)
+ 	}
+ 
+ 	if (!r) {
++		dm_log_error(2, DM_DEVICE_STATUS, dmt);
+ 		condlog(0, "%i:%i: timeout fetching map name", major, minor);
+ 		goto bad;
+ 	}
+@@ -1318,8 +1344,10 @@ do_foreach_partmaps (const char * mapname,
+ 
+ 	dm_task_no_open_count(dmt);
+ 
+-	if (!dm_task_run(dmt))
++	if (!dm_task_run(dmt)) {
++		dm_log_error(3, DM_DEVICE_LIST, dmt);
+ 		goto out;
++	}
+ 
+ 	if (!(names = dm_task_get_names(dmt)))
+ 		goto out;
+@@ -1552,6 +1580,8 @@ dm_rename (const char * old, char * new, char *delim, int skip_kpartx)
+ 	if (!dm_task_set_cookie(dmt, &cookie, udev_flags))
+ 		goto out;
+ 	r = dm_task_run(dmt);
++	if (!r)
++		dm_log_error(2, DM_DEVICE_RENAME, dmt);
+ 
+ 	dm_udev_wait(cookie);
+ 
+@@ -1595,8 +1625,10 @@ int dm_reassign_table(const char *name, char *old, char *new)
+ 
+ 	dm_task_no_open_count(dmt);
+ 
+-	if (!dm_task_run(dmt))
++	if (!dm_task_run(dmt)) {
++		dm_log_error(3, DM_DEVICE_TABLE, dmt);
+ 		goto out;
++	}
+ 	if (!(reload_dmt = libmp_dm_task_create(DM_DEVICE_RELOAD)))
+ 		goto out;
+ 	if (!dm_task_set_name(reload_dmt, name))
+@@ -1627,6 +1659,7 @@ int dm_reassign_table(const char *name, char *old, char *new)
+ 		dm_task_no_open_count(reload_dmt);
+ 
+ 		if (!dm_task_run(reload_dmt)) {
++			dm_log_error(3, DM_DEVICE_RELOAD, reload_dmt);
+ 			condlog(3, "%s: failed to reassign targets", name);
+ 			goto out_reload;
+ 		}
+@@ -1672,8 +1705,10 @@ int dm_reassign(const char *mapname)
+ 
+ 	dm_task_no_open_count(dmt);
+ 
+-	if (!dm_task_run(dmt))
++	if (!dm_task_run(dmt)) {
++		dm_log_error(3, DM_DEVICE_DEPS, dmt);
+ 		goto out;
++	}
+ 
+ 	if (!dm_task_get_info(dmt, &info))
+ 		goto out;
+@@ -1739,6 +1774,8 @@ int dm_setgeometry(struct multipath *mpp)
+ 	}
+ 
+ 	r = dm_task_run(dmt);
++	if (!r)
++		dm_log_error(3, DM_DEVICE_SET_GEOMETRY, dmt);
+ out:
+ 	dm_task_destroy(dmt);
+ 
+diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+index 6dd178c..f568ab5 100644
+--- a/libmultipath/devmapper.h
++++ b/libmultipath/devmapper.h
+@@ -85,4 +85,8 @@ struct multipath *dm_get_multipath(const char *name);
+ 	((v[0] == minv[0]) && (v[1] == minv[1]) && (v[2] >= minv[2])) \
+ )
+ 
++#define dm_log_error(lvl, cmd, dmt)			      \
++	condlog(lvl, "%s: libdm task=%d error: %s", __func__, \
++		cmd, strerror(dm_task_get_errno(dmt)))	      \
++
+ #endif /* _DEVMAPPER_H */
+diff --git a/multipathd/dmevents.c b/multipathd/dmevents.c
+index b22b47d..b235dd4 100644
+--- a/multipathd/dmevents.c
++++ b/multipathd/dmevents.c
+@@ -156,8 +156,10 @@ static int dm_get_events(void)
+ 
+ 	dm_task_no_open_count(dmt);
+ 
+-	if (!dm_task_run(dmt))
++	if (!dm_task_run(dmt)) {
++		dm_log_error(3, DM_DEVICE_LIST, dmt);
+ 		goto fail;
++	}
+ 
+ 	if (!(names = dm_task_get_names(dmt)))
+ 		goto fail;
+diff --git a/multipathd/waiter.c b/multipathd/waiter.c
+index e645766..16fbdc8 100644
+--- a/multipathd/waiter.c
++++ b/multipathd/waiter.c
+@@ -119,6 +119,8 @@ static int waiteventloop (struct event_thread *waiter)
+ 
+ 	pthread_testcancel();
+ 	r = dm_task_run(waiter->dmt);
++	if (!r)
++		dm_log_error(2, DM_DEVICE_WAITEVENT, waiter->dmt);
+ 	pthread_testcancel();
+ 
+ 	pthread_sigmask(SIG_SETMASK, &oldset, NULL);
 -- 
 2.28.0
