@@ -1,15 +1,15 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v3 77/80] libmultipath: log dm_task_run()
-	errors
-Date: Wed, 19 Aug 2020 15:45:58 -0500
-Message-ID: <20200819204558.GS19233@octiron.msp.redhat.com>
-References: <20200819131747.13400-1-mwilck@suse.com>
-	<20200819131747.13400-3-mwilck@suse.com>
+Subject: Re: [PATCH v3 84/87] libmultipath: add consistency check
+ for alias settings
+Date: Wed, 19 Aug 2020 17:13:39 -0500
+Message-ID: <20200819221339.GT19233@octiron.msp.redhat.com>
+References: <20200819131819.13493-1-mwilck@suse.com>
+	<20200819131819.13493-2-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200819131747.13400-3-mwilck@suse.com>
+In-Reply-To: <20200819131819.13493-2-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,285 +24,362 @@ To: mwilck@suse.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Aug 19, 2020 at 03:17:47PM +0200, mwilck@suse.com wrote:
+On Wed, Aug 19, 2020 at 03:18:16PM +0200, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> Log the ioctl error messages from libdm.
+> A typo in a config file, assigning the same alias to multiple WWIDs,
+> can cause massive confusion and even data corruption. Check and
+> if possible fix the bindings file in such cases.
 > 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/devmapper.c | 61 ++++++++++++++++++++++++++++++++--------
->  libmultipath/devmapper.h |  4 +++
->  multipathd/dmevents.c    |  4 ++-
->  multipathd/waiter.c      |  2 ++
->  4 files changed, 58 insertions(+), 13 deletions(-)
+>  libmultipath/alias.c | 265 +++++++++++++++++++++++++++++++++++++++++++
+>  libmultipath/alias.h |   3 +
+>  multipath/main.c     |   3 +
+>  multipathd/main.c    |   3 +
+>  4 files changed, 274 insertions(+)
 > 
-> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> index 38d1990..cc2de1d 100644
-> --- a/libmultipath/devmapper.c
-> +++ b/libmultipath/devmapper.c
-> @@ -182,6 +182,7 @@ dm_tgt_version (unsigned int * version, char * str)
->  	dm_task_no_open_count(dmt);
+> diff --git a/libmultipath/alias.c b/libmultipath/alias.c
+> index 0759c4e..df44bdc 100644
+> --- a/libmultipath/alias.c
+> +++ b/libmultipath/alias.c
+> @@ -4,6 +4,7 @@
+>   */
+>  #include <stdlib.h>
+>  #include <errno.h>
+> +#include <stdlib.h>
+>  #include <unistd.h>
+>  #include <string.h>
+>  #include <limits.h>
+> @@ -17,6 +18,9 @@
+>  #include "vector.h"
+>  #include "checkers.h"
+>  #include "structs.h"
+> +#include "config.h"
+> +#include "util.h"
+> +#include "errno.h"
 >  
->  	if (!dm_task_run(dmt)) {
-> +		dm_log_error(2, DM_DEVICE_LIST_VERSIONS, dmt);
->  		condlog(0, "Can not communicate with kernel DM");
->  		goto out;
->  	}
-> @@ -320,6 +321,8 @@ dm_simplecmd (int task, const char *name, int no_flush, int need_sync, uint16_t
->  		goto out;
 >  
->  	r = dm_task_run (dmt);
-> +	if (!r)
-> +		dm_log_error(2, task, dmt);
->  
->  	if (udev_wait_flag)
->  			dm_udev_wait(cookie);
-> @@ -410,6 +413,8 @@ dm_addmap (int task, const char *target, struct multipath *mpp,
->  		goto freeout;
->  
->  	r = dm_task_run (dmt);
-> +	if (!r)
-> +		dm_log_error(2, task, dmt);
->  
->  	if (task == DM_DEVICE_CREATE)
->  			dm_udev_wait(cookie);
-> @@ -522,8 +527,10 @@ do_get_info(const char *name, struct dm_info *info)
->  
->  	dm_task_no_open_count(dmt);
->  
-> -	if (!dm_task_run(dmt))
-> +	if (!dm_task_run(dmt)) {
-> +		dm_log_error(3, DM_DEVICE_INFO, dmt);
->  		goto out;
-> +	}
->  
->  	if (!dm_task_get_info(dmt, info))
->  		goto out;
-> @@ -562,6 +569,7 @@ int dm_get_map(const char *name, unsigned long long *size, char *outparams)
->  
->  	errno = 0;
->  	if (!dm_task_run(dmt)) {
-> +		dm_log_error(3, DM_DEVICE_TABLE, dmt);
->  		if (dm_task_get_errno(dmt) == ENXIO)
->  			r = DMP_NOT_FOUND;
->  		goto out;
-> @@ -602,8 +610,10 @@ dm_get_prefixed_uuid(const char *name, char *uuid, int uuid_len)
->  	if (!dm_task_set_name (dmt, name))
->  		goto uuidout;
->  
-> -	if (!dm_task_run(dmt))
-> +	if (!dm_task_run(dmt)) {
-> +		dm_log_error(3, DM_DEVICE_INFO, dmt);
->  		goto uuidout;
-> +	}
->  
->  	uuidtmp = dm_task_get_uuid(dmt);
->  	if (uuidtmp)
-> @@ -672,6 +682,7 @@ int dm_get_status(const char *name, char *outstatus)
->  
->  	errno = 0;
->  	if (!dm_task_run(dmt)) {
-> +		dm_log_error(3, DM_DEVICE_STATUS, dmt);
->  		if (dm_task_get_errno(dmt) == ENXIO)
->  			r = DMP_NOT_FOUND;
->  		goto out;
-> @@ -723,8 +734,10 @@ int dm_type(const char *name, char *type)
->  
->  	dm_task_no_open_count(dmt);
->  
-> -	if (!dm_task_run(dmt))
-> +	if (!dm_task_run(dmt)) {
-> +		dm_log_error(3, DM_DEVICE_TABLE, dmt);
->  		goto out;
-> +	}
->  
->  	/* Fetch 1st target */
->  	if (dm_get_next_target(dmt, NULL, &start, &length,
-> @@ -765,8 +778,10 @@ int dm_is_mpath(const char *name)
->  
->  	dm_task_no_open_count(dmt);
->  
-> -	if (!dm_task_run(dmt))
-> +	if (!dm_task_run(dmt)) {
-> +		dm_log_error(3, DM_DEVICE_TABLE, dmt);
->  		goto out_task;
-> +	}
->  
->  	if (!dm_task_get_info(dmt, &info))
->  		goto out_task;
-> @@ -827,8 +842,10 @@ dm_map_present_by_uuid(const char *uuid)
->  	if (!dm_task_set_uuid(dmt, prefixed_uuid))
->  		goto out_task;
->  
-> -	if (!dm_task_run(dmt))
-> +	if (!dm_task_run(dmt)) {
-> +		dm_log_error(3, DM_DEVICE_INFO, dmt);
->  		goto out_task;
-> +	}
->  
->  	if (!dm_task_get_info(dmt, &info))
->  		goto out_task;
-> @@ -871,8 +888,10 @@ dm_get_opencount (const char * mapname)
->  	if (!dm_task_set_name(dmt, mapname))
->  		goto out;
->  
-> -	if (!dm_task_run(dmt))
-> +	if (!dm_task_run(dmt)) {
-> +		dm_log_error(3, DM_DEVICE_INFO, dmt);
->  		goto out;
-> +	}
->  
->  	if (!dm_task_get_info(dmt, &info))
->  		goto out;
-> @@ -1029,8 +1048,10 @@ int dm_flush_maps (int need_suspend, int retries)
->  
->  	dm_task_no_open_count(dmt);
->  
-> -	if (!dm_task_run (dmt))
-> +	if (!dm_task_run (dmt)) {
-> +		dm_log_error(3, DM_DEVICE_LIST, dmt);
->  		goto out;
-> +	}
->  
->  	if (!(names = dm_task_get_names (dmt)))
->  		goto out;
-> @@ -1073,8 +1094,10 @@ dm_message(const char * mapname, char * message)
->  
->  	dm_task_no_open_count(dmt);
->  
-> -	if (!dm_task_run(dmt))
-> +	if (!dm_task_run(dmt)) {
-> +		dm_log_error(2, DM_DEVICE_TARGET_MSG, dmt);
->  		goto out;
-> +	}
->  
->  	r = 0;
->  out:
-> @@ -1191,8 +1214,10 @@ dm_get_maps (vector mp)
->  
->  	dm_task_no_open_count(dmt);
->  
-> -	if (!dm_task_run(dmt))
-> +	if (!dm_task_run(dmt)) {
-> +		dm_log_error(3, DM_DEVICE_LIST, dmt);
->  		goto out;
-> +	}
->  
->  	if (!(names = dm_task_get_names(dmt)))
->  		goto out;
-> @@ -1283,6 +1308,7 @@ dm_mapname(int major, int minor)
->  	}
->  
->  	if (!r) {
-> +		dm_log_error(2, DM_DEVICE_STATUS, dmt);
->  		condlog(0, "%i:%i: timeout fetching map name", major, minor);
->  		goto bad;
->  	}
-> @@ -1318,8 +1344,10 @@ do_foreach_partmaps (const char * mapname,
->  
->  	dm_task_no_open_count(dmt);
->  
-> -	if (!dm_task_run(dmt))
-> +	if (!dm_task_run(dmt)) {
-> +		dm_log_error(3, DM_DEVICE_LIST, dmt);
->  		goto out;
-> +	}
->  
->  	if (!(names = dm_task_get_names(dmt)))
->  		goto out;
-> @@ -1552,6 +1580,8 @@ dm_rename (const char * old, char * new, char *delim, int skip_kpartx)
->  	if (!dm_task_set_cookie(dmt, &cookie, udev_flags))
->  		goto out;
->  	r = dm_task_run(dmt);
-> +	if (!r)
-> +		dm_log_error(2, DM_DEVICE_RENAME, dmt);
->  
->  	dm_udev_wait(cookie);
->  
-> @@ -1595,8 +1625,10 @@ int dm_reassign_table(const char *name, char *old, char *new)
->  
->  	dm_task_no_open_count(dmt);
->  
-> -	if (!dm_task_run(dmt))
-> +	if (!dm_task_run(dmt)) {
-> +		dm_log_error(3, DM_DEVICE_TABLE, dmt);
->  		goto out;
-> +	}
->  	if (!(reload_dmt = libmp_dm_task_create(DM_DEVICE_RELOAD)))
->  		goto out;
->  	if (!dm_task_set_name(reload_dmt, name))
-> @@ -1627,6 +1659,7 @@ int dm_reassign_table(const char *name, char *old, char *new)
->  		dm_task_no_open_count(reload_dmt);
->  
->  		if (!dm_task_run(reload_dmt)) {
-> +			dm_log_error(3, DM_DEVICE_RELOAD, reload_dmt);
->  			condlog(3, "%s: failed to reassign targets", name);
->  			goto out_reload;
->  		}
-> @@ -1672,8 +1705,10 @@ int dm_reassign(const char *mapname)
->  
->  	dm_task_no_open_count(dmt);
->  
-> -	if (!dm_task_run(dmt))
-> +	if (!dm_task_run(dmt)) {
-> +		dm_log_error(3, DM_DEVICE_DEPS, dmt);
->  		goto out;
-> +	}
->  
->  	if (!dm_task_get_info(dmt, &info))
->  		goto out;
-> @@ -1739,6 +1774,8 @@ int dm_setgeometry(struct multipath *mpp)
->  	}
->  
->  	r = dm_task_run(dmt);
-> +	if (!r)
-> +		dm_log_error(3, DM_DEVICE_SET_GEOMETRY, dmt);
->  out:
->  	dm_task_destroy(dmt);
->  
-> diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-> index 6dd178c..f568ab5 100644
-> --- a/libmultipath/devmapper.h
-> +++ b/libmultipath/devmapper.h
-> @@ -85,4 +85,8 @@ struct multipath *dm_get_multipath(const char *name);
->  	((v[0] == minv[0]) && (v[1] == minv[1]) && (v[2] >= minv[2])) \
->  )
->  
-> +#define dm_log_error(lvl, cmd, dmt)			      \
-> +	condlog(lvl, "%s: libdm task=%d error: %s", __func__, \
-> +		cmd, strerror(dm_task_get_errno(dmt)))	      \
+>  /*
+> @@ -438,3 +442,264 @@ get_user_friendly_wwid(const char *alias, char *buff, const char *file)
+>  	fclose(f);
+>  	return 0;
+>  }
 > +
->  #endif /* _DEVMAPPER_H */
-> diff --git a/multipathd/dmevents.c b/multipathd/dmevents.c
-> index b22b47d..b235dd4 100644
-> --- a/multipathd/dmevents.c
-> +++ b/multipathd/dmevents.c
-> @@ -156,8 +156,10 @@ static int dm_get_events(void)
->  
->  	dm_task_no_open_count(dmt);
->  
-> -	if (!dm_task_run(dmt))
-> +	if (!dm_task_run(dmt)) {
-> +		dm_log_error(3, DM_DEVICE_LIST, dmt);
->  		goto fail;
+> +struct binding {
+> +	char *alias;
+> +	char *wwid;
+> +};
+> +
+> +static void _free_binding(struct binding *bdg)
+> +{
+> +	free(bdg->wwid);
+> +	free(bdg->alias);
+> +	free(bdg);
+> +}
+> +
+> +/*
+> + * Perhaps one day we'll implement this more efficiently, thus use
+> + * an abstract type.
+> + */
+> +typedef struct _vector Bindings;
+> +
+> +static void free_bindings(Bindings *bindings)
+> +{
+> +	struct binding *bdg;
+> +	int i;
+> +
+> +	vector_foreach_slot(bindings, bdg, i)
+> +		_free_binding(bdg);
+> +	vector_reset(bindings);
+> +}
+> +
+> +enum {
+> +	BINDING_EXISTS,
+> +	BINDING_CONFLICT,
+> +	BINDING_ADDED,
+> +	BINDING_DELETED,
+> +	BINDING_NOTFOUND,
+> +	BINDING_ERROR,
+> +};
+> +
+> +static int add_binding(Bindings *bindings, const char *alias, const char *wwid)
+> +{
+> +	struct binding *bdg;
+> +	int i, cmp = 0;
+> +
+> +	/*
+> +	 * Keep the bindings array sorted by alias.
+> +	 * Optimization: Search backwards, assuming that the bindings file is
+> +	 * sorted already.
+> +	 */
+> +	vector_foreach_slot_backwards(bindings, bdg, i) {
+> +		if ((cmp = strcmp(bdg->alias, alias)) <= 0)
+> +			break;
 > +	}
+> +
+> +	/* Check for exact match */
+> +	if (i >= 0 && cmp == 0)
+> +		return strcmp(bdg->wwid, wwid) ?
+> +			BINDING_CONFLICT : BINDING_EXISTS;
+> +
+> +	i++;
+> +	bdg = calloc(1, sizeof(*bdg));
+> +	if (bdg) {
+> +		bdg->wwid = strdup(wwid);
+> +		bdg->alias = strdup(alias);
+> +		if (bdg->wwid && bdg->alias &&
+> +		    vector_insert_slot(bindings, i, bdg))
+> +			return BINDING_ADDED;
+> +		else
+> +			_free_binding(bdg);
+> +	}
+> +
+> +	return BINDING_ERROR;
+> +}
+> +
+> +static int write_bindings_file(const Bindings *bindings, int fd)
+> +{
+> +	struct binding *bnd;
+> +	char line[LINE_MAX];
+> +	int i;
+> +
+> +	if (write(fd, BINDINGS_FILE_HEADER, sizeof(BINDINGS_FILE_HEADER) - 1)
+> +	    != sizeof(BINDINGS_FILE_HEADER) - 1)
+> +		return -1;
+> +
+> +	vector_foreach_slot(bindings, bnd, i) {
+> +		int len;
+> +
+> +		len = snprintf(line, sizeof(line), "%s %s\n",
+> +			       bnd->alias, bnd->wwid);
+> +
+> +		if (len < 0 || (size_t)len >= sizeof(line)) {
+> +			condlog(1, "%s: line overflow", __func__);
+> +			return -1;
+> +		}
+> +
+> +		if (write(fd, line, len) != len)
+> +			return -1;
+> +	}
+> +	return 0;
+> +}
+> +
+> +static int fix_bindings_file(const struct config *conf,
+> +			     const Bindings *bindings)
+> +{
+> +	int rc;
+> +	long fd;
+> +	char tempname[PATH_MAX];
+> +
+> +	if (safe_sprintf(tempname, "%s.XXXXXX", conf->bindings_file))
+> +		return -1;
+> +	if ((fd = mkstemp(tempname)) == -1) {
+> +		condlog(1, "%s: mkstemp: %m", __func__);
+> +		return -1;
+> +	}
+> +	pthread_cleanup_push(close_fd, (void*)fd);
+> +	rc = write_bindings_file(bindings, fd);
+> +	pthread_cleanup_pop(1);
+> +	if (rc == -1) {
+> +		condlog(1, "failed to write new bindings file %s",
+> +			tempname);
+> +		unlink(tempname);
+> +		return rc;
+> +	}
+> +	if ((rc = rename(tempname, conf->bindings_file)) == -1)
+> +		condlog(0, "%s: rename: %m", __func__);
+> +	else
+> +		condlog(1, "updated bindings file %s", conf->bindings_file);
+> +	return rc;
+> +}
+> +
+> +static int _check_bindings_file(const struct config *conf, FILE *file,
+> +				 Bindings *bindings)
+> +{
+> +	int rc = 0;
+> +	unsigned int linenr = 0;
+> +	char *line = NULL;
+> +	size_t line_len = 0;
+> +	ssize_t n;
+> +
+> +	pthread_cleanup_push(free, line);
+> +	while ((n = getline(&line, &line_len, file)) >= 0) {
+> +		char *c, *alias, *wwid;
+> +		const char *mpe_wwid;
+> +
+> +		linenr++;
+> +		c = strpbrk(line, "#\n\r");
+> +		if (c)
+> +			*c = '\0';
+> +		alias = strtok(line, " \t");
+> +		if (!alias) /* blank line */
+> +			continue;
+> +		wwid = strtok(NULL, " \t");
+> +		if (!wwid) {
+> +			condlog(1, "invalid line %d in bindings file, missing WWID",
+> +				linenr);
+> +			continue;
+> +		}
+> +		c = strtok(NULL, " \t");
+> +		if (c)
+> +			/* This is non-fatal */
+> +			condlog(1, "invalid line %d in bindings file, extra args \"%s\"",
+> +				linenr, c);
+> +
+> +		mpe_wwid = get_mpe_wwid(conf->mptable, alias);
+> +		if (mpe_wwid && strcmp(mpe_wwid, wwid)) {
+> +			condlog(0, "ERROR: alias \"%s\" for WWID %s in bindings file "
+> +				"on line %u conflicts with multipath.conf entry for %s",
+> +				alias, wwid, linenr, mpe_wwid);
+> +			rc = -1;
+> +			continue;
+> +		}
+> +
+> +		switch (add_binding(bindings, alias, wwid)) {
+> +		case BINDING_CONFLICT:
+> +			condlog(0, "ERROR: multiple bindings for alias \"%s\" in "
+> +				"bindings file on line %u, discarding binding to WWID %s",
+> +				alias, linenr, wwid);
+> +			rc = -1;
+> +			break;
+> +		case BINDING_EXISTS:
+> +			condlog(2, "duplicate line for alias %s in bindings file on line %u",
+> +				alias, linenr);
+> +			break;
+> +		case BINDING_ERROR:
+> +			condlog(2, "error adding binding %s -> %s",
+> +				alias, wwid);
+> +			break;
+> +		default:
+> +			break;
+> +		}
+> +	}
+> +	pthread_cleanup_pop(1);
+> +	return rc;
+> +}
+> +
+> +static void cleanup_fclose(void *p)
+> +{
+> +	fclose(p);
+> +}
+> +
+> +/*
+> + * check_alias_settings(): test for inconsistent alias configuration
+> + *
+> + * It's a fatal configuration error if the same alias is assigned to
+> + * multiple WWIDs. In the worst case, it can cause data corruption
+> + * by mangling devices with different WWIDs into the same multipath map.
+> + * This function tests the configuration from multipath.conf and the
+> + * bindings file for consistency, drops inconsistent multipath.conf
+> + * alias settings, and rewrites the bindings file if necessary, dropping
+> + * conflicting lines (if user_friendly_names is on, multipathd will
+> + * fill in the deleted lines with a newly generated alias later).
+> + * Note that multipath.conf is not rewritten. Use "multipath -T" for that.
+> + *
+> + * Returns: 0 in case of success, -1 if the configuration was bad
+> + * and couldn't be fixed.
+> + */
+> +int check_alias_settings(const struct config *conf)
+> +{
+> +	int can_write;
+> +	int rc = 0, i, fd;
+> +	Bindings bindings = {.allocated = 0, };
+> +	struct mpentry *mpe;
+> +
+> +	pthread_cleanup_push_cast(free_bindings, &bindings);
+> +	vector_foreach_slot(conf->mptable, mpe, i) {
+> +		if (!mpe->wwid || !mpe->alias)
+> +			continue;
+> +		if (add_binding(&bindings, mpe->alias, mpe->wwid) ==
+> +		    BINDING_CONFLICT) {
+> +			condlog(0, "ERROR: alias \"%s\" bound to multiple wwids in multipath.conf, "
+> +				"discarding binding to %s",
+> +				mpe->alias, mpe->wwid);
+> +			free(mpe->alias);
+> +			mpe->alias = NULL;
+> +		}
+> +	}
+> +	/* This clears the bindings */
+> +	pthread_cleanup_pop(1);
+> +
+> +	pthread_cleanup_push_cast(free_bindings, &bindings);
+> +	fd = open_file(conf->bindings_file, &can_write, BINDINGS_FILE_HEADER);
+> +	if (fd != -1) {
+> +		FILE *file = fdopen(fd, "r");
+> +
+> +		if (file != NULL) {
+> +			pthread_cleanup_push(cleanup_fclose, file);
+> +			rc = _check_bindings_file(conf, file, &bindings);
+> +			pthread_cleanup_pop(1);
+> +			if (rc == -1 && can_write && !conf->bindings_read_only)
+> +				rc = fix_bindings_file(conf, &bindings);
+> +			else if (rc == -1)
+> +				condlog(0, "ERROR: bad settings in read-only bindings file %s",
+> +					conf->bindings_file);
+> +		} else {
+> +			condlog(1, "failed to fdopen %s: %m",
+> +				conf->bindings_file);
+> +			close(fd);
+> +		}
+> +	}
+> +	pthread_cleanup_pop(1);
+> +	return rc;
+> +}
+> diff --git a/libmultipath/alias.h b/libmultipath/alias.h
+> index 236b3ba..dbc950c 100644
+> --- a/libmultipath/alias.h
+> +++ b/libmultipath/alias.h
+> @@ -10,4 +10,7 @@ char *use_existing_alias (const char *wwid, const char *file,
+>  			  const char *alias_old,
+>  			  const char *prefix, int bindings_read_only);
 >  
->  	if (!(names = dm_task_get_names(dmt)))
->  		goto fail;
-> diff --git a/multipathd/waiter.c b/multipathd/waiter.c
-> index e645766..16fbdc8 100644
-> --- a/multipathd/waiter.c
-> +++ b/multipathd/waiter.c
-> @@ -119,6 +119,8 @@ static int waiteventloop (struct event_thread *waiter)
+> +struct config;
+> +int check_alias_settings(const struct config *);
+> +
+>  #endif /* _ALIAS_H */
+> diff --git a/multipath/main.c b/multipath/main.c
+> index 9e65070..80bc4b5 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -64,6 +64,7 @@
+>  #include "time-util.h"
+>  #include "file.h"
+>  #include "valid.h"
+> +#include "alias.h"
 >  
->  	pthread_testcancel();
->  	r = dm_task_run(waiter->dmt);
-> +	if (!r)
-> +		dm_log_error(2, DM_DEVICE_WAITEVENT, waiter->dmt);
->  	pthread_testcancel();
+>  int logsink;
+>  struct udev *udev;
+> @@ -958,6 +959,8 @@ main (int argc, char *argv[])
+>  		exit(RTVL_FAIL);
+>  	}
 >  
->  	pthread_sigmask(SIG_SETMASK, &oldset, NULL);
+> +	check_alias_settings(conf);
+> +
+>  	if (optind < argc) {
+>  		dev = MALLOC(FILE_NAME_SIZE);
+>  
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 343ee95..9f12a57 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -63,6 +63,7 @@
+>  #include "uevent.h"
+>  #include "log.h"
+>  #include "uxsock.h"
+> +#include "alias.h"
+>  
+>  #include "mpath_cmd.h"
+>  #include "mpath_persist.h"
+> @@ -2717,6 +2718,8 @@ reconfigure (struct vectors * vecs)
+>  		conf->verbosity = verbosity;
+>  	if (bindings_read_only)
+>  		conf->bindings_read_only = bindings_read_only;
+> +	check_alias_settings(conf);
+> +
+>  	uxsock_timeout = conf->uxsock_timeout;
+>  
+>  	old = rcu_dereference(multipath_conf);
 > -- 
 > 2.28.0
