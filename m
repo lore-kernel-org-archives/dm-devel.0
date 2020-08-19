@@ -1,72 +1,112 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH RESEND] blk-mq: insert request not through ->queue_rq
- into sw/scheduler queue
-Date: Tue, 18 Aug 2020 20:20:35 -0400
-Message-ID: <20200819002035.GA9292@redhat.com>
-References: <20200818090728.2696802-1-ming.lei@redhat.com>
- <92162ee6-0fa0-dafd-69b1-af285ee61044@kernel.dk>
- <20200818152022.GB6842@redhat.com>
- <20200818235220.GA2712797@T590>
+From: lixiaokeng <lixiaokeng@huawei.com>
+Subject: Re: [PATCH 5/5] libmultipath fix daemon memory leak in
+ disassemble_map
+Date: Wed, 19 Aug 2020 09:42:55 +0800
+Message-ID: <1c0d627e-3d7b-8971-04b5-f3815f142621@huawei.com>
+References: <5ef5f58e-3a27-8959-3abb-4b4c401cc309@huawei.com>
+	<61f78db1-c481-292f-eb6f-bce69d66b8ab@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200818235220.GA2712797@T590>
-Sender: linux-block-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>, dm-devel@redhat.com
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <61f78db1-c481-292f-eb6f-bce69d66b8ab@huawei.com>
+Content-Language: en-GB
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
+Cc: linfeilong@huawei.com, liuzhiqiang26@huawei.com
 List-Id: dm-devel.ids
 
-On Tue, Aug 18 2020 at  7:52pm -0400,
-Ming Lei <ming.lei@redhat.com> wrote:
+Hi
+  I'm sorry for subject with Re. I will send it  again.
 
-> On Tue, Aug 18, 2020 at 11:20:22AM -0400, Mike Snitzer wrote:
-> > On Tue, Aug 18 2020 at 10:50am -0400,
-> > Jens Axboe <axboe@kernel.dk> wrote:
-> > 
-> > > On 8/18/20 2:07 AM, Ming Lei wrote:
-> > > > c616cbee97ae ("blk-mq: punt failed direct issue to dispatch list") supposed
-> > > > to add request which has been through ->queue_rq() to the hw queue dispatch
-> > > > list, however it adds request running out of budget or driver tag to hw queue
-> > > > too. This way basically bypasses request merge, and causes too many request
-> > > > dispatched to LLD, and system% is unnecessary increased.
-> > > > 
-> > > > Fixes this issue by adding request not through ->queue_rq into sw/scheduler
-> > > > queue, and this way is safe because no ->queue_rq is called on this request
-> > > > yet.
-> > > > 
-> > > > High %system can be observed on Azure storvsc device, and even soft lock
-> > > > is observed. This patch reduces %system during heavy sequential IO,
-> > > > meantime decreases soft lockup risk.
-> > > 
-> > > Applied, thanks Ming.
-> > 
-> > Hmm, strikes me as strange that this is occurring given the direct
-> > insertion into blk-mq queue (bypassing scheduler) is meant to avoid 2
-> > layers of IO merging when dm-mulipath is stacked on blk-mq path(s).  The
-> > dm-mpath IO scheduler does all merging and underlying paths' blk-mq
-> > request_queues are meant to just dispatch the top-level's requests.
-> > 
-> > So this change concerns me.  Feels like this design has broken down.
-> > 
+On 2020/8/18 21:11, lixiaokeng wrote:
+> When one iscsi device logs in and logs out with the "multipath -r"
+> executed at the same time, memory leak happens in multipathd
+> process.
 > 
-> 'bypass_insert' is 'true' when blk_insert_cloned_request() is
-> called from device mapper code, so this patch doesn't affect dm.
-
-Great.
- 
-> > Could be that some other entry point was added for the
-> > __blk_mq_try_issue_directly() code?  And it needs to be untangled away
-> > from the dm-multipath use-case?
+> The reason is following. When "multipath -r" is executed, the path
+> will be free in configure function. Before path_discovery executed,
+> iscsi device logs out. Then path_discovery will not find any path and
+> there is no path in the gvecs->pathvec. When map_discovery function
+> is executed, disassemble_map function will be called. Because
+> gvecs->pathvec->slot is empty and is_deamon is 1, a path will be
+> allocated and is not stored in gvecs->pathvec but store in
+> mpp->pg. But when the mpp is removed and freed by remove_map
+> function, the path will not be free and can't be find anymore.
 > 
-> __blk_mq_try_issue_directly() can be called from blk-mq directly, that
-> is the case this patch is addressing, if one request can't be queued to
-> LLD because of running out of budget or driver tag, it should be added to
-> scheduler queue for improving io merge, meantime we can avoid too many
-> requests dispatched to hardware.
-
-I see, so if retry is needed best to attempt merge again.
-
-Thanks for the explanation.
-
-Mike
+> The procedure details given as follows,
+> 1."multipath -r" is executed
+> main
+> 	->child
+> 		->reconfigure
+> 			->configure
+> 				->path_discovery //after iscsi logout
+> 				->map_discovery
+> 					->update_multipath_table
+> 						->disassemble_map
+> 							->alloc_path
+> 2.then "multipath -r" is executed again
+> main
+> main
+> 	->child
+> 		->reconfigure
+> 			->remove_maps_and_stop_waiters
+> 				->remove_maps
+> 
+> If checking is_deamon is deleted, there are many other things need be done like in
+> https://www.redhat.com/archives/dm-devel/2020-July/msg00245.html. And this
+> branch develops from 0.8.3 but upstream_queue is mainline which develops from
+> 0.8.4.
+> Here, we skip alloc_path if pp isn't find in pathvec and process is daemon.  In
+> daemon, we should not store path with incomplete information to pathvec.  The
+> pathvec stores all paths in daemon, so it is reasonable keep same with pathvec.
+> 
+> Reported-by: Tianxiong Li <lutianxiong@huawei.com>
+> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> ---
+>  libmultipath/dmparser.c | 14 ++++++++++++--
+>  1 file changed, 12 insertions(+), 2 deletions(-)
+> 
+> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+> index f02c551..0f370e9 100644
+> --- a/libmultipath/dmparser.c
+> +++ b/libmultipath/dmparser.c
+> @@ -314,6 +314,16 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+>  			}
+> 
+>  			if (!pp) {
+> +				/* daemon should keep same with pathvec */
+> +				/* pp is not find in pathvec, skip it */
+> +				if (is_daemon) {
+> +					FREE(word);
+> +					for (k = 0; k < num_paths_args; k++) {
+> +						p += get_word(p, NULL);
+> +					}
+> +					continue;
+> +				}
+> +
+>  				pp_unfound = 1;
+>  				pp = alloc_path();
+> 
+> @@ -326,8 +336,8 @@ int disassemble_map(vector pathvec, char *params, struct multipath *mpp,
+>  					strncpy(pp->wwid, mpp->wwid,
+>  						WWID_SIZE - 1);
+>  				}
+> -				/* Only call this in multipath client mode */
+> -				if (!is_daemon && store_path(pathvec, pp)) {
+> +
+> +				if (store_path(pathvec, pp)) {
+>  					free_path(pp);
+>  					goto out1;
+>  				}
+> --
+> 
