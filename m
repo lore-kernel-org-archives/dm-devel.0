@@ -1,75 +1,127 @@
-From: John Dorminy <jdorminy@redhat.com>
-Subject: Re: [git pull] device mapper changes for 5.9
-Date: Wed, 19 Aug 2020 00:25:20 -0400
-Message-ID: <CAMeeMh_4j9EyOB3evyHi536d8kocH3egPdGO_FZj+G5iZzkVrQ@mail.gmail.com>
-References: <20200807160327.GA977@redhat.com> <CAHk-=wiC=g-0yZW6QrEXRH53bUVAwEFgYxd05qgOnDLJYdzzcA@mail.gmail.com>
- <20200807204015.GA2178@redhat.com> <CAMeeMh_=M3Z7bLPN3_SD+VxNbosZjXgC_H2mZq1eCeZG0kUx1w@mail.gmail.com>
- <CALrw=nHD81X4YCpuk-Pp9_FSFba6LZEVUwo-YkYh1nL9pEbzpA@mail.gmail.com> <CAHk-=wj95eQxPOEMHe8j3zmpZYHbv8kZ0nz8fUUCO6acENTs0w@mail.gmail.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 5/5] libmultipath fix daemon memory leak in
+ disassemble_map
+Date: Wed, 19 Aug 2020 10:26:15 +0200
+Message-ID: <d76537854b7e9171738cf8db094319088bb13c3a.camel@suse.com>
+References: <5ef5f58e-3a27-8959-3abb-4b4c401cc309@huawei.com>
+	<e15fee1e-145b-2880-c84a-aba7b1496555@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wj95eQxPOEMHe8j3zmpZYHbv8kZ0nz8fUUCO6acENTs0w@mail.gmail.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Ignat Korchagin <ignat@cloudflare.com>, Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, linux-block <linux-block@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, Damien Le Moal <damien.lemoal@wdc.com>, JeongHyeon Lee <jhs2.lee@samsung.com>, Johannes Thumshirn <johannes.thumshirn@wdc.com>, Mikulas Patocka <mpatocka@redhat.com>, Ming Lei <ming.lei@redhat.com>, yangerkun <yangerkun@huawei.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <e15fee1e-145b-2880-c84a-aba7b1496555@huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: lixiaokeng <lixiaokeng@huawei.com>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: linfeilong@huawei.com, dm-devel mailing list <dm-devel@redhat.com>, liuzhiqiang26@huawei.com
 List-Id: dm-devel.ids
 
-Your points are good. I don't know a good macrobenchmark at present,
-but at least various latency numbers are easy to get out of fio.
+Hello lixiaokeng,
 
-I ran a similar set of tests on an Optane 900P with results below.
-'clat' is, as fio reports, the completion latency, measured in usec.
-'configuration' is [block size], [iodepth], [jobs]; picked to be a
-varied selection that obtained excellent throughput from the drive.
-Table reports average, and 99th percentile, latency times as well as
-throughput. It matches Ignat's report that large block sizes using the
-new option can have worse latency and throughput on top-end drives,
-although that result doesn't make any sense to me.
+Thanks again for your contribution.
 
-Happy to run some more there or elsewhere if there are suggestions.
+On Wed, 2020-08-19 at 09:50 +0800, lixiaokeng wrote:
+> 
+> If checking is_deamon is deleted, there are many other things need be
+> done like in
+> https://www.redhat.com/archives/dm-devel/2020-July/msg00245.html. And
+> this
+> branch develops from 0.8.3 but upstream_queue is mainline which
+> develops from
+> 0.8.4.
 
-devicetype    configuration    MB/s    clat mean    clat 99%
-------------------------------------------------------------------
-nvme base    1m,32,4     2259    59280       67634
-crypt default    1m,32,4     2267    59050       182000
-crypt no_w_wq    1m,32,4     1758    73954.54    84411
-nvme base    64k,1024,1    2273    29500.92    30540
-crypt default    64k,1024,1    2167    29518.89    50594
-crypt no_w_wq    64k,1024,1    2056    31090.23    31327
-nvme base    4k,128,4    2159      924.57    1106
-crypt default    4k,128,4    1256     1663.67    3294
-crypt no_w_wq    4k,128,4    1703     1165.69    1319
+This is a misunderstanding. My upstream-queue branch is *not* mainline.
+Mainline is http://git.opensvc.com/multipath-tools/.git. Also, my
+entire patch series (link above) was based on upstream-queue, which in
+turn was based on 0.8.4, not 0.8.3.
 
-Ignat, how do these numbers match up to what you've been seeing?
+As the name says, "upstream-queue" represents the queue of pending
+patches which have at least one positive review (and no negative ones).
+The intention is 1. to provide an overview for myself and other
+interested parties, and 2. to simplify matters for the actual
+maintainer, Christophe, when he applies patches onto mainline.
 
--John
+My patch series changes the same code path as this one, and I think it
+solves the same issue, albeit differently. Most of my series has
+meanwhile been positively reviewed by Ben, and the remaining open
+issues are in other parts of the series. I'll hopefully be able to push
+it to upstream-queue soon. IMO it makes little sense to push changes to
+upstream-queue which are going to be removed again when my series is
+applied (I don't intend to start using merge operations in this
+branch).
 
+Christophe is on the recipients list of your patch. He may of course
+decide to apply your patch before my series, in which case I'll have to
+rebase mine. But he'll probably have other prior patches to look at
+first before he gets down to this one.
 
-On Tue, Aug 18, 2020 at 5:23 PM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
->
-> On Tue, Aug 18, 2020 at 2:12 PM Ignat Korchagin <ignat@cloudflare.com> wrote:
-> >
-> > Additionally if one cares about latency
->
-> I think everybody really deep down cares about latency, they just
-> don't always know it, and the benchmarks are very seldom about it
-> because it's so much harder to measure.
->
-> > they will not use HDDs for the workflow and HDDs have much higher IO latency than CPU scheduling.
->
-> I think by now we can just say that anybody who uses HDD's don't care
-> about performance as a primary issue.
->
-> I don't think they are really interesting as a benchmark target - at
-> least from the standpoint of what the kernel should optimize for.
->
-> People have HDD's for legacy reasons or because they care much more
-> about capacity than performance.  Why should _we_ then worry about
-> performance that the user doesn't worry about?
->
-> I'm not saying we should penalize HDD's, but I don't think they are
-> things we should primarily care deeply about any more.
->
->                Linus
->
+Regards,
+Martin
+
+> Here, we skip alloc_path if pp isn't find in pathvec and process is
+> daemon.  In
+> daemon, we should not store path with incomplete information to
+> pathvec.  The
+> pathvec stores all paths in daemon, so it is reasonable keep same
+> with pathvec.
+> 
+> Reported-by: Tianxiong Li <lutianxiong@huawei.com>
+> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> ---
+>  libmultipath/dmparser.c | 14 ++++++++++++--
+>  1 file changed, 12 insertions(+), 2 deletions(-)
+> 
+> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+> index f02c551..0f370e9 100644
+> --- a/libmultipath/dmparser.c
+> +++ b/libmultipath/dmparser.c
+> @@ -314,6 +314,16 @@ int disassemble_map(vector pathvec, char
+> *params, struct multipath *mpp,
+>  			}
+> 
+>  			if (!pp) {
+> +				/* daemon should keep same with pathvec
+> */
+> +				/* pp is not find in pathvec, skip it
+> */
+> +				if (is_daemon) {
+> +					FREE(word);
+> +					for (k = 0; k < num_paths_args;
+> k++) {
+> +						p += get_word(p, NULL);
+> +					}
+> +					continue;
+> +				}
+> +
+>  				pp_unfound = 1;
+>  				pp = alloc_path();
+> 
+> @@ -326,8 +336,8 @@ int disassemble_map(vector pathvec, char *params,
+> struct multipath *mpp,
+>  					strncpy(pp->wwid, mpp->wwid,
+>  						WWID_SIZE - 1);
+>  				}
+> -				/* Only call this in multipath client
+> mode */
+> -				if (!is_daemon && store_path(pathvec,
+> pp)) {
+> +
+> +				if (store_path(pathvec, pp)) {
+>  					free_path(pp);
+>  					goto out1;
+>  				}
+> --
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
