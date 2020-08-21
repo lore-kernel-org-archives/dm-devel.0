@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 3/3] multipath: get_dm_mpvec: discard broken maps
-Date: Fri, 21 Aug 2020 15:54:18 +0200
-Message-ID: <20200821135418.28138-4-mwilck@suse.com>
+Subject: [PATCH 1/3] libmultipath: update_multipath_table(): add
+	flags argument
+Date: Fri, 21 Aug 2020 15:54:16 +0200
+Message-ID: <20200821135418.28138-2-mwilck@suse.com>
 References: <20200821135418.28138-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,64 +24,80 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Use the same logic as map_discovery() to discard maps that
-couldn't be parsed successfully. If map parsing fails,
-certain vital fields of the mpp, like features or hwhandler,
-will not be set, which might cause multipath to crash later on.
+... to be passed to update_pathvec_from_dm().
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/main.c | 23 +++++++++--------------
- 1 file changed, 9 insertions(+), 14 deletions(-)
+ libmultipath/structs_vec.c | 6 +++---
+ libmultipath/structs_vec.h | 2 +-
+ multipathd/main.c          | 4 ++--
+ 3 files changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 80bc4b5..2d7ec74 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -193,7 +193,7 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index cc2dafa..3d4f855 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -406,7 +406,7 @@ extract_hwe_from_path(struct multipath * mpp)
+ }
+ 
+ int
+-update_multipath_table (struct multipath *mpp, vector pathvec)
++update_multipath_table (struct multipath *mpp, vector pathvec, int flags)
  {
- 	int i;
- 	struct multipath * mpp;
--	char params[PARAMS_SIZE], status[PARAMS_SIZE];
-+	int flags = (cmd == CMD_LIST_SHORT ? DI_NOIO : DI_ALL);
+ 	int r = DMP_ERR;
+ 	char params[PARAMS_SIZE] = {0};
+@@ -426,7 +426,7 @@ update_multipath_table (struct multipath *mpp, vector pathvec)
+ 	}
  
- 	if (dm_get_maps(curmp))
+ 	/* FIXME: we should deal with the return value here */
+-	update_pathvec_from_dm(pathvec, mpp, 0);
++	update_pathvec_from_dm(pathvec, mpp, flags);
+ 
+ 	return DMP_OK;
+ }
+@@ -532,7 +532,7 @@ update_multipath_strings(struct multipath *mpp, vector pathvec)
+ 	free_pgvec(mpp->pg, KEEP_PATHS);
+ 	mpp->pg = NULL;
+ 
+-	r = update_multipath_table(mpp, pathvec);
++	r = update_multipath_table(mpp, pathvec, 0);
+ 	if (r != DMP_OK)
+ 		return r;
+ 	sync_paths(mpp, pathvec);
+diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
+index 39cb074..478168f 100644
+--- a/libmultipath/structs_vec.h
++++ b/libmultipath/structs_vec.h
+@@ -39,7 +39,7 @@ struct multipath * add_map_with_path (struct vectors * vecs,
+ 				struct path * pp, int add_vec);
+ void update_queue_mode_del_path(struct multipath *mpp);
+ void update_queue_mode_add_path(struct multipath *mpp);
+-int update_multipath_table (struct multipath *mpp, vector pathvec);
++int update_multipath_table (struct multipath *mpp, vector pathvec, int flags);
+ int update_multipath_status (struct multipath *mpp);
+ vector get_used_hwes(const struct _vector *pathvec);
+ 
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 9f12a57..b8019ec 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -552,7 +552,7 @@ add_map_without_path (struct vectors *vecs, const char *alias)
+ 	mpp->mpe = find_mpe(conf->mptable, mpp->wwid);
+ 	put_multipath_config(conf);
+ 
+-	if (update_multipath_table(mpp, vecs->pathvec) != DMP_OK)
++	if (update_multipath_table(mpp, vecs->pathvec, 0) != DMP_OK)
+ 		goto out;
+ 	if (update_multipath_status(mpp) != DMP_OK)
+ 		goto out;
+@@ -1412,7 +1412,7 @@ map_discovery (struct vectors * vecs)
  		return 1;
-@@ -205,27 +205,22 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
- 		if (refwwid && strlen(refwwid) &&
- 		    strncmp(mpp->wwid, refwwid, WWID_SIZE)) {
- 			condlog(3, "skip map %s: out of scope", mpp->alias);
--			free_multipath(mpp, KEEP_PATHS);
--			vector_del_slot(curmp, i);
-+			remove_map(mpp, pathvec, curmp, PURGE_VEC);
+ 
+ 	vector_foreach_slot (vecs->mpvec, mpp, i)
+-		if (update_multipath_table(mpp, vecs->pathvec) != DMP_OK ||
++		if (update_multipath_table(mpp, vecs->pathvec, 0) != DMP_OK ||
+ 		    update_multipath_status(mpp) != DMP_OK) {
+ 			remove_map(mpp, vecs, 1);
  			i--;
- 			continue;
- 		}
- 
--		dm_get_map(mpp->alias, &mpp->size, params);
--		condlog(3, "params = %s", params);
--		dm_get_status(mpp->alias, status);
--		condlog(3, "status = %s", status);
--
--		disassemble_map(pathvec, params, mpp);
--		update_pathvec_from_dm(pathvec, mpp,
--				       (cmd == CMD_LIST_SHORT ?
--					DI_NOIO : DI_ALL));
-+		if (update_multipath_table(mpp, pathvec, flags) != DMP_OK ||
-+		    update_multipath_status(mpp) != DMP_OK) {
-+			condlog(1, "error parsing map %s", mpp->wwid);
-+			remove_map(mpp, pathvec, curmp, PURGE_VEC);
-+			i--;
-+			continue;
-+		}
- 
- 		if (cmd == CMD_LIST_LONG)
- 			mpp->bestpg = select_path_group(mpp);
- 
--		disassemble_status(status, mpp);
--
- 		if (cmd == CMD_LIST_SHORT ||
- 		    cmd == CMD_LIST_LONG) {
- 			struct config *conf = get_multipath_config();
 -- 
 2.28.0
