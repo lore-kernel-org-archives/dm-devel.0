@@ -1,15 +1,14 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH V2 1/5] multipathd: adopt static char* arr in
- daemon_status
-Date: Fri, 21 Aug 2020 15:42:02 +0200
-Message-ID: <5b382b169a8c499acfc523adb81681fe941d743a.camel@suse.com>
-References: <52b3b834-6da6-99c1-a2d1-95c2387c47e3@huawei.com>
-	<b2c96dc6-1e01-beb2-0ccb-22e1d0d980a6@huawei.com>
+From: mwilck@suse.com
+Subject: [PATCH 2/3] libmultipath: remove_map(): separate pathvec
+	and mpvec arguments
+Date: Fri, 21 Aug 2020 15:54:17 +0200
+Message-ID: <20200821135418.28138-3-mwilck@suse.com>
+References: <20200821135418.28138-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <b2c96dc6-1e01-beb2-0ccb-22e1d0d980a6@huawei.com>
+In-Reply-To: <20200821135418.28138-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,36 +18,218 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Zhiqiang Liu <liuzhiqiang26@huawei.com>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
+To: lixiaokeng@huawei.com
+Cc: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com, Zhiqiang Liu <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-T24gRnJpLCAyMDIwLTA4LTIxIGF0IDE4OjU4ICswODAwLCBaaGlxaWFuZyBMaXUgd3JvdGU6Cj4g
-V2UgYWRvcHQgc3RhdGljIGNoYXIqIGFycmF5IChkZW1vbl9zdGF0dXNfbXNnKSBpbiBkYWVtb25f
-c3RhdHVzIGZ1bmMsCj4gc28gaXQgbG9va3MgbW9yZSBzaW1wbGVyIGFuZCBlYXNpZXIgdG8gZXhw
-YW5kLgo+IAo+IFYxLT5WMjoKPiAtIHVzZSAiaW50IiBhcyB0aGUgdHlwZSBvZiAic3RhdHVzIiAo
-c3VnZ2VzdGVkIGJ5IE1hcnRpbikKPiAKPiBTaWduZWQtb2ZmLWJ5OiBaaGlxaWFuZyBMaXUgPGxp
-dXpoaXFpYW5nMjZAaHVhd2VpLmNvbT4KPiBTaWduZWQtb2ZmLWJ5OiBsaXhpYW9rZW5nIDxsaXhp
-YW9rZW5nQGh1YXdlaS5jb20+Cj4gLS0tCj4gIG11bHRpcGF0aGQvbWFpbi5jIHwgMzAgKysrKysr
-KysrKysrKysrLS0tLS0tLS0tLS0tLS0tCj4gIG11bHRpcGF0aGQvbWFpbi5oIHwgIDMgKystCj4g
-IDIgZmlsZXMgY2hhbmdlZCwgMTcgaW5zZXJ0aW9ucygrKSwgMTYgZGVsZXRpb25zKC0pCj4gCj4g
-ZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvbWFpbi5jIGIvbXVsdGlwYXRoZC9tYWluLmMKPiBpbmRl
-eCA5ZWM2NTg1Ni4uNjJjZjRmZjQgMTAwNjQ0Cj4gLS0tIGEvbXVsdGlwYXRoZC9tYWluLmMKPiAr
-KysgYi9tdWx0aXBhdGhkL21haW4uYwo+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL21haW4uaCBi
-L211bHRpcGF0aGQvbWFpbi5oCj4gaW5kZXggNWRmZjE3ZTUuLjZhNTU5MmMwIDEwMDY0NAo+IC0t
-LSBhL211bHRpcGF0aGQvbWFpbi5oCj4gKysrIGIvbXVsdGlwYXRoZC9tYWluLmgKPiBAQCAtNCwx
-MiArNCwxMyBAQAo+ICAjZGVmaW5lIE1BUEdDSU5UIDUKPiAKPiAgZW51bSBkYWVtb25fc3RhdHVz
-IHsKPiAtCURBRU1PTl9JTklULAo+ICsJREFFTU9OX0lOSVQgPSAwLAo+ICAJREFFTU9OX1NUQVJU
-LAo+ICAJREFFTU9OX0NPTkZJR1VSRSwKPiAgCURBRU1PTl9JRExFLAo+ICAJREFFTU9OX1JVTk5J
-TkcsCj4gIAlEQUVNT05fU0hVVERPV04sCj4gKwlEQUVNT05fU1RBVFVTX1NJWkUsCj4gIH07CgpU
-aGlzIGJyZWFrcyBjb21waWxhdGlvbjoKCm1haW4uYzogSW4gZnVuY3Rpb24g4oCYc2Rfbm90aWZ5
-X3N0YXR1c+KAmToKbWFpbi5jOjE4NDoyOiBlcnJvcjogZW51bWVyYXRpb24gdmFsdWUg4oCYREFF
-TU9OX1NUQVRVU19TSVpF4oCZIG5vdCBoYW5kbGVkCmluIHN3aXRjaCBbLVdlcnJvcj1zd2l0Y2hd
-CiAgc3dpdGNoIChzdGF0ZSkgewogIF5+fn5+fgoKUGxlYXNlIGF2b2lkIGludHJvZHVjaW5nIERB
-RU1PTl9TVEFUVVNfU0laRS4KClRoaXMgd291bGQgYmUgZml4ZWQgYnkgeW91ciBwYXRjaCAyIGJl
-Y2F1c2UgaXQgcmVtb3ZlcyB0aGUgc3dpdGNoCnN0YXRlbWVudCwgYnV0IG5vIHBhdGNoIGluIGEg
-c2VyaWVzIHNob3VsZCBicmVhayBjb21waWxhdGlvbiwgdG8gCmFsbG93IGZ1dHVyZSBiaXNlY3Rp
-b25zLgoKSSBoYXZlIHRvIHdpdGhkcmF3IG15ICJSZXZpZXdlZC1ieTogZm9yIHRoZSB0aW1lIGJl
-aW5nLCBzb3JyeS4KCk1hcnRpbgoKCj4gCj4gIHN0cnVjdCBwcm91dF9wYXJhbV9kZXNjcmlwdG9y
-OwoKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
-L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+From: Martin Wilck <mwilck@suse.com>
+
+This will enable us to use remove_map() from multipath.
+Also, pass symbolic arguments for remove_map() everywhere.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/configure.c   | 11 ++++++-----
+ libmultipath/structs_vec.c | 14 +++++++-------
+ libmultipath/structs_vec.h |  8 ++++++--
+ multipathd/dmevents.c      |  2 +-
+ multipathd/main.c          | 12 ++++++------
+ 5 files changed, 26 insertions(+), 21 deletions(-)
+
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 5fb5767..5bc65fd 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -1186,7 +1186,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 
+ 		if (!mpp->paths) {
+ 			condlog(0, "%s: skip coalesce (no paths)", mpp->alias);
+-			remove_map(mpp, vecs, 0);
++			remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
+ 			continue;
+ 		}
+ 
+@@ -1215,7 +1215,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 
+ 		params[0] = '\0';
+ 		if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
+-			remove_map(mpp, vecs, 0);
++			remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
+ 			continue;
+ 		}
+ 
+@@ -1235,7 +1235,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 				condlog(2, "%s: %s map",
+ 					mpp->alias, (mpp->action == ACT_CREATE)?
+ 					"ignoring" : "removing");
+-				remove_map(mpp, vecs, 0);
++				remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
+ 				continue;
+ 			} else /* if (r == DOMAP_RETRY && !is_daemon) */ {
+ 				ret = CP_RETRY;
+@@ -1286,7 +1286,8 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 				vector_set_slot(newmp, mpp);
+ 			}
+ 			else
+-				remove_map(mpp, vecs, 0);
++				remove_map(mpp, vecs->pathvec, vecs->mpvec,
++					   KEEP_VEC);
+ 		}
+ 	}
+ 	/*
+@@ -1304,7 +1305,7 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 
+ 			vector_del_slot(newmp, i);
+ 			i--;
+-			remove_map(mpp, vecs, 0);
++			remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
+ 
+ 			if (dm_flush_map(alias))
+ 				condlog(2, "%s: remove failed (dead)",
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 3d4f855..7fd860e 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -329,18 +329,18 @@ void set_path_removed(struct path *pp)
+ }
+ 
+ void
+-remove_map(struct multipath * mpp, struct vectors * vecs, int purge_vec)
++remove_map(struct multipath *mpp, vector pathvec, vector mpvec, int purge_vec)
+ {
+ 	int i;
+ 
+ 	/*
+ 	 * clear references to this map
+ 	 */
+-	orphan_paths(vecs->pathvec, mpp, "map removed internally");
++	orphan_paths(pathvec, mpp, "map removed internally");
+ 
+ 	if (purge_vec &&
+-	    (i = find_slot(vecs->mpvec, (void *)mpp)) != -1)
+-		vector_del_slot(vecs->mpvec, i);
++	    (i = find_slot(mpvec, (void *)mpp)) != -1)
++		vector_del_slot(mpvec, i);
+ 
+ 	/*
+ 	 * final free
+@@ -354,7 +354,7 @@ remove_map_by_alias(const char *alias, struct vectors * vecs, int purge_vec)
+ 	struct multipath * mpp = find_mp_by_alias(vecs->mpvec, alias);
+ 	if (mpp) {
+ 		condlog(2, "%s: removing map by alias", alias);
+-		remove_map(mpp, vecs, purge_vec);
++		remove_map(mpp, vecs->pathvec, vecs->mpvec, purge_vec);
+ 	}
+ }
+ 
+@@ -368,7 +368,7 @@ remove_maps(struct vectors * vecs)
+ 		return;
+ 
+ 	vector_foreach_slot (vecs->mpvec, mpp, i) {
+-		remove_map(mpp, vecs, 1);
++		remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
+ 		i--;
+ 	}
+ 
+@@ -712,7 +712,7 @@ struct multipath *add_map_with_path(struct vectors *vecs, struct path *pp,
+ 	return mpp;
+ 
+ out:
+-	remove_map(mpp, vecs, PURGE_VEC);
++	remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
+ 	return NULL;
+ }
+ 
+diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
+index 478168f..ee2b723 100644
+--- a/libmultipath/structs_vec.h
++++ b/libmultipath/structs_vec.h
+@@ -27,9 +27,13 @@ int update_mpp_paths(struct multipath * mpp, vector pathvec);
+ int update_multipath_strings (struct multipath *mpp, vector pathvec);
+ void extract_hwe_from_path(struct multipath * mpp);
+ 
+-#define PURGE_VEC 1
++enum {
++	KEEP_VEC,
++	PURGE_VEC,
++};
+ 
+-void remove_map (struct multipath * mpp, struct vectors * vecs, int purge_vec);
++void remove_map (struct multipath *mpp, vector pathvec, vector mpvec,
++		 int purge_vec);
+ void remove_map_by_alias(const char *alias, struct vectors * vecs,
+ 			 int purge_vec);
+ void remove_maps (struct vectors * vecs);
+diff --git a/multipathd/dmevents.c b/multipathd/dmevents.c
+index b235dd4..5f2d210 100644
+--- a/multipathd/dmevents.c
++++ b/multipathd/dmevents.c
+@@ -357,7 +357,7 @@ static int dmevent_loop (void)
+ 		pthread_testcancel();
+ 		r = 0;
+ 		if (curr_dev.action == EVENT_REMOVE)
+-			remove_map_by_alias(curr_dev.name, waiter->vecs, 1);
++			remove_map_by_alias(curr_dev.name, waiter->vecs, PURGE_VEC);
+ 		else
+ 			r = update_multipath(waiter->vecs, curr_dev.name, 1);
+ 		pthread_cleanup_pop(1);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index b8019ec..67e9af1 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -379,7 +379,7 @@ remove_map_and_stop_waiter(struct multipath *mpp, struct vectors *vecs)
+ 	condlog(3, "%s: removing map from internal tables", mpp->alias);
+ 	if (!poll_dmevents)
+ 		stop_waiter_thread(mpp);
+-	remove_map(mpp, vecs, PURGE_VEC);
++	remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
+ }
+ 
+ static void
+@@ -511,7 +511,7 @@ retry:
+ fail:
+ 	if (new_map && (retries < 0 || wait_for_events(mpp, vecs))) {
+ 		condlog(0, "%s: failed to create new map", mpp->alias);
+-		remove_map(mpp, vecs, 1);
++		remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
+ 		return 1;
+ 	}
+ 
+@@ -567,7 +567,7 @@ add_map_without_path (struct vectors *vecs, const char *alias)
+ 
+ 	return mpp;
+ out:
+-	remove_map(mpp, vecs, PURGE_VEC);
++	remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
+ 	return NULL;
+ }
+ 
+@@ -1099,7 +1099,7 @@ rescan:
+ 		goto fail;
+ 
+ fail_map:
+-	remove_map(mpp, vecs, 1);
++	remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
+ fail:
+ 	orphan_path(pp, "failed to add path");
+ 	return 1;
+@@ -1414,7 +1414,7 @@ map_discovery (struct vectors * vecs)
+ 	vector_foreach_slot (vecs->mpvec, mpp, i)
+ 		if (update_multipath_table(mpp, vecs->pathvec, 0) != DMP_OK ||
+ 		    update_multipath_status(mpp) != DMP_OK) {
+-			remove_map(mpp, vecs, 1);
++			remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
+ 			i--;
+ 		}
+ 
+@@ -2653,7 +2653,7 @@ configure (struct vectors * vecs)
+ 	 */
+ 	vector_foreach_slot(vecs->mpvec, mpp, i) {
+ 		if (wait_for_events(mpp, vecs)) {
+-			remove_map(mpp, vecs, 1);
++			remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
+ 			i--;
+ 			continue;
+ 		}
+-- 
+2.28.0
