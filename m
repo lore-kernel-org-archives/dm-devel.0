@@ -1,8 +1,8 @@
 From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [PATCH V2 4/5] vector: add lower boundary check in
- vector_foreach_slot_after
-Date: Fri, 21 Aug 2020 19:00:48 +0800
-Message-ID: <8e1d9d4d-a1c2-f75a-ec84-6d7968a9e0d7@huawei.com>
+Subject: [PATCH V2 5/5] multipathd: remove useless memset after
+ MALLOC in alloc_waiteri func
+Date: Fri, 21 Aug 2020 19:01:27 +0800
+Message-ID: <ab034ec7-c80d-6d40-b9bf-1942e2ad5067@huawei.com>
 References: <52b3b834-6da6-99c1-a2d1-95c2387c47e3@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,42 +21,41 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: mwilck@suse.com, Benjamin Marzinski <bmarzins@redhat.com>, Christophe
 	Varoqui <christophe.varoqui@opensvc.com>, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, liuzhiqiang26@huawei.com
+Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>, liuzhiqiang26@huawei.com
 List-Id: dm-devel.ids
 
 
-In vector_foreach_slot_after macro, i is the input var, which
-may have a illegal value (i < 0). So we should add lower boundary
-check in vector_foreach_slot_after macro.
+MALLOC(x) maps to calloc(1, x), which already init var to zero.
+In alloc_waiter func, the superfluous memset(wp) call is useless,
+and it should be removed.
 
 V1->V2:
-- check whether i is illegal before loop (As suggested by Martin)
+- remove useless memset call after MALLOC (as suggested by Martin)
 
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
 ---
- libmultipath/vector.h | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+ multipathd/waiter.c | 8 +-------
+ 1 file changed, 1 insertion(+), 7 deletions(-)
 
-diff --git a/libmultipath/vector.h b/libmultipath/vector.h
-index 2862dc28..ab80d06e 100644
---- a/libmultipath/vector.h
-+++ b/libmultipath/vector.h
-@@ -38,11 +38,12 @@ typedef struct _vector *vector;
- #define VECTOR_LAST_SLOT(V)   (((V) && VECTOR_SIZE(V) > 0) ? (V)->slot[(VECTOR_SIZE(V) - 1)] : NULL)
+diff --git a/multipathd/waiter.c b/multipathd/waiter.c
+index e6457663..da4017b9 100644
+--- a/multipathd/waiter.c
++++ b/multipathd/waiter.c
+@@ -29,13 +29,7 @@ struct mutex_lock waiter_lock = { .mutex = PTHREAD_MUTEX_INITIALIZER };
 
- #define vector_foreach_slot(v,p,i) \
--	for (i = 0; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); i++)
-+	for ((i) = 0; (v) && (int)(i) < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); (i)++)
- #define vector_foreach_slot_after(v,p,i) \
--	for (; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); i++)
-+	if ((v) && (int)(i) >= 0) \
-+		for (; (int)(i) < VECTOR_SIZE(v) && ((p) = (v)->slot[i]); (i)++)
- #define vector_foreach_slot_backwards(v,p,i) \
--	for (i = VECTOR_SIZE(v) - 1; (int)i >= 0 && ((p) = (v)->slot[i]); i--)
-+	for ((i) = VECTOR_SIZE(v) - 1; (int)(i) >= 0 && ((p) = (v)->slot[i]); (i)--)
+ static struct event_thread *alloc_waiter (void)
+ {
+-
+-	struct event_thread *wp;
+-
+-	wp = (struct event_thread *)MALLOC(sizeof(struct event_thread));
+-	memset(wp, 0, sizeof(struct event_thread));
+-
+-	return wp;
++	return (struct event_thread *)MALLOC(sizeof(struct event_thread));
+ }
 
- #define identity(x) (x)
- /*
+ static void free_waiter (void *data)
 -- 
 2.24.0.windows.2
