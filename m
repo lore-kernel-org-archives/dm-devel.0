@@ -1,11 +1,13 @@
 From: mwilck@suse.com
-Subject: [PATCH 0/3] discard broken maps in get_dm_mpvec
-Date: Fri, 21 Aug 2020 15:54:15 +0200
-Message-ID: <20200821135418.28138-1-mwilck@suse.com>
+Subject: [PATCH 3/3] multipath: get_dm_mpvec: discard broken maps
+Date: Fri, 21 Aug 2020 15:54:18 +0200
+Message-ID: <20200821135418.28138-4-mwilck@suse.com>
+References: <20200821135418.28138-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200821135418.28138-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,30 +23,64 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Hello lixiaokeng,
+Use the same logic as map_discovery() to discard maps that
+couldn't be parsed successfully. If map parsing fails,
+certain vital fields of the mpp, like features or hwhandler,
+will not be set, which might cause multipath to crash later on.
 
-please check if this fixes the issue you reported in
-"libmultipath fix NULL dereference in select_action"
-(https://www.redhat.com/archives/dm-devel/2020-August/msg00246.html).
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipath/main.c | 23 +++++++++--------------
+ 1 file changed, 9 insertions(+), 14 deletions(-)
 
-As discussed before, the idea is to discard broken / incompletely
-initialized maps in get_dm_mpvec().
-
-Regards
-Martin
-
-Martin Wilck (3):
-  libmultipath: update_multipath_table(): add flags argument
-  libmultipath: remove_map(): separate pathvec and mpvec arguments
-  multipath: get_dm_mpvec: discard broken maps
-
- libmultipath/configure.c   | 11 ++++++-----
- libmultipath/structs_vec.c | 20 ++++++++++----------
- libmultipath/structs_vec.h | 10 +++++++---
- multipath/main.c           | 23 +++++++++--------------
- multipathd/dmevents.c      |  2 +-
- multipathd/main.c          | 16 ++++++++--------
- 6 files changed, 41 insertions(+), 41 deletions(-)
-
+diff --git a/multipath/main.c b/multipath/main.c
+index 80bc4b5..2d7ec74 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -193,7 +193,7 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+ {
+ 	int i;
+ 	struct multipath * mpp;
+-	char params[PARAMS_SIZE], status[PARAMS_SIZE];
++	int flags = (cmd == CMD_LIST_SHORT ? DI_NOIO : DI_ALL);
+ 
+ 	if (dm_get_maps(curmp))
+ 		return 1;
+@@ -205,27 +205,22 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+ 		if (refwwid && strlen(refwwid) &&
+ 		    strncmp(mpp->wwid, refwwid, WWID_SIZE)) {
+ 			condlog(3, "skip map %s: out of scope", mpp->alias);
+-			free_multipath(mpp, KEEP_PATHS);
+-			vector_del_slot(curmp, i);
++			remove_map(mpp, pathvec, curmp, PURGE_VEC);
+ 			i--;
+ 			continue;
+ 		}
+ 
+-		dm_get_map(mpp->alias, &mpp->size, params);
+-		condlog(3, "params = %s", params);
+-		dm_get_status(mpp->alias, status);
+-		condlog(3, "status = %s", status);
+-
+-		disassemble_map(pathvec, params, mpp);
+-		update_pathvec_from_dm(pathvec, mpp,
+-				       (cmd == CMD_LIST_SHORT ?
+-					DI_NOIO : DI_ALL));
++		if (update_multipath_table(mpp, pathvec, flags) != DMP_OK ||
++		    update_multipath_status(mpp) != DMP_OK) {
++			condlog(1, "error parsing map %s", mpp->wwid);
++			remove_map(mpp, pathvec, curmp, PURGE_VEC);
++			i--;
++			continue;
++		}
+ 
+ 		if (cmd == CMD_LIST_LONG)
+ 			mpp->bestpg = select_path_group(mpp);
+ 
+-		disassemble_status(status, mpp);
+-
+ 		if (cmd == CMD_LIST_SHORT ||
+ 		    cmd == CMD_LIST_LONG) {
+ 			struct config *conf = get_multipath_config();
 -- 
 2.28.0
