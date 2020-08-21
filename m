@@ -1,15 +1,14 @@
-From: =?utf-8?B?55Sw?= <xianting_tian@126.com>
-Subject: Re: [PATCH 2/2] block: fix locking for struct
- block_device size updates
-Date: Fri, 21 Aug 2020 18:02:32 +0800 (GMT+08:00)
-Message-ID: <133efc8b.1649.17410784734.Coremail.xianting_tian@126.com>
-References: <20200821085600.2395666-1-hch@lst.de>
-	<20200821085600.2395666-3-hch@lst.de>
-	<4df016bc-570c-d166-47dd-36a9f21fad13@suse.de>
+From: Ye Bin <yebin10@huawei.com>
+Subject: [PATCH 1/4] dm thin metadata: Avoid return pmd->bm wild
+	pointer when process with error
+Date: Fri, 21 Aug 2020 17:26:48 +0800
+Message-ID: <20200821092651.1587859-2-yebin10@huawei.com>
+References: <20200821092651.1587859-1-yebin10@huawei.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============5601014413426987692=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4df016bc-570c-d166-47dd-36a9f21fad13@suse.de>
+In-Reply-To: <20200821092651.1587859-1-yebin10@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,109 +18,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: Jens Axboe <axboe@kernel.dk>, "linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>, Jan Hoeppner <hoeppner@linux.ibm.com>, Justin Sanders <justin@coraid.com>, Josef Bacik <josef@toxicpanda.com>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Stefan Haberland <sth@linux.ibm.com>, "nbd@other.debian.org" <nbd@other.debian.org>, Christoph Hellwig <hch@lst.de>
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com
+Cc: yebin10@huawei.com
 List-Id: dm-devel.ids
 
---===============5601014413426987692==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_16762_1838007221.1598004152116"
+Maybe caller will use PTR_ERR as a pointer, it will lead to some strange
+things.
 
-------=_Part_16762_1838007221.1598004152116
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: base64
+Signed-off-by: Ye Bin <yebin10@huawei.com>
+---
+ drivers/md/dm-thin-metadata.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
-dGhhbmtzIEhlbGx3aWcgZm9yIHlvdXIga2luZGx5IHJlcGx5IGFuZCB5b3VyIGZpeCBhbmQgYWRk
-IHJlcG9ydCBieSBtZSA6KQoKCk9uIDA4LzIxLzIwMjAgMTc6MjYsIEhhbm5lcyBSZWluZWNrZSB3
-cm90ZToKT24gOC8yMS8yMCAxMDo1NiBBTSwgQ2hyaXN0b3BoIEhlbGx3aWcgd3JvdGU6Cj4gVHdv
-IGRpZmZlcmVudCBjYWxsZXJzIHVzZSB0d28gZGlmZmVyZW50IG11dGV4ZXMgZm9yIHVwZGF0aW5n
-IHRoZQo+IGJsb2NrIGRldmljZSBzaXplLCB3aGljaCBvYnZpb3VzbHkgZG9lc24ndCBoZWxwIHRv
-IGFjdHVhbGx5IHByb3RlY3QKPiBhZ2FpbnN0IGNvbmN1cnJlbnQgdXBkYXRlcyBmcm9tIHRoZSBk
-aWZmZXJlbnQgY2FsbGVycy4gIEluIGFkZGl0aW9uCj4gb25lIG9mIHRoZSBsb2NrcywgYmRfbXV0
-ZXggaXMgcmF0aGVyIHByb25lIHRvIGRlYWRsb2NrcyB3aXRoIG90aGVyCj4gcGFydHMgb2YgdGhl
-IGJsb2NrIHN0YWNrIHRoYXQgdXNlIGl0IGZvciBoaWdoIGxldmVsIHN5bmNocm9uaXphdGlvbi4K
-Pgo+IFN3aXRjaCB0byB1c2luZyBhIG5ldyBzcGlubG9jayBwcm90ZWN0aW5nIGp1c3QgdGhlIHNp
-emUgdXBkYXRlcywgYXMKPiB0aGF0IGlzIGFsbCB3ZSBuZWVkLCBhbmQgbWFrZSBzdXJlIGV2ZXJ5
-b25lIGRvZXMgdGhlIHVwZGF0ZSB0aHJvdWdoCj4gdGhlIHByb3BlciBoZWxwZXIuCj4KPiBUaGlz
-IGZpeGXRlSBhIGJ1ZyByZXBvcnRlZCB3aXRoIHRoZSBudm1lIHJldmFsaWRhdGluZyBkaXNrcyBk
-dXJpbmcgYQo+IGhvdCByZW1vdmFsIG9wZXJhdGlvbi4KPgo+IFJlcG9ydGVkLWJ5OiBYaWFudGlu
-ZyBUaWFuIDx4aWFudGluZ190aWFuQDEyNi5jb20+Cj4gU2lnbmVkLW9mZi1ieTogQ2hyaXN0b3Bo
-IEhlbGx3aWcgPGhjaEBsc3QuZGU+Cj4gLS0tCj4gIGJsb2NrL3BhcnRpdGlvbnMvY29yZS5jICAg
-ICAgICAgfCAgNCArKy0tCj4gIGRyaXZlcnMvYmxvY2svYW9lL2FvZWNtZC5jICAgICAgfCAgNCAr
-LS0tCj4gIGRyaXZlcnMvbWQvZG0uYyAgICAgICAgICAgICAgICAgfCAxNSArKy0tLS0tLS0tLS0t
-LS0KPiAgZHJpdmVycy9zMzkwL2Jsb2NrL2Rhc2RfaW9jdGwuYyB8ICA5ICsrLS0tLS0tLQo+ICBm
-cy9ibG9ja19kZXYuYyAgICAgICAgICAgICAgICAgIHwgMTggKysrKysrKysrLS0tLS0tLS0tCj4g
-IGluY2x1ZGUvbGludXgvYmxrX3R5cGVzLmggICAgICAgfCAgMSArCj4gIDYgZmlsZXMgY2hhbmdl
-ZCwgMTcgaW5zZXJ0aW9ucygrKSwgMzQgZGVsZXRpb25zKC0pCj4KUmV2aWV3ZWQtYnk6IEhhbm5l
-cyBSZWluZWNrZSA8aGFyZUBzdXNlLmRlPgoKQ2hlZXJzLAoKSGFubmVzCi0tCkRyLiBIYW5uZXMg
-UmVpbmVja2UgICAgICAgICAgICAgICAgICAgICBLZXJuZWwgU3RvcmFnZSBBcmNoaXRlY3QKaGFy
-ZUBzdXNlLmRlICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKzQ5IDkxMSA3NDA1MyA2
-ODgKU1VTRSBTb2Z0d2FyZSBTb2x1dGlvbnMgR2VybWFueSBHbWJILCBNYXhmZWxkc3RyLiA1LCA5
-MDQwOSBOw7xybmJlcmcKSFJCIDM2ODA5IChBRyBOw7xybmJlcmcpLCBHRjogRmVsaXggSW1lbmTD
-tnJmZmVyCg==
-------=_Part_16762_1838007221.1598004152116
-Content-Type: text/html; charset=utf-8
-Content-Transfer-Encoding: base64
-
-PGh0bWw+CjxoZWFkPgogICAgPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBjb250ZW50
-PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9VVRGLTgiPgo8L2hlYWQ+Cjxib2R5Pgo8ZGl2IHN0eWxlPSJs
-aW5lLWhlaWdodDoxLjY7Zm9udC1mYW1pbHk6J+iLueaWuScsJ+W+rui9r+mbhem7kScsJ3NhbnMt
-c2VyaWYnOyI+dGhhbmtzIEhlbGx3aWcgZm9yIHlvdXIga2luZGx5IHJlcGx5IGFuZCB5b3VyIGZp
-eCBhbmQgYWRkIHJlcG9ydCBieSBtZSA6KTxicj48YnI+PC9kaXY+PGRpdiBjbGFzcz0ibmUtcXVv
-dGVkIj48YmxvY2txdW90ZSBpZD0ibnRlcy1hbmRyaW9kbWFpbC1xdW90ZSIgc3R5bGU9Im1hcmdp
-bjowcHggIWltcG9ydGFudDtwYWRkaW5nOjBweCAhaW1wb3J0YW50O2JvcmRlcjogbm9uZSAhaW1w
-b3J0YW50OyI+PGRpdiBjbGFzcz0iSi1yZXBseSIgc3R5bGU9ImJhY2tncm91bmQtY29sb3I6I2Yy
-ZjJmMjtjb2xvcjpibGFjaztwYWRkaW5nLXRvcDo2cHg7cGFkZGluZy1ib3R0b206NnB4O2JvcmRl
-ci1yYWRpdXM6M3B4Oy1tb3otYm9yZGVyLXJhZGl1czozcHg7LXdlYmtpdC1ib3JkZXItcmFkaXVz
-OjNweDttYXJnaW4tdG9wOjQ1cHg7bWFyZ2luLWJvdHRvbToyMHB4OyI+CiAgICA8ZGl2IHN0eWxl
-PSJmb250LXNpemU6MTRweDtsaW5lLWhlaWdodDoxLjU7d29yZC1icmVhazpicmVhay1hbGw7bWFy
-Z2luLWxlZnQ6MTBweDttYXJnaW4tcmlnaHQ6MTBweCI+T24gPHNwYW4gY2xhc3M9Im1haWwtZGF0
-ZSI+MDgvMjEvMjAyMCAxNzoyNjwvc3Bhbj4sIDxhIGNsYXNzPSJtYWlsLXRvIiBzdHlsZT0idGV4
-dC1kZWNvcmF0aW9uOm5vbmU7Y29sb3I6IzJhOTdmZjsiIGhyZWY9Im1haWx0bzpoYXJlQHN1c2Uu
-ZGUiPkhhbm5lcyBSZWluZWNrZTwvYT4gd3JvdGU6PC9kaXY+CjwvZGl2Pk9uIDgvMjEvMjAgMTA6
-NTYgQU0sIENocmlzdG9waCBIZWxsd2lnIHdyb3RlOgo8YnI+Jmd0OyBUd28gZGlmZmVyZW50IGNh
-bGxlcnMgdXNlIHR3byBkaWZmZXJlbnQgbXV0ZXhlcyBmb3IgdXBkYXRpbmcgdGhlCjxicj4mZ3Q7
-IGJsb2NrIGRldmljZSBzaXplLCB3aGljaCBvYnZpb3VzbHkgZG9lc24ndCBoZWxwIHRvIGFjdHVh
-bGx5IHByb3RlY3QKPGJyPiZndDsgYWdhaW5zdCBjb25jdXJyZW50IHVwZGF0ZXMgZnJvbSB0aGUg
-ZGlmZmVyZW50IGNhbGxlcnMuICZuYnNwO0luIGFkZGl0aW9uCjxicj4mZ3Q7IG9uZSBvZiB0aGUg
-bG9ja3MsIGJkX211dGV4IGlzIHJhdGhlciBwcm9uZSB0byBkZWFkbG9ja3Mgd2l0aCBvdGhlcgo8
-YnI+Jmd0OyBwYXJ0cyBvZiB0aGUgYmxvY2sgc3RhY2sgdGhhdCB1c2UgaXQgZm9yIGhpZ2ggbGV2
-ZWwgc3luY2hyb25pemF0aW9uLgo8YnI+Jmd0OyAKPGJyPiZndDsgU3dpdGNoIHRvIHVzaW5nIGEg
-bmV3IHNwaW5sb2NrIHByb3RlY3RpbmcganVzdCB0aGUgc2l6ZSB1cGRhdGVzLCBhcwo8YnI+Jmd0
-OyB0aGF0IGlzIGFsbCB3ZSBuZWVkLCBhbmQgbWFrZSBzdXJlIGV2ZXJ5b25lIGRvZXMgdGhlIHVw
-ZGF0ZSB0aHJvdWdoCjxicj4mZ3Q7IHRoZSBwcm9wZXIgaGVscGVyLgo8YnI+Jmd0OyAKPGJyPiZn
-dDsgVGhpcyBmaXhl0ZUgYSBidWcgcmVwb3J0ZWQgd2l0aCB0aGUgbnZtZSByZXZhbGlkYXRpbmcg
-ZGlza3MgZHVyaW5nIGEKPGJyPiZndDsgaG90IHJlbW92YWwgb3BlcmF0aW9uLgo8YnI+Jmd0OyAK
-PGJyPiZndDsgUmVwb3J0ZWQtYnk6IFhpYW50aW5nIFRpYW4gJmx0O3hpYW50aW5nX3RpYW5AMTI2
-LmNvbSZndDsKPGJyPiZndDsgU2lnbmVkLW9mZi1ieTogQ2hyaXN0b3BoIEhlbGx3aWcgJmx0O2hj
-aEBsc3QuZGUmZ3Q7Cjxicj4mZ3Q7IC0tLQo8YnI+Jmd0OyAmbmJzcDtibG9jay9wYXJ0aXRpb25z
-L2NvcmUuYyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgfCAmbmJzcDs0ICsrLS0KPGJyPiZn
-dDsgJm5ic3A7ZHJpdmVycy9ibG9jay9hb2UvYW9lY21kLmMgJm5ic3A7ICZuYnNwOyAmbmJzcDt8
-ICZuYnNwOzQgKy0tLQo8YnI+Jmd0OyAmbmJzcDtkcml2ZXJzL21kL2RtLmMgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyB8IDE1ICsrLS0tLS0t
-LS0tLS0tLQo8YnI+Jmd0OyAmbmJzcDtkcml2ZXJzL3MzOTAvYmxvY2svZGFzZF9pb2N0bC5jIHwg
-Jm5ic3A7OSArKy0tLS0tLS0KPGJyPiZndDsgJm5ic3A7ZnMvYmxvY2tfZGV2LmMgJm5ic3A7ICZu
-YnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDt8IDE4
-ICsrKysrKysrKy0tLS0tLS0tLQo8YnI+Jmd0OyAmbmJzcDtpbmNsdWRlL2xpbnV4L2Jsa190eXBl
-cy5oICZuYnNwOyAmbmJzcDsgJm5ic3A7IHwgJm5ic3A7MSArCjxicj4mZ3Q7ICZuYnNwOzYgZmls
-ZXMgY2hhbmdlZCwgMTcgaW5zZXJ0aW9ucygrKSwgMzQgZGVsZXRpb25zKC0pCjxicj4mZ3Q7IAo8
-YnI+UmV2aWV3ZWQtYnk6IEhhbm5lcyBSZWluZWNrZSAmbHQ7aGFyZUBzdXNlLmRlJmd0Owo8YnI+
-Cjxicj5DaGVlcnMsCjxicj4KPGJyPkhhbm5lcwo8YnI+LS0gCjxicj5Eci4gSGFubmVzIFJlaW5l
-Y2tlJm5ic3A7ICZuYnNwOyAmbmJzcDsmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7
-ICZuYnNwOyAmbmJzcDsgJm5ic3A7IEtlcm5lbCBTdG9yYWdlIEFyY2hpdGVjdAo8YnI+aGFyZUBz
-dXNlLmRlJm5ic3A7ICZuYnNwOyAmbmJzcDsmbmJzcDsgJm5ic3A7ICZuYnNwOyZuYnNwOyAmbmJz
-cDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNwOyAmbmJzcDsgJm5ic3A7ICZuYnNw
-OyAmbmJzcDsgJm5ic3A7KzQ5IDkxMSA3NDA1MyA2ODgKPGJyPlNVU0UgU29mdHdhcmUgU29sdXRp
-b25zIEdlcm1hbnkgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCjxicj5IUkIg
-MzY4MDkgKEFHIE7DvHJuYmVyZyksIEdGOiBGZWxpeCBJbWVuZMO2cmZmZXIKPGJyPjwvYmxvY2tx
-dW90ZT48L2Rpdj4KPC9ib2R5Pgo8L2h0bWw+
-------=_Part_16762_1838007221.1598004152116--
-
---===============5601014413426987692==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============5601014413426987692==--
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+index 76b6b323bf4b..ddb7f1f0bc48 100644
+--- a/drivers/md/dm-thin-metadata.c
++++ b/drivers/md/dm-thin-metadata.c
+@@ -739,12 +739,16 @@ static int __create_persistent_data_objects(struct dm_pool_metadata *pmd, bool f
+ 					  THIN_MAX_CONCURRENT_LOCKS);
+ 	if (IS_ERR(pmd->bm)) {
+ 		DMERR("could not create block manager");
+-		return PTR_ERR(pmd->bm);
++		r = PTR_ERR(pmd->bm);
++		pmd->bm = NULL;
++		return r;
+ 	}
+ 
+ 	r = __open_or_format_metadata(pmd, format_device);
+-	if (r)
++	if (r) {
+ 		dm_block_manager_destroy(pmd->bm);
++		pmd->bm = NULL;
++	}
+ 
+ 	return r;
+ }
+-- 
+2.25.4
