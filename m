@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 3/3] multipath-tools tests: fix small bitfield
-	tests for big endian
-Date: Sat, 22 Aug 2020 00:42:24 +0200
-Message-ID: <20200821224224.13536-4-mwilck@suse.com>
+Subject: [PATCH 2/3] multipath-tools tests: fix bitfield tests
+	for big endian
+Date: Sat, 22 Aug 2020 00:42:23 +0200
+Message-ID: <20200821224224.13536-3-mwilck@suse.com>
 References: <20200821224224.13536-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,164 +24,68 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This is the opposite case of the previous patch: 64 bit bitfield_t,
-tested with 32 bit words.
+On big endian systems, the 32bit words need to be swapped in
+the test code to get the byte ordering right.
 
 Fixes: "libmultipath: create bitfield abstraction"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/util.c | 60 ++++++++++++++++++++++++++++++++++------------------
- 1 file changed, 40 insertions(+), 20 deletions(-)
+ tests/util.c | 22 +++++++++++++++++++---
+ 1 file changed, 19 insertions(+), 3 deletions(-)
 
 diff --git a/tests/util.c b/tests/util.c
-index ec38c55..21311b2 100644
+index 63a5f59..ec38c55 100644
 --- a/tests/util.c
 +++ b/tests/util.c
-@@ -22,6 +22,7 @@
- #include <setjmp.h>
- #include <stdlib.h>
- #include <cmocka.h>
-+#include <endian.h>
- #include "util.h"
- 
- #include "globals.c"
-@@ -295,11 +296,25 @@ static void test_bitmask_len_0(void **state)
- 	assert_null(bf);
+@@ -162,6 +162,22 @@ static int test_basenamecpy(void)
+ 	return cmocka_run_group_tests(tests, NULL, NULL);
  }
  
 +/*
-+ * We use uint32_t in the "small bitmask" tests below.
-+ * This means that we may have to swap 32bit words if bitfield_t
-+ * is 64bit wide.
++ * On big endian systems, if bitfield_t is 32bit, we need
++ * to swap the two 32 bit parts of a 64bit value to make
++ * the tests below work.
 + */
-+static unsigned int maybe_swap_idx(unsigned int i)
++static uint64_t maybe_swap(uint64_t v)
 +{
-+	if (BYTE_ORDER == LITTLE_ENDIAN || sizeof(bitfield_t) == 4)
-+		return i;
++	uint32_t *s = (uint32_t *)&v;
++
++	if (sizeof(bitfield_t) == 4)
++		/* this is identity for little endian */
++		return ((uint64_t)s[1] << 32) | s[0];
 +	else
-+		/* 0<->1, 2<->3, ... */
-+		return i + (i % 2 == 0 ? 1 : -1);
++		return v;
 +}
 +
- static void _test_bitmask_small(unsigned int n)
+ static void test_bitmask_1(void **state)
  {
  	struct bitfield *bf;
- 	uint32_t *arr;
--	unsigned int size = (n - 1) / 32 + 1, i;
-+	unsigned int size = maybe_swap_idx((n - 1) / 32) + 1, i;
- 
- 	assert(sizeof(bitfield_t) == 4 || sizeof(bitfield_t) == 8);
- 	assert(n <= 64);
-@@ -325,11 +340,12 @@ static void _test_bitmask_small(unsigned int n)
- 	for (i = 0; i < size; i++) {
- 		unsigned int k = (n - 1) / 32;
- 		unsigned int j = (n - 1) - k * 32;
-+		unsigned int i1 = maybe_swap_idx(i);
- 
- 		if (i == k)
--			assert_int_equal(arr[i], 1UL << j);
-+			assert_int_equal(arr[i1], 1UL << j);
- 		else
--			assert_int_equal(arr[i], 0);
-+			assert_int_equal(arr[i1], 0);
- 	}
- 
- 	clear_bit_in_bitfield(n - 1, bf);
-@@ -337,9 +353,9 @@ static void _test_bitmask_small(unsigned int n)
- 		assert_int_equal(arr[i], 0);
- 
- 	set_bit_in_bitfield(0, bf);
--	assert_int_equal(arr[0], 1);
-+	assert_int_equal(arr[maybe_swap_idx(0)], 1);
- 	for (i = 1; i < size; i++)
--		assert_int_equal(arr[i], 0);
-+		assert_int_equal(arr[maybe_swap_idx(i)], 0);
- 
- 	free(bf);
- }
-@@ -348,7 +364,7 @@ static void _test_bitmask_small_2(unsigned int n)
- {
- 	struct bitfield *bf;
- 	uint32_t *arr;
--	unsigned int size = (n - 1) / 32 + 1, i;
-+	unsigned int size = maybe_swap_idx((n - 1) / 32) + 1, i;
- 
- 	assert(n <= 128);
- 	assert(n >= 65);
-@@ -374,56 +390,60 @@ static void _test_bitmask_small_2(unsigned int n)
- 	for (i = 0; i < size; i++) {
- 		unsigned int k = (n - 1) / 32;
- 		unsigned int j = (n - 1) - k * 32;
-+		unsigned int i1 = maybe_swap_idx(i);
- 
- 		if (i == k)
--			assert_int_equal(arr[i], 1UL << j);
-+			assert_int_equal(arr[i1], 1UL << j);
- 		else
--			assert_int_equal(arr[i], 0);
-+			assert_int_equal(arr[i1], 0);
- 	}
- 
- 	set_bit_in_bitfield(0, bf);
- 	for (i = 0; i < size; i++) {
- 		unsigned int k = (n - 1) / 32;
- 		unsigned int j = (n - 1) - k * 32;
-+		unsigned int i1 = maybe_swap_idx(i);
- 
- 		if (i == k && k == 0)
--			assert_int_equal(arr[i], (1UL << j) | 1);
-+			assert_int_equal(arr[i1], (1UL << j) | 1);
- 		else if (i == k)
--			assert_int_equal(arr[i], 1UL << j);
-+			assert_int_equal(arr[i1], 1UL << j);
- 		else if (i == 0)
--			assert_int_equal(arr[i], 1);
-+			assert_int_equal(arr[i1], 1);
- 		else
--			assert_int_equal(arr[i], 0);
-+			assert_int_equal(arr[i1], 0);
- 	}
- 
- 	set_bit_in_bitfield(64, bf);
- 	for (i = 0; i < size; i++) {
- 		unsigned int k = (n - 1) / 32;
- 		unsigned int j = (n - 1) - k * 32;
-+		unsigned int i1 = maybe_swap_idx(i);
- 
- 		if (i == k && (k == 0 || k == 2))
--			assert_int_equal(arr[i], (1UL << j) | 1);
-+			assert_int_equal(arr[i1], (1UL << j) | 1);
- 		else if (i == k)
--			assert_int_equal(arr[i], 1UL << j);
-+			assert_int_equal(arr[i1], 1UL << j);
- 		else if (i == 2 || i == 0)
--			assert_int_equal(arr[i], 1);
-+			assert_int_equal(arr[i1], 1);
- 		else
--			assert_int_equal(arr[i], 0);
-+			assert_int_equal(arr[i1], 0);
- 	}
- 
- 	clear_bit_in_bitfield(0, bf);
- 	for (i = 0; i < size; i++) {
- 		unsigned int k = (n - 1) / 32;
- 		unsigned int j = (n - 1) - k * 32;
-+		unsigned int i1 = maybe_swap_idx(i);
- 
- 		if (i == k && k == 2)
--			assert_int_equal(arr[i], (1UL << j) | 1);
-+			assert_int_equal(arr[i1], (1UL << j) | 1);
- 		else if (i == k)
--			assert_int_equal(arr[i], 1UL << j);
-+			assert_int_equal(arr[i1], 1UL << j);
- 		else if (i == 2)
--			assert_int_equal(arr[i], 1);
-+			assert_int_equal(arr[i1], 1);
- 		else
--			assert_int_equal(arr[i], 0);
-+			assert_int_equal(arr[i1], 0);
- 	}
- 
- 	free(bf);
+@@ -184,7 +200,7 @@ static void test_bitmask_1(void **state)
+ 				       b, j, k, arr[k]);
+ #endif
+ 				if (k == j)
+-					assert_int_equal(arr[j], 1ULL << i);
++					assert_int_equal(maybe_swap(arr[j]), 1ULL << i);
+ 				else
+ 					assert_int_equal(arr[k], 0ULL);
+ 			}
+@@ -235,7 +251,7 @@ static void test_bitmask_2(void **state)
+ 					assert_int_equal(arr[k], 0ULL);
+ 				else
+ 					assert_int_equal(
+-						arr[k],
++						maybe_swap(arr[k]),
+ 						(1ULL << (i + 1)) - 1);
+ 			}
+ 		}
+@@ -260,7 +276,7 @@ static void test_bitmask_2(void **state)
+ 					assert_int_equal(arr[k], ~0ULL);
+ 				else
+ 					assert_int_equal(
+-						arr[k],
++						maybe_swap(arr[k]),
+ 						~((1ULL << (i + 1)) - 1));
+ 			}
+ 		}
 -- 
 2.28.0
