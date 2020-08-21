@@ -1,15 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH V2 1/5] multipathd: adopt static char* arr in
- daemon_status
-Date: Fri, 21 Aug 2020 13:07:08 +0200
-Message-ID: <5edc6f28c4a825c26c8b1515369a4a4c533e72ba.camel@suse.com>
+Subject: Re: [PATCH V2 3/5] libmultipath: check blist before
+ calling MALLOC in alloc_ble_device func
+Date: Fri, 21 Aug 2020 13:15:46 +0200
+Message-ID: <5e5b2021953e364ab6971f1bc3d945c6930d8072.camel@suse.com>
 References: <52b3b834-6da6-99c1-a2d1-95c2387c47e3@huawei.com>
-	<b2c96dc6-1e01-beb2-0ccb-22e1d0d980a6@huawei.com>
+	<9fbd5246-ff4f-0486-d33a-c77ccd334a4d@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <b2c96dc6-1e01-beb2-0ccb-22e1d0d980a6@huawei.com>
+In-Reply-To: <9fbd5246-ff4f-0486-d33a-c77ccd334a4d@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,19 +23,17 @@ To: Zhiqiang Liu <liuzhiqiang26@huawei.com>, Benjamin Marzinski <bmarzins@redhat
 Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
 List-Id: dm-devel.ids
 
-On Fri, 2020-08-21 at 18:58 +0800, Zhiqiang Liu wrote:
-> We adopt static char* array (demon_status_msg) in daemon_status func,
-> so it looks more simpler and easier to expand.
+On Fri, 2020-08-21 at 19:00 +0800, Zhiqiang Liu wrote:
+> In alloc_ble_device func, ble is firstly allocated by calling MALLOC,
+> and then input blist is checked whether it is valid. If blist is not
+> valid, ble will be freed without using.
 > 
-> V1->V2:
-> - use "int" as the type of "status" (suggested by Martin)
+> Here, we should check blist firstly.
 > 
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
-> ---
->  multipathd/main.c | 30 +++++++++++++++---------------
->  multipathd/main.h |  3 ++-
->  2 files changed, 17 insertions(+), 16 deletions(-)
+This one is already applied in my "upstream-queue" branch.
