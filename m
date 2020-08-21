@@ -1,15 +1,15 @@
-From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [PATCH V2 5/5] multipathd: remove useless memset after
- MALLOC in alloc_waiteri func
-Date: Fri, 21 Aug 2020 19:01:27 +0800
-Message-ID: <ab034ec7-c80d-6d40-b9bf-1942e2ad5067@huawei.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH V2 1/5] multipathd: adopt static char* arr in
+ daemon_status
+Date: Fri, 21 Aug 2020 13:07:08 +0200
+Message-ID: <5edc6f28c4a825c26c8b1515369a4a4c533e72ba.camel@suse.com>
 References: <52b3b834-6da6-99c1-a2d1-95c2387c47e3@huawei.com>
+	<b2c96dc6-1e01-beb2-0ccb-22e1d0d980a6@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <52b3b834-6da6-99c1-a2d1-95c2387c47e3@huawei.com>
-Content-Language: en-US
+In-Reply-To: <b2c96dc6-1e01-beb2-0ccb-22e1d0d980a6@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,43 +19,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mwilck@suse.com, Benjamin Marzinski <bmarzins@redhat.com>, Christophe
-	Varoqui <christophe.varoqui@opensvc.com>, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>, liuzhiqiang26@huawei.com
+To: Zhiqiang Liu <liuzhiqiang26@huawei.com>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
 List-Id: dm-devel.ids
 
+On Fri, 2020-08-21 at 18:58 +0800, Zhiqiang Liu wrote:
+> We adopt static char* array (demon_status_msg) in daemon_status func,
+> so it looks more simpler and easier to expand.
+> 
+> V1->V2:
+> - use "int" as the type of "status" (suggested by Martin)
+> 
 
-MALLOC(x) maps to calloc(1, x), which already init var to zero.
-In alloc_waiter func, the superfluous memset(wp) call is useless,
-and it should be removed.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-V1->V2:
-- remove useless memset call after MALLOC (as suggested by Martin)
-
-Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
----
- multipathd/waiter.c | 8 +-------
- 1 file changed, 1 insertion(+), 7 deletions(-)
-
-diff --git a/multipathd/waiter.c b/multipathd/waiter.c
-index e6457663..da4017b9 100644
---- a/multipathd/waiter.c
-+++ b/multipathd/waiter.c
-@@ -29,13 +29,7 @@ struct mutex_lock waiter_lock = { .mutex = PTHREAD_MUTEX_INITIALIZER };
-
- static struct event_thread *alloc_waiter (void)
- {
--
--	struct event_thread *wp;
--
--	wp = (struct event_thread *)MALLOC(sizeof(struct event_thread));
--	memset(wp, 0, sizeof(struct event_thread));
--
--	return wp;
-+	return (struct event_thread *)MALLOC(sizeof(struct event_thread));
- }
-
- static void free_waiter (void *data)
--- 
-2.24.0.windows.2
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+> ---
+>  multipathd/main.c | 30 +++++++++++++++---------------
+>  multipathd/main.h |  3 ++-
+>  2 files changed, 17 insertions(+), 16 deletions(-)
