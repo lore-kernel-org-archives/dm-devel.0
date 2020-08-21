@@ -1,15 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH V2 4/5] vector: add lower boundary check in
- vector_foreach_slot_after
-Date: Fri, 21 Aug 2020 13:20:15 +0200
-Message-ID: <479007328bfbb4737c8e843dff563fa4ea32f246.camel@suse.com>
+Subject: Re: [PATCH V2 1/5] multipathd: adopt static char* arr in
+ daemon_status
+Date: Fri, 21 Aug 2020 15:42:02 +0200
+Message-ID: <5b382b169a8c499acfc523adb81681fe941d743a.camel@suse.com>
 References: <52b3b834-6da6-99c1-a2d1-95c2387c47e3@huawei.com>
-	<8e1d9d4d-a1c2-f75a-ec84-6d7968a9e0d7@huawei.com>
+	<b2c96dc6-1e01-beb2-0ccb-22e1d0d980a6@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8e1d9d4d-a1c2-f75a-ec84-6d7968a9e0d7@huawei.com>
+In-Reply-To: <b2c96dc6-1e01-beb2-0ccb-22e1d0d980a6@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,50 +20,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Zhiqiang Liu <liuzhiqiang26@huawei.com>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com
+Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
 List-Id: dm-devel.ids
 
-On Fri, 2020-08-21 at 19:00 +0800, Zhiqiang Liu wrote:
-> In vector_foreach_slot_after macro, i is the input var, which
-> may have a illegal value (i < 0). So we should add lower boundary
-> check in vector_foreach_slot_after macro.
-> 
-> V1->V2:
-> - check whether i is illegal before loop (As suggested by Martin)
-> 
-
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-
-> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
-> ---
->  libmultipath/vector.h | 7 ++++---
->  1 file changed, 4 insertions(+), 3 deletions(-)
-> 
-> diff --git a/libmultipath/vector.h b/libmultipath/vector.h
-> index 2862dc28..ab80d06e 100644
-> --- a/libmultipath/vector.h
-> +++ b/libmultipath/vector.h
-> @@ -38,11 +38,12 @@ typedef struct _vector *vector;
->  #define VECTOR_LAST_SLOT(V)   (((V) && VECTOR_SIZE(V) > 0) ? (V)-
-> >slot[(VECTOR_SIZE(V) - 1)] : NULL)
-> 
->  #define vector_foreach_slot(v,p,i) \
-> -	for (i = 0; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)-
-> >slot[i]); i++)
-> +	for ((i) = 0; (v) && (int)(i) < VECTOR_SIZE(v) && ((p) = (v)-
-> >slot[i]); (i)++)
->  #define vector_foreach_slot_after(v,p,i) \
-> -	for (; (v) && (int)i < VECTOR_SIZE(v) && ((p) = (v)->slot[i]);
-> i++)
-> +	if ((v) && (int)(i) >= 0) \
-> +		for (; (int)(i) < VECTOR_SIZE(v) && ((p) = (v)-
-> >slot[i]); (i)++)
->  #define vector_foreach_slot_backwards(v,p,i) \
-> -	for (i = VECTOR_SIZE(v) - 1; (int)i >= 0 && ((p) = (v)-
-> >slot[i]); i--)
-> +	for ((i) = VECTOR_SIZE(v) - 1; (int)(i) >= 0 && ((p) = (v)-
-> >slot[i]); (i)--)
-> 
->  #define identity(x) (x)
->  /*
+T24gRnJpLCAyMDIwLTA4LTIxIGF0IDE4OjU4ICswODAwLCBaaGlxaWFuZyBMaXUgd3JvdGU6Cj4g
+V2UgYWRvcHQgc3RhdGljIGNoYXIqIGFycmF5IChkZW1vbl9zdGF0dXNfbXNnKSBpbiBkYWVtb25f
+c3RhdHVzIGZ1bmMsCj4gc28gaXQgbG9va3MgbW9yZSBzaW1wbGVyIGFuZCBlYXNpZXIgdG8gZXhw
+YW5kLgo+IAo+IFYxLT5WMjoKPiAtIHVzZSAiaW50IiBhcyB0aGUgdHlwZSBvZiAic3RhdHVzIiAo
+c3VnZ2VzdGVkIGJ5IE1hcnRpbikKPiAKPiBTaWduZWQtb2ZmLWJ5OiBaaGlxaWFuZyBMaXUgPGxp
+dXpoaXFpYW5nMjZAaHVhd2VpLmNvbT4KPiBTaWduZWQtb2ZmLWJ5OiBsaXhpYW9rZW5nIDxsaXhp
+YW9rZW5nQGh1YXdlaS5jb20+Cj4gLS0tCj4gIG11bHRpcGF0aGQvbWFpbi5jIHwgMzAgKysrKysr
+KysrKysrKysrLS0tLS0tLS0tLS0tLS0tCj4gIG11bHRpcGF0aGQvbWFpbi5oIHwgIDMgKystCj4g
+IDIgZmlsZXMgY2hhbmdlZCwgMTcgaW5zZXJ0aW9ucygrKSwgMTYgZGVsZXRpb25zKC0pCj4gCj4g
+ZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvbWFpbi5jIGIvbXVsdGlwYXRoZC9tYWluLmMKPiBpbmRl
+eCA5ZWM2NTg1Ni4uNjJjZjRmZjQgMTAwNjQ0Cj4gLS0tIGEvbXVsdGlwYXRoZC9tYWluLmMKPiAr
+KysgYi9tdWx0aXBhdGhkL21haW4uYwo+IGRpZmYgLS1naXQgYS9tdWx0aXBhdGhkL21haW4uaCBi
+L211bHRpcGF0aGQvbWFpbi5oCj4gaW5kZXggNWRmZjE3ZTUuLjZhNTU5MmMwIDEwMDY0NAo+IC0t
+LSBhL211bHRpcGF0aGQvbWFpbi5oCj4gKysrIGIvbXVsdGlwYXRoZC9tYWluLmgKPiBAQCAtNCwx
+MiArNCwxMyBAQAo+ICAjZGVmaW5lIE1BUEdDSU5UIDUKPiAKPiAgZW51bSBkYWVtb25fc3RhdHVz
+IHsKPiAtCURBRU1PTl9JTklULAo+ICsJREFFTU9OX0lOSVQgPSAwLAo+ICAJREFFTU9OX1NUQVJU
+LAo+ICAJREFFTU9OX0NPTkZJR1VSRSwKPiAgCURBRU1PTl9JRExFLAo+ICAJREFFTU9OX1JVTk5J
+TkcsCj4gIAlEQUVNT05fU0hVVERPV04sCj4gKwlEQUVNT05fU1RBVFVTX1NJWkUsCj4gIH07CgpU
+aGlzIGJyZWFrcyBjb21waWxhdGlvbjoKCm1haW4uYzogSW4gZnVuY3Rpb24g4oCYc2Rfbm90aWZ5
+X3N0YXR1c+KAmToKbWFpbi5jOjE4NDoyOiBlcnJvcjogZW51bWVyYXRpb24gdmFsdWUg4oCYREFF
+TU9OX1NUQVRVU19TSVpF4oCZIG5vdCBoYW5kbGVkCmluIHN3aXRjaCBbLVdlcnJvcj1zd2l0Y2hd
+CiAgc3dpdGNoIChzdGF0ZSkgewogIF5+fn5+fgoKUGxlYXNlIGF2b2lkIGludHJvZHVjaW5nIERB
+RU1PTl9TVEFUVVNfU0laRS4KClRoaXMgd291bGQgYmUgZml4ZWQgYnkgeW91ciBwYXRjaCAyIGJl
+Y2F1c2UgaXQgcmVtb3ZlcyB0aGUgc3dpdGNoCnN0YXRlbWVudCwgYnV0IG5vIHBhdGNoIGluIGEg
+c2VyaWVzIHNob3VsZCBicmVhayBjb21waWxhdGlvbiwgdG8gCmFsbG93IGZ1dHVyZSBiaXNlY3Rp
+b25zLgoKSSBoYXZlIHRvIHdpdGhkcmF3IG15ICJSZXZpZXdlZC1ieTogZm9yIHRoZSB0aW1lIGJl
+aW5nLCBzb3JyeS4KCk1hcnRpbgoKCj4gCj4gIHN0cnVjdCBwcm91dF9wYXJhbV9kZXNjcmlwdG9y
+OwoKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
+L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
