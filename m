@@ -1,118 +1,164 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 3/3] nvme: don't call revalidate_disk from nvme_set_queue_dying
-Date: Sun, 23 Aug 2020 11:10:43 +0200
-Message-ID: <20200823091043.2600261-4-hch@lst.de>
+Subject: [PATCH 1/3] block: replace bd_set_size with bd_set_nr_sectors
+Date: Sun, 23 Aug 2020 11:10:41 +0200
+Message-ID: <20200823091043.2600261-2-hch@lst.de>
 References: <20200823091043.2600261-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20200823091043.2600261-1-hch@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-block-owner@vger.kernel.org
 To: Jens Axboe <axboe@kernel.dk>
-Cc: Justin Sanders <justin@coraid.com>, Josef Bacik <josef@toxicpanda.com>, Xianting Tian <xianting_tian@126.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Stefan Haberland <sth@linux.ibm.com>, Jan Hoeppner <hoeppner@linux.ibm.com>, linux-kernel@vger.kernel.org, nbd@other.debian.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
+Cc: Justin Sanders <justin@coraid.com>, Josef Bacik <josef@toxicpanda.com>, Xianting Tian <xianting_tian@126.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Stefan Haberland <sth@linux.ibm.com>, Jan Hoeppner <hoeppner@linux.ibm.com>, linux-kernel@vger.kernel.org, nbd@other.debian.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org, Hannes Reinecke <hare@suse.de>
 List-Id: dm-devel.ids
 
-In nvme_set_queue_dying we really just want to ensure the disk and bdev
-sizes are set to zero.  Going through revalidate_disk leads to a somewhat
-arcance and complex callchain relying on special behavior in a few
-places.  Instead just lift the set_capacity directly to
-nvme_set_queue_dying, and rename and move the nvme_mpath_update_disk_size
-helper so that we can use it in nvme_set_queue_dying to propagate the
-size to the bdev without detours.
+Replace bd_set_size with a version that takes the number of sectors
+instead, as that fits most of the current and future callers much better.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/nvme/host/core.c | 33 +++++++++++++++++++++++----------
- drivers/nvme/host/nvme.h | 13 -------------
- 2 files changed, 23 insertions(+), 23 deletions(-)
+ drivers/block/loop.c     |  4 ++--
+ drivers/block/nbd.c      |  7 ++++---
+ drivers/block/pktcdvd.c  |  2 +-
+ drivers/nvme/host/nvme.h |  2 +-
+ fs/block_dev.c           | 10 +++++-----
+ include/linux/genhd.h    |  2 +-
+ 6 files changed, 14 insertions(+), 13 deletions(-)
 
-diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index 88cff309d8e4f0..12dea15527f61a 100644
---- a/drivers/nvme/host/core.c
-+++ b/drivers/nvme/host/core.c
-@@ -94,21 +94,34 @@ static void nvme_put_subsystem(struct nvme_subsystem *subsys);
- static void nvme_remove_invalid_namespaces(struct nvme_ctrl *ctrl,
- 					   unsigned nsid);
- 
-+static void nvme_update_bdev_size(struct gendisk *disk)
-+{
-+	struct block_device *bdev = bdget_disk(disk, 0);
-+
-+	if (bdev) {
-+		bd_set_nr_sectors(bdev, get_capacity(disk));
-+		bdput(bdev);
-+	}
-+}
-+
-+/*
-+ * Prepare a queue for teardown.
-+ *
-+ * This must forcibly unquiesce queues to avoid blocking dispatch, and only set
-+ * the capacity to 0 after that to avoid blocking dispatchers that may be
-+ * holding bd_butex.  This will end buffered writers dirtying pages that can't
-+ * be synced.
-+ */
- static void nvme_set_queue_dying(struct nvme_ns *ns)
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index 2f137d6ce169d5..7069899a94903e 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -253,7 +253,7 @@ static void loop_set_size(struct loop_device *lo, loff_t size)
  {
--	/*
--	 * Revalidating a dead namespace sets capacity to 0. This will end
--	 * buffered writers dirtying pages that can't be synced.
--	 */
- 	if (test_and_set_bit(NVME_NS_DEAD, &ns->flags))
+ 	struct block_device *bdev = lo->lo_device;
+ 
+-	bd_set_size(bdev, size << SECTOR_SHIFT);
++	bd_set_nr_sectors(bdev, size);
+ 
+ 	set_capacity_revalidate_and_notify(lo->lo_disk, size, false);
+ }
+@@ -1248,7 +1248,7 @@ static int __loop_clr_fd(struct loop_device *lo, bool release)
+ 	set_capacity(lo->lo_disk, 0);
+ 	loop_sysfs_exit(lo);
+ 	if (bdev) {
+-		bd_set_size(bdev, 0);
++		bd_set_nr_sectors(bdev, 0);
+ 		/* let user-space know about this change */
+ 		kobject_uevent(&disk_to_dev(bdev->bd_disk)->kobj, KOBJ_CHANGE);
+ 	}
+diff --git a/drivers/block/nbd.c b/drivers/block/nbd.c
+index 3ff4054d6834d2..f07243335472a4 100644
+--- a/drivers/block/nbd.c
++++ b/drivers/block/nbd.c
+@@ -300,6 +300,7 @@ static void nbd_size_update(struct nbd_device *nbd)
+ {
+ 	struct nbd_config *config = nbd->config;
+ 	struct block_device *bdev = bdget_disk(nbd->disk, 0);
++	sector_t nr_sectors = config->bytesize >> 9;
+ 
+ 	if (config->flags & NBD_FLAG_SEND_TRIM) {
+ 		nbd->disk->queue->limits.discard_granularity = config->blksize;
+@@ -308,10 +309,10 @@ static void nbd_size_update(struct nbd_device *nbd)
+ 	}
+ 	blk_queue_logical_block_size(nbd->disk->queue, config->blksize);
+ 	blk_queue_physical_block_size(nbd->disk->queue, config->blksize);
+-	set_capacity(nbd->disk, config->bytesize >> 9);
++	set_capacity(nbd->disk, nr_sectors);
+ 	if (bdev) {
+ 		if (bdev->bd_disk) {
+-			bd_set_size(bdev, config->bytesize);
++			bd_set_nr_sectors(bdev, nr_sectors);
+ 			set_blocksize(bdev, config->blksize);
+ 		} else
+ 			bdev->bd_invalidated = 1;
+@@ -1138,7 +1139,7 @@ static void nbd_bdev_reset(struct block_device *bdev)
+ {
+ 	if (bdev->bd_openers > 1)
  		return;
-+
- 	blk_set_queue_dying(ns->queue);
--	/* Forcibly unquiesce queues to avoid blocking dispatch */
- 	blk_mq_unquiesce_queue(ns->queue);
--	/*
--	 * Revalidate after unblocking dispatchers that may be holding bd_butex
--	 */
--	revalidate_disk(ns->disk);
-+
-+	set_capacity(ns->disk, 0);
-+	nvme_update_bdev_size(ns->disk);
+-	bd_set_size(bdev, 0);
++	bd_set_nr_sectors(bdev, 0);
  }
  
- static void nvme_queue_scan(struct nvme_ctrl *ctrl)
-@@ -2083,7 +2096,7 @@ static int __nvme_revalidate_disk(struct gendisk *disk, struct nvme_id_ns *id)
- 		nvme_update_disk_info(ns->head->disk, ns, id);
- 		blk_stack_limits(&ns->head->disk->queue->limits,
- 				 &ns->queue->limits, 0);
--		nvme_mpath_update_disk_size(ns->head->disk);
-+		nvme_update_bdev_size(ns->head->disk);
- 	}
- #endif
- 	return 0;
+ static void nbd_parse_flags(struct nbd_device *nbd)
+diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
+index 4becc1efe775fc..015fe128fa8a35 100644
+--- a/drivers/block/pktcdvd.c
++++ b/drivers/block/pktcdvd.c
+@@ -2192,7 +2192,7 @@ static int pkt_open_dev(struct pktcdvd_device *pd, fmode_t write)
+ 
+ 	set_capacity(pd->disk, lba << 2);
+ 	set_capacity(pd->bdev->bd_disk, lba << 2);
+-	bd_set_size(pd->bdev, (loff_t)lba << 11);
++	bd_set_nr_sectors(pd->bdev, lba << 2);
+ 
+ 	q = bdev_get_queue(pd->bdev);
+ 	if (write) {
 diff --git a/drivers/nvme/host/nvme.h b/drivers/nvme/host/nvme.h
-index ae5cad5a08f411..4cadaea9034ae4 100644
+index ebb8c3ed388554..ae5cad5a08f411 100644
 --- a/drivers/nvme/host/nvme.h
 +++ b/drivers/nvme/host/nvme.h
-@@ -659,16 +659,6 @@ static inline void nvme_trace_bio_complete(struct request *req,
- 		trace_block_bio_complete(ns->head->disk->queue, req->bio);
- }
+@@ -664,7 +664,7 @@ static inline void nvme_mpath_update_disk_size(struct gendisk *disk)
+ 	struct block_device *bdev = bdget_disk(disk, 0);
  
--static inline void nvme_mpath_update_disk_size(struct gendisk *disk)
--{
--	struct block_device *bdev = bdget_disk(disk, 0);
--
--	if (bdev) {
--		bd_set_nr_sectors(bdev, get_capacity(disk));
--		bdput(bdev);
--	}
--}
--
- extern struct device_attribute dev_attr_ana_grpid;
- extern struct device_attribute dev_attr_ana_state;
- extern struct device_attribute subsys_attr_iopolicy;
-@@ -744,9 +734,6 @@ static inline void nvme_mpath_wait_freeze(struct nvme_subsystem *subsys)
- static inline void nvme_mpath_start_freeze(struct nvme_subsystem *subsys)
+ 	if (bdev) {
+-		bd_set_size(bdev, get_capacity(disk) << SECTOR_SHIFT);
++		bd_set_nr_sectors(bdev, get_capacity(disk));
+ 		bdput(bdev);
+ 	}
+ }
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 8ae833e004439b..f52597172c8b79 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -1371,13 +1371,13 @@ int check_disk_change(struct block_device *bdev)
+ 
+ EXPORT_SYMBOL(check_disk_change);
+ 
+-void bd_set_size(struct block_device *bdev, loff_t size)
++void bd_set_nr_sectors(struct block_device *bdev, sector_t sectors)
  {
+ 	inode_lock(bdev->bd_inode);
+-	i_size_write(bdev->bd_inode, size);
++	i_size_write(bdev->bd_inode, (loff_t)sectors << SECTOR_SHIFT);
+ 	inode_unlock(bdev->bd_inode);
  }
--static inline void nvme_mpath_update_disk_size(struct gendisk *disk)
--{
--}
- #endif /* CONFIG_NVME_MULTIPATH */
+-EXPORT_SYMBOL(bd_set_size);
++EXPORT_SYMBOL(bd_set_nr_sectors);
  
- #ifdef CONFIG_BLK_DEV_ZONED
+ static void __blkdev_put(struct block_device *bdev, fmode_t mode, int for_part);
+ 
+@@ -1514,7 +1514,7 @@ static int __blkdev_get(struct block_device *bdev, fmode_t mode, void *holder,
+ 			}
+ 
+ 			if (!ret) {
+-				bd_set_size(bdev,(loff_t)get_capacity(disk)<<9);
++				bd_set_nr_sectors(bdev, get_capacity(disk));
+ 				set_init_blocksize(bdev);
+ 			}
+ 
+@@ -1542,7 +1542,7 @@ static int __blkdev_get(struct block_device *bdev, fmode_t mode, void *holder,
+ 				ret = -ENXIO;
+ 				goto out_clear;
+ 			}
+-			bd_set_size(bdev, (loff_t)bdev->bd_part->nr_sects << 9);
++			bd_set_nr_sectors(bdev, bdev->bd_part->nr_sects);
+ 			set_init_blocksize(bdev);
+ 		}
+ 
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index 4ab853461dff25..39025dc0397c04 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -375,7 +375,7 @@ void unregister_blkdev(unsigned int major, const char *name);
+ int revalidate_disk(struct gendisk *disk);
+ int check_disk_change(struct block_device *bdev);
+ int __invalidate_device(struct block_device *bdev, bool kill_dirty);
+-void bd_set_size(struct block_device *bdev, loff_t size);
++void bd_set_nr_sectors(struct block_device *bdev, sector_t sectors);
+ 
+ /* for drivers/char/raw.c: */
+ int blkdev_ioctl(struct block_device *, fmode_t, unsigned, unsigned long);
 -- 
 2.28.0
