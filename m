@@ -1,7 +1,7 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 2/3] block: fix locking for struct block_device size updates
-Date: Sun, 23 Aug 2020 11:10:42 +0200
-Message-ID: <20200823091043.2600261-3-hch@lst.de>
+Subject: [PATCH 3/3] nvme: don't call revalidate_disk from nvme_set_queue_dying
+Date: Sun, 23 Aug 2020 11:10:43 +0200
+Message-ID: <20200823091043.2600261-4-hch@lst.de>
 References: <20200823091043.2600261-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,199 +12,107 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: Justin Sanders <justin@coraid.com>, Josef Bacik <josef@toxicpanda.com>, Xianting Tian <xianting_tian@126.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Stefan Haberland <sth@linux.ibm.com>, Jan Hoeppner <hoeppner@linux.ibm.com>, linux-kernel@vger.kernel.org, nbd@other.debian.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
 List-Id: dm-devel.ids
 
-Two different callers use two different mutexes for updating the
-block device size, which obviously doesn't help to actually protect
-against concurrent updates from the different callers.  In addition
-one of the locks, bd_mutex is rather prone to deadlocks with other
-parts of the block stack that use it for high level synchronization.
+In nvme_set_queue_dying we really just want to ensure the disk and bdev
+sizes are set to zero.  Going through revalidate_disk leads to a somewhat
+arcance and complex callchain relying on special behavior in a few
+places.  Instead just lift the set_capacity directly to
+nvme_set_queue_dying, and rename and move the nvme_mpath_update_disk_size
+helper so that we can use it in nvme_set_queue_dying to propagate the
+size to the bdev without detours.
 
-Switch to using a new spinlock protecting just the size updates, as
-that is all we need, and make sure everyone does the update through
-the proper helper.
-
-This fixes a bug reported with the nvme revalidating disks during a
-hot removal operation, which can currently deadlock on bd_mutex.
-
-Reported-by: Xianting Tian <xianting_tian@126.com>
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/partitions/core.c         |  4 ++--
- drivers/block/aoe/aoecmd.c      |  4 +---
- drivers/md/dm.c                 | 15 ++-------------
- drivers/s390/block/dasd_ioctl.c |  9 ++-------
- fs/block_dev.c                  | 25 ++++++++++++++-----------
- include/linux/blk_types.h       |  1 +
- 6 files changed, 22 insertions(+), 36 deletions(-)
+ drivers/nvme/host/core.c | 33 +++++++++++++++++++++++----------
+ drivers/nvme/host/nvme.h | 13 -------------
+ 2 files changed, 23 insertions(+), 23 deletions(-)
 
-diff --git a/block/partitions/core.c b/block/partitions/core.c
-index e62a98a8eeb750..328a2cb7875ba1 100644
---- a/block/partitions/core.c
-+++ b/block/partitions/core.c
-@@ -585,8 +585,8 @@ int bdev_resize_partition(struct block_device *bdev, int partno,
- 	if (partition_overlaps(bdev->bd_disk, start, length, partno))
- 		goto out_unlock;
+diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
+index 88cff309d8e4f0..12dea15527f61a 100644
+--- a/drivers/nvme/host/core.c
++++ b/drivers/nvme/host/core.c
+@@ -94,21 +94,34 @@ static void nvme_put_subsystem(struct nvme_subsystem *subsys);
+ static void nvme_remove_invalid_namespaces(struct nvme_ctrl *ctrl,
+ 					   unsigned nsid);
  
--	part_nr_sects_write(part, (sector_t)length);
--	i_size_write(bdevp->bd_inode, length << SECTOR_SHIFT);
-+	part_nr_sects_write(part, length);
-+	bd_set_nr_sectors(bdevp, length);
- 
- 	ret = 0;
- out_unlock:
-diff --git a/drivers/block/aoe/aoecmd.c b/drivers/block/aoe/aoecmd.c
-index 3cf9bc5d8d9599..6ad73fe730bede 100644
---- a/drivers/block/aoe/aoecmd.c
-+++ b/drivers/block/aoe/aoecmd.c
-@@ -900,9 +900,7 @@ aoecmd_sleepwork(struct work_struct *work)
- 		ssize = get_capacity(d->gd);
- 		bd = bdget_disk(d->gd, 0);
- 		if (bd) {
--			inode_lock(bd->bd_inode);
--			i_size_write(bd->bd_inode, (loff_t)ssize<<9);
--			inode_unlock(bd->bd_inode);
-+			bd_set_nr_sectors(bd, ssize);
- 			bdput(bd);
- 		}
- 		spin_lock_irq(&d->lock);
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 32fa6499739fb9..6b21e5104e3e08 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2097,18 +2097,6 @@ static void event_callback(void *context)
- 	dm_issue_global_event();
++static void nvme_update_bdev_size(struct gendisk *disk)
++{
++	struct block_device *bdev = bdget_disk(disk, 0);
++
++	if (bdev) {
++		bd_set_nr_sectors(bdev, get_capacity(disk));
++		bdput(bdev);
++	}
++}
++
++/*
++ * Prepare a queue for teardown.
++ *
++ * This must forcibly unquiesce queues to avoid blocking dispatch, and only set
++ * the capacity to 0 after that to avoid blocking dispatchers that may be
++ * holding bd_butex.  This will end buffered writers dirtying pages that can't
++ * be synced.
++ */
+ static void nvme_set_queue_dying(struct nvme_ns *ns)
+ {
+-	/*
+-	 * Revalidating a dead namespace sets capacity to 0. This will end
+-	 * buffered writers dirtying pages that can't be synced.
+-	 */
+ 	if (test_and_set_bit(NVME_NS_DEAD, &ns->flags))
+ 		return;
++
+ 	blk_set_queue_dying(ns->queue);
+-	/* Forcibly unquiesce queues to avoid blocking dispatch */
+ 	blk_mq_unquiesce_queue(ns->queue);
+-	/*
+-	 * Revalidate after unblocking dispatchers that may be holding bd_butex
+-	 */
+-	revalidate_disk(ns->disk);
++
++	set_capacity(ns->disk, 0);
++	nvme_update_bdev_size(ns->disk);
  }
  
--/*
-- * Protected by md->suspend_lock obtained by dm_swap_table().
-- */
--static void __set_size(struct mapped_device *md, sector_t size)
+ static void nvme_queue_scan(struct nvme_ctrl *ctrl)
+@@ -2083,7 +2096,7 @@ static int __nvme_revalidate_disk(struct gendisk *disk, struct nvme_id_ns *id)
+ 		nvme_update_disk_info(ns->head->disk, ns, id);
+ 		blk_stack_limits(&ns->head->disk->queue->limits,
+ 				 &ns->queue->limits, 0);
+-		nvme_mpath_update_disk_size(ns->head->disk);
++		nvme_update_bdev_size(ns->head->disk);
+ 	}
+ #endif
+ 	return 0;
+diff --git a/drivers/nvme/host/nvme.h b/drivers/nvme/host/nvme.h
+index ae5cad5a08f411..4cadaea9034ae4 100644
+--- a/drivers/nvme/host/nvme.h
++++ b/drivers/nvme/host/nvme.h
+@@ -659,16 +659,6 @@ static inline void nvme_trace_bio_complete(struct request *req,
+ 		trace_block_bio_complete(ns->head->disk->queue, req->bio);
+ }
+ 
+-static inline void nvme_mpath_update_disk_size(struct gendisk *disk)
 -{
--	lockdep_assert_held(&md->suspend_lock);
+-	struct block_device *bdev = bdget_disk(disk, 0);
 -
--	set_capacity(md->disk, size);
--
--	i_size_write(md->bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
+-	if (bdev) {
+-		bd_set_nr_sectors(bdev, get_capacity(disk));
+-		bdput(bdev);
+-	}
 -}
 -
- /*
-  * Returns old map, which caller must destroy.
-  */
-@@ -2131,7 +2119,8 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
- 	if (size != dm_get_size(md))
- 		memset(&md->geometry, 0, sizeof(md->geometry));
- 
--	__set_size(md, size);
-+	set_capacity(md->disk, size);
-+	bd_set_nr_sectors(md->bdev, size);
- 
- 	dm_table_event_callback(t, event_callback, md);
- 
-diff --git a/drivers/s390/block/dasd_ioctl.c b/drivers/s390/block/dasd_ioctl.c
-index 777734d1b4e58c..faaf5596e31c12 100644
---- a/drivers/s390/block/dasd_ioctl.c
-+++ b/drivers/s390/block/dasd_ioctl.c
-@@ -55,10 +55,7 @@ dasd_ioctl_enable(struct block_device *bdev)
- 
- 	dasd_enable_device(base);
- 	/* Formatting the dasd device can change the capacity. */
--	mutex_lock(&bdev->bd_mutex);
--	i_size_write(bdev->bd_inode,
--		     (loff_t)get_capacity(base->block->gdp) << 9);
--	mutex_unlock(&bdev->bd_mutex);
-+	bd_set_nr_sectors(bdev, get_capacity(base->block->gdp));
- 	dasd_put_device(base);
- 	return 0;
- }
-@@ -91,9 +88,7 @@ dasd_ioctl_disable(struct block_device *bdev)
- 	 * Set i_size to zero, since read, write, etc. check against this
- 	 * value.
- 	 */
--	mutex_lock(&bdev->bd_mutex);
--	i_size_write(bdev->bd_inode, 0);
--	mutex_unlock(&bdev->bd_mutex);
-+	bd_set_nr_sectors(bdev, 0);
- 	dasd_put_device(base);
- 	return 0;
- }
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index f52597172c8b79..08158bb2e76c85 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -876,6 +876,7 @@ struct block_device *bdget(dev_t dev)
- 	bdev = &BDEV_I(inode)->bdev;
- 
- 	if (inode->i_state & I_NEW) {
-+		spin_lock_init(&bdev->bd_size_lock);
- 		bdev->bd_contains = NULL;
- 		bdev->bd_super = NULL;
- 		bdev->bd_inode = inode;
-@@ -1290,6 +1291,7 @@ static void check_disk_size_change(struct gendisk *disk,
+ extern struct device_attribute dev_attr_ana_grpid;
+ extern struct device_attribute dev_attr_ana_state;
+ extern struct device_attribute subsys_attr_iopolicy;
+@@ -744,9 +734,6 @@ static inline void nvme_mpath_wait_freeze(struct nvme_subsystem *subsys)
+ static inline void nvme_mpath_start_freeze(struct nvme_subsystem *subsys)
  {
- 	loff_t disk_size, bdev_size;
- 
-+	spin_lock(&bdev->bd_size_lock);
- 	disk_size = (loff_t)get_capacity(disk) << 9;
- 	bdev_size = i_size_read(bdev->bd_inode);
- 	if (disk_size != bdev_size) {
-@@ -1299,11 +1301,15 @@ static void check_disk_size_change(struct gendisk *disk,
- 			       disk->disk_name, bdev_size, disk_size);
- 		}
- 		i_size_write(bdev->bd_inode, disk_size);
--		if (bdev_size > disk_size && __invalidate_device(bdev, false))
-+	}
-+	bdev->bd_invalidated = 0;
-+	spin_unlock(&bdev->bd_size_lock);
-+
-+	if (bdev_size > disk_size) {
-+		if (__invalidate_device(bdev, false))
- 			pr_warn("VFS: busy inodes on resized disk %s\n",
- 				disk->disk_name);
- 	}
--	bdev->bd_invalidated = 0;
  }
+-static inline void nvme_mpath_update_disk_size(struct gendisk *disk)
+-{
+-}
+ #endif /* CONFIG_NVME_MULTIPATH */
  
- /**
-@@ -1328,13 +1334,10 @@ int revalidate_disk(struct gendisk *disk)
- 	if (!(disk->flags & GENHD_FL_HIDDEN)) {
- 		struct block_device *bdev = bdget_disk(disk, 0);
- 
--		if (!bdev)
--			return ret;
--
--		mutex_lock(&bdev->bd_mutex);
--		check_disk_size_change(disk, bdev, ret == 0);
--		mutex_unlock(&bdev->bd_mutex);
--		bdput(bdev);
-+		if (bdev) {
-+			check_disk_size_change(disk, bdev, ret == 0);
-+			bdput(bdev);
-+		}
- 	}
- 	return ret;
- }
-@@ -1373,9 +1376,9 @@ EXPORT_SYMBOL(check_disk_change);
- 
- void bd_set_nr_sectors(struct block_device *bdev, sector_t sectors)
- {
--	inode_lock(bdev->bd_inode);
-+	spin_lock(&bdev->bd_size_lock);
- 	i_size_write(bdev->bd_inode, (loff_t)sectors << SECTOR_SHIFT);
--	inode_unlock(bdev->bd_inode);
-+	spin_unlock(&bdev->bd_size_lock);
- }
- EXPORT_SYMBOL(bd_set_nr_sectors);
- 
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 4ecf4fed171f0d..5accc2549d2259 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -38,6 +38,7 @@ struct block_device {
- 	/* number of times partitions within this device have been opened. */
- 	unsigned		bd_part_count;
- 	int			bd_invalidated;
-+	spinlock_t		bd_size_lock; /* for bd_inode->i_size updates */
- 	struct gendisk *	bd_disk;
- 	struct backing_dev_info *bd_bdi;
- 
+ #ifdef CONFIG_BLK_DEV_ZONED
 -- 
 2.28.0
