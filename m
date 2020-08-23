@@ -1,63 +1,22 @@
-From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: Re: [PATCH V2 1/5] multipathd: adopt static char* arr in
- daemon_status
-Date: Sat, 22 Aug 2020 12:31:40 +0800
-Message-ID: <264c80ee-b179-616c-4551-dc1f8a53a8b6@huawei.com>
-References: <52b3b834-6da6-99c1-a2d1-95c2387c47e3@huawei.com>
-	<b2c96dc6-1e01-beb2-0ccb-22e1d0d980a6@huawei.com>
-	<5b382b169a8c499acfc523adb81681fe941d743a.camel@suse.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 2/2] block: fix locking for struct block_device size
+ updates
+Date: Sun, 23 Aug 2020 11:09:15 +0200
+Message-ID: <20200823090915.GA2764@lst.de>
+References: <20200821085600.2395666-1-hch@lst.de> <20200821085600.2395666-3-hch@lst.de> <4df016bc-570c-d166-47dd-36a9f21fad13@suse.de> <133efc8b.1649.17410784734.Coremail.xianting_tian@126.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5b382b169a8c499acfc523adb81681fe941d743a.camel@suse.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Zdenek Kabelac <zkabelac@redhat.com>
-Cc: linfeilong <linfeilong@huawei.com>, Yanxiaodan <yanxiaodan@huawei.com>, dm-devel@redhat.com, lixiaokeng <lixiaokeng@huawei.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <133efc8b.1649.17410784734.Coremail.xianting_tian@126.com>
+Sender: linux-block-owner@vger.kernel.org
+To: =?utf-8?B?55Sw?= <xianting_tian@126.com>
+Cc: Hannes Reinecke <hare@suse.de>, Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Justin Sanders <justin@coraid.com>, Josef Bacik <josef@toxicpanda.com>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Stefan Haberland <sth@linux.ibm.com>, Jan Hoeppner <hoeppner@linux.ibm.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "nbd@other.debian.org" <nbd@other.debian.org>, "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>, "linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Ck9uIDIwMjAvOC8yMSAyMTo0MiwgTWFydGluIFdpbGNrIHdyb3RlOgo+IE9uIEZyaSwgMjAyMC0w
-OC0yMSBhdCAxODo1OCArMDgwMCwgWmhpcWlhbmcgTGl1IHdyb3RlOgo+PiBXZSBhZG9wdCBzdGF0
-aWMgY2hhciogYXJyYXkgKGRlbW9uX3N0YXR1c19tc2cpIGluIGRhZW1vbl9zdGF0dXMgZnVuYywK
-Pj4gc28gaXQgbG9va3MgbW9yZSBzaW1wbGVyIGFuZCBlYXNpZXIgdG8gZXhwYW5kLgo+Pgo+PiBW
-MS0+VjI6Cj4+IC0gdXNlICJpbnQiIGFzIHRoZSB0eXBlIG9mICJzdGF0dXMiIChzdWdnZXN0ZWQg
-YnkgTWFydGluKQo+Pgo+PiBTaWduZWQtb2ZmLWJ5OiBaaGlxaWFuZyBMaXUgPGxpdXpoaXFpYW5n
-MjZAaHVhd2VpLmNvbT4KPj4gU2lnbmVkLW9mZi1ieTogbGl4aWFva2VuZyA8bGl4aWFva2VuZ0Bo
-dWF3ZWkuY29tPgo+PiAtLS0KPj4gIG11bHRpcGF0aGQvbWFpbi5jIHwgMzAgKysrKysrKysrKysr
-KysrLS0tLS0tLS0tLS0tLS0tCj4+ICBtdWx0aXBhdGhkL21haW4uaCB8ICAzICsrLQo+PiAgMiBm
-aWxlcyBjaGFuZ2VkLCAxNyBpbnNlcnRpb25zKCspLCAxNiBkZWxldGlvbnMoLSkKPj4KPj4gZGlm
-ZiAtLWdpdCBhL211bHRpcGF0aGQvbWFpbi5jIGIvbXVsdGlwYXRoZC9tYWluLmMKPj4gaW5kZXgg
-OWVjNjU4NTYuLjYyY2Y0ZmY0IDEwMDY0NAo+PiAtLS0gYS9tdWx0aXBhdGhkL21haW4uYwo+PiAr
-KysgYi9tdWx0aXBhdGhkL21haW4uYwo+PiBkaWZmIC0tZ2l0IGEvbXVsdGlwYXRoZC9tYWluLmgg
-Yi9tdWx0aXBhdGhkL21haW4uaAo+PiBpbmRleCA1ZGZmMTdlNS4uNmE1NTkyYzAgMTAwNjQ0Cj4+
-IC0tLSBhL211bHRpcGF0aGQvbWFpbi5oCj4+ICsrKyBiL211bHRpcGF0aGQvbWFpbi5oCj4+IEBA
-IC00LDEyICs0LDEzIEBACj4+ICAjZGVmaW5lIE1BUEdDSU5UIDUKPj4KPj4gIGVudW0gZGFlbW9u
-X3N0YXR1cyB7Cj4+IC0JREFFTU9OX0lOSVQsCj4+ICsJREFFTU9OX0lOSVQgPSAwLAo+PiAgCURB
-RU1PTl9TVEFSVCwKPj4gIAlEQUVNT05fQ09ORklHVVJFLAo+PiAgCURBRU1PTl9JRExFLAo+PiAg
-CURBRU1PTl9SVU5OSU5HLAo+PiAgCURBRU1PTl9TSFVURE9XTiwKPj4gKwlEQUVNT05fU1RBVFVT
-X1NJWkUsCj4+ICB9Owo+IAo+IFRoaXMgYnJlYWtzIGNvbXBpbGF0aW9uOgo+IAo+IG1haW4uYzog
-SW4gZnVuY3Rpb24g4oCYc2Rfbm90aWZ5X3N0YXR1c+KAmToKPiBtYWluLmM6MTg0OjI6IGVycm9y
-OiBlbnVtZXJhdGlvbiB2YWx1ZSDigJhEQUVNT05fU1RBVFVTX1NJWkXigJkgbm90IGhhbmRsZWQK
-PiBpbiBzd2l0Y2ggWy1XZXJyb3I9c3dpdGNoXQo+ICAgc3dpdGNoIChzdGF0ZSkgewo+ICAgXn5+
-fn5+Cj4gCj4gUGxlYXNlIGF2b2lkIGludHJvZHVjaW5nIERBRU1PTl9TVEFUVVNfU0laRS4KPiAK
-PiBUaGlzIHdvdWxkIGJlIGZpeGVkIGJ5IHlvdXIgcGF0Y2ggMiBiZWNhdXNlIGl0IHJlbW92ZXMg
-dGhlIHN3aXRjaAo+IHN0YXRlbWVudCwgYnV0IG5vIHBhdGNoIGluIGEgc2VyaWVzIHNob3VsZCBi
-cmVhayBjb21waWxhdGlvbiwgdG8gCj4gYWxsb3cgZnV0dXJlIGJpc2VjdGlvbnMuCj4gCj4gSSBo
-YXZlIHRvIHdpdGhkcmF3IG15ICJSZXZpZXdlZC1ieTogZm9yIHRoZSB0aW1lIGJlaW5nLCBzb3Jy
-eS4KCj4gTWFydGluCgpUaGFua3MgZm9yIHlvdXIgcmVwbHkuCkkgdGhpbmsgd2Ugc2hvdWxkIGtl
-ZXAgREFFTU9OX1NUQVRVU19TSVpFIGZvciBib3VuZGFyeSBjaGVjay4KRm9yIHNvbHZpbmcgdGhl
-IHByb2JsZW0sIHdlIGNhbiBhZGQgZGVmYXVsdCBjYXNlIGluIHN3aXRjaChzdGF0ZSkKaW4gc2Rf
-bm90aWZ5X3N0YXR1cyBmdW5jLgoKSSB3aWxsIHNlbmQgdGhlIHYzIHBhdGNoIHNlcmllcy4KClJl
-Z2FyZHMKWmhpcWlhbmcgTGl1Cj4gCj4gCj4+Cj4+ICBzdHJ1Y3QgcHJvdXRfcGFyYW1fZGVzY3Jp
-cHRvcjsKPiAKPiAKPiAKPiAuCj4gCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVs
-QHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
-dmVs
+On Fri, Aug 21, 2020 at 06:02:32PM +0800, 田 wrote:
+> thanks Hellwig for your kindly reply and your fix and add report by me :)
+
+I found an issue with the patch, and will send a new version in a bit.
+If this works for your reproducer, can you add a Tested-by: tag?
