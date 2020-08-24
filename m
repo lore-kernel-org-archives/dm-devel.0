@@ -1,71 +1,52 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH] dm-crypt: Document new no_workqueue flags.
-Date: Mon, 24 Aug 2020 08:46:23 +0200
-Message-ID: <5e803f19-241a-d2ff-6cdb-a45846cd06a0@gmail.com>
-References: <20200820174538.20837-1-gmazyland@gmail.com>
-	<CY4PR04MB37518F3475AE21AB020B628DE7560@CY4PR04MB3751.namprd04.prod.outlook.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 2/3] block: fix locking for struct block_device size
+ updates
+Date: Mon, 24 Aug 2020 09:36:38 +0200
+Message-ID: <73653f9e-2d39-48fb-9842-3a1851fb5bed@suse.de>
+References: <20200823091043.2600261-1-hch@lst.de>
+ <20200823091043.2600261-3-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CY4PR04MB37518F3475AE21AB020B628DE7560@CY4PR04MB3751.namprd04.prod.outlook.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200823091043.2600261-3-hch@lst.de>
 Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
+Cc: Justin Sanders <justin@coraid.com>, Josef Bacik <josef@toxicpanda.com>, Xianting Tian <xianting_tian@126.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Stefan Haberland <sth@linux.ibm.com>, Jan Hoeppner <hoeppner@linux.ibm.com>, linux-kernel@vger.kernel.org, nbd@other.debian.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 24/08/2020 03:15, Damien Le Moal wrote:
-> On 2020/08/21 2:46, Milan Broz wrote:
->> Patch 39d42fa96ba1b7d2544db3f8ed5da8fb0d5cb877 introduced new
->> dm-crypt no_read_workqueue and no_write_workqueue flags.
->>
->> This patch adds documentation to admin guide for them.
->>
->> Signed-off-by: Milan Broz <gmazyland@gmail.com>
->> ---
->>  Documentation/admin-guide/device-mapper/dm-crypt.rst | 6 ++++++
->>  1 file changed, 6 insertions(+)
->>
->> diff --git a/Documentation/admin-guide/device-mapper/dm-crypt.rst b/Documentation/admin-guide/device-mapper/dm-crypt.rst
->> index 8f4a3f889d43..94466921415d 100644
->> --- a/Documentation/admin-guide/device-mapper/dm-crypt.rst
->> +++ b/Documentation/admin-guide/device-mapper/dm-crypt.rst
->> @@ -121,6 +121,12 @@ submit_from_crypt_cpus
->>      thread because it benefits CFQ to have writes submitted using the
->>      same context.
->>  
->> +no_read_workqueue
->> +    Bypass dm-crypt internal workqueue and process read requests synchronously.
->> +
->> +no_write_workqueue
->> +    Bypass dm-crypt internal workqueue and process write requests synchronously.
+On 8/23/20 11:10 AM, Christoph Hellwig wrote:
+> Two different callers use two different mutexes for updating the
+> block device size, which obviously doesn't help to actually protect
+> against concurrent updates from the different callers.  In addition
+> one of the locks, bd_mutex is rather prone to deadlocks with other
+> parts of the block stack that use it for high level synchronization.
 > 
-> Could you add one more line here saying something like:
+> Switch to using a new spinlock protecting just the size updates, as
+> that is all we need, and make sure everyone does the update through
+> the proper helper.
 > 
-> This option is automatically enabled for host-managed zoned block devices (e.g.
-> host-managed SMR hard-disks).
+> This fixes a bug reported with the nvme revalidating disks during a
+> hot removal operation, which can currently deadlock on bd_mutex.
+> 
+> Reported-by: Xianting Tian <xianting_tian@126.com>
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>  block/partitions/core.c         |  4 ++--
+>  drivers/block/aoe/aoecmd.c      |  4 +---
+>  drivers/md/dm.c                 | 15 ++-------------
+>  drivers/s390/block/dasd_ioctl.c |  9 ++-------
+>  fs/block_dev.c                  | 25 ++++++++++++++-----------
+>  include/linux/blk_types.h       |  1 +
+>  6 files changed, 22 insertions(+), 36 deletions(-)
+> Reviewed-by: Hannes Reinecke <hare@suse.de>
 
-Yes, Mike can squeeze it there (Mike, if you prefer, I can resend the patch with the note above).
+Cheers,
 
-I just see one problem here - when we activate device without these flags,
-then dm-crypt decides to set the feature bits because of zone device.
-
-So you activate device with some feature set but table will show something different.
-It is not a technical problem, but I think DM table was not expected to behave this way.
-
-It is probably not the first change (I think some flags are activated in dm-integrity
-according to on-disk superblock state only).
-
-Milan
-
-p.s. Both noqueue flags are now supported in cryptsetup master, for LUKS2 we can store them persistently
-(IOW to be used in all later LUKS2 activations if kernel supports it).
-It should appear in next stable cryptsetup release.
+Hannes
+-- 
+Dr. Hannes Reinecke		           Kernel Storage Architect
+hare@suse.de			                  +49 911 74053 688
+SUSE Software Solutions Germany GmbH, Maxfeldstr. 5, 90409 Nürnberg
+HRB 36809 (AG Nürnberg), GF: Felix Imendörffer
