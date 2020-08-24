@@ -1,19 +1,12 @@
-From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: Re: [PATCH 3/5] multipathd: add reclear_pp_from_mpp in
- ev_remove_path
-Date: Mon, 24 Aug 2020 21:07:27 +0800
-Message-ID: <cb7990df-6c84-7fc9-78ef-bf4c8600010f@huawei.com>
-References: <5ef5f58e-3a27-8959-3abb-4b4c401cc309@huawei.com>
-	<8fd64929-cb4b-5267-1899-15a82e2ff678@huawei.com>
-	<fb04916036613edb59dfd470c449a1a199cd03ff.camel@suse.com>
-	<905553fd-8c51-2898-8015-3795c6affc9f@huawei.com>
-	<352109cf9e0b3f1fbd1851e86bc12fef12c40dec.camel@suse.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] dm-writecache: handle partitions on persistent
+ memory correctly
+Date: Mon, 24 Aug 2020 11:09:47 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2008241106190.26379@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <352109cf9e0b3f1fbd1851e86bc12fef12c40dec.camel@suse.com>
-Content-Language: en-GB
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,74 +16,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
-Cc: linfeilong@huawei.com, liuzhiqiang26@huawei.com
+To: Mike Snitzer <msnitzer@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Martin:
-  Thanks for your detailed explanation. I understand it  well.
+This patch fixes handling partitions in the dm-writecache target. The
+function dax_direct_access doesn't take partitions into account, it always
+maps pages from the beginning of the device. Therefore, we must get the
+partition offset using the function get_start_sect and add it to the page
+offsets passed to dax_direct_access.
 
-Regards
-Lixiaokeng
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org	# 4.18+
+Fixes: 48debafe4f2f ("dm: add writecache target")
 
-On 2020/8/20 23:22, Martin Wilck wrote:
-> On Thu, 2020-08-20 at 22:51 +0800, lixiaokeng wrote:
->> Hi Martin:
->>    I test this in 0.8.4 without your patch series . I have review the
->> code with your patch series and I think this problem will be solved.
->> But I have another question.
->> ev_remove_path
->> 	->__setup_multipath
->> 		->update_multipath_strings
->> 			->update_multipath_table
->> 				->update_pathvec_from_dm
->> 					->store_path
->> When multipathd del path xxx(such as sde) and multipath -v2 are
->> executed simultaneously, will the path(sde) deleted be stored to
->> pathvec
->> again? In my opinion, sde is't delete in pathvec and in
->> disassembel_map
->> sde will be stored to mpp->pg. When update_pathvec_from_dm, sde will
->> be
->> stored again.
-> 
-> in ev_remove_path(), we set INIT_REMOVED state. That means this path
-> won't be used in the RELOAD ioctl. If the ioctl is successful, it will
-> be gone from the kernel (for the time being). Later, sync_map_state()
-> will figure this out, and remove the path. If the parallel "multipath"
-> command reloads the map after multipathd's RELOAD operation, and before
-> update_multipath_table() called, re-adding the path, the path will be
-> read back from the kernel, and sync_map_state() will not delete the it.
->>From multipathd's point of view it will remain in INIT_REMOVED state,
-> though. multipathd will not try to reload the map again unless it's
-> asked to do so with another "add path" or "del path" command. This
-> results in an inconsistent internal state between multipathd and the
-> kernel (multipathd considers the path as REMOVED even though it's still
-> present in the map). I don't think this can be generally avoided if we
-> allow multipath to make changes to kernel maps while multipathd is
-> running. (*)
-> 
-> We could avoid this by delegating these commands from multipath to
-> multipathd, as we already do for some other commands. "multipath"
-> without any arguments would map to a "multipathd reconfigure" command,
-> while "multipath $DEVICE" would be translated to "multipathd add map"
-> or "multipathd add path".
-> 
-> Does this make sense?
-> 
-> Regards,
-> Martin
-> 
-> (*) Well: we *could* try to analyze incoming uevents, and distinguish
-> those that multipathd has initiated itself from other, externally-
-> triggered ones. Then if an external event arrives, adding a path which
-> we had previously removed, and this external event arrives after the
-> remove event we initiated, we could in theory infer that an external
-> program had reverted the change we just made. But this would result in
-> complex and pretty fragile logic. I'm not sure if it's worth it. The
-> "delegating" approach is safer and cleaner IMO.
-> 
-> 
-> 
-> .
-> 
+---
+ drivers/md/dm-writecache.c |   12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+Index: linux-2.6/drivers/md/dm-writecache.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-writecache.c	2020-08-19 15:04:21.499999000 +0200
++++ linux-2.6/drivers/md/dm-writecache.c	2020-08-24 17:07:54.169999000 +0200
+@@ -231,6 +231,7 @@ static int persistent_memory_claim(struc
+ 	pfn_t pfn;
+ 	int id;
+ 	struct page **pages;
++	sector_t offset;
+ 
+ 	wc->memory_vmapped = false;
+ 
+@@ -245,9 +246,16 @@ static int persistent_memory_claim(struc
+ 		goto err1;
+ 	}
+ 
++	offset = get_start_sect(wc->ssd_dev->bdev);
++	if (offset & (PAGE_SIZE / 512 - 1)) {
++		r = -EINVAL;
++		goto err1;
++	}
++	offset >>= PAGE_SHIFT - 9;
++
+ 	id = dax_read_lock();
+ 
+-	da = dax_direct_access(wc->ssd_dev->dax_dev, 0, p, &wc->memory_map, &pfn);
++	da = dax_direct_access(wc->ssd_dev->dax_dev, offset, p, &wc->memory_map, &pfn);
+ 	if (da < 0) {
+ 		wc->memory_map = NULL;
+ 		r = da;
+@@ -269,7 +277,7 @@ static int persistent_memory_claim(struc
+ 		i = 0;
+ 		do {
+ 			long daa;
+-			daa = dax_direct_access(wc->ssd_dev->dax_dev, i, p - i,
++			daa = dax_direct_access(wc->ssd_dev->dax_dev, offset + i, p - i,
+ 						NULL, &pfn);
+ 			if (daa <= 0) {
+ 				r = daa ? daa : -EINVAL;
