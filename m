@@ -1,8 +1,7 @@
 From: mwilck@suse.com
-Subject: [PATCH 5/5] multipath-tools tests: fix memory leak in
-	vpd test
-Date: Tue, 25 Aug 2020 23:24:50 +0200
-Message-ID: <20200825212450.8561-5-mwilck@suse.com>
+Subject: [PATCH 2/5] libmultipath: fix memory leak in ble handlers
+Date: Tue, 25 Aug 2020 23:24:47 +0200
+Message-ID: <20200825212450.8561-2-mwilck@suse.com>
 References: <20200825212450.8561-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,72 +18,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: lixiaokeng <lixiaokeng@huawei.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-regfree() wasn't called on the re used in subst_spaces().
+Since patch "libmultipath fix a memory leak in set_ble_device",
+strings are strdup'd in set_ble_device() and store_ble(). The
+passed string must therefore be freed in the handlers in dict.c.
 
+Fixes: ("libmultipath fix a memory leak in set_ble_device")
+Cc: lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/vpd.c | 18 ++++++++----------
- 1 file changed, 8 insertions(+), 10 deletions(-)
+ libmultipath/dict.c | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
 
-diff --git a/tests/vpd.c b/tests/vpd.c
-index 3cbad81..e2ec65e 100644
---- a/tests/vpd.c
-+++ b/tests/vpd.c
-@@ -28,13 +28,17 @@ struct vpdtest {
- 	char wwid[WWID_SIZE];
- };
- 
-+static regex_t space_re;
- static int setup(void **state)
- {
- 	struct vpdtest *vt = malloc(sizeof(*vt));
-+	int rc;
- 
- 	if (vt == NULL)
- 		return -1;
- 	*state = vt;
-+	rc = regcomp(&space_re, " +", REG_EXTENDED);
-+	assert_int_equal(rc, 0);
- 	return 0;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index be3029c..feabae5 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -1499,7 +1499,8 @@ blacklist_exceptions_handler(struct config *conf, vector strvec)
+ static int								\
+ ble_ ## option ## _handler (struct config *conf, vector strvec)		\
+ {									\
+-	char * buff;							\
++	char *buff;							\
++	int rc;								\
+ 									\
+ 	if (!conf->option)						\
+ 		return 1;						\
+@@ -1508,7 +1509,9 @@ ble_ ## option ## _handler (struct config *conf, vector strvec)		\
+ 	if (!buff)							\
+ 		return 1;						\
+ 									\
+-	return store_ble(conf->option, buff, ORIGIN_CONFIG);		\
++	rc = store_ble(conf->option, buff, ORIGIN_CONFIG);		\
++	free(buff);							\
++	return rc;							\
  }
  
-@@ -44,6 +48,7 @@ static int teardown(void **state)
- 
- 	free(vt);
- 	*state = NULL;
-+	regfree(&space_re);
- 	return 0;
+ #define declare_ble_device_handler(name, option, vend, prod)		\
+@@ -1516,6 +1519,7 @@ static int								\
+ ble_ ## option ## _ ## name ## _handler (struct config *conf, vector strvec) \
+ {									\
+ 	char * buff;							\
++	int rc;								\
+ 									\
+ 	if (!conf->option)						\
+ 		return 1;						\
+@@ -1524,7 +1528,9 @@ ble_ ## option ## _ ## name ## _handler (struct config *conf, vector strvec) \
+ 	if (!buff)							\
+ 		return 1;						\
+ 									\
+-	return set_ble_device(conf->option, vend, prod, ORIGIN_CONFIG);	\
++	rc = set_ble_device(conf->option, vend, prod, ORIGIN_CONFIG);	\
++	free(buff);							\
++	return rc;							\
  }
  
-@@ -360,21 +365,14 @@ static char *subst_spaces(const char *src)
- {
- 	char *dst = calloc(1, strlen(src) + 1);
- 	char *p;
--	static regex_t *re;
- 	regmatch_t match;
--	int rc;
-+	int rc = 0;
- 
- 	assert_non_null(dst);
--	if (re == NULL) {
--		re = calloc(1, sizeof(*re));
--		assert_non_null(re);
--		rc = regcomp(re, " +", REG_EXTENDED);
--		assert_int_equal(rc, 0);
--	}
- 
--	for (rc = regexec(re, src, 1, &match, 0), p = dst;
-+	for (rc = regexec(&space_re, src, 1, &match, 0), p = dst;
- 	    rc == 0;
--	    src += match.rm_eo, rc = regexec(re, src, 1, &match, 0)) {
-+	    src += match.rm_eo, rc = regexec(&space_re, src, 1, &match, 0)) {
- 		memcpy(p, src, match.rm_so);
- 		p += match.rm_so;
- 		*p = '_';
+ declare_ble_handler(blist_devnode)
 -- 
 2.28.0
