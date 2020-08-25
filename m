@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 3/5] libmultipath: fix enable_foreign memory leak
-Date: Tue, 25 Aug 2020 23:24:48 +0200
-Message-ID: <20200825212450.8561-3-mwilck@suse.com>
+Subject: [PATCH 5/5] multipath-tools tests: fix memory leak in
+	vpd test
+Date: Tue, 25 Aug 2020 23:24:50 +0200
+Message-ID: <20200825212450.8561-5-mwilck@suse.com>
 References: <20200825212450.8561-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,40 +24,67 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-enable_foreign wasn't freed in free_config(). Do it, and make
-sure it's always a malloc'd string.
+regfree() wasn't called on the re used in subst_spaces().
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c | 2 ++
- multipath/main.c      | 2 +-
- 2 files changed, 3 insertions(+), 1 deletion(-)
+ tests/vpd.c | 18 ++++++++----------
+ 1 file changed, 8 insertions(+), 10 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 86b6733..b9bdbdb 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -631,6 +631,8 @@ free_config (struct config * conf)
+diff --git a/tests/vpd.c b/tests/vpd.c
+index 3cbad81..e2ec65e 100644
+--- a/tests/vpd.c
++++ b/tests/vpd.c
+@@ -28,13 +28,17 @@ struct vpdtest {
+ 	char wwid[WWID_SIZE];
+ };
  
- 	if (conf->config_dir)
- 		FREE(conf->config_dir);
-+	if (conf->enable_foreign)
-+		FREE(conf->enable_foreign);
++static regex_t space_re;
+ static int setup(void **state)
+ {
+ 	struct vpdtest *vt = malloc(sizeof(*vt));
++	int rc;
  
- 	free_blacklist(conf->blist_devnode);
- 	free_blacklist(conf->blist_wwid);
-diff --git a/multipath/main.c b/multipath/main.c
-index 80bc4b5..004bce5 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -997,7 +997,7 @@ main (int argc, char *argv[])
- 	}
+ 	if (vt == NULL)
+ 		return -1;
+ 	*state = vt;
++	rc = regcomp(&space_re, " +", REG_EXTENDED);
++	assert_int_equal(rc, 0);
+ 	return 0;
+ }
  
- 	if ((cmd == CMD_LIST_SHORT || cmd == CMD_LIST_LONG) && enable_foreign)
--		conf->enable_foreign = "";
-+		conf->enable_foreign = strdup("");
+@@ -44,6 +48,7 @@ static int teardown(void **state)
  
- 	/* Failing here is non-fatal */
- 	init_foreign(conf->multipath_dir, conf->enable_foreign);
+ 	free(vt);
+ 	*state = NULL;
++	regfree(&space_re);
+ 	return 0;
+ }
+ 
+@@ -360,21 +365,14 @@ static char *subst_spaces(const char *src)
+ {
+ 	char *dst = calloc(1, strlen(src) + 1);
+ 	char *p;
+-	static regex_t *re;
+ 	regmatch_t match;
+-	int rc;
++	int rc = 0;
+ 
+ 	assert_non_null(dst);
+-	if (re == NULL) {
+-		re = calloc(1, sizeof(*re));
+-		assert_non_null(re);
+-		rc = regcomp(re, " +", REG_EXTENDED);
+-		assert_int_equal(rc, 0);
+-	}
+ 
+-	for (rc = regexec(re, src, 1, &match, 0), p = dst;
++	for (rc = regexec(&space_re, src, 1, &match, 0), p = dst;
+ 	    rc == 0;
+-	    src += match.rm_eo, rc = regexec(re, src, 1, &match, 0)) {
++	    src += match.rm_eo, rc = regexec(&space_re, src, 1, &match, 0)) {
+ 		memcpy(p, src, match.rm_so);
+ 		p += match.rm_so;
+ 		*p = '_';
 -- 
 2.28.0
