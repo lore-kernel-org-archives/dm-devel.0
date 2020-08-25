@@ -1,12 +1,13 @@
 From: mwilck@suse.com
-Subject: [PATCH 1/5] multipath-tools tests: fix memory leak in
-	alias test
-Date: Tue, 25 Aug 2020 23:24:46 +0200
-Message-ID: <20200825212450.8561-1-mwilck@suse.com>
+Subject: [PATCH 3/5] libmultipath: fix enable_foreign memory leak
+Date: Tue, 25 Aug 2020 23:24:48 +0200
+Message-ID: <20200825212450.8561-3-mwilck@suse.com>
+References: <20200825212450.8561-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200825212450.8561-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,30 +23,40 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+enable_foreign wasn't freed in free_config(). Do it, and make
+sure it's always a malloc'd string.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/alias.c | 2 ++
- 1 file changed, 2 insertions(+)
+ libmultipath/config.c | 2 ++
+ multipath/main.c      | 2 +-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/tests/alias.c b/tests/alias.c
-index 22ffd55..5624138 100644
---- a/tests/alias.c
-+++ b/tests/alias.c
-@@ -652,6 +652,7 @@ static void al_a(void **state)
- 	alias = allocate_binding(0, "WWIDa", 1, "MPATH");
- 	assert_ptr_not_equal(alias, NULL);
- 	assert_string_equal(alias, "MPATHa");
-+	free(alias);
- }
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 86b6733..b9bdbdb 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -631,6 +631,8 @@ free_config (struct config * conf)
  
- static void al_zz(void **state)
-@@ -668,6 +669,7 @@ static void al_zz(void **state)
- 	alias = allocate_binding(0, "WWIDzz", 26*26 + 26, "MPATH");
- 	assert_ptr_not_equal(alias, NULL);
- 	assert_string_equal(alias, "MPATHzz");
-+	free(alias);
- }
+ 	if (conf->config_dir)
+ 		FREE(conf->config_dir);
++	if (conf->enable_foreign)
++		FREE(conf->enable_foreign);
  
- static void al_0(void **state)
+ 	free_blacklist(conf->blist_devnode);
+ 	free_blacklist(conf->blist_wwid);
+diff --git a/multipath/main.c b/multipath/main.c
+index 80bc4b5..004bce5 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -997,7 +997,7 @@ main (int argc, char *argv[])
+ 	}
+ 
+ 	if ((cmd == CMD_LIST_SHORT || cmd == CMD_LIST_LONG) && enable_foreign)
+-		conf->enable_foreign = "";
++		conf->enable_foreign = strdup("");
+ 
+ 	/* Failing here is non-fatal */
+ 	init_foreign(conf->multipath_dir, conf->enable_foreign);
 -- 
 2.28.0
