@@ -1,14 +1,12 @@
 From: mwilck@suse.com
-Subject: [PATCH 4/5] multipath-tools tests: fix memory leak in
-	hwtable test
-Date: Tue, 25 Aug 2020 23:24:49 +0200
-Message-ID: <20200825212450.8561-4-mwilck@suse.com>
-References: <20200825212450.8561-1-mwilck@suse.com>
+Subject: [PATCH 1/5] multipath-tools tests: fix memory leak in
+	alias test
+Date: Tue, 25 Aug 2020 23:24:46 +0200
+Message-ID: <20200825212450.8561-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200825212450.8561-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,30 +24,28 @@ From: Martin Wilck <mwilck@suse.com>
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/hwtable.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ tests/alias.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/tests/hwtable.c b/tests/hwtable.c
-index 84d2b35..12660da 100644
---- a/tests/hwtable.c
-+++ b/tests/hwtable.c
-@@ -25,6 +25,7 @@
- #include "test-lib.h"
- #include "print.h"
- #include "util.h"
-+#include "foreign.h"
- 
- #define N_CONF_FILES 2
- 
-@@ -187,6 +188,9 @@ static int teardown(void **state)
- 
- 	free_hwt(*state);
- 	*state = NULL;
-+	cleanup_prio();
-+	cleanup_checkers();
-+	cleanup_foreign();
- 
- 	return 0;
+diff --git a/tests/alias.c b/tests/alias.c
+index 22ffd55..5624138 100644
+--- a/tests/alias.c
++++ b/tests/alias.c
+@@ -652,6 +652,7 @@ static void al_a(void **state)
+ 	alias = allocate_binding(0, "WWIDa", 1, "MPATH");
+ 	assert_ptr_not_equal(alias, NULL);
+ 	assert_string_equal(alias, "MPATHa");
++	free(alias);
  }
+ 
+ static void al_zz(void **state)
+@@ -668,6 +669,7 @@ static void al_zz(void **state)
+ 	alias = allocate_binding(0, "WWIDzz", 26*26 + 26, "MPATH");
+ 	assert_ptr_not_equal(alias, NULL);
+ 	assert_string_equal(alias, "MPATHzz");
++	free(alias);
+ }
+ 
+ static void al_0(void **state)
 -- 
 2.28.0
