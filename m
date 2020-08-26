@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 06/10] libmultipath: fix memory leak in ble
-	handlers
-Date: Wed, 26 Aug 2020 11:59:03 +0200
-Message-ID: <20200826095907.5576-7-mwilck@suse.com>
+Subject: [PATCH v2 01/10] multipath-tools: Makefile.inc: fix
+	compilation with gcc 4.x
+Date: Wed, 26 Aug 2020 11:58:58 +0200
+Message-ID: <20200826095907.5576-2-mwilck@suse.com>
 References: <20200826095907.5576-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,65 +19,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: lixiaokeng <lixiaokeng@huawei.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Since patch "libmultipath fix a memory leak in set_ble_device",
-strings are strdup'd in set_ble_device() and store_ble(). The
-passed string must therefore be freed in the handlers in dict.c.
+GCC 4.x doesn't enable the "gnu99" standard by default, which is
+required by the multipath-tools code. Tested with gcc 4, 7, 8,
+9, 10 and clang 3.9, 7, 8, 9, 10.
 
-Fixes: ("libmultipath fix a memory leak in set_ble_device")
-Cc: lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/dict.c | 12 +++++++++---
- 1 file changed, 9 insertions(+), 3 deletions(-)
+ Makefile.inc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index be3029c..feabae5 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -1499,7 +1499,8 @@ blacklist_exceptions_handler(struct config *conf, vector strvec)
- static int								\
- ble_ ## option ## _handler (struct config *conf, vector strvec)		\
- {									\
--	char * buff;							\
-+	char *buff;							\
-+	int rc;								\
- 									\
- 	if (!conf->option)						\
- 		return 1;						\
-@@ -1508,7 +1509,9 @@ ble_ ## option ## _handler (struct config *conf, vector strvec)		\
- 	if (!buff)							\
- 		return 1;						\
- 									\
--	return store_ble(conf->option, buff, ORIGIN_CONFIG);		\
-+	rc = store_ble(conf->option, buff, ORIGIN_CONFIG);		\
-+	free(buff);							\
-+	return rc;							\
- }
- 
- #define declare_ble_device_handler(name, option, vend, prod)		\
-@@ -1516,6 +1519,7 @@ static int								\
- ble_ ## option ## _ ## name ## _handler (struct config *conf, vector strvec) \
- {									\
- 	char * buff;							\
-+	int rc;								\
- 									\
- 	if (!conf->option)						\
- 		return 1;						\
-@@ -1524,7 +1528,9 @@ ble_ ## option ## _ ## name ## _handler (struct config *conf, vector strvec) \
- 	if (!buff)							\
- 		return 1;						\
- 									\
--	return set_ble_device(conf->option, vend, prod, ORIGIN_CONFIG);	\
-+	rc = set_ble_device(conf->option, vend, prod, ORIGIN_CONFIG);	\
-+	free(buff);							\
-+	return rc;							\
- }
- 
- declare_ble_handler(blist_devnode)
+diff --git a/Makefile.inc b/Makefile.inc
+index 8ea3352..e05f3a9 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -98,7 +98,7 @@ WARNFLAGS	:= -Werror -Wall -Wextra -Wformat=2 -Werror=implicit-int \
+ 		  -Werror=implicit-function-declaration -Werror=format-security \
+ 		  $(WNOCLOBBERED) -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS)
+ CPPFLAGS	:= -Wp,-D_FORTIFY_SOURCE=2 
+-CFLAGS		:= $(CFLAGS) $(OPTFLAGS) $(WARNFLAGS) -pipe \
++CFLAGS		:= --std=gnu99 $(CFLAGS) $(OPTFLAGS) $(WARNFLAGS) -pipe \
+ 		   -DBIN_DIR=\"$(bindir)\" -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\" \
+ 		   -MMD -MP
+ BIN_CFLAGS	= -fPIE -DPIE
 -- 
 2.28.0
