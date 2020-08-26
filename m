@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 07/10] libmultipath: fix enable_foreign memory
-	leak
-Date: Wed, 26 Aug 2020 11:59:04 +0200
-Message-ID: <20200826095907.5576-8-mwilck@suse.com>
+Subject: [PATCH v2 02/10] multipath-tools: Makefile: add
+	"valgrind-test" target
+Date: Wed, 26 Aug 2020 11:58:59 +0200
+Message-ID: <20200826095907.5576-3-mwilck@suse.com>
 References: <20200826095907.5576-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,40 +24,83 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-enable_foreign wasn't freed in free_config(). Do it, and make
-sure it's always a malloc'd string.
+The new target "valgrind-test" (or "valgrind" in the tests/
+subdirectory) allows running the unit tests under valgrind.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c | 2 ++
- multipath/main.c      | 2 +-
- 2 files changed, 3 insertions(+), 1 deletion(-)
+ Makefile        |  3 +++
+ tests/Makefile  | 13 +++++++++++--
+ tests/README.md |  8 ++++++++
+ 3 files changed, 22 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 86b6733..b9bdbdb 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -631,6 +631,8 @@ free_config (struct config * conf)
+diff --git a/Makefile b/Makefile
+index 8bcaba6..4a3491d 100644
+--- a/Makefile
++++ b/Makefile
+@@ -52,6 +52,9 @@ uninstall: $(BUILDDIRS:=.uninstall)
+ test:	all
+ 	$(MAKE) -C tests
  
- 	if (conf->config_dir)
- 		FREE(conf->config_dir);
-+	if (conf->enable_foreign)
-+		FREE(conf->enable_foreign);
++valgrind-test:	all
++	$(MAKE) -C tests valgrind
++
+ .PHONY:	TAGS
+ TAGS:
+ 	etags -a libmultipath/*.c
+diff --git a/tests/Makefile b/tests/Makefile
+index 5f00a3a..502377f 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -19,6 +19,7 @@ TESTS := uevent parser util dmevents hwtable blacklist unaligned vpd pgpolicy \
+ .PRECIOUS: $(TESTS:%=%-test)
  
- 	free_blacklist(conf->blist_devnode);
- 	free_blacklist(conf->blist_wwid);
-diff --git a/multipath/main.c b/multipath/main.c
-index 80bc4b5..004bce5 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -997,7 +997,7 @@ main (int argc, char *argv[])
- 	}
+ all:	$(TESTS:%=%.out)
++valgrind:	$(TESTS:%=%.vgr)
  
- 	if ((cmd == CMD_LIST_SHORT || cmd == CMD_LIST_LONG) && enable_foreign)
--		conf->enable_foreign = "";
-+		conf->enable_foreign = strdup("");
+ # test-specific compiler flags
+ # XYZ-test_FLAGS: Additional compiler flags for this test
+@@ -68,12 +69,20 @@ lib/libchecktur.so:
+ 	@echo == running $< ==
+ 	@LD_LIBRARY_PATH=$(multipathdir):$(mpathcmddir) ./$< >$@
  
- 	/* Failing here is non-fatal */
- 	init_foreign(conf->multipath_dir, conf->enable_foreign);
++%.vgr:  %-test lib/libchecktur.so
++	@echo == running valgrind for $< ==
++	@LD_LIBRARY_PATH=$(multipathdir):$(mpathcmddir) \
++		valgrind --leak-check=full --error-exitcode=128 ./$< >$@ 2>&1
++
+ OBJS = $(TESTS:%=%.o) test-lib.o
+ 
+ test_clean:
+-	$(RM) $(TESTS:%=%.out)
++	$(RM) $(TESTS:%=%.out) $(TESTS:%=%.vgr)
++
++valgrind_clean:
++	$(RM) $(TESTS:%=%.vgr)
+ 
+-clean: test_clean dep_clean
++clean: test_clean valgrind_clean dep_clean
+ 	$(RM) $(TESTS:%=%-test) $(OBJS) *.o.wrap
+ 	$(RM) -rf lib
+ 
+diff --git a/tests/README.md b/tests/README.md
+index 6438a82..6e7ad40 100644
+--- a/tests/README.md
++++ b/tests/README.md
+@@ -5,6 +5,14 @@ or simply `make` in the `tests` subdirectory. The test output is saved as
+ `<testname>.out`. The test programs are called `<testname>-test`, and can
+ be run standalone e.g. for debugging purposes.
+ 
++## Running tests under valgrind
++
++The unit tests can be run under the valgrind debugger with `make valgrind`
++in the `tests` directory, or `make valgrind-test` in the top directory.
++If valgrind detects a bad memory access or leak, the test will fail. The
++output of the test run, including valgrind output, is stored as
++`<testname>.vgr`.
++
+ ## Notes on individual tests
+ 
+ ### Tests that require root permissions
 -- 
 2.28.0
