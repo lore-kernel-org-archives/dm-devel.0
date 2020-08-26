@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 04/10] multipath-tools tests: fix memory leak
-	in hwtable test
-Date: Wed, 26 Aug 2020 11:59:01 +0200
-Message-ID: <20200826095907.5576-5-mwilck@suse.com>
+Subject: [PATCH v2 09/10] libmultipath: alloc_strvec:
+	NULL-initialize strvec elements
+Date: Wed, 26 Aug 2020 11:59:06 +0200
+Message-ID: <20200826095907.5576-10-mwilck@suse.com>
 References: <20200826095907.5576-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,32 +24,27 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+The statement assigning a real token to a strvec element may
+never be reached. Thus set the element to NULL beforehand to
+make sure later code can recognized the non-properly initialized
+element.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/hwtable.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ libmultipath/parser.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/tests/hwtable.c b/tests/hwtable.c
-index 84d2b35..12660da 100644
---- a/tests/hwtable.c
-+++ b/tests/hwtable.c
-@@ -25,6 +25,7 @@
- #include "test-lib.h"
- #include "print.h"
- #include "util.h"
-+#include "foreign.h"
+diff --git a/libmultipath/parser.c b/libmultipath/parser.c
+index 3875174..e6753c4 100644
+--- a/libmultipath/parser.c
++++ b/libmultipath/parser.c
+@@ -237,6 +237,7 @@ alloc_strvec(char *string)
+ 		if (!vector_alloc_slot(strvec))
+ 			goto out;
  
- #define N_CONF_FILES 2
- 
-@@ -187,6 +188,9 @@ static int teardown(void **state)
- 
- 	free_hwt(*state);
- 	*state = NULL;
-+	cleanup_prio();
-+	cleanup_checkers();
-+	cleanup_foreign();
- 
- 	return 0;
- }
++		vector_set_slot(strvec, NULL);
+ 		start = cp;
+ 		if (*cp == '"' && !(in_string && *(cp + 1) == '"')) {
+ 			cp++;
 -- 
 2.28.0
