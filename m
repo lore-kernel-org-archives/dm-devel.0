@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 05/10] multipath-tools tests: fix memory leak
-	in vpd test
-Date: Wed, 26 Aug 2020 11:59:02 +0200
-Message-ID: <20200826095907.5576-6-mwilck@suse.com>
+Subject: [PATCH v2 10/10] libmultipath: validate_config_strvec():
+	avoid out-of-bounds access
+Date: Wed, 26 Aug 2020 11:59:07 +0200
+Message-ID: <20200826095907.5576-11-mwilck@suse.com>
 References: <20200826095907.5576-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,67 +24,54 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-regfree() wasn't called on the re used in subst_spaces().
+Always check the length of strvec before accessing elements.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/vpd.c | 18 ++++++++----------
- 1 file changed, 8 insertions(+), 10 deletions(-)
+ libmultipath/parser.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
 
-diff --git a/tests/vpd.c b/tests/vpd.c
-index 3cbad81..e2ec65e 100644
---- a/tests/vpd.c
-+++ b/tests/vpd.c
-@@ -28,13 +28,17 @@ struct vpdtest {
- 	char wwid[WWID_SIZE];
- };
- 
-+static regex_t space_re;
- static int setup(void **state)
+diff --git a/libmultipath/parser.c b/libmultipath/parser.c
+index e6753c4..ed6d5d6 100644
+--- a/libmultipath/parser.c
++++ b/libmultipath/parser.c
+@@ -436,14 +436,16 @@ is_sublevel_keyword(char *str)
+ int
+ validate_config_strvec(vector strvec, char *file)
  {
- 	struct vpdtest *vt = malloc(sizeof(*vt));
-+	int rc;
+-	char *str;
++	char *str = NULL;
+ 	int i;
  
- 	if (vt == NULL)
+-	str = VECTOR_SLOT(strvec, 0);
++	if (strvec && VECTOR_SIZE(strvec) > 0)
++		str = VECTOR_SLOT(strvec, 0);
++
+ 	if (str == NULL) {
+ 		condlog(0, "can't parse option on line %d of %s",
+ 			line_nr, file);
+-	return -1;
++		return -1;
+ 	}
+ 	if (*str == '}') {
+ 		if (VECTOR_SIZE(strvec) > 1)
+@@ -456,7 +458,7 @@ validate_config_strvec(vector strvec, char *file)
  		return -1;
- 	*state = vt;
-+	rc = regcomp(&space_re, " +", REG_EXTENDED);
-+	assert_int_equal(rc, 0);
- 	return 0;
- }
- 
-@@ -44,6 +48,7 @@ static int teardown(void **state)
- 
- 	free(vt);
- 	*state = NULL;
-+	regfree(&space_re);
- 	return 0;
- }
- 
-@@ -360,21 +365,14 @@ static char *subst_spaces(const char *src)
- {
- 	char *dst = calloc(1, strlen(src) + 1);
- 	char *p;
--	static regex_t *re;
- 	regmatch_t match;
--	int rc;
-+	int rc = 0;
- 
- 	assert_non_null(dst);
--	if (re == NULL) {
--		re = calloc(1, sizeof(*re));
--		assert_non_null(re);
--		rc = regcomp(re, " +", REG_EXTENDED);
--		assert_int_equal(rc, 0);
--	}
- 
--	for (rc = regexec(re, src, 1, &match, 0), p = dst;
-+	for (rc = regexec(&space_re, src, 1, &match, 0), p = dst;
- 	    rc == 0;
--	    src += match.rm_eo, rc = regexec(re, src, 1, &match, 0)) {
-+	    src += match.rm_eo, rc = regexec(&space_re, src, 1, &match, 0)) {
- 		memcpy(p, src, match.rm_so);
- 		p += match.rm_so;
- 		*p = '_';
+ 	}
+ 	if (is_sublevel_keyword(str)) {
+-		str = VECTOR_SLOT(strvec, 1);
++		str = VECTOR_SIZE(strvec) > 1 ? VECTOR_SLOT(strvec, 1) : NULL;
+ 		if (str == NULL)
+ 			condlog(0, "missing '{' on line %d of %s",
+ 				line_nr, file);
+@@ -467,7 +469,7 @@ validate_config_strvec(vector strvec, char *file)
+ 			condlog(0, "ignoring extra data starting with '%s' on line %d of %s", (char *)VECTOR_SLOT(strvec, 2), line_nr, file);
+ 		return 0;
+ 	}
+-	str = VECTOR_SLOT(strvec, 1);
++	str = VECTOR_SIZE(strvec) > 1 ? VECTOR_SLOT(strvec, 1) : NULL;
+ 	if (str == NULL) {
+ 		condlog(0, "missing value for option '%s' on line %d of %s",
+ 			(char *)VECTOR_SLOT(strvec, 0), line_nr, file);
 -- 
 2.28.0
