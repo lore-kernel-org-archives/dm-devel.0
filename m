@@ -1,8 +1,8 @@
-From: mwilck@suse.com
-Subject: [PATCH v2 09/10] libmultipath: alloc_strvec:
-	NULL-initialize strvec elements
-Date: Wed, 26 Aug 2020 11:59:06 +0200
-Message-ID: <20200826095907.5576-10-mwilck@suse.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH v2 00/10] multipath-tools: valgrind tests &
+	fixes
+Date: Wed, 26 Aug 2020 13:46:30 -0500
+Message-ID: <20200826184630.GB19233@octiron.msp.redhat.com>
 References: <20200826095907.5576-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,33 +18,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Content-Disposition: inline
+To: mwilck@suse.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Martin Wilck <mwilck@suse.com>
+On Wed, Aug 26, 2020 at 11:58:57AM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+> 
+> Hi Christophe and Ben,
+> 
+> this series  adds a make target to run unit tests under valgrind, and fixes
+> the issues I found using this test target.
+> 
+> It contains the patches I sent yesterday ([PATCH 1/5] multipath-tools tests:
+> fix memory leak in alias test), but in a different order / numbering,
+> which seems more appropriate now.
+> 
 
-The statement assigning a real token to a strvec element may
-never be reached. Thus set the element to NULL beforehand to
-make sure later code can recognized the non-properly initialized
-element.
+For the set
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/parser.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index 3875174..e6753c4 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -237,6 +237,7 @@ alloc_strvec(char *string)
- 		if (!vector_alloc_slot(strvec))
- 			goto out;
- 
-+		vector_set_slot(strvec, NULL);
- 		start = cp;
- 		if (*cp == '"' && !(in_string && *(cp + 1) == '"')) {
- 			cp++;
--- 
-2.28.0
+> Regards,
+> Martin
+> 
+> Martin Wilck (10):
+>   multipath-tools: Makefile.inc: fix compilation with gcc 4.x
+>   multipath-tools: Makefile: add "valgrind-test" target
+>   multipath-tools tests: fix memory leak in alias test
+>   multipath-tools tests: fix memory leak in hwtable test
+>   multipath-tools tests: fix memory leak in vpd test
+>   libmultipath: fix memory leak in ble handlers
+>   libmultipath: fix enable_foreign memory leak
+>   libmultipath: fix invalid memory access in is_token()
+>   libmultipath: alloc_strvec: NULL-initialize strvec elements
+>   libmultipath: validate_config_strvec(): avoid out-of-bounds access
+> 
+>  Makefile              |  3 +++
+>  Makefile.inc          |  2 +-
+>  libmultipath/config.c |  2 ++
+>  libmultipath/dict.c   | 12 +++++++++---
+>  libmultipath/parser.c | 17 +++++++++++------
+>  multipath/main.c      |  2 +-
+>  tests/Makefile        | 13 +++++++++++--
+>  tests/README.md       |  8 ++++++++
+>  tests/alias.c         |  2 ++
+>  tests/hwtable.c       |  4 ++++
+>  tests/vpd.c           | 18 ++++++++----------
+>  11 files changed, 60 insertions(+), 23 deletions(-)
+> 
+> -- 
+> 2.28.0
