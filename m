@@ -1,14 +1,11 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 08/10] libmultipath: fix invalid memory access
-	in is_token()
-Date: Wed, 26 Aug 2020 11:59:05 +0200
-Message-ID: <20200826095907.5576-9-mwilck@suse.com>
-References: <20200826095907.5576-1-mwilck@suse.com>
+Subject: [PATCH v2 00/10] multipath-tools: valgrind tests & fixes
+Date: Wed, 26 Aug 2020 11:58:57 +0200
+Message-ID: <20200826095907.5576-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200826095907.5576-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,31 +21,42 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-memcmp() must always be passed memory areas that are valid for the
-full length given by the size argument.
+Hi Christophe and Ben,
 
-See e.g. https://trust-in-soft.com/blog/2015/12/21/memcmp-requires-pointers-to-fully-valid-buffers/
+this series  adds a make target to run unit tests under valgrind, and fixes
+the issues I found using this test target.
 
-Fixes: 7d95fb6 ("libmultipath: config parser: fix corner case for double quotes")
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/parser.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+It contains the patches I sent yesterday ([PATCH 1/5] multipath-tools tests:
+fix memory leak in alias test), but in a different order / numbering,
+which seems more appropriate now.
 
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index 4f65ba1..3875174 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -194,7 +194,9 @@ snprint_keyword(char *buff, int len, char *fmt, struct keyword *kw,
- static const char quote_marker[] = { '\0', '"', '\0' };
- bool is_quote(const char* token)
- {
--	return !memcmp(token, quote_marker, sizeof(quote_marker));
-+	return token[0] == quote_marker[0] &&
-+		token[1] == quote_marker[1] &&
-+		token[2] == quote_marker[2];
- }
- 
- vector
+Regards,
+Martin
+
+Martin Wilck (10):
+  multipath-tools: Makefile.inc: fix compilation with gcc 4.x
+  multipath-tools: Makefile: add "valgrind-test" target
+  multipath-tools tests: fix memory leak in alias test
+  multipath-tools tests: fix memory leak in hwtable test
+  multipath-tools tests: fix memory leak in vpd test
+  libmultipath: fix memory leak in ble handlers
+  libmultipath: fix enable_foreign memory leak
+  libmultipath: fix invalid memory access in is_token()
+  libmultipath: alloc_strvec: NULL-initialize strvec elements
+  libmultipath: validate_config_strvec(): avoid out-of-bounds access
+
+ Makefile              |  3 +++
+ Makefile.inc          |  2 +-
+ libmultipath/config.c |  2 ++
+ libmultipath/dict.c   | 12 +++++++++---
+ libmultipath/parser.c | 17 +++++++++++------
+ multipath/main.c      |  2 +-
+ tests/Makefile        | 13 +++++++++++--
+ tests/README.md       |  8 ++++++++
+ tests/alias.c         |  2 ++
+ tests/hwtable.c       |  4 ++++
+ tests/vpd.c           | 18 ++++++++----------
+ 11 files changed, 60 insertions(+), 23 deletions(-)
+
 -- 
 2.28.0
