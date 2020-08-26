@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 01/10] multipath-tools: Makefile.inc: fix
-	compilation with gcc 4.x
-Date: Wed, 26 Aug 2020 11:58:58 +0200
-Message-ID: <20200826095907.5576-2-mwilck@suse.com>
+Subject: [PATCH v2 03/10] multipath-tools tests: fix memory leak
+	in alias test
+Date: Wed, 26 Aug 2020 11:59:00 +0200
+Message-ID: <20200826095907.5576-4-mwilck@suse.com>
 References: <20200826095907.5576-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,27 +24,30 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-GCC 4.x doesn't enable the "gnu99" standard by default, which is
-required by the multipath-tools code. Tested with gcc 4, 7, 8,
-9, 10 and clang 3.9, 7, 8, 9, 10.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- Makefile.inc | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ tests/alias.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 8ea3352..e05f3a9 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -98,7 +98,7 @@ WARNFLAGS	:= -Werror -Wall -Wextra -Wformat=2 -Werror=implicit-int \
- 		  -Werror=implicit-function-declaration -Werror=format-security \
- 		  $(WNOCLOBBERED) -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS)
- CPPFLAGS	:= -Wp,-D_FORTIFY_SOURCE=2 
--CFLAGS		:= $(CFLAGS) $(OPTFLAGS) $(WARNFLAGS) -pipe \
-+CFLAGS		:= --std=gnu99 $(CFLAGS) $(OPTFLAGS) $(WARNFLAGS) -pipe \
- 		   -DBIN_DIR=\"$(bindir)\" -DLIB_STRING=\"${LIB}\" -DRUN_DIR=\"${RUN}\" \
- 		   -MMD -MP
- BIN_CFLAGS	= -fPIE -DPIE
+diff --git a/tests/alias.c b/tests/alias.c
+index 22ffd55..5624138 100644
+--- a/tests/alias.c
++++ b/tests/alias.c
+@@ -652,6 +652,7 @@ static void al_a(void **state)
+ 	alias = allocate_binding(0, "WWIDa", 1, "MPATH");
+ 	assert_ptr_not_equal(alias, NULL);
+ 	assert_string_equal(alias, "MPATHa");
++	free(alias);
+ }
+ 
+ static void al_zz(void **state)
+@@ -668,6 +669,7 @@ static void al_zz(void **state)
+ 	alias = allocate_binding(0, "WWIDzz", 26*26 + 26, "MPATH");
+ 	assert_ptr_not_equal(alias, NULL);
+ 	assert_string_equal(alias, "MPATHzz");
++	free(alias);
+ }
+ 
+ static void al_0(void **state)
 -- 
 2.28.0
