@@ -1,115 +1,26 @@
-From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [PATCH V3 1/5] multipathd: adopt static char* arr in
-	daemon_status
-Date: Sat, 29 Aug 2020 11:03:04 +0800
-Message-ID: <c31619f2-93e6-f317-809c-828026e6ee03@huawei.com>
-References: <dc4f5730-157f-8a27-247c-628f38bb6cb5@huawei.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: fix block device size update serialization v2
+Date: Sat, 29 Aug 2020 10:47:11 -0600
+Message-ID: <b1960016-c265-1e1d-cfd7-de2330bc5eac@kernel.dk>
+References: <20200823091043.2600261-1-hch@lst.de>
+ <20200827074758.GA8009@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <dc4f5730-157f-8a27-247c-628f38bb6cb5@huawei.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200827074758.GA8009@lst.de>
 Content-Language: en-US
-To: Martin Wilck <mwilck@suse.com>
-Cc: lixiaokeng <lixiaokeng@huawei.com>, yanxiaodan@huawei.com, linfeilong@huawei.com, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, liuzhiqiang26@huawei.com
+Sender: linux-block-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: Justin Sanders <justin@coraid.com>, Josef Bacik <josef@toxicpanda.com>, Xianting Tian <xianting_tian@126.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Stefan Haberland <sth@linux.ibm.com>, Jan Hoeppner <hoeppner@linux.ibm.com>, linux-kernel@vger.kernel.org, nbd@other.debian.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
 List-Id: dm-devel.ids
 
+On 8/27/20 1:47 AM, Christoph Hellwig wrote:
+> Jens, can you consider this for 5.9?  It reliably fixes the reported
+> hangs with nvme hotremoval that we've had for a few releases.
 
-We adopt static char* array (demon_status_msg) in daemon_status func,
-so it looks more simpler and easier to expand.
+I've queued this up for 5.10. I think it's too late for 5.9 at this
+point, and it's not a regression in this release.
 
-V2->V3:
-- add default case in sd_notify_status to fix compile error
-V1->V2:
-- use "int" as the type of "status" (suggested by Martin)
-
-Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
----
- multipathd/main.c | 32 +++++++++++++++++---------------
- multipathd/main.h |  3 ++-
- 2 files changed, 19 insertions(+), 16 deletions(-)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 9ec65856..27c3a3ae 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -153,24 +153,24 @@ static volatile sig_atomic_t exit_sig;
- static volatile sig_atomic_t reconfig_sig;
- static volatile sig_atomic_t log_reset_sig;
-
-+static const char *daemon_status_msg[DAEMON_STATUS_SIZE] = {
-+	[DAEMON_INIT] = "init",
-+	[DAEMON_START] = "startup",
-+	[DAEMON_CONFIGURE] = "configure",
-+	[DAEMON_IDLE] = "idle",
-+	[DAEMON_RUNNING] = "running",
-+	[DAEMON_SHUTDOWN] = "shutdown",
-+};
-+
- const char *
- daemon_status(void)
- {
--	switch (get_running_state()) {
--	case DAEMON_INIT:
--		return "init";
--	case DAEMON_START:
--		return "startup";
--	case DAEMON_CONFIGURE:
--		return "configure";
--	case DAEMON_IDLE:
--		return "idle";
--	case DAEMON_RUNNING:
--		return "running";
--	case DAEMON_SHUTDOWN:
--		return "shutdown";
--	}
--	return NULL;
-+	int status = get_running_state();
-+
-+	if (status < DAEMON_INIT || status >= DAEMON_STATUS_SIZE)
-+		return NULL;
-+
-+	return daemon_status_msg[status];
- }
-
- /*
-@@ -192,6 +192,8 @@ sd_notify_status(enum daemon_status state)
- 		return "STATUS=up";
- 	case DAEMON_SHUTDOWN:
- 		return "STATUS=shutdown";
-+	default:
-+		return NULL;
- 	}
- 	return NULL;
- }
-diff --git a/multipathd/main.h b/multipathd/main.h
-index 5dff17e5..6a5592c0 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -4,12 +4,13 @@
- #define MAPGCINT 5
-
- enum daemon_status {
--	DAEMON_INIT,
-+	DAEMON_INIT = 0,
- 	DAEMON_START,
- 	DAEMON_CONFIGURE,
- 	DAEMON_IDLE,
- 	DAEMON_RUNNING,
- 	DAEMON_SHUTDOWN,
-+	DAEMON_STATUS_SIZE,
- };
-
- struct prout_param_descriptor;
 -- 
-2.24.0.windows.2
+Jens Axboe
