@@ -1,14 +1,11 @@
-From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [PATCH V3 2/5] multipathd: use daemon_status_msg to
- construct sd notify msg in do_sd_notify func
-Date: Sat, 29 Aug 2020 11:03:48 +0800
-Message-ID: <8e24c49b-6f56-e7ea-7f2a-e7bd9d266e23@huawei.com>
-References: <dc4f5730-157f-8a27-247c-628f38bb6cb5@huawei.com>
+From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+Subject: [PATCH] IMA: Add test for dm-crypt measurement
+Date: Fri, 28 Aug 2020 18:14:27 -0700
+Message-ID: <20200829011427.12893-1-tusharsu@linux.microsoft.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <dc4f5730-157f-8a27-247c-628f38bb6cb5@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,88 +15,208 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Language: en-US
-To: Martin Wilck <mwilck@suse.com>
-Cc: lixiaokeng <lixiaokeng@huawei.com>, yanxiaodan@huawei.com, linfeilong@huawei.com, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>, liuzhiqiang26@huawei.com
+To: zohar@linux.ibm.com, agk@redhat.com, snitzer@redhat.com, gmazyland@gmail.com, pvorel@suse.cz
+Cc: nramas@linux.microsoft.com, linux-integrity@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+IMA subsystem supports measuring data from other kernel components
+through func=CRITICAL_DATA policy 'critical_kernel_data_sources'. 
+This IMA policy can be set to measure the data coming from device-mapper
+targets. This scenario needs test coverage.
 
-sd_notify_status() is very similar with daemon_status(), except
-DAEMON_IDLE and DAEMON_RUNNING state. As suggested by Martin,
-we can create the sd notification string in a dynamic buffer,
-and treat DAEMON_IDLE and DAEMON_RUNNING cases first. Then,
-we can use daemon_status_msg[state] for other cases.
+Add a testcase which verifies that the IMA subsystem correctly measures
+the data provided by one such DM target - dm-crypt.
 
-V2->V3:
-- set MSG_SIZE to 32 and use safe_sprintf as suggested by Martin.
+This series needs a kernel built on the following repo/branch/patches:
+ repo: https://git.kernel.org/pub/scm/linux/kernel/git/zohar/linux-integrity.git
+ branch: next-integrity
+ commit d012a7190fc1 ("Linux 5.9-rc2") 
 
-Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+And the following patch series should be applied in the order below:
+ 1. https://patchwork.kernel.org/patch/11709527/
+ 2. https://patchwork.kernel.org/patch/11742047/
+ 3. https://patchwork.kernel.org/patch/11743265/
+ 4. https://patchwork.kernel.org/patch/11743715/
+
+The kernel code required for this series (the patches above)
+is still under review. This series will be ready to merge in LTP only
+after the above patches are merged.
+
+This series is based on the following commit in LTP branch:
+ commit a277498c08a7 ("IMA/ima_keys.sh: Enhance policy checks") 
+        
+Signed-off-by: Tushar Sugandhi <tusharsu@linux.microsoft.com>
 ---
- multipathd/main.c | 34 ++++++++++++----------------------
- 1 file changed, 12 insertions(+), 22 deletions(-)
+ runtest/ima                                   |   1 +
+ .../kernel/security/integrity/ima/README.md   |  20 +++
+ .../integrity/ima/tests/ima_dm_crypt.sh       | 118 ++++++++++++++++++
+ 3 files changed, 139 insertions(+)
+ create mode 100755 testcases/kernel/security/integrity/ima/tests/ima_dm_crypt.sh
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 27c3a3ae..7fe55b12 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -85,6 +85,7 @@
-
- #define FILE_NAME_SIZE 256
- #define CMDSIZE 160
-+#define MSG_SIZE 32
-
- #define LOG_MSG(lvl, verb, pp)					\
- do {								\
-@@ -177,30 +178,12 @@ daemon_status(void)
-  * I love you too, systemd ...
-  */
- #ifdef USE_SYSTEMD
--static const char *
--sd_notify_status(enum daemon_status state)
--{
--	switch (state) {
--	case DAEMON_INIT:
--		return "STATUS=init";
--	case DAEMON_START:
--		return "STATUS=startup";
--	case DAEMON_CONFIGURE:
--		return "STATUS=configure";
--	case DAEMON_IDLE:
--	case DAEMON_RUNNING:
--		return "STATUS=up";
--	case DAEMON_SHUTDOWN:
--		return "STATUS=shutdown";
--	default:
--		return NULL;
--	}
--	return NULL;
--}
--
- static void do_sd_notify(enum daemon_status old_state,
- 			 enum daemon_status new_state)
- {
-+	char notify_msg[MSG_SIZE];
-+	const char prefix[] = "STATUS=";
-+	const char *msg = NULL;
- 	/*
- 	 * Checkerloop switches back and forth between idle and running state.
- 	 * No need to tell systemd each time.
-@@ -209,7 +192,14 @@ static void do_sd_notify(enum daemon_status old_state,
- 	if ((new_state == DAEMON_IDLE || new_state == DAEMON_RUNNING) &&
- 	    (old_state == DAEMON_IDLE || old_state == DAEMON_RUNNING))
- 		return;
--	sd_notify(0, sd_notify_status(new_state));
+diff --git a/runtest/ima b/runtest/ima
+index 5f4b4a7a1..123b6c8b0 100644
+--- a/runtest/ima
++++ b/runtest/ima
+@@ -5,4 +5,5 @@ ima_tpm ima_tpm.sh
+ ima_violations ima_violations.sh
+ ima_keys ima_keys.sh
+ ima_kexec ima_kexec.sh
++ima_dm_crypt ima_dm_crypt.sh
+ evm_overlay evm_overlay.sh
+diff --git a/testcases/kernel/security/integrity/ima/README.md b/testcases/kernel/security/integrity/ima/README.md
+index 68d046678..663c0b624 100644
+--- a/testcases/kernel/security/integrity/ima/README.md
++++ b/testcases/kernel/security/integrity/ima/README.md
+@@ -37,6 +37,26 @@ see example in `kexec.policy`.
+ The test attempts to kexec the existing running kernel image.
+ To kexec a different kernel image export `IMA_KEXEC_IMAGE=<pathname>`.
+ 
++### IMA DM target (dm-crypt) measurement test
 +
-+	if (new_state == DAEMON_IDLE || new_state == DAEMON_RUNNING)
-+		msg = "up";
++To enable IMA to measure device-mapper target - dm-crypt,
++`ima_dm_crypt.sh` requires a readable IMA policy, as well as 
++a loaded measure policy with 
++`func=CRITICAL_DATA critical_kernel_data_sources=dm-crypt`
++
++As well as what's required for the IMA tests, dm-crypt measurement test require
++reading the IMA policy allowed in the kernel configuration:
++```
++CONFIG_IMA_READ_POLICY=y
++```
++
++The following kernel configuration is also required. It enables compiling
++the device-mapper target module dm-crypt, which allows to create a device
++that transparently encrypts the data on it.
++```
++CONFIG_DM_CRYPT
++```
++
+ ## EVM tests
+ 
+ `evm_overlay.sh` requires a builtin IMA appraise tcb policy (e.g. `ima_policy=appraise_tcb`
+diff --git a/testcases/kernel/security/integrity/ima/tests/ima_dm_crypt.sh b/testcases/kernel/security/integrity/ima/tests/ima_dm_crypt.sh
+new file mode 100755
+index 000000000..ee572ed01
+--- /dev/null
++++ b/testcases/kernel/security/integrity/ima/tests/ima_dm_crypt.sh
+@@ -0,0 +1,118 @@
++#!/bin/sh
++# SPDX-License-Identifier: GPL-2.0-or-later
++# Copyright (c) 2020 Microsoft Corporation
++# Author: Tushar Sugandhi <tusharsu@linux.microsoft.com>
++#
++# Verify that DM target dm-crypt is measured correctly based on policy.
++
++TST_NEEDS_CMDS="grep cut sed tr dmsetup"
++TST_CNT=1
++TST_NEEDS_DEVICE=1
++TST_SETUP=setup
++
++. ima_setup.sh
++
++FUNC_CRIT_DATA='func=CRITICAL_DATA'
++TEMPLATE_BUF='template=ima-buf'
++REQUIRED_POLICY="^measure.*($FUNC_CRIT_DATA.*$TEMPLATE_BUF|$TEMPLATE_BUF.*$FUNC_CRIT_DATA)"
++
++setup()
++{
++	tst_res TINFO "inside setup"
++	require_ima_policy_content "$REQUIRED_POLICY" '-E' > policy.txt
++}
++
++check_dm_crypt_policy()
++{
++	local pattern="$1"
++
++	if ! grep -E "$pattern" policy.txt; then
++		tst_res TCONF "IMA policy must specify $pattern, $FUNC_CRIT_DATA, $TEMPLATE_BUF"
++		return 1
++	fi
++	return 0
++}
++
++test1()
++{
++	local dmcheck_lines i dm_targets templates
++	local policy="critical_kernel_data_sources"
++	local pattern='critical_kernel_data_sources=[^[:space:]]+'
++	local tmp_file="tmp.txt"
++	local tokens_file="tokens_file.txt" grep_file="grep_file.txt"
++	local arg cmd key tgt_name
++	local res=0
++
++	tst_res TINFO "verifying dm target - dmcrypt gets measured correctly."
++
++	check_dm_crypt_policy "$pattern" > $tmp_file || return
++
++	dmcheck_lines=$(cat $tmp_file)
++	dm_targets=$(for i in $dmcheck_lines; do echo "$i" | grep "$policy" | \
++		sed "s/\./\\\./g" | cut -d'=' -f2; done | sed ':a;N;$!ba;s/\n/|/g')
++	if [ -z "$dm_targets" ]; then
++		tst_res TCONF "IMA policy has a $policy key-value specifier, but no specified sources."
++		return
++	fi
++
++	templates=$(for i in $dmcheck_lines; do echo "$i" | grep "template" | \
++		cut -d'=' -f2; done | sed ':a;N;$!ba;s/\n/|/g')
++
++	tst_res TINFO "dm_targets: '$dm_targets'"
++	tst_res TINFO "templates: '$templates'"
++
++	tgt="crypt"
++	key="faf453b4ee938cff2f0d2c869a0b743f59125c0a37f5bcd8f1dbbd911a78abaa"
++
++	arg="'0 1953125 crypt aes-xts-plain64 "
++	arg="$arg $key 0 "
++	arg="$arg /dev/loop0 0 1 allow_discards'"
++	tgt_name="test-crypt"
++	cmd="dmsetup create $tgt_name --table $arg"
++
++	tst_res TINFO "Executing: $cmd"
++	eval $cmd
++
++	grep -E "($templates)*($dm_targets)" $ASCII_MEASUREMENTS > $grep_file
++
++	while read line
++	do
++		local act_digest exp_digest comp_digest algorithm
++
++		act_digest=$(echo "$line" | cut -d' ' -f4 | cut -d':' -f2)
++		algorithm=$(echo "$line" | cut -d' ' -f4 | cut -d':' -f1)
++		dmtgt_evtname=$(echo "$line" | cut -d' ' -f5)
++
++		echo "$line" | cut -d' ' -f6 | xxd -r -p > $tokens_file
++		plain_text=$(echo "$line" | cut -d' ' -f6 | xxd -r -p)
++
++		#expected digest for $cmd
++		exp_digest="039d8ff71918608d585adca3e5aab2e3f41f84d6"
++		comp_digest="$(compute_digest $algorithm $tokens_file)" || \
++			tst_brk TCONF "cannot compute digest for $algorithm"
++
++		if [ "$act_digest" != "$comp_digest" ]; then
++			tst_res TFAIL "Incorrect digest for ($dmtgt_evtname)."
++			tst_res TFAIL "Expected digest:($comp_digest)."
++			tst_res TFAIL "Actual digest:($act_digest)."
++			tst_res TINFO "Removing DM target $tgt_name."
++			dmsetup remove $tgt_name
++			return
++		fi
++
++		if [ "$act_digest" = "$exp_digest" ]; then
++			res=1
++		fi
++
++	done < $grep_file
++
++	if [ $res -eq 1 ]; then
++		tst_res TPASS "dm-crypt target verification passed."
 +	else
-+		msg = daemon_status_msg[new_state];
++		tst_res TFAIL "dm-crypt target verification failed."
++	fi
++	tst_res TINFO "Removing DM target $tgt_name."
++	dmsetup remove $tgt_name
++}
 +
-+	if (!safe_sprintf(notify_msg, "%s%s", prefix, msg))
-+		sd_notify(0, notify_msg);
- }
- #endif
-
++tst_run
 -- 
-2.24.0.windows.2
+2.17.1
