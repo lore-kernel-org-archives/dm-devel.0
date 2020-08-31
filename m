@@ -1,26 +1,56 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: fix block device size update serialization v2
-Date: Sat, 29 Aug 2020 10:47:11 -0600
-Message-ID: <b1960016-c265-1e1d-cfd7-de2330bc5eac@kernel.dk>
-References: <20200823091043.2600261-1-hch@lst.de>
- <20200827074758.GA8009@lst.de>
+From: Damien Le Moal <damien.lemoal@wdc.com>
+Subject: [PATCH] dm crypt: Initialize crypto wait structures
+Date: Mon, 31 Aug 2020 14:55:55 +0900
+Message-ID: <20200831055555.471935-1-damien.lemoal@wdc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200827074758.GA8009@lst.de>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Justin Sanders <justin@coraid.com>, Josef Bacik <josef@toxicpanda.com>, Xianting Tian <xianting_tian@126.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, Stefan Haberland <sth@linux.ibm.com>, Jan Hoeppner <hoeppner@linux.ibm.com>, linux-kernel@vger.kernel.org, nbd@other.debian.org, linux-nvme@lists.infradead.org, linux-s390@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On 8/27/20 1:47 AM, Christoph Hellwig wrote:
-> Jens, can you consider this for 5.9?  It reliably fixes the reported
-> hangs with nvme hotremoval that we've had for a few releases.
+Use the DECLARE_CRYPTO_WAIT() macro to properly initialize the crypto
+wait structures declared on stack before their use with
+crypto_wait_req().
 
-I've queued this up for 5.10. I think it's too late for 5.9 at this
-point, and it's not a regression in this release.
+Fixes: 39d13a1ac41d ("dm crypt: reuse eboiv skcipher for IV generation")
+Fixes: bbb1658461ac ("dm crypt: Implement Elephant diffuser for Bitlocker compatibility")
+Cc: stable@vger.kernel.org
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+---
+ drivers/md/dm-crypt.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 238cd80826a6..380386c36921 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -739,7 +739,7 @@ static int crypt_iv_eboiv_gen(struct crypt_config *cc, u8 *iv,
+ 	u8 buf[MAX_CIPHER_BLOCKSIZE] __aligned(__alignof__(__le64));
+ 	struct skcipher_request *req;
+ 	struct scatterlist src, dst;
+-	struct crypto_wait wait;
++	DECLARE_CRYPTO_WAIT(wait);
+ 	int err;
+ 
+ 	req = skcipher_request_alloc(any_tfm(cc), GFP_NOIO);
+@@ -936,7 +936,7 @@ static int crypt_iv_elephant(struct crypt_config *cc, struct dm_crypt_request *d
+ 	u8 *es, *ks, *data, *data2, *data_offset;
+ 	struct skcipher_request *req;
+ 	struct scatterlist *sg, *sg2, src, dst;
+-	struct crypto_wait wait;
++	DECLARE_CRYPTO_WAIT(wait);
+ 	int i, r;
+ 
+ 	req = skcipher_request_alloc(elephant->tfm, GFP_NOIO);
 -- 
-Jens Axboe
+2.26.2
