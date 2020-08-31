@@ -1,58 +1,115 @@
-From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Subject: [PATCH V4 0/5] multipath-tools series: some cleanups and
-	fixes
-Date: Mon, 31 Aug 2020 19:36:15 +0800
-Message-ID: <50b2333d-8c5d-8705-a31a-11bb84980373@huawei.com>
+From: Mimi Zohar <zohar@linux.ibm.com>
+Subject: Re: [PATCH v3 2/6] IMA: change process_buffer_measurement return
+ type from void to int
+Date: Mon, 31 Aug 2020 07:36:32 -0400
+Message-ID: <e76bdb18c6045702156441470e50380445e6e218.camel@linux.ibm.com>
+References: <20200828015704.6629-1-tusharsu@linux.microsoft.com>
+         <20200828015704.6629-3-tusharsu@linux.microsoft.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Language: en-US
-To: Martin Wilck <mwilck@suse.com>
-Cc: lixiaokeng <lixiaokeng@huawei.com>, yanxiaodan@huawei.com, linfeilong <linfeilong@huawei.com>, dm-devel@redhat.com, zkabelac@redhat.com, liuzhiqiang26@huawei.com
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <20200828015704.6629-3-tusharsu@linux.microsoft.com>
+Sender: owner-linux-security-module@vger.kernel.org
+To: Tushar Sugandhi <tusharsu@linux.microsoft.com>, stephen.smalley.work@gmail.com, casey@schaufler-ca.com, agk@redhat.com, snitzer@redhat.com, gmazyland@gmail.com
+Cc: tyhicks@linux.microsoft.com, sashal@kernel.org, jmorris@namei.org, nramas@linux.microsoft.com, linux-integrity@vger.kernel.org, selinux@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On Thu, 2020-08-27 at 18:57 -0700, Tushar Sugandhi wrote:
+> process_buffer_measurement() does not return the result of the operation.
+> Therefore, the consumers of this function cannot act on it, if needed.
+> 
+> Update return type of process_buffer_measurement() from void to int.
 
-When I learn and review the multipath-tools source code, I find
-some cleanups and fixes.
+Failure to measure may be audited, but should never fail.  This is one
+of the main differences between secure and trusted boot concepts. 
+Notice in process_measurement() that -EACCES is only returned for
+appraisal.
 
-V3->V4:
-[PATCH V4 2/5] multipathd: use daemon_status_msg to construct sd notify msg
-in do_sd_notify func
--- put "STATUS=" in format string to avoid "prefix" var as suggested by
-Martin.
+Returning a failure from process_buffer_measurement() in itself isn't a
+problem, as long as the failure isn't returned to the LSM/IMA hook. 
+However,  just as the callers of  process_measurement() originally
+processed the result, that processing was moved into
+process_measurement() [1].
 
+Mimi
 
-V2->V3:
-[PATCH V3 1/5] multipathd: adopt static char* arr in daemon_status
-  - add default case in sd_notify_status to fix compile error
-[PATCH V3 2/5] multipathd: use daemon_status_msg to construct sd notify
-  - set MSG_SIZE to 32 and use safe_sprintf as suggested by Martin.
+[1] 750943a30714 ima: remove enforce checking duplication
 
-V1->V2:
-- rewrite some patches as suggested by Martin.
-
-repo: openSUSE/multipath-tools
-repo link: https://github.com/openSUSE/multipath-tools
-branch: upstream-queue
-
-ZhiqiangLiu (2):
-  multipathd: adopt static char* arr in daemon_status
-  multipathd: use daemon_status_msg to construct sd notify msg in
-    do_sd_notify func
-
- multipathd/main.c | 62 +++++++++++++++++++++--------------------------
- multipathd/main.h |  3 ++-
- 2 files changed, 29 insertions(+), 36 deletions(-)
-
--- 
-2.24.0.windows.2
+> 
+> Signed-off-by: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+> ---
+>  security/integrity/ima/ima.h      |  6 +++---
+>  security/integrity/ima/ima_main.c | 14 +++++++-------
+>  2 files changed, 10 insertions(+), 10 deletions(-)
+> 
+> diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
+> index 8875085db689..83ed57147e68 100644
+> --- a/security/integrity/ima/ima.h
+> +++ b/security/integrity/ima/ima.h
+> @@ -265,9 +265,9 @@ void ima_store_measurement(struct integrity_iint_cache *iint, struct file *file,
+>  			   struct evm_ima_xattr_data *xattr_value,
+>  			   int xattr_len, const struct modsig *modsig, int pcr,
+>  			   struct ima_template_desc *template_desc);
+> -void process_buffer_measurement(struct inode *inode, const void *buf, int size,
+> -				const char *eventname, enum ima_hooks func,
+> -				int pcr, const char *func_data);
+> +int process_buffer_measurement(struct inode *inode, const void *buf, int size,
+> +			       const char *eventname, enum ima_hooks func,
+> +			       int pcr, const char *func_data);
+>  void ima_audit_measurement(struct integrity_iint_cache *iint,
+>  			   const unsigned char *filename);
+>  int ima_alloc_init_template(struct ima_event_data *event_data,
+> diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
+> index c870fd6d2f83..0979a62a9257 100644
+> --- a/security/integrity/ima/ima_main.c
+> +++ b/security/integrity/ima/ima_main.c
+> @@ -736,9 +736,9 @@ int ima_load_data(enum kernel_load_data_id id)
+>   *
+>   * Based on policy, the buffer is measured into the ima log.
+>   */
+> -void process_buffer_measurement(struct inode *inode, const void *buf, int size,
+> -				const char *eventname, enum ima_hooks func,
+> -				int pcr, const char *func_data)
+> +int process_buffer_measurement(struct inode *inode, const void *buf, int size,
+> +			       const char *eventname, enum ima_hooks func,
+> +			       int pcr, const char *func_data)
+>  {
+>  	int ret = 0;
+>  	const char *audit_cause = "ENOMEM";
+> @@ -758,7 +758,7 @@ void process_buffer_measurement(struct inode *inode, const void *buf, int size,
+>  	u32 secid;
+>  
+>  	if (!ima_policy_flag)
+> -		return;
+> +		return 0;
+>  
+>  	/*
+>  	 * Both LSM hooks and auxilary based buffer measurements are
+> @@ -772,7 +772,7 @@ void process_buffer_measurement(struct inode *inode, const void *buf, int size,
+>  		action = ima_get_action(inode, current_cred(), secid, 0, func,
+>  					&pcr, &template, func_data);
+>  		if (!(action & IMA_MEASURE))
+> -			return;
+> +			return 0;
+>  	}
+>  
+>  	if (!pcr)
+> @@ -787,7 +787,7 @@ void process_buffer_measurement(struct inode *inode, const void *buf, int size,
+>  			pr_err("template %s init failed, result: %d\n",
+>  			       (strlen(template->name) ?
+>  				template->name : template->fmt), ret);
+> -			return;
+> +			return ret;
+>  		}
+>  	}
+>  
+> @@ -819,7 +819,7 @@ void process_buffer_measurement(struct inode *inode, const void *buf, int size,
+>  					func_measure_str(func),
+>  					audit_cause, ret, 0, ret);
+>  
+> -	return;
+> +	return ret;
+>  }
+>  
+>  /**
