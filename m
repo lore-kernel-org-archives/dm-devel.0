@@ -1,49 +1,49 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH V4 2/5] multipathd: use daemon_status_msg to
- construct sd notify msg in do_sd_notify func
-Date: Mon, 31 Aug 2020 16:36:58 +0200
-Message-ID: <bfd637399397e33f01b5cdb9b7f8f9eaaa698103.camel@suse.com>
-References: <50b2333d-8c5d-8705-a31a-11bb84980373@huawei.com>
-	<76528c71-f8b9-1595-edc1-e9061858a76f@huawei.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: [PATCH 1/9] Documentation/filesystems/locking.rst: remove an
+ incorrect sentence
+Date: Tue,  1 Sep 2020 17:57:40 +0200
+Message-ID: <20200901155748.2884-2-hch@lst.de>
+References: <20200901155748.2884-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <76528c71-f8b9-1595-edc1-e9061858a76f@huawei.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Cc: lixiaokeng <lixiaokeng@huawei.com>, yanxiaodan@huawei.com, linfeilong <linfeilong@huawei.com>, dm-devel@redhat.com, zkabelac@redhat.com
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+In-Reply-To: <20200901155748.2884-1-hch@lst.de>
+List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
+ <mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
+ <mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+Sender: "Virtualization" <virtualization-bounces@lists.linux-foundation.org>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-raid@vger.kernel.org, linux-scsi@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>, nbd@other.debian.org, virtualization@lists.linux-foundation.org, ceph-devel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, 2020-08-31 at 19:37 +0800, Zhiqiang Liu wrote:
-> sd_notify_status() is very similar with daemon_status(), except
-> DAEMON_IDLE and DAEMON_RUNNING state. As suggested by Martin,
-> we can create the sd notification string in a dynamic buffer,
-> and treat DAEMON_IDLE and DAEMON_RUNNING cases first. Then,
-> we can use daemon_status_msg[state] for other cases.
-> 
-> V3->V4:
-> - put "STATUS=" in format string to avoid "prefix" var as suggested
-> by
-> Martin.
-> 
-> V2->V3:
-> - set MSG_SIZE to 32 and use safe_sprintf as suggested by Martin.
-> 
-> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
-> ---
->  multipathd/main.c | 33 +++++++++++----------------------
->  1 file changed, 11 insertions(+), 22 deletions(-)
-> 
+unlock_native_capacity is never called from check_disk_change(), and
+while revalidate_disk can be called from it, it can also be called
+from two other places at the moment.
 
-Thank you.
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ Documentation/filesystems/locking.rst | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/Documentation/filesystems/locking.rst b/Documentation/filesystems/locking.rst
+index 64f94a18d97e75..c0f2c7586531b0 100644
+--- a/Documentation/filesystems/locking.rst
++++ b/Documentation/filesystems/locking.rst
+@@ -488,9 +488,6 @@ getgeo:			no
+ swap_slot_free_notify:	no	(see below)
+ ======================= ===================
+ 
+-unlock_native_capacity and revalidate_disk are called only from
+-check_disk_change().
+-
+ swap_slot_free_notify is called with swap_lock and sometimes the page lock
+ held.
+ 
+-- 
+2.28.0
