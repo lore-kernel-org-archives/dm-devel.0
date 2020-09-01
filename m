@@ -1,8 +1,8 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 2/9] block: don't clear bd_invalidated in
- check_disk_size_change
-Date: Tue,  1 Sep 2020 17:57:41 +0200
-Message-ID: <20200901155748.2884-3-hch@lst.de>
+Subject: [PATCH 5/9] block: use revalidate_disk_size in
+ set_capacity_revalidate_and_notify
+Date: Tue,  1 Sep 2020 17:57:44 +0200
+Message-ID: <20200901155748.2884-6-hch@lst.de>
 References: <20200901155748.2884-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,39 +22,52 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: linux-raid@vger.kernel.org, linux-scsi@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>, nbd@other.debian.org, virtualization@lists.linux-foundation.org, ceph-devel@vger.kernel.org
 List-Id: dm-devel.ids
 
-bd_invalidated is set by check_disk_change or in add_disk to initiate a
-partition scan.  Move it from check_disk_size_change which is called
-from both revalidate_disk() and bdev_disk_changed() to only the latter,
-as that is what is called from the block device open code (and nbd) to
-deal with the bd_invalidated event.  revalidate_disk() on the other hand
-is mostly used to propagate a size update from the gendisk to the block
-device, which is entirely unrelated.
+Only virtio_blk and xen-blkfront set the revalidate argument to true,
+and both do not implement the ->revalidate_disk method.  So switch
+to the helper that just updates the size instead.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/block_dev.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ block/genhd.c         | 7 +++----
+ include/linux/genhd.h | 4 ++--
+ 2 files changed, 5 insertions(+), 6 deletions(-)
 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 08158bb2e76c85..2760292045c082 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -1302,7 +1302,6 @@ static void check_disk_size_change(struct gendisk *disk,
- 		}
- 		i_size_write(bdev->bd_inode, disk_size);
- 	}
--	bdev->bd_invalidated = 0;
- 	spin_unlock(&bdev->bd_size_lock);
+diff --git a/block/genhd.c b/block/genhd.c
+index a2c0ec694918e5..431d4081b50ec7 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -50,14 +50,13 @@ static void disk_release_events(struct gendisk *disk);
+  * zero and will not be set to zero
+  */
+ void set_capacity_revalidate_and_notify(struct gendisk *disk, sector_t size,
+-					bool revalidate)
++					bool update_bdev)
+ {
+ 	sector_t capacity = get_capacity(disk);
  
- 	if (bdev_size > disk_size) {
-@@ -1391,6 +1390,8 @@ int bdev_disk_changed(struct block_device *bdev, bool invalidate)
+ 	set_capacity(disk, size);
+-
+-	if (revalidate)
+-		revalidate_disk(disk);
++	if (update_bdev)
++		revalidate_disk_size(disk, true);
  
- 	lockdep_assert_held(&bdev->bd_mutex);
+ 	if (capacity != size && capacity != 0 && size != 0) {
+ 		char *envp[] = { "RESIZE=1", NULL };
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index 8e9c9d3a493fae..c340b392452ce6 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -315,8 +315,8 @@ static inline int get_disk_ro(struct gendisk *disk)
+ extern void disk_block_events(struct gendisk *disk);
+ extern void disk_unblock_events(struct gendisk *disk);
+ extern void disk_flush_events(struct gendisk *disk, unsigned int mask);
+-extern void set_capacity_revalidate_and_notify(struct gendisk *disk,
+-			sector_t size, bool revalidate);
++void set_capacity_revalidate_and_notify(struct gendisk *disk, sector_t size,
++		bool update_bdev);
+ extern unsigned int disk_clear_events(struct gendisk *disk, unsigned int mask);
  
-+	bdev->bd_invalidated = 0;
-+
- rescan:
- 	ret = blk_drop_partitions(bdev);
- 	if (ret)
+ /* drivers/char/random.c */
 -- 
 2.28.0
