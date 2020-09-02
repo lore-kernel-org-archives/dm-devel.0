@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH 13/14] multipath: use
- update_multipath_table/status in, check_useable_paths
-Date: Wed, 2 Sep 2020 15:25:28 +0800
-Message-ID: <78021dc0-bede-f376-b450-40dd5522786b@huawei.com>
+Subject: [PATCH 14/14] multipathpersist: delete unused variable
+	in handle_args
+Date: Wed, 2 Sep 2020 15:26:29 +0800
+Message-ID: <829f930f-f426-bcd6-602d-26959accaef7@huawei.com>
 References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,42 +23,25 @@ To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Ch
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-The return values of dm_get_map, disassemble_map,dm_get_status
-and disassemble_status in check_usable_paths were not checked.
-Use update_multipath_table/status to instead of them.
+In handle_args, the tmp isn't used. We delete it.
 
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- multipath/main.c | 9 +++------
- 1 file changed, 3 insertions(+), 6 deletions(-)
+ mpathpersist/main.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index d227e0b3..9e920d89 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -251,7 +251,6 @@ static int check_usable_paths(struct config *conf,
- 	struct path *pp;
- 	char *mapname;
- 	vector pathvec = NULL;
--	char params[PARAMS_SIZE], status[PARAMS_SIZE];
- 	dev_t devt;
- 	int r = 1, i, j;
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index f20c902c..ccf0024e 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -213,7 +213,6 @@ static int handle_args(int argc, char * argv[], int nline)
+ 	int num_transport =0;
+ 	char *batch_fn = NULL;
+ 	void *resp = NULL;
+-	struct transportid * tmp;
 
-@@ -285,11 +284,9 @@ static int check_usable_paths(struct config *conf,
- 	if (mpp == NULL)
- 		goto free;
+ 	memset(transportids, 0, MPATH_MX_TIDS * sizeof(struct transportid));
 
--	dm_get_map(mpp->alias, &mpp->size, params);
--	dm_get_status(mpp->alias, status);
--	disassemble_map(pathvec, params, mpp);
--	update_pathvec_from_dm(pathvec, mpp, 0);
--	disassemble_status(status, mpp);
-+	if (update_multipath_table(mpp, pathvec, 0) != DMP_OK ||
-+		    update_multipath_status(mpp) != DMP_OK)
-+		    goto free;
-
- 	vector_foreach_slot (mpp->pg, pg, i) {
- 		vector_foreach_slot (pg->paths, pp, j) {
 -- 
