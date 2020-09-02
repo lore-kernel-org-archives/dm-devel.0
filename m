@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH 06/14] kpartx: check return value of malloc in
-	main func
-Date: Wed, 2 Sep 2020 15:19:14 +0800
-Message-ID: <dae35ea9-6825-bd0f-68b5-c327fc1a5a95@huawei.com>
+Subject: [PATCH 07/14] libmultipath: check return value of
+ dm_mapname in, sysfs_check_holders
+Date: Wed, 2 Sep 2020 15:19:51 +0800
+Message-ID: <efc49805-8938-00d4-5eff-230f8f6f064e@huawei.com>
 References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,28 +23,35 @@ To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Ch
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-In main func of kpartx.c, we should check return value of
-malloc before using it.
+In sysfs_check_holders func, table_name is obtained by calling
+dm_mapname func, and then call dm_reassign_table for reassigning
+table. However, we donnot check whether dm_mapname func returns
+NULL, and then it may cause a segmentation fault in dm_task_set_name.
+
+Here, we will check whether dm_mapname func returns NULL before
+using it.
 
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 ---
- kpartx/kpartx.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ libmultipath/sysfs.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index 98f6176e..2f6dea7c 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -384,6 +384,10 @@ main(int argc, char **argv){
-
- 	if (delim == NULL) {
- 		delim = malloc(DELIM_SIZE);
-+		if (!delim) {
-+			fprintf(stderr, "malloc delim failed.\n");
-+			exit(1);
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index 12a82d95..5390de62 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -278,7 +278,11 @@ int sysfs_check_holders(char * check_devt, char * new_devt)
+ 			continue;
+ 		}
+ 		table_name = dm_mapname(major, table_minor);
+-
++		if (!table_name) {
++			condlog(2, "%s: mapname not found for %d:%d", check_dev,
++				major, table_minor);
++			continue;
 +		}
- 		memset(delim, 0, DELIM_SIZE);
- 		set_delimiter(mapname, delim);
- 	}
+ 		condlog(0, "%s: reassign table %s old %s new %s", check_dev,
+ 			table_name, check_devt, new_devt);
+
 -- 
