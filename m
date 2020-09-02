@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH 01/14] multipathd: return if dm_get_major_minor
- failed in, cli_add_map
-Date: Wed, 2 Sep 2020 15:15:48 +0800
-Message-ID: <b1baac25-58c2-8f27-67bd-5d050fcdf8c7@huawei.com>
+Subject: [PATCH 02/14] libmultipath: check malloc return value in,
+ print_foreign_topology
+Date: Wed, 2 Sep 2020 15:16:43 +0800
+Message-ID: <a89192b4-f330-6a18-e4d7-e18305b1e66a@huawei.com>
 References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,33 +23,28 @@ To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Ch
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-If dm_get_major_minor failed, log with major and minor should not
-be printed to avoid major and minor used before initialization.
+We check the return value of malloc in print_foreign_topology.
 
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- multipathd/cli_handlers.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ libmultipath/foreign.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 8db37961..2d297fd0 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -847,11 +847,12 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
- 		else {
- 			sprintf(dev_path, "dm-%d", minor);
- 			alias = dm_mapname(major, minor);
-+			if (!alias)
-+				condlog(2, "%s: mapname not found for %d:%d",
-+					param, major, minor);
- 		}
- 		/*if there is no mapname found, we first create the device*/
- 		if (!alias && !count) {
--			condlog(2, "%s: mapname not found for %d:%d",
--				param, major, minor);
- 			get_refwwid(CMD_NONE, param, DEV_DEVMAP,
- 				    vecs->pathvec, &refwwid);
- 			if (refwwid) {
--- 
+diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
+index e8f61351..44f32d03 100644
+--- a/libmultipath/foreign.c
++++ b/libmultipath/foreign.c
+@@ -545,6 +545,10 @@ void print_foreign_topology(int verbosity)
+ 	char *buf = NULL, *tmp = NULL;
+
+ 	buf = malloc(buflen);
++	if (!buf) {
++		condlog (0, "malloc buf failed.");
++		return;
++	}
+ 	buf[0] = '\0';
+ 	while (buf != NULL) {
+ 		char *c = buf;
+--
