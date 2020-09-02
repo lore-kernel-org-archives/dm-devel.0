@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH 07/14] libmultipath: check return value of
- dm_mapname in, sysfs_check_holders
-Date: Wed, 2 Sep 2020 15:19:51 +0800
-Message-ID: <efc49805-8938-00d4-5eff-230f8f6f064e@huawei.com>
+Subject: [PATCH 08/14] libmultipath: donot free *dst if REALLOC
+ fails in, merge_words
+Date: Wed, 2 Sep 2020 15:20:29 +0800
+Message-ID: <f8ec7113-a9da-46a0-16c8-1e245f9592f0@huawei.com>
 References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,35 +23,39 @@ To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Ch
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-In sysfs_check_holders func, table_name is obtained by calling
-dm_mapname func, and then call dm_reassign_table for reassigning
-table. However, we donnot check whether dm_mapname func returns
-NULL, and then it may cause a segmentation fault in dm_task_set_name.
+In merge_words func, if REALLOC() fails, the input *dst will
+be freed. If so, mpp->hwhandler| mpp->features|mpp->selector
+may be set to NULL after calling merge_words func in
+disassemble_map func. This may cause accessing freed memory
+problem.
 
-Here, we will check whether dm_mapname func returns NULL before
-using it.
+Here, we donot free *dst if REALLOC() fails in merge_words func.
 
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 ---
- libmultipath/sysfs.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ libmultipath/dmparser.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index 12a82d95..5390de62 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -278,7 +278,11 @@ int sysfs_check_holders(char * check_devt, char * new_devt)
- 			continue;
- 		}
- 		table_name = dm_mapname(major, table_minor);
--
-+		if (!table_name) {
-+			condlog(2, "%s: mapname not found for %d:%d", check_dev,
-+				major, table_minor);
-+			continue;
-+		}
- 		condlog(0, "%s: reassign table %s old %s new %s", check_dev,
- 			table_name, check_devt, new_devt);
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index c1031616..482e9d0e 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -26,13 +26,12 @@ merge_words(char **dst, const char *word)
 
+ 	dstlen = strlen(*dst);
+ 	len = dstlen + strlen(word) + 2;
+-	*dst = REALLOC(*dst, len);
++	p = REALLOC(*dst, len);
+
+-	if (!*dst) {
+-		free(p);
++	if (!p)
+ 		return 1;
+-	}
+
++	*dst = p;
+ 	p = *dst + dstlen;
+ 	*p = ' ';
+ 	++p;
 -- 
