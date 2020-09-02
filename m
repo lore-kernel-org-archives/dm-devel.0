@@ -1,41 +1,76 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: remove revalidate_disk()
-Date: Wed, 2 Sep 2020 08:02:49 -0600
-Message-ID: <78d5ab8a-4387-7bfb-6e25-07fd6c1ddc10@kernel.dk>
-References: <20200901155748.2884-1-hch@lst.de>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 06/14] block: lift setting the readahead size
+ into the block layer
+Date: Wed, 2 Sep 2020 17:11:44 +0200
+Message-ID: <20200902151144.GA1738@lst.de>
+References: <20200726150333.305527-1-hch@lst.de>
+	<20200726150333.305527-7-hch@lst.de>
+	<20200826220737.GA25613@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <virtualization-bounces@lists.linux-foundation.org>
-In-Reply-To: <20200901155748.2884-1-hch@lst.de>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.linuxfoundation.org/mailman/options/virtualization>,
- <mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
-List-Archive: <http://lists.linuxfoundation.org/pipermail/virtualization/>
-List-Post: <mailto:virtualization@lists.linux-foundation.org>
-List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
-List-Subscribe: <https://lists.linuxfoundation.org/mailman/listinfo/virtualization>,
- <mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
-Errors-To: virtualization-bounces@lists.linux-foundation.org
-Sender: "Virtualization" <virtualization-bounces@lists.linux-foundation.org>
-To: Christoph Hellwig <hch@lst.de>
-Cc: linux-raid@vger.kernel.org, linux-scsi@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>, linux-block@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>, nbd@other.debian.org, virtualization@lists.linux-foundation.org, ceph-devel@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200826220737.GA25613@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, martin.petersen@oracle.com, Hans de Goede <hdegoede@redhat.com>, Song Liu <song@kernel.org>, Richard Weinberger <richard@nod.at>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Minchan Kim <minchan@kernel.org>, dm-devel@redhat.com, linux-mtd@lists.infradead.org, linux-mm@kvack.org, drbd-dev@tron.linbit.com, cgroups@vger.kernel.org, Christoph Hellwig <hch@lst.de>
 List-Id: dm-devel.ids
 
-On 9/1/20 9:57 AM, Christoph Hellwig wrote:
-> Hi Jens,
+On Wed, Aug 26, 2020 at 06:07:38PM -0400, Mike Snitzer wrote:
+> On Sun, Jul 26 2020 at 11:03am -0400,
+> Christoph Hellwig <hch@lst.de> wrote:
 > 
-> this series removes the revalidate_disk() function, which has been a
-> really odd duck in the last years.  The prime reason why most people
-> use it is because it propagates a size change from the gendisk to
-> the block_device structure.  But it also calls into the rather ill
-> defined ->revalidate_disk method which is rather useless for the
-> callers.  So this adds a new helper to just propagate the size, and
-> cleans up all kinds of mess around this area.  Follow on patches
-> will eventuall kill of ->revalidate_disk entirely, but ther are a lot
-> more patches needed for that.
+> > Drivers shouldn't really mess with the readahead size, as that is a VM
+> > concept.  Instead set it based on the optimal I/O size by lifting the
+> > algorithm from the md driver when registering the disk.  Also set
+> > bdi->io_pages there as well by applying the same scheme based on
+> > max_sectors.
+> > 
+> > Signed-off-by: Christoph Hellwig <hch@lst.de>
+> > ---
+> >  block/blk-settings.c         |  5 ++---
+> >  block/blk-sysfs.c            |  1 -
+> >  block/genhd.c                | 13 +++++++++++--
+> >  drivers/block/aoe/aoeblk.c   |  2 --
+> >  drivers/block/drbd/drbd_nl.c | 12 +-----------
+> >  drivers/md/bcache/super.c    |  4 ----
+> >  drivers/md/dm-table.c        |  3 ---
+> >  drivers/md/raid0.c           | 16 ----------------
+> >  drivers/md/raid10.c          | 24 +-----------------------
+> >  drivers/md/raid5.c           | 13 +------------
+> >  10 files changed, 16 insertions(+), 77 deletions(-)
+> 
+> 
+> In general these changes need a solid audit relative to stacking
+> drivers.  That is, the limits stacking methods (blk_stack_limits)
+> vs lower level allocation methods (__device_add_disk).
+> 
+> You optimized for lowlevel __device_add_disk establishing the bdi's
+> ra_pages and io_pages.  That is at the beginning of disk allocation,
+> well before any build up of stacking driver's queue_io_opt() -- which
+> was previously done in disk_stack_limits or driver specific methods
+> (e.g. dm_table_set_restrictions) that are called _after_ all the limits
+> stacking occurs.
+> 
+> By inverting the setting of the bdi's ra_pages and io_pages to be done
+> so early in __device_add_disk it'll break properly setting these values
+> for at least DM afaict.
 
-Applied, thanks.
+ra_pages never got inherited by stacking drivers, check it by modifying
+it on an underlying device and then creating a trivial dm or md one.
+And I think that is a good thing - in general we shouldn't really mess
+with this thing from drivers if we can avoid it.  I've kept the legacy
+aoe and md parity raid cases, out of which the first looks pretty weird
+and the md one at least remotely sensible.
 
--- 
-Jens Axboe
+->io_pages is still inherited in disk_stack_limits, just like before
+so no change either.
