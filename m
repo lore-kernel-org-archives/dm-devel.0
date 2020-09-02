@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH 03/14] libmultipath: use map instead of
-	dm_task_get_name
-Date: Wed, 2 Sep 2020 15:17:27 +0800
-Message-ID: <209c5f12-b041-371a-8a80-8201b5b2cf98@huawei.com>
+Subject: [PATCH 04/14] multipathd: check MALLOC return value in,
+ mpath_pr_event_handler_fn
+Date: Wed, 2 Sep 2020 15:17:56 +0800
+Message-ID: <8b45a04b-c851-94ba-fcba-676c03b060e7@huawei.com>
 References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,27 +23,33 @@ To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Ch
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-In dm_mapname, dm_task_get_name(dmt) has been called and the return value
-has been stored in map. Use map instead of second  dm_task_get_name.
+In  mpath_pr_event_handler_fn, we use MALLOC instead of malloc, and check
+the return value of MALLOC.
 
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- libmultipath/devmapper.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ multipathd/main.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index cc2de1df..b4d77cb6 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -1315,7 +1315,7 @@ dm_mapname(int major, int minor)
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 67e9af11..7180d3c1 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -3391,8 +3391,12 @@ void *  mpath_pr_event_handler_fn (void * pathp )
+ 		goto out;
+ 	}
 
- 	map = dm_task_get_name(dmt);
- 	if (map && strlen(map))
--		response = STRDUP((const char *)dm_task_get_name(dmt));
-+		response = STRDUP((const char *)map);
-
- 	dm_task_destroy(dmt);
- 	return response;
+-	param= malloc(sizeof(struct prout_param_descriptor));
+-	memset(param, 0 , sizeof(struct prout_param_descriptor));
++	param = (struct prout_param_descriptor *)MALLOC(sizeof(struct prout_param_descriptor));
++	if (!param) {
++		ret = MPATH_PR_OTHER;
++		goto out;
++	}
++
+ 	param->sa_flags = mpp->sa_flags;
+ 	memcpy(param->sa_key, &mpp->reservation_key, 8);
+ 	param->num_transportid = 0;
 -- 
