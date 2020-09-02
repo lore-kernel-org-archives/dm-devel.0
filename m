@@ -1,9 +1,9 @@
 From: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
-Subject: Re: [PATCH 3/9] block: rename bd_invalidated
-Date: Wed, 2 Sep 2020 07:23:11 +0000
-Message-ID: <SN4PR0401MB35989D97E602B0000F82E67B9B2F0@SN4PR0401MB3598.namprd04.prod.outlook.com>
+Subject: Re: [PATCH 4/9] block: add a new revalidate_disk_size helper
+Date: Wed, 2 Sep 2020 07:23:25 +0000
+Message-ID: <SN4PR0401MB35985F2B6C51B7C5027A636A9B2F0@SN4PR0401MB3598.namprd04.prod.outlook.com>
 References: <20200901155748.2884-1-hch@lst.de>
- <20200901155748.2884-4-hch@lst.de>
+ <20200901155748.2884-5-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
