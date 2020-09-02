@@ -1,31 +1,61 @@
-From: linmiaohe <linmiaohe@huawei.com>
-Subject: Re: [PATCH] block: make bio_crypt_clone() return an error code
-Date: Wed, 2 Sep 2020 06:34:16 +0000
-Message-ID: <b90bb41c7755452eb6f3fb3116ff9d6d@huawei.com>
+From: lixiaokeng <lixiaokeng@huawei.com>
+Subject: [PATCH 00/14] multipath-tools series: some cleanups and
+ fixes checked by codedex tool
+Date: Wed, 2 Sep 2020 14:40:39 +0800
+Message-ID: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Language: zh-CN
-Sender: linux-block-owner@vger.kernel.org
-To: Satya Tangirala <satyat@google.com>, Eric Biggers <ebiggers@kernel.org>
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Jens Axboe <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Language: en-GB
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel mailing list <dm-devel@redhat.com>
+Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-Satya Tangirala <satyat@google.com> wrote:
->On Tue, Sep 01, 2020 at 10:15:11PM -0700, Eric Biggers wrote:
->> From: Eric Biggers <ebiggers@google.com>
->> 
->> Callers of bio_clone_fast() may use a gfp_mask that excludes 
->> GFP_DIRECT_RECLAIM.  For example, map_request() uses GFP_ATOMIC.
->> 
->> If this were to happen, the mempool_alloc() in __bio_crypt_clone() can 
->> fail, causing a NULL dereference.
->The call to blk_crypto_rq_bio_prep() from blk_rq_prep_clone() could also fail for the same reason. So we may need to make blk_crypto_rq_bio_prep() also return a bool and handle the errors in the callers (the only other caller is I think blk_mq_bio_to_request(), which explicitly calls the function with GFP_NOIO, so maybe we could explicitly document the fact that blk_mq_bio_to_request will return true when called with a gfp_mask th
-at includes GFP_DIRECT_RECLAIM, and ignore the return value in blk_mq_bio_to_request()). (And maybe we should document the same for bio_crypt_set_ctx and bio_crypt_clone?)
+Hi:
+    Now, we check multipath-tools codes with codedex tool. Here
+are some some cleanups and fixes.
 
-Agreed.
-Except for above suggestions, the patch looks good for me, many thanks.
+Zhiqiang Liu (7):
+  multipathd: use MALLOC and check return value in cli_getprkey func
+  kpartx: check return value of malloc in main func
+  libmultipath: check return value of dm_mapname in sysfs_check_holders
+  libmultipath: donot free *dst if REALLOC fails in merge_words
+  libmultipath: check whether mp->features is NULl in assemble_map
+  util/tests: use assert_non_null to ensure malloc returns non-null
+    pointer
+  mpathpersist: check whether malloc paramp->trnptid_list fails in
+    handle_args func
 
->> 
->> In reality map_request() currently never has to clone an encryption  
+lixiaokeng (7):
+  multipathd: return if dm_get_major_minor failed in cli_add_map
+  libmultipath: check malloc return value in print_foreign_topology
+  libmultipath: use map instead of dm_task_get_name
+  multipathd: check MALLOC return value in mpath_pr_event_handler_fn
+  libmultipathpersist: use update_multipath_table/status in get_mpvec
+  multipath: use update_multipath_table/status in check_useable_paths
+  multipathpersist: delete unused variable in handle_args
+
+ kpartx/kpartx.c                 |  4 +++
+ libmpathpersist/mpath_persist.c | 11 ++-----
+ libmultipath/devmapper.c        |  2 +-
+ libmultipath/dmparser.c         | 18 +++++------
+ libmultipath/foreign.c          |  4 +++
+ libmultipath/sysfs.c            |  6 +++-
+ mpathpersist/main.c             | 56 +++++++++++++++++++++++++++------
+ multipath/main.c                |  9 ++----
+ multipathd/cli_handlers.c       | 17 +++++++---
+ multipathd/main.c               |  8 +++--
+ tests/util.c                    |  2 ++
+ 11 files changed, 96 insertions(+), 41 deletions(-)
+
+-- 
