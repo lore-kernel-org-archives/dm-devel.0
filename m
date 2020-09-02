@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH 02/14] libmultipath: check malloc return value in,
- print_foreign_topology
-Date: Wed, 2 Sep 2020 15:16:43 +0800
-Message-ID: <a89192b4-f330-6a18-e4d7-e18305b1e66a@huawei.com>
+Subject: [PATCH 03/14] libmultipath: use map instead of
+	dm_task_get_name
+Date: Wed, 2 Sep 2020 15:17:27 +0800
+Message-ID: <209c5f12-b041-371a-8a80-8201b5b2cf98@huawei.com>
 References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,28 +23,27 @@ To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Ch
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-We check the return value of malloc in print_foreign_topology.
+In dm_mapname, dm_task_get_name(dmt) has been called and the return value
+has been stored in map. Use map instead of second  dm_task_get_name.
 
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- libmultipath/foreign.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ libmultipath/devmapper.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
-index e8f61351..44f32d03 100644
---- a/libmultipath/foreign.c
-+++ b/libmultipath/foreign.c
-@@ -545,6 +545,10 @@ void print_foreign_topology(int verbosity)
- 	char *buf = NULL, *tmp = NULL;
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index cc2de1df..b4d77cb6 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -1315,7 +1315,7 @@ dm_mapname(int major, int minor)
 
- 	buf = malloc(buflen);
-+	if (!buf) {
-+		condlog (0, "malloc buf failed.");
-+		return;
-+	}
- 	buf[0] = '\0';
- 	while (buf != NULL) {
- 		char *c = buf;
---
+ 	map = dm_task_get_name(dmt);
+ 	if (map && strlen(map))
+-		response = STRDUP((const char *)dm_task_get_name(dmt));
++		response = STRDUP((const char *)map);
+
+ 	dm_task_destroy(dmt);
+ 	return response;
+-- 
