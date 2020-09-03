@@ -1,8 +1,8 @@
 From: Coly Li <colyli@suse.de>
-Subject: [PATCH] dax: fix for do not print error message for
+Subject: [PATCH v2] dax: fix for do not print error message for
 	non-persistent memory block device
-Date: Thu,  3 Sep 2020 19:55:49 +0800
-Message-ID: <20200903115549.17845-1-colyli@suse.de>
+Date: Thu,  3 Sep 2020 23:28:39 +0800
+Message-ID: <20200903152839.19040-1-colyli@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -44,13 +44,17 @@ This patch does the following change for the above purpose,
 
 Fixes: c2affe920b0e ("dax: do not print error message for non-persistent memory block device")
 Signed-off-by: Coly Li <colyli@suse.de>
-Cc: Adrian Huang <ahuang12@lenovo.com>
+Reviewed-and-Tested-by: Adrian Huang <ahuang12@lenovo.com>
 Cc: Ira Weiny <ira.weiny@intel.com>
 Cc: Jan Kara <jack@suse.com>
 Cc: Mike Snitzer <snitzer@redhat.com>
 Cc: Pankaj Gupta <pankaj.gupta.linux@gmail.com>
 Cc: Vishal Verma <vishal.l.verma@intel.com>
 ---
+Changelog:
+v2: add Reviewed-and-Tested-by from Adrian Huang.
+v1: initial version.
+
  drivers/dax/super.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
