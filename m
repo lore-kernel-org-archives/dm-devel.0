@@ -1,15 +1,15 @@
 From: Coly Li <colyli@suse.de>
-Subject: Re: [PATCH] dax: fix for do not print error message for
- non-persistent memory block device
-Date: Fri, 4 Sep 2020 00:12:17 +0800
-Message-ID: <c202e410-99af-3f15-0f76-def5fba7a83a@suse.de>
-References: <20200903115549.17845-1-colyli@suse.de>
-	<20200903160608.GU878166@iweiny-DESK2.sc.intel.com>
+Subject: Re: [PATCH v2] dax: fix for do not print error message
+ for non-persistent memory block device
+Date: Fri, 4 Sep 2020 00:14:16 +0800
+Message-ID: <fa3c9861-1c1b-23a5-8c20-dea4c13b060d@suse.de>
+References: <20200903152839.19040-1-colyli@suse.de>
+	<20200903160005.GA11871@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200903160608.GU878166@iweiny-DESK2.sc.intel.com>
+In-Reply-To: <20200903160005.GA11871@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,12 +20,14 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Language: en-US
-To: Ira Weiny <ira.weiny@intel.com>
-Cc: Pankaj Gupta <pankaj.gupta.linux@gmail.com>, Mike Snitzer <snitzer@redhat.com>, linux-nvdimm@lists.01.org, Vishal Verma <vishal.l.verma@intel.com>, dm-devel@redhat.com, Adrian Huang <ahuang12@lenovo.com>, Jan Kara <jack@suse.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Pankaj Gupta <pankaj.gupta.linux@gmail.com>, linux-nvdimm@lists.01.org, Vishal Verma <vishal.l.verma@intel.com>, dm-devel@redhat.com, Adrian Huang <ahuang12@lenovo.com>, Jan Kara <jack@suse.com>, Ira Weiny <ira.weiny@intel.com>
 List-Id: dm-devel.ids
 
-On 2020/9/4 00:06, Ira Weiny wrote:
-> On Thu, Sep 03, 2020 at 07:55:49PM +0800, Coly Li wrote:
+On 2020/9/4 00:00, Mike Snitzer wrote:
+> On Thu, Sep 03 2020 at 11:28am -0400,
+> Coly Li <colyli@suse.de> wrote:
+> 
 >> When calling __generic_fsdax_supported(), a dax-unsupported device may
 >> not have dax_dev as NULL, e.g. the dax related code block is not enabled
 >> by Kconfig.
@@ -46,61 +48,11 @@ On 2020/9/4 00:06, Ira Weiny wrote:
 >> This patch does the following change for the above purpose,
 >>     -       if (!dax_dev && !bdev_dax_supported(bdev, blocksize)) {
 >>     +       if (!dax_dev || !bdev_dax_supported(bdev, blocksize)) {
->>
->>
->> Fixes: c2affe920b0e ("dax: do not print error message for non-persistent memory block device")
->> Signed-off-by: Coly Li <colyli@suse.de>
 > 
-> I hate to do this because I realize this is a bug which people really need
-> fixed.
-> 
-> However, shouldn't we also check (!dax_dev || !bdev_dax_supported()) as the
-> _first_ check in __generic_fsdax_supported()?
-> 
-> It seems like the other pr_info's could also be called when DAX is not
-> supported and we probably don't want them to be?
-> 
-> Perhaps that should be a follow on patch though.  So...
-
-I am not author of c2affe920b0e, but I guess it was because
-bdev_dax_supported() needed blocksize, so blocksize should pass previous
-checks firstly to make sure bdev_dax_supported() has a correct blocksize
-to check.
-
-> 
-> As a direct fix to c2affe920b0e
-> 
-> Reviewed-by: Ira Weiny <ira.weiny@intel.com>
-
-Thanks.
+> Don't think I've ever seen a one-liner fix document the diff in its
+> patch header.  Really no need for that.
+>
+Oops, I just see this comment when I maximum my email client window now.
+OK, I will post a v4 version to remove the above diff-like style comment.
 
 Coly Li
-
-
-> 
->> Cc: Adrian Huang <ahuang12@lenovo.com>
->> Cc: Ira Weiny <ira.weiny@intel.com>
->> Cc: Jan Kara <jack@suse.com>
->> Cc: Mike Snitzer <snitzer@redhat.com>
->> Cc: Pankaj Gupta <pankaj.gupta.linux@gmail.com>
->> Cc: Vishal Verma <vishal.l.verma@intel.com>
->> ---
->>  drivers/dax/super.c | 2 +-
->>  1 file changed, 1 insertion(+), 1 deletion(-)
->>
->> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
->> index 32642634c1bb..e5767c83ea23 100644
->> --- a/drivers/dax/super.c
->> +++ b/drivers/dax/super.c
->> @@ -100,7 +100,7 @@ bool __generic_fsdax_supported(struct dax_device *dax_dev,
->>  		return false;
->>  	}
->>  
->> -	if (!dax_dev && !bdev_dax_supported(bdev, blocksize)) {
->> +	if (!dax_dev || !bdev_dax_supported(bdev, blocksize)) {
->>  		pr_debug("%s: error: dax unsupported by block device\n",
->>  				bdevname(bdev, buf));
->>  		return false;
->> -- 
->> 2.26.2
->>
