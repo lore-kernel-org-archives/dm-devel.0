@@ -1,15 +1,14 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 07/14] libmultipath: check return value of
- dm_mapname in, sysfs_check_holders
-Date: Fri, 4 Sep 2020 15:28:27 -0500
-Message-ID: <20200904202827.GC11108@octiron.msp.redhat.com>
-References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
-	<efc49805-8938-00d4-5eff-230f8f6f064e@huawei.com>
+From: Pankaj Gupta <pankaj.gupta.linux@gmail.com>
+Subject: Re: [PATCH v2] dax: fix for do not print error message
+ for non-persistent memory block device
+Date: Thu, 3 Sep 2020 17:58:17 +0200
+Message-ID: <CAM9Jb+gsmU-TsT99a7Kp=2owhYZFgROqHYr1aDoza0VApzAQLg@mail.gmail.com>
+References: <20200903152839.19040-1-colyli@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <efc49805-8938-00d4-5eff-230f8f6f064e@huawei.com>
+In-Reply-To: <20200903152839.19040-1-colyli@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,43 +18,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: lixiaokeng <lixiaokeng@huawei.com>
-Cc: linfeilong <linfeilong@huawei.com>, dm-devel mailing list <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
+To: Coly Li <colyli@suse.de>
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-nvdimm <linux-nvdimm@lists.01.org>, Vishal Verma <vishal.l.verma@intel.com>, dm-devel@redhat.com, Adrian Huang <ahuang12@lenovo.com>, Jan Kara <jack@suse.com>, Ira Weiny <ira.weiny@intel.com>
 List-Id: dm-devel.ids
 
-On Wed, Sep 02, 2020 at 03:19:51PM +0800, lixiaokeng wrote:
-> In sysfs_check_holders func, table_name is obtained by calling
-> dm_mapname func, and then call dm_reassign_table for reassigning
-> table. However, we donnot check whether dm_mapname func returns
-> NULL, and then it may cause a segmentation fault in dm_task_set_name.
-> 
-> Here, we will check whether dm_mapname func returns NULL before
-> using it.
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> 
-> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+> When calling __generic_fsdax_supported(), a dax-unsupported device may
+> not have dax_dev as NULL, e.g. the dax related code block is not enabled
+> by Kconfig.
+>
+> Therefore in __generic_fsdax_supported(), to check whether a device
+> supports DAX or not, the following order should be performed,
+> - If dax_dev pointer is NULL, it means the device driver explicitly
+>   announce it doesn't support DAX. Then it is OK to directly return
+>   false from __generic_fsdax_supported().
+> - If dax_dev pointer is NOT NULL, it might be because the driver doesn't
+>   support DAX and not explicitly initialize related data structure. Then
+>   bdev_dax_supported() should be called for further check.
+>
+> IMHO if device driver desn't explicitly set its dax_dev pointer to NULL,
+> this is not a bug. Calling bdev_dax_supported() makes sure they can be
+> recognized as dax-unsupported eventually.
+>
+> This patch does the following change for the above purpose,
+>     -       if (!dax_dev && !bdev_dax_supported(bdev, blocksize)) {
+>     +       if (!dax_dev || !bdev_dax_supported(bdev, blocksize)) {
+>
+>
+> Fixes: c2affe920b0e ("dax: do not print error message for non-persistent memory block device")
+> Signed-off-by: Coly Li <colyli@suse.de>
+> Reviewed-and-Tested-by: Adrian Huang <ahuang12@lenovo.com>
+> Cc: Ira Weiny <ira.weiny@intel.com>
+> Cc: Jan Kara <jack@suse.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: Pankaj Gupta <pankaj.gupta.linux@gmail.com>
+> Cc: Vishal Verma <vishal.l.verma@intel.com>
 > ---
->  libmultipath/sysfs.c | 6 +++++-
->  1 file changed, 5 insertions(+), 1 deletion(-)
-> 
-> diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-> index 12a82d95..5390de62 100644
-> --- a/libmultipath/sysfs.c
-> +++ b/libmultipath/sysfs.c
-> @@ -278,7 +278,11 @@ int sysfs_check_holders(char * check_devt, char * new_devt)
->  			continue;
->  		}
->  		table_name = dm_mapname(major, table_minor);
-> -
-> +		if (!table_name) {
-> +			condlog(2, "%s: mapname not found for %d:%d", check_dev,
-> +				major, table_minor);
-> +			continue;
-> +		}
->  		condlog(0, "%s: reassign table %s old %s new %s", check_dev,
->  			table_name, check_devt, new_devt);
-> 
-> -- 
+> Changelog:
+> v2: add Reviewed-and-Tested-by from Adrian Huang.
+> v1: initial version.
+>
+>  drivers/dax/super.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+> index 32642634c1bb..e5767c83ea23 100644
+> --- a/drivers/dax/super.c
+> +++ b/drivers/dax/super.c
+> @@ -100,7 +100,7 @@ bool __generic_fsdax_supported(struct dax_device *dax_dev,
+>                 return false;
+>         }
+>
+> -       if (!dax_dev && !bdev_dax_supported(bdev, blocksize)) {
+> +       if (!dax_dev || !bdev_dax_supported(bdev, blocksize)) {
+>                 pr_debug("%s: error: dax unsupported by block device\n",
+>                                 bdevname(bdev, buf));
+>                 return false;
+> --
+
+Looks good.
+Reviewed-by: Pankaj Gupta <pankaj.gupta.linux@gmail.com>
