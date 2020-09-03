@@ -1,15 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 04/14] multipathd: check MALLOC return value
- in, mpath_pr_event_handler_fn
-Date: Thu, 03 Sep 2020 20:57:55 +0200
-Message-ID: <41d51bddd2de5bf18d50bd39cf356ee769074647.camel@suse.com>
+Subject: Re: [PATCH 05/14] multipathd: use MALLOC and check
+ return value in, cli_getprkey func
+Date: Thu, 03 Sep 2020 21:13:04 +0200
+Message-ID: <4a51a6797398562b475e3320220112c2cd0d2186.camel@suse.com>
 References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
-	<8b45a04b-c851-94ba-fcba-676c03b060e7@huawei.com>
+	<5edc1c2b-eb21-198b-9880-3be6621496f9@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8b45a04b-c851-94ba-fcba-676c03b060e7@huawei.com>
+In-Reply-To: <5edc1c2b-eb21-198b-9880-3be6621496f9@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,39 +23,35 @@ To: lixiaokeng <lixiaokeng@huawei.com>, Benjamin Marzinski <bmarzins@redhat.com>
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-On Wed, 2020-09-02 at 15:17 +0800, lixiaokeng wrote:
-> In  mpath_pr_event_handler_fn, we use MALLOC instead of malloc, and
-> check
+On Wed, 2020-09-02 at 15:18 +0800, lixiaokeng wrote:
+> In cli_getprkey func, we use MALLOC instead of malloc, and check
 > the return value of MALLOC.
 > 
-> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 > Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 > Signed-off-by: Linfeilong <linfeilong@huawei.com>
 > ---
->  multipathd/main.c | 8 ++++++--
->  1 file changed, 6 insertions(+), 2 deletions(-)
+>  multipathd/cli_handlers.c | 6 +++++-
+>  1 file changed, 5 insertions(+), 1 deletion(-)
 > 
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 67e9af11..7180d3c1 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -3391,8 +3391,12 @@ void *  mpath_pr_event_handler_fn (void *
-> pathp )
->  		goto out;
->  	}
+> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+> index 27e4574f..d345afd3 100644
+> --- a/multipathd/cli_handlers.c
+> +++ b/multipathd/cli_handlers.c
+> @@ -1535,7 +1535,11 @@ cli_getprkey(void * v, char ** reply, int *
+> len, void * data)
+>  	if (!mpp)
+>  		return 1;
 > 
-> -	param= malloc(sizeof(struct prout_param_descriptor));
-> -	memset(param, 0 , sizeof(struct prout_param_descriptor));
-> +	param = (struct prout_param_descriptor *)MALLOC(sizeof(struct
-> prout_param_descriptor));
-> +	if (!param) {
-> +		ret = MPATH_PR_OTHER;
-> +		goto out;
+> -	*reply = malloc(26);
+> +	*reply = MALLOC(26);
+> +	if (!*reply) {
+> +		condlog(0, "malloc *reply failed.");
+> +		return 1;
 > +	}
 
-No need to set the local variable "ret" when you jump to "out". I can
-see this is done elsewhere in this function, too. It has been like that
-since day 1.
+MALLOC is not necessary (*reply isn't left uninialized), nor is the
+error message.
 
 Regards,
 Martin
