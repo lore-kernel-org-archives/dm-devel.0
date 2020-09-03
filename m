@@ -1,12 +1,15 @@
-From: Coly Li <colyli@suse.de>
-Subject: [PATCH v4] dax: fix for do not print error message for
-	non-persistent memory block device
-Date: Fri,  4 Sep 2020 00:16:25 +0800
-Message-ID: <20200903161625.19524-1-colyli@suse.de>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 01/14] multipathd: return if
+ dm_get_major_minor failed in, cli_add_map
+Date: Thu, 03 Sep 2020 19:26:25 +0200
+Message-ID: <e525938e5b810958512eb623898fd732bd8482c4.camel@suse.com>
+References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
+	<b1baac25-58c2-8f27-67bd-5d050fcdf8c7@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <b1baac25-58c2-8f27-67bd-5d050fcdf8c7@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,60 +19,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-nvdimm@lists.01.org
-Cc: Pankaj Gupta <pankaj.gupta.linux@gmail.com>, Mike Snitzer <snitzer@redhat.com>, Vishal Verma <vishal.l.verma@intel.com>, Coly Li <colyli@suse.de>, dm-devel@redhat.com, Adrian Huang <ahuang12@lenovo.com>, Jan Kara <jack@suse.com>, Ira Weiny <ira.weiny@intel.com>
+To: lixiaokeng <lixiaokeng@huawei.com>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel mailing list <dm-devel@redhat.com>
+Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-When calling __generic_fsdax_supported(), a dax-unsupported device may
-not have dax_dev as NULL, e.g. the dax related code block is not enabled
-by Kconfig.
+On Wed, 2020-09-02 at 15:15 +0800, lixiaokeng wrote:
+> If dm_get_major_minor failed, log with major and minor should not
+> be printed to avoid major and minor used before initialization.
+> 
+> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> Signed-off-by: Linfeilong <linfeilong@huawei.com>
+> ---
+>  multipathd/cli_handlers.c | 5 +++--
+>  1 file changed, 3 insertions(+), 2 deletions(-)
+> 
+> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+> index 8db37961..2d297fd0 100644
+> --- a/multipathd/cli_handlers.c
+> +++ b/multipathd/cli_handlers.c
+> @@ -847,11 +847,12 @@ cli_add_map (void * v, char ** reply, int *
+> len, void * data)
 
-Therefore in __generic_fsdax_supported(), to check whether a device
-supports DAX or not, the following order should be performed,
-- If dax_dev pointer is NULL, it means the device driver explicitly
-  announce it doesn't support DAX. Then it is OK to directly return
-  false from __generic_fsdax_supported().
-- If dax_dev pointer is NOT NULL, it might be because the driver doesn't
-  support DAX and not explicitly initialize related data structure. Then
-  bdev_dax_supported() should be called for further check.
+Why not just quit the "do" loop in the error case
+for dm_get_major_minor()?
 
-IMHO if device driver desn't explicitly set its dax_dev pointer to NULL,
-this is not a bug. Calling bdev_dax_supported() makes sure they can be
-recognized as dax-unsupported eventually.
+Martin
 
-This patch does the change for the above purpose.
-
-Fixes: c2affe920b0e ("dax: do not print error message for non-persistent memory block device")
-Signed-off-by: Coly Li <colyli@suse.de>
-Reviewed-and-tested-by: Adrian Huang <ahuang12@lenovo.com>
-Reviewed-by: Ira Weiny <ira.weiny@intel.com>
-Reviewed-by: Mike Snitzer <snitzer@redhat.com>
-Reviewed-by: Pankaj Gupta <pankaj.gupta.linux@gmail.com>
-Cc: Jan Kara <jack@suse.com>
-Cc: Vishal Verma <vishal.l.verma@intel.com>
----
-Changelog:
-v4: add Reviewed-by from Ira Weiny, remove the diff-like format comment
-    from commit log which suggested by Mike Snitzer.
-v3: add more Reviewed-by from Mike Snitzer and Pankaj Gupta.
-v2: add Reviewed-and-Tested-by from Adrian Huang.
-v1: initial version.
-
- drivers/dax/super.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-index 32642634c1bb..e5767c83ea23 100644
---- a/drivers/dax/super.c
-+++ b/drivers/dax/super.c
-@@ -100,7 +100,7 @@ bool __generic_fsdax_supported(struct dax_device *dax_dev,
- 		return false;
- 	}
- 
--	if (!dax_dev && !bdev_dax_supported(bdev, blocksize)) {
-+	if (!dax_dev || !bdev_dax_supported(bdev, blocksize)) {
- 		pr_debug("%s: error: dax unsupported by block device\n",
- 				bdevname(bdev, buf));
- 		return false;
--- 
-2.26.2
+>  		else {
+>  			sprintf(dev_path, "dm-%d", minor);
+>  			alias = dm_mapname(major, minor);
+> +			if (!alias)
+> +				condlog(2, "%s: mapname not found for
+> %d:%d",
+> +					param, major, minor);
+>  		}
+>  		/*if there is no mapname found, we first create the
+> device*/
+>  		if (!alias && !count) {
+> -			condlog(2, "%s: mapname not found for %d:%d",
+> -				param, major, minor);
+>  			get_refwwid(CMD_NONE, param, DEV_DEVMAP,
+>  				    vecs->pathvec, &refwwid);
+>  			if (refwwid) {
