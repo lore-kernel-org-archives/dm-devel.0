@@ -1,14 +1,15 @@
-From: Ira Weiny <ira.weiny@intel.com>
-Subject: Re: [PATCH] dax: fix for do not print error message for
- non-persistent memory block device
-Date: Thu, 3 Sep 2020 09:06:08 -0700
-Message-ID: <20200903160608.GU878166@iweiny-DESK2.sc.intel.com>
-References: <20200903115549.17845-1-colyli@suse.de>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 08/14] libmultipath: donot free *dst if
+ REALLOC fails in, merge_words
+Date: Fri, 4 Sep 2020 16:11:09 -0500
+Message-ID: <20200904211109.GD11108@octiron.msp.redhat.com>
+References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
+	<f8ec7113-a9da-46a0-16c8-1e245f9592f0@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200903115549.17845-1-colyli@suse.de>
+In-Reply-To: <f8ec7113-a9da-46a0-16c8-1e245f9592f0@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,74 +20,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-To: Coly Li <colyli@suse.de>
-Cc: Pankaj Gupta <pankaj.gupta.linux@gmail.com>, Mike Snitzer <snitzer@redhat.com>, linux-nvdimm@lists.01.org, Vishal Verma <vishal.l.verma@intel.com>, dm-devel@redhat.com, Adrian Huang <ahuang12@lenovo.com>, Jan Kara <jack@suse.com>
+To: lixiaokeng <lixiaokeng@huawei.com>
+Cc: linfeilong <linfeilong@huawei.com>, dm-devel mailing list <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 03, 2020 at 07:55:49PM +0800, Coly Li wrote:
-> When calling __generic_fsdax_supported(), a dax-unsupported device may
-> not have dax_dev as NULL, e.g. the dax related code block is not enabled
-> by Kconfig.
+On Wed, Sep 02, 2020 at 03:20:29PM +0800, lixiaokeng wrote:
+> In merge_words func, if REALLOC() fails, the input *dst will
+> be freed. If so, mpp->hwhandler| mpp->features|mpp->selector
+> may be set to NULL after calling merge_words func in
+> disassemble_map func. This may cause accessing freed memory
+> problem.
 > 
-> Therefore in __generic_fsdax_supported(), to check whether a device
-> supports DAX or not, the following order should be performed,
-> - If dax_dev pointer is NULL, it means the device driver explicitly
->   announce it doesn't support DAX. Then it is OK to directly return
->   false from __generic_fsdax_supported().
-> - If dax_dev pointer is NOT NULL, it might be because the driver doesn't
->   support DAX and not explicitly initialize related data structure. Then
->   bdev_dax_supported() should be called for further check.
+
+I'm not sure that this is the right way to fix the issue you're seeing.
+If merge_words() frees mpp->hwhandler| mpp->features|mpp->selector, it
+also sets them to NULL.  I don't see any place in disassemble_map()
+where these would be accessed if merge_words() freed them.  Even with
+this fix, there are still cases where disassemble_map() will return 1,
+with these members set to NULL. If there is something that is
+dereferencing them without checking if they're NULL, we should fix that.
+But simply making them include partial information doesn't seem like it
+fixes anything.
+
+Am I missing something here?
+
+-Ben
+
+> Here, we donot free *dst if REALLOC() fails in merge_words func.
 > 
-> IMHO if device driver desn't explicitly set its dax_dev pointer to NULL,
-> this is not a bug. Calling bdev_dax_supported() makes sure they can be
-> recognized as dax-unsupported eventually.
-> 
-> This patch does the following change for the above purpose,
->     -       if (!dax_dev && !bdev_dax_supported(bdev, blocksize)) {
->     +       if (!dax_dev || !bdev_dax_supported(bdev, blocksize)) {
-> 
-> 
-> Fixes: c2affe920b0e ("dax: do not print error message for non-persistent memory block device")
-> Signed-off-by: Coly Li <colyli@suse.de>
-
-I hate to do this because I realize this is a bug which people really need
-fixed.
-
-However, shouldn't we also check (!dax_dev || !bdev_dax_supported()) as the
-_first_ check in __generic_fsdax_supported()?
-
-It seems like the other pr_info's could also be called when DAX is not
-supported and we probably don't want them to be?
-
-Perhaps that should be a follow on patch though.  So...
-
-As a direct fix to c2affe920b0e
-
-Reviewed-by: Ira Weiny <ira.weiny@intel.com>
-
-> Cc: Adrian Huang <ahuang12@lenovo.com>
-> Cc: Ira Weiny <ira.weiny@intel.com>
-> Cc: Jan Kara <jack@suse.com>
-> Cc: Mike Snitzer <snitzer@redhat.com>
-> Cc: Pankaj Gupta <pankaj.gupta.linux@gmail.com>
-> Cc: Vishal Verma <vishal.l.verma@intel.com>
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 > ---
->  drivers/dax/super.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  libmultipath/dmparser.c | 7 +++----
+>  1 file changed, 3 insertions(+), 4 deletions(-)
 > 
-> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-> index 32642634c1bb..e5767c83ea23 100644
-> --- a/drivers/dax/super.c
-> +++ b/drivers/dax/super.c
-> @@ -100,7 +100,7 @@ bool __generic_fsdax_supported(struct dax_device *dax_dev,
->  		return false;
->  	}
->  
-> -	if (!dax_dev && !bdev_dax_supported(bdev, blocksize)) {
-> +	if (!dax_dev || !bdev_dax_supported(bdev, blocksize)) {
->  		pr_debug("%s: error: dax unsupported by block device\n",
->  				bdevname(bdev, buf));
->  		return false;
+> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+> index c1031616..482e9d0e 100644
+> --- a/libmultipath/dmparser.c
+> +++ b/libmultipath/dmparser.c
+> @@ -26,13 +26,12 @@ merge_words(char **dst, const char *word)
+> 
+>  	dstlen = strlen(*dst);
+>  	len = dstlen + strlen(word) + 2;
+> -	*dst = REALLOC(*dst, len);
+> +	p = REALLOC(*dst, len);
+> 
+> -	if (!*dst) {
+> -		free(p);
+> +	if (!p)
+>  		return 1;
+> -	}
+> 
+> +	*dst = p;
+>  	p = *dst + dstlen;
+>  	*p = ' ';
+>  	++p;
 > -- 
-> 2.26.2
-> 
