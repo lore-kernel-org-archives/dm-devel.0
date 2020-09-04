@@ -1,17 +1,16 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 05/14] multipathd: use MALLOC and check
- return value in, cli_getprkey func
-Date: Fri, 04 Sep 2020 23:24:06 +0200
-Message-ID: <500db1f854e00efd844a7d2dab5d384ff74ec79d.camel@suse.com>
+Subject: Re: [PATCH 00/14] multipath-tools series: some cleanups
+ and fixes checked by codedex tool
+Date: Fri, 04 Sep 2020 23:28:21 +0200
+Message-ID: <2e64d235b13042a015c7d1df63f6fd8222c85182.camel@suse.com>
 References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
-	<5edc1c2b-eb21-198b-9880-3be6621496f9@huawei.com>
-	<4a51a6797398562b475e3320220112c2cd0d2186.camel@suse.com>
-	<20200904182555.GA11108@octiron.msp.redhat.com>
+	<73d14f51e1ca6aeb8dbd40f5a22c21508b6d4401.camel@suse.com>
+	<20200904200032.GB11108@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200904182555.GA11108@octiron.msp.redhat.com>
+In-Reply-To: <20200904200032.GB11108@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,64 +21,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: lixiaokeng <lixiaokeng@huawei.com>, linfeilong <linfeilong@huawei.com>, dm-devel mailing list <dm-devel@redhat.com>, "liuzhiqiang
+Cc: lixiaokeng <lixiaokeng@huawei.com>, dm-devel mailing list <dm-devel@redhat.com>, linfeilong <linfeilong@huawei.com>, "liuzhiqiang
 	(I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-On Fri, 2020-09-04 at 13:25 -0500, Benjamin Marzinski wrote:
-> On Thu, Sep 03, 2020 at 09:13:04PM +0200, Martin Wilck wrote:
-> > On Wed, 2020-09-02 at 15:18 +0800, lixiaokeng wrote:
-> > > In cli_getprkey func, we use MALLOC instead of malloc, and check
-> > > the return value of MALLOC.
-> > > 
-> > > Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> > > Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
-> > > Signed-off-by: Linfeilong <linfeilong@huawei.com>
-> > > ---
-> > >  multipathd/cli_handlers.c | 6 +++++-
-> > >  1 file changed, 5 insertions(+), 1 deletion(-)
-> > > 
-> > > diff --git a/multipathd/cli_handlers.c
-> > > b/multipathd/cli_handlers.c
-> > > index 27e4574f..d345afd3 100644
-> > > --- a/multipathd/cli_handlers.c
-> > > +++ b/multipathd/cli_handlers.c
-> > > @@ -1535,7 +1535,11 @@ cli_getprkey(void * v, char ** reply, int
-> > > *
-> > > len, void * data)
-> > >  	if (!mpp)
-> > >  		return 1;
-> > > 
-> > > -	*reply = malloc(26);
-> > > +	*reply = MALLOC(26);
-> > > +	if (!*reply) {
-> > > +		condlog(0, "malloc *reply failed.");
-> > > +		return 1;
-> > > +	}
+On Fri, 2020-09-04 at 15:00 -0500, Benjamin Marzinski wrote:
+> On Thu, Sep 03, 2020 at 10:08:53PM +0200, Martin Wilck wrote:
+> > Hello Lixiaokeng,
 > > 
-> > MALLOC is not necessary (*reply isn't left uninialized), nor is the
-> > error message.
+> > On Wed, 2020-09-02 at 14:40 +0800, lixiaokeng wrote:
+> > > Hi:
+> > >     Now, we check multipath-tools codes with codedex tool. Here
+> > > are some some cleanups and fixes.
+> > 
+> > Thank you. However I'm going to nack all patches that add error
+> > messages after unsuccesful memory allocations. Such messages are
+> > unhelpful most of the time, and increase the code size without a
+> > true
+> > benefit. I've actually considered to get rid of all these, and
+> > replace
+> > them by a log_oom() macro.
 > 
-> What's you objection to the error message? Admittedly there is
-> basically
-> no chance that malloc(26) would ever actually fail. But when things
-> fail, having error messages so that we can debug them faster is
-> helpful.
-> 
-> If your objection is that malloc checks are mostly just there for
-> good
-> form, and so those error messages won't actually help in practice, I
-> agree. But as a general rule, I think we should print error messages
-> on
-> things that are unambiguoulsy errors.
+> O.k. This answers my question from patch 0005. I'm fine with this.
 
-See my reply to 00/14. I'd like to standardize and streamline "out of
-memory" error messages, rather than hand-coding them in every
-procedure. I think that in 99% of cases, if multipathd crashes or
-errors out due to OOM, the information in which function OOM occured
-first will not be helpful. Even if we had a major memory leak, its
-unlikely that such error messages would help us find it.
+Great, thanks.
 
-Do you disagree?
+> As a side note: man, those are some ugly preprocessor hoops you need
+> to
+> jump through to stringify __LINE__.
 
+Yeah, it took me some attempts to get it right. 
+It's actually documented:
+https://gcc.gnu.org/onlinedocs/gcc-4.8.5/cpp/Stringification.html
+
+Thanks,
 Martin
