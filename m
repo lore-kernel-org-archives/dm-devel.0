@@ -1,15 +1,15 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 00/14] multipath-tools series: some cleanups
- and fixes checked by codedex tool
-Date: Fri, 4 Sep 2020 15:00:32 -0500
-Message-ID: <20200904200032.GB11108@octiron.msp.redhat.com>
+Subject: Re: [PATCH 07/14] libmultipath: check return value of
+ dm_mapname in, sysfs_check_holders
+Date: Fri, 4 Sep 2020 15:28:27 -0500
+Message-ID: <20200904202827.GC11108@octiron.msp.redhat.com>
 References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
-	<73d14f51e1ca6aeb8dbd40f5a22c21508b6d4401.camel@suse.com>
+	<efc49805-8938-00d4-5eff-230f8f6f064e@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <73d14f51e1ca6aeb8dbd40f5a22c21508b6d4401.camel@suse.com>
+In-Reply-To: <efc49805-8938-00d4-5eff-230f8f6f064e@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,87 +20,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-To: Martin Wilck <mwilck@suse.com>
-Cc: lixiaokeng <lixiaokeng@huawei.com>, dm-devel mailing list <dm-devel@redhat.com>, linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
+To: lixiaokeng <lixiaokeng@huawei.com>
+Cc: linfeilong <linfeilong@huawei.com>, dm-devel mailing list <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 03, 2020 at 10:08:53PM +0200, Martin Wilck wrote:
-> Hello Lixiaokeng,
+On Wed, Sep 02, 2020 at 03:19:51PM +0800, lixiaokeng wrote:
+> In sysfs_check_holders func, table_name is obtained by calling
+> dm_mapname func, and then call dm_reassign_table for reassigning
+> table. However, we donnot check whether dm_mapname func returns
+> NULL, and then it may cause a segmentation fault in dm_task_set_name.
 > 
-> On Wed, 2020-09-02 at 14:40 +0800, lixiaokeng wrote:
-> > Hi:
-> >     Now, we check multipath-tools codes with codedex tool. Here
-> > are some some cleanups and fixes.
-> 
-> Thank you. However I'm going to nack all patches that add error
-> messages after unsuccesful memory allocations. Such messages are
-> unhelpful most of the time, and increase the code size without a true
-> benefit. I've actually considered to get rid of all these, and replace
-> them by a log_oom() macro.
+> Here, we will check whether dm_mapname func returns NULL before
+> using it.
 
-O.k. This answers my question from patch 0005. I'm fine with this.
-
-As a side note: man, those are some ugly preprocessor hoops you need to
-jump through to stringify __LINE__.
-
--Ben
-
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > 
-> See an untested prototype attached, to better understand what I mean.
-> 
-> Regards
-> Martin
-> 
-> 
-
-> From fbbca2c5076a489ee4ae643d6d9199ca5085be95 Mon Sep 17 00:00:00 2001
-> From: Martin Wilck <mwilck@suse.com>
-> Date: Thu, 3 Sep 2020 22:03:22 +0200
-> Subject: [PATCH] libmultipath: prototype implementation of log_oom()
-> 
-> Rationale: with VERBOSE_OOM_LOGGING, we log the part of the code
-> where OOM occured, with minimal runtime effort (no string formatting).
-> With lots of log_oom() invocations, our binary will increase by many
-> static strings. Without VERBOSE_OOM_LOGGING, we just print a minimal
-> error message, which will be enough most of the time.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 > ---
->  libmultipath/debug.c | 7 +++++++
->  libmultipath/debug.h | 8 ++++++++
->  2 files changed, 15 insertions(+)
+>  libmultipath/sysfs.c | 6 +++++-
+>  1 file changed, 5 insertions(+), 1 deletion(-)
 > 
-> diff --git a/libmultipath/debug.c b/libmultipath/debug.c
-> index 4128cb9..9062581 100644
-> --- a/libmultipath/debug.c
-> +++ b/libmultipath/debug.c
-> @@ -48,3 +48,10 @@ void dlog (int sink, int prio, const char * fmt, ...)
->  	}
->  	va_end(ap);
->  }
-> +
-> +#ifndef VERBOSE_OOM_LOGGING
-> +void log_oom(void)
-> +{
-> +	condlog(0, "Out of memory");
-> +}
-> +#endif
-> diff --git a/libmultipath/debug.h b/libmultipath/debug.h
-> index c6120c1..f61ecb6 100644
-> --- a/libmultipath/debug.h
-> +++ b/libmultipath/debug.h
-> @@ -11,3 +11,11 @@ extern int logsink;
->  
->  #define condlog(prio, fmt, args...) \
->  	dlog(logsink, prio, fmt "\n", ##args)
-> +
-> +#ifdef VERBOSE_OOM_LOGGING
-> +#define __log_oom(file, line) condlog(0, "Out of memory in " file ":" #line)
-> +#define _log_oom(file, line) __log_oom(file, line)
-> +#define log_oom() _log_oom(__FILE__, __LINE__)
-> +#else
-> +void log_oom(void);
-> +#endif
+> diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+> index 12a82d95..5390de62 100644
+> --- a/libmultipath/sysfs.c
+> +++ b/libmultipath/sysfs.c
+> @@ -278,7 +278,11 @@ int sysfs_check_holders(char * check_devt, char * new_devt)
+>  			continue;
+>  		}
+>  		table_name = dm_mapname(major, table_minor);
+> -
+> +		if (!table_name) {
+> +			condlog(2, "%s: mapname not found for %d:%d", check_dev,
+> +				major, table_minor);
+> +			continue;
+> +		}
+>  		condlog(0, "%s: reassign table %s old %s new %s", check_dev,
+>  			table_name, check_devt, new_devt);
+> 
 > -- 
-> 2.28.0
-> 
