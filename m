@@ -1,15 +1,16 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: Re: [PATCH 00/14] multipath-tools series: some cleanups
- and fixes checked by codedex tool
-Date: Fri, 4 Sep 2020 10:24:58 +0800
-Message-ID: <6a6cd305-2c2e-b1af-967b-4b73b254fbda@huawei.com>
+Subject: Re: [PATCH 01/14] multipathd: return if
+ dm_get_major_minor failed in, cli_add_map
+Date: Fri, 4 Sep 2020 10:48:40 +0800
+Message-ID: <ef74857c-c81d-c0ec-4692-a9cd8299a99c@huawei.com>
 References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
-	<73d14f51e1ca6aeb8dbd40f5a22c21508b6d4401.camel@suse.com>
+	<b1baac25-58c2-8f27-67bd-5d050fcdf8c7@huawei.com>
+	<e525938e5b810958512eb623898fd732bd8482c4.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <73d14f51e1ca6aeb8dbd40f5a22c21508b6d4401.camel@suse.com>
+In-Reply-To: <e525938e5b810958512eb623898fd732bd8482c4.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,30 +25,40 @@ To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Ch
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-Hello Martin,
-   Thanks for your reviews. I will remove the error messages and send
-them again.
 
-Regards
-Lixiaokeng
 
-On 2020/9/4 4:08, Martin Wilck wrote:
-> Hello Lixiaokeng,
+On 2020/9/4 1:26, Martin Wilck wrote:
 > 
-> On Wed, 2020-09-02 at 14:40 +0800, lixiaokeng wrote:
->> Hi:
->>     Now, we check multipath-tools codes with codedex tool. Here
->> are some some cleanups and fixes.
+> Why not just quit the "do" loop in the error case
+> for dm_get_major_minor()?
 > 
-> Thank you. However I'm going to nack all patches that add error
-> messages after unsuccesful memory allocations. Such messages are
-> unhelpful most of the time, and increase the code size without a true
-> benefit. I've actually considered to get rid of all these, and replace
-> them by a log_oom() macro.
-> 
-> See an untested prototype attached, to better understand what I mean.
-> 
-> Regards
 > Martin
+
+If dm_get_major failed at first time, it will be executed again
+for some reason I don't know in the original code. Quiting the
+"do" loop in the error case for dm_get_major_minor() is against
+the twice attempt rule.
+
+Lixiaokeng
 > 
+>>  		else {
+>>  			sprintf(dev_path, "dm-%d", minor);
+>>  			alias = dm_mapname(major, minor);
+>> +			if (!alias)
+>> +				condlog(2, "%s: mapname not found for
+>> %d:%d",
+>> +					param, major, minor);
+>>  		}
+>>  		/*if there is no mapname found, we first create the
+>> device*/
+>>  		if (!alias && !count) {
+>> -			condlog(2, "%s: mapname not found for %d:%d",
+>> -				param, major, minor);
+>>  			get_refwwid(CMD_NONE, param, DEV_DEVMAP,
+>>  				    vecs->pathvec, &refwwid);
+>>  			if (refwwid) {
+> 
+> 
+> 
+> .
 > 
