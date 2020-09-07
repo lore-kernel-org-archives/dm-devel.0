@@ -1,115 +1,89 @@
-From: "Leizhen (ThunderTown)" <thunder.leizhen@huawei.com>
-Subject: Re: [PATCH 1/1] block: move the PAGE_SECTORS definition into
- <linux/blkdev.h>
-Date: Mon, 7 Sep 2020 15:39:53 +0800
-Message-ID: <c2f8cf50-d9f7-df19-40eb-0543e6208c0d@huawei.com>
-References: <20200821020345.3358-1-thunder.leizhen@huawei.com>
- <b4643e74-aad9-385f-01f2-f8e48ba4dbef@suse.de>
- <ad100923-e479-faf0-f749-ac8e4cf87899@huawei.com>
- <8aa638b7-6cfd-bf3d-8015-fbe59f28f31f@suse.de>
+From: lixiaokeng <lixiaokeng@huawei.com>
+Subject: Re: [PATCH 08/14] libmultipath: donot free *dst if
+ REALLOC fails in, merge_words
+Date: Mon, 7 Sep 2020 19:58:50 +0800
+Message-ID: <bd3eee2a-2918-c428-174a-2b7d9c05b6dc@huawei.com>
+References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
+	<f8ec7113-a9da-46a0-16c8-1e245f9592f0@huawei.com>
+	<20200904211109.GD11108@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <8aa638b7-6cfd-bf3d-8015-fbe59f28f31f@suse.de>
-Content-Language: en-US
-Sender: linux-block-owner@vger.kernel.org
-To: Coly Li <colyli@suse.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Kent Overstreet <kent.overstreet@gmail.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel <dm-devel@redhat.com>, linux-block <linux-block@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-bcache <linux-bcache@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200904211109.GD11108@octiron.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Language: en-GB
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: linfeilong <linfeilong@huawei.com>, dm-devel mailing list <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-Hi, Jens Axboe, Alasdair Kergon, Mike Snitzer:
-  What's your opinion?
+Hi Ben:
+  I think you are right. We should not keep them with partial information.
+Thanks for your review.
 
+-Lixiaokeng
 
-On 2020/8/21 15:05, Coly Li wrote:
-> On 2020/8/21 14:48, Leizhen (ThunderTown) wrote:
+On 2020/9/5 5:11, Benjamin Marzinski wrote:
+> On Wed, Sep 02, 2020 at 03:20:29PM +0800, lixiaokeng wrote:
+>> In merge_words func, if REALLOC() fails, the input *dst will
+>> be freed. If so, mpp->hwhandler| mpp->features|mpp->selector
+>> may be set to NULL after calling merge_words func in
+>> disassemble_map func. This may cause accessing freed memory
+>> problem.
 >>
+> 
+> I'm not sure that this is the right way to fix the issue you're seeing.
+> If merge_words() frees mpp->hwhandler| mpp->features|mpp->selector, it
+> also sets them to NULL.  I don't see any place in disassemble_map()
+> where these would be accessed if merge_words() freed them.  Even with
+> this fix, there are still cases where disassemble_map() will return 1,
+> with these members set to NULL. If there is something that is
+> dereferencing them without checking if they're NULL, we should fix that.
+> But simply making them include partial information doesn't seem like it
+> fixes anything.
+> 
+> Am I missing something here?
+> 
+> -Ben
+> 
+>> Here, we donot free *dst if REALLOC() fails in merge_words func.
 >>
->> On 8/21/2020 12:11 PM, Coly Li wrote:
->>> On 2020/8/21 10:03, Zhen Lei wrote:
->>>> There are too many PAGE_SECTORS definitions, and all of them are the
->>>> same. It looks a bit of a mess. So why not move it into <linux/blkdev.h>,
->>>> to achieve a basic and unique definition.
->>>>
->>>> Signed-off-by: Zhen Lei <thunder.leizhen@huawei.com>
->>>
->>>
->>> A lazy question about page size > 4KB: currently in bcache code the
->>> sector size is assumed to be 512 sectors, if kernel page > 4KB, it is
->>> possible that PAGE_SECTORS in bcache will be a number > 8 ?
+>> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+>> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+>> ---
+>>  libmultipath/dmparser.c | 7 +++----
+>>  1 file changed, 3 insertions(+), 4 deletions(-)
 >>
->> Sorry, I don't fully understand your question. I known that the sector size
->> can be 512 or 4K, and the PAGE_SIZE can be 4K or 64K. So even if sector size
->> is 4K, isn't it greater than 8 for 64K pages?
+>> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+>> index c1031616..482e9d0e 100644
+>> --- a/libmultipath/dmparser.c
+>> +++ b/libmultipath/dmparser.c
+>> @@ -26,13 +26,12 @@ merge_words(char **dst, const char *word)
 >>
->> I'm not sure if the question you're asking is the one Matthew Wilcox has
->> answered before:
->> https://www.spinics.net/lists/raid/msg64345.html
-> 
-> Thank you for the above information. Currently bcache code assumes
-> sector size is always 512 bytes, you may see how many "<< 9" or ">> 9"
-> are used. Therefore I doubt whether current code may stably work on e.g.
-> 4Kn SSDs (this is only doubt because I don't have such SSD).
-> 
-> Anyway your patch is fine to me. This change to bcache doesn't make
-> thins worse or better, maybe it can be helpful to trigger my above
-> suspicious early if people do have this kind of problem on 4Kn sector SSDs.
-> 
-> For the bcache part of this patch, you may add,
-> Acked-by: Coly Li <colyli@suse.de>
-> 
-> Thanks.
-> 
-> Coly Li
-> 
->>>> ---
->>>>  drivers/block/brd.c           | 1 -
->>>>  drivers/block/null_blk_main.c | 1 -
->>>>  drivers/md/bcache/util.h      | 2 --
->>>>  include/linux/blkdev.h        | 5 +++--
->>>>  include/linux/device-mapper.h | 1 -
->>>>  5 files changed, 3 insertions(+), 7 deletions(-)
->>>>
->>>
->>> [snipped]
->>>
->>>> diff --git a/drivers/md/bcache/util.h b/drivers/md/bcache/util.h
->>>> index c029f7443190805..55196e0f37c32c6 100644
->>>> --- a/drivers/md/bcache/util.h
->>>> +++ b/drivers/md/bcache/util.h
->>>> @@ -15,8 +15,6 @@
->>>>  
->>>>  #include "closure.h"
->>>>  
->>>> -#define PAGE_SECTORS		(PAGE_SIZE / 512)
->>>> -
->>>>  struct closure;
->>>>  
->>>>  #ifdef CONFIG_BCACHE_DEBUG
->>>> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
->>>> index bb5636cc17b91a7..b068dfc5f2ef0ab 100644
->>>> --- a/include/linux/blkdev.h
->>>> +++ b/include/linux/blkdev.h
->>>> @@ -949,11 +949,12 @@ static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
->>>>   * multiple of 512 bytes. Hence these two constants.
->>>>   */
->>>>  #ifndef SECTOR_SHIFT
->>>> -#define SECTOR_SHIFT 9
->>>> +#define SECTOR_SHIFT		9
->>>>  #endif
->>>>  #ifndef SECTOR_SIZE
->>>> -#define SECTOR_SIZE (1 << SECTOR_SHIFT)
->>>> +#define SECTOR_SIZE		(1 << SECTOR_SHIFT)
->>>>  #endif
->>>> +#define PAGE_SECTORS		(PAGE_SIZE / SECTOR_SIZE)
->>>>  
->>>>  /*
->>>>   * blk_rq_pos()			: the current sector
->>> [snipped]
->>>
->>>
+>>  	dstlen = strlen(*dst);
+>>  	len = dstlen + strlen(word) + 2;
+>> -	*dst = REALLOC(*dst, len);
+>> +	p = REALLOC(*dst, len);
 >>
+>> -	if (!*dst) {
+>> -		free(p);
+>> +	if (!p)
+>>  		return 1;
+>> -	}
+>>
+>> +	*dst = p;
+>>  	p = *dst + dstlen;
+>>  	*p = ' ';
+>>  	++p;
+>> -- 
 > 
 > 
 > .
