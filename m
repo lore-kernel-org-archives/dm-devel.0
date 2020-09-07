@@ -1,16 +1,12 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 12/14] libmultipathpersist: use
- update_multipath_table/status, in get_mpvec
-Date: Mon, 07 Sep 2020 16:33:15 +0200
-Message-ID: <1249b66af15efd82f3e37835d74f18a1c5398a73.camel@suse.com>
-References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
-	<5beca982-98a1-e48b-f86f-95810bc3c49c@huawei.com>
-	<20200905000501.GH11108@octiron.msp.redhat.com>
-Mime-Version: 1.0
+From: Brian Bunker <brian@purestorage.com>
+Subject: fix for kernel BUG at
+ drivers/scsi/device_handler/scsi_dh_alua.c:662!
+Date: Mon, 7 Sep 2020 12:55:05 -0700
+Message-ID: <EA072C02-DFA6-440C-88CB-5E379FBB23FD@purestorage.com>
+Mime-Version: 1.0 (Mac OS X Mail 14.0 \(3654.0.3\))
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200905000501.GH11108@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,31 +16,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>, lixiaokeng <lixiaokeng@huawei.com>
-Cc: dm-devel, list <dm-devel@redhat.com>, linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2020-09-04 at 19:05 -0500, Benjamin Marzinski wrote:
-> On Wed, Sep 02, 2020 at 03:24:33PM +0800, lixiaokeng wrote:
-> > The return values of dm_get_map, disassemble_map in get_mpvec
-> > were not checked. Use update_multipath_table/status to instead
-> > of them.
-> > 
-> 
-> Looks mostly good. I agree that we should be checking the results of
-> getting the raw data before we try to disassemble it. But, there's
-> not
-> really any point to calling continue as the last operation of a loop.
-> Perhaps
-> 
-> if (update_multipath_table(mpp, pathvec, DI_CHECKER) == DMP_OK)
-> 	update_multipath_status(mpp);
-> 
-> makes more sense.
+Hello all,
 
-I was thinking about this before, and wondered whether we should call
-remove_map() here if we encounter an error. Looking at it again and
-comparing with get_dm_mpvec(), I think we should.
+From my earlier post:
+https://www.redhat.com/archives/dm-devel/2020-September/msg00083.html
 
-Regards
-Martin
+Would it be better to move the unsetting the address of sdev to NULL lower? This would protect
+against the crash we see when the alua_rtpg function tries to access the sdev address
+that has been set to NULL in alua_bus_detach by another thread.
+
+--- a/linux-5.4.17/drivers/scsi/device_handler/scsi_dh_alua.c	2020-07-29 22:48:30.000000000 -0600
++++ b/linux-5.4.17/drivers/scsi/device_handler/scsi_dh_alua.c	2020-09-07 13:38:23.771575702 -0600
+@@ -1146,15 +1146,15 @@
+ 
+ 	spin_lock(&h->pg_lock);
+ 	pg = rcu_dereference_protected(h->pg, lockdep_is_held(&h->pg_lock));
+-	rcu_assign_pointer(h->pg, NULL);
+-	h->sdev = NULL;
+-	spin_unlock(&h->pg_lock);
+ 	if (pg) {
+ 		spin_lock_irq(&pg->lock);
+ 		list_del_rcu(&h->node);
+ 		spin_unlock_irq(&pg->lock);
+ 		kref_put(&pg->kref, release_port_group);
+ 	}
++	rcu_assign_pointer(h->pg, NULL);
++	h->sdev = NULL;
++	spin_unlock(&h->pg_lock);
+ 	sdev->handler_data = NULL;
+ 	kfree(h);
+ }
+
+Thanks,
+Brian
+
+Brian Bunker
+SW Eng
+brian@purestorage.com
