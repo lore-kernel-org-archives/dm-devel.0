@@ -1,16 +1,16 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: Re: [PATCH 09/14] libmultipath: check whether
- mp->features is NULl in, assemble_map
-Date: Mon, 7 Sep 2020 20:21:28 +0800
-Message-ID: <8dd72a70-991a-cb7d-3279-3d5036df1b9d@huawei.com>
+Subject: Re: [PATCH 11/14] mpathpersist: check whether malloc
+ paramp->trnptid_list, fails in handle_args func
+Date: Mon, 7 Sep 2020 20:26:56 +0800
+Message-ID: <b26b27f9-3c6e-8b9c-baa1-c72fd0cf7d96@huawei.com>
 References: <37544d4c-950f-4281-3b66-e4d1884c5167@huawei.com>
-	<40cf77df-eaa3-fb72-69fd-9f865d12dc34@huawei.com>
-	<20200904213048.GE11108@octiron.msp.redhat.com>
+	<eeea4f08-bcb1-65b6-2fe8-b078961a07d3@huawei.com>
+	<20200904235252.GG11108@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200904213048.GE11108@octiron.msp.redhat.com>
+In-Reply-To: <20200904235252.GG11108@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,36 +26,20 @@ Cc: linfeilong <linfeilong@huawei.com>, dm-devel mailing list <dm-devel@redhat.c
 List-Id: dm-devel.ids
 
 
->> @@ -86,9 +86,12 @@ assemble_map (struct multipath * mp, char * params, int len)
->>  	    get_linux_version_code() < KERNEL_VERSION(4, 3, 0))
->>  		add_feature(&mp->features, retain_hwhandler);
 >>
->> -	f = STRDUP(mp->features);
+>> -		paramp= malloc(sizeof(struct prout_param_descriptor) + (sizeof(struct transportid *)*(MPATH_MX_TIDS )));
+>> -
+>> -		memset(paramp, 0, sizeof(struct prout_param_descriptor) + (sizeof(struct transportid *)*(MPATH_MX_TIDS)));
 > 
-> clearly strdup()ing without checking if mp->features NULL is incorrect.
-> However, I'm not sure that we need to fail if mp->features is NULL.
-> instead, int the APPEND call, we could use the gcc ternary operator
-> extension
+> When looking at your patch, I noticed that this function has both
+> num_transport and num_transportids, but only num_transport is used,
+> while num_transportids is reported back to the user.  I realize that
+> this is only tangentially related to your patch, but if you could
+> combine these two varaiables, that would be helpful.
 > 
-> (mp->features)?: "0"
-> 
-> to use "0" if mp->features is NULL.
-> 
-> Also, have you seen this actually occur?  Or is this just a theoretical
-> issue that you've found from reading the code.  It seems like
-> setup_map() will always call select_features() before calling
-> assemble_map(), which should mean that mp->features will always be set
-> in this case. Perhaps I'm missing something here.
-> 
-> -Ben
-> 
-Hi Ben,
-  This just a theoretical issue and I did not see it. But it's not necessary
-to call strdup. In your opinion, need multipath be checked?  I will make new
-patch with your suggestion.
+
+Hi Ben:
+  Thanks for you great advice. I will make patch v2 following your
+advice.
 
 -Lixiaokeng
->> +	if (!mp->features) {
->> +		condlog(0, "mp->features is still NULL.");
->> +		goto err;
->> +	}
