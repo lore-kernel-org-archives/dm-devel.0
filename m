@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH V2 05/14] multipathd: use MALLOC and check return
- value in cli_getprkey func
-Date: Tue, 8 Sep 2020 14:57:59 +0800
-Message-ID: <ca11c6dc-4d0b-a044-2111-3b4161d2e498@huawei.com>
+Subject: [PATCH V2 06/14] kpartx: check return value of malloc in
+	main func
+Date: Tue, 8 Sep 2020 14:59:20 +0800
+Message-ID: <e8f626e9-d492-fc86-6a90-9cf99984940f@huawei.com>
 References: <a3672ace-9637-20e2-04ce-857e364ffdb3@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,29 +23,38 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, dm-devel mailing list <dm-devel@redhat.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-In cli_getprkey func, we use MALLOC instead of malloc, and check
-the return value of MALLOC.
+In main func of kpartx.c, we should check return value of
+malloc before using it.
 
-V1->V2: turn back MALLOC to malloc and reomve error message
+V1->V2: change malloc to xmalloc
 
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
-Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- multipathd/cli_handlers.c | 2 ++
- 1 file changed, 2 insertions(+)
+ kpartx/kpartx.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index e9698704..235e2a2e 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -1531,6 +1531,8 @@ cli_getprkey(void * v, char ** reply, int * len, void * data)
-                return 1;
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 98f6176e..6de3c9c4 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -61,6 +61,9 @@ struct pt {
+ int ptct = 0;
+ int udev_sync = 1;
 
-        *reply = malloc(26);
-+       if (!*reply)
-+               return 1;
++extern void *
++xmalloc (size_t size);
++
+ static void
+ addpts(char *t, ptreader f)
+ {
+@@ -383,7 +386,7 @@ main(int argc, char **argv){
+                mapname = device + off;
 
-        if (!get_be64(mpp->reservation_key)) {
-                sprintf(*reply, "none\n");
+        if (delim == NULL) {
+-               delim = malloc(DELIM_SIZE);
++               delim = xmalloc(DELIM_SIZE);
+                memset(delim, 0, DELIM_SIZE);
+                set_delimiter(mapname, delim);
+        }
 --
