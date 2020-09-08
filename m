@@ -1,8 +1,8 @@
-From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH V2 14/14] multipathpersist: delete unused
- variable in handle_args
-Date: Tue, 8 Sep 2020 15:06:05 +0800
-Message-ID: <04f01b5d-7142-eac1-b043-f0fc19702bd7@huawei.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH V2 00/14] multipath-tools series: some
+ cleanups and fixes checked by codedex tool
+Date: Tue, 08 Sep 2020 09:10:39 +0200
+Message-ID: <83fb04548a93ab61df268fc4925c83883be3dabd.camel@suse.com>
 References: <a3672ace-9637-20e2-04ce-857e364ffdb3@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -18,33 +18,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Language: en-GB
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>
+To: lixiaokeng <lixiaokeng@huawei.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
 Cc: linfeilong <linfeilong@huawei.com>, dm-devel mailing list <dm-devel@redhat.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-In handle_args, the tmp isn't used. We delete it.
+On Tue, 2020-09-08 at 14:50 +0800, lixiaokeng wrote:
+> Patches 01, 02, 04, 05, 06, 09, 11, 12, 14 have some changes.
 
-V1->V2: modify patch because of "mpathpersist: check whether
-malloc paramp->trnptid_list fails in handle_args func" changing
+Thanks.
+What about No. 08? Did you drop it? If yes, please say so.
 
-Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
-Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Signed-off-by: Linfeilong <linfeilong@huawei.com>
----
- mpathpersist/main.c | 1 -
- 1 file changed, 1 deletion(-)
-
-diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-index da67c15c..85453ac2 100644
---- a/mpathpersist/main.c
-+++ b/mpathpersist/main.c
-@@ -211,7 +211,6 @@ static int handle_args(int argc, char * argv[], int nline)
-        int prout_sa = -1;
-        char *batch_fn = NULL;
-        void *resp = NULL;
--       struct transportid * tmp;
-
-        memset(transportids, 0, MPATH_MX_TIDS * sizeof(struct transportid));
-
---
+Regards,
+Martin
