@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH V3 09/14] libmultipath: check whether
- mp->features is NUll in assemble_map
-Date: Tue, 8 Sep 2020 16:51:07 +0800
-Message-ID: <13d81368-18be-3961-df65-34fed5bf1bce@huawei.com>
+Subject: [PATCH V3 14/14] multipathpersist: delete unused
+ variable in handle_args
+Date: Tue, 8 Sep 2020 16:54:08 +0800
+Message-ID: <114eab07-d200-bd2e-af23-d7c7234525d1@huawei.com>
 References: <2fb59aa1-eafa-49b6-08aa-a279565ec234@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,58 +24,28 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-In assemble_map func, if add_feature fails and mp->features is
-default value (NULL), STRDUP(mp->features) will cause a seg-fault.
-In addition, f = STRDUP(mp->features) is just used for APPEND().
-We can directly pass mp->features to APPEND().
+In handle_args, the tmp isn't used. We delete it.
 
-Here, we firstly check whether mp->features is null.
+V1->V2: modify patch because of "mpathpersist: check whether
+malloc paramp->trnptid_list fails in handle_args func" changing
 
-V1->V2: use ?: instead of checking mp->features
-
+Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- libmultipath/dmparser.c | 10 +++-------
- 1 file changed, 3 insertions(+), 7 deletions(-)
+ mpathpersist/main.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index 482e9d0e..3c5e016a 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -65,7 +65,7 @@ assemble_map (struct multipath * mp, char * params, int len)
- 	int i, j;
- 	int minio;
- 	int nr_priority_groups, initial_pg_nr;
--	char * p, * f;
-+	char * p;
- 	const char *const end = params + len;
- 	char no_path_retry[] = "queue_if_no_path";
- 	char retain_hwhandler[] = "retain_attached_hw_handler";
-@@ -86,10 +86,8 @@ assemble_map (struct multipath * mp, char * params, int len)
- 	    get_linux_version_code() < KERNEL_VERSION(4, 3, 0))
- 		add_feature(&mp->features, retain_hwhandler);
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index da67c15c..85453ac2 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -211,7 +211,6 @@ static int handle_args(int argc, char * argv[], int nline)
+ 	int prout_sa = -1;
+ 	char *batch_fn = NULL;
+ 	void *resp = NULL;
+-	struct transportid * tmp;
 
--	f = STRDUP(mp->features);
--
--	APPEND(p, end, "%s %s %i %i", f, mp->hwhandler, nr_priority_groups,
--	       initial_pg_nr);
-+	APPEND(p, end, "%s %s %i %i", mp->features ? mp->features : 0, mp->hwhandler,
-+		nr_priority_groups, initial_pg_nr);
-
- 	vector_foreach_slot (mp->pg, pgp, i) {
- 		pgp = VECTOR_SLOT(mp->pg, i);
-@@ -110,12 +108,10 @@ assemble_map (struct multipath * mp, char * params, int len)
- 		}
- 	}
-
--	FREE(f);
- 	condlog(4, "%s: assembled map [%s]", mp->alias, params);
- 	return 0;
-
- err:
--	FREE(f);
- 	return 1;
- }
+ 	memset(transportids, 0, MPATH_MX_TIDS * sizeof(struct transportid));
 
 -- 
