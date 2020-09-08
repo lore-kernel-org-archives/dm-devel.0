@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH V2 12/14] libmultipathpersist: use
- update_multipath_table/status in get_mpvec
-Date: Tue, 8 Sep 2020 15:05:18 +0800
-Message-ID: <e823042d-920b-21cf-54bc-884d46fc4fba@huawei.com>
+Subject: [PATCH V2 14/14] multipathpersist: delete unused
+ variable in handle_args
+Date: Tue, 8 Sep 2020 15:06:05 +0800
+Message-ID: <04f01b5d-7142-eac1-b043-f0fc19702bd7@huawei.com>
 References: <a3672ace-9637-20e2-04ce-857e364ffdb3@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,50 +23,28 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, dm-devel mailing list <dm-devel@redhat.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-The return values of dm_get_map, disassemble_map in get_mpvec
-were not checked. Use update_multipath_table/status to instead
-of them.
+In handle_args, the tmp isn't used. We delete it.
 
-V1->V2: delete continue and add remove_map
+V1->V2: modify patch because of "mpathpersist: check whether
+malloc paramp->trnptid_list fails in handle_args func" changing
 
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- libmpathpersist/mpath_persist.c | 15 ++++++---------
- 1 file changed, 6 insertions(+), 9 deletions(-)
+ mpathpersist/main.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index e7256049..1f9817ed 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -323,7 +323,6 @@ get_mpvec (vector curmp, vector pathvec, char * refwwid)
- {
-        int i;
-        struct multipath *mpp;
--       char params[PARAMS_SIZE], status[PARAMS_SIZE];
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index da67c15c..85453ac2 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -211,7 +211,6 @@ static int handle_args(int argc, char * argv[], int nline)
+        int prout_sa = -1;
+        char *batch_fn = NULL;
+        void *resp = NULL;
+-       struct transportid * tmp;
 
-        vector_foreach_slot (curmp, mpp, i){
-                /*
-@@ -341,14 +340,12 @@ get_mpvec (vector curmp, vector pathvec, char * refwwid)
-                if (refwwid && strncmp (mpp->alias, refwwid, WWID_SIZE - 1))
-                        continue;
+        memset(transportids, 0, MPATH_MX_TIDS * sizeof(struct transportid));
 
--               dm_get_map(mpp->alias, &mpp->size, params);
--               condlog(3, "params = %s", params);
--               dm_get_status(mpp->alias, status);
--               condlog(3, "status = %s", status);
--               disassemble_map (pathvec, params, mpp);
--               update_pathvec_from_dm(pathvec, mpp, DI_CHECKER);
--               disassemble_status (status, mpp);
--
-+               if (update_multipath_table(mpp, pathvec, DI_CHECKER) != DMP_OK ||
-+                   update_multipath_status(mpp) != DMP_OK) {
-+                       condlog(1, "error parsing map %s", mpp->wwid);
-+                       remove_map(mpp, pathvec, curmp, PURGE_VEC);
-+                       i--;
-+               }
-        }
-        return MPATH_PR_SUCCESS ;
- }
 --
