@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH V3 04/14] multipathd: check MALLOC return value
- in mpath_pr_event_handler_fn
-Date: Tue, 8 Sep 2020 16:48:15 +0800
-Message-ID: <dfca2184-d0f9-db27-5ba5-02ad1692e6bd@huawei.com>
+Subject: [PATCH V3 05/14] multipathd: use MALLOC and check return
+ value in cli_getprkey func
+Date: Tue, 8 Sep 2020 16:49:03 +0800
+Message-ID: <fd8cdf1e-3a56-e904-21e1-eb6258f78d79@huawei.com>
 References: <2fb59aa1-eafa-49b6-08aa-a279565ec234@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,45 +24,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-In  mpath_pr_event_handler_fn, we use MALLOC instead of malloc, and check
+In cli_getprkey func, we use MALLOC instead of malloc, and check
 the return value of MALLOC.
 
-V1->V2: delete seting ret when jump to out
+V1->V2: turn back MALLOC to malloc and reomve error message
 
-Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- multipathd/main.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ multipathd/cli_handlers.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 67e9af11..f1264459 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -3365,7 +3365,6 @@ void *  mpath_pr_event_handler_fn (void * pathp )
- 	if (resp->prin_descriptor.prin_readkeys.additional_length == 0 )
- 	{
- 		condlog(1, "%s: No key found. Device may not be registered.", pp->dev);
--		ret = MPATH_PR_SUCCESS;
- 		goto out;
- 	}
- 	condlog(2, "Multipath  reservation_key: 0x%" PRIx64 " ",
-@@ -3387,12 +3386,13 @@ void *  mpath_pr_event_handler_fn (void * pathp )
- 	{
- 		condlog(0, "%s: Either device not registered or ", pp->dev);
- 		condlog(0, "host is not authorised for registration. Skip path");
--		ret = MPATH_PR_OTHER;
- 		goto out;
- 	}
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index e9698704..235e2a2e 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -1531,6 +1531,8 @@ cli_getprkey(void * v, char ** reply, int * len, void * data)
+ 		return 1;
 
--	param= malloc(sizeof(struct prout_param_descriptor));
--	memset(param, 0 , sizeof(struct prout_param_descriptor));
-+	param = (struct prout_param_descriptor *)MALLOC(sizeof(struct prout_param_descriptor));
-+	if (!param)
-+		goto out;
-+
- 	param->sa_flags = mpp->sa_flags;
- 	memcpy(param->sa_key, &mpp->reservation_key, 8);
- 	param->num_transportid = 0;
+ 	*reply = malloc(26);
++	if (!*reply)
++		return 1;
+
+ 	if (!get_be64(mpp->reservation_key)) {
+ 		sprintf(*reply, "none\n");
 -- 
