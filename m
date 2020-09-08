@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: Re: [PATCH V3 06/14] kpartx: check return value of
- malloc in main func
-Date: Tue, 8 Sep 2020 16:49:50 +0800
-Message-ID: <686d0ca6-2bbf-095d-63bc-346ca609061a@huawei.com>
+Subject: [PATCH V3 09/14] libmultipath: check whether
+ mp->features is NUll in assemble_map
+Date: Tue, 8 Sep 2020 16:51:07 +0800
+Message-ID: <13d81368-18be-3961-df65-34fed5bf1bce@huawei.com>
 References: <2fb59aa1-eafa-49b6-08aa-a279565ec234@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,38 +24,58 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-In main func of kpartx.c, we should check return value of
-malloc before using it.
+In assemble_map func, if add_feature fails and mp->features is
+default value (NULL), STRDUP(mp->features) will cause a seg-fault.
+In addition, f = STRDUP(mp->features) is just used for APPEND().
+We can directly pass mp->features to APPEND().
 
-V1->V2: change malloc to xmalloc
+Here, we firstly check whether mp->features is null.
+
+V1->V2: use ?: instead of checking mp->features
 
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
 ---
- kpartx/kpartx.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ libmultipath/dmparser.c | 10 +++-------
+ 1 file changed, 3 insertions(+), 7 deletions(-)
 
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index 98f6176e..6de3c9c4 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -61,6 +61,9 @@ struct pt {
- int ptct = 0;
- int udev_sync = 1;
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 482e9d0e..3c5e016a 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -65,7 +65,7 @@ assemble_map (struct multipath * mp, char * params, int len)
+ 	int i, j;
+ 	int minio;
+ 	int nr_priority_groups, initial_pg_nr;
+-	char * p, * f;
++	char * p;
+ 	const char *const end = params + len;
+ 	char no_path_retry[] = "queue_if_no_path";
+ 	char retain_hwhandler[] = "retain_attached_hw_handler";
+@@ -86,10 +86,8 @@ assemble_map (struct multipath * mp, char * params, int len)
+ 	    get_linux_version_code() < KERNEL_VERSION(4, 3, 0))
+ 		add_feature(&mp->features, retain_hwhandler);
 
-+extern void *
-+xmalloc (size_t size);
-+
- static void
- addpts(char *t, ptreader f)
- {
-@@ -383,7 +386,7 @@ main(int argc, char **argv){
- 		mapname = device + off;
+-	f = STRDUP(mp->features);
+-
+-	APPEND(p, end, "%s %s %i %i", f, mp->hwhandler, nr_priority_groups,
+-	       initial_pg_nr);
++	APPEND(p, end, "%s %s %i %i", mp->features ? mp->features : 0, mp->hwhandler,
++		nr_priority_groups, initial_pg_nr);
 
- 	if (delim == NULL) {
--		delim = malloc(DELIM_SIZE);
-+		delim = xmalloc(DELIM_SIZE);
- 		memset(delim, 0, DELIM_SIZE);
- 		set_delimiter(mapname, delim);
+ 	vector_foreach_slot (mp->pg, pgp, i) {
+ 		pgp = VECTOR_SLOT(mp->pg, i);
+@@ -110,12 +108,10 @@ assemble_map (struct multipath * mp, char * params, int len)
+ 		}
  	}
+
+-	FREE(f);
+ 	condlog(4, "%s: assembled map [%s]", mp->alias, params);
+ 	return 0;
+
+ err:
+-	FREE(f);
+ 	return 1;
+ }
+
 -- 
