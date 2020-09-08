@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH V3 02/14] libmultipath: change malloc to calloc
- in print_foreign_topology
-Date: Tue, 8 Sep 2020 16:46:17 +0800
-Message-ID: <900c9ffe-9384-8915-e31f-34a0ef87bb49@huawei.com>
+Subject: [PATCH V3 04/14] multipathd: check MALLOC return value
+ in mpath_pr_event_handler_fn
+Date: Tue, 8 Sep 2020 16:48:15 +0800
+Message-ID: <dfca2184-d0f9-db27-5ba5-02ad1692e6bd@huawei.com>
 References: <2fb59aa1-eafa-49b6-08aa-a279565ec234@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,30 +24,45 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-We check the return value of malloc in print_foreign_topology.
+In  mpath_pr_event_handler_fn, we use MALLOC instead of malloc, and check
+the return value of MALLOC.
 
-V1->V2: chanege malloc to calloc
+V1->V2: delete seting ret when jump to out
 
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- libmultipath/foreign.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ multipathd/main.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
-index e8f61351..fce19347 100644
---- a/libmultipath/foreign.c
-+++ b/libmultipath/foreign.c
-@@ -544,8 +544,8 @@ void print_foreign_topology(int verbosity)
- 	int buflen = MAX_LINE_LEN * MAX_LINES;
- 	char *buf = NULL, *tmp = NULL;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 67e9af11..f1264459 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -3365,7 +3365,6 @@ void *  mpath_pr_event_handler_fn (void * pathp )
+ 	if (resp->prin_descriptor.prin_readkeys.additional_length == 0 )
+ 	{
+ 		condlog(1, "%s: No key found. Device may not be registered.", pp->dev);
+-		ret = MPATH_PR_SUCCESS;
+ 		goto out;
+ 	}
+ 	condlog(2, "Multipath  reservation_key: 0x%" PRIx64 " ",
+@@ -3387,12 +3386,13 @@ void *  mpath_pr_event_handler_fn (void * pathp )
+ 	{
+ 		condlog(0, "%s: Either device not registered or ", pp->dev);
+ 		condlog(0, "host is not authorised for registration. Skip path");
+-		ret = MPATH_PR_OTHER;
+ 		goto out;
+ 	}
 
--	buf = malloc(buflen);
--	buf[0] = '\0';
-+	buf = calloc(1, buflen);
+-	param= malloc(sizeof(struct prout_param_descriptor));
+-	memset(param, 0 , sizeof(struct prout_param_descriptor));
++	param = (struct prout_param_descriptor *)MALLOC(sizeof(struct prout_param_descriptor));
++	if (!param)
++		goto out;
 +
- 	while (buf != NULL) {
- 		char *c = buf;
-
+ 	param->sa_flags = mpp->sa_flags;
+ 	memcpy(param->sa_key, &mpp->reservation_key, 8);
+ 	param->num_transportid = 0;
 -- 
