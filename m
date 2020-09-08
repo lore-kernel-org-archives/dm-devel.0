@@ -1,15 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH V3 06/14] kpartx: check return value of
- malloc in main func
-Date: Tue, 08 Sep 2020 16:25:11 +0200
-Message-ID: <f13f55dcfdf6a17702c1c4a3b61b6956e68e0b91.camel@suse.com>
+Subject: Re: [PATCH V3 05/14] multipathd: use MALLOC and check
+ return value in cli_getprkey func
+Date: Tue, 08 Sep 2020 16:32:28 +0200
+Message-ID: <ca471cce2d6801dde59fd9d8e8d191f3b89ef407.camel@suse.com>
 References: <2fb59aa1-eafa-49b6-08aa-a279565ec234@huawei.com>
-	<686d0ca6-2bbf-095d-63bc-346ca609061a@huawei.com>
+	<fd8cdf1e-3a56-e904-21e1-eb6258f78d79@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <686d0ca6-2bbf-095d-63bc-346ca609061a@huawei.com>
+In-Reply-To: <fd8cdf1e-3a56-e904-21e1-eb6258f78d79@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,32 +24,20 @@ Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.
 List-Id: dm-devel.ids
 
 On Tue, 2020-09-08 at 16:49 +0800, lixiaokeng wrote:
-> In main func of kpartx.c, we should check return value of
-> malloc before using it.
+> In cli_getprkey func, we use MALLOC instead of malloc, and check
+> the return value of MALLOC.
 > 
-> V1->V2: change malloc to xmalloc
-> 
-> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
-> ---
->  kpartx/kpartx.c | 5 ++++-
->  1 file changed, 4 insertions(+), 1 deletion(-)
-> 
-> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-> index 98f6176e..6de3c9c4 100644
-> --- a/kpartx/kpartx.c
-> +++ b/kpartx/kpartx.c
-> @@ -61,6 +61,9 @@ struct pt {
->  int ptct = 0;
->  int udev_sync = 1;
-> 
-> +extern void *
-> +xmalloc (size_t size);
-> +
+> V1->V2: turn back MALLOC to malloc and reomve error message
 
-Please don't use "extern". It's misleading, because this function is
-defined in the same file. You should actually change xmalloc() to a
-static function.
+Ok, but now you need to change the patch subject as well...
+
+Also, please don't include v1->v2 changes in the commit message itself.
+Once this is committed, it's not interesting how it differs from
+earlier versions of the patch. Put it below the "---" marker,
+or just mention the version history in the cover letter.
+
+Please see
+https://www.kernel.org/doc/html/v4.17/process/submitting-patches.html
 
 Regards,
 Martin
