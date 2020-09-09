@@ -1,54 +1,69 @@
-From: Joe Perches <joe@perches.com>
-Subject: Re: [trivial PATCH] treewide: Convert switch/case fallthrough; to
- break;
-Date: Wed, 09 Sep 2020 15:47:24 -0700
-Message-ID: <b3d6f71aea87f4bb88554f1a3fdaee0b2feb158c.camel@perches.com>
-References: <e6387578c75736d61b2fe70d9783d91329a97eb4.camel@perches.com>
- <20200909223602.GJ87483@ziepe.ca>
+From: Satya Tangirala <satyat@google.com>
+Subject: [PATCH 3/3] dm: enable may_passthrough_inline_crypto on some targets
+Date: Wed,  9 Sep 2020 23:44:22 +0000
+Message-ID: <20200909234422.76194-4-satyat@google.com>
+References: <20200909234422.76194-1-satyat@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
-In-Reply-To: <20200909223602.GJ87483@ziepe.ca>
-List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
-List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
-List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
-List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
-List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
-Errors-To: kvmarm-bounces@lists.cs.columbia.edu
-Sender: kvmarm-bounces@lists.cs.columbia.edu
-To: Jason Gunthorpe <jgg@ziepe.ca>
-Cc: linux-wireless@vger.kernel.org, linux-fbdev@vger.kernel.org, oss-drivers@netronome.com, nouveau@lists.freedesktop.org, alsa-devel <alsa-devel@alsa-project.org>, dri-devel@lists.freedesktop.org, linux-mips@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, linux-mtd@lists.infradead.org, linux-i2c@vger.kernel.org, sparclinux@vger.kernel.org, kvmarm@lists.cs.columbia.edu, linux-rtc@vger.kernel.org, linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, dccp@vger.kernel.org, linux-rdma@vger.kernel.org, linux-atm-general@lists.sourceforge.net, linux-afs@lists.infradead.org, coreteam@netfilter.org, intel-wired-lan@lists.osuosl.org, linux-serial@vger.kernel.org, linux-input@vger.kernel.org, linux-mmc@vger.kernel.org, Kees Cook <kees.cook@canonical.com>, linux-media@vger.kernel.org, linux-pm@vger.kernel.org, intel-gfx@lists.freedesktop.org, linux-sctp@vger.kernel.
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200909234422.76194-1-satyat@google.com>
+Sender: linux-block-owner@vger.kernel.org
+To: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Cc: Jens Axboe <axboe@kernel.dk>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Eric Biggers <ebiggers@google.com>, Satya Tangirala <satyat@google.com>
 List-Id: dm-devel.ids
 
-On Wed, 2020-09-09 at 19:36 -0300, Jason Gunthorpe wrote:
-> On Wed, Sep 09, 2020 at 01:06:39PM -0700, Joe Perches wrote:
-> > fallthrough to a separate case/default label break; isn't very readable.
-> > 
-> > Convert pseudo-keyword fallthrough; statements to a simple break; when
-> > the next label is case or default and the only statement in the next
-> > label block is break;
-> > 
-> > Found using:
-> > 
-> > $ grep-2.5.4 -rP --include=*.[ch] -n "fallthrough;(\s*(case\s+\w+|default)\s*:\s*){1,7}break;" *
-> > 
-> > Miscellanea:
-> > 
-> > o Move or coalesce a couple label blocks above a default: block.
-> > 
-> > Signed-off-by: Joe Perches <joe@perches.com>
-> > ---
-> > 
-> > Compiled allyesconfig x86-64 only.
-> > A few files for other arches were not compiled.
-> 
-> IB part looks OK, I prefer it like this
-> 
-> You could do the same for continue as well, I saw a few of those..
+From: Eric Biggers <ebiggers@google.com>
 
-I saw some continue uses as well but wasn't sure
-and didn't look to see if the switch/case with
-continue was in a for/while loop.
+dm-linear and dm-flakey obviously can pass through inline crypto support.
+
+dm-zero should declare that it passes through inline crypto support, since
+any reads from dm-zero should return zeroes, and blk-crypto should not
+attempt to decrypt data returned from dm-zero.
+
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+Co-developed-by: Satya Tangirala <satyat@google.com>
+Signed-off-by: Satya Tangirala <satyat@google.com>
+---
+ drivers/md/dm-flakey.c | 1 +
+ drivers/md/dm-linear.c | 1 +
+ drivers/md/dm-zero.c   | 1 +
+ 3 files changed, 3 insertions(+)
+
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index a2cc9e45cbba..655286dacc35 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -253,6 +253,7 @@ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	ti->num_discard_bios = 1;
+ 	ti->per_io_data_size = sizeof(struct per_bio_data);
+ 	ti->private = fc;
++	ti->may_passthrough_inline_crypto = true;
+ 	return 0;
+ 
+ bad:
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index e1db43446327..6d81878e2ca8 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -62,6 +62,7 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	ti->num_secure_erase_bios = 1;
+ 	ti->num_write_same_bios = 1;
+ 	ti->num_write_zeroes_bios = 1;
++	ti->may_passthrough_inline_crypto = true;
+ 	ti->private = lc;
+ 	return 0;
+ 
+diff --git a/drivers/md/dm-zero.c b/drivers/md/dm-zero.c
+index b65ca8dcfbdc..07e02f3a9cd1 100644
+--- a/drivers/md/dm-zero.c
++++ b/drivers/md/dm-zero.c
+@@ -26,6 +26,7 @@ static int zero_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	 * Silently drop discards, avoiding -EOPNOTSUPP.
+ 	 */
+ 	ti->num_discard_bios = 1;
++	ti->may_passthrough_inline_crypto = true;
+ 
+ 	return 0;
+ }
+-- 
+2.28.0.618.gf4bc123cb7-goog
