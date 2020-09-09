@@ -1,56 +1,70 @@
-From: Song Liu <song@kernel.org>
-Subject: Re: [PATCH 4/9] md: don't detour through bd_contains for the gendisk
-Date: Tue, 8 Sep 2020 17:55:48 -0700
-Message-ID: <CAPhsuW62Cd329s-LUR9uQVcFvn4pbOj7H0434P7zwRhbNVScgA@mail.gmail.com>
-References: <20200903054104.228829-1-hch@lst.de> <20200903054104.228829-5-hch@lst.de>
+From: lixiaokeng <lixiaokeng@huawei.com>
+Subject: Re: [PATCH V3 06/14] kpartx: check return value of
+ malloc in main func
+Date: Wed, 9 Sep 2020 10:04:33 +0800
+Message-ID: <07b9f006-7959-aa5f-1327-79bf18fc2014@huawei.com>
+References: <2fb59aa1-eafa-49b6-08aa-a279565ec234@huawei.com>
+	<686d0ca6-2bbf-095d-63bc-346ca609061a@huawei.com>
+	<f13f55dcfdf6a17702c1c4a3b61b6956e68e0b91.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200903054104.228829-5-hch@lst.de>
-Sender: linux-block-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, Linux Doc Mailing List <linux-doc@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-ide@vger.kernel.org, linux-raid <linux-raid@vger.kernel.org>, linux-mmc@vger.kernel.org, linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <f13f55dcfdf6a17702c1c4a3b61b6956e68e0b91.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Language: en-GB
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel mailing list <dm-devel@redhat.com>
+Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-On Wed, Sep 2, 2020 at 10:43 PM Christoph Hellwig <hch@lst.de> wrote:
->
-> bd_disk is set on all block devices, including those for partitions.
->
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-Acked-by: Song Liu <song@kernel.org>
 
-> ---
->  drivers/md/md.c | 2 +-
->  drivers/md/md.h | 2 +-
->  2 files changed, 2 insertions(+), 2 deletions(-)
->
-> diff --git a/drivers/md/md.c b/drivers/md/md.c
-> index 3f33562d10d6f5..5a0fd93769a70e 100644
-> --- a/drivers/md/md.c
-> +++ b/drivers/md/md.c
-> @@ -8444,7 +8444,7 @@ static int is_mddev_idle(struct mddev *mddev, int init)
->         idle = 1;
->         rcu_read_lock();
->         rdev_for_each_rcu(rdev, mddev) {
-> -               struct gendisk *disk = rdev->bdev->bd_contains->bd_disk;
-> +               struct gendisk *disk = rdev->bdev->bd_disk;
->                 curr_events = (int)part_stat_read_accum(&disk->part0, sectors) -
->                               atomic_read(&disk->sync_io);
->                 /* sync IO will cause sync_io to increase before the disk_stats
-> diff --git a/drivers/md/md.h b/drivers/md/md.h
-> index f9e2ccdd22c478..2175a5ac4f7c68 100644
-> --- a/drivers/md/md.h
-> +++ b/drivers/md/md.h
-> @@ -551,7 +551,7 @@ extern void mddev_unlock(struct mddev *mddev);
->
->  static inline void md_sync_acct(struct block_device *bdev, unsigned long nr_sectors)
->  {
-> -       atomic_add(nr_sectors, &bdev->bd_contains->bd_disk->sync_io);
-> +       atomic_add(nr_sectors, &bdev->bd_disk->sync_io);
->  }
->
->  static inline void md_sync_acct_bio(struct bio *bio, unsigned long nr_sectors)
-> --
-> 2.28.0
->
+On 2020/9/8 22:25, Martin Wilck wrote:
+> On Tue, 2020-09-08 at 16:49 +0800, lixiaokeng wrote:
+>> In main func of kpartx.c, we should check return value of
+>> malloc before using it.
+>>
+>> V1->V2: change malloc to xmalloc
+>>
+>> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+>> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+>> ---
+>>  kpartx/kpartx.c | 5 ++++-
+>>  1 file changed, 4 insertions(+), 1 deletion(-)
+>>
+>> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+>> index 98f6176e..6de3c9c4 100644
+>> --- a/kpartx/kpartx.c
+>> +++ b/kpartx/kpartx.c
+>> @@ -61,6 +61,9 @@ struct pt {
+>>  int ptct = 0;
+>>  int udev_sync = 1;
+>>
+>> +extern void *
+>> +xmalloc (size_t size);
+>> +
+> 
+> Please don't use "extern". It's misleading, because this function is
+> defined in the same file. You should actually change xmalloc() to a
+> static function.
+> 
+> Regards,
+> Martin
+> 
+
+Hi Martin,
+
+  The function xmalloc should be externed before main even it is changed
+to static function. So do you think it is a good idea to move xmalloc
+before main? Or move it and change it to static func?
+
+Regards,
+Lixiaokeng
