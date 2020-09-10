@@ -1,12 +1,14 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH V4 00/14] multipath-tools series: some cleanups
- and fixes checked by codedex tool
-Date: Thu, 10 Sep 2020 18:45:17 +0800
-Message-ID: <f8c2133b-6c02-4cc4-59cd-162828154689@huawei.com>
+Subject: [PATCH V4 01/14] multipathd: initialize major and minor
+ in cli_add_map
+Date: Thu, 10 Sep 2020 18:46:37 +0800
+Message-ID: <0ce971f0-582e-88dd-0fcd-77edaa6d74ed@huawei.com>
+References: <f8c2133b-6c02-4cc4-59cd-162828154689@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <f8c2133b-6c02-4cc4-59cd-162828154689@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,45 +24,29 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-Patches 01, 02, 04, 05, 06, 09, 11, 12, 14 have some changes
+If dm_get_major_minor failed, log with major and minor should not
+be printed to avoid major and minor used before initialization.
 
-Patches 01, 02, 04, 05, 11, 12, 14: change commit message
-Patches 06: move xmalloc before main
-Patches 09: check strdup result in setup_map, add message
-"mp->features must not be NULL" in assemble_map
+Here, we set major and minor to -1 at begining
 
-Zhiqiang Liu (7):
-  multipathd: check return value of malloc in cli_getprkey func
-  kpartx: use xmalloc to instead of malloc in main func
-  libmultipath: check return value of dm_mapname in sysfs_check_holders
-  libmultipath: donot free *dst if REALLOC fails in merge_words
-  libmultipath: check whether mpp->features is NUll in setup_map
-  util/tests: use assert_non_null to ensure malloc returns non-null
-    pointer
-  mpathpersist: check whether malloc paramp->trnptid_list fails in
-    handle_args func
+Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Signed-off-by: Linfeilong <linfeilong@huawei.com>
+---
+ multipathd/cli_handlers.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-lixiaokeng (7):
-  multipathd: initialize major and minor in cli_add_map
-  libmultipath: change malloc to calloc in print_foreign_topology
-  libmultipath: use map instead of dm_task_get_name
-  multipathd: check MALLOC return value in mpath_pr_event_handler_fn
-  libmultipathpersist: use update_multipath_table/status in get_mpvec
-  multipath: use update_multipath_table/status in check_useable_paths
-  multipathpersist: delete unused variable in handle_args
-
- kpartx/kpartx.c                 | 36 +++++++++---------
- libmpathpersist/mpath_persist.c | 15 +++-----
- libmultipath/configure.c        |  5 +++
- libmultipath/devmapper.c        |  2 +-
- libmultipath/dmparser.c         | 18 ++++-----
- libmultipath/foreign.c          |  4 +-
- libmultipath/sysfs.c            |  6 ++-
- mpathpersist/main.c             | 66 +++++++++++++++++++++++++--------
- multipath/main.c                |  9 ++---
- multipathd/cli_handlers.c       |  4 +-
- multipathd/main.c               |  8 ++--
- tests/util.c                    |  2 +
- 12 files changed, 106 insertions(+), 69 deletions(-)
-
---
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index 8db37961..e9698704 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -820,7 +820,7 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
+ {
+ 	struct vectors * vecs = (struct vectors *)data;
+ 	char * param = get_keyparam(v, MAP);
+-	int major, minor;
++	int major = -1, minor = -1;
+ 	char dev_path[PATH_SIZE];
+ 	char *refwwid, *alias = NULL;
+ 	int rc, count = 0;
+-- 
