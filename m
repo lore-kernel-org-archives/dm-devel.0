@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH] libmultipath: setup_map(): don't break multipath
-	attributes
-Date: Thu, 10 Sep 2020 21:50:50 +0200
-Message-ID: <20200910195050.7538-1-mwilck@suse.com>
+Subject: [PATCH v2] libmultipath: setup_map(): don't break
+	multipath attributes
+Date: Thu, 10 Sep 2020 21:56:11 +0200
+Message-ID: <20200910195611.8439-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -32,17 +32,21 @@ not to break this assumption because of an error in this setup_map()
 invocation. As these properties aren't likely to change during an update
 operation, saving and restoring them is better than leaving the map
 improperly initialized.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
+
+v1->v2: forgot to remove the call to free_multipath_attributes().
 
 This is supposed to be applied on top of lixiaokeng's patch
 "libmultipath: check whether mpp->features is NUll in setup_map".
 
- libmultipath/configure.c | 28 +++++++++++++++++++++++++---
+ libmultipath/configure.c | 29 +++++++++++++++++++++++++----
  libmultipath/util.h      |  7 +++++++
- 2 files changed, 32 insertions(+), 3 deletions(-)
+ 2 files changed, 32 insertions(+), 4 deletions(-)
 
 diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 5d5d941..03db587 100644
+index 5d5d941..8fd12df 100644
 --- a/libmultipath/configure.c
 +++ b/libmultipath/configure.c
 @@ -298,6 +298,7 @@ int setup_map(struct multipath *mpp, char *params, int params_size,
@@ -53,17 +57,18 @@ index 5d5d941..03db587 100644
  
  	/*
  	 * don't bother if devmap size is unknown
-@@ -307,9 +308,6 @@ int setup_map(struct multipath *mpp, char *params, int params_size,
+@@ -307,10 +308,6 @@ int setup_map(struct multipath *mpp, char *params, int params_size,
  		return 1;
  	}
  
 -	/*
 -	 * free features, selector, and hwhandler properties if they are being reused
 -	 */
- 	free_multipath_attributes(mpp);
+-	free_multipath_attributes(mpp);
  	if (mpp->disable_queueing && VECTOR_SIZE(mpp->paths) != 0)
  		mpp->disable_queueing = 0;
-@@ -328,11 +326,35 @@ int setup_map(struct multipath *mpp, char *params, int params_size,
+ 
+@@ -328,11 +325,35 @@ int setup_map(struct multipath *mpp, char *params, int params_size,
  
  	select_pgfailback(conf, mpp);
  	select_pgpolicy(conf, mpp);
