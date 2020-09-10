@@ -1,99 +1,76 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 06/14] block: lift setting the readahead size into the
- block layer
-Date: Thu, 10 Sep 2020 13:15:41 -0400
-Message-ID: <20200910171541.GB21919@redhat.com>
-References: <20200726150333.305527-1-hch@lst.de>
- <20200726150333.305527-7-hch@lst.de>
- <20200826220737.GA25613@redhat.com>
- <20200902151144.GA1738@lst.de>
- <20200902162007.GB5513@redhat.com>
- <20200910092813.GA27229@lst.de>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH V4 11/14] mpathpersist: check whether malloc
+ paramp->trnptid_list fails in handle_args func
+Date: Thu, 10 Sep 2020 20:40:57 +0200
+Message-ID: <4c55ba6dcf80faed5859f9e8b6ed71ca49beaed1.camel@suse.com>
+References: <f8c2133b-6c02-4cc4-59cd-162828154689@huawei.com>
+	<3f34cd14-17a0-f7a4-6cdb-7a37aa5c31b4@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200910092813.GA27229@lst.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, martin.petersen@oracle.com, Hans de Goede <hdegoede@redhat.com>, Song Liu <song@kernel.org>, Richard Weinberger <richard@nod.at>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Minchan Kim <minchan@kernel.org>, dm-devel@redhat.com, linux-mtd@lists.infradead.org, linux-mm@kvack.org, drbd-dev@tron.linbit.com, cgroups@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <3f34cd14-17a0-f7a4-6cdb-7a37aa5c31b4@huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: lixiaokeng <lixiaokeng@huawei.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel mailing list <dm-devel@redhat.com>
+Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 10 2020 at  5:28am -0400,
-Christoph Hellwig <hch@lst.de> wrote:
-
-> On Wed, Sep 02, 2020 at 12:20:07PM -0400, Mike Snitzer wrote:
-> > On Wed, Sep 02 2020 at 11:11am -0400,
-> > Christoph Hellwig <hch@lst.de> wrote:
-> > 
-> > > On Wed, Aug 26, 2020 at 06:07:38PM -0400, Mike Snitzer wrote:
-> > > > On Sun, Jul 26 2020 at 11:03am -0400,
-> > > > Christoph Hellwig <hch@lst.de> wrote:
-> > > > 
-> > > > > Drivers shouldn't really mess with the readahead size, as that is a VM
-> > > > > concept.  Instead set it based on the optimal I/O size by lifting the
-> > > > > algorithm from the md driver when registering the disk.  Also set
-> > > > > bdi->io_pages there as well by applying the same scheme based on
-> > > > > max_sectors.
-> > > > > 
-> > > > > Signed-off-by: Christoph Hellwig <hch@lst.de>
-> > > > > ---
-> > > > >  block/blk-settings.c         |  5 ++---
-> > > > >  block/blk-sysfs.c            |  1 -
-> > > > >  block/genhd.c                | 13 +++++++++++--
-> > > > >  drivers/block/aoe/aoeblk.c   |  2 --
-> > > > >  drivers/block/drbd/drbd_nl.c | 12 +-----------
-> > > > >  drivers/md/bcache/super.c    |  4 ----
-> > > > >  drivers/md/dm-table.c        |  3 ---
-> > > > >  drivers/md/raid0.c           | 16 ----------------
-> > > > >  drivers/md/raid10.c          | 24 +-----------------------
-> > > > >  drivers/md/raid5.c           | 13 +------------
-> > > > >  10 files changed, 16 insertions(+), 77 deletions(-)
-> > > > 
-> > > > 
-> > > > In general these changes need a solid audit relative to stacking
-> > > > drivers.  That is, the limits stacking methods (blk_stack_limits)
-> > > > vs lower level allocation methods (__device_add_disk).
-> > > > 
-> > > > You optimized for lowlevel __device_add_disk establishing the bdi's
-> > > > ra_pages and io_pages.  That is at the beginning of disk allocation,
-> > > > well before any build up of stacking driver's queue_io_opt() -- which
-> > > > was previously done in disk_stack_limits or driver specific methods
-> > > > (e.g. dm_table_set_restrictions) that are called _after_ all the limits
-> > > > stacking occurs.
-> > > > 
-> > > > By inverting the setting of the bdi's ra_pages and io_pages to be done
-> > > > so early in __device_add_disk it'll break properly setting these values
-> > > > for at least DM afaict.
-> > > 
-> > > ra_pages never got inherited by stacking drivers, check it by modifying
-> > > it on an underlying device and then creating a trivial dm or md one.
-> > 
-> > Sure, not saying that it did.  But if the goal is to set ra_pages based
-> > on io_opt then to do that correctly on stacking drivers it must be done
-> > in terms of limits stacking right?  Or at least done at a location that
-> > is after the limits stacking has occurred?  So should DM just open-code
-> > setting ra_pages like it did for io_pages?
-> > 
-> > Because setting ra_pages in __device_add_disk() is way too early for DM
-> > -- given it uses device_add_disk_no_queue_reg via add_disk_no_queue_reg
-> > at DM device creation (before stacking all underlying devices' limits).
+On Thu, 2020-09-10 at 18:52 +0800, lixiaokeng wrote:
+> In handle_args func, we donot check whether malloc paramp and
+> each paramp->trnptid_list[j] fails before using them, it may
+> cause access NULL pointer.
 > 
-> I'll move it to blk_register_queue, which should work just fine.
+> Here, we add alloc_prout_param_descriptor to allocate and init
+> paramp, and we add free_prout_param_descriptor to free paramp
+> and each paramp->trnptid_list[j].
+> 
+> We change num_transport to num_transportids to combine them.
+> 
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+> ---
+>  mpathpersist/main.c | 65 ++++++++++++++++++++++++++++++++++---------
+> --
+>  1 file changed, 50 insertions(+), 15 deletions(-)
+> 
+> diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+> index 28bfe410..da67c15c 100644
+> --- a/mpathpersist/main.c
+> +++ b/mpathpersist/main.c
+> @@ -153,6 +153,38 @@ static int do_batch_file(const char *batch_fn)
+>  	return ret;
+>  }
+> 
+> +static struct prout_param_descriptor *
+> +alloc_prout_param_descriptor(int num_transportid)
+> +{
+> +	struct prout_param_descriptor *paramp;
+> +
+> +	if (num_transportid < 0 || num_transportid > MPATH_MX_TIDS)
+> +		return NULL;
+> +
+> +	paramp= malloc(sizeof(struct prout_param_descriptor) +
+> +				(sizeof(struct transportid *) *
+> num_transportid));
+> +
+> +	if (!paramp)
+> +		return NULL;
+> +
+> +	paramp->num_transportid = num_transportid;
+> +	memset(paramp, 0, sizeof(struct prout_param_descriptor) +
+> +			(sizeof(struct transportid *) *
+> num_transportid));
 
-That'll work for initial DM table load as part of DM device creation
-(dm_setup_md_queue).  But it won't account for DM table reloads that
-might change underlying devices on a live DM device (done using
-__bind).
+Here you overwrite paramp->num_transportid, which you just set.
+Otherwise, the patch looks ok.
 
-Both dm_setup_md_queue() and __bind() call dm_table_set_restrictions()
-to set/update queue_limits.  It feels like __bind() will need to call a
-new block helper to set/update parts of queue_limits (e.g. ra_pages and
-io_pages).
-
-Any chance you're open to factoring out that block function as an
-exported symbol for use by blk_register_queue() and code like DM's
-__bind()?
-
-Thanks,
-Mike
+Regards,
+Martin
