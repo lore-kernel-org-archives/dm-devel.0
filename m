@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH V4 02/14] libmultipath: change malloc to calloc
- in print_foreign_topology
-Date: Thu, 10 Sep 2020 18:47:34 +0800
-Message-ID: <e7fd9cde-bb39-4fe4-65bd-17d0997c840e@huawei.com>
+Subject: [PATCH V4 05/14] multipathd: check return value of
+ malloc in cli_getprkey func
+Date: Thu, 10 Sep 2020 18:49:27 +0800
+Message-ID: <4a43f1ca-c756-ed8f-c69d-a388b0911a61@huawei.com>
 References: <f8c2133b-6c02-4cc4-59cd-162828154689@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,28 +24,26 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-We chanege malloc to calloc.
+In cli_getprkey func, we check the return value of malloc.
 
-Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- libmultipath/foreign.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ multipathd/cli_handlers.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
-index e8f61351..fce19347 100644
---- a/libmultipath/foreign.c
-+++ b/libmultipath/foreign.c
-@@ -544,8 +544,8 @@ void print_foreign_topology(int verbosity)
- 	int buflen = MAX_LINE_LEN * MAX_LINES;
- 	char *buf = NULL, *tmp = NULL;
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index e9698704..235e2a2e 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -1531,6 +1531,8 @@ cli_getprkey(void * v, char ** reply, int * len, void * data)
+ 		return 1;
 
--	buf = malloc(buflen);
--	buf[0] = '\0';
-+	buf = calloc(1, buflen);
-+
- 	while (buf != NULL) {
- 		char *c = buf;
+ 	*reply = malloc(26);
++	if (!*reply)
++		return 1;
 
+ 	if (!get_be64(mpp->reservation_key)) {
+ 		sprintf(*reply, "none\n");
 -- 
