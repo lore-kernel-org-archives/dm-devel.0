@@ -1,61 +1,66 @@
-From: Matthias Brugger <matthias.bgg@gmail.com>
-Subject: Re: [trivial PATCH] treewide: Convert switch/case
- fallthrough; to break;
-Date: Thu, 10 Sep 2020 12:16:33 +0200
-Message-ID: <81d852d4-115f-c6c6-ef80-17c47ec4849a@gmail.com>
-References: <e6387578c75736d61b2fe70d9783d91329a97eb4.camel@perches.com>
+From: lixiaokeng <lixiaokeng@huawei.com>
+Subject: [PATCH V4 00/14] multipath-tools series: some cleanups
+ and fixes checked by codedex tool
+Date: Thu, 10 Sep 2020 18:45:17 +0800
+Message-ID: <f8c2133b-6c02-4cc4-59cd-162828154689@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <intel-gfx-bounces@lists.freedesktop.org>
-In-Reply-To: <e6387578c75736d61b2fe70d9783d91329a97eb4.camel@perches.com>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/intel-gfx>
-List-Post: <mailto:intel-gfx@lists.freedesktop.org>
-List-Help: <mailto:intel-gfx-request@lists.freedesktop.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/intel-gfx>,
- <mailto:intel-gfx-request@lists.freedesktop.org?subject=subscribe>
-Errors-To: intel-gfx-bounces@lists.freedesktop.org
-Sender: "Intel-gfx" <intel-gfx-bounces@lists.freedesktop.org>
-To: Joe Perches <joe@perches.com>, LKML <linux-kernel@vger.kernel.org>, Jiri Kosina <trivial@kernel.org>
-Cc: linux-fbdev@vger.kernel.org, oss-drivers@netronome.com, nouveau@lists.freedesktop.org, alsa-devel <alsa-devel@alsa-project.org>, dri-devel@lists.freedesktop.org, linux-mips@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, linux-mtd@lists.infradead.org, linux-i2c@vger.kernel.org, sparclinux@vger.kernel.org, linux-afs@lists.infradead.org, linux-rtc@vger.kernel.org, linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, dccp@vger.kernel.org, linux-rdma@vger.kernel.org, linux-atm-general@lists.sourceforge.net, kvmarm@lists.cs.columbia.edu, coreteam@netfilter.org, intel-wired-lan@lists.osuosl.org, linux-serial@vger.kernel.org, linux-input@vger.kernel.org, linux-mmc@vger.kernel.org, Kees Cook <kees.cook@canonical.com>, linux-media@vger.kernel.org, linux-pm@vger.kernel.org, intel-gfx@lists.freedesktop.org, linux-mediatek@lists.infradead.org, linux-nvme@lists.in
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Language: en-GB
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel
+	mailing list <dm-devel@redhat.com>
+Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
+Patches 01, 02, 04, 05, 06, 09, 11, 12, 14 have some changes
 
+Patches 01, 02, 04, 05, 11, 12, 14: change commit message
+Patches 06: move xmalloc before main
+Patches 09: check strdup result in setup_map, add message
+"mp->features must not be NULL" in assemble_map
 
-On 09/09/2020 22:06, Joe Perches wrote:
-> diff --git a/drivers/net/wireless/mediatek/mt7601u/dma.c b/drivers/net/wireless/mediatek/mt7601u/dma.c
-> index 09f931d4598c..778be26d329f 100644
-> --- a/drivers/net/wireless/mediatek/mt7601u/dma.c
-> +++ b/drivers/net/wireless/mediatek/mt7601u/dma.c
-> @@ -193,11 +193,11 @@ static void mt7601u_complete_rx(struct urb *urb)
->   	case -ESHUTDOWN:
->   	case -ENOENT:
->   		return;
-> +	case 0:
-> +		break;
->   	default:
->   		dev_err_ratelimited(dev->dev, "rx urb failed: %d\n",
->   				    urb->status);
-> -		fallthrough;
-> -	case 0:
->   		break;
->   	}
->   
-> @@ -238,11 +238,11 @@ static void mt7601u_complete_tx(struct urb *urb)
->   	case -ESHUTDOWN:
->   	case -ENOENT:
->   		return;
-> +	case 0:
-> +		break;
->   	default:
->   		dev_err_ratelimited(dev->dev, "tx urb failed: %d\n",
->   				    urb->status);
-> -		fallthrough;
-> -	case 0:
->   		break;
->   	}
+Zhiqiang Liu (7):
+  multipathd: check return value of malloc in cli_getprkey func
+  kpartx: use xmalloc to instead of malloc in main func
+  libmultipath: check return value of dm_mapname in sysfs_check_holders
+  libmultipath: donot free *dst if REALLOC fails in merge_words
+  libmultipath: check whether mpp->features is NUll in setup_map
+  util/tests: use assert_non_null to ensure malloc returns non-null
+    pointer
+  mpathpersist: check whether malloc paramp->trnptid_list fails in
+    handle_args func
 
-Reviewed-by: Matthias Brugger <matthias.bgg@gmail.com>
+lixiaokeng (7):
+  multipathd: initialize major and minor in cli_add_map
+  libmultipath: change malloc to calloc in print_foreign_topology
+  libmultipath: use map instead of dm_task_get_name
+  multipathd: check MALLOC return value in mpath_pr_event_handler_fn
+  libmultipathpersist: use update_multipath_table/status in get_mpvec
+  multipath: use update_multipath_table/status in check_useable_paths
+  multipathpersist: delete unused variable in handle_args
+
+ kpartx/kpartx.c                 | 36 +++++++++---------
+ libmpathpersist/mpath_persist.c | 15 +++-----
+ libmultipath/configure.c        |  5 +++
+ libmultipath/devmapper.c        |  2 +-
+ libmultipath/dmparser.c         | 18 ++++-----
+ libmultipath/foreign.c          |  4 +-
+ libmultipath/sysfs.c            |  6 ++-
+ mpathpersist/main.c             | 66 +++++++++++++++++++++++++--------
+ multipath/main.c                |  9 ++---
+ multipathd/cli_handlers.c       |  4 +-
+ multipathd/main.c               |  8 ++--
+ tests/util.c                    |  2 +
+ 12 files changed, 106 insertions(+), 69 deletions(-)
+
+--
