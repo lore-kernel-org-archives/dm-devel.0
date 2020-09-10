@@ -1,15 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH V4 11/14] mpathpersist: check whether malloc
- paramp->trnptid_list fails in handle_args func
-Date: Thu, 10 Sep 2020 20:48:14 +0200
-Message-ID: <8ecf7f972b83be7fba3797327046c7cedf1179c8.camel@suse.com>
+Subject: Re: [PATCH V4 14/14] multipathpersist: delete unused
+ variable in handle_args
+Date: Thu, 10 Sep 2020 20:50:10 +0200
+Message-ID: <9d263718209e39bee19a21e26075bcccadf91888.camel@suse.com>
 References: <f8c2133b-6c02-4cc4-59cd-162828154689@huawei.com>
-	<3f34cd14-17a0-f7a4-6cdb-7a37aa5c31b4@huawei.com>
+	<3b8dc5f8-2fbc-e051-7151-d39308c4aa44@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3f34cd14-17a0-f7a4-6cdb-7a37aa5c31b4@huawei.com>
+In-Reply-To: <3b8dc5f8-2fbc-e051-7151-d39308c4aa44@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,43 +23,31 @@ To: lixiaokeng <lixiaokeng@huawei.com>, Christophe Varoqui <christophe.varoqui@o
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-T24gVGh1LCAyMDIwLTA5LTEwIGF0IDE4OjUyICswODAwLCBsaXhpYW9rZW5nIHdyb3RlOgo+IElu
-IGhhbmRsZV9hcmdzIGZ1bmMsIHdlIGRvbm90IGNoZWNrIHdoZXRoZXIgbWFsbG9jIHBhcmFtcCBh
-bmQKPiBlYWNoIHBhcmFtcC0+dHJucHRpZF9saXN0W2pdIGZhaWxzIGJlZm9yZSB1c2luZyB0aGVt
-LCBpdCBtYXkKPiBjYXVzZSBhY2Nlc3MgTlVMTCBwb2ludGVyLgo+IAo+IEhlcmUsIHdlIGFkZCBh
-bGxvY19wcm91dF9wYXJhbV9kZXNjcmlwdG9yIHRvIGFsbG9jYXRlIGFuZCBpbml0Cj4gcGFyYW1w
-LCBhbmQgd2UgYWRkIGZyZWVfcHJvdXRfcGFyYW1fZGVzY3JpcHRvciB0byBmcmVlIHBhcmFtcAo+
-IGFuZCBlYWNoIHBhcmFtcC0+dHJucHRpZF9saXN0W2pdLgo+IAo+IFdlIGNoYW5nZSBudW1fdHJh
-bnNwb3J0IHRvIG51bV90cmFuc3BvcnRpZHMgdG8gY29tYmluZSB0aGVtLgo+IAo+IFNpZ25lZC1v
-ZmYtYnk6IFpoaXFpYW5nIExpdSA8bGl1emhpcWlhbmcyNkBodWF3ZWkuY29tPgo+IFNpZ25lZC1v
-ZmYtYnk6IGxpeGlhb2tlbmcgPGxpeGlhb2tlbmdAaHVhd2VpLmNvbT4KPiAtLS0KPiAgbXBhdGhw
-ZXJzaXN0L21haW4uYyB8IDY1ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKystLS0t
-LS0tLS0KPiAtLQo+ICAxIGZpbGUgY2hhbmdlZCwgNTAgaW5zZXJ0aW9ucygrKSwgMTUgZGVsZXRp
-b25zKC0pCj4gCj4gZGlmZiAtLWdpdCBhL21wYXRocGVyc2lzdC9tYWluLmMgYi9tcGF0aHBlcnNp
-c3QvbWFpbi5jCj4gaW5kZXggMjhiZmU0MTAuLmRhNjdjMTVjIDEwMDY0NAo+IC0tLSBhL21wYXRo
-cGVyc2lzdC9tYWluLmMKPiArKysgYi9tcGF0aHBlcnNpc3QvbWFpbi5jCj4gQEAgLTE1Myw2ICsx
-NTMsMzggQEAgc3RhdGljIGludCBkb19iYXRjaF9maWxlKGNvbnN0IGNoYXIgKmJhdGNoX2ZuKQo+
-ICAJcmV0dXJuIHJldDsKPiAgfQo+IAo+ICtzdGF0aWMgc3RydWN0IHByb3V0X3BhcmFtX2Rlc2Ny
-aXB0b3IgKgo+ICthbGxvY19wcm91dF9wYXJhbV9kZXNjcmlwdG9yKGludCBudW1fdHJhbnNwb3J0
-aWQpCj4gK3sKPiArCXN0cnVjdCBwcm91dF9wYXJhbV9kZXNjcmlwdG9yICpwYXJhbXA7Cj4gKwo+
-ICsJaWYgKG51bV90cmFuc3BvcnRpZCA8IDAgfHwgbnVtX3RyYW5zcG9ydGlkID4gTVBBVEhfTVhf
-VElEUykKPiArCQlyZXR1cm4gTlVMTDsKPiArCj4gKwlwYXJhbXA9IG1hbGxvYyhzaXplb2Yoc3Ry
-dWN0IHByb3V0X3BhcmFtX2Rlc2NyaXB0b3IpICsKPiArCQkJCShzaXplb2Yoc3RydWN0IHRyYW5z
-cG9ydGlkICopICoKPiBudW1fdHJhbnNwb3J0aWQpKTsKPiArCj4gKwlpZiAoIXBhcmFtcCkKPiAr
-CQlyZXR1cm4gTlVMTDsKPiArCj4gKwlwYXJhbXAtPm51bV90cmFuc3BvcnRpZCA9IG51bV90cmFu
-c3BvcnRpZDsKPiArCW1lbXNldChwYXJhbXAsIDAsIHNpemVvZihzdHJ1Y3QgcHJvdXRfcGFyYW1f
-ZGVzY3JpcHRvcikgKwo+ICsJCQkoc2l6ZW9mKHN0cnVjdCB0cmFuc3BvcnRpZCAqKSAqCj4gbnVt
-X3RyYW5zcG9ydGlkKSk7Cj4gKwlyZXR1cm4gcGFyYW1wOwo+ICt9Cj4gKwo+ICtzdGF0aWMgdm9p
-ZCBmcmVlX3Byb3V0X3BhcmFtX2Rlc2NyaXB0b3Ioc3RydWN0Cj4gcHJvdXRfcGFyYW1fZGVzY3Jp
-cHRvciAqcGFyYW1wKQo+ICt7Cj4gKwlpbnQgaTsKPiArCWlmICghcGFyYW1wKQo+ICsJCXJldHVy
-bjsKPiArCj4gKwlmb3IgKGkgPSAwOyBpIDwgcGFyYW1wLT5udW1fdHJhbnNwb3J0aWQ7IGkrKykK
-PiArCQlmcmVlKHBhcmFtcC0+dHJucHRpZF9saXN0W2ldKTsKClRoaXMgY2F1c2VzIGEgY29tcGls
-YXRpb24gZXJyb3IuIERpZG4ndCB5b3UgY29tcGlsZS10ZXN0PwoKbWFpbi5jOiBJbiBmdW5jdGlv
-biDigJhmcmVlX3Byb3V0X3BhcmFtX2Rlc2NyaXB0b3LigJk6Cm1haW4uYzoxODI6MTY6IGVycm9y
-OiBjb21wYXJpc29uIG9mIGludGVnZXIgZXhwcmVzc2lvbnMgb2YgZGlmZmVyZW50CnNpZ25lZG5l
-c3M6IOKAmGludOKAmSBhbmQg4oCYdWludDMyX3TigJkge2FrYSDigJh1bnNpZ25lZCBpbnTigJl9
-IFstV2Vycm9yPXNpXQogIDE4MiB8ICBmb3IgKGkgPSAwOyBpIDwgcGFyYW1wLT5udW1fdHJhbnNw
-b3J0aWQ7IGkrKykKICAgICAgfCAgICAgICAgICAgICAgICBeCmNjMTogYWxsIHdhcm5pbmdzIGJl
-aW5nIHRyZWF0ZWQgYXMgZXJyb3JzCgpSZWdhcmRzLApNYXJ0aW4KCgoKCi0tCmRtLWRldmVsIG1h
-aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFp
-bG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Thu, 2020-09-10 at 18:54 +0800, lixiaokeng wrote:
+> In handle_args, the tmp isn't used. We delete it.
+> 
+> Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+> Signed-off-by: Linfeilong <linfeilong@huawei.com>
+
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+
+
+> ---
+>  mpathpersist/main.c | 1 -
+>  1 file changed, 1 deletion(-)
+> 
+> diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+> index da67c15c..85453ac2 100644
+> --- a/mpathpersist/main.c
+> +++ b/mpathpersist/main.c
+> @@ -211,7 +211,6 @@ static int handle_args(int argc, char * argv[],
+> int nline)
+>  	int prout_sa = -1;
+>  	char *batch_fn = NULL;
+>  	void *resp = NULL;
+> -	struct transportid * tmp;
+> 
+>  	memset(transportids, 0, MPATH_MX_TIDS * sizeof(struct
+> transportid));
+> 
