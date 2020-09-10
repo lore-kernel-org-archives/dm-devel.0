@@ -1,104 +1,59 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Revert "dm: always call blk_queue_split() in
-	dm_process_bio()"
-Date: Thu, 10 Sep 2020 10:24:39 -0400
-Message-ID: <20200910142438.GA21919@redhat.com>
-References: <529c2394-1b58-b9d8-d462-1f3de1b78ac8@oracle.com>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: [PATCH 02/12] drbd: remove dead code in
+	device_to_statistics
+Date: Thu, 10 Sep 2020 16:48:22 +0200
+Message-ID: <20200910144833.742260-3-hch@lst.de>
+References: <20200910144833.742260-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <529c2394-1b58-b9d8-d462-1f3de1b78ac8@oracle.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Vijayendra Suman <vijayendra.suman@oracle.com>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+In-Reply-To: <20200910144833.742260-1-hch-jcswGhMUV9g@public.gmane.org>
+List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-[cc'ing dm-devel and linux-block because this is upstream concern too]
+Ever since the switch to blk-mq, a lower device not used for VM
+writeback will not be marked congested, so the check will never
+trigger.
 
-On Wed, Sep 09 2020 at  1:00pm -0400,
-Vijayendra Suman <vijayendra.suman@oracle.com> wrote:
+Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+---
+ drivers/block/drbd/drbd_nl.c | 6 ------
+ 1 file changed, 6 deletions(-)
 
->    Hello Mike,
-> 
->    While Running pgbench tool with  5.4.17 kernel build
-> 
->    Following performance degrade is found out
-> 
->    buffer read/write metric : -17.2%
->    cache read/write metric : -18.7%
->    disk read/write metric : -19%
-> 
->    buffer
->    number of transactions actually processed: 840972
->    latency average = 24.013 ms
->    tps = 4664.153934 (including connections establishing)
->    tps = 4664.421492 (excluding connections establishing)
-> 
->    cache
->    number of transactions actually processed: 551345
->    latency average = 36.949 ms
->    tps = 3031.223905 (including connections establishing)
->    tps = 3031.402581 (excluding connections establishing)
-> 
->    After revert of Commit
->    2892100bc85ae446088cebe0c00ba9b194c0ac9d ( Revert "dm: always call
->    blk_queue_split() in dm_process_bio()")
-
-I assume 2892100bc85ae446088cebe0c00ba9b194c0ac9d is 5.4-stable's
-backport of upstream commit 120c9257f5f19e5d1e87efcbb5531b7cd81b7d74 ?
-
->    Performance is Counter measurement
-> 
->    buffer ->
->    number of transactions actually processed: 1135735
->    latency average = 17.799 ms
->    tps = 6292.586749 (including connections establishing)
->    tps = 6292.875089 (excluding connections establishing)
-> 
->    cache ->
->    number of transactions actually processed: 648177
->    latency average = 31.217 ms
->    tps = 3587.755975 (including connections establishing)
->    tps = 3587.966359 (excluding connections establishing)
-> 
->    Following is your commit
-> 
->    diff --git a/drivers/md/dm.c b/drivers/md/dm.c
->    index cf71a2277d60..1e6e0c970e19 100644
->    --- a/drivers/md/dm.c
->    +++ b/drivers/md/dm.c
->    @@ -1760,8 +1760,9 @@ static blk_qc_t dm_process_bio(struct mapped_device
->    *md,
->             * won't be imposed.
->             */
->            if (current->bio_list) {
->    -               blk_queue_split(md->queue, &bio);
->    -               if (!is_abnormal_io(bio))
->    +               if (is_abnormal_io(bio))
->    +                       blk_queue_split(md->queue, &bio);
->    +               else
->                            dm_queue_split(md, ti, &bio);
->            }
-> 
->    Could you have a look if it is safe to revert this commit.
-
-No, it really isn't a good idea given what was documented in the commit
-header for commit 120c9257f5f19e5d1e87efcbb5531b7cd81b7d74 -- the
-excessive splitting is not conducive to performance either.
-
-So I think we need to identify _why_ reverting this commit is causing
-such a performance improvement.  Why is calling blk_queue_split() before
-dm_queue_split() benefiting your pgbench workload?
-
-Thanks,
-Mike
+diff --git a/drivers/block/drbd/drbd_nl.c b/drivers/block/drbd/drbd_nl.c
+index 43c8ae4d9fca81..aaff5bde391506 100644
+--- a/drivers/block/drbd/drbd_nl.c
++++ b/drivers/block/drbd/drbd_nl.c
+@@ -3370,7 +3370,6 @@ static void device_to_statistics(struct device_statistics *s,
+ 	if (get_ldev(device)) {
+ 		struct drbd_md *md = &device->ldev->md;
+ 		u64 *history_uuids = (u64 *)s->history_uuids;
+-		struct request_queue *q;
+ 		int n;
+ 
+ 		spin_lock_irq(&md->uuid_lock);
+@@ -3384,11 +3383,6 @@ static void device_to_statistics(struct device_statistics *s,
+ 		spin_unlock_irq(&md->uuid_lock);
+ 
+ 		s->dev_disk_flags = md->flags;
+-		q = bdev_get_queue(device->ldev->backing_bdev);
+-		s->dev_lower_blocked =
+-			bdi_congested(q->backing_dev_info,
+-				      (1 << WB_async_congested) |
+-				      (1 << WB_sync_congested));
+ 		put_ldev(device);
+ 	}
+ 	s->dev_size = drbd_get_capacity(device->this_bdev);
+-- 
+2.28.0
