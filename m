@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH V4 01/14] multipathd: initialize major and minor
- in cli_add_map
-Date: Thu, 10 Sep 2020 18:46:37 +0800
-Message-ID: <0ce971f0-582e-88dd-0fcd-77edaa6d74ed@huawei.com>
+Subject: [PATCH V4 02/14] libmultipath: change malloc to calloc
+ in print_foreign_topology
+Date: Thu, 10 Sep 2020 18:47:34 +0800
+Message-ID: <e7fd9cde-bb39-4fe4-65bd-17d0997c840e@huawei.com>
 References: <f8c2133b-6c02-4cc4-59cd-162828154689@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,29 +24,28 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-If dm_get_major_minor failed, log with major and minor should not
-be printed to avoid major and minor used before initialization.
-
-Here, we set major and minor to -1 at begining
+We chanege malloc to calloc.
 
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- multipathd/cli_handlers.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/foreign.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 8db37961..e9698704 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -820,7 +820,7 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, MAP);
--	int major, minor;
-+	int major = -1, minor = -1;
- 	char dev_path[PATH_SIZE];
- 	char *refwwid, *alias = NULL;
- 	int rc, count = 0;
+diff --git a/libmultipath/foreign.c b/libmultipath/foreign.c
+index e8f61351..fce19347 100644
+--- a/libmultipath/foreign.c
++++ b/libmultipath/foreign.c
+@@ -544,8 +544,8 @@ void print_foreign_topology(int verbosity)
+ 	int buflen = MAX_LINE_LEN * MAX_LINES;
+ 	char *buf = NULL, *tmp = NULL;
+
+-	buf = malloc(buflen);
+-	buf[0] = '\0';
++	buf = calloc(1, buflen);
++
+ 	while (buf != NULL) {
+ 		char *c = buf;
+
 -- 
