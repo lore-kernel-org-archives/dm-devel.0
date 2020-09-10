@@ -1,72 +1,104 @@
-From: Robin Murphy <robin.murphy@arm.com>
-Subject: Re: [trivial PATCH] treewide: Convert switch/case fallthrough; to
- break;
-Date: Thu, 10 Sep 2020 15:21:05 +0100
-Message-ID: <9372456a-8dcf-2735-57a4-e126aa5df3a6@arm.com>
-References: <e6387578c75736d61b2fe70d9783d91329a97eb4.camel@perches.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: Revert "dm: always call blk_queue_split() in
+	dm_process_bio()"
+Date: Thu, 10 Sep 2020 10:24:39 -0400
+Message-ID: <20200910142438.GA21919@redhat.com>
+References: <529c2394-1b58-b9d8-d462-1f3de1b78ac8@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
-In-Reply-To: <e6387578c75736d61b2fe70d9783d91329a97eb4.camel@perches.com>
-Content-Language: en-GB
-List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
-List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
-List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
-List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
-List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
-Errors-To: kvmarm-bounces@lists.cs.columbia.edu
-Sender: kvmarm-bounces@lists.cs.columbia.edu
-To: Joe Perches <joe@perches.com>, LKML <linux-kernel@vger.kernel.org>, Jiri Kosina <trivial@kernel.org>
-Cc: linux-fbdev@vger.kernel.org, oss-drivers@netronome.com, nouveau@lists.freedesktop.org, alsa-devel <alsa-devel@alsa-project.org>, dri-devel@lists.freedesktop.org, linux-mips@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, linux-mtd@lists.infradead.org, linux-i2c@vger.kernel.org, sparclinux@vger.kernel.org, Will Deacon <will@kernel.org>, linux-afs@lists.infradead.org, linux-rtc@vger.kernel.org, linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, dccp@vger.kernel.org, linux-rdma@vger.kernel.org, linux-atm-general@lists.sourceforge.net, kvmarm@lists.cs.columbia.edu, coreteam@netfilter.org, intel-wired-lan@lists.osuosl.org, linux-serial@vger.kernel.org, linux-input@vger.kernel.org, linux-mmc@vger.kernel.org, Kees Cook <kees.cook@canonical.com>, linux-media@vger.kernel.org, linux-pm@vger.kernel.org, intel-gfx@lists.freedesktop.org, linux-mediatek@lists.inf
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <529c2394-1b58-b9d8-d462-1f3de1b78ac8@oracle.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+Content-Disposition: inline
+To: Vijayendra Suman <vijayendra.suman@oracle.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2020-09-09 21:06, Joe Perches wrote:
-> fallthrough to a separate case/default label break; isn't very readable.
-> 
-> Convert pseudo-keyword fallthrough; statements to a simple break; when
-> the next label is case or default and the only statement in the next
-> label block is break;
-> 
-> Found using:
-> 
-> $ grep-2.5.4 -rP --include=*.[ch] -n "fallthrough;(\s*(case\s+\w+|default)\s*:\s*){1,7}break;" *
-> 
-> Miscellanea:
-> 
-> o Move or coalesce a couple label blocks above a default: block.
-> 
-> Signed-off-by: Joe Perches <joe@perches.com>
-> ---
-> 
-> Compiled allyesconfig x86-64 only.
-> A few files for other arches were not compiled.
-> 
+[cc'ing dm-devel and linux-block because this is upstream concern too]
 
-[...]
-> diff --git a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
-> index c192544e874b..743db1abec40 100644
-> --- a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
-> +++ b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
-> @@ -3777,7 +3777,7 @@ static int arm_smmu_device_hw_probe(struct arm_smmu_device *smmu)
->   	switch (FIELD_GET(IDR0_TTF, reg)) {
->   	case IDR0_TTF_AARCH32_64:
->   		smmu->ias = 40;
-> -		fallthrough;
-> +		break;
->   	case IDR0_TTF_AARCH64:
->   		break;
->   	default:
+On Wed, Sep 09 2020 at  1:00pm -0400,
+Vijayendra Suman <vijayendra.suman@oracle.com> wrote:
 
-I have to say I don't really agree with the readability argument for 
-this one - a fallthrough is semantically correct here, since the first 
-case is a superset of the second. It just happens that anything we would 
-do for the common subset is implicitly assumed (there are other 
-potential cases we simply haven't added support for at the moment), thus 
-the second case is currently empty.
+>    Hello Mike,
+> 
+>    While Running pgbench tool with  5.4.17 kernel build
+> 
+>    Following performance degrade is found out
+> 
+>    buffer read/write metric : -17.2%
+>    cache read/write metric : -18.7%
+>    disk read/write metric : -19%
+> 
+>    buffer
+>    number of transactions actually processed: 840972
+>    latency average = 24.013 ms
+>    tps = 4664.153934 (including connections establishing)
+>    tps = 4664.421492 (excluding connections establishing)
+> 
+>    cache
+>    number of transactions actually processed: 551345
+>    latency average = 36.949 ms
+>    tps = 3031.223905 (including connections establishing)
+>    tps = 3031.402581 (excluding connections establishing)
+> 
+>    After revert of Commit
+>    2892100bc85ae446088cebe0c00ba9b194c0ac9d ( Revert "dm: always call
+>    blk_queue_split() in dm_process_bio()")
 
-This change actively obfuscates that distinction.
+I assume 2892100bc85ae446088cebe0c00ba9b194c0ac9d is 5.4-stable's
+backport of upstream commit 120c9257f5f19e5d1e87efcbb5531b7cd81b7d74 ?
 
-Robin.
+>    Performance is Counter measurement
+> 
+>    buffer ->
+>    number of transactions actually processed: 1135735
+>    latency average = 17.799 ms
+>    tps = 6292.586749 (including connections establishing)
+>    tps = 6292.875089 (excluding connections establishing)
+> 
+>    cache ->
+>    number of transactions actually processed: 648177
+>    latency average = 31.217 ms
+>    tps = 3587.755975 (including connections establishing)
+>    tps = 3587.966359 (excluding connections establishing)
+> 
+>    Following is your commit
+> 
+>    diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+>    index cf71a2277d60..1e6e0c970e19 100644
+>    --- a/drivers/md/dm.c
+>    +++ b/drivers/md/dm.c
+>    @@ -1760,8 +1760,9 @@ static blk_qc_t dm_process_bio(struct mapped_device
+>    *md,
+>             * won't be imposed.
+>             */
+>            if (current->bio_list) {
+>    -               blk_queue_split(md->queue, &bio);
+>    -               if (!is_abnormal_io(bio))
+>    +               if (is_abnormal_io(bio))
+>    +                       blk_queue_split(md->queue, &bio);
+>    +               else
+>                            dm_queue_split(md, ti, &bio);
+>            }
+> 
+>    Could you have a look if it is safe to revert this commit.
+
+No, it really isn't a good idea given what was documented in the commit
+header for commit 120c9257f5f19e5d1e87efcbb5531b7cd81b7d74 -- the
+excessive splitting is not conducive to performance either.
+
+So I think we need to identify _why_ reverting this commit is causing
+such a performance improvement.  Why is calling blk_queue_split() before
+dm_queue_split() benefiting your pgbench workload?
+
+Thanks,
+Mike
