@@ -1,15 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH V4 02/14] libmultipath: change malloc to
- calloc in print_foreign_topology
-Date: Thu, 10 Sep 2020 18:19:22 +0200
-Message-ID: <1e03209b75eaa712cc62216b048286665fe6a2bd.camel@suse.com>
+Subject: Re: [PATCH V4 04/14] multipathd: check MALLOC return
+ value in mpath_pr_event_handler_fn
+Date: Thu, 10 Sep 2020 18:19:48 +0200
+Message-ID: <37e0b351782eadf73fee363260799761e073fcf6.camel@suse.com>
 References: <f8c2133b-6c02-4cc4-59cd-162828154689@huawei.com>
-	<e7fd9cde-bb39-4fe4-65bd-17d0997c840e@huawei.com>
+	<c1041522-f3e6-7d1f-3fd0-34c356230b5a@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <e7fd9cde-bb39-4fe4-65bd-17d0997c840e@huawei.com>
+In-Reply-To: <c1041522-f3e6-7d1f-3fd0-34c356230b5a@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,8 +23,10 @@ To: lixiaokeng <lixiaokeng@huawei.com>, Christophe Varoqui <christophe.varoqui@o
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-On Thu, 2020-09-10 at 18:47 +0800, lixiaokeng wrote:
-> We chanege malloc to calloc.
+On Thu, 2020-09-10 at 18:48 +0800, lixiaokeng wrote:
+> In  mpath_pr_event_handler_fn, we use MALLOC instead of malloc, and
+> check
+> the return value of MALLOC. And we delete seting ret when jump to out
 > 
 > Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 > Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
