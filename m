@@ -1,82 +1,48 @@
-From: Joe Perches <joe@perches.com>
-Subject: Re: [trivial PATCH] treewide: Convert switch/case fallthrough; to
- break;
-Date: Thu, 10 Sep 2020 21:19:35 -0700
-Message-ID: <f4ad706519917d493a0af32ea2da8565227cc74a.camel@perches.com>
-References: <e6387578c75736d61b2fe70d9783d91329a97eb4.camel@perches.com>
- <9372456a-8dcf-2735-57a4-e126aa5df3a6@arm.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH V4 11/14] mpathpersist: check whether malloc
+ paramp->trnptid_list fails in handle_args func
+Date: Fri, 11 Sep 2020 08:29:15 +0200
+Message-ID: <fa0924fb650fddb1fbf53226bd79f2c207f1ea0b.camel@suse.com>
+References: <f8c2133b-6c02-4cc4-59cd-162828154689@huawei.com>
+	<3f34cd14-17a0-f7a4-6cdb-7a37aa5c31b4@huawei.com>
+	<8ecf7f972b83be7fba3797327046c7cedf1179c8.camel@suse.com>
+	<aceb50c7-ddf5-b00e-1d05-4294c5650127@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
-In-Reply-To: <9372456a-8dcf-2735-57a4-e126aa5df3a6@arm.com>
-List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
-List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
-List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
-List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
-List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
- <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
-Errors-To: kvmarm-bounces@lists.cs.columbia.edu
-Sender: kvmarm-bounces@lists.cs.columbia.edu
-To: Robin Murphy <robin.murphy@arm.com>, LKML <linux-kernel@vger.kernel.org>, Jiri Kosina <trivial@kernel.org>
-Cc: linux-fbdev@vger.kernel.org, oss-drivers@netronome.com, nouveau@lists.freedesktop.org, alsa-devel <alsa-devel@alsa-project.org>, dri-devel@lists.freedesktop.org, linux-mips@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, linux-mtd@lists.infradead.org, linux-i2c@vger.kernel.org, sparclinux@vger.kernel.org, Will Deacon <will@kernel.org>, linux-afs@lists.infradead.org, linux-rtc@vger.kernel.org, linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, dccp@vger.kernel.org, linux-rdma@vger.kernel.org, linux-atm-general@lists.sourceforge.net, kvmarm@lists.cs.columbia.edu, coreteam@netfilter.org, intel-wired-lan@lists.osuosl.org, linux-serial@vger.kernel.org, linux-input@vger.kernel.org, linux-mmc@vger.kernel.org, Kees Cook <kees.cook@canonical.com>, linux-media@vger.kernel.org, linux-pm@vger.kernel.org, intel-gfx@lists.freedesktop.org, linux-mediatek@lists.inf
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <aceb50c7-ddf5-b00e-1d05-4294c5650127@huawei.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: lixiaokeng <lixiaokeng@huawei.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel mailing list <dm-devel@redhat.com>
+Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-On Thu, 2020-09-10 at 15:21 +0100, Robin Murphy wrote:
-> On 2020-09-09 21:06, Joe Perches wrote:
-> > fallthrough to a separate case/default label break; isn't very readable.
-> > 
-> > Convert pseudo-keyword fallthrough; statements to a simple break; when
-> > the next label is case or default and the only statement in the next
-> > label block is break;
-> > 
-> > Found using:
-> > 
-> > $ grep-2.5.4 -rP --include=*.[ch] -n "fallthrough;(\s*(case\s+\w+|default)\s*:\s*){1,7}break;" *
-> > 
-> > Miscellanea:
-> > 
-> > o Move or coalesce a couple label blocks above a default: block.
-> > 
-> > Signed-off-by: Joe Perches <joe@perches.com>
-> > ---
-> > 
-> > Compiled allyesconfig x86-64 only.
-> > A few files for other arches were not compiled.
-> > 
+Hi Lixiaokeng,
+
+On Fri, 2020-09-11 at 09:34 +0800, lixiaokeng wrote:
 > 
-> [...]
-> > diff --git a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
-> > index c192544e874b..743db1abec40 100644
-> > --- a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
-> > +++ b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
-> > @@ -3777,7 +3777,7 @@ static int arm_smmu_device_hw_probe(struct arm_smmu_device *smmu)
-> >   	switch (FIELD_GET(IDR0_TTF, reg)) {
-> >   	case IDR0_TTF_AARCH32_64:
-> >   		smmu->ias = 40;
-> > -		fallthrough;
-> > +		break;
-> >   	case IDR0_TTF_AARCH64:
-> >   		break;
-> >   	default:
-> 
-> I have to say I don't really agree with the readability argument for 
-> this one - a fallthrough is semantically correct here, since the first 
-> case is a superset of the second. It just happens that anything we would 
-> do for the common subset is implicitly assumed (there are other 
-> potential cases we simply haven't added support for at the moment), thus 
-> the second case is currently empty.
-> This change actively obfuscates that distinction.
+> Hi Martin,
+>   When I compile it, I add a patch thats changes int to unsigned int.
+> But I don't think it is an error. It is  just a warning and becomes
+> an
+> error with [-Werror]. Anyway,
 
-Then perhaps comments should be added to usefully
-describe the mechanisms.
+What do you think, why did we add -Werror?
 
-	case IDR0_TTF_AARCH32_64:
-		smmu->ias = 40;
-		fallthrough;	/* and still do the 64 bit processing */
-	case IDR0_TTF_AARCH64:
-		/* Nothing specific yet */
-		break;
+Disabling the warning options when working on the code is strongly
+discouraged.
 
-> Robin.
+> > I will change int to unsigned it and send
+> it again. Thanks.
+
+Thank you.
+
+Martin
