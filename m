@@ -1,143 +1,151 @@
-From: Ard Biesheuvel <ardb@kernel.org>
-Subject: Re: [PATCH] crypto: mark unused ciphers as obsolete
-Date: Fri, 11 Sep 2020 19:30:20 +0300
-Message-ID: <CAMj1kXHOrGoGv6Tse9Vju9mTV_+ks8cUMqx_iSQHPfc+2DVkmw@mail.gmail.com>
-References: <20200911141103.14832-1-ardb@kernel.org> <CY4PR0401MB3652AD749C06D0ACD9F085F3C3240@CY4PR0401MB3652.namprd04.prod.outlook.com>
+From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+Subject: Re: [PATCH v3 3/6] IMA: update process_buffer_measurement to measure
+ buffer hash
+Date: Fri, 11 Sep 2020 09:44:57 -0700
+Message-ID: <c932ae94-d7c3-5d23-2bb4-95517f712ceb@linux.microsoft.com>
+References: <20200828015704.6629-1-tusharsu@linux.microsoft.com>
+ <20200828015704.6629-4-tusharsu@linux.microsoft.com>
+ <f11dbfc1382e60c04fdd519ce5122239fa0cab8b.camel@linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <CY4PR0401MB3652AD749C06D0ACD9F085F3C3240@CY4PR0401MB3652.namprd04.prod.outlook.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: "Van Leeuwen, Pascal" <pvanleeuwen@rambus.com>, dm-devel@redhat.com, Milan Broz <gmazyland@gmail.com>
-Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "herbert@gondor.apana.org.au" <herbert@gondor.apana.org.au>, "ebiggers@kernel.org" <ebiggers@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-security-module-owner@vger.kernel.org>
+In-Reply-To: <f11dbfc1382e60c04fdd519ce5122239fa0cab8b.camel@linux.ibm.com>
+Content-Language: en-US
+Sender: owner-linux-security-module@vger.kernel.org
+To: Mimi Zohar <zohar@linux.ibm.com>, stephen.smalley.work@gmail.com, casey@schaufler-ca.com, agk@redhat.com, snitzer@redhat.com, gmazyland@gmail.com
+Cc: tyhicks@linux.microsoft.com, sashal@kernel.org, jmorris@namei.org, nramas@linux.microsoft.com, linux-integrity@vger.kernel.org, selinux@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-(cc Milan and dm-devel)
-
-On Fri, 11 Sep 2020 at 19:24, Van Leeuwen, Pascal
-<pvanleeuwen@rambus.com> wrote:
->
-> > -----Original Message-----
-> > From: linux-crypto-owner@vger.kernel.org <linux-crypto-owner@vger.kerne=
-l.org> On Behalf Of Ard Biesheuvel
-> > Sent: Friday, September 11, 2020 4:11 PM
-> > To: linux-crypto@vger.kernel.org
-> > Cc: herbert@gondor.apana.org.au; ebiggers@kernel.org; Ard Biesheuvel <a=
-rdb@kernel.org>
-> > Subject: [PATCH] crypto: mark unused ciphers as obsolete
-> >
-> > <<< External Email >>>
-> > We have a few interesting pieces in our cipher museum, which are never
-> > used internally, and were only ever provided as generic C implementatio=
-ns.
-> >
-> > Unfortunately, we cannot simply remove this code, as we cannot be sure
-> > that it is not being used via the AF_ALG socket API, however unlikely.
-> > So let's mark the Anubis, Khazad, SEED and TEA algorithms as obsolete,
-> >
-> Wouldn't the IKE deamon be able to utilize these algorithms through the X=
-FRM API?
-> I'm by no means an expert on the subject, but it looks like the cipher te=
-mplate is
-> provided there directly via XFRM, so it does not need to live in the kern=
-el source.
-> And I know for a fact that SEED is being used for IPsec (and TLS) in Kore=
-a.
->
-
-I have been staring at net/xfrm/xfrm_algo.c, and as far as I can tell,
-algorithms have to be mentioned there in order to be usable. None of
-the ciphers that this patch touches are listed there or anywhere else
-in the kernel.
-
-> The point being, there are more users to consider beyond "internal" (mean=
-ing hard
-> coded in the kernel source in this context?) and AF_ALG.
->
-
-That is a good point, actually, since dm-crypt could be affected here
-as well, hence the CCs.
-
-Milan (or others): are you aware of any of these ciphers being used
-for dm-crypt?
 
 
-> I'm not aware of any real use cases for Anubis, Khazad and TEA though.
->
+On 2020-08-31 10:02 a.m., Mimi Zohar wrote:
+> On Thu, 2020-08-27 at 18:57 -0700, Tushar Sugandhi wrote:
+>> process_buffer_measurement() currently only measures the input buffer.
+>> When the buffer being measured is too large, it may result in bloated
+>> IMA logs.
+> 
+> The subject of  this sentence refers to an individual record, while
+> "bloated" refers to the measurement list.  A "bloated" measurement list
+> would contain too many or unnecessary records.  Your concern seems to
+> be with the size of the individual record, not the number of
+> measurement list entries.
+> 
+The intent behind that description was twofold. One, as you mentioned,
+the individual record size being large; and two, multiple large-sized
+individual records will eventually bloat the measurement list too.
 
-OK, thanks for confirming. Removing those would be a good start.
+It can happen in SeLinux case as we discovered. The SeLinux policy
+(which can be a few MBs) can change from 'foo', to 'bar', back to 'foo'.
+And the requirement from SeLinux is that 'foo' should be measured the
+second time too. When 'foo' and 'bar' are large, the individual records
+in the ima log will be large, which will also result in measurement list
+being bloated.
 
-> > which means they can only be enabled in the build if the socket API is
-> > enabled in the first place.
-> >
-> > Signed-off-by: Ard Biesheuvel <ardb@kernel.org>
-> > ---
-> > Hopefully, I will be able to convince the distro kernel maintainers to
-> > disable CRYPTO_USER_API_ENABLE_OBSOLETE in their v5.10+ builds once the
-> > iwd changes for arc4 make it downstream (Debian already has an updated
-> > version in its unstable distro). With the joint coverage of their QA,
-> > we should be able to confirm that these algos are never used, and
-> > actually remove them altogether.
-> >
-> >  crypto/Kconfig | 4 ++++
-> >  1 file changed, 4 insertions(+)
-> >
-> > diff --git a/crypto/Kconfig b/crypto/Kconfig
-> > index e85d8a059489..fac10143d23f 100644
-> > --- a/crypto/Kconfig
-> > +++ b/crypto/Kconfig
-> > @@ -1185,6 +1185,7 @@ config CRYPTO_AES_PPC_SPE
-> >
-> >  config CRYPTO_ANUBIS
-> >  tristate "Anubis cipher algorithm"
-> > +depends on CRYPTO_USER_API_ENABLE_OBSOLETE
-> >  select CRYPTO_ALGAPI
-> >  help
-> >    Anubis cipher algorithm.
-> > @@ -1424,6 +1425,7 @@ config CRYPTO_FCRYPT
-> >
-> >  config CRYPTO_KHAZAD
-> >  tristate "Khazad cipher algorithm"
-> > +depends on CRYPTO_USER_API_ENABLE_OBSOLETE
-> >  select CRYPTO_ALGAPI
-> >  help
-> >    Khazad cipher algorithm.
-> > @@ -1487,6 +1489,7 @@ config CRYPTO_CHACHA_MIPS
-> >
-> >  config CRYPTO_SEED
-> >  tristate "SEED cipher algorithm"
-> > +depends on CRYPTO_USER_API_ENABLE_OBSOLETE
-> >  select CRYPTO_ALGAPI
-> >  help
-> >    SEED cipher algorithm (RFC4269).
-> > @@ -1613,6 +1616,7 @@ config CRYPTO_SM4
-> >
-> >  config CRYPTO_TEA
-> >  tristate "TEA, XTEA and XETA cipher algorithms"
-> > +depends on CRYPTO_USER_API_ENABLE_OBSOLETE
-> >  select CRYPTO_ALGAPI
-> >  help
-> >    TEA cipher algorithm.
-> > --
-> > 2.17.1
->
-> Regards,
-> Pascal van Leeuwen
-> Silicon IP Architect Multi-Protocol Engines, Rambus Security
-> Rambus ROTW Holding BV
-> +31-73 6581953
->
-> Note: The Inside Secure/Verimatrix Silicon IP team was recently acquired =
-by Rambus.
-> Please be so kind to update your e-mail address book with my new e-mail a=
-ddress.
->
->
-> ** This message and any attachments are for the sole use of the intended =
-recipient(s). It may contain information that is confidential and privilege=
-d. If you are not the intended recipient of this message, you are prohibite=
-d from printing, copying, forwarding or saving it. Please delete the messag=
-e and attachments and notify the sender immediately. **
->
-> Rambus Inc.<http://www.rambus.com>
+But I understand your concern with the current wording. I will update 
+the patch description accordingly.
+
+> Measuring the hash of the buffer data is similar to measuring the file
+> data.  In the case of the file data, however, the attestation server
+> may rely on a white list manifest/DB or the file signature to verify
+> the file data hash.  For buffer measurements, how will the attestation
+> server ascertain what is a valid buffer hash?
+The client and the server implementation will go hand in hand. The
+client/kernel would know what data is measured as-is
+(e.g. KEXEC_CMDLINE), and what data has it’s hash measured
+(e.g. SeLinux Policy). And the attestation server would verify data/hash
+accordingly.
+
+Just like the data being measured in other cases, the attestation server 
+will know what are possible values of the large buffers being measured. 
+It will have to maintain the hash of those buffer values.
+> 
+> Hint:  I assume, correct me if I'm wrong, the measurement list record
+> template data is not meant to be verified, but used to detect if the "critical data" changed.
+> 
+As mentioned above, the use case for this feature is in-memory loaded 
+SeLinux policy, which can be quite large (several MBs) – that's why this 
+functionality. The data is meant to be verified by the attestation server.
+
+> Please update the patch description accordingly.
+I will update the patch description to clarify all this.
+> 
+>>
+>> Introduce a boolean parameter measure_buf_hash to support measuring
+>> hash of a buffer, which would be much smaller, instead of the buffer
+>> itself.
+>> Signed-off-by: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+>> ---
+> 
+> <snip>
+> 
+>> +++ b/security/integrity/ima/ima_main.c
+>> @@ -733,17 +733,21 @@ int ima_load_data(enum kernel_load_data_id id)
+>>    * @func: IMA hook
+>>    * @pcr: pcr to extend the measurement
+>>    * @func_data: private data specific to @func, can be NULL.
+>> + * @measure_buf_hash: if set to true - will measure hash of the buf,
+>> + *                    instead of buf
+>>    *
+>>    * Based on policy, the buffer is measured into the ima log.
+>>    */
+>>   int process_buffer_measurement(struct inode *inode, const void *buf, int size,
+>>   			       const char *eventname, enum ima_hooks func,
+>> -			       int pcr, const char *func_data)
+>> +			       int pcr, const char *func_data,
+>> +			       bool measure_buf_hash)
+>>   {
+>>   	int ret = 0;
+>>   	const char *audit_cause = "ENOMEM";
+>>   	struct ima_template_entry *entry = NULL;
+>>   	struct integrity_iint_cache iint = {};
+>> +	struct integrity_iint_cache digest_iint = {};
+>>   	struct ima_event_data event_data = {.iint = &iint,
+>>   					    .filename = eventname,
+>>   					    .buf = buf,
+>> @@ -752,7 +756,7 @@ int process_buffer_measurement(struct inode *inode, const void *buf, int size,
+>>   	struct {
+>>   		struct ima_digest_data hdr;
+>>   		char digest[IMA_MAX_DIGEST_SIZE];
+>> -	} hash = {};
+>> +	} hash = {}, digest_hash = {};
+>>   	int violation = 0;
+>>   	int action = 0;
+>>   	u32 secid;
+>> @@ -801,6 +805,24 @@ int process_buffer_measurement(struct inode *inode, const void *buf, int size,
+>>   		goto out;
+>>   	}
+>>   
+>> +	if (measure_buf_hash) {
+>> +		digest_iint.ima_hash = &digest_hash.hdr;
+>> +		digest_iint.ima_hash->algo = ima_hash_algo;
+>> +		digest_iint.ima_hash->length = hash_digest_size[ima_hash_algo];
+>> +
+>> +		ret = ima_calc_buffer_hash(hash.hdr.digest,
+>> +					   iint.ima_hash->length,
+>> +					   digest_iint.ima_hash);
+>> +		if (ret < 0) {
+>> +			audit_cause = "digest_hashing_error";
+>> +			goto out;
+>> +		}
+>> +
+>> +		event_data.iint = &digest_iint;
+>> +		event_data.buf = hash.hdr.digest;
+>> +		event_data.buf_len = iint.ima_hash->length;
+>> +	}
+>> +
+> 
+> There seems to be some code and variable duplication by doing it this
+> way.  Copying the caluclated buffer data hash to a temporary buffer
+> might eliminate it.
+> 
+With the way ima_calc_buffer_hash() is implemented, I was convinced that
+the variable duplication was needed. I didn't want to write a helper 
+function in order to minimize the unnecessary code churn in p_b_m().
+But I will revisit this to see how I can reduce the code and variable 
+duplication.
+
+Thanks for the feedback.
+>>   	ret = ima_alloc_init_template(&event_data, &entry, template);
+>>   	if (ret < 0) {
+>>   		audit_cause = "alloc_entry";
