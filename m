@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 1/3] block: fix blk_rq_get_max_sectors() to flow more carefully
-Date: Fri, 11 Sep 2020 17:53:36 -0400
-Message-ID: <20200911215338.44805-2-snitzer@redhat.com>
+Subject: [PATCH 2/3] block: use lcm_not_zero() when stacking chunk_sectors
+Date: Fri, 11 Sep 2020 17:53:37 -0400
+Message-ID: <20200911215338.44805-3-snitzer@redhat.com>
 References: <20200911215338.44805-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 In-Reply-To: <20200911215338.44805-1-snitzer@redhat.com>
@@ -10,52 +10,56 @@ To: Ming Lei <ming.lei@redhat.com>
 Cc: Vijayendra Suman <vijayendra.suman@oracle.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-blk_queue_get_max_sectors() has been trained for REQ_OP_WRITE_SAME and
-REQ_OP_WRITE_ZEROES yet blk_rq_get_max_sectors() didn't call it for
-those operations.
+Like 'io_opt', blk_stack_limits() should stack 'chunk_sectors' using
+lcm_not_zero() rather than min_not_zero() -- otherwise the final
+'chunk_sectors' could result in sub-optimal alignment of IO to
+component devices in the IO stack.
 
-Also, there is no need to avoid blk_max_size_offset() if
-'chunk_sectors' isn't set because it falls back to 'max_sectors'.
+Also, if 'chunk_sectors' isn't a multiple of 'physical_block_size'
+then it is a bug in the driver and the device should be flagged as
+'misaligned'.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- include/linux/blkdev.h | 19 +++++++++++++------
- 1 file changed, 13 insertions(+), 6 deletions(-)
+ block/blk-settings.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index bb5636cc17b9..453a3d735d66 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1070,17 +1070,24 @@ static inline unsigned int blk_rq_get_max_sectors(struct request *rq,
- 						  sector_t offset)
- {
- 	struct request_queue *q = rq->q;
-+	int op;
-+	unsigned int max_sectors;
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index 76a7e03bcd6c..b09642d5f15e 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -534,6 +534,7 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
  
- 	if (blk_rq_is_passthrough(rq))
- 		return q->limits.max_hw_sectors;
+ 	t->io_min = max(t->io_min, b->io_min);
+ 	t->io_opt = lcm_not_zero(t->io_opt, b->io_opt);
++	t->chunk_sectors = lcm_not_zero(t->chunk_sectors, b->chunk_sectors);
  
--	if (!q->limits.chunk_sectors ||
--	    req_op(rq) == REQ_OP_DISCARD ||
--	    req_op(rq) == REQ_OP_SECURE_ERASE)
--		return blk_queue_get_max_sectors(q, req_op(rq));
-+	op = req_op(rq);
-+	max_sectors = blk_queue_get_max_sectors(q, op);
+ 	/* Physical block size a multiple of the logical block size? */
+ 	if (t->physical_block_size & (t->logical_block_size - 1)) {
+@@ -556,6 +557,13 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+ 		ret = -1;
+ 	}
  
--	return min(blk_max_size_offset(q, offset),
--			blk_queue_get_max_sectors(q, req_op(rq)));
-+	switch (op) {
-+	case REQ_OP_DISCARD:
-+	case REQ_OP_SECURE_ERASE:
-+	case REQ_OP_WRITE_SAME:
-+	case REQ_OP_WRITE_ZEROES:
-+		return max_sectors;
++	/* chunk_sectors a multiple of the physical block size? */
++	if (t->chunk_sectors & (t->physical_block_size - 1)) {
++		t->chunk_sectors = 0;
++		t->misaligned = 1;
++		ret = -1;
 +	}
 +
-+	return min(blk_max_size_offset(q, offset), max_sectors);
- }
+ 	t->raid_partial_stripes_expensive =
+ 		max(t->raid_partial_stripes_expensive,
+ 		    b->raid_partial_stripes_expensive);
+@@ -594,10 +602,6 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+ 			t->discard_granularity;
+ 	}
  
- static inline unsigned int blk_rq_count_bios(struct request *rq)
+-	if (b->chunk_sectors)
+-		t->chunk_sectors = min_not_zero(t->chunk_sectors,
+-						b->chunk_sectors);
+-
+ 	t->zoned = max(t->zoned, b->zoned);
+ 	return ret;
+ }
 -- 
 2.15.0
