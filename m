@@ -1,74 +1,82 @@
-From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: Re: [PATCH V4 11/14] mpathpersist: check whether malloc
- paramp->trnptid_list fails in handle_args func
-Date: Fri, 11 Sep 2020 09:34:42 +0800
-Message-ID: <aceb50c7-ddf5-b00e-1d05-4294c5650127@huawei.com>
-References: <f8c2133b-6c02-4cc4-59cd-162828154689@huawei.com>
-	<3f34cd14-17a0-f7a4-6cdb-7a37aa5c31b4@huawei.com>
-	<8ecf7f972b83be7fba3797327046c7cedf1179c8.camel@suse.com>
+From: Joe Perches <joe@perches.com>
+Subject: Re: [trivial PATCH] treewide: Convert switch/case fallthrough; to
+ break;
+Date: Thu, 10 Sep 2020 21:19:35 -0700
+Message-ID: <f4ad706519917d493a0af32ea2da8565227cc74a.camel@perches.com>
+References: <e6387578c75736d61b2fe70d9783d91329a97eb4.camel@perches.com>
+ <9372456a-8dcf-2735-57a4-e126aa5df3a6@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8ecf7f972b83be7fba3797327046c7cedf1179c8.camel@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Language: en-GB
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel mailing list <dm-devel@redhat.com>
-Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <kvmarm-bounces@lists.cs.columbia.edu>
+In-Reply-To: <9372456a-8dcf-2735-57a4-e126aa5df3a6@arm.com>
+List-Unsubscribe: <https://lists.cs.columbia.edu/mailman/options/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=unsubscribe>
+List-Archive: <https://lists.cs.columbia.edu/pipermail/kvmarm>
+List-Post: <mailto:kvmarm@lists.cs.columbia.edu>
+List-Help: <mailto:kvmarm-request@lists.cs.columbia.edu?subject=help>
+List-Subscribe: <https://lists.cs.columbia.edu/mailman/listinfo/kvmarm>,
+ <mailto:kvmarm-request@lists.cs.columbia.edu?subject=subscribe>
+Errors-To: kvmarm-bounces@lists.cs.columbia.edu
+Sender: kvmarm-bounces@lists.cs.columbia.edu
+To: Robin Murphy <robin.murphy@arm.com>, LKML <linux-kernel@vger.kernel.org>, Jiri Kosina <trivial@kernel.org>
+Cc: linux-fbdev@vger.kernel.org, oss-drivers@netronome.com, nouveau@lists.freedesktop.org, alsa-devel <alsa-devel@alsa-project.org>, dri-devel@lists.freedesktop.org, linux-mips@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, linux-mtd@lists.infradead.org, linux-i2c@vger.kernel.org, sparclinux@vger.kernel.org, Will Deacon <will@kernel.org>, linux-afs@lists.infradead.org, linux-rtc@vger.kernel.org, linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, dccp@vger.kernel.org, linux-rdma@vger.kernel.org, linux-atm-general@lists.sourceforge.net, kvmarm@lists.cs.columbia.edu, coreteam@netfilter.org, intel-wired-lan@lists.osuosl.org, linux-serial@vger.kernel.org, linux-input@vger.kernel.org, linux-mmc@vger.kernel.org, Kees Cook <kees.cook@canonical.com>, linux-media@vger.kernel.org, linux-pm@vger.kernel.org, intel-gfx@lists.freedesktop.org, linux-mediatek@lists.inf
 List-Id: dm-devel.ids
 
-CgpPbiAyMDIwLzkvMTEgMjo0OCwgTWFydGluIFdpbGNrIHdyb3RlOgo+IE9uIFRodSwgMjAyMC0w
-OS0xMCBhdCAxODo1MiArMDgwMCwgbGl4aWFva2VuZyB3cm90ZToKPj4gSW4gaGFuZGxlX2FyZ3Mg
-ZnVuYywgd2UgZG9ub3QgY2hlY2sgd2hldGhlciBtYWxsb2MgcGFyYW1wIGFuZAo+PiBlYWNoIHBh
-cmFtcC0+dHJucHRpZF9saXN0W2pdIGZhaWxzIGJlZm9yZSB1c2luZyB0aGVtLCBpdCBtYXkKPj4g
-Y2F1c2UgYWNjZXNzIE5VTEwgcG9pbnRlci4KPj4KPj4gSGVyZSwgd2UgYWRkIGFsbG9jX3Byb3V0
-X3BhcmFtX2Rlc2NyaXB0b3IgdG8gYWxsb2NhdGUgYW5kIGluaXQKPj4gcGFyYW1wLCBhbmQgd2Ug
-YWRkIGZyZWVfcHJvdXRfcGFyYW1fZGVzY3JpcHRvciB0byBmcmVlIHBhcmFtcAo+PiBhbmQgZWFj
-aCBwYXJhbXAtPnRybnB0aWRfbGlzdFtqXS4KPj4KPj4gV2UgY2hhbmdlIG51bV90cmFuc3BvcnQg
-dG8gbnVtX3RyYW5zcG9ydGlkcyB0byBjb21iaW5lIHRoZW0uCj4+Cj4+IFNpZ25lZC1vZmYtYnk6
-IFpoaXFpYW5nIExpdSA8bGl1emhpcWlhbmcyNkBodWF3ZWkuY29tPgo+PiBTaWduZWQtb2ZmLWJ5
-OiBsaXhpYW9rZW5nIDxsaXhpYW9rZW5nQGh1YXdlaS5jb20+Cj4+IC0tLQo+PiAgbXBhdGhwZXJz
-aXN0L21haW4uYyB8IDY1ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKystLS0tLS0t
-LS0KPj4gLS0KPj4gIDEgZmlsZSBjaGFuZ2VkLCA1MCBpbnNlcnRpb25zKCspLCAxNSBkZWxldGlv
-bnMoLSkKPj4KPj4gZGlmZiAtLWdpdCBhL21wYXRocGVyc2lzdC9tYWluLmMgYi9tcGF0aHBlcnNp
-c3QvbWFpbi5jCj4+IGluZGV4IDI4YmZlNDEwLi5kYTY3YzE1YyAxMDA2NDQKPj4gLS0tIGEvbXBh
-dGhwZXJzaXN0L21haW4uYwo+PiArKysgYi9tcGF0aHBlcnNpc3QvbWFpbi5jCj4+IEBAIC0xNTMs
-NiArMTUzLDM4IEBAIHN0YXRpYyBpbnQgZG9fYmF0Y2hfZmlsZShjb25zdCBjaGFyICpiYXRjaF9m
-bikKPj4gIAlyZXR1cm4gcmV0Owo+PiAgfQo+Pgo+PiArc3RhdGljIHN0cnVjdCBwcm91dF9wYXJh
-bV9kZXNjcmlwdG9yICoKPj4gK2FsbG9jX3Byb3V0X3BhcmFtX2Rlc2NyaXB0b3IoaW50IG51bV90
-cmFuc3BvcnRpZCkKPj4gK3sKPj4gKwlzdHJ1Y3QgcHJvdXRfcGFyYW1fZGVzY3JpcHRvciAqcGFy
-YW1wOwo+PiArCj4+ICsJaWYgKG51bV90cmFuc3BvcnRpZCA8IDAgfHwgbnVtX3RyYW5zcG9ydGlk
-ID4gTVBBVEhfTVhfVElEUykKPj4gKwkJcmV0dXJuIE5VTEw7Cj4+ICsKPj4gKwlwYXJhbXA9IG1h
-bGxvYyhzaXplb2Yoc3RydWN0IHByb3V0X3BhcmFtX2Rlc2NyaXB0b3IpICsKPj4gKwkJCQkoc2l6
-ZW9mKHN0cnVjdCB0cmFuc3BvcnRpZCAqKSAqCj4+IG51bV90cmFuc3BvcnRpZCkpOwo+PiArCj4+
-ICsJaWYgKCFwYXJhbXApCj4+ICsJCXJldHVybiBOVUxMOwo+PiArCj4+ICsJcGFyYW1wLT5udW1f
-dHJhbnNwb3J0aWQgPSBudW1fdHJhbnNwb3J0aWQ7Cj4+ICsJbWVtc2V0KHBhcmFtcCwgMCwgc2l6
-ZW9mKHN0cnVjdCBwcm91dF9wYXJhbV9kZXNjcmlwdG9yKSArCj4+ICsJCQkoc2l6ZW9mKHN0cnVj
-dCB0cmFuc3BvcnRpZCAqKSAqCj4+IG51bV90cmFuc3BvcnRpZCkpOwo+PiArCXJldHVybiBwYXJh
-bXA7Cj4+ICt9Cj4+ICsKPj4gK3N0YXRpYyB2b2lkIGZyZWVfcHJvdXRfcGFyYW1fZGVzY3JpcHRv
-cihzdHJ1Y3QKPj4gcHJvdXRfcGFyYW1fZGVzY3JpcHRvciAqcGFyYW1wKQo+PiArewo+PiArCWlu
-dCBpOwo+PiArCWlmICghcGFyYW1wKQo+PiArCQlyZXR1cm47Cj4+ICsKPj4gKwlmb3IgKGkgPSAw
-OyBpIDwgcGFyYW1wLT5udW1fdHJhbnNwb3J0aWQ7IGkrKykKPj4gKwkJZnJlZShwYXJhbXAtPnRy
-bnB0aWRfbGlzdFtpXSk7Cj4gCj4gVGhpcyBjYXVzZXMgYSBjb21waWxhdGlvbiBlcnJvci4gRGlk
-bid0IHlvdSBjb21waWxlLXRlc3Q/Cj4gCj4gbWFpbi5jOiBJbiBmdW5jdGlvbiDigJhmcmVlX3By
-b3V0X3BhcmFtX2Rlc2NyaXB0b3LigJk6Cj4gbWFpbi5jOjE4MjoxNjogZXJyb3I6IGNvbXBhcmlz
-b24gb2YgaW50ZWdlciBleHByZXNzaW9ucyBvZiBkaWZmZXJlbnQKPiBzaWduZWRuZXNzOiDigJhp
-bnTigJkgYW5kIOKAmHVpbnQzMl904oCZIHtha2Eg4oCYdW5zaWduZWQgaW504oCZfSBbLVdlcnJv
-cj1zaV0KPiAgIDE4MiB8ICBmb3IgKGkgPSAwOyBpIDwgcGFyYW1wLT5udW1fdHJhbnNwb3J0aWQ7
-IGkrKykKPiAgICAgICB8ICAgICAgICAgICAgICAgIF4KPiBjYzE6IGFsbCB3YXJuaW5ncyBiZWlu
-ZyB0cmVhdGVkIGFzIGVycm9ycwo+IAo+IFJlZ2FyZHMsCj4gTWFydGluCj4gCkhpIE1hcnRpbiwK
-ICBXaGVuIEkgY29tcGlsZSBpdCwgSSBhZGQgYSBwYXRjaCB0aGF0cyBjaGFuZ2VzIGludCB0byB1
-bnNpZ25lZCBpbnQuCkJ1dCBJIGRvbid0IHRoaW5rIGl0IGlzIGFuIGVycm9yLiBJdCBpcyAganVz
-dCBhIHdhcm5pbmcgYW5kIGJlY29tZXMgYW4KZXJyb3Igd2l0aCBbLVdlcnJvcl0uIEFueXdheSwg
-SSB3aWxsIGNoYW5nZSBpbnQgdG8gdW5zaWduZWQgaXQgYW5kIHNlbmQKaXQgYWdhaW4uIFRoYW5r
-cy4KClJlZ2FyZHMKTGl4aWFva2VuZwoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
-bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
-ZXZlbA==
+On Thu, 2020-09-10 at 15:21 +0100, Robin Murphy wrote:
+> On 2020-09-09 21:06, Joe Perches wrote:
+> > fallthrough to a separate case/default label break; isn't very readable.
+> > 
+> > Convert pseudo-keyword fallthrough; statements to a simple break; when
+> > the next label is case or default and the only statement in the next
+> > label block is break;
+> > 
+> > Found using:
+> > 
+> > $ grep-2.5.4 -rP --include=*.[ch] -n "fallthrough;(\s*(case\s+\w+|default)\s*:\s*){1,7}break;" *
+> > 
+> > Miscellanea:
+> > 
+> > o Move or coalesce a couple label blocks above a default: block.
+> > 
+> > Signed-off-by: Joe Perches <joe@perches.com>
+> > ---
+> > 
+> > Compiled allyesconfig x86-64 only.
+> > A few files for other arches were not compiled.
+> > 
+> 
+> [...]
+> > diff --git a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
+> > index c192544e874b..743db1abec40 100644
+> > --- a/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
+> > +++ b/drivers/iommu/arm/arm-smmu-v3/arm-smmu-v3.c
+> > @@ -3777,7 +3777,7 @@ static int arm_smmu_device_hw_probe(struct arm_smmu_device *smmu)
+> >   	switch (FIELD_GET(IDR0_TTF, reg)) {
+> >   	case IDR0_TTF_AARCH32_64:
+> >   		smmu->ias = 40;
+> > -		fallthrough;
+> > +		break;
+> >   	case IDR0_TTF_AARCH64:
+> >   		break;
+> >   	default:
+> 
+> I have to say I don't really agree with the readability argument for 
+> this one - a fallthrough is semantically correct here, since the first 
+> case is a superset of the second. It just happens that anything we would 
+> do for the common subset is implicitly assumed (there are other 
+> potential cases we simply haven't added support for at the moment), thus 
+> the second case is currently empty.
+> This change actively obfuscates that distinction.
+
+Then perhaps comments should be added to usefully
+describe the mechanisms.
+
+	case IDR0_TTF_AARCH32_64:
+		smmu->ias = 40;
+		fallthrough;	/* and still do the 64 bit processing */
+	case IDR0_TTF_AARCH64:
+		/* Nothing specific yet */
+		break;
+
+> Robin.
