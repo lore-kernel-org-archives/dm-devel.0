@@ -1,68 +1,52 @@
-From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-Subject: Re: [PATCH v3 5/6] IMA: add hook to measure critical data from kernel
- components
-Date: Fri, 11 Sep 2020 10:38:30 -0700
-Message-ID: <01f5ea67-447e-c1c2-9c47-49fd3f6c16ec@linux.microsoft.com>
-References: <20200828015704.6629-1-tusharsu@linux.microsoft.com>
- <20200828015704.6629-6-tusharsu@linux.microsoft.com>
- <6c80bdad49c72fa58b5a9fb7ce2d20c8cabe1324.camel@linux.ibm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <6c80bdad49c72fa58b5a9fb7ce2d20c8cabe1324.camel@linux.ibm.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mimi Zohar <zohar@linux.ibm.com>, stephen.smalley.work@gmail.com, casey@schaufler-ca.com, agk@redhat.com, snitzer@redhat.com, gmazyland@gmail.com
-Cc: tyhicks@linux.microsoft.com, sashal@kernel.org, jmorris@namei.org, nramas@linux.microsoft.com, linux-integrity@vger.kernel.org, selinux@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH 0/3] block: a few chunk_sectors fixes/improvements
+Date: Fri, 11 Sep 2020 17:53:35 -0400
+Message-ID: <20200911215338.44805-1-snitzer@redhat.com>
+References: <20200911161344.GA28614@redhat.com>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200911161344.GA28614@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Vijayendra Suman <vijayendra.suman@oracle.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
+Hi,
 
+Here are some changes that seem needed but that stop short of fixing the
+initial report (of DM pgbench regression).  Would be nice if you could
+review these block patches since they stand on their own.
 
-On 2020-08-31 11:23 a.m., Mimi Zohar wrote:
->> diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
->> index 52cbbc1f7ea2..a889bf40cb7e 100644
->> --- a/security/integrity/ima/ima_main.c
->> +++ b/security/integrity/ima/ima_main.c
->> @@ -869,6 +869,30 @@ void ima_kexec_cmdline(int kernel_fd, const void *buf, int size)
->>   	fdput(f);
->>   }
->>   
->> +/**
->> + * ima_measure_critical_data - measure critical data
->> + * @event_name: name for the given data
->> + * @event_data_source: name of the event data source
->> + * @buf: pointer to buffer containing data to measure
->> + * @buf_len: length of buffer(in bytes)
->> + * @measure_buf_hash: if set to true - will measure hash of the buf,
->> + *                    instead of buf
->> + *
->> + * Buffers can only be measured, not appraised.
->> + */
->> +int ima_measure_critical_data(const char *event_name,
->> +			      const char *event_data_source,
->> +			      const void *buf, int buf_len,
->> +			      bool measure_buf_hash)
->> +{
->> +	if (!event_name || !event_data_source || !buf || !buf_len)
->> +		return -EINVAL;
->> +
->> +	return process_buffer_measurement(NULL, buf, buf_len, event_name,
->> +					  CRITICAL_DATA, 0, event_data_source,
->> +					  measure_buf_hash);
-> 
-> This is exactly what I'm concerned about.  Failure to measure data may
-> be audited, but should never fail.
-> 
-> Mimi
-> 
-As I responded in patch 2, I can ignore the result of 
-process_buffer_measurement() in ima_measure_critical_data(), and make
-ima_measure_critical_data() return type as "void".
+I still have to look closer at how to get blk_queue_split() the info DM
+has (in ti->max_io_len). Ideally a variant of blk_queue_split() could be
+created that allows a 'chunk_sectors' override to be passed in, e.g.:
+dm_process_bio() would call: blk_queue_split(&bio, ti->max_io_len);
+And the provided ti->max_io_len would be used instead of a global (one
+size fits all) q->limits.chunk_sectors.  The reason why this is
+needed/ideal is due to DM's stacked nature.  Different offsets into a DM
+device could yield entirely different max_io_len (or chunk_sectors)
+settings.
 
-But that’s the only place where the results of p_b_m() are being used.
-So I might as well just revert the return type of p_b_m() to the
-original "void".
+BUT short of standing up a new variant of blk_queue_split() with per bio
+override for 'chunk_sectors' (which is likely a non-starter for a few
+reasons, recurssive nature of bio_split being the biggest): I'll need to
+update all DM targets that call dm_set_target_max_io_len() to also do
+this in each target's .io_hints hook:
+  limits->chunk_sectors = lcm_not_zero(ti->max_io_len, limits->chunk_sectors);
+Won't be perfect for some stacked devices (given it'll constrain
+chunk_sectors to be less optimal as the IO limits are stacked) but it
+should be an improvment -- and hopefully fix this pgbench regression.
 
->> +}
-> 
+Thanks,
+Mike
+
+Mike Snitzer (3):
+  block: fix blk_rq_get_max_sectors() to flow more carefully
+  block: use lcm_not_zero() when stacking chunk_sectors
+  block: allow 'chunk_sectors' to be non-power-of-2
+
+ block/blk-settings.c   | 22 ++++++++++++----------
+ include/linux/blkdev.h | 31 ++++++++++++++++++++++---------
+ 2 files changed, 34 insertions(+), 19 deletions(-)
+
+-- 
+2.15.0
