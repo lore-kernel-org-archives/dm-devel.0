@@ -1,17 +1,16 @@
-From: Coly Li <colyli@suse.de>
-Subject: Re: [PATCH] dax: fix for do not print error message for
- non-persistent memory block device
-Date: Fri, 11 Sep 2020 08:54:46 +0800
-Message-ID: <92b65cc3-37b6-d038-148a-a32db682830b@suse.de>
-References: <20200903115549.17845-1-colyli@suse.de>
-	<20200903160608.GU878166@iweiny-DESK2.sc.intel.com>
-	<c202e410-99af-3f15-0f76-def5fba7a83a@suse.de>
-	<CA+RJvhxBHriCuJhm-D8NvJRe3h2MLM+ZMFgjeJjrRPerMRLvdg@mail.gmail.com>
+From: lixiaokeng <lixiaokeng@huawei.com>
+Subject: Re: [PATCH V4 11/14] mpathpersist: check whether malloc
+ paramp->trnptid_list fails in handle_args func
+Date: Fri, 11 Sep 2020 09:34:42 +0800
+Message-ID: <aceb50c7-ddf5-b00e-1d05-4294c5650127@huawei.com>
+References: <f8c2133b-6c02-4cc4-59cd-162828154689@huawei.com>
+	<3f34cd14-17a0-f7a4-6cdb-7a37aa5c31b4@huawei.com>
+	<8ecf7f972b83be7fba3797327046c7cedf1179c8.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CA+RJvhxBHriCuJhm-D8NvJRe3h2MLM+ZMFgjeJjrRPerMRLvdg@mail.gmail.com>
+In-Reply-To: <8ecf7f972b83be7fba3797327046c7cedf1179c8.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,80 +20,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Language: en-US
-To: John Pittman <jpittman@redhat.com>
-Cc: Pankaj Gupta <pankaj.gupta.linux@gmail.com>, Mike Snitzer <snitzer@redhat.com>, linux-nvdimm@lists.01.org, dm-devel@redhat.com, Adrian Huang <ahuang12@lenovo.com>, Jan Kara <jack@suse.com>, Ira Weiny <ira.weiny@intel.com>
+Content-Language: en-GB
+To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel mailing list <dm-devel@redhat.com>
+Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-On 2020/9/11 04:29, John Pittman wrote:
-> But it should be moved prior to the two bdev_dax_pgoff() checks right?
->  Else a misaligned partition on a dax unsupported block device can
-> print the below messages.
-> 
-> kernel: sda1: error: unaligned partition for dax
-> kernel: sda2: error: unaligned partition for dax
-> kernel: sda3: error: unaligned partition for dax
-> 
-
-Aha, yes you are right, I agree with you.
-
-Coly Li
-
-
-> Reviewed-by: John Pittman <jpittman@redhat.com>
-> 
-> On Thu, Sep 3, 2020 at 12:12 PM Coly Li <colyli@suse.de> wrote:
->>
->> On 2020/9/4 00:06, Ira Weiny wrote:
->>> On Thu, Sep 03, 2020 at 07:55:49PM +0800, Coly Li wrote:
->>>> When calling __generic_fsdax_supported(), a dax-unsupported device may
->>>> not have dax_dev as NULL, e.g. the dax related code block is not enabled
->>>> by Kconfig.
->>>>
->>>> Therefore in __generic_fsdax_supported(), to check whether a device
->>>> supports DAX or not, the following order should be performed,
->>>> - If dax_dev pointer is NULL, it means the device driver explicitly
->>>>   announce it doesn't support DAX. Then it is OK to directly return
->>>>   false from __generic_fsdax_supported().
->>>> - If dax_dev pointer is NOT NULL, it might be because the driver doesn't
->>>>   support DAX and not explicitly initialize related data structure. Then
->>>>   bdev_dax_supported() should be called for further check.
->>>>
->>>> IMHO if device driver desn't explicitly set its dax_dev pointer to NULL,
->>>> this is not a bug. Calling bdev_dax_supported() makes sure they can be
->>>> recognized as dax-unsupported eventually.
->>>>
->>>> This patch does the following change for the above purpose,
->>>>     -       if (!dax_dev && !bdev_dax_supported(bdev, blocksize)) {
->>>>     +       if (!dax_dev || !bdev_dax_supported(bdev, blocksize)) {
->>>>
->>>>
->>>> Fixes: c2affe920b0e ("dax: do not print error message for non-persistent memory block device")
->>>> Signed-off-by: Coly Li <colyli@suse.de>
->>>
->>> I hate to do this because I realize this is a bug which people really need
->>> fixed.
->>>
->>> However, shouldn't we also check (!dax_dev || !bdev_dax_supported()) as the
->>> _first_ check in __generic_fsdax_supported()?
->>>
->>> It seems like the other pr_info's could also be called when DAX is not
->>> supported and we probably don't want them to be?
->>>
->>> Perhaps that should be a follow on patch though.  So...
->>
->> I am not author of c2affe920b0e, but I guess it was because
->> bdev_dax_supported() needed blocksize, so blocksize should pass previous
->> checks firstly to make sure bdev_dax_supported() has a correct blocksize
->> to check.
->>
->>>
->>> As a direct fix to c2affe920b0e
->>>
->>> Reviewed-by: Ira Weiny <ira.weiny@intel.com>
->>
->> Thanks.
->>
->> Coly Li
->>
-[snipped]
+CgpPbiAyMDIwLzkvMTEgMjo0OCwgTWFydGluIFdpbGNrIHdyb3RlOgo+IE9uIFRodSwgMjAyMC0w
+OS0xMCBhdCAxODo1MiArMDgwMCwgbGl4aWFva2VuZyB3cm90ZToKPj4gSW4gaGFuZGxlX2FyZ3Mg
+ZnVuYywgd2UgZG9ub3QgY2hlY2sgd2hldGhlciBtYWxsb2MgcGFyYW1wIGFuZAo+PiBlYWNoIHBh
+cmFtcC0+dHJucHRpZF9saXN0W2pdIGZhaWxzIGJlZm9yZSB1c2luZyB0aGVtLCBpdCBtYXkKPj4g
+Y2F1c2UgYWNjZXNzIE5VTEwgcG9pbnRlci4KPj4KPj4gSGVyZSwgd2UgYWRkIGFsbG9jX3Byb3V0
+X3BhcmFtX2Rlc2NyaXB0b3IgdG8gYWxsb2NhdGUgYW5kIGluaXQKPj4gcGFyYW1wLCBhbmQgd2Ug
+YWRkIGZyZWVfcHJvdXRfcGFyYW1fZGVzY3JpcHRvciB0byBmcmVlIHBhcmFtcAo+PiBhbmQgZWFj
+aCBwYXJhbXAtPnRybnB0aWRfbGlzdFtqXS4KPj4KPj4gV2UgY2hhbmdlIG51bV90cmFuc3BvcnQg
+dG8gbnVtX3RyYW5zcG9ydGlkcyB0byBjb21iaW5lIHRoZW0uCj4+Cj4+IFNpZ25lZC1vZmYtYnk6
+IFpoaXFpYW5nIExpdSA8bGl1emhpcWlhbmcyNkBodWF3ZWkuY29tPgo+PiBTaWduZWQtb2ZmLWJ5
+OiBsaXhpYW9rZW5nIDxsaXhpYW9rZW5nQGh1YXdlaS5jb20+Cj4+IC0tLQo+PiAgbXBhdGhwZXJz
+aXN0L21haW4uYyB8IDY1ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKystLS0tLS0t
+LS0KPj4gLS0KPj4gIDEgZmlsZSBjaGFuZ2VkLCA1MCBpbnNlcnRpb25zKCspLCAxNSBkZWxldGlv
+bnMoLSkKPj4KPj4gZGlmZiAtLWdpdCBhL21wYXRocGVyc2lzdC9tYWluLmMgYi9tcGF0aHBlcnNp
+c3QvbWFpbi5jCj4+IGluZGV4IDI4YmZlNDEwLi5kYTY3YzE1YyAxMDA2NDQKPj4gLS0tIGEvbXBh
+dGhwZXJzaXN0L21haW4uYwo+PiArKysgYi9tcGF0aHBlcnNpc3QvbWFpbi5jCj4+IEBAIC0xNTMs
+NiArMTUzLDM4IEBAIHN0YXRpYyBpbnQgZG9fYmF0Y2hfZmlsZShjb25zdCBjaGFyICpiYXRjaF9m
+bikKPj4gIAlyZXR1cm4gcmV0Owo+PiAgfQo+Pgo+PiArc3RhdGljIHN0cnVjdCBwcm91dF9wYXJh
+bV9kZXNjcmlwdG9yICoKPj4gK2FsbG9jX3Byb3V0X3BhcmFtX2Rlc2NyaXB0b3IoaW50IG51bV90
+cmFuc3BvcnRpZCkKPj4gK3sKPj4gKwlzdHJ1Y3QgcHJvdXRfcGFyYW1fZGVzY3JpcHRvciAqcGFy
+YW1wOwo+PiArCj4+ICsJaWYgKG51bV90cmFuc3BvcnRpZCA8IDAgfHwgbnVtX3RyYW5zcG9ydGlk
+ID4gTVBBVEhfTVhfVElEUykKPj4gKwkJcmV0dXJuIE5VTEw7Cj4+ICsKPj4gKwlwYXJhbXA9IG1h
+bGxvYyhzaXplb2Yoc3RydWN0IHByb3V0X3BhcmFtX2Rlc2NyaXB0b3IpICsKPj4gKwkJCQkoc2l6
+ZW9mKHN0cnVjdCB0cmFuc3BvcnRpZCAqKSAqCj4+IG51bV90cmFuc3BvcnRpZCkpOwo+PiArCj4+
+ICsJaWYgKCFwYXJhbXApCj4+ICsJCXJldHVybiBOVUxMOwo+PiArCj4+ICsJcGFyYW1wLT5udW1f
+dHJhbnNwb3J0aWQgPSBudW1fdHJhbnNwb3J0aWQ7Cj4+ICsJbWVtc2V0KHBhcmFtcCwgMCwgc2l6
+ZW9mKHN0cnVjdCBwcm91dF9wYXJhbV9kZXNjcmlwdG9yKSArCj4+ICsJCQkoc2l6ZW9mKHN0cnVj
+dCB0cmFuc3BvcnRpZCAqKSAqCj4+IG51bV90cmFuc3BvcnRpZCkpOwo+PiArCXJldHVybiBwYXJh
+bXA7Cj4+ICt9Cj4+ICsKPj4gK3N0YXRpYyB2b2lkIGZyZWVfcHJvdXRfcGFyYW1fZGVzY3JpcHRv
+cihzdHJ1Y3QKPj4gcHJvdXRfcGFyYW1fZGVzY3JpcHRvciAqcGFyYW1wKQo+PiArewo+PiArCWlu
+dCBpOwo+PiArCWlmICghcGFyYW1wKQo+PiArCQlyZXR1cm47Cj4+ICsKPj4gKwlmb3IgKGkgPSAw
+OyBpIDwgcGFyYW1wLT5udW1fdHJhbnNwb3J0aWQ7IGkrKykKPj4gKwkJZnJlZShwYXJhbXAtPnRy
+bnB0aWRfbGlzdFtpXSk7Cj4gCj4gVGhpcyBjYXVzZXMgYSBjb21waWxhdGlvbiBlcnJvci4gRGlk
+bid0IHlvdSBjb21waWxlLXRlc3Q/Cj4gCj4gbWFpbi5jOiBJbiBmdW5jdGlvbiDigJhmcmVlX3By
+b3V0X3BhcmFtX2Rlc2NyaXB0b3LigJk6Cj4gbWFpbi5jOjE4MjoxNjogZXJyb3I6IGNvbXBhcmlz
+b24gb2YgaW50ZWdlciBleHByZXNzaW9ucyBvZiBkaWZmZXJlbnQKPiBzaWduZWRuZXNzOiDigJhp
+bnTigJkgYW5kIOKAmHVpbnQzMl904oCZIHtha2Eg4oCYdW5zaWduZWQgaW504oCZfSBbLVdlcnJv
+cj1zaV0KPiAgIDE4MiB8ICBmb3IgKGkgPSAwOyBpIDwgcGFyYW1wLT5udW1fdHJhbnNwb3J0aWQ7
+IGkrKykKPiAgICAgICB8ICAgICAgICAgICAgICAgIF4KPiBjYzE6IGFsbCB3YXJuaW5ncyBiZWlu
+ZyB0cmVhdGVkIGFzIGVycm9ycwo+IAo+IFJlZ2FyZHMsCj4gTWFydGluCj4gCkhpIE1hcnRpbiwK
+ICBXaGVuIEkgY29tcGlsZSBpdCwgSSBhZGQgYSBwYXRjaCB0aGF0cyBjaGFuZ2VzIGludCB0byB1
+bnNpZ25lZCBpbnQuCkJ1dCBJIGRvbid0IHRoaW5rIGl0IGlzIGFuIGVycm9yLiBJdCBpcyAganVz
+dCBhIHdhcm5pbmcgYW5kIGJlY29tZXMgYW4KZXJyb3Igd2l0aCBbLVdlcnJvcl0uIEFueXdheSwg
+SSB3aWxsIGNoYW5nZSBpbnQgdG8gdW5zaWduZWQgaXQgYW5kIHNlbmQKaXQgYWdhaW4uIFRoYW5r
+cy4KClJlZ2FyZHMKTGl4aWFva2VuZwoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZl
+bEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
+ZXZlbA==
