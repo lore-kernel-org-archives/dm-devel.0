@@ -1,67 +1,76 @@
-From: Milan Broz <gmazyland@gmail.com>
-Subject: Re: [PATCH] crypto: mark unused ciphers as obsolete
-Date: Sat, 12 Sep 2020 12:05:40 +0200
-Message-ID: <ddbf295b-1e02-6553-0d78-5543923ba100@gmail.com>
-References: <20200911141103.14832-1-ardb@kernel.org>
- <CY4PR0401MB3652AD749C06D0ACD9F085F3C3240@CY4PR0401MB3652.namprd04.prod.outlook.com>
- <CAMj1kXHOrGoGv6Tse9Vju9mTV_+ks8cUMqx_iSQHPfc+2DVkmw@mail.gmail.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH 1/3] block: fix blk_rq_get_max_sectors() to flow more
+ carefully
+Date: Sat, 12 Sep 2020 21:52:52 +0800
+Message-ID: <20200912135252.GA210077@T590>
+References: <20200911215338.44805-1-snitzer@redhat.com>
+ <20200911215338.44805-2-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <CAMj1kXHOrGoGv6Tse9Vju9mTV_+ks8cUMqx_iSQHPfc+2DVkmw@mail.gmail.com>
-Content-Language: en-US
-Sender: linux-crypto-owner@vger.kernel.org
-To: Ard Biesheuvel <ardb@kernel.org>, "Van Leeuwen, Pascal" <pvanleeuwen@rambus.com>, dm-devel@redhat.com
-Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>, "herbert@gondor.apana.org.au" <herbert@gondor.apana.org.au>, "ebiggers@kernel.org" <ebiggers@kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200911215338.44805-2-snitzer@redhat.com>
+Sender: linux-block-owner@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Vijayendra Suman <vijayendra.suman@oracle.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 11/09/2020 18:30, Ard Biesheuvel wrote:
-> (cc Milan and dm-devel)
-> 
-> On Fri, 11 Sep 2020 at 19:24, Van Leeuwen, Pascal
-> <pvanleeuwen@rambus.com> wrote:
->>
->>> -----Original Message-----
->>> From: linux-crypto-owner@vger.kernel.org <linux-crypto-owner@vger.kernel.org> On Behalf Of Ard Biesheuvel
->>> Sent: Friday, September 11, 2020 4:11 PM
->>> To: linux-crypto@vger.kernel.org
->>> Cc: herbert@gondor.apana.org.au; ebiggers@kernel.org; Ard Biesheuvel <ardb@kernel.org>
->>> Subject: [PATCH] crypto: mark unused ciphers as obsolete
->>>
->>> <<< External Email >>>
->>> We have a few interesting pieces in our cipher museum, which are never
->>> used internally, and were only ever provided as generic C implementations.
->>>
->>> Unfortunately, we cannot simply remove this code, as we cannot be sure
->>> that it is not being used via the AF_ALG socket API, however unlikely.
->>> So let's mark the Anubis, Khazad, SEED and TEA algorithms as obsolete,
->>>
->> Wouldn't the IKE deamon be able to utilize these algorithms through the XFRM API?
->> I'm by no means an expert on the subject, but it looks like the cipher template is
->> provided there directly via XFRM, so it does not need to live in the kernel source.
->> And I know for a fact that SEED is being used for IPsec (and TLS) in Korea.
->>
-> 
-> I have been staring at net/xfrm/xfrm_algo.c, and as far as I can tell,
-> algorithms have to be mentioned there in order to be usable. None of
-> the ciphers that this patch touches are listed there or anywhere else
-> in the kernel.
-> 
->> The point being, there are more users to consider beyond "internal" (meaning hard
->> coded in the kernel source in this context?) and AF_ALG.
->>
-> 
-> That is a good point, actually, since dm-crypt could be affected here
-> as well, hence the CCs.
-> 
-> Milan (or others): are you aware of any of these ciphers being used
-> for dm-crypt?
+On Fri, Sep 11, 2020 at 05:53:36PM -0400, Mike Snitzer wrote:
+> blk_queue_get_max_sectors() has been trained for REQ_OP_WRITE_SAME and
+> REQ_OP_WRITE_ZEROES yet blk_rq_get_max_sectors() didn't call it for
+> those operations.
 
-Cryptsetup/dm-crypt can use them (talking about Seed, Khazad, Anubis, TEA), but I think
-there is no real use of these.
-(IOW these are used only if someone deliberately uses them - manually specifying on format.)
+Actually WRITE_SAME & WRITE_ZEROS are handled by the following if
+chunk_sectors is set:
 
-For dm-crypt. there should be no big harm if these are marked obsolete.
+        return min(blk_max_size_offset(q, offset),
+                        blk_queue_get_max_sectors(q, req_op(rq)));
+ 
+> Also, there is no need to avoid blk_max_size_offset() if
+> 'chunk_sectors' isn't set because it falls back to 'max_sectors'.
+> 
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  include/linux/blkdev.h | 19 +++++++++++++------
+>  1 file changed, 13 insertions(+), 6 deletions(-)
+> 
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index bb5636cc17b9..453a3d735d66 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -1070,17 +1070,24 @@ static inline unsigned int blk_rq_get_max_sectors(struct request *rq,
+>  						  sector_t offset)
+>  {
+>  	struct request_queue *q = rq->q;
+> +	int op;
+> +	unsigned int max_sectors;
+>  
+>  	if (blk_rq_is_passthrough(rq))
+>  		return q->limits.max_hw_sectors;
+>  
+> -	if (!q->limits.chunk_sectors ||
+> -	    req_op(rq) == REQ_OP_DISCARD ||
+> -	    req_op(rq) == REQ_OP_SECURE_ERASE)
+> -		return blk_queue_get_max_sectors(q, req_op(rq));
+> +	op = req_op(rq);
+> +	max_sectors = blk_queue_get_max_sectors(q, op);
+>  
+> -	return min(blk_max_size_offset(q, offset),
+> -			blk_queue_get_max_sectors(q, req_op(rq)));
+> +	switch (op) {
+> +	case REQ_OP_DISCARD:
+> +	case REQ_OP_SECURE_ERASE:
+> +	case REQ_OP_WRITE_SAME:
+> +	case REQ_OP_WRITE_ZEROES:
+> +		return max_sectors;
+> +	}
+> +
+> +	return min(blk_max_size_offset(q, offset), max_sectors);
+>  }
 
-Milan
+It depends if offset & chunk_sectors limit for WRITE_SAME & WRITE_ZEROS
+needs to be considered.
+
+
+Thanks,
+Ming
