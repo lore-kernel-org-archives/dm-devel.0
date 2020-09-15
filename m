@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH 3/6] libmultipath: check udev* return value in
- sysfs_get_tgt_nodename
-Date: Tue, 15 Sep 2020 12:40:39 +0800
-Message-ID: <a47d7089-02c4-320b-9710-bc8cfd2fd14b@huawei.com>
+Subject: [PATCH 4/6] libmultipath: check udev* return value in
+ trigger_partitions_udev_change
+Date: Tue, 15 Sep 2020 12:41:11 +0800
+Message-ID: <94e6143b-9aac-affa-9c48-7e48f1910732@huawei.com>
 References: <d89bc33d-8e5d-d194-3b26-83ff4d170c5c@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,36 +24,36 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-We check the return value of udev_device_get_parent and
-udev_device_get_sysname.
+We check the return value  of udev_device_get_devtype before
+dereference it.
 
-Signed-off-by:lixiaokeng<lixiaokeng@huawei.com>
+Signed-off-by:Lixiaokeng<Lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- libmultipath/discovery.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/configure.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 27cb67f8..c490dddb 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -356,7 +356,7 @@ sysfs_get_tgt_nodename(struct path *pp, char *node)
- 		tgtdev = udev_device_get_parent(parent);
- 		while (tgtdev) {
- 			tgtname = udev_device_get_sysname(tgtdev);
--			if (sscanf(tgtname, "end_device-%d:%d",
-+			if (tgtname && sscanf(tgtname, "end_device-%d:%d",
- 				   &host, &tgtid) == 2)
- 				break;
- 			tgtdev = udev_device_get_parent(tgtdev);
-@@ -389,7 +389,7 @@ sysfs_get_tgt_nodename(struct path *pp, char *node)
- 	/* Check for FibreChannel */
- 	tgtdev = udev_device_get_parent(parent);
- 	value = udev_device_get_sysname(tgtdev);
--	if (sscanf(value, "rport-%d:%d-%d",
-+	if (value && sscanf(value, "rport-%d:%d-%d",
- 		   &host, &channel, &tgtid) == 3) {
- 		tgtdev = udev_device_new_from_subsystem_sysname(udev,
- 				"fc_remote_ports", value);
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 972cf5fe..7263707c 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -515,6 +515,7 @@ static void trigger_partitions_udev_change(struct udev_device *dev,
+ {
+ 	struct udev_enumerate *part_enum;
+ 	struct udev_list_entry *item;
++	const char *devtype;
+
+ 	part_enum = udev_enumerate_new(udev);
+ 	if (!part_enum)
+@@ -535,7 +536,8 @@ static void trigger_partitions_udev_change(struct udev_device *dev,
+ 		if (!part)
+ 			continue;
+
+-		if (!strcmp("partition", udev_device_get_devtype(part))) {
++		devtype = udev_device_get_devtype(part);
++		if (devtype && !strcmp("partition", devtype)) {
+ 			condlog(4, "%s: triggering %s event for %s", __func__,
+ 				action, syspath);
+ 			sysfs_attr_set_value(part, "uevent", action, len);
 -- 
