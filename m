@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 1/3] multipath: add libmpathvalid library
-Date: Tue, 15 Sep 2020 16:45:10 -0500
-Message-ID: <1600206312-6497-2-git-send-email-bmarzins@redhat.com>
+Subject: [PATCH 3/3] libmultipath: add ignore_udev_uid option
+Date: Tue, 15 Sep 2020 16:45:12 -0500
+Message-ID: <1600206312-6497-4-git-send-email-bmarzins@redhat.com>
 References: <1600206312-6497-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,352 +21,189 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-This library allows other programs to check if a path should be claimed
-by multipath. It exports an init and exit function, a pointer to a
-struct config, that stores the configuration which is dealt with in the
-init and exit functions, and two more functions.
+Setting this option to yes will force multipath to get the uid by using
+the fallback sysfs methods, instead of getting it from udev. This will
+cause devices that can't get their uid from the standard locations to
+not get a uid. It will also disable uevent merging.
 
-mpath_get_mode() get the configured find_multipaths mode.
-mpath_is_path() returns whether the device is claimed by multipath, and
-optionally returns the wwid.  This code works slightly different than
-the multipath -c/u code for SMART mode.  Instead of checking all the
-existing paths to see if another has the same wwid, it expects the
-caller to pass in an array of the already known path wwids, and checks
-if the current path matches any of those.
-
-The library also doesn't set up the device-mapper log fuctions. It
-leaves this up to the caller.
+It will not stop uevents from being resent for device that failed to
+get a WWID, although I'm on the fence about the benefit of this.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- Makefile                            |   3 +-
- libmpathvalid/Makefile              |  38 +++++++
- libmpathvalid/libmpathvalid.version |  10 ++
- libmpathvalid/mpath_valid.c         | 168 ++++++++++++++++++++++++++++
- libmpathvalid/mpath_valid.h         |  57 ++++++++++
- 5 files changed, 275 insertions(+), 1 deletion(-)
- create mode 100644 libmpathvalid/Makefile
- create mode 100644 libmpathvalid/libmpathvalid.version
- create mode 100644 libmpathvalid/mpath_valid.c
- create mode 100644 libmpathvalid/mpath_valid.h
+ libmultipath/config.h      |  1 +
+ libmultipath/dict.c        |  4 ++++
+ libmultipath/discovery.c   | 17 +++++++++++------
+ libmultipath/discovery.h   |  8 +++++++-
+ libmultipath/uevent.c      |  2 +-
+ multipath/multipath.conf.5 | 13 +++++++++++++
+ multipathd/main.c          |  7 ++++++-
+ 7 files changed, 43 insertions(+), 9 deletions(-)
 
-diff --git a/Makefile b/Makefile
-index 4a3491da..f127ff91 100644
---- a/Makefile
-+++ b/Makefile
-@@ -9,6 +9,7 @@ BUILDDIRS := \
- 	libmultipath/checkers \
- 	libmultipath/foreign \
- 	libmpathpersist \
-+	libmpathvalid \
- 	multipath \
- 	multipathd \
- 	mpathpersist \
-@@ -29,7 +30,7 @@ $(BUILDDIRS):
- 	$(MAKE) -C $@
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 2bb7153b..4ad905f5 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -191,6 +191,7 @@ struct config {
+ 	int find_multipaths_timeout;
+ 	int marginal_pathgroups;
+ 	int skip_delegate;
++	int ignore_udev_uid;
+ 	unsigned int version[3];
+ 	unsigned int sequence_nr;
  
- libmultipath libdmmp: libmpathcmd
--libmpathpersist multipath multipathd: libmultipath
-+libmpathpersist libmpathvalid multipath multipathd: libmultipath
- mpathpersist multipathd:  libmpathpersist
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index feabae56..79de5d3b 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -1391,6 +1391,9 @@ declare_hw_snprint(all_tg_pt, print_yes_no_undef)
+ declare_def_handler(marginal_pathgroups, set_yes_no)
+ declare_def_snprint(marginal_pathgroups, print_yes_no)
  
- libmultipath/checkers.install \
-diff --git a/libmpathvalid/Makefile b/libmpathvalid/Makefile
-new file mode 100644
-index 00000000..70b97eca
---- /dev/null
-+++ b/libmpathvalid/Makefile
-@@ -0,0 +1,38 @@
-+include ../Makefile.inc
++declare_def_handler(ignore_udev_uid, set_yes_no)
++declare_def_snprint(ignore_udev_uid, print_yes_no)
 +
-+SONAME = 0
-+DEVLIB = libmpathvalid.so
-+LIBS = $(DEVLIB).$(SONAME)
+ static int
+ def_uxsock_timeout_handler(struct config *conf, vector strvec)
+ {
+@@ -1807,6 +1810,7 @@ init_keywords(vector keywords)
+ 	install_keyword("enable_foreign", &def_enable_foreign_handler,
+ 			&snprint_def_enable_foreign);
+ 	install_keyword("marginal_pathgroups", &def_marginal_pathgroups_handler, &snprint_def_marginal_pathgroups);
++	install_keyword("ignore_udev_uid", &def_ignore_udev_uid_handler, &snprint_def_ignore_udev_uid);
+ 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
+ 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
+ 	__deprecated install_keyword("default_uid_attribute", &def_uid_attribute_handler, NULL);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 2096fb48..5c0188ba 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -2043,7 +2043,7 @@ static bool has_uid_fallback(struct path *pp)
+ 
+ int
+ get_uid (struct path * pp, int path_state, struct udev_device *udev,
+-	 int allow_fallback)
++	 int fallback)
+ {
+ 	char *c;
+ 	const char *origin = "unknown";
+@@ -2076,7 +2076,9 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev,
+ 		} else
+ 			len = strlen(pp->wwid);
+ 		origin = "callout";
+-	} else {
++	} else if (fallback == UID_FALLBACK_FORCE)
++		len = uid_fallback(pp, path_state, &origin);
++	else {
+ 		bool udev_available = udev && pp->uid_attribute
+ 			&& *pp->uid_attribute;
+ 
+@@ -2086,8 +2088,9 @@ get_uid (struct path * pp, int path_state, struct udev_device *udev,
+ 			if (len == 0)
+ 				condlog(1, "%s: empty udev uid", pp->dev);
+ 		}
+-		if ((!udev_available || (len <= 0 && allow_fallback))
+-		    && has_uid_fallback(pp)) {
++		if ((!udev_available ||
++		     (len <= 0 && fallback == UID_FALLBACK_ALLOW)) &&
++		    has_uid_fallback(pp)) {
+ 			used_fallback = 1;
+ 			len = uid_fallback(pp, path_state, &origin);
+ 		}
+@@ -2231,8 +2234,10 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 	}
+ 
+ 	if ((mask & DI_WWID) && !strlen(pp->wwid)) {
+-		get_uid(pp, path_state, pp->udev,
+-			(pp->retriggers >= conf->retrigger_tries));
++		int fallback = conf->ignore_udev_uid? UID_FALLBACK_FORCE :
++			       (pp->retriggers >= conf->retrigger_tries)?
++			       UID_FALLBACK_ALLOW : UID_FALLBACK_NONE;
++		get_uid(pp, path_state, pp->udev, fallback);
+ 		if (!strlen(pp->wwid)) {
+ 			if (pp->bus == SYSFS_BUS_UNDEF)
+ 				return PATHINFO_SKIPPED;
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+index 6444887d..ca8542d6 100644
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -54,8 +54,14 @@ ssize_t sysfs_get_inquiry(struct udev_device *udev,
+ 			  unsigned char *buff, size_t len);
+ int sysfs_get_asymmetric_access_state(struct path *pp,
+ 				      char *buff, int buflen);
 +
-+CFLAGS += $(LIB_CFLAGS) -I$(multipathdir) -I$(mpathcmddir)
-+
-+LIBDEPS += -lpthread -ldevmapper -ldl -L$(multipathdir) \
-+	   -lmultipath -L$(mpathcmddir) -lmpathcmd -ludev
-+
-+OBJS = mpath_valid.o
-+
-+all: $(LIBS)
-+
-+$(LIBS): $(OBJS)
-+	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS) $(LIBDEPS) -Wl,--version-script=libmpathvalid.version
-+	$(LN) $(LIBS) $(DEVLIB)
-+
-+install: $(LIBS)
-+	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(syslibdir)
-+	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
-+	$(LN) $(LIBS) $(DESTDIR)$(syslibdir)/$(DEVLIB)
-+	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(includedir)
-+	$(INSTALL_PROGRAM) -m 644 mpath_valid.h $(DESTDIR)$(includedir)
-+
-+uninstall:
-+	$(RM) $(DESTDIR)$(syslibdir)/$(LIBS)
-+	$(RM) $(DESTDIR)$(syslibdir)/$(DEVLIB)
-+	$(RM) $(DESTDIR)$(includedir)/mpath_valid.h
-+
-+clean: dep_clean
-+	$(RM) core *.a *.o *.so *.so.* *.gz
-+
-+include $(wildcard $(OBJS:.o=.d))
-+
-+dep_clean:
-+	$(RM) $(OBJS:.o=.d)
-diff --git a/libmpathvalid/libmpathvalid.version b/libmpathvalid/libmpathvalid.version
-new file mode 100644
-index 00000000..4d8a8ba4
---- /dev/null
-+++ b/libmpathvalid/libmpathvalid.version
-@@ -0,0 +1,10 @@
-+MPATH_1.0 {
-+	global:
-+		mpathvalid_conf;
-+		mpathvalid_init;
-+		mpathvalid_exit;
-+		mpathvalid_is_path;
-+		mpathvalid_get_mode;
-+	local:
-+		*;
++enum {
++	UID_FALLBACK_NONE,
++	UID_FALLBACK_ALLOW,
++	UID_FALLBACK_FORCE,
 +};
-diff --git a/libmpathvalid/mpath_valid.c b/libmpathvalid/mpath_valid.c
-new file mode 100644
-index 00000000..6153e8b7
---- /dev/null
-+++ b/libmpathvalid/mpath_valid.c
-@@ -0,0 +1,168 @@
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include <stdint.h>
-+#include <libdevmapper.h>
-+#include <libudev.h>
-+#include <errno.h>
-+
-+#include "devmapper.h"
-+#include "structs.h"
-+#include "util.h"
-+#include "config.h"
-+#include "discovery.h"
-+#include "wwids.h"
-+#include "sysfs.h"
-+#include "mpath_cmd.h"
-+#include "valid.h"
-+#include "mpath_valid.h"
-+
-+static struct config default_config = { .verbosity = -1 };
-+struct config *mpathvalid_conf = &default_config;
-+
-+static unsigned int get_conf_mode(struct config *conf)
-+{
-+	if (conf->find_multipaths == FIND_MULTIPATHS_SMART)
-+		return MPATH_SMART;
-+	if (conf->find_multipaths == FIND_MULTIPATHS_GREEDY)
-+		return MPATH_GREEDY;
-+	return MPATH_STRICT;
-+}
-+
-+static void set_conf_mode(struct config *conf, unsigned int mode)
-+{
-+	if (mode == MPATH_SMART)
-+		conf->find_multipaths = FIND_MULTIPATHS_SMART;
-+	else if (mode == MPATH_GREEDY)
-+		conf->find_multipaths = FIND_MULTIPATHS_GREEDY;
-+	else
-+		conf->find_multipaths = FIND_MULTIPATHS_STRICT;
-+}
-+
-+unsigned int mpathvalid_get_mode(void)
-+{
-+	int mode;
-+	struct config *conf;
-+
-+	conf = get_multipath_config();
-+	if (!conf)
-+		return -1;
-+	mode = get_conf_mode(conf);
-+	put_multipath_config(conf);
-+	return mode;
-+}
-+
-+static int convert_result(int result) {
-+	switch (result) {
-+	case PATH_IS_ERROR:
-+		return MPATH_IS_ERROR;
-+	case PATH_IS_NOT_VALID:
-+		return MPATH_IS_NOT_VALID;
-+	case PATH_IS_VALID:
-+		return MPATH_IS_VALID;
-+	case PATH_IS_VALID_NO_CHECK:
-+		return MPATH_IS_VALID_NO_CHECK;
-+	case PATH_IS_MAYBE_VALID:
-+		return MPATH_IS_MAYBE_VALID;
-+	}
-+	return MPATH_IS_ERROR;
-+}
-+
-+int
-+mpathvalid_init(int verbosity)
-+{
-+	unsigned int version[3];
-+	struct config *conf;
-+
-+	default_config.verbosity = verbosity;
-+	skip_libmp_dm_init();
-+	conf = load_config(DEFAULT_CONFIGFILE);
-+	if (!conf)
-+		return -1;
-+	conf->verbosity = verbosity;
-+	if (dm_prereq(version))
-+		goto fail;
-+	memcpy(conf->version, version, sizeof(version));
-+
-+	mpathvalid_conf = conf;
-+	return 0;
-+fail:
-+	free_config(conf);
-+	return -1;
-+}
-+
-+int
-+mpathvalid_exit(void)
-+{
-+	struct config *conf = mpathvalid_conf;
-+
-+	default_config.verbosity = -1;
-+	if (mpathvalid_conf == &default_config)
-+		return 0;
-+	mpathvalid_conf = &default_config;
-+	free_config(conf);
-+	return 0;
-+}
-+
-+/*
-+ * name: name of path to check
-+ * mode: mode to use for determination. MPATH_DEFAULT uses configured mode
-+ * info: on success, contains the path wwid
-+ * paths: array of the returned mpath_info from other claimed paths
-+ * nr_paths: the size of the paths array
-+ */
-+int
-+mpathvalid_is_path(const char *name, unsigned int mode, char **wwid,
-+	           const char **path_wwids, unsigned int nr_paths)
-+{
-+	struct config *conf;
-+	int r = MPATH_IS_ERROR;
-+	unsigned int i;
-+	struct path *pp;
-+
-+	if (!name || mode >= MPATH_MAX_MODE)
-+		return r;
-+
-+	if (nr_paths > 0 && !path_wwids)
-+		return r;
-+
-+	pp = alloc_path();
-+	if (!pp)
-+		return r;
-+
-+	if (wwid) {
-+		*wwid = (char *)malloc(WWID_SIZE);
-+		if (!*wwid)
-+			goto out;
-+	}
-+
-+	conf = get_multipath_config();
-+	if (!conf || conf == &default_config)
-+		goto out_wwid;
-+	if (mode != MPATH_DEFAULT)
-+		set_conf_mode(conf, mode);
-+	r = convert_result(is_path_valid(name, conf, pp, true));
-+	put_multipath_config(conf);
-+
-+	if (r == MPATH_IS_MAYBE_VALID) {
-+		for (i = 0; i < nr_paths; i++) {
-+			if (strncmp(path_wwids[i], pp->wwid, WWID_SIZE) == 0) {
-+				r = MPATH_IS_VALID;
-+				break;
-+			}
-+		}
-+	}
-+
-+out_wwid:
-+	if (wwid) {
-+		if (r == MPATH_IS_VALID || r == MPATH_IS_VALID_NO_CHECK ||
-+		    r == MPATH_IS_MAYBE_VALID)
-+			strlcpy(*wwid, pp->wwid, WWID_SIZE);
-+		else {
-+			free(*wwid);
-+			*wwid = NULL;
-+		}
-+	}
-+out:
-+	free_path(pp);
-+	return r;
-+}
-diff --git a/libmpathvalid/mpath_valid.h b/libmpathvalid/mpath_valid.h
-new file mode 100644
-index 00000000..7fd8aa47
---- /dev/null
-+++ b/libmpathvalid/mpath_valid.h
-@@ -0,0 +1,57 @@
-+/*
-+ * Copyright (C) 2015 Red Hat, Inc.
-+ *
-+ * This file is part of the device-mapper multipath userspace tools.
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU Lesser General Public License
-+ * as published by the Free Software Foundation; either version 2
-+ * of the License, or (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU Lesser General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU Lesser General Public License
-+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
-+ */
-+
-+#ifndef LIB_MPATH_VALID_H
-+#define LIB_MPATH_VALID_H
-+
-+#ifdef __cpluscplus
-+extern "C" {
-+#endif
-+
-+enum mpath_valid_mode {
-+	MPATH_DEFAULT,
-+	MPATH_STRICT,
-+	MPATH_SMART,
-+	MPATH_GREEDY,
-+	MPATH_MAX_MODE,  /* used only for bounds checking */
-+};
-+
-+/* MPATH_IS_VALID_NO_CHECK is used to skip checks to see if the device
-+ * has already been unclaimed by multipath in the past */
-+enum mpath_valid_result {
-+	MPATH_IS_ERROR = -1,
-+	MPATH_IS_NOT_VALID,
-+	MPATH_IS_VALID,
-+	MPATH_IS_VALID_NO_CHECK,
-+	MPATH_IS_MAYBE_VALID,
-+};
-+
-+struct config;
-+extern struct config *mpathvalid_conf;
-+int mpathvalid_init(int verbosity);
-+int mpathvalid_exit(void);
-+unsigned int mpathvalid_get_mode(void);
-+int mpathvalid_is_path(const char *name, unsigned int mode, char **wwid,
-+		       const char **path_wwids, unsigned int nr_paths);
-+
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+#endif /* LIB_PATH_VALID_H */
+ int get_uid(struct path * pp, int path_state, struct udev_device *udev,
+-	    int allow_fallback);
++	    int fallback);
+ 
+ /*
+  * discovery bitmask
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index d3061bf8..05c8543b 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -177,7 +177,7 @@ static bool uevent_need_merge(void)
+ 	bool need_merge = false;
+ 
+ 	conf = get_multipath_config();
+-	if (VECTOR_SIZE(&conf->uid_attrs) > 0)
++	if (!conf->ignore_udev_uid && VECTOR_SIZE(&conf->uid_attrs) > 0)
+ 		need_merge = true;
+ 	put_multipath_config(conf);
+ 
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 5adaced6..b2920df5 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -286,6 +286,19 @@ The default is: \fB<unset>\fR
+ .
+ .
+ .TP
++.B ignore_udev_uid
++Setting this option to yes will force multipath to ignore the the uid_attrs
++and uid_attribute settings, and generate the WWID by the \fIsysfs\fR
++method. This will cause devices that cannot get their WWID from the standard
++locations for their device type to not get a WWID; see \fBWWID generation\fR
++below.
++.RS
++.TP
++The default is: \fBno\fR
++.RE
++.
++.
++.TP
+ .B prio
+ The name of the path priority routine. The specified routine
+ should return a numeric value specifying the relative priority
+diff --git a/multipathd/main.c b/multipathd/main.c
+index f7229a7d..c522b045 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1279,6 +1279,7 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 	if (pp) {
+ 		struct multipath *mpp = pp->mpp;
+ 		char wwid[WWID_SIZE];
++		int fallback;
+ 
+ 		if (pp->initialized == INIT_REQUESTED_UDEV) {
+ 			needs_reinit = 1;
+@@ -1290,7 +1291,11 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 			goto out;
+ 
+ 		strcpy(wwid, pp->wwid);
+-		rc = get_uid(pp, pp->state, uev->udev, 0);
++		conf = get_multipath_config();
++		fallback = conf->ignore_udev_uid? UID_FALLBACK_FORCE:
++			   UID_FALLBACK_NONE;
++		put_multipath_config(conf);
++		rc = get_uid(pp, pp->state, uev->udev, fallback);
+ 
+ 		if (rc != 0)
+ 			strcpy(pp->wwid, wwid);
 -- 
 2.17.2
