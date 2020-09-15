@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH 2/6] libmultipath: check udev* return value in
- ccw_sysfs_pathinfo
-Date: Tue, 15 Sep 2020 12:39:59 +0800
-Message-ID: <cf6ba543-dd8d-cbc9-b69d-a4e9efd0c7f9@huawei.com>
+Subject: [PATCH 3/6] libmultipath: check udev* return value in
+ sysfs_get_tgt_nodename
+Date: Tue, 15 Sep 2020 12:40:39 +0800
+Message-ID: <a47d7089-02c4-320b-9710-bc8cfd2fd14b@huawei.com>
 References: <d89bc33d-8e5d-d194-3b26-83ff4d170c5c@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,26 +24,36 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-We check the return value of udev_device_get_sysname.
+We check the return value of udev_device_get_parent and
+udev_device_get_sysname.
 
-Signed-off-by:Lixiaokeng<lixiaokeng@huawei.com>
+Signed-off-by:lixiaokeng<lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- libmultipath/discovery.c | 2 ++
- 1 file changed, 2 insertions(+)
+ libmultipath/discovery.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 4264b0da..27cb67f8 100644
+index 27cb67f8..c490dddb 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -1471,6 +1471,8 @@ ccw_sysfs_pathinfo (struct path *pp, const struct _vector *hwtable)
- 	 * host / bus / target / lun
- 	 */
- 	attr_path = udev_device_get_sysname(parent);
-+	if (attr_path)
-+		return PATHINFO_FAILED;
- 	pp->sg_id.lun = 0;
- 	if (sscanf(attr_path, "%i.%i.%x",
- 		   &pp->sg_id.host_no,
+@@ -356,7 +356,7 @@ sysfs_get_tgt_nodename(struct path *pp, char *node)
+ 		tgtdev = udev_device_get_parent(parent);
+ 		while (tgtdev) {
+ 			tgtname = udev_device_get_sysname(tgtdev);
+-			if (sscanf(tgtname, "end_device-%d:%d",
++			if (tgtname && sscanf(tgtname, "end_device-%d:%d",
+ 				   &host, &tgtid) == 2)
+ 				break;
+ 			tgtdev = udev_device_get_parent(tgtdev);
+@@ -389,7 +389,7 @@ sysfs_get_tgt_nodename(struct path *pp, char *node)
+ 	/* Check for FibreChannel */
+ 	tgtdev = udev_device_get_parent(parent);
+ 	value = udev_device_get_sysname(tgtdev);
+-	if (sscanf(value, "rport-%d:%d-%d",
++	if (value && sscanf(value, "rport-%d:%d-%d",
+ 		   &host, &channel, &tgtid) == 3) {
+ 		tgtdev = udev_device_new_from_subsystem_sysname(udev,
+ 				"fc_remote_ports", value);
 -- 
