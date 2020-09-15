@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2 3/4] dm table: stack 'chunk_sectors' limit to
-	account for target-specific splitting
-Date: Tue, 15 Sep 2020 13:23:56 -0400
-Message-ID: <20200915172357.83215-4-snitzer@redhat.com>
+Subject: [PATCH v2 4/4] dm: unconditionally call
+	blk_queue_split() in dm_process_bio()
+Date: Tue, 15 Sep 2020 13:23:57 -0400
+Message-ID: <20200915172357.83215-5-snitzer@redhat.com>
 References: <20200915172357.83215-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,40 +22,87 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Vijayendra Suman <vijayendra.suman@oracle.com>, Ming Lei <ming.lei@redhat.com>
 List-Id: dm-devel.ids
 
-If target set ti->max_io_len it must be used when stacking
-DM device's queue_limits to establish a 'chunk_sectors' that is
-compatible with the IO stack.
+blk_queue_split() has become compulsory from .submit_bio -- regardless
+of whether it is recursing.  Update DM core to always call
+blk_queue_split().
 
-By using lcm_not_zero() care is taken to avoid blindly overriding the
-chunk_sectors limit stacked up by blk_stack_limits().
+dm_queue_split() is removed because __split_and_process_bio() handles
+splitting as needed.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-table.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ drivers/md/dm.c | 45 +--------------------------------------------
+ 1 file changed, 1 insertion(+), 44 deletions(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 5edc3079e7c1..248c5a1074a7 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -18,6 +18,7 @@
- #include <linux/mutex.h>
- #include <linux/delay.h>
- #include <linux/atomic.h>
-+#include <linux/lcm.h>
- #include <linux/blk-mq.h>
- #include <linux/mount.h>
- #include <linux/dax.h>
-@@ -1502,6 +1503,10 @@ int dm_calculate_queue_limits(struct dm_table *table,
- 			zone_sectors = ti_limits.chunk_sectors;
- 		}
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index fb0255d25e4b..0bae9f26dc8e 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1530,22 +1530,6 @@ static int __send_write_zeroes(struct clone_info *ci, struct dm_target *ti)
+ 	return __send_changing_extent_only(ci, ti, get_num_write_zeroes_bios(ti));
+ }
  
-+		/* Stack chunk_sectors if target-specific splitting is required */
-+		if (ti->max_io_len)
-+			ti_limits.chunk_sectors = lcm_not_zero(ti->max_io_len,
-+							       ti_limits.chunk_sectors);
- 		/* Set I/O hints portion of queue limits */
- 		if (ti->type->io_hints)
- 			ti->type->io_hints(ti, &ti_limits);
+-static bool is_abnormal_io(struct bio *bio)
+-{
+-	bool r = false;
+-
+-	switch (bio_op(bio)) {
+-	case REQ_OP_DISCARD:
+-	case REQ_OP_SECURE_ERASE:
+-	case REQ_OP_WRITE_SAME:
+-	case REQ_OP_WRITE_ZEROES:
+-		r = true;
+-		break;
+-	}
+-
+-	return r;
+-}
+-
+ static bool __process_abnormal_io(struct clone_info *ci, struct dm_target *ti,
+ 				  int *result)
+ {
+@@ -1723,23 +1707,6 @@ static blk_qc_t __process_bio(struct mapped_device *md, struct dm_table *map,
+ 	return ret;
+ }
+ 
+-static void dm_queue_split(struct mapped_device *md, struct dm_target *ti, struct bio **bio)
+-{
+-	unsigned len, sector_count;
+-
+-	sector_count = bio_sectors(*bio);
+-	len = min_t(sector_t, max_io_len((*bio)->bi_iter.bi_sector, ti), sector_count);
+-
+-	if (sector_count > len) {
+-		struct bio *split = bio_split(*bio, len, GFP_NOIO, &md->queue->bio_split);
+-
+-		bio_chain(split, *bio);
+-		trace_block_split(md->queue, split, (*bio)->bi_iter.bi_sector);
+-		submit_bio_noacct(*bio);
+-		*bio = split;
+-	}
+-}
+-
+ static blk_qc_t dm_process_bio(struct mapped_device *md,
+ 			       struct dm_table *map, struct bio *bio)
+ {
+@@ -1759,17 +1726,7 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
+ 		}
+ 	}
+ 
+-	/*
+-	 * If in ->queue_bio we need to use blk_queue_split(), otherwise
+-	 * queue_limits for abnormal requests (e.g. discard, writesame, etc)
+-	 * won't be imposed.
+-	 */
+-	if (current->bio_list) {
+-		if (is_abnormal_io(bio))
+-			blk_queue_split(&bio);
+-		else
+-			dm_queue_split(md, ti, &bio);
+-	}
++	blk_queue_split(&bio);
+ 
+ 	if (dm_get_md_type(md) == DM_TYPE_NVME_BIO_BASED)
+ 		return __process_bio(md, map, bio, ti);
 -- 
 2.15.0
