@@ -1,11 +1,14 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH 0/6] libmultipath: check udev* func return value
-Date: Tue, 15 Sep 2020 12:38:27 +0800
-Message-ID: <d89bc33d-8e5d-d194-3b26-83ff4d170c5c@huawei.com>
+Subject: [PATCH 1/6] libmultipath: check uedv* return value in
+ sysfs_get_host_pci_name
+Date: Tue, 15 Sep 2020 12:39:15 +0800
+Message-ID: <965e9cd1-f0dc-b94a-4314-0e8f6cb50bf5@huawei.com>
+References: <d89bc33d-8e5d-d194-3b26-83ff4d170c5c@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <d89bc33d-8e5d-d194-3b26-83ff4d170c5c@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,27 +24,27 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-Hi,
-  The udev* function may return NULL,and it will be
-dereferenced in str* and sscanf func. For example,
-there is a coredump caused in add func, which show in
-be7a043(commit id) in upstream-queue. We check the
-return value to avoid dereference NULL.
+udev_device_get_sysname may return NULL. We check the return value.
 
-repo: openSUSE/multipath-tools
-repo link: https://github.com/openSUSE/multipath-tools
-branch: upstream-queue
+Signed-off-by:Lixiaokeng<Lixiaokeng@huawei.com>
+Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Signed-off-by: Linfeilong <linfeilong@huawei.com>
+---
+ libmultipath/discovery.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-lixiaokeng (6):
-  libmultipath: check uedv* return value in sysfs_get_host_pci_name
-  libmultipath: check udev* return value in ccw_sysfs_pathinfo
-  libmultipath: check udev* return value in sysfs_get_tgt_nodename
-  libmultipath: check udev* return value in
-    trigger_partitions_udev_change
-  libmultipath: check udev* renturn value in get_ctrl_blkdev
-  libmultipath: check udev* return value in _find_path_by_syspath
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 3f1b1d71..4264b0da 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -519,6 +519,9 @@ int sysfs_get_host_pci_name(const struct path *pp, char *pci_name)
+ 		 */
+ 		value = udev_device_get_sysname(parent);
 
- libmultipath/configure.c    |  4 +++-
- libmultipath/discovery.c    |  9 +++++++--
- libmultipath/foreign/nvme.c | 10 +++++++---
- 3 files changed, 17 insertions(+), 6 deletions(-)
++		if (!value)
++			return 1;
++
+ 		strncpy(pci_name, value, SLOT_NAME_SIZE);
+ 		udev_device_unref(hostdev);
+ 		return 0;
+-- 
