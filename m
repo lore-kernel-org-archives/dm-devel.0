@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH 5/6] libmultipath: check udev* renturn value in
- get_ctrl_blkdev
-Date: Tue, 15 Sep 2020 12:41:41 +0800
-Message-ID: <2e194628-4c9b-e259-f2b3-3c09e134575c@huawei.com>
+Subject: [PATCH 6/6] libmultipath: check udev* return value in
+ _find_path_by_syspath
+Date: Tue, 15 Sep 2020 12:42:16 +0800
+Message-ID: <40f72a77-5dcc-89e4-e164-d19e0da10699@huawei.com>
 References: <d89bc33d-8e5d-d194-3b26-83ff4d170c5c@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,37 +24,37 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-We check return value of udev_device_get_devtype before
+We check udev_device_get_syspath return value before
 dereference it.
 
-Signed-off-by:Lixiaokeng<lixiaokeng@huawei.com>
+Signed-off-by: Lixiaokeng<lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- libmultipath/foreign/nvme.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ libmultipath/foreign/nvme.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
-index 0bc5106e..a0668713 100644
+index a0668713..28e0d192 100644
 --- a/libmultipath/foreign/nvme.c
 +++ b/libmultipath/foreign/nvme.c
-@@ -538,6 +538,7 @@ struct udev_device *get_ctrl_blkdev(const struct context *ctx,
- 	struct udev_list_entry *item;
- 	struct udev_device *blkdev = NULL;
- 	struct udev_enumerate *enm = udev_enumerate_new(ctx->udev);
-+	const char *devtype;
+@@ -482,6 +482,7 @@ _find_path_by_syspath(struct nvme_map *map, const char *syspath)
+ 	struct nvme_pathgroup *pg;
+ 	char real[PATH_MAX];
+ 	const char *ppath;
++	const char *psyspath;
+ 	int i;
 
- 	if (enm == NULL)
- 		return NULL;
-@@ -562,7 +563,9 @@ struct udev_device *get_ctrl_blkdev(const struct context *ctx,
- 					   udev_list_entry_get_name(item));
- 		if (tmp == NULL)
- 			continue;
--		if (!strcmp(udev_device_get_devtype(tmp), "disk")) {
-+
-+		devtype = udev_device_get_devtype(tmp);
-+		if (!devtype && !strcmp(devtype, "disk")) {
- 			blkdev = tmp;
- 			break;
- 		} else
+ 	ppath = realpath(syspath, real);
+@@ -493,8 +494,8 @@ _find_path_by_syspath(struct nvme_map *map, const char *syspath)
+ 	vector_foreach_slot(&map->pgvec, pg, i) {
+ 		struct nvme_path *path = nvme_pg_to_path(pg);
+
+-		if (!strcmp(ppath,
+-			    udev_device_get_syspath(path->udev)))
++		psyspath = udev_device_get_syspath(path->udev);
++		if (!psyspath && !strcmp(ppath, psyspath))
+ 			return path;
+ 	}
+ 	condlog(4, "%s: %s: %s not found", __func__, THIS, ppath);
 -- 
