@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH 4/6] libmultipath: check udev* return value in
- trigger_partitions_udev_change
-Date: Tue, 15 Sep 2020 12:41:11 +0800
-Message-ID: <94e6143b-9aac-affa-9c48-7e48f1910732@huawei.com>
+Subject: [PATCH 5/6] libmultipath: check udev* renturn value in
+ get_ctrl_blkdev
+Date: Tue, 15 Sep 2020 12:41:41 +0800
+Message-ID: <2e194628-4c9b-e259-f2b3-3c09e134575c@huawei.com>
 References: <d89bc33d-8e5d-d194-3b26-83ff4d170c5c@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,36 +24,37 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-We check the return value  of udev_device_get_devtype before
+We check return value of udev_device_get_devtype before
 dereference it.
 
-Signed-off-by:Lixiaokeng<Lixiaokeng@huawei.com>
+Signed-off-by:Lixiaokeng<lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- libmultipath/configure.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ libmultipath/foreign/nvme.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 972cf5fe..7263707c 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -515,6 +515,7 @@ static void trigger_partitions_udev_change(struct udev_device *dev,
- {
- 	struct udev_enumerate *part_enum;
+diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
+index 0bc5106e..a0668713 100644
+--- a/libmultipath/foreign/nvme.c
++++ b/libmultipath/foreign/nvme.c
+@@ -538,6 +538,7 @@ struct udev_device *get_ctrl_blkdev(const struct context *ctx,
  	struct udev_list_entry *item;
+ 	struct udev_device *blkdev = NULL;
+ 	struct udev_enumerate *enm = udev_enumerate_new(ctx->udev);
 +	const char *devtype;
 
- 	part_enum = udev_enumerate_new(udev);
- 	if (!part_enum)
-@@ -535,7 +536,8 @@ static void trigger_partitions_udev_change(struct udev_device *dev,
- 		if (!part)
+ 	if (enm == NULL)
+ 		return NULL;
+@@ -562,7 +563,9 @@ struct udev_device *get_ctrl_blkdev(const struct context *ctx,
+ 					   udev_list_entry_get_name(item));
+ 		if (tmp == NULL)
  			continue;
-
--		if (!strcmp("partition", udev_device_get_devtype(part))) {
-+		devtype = udev_device_get_devtype(part);
-+		if (devtype && !strcmp("partition", devtype)) {
- 			condlog(4, "%s: triggering %s event for %s", __func__,
- 				action, syspath);
- 			sysfs_attr_set_value(part, "uevent", action, len);
+-		if (!strcmp(udev_device_get_devtype(tmp), "disk")) {
++
++		devtype = udev_device_get_devtype(tmp);
++		if (!devtype && !strcmp(devtype, "disk")) {
+ 			blkdev = tmp;
+ 			break;
+ 		} else
 -- 
