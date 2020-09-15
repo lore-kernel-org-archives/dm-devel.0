@@ -1,8 +1,8 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH 1/6] libmultipath: check uedv* return value in
- sysfs_get_host_pci_name
-Date: Tue, 15 Sep 2020 12:39:15 +0800
-Message-ID: <965e9cd1-f0dc-b94a-4314-0e8f6cb50bf5@huawei.com>
+Subject: [PATCH 2/6] libmultipath: check udev* return value in
+ ccw_sysfs_pathinfo
+Date: Tue, 15 Sep 2020 12:39:59 +0800
+Message-ID: <cf6ba543-dd8d-cbc9-b69d-a4e9efd0c7f9@huawei.com>
 References: <d89bc33d-8e5d-d194-3b26-83ff4d170c5c@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,27 +24,26 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Martin Wilck <mwilck@su
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-udev_device_get_sysname may return NULL. We check the return value.
+We check the return value of udev_device_get_sysname.
 
-Signed-off-by:Lixiaokeng<Lixiaokeng@huawei.com>
+Signed-off-by:Lixiaokeng<lixiaokeng@huawei.com>
 Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
 Signed-off-by: Linfeilong <linfeilong@huawei.com>
 ---
- libmultipath/discovery.c | 3 +++
- 1 file changed, 3 insertions(+)
+ libmultipath/discovery.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
 diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 3f1b1d71..4264b0da 100644
+index 4264b0da..27cb67f8 100644
 --- a/libmultipath/discovery.c
 +++ b/libmultipath/discovery.c
-@@ -519,6 +519,9 @@ int sysfs_get_host_pci_name(const struct path *pp, char *pci_name)
- 		 */
- 		value = udev_device_get_sysname(parent);
-
-+		if (!value)
-+			return 1;
-+
- 		strncpy(pci_name, value, SLOT_NAME_SIZE);
- 		udev_device_unref(hostdev);
- 		return 0;
+@@ -1471,6 +1471,8 @@ ccw_sysfs_pathinfo (struct path *pp, const struct _vector *hwtable)
+ 	 * host / bus / target / lun
+ 	 */
+ 	attr_path = udev_device_get_sysname(parent);
++	if (attr_path)
++		return PATHINFO_FAILED;
+ 	pp->sg_id.lun = 0;
+ 	if (sscanf(attr_path, "%i.%i.%x",
+ 		   &pp->sg_id.host_no,
 -- 
