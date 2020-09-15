@@ -1,54 +1,99 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 0/3]  Fixes for bitfield unit tests
-Date: Tue, 15 Sep 2020 13:16:19 +0200
-Message-ID: <1fea6ca4ce7221461ddec39f37f2216e8cdd4c33.camel@suse.com>
-References: <20200821224224.13536-1-mwilck@suse.com>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: bdi cleanups v5
+Date: Tue, 15 Sep 2020 17:18:17 +0200
+Message-ID: <20200915151829.1767176-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200821224224.13536-1-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+Return-path: <drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Unsubscribe: <https://lists.linbit.com/mailman/options/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linbit.com/pipermail/drbd-dev>
+List-Post: <mailto:drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org>
+List-Help: <mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linbit.com/mailman/listinfo/drbd-dev>,
+	<mailto:drbd-dev-request-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org?subject=subscribe>
+Sender: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+Errors-To: drbd-dev-bounces-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
+To: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>
+Cc: linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Johannes Thumshirn <Johannes.Thumshirn-Sjgp3cTcYWE@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org
 List-Id: dm-devel.ids
 
-On Sat, 2020-08-22 at 00:42 +0200, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
-> 
-> Hi Christophe, hi Ben,
-> 
-> embarassingly, it turns out that my unit test code for the bitfield
-> code was broken in various ways, which at the same time shows that
-> I didn't test this as broadly as I should have before submitting.
-> The good news is that only the test code was broken, not the
-> implementation itself.
-> 
-> With these fixes, I successfully compiled it on both little and
-> big endian architectures, with and without glibc 2.27.
-> (https://build.opensuse.org/package/show/Base:System/multipath-tools)
-> 
-> Regards,
-> Martin
-> 
-> Martin Wilck (3):
->   multipath-tools tests: fix bitfield tests for small fields
->   multipath-tools tests: fix bitfield tests for big endian
->   multipath-tools tests: fix small bitfield tests for big endian
-> 
->  tests/util.c | 146 ++++++++++++++++++++++++++++++++++++++++++-------
-> --
->  1 file changed, 120 insertions(+), 26 deletions(-)
+Hi Jens,
 
-@Ben: Gentle review reminder ...
+this series contains a bunch of different BDI cleanups.  The biggest item
+is to isolate block drivers from the BDI in preparation of changing the
+lifetime of the block device BDI in a follow up series.
 
-Cheers,
-Martin
+Changes since v4:
+ - add a back a prematurely removed assignment in dm-table.c
+ - pick up a few reviews from Johannes that got lost
+
+Changes since v3:
+ - rebased on the lasted block tree, which has some of the prep
+   changes merged
+ - extend the ->ra_pages changes to ->io_pages
+ - move initializing ->ra_pages and ->io_pages for block devices to
+   blk_register_queue
+
+Changes since v2:
+ - fix a rw_page return value check
+ - fix up various changelogs
+
+Changes since v1:
+ - rebased to the for-5.9/block-merge branch
+ - explicitly set the readahead to 0 for ubifs, vboxsf and mtd
+ - split the zram block_device operations
+ - let rw_page users fall back to bios in swap_readpage
+
+
+Diffstat:
+ block/blk-core.c              |    3 -
+ block/blk-integrity.c         |    4 +-
+ block/blk-mq-debugfs.c        |    1 
+ block/blk-settings.c          |    5 +-
+ block/blk-sysfs.c             |    4 +-
+ block/genhd.c                 |   13 +++++--
+ drivers/block/aoe/aoeblk.c    |    2 -
+ drivers/block/brd.c           |    1 
+ drivers/block/drbd/drbd_nl.c  |   18 ---------
+ drivers/block/drbd/drbd_req.c |    4 --
+ drivers/block/rbd.c           |    2 -
+ drivers/block/zram/zram_drv.c |   19 +++++++---
+ drivers/md/bcache/super.c     |    4 --
+ drivers/md/dm-table.c         |    9 +---
+ drivers/md/raid0.c            |   16 --------
+ drivers/md/raid10.c           |   46 ++++++++----------------
+ drivers/md/raid5.c            |   31 +++++++---------
+ drivers/mmc/core/queue.c      |    3 -
+ drivers/mtd/mtdcore.c         |    2 +
+ drivers/nvdimm/btt.c          |    2 -
+ drivers/nvdimm/pmem.c         |    1 
+ drivers/nvme/host/core.c      |    3 -
+ drivers/nvme/host/multipath.c |   10 +----
+ drivers/scsi/iscsi_tcp.c      |    4 +-
+ fs/9p/vfs_file.c              |    2 -
+ fs/9p/vfs_super.c             |    6 ++-
+ fs/afs/super.c                |    1 
+ fs/btrfs/disk-io.c            |    2 -
+ fs/fs-writeback.c             |    7 ++-
+ fs/fuse/inode.c               |    4 +-
+ fs/namei.c                    |    4 +-
+ fs/nfs/super.c                |    9 ----
+ fs/super.c                    |    2 +
+ fs/ubifs/super.c              |    2 +
+ fs/vboxsf/super.c             |    2 +
+ include/linux/backing-dev.h   |   78 +++++++-----------------------------------
+ include/linux/blkdev.h        |    3 +
+ include/linux/drbd.h          |    1 
+ include/linux/fs.h            |    2 -
+ mm/backing-dev.c              |   13 +++----
+ mm/filemap.c                  |    4 +-
+ mm/memcontrol.c               |    2 -
+ mm/memory-failure.c           |    2 -
+ mm/migrate.c                  |    2 -
+ mm/mmap.c                     |    2 -
+ mm/page-writeback.c           |   18 ++++-----
+ mm/page_io.c                  |   18 +++++----
+ mm/swapfile.c                 |    4 +-
+ 48 files changed, 144 insertions(+), 253 deletions(-)
