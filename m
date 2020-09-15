@@ -1,39 +1,71 @@
-From: Jani Nikula <jani.nikula@linux.intel.com>
-Subject: Re: [Intel-gfx] [trivial PATCH] treewide: Convert switch/case fallthrough; to break;
-Date: Tue, 15 Sep 2020 12:06:21 +0300
-Message-ID: <87d02nxvci.fsf@intel.com>
-References: <e6387578c75736d61b2fe70d9783d91329a97eb4.camel@perches.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <ceph-devel-owner@vger.kernel.org>
-In-Reply-To: <e6387578c75736d61b2fe70d9783d91329a97eb4.camel@perches.com>
-Sender: ceph-devel-owner@vger.kernel.org
-To: Joe Perches <joe@perches.com>, LKML <linux-kernel@vger.kernel.org>, Jiri Kosina <trivial@kernel.org>
-Cc: linux-wireless@vger.kernel.org, linux-fbdev@vger.kernel.org, oss-drivers@netronome.com, nouveau@lists.freedesktop.org, alsa-devel <alsa-devel@alsa-project.org>, dri-devel@lists.freedesktop.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, linux-mtd@lists.infradead.org, linux-i2c@vger.kernel.org, sparclinux@vger.kernel.org, kvmarm@lists.cs.columbia.edu, linux-rtc@vger.kernel.org, linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, dccp@vger.kernel.org, linux-rdma@vger.kernel.org, linux-atm-general@lists.sourceforge.net, linux-afs@lists.infradead.org, coreteam@netfilter.org, intel-wired-lan@lists.osuosl.org, linux-serial@vger.kernel.org, linux-input@vger.kernel.org, linux-mmc@vger.kernel.org, Kees Cook <kees.cook@canonical.com>, linux-media@vger.kernel.org, linux-pm@vg
+From: Huaisheng Ye <yehs2007@zoho.com>
+Subject: [PATCH] dm thin metadata: Remove unused local variable when create thin and snap
+Date: Tue, 15 Sep 2020 16:56:08 +0800
+Message-ID: <20200915085608.13776-1-yehs2007@zoho.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: snitzer@redhat.com, agk@redhat.com
+Cc: tyu1@lenovo.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Huaisheng Ye <yehs1@lenovo.com>
 List-Id: dm-devel.ids
 
-On Wed, 09 Sep 2020, Joe Perches <joe@perches.com> wrote:
-> diff --git a/drivers/gpu/drm/i915/display/intel_sprite.c b/drivers/gpu/drm/i915/display/intel_sprite.c
-> index 5ac0dbf0e03d..35ac539cc2b1 100644
-> --- a/drivers/gpu/drm/i915/display/intel_sprite.c
-> +++ b/drivers/gpu/drm/i915/display/intel_sprite.c
-> @@ -2861,7 +2861,7 @@ static bool gen12_plane_format_mod_supported(struct drm_plane *_plane,
->  	case I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS:
->  		if (!gen12_plane_supports_mc_ccs(dev_priv, plane->id))
->  			return false;
-> -		fallthrough;
-> +		break;
->  	case DRM_FORMAT_MOD_LINEAR:
->  	case I915_FORMAT_MOD_X_TILED:
->  	case I915_FORMAT_MOD_Y_TILED:
+From: Huaisheng Ye <yehs1@lenovo.com>
 
-Acked-by: Jani Nikula <jani.nikula@intel.com>
+The local variable disk details is not used during the creating of thin & snap
+devices. Remove them from dm-thin-metadata, and add pointer validity check for
+pointer value in btree_lookup_raw. Skip memory copy when the caller doesn't need
+the value.
 
-for merging via whichever tree seems best.
+Signed-off-by: Huaisheng Ye <yehs1@lenovo.com>
+---
+ drivers/md/dm-thin-metadata.c         | 6 ++----
+ drivers/md/persistent-data/dm-btree.c | 3 ++-
+ 2 files changed, 4 insertions(+), 5 deletions(-)
 
-BR,
-Jani.
-
-
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+index b461836..6ebb212 100644
+--- a/drivers/md/dm-thin-metadata.c
++++ b/drivers/md/dm-thin-metadata.c
+@@ -1051,12 +1051,11 @@ static int __create_thin(struct dm_pool_metadata *pmd,
+ 	int r;
+ 	dm_block_t dev_root;
+ 	uint64_t key = dev;
+-	struct disk_device_details details_le;
+ 	struct dm_thin_device *td;
+ 	__le64 value;
+ 
+ 	r = dm_btree_lookup(&pmd->details_info, pmd->details_root,
+-			    &key, &details_le);
++			    &key, NULL);
+ 	if (!r)
+ 		return -EEXIST;
+ 
+@@ -1129,12 +1128,11 @@ static int __create_snap(struct dm_pool_metadata *pmd,
+ 	dm_block_t origin_root;
+ 	uint64_t key = origin, dev_key = dev;
+ 	struct dm_thin_device *td;
+-	struct disk_device_details details_le;
+ 	__le64 value;
+ 
+ 	/* check this device is unused */
+ 	r = dm_btree_lookup(&pmd->details_info, pmd->details_root,
+-			    &dev_key, &details_le);
++			    &dev_key, NULL);
+ 	if (!r)
+ 		return -EEXIST;
+ 
+diff --git a/drivers/md/persistent-data/dm-btree.c b/drivers/md/persistent-data/dm-btree.c
+index 8aae062..ef6e78d 100644
+--- a/drivers/md/persistent-data/dm-btree.c
++++ b/drivers/md/persistent-data/dm-btree.c
+@@ -366,7 +366,8 @@ static int btree_lookup_raw(struct ro_spine *s, dm_block_t block, uint64_t key,
+ 	} while (!(flags & LEAF_NODE));
+ 
+ 	*result_key = le64_to_cpu(ro_node(s)->keys[i]);
+-	memcpy(v, value_ptr(ro_node(s), i), value_size);
++	if (v)
++		memcpy(v, value_ptr(ro_node(s), i), value_size);
+ 
+ 	return 0;
+ }
 -- 
-Jani Nikula, Intel Open Source Graphics Center
+1.8.3.1
