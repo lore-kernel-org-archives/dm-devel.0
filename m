@@ -1,123 +1,135 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: Revert "dm: always call blk_queue_split() in dm_process_bio()"
-Date: Mon, 14 Sep 2020 21:33:08 -0400
-Message-ID: <20200915013308.GA14877@redhat.com>
-References: <529c2394-1b58-b9d8-d462-1f3de1b78ac8@oracle.com>
- <20200910142438.GA21919@redhat.com>
- <5261af10-bf5c-f768-dbeb-2e784a5823f9@oracle.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH 1/3] block: fix blk_rq_get_max_sectors() to flow more
+ carefully
+Date: Tue, 15 Sep 2020 09:50:13 +0800
+Message-ID: <20200915015013.GA738570@T590>
+References: <20200911215338.44805-1-snitzer@redhat.com>
+ <20200911215338.44805-2-snitzer@redhat.com>
+ <20200912135252.GA210077@T590>
+ <20200914144928.GA14410@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <5261af10-bf5c-f768-dbeb-2e784a5823f9@oracle.com>
+In-Reply-To: <20200914144928.GA14410@redhat.com>
 Sender: linux-block-owner@vger.kernel.org
-To: Vijayendra Suman <vijayendra.suman@oracle.com>
-Cc: linux-block@vger.kernel.org, Somu Krishnasamy <somasundaram.krishnasamy@oracle.com>, dm-devel@redhat.com, RAMANAN_GOVINDARAJAN <ramanan.govindarajan@oracle.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Vijayendra Suman <vijayendra.suman@oracle.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Thu, Sep 10 2020 at  3:29pm -0400,
-Vijayendra Suman <vijayendra.suman@oracle.com> wrote:
-
-> Hello Mike,
+On Mon, Sep 14, 2020 at 10:49:28AM -0400, Mike Snitzer wrote:
+> On Sat, Sep 12 2020 at  9:52am -0400,
+> Ming Lei <ming.lei@redhat.com> wrote:
 > 
-> I checked with upstream, performance measurement is similar and
-> shows performance improvement when
-> 120c9257f5f19e5d1e87efcbb5531b7cd81b7d74 is reverted.
+> > On Fri, Sep 11, 2020 at 05:53:36PM -0400, Mike Snitzer wrote:
+> > > blk_queue_get_max_sectors() has been trained for REQ_OP_WRITE_SAME and
+> > > REQ_OP_WRITE_ZEROES yet blk_rq_get_max_sectors() didn't call it for
+> > > those operations.
+> > 
+> > Actually WRITE_SAME & WRITE_ZEROS are handled by the following if
+> > chunk_sectors is set:
+> > 
+> >         return min(blk_max_size_offset(q, offset),
+> >                         blk_queue_get_max_sectors(q, req_op(rq)));
 > 
-> On 9/10/2020 7:54 PM, Mike Snitzer wrote:
-> >[cc'ing dm-devel and linux-block because this is upstream concern too]
-> >
-> >On Wed, Sep 09 2020 at  1:00pm -0400,
-> >Vijayendra Suman <vijayendra.suman@oracle.com> wrote:
-> >
-> >>    Hello Mike,
-> >>
-> >>    While Running pgbench tool with  5.4.17 kernel build
-> >>
-> >>    Following performance degrade is found out
-> >>
-> >>    buffer read/write metric : -17.2%
-> >>    cache read/write metric : -18.7%
-> >>    disk read/write metric : -19%
-> >>
-> >>    buffer
-> >>    number of transactions actually processed: 840972
-> >>    latency average = 24.013 ms
-> >>    tps = 4664.153934 (including connections establishing)
-> >>    tps = 4664.421492 (excluding connections establishing)
-> >>
-> >>    cache
-> >>    number of transactions actually processed: 551345
-> >>    latency average = 36.949 ms
-> >>    tps = 3031.223905 (including connections establishing)
-> >>    tps = 3031.402581 (excluding connections establishing)
-> >>
-> >>    After revert of Commit
-> >>    2892100bc85ae446088cebe0c00ba9b194c0ac9d ( Revert "dm: always call
-> >>    blk_queue_split() in dm_process_bio()")
-> >
-> >I assume 2892100bc85ae446088cebe0c00ba9b194c0ac9d is 5.4-stable's
-> >backport of upstream commit 120c9257f5f19e5d1e87efcbb5531b7cd81b7d74 ?
->
-> Yes
->
-> >>    Performance is Counter measurement
-> >>
-> >>    buffer ->
-> >>    number of transactions actually processed: 1135735
-> >>    latency average = 17.799 ms
-> >>    tps = 6292.586749 (including connections establishing)
-> >>    tps = 6292.875089 (excluding connections establishing)
-> >>
-> >>    cache ->
-> >>    number of transactions actually processed: 648177
-> >>    latency average = 31.217 ms
-> >>    tps = 3587.755975 (including connections establishing)
-> >>    tps = 3587.966359 (excluding connections establishing)
-> >>
-> >>    Following is your commit
-> >>
-> >>    diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> >>    index cf71a2277d60..1e6e0c970e19 100644
-> >>    --- a/drivers/md/dm.c
-> >>    +++ b/drivers/md/dm.c
-> >>    @@ -1760,8 +1760,9 @@ static blk_qc_t dm_process_bio(struct mapped_device
-> >>    *md,
-> >>             * won't be imposed.
-> >>             */
-> >>            if (current->bio_list) {
-> >>    -               blk_queue_split(md->queue, &bio);
-> >>    -               if (!is_abnormal_io(bio))
-> >>    +               if (is_abnormal_io(bio))
-> >>    +                       blk_queue_split(md->queue, &bio);
-> >>    +               else
-> >>                            dm_queue_split(md, ti, &bio);
-> >>            }
-> >>
-> >>    Could you have a look if it is safe to revert this commit.
-> >No, it really isn't a good idea given what was documented in the commit
-> >header for commit 120c9257f5f19e5d1e87efcbb5531b7cd81b7d74 -- the
-> >excessive splitting is not conducive to performance either.
-> >
-> >So I think we need to identify _why_ reverting this commit is causing
-> >such a performance improvement.  Why is calling blk_queue_split() before
-> >dm_queue_split() benefiting your pgbench workload?
->
-> Let me know if you want to check some patch.
+> Yes, but blk_rq_get_max_sectors() is a bit of a mess structurally.  he
+> duality of imposing chunk_sectors and/or considering offset when
+> calculating the return is very confused.
+> 
+> > > Also, there is no need to avoid blk_max_size_offset() if
+> > > 'chunk_sectors' isn't set because it falls back to 'max_sectors'.
+> > > 
+> > > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > > ---
+> > >  include/linux/blkdev.h | 19 +++++++++++++------
+> > >  1 file changed, 13 insertions(+), 6 deletions(-)
+> > > 
+> > > diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> > > index bb5636cc17b9..453a3d735d66 100644
+> > > --- a/include/linux/blkdev.h
+> > > +++ b/include/linux/blkdev.h
+> > > @@ -1070,17 +1070,24 @@ static inline unsigned int blk_rq_get_max_sectors(struct request *rq,
+> > >  						  sector_t offset)
+> > >  {
+> > >  	struct request_queue *q = rq->q;
+> > > +	int op;
+> > > +	unsigned int max_sectors;
+> > >  
+> > >  	if (blk_rq_is_passthrough(rq))
+> > >  		return q->limits.max_hw_sectors;
+> > >  
+> > > -	if (!q->limits.chunk_sectors ||
+> > > -	    req_op(rq) == REQ_OP_DISCARD ||
+> > > -	    req_op(rq) == REQ_OP_SECURE_ERASE)
+> > > -		return blk_queue_get_max_sectors(q, req_op(rq));
+> > > +	op = req_op(rq);
+> > > +	max_sectors = blk_queue_get_max_sectors(q, op);
+> > >  
+> > > -	return min(blk_max_size_offset(q, offset),
+> > > -			blk_queue_get_max_sectors(q, req_op(rq)));
+> > > +	switch (op) {
+> > > +	case REQ_OP_DISCARD:
+> > > +	case REQ_OP_SECURE_ERASE:
+> > > +	case REQ_OP_WRITE_SAME:
+> > > +	case REQ_OP_WRITE_ZEROES:
+> > > +		return max_sectors;
+> > > +	}
+> > > +
+> > > +	return min(blk_max_size_offset(q, offset), max_sectors);
+> > >  }
+> > 
+> > It depends if offset & chunk_sectors limit for WRITE_SAME & WRITE_ZEROS
+> > needs to be considered.
+> 
+> Yes, I see that now.  But why don't they need to be considered for
+> REQ_OP_DISCARD and REQ_OP_SECURE_ERASE?
 
-Hi,
+This behavior is introduced int the following commit, and I guess it is
+because we support multi-range discard request, maybe Jens can explain more.
 
-Could you please test this branch?:
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-5.10
-(or apply at least the first 4 patches, commit 63f85d97be69^..b6a80963621fa)
+commit e548ca4ee4595f65b262661d166310ad8a149bec
+Author: Jens Axboe <axboe@fb.com>
+Date:   Fri May 29 13:11:32 2015 -0600
 
-So far I've done various DM regression testing.  But I haven't tested
-with pgbench or with the misaaligned IO scenario documented in the
-header for commit 120c9257f5f19e5d1e87efcbb5531b7cd81b7d74.  But I'll
-test that scenario tomorrow.
+    block: don't honor chunk sizes for data-less IO
 
-Any chance you could provide some hints on how you're running pgbench
-just so I can try to test/reproduce/verify locally?
+    We don't need to honor chunk sizes for IO that doesn't carry any
+    data.
+
+    Signed-off-by: Jens Axboe <axboe@fb.com>
+
+> Is it because the intent of the
+> block core is to offer late splitting of bios?
+
+block layer doesn't have late bio splitting, and bio is only splitted
+via __blk_queue_split() before allocating request.
+
+blk_rq_get_max_sectors() is only called by rq merge code, actually it
+should have been defined in block/blk.h instead of public header.
+
+> If so, then why impose
+> chunk_sectors so early?
+
+Not sure I understand your question. 'chunk_sectors' is firstly used
+during bio split(get_max_io_size() from blk_bio_segment_split()), 
+
+> 
+> Obviously this patch 1/3 should be dropped.  I didn't treat
+> chunk_sectors with proper priority.
+> 
+> But like I said above, blk_rq_get_max_sectors() vs blk_max_size_offset()
+> is not at all straight-forward.  And the code looks prone to imposing
+> limits that shouldn't be (or vice-versa).
+> 
+> Also, when falling back to max_sectors, why not consider offset to treat
+> max_sectors like a granularity?  Would allow for much more consistent IO
+> patterns.
+
+blk_rq_get_max_sectors() is called when one bio or rq can be merged to
+current request, and we have already considered all kinds of queue limits
+when doing bio splitting, so not necessary to consider it again here during
+merging rq.
+
 
 Thanks,
-Mike
+Ming
