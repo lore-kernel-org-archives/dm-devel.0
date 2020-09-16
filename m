@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 03/19] multipathd: send "STOPPING=1" to systemd
-	on shutdown
-Date: Wed, 16 Sep 2020 17:37:02 +0200
-Message-ID: <20200916153718.582-4-mwilck@suse.com>
+Subject: [PATCH 12/19] libmultipath: constify file argument in
+	config parser
+Date: Wed, 16 Sep 2020 17:37:11 +0200
+Message-ID: <20200916153718.582-13-mwilck@suse.com>
 References: <20200916153718.582-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,27 +24,94 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Inform systemd that the daemon is shutting down. See sd_notify(3).
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ libmultipath/config.c | 3 +--
+ libmultipath/config.h | 2 +-
+ libmultipath/parser.c | 9 +++++----
+ libmultipath/parser.h | 2 +-
+ 4 files changed, 8 insertions(+), 8 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index afc6c99..2923c08 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -208,7 +208,9 @@ static void do_sd_notify(enum daemon_status old_state,
- 	if (msg && !safe_sprintf(notify_msg, "STATUS=%s", msg))
- 		sd_notify(0, notify_msg);
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index b9bdbdb..2011a29 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -719,8 +719,7 @@ static void set_max_checkint_from_watchdog(struct config *conf)
+ }
+ #endif
  
--	if (new_state == DAEMON_IDLE && !startup_done) {
-+	if (new_state == DAEMON_SHUTDOWN)
-+		sd_notify(0, "STOPPING=1");
-+	else if (new_state == DAEMON_IDLE && !startup_done) {
- 		sd_notify(0, "READY=1");
- 		startup_done = true;
- 	}
+-struct config *
+-load_config (char * file)
++struct config *load_config(const char *file)
+ {
+ 	struct config *conf = alloc_config();
+ 
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 8e13ae9..116fe37 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -250,7 +250,7 @@ void free_mptable (vector mptable);
+ 
+ int store_hwe (vector hwtable, struct hwentry *);
+ 
+-struct config *load_config (char * file);
++struct config *load_config (const char *file);
+ struct config * alloc_config (void);
+ void free_config (struct config * conf);
+ extern struct config *get_multipath_config(void);
+diff --git a/libmultipath/parser.c b/libmultipath/parser.c
+index ed6d5d6..163ffbc 100644
+--- a/libmultipath/parser.c
++++ b/libmultipath/parser.c
+@@ -390,7 +390,7 @@ oom:
+ /* non-recursive configuration stream handler */
+ static int kw_level = 0;
+ 
+-int warn_on_duplicates(vector uniques, char *str, char *file)
++int warn_on_duplicates(vector uniques, char *str, const char *file)
+ {
+ 	char *tmp;
+ 	int i;
+@@ -434,7 +434,7 @@ is_sublevel_keyword(char *str)
+ }
+ 
+ int
+-validate_config_strvec(vector strvec, char *file)
++validate_config_strvec(vector strvec, const char *file)
+ {
+ 	char *str = NULL;
+ 	int i;
+@@ -499,7 +499,8 @@ validate_config_strvec(vector strvec, char *file)
+ }
+ 
+ static int
+-process_stream(struct config *conf, FILE *stream, vector keywords, char *file)
++process_stream(struct config *conf, FILE *stream, vector keywords,
++	       const char *file)
+ {
+ 	int i;
+ 	int r = 0, t;
+@@ -584,7 +585,7 @@ out:
+ 
+ /* Data initialization */
+ int
+-process_file(struct config *conf, char *file)
++process_file(struct config *conf, const char *file)
+ {
+ 	int r;
+ 	FILE *stream;
+diff --git a/libmultipath/parser.h b/libmultipath/parser.h
+index 62906e9..06666cc 100644
+--- a/libmultipath/parser.h
++++ b/libmultipath/parser.h
+@@ -77,7 +77,7 @@ extern void dump_keywords(vector keydump, int level);
+ extern void free_keywords(vector keywords);
+ extern vector alloc_strvec(char *string);
+ extern void *set_value(vector strvec);
+-extern int process_file(struct config *conf, char *conf_file);
++extern int process_file(struct config *conf, const char *conf_file);
+ extern struct keyword * find_keyword(vector keywords, vector v, char * name);
+ int snprint_keyword(char *buff, int len, char *fmt, struct keyword *kw,
+ 		    const void *data);
 -- 
 2.28.0
