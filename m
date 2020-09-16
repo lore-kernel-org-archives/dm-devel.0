@@ -1,15 +1,14 @@
-From: Martin Wilck <martin.wilck@suse.com>
-Subject: Re: [PATCH 3/3] libmultipath: add ignore_udev_uid option
-Date: Wed, 16 Sep 2020 14:46:18 +0000
-Message-ID: <6442fa8e24eaa44a5487d16de95a712ed9d76125.camel@suse.com>
-References: <1600206312-6497-1-git-send-email-bmarzins@redhat.com>
-	<1600206312-6497-4-git-send-email-bmarzins@redhat.com>
+From: mwilck@suse.com
+Subject: [PATCH 07/19] multipathd: set_config_state(): avoid code
+	duplication
+Date: Wed, 16 Sep 2020 17:37:06 +0200
+Message-ID: <20200916153718.582-8-mwilck@suse.com>
+References: <20200916153718.582-1-mwilck@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1600206312-6497-4-git-send-email-bmarzins@redhat.com>
-Content-ID: <D1BA8256342E544BAC169BF9D65630FC@eurprd04.prod.outlook.com>
+In-Reply-To: <20200916153718.582-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,41 +18,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Language: en-US
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
-Hi Ben,
+From: Martin Wilck <mwilck@suse.com>
 
-On Tue, 2020-09-15 at 16:45 -0500, Benjamin Marzinski wrote:
-> Setting this option to yes will force multipath to get the uid by
-> using
-> the fallback sysfs methods, instead of getting it from udev. This
-> will
-> cause devices that can't get their uid from the standard locations to
-> not get a uid. It will also disable uevent merging.
->=20
-> It will not stop uevents from being resent for device that failed to
-> get a WWID, although I'm on the fence about the benefit of this.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Use __post_config_state() and __wait_for_state_change(). This
+way __post_config_state() is the only place where running_state
+is ever changed, and we avoid code duplication.
 
-Can you explain how this differs from setting uid_attribute to the
-empty string (and leaving uid_attrs at the default, empty)?
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipathd/main.c | 23 +++++------------------
+ 1 file changed, 5 insertions(+), 18 deletions(-)
 
-The patch is alright, but the configuration of WWID determination is
-already sooo complicated... I'm not too happy about adding yet another
-option which complicates matters further. IMO we should rather attempt
-to make this easier for users (meaning less options, less combinations
-thereof, and less "x supersedes y but only if z is not set" kind of
-logic). This is not a nack, I just want to understand.
-
-Regards
-Martin
-
---
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 49809e0..a5c4031 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -292,27 +292,14 @@ int set_config_state(enum daemon_status state)
+ 	pthread_cleanup_push(config_cleanup, NULL);
+ 	pthread_mutex_lock(&config_lock);
+ 	if (running_state != state) {
+-#ifdef USE_SYSTEMD
+-		enum daemon_status old_state = running_state;
+-#endif
+ 
+ 		if (running_state == DAEMON_SHUTDOWN)
+ 			rc = EINVAL;
+-		else if (running_state != DAEMON_IDLE) {
+-			struct timespec ts;
+-
+-			get_monotonic_time(&ts);
+-			ts.tv_sec += 1;
+-			rc = pthread_cond_timedwait(&config_cond,
+-						    &config_lock, &ts);
+-		}
+-		if (!rc && (running_state != DAEMON_SHUTDOWN)) {
+-			running_state = state;
+-			pthread_cond_broadcast(&config_cond);
+-#ifdef USE_SYSTEMD
+-			do_sd_notify(old_state, state);
+-#endif
+-		}
++		else
++			rc = __wait_for_state_change(
++				running_state != DAEMON_IDLE, 1000);
++		if (!rc)
++			__post_config_state(state);
+ 	}
+ 	pthread_cleanup_pop(1);
+ 	return rc;
+-- 
+2.28.0
