@@ -1,12 +1,14 @@
 From: mwilck@suse.com
-Subject: [PATCH 00/19] multipath-tools: shutdown,
-	libdevmapper races, globals
-Date: Wed, 16 Sep 2020 17:36:59 +0200
-Message-ID: <20200916153718.582-1-mwilck@suse.com>
+Subject: [PATCH 15/19] multipath: use {get_put}_multipath_config
+	from libmultipath
+Date: Wed, 16 Sep 2020 17:37:14 +0200
+Message-ID: <20200916153718.582-16-mwilck@suse.com>
+References: <20200916153718.582-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200916153718.582-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,87 +19,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: lixiaokeng@huawei.com, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Hi Christophe, hi Ben,
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipath/main.c | 20 ++++----------------
+ 1 file changed, 4 insertions(+), 16 deletions(-)
 
-this series contains a number of patches I've wanted to do for some
-time. As usual, it's based on my "upstream-queue" tree
-(https://github.com/openSUSE/multipath-tools/tree/upstream-queue).
-
-Patch 1-8 are related to multipathd shutdown and systemd notifcation.
-Patch 1 and 8 have been part of my earlier series "multipath-tools: 
-Fix remaining shutdown delay issues" from Jan, 2019. But this is so
-long ago that I didn't mark this as a v2. I have tried to address
-Ben's issues with #1 (size_mismatch_seen leak, and premature sd_notify)
-(https://www.redhat.com/archives/dm-devel/2019-January/msg00097.html).
-#8 is just resent, after the recent discussion
-(https://www.redhat.com/archives/dm-devel/2020-August/msg00342.html).
-Ben's remark about sd_notify() drove me to reexamine that feature,
-and actually improve a little by informing systemd of shutdown and
-reconfigure operations.
-
-Patch 9-11 are an attempt to fix races in libdevmapper, as discussed
-a while ago in the "fix fd leak when iscsi device logs in" thread
-(https://www.redhat.com/archives/dm-devel/2020-July/msg00321.html and
-references).
-
-Patch 12ff. add definitions of the symbol get_multipath_config(),
-put_multipath_config(), udev, and logsink to libmultipath. This way
-callers won't have to bother with defining these global symbols any
-more in the future (but they still can).
-
-Regards,
-Martin
-
-Cc: lixiaokeng@huawei.com
-
-Martin Wilck (19):
-  multipathd: allow shutdown during configure()
-  multipathd: avoid sending "READY=1" to systemd on early shutdown
-  multipathd: send "STOPPING=1" to systemd on shutdown
-  multipathd: send "RELOADING=1" to systemd on DAEMON_CONFIGURE state
-  multipathd: use volatile qualifier for running_state
-  multipathd: generalize and fix wait_for_state_change_if()
-  multipathd: set_config_state(): avoid code duplication
-  multipathd: cancel threads early during shutdown
-  multipath-tools: don't call dm_lib_release() any more
-  libmultipath: devmapper: refactor libdm version determination
-  libmultipath: protect racy libdevmapper calls with a mutex
-  libmultipath: constify file argument in config parser
-  libmultipath: provide defaults for {get,put}_multipath_config
-  libmpathpersist: allow using libmultipath {get,put}_multipath_config
-  multipath: use {get_put}_multipath_config from libmultipath
-  mpathpersist: use {get,put}_multipath_config() from libmultipath
-  libmultipath: add udev and logsink symbols
-  multipath: remove logsink and udev
-  mpathpersist: remove logsink and udev
-
- kpartx/kpartx.c                 |   1 -
- libmpathpersist/mpath_persist.c |  43 +++++-
- libmpathpersist/mpath_persist.h |  28 ++++
- libmultipath/config.c           |  95 +++++++++++--
- libmultipath/config.h           |  28 +++-
- libmultipath/configure.c        |   6 +
- libmultipath/debug.c            |   2 +
- libmultipath/devmapper.c        | 228 +++++++++++++++++++++-----------
- libmultipath/devmapper.h        |  13 +-
- libmultipath/discovery.c        |   3 +
- libmultipath/parser.c           |   9 +-
- libmultipath/parser.h           |   2 +-
- libmultipath/propsel.c          |  10 +-
- libmultipath/util.c             |  10 ++
- libmultipath/util.h             |   2 +
- mpathpersist/main.c             |  26 +---
- multipath/main.c                |  28 +---
- multipathd/cli_handlers.c       |   2 -
- multipathd/dmevents.c           |   4 +-
- multipathd/main.c               | 117 ++++++++--------
- multipathd/waiter.c             |   2 +-
- 21 files changed, 441 insertions(+), 218 deletions(-)
-
+diff --git a/multipath/main.c b/multipath/main.c
+index 650977c..2f5ddd9 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -68,7 +68,6 @@
+ 
+ int logsink;
+ struct udev *udev;
+-struct config *multipath_conf;
+ 
+ /*
+  * Return values of configure(), check_path_valid(), and main().
+@@ -79,16 +78,6 @@ enum {
+ 	RTVL_RETRY, /* returned by configure(), not by main() */
+ };
+ 
+-struct config *get_multipath_config(void)
+-{
+-	return multipath_conf;
+-}
+-
+-void put_multipath_config(__attribute__((unused)) void *arg)
+-{
+-	/* Noop for now */
+-}
+-
+ static int
+ dump_config (struct config *conf, vector hwes, vector mpvec)
+ {
+@@ -826,10 +815,9 @@ main (int argc, char *argv[])
+ 
+ 	udev = udev_new();
+ 	logsink = 0;
+-	conf = load_config(DEFAULT_CONFIGFILE);
+-	if (!conf)
++	if (init_config(DEFAULT_CONFIGFILE))
+ 		exit(RTVL_FAIL);
+-	multipath_conf = conf;
++	conf = get_multipath_config();
+ 	conf->retrigger_tries = 0;
+ 	conf->force_sync = 1;
+ 	while ((arg = getopt(argc, argv, ":adDcChl::eFfM:v:p:b:BrR:itTquUwW")) != EOF ) {
+@@ -1081,8 +1069,8 @@ out_free_config:
+ 	 * the logging function (dm_write_log()), which is called there,
+ 	 * references the config.
+ 	 */
+-	free_config(conf);
+-	conf = NULL;
++	put_multipath_config(conf);
++	uninit_config();
+ 	udev_unref(udev);
+ 	if (dev)
+ 		FREE(dev);
 -- 
 2.28.0
