@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 07/19] multipathd: set_config_state(): avoid code
-	duplication
-Date: Wed, 16 Sep 2020 17:37:06 +0200
-Message-ID: <20200916153718.582-8-mwilck@suse.com>
+Subject: [PATCH 06/19] multipathd: generalize and fix
+	wait_for_state_change_if()
+Date: Wed, 16 Sep 2020 17:37:05 +0200
+Message-ID: <20200916153718.582-7-mwilck@suse.com>
 References: <20200916153718.582-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,51 +24,68 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Use __post_config_state() and __wait_for_state_change(). This
-way __post_config_state() is the only place where running_state
-is ever changed, and we avoid code duplication.
+It's unlikely but not impossible that other threads change the state
+while we're waiting, and if we grab the lock again, it's still not
+what we wanted. We need to continue waiting until either the condition
+is met, or time timeout expired.
+
+Moreover, generalize this code so that it can also be used in
+set_config_state().
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 23 +++++------------------
- 1 file changed, 5 insertions(+), 18 deletions(-)
+ multipathd/main.c | 25 ++++++++++++++++++-------
+ 1 file changed, 18 insertions(+), 7 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 49809e0..a5c4031 100644
+index 451d68c..49809e0 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -292,27 +292,14 @@ int set_config_state(enum daemon_status state)
- 	pthread_cleanup_push(config_cleanup, NULL);
- 	pthread_mutex_lock(&config_lock);
- 	if (running_state != state) {
--#ifdef USE_SYSTEMD
--		enum daemon_status old_state = running_state;
--#endif
+@@ -223,6 +223,23 @@ static void config_cleanup(__attribute__((unused)) void *arg)
+ 	pthread_mutex_unlock(&config_lock);
+ }
  
- 		if (running_state == DAEMON_SHUTDOWN)
- 			rc = EINVAL;
--		else if (running_state != DAEMON_IDLE) {
--			struct timespec ts;
--
--			get_monotonic_time(&ts);
--			ts.tv_sec += 1;
--			rc = pthread_cond_timedwait(&config_cond,
--						    &config_lock, &ts);
--		}
--		if (!rc && (running_state != DAEMON_SHUTDOWN)) {
--			running_state = state;
--			pthread_cond_broadcast(&config_cond);
--#ifdef USE_SYSTEMD
--			do_sd_notify(old_state, state);
--#endif
--		}
-+		else
-+			rc = __wait_for_state_change(
-+				running_state != DAEMON_IDLE, 1000);
-+		if (!rc)
-+			__post_config_state(state);
- 	}
++#define __wait_for_state_change(condition, ms)				\
++	({								\
++		struct timespec tmo;					\
++		int rc = 0;						\
++									\
++		if (condition) {					\
++			get_monotonic_time(&tmo);			\
++			tmo.tv_nsec += (ms) * 1000 * 1000;		\
++			normalize_timespec(&tmo);			\
++			do						\
++				rc = pthread_cond_timedwait(		\
++					&config_cond, &config_lock, &tmo); \
++			while (rc == 0 && (condition));			\
++		}							\
++		rc;							\
++	})
++
+ /*
+  * If the current status is @oldstate, wait for at most @ms milliseconds
+  * for the state to change, and return the new state, which may still be
+@@ -232,20 +249,14 @@ enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
+ 					    unsigned long ms)
+ {
+ 	enum daemon_status st;
+-	struct timespec tmo;
+ 
+ 	if (oldstate == DAEMON_SHUTDOWN)
+ 		return DAEMON_SHUTDOWN;
+ 
+ 	pthread_mutex_lock(&config_lock);
+ 	pthread_cleanup_push(config_cleanup, NULL);
++	__wait_for_state_change(running_state == oldstate, ms);
+ 	st = running_state;
+-	if (st == oldstate && clock_gettime(CLOCK_MONOTONIC, &tmo) == 0) {
+-		tmo.tv_nsec += ms * 1000 * 1000;
+-		normalize_timespec(&tmo);
+-		(void)pthread_cond_timedwait(&config_cond, &config_lock, &tmo);
+-		st = running_state;
+-	}
  	pthread_cleanup_pop(1);
- 	return rc;
+ 	return st;
+ }
 -- 
 2.28.0
