@@ -1,30 +1,148 @@
-From: Miquel Raynal <miquel.raynal-LDxbnhwyfcJBDgjK7y7TUQ@public.gmane.org>
-Subject: Re: [trivial PATCH] treewide: Convert switch/case
- fallthrough; to break;
-Date: Tue, 15 Sep 2020 11:19:25 +0200
-Message-ID: <20200915111925.475dd3f1__13497.8506526508$1600222971$gmane$org@xps13>
-References: <e6387578c75736d61b2fe70d9783d91329a97eb4.camel@perches.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2 4/4] dm: unconditionally call blk_queue_split() in
+ dm_process_bio()
+Date: Tue, 15 Sep 2020 23:39:46 -0400
+Message-ID: <20200916033946.GB23236@redhat.com>
+References: <20200915172357.83215-1-snitzer@redhat.com>
+ <20200915172357.83215-5-snitzer@redhat.com>
+ <20200916010817.GB791425@T590>
+ <20200916012813.GA23236@redhat.com>
+ <20200916014802.GC791425@T590>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <nouveau-bounces-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>
-In-Reply-To: <e6387578c75736d61b2fe70d9783d91329a97eb4.camel-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
-List-Unsubscribe: <https://lists.freedesktop.org/mailman/options/nouveau>,
- <mailto:nouveau-request-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org?subject=unsubscribe>
-List-Archive: <https://lists.freedesktop.org/archives/nouveau>
-List-Post: <mailto:nouveau-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>
-List-Help: <mailto:nouveau-request-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.freedesktop.org/mailman/listinfo/nouveau>,
- <mailto:nouveau-request-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org?subject=subscribe>
-Errors-To: nouveau-bounces-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org
-Sender: "Nouveau" <nouveau-bounces-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org>
-To: Joe Perches <joe-6d6DIl74uiNBDgjK7y7TUQ@public.gmane.org>
-Cc: linux-fbdev-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oss-drivers-wFxRvT7yatFl57MIdRCFDg@public.gmane.org, nouveau-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, alsa-devel <alsa-devel-K7yf7f+aM1XWsZ/bQMPhNw@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mips-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-ide-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, sparclinux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-afs-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-rtc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-s390-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-scsi-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, dccp-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-rdma-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-atm-general-5NWGOfrQmneRv+LV9MX5uipxlwaOVQ5f@public.gmane.org, iommu-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, kvmarm-FPEHb7Xf0XXUo1n7N8X6UoWGPAHP3yOg@public.gmane.org, coreteam-Cap9r6Oaw4JrovVCs/uTlw@public.gmane.org, intel-wired-lan-qjLDD68F18P21nG7glBr7A@public.gmane.org, linux-serial-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-input-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mmc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Kees Cook <kees.cook-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>, linux-media-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-pm-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, intel-gfx-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, linux-mediatek@lists.
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200916014802.GC791425@T590>
+Sender: linux-block-owner@vger.kernel.org
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Vijayendra Suman <vijayendra.suman@oracle.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-SGkgSm9lLAoKRm9yIE1URDoKCj4gIGRyaXZlcnMvbXRkL25hbmQvcmF3L25hbmRzaW0uYyAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICB8ICAyICstCgpSZXZpZXdlZC1ieTogTWlxdWVsIFJheW5h
-bCA8bWlxdWVsLnJheW5hbEBib290bGluLmNvbT4KCgpUaGFua3MsCk1pcXXDqGwKX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KTm91dmVhdSBtYWlsaW5nIGxp
-c3QKTm91dmVhdUBsaXN0cy5mcmVlZGVza3RvcC5vcmcKaHR0cHM6Ly9saXN0cy5mcmVlZGVza3Rv
-cC5vcmcvbWFpbG1hbi9saXN0aW5mby9ub3V2ZWF1Cg==
+On Tue, Sep 15 2020 at  9:48pm -0400,
+Ming Lei <ming.lei@redhat.com> wrote:
+
+> On Tue, Sep 15, 2020 at 09:28:14PM -0400, Mike Snitzer wrote:
+> > On Tue, Sep 15 2020 at  9:08pm -0400,
+> > Ming Lei <ming.lei@redhat.com> wrote:
+> > 
+> > > On Tue, Sep 15, 2020 at 01:23:57PM -0400, Mike Snitzer wrote:
+> > > > blk_queue_split() has become compulsory from .submit_bio -- regardless
+> > > > of whether it is recursing.  Update DM core to always call
+> > > > blk_queue_split().
+> > > > 
+> > > > dm_queue_split() is removed because __split_and_process_bio() handles
+> > > > splitting as needed.
+> > > > 
+> > > > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> > > > ---
+> > > >  drivers/md/dm.c | 45 +--------------------------------------------
+> > > >  1 file changed, 1 insertion(+), 44 deletions(-)
+> > > > 
+> > > > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> > > > index fb0255d25e4b..0bae9f26dc8e 100644
+> > > > --- a/drivers/md/dm.c
+> > > > +++ b/drivers/md/dm.c
+> > > > @@ -1530,22 +1530,6 @@ static int __send_write_zeroes(struct clone_info *ci, struct dm_target *ti)
+> > > >  	return __send_changing_extent_only(ci, ti, get_num_write_zeroes_bios(ti));
+> > > >  }
+> > > >  
+> > > > -static bool is_abnormal_io(struct bio *bio)
+> > > > -{
+> > > > -	bool r = false;
+> > > > -
+> > > > -	switch (bio_op(bio)) {
+> > > > -	case REQ_OP_DISCARD:
+> > > > -	case REQ_OP_SECURE_ERASE:
+> > > > -	case REQ_OP_WRITE_SAME:
+> > > > -	case REQ_OP_WRITE_ZEROES:
+> > > > -		r = true;
+> > > > -		break;
+> > > > -	}
+> > > > -
+> > > > -	return r;
+> > > > -}
+> > > > -
+> > > >  static bool __process_abnormal_io(struct clone_info *ci, struct dm_target *ti,
+> > > >  				  int *result)
+> > > >  {
+> > > > @@ -1723,23 +1707,6 @@ static blk_qc_t __process_bio(struct mapped_device *md, struct dm_table *map,
+> > > >  	return ret;
+> > > >  }
+> > > >  
+> > > > -static void dm_queue_split(struct mapped_device *md, struct dm_target *ti, struct bio **bio)
+> > > > -{
+> > > > -	unsigned len, sector_count;
+> > > > -
+> > > > -	sector_count = bio_sectors(*bio);
+> > > > -	len = min_t(sector_t, max_io_len((*bio)->bi_iter.bi_sector, ti), sector_count);
+> > > > -
+> > > > -	if (sector_count > len) {
+> > > > -		struct bio *split = bio_split(*bio, len, GFP_NOIO, &md->queue->bio_split);
+> > > > -
+> > > > -		bio_chain(split, *bio);
+> > > > -		trace_block_split(md->queue, split, (*bio)->bi_iter.bi_sector);
+> > > > -		submit_bio_noacct(*bio);
+> > > > -		*bio = split;
+> > > > -	}
+> > > > -}
+> > > > -
+> > > >  static blk_qc_t dm_process_bio(struct mapped_device *md,
+> > > >  			       struct dm_table *map, struct bio *bio)
+> > > >  {
+> > > > @@ -1759,17 +1726,7 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
+> > > >  		}
+> > > >  	}
+> > > >  
+> > > > -	/*
+> > > > -	 * If in ->queue_bio we need to use blk_queue_split(), otherwise
+> > > > -	 * queue_limits for abnormal requests (e.g. discard, writesame, etc)
+> > > > -	 * won't be imposed.
+> > > > -	 */
+> > > > -	if (current->bio_list) {
+> > > > -		if (is_abnormal_io(bio))
+> > > > -			blk_queue_split(&bio);
+> > > > -		else
+> > > > -			dm_queue_split(md, ti, &bio);
+> > > > -	}
+> > > > +	blk_queue_split(&bio);
+> > > 
+> > > In max_io_len(), target boundary is taken into account when figuring out
+> > > the max io len. However, this info won't be used any more after
+> > > switching to blk_queue_split(). Is that one potential problem?
+> > 
+> > Thanks for your review.  But no, as the patch header says:
+> > "dm_queue_split() is removed because __split_and_process_bio() handles
+> > splitting as needed."
+> > 
+> > (__split_and_process_non_flush calls max_io_len, as does
+> > __process_abnormal_io by calling __send_changing_extent_only)
+> > 
+> > SO the blk_queue_split() bio will be further split if needed (due to
+> > DM target boundary, etc).
+> 
+> Thanks for your explanation.
+> 
+> Then looks there is double split issue since both blk_queue_split()
+> and __split_and_process_non_flush() may split bio from same bioset(md->queue->bio_split),
+> and this way may cause deadlock, see comment of bio_alloc_bioset(), especially
+> the paragraph of 'callers must never allocate more than 1 bio at a time
+> from this pool.'
+
+Next sentence is:
+"Callers that need to allocate more than 1 bio must always submit the
+previously allocated bio for IO before attempting to allocate a new
+one."
+
+__split_and_process_non_flush -> __map_bio -> submit_bio_noacct
+bio_split
+submit_bio_noacct
+
+With commit 18a25da84354c, NeilBrown wrote the __split_and_process_bio()
+with an eye toward depth-first submission to avoid this deadlock you're
+concerned about.  That commit header speaks to it directly.
+
+I did go on to change Neil's code a bit with commit f21c601a2bb31 -- but
+I _think_ the current code is still OK relative to bio_split mempool
+use.
+
+Mike
