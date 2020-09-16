@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 02/19] multipathd: avoid sending "READY=1" to
-	systemd on early shutdown
-Date: Wed, 16 Sep 2020 17:37:01 +0200
-Message-ID: <20200916153718.582-3-mwilck@suse.com>
+Subject: [PATCH 14/19] libmpathpersist: allow using libmultipath
+	{get, put}_multipath_config
+Date: Wed, 16 Sep 2020 17:37:13 +0200
+Message-ID: <20200916153718.582-15-mwilck@suse.com>
 References: <20200916153718.582-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,62 +24,135 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-If multipathd gets a shutdown request during initial reconfigure(),
-it shouldn't send "READY=1" to systemd. Ensure this by sending
-"READY=1" via post_config_state().
+Provide an alternative init function libmpathpersist_init() which
+avoids allocating a new struct config, simply using libmultipath's
+internal implementation.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 16 +++++++---------
- 1 file changed, 7 insertions(+), 9 deletions(-)
+ libmpathpersist/mpath_persist.c | 42 ++++++++++++++++++++++++++++-----
+ libmpathpersist/mpath_persist.h | 28 ++++++++++++++++++++++
+ 2 files changed, 64 insertions(+), 6 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d5e90b2..afc6c99 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -189,6 +189,8 @@ static void do_sd_notify(enum daemon_status old_state,
- {
- 	char notify_msg[MSG_SIZE];
- 	const char *msg;
-+	static bool startup_done = false;
-+
- 	/*
- 	 * Checkerloop switches back and forth between idle and running state.
- 	 * No need to tell systemd each time.
-@@ -205,6 +207,11 @@ static void do_sd_notify(enum daemon_status old_state,
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 729a8e4..fd113cc 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -37,6 +37,27 @@
  
- 	if (msg && !safe_sprintf(notify_msg, "STATUS=%s", msg))
- 		sd_notify(0, notify_msg);
+ extern struct udev *udev;
+ 
++static void adapt_config(struct config *conf)
++{
++	conf->force_sync = 1;
++	set_max_fds(conf->max_fds);
++}
 +
-+	if (new_state == DAEMON_IDLE && !startup_done) {
-+		sd_notify(0, "READY=1");
-+		startup_done = true;
++int libmpathpersist_init(void)
++{
++	struct config *conf;
++	int rc = 0;
++
++	if (init_config(DEFAULT_CONFIGFILE)) {
++		condlog(0, "Failed to initialize multipath config.");
++		return 1;
 +	}
- }
- #endif
- 
-@@ -2913,9 +2920,6 @@ child (__attribute__((unused)) void *param)
- 	struct vectors * vecs;
- 	struct multipath * mpp;
- 	int i;
--#ifdef USE_SYSTEMD
--	int startup_done = 0;
--#endif
- 	int rc;
- 	int pid_fd = -1;
- 	struct config *conf;
-@@ -3075,12 +3079,6 @@ child (__attribute__((unused)) void *param)
- 			}
- 			lock_cleanup_pop(vecs->lock);
- 			post_config_state(DAEMON_IDLE);
--#ifdef USE_SYSTEMD
--			if (!startup_done) {
--				sd_notify(0, "READY=1");
--				startup_done = 1;
--			}
--#endif
- 		}
++	conf = libmp_get_multipath_config();
++	adapt_config(conf);
++	libmp_put_multipath_config(conf);
++	return rc;
++}
++
+ struct config *
+ mpath_lib_init (void)
+ {
+@@ -47,20 +68,29 @@ mpath_lib_init (void)
+ 		condlog(0, "Failed to initialize multipath config.");
+ 		return NULL;
  	}
+-	conf->force_sync = 1;
+-	set_max_fds(conf->max_fds);
+-
++	adapt_config(conf);
+ 	return conf;
+ }
  
+-int
+-mpath_lib_exit (struct config *conf)
++static void libmpathpersist_cleanup(void)
+ {
+ 	dm_lib_exit();
+ 	cleanup_prio();
+ 	cleanup_checkers();
++}
++
++int
++mpath_lib_exit (struct config *conf)
++{
++	libmpathpersist_cleanup();
+ 	free_config(conf);
+-	conf = NULL;
++	return 0;
++}
++
++int libmpathpersist_exit(void)
++{
++	libmpathpersist_cleanup();
++	uninit_config();
+ 	return 0;
+ }
+ 
+diff --git a/libmpathpersist/mpath_persist.h b/libmpathpersist/mpath_persist.h
+index 7cf4faf..91606ef 100644
+--- a/libmpathpersist/mpath_persist.h
++++ b/libmpathpersist/mpath_persist.h
+@@ -175,6 +175,22 @@ struct prout_param_descriptor {		/* PROUT parameter descriptor */
+  * DESCRIPTION :
+  *	Initialize device mapper multipath configuration. This function must be invoked first
+  *	before performing reservation management functions.
++ *	Either this function or mpath_lib_init() may be used.
++ *	Use this function to work with libmultipath's internal "struct config".
++ *	Call libmpathpersist_exit() for cleanup.
++ * RESTRICTIONS:
++ *
++ * RETURNS: 0->Success, 1->Failed.
++ */
++extern int libmpathpersist_init (void);
++
++/*
++ * DESCRIPTION :
++ *	Initialize device mapper multipath configuration. This function must be invoked first
++ *	before performing reservation management functions.
++ *	Either this function or libmpathpersist_init() may be used.
++ *	Use this function to work with an application-specific "struct config".
++ *	Call mpath_lib_exit() for cleanup.
+  * RESTRICTIONS:
+  *
+  * RETURNS: struct config ->Success, NULL->Failed.
+@@ -186,12 +202,24 @@ extern struct config * mpath_lib_init (void);
+  * DESCRIPTION :
+  *	Release device mapper multipath configuration. This function must be invoked after
+  *	performing reservation management functions.
++ *	Use this after initialization with mpath_lib_init().
+  * RESTRICTIONS:
+  *
+  * RETURNS: 0->Success, 1->Failed.
+  */
+ extern int mpath_lib_exit (struct config *conf);
+ 
++/*
++ * DESCRIPTION :
++ *	Release device mapper multipath configuration. This function must be invoked after
++ *	performing reservation management functions.
++ *	Use this after initialization with libmpathpersist_init().
++ * RESTRICTIONS:
++ *
++ * RETURNS: 0->Success, 1->Failed.
++ */
++extern int libmpathpersist_exit (void);
++
+ 
+ /*
+  * DESCRIPTION :
 -- 
 2.28.0
