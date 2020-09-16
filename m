@@ -1,7 +1,7 @@
 From: mwilck@suse.com
-Subject: [PATCH 17/19] libmultipath: add udev and logsink symbols
-Date: Wed, 16 Sep 2020 17:37:16 +0200
-Message-ID: <20200916153718.582-18-mwilck@suse.com>
+Subject: [PATCH 19/19] mpathpersist: remove logsink and udev
+Date: Wed, 16 Sep 2020 17:37:18 +0200
+Message-ID: <20200916153718.582-20-mwilck@suse.com>
 References: <20200916153718.582-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,86 +23,51 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-With these symbols added, applications using libmultipath don't
-need to define global variables "udev" and "logsink" any more.
-This comes at the cost of having to call an init function.
-Currently, libmultipath_init() does nothing but initialize
-"udev".
-
-The linker's symbol lookup order still allows applications to use
-their own "logsink" and "udev" variables, which will take precendence
-over libmultipath's internal ones. In this case, calling
-libmultipath_init() can be skipped, but like before,
-udev should be initialized (using udev_new()) before making any
-libmultipath calls.
+We can use libmultipath's internal symbols now.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c | 22 ++++++++++++++++++++++
- libmultipath/config.h |  4 +++-
- libmultipath/debug.c  |  2 ++
- 3 files changed, 27 insertions(+), 1 deletion(-)
+ mpathpersist/main.c | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index b83e5cd..4b48b27 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -27,6 +27,28 @@
- #include "mpath_cmd.h"
- #include "propsel.h"
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index 0f0db4b..729857f 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -42,13 +42,10 @@ void * mpath_alloc_prin_response(int prin_sa);
+ void mpath_print_transport_id(struct prin_fulldescr *fdesc);
+ int construct_transportid(const char * inp, struct transportid transid[], int num_transportids);
  
-+static pthread_once_t _udev_once = PTHREAD_ONCE_INIT;
-+struct udev *udev;
-+
-+void _udev_init(void)
-+{
-+	udev = udev_new();
-+	if (!udev)
-+		condlog(0, "%s: failed to initialize udev", __func__);
-+}
-+
-+int libmultipath_init(void)
-+{
-+	if (!udev)
-+		pthread_once(&_udev_once, _udev_init);
-+	return udev ? 0 : 1;
-+}
-+
-+void libmultipath_exit(void)
-+{
-+	udev_unref(udev);
-+}
-+
- static struct config __internal_config;
- struct config *libmp_get_multipath_config(void)
- {
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 5997b71..541b2e4 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -232,7 +232,9 @@ struct config {
- 	char *enable_foreign;
- };
+-int logsink;
+-
+ void rcu_register_thread_memb(void) {}
  
--extern struct udev * udev;
-+extern struct udev *udev;
-+int libmultipath_init(void);
-+void libmultipath_exit(void);
+ void rcu_unregister_thread_memb(void) {}
  
- int find_hwe (const struct _vector *hwtable,
- 	      const char * vendor, const char * product, const char *revision,
-diff --git a/libmultipath/debug.c b/libmultipath/debug.c
-index 4128cb9..b3a1de9 100644
---- a/libmultipath/debug.c
-+++ b/libmultipath/debug.c
-@@ -15,6 +15,8 @@
- #include "defaults.h"
- #include "debug.h"
+-struct udev *udev;
  
-+int logsink;
-+
- void dlog (int sink, int prio, const char * fmt, ...)
- {
- 	va_list ap;
+ static int verbose, loglevel, noisy;
+ 
+@@ -608,16 +605,17 @@ int main(int argc, char *argv[])
+ 		exit (1);
+ 	}
+ 
+-	udev = udev_new();
++	if (libmultipath_init())
++		exit(1);
+ 	if (libmpathpersist_init()) {
+-		udev_unref(udev);
++		libmultipath_exit();
+ 		exit(1);
+ 	}
+ 
+ 	ret = handle_args(argc, argv, 0);
+ 
+ 	libmpathpersist_exit();
+-	udev_unref(udev);
++	libmultipath_exit();
+ 
+ 	return (ret >= 0) ? ret : MPATH_PR_OTHER;
+ }
 -- 
 2.28.0
