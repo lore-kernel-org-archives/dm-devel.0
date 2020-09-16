@@ -1,161 +1,27 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH v2 4/4] dm: unconditionally call blk_queue_split() in
- dm_process_bio()
-Date: Wed, 16 Sep 2020 15:51:02 +0800
-Message-ID: <20200916075102.GD791425@T590>
-References: <20200915172357.83215-1-snitzer@redhat.com>
- <20200915172357.83215-5-snitzer@redhat.com>
- <20200916010817.GB791425@T590>
- <20200916012813.GA23236@redhat.com>
- <20200916014802.GC791425@T590>
- <20200916033946.GB23236@redhat.com>
+From: David Sterba <dsterba-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH 07/12] bdi: remove BDI_CAP_CGROUP_WRITEBACK
+Date: Wed, 16 Sep 2020 11:28:09 +0200
+Message-ID: <20200916092809.GJ1791@twin.jikos.cz>
+References: <20200910144833.742260-1-hch@lst.de>
+ <20200910144833.742260-8-hch@lst.de>
+Reply-To: dsterba-AlSwsSmVLrQ@public.gmane.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
 Content-Disposition: inline
-In-Reply-To: <20200916033946.GB23236@redhat.com>
-Sender: linux-block-owner@vger.kernel.org
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Vijayendra Suman <vijayendra.suman@oracle.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
+In-Reply-To: <20200910144833.742260-8-hch-jcswGhMUV9g@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-/sHSiTBGKwq//tTphpj/8g@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Johannes Thumshirn <johannes.thumshirn-Sjgp3cTcYWE@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Tue, Sep 15, 2020 at 11:39:46PM -0400, Mike Snitzer wrote:
-> On Tue, Sep 15 2020 at  9:48pm -0400,
-> Ming Lei <ming.lei@redhat.com> wrote:
+On Thu, Sep 10, 2020 at 04:48:27PM +0200, Christoph Hellwig wrote:
+> Just checking SB_I_CGROUPWB for cgroup writeback support is enough.
+> Either the file system allocates its own bdi (e.g. btrfs), in which case
+> it is known to support cgroup writeback, or the bdi comes from the block
+> layer, which always supports cgroup writeback.
 > 
-> > On Tue, Sep 15, 2020 at 09:28:14PM -0400, Mike Snitzer wrote:
-> > > On Tue, Sep 15 2020 at  9:08pm -0400,
-> > > Ming Lei <ming.lei@redhat.com> wrote:
-> > > 
-> > > > On Tue, Sep 15, 2020 at 01:23:57PM -0400, Mike Snitzer wrote:
-> > > > > blk_queue_split() has become compulsory from .submit_bio -- regardless
-> > > > > of whether it is recursing.  Update DM core to always call
-> > > > > blk_queue_split().
-> > > > > 
-> > > > > dm_queue_split() is removed because __split_and_process_bio() handles
-> > > > > splitting as needed.
-> > > > > 
-> > > > > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> > > > > ---
-> > > > >  drivers/md/dm.c | 45 +--------------------------------------------
-> > > > >  1 file changed, 1 insertion(+), 44 deletions(-)
-> > > > > 
-> > > > > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > > > > index fb0255d25e4b..0bae9f26dc8e 100644
-> > > > > --- a/drivers/md/dm.c
-> > > > > +++ b/drivers/md/dm.c
-> > > > > @@ -1530,22 +1530,6 @@ static int __send_write_zeroes(struct clone_info *ci, struct dm_target *ti)
-> > > > >  	return __send_changing_extent_only(ci, ti, get_num_write_zeroes_bios(ti));
-> > > > >  }
-> > > > >  
-> > > > > -static bool is_abnormal_io(struct bio *bio)
-> > > > > -{
-> > > > > -	bool r = false;
-> > > > > -
-> > > > > -	switch (bio_op(bio)) {
-> > > > > -	case REQ_OP_DISCARD:
-> > > > > -	case REQ_OP_SECURE_ERASE:
-> > > > > -	case REQ_OP_WRITE_SAME:
-> > > > > -	case REQ_OP_WRITE_ZEROES:
-> > > > > -		r = true;
-> > > > > -		break;
-> > > > > -	}
-> > > > > -
-> > > > > -	return r;
-> > > > > -}
-> > > > > -
-> > > > >  static bool __process_abnormal_io(struct clone_info *ci, struct dm_target *ti,
-> > > > >  				  int *result)
-> > > > >  {
-> > > > > @@ -1723,23 +1707,6 @@ static blk_qc_t __process_bio(struct mapped_device *md, struct dm_table *map,
-> > > > >  	return ret;
-> > > > >  }
-> > > > >  
-> > > > > -static void dm_queue_split(struct mapped_device *md, struct dm_target *ti, struct bio **bio)
-> > > > > -{
-> > > > > -	unsigned len, sector_count;
-> > > > > -
-> > > > > -	sector_count = bio_sectors(*bio);
-> > > > > -	len = min_t(sector_t, max_io_len((*bio)->bi_iter.bi_sector, ti), sector_count);
-> > > > > -
-> > > > > -	if (sector_count > len) {
-> > > > > -		struct bio *split = bio_split(*bio, len, GFP_NOIO, &md->queue->bio_split);
-> > > > > -
-> > > > > -		bio_chain(split, *bio);
-> > > > > -		trace_block_split(md->queue, split, (*bio)->bi_iter.bi_sector);
-> > > > > -		submit_bio_noacct(*bio);
-> > > > > -		*bio = split;
-> > > > > -	}
-> > > > > -}
-> > > > > -
-> > > > >  static blk_qc_t dm_process_bio(struct mapped_device *md,
-> > > > >  			       struct dm_table *map, struct bio *bio)
-> > > > >  {
-> > > > > @@ -1759,17 +1726,7 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
-> > > > >  		}
-> > > > >  	}
-> > > > >  
-> > > > > -	/*
-> > > > > -	 * If in ->queue_bio we need to use blk_queue_split(), otherwise
-> > > > > -	 * queue_limits for abnormal requests (e.g. discard, writesame, etc)
-> > > > > -	 * won't be imposed.
-> > > > > -	 */
-> > > > > -	if (current->bio_list) {
-> > > > > -		if (is_abnormal_io(bio))
-> > > > > -			blk_queue_split(&bio);
-> > > > > -		else
-> > > > > -			dm_queue_split(md, ti, &bio);
-> > > > > -	}
-> > > > > +	blk_queue_split(&bio);
-> > > > 
-> > > > In max_io_len(), target boundary is taken into account when figuring out
-> > > > the max io len. However, this info won't be used any more after
-> > > > switching to blk_queue_split(). Is that one potential problem?
-> > > 
-> > > Thanks for your review.  But no, as the patch header says:
-> > > "dm_queue_split() is removed because __split_and_process_bio() handles
-> > > splitting as needed."
-> > > 
-> > > (__split_and_process_non_flush calls max_io_len, as does
-> > > __process_abnormal_io by calling __send_changing_extent_only)
-> > > 
-> > > SO the blk_queue_split() bio will be further split if needed (due to
-> > > DM target boundary, etc).
-> > 
-> > Thanks for your explanation.
-> > 
-> > Then looks there is double split issue since both blk_queue_split()
-> > and __split_and_process_non_flush() may split bio from same bioset(md->queue->bio_split),
-> > and this way may cause deadlock, see comment of bio_alloc_bioset(), especially
-> > the paragraph of 'callers must never allocate more than 1 bio at a time
-> > from this pool.'
-> 
-> Next sentence is:
-> "Callers that need to allocate more than 1 bio must always submit the
-> previously allocated bio for IO before attempting to allocate a new
-> one."
+> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+> Reviewed-by: Johannes Thumshirn <johannes.thumshirn-Sjgp3cTcYWE@public.gmane.org>
 
-Yeah, I know that. This sentence actually means that the previous
-submission should make forward progress, then the bio may be completed &
-freed, so that new allocation can move on.
-
-However, in this situation, __split_and_process_non_flush() doesn't
-provide such forward progress, see below.
-
-> 
-> __split_and_process_non_flush -> __map_bio -> submit_bio_noacct
-> bio_split
-> submit_bio_noacct
-
-Yeah, the above submission is done on clone bio & underlying queue. What
-matters is if the submission can make forward progress. After
-__split_and_process_non_flush() returns, the splitted 'bio'(original bio)
-can't be done by previous submission because this bio won't be freed until
-dec_pending() from __split_and_process_bio() returns.
-
-So when ci.sector_count doesn't become zero, bio_split() is called again from
-the same bio_set for allocating new bio, the allocation may never be made because
-the original bio allocated from the same bio_set can't be freed during bio_split().
-
-Thanks, 
-Ming
+Acked-by: David Sterba <dsterba-IBi9RG/b67k@public.gmane.org>
