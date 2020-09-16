@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 06/19] multipathd: generalize and fix
-	wait_for_state_change_if()
-Date: Wed, 16 Sep 2020 17:37:05 +0200
-Message-ID: <20200916153718.582-7-mwilck@suse.com>
+Subject: [PATCH 02/19] multipathd: avoid sending "READY=1" to
+	systemd on early shutdown
+Date: Wed, 16 Sep 2020 17:37:01 +0200
+Message-ID: <20200916153718.582-3-mwilck@suse.com>
 References: <20200916153718.582-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,68 +24,62 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-It's unlikely but not impossible that other threads change the state
-while we're waiting, and if we grab the lock again, it's still not
-what we wanted. We need to continue waiting until either the condition
-is met, or time timeout expired.
-
-Moreover, generalize this code so that it can also be used in
-set_config_state().
+If multipathd gets a shutdown request during initial reconfigure(),
+it shouldn't send "READY=1" to systemd. Ensure this by sending
+"READY=1" via post_config_state().
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 25 ++++++++++++++++++-------
- 1 file changed, 18 insertions(+), 7 deletions(-)
+ multipathd/main.c | 16 +++++++---------
+ 1 file changed, 7 insertions(+), 9 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 451d68c..49809e0 100644
+index d5e90b2..afc6c99 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -223,6 +223,23 @@ static void config_cleanup(__attribute__((unused)) void *arg)
- 	pthread_mutex_unlock(&config_lock);
- }
- 
-+#define __wait_for_state_change(condition, ms)				\
-+	({								\
-+		struct timespec tmo;					\
-+		int rc = 0;						\
-+									\
-+		if (condition) {					\
-+			get_monotonic_time(&tmo);			\
-+			tmo.tv_nsec += (ms) * 1000 * 1000;		\
-+			normalize_timespec(&tmo);			\
-+			do						\
-+				rc = pthread_cond_timedwait(		\
-+					&config_cond, &config_lock, &tmo); \
-+			while (rc == 0 && (condition));			\
-+		}							\
-+		rc;							\
-+	})
-+
- /*
-  * If the current status is @oldstate, wait for at most @ms milliseconds
-  * for the state to change, and return the new state, which may still be
-@@ -232,20 +249,14 @@ enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
- 					    unsigned long ms)
+@@ -189,6 +189,8 @@ static void do_sd_notify(enum daemon_status old_state,
  {
- 	enum daemon_status st;
--	struct timespec tmo;
+ 	char notify_msg[MSG_SIZE];
+ 	const char *msg;
++	static bool startup_done = false;
++
+ 	/*
+ 	 * Checkerloop switches back and forth between idle and running state.
+ 	 * No need to tell systemd each time.
+@@ -205,6 +207,11 @@ static void do_sd_notify(enum daemon_status old_state,
  
- 	if (oldstate == DAEMON_SHUTDOWN)
- 		return DAEMON_SHUTDOWN;
- 
- 	pthread_mutex_lock(&config_lock);
- 	pthread_cleanup_push(config_cleanup, NULL);
-+	__wait_for_state_change(running_state == oldstate, ms);
- 	st = running_state;
--	if (st == oldstate && clock_gettime(CLOCK_MONOTONIC, &tmo) == 0) {
--		tmo.tv_nsec += ms * 1000 * 1000;
--		normalize_timespec(&tmo);
--		(void)pthread_cond_timedwait(&config_cond, &config_lock, &tmo);
--		st = running_state;
--	}
- 	pthread_cleanup_pop(1);
- 	return st;
+ 	if (msg && !safe_sprintf(notify_msg, "STATUS=%s", msg))
+ 		sd_notify(0, notify_msg);
++
++	if (new_state == DAEMON_IDLE && !startup_done) {
++		sd_notify(0, "READY=1");
++		startup_done = true;
++	}
  }
+ #endif
+ 
+@@ -2913,9 +2920,6 @@ child (__attribute__((unused)) void *param)
+ 	struct vectors * vecs;
+ 	struct multipath * mpp;
+ 	int i;
+-#ifdef USE_SYSTEMD
+-	int startup_done = 0;
+-#endif
+ 	int rc;
+ 	int pid_fd = -1;
+ 	struct config *conf;
+@@ -3075,12 +3079,6 @@ child (__attribute__((unused)) void *param)
+ 			}
+ 			lock_cleanup_pop(vecs->lock);
+ 			post_config_state(DAEMON_IDLE);
+-#ifdef USE_SYSTEMD
+-			if (!startup_done) {
+-				sd_notify(0, "READY=1");
+-				startup_done = 1;
+-			}
+-#endif
+ 		}
+ 	}
+ 
 -- 
 2.28.0
