@@ -1,148 +1,41 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2 4/4] dm: unconditionally call blk_queue_split() in
- dm_process_bio()
-Date: Tue, 15 Sep 2020 23:39:46 -0400
-Message-ID: <20200916033946.GB23236@redhat.com>
-References: <20200915172357.83215-1-snitzer@redhat.com>
- <20200915172357.83215-5-snitzer@redhat.com>
- <20200916010817.GB791425@T590>
- <20200916012813.GA23236@redhat.com>
- <20200916014802.GC791425@T590>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: [PATCH v2 0/3] block: fix up bio_crypt_ctx allocation
+Date: Tue, 15 Sep 2020 20:53:12 -0700
+Message-ID: <20200916035315.34046-1-ebiggers@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200916014802.GC791425@T590>
 Sender: linux-block-owner@vger.kernel.org
-To: Ming Lei <ming.lei@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Vijayendra Suman <vijayendra.suman@oracle.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
+To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>
+Cc: dm-devel@redhat.com, Satya Tangirala <satyat@google.com>, Miaohe Lin <linmiaohe@huawei.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 15 2020 at  9:48pm -0400,
-Ming Lei <ming.lei@redhat.com> wrote:
+This series makes allocation of encryption contexts either able to fail,
+or explicitly require __GFP_DIRECT_RECLAIM (via WARN_ON_ONCE).
 
-> On Tue, Sep 15, 2020 at 09:28:14PM -0400, Mike Snitzer wrote:
-> > On Tue, Sep 15 2020 at  9:08pm -0400,
-> > Ming Lei <ming.lei@redhat.com> wrote:
-> > 
-> > > On Tue, Sep 15, 2020 at 01:23:57PM -0400, Mike Snitzer wrote:
-> > > > blk_queue_split() has become compulsory from .submit_bio -- regardless
-> > > > of whether it is recursing.  Update DM core to always call
-> > > > blk_queue_split().
-> > > > 
-> > > > dm_queue_split() is removed because __split_and_process_bio() handles
-> > > > splitting as needed.
-> > > > 
-> > > > Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> > > > ---
-> > > >  drivers/md/dm.c | 45 +--------------------------------------------
-> > > >  1 file changed, 1 insertion(+), 44 deletions(-)
-> > > > 
-> > > > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > > > index fb0255d25e4b..0bae9f26dc8e 100644
-> > > > --- a/drivers/md/dm.c
-> > > > +++ b/drivers/md/dm.c
-> > > > @@ -1530,22 +1530,6 @@ static int __send_write_zeroes(struct clone_info *ci, struct dm_target *ti)
-> > > >  	return __send_changing_extent_only(ci, ti, get_num_write_zeroes_bios(ti));
-> > > >  }
-> > > >  
-> > > > -static bool is_abnormal_io(struct bio *bio)
-> > > > -{
-> > > > -	bool r = false;
-> > > > -
-> > > > -	switch (bio_op(bio)) {
-> > > > -	case REQ_OP_DISCARD:
-> > > > -	case REQ_OP_SECURE_ERASE:
-> > > > -	case REQ_OP_WRITE_SAME:
-> > > > -	case REQ_OP_WRITE_ZEROES:
-> > > > -		r = true;
-> > > > -		break;
-> > > > -	}
-> > > > -
-> > > > -	return r;
-> > > > -}
-> > > > -
-> > > >  static bool __process_abnormal_io(struct clone_info *ci, struct dm_target *ti,
-> > > >  				  int *result)
-> > > >  {
-> > > > @@ -1723,23 +1707,6 @@ static blk_qc_t __process_bio(struct mapped_device *md, struct dm_table *map,
-> > > >  	return ret;
-> > > >  }
-> > > >  
-> > > > -static void dm_queue_split(struct mapped_device *md, struct dm_target *ti, struct bio **bio)
-> > > > -{
-> > > > -	unsigned len, sector_count;
-> > > > -
-> > > > -	sector_count = bio_sectors(*bio);
-> > > > -	len = min_t(sector_t, max_io_len((*bio)->bi_iter.bi_sector, ti), sector_count);
-> > > > -
-> > > > -	if (sector_count > len) {
-> > > > -		struct bio *split = bio_split(*bio, len, GFP_NOIO, &md->queue->bio_split);
-> > > > -
-> > > > -		bio_chain(split, *bio);
-> > > > -		trace_block_split(md->queue, split, (*bio)->bi_iter.bi_sector);
-> > > > -		submit_bio_noacct(*bio);
-> > > > -		*bio = split;
-> > > > -	}
-> > > > -}
-> > > > -
-> > > >  static blk_qc_t dm_process_bio(struct mapped_device *md,
-> > > >  			       struct dm_table *map, struct bio *bio)
-> > > >  {
-> > > > @@ -1759,17 +1726,7 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
-> > > >  		}
-> > > >  	}
-> > > >  
-> > > > -	/*
-> > > > -	 * If in ->queue_bio we need to use blk_queue_split(), otherwise
-> > > > -	 * queue_limits for abnormal requests (e.g. discard, writesame, etc)
-> > > > -	 * won't be imposed.
-> > > > -	 */
-> > > > -	if (current->bio_list) {
-> > > > -		if (is_abnormal_io(bio))
-> > > > -			blk_queue_split(&bio);
-> > > > -		else
-> > > > -			dm_queue_split(md, ti, &bio);
-> > > > -	}
-> > > > +	blk_queue_split(&bio);
-> > > 
-> > > In max_io_len(), target boundary is taken into account when figuring out
-> > > the max io len. However, this info won't be used any more after
-> > > switching to blk_queue_split(). Is that one potential problem?
-> > 
-> > Thanks for your review.  But no, as the patch header says:
-> > "dm_queue_split() is removed because __split_and_process_bio() handles
-> > splitting as needed."
-> > 
-> > (__split_and_process_non_flush calls max_io_len, as does
-> > __process_abnormal_io by calling __send_changing_extent_only)
-> > 
-> > SO the blk_queue_split() bio will be further split if needed (due to
-> > DM target boundary, etc).
-> 
-> Thanks for your explanation.
-> 
-> Then looks there is double split issue since both blk_queue_split()
-> and __split_and_process_non_flush() may split bio from same bioset(md->queue->bio_split),
-> and this way may cause deadlock, see comment of bio_alloc_bioset(), especially
-> the paragraph of 'callers must never allocate more than 1 bio at a time
-> from this pool.'
+This applies to linux-block/for-next.
 
-Next sentence is:
-"Callers that need to allocate more than 1 bio must always submit the
-previously allocated bio for IO before attempting to allocate a new
-one."
+Changed since v1 (https://lkml.kernel.org/r/20200902051511.79821-1-ebiggers@kernel.org):
+    - Added patches 2 and 3.
+    - Added kerneldoc for bio_crypt_clone().
+    - Adjusted commit message.
 
-__split_and_process_non_flush -> __map_bio -> submit_bio_noacct
-bio_split
-submit_bio_noacct
+Eric Biggers (3):
+  block: make bio_crypt_clone() able to fail
+  block: make blk_crypto_rq_bio_prep() able to fail
+  block: warn if !__GFP_DIRECT_RECLAIM in bio_crypt_set_ctx()
 
-With commit 18a25da84354c, NeilBrown wrote the __split_and_process_bio()
-with an eye toward depth-first submission to avoid this deadlock you're
-concerned about.  That commit header speaks to it directly.
+ block/bio.c                 | 20 +++++++++-----------
+ block/blk-core.c            |  8 +++++---
+ block/blk-crypto-internal.h | 21 ++++++++++++++++-----
+ block/blk-crypto.c          | 33 ++++++++++++++++++++-------------
+ block/blk-mq.c              |  7 ++++++-
+ block/bounce.c              | 19 +++++++++----------
+ drivers/md/dm.c             |  7 ++++---
+ include/linux/blk-crypto.h  | 20 ++++++++++++++++----
+ 8 files changed, 85 insertions(+), 50 deletions(-)
 
-I did go on to change Neil's code a bit with commit f21c601a2bb31 -- but
-I _think_ the current code is still OK relative to bio_split mempool
-use.
 
-Mike
+base-commit: 99faa39ec56f33591ed3cc4d3ef62ac2878fad7e
+-- 
+2.28.0
