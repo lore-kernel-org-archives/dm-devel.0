@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 04/19] multipathd: send "RELOADING=1" to systemd
-	on DAEMON_CONFIGURE state
-Date: Wed, 16 Sep 2020 17:37:03 +0200
-Message-ID: <20200916153718.582-5-mwilck@suse.com>
+Subject: [PATCH 16/19] mpathpersist: use {get,
+	put}_multipath_config() from libmultipath
+Date: Wed, 16 Sep 2020 17:37:15 +0200
+Message-ID: <20200916153718.582-17-mwilck@suse.com>
 References: <20200916153718.582-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,37 +24,50 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-The logic is as follows: child() sets DAEMON_IDLE status after
-DAEMON_CONFIGURE when reconfigure() has finished. The only other state change
-that can race with that is DAEMON_SHUTDOWN. Other state changes will wait for
-DAEMON_IDLE first (see set_config_state()). When DAEMON_CONFIGURE is entered,
-and we are not just starting up, send a "RELOADING=1" message to
-systemd. After that, we must send "READY=1" when we're done reloading. Also
-do that on startup, when DAEMON_IDLE is set for the first time.
-See sd_notify(3).
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ mpathpersist/main.c | 16 ++--------------
+ 1 file changed, 2 insertions(+), 14 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 2923c08..8cc9b74 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -210,10 +210,11 @@ static void do_sd_notify(enum daemon_status old_state,
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index 28bfe41..0f0db4b 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -43,17 +43,6 @@ void mpath_print_transport_id(struct prin_fulldescr *fdesc);
+ int construct_transportid(const char * inp, struct transportid transid[], int num_transportids);
  
- 	if (new_state == DAEMON_SHUTDOWN)
- 		sd_notify(0, "STOPPING=1");
--	else if (new_state == DAEMON_IDLE && !startup_done) {
-+	else if (new_state == DAEMON_IDLE && old_state == DAEMON_CONFIGURE) {
- 		sd_notify(0, "READY=1");
- 		startup_done = true;
--	}
-+	} else if (new_state == DAEMON_CONFIGURE && startup_done)
-+		sd_notify(0, "RELOADING=1");
- }
- #endif
+ int logsink;
+-struct config *multipath_conf;
+-
+-struct config *get_multipath_config(void)
+-{
+-	return multipath_conf;
+-}
+-
+-void put_multipath_config(__attribute__((unused)) void * arg)
+-{
+-	/* Noop for now */
+-}
  
+ void rcu_register_thread_memb(void) {}
+ 
+@@ -620,15 +609,14 @@ int main(int argc, char *argv[])
+ 	}
+ 
+ 	udev = udev_new();
+-	multipath_conf = mpath_lib_init();
+-	if(!multipath_conf) {
++	if (libmpathpersist_init()) {
+ 		udev_unref(udev);
+ 		exit(1);
+ 	}
+ 
+ 	ret = handle_args(argc, argv, 0);
+ 
+-	mpath_lib_exit(multipath_conf);
++	libmpathpersist_exit();
+ 	udev_unref(udev);
+ 
+ 	return (ret >= 0) ? ret : MPATH_PR_OTHER;
 -- 
 2.28.0
