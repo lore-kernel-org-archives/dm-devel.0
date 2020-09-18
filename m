@@ -1,50 +1,80 @@
 From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [dm-devel] [PATCH v2] dm: Call proper helper to determine dax support
-Date: Fri, 18 Sep 2020 09:54:51 -0700
-Message-ID: <CAPcyv4ii+NWnJhLWwz=Z+2aAJ=DdjwQoqPC+hO88CsM2ub5FEw@mail.gmail.com>
-References: <160040692945.25320.13233625491405115889.stgit@dwillia2-desk3.amr.corp.intel.com>
- <20200918153041.GN7954@magnolia>
+Subject: [PATCH] dm/dax: Fix table reference counts
+Date: Fri, 18 Sep 2020 12:51:15 -0700
+Message-ID: <160045867590.25663.7548541079217827340.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20200918153041.GN7954@magnolia>
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: linux-nvdimm <linux-nvdimm@lists.01.org>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, stable <stable@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Adrian Huang <ahuang12@lenovo.com>, Mikulas Patocka <mpatocka@redhat.com>, "Weiny, Ira" <ira.weiny@intel.com>
+To: dm-devel@redhat.com
+Cc: stable@vger.kernel.org, Jan Kara <jack@suse.cz>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Adrian Huang <ahuang12@lenovo.com>, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Sep 18, 2020 at 8:31 AM Darrick J. Wong <darrick.wong@oracle.com> wrote:
->
-> On Thu, Sep 17, 2020 at 10:30:03PM -0700, Dan Williams wrote:
-> > From: Jan Kara <jack@suse.cz>
-> >
-> > DM was calling generic_fsdax_supported() to determine whether a device
-> > referenced in the DM table supports DAX. However this is a helper for "leaf" device drivers so that
-> > they don't have to duplicate common generic checks. High level code
-> > should call dax_supported() helper which that calls into appropriate
-> > helper for the particular device. This problem manifested itself as
-> > kernel messages:
-> >
-> > dm-3: error: dax access failed (-95)
-> >
-> > when lvm2-testsuite run in cases where a DM device was stacked on top of
-> > another DM device.
->
-> Is there somewhere where it is documented which of:
->
-> bdev_dax_supported, generic_fsdax_supported, and dax_supported
->
-> one is supposed to use for a given circumstance?
+A recent fix to the dm_dax_supported() flow uncovered a latent bug. When
+dm_get_live_table() fails it is still required to drop the
+srcu_read_lock(). Without this change the lvm2 test-suite triggers this
+warning:
 
-generic_fsdax_supported should be private to device drivers populating
-their dax_operations. I think it deserves a rename at this point.
-dax_supported() knows how to route through multiple layers of stacked
-block-devices to ask the "is dax supported" question at each level.
+    # lvm2-testsuite --only pvmove-abort-all.sh
 
-> I guess the last two can test a given range w/ blocksize; the first one
-> only does blocksize; and the middle one also checks with whatever fs
-> might be mounted? <shrug>
->
-> (I ask because it took me a while to figure out how to revert correctly
-> the brokenness in rc3-5 that broke my nightly dax fstesting.)
+    WARNING: lock held when returning to user space!
+    5.9.0-rc5+ #251 Tainted: G           OE
+    ------------------------------------------------
+    lvm/1318 is leaving the kernel with locks still held!
+    1 lock held by lvm/1318:
+     #0: ffff9372abb5a340 (&md->io_barrier){....}-{0:0}, at: dm_get_live_table+0x5/0xb0 [dm_mod]
 
-Again, apologies for that.
+...and later on this hang signature:
+
+    INFO: task lvm:1344 blocked for more than 122 seconds.
+          Tainted: G           OE     5.9.0-rc5+ #251
+    "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+    task:lvm             state:D stack:    0 pid: 1344 ppid:     1 flags:0x00004000
+    Call Trace:
+     __schedule+0x45f/0xa80
+     ? finish_task_switch+0x249/0x2c0
+     ? wait_for_completion+0x86/0x110
+     schedule+0x5f/0xd0
+     schedule_timeout+0x212/0x2a0
+     ? __schedule+0x467/0xa80
+     ? wait_for_completion+0x86/0x110
+     wait_for_completion+0xb0/0x110
+     __synchronize_srcu+0xd1/0x160
+     ? __bpf_trace_rcu_utilization+0x10/0x10
+     __dm_suspend+0x6d/0x210 [dm_mod]
+     dm_suspend+0xf6/0x140 [dm_mod]
+
+Fixes: 7bf7eac8d648 ("dax: Arrange for dax_supported check to span multiple devices")
+Cc: <stable@vger.kernel.org>
+Cc: Jan Kara <jack@suse.cz>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Reported-by: Adrian Huang <ahuang12@lenovo.com>
+Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+---
+ drivers/md/dm.c |    5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index fb0255d25e4b..4a40df8af7d3 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1136,15 +1136,16 @@ static bool dm_dax_supported(struct dax_device *dax_dev, struct block_device *bd
+ {
+ 	struct mapped_device *md = dax_get_private(dax_dev);
+ 	struct dm_table *map;
++	bool ret = false;
+ 	int srcu_idx;
+-	bool ret;
+ 
+ 	map = dm_get_live_table(md, &srcu_idx);
+ 	if (!map)
+-		return false;
++		goto out;
+ 
+ 	ret = dm_table_supports_dax(map, device_supports_dax, &blocksize);
+ 
++out:
+ 	dm_put_live_table(md, srcu_idx);
+ 
+ 	return ret;
