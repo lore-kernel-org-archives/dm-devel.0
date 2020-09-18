@@ -1,17 +1,16 @@
-From: Martin Wilck <martin.wilck@suse.com>
-Subject: Re: [PATCH 1/3] multipath: add libmpathvalid library
-Date: Fri, 18 Sep 2020 07:51:47 +0000
-Message-ID: <4b65fb0cf70f139f2fa06b61c2a092038038a170.camel@suse.com>
-References: <1600206312-6497-1-git-send-email-bmarzins@redhat.com>
-	<1600206312-6497-2-git-send-email-bmarzins@redhat.com>
-	<940b5f7e1202f27a55f58417314c45e441679535.camel@suse.com>
-	<20200917235242.GT11108@octiron.msp.redhat.com>
+From: lixiaokeng <lixiaokeng@huawei.com>
+Subject: Re: [PATCH 0/6] libmultipath: check udev* func return
+	value
+Date: Fri, 18 Sep 2020 16:39:45 +0800
+Message-ID: <3735c20d-a0fd-ca41-be9a-0df679022668@huawei.com>
+References: <d89bc33d-8e5d-d194-3b26-83ff4d170c5c@huawei.com>
+	<20200918022626.GU11108@octiron.msp.redhat.com>
+	<011310221c816f3c3573d96d91aca3e0a48fb80d.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200917235242.GT11108@octiron.msp.redhat.com>
-Content-ID: <A509AA48A9405A4FBCB90690A2F92764@eurprd04.prod.outlook.com>
+In-Reply-To: <011310221c816f3c3573d96d91aca3e0a48fb80d.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,82 +20,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Language: en-US
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Language: en-GB
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: linfeilong <linfeilong@huawei.com>, dm-devel mailing list <dm-devel@redhat.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-On Thu, 2020-09-17 at 18:52 -0500, Benjamin Marzinski wrote:
-> On Wed, Sep 16, 2020 at 02:18:49PM +0000, Martin Wilck wrote:
-> > On Tue, 2020-09-15 at 16:45 -0500, Benjamin Marzinski wrote:
-> > >=20
-> > > +struct config;
-> > > +extern struct config *mpathvalid_conf;
-> >=20
-> > What do you need this for?
->=20
-> This isn't really necessary. Library users are expected to define
-> methods like
->=20
-> struct config *get_multipath_config(void)
-> {
->         return mpathvalid_conf;
-> }
->=20
-> void put_multipath_config(__attribute__((unused))void *conf)
-> {
->         /* Noop */
-> }
->=20
-> It would be possible to have mpathvalid_init() return
->=20
-> struct config *
->=20
-> and mpathvalid_exit() take that pointer. That would allow the caller
-> to
-> name their config pointer whatever they liked.  However the only
-> thing
-> that the caller can effect is the verbosity, so there's never really
-> any
-> point to have more than one config pointer.
->=20
-> If you have objections, I can switch this to make the library use a
-> user provided config pointer, instead of declaring one itself.
+Hi Martin,
 
-No, I'd rather not. I was mainly wondering why you export the pointer.
-I believe that libmultipath's way to require the application to define
-certain symbols is suboptimal, and I'd like to get rid of it (see my
-other patch set). I can see that (as far as libmultipath is concerned)
-this comes too late for sid, but I wouldn't want to repeat that design
-decision again.
+On 2020/9/18 15:37, Martin Wilck wrote:
+> On Thu, 2020-09-17 at 21:26 -0500, Benjamin Marzinski wrote:
+>> On Tue, Sep 15, 2020 at 12:38:27PM +0800, lixiaokeng wrote:
+>>> Hi,
+>>>   The udev* function may return NULL,and it will be
+>>> dereferenced in str* and sscanf func. For example,
+>>> there is a coredump caused in add func, which show in
+>>> be7a043(commit id) in upstream-queue. We check the
+>>> return value to avoid dereference NULL.
+>>>
+>>> repo: openSUSE/multipath-tools
+>>> repo link: https://github.com/openSUSE/multipath-tools
+>>> branch: upstream-queue
+>>>
+>> For the set
+>> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> 
+> Well, the set got the logic wrong in 3 out of 6 patches :-)
+> 
+> In general, as these fixes are all very similar, I would prefer
+> bundling them together into one patch, and I would like to make sure
+> (and assert in the commit message) that the set fixes
+> *all* possible NULL pointer dereferences related to accessing udev
+> properties (I haven't checked whether this is the case for the set).
+> 
+> Also, while I'd ack this set if the logic was correct, I think that in
+> a way it's papering over the actual problem. udev_device_get_XYZ()
+> functions fail *only* if the underlying sysfs directory has vanished
+> (well, perhaps for out-of-memory, too, but let's put that aside for a
+> moment). It that case, we should actually not just return an error code
 
-So, I guess exporting the pointer is just fine. Applications can still
-define a symbol by the same name, overriding libmpathvalid's. It might
-get problematic if sid will support runtime reconfiguration, like
-multipathd. In that case it'd be better if you let the application
-override get_multpath_config().
+   Here we use multipath-tools basing on iscsi. When iscsi logout, the path
+will disappear in sysfs and a uevent will cause. Before uevent processed,
+some coredump will happen but if coredump is solved the multipathd will
+deal with the disappeared path latter.
+  In this set, the funcs will not be processed when multipath-tools bases
+on iscsi. However, I think multipathd will deal with the disappeared path
+like basing on iscsi. So I just check them. Anyway, if you have any better
+idea, please tell me.
 
-Martin
+> - we should realize that there's a problem with the device (it probably
+> has been deleted from the system and shouldn't be used any more in any
+> way), and that we need to deal with it somehow. This is a fundamental
+> problem for all user space programs that use udev_devices for more than
+> a few CPU cycles. That doesn't mean the set is wrong, but we should
+> keep this in mind. I have something cooking for a more complete
+> solution, which isn't ready yet.
+> 
+> Finally, @lixiaokeng, please check your inbox once more. You still
+> haven't fixed #11/14 of your previous series.
+> 
 
->=20
-> -Ben
->=20
-> =20
-> > This looks good to me. It would be even better with a few unit
-> > tests...
-> >=20
-> > Anyway, I've been working on a patch set to spare callers to define
-> > the symbols {get,put}_multipath_config, udev, and logsink (we've
-> > been
-> > discussing that in the past). I'm going to submit it soon. I think
-> > you
-> > might be interested in that for this new library.
-> >=20
-> > Regards
-> > Martin
+I will modify patch 11/14 and send it.
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+> Regards,
+> Martin
+> 
+> 
+> .
+> 
