@@ -1,14 +1,14 @@
-From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 5.4 026/330] dm table: do not allow
-	request-based DM to stack on partitions
-Date: Thu, 17 Sep 2020 21:56:06 -0400
-Message-ID: <20200918020110.2063155-26-sashal@kernel.org>
-References: <20200918020110.2063155-1-sashal@kernel.org>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 0/6] libmultipath: check udev* func return
+	value
+Date: Thu, 17 Sep 2020 21:26:26 -0500
+Message-ID: <20200918022626.GU11108@octiron.msp.redhat.com>
+References: <d89bc33d-8e5d-d194-3b26-83ff4d170c5c@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200918020110.2063155-1-sashal@kernel.org>
+In-Reply-To: <d89bc33d-8e5d-d194-3b26-83ff4d170c5c@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,87 +18,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: Sasha Levin <sashal@kernel.org>, linux-raid@vger.kernel.org, dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Content-Disposition: inline
+To: lixiaokeng <lixiaokeng@huawei.com>
+Cc: linfeilong <linfeilong@huawei.com>, dm-devel mailing list <dm-devel@redhat.com>, Martin Wilck <mwilck@suse.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-From: Mike Snitzer <snitzer@redhat.com>
+On Tue, Sep 15, 2020 at 12:38:27PM +0800, lixiaokeng wrote:
+> Hi,
+>   The udev* function may return NULL,and it will be
+> dereferenced in str* and sscanf func. For example,
+> there is a coredump caused in add func, which show in
+> be7a043(commit id) in upstream-queue. We check the
+> return value to avoid dereference NULL.
+> 
+> repo: openSUSE/multipath-tools
+> repo link: https://github.com/openSUSE/multipath-tools
+> branch: upstream-queue
+> 
+For the set
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-[ Upstream commit 6ba01df72b4b63a26b4977790f58d8f775d2992c ]
 
-Partitioned request-based devices cannot be used as underlying devices
-for request-based DM because no partition offsets are added to each
-incoming request.  As such, until now, stacking on partitioned devices
-would _always_ result in data corruption (e.g. wiping the partition
-table, writing to other partitions, etc).  Fix this by disallowing
-request-based stacking on partitions.
-
-While at it, since all .request_fn support has been removed from block
-core, remove legacy dm-table code that differentiated between blk-mq and
-.request_fn request-based.
-
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
----
- drivers/md/dm-table.c | 27 ++++++++-------------------
- 1 file changed, 8 insertions(+), 19 deletions(-)
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 52e049554f5cd..2ae0c19137667 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -918,21 +918,15 @@ bool dm_table_supports_dax(struct dm_table *t,
- 
- static bool dm_table_does_not_support_partial_completion(struct dm_table *t);
- 
--struct verify_rq_based_data {
--	unsigned sq_count;
--	unsigned mq_count;
--};
--
--static int device_is_rq_based(struct dm_target *ti, struct dm_dev *dev,
--			      sector_t start, sector_t len, void *data)
-+static int device_is_rq_stackable(struct dm_target *ti, struct dm_dev *dev,
-+				  sector_t start, sector_t len, void *data)
- {
--	struct request_queue *q = bdev_get_queue(dev->bdev);
--	struct verify_rq_based_data *v = data;
-+	struct block_device *bdev = dev->bdev;
-+	struct request_queue *q = bdev_get_queue(bdev);
- 
--	if (queue_is_mq(q))
--		v->mq_count++;
--	else
--		v->sq_count++;
-+	/* request-based cannot stack on partitions! */
-+	if (bdev != bdev->bd_contains)
-+		return false;
- 
- 	return queue_is_mq(q);
- }
-@@ -941,7 +935,6 @@ static int dm_table_determine_type(struct dm_table *t)
- {
- 	unsigned i;
- 	unsigned bio_based = 0, request_based = 0, hybrid = 0;
--	struct verify_rq_based_data v = {.sq_count = 0, .mq_count = 0};
- 	struct dm_target *tgt;
- 	struct list_head *devices = dm_table_get_devices(t);
- 	enum dm_queue_mode live_md_type = dm_get_md_type(t->md);
-@@ -1045,14 +1038,10 @@ verify_rq_based:
- 
- 	/* Non-request-stackable devices can't be used for request-based dm */
- 	if (!tgt->type->iterate_devices ||
--	    !tgt->type->iterate_devices(tgt, device_is_rq_based, &v)) {
-+	    !tgt->type->iterate_devices(tgt, device_is_rq_stackable, NULL)) {
- 		DMERR("table load rejected: including non-request-stackable devices");
- 		return -EINVAL;
- 	}
--	if (v.sq_count > 0) {
--		DMERR("table load rejected: not all devices are blk-mq request-stackable");
--		return -EINVAL;
--	}
- 
- 	return 0;
- }
--- 
-2.25.1
+> lixiaokeng (6):
+>   libmultipath: check uedv* return value in sysfs_get_host_pci_name
+>   libmultipath: check udev* return value in ccw_sysfs_pathinfo
+>   libmultipath: check udev* return value in sysfs_get_tgt_nodename
+>   libmultipath: check udev* return value in
+>     trigger_partitions_udev_change
+>   libmultipath: check udev* renturn value in get_ctrl_blkdev
+>   libmultipath: check udev* return value in _find_path_by_syspath
+> 
+>  libmultipath/configure.c    |  4 +++-
+>  libmultipath/discovery.c    |  9 +++++++--
+>  libmultipath/foreign/nvme.c | 10 +++++++---
+>  3 files changed, 17 insertions(+), 6 deletions(-)
