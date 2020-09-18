@@ -1,80 +1,140 @@
 From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH] dm/dax: Fix table reference counts
-Date: Fri, 18 Sep 2020 12:51:15 -0700
-Message-ID: <160045867590.25663.7548541079217827340.stgit@dwillia2-desk3.amr.corp.intel.com>
+Subject: [PATCH v3] dm: Call proper helper to determine dax support
+Date: Fri, 18 Sep 2020 13:19:42 -0700
+Message-ID: <160046028990.22670.15271558589864899328.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <stable-owner@vger.kernel.org>
-To: dm-devel@redhat.com
-Cc: stable@vger.kernel.org, Jan Kara <jack@suse.cz>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, Adrian Huang <ahuang12@lenovo.com>, linux-nvdimm@lists.01.org, linux-kernel@vger.kernel.org
+To: linux-nvdimm@lists.01.org
+Cc: stable@vger.kernel.org, Adrian Huang <ahuang12@lenovo.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, kernel test robot <lkp@intel.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, ira.weiny@intel.com, mpatocka@redhat.comsnitzer@redhat.com
 List-Id: dm-devel.ids
 
-A recent fix to the dm_dax_supported() flow uncovered a latent bug. When
-dm_get_live_table() fails it is still required to drop the
-srcu_read_lock(). Without this change the lvm2 test-suite triggers this
-warning:
+From: Jan Kara <jack@suse.cz>
 
-    # lvm2-testsuite --only pvmove-abort-all.sh
+DM was calling generic_fsdax_supported() to determine whether a device
+referenced in the DM table supports DAX. However this is a helper for "leaf" device drivers so that
+they don't have to duplicate common generic checks. High level code
+should call dax_supported() helper which that calls into appropriate
+helper for the particular device. This problem manifested itself as
+kernel messages:
 
-    WARNING: lock held when returning to user space!
-    5.9.0-rc5+ #251 Tainted: G           OE
-    ------------------------------------------------
-    lvm/1318 is leaving the kernel with locks still held!
-    1 lock held by lvm/1318:
-     #0: ffff9372abb5a340 (&md->io_barrier){....}-{0:0}, at: dm_get_live_table+0x5/0xb0 [dm_mod]
+dm-3: error: dax access failed (-95)
 
-...and later on this hang signature:
-
-    INFO: task lvm:1344 blocked for more than 122 seconds.
-          Tainted: G           OE     5.9.0-rc5+ #251
-    "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
-    task:lvm             state:D stack:    0 pid: 1344 ppid:     1 flags:0x00004000
-    Call Trace:
-     __schedule+0x45f/0xa80
-     ? finish_task_switch+0x249/0x2c0
-     ? wait_for_completion+0x86/0x110
-     schedule+0x5f/0xd0
-     schedule_timeout+0x212/0x2a0
-     ? __schedule+0x467/0xa80
-     ? wait_for_completion+0x86/0x110
-     wait_for_completion+0xb0/0x110
-     __synchronize_srcu+0xd1/0x160
-     ? __bpf_trace_rcu_utilization+0x10/0x10
-     __dm_suspend+0x6d/0x210 [dm_mod]
-     dm_suspend+0xf6/0x140 [dm_mod]
+when lvm2-testsuite run in cases where a DM device was stacked on top of
+another DM device.
 
 Fixes: 7bf7eac8d648 ("dax: Arrange for dax_supported check to span multiple devices")
 Cc: <stable@vger.kernel.org>
-Cc: Jan Kara <jack@suse.cz>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Reported-by: Adrian Huang <ahuang12@lenovo.com>
+Tested-by: Adrian Huang <ahuang12@lenovo.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Acked-by: Mike Snitzer <snitzer@redhat.com>
+Reported-by: kernel test robot <lkp@intel.com>
 Signed-off-by: Dan Williams <dan.j.williams@intel.com>
 ---
- drivers/md/dm.c |    5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+Changes since v2 [1]:
+- Add dummy definitions for dax_read_{lock,unlock} in the CONFIG_DAX=n
+  case (0day robot)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index fb0255d25e4b..4a40df8af7d3 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1136,15 +1136,16 @@ static bool dm_dax_supported(struct dax_device *dax_dev, struct block_device *bd
+[1]: http://lore.kernel.org/r/160040692945.25320.13233625491405115889.stgit@dwillia2-desk3.amr.corp.intel.com
+
+ drivers/dax/super.c   |    4 ++++
+ drivers/md/dm-table.c |   10 +++++++---
+ include/linux/dax.h   |   22 ++++++++++++++++++++--
+ 3 files changed, 31 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+index e5767c83ea23..b6284c5cae0a 100644
+--- a/drivers/dax/super.c
++++ b/drivers/dax/super.c
+@@ -325,11 +325,15 @@ EXPORT_SYMBOL_GPL(dax_direct_access);
+ bool dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
+ 		int blocksize, sector_t start, sector_t len)
  {
- 	struct mapped_device *md = dax_get_private(dax_dev);
- 	struct dm_table *map;
-+	bool ret = false;
- 	int srcu_idx;
--	bool ret;
++	if (!dax_dev)
++		return false;
++
+ 	if (!dax_alive(dax_dev))
+ 		return false;
  
- 	map = dm_get_live_table(md, &srcu_idx);
- 	if (!map)
--		return false;
-+		goto out;
+ 	return dax_dev->ops->dax_supported(dax_dev, bdev, blocksize, start, len);
+ }
++EXPORT_SYMBOL_GPL(dax_supported);
  
- 	ret = dm_table_supports_dax(map, device_supports_dax, &blocksize);
+ size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+ 		size_t bytes, struct iov_iter *i)
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 5edc3079e7c1..229f461e7def 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -860,10 +860,14 @@ EXPORT_SYMBOL_GPL(dm_table_set_type);
+ int device_supports_dax(struct dm_target *ti, struct dm_dev *dev,
+ 			sector_t start, sector_t len, void *data)
+ {
+-	int blocksize = *(int *) data;
++	int blocksize = *(int *) data, id;
++	bool rc;
  
-+out:
- 	dm_put_live_table(md, srcu_idx);
+-	return generic_fsdax_supported(dev->dax_dev, dev->bdev, blocksize,
+-				       start, len);
++	id = dax_read_lock();
++	rc = dax_supported(dev->dax_dev, dev->bdev, blocksize, start, len);
++	dax_read_unlock(id);
++
++	return rc;
+ }
  
- 	return ret;
+ /* Check devices support synchronous DAX */
+diff --git a/include/linux/dax.h b/include/linux/dax.h
+index 6904d4e0b2e0..d0af16b23122 100644
+--- a/include/linux/dax.h
++++ b/include/linux/dax.h
+@@ -130,6 +130,8 @@ static inline bool generic_fsdax_supported(struct dax_device *dax_dev,
+ 	return __generic_fsdax_supported(dax_dev, bdev, blocksize, start,
+ 			sectors);
+ }
++bool dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
++		int blocksize, sector_t start, sector_t len);
+ 
+ static inline void fs_put_dax(struct dax_device *dax_dev)
+ {
+@@ -157,6 +159,13 @@ static inline bool generic_fsdax_supported(struct dax_device *dax_dev,
+ 	return false;
+ }
+ 
++static inline bool dax_supported(struct dax_device *dax_dev,
++		struct block_device *bdev, int blocksize, sector_t start,
++		sector_t len)
++{
++	return false;
++}
++
+ static inline void fs_put_dax(struct dax_device *dax_dev)
+ {
+ }
+@@ -189,14 +198,23 @@ static inline void dax_unlock_page(struct page *page, dax_entry_t cookie)
+ }
+ #endif
+ 
++#ifdef CONFIG_DAX
+ int dax_read_lock(void);
+ void dax_read_unlock(int id);
++#else
++static inline int dax_read_lock(void)
++{
++	return 0;
++}
++
++static inline void dax_read_unlock(int id)
++{
++}
++#endif /* CONFIG_DAX */
+ bool dax_alive(struct dax_device *dax_dev);
+ void *dax_get_private(struct dax_device *dax_dev);
+ long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
+ 		void **kaddr, pfn_t *pfn);
+-bool dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
+-		int blocksize, sector_t start, sector_t len);
+ size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+ 		size_t bytes, struct iov_iter *i);
+ size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
