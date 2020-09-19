@@ -1,14 +1,15 @@
-From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH V6 11/14] mpathpersist: check whether malloc
- paramp->trnptid_list fails in handle_args func
-Date: Sat, 19 Sep 2020 18:28:36 +0800
-Message-ID: <39c4b48b-4cc8-062e-c6c8-1207b38f576a@huawei.com>
-References: <ae709d8f-64f7-30bc-bd08-fc2398c0c093@huawei.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 07/19] multipathd: set_config_state(): avoid
+ code duplication
+Date: Sat, 19 Sep 2020 14:01:01 -0500
+Message-ID: <20200919190101.GV11108@octiron.msp.redhat.com>
+References: <20200916153718.582-1-mwilck@suse.com>
+	<20200916153718.582-8-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <ae709d8f-64f7-30bc-bd08-fc2398c0c093@huawei.com>
+In-Reply-To: <20200916153718.582-8-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,144 +19,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Language: en-GB
-To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel mailing list <dm-devel@redhat.com>
-Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
+Content-Disposition: inline
+To: mwilck@suse.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-In handle_args func, we donot check whether malloc paramp and
-each paramp->trnptid_list[j] fails before using them, it may
-cause access NULL pointer.
+On Wed, Sep 16, 2020 at 05:37:06PM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+> 
+> Use __post_config_state() and __wait_for_state_change(). This
+> way __post_config_state() is the only place where running_state
+> is ever changed, and we avoid code duplication.
+> 
 
-Here, we add alloc_prout_param_descriptor to allocate and init
-paramp, and we add free_prout_param_descriptor to free paramp
-and each paramp->trnptid_list[j].
+It's only tangentially related to this patch, but it's possible for
+set_conf_state() to timeout, and we'd don't always retry it. That's
+fine, be we don't always check for failure and notify the user that the
+reconfigure isn't happening, and we probably should. But the patch
+itself is fine.
 
-We change num_transport to num_transportids to combine them.
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com> 
 
-Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
----
- mpathpersist/main.c | 64 ++++++++++++++++++++++++++++++++++-----------
- 1 file changed, 49 insertions(+), 15 deletions(-)
-
-diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-index 28bfe410..f6a8b38c 100644
---- a/mpathpersist/main.c
-+++ b/mpathpersist/main.c
-@@ -153,6 +153,37 @@ static int do_batch_file(const char *batch_fn)
- 	return ret;
- }
-
-+static struct prout_param_descriptor *
-+alloc_prout_param_descriptor(int num_transportid)
-+{
-+	struct prout_param_descriptor *paramp;
-+
-+	if (num_transportid < 0 || num_transportid > MPATH_MX_TIDS)
-+		return NULL;
-+
-+	paramp= malloc(sizeof(struct prout_param_descriptor) +
-+				(sizeof(struct transportid *) * num_transportid));
-+
-+	if (!paramp)
-+		return NULL;
-+
-+	memset(paramp, 0, sizeof(struct prout_param_descriptor) +
-+			(sizeof(struct transportid *) * num_transportid));
-+	return paramp;
-+}
-+
-+static void free_prout_param_descriptor(struct prout_param_descriptor *paramp)
-+{
-+	unsigned int i;
-+	if (!paramp)
-+		return;
-+
-+	for (i = 0; i < paramp->num_transportid; i++)
-+		free(paramp->trnptid_list[i]);
-+
-+	free(paramp);
-+}
-+
- static int handle_args(int argc, char * argv[], int nline)
- {
- 	int c;
-@@ -177,7 +208,6 @@ static int handle_args(int argc, char * argv[], int nline)
- 	int prin = 1;
- 	int prin_sa = -1;
- 	int prout_sa = -1;
--	int num_transport =0;
- 	char *batch_fn = NULL;
- 	void *resp = NULL;
- 	struct transportid * tmp;
-@@ -334,13 +364,13 @@ static int handle_args(int argc, char * argv[], int nline)
- 				break;
-
- 			case 'X':
--				if (0 != construct_transportid(optarg, transportids, num_transport)) {
-+				if (0 != construct_transportid(optarg, transportids, num_transportids)) {
- 					fprintf(stderr, "bad argument to '--transport-id'\n");
- 					ret = MPATH_PR_SYNTAX_ERROR;
- 					goto out;
- 				}
-
--				++num_transport;
-+				++num_transportids;
- 				break;
-
- 			case 'l':
-@@ -525,9 +555,12 @@ static int handle_args(int argc, char * argv[], int nline)
- 		int j;
- 		struct prout_param_descriptor *paramp;
-
--		paramp= malloc(sizeof(struct prout_param_descriptor) + (sizeof(struct transportid *)*(MPATH_MX_TIDS )));
--
--		memset(paramp, 0, sizeof(struct prout_param_descriptor) + (sizeof(struct transportid *)*(MPATH_MX_TIDS)));
-+		paramp = alloc_prout_param_descriptor(num_transportids);
-+		if (!paramp) {
-+			fprintf(stderr, "malloc paramp failed\n");
-+			ret = MPATH_PR_OTHER;
-+			goto out_fd;
-+		}
-
- 		for (j = 7; j >= 0; --j) {
- 			paramp->key[j] = (param_rk & 0xff);
-@@ -544,13 +577,19 @@ static int handle_args(int argc, char * argv[], int nline)
- 		if (param_aptpl)
- 			paramp->sa_flags |= MPATH_F_APTPL_MASK;
-
--		if (num_transport)
-+		if (num_transportids)
- 		{
- 			paramp->sa_flags |= MPATH_F_SPEC_I_PT_MASK;
--			paramp->num_transportid = num_transport;
--			for (j = 0 ; j < num_transport; j++)
-+			paramp->num_transportid = num_transportids;
-+			for (j = 0 ; j < num_transportids; j++)
- 			{
- 				paramp->trnptid_list[j] = (struct transportid *)malloc(sizeof(struct transportid));
-+				if (!paramp->trnptid_list[j]) {
-+					fprintf(stderr, "malloc paramp->trnptid_list[%d] failed.\n", j);
-+					ret = MPATH_PR_OTHER;
-+					free_prout_param_descriptor(paramp);
-+					goto out_fd;
-+				}
- 				memcpy(paramp->trnptid_list[j], &transportids[j],sizeof(struct transportid));
- 			}
- 		}
-@@ -558,12 +597,7 @@ static int handle_args(int argc, char * argv[], int nline)
- 		/* PROUT commands other than 'register and move' */
- 		ret = __mpath_persistent_reserve_out (fd, prout_sa, 0, prout_type,
- 				paramp, noisy);
--		for (j = 0 ; j < num_transport; j++)
--		{
--			tmp = paramp->trnptid_list[j];
--			free(tmp);
--		}
--		free(paramp);
-+		free_prout_param_descriptor(paramp);
- 	}
-
- 	if (ret != MPATH_PR_SUCCESS)
--- 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipathd/main.c | 23 +++++------------------
+>  1 file changed, 5 insertions(+), 18 deletions(-)
+> 
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 49809e0..a5c4031 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -292,27 +292,14 @@ int set_config_state(enum daemon_status state)
+>  	pthread_cleanup_push(config_cleanup, NULL);
+>  	pthread_mutex_lock(&config_lock);
+>  	if (running_state != state) {
+> -#ifdef USE_SYSTEMD
+> -		enum daemon_status old_state = running_state;
+> -#endif
+>  
+>  		if (running_state == DAEMON_SHUTDOWN)
+>  			rc = EINVAL;
+> -		else if (running_state != DAEMON_IDLE) {
+> -			struct timespec ts;
+> -
+> -			get_monotonic_time(&ts);
+> -			ts.tv_sec += 1;
+> -			rc = pthread_cond_timedwait(&config_cond,
+> -						    &config_lock, &ts);
+> -		}
+> -		if (!rc && (running_state != DAEMON_SHUTDOWN)) {
+> -			running_state = state;
+> -			pthread_cond_broadcast(&config_cond);
+> -#ifdef USE_SYSTEMD
+> -			do_sd_notify(old_state, state);
+> -#endif
+> -		}
+> +		else
+> +			rc = __wait_for_state_change(
+> +				running_state != DAEMON_IDLE, 1000);
+> +		if (!rc)
+> +			__post_config_state(state);
+>  	}
+>  	pthread_cleanup_pop(1);
+>  	return rc;
+> -- 
+> 2.28.0
