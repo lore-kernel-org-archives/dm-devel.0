@@ -1,70 +1,45 @@
-From: Adrian Huang12 <ahuang12@lenovo.com>
-Subject: RE: [External]  [PATCH] dm/dax: Fix table reference counts
-Date: Sat, 19 Sep 2020 03:38:20 +0000
-Message-ID: <HK2PR0302MB25949288D7E87B5C9CDD60A9B33C0@HK2PR0302MB2594.apcprd03.prod.outlook.com>
-References: <160045867590.25663.7548541079217827340.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Subject: Re: [PATCH 10/12] bdi: replace BDI_CAP_STABLE_WRITES with a queue
+ and a sb flag
+Date: Sat, 19 Sep 2020 08:51:26 +0200
+Message-ID: <20200919065126.GA8048@lst.de>
+References: <20200910144833.742260-1-hch@lst.de> <20200910144833.742260-11-hch@lst.de> <20200917092524.GC7347@quack2.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <160045867590.25663.7548541079217827340.stgit@dwillia2-desk3.amr.corp.intel.com>
-Content-Language: en-US
-To: Dan Williams <dan.j.williams@intel.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
-Cc: "stable@vger.kernel.org" <stable@vger.kernel.org>, Jan Kara <jack@suse.cz>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20200917092524.GC7347-4I4JzKEfoa/jFM9bn6wA6Q@public.gmane.org>
+To: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Cc: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>, Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBEYW4gV2lsbGlhbXMgPGRhbi5q
-LndpbGxpYW1zQGludGVsLmNvbT4NCj4gU2VudDogU2F0dXJkYXksIFNlcHRlbWJlciAxOSwgMjAy
-MCAzOjUxIEFNDQo+IFRvOiBkbS1kZXZlbEByZWRoYXQuY29tDQo+IENjOiBzdGFibGVAdmdlci5r
-ZXJuZWwub3JnOyBKYW4gS2FyYSA8amFja0BzdXNlLmN6PjsgQWxhc2RhaXIgS2VyZ29uDQo+IDxh
-Z2tAcmVkaGF0LmNvbT47IE1pa2UgU25pdHplciA8c25pdHplckByZWRoYXQuY29tPjsgQWRyaWFu
-IEh1YW5nMTINCj4gPGFodWFuZzEyQGxlbm92by5jb20+OyBsaW51eC1udmRpbW1AbGlzdHMuMDEu
-b3JnOyBsaW51eC0NCj4ga2VybmVsQHZnZXIua2VybmVsLm9yZw0KPiBTdWJqZWN0OiBbRXh0ZXJu
-YWxdIFtQQVRDSF0gZG0vZGF4OiBGaXggdGFibGUgcmVmZXJlbmNlIGNvdW50cw0KPiANCj4gQSBy
-ZWNlbnQgZml4IHRvIHRoZSBkbV9kYXhfc3VwcG9ydGVkKCkgZmxvdyB1bmNvdmVyZWQgYSBsYXRl
-bnQgYnVnLiBXaGVuDQo+IGRtX2dldF9saXZlX3RhYmxlKCkgZmFpbHMgaXQgaXMgc3RpbGwgcmVx
-dWlyZWQgdG8gZHJvcCB0aGUgc3JjdV9yZWFkX2xvY2soKS4gV2l0aG91dA0KPiB0aGlzIGNoYW5n
-ZSB0aGUgbHZtMiB0ZXN0LXN1aXRlIHRyaWdnZXJzIHRoaXMNCj4gd2FybmluZzoNCj4gDQo+ICAg
-ICAjIGx2bTItdGVzdHN1aXRlIC0tb25seSBwdm1vdmUtYWJvcnQtYWxsLnNoDQo+IA0KPiAgICAg
-V0FSTklORzogbG9jayBoZWxkIHdoZW4gcmV0dXJuaW5nIHRvIHVzZXIgc3BhY2UhDQo+ICAgICA1
-LjkuMC1yYzUrICMyNTEgVGFpbnRlZDogRyAgICAgICAgICAgT0UNCj4gICAgIC0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KPiAgICAgbHZtLzEzMTggaXMg
-bGVhdmluZyB0aGUga2VybmVsIHdpdGggbG9ja3Mgc3RpbGwgaGVsZCENCj4gICAgIDEgbG9jayBo
-ZWxkIGJ5IGx2bS8xMzE4Og0KPiAgICAgICMwOiBmZmZmOTM3MmFiYjVhMzQwICgmbWQtPmlvX2Jh
-cnJpZXIpey4uLi59LXswOjB9LCBhdDoNCj4gZG1fZ2V0X2xpdmVfdGFibGUrMHg1LzB4YjAgW2Rt
-X21vZF0NCj4gDQo+IC4uLmFuZCBsYXRlciBvbiB0aGlzIGhhbmcgc2lnbmF0dXJlOg0KPiANCj4g
-ICAgIElORk86IHRhc2sgbHZtOjEzNDQgYmxvY2tlZCBmb3IgbW9yZSB0aGFuIDEyMiBzZWNvbmRz
-Lg0KPiAgICAgICAgICAgVGFpbnRlZDogRyAgICAgICAgICAgT0UgICAgIDUuOS4wLXJjNSsgIzI1
-MQ0KPiAgICAgImVjaG8gMCA+IC9wcm9jL3N5cy9rZXJuZWwvaHVuZ190YXNrX3RpbWVvdXRfc2Vj
-cyIgZGlzYWJsZXMgdGhpcyBtZXNzYWdlLg0KPiAgICAgdGFzazpsdm0gICAgICAgICAgICAgc3Rh
-dGU6RCBzdGFjazogICAgMCBwaWQ6IDEzNDQgcHBpZDogICAgIDEgZmxhZ3M6MHgwMDAwNDAwMA0K
-PiAgICAgQ2FsbCBUcmFjZToNCj4gICAgICBfX3NjaGVkdWxlKzB4NDVmLzB4YTgwDQo+ICAgICAg
-PyBmaW5pc2hfdGFza19zd2l0Y2grMHgyNDkvMHgyYzANCj4gICAgICA/IHdhaXRfZm9yX2NvbXBs
-ZXRpb24rMHg4Ni8weDExMA0KPiAgICAgIHNjaGVkdWxlKzB4NWYvMHhkMA0KPiAgICAgIHNjaGVk
-dWxlX3RpbWVvdXQrMHgyMTIvMHgyYTANCj4gICAgICA/IF9fc2NoZWR1bGUrMHg0NjcvMHhhODAN
-Cj4gICAgICA/IHdhaXRfZm9yX2NvbXBsZXRpb24rMHg4Ni8weDExMA0KPiAgICAgIHdhaXRfZm9y
-X2NvbXBsZXRpb24rMHhiMC8weDExMA0KPiAgICAgIF9fc3luY2hyb25pemVfc3JjdSsweGQxLzB4
-MTYwDQo+ICAgICAgPyBfX2JwZl90cmFjZV9yY3VfdXRpbGl6YXRpb24rMHgxMC8weDEwDQo+ICAg
-ICAgX19kbV9zdXNwZW5kKzB4NmQvMHgyMTAgW2RtX21vZF0NCj4gICAgICBkbV9zdXNwZW5kKzB4
-ZjYvMHgxNDAgW2RtX21vZF0NCj4gDQo+IEZpeGVzOiA3YmY3ZWFjOGQ2NDggKCJkYXg6IEFycmFu
-Z2UgZm9yIGRheF9zdXBwb3J0ZWQgY2hlY2sgdG8gc3BhbiBtdWx0aXBsZQ0KPiBkZXZpY2VzIikN
-Cj4gQ2M6IDxzdGFibGVAdmdlci5rZXJuZWwub3JnPg0KPiBDYzogSmFuIEthcmEgPGphY2tAc3Vz
-ZS5jej4NCj4gQ2M6IEFsYXNkYWlyIEtlcmdvbiA8YWdrQHJlZGhhdC5jb20+DQo+IENjOiBNaWtl
-IFNuaXR6ZXIgPHNuaXR6ZXJAcmVkaGF0LmNvbT4NCj4gUmVwb3J0ZWQtYnk6IEFkcmlhbiBIdWFu
-ZyA8YWh1YW5nMTJAbGVub3ZvLmNvbT4NCj4gU2lnbmVkLW9mZi1ieTogRGFuIFdpbGxpYW1zIDxk
-YW4uai53aWxsaWFtc0BpbnRlbC5jb20+DQoNCkNvb2wsIHRoYW5rcyBmb3IgdGhlIGZpeC4gVGhp
-cyBzb2x2ZXMgdGhlIGlzc3VlLg0KDQpUZXN0ZWQtYnk6IEFkcmlhbiBIdWFuZyA8YWh1YW5nMTJA
-bGVub3ZvLmNvbT4NCg0KPiAtLS0NCj4gIGRyaXZlcnMvbWQvZG0uYyB8ICAgIDUgKysrLS0NCj4g
-IDEgZmlsZSBjaGFuZ2VkLCAzIGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pDQo+IA0KPiBk
-aWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS5jIGIvZHJpdmVycy9tZC9kbS5jIGluZGV4DQo+IGZi
-MDI1NWQyNWU0Yi4uNGE0MGRmOGFmN2QzIDEwMDY0NA0KPiAtLS0gYS9kcml2ZXJzL21kL2RtLmMN
-Cj4gKysrIGIvZHJpdmVycy9tZC9kbS5jDQo+IEBAIC0xMTM2LDE1ICsxMTM2LDE2IEBAIHN0YXRp
-YyBib29sIGRtX2RheF9zdXBwb3J0ZWQoc3RydWN0IGRheF9kZXZpY2UNCj4gKmRheF9kZXYsIHN0
-cnVjdCBibG9ja19kZXZpY2UgKmJkICB7DQo+ICAJc3RydWN0IG1hcHBlZF9kZXZpY2UgKm1kID0g
-ZGF4X2dldF9wcml2YXRlKGRheF9kZXYpOw0KPiAgCXN0cnVjdCBkbV90YWJsZSAqbWFwOw0KPiAr
-CWJvb2wgcmV0ID0gZmFsc2U7DQo+ICAJaW50IHNyY3VfaWR4Ow0KPiAtCWJvb2wgcmV0Ow0KPiAN
-Cj4gIAltYXAgPSBkbV9nZXRfbGl2ZV90YWJsZShtZCwgJnNyY3VfaWR4KTsNCj4gIAlpZiAoIW1h
-cCkNCj4gLQkJcmV0dXJuIGZhbHNlOw0KPiArCQlnb3RvIG91dDsNCj4gDQo+ICAJcmV0ID0gZG1f
-dGFibGVfc3VwcG9ydHNfZGF4KG1hcCwgZGV2aWNlX3N1cHBvcnRzX2RheCwgJmJsb2Nrc2l6ZSk7
-DQo+IA0KPiArb3V0Og0KPiAgCWRtX3B1dF9saXZlX3RhYmxlKG1kLCBzcmN1X2lkeCk7DQo+IA0K
-PiAgCXJldHVybiByZXQ7DQoNCg==
+On Thu, Sep 17, 2020 at 11:25:24AM +0200, Jan Kara wrote:
+> On Thu 10-09-20 16:48:30, Christoph Hellwig wrote:
+> > The BDI_CAP_STABLE_WRITES is one of the few bits of information in the
+> > backing_dev_info shared between the block drivers and the writeback code.
+> > To help untangling the dependency replace it with a queue flag and a
+> > superblock flag derived from it.  This also helps with the case of e.g.
+> > a file system requiring stable writes due to its own checksumming, but
+> > not forcing it on other users of the block device like the swap code.
+> > 
+> > One downside is that we can't support the stable_pages_required bdi
+> > attribute in sysfs anymore.  It is replaced with a queue attribute, that
+> > can also be made writable for easier testing.
+>   ^^^^^^^^^^^^^^^^
+>   is also made
+> 
+> For a while I was confused thinking that the new attribute is not writeable
+> but when I checked the code I saw that it is.
+> 
+> Not supporting stable_pages_required attribute is not nice but probably it
+> isn't widely used. Maybe the deprecation message can even mention to use
+> the queue attribute? Otherwise the patch looks good to me so feel free to
+> add:
+> 
+> Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+
+Thanks.  I've fixed the commit log and changed the warning to:
+
+	dev_warn_once(dev, 
+                 "the stable_pages_required attribute has been removed. Use the
+		 stable_writes queue attribute instead.\n");
