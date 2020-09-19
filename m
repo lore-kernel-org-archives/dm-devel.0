@@ -1,140 +1,70 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: [PATCH v3] dm: Call proper helper to determine dax support
-Date: Fri, 18 Sep 2020 13:19:42 -0700
-Message-ID: <160046028990.22670.15271558589864899328.stgit@dwillia2-desk3.amr.corp.intel.com>
+From: Adrian Huang12 <ahuang12@lenovo.com>
+Subject: RE: [External]  [PATCH] dm/dax: Fix table reference counts
+Date: Sat, 19 Sep 2020 03:38:20 +0000
+Message-ID: <HK2PR0302MB25949288D7E87B5C9CDD60A9B33C0@HK2PR0302MB2594.apcprd03.prod.outlook.com>
+References: <160045867590.25663.7548541079217827340.stgit@dwillia2-desk3.amr.corp.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
 Return-path: <stable-owner@vger.kernel.org>
-To: linux-nvdimm@lists.01.org
-Cc: stable@vger.kernel.org, Adrian Huang <ahuang12@lenovo.com>, Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>, kernel test robot <lkp@intel.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, ira.weiny@intel.com, mpatocka@redhat.comsnitzer@redhat.com
+In-Reply-To: <160045867590.25663.7548541079217827340.stgit@dwillia2-desk3.amr.corp.intel.com>
+Content-Language: en-US
+To: Dan Williams <dan.j.williams@intel.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: "stable@vger.kernel.org" <stable@vger.kernel.org>, Jan Kara <jack@suse.cz>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>, "linux-nvdimm@lists.01.org" <linux-nvdimm@lists.01.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-From: Jan Kara <jack@suse.cz>
-
-DM was calling generic_fsdax_supported() to determine whether a device
-referenced in the DM table supports DAX. However this is a helper for "leaf" device drivers so that
-they don't have to duplicate common generic checks. High level code
-should call dax_supported() helper which that calls into appropriate
-helper for the particular device. This problem manifested itself as
-kernel messages:
-
-dm-3: error: dax access failed (-95)
-
-when lvm2-testsuite run in cases where a DM device was stacked on top of
-another DM device.
-
-Fixes: 7bf7eac8d648 ("dax: Arrange for dax_supported check to span multiple devices")
-Cc: <stable@vger.kernel.org>
-Tested-by: Adrian Huang <ahuang12@lenovo.com>
-Signed-off-by: Jan Kara <jack@suse.cz>
-Acked-by: Mike Snitzer <snitzer@redhat.com>
-Reported-by: kernel test robot <lkp@intel.com>
-Signed-off-by: Dan Williams <dan.j.williams@intel.com>
----
-Changes since v2 [1]:
-- Add dummy definitions for dax_read_{lock,unlock} in the CONFIG_DAX=n
-  case (0day robot)
-
-[1]: http://lore.kernel.org/r/160040692945.25320.13233625491405115889.stgit@dwillia2-desk3.amr.corp.intel.com
-
- drivers/dax/super.c   |    4 ++++
- drivers/md/dm-table.c |   10 +++++++---
- include/linux/dax.h   |   22 ++++++++++++++++++++--
- 3 files changed, 31 insertions(+), 5 deletions(-)
-
-diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-index e5767c83ea23..b6284c5cae0a 100644
---- a/drivers/dax/super.c
-+++ b/drivers/dax/super.c
-@@ -325,11 +325,15 @@ EXPORT_SYMBOL_GPL(dax_direct_access);
- bool dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
- 		int blocksize, sector_t start, sector_t len)
- {
-+	if (!dax_dev)
-+		return false;
-+
- 	if (!dax_alive(dax_dev))
- 		return false;
- 
- 	return dax_dev->ops->dax_supported(dax_dev, bdev, blocksize, start, len);
- }
-+EXPORT_SYMBOL_GPL(dax_supported);
- 
- size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
- 		size_t bytes, struct iov_iter *i)
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 5edc3079e7c1..229f461e7def 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -860,10 +860,14 @@ EXPORT_SYMBOL_GPL(dm_table_set_type);
- int device_supports_dax(struct dm_target *ti, struct dm_dev *dev,
- 			sector_t start, sector_t len, void *data)
- {
--	int blocksize = *(int *) data;
-+	int blocksize = *(int *) data, id;
-+	bool rc;
- 
--	return generic_fsdax_supported(dev->dax_dev, dev->bdev, blocksize,
--				       start, len);
-+	id = dax_read_lock();
-+	rc = dax_supported(dev->dax_dev, dev->bdev, blocksize, start, len);
-+	dax_read_unlock(id);
-+
-+	return rc;
- }
- 
- /* Check devices support synchronous DAX */
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index 6904d4e0b2e0..d0af16b23122 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -130,6 +130,8 @@ static inline bool generic_fsdax_supported(struct dax_device *dax_dev,
- 	return __generic_fsdax_supported(dax_dev, bdev, blocksize, start,
- 			sectors);
- }
-+bool dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
-+		int blocksize, sector_t start, sector_t len);
- 
- static inline void fs_put_dax(struct dax_device *dax_dev)
- {
-@@ -157,6 +159,13 @@ static inline bool generic_fsdax_supported(struct dax_device *dax_dev,
- 	return false;
- }
- 
-+static inline bool dax_supported(struct dax_device *dax_dev,
-+		struct block_device *bdev, int blocksize, sector_t start,
-+		sector_t len)
-+{
-+	return false;
-+}
-+
- static inline void fs_put_dax(struct dax_device *dax_dev)
- {
- }
-@@ -189,14 +198,23 @@ static inline void dax_unlock_page(struct page *page, dax_entry_t cookie)
- }
- #endif
- 
-+#ifdef CONFIG_DAX
- int dax_read_lock(void);
- void dax_read_unlock(int id);
-+#else
-+static inline int dax_read_lock(void)
-+{
-+	return 0;
-+}
-+
-+static inline void dax_read_unlock(int id)
-+{
-+}
-+#endif /* CONFIG_DAX */
- bool dax_alive(struct dax_device *dax_dev);
- void *dax_get_private(struct dax_device *dax_dev);
- long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
- 		void **kaddr, pfn_t *pfn);
--bool dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
--		int blocksize, sector_t start, sector_t len);
- size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
- 		size_t bytes, struct iov_iter *i);
- size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+PiAtLS0tLU9yaWdpbmFsIE1lc3NhZ2UtLS0tLQ0KPiBGcm9tOiBEYW4gV2lsbGlhbXMgPGRhbi5q
+LndpbGxpYW1zQGludGVsLmNvbT4NCj4gU2VudDogU2F0dXJkYXksIFNlcHRlbWJlciAxOSwgMjAy
+MCAzOjUxIEFNDQo+IFRvOiBkbS1kZXZlbEByZWRoYXQuY29tDQo+IENjOiBzdGFibGVAdmdlci5r
+ZXJuZWwub3JnOyBKYW4gS2FyYSA8amFja0BzdXNlLmN6PjsgQWxhc2RhaXIgS2VyZ29uDQo+IDxh
+Z2tAcmVkaGF0LmNvbT47IE1pa2UgU25pdHplciA8c25pdHplckByZWRoYXQuY29tPjsgQWRyaWFu
+IEh1YW5nMTINCj4gPGFodWFuZzEyQGxlbm92by5jb20+OyBsaW51eC1udmRpbW1AbGlzdHMuMDEu
+b3JnOyBsaW51eC0NCj4ga2VybmVsQHZnZXIua2VybmVsLm9yZw0KPiBTdWJqZWN0OiBbRXh0ZXJu
+YWxdIFtQQVRDSF0gZG0vZGF4OiBGaXggdGFibGUgcmVmZXJlbmNlIGNvdW50cw0KPiANCj4gQSBy
+ZWNlbnQgZml4IHRvIHRoZSBkbV9kYXhfc3VwcG9ydGVkKCkgZmxvdyB1bmNvdmVyZWQgYSBsYXRl
+bnQgYnVnLiBXaGVuDQo+IGRtX2dldF9saXZlX3RhYmxlKCkgZmFpbHMgaXQgaXMgc3RpbGwgcmVx
+dWlyZWQgdG8gZHJvcCB0aGUgc3JjdV9yZWFkX2xvY2soKS4gV2l0aG91dA0KPiB0aGlzIGNoYW5n
+ZSB0aGUgbHZtMiB0ZXN0LXN1aXRlIHRyaWdnZXJzIHRoaXMNCj4gd2FybmluZzoNCj4gDQo+ICAg
+ICAjIGx2bTItdGVzdHN1aXRlIC0tb25seSBwdm1vdmUtYWJvcnQtYWxsLnNoDQo+IA0KPiAgICAg
+V0FSTklORzogbG9jayBoZWxkIHdoZW4gcmV0dXJuaW5nIHRvIHVzZXIgc3BhY2UhDQo+ICAgICA1
+LjkuMC1yYzUrICMyNTEgVGFpbnRlZDogRyAgICAgICAgICAgT0UNCj4gICAgIC0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KPiAgICAgbHZtLzEzMTggaXMg
+bGVhdmluZyB0aGUga2VybmVsIHdpdGggbG9ja3Mgc3RpbGwgaGVsZCENCj4gICAgIDEgbG9jayBo
+ZWxkIGJ5IGx2bS8xMzE4Og0KPiAgICAgICMwOiBmZmZmOTM3MmFiYjVhMzQwICgmbWQtPmlvX2Jh
+cnJpZXIpey4uLi59LXswOjB9LCBhdDoNCj4gZG1fZ2V0X2xpdmVfdGFibGUrMHg1LzB4YjAgW2Rt
+X21vZF0NCj4gDQo+IC4uLmFuZCBsYXRlciBvbiB0aGlzIGhhbmcgc2lnbmF0dXJlOg0KPiANCj4g
+ICAgIElORk86IHRhc2sgbHZtOjEzNDQgYmxvY2tlZCBmb3IgbW9yZSB0aGFuIDEyMiBzZWNvbmRz
+Lg0KPiAgICAgICAgICAgVGFpbnRlZDogRyAgICAgICAgICAgT0UgICAgIDUuOS4wLXJjNSsgIzI1
+MQ0KPiAgICAgImVjaG8gMCA+IC9wcm9jL3N5cy9rZXJuZWwvaHVuZ190YXNrX3RpbWVvdXRfc2Vj
+cyIgZGlzYWJsZXMgdGhpcyBtZXNzYWdlLg0KPiAgICAgdGFzazpsdm0gICAgICAgICAgICAgc3Rh
+dGU6RCBzdGFjazogICAgMCBwaWQ6IDEzNDQgcHBpZDogICAgIDEgZmxhZ3M6MHgwMDAwNDAwMA0K
+PiAgICAgQ2FsbCBUcmFjZToNCj4gICAgICBfX3NjaGVkdWxlKzB4NDVmLzB4YTgwDQo+ICAgICAg
+PyBmaW5pc2hfdGFza19zd2l0Y2grMHgyNDkvMHgyYzANCj4gICAgICA/IHdhaXRfZm9yX2NvbXBs
+ZXRpb24rMHg4Ni8weDExMA0KPiAgICAgIHNjaGVkdWxlKzB4NWYvMHhkMA0KPiAgICAgIHNjaGVk
+dWxlX3RpbWVvdXQrMHgyMTIvMHgyYTANCj4gICAgICA/IF9fc2NoZWR1bGUrMHg0NjcvMHhhODAN
+Cj4gICAgICA/IHdhaXRfZm9yX2NvbXBsZXRpb24rMHg4Ni8weDExMA0KPiAgICAgIHdhaXRfZm9y
+X2NvbXBsZXRpb24rMHhiMC8weDExMA0KPiAgICAgIF9fc3luY2hyb25pemVfc3JjdSsweGQxLzB4
+MTYwDQo+ICAgICAgPyBfX2JwZl90cmFjZV9yY3VfdXRpbGl6YXRpb24rMHgxMC8weDEwDQo+ICAg
+ICAgX19kbV9zdXNwZW5kKzB4NmQvMHgyMTAgW2RtX21vZF0NCj4gICAgICBkbV9zdXNwZW5kKzB4
+ZjYvMHgxNDAgW2RtX21vZF0NCj4gDQo+IEZpeGVzOiA3YmY3ZWFjOGQ2NDggKCJkYXg6IEFycmFu
+Z2UgZm9yIGRheF9zdXBwb3J0ZWQgY2hlY2sgdG8gc3BhbiBtdWx0aXBsZQ0KPiBkZXZpY2VzIikN
+Cj4gQ2M6IDxzdGFibGVAdmdlci5rZXJuZWwub3JnPg0KPiBDYzogSmFuIEthcmEgPGphY2tAc3Vz
+ZS5jej4NCj4gQ2M6IEFsYXNkYWlyIEtlcmdvbiA8YWdrQHJlZGhhdC5jb20+DQo+IENjOiBNaWtl
+IFNuaXR6ZXIgPHNuaXR6ZXJAcmVkaGF0LmNvbT4NCj4gUmVwb3J0ZWQtYnk6IEFkcmlhbiBIdWFu
+ZyA8YWh1YW5nMTJAbGVub3ZvLmNvbT4NCj4gU2lnbmVkLW9mZi1ieTogRGFuIFdpbGxpYW1zIDxk
+YW4uai53aWxsaWFtc0BpbnRlbC5jb20+DQoNCkNvb2wsIHRoYW5rcyBmb3IgdGhlIGZpeC4gVGhp
+cyBzb2x2ZXMgdGhlIGlzc3VlLg0KDQpUZXN0ZWQtYnk6IEFkcmlhbiBIdWFuZyA8YWh1YW5nMTJA
+bGVub3ZvLmNvbT4NCg0KPiAtLS0NCj4gIGRyaXZlcnMvbWQvZG0uYyB8ICAgIDUgKysrLS0NCj4g
+IDEgZmlsZSBjaGFuZ2VkLCAzIGluc2VydGlvbnMoKyksIDIgZGVsZXRpb25zKC0pDQo+IA0KPiBk
+aWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS5jIGIvZHJpdmVycy9tZC9kbS5jIGluZGV4DQo+IGZi
+MDI1NWQyNWU0Yi4uNGE0MGRmOGFmN2QzIDEwMDY0NA0KPiAtLS0gYS9kcml2ZXJzL21kL2RtLmMN
+Cj4gKysrIGIvZHJpdmVycy9tZC9kbS5jDQo+IEBAIC0xMTM2LDE1ICsxMTM2LDE2IEBAIHN0YXRp
+YyBib29sIGRtX2RheF9zdXBwb3J0ZWQoc3RydWN0IGRheF9kZXZpY2UNCj4gKmRheF9kZXYsIHN0
+cnVjdCBibG9ja19kZXZpY2UgKmJkICB7DQo+ICAJc3RydWN0IG1hcHBlZF9kZXZpY2UgKm1kID0g
+ZGF4X2dldF9wcml2YXRlKGRheF9kZXYpOw0KPiAgCXN0cnVjdCBkbV90YWJsZSAqbWFwOw0KPiAr
+CWJvb2wgcmV0ID0gZmFsc2U7DQo+ICAJaW50IHNyY3VfaWR4Ow0KPiAtCWJvb2wgcmV0Ow0KPiAN
+Cj4gIAltYXAgPSBkbV9nZXRfbGl2ZV90YWJsZShtZCwgJnNyY3VfaWR4KTsNCj4gIAlpZiAoIW1h
+cCkNCj4gLQkJcmV0dXJuIGZhbHNlOw0KPiArCQlnb3RvIG91dDsNCj4gDQo+ICAJcmV0ID0gZG1f
+dGFibGVfc3VwcG9ydHNfZGF4KG1hcCwgZGV2aWNlX3N1cHBvcnRzX2RheCwgJmJsb2Nrc2l6ZSk7
+DQo+IA0KPiArb3V0Og0KPiAgCWRtX3B1dF9saXZlX3RhYmxlKG1kLCBzcmN1X2lkeCk7DQo+IA0K
+PiAgCXJldHVybiByZXQ7DQoNCg==
