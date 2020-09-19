@@ -1,12 +1,14 @@
 From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: [PATCH V6 00/14] multipath-tools series: some cleanups
- and fixes checked by codedex tool
-Date: Sat, 19 Sep 2020 18:27:15 +0800
-Message-ID: <ae709d8f-64f7-30bc-bd08-fc2398c0c093@huawei.com>
+Subject: [PATCH V6 11/14] mpathpersist: check whether malloc
+ paramp->trnptid_list fails in handle_args func
+Date: Sat, 19 Sep 2020 18:28:36 +0800
+Message-ID: <39c4b48b-4cc8-062e-c6c8-1207b38f576a@huawei.com>
+References: <ae709d8f-64f7-30bc-bd08-fc2398c0c093@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <ae709d8f-64f7-30bc-bd08-fc2398c0c093@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,43 +23,139 @@ To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, Ch
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-Patch 11 is changed.
-V5->V6 "paramp->num_transportid = num_transportid" is deleted
-in alloc_prout_param_descriptor because paramp->num_transportid
-will be set after if (num_transportids) in handle_args.
+In handle_args func, we donot check whether malloc paramp and
+each paramp->trnptid_list[j] fails before using them, it may
+cause access NULL pointer.
 
-Zhiqiang Liu (7):
-  multipathd: check return value of malloc in cli_getprkey func
-  kpartx: use xmalloc to instead of malloc in main func
-  libmultipath: check return value of dm_mapname in sysfs_check_holders
-  libmultipath: donot free *dst if REALLOC fails in merge_words
-  libmultipath: check whether mpp->features is NUll in setup_map
-  util/tests: use assert_non_null to ensure malloc returns non-null
-    pointer
-  mpathpersist: check whether malloc paramp->trnptid_list fails in
-    handle_args func
+Here, we add alloc_prout_param_descriptor to allocate and init
+paramp, and we add free_prout_param_descriptor to free paramp
+and each paramp->trnptid_list[j].
 
-lixiaokeng (7):
-  multipathd: initialize major and minor in cli_add_map
-  libmultipath: change malloc to calloc in print_foreign_topology
-  libmultipath: use map instead of dm_task_get_name
-  multipathd: check MALLOC return value in mpath_pr_event_handler_fn
-  libmultipathpersist: use update_multipath_table/status in get_mpvec
-  multipath: use update_multipath_table/status in check_useable_paths
-  multipathpersist: delete unused variable in handle_args
+We change num_transport to num_transportids to combine them.
 
- kpartx/kpartx.c                 | 36 +++++++++---------
- libmpathpersist/mpath_persist.c | 15 +++-----
- libmultipath/configure.c        |  5 +++
- libmultipath/devmapper.c        |  2 +-
- libmultipath/dmparser.c         | 18 ++++-----
- libmultipath/foreign.c          |  4 +-
- libmultipath/sysfs.c            |  6 ++-
- mpathpersist/main.c             | 66 +++++++++++++++++++++++++--------
- multipath/main.c                |  9 ++---
- multipathd/cli_handlers.c       |  4 +-
- multipathd/main.c               |  8 ++--
- tests/util.c                    |  2 +
- 12 files changed, 106 insertions(+), 69 deletions(-)
+Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
+---
+ mpathpersist/main.c | 64 ++++++++++++++++++++++++++++++++++-----------
+ 1 file changed, 49 insertions(+), 15 deletions(-)
 
---
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index 28bfe410..f6a8b38c 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -153,6 +153,37 @@ static int do_batch_file(const char *batch_fn)
+ 	return ret;
+ }
+
++static struct prout_param_descriptor *
++alloc_prout_param_descriptor(int num_transportid)
++{
++	struct prout_param_descriptor *paramp;
++
++	if (num_transportid < 0 || num_transportid > MPATH_MX_TIDS)
++		return NULL;
++
++	paramp= malloc(sizeof(struct prout_param_descriptor) +
++				(sizeof(struct transportid *) * num_transportid));
++
++	if (!paramp)
++		return NULL;
++
++	memset(paramp, 0, sizeof(struct prout_param_descriptor) +
++			(sizeof(struct transportid *) * num_transportid));
++	return paramp;
++}
++
++static void free_prout_param_descriptor(struct prout_param_descriptor *paramp)
++{
++	unsigned int i;
++	if (!paramp)
++		return;
++
++	for (i = 0; i < paramp->num_transportid; i++)
++		free(paramp->trnptid_list[i]);
++
++	free(paramp);
++}
++
+ static int handle_args(int argc, char * argv[], int nline)
+ {
+ 	int c;
+@@ -177,7 +208,6 @@ static int handle_args(int argc, char * argv[], int nline)
+ 	int prin = 1;
+ 	int prin_sa = -1;
+ 	int prout_sa = -1;
+-	int num_transport =0;
+ 	char *batch_fn = NULL;
+ 	void *resp = NULL;
+ 	struct transportid * tmp;
+@@ -334,13 +364,13 @@ static int handle_args(int argc, char * argv[], int nline)
+ 				break;
+
+ 			case 'X':
+-				if (0 != construct_transportid(optarg, transportids, num_transport)) {
++				if (0 != construct_transportid(optarg, transportids, num_transportids)) {
+ 					fprintf(stderr, "bad argument to '--transport-id'\n");
+ 					ret = MPATH_PR_SYNTAX_ERROR;
+ 					goto out;
+ 				}
+
+-				++num_transport;
++				++num_transportids;
+ 				break;
+
+ 			case 'l':
+@@ -525,9 +555,12 @@ static int handle_args(int argc, char * argv[], int nline)
+ 		int j;
+ 		struct prout_param_descriptor *paramp;
+
+-		paramp= malloc(sizeof(struct prout_param_descriptor) + (sizeof(struct transportid *)*(MPATH_MX_TIDS )));
+-
+-		memset(paramp, 0, sizeof(struct prout_param_descriptor) + (sizeof(struct transportid *)*(MPATH_MX_TIDS)));
++		paramp = alloc_prout_param_descriptor(num_transportids);
++		if (!paramp) {
++			fprintf(stderr, "malloc paramp failed\n");
++			ret = MPATH_PR_OTHER;
++			goto out_fd;
++		}
+
+ 		for (j = 7; j >= 0; --j) {
+ 			paramp->key[j] = (param_rk & 0xff);
+@@ -544,13 +577,19 @@ static int handle_args(int argc, char * argv[], int nline)
+ 		if (param_aptpl)
+ 			paramp->sa_flags |= MPATH_F_APTPL_MASK;
+
+-		if (num_transport)
++		if (num_transportids)
+ 		{
+ 			paramp->sa_flags |= MPATH_F_SPEC_I_PT_MASK;
+-			paramp->num_transportid = num_transport;
+-			for (j = 0 ; j < num_transport; j++)
++			paramp->num_transportid = num_transportids;
++			for (j = 0 ; j < num_transportids; j++)
+ 			{
+ 				paramp->trnptid_list[j] = (struct transportid *)malloc(sizeof(struct transportid));
++				if (!paramp->trnptid_list[j]) {
++					fprintf(stderr, "malloc paramp->trnptid_list[%d] failed.\n", j);
++					ret = MPATH_PR_OTHER;
++					free_prout_param_descriptor(paramp);
++					goto out_fd;
++				}
+ 				memcpy(paramp->trnptid_list[j], &transportids[j],sizeof(struct transportid));
+ 			}
+ 		}
+@@ -558,12 +597,7 @@ static int handle_args(int argc, char * argv[], int nline)
+ 		/* PROUT commands other than 'register and move' */
+ 		ret = __mpath_persistent_reserve_out (fd, prout_sa, 0, prout_type,
+ 				paramp, noisy);
+-		for (j = 0 ; j < num_transport; j++)
+-		{
+-			tmp = paramp->trnptid_list[j];
+-			free(tmp);
+-		}
+-		free(paramp);
++		free_prout_param_descriptor(paramp);
+ 	}
+
+ 	if (ret != MPATH_PR_SUCCESS)
+-- 
