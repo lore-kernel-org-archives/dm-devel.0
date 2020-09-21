@@ -1,15 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH V6 11/14] mpathpersist: check whether malloc
- paramp->trnptid_list fails in handle_args func
-Date: Mon, 21 Sep 2020 10:56:45 +0200
-Message-ID: <2784ac6e3115342c807fb750ddd72874621db4ca.camel@suse.com>
-References: <ae709d8f-64f7-30bc-bd08-fc2398c0c093@huawei.com>
-	<39c4b48b-4cc8-062e-c6c8-1207b38f576a@huawei.com>
+Subject: Re: [PATCH v2] libmultipath: check udev_device_get_*
+ return value to avoid segfault
+Date: Mon, 21 Sep 2020 11:14:24 +0200
+Message-ID: <a09c32f1acded7e3fe2e5187606e27c60c584de6.camel@suse.com>
+References: <be54400a-5da9-8444-c473-562d675b10f3@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <39c4b48b-4cc8-062e-c6c8-1207b38f576a@huawei.com>
+In-Reply-To: <be54400a-5da9-8444-c473-562d675b10f3@huawei.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,37 +22,17 @@ To: lixiaokeng <lixiaokeng@huawei.com>, Benjamin Marzinski <bmarzins@redhat.com>
 Cc: linfeilong <linfeilong@huawei.com>, "liuzhiqiang (I)" <liuzhiqiang26@huawei.com>
 List-Id: dm-devel.ids
 
-On Sat, 2020-09-19 at 18:28 +0800, lixiaokeng wrote:
-> In handle_args func, we donot check whether malloc paramp and
-> each paramp->trnptid_list[j] fails before using them, it may
-> cause access NULL pointer.
-> 
-> Here, we add alloc_prout_param_descriptor to allocate and init
-> paramp, and we add free_prout_param_descriptor to free paramp
-> and each paramp->trnptid_list[j].
-> 
-> We change num_transport to num_transportids to combine them.
-> 
-> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
-> ---
->  mpathpersist/main.c | 64 ++++++++++++++++++++++++++++++++++---------
-> --
->  1 file changed, 49 insertions(+), 15 deletions(-)
-> 
+On Mon, 2020-09-21 at 12:00 +0800, lixiaokeng wrote:
+> The udev_device_get_* function may return NULL, and it will be
+> deregerenced in str* and sscanf func. We check the return value
+> to avoid segfault. Fix all.
+>
 
-OK. So your v5 patch wasn't wrong either, as you did set
-num_transportids twice. I admit I missed that. But it's better now
-anyway. 
+Thanks. Let me remark that this patch does _not_ fix all invocations of
+udev_device_get_XYZ() (I suppose you meant something else with "Fix
+all.", but please be more specific next time then).
+See path_discover(), declare_sysfs_get_str(), for instance.
 
-Actually, I would have preferred if you solved the issue the other way
-around, by moving the assignment to num_transportids to after the
-memset() in alloc_prout_param_descriptor(). But it's not worth forcing
-you into yet another iteration, so:
+Anyway, that can be fixed later, so:
 
 Reviewed-by: Martin Wilck <mwilck@suse.com>
-
-This means the whole series (except 8/14 which had been taken back) is
-acked now, and I'll push it to the upstream-queue branch.
-
-Martin
