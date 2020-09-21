@@ -1,97 +1,110 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 10/19] libmultipath: devmapper: refactor
- libdm version determination
-Date: Mon, 21 Sep 2020 10:35:34 +0200
-Message-ID: <1cb705785cf5d77b89002135b9411900fb82b630.camel@suse.com>
-References: <20200916153718.582-1-mwilck@suse.com>
-	<20200916153718.582-11-mwilck@suse.com>
-	<20200919221422.GW11108@octiron.msp.redhat.com>
+From: Bhaskar Chowdhury <unixbhaskar@gmail.com>
+Subject: Re: PROBLEM: 5.9.0-rc6 fails =?utf-8?Q?to_?=
+ =?utf-8?Q?compile_due_to_'redefinition_of_=E2=80=98dax=5Fsupported?=
+ =?utf-8?B?4oCZJw==?=
+Date: Mon, 21 Sep 2020 14:19:48 +0530
+Message-ID: <20200921084948.GA20254@Slackware>
+References: <20200921010359.GO3027113@arch-chirva.localdomain>
+ <CA+G9fYtCg2KjdB2oBUDJ2DKAzUxq3u8ZnMY9Et-RG9Pnrmuf9w@mail.gmail.com>
+ <20200921073218.GA3142611@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200919221422.GW11108@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: lixiaokeng@huawei.com, dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="UlVJffcvxoiEqYs2"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200921073218.GA3142611@kroah.com>
+To: Greg KH <gregkh@linuxfoundation.org>
+Cc: Naresh Kamboju <naresh.kamboju@linaro.org>, Stuart Little <achirvasub@gmail.com>, Dan Williams <dan.j.williams@intel.com>, Vishal Verma <vishal.l.verma@intel.com>, Dave Jiang <dave.jiang@intel.com>, linux-nvdimm@lists.01.org, kernel list <linux-kernel@vger.kernel.org>, linux- stable <stable@vger.kernel.org>, Adrian Huang <ahuang12@lenovo.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Ira Weiny <ira.weiny@intel.com>, mpatocka@redhat.com, lkft-triage@lists.linaro.org, Jan Kara <jack@suse.cz>
 List-Id: dm-devel.ids
 
-On Sat, 2020-09-19 at 17:14 -0500, Benjamin Marzinski wrote:
-> On Wed, Sep 16, 2020 at 05:37:09PM +0200, mwilck@suse.com wrote:
-> > From: Martin Wilck <mwilck@suse.com>
-> > 
-> > As one step towards bundling all possibly racy libdm init calls
-> > into a single
-> > function, split the code for determining and checking versions of
-> > libdm and kernel components. Provide a generic helper
-> > libmp_get_version() that makes sure the versions are "lazily"
-> > initialized.
-> > Note that retrieving the versions requires libdm calls, thus the
-> > version initialization calls libdm initialization, which might call
-> > version initialization recursively. But that's not an issue, as
-> > the initialization is protected by pthread_once().
-> 
-> This is confusing me. dm_tgt_version will call
-> DM_DEVICE_LIST_VERSIONS,
-> but it doesn't call libmp_dm_task_create(), so I don't see the
-> recursion
-> possiblity. 
 
-You are right, I was confused. 
-The callstack for "lazy" initialization looks like this:
+--UlVJffcvxoiEqYs2
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-libmp_dm_task_create
-  pthread_once(&dm_initialized, libmp_dm_init);
-    libmp_dm_init()
-=>    dm_prereq()
-        init_versions
-          pthread_once(&versions_initialized, _init_versions);
-            _init_versions()
-              init_dm_library_version()
-              init_dm_drv_version()
-              init_dm_mpath_version()
-                dm_tgt_version
-**                dm_task_create
-                  libmp_task_run()
-                    pthread_mutex_lock(&libmp_dm_lock);
-                    dm_task_run()
+On 09:32 Mon 21 Sep 2020, Greg KH wrote:
+>On Mon, Sep 21, 2020 at 11:34:17AM +0530, Naresh Kamboju wrote:
+>> On Mon, 21 Sep 2020 at 06:34, Stuart Little <achirvasub@gmail.com> wrote:
+>> >
+>> > I am trying to compile for an x86_64 machine (Intel(R) Core(TM) i7-750=
+0U CPU @ 2.70GHz). The config file I am currently using is at
+>> >
+>> > https://termbin.com/xin7
+>> >
+>> > The build for 5.9.0-rc6 fails with the following errors:
+>> >
+>>=20
+>> arm and mips allmodconfig build breaks due to this error.
+>
+>all my local builds are breaking now too with this :(
+>
+>Was there a proposed patch anywhere for this?
+>
+>thanks,
+>
+>greg k-h
 
-(If an application called dm_prereq() explicitly, it would enter
-the stack at "=>", which would be less of a problem).
+I don't know Greg,but it builds for me with these config :
 
-I suppose I should add a comment at "**" saying that we must not call
-libmp_dm_task_create() there to avoid recursion. I also notice that my
-function naming I used is inconsistent; it should be
-libmp_dm_task_run() rather than just libmp_task_run().
+bhaskar@Slackware_14:14:31_Mon Sep 21:~> cd /data/linux
+=E2=9C=94 /data/linux [master|=E2=9A=91 1]
+14:14 $ grep DAX .config
+CONFIG_NVDIMM_DAX=3Dy
+CONFIG_DAX_DRIVER=3Dy
+CONFIG_DAX=3Dy
+CONFIG_DEV_DAX=3Dm
+CONFIG_DEV_DAX_PMEM=3Dm
+CONFIG_DEV_DAX_KMEM=3Dm
+CONFIG_DEV_DAX_PMEM_COMPAT=3Dm
+CONFIG_FS_DAX=3Dy
+CONFIG_FS_DAX_PMD=3Dy
 
-> That's good because according to the man page:
-> 
-> "If you specify a routine that directly or indirectly results in a
-> recursive call to pthread_once(3) and that specifies the same routine
-> argument, the recursive call can result in a deadlock."
 
-Thanks for pointing this out. I had missed that indeed.
+and it gets booted by qemu ....like this=20
 
-I see this paragraph only in some old DECThreads man pages on the web.
-There's a slighly different "APPLICATION USAGE" statement under 
-https://pubs.opengroup.org/onlinepubs/9699919799/. The pragraph is
-missing in https://man7.org/linux/man-pages/man3/pthread_once.3p.html,
-which is still based on POSIX.1-2008, 2013 edition - that's why I
-missed it.
+[    5.134563] devtmpfs: mounted
+[    5.164729] Freeing unused decrypted memory: 2040K
+[    5.314950] Freeing unused kernel image (initmem) memory: 1600K
+[    5.316543] Write protecting the kernel read-only data: 26624k
+[    5.327037] Freeing unused kernel image (text/rodata gap) memory: 2040K
+[    5.331005] Freeing unused kernel image (rodata/data gap) memory: 876K
+[    5.331861] rodata_test: all tests were successful
+[    5.332872] Run /sbin/init as init process
+[    5.694654] EXT4-fs (sda): re-mounted. Opts: (null)
+[    5.695839] ext4 filesystem being remounted at / supports timestamps unt=
+il 2038 (0x7fffffff)
+Starting syslogd: OK
+Starting klogd: OK
+Running sysctl: [    6.974188] random: crng init done
+OK
+Initializing random number generator: OK
+Saving random seed: OK
+Starting network: [    8.293018] hrtimer: interrupt took 4569776 ns
+OK
 
-Anyway, it makes sense, because pthread_once() guarantees that the init
-routine has _finished_ when it returns, which can't work with recursive
-calls.
+Welcome to Buildroot_Linux
+Bhaskar_Thinkpad_x250 login: root
+# uname -a
+Linux Bhaskar_Thinkpad_x250 5.9.0-rc6-Slackware #1 SMP Mon Sep 21 11:42:03 =
+IST 2020 x86_64 GNU/Linux
 
-Anyway, I'll send a v2.
 
-Regards
-Martin
+~Bhaskar
+
+--UlVJffcvxoiEqYs2
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAABCAAdFiEEnwF+nWawchZUPOuwsjqdtxFLKRUFAl9oaSgACgkQsjqdtxFL
+KRWNQwgAmjlpIbY42uBabMCy++pqyyzc4Jq9sz9SHbENTdvsPvBV6FPDleUI6DMP
+3egPCVbC5vEB19r6MYqFuq4L9Y7kuXdDd3P+52v8/gJ7HOOQDDd4lIG0YCyxH1RI
+Lx7Lb/9/WTISo2JYsqlrgaPY8PWjF+aGZrN24TFXuH6YlSTf+ck24RfZxPoRtAO9
+kTp9s4HBHPXlQcHHBscLIRdq9sGlHbYew3VxtlGz0DhP9bbMOuvER8Ick3Y+rGSb
+DyUfgPU3T8Q/SinM51LUBR7WGqAoi1x4DjcAp1ZGOXB0AF5XKz2nLkvAbwBe2bqH
+NF1e9TEZ4GLiQK4oKjhvXvl58jz1JA==
+=yKt3
+-----END PGP SIGNATURE-----
+
+--UlVJffcvxoiEqYs2--
