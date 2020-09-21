@@ -1,60 +1,178 @@
-From: Coly Li <colyli@suse.de>
-Subject: Re: [PATCH 03/13] bcache: inherit the optimal I/O size
-Date: Mon, 21 Sep 2020 17:54:59 +0800
-Message-ID: <b547a1b6-ab03-0520-012d-86d112c83d92@suse.de>
-References: <20200921080734.452759-1-hch@lst.de>
- <20200921080734.452759-4-hch@lst.de>
+From: Jan Kara <jack@suse.cz>
+Subject: Re: [PATCH v2] dm: Call proper helper to determine dax support
+Date: Mon, 21 Sep 2020 11:58:03 +0200
+Message-ID: <20200921095803.GE5862@quack2.suse.cz>
+References: <160040692945.25320.13233625491405115889.stgit@dwillia2-desk3.amr.corp.intel.com>
+ <CA+G9fYud7x0TfTDNWHa_0hzYHNQyet-a2==gQzDaZKXywY1meg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: multipart/mixed; boundary="Pk6IbRAofICFmK5e"
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200921080734.452759-4-hch@lst.de>
-Content-Language: en-US
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Richard Weinberger <richard@nod.at>, Minchan Kim <minchan@kernel.org>, Johannes Thumshirn <Johannes.Thumshirn@wdc.com>, Justin Sanders <justin@coraid.com>, linux-mtd@lists.infradead.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org
+Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CA+G9fYud7x0TfTDNWHa_0hzYHNQyet-a2==gQzDaZKXywY1meg@mail.gmail.com>
+To: Naresh Kamboju <naresh.kamboju@linaro.org>
+Cc: Dan Williams <dan.j.williams@intel.com>, Jan Kara <jack@suse.cz>, linux-nvdimm@lists.01.org, linux- stable <stable@vger.kernel.org>, Adrian Huang <ahuang12@lenovo.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, open list <linux-kernel@vger.kernel.org>, Ira Weiny <ira.weiny@intel.com>, mpatocka@redhat.com, lkft-triage@lists.linaro.org
 List-Id: dm-devel.ids
 
-On 2020/9/21 16:07, Christoph Hellwig wrote:
-> Inherit the optimal I/O size setting just like the readahead window,
-> as any reason to do larger I/O does not apply to just readahead.
+
+--Pk6IbRAofICFmK5e
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+
+On Mon 21-09-20 11:23:07, Naresh Kamboju wrote:
+> On Fri, 18 Sep 2020 at 11:18, Dan Williams <dan.j.williams@intel.com> wrote:
+> >
+> > From: Jan Kara <jack@suse.cz>
+> >
+> > DM was calling generic_fsdax_supported() to determine whether a device
+> > referenced in the DM table supports DAX. However this is a helper for "leaf" device drivers so that
+> > they don't have to duplicate common generic checks. High level code
+> > should call dax_supported() helper which that calls into appropriate
+> > helper for the particular device. This problem manifested itself as
+> > kernel messages:
+> >
+> > dm-3: error: dax access failed (-95)
+> >
+> > when lvm2-testsuite run in cases where a DM device was stacked on top of
+> > another DM device.
+> >
+> > Fixes: 7bf7eac8d648 ("dax: Arrange for dax_supported check to span multiple devices")
+> > Cc: <stable@vger.kernel.org>
+> > Tested-by: Adrian Huang <ahuang12@lenovo.com>
+> > Signed-off-by: Jan Kara <jack@suse.cz>
+> > Acked-by: Mike Snitzer <snitzer@redhat.com>
+> > Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+> > ---
+> > Changes since v1 [1]:
+> > - Add missing dax_read_lock() around dax_supported()
+> >
+> > [1]: http://lore.kernel.org/r/20200916151445.450-1-jack@suse.cz
+> >
+> >  drivers/dax/super.c   |    4 ++++
+> >  drivers/md/dm-table.c |   10 +++++++---
+> >  include/linux/dax.h   |   11 +++++++++--
+> >  3 files changed, 20 insertions(+), 5 deletions(-)
+> >
+> > diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+> > index e5767c83ea23..b6284c5cae0a 100644
+> > --- a/drivers/dax/super.c
+> > +++ b/drivers/dax/super.c
+> > @@ -325,11 +325,15 @@ EXPORT_SYMBOL_GPL(dax_direct_access);
+> >  bool dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
+> >                 int blocksize, sector_t start, sector_t len)
+> >  {
+> > +       if (!dax_dev)
+> > +               return false;
+> > +
+> >         if (!dax_alive(dax_dev))
+> >                 return false;
+> >
+> >         return dax_dev->ops->dax_supported(dax_dev, bdev, blocksize, start, len);
+> >  }
+> > +EXPORT_SYMBOL_GPL(dax_supported);
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  drivers/md/bcache/super.c | 2 ++
->  1 file changed, 2 insertions(+)
+> arm build error while building with allmodconfig.
 > 
-> diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
-> index 1bbdc410ee3c51..48113005ed86ad 100644
-> --- a/drivers/md/bcache/super.c
-> +++ b/drivers/md/bcache/super.c
-> @@ -1430,6 +1430,8 @@ static int cached_dev_init(struct cached_dev *dc, unsigned int block_size)
->  	dc->disk.disk->queue->backing_dev_info->ra_pages =
->  		max(dc->disk.disk->queue->backing_dev_info->ra_pages,
->  		    q->backing_dev_info->ra_pages);
-> +	blk_queue_io_opt(dc->disk.disk->queue,
-> +		max(queue_io_opt(dc->disk.disk->queue), queue_io_opt(q)));
->  
+> ../drivers/dax/super.c:325:6: error: redefinition of ‘dax_supported’
+>   325 | bool dax_supported(struct dax_device *dax_dev, struct
+> block_device *bdev,
+>       |      ^~~~~~~~~~~~~
+> In file included from ../drivers/dax/super.c:16:
+> ../include/linux/dax.h:162:20: note: previous definition of
+> ‘dax_supported’ was here
+>   162 | static inline bool dax_supported(struct dax_device *dax_dev,
+>       |                    ^~~~~~~~~~~~~
+> make[3]: *** [../scripts/Makefile.build:283: drivers/dax/super.o] Error 1
+> 
+> Reported-by: Naresh Kamboju <naresh.kamboju@linaro.org>
+> 
+> Ref:
+> https://builds.tuxbuild.com/IO690jFQDp0qP9zFuWBqpA/build.log
 
-Hi Christoph,
+Thanks for report! Attached patch should fix the build (at least I've
+tested it with CONFIG_DAX && CONFIG_FS_DAX, CONFIG_DAX && !CONFIG_FS_DAX,
+and !CONFIG_DAX cases). Dan can you please merge the fix?
 
-I am not sure whether virtual bcache device's optimal request size can
-be simply set like this.
+								Honza
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
 
-Most of time inherit backing device's optimal request size is fine, but
-there are two exceptions,
-- Read request hits on cache device
-- User sets sequential_cuttoff as 0, all writing may go into cache
-device firstly.
-For the above two conditions, all I/Os goes into cache device, using
-optimal request size of backing device might be improper.
+--Pk6IbRAofICFmK5e
+Content-Type: text/x-patch; charset=us-ascii
+Content-Disposition: attachment; filename="0001-dax-Fix-compilation-for-CONFIG_DAX-CONFIG_FS_DAX.patch"
 
-Just a guess, is it OK to set the optimal request size of the virtual
-bcache device as the least common multiple of cache device's and backing
-device's optimal request sizes ?
+From c48c9d1ee41ca17561dfd7ec5247b5afc527d40e Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Mon, 21 Sep 2020 11:33:23 +0200
+Subject: [PATCH] dax: Fix compilation for CONFIG_DAX && !CONFIG_FS_DAX
+
+dax_supported() is defined whenever CONFIG_DAX is enabled. So dummy
+implementation should be defined only in !CONFIG_DAX case, not in
+!CONFIG_FS_DAX case.
+
+Fixes: e2ec51282545 ("dm: Call proper helper to determine dax support")
+Cc: <stable@vger.kernel.org>
+Reported-by: Geert Uytterhoeven <geert@linux-m68k.org>
+Reported-by: Naresh Kamboju <naresh.kamboju@linaro.org>
+Reported-by: kernel test robot <lkp@intel.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+---
+ include/linux/dax.h | 17 ++++++++---------
+ 1 file changed, 8 insertions(+), 9 deletions(-)
+
+diff --git a/include/linux/dax.h b/include/linux/dax.h
+index 497031392e0a..43b39ab9de1a 100644
+--- a/include/linux/dax.h
++++ b/include/linux/dax.h
+@@ -58,6 +58,8 @@ static inline void set_dax_synchronous(struct dax_device *dax_dev)
+ {
+ 	__set_dax_synchronous(dax_dev);
+ }
++bool dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
++		int blocksize, sector_t start, sector_t len);
+ /*
+  * Check if given mapping is supported by the file / underlying device.
+  */
+@@ -104,6 +106,12 @@ static inline bool dax_synchronous(struct dax_device *dax_dev)
+ static inline void set_dax_synchronous(struct dax_device *dax_dev)
+ {
+ }
++static inline bool dax_supported(struct dax_device *dax_dev,
++		struct block_device *bdev, int blocksize, sector_t start,
++		sector_t len)
++{
++	return false;
++}
+ static inline bool daxdev_mapping_supported(struct vm_area_struct *vma,
+ 				struct dax_device *dax_dev)
+ {
+@@ -130,8 +138,6 @@ static inline bool generic_fsdax_supported(struct dax_device *dax_dev,
+ 	return __generic_fsdax_supported(dax_dev, bdev, blocksize, start,
+ 			sectors);
+ }
+-bool dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
+-		int blocksize, sector_t start, sector_t len);
+ 
+ static inline void fs_put_dax(struct dax_device *dax_dev)
+ {
+@@ -159,13 +165,6 @@ static inline bool generic_fsdax_supported(struct dax_device *dax_dev,
+ 	return false;
+ }
+ 
+-static inline bool dax_supported(struct dax_device *dax_dev,
+-		struct block_device *bdev, int blocksize, sector_t start,
+-		sector_t len)
+-{
+-	return false;
+-}
+-
+ static inline void fs_put_dax(struct dax_device *dax_dev)
+ {
+ }
+-- 
+2.16.4
 
 
-[snipped]
-
-Thanks.
-
-Coly Li
+--Pk6IbRAofICFmK5e--
