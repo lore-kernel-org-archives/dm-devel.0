@@ -1,58 +1,50 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3 6/6] dm: change max_io_len() to use blk_max_size_offset()
-Date: Mon, 21 Sep 2020 22:32:51 -0400
-Message-ID: <20200922023251.47712-7-snitzer@redhat.com>
-References: <20200922023251.47712-1-snitzer@redhat.com>
-Return-path: <linux-block-owner@vger.kernel.org>
-Sender: Mike Snitzer <snitzer@gmail.com>
-In-Reply-To: <20200922023251.47712-1-snitzer@redhat.com>
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Ming Lei <ming.lei@redhat.com>, Vijayendra Suman <vijayendra.suman@oracle.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
+From: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH 03/13] bcache: inherit the optimal I/O size
+Date: Tue, 22 Sep 2020 10:44:31 +0200
+Message-ID: <20200922084431.GA16464@quack2.suse.cz>
+References: <20200921080734.452759-1-hch@lst.de>
+ <20200921080734.452759-4-hch@lst.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20200921080734.452759-4-hch-jcswGhMUV9g@public.gmane.org>
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Johannes Thumshirn <Johannes.Thumshirn-Sjgp3cTcYWE@public.gmane.org>, Justin Sanders <justin-kFqnmIA2sJXQT0dZR+AlfA@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-cunTk1MwBs8qoQakbn7OcQ@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-Using blk_max_size_offset() enables DM core's splitting to impose
-ti->max_io_len (via q->limits.chunk_sectors) and also fallback to
-respecting q->limits.max_sectors if chunk_sectors isn't set.
+On Mon 21-09-20 10:07:24, Christoph Hellwig wrote:
+> Inherit the optimal I/O size setting just like the readahead window,
+> as any reason to do larger I/O does not apply to just readahead.
+> 
+> Signed-off-by: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm.c | 20 ++++++++------------
- 1 file changed, 8 insertions(+), 12 deletions(-)
+The patch looks good to me. You can add:
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 6ed05ca65a0f..3982012b1309 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1051,22 +1051,18 @@ static sector_t max_io_len_target_boundary(sector_t sector, struct dm_target *ti
- static sector_t max_io_len(sector_t sector, struct dm_target *ti)
- {
- 	sector_t len = max_io_len_target_boundary(sector, ti);
--	sector_t offset, max_len;
-+	sector_t max_len;
- 
- 	/*
- 	 * Does the target need to split even further?
-+	 * - q->limits.chunk_sectors reflects ti->max_io_len so
-+	 *   blk_max_size_offset() provides required splitting.
-+	 * - blk_max_size_offset() also respects q->limits.max_sectors
- 	 */
--	if (ti->max_io_len) {
--		offset = dm_target_offset(ti, sector);
--		if (unlikely(ti->max_io_len & (ti->max_io_len - 1)))
--			max_len = sector_div(offset, ti->max_io_len);
--		else
--			max_len = offset & (ti->max_io_len - 1);
--		max_len = ti->max_io_len - max_len;
--
--		if (len > max_len)
--			len = max_len;
--	}
-+	max_len = blk_max_size_offset(dm_table_get_md(ti->table)->queue,
-+				      dm_target_offset(ti, sector));
-+	if (len > max_len)
-+		len = max_len;
- 
- 	return len;
- }
+Reviewed-by: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
+
+								Honza
+
+> ---
+>  drivers/md/bcache/super.c | 2 ++
+>  1 file changed, 2 insertions(+)
+> 
+> diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+> index 1bbdc410ee3c51..48113005ed86ad 100644
+> --- a/drivers/md/bcache/super.c
+> +++ b/drivers/md/bcache/super.c
+> @@ -1430,6 +1430,8 @@ static int cached_dev_init(struct cached_dev *dc, unsigned int block_size)
+>  	dc->disk.disk->queue->backing_dev_info->ra_pages =
+>  		max(dc->disk.disk->queue->backing_dev_info->ra_pages,
+>  		    q->backing_dev_info->ra_pages);
+> +	blk_queue_io_opt(dc->disk.disk->queue,
+> +		max(queue_io_opt(dc->disk.disk->queue), queue_io_opt(q)));
+>  
+>  	atomic_set(&dc->io_errors, 0);
+>  	dc->io_disable = false;
+> -- 
+> 2.28.0
+> 
 -- 
-2.15.0
+Jan Kara <jack-IBi9RG/b67k@public.gmane.org>
+SUSE Labs, CR
