@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3 1/6] dm: fix bio splitting and its bio completion order for regular IO
-Date: Mon, 21 Sep 2020 22:32:46 -0400
-Message-ID: <20200922023251.47712-2-snitzer@redhat.com>
+Subject: [PATCH v3 2/6] dm: fix comment in dm_process_bio()
+Date: Mon, 21 Sep 2020 22:32:47 -0400
+Message-ID: <20200922023251.47712-3-snitzer@redhat.com>
 References: <20200922023251.47712-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 Sender: Mike Snitzer <snitzer@gmail.com>
@@ -10,71 +10,32 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: Ming Lei <ming.lei@redhat.com>, Vijayendra Suman <vijayendra.suman@oracle.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-dm_queue_split() is removed because __split_and_process_bio() _must_
-handle splitting bios to ensure proper bio submission and completion
-ordering as a bio is split.
+Refer to the correct function (->submit_bio instead of ->queue_bio).
+Also, add details about why using blk_queue_split() isn't needed for
+dm_wq_work()'s call to dm_process_bio().
 
-Otherwise, multiple recursive calls to ->submit_bio will cause multiple
-split bios to be allocated from the same ->bio_split mempool at the same
-time. This would result in deadlock in low memory conditions because no
-progress could be made (only one bio is available in ->bio_split
-mempool).
-
-This fix has been verified to still fix the loss of performance, due
-to excess splitting, that commit 120c9257f5f1 provided.
-
-Fixes: 120c9257f5f1 ("Revert "dm: always call blk_queue_split() in dm_process_bio()"")
-Cc: stable@vger.kernel.org # 5.0+, requires custom backport due to 5.9 changes
-Reported-by: Ming Lei <ming.lei@redhat.com>
+Fixes: c62b37d96b6eb ("block: move ->make_request_fn to struct block_device_operations")
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm.c | 23 ++---------------------
- 1 file changed, 2 insertions(+), 21 deletions(-)
+ drivers/md/dm.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 4a40df8af7d3..d948cd522431 100644
+index d948cd522431..6ed05ca65a0f 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -1724,23 +1724,6 @@ static blk_qc_t __process_bio(struct mapped_device *md, struct dm_table *map,
- 	return ret;
- }
- 
--static void dm_queue_split(struct mapped_device *md, struct dm_target *ti, struct bio **bio)
--{
--	unsigned len, sector_count;
--
--	sector_count = bio_sectors(*bio);
--	len = min_t(sector_t, max_io_len((*bio)->bi_iter.bi_sector, ti), sector_count);
--
--	if (sector_count > len) {
--		struct bio *split = bio_split(*bio, len, GFP_NOIO, &md->queue->bio_split);
--
--		bio_chain(split, *bio);
--		trace_block_split(md->queue, split, (*bio)->bi_iter.bi_sector);
--		submit_bio_noacct(*bio);
--		*bio = split;
--	}
--}
--
- static blk_qc_t dm_process_bio(struct mapped_device *md,
- 			       struct dm_table *map, struct bio *bio)
- {
-@@ -1768,14 +1751,12 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
- 	if (current->bio_list) {
- 		if (is_abnormal_io(bio))
- 			blk_queue_split(&bio);
--		else
--			dm_queue_split(md, ti, &bio);
-+		/* regular IO is split by __split_and_process_bio */
+@@ -1744,9 +1744,11 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
  	}
  
- 	if (dm_get_md_type(md) == DM_TYPE_NVME_BIO_BASED)
- 		return __process_bio(md, map, bio, ti);
--	else
--		return __split_and_process_bio(md, map, bio);
-+	return __split_and_process_bio(md, map, bio);
- }
- 
- static blk_qc_t dm_submit_bio(struct bio *bio)
+ 	/*
+-	 * If in ->queue_bio we need to use blk_queue_split(), otherwise
++	 * If in ->submit_bio we need to use blk_queue_split(), otherwise
+ 	 * queue_limits for abnormal requests (e.g. discard, writesame, etc)
+ 	 * won't be imposed.
++	 * If called from dm_wq_work() for deferred bio processing, bio
++	 * was already handled by following code with previous ->submit_bio.
+ 	 */
+ 	if (current->bio_list) {
+ 		if (is_abnormal_io(bio))
 -- 
 2.15.0
