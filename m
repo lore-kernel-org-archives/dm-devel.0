@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v3 5/6] dm table: stack 'chunk_sectors' limit to account for target-specific splitting
-Date: Mon, 21 Sep 2020 22:32:50 -0400
-Message-ID: <20200922023251.47712-6-snitzer@redhat.com>
+Subject: [PATCH v3 6/6] dm: change max_io_len() to use blk_max_size_offset()
+Date: Mon, 21 Sep 2020 22:32:51 -0400
+Message-ID: <20200922023251.47712-7-snitzer@redhat.com>
 References: <20200922023251.47712-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 Sender: Mike Snitzer <snitzer@gmail.com>
@@ -10,40 +10,49 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: Ming Lei <ming.lei@redhat.com>, Vijayendra Suman <vijayendra.suman@oracle.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-If target set ti->max_io_len it must be used when stacking
-DM device's queue_limits to establish a 'chunk_sectors' that is
-compatible with the IO stack.
-
-By using lcm_not_zero() care is taken to avoid blindly overriding the
-chunk_sectors limit stacked up by blk_stack_limits().
+Using blk_max_size_offset() enables DM core's splitting to impose
+ti->max_io_len (via q->limits.chunk_sectors) and also fallback to
+respecting q->limits.max_sectors if chunk_sectors isn't set.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-table.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ drivers/md/dm.c | 20 ++++++++------------
+ 1 file changed, 8 insertions(+), 12 deletions(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 229f461e7def..3f4e7c7912a2 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -18,6 +18,7 @@
- #include <linux/mutex.h>
- #include <linux/delay.h>
- #include <linux/atomic.h>
-+#include <linux/lcm.h>
- #include <linux/blk-mq.h>
- #include <linux/mount.h>
- #include <linux/dax.h>
-@@ -1506,6 +1507,10 @@ int dm_calculate_queue_limits(struct dm_table *table,
- 			zone_sectors = ti_limits.chunk_sectors;
- 		}
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 6ed05ca65a0f..3982012b1309 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1051,22 +1051,18 @@ static sector_t max_io_len_target_boundary(sector_t sector, struct dm_target *ti
+ static sector_t max_io_len(sector_t sector, struct dm_target *ti)
+ {
+ 	sector_t len = max_io_len_target_boundary(sector, ti);
+-	sector_t offset, max_len;
++	sector_t max_len;
  
-+		/* Stack chunk_sectors if target-specific splitting is required */
-+		if (ti->max_io_len)
-+			ti_limits.chunk_sectors = lcm_not_zero(ti->max_io_len,
-+							       ti_limits.chunk_sectors);
- 		/* Set I/O hints portion of queue limits */
- 		if (ti->type->io_hints)
- 			ti->type->io_hints(ti, &ti_limits);
+ 	/*
+ 	 * Does the target need to split even further?
++	 * - q->limits.chunk_sectors reflects ti->max_io_len so
++	 *   blk_max_size_offset() provides required splitting.
++	 * - blk_max_size_offset() also respects q->limits.max_sectors
+ 	 */
+-	if (ti->max_io_len) {
+-		offset = dm_target_offset(ti, sector);
+-		if (unlikely(ti->max_io_len & (ti->max_io_len - 1)))
+-			max_len = sector_div(offset, ti->max_io_len);
+-		else
+-			max_len = offset & (ti->max_io_len - 1);
+-		max_len = ti->max_io_len - max_len;
+-
+-		if (len > max_len)
+-			len = max_len;
+-	}
++	max_len = blk_max_size_offset(dm_table_get_md(ti->table)->queue,
++				      dm_target_offset(ti, sector));
++	if (len > max_len)
++		len = max_len;
+ 
+ 	return len;
+ }
 -- 
 2.15.0
