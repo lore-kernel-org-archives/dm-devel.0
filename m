@@ -1,55 +1,33 @@
-From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 19/19] mpathpersist: remove logsink and udev
-Date: Tue, 22 Sep 2020 13:32:51 +0200
-Message-ID: <bf7d1347bd6f3f2f5549a965725001c1785227cb.camel@suse.com>
-References: <20200916153718.582-1-mwilck@suse.com>
-	<20200916153718.582-20-mwilck@suse.com>
-	<20200921201544.GZ11108@octiron.msp.redhat.com>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [PATCH v3 4/6] block: allow 'chunk_sectors' to be non-power-of-2
+Date: Tue, 22 Sep 2020 15:30:34 -0400
+Message-ID: <yq1wo0lpq2d.fsf@ca-mkp.ca.oracle.com>
+References: <20200922023251.47712-1-snitzer@redhat.com>
+        <20200922023251.47712-5-snitzer@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200921201544.GZ11108@octiron.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200922023251.47712-5-snitzer@redhat.com> (Mike Snitzer's
+        message of "Mon, 21 Sep 2020 22:32:49 -0400")
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, Ming Lei <ming.lei@redhat.com>, Vijayendra Suman <vijayendra.suman@oracle.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, 2020-09-21 at 15:15 -0500, Benjamin Marzinski wrote:
-> On Wed, Sep 16, 2020 at 05:37:18PM +0200, mwilck@suse.com wrote:
-> > From: Martin Wilck <mwilck@suse.com>
-> > 
-> > We can use libmultipath's internal symbols now.
-> > 
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > ---
-> >  mpathpersist/main.c | 10 ++++------
-> >  1 file changed, 4 insertions(+), 6 deletions(-)
-> > 
-> > diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-> > index 0f0db4b..729857f 100644
-> > --- a/mpathpersist/main.c
-> > +++ b/mpathpersist/main.c
-> 
-> I'm pretty sure that without this patch, mpathpersist is not directly
-> calling functions from libmultipath
 
-Yes, this is so.
+Mike,
 
-> , and if so, it should stay that way.
-> 
-> I don't see any problem with adding the libmultipath_init() and
-> libmultipath_exit() calls to libmpathpersist_init() and
-> libmpathpersist_exit().
+> It is possible, albeit more unlikely, for a block device to have a non
+> power-of-2 for chunk_sectors (e.g. 10+2 RAID6 with 128K chunk_sectors,
+> which results in a full-stripe size of 1280K. This causes the RAID6's
+> io_opt to be advertised as 1280K, and a stacked device _could_ then be
+> made to use a blocksize, aka chunk_sectors, that matches non
+> power-of-2 io_opt of underlying RAID6 -- resulting in stacked device's
+> chunk_sectors being a non power-of-2).
+>
+> Update blk_queue_chunk_sectors() and blk_max_size_offset() to
+> accommodate drivers that need a non power-of-2 chunk_sectors.
 
-Will do.
+Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
 
-Martin
+-- 
+Martin K. Petersen	Oracle Linux Engineering
