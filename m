@@ -1,7 +1,7 @@
 From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-Subject: [PATCH v4 4/6] IMA: add policy to measure critical data from kernel components
-Date: Wed, 23 Sep 2020 12:20:09 -0700
-Message-ID: <20200923192011.5293-5-tusharsu@linux.microsoft.com>
+Subject: [PATCH v4 6/6] IMA: validate supported kernel data sources before measurement
+Date: Wed, 23 Sep 2020 12:20:11 -0700
+Message-ID: <20200923192011.5293-7-tusharsu@linux.microsoft.com>
 References: <20200923192011.5293-1-tusharsu@linux.microsoft.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20200923192011.5293-1-tusharsu@linux.microsoft.com>
@@ -9,137 +9,89 @@ To: zohar@linux.ibm.com, stephen.smalley.work@gmail.com, casey@schaufler-ca.com,
 Cc: tyhicks@linux.microsoft.com, sashal@kernel.org, jmorris@namei.org, nramas@linux.microsoft.com, linux-integrity@vger.kernel.org, selinux@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-There would be several candidate kernel components suitable for IMA
-measurement. Not all of them would have support for IMA measurement.
-Also, system administrators may not want to measure data for all of
-them, even when they support IMA measurement. An IMA policy option 
-specific to various kernel components is needed to measure their
-respective critical data.
+Currently, IMA does not restrict random data sources from measuring
+their data using ima_measure_critical_data(). Any kernel data source can
+call the function, and it's data will get measured as long as the input
+event_data_source is part of the IMA policy - RITICAL_DATA+data_sources.
+Supporting random data sources at run-time may impact the reliability of
+the system.
 
-This policy option needs to be constrained to measure data for
-specific kernel components that are specified as input values to the
-policy option.
+To ensure that only data from supported sources are measured, the kernel
+component needs to be added to a compile-time list of supported sources
+(an "allowed list of components"). IMA then validates the input
+parameter - "event_data_source" passed to ima_measure_critical_data()
+against this allowed list at run-time.
 
-Add a new IMA policy option - "data_sources:=" to allow measuring
-various critical kernel components. This policy option would enable the
-system administrators to limit the measurement to the components
-listed in "data_sources:=", if the components support IMA measurement.
+This compile time list must be updated when kernel components are
+updated to measure their data using IMA.
 
-The new policy option "data_sources:=" is different from the existing
-policy option "keyrings:=". 
-
-In case of "keyrings:=", a policy may measure all keyrings (when
-"keyrings:=" option is not provided for func KEY_CHECK), or may
-constrain which keyrings need to be measured (when "keyrings:=" option
-is provided for func KEY_CHECK).
-
-But unlike "keyrings:=", the entries in "data_sources:=" would have
-different data format. Further, the components listed in
-"data_sources:=" need to be modified to call IMA to measure their
-data. Therefore, unlike "keyrings:=", IMA shouldn't measure all of the
-components by default, when "data_sources:=" is not specified. Because
-measuring non-vetted components just by specifying them as a policy
-option value may impact the overall reliability of the system.
-
-To address this, "data_sources:=" should be a mandatory policy option
-for func=CRITICAL_DATA. This func is introduced in the 5th patch in this
-series). And the compile-time vetting functionality described above is
-introduced in the 6th patch in this series.
+Provide an infrastructure for kernel data sources to be added to
+IMA's supported data sources list at compile-time. Update
+ima_measure_critical_data() to validate, at run-time, that the data
+source is supported before measuring the data coming from that source.
 
 Signed-off-by: Tushar Sugandhi <tusharsu@linux.microsoft.com>
 ---
- Documentation/ABI/testing/ima_policy |  3 +++
- security/integrity/ima/ima_policy.c  | 29 +++++++++++++++++++++++++++-
- 2 files changed, 31 insertions(+), 1 deletion(-)
+ security/integrity/ima/ima.h      | 29 +++++++++++++++++++++++++++++
+ security/integrity/ima/ima_main.c |  6 ++++++
+ 2 files changed, 35 insertions(+)
 
-diff --git a/Documentation/ABI/testing/ima_policy b/Documentation/ABI/testing/ima_policy
-index cd572912c593..a81cf79fb255 100644
---- a/Documentation/ABI/testing/ima_policy
-+++ b/Documentation/ABI/testing/ima_policy
-@@ -48,6 +48,9 @@ Description:
- 			template:= name of a defined IMA template type
- 			(eg, ima-ng). Only valid when action is "measure".
- 			pcr:= decimal value
-+			data_sources:= list of kernel components
-+			(eg, selinux|apparmor|dm-crypt) that contain data critical
-+			to the security of the kernel.
+diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
+index c1acf88e1b5d..4a35db010d91 100644
+--- a/security/integrity/ima/ima.h
++++ b/security/integrity/ima/ima.h
+@@ -228,6 +228,35 @@ extern const char *const func_tokens[];
  
- 		default policy:
- 			# PROC_SUPER_MAGIC
-diff --git a/security/integrity/ima/ima_policy.c b/security/integrity/ima/ima_policy.c
-index 8866e84d0062..89452245f54a 100644
---- a/security/integrity/ima/ima_policy.c
-+++ b/security/integrity/ima/ima_policy.c
-@@ -33,6 +33,7 @@
- #define IMA_PCR		0x0100
- #define IMA_FSNAME	0x0200
- #define IMA_KEYRINGS	0x0400
-+#define IMA_DATA_SOURCES	0x0800
+ struct modsig;
  
- #define UNKNOWN		0
- #define MEASURE		0x0001	/* same as IMA_MEASURE */
-@@ -84,6 +85,7 @@ struct ima_rule_entry {
- 	} lsm[MAX_LSM_RULES];
- 	char *fsname;
- 	struct ima_rule_opt_list *keyrings; /* Measure keys added to these keyrings */
-+	struct ima_rule_opt_list *data_sources; /* Measure data from these sources */
- 	struct ima_template_desc *template;
- };
- 
-@@ -911,7 +913,7 @@ enum {
- 	Opt_uid_lt, Opt_euid_lt, Opt_fowner_lt,
- 	Opt_appraise_type, Opt_appraise_flag,
- 	Opt_permit_directio, Opt_pcr, Opt_template, Opt_keyrings,
--	Opt_err
-+	Opt_data_sources, Opt_err
- };
- 
- static const match_table_t policy_tokens = {
-@@ -948,6 +950,7 @@ static const match_table_t policy_tokens = {
- 	{Opt_pcr, "pcr=%s"},
- 	{Opt_template, "template=%s"},
- 	{Opt_keyrings, "keyrings=%s"},
-+	{Opt_data_sources, "data_sources=%s"},
- 	{Opt_err, NULL}
- };
- 
-@@ -1312,6 +1315,24 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
- 
- 			entry->flags |= IMA_KEYRINGS;
- 			break;
-+		case Opt_data_sources:
-+			ima_log_string(ab, "data_sources",
-+				       args[0].from);
++#define __ima_supported_kernel_data_sources(source)	\
++	source(MIN_SOURCE, min_source)			\
++	source(MAX_SOURCE, max_source)
 +
-+			if (entry->data_sources) {
-+				result = -EINVAL;
-+				break;
-+			}
++#define __ima_enum_stringify(ENUM, str) (#str),
 +
-+			entry->data_sources = ima_alloc_rule_opt_list(args);
-+			if (IS_ERR(entry->data_sources)) {
-+				result = PTR_ERR(entry->data_sources);
-+				entry->data_sources = NULL;
-+				break;
-+			}
++enum ima_supported_kernel_data_sources {
++	__ima_supported_kernel_data_sources(__ima_hook_enumify)
++};
 +
-+			entry->flags |= IMA_DATA_SOURCES;
-+			break;
- 		case Opt_fsuuid:
- 			ima_log_string(ab, "fsuuid", args[0].from);
- 
-@@ -1692,6 +1713,12 @@ int ima_policy_show(struct seq_file *m, void *v)
- 		seq_puts(m, " ");
- 	}
- 
-+	if (entry->flags & IMA_DATA_SOURCES) {
-+		seq_puts(m, "data_sources=");
-+		ima_show_rule_opt_list(m, entry->data_sources);
-+		seq_puts(m, " ");
++static const char * const ima_supported_kernel_data_sources_str[] = {
++	__ima_supported_kernel_data_sources(__ima_enum_stringify)
++};
++
++static inline bool ima_kernel_data_source_is_supported(const char *source)
++{
++	int i;
++
++	if (!source)
++		return false;
++
++	for (i = MIN_SOURCE + 1; i < MAX_SOURCE; i++) {
++		if (!strcmp(ima_supported_kernel_data_sources_str[i], source))
++			return true;
 +	}
 +
- 	if (entry->flags & IMA_PCR) {
- 		snprintf(tbuf, sizeof(tbuf), "%d", entry->pcr);
- 		seq_printf(m, pt(Opt_pcr), tbuf);
++	return false;
++}
++
+ #ifdef CONFIG_IMA_QUEUE_EARLY_BOOT_KEYS
+ /*
+  * To track keys that need to be measured.
+diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
+index d55896f28790..61f9642747a8 100644
+--- a/security/integrity/ima/ima_main.c
++++ b/security/integrity/ima/ima_main.c
+@@ -888,6 +888,12 @@ void ima_measure_critical_data(const char *event_name,
+ 		return;
+ 	}
+ 
++	if (!ima_kernel_data_source_is_supported(event_data_source)) {
++		pr_err("measuring data source %s is not permitted",
++		       event_data_source);
++		return;
++	}
++
+ 	process_buffer_measurement(NULL, buf, buf_len, event_name,
+ 				   CRITICAL_DATA, 0, event_data_source,
+ 				   measure_buf_hash);
 -- 
 2.17.1
