@@ -1,64 +1,23 @@
-From: Sudhakar Panneerselvam <sudhakar.panneerselvam@oracle.com>
-Subject: Re: [RFC PATCH 0/2] dm crypt: Allow unaligned buffer
- lengths for skcipher devices
-Date: Wed, 23 Sep 2020 10:01:45 -0700 (PDT)
-Message-ID: <3be1ea32-b6a8-41ef-a9ba-ed691434d068@default>
-References: <1600281606-1446-1-git-send-email-sudhakar.panneerselvam@oracle.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1600281606-1446-1-git-send-email-sudhakar.panneerselvam@oracle.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, dm-crypt@saout.de, mpatocka@redhat.com, Damien.LeMoal@wdc.com
-Cc: Shirley Ma <shirley.ma@oracle.com>, ssudhakarp@gmail.com, Martin Petersen <martin.petersen@oracle.com>
+From: pr-tracker-bot@kernel.org
+Subject: Re: [git pull] device mapper fixes for 5.9 final
+Date: Wed, 23 Sep 2020 21:54:30 +0000
+Message-ID: <160089807067.12557.15709225773189841280.pr-tracker-bot@kernel.org>
+References: <20200923173024.GA97173@lobo>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200923173024.GA97173@lobo>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, dm-devel@redhat.com, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-Could someone review this patch set, please?
+The pull request you sent on Wed, 23 Sep 2020 13:30:24 -0400:
 
-Thanks
-Sudhakar
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.9/dm-fixes-2
 
-> -----Original Message-----
-> From: Sudhakar Panneerselvam
-> Sent: Wednesday, September 16, 2020 12:40 PM
-> To: agk@redhat.com; snitzer@redhat.com; dm-devel@redhat.com
-> Cc: Shirley Ma <shirley.ma@oracle.com>; ssudhakarp@gmail.com; Martin
-> Petersen <martin.petersen@oracle.com>
-> Subject: [dm-devel] [RFC PATCH 0/2] dm crypt: Allow unaligned buffer lengths
-> for skcipher devices
-> 
-> Hi,
-> 
-> This changeset allows processing of unaligned bio requests in dm crypt
-> for the I/Os generated from a windows guest OS in a QEMU environment. If
-> this changeset is accepted, then I will be submitting another changeset that
-> addresses the similar issue in AEAD disks and dm-integrity module.
-> 
-> Thanks
-> Sudhakar
-> 
-> Sudhakar Panneerselvam (2):
->   dm crypt: Allow unaligned bio buffer lengths for skcipher devices
->   dm crypt: Handle unaligned bio buffer lengths for lmk and tcw
-> 
->  drivers/md/dm-crypt.c | 154 +++++++++++++++++++++++++++++++++++----
-> -----------
->  1 file changed, 108 insertions(+), 46 deletions(-)
-> 
-> --
-> 1.8.3.1
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/a969324fe7cc38e4af05eea44fde385a2853c91e
+
+Thank you!
+
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
