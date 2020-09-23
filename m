@@ -1,7 +1,7 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 1/2] block: add QUEUE_FLAG_NOWAIT
-Date: Wed, 23 Sep 2020 16:06:51 -0400
-Message-ID: <20200923200652.11082-2-snitzer@redhat.com>
+Subject: [PATCH 2/2] dm: add support for REQ_NOWAIT and enable it for linear target
+Date: Wed, 23 Sep 2020 16:06:52 -0400
+Message-ID: <20200923200652.11082-3-snitzer@redhat.com>
 References: <20200923200652.11082-1-snitzer@redhat.com>
 Return-path: <linux-block-owner@vger.kernel.org>
 Sender: Mike Snitzer <snitzer@gmail.com>
@@ -10,63 +10,122 @@ To: Jens Axboe <axboe@kernel.dk>
 Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, hch@lst.de, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Add QUEUE_FLAG_NOWAIT to allow a block device to advertise support for
-REQ_NOWAIT. Bio-based devices may set QUEUE_FLAG_NOWAIT where
-applicable.
+From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
 
-Update QUEUE_FLAG_MQ_DEFAULT to include QUEUE_FLAG_NOWAIT.  Also
-update submit_bio_checks() to verify it is set for REQ_NOWAIT bios.
+Add DM target feature flag DM_TARGET_NOWAIT which advertises that
+target works with REQ_NOWAIT bios.
 
-Reported-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Suggested-by: Christoph Hellwig <hch@lst.de>
+Add dm_table_supports_nowait() and update dm_table_set_restrictions()
+to set/clear QUEUE_FLAG_NOWAIT accordingly.
+
+Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- block/blk-core.c       | 4 ++--
- include/linux/blkdev.h | 7 +++++--
- 2 files changed, 7 insertions(+), 4 deletions(-)
+ drivers/md/dm-linear.c        |  5 +++--
+ drivers/md/dm-table.c         | 32 ++++++++++++++++++++++++++++++++
+ drivers/md/dm.c               |  4 +++-
+ include/linux/device-mapper.h |  6 ++++++
+ 4 files changed, 44 insertions(+), 3 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index ca3f0f00c943..e3adfa135a20 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -817,9 +817,9 @@ static noinline_for_stack bool submit_bio_checks(struct bio *bio)
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index e1db43446327..00774b5d7668 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -228,10 +228,11 @@ static struct target_type linear_target = {
+ 	.name   = "linear",
+ 	.version = {1, 4, 0},
+ #ifdef CONFIG_BLK_DEV_ZONED
+-	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_ZONED_HM,
++	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_NOWAIT |
++		    DM_TARGET_ZONED_HM,
+ 	.report_zones = linear_report_zones,
+ #else
+-	.features = DM_TARGET_PASSES_INTEGRITY,
++	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_NOWAIT,
+ #endif
+ 	.module = THIS_MODULE,
+ 	.ctr    = linear_ctr,
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index acba92500c12..17fb9b96d18e 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1719,6 +1719,33 @@ static bool dm_table_supports_write_zeroes(struct dm_table *t)
+ 	return true;
+ }
  
- 	/*
- 	 * For a REQ_NOWAIT based request, return -EOPNOTSUPP
--	 * if queue is not a request based queue.
-+	 * if queue does not support NOWAIT.
++static int device_not_nowait_capable(struct dm_target *ti, struct dm_dev *dev,
++				     sector_t start, sector_t len, void *data)
++{
++	struct request_queue *q = bdev_get_queue(dev->bdev);
++
++	return q && !blk_queue_nowait(q);
++}
++
++static bool dm_table_supports_nowait(struct dm_table *t)
++{
++	struct dm_target *ti;
++	unsigned i = 0;
++
++	while (i < dm_table_get_num_targets(t)) {
++		ti = dm_table_get_target(t, i++);
++
++		if (!dm_target_supports_nowait(ti->type))
++			return false;
++
++		if (!ti->type->iterate_devices ||
++		    ti->type->iterate_devices(ti, device_not_nowait_capable, NULL))
++			return false;
++	}
++
++	return true;
++}
++
+ static int device_not_discard_capable(struct dm_target *ti, struct dm_dev *dev,
+ 				      sector_t start, sector_t len, void *data)
+ {
+@@ -1821,6 +1848,11 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
  	 */
--	if ((bio->bi_opf & REQ_NOWAIT) && !queue_is_mq(q))
-+	if ((bio->bi_opf & REQ_NOWAIT) && !blk_queue_nowait(q))
- 		goto not_supported;
+ 	q->limits = *limits;
  
- 	if (should_fail_bio(bio))
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index be5ef6f4ba19..9723b497d435 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -618,10 +618,12 @@ struct request_queue {
- #define QUEUE_FLAG_PCI_P2PDMA	25	/* device supports PCI p2p requests */
- #define QUEUE_FLAG_ZONE_RESETALL 26	/* supports Zone Reset All */
- #define QUEUE_FLAG_RQ_ALLOC_TIME 27	/* record rq->alloc_time_ns */
--#define QUEUE_FLAG_HCTX_ACTIVE 28	/* at least one blk-mq hctx is active */
-+#define QUEUE_FLAG_HCTX_ACTIVE	28	/* at least one blk-mq hctx is active */
-+#define QUEUE_FLAG_NOWAIT       29	/* device supports NOWAIT */
++	if (dm_table_supports_nowait(t))
++		blk_queue_flag_set(QUEUE_FLAG_NOWAIT, q);
++	else
++		blk_queue_flag_clear(QUEUE_FLAG_NOWAIT, q);
++
+ 	if (!dm_table_supports_discards(t)) {
+ 		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, q);
+ 		/* Must also clear discard limits... */
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index b110b5eb99a5..3ad4a8da8b15 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1733,7 +1733,9 @@ static blk_qc_t dm_submit_bio(struct bio *bio)
+ 	if (unlikely(test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags))) {
+ 		dm_put_live_table(md, srcu_idx);
  
- #define QUEUE_FLAG_MQ_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
--				 (1 << QUEUE_FLAG_SAME_COMP))
-+				 (1 << QUEUE_FLAG_SAME_COMP) |		\
-+				 (1 << QUEUE_FLAG_NOWAIT))
+-		if (!(bio->bi_opf & REQ_RAHEAD))
++		if (bio->bi_opf & REQ_NOWAIT)
++			bio_wouldblock_error(bio);
++		else if (!(bio->bi_opf & REQ_RAHEAD))
+ 			queue_io(md, bio);
+ 		else
+ 			bio_io_error(bio);
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 57610fc3013e..ba3b0979e09f 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -252,6 +252,12 @@ struct target_type {
+ #define DM_TARGET_ZONED_HM		0x00000040
+ #define dm_target_supports_zoned_hm(type) ((type)->features & DM_TARGET_ZONED_HM)
  
- void blk_queue_flag_set(unsigned int flag, struct request_queue *q);
- void blk_queue_flag_clear(unsigned int flag, struct request_queue *q);
-@@ -661,6 +663,7 @@ bool blk_queue_flag_test_and_set(unsigned int flag, struct request_queue *q);
- #define blk_queue_pm_only(q)	atomic_read(&(q)->pm_only)
- #define blk_queue_fua(q)	test_bit(QUEUE_FLAG_FUA, &(q)->queue_flags)
- #define blk_queue_registered(q)	test_bit(QUEUE_FLAG_REGISTERED, &(q)->queue_flags)
-+#define blk_queue_nowait(q)	test_bit(QUEUE_FLAG_NOWAIT, &(q)->queue_flags)
- 
- extern void blk_set_pm_only(struct request_queue *q);
- extern void blk_clear_pm_only(struct request_queue *q);
++/*
++ * A target handles REQ_NOWAIT
++ */
++#define DM_TARGET_NOWAIT		0x00000080
++#define dm_target_supports_nowait(type) ((type)->features & DM_TARGET_NOWAIT)
++
+ struct dm_target {
+ 	struct dm_table *table;
+ 	struct target_type *type;
 -- 
 2.15.0
