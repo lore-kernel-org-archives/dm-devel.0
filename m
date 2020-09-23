@@ -1,15 +1,16 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] libmultipath: Allow discovery of USB devices
-Date: Wed, 23 Sep 2020 00:34:45 +0200
-Message-ID: <df42a8a5ed7ecd27cc6d30a5561e1cc716d27033.camel@suse.com>
-References: <AM0PR09MB289726B5423506E7A0CBFA47FE3B0@AM0PR09MB2897.eurprd09.prod.outlook.com>
-	<42aa1aaf935927e169e27e035fe307fd8181f9a6.camel@suse.com>
-	<20200922222726.GC11108@octiron.msp.redhat.com>
+Subject: Re: [PATCH 17/19] libmultipath: add udev and logsink
+	symbols
+Date: Wed, 23 Sep 2020 10:16:48 +0200
+Message-ID: <3c33e8dc3355a444d58bff8d5ccc24515931c523.camel@suse.com>
+References: <20200916153718.582-1-mwilck@suse.com>
+	<20200916153718.582-18-mwilck@suse.com>
+	<20200921201052.GY11108@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200922222726.GC11108@octiron.msp.redhat.com>
+In-Reply-To: <20200921201052.GY11108@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,69 +21,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Frank Meinl <frank.meinl@live.de>, dm-devel@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, 2020-09-22 at 17:27 -0500, Benjamin Marzinski wrote:
-> On Tue, Sep 22, 2020 at 09:59:36PM +0200, Martin Wilck wrote:
-> > On Tue, 2020-09-22 at 20:34 +0200, Frank Meinl wrote:
-> > > This change adds a new configuration option allow_usb_devices. It
-> > > is
-> > > disabled by default, so that the behavior of existing setups is
-> > > not
-> > > changed. If enabled (via multipath.conf), USB devices will be
-> > > found
-> > > during device discovery and can be used for multipath setups.
-> > > 
-> > > Without this option, multipath currently ignores all USB drives,
-> > > which
-> > > is convenient for most users. (refer also to commit 51957eb)
-> > > 
-> > > However, it can be beneficial to use the multipath dm-module even
-> > > if
-> > > there is only a single path to an USB attached storage. In
-> > > combination
-> > > with the option 'queue_if_no_path', such a setup survives a
-> > > temporary
-> > > device disconnect without any severe consequences for the running
-> > > applications. All I/O is queued until the device reappears.
-> > 
-> > Hm. So you want to use multipath just to enable queueing?
-> > I wonder if that can't be achieved some other way; multipath seems
-> > to
-> > be quite big hammer for this nail. Anyway, I don't think this would
-> > hurt us, so I don't have good reasons to reject it.
-> > 
-> > Waiting for others' opinions.
+On Mon, 2020-09-21 at 15:10 -0500, Benjamin Marzinski wrote:
 > 
-> I've actually seen other cases where people are using multipath on
-> single path devices just for the queuing, and when I thought about
-> it, I
-> realized that it makes sense. Multipath works with devices as they
-> are,
-> instead of needing special metadata, like lvm devices. People often
-> realize that they need this after the device is already set up. Plus,
-> multipath already deals with devices that have partitions or logical
-> volumes on top of them. It's also easy to configure exactly how you
-> want
-> queueing to work. This use case might be a small nail, but it is a
-> nail,
-> and multipath is a reasonable tool to get the job done.
-> 
-> It doesn't seem too hard to write a dm target that would queue and
-> retry
-> IO at some configurable interval, for some configurable number of
-> times,
-> when it failed. But you would also need to copy the work for getting
-> the
-> device, and any partitons on it, to autoassemble after the frist time
-> it's set up and to make sure other layers use this device instead of
-> the
-> underlying device. Or, people can just use multipath.
+> After calling libmultipath_exit(), you can never reinitialized the
+> udev
+> device.  That seems fine, but it should probably set udev to null, so
+> that future calls to libmultipath_init() don't return success. Either
+> that or multipath_init() should use a mutex instead of pthread_once()
+> to
+> avoid races, so that you can reinitialize udev after a call to
+> libmultipath_exit().
 
-Ok. So Frank, please just clarify the remaining minor points. You may
-actually want to put (a short version of) this motivation in the man
-page.
+I've been thinking about this some more. It makes a lot of sense to
+move more cleanup code into libmultipath_exit() in the future; thus
+this function will do more than just clean up "udev". I believe calling
+libmultipath_exit() will become the only supported way to clean up
+libmultipath, and basically mandatory, rather sooner than later. 
 
-Regards,
+The handling of "udev" is the main cause of headache, because we don't
+know whether the application wants to continue to use the variable
+after libmultipath_exit(). In libmultipath_exit(), we can't determine
+if "udev" is the symbol from libmultipath or from some other object
+file. It's also impossible to tell by the return value of udev_unref()
+whether or not it destroyed the variable. Setting udev to NULL is
+dangerous if the uevent listener thread is still running, or if the
+application needs to use the variable further.
+
+So this is my current idea for a "robust" design:
+
+1. libmultipath_init() initializes udev if it's NULL; otherwise, it
+   simply takes an additional ref. IOW, applications may (but
+   don't have to) initialize and use udev before calling
+   libmultipath_init().
+2. libmultipath_exit() calls udev_unref(udev), without nullifying it.
+   Thus applications may continue using udev afterwards, if they own an
+   additional reference.
+3. libmultipath_init() always fails after calling libmultipath_exit().
+4. Other libmultipath calls after libmultipath_exit() may cause
+   undefined behavior.
+5. Normal usage would be to call libmultipath_exit() at program exit.
+6. Calling libmultipath_init() is currently only mandatory for
+   programs that don't initialize "udev" themselves. This may change
+   in the future.
+7. Calling libmultipath_exit() will be mandatory for programs that
+   wish to avoid memory leaks.
+
+The only downside that I see is that the application can't test whether
+"udev" is valid by checking if it's NULL. But that's by design of
+udev_unref(). The application needs to track its own references.
+
+There is no rigorous reason for (3.). In principle, we could just
+handle re-initialization like (1.). But I don't think it's worth the
+effort of figuring out all possible ways in which re-initialization
+could go wrong, in particular if we want to initialize more stuff
+later.
+
+Does this make sense? 
 Martin
