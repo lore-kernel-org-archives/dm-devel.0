@@ -1,33 +1,94 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 05/13] bdi: initialize ->ra_pages and ->io_pages in
- bdi_init
-Date: Wed, 23 Sep 2020 17:16:06 +0200
-Message-ID: <20200923151606.GB16073@lst.de>
-References: <20200921080734.452759-1-hch@lst.de> <20200921080734.452759-6-hch@lst.de> <20200922084954.GC16464@quack2.suse.cz>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 17/19] libmultipath: add udev and logsink
+	symbols
+Date: Wed, 23 Sep 2020 11:05:52 -0500
+Message-ID: <20200923160552.GD11108@octiron.msp.redhat.com>
+References: <20200916153718.582-1-mwilck@suse.com>
+	<20200916153718.582-18-mwilck@suse.com>
+	<20200921201052.GY11108@octiron.msp.redhat.com>
+	<3c33e8dc3355a444d58bff8d5ccc24515931c523.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <3c33e8dc3355a444d58bff8d5ccc24515931c523.camel@suse.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
-In-Reply-To: <20200922084954.GC16464@quack2.suse.cz>
-To: Jan Kara <jack@suse.cz>
-Cc: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Coly Li <colyli@suse.de>, Richard Weinberger <richard@nod.at>, Minchan Kim <minchan@kernel.org>, Johannes Thumshirn <Johannes.Thumshirn@wdc.com>, Justin Sanders <justin@coraid.com>, linux-mtd@lists.infradead.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, David Sterba <dsterba@suse.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Sep 22, 2020 at 10:49:54AM +0200, Jan Kara wrote:
-> On Mon 21-09-20 10:07:26, Christoph Hellwig wrote:
-> > Set up a readahead size by default, as very few users have a good
-> > reason to change it.
+On Wed, Sep 23, 2020 at 10:16:48AM +0200, Martin Wilck wrote:
+> On Mon, 2020-09-21 at 15:10 -0500, Benjamin Marzinski wrote:
 > > 
-> > Signed-off-by: Christoph Hellwig <hch@lst.de>
-> > Acked-by: David Sterba <dsterba@suse.com> [btrfs]
-> > Acked-by: Richard Weinberger <richard@nod.at> [ubifs, mtd]
+> > After calling libmultipath_exit(), you can never reinitialized the
+> > udev
+> > device.  That seems fine, but it should probably set udev to null, so
+> > that future calls to libmultipath_init() don't return success. Either
+> > that or multipath_init() should use a mutex instead of pthread_once()
+> > to
+> > avoid races, so that you can reinitialize udev after a call to
+> > libmultipath_exit().
 > 
-> The patch looks good to me. You can add:
+> I've been thinking about this some more. It makes a lot of sense to
+> move more cleanup code into libmultipath_exit() in the future; thus
+> this function will do more than just clean up "udev". I believe calling
+> libmultipath_exit() will become the only supported way to clean up
+> libmultipath, and basically mandatory, rather sooner than later. 
 > 
-> Reviewed-by: Jan Kara <jack@suse.cz>
+> The handling of "udev" is the main cause of headache, because we don't
+> know whether the application wants to continue to use the variable
+> after libmultipath_exit(). In libmultipath_exit(), we can't determine
+> if "udev" is the symbol from libmultipath or from some other object
+> file. It's also impossible to tell by the return value of udev_unref()
+> whether or not it destroyed the variable. Setting udev to NULL is
+> dangerous if the uevent listener thread is still running, or if the
+> application needs to use the variable further.
 > 
-> I'd just prefer if the changelog explicitely mentioned that this patch
-> results in enabling readahead for coda, ecryptfs, and orangefs... Just in
-> case someone bisects some issue down to this patch :).
+> So this is my current idea for a "robust" design:
+> 
+> 1. libmultipath_init() initializes udev if it's NULL; otherwise, it
+>    simply takes an additional ref. IOW, applications may (but
+>    don't have to) initialize and use udev before calling
+>    libmultipath_init().
+> 2. libmultipath_exit() calls udev_unref(udev), without nullifying it.
+>    Thus applications may continue using udev afterwards, if they own an
+>    additional reference.
+> 3. libmultipath_init() always fails after calling libmultipath_exit().
+> 4. Other libmultipath calls after libmultipath_exit() may cause
+>    undefined behavior.
+> 5. Normal usage would be to call libmultipath_exit() at program exit.
+> 6. Calling libmultipath_init() is currently only mandatory for
+>    programs that don't initialize "udev" themselves. This may change
+>    in the future.
+> 7. Calling libmultipath_exit() will be mandatory for programs that
+>    wish to avoid memory leaks.
+> 
+> The only downside that I see is that the application can't test whether
+> "udev" is valid by checking if it's NULL. But that's by design of
+> udev_unref(). The application needs to track its own references.
+> 
+> There is no rigorous reason for (3.). In principle, we could just
+> handle re-initialization like (1.). But I don't think it's worth the
+> effort of figuring out all possible ways in which re-initialization
+> could go wrong, in particular if we want to initialize more stuff
+> later.
+> 
+> Does this make sense? 
 
-Ok, I've updated the changelog.
+Yeah. After I sent off my message, I realized that there's no way to
+know if you dropped the last reference, which means that NULLing out
+udev doesn't make sense.
+
+-Ben
+
+> Martin
+> 
