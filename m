@@ -1,33 +1,50 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH v3 0/6] dm: fix then improve bio splitting
-Date: Wed, 23 Sep 2020 10:38:26 -0600
-Message-ID: <bc988bfa-5f81-3d04-82e8-489943143355@kernel.dk>
-References: <20200922023251.47712-1-snitzer@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [git pull] device mapper fixes for 5.9 final
+Date: Wed, 23 Sep 2020 13:30:24 -0400
+Message-ID: <20200923173024.GA97173@lobo>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-block-owner@vger.kernel.org>
-In-Reply-To: <20200922023251.47712-1-snitzer@redhat.com>
-Content-Language: en-US
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Ming Lei <ming.lei@redhat.com>, Vijayendra Suman <vijayendra.suman@oracle.com>, dm-devel@redhat.com, linux-block@vger.kernel.org
+Sender: Mike Snitzer <snitzer@gmail.com>
+Content-Disposition: inline
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-block@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Milan Broz <gmazyland@gmail.com>
 List-Id: dm-devel.ids
 
-On 9/21/20 8:32 PM, Mike Snitzer wrote:
-> Hi,
-> 
-> Patches 1 and 2 are queued for me to send to Linus later this week.
-> 
-> Patches 3 and 4 are block core and should get picked up for 5.10.
-> Jens, please pick them up. I revised the header for patch 4 to give
-> better context for use-case where non power-of-2 chunk_sectors
-> occurs. Patch 4 enables DM to switch to using blk_max_size_offset() in
-> Patch 6.
-> 
-> Patches 5 and 6 just show how DM will be enhanced for 5.10 once
-> patches 3 and 4 land in the block tree.
+Hi Linus,
 
-Applied 3-4 for 5.10, thanks.
+The following changes since commit beaeb4f39bc31d5a5eb6d05465a86af4fe147732:
 
--- 
-Jens Axboe
+  Merge tag 'for-linus' of git://git.kernel.org/pub/scm/virt/kvm/kvm (2020-09-21 08:53:48 -0700)
+
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.9/dm-fixes-2
+
+for you to fetch changes up to 4c07ae0ad493b7b2d3dd3e53870e594f136ce8a5:
+
+  dm crypt: document encrypted keyring key option (2020-09-22 13:25:58 -0400)
+
+Please pull, thanks!
+Mike
+
+----------------------------------------------------------------
+- DM core fix for incorrect double bio splitting. Keep "fixing" this
+  because past attempts didn't fully appreciate the liability relative
+  to recursive bio splitting. This fix limits DM's bio splitting to a
+  single method and does _not_ use blk_queue_split() for normal IO.
+
+- DM crypt Documentation updates for features added during 5.9 merge.
+
+----------------------------------------------------------------
+Mike Snitzer (2):
+      dm: fix bio splitting and its bio completion order for regular IO
+      dm: fix comment in dm_process_bio()
+
+Milan Broz (2):
+      dm crypt: document new no_workqueue flags
+      dm crypt: document encrypted keyring key option
+
+ .../admin-guide/device-mapper/dm-crypt.rst         | 10 +++++++-
+ drivers/md/dm.c                                    | 27 ++++------------------
+ 2 files changed, 14 insertions(+), 23 deletions(-)
