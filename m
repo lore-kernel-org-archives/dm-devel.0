@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 09/23] multipathd: close pidfile on exit
-Date: Thu, 24 Sep 2020 15:40:40 +0200
-Message-ID: <20200924134054.14632-10-mwilck@suse.com>
+Subject: [PATCH 13/23] multipathd: print error message if config
+	can't be loaded
+Date: Thu, 24 Sep 2020 15:40:44 +0200
+Message-ID: <20200924134054.14632-14-mwilck@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,41 +24,26 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-It seems we've been doing this only in the failure case, for ages.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
  multipathd/main.c | 4 +++-
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 3db051b..44c1bd1 100644
+index 3c8f893..483b3c7 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -132,6 +132,7 @@ static pthread_cond_t config_cond;
- static pthread_t check_thr, uevent_thr, uxlsnr_thr, uevq_thr, dmevent_thr;
- static bool check_thr_started, uevent_thr_started, uxlsnr_thr_started,
- 	uevq_thr_started, dmevent_thr_started;
-+static int pid_fd = -1;
+@@ -3074,8 +3074,10 @@ child (__attribute__((unused)) void *param)
+ 	condlog(2, "read " DEFAULT_CONFIGFILE);
  
- static inline enum daemon_status get_running_state(void)
- {
-@@ -2894,6 +2895,8 @@ set_oom_adj (void)
+ 	conf = load_config(DEFAULT_CONFIGFILE);
+-	if (!conf)
++	if (!conf) {
++		condlog(0, "failed to load configuration");
+ 		goto failed;
++	}
  
- static void cleanup_pidfile(void)
- {
-+	if (pid_fd >= 0)
-+		close(pid_fd);
- 	condlog(3, "unlink pidfile");
- 	unlink(DEFAULT_PIDFILE);
- }
-@@ -3026,7 +3029,6 @@ child (__attribute__((unused)) void *param)
- 	pthread_attr_t log_attr, misc_attr, uevent_attr;
- 	struct vectors * vecs;
- 	int rc;
--	int pid_fd = -1;
- 	struct config *conf;
- 	char *envp;
- 	enum daemon_status state;
+ 	if (verbosity)
+ 		conf->verbosity = verbosity;
 -- 
 2.28.0
