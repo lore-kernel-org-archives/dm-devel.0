@@ -1,15 +1,16 @@
-From: Martin Wilck <martin.wilck@suse.com>
-Subject: Re: [RFC PATCH v2 0/3] add library to check if device is
-	a valid path
-Date: Thu, 24 Sep 2020 08:18:02 +0000
-Message-ID: <01ce499f8c7a7248f560066054ba4dd922bbc338.camel@suse.com>
-References: <1600923569-17412-1-git-send-email-bmarzins@redhat.com>
+From: Frank Meinl <frank.meinl@live.de>
+Subject: Re: [PATCH] libmultipath: Allow discovery of USB devices
+Date: Thu, 24 Sep 2020 08:54:16 +0200
+Message-ID: <AM0PR09MB289728167D421F64F6A60447FE390@AM0PR09MB2897.eurprd09.prod.outlook.com>
+References: <AM0PR09MB289726B5423506E7A0CBFA47FE3B0@AM0PR09MB2897.eurprd09.prod.outlook.com>
+	<42aa1aaf935927e169e27e035fe307fd8181f9a6.camel@suse.com>
+	<20200922222726.GC11108@octiron.msp.redhat.com>
+	<df42a8a5ed7ecd27cc6d30a5561e1cc716d27033.camel@suse.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1600923569-17412-1-git-send-email-bmarzins@redhat.com>
-Content-ID: <44444FFB5E9C5945934B0FB0F77BA240@eurprd04.prod.outlook.com>
+In-Reply-To: <df42a8a5ed7ecd27cc6d30a5561e1cc716d27033.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,59 +21,83 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Language: en-US
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>, "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 2020-09-23 at 23:59 -0500, Benjamin Marzinski wrote:
-> The main part of the this patchset is the first patch, which adds a
-> new library interface to check whether devices are valid paths. This
-> was designed for use in the Storage Instantiation Daemon (SID).
->=20
-> https://github.com/sid-project
->=20
-> Hopefully, I've removed all the controvertial bits from the last time
-> I
-> proposed this library.
->=20
-> The second patch adds get_uid fallback code for dasd devices. The
-> third
-> patch just changes the get_uid log level for devices configured with
-> uid_attribute "". This is because it is currently necessary to
-> configure
-> multipath with
->=20
-> overrides {
->         uid_attribute ""
-> }
->=20
-> to claim multipath devices with SID (instead of using
-> multipath.rules),
-> since SID doesn't currently get the UID information itself, and it is
-> called by udev before this information is added to the udev database.
->=20
+Hello,
 
-This makes me wonder how SID and multipathd are supposed to coexist.
-We wouldn't want this overrides directive for multipathd itself, would
-we?
+thank you all for your replies.
+And of course good to hear that you are also open for this rather 
+special use case ;)
 
-Actually that "overrides" begs for allowing a custom configuration file
-for libmultipath to be used with SID. OTOH, that would allow the
-configurations to diverge, which might cause issues, too (in particular
-if blacklisting options were different).
+I will then revise the patch as you suggested, and send it again for review.
 
-I think what we should do is allow applications to set overrides like
-this at runtime, modifying the configuration. Perhaps we could support
-an application-specific, additional config_dir, from which items like
-the above could be read in addition to the regular configuration files.
-This additional configuration would not be used by multipathd and
-multipath. Does that make sense?
+   Frank
 
-Regards
-Martin
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+On 23.09.20 00:34, Martin Wilck wrote:
+> On Tue, 2020-09-22 at 17:27 -0500, Benjamin Marzinski wrote:
+>> On Tue, Sep 22, 2020 at 09:59:36PM +0200, Martin Wilck wrote:
+>>> On Tue, 2020-09-22 at 20:34 +0200, Frank Meinl wrote:
+>>>> This change adds a new configuration option allow_usb_devices. It
+>>>> is
+>>>> disabled by default, so that the behavior of existing setups is
+>>>> not
+>>>> changed. If enabled (via multipath.conf), USB devices will be
+>>>> found
+>>>> during device discovery and can be used for multipath setups.
+>>>>
+>>>> Without this option, multipath currently ignores all USB drives,
+>>>> which
+>>>> is convenient for most users. (refer also to commit 51957eb)
+>>>>
+>>>> However, it can be beneficial to use the multipath dm-module even
+>>>> if
+>>>> there is only a single path to an USB attached storage. In
+>>>> combination
+>>>> with the option 'queue_if_no_path', such a setup survives a
+>>>> temporary
+>>>> device disconnect without any severe consequences for the running
+>>>> applications. All I/O is queued until the device reappears.
+>>>
+>>> Hm. So you want to use multipath just to enable queueing?
+>>> I wonder if that can't be achieved some other way; multipath seems
+>>> to
+>>> be quite big hammer for this nail. Anyway, I don't think this would
+>>> hurt us, so I don't have good reasons to reject it.
+>>>
+>>> Waiting for others' opinions.
+>>
+>> I've actually seen other cases where people are using multipath on
+>> single path devices just for the queuing, and when I thought about
+>> it, I
+>> realized that it makes sense. Multipath works with devices as they
+>> are,
+>> instead of needing special metadata, like lvm devices. People often
+>> realize that they need this after the device is already set up. Plus,
+>> multipath already deals with devices that have partitions or logical
+>> volumes on top of them. It's also easy to configure exactly how you
+>> want
+>> queueing to work. This use case might be a small nail, but it is a
+>> nail,
+>> and multipath is a reasonable tool to get the job done.
+>>
+>> It doesn't seem too hard to write a dm target that would queue and
+>> retry
+>> IO at some configurable interval, for some configurable number of
+>> times,
+>> when it failed. But you would also need to copy the work for getting
+>> the
+>> device, and any partitons on it, to autoassemble after the frist time
+>> it's set up and to make sure other layers use this device instead of
+>> the
+>> underlying device. Or, people can just use multipath.
+> 
+> Ok. So Frank, please just clarify the remaining minor points. You may
+> actually want to put (a short version of) this motivation in the man
+> page.
+> 
+> Regards,
+> Martin
+> 
+> 
