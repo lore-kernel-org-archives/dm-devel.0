@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 04/23] multipathd: move vecs desctruction into
-	cleanup function
-Date: Thu, 24 Sep 2020 15:40:35 +0200
-Message-ID: <20200924134054.14632-5-mwilck@suse.com>
+Subject: [PATCH 18/23] libmultipath: fix log_thread startup and
+	teardown
+Date: Thu, 24 Sep 2020 15:40:49 +0200
+Message-ID: <20200924134054.14632-19-mwilck@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,121 +24,135 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This will make it easer to move the stuff around later.
-The only functional change is that map destuction now happens after
-joining all threads, which should actually improve robustness.
+This fixes several issues with the log_thread. First, the running
+flag logq_running should be set by the thread itself, not by
+log_thread_start()/_stop(). Second, the thread was both cancelled and
+terminated via a flag (again, logq_running). It's sufficient,
+and better, to just cancel it and use logq_running as indication for
+successful termination. Third, the locking wasn't cancel-safe in some
+places. Forth, log_thread_start() and log_thread_stop() didn't wait for
+startup/teardown properly. Fifth, using (pthread_t)0 is wrong (pthread_t is
+opaque; there's no guarantee that 0 is not a valid pthread_t value). Finally,
+pthread_cancel() was called under logq_lock, which doesn't make sense to
+me at all.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 64 +++++++++++++++++++++++++++++------------------
- 1 file changed, 40 insertions(+), 24 deletions(-)
+ libmultipath/log_pthread.c | 59 ++++++++++++++++++++++++++++----------
+ 1 file changed, 44 insertions(+), 15 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 4d714e8..2642570 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -148,7 +148,7 @@ int should_exit(void)
- /*
-  * global copy of vecs for use in sig handlers
-  */
--struct vectors * gvecs;
-+static struct vectors * gvecs;
+diff --git a/libmultipath/log_pthread.c b/libmultipath/log_pthread.c
+index 0c327ff..5825e66 100644
+--- a/libmultipath/log_pthread.c
++++ b/libmultipath/log_pthread.c
+@@ -13,6 +13,7 @@
+ #include "log_pthread.h"
+ #include "log.h"
+ #include "lock.h"
++#include "util.h"
  
- struct config *multipath_conf;
+ static pthread_t log_thr;
  
-@@ -2889,6 +2889,44 @@ set_oom_adj (void)
- 	condlog(0, "couldn't adjust oom score");
+@@ -56,28 +57,45 @@ static void flush_logqueue (void)
+ 	} while (empty == 0);
  }
  
-+static void cleanup_maps(struct vectors *vecs)
++static void cleanup_log_thread(__attribute((unused)) void *arg)
 +{
-+	int queue_without_daemon, i;
-+	struct multipath *mpp;
-+	struct config *conf;
-+
-+	conf = get_multipath_config();
-+	queue_without_daemon = conf->queue_without_daemon;
-+	put_multipath_config(conf);
-+	if (queue_without_daemon == QUE_NO_DAEMON_OFF)
-+		vector_foreach_slot(vecs->mpvec, mpp, i)
-+			dm_queue_if_no_path(mpp->alias, 0);
-+	remove_maps_and_stop_waiters(vecs);
-+	vecs->mpvec = NULL;
++	logdbg(stderr, "log thread exiting");
++	pthread_mutex_lock(&logev_lock);
++	logq_running = 0;
++	pthread_cond_signal(&logev_cond);
++	pthread_mutex_unlock(&logev_lock);
 +}
 +
-+static void cleanup_paths(struct vectors *vecs)
-+{
-+	free_pathvec(vecs->pathvec, FREE_PATHS);
-+	vecs->pathvec = NULL;
-+}
+ static void * log_thread (__attribute__((unused)) void * et)
+ {
+ 	int running;
+ 
+ 	pthread_mutex_lock(&logev_lock);
+-	logq_running = 1;
++	running = logq_running;
++	if (!running)
++		logq_running = 1;
++	pthread_cond_signal(&logev_cond);
+ 	pthread_mutex_unlock(&logev_lock);
++	if (running)
++		/* already started */
++		return NULL;
++	pthread_cleanup_push(cleanup_log_thread, NULL);
+ 
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
+ 	logdbg(stderr,"enter log_thread\n");
+ 
+ 	while (1) {
+ 		pthread_mutex_lock(&logev_lock);
+-		if (logq_running && !log_messages_pending)
++		pthread_cleanup_push(cleanup_mutex, &logev_lock);
++		while (!log_messages_pending)
++			/* this is a cancellation point */
+ 			pthread_cond_wait(&logev_cond, &logev_lock);
+ 		log_messages_pending = 0;
+-		running = logq_running;
+-		pthread_mutex_unlock(&logev_lock);
+-		if (!running)
+-			break;
++		pthread_cleanup_pop(1);
 +
-+static void cleanup_vecs(void)
-+{
-+	if (!gvecs)
-+		return;
-+	/*
-+	 * We can't take the vecs lock here, because exit() may
-+	 * have been called from the child() thread, holding the lock already.
-+	 * Anyway, by the time we get here, all threads that might access
-+	 * vecs should have been joined already (in cleanup_threads).
-+	 */
-+	cleanup_maps(gvecs);
-+	cleanup_paths(gvecs);
-+	pthread_mutex_destroy(&gvecs->lock.mutex);
-+	FREE(gvecs);
-+}
+ 		flush_logqueue();
+ 	}
++	pthread_cleanup_pop(1);
+ 	return NULL;
+ }
+ 
+@@ -98,6 +116,12 @@ void log_thread_start (pthread_attr_t *attr)
+ 		exit(1);
+ 	}
+ 
++	pthread_mutex_lock(&logev_lock);
++	pthread_cleanup_push(cleanup_mutex, &logev_lock);
++	/* wait for thread startup */
++	while (!logq_running)
++		pthread_cond_wait(&logev_cond, &logev_lock);
++	pthread_cleanup_pop(1);
+ 	return;
+ }
+ 
+@@ -112,21 +136,26 @@ void log_thread_reset (void)
+ 
+ void log_thread_stop (void)
+ {
++	int running;
 +
- /*
-  * Use a non-default call_rcu_data for child().
-  *
-@@ -2936,13 +2974,10 @@ child (__attribute__((unused)) void *param)
- 	pthread_t check_thr, uevent_thr, uxlsnr_thr, uevq_thr, dmevent_thr;
- 	pthread_attr_t log_attr, misc_attr, uevent_attr;
- 	struct vectors * vecs;
--	struct multipath * mpp;
--	int i;
- 	int rc;
- 	int pid_fd = -1;
- 	struct config *conf;
- 	char *envp;
--	int queue_without_daemon;
- 	enum daemon_status state;
- 	struct call_rcu_data *crdp;
- 
-@@ -3108,17 +3143,6 @@ child (__attribute__((unused)) void *param)
- 	if (poll_dmevents)
- 		pthread_cancel(dmevent_thr);
- 
--	conf = get_multipath_config();
--	queue_without_daemon = conf->queue_without_daemon;
--	put_multipath_config(conf);
+ 	if (!la)
+ 		return;
 -
--	lock(&vecs->lock);
--	if (queue_without_daemon == QUE_NO_DAEMON_OFF)
--		vector_foreach_slot(vecs->mpvec, mpp, i)
--			dm_queue_if_no_path(mpp->alias, 0);
--	remove_maps_and_stop_waiters(vecs);
--	unlock(&vecs->lock);
--
- 	pthread_join(check_thr, NULL);
- 	pthread_join(uevent_thr, NULL);
- 	pthread_join(uxlsnr_thr, NULL);
-@@ -3128,15 +3152,7 @@ child (__attribute__((unused)) void *param)
+ 	logdbg(stderr,"enter log_thread_stop\n");
  
- 	stop_io_err_stat_thread();
+ 	pthread_mutex_lock(&logev_lock);
+-	logq_running = 0;
+-	pthread_cond_signal(&logev_cond);
+-	pthread_mutex_unlock(&logev_lock);
++	pthread_cleanup_push(cleanup_mutex, &logev_lock);
++	running = logq_running;
++	if (running) {
++		pthread_cancel(log_thr);
++		pthread_cond_signal(&logev_cond);
++	}
++	while (logq_running)
++		pthread_cond_wait(&logev_cond, &logev_lock);
++	pthread_cleanup_pop(1);
++
++	if (running)
++		pthread_join(log_thr, NULL);
  
--	lock(&vecs->lock);
--	free_pathvec(vecs->pathvec, FREE_PATHS);
--	vecs->pathvec = NULL;
--	unlock(&vecs->lock);
--
--	pthread_mutex_destroy(&vecs->lock.mutex);
--	FREE(vecs);
--	vecs = NULL;
--
-+	cleanup_vecs();
- 	cleanup_foreign();
- 	cleanup_checkers();
- 	cleanup_prio();
+-	pthread_mutex_lock(&logq_lock);
+-	pthread_cancel(log_thr);
+-	pthread_mutex_unlock(&logq_lock);
+-	pthread_join(log_thr, NULL);
+-	log_thr = (pthread_t)0;
+ 
+ 	flush_logqueue();
+ 
 -- 
 2.28.0
