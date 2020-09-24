@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 09/11] libmultipath: add linker version script
-Date: Thu, 24 Sep 2020 15:36:42 +0200
-Message-ID: <20200924133644.14034-10-mwilck@suse.com>
+Subject: [PATCH 06/11] libmultipath: checkers/prio: allow
+	non-lazy .so loading
+Date: Thu, 24 Sep 2020 15:36:39 +0200
+Message-ID: <20200924133644.14034-7-mwilck@suse.com>
 References: <20200924133644.14034-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,263 +24,84 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This version script documents the current ABI of libmultipath,
-as used by multipath, multipathd, (lib)mpathpersist, and the
-dynamically loaded libraries (prioritizers, checkers, and foreign).
-
-This reduces the amount of exported symbols of libmultipath.so.0
-by more than a half (199 vs. 434).
+If compiled with -DLOAD_ALL_SHARED_LIBS, all known prioritizers
+and checkers will be loaded immediately on startup. This is useful
+for determining symbol usage (start executables with LD_BIND_NOW=1).
 ---
- libmultipath/Makefile             |   7 +-
- libmultipath/libmultipath.version | 215 ++++++++++++++++++++++++++++++
- 2 files changed, 220 insertions(+), 2 deletions(-)
- create mode 100644 libmultipath/libmultipath.version
+ libmultipath/checkers.c | 17 +++++++++++++++++
+ libmultipath/prio.c     | 22 ++++++++++++++++++++++
+ 2 files changed, 39 insertions(+)
 
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index cf13561..bfc7263 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -6,6 +6,7 @@ include ../Makefile.inc
- SONAME = 0
- DEVLIB = libmultipath.so
- LIBS = $(DEVLIB).$(SONAME)
-+VERSION_SCRIPT := libmultipath.version
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index f7ddd53..18b1f5e 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -7,6 +7,7 @@
+ #include "debug.h"
+ #include "checkers.h"
+ #include "vector.h"
++#include "util.h"
  
- CFLAGS += $(LIB_CFLAGS) -I$(mpathcmddir) -I$(mpathpersistdir) -I$(nvmedir)
+ struct checker_class {
+ 	struct list_head node;
+@@ -375,7 +376,23 @@ void checker_get(const char *multipath_dir, struct checker *dst,
  
-@@ -68,8 +69,10 @@ nvme-ioctl.c: nvme/nvme-ioctl.c
- nvme-ioctl.h: nvme/nvme-ioctl.h
- 	$(call make_static,$<,$@)
+ int init_checkers(const char *multipath_dir)
+ {
++#ifdef LOAD_ALL_SHARED_LIBS
++	static const char *const all_checkers[] = {
++		DIRECTIO,
++		TUR,
++		HP_SW,
++		RDAC,
++		EMC_CLARIION,
++		READSECTOR0,
++		CCISS_TUR,
++	};
++	unsigned int i;
++
++	for (i = 0; i < ARRAY_SIZE(all_checkers); i++)
++		add_checker_class(multipath_dir, all_checkers[i]);
++#else
+ 	if (!add_checker_class(multipath_dir, DEFAULT_CHECKER))
+ 		return 1;
++#endif
+ 	return 0;
+ }
+diff --git a/libmultipath/prio.c b/libmultipath/prio.c
+index 3a718ba..c92bde7 100644
+--- a/libmultipath/prio.c
++++ b/libmultipath/prio.c
+@@ -20,8 +20,30 @@ unsigned int get_prio_timeout(unsigned int timeout_ms,
  
--$(LIBS): $(OBJS)
--	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS) $(LIBDEPS)
+ int init_prio (const char *multipath_dir)
+ {
++#ifdef LOAD_ALL_SHARED_LIBS
++	static const char *const all_prios[] = {
++		PRIO_ALUA,
++		PRIO_CONST,
++		PRIO_DATACORE,
++		PRIO_EMC,
++		PRIO_HDS,
++		PRIO_HP_SW,
++		PRIO_ONTAP,
++		PRIO_RANDOM,
++		PRIO_RDAC,
++		PRIO_WEIGHTED_PATH,
++		PRIO_SYSFS,
++		PRIO_PATH_LATENCY,
++		PRIO_ANA,
++	};
++	unsigned int i;
 +
-+$(LIBS): $(OBJS) $(VERSION_SCRIPT)
-+	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ \
-+		-Wl,--version-script=$(VERSION_SCRIPT) -o $@ $(OBJS) $(LIBDEPS)
++	for  (i = 0; i < ARRAY_SIZE(all_prios); i++)
++		add_prio(multipath_dir, all_prios[i]);
++#else
+ 	if (!add_prio(multipath_dir, DEFAULT_PRIO))
+ 		return 1;
++#endif
+ 	return 0;
+ }
  
- $(DEVLIB): $(LIBS)
- 	$(LN) $(LIBS) $@
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-new file mode 100644
-index 0000000..d6ac0e1
---- /dev/null
-+++ b/libmultipath/libmultipath.version
-@@ -0,0 +1,215 @@
-+LIBMULTIPATH_0.8.4.0 {
-+global:
-+	/* symbols referenced by multipath and multipathd */
-+	add_foreign;
-+	add_map_with_path;
-+	adopt_paths;
-+	alloc_multipath;
-+	alloc_path;
-+	alloc_path_with_pathinfo;
-+	alloc_strvec;
-+	change_foreign;
-+	check_alias_settings;
-+	checker_clear_message;
-+	checker_disable;
-+	checker_enable;
-+	checker_is_sync;
-+	checker_message;
-+	checker_name;
-+	checker_state_name;
-+	check_foreign;
-+	cleanup_checkers;
-+	cleanup_foreign;
-+	cleanup_lock;
-+	cleanup_prio;
-+	close_fd;
-+	coalesce_paths;
-+	convert_dev;
-+	count_active_paths;
-+	delete_all_foreign;
-+	delete_foreign;
-+	disassemble_map;
-+	disassemble_status;
-+	dlog;
-+	dm_cancel_deferred_remove;
-+	dm_drv_version;
-+	dm_enablegroup;
-+	dm_fail_path;
-+	_dm_flush_map;
-+	dm_flush_map_nopaths;
-+	dm_flush_maps;
-+	dm_geteventnr;
-+	dm_get_info;
-+	dm_get_major_minor;
-+	dm_get_map;
-+	dm_get_maps;
-+	dm_get_multipath;
-+	dm_get_status;
-+	dm_get_uuid;
-+	dm_is_mpath;
-+	dm_mapname;
-+	dm_map_present;
-+	dm_queue_if_no_path;
-+	dm_reassign;
-+	dm_reinstate_path;
-+	dm_simplecmd_noflush;
-+	dm_switchgroup;
-+	dm_tgt_version;
-+	domap;
-+	ensure_directories_exist;
-+	extract_hwe_from_path;
-+	filter_devnode;
-+	filter_path;
-+	filter_wwid;
-+	find_mp_by_alias;
-+	find_mp_by_minor;
-+	find_mp_by_str;
-+	find_mp_by_wwid;
-+	find_mpe;
-+	find_path_by_dev;
-+	find_path_by_devt;
-+	find_slot;
-+	foreign_multipath_layout;
-+	foreign_path_layout;
-+	free_config;
-+	free_multipath;
-+	free_multipathvec;
-+	free_path;
-+	free_pathvec;
-+	free_strvec;
-+	get_monotonic_time;
-+	get_multipath_layout;
-+	get_path_layout;
-+	get_pgpolicy_id;
-+	get_refwwid;
-+	get_state;
-+	get_udev_device;
-+	get_uid;
-+	get_used_hwes;
-+	group_by_prio;
-+	init_checkers;
-+	init_foreign;
-+	init_prio;
-+	io_err_stat_attr;
-+	io_err_stat_handle_pathfail;
-+	is_path_valid;
-+	is_quote;
-+	libmp_dm_task_create;
-+	libmp_udev_set_sync_support;
-+	load_config;
-+	log_thread_reset;
-+	log_thread_start;
-+	log_thread_stop;
-+	need_io_err_check;
-+	normalize_timespec;
-+	orphan_path;
-+	orphan_paths;
-+	parse_prkey_flags;
-+	pathcount;
-+	path_discovery;
-+	path_get_tpgs;
-+	pathinfo;
-+	path_offline;
-+	print_all_paths;
-+	print_foreign_topology;
-+	_print_multipath_topology;
-+	pthread_cond_init_mono;
-+	recv_packet;
-+	recv_packet_from_client;
-+	reinstate_paths;
-+	remember_wwid;
-+	remove_map;
-+	remove_map_by_alias;
-+	remove_maps;
-+	remove_wwid;
-+	replace_wwids;
-+	reset_checker_classes;
-+	select_all_tg_pt;
-+	select_action;
-+	select_find_multipaths_timeout;
-+	select_no_path_retry;
-+	select_path_group;
-+	select_reservation_key;
-+	send_packet;
-+	set_max_fds;
-+	__set_no_path_retry;
-+	set_path_removed;
-+	set_prkey;
-+	setup_map;
-+	setup_thread_attr;
-+	should_multipath;
-+	snprint_blacklist_report;
-+	snprint_config;
-+	snprint_devices;
-+	snprint_foreign_multipaths;
-+	snprint_foreign_paths;
-+	snprint_foreign_topology;
-+	_snprint_multipath;
-+	snprint_multipath_header;
-+	snprint_multipath_map_json;
-+	_snprint_multipath_topology;
-+	snprint_multipath_topology_json;
-+	_snprint_path;
-+	snprint_path_header;
-+	snprint_status;
-+	snprint_wildcards;
-+	stop_io_err_stat_thread;
-+	store_path;
-+	store_pathinfo;
-+	strchop;
-+	strlcpy;
-+	sync_map_state;
-+	sysfs_attr_set_value;
-+	sysfs_get_size;
-+	sysfs_is_multipathed;
-+	timespecsub;
-+	trigger_paths_udev_change;
-+	uevent_dispatch;
-+	uevent_get_dm_str;
-+	uevent_get_env_positive_int;
-+	uevent_is_mpath;
-+	uevent_listen;
-+	update_mpp_paths;
-+	update_multipath_status;
-+	update_multipath_strings;
-+	update_multipath_table;
-+	update_pathvec_from_dm;
-+	update_queue_mode_add_path;
-+	update_queue_mode_del_path;
-+	ux_socket_listen;
-+	valid_alias;
-+	vector_alloc;
-+	vector_alloc_slot;
-+	vector_del_slot;
-+	vector_free;
-+	vector_reset;
-+	vector_set_slot;
-+	verify_paths;
-+
-+	/* checkers */
-+	sg_read;
-+
-+	/* prioritizers */
-+	get_asymmetric_access_state;
-+	get_prio_timeout;
-+	get_target_port_group;
-+	get_target_port_group_support;
-+	libmp_nvme_ana_log;
-+	libmp_nvme_get_nsid;
-+	libmp_nvme_identify_ns;
-+	log_nvme_errcode;
-+	nvme_id_ctrl_ana;
-+	snprint_host_wwnn;
-+	snprint_host_wwpn;
-+	snprint_path_serial;
-+	snprint_tgt_wwnn;
-+	snprint_tgt_wwpn;
-+	sysfs_get_asymmetric_access_state;
-+
-+	/* foreign */
-+	free_scandir_result;
-+	sysfs_attr_get_value;
-+
-+local:
-+	*;
-+};
 -- 
 2.28.0
