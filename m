@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 02/23] multipathd: Fix liburcu memory leak
-Date: Thu, 24 Sep 2020 15:40:33 +0200
-Message-ID: <20200924134054.14632-3-mwilck@suse.com>
+Subject: [PATCH 06/23] multipathd: move threads destruction into
+	separate function
+Date: Thu, 24 Sep 2020 15:40:37 +0200
+Message-ID: <20200924134054.14632-7-mwilck@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,97 +24,160 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Fix this leak in multipathd, reported by valgrind, that messes up
-multipathd's otherwise clean leak report:
-
-==23823== 336 bytes in 1 blocks are possibly lost in loss record 3 of 3
-==23823==    at 0x483AB65: calloc (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
-==23823==    by 0x4012F16: _dl_allocate_tls (in /lib64/ld-2.31.so)
-==23823==    by 0x493BB8E: pthread_create@@GLIBC_2.2.5 (in /lib64/libpthread-2.31.so)
-==23823==    by 0x492A9A9: call_rcu_data_init (urcu-call-rcu-impl.h:437)
-==23823==    by 0x492AD2F: UnknownInlinedFun (urcu-call-rcu-impl.h:492)
-==23823==    by 0x492AD2F: create_call_rcu_data_memb (urcu-call-rcu-impl.h:504)
-==23823==    by 0x1164E3: child.constprop.0.isra.0 (main.c:2915)
-==23823==    by 0x10F50C: main (main.c:3335)
-==23823==
-==23823== LEAK SUMMARY:
-==23823==    definitely lost: 0 bytes in 0 blocks
-==23823==    indirectly lost: 0 bytes in 0 blocks
-==23823==      possibly lost: 336 bytes in 1 blocks
-
-The problem is caused by using liburcu's default RCU call handler,
-which liburcu refuses to stop/join. See comments in the code.
+Also, introduce booleans that indicate a certain thread has
+been started successfully. Using these booleans, we can avoid
+crashing by cancelling threads that have never been started.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 45 ++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 44 insertions(+), 1 deletion(-)
+ multipathd/main.c | 76 +++++++++++++++++++++++++++++++----------------
+ 1 file changed, 51 insertions(+), 25 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index c5c374b..be1b5ae 100644
+index 1cdbff1..8b9df55 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -2889,6 +2889,47 @@ set_oom_adj (void)
- 	condlog(0, "couldn't adjust oom score");
+@@ -129,6 +129,9 @@ static volatile enum daemon_status running_state = DAEMON_INIT;
+ pid_t daemon_pid;
+ static pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
+ static pthread_cond_t config_cond;
++static pthread_t check_thr, uevent_thr, uxlsnr_thr, uevq_thr, dmevent_thr;
++static bool check_thr_started, uevent_thr_started, uxlsnr_thr_started,
++	uevq_thr_started, dmevent_thr_started;
+ 
+ static inline enum daemon_status get_running_state(void)
+ {
+@@ -2927,6 +2930,39 @@ static void cleanup_vecs(void)
+ 	FREE(gvecs);
  }
  
-+/*
-+ * Use a non-default call_rcu_data for child().
-+ *
-+ * We do this to avoid a memory leak from liburcu.
-+ * liburcu never frees the default rcu handler (see comments on
-+ * call_rcu_data_free() in urcu-call-rcu-impl.h), its thread
-+ * can't be joined with pthread_join(), leaving a memory leak.
-+ *
-+ * Therefore we create our own, which can be destroyed and joined.
-+ */
-+static struct call_rcu_data *setup_rcu(void)
++static void cleanup_threads(void)
 +{
-+	struct call_rcu_data *crdp;
++	stop_io_err_stat_thread();
 +
-+	rcu_init();
-+	rcu_register_thread();
-+	crdp = create_call_rcu_data(0UL, -1);
-+	if (crdp != NULL)
-+		set_thread_call_rcu_data(crdp);
-+	return crdp;
++	if (check_thr_started)
++		pthread_cancel(check_thr);
++	if (uevent_thr_started)
++		pthread_cancel(uevent_thr);
++	if (uxlsnr_thr_started)
++		pthread_cancel(uxlsnr_thr);
++	if (uevq_thr_started)
++		pthread_cancel(uevq_thr);
++	if (dmevent_thr_started)
++		pthread_cancel(dmevent_thr);
++
++	if (check_thr_started)
++		pthread_join(check_thr, NULL);
++	if (uevent_thr_started)
++		pthread_join(uevent_thr, NULL);
++	if (uxlsnr_thr_started)
++		pthread_join(uxlsnr_thr, NULL);
++	if (uevq_thr_started)
++		pthread_join(uevq_thr, NULL);
++	if (dmevent_thr_started)
++		pthread_join(dmevent_thr, NULL);
++
++	/*
++	 * As all threads are joined now, and we're in DAEMON_SHUTDOWN
++	 * state, no new waiter threads will be created any more.
++	 */
++	pthread_attr_destroy(&waiter_attr);
 +}
 +
-+static void cleanup_rcu(int dummy __attribute__((unused)), void *arg)
-+{
-+	struct call_rcu_data *crdp = arg;
-+	pthread_t rcu_thread;
-+
-+	/* Wait for any pending RCU calls */
-+	rcu_barrier();
-+	if (crdp != NULL) {
-+		rcu_thread = get_call_rcu_thread(crdp);
-+		/* detach this thread from the RCU thread */
-+		set_thread_call_rcu_data(NULL);
-+		synchronize_rcu();
-+		/* tell RCU thread to exit */
-+		call_rcu_data_free(crdp);
-+		pthread_join(rcu_thread, NULL);
-+	}
-+	rcu_unregister_thread();
-+}
-+
+ /*
+  * Use a non-default call_rcu_data for child().
+  *
+@@ -2971,7 +3007,6 @@ static void cleanup_rcu(int dummy __attribute__((unused)), void *arg)
  static int
  child (__attribute__((unused)) void *param)
  {
-@@ -2903,10 +2944,12 @@ child (__attribute__((unused)) void *param)
- 	char *envp;
- 	int queue_without_daemon;
- 	enum daemon_status state;
-+	struct call_rcu_data *crdp;
+-	pthread_t check_thr, uevent_thr, uxlsnr_thr, uevq_thr, dmevent_thr;
+ 	pthread_attr_t log_attr, misc_attr, uevent_attr;
+ 	struct vectors * vecs;
+ 	int rc;
+@@ -3070,9 +3105,12 @@ child (__attribute__((unused)) void *param)
+ 		condlog(0, "failed to create cli listener: %d", rc);
+ 		goto failed;
+ 	}
+-	else if (state != DAEMON_CONFIGURE) {
+-		condlog(0, "cli listener failed to start");
+-		goto failed;
++	else {
++		uxlsnr_thr_started = true;
++		if (state != DAEMON_CONFIGURE) {
++			condlog(0, "cli listener failed to start");
++			goto failed;
++		}
+ 	}
  
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 	signal_init();
--	rcu_init();
-+	crdp = setup_rcu();
-+	on_exit(cleanup_rcu, crdp);
+ 	if (poll_dmevents) {
+@@ -3085,7 +3123,8 @@ child (__attribute__((unused)) void *param)
+ 			condlog(0, "failed to create dmevent waiter thread: %d",
+ 				rc);
+ 			goto failed;
+-		}
++		} else
++			dmevent_thr_started = true;
+ 	}
  
- 	setup_thread_attr(&misc_attr, 64 * 1024, 0);
- 	setup_thread_attr(&uevent_attr, DEFAULT_UEVENT_STACKSIZE * 1024, 0);
+ 	/*
+@@ -3094,7 +3133,8 @@ child (__attribute__((unused)) void *param)
+ 	if ((rc = pthread_create(&uevent_thr, &uevent_attr, ueventloop, udev))) {
+ 		condlog(0, "failed to create uevent thread: %d", rc);
+ 		goto failed;
+-	}
++	} else
++		uevent_thr_started = true;
+ 	pthread_attr_destroy(&uevent_attr);
+ 
+ 	/*
+@@ -3103,11 +3143,13 @@ child (__attribute__((unused)) void *param)
+ 	if ((rc = pthread_create(&check_thr, &misc_attr, checkerloop, vecs))) {
+ 		condlog(0,"failed to create checker loop thread: %d", rc);
+ 		goto failed;
+-	}
++	} else
++		check_thr_started = true;
+ 	if ((rc = pthread_create(&uevq_thr, &misc_attr, uevqloop, vecs))) {
+ 		condlog(0, "failed to create uevent dispatcher: %d", rc);
+ 		goto failed;
+-	}
++	} else
++		uevq_thr_started = true;
+ 	pthread_attr_destroy(&misc_attr);
+ 
+ 	while (1) {
+@@ -3136,22 +3178,7 @@ child (__attribute__((unused)) void *param)
+ 		}
+ 	}
+ 
+-	pthread_cancel(check_thr);
+-	pthread_cancel(uevent_thr);
+-	pthread_cancel(uxlsnr_thr);
+-	pthread_cancel(uevq_thr);
+-	if (poll_dmevents)
+-		pthread_cancel(dmevent_thr);
+-
+-	pthread_join(check_thr, NULL);
+-	pthread_join(uevent_thr, NULL);
+-	pthread_join(uxlsnr_thr, NULL);
+-	pthread_join(uevq_thr, NULL);
+-	if (poll_dmevents)
+-		pthread_join(dmevent_thr, NULL);
+-
+-	stop_io_err_stat_thread();
+-
++	cleanup_threads();
+ 	cleanup_vecs();
+ 	cleanup_foreign();
+ 	cleanup_checkers();
+@@ -3178,7 +3205,6 @@ child (__attribute__((unused)) void *param)
+ 	conf = rcu_dereference(multipath_conf);
+ 	rcu_assign_pointer(multipath_conf, NULL);
+ 	call_rcu(&conf->rcu, rcu_free_config);
+-	pthread_attr_destroy(&waiter_attr);
+ #ifdef _DEBUG_
+ 	dbg_free_final(NULL);
+ #endif
 -- 
 2.28.0
