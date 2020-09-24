@@ -1,38 +1,36 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH 6/6] mm: Add memalloc_nowait
-Date: Wed, 23 Sep 2020 20:39:02 -0400
-Message-ID: <20200924003902.GA10500@redhat.com>
-References: <20200625113122.7540-1-willy@infradead.org>
- <20200625113122.7540-7-willy@infradead.org>
+Subject: Re: [PATCH v2 1/3] block: make bio_crypt_clone() able to fail
+Date: Wed, 23 Sep 2020 20:56:47 -0400
+Message-ID: <20200924005647.GB10500@redhat.com>
+References: <20200916035315.34046-1-ebiggers@kernel.org>
+ <20200916035315.34046-2-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-block-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20200625113122.7540-7-willy@infradead.org>
-To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, Jens Axboe <axboe@kernel.dk>, linux-xfs@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
+In-Reply-To: <20200916035315.34046-2-ebiggers@kernel.org>
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, Miaohe Lin <linmiaohe@huawei.com>, dm-devel@redhat.com, Satya Tangirala <satyat@google.com>
 List-Id: dm-devel.ids
 
-On Thu, Jun 25 2020 at  7:31am -0400,
-Matthew Wilcox (Oracle) <willy@infradead.org> wrote:
+On Tue, Sep 15 2020 at 11:53pm -0400,
+Eric Biggers <ebiggers@kernel.org> wrote:
 
-> Similar to memalloc_noio() and memalloc_nofs(), memalloc_nowait()
-> guarantees we will not sleep to reclaim memory.  Use it to simplify
-> dm-bufio's allocations.
+> From: Eric Biggers <ebiggers@google.com>
 > 
-> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
-> ---
->  drivers/md/dm-bufio.c    | 30 ++++++++----------------------
->  include/linux/sched.h    |  1 +
->  include/linux/sched/mm.h | 12 ++++++++----
->  3 files changed, 17 insertions(+), 26 deletions(-)
+> bio_crypt_clone() assumes its gfp_mask argument always includes
+> __GFP_DIRECT_RECLAIM, so that the mempool_alloc() will always succeed.
+> 
+> However, bio_crypt_clone() might be called with GFP_ATOMIC via
+> setup_clone() in drivers/md/dm-rq.c, or with GFP_NOWAIT via
+> kcryptd_io_read() in drivers/md/dm-crypt.c.
+> 
+> Neither case is currently reachable with a bio that actually has an
+> encryption context.  However, it's fragile to rely on this.  Just make
+> bio_crypt_clone() able to fail, analogous to bio_integrity_clone().
+> 
+> Reported-by: Miaohe Lin <linmiaohe@huawei.com>
+> Cc: Satya Tangirala <satyat@google.com>
+> Signed-off-by: Eric Biggers <ebiggers@google.com>
 
-
-Hi,
-
-Curious on the state of this patchset?  Not seeing it in next-20200923
-
-The dm-bufio cleanup looks desirable.
-
-Thanks,
-Mike
+Reviewed-by: Mike Snitzer <snitzer@redhat.com>
