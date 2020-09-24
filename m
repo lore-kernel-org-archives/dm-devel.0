@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 01/11] libmultipath: find_mpe(): don't match with
-	empty WWID
-Date: Thu, 24 Sep 2020 15:36:34 +0200
-Message-ID: <20200924133644.14034-2-mwilck@suse.com>
+Subject: [PATCH 07/11] multipath-tools Makefiles: separate rules
+	for .so and man pages
+Date: Thu, 24 Sep 2020 15:36:40 +0200
+Message-ID: <20200924133644.14034-8-mwilck@suse.com>
 References: <20200924133644.14034-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,22 +24,89 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+Rely more on "make" functionality than on sequential command execution.
 ---
- libmultipath/config.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmpathcmd/Makefile     |  8 +++++---
+ libmpathpersist/Makefile | 10 +++++++---
+ libmultipath/Makefile    |  8 +++++---
+ 3 files changed, 17 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index b9bdbdb..df0f8f4 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -147,7 +147,7 @@ struct mpentry *find_mpe(vector mptable, char *wwid)
- 	int i;
- 	struct mpentry * mpe;
+diff --git a/libmpathcmd/Makefile b/libmpathcmd/Makefile
+index 0f6b816..08ccb81 100644
+--- a/libmpathcmd/Makefile
++++ b/libmpathcmd/Makefile
+@@ -8,13 +8,15 @@ CFLAGS += $(LIB_CFLAGS)
  
--	if (!wwid)
-+	if (!wwid || !*wwid)
- 		return NULL;
+ OBJS = mpath_cmd.o
  
- 	vector_foreach_slot (mptable, mpe, i)
+-all: $(LIBS)
++all:	$(DEVLIB)
+ 
+ $(LIBS): $(OBJS)
+ 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS) $(LIBDEPS)
+-	$(LN) $@ $(DEVLIB)
+ 
+-install: $(LIBS)
++$(DEVLIB): $(LIBS)
++	$(LN) $(LIBS) $@
++
++install: all
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(syslibdir)
+ 	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
+ 	$(LN) $(LIBS) $(DESTDIR)$(syslibdir)/$(DEVLIB)
+diff --git a/libmpathpersist/Makefile b/libmpathpersist/Makefile
+index 21fdad8..9e869fd 100644
+--- a/libmpathpersist/Makefile
++++ b/libmpathpersist/Makefile
+@@ -11,15 +11,19 @@ LIBDEPS += -lpthread -ldevmapper -ldl -L$(multipathdir) -lmultipath \
+ 
+ OBJS = mpath_persist.o mpath_updatepr.o mpath_pr_ioctl.o
+ 
+-all: $(LIBS)
++all: $(DEVLIB) man
+ 
+ $(LIBS): $(OBJS)
+ 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) $(LIBDEPS) -Wl,-soname=$@ -o $@ $(OBJS)
+-	$(LN) $(LIBS) $(DEVLIB)
++
++$(DEVLIB): $(LIBS)
++	$(LN) $(LIBS) $@
++
++man:
+ 	$(GZIP) mpath_persistent_reserve_in.3 > mpath_persistent_reserve_in.3.gz
+ 	$(GZIP) mpath_persistent_reserve_out.3 > mpath_persistent_reserve_out.3.gz
+ 
+-install: $(LIBS)
++install: all
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(syslibdir)
+ 	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
+ 	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(syslibdir)
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index e5dac5e..af5bb77 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -50,7 +50,7 @@ OBJS = memory.o parser.o vector.o devmapper.o callout.o \
+ 	io_err_stat.o dm-generic.o generic.o foreign.o nvme-lib.o \
+ 	libsg.o valid.o
+ 
+-all: $(LIBS)
++all:	$(DEVLIB)
+ 
+ nvme-lib.o: nvme-lib.c nvme-ioctl.c nvme-ioctl.h
+ 	$(CC) $(CFLAGS) -Wno-unused-function -c -o $@ $<
+@@ -70,9 +70,11 @@ nvme-ioctl.h: nvme/nvme-ioctl.h
+ 
+ $(LIBS): $(OBJS)
+ 	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=$@ -o $@ $(OBJS) $(LIBDEPS)
+-	$(LN) $@ $(DEVLIB)
+ 
+-install:
++$(DEVLIB): $(LIBS)
++	$(LN) $(LIBS) $@
++
++install: all
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(syslibdir)
+ 	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
+ 	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(libdir)
 -- 
 2.28.0
