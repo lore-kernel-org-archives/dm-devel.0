@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 10/11] libmpathpersist: add linker version script
-Date: Thu, 24 Sep 2020 15:36:43 +0200
-Message-ID: <20200924133644.14034-11-mwilck@suse.com>
+Subject: [PATCH 08/11] libmultipath: create separate .so for unit
+	tests
+Date: Thu, 24 Sep 2020 15:36:41 +0200
+Message-ID: <20200924133644.14034-9-mwilck@suse.com>
 References: <20200924133644.14034-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,62 +24,81 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This defines the ABI of libmpathpersist in the current state.
+The unit tests use a lot of internal symbols that we don't want
+to add to the ABI if we don't have to. As long as we don't
+have to make incompatible changes to functions, we can work around
+that by simply using a non-versioned library for the unit tests.
+Therefore we add a seperate rule here. Do this before actually
+adding a version script, to avoid breakage during bisection.
 ---
- libmpathpersist/Makefile                |  6 ++++--
- libmpathpersist/libmpathpersist.version | 20 ++++++++++++++++++++
- 2 files changed, 24 insertions(+), 2 deletions(-)
- create mode 100644 libmpathpersist/libmpathpersist.version
+ libmultipath/Makefile |  7 +++++++
+ tests/Makefile        | 10 ++++++----
+ 2 files changed, 13 insertions(+), 4 deletions(-)
 
-diff --git a/libmpathpersist/Makefile b/libmpathpersist/Makefile
-index 9e869fd..456ce4c 100644
---- a/libmpathpersist/Makefile
-+++ b/libmpathpersist/Makefile
-@@ -3,6 +3,7 @@ include ../Makefile.inc
- SONAME = 0
- DEVLIB = libmpathpersist.so
- LIBS = $(DEVLIB).$(SONAME)
-+VERSION_SCRIPT := libmpathpersist.version
- 
- CFLAGS += $(LIB_CFLAGS) -I$(multipathdir) -I$(mpathpersistdir) -I$(mpathcmddir)
- 
-@@ -13,8 +14,9 @@ OBJS = mpath_persist.o mpath_updatepr.o mpath_pr_ioctl.o
- 
- all: $(DEVLIB) man
- 
--$(LIBS): $(OBJS)
--	$(CC) $(LDFLAGS) $(SHARED_FLAGS) $(LIBDEPS) -Wl,-soname=$@ -o $@ $(OBJS)
-+$(LIBS): $(OBJS) $(VERSION_SCRIPT)
-+	$(CC) $(LDFLAGS) $(SHARED_FLAGS) $(LIBDEPS) -Wl,-soname=$@ \
-+		-Wl,--version-script=$(VERSION_SCRIPT) -o $@ $(OBJS)
- 
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index af5bb77..cf13561 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -74,6 +74,13 @@ $(LIBS): $(OBJS)
  $(DEVLIB): $(LIBS)
  	$(LN) $(LIBS) $@
-diff --git a/libmpathpersist/libmpathpersist.version b/libmpathpersist/libmpathpersist.version
-new file mode 100644
-index 0000000..1bb8212
---- /dev/null
-+++ b/libmpathpersist/libmpathpersist.version
-@@ -0,0 +1,20 @@
-+LIBMPATHPERSIST_0.8.4.0 {
-+global:
+ 
++../tests/$(LIBS): $(OBJS) $(VERSION_SCRIPT)
++	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=`basename $@` \
++		-o $@ $(OBJS) $(LIBDEPS)
++	$(LN) $@ ${@:.so.0=.so}
 +
-+	__mpath_persistent_reserve_in;
-+	__mpath_persistent_reserve_out;
-+	dumpHex;
-+	mpath_alloc_prin_response;
-+	mpath_lib_exit;
-+	mpath_lib_init;
-+	mpath_mx_alloc_len;
-+	mpath_persistent_reserve_in;
-+	mpath_persistent_reserve_init_vecs;
-+	mpath_persistent_reserve_out;
-+	mpath_persistent_reserve_free_vecs;
-+	prin_do_scsi_ioctl;
-+	prout_do_scsi_ioctl;
-+	update_map_pr;
++test-lib:	../tests/$(LIBS)
 +
-+local: *;
-+};
+ install: all
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(syslibdir)
+ 	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
+diff --git a/tests/Makefile b/tests/Makefile
+index 502377f..47e6b86 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -10,7 +10,7 @@ W_MISSING_INITIALIZERS := $(call TEST_MISSING_INITIALIZERS)
+ 
+ CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathcmddir) \
+ 	-Wno-unused-parameter $(W_MISSING_INITIALIZERS)
+-LIBDEPS += -L$(multipathdir) -L$(mpathcmddir) -lmultipath -lmpathcmd -lcmocka
++LIBDEPS += -L. -L$(mpathcmddir) -lmultipath -lmpathcmd -lcmocka
+ 
+ TESTS := uevent parser util dmevents hwtable blacklist unaligned vpd pgpolicy \
+ 	 alias directio valid devt
+@@ -67,7 +67,7 @@ lib/libchecktur.so:
+ 
+ %.out:	%-test lib/libchecktur.so
+ 	@echo == running $< ==
+-	@LD_LIBRARY_PATH=$(multipathdir):$(mpathcmddir) ./$< >$@
++	@LD_LIBRARY_PATH=.:$(mpathcmddir) ./$< >$@
+ 
+ %.vgr:  %-test lib/libchecktur.so
+ 	@echo == running valgrind for $< ==
+@@ -77,7 +77,7 @@ lib/libchecktur.so:
+ OBJS = $(TESTS:%=%.o) test-lib.o
+ 
+ test_clean:
+-	$(RM) $(TESTS:%=%.out) $(TESTS:%=%.vgr)
++	$(RM) $(TESTS:%=%.out) $(TESTS:%=%.vgr) *.so.*
+ 
+ valgrind_clean:
+ 	$(RM) $(TESTS:%=%.vgr)
+@@ -97,12 +97,14 @@ dep_clean:
+ 	@sed -n 's/^.*__wrap_\([a-zA-Z0-9_]*\).*$$/-Wl,--wrap=\1/p' $< | \
+ 		sort -u | tr '\n' ' ' >$@
+ 
++libmultipath.so.0:
++	$(MAKE) -C $(multipathdir) test-lib
+ 
+ # COLON will get expanded during second expansion below
+ COLON:=:
+ .SECONDEXPANSION:
+ %-test:	%.o %.o.wrap $$($$@_OBJDEPS) $$($$@_TESTDEPS) $$($$@_TESTDEPS$$(COLON).o=.o.wrap) \
+-		$(multipathdir)/libmultipath.so Makefile
++		libmultipath.so.0 Makefile
+ 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $($@_TESTDEPS) $($@_OBJDEPS) \
+ 		$(LIBDEPS) $($@_LIBDEPS) \
+ 		$(shell cat $<.wrap) $(foreach dep,$($@_TESTDEPS),$(shell cat $(dep).wrap))
 -- 
 2.28.0
