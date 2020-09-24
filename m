@@ -1,16 +1,15 @@
-From: Sudhakar Panneerselvam <sudhakar.panneerselvam@oracle.com>
-Subject: Re: [RFC PATCH 0/2] dm crypt: Allow unaligned buffer
- lengths for skcipher devices
-Date: Thu, 24 Sep 2020 10:12:44 -0700 (PDT)
-Message-ID: <0b18d5a9-5bf3-41fb-9766-7f4b75019067@default>
-References: <1600281606-1446-1-git-send-email-sudhakar.panneerselvam@oracle.com>
-	<3be1ea32-b6a8-41ef-a9ba-ed691434d068@default>
-	<alpine.LRH.2.02.2009240834020.11084@file01.intranet.prod.int.rdu2.redhat.com>
+From: John Dorminy <jdorminy@redhat.com>
+Subject: Re: dm-raid: stack limits instead of overwriting them.
+Date: Thu, 24 Sep 2020 13:24:32 -0400
+Message-ID: <CAMeeMh-KfeEFAZE9v_UiDx_TELg3twKg6Ayvbbaf=NwYJ-8Csg@mail.gmail.com>
+References: <alpine.LRH.2.02.2009241225310.22728@file01.intranet.prod.int.rdu2.redhat.com>
+	<CAMeeMh87GLea=7_4qGuPhMj0WKnB-596HzkKQDafLirHiBpSzQ@mail.gmail.com>
+	<20200924170047.GB14650@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.2009240834020.11084@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <20200924170047.GB14650@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,51 +19,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Damien.LeMoal@wdc.com, ssudhakarp@gmail.com, snitzer@redhat.com, dm-crypt@saout.de, dm-devel@redhat.com, Shirley Ma <shirley.ma@oracle.com>, Martin Petersen <martin.petersen@oracle.com>, agk@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-Hello Mikulas,
+I am impressed at how much I read wrong...
 
-> -----Original Message-----
-> From: Mikulas Patocka [mailto:mpatocka@redhat.com]
-> Sent: Thursday, September 24, 2020 6:40 AM
-> To: Sudhakar Panneerselvam <sudhakar.panneerselvam@oracle.com>
-> Cc: agk@redhat.com; snitzer@redhat.com; dm-devel@redhat.com; dm-
-> crypt@saout.de; Damien.LeMoal@wdc.com; Shirley Ma
-> <shirley.ma@oracle.com>; ssudhakarp@gmail.com; Martin Petersen
-> <martin.petersen@oracle.com>
-> Subject: RE: [dm-devel] [RFC PATCH 0/2] dm crypt: Allow unaligned buffer
-> lengths for skcipher devices
-> 
-> 
-> 
-> On Wed, 23 Sep 2020, Sudhakar Panneerselvam wrote:
-> 
-> > Could someone review this patch set, please?
+On Thu, Sep 24, 2020 at 1:00 PM Mike Snitzer <snitzer@redhat.com> wrote:
+>
+> On Thu, Sep 24 2020 at 12:45pm -0400,
+> John Dorminy <jdorminy@redhat.com> wrote:
+>
+> > I don't understand how this works...
 > >
-> > Thanks
-> > Sudhakar
-> 
-> Hi
-> 
-> I'd like to ask - what sector size do you use in dm-crypt? Could the issue
-> be fixed just by using the smallest possible 512-byte sectors?
+> > Can chunk_size_bytes be 0? If not, how is discard_granularity being set to 0?
+>
+> Yeah, I had same question.. see the reply I just sent in this thread:
+> https://www.redhat.com/archives/dm-devel/2020-September/msg00568.html
+>
+> > I think also limits is local to the ti in question here, initialized
+> > by blk_set_stacking_limits() via dm-table.c, and therefore has only
+> > default values and not anything to do with the underlying queue. So
+> > setting discard_granularity=max(discard_granularity, chunk_size_bytes)
+> > doesn't seem like it should be working, unless I'm not understanding
+> > what it's there for...
+>
+> You're reading the dm-table.c limits stacking wrong.  Of course DM stack
+> up the underlying device(s) limits ;)
 
-My test has been with 512 bytes sector length. 
+Yep, I failed to read iterate_devices...
 
-> 
-> What I/O method does qemu use? Is it direct i/o + aio? What is unaligned -
-> the base address? Or length? Or the sector number? Could you use strace on
-> qemu and show an example of an I/O that fails due to alignment?
+>
+> >
+> > And shouldn't melding in the target's desired io_hints into the
+> > existing queue limits be happening in blk_stack_limits() instead?
+> > (Also, it does lcm_not_zero() for stacking granularity, instead of
+> > max()...)
+> >
+>
+> DM core does do that, the .io_hints hook in the DM target is reserved
+> for when the target has additional constraints that blk_stack_limits()
+> didn't/couldn't factor in.
+Yes, I had erroneously thought the limit-stacking was after getting
+the targets' individual limits, not before.
 
-Please see my update on June 11 @ https://github.com/virtio-win/kvm-guest-drivers-windows/issues/446 when I originally posted this issue to windows virtio forum. It has some finer details of the reproduction steps and might answer some of your questions.
+>
+> And blk_stack_limts() does use max() for discard_granularity.
+... I'm just terrible at reading this morning.
 
-Also, please see my reply to Eric's email on some of the low level details of function call sequence leading to the issue. If there are further questions, let me know.
+Thanks for pointing out all the things I misread!
 
-Thanks
-Sudhakar
-
-> 
-> Mikulas
-> 
+>
+> Mike
+>
+> >
+> > On Thu, Sep 24, 2020 at 12:29 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
+> > >
+> > > This patch fixes a warning WARN_ON_ONCE(!q->limits.discard_granularity).
+> > > The reason is that the function raid_io_hints overwrote
+> > > limits->discard_granularity with zero. We need to properly stack the
+> > > limits instead of overwriting them.
+> > >
+> > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > > Cc: stable@vger.kernel.org
+> > >
+> > > ---
+> > >  drivers/md/dm-raid.c |    4 ++--
+> > >  1 file changed, 2 insertions(+), 2 deletions(-)
+> > >
+> > > Index: linux-2.6/drivers/md/dm-raid.c
+> > > ===================================================================
+> > > --- linux-2.6.orig/drivers/md/dm-raid.c 2020-09-24 18:16:45.000000000 +0200
+> > > +++ linux-2.6/drivers/md/dm-raid.c      2020-09-24 18:16:45.000000000 +0200
+> > > @@ -3734,8 +3734,8 @@ static void raid_io_hints(struct dm_targ
+> > >          * RAID0/4/5/6 don't and process large discard bios properly.
+> > >          */
+> > >         if (rs_is_raid1(rs) || rs_is_raid10(rs)) {
+> > > -               limits->discard_granularity = chunk_size_bytes;
+> > > -               limits->max_discard_sectors = rs->md.chunk_sectors;
+> > > +               limits->discard_granularity = max(limits->discard_granularity, chunk_size_bytes);
+> > > +               limits->max_discard_sectors = min_not_zero(limits->max_discard_sectors, (unsigned)rs->md.chunk_sectors);
+> > >         }
+> > >  }
+> > >
+> > >
+> > > --
+> > > dm-devel mailing list
+> > > dm-devel@redhat.com
+> > > https://www.redhat.com/mailman/listinfo/dm-devel
+> > >
+> >
+>
