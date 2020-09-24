@@ -1,8 +1,7 @@
 From: mwilck@suse.com
-Subject: [PATCH 08/11] libmultipath: create separate .so for unit
-	tests
-Date: Thu, 24 Sep 2020 15:36:41 +0200
-Message-ID: <20200924133644.14034-9-mwilck@suse.com>
+Subject: [PATCH 04/11] libdmmp tests: fix compilation
+Date: Thu, 24 Sep 2020 15:36:37 +0200
+Message-ID: <20200924133644.14034-5-mwilck@suse.com>
 References: <20200924133644.14034-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,81 +23,37 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-The unit tests use a lot of internal symbols that we don't want
-to add to the ABI if we don't have to. As long as we don't
-have to make incompatible changes to functions, we can work around
-that by simply using a non-versioned library for the unit tests.
-Therefore we add a seperate rule here. Do this before actually
-adding a version script, to avoid breakage during bisection.
+These tests don't compile with -Werror=unused-parameter. Fix it.
 ---
- libmultipath/Makefile |  7 +++++++
- tests/Makefile        | 10 ++++++----
- 2 files changed, 13 insertions(+), 4 deletions(-)
+ libdmmp/test/libdmmp_speed_test.c | 2 +-
+ libdmmp/test/libdmmp_test.c       | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index af5bb77..cf13561 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -74,6 +74,13 @@ $(LIBS): $(OBJS)
- $(DEVLIB): $(LIBS)
- 	$(LN) $(LIBS) $@
+diff --git a/libdmmp/test/libdmmp_speed_test.c b/libdmmp/test/libdmmp_speed_test.c
+index 372cd39..d91ba50 100644
+--- a/libdmmp/test/libdmmp_speed_test.c
++++ b/libdmmp/test/libdmmp_speed_test.c
+@@ -27,7 +27,7 @@
  
-+../tests/$(LIBS): $(OBJS) $(VERSION_SCRIPT)
-+	$(CC) $(LDFLAGS) $(SHARED_FLAGS) -Wl,-soname=`basename $@` \
-+		-o $@ $(OBJS) $(LIBDEPS)
-+	$(LN) $@ ${@:.so.0=.so}
-+
-+test-lib:	../tests/$(LIBS)
-+
- install: all
- 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(syslibdir)
- 	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(syslibdir)/$(LIBS)
-diff --git a/tests/Makefile b/tests/Makefile
-index 502377f..47e6b86 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -10,7 +10,7 @@ W_MISSING_INITIALIZERS := $(call TEST_MISSING_INITIALIZERS)
+ #include <libdmmp/libdmmp.h>
  
- CFLAGS += $(BIN_CFLAGS) -I$(multipathdir) -I$(mpathcmddir) \
- 	-Wno-unused-parameter $(W_MISSING_INITIALIZERS)
--LIBDEPS += -L$(multipathdir) -L$(mpathcmddir) -lmultipath -lmpathcmd -lcmocka
-+LIBDEPS += -L. -L$(mpathcmddir) -lmultipath -lmpathcmd -lcmocka
+-int main(int argc, char *argv[])
++int main(void)
+ {
+ 	struct dmmp_context *ctx = NULL;
+ 	struct dmmp_mpath **dmmp_mps = NULL;
+diff --git a/libdmmp/test/libdmmp_test.c b/libdmmp/test/libdmmp_test.c
+index d944e1e..a940b57 100644
+--- a/libdmmp/test/libdmmp_test.c
++++ b/libdmmp/test/libdmmp_test.c
+@@ -102,7 +102,7 @@ out:
+ 	return rc;
+ }
  
- TESTS := uevent parser util dmevents hwtable blacklist unaligned vpd pgpolicy \
- 	 alias directio valid devt
-@@ -67,7 +67,7 @@ lib/libchecktur.so:
- 
- %.out:	%-test lib/libchecktur.so
- 	@echo == running $< ==
--	@LD_LIBRARY_PATH=$(multipathdir):$(mpathcmddir) ./$< >$@
-+	@LD_LIBRARY_PATH=.:$(mpathcmddir) ./$< >$@
- 
- %.vgr:  %-test lib/libchecktur.so
- 	@echo == running valgrind for $< ==
-@@ -77,7 +77,7 @@ lib/libchecktur.so:
- OBJS = $(TESTS:%=%.o) test-lib.o
- 
- test_clean:
--	$(RM) $(TESTS:%=%.out) $(TESTS:%=%.vgr)
-+	$(RM) $(TESTS:%=%.out) $(TESTS:%=%.vgr) *.so.*
- 
- valgrind_clean:
- 	$(RM) $(TESTS:%=%.vgr)
-@@ -97,12 +97,14 @@ dep_clean:
- 	@sed -n 's/^.*__wrap_\([a-zA-Z0-9_]*\).*$$/-Wl,--wrap=\1/p' $< | \
- 		sort -u | tr '\n' ' ' >$@
- 
-+libmultipath.so.0:
-+	$(MAKE) -C $(multipathdir) test-lib
- 
- # COLON will get expanded during second expansion below
- COLON:=:
- .SECONDEXPANSION:
- %-test:	%.o %.o.wrap $$($$@_OBJDEPS) $$($$@_TESTDEPS) $$($$@_TESTDEPS$$(COLON).o=.o.wrap) \
--		$(multipathdir)/libmultipath.so Makefile
-+		libmultipath.so.0 Makefile
- 	$(CC) $(CFLAGS) -o $@ $(LDFLAGS) $< $($@_TESTDEPS) $($@_OBJDEPS) \
- 		$(LIBDEPS) $($@_LIBDEPS) \
- 		$(shell cat $<.wrap) $(foreach dep,$($@_TESTDEPS),$(shell cat $(dep).wrap))
+-int main(int argc, char *argv[])
++int main(void)
+ {
+ 	struct dmmp_context *ctx = NULL;
+ 	struct dmmp_mpath **dmmp_mps = NULL;
 -- 
 2.28.0
