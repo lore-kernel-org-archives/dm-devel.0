@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 07/21] multipathd: set_config_state(): avoid
-	code duplication
-Date: Thu, 24 Sep 2020 15:37:02 +0200
-Message-ID: <20200924133716.14120-8-mwilck@suse.com>
+Subject: [PATCH v2 08/21] multipathd: cancel threads early during
+	shutdown
+Date: Thu, 24 Sep 2020 15:37:03 +0200
+Message-ID: <20200924133716.14120-9-mwilck@suse.com>
 References: <20200924133716.14120-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -19,57 +19,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: Chongyun Wu <wu.chongyun@h3c.com>, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Use __post_config_state() and __wait_for_state_change(). This
-way __post_config_state() is the only place where running_state
-is ever changed, and we avoid code duplication.
+Cancel the other threads before taking vecs->lock. This avoids
+delays during shutdown caused e.g. by the checker thread holding
+the vecs lock.
 
+Note: this makes it possible that cancelled threads leak memory,
+because they can now be cancelled before having released the vecs
+lock. I believe this is acceptable, as only threads are affected
+that are cancelled during multipathd shutdown.
+
+Cc: Chongyun Wu <wu.chongyun@h3c.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 23 +++++------------------
- 1 file changed, 5 insertions(+), 18 deletions(-)
+ multipathd/main.c | 17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 1fb0ee6..39aea4a 100644
+index 39aea4a..d1f8cc1 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -292,27 +292,14 @@ int set_config_state(enum daemon_status state)
- 	pthread_cleanup_push(config_cleanup, NULL);
- 	pthread_mutex_lock(&config_lock);
- 	if (running_state != state) {
--#ifdef USE_SYSTEMD
--		enum daemon_status old_state = running_state;
--#endif
- 
- 		if (running_state == DAEMON_SHUTDOWN)
- 			rc = EINVAL;
--		else if (running_state != DAEMON_IDLE) {
--			struct timespec ts;
--
--			get_monotonic_time(&ts);
--			ts.tv_sec += 1;
--			rc = pthread_cond_timedwait(&config_cond,
--						    &config_lock, &ts);
--		}
--		if (!rc && (running_state != DAEMON_SHUTDOWN)) {
--			running_state = state;
--			pthread_cond_broadcast(&config_cond);
--#ifdef USE_SYSTEMD
--			do_sd_notify(old_state, state);
--#endif
--		}
-+		else
-+			rc = __wait_for_state_change(
-+				running_state != DAEMON_IDLE, 1000);
-+		if (!rc)
-+			__post_config_state(state);
+@@ -3073,23 +3073,24 @@ child (__attribute__((unused)) void *param)
+ 		}
  	}
- 	pthread_cleanup_pop(1);
- 	return rc;
+ 
+-	lock(&vecs->lock);
++	pthread_cancel(check_thr);
++	pthread_cancel(uevent_thr);
++	pthread_cancel(uxlsnr_thr);
++	pthread_cancel(uevq_thr);
++	if (poll_dmevents)
++		pthread_cancel(dmevent_thr);
++
+ 	conf = get_multipath_config();
+ 	queue_without_daemon = conf->queue_without_daemon;
+ 	put_multipath_config(conf);
++
++	lock(&vecs->lock);
+ 	if (queue_without_daemon == QUE_NO_DAEMON_OFF)
+ 		vector_foreach_slot(vecs->mpvec, mpp, i)
+ 			dm_queue_if_no_path(mpp->alias, 0);
+ 	remove_maps_and_stop_waiters(vecs);
+ 	unlock(&vecs->lock);
+ 
+-	pthread_cancel(check_thr);
+-	pthread_cancel(uevent_thr);
+-	pthread_cancel(uxlsnr_thr);
+-	pthread_cancel(uevq_thr);
+-	if (poll_dmevents)
+-		pthread_cancel(dmevent_thr);
+-
+ 	pthread_join(check_thr, NULL);
+ 	pthread_join(uevent_thr, NULL);
+ 	pthread_join(uxlsnr_thr, NULL);
 -- 
 2.28.0
