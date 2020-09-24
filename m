@@ -1,16 +1,17 @@
-From: John Dorminy <jdorminy@redhat.com>
-Subject: Re: dm-raid: stack limits instead of overwriting them.
-Date: Thu, 24 Sep 2020 14:56:30 -0400
-Message-ID: <CAMeeMh-6kdN_73qc3uH_UVqbWyo07nWR8yhypVcboyXry-2N9A@mail.gmail.com>
-References: <alpine.LRH.2.02.2009241225310.22728@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAMeeMh87GLea=7_4qGuPhMj0WKnB-596HzkKQDafLirHiBpSzQ@mail.gmail.com>
-	<20200924170047.GB14650@redhat.com>
-	<CAMeeMh-KfeEFAZE9v_UiDx_TELg3twKg6Ayvbbaf=NwYJ-8Csg@mail.gmail.com>
+From: Martin Wilck <martin.wilck@suse.com>
+Subject: Re: [RFC PATCH v2 3/3] libmultipath: change log level
+ for null uid_attribute
+Date: Thu, 24 Sep 2020 19:03:54 +0000
+Message-ID: <a8845e2c457c9817bb3ed315a81b3d3d76348308.camel@suse.com>
+References: <1600923569-17412-1-git-send-email-bmarzins@redhat.com>
+	<1600923569-17412-4-git-send-email-bmarzins@redhat.com>
+	<62ced86c81b139e6461fe0dc14207606548a652a.camel@suse.com>
+	<20200924162055.GF11108@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAMeeMh-KfeEFAZE9v_UiDx_TELg3twKg6Ayvbbaf=NwYJ-8Csg@mail.gmail.com>
+In-Reply-To: <20200924162055.GF11108@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,107 +21,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Content-Language: en-US
+Content-ID: <52E1FF8B2FD10E40A98EDC27BF610344@eurprd04.prod.outlook.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 24, 2020 at 1:24 PM John Dorminy <jdorminy@redhat.com> wrote:
->
-> I am impressed at how much I read wrong...
->
-> On Thu, Sep 24, 2020 at 1:00 PM Mike Snitzer <snitzer@redhat.com> wrote:
-> >
-> > On Thu, Sep 24 2020 at 12:45pm -0400,
-> > John Dorminy <jdorminy@redhat.com> wrote:
-> >
-> > > I don't understand how this works...
-> > >
-> > > Can chunk_size_bytes be 0? If not, how is discard_granularity being set to 0?
-> >
-> > Yeah, I had same question.. see the reply I just sent in this thread:
-> > https://www.redhat.com/archives/dm-devel/2020-September/msg00568.html
-> >
-> > > I think also limits is local to the ti in question here, initialized
-> > > by blk_set_stacking_limits() via dm-table.c, and therefore has only
-> > > default values and not anything to do with the underlying queue. So
-> > > setting discard_granularity=max(discard_granularity, chunk_size_bytes)
-> > > doesn't seem like it should be working, unless I'm not understanding
-> > > what it's there for...
-> >
-> > You're reading the dm-table.c limits stacking wrong.  Of course DM stack
-> > up the underlying device(s) limits ;)
->
-> Yep, I failed to read iterate_devices...
->
-> >
-> > >
-> > > And shouldn't melding in the target's desired io_hints into the
-> > > existing queue limits be happening in blk_stack_limits() instead?
-> > > (Also, it does lcm_not_zero() for stacking granularity, instead of
-> > > max()...)
-> > >
-> >
-> > DM core does do that, the .io_hints hook in the DM target is reserved
-> > for when the target has additional constraints that blk_stack_limits()
-> > didn't/couldn't factor in.
-> Yes, I had erroneously thought the limit-stacking was after getting
-> the targets' individual limits, not before.
->
-> >
-> > And blk_stack_limts() does use max() for discard_granularity.
-> ... I'm just terrible at reading this morning.
->
-> Thanks for pointing out all the things I misread!
+On Thu, 2020-09-24 at 11:20 -0500, Benjamin Marzinski wrote:
+> On Thu, Sep 24, 2020 at 08:06:41AM +0000, Martin Wilck wrote:
+> > On Wed, 2020-09-23 at 23:59 -0500, Benjamin Marzinski wrote:
+> > > 
+> > > diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> > > index f650534f..435f2639 100644
+> > > --- a/libmultipath/discovery.c
+> > > +++ b/libmultipath/discovery.c
+> > > @@ -2091,7 +2091,8 @@ get_uid (struct path * pp, int path_state,
+> > > struct udev_device *udev,
+> > >  		}
+> > >  		if ((!udev_available || (len <= 0 && allow_fallback))
+> > >  		    && has_uid_fallback(pp)) {
+> > > -			used_fallback = 1;
+> > > +			if (udev_available || !(udev && pp-
+> > > > uid_attribute))
+> > > +				used_fallback = 1;
+> > >  			len = uid_fallback(pp, path_state, &origin);
+> > >  		}
+> > >  	}
+> > 
+> > Uff, this logic was convoluted anyway, now it's even harder to
+> > grasp.
+> > IIUC, if !udev, used_fallback will be set to 1, even if 
+> > pp->uid_attribute is the empty string. Is that intended?
+> > To make this easier to read, I'd suggest something like this:
+> 
+> My though was that not having a udev device is an unexpected
+> situation,
+> and so we should continue to log the message at an increased logging
+> level.  If you're against that, it's not that important. I can
+> certainly
+> go with your code logic, or "if (!udev || !empty_uid_attr)" if you
+> think
+> it's reasonable to log at an increased level whenever the udev_device
+> is
+> NULL, even if the device was configured to ignore the udev database
 
-Actually, though, I don't understand why it should be max instead of
-lcm_not_zero(). If the raid's chunk size is 1024 sectors, say, and
-you're constructing it on something that has discard_granularity 812
-sectors, say, blkdev_issue_discard will be generating 1024 sector IOs
-which will work poorly when passed down to the 812-sector-granularity
-underlying device. While, if lcm(812,1024) were used, lcm(812,1024)
-sector IOs would be compatible with both the chunk size and underlying
-device's granularity, perhaps? Maybe I'm missing something, but I read
-the doc and code an extra time around this time ;)
+My main concern was not the !udev case, nor the logging. It was just
+that my brain choked on the complex boolean expression. My suggestion
+was intended to make it somewhat easier to grok, that's all.
 
->
-> >
-> > Mike
-> >
-> > >
-> > > On Thu, Sep 24, 2020 at 12:29 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > > >
-> > > > This patch fixes a warning WARN_ON_ONCE(!q->limits.discard_granularity).
-> > > > The reason is that the function raid_io_hints overwrote
-> > > > limits->discard_granularity with zero. We need to properly stack the
-> > > > limits instead of overwriting them.
-> > > >
-> > > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > > > Cc: stable@vger.kernel.org
-> > > >
-> > > > ---
-> > > >  drivers/md/dm-raid.c |    4 ++--
-> > > >  1 file changed, 2 insertions(+), 2 deletions(-)
-> > > >
-> > > > Index: linux-2.6/drivers/md/dm-raid.c
-> > > > ===================================================================
-> > > > --- linux-2.6.orig/drivers/md/dm-raid.c 2020-09-24 18:16:45.000000000 +0200
-> > > > +++ linux-2.6/drivers/md/dm-raid.c      2020-09-24 18:16:45.000000000 +0200
-> > > > @@ -3734,8 +3734,8 @@ static void raid_io_hints(struct dm_targ
-> > > >          * RAID0/4/5/6 don't and process large discard bios properly.
-> > > >          */
-> > > >         if (rs_is_raid1(rs) || rs_is_raid10(rs)) {
-> > > > -               limits->discard_granularity = chunk_size_bytes;
-> > > > -               limits->max_discard_sectors = rs->md.chunk_sectors;
-> > > > +               limits->discard_granularity = max(limits->discard_granularity, chunk_size_bytes);
-> > > > +               limits->max_discard_sectors = min_not_zero(limits->max_discard_sectors, (unsigned)rs->md.chunk_sectors);
-> > > >         }
-> > > >  }
-> > > >
-> > > >
-> > > > --
-> > > > dm-devel mailing list
-> > > > dm-devel@redhat.com
-> > > > https://www.redhat.com/mailman/listinfo/dm-devel
-> > > >
-> > >
-> >
+Cheers,
+Martin
