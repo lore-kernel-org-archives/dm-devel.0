@@ -1,17 +1,16 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-raid: stack limits instead of overwriting them.
-Date: Thu, 24 Sep 2020 15:15:15 -0400
-Message-ID: <20200924191515.GA15323@redhat.com>
-References: <alpine.LRH.2.02.2009241225310.22728@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAMeeMh87GLea=7_4qGuPhMj0WKnB-596HzkKQDafLirHiBpSzQ@mail.gmail.com>
-	<20200924170047.GB14650@redhat.com>
-	<CAMeeMh-KfeEFAZE9v_UiDx_TELg3twKg6Ayvbbaf=NwYJ-8Csg@mail.gmail.com>
-	<CAMeeMh-6kdN_73qc3uH_UVqbWyo07nWR8yhypVcboyXry-2N9A@mail.gmail.com>
+From: Martin Wilck <martin.wilck@suse.com>
+Subject: Re: [RFC PATCH v2 0/3] add library to check if device is
+ a valid path
+Date: Thu, 24 Sep 2020 19:22:21 +0000
+Message-ID: <53ad2ea2f8457030eac247420fcc564bd5608ab8.camel@suse.com>
+References: <1600923569-17412-1-git-send-email-bmarzins@redhat.com>
+	<01ce499f8c7a7248f560066054ba4dd922bbc338.camel@suse.com>
+	<20200924163007.GG11108@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <CAMeeMh-6kdN_73qc3uH_UVqbWyo07nWR8yhypVcboyXry-2N9A@mail.gmail.com>
+In-Reply-To: <20200924163007.GG11108@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,76 +20,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: John Dorminy <jdorminy@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Content-Language: en-US
+Content-ID: <C2F8931456399F47BD648CD6C6BE8A31@eurprd04.prod.outlook.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 24 2020 at  2:56pm -0400,
-John Dorminy <jdorminy@redhat.com> wrote:
+On Thu, 2020-09-24 at 11:30 -0500, Benjamin Marzinski wrote:
+> On Thu, Sep 24, 2020 at 08:18:02AM +0000, Martin Wilck wrote:
+> > On Wed, 2020-09-23 at 23:59 -0500, Benjamin Marzinski wrote:
+> > >=20
+> > > The second patch adds get_uid fallback code for dasd devices. The
+> > > third
+> > > patch just changes the get_uid log level for devices configured
+> > > with
+> > > uid_attribute "". This is because it is currently necessary to
+> > > configure
+> > > multipath with
+> > >=20
+> > > overrides {
+> > >         uid_attribute ""
+> > > }
+> > >=20
+> > > to claim multipath devices with SID (instead of using
+> > > multipath.rules),
+> > > since SID doesn't currently get the UID information itself, and
+> > > it is
+> > > called by udev before this information is added to the udev
+> > > database.
+> > >=20
+> >=20
+> > This makes me wonder how SID and multipathd are supposed to
+> > coexist.
+> > We wouldn't want this overrides directive for multipathd itself,
+> > would
+> > we?
+>=20
+> Don't we need it to be used by everything?  We certainly don't want
+> multipathd to get a different value for the wwid than SID has. It
+> seems
+> like all programs that access the multipath devices should use the
+> same
+> method to get the WWIDs.
 
-> On Thu, Sep 24, 2020 at 1:24 PM John Dorminy <jdorminy@redhat.com> wrote:
-> >
-> > I am impressed at how much I read wrong...
-> >
-> > On Thu, Sep 24, 2020 at 1:00 PM Mike Snitzer <snitzer@redhat.com> wrote:
-> > >
-> > > On Thu, Sep 24 2020 at 12:45pm -0400,
-> > > John Dorminy <jdorminy@redhat.com> wrote:
-> > >
-> > > > I don't understand how this works...
-> > > >
-> > > > Can chunk_size_bytes be 0? If not, how is discard_granularity being set to 0?
-> > >
-> > > Yeah, I had same question.. see the reply I just sent in this thread:
-> > > https://www.redhat.com/archives/dm-devel/2020-September/msg00568.html
-> > >
-> > > > I think also limits is local to the ti in question here, initialized
-> > > > by blk_set_stacking_limits() via dm-table.c, and therefore has only
-> > > > default values and not anything to do with the underlying queue. So
-> > > > setting discard_granularity=max(discard_granularity, chunk_size_bytes)
-> > > > doesn't seem like it should be working, unless I'm not understanding
-> > > > what it's there for...
-> > >
-> > > You're reading the dm-table.c limits stacking wrong.  Of course DM stack
-> > > up the underlying device(s) limits ;)
-> >
-> > Yep, I failed to read iterate_devices...
-> >
-> > >
-> > > >
-> > > > And shouldn't melding in the target's desired io_hints into the
-> > > > existing queue limits be happening in blk_stack_limits() instead?
-> > > > (Also, it does lcm_not_zero() for stacking granularity, instead of
-> > > > max()...)
-> > > >
-> > >
-> > > DM core does do that, the .io_hints hook in the DM target is reserved
-> > > for when the target has additional constraints that blk_stack_limits()
-> > > didn't/couldn't factor in.
-> > Yes, I had erroneously thought the limit-stacking was after getting
-> > the targets' individual limits, not before.
-> >
-> > >
-> > > And blk_stack_limts() does use max() for discard_granularity.
-> > ... I'm just terrible at reading this morning.
-> >
-> > Thanks for pointing out all the things I misread!
-> 
-> Actually, though, I don't understand why it should be max instead of
-> lcm_not_zero(). If the raid's chunk size is 1024 sectors, say, and
-> you're constructing it on something that has discard_granularity 812
-> sectors, say, blkdev_issue_discard will be generating 1024 sector IOs
-> which will work poorly when passed down to the 812-sector-granularity
-> underlying device. While, if lcm(812,1024) were used, lcm(812,1024)
-> sector IOs would be compatible with both the chunk size and underlying
-> device's granularity, perhaps? Maybe I'm missing something, but I read
-> the doc and code an extra time around this time ;)
+Well, as soon as SID is authoritative for the question whether or not a
+device should be multipathed, this is certainly true.
 
-Martin may correct me if I'm wrong but I _think_ it is because
-discard_granularity is unintuitive.  The larger the discard_granularity
-the more constraining it is (on other devices with more relaxed, or
-smaller, discard_granularity).  So you need to impose the most
-constrained limit for all when stacking.
+That would mean, then, that multipath-tools would abandon the current
+philosophy of relying on udev, and attempt to derive device properties
+directly from sysfs instead. That makes a certain amount of sense to
+me, even though it's contrary to what we've been doing the last years.
+Relying on udev is not without issues, as we both know. uevents being
+delayed or never delivered is one problem, the other is the fact that
+udev rules can be customized without limits, leading to a
+profliferation of variables and configuration options. All this has
+historical reasons, today we could very well obtain almost all device
+attributes we need directly from sysfs.
 
-Mike
+... but I gather that this is a temporary scenario ...=20
+
+> The long term solution is that SID will call out to the devices, and
+> grab these uid attributes, just like udev currently does. It already
+> does this for the blkid values. When SID is running, these udev rules
+> will be disabled, and SID will provide udev with this data. So
+> eventually, multipath won't need any configuration changes to work
+> with
+> SID. setting this overrides line is just a stop-gap, so that people
+> can
+> test SID and multipath now.
+
+So, SID will call into libmultipath via libmpathvalid, udev will obtain
+the properties from SID, and multipathd will fetch them from udev in
+turn? Or will multipathd talk directly to SID? I seem to be missing the
+overall picture.
+
+Anyway, if you can live with simply adding an "overrides" statement to
+multipath.conf for SID at the current stage, fine with me.
+
+Forgot to say: ACK for this series from me, with the exception of the
+minor nit I had on #3.
+
+Regards,
+Martin
+
+--=20
+Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+SUSE  Software Solutions Germany GmbH
+HRB 36809, AG N=FCrnberg GF: Felix
+Imend=F6rffer
