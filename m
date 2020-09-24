@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 06/21] multipathd: generalize and fix
-	wait_for_state_change_if()
-Date: Thu, 24 Sep 2020 15:37:01 +0200
-Message-ID: <20200924133716.14120-7-mwilck@suse.com>
+Subject: [PATCH v2 02/21] multipathd: avoid sending "READY=1" to
+	systemd on early shutdown
+Date: Thu, 24 Sep 2020 15:36:57 +0200
+Message-ID: <20200924133716.14120-3-mwilck@suse.com>
 References: <20200924133716.14120-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,69 +24,63 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-It's unlikely but not impossible that other threads change the state
-while we're waiting, and if we grab the lock again, it's still not
-what we wanted. We need to continue waiting until either the condition
-is met, or time timeout expired.
-
-Moreover, generalize this code so that it can also be used in
-set_config_state().
+If multipathd gets a shutdown request during initial reconfigure(),
+it shouldn't send "READY=1" to systemd. Ensure this by sending
+"READY=1" via post_config_state().
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 25 ++++++++++++++++++-------
- 1 file changed, 18 insertions(+), 7 deletions(-)
+ multipathd/main.c | 16 +++++++---------
+ 1 file changed, 7 insertions(+), 9 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index d081b3e..1fb0ee6 100644
+index fa53e96..53a22a4 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -223,6 +223,23 @@ static void config_cleanup(__attribute__((unused)) void *arg)
- 	pthread_mutex_unlock(&config_lock);
- }
- 
-+#define __wait_for_state_change(condition, ms)				\
-+	({								\
-+		struct timespec tmo;					\
-+		int rc = 0;						\
-+									\
-+		if (condition) {					\
-+			get_monotonic_time(&tmo);			\
-+			tmo.tv_nsec += (ms) * 1000 * 1000;		\
-+			normalize_timespec(&tmo);			\
-+			do						\
-+				rc = pthread_cond_timedwait(		\
-+					&config_cond, &config_lock, &tmo); \
-+			while (rc == 0 && (condition));			\
-+		}							\
-+		rc;							\
-+	})
-+
- /*
-  * If the current status is @oldstate, wait for at most @ms milliseconds
-  * for the state to change, and return the new state, which may still be
-@@ -232,20 +249,14 @@ enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
- 					    unsigned long ms)
+@@ -189,6 +189,8 @@ static void do_sd_notify(enum daemon_status old_state,
  {
- 	enum daemon_status st;
--	struct timespec tmo;
+ 	char notify_msg[MSG_SIZE];
+ 	const char *msg;
++	static bool startup_done = false;
++
+ 	/*
+ 	 * Checkerloop switches back and forth between idle and running state.
+ 	 * No need to tell systemd each time.
+@@ -205,6 +207,11 @@ static void do_sd_notify(enum daemon_status old_state,
  
- 	if (oldstate == DAEMON_SHUTDOWN)
- 		return DAEMON_SHUTDOWN;
- 
- 	pthread_mutex_lock(&config_lock);
- 	pthread_cleanup_push(config_cleanup, NULL);
-+	__wait_for_state_change(running_state == oldstate, ms);
- 	st = running_state;
--	if (st == oldstate && clock_gettime(CLOCK_MONOTONIC, &tmo) == 0) {
--		tmo.tv_nsec += ms * 1000 * 1000;
--		normalize_timespec(&tmo);
--		(void)pthread_cond_timedwait(&config_cond, &config_lock, &tmo);
--		st = running_state;
--	}
- 	pthread_cleanup_pop(1);
- 	return st;
+ 	if (msg && !safe_sprintf(notify_msg, "STATUS=%s", msg))
+ 		sd_notify(0, notify_msg);
++
++	if (new_state == DAEMON_IDLE && !startup_done) {
++		sd_notify(0, "READY=1");
++		startup_done = true;
++	}
  }
+ #endif
+ 
+@@ -2903,9 +2910,6 @@ child (__attribute__((unused)) void *param)
+ 	struct vectors * vecs;
+ 	struct multipath * mpp;
+ 	int i;
+-#ifdef USE_SYSTEMD
+-	int startup_done = 0;
+-#endif
+ 	int rc;
+ 	int pid_fd = -1;
+ 	struct config *conf;
+@@ -3065,12 +3069,6 @@ child (__attribute__((unused)) void *param)
+ 			}
+ 			lock_cleanup_pop(vecs->lock);
+ 			post_config_state(DAEMON_IDLE);
+-#ifdef USE_SYSTEMD
+-			if (!startup_done) {
+-				sd_notify(0, "READY=1");
+-				startup_done = 1;
+-			}
+-#endif
+ 		}
+ 	}
+ 
 -- 
 2.28.0
