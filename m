@@ -1,56 +1,27 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH 2/3] dm: add support for passing through inline crypto
- support
-Date: Thu, 24 Sep 2020 08:45:50 -0700
-Message-ID: <20200924154550.GA1266@sol.localdomain>
-References: <20200909234422.76194-1-satyat@google.com>
- <20200909234422.76194-3-satyat@google.com>
- <20200922003255.GC32959@sol.localdomain>
- <20200924011438.GD10500@redhat.com>
- <20200924071721.GA1883346@google.com>
- <20200924134649.GB13849@redhat.com>
+From: "Martin K. Petersen" <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH 03/13] bcache: inherit the optimal I/O size
+Date: Thu, 24 Sep 2020 11:49:48 -0400
+Message-ID: <yq1ft77maz5.fsf@ca-mkp.ca.oracle.com>
+References: <20200924065140.726436-1-hch@lst.de>
+        <20200924065140.726436-4-hch@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200924134649.GB13849@redhat.com>
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: Satya Tangirala <satyat@google.com>, Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
+Content-Type: text/plain
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <20200924065140.726436-4-hch-jcswGhMUV9g@public.gmane.org> (Christoph Hellwig's message
+        of "Thu, 24 Sep 2020 08:51:30 +0200")
+To: Christoph Hellwig <hch-jcswGhMUV9g@public.gmane.org>
+Cc: Jens Axboe <axboe-tSWWG44O7X1aa/9Udqfwiw@public.gmane.org>, Song Liu <song-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Hans de Goede <hdegoede-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Coly Li <colyli-l3A5Bk7waGM@public.gmane.org>, Richard Weinberger <richard-/L3Ra7n9ekc@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Johannes Thumshirn <Johannes.Thumshirn-Sjgp3cTcYWE@public.gmane.org>, Justin Sanders <justin-kFqnmIA2sJXQT0dZR+AlfA@public.gmane.org>, linux-mtd-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-block-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-bcache-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, drbd-dev-/sHSiTBGKwq//tTphpj/8g@public.gmane.org, linux-raid-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
 List-Id: dm-devel.ids
 
-On Thu, Sep 24, 2020 at 09:46:49AM -0400, Mike Snitzer wrote:
-> > > Can you help me better understand the expected consumer of this code?
-> > > If you have something _real_ please be explicit.  It makes justifying
-> > > supporting niche code like this more tolerable.
-> >
-> > So the motivation for this code was that Android currently uses a device
-> > mapper target on top of a phone's disk for user data. On many phones,
-> > that disk has inline encryption support, and it'd be great to be able to
-> > make use of that. The DM device configuration isn't changed at runtime.
-> 
-> OK, which device mapper target is used?
 
-There are several device-mapper targets that Android can require for the
-"userdata" partition -- potentially in a stack of more than one:
+Christoph,
 
-dm-linear: required for Dynamic System Updates
-(https://developer.android.com/topic/dsu)
+> Inherit the optimal I/O size setting just like the readahead window,
+> as any reason to do larger I/O does not apply to just readahead.
 
-dm-bow: required for User Data Checkpoints on ext4
-(https://source.android.com/devices/tech/ota/user-data-checkpoint)
-(https://patchwork.kernel.org/patch/10838743/)
+Looks fine.
 
-dm-default-key: required for metadata encryption
-(https://source.android.com/security/encryption/metadata)
+Reviewed-by: Martin K. Petersen <martin.petersen-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org>
 
-We're already carrying this patchset in the Android common kernels since late
-last year, as it's required for inline encryption to work when any of the above
-is used.  So this is something that is needed and is already being used.
-
-Now, you don't have to "count" dm-bow and dm-default-key since they aren't
-upstream; that leaves dm-linear.  But hopefully the others at least show that
-architecturally, dm-linear is just the initial use case, and this patchset also
-makes it easy to pass through inline crypto on any other target that can support
-it (basically, anything that doesn't change the data itself as it goes through).
-
-- Eric
+-- 
+Martin K. Petersen	Oracle Linux Engineering
