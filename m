@@ -1,7 +1,7 @@
 From: mwilck@suse.com
-Subject: [PATCH 05/23] multipathd: make some globals static
-Date: Thu, 24 Sep 2020 15:40:36 +0200
-Message-ID: <20200924134054.14632-6-mwilck@suse.com>
+Subject: [PATCH 15/23] multipathd: fixup libdm deinitialization
+Date: Thu, 24 Sep 2020 15:40:46 +0200
+Message-ID: <20200924134054.14632-16-mwilck@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,41 +23,36 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+With libmp_dm_exit() in place, we can make sure that the
+calls are made in the right order.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ multipathd/main.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 2642570..1cdbff1 100644
+index 483b3c7..f9749e5 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -116,19 +116,19 @@ struct mpath_event_param
- };
+@@ -3220,8 +3220,6 @@ failed:
+ 	if (poll_dmevents)
+ 		cleanup_dmevent_waiter();
  
- int uxsock_timeout;
--int verbosity;
--int bindings_read_only;
-+static int verbosity;
-+static int bindings_read_only;
- int ignore_new_devs;
- #ifdef NO_DMEVENTS_POLL
--int poll_dmevents = 0;
-+static int poll_dmevents = 0;
- #else
--int poll_dmevents = 1;
-+static int poll_dmevents = 1;
- #endif
- /* Don't access this variable without holding config_lock */
--volatile enum daemon_status running_state = DAEMON_INIT;
-+static volatile enum daemon_status running_state = DAEMON_INIT;
- pid_t daemon_pid;
--pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
--pthread_cond_t config_cond;
-+static pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
-+static pthread_cond_t config_cond;
+-	dm_lib_exit();
+-
+ 	/* We're done here */
+ 	cleanup_pidfile();
+ 	condlog(2, "--------shut down-------");
+@@ -3320,6 +3318,9 @@ main (int argc, char *argv[])
  
- static inline enum daemon_status get_running_state(void)
- {
+ 	pthread_cond_init_mono(&config_cond);
+ 
++	if (atexit(dm_lib_exit))
++		condlog(3, "failed to register exit handler for libdm");
++
+ 	libmultipath_init();
+ 	if (atexit(libmultipath_exit))
+ 		condlog(3, "failed to register exit handler for libmultipath");
 -- 
 2.28.0
