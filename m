@@ -1,16 +1,23 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: dm-raid: stack limits instead of overwriting them.
-Date: Thu, 24 Sep 2020 15:07:55 -0400
-Message-ID: <20200924190755.GA15317@redhat.com>
-References: <alpine.LRH.2.02.2009241225310.22728@file01.intranet.prod.int.rdu2.redhat.com>
-	<20200924165616.GA14650@redhat.com>
-	<alpine.LRH.2.02.2009241306170.28814@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.2009241410490.8544@file01.intranet.prod.int.rdu2.redhat.com>
+From: Sudhakar Panneerselvam <sudhakar.panneerselvam@oracle.com>
+Subject: Re: [RFC PATCH 0/2] dm crypt: Allow unaligned buffer
+ lengths for skcipher devices
+Date: Thu, 24 Sep 2020 12:13:52 -0700 (PDT)
+Message-ID: <eb43742e-bdfe-4567-8240-1d8e083d76a2@default>
+References: <1600281606-1446-1-git-send-email-sudhakar.panneerselvam@oracle.com>
+	<3be1ea32-b6a8-41ef-a9ba-ed691434d068@default>
+	<20200924012732.GA10766@redhat.com>
+	<20200924051419.GA16103@sol.localdomain>
+	<252587bb-c0b7-47c9-a97b-91422f8f9c47@default>
+	<alpine.LRH.2.02.2009241314280.28814@file01.intranet.prod.int.rdu2.redhat.com>
+	<7b6fdfd5-0160-4bcf-b7ed-d0e51553c678@default>
+	<alpine.LRH.2.02.2009241345370.4229@file01.intranet.prod.int.rdu2.redhat.com>
+	<fd512a7d-c064-4812-a794-5274c10687db@default>
+	<alpine.LRH.2.02.2009241421170.8544@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.2009241410490.8544@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2009241421170.8544@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,63 +27,91 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
+Cc: Damien.LeMoal@wdc.com, ssudhakarp@gmail.com, Mike Snitzer <snitzer@redhat.com>, dm-crypt@saout.de, Eric Biggers <ebiggers@kernel.org>, dm-devel@redhat.com, Shirley Ma <shirley.ma@oracle.com>, Martin Petersen <martin.petersen@oracle.com>, Milan Broz <gmazyland@gmail.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Sep 24 2020 at  2:12pm -0400,
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+> 
+> On Thu, 24 Sep 2020, Sudhakar Panneerselvam wrote:
+> 
+> > > By copying it to a temporary aligned buffer and issuing I/O on this
+> > > buffer.
+> >
+> > I don't like this idea. Because, you need to allocate additional pages
+> > for the entire I/O size(for the misaligned case, if you think through
+> 
+> You can break the I/O to smaller pieces. You can use mempool for
+> pre-allocation of the pages.
+
+Assuming we do this, how is this code simpler(based on your
+comment below) than the fix in dm-crypt? In fact, this approach 
+would make the code change look bad in vhost, at the same time
+having performance penalty. By doing this, we are just moving the 
+responsibility to other unrelated component.
 
 > 
+> > carefully, you will know why we have to allocate a temporary buffer that
+> > is as big as the original IO) and on top of it, copying the buffer from
+> > original to temporary buffer which is all unnecessary while it can
+> > simply be fixed in dm-crypt without any of these additional overheads.
+> >
+> > >
+> > > > Only other
+> > > > possibility I see is to have windows fix it by always sending 512 byte
+> > > > aligned buffer lengths, but going with my earlier point that every other
+> > > > component in the Linux IO path handles this case well except for
+> > > > dm-crypt, so it make more sense to fix it in dm-crypt.
+> > > >
+> > > > Thanks
+> > > > Sudhakar
+> > >
+> > > Are you sure that the problem is only with dm-crypt? You haven't tried
+> all
+> > > the existing block device drivers, have you?
+> >
+> > My question is, why dm-crypt worries about alignment requirement of
+> > other layers? Is there anything that impacts dm-crypt if the segment
+> > lengths are not aligned?(I believe this case is just not handled so far
 > 
-> On Thu, 24 Sep 2020, Mikulas Patocka wrote:
-> 
-> > 
-> > 
-> > On Thu, 24 Sep 2020, Mike Snitzer wrote:
-> > 
-> > > WAIT... Could it be that raid_io_hints _really_ meant to special case
-> > > raid0 and raid10 -- due to their striping/splitting requirements!?
-> > > So, not raid1 but raid0?
-> > > 
-> > > E.g.:
-> > > 
-> > > diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> > > index 56b723d012ac..6dca932d6f1d 100644
-> > > --- a/drivers/md/dm-raid.c
-> > > +++ b/drivers/md/dm-raid.c
-> > > @@ -3730,10 +3730,10 @@ static void raid_io_hints(struct dm_target *ti,
-> > > struct queue_limits *limits)
-> > >         blk_limits_io_opt(limits, chunk_size_bytes *
-> > > 	mddev_data_stripes(rs));
-> > > 
-> > >         /*
-> > > -        * RAID1 and RAID10 personalities require bio splitting,
-> > > -        * RAID0/4/5/6 don't and process large discard bios properly.
-> > > +        * RAID0 and RAID10 personalities require bio splitting,
-> > > +        * RAID1/4/5/6 don't and process large discard bios properly.
-> > >          */
-> > > -       if (rs_is_raid1(rs) || rs_is_raid10(rs)) {
-> > > +       if (rs_is_raid0(rs) || rs_is_raid10(rs)) {
-> > >                 limits->discard_granularity = chunk_size_bytes;
-> > >                 limits->max_discard_sectors = rs->md.chunk_sectors;
-> > >         }
-> > > 
-> > > Mike
-> > 
-> > Yes - that's an interesing point.
-> > 
-> > Mikulas
-> 
-> But raid0_handle_discard handles discards with arbitrary start/end 
-> sectors.
-> 
-> So, we don't need to set discard_granularity for that.
+> Because the code is simpler if it assumes aligned buffers.
 
-OK, great, I've staged this:
+Did you get a chance to review my changes? If you want more documentation,
+improve the code, etc, let me know, I can do that if there is scope for that.
 
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.10&id=c1fda10e1123a37cf9d22740486cd66f43c47846
+> 
+> > in dm-crypt and my patch addresses it). Should dm-crypt not just pass on
+> > all those I/O requests to those respective layers to handle it which
+> > will be more graceful?
+> >
+> > -Sudhakar
+> 
+> So, suppose that we change dm-crypt to handle your workload - what are
+> you
+> going to do with other block device drivers that assume aligned bio vector
+> length? How will you find all the other drivers that need to be changed?
+> 
+> You are claiming that "every other component in the Linux IO path handles
+> this case well except for dm-crypt", but this claim is wrong. There are
+> other driver that don't handle misaligned length as well.
 
-Thanks,
-Mike
+I should not have said, "every other component", I take that back, sorry. How
+about doing something like this in crypt_convert_block_skcipher():
+
+Add a check that looks at the alignment requirement of the low-level driver
+and reject the I/O if it doesn't meet that requirement. This means, we still
+need to handle the case in this function where the low lever driver support
+unaligned buffer lengths, that means, my other changes in this function
+would still be needed.
+
+Is this acceptable to everyone?
+
+-Sudhakar
+
+> 
+> Mikulas
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
