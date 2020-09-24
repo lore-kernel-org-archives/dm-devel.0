@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 02/21] multipathd: avoid sending "READY=1" to
-	systemd on early shutdown
-Date: Thu, 24 Sep 2020 15:36:57 +0200
-Message-ID: <20200924133716.14120-3-mwilck@suse.com>
+Subject: [PATCH v2 07/21] multipathd: set_config_state(): avoid
+	code duplication
+Date: Thu, 24 Sep 2020 15:37:02 +0200
+Message-ID: <20200924133716.14120-8-mwilck@suse.com>
 References: <20200924133716.14120-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,63 +24,52 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-If multipathd gets a shutdown request during initial reconfigure(),
-it shouldn't send "READY=1" to systemd. Ensure this by sending
-"READY=1" via post_config_state().
+Use __post_config_state() and __wait_for_state_change(). This
+way __post_config_state() is the only place where running_state
+is ever changed, and we avoid code duplication.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 16 +++++++---------
- 1 file changed, 7 insertions(+), 9 deletions(-)
+ multipathd/main.c | 23 +++++------------------
+ 1 file changed, 5 insertions(+), 18 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index fa53e96..53a22a4 100644
+index 1fb0ee6..39aea4a 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -189,6 +189,8 @@ static void do_sd_notify(enum daemon_status old_state,
- {
- 	char notify_msg[MSG_SIZE];
- 	const char *msg;
-+	static bool startup_done = false;
-+
- 	/*
- 	 * Checkerloop switches back and forth between idle and running state.
- 	 * No need to tell systemd each time.
-@@ -205,6 +207,11 @@ static void do_sd_notify(enum daemon_status old_state,
- 
- 	if (msg && !safe_sprintf(notify_msg, "STATUS=%s", msg))
- 		sd_notify(0, notify_msg);
-+
-+	if (new_state == DAEMON_IDLE && !startup_done) {
-+		sd_notify(0, "READY=1");
-+		startup_done = true;
-+	}
- }
- #endif
- 
-@@ -2903,9 +2910,6 @@ child (__attribute__((unused)) void *param)
- 	struct vectors * vecs;
- 	struct multipath * mpp;
- 	int i;
+@@ -292,27 +292,14 @@ int set_config_state(enum daemon_status state)
+ 	pthread_cleanup_push(config_cleanup, NULL);
+ 	pthread_mutex_lock(&config_lock);
+ 	if (running_state != state) {
 -#ifdef USE_SYSTEMD
--	int startup_done = 0;
+-		enum daemon_status old_state = running_state;
 -#endif
- 	int rc;
- 	int pid_fd = -1;
- 	struct config *conf;
-@@ -3065,12 +3069,6 @@ child (__attribute__((unused)) void *param)
- 			}
- 			lock_cleanup_pop(vecs->lock);
- 			post_config_state(DAEMON_IDLE);
+ 
+ 		if (running_state == DAEMON_SHUTDOWN)
+ 			rc = EINVAL;
+-		else if (running_state != DAEMON_IDLE) {
+-			struct timespec ts;
+-
+-			get_monotonic_time(&ts);
+-			ts.tv_sec += 1;
+-			rc = pthread_cond_timedwait(&config_cond,
+-						    &config_lock, &ts);
+-		}
+-		if (!rc && (running_state != DAEMON_SHUTDOWN)) {
+-			running_state = state;
+-			pthread_cond_broadcast(&config_cond);
 -#ifdef USE_SYSTEMD
--			if (!startup_done) {
--				sd_notify(0, "READY=1");
--				startup_done = 1;
--			}
+-			do_sd_notify(old_state, state);
 -#endif
- 		}
+-		}
++		else
++			rc = __wait_for_state_change(
++				running_state != DAEMON_IDLE, 1000);
++		if (!rc)
++			__post_config_state(state);
  	}
- 
+ 	pthread_cleanup_pop(1);
+ 	return rc;
 -- 
 2.28.0
