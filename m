@@ -1,8 +1,8 @@
 From: Satya Tangirala <satyat@google.com>
 Subject: Re: [PATCH 2/3] dm: add support for passing through inline crypto
  support
-Date: Thu, 24 Sep 2020 07:38:42 +0000
-Message-ID: <20200924073842.GA1894729@google.com>
+Date: Thu, 24 Sep 2020 07:48:10 +0000
+Message-ID: <20200924074810.GB1894729@google.com>
 References: <20200909234422.76194-1-satyat@google.com>
  <20200909234422.76194-3-satyat@google.com>
  <20200924012103.GE10500@redhat.com>
@@ -132,6 +132,12 @@ On Wed, Sep 23, 2020 at 09:21:03PM -0400, Mike Snitzer wrote:
 > >  	atomic_t open_count;
 > 
 > Any reason you placed the ksm member where you did?
+As in, any reason why it's placed right after the struct request_queue
+*queue? The ksm is going to be set up in the request_queue and is a part
+of the request_queue is some sense, so it seemed reasonable to me to
+group them together....but I don't think there's any reason it *has* to
+be there, if you think it should be put elsewhere (or maybe I'm
+misunderstanding your question :) ).
 > 
 > Looking at 'struct blk_keyslot_manager' I'm really hating adding that
 > bloat to every DM device for a feature that really won't see much broad
@@ -140,12 +146,6 @@ On Wed, Sep 23, 2020 at 09:21:03PM -0400, Mike Snitzer wrote:
 > Any chance you could allocate 'struct blk_keyslot_manager' as needed so
 > that most users of DM would only be carrying 1 extra pointer (set to
 > NULL)?
-I don't think there's any technical problem with doing that - the only
-other thing that would need addressing is that the patch uses
-"container_of" on that blk_keyslot_manager in dm_keyslot_evict() to get
-a pointer to the struct mapped_device. I could try adding a "private"
-field to struct blk_keyslot_manager and store a pointer to the struct
-mapped_device there).
 > 
 > Thanks,
 > Mike
