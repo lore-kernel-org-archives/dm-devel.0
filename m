@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 20/23] multipath: use atexit() for cleanup
-	handlers
-Date: Thu, 24 Sep 2020 15:40:51 +0200
-Message-ID: <20200924134054.14632-21-mwilck@suse.com>
+Subject: [PATCH 23/23] multipath-tools: mpath-tools.supp: file
+	with valgrind suppressions
+Date: Thu, 24 Sep 2020 15:40:54 +0200
+Message-ID: <20200924134054.14632-24-mwilck@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,108 +24,58 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+These leaks are caused by other libraries (libsystemd, glibc,
+libgcrypt) and should be ignored when debugging with valgrind
+
+Usage example:
+
+valgrind --suppressions=mpath-tools.supp \
+    --leak-check=full --show-leak-kinds=all $COMMAND
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/main.c | 39 ++++++++++++++++++---------------------
- 1 file changed, 18 insertions(+), 21 deletions(-)
+ third-party/valgrind/mpath-tools.supp | 33 +++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
+ create mode 100644 third-party/valgrind/mpath-tools.supp
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 9ae46ed..049a36f 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -452,13 +452,21 @@ static bool released_to_systemd(void)
- 	return ret;
- }
- 
-+static void cleanup_vecs(__attribute__((unused)) int dummy, void *arg)
+diff --git a/third-party/valgrind/mpath-tools.supp b/third-party/valgrind/mpath-tools.supp
+new file mode 100644
+index 0000000..621463a
+--- /dev/null
++++ b/third-party/valgrind/mpath-tools.supp
+@@ -0,0 +1,33 @@
 +{
-+	struct vectors *vecs = arg;
-+
-+	free_multipathvec(vecs->mpvec, KEEP_PATHS);
-+	free_pathvec(vecs->pathvec, FREE_PATHS);
++   glibc _dlerror_run leak: https://stackoverflow.com/questions/1542457/memory-leak-reported-by-valgrind-in-dlopen
++   Memcheck:Leak
++   match-leak-kinds: reachable
++   fun:calloc
++   fun:_dlerror_run
++   fun:dlopen*
 +}
 +
- static int
- configure (struct config *conf, enum mpath_cmds cmd,
- 	   enum devtypes dev_type, char *devpath)
- {
- 	vector curmp = NULL;
- 	vector pathvec = NULL;
--	struct vectors vecs;
-+	static struct vectors vecs;
- 	int r = RTVL_FAIL, rc;
- 	int di_flag = 0;
- 	char * refwwid = NULL;
-@@ -469,6 +477,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
- 	 */
- 	curmp = vector_alloc();
- 	pathvec = vector_alloc();
-+	on_exit(cleanup_vecs, &vecs);
- 
- 	if (!curmp || !pathvec) {
- 		condlog(0, "can not allocate memory");
-@@ -580,9 +589,6 @@ out:
- 	if (refwwid)
- 		FREE(refwwid);
- 
--	free_multipathvec(curmp, KEEP_PATHS);
--	free_pathvec(pathvec, FREE_PATHS);
--
- 	return r;
- }
- 
-@@ -808,9 +814,13 @@ main (int argc, char *argv[])
- 	bool enable_foreign = false;
- 
- 	libmultipath_init();
-+	if (atexit(dm_lib_exit) || atexit(libmultipath_exit))
-+		condlog(1, "failed to register cleanup handler for libmultipath: %m");
- 	logsink = 0;
- 	if (init_config(DEFAULT_CONFIGFILE))
- 		exit(RTVL_FAIL);
-+	if (atexit(uninit_config))
-+		condlog(1, "failed to register cleanup handler for config: %m");
- 	conf = get_multipath_config();
- 	conf->retrigger_tries = 0;
- 	conf->force_sync = 1;
-@@ -887,7 +897,7 @@ main (int argc, char *argv[])
- 			break;
- 		case 't':
- 			r = dump_config(conf, NULL, NULL) ? RTVL_FAIL : RTVL_OK;
--			goto out_free_config;
-+			goto out;
- 		case 'T':
- 			cmd = CMD_DUMP_CONFIG;
- 			break;
-@@ -1048,26 +1058,13 @@ main (int argc, char *argv[])
- 		condlog(3, "restart multipath configuration process");
- 
- out:
--	dm_lib_exit();
--
--	cleanup_foreign();
--	cleanup_prio();
--	cleanup_checkers();
-+	put_multipath_config(conf);
-+	if (dev)
-+		FREE(dev);
- 
- 	if (dev_type == DEV_UEVENT)
- 		closelog();
- 
--out_free_config:
--	/*
--	 * Freeing config must be done after dm_lib_exit(), because
--	 * the logging function (dm_write_log()), which is called there,
--	 * references the config.
--	 */
--	put_multipath_config(conf);
--	uninit_config();
--	libmultipath_exit();
--	if (dev)
--		FREE(dev);
- #ifdef _DEBUG_
- 	dbg_free_final(NULL);
- #endif
++{
++   systemd mempools are never freed: https://bugzilla.redhat.com/show_bug.cgi?id=1215670
++   Memcheck:Leak
++   match-leak-kinds: reachable
++   fun:malloc
++   fun:mempool_alloc_tile
++   fun:mempool_alloc0_tile
++   fun:hashmap_base_new
++   fun:hashmap_base_ensure_allocated
++}
++
++{
++   libgcrypt library initialization
++   Memcheck:Leak
++   match-leak-kinds: reachable
++   fun:malloc
++   ...
++   fun:_gcry_xmalloc
++   ...
++   fun:global_init.*
++   ...
++   fun:_dl_init
++}
++
 -- 
 2.28.0
