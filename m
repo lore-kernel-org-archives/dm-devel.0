@@ -1,15 +1,11 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 23/23] multipath-tools: mpath-tools.supp:
- file with valgrind suppressions
-Date: Thu, 24 Sep 2020 15:58:30 -0500
-Message-ID: <20200924205830.GJ11108@octiron.msp.redhat.com>
-References: <20200924134054.14632-1-mwilck@suse.com>
-	<20200924134054.14632-24-mwilck@suse.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+From: Brian Bunker <brian@purestorage.com>
+Subject: Make LUNs higher than 255 more friendly to look at
+Date: Thu, 24 Sep 2020 14:10:17 -0700
+Message-ID: <04F146B1-3EB2-42C0-87EA-E0EABC3D8020@purestorage.com>
+Mime-Version: 1.0 (Mac OS X Mail 14.0 \(3654.0.3.2.33\))
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200924134054.14632-24-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,73 +15,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: mwilck@suse.com
-Cc: lixiaokeng@huawei.com, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 24, 2020 at 03:40:54PM +0200, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
-> 
-
-Git complains about the extra blank line at the end of the file
-
-third-party/valgrind/mpath-tools.supp:33: new blank line at EOF.
-
--Ben
-
-> These leaks are caused by other libraries (libsystemd, glibc,
-> libgcrypt) and should be ignored when debugging with valgrind
-> 
-> Usage example:
-> 
-> valgrind --suppressions=mpath-tools.supp \
->     --leak-check=full --show-leak-kinds=all $COMMAND
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  third-party/valgrind/mpath-tools.supp | 33 +++++++++++++++++++++++++++
->  1 file changed, 33 insertions(+)
->  create mode 100644 third-party/valgrind/mpath-tools.supp
-> 
-> diff --git a/third-party/valgrind/mpath-tools.supp b/third-party/valgrind/mpath-tools.supp
-> new file mode 100644
-> index 0000000..621463a
-> --- /dev/null
-> +++ b/third-party/valgrind/mpath-tools.supp
-> @@ -0,0 +1,33 @@
-> +{
-> +   glibc _dlerror_run leak: https://stackoverflow.com/questions/1542457/memory-leak-reported-by-valgrind-in-dlopen
-> +   Memcheck:Leak
-> +   match-leak-kinds: reachable
-> +   fun:calloc
-> +   fun:_dlerror_run
-> +   fun:dlopen*
-> +}
-> +
-> +{
-> +   systemd mempools are never freed: https://bugzilla.redhat.com/show_bug.cgi?id=1215670
-> +   Memcheck:Leak
-> +   match-leak-kinds: reachable
-> +   fun:malloc
-> +   fun:mempool_alloc_tile
-> +   fun:mempool_alloc0_tile
-> +   fun:hashmap_base_new
-> +   fun:hashmap_base_ensure_allocated
-> +}
-> +
-> +{
-> +   libgcrypt library initialization
-> +   Memcheck:Leak
-> +   match-leak-kinds: reachable
-> +   fun:malloc
-> +   ...
-> +   fun:_gcry_xmalloc
-> +   ...
-> +   fun:global_init.*
-> +   ...
-> +   fun:_dl_init
-> +}
-> +
-> -- 
-> 2.28.0
+Rm9yIExVTnMgYmV0d2VlbiAwIGFuZCAyNTUgcGVyaXBoZXJhbCBhZGRyZXNzaW5nIGlzIHVzZWQu
+IEZvciBMVU5zIGhpZ2hlciB0aGFuIDI1NSB0aGUgTFVOIGFkZHJlc3NpbmcKc2hvdWxkIHN3aXRj
+aCB0byBmbGF0IGFjY29yZGluZyB0byB0aGUgc3BlY2lmaWNhdGlvbi4gSW5zdGVhZCBvZiBwcmlu
+dGluZyBvdXQgdGhlIExVTiBudW1iZXIgd2l0aG91dCByZWdhcmQgdG8KdGhlIHNoaWZ0aW5nIG9m
+IGFkZHJlc3MgbWV0aG9kLCBkaXNwbGF5IHRoZSBMVU4gYXMgaXQgd2FzIGludGVuZGVkIHRvIGJl
+IHRoZSB1c2VyIGNvbm5lY3RpbmcgdGhlIExVTi4gVGhlCmN1cnJlbnQgZGlzcGxheSBsZWF2ZXMg
+YSBub24tb2J2aW91cyAxNjM4NCBvZmZzZXQuCgpJbiBzaG9ydCwgYSBMVU4gY29ubmVjdGVkIGFz
+IDI1OCB3aWxsIHNob3cgdXAgaW4gbXVsdGlwYXRoIG91dHB1dCBhcyAxNjY0Mi4gSW5zdGVhZCBk
+aXNwbGF5IGl0IGFzIHRoZQpleHBlY3RlZCAyNTguIFRoaXMgaXMgZm9yIGRpc3BsYXkgb25seSBh
+bmQgZG9lc27igJl0IGNoYW5nZSB0aGUgYWN0dWFsIGNvbnRlbnRzIG9mIHRoZSBMVU4gdmFyaWFi
+bGUuCgpTaWduZWQtb2ZmLWJ5OiBCcmlhbiBCdW5rZXIgPGJyaWFuQHB1cmVzdG9yYWdlLmNvbT4K
+X19fCi0tLSBhL2xpYm11bHRpcGF0aC9wcmludC5jICAgICAgMjAyMC0wOS0yNCAxMzo1MjoxOC42
+NjE4MjgwMTEgLTA2MDAKKysrIGIvbGlibXVsdGlwYXRoL3ByaW50LmMgICAgICAyMDIwLTA5LTI0
+IDE0OjI4OjI3LjYwMzU0MjMwMyAtMDYwMApAQCAtMzk0LDcgKzM5NCw3IEBACiAgICAgICAgICAg
+ICAgICAgICAgICAgIHBwLT5zZ19pZC5ob3N0X25vLAogICAgICAgICAgICAgICAgICAgICAgICBw
+cC0+c2dfaWQuY2hhbm5lbCwKICAgICAgICAgICAgICAgICAgICAgICAgcHAtPnNnX2lkLnNjc2lf
+aWQsCi0gICAgICAgICAgICAgICAgICAgICAgIHBwLT5zZ19pZC5sdW4pOworICAgICAgICAgICAg
+ICAgICAgICAgICAocHAtPnNnX2lkLmx1biAmIDB4NDAwMCkgPyBwcC0+c2dfaWQubHVuIC0gMHg0
+MDAwIDogcHAtPnNnX2lkLmx1bik7CiB9Cgogc3RhdGljIGludAoKQnJpYW4gQnVua2VyClNXIEVu
+ZwpicmlhbkBwdXJlc3RvcmFnZS5jb20KCgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1k
+ZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
+bS1kZXZlbA==
