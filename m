@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 09/21] multipath-tools: don't call
-	dm_lib_release() any more
-Date: Thu, 24 Sep 2020 15:37:04 +0200
-Message-ID: <20200924133716.14120-10-mwilck@suse.com>
+Subject: [PATCH v2 13/21] libmultipath: provide defaults for {get,
+	put}_multipath_config
+Date: Thu, 24 Sep 2020 15:37:08 +0200
+Message-ID: <20200924133716.14120-14-mwilck@suse.com>
 References: <20200924133716.14120-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,162 +24,200 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-The purpose of dm_lib_release() is to release stacked device node
-operations in libdevmapper. This is functionality we don't need and
-use any more, as we rely on udev to set up device nodes and symlinks.
+Add an implementation of get_multipath_config() and put_multipath_config()
+to libmultipath. The linker's symbol lookup rules will make sure that
+applications can override these functions if they need to. Defining
+these functions in libmultipath avoids the need to provide stubs
+for these functions in every appliation linking to libmultipath.
 
-We always set DM_UDEV_DISABLE_LIBRARY_FALLBACK when we run dm tasks.
-In the standard CREATE and REMOVE cases, libdevmapper doesn't
-stack any operations if this flag is set. The only exceptions are
+libmultipath's internal functions simply refer to a static "struct config".
+It must be initialized with init_config() rather than load_config(),
+which always allocates a new struct for backward compatibility, and must
+be teared down using uninit_config().
 
- a) RESUME operations with DM_ADD_NODE_ON_RESUME set. This happens
-implicity when we create new maps
- b) RENAME operations
-
-In both cases, we call dm_udev_wait() after the libdm operation, which
-calls update_devs() and thus has the same effect as dm_lib_release(),
-cleaning out stacked operations.
-
-OTOH, dm_lib_releases() accesses static variables in libdevmapper, so
-calling it might be racy.
-
-Drop the calls to dm_lib_release().
-
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/kpartx.c                 |  1 -
- libmpathpersist/mpath_persist.c |  1 -
- multipath/main.c                |  1 -
- multipathd/cli_handlers.c       |  2 --
- multipathd/main.c               | 15 ++-------------
- 5 files changed, 2 insertions(+), 18 deletions(-)
+ libmultipath/config.c             | 75 ++++++++++++++++++++++++++-----
+ libmultipath/config.h             | 21 +++++++--
+ libmultipath/libmultipath.version | 10 +++++
+ 3 files changed, 93 insertions(+), 13 deletions(-)
 
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index 4a0aae9..6a7933f 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -681,7 +681,6 @@ main(int argc, char **argv){
- 	}
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 5c91a09..01b77df 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -27,6 +27,26 @@
+ #include "mpath_cmd.h"
+ #include "propsel.h"
  
- end:
--	dm_lib_release();
- 	dm_lib_exit();
- 
- 	return r;
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 1f9817e..39055ed 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -56,7 +56,6 @@ mpath_lib_init (void)
- int
- mpath_lib_exit (struct config *conf)
++static struct config __internal_config;
++struct config *libmp_get_multipath_config(void)
++{
++	if (!__internal_config.hwtable)
++		/* not initialized */
++		return NULL;
++	return &__internal_config;
++}
++
++struct config *get_multipath_config(void)
++	__attribute__((weak, alias("libmp_get_multipath_config")));
++
++void libmp_put_multipath_config(void *conf __attribute__((unused)))
++{
++	/* empty */
++}
++
++void put_multipath_config(void *conf)
++	__attribute__((weak, alias("libmp_put_multipath_config")));
++
+ static int
+ hwe_strmatch (const struct hwentry *hwe1, const struct hwentry *hwe2)
  {
--	dm_lib_release();
- 	dm_lib_exit();
- 	cleanup_prio();
- 	cleanup_checkers();
-diff --git a/multipath/main.c b/multipath/main.c
-index 9e920d8..dc4974b 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -1063,7 +1063,6 @@ main (int argc, char *argv[])
- 		condlog(3, "restart multipath configuration process");
+@@ -574,17 +594,15 @@ restart:
+ 	return;
+ }
  
+-struct config *
+-alloc_config (void)
++static struct config *alloc_config (void)
+ {
+ 	return (struct config *)MALLOC(sizeof(struct config));
+ }
+ 
+-void
+-free_config (struct config * conf)
++static void _uninit_config(struct config *conf)
+ {
+ 	if (!conf)
+-		return;
++		conf = &__internal_config;
+ 
+ 	if (conf->multipath_dir)
+ 		FREE(conf->multipath_dir);
+@@ -650,7 +668,27 @@ free_config (struct config * conf)
+ 	free_hwtable(conf->hwtable);
+ 	free_hwe(conf->overrides);
+ 	free_keywords(conf->keywords);
+-	FREE(conf);
++
++	memset(conf, 0, sizeof(*conf));
++}
++
++void uninit_config(void)
++{
++	_uninit_config(&__internal_config);
++}
++
++void free_config(struct config *conf)
++{
++	if (!conf)
++		return;
++	else if (conf == &__internal_config) {
++		condlog(0, "ERROR: %s called for internal config. Use uninit_config() instead",
++			__func__);
++		return;
++	}
++
++	_uninit_config(conf);
++	free(conf);
+ }
+ 
+ /* if multipath fails to process the config directory, it should continue,
+@@ -719,12 +757,29 @@ static void set_max_checkint_from_watchdog(struct config *conf)
+ }
+ #endif
+ 
++static int _init_config (const char *file, struct config *conf);
++
++int init_config(const char *file)
++{
++	return _init_config(file, &__internal_config);
++}
++
+ struct config *load_config(const char *file)
+ {
+ 	struct config *conf = alloc_config();
+ 
++	if (conf && !_init_config(file, conf))
++		return conf;
++
++	free(conf);
++	return NULL;
++}
++
++int _init_config (const char *file, struct config *conf)
++{
++
+ 	if (!conf)
+-		return NULL;
++		conf = &__internal_config;
+ 
+ 	/*
+ 	 * internal defaults
+@@ -896,10 +951,10 @@ struct config *load_config(const char *file)
+ 	    !conf->wwids_file || !conf->prkeys_file)
+ 		goto out;
+ 
+-	return conf;
++	return 0;
  out:
--	dm_lib_release();
- 	dm_lib_exit();
+-	free_config(conf);
+-	return NULL;
++	_uninit_config(conf);
++	return 1;
+ }
  
- 	cleanup_foreign();
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 235e2a2..5463573 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -860,7 +860,6 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
- 				    != CP_OK)
- 					condlog(2, "%s: coalesce_paths failed",
- 									param);
--				dm_lib_release();
- 				FREE(refwwid);
- 			}
- 		} /*we attempt to create device only once*/
-@@ -1032,7 +1031,6 @@ cli_resize(void *v, char **reply, int *len, void *data)
- 	if (resize_map(mpp, size, vecs) != 0)
- 		return 1;
+ char *get_uid_attribute_by_attrs(struct config *conf,
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 116fe37..5997b71 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -251,10 +251,25 @@ void free_mptable (vector mptable);
+ int store_hwe (vector hwtable, struct hwentry *);
  
--	dm_lib_release();
- 	if (setup_multipath(vecs, mpp) != 0)
- 		return 1;
- 	sync_map_state(mpp);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d1f8cc1..5cc3435 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -510,7 +510,6 @@ retry:
- 		sleep(1);
- 		goto retry;
- 	}
--	dm_lib_release();
+ struct config *load_config (const char *file);
+-struct config * alloc_config (void);
+ void free_config (struct config * conf);
+-extern struct config *get_multipath_config(void);
+-extern void put_multipath_config(void *);
++int init_config(const char *file);
++void uninit_config(void);
++
++/*
++ * libmultipath provides default implementations of
++ * get_multipath_config() and put_multipath_config().
++ * Applications using these should use init_config(file, NULL)
++ * to load the configuration, rather than load_config(file).
++ * Likewise, uninit_config() should be used for teardown, but
++ * using free_config() for that is supported, too.
++ * Applications can define their own {get,put}_multipath_config()
++ * functions, which override the library-internal ones, but
++ * could still call libmp_{get,put}_multipath_config().
++ */
++struct config *libmp_get_multipath_config(void);
++struct config *get_multipath_config(void);
++void libmp_put_multipath_config(void *);
++void put_multipath_config(void *);
  
- fail:
- 	if (new_map && (retries < 0 || wait_for_events(mpp, vecs))) {
-@@ -611,10 +610,8 @@ coalesce_maps(struct vectors *vecs, vector nmpv)
- 				vector_del_slot(ompv, i);
- 				i--;
- 			}
--			else {
--				dm_lib_release();
-+			else
- 				condlog(2, "%s devmap removed", ompp->alias);
--			}
- 		} else if (reassign_maps) {
- 			condlog(3, "%s: Reassign existing device-mapper"
- 				" devices", ompp->alias);
-@@ -660,10 +657,8 @@ flush_map(struct multipath * mpp, struct vectors * vecs, int nopaths)
- 		}
- 		return r;
- 	}
--	else {
--		dm_lib_release();
-+	else
- 		condlog(2, "%s: map flushed", mpp->alias);
--	}
- 
- 	orphan_paths(vecs->pathvec, mpp, "map flushed");
- 	remove_map_and_stop_waiter(mpp, vecs);
-@@ -1080,7 +1075,6 @@ rescan:
- 		else
- 			goto fail_map;
- 	}
--	dm_lib_release();
- 
- 	if ((mpp->action == ACT_CREATE ||
- 	     (mpp->action == ACT_NOTHING && start_waiter && !mpp->waiter)) &&
-@@ -1947,8 +1941,6 @@ int reload_and_sync_map(struct multipath *mpp,
- {
- 	if (reload_map(vecs, mpp, refresh, 1))
- 		return 1;
--
--	dm_lib_release();
- 	if (setup_multipath(vecs, mpp) != 0)
- 		return 2;
- 	sync_map_state(mpp);
-@@ -2631,8 +2623,6 @@ configure (struct vectors * vecs)
- 		goto fail;
- 	}
- 
--	dm_lib_release();
--
- 	if (should_exit())
- 		goto fail;
- 
-@@ -3115,7 +3105,6 @@ child (__attribute__((unused)) void *param)
- 	if (poll_dmevents)
- 		cleanup_dmevent_waiter();
- 
--	dm_lib_release();
- 	dm_lib_exit();
- 
- 	/* We're done here */
+ int parse_uid_attrs(char *uid_attrs, struct config *conf);
+ char *get_uid_attribute_by_attrs(struct config *conf,
+diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+index 0a96010..81bcc9d 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -218,3 +218,13 @@ global:
+ 	libmp_dm_task_run;
+ 	cleanup_mutex;
+ } LIBMULTIPATH_0.8.4.1;
++
++LIBMULTIPATH_0.8.4.3 {
++global:
++	libmp_get_multipath_config;
++	get_multipath_config;
++	libmp_put_multipath_config;
++	put_multipath_config;
++	init_config;
++	uninit_config;
++} LIBMULTIPATH_0.8.4.2;
 -- 
 2.28.0
