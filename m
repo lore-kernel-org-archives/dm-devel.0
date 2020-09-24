@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 06/11] libmultipath: checkers/prio: allow
-	non-lazy .so loading
-Date: Thu, 24 Sep 2020 15:36:39 +0200
-Message-ID: <20200924133644.14034-7-mwilck@suse.com>
+Subject: [PATCH 03/11] libmultipath: dm_map_present_by_uuid():
+	fix dm_task_create() call
+Date: Thu, 24 Sep 2020 15:36:36 +0200
+Message-ID: <20200924133644.14034-4-mwilck@suse.com>
 References: <20200924133644.14034-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,84 +24,25 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-If compiled with -DLOAD_ALL_SHARED_LIBS, all known prioritizers
-and checkers will be loaded immediately on startup. This is useful
-for determining symbol usage (start executables with LD_BIND_NOW=1).
----
- libmultipath/checkers.c | 17 +++++++++++++++++
- libmultipath/prio.c     | 22 ++++++++++++++++++++++
- 2 files changed, 39 insertions(+)
+libmultipath shouldn't call dm_task_create() directly any more.
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index f7ddd53..18b1f5e 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -7,6 +7,7 @@
- #include "debug.h"
- #include "checkers.h"
- #include "vector.h"
-+#include "util.h"
+Fixes: 90535a3 ("multipath: centralize validation code")
+---
+ libmultipath/devmapper.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index b4d77cb..7394796 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -834,7 +834,7 @@ dm_map_present_by_uuid(const char *uuid)
+ 	if (safe_sprintf(prefixed_uuid, UUID_PREFIX "%s", uuid))
+ 		goto out;
  
- struct checker_class {
- 	struct list_head node;
-@@ -375,7 +376,23 @@ void checker_get(const char *multipath_dir, struct checker *dst,
+-	if (!(dmt = dm_task_create(DM_DEVICE_INFO)))
++	if (!(dmt = libmp_dm_task_create(DM_DEVICE_INFO)))
+ 		goto out;
  
- int init_checkers(const char *multipath_dir)
- {
-+#ifdef LOAD_ALL_SHARED_LIBS
-+	static const char *const all_checkers[] = {
-+		DIRECTIO,
-+		TUR,
-+		HP_SW,
-+		RDAC,
-+		EMC_CLARIION,
-+		READSECTOR0,
-+		CCISS_TUR,
-+	};
-+	unsigned int i;
-+
-+	for (i = 0; i < ARRAY_SIZE(all_checkers); i++)
-+		add_checker_class(multipath_dir, all_checkers[i]);
-+#else
- 	if (!add_checker_class(multipath_dir, DEFAULT_CHECKER))
- 		return 1;
-+#endif
- 	return 0;
- }
-diff --git a/libmultipath/prio.c b/libmultipath/prio.c
-index 3a718ba..c92bde7 100644
---- a/libmultipath/prio.c
-+++ b/libmultipath/prio.c
-@@ -20,8 +20,30 @@ unsigned int get_prio_timeout(unsigned int timeout_ms,
- 
- int init_prio (const char *multipath_dir)
- {
-+#ifdef LOAD_ALL_SHARED_LIBS
-+	static const char *const all_prios[] = {
-+		PRIO_ALUA,
-+		PRIO_CONST,
-+		PRIO_DATACORE,
-+		PRIO_EMC,
-+		PRIO_HDS,
-+		PRIO_HP_SW,
-+		PRIO_ONTAP,
-+		PRIO_RANDOM,
-+		PRIO_RDAC,
-+		PRIO_WEIGHTED_PATH,
-+		PRIO_SYSFS,
-+		PRIO_PATH_LATENCY,
-+		PRIO_ANA,
-+	};
-+	unsigned int i;
-+
-+	for  (i = 0; i < ARRAY_SIZE(all_prios); i++)
-+		add_prio(multipath_dir, all_prios[i]);
-+#else
- 	if (!add_prio(multipath_dir, DEFAULT_PRIO))
- 		return 1;
-+#endif
- 	return 0;
- }
- 
+ 	dm_task_no_open_count(dmt);
 -- 
 2.28.0
