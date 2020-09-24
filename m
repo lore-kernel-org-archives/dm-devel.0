@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 17/21] libmultipath: add udev and logsink
-	symbols
-Date: Thu, 24 Sep 2020 15:37:12 +0200
-Message-ID: <20200924133716.14120-18-mwilck@suse.com>
+Subject: [PATCH v2 16/21] mpathpersist: use {get,
+	put}_multipath_config() from libmultipath
+Date: Thu, 24 Sep 2020 15:37:11 +0200
+Message-ID: <20200924133716.14120-17-mwilck@suse.com>
 References: <20200924133716.14120-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,169 +24,51 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-With these symbols added, applications using libmultipath don't
-need to define global variables "udev" and "logsink" any more.
-This comes at the cost of having to call an init function.
-Currently, libmultipath_init() does nothing but initialize
-"udev".
-
-The linker's symbol lookup order still allows applications to use
-their own "logsink" and "udev" variables, which will take precendence
-over libmultipath's internal ones. In this case, calling
-libmultipath_init() can be skipped, but like before,
-udev should be initialized (using udev_new()) before making any
-libmultipath calls.
-
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c             | 46 +++++++++++++++++++++++++++++++
- libmultipath/config.h             | 46 ++++++++++++++++++++++++++++++-
- libmultipath/debug.c              |  2 ++
- libmultipath/libmultipath.version |  8 ++++++
- 4 files changed, 101 insertions(+), 1 deletion(-)
+ mpathpersist/main.c | 16 ++--------------
+ 1 file changed, 2 insertions(+), 14 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 01b77df..fbb66b3 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -27,6 +27,52 @@
- #include "mpath_cmd.h"
- #include "propsel.h"
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index a6a3bcf..278e48f 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -43,17 +43,6 @@ void mpath_print_transport_id(struct prin_fulldescr *fdesc);
+ int construct_transportid(const char * inp, struct transportid transid[], int num_transportids);
  
-+/*
-+ * We don't support re-initialization after
-+ * libmultipath_exit().
-+ */
-+static bool libmultipath_exit_called;
-+static pthread_once_t _init_once = PTHREAD_ONCE_INIT;
-+static pthread_once_t _exit_once = PTHREAD_ONCE_INIT;
-+struct udev *udev;
-+
-+static void _udev_init(void)
-+{
-+	if (udev)
-+		udev_ref(udev);
-+	else
-+		udev = udev_new();
-+	if (!udev)
-+		condlog(0, "%s: failed to initialize udev", __func__);
-+}
-+
-+static void _libmultipath_init(void)
-+{
-+	_udev_init();
-+}
-+
-+static bool _is_libmultipath_initialized(void)
-+{
-+	return !libmultipath_exit_called && !!udev;
-+}
-+
-+int libmultipath_init(void)
-+{
-+	pthread_once(&_init_once, _libmultipath_init);
-+	return !_is_libmultipath_initialized();
-+}
-+
-+static void _libmultipath_exit(void)
-+{
-+	libmultipath_exit_called = true;
-+	udev_unref(udev);
-+}
-+
-+void libmultipath_exit(void)
-+{
-+	pthread_once(&_exit_once, _libmultipath_exit);
-+}
-+
- static struct config __internal_config;
- struct config *libmp_get_multipath_config(void)
- {
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 5997b71..dac4e8f 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -232,7 +232,51 @@ struct config {
- 	char *enable_foreign;
- };
+ int logsink;
+-struct config *multipath_conf;
+-
+-struct config *get_multipath_config(void)
+-{
+-	return multipath_conf;
+-}
+-
+-void put_multipath_config(__attribute__((unused)) void * arg)
+-{
+-	/* Noop for now */
+-}
  
--extern struct udev * udev;
-+/**
-+ * extern variable: udev
-+ *
-+ * A &struct udev instance used by libmultipath. libmultipath expects
-+ * a valid, initialized &struct udev in this variable.
-+ * An application can define this variable itself, in which case
-+ * the applications's instance will take precedence.
-+ * The application can initialize and destroy this variable by
-+ * calling libmultipath_init() and libmultipath_exit(), respectively,
-+ * whether or not it defines the variable itself.
-+ * An application can initialize udev with udev_new() before calling
-+ * libmultipath_init(), e.g. if it has to make libudev calls before
-+ * libmultipath calls. If an application wants to keep using the
-+ * udev variable after calling libmultipath_exit(), it should have taken
-+ * an additional reference on it beforehand. This is the case e.g.
-+ * after initiazing udev with udev_new().
-+ */
-+extern struct udev *udev;
-+
-+/**
-+ * libmultipath_init() - library initialization
-+ *
-+ * This function initializes libmultipath data structures.
-+ * It is light-weight; some other initializations, like device-mapper
-+ * initialization, are done lazily when the respective functionality
-+ * is required.
-+ *
-+ * Clean up by libmultipath_exit() when the program terminates.
-+ * It is an error to call libmultipath_init() after libmultipath_exit().
-+ * Return: 0 on success, 1 on failure.
-+ */
-+int libmultipath_init(void);
-+
-+/**
-+ * libmultipath_exit() - library un-initialization
-+ *
-+ * This function un-initializes libmultipath data structures.
-+ * It is recommended to call this function at program exit.
-+ *
-+ * Calls to libmultipath_init() after libmultipath_exit() will fail
-+ * (in other words, libmultipath can't be re-initialized).
-+ * Any other libmultipath calls after libmultipath_exit() may cause
-+ * undefined behavior.
-+ */
-+void libmultipath_exit(void);
+ void rcu_register_thread_memb(void) {}
  
- int find_hwe (const struct _vector *hwtable,
- 	      const char * vendor, const char * product, const char *revision,
-diff --git a/libmultipath/debug.c b/libmultipath/debug.c
-index 4128cb9..b3a1de9 100644
---- a/libmultipath/debug.c
-+++ b/libmultipath/debug.c
-@@ -15,6 +15,8 @@
- #include "defaults.h"
- #include "debug.h"
+@@ -653,15 +642,14 @@ int main(int argc, char *argv[])
+ 	}
  
-+int logsink;
-+
- void dlog (int sink, int prio, const char * fmt, ...)
- {
- 	va_list ap;
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 81bcc9d..2e531ef 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -228,3 +228,11 @@ global:
- 	init_config;
- 	uninit_config;
- } LIBMULTIPATH_0.8.4.2;
-+
-+LIBMULTIPATH_0.8.4.4 {
-+global:
-+	udev;
-+	logsink;
-+	libmultipath_init;
-+	libmultipath_exit;
-+} LIBMULTIPATH_0.8.4.3;
+ 	udev = udev_new();
+-	multipath_conf = mpath_lib_init();
+-	if(!multipath_conf) {
++	if (libmpathpersist_init()) {
+ 		udev_unref(udev);
+ 		exit(1);
+ 	}
+ 
+ 	ret = handle_args(argc, argv, 0);
+ 
+-	mpath_lib_exit(multipath_conf);
++	libmpathpersist_exit();
+ 	udev_unref(udev);
+ 
+ 	return (ret >= 0) ? ret : MPATH_PR_OTHER;
 -- 
 2.28.0
