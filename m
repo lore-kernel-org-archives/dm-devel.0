@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 18/23] libmultipath: fix log_thread startup and
-	teardown
-Date: Thu, 24 Sep 2020 15:40:49 +0200
-Message-ID: <20200924134054.14632-19-mwilck@suse.com>
+Subject: [PATCH 12/23] multipathd: unwatch_all_dmevents: check if
+	waiter is initialized
+Date: Thu, 24 Sep 2020 15:40:43 +0200
+Message-ID: <20200924134054.14632-13-mwilck@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,135 +24,23 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This fixes several issues with the log_thread. First, the running
-flag logq_running should be set by the thread itself, not by
-log_thread_start()/_stop(). Second, the thread was both cancelled and
-terminated via a flag (again, logq_running). It's sufficient,
-and better, to just cancel it and use logq_running as indication for
-successful termination. Third, the locking wasn't cancel-safe in some
-places. Forth, log_thread_start() and log_thread_stop() didn't wait for
-startup/teardown properly. Fifth, using (pthread_t)0 is wrong (pthread_t is
-opaque; there's no guarantee that 0 is not a valid pthread_t value). Finally,
-pthread_cancel() was called under logq_lock, which doesn't make sense to
-me at all.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/log_pthread.c | 59 ++++++++++++++++++++++++++++----------
- 1 file changed, 44 insertions(+), 15 deletions(-)
+ multipathd/dmevents.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/libmultipath/log_pthread.c b/libmultipath/log_pthread.c
-index 0c327ff..5825e66 100644
---- a/libmultipath/log_pthread.c
-+++ b/libmultipath/log_pthread.c
-@@ -13,6 +13,7 @@
- #include "log_pthread.h"
- #include "log.h"
- #include "lock.h"
-+#include "util.h"
+diff --git a/multipathd/dmevents.c b/multipathd/dmevents.c
+index b561cbf..f52f597 100644
+--- a/multipathd/dmevents.c
++++ b/multipathd/dmevents.c
+@@ -257,6 +257,8 @@ void unwatch_all_dmevents(void)
+ 	struct dev_event *dev_evt;
+ 	int i;
  
- static pthread_t log_thr;
- 
-@@ -56,28 +57,45 @@ static void flush_logqueue (void)
- 	} while (empty == 0);
- }
- 
-+static void cleanup_log_thread(__attribute((unused)) void *arg)
-+{
-+	logdbg(stderr, "log thread exiting");
-+	pthread_mutex_lock(&logev_lock);
-+	logq_running = 0;
-+	pthread_cond_signal(&logev_cond);
-+	pthread_mutex_unlock(&logev_lock);
-+}
-+
- static void * log_thread (__attribute__((unused)) void * et)
- {
- 	int running;
- 
- 	pthread_mutex_lock(&logev_lock);
--	logq_running = 1;
-+	running = logq_running;
-+	if (!running)
-+		logq_running = 1;
-+	pthread_cond_signal(&logev_cond);
- 	pthread_mutex_unlock(&logev_lock);
-+	if (running)
-+		/* already started */
-+		return NULL;
-+	pthread_cleanup_push(cleanup_log_thread, NULL);
- 
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 	logdbg(stderr,"enter log_thread\n");
- 
- 	while (1) {
- 		pthread_mutex_lock(&logev_lock);
--		if (logq_running && !log_messages_pending)
-+		pthread_cleanup_push(cleanup_mutex, &logev_lock);
-+		while (!log_messages_pending)
-+			/* this is a cancellation point */
- 			pthread_cond_wait(&logev_cond, &logev_lock);
- 		log_messages_pending = 0;
--		running = logq_running;
--		pthread_mutex_unlock(&logev_lock);
--		if (!running)
--			break;
-+		pthread_cleanup_pop(1);
-+
- 		flush_logqueue();
- 	}
-+	pthread_cleanup_pop(1);
- 	return NULL;
- }
- 
-@@ -98,6 +116,12 @@ void log_thread_start (pthread_attr_t *attr)
- 		exit(1);
- 	}
- 
-+	pthread_mutex_lock(&logev_lock);
-+	pthread_cleanup_push(cleanup_mutex, &logev_lock);
-+	/* wait for thread startup */
-+	while (!logq_running)
-+		pthread_cond_wait(&logev_cond, &logev_lock);
-+	pthread_cleanup_pop(1);
- 	return;
- }
- 
-@@ -112,21 +136,26 @@ void log_thread_reset (void)
- 
- void log_thread_stop (void)
- {
-+	int running;
-+
- 	if (!la)
- 		return;
--
- 	logdbg(stderr,"enter log_thread_stop\n");
- 
- 	pthread_mutex_lock(&logev_lock);
--	logq_running = 0;
--	pthread_cond_signal(&logev_cond);
--	pthread_mutex_unlock(&logev_lock);
-+	pthread_cleanup_push(cleanup_mutex, &logev_lock);
-+	running = logq_running;
-+	if (running) {
-+		pthread_cancel(log_thr);
-+		pthread_cond_signal(&logev_cond);
-+	}
-+	while (logq_running)
-+		pthread_cond_wait(&logev_cond, &logev_lock);
-+	pthread_cleanup_pop(1);
-+
-+	if (running)
-+		pthread_join(log_thr, NULL);
- 
--	pthread_mutex_lock(&logq_lock);
--	pthread_cancel(log_thr);
--	pthread_mutex_unlock(&logq_lock);
--	pthread_join(log_thr, NULL);
--	log_thr = (pthread_t)0;
- 
- 	flush_logqueue();
- 
++	if (!waiter)
++		return;
+ 	pthread_mutex_lock(&waiter->events_lock);
+ 	vector_foreach_slot(waiter->events, dev_evt, i)
+ 		free(dev_evt);
 -- 
 2.28.0
