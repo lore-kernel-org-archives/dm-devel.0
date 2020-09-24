@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 12/23] multipathd: unwatch_all_dmevents: check if
-	waiter is initialized
-Date: Thu, 24 Sep 2020 15:40:43 +0200
-Message-ID: <20200924134054.14632-13-mwilck@suse.com>
+Subject: [PATCH 11/23] multipathd: child(): call cleanups in
+	failure case, too
+Date: Thu, 24 Sep 2020 15:40:42 +0200
+Message-ID: <20200924134054.14632-12-mwilck@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,23 +24,48 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+So far we haven't called any cleanup code if child() failed.
+Fix it.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/dmevents.c | 2 ++
- 1 file changed, 2 insertions(+)
+ multipathd/main.c | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
 
-diff --git a/multipathd/dmevents.c b/multipathd/dmevents.c
-index b561cbf..f52f597 100644
---- a/multipathd/dmevents.c
-+++ b/multipathd/dmevents.c
-@@ -257,6 +257,8 @@ void unwatch_all_dmevents(void)
- 	struct dev_event *dev_evt;
- 	int i;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index e742aa5..3c8f893 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -3044,6 +3044,7 @@ child (__attribute__((unused)) void *param)
+ 	char *envp;
+ 	enum daemon_status state;
+ 	struct call_rcu_data *crdp;
++	int exit_code = 1;
  
-+	if (!waiter)
-+		return;
- 	pthread_mutex_lock(&waiter->events_lock);
- 	vector_foreach_slot(waiter->events, dev_evt, i)
- 		free(dev_evt);
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
+ 	signal_init();
+@@ -3207,6 +3208,8 @@ child (__attribute__((unused)) void *param)
+ 		}
+ 	}
+ 
++	exit_code = 0;
++failed:
+ 	cleanup_threads();
+ 	cleanup_vecs();
+ 	cleanup_foreign();
+@@ -3229,12 +3232,7 @@ child (__attribute__((unused)) void *param)
+ #ifdef _DEBUG_
+ 	dbg_free_final(NULL);
+ #endif
+-	exit(sd_notify_exit(0));
+-
+-failed:
+-	if (pid_fd >= 0)
+-		close(pid_fd);
+-	exit(sd_notify_exit(1));
++	return sd_notify_exit(exit_code);
+ }
+ 
+ static int
 -- 
 2.28.0
