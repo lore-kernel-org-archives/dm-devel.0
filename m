@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 21/21] multipathd: remove logsink and udev
-Date: Thu, 24 Sep 2020 15:37:16 +0200
-Message-ID: <20200924133716.14120-22-mwilck@suse.com>
+Subject: [PATCH v2 19/21] libmpathpersist: call
+	libmultipath_{init, exit}()
+Date: Thu, 24 Sep 2020 15:37:14 +0200
+Message-ID: <20200924133716.14120-20-mwilck@suse.com>
 References: <20200924133716.14120-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,53 +24,92 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-We can use the symbols from libmultipath now.
+Have libmpathpersist_{init,exit} do the udev initialization, too.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 9 +++------
- 1 file changed, 3 insertions(+), 6 deletions(-)
+ libmpathpersist/mpath_persist.c | 11 ++++++++---
+ libmpathpersist/mpath_persist.h |  9 ++++++---
+ 2 files changed, 14 insertions(+), 6 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 00b66ba..c5c374b 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -115,7 +115,6 @@ struct mpath_event_param
- 	struct multipath *mpp;
- };
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index a529a38..873b419 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -48,6 +48,10 @@ int libmpathpersist_init(void)
+ 	struct config *conf;
+ 	int rc = 0;
  
--int logsink;
- int uxsock_timeout;
- int verbosity;
- int bindings_read_only;
-@@ -151,8 +150,6 @@ int should_exit(void)
-  */
- struct vectors * gvecs;
++	if (libmultipath_init()) {
++		condlog(0, "Failed to initialize libmultipath.");
++		return 1;
++	}
+ 	if (init_config(DEFAULT_CONFIGFILE)) {
+ 		condlog(0, "Failed to initialize multipath config.");
+ 		return 1;
+@@ -74,23 +78,24 @@ mpath_lib_init (void)
  
--struct udev * udev;
--
- struct config *multipath_conf;
+ static void libmpathpersist_cleanup(void)
+ {
+-	dm_lib_exit();
+ 	cleanup_prio();
+ 	cleanup_checkers();
++	libmultipath_exit();
++	dm_lib_exit();
+ }
  
- /* Local variables */
-@@ -3123,8 +3120,6 @@ child (__attribute__((unused)) void *param)
- 	conf = rcu_dereference(multipath_conf);
- 	rcu_assign_pointer(multipath_conf, NULL);
- 	call_rcu(&conf->rcu, rcu_free_config);
--	udev_unref(udev);
--	udev = NULL;
- 	pthread_attr_destroy(&waiter_attr);
- 	pthread_attr_destroy(&io_err_stat_attr);
- #ifdef _DEBUG_
-@@ -3228,7 +3223,9 @@ main (int argc, char *argv[])
+ int
+ mpath_lib_exit (struct config *conf)
+ {
+-	libmpathpersist_cleanup();
+ 	free_config(conf);
++	libmpathpersist_cleanup();
+ 	return 0;
+ }
  
- 	pthread_cond_init_mono(&config_cond);
+ int libmpathpersist_exit(void)
+ {
+-	libmpathpersist_cleanup();
+ 	uninit_config();
++	libmpathpersist_cleanup();
+ 	return 0;
+ }
  
--	udev = udev_new();
-+	libmultipath_init();
-+	if (atexit(libmultipath_exit))
-+		condlog(3, "failed to register exit handler for libmultipath");
- 	libmp_udev_set_sync_support(0);
+diff --git a/libmpathpersist/mpath_persist.h b/libmpathpersist/mpath_persist.h
+index 91606ef..5435eae 100644
+--- a/libmpathpersist/mpath_persist.h
++++ b/libmpathpersist/mpath_persist.h
+@@ -176,7 +176,8 @@ struct prout_param_descriptor {		/* PROUT parameter descriptor */
+  *	Initialize device mapper multipath configuration. This function must be invoked first
+  *	before performing reservation management functions.
+  *	Either this function or mpath_lib_init() may be used.
+- *	Use this function to work with libmultipath's internal "struct config".
++ *	Use this function to work with libmultipath's internal "struct config"
++ *	and "struct udev". The latter will be initialized automatically.
+  *	Call libmpathpersist_exit() for cleanup.
+  * RESTRICTIONS:
+  *
+@@ -189,7 +190,8 @@ extern int libmpathpersist_init (void);
+  *	Initialize device mapper multipath configuration. This function must be invoked first
+  *	before performing reservation management functions.
+  *	Either this function or libmpathpersist_init() may be used.
+- *	Use this function to work with an application-specific "struct config".
++ *	Use this function to work with an application-specific "struct config"
++ *	and "struct udev". The latter must be initialized by the application.
+  *	Call mpath_lib_exit() for cleanup.
+  * RESTRICTIONS:
+  *
+@@ -211,9 +213,10 @@ extern int mpath_lib_exit (struct config *conf);
  
- 	while ((arg = getopt(argc, argv, ":dsv:k::Bniw")) != EOF ) {
+ /*
+  * DESCRIPTION :
+- *	Release device mapper multipath configuration. This function must be invoked after
++ *	Release device mapper multipath configuration a. This function must be invoked after
+  *	performing reservation management functions.
+  *	Use this after initialization with libmpathpersist_init().
++ *	Calling libmpathpersist_init() after libmpathpersist_exit() will fail.
+  * RESTRICTIONS:
+  *
+  * RETURNS: 0->Success, 1->Failed.
 -- 
 2.28.0
