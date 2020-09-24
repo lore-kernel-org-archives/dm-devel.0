@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 16/23] libmultipath: log_thread_stop(): check if
-	logarea is initialized
-Date: Thu, 24 Sep 2020 15:40:47 +0200
-Message-ID: <20200924134054.14632-17-mwilck@suse.com>
+Subject: [PATCH 21/23] mpathpersist: use atexit() for cleanup
+	handlers
+Date: Thu, 24 Sep 2020 15:40:52 +0200
+Message-ID: <20200924134054.14632-22-mwilck@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -26,22 +26,26 @@ From: Martin Wilck <mwilck@suse.com>
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/log_pthread.c | 3 +++
- 1 file changed, 3 insertions(+)
+ mpathpersist/main.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/log_pthread.c b/libmultipath/log_pthread.c
-index 15baef8..0c327ff 100644
---- a/libmultipath/log_pthread.c
-+++ b/libmultipath/log_pthread.c
-@@ -112,6 +112,9 @@ void log_thread_reset (void)
+diff --git a/mpathpersist/main.c b/mpathpersist/main.c
+index 3c2e657..14245cc 100644
+--- a/mpathpersist/main.c
++++ b/mpathpersist/main.c
+@@ -641,11 +641,10 @@ int main(int argc, char *argv[])
+ 	if (libmpathpersist_init()) {
+ 		exit(1);
+ 	}
++	if (atexit((void(*)(void))libmpathpersist_exit))
++		fprintf(stderr, "failed to register cleanup handler for libmpathpersist: %m");
  
- void log_thread_stop (void)
- {
-+	if (!la)
-+		return;
-+
- 	logdbg(stderr,"enter log_thread_stop\n");
+ 	ret = handle_args(argc, argv, 0);
+-
+-	libmpathpersist_exit();
+-
+ 	return (ret >= 0) ? ret : MPATH_PR_OTHER;
+ }
  
- 	pthread_mutex_lock(&logev_lock);
 -- 
 2.28.0
