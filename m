@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 19/23] multipathd: move cleanup_{prio, checkers,
-	foreign} to libmultipath_exit
-Date: Thu, 24 Sep 2020 15:40:50 +0200
-Message-ID: <20200924134054.14632-20-mwilck@suse.com>
+Subject: [PATCH 07/23] multipathd: move conf destruction into
+	separate function
+Date: Thu, 24 Sep 2020 15:40:38 +0200
+Message-ID: <20200924134054.14632-8-mwilck@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,83 +24,57 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
+Also removing the comment about dlog() and dm_write_log().
+dlog() can cope with get_multipath_config() returning NULL,
+and dm_write_log() hasn't accessed the configuration for a while.
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmpathpersist/mpath_persist.c   | 2 --
- libmultipath/config.c             | 4 ++++
- libmultipath/libmultipath.version | 5 +----
- multipathd/main.c                 | 3 ---
- 4 files changed, 5 insertions(+), 9 deletions(-)
+ multipathd/main.c | 24 ++++++++++++++----------
+ 1 file changed, 14 insertions(+), 10 deletions(-)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 873b419..af56a95 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -78,8 +78,6 @@ mpath_lib_init (void)
- 
- static void libmpathpersist_cleanup(void)
- {
--	cleanup_prio();
--	cleanup_checkers();
- 	libmultipath_exit();
- 	dm_lib_exit();
- }
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 8097838..f115ac2 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -26,6 +26,7 @@
- #include "devmapper.h"
- #include "mpath_cmd.h"
- #include "propsel.h"
-+#include "foreign.h"
- 
- /*
-  * We don't support re-initialization after
-@@ -65,6 +66,9 @@ int libmultipath_init(void)
- static void _libmultipath_exit(void)
- {
- 	libmultipath_exit_called = true;
-+	cleanup_foreign();
-+	cleanup_checkers();
-+	cleanup_prio();
- 	libmp_dm_exit();
- 	udev_unref(udev);
- }
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 9abdb22..80f1950 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -1,4 +1,4 @@
--LIBMULTIPATH_0.8.4.5 {
-+LIBMULTIPATH_0.8.4.6 {
- global:
- 	/* symbols referenced by multipath and multipathd */
- 	add_foreign;
-@@ -18,10 +18,7 @@ global:
- 	checker_name;
- 	checker_state_name;
- 	check_foreign;
--	cleanup_checkers;
--	cleanup_foreign;
- 	cleanup_lock;
--	cleanup_prio;
- 	close_fd;
- 	coalesce_paths;
- 	convert_dev;
 diff --git a/multipathd/main.c b/multipathd/main.c
-index e7b479a..efed56e 100644
+index 8b9df55..4d5b40b 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -3027,9 +3027,6 @@ static void cleanup_child(void)
- {
- 	cleanup_threads();
- 	cleanup_vecs();
--	cleanup_foreign();
--	cleanup_checkers();
--	cleanup_prio();
- 	if (poll_dmevents)
- 		cleanup_dmevent_waiter();
+@@ -2892,6 +2892,16 @@ set_oom_adj (void)
+ 	condlog(0, "couldn't adjust oom score");
+ }
  
++static void cleanup_conf(void) {
++	struct config *conf;
++
++	conf = rcu_dereference(multipath_conf);
++	if (!conf)
++		return;
++	rcu_assign_pointer(multipath_conf, NULL);
++	call_rcu(&conf->rcu, rcu_free_config);
++}
++
+ static void cleanup_maps(struct vectors *vecs)
+ {
+ 	int queue_without_daemon, i;
+@@ -3194,17 +3204,11 @@ child (__attribute__((unused)) void *param)
+ 
+ 	condlog(2, "--------shut down-------");
+ 
+-	if (logsink == 1)
++	if (logsink == 1) {
++		logsink = 0;
+ 		log_thread_stop();
+-
+-	/*
+-	 * Freeing config must be done after condlog() and dm_lib_exit(),
+-	 * because logging functions like dlog() and dm_write_log()
+-	 * reference the config.
+-	 */
+-	conf = rcu_dereference(multipath_conf);
+-	rcu_assign_pointer(multipath_conf, NULL);
+-	call_rcu(&conf->rcu, rcu_free_config);
++	}
++	cleanup_conf();
+ #ifdef _DEBUG_
+ 	dbg_free_final(NULL);
+ #endif
 -- 
 2.28.0
