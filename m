@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 11/23] multipathd: child(): call cleanups in
-	failure case, too
-Date: Thu, 24 Sep 2020 15:40:42 +0200
-Message-ID: <20200924134054.14632-12-mwilck@suse.com>
+Subject: [PATCH 20/23] multipath: use atexit() for cleanup
+	handlers
+Date: Thu, 24 Sep 2020 15:40:51 +0200
+Message-ID: <20200924134054.14632-21-mwilck@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,48 +24,108 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-So far we haven't called any cleanup code if child() failed.
-Fix it.
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 10 ++++------
- 1 file changed, 4 insertions(+), 6 deletions(-)
+ multipath/main.c | 39 ++++++++++++++++++---------------------
+ 1 file changed, 18 insertions(+), 21 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index e742aa5..3c8f893 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -3044,6 +3044,7 @@ child (__attribute__((unused)) void *param)
- 	char *envp;
- 	enum daemon_status state;
- 	struct call_rcu_data *crdp;
-+	int exit_code = 1;
+diff --git a/multipath/main.c b/multipath/main.c
+index 9ae46ed..049a36f 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -452,13 +452,21 @@ static bool released_to_systemd(void)
+ 	return ret;
+ }
  
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 	signal_init();
-@@ -3207,6 +3208,8 @@ child (__attribute__((unused)) void *param)
- 		}
- 	}
++static void cleanup_vecs(__attribute__((unused)) int dummy, void *arg)
++{
++	struct vectors *vecs = arg;
++
++	free_multipathvec(vecs->mpvec, KEEP_PATHS);
++	free_pathvec(vecs->pathvec, FREE_PATHS);
++}
++
+ static int
+ configure (struct config *conf, enum mpath_cmds cmd,
+ 	   enum devtypes dev_type, char *devpath)
+ {
+ 	vector curmp = NULL;
+ 	vector pathvec = NULL;
+-	struct vectors vecs;
++	static struct vectors vecs;
+ 	int r = RTVL_FAIL, rc;
+ 	int di_flag = 0;
+ 	char * refwwid = NULL;
+@@ -469,6 +477,7 @@ configure (struct config *conf, enum mpath_cmds cmd,
+ 	 */
+ 	curmp = vector_alloc();
+ 	pathvec = vector_alloc();
++	on_exit(cleanup_vecs, &vecs);
  
-+	exit_code = 0;
-+failed:
- 	cleanup_threads();
- 	cleanup_vecs();
- 	cleanup_foreign();
-@@ -3229,12 +3232,7 @@ child (__attribute__((unused)) void *param)
+ 	if (!curmp || !pathvec) {
+ 		condlog(0, "can not allocate memory");
+@@ -580,9 +589,6 @@ out:
+ 	if (refwwid)
+ 		FREE(refwwid);
+ 
+-	free_multipathvec(curmp, KEEP_PATHS);
+-	free_pathvec(pathvec, FREE_PATHS);
+-
+ 	return r;
+ }
+ 
+@@ -808,9 +814,13 @@ main (int argc, char *argv[])
+ 	bool enable_foreign = false;
+ 
+ 	libmultipath_init();
++	if (atexit(dm_lib_exit) || atexit(libmultipath_exit))
++		condlog(1, "failed to register cleanup handler for libmultipath: %m");
+ 	logsink = 0;
+ 	if (init_config(DEFAULT_CONFIGFILE))
+ 		exit(RTVL_FAIL);
++	if (atexit(uninit_config))
++		condlog(1, "failed to register cleanup handler for config: %m");
+ 	conf = get_multipath_config();
+ 	conf->retrigger_tries = 0;
+ 	conf->force_sync = 1;
+@@ -887,7 +897,7 @@ main (int argc, char *argv[])
+ 			break;
+ 		case 't':
+ 			r = dump_config(conf, NULL, NULL) ? RTVL_FAIL : RTVL_OK;
+-			goto out_free_config;
++			goto out;
+ 		case 'T':
+ 			cmd = CMD_DUMP_CONFIG;
+ 			break;
+@@ -1048,26 +1058,13 @@ main (int argc, char *argv[])
+ 		condlog(3, "restart multipath configuration process");
+ 
+ out:
+-	dm_lib_exit();
+-
+-	cleanup_foreign();
+-	cleanup_prio();
+-	cleanup_checkers();
++	put_multipath_config(conf);
++	if (dev)
++		FREE(dev);
+ 
+ 	if (dev_type == DEV_UEVENT)
+ 		closelog();
+ 
+-out_free_config:
+-	/*
+-	 * Freeing config must be done after dm_lib_exit(), because
+-	 * the logging function (dm_write_log()), which is called there,
+-	 * references the config.
+-	 */
+-	put_multipath_config(conf);
+-	uninit_config();
+-	libmultipath_exit();
+-	if (dev)
+-		FREE(dev);
  #ifdef _DEBUG_
  	dbg_free_final(NULL);
  #endif
--	exit(sd_notify_exit(0));
--
--failed:
--	if (pid_fd >= 0)
--		close(pid_fd);
--	exit(sd_notify_exit(1));
-+	return sd_notify_exit(exit_code);
- }
- 
- static int
 -- 
 2.28.0
