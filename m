@@ -1,18 +1,13 @@
-From: Sudhakar Panneerselvam <sudhakar.panneerselvam@oracle.com>
-Subject: Re: [RFC PATCH 0/2] dm crypt: Allow unaligned buffer
- lengths for skcipher devices
-Date: Thu, 24 Sep 2020 09:55:01 -0700 (PDT)
-Message-ID: <378f445c-2136-4d17-ac2f-355b7850d28a@default>
-References: <1600281606-1446-1-git-send-email-sudhakar.panneerselvam@oracle.com>
-	<3be1ea32-b6a8-41ef-a9ba-ed691434d068@default>
-	<20200924012732.GA10766@redhat.com>
-	<20200924051419.GA16103@sol.localdomain>
-	<1c44946e-9661-16f7-1c38-32d666b55fb2@gmail.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-raid: stack limits instead of overwriting them.
+Date: Thu, 24 Sep 2020 12:56:17 -0400
+Message-ID: <20200924165616.GA14650@redhat.com>
+References: <alpine.LRH.2.02.2009241225310.22728@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1c44946e-9661-16f7-1c38-32d666b55fb2@gmail.com>
+In-Reply-To: <alpine.LRH.2.02.2009241225310.22728@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,63 +17,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <gmazyland@gmail.com>, Eric Biggers <ebiggers@kernel.org>, Mike Snitzer <snitzer@redhat.com>
-Cc: Damien.LeMoal@wdc.com, ssudhakarp@gmail.com, Martin Petersen <martin.petersen@oracle.com>, dm-crypt@saout.de, mpatocka@redhat.com, dm-devel@redhat.com, Ma <shirley.ma@oracle.com>, Shirley, agk@redhat.com
+Content-Disposition: inline
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-Hello Milan,
+On Thu, Sep 24 2020 at 12:26pm -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> -----Original Message-----
-> From: Milan Broz [mailto:gmazyland@gmail.com]
-> Sent: Thursday, September 24, 2020 2:16 AM
-> To: Eric Biggers <ebiggers@kernel.org>; Mike Snitzer <snitzer@redhat.com>
-> Cc: Sudhakar Panneerselvam <sudhakar.panneerselvam@oracle.com>;
-> Damien.LeMoal@wdc.com; ssudhakarp@gmail.com; Martin Petersen
-> <martin.petersen@oracle.com>; dm-crypt@saout.de; dm-devel@redhat.com;
-> Shirley Ma <shirley.ma@oracle.com>; mpatocka@redhat.com;
-> agk@redhat.com
-> Subject: Re: [dm-devel] [RFC PATCH 0/2] dm crypt: Allow unaligned buffer
-> lengths for skcipher devices
+> This patch fixes a warning WARN_ON_ONCE(!q->limits.discard_granularity).
+> The reason is that the function raid_io_hints overwrote
+> limits->discard_granularity with zero. We need to properly stack the
+> limits instead of overwriting them.
 > 
-> On 24/09/2020 07:14, Eric Biggers wrote:
-> > On Wed, Sep 23, 2020 at 09:27:32PM -0400, Mike Snitzer wrote:
-> >> You've clearly done a nice job with these changes.  Looks clean.
-> >>
-> >> BUT, I'm struggling to just accept that dm-crypt needs to go to these
-> >> extra lengths purely because of one bad apple usecase.
-> >>
-> >> These alignment constraints aren't new.  Are there other portions of
-> >> Linux's crypto subsystem that needed comparable fixes in order to work
-> >> with Microsfot OS initiated IO through a guest?
-> >>
-> >> You forecast that these same kinds of changes are needed for AEAD and
-> >> dm-integrity... that's alarming.
-> >>
-> >> Are we _certain_ there is no other way forward?
-> >> (Sorry I don't have suggestions.. I'm in "fact finding mode" ;)
-> >>
-> >
-> > I don't understand why this is needed, since dm-crypt already sets its
-> > logical_block_size to its crypto sector_size.  Isn't it expected that I/O that
-> > isn't aligned to logical_block_size fails?  It's the I/O submitter's
-> > responsibility to ensure logical_block_size alignment of all I/O segments.
-> > Exactly how is the misaligned I/O actually being submitted here?
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org
 > 
-> Thanks for mentioning it - exactly that I asked when reading this patch...
-> It seems that we are here fixing a problem that is just caused when someone
-> ignores clearly set restrictions.
+> ---
+>  drivers/md/dm-raid.c |    4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 > 
-> Who is submitting these bioses? Why can it not be fixed there?
-> 
-> What happens with writes to fs journals, etc., is it still safe if we are
-> processing such unaligned bios?
+> Index: linux-2.6/drivers/md/dm-raid.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-raid.c	2020-09-24 18:16:45.000000000 +0200
+> +++ linux-2.6/drivers/md/dm-raid.c	2020-09-24 18:16:45.000000000 +0200
+> @@ -3734,8 +3734,8 @@ static void raid_io_hints(struct dm_targ
+>  	 * RAID0/4/5/6 don't and process large discard bios properly.
+>  	 */
+>  	if (rs_is_raid1(rs) || rs_is_raid10(rs)) {
+> -		limits->discard_granularity = chunk_size_bytes;
+> -		limits->max_discard_sectors = rs->md.chunk_sectors;
+> +		limits->discard_granularity = max(limits->discard_granularity, chunk_size_bytes);
+> +		limits->max_discard_sectors = min_not_zero(limits->max_discard_sectors, (unsigned)rs->md.chunk_sectors);
+>  	}
+>  }
+>  
 
-I don't follow your question regarding fs journals. I am not sure why it is not safe to process unaligned bio segment lengths of fs journals writes. Could you explain with some example on why that would be a problem?
+OK, but how is it that chunk_size_bytes is 0?  Oh, raid1 doesn't have a
+chunksize does it!?
 
-Please see my reply to Eric's/Mike's email, in that, I explained why this issue needs to be fixed in dm-crypt. I hope I have answered to your questions there. If not, let me know, I will try to answer.
+Relative to MD raid0 and raid10: they don't have dm-stripe like
+optimization to handle large discards.  So stacking up larger discard
+limits (that span multiple chunks) is a non-starter right?
 
-Thanks
-Sudhakar
+Like dm-raid.c, raid10.c does explicitly set max_discard_sectors to
+mddev->chunk_sectors.  But it (mistakenly IMHO) just accepts stackd up
+discard_granularity.
 
-> 
-> Milan
+Looking at raid1.c I see MD is just stacking up the limits without
+modification.  Maybe dm-raid.c shouldn't be changing these limits at all
+for raid1 (just use what was already stacked)?
+
+WAIT... Could it be that raid_io_hints _really_ meant to special case
+raid0 and raid10 -- due to their striping/splitting requirements!?
+So, not raid1 but raid0?
+
+E.g.:
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 56b723d012ac..6dca932d6f1d 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3730,10 +3730,10 @@ static void raid_io_hints(struct dm_target *ti,
+struct queue_limits *limits)
+        blk_limits_io_opt(limits, chunk_size_bytes *
+	mddev_data_stripes(rs));
+
+        /*
+-        * RAID1 and RAID10 personalities require bio splitting,
+-        * RAID0/4/5/6 don't and process large discard bios properly.
++        * RAID0 and RAID10 personalities require bio splitting,
++        * RAID1/4/5/6 don't and process large discard bios properly.
+         */
+-       if (rs_is_raid1(rs) || rs_is_raid10(rs)) {
++       if (rs_is_raid0(rs) || rs_is_raid10(rs)) {
+                limits->discard_granularity = chunk_size_bytes;
+                limits->max_discard_sectors = rs->md.chunk_sectors;
+        }
+
+Mike
