@@ -1,11 +1,13 @@
 From: mwilck@suse.com
-Subject: [PATCH 00/23] libmultipath: improve cleanup on exit
-Date: Thu, 24 Sep 2020 15:40:31 +0200
-Message-ID: <20200924134054.14632-1-mwilck@suse.com>
+Subject: [PATCH 05/23] multipathd: make some globals static
+Date: Thu, 24 Sep 2020 15:40:36 +0200
+Message-ID: <20200924134054.14632-6-mwilck@suse.com>
+References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200924134054.14632-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,63 +23,41 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Hi Christophe, hi Ben, hi lixiaokeng,
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipathd/main.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-this series was inspired by lixiaokeng's recent posting "[QUESTION] memory
-leak in main (multipath)". It implements my first idea, registering
-cleanup handlers with atexit(). However it turned out to be quite
-complex. In particular multipathd has a lot of things to clean up.
-
-This series is based on the previous series "multipath-tools: shutdown, 
-libdevmapper races, globals".
-
-While the bulk of the series is the cleanup handling, it also contains
-some bug fixes for issues that I found while working on this.
-
-Regards
-Martin
-
-Martin Wilck (23):
-  multipathd: uxlsnr: avoid deadlock on exit
-  multipathd: Fix liburcu memory leak
-  multipathd: move handling of io_err_stat_attr into libmultipath
-  multipathd: move vecs desctruction into cleanup function
-  multipathd: make some globals static
-  multipathd: move threads destruction into separate function
-  multipathd: move conf destruction into separate function
-  multipathd: move pid destruction into separate function
-  multipathd: close pidfile on exit
-  multipathd: add helper for systemd notification at exit
-  multipathd: child(): call cleanups in failure case, too
-  multipathd: unwatch_all_dmevents: check if waiter is initialized
-  multipathd: print error message if config can't be loaded
-  libmultipath: add libmp_dm_exit()
-  multipathd: fixup libdm deinitialization
-  libmultipath: log_thread_stop(): check if logarea is initialized
-  multipathd: add cleanup_child() exit handler
-  libmultipath: fix log_thread startup and teardown
-  multipathd: move cleanup_{prio,checkers,foreign} to libmultipath_exit
-  multipath: use atexit() for cleanup handlers
-  mpathpersist: use atexit() for cleanup handlers
-  multipath: fix leaks in check_path_valid()
-  multipath-tools: mpath-tools.supp: file with valgrind suppressions
-
- libmpathpersist/mpath_persist.c       |   2 -
- libmultipath/config.c                 |   5 +
- libmultipath/config.h                 |   2 +
- libmultipath/devmapper.c              |  10 +
- libmultipath/devmapper.h              |   1 +
- libmultipath/io_err_stat.c            |   7 +-
- libmultipath/libmultipath.version     |  26 +--
- libmultipath/log_pthread.c            |  60 +++--
- mpathpersist/main.c                   |   5 +-
- multipath/main.c                      |  94 +++++---
- multipathd/dmevents.c                 |   2 +
- multipathd/main.c                     | 305 +++++++++++++++++---------
- multipathd/uxlsnr.c                   |  17 +-
- third-party/valgrind/mpath-tools.supp |  33 +++
- 14 files changed, 389 insertions(+), 180 deletions(-)
- create mode 100644 third-party/valgrind/mpath-tools.supp
-
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 2642570..1cdbff1 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -116,19 +116,19 @@ struct mpath_event_param
+ };
+ 
+ int uxsock_timeout;
+-int verbosity;
+-int bindings_read_only;
++static int verbosity;
++static int bindings_read_only;
+ int ignore_new_devs;
+ #ifdef NO_DMEVENTS_POLL
+-int poll_dmevents = 0;
++static int poll_dmevents = 0;
+ #else
+-int poll_dmevents = 1;
++static int poll_dmevents = 1;
+ #endif
+ /* Don't access this variable without holding config_lock */
+-volatile enum daemon_status running_state = DAEMON_INIT;
++static volatile enum daemon_status running_state = DAEMON_INIT;
+ pid_t daemon_pid;
+-pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
+-pthread_cond_t config_cond;
++static pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
++static pthread_cond_t config_cond;
+ 
+ static inline enum daemon_status get_running_state(void)
+ {
 -- 
 2.28.0
