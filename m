@@ -1,7 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 15/23] multipathd: fixup libdm deinitialization
-Date: Thu, 24 Sep 2020 15:40:46 +0200
-Message-ID: <20200924134054.14632-16-mwilck@suse.com>
+Subject: [PATCH 17/23] multipathd: add cleanup_child() exit
+	handler
+Date: Thu, 24 Sep 2020 15:40:48 +0200
+Message-ID: <20200924134054.14632-18-mwilck@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,36 +24,87 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-With libmp_dm_exit() in place, we can make sure that the
-calls are made in the right order.
+cleanup_child() calls all cleanups in the right order, in an
+exit handler.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ multipathd/main.c | 48 +++++++++++++++++++++++++++--------------------
+ 1 file changed, 28 insertions(+), 20 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 483b3c7..f9749e5 100644
+index f9749e5..e7b479a 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -3220,8 +3220,6 @@ failed:
- 	if (poll_dmevents)
- 		cleanup_dmevent_waiter();
+@@ -3023,6 +3023,28 @@ static void cleanup_rcu(int dummy __attribute__((unused)), void *arg)
+ 	rcu_unregister_thread();
+ }
  
--	dm_lib_exit();
--
- 	/* We're done here */
- 	cleanup_pidfile();
- 	condlog(2, "--------shut down-------");
-@@ -3320,6 +3318,9 @@ main (int argc, char *argv[])
- 
- 	pthread_cond_init_mono(&config_cond);
- 
-+	if (atexit(dm_lib_exit))
-+		condlog(3, "failed to register exit handler for libdm");
++static void cleanup_child(void)
++{
++	cleanup_threads();
++	cleanup_vecs();
++	cleanup_foreign();
++	cleanup_checkers();
++	cleanup_prio();
++	if (poll_dmevents)
++		cleanup_dmevent_waiter();
 +
- 	libmultipath_init();
- 	if (atexit(libmultipath_exit))
- 		condlog(3, "failed to register exit handler for libmultipath");
++	cleanup_pidfile();
++	if (logsink == 1) {
++		logsink = 0;
++		log_thread_stop();
++	}
++	cleanup_conf();
++
++#ifdef _DEBUG_
++	dbg_free_final(NULL);
++#endif
++}
++
+ static int sd_notify_exit(int err)
+ {
+ #ifdef USE_SYSTEMD
+@@ -3049,7 +3071,11 @@ child (__attribute__((unused)) void *param)
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
+ 	signal_init();
+ 	crdp = setup_rcu();
+-	on_exit(cleanup_rcu, crdp);
++
++	if (on_exit(cleanup_rcu, crdp) ||
++	    atexit(cleanup_child)) {
++		fprintf(stderr, "failed to register cleanup handlers\n");
++	}
+ 
+ 	setup_thread_attr(&misc_attr, 64 * 1024, 0);
+ 	setup_thread_attr(&uevent_attr, DEFAULT_UEVENT_STACKSIZE * 1024, 0);
+@@ -3212,26 +3238,8 @@ child (__attribute__((unused)) void *param)
+ 
+ 	exit_code = 0;
+ failed:
+-	cleanup_threads();
+-	cleanup_vecs();
+-	cleanup_foreign();
+-	cleanup_checkers();
+-	cleanup_prio();
+-	if (poll_dmevents)
+-		cleanup_dmevent_waiter();
+-
+-	/* We're done here */
+-	cleanup_pidfile();
+ 	condlog(2, "--------shut down-------");
+-
+-	if (logsink == 1) {
+-		logsink = 0;
+-		log_thread_stop();
+-	}
+-	cleanup_conf();
+-#ifdef _DEBUG_
+-	dbg_free_final(NULL);
+-#endif
++	/* All cleanup is done in the cleanup_child() exit handler */
+ 	return sd_notify_exit(exit_code);
+ }
+ 
 -- 
 2.28.0
