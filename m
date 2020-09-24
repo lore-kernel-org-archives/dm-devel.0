@@ -1,14 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: dm-raid: stack limits instead of overwriting them.
-Date: Thu, 24 Sep 2020 13:07:12 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2009241306170.28814@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.2009241225310.22728@file01.intranet.prod.int.rdu2.redhat.com>
-	<20200924165616.GA14650@redhat.com>
+From: Sudhakar Panneerselvam <sudhakar.panneerselvam@oracle.com>
+Subject: Re: [RFC PATCH 0/2] dm crypt: Allow unaligned buffer
+ lengths for skcipher devices
+Date: Thu, 24 Sep 2020 10:12:44 -0700 (PDT)
+Message-ID: <0b18d5a9-5bf3-41fb-9766-7f4b75019067@default>
+References: <1600281606-1446-1-git-send-email-sudhakar.panneerselvam@oracle.com>
+	<3be1ea32-b6a8-41ef-a9ba-ed691434d068@default>
+	<alpine.LRH.2.02.2009240834020.11084@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200924165616.GA14650@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2009240834020.11084@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,43 +20,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Damien.LeMoal@wdc.com, ssudhakarp@gmail.com, snitzer@redhat.com, dm-crypt@saout.de, dm-devel@redhat.com, Shirley Ma <shirley.ma@oracle.com>, Martin Petersen <martin.petersen@oracle.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
+Hello Mikulas,
 
-
-On Thu, 24 Sep 2020, Mike Snitzer wrote:
-
-> WAIT... Could it be that raid_io_hints _really_ meant to special case
-> raid0 and raid10 -- due to their striping/splitting requirements!?
-> So, not raid1 but raid0?
+> -----Original Message-----
+> From: Mikulas Patocka [mailto:mpatocka@redhat.com]
+> Sent: Thursday, September 24, 2020 6:40 AM
+> To: Sudhakar Panneerselvam <sudhakar.panneerselvam@oracle.com>
+> Cc: agk@redhat.com; snitzer@redhat.com; dm-devel@redhat.com; dm-
+> crypt@saout.de; Damien.LeMoal@wdc.com; Shirley Ma
+> <shirley.ma@oracle.com>; ssudhakarp@gmail.com; Martin Petersen
+> <martin.petersen@oracle.com>
+> Subject: RE: [dm-devel] [RFC PATCH 0/2] dm crypt: Allow unaligned buffer
+> lengths for skcipher devices
 > 
-> E.g.:
 > 
-> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> index 56b723d012ac..6dca932d6f1d 100644
-> --- a/drivers/md/dm-raid.c
-> +++ b/drivers/md/dm-raid.c
-> @@ -3730,10 +3730,10 @@ static void raid_io_hints(struct dm_target *ti,
-> struct queue_limits *limits)
->         blk_limits_io_opt(limits, chunk_size_bytes *
-> 	mddev_data_stripes(rs));
 > 
->         /*
-> -        * RAID1 and RAID10 personalities require bio splitting,
-> -        * RAID0/4/5/6 don't and process large discard bios properly.
-> +        * RAID0 and RAID10 personalities require bio splitting,
-> +        * RAID1/4/5/6 don't and process large discard bios properly.
->          */
-> -       if (rs_is_raid1(rs) || rs_is_raid10(rs)) {
-> +       if (rs_is_raid0(rs) || rs_is_raid10(rs)) {
->                 limits->discard_granularity = chunk_size_bytes;
->                 limits->max_discard_sectors = rs->md.chunk_sectors;
->         }
+> On Wed, 23 Sep 2020, Sudhakar Panneerselvam wrote:
 > 
-> Mike
+> > Could someone review this patch set, please?
+> >
+> > Thanks
+> > Sudhakar
+> 
+> Hi
+> 
+> I'd like to ask - what sector size do you use in dm-crypt? Could the issue
+> be fixed just by using the smallest possible 512-byte sectors?
 
-Yes - that's an interesing point.
+My test has been with 512 bytes sector length. 
 
-Mikulas
+> 
+> What I/O method does qemu use? Is it direct i/o + aio? What is unaligned -
+> the base address? Or length? Or the sector number? Could you use strace on
+> qemu and show an example of an I/O that fails due to alignment?
+
+Please see my update on June 11 @ https://github.com/virtio-win/kvm-guest-drivers-windows/issues/446 when I originally posted this issue to windows virtio forum. It has some finer details of the reproduction steps and might answer some of your questions.
+
+Also, please see my reply to Eric's email on some of the low level details of function call sequence leading to the issue. If there are further questions, let me know.
+
+Thanks
+Sudhakar
+
+> 
+> Mikulas
+> 
