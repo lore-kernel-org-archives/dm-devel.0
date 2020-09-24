@@ -1,14 +1,16 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [RFC PATCH v2 2/3] libmultipath: add uid failback for
-	dasd devices
-Date: Wed, 23 Sep 2020 23:59:28 -0500
-Message-ID: <1600923569-17412-3-git-send-email-bmarzins@redhat.com>
-References: <1600923569-17412-1-git-send-email-bmarzins@redhat.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [RFC PATCH 0/2] dm crypt: Allow unaligned buffer
+ lengths for skcipher devices
+Date: Wed, 23 Sep 2020 22:14:19 -0700
+Message-ID: <20200924051419.GA16103@sol.localdomain>
+References: <1600281606-1446-1-git-send-email-sudhakar.panneerselvam@oracle.com>
+	<3be1ea32-b6a8-41ef-a9ba-ed691434d068@default>
+	<20200924012732.GA10766@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1600923569-17412-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <20200924012732.GA10766@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,91 +20,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
+Content-Disposition: inline
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Damien.LeMoal@wdc.com, ssudhakarp@gmail.com, Martin Petersen <martin.petersen@oracle.com>, dm-crypt@saout.de, Sudhakar Panneerselvam <sudhakar.panneerselvam@oracle.com>, dm-devel@redhat.com, Shirley Ma <shirley.ma@oracle.com>, mpatocka@redhat.com, Milan Broz <gmazyland@gmail.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
-Add failback code to get the uid for dasd devices from sysfs. Copied
-from dasdinfo
+On Wed, Sep 23, 2020 at 09:27:32PM -0400, Mike Snitzer wrote:
+> You've clearly done a nice job with these changes.  Looks clean.
+> 
+> BUT, I'm struggling to just accept that dm-crypt needs to go to these
+> extra lengths purely because of one bad apple usecase.
+> 
+> These alignment constraints aren't new.  Are there other portions of
+> Linux's crypto subsystem that needed comparable fixes in order to work
+> with Microsfot OS initiated IO through a guest?
+> 
+> You forecast that these same kinds of changes are needed for AEAD and
+> dm-integrity... that's alarming.
+> 
+> Are we _certain_ there is no other way forward?
+> (Sorry I don't have suggestions.. I'm in "fact finding mode" ;)
+> 
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/defaults.h  |  1 +
- libmultipath/discovery.c | 37 ++++++++++++++++++++++++++++++++++++-
- 2 files changed, 37 insertions(+), 1 deletion(-)
+I don't understand why this is needed, since dm-crypt already sets its
+logical_block_size to its crypto sector_size.  Isn't it expected that I/O that
+isn't aligned to logical_block_size fails?  It's the I/O submitter's
+responsibility to ensure logical_block_size alignment of all I/O segments.
+Exactly how is the misaligned I/O actually being submitted here?
 
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index 39a5e415..947ba467 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -8,6 +8,7 @@
-  */
- #define DEFAULT_UID_ATTRIBUTE	"ID_SERIAL"
- #define DEFAULT_NVME_UID_ATTRIBUTE	"ID_WWN"
-+#define DEFAULT_DASD_UID_ATTRIBUTE	"ID_UID"
- #define DEFAULT_UDEVDIR		"/dev"
- #define DEFAULT_MULTIPATHDIR	"/" LIB_STRING "/multipath"
- #define DEFAULT_SELECTOR	"service-time 0"
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 000f4c96..f650534f 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1953,12 +1953,44 @@ get_vpd_uid(struct path * pp)
- 	return get_vpd_sysfs(parent, 0x83, pp->wwid, WWID_SIZE);
- }
- 
-+/* based on code from s390-tools/dasdinfo/dasdinfo.c */
-+static ssize_t dasd_get_uid(struct path *pp)
-+{
-+	struct udev_device *parent;
-+	char value[80];
-+	char *p;
-+	int i;
-+
-+	parent = udev_device_get_parent_with_subsystem_devtype(pp->udev, "ccw",
-+							       NULL);
-+	if (!parent)
-+		return -1;
-+
-+	if (sysfs_attr_get_value(parent, "uid", value, 80) < 0)
-+		return -1;
-+
-+	p = value - 1;
-+	/* look for the 4th '.' and cut there */
-+	for (i = 0; i < 4; i++) {
-+		p = index(p + 1, '.');
-+		if (!p)
-+			break;
-+	}
-+	if (p)
-+		*p = '\0';
-+
-+	return strlcpy(pp->wwid, value, WWID_SIZE);
-+}
-+
- static ssize_t uid_fallback(struct path *pp, int path_state,
- 			    const char **origin)
- {
- 	ssize_t len = -1;
- 
--	if (pp->bus == SYSFS_BUS_SCSI) {
-+	if (pp->bus == SYSFS_BUS_CCW) {
-+		len = dasd_get_uid(pp);
-+		*origin = "sysfs";
-+	} else if (pp->bus == SYSFS_BUS_SCSI) {
- 		len = get_vpd_uid(pp);
- 		*origin = "sysfs";
- 		if (len < 0 && path_state == PATH_UP) {
-@@ -2006,6 +2038,9 @@ static bool has_uid_fallback(struct path *pp)
- 		  !strcmp(pp->uid_attribute, ""))) ||
- 		(pp->bus == SYSFS_BUS_NVME &&
- 		 (!strcmp(pp->uid_attribute, DEFAULT_NVME_UID_ATTRIBUTE) ||
-+		  !strcmp(pp->uid_attribute, ""))) ||
-+		(pp->bus == SYSFS_BUS_CCW &&
-+		 (!strcmp(pp->uid_attribute, DEFAULT_DASD_UID_ATTRIBUTE) ||
- 		  !strcmp(pp->uid_attribute, ""))));
- }
- 
--- 
-2.17.2
+- Eric
