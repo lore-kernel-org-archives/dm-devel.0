@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH 21/23] mpathpersist: use atexit() for cleanup
-	handlers
-Date: Thu, 24 Sep 2020 15:40:52 +0200
-Message-ID: <20200924134054.14632-22-mwilck@suse.com>
+Subject: [PATCH 19/23] multipathd: move cleanup_{prio, checkers,
+	foreign} to libmultipath_exit
+Date: Thu, 24 Sep 2020 15:40:50 +0200
+Message-ID: <20200924134054.14632-20-mwilck@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -26,26 +26,81 @@ From: Martin Wilck <mwilck@suse.com>
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- mpathpersist/main.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ libmpathpersist/mpath_persist.c   | 2 --
+ libmultipath/config.c             | 4 ++++
+ libmultipath/libmultipath.version | 5 +----
+ multipathd/main.c                 | 3 ---
+ 4 files changed, 5 insertions(+), 9 deletions(-)
 
-diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-index 3c2e657..14245cc 100644
---- a/mpathpersist/main.c
-+++ b/mpathpersist/main.c
-@@ -641,11 +641,10 @@ int main(int argc, char *argv[])
- 	if (libmpathpersist_init()) {
- 		exit(1);
- 	}
-+	if (atexit((void(*)(void))libmpathpersist_exit))
-+		fprintf(stderr, "failed to register cleanup handler for libmpathpersist: %m");
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 873b419..af56a95 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -78,8 +78,6 @@ mpath_lib_init (void)
  
- 	ret = handle_args(argc, argv, 0);
--
--	libmpathpersist_exit();
--
- 	return (ret >= 0) ? ret : MPATH_PR_OTHER;
+ static void libmpathpersist_cleanup(void)
+ {
+-	cleanup_prio();
+-	cleanup_checkers();
+ 	libmultipath_exit();
+ 	dm_lib_exit();
  }
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index 8097838..f115ac2 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -26,6 +26,7 @@
+ #include "devmapper.h"
+ #include "mpath_cmd.h"
+ #include "propsel.h"
++#include "foreign.h"
+ 
+ /*
+  * We don't support re-initialization after
+@@ -65,6 +66,9 @@ int libmultipath_init(void)
+ static void _libmultipath_exit(void)
+ {
+ 	libmultipath_exit_called = true;
++	cleanup_foreign();
++	cleanup_checkers();
++	cleanup_prio();
+ 	libmp_dm_exit();
+ 	udev_unref(udev);
+ }
+diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+index 9abdb22..80f1950 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -1,4 +1,4 @@
+-LIBMULTIPATH_0.8.4.5 {
++LIBMULTIPATH_0.8.4.6 {
+ global:
+ 	/* symbols referenced by multipath and multipathd */
+ 	add_foreign;
+@@ -18,10 +18,7 @@ global:
+ 	checker_name;
+ 	checker_state_name;
+ 	check_foreign;
+-	cleanup_checkers;
+-	cleanup_foreign;
+ 	cleanup_lock;
+-	cleanup_prio;
+ 	close_fd;
+ 	coalesce_paths;
+ 	convert_dev;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index e7b479a..efed56e 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -3027,9 +3027,6 @@ static void cleanup_child(void)
+ {
+ 	cleanup_threads();
+ 	cleanup_vecs();
+-	cleanup_foreign();
+-	cleanup_checkers();
+-	cleanup_prio();
+ 	if (poll_dmevents)
+ 		cleanup_dmevent_waiter();
  
 -- 
 2.28.0
