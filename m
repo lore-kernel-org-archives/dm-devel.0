@@ -1,15 +1,12 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [RFC PATCH 0/2] dm crypt: Allow unaligned buffer
- lengths for skcipher devices
-Date: Wed, 23 Sep 2020 21:27:32 -0400
-Message-ID: <20200924012732.GA10766@redhat.com>
-References: <1600281606-1446-1-git-send-email-sudhakar.panneerselvam@oracle.com>
-	<3be1ea32-b6a8-41ef-a9ba-ed691434d068@default>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [RFC PATCH v2 0/3] add library to check if device is a
+	valid path
+Date: Wed, 23 Sep 2020 23:59:26 -0500
+Message-ID: <1600923569-17412-1-git-send-email-bmarzins@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3be1ea32-b6a8-41ef-a9ba-ed691434d068@default>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,70 +16,66 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Sudhakar Panneerselvam <sudhakar.panneerselvam@oracle.com>
-Cc: Damien.LeMoal@wdc.com, ssudhakarp@gmail.com, Martin Petersen <martin.petersen@oracle.com>, dm-crypt@saout.de, dm-devel@redhat.com, Shirley Ma <shirley.ma@oracle.com>, mpatocka@redhat.com, Milan Broz <gmazyland@gmail.com>, agk@redhat.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Martin Wilck <Martin.Wilck@suse.com>
 List-Id: dm-devel.ids
 
-You've clearly done a nice job with these changes.  Looks clean.
+The main part of the this patchset is the first patch, which adds a
+new library interface to check whether devices are valid paths. This
+was designed for use in the Storage Instantiation Daemon (SID).
 
-BUT, I'm struggling to just accept that dm-crypt needs to go to these
-extra lengths purely because of one bad apple usecase.
+https://github.com/sid-project
 
-These alignment constraints aren't new.  Are there other portions of
-Linux's crypto subsystem that needed comparable fixes in order to work
-with Microsfot OS initiated IO through a guest?
+Hopefully, I've removed all the controvertial bits from the last time I
+proposed this library.
 
-You forecast that these same kinds of changes are needed for AEAD and
-dm-integrity... that's alarming.
+The second patch adds get_uid fallback code for dasd devices. The third
+patch just changes the get_uid log level for devices configured with
+uid_attribute "". This is because it is currently necessary to configure
+multipath with
 
-Are we _certain_ there is no other way forward?
-(Sorry I don't have suggestions.. I'm in "fact finding mode" ;)
+overrides {
+        uid_attribute ""
+}
 
-Thanks,
-Mike
+to claim multipath devices with SID (instead of using multipath.rules),
+since SID doesn't currently get the UID information itself, and it is
+called by udev before this information is added to the udev database.
 
-On Wed, Sep 23 2020 at  1:01pm -0400,
-Sudhakar Panneerselvam <sudhakar.panneerselvam@oracle.com> wrote:
+I'm resubmitting this as a RFC patchset. Assuming they are ACKed, I will
+resend these patches again, along with a man page, and unit tests, on
+top of Martin's revised version of his "multipath-tools: shutdown,
+libdevmapper races, globals" patchset.
 
-> Could someone review this patch set, please?
-> 
-> Thanks
-> Sudhakar
-> 
-> > -----Original Message-----
-> > From: Sudhakar Panneerselvam
-> > Sent: Wednesday, September 16, 2020 12:40 PM
-> > To: agk@redhat.com; snitzer@redhat.com; dm-devel@redhat.com
-> > Cc: Shirley Ma <shirley.ma@oracle.com>; ssudhakarp@gmail.com; Martin
-> > Petersen <martin.petersen@oracle.com>
-> > Subject: [dm-devel] [RFC PATCH 0/2] dm crypt: Allow unaligned buffer lengths
-> > for skcipher devices
-> > 
-> > Hi,
-> > 
-> > This changeset allows processing of unaligned bio requests in dm crypt
-> > for the I/Os generated from a windows guest OS in a QEMU environment. If
-> > this changeset is accepted, then I will be submitting another changeset that
-> > addresses the similar issue in AEAD disks and dm-integrity module.
-> > 
-> > Thanks
-> > Sudhakar
-> > 
-> > Sudhakar Panneerselvam (2):
-> >   dm crypt: Allow unaligned bio buffer lengths for skcipher devices
-> >   dm crypt: Handle unaligned bio buffer lengths for lmk and tcw
-> > 
-> >  drivers/md/dm-crypt.c | 154 +++++++++++++++++++++++++++++++++++----
-> > -----------
-> >  1 file changed, 108 insertions(+), 46 deletions(-)
-> > 
-> > --
-> > 1.8.3.1
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> > 
-> 
+changes from v1
+---------------
+
+0001: This patch is now rebased on top of, and makes use of Martin's
+patches that provide a default *_multipath_config, udev, and logsink.
+Because of this, mpathvalid_init() now has a parameter used to set
+logsink. There is also a new API function, mpathvalid_reload_config().
+
+0003: This is completely new, since Martin pointed out that adding a new
+config option to always use the fallback getuid code was unnecessary. It
+just makes a uid_attribute of "" log at normal levels.
+
+Benjamin Marzinski (3):
+  multipath: add libmpathvalid library
+  libmultipath: add uid failback for dasd devices
+  libmultipath: change log level for null uid_attribute
+
+ Makefile                            |   3 +-
+ libmpathvalid/Makefile              |  38 ++++++
+ libmpathvalid/libmpathvalid.version |  10 ++
+ libmpathvalid/mpath_valid.c         | 199 ++++++++++++++++++++++++++++
+ libmpathvalid/mpath_valid.h         |  61 +++++++++
+ libmultipath/defaults.h             |   1 +
+ libmultipath/discovery.c            |  40 +++++-
+ 7 files changed, 349 insertions(+), 3 deletions(-)
+ create mode 100644 libmpathvalid/Makefile
+ create mode 100644 libmpathvalid/libmpathvalid.version
+ create mode 100644 libmpathvalid/mpath_valid.c
+ create mode 100644 libmpathvalid/mpath_valid.h
+
+-- 
+2.17.2
