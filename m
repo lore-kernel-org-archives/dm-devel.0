@@ -1,8 +1,8 @@
 From: mwilck@suse.com
-Subject: [PATCH v2 03/21] multipathd: send "STOPPING=1" to
-	systemd on shutdown
-Date: Thu, 24 Sep 2020 15:36:58 +0200
-Message-ID: <20200924133716.14120-4-mwilck@suse.com>
+Subject: [PATCH v2 06/21] multipathd: generalize and fix
+	wait_for_state_change_if()
+Date: Thu, 24 Sep 2020 15:37:01 +0200
+Message-ID: <20200924133716.14120-7-mwilck@suse.com>
 References: <20200924133716.14120-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,28 +24,69 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-Inform systemd that the daemon is shutting down. See sd_notify(3).
+It's unlikely but not impossible that other threads change the state
+while we're waiting, and if we grab the lock again, it's still not
+what we wanted. We need to continue waiting until either the condition
+is met, or time timeout expired.
+
+Moreover, generalize this code so that it can also be used in
+set_config_state().
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ multipathd/main.c | 25 ++++++++++++++++++-------
+ 1 file changed, 18 insertions(+), 7 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 53a22a4..c264351 100644
+index d081b3e..1fb0ee6 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -208,7 +208,9 @@ static void do_sd_notify(enum daemon_status old_state,
- 	if (msg && !safe_sprintf(notify_msg, "STATUS=%s", msg))
- 		sd_notify(0, notify_msg);
+@@ -223,6 +223,23 @@ static void config_cleanup(__attribute__((unused)) void *arg)
+ 	pthread_mutex_unlock(&config_lock);
+ }
  
--	if (new_state == DAEMON_IDLE && !startup_done) {
-+	if (new_state == DAEMON_SHUTDOWN)
-+		sd_notify(0, "STOPPING=1");
-+	else if (new_state == DAEMON_IDLE && !startup_done) {
- 		sd_notify(0, "READY=1");
- 		startup_done = true;
- 	}
++#define __wait_for_state_change(condition, ms)				\
++	({								\
++		struct timespec tmo;					\
++		int rc = 0;						\
++									\
++		if (condition) {					\
++			get_monotonic_time(&tmo);			\
++			tmo.tv_nsec += (ms) * 1000 * 1000;		\
++			normalize_timespec(&tmo);			\
++			do						\
++				rc = pthread_cond_timedwait(		\
++					&config_cond, &config_lock, &tmo); \
++			while (rc == 0 && (condition));			\
++		}							\
++		rc;							\
++	})
++
+ /*
+  * If the current status is @oldstate, wait for at most @ms milliseconds
+  * for the state to change, and return the new state, which may still be
+@@ -232,20 +249,14 @@ enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
+ 					    unsigned long ms)
+ {
+ 	enum daemon_status st;
+-	struct timespec tmo;
+ 
+ 	if (oldstate == DAEMON_SHUTDOWN)
+ 		return DAEMON_SHUTDOWN;
+ 
+ 	pthread_mutex_lock(&config_lock);
+ 	pthread_cleanup_push(config_cleanup, NULL);
++	__wait_for_state_change(running_state == oldstate, ms);
+ 	st = running_state;
+-	if (st == oldstate && clock_gettime(CLOCK_MONOTONIC, &tmo) == 0) {
+-		tmo.tv_nsec += ms * 1000 * 1000;
+-		normalize_timespec(&tmo);
+-		(void)pthread_cond_timedwait(&config_cond, &config_lock, &tmo);
+-		st = running_state;
+-	}
+ 	pthread_cleanup_pop(1);
+ 	return st;
+ }
 -- 
 2.28.0
