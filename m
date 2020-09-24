@@ -1,8 +1,7 @@
 From: mwilck@suse.com
-Subject: [PATCH 03/23] multipathd: move handling of
-	io_err_stat_attr into libmultipath
-Date: Thu, 24 Sep 2020 15:40:34 +0200
-Message-ID: <20200924134054.14632-4-mwilck@suse.com>
+Subject: [PATCH 01/23] multipathd: uxlsnr: avoid deadlock on exit
+Date: Thu, 24 Sep 2020 15:40:32 +0200
+Message-ID: <20200924134054.14632-2-mwilck@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -24,138 +23,82 @@ List-Id: dm-devel.ids
 
 From: Martin Wilck <mwilck@suse.com>
 
-This thread attribute can be dynamically initialized and destroyed.
-No need to carry it along in multipathd. Removal of the symbol
-requires a new ABI version.
+The uxlsnr wouldn't always release the client lock when cancelled,
+causing a deadlock in uxsock_cleanup(). While this hasn't been
+caused by commit 3d611a2, the deadlock seems to have become much
+more likely after that patch. Solving this means that we have to
+treat reallocation failure of the pollfd array differently.
+We will now just ignore any clients above the last valid pfd index.
+That's a minor problem, as we're in an OOM situation anyway.
 
+Moreover, client_lock is not a "struct lock", but a plain
+pthread_mutex_t.
+
+Fixes: 3d611a2 ("multipathd: cancel threads early during shutdown")
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/io_err_stat.c        |  7 +++++--
- libmultipath/libmultipath.version | 23 ++++++++---------------
- multipathd/main.c                 |  2 --
- 3 files changed, 13 insertions(+), 19 deletions(-)
+ multipathd/uxlsnr.c | 17 ++++++++++-------
+ 1 file changed, 10 insertions(+), 7 deletions(-)
 
-diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
-index 58bc1dd..5363049 100644
---- a/libmultipath/io_err_stat.c
-+++ b/libmultipath/io_err_stat.c
-@@ -34,6 +34,7 @@
- #include "lock.h"
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 1c5ce9d..d47ba1a 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -35,6 +35,7 @@
+ #include "config.h"
+ #include "mpath_cmd.h"
  #include "time-util.h"
- #include "io_err_stat.h"
 +#include "util.h"
  
- #define TIMEOUT_NO_IO_NSEC		10000000 /*10ms = 10000000ns*/
- #define FLAKY_PATHFAIL_THRESHOLD	2
-@@ -70,8 +71,7 @@ struct io_err_stat_path {
- 	int		err_rate_threshold;
- };
+ #include "main.h"
+ #include "cli.h"
+@@ -116,7 +117,7 @@ static void _dead_client(struct client *c)
  
--pthread_t		io_err_stat_thr;
--pthread_attr_t		io_err_stat_attr;
-+static pthread_t	io_err_stat_thr;
- 
- static pthread_mutex_t io_err_thread_lock = PTHREAD_MUTEX_INITIALIZER;
- static pthread_cond_t io_err_thread_cond = PTHREAD_COND_INITIALIZER;
-@@ -727,6 +727,7 @@ static void *io_err_stat_loop(void *data)
- int start_io_err_stat_thread(void *data)
+ static void dead_client(struct client *c)
  {
- 	int ret;
-+	pthread_attr_t io_err_stat_attr;
- 
- 	if (uatomic_read(&io_err_thread_running) == 1)
- 		return 0;
-@@ -739,6 +740,7 @@ int start_io_err_stat_thread(void *data)
- 	if (!paths)
- 		goto destroy_ctx;
- 
-+	setup_thread_attr(&io_err_stat_attr, 32 * 1024, 0);
- 	pthread_mutex_lock(&io_err_thread_lock);
- 	pthread_cleanup_push(cleanup_unlock, &io_err_thread_lock);
- 
-@@ -750,6 +752,7 @@ int start_io_err_stat_thread(void *data)
- 				 &io_err_thread_lock) == 0);
- 
+-	pthread_cleanup_push(cleanup_lock, &client_lock);
++	pthread_cleanup_push(cleanup_mutex, &client_lock);
+ 	pthread_mutex_lock(&client_lock);
+ 	_dead_client(c);
  	pthread_cleanup_pop(1);
-+	pthread_attr_destroy(&io_err_stat_attr);
+@@ -306,6 +307,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
  
- 	if (ret) {
- 		io_err_stat_log(0, "cannot create io_error statistic thread");
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 2e531ef..9abdb22 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -1,4 +1,4 @@
--LIBMULTIPATH_0.8.4.1 {
-+LIBMULTIPATH_0.8.4.5 {
- global:
- 	/* symbols referenced by multipath and multipathd */
- 	add_foreign;
-@@ -88,7 +88,6 @@ global:
- 	init_checkers;
- 	init_foreign;
- 	init_prio;
--	io_err_stat_attr;
- 	io_err_stat_handle_pathfail;
- 	is_path_valid;
- 	is_quote;
-@@ -209,30 +208,24 @@ global:
- 	free_scandir_result;
- 	sysfs_attr_get_value;
+ 		/* setup for a poll */
+ 		pthread_mutex_lock(&client_lock);
++		pthread_cleanup_push(cleanup_mutex, &client_lock);
+ 		num_clients = 0;
+ 		list_for_each_entry(c, &clients, node) {
+ 			num_clients++;
+@@ -322,14 +324,13 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
+ 						sizeof(struct pollfd));
+ 			}
+ 			if (!new) {
+-				pthread_mutex_unlock(&client_lock);
+ 				condlog(0, "%s: failed to realloc %d poll fds",
+ 					"uxsock", 2 + num_clients);
+-				sched_yield();
+-				continue;
++				num_clients = old_clients;
++			} else {
++				old_clients = num_clients;
++				polls = new;
+ 			}
+-			old_clients = num_clients;
+-			polls = new;
+ 		}
+ 		polls[0].fd = ux_sock;
+ 		polls[0].events = POLLIN;
+@@ -347,8 +348,10 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
+ 			polls[i].fd = c->fd;
+ 			polls[i].events = POLLIN;
+ 			i++;
++			if (i >= 2 + num_clients)
++				break;
+ 		}
+-		pthread_mutex_unlock(&client_lock);
++		pthread_cleanup_pop(1);
  
--local:
--	*;
--};
--
--LIBMULTIPATH_0.8.4.2 {
--global:
-+	/* added in 0.8.4.2 */
- 	libmp_dm_task_run;
- 	cleanup_mutex;
--} LIBMULTIPATH_0.8.4.1;
- 
--LIBMULTIPATH_0.8.4.3 {
--global:
-+	/* added in 0.8.4.3 */
- 	libmp_get_multipath_config;
- 	get_multipath_config;
- 	libmp_put_multipath_config;
- 	put_multipath_config;
- 	init_config;
- 	uninit_config;
--} LIBMULTIPATH_0.8.4.2;
- 
--LIBMULTIPATH_0.8.4.4 {
--global:
-+	/* added in 0.8.4.4 */
- 	udev;
- 	logsink;
- 	libmultipath_init;
- 	libmultipath_exit;
--} LIBMULTIPATH_0.8.4.3;
-+
-+local:
-+	*;
-+};
-diff --git a/multipathd/main.c b/multipathd/main.c
-index be1b5ae..4d714e8 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2954,7 +2954,6 @@ child (__attribute__((unused)) void *param)
- 	setup_thread_attr(&misc_attr, 64 * 1024, 0);
- 	setup_thread_attr(&uevent_attr, DEFAULT_UEVENT_STACKSIZE * 1024, 0);
- 	setup_thread_attr(&waiter_attr, 32 * 1024, 1);
--	setup_thread_attr(&io_err_stat_attr, 32 * 1024, 0);
- 
- 	if (logsink == 1) {
- 		setup_thread_attr(&log_attr, 64 * 1024, 0);
-@@ -3164,7 +3163,6 @@ child (__attribute__((unused)) void *param)
- 	rcu_assign_pointer(multipath_conf, NULL);
- 	call_rcu(&conf->rcu, rcu_free_config);
- 	pthread_attr_destroy(&waiter_attr);
--	pthread_attr_destroy(&io_err_stat_attr);
- #ifdef _DEBUG_
- 	dbg_free_final(NULL);
- #endif
+ 		/* most of our life is spent in this call */
+ 		poll_count = ppoll(polls, i, &sleep_time, &mask);
 -- 
 2.28.0
