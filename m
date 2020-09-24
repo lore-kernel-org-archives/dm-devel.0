@@ -1,47 +1,55 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH 04/13] aoe: set an optimal I/O size
-Date: Thu, 24 Sep 2020 08:51:31 +0200
-Message-ID: <20200924065140.726436-5-hch@lst.de>
-References: <20200924065140.726436-1-hch@lst.de>
+Subject: bdi cleanups v7
+Date: Thu, 24 Sep 2020 08:51:27 +0200
+Message-ID: <20200924065140.726436-1-hch@lst.de>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-bcache-owner@vger.kernel.org>
-In-Reply-To: <20200924065140.726436-1-hch@lst.de>
+Return-path: <linux-block-owner@vger.kernel.org>
 To: Jens Axboe <axboe@kernel.dk>
-Cc: Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Coly Li <colyli@suse.de>, Richard Weinberger <richard@nod.at>, Minchan Kim <minchan@kernel.org>, Johannes Thumshirn <Johannes.Thumshirn@wdc.com>, Justin Sanders <justin@coraid.com>, linux-mtd@lists.infradead.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org, Jan Kara <jack@suse.cz>
+Cc: Song Liu <song@kernel.org>, Hans de Goede <hdegoede@redhat.com>, Coly Li <colyli@suse.de>, Richard Weinberger <richard@nod.at>, Minchan Kim <minchan@kernel.org>, Johannes Thumshirn <Johannes.Thumshirn@wdc.com>, Justin Sanders <justin@coraid.com>, linux-mtd@lists.infradead.org, dm-devel@redhat.com, linux-block@vger.kernel.org, linux-bcache@vger.kernel.org, linux-kernel@vger.kernel.org, drbd-dev@lists.linbit.com, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, cgroups@vger.kernel.org
 List-Id: dm-devel.ids
 
-aoe forces a larger readahead size, but any reason to do larger I/O
-is not limited to readahead.  Also set the optimal I/O size, and
-remove the local constants in favor of just using SZ_2G.
+Hi Jens,
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Jan Kara <jack@suse.cz>
----
- drivers/block/aoe/aoeblk.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+this series contains a bunch of different BDI cleanups.  The biggest item
+is to isolate block drivers from the BDI in preparation of changing the
+lifetime of the block device BDI in a follow up series.
 
-diff --git a/drivers/block/aoe/aoeblk.c b/drivers/block/aoe/aoeblk.c
-index 5ca7216e9e01f3..d8cfc233e64b93 100644
---- a/drivers/block/aoe/aoeblk.c
-+++ b/drivers/block/aoe/aoeblk.c
-@@ -347,7 +347,6 @@ aoeblk_gdalloc(void *vp)
- 	mempool_t *mp;
- 	struct request_queue *q;
- 	struct blk_mq_tag_set *set;
--	enum { KB = 1024, MB = KB * KB, READ_AHEAD = 2 * MB, };
- 	ulong flags;
- 	int late = 0;
- 	int err;
-@@ -407,7 +406,8 @@ aoeblk_gdalloc(void *vp)
- 	WARN_ON(d->gd);
- 	WARN_ON(d->flags & DEVFL_UP);
- 	blk_queue_max_hw_sectors(q, BLK_DEF_MAX_SECTORS);
--	q->backing_dev_info->ra_pages = READ_AHEAD / PAGE_SIZE;
-+	q->backing_dev_info->ra_pages = SZ_2M / PAGE_SIZE;
-+	blk_queue_io_opt(q, SZ_2M);
- 	d->bufpool = mp;
- 	d->blkq = gd->queue = q;
- 	q->queuedata = d;
--- 
-2.28.0
+Changes since v6:
+ - add a new blk_queue_update_readahead helper and use it in stacking
+   drivers
+ - improve another commit log
+
+Changes since v5:
+ - improve a commit message
+ - improve the stable_writes deprecation printk
+ - drop "drbd: remove RB_CONGESTED_REMOTE"
+ - drop a few hunks that add a local variable in a otherwise unchanged
+   file due to changes in the previous revisions
+ - keep updating ->io_pages in queue_max_sectors_store
+ - set an optimal I/O size in aoe
+ - inherit the optimal I/O size in bcache
+
+Changes since v4:
+ - add a back a prematurely removed assignment in dm-table.c
+ - pick up a few reviews from Johannes that got lost
+
+Changes since v3:
+ - rebased on the lasted block tree, which has some of the prep
+   changes merged
+ - extend the ->ra_pages changes to ->io_pages
+ - move initializing ->ra_pages and ->io_pages for block devices to
+   blk_register_queue
+
+Changes since v2:
+ - fix a rw_page return value check
+ - fix up various changelogs
+
+Changes since v1:
+ - rebased to the for-5.9/block-merge branch
+ - explicitly set the readahead to 0 for ubifs, vboxsf and mtd
+ - split the zram block_device operations
+ - let rw_page users fall back to bios in swap_readpage
+
+
+Diffstat:
