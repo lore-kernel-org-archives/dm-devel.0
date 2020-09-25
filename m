@@ -1,19 +1,16 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [RFC PATCH v2 0/3] add library to check if device is
- a valid path
-Date: Fri, 25 Sep 2020 10:34:49 -0500
-Message-ID: <20200925153449.GP11108@octiron.msp.redhat.com>
-References: <1600923569-17412-1-git-send-email-bmarzins@redhat.com>
-	<01ce499f8c7a7248f560066054ba4dd922bbc338.camel@suse.com>
-	<20200924163007.GG11108@octiron.msp.redhat.com>
-	<53ad2ea2f8457030eac247420fcc564bd5608ab8.camel@suse.com>
-	<20200925010846.GL11108@octiron.msp.redhat.com>
-	<2151af2280728eeeea5404bcda3cd6411a7173f5.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH 02/11] libmultipath: copy mpp->hwe from
+	pp->hwe
+Date: Fri, 25 Sep 2020 18:01:26 +0200
+Message-ID: <f3b7a133b11ef4088948c76706ea088d40817039.camel@suse.com>
+References: <20200924133644.14034-1-mwilck@suse.com>
+	<20200924133644.14034-3-mwilck@suse.com>
+	<20200924201245.GH11108@octiron.msp.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2151af2280728eeeea5404bcda3cd6411a7173f5.camel@suse.com>
+In-Reply-To: <20200924201245.GH11108@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,80 +20,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Disposition: inline
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Sep 25, 2020 at 10:01:01AM +0000, Martin Wilck wrote:
-> On Thu, 2020-09-24 at 20:08 -0500, Benjamin Marzinski wrote:
-> > On Thu, Sep 24, 2020 at 07:22:21PM +0000, Martin Wilck wrote:
-> > >=20
-> > > So, SID will call into libmultipath via libmpathvalid, udev will
-> > > obtain
-> > > the properties from SID, and multipathd will fetch them from udev
-> > > in
-> > > turn? Or will multipathd talk directly to SID? I seem to be missing
-> > > the
-> > > overall picture.
-> >=20
-> > Yeah. SID will populate the udev database with the necessary udev
-> > properties, and multipathd will get those udev properties just like
-> > it
-> > always does.=20
->=20
-> But then I'm not getting how you'll get along with a SID-specific
-> configuration for libmultipath's behavior. You want get_uid() to use
-> direct sysfs access for SID, and use udev for multipath(d). How else
-> would you achieve that?
+On Thu, 2020-09-24 at 15:12 -0500, Benjamin Marzinski wrote:
+> On Thu, Sep 24, 2020 at 03:36:35PM +0200, mwilck@suse.com wrote:
+> > From: Martin Wilck <mwilck@suse.com>
+> > 
+> > Since f0462f0 ("libmultipath: use vector for for pp->hwe and mp-
+> > >hwe"),
+> > we've been trying to fix issues caused by paths getting freed and
+> > mpp->hwe
+> > dangling. This approach couldn't work because we need mpp->hwe to
+> > persist,
+> > even if all paths are removed from the map. Before f0462f0, a
+> > simple
+> > assignment worked, because the lifetime of the hwe wasn't bound to
+> > the
+> > path. But now, we need to copy the vector. It turns out that we
+> > need to set
+> > mpp->hwe only in two places, add_map_with_path() and setup_map(),
+> > and
+> > that the code is simplified overall.
+> 
+> Unless I'm missing someting, it looks like
+> __mpath_persistent_reserve_out() will call select_all_tg_pt(), which
+> uses mpp->hwe, without ever setting it.  Granted, I don't see how
+> this
+> was supposed to work before your patch either.
 
-In the future, libmapathvalid will have access to the udev properties
-that SID will be passing back to udev, so it can use the same data.
-Those values just aren't there yet. I admit, how exactly this will work
-is not completely nailed down.
-=20
-> More generally, I'm not quite convinced of the the design yet. The
-> information flow kernel -> (sysfs or ioctl) -> libmultipath(sid mode)=20
-> -> libmpathvalid -> SID -> udev -> udev db -> libudev -> libmultipath
-> (udev mode) -> multipathd is more complex than it needs to be. It might
-> actually increase the lags experienced by multipathd, which will still
-> have to wait for uevent workers to finish until it can be certain about
-> device properties. Not to mention that SID must be rock stable and
-> always available during boot, initrd processing, etc.
+Right, it doesn't. Thanks for spotting it.
+Ok to create a new, separate patch for it?
 
-Yes, clearly SID will need to be just as robust as udev.
-
-> Why don't we rather write a common library for determining WWIDs and
-> the "should be multipathed" predicate, to be used by udev (with a
-> plugin), multipath-tools, SID, and possibly other tools like systemd
-> and LVM, with common, simple configuration, guaranteed to always
-> provide the same results? I mean, libmultipath already has all the
-> "intelligence" built-in to do this. We'd "just" need to cut down
-> configuration options drastically to get more reprocucible results, and
-> refactor things to obtain a minimalistic API. Unlike the current
-> libmpathvalid design, this wouldn't be built on top of current
-> libmultipath, rather vice-versa. multipath-tools would also benefit a
-> lot from such work.
-
-Right now a lot of this infomation is being gathered by libraries. For
-udev's builtin commands, those libraries are already being called
-directly. SID will just be calling all those libraries directly, instead
-of having to exec a program that bascially just calles the library.
-Obviously not everything is in a library, however. But the idea of WWID
-library sounds great. libmultipath probably doesn't have all the
-intelligence built-in, because I assume people would want this library
-would handle more device types than multipath does. Although you are
-correct that just with what libmultipath does now, it would still have
-a use.
-
--Ben
-
-> Regards
-> Martin
->=20
-> --=20
-> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-> SUSE  Software Solutions Germany GmbH
-> HRB 36809, AG N=FCrnberg GF: Felix
-> Imend=F6rffer
->=20
+Regards,
+Martin
