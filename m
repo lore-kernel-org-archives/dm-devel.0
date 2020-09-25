@@ -1,23 +1,14 @@
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-Subject: Re: [RFC PATCH 0/2] dm crypt: Allow unaligned buffer
- lengths for skcipher devices
-Date: Fri, 25 Sep 2020 01:09:52 +0000
-Message-ID: <MWHPR04MB37588DF8C3FFF4BD0C3CD543E7360@MWHPR04MB3758.namprd04.prod.outlook.com>
-References: <1600281606-1446-1-git-send-email-sudhakar.panneerselvam@oracle.com>
-	<3be1ea32-b6a8-41ef-a9ba-ed691434d068@default>
-	<20200924012732.GA10766@redhat.com>
-	<20200924051419.GA16103@sol.localdomain>
-	<252587bb-c0b7-47c9-a97b-91422f8f9c47@default>
-	<alpine.LRH.2.02.2009241314280.28814@file01.intranet.prod.int.rdu2.redhat.com>
-	<7b6fdfd5-0160-4bcf-b7ed-d0e51553c678@default>
-	<alpine.LRH.2.02.2009241345370.4229@file01.intranet.prod.int.rdu2.redhat.com>
-	<fd512a7d-c064-4812-a794-5274c10687db@default>
-	<alpine.LRH.2.02.2009241421170.8544@file01.intranet.prod.int.rdu2.redhat.com>
-	<eb43742e-bdfe-4567-8240-1d8e083d76a2@default>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 00/11] multipath-tools: add linker version
+	scripts
+Date: Thu, 24 Sep 2020 21:09:55 -0500
+Message-ID: <20200925020955.GM11108@octiron.msp.redhat.com>
+References: <20200924133644.14034-1-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20200924133644.14034-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,107 +18,81 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Language: en-US
-To: Sudhakar Panneerselvam <sudhakar.panneerselvam@oracle.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: "ssudhakarp@gmail.com" <ssudhakarp@gmail.com>, Mike Snitzer <snitzer@redhat.com>, "dm-crypt@saout.de" <dm-crypt@saout.de>, Eric Biggers <ebiggers@kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, Ma <shirley.ma@oracle.com>, Martin Petersen <martin.petersen@oracle.com>, Shirley, Milan Broz <gmazyland@gmail.com>, "agk@redhat.com" <agk@redhat.com>
+Content-Disposition: inline
+To: mwilck@suse.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2020/09/25 4:14, Sudhakar Panneerselvam wrote:
->>
->> On Thu, 24 Sep 2020, Sudhakar Panneerselvam wrote:
->>
->>>> By copying it to a temporary aligned buffer and issuing I/O on this
->>>> buffer.
->>>
->>> I don't like this idea. Because, you need to allocate additional pages
->>> for the entire I/O size(for the misaligned case, if you think through
->>
->> You can break the I/O to smaller pieces. You can use mempool for
->> pre-allocation of the pages.
+On Thu, Sep 24, 2020 at 03:36:33PM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
 > 
-> Assuming we do this, how is this code simpler(based on your
-> comment below) than the fix in dm-crypt? In fact, this approach 
-> would make the code change look bad in vhost, at the same time
-> having performance penalty. By doing this, we are just moving the 
-> responsibility to other unrelated component.
-
-Because vhost is at the top of the block-io food chain. Fixing the unaligned
-segments there will ensure that it does not matter what device is under it. It
-will work.
-
-I am still baffled that the unaligned segments go through in the first place...
-Do we have something missing in the BIO code ?
-
+> Hi Christophe, hi Ben,
 > 
->>
->>> carefully, you will know why we have to allocate a temporary buffer that
->>> is as big as the original IO) and on top of it, copying the buffer from
->>> original to temporary buffer which is all unnecessary while it can
->>> simply be fixed in dm-crypt without any of these additional overheads.
->>>
->>>>
->>>>> Only other
->>>>> possibility I see is to have windows fix it by always sending 512 byte
->>>>> aligned buffer lengths, but going with my earlier point that every other
->>>>> component in the Linux IO path handles this case well except for
->>>>> dm-crypt, so it make more sense to fix it in dm-crypt.
->>>>>
->>>>> Thanks
->>>>> Sudhakar
->>>>
->>>> Are you sure that the problem is only with dm-crypt? You haven't tried
->> all
->>>> the existing block device drivers, have you?
->>>
->>> My question is, why dm-crypt worries about alignment requirement of
->>> other layers? Is there anything that impacts dm-crypt if the segment
->>> lengths are not aligned?(I believe this case is just not handled so far
->>
->> Because the code is simpler if it assumes aligned buffers.
+> Patch 1-5 are small fixes, the first two resent from an earlier
+> submission. Patch 6ff. add version scripts for the linker to
+> libmultipath, libmpathpersist, and libmpathcmd.
 > 
-> Did you get a chance to review my changes? If you want more documentation,
-> improve the code, etc, let me know, I can do that if there is scope for that.
+> Is it useful to do this for libmultipath? We have always said that this is
+> not a public, stable ABI. However, I still believe it has merits. First of
+> all, it's a description of the ABI we use. It turns out that it cuts the
+> size of the exported symbol list of libmultipath roughly in half, which is
+> better than I'd expected. It leads to ld.so-time failure rather than weird
+> crashes in the unlikely case that non-matching binaries are used
+> together. It allows packaging scripts to check compatibility of binaries
+> and libraries without resorting to version and release. It will help us
+> stabilize the ABI, albeit only in the long run. Finally, it's a step
+> towards modernizing our code base in general.
 > 
->>
->>> in dm-crypt and my patch addresses it). Should dm-crypt not just pass on
->>> all those I/O requests to those respective layers to handle it which
->>> will be more graceful?
->>>
->>> -Sudhakar
->>
->> So, suppose that we change dm-crypt to handle your workload - what are
->> you
->> going to do with other block device drivers that assume aligned bio vector
->> length? How will you find all the other drivers that need to be changed?
->>
->> You are claiming that "every other component in the Linux IO path handles
->> this case well except for dm-crypt", but this claim is wrong. There are
->> other driver that don't handle misaligned length as well.
-> 
-> I should not have said, "every other component", I take that back, sorry. How
-> about doing something like this in crypt_convert_block_skcipher():
-> 
-> Add a check that looks at the alignment requirement of the low-level driver
-> and reject the I/O if it doesn't meet that requirement. This means, we still
-> need to handle the case in this function where the low lever driver support
-> unaligned buffer lengths, that means, my other changes in this function
-> would still be needed.
-> 
-> Is this acceptable to everyone?
-> 
-> -Sudhakar
-> 
->>
->> Mikulas
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
->>
+> To avoid misunderstanding, my intention is not to provide a stable or even
+> backward-compatible ABI in libmultipath.so.0. We're still allowed to make
+> changes to globally visible data structures like "struct config", and to
+> remove symbols from the ABI, like no serious shared library would do.
+> We just need to bump the ABI version when we do so.
 > 
 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+For this patchset, except for 0002 and 0008
 
--- 
-Damien Le Moal
-Western Digital Research
+> Regards,
+> Martin
+> 
+> Martin Wilck (11):
+>   libmultipath: find_mpe(): don't match with empty WWID
+>   libmultipath: copy mpp->hwe from pp->hwe
+>   libmultipath: dm_map_present_by_uuid(): fix dm_task_create() call
+>   libdmmp tests: fix compilation
+>   libmultipath: prio: constify some function parameters
+>   libmultipath: checkers/prio: allow non-lazy .so loading
+>   multipath-tools Makefiles: separate rules for .so and man pages
+>   libmultipath: create separate .so for unit tests
+>   libmultipath: add linker version script
+>   libmpathpersist: add linker version script
+>   libmpathcmd: add linker version script
+> 
+>  libdmmp/test/libdmmp_speed_test.c       |   2 +-
+>  libdmmp/test/libdmmp_test.c             |   2 +-
+>  libmpathcmd/Makefile                    |  14 +-
+>  libmpathcmd/libmpathcmd.version         |  13 ++
+>  libmpathpersist/Makefile                |  16 +-
+>  libmpathpersist/libmpathpersist.version |  20 +++
+>  libmultipath/Makefile                   |  22 ++-
+>  libmultipath/checkers.c                 |  17 ++
+>  libmultipath/config.c                   |   2 +-
+>  libmultipath/configure.c                |   7 +
+>  libmultipath/devmapper.c                |   2 +-
+>  libmultipath/libmultipath.version       | 215 ++++++++++++++++++++++++
+>  libmultipath/prio.c                     |  26 ++-
+>  libmultipath/prio.h                     |   4 +-
+>  libmultipath/propsel.c                  |   4 +-
+>  libmultipath/structs.c                  |  15 ++
+>  libmultipath/structs.h                  |   1 +
+>  libmultipath/structs_vec.c              |  54 +++---
+>  multipathd/main.c                       |  10 --
+>  tests/Makefile                          |  10 +-
+>  20 files changed, 384 insertions(+), 72 deletions(-)
+>  create mode 100644 libmpathcmd/libmpathcmd.version
+>  create mode 100644 libmpathpersist/libmpathpersist.version
+>  create mode 100644 libmultipath/libmultipath.version
+> 
+> -- 
+> 2.28.0
