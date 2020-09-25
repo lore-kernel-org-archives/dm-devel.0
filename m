@@ -1,26 +1,42 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: clean up is partition checks
-Date: Fri, 25 Sep 2020 08:19:08 -0600
-Message-ID: <7a0600d8-d886-c546-378c-5298a16e979c@kernel.dk>
-References: <20200903054104.228829-1-hch@lst.de>
+Subject: Re: [PATCH 0/2] block/dm: add REQ_NOWAIT support for bio-based
+Date: Fri, 25 Sep 2020 08:20:18 -0600
+Message-ID: <1a406078-7652-f8eb-e29c-bc4851b23dde@kernel.dk>
+References: <20200923200652.11082-1-snitzer@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20200903054104.228829-1-hch@lst.de>
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200923200652.11082-1-snitzer@redhat.com>
 Content-Language: en-US
-To: Christoph Hellwig <hch@lst.de>
-Cc: dm-devel@redhat.com, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, drbd-dev@lists.linbit.com, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org, linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, target-devel@vger.kernel.org
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, hch@lst.de, dm-devel@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 9/2/20 11:40 PM, Christoph Hellwig wrote:
-> Hi Jens,
+On 9/23/20 2:06 PM, Mike Snitzer wrote:
+> Hi,
 > 
-> this series add a new helepr to check if a struct block_device represents
-> a parition, and removes most direct access to ->bd_contained from
-> drivers.
+> I got guilted into this by this Twitter exchange:
+> https://twitter.com/axboe/status/1308778488011337728
+> 
+> Started with this patchset from June and revised it:
+> https://patchwork.kernel.org/project/dm-devel/list/?series=297693
+> (dropped MD patch while doing so_.
+> 
+> Tested these changes with this test Jens provided:
+> 
+> [mikes-test-job]
+> filename=/dev/dm-0
+> rw=randread
+> buffered=1
+> ioengine=io_uring
+> iodepth=16
+> norandommap
+> 
+> Jens, please feel free to pickup both patches, I don't have any
+> conflicting DM changes for 5.10.
 
-Applied, thanks.
+Thanks Mike! Applied.
 
 -- 
 Jens Axboe
