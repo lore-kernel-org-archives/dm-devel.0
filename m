@@ -1,17 +1,18 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
 Subject: Re: dm-raid: stack limits instead of overwriting them.
-Date: Fri, 25 Sep 2020 08:04:21 -0400 (EDT)
-Message-ID: <alpine.LRH.2.02.2009250801070.3475@file01.intranet.prod.int.rdu2.redhat.com>
+Date: Fri, 25 Sep 2020 09:20:57 -0400
+Message-ID: <20200925132057.GA4245@redhat.com>
 References: <alpine.LRH.2.02.2009241225310.22728@file01.intranet.prod.int.rdu2.redhat.com>
 	<20200924165616.GA14650@redhat.com>
 	<alpine.LRH.2.02.2009241306170.28814@file01.intranet.prod.int.rdu2.redhat.com>
 	<alpine.LRH.2.02.2009241410490.8544@file01.intranet.prod.int.rdu2.redhat.com>
 	<20200924190755.GA15317@redhat.com>
+	<alpine.LRH.2.02.2009250801070.3475@file01.intranet.prod.int.rdu2.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200924190755.GA15317@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2009250801070.3475@file01.intranet.prod.int.rdu2.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,80 +22,96 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
+Content-Disposition: inline
+To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
+On Fri, Sep 25 2020 at  8:04am -0400,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-
-On Thu, 24 Sep 2020, Mike Snitzer wrote:
-
-> On Thu, Sep 24 2020 at  2:12pm -0400,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
 > 
-> > 
-> > 
-> > On Thu, 24 Sep 2020, Mikulas Patocka wrote:
-> > 
-> > > 
-> > > 
-> > > On Thu, 24 Sep 2020, Mike Snitzer wrote:
-> > > 
-> > > > WAIT... Could it be that raid_io_hints _really_ meant to special case
-> > > > raid0 and raid10 -- due to their striping/splitting requirements!?
-> > > > So, not raid1 but raid0?
-> > > > 
-> > > > E.g.:
-> > > > 
-> > > > diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> > > > index 56b723d012ac..6dca932d6f1d 100644
-> > > > --- a/drivers/md/dm-raid.c
-> > > > +++ b/drivers/md/dm-raid.c
-> > > > @@ -3730,10 +3730,10 @@ static void raid_io_hints(struct dm_target *ti,
-> > > > struct queue_limits *limits)
-> > > >         blk_limits_io_opt(limits, chunk_size_bytes *
-> > > > 	mddev_data_stripes(rs));
-> > > > 
-> > > >         /*
-> > > > -        * RAID1 and RAID10 personalities require bio splitting,
-> > > > -        * RAID0/4/5/6 don't and process large discard bios properly.
-> > > > +        * RAID0 and RAID10 personalities require bio splitting,
-> > > > +        * RAID1/4/5/6 don't and process large discard bios properly.
-> > > >          */
-> > > > -       if (rs_is_raid1(rs) || rs_is_raid10(rs)) {
-> > > > +       if (rs_is_raid0(rs) || rs_is_raid10(rs)) {
-> > > >                 limits->discard_granularity = chunk_size_bytes;
-> > > >                 limits->max_discard_sectors = rs->md.chunk_sectors;
-> > > >         }
-> > > > 
-> > > > Mike
-> > > 
-> > > Yes - that's an interesing point.
-> > > 
-> > > Mikulas
-> > 
-> > But raid0_handle_discard handles discards with arbitrary start/end 
-> > sectors.
-> > 
-> > So, we don't need to set discard_granularity for that.
 > 
-> OK, great, I've staged this:
+> On Thu, 24 Sep 2020, Mike Snitzer wrote:
 > 
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.10&id=c1fda10e1123a37cf9d22740486cd66f43c47846
+> > On Thu, Sep 24 2020 at  2:12pm -0400,
+> > Mikulas Patocka <mpatocka@redhat.com> wrote:
+> > 
+> > > 
+> > > 
+> > > On Thu, 24 Sep 2020, Mikulas Patocka wrote:
+> > > 
+> > > > 
+> > > > 
+> > > > On Thu, 24 Sep 2020, Mike Snitzer wrote:
+> > > > 
+> > > > > WAIT... Could it be that raid_io_hints _really_ meant to special case
+> > > > > raid0 and raid10 -- due to their striping/splitting requirements!?
+> > > > > So, not raid1 but raid0?
+> > > > > 
+> > > > > E.g.:
+> > > > > 
+> > > > > diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> > > > > index 56b723d012ac..6dca932d6f1d 100644
+> > > > > --- a/drivers/md/dm-raid.c
+> > > > > +++ b/drivers/md/dm-raid.c
+> > > > > @@ -3730,10 +3730,10 @@ static void raid_io_hints(struct dm_target *ti,
+> > > > > struct queue_limits *limits)
+> > > > >         blk_limits_io_opt(limits, chunk_size_bytes *
+> > > > > 	mddev_data_stripes(rs));
+> > > > > 
+> > > > >         /*
+> > > > > -        * RAID1 and RAID10 personalities require bio splitting,
+> > > > > -        * RAID0/4/5/6 don't and process large discard bios properly.
+> > > > > +        * RAID0 and RAID10 personalities require bio splitting,
+> > > > > +        * RAID1/4/5/6 don't and process large discard bios properly.
+> > > > >          */
+> > > > > -       if (rs_is_raid1(rs) || rs_is_raid10(rs)) {
+> > > > > +       if (rs_is_raid0(rs) || rs_is_raid10(rs)) {
+> > > > >                 limits->discard_granularity = chunk_size_bytes;
+> > > > >                 limits->max_discard_sectors = rs->md.chunk_sectors;
+> > > > >         }
+> > > > > 
+> > > > > Mike
+> > > > 
+> > > > Yes - that's an interesing point.
+> > > > 
+> > > > Mikulas
+> > > 
+> > > But raid0_handle_discard handles discards with arbitrary start/end 
+> > > sectors.
+> > > 
+> > > So, we don't need to set discard_granularity for that.
+> > 
+> > OK, great, I've staged this:
+> > 
+> > https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.10&id=c1fda10e1123a37cf9d22740486cd66f43c47846
+> > 
+> > Thanks,
+> > Mike
 > 
-> Thanks,
-> Mike
+> What if there are multiple targets for a device with different 
+> discard_granularity - we would overwrite the settings made by another 
+> target.
+> 
+> Should there be:
+> 
+> limits->discard_granularity = max(limits->discard_granularity, chunk_size_bytes);
+> 
+> or perhaps:
+> 
+> limits->discard_granularity = lcm_not_zero(limits->discard_granularity, chunk_size_bytes);
 
-What if there are multiple targets for a device with different 
-discard_granularity - we would overwrite the settings made by another 
-target.
+I'd go with max().  So I can fix up the stable@ patch to actually stack
+the limits for raid10.
 
-Should there be:
+But it should be noted that there is this patch queued for Jens to pull
+in (he actually _did_ pull the MD pull request but then rebased without
+it):
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.10&id=828d14fd7a6cf
 
-limits->discard_granularity = max(limits->discard_granularity, chunk_size_bytes);
+I haappened to have seized on it and will need to adjust given the
+changes have been dropped at this point:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.10&id=dd29d4b556979dae3cb6460d019c36073af7a3fc
 
-or perhaps:
-
-limits->discard_granularity = lcm_not_zero(limits->discard_granularity, chunk_size_bytes);
-
-Mikulas
+Mike
