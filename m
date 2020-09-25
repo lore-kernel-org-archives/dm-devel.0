@@ -1,18 +1,17 @@
-From: Martin Wilck <martin.wilck@suse.com>
-Subject: Re: [RFC PATCH v2 0/3] add library to check if device is
- a valid path
-Date: Fri, 25 Sep 2020 10:01:01 +0000
-Message-ID: <2151af2280728eeeea5404bcda3cd6411a7173f5.camel@suse.com>
-References: <1600923569-17412-1-git-send-email-bmarzins@redhat.com>
-	<01ce499f8c7a7248f560066054ba4dd922bbc338.camel@suse.com>
-	<20200924163007.GG11108@octiron.msp.redhat.com>
-	<53ad2ea2f8457030eac247420fcc564bd5608ab8.camel@suse.com>
-	<20200925010846.GL11108@octiron.msp.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-raid: stack limits instead of overwriting them.
+Date: Fri, 25 Sep 2020 08:04:21 -0400 (EDT)
+Message-ID: <alpine.LRH.2.02.2009250801070.3475@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2009241225310.22728@file01.intranet.prod.int.rdu2.redhat.com>
+	<20200924165616.GA14650@redhat.com>
+	<alpine.LRH.2.02.2009241306170.28814@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.2009241410490.8544@file01.intranet.prod.int.rdu2.redhat.com>
+	<20200924190755.GA15317@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200925010846.GL11108@octiron.msp.redhat.com>
+In-Reply-To: <20200924190755.GA15317@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,59 +21,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Language: en-US
-Content-ID: <FD44D69170761A4B95EA32AABF90F001@eurprd04.prod.outlook.com>
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, Zdenek Kabelac <zkabelac@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 2020-09-24 at 20:08 -0500, Benjamin Marzinski wrote:
-> On Thu, Sep 24, 2020 at 07:22:21PM +0000, Martin Wilck wrote:
-> >=20
-> > So, SID will call into libmultipath via libmpathvalid, udev will
-> > obtain
-> > the properties from SID, and multipathd will fetch them from udev
-> > in
-> > turn? Or will multipathd talk directly to SID? I seem to be missing
-> > the
-> > overall picture.
->=20
-> Yeah. SID will populate the udev database with the necessary udev
-> properties, and multipathd will get those udev properties just like
-> it
-> always does.=20
 
-But then I'm not getting how you'll get along with a SID-specific
-configuration for libmultipath's behavior. You want get_uid() to use
-direct sysfs access for SID, and use udev for multipath(d). How else
-would you achieve that?
 
-More generally, I'm not quite convinced of the the design yet. The
-information flow kernel -> (sysfs or ioctl) -> libmultipath(sid mode)=20
--> libmpathvalid -> SID -> udev -> udev db -> libudev -> libmultipath
-(udev mode) -> multipathd is more complex than it needs to be. It might
-actually increase the lags experienced by multipathd, which will still
-have to wait for uevent workers to finish until it can be certain about
-device properties. Not to mention that SID must be rock stable and
-always available during boot, initrd processing, etc.
+On Thu, 24 Sep 2020, Mike Snitzer wrote:
 
-Why don't we rather write a common library for determining WWIDs and
-the "should be multipathed" predicate, to be used by udev (with a
-plugin), multipath-tools, SID, and possibly other tools like systemd
-and LVM, with common, simple configuration, guaranteed to always
-provide the same results? I mean, libmultipath already has all the
-"intelligence" built-in to do this. We'd "just" need to cut down
-configuration options drastically to get more reprocucible results, and
-refactor things to obtain a minimalistic API. Unlike the current
-libmpathvalid design, this wouldn't be built on top of current
-libmultipath, rather vice-versa. multipath-tools would also benefit a
-lot from such work.
+> On Thu, Sep 24 2020 at  2:12pm -0400,
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> 
+> > 
+> > 
+> > On Thu, 24 Sep 2020, Mikulas Patocka wrote:
+> > 
+> > > 
+> > > 
+> > > On Thu, 24 Sep 2020, Mike Snitzer wrote:
+> > > 
+> > > > WAIT... Could it be that raid_io_hints _really_ meant to special case
+> > > > raid0 and raid10 -- due to their striping/splitting requirements!?
+> > > > So, not raid1 but raid0?
+> > > > 
+> > > > E.g.:
+> > > > 
+> > > > diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> > > > index 56b723d012ac..6dca932d6f1d 100644
+> > > > --- a/drivers/md/dm-raid.c
+> > > > +++ b/drivers/md/dm-raid.c
+> > > > @@ -3730,10 +3730,10 @@ static void raid_io_hints(struct dm_target *ti,
+> > > > struct queue_limits *limits)
+> > > >         blk_limits_io_opt(limits, chunk_size_bytes *
+> > > > 	mddev_data_stripes(rs));
+> > > > 
+> > > >         /*
+> > > > -        * RAID1 and RAID10 personalities require bio splitting,
+> > > > -        * RAID0/4/5/6 don't and process large discard bios properly.
+> > > > +        * RAID0 and RAID10 personalities require bio splitting,
+> > > > +        * RAID1/4/5/6 don't and process large discard bios properly.
+> > > >          */
+> > > > -       if (rs_is_raid1(rs) || rs_is_raid10(rs)) {
+> > > > +       if (rs_is_raid0(rs) || rs_is_raid10(rs)) {
+> > > >                 limits->discard_granularity = chunk_size_bytes;
+> > > >                 limits->max_discard_sectors = rs->md.chunk_sectors;
+> > > >         }
+> > > > 
+> > > > Mike
+> > > 
+> > > Yes - that's an interesing point.
+> > > 
+> > > Mikulas
+> > 
+> > But raid0_handle_discard handles discards with arbitrary start/end 
+> > sectors.
+> > 
+> > So, we don't need to set discard_granularity for that.
+> 
+> OK, great, I've staged this:
+> 
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.10&id=c1fda10e1123a37cf9d22740486cd66f43c47846
+> 
+> Thanks,
+> Mike
 
-Regards
-Martin
+What if there are multiple targets for a device with different 
+discard_granularity - we would overwrite the settings made by another 
+target.
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
-SUSE  Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix
-Imend=F6rffer
+Should there be:
+
+limits->discard_granularity = max(limits->discard_granularity, chunk_size_bytes);
+
+or perhaps:
+
+limits->discard_granularity = lcm_not_zero(limits->discard_granularity, chunk_size_bytes);
+
+Mikulas
