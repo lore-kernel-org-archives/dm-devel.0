@@ -1,13 +1,14 @@
-From: Steffen Maier <maier@linux.ibm.com>
-Subject: Re: Make LUNs higher than 255 more friendly to look at
-Date: Fri, 25 Sep 2020 16:14:06 +0200
-Message-ID: <495bf574-1f2f-a281-96e5-c7631b0f07f0@linux.ibm.com>
-References: <04F146B1-3EB2-42C0-87EA-E0EABC3D8020@purestorage.com>
+From: Frank Meinl <frank.meinl@live.de>
+Subject: [PATCH v2 2/2] multipath: Extend program description in
+	manpage
+Date: Sat, 26 Sep 2020 18:29:47 +0200
+Message-ID: <AM0PR09MB2897B99544634CA56DA930D1FE370@AM0PR09MB2897.eurprd09.prod.outlook.com>
+References: <AM0PR09MB289702395C44596866E4B9C3FE370@AM0PR09MB2897.eurprd09.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <04F146B1-3EB2-42C0-87EA-E0EABC3D8020@purestorage.com>
+In-Reply-To: <AM0PR09MB289702395C44596866E4B9C3FE370@AM0PR09MB2897.eurprd09.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,60 +18,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Content-Language: en-US
-To: Brian Bunker <brian@purestorage.com>, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Frank Meinl <frank.meinl@live.de>, mwilck@suse.com
 List-Id: dm-devel.ids
 
-SGkgQnJpYW4sCgpPbiA5LzI0LzIwIDExOjEwIFBNLCBCcmlhbiBCdW5rZXIgd3JvdGU6Cj4gRm9y
-IExVTnMgYmV0d2VlbiAwIGFuZCAyNTUgcGVyaXBoZXJhbCBhZGRyZXNzaW5nIGlzIHVzZWQuIEZv
-ciBMVU5zIGhpZ2hlciB0aGFuIDI1NSB0aGUgTFVOIGFkZHJlc3NpbmcKPiBzaG91bGQgc3dpdGNo
-IHRvIGZsYXQgYWNjb3JkaW5nIHRvIHRoZSBzcGVjaWZpY2F0aW9uLiBJbnN0ZWFkIG9mIHByaW50
-aW5nIG91dCB0aGUgTFVOIG51bWJlciB3aXRob3V0IHJlZ2FyZCB0bwo+IHRoZSBzaGlmdGluZyBv
-ZiBhZGRyZXNzIG1ldGhvZCwgZGlzcGxheSB0aGUgTFVOIGFzIGl0IHdhcyBpbnRlbmRlZCB0byBi
-ZSB0aGUgdXNlciBjb25uZWN0aW5nIHRoZSBMVU4uIFRoZQo+IGN1cnJlbnQgZGlzcGxheSBsZWF2
-ZXMgYSBub24tb2J2aW91cyAxNjM4NCBvZmZzZXQuCj4gCj4gSW4gc2hvcnQsIGEgTFVOIGNvbm5l
-Y3RlZCBhcyAyNTggd2lsbCBzaG93IHVwIGluIG11bHRpcGF0aCBvdXRwdXQgYXMgMTY2NDIuIElu
-c3RlYWQgZGlzcGxheSBpdCBhcyB0aGUKPiBleHBlY3RlZCAyNTguIFRoaXMgaXMgZm9yIGRpc3Bs
-YXkgb25seSBhbmQgZG9lc27igJl0IGNoYW5nZSB0aGUgYWN0dWFsIGNvbnRlbnRzIG9mIHRoZSBM
-VU4gdmFyaWFibGUuCj4gCj4gU2lnbmVkLW9mZi1ieTogQnJpYW4gQnVua2VyIDxicmlhbkBwdXJl
-c3RvcmFnZS5jb20+Cj4gX19fCj4gLS0tIGEvbGlibXVsdGlwYXRoL3ByaW50LmMgICAgICAyMDIw
-LTA5LTI0IDEzOjUyOjE4LjY2MTgyODAxMSAtMDYwMAo+ICsrKyBiL2xpYm11bHRpcGF0aC9wcmlu
-dC5jICAgICAgMjAyMC0wOS0yNCAxNDoyODoyNy42MDM1NDIzMDMgLTA2MDAKPiBAQCAtMzk0LDcg
-KzM5NCw3IEBACj4gICAgICAgICAgICAgICAgICAgICAgICAgIHBwLT5zZ19pZC5ob3N0X25vLAo+
-ICAgICAgICAgICAgICAgICAgICAgICAgICBwcC0+c2dfaWQuY2hhbm5lbCwKPiAgICAgICAgICAg
-ICAgICAgICAgICAgICAgcHAtPnNnX2lkLnNjc2lfaWQsCj4gLSAgICAgICAgICAgICAgICAgICAg
-ICAgcHAtPnNnX2lkLmx1bik7Cj4gKyAgICAgICAgICAgICAgICAgICAgICAgKHBwLT5zZ19pZC5s
-dW4gJiAweDQwMDApID8gcHAtPnNnX2lkLmx1biAtIDB4NDAwMCA6IHBwLT5zZ19pZC5sdW4pOwo+
-ICAgfQo+IAo+ICAgc3RhdGljIGludAoKRm9yIExpbnV4IFNDU0kgZGV2aWNlcywgYW5kIGlmIEkg
-dW5kZXJzdG9vZCB0aGUgY29kZSBjb3JyZWN0bHkgCltsaWJtdWx0aXBhdGgvZGlzY292ZXJ5LmM6
-c2NzaV9zeXNmc19wYXRoaW5mbygpXSwgdGhpcyBzZWVtcyB0aGUgU0NTSSBMVU4gdmFsdWUgCmJl
-aW5nIHBhcnQgb2YgdGhlIFNDU0kgZGV2aWNlIG5hbWUgaW4gaXRzIEg6QzpUOkwgZm9ybWF0LiBB
-RkFJSywgTGludXggCmludGVudGlvbmFsbHkgdHJlYXRzIHRoaXMgYXMgYW4gb3BhcXVlIDY0LWJp
-dCB2YWx1ZSB0byByZWZsZWN0IGEgVDEwIFNBTSBMVU4gClthcyBkZWNpbWFsIG51bWJlciB3aXRo
-IHJldmVyc2VkIExVTiBsZXZlbHMsIHRob3VnaCwgc28gYSBwZXJpcGhlcmFsIGFkZHJlc3Npbmcg
-CkxVTiBoYXBwZW5zIHRvIGxvb2sgbGlrZSBhIHNtYWxsIGludGVnZXIgdmFsdWVdLiBUaGlzIHdh
-eSwgaXQgYWx3YXlzIHdvcmtzIHdpdGggCmFueSAoY3VycmVudCBvciBmdXR1cmUpIExVTiBmb3Jt
-YXQgYW5kIGl0cyBwb3RlbnRpYWxseSBkaWZmZXJlbnQgTFVOIGZvcm1hdCAKZmllbGRzL3BhcnRz
-LgoKVXNlcnMgbWF5IHVzZSB0aGUgaGNpbCBvdXRwdXQgdG8gZmluZCB0aGUgY29ycmVzcG9uZGlu
-ZyBMaW51eCBTQ1NJIGRldmljZSBieSAKaXRzIG5hbWUuIFdvdWxkIHRoaXMgc3RpbGwgd29yayBp
-ZiB0aGUgb3V0cHV0IHZhbHVlIHdhcyBtb2RpZmllZD8KCkFsc28sIHNvbWUgKEZDUC1hdHRhY2hl
-ZCBTQ1NJKSBzdG9yYWdlcyBpbiBwYXJ0aWN1bGFyIGNhc2VzIHVzZSBMVU4gZm9ybWF0IApmaWVs
-ZHMgaW4gYWRkaXRpb24gdG8gIi4uLiBMVU4iIHRvIGNvZGUgYSBsYXJnZXIgc29tZXdoYXQgb3Bh
-cXVlIDY0LWJpdCBUMTAgU0FNIApMVU4gdmFsdWUuIEZvciBpbnN0YW5jZSAiQlVTIElERU5USUZJ
-RVIiIHdpdGggcGVyaXBoZXJhbCBhZGRyZXNzaW5nLCBvciBhIApub24temVybyAybmQgbGV2ZWwg
-d2l0aCBmbGF0IHNwYWNlIGFkZHJlc3NpbmcuIEFib3ZlIGNvbnZlcnNpb24gc2VlbXMgdG8gYXQg
-CmxlYXN0IHJlc3VsdCBpbiB1bmV4cGVjdGVkIHZhbHVlcy4KCigoTm90IHN1cmUgZm9yIHRoaXMg
-Y2FzZSwgYXMgTlZNZSBtaWdodCB1c2UgaXRzIG93biBwcmludCBvdXRwdXQgY29kZSBpbiAKbGli
-bXVsdGlwYXRoL2ZvcmVpZ24vbnZtZS5jOiBudm1lX3N5c2ZzX3BhdGhpbmZvKCkgc2VlbXMgdG8g
-YmUgYW5vdGhlciB1c2VyIAphc3NpZ25pbmcgYSBub24temVybyB2YWx1ZSB0byBzZ19pZC5sdW4g
-W29yaWdpbmF0aW5nIGluIHRoZSBuc2lkIAoobmFtZXNwYWNlLUlEPyldLiBBbiB1bmNvbmRpdGlv
-bmFsIHZhbHVlIGNvbnZlcnNpb24gaW4gdGhlIG91dHB1dCBwcmludGluZyBjb2RlIApwYXRoIGJh
-c2VkIG9uIFNDU0kga25vd2xlZGdlIG1pZ2h0IGJyZWFrIG91dHB1dCBvZiB2YWx1ZXMgYmVsb25n
-aW5nIHRvIE5WTWUgCnBhdGhzLikpCgotLSAKTWl0IGZyZXVuZGxpY2hlbiBHcnVlc3NlbiAvIEtp
-bmQgcmVnYXJkcwpTdGVmZmVuIE1haWVyCgpMaW51eCBvbiBJQk0gWiBEZXZlbG9wbWVudAoKaHR0
-cHM6Ly93d3cuaWJtLmNvbS9wcml2YWN5L3VzL2VuLwpJQk0gRGV1dHNjaGxhbmQgUmVzZWFyY2gg
-JiBEZXZlbG9wbWVudCBHbWJIClZvcnNpdHplbmRlciBkZXMgQXVmc2ljaHRzcmF0czogTWF0dGhp
-YXMgSGFydG1hbm4KR2VzY2hhZWZ0c2Z1ZWhydW5nOiBEaXJrIFdpdHRrb3BwClNpdHogZGVyIEdl
-c2VsbHNjaGFmdDogQm9lYmxpbmdlbgpSZWdpc3RlcmdlcmljaHQ6IEFtdHNnZXJpY2h0IFN0dXR0
-Z2FydCwgSFJCIDI0MzI5NAoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
-YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Add two paragraphs which list some advantages of multipath and explain
+the benefit for single path devices. The text has been partly composed
+by Benjamin Marzinski. - Refer to
+https://www.redhat.com/archives/dm-devel/2020-September/msg00431.html
+
+Signed-off-by: Frank Meinl <frank.meinl@live.de>
+---
+ multipath/multipath.8 | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/multipath/multipath.8 b/multipath/multipath.8
+index 5b29a5d9..a580630a 100644
+--- a/multipath/multipath.8
++++ b/multipath/multipath.8
+@@ -89,7 +89,20 @@ multipath \- Device mapper target autoconfig.
+ .\" ----------------------------------------------------------------------------
+ .
+ .B multipath
+-is used to detect and coalesce multiple paths to devices, for fail-over or performance reasons.
++is used to detect and coalesce multiple paths to devices, for fail-over or
++performance reasons.
++.PP
++.B multipath
++works with devices as they are, instead of needing special metadata, like
++\fBlvm\fR devices. Plus, multipath deals with devices that have partitions or
++logical volumes on top of them. Consequently, multipath can be easily employed
++after the device is already set up, without the need to alter logical volumes
++or partition tables.
++.PP
++Despite its name, \fBmultipath\fR may be useful for single path devices, too.
++It offers the possibility to queue I/O if no path to the physical device is
++available. With queuing, a running application may tolerate a temporary device
++disconnect, because outstanding I/O will not fail immediately.
+ .
+ .\" ----------------------------------------------------------------------------
+ .SH ARGUMENTS
+-- 
+2.25.1
