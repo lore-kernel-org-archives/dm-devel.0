@@ -1,18 +1,16 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2 13/21] libmultipath: provide defaults for
- {get, put}_multipath_config
-Date: Sat, 26 Sep 2020 11:43:46 +0200
-Message-ID: <91ed445c926ecf1fae57b8b0d7478f6b3401460c.camel@suse.com>
-References: <20200924133716.14120-1-mwilck@suse.com>
-	<20200924133716.14120-14-mwilck@suse.com>
-	<20200925043458.GO11108@octiron.msp.redhat.com>
-	<e0637cd84ca36dbba00f8ff5b92ffcb8e81aa747.camel@suse.com>
-	<20200925215739.GA3384@octiron.msp.redhat.com>
+Subject: Re: [PATCH 01/23] multipathd: uxlsnr: avoid deadlock on
+	exit
+Date: Sat, 26 Sep 2020 15:00:58 +0200
+Message-ID: <20711328a510d2c02aba22b584a7f5eb1e4ecf65.camel@suse.com>
+References: <20200924134054.14632-1-mwilck@suse.com>
+	<20200924134054.14632-2-mwilck@suse.com>
+	<20200926015207.GJ3384@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200925215739.GA3384@octiron.msp.redhat.com>
+In-Reply-To: <20200926015207.GJ3384@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,26 +21,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@redhat.com
+Cc: lixiaokeng@huawei.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, 2020-09-25 at 16:57 -0500, Benjamin Marzinski wrote:
-> On Fri, Sep 25, 2020 at 10:00:10PM +0200, Martin Wilck wrote:
-> > 
-> > I suggest to track the verbosity independently in a different
-> > variable,
-> > and just set it from init_config() if it was actually set in the
-> > config file. Most of the time, we set it from the command line.
-> > This would have the additional benefit not to have to call
-> > get_multipath_config() in dlog().
+On Fri, 2020-09-25 at 20:52 -0500, Benjamin Marzinski wrote:
 > 
-> Sure. That sounds like a much simpler solution than what I was
-> proposing.
+> O.k. I'm getting way into the theoretical weeds here, but I believe
+> that
+> realloc() is technically allowed to return NULL when it shrinks
+> allocated memory. In this case num_clients would be too big.  Later
+> in
+> this function, when we loop through num_clients
+> 
+>                 for (i = 2; i < num_clients + 2; i++) {
+>                         if (polls[i].revents & POLLIN) {
+>  
+> We could look at an unused polls entry, since its revents doesn't get
+> cleared. It's also possible that the fd of this unused entry matches
+> the
+> fd of an existing client. Then we could try to get a packet from a
+> client that isn't sending one, and kill that client. Yeah, this will
+> almost certainly never happen.  But we could just zero out the
+> revents
+> field, or loop over the actual number of structures we polled, and
+> then
+> it can't happen.
 
-I will do that in a separate patch. It will actually be a short
-series with logging fixes. Would you ack this patch then?
-In general it makes sense for get_multipath_config() to return NULL if
-the struct config is not initialized.
+I'll fix this up in this patch, and add another patch to sanitize this.
+calling realloc() when the number of fds shrinks really isn't buying us
+much.
 
-Thanks,
 Martin
