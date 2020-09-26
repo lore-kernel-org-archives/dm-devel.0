@@ -1,16 +1,14 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 01/23] multipathd: uxlsnr: avoid deadlock on
-	exit
-Date: Sat, 26 Sep 2020 15:00:58 +0200
-Message-ID: <20711328a510d2c02aba22b584a7f5eb1e4ecf65.camel@suse.com>
-References: <20200924134054.14632-1-mwilck@suse.com>
-	<20200924134054.14632-2-mwilck@suse.com>
-	<20200926015207.GJ3384@octiron.msp.redhat.com>
+Subject: Re: [PATCH v2 1/2] libmultipath: Allow discovery of USB
+	devices
+Date: Sat, 26 Sep 2020 20:54:58 +0200
+Message-ID: <e6325f41106fbc2da29b00bdd4a77a4ee4a2f5a9.camel@suse.com>
+References: <AM0PR09MB289702395C44596866E4B9C3FE370@AM0PR09MB2897.eurprd09.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200926015207.GJ3384@octiron.msp.redhat.com>
+In-Reply-To: <AM0PR09MB289702395C44596866E4B9C3FE370@AM0PR09MB2897.eurprd09.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,35 +18,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: lixiaokeng@huawei.com, dm-devel@redhat.com
+To: Frank Meinl <frank.meinl@live.de>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, 2020-09-25 at 20:52 -0500, Benjamin Marzinski wrote:
+On Sat, 2020-09-26 at 18:26 +0200, Frank Meinl wrote:
+> This change adds a new configuration option allow_usb_devices. It is
+> disabled by default, so that the behavior of existing setups is not
+> changed. If enabled (via multipath.conf), USB devices will be found
+> during device discovery and can be used for multipath setups.
 > 
-> O.k. I'm getting way into the theoretical weeds here, but I believe
-> that
-> realloc() is technically allowed to return NULL when it shrinks
-> allocated memory. In this case num_clients would be too big.  Later
-> in
-> this function, when we loop through num_clients
+> Without this option, multipath currently ignores all USB drives,
+> which
+> is convenient for most users. (refer also to commit 51957eb)
 > 
->                 for (i = 2; i < num_clients + 2; i++) {
->                         if (polls[i].revents & POLLIN) {
->  
-> We could look at an unused polls entry, since its revents doesn't get
-> cleared. It's also possible that the fd of this unused entry matches
-> the
-> fd of an existing client. Then we could try to get a packet from a
-> client that isn't sending one, and kill that client. Yeah, this will
-> almost certainly never happen.  But we could just zero out the
-> revents
-> field, or loop over the actual number of structures we polled, and
-> then
-> it can't happen.
+> However, it can be beneficial to use the multipath dm-module even if
+> there is only a single path to an USB attached storage. In
+> combination
+> with the option 'queue_if_no_path', such a setup survives a temporary
+> device disconnect without any severe consequences for the running
+> applications. All I/O is queued until the device reappears.
+> 
+> Signed-off-by: Frank Meinl <frank.meinl@live.de>
 
-I'll fix this up in this patch, and add another patch to sanitize this.
-calling realloc() when the number of fds shrinks really isn't buying us
-much.
+Sorry, I forgot in the previous review: You must add an entry for 
+SCSI_PROTOCOL_USB in snprint_path_protocol(). Apart from that, this
+looks OK.
 
+Regards,
 Martin
