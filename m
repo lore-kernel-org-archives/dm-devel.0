@@ -1,14 +1,15 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH v2 1/2] libmultipath: Allow discovery of USB
-	devices
-Date: Sat, 26 Sep 2020 20:54:58 +0200
-Message-ID: <e6325f41106fbc2da29b00bdd4a77a4ee4a2f5a9.camel@suse.com>
+Subject: Re: [PATCH v2 2/2] multipath: Extend program description
+	in manpage
+Date: Sat, 26 Sep 2020 21:02:39 +0200
+Message-ID: <bb1c3bce184dae7dc6148417aae115a87658a28c.camel@suse.com>
 References: <AM0PR09MB289702395C44596866E4B9C3FE370@AM0PR09MB2897.eurprd09.prod.outlook.com>
+	<AM0PR09MB2897B99544634CA56DA930D1FE370@AM0PR09MB2897.eurprd09.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <AM0PR09MB289702395C44596866E4B9C3FE370@AM0PR09MB2897.eurprd09.prod.outlook.com>
+In-Reply-To: <AM0PR09MB2897B99544634CA56DA930D1FE370@AM0PR09MB2897.eurprd09.prod.outlook.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,28 +22,27 @@ Errors-To: dm-devel-bounces@redhat.com
 To: Frank Meinl <frank.meinl@live.de>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, 2020-09-26 at 18:26 +0200, Frank Meinl wrote:
-> This change adds a new configuration option allow_usb_devices. It is
-> disabled by default, so that the behavior of existing setups is not
-> changed. If enabled (via multipath.conf), USB devices will be found
-> during device discovery and can be used for multipath setups.
-> 
-> Without this option, multipath currently ignores all USB drives,
-> which
-> is convenient for most users. (refer also to commit 51957eb)
-> 
-> However, it can be beneficial to use the multipath dm-module even if
-> there is only a single path to an USB attached storage. In
-> combination
-> with the option 'queue_if_no_path', such a setup survives a temporary
-> device disconnect without any severe consequences for the running
-> applications. All I/O is queued until the device reappears.
+On Sat, 2020-09-26 at 18:29 +0200, Frank Meinl wrote:
+> Add two paragraphs which list some advantages of multipath and
+> explain
+> the benefit for single path devices. The text has been partly
+> composed
+> by Benjamin Marzinski. - Refer to
+> https://www.redhat.com/archives/dm-devel/2020-September/msg00431.html
 > 
 > Signed-off-by: Frank Meinl <frank.meinl@live.de>
 
-Sorry, I forgot in the previous review: You must add an entry for 
-SCSI_PROTOCOL_USB in snprint_path_protocol(). Apart from that, this
-looks OK.
+Hm, this was not what I meant. multipath(8) is not the man page of the
+dm-multipath kernel feature, it's the man page of the tool "multipath".
+USB disks could just as well be set up using "multipathd". This text is
+too generic and doesn't fit into multipath(8), neither generally nor
+wrt style.
 
-Regards,
+We don't have a man page about dm-multipath itself, and as nobody has
+asked for it in 15 years, perhaps it's a bit late now to start one.
+
+I know I asked you to do this, but thinking about it now, if you don't
+mind, let's just leave it at the first patch.
+
+Regards
 Martin
