@@ -1,14 +1,15 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2 21/21] multipathd: remove logsink and udev
-Date: Fri, 25 Sep 2020 19:19:23 -0500
-Message-ID: <20200926001923.GI3384@octiron.msp.redhat.com>
-References: <20200924133716.14120-1-mwilck@suse.com>
-	<20200924133716.14120-22-mwilck@suse.com>
+Subject: Re: [PATCH 01/23] multipathd: uxlsnr: avoid deadlock on
+	exit
+Date: Fri, 25 Sep 2020 20:52:07 -0500
+Message-ID: <20200926015207.GJ3384@octiron.msp.redhat.com>
+References: <20200924134054.14632-1-mwilck@suse.com>
+	<20200924134054.14632-2-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200924133716.14120-22-mwilck@suse.com>
+In-Reply-To: <20200924134054.14632-2-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,60 +21,107 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Content-Disposition: inline
 To: mwilck@suse.com
-Cc: dm-devel@redhat.com
+Cc: lixiaokeng@huawei.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Sep 24, 2020 at 03:37:16PM +0200, mwilck@suse.com wrote:
+On Thu, Sep 24, 2020 at 03:40:32PM +0200, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> We can use the symbols from libmultipath now.
+> The uxlsnr wouldn't always release the client lock when cancelled,
+> causing a deadlock in uxsock_cleanup(). While this hasn't been
+> caused by commit 3d611a2, the deadlock seems to have become much
+> more likely after that patch. Solving this means that we have to
+> treat reallocation failure of the pollfd array differently.
+> We will now just ignore any clients above the last valid pfd index.
+> That's a minor problem, as we're in an OOM situation anyway.
 > 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Moreover, client_lock is not a "struct lock", but a plain
+> pthread_mutex_t.
+> 
+> Fixes: 3d611a2 ("multipathd: cancel threads early during shutdown")
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  multipathd/main.c | 9 +++------
->  1 file changed, 3 insertions(+), 6 deletions(-)
+>  multipathd/uxlsnr.c | 17 ++++++++++-------
+>  1 file changed, 10 insertions(+), 7 deletions(-)
 > 
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 00b66ba..c5c374b 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -115,7 +115,6 @@ struct mpath_event_param
->  	struct multipath *mpp;
->  };
+> diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+> index 1c5ce9d..d47ba1a 100644
+> --- a/multipathd/uxlsnr.c
+> +++ b/multipathd/uxlsnr.c
+> @@ -35,6 +35,7 @@
+>  #include "config.h"
+>  #include "mpath_cmd.h"
+>  #include "time-util.h"
+> +#include "util.h"
 >  
-> -int logsink;
->  int uxsock_timeout;
->  int verbosity;
->  int bindings_read_only;
-> @@ -151,8 +150,6 @@ int should_exit(void)
->   */
->  struct vectors * gvecs;
+>  #include "main.h"
+>  #include "cli.h"
+> @@ -116,7 +117,7 @@ static void _dead_client(struct client *c)
 >  
-> -struct udev * udev;
-> -
->  struct config *multipath_conf;
+>  static void dead_client(struct client *c)
+>  {
+> -	pthread_cleanup_push(cleanup_lock, &client_lock);
+> +	pthread_cleanup_push(cleanup_mutex, &client_lock);
+>  	pthread_mutex_lock(&client_lock);
+>  	_dead_client(c);
+>  	pthread_cleanup_pop(1);
+> @@ -306,6 +307,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
 >  
->  /* Local variables */
-> @@ -3123,8 +3120,6 @@ child (__attribute__((unused)) void *param)
->  	conf = rcu_dereference(multipath_conf);
->  	rcu_assign_pointer(multipath_conf, NULL);
->  	call_rcu(&conf->rcu, rcu_free_config);
-> -	udev_unref(udev);
-> -	udev = NULL;
->  	pthread_attr_destroy(&waiter_attr);
->  	pthread_attr_destroy(&io_err_stat_attr);
->  #ifdef _DEBUG_
-> @@ -3228,7 +3223,9 @@ main (int argc, char *argv[])
+>  		/* setup for a poll */
+>  		pthread_mutex_lock(&client_lock);
+> +		pthread_cleanup_push(cleanup_mutex, &client_lock);
+>  		num_clients = 0;
+>  		list_for_each_entry(c, &clients, node) {
+>  			num_clients++;
+> @@ -322,14 +324,13 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
+>  						sizeof(struct pollfd));
+>  			}
+>  			if (!new) {
+> -				pthread_mutex_unlock(&client_lock);
+>  				condlog(0, "%s: failed to realloc %d poll fds",
+>  					"uxsock", 2 + num_clients);
+> -				sched_yield();
+> -				continue;
+> +				num_clients = old_clients;
+
+O.k. I'm getting way into the theoretical weeds here, but I believe that
+realloc() is technically allowed to return NULL when it shrinks
+allocated memory. In this case num_clients would be too big.  Later in
+this function, when we loop through num_clients
+
+                for (i = 2; i < num_clients + 2; i++) {
+                        if (polls[i].revents & POLLIN) {
+ 
+We could look at an unused polls entry, since its revents doesn't get
+cleared. It's also possible that the fd of this unused entry matches the
+fd of an existing client. Then we could try to get a packet from a
+client that isn't sending one, and kill that client. Yeah, this will
+almost certainly never happen.  But we could just zero out the revents
+field, or loop over the actual number of structures we polled, and then
+it can't happen.
+
+-Ben
+
+> +			} else {
+> +				old_clients = num_clients;
+> +				polls = new;
+>  			}
+> -			old_clients = num_clients;
+> -			polls = new;
+>  		}
+>  		polls[0].fd = ux_sock;
+>  		polls[0].events = POLLIN;
+> @@ -347,8 +348,10 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
+>  			polls[i].fd = c->fd;
+>  			polls[i].events = POLLIN;
+>  			i++;
+> +			if (i >= 2 + num_clients)
+> +				break;
+>  		}
+> -		pthread_mutex_unlock(&client_lock);
+> +		pthread_cleanup_pop(1);
 >  
->  	pthread_cond_init_mono(&config_cond);
->  
-> -	udev = udev_new();
-> +	libmultipath_init();
-> +	if (atexit(libmultipath_exit))
-> +		condlog(3, "failed to register exit handler for libmultipath");
->  	libmp_udev_set_sync_support(0);
->  
->  	while ((arg = getopt(argc, argv, ":dsv:k::Bniw")) != EOF ) {
+>  		/* most of our life is spent in this call */
+>  		poll_count = ppoll(polls, i, &sleep_time, &mask);
 > -- 
 > 2.28.0
