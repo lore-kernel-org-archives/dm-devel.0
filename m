@@ -1,11 +1,16 @@
 From: Frank Meinl <frank.meinl@live.de>
-Subject: [PATCH v3] libmultipath: Allow discovery of USB devices
-Date: Mon, 28 Sep 2020 21:09:57 +0200
-Message-ID: <AM0PR09MB289766D38FDC2D4F424B95AEFE350@AM0PR09MB2897.eurprd09.prod.outlook.com>
+Subject: Re: [PATCH v2 2/2] multipath: Extend program description
+	in manpage
+Date: Mon, 28 Sep 2020 21:13:36 +0200
+Message-ID: <AM0PR09MB289751B64BA29C2B7C307984FE350@AM0PR09MB2897.eurprd09.prod.outlook.com>
+References: <AM0PR09MB289702395C44596866E4B9C3FE370@AM0PR09MB2897.eurprd09.prod.outlook.com>
+	<AM0PR09MB2897B99544634CA56DA930D1FE370@AM0PR09MB2897.eurprd09.prod.outlook.com>
+	<bb1c3bce184dae7dc6148417aae115a87658a28c.camel@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <bb1c3bce184dae7dc6148417aae115a87658a28c.camel@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,148 +20,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Frank Meinl <frank.meinl@live.de>, mwilck@suse.com
+Content-Language: en-US
+To: Martin Wilck <mwilck@suse.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This change adds a new configuration option allow_usb_devices. It is
-disabled by default, so that the behavior of existing setups is not
-changed. If enabled (via multipath.conf), USB devices will be found
-during device discovery and can be used for multipath setups.
+On 26.09.20 21:02, Martin Wilck wrote:
+> On Sat, 2020-09-26 at 18:29 +0200, Frank Meinl wrote:
+>> Add two paragraphs which list some advantages of multipath and
+>> explain
+>> the benefit for single path devices. The text has been partly
+>> composed
+>> by Benjamin Marzinski. - Refer to
+>> https://www.redhat.com/archives/dm-devel/2020-September/msg00431.html
+>>
+>> Signed-off-by: Frank Meinl <frank.meinl@live.de>
+> 
+> Hm, this was not what I meant. multipath(8) is not the man page of the
+> dm-multipath kernel feature, it's the man page of the tool "multipath".
+> USB disks could just as well be set up using "multipathd". This text is
+> too generic and doesn't fit into multipath(8), neither generally nor
+> wrt style.
+> 
+> We don't have a man page about dm-multipath itself, and as nobody has
+> asked for it in 15 years, perhaps it's a bit late now to start one.
+> 
+> I know I asked you to do this, but thinking about it now, if you don't
+> mind, let's just leave it at the first patch.
+> 
+> Regards
+> Martin
+> 
+> 
 
-Without this option, multipath currently ignores all USB drives, which
-is convenient for most users. (refer also to commit 51957eb)
+No problem,
+For me it's perfectly fine to ignore this patch. Maybe I was the wrong
+person for this job, as I'm practically new to multipath.
 
-However, it can be beneficial to use the multipath dm-module even if
-there is only a single path to an USB attached storage. In combination
-with the option 'queue_if_no_path', such a setup survives a temporary
-device disconnect without any severe consequences for the running
-applications. All I/O is queued until the device reappears.
+Anyhow, if somebody else wants to use this text snippet in a more
+appropriate place, please feel free.
 
-Signed-off-by: Frank Meinl <frank.meinl@live.de>
----
- libmultipath/config.h      |  1 +
- libmultipath/dict.c        |  4 ++++
- libmultipath/discovery.c   | 13 ++++++++++---
- libmultipath/print.c       |  2 ++
- libmultipath/structs.h     |  1 +
- multipath/multipath.conf.5 | 12 ++++++++++++
- 6 files changed, 30 insertions(+), 3 deletions(-)
-
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 2bb7153b..290aea58 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -158,6 +158,7 @@ struct config {
- 	unsigned int dev_loss;
- 	int log_checker_err;
- 	int allow_queueing;
-+	int allow_usb_devices;
- 	int find_multipaths;
- 	uid_t uid;
- 	gid_t gid;
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index feabae56..f12c2e5c 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -543,6 +543,9 @@ snprint_def_queue_without_daemon (struct config *conf,
- declare_def_handler(checker_timeout, set_int)
- declare_def_snprint(checker_timeout, print_nonzero)
- 
-+declare_def_handler(allow_usb_devices, set_yes_no)
-+declare_def_snprint(allow_usb_devices, print_yes_no)
-+
- declare_def_handler(flush_on_last_del, set_yes_no_undef)
- declare_def_snprint_defint(flush_on_last_del, print_yes_no_undef, DEFAULT_FLUSH)
- declare_ovr_handler(flush_on_last_del, set_yes_no_undef)
-@@ -1759,6 +1762,7 @@ init_keywords(vector keywords)
- 	install_keyword("no_path_retry", &def_no_path_retry_handler, &snprint_def_no_path_retry);
- 	install_keyword("queue_without_daemon", &def_queue_without_daemon_handler, &snprint_def_queue_without_daemon);
- 	install_keyword("checker_timeout", &def_checker_timeout_handler, &snprint_def_checker_timeout);
-+	install_keyword("allow_usb_devices", &def_allow_usb_devices_handler, &snprint_def_allow_usb_devices);
- 	install_keyword("pg_timeout", &deprecated_handler, &snprint_deprecated);
- 	install_keyword("flush_on_last_del", &def_flush_on_last_del_handler, &snprint_def_flush_on_last_del);
- 	install_keyword("user_friendly_names", &def_user_friendly_names_handler, &snprint_def_user_friendly_names);
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 2f301ac4..193d7127 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -375,11 +375,10 @@ sysfs_get_tgt_nodename(struct path *pp, char *node)
- 	while (tgtdev) {
- 		value = udev_device_get_subsystem(tgtdev);
- 		if (value && !strcmp(value, "usb")) {
--			pp->sg_id.proto_id = SCSI_PROTOCOL_UNSPEC;
-+			pp->sg_id.proto_id = SCSI_PROTOCOL_USB;
- 			tgtname = udev_device_get_sysname(tgtdev);
- 			strlcpy(node, tgtname, NODE_NAME_SIZE);
--			condlog(3, "%s: skip USB device %s", pp->dev, node);
--			return 1;
-+			return 0;
- 		}
- 		tgtdev = udev_device_get_parent(tgtdev);
- 	}
-@@ -2136,6 +2135,14 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 
- 		if (rc != PATHINFO_OK)
- 			return rc;
-+
-+		if (pp->bus == SYSFS_BUS_SCSI &&
-+		    pp->sg_id.proto_id == SCSI_PROTOCOL_USB &&
-+		    !conf->allow_usb_devices) {
-+			condlog(3, "%s: skip USB device %s", pp->dev,
-+				pp->tgt_node_name);
-+			return PATHINFO_SKIPPED;
-+		}
- 	}
- 
- 	if (mask & DI_BLACKLIST && mask & DI_SYSFS) {
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index ea95d696..19de2c7c 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -684,6 +684,8 @@ snprint_path_protocol(char * buff, size_t len, const struct path * pp)
- 			return snprintf(buff, len, "scsi:adt");
- 		case SCSI_PROTOCOL_ATA:
- 			return snprintf(buff, len, "scsi:ata");
-+		case SCSI_PROTOCOL_USB:
-+			return snprintf(buff, len, "scsi:usb");
- 		case SCSI_PROTOCOL_UNSPEC:
- 		default:
- 			return snprintf(buff, len, "scsi:unspec");
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 4afd3e88..7de93d6c 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -174,6 +174,7 @@ enum scsi_protocol {
- 	SCSI_PROTOCOL_SAS = 6,
- 	SCSI_PROTOCOL_ADT = 7,	/* Media Changers */
- 	SCSI_PROTOCOL_ATA = 8,
-+	SCSI_PROTOCOL_USB = 9,  /* USB Attached SCSI (UAS), and others */
- 	SCSI_PROTOCOL_UNSPEC = 0xf, /* No specific protocol */
- };
- 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 5adaced6..60fa12a2 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -643,6 +643,18 @@ The default is: in \fB/sys/block/sd<x>/device/timeout\fR
- .
- .
- .TP
-+.B allow_usb_devices
-+If set to
-+.I no
-+, all USB devices will be skipped during path discovery. If you intend to use
-+multipath on USB attached devices, set this to \fIyes\fR.
-+.RS
-+.TP
-+The default is: \fBno\fR
-+.RE
-+.
-+.
-+.TP
- .B flush_on_last_del
- If set to
- .I yes
--- 
-2.25.1
+  Frank
