@@ -1,8 +1,7 @@
-From: Jeffle Xu <jefflexu@linux.alibaba.com>
-Subject: [RFC] dm: fix imposition of queue_limits in dm_wq_work()
-	thread
-Date: Sun, 27 Sep 2020 20:04:35 +0800
-Message-ID: <20200927120435.44118-1-jefflexu@linux.alibaba.com>
+From: Frank Meinl <frank.meinl@live.de>
+Subject: [PATCH v3] libmultipath: Allow discovery of USB devices
+Date: Mon, 28 Sep 2020 21:09:57 +0200
+Message-ID: <AM0PR09MB289766D38FDC2D4F424B95AEFE350@AM0PR09MB2897.eurprd09.prod.outlook.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
@@ -16,66 +15,148 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: snitzer@redhat.com
-Cc: joseph.qi@linux.alibaba.com, dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: Frank Meinl <frank.meinl@live.de>, mwilck@suse.com
 List-Id: dm-devel.ids
 
-Hi Mike, would you mind further expalin why bio processed by dm_wq_work()
-always gets a previous ->submit_bio. Considering the following call graph:
+This change adds a new configuration option allow_usb_devices. It is
+disabled by default, so that the behavior of existing setups is not
+changed. If enabled (via multipath.conf), USB devices will be found
+during device discovery and can be used for multipath setups.
 
-->submit_bio, that is, dm_submit_bio
-  DMF_BLOCK_IO_FOR_SUSPEND set, thus queue_io()
+Without this option, multipath currently ignores all USB drives, which
+is convenient for most users. (refer also to commit 51957eb)
 
-then worker thread dm_wq_work()
-  dm_process_bio  // at this point. the input bio is the original bio
-                     submitted to dm device
+However, it can be beneficial to use the multipath dm-module even if
+there is only a single path to an USB attached storage. In combination
+with the option 'queue_if_no_path', such a setup survives a temporary
+device disconnect without any severe consequences for the running
+applications. All I/O is queued until the device reappears.
 
-Please let me know if I missed something.
-
-Thanks.
-Jeffle
-
-
-Original commit log:
-dm_process_bio() can be called by dm_wq_work(), and if the currently
-processing bio is the very beginning bio submitted to the dm device,
-that is it has not been handled by previous ->submit_bio, then we also
-need to impose the queue_limits when it's in thread (dm_wq_work()).
-
-Fixes: cf9c37865557 ("dm: fix comment in dm_process_bio()")
-Fixes: 568c73a355e0 ("dm: update dm_process_bio() to split bio if in ->make_request_fn()")
-Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+Signed-off-by: Frank Meinl <frank.meinl@live.de>
 ---
- drivers/md/dm.c | 16 ++++++----------
- 1 file changed, 6 insertions(+), 10 deletions(-)
+ libmultipath/config.h      |  1 +
+ libmultipath/dict.c        |  4 ++++
+ libmultipath/discovery.c   | 13 ++++++++++---
+ libmultipath/print.c       |  2 ++
+ libmultipath/structs.h     |  1 +
+ multipath/multipath.conf.5 | 12 ++++++++++++
+ 6 files changed, 30 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 6ed05ca65a0f..54471c75ddef 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1744,17 +1744,13 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 2bb7153b..290aea58 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -158,6 +158,7 @@ struct config {
+ 	unsigned int dev_loss;
+ 	int log_checker_err;
+ 	int allow_queueing;
++	int allow_usb_devices;
+ 	int find_multipaths;
+ 	uid_t uid;
+ 	gid_t gid;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index feabae56..f12c2e5c 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -543,6 +543,9 @@ snprint_def_queue_without_daemon (struct config *conf,
+ declare_def_handler(checker_timeout, set_int)
+ declare_def_snprint(checker_timeout, print_nonzero)
+ 
++declare_def_handler(allow_usb_devices, set_yes_no)
++declare_def_snprint(allow_usb_devices, print_yes_no)
++
+ declare_def_handler(flush_on_last_del, set_yes_no_undef)
+ declare_def_snprint_defint(flush_on_last_del, print_yes_no_undef, DEFAULT_FLUSH)
+ declare_ovr_handler(flush_on_last_del, set_yes_no_undef)
+@@ -1759,6 +1762,7 @@ init_keywords(vector keywords)
+ 	install_keyword("no_path_retry", &def_no_path_retry_handler, &snprint_def_no_path_retry);
+ 	install_keyword("queue_without_daemon", &def_queue_without_daemon_handler, &snprint_def_queue_without_daemon);
+ 	install_keyword("checker_timeout", &def_checker_timeout_handler, &snprint_def_checker_timeout);
++	install_keyword("allow_usb_devices", &def_allow_usb_devices_handler, &snprint_def_allow_usb_devices);
+ 	install_keyword("pg_timeout", &deprecated_handler, &snprint_deprecated);
+ 	install_keyword("flush_on_last_del", &def_flush_on_last_del_handler, &snprint_def_flush_on_last_del);
+ 	install_keyword("user_friendly_names", &def_user_friendly_names_handler, &snprint_def_user_friendly_names);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 2f301ac4..193d7127 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -375,11 +375,10 @@ sysfs_get_tgt_nodename(struct path *pp, char *node)
+ 	while (tgtdev) {
+ 		value = udev_device_get_subsystem(tgtdev);
+ 		if (value && !strcmp(value, "usb")) {
+-			pp->sg_id.proto_id = SCSI_PROTOCOL_UNSPEC;
++			pp->sg_id.proto_id = SCSI_PROTOCOL_USB;
+ 			tgtname = udev_device_get_sysname(tgtdev);
+ 			strlcpy(node, tgtname, NODE_NAME_SIZE);
+-			condlog(3, "%s: skip USB device %s", pp->dev, node);
+-			return 1;
++			return 0;
+ 		}
+ 		tgtdev = udev_device_get_parent(tgtdev);
+ 	}
+@@ -2136,6 +2135,14 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 
+ 		if (rc != PATHINFO_OK)
+ 			return rc;
++
++		if (pp->bus == SYSFS_BUS_SCSI &&
++		    pp->sg_id.proto_id == SCSI_PROTOCOL_USB &&
++		    !conf->allow_usb_devices) {
++			condlog(3, "%s: skip USB device %s", pp->dev,
++				pp->tgt_node_name);
++			return PATHINFO_SKIPPED;
++		}
  	}
  
- 	/*
--	 * If in ->submit_bio we need to use blk_queue_split(), otherwise
--	 * queue_limits for abnormal requests (e.g. discard, writesame, etc)
--	 * won't be imposed.
--	 * If called from dm_wq_work() for deferred bio processing, bio
--	 * was already handled by following code with previous ->submit_bio.
-+	 * Call blk_queue_split() so that queue_limits for abnormal requests
-+	 * (e.g. discard, writesame, etc) are ensured to be imposed, while
-+	 * it's not needed for regular IO, since regular IO will be split by
-+	 * following __split_and_process_bio.
- 	 */
--	if (current->bio_list) {
--		if (is_abnormal_io(bio))
--			blk_queue_split(&bio);
--		/* regular IO is split by __split_and_process_bio */
--	}
-+	if (is_abnormal_io(bio))
-+		blk_queue_split(&bio);
+ 	if (mask & DI_BLACKLIST && mask & DI_SYSFS) {
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index ea95d696..19de2c7c 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -684,6 +684,8 @@ snprint_path_protocol(char * buff, size_t len, const struct path * pp)
+ 			return snprintf(buff, len, "scsi:adt");
+ 		case SCSI_PROTOCOL_ATA:
+ 			return snprintf(buff, len, "scsi:ata");
++		case SCSI_PROTOCOL_USB:
++			return snprintf(buff, len, "scsi:usb");
+ 		case SCSI_PROTOCOL_UNSPEC:
+ 		default:
+ 			return snprintf(buff, len, "scsi:unspec");
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 4afd3e88..7de93d6c 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -174,6 +174,7 @@ enum scsi_protocol {
+ 	SCSI_PROTOCOL_SAS = 6,
+ 	SCSI_PROTOCOL_ADT = 7,	/* Media Changers */
+ 	SCSI_PROTOCOL_ATA = 8,
++	SCSI_PROTOCOL_USB = 9,  /* USB Attached SCSI (UAS), and others */
+ 	SCSI_PROTOCOL_UNSPEC = 0xf, /* No specific protocol */
+ };
  
- 	if (dm_get_md_type(md) == DM_TYPE_NVME_BIO_BASED)
- 		return __process_bio(md, map, bio, ti);
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 5adaced6..60fa12a2 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -643,6 +643,18 @@ The default is: in \fB/sys/block/sd<x>/device/timeout\fR
+ .
+ .
+ .TP
++.B allow_usb_devices
++If set to
++.I no
++, all USB devices will be skipped during path discovery. If you intend to use
++multipath on USB attached devices, set this to \fIyes\fR.
++.RS
++.TP
++The default is: \fBno\fR
++.RE
++.
++.
++.TP
+ .B flush_on_last_del
+ If set to
+ .I yes
 -- 
-2.27.0
+2.25.1
