@@ -1,15 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 07/23] multipathd: move conf destruction into
- separate function
-Date: Mon, 28 Sep 2020 13:03:12 -0500
-Message-ID: <20200928180312.GM3384@octiron.msp.redhat.com>
+Subject: Re: [PATCH 14/23] libmultipath: add libmp_dm_exit()
+Date: Mon, 28 Sep 2020 13:41:52 -0500
+Message-ID: <20200928184152.GN3384@octiron.msp.redhat.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
-	<20200924134054.14632-8-mwilck@suse.com>
+	<20200924134054.14632-15-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200924134054.14632-8-mwilck@suse.com>
+In-Reply-To: <20200924134054.14632-15-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,71 +23,86 @@ To: mwilck@suse.com
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Sep 24, 2020 at 03:40:38PM +0200, mwilck@suse.com wrote:
+On Thu, Sep 24, 2020 at 03:40:45PM +0200, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> Also removing the comment about dlog() and dm_write_log().
-> dlog() can cope with get_multipath_config() returning NULL,
-> and dm_write_log() hasn't accessed the configuration for a while.
+> This function prepares for calling dm_lib_exit() on program exit.
+> It undoes changes to libdm internals done by libmultipath.
+> It doesn't call dm_lib_exit(), as the caller may want to keep
+> libdm active.
 > 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  multipathd/main.c | 24 ++++++++++++++----------
->  1 file changed, 14 insertions(+), 10 deletions(-)
+>  libmultipath/config.c    |  1 +
+>  libmultipath/config.h    |  2 ++
+>  libmultipath/devmapper.c | 10 ++++++++++
+>  libmultipath/devmapper.h |  1 +
+>  4 files changed, 14 insertions(+)
 > 
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 8b9df55..4d5b40b 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -2892,6 +2892,16 @@ set_oom_adj (void)
->  	condlog(0, "couldn't adjust oom score");
+> diff --git a/libmultipath/config.c b/libmultipath/config.c
+> index fbb66b3..8097838 100644
+> --- a/libmultipath/config.c
+> +++ b/libmultipath/config.c
+> @@ -65,6 +65,7 @@ int libmultipath_init(void)
+>  static void _libmultipath_exit(void)
+>  {
+>  	libmultipath_exit_called = true;
+> +	libmp_dm_exit();
+>  	udev_unref(udev);
+>  }
+
+What if the caller wanted to control the dm initialization themselves,
+and used skip_libmp_dm_init()? We need to track that and not undo
+their changes.
+
+-Ben
+
+>  
+> diff --git a/libmultipath/config.h b/libmultipath/config.h
+> index dac4e8f..fc614f0 100644
+> --- a/libmultipath/config.h
+> +++ b/libmultipath/config.h
+> @@ -270,6 +270,8 @@ int libmultipath_init(void);
+>   *
+>   * This function un-initializes libmultipath data structures.
+>   * It is recommended to call this function at program exit.
+> + * If the application also calls dm_lib_exit(), it should do so
+> + * after libmultipath_exit().
+>   *
+>   * Calls to libmultipath_init() after libmultipath_exit() will fail
+>   * (in other words, libmultipath can't be re-initialized).
+> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+> index 2e3ae8a..5a2e1e7 100644
+> --- a/libmultipath/devmapper.c
+> +++ b/libmultipath/devmapper.c
+> @@ -333,6 +333,16 @@ void libmp_udev_set_sync_support(int on)
+>  	libmp_dm_udev_sync = !!on;
 >  }
 >  
-> +static void cleanup_conf(void) {
-> +	struct config *conf;
-> +
-> +	conf = rcu_dereference(multipath_conf);
-> +	if (!conf)
-> +		return;
-> +	rcu_assign_pointer(multipath_conf, NULL);
-> +	call_rcu(&conf->rcu, rcu_free_config);
+> +void libmp_dm_exit(void)
+> +{
+> +	/* switch back to default libdm logging */
+> +	dm_log_init(NULL);
+> +#ifdef LIBDM_API_HOLD_CONTROL
+> +	/* make sure control fd is closed in dm_lib_release() */
+> +	dm_hold_control_dev(0);
+> +#endif
 > +}
 > +
->  static void cleanup_maps(struct vectors *vecs)
+>  static void libmp_dm_init(void)
 >  {
->  	int queue_without_daemon, i;
-> @@ -3194,17 +3204,11 @@ child (__attribute__((unused)) void *param)
+>  	struct config *conf;
+> diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+> index 158057e..ecf2e66 100644
+> --- a/libmultipath/devmapper.h
+> +++ b/libmultipath/devmapper.h
+> @@ -35,6 +35,7 @@ enum {
 >  
->  	condlog(2, "--------shut down-------");
->  
-> -	if (logsink == 1)
-> +	if (logsink == 1) {
-> +		logsink = 0;
->  		log_thread_stop();
-
-It seems like log_thread_stop() could just do something like
-
-pthread_t log_thr_save = log_thr;
-log_thr = (pthread_t)0;
-
-at the start, and then you would continue to get syslog logging, even
-when the log thread stopped. It's racy, but all the other threads
-(except the log_thread, obviously) should be stopped. Or am I not
-understanding the purpose of doing this?
-
-> -
-> -	/*
-> -	 * Freeing config must be done after condlog() and dm_lib_exit(),
-> -	 * because logging functions like dlog() and dm_write_log()
-> -	 * reference the config.
-> -	 */
-> -	conf = rcu_dereference(multipath_conf);
-> -	rcu_assign_pointer(multipath_conf, NULL);
-> -	call_rcu(&conf->rcu, rcu_free_config);
-> +	}
-> +	cleanup_conf();
->  #ifdef _DEBUG_
->  	dbg_free_final(NULL);
->  #endif
+>  int dm_prereq(unsigned int *v);
+>  void skip_libmp_dm_init(void);
+> +void libmp_dm_exit(void);
+>  void libmp_udev_set_sync_support(int on);
+>  struct dm_task *libmp_dm_task_create(int task);
+>  int dm_simplecmd_flush (int, const char *, uint16_t);
 > -- 
 > 2.28.0
