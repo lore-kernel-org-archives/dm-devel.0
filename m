@@ -1,33 +1,81 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH v2 0/3] block: fix up bio_crypt_ctx allocation
-Date: Mon, 28 Sep 2020 13:59:34 -0700
-Message-ID: <20200928205934.GA1340@sol.localdomain>
-References: <20200916035315.34046-1-ebiggers@kernel.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-block-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200916035315.34046-1-ebiggers@kernel.org>
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, Satya Tangirala <satyat@google.com>, Miaohe Lin <linmiaohe@huawei.com>
+From: Brian Bunker <brian@purestorage.com>
+Subject: [PATCH] libmultipath: Extract the LUN number for
+ peripheral, flat, and logical unit address methods
+Date: Mon, 28 Sep 2020 16:14:27 -0700
+Message-ID: <D7BC3D02-400E-4F70-9A61-6E959F5AE5A5@purestorage.com>
+Mime-Version: 1.0 (Mac OS X Mail 14.0 \(3654.0.3.2.33\))
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 15, 2020 at 08:53:12PM -0700, Eric Biggers wrote:
-> This series makes allocation of encryption contexts either able to fail,
-> or explicitly require __GFP_DIRECT_RECLAIM (via WARN_ON_ONCE).
-> 
-> This applies to linux-block/for-next.
-> 
-> Changed since v1 (https://lkml.kernel.org/r/20200902051511.79821-1-ebiggers@kernel.org):
->     - Added patches 2 and 3.
->     - Added kerneldoc for bio_crypt_clone().
->     - Adjusted commit message.
-> 
-> Eric Biggers (3):
->   block: make bio_crypt_clone() able to fail
->   block: make blk_crypto_rq_bio_prep() able to fail
->   block: warn if !__GFP_DIRECT_RECLAIM in bio_crypt_set_ctx()
-
-Jens, any interest in applying these patches for 5.10?
-
-- Eric
+Rm9yIExVTnMgYmV0d2VlbiAwIGFuZCAyNTUgcGVyaXBoZXJhbCBhZGRyZXNzaW5nIGlzIHVzZWQu
+IEZvciBMVU5zIGhpZ2hlciB0aGFuIDI1NSB0aGUgTFVOIGFkZHJlc3NpbmcKc2hvdWxkIHN3aXRj
+aCB0byBmbGF0IGFjY29yZGluZyB0byB0aGUgc3BlY2lmaWNhdGlvbi4gSW5zdGVhZCBvZiBwcmlu
+dGluZyBvdXQgdGhlIExVTiBudW1iZXIgd2l0aG91dCByZWdhcmQgdG8KdGhlIHNoaWZ0aW5nIG9m
+IGFkZHJlc3MgbWV0aG9kLCBkaXNwbGF5IHRoZSBMVU4gYXMgaXQgd2FzIGludGVuZGVkIHRvIGJl
+IHRoZSB1c2VyIGNvbm5lY3RpbmcgdGhlIExVTi4gVGhlCmN1cnJlbnQgZGlzcGxheSBsZWF2ZXMg
+YSBub24tb2J2aW91cyAxNjM4NCBvZmZzZXQuCgpJbiBzaG9ydCwgYSBMVU4gY29ubmVjdGVkIGFz
+IDI1OCB3aWxsIHNob3cgdXAgaW4gbXVsdGlwYXRoIG91dHB1dCBhcyAxNjY0Mi4gSW5zdGVhZCBk
+aXNwbGF5IGl0IGFzIHRoZQpleHBlY3RlZCAyNTguIFRoaXMgaXMgZm9yIGRpc3BsYXkgb25seSBh
+bmQgZG9lc27igJl0IGNoYW5nZSB0aGUgYWN0dWFsIGNvbnRlbnRzIG9mIHRoZSBMVU4gdmFyaWFi
+bGUuCgpTaWduZWQtb2ZmLWJ5OiBCcmlhbiBCdW5rZXIgPGJyaWFuQHB1cmVzdG9yYWdlLmNvbT4K
+X19fCmRpZmYgLU5hdXIgYS9tdWx0aXBhdGgtdG9vbHMtMC44LjMvbGlibXVsdGlwYXRoL3ByaW50
+LmMgYi9tdWx0aXBhdGgtdG9vbHMtMC44LjMvbGlibXVsdGlwYXRoL3ByaW50LmMKLS0tIGEvbGli
+bXVsdGlwYXRoL3ByaW50LmMgICAgICAyMDIwLTA5LTI0IDEzOjUyOjE4LjY2MTgyODAxMSAtMDYw
+MAorKysgYi9saWJtdWx0aXBhdGgvcHJpbnQuYyAgICAgIDIwMjAtMDktMjggMTY6NTc6MzcuOTU2
+MjIyMjU4IC0wNjAwCkBAIC0yOSw2ICsyOSw3IEBACiAjaW5jbHVkZSAidWV2ZW50LmgiCiAjaW5j
+bHVkZSAiZGVidWcuaCIKICNpbmNsdWRlICJkaXNjb3ZlcnkuaCIKKyNpbmNsdWRlICJ1dGlsLmgi
+CiAKICNkZWZpbmUgTUFYKHgseSkgKCgoeCkgPiAoeSkpID8gKHgpIDogKHkpKQogI2RlZmluZSBN
+SU4oeCx5KSAoKCh4KSA+ICh5KSkgPyAoeSkgOiAoeCkpCkBAIC0zOTAsMTEgKzM5MSwxMiBAQAog
+ICAgICAgIGlmICghcHAgfHwgcHAtPnNnX2lkLmhvc3Rfbm8gPCAwKQogICAgICAgICAgICAgICAg
+cmV0dXJuIHNucHJpbnRmKGJ1ZmYsIGxlbiwgIiM6IzojOiMiKTsKIAorICAgICAgIGludCBkaXNw
+bGF5X2x1biA9IGV4dHJhY3RfbHVuX251bWJlcihwcC0+c2dfaWQubHVuKTsKICAgICAgICByZXR1
+cm4gc25wcmludGYoYnVmZiwgbGVuLCAiJWk6JWk6JWk6JWkiLAogICAgICAgICAgICAgICAgICAg
+ICAgICBwcC0+c2dfaWQuaG9zdF9ubywKICAgICAgICAgICAgICAgICAgICAgICAgcHAtPnNnX2lk
+LmNoYW5uZWwsCiAgICAgICAgICAgICAgICAgICAgICAgIHBwLT5zZ19pZC5zY3NpX2lkLAotICAg
+ICAgICAgICAgICAgICAgICAgICBwcC0+c2dfaWQubHVuKTsKKyAgICAgICAgICAgICAgICAgICAg
+ICAgZGlzcGxheV9sdW4pOwogfQogCiBzdGF0aWMgaW50CmRpZmYgLU5hdXIgYS9tdWx0aXBhdGgt
+dG9vbHMtMC44LjMvbGlibXVsdGlwYXRoL3V0aWwuYyBiL211bHRpcGF0aC10b29scy0wLjguMy9s
+aWJtdWx0aXBhdGgvdXRpbC5jCi0tLSBhL211bHRpcGF0aC10b29scy0wLjguMy9saWJtdWx0aXBh
+dGgvdXRpbC5jIDIwMTktMTAtMDIgMDE6MTU6MDMuMDAwMDAwMDAwIC0wNjAwCisrKyBiL211bHRp
+cGF0aC10b29scy0wLjguMy9saWJtdWx0aXBhdGgvdXRpbC5jIDIwMjAtMDktMjggMTY6NTY6MDAu
+ODUxMTY5MDcwIC0wNjAwCkBAIC00NzAsMyArNDcwLDI1IEBACiB7CiAgICAgICAgY2xvc2UoKGxv
+bmcpYXJnKTsKIH0KKworLyogRXh0cmFjdHMgdGhlIExVTiBudW1iZXIgZnJvbSB0aGUgYWRkcmVz
+c2luZyBtZXRob2QgZm9yCisgICBwZXJpcGhlcmFsLCBmbGF0LCBhbmQgTFVOIGFkZHJlc3Npbmcg
+bWV0aG9kcy4KKyAqLworaW50IGV4dHJhY3RfbHVuX251bWJlcihpbnQgbHVuKQoreworICAgICAg
+IGlmIChsdW4gPiBVSU5UMTZfTUFYKQorICAgICAgICAgICAgICAgcmV0dXJuIGx1bjsKKworICAg
+ICAgIHVpbnQ4X3QgYWRkcmVzc19tZXRob2QgPSAoKGx1biA+PiA4KSAmIDB4QzApID4+IDY7IC8q
+IGZpcnN0IHR3byBiaXRzIG9mIHRoZSAxNiBieXRlIExVTiAqLworICAgICAgIHN3aXRjaCAoYWRk
+cmVzc19tZXRob2QpIHsKKyAgICAgICAgICAgICAgIGNhc2UgMTogLyogRmxhdCBBZGRyZXNzaW5n
+IG1ldGhvZCAoMDFiKSAqLworICAgICAgICAgICAgICAgICAgICAgICByZXR1cm4gbHVuIC0gMHg0
+MDAwOworICAgICAgICAgICAgICAgY2FzZSAyOiAvKiBMb2dpY2FsIHVuaXQgYWRkcmVzc2luZyAo
+MDJiKSAqLworICAgICAgICAgICAgICAgICAgICAgICByZXR1cm4gbHVuICYgMHgwMDFGOworICAg
+ICAgICAgICAgICAgY2FzZSAwOiAvKiBQZXJpcGhlcmFsIGFkZHJlc3NpbmcgbWV0aG9kICgwMGIp
+ICovCisgICAgICAgICAgICAgICAgICAgICAgIGlmIChsdW4gPiAyNTUpCisgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgY29uZGxvZygzLCAiUGVyaXBoZXJhbCBhZGRyZXNzaW5nIHN1cHBv
+cnRzIHVwIHRvIDI1NiBMVU5zIik7CisgICAgICAgICAgICAgICBkZWZhdWx0OgorICAgICAgICAg
+ICAgICAgICAgICAgICByZXR1cm4gbHVuOworICAgICAgIH0KK30KZGlmZiAtTmF1ciBhL211bHRp
+cGF0aC10b29scy0wLjguMy9saWJtdWx0aXBhdGgvdXRpbC5oIGIvbXVsdGlwYXRoLXRvb2xzLTAu
+OC4zL2xpYm11bHRpcGF0aC91dGlsLmgKLS0tIGEvbXVsdGlwYXRoLXRvb2xzLTAuOC4zL2xpYm11
+bHRpcGF0aC91dGlsLmggMjAxOS0xMC0wMiAwMToxNTowMy4wMDAwMDAwMDAgLTA2MDAKKysrIGIv
+bXVsdGlwYXRoLXRvb2xzLTAuOC4zL2xpYm11bHRpcGF0aC91dGlsLmggMjAyMC0wOS0yOCAxNjo0
+MzozMi42MzI4Nzk3NjMgLTA2MDAKQEAgLTIyLDYgKzIyLDcgQEAKIGludCBwYXJzZV9wcmtleV9m
+bGFncyhjaGFyICpwdHIsIHVpbnQ2NF90ICpwcmtleSwgdWludDhfdCAqZmxhZ3MpOwogaW50IHNh
+ZmVfd3JpdGUoaW50IGZkLCBjb25zdCB2b2lkICpidWYsIHNpemVfdCBjb3VudCk7CiB2b2lkIHNl
+dF9tYXhfZmRzKGludCBtYXhfZmRzKTsKK2ludCBleHRyYWN0X2x1bl9udW1iZXIoaW50IGx1bik7
+CiAKICNkZWZpbmUgS0VSTkVMX1ZFUlNJT04obWFqLCBtaW4sIHB0YykgKCgoKG1haikgKiAyNTYp
+ICsgKG1pbikpICogMjU2ICsgKHB0YykpCiAjZGVmaW5lIEFSUkFZX1NJWkUoeCkgKHNpemVvZih4
+KS9zaXplb2YoKHgpWzBdKSkKCkJyaWFuIEJ1bmtlcgpTVyBFbmcKYnJpYW5AcHVyZXN0b3JhZ2Uu
+Y29tCgoKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
+czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
