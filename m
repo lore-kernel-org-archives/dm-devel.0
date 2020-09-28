@@ -1,15 +1,13 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 19/23] multipathd: move cleanup_{prio,
- checkers, foreign} to libmultipath_exit
-Date: Mon, 28 Sep 2020 15:26:24 -0500
-Message-ID: <20200928202624.GP3384@octiron.msp.redhat.com>
+Subject: Re: [PATCH 00/23] libmultipath: improve cleanup on exit
+Date: Mon, 28 Sep 2020 15:51:02 -0500
+Message-ID: <20200928205102.GQ3384@octiron.msp.redhat.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
-	<20200924134054.14632-20-mwilck@suse.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200924134054.14632-20-mwilck@suse.com>
+In-Reply-To: <20200924134054.14632-1-mwilck@suse.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,98 +22,68 @@ To: mwilck@suse.com
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Sep 24, 2020 at 03:40:50PM +0200, mwilck@suse.com wrote:
+On Thu, Sep 24, 2020 at 03:40:31PM +0200, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmpathpersist/mpath_persist.c   | 2 --
->  libmultipath/config.c             | 4 ++++
->  libmultipath/libmultipath.version | 5 +----
->  multipathd/main.c                 | 3 ---
->  4 files changed, 5 insertions(+), 9 deletions(-)
+> Hi Christophe, hi Ben, hi lixiaokeng,
 > 
-> diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-> index 873b419..af56a95 100644
-> --- a/libmpathpersist/mpath_persist.c
-> +++ b/libmpathpersist/mpath_persist.c
-> @@ -78,8 +78,6 @@ mpath_lib_init (void)
->  
->  static void libmpathpersist_cleanup(void)
->  {
-> -	cleanup_prio();
-> -	cleanup_checkers();
->  	libmultipath_exit();
->  	dm_lib_exit();
->  }
-> diff --git a/libmultipath/config.c b/libmultipath/config.c
-> index 8097838..f115ac2 100644
-> --- a/libmultipath/config.c
-> +++ b/libmultipath/config.c
-> @@ -26,6 +26,7 @@
->  #include "devmapper.h"
->  #include "mpath_cmd.h"
->  #include "propsel.h"
-> +#include "foreign.h"
->  
->  /*
->   * We don't support re-initialization after
-> @@ -65,6 +66,9 @@ int libmultipath_init(void)
->  static void _libmultipath_exit(void)
->  {
->  	libmultipath_exit_called = true;
-> +	cleanup_foreign();
-
-I don't really feel too strongly about this, but it seems to me that
-there is a difference between the checkers and prioritizers, which
-it seems like most users of libmultipath would want, and the foreign
-code, which doesn't seem that way. libmpathpersist, for instance,
-will use the checkers and prioritizers, but not the foreign code.
-On the other hand, if the caller isn't using the foreign code,
-then grabbing the lock and checking the foreign pointer shouldn't
-take much time.
-
--Ben
-
-> +	cleanup_checkers();
-> +	cleanup_prio();
->  	libmp_dm_exit();
->  	udev_unref(udev);
->  }
-> diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-> index 9abdb22..80f1950 100644
-> --- a/libmultipath/libmultipath.version
-> +++ b/libmultipath/libmultipath.version
-> @@ -1,4 +1,4 @@
-> -LIBMULTIPATH_0.8.4.5 {
-> +LIBMULTIPATH_0.8.4.6 {
->  global:
->  	/* symbols referenced by multipath and multipathd */
->  	add_foreign;
-> @@ -18,10 +18,7 @@ global:
->  	checker_name;
->  	checker_state_name;
->  	check_foreign;
-> -	cleanup_checkers;
-> -	cleanup_foreign;
->  	cleanup_lock;
-> -	cleanup_prio;
->  	close_fd;
->  	coalesce_paths;
->  	convert_dev;
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index e7b479a..efed56e 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -3027,9 +3027,6 @@ static void cleanup_child(void)
->  {
->  	cleanup_threads();
->  	cleanup_vecs();
-> -	cleanup_foreign();
-> -	cleanup_checkers();
-> -	cleanup_prio();
->  	if (poll_dmevents)
->  		cleanup_dmevent_waiter();
->  
+> this series was inspired by lixiaokeng's recent posting "[QUESTION] memory
+> leak in main (multipath)". It implements my first idea, registering
+> cleanup handlers with atexit(). However it turned out to be quite
+> complex. In particular multipathd has a lot of things to clean up.
+> 
+> This series is based on the previous series "multipath-tools: shutdown, 
+> libdevmapper races, globals".
+> 
+> While the bulk of the series is the cleanup handling, it also contains
+> some bug fixes for issues that I found while working on this.
+> 
+> Regards
+> Martin
+> 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+For all patches except 1, 7, 14, 18, & 23
+> Martin Wilck (23):
+>   multipathd: uxlsnr: avoid deadlock on exit
+>   multipathd: Fix liburcu memory leak
+>   multipathd: move handling of io_err_stat_attr into libmultipath
+>   multipathd: move vecs desctruction into cleanup function
+>   multipathd: make some globals static
+>   multipathd: move threads destruction into separate function
+>   multipathd: move conf destruction into separate function
+>   multipathd: move pid destruction into separate function
+>   multipathd: close pidfile on exit
+>   multipathd: add helper for systemd notification at exit
+>   multipathd: child(): call cleanups in failure case, too
+>   multipathd: unwatch_all_dmevents: check if waiter is initialized
+>   multipathd: print error message if config can't be loaded
+>   libmultipath: add libmp_dm_exit()
+>   multipathd: fixup libdm deinitialization
+>   libmultipath: log_thread_stop(): check if logarea is initialized
+>   multipathd: add cleanup_child() exit handler
+>   libmultipath: fix log_thread startup and teardown
+>   multipathd: move cleanup_{prio,checkers,foreign} to libmultipath_exit
+>   multipath: use atexit() for cleanup handlers
+>   mpathpersist: use atexit() for cleanup handlers
+>   multipath: fix leaks in check_path_valid()
+>   multipath-tools: mpath-tools.supp: file with valgrind suppressions
+> 
+>  libmpathpersist/mpath_persist.c       |   2 -
+>  libmultipath/config.c                 |   5 +
+>  libmultipath/config.h                 |   2 +
+>  libmultipath/devmapper.c              |  10 +
+>  libmultipath/devmapper.h              |   1 +
+>  libmultipath/io_err_stat.c            |   7 +-
+>  libmultipath/libmultipath.version     |  26 +--
+>  libmultipath/log_pthread.c            |  60 +++--
+>  mpathpersist/main.c                   |   5 +-
+>  multipath/main.c                      |  94 +++++---
+>  multipathd/dmevents.c                 |   2 +
+>  multipathd/main.c                     | 305 +++++++++++++++++---------
+>  multipathd/uxlsnr.c                   |  17 +-
+>  third-party/valgrind/mpath-tools.supp |  33 +++
+>  14 files changed, 389 insertions(+), 180 deletions(-)
+>  create mode 100644 third-party/valgrind/mpath-tools.supp
+> 
 > -- 
 > 2.28.0
