@@ -1,96 +1,90 @@
-From: lixiaokeng <lixiaokeng@huawei.com>
-Subject: Re: [PATCH 3/3] multipath: get_dm_mpvec: discard broken
-	maps
-Date: Mon, 28 Sep 2020 14:54:23 +0800
-Message-ID: <106bcd4a-0d3c-f758-ba0d-68e0bc2c2edc@huawei.com>
-References: <20200821135418.28138-1-mwilck@suse.com>
-	<20200821135418.28138-4-mwilck@suse.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm: fix imposition of queue_limits in dm_wq_work() thread
+Date: Mon, 28 Sep 2020 12:03:22 -0400
+Message-ID: <20200928160322.GA23320@redhat.com>
+References: <20200927120435.44118-1-jefflexu@linux.alibaba.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200821135418.28138-4-mwilck@suse.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Language: en-GB
-To: mwilck@suse.com
-Cc: dm-devel@redhat.com, Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-block-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200927120435.44118-1-jefflexu@linux.alibaba.com>
+To: Jeffle Xu <jefflexu@linux.alibaba.com>
+Cc: dm-devel@redhat.com, joseph.qi@linux.alibaba.com, ming.lei@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Martin:
-  I'm sorry for forgetting to reply this. When I test with
-this patch, the multipath coredump don't cause again.
+On Sun, Sep 27 2020 at  8:04am -0400,
+Jeffle Xu <jefflexu@linux.alibaba.com> wrote:
 
-Regards
-Lixiaokeng
+> Hi Mike, would you mind further expalin why bio processed by dm_wq_work()
+> always gets a previous ->submit_bio. Considering the following call graph:
+> 
+> ->submit_bio, that is, dm_submit_bio
+>   DMF_BLOCK_IO_FOR_SUSPEND set, thus queue_io()
+> 
+> then worker thread dm_wq_work()
+>   dm_process_bio  // at this point. the input bio is the original bio
+>                      submitted to dm device
+> 
+> Please let me know if I missed something.
+> 
+> Thanks.
+> Jeffle
 
-On 2020/8/21 21:54, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
+In general you have a valid point, that blk_queue_split() won't have
+been done for the suspended device case, but blk_queue_split() cannot be
+used if not in ->submit_bio -- IIUC you cannot just do it from a worker
+thread and hope to have proper submission order (depth first) as
+provided by __submit_bio_noacct().  Because this IO will be submitted
+from worker you could have multiple threads allocating from the
+q->bio_split mempool at the same time.
+
+All said, I'm not quite sure how to address this report.  But I'll keep
+at it and see what I can come up with.
+
+Thanks,
+Mike
+
+> Original commit log:
+> dm_process_bio() can be called by dm_wq_work(), and if the currently
+> processing bio is the very beginning bio submitted to the dm device,
+> that is it has not been handled by previous ->submit_bio, then we also
+> need to impose the queue_limits when it's in thread (dm_wq_work()).
 > 
-> Use the same logic as map_discovery() to discard maps that
-> couldn't be parsed successfully. If map parsing fails,
-> certain vital fields of the mpp, like features or hwhandler,
-> will not be set, which might cause multipath to crash later on.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> Fixes: cf9c37865557 ("dm: fix comment in dm_process_bio()")
+> Fixes: 568c73a355e0 ("dm: update dm_process_bio() to split bio if in ->make_request_fn()")
+> Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
 > ---
->  multipath/main.c | 23 +++++++++--------------
->  1 file changed, 9 insertions(+), 14 deletions(-)
+>  drivers/md/dm.c | 16 ++++++----------
+>  1 file changed, 6 insertions(+), 10 deletions(-)
 > 
-> diff --git a/multipath/main.c b/multipath/main.c
-> index 80bc4b5..2d7ec74 100644
-> --- a/multipath/main.c
-> +++ b/multipath/main.c
-> @@ -193,7 +193,7 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
->  {
->  	int i;
->  	struct multipath * mpp;
-> -	char params[PARAMS_SIZE], status[PARAMS_SIZE];
-> +	int flags = (cmd == CMD_LIST_SHORT ? DI_NOIO : DI_ALL);
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 6ed05ca65a0f..54471c75ddef 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1744,17 +1744,13 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
+>  	}
 >  
->  	if (dm_get_maps(curmp))
->  		return 1;
-> @@ -205,27 +205,22 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
->  		if (refwwid && strlen(refwwid) &&
->  		    strncmp(mpp->wwid, refwwid, WWID_SIZE)) {
->  			condlog(3, "skip map %s: out of scope", mpp->alias);
-> -			free_multipath(mpp, KEEP_PATHS);
-> -			vector_del_slot(curmp, i);
-> +			remove_map(mpp, pathvec, curmp, PURGE_VEC);
->  			i--;
->  			continue;
->  		}
+>  	/*
+> -	 * If in ->submit_bio we need to use blk_queue_split(), otherwise
+> -	 * queue_limits for abnormal requests (e.g. discard, writesame, etc)
+> -	 * won't be imposed.
+> -	 * If called from dm_wq_work() for deferred bio processing, bio
+> -	 * was already handled by following code with previous ->submit_bio.
+> +	 * Call blk_queue_split() so that queue_limits for abnormal requests
+> +	 * (e.g. discard, writesame, etc) are ensured to be imposed, while
+> +	 * it's not needed for regular IO, since regular IO will be split by
+> +	 * following __split_and_process_bio.
+>  	 */
+> -	if (current->bio_list) {
+> -		if (is_abnormal_io(bio))
+> -			blk_queue_split(&bio);
+> -		/* regular IO is split by __split_and_process_bio */
+> -	}
+> +	if (is_abnormal_io(bio))
+> +		blk_queue_split(&bio);
 >  
-> -		dm_get_map(mpp->alias, &mpp->size, params);
-> -		condlog(3, "params = %s", params);
-> -		dm_get_status(mpp->alias, status);
-> -		condlog(3, "status = %s", status);
-> -
-> -		disassemble_map(pathvec, params, mpp);
-> -		update_pathvec_from_dm(pathvec, mpp,
-> -				       (cmd == CMD_LIST_SHORT ?
-> -					DI_NOIO : DI_ALL));
-> +		if (update_multipath_table(mpp, pathvec, flags) != DMP_OK ||
-> +		    update_multipath_status(mpp) != DMP_OK) {
-> +			condlog(1, "error parsing map %s", mpp->wwid);
-> +			remove_map(mpp, pathvec, curmp, PURGE_VEC);
-> +			i--;
-> +			continue;
-> +		}
->  
->  		if (cmd == CMD_LIST_LONG)
->  			mpp->bestpg = select_path_group(mpp);
->  
-> -		disassemble_status(status, mpp);
-> -
->  		if (cmd == CMD_LIST_SHORT ||
->  		    cmd == CMD_LIST_LONG) {
->  			struct config *conf = get_multipath_config();
+>  	if (dm_get_md_type(md) == DM_TYPE_NVME_BIO_BASED)
+>  		return __process_bio(md, map, bio, ti);
+> -- 
+> 2.27.0
 > 
