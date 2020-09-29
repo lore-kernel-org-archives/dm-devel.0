@@ -1,16 +1,16 @@
 From: Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 18/23] libmultipath: fix log_thread startup
-	and teardown
-Date: Tue, 29 Sep 2020 11:18:13 +0200
-Message-ID: <f7e7f62ed6b79c08b2f494bcd45ba09e265de55b.camel@suse.com>
+Subject: Re: [PATCH 19/23] multipathd: move cleanup_{prio,
+ checkers, foreign} to libmultipath_exit
+Date: Tue, 29 Sep 2020 11:31:06 +0200
+Message-ID: <3ebea94ffd3be1a24c1f3a3159a337a7e878ce99.camel@suse.com>
 References: <20200924134054.14632-1-mwilck@suse.com>
-	<20200924134054.14632-19-mwilck@suse.com>
-	<20200928201523.GO3384@octiron.msp.redhat.com>
+	<20200924134054.14632-20-mwilck@suse.com>
+	<20200928202624.GP3384@octiron.msp.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20200928201523.GO3384@octiron.msp.redhat.com>
+In-Reply-To: <20200928202624.GP3384@octiron.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,50 +24,39 @@ To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 2020-09-28 at 15:15 -0500, Benjamin Marzinski wrote:
-> On Thu, Sep 24, 2020 at 03:40:49PM +0200, mwilck@suse.com wrote:
-> > From: Martin Wilck <mwilck@suse.com>
+On Mon, 2020-09-28 at 15:26 -0500, Benjamin Marzinski wrote:
+> On Thu, Sep 24, 2020 at 03:40:50PM +0200, mwilck@suse.com wrote:
 > > 
-> > This fixes several issues with the log_thread. First, the running
-> > flag logq_running should be set by the thread itself, not by
-> > log_thread_start()/_stop(). Second, the thread was both cancelled
-> > and
-> > terminated via a flag (again, logq_running). It's sufficient,
-> > and better, to just cancel it and use logq_running as indication
-> > for
-> > successful termination. Third, the locking wasn't cancel-safe in
-> > some
-> > places. Forth, log_thread_start() and log_thread_stop() didn't wait
-> > for
-> > startup/teardown properly. Fifth, using (pthread_t)0 is wrong
-> > (pthread_t is
-> > opaque; there's no guarantee that 0 is not a valid pthread_t
-> > value). Finally,
-> > pthread_cancel() was called under logq_lock, which doesn't make
-> > sense to
-> > me at all.
-> > 
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > ---
-> >  
-> >  	pthread_mutex_lock(&logev_lock);
-> > -	logq_running = 0;
-> > -	pthread_cond_signal(&logev_cond);
-> > -	pthread_mutex_unlock(&logev_lock);
-> > +	pthread_cleanup_push(cleanup_mutex, &logev_lock);
-> > +	running = logq_running;
-> > +	if (running) {
-> > +		pthread_cancel(log_thr);
-> > +		pthread_cond_signal(&logev_cond);
-> > +	}
-> > +	while (logq_running)
-> > +		pthread_cond_wait(&logev_cond, &logev_lock);
+> >  /*
+> >   * We don't support re-initialization after
+> > @@ -65,6 +66,9 @@ int libmultipath_init(void)
+> >  static void _libmultipath_exit(void)
+> >  {
+> >  	libmultipath_exit_called = true;
+> > +	cleanup_foreign();
 > 
-> If we're already going to join the thread, why do we have to wait for
-> the cleanup handler first? Won't the join do the waiting we need?
+> I don't really feel too strongly about this, but it seems to me that
+> there is a difference between the checkers and prioritizers, which
+> it seems like most users of libmultipath would want, and the foreign
+> code, which doesn't seem that way. libmpathpersist, for instance,
+> will use the checkers and prioritizers, but not the foreign code.
+> On the other hand, if the caller isn't using the foreign code,
+> then grabbing the lock and checking the foreign pointer shouldn't
+> take much time.
 
-Yes, I guess it would. I implemented it in a way analogous the startup
-sequence, but it's really not necessary for shutdown. Thanks for
-pointing it out.
+It would just be a few cycles. I want callers to have to worry about
+cleanup as little as possible. All else is error-prone IMO, and
+although I agree that the foreign functions are less important than
+checkers and prio, I thought it made sense to treat all our "plug-ins"
+the same way.
 
+Ideally I'd like to do checker/prio/foreign initialization completely
+lazily too, in the sense that callers don't need to worry about calling
+init_checkers() etc., either. But this series had to stop at some
+point.
+
+Either way, it's not a big issue, so please tell me if you feel
+strongly enough about it to ask me to revert the change.
+
+Regards,
 Martin
