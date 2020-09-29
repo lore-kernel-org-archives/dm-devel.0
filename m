@@ -1,81 +1,94 @@
-From: Brian Bunker <brian@purestorage.com>
-Subject: [PATCH] libmultipath: Extract the LUN number for
- peripheral, flat, and logical unit address methods
-Date: Mon, 28 Sep 2020 16:14:27 -0700
-Message-ID: <D7BC3D02-400E-4F70-9A61-6E959F5AE5A5@purestorage.com>
-Mime-Version: 1.0 (Mac OS X Mail 14.0 \(3654.0.3.2.33\))
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: JeffleXu <jefflexu@linux.alibaba.com>
+Subject: Re: dm: fix imposition of queue_limits in dm_wq_work() thread
+Date: Tue, 29 Sep 2020 12:08:07 +0800
+Message-ID: <2f6f1882-0519-22fc-a11c-645b721ac731@linux.alibaba.com>
+References: <20200927120435.44118-1-jefflexu@linux.alibaba.com>
+ <20200928160322.GA23320@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-block-owner@vger.kernel.org>
+In-Reply-To: <20200928160322.GA23320@redhat.com>
+Content-Language: en-US
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@redhat.com, joseph.qi@linux.alibaba.com, ming.lei@redhat.com, linux-block@vger.kernel.org
 List-Id: dm-devel.ids
 
-Rm9yIExVTnMgYmV0d2VlbiAwIGFuZCAyNTUgcGVyaXBoZXJhbCBhZGRyZXNzaW5nIGlzIHVzZWQu
-IEZvciBMVU5zIGhpZ2hlciB0aGFuIDI1NSB0aGUgTFVOIGFkZHJlc3NpbmcKc2hvdWxkIHN3aXRj
-aCB0byBmbGF0IGFjY29yZGluZyB0byB0aGUgc3BlY2lmaWNhdGlvbi4gSW5zdGVhZCBvZiBwcmlu
-dGluZyBvdXQgdGhlIExVTiBudW1iZXIgd2l0aG91dCByZWdhcmQgdG8KdGhlIHNoaWZ0aW5nIG9m
-IGFkZHJlc3MgbWV0aG9kLCBkaXNwbGF5IHRoZSBMVU4gYXMgaXQgd2FzIGludGVuZGVkIHRvIGJl
-IHRoZSB1c2VyIGNvbm5lY3RpbmcgdGhlIExVTi4gVGhlCmN1cnJlbnQgZGlzcGxheSBsZWF2ZXMg
-YSBub24tb2J2aW91cyAxNjM4NCBvZmZzZXQuCgpJbiBzaG9ydCwgYSBMVU4gY29ubmVjdGVkIGFz
-IDI1OCB3aWxsIHNob3cgdXAgaW4gbXVsdGlwYXRoIG91dHB1dCBhcyAxNjY0Mi4gSW5zdGVhZCBk
-aXNwbGF5IGl0IGFzIHRoZQpleHBlY3RlZCAyNTguIFRoaXMgaXMgZm9yIGRpc3BsYXkgb25seSBh
-bmQgZG9lc27igJl0IGNoYW5nZSB0aGUgYWN0dWFsIGNvbnRlbnRzIG9mIHRoZSBMVU4gdmFyaWFi
-bGUuCgpTaWduZWQtb2ZmLWJ5OiBCcmlhbiBCdW5rZXIgPGJyaWFuQHB1cmVzdG9yYWdlLmNvbT4K
-X19fCmRpZmYgLU5hdXIgYS9tdWx0aXBhdGgtdG9vbHMtMC44LjMvbGlibXVsdGlwYXRoL3ByaW50
-LmMgYi9tdWx0aXBhdGgtdG9vbHMtMC44LjMvbGlibXVsdGlwYXRoL3ByaW50LmMKLS0tIGEvbGli
-bXVsdGlwYXRoL3ByaW50LmMgICAgICAyMDIwLTA5LTI0IDEzOjUyOjE4LjY2MTgyODAxMSAtMDYw
-MAorKysgYi9saWJtdWx0aXBhdGgvcHJpbnQuYyAgICAgIDIwMjAtMDktMjggMTY6NTc6MzcuOTU2
-MjIyMjU4IC0wNjAwCkBAIC0yOSw2ICsyOSw3IEBACiAjaW5jbHVkZSAidWV2ZW50LmgiCiAjaW5j
-bHVkZSAiZGVidWcuaCIKICNpbmNsdWRlICJkaXNjb3ZlcnkuaCIKKyNpbmNsdWRlICJ1dGlsLmgi
-CiAKICNkZWZpbmUgTUFYKHgseSkgKCgoeCkgPiAoeSkpID8gKHgpIDogKHkpKQogI2RlZmluZSBN
-SU4oeCx5KSAoKCh4KSA+ICh5KSkgPyAoeSkgOiAoeCkpCkBAIC0zOTAsMTEgKzM5MSwxMiBAQAog
-ICAgICAgIGlmICghcHAgfHwgcHAtPnNnX2lkLmhvc3Rfbm8gPCAwKQogICAgICAgICAgICAgICAg
-cmV0dXJuIHNucHJpbnRmKGJ1ZmYsIGxlbiwgIiM6IzojOiMiKTsKIAorICAgICAgIGludCBkaXNw
-bGF5X2x1biA9IGV4dHJhY3RfbHVuX251bWJlcihwcC0+c2dfaWQubHVuKTsKICAgICAgICByZXR1
-cm4gc25wcmludGYoYnVmZiwgbGVuLCAiJWk6JWk6JWk6JWkiLAogICAgICAgICAgICAgICAgICAg
-ICAgICBwcC0+c2dfaWQuaG9zdF9ubywKICAgICAgICAgICAgICAgICAgICAgICAgcHAtPnNnX2lk
-LmNoYW5uZWwsCiAgICAgICAgICAgICAgICAgICAgICAgIHBwLT5zZ19pZC5zY3NpX2lkLAotICAg
-ICAgICAgICAgICAgICAgICAgICBwcC0+c2dfaWQubHVuKTsKKyAgICAgICAgICAgICAgICAgICAg
-ICAgZGlzcGxheV9sdW4pOwogfQogCiBzdGF0aWMgaW50CmRpZmYgLU5hdXIgYS9tdWx0aXBhdGgt
-dG9vbHMtMC44LjMvbGlibXVsdGlwYXRoL3V0aWwuYyBiL211bHRpcGF0aC10b29scy0wLjguMy9s
-aWJtdWx0aXBhdGgvdXRpbC5jCi0tLSBhL211bHRpcGF0aC10b29scy0wLjguMy9saWJtdWx0aXBh
-dGgvdXRpbC5jIDIwMTktMTAtMDIgMDE6MTU6MDMuMDAwMDAwMDAwIC0wNjAwCisrKyBiL211bHRp
-cGF0aC10b29scy0wLjguMy9saWJtdWx0aXBhdGgvdXRpbC5jIDIwMjAtMDktMjggMTY6NTY6MDAu
-ODUxMTY5MDcwIC0wNjAwCkBAIC00NzAsMyArNDcwLDI1IEBACiB7CiAgICAgICAgY2xvc2UoKGxv
-bmcpYXJnKTsKIH0KKworLyogRXh0cmFjdHMgdGhlIExVTiBudW1iZXIgZnJvbSB0aGUgYWRkcmVz
-c2luZyBtZXRob2QgZm9yCisgICBwZXJpcGhlcmFsLCBmbGF0LCBhbmQgTFVOIGFkZHJlc3Npbmcg
-bWV0aG9kcy4KKyAqLworaW50IGV4dHJhY3RfbHVuX251bWJlcihpbnQgbHVuKQoreworICAgICAg
-IGlmIChsdW4gPiBVSU5UMTZfTUFYKQorICAgICAgICAgICAgICAgcmV0dXJuIGx1bjsKKworICAg
-ICAgIHVpbnQ4X3QgYWRkcmVzc19tZXRob2QgPSAoKGx1biA+PiA4KSAmIDB4QzApID4+IDY7IC8q
-IGZpcnN0IHR3byBiaXRzIG9mIHRoZSAxNiBieXRlIExVTiAqLworICAgICAgIHN3aXRjaCAoYWRk
-cmVzc19tZXRob2QpIHsKKyAgICAgICAgICAgICAgIGNhc2UgMTogLyogRmxhdCBBZGRyZXNzaW5n
-IG1ldGhvZCAoMDFiKSAqLworICAgICAgICAgICAgICAgICAgICAgICByZXR1cm4gbHVuIC0gMHg0
-MDAwOworICAgICAgICAgICAgICAgY2FzZSAyOiAvKiBMb2dpY2FsIHVuaXQgYWRkcmVzc2luZyAo
-MDJiKSAqLworICAgICAgICAgICAgICAgICAgICAgICByZXR1cm4gbHVuICYgMHgwMDFGOworICAg
-ICAgICAgICAgICAgY2FzZSAwOiAvKiBQZXJpcGhlcmFsIGFkZHJlc3NpbmcgbWV0aG9kICgwMGIp
-ICovCisgICAgICAgICAgICAgICAgICAgICAgIGlmIChsdW4gPiAyNTUpCisgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgY29uZGxvZygzLCAiUGVyaXBoZXJhbCBhZGRyZXNzaW5nIHN1cHBv
-cnRzIHVwIHRvIDI1NiBMVU5zIik7CisgICAgICAgICAgICAgICBkZWZhdWx0OgorICAgICAgICAg
-ICAgICAgICAgICAgICByZXR1cm4gbHVuOworICAgICAgIH0KK30KZGlmZiAtTmF1ciBhL211bHRp
-cGF0aC10b29scy0wLjguMy9saWJtdWx0aXBhdGgvdXRpbC5oIGIvbXVsdGlwYXRoLXRvb2xzLTAu
-OC4zL2xpYm11bHRpcGF0aC91dGlsLmgKLS0tIGEvbXVsdGlwYXRoLXRvb2xzLTAuOC4zL2xpYm11
-bHRpcGF0aC91dGlsLmggMjAxOS0xMC0wMiAwMToxNTowMy4wMDAwMDAwMDAgLTA2MDAKKysrIGIv
-bXVsdGlwYXRoLXRvb2xzLTAuOC4zL2xpYm11bHRpcGF0aC91dGlsLmggMjAyMC0wOS0yOCAxNjo0
-MzozMi42MzI4Nzk3NjMgLTA2MDAKQEAgLTIyLDYgKzIyLDcgQEAKIGludCBwYXJzZV9wcmtleV9m
-bGFncyhjaGFyICpwdHIsIHVpbnQ2NF90ICpwcmtleSwgdWludDhfdCAqZmxhZ3MpOwogaW50IHNh
-ZmVfd3JpdGUoaW50IGZkLCBjb25zdCB2b2lkICpidWYsIHNpemVfdCBjb3VudCk7CiB2b2lkIHNl
-dF9tYXhfZmRzKGludCBtYXhfZmRzKTsKK2ludCBleHRyYWN0X2x1bl9udW1iZXIoaW50IGx1bik7
-CiAKICNkZWZpbmUgS0VSTkVMX1ZFUlNJT04obWFqLCBtaW4sIHB0YykgKCgoKG1haikgKiAyNTYp
-ICsgKG1pbikpICogMjU2ICsgKHB0YykpCiAjZGVmaW5lIEFSUkFZX1NJWkUoeCkgKHNpemVvZih4
-KS9zaXplb2YoKHgpWzBdKSkKCkJyaWFuIEJ1bmtlcgpTVyBFbmcKYnJpYW5AcHVyZXN0b3JhZ2Uu
-Y29tCgoKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRw
-czovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+I see. Thanks.
+
+On 9/29/20 12:03 AM, Mike Snitzer wrote:
+> On Sun, Sep 27 2020 at  8:04am -0400,
+> Jeffle Xu <jefflexu@linux.alibaba.com> wrote:
+>
+>> Hi Mike, would you mind further expalin why bio processed by dm_wq_work()
+>> always gets a previous ->submit_bio. Considering the following call graph:
+>>
+>> ->submit_bio, that is, dm_submit_bio
+>>    DMF_BLOCK_IO_FOR_SUSPEND set, thus queue_io()
+>>
+>> then worker thread dm_wq_work()
+>>    dm_process_bio  // at this point. the input bio is the original bio
+>>                       submitted to dm device
+>>
+>> Please let me know if I missed something.
+>>
+>> Thanks.
+>> Jeffle
+> In general you have a valid point, that blk_queue_split() won't have
+> been done for the suspended device case, but blk_queue_split() cannot be
+> used if not in ->submit_bio -- IIUC you cannot just do it from a worker
+> thread and hope to have proper submission order (depth first) as
+> provided by __submit_bio_noacct().  Because this IO will be submitted
+> from worker you could have multiple threads allocating from the
+> q->bio_split mempool at the same time.
+>
+> All said, I'm not quite sure how to address this report.  But I'll keep
+> at it and see what I can come up with.
+>
+> Thanks,
+> Mike
+>
+>> Original commit log:
+>> dm_process_bio() can be called by dm_wq_work(), and if the currently
+>> processing bio is the very beginning bio submitted to the dm device,
+>> that is it has not been handled by previous ->submit_bio, then we also
+>> need to impose the queue_limits when it's in thread (dm_wq_work()).
+>>
+>> Fixes: cf9c37865557 ("dm: fix comment in dm_process_bio()")
+>> Fixes: 568c73a355e0 ("dm: update dm_process_bio() to split bio if in ->make_request_fn()")
+>> Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+>> ---
+>>   drivers/md/dm.c | 16 ++++++----------
+>>   1 file changed, 6 insertions(+), 10 deletions(-)
+>>
+>> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+>> index 6ed05ca65a0f..54471c75ddef 100644
+>> --- a/drivers/md/dm.c
+>> +++ b/drivers/md/dm.c
+>> @@ -1744,17 +1744,13 @@ static blk_qc_t dm_process_bio(struct mapped_device *md,
+>>   	}
+>>   
+>>   	/*
+>> -	 * If in ->submit_bio we need to use blk_queue_split(), otherwise
+>> -	 * queue_limits for abnormal requests (e.g. discard, writesame, etc)
+>> -	 * won't be imposed.
+>> -	 * If called from dm_wq_work() for deferred bio processing, bio
+>> -	 * was already handled by following code with previous ->submit_bio.
+>> +	 * Call blk_queue_split() so that queue_limits for abnormal requests
+>> +	 * (e.g. discard, writesame, etc) are ensured to be imposed, while
+>> +	 * it's not needed for regular IO, since regular IO will be split by
+>> +	 * following __split_and_process_bio.
+>>   	 */
+>> -	if (current->bio_list) {
+>> -		if (is_abnormal_io(bio))
+>> -			blk_queue_split(&bio);
+>> -		/* regular IO is split by __split_and_process_bio */
+>> -	}
+>> +	if (is_abnormal_io(bio))
+>> +		blk_queue_split(&bio);
+>>   
+>>   	if (dm_get_md_type(md) == DM_TYPE_NVME_BIO_BASED)
+>>   		return __process_bio(md, map, bio, ti);
+>> -- 
+>> 2.27.0
+>>
