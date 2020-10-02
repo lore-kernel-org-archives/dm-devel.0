@@ -1,73 +1,79 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] libmultipath: Extract the LUN number for
- peripheral, flat, and logical unit address methods
-Date: Wed, 30 Sep 2020 14:08:13 +0200
-Message-ID: <f095e46c-05b0-0ea1-4d26-d101075f5ac3@suse.de>
-References: <D7BC3D02-400E-4F70-9A61-6E959F5AE5A5@purestorage.com>
-	<c2d499b3-b2d1-eaae-bf23-8875b974012a@linux.ibm.com>
+From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
+Subject: [PATCH v1] dm verity: Add support for signature verification with 2nd keyring
+Date: Fri,  2 Oct 2020 09:18:02 +0200
+Message-ID: <20201002071802.535023-1-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <c2d499b3-b2d1-eaae-bf23-8875b974012a@linux.ibm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-Content-Language: en-US
-To: Steffen Maier <maier@linux.ibm.com>, Brian Bunker <brian@purestorage.com>, device-mapper development <dm-devel@redhat.com>
-Cc: Benjamin Block <bblock@linux.ibm.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Deven Bowers <deven.desai@linux.microsoft.com>, Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>, Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com, linux-integrity@vger.kernel.org, linux-kernel@vger.kernel.org, =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@linux.microsoft.com>
 List-Id: dm-devel.ids
 
-T24gOS8zMC8yMCAxOjA5IFBNLCBTdGVmZmVuIE1haWVyIHdyb3RlOgo+IE9uIDkvMjkvMjAgMTox
-NCBBTSwgQnJpYW4gQnVua2VyIHdyb3RlOgo+PiBGb3IgTFVOcyBiZXR3ZWVuIDAgYW5kIDI1NSBw
-ZXJpcGhlcmFsIGFkZHJlc3NpbmcgaXMgdXNlZC4gRm9yIExVTnMgCj4+IGhpZ2hlciB0aGFuIDI1
-NSB0aGUgTFVOIGFkZHJlc3NpbmcKPj4gc2hvdWxkIHN3aXRjaCB0byBmbGF0IGFjY29yZGluZyB0
-byB0aGUgc3BlY2lmaWNhdGlvbi4gSW5zdGVhZCBvZiAKPj4gcHJpbnRpbmcgb3V0IHRoZSBMVU4g
-bnVtYmVyIHdpdGhvdXQgcmVnYXJkIHRvCj4+IHRoZSBzaGlmdGluZyBvZiBhZGRyZXNzIG1ldGhv
-ZCwgZGlzcGxheSB0aGUgTFVOIGFzIGl0IHdhcyBpbnRlbmRlZCB0byAKPj4gYmUgdGhlIHVzZXIg
-Y29ubmVjdGluZyB0aGUgTFVOLiBUaGUKPj4gY3VycmVudCBkaXNwbGF5IGxlYXZlcyBhIG5vbi1v
-YnZpb3VzIDE2Mzg0IG9mZnNldC4KPj4KPj4gSW4gc2hvcnQsIGEgTFVOIGNvbm5lY3RlZCBhcyAy
-NTggd2lsbCBzaG93IHVwIGluIG11bHRpcGF0aCBvdXRwdXQgYXMgCj4+IDE2NjQyLiBJbnN0ZWFk
-IGRpc3BsYXkgaXQgYXMgdGhlCj4+IGV4cGVjdGVkIDI1OC4gVGhpcyBpcyBmb3IgZGlzcGxheSBv
-bmx5IGFuZCBkb2VzbuKAmXQgY2hhbmdlIHRoZSBhY3R1YWwgCj4+IGNvbnRlbnRzIG9mIHRoZSBM
-VU4gdmFyaWFibGUuCj4gCj4gW3RoaXMgaXMga2luZCBvZiBhIGNvbnRpbnVhdGlvbiBvZiB0aGUg
-ZGlzY3Vzc2lvbiB0aGF0IHN0YXJ0ZWQgd2l0aCB0aGUgCj4gMXN0IHZlcnNpb24gb2YgdGhlIHBh
-dGggaW4gCj4gaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9hcmNoaXZlcy9kbS1kZXZlbC8yMDIwLVNl
-cHRlbWJlci9tc2cwMDU5Mi5odG1sXQo+IAo+IFVzZXJzIGFuZCB0b29scyBzdWNoIGFzIAo+IGh0
-dHBzOi8vZ2l0aHViLmNvbS9pYm0tczM5MC10b29scy9zMzkwLXRvb2xzL2Jsb2IvbWFzdGVyL3pp
-b21vbi96aW9tb24gCj4gcGFyc2UgdGhlIGhjaWwgb3V0cHV0IG9mIG11bHRpcGF0aChkKSB0byBm
-aW5kIHRoZSBjb3JyZXNwb25kaW5nIExpbnV4IAo+IFNDU0kgZGV2aWNlIGJ5IGl0cyB3ZWxsLWRl
-ZmluZWQgbmFtZS4KPiBJIHRoaW5rIHRoaXMgY2hhbmdlIHdvdWxkIGJyZWFrIHRob3NlLgo+IAo+
-IElJUkMsIHRvb2xzIHN1Y2ggYXMgcmVzY2FuLXNjc2ktYnVzLnNoIFtzZzNfdXRpbHNdIHdlcmUg
-aW50ZW50aW9uYWxseSAKPiBjaGFuZ2VkIGZyb20gZGVjb2RpbmcgdGhlIExVTiBmb3JtYXQgdG8g
-d29ya2luZyB3aXRoIGFuIG9wYXF1ZSA2NC1iaXQgTFVOLgo+IFtodHRwczovL2xvcmUua2VybmVs
-Lm9yZy9saW51eC1zY3NpLzUxMjg4QzVGLjEwODA4MDJAc3VzZS5kZS9ULyNtYWJhOTU0ZmM1MGVm
-YTI0ZTRjMDU0NDUwNmQ0YzQwMjUyNjlkNmM2MF0gCj4gCkkgY2FuIG5vdCBhZ3JlZSBtb3JlLgpU
-aGUgcHJpbmNpcGFsIHByb2JsZW0gaXMgdGhhdCB0aGVyZSB3YXMgYSBzaGlmdCBpbiB0aGUgZGVm
-aW5pdGlvbiBvZiB0aGUgCkxVTiBudW1iZXIgYmV0d2VlbiBTQ1NJLTMvU0FNIGFuZCBTQU0tMjsg
-cHJpb3IgdG8gU0FNLTIgX2FueV8gNjQtYml0IApudW1iZXIgd2FzIGEgdmFsaWQgTFVOLCB3aGVy
-ZWFzIFNBTS0yIGludHJvZHVjZWQgdGhlIExVTiBudW1iZXIgc3RydWN0dXJlLgpTbyBhbnkgbWVh
-bmluZyBhIExVTiBtaWdodCBoYXZlIGRlcGVuZHMgb24gdGhlIGNsYWltZWQgc3RhbmRhcmQuCkFk
-ZGl0aW9uYWxseSwgcXVpdGUgc29tZSBhcnJheXMgb3BlcmF0ZSBpbiAnbGVnYWN5JyBtb2RlLCB0
-cnlpbmcgdG8gCnByZXNlcnZlIGJhY2t3YXJkcyBjb21wYWJpbGl0eSB3aXRoIHRoZSBvcmlnaW5h
-bCBTQ1NJLTIgc3RhbmRhcmQuCkhlbmNlIGZpZ3VyaW5nIG91dCB3aGljaCBzdGFuZGFyZCBpcyBh
-Y3R1YWxseSB1c2VkIGJ5IHRoZSBpbXBsZW1lbnRhdGlvbiAKaXMgY2hhbGxlbmdpbmcgYXQgdGlt
-ZXMuCgpCdXQgaXQgYWxzbyBtZWFucyB0aGF0IExVTiAweDQxMDAgY291bGQgcmVmZXIgdG8gTFVO
-IDE2NjQwIChmb3IgU0NTSS0zKSwgCm9yIHRvIExVTiAyNTYgKGZvciBTQU0tMikuCk9yIHRoZSBk
-ZXZpY2UgbWlnaHQgY2hvb3NlIHRvIHVzZSBoaWVyYXJjaGljYWwgTFVOIGFkZHJlc3NpbmcsIHdo
-aWNoIAptYWtlcyBpdCBwcmV0dHkgaGFyZCB0byBleHRyYWN0IGEgdmFsaWQgKGFuZCB1bmlxdWUh
-KSBMVU4gbnVtYmVyLgoKU28gaW4gdGhlIGVuZCB3ZSBkZWNpZGVkIHRvIF9ub3RfIGRlY29kZSB0
-aGUgTFVOIG51bWJlciwgYXMgdGhlIGludGVybmFsIApzdHJ1Y3R1cmUgaXMgb25seSBldmVyIHVz
-ZWZ1bCBmb3IgdGhlIHRhcmdldCwgbm90IHRoZSBpbml0aWF0b3IuCgpDaGVlcnMsCgpIYW5uZXMK
-LS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAgICAgICAgICAgS2VybmVsIFN0b3JhZ2UgQXJjaGl0
-ZWN0CmhhcmVAc3VzZS5kZQkJCSAgICAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNV
-U0UgU29mdHdhcmUgU29sdXRpb25zIEdlcm1hbnkgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkg
-TsO8cm5iZXJnCkhSQiAzNjgwOSAoQUcgTsO8cm5iZXJnKSwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZl
-cgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8v
-d3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+From: Mickaël Salaün <mic@linux.microsoft.com>
+
+Add a new DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING configuration
+to enable dm-verity signatures to be verified against the secondary
+trusted keyring.  This allows certificate updates without kernel update
+and reboot, aligning with module and kernel (kexec) signature
+verifications.
+
+Signed-off-by: Mickaël Salaün <mic@linux.microsoft.com>
+Cc: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
+Cc: Mike Snitzer <snitzer@redhat.com>
+Cc: Milan Broz <gmazyland@gmail.com>
+---
+ drivers/md/Kconfig                | 13 ++++++++++++-
+ drivers/md/dm-verity-verify-sig.c |  9 +++++++--
+ 2 files changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 30ba3573626c..63870fdfe8ce 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -530,11 +530,22 @@ config DM_VERITY_VERIFY_ROOTHASH_SIG
+ 	bool "Verity data device root hash signature verification support"
+ 	depends on DM_VERITY
+ 	select SYSTEM_DATA_VERIFICATION
+-	  help
++	---help---
+ 	  Add ability for dm-verity device to be validated if the
+ 	  pre-generated tree of cryptographic checksums passed has a pkcs#7
+ 	  signature file that can validate the roothash of the tree.
+ 
++	  By default, rely on the builtin trusted keyring.
++
++	  If unsure, say N.
++
++config DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
++	bool "Verity data device root hash signature verification with secondary keyring"
++	depends on DM_VERITY_VERIFY_ROOTHASH_SIG
++	depends on SECONDARY_TRUSTED_KEYRING
++	---help---
++	  Rely on the secondary trusted keyring to verify dm-verity signatures.
++
+ 	  If unsure, say N.
+ 
+ config DM_VERITY_FEC
+diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
+index 614e43db93aa..29385dc470d5 100644
+--- a/drivers/md/dm-verity-verify-sig.c
++++ b/drivers/md/dm-verity-verify-sig.c
+@@ -119,8 +119,13 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
+ 	}
+ 
+ 	ret = verify_pkcs7_signature(root_hash, root_hash_len, sig_data,
+-				sig_len, NULL, VERIFYING_UNSPECIFIED_SIGNATURE,
+-				NULL, NULL);
++				sig_len,
++#ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
++				VERIFY_USE_SECONDARY_KEYRING,
++#else
++				NULL,
++#endif
++				VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
+ 
+ 	return ret;
+ }
+-- 
+2.28.0
