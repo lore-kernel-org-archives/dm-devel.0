@@ -6,87 +6,86 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,DKIM_ADSP_CUSTOM_MED,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
 	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 84236C433DF
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:20:58 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 749F4C43467
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:20:59 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id D39F120848
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:20:57 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D39F120848
+	by mail.kernel.org (Postfix) with ESMTPS id C8BEE20848
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:20:58 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C8BEE20848
 Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=google.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-503-UyueqI9OPMeXa76-Be8Tbw-1; Fri, 16 Oct 2020 06:20:54 -0400
-X-MC-Unique: UyueqI9OPMeXa76-Be8Tbw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-290-qcvktNI3N2GfF5WYAqCE9Q-1; Fri, 16 Oct 2020 06:20:55 -0400
+X-MC-Unique: qcvktNI3N2GfF5WYAqCE9Q-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 33575100746A;
-	Fri, 16 Oct 2020 10:20:49 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 33D6281CBDD;
+	Fri, 16 Oct 2020 10:20:51 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 19AC176649;
-	Fri, 16 Oct 2020 10:20:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 168035C1D0;
+	Fri, 16 Oct 2020 10:20:51 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E6E4044A62;
-	Fri, 16 Oct 2020 10:20:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E0EDA44A64;
+	Fri, 16 Oct 2020 10:20:50 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09FLtjaF001954 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 15 Oct 2020 17:55:45 -0400
+	id 09FM5VY2002643 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 15 Oct 2020 18:05:31 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 96CE62166BA0; Thu, 15 Oct 2020 21:55:45 +0000 (UTC)
+	id 402772011540; Thu, 15 Oct 2020 22:05:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 915AE2166B28
-	for <dm-devel@redhat.com>; Thu, 15 Oct 2020 21:55:43 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3B55B2011541
+	for <dm-devel@redhat.com>; Thu, 15 Oct 2020 22:05:27 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4F793800186
-	for <dm-devel@redhat.com>; Thu, 15 Oct 2020 21:55:43 +0000 (UTC)
-Received: from mail-pf1-f196.google.com (mail-pf1-f196.google.com
-	[209.85.210.196]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-190-uaLTzILtPuOsVjtHMMOkdA-1; Thu, 15 Oct 2020 17:55:41 -0400
-X-MC-Unique: uaLTzILtPuOsVjtHMMOkdA-1
-Received: by mail-pf1-f196.google.com with SMTP id 144so246270pfb.4
-	for <dm-devel@redhat.com>; Thu, 15 Oct 2020 14:55:40 -0700 (PDT)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BB03C858289
+	for <dm-devel@redhat.com>; Thu, 15 Oct 2020 22:05:27 +0000 (UTC)
+Received: from mail-pj1-f66.google.com (mail-pj1-f66.google.com
+	[209.85.216.66]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-338-ghOj-tCxPNueWVGrQMNDsg-1; Thu, 15 Oct 2020 18:05:25 -0400
+X-MC-Unique: ghOj-tCxPNueWVGrQMNDsg-1
+Received: by mail-pj1-f66.google.com with SMTP id az3so213679pjb.4
+	for <dm-devel@redhat.com>; Thu, 15 Oct 2020 15:05:25 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20161025;
 	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
 	:mime-version:content-disposition:in-reply-to;
-	bh=Mp0fFCaPEBpQGNEbuV9IgZPXZ47zhWeprp5HxFaRp04=;
-	b=lSrxP27F9vs7jYQIYAqGtdFLQb5NGDWawWIXnjM4b1lxMpq7n7ZaA3hP7syFKUToqA
-	LpEktHIfRNpovonMbGMogOxoJEAHpEP8tOg7BI2M9R2E4ReGAKynOrYirRAgMrO9Mp3e
-	Xjfw3+qqph1zKEbHHev1Q9MY4/CKrD4q8zuSpzjedsfivECb0ivFX3GPUYqJCTC2Vvaq
-	IE+SAeEv5mIxykbgjoT8pSHFBQ0QHXquDeMlIFMr5oHiP+/yv4YNE/RRde2+AKrWlDd7
-	lqdvTHX93rJFXoJi2PkXyeFsvG5CRkHkIwyzkpl6wku+eHmbrgwaPHYlkWYs9O7TGVh/
-	YbnQ==
-X-Gm-Message-State: AOAM533WZ+4AfpeX9y8gkzzFNpzvnGAi/aaxt/vH7z+BeUXu1HRrp1Du
-	hxgvMwCHXvJv9Iv8vKhIRC7IeQ==
-X-Google-Smtp-Source: ABdhPJxLXVcVr8KojpvEjCXdEZ6KAspUKoe2F0+QMs61OvnoBOXCEoHxSWNtaR7ijwwz2xclViQPrQ==
-X-Received: by 2002:a62:7b11:0:b029:156:3610:7e25 with SMTP id
-	w17-20020a627b110000b029015636107e25mr614898pfc.53.1602798939559;
-	Thu, 15 Oct 2020 14:55:39 -0700 (PDT)
+	bh=700dSlreVGZIbwr3AdAuK7QeFJxaPoeuAx3F/ELDRDo=;
+	b=lG917whoBoCUUILqhB/fxpPA0AGxKe5RuGuJ1o1OJlOu0d7ZPn9MWfCVysFqJbPFWF
+	v02bqfWFE7KFtm69WOhI1DORXgtcnIC/4/JkiX1sMPwCJuygjWuzHNNVu4TaCWZeEZPa
+	zVgn1QkvcXCASAroLRslJ+IFR4vI5BBf3L0qE59jniyB734yVfh1z9rOJmr2gltiAGsP
+	hiJyfcmouCq8ILnSdF+og4RpgFCY6QV2cdW4BiUkCDI9SSStlqZRV0T6DYNxpp+Zl1Yi
+	33hgmqDjJSTf/V1l2flf/RF42cTwm3i9rloMTmOQjvtoM3lCIqng501eqLV9uQxrjkCI
+	pHug==
+X-Gm-Message-State: AOAM531WeYEqAhIW/otZp55u37IyLhD1mE6ex4+IL+YMRXz2ozoBgnwT
+	H8CbEzufuN4R2Nf3+AT7TIYeiQ==
+X-Google-Smtp-Source: ABdhPJzUX9wxifuk/NX4KO9hxnbTmPIzCu5nOp+krk3Lv2bCZAZCkS014tzTx/UPz0a1f2BvXPsGKQ==
+X-Received: by 2002:a17:90a:9317:: with SMTP id
+	p23mr762160pjo.160.1602799523789; 
+	Thu, 15 Oct 2020 15:05:23 -0700 (PDT)
 Received: from google.com (154.137.233.35.bc.googleusercontent.com.
-	[35.233.137.154]) by smtp.gmail.com with ESMTPSA id
-	js21sm303276pjb.14.2020.10.15.14.55.38
+	[35.233.137.154])
+	by smtp.gmail.com with ESMTPSA id e8sm295045pgj.8.2020.10.15.15.05.23
 	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Thu, 15 Oct 2020 14:55:38 -0700 (PDT)
-Date: Thu, 15 Oct 2020 21:55:35 +0000
+	Thu, 15 Oct 2020 15:05:23 -0700 (PDT)
+Date: Thu, 15 Oct 2020 22:05:19 +0000
 From: Satya Tangirala <satyat@google.com>
 To: Mike Snitzer <snitzer@redhat.com>
-Message-ID: <20201015215535.GA48329@google.com>
+Message-ID: <20201015220519.GB48329@google.com>
 References: <20200909234422.76194-1-satyat@google.com>
 	<20200909234422.76194-3-satyat@google.com>
 	<20200924012103.GE10500@redhat.com>
-	<20200924074810.GB1894729@google.com>
-	<20200924134021.GA13849@redhat.com>
+	<20200924073842.GA1894729@google.com>
+	<20200924142353.GC13849@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <20200924134021.GA13849@redhat.com>
+In-Reply-To: <20200924142353.GC13849@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -95,7 +94,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Fri, 16 Oct 2020 06:18:45 -0400
 Cc: Jens Axboe <axboe@kernel.dk>, Eric Biggers <ebiggers@google.com>,
@@ -116,7 +115,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -125,8 +124,8 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Sep 24, 2020 at 09:40:22AM -0400, Mike Snitzer wrote:
-> On Thu, Sep 24 2020 at  3:48am -0400,
+On Thu, Sep 24, 2020 at 10:23:54AM -0400, Mike Snitzer wrote:
+> On Thu, Sep 24 2020 at  3:38am -0400,
 > Satya Tangirala <satyat@google.com> wrote:
 > 
 > > On Wed, Sep 23, 2020 at 09:21:03PM -0400, Mike Snitzer wrote:
@@ -193,31 +192,63 @@ On Thu, Sep 24, 2020 at 09:40:22AM -0400, Mike Snitzer wrote:
 > > > >  	atomic_t open_count;
 > > > 
 > > > Any reason you placed the ksm member where you did?
+> > > 
+> > > Looking at 'struct blk_keyslot_manager' I'm really hating adding that
+> > > bloat to every DM device for a feature that really won't see much broad
+> > > use (AFAIK).
+> > > 
+> > > Any chance you could allocate 'struct blk_keyslot_manager' as needed so
+> > > that most users of DM would only be carrying 1 extra pointer (set to
+> > > NULL)?
 > >
-> > As in, any reason why it's placed right after the struct request_queue
-> > *queue? The ksm is going to be set up in the request_queue and is a part
-> > of the request_queue is some sense, so it seemed reasonable to me to
-> > group them together....but I don't think there's any reason it *has* to
-> > be there, if you think it should be put elsewhere (or maybe I'm
-> > misunderstanding your question :) ).
+> > I don't think there's any technical problem with doing that - the only
+> > other thing that would need addressing is that the patch uses
+> > "container_of" on that blk_keyslot_manager in dm_keyslot_evict() to get
+> > a pointer to the struct mapped_device. I could try adding a "private"
+> > field to struct blk_keyslot_manager and store a pointer to the struct
+> > mapped_device there).
 > 
-> Placing the full struct where you did is highly disruptive to the prior
-> care taken to tune alignment of struct members within mapped_device.
+> Yes, that'd be ideal.
 > 
-Ah I see - sorry about that! I ended up removing it entirely in the next
-version of this series while trying to address this and your other
-comments :). The next version is at
+> As for the lifetime of the struct blk_keyslot_manager pointer DM would
+> manage (in your future code revision): you meantioned in one reply that
+> the request_queue takes care of setting up the ksm... but the ksm
+> is tied to the queue at a later phase using blk_ksm_register(). 
+> 
+I probably wasn't clear in that reply :(. So the request_queue isn't
+responsible for setting up the ksm - setting up the ksm in the request
+queue is the responsibility of the DM device.
+> In any case, I think my feature reequest (to have DM allocate the ksm
+> struct only as needed) is a bit challenging because of how DM allocates
+> the request_queue upfront in alloc_dev() and then later completes the
+> request_queue initialization based on DM_TYPE* in dm_setup_md_queue().
+> 
+> It _could_ be that you'll need to add a new DM_TYPE_KSM_BIO_BASED or
+> something.  But you have a catch-22 in that the dm-table.c code to
+> establish the intersection of supported modes assumes ksm is already
+> allocated.  So something needs to give by reasoning through: _what_ is
+> the invariant that will trigger the delayed allocation of the ksm
+> struct?  I don't yet see how you can make that informed decision that
+> the target(s) in the DM table _will_ use the ksm if it exists.
+> 
+What I tried doing in the next version that I just sent out was to get
+the DM device to set up the ksm as appropriate on table swaps (and also
+to verify the "new" ksm on table swaps and loads, so that we reject any
+new table that would require a new ksm that would drop any capabability
+that the current ksm supports)
+> But then once the ksm is allocated, it never gets allocated again
+> because md->queue->ksm is already set, and it inherits the lifetime that
+> is used when destroying the mapped_device (md->queue, etc).
+>
+This is what the new version of the series does :). It also just sets up
+the ksm directly in md->queue, and completely drops the md->ksm field
+(because unless I'm misunderstanding things, each DM device is
+associated with exactly one queue).
 
-https://lore.kernel.org/linux-block/20201015214632.41951-5-satyat@google.com/
+Btw, the new version is at
 
-> Switching to a pointer will be less so, but even still it might be best
-> to either find a hole in the struct (not looked recently, but there may
-> not be one) or simply put it at the end of the structure.
-> 
-> The pahole utility is very useful for this kind of struct member
-> placement, etc.  But it is increasingly unavailable in modern Linux
-> distros...
-> 
+https://lore.kernel.org/linux-block/20201015214632.41951-1-satyat@google.com/
+
 > Mike
 > 
 
