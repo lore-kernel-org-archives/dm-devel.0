@@ -2,124 +2,80 @@ Return-Path: <SRS0=9700=DW=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MSGID_FROM_MTA_HEADER,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4F503C433E7
-	for <dm-devel@archiver.kernel.org>; Thu, 15 Oct 2020 08:08:28 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A8792C433E7
+	for <dm-devel@archiver.kernel.org>; Thu, 15 Oct 2020 16:52:51 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 8D4BC2224A
-	for <dm-devel@archiver.kernel.org>; Thu, 15 Oct 2020 08:08:27 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 8D4BC2224A
-Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=ddn.com
+	by mail.kernel.org (Postfix) with ESMTPS id 05E9B2067D
+	for <dm-devel@archiver.kernel.org>; Thu, 15 Oct 2020 16:52:50 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="GXt0UiU9"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 05E9B2067D
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1602780769;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=s8kJGhWxlH/7UihaH9l3IrHqlOCpByU2aK5PCYQVS+w=;
+	b=GXt0UiU983pazweUyDIjs3WAsVEEfRUDUo2hkqc6bFfaKa+Unxz66tmcNIqsw1hGBXD6Zk
+	KrhOVh9ZPms69nfMMYLqOW1MpKeIf/OVb6AQqKmYW2pQKxuyaKC3nyNHE83nQfyHgCXqzF
+	Flp+tKEhUEeOoJ45VjkpIpnufoZ/8MY=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-476-qGFic-78NrKBJOLqEYL4UA-1; Thu, 15 Oct 2020 04:08:24 -0400
-X-MC-Unique: qGFic-78NrKBJOLqEYL4UA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-245-JJtWbr5CMD67HAxiBlryvA-1; Thu, 15 Oct 2020 12:52:46 -0400
+X-MC-Unique: JJtWbr5CMD67HAxiBlryvA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2D09618A0763;
-	Thu, 15 Oct 2020 08:08:19 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 06D8D60C0F;
-	Thu, 15 Oct 2020 08:08:19 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E5DD1101962B;
+	Thu, 15 Oct 2020 16:52:40 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E196C6EF54;
+	Thu, 15 Oct 2020 16:52:39 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D1D071826D38;
-	Thu, 15 Oct 2020 08:08:18 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0FFFB5810D;
+	Thu, 15 Oct 2020 16:52:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
+	[10.5.11.11])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09DEv2aP021585 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 13 Oct 2020 10:57:03 -0400
+	id 09FGqY2j030706 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 15 Oct 2020 12:52:34 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id B74682A13EF; Tue, 13 Oct 2020 14:57:02 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B14B62A13F2
-	for <dm-devel@redhat.com>; Tue, 13 Oct 2020 14:56:59 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A7693811E79
-	for <dm-devel@redhat.com>; Tue, 13 Oct 2020 14:56:59 +0000 (UTC)
-Received: from NAM04-DM6-obe.outbound.protection.outlook.com
-	(mail-dm6nam08on2077.outbound.protection.outlook.com [40.107.102.77])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-176-zzvKuEo4NNybegS-TQShRA-1; Tue, 13 Oct 2020 10:56:57 -0400
-X-MC-Unique: zzvKuEo4NNybegS-TQShRA-1
-Received: from MN2PR19MB2976.namprd19.prod.outlook.com (2603:10b6:208:104::31)
-	by MN2PR19MB3216.namprd19.prod.outlook.com (2603:10b6:208:156::23)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3455.24;
-	Tue, 13 Oct 2020 14:56:53 +0000
-Received: from MN2PR19MB2976.namprd19.prod.outlook.com
-	([fe80::6c23:b8b9:942e:2290]) by
-	MN2PR19MB2976.namprd19.prod.outlook.com
-	([fe80::6c23:b8b9:942e:2290%6]) with mapi id 15.20.3455.030;
-	Tue, 13 Oct 2020 14:56:53 +0000
-To: dm-devel@redhat.com
-From: Aaron Knister <aknister@ddn.com>
-Message-ID: <411a5a5f-c1e5-6cc6-b7ab-7c2ed053398d@ddn.com>
-Date: Tue, 13 Oct 2020 10:56:42 -0400
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:68.0)
-	Gecko/20100101 Thunderbird/68.12.0
-X-Originating-IP: [100.16.217.82]
-X-ClientProxiedBy: BYAPR06CA0053.namprd06.prod.outlook.com
-	(2603:10b6:a03:14b::30) To MN2PR19MB2976.namprd19.prod.outlook.com
-	(2603:10b6:208:104::31)
+	id 7A94376672; Thu, 15 Oct 2020 16:52:34 +0000 (UTC)
+Received: from localhost (unknown [10.18.25.174])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A51DD76649;
+	Thu, 15 Oct 2020 16:52:30 +0000 (UTC)
+Date: Thu, 15 Oct 2020 12:52:29 -0400
+From: Mike Snitzer <snitzer@redhat.com>
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Message-ID: <20201015165229.GA5513@redhat.com>
+References: <20201015150504.1319098-1-mic@digikod.net>
 MIME-Version: 1.0
-X-MS-Exchange-MessageSentRepresentingType: 1
-Received: from DDN11654m.local (100.16.217.82) by
-	BYAPR06CA0053.namprd06.prod.outlook.com (2603:10b6:a03:14b::30)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3455.21
-	via Frontend Transport; Tue, 13 Oct 2020 14:56:52 +0000
-X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: 06fad271-0042-4483-454e-08d86f88388a
-X-MS-TrafficTypeDiagnostic: MN2PR19MB3216:
-X-Microsoft-Antispam-PRVS: <MN2PR19MB3216ECF3A140AAA7782A79B0C6040@MN2PR19MB3216.namprd19.prod.outlook.com>
-X-MS-Oob-TLC-OOBClassifiers: OLM:10000
-X-MS-Exchange-SenderADCheck: 1
-X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: hMEPGO/PUyWQhcJZhIYyq5jHGBmA4NEbRLCCZUxCmNdG70z+yv+FiqxdOS8Vt6tSyfWQQZQfb5KGALg2RSySBOH3s7jntm4Gsku3SJSNRtTvH7mOi/+DmzpWrA4DM2onm/DwKSuxLmEiQBH6hJ1TlCg0jlriVd5XsjNf2yYINYtm25Mc3Qed7RG/8jhIXNdHUAelLrNn0tCc4U2io8AjB09LWG+t0LKeH6TlfZTYg6/6y1kN9lzewqEtBFpUX8QI6MCUgKMqAG4QoTIP8u2ghoDPlRTO91kQ/7bIF0ShFuEvvR8z1XAJ2n6jyzVJ6xCxBnTl1Jx9eWsvHnerzT013Bu9ee84Oa54tvdLG/B67IxD26K+R//fvuK/9PM+AjKJ+c3bQyR44GWOLjLyoZTvN3F4Ow8OnLV6d5I8+ZYIPSZScMy6LJ/XwRgGGrlilU8fM0859yPPqVLiv82kuzXSUw==
-X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:MN2PR19MB2976.namprd19.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(4636009)(136003)(396003)(366004)(39830400003)(376002)(346002)(6512007)(8936002)(45080400002)(8676002)(6486002)(6506007)(26005)(478600001)(966005)(83080400001)(52116002)(2616005)(16526019)(186003)(956004)(2906002)(83380400001)(31686004)(6666004)(66556008)(5660300002)(31696002)(36756003)(316002)(66476007)(66946007)(86362001)(6916009)(43740500002);
-	DIR:OUT; SFP:1101
-X-MS-Exchange-AntiSpam-MessageData: 6LcO8+YFTHkYcyRsnTuI/jyorLQmecIg1CEEg4VZ+l5lS3oPgm7Xs1gCR43K/AR/n+YG6CDW2ZjhJYQct/Axfb/Y5YnhWfn0+QEV7geOoLRPpVobQueTjV0yzRvzHsSO72mca8ZYoe+N/b0od/qaF+d+HqKT6zxpoplbqrYh0Hs8TmLzQ0R1L3jG95wwXfVKibrebart4RoVbD/mYPX8UG3DTKbhneth3TxC/LMjz8v5dlFPyOCTncXvWByY6gLi+aUUwpRG3LXdpPEcxDQ9ZGntENasO7GrCOUQPcxr0jUZNclU1bsa+bXG9rYKMKdAHFE58MLmqCmaSOzPis7LAB6AGum1Oq/ymXWdyzMCEHZ3vFhbFEFdpaHK3GbutXOCELHu++jXfrcvP5f93Q3YT5SWZ/S6l5iFnPqz3DZ806R/aKxawSAiw+g9esz1Z/u0iZCuuZUkeCRXrVuqFsqJHJwRBkJvo+fSc+M4L8TLOJd772stjAP2iuYVjAkS4ik/dvfo4wUTv6S6bx2pjw8/3cpN20Df50yttEBv2BZxxMfUdy/xEHvuD4JcnG5RR9Fz7sV9ypWDrDtvpWVZ87vhaAfVvRJ7zK8bLrLqWd6sCkQpxbFF32nn5MlrYOFVydXboPFyT55zSEGC8EX6zmDpXg==
-X-OriginatorOrg: ddn.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 06fad271-0042-4483-454e-08d86f88388a
-X-MS-Exchange-CrossTenant-AuthSource: MN2PR19MB2976.namprd19.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 13 Oct 2020 14:56:53.0814 (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 753b6e26-6fd3-43e6-8248-3f1735d59bb4
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: GjYHIt9pSlmU4z1U8GYn+DikUJUbEadhMZPHh+CADqhRzUcxTpg60fqJrtn0mHEHnL3gjhMfSOcMGSdENJwcbA==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: MN2PR19MB3216
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 09DEv2aP021585
+In-Reply-To: <20201015150504.1319098-1-mic@digikod.net>
+User-Agent: Mutt/1.5.21 (2010-09-15)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Thu, 15 Oct 2020 04:07:55 -0400
-Subject: [dm-devel] use after free with blk_mq_update_nr_requests racing
- with do_resume/dm_swap_table
+Cc: Deven Bowers <deven.desai@linux.microsoft.com>,
+	linux-kernel@vger.kernel.org,
+	Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>,
+	=?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@linux.microsoft.com>,
+	dm-devel@redhat.com, linux-integrity@vger.kernel.org,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>,
+	Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
+Subject: Re: [dm-devel] [PATCH v2] dm verity: Add support for signature
+ verification with 2nd keyring
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -133,165 +89,128 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Disposition: inline
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-SGkgQWxsLAoKSSd2ZSBiZWVuIGNoYXNpbmcgZG93biBhIGtlcm5lbCBwYW5pYyBbMl0gb24gYSBS
-SEVMNyBrZXJuZWwgdGhhdCBzdGVtcyAKZnJvbSBibGtfZG9uZV9zb2Z0aXJxIGNhbGxpbmcgZG1f
-ZG9uZSBhdHRlbXB0aW5nIHRvIHJlZmVyZW5jZSB0aW8tPnRpLCAKaG93ZXZlciB0aW8tPnRpIGhh
-cyBiZWVuIGZyZWVkIHdoaWNoIGxlYWRzIHRvIHRoZSBwYW5pYy4KCkl0IHRvb2sgbWUgYSB3aGls
-ZSB0byBmaWd1cmUgb3V0IHdoYXQgd2FzIGdvaW5nIG9uLCBidXQgaXQgYXBwZWFycyBhcyAKdGhv
-dWdoIGJsa19tcV91cGRhdGVfbnJfcmVxdWVzdHMgaXMgcmFjaW5nIHdpdGggZG9fcmVzdW1lL2Rt
-X3N3YXBfdGFibGUuIApibGtfbXFfdXBkYXRlX25yX3JlcXVlc3RzIHdpbGwgdW4tcXVpZXNjZSB0
-aGUgcXVldWUgd2hlbiBpdCdzIGNvbXBsZXRlLCAKaG93ZXZlciB0aGlzIHVuLXF1aWVzY2UgY2Fu
-IHNvbWV0aW1lcyBvY2N1ciB3aGlsZSAKZG9fcmVzdW1lLT5kbV9zd2FwX3RhYmxlIGhhcyBxdWll
-c2NlZCB0aGUgcXVldWVzIGJ1dCBiZWZvcmUgCm1kLT5pbW11dGFibGVfdGFibGUgaGFzIGJlZW4g
-dXBkYXRlZCB3aXRoIHRoZSBuZXcgdGFibGUgcmVmZXJlbmNlLiBUaGlzIApsZWFkcyB0byBhbiBJ
-L08gc25lYWtpbmcgaW4sIHBpY2tpbmcgdXAgdGlvLT50aSBmcm9tIG1kLT5pbW11dGFibGVfdGFi
-bGUgCndoaWNoIGlzIHN1YnNlcXVlbnRseSBmcmVlZCBhZnRlciB0aGUgY2FsbCB0byBkbV9zd2Fw
-X3RhYmxlIGFuZCB0aGVuIAp3aGVuIHRoZSBzb2Z0aXJxIGhhbmRsZXIgZmlyZXMgdGlvLT50aSBo
-YXMgYmVlbiBmcmVlZCBhbmQgd2UgZW5kIHVwIHdpdGggCmEgcGFuaWMuCgpJIGFkZGVkIHNvbWUg
-dGltZXJzIGFuZCBkZWJ1ZyBwcmludGsncyBpbnRvIHRoZSBjb2RlIGhvcGVmdWxseSB5b3UgY2Fu
-IApzZWUgdGhlIHJhY2UgbW9yZSBjbGVhcmx5IGJlbG93IFsxXS4KCkknbSBzdXJlIHRoZXJlIGFy
-ZSBhIG15cmlhZCBvZiBhcHByb2FjaGVzIG9uZSBjb3VsZCB0YWtlIHRvIGZpeCB0aGlzLCAKYnV0
-IHRvIG1lIGl0IHNlZW1zIHRoZSBwYXRjaCBoZXJlOgoKaHR0cDovL2xpc3RzLmluZnJhZGVhZC5v
-cmcvcGlwZXJtYWlsL2xpbnV4LW52bWUvMjAxNy1EZWNlbWJlci8wMTQ0NDcuaHRtbAoKV2hpY2gg
-YWxsb3dzIGNvbmN1cnJlbnQgY2FsbHMgdG8gYmxrX21xX3F1aWVzY2VfcXVldWUgd291bGQgYWRk
-cmVzcyB0aGlzIApiZWhhdmlvci4KCldoaWxlIEkgaGF2ZW4ndCB0ZXN0ZWQgdGhpcyBvbiBhIG1h
-aW5saW5lIGtlcm5lbCwgaXQgc2VlbXMgdG8gbWUgdGhhdCAKdGhpcyByYWNlIHN0aWxsIGV4aXN0
-cyB0aGVyZS4gSSdsbCBhbHNvIHJhaXNlIHRoaXMgdGhyb3VnaCBSZWRIYXQsIGJ1dCAKc2luY2Ug
-aXQgc2VlbXMgdG8gbWUgdG8gYmUgYW4gdXBzdHJlYW0gaXNzdWUgYXMgd2VsbCBJIHRob3VnaHQg
-YSBwb3N0IApoZXJlIHdvdWxkIGJlIGFwcHJvcHJpYXRlLgoKSSdtIGN1cmlvdXMsIHdoYXQncyB0
-aGUgc3RhdGUgb2YgdGhhdCBwYXRjaD8gSSBkbyBzaGFyZSBDaHJpc3RvcGgncyAKY29uY2VybiBh
-Ym91dCB0aGUgbnZtZSBkcml2ZXIgYmVpbmcgYWJsZSB0byBmb3JjaWJseSB1bi1xdWllc2NlIHRo
-ZSAKcXVldWUgYW5kIGRvbid0IGhhdmUgYW55IHN1Z2dlc3Rpb25zIHRvIG9mZmVyLCBidXQgaXQg
-ZG9lcyBzZWVtIHRvIG1lIAp0aGF0IGEgcXVpZXNjZSBvcGVyYXRpb24gaXNuJ3QgcGFydGljdWxh
-cmx5IHVzZWZ1bCBpZiBpdCBjYW4gYmUgCnVucXVpZXNjZWQgYnkgYW5vdGhlciBjYWxsZXIgd2l0
-aG91dCBrbm93bGVkZ2Ugb2YgdGhlIG9yaWdpbmFsIHF1aWVzY2VyLiAKSXQgYWxtb3N0IHNlZW1z
-IGxpa2UgdGhlcmUgYXJlIHR3byBzY2VuYXJpb3MgZm9yIHRoZSBxdWllc2NlL3VucXVpZXNjZSAK
-b3BlcmF0aW9ucyB0b2RheS0tCgoxLiBhIG1vbWVudGFyeSBwYXVzZSB3aGVyZSB0aGUgcXVpZXNj
-ZS9yZXN1bWUgb2NjdXIgd2l0aGluIHRoZSBzYW1lIApmdW5jdGlvbiB0byBjaGFuZ2UgcXVldWUg
-cGFyYW1ldGVycyAodGhpcyBzZWVtcyB0byBiZSBtb3N0IHNpdHVhdGlvbnMpCgoyLiBhIGxvbmdl
-ciBwYXVzZSB0byBrZWVwIHJlcXVlc3RzIGZyb20gYmVpbmcgZGlzcGF0Y2hlZCB3aGlsZSBkZXZp
-Y2UgCnJlY292ZXJ5IG9jY3VycyAodGhpcyBzZWVtcyB0byBtZSB0byBiZSB0aGUgbnZtZSBjYXNl
-KQoKVG8gbWUgaXQgc2VlbXMgdGhlIDJuZCBjYXNlIGlzIGluY29ycmVjdCwgYW5kIG9uZSBvdWdo
-dCB0byBkaXN0aW5ndWlzaCAKYmV0d2VlbiBxdWllc2NlZCBhbmQgc3RvcHBlZCAoZS5nLiB5b3Ug
-cXVpZXNjZSB0aGUgcXVldWUgdG8gdGhlbiBzdG9wIGl0IApyYXRoZXIgdGhhbiB1c2luZyB0aGUg
-cXVpZXNjZSBhcyB0aGUgc3RvcCBtZWNoYW5pc20pLgoKLUFhcm9uCgpbMV0tCgpucl9yZXF1ZXN0
-cyBbMTU2NzkuNjE3NzUwXSBibGtfbXFfdXBkYXRlX25yX3JlcXVlc3RzOiBxPWZmZmY5OTQ5MTcy
-MGU5ODggCmVudGVyCgpkb19yZXN1bWXCoMKgIFsxNTY3OS42Mzk4NDZdIGRvX3Jlc3VtZVsxMDE1
-XTogbWQ9ZmZmZjk5NDkxZTdlZDAwMCAKbmV3X21hcD1mZmZmOTk0OTFkYmM4ODAwCmRvX3Jlc3Vt
-ZcKgwqAgWzE1Njc5LjYzOTg0OF3CoMKgwqDCoMKgIGRtX3N1c3BlbmRbMTAxNV06IG1kPWZmZmY5
-OTQ5MWU3ZWQwMDAgCnN1c3BlbmRfZmxhZ3M9MiBlbnRlcgpkb19yZXN1bWXCoMKgIFsxNTY3OS42
-Mzk4NTBdwqDCoMKgwqDCoMKgwqAgX19kbV9zdXNwZW5kWzEwMTVdOiBlbnRlciAKbWQ9ZmZmZjk5
-NDkxZTdlZDAwMCBtZC0+ZmxhZ3M9NjQgbWFwPWZmZmY5OTQ5MWRiYzk2MDAgc3VzcGVuZF9mbGFn
-cz0yIAp0YXNrX3N0YXRlPTEgZG1mX3N1c3BlbmRlZF9mbGFncz0xCgpucl9yZXF1ZXN0cyBbMTU2
-NzkuNjM5ODYwXcKgwqAgYmxrX21xX3F1aWVzY2VfcXVldWU6IApxPWZmZmY5OTQ5MTcyMGU5ODjC
-oMKgwqDCoMKgwqAgXF9fIG9uZSBpcyBmcm9tIGRtX3N1c3BlbmQsIHRoZSBvdGhlciBmcm9tIAp1
-cGRhdGVfbnJfcmVxdWVzdHMKZG9fcmVzdW1lwqDCoCBbMTU2NzkuNjQxNzE3XcKgwqDCoMKgwqDC
-oMKgwqAgYmxrX21xX3F1aWVzY2VfcXVldWU6IApxPWZmZmY5OTQ5MTcyMGU5ODggL8KgwqAgbm90
-IHN1cmUgd2hpY2ggaXMgd2hpY2gsIGJ1dCBkb2Vzbid0IG1hdHRlciBtdWNoCgpkb19yZXN1bWXC
-oMKgIFsxNTY3OS42NjY2NzJdwqDCoMKgwqDCoMKgIGRtX21xX3N0b3BfcXVldWU6IHE9ZmZmZjk5
-NDkxNzIwZTk4OCAKc3RvcHBlZApkb19yZXN1bWXCoMKgIFsxNTY3OS42NjY2ODRdwqDCoMKgwqAg
-X19kbV9zdXNwZW5kWzEwMTVdOiByZXR1cm4gZW5kIAptZD1mZmZmOTk0OTFlN2VkMDAwIG1hcD1m
-ZmZmOTk0OTFkYmM5NjAwIHJjPTAKZG9fcmVzdW1lwqDCoCBbMTU2NzkuNjY2Njg4XcKgwqAgZG1f
-c3VzcGVuZFsxMDE1XTogbWQ9ZmZmZjk5NDkxZTdlZDAwMCAKc3VzcGVuZF9mbGFncz0yIGV4aXQg
-cj0wCmRvX3Jlc3VtZcKgwqAgWzE1Njc5LjY2NjY5MF3CoMKgIGRtX3N3YXBfdGFibGU6IGVudGVy
-IG1kPWZmZmY5OTQ5MWU3ZWQwMDAgCm1kLT5mbGFncz02NyBtZC0+aW1tdXRhYmxlX3RhYmxlPWZm
-ZmZiMTViMDZkOGQwNDAgdGFibGU9ZmZmZjk5NDkxZGJjODgwMApkb19yZXN1bWXCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBkbV9tcV9zdG9wX3F1ZXVlIGVudGVy
-Cgpucl9yZXF1ZXN0cyBbMTU2NzkuNjY2Njk1XcKgwqDCoMKgwqDCoCBibGtfbXFfcXVpZXNjZV9x
-dWV1ZTogcT1mZmZmOTk0OTE3MjBlOTg4Cm5yX3JlcXVlc3RzIFsxNTY3OS42ODg2NzVdIGJsa19t
-cV91bnF1aWVzY2VfcXVldWU6IHE9ZmZmZjk5NDkxNzIwZTk4OAoKZG9fcmVzdW1lwqDCoMKgIDE1
-Njc5LjY5NDk5NjA3MyA9IGRtX3N0YXJ0X3RpbWUKZG9fcmVzdW1lwqDCoMKgIDE1Njc5LjY5NTAx
-MzE1NCA9IGRtX21xX3F1ZXVlX3JxX25zCmRvX3Jlc3VtZcKgwqDCoCAxNTY3OS42OTUwMTMxOTQg
-PSBpbml0X3Rpb19ucyAoc2V0IHRpby0+dGkgPSB0aTsgdGkgaXMgCm1kLT5pbW11dGFibGVfdGFi
-bGUgKGZmZmZiMTViMDZkOGQwNDApKQoKZG9fcmVzdW1lwqDCoCBbMTU2NzkuNjk1Njc4XcKgwqDC
-oMKgIGRtX21xX3N0b3BfcXVldWU6IHE9ZmZmZjk5NDkxNzIwZTk4OCBzdG9wcGVkCmRvX3Jlc3Vt
-ZcKgwqAgWzE1Njc5LjY5NTc1Nl3CoMKgIGRtX3N3YXBfdGFibGU6IG1kPWZmZmY5OTQ5MWU3ZWQw
-MDAgCm1kLT5mbGFncz02NyAob3JpZyA2NykgbWQtPmltbXV0YWJsZV90YWJsZT1mZmZmYjE1YjA2
-ZDkzMDQwIChvcmlnIApmZmZmYjE1YjA2ZDhkMDQwKSBvbGQ9ZmZmZjk5NDkxZGJjODgwMCBuZXc9
-ZmZmZjk5NDkxZGJjOTYwMCAKdGFibGUtPnR5cGU9MyAob3JpZyAzKSBzdXNwZW5kZWQ9MQpkb19y
-ZXN1bWXCoMKgIFsxNTY3OS42OTU3NThdwqDCoCBkbV9yZXN1bWVbMTAxNV06IG1kPWZmZmY5OTQ5
-MWU3ZWQwMDAgZW50ZXIKZG9fcmVzdW1lwqDCoCBbMTU2NzkuNjk1NzYxXSBkbV9tcV9zdGFydF9x
-dWV1ZTogcT1mZmZmOTk0OTE3MjBlOTg4IHJlc3VtaW5nCmRvX3Jlc3VtZcKgwqAgWzE1Njc5LjY5
-NTc2M10gYmxrX21xX3VucXVpZXNjZV9xdWV1ZTogcT1mZmZmOTk0OTE3MjBlOTg4CmRvX3Jlc3Vt
-ZcKgwqAgWzE1Njc5LjcwODIyOV3CoMKgIGRtX3Jlc3VtZVsxMDE1XTogbWQ9ZmZmZjk5NDkxZTdl
-ZDAwMCBub3JtYWwgCnJjPTAKZG9fcmVzdW1lwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgIHRpby0+dGkgZGVzdHJveWVkIChmZmZmYjE1YjA2ZDhkMDQwKQpkb19yZXN1
-bWXCoMKgIFsxNTY3OS43MDgyNDddIGRvX3Jlc3VtZVsxMDE1XTogbWQ9ZmZmZjk5NDkxZTdlZDAw
-MCAKbmV3X21hcD1mZmZmOTk0OTFkYmM4ODAwIHJjPTAKCnNvZnRpcnEgaGFuZGxlciBmaXJlcz09
-PgpQQU5JQyBbMTU2NzkuNzA4NjI5XSBCVUc6IHVuYWJsZSB0byBoYW5kbGUga2VybmVsIHBhZ2lu
-ZyByZXF1ZXN0IGF0IApmZmZmYjE1YjA2ZDhkMDQwCgoKWzJdLQoKWzE1Njc5LjcwODYyOV0gQlVH
-OiB1bmFibGUgdG8gaGFuZGxlIGtlcm5lbCBwYWdpbmcgcmVxdWVzdCBhdCAKZmZmZmIxNWIwNmQ4
-ZDA0MApbMTU2NzkuNzIzMTA0XSBJUDogWzxmZmZmZmZmZmMwMTk1ZDlkPl0gZG1fc29mdGlycV9k
-b25lKzB4NWQvMHgzMTAgW2RtX21vZF0KWzE1Njc5LjczMTA5OV0gUEdEIDE3ZmQ2NTA2NyBQVUQg
-OGJmYzAyMDY3IFBNRCA4MWQ2NTAwNjcgUFRFIDAKWzE1Njc5LjczNzg0MV0gT29wczogMDAwMCBb
-IzFdIFNNUApbMTU2NzkuNzQxOTU0XSBNb2R1bGVzIGxpbmtlZCBpbjogCnN0YXBfZGNmOWExYjFi
-MTE0ZDk3NDM2MjMxYjkxYmU2OTE5ZV8yNDI3NShPRSkgZG1fcm91bmRfcm9iaW4gCmliX2lzZXIo
-T0UpIGxpYmlzY3NpIHNjc2lfdHJhbnNwb3J0X2lzY3NpIHJwY3NlY19nc3Nfa3JiNSBhdXRoX3Jw
-Y2dzcyAKbmZzdjQgZG5zX3Jlc29sdmVyIG5mcyBsb2NrZCBncmFjZSBmc2NhY2hlIGxuZXQoT0Up
-IGRlbGxfcmJ1IGxpYmNmcyhPRSkgCnJkbWFfdWNtKE9FKSBpYl91Y20oT0UpIHJkbWFfY20oT0Up
-IGl3X2NtKE9FKSBpYl9pcG9pYihPRSkgaWJfY20oT0UpIAppYl91bWFkKE9FKSBtbHg1X2ZwZ2Ff
-dG9vbHMoT0UpIG1seDRfZW4oT0UpIG1seDRfaWIoT0UpIG1seDRfY29yZShPRSkgCnN1bnJwYyBp
-VENPX3dkdCBpVENPX3ZlbmRvcl9zdXBwb3J0IHNiX2VkYWMgY29yZXRlbXAgaW50ZWxfcmFwbCBp
-b3NmX21iaSAKa3ZtX2ludGVsIGt2bSBpcnFieXBhc3MgY3JjMzJfcGNsbXVsIGdoYXNoX2NsbXVs
-bmlfaW50ZWwgYWVzbmlfaW50ZWwgbHJ3IApnZjEyOG11bCBnbHVlX2hlbHBlciBhYmxrX2hlbHBl
-ciBjcnlwdGQgcGNzcGtyIGpveWRldiBscGNfaWNoIHNnIG1laV9tZSAKbWVpIHdtaSBpcG1pX3Np
-IGlwbWlfZGV2aW50ZiBpcG1pX21zZ2hhbmRsZXIgYWNwaV9wb3dlcl9tZXRlciAKcGNjX2NwdWZy
-ZXEgZG1fbXVsdGlwYXRoIGJpbmZtdF9taXNjIGtuZW0oT0UpIGlwX3RhYmxlcyBleHQ0IG1iY2Fj
-aGUgCmpiZDIgc2RfbW9kIGNyY190MTBkaWYgY3JjdDEwZGlmX2dlbmVyaWMgbWx4NV9pYihPRSkg
-aWJfdXZlcmJzKE9FKSAKaWJfY29yZShPRSkgc3JfbW9kClsxNTY3OS44Mzk0OThdwqAgY2Ryb20g
-bWdhZzIwMCBpMmNfYWxnb19iaXQgZHJtX2ttc19oZWxwZXIgc3lzY29weWFyZWEgCnN5c2ZpbGxy
-ZWN0IHN5c2ltZ2JsdCBmYl9zeXNfZm9wcyB0dG0gYWhjaSBkcm0gbGliYWhjaSBtbHg1X2NvcmUo
-T0UpIApsaWJhdGEgY3JjdDEwZGlmX3BjbG11bCB0ZzMgY3JjdDEwZGlmX2NvbW1vbiBtbHhmdyhP
-RSkgdmZpb19tZGV2KE9FKSAKdmZpb19pb21tdV90eXBlMSBjcmMzMmNfaW50ZWwgdmZpbyBtZWdh
-cmFpZF9zYXMgbWRldihPRSkgZGV2bGluayAKbWx4X2NvbXBhdChPRSkgZHJtX3BhbmVsX29yaWVu
-dGF0aW9uX3F1aXJrcyBwdHAgcHBzX2NvcmUgZG1fbWlycm9yIApkbV9yZWdpb25faGFzaCBkbV9s
-b2cgZG1fbW9kKE9FKSBbbGFzdCB1bmxvYWRlZDogCnN0YXBfMThkNWU1ODFiOWE4N2Y5MGZhNDZl
-NTI5MmJlYTlhY18xNDI1NF0KWzE1Njc5Ljg4MzU0MF0gQ1BVOiAzIFBJRDogMjYgQ29tbToga3Nv
-ZnRpcnFkLzMgS2R1bXA6IGxvYWRlZCBUYWludGVkOiAKR8KgwqDCoMKgwqDCoMKgwqDCoMKgIE9F
-wqAgLS0tLS0tLS0tLS0tIFQgMy4xMC4wLTEwNjIuOS4xLmVsNy54ODZfNjQgIzEKWzE1Njc5Ljg5
-ODEwNV0gSGFyZHdhcmUgbmFtZTrCoMKgwqAgLzBINDdISCwgQklPUyAyLjcuMCAwNS8yMy8yMDE4
-ClsxNTY3OS45MDUyNjNdIHRhc2s6IGZmZmY5OTQxYjRlOWMxYzAgdGk6IGZmZmY5OTQxYjQ0ODQw
-MDAgdGFzay50aTogCmZmZmY5OTQxYjQ0ODQwMDAKWzE1Njc5LjkxNDQ3M10gUklQOiAwMDEwOls8
-ZmZmZmZmZmZjMDE5NWQ5ZD5dIFs8ZmZmZmZmZmZjMDE5NWQ5ZD5dIApkbV9zb2Z0aXJxX2RvbmUr
-MHg1ZC8weDMxMCBbZG1fbW9kXQpbMTU2NzkuOTI1NTYxXSBSU1A6IDAwMTg6ZmZmZjk5NDFiNDQ4
-N2RhMMKgIEVGTEFHUzogMDAwMTAyMDIKWzE1Njc5LjkzMjM2NF0gUkFYOiAwMDAwMDAwMDAwMDAw
-MDAxIFJCWDogMDAwMDAwMDAwMDAwMDAwMCBSQ1g6IApkZWFkMDAwMDAwMDAwMjAwClsxNTY3OS45
-NDEyMTJdIFJEWDogZmZmZjk5NDFiNDQ4N2RkOCBSU0k6IGZmZmY5OTQxYjQ0ODdkYzggUkRJOiAK
-ZmZmZmIxNWIwNmQ4ZDA0MApbMTU2NzkuOTUwMDY0XSBSQlA6IGZmZmY5OTQxYjQ0ODdkYzggUjA4
-OiBmZmZmOTk0OGYxMjgwOTgwIFIwOTogCmZmZmY5OTQ5MWYwNTM5MDAKWzE1Njc5Ljk1ODkxNF0g
-UjEwOiAwMDAwMDAwMDAwMDBiNzMxIFIxMTogMDAwMDAwMDAwMDAwMDAwZCBSMTI6IApmZmZmOTk0
-OGRmMzE0ZDAwClsxNTY3OS45Njc3NjddIFIxMzogZmZmZjk5NDhmMTI4MGE4MCBSMTQ6IDAwMDAw
-MDAwMDAwMDAwMDAgUjE1OiAKMDAwMDAwMDAwMDAwMDAwOQpbMTU2NzkuOTc2NjMxXSBGUzrCoCAw
-MDAwMDAwMDAwMDAwMDAwKDAwMDApIEdTOmZmZmY5OTQ5MWYwNDAwMDAoMDAwMCkgCmtubEdTOjAw
-MDAwMDAwMDAwMDAwMDAKWzE1Njc5Ljk4NjU4MV0gQ1M6wqAgMDAxMCBEUzogMDAwMCBFUzogMDAw
-MCBDUjA6IDAwMDAwMDAwODAwNTAwMzMKWzE1Njc5Ljk5MzkxM10gQ1IyOiBmZmZmYjE1YjA2ZDhk
-MDQwIENSMzogMDAwMDAwMTAxZDI3MjAwMCBDUjQ6IAowMDAwMDAwMDAwMTYwN2UwClsxNTY4MC4w
-MDI4MTBdIENhbGwgVHJhY2U6ClsxNTY4MC4wMDY0NzNdwqAgWzxmZmZmZmZmZmFlZDU4ZDg2Pl0g
-YmxrX2RvbmVfc29mdGlycSsweDk2LzB4YzAKWzE1NjgwLjAxMzc0MV3CoCBbPGZmZmZmZmZmYWVh
-YTUzMDU+XSBfX2RvX3NvZnRpcnErMHhmNS8weDI4MApbMTU2ODAuMDIwNzE0XcKgIFs8ZmZmZmZm
-ZmZhZWFhNTRjOD5dIHJ1bl9rc29mdGlycWQrMHgzOC8weDUwClsxNTY4MC4wMjc2OTNdwqAgWzxm
-ZmZmZmZmZmFlYWNlYzI0Pl0gc21wYm9vdF90aHJlYWRfZm4rMHgxNDQvMHgxYTAKWzE1NjgwLjAz
-NTI1MV3CoCBbPGZmZmZmZmZmYWVhY2VhZTA+XSA/IGxnX2RvdWJsZV91bmxvY2srMHg0MC8weDQw
-ClsxNTY4MC4wNDI3MTBdwqAgWzxmZmZmZmZmZmFlYWM2MWYxPl0ga3RocmVhZCsweGQxLzB4ZTAK
-WzE1NjgwLjA0OTEwMF3CoCBbPGZmZmZmZmZmYWVhYzYxMjA+XSA/IGluc2VydF9rdGhyZWFkX3dv
-cmsrMHg0MC8weDQwClsxNTY4MC4wNTY4NDddwqAgWzxmZmZmZmZmZmFmMThkZDM3Pl0gcmV0X2Zy
-b21fZm9ya19ub3NwZWNfYmVnaW4rMHgyMS8weDIxClsxNTY4MC4wNjUwOTFdwqAgWzxmZmZmZmZm
-ZmFlYWM2MTIwPl0gPyBpbnNlcnRfa3RocmVhZF93b3JrKzB4NDAvMHg0MApbMTU2ODAuMDcyODQ4
-XSBDb2RlOiAwMSAwMCAwMCA0ZCA4NSBlNCAwZiA4NCA5MiAwMCAwMCAwMCA0OCA4YiA0MyA0OCA0
-MSAKOGIgNWQgNTggNGQgOGIgYWMgMjQgNzAgMDEgMDAgMDAgNDggYzEgZTggMTYgNDkgOGIgN2Qg
-MDggNDggODMgZjAgMDEgODMgCmUwIDAxIDw0OD4gODMgM2YgMDAgNzQgMGMgNDggOGIgNTcgMDgg
-ODQgYzAgNGMgOGIgNDIgNjAgNzUgNDEgODMgZmIgODcKWzE1NjgwLjA5NjU2Nl0gUklQwqAgWzxm
-ZmZmZmZmZmMwMTk1ZDlkPl0gZG1fc29mdGlycV9kb25lKzB4NWQvMHgzMTAgW2RtX21vZF0KWzE1
-NjgwLjEwNTE4MV3CoCBSU1AgPGZmZmY5OTQxYjQ0ODdkYTA+ClsxNTY4MC4xMTAwOTFdIENSMjog
-ZmZmZmIxNWIwNmQ4ZDA0MAoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
-YXQuY29tCmh0dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On Thu, Oct 15 2020 at 11:05am -0400,
+Micka=EBl Sala=FCn <mic@digikod.net> wrote:
+
+> From: Micka=EBl Sala=FCn <mic@linux.microsoft.com>
+>=20
+> Add a new configuration DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
+> to enable dm-verity signatures to be verified against the secondary
+> trusted keyring.  Instead of relying on the builtin trusted keyring
+> (with hard-coded certificates), the second trusted keyring can include
+> certificate authorities from the builtin trusted keyring and child
+> certificates loaded at run time.  Using the secondary trusted keyring
+> enables to use dm-verity disks (e.g. loop devices) signed by keys which
+> did not exist at kernel build time, leveraging the certificate chain of
+> trust model.  In practice, this makes it possible to update certificates
+> without kernel update and reboot, aligning with module and kernel
+> (kexec) signature verification which already use the secondary trusted
+> keyring.
+>=20
+> Cc: Alasdair Kergon <agk@redhat.com>
+> Cc: Andrew Morton <akpm@linux-foundation.org>
+> Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
+> Cc: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
+> Cc: Mike Snitzer <snitzer@redhat.com>
+> Cc: Milan Broz <gmazyland@gmail.com>
+> Signed-off-by: Micka=EBl Sala=FCn <mic@linux.microsoft.com>
+> ---
+>=20
+> Previous version:
+> https://lore.kernel.org/lkml/20201002071802.535023-1-mic@digikod.net/
+>=20
+> Changes since v1:
+> * Extend the commit message (asked by Jarkko Sakkinen).
+> * Rename the Kconfig "help" keyword according to commit 84af7a6194e4
+>   ("checkpatch: kconfig: prefer 'help' over '---help---'").
+
+Can you please explain why you've decided to make this a Kconfig CONFIG
+knob?  Why not either add: a dm-verity table argument? A dm-verity
+kernel module parameter? or both (to allow a particular default but then
+per-device override)?
+
+Otherwise, _all_ DM verity devices will be configured to use secondary
+keyring fallback.  Is that really desirable?
+
+Regardless, I really don't see why a Kconfig knob is appropriate.
+
+Mike
+
+
+> ---
+>  drivers/md/Kconfig                | 13 ++++++++++++-
+>  drivers/md/dm-verity-verify-sig.c |  9 +++++++--
+>  2 files changed, 19 insertions(+), 3 deletions(-)
+>=20
+> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+> index 30ba3573626c..1d68935e45ef 100644
+> --- a/drivers/md/Kconfig
+> +++ b/drivers/md/Kconfig
+> @@ -530,11 +530,22 @@ config DM_VERITY_VERIFY_ROOTHASH_SIG
+>  =09bool "Verity data device root hash signature verification support"
+>  =09depends on DM_VERITY
+>  =09select SYSTEM_DATA_VERIFICATION
+> -=09  help
+> +=09help
+>  =09  Add ability for dm-verity device to be validated if the
+>  =09  pre-generated tree of cryptographic checksums passed has a pkcs#7
+>  =09  signature file that can validate the roothash of the tree.
+> =20
+> +=09  By default, rely on the builtin trusted keyring.
+> +
+> +=09  If unsure, say N.
+> +
+> +config DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
+> +=09bool "Verity data device root hash signature verification with second=
+ary keyring"
+> +=09depends on DM_VERITY_VERIFY_ROOTHASH_SIG
+> +=09depends on SECONDARY_TRUSTED_KEYRING
+> +=09help
+> +=09  Rely on the secondary trusted keyring to verify dm-verity signature=
+s.
+> +
+>  =09  If unsure, say N.
+> =20
+>  config DM_VERITY_FEC
+> diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-ver=
+ify-sig.c
+> index 614e43db93aa..29385dc470d5 100644
+> --- a/drivers/md/dm-verity-verify-sig.c
+> +++ b/drivers/md/dm-verity-verify-sig.c
+> @@ -119,8 +119,13 @@ int verity_verify_root_hash(const void *root_hash, s=
+ize_t root_hash_len,
+>  =09}
+> =20
+>  =09ret =3D verify_pkcs7_signature(root_hash, root_hash_len, sig_data,
+> -=09=09=09=09sig_len, NULL, VERIFYING_UNSPECIFIED_SIGNATURE,
+> -=09=09=09=09NULL, NULL);
+> +=09=09=09=09sig_len,
+> +#ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
+> +=09=09=09=09VERIFY_USE_SECONDARY_KEYRING,
+> +#else
+> +=09=09=09=09NULL,
+> +#endif
+> +=09=09=09=09VERIFYING_UNSPECIFIED_SIGNATURE, NULL, NULL);
+> =20
+>  =09return ret;
+>  }
+>=20
+> base-commit: bbf5c979011a099af5dc76498918ed7df445635b
+> --=20
+> 2.28.0
+>=20
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
 
