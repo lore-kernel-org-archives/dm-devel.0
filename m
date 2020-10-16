@@ -7,61 +7,60 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D13AAC433E7
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:34 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 762E6C35265
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:37 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3C7E2207F7
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:34 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3C7E2207F7
+	by mail.kernel.org (Postfix) with ESMTPS id EB02120872
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:36 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org EB02120872
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-379-HBsJ5fPZO1eDboU-8_IGnw-1; Fri, 16 Oct 2020 06:45:30 -0400
-X-MC-Unique: HBsJ5fPZO1eDboU-8_IGnw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-530-1MJGaBIQNEy3JGNBVIUpVQ-1; Fri, 16 Oct 2020 06:45:32 -0400
+X-MC-Unique: 1MJGaBIQNEy3JGNBVIUpVQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3ED6C18A8238;
-	Fri, 16 Oct 2020 10:45:23 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 171F09CC12;
+	Fri, 16 Oct 2020 10:45:25 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1E9395D9D5;
-	Fri, 16 Oct 2020 10:45:23 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EDA3075130;
+	Fri, 16 Oct 2020 10:45:24 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E60C81826D37;
-	Fri, 16 Oct 2020 10:45:22 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C3F471826D3B;
+	Fri, 16 Oct 2020 10:45:24 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09GAjJHC020686 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 16 Oct 2020 06:45:19 -0400
+	id 09GAjKpf020720 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 16 Oct 2020 06:45:20 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4483B2156A38; Fri, 16 Oct 2020 10:45:19 +0000 (UTC)
+	id 0B93E11DBD59; Fri, 16 Oct 2020 10:45:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 374122156A3A
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 074EC11CC25B
 	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:45:17 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2FFFE800186
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7AE8980018D
 	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:45:17 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-389-7A2Z0EO4OnSwEWhyQO2TnQ-1;
+	relay.mimecast.com with ESMTP id us-mta-304-kt_JXVAHMte7-H4DWnHe1Q-1;
 	Fri, 16 Oct 2020 06:45:12 -0400
-X-MC-Unique: 7A2Z0EO4OnSwEWhyQO2TnQ-1
+X-MC-Unique: kt_JXVAHMte7-H4DWnHe1Q-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 03ED5AF4F;
+	by mx2.suse.de (Postfix) with ESMTP id 49DB5AF57;
 	Fri, 16 Oct 2020 10:45:11 +0000 (UTC)
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri, 16 Oct 2020 12:44:35 +0200
-Message-Id: <20201016104501.8700-4-mwilck@suse.com>
+Date: Fri, 16 Oct 2020 12:44:36 +0200
+Message-Id: <20201016104501.8700-5-mwilck@suse.com>
 In-Reply-To: <20201016104501.8700-1-mwilck@suse.com>
 References: <20201016104501.8700-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -73,13 +72,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 09GAjJHC020686
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 09GAjKpf020720
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH v2 03/29] multipathd: move handling of
-	io_err_stat_attr into libmultipath
+Subject: [dm-devel] [PATCH v2 04/29] multipathd: move vecs desctruction into
+	cleanup function
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,7 +92,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -103,143 +102,123 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-This thread attribute can be dynamically initialized and destroyed.
-No need to carry it along in multipathd. Removal of the symbol
-requires to bump the ABI version to 3.
+This will make it easer to move the stuff around later.
+The only functional change is that map destuction now happens after
+joining all threads, which should actually improve robustness.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/io_err_stat.c        |  7 +++++--
- libmultipath/libmultipath.version | 23 ++++++++---------------
- multipathd/main.c                 |  2 --
- 3 files changed, 13 insertions(+), 19 deletions(-)
+ multipathd/main.c | 64 +++++++++++++++++++++++++++++------------------
+ 1 file changed, 40 insertions(+), 24 deletions(-)
 
-diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
-index 58bc1dd..5363049 100644
---- a/libmultipath/io_err_stat.c
-+++ b/libmultipath/io_err_stat.c
-@@ -34,6 +34,7 @@
- #include "lock.h"
- #include "time-util.h"
- #include "io_err_stat.h"
-+#include "util.h"
- 
- #define TIMEOUT_NO_IO_NSEC		10000000 /*10ms = 10000000ns*/
- #define FLAKY_PATHFAIL_THRESHOLD	2
-@@ -70,8 +71,7 @@ struct io_err_stat_path {
- 	int		err_rate_threshold;
- };
- 
--pthread_t		io_err_stat_thr;
--pthread_attr_t		io_err_stat_attr;
-+static pthread_t	io_err_stat_thr;
- 
- static pthread_mutex_t io_err_thread_lock = PTHREAD_MUTEX_INITIALIZER;
- static pthread_cond_t io_err_thread_cond = PTHREAD_COND_INITIALIZER;
-@@ -727,6 +727,7 @@ static void *io_err_stat_loop(void *data)
- int start_io_err_stat_thread(void *data)
- {
- 	int ret;
-+	pthread_attr_t io_err_stat_attr;
- 
- 	if (uatomic_read(&io_err_thread_running) == 1)
- 		return 0;
-@@ -739,6 +740,7 @@ int start_io_err_stat_thread(void *data)
- 	if (!paths)
- 		goto destroy_ctx;
- 
-+	setup_thread_attr(&io_err_stat_attr, 32 * 1024, 0);
- 	pthread_mutex_lock(&io_err_thread_lock);
- 	pthread_cleanup_push(cleanup_unlock, &io_err_thread_lock);
- 
-@@ -750,6 +752,7 @@ int start_io_err_stat_thread(void *data)
- 				 &io_err_thread_lock) == 0);
- 
- 	pthread_cleanup_pop(1);
-+	pthread_attr_destroy(&io_err_stat_attr);
- 
- 	if (ret) {
- 		io_err_stat_log(0, "cannot create io_error statistic thread");
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 0c300c8..84beb7f 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -31,7 +31,7 @@
-  *   The new version inherits the previous ones.
-  */
- 
--LIBMULTIPATH_2.0.0 {
-+LIBMULTIPATH_3.0.0 {
- global:
- 	/* symbols referenced by multipath and multipathd */
- 	add_foreign;
-@@ -121,7 +121,6 @@ global:
- 	init_checkers;
- 	init_foreign;
- 	init_prio;
--	io_err_stat_attr;
- 	io_err_stat_handle_pathfail;
- 	is_path_valid;
- 	is_quote;
-@@ -242,30 +241,24 @@ global:
- 	free_scandir_result;
- 	sysfs_attr_get_value;
- 
--local:
--	*;
--};
--
--LIBMULTIPATH_2.1.0 {
--global:
-+	/* added in 2.1.0 */
- 	libmp_dm_task_run;
- 	cleanup_mutex;
--} LIBMULTIPATH_2.0.0;
- 
--LIBMULTIPATH_2.2.0 {
--global:
-+	/* added in 2.2.0 */
- 	libmp_get_multipath_config;
- 	get_multipath_config;
- 	libmp_put_multipath_config;
- 	put_multipath_config;
- 	init_config;
- 	uninit_config;
--} LIBMULTIPATH_2.1.0;
- 
--LIBMULTIPATH_2.3.0 {
--global:
-+	/* added in 2.3.0 */
- 	udev;
- 	logsink;
- 	libmultipath_init;
- 	libmultipath_exit;
--} LIBMULTIPATH_2.2.0;
-+
-+local:
-+	*;
-+};
 diff --git a/multipathd/main.c b/multipathd/main.c
-index be1b5ae..4d714e8 100644
+index 4d714e8..2642570 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -2954,7 +2954,6 @@ child (__attribute__((unused)) void *param)
- 	setup_thread_attr(&misc_attr, 64 * 1024, 0);
- 	setup_thread_attr(&uevent_attr, DEFAULT_UEVENT_STACKSIZE * 1024, 0);
- 	setup_thread_attr(&waiter_attr, 32 * 1024, 1);
--	setup_thread_attr(&io_err_stat_attr, 32 * 1024, 0);
+@@ -148,7 +148,7 @@ int should_exit(void)
+ /*
+  * global copy of vecs for use in sig handlers
+  */
+-struct vectors * gvecs;
++static struct vectors * gvecs;
  
- 	if (logsink == 1) {
- 		setup_thread_attr(&log_attr, 64 * 1024, 0);
-@@ -3164,7 +3163,6 @@ child (__attribute__((unused)) void *param)
- 	rcu_assign_pointer(multipath_conf, NULL);
- 	call_rcu(&conf->rcu, rcu_free_config);
- 	pthread_attr_destroy(&waiter_attr);
--	pthread_attr_destroy(&io_err_stat_attr);
- #ifdef _DEBUG_
- 	dbg_free_final(NULL);
- #endif
+ struct config *multipath_conf;
+ 
+@@ -2889,6 +2889,44 @@ set_oom_adj (void)
+ 	condlog(0, "couldn't adjust oom score");
+ }
+ 
++static void cleanup_maps(struct vectors *vecs)
++{
++	int queue_without_daemon, i;
++	struct multipath *mpp;
++	struct config *conf;
++
++	conf = get_multipath_config();
++	queue_without_daemon = conf->queue_without_daemon;
++	put_multipath_config(conf);
++	if (queue_without_daemon == QUE_NO_DAEMON_OFF)
++		vector_foreach_slot(vecs->mpvec, mpp, i)
++			dm_queue_if_no_path(mpp->alias, 0);
++	remove_maps_and_stop_waiters(vecs);
++	vecs->mpvec = NULL;
++}
++
++static void cleanup_paths(struct vectors *vecs)
++{
++	free_pathvec(vecs->pathvec, FREE_PATHS);
++	vecs->pathvec = NULL;
++}
++
++static void cleanup_vecs(void)
++{
++	if (!gvecs)
++		return;
++	/*
++	 * We can't take the vecs lock here, because exit() may
++	 * have been called from the child() thread, holding the lock already.
++	 * Anyway, by the time we get here, all threads that might access
++	 * vecs should have been joined already (in cleanup_threads).
++	 */
++	cleanup_maps(gvecs);
++	cleanup_paths(gvecs);
++	pthread_mutex_destroy(&gvecs->lock.mutex);
++	FREE(gvecs);
++}
++
+ /*
+  * Use a non-default call_rcu_data for child().
+  *
+@@ -2936,13 +2974,10 @@ child (__attribute__((unused)) void *param)
+ 	pthread_t check_thr, uevent_thr, uxlsnr_thr, uevq_thr, dmevent_thr;
+ 	pthread_attr_t log_attr, misc_attr, uevent_attr;
+ 	struct vectors * vecs;
+-	struct multipath * mpp;
+-	int i;
+ 	int rc;
+ 	int pid_fd = -1;
+ 	struct config *conf;
+ 	char *envp;
+-	int queue_without_daemon;
+ 	enum daemon_status state;
+ 	struct call_rcu_data *crdp;
+ 
+@@ -3108,17 +3143,6 @@ child (__attribute__((unused)) void *param)
+ 	if (poll_dmevents)
+ 		pthread_cancel(dmevent_thr);
+ 
+-	conf = get_multipath_config();
+-	queue_without_daemon = conf->queue_without_daemon;
+-	put_multipath_config(conf);
+-
+-	lock(&vecs->lock);
+-	if (queue_without_daemon == QUE_NO_DAEMON_OFF)
+-		vector_foreach_slot(vecs->mpvec, mpp, i)
+-			dm_queue_if_no_path(mpp->alias, 0);
+-	remove_maps_and_stop_waiters(vecs);
+-	unlock(&vecs->lock);
+-
+ 	pthread_join(check_thr, NULL);
+ 	pthread_join(uevent_thr, NULL);
+ 	pthread_join(uxlsnr_thr, NULL);
+@@ -3128,15 +3152,7 @@ child (__attribute__((unused)) void *param)
+ 
+ 	stop_io_err_stat_thread();
+ 
+-	lock(&vecs->lock);
+-	free_pathvec(vecs->pathvec, FREE_PATHS);
+-	vecs->pathvec = NULL;
+-	unlock(&vecs->lock);
+-
+-	pthread_mutex_destroy(&vecs->lock.mutex);
+-	FREE(vecs);
+-	vecs = NULL;
+-
++	cleanup_vecs();
+ 	cleanup_foreign();
+ 	cleanup_checkers();
+ 	cleanup_prio();
 -- 
 2.28.0
 
