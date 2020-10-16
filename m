@@ -7,60 +7,61 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ADA13C43467
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:44:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EED0BC433DF
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:44:09 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 1AE09207F7
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:44:06 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1AE09207F7
+	by mail.kernel.org (Postfix) with ESMTPS id 5AA66207F7
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:44:09 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5AA66207F7
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-158-vTmIZQ1IOomKJ4_QPdZPVg-1; Fri, 16 Oct 2020 06:44:03 -0400
-X-MC-Unique: vTmIZQ1IOomKJ4_QPdZPVg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-560-YR6z3IZYOfS1eVWwyGhEjA-1; Fri, 16 Oct 2020 06:44:05 -0400
+X-MC-Unique: YR6z3IZYOfS1eVWwyGhEjA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6F92B85C715;
-	Fri, 16 Oct 2020 10:43:57 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4C7EE100239A;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 00EE586ABCF;
+	Fri, 16 Oct 2020 10:43:58 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D5E965D9DD;
 	Fri, 16 Oct 2020 10:43:57 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1F674181A87F;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A6DCC5810F;
 	Fri, 16 Oct 2020 10:43:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09GAhrba020164 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 16 Oct 2020 06:43:53 -0400
+	id 09GAhq5H020139 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 16 Oct 2020 06:43:52 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4801C124579; Fri, 16 Oct 2020 10:43:53 +0000 (UTC)
+	id 5FB562011559; Fri, 16 Oct 2020 10:43:52 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 423A916C2DB
-	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:43:53 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5AE742011557
+	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:43:49 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 29472800186
-	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:43:53 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 51B97800186
+	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:43:49 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-555-YyeJfaovNyGAzI48g9gQxw-1;
-	Fri, 16 Oct 2020 06:43:49 -0400
-X-MC-Unique: YyeJfaovNyGAzI48g9gQxw-1
+	relay.mimecast.com with ESMTP id us-mta-70-6DdqKEYAOvKfNYjU5yLGHw-1;
+	Fri, 16 Oct 2020 06:43:46 -0400
+X-MC-Unique: 6DdqKEYAOvKfNYjU5yLGHw-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id F032DAF2C;
-	Fri, 16 Oct 2020 10:43:47 +0000 (UTC)
+	by mx2.suse.de (Postfix) with ESMTP id 07C89AC5F;
+	Fri, 16 Oct 2020 10:43:45 +0000 (UTC)
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri, 16 Oct 2020 12:43:20 +0200
-Message-Id: <20201016104329.8337-13-mwilck@suse.com>
+Date: Fri, 16 Oct 2020 12:43:09 +0200
+Message-Id: <20201016104329.8337-2-mwilck@suse.com>
 In-Reply-To: <20201016104329.8337-1-mwilck@suse.com>
 References: <20201016104329.8337-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -72,13 +73,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 09GAhrba020164
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 09GAhq5H020139
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH v3 12/21] libmultipath: constify file argument in
-	config parser
+Cc: Chongyun Wu <wu.chongyun@h3c.com>, dm-devel@redhat.com,
+	Martin Wilck <mwilck@suse.com>
+Subject: [dm-devel] [PATCH v3 01/21] multipathd: allow shutdown during
+	configure()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -92,7 +94,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -102,96 +104,138 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
+reconfigure() can be a long-running operation; both initial path
+discovery and initial map setup can take a long time. Allow
+the main program to indicate that the process should be
+interrupted if a shutdown signal was received.
+
+We take advantage of the dynamic linker's symbol lookup ordering
+here. The default implementation of should_exit never returns
+true, but callers (like multipathd) can override it.
+
+Cc: Chongyun Wu <wu.chongyun@h3c.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c | 3 +--
- libmultipath/config.h | 2 +-
- libmultipath/parser.c | 9 +++++----
- libmultipath/parser.h | 2 +-
- 4 files changed, 8 insertions(+), 8 deletions(-)
+ libmultipath/configure.c |  6 ++++++
+ libmultipath/discovery.c |  3 +++
+ libmultipath/util.c      |  5 +++++
+ libmultipath/util.h      |  1 +
+ multipathd/main.c        | 17 +++++++++++++++++
+ 5 files changed, 32 insertions(+)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index df0f8f4..5c91a09 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -719,8 +719,7 @@ static void set_max_checkint_from_watchdog(struct config *conf)
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index d7afc91..1c8aac0 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -1173,6 +1173,12 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 
+ 	vector_foreach_slot (pathvec, pp1, k) {
+ 		int invalid;
++
++		if (should_exit()) {
++			ret = CP_FAIL;
++			goto out;
++		}
++
+ 		/* skip this path for some reason */
+ 
+ 		/* 1. if path has no unique id or wwid blacklisted */
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 193d712..cbde358 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -200,6 +200,9 @@ path_discovery (vector pathvec, int flag)
+ 		const char *devtype;
+ 		const char *devpath;
+ 
++		if (should_exit())
++			break;
++
+ 		devpath = udev_list_entry_get_name(entry);
+ 		condlog(4, "Discover device %s", devpath);
+ 		udevice = udev_device_new_from_syspath(udev, devpath);
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index 1dad90f..66cd721 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -430,3 +430,8 @@ void _log_bitfield_overflow(const char *f, unsigned int bit, unsigned int len)
+ {
+ 	condlog(0, "%s: bitfield overflow: %u >= %u", f, bit, len);
  }
- #endif
++
++int should_exit(void)
++{
++	return 0;
++}
+diff --git a/libmultipath/util.h b/libmultipath/util.h
+index 0f0f6cb..c1ae878 100644
+--- a/libmultipath/util.h
++++ b/libmultipath/util.h
+@@ -27,6 +27,7 @@ int parse_prkey(const char *ptr, uint64_t *prkey);
+ int parse_prkey_flags(const char *ptr, uint64_t *prkey, uint8_t *flags);
+ int safe_write(int fd, const void *buf, size_t count);
+ void set_max_fds(rlim_t max_fds);
++int should_exit(void);
  
--struct config *
--load_config (char * file)
-+struct config *load_config(const char *file)
- {
- 	struct config *conf = alloc_config();
- 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 7af1984..ace403b 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -251,7 +251,7 @@ void free_mptable (vector mptable);
- 
- int store_hwe (vector hwtable, struct hwentry *);
- 
--struct config *load_config (char * file);
-+struct config *load_config (const char *file);
- struct config * alloc_config (void);
- void free_config (struct config * conf);
- extern struct config *get_multipath_config(void);
-diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-index ed6d5d6..163ffbc 100644
---- a/libmultipath/parser.c
-+++ b/libmultipath/parser.c
-@@ -390,7 +390,7 @@ oom:
- /* non-recursive configuration stream handler */
- static int kw_level = 0;
- 
--int warn_on_duplicates(vector uniques, char *str, char *file)
-+int warn_on_duplicates(vector uniques, char *str, const char *file)
- {
- 	char *tmp;
- 	int i;
-@@ -434,7 +434,7 @@ is_sublevel_keyword(char *str)
+ #define KERNEL_VERSION(maj, min, ptc) ((((maj) * 256) + (min)) * 256 + (ptc))
+ #define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+diff --git a/multipathd/main.c b/multipathd/main.c
+index eedc6c1..fa53e96 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -141,6 +141,11 @@ static inline enum daemon_status get_running_state(void)
+ 	return st;
  }
  
- int
--validate_config_strvec(vector strvec, char *file)
-+validate_config_strvec(vector strvec, const char *file)
- {
- 	char *str = NULL;
- 	int i;
-@@ -499,7 +499,8 @@ validate_config_strvec(vector strvec, char *file)
- }
++int should_exit(void)
++{
++	return get_running_state() == DAEMON_SHUTDOWN;
++}
++
+ /*
+  * global copy of vecs for use in sig handlers
+  */
+@@ -2570,6 +2575,9 @@ configure (struct vectors * vecs)
+ 		goto fail;
+ 	}
  
- static int
--process_stream(struct config *conf, FILE *stream, vector keywords, char *file)
-+process_stream(struct config *conf, FILE *stream, vector keywords,
-+	       const char *file)
- {
- 	int i;
- 	int r = 0, t;
-@@ -584,7 +585,7 @@ out:
++	if (should_exit())
++		goto fail;
++
+ 	conf = get_multipath_config();
+ 	pthread_cleanup_push(put_multipath_config, conf);
+ 	vector_foreach_slot (vecs->pathvec, pp, i){
+@@ -2586,6 +2594,9 @@ configure (struct vectors * vecs)
+ 		goto fail;
+ 	}
  
- /* Data initialization */
- int
--process_file(struct config *conf, char *file)
-+process_file(struct config *conf, const char *file)
- {
- 	int r;
- 	FILE *stream;
-diff --git a/libmultipath/parser.h b/libmultipath/parser.h
-index 62906e9..06666cc 100644
---- a/libmultipath/parser.h
-+++ b/libmultipath/parser.h
-@@ -77,7 +77,7 @@ extern void dump_keywords(vector keydump, int level);
- extern void free_keywords(vector keywords);
- extern vector alloc_strvec(char *string);
- extern void *set_value(vector strvec);
--extern int process_file(struct config *conf, char *conf_file);
-+extern int process_file(struct config *conf, const char *conf_file);
- extern struct keyword * find_keyword(vector keywords, vector v, char * name);
- int snprint_keyword(char *buff, int len, char *fmt, struct keyword *kw,
- 		    const void *data);
++	if (should_exit())
++		goto fail;
++
+ 	/*
+ 	 * create new set of maps & push changed ones into dm
+ 	 * In the first call, use FORCE_RELOAD_WEAK to avoid making
+@@ -2600,6 +2611,9 @@ configure (struct vectors * vecs)
+ 		goto fail;
+ 	}
+ 
++	if (should_exit())
++		goto fail;
++
+ 	/*
+ 	 * may need to remove some maps which are no longer relevant
+ 	 * e.g., due to blacklist changes in conf file
+@@ -2611,6 +2625,9 @@ configure (struct vectors * vecs)
+ 
+ 	dm_lib_release();
+ 
++	if (should_exit())
++		goto fail;
++
+ 	sync_maps_state(mpvec);
+ 	vector_foreach_slot(mpvec, mpp, i){
+ 		if (remember_wwid(mpp->wwid) == 1)
 -- 
 2.28.0
 
