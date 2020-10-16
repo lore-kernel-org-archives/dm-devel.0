@@ -7,61 +7,60 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 118B5C2D0A4
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 16A8DC2D0AE
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:33 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 70F3B20872
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:30 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 70F3B20872
+	by mail.kernel.org (Postfix) with ESMTPS id 70F29207F7
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:32 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 70F29207F7
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-337-JMe6qxdcNrSm93QCG3q2wQ-1; Fri, 16 Oct 2020 06:45:26 -0400
-X-MC-Unique: JMe6qxdcNrSm93QCG3q2wQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-305-clw4wV3HPEmIzGtVi0ESig-1; Fri, 16 Oct 2020 06:45:26 -0400
+X-MC-Unique: clw4wV3HPEmIzGtVi0ESig-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 50BF584BA68;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AE64E1019632;
 	Fri, 16 Oct 2020 10:45:21 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 346F560CD0;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 934E56EF4A;
 	Fri, 16 Oct 2020 10:45:21 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 082E85810D;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6C08F58112;
 	Fri, 16 Oct 2020 10:45:21 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09GAjJl7020680 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 16 Oct 2020 06:45:19 -0400
+	id 09GAjHdJ020661 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 16 Oct 2020 06:45:17 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 230F716C2DD; Fri, 16 Oct 2020 10:45:19 +0000 (UTC)
+	id 7360616C2DD; Fri, 16 Oct 2020 10:45:17 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1CCC616C2DB
-	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:45:19 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6E0A016C2DB
+	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:45:17 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E79DF101A56E
-	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:45:18 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 565C580018D
+	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:45:17 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-314-PmHs1HXHP-ei4Wtj5C8GyA-1;
-	Fri, 16 Oct 2020 06:45:15 -0400
-X-MC-Unique: PmHs1HXHP-ei4Wtj5C8GyA-1
+	relay.mimecast.com with ESMTP id us-mta-327-cC7rJkeVMD-KSYaVJ9WkAw-1;
+	Fri, 16 Oct 2020 06:45:14 -0400
+X-MC-Unique: cC7rJkeVMD-KSYaVJ9WkAw-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 4B3B7B2B2;
-	Fri, 16 Oct 2020 10:45:14 +0000 (UTC)
+	by mx2.suse.de (Postfix) with ESMTP id 2CD8FAF68;
+	Fri, 16 Oct 2020 10:45:12 +0000 (UTC)
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri, 16 Oct 2020 12:44:46 +0200
-Message-Id: <20201016104501.8700-15-mwilck@suse.com>
+Date: Fri, 16 Oct 2020 12:44:39 +0200
+Message-Id: <20201016104501.8700-8-mwilck@suse.com>
 In-Reply-To: <20201016104501.8700-1-mwilck@suse.com>
 References: <20201016104501.8700-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -75,10 +74,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 09GAjJl7020680
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 09GAjHdJ020661
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH v2 14/29] libmultipath: add libmp_dm_exit()
+Subject: [dm-devel] [PATCH v2 07/29] multipathd: move conf destruction into
+	separate function
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -92,7 +92,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -102,89 +102,53 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-This function prepares for calling dm_lib_exit() on program exit.
-It undoes changes to libdm internals done by libmultipath.
-It doesn't call dm_lib_exit(), as the caller may want to keep
-libdm active.
+Also removing the comment about dlog() and dm_write_log().
+dlog() can cope with get_multipath_config() returning NULL,
+and dm_write_log() hasn't accessed the configuration for a while.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/config.c    |  1 +
- libmultipath/config.h    |  2 ++
- libmultipath/devmapper.c | 15 +++++++++++++++
- libmultipath/devmapper.h |  1 +
- 4 files changed, 19 insertions(+)
+ multipathd/main.c | 20 +++++++++++---------
+ 1 file changed, 11 insertions(+), 9 deletions(-)
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index f74417c..b9cb413 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -60,6 +60,7 @@ int libmultipath_init(void)
- static void _libmultipath_exit(void)
- {
- 	libmultipath_exit_called = true;
-+	libmp_dm_exit();
- 	udev_unref(udev);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 8b9df55..722ef69 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2892,6 +2892,16 @@ set_oom_adj (void)
+ 	condlog(0, "couldn't adjust oom score");
  }
  
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index f478df7..5d46035 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -271,6 +271,8 @@ int libmultipath_init(void);
-  *
-  * This function un-initializes libmultipath data structures.
-  * It is recommended to call this function at program exit.
-+ * If the application also calls dm_lib_exit(), it should do so
-+ * after libmultipath_exit().
-  *
-  * Calls to libmultipath_init() after libmultipath_exit() will fail
-  * (in other words, libmultipath can't be re-initialized).
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 2e3ae8a..a8e0611 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -333,6 +333,20 @@ void libmp_udev_set_sync_support(int on)
- 	libmp_dm_udev_sync = !!on;
- }
- 
-+static bool libmp_dm_init_called;
-+void libmp_dm_exit(void)
-+{
-+	if (!libmp_dm_init_called)
-+		return;
++static void cleanup_conf(void) {
++	struct config *conf;
 +
-+	/* switch back to default libdm logging */
-+	dm_log_init(NULL);
-+#ifdef LIBDM_API_HOLD_CONTROL
-+	/* make sure control fd is closed in dm_lib_release() */
-+	dm_hold_control_dev(0);
-+#endif
++	conf = rcu_dereference(multipath_conf);
++	if (!conf)
++		return;
++	rcu_assign_pointer(multipath_conf, NULL);
++	call_rcu(&conf->rcu, rcu_free_config);
 +}
 +
- static void libmp_dm_init(void)
+ static void cleanup_maps(struct vectors *vecs)
  {
- 	struct config *conf;
-@@ -349,6 +363,7 @@ static void libmp_dm_init(void)
- 	dm_hold_control_dev(1);
+ 	int queue_without_daemon, i;
+@@ -3196,15 +3206,7 @@ child (__attribute__((unused)) void *param)
+ 
+ 	if (logsink == 1)
+ 		log_thread_stop();
+-
+-	/*
+-	 * Freeing config must be done after condlog() and dm_lib_exit(),
+-	 * because logging functions like dlog() and dm_write_log()
+-	 * reference the config.
+-	 */
+-	conf = rcu_dereference(multipath_conf);
+-	rcu_assign_pointer(multipath_conf, NULL);
+-	call_rcu(&conf->rcu, rcu_free_config);
++	cleanup_conf();
+ #ifdef _DEBUG_
+ 	dbg_free_final(NULL);
  #endif
- 	dm_udev_set_sync_support(libmp_dm_udev_sync);
-+	libmp_dm_init_called = true;
- }
- 
- static void _do_skip_libmp_dm_init(void)
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index 158057e..ecf2e66 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -35,6 +35,7 @@ enum {
- 
- int dm_prereq(unsigned int *v);
- void skip_libmp_dm_init(void);
-+void libmp_dm_exit(void);
- void libmp_udev_set_sync_support(int on);
- struct dm_task *libmp_dm_task_create(int task);
- int dm_simplecmd_flush (int, const char *, uint16_t);
 -- 
 2.28.0
 
