@@ -7,60 +7,61 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DEC5FC433E7
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:56 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BF011C433E7
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:46:04 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3F2C02084C
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:56 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3F2C02084C
+	by mail.kernel.org (Postfix) with ESMTPS id 23E802084C
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:46:03 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 23E802084C
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-122-y-m-eQPkMrGnFee8_cacnw-1; Fri, 16 Oct 2020 06:45:51 -0400
-X-MC-Unique: y-m-eQPkMrGnFee8_cacnw-1
+ us-mta-190-0IO3zyY0Nr2nJcf9niZV-w-1; Fri, 16 Oct 2020 06:45:40 -0400
+X-MC-Unique: 0IO3zyY0Nr2nJcf9niZV-w-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5BDB61019631;
-	Fri, 16 Oct 2020 10:45:46 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1055C1992F;
-	Fri, 16 Oct 2020 10:45:46 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C8DA41019636;
+	Fri, 16 Oct 2020 10:45:32 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A8D9B27C2A;
+	Fri, 16 Oct 2020 10:45:32 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DBE6E1832FC2;
-	Fri, 16 Oct 2020 10:45:45 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7EF6058133;
+	Fri, 16 Oct 2020 10:45:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09GAjMJX020836 for <dm-devel@listman.util.phx.redhat.com>;
+	id 09GAjMNS020835 for <dm-devel@listman.util.phx.redhat.com>;
 	Fri, 16 Oct 2020 06:45:22 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id AD54E12D8B8; Fri, 16 Oct 2020 10:45:22 +0000 (UTC)
+	id A5E992011559; Fri, 16 Oct 2020 10:45:22 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A8C5416C2E0
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A0F1F2011557
 	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:45:22 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 82A36801184
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8839C811E90
 	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:45:22 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-112-38dmOTL1Op67BzXIIsvkKw-1;
-	Fri, 16 Oct 2020 06:45:19 -0400
-X-MC-Unique: 38dmOTL1Op67BzXIIsvkKw-1
+	relay.mimecast.com with ESMTP id us-mta-217-NjQ_EKj5MNmotgm92jwbPQ-1;
+	Fri, 16 Oct 2020 06:45:20 -0400
+X-MC-Unique: NjQ_EKj5MNmotgm92jwbPQ-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 20DC0AF68;
+	by mx2.suse.de (Postfix) with ESMTP id B26DCAB5C;
 	Fri, 16 Oct 2020 10:45:18 +0000 (UTC)
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri, 16 Oct 2020 12:44:59 +0200
-Message-Id: <20201016104501.8700-28-mwilck@suse.com>
+Date: Fri, 16 Oct 2020 12:45:01 +0200
+Message-Id: <20201016104501.8700-30-mwilck@suse.com>
 In-Reply-To: <20201016104501.8700-1-mwilck@suse.com>
 References: <20201016104501.8700-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -72,13 +73,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 09GAjMJX020836
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 09GAjMNS020835
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH v2 27/29] multipathd: common code for "-k" and
-	command args
+Subject: [dm-devel] [PATCH v2 29/29] libmultipath: fix race between log_safe
+	and log_thread_stop()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -102,84 +103,79 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-'multipathd -k"cmd"' and 'multipath cmd' are the same thing.
-Treat it with common code.
+log_safe() could race with log_thread_stop(); simply
+checking the value of log_thr has never been safe. By converting the
+mutexes to static initializers, we avoid having to destroy them, and thus
+possibly accessing a destroyed mutex in log_safe(). Furthermore, taking
+both the logev_lock and the logq_lock makes sure the logarea isn't freed
+while we are writing to it.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 37 +++++++++++++++++++------------------
- 1 file changed, 19 insertions(+), 18 deletions(-)
+ libmultipath/log_pthread.c | 39 ++++++++++++++++++++++++--------------
+ 1 file changed, 25 insertions(+), 14 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 725a10b..0cf8a26 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -3303,6 +3303,8 @@ main (int argc, char *argv[])
- 	int err;
- 	int foreground = 0;
- 	struct config *conf;
-+	char *opt_k_arg = NULL;
-+	bool opt_k = false;
+diff --git a/libmultipath/log_pthread.c b/libmultipath/log_pthread.c
+index 3c73941..91c9c19 100644
+--- a/libmultipath/log_pthread.c
++++ b/libmultipath/log_pthread.c
+@@ -17,31 +17,42 @@
  
- 	ANNOTATE_BENIGN_RACE_SIZED(&multipath_conf, sizeof(multipath_conf),
- 				   "Manipulated through RCU");
-@@ -3350,16 +3352,9 @@ main (int argc, char *argv[])
- 			logsink = LOGSINK_STDERR_WITHOUT_TIME;
- 			break;
- 		case 'k':
--			logsink = 0;
--			conf = load_config(DEFAULT_CONFIGFILE);
--			if (!conf)
--				exit(1);
--			if (verbosity)
--				libmp_verbosity = verbosity;
--			uxsock_timeout = conf->uxsock_timeout;
--			err = uxclnt(optarg, uxsock_timeout + 100);
--			free_config(conf);
--			return err;
-+			opt_k = true;
-+			opt_k_arg = optarg;
-+			break;
- 		case 'B':
- 			bindings_read_only = 1;
- 			break;
-@@ -3375,7 +3370,7 @@ main (int argc, char *argv[])
- 			exit(1);
- 		}
- 	}
--	if (optind < argc) {
-+	if (opt_k || optind < argc) {
- 		char cmd[CMDSIZE];
- 		char * s = cmd;
- 		char * c = s;
-@@ -3390,14 +3385,20 @@ main (int argc, char *argv[])
- 			libmp_verbosity = verbosity;
- 		uxsock_timeout = conf->uxsock_timeout;
- 		memset(cmd, 0x0, CMDSIZE);
--		while (optind < argc) {
--			if (strchr(argv[optind], ' '))
--				c += snprintf(c, s + CMDSIZE - c, "\"%s\" ", argv[optind]);
--			else
--				c += snprintf(c, s + CMDSIZE - c, "%s ", argv[optind]);
--			optind++;
-+		if (opt_k)
-+			s = opt_k_arg;
-+		else {
-+			while (optind < argc) {
-+				if (strchr(argv[optind], ' '))
-+					c += snprintf(c, s + CMDSIZE - c,
-+						      "\"%s\" ", argv[optind]);
-+				else
-+					c += snprintf(c, s + CMDSIZE - c,
-+						      "%s ", argv[optind]);
-+				optind++;
-+			}
-+			c += snprintf(c, s + CMDSIZE - c, "\n");
- 		}
--		c += snprintf(c, s + CMDSIZE - c, "\n");
- 		err = uxclnt(s, uxsock_timeout + 100);
- 		free_config(conf);
- 		return err;
+ static pthread_t log_thr;
+ 
+-static pthread_mutex_t logq_lock;
+-static pthread_mutex_t logev_lock;
+-static pthread_cond_t logev_cond;
++/* logev_lock must not be taken with logq_lock held */
++static pthread_mutex_t logq_lock = PTHREAD_MUTEX_INITIALIZER;
++static pthread_mutex_t logev_lock = PTHREAD_MUTEX_INITIALIZER;
++static pthread_cond_t logev_cond = PTHREAD_COND_INITIALIZER;
+ 
+ static int logq_running;
+ static int log_messages_pending;
+ 
+ void log_safe (int prio, const char * fmt, va_list ap)
+ {
++	bool running;
++
+ 	if (prio > LOG_DEBUG)
+ 		prio = LOG_DEBUG;
+ 
+-	if (log_thr == (pthread_t)0) {
+-		vsyslog(prio, fmt, ap);
+-		return;
+-	}
++	/*
++	 * logev_lock protects logq_running. By holding it, we avoid a race
++	 * with log_thread_stop() -> log_close(), which would free the logarea.
++	 */
++	pthread_mutex_lock(&logev_lock);
++	pthread_cleanup_push(cleanup_mutex, &logev_lock);
++	running = logq_running;
+ 
+-	pthread_mutex_lock(&logq_lock);
+-	log_enqueue(prio, fmt, ap);
+-	pthread_mutex_unlock(&logq_lock);
++	if (running) {
++		pthread_mutex_lock(&logq_lock);
++		pthread_cleanup_push(cleanup_mutex, &logq_lock);
++		log_enqueue(prio, fmt, ap);
++		pthread_cleanup_pop(1);
+ 
+-	pthread_mutex_lock(&logev_lock);
+-	log_messages_pending = 1;
+-	pthread_cond_signal(&logev_cond);
+-	pthread_mutex_unlock(&logev_lock);
++		log_messages_pending = 1;
++		pthread_cond_signal(&logev_cond);
++	}
++	pthread_cleanup_pop(1);
++
++	if (!running)
++		vsyslog(prio, fmt, ap);
+ }
+ 
+ static void flush_logqueue (void)
 -- 
 2.28.0
 
