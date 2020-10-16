@@ -2,71 +2,65 @@ Return-Path: <SRS0=cnJz=DX=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 56C7BC433E7
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:21:04 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 19349C433E7
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:43:22 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 825AC20848
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:21:03 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 825AC20848
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net
+	by mail.kernel.org (Postfix) with ESMTPS id 5D72D207F7
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:43:20 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5D72D207F7
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-497-G8vPcF6bMxCX3XQEKOuMrQ-1; Fri, 16 Oct 2020 06:21:00 -0400
-X-MC-Unique: G8vPcF6bMxCX3XQEKOuMrQ-1
+ us-mta-164-Sf0NO2qPP52A-ojAk3CmJA-1; Fri, 16 Oct 2020 06:43:17 -0400
+X-MC-Unique: Sf0NO2qPP52A-ojAk3CmJA-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B923F86ABD1;
-	Fri, 16 Oct 2020 10:20:54 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9F81076649;
-	Fri, 16 Oct 2020 10:20:54 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4616464150;
+	Fri, 16 Oct 2020 10:43:13 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D56627667A;
+	Fri, 16 Oct 2020 10:43:12 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 735C91819AC1;
-	Fri, 16 Oct 2020 10:20:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2FE9C92F4F;
+	Fri, 16 Oct 2020 10:43:12 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09G8nUf7005841 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 16 Oct 2020 04:49:30 -0400
+	id 09GAhAJv019906 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 16 Oct 2020 06:43:10 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 050502166B28; Fri, 16 Oct 2020 08:49:30 +0000 (UTC)
+	id 63D7011DBD59; Fri, 16 Oct 2020 10:43:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id F3ECB2156708
-	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 08:49:27 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 604AF11CC237
+	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:43:08 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BAA091823613
-	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 08:49:27 +0000 (UTC)
-Received: from smtp-8fa8.mail.infomaniak.ch (smtp-8fa8.mail.infomaniak.ch
-	[83.166.143.168]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-439-ZMmvC55SPBiKXPwdOhzTKA-1; Fri, 16 Oct 2020 04:49:25 -0400
-X-MC-Unique: ZMmvC55SPBiKXPwdOhzTKA-1
-Received: from smtp-2-0001.mail.infomaniak.ch (unknown [10.5.36.108])
-	by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id
-	4CCKZr08rQzlhNhB; Fri, 16 Oct 2020 10:49:24 +0200 (CEST)
-Received: from ns3096276.ip-94-23-54.eu (unknown [94.23.54.103])
-	by smtp-2-0001.mail.infomaniak.ch (Postfix) with ESMTPA id
-	4CCKZq06Znzlh8T5; Fri, 16 Oct 2020 10:49:22 +0200 (CEST)
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-To: Mike Snitzer <snitzer@redhat.com>
-References: <20201015150504.1319098-1-mic@digikod.net>
-	<20201015165229.GA5513@redhat.com>
-	<022e949e-00c4-d98a-b536-1c5f9e05c09c@digikod.net>
-Message-ID: <b7ba2ff9-5f5f-8c1e-dfaa-33da56d3d8de@digikod.net>
-Date: Fri, 16 Oct 2020 10:49:22 +0200
-User-Agent: 
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E9774182360B
+	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:43:07 +0000 (UTC)
+Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-528-Z7jHvyN_N7WAbJUrUmHYyQ-1;
+	Fri, 16 Oct 2020 06:43:05 -0400
+X-MC-Unique: Z7jHvyN_N7WAbJUrUmHYyQ-1
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.221.27])
+	by mx2.suse.de (Postfix) with ESMTP id C8D8BB2AA;
+	Fri, 16 Oct 2020 10:43:03 +0000 (UTC)
+From: mwilck@suse.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Date: Fri, 16 Oct 2020 12:42:27 +0200
+Message-Id: <20201016104239.8217-1-mwilck@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <022e949e-00c4-d98a-b536-1c5f9e05c09c@digikod.net>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -75,21 +69,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 09G8nUf7005841
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 09GAhAJv019906
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Fri, 16 Oct 2020 06:18:44 -0400
-Cc: Deven Bowers <deven.desai@linux.microsoft.com>,
-	linux-kernel@vger.kernel.org,
-	Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>,
-	=?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@linux.microsoft.com>,
-	dm-devel@redhat.com, linux-integrity@vger.kernel.org,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Milan Broz <gmazyland@gmail.com>, Alasdair Kergon <agk@redhat.com>,
-	Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
-Subject: Re: [dm-devel] [PATCH v2] dm verity: Add support for signature
- verification with 2nd keyring
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Subject: [dm-devel] [PATCH v2 00/12] multipath-tools: add linker version
+	scripts
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -108,104 +94,90 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
+From: Martin Wilck <mwilck@suse.com>
 
+Hi Christophe, hi Ben,
 
-On 16/10/2020 10:29, Micka=EBl Sala=FCn wrote:
->=20
-> On 15/10/2020 18:52, Mike Snitzer wrote:
->> On Thu, Oct 15 2020 at 11:05am -0400,
->> Micka=EBl Sala=FCn <mic@digikod.net> wrote:
->>
->>> From: Micka=EBl Sala=FCn <mic@linux.microsoft.com>
->>>
->>> Add a new configuration DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING
->>> to enable dm-verity signatures to be verified against the secondary
->>> trusted keyring.  Instead of relying on the builtin trusted keyring
->>> (with hard-coded certificates), the second trusted keyring can include
->>> certificate authorities from the builtin trusted keyring and child
->>> certificates loaded at run time.  Using the secondary trusted keyring
->>> enables to use dm-verity disks (e.g. loop devices) signed by keys which
->>> did not exist at kernel build time, leveraging the certificate chain of
->>> trust model.  In practice, this makes it possible to update certificate=
-s
->>> without kernel update and reboot, aligning with module and kernel
->>> (kexec) signature verification which already use the secondary trusted
->>> keyring.
->>>
->>> Cc: Alasdair Kergon <agk@redhat.com>
->>> Cc: Andrew Morton <akpm@linux-foundation.org>
->>> Cc: Jarkko Sakkinen <jarkko.sakkinen@linux.intel.com>
->>> Cc: Jaskaran Khurana <jaskarankhurana@linux.microsoft.com>
->>> Cc: Mike Snitzer <snitzer@redhat.com>
->>> Cc: Milan Broz <gmazyland@gmail.com>
->>> Signed-off-by: Micka=EBl Sala=FCn <mic@linux.microsoft.com>
->>> ---
->>>
->>> Previous version:
->>> https://lore.kernel.org/lkml/20201002071802.535023-1-mic@digikod.net/
->>>
->>> Changes since v1:
->>> * Extend the commit message (asked by Jarkko Sakkinen).
->>> * Rename the Kconfig "help" keyword according to commit 84af7a6194e4
->>>   ("checkpatch: kconfig: prefer 'help' over '---help---'").
->>
->> Can you please explain why you've decided to make this a Kconfig CONFIG
->> knob?  Why not either add: a dm-verity table argument? A dm-verity
->> kernel module parameter? or both (to allow a particular default but then
->> per-device override)?
->=20
-> The purpose of signed dm-verity images is to authenticate files, or said
-> in another way, to enable the kernel to trust disk images in a flexible
-> way (i.e. thanks to certificate's chain of trust). Being able to update
-> such chain at run time requires to use the second trusted keyring. This
-> keyring automatically includes the certificate authorities from the
-> builtin trusted keyring, which are required to dynamically populate the
-> secondary trusted keyring with certificates signed by an already trusted
-> authority. The roots of trust must then be included at build time in the
-> builtin trusted keyring.
->=20
-> To be meaningful, using dm-verity signatures implies to have a
-> restricted user space, i.e. even the root user has limited power over
-> the kernel and the rest of the system. Blindly trusting data provided by
-> user space (e.g. dm-verity table argument, kernel module parameter)
-> defeat the purpose of (mandatory) authenticated images.
->=20
->>
->> Otherwise, _all_ DM verity devices will be configured to use secondary
->> keyring fallback.  Is that really desirable?
->=20
-> That is already the current state (on purpose).
+Patch 1-5 are small fixes, the first two resent from an earlier
+submission. Patch 6ff. add version scripts for the linker to
+libmultipath, libmpathpersist, and libmpathcmd.
+(new in v2: versions start at 1.0.0 for all 3 libraries).
 
-I meant that when DM_VERITY_VERIFY_ROOTHASH_SIG is set, dm-verity
-signature becomes mandatory. This new configuration
-DM_VERITY_VERIFY_ROOTHASH_SIG_SECONDARY_KEYRING extend this trust to the
-secondary trusted keyring, which contains certificates signed (directly
-or indirectly) by CA from the builtin trusted keyring.
+Is it useful to do this for libmultipath? We have always said that this is
+not a public, stable ABI. However, I still believe it has merits. First of
+all, it's a description of the ABI we use. It turns out that it cuts the
+size of the exported symbol list of libmultipath roughly in half, which is
+better than I'd expected. It leads to ld.so-time failure rather than weird
+crashes in the unlikely case that non-matching binaries are used
+together. It allows packaging scripts to check compatibility of binaries
+and libraries without resorting to version and release. It will help us
+stabilize the ABI, albeit only in the long run. Finally, it's a step
+towards modernizing our code base in general.
 
-So yes, this new (optional) configuration *extends* the source of trust
-for all dm-verity devices, and yes, it is desirable. I think it should
-have been this way from the beginning (as for other authentication
-mechanisms) but it wasn't necessary at that time.
+To avoid misunderstanding, my intention is not to provide a stable or even
+backward-compatible ABI in libmultipath.so.0. We're still allowed to make
+changes to globally visible data structures like "struct config", and to
+remove symbols from the ABI, like no serious shared library would do.
+We just need to bump the ABI version when we do so.
 
->=20
->>
->> Regardless, I really don't see why a Kconfig knob is appropriate.
->=20
-> Moreover, a Kconfig knob makes sense as much as
-> DM_VERITY_VERIFY_ROOTHASH_SIG,
-> IMA_KEYRINGS_PERMIT_SIGNED_BY_BUILTIN_OR_SECONDARY, MODULE_SIG_FORCE and
-> other similar authentication mechanisms. Indeed, when using these
-> configurations, we want the kernel to enforce a specific policy.
->=20
-> Obviously, we can't make the DM_VERITY_VERIFY_ROOTHASH_SIG relies on the
-> secondary trusted keyring without important security implications for
-> systems already using this configuration (and then the builtin trusted
-> keyring as the unique source of trust).
->=20
+Changes v1->v2:
+
+08/12: "libmultipath: create separate .so for unit tests"
+       fix test_clean rule (Ben)
+9/12-11/12: Changed library versions from 0.8.4 to 1.0.0 as discussed with Ben,
+       kept Reviewed-by: trailer
+12/12 "libmpathpersist: initialize mpp->hwe in get_mpvec()"
+      Fix for the issue mentioned by Ben in his review for 02/12
+      "libmultipath: copy mpp->hwe from pp->hwe"
+
+Regards
+Martin
+
+Martin Wilck (12):
+  libmultipath: find_mpe(): don't match with empty WWID
+  libmultipath: copy mpp->hwe from pp->hwe
+  libmultipath: dm_map_present_by_uuid(): fix dm_task_create() call
+  libdmmp tests: fix compilation
+  libmultipath: prio: constify some function parameters
+  libmultipath: checkers/prio: allow non-lazy .so loading
+  multipath-tools Makefiles: separate rules for .so and man pages
+  libmultipath: create separate .so for unit tests
+  libmultipath: add linker version script
+  libmpathpersist: add linker version script
+  libmpathcmd: add linker version script
+  libmpathpersist: initialize mpp->hwe in get_mpvec()
+
+ libdmmp/test/libdmmp_speed_test.c       |   2 +-
+ libdmmp/test/libdmmp_test.c             |   2 +-
+ libmpathcmd/Makefile                    |  14 +-
+ libmpathcmd/libmpathcmd.version         |  25 +++
+ libmpathpersist/Makefile                |  16 +-
+ libmpathpersist/libmpathpersist.version |  32 +++
+ libmpathpersist/mpath_persist.c         |   6 +-
+ libmultipath/Makefile                   |  22 ++-
+ libmultipath/checkers.c                 |  17 ++
+ libmultipath/config.c                   |   2 +-
+ libmultipath/configure.c                |   7 +
+ libmultipath/devmapper.c                |   2 +-
+ libmultipath/libmultipath.version       | 248 ++++++++++++++++++++++++
+ libmultipath/prio.c                     |  26 ++-
+ libmultipath/prio.h                     |   4 +-
+ libmultipath/propsel.c                  |   4 +-
+ libmultipath/structs.c                  |  15 ++
+ libmultipath/structs.h                  |   1 +
+ libmultipath/structs_vec.c              |  54 +++---
+ multipathd/main.c                       |  10 -
+ tests/Makefile                          |  10 +-
+ 21 files changed, 445 insertions(+), 74 deletions(-)
+ create mode 100644 libmpathcmd/libmpathcmd.version
+ create mode 100644 libmpathpersist/libmpathpersist.version
+ create mode 100644 libmultipath/libmultipath.version
+
+-- 
+2.28.0
 
 
 --
