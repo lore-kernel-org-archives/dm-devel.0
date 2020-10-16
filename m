@@ -7,60 +7,60 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 94678C35267
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7D957C35265
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:41 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id EB06E2084C
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:37 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org EB06E2084C
+	by mail.kernel.org (Postfix) with ESMTPS id DB50420872
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Oct 2020 10:45:40 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org DB50420872
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-457-gDcN_I3TMGyMoQII75Vgwg-1; Fri, 16 Oct 2020 06:45:34 -0400
-X-MC-Unique: gDcN_I3TMGyMoQII75Vgwg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-595-AcgFLbIVOZqcuMKUmw4PeA-1; Fri, 16 Oct 2020 06:45:37 -0400
+X-MC-Unique: AcgFLbIVOZqcuMKUmw4PeA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8C39D803654;
-	Fri, 16 Oct 2020 10:45:23 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6E3B17666D;
-	Fri, 16 Oct 2020 10:45:23 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B2ECA18A8234;
+	Fri, 16 Oct 2020 10:45:25 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 393FD5C22D;
+	Fri, 16 Oct 2020 10:45:25 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 46E085811A;
-	Fri, 16 Oct 2020 10:45:23 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0EA451826D3C;
+	Fri, 16 Oct 2020 10:45:25 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09GAjI2q020666 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 16 Oct 2020 06:45:18 -0400
+	id 09GAjKQX020735 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 16 Oct 2020 06:45:20 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 3984512D8B8; Fri, 16 Oct 2020 10:45:18 +0000 (UTC)
+	id 8468116C2DD; Fri, 16 Oct 2020 10:45:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3357816C2DB
-	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:45:18 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7FA0A12D8B8
+	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:45:20 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1FE3D101A569
-	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:45:18 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 59EE18726C9
+	for <dm-devel@redhat.com>; Fri, 16 Oct 2020 10:45:20 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-589-jaXDsw3HPcyai5aDWyK6GQ-1;
+	relay.mimecast.com with ESMTP id us-mta-228-Zz-uTotLORWCq-GZyRjnFQ-1;
 	Fri, 16 Oct 2020 06:45:15 -0400
-X-MC-Unique: jaXDsw3HPcyai5aDWyK6GQ-1
+X-MC-Unique: Zz-uTotLORWCq-GZyRjnFQ-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id F0AB7B2B0;
+	by mx2.suse.de (Postfix) with ESMTP id 5743DB2AE;
 	Fri, 16 Oct 2020 10:45:13 +0000 (UTC)
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri, 16 Oct 2020 12:44:45 +0200
-Message-Id: <20201016104501.8700-14-mwilck@suse.com>
+Date: Fri, 16 Oct 2020 12:44:43 +0200
+Message-Id: <20201016104501.8700-12-mwilck@suse.com>
 In-Reply-To: <20201016104501.8700-1-mwilck@suse.com>
 References: <20201016104501.8700-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -74,11 +74,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 09GAjI2q020666
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 09GAjKQX020735
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH v2 13/29] multipathd: print error message if
-	config can't be loaded
+Subject: [dm-devel] [PATCH v2 11/29] multipathd: child(): call cleanups in
+	failure case, too
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -92,7 +92,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -102,28 +102,50 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
+So far we haven't called any cleanup code if child() failed.
+Fix it.
+
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ multipathd/main.c | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index be6d3cd..f3bb272 100644
+index 9080a15..be6d3cd 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -3074,8 +3074,10 @@ child (__attribute__((unused)) void *param)
- 	condlog(2, "read " DEFAULT_CONFIGFILE);
+@@ -3044,6 +3044,7 @@ child (__attribute__((unused)) void *param)
+ 	char *envp;
+ 	enum daemon_status state;
+ 	struct call_rcu_data *crdp;
++	int exit_code = 1;
  
- 	conf = load_config(DEFAULT_CONFIGFILE);
--	if (!conf)
-+	if (!conf) {
-+		condlog(0, "failed to load configuration");
- 		goto failed;
-+	}
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
+ 	signal_init();
+@@ -3207,6 +3208,8 @@ child (__attribute__((unused)) void *param)
+ 		}
+ 	}
  
- 	if (verbosity)
- 		conf->verbosity = verbosity;
++	exit_code = 0;
++failed:
+ 	cleanup_threads();
+ 	cleanup_vecs();
+ 	cleanup_foreign();
+@@ -3227,12 +3230,7 @@ child (__attribute__((unused)) void *param)
+ #ifdef _DEBUG_
+ 	dbg_free_final(NULL);
+ #endif
+-	exit(sd_notify_exit(0));
+-
+-failed:
+-	if (pid_fd >= 0)
+-		close(pid_fd);
+-	exit(sd_notify_exit(1));
++	return sd_notify_exit(exit_code);
+ }
+ 
+ static int
 -- 
 2.28.0
 
