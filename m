@@ -7,74 +7,75 @@ X-Spam-Status: No, score=-11.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BBD12C433E7
-	for <dm-devel@archiver.kernel.org>; Mon, 19 Oct 2020 21:07:48 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7D982C433DF
+	for <dm-devel@archiver.kernel.org>; Mon, 19 Oct 2020 21:52:10 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 39B2622282
-	for <dm-devel@archiver.kernel.org>; Mon, 19 Oct 2020 21:07:47 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTPS id C983322400
+	for <dm-devel@archiver.kernel.org>; Mon, 19 Oct 2020 21:52:09 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MGxjQhl2"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 39B2622282
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Es4Gv2qa"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C983322400
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1603141666;
+	s=mimecast20190719; t=1603144328;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=fvmyqEl9JzPP1U9gXSJuQDuDDlbMPf0fecRaVpqsy3A=;
-	b=MGxjQhl2KPDchFByuNo3SL3MiMwUpe43j5qvU813IVpoqU7TNaWq6FLVlsUPhJK3bxILfA
-	0itL47M1dnxBxITIZ/bA5AqmG8j9U0sbtUYFvu8hTJsp0nJCkd3PfXwAHoRxfI3nj/O6fh
-	hJ5oDBkZXQu+v4uY1ja8ox85U2UfwRo=
+	bh=lQF9DFTKn7ajHA/mm1lPIOR92MnfiRBXlEK3mEZSbV0=;
+	b=Es4Gv2qayuqw57Xx9yS9V57hg7j3/MBJMhlNxG2/JplMOnG5vTxcXobVYE9EB3wpJTuM7q
+	jPH4tLV+vSGMoXlR0OlY68VP14VIMkrpym9IV7Lqu4/Zk2uk99vEWfWzkhfRADNnni06/e
+	9w5QmKFHkyUTEZ0LXOS1pMWlBapaRE0=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-109-bzj_bpznPfOC_fIjEaLrBQ-1; Mon, 19 Oct 2020 17:07:44 -0400
-X-MC-Unique: bzj_bpznPfOC_fIjEaLrBQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-558-c5tcBS8GOrSucLzaXf3BSQ-1; Mon, 19 Oct 2020 17:52:04 -0400
+X-MC-Unique: c5tcBS8GOrSucLzaXf3BSQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 113D9802B6B;
-	Mon, 19 Oct 2020 21:07:38 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0A6D45C1A3;
-	Mon, 19 Oct 2020 21:07:37 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C1F041891E81;
+	Mon, 19 Oct 2020 21:51:59 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A461B6EF44;
+	Mon, 19 Oct 2020 21:51:58 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7A3461826D35;
-	Mon, 19 Oct 2020 21:07:34 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
-	[10.5.11.12])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C21EF44A74;
+	Mon, 19 Oct 2020 21:51:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
+	[10.5.11.22])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09JL7Wop002387 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 19 Oct 2020 17:07:32 -0400
+	id 09JLpuVe007140 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 19 Oct 2020 17:51:56 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id CF48661983; Mon, 19 Oct 2020 21:07:32 +0000 (UTC)
+	id 24CED10002A4; Mon, 19 Oct 2020 21:51:56 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 79AF860C05;
-	Mon, 19 Oct 2020 21:07:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2803C1002388;
+	Mon, 19 Oct 2020 21:51:53 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 09JL7RNJ014453; 
-	Mon, 19 Oct 2020 16:07:28 -0500
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 09JLppqu014503; 
+	Mon, 19 Oct 2020 16:51:51 -0500
 Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 09JL7RsE014452;
-	Mon, 19 Oct 2020 16:07:27 -0500
-Date: Mon, 19 Oct 2020 16:07:26 -0500
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 09JLppUg014502;
+	Mon, 19 Oct 2020 16:51:51 -0500
+Date: Mon, 19 Oct 2020 16:51:51 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: mwilck@suse.com
-Message-ID: <20201019210726.GH3384@octiron.msp.redhat.com>
+Message-ID: <20201019215151.GI3384@octiron.msp.redhat.com>
 References: <20201016104501.8700-1-mwilck@suse.com>
-	<20201016104501.8700-27-mwilck@suse.com>
+	<20201016104501.8700-28-mwilck@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <20201016104501.8700-27-mwilck@suse.com>
+In-Reply-To: <20201016104501.8700-28-mwilck@suse.com>
 User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com
-Subject: Re: [dm-devel] [PATCH v2 26/29] libmultipath: simplify dlog()
+Subject: Re: [dm-devel] [PATCH v2 27/29] multipathd: common code for "-k"
+ and command args
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -88,7 +89,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -97,153 +98,93 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Oct 16, 2020 at 12:44:58PM +0200, mwilck@suse.com wrote:
+On Fri, Oct 16, 2020 at 12:44:59PM +0200, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> By checking the log level in condlog() directly, we can simplify
-> dlog(). Also, it's now possible to limit the log level at compile
-> time by setting MAX_VERBOSITY, enabling the compiler to optimize
-> away log messages with higher loglevel.
+> 'multipathd -k"cmd"' and 'multipath cmd' are the same thing.
+> Treat it with common code.
 > 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/debug.c     | 30 +++++++++++++-----------------
->  libmultipath/debug.h     | 19 +++++++++++++++----
->  libmultipath/devmapper.c |  4 +++-
->  tests/test-log.c         |  4 ++--
->  tests/test-log.h         |  3 ++-
->  5 files changed, 35 insertions(+), 25 deletions(-)
+>  multipathd/main.c | 37 +++++++++++++++++++------------------
+>  1 file changed, 19 insertions(+), 18 deletions(-)
 > 
-> diff --git a/libmultipath/debug.c b/libmultipath/debug.c
-> index f9b7755..429f269 100644
-> --- a/libmultipath/debug.c
-> +++ b/libmultipath/debug.c
-> @@ -18,29 +18,25 @@
->  int logsink;
->  int libmp_verbosity = DEFAULT_VERBOSITY;
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 725a10b..0cf8a26 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -3303,6 +3303,8 @@ main (int argc, char *argv[])
+>  	int err;
+>  	int foreground = 0;
+>  	struct config *conf;
+> +	char *opt_k_arg = NULL;
+> +	bool opt_k = false;
 >  
-> -void dlog (int sink, int prio, const char * fmt, ...)
-> +void dlog(int prio, const char * fmt, ...)
->  {
->  	va_list ap;
->  
->  	va_start(ap, fmt);
-> +	if (logsink != LOGSINK_SYSLOG) {
-> +		if (logsink == LOGSINK_STDERR_WITH_TIME) {
-> +			time_t t = time(NULL);
-> +			struct tm *tb = localtime(&t);
-> +			char buff[16];
->  
-> -	if (prio <= libmp_verbosity) {
-> -		if (sink != LOGSINK_SYSLOG) {
-> -			if (sink == LOGSINK_STDERR_WITH_TIME) {
-> -				time_t t = time(NULL);
-> -				struct tm *tb = localtime(&t);
-> -				char buff[16];
-> -
-> -				strftime(buff, sizeof(buff),
-> -					 "%b %d %H:%M:%S", tb);
-> -				buff[sizeof(buff)-1] = '\0';
-> -
-> -				fprintf(stderr, "%s | ", buff);
-> -			}
-> -			vfprintf(stderr, fmt, ap);
-> +			strftime(buff, sizeof(buff),
-> +				 "%b %d %H:%M:%S", tb);
-> +			buff[sizeof(buff)-1] = '\0';
-> +			fprintf(stderr, "%s | ", buff);
+>  	ANNOTATE_BENIGN_RACE_SIZED(&multipath_conf, sizeof(multipath_conf),
+>  				   "Manipulated through RCU");
+> @@ -3350,16 +3352,9 @@ main (int argc, char *argv[])
+>  			logsink = LOGSINK_STDERR_WITHOUT_TIME;
+>  			break;
+>  		case 'k':
+> -			logsink = 0;
+> -			conf = load_config(DEFAULT_CONFIGFILE);
+> -			if (!conf)
+> -				exit(1);
+> -			if (verbosity)
+> -				libmp_verbosity = verbosity;
+> -			uxsock_timeout = conf->uxsock_timeout;
+> -			err = uxclnt(optarg, uxsock_timeout + 100);
+> -			free_config(conf);
+> -			return err;
+> +			opt_k = true;
+> +			opt_k_arg = optarg;
+> +			break;
+>  		case 'B':
+>  			bindings_read_only = 1;
+>  			break;
+> @@ -3375,7 +3370,7 @@ main (int argc, char *argv[])
+>  			exit(1);
 >  		}
-> -		else
-> -			log_safe(prio + 3, fmt, ap);
-> +		vfprintf(stderr, fmt, ap);
 >  	}
-> +	else
-> +		log_safe(prio + 3, fmt, ap);
->  	va_end(ap);
->  }
-> diff --git a/libmultipath/debug.h b/libmultipath/debug.h
-> index 91ba02b..705a5d7 100644
-> --- a/libmultipath/debug.h
-> +++ b/libmultipath/debug.h
-> @@ -1,5 +1,7 @@
-> -void dlog (int sink, int prio, const char * fmt, ...)
-> -	__attribute__((format(printf, 3, 4)));
-> +#ifndef _DEBUG_H
-> +#define _DEBUG_H
-> +void dlog (int prio, const char *fmt, ...)
-> +	__attribute__((format(printf, 2, 3)));
->  
->  
->  #include <pthread.h>
-> @@ -10,8 +12,9 @@ void dlog (int sink, int prio, const char * fmt, ...)
->  extern int logsink;
->  extern int libmp_verbosity;
->  
-> -#define condlog(prio, fmt, args...) \
-> -	dlog(logsink, prio, fmt "\n", ##args)
-> +#ifndef MAX_VERBOSITY
-> +#define MAX_VERBOSITY 4
-> +#endif
->  
->  enum {
->  	LOGSINK_STDERR_WITH_TIME = 0,
-> @@ -19,3 +22,11 @@ enum {
->  	LOGSINK_SYSLOG = 1,
->  };
->  
-> +#define condlog(prio, fmt, args...)					\
-> +	do {								\
-> +		int __p = (prio);					\
-> +									\
-> +		if (__p <= MAX_VERBOSITY && __p <= libmp_verbosity)	\
-> +			dlog(__p, fmt "\n", ##args);			\
-> +	} while (0)
-> +#endif /* _DEBUG_H */
-> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> index 78112a9..cf2f27c 100644
-> --- a/libmultipath/devmapper.c
-> +++ b/libmultipath/devmapper.c
-> @@ -274,7 +274,9 @@ static int dm_tgt_prereq (unsigned int *ver)
->  
->  static void _init_versions(void)
->  {
-> -	dlog(logsink, 3, VERSION_STRING);
-> +	/* Can't use condlog here because of how VERSION_STRING is defined */
-> +	if (3 <= libmp_verbosity)
-> +		dlog(3, VERSION_STRING);
->  	init_dm_library_version();
->  	init_dm_drv_version();
->  	init_dm_mpath_version();
-> diff --git a/tests/test-log.c b/tests/test-log.c
-> index 051491e..42ebad0 100644
-> --- a/tests/test-log.c
-> +++ b/tests/test-log.c
-> @@ -6,8 +6,8 @@
->  #include "log.h"
->  #include "test-log.h"
->  
-> -__attribute__((format(printf, 3, 0)))
-> -void __wrap_dlog (int sink, int prio, const char * fmt, ...)
-> +__attribute__((format(printf, 2, 0)))
-> +void __wrap_dlog (int prio, const char * fmt, ...)
->  {
->  	char buff[MAX_MSG_SIZE];
->  	va_list ap;
-> diff --git a/tests/test-log.h b/tests/test-log.h
-> index 2c878c6..6d22cd2 100644
-> --- a/tests/test-log.h
-> +++ b/tests/test-log.h
-> @@ -1,7 +1,8 @@
->  #ifndef _TEST_LOG_H
->  #define _TEST_LOG_H
->  
-> -void __wrap_dlog (int sink, int prio, const char * fmt, ...);
-> +__attribute__((format(printf, 2, 0)))
-> +void __wrap_dlog (int prio, const char * fmt, ...);
->  void expect_condlog(int prio, char *string);
->  
->  #endif
+> -	if (optind < argc) {
+> +	if (opt_k || optind < argc) {
+>  		char cmd[CMDSIZE];
+>  		char * s = cmd;
+>  		char * c = s;
+> @@ -3390,14 +3385,20 @@ main (int argc, char *argv[])
+>  			libmp_verbosity = verbosity;
+>  		uxsock_timeout = conf->uxsock_timeout;
+>  		memset(cmd, 0x0, CMDSIZE);
+> -		while (optind < argc) {
+> -			if (strchr(argv[optind], ' '))
+> -				c += snprintf(c, s + CMDSIZE - c, "\"%s\" ", argv[optind]);
+> -			else
+> -				c += snprintf(c, s + CMDSIZE - c, "%s ", argv[optind]);
+> -			optind++;
+> +		if (opt_k)
+> +			s = opt_k_arg;
+> +		else {
+> +			while (optind < argc) {
+> +				if (strchr(argv[optind], ' '))
+> +					c += snprintf(c, s + CMDSIZE - c,
+> +						      "\"%s\" ", argv[optind]);
+> +				else
+> +					c += snprintf(c, s + CMDSIZE - c,
+> +						      "%s ", argv[optind]);
+> +				optind++;
+> +			}
+> +			c += snprintf(c, s + CMDSIZE - c, "\n");
+
+combining these two methods makes is obvious that adding the newline to
+the cmd buffer is unnecessary. But since your patch didn't add it, and
+it doesn't hurt anything
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+>  		}
+> -		c += snprintf(c, s + CMDSIZE - c, "\n");
+>  		err = uxclnt(s, uxsock_timeout + 100);
+>  		free_config(conf);
+>  		return err;
 > -- 
 > 2.28.0
 
