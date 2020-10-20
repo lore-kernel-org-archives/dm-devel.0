@@ -2,65 +2,71 @@ Return-Path: <SRS0=X5vH=D3=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	SPF_HELO_NONE,SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E50B5C433E7
-	for <dm-devel@archiver.kernel.org>; Tue, 20 Oct 2020 08:22:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 75A1EC43457
+	for <dm-devel@archiver.kernel.org>; Tue, 20 Oct 2020 08:22:57 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4AFF32225F
+	by mail.kernel.org (Postfix) with ESMTPS id C0B132222F
 	for <dm-devel@archiver.kernel.org>; Tue, 20 Oct 2020 08:22:56 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4AFF32225F
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C0B132222F
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-459-d56ANhx6NMSSUpZG9ziZPw-1; Tue, 20 Oct 2020 04:22:53 -0400
-X-MC-Unique: d56ANhx6NMSSUpZG9ziZPw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-567-w4yZQkDKMeqhrcY8UVEurQ-1; Tue, 20 Oct 2020 04:22:53 -0400
+X-MC-Unique: w4yZQkDKMeqhrcY8UVEurQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3B17E8049D8;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4072F8049CB;
 	Tue, 20 Oct 2020 08:22:45 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1B02975132;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F17F1000232;
 	Tue, 20 Oct 2020 08:22:45 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E19EF18199F8;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E4E26181A050;
 	Tue, 20 Oct 2020 08:22:44 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09JHQWhI012601 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 19 Oct 2020 13:26:32 -0400
+	id 09K6sVSj002598 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 20 Oct 2020 02:54:31 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 69F3D11558B7; Mon, 19 Oct 2020 17:26:32 +0000 (UTC)
+	id 2DFFE2166B44; Tue, 20 Oct 2020 06:54:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6630A11558B6
-	for <dm-devel@redhat.com>; Mon, 19 Oct 2020 17:26:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 291F22166B28
+	for <dm-devel@redhat.com>; Tue, 20 Oct 2020 06:54:28 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CAF8A102F1E1
-	for <dm-devel@redhat.com>; Mon, 19 Oct 2020 17:26:29 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-11-CX9vnjyzPui41IV2STfSJA-1;
-	Mon, 19 Oct 2020 13:26:25 -0400
-X-MC-Unique: CX9vnjyzPui41IV2STfSJA-1
-Received: from tusharsu-Ubuntu.lan (c-71-197-163-6.hsd1.wa.comcast.net
-	[71.197.163.6])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 6544920B4905;
-	Mon, 19 Oct 2020 10:26:23 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 6544920B4905
-From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-To: zohar@linux.ibm.com, agk@redhat.com, snitzer@redhat.com,
-	gmazyland@gmail.com
-Date: Mon, 19 Oct 2020 10:26:05 -0700
-Message-Id: <20201019172607.16714-1-tusharsu@linux.microsoft.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C7F00100B165
+	for <dm-devel@redhat.com>; Tue, 20 Oct 2020 06:54:28 +0000 (UTC)
+Received: from out30-54.freemail.mail.aliyun.com
+	(out30-54.freemail.mail.aliyun.com [115.124.30.54]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-131-Hf1Z4D3zNSeW2e0lzfGP1A-1;
+	Tue, 20 Oct 2020 02:54:26 -0400
+X-MC-Unique: Hf1Z4D3zNSeW2e0lzfGP1A-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R111e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04357;
+	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=7; SR=0;
+	TI=SMTPD_---0UCd5jTt_1603176861
+Received: from localhost(mailfrom:jefflexu@linux.alibaba.com
+	fp:SMTPD_---0UCd5jTt_1603176861) by smtp.aliyun-inc.com(127.0.0.1);
+	Tue, 20 Oct 2020 14:54:22 +0800
+From: Jeffle Xu <jefflexu@linux.alibaba.com>
+To: snitzer@redhat.com, axboe@kernel.dk
+Date: Tue, 20 Oct 2020 14:54:20 +0800
+Message-Id: <20201020065420.124885-4-jefflexu@linux.alibaba.com>
+In-Reply-To: <20201020065420.124885-1-jefflexu@linux.alibaba.com>
+References: <20201020065420.124885-1-jefflexu@linux.alibaba.com>
+MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -69,14 +75,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Tue, 20 Oct 2020 04:22:11 -0400
-Cc: sashal@kernel.org, jmorris@namei.org, linux-kernel@vger.kernel.org,
-	nramas@linux.microsoft.com, dm-devel@redhat.com,
-	tyhicks@linux.microsoft.com, linux-integrity@vger.kernel.org
-Subject: [dm-devel] [PATCH v4 0/2] dm-devel:dm-crypt: infrastructure for
-	measurement of DM target data using IMA
+X-Mailman-Approved-At: Tue, 20 Oct 2020 04:22:10 -0400
+Cc: linux-block@vger.kernel.org, joseph.qi@linux.alibaba.com,
+	dm-devel@redhat.com, haoxu@linux.alibaba.com,
+	xiaoguang.wang@linux.alibaba.com
+Subject: [dm-devel] [RFC 3/3] dm: add support for IO polling
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -88,10 +93,9 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -99,85 +103,132 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-There are several device-mapper targets which contribute to verify
-the integrity of the mapped devices e.g. dm-integrity, dm-verity,
-dm-crypt etc.
+Design of cookie is initially constrained as a per-bio concept. It
+dosn't work well when bio-split needed, and it is really an issue when
+adding support of iopoll for dm devices.
 
-But they do not use the capabilities provided by kernel integrity
-subsystem (IMA). For instance, the IMA capability that measures several
-in-memory constructs and files to detect if they have been accidentally
-or maliciously altered. IMA also has the capability to include these
-measurements in the IMA measurement list and use them to extend a TPM
-PCR so that they can be quoted. These TPM PCR extend operations ensure
-that the tampering with the order of constructs being measured, and
-tampering with the measured constructs themselves - doesn't go
-undetected. In general, this capability is used for remote attestation
-of in-memory constructs and files of interest. As of today,device-mapper
-targets don't use the benefits of extended TPM PCR quotes and ultimately
-the benefits of remote attestation.
+The current algorithm implementation is simple. The returned cookie of
+dm device is actually not used since it is just the cookie of one of
+the cloned bios. Polling of dm device is actually polling on all
+hardware queues (in poll mode) of all underlying target devices.
 
-This series bridges this gap, so that all device-mapper targets
-could take advantage of IMA's measuring and quoting abilities - thus
-ultimately enabling remote attestation for device-mapper targets.
+Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+---
+ drivers/md/dm-core.h  |  1 +
+ drivers/md/dm-table.c | 30 ++++++++++++++++++++++++++++++
+ drivers/md/dm.c       | 39 +++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 70 insertions(+)
 
-This series is based on the following repo/branch:
- repo: https://git.kernel.org/pub/scm/linux/kernel/git/zohar/linux-integrity.git
- branch: next-integrity
- commit aa662fc04f5b ("ima: Fix NULL pointer dereference in ima_file_hash")
-
-This series also has a dependency on the following patch series and
-should be applied in the following order:
- 1. https://patchwork.kernel.org/patch/11795559/
- 2. https://patchwork.kernel.org/patch/11801525/
-
-
-Change Log v4:
-Incorporated feedback from Milan Broz <gmazyland@gmail.com> on v3 series.
- - Added device name of both base disk and target device for
-   measurement, along with their major:minor.
- - Introduced a function get_devname_from_maj_min() in dm-ima.c, to
-   get the device name from device major:minor. Currently it is used
-   for dm-crypt measurements, but it would be helpful for measuring 
-   other device-mapper targets as well.
- - Added dm_target members - len and begin - to measurement list. 
- - Taken dependency on the updated base series v4 (1. above)
- - Taken dependency on the updated early boot measurement series v3
-   (2. above).
-
-Change Log v3:
- - Added dm-crypt as a supported data source to measure in ima.h.
- - Taken dependency on the updated base series v3 (2. above)
- - Taken dependency on the updated early boot measurement series v2
-   (3. above).
-
-Change Log v2:
- - Removed the references to "local" measurement from the description -
-   as this series only support remote attestation, and not local
-   integrity enforcement.
- - Taken dependency on the updated base series (2. above), which 
-   introduced a boolean parameter measure_buf_hash as per community
-   feedback to support measuring hash of the buffer, instead of the
-   buffer itself.
- - Taken dependency on the updated early boot measurement series
-   (3. above).
-
-Tushar Sugandhi (2):
-  dm-devel: collect target data and submit to IMA to measure
-  dm-crypt: collect data and submit to DM to measure
-
- block/genhd.c                           |   2 +
- drivers/md/Makefile                     |   1 +
- drivers/md/dm-crypt.c                   | 217 ++++++++++++++
- drivers/md/dm-ima.c                     | 378 ++++++++++++++++++++++++
- include/linux/device-mapper.h           |  67 +++++
- include/linux/genhd.h                   |   1 +
- security/integrity/ima/ima.h            |   1 +
- security/integrity/ima/ima_queue_data.c |   3 +-
- 8 files changed, 669 insertions(+), 1 deletion(-)
- create mode 100644 drivers/md/dm-ima.c
-
+diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
+index d522093cb39d..f18e066beffe 100644
+--- a/drivers/md/dm-core.h
++++ b/drivers/md/dm-core.h
+@@ -187,4 +187,5 @@ extern atomic_t dm_global_event_nr;
+ extern wait_queue_head_t dm_global_eventq;
+ void dm_issue_global_event(void);
+ 
++int dm_io_poll(struct request_queue *q, blk_qc_t cookie);
+ #endif
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index ce543b761be7..634b79842519 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1809,6 +1809,31 @@ static bool dm_table_requires_stable_pages(struct dm_table *t)
+ 	return false;
+ }
+ 
++static int device_not_support_poll(struct dm_target *ti, struct dm_dev *dev,
++					   sector_t start, sector_t len, void *data)
++{
++	struct request_queue *q = bdev_get_queue(dev->bdev);
++
++	return q && !(q->queue_flags & QUEUE_FLAG_POLL);
++}
++
++bool dm_table_supports_poll(struct dm_table *t)
++{
++	struct dm_target *ti;
++	unsigned int i;
++
++	/* Ensure that all targets support DAX. */
++	for (i = 0; i < dm_table_get_num_targets(t); i++) {
++		ti = dm_table_get_target(t, i);
++
++		if (!ti->type->iterate_devices ||
++		    ti->type->iterate_devices(ti, device_not_support_poll, NULL))
++			return false;
++	}
++
++	return true;
++}
++
+ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 			       struct queue_limits *limits)
+ {
+@@ -1901,6 +1926,11 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ #endif
+ 
+ 	blk_queue_update_readahead(q);
++
++	if (dm_table_supports_poll(t)) {
++		q->poll_fn = dm_io_poll;
++		blk_queue_flag_set(QUEUE_FLAG_POLL, q);
++	}
+ }
+ 
+ unsigned int dm_table_get_num_targets(struct dm_table *t)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index c18fc2548518..4eceaf87ffd4 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1666,6 +1666,45 @@ static blk_qc_t dm_submit_bio(struct bio *bio)
+ 	return ret;
+ }
+ 
++static int dm_poll_one_dev(struct request_queue *q, blk_qc_t cookie)
++{
++	/* Iterate polling on all polling queues for mq device */
++	if (queue_is_mq(q)) {
++		struct blk_mq_hw_ctx *hctx;
++		int i, ret = 0;
++
++		if (!percpu_ref_tryget(&q->q_usage_counter))
++			return 0;
++
++		queue_for_each_poll_hw_ctx(q, hctx, i) {
++			ret += q->mq_ops->poll(hctx);
++		}
++
++		percpu_ref_put(&q->q_usage_counter);
++		return ret;
++	} else
++		return q->poll_fn(q, cookie);
++}
++
++int dm_io_poll(struct request_queue *q, blk_qc_t cookie)
++{
++	struct mapped_device *md = q->queuedata;
++	struct dm_table *table;
++	struct dm_dev_internal *dd;
++	int srcu_idx;
++	int ret = 0;
++
++	table = dm_get_live_table(md, &srcu_idx);
++	if (!table)
++		goto out;
++
++	list_for_each_entry(dd, dm_table_get_devices(table), list)
++		ret += dm_poll_one_dev(bdev_get_queue(dd->dm_dev->bdev), cookie);
++out:
++	dm_put_live_table(md, srcu_idx);
++	return ret;
++}
++
+ /*-----------------------------------------------------------------
+  * An IDR is used to keep track of allocated minor numbers.
+  *---------------------------------------------------------------*/
 -- 
-2.17.1
+2.27.0
 
 --
 dm-devel mailing list
