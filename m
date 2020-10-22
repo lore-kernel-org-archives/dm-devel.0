@@ -2,74 +2,88 @@ Return-Path: <SRS0=1REc=D5=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.9 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BA4EBC388F2
-	for <dm-devel@archiver.kernel.org>; Thu, 22 Oct 2020 03:15:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5A72CC4363A
+	for <dm-devel@archiver.kernel.org>; Thu, 22 Oct 2020 07:28:59 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 0F7792063A
-	for <dm-devel@archiver.kernel.org>; Thu, 22 Oct 2020 03:15:10 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="C0EfEgTY"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0F7792063A
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 6C8E420848
+	for <dm-devel@archiver.kernel.org>; Thu, 22 Oct 2020 07:28:58 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 6C8E420848
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=huawei.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1603336509;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=eOaViWLUkTV4LnzF81LRa6a47IU1/awCOrU92Ivedjs=;
-	b=C0EfEgTY3NYplpY04HwkJSd4LdG4SlP3nZbr7HJeUz4zbfY6U3/zKRZFPIpyQjt75wXtaK
-	ui2JYtHUQMo6pa1ljUKiTo4vCV1SQ00I7xwQ+Q7ZwWxgaY5CGUOZ1dGEJOza0pGNBqH7uh
-	4Ovm3OfVxZnWvAg5Z4R/L7OshjUUOD8=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-339-JmyColfbMAmALLZqBBmLKA-1; Wed, 21 Oct 2020 23:15:07 -0400
-X-MC-Unique: JmyColfbMAmALLZqBBmLKA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-383-_n3aN0gENG-BavTFnZMIzA-1; Thu, 22 Oct 2020 03:28:54 -0400
+X-MC-Unique: _n3aN0gENG-BavTFnZMIzA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D38721008542;
-	Thu, 22 Oct 2020 03:15:01 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 90D9D55781;
-	Thu, 22 Oct 2020 03:15:00 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E3D98107ACF5;
+	Thu, 22 Oct 2020 07:28:47 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E13245C1C7;
+	Thu, 22 Oct 2020 07:28:45 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 877001832FC2;
-	Thu, 22 Oct 2020 03:14:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
-	[10.5.11.23])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 27E97922E2;
+	Thu, 22 Oct 2020 07:28:42 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09M3EtDM013945 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 21 Oct 2020 23:14:55 -0400
+	id 09M7Sd4l008993 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 22 Oct 2020 03:28:39 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 507A719D7C; Thu, 22 Oct 2020 03:14:55 +0000 (UTC)
-Received: from T590 (ovpn-12-46.pek2.redhat.com [10.72.12.46])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A019A19728;
-	Thu, 22 Oct 2020 03:14:38 +0000 (UTC)
-Date: Thu, 22 Oct 2020 11:14:34 +0800
-From: Ming Lei <ming.lei@redhat.com>
-To: Jeffle Xu <jefflexu@linux.alibaba.com>
-Message-ID: <20201022031434.GA1643586@T590>
-References: <20201020065420.124885-1-jefflexu@linux.alibaba.com>
-	<20201020065420.124885-4-jefflexu@linux.alibaba.com>
+	id 16515AB411; Thu, 22 Oct 2020 07:28:39 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0FC9AAB594
+	for <dm-devel@redhat.com>; Thu, 22 Oct 2020 07:28:35 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D8134801224
+	for <dm-devel@redhat.com>; Thu, 22 Oct 2020 07:28:35 +0000 (UTC)
+Received: from huawei.com (szxga06-in.huawei.com [45.249.212.32]) (Using
+	TLS) by relay.mimecast.com with ESMTP id
+	us-mta-193-7XHswIVJNtGOikzoxsRYAQ-1; Thu, 22 Oct 2020 03:28:30 -0400
+X-MC-Unique: 7XHswIVJNtGOikzoxsRYAQ-1
+Received: from DGGEMS406-HUB.china.huawei.com (unknown [172.30.72.59])
+	by Forcepoint Email with ESMTP id 51AFB90192A34C041D30;
+	Thu, 22 Oct 2020 15:28:24 +0800 (CST)
+Received: from [10.174.178.210] (10.174.178.210) by
+	DGGEMS406-HUB.china.huawei.com (10.3.19.206) with Microsoft SMTP Server
+	id 14.3.487.0; Thu, 22 Oct 2020 15:28:14 +0800
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski
+	<bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>,
+	dm-devel mailing list <dm-devel@redhat.com>
+From: lixiaokeng <lixiaokeng@huawei.com>
+Message-ID: <adb9eb05-0597-5027-701d-861e273da9e4@huawei.com>
+Date: Thu, 22 Oct 2020 15:28:14 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
+	Thunderbird/68.10.0
 MIME-Version: 1.0
-In-Reply-To: <20201020065420.124885-4-jefflexu@linux.alibaba.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Originating-IP: [10.174.178.210]
+X-CFilter-Loop: Reflected
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: axboe@kernel.dk, snitzer@redhat.com, xiaoguang.wang@linux.alibaba.com,
-	linux-block@vger.kernel.org, joseph.qi@linux.alibaba.com,
-	dm-devel@redhat.com, haoxu@linux.alibaba.com
-Subject: Re: [dm-devel] [RFC 3/3] dm: add support for IO polling
+Cc: linfeilong <linfeilong@huawei.com>,
+	"liuzhiqiang \(I\)" <liuzhiqiang26@huawei.com>
+Subject: [dm-devel] [PATCH v2] libmultipath: fix memory leaks in
+	coalesce_paths
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -83,121 +97,147 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-GB
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Oct 20, 2020 at 02:54:20PM +0800, Jeffle Xu wrote:
-> Design of cookie is initially constrained as a per-bio concept. It
-> dosn't work well when bio-split needed, and it is really an issue when
-> adding support of iopoll for dm devices.
-> 
-> The current algorithm implementation is simple. The returned cookie of
-> dm device is actually not used since it is just the cookie of one of
-> the cloned bios. Polling of dm device is actually polling on all
-> hardware queues (in poll mode) of all underlying target devices.
-> 
-> Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
-> ---
->  drivers/md/dm-core.h  |  1 +
->  drivers/md/dm-table.c | 30 ++++++++++++++++++++++++++++++
->  drivers/md/dm.c       | 39 +++++++++++++++++++++++++++++++++++++++
->  3 files changed, 70 insertions(+)
-> 
-> diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
-> index d522093cb39d..f18e066beffe 100644
-> --- a/drivers/md/dm-core.h
-> +++ b/drivers/md/dm-core.h
-> @@ -187,4 +187,5 @@ extern atomic_t dm_global_event_nr;
->  extern wait_queue_head_t dm_global_eventq;
->  void dm_issue_global_event(void);
->  
-> +int dm_io_poll(struct request_queue *q, blk_qc_t cookie);
->  #endif
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index ce543b761be7..634b79842519 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -1809,6 +1809,31 @@ static bool dm_table_requires_stable_pages(struct dm_table *t)
->  	return false;
->  }
->  
-> +static int device_not_support_poll(struct dm_target *ti, struct dm_dev *dev,
-> +					   sector_t start, sector_t len, void *data)
-> +{
-> +	struct request_queue *q = bdev_get_queue(dev->bdev);
-> +
-> +	return q && !(q->queue_flags & QUEUE_FLAG_POLL);
-> +}
-> +
-> +bool dm_table_supports_poll(struct dm_table *t)
-> +{
-> +	struct dm_target *ti;
-> +	unsigned int i;
-> +
-> +	/* Ensure that all targets support DAX. */
-> +	for (i = 0; i < dm_table_get_num_targets(t); i++) {
-> +		ti = dm_table_get_target(t, i);
-> +
-> +		if (!ti->type->iterate_devices ||
-> +		    ti->type->iterate_devices(ti, device_not_support_poll, NULL))
-> +			return false;
-> +	}
-> +
-> +	return true;
-> +}
-> +
->  void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
->  			       struct queue_limits *limits)
->  {
-> @@ -1901,6 +1926,11 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
->  #endif
->  
->  	blk_queue_update_readahead(q);
-> +
-> +	if (dm_table_supports_poll(t)) {
-> +		q->poll_fn = dm_io_poll;
-> +		blk_queue_flag_set(QUEUE_FLAG_POLL, q);
-> +	}
->  }
->  
->  unsigned int dm_table_get_num_targets(struct dm_table *t)
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index c18fc2548518..4eceaf87ffd4 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1666,6 +1666,45 @@ static blk_qc_t dm_submit_bio(struct bio *bio)
->  	return ret;
->  }
->  
-> +static int dm_poll_one_dev(struct request_queue *q, blk_qc_t cookie)
-> +{
-> +	/* Iterate polling on all polling queues for mq device */
-> +	if (queue_is_mq(q)) {
-> +		struct blk_mq_hw_ctx *hctx;
-> +		int i, ret = 0;
-> +
-> +		if (!percpu_ref_tryget(&q->q_usage_counter))
-> +			return 0;
-> +
-> +		queue_for_each_poll_hw_ctx(q, hctx, i) {
-> +			ret += q->mq_ops->poll(hctx);
-> +		}
+When multipath -F are executed first and multipath -v2 or
+-d are executed later, asan will warn memory leaks. The
+reason is that the mpp allocated in coalesce_paths isn't
+freed. Here we use newmp to store mpp. If newmp need not
+be copied to mpvec, we free newmp at the end of the func.
 
-IMO, this way may not be accepted from performance viewpoint, .poll()
-often requires per-hw-queue lock. So in case of > 1 io thread,
-contention/cache ping-pong on hw queue resource can be very serious.
+Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
+Signed-off-by: Linfeilong <linfeilong@huawei.com>
+---
+ libmultipath/configure.c | 66 +++++++++++++++++++++++++---------------
+ 1 file changed, 41 insertions(+), 25 deletions(-)
 
-I guess you may have to find one way to pass correct cookie to ->poll().
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 6fb477fc..9d6eeba1 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -1132,7 +1132,7 @@ out:
+  * FORCE_RELOAD_WEAK: existing maps are compared to the current conf and only
+  * reloaded in DM if there's a difference. This is useful during startup.
+  */
+-int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
++int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
+ 		    int force_reload, enum mpath_cmds cmd)
+ {
+ 	int ret = CP_FAIL;
+@@ -1144,10 +1144,20 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 	struct path * pp2;
+ 	vector curmp = vecs->mpvec;
+ 	vector pathvec = vecs->pathvec;
++	vector newmp = NULL;
+ 	struct config *conf;
+ 	int allow_queueing;
+ 	struct bitfield *size_mismatch_seen;
 
++	if (mpvec)
++		newmp = mpvec;
++	else
++		newmp = vector_alloc();
++	if (!newmp) {
++		condlog(0, "can not allocate newmp");
++		return ret;
++	}
++
+ 	/* ignore refwwid if it's empty */
+ 	if (refwwid && !strlen(refwwid))
+ 		refwwid = NULL;
+@@ -1270,8 +1280,14 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 				goto out;
+ 			}
+ 		}
+-		if (r == DOMAP_DRY)
++		if (r == DOMAP_DRY) {
++			if (!vector_alloc_slot(newmp)) {
++				remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
++				goto out;
++			}
++			vector_set_slot(newmp, mpp);
+ 			continue;
++		}
 
-Thanks,
-Ming
+ 		if (r == DOMAP_EXIST && mpp->action == ACT_NOTHING &&
+ 		    force_reload == FORCE_RELOAD_WEAK)
+@@ -1307,44 +1323,44 @@ int coalesce_paths (struct vectors * vecs, vector newmp, char * refwwid,
+ 			print_multipath_topology(mpp, verbosity);
+ 		}
+
+-		if (newmp) {
+-			if (mpp->action != ACT_REJECT) {
+-				if (!vector_alloc_slot(newmp))
+-					goto out;
+-				vector_set_slot(newmp, mpp);
++		if (mpp->action != ACT_REJECT) {
++			if (!vector_alloc_slot(newmp)) {
++				remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
++				goto out;
+ 			}
+-			else
+-				remove_map(mpp, vecs->pathvec, vecs->mpvec,
+-					   KEEP_VEC);
++			vector_set_slot(newmp, mpp);
+ 		}
++		else
++			remove_map(mpp, vecs->pathvec, vecs->mpvec,
++				   KEEP_VEC);
+ 	}
+ 	/*
+ 	 * Flush maps with only dead paths (ie not in sysfs)
+ 	 * Keep maps with only failed paths
+ 	 */
+-	if (newmp) {
+-		vector_foreach_slot (newmp, mpp, i) {
+-			char alias[WWID_SIZE];
++	vector_foreach_slot (newmp, mpp, i) {
++		char alias[WWID_SIZE];
+
+-			if (!deadmap(mpp))
+-				continue;
++		if (!deadmap(mpp))
++			continue;
+
+-			strlcpy(alias, mpp->alias, WWID_SIZE);
++		strlcpy(alias, mpp->alias, WWID_SIZE);
+
+-			vector_del_slot(newmp, i);
+-			i--;
+-			remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
++		vector_del_slot(newmp, i);
++		i--;
++		remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
+
+-			if (dm_flush_map(alias))
+-				condlog(2, "%s: remove failed (dead)",
+-					alias);
+-			else
+-				condlog(2, "%s: remove (dead)", alias);
+-		}
++		if (dm_flush_map(alias))
++			condlog(2, "%s: remove failed (dead)",
++				alias);
++		else
++			condlog(2, "%s: remove (dead)", alias);
+ 	}
+ 	ret = CP_OK;
+ out:
+ 	free(size_mismatch_seen);
++	if (!mpvec)
++		free_multipathvec(newmp, KEEP_PATHS);
+ 	return ret;
+ }
+
+-- 
 
 --
 dm-devel mailing list
