@@ -2,78 +2,74 @@ Return-Path: <SRS0=KxaR=D6=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-3.9 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	UNWANTED_LANGUAGE_BODY autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 020F6C388F9
-	for <dm-devel@archiver.kernel.org>; Fri, 23 Oct 2020 21:15:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 26EBAC55178
+	for <dm-devel@archiver.kernel.org>; Fri, 23 Oct 2020 21:16:25 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 5841D21D6C
-	for <dm-devel@archiver.kernel.org>; Fri, 23 Oct 2020 21:15:56 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTPS id 7213E22273
+	for <dm-devel@archiver.kernel.org>; Fri, 23 Oct 2020 21:16:24 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RnXqRLj7"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5841D21D6C
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="e+HTfYoZ"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7213E22273
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1603487755;
+	s=mimecast20190719; t=1603487783;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=RpU1e5zlllv2z0tnFMHA0v57nO5ox1vhPPsIRRIpQdQ=;
-	b=RnXqRLj7nUOmboO+i3j+cxjq0uQykBZQyMy1gfrHbOe6nHAOeWWKFaSJSXuuSAfUrv+bWC
-	nkIErvErxlMk3jnNjKWB5F/UExB77Lc5IMLd4cZ/DNb8D9y5lSZVyllFqPFIclhKLPn5IT
-	CYcposlwFS3qAYAp0KtPhMZOQFltf6k=
+	bh=si7SdmbJTuuVLskZbqhbAJKQJNUiKt/QyThKvDF/Mhk=;
+	b=e+HTfYoZ2IKiiS5OkKMbX0ayc4ZrXsz2rclna/IdHD9x4Z9eh9mMEAQ0CKSJSYmRvTw4Fv
+	tKEOT4iCWc+bkbwoho5wSY3c0bZatL235ZbafQayjTk7+/e/DiGRbK+pbdTIqSddILwEvv
+	XwcwLPCu5hSLTnWi4VZJd16qKyaXG50=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-333-4l33oNl6PAiA39Xy3Rcfww-1; Fri, 23 Oct 2020 17:15:52 -0400
-X-MC-Unique: 4l33oNl6PAiA39Xy3Rcfww-1
+ us-mta-369-jAdzrJBzNlmfRQXvQeHCWg-1; Fri, 23 Oct 2020 17:16:20 -0400
+X-MC-Unique: jAdzrJBzNlmfRQXvQeHCWg-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C4235804B74;
-	Fri, 23 Oct 2020 21:15:45 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 69F48835B49;
+	Fri, 23 Oct 2020 21:16:14 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1CC5C19C66;
-	Fri, 23 Oct 2020 21:15:44 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3A2C319C66;
+	Fri, 23 Oct 2020 21:16:14 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8AADA180B657;
-	Fri, 23 Oct 2020 21:15:40 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1C3AA180B65D;
+	Fri, 23 Oct 2020 21:16:13 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
 	[10.5.11.12])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09NLFDeA027774 for <dm-devel@listman.util.phx.redhat.com>;
+	id 09NLFDIB027769 for <dm-devel@listman.util.phx.redhat.com>;
 	Fri, 23 Oct 2020 17:15:13 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id C3C6E60CCC; Fri, 23 Oct 2020 21:15:13 +0000 (UTC)
+	id B5BB760E1C; Fri, 23 Oct 2020 21:15:13 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C3D7360C84;
-	Fri, 23 Oct 2020 21:15:11 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AC37B60CCC;
+	Fri, 23 Oct 2020 21:15:10 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 09NLFAYw012589; 
-	Fri, 23 Oct 2020 16:15:10 -0500
-Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 09NLF93H012588;
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 09NLF8ES012585; 
 	Fri, 23 Oct 2020 16:15:09 -0500
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 09NLF8pm012584;
+	Fri, 23 Oct 2020 16:15:08 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Fri, 23 Oct 2020 16:15:04 -0500
-Message-Id: <1603487708-12547-2-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1603487708-12547-1-git-send-email-bmarzins@redhat.com>
-References: <1603487708-12547-1-git-send-email-bmarzins@redhat.com>
+Date: Fri, 23 Oct 2020 16:15:03 -0500
+Message-Id: <1603487708-12547-1-git-send-email-bmarzins@redhat.com>
 X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 X-loop: dm-devel@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>,
 	Martin Wilck <Martin.Wilck@suse.com>
-Subject: [dm-devel] [PATCH 1/5] libmultipath: move fast_io_fail defines to
-	structs.h
+Subject: [dm-devel] [PATCH 0/5] Misc Multipath patches
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -96,157 +92,55 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Since fast_io_fail is part of the multipath struct, its symbolic values
-belong in structs.h. Also, make it an instance of a general enum, which
-will be used again in future patches, and change the set/print functions
-which use it to use the general enum instead.
+This is a set of unrelated patches, based on top of my previous "add
+library to check if device is a valid path" patchset. The first two
+patches add a new config option, eh_deadline, that sets the scsi sysfs
+value of the same name for scsi path devices. This has been requested by
+multiple customers. Patch 0004 is a change to detecting rdac support
+requested by Netapp.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/config.h  |  8 --------
- libmultipath/dict.c    | 30 +++++++++++++++---------------
- libmultipath/dict.h    |  2 +-
- libmultipath/propsel.c |  2 +-
- libmultipath/structs.h | 17 +++++++++++++++++
- 5 files changed, 34 insertions(+), 25 deletions(-)
+Patch 0005 fixes a rare segfault during shutdown, that happens when the
+tur DSO is unloaded while the tur thread is still running. The issue is
+that unless we make the tur_checker thread joinable, there is no way to
+be sure that it isn't still running when the DSO is unloaded. I tried to
+fix this in a way that allowed the DSO to get cleaned up. But without
+redoing the tur_thread, that was impossible. Even if the cleanup
+happened when the tur_thread was running a cleanup handler function from
+libmultipath (not the DSO), while in pthread_exit(), which doesn't
+return back to the calling fuction, it would segfault.
 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 5d460359..661dd586 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -10,14 +10,6 @@
- #define ORIGIN_DEFAULT 0
- #define ORIGIN_CONFIG  1
- 
--/*
-- * In kernel, fast_io_fail == 0 means immediate failure on rport delete.
-- * OTOH '0' means not-configured in various places in multipath-tools.
-- */
--#define MP_FAST_IO_FAIL_UNSET (0)
--#define MP_FAST_IO_FAIL_OFF (-1)
--#define MP_FAST_IO_FAIL_ZERO (-2)
--
- enum devtypes {
- 	DEV_NONE,
- 	DEV_DEVT,
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index f12c2e5c..f4357da1 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -822,7 +822,7 @@ declare_mp_attr_handler(gid, set_gid)
- declare_mp_attr_snprint(gid, print_gid)
- 
- static int
--set_fast_io_fail(vector strvec, void *ptr)
-+set_undef_off_zero(vector strvec, void *ptr)
- {
- 	char * buff;
- 	int *int_ptr = (int *)ptr;
-@@ -832,36 +832,36 @@ set_fast_io_fail(vector strvec, void *ptr)
- 		return 1;
- 
- 	if (strcmp(buff, "off") == 0)
--		*int_ptr = MP_FAST_IO_FAIL_OFF;
-+		*int_ptr = UOZ_OFF;
- 	else if (sscanf(buff, "%d", int_ptr) != 1 ||
--		 *int_ptr < MP_FAST_IO_FAIL_ZERO)
--		*int_ptr = MP_FAST_IO_FAIL_UNSET;
-+		 *int_ptr < UOZ_ZERO)
-+		*int_ptr = UOZ_UNDEF;
- 	else if (*int_ptr == 0)
--		*int_ptr = MP_FAST_IO_FAIL_ZERO;
-+		*int_ptr = UOZ_ZERO;
- 
- 	FREE(buff);
- 	return 0;
- }
- 
- int
--print_fast_io_fail(char * buff, int len, long v)
-+print_undef_off_zero(char * buff, int len, long v)
- {
--	if (v == MP_FAST_IO_FAIL_UNSET)
-+	if (v == UOZ_UNDEF)
- 		return 0;
--	if (v == MP_FAST_IO_FAIL_OFF)
-+	if (v == UOZ_OFF)
- 		return snprintf(buff, len, "\"off\"");
--	if (v == MP_FAST_IO_FAIL_ZERO)
-+	if (v == UOZ_ZERO)
- 		return snprintf(buff, len, "0");
- 	return snprintf(buff, len, "%ld", v);
- }
- 
--declare_def_handler(fast_io_fail, set_fast_io_fail)
--declare_def_snprint_defint(fast_io_fail, print_fast_io_fail,
-+declare_def_handler(fast_io_fail, set_undef_off_zero)
-+declare_def_snprint_defint(fast_io_fail, print_undef_off_zero,
- 			   DEFAULT_FAST_IO_FAIL)
--declare_ovr_handler(fast_io_fail, set_fast_io_fail)
--declare_ovr_snprint(fast_io_fail, print_fast_io_fail)
--declare_hw_handler(fast_io_fail, set_fast_io_fail)
--declare_hw_snprint(fast_io_fail, print_fast_io_fail)
-+declare_ovr_handler(fast_io_fail, set_undef_off_zero)
-+declare_ovr_snprint(fast_io_fail, print_undef_off_zero)
-+declare_hw_handler(fast_io_fail, set_undef_off_zero)
-+declare_hw_snprint(fast_io_fail, print_undef_off_zero)
- 
- static int
- set_dev_loss(vector strvec, void *ptr)
-diff --git a/libmultipath/dict.h b/libmultipath/dict.h
-index a40ac66f..a917e1ca 100644
---- a/libmultipath/dict.h
-+++ b/libmultipath/dict.h
-@@ -13,7 +13,7 @@ int print_rr_weight(char *buff, int len, long v);
- int print_pgfailback(char *buff, int len, long v);
- int print_pgpolicy(char *buff, int len, long v);
- int print_no_path_retry(char *buff, int len, long v);
--int print_fast_io_fail(char *buff, int len, long v);
-+int print_undef_off_zero(char *buff, int len, long v);
- int print_dev_loss(char *buff, int len, unsigned long v);
- int print_reservation_key(char * buff, int len, struct be64 key, uint8_t
- 			  flags, int source);
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 3f2c2cfa..67d025cf 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -754,7 +754,7 @@ int select_fast_io_fail(struct config *conf, struct multipath *mp)
- 	mp_set_conf(fast_io_fail);
- 	mp_set_default(fast_io_fail, DEFAULT_FAST_IO_FAIL);
- out:
--	print_fast_io_fail(buff, 12, mp->fast_io_fail);
-+	print_undef_off_zero(buff, 12, mp->fast_io_fail);
- 	condlog(3, "%s: fast_io_fail_tmo = %s %s", mp->alias, buff, origin);
- 	return 0;
- }
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 4ce30551..cfa7b649 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -219,6 +219,23 @@ enum vpd_vendor_ids {
- 	VPD_VP_ARRAY_SIZE, /* This must remain the last entry */
- };
- 
-+/*
-+ * Multipath treats 0 as undefined for optional config parameters.
-+ * Use this for cases where 0 is a valid option for systems multipath
-+ * is communicating with
-+ */
-+enum undefined_off_zero {
-+	UOZ_UNDEF = 0,
-+	UOZ_OFF = -1,
-+	UOZ_ZERO = -2,
-+};
-+
-+enum fast_io_fail_states {
-+	MP_FAST_IO_FAIL_UNSET = UOZ_UNDEF,
-+	MP_FAST_IO_FAIL_OFF = UOZ_OFF,
-+	MP_FAST_IO_FAIL_ZERO = UOZ_ZERO,
-+};
-+
- struct vpd_vendor_page {
- 	int pg;
- 	const char *name;
+I realize that there has just been a lot of work done to make sure that
+multipathd is cleaning up before exitting that this code is going
+against that, but I'm not sure that the cost of redoing the tur_thread
+is worth the benefit of being able to unload the DSO. If people feel
+strongly that we should always unload the DSO, I can redo this and make
+the tur_thread joinable with pthread_tryjoin_np(), and add code to the
+checkerloop or uxlsnrloop to join with orphaned tur_threads.  That
+should work.
+
+Benjamin Marzinski (5):
+  libmultipath: move fast_io_fail defines to structs.h
+  libmultipath: add eh_deadline multipath.conf parameter
+  multipathd: remove redundant vector_free() int configure
+  libmultipath: only read 0xc9 vpd page for devices with rdac checker
+  libmultipath: don't dlclose tur checker DSO
+
+ libmultipath/checkers.c     | 10 +++++-
+ libmultipath/checkers.h     |  1 +
+ libmultipath/checkers/tur.c |  1 +
+ libmultipath/config.c       |  2 ++
+ libmultipath/config.h       | 10 ++----
+ libmultipath/configure.c    |  1 +
+ libmultipath/dict.c         | 40 +++++++++++++--------
+ libmultipath/dict.h         |  2 +-
+ libmultipath/discovery.c    | 70 +++++++++++++++++++++++++++++--------
+ libmultipath/propsel.c      | 21 +++++++++--
+ libmultipath/propsel.h      |  1 +
+ libmultipath/structs.h      | 24 +++++++++++++
+ multipath/multipath.conf.5  | 16 +++++++++
+ multipathd/main.c           |  8 ++---
+ 14 files changed, 159 insertions(+), 48 deletions(-)
+
 -- 
 2.17.2
 
