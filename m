@@ -2,62 +2,61 @@ Return-Path: <SRS0=KxaR=D6=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.4 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,NICE_REPLY_A,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3A80DC388F9
-	for <dm-devel@archiver.kernel.org>; Fri, 23 Oct 2020 09:31:52 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 58335C388F9
+	for <dm-devel@archiver.kernel.org>; Fri, 23 Oct 2020 10:31:34 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 6B1602192A
-	for <dm-devel@archiver.kernel.org>; Fri, 23 Oct 2020 09:31:51 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 6B1602192A
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+	by mail.kernel.org (Postfix) with ESMTPS id 9BF9920EDD
+	for <dm-devel@archiver.kernel.org>; Fri, 23 Oct 2020 10:31:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9BF9920EDD
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=suse.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-312-5mTaUDRWPguRDhNgFx4xQg-1; Fri, 23 Oct 2020 05:31:28 -0400
-X-MC-Unique: 5mTaUDRWPguRDhNgFx4xQg-1
+ us-mta-379-eCxLL7OaMq-aPLV5fOHrVw-1; Fri, 23 Oct 2020 06:31:30 -0400
+X-MC-Unique: eCxLL7OaMq-aPLV5fOHrVw-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D487D879532;
-	Fri, 23 Oct 2020 09:31:23 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 498CA5B4AC;
-	Fri, 23 Oct 2020 09:31:22 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B89E11868408;
+	Fri, 23 Oct 2020 10:31:24 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8A28D5B4A2;
+	Fri, 23 Oct 2020 10:31:22 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AF64E922F6;
-	Fri, 23 Oct 2020 09:31:18 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 08774180B657;
+	Fri, 23 Oct 2020 10:31:20 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09N9UMXY007012 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 23 Oct 2020 05:30:23 -0400
+	id 09NAVGhq013433 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 23 Oct 2020 06:31:17 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 53DD2110F2F6; Fri, 23 Oct 2020 09:30:22 +0000 (UTC)
+	id D177E110F0CD; Fri, 23 Oct 2020 10:31:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4F542110F2F4
-	for <dm-devel@redhat.com>; Fri, 23 Oct 2020 09:30:20 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CC5DA110F0CB
+	for <dm-devel@redhat.com>; Fri, 23 Oct 2020 10:31:12 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1C54D811E82
-	for <dm-devel@redhat.com>; Fri, 23 Oct 2020 09:30:20 +0000 (UTC)
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-493-EYnCz2N2PgSquWC2DejuwA-1; Fri, 23 Oct 2020 05:30:15 -0400
-X-MC-Unique: EYnCz2N2PgSquWC2DejuwA-1
-Received: from hch by casper.infradead.org with local (Exim 4.92.3 #3 (Red Hat
-	Linux)) id 1kVt8s-0006xU-8j; Fri, 23 Oct 2020 09:13:46 +0000
-Date: Fri, 23 Oct 2020 10:13:46 +0100
-From: "hch@infradead.org" <hch@infradead.org>
-To: Mike Snitzer <snitzer@redhat.com>
-Message-ID: <20201023091346.GA25115@infradead.org>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 15216858287
+	for <dm-devel@redhat.com>; Fri, 23 Oct 2020 10:31:12 +0000 (UTC)
+Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-292-jmeZCHwkN8iU55tahrZm9g-1;
+	Fri, 23 Oct 2020 06:31:09 -0400
+X-MC-Unique: jmeZCHwkN8iU55tahrZm9g-1
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.221.27])
+	by mx2.suse.de (Postfix) with ESMTP id A0192ABD1;
+	Fri, 23 Oct 2020 10:31:07 +0000 (UTC)
+To: "hch@infradead.org" <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>
 References: <1603271049-20681-1-git-send-email-sergei.shtepa@veeam.com>
 	<71926887-5707-04a5-78a2-ffa2ee32bd68@suse.de>
 	<20201021141044.GF20749@veeam.com>
@@ -66,10 +65,14 @@ References: <1603271049-20681-1-git-send-email-sergei.shtepa@veeam.com>
 	<BL0PR04MB6514AC1B1FF313E6A14D122CE71D0@BL0PR04MB6514.namprd04.prod.outlook.com>
 	<20201022135213.GB21466@veeam.com> <20201022151418.GR9832@magnolia>
 	<CAMM=eLfO_L-ZzcGmpPpHroznnSOq_KEWignFoM09h7Am9yE83g@mail.gmail.com>
+	<20201023091346.GA25115@infradead.org>
+From: Hannes Reinecke <hare@suse.de>
+Message-ID: <d50062cd-929d-c8ff-5851-4e1d517dc4cb@suse.de>
+Date: Fri, 23 Oct 2020 12:31:05 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+	Thunderbird/68.12.0
 MIME-Version: 1.0
-In-Reply-To: <CAMM=eLfO_L-ZzcGmpPpHroznnSOq_KEWignFoM09h7Am9yE83g@mail.gmail.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
-	casper.infradead.org. See http://www.infradead.org/rpr.html
+In-Reply-To: <20201023091346.GA25115@infradead.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -79,6 +82,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 09NAVGhq013433
 X-loop: dm-devel@redhat.com
 Cc: "jack@suse.cz" <jack@suse.cz>,
 	"gustavo@embeddedor.com" <gustavo@embeddedor.com>,
@@ -88,7 +93,6 @@ Cc: "jack@suse.cz" <jack@suse.cz>,
 	"osandov@fb.com" <osandov@fb.com>, Alasdair G Kergon <agk@redhat.com>,
 	"bvanassche@acm.org" <bvanassche@acm.org>,
 	"Darrick J. Wong" <darrick.wong@oracle.com>,
-	"hch@infradead.org" <hch@infradead.org>,
 	"len.brown@intel.com" <len.brown@intel.com>,
 	"linux-pm@vger.kernel.org" <linux-pm@vger.kernel.org>,
 	"ming.lei@redhat.com" <ming.lei@redhat.com>,
@@ -124,43 +128,41 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-On Thu, Oct 22, 2020 at 01:54:16PM -0400, Mike Snitzer wrote:
-> On Thu, Oct 22, 2020 at 11:14 AM Darrick J. Wong
-> > Stupid question: Why don't you change the block layer to make it
-> > possible to insert device mapper devices after the blockdev has been set
-> > up?
-> 
-> Not a stupid question.  Definitely something that us DM developers
-> have wanted to do for a while.  Devil is in the details but it is the
-> right way forward.
-> 
-
-Yes, I think that is the right thing to do.  And I don't think it should
-be all that hard.  All we'd need in the I/O path is something like the
-pseudo-patch below, which will allow the interposer driver to resubmit
-bios using submit_bio_noacct as long as the driver sets BIO_INTERPOSED.
-
-diff --git a/block/blk-core.c b/block/blk-core.c
-index ac00d2fa4eb48d..3f6f1eb565e0a8 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1051,6 +1051,9 @@ blk_qc_t submit_bio_noacct(struct bio *bio)
- 		return BLK_QC_T_NONE;
- 	}
- 
-+	if (blk_has_interposer(bio->bi_disk) &&
-+	    !(bio->bi_flags & BIO_INTERPOSED))
-+		return __submit_bio_interposed(bio);
- 	if (!bio->bi_disk->fops->submit_bio)
- 		return __submit_bio_noacct_mq(bio);
- 	return __submit_bio_noacct(bio);
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+T24gMTAvMjMvMjAgMTE6MTMgQU0sIGhjaEBpbmZyYWRlYWQub3JnIHdyb3RlOgo+IE9uIFRodSwg
+T2N0IDIyLCAyMDIwIGF0IDAxOjU0OjE2UE0gLTA0MDAsIE1pa2UgU25pdHplciB3cm90ZToKPj4g
+T24gVGh1LCBPY3QgMjIsIDIwMjAgYXQgMTE6MTQgQU0gRGFycmljayBKLiBXb25nCj4+PiBTdHVw
+aWQgcXVlc3Rpb246IFdoeSBkb24ndCB5b3UgY2hhbmdlIHRoZSBibG9jayBsYXllciB0byBtYWtl
+IGl0Cj4+PiBwb3NzaWJsZSB0byBpbnNlcnQgZGV2aWNlIG1hcHBlciBkZXZpY2VzIGFmdGVyIHRo
+ZSBibG9ja2RldiBoYXMgYmVlbiBzZXQKPj4+IHVwPwo+Pgo+PiBOb3QgYSBzdHVwaWQgcXVlc3Rp
+b24uICBEZWZpbml0ZWx5IHNvbWV0aGluZyB0aGF0IHVzIERNIGRldmVsb3BlcnMKPj4gaGF2ZSB3
+YW50ZWQgdG8gZG8gZm9yIGEgd2hpbGUuICBEZXZpbCBpcyBpbiB0aGUgZGV0YWlscyBidXQgaXQg
+aXMgdGhlCj4+IHJpZ2h0IHdheSBmb3J3YXJkLgo+Pgo+IAo+IFllcywgSSB0aGluayB0aGF0IGlz
+IHRoZSByaWdodCB0aGluZyB0byBkby4gIEFuZCBJIGRvbid0IHRoaW5rIGl0IHNob3VsZAo+IGJl
+IGFsbCB0aGF0IGhhcmQuICBBbGwgd2UnZCBuZWVkIGluIHRoZSBJL08gcGF0aCBpcyBzb21ldGhp
+bmcgbGlrZSB0aGUKPiBwc2V1ZG8tcGF0Y2ggYmVsb3csIHdoaWNoIHdpbGwgYWxsb3cgdGhlIGlu
+dGVycG9zZXIgZHJpdmVyIHRvIHJlc3VibWl0Cj4gYmlvcyB1c2luZyBzdWJtaXRfYmlvX25vYWNj
+dCBhcyBsb25nIGFzIHRoZSBkcml2ZXIgc2V0cyBCSU9fSU5URVJQT1NFRC4KPiAKPiBkaWZmIC0t
+Z2l0IGEvYmxvY2svYmxrLWNvcmUuYyBiL2Jsb2NrL2Jsay1jb3JlLmMKPiBpbmRleCBhYzAwZDJm
+YTRlYjQ4ZC4uM2Y2ZjFlYjU2NWUwYTggMTAwNjQ0Cj4gLS0tIGEvYmxvY2svYmxrLWNvcmUuYwo+
+ICsrKyBiL2Jsb2NrL2Jsay1jb3JlLmMKPiBAQCAtMTA1MSw2ICsxMDUxLDkgQEAgYmxrX3FjX3Qg
+c3VibWl0X2Jpb19ub2FjY3Qoc3RydWN0IGJpbyAqYmlvKQo+ICAgCQlyZXR1cm4gQkxLX1FDX1Rf
+Tk9ORTsKPiAgIAl9Cj4gICAKPiArCWlmIChibGtfaGFzX2ludGVycG9zZXIoYmlvLT5iaV9kaXNr
+KSAmJgo+ICsJICAgICEoYmlvLT5iaV9mbGFncyAmIEJJT19JTlRFUlBPU0VEKSkKPiArCQlyZXR1
+cm4gX19zdWJtaXRfYmlvX2ludGVycG9zZWQoYmlvKTsKPiAgIAlpZiAoIWJpby0+YmlfZGlzay0+
+Zm9wcy0+c3VibWl0X2JpbykKPiAgIAkJcmV0dXJuIF9fc3VibWl0X2Jpb19ub2FjY3RfbXEoYmlv
+KTsKPiAgIAlyZXR1cm4gX19zdWJtaXRfYmlvX25vYWNjdChiaW8pOwo+IApNeSB0aG91Z2h0cyB3
+ZW50IG1vcmUgaW50byB0aGUgZGlyZWN0aW9uIG9mIGhvb2tpbmcgaW50byAtPnN1Ym1pdF9iaW8s
+IApzZWVpbmcgdGhhdCBpdCdzIGEgTlVMTCBwb2ludGVyIGZvciBtb3N0IChhbGw/KSBibG9jayBk
+cml2ZXJzLgoKQnV0IHN1cmUsIEknbGwgY2hlY2sgaG93IHRoZSBpbnRlcnBvc2VyIGFwcHJvYWNo
+IHdvdWxkIHR1cm4gb3V0LgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tl
+ICAgICAgICAgICAgICAgIEtlcm5lbCBTdG9yYWdlIEFyY2hpdGVjdApoYXJlQHN1c2UuZGUgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIFNvZnR3YXJl
+IFNvbHV0aW9ucyBHbWJILCBNYXhmZWxkc3RyLiA1LCA5MDQwOSBOw7xybmJlcmcKSFJCIDM2ODA5
+IChBRyBOw7xybmJlcmcpLCBHZXNjaMOkZnRzZsO8aHJlcjogRmVsaXggSW1lbmTDtnJmZmVyCgoK
+LS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cu
+cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
 
