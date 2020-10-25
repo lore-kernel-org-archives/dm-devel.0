@@ -2,95 +2,113 @@ Return-Path: <SRS0=x48V=EB=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 40371C2D0A3
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 07:38:59 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B493DC5517A
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 07:42:21 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E4833222EA
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 07:38:57 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E4833222EA
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=ffwll.ch
+	by mail.kernel.org (Postfix) with ESMTPS id 367A3222EA
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 07:42:20 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 367A3222EA
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.ibm.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-497-N4jcLJZUOE-FoTBF2Wgykw-1; Mon, 26 Oct 2020 03:38:53 -0400
-X-MC-Unique: N4jcLJZUOE-FoTBF2Wgykw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-320-9fySozLrNM23NxgPUIkxlg-1; Mon, 26 Oct 2020 03:42:18 -0400
+X-MC-Unique: 9fySozLrNM23NxgPUIkxlg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D069B10866B0;
-	Mon, 26 Oct 2020 07:38:48 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9EE8F801F9B;
+	Mon, 26 Oct 2020 07:42:13 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B2686104326B;
-	Mon, 26 Oct 2020 07:38:48 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 81EDA5D9CD;
+	Mon, 26 Oct 2020 07:42:13 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 879BF1800BB2;
-	Mon, 26 Oct 2020 07:38:48 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4D1C21832FC2;
+	Mon, 26 Oct 2020 07:42:13 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09NEnv0H011077 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 23 Oct 2020 10:49:57 -0400
+	id 09P3a8cL025043 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 24 Oct 2020 23:36:09 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 5EFC085CDF; Fri, 23 Oct 2020 14:49:57 +0000 (UTC)
+	id AE20547CF6; Sun, 25 Oct 2020 03:36:08 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 578FE85CCE
-	for <dm-devel@redhat.com>; Fri, 23 Oct 2020 14:49:55 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A83A847CEF
+	for <dm-devel@redhat.com>; Sun, 25 Oct 2020 03:36:06 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EDE83800962
-	for <dm-devel@redhat.com>; Fri, 23 Oct 2020 14:49:54 +0000 (UTC)
-Received: from mail-wr1-f66.google.com (mail-wr1-f66.google.com
-	[209.85.221.66]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-217-4EHMngkuO6GUm5o8YpNGtQ-1; Fri, 23 Oct 2020 10:49:52 -0400
-X-MC-Unique: 4EHMngkuO6GUm5o8YpNGtQ-1
-Received: by mail-wr1-f66.google.com with SMTP id n18so2188053wrs.5
-	for <dm-devel@redhat.com>; Fri, 23 Oct 2020 07:49:52 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:date:from:to:cc:subject:message-id
-	:mail-followup-to:references:mime-version:content-disposition
-	:in-reply-to;
-	bh=xePUgVqudoa7FnGpfppkhLWoCoDAn7O+IxyLYMvs6Sc=;
-	b=N5z7xRcEV8zzSj0/1sjQLOicoxylemhNgGjCX4zLD7veKhzlibhvsOsIpugi/cLr64
-	8sbKifvXlVoRYFFDzbyeht/GDdAWVuig8L51OoGjfGbjiH7w9b5yDaldwkZTvdRJ/Maz
-	IAAqyymEtCVjzvoI4VeaU3OToV3n6c3y+j77PKGKrrmuTwmf51XQuP06UZ8VfgN11//J
-	hrMj2pPP3H08ciT3Fk1Rt0/O6dtRpqpcyACxrYV5MVFYuU3hHHJ3LnQ02gCBUrdlPe7t
-	tl67xR0eOLr2chIBybhdC9UUB48VOPvGRpc1oiFl0TSrm0i8yO55g+GqvOLdt1klRy0J
-	aAJg==
-X-Gm-Message-State: AOAM530d14PNbKymVFGE9U73y3okbv5C2rKQ1O4RzcqeEvTDcr6TFKkX
-	QXjE+/nZhjqT/MeuXtKZHxVCVnFt2pDeOKtJ
-X-Google-Smtp-Source: ABdhPJyQZR2dXG0RjIsq+LQh8IIHllK8eRs8oeqmDRQIBDJg1umlU3uJqlUglPGV6YHm5CpOm9JoMg==
-X-Received: by 2002:adf:ef06:: with SMTP id e6mr2966269wro.397.1603464591080; 
-	Fri, 23 Oct 2020 07:49:51 -0700 (PDT)
-Received: from phenom.ffwll.local ([2a02:168:57f4:0:efd0:b9e5:5ae6:c2fa])
-	by smtp.gmail.com with ESMTPSA id
-	e25sm4069542wra.71.2020.10.23.07.49.50
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Fri, 23 Oct 2020 07:49:50 -0700 (PDT)
-Date: Fri, 23 Oct 2020 16:49:48 +0200
-From: Daniel Vetter <daniel@ffwll.ch>
-To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Message-ID: <20201023144948.GE401619@phenom.ffwll.local>
-Mail-Followup-To: "Matthew Wilcox (Oracle)" <willy@infradead.org>,
-	linux-kernel@vger.kernel.org, linux-mm@kvack.org,
-	linux-xfs@vger.kernel.org, dm-devel@redhat.com,
-	Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>,
-	NeilBrown <neilb@suse.de>
-References: <20200625113122.7540-1-willy@infradead.org>
-	<20200625113122.7540-7-willy@infradead.org>
-MIME-Version: 1.0
-In-Reply-To: <20200625113122.7540-7-willy@infradead.org>
-X-Operating-System: Linux phenom 5.7.0-1-amd64
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 871E7858280
+	for <dm-devel@redhat.com>; Sun, 25 Oct 2020 03:36:06 +0000 (UTC)
+Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com
+	[148.163.156.1]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-228-0z9v7hZWOg60fZW002Lh1w-1; Sat, 24 Oct 2020 23:36:03 -0400
+X-MC-Unique: 0z9v7hZWOg60fZW002Lh1w-1
+Received: from pps.filterd (m0098410.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.16.0.42/8.16.0.42) with SMTP id
+	09P3VgEA048446; Sat, 24 Oct 2020 23:36:02 -0400
+Received: from pps.reinject (localhost [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com with ESMTP id 34d0xs8qmv-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Sat, 24 Oct 2020 23:36:02 -0400
+Received: from m0098410.ppops.net (m0098410.ppops.net [127.0.0.1])
+	by pps.reinject (8.16.0.36/8.16.0.36) with SMTP id 09P3a2N9060532;
+	Sat, 24 Oct 2020 23:36:02 -0400
+Received: from ppma05fra.de.ibm.com (6c.4a.5195.ip4.static.sl-reverse.com
+	[149.81.74.108])
+	by mx0a-001b2d01.pphosted.com with ESMTP id 34d0xs8qmj-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Sat, 24 Oct 2020 23:36:02 -0400
+Received: from pps.filterd (ppma05fra.de.ibm.com [127.0.0.1])
+	by ppma05fra.de.ibm.com (8.16.0.42/8.16.0.42) with SMTP id
+	09P3UBRi027808; Sun, 25 Oct 2020 03:35:59 GMT
+Received: from b06cxnps3074.portsmouth.uk.ibm.com
+	(d06relay09.portsmouth.uk.ibm.com [9.149.109.194])
+	by ppma05fra.de.ibm.com with ESMTP id 34cbw88e5h-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Sun, 25 Oct 2020 03:35:59 +0000
+Received: from b06wcsmtp001.portsmouth.uk.ibm.com
+	(b06wcsmtp001.portsmouth.uk.ibm.com [9.149.105.160])
+	by b06cxnps3074.portsmouth.uk.ibm.com (8.14.9/8.14.9/NCO v10.0) with
+	ESMTP id 09P3ZvoH37159234
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=OK); Sun, 25 Oct 2020 03:35:57 GMT
+Received: from b06wcsmtp001.portsmouth.uk.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 86DDAA4065;
+	Sun, 25 Oct 2020 03:35:57 +0000 (GMT)
+Received: from b06wcsmtp001.portsmouth.uk.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 23FCEA405B;
+	Sun, 25 Oct 2020 03:35:54 +0000 (GMT)
+Received: from sig-9-65-192-162.ibm.com (unknown [9.65.192.162])
+	by b06wcsmtp001.portsmouth.uk.ibm.com (Postfix) with ESMTP;
+	Sun, 25 Oct 2020 03:35:53 +0000 (GMT)
+Message-ID: <2c7da61fbeb17c577253b117829b3bd544d8cf44.camel@linux.ibm.com>
+From: Mimi Zohar <zohar@linux.ibm.com>
+To: Tushar Sugandhi <tusharsu@linux.microsoft.com>,
+	stephen.smalley.work@gmail.com, casey@schaufler-ca.com, agk@redhat.com, 
+	snitzer@redhat.com, gmazyland@gmail.com
+Date: Sat, 24 Oct 2020 23:35:53 -0400
+In-Reply-To: <20200923192011.5293-1-tusharsu@linux.microsoft.com>
+References: <20200923192011.5293-1-tusharsu@linux.microsoft.com>
+Mime-Version: 1.0
+X-TM-AS-GCONF: 00
+X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.235, 18.0.737
+	definitions=2020-10-25_01:2020-10-23,
+	2020-10-25 signatures=0
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+	phishscore=0 spamscore=0
+	adultscore=0 suspectscore=3 impostorscore=0 mlxscore=0
+	priorityscore=1501
+	malwarescore=0 bulkscore=0 lowpriorityscore=0 clxscore=1015
+	mlxlogscore=999 classifier=spam adjust=0 reason=mlx scancount=1
+	engine=8.12.0-2009150000 definitions=main-2010250022
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -101,11 +119,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Mon, 26 Oct 2020 03:19:19 -0400
-Cc: Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org,
-	linux-xfs@vger.kernel.org, linux-mm@kvack.org,
-	dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [dm-devel] [PATCH 6/6] mm: Add memalloc_nowait
+X-Mailman-Approved-At: Mon, 26 Oct 2020 03:19:18 -0400
+Cc: sashal@kernel.org, dm-devel@redhat.com, selinux@vger.kernel.org,
+	jmorris@namei.org, linux-kernel@vger.kernel.org,
+	nramas@linux.microsoft.com, linux-security-module@vger.kernel.org,
+	tyhicks@linux.microsoft.com, linux-integrity@vger.kernel.org
+Subject: Re: [dm-devel] [PATCH v4 0/6] IMA: Infrastructure for measurement
+ of critical kernel data
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -119,144 +139,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Jun 25, 2020 at 12:31:22PM +0100, Matthew Wilcox (Oracle) wrote:
-> Similar to memalloc_noio() and memalloc_nofs(), memalloc_nowait()
-> guarantees we will not sleep to reclaim memory.  Use it to simplify
-> dm-bufio's allocations.
-> 
-> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
-> ---
->  drivers/md/dm-bufio.c    | 30 ++++++++----------------------
->  include/linux/sched.h    |  1 +
->  include/linux/sched/mm.h | 12 ++++++++----
->  3 files changed, 17 insertions(+), 26 deletions(-)
-> 
-> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-> index 6d1565021d74..140ada9a2c8f 100644
-> --- a/drivers/md/dm-bufio.c
-> +++ b/drivers/md/dm-bufio.c
-> @@ -412,23 +412,6 @@ static void *alloc_buffer_data(struct dm_bufio_client *c, gfp_t gfp_mask,
->  
->  	*data_mode = DATA_MODE_VMALLOC;
->  
-> -	/*
-> -	 * __vmalloc allocates the data pages and auxiliary structures with
-> -	 * gfp_flags that were specified, but pagetables are always allocated
-> -	 * with GFP_KERNEL, no matter what was specified as gfp_mask.
-> -	 *
-> -	 * Consequently, we must set per-process flag PF_MEMALLOC_NOIO so that
-> -	 * all allocations done by this process (including pagetables) are done
-> -	 * as if GFP_NOIO was specified.
-> -	 */
-> -	if (gfp_mask & __GFP_NORETRY) {
-> -		unsigned noio_flag = memalloc_noio_save();
-> -		void *ptr = __vmalloc(c->block_size, gfp_mask);
-> -
-> -		memalloc_noio_restore(noio_flag);
-> -		return ptr;
-> -	}
-> -
->  	return __vmalloc(c->block_size, gfp_mask);
->  }
->  
-> @@ -866,9 +849,6 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
->  	 * dm-bufio is resistant to allocation failures (it just keeps
->  	 * one buffer reserved in cases all the allocations fail).
->  	 * So set flags to not try too hard:
-> -	 *	GFP_NOWAIT: don't wait; if we need to sleep we'll release our
-> -	 *		    mutex and wait ourselves.
-> -	 *	__GFP_NORETRY: don't retry and rather return failure
->  	 *	__GFP_NOMEMALLOC: don't use emergency reserves
->  	 *	__GFP_NOWARN: don't print a warning in case of failure
->  	 *
-> @@ -877,7 +857,9 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
->  	 */
->  	while (1) {
->  		if (dm_bufio_cache_size_latch != 1) {
-> -			b = alloc_buffer(c, GFP_NOWAIT | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-> +			unsigned nowait_flag = memalloc_nowait_save();
-> +			b = alloc_buffer(c, GFP_KERNEL | __GFP_NOMEMALLOC | __GFP_NOWARN);
-> +			memalloc_nowait_restore(nowait_flag);
->  			if (b)
->  				return b;
->  		}
-> @@ -886,8 +868,12 @@ static struct dm_buffer *__alloc_buffer_wait_no_callback(struct dm_bufio_client
->  			return NULL;
->  
->  		if (dm_bufio_cache_size_latch != 1 && !tried_noio_alloc) {
-> +			unsigned noio_flag;
-> +
->  			dm_bufio_unlock(c);
-> -			b = alloc_buffer(c, GFP_NOIO | __GFP_NORETRY | __GFP_NOMEMALLOC | __GFP_NOWARN);
-> +			noio_flag = memalloc_noio_save();
-> +			b = alloc_buffer(c, GFP_KERNEL | __GFP_NOMEMALLOC | __GFP_NOWARN);
-> +			memalloc_noio_restore(noio_flag);
->  			dm_bufio_lock(c);
->  			if (b)
->  				return b;
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index 90336850e940..b1c2cddd366c 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -803,6 +803,7 @@ struct task_struct {
->  #endif
->  	unsigned			memalloc_noio:1;
->  	unsigned			memalloc_nofs:1;
-> +	unsigned			memalloc_nowait:1;
+Hi Tushar,
 
-I think you also need to update gfpflags_allow_blocking() to take your new
-flag into account, or some debug checks all over the place might misfire.
+On Wed, 2020-09-23 at 12:20 -0700, Tushar Sugandhi wrote:
+> There are several kernel components that contain critical data which if
+> accidentally or maliciously altered, can compromise the security of the
+> kernel. Example of such components would include LSMs like SELinux, or
+> AppArmor; or device-mapper targets like dm-crypt, dm-verity etc.
 
-Plus I have a patch which rolls this out to a few more places in all the
-allocators.
--Daniel
+^"the integrity of the system."
 
->  	unsigned			memalloc_nocma:1;
->  
->  	unsigned long			atomic_flags; /* Flags requiring atomic access. */
-> diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-> index 6f7b59a848a6..6484569f50df 100644
-> --- a/include/linux/sched/mm.h
-> +++ b/include/linux/sched/mm.h
-> @@ -179,12 +179,16 @@ static inline bool in_vfork(struct task_struct *tsk)
->  static inline gfp_t current_gfp_context(gfp_t flags)
->  {
->  	if (unlikely(current->memalloc_noio || current->memalloc_nofs ||
-> -		     current->memalloc_nocma)) {
-> +		     current->memalloc_nocma) || current->memalloc_nowait) {
->  		/*
-> -		 * NOIO implies both NOIO and NOFS and it is a weaker context
-> -		 * so always make sure it makes precedence
-> +		 * Clearing DIRECT_RECLAIM means we won't get to the point
-> +		 * of testing IO or FS, so we don't need to bother clearing
-> +		 * them.  noio implies neither IO nor FS and it is a weaker
-> +		 * context so always make sure it takes precedence.
->  		 */
-> -		if (current->memalloc_noio)
-> +		if (current->memalloc_nowait)
-> +			flags &= ~__GFP_DIRECT_RECLAIM;
-> +		else if (current->memalloc_noio)
->  			flags &= ~(__GFP_IO | __GFP_FS);
->  		else if (current->memalloc_nofs)
->  			flags &= ~__GFP_FS;
-> -- 
-> 2.27.0
+This cover letter needs to be re-written from a higher perspective,
+explaining what is meant by "critical data" (e.g. kernel subsystem
+specific information only stored in kernel memory).
+
 > 
-> 
+> Many of these components do not use the capabilities provided by kernel
+> integrity subsystem (IMA), and thus they don't use the benefits of
+> extended TPM PCR quotes and ultimately the benefits of remote attestation.
 
--- 
-Daniel Vetter
-Software Engineer, Intel Corporation
-http://blog.ffwll.ch
+True, up until recently IMA only measured files, nothing else.  Why is
+this paragraph needed?  What new information is provided?
+
+> This series bridges this gap, so that potential kernel components that
+> contain data critical to the security of the kernel could take advantage
+> of IMA's measuring and quoting abilities - thus ultimately enabling
+> remote attestation for their specific data.
+
+Perhaps, something more along the lines, "This patch set defines a new
+IMA hook named ... to measure critical data."
+
+> 
+> System administrators may want to pick and choose which kernel
+> components they would want to enable for measurements, quoting, and
+> remote attestation. To enable that, a new IMA policy is introduced.
+
+Reverse the order of this paragraph and the following one, describing
+the new feature and only afterwards explaining how it may be
+constrained.
+
+> 
+> And lastly, the functionality is exposed through a function
+> ima_measure_critical_data(). The functionality is generic enough to
+> measure the data of any kernel component at run-time. To ensure that
+> only data from supported sources are measured, the kernel component
+> needs to be added to a compile-time list of supported sources (an
+> "allowed list of components"). IMA validates the source passed to
+> ima_measure_critical_data() against this allowed list at run-time.
+
+This patch set must include at least one example of measuring critical
+data, before it can be upstreamed.  Tushar, please coordinate with
+Lakshmi and Raphael.
+
+thanks,
+
+Mimi
 
 --
 dm-devel mailing list
