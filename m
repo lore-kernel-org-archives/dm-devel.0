@@ -7,64 +7,65 @@ X-Spam-Status: No, score=-11.2 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 544F1C2D0A3
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 09:27:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 31340C2D0A3
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 09:27:59 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7E16D20874
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 09:27:54 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7E16D20874
+	by mail.kernel.org (Postfix) with ESMTPS id 834E220874
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 09:27:58 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 834E220874
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=huawei.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-363-Jro_2U7CMPW31vy-wmve8w-1; Mon, 26 Oct 2020 05:27:51 -0400
-X-MC-Unique: Jro_2U7CMPW31vy-wmve8w-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-99-QhqsSCRhPIOL1ur9ynNRVw-1; Mon, 26 Oct 2020 05:27:55 -0400
+X-MC-Unique: QhqsSCRhPIOL1ur9ynNRVw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AC2DA1084C9C;
-	Mon, 26 Oct 2020 09:27:46 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 524C25C1C2;
-	Mon, 26 Oct 2020 09:27:46 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1AC4E188C128;
+	Mon, 26 Oct 2020 09:27:51 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AE6205B4AE;
+	Mon, 26 Oct 2020 09:27:50 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D7F4492F25;
-	Mon, 26 Oct 2020 09:27:45 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 837921833004;
+	Mon, 26 Oct 2020 09:27:50 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09Q9P4c3001619 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 26 Oct 2020 05:25:04 -0400
+	id 09Q9Rntr001996 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 26 Oct 2020 05:27:49 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 07DAB207B171; Mon, 26 Oct 2020 09:25:04 +0000 (UTC)
+	id E763C1111A76; Mon, 26 Oct 2020 09:27:48 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0342C207B16F
-	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 09:25:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E425B1111A72
+	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 09:27:47 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 93F28101043C
-	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 09:25:01 +0000 (UTC)
-Received: from szxga05-in.huawei.com (szxga05-in.huawei.com
-	[45.249.212.191]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-559-M1qHbTOhNkOALNnAV6j5UQ-1; Mon, 26 Oct 2020 05:24:56 -0400
-X-MC-Unique: M1qHbTOhNkOALNnAV6j5UQ-1
-Received: from DGGEMS406-HUB.china.huawei.com (unknown [172.30.72.60])
-	by szxga05-in.huawei.com (SkyGuard) with ESMTP id 4CKTvD26FmzLnwZ;
-	Mon, 26 Oct 2020 17:24:56 +0800 (CST)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E3F98101043F
+	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 09:27:46 +0000 (UTC)
+Received: from szxga06-in.huawei.com (szxga06-in.huawei.com [45.249.212.32])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-21-0M8ETz_ENTqE1dtObQo1SQ-1; Mon, 26 Oct 2020 05:27:42 -0400
+X-MC-Unique: 0M8ETz_ENTqE1dtObQo1SQ-1
+Received: from DGGEMS408-HUB.china.huawei.com (unknown [172.30.72.58])
+	by szxga06-in.huawei.com (SkyGuard) with ESMTP id 4CKTyP2mP2zhZnt;
+	Mon, 26 Oct 2020 17:27:41 +0800 (CST)
 Received: from [10.174.178.210] (10.174.178.210) by
-	DGGEMS406-HUB.china.huawei.com (10.3.19.206) with Microsoft SMTP Server
-	id 14.3.487.0; Mon, 26 Oct 2020 17:24:41 +0800
+	DGGEMS408-HUB.china.huawei.com (10.3.19.208) with Microsoft SMTP Server
+	id 14.3.487.0; Mon, 26 Oct 2020 17:27:26 +0800
 From: lixiaokeng <lixiaokeng@huawei.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski
 	<bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>,
 	dm-devel mailing list <dm-devel@redhat.com>
 References: <2a95503c-da40-391c-ce76-bdde19636b51@huawei.com>
-Message-ID: <923958ea-ccd4-8a9c-5615-c72749f1676d@huawei.com>
-Date: Mon, 26 Oct 2020 17:24:41 +0800
+Message-ID: <186c0217-f21e-16b1-e6c2-d7aa5029f3e7@huawei.com>
+Date: Mon, 26 Oct 2020 17:27:26 +0800
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
 	Thunderbird/68.10.0
 MIME-Version: 1.0
@@ -79,12 +80,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 Cc: linfeilong <linfeilong@huawei.com>,
 	"liuzhiqiang \(I\)" <liuzhiqiang26@huawei.com>
-Subject: [dm-devel] [PATCH 1/6] fix multipathd resize when not all sizes of
- paths are equal
+Subject: [dm-devel] [PATCH 5/6] ignore for clear mismatch key
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -98,7 +98,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -107,57 +107,54 @@ Content-Language: en-GB
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-In history, the "multipathd resize" may fail without failed
-messages because of there are different sizes paths in mpp.
-Here we check every path size in cli_resize, fail and print
-messages if there are some different size paths. This patch
-was made in 12 Oct 2017.
+The mpathpersist -I and -G does not work.
+Here we fix that.
 
+Signed-off-by: Jianbing Jiao <jiaojianbing@huawei.com>
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 ---
- multipathd/cli_handlers.c | 19 ++++++++++++++++++-
- 1 file changed, 18 insertions(+), 1 deletion(-)
+ libmpathpersist/mpath_persist.c | 20 ++++++++++++--------
+ 1 file changed, 12 insertions(+), 8 deletions(-)
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 235e2a2e..18b51875 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -981,9 +981,10 @@ cli_resize(void *v, char **reply, int *len, void *data)
- 	char * mapname = get_keyparam(v, MAP);
- 	struct multipath *mpp;
- 	int minor;
--	unsigned long long size;
-+	unsigned long long size, sz;
- 	struct pathgroup *pgp;
- 	struct path *pp;
-+	int i,j;
-
- 	mapname = convert_dev(mapname, 0);
- 	condlog(2, "%s: resize map (operator)", mapname);
-@@ -1021,6 +1022,22 @@ cli_resize(void *v, char **reply, int *len, void *data)
- 			mapname);
- 		return 1;
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 02d173dc..95018ae5 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -265,8 +265,10 @@ int __mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
+ 	memcpy(&prkey, paramp->sa_key, 8);
+ 	if (mpp->prkey_source == PRKEY_SOURCE_FILE && prkey &&
+ 	    ((!get_be64(mpp->reservation_key) &&
+-	      rq_servact == MPATH_PROUT_REG_SA) ||
+-	     rq_servact == MPATH_PROUT_REG_IGN_SA)) {
++	    rq_servact == MPATH_PROUT_REG_SA) ||
++	    rq_servact == MPATH_PROUT_REG_IGN_SA ||
++	    (!memcmp(paramp->key, &mpp->reservation_key, 8) &&
++	    rq_servact == MPATH_PROUT_REG_SA))) {
+ 		memcpy(&mpp->reservation_key, paramp->sa_key, 8);
+ 		if (update_prkey_flags(alias, get_be64(mpp->reservation_key),
+ 				       paramp->sa_flags)) {
+@@ -282,12 +284,14 @@ int __mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
+ 		uitmp[j] = (uireservation & 0xff);
+ 		uireservation >>= 8;
  	}
-+
-+	vector_foreach_slot (mpp->pg, pgp, i) {
-+		vector_foreach_slot (pgp->paths, pp, j) {
-+			if (!pp->udev || sysfs_get_size(pp, &sz)) {
-+				condlog(0, "%s: couldn't get size for sysfs. cannot resize",
-+					mapname);
-+				return 1;
-+			}
-+			if (size != sz) {
-+				condlog(0, "%s: not all path sizes are equal, please check. cannot resize",
-+					mapname);
-+				return 1;
-+			}
+-
+-	if (memcmp(paramp->key, uitmp, 8) &&
+-	    memcmp(paramp->sa_key, uitmp, 8)) {
+-		condlog(0, "%s: configured reservation key doesn't match: 0x%" PRIx64, alias, get_be64(mpp->reservation_key));
+-		ret = MPATH_PR_SYNTAX_ERROR;
+-		goto out1;
++	/* pass -I option */
++	if (rq_servact != MPATH_PROUT_REG_IGN_SA) {
++		if (memcmp(paramp->key, uitmp, 8) &&
++		    memcmp(paramp->sa_key, uitmp, 8)) {
++			condlog(0, "%s: configured reservation key doesn't match: 0x%" PRIx64, alias, get_be64(mpp->reservation_key));
++			ret = MPATH_PR_SYNTAX_ERROR;
++			goto out1;
 +		}
-+	}
-+
- 	if (size == mpp->size) {
- 		condlog(0, "%s: map is still the same size (%llu)", mapname,
- 			mpp->size);
--- 
+ 	}
+
+ 	switch(rq_servact)
+--
 
 --
 dm-devel mailing list
