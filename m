@@ -6,64 +6,65 @@ X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B5A6DC4363A
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 16:50:45 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 13DD1C4363A
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 17:29:26 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3DECD221FC
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 16:50:44 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3DECD221FC
+	by mail.kernel.org (Postfix) with ESMTPS id 912ED2223C
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 17:29:25 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 912ED2223C
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-63-8fa9JZXoP-Km_hKXVMXTeA-1; Mon, 26 Oct 2020 12:50:41 -0400
-X-MC-Unique: 8fa9JZXoP-Km_hKXVMXTeA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-28-rWRFWcoyPaGy0-CbhtAOVQ-1; Mon, 26 Oct 2020 13:29:22 -0400
+X-MC-Unique: rWRFWcoyPaGy0-CbhtAOVQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A67D4106C0FC;
-	Mon, 26 Oct 2020 16:50:02 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 807E61009E2D;
+	Mon, 26 Oct 2020 17:29:14 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7F87F5C1C2;
-	Mon, 26 Oct 2020 16:50:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 504DA5B4AE;
+	Mon, 26 Oct 2020 17:29:14 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DB0F4181A86E;
-	Mon, 26 Oct 2020 16:49:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B539D181A06C;
+	Mon, 26 Oct 2020 17:29:13 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09QGM8jS024906 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 26 Oct 2020 12:22:09 -0400
+	id 09QHP5bR032653 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 26 Oct 2020 13:25:05 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id CB374112D410; Mon, 26 Oct 2020 16:22:08 +0000 (UTC)
+	id 068A02166B27; Mon, 26 Oct 2020 17:25:05 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C52F5112D40B
-	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 16:22:06 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 025AB2166B44
+	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 17:25:02 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6A6F0185A78B
-	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 16:22:06 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A723C858296
+	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 17:25:02 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-371-ry0ZQytZMWOQ_msPmaacJA-1;
-	Mon, 26 Oct 2020 12:22:04 -0400
-X-MC-Unique: ry0ZQytZMWOQ_msPmaacJA-1
+	relay.mimecast.com with ESMTP id us-mta-321-XBePnV2MO8CKtHGq65ZVNA-1;
+	Mon, 26 Oct 2020 13:25:00 -0400
+X-MC-Unique: XBePnV2MO8CKtHGq65ZVNA-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id A7DC5AC4D;
-	Mon, 26 Oct 2020 16:22:02 +0000 (UTC)
-Message-ID: <b90e91621122ebfacd85a548e0ec7a9aa59865e3.camel@suse.com>
+	by mx2.suse.de (Postfix) with ESMTP id 95720AECE;
+	Mon, 26 Oct 2020 17:24:58 +0000 (UTC)
+Message-ID: <44a708f870a0f9a60b1adcbe37acca9a58933366.camel@suse.com>
 From: Martin Wilck <mwilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>
-Date: Mon, 26 Oct 2020 17:22:00 +0100
-In-Reply-To: <20201020022008.GK3384@octiron.msp.redhat.com>
+Date: Mon, 26 Oct 2020 18:24:57 +0100
+In-Reply-To: <b90e91621122ebfacd85a548e0ec7a9aa59865e3.camel@suse.com>
 References: <20201016104501.8700-1-mwilck@suse.com>
 	<20201016104501.8700-30-mwilck@suse.com>
 	<20201020022008.GK3384@octiron.msp.redhat.com>
+	<b90e91621122ebfacd85a548e0ec7a9aa59865e3.camel@suse.com>
 User-Agent: Evolution 3.36.5
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -74,7 +75,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com
 Subject: Re: [dm-devel] [PATCH v2 29/29] libmultipath: fix race between
@@ -92,7 +93,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -100,45 +101,74 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, 2020-10-19 at 21:20 -0500, Benjamin Marzinski wrote:
-> On Fri, Oct 16, 2020 at 12:45:01PM +0200, mwilck@suse.com wrote:
-> > From: Martin Wilck <mwilck@suse.com>
+On Mon, 2020-10-26 at 17:22 +0100, Martin Wilck wrote:
+> On Mon, 2020-10-19 at 21:20 -0500, Benjamin Marzinski wrote:
+> > On Fri, Oct 16, 2020 at 12:45:01PM +0200, mwilck@suse.com wrote:
+> > > From: Martin Wilck <mwilck@suse.com>
+> > > 
+> > > log_safe() could race with log_thread_stop(); simply
+> > > checking the value of log_thr has never been safe. By converting
+> > > the
+> > > mutexes to static initializers, we avoid having to destroy them,
+> > > and thus
+> > > possibly accessing a destroyed mutex in log_safe(). Furthermore,
+> > > taking
+> > > both the logev_lock and the logq_lock makes sure the logarea
+> > > isn't
+> > > freed
+> > > while we are writing to it.
+> > > 
 > > 
-> > log_safe() could race with log_thread_stop(); simply
-> > checking the value of log_thr has never been safe. By converting
+> > I don't see any problems with this, but I also don't think it's
+> > necssary
+> > to hold the log thread lock (logev_lock), just to add a message to
 > > the
-> > mutexes to static initializers, we avoid having to destroy them,
-> > and thus
-> > possibly accessing a destroyed mutex in log_safe(). Furthermore,
-> > taking
-> > both the logev_lock and the logq_lock makes sure the logarea isn't
-> > freed
-> > while we are writing to it.
-> > 
+> > queue. It seems like protecting the log queue is the job of
+> > logq_lock.
+> > As long as log_safe() enqueues the message before flush_logqueue()
+> > is
+> > called in log_thread_stop(), it should be fine. This could be
+> > solved
+> > by
+> > simply having a static variable in log_pthread.c named something
+> > like
+> > log_area_enabled, that always accessed while holding the logq_lock,
+> > and
+> > is set to true when the log_area is created, and set to false just
+> > before calling the flush_logqueue() in log_thread_stop().
 > 
-> I don't see any problems with this, but I also don't think it's
-> necssary
-> to hold the log thread lock (logev_lock), just to add a message to
-> the
-> queue. It seems like protecting the log queue is the job of
-> logq_lock.
-> As long as log_safe() enqueues the message before flush_logqueue() is
-> called in log_thread_stop(), it should be fine. This could be solved
-> by
-> simply having a static variable in log_pthread.c named something like
-> log_area_enabled, that always accessed while holding the logq_lock,
-> and
-> is set to true when the log_area is created, and set to false just
-> before calling the flush_logqueue() in log_thread_stop().
+> If we do this, we might as well use the variable "la" itself for
+> that,
+> and make sure it's only accessed under the lock. It'd be fine,
+> because
+> la is used if and only if the log thread is active, and spare us
+> another variable. I had actually considered that, thought it was too
+> invasive for the already big series. If you prefer this way, I can do
+> it. 
 
-If we do this, we might as well use the variable "la" itself for that,
-and make sure it's only accessed under the lock. It'd be fine, because
-la is used if and only if the log thread is active, and spare us
-another variable. I had actually considered that, thought it was too
-invasive for the already big series. If you prefer this way, I can do
-it. 
+OTOH, we take logev_lock in log_safe() anyway (to set
+log_messages_pending). I doubt that it makes a big difference if we
+take the two locks sequentially, or nested. The previous code actually
+took the logev_lock twice, before and after logq_lock. Assuming that
+contention is rather rare, I believe my code might actually perform
+better than before. 
 
+In your previous review 
+https://www.redhat.com/archives/dm-devel/2020-September/msg00631.html
+you pointed out that you considered it important that log_safe() works
+even after the thread was stopped. Making this work implies that
+log_safe() needs to check if the thread is up. So we either have to
+take logev_lock twice, or take logq_lock while holding logev_lock.
+
+Bottom line: I think my patch is correct. We could add another patch on
+top that moves logq_lock() into log.c, protecting the "la" variable,
+but the nesting would still need to be the same.
+
+Does this make sense?
+     
+Regards,
 Martin
+
 
 
 --
