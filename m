@@ -2,70 +2,70 @@ Return-Path: <SRS0=x48V=EB=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.2 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-11.3 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham
-	autolearn_force=no version=3.4.0
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DA36DC4363A
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 09:41:40 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 84391C4363A
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 09:41:49 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 0E5CD223EA
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 09:41:39 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0E5CD223EA
+	by mail.kernel.org (Postfix) with ESMTPS id B415222400
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 09:41:48 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org B415222400
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=huawei.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-422-RY9GKjUpOKm4Ka8llWlztQ-1; Mon, 26 Oct 2020 05:41:36 -0400
-X-MC-Unique: RY9GKjUpOKm4Ka8llWlztQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-557-sz1Pv0c9PCyPVZhwPUV-XQ-1; Mon, 26 Oct 2020 05:41:43 -0400
+X-MC-Unique: sz1Pv0c9PCyPVZhwPUV-XQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0802D10060C1;
-	Mon, 26 Oct 2020 09:41:32 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8D28A186DD2E;
+	Mon, 26 Oct 2020 09:41:37 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D5D195B4B3;
-	Mon, 26 Oct 2020 09:41:31 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6943C5C1C5;
+	Mon, 26 Oct 2020 09:41:37 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AB6B992F2B;
-	Mon, 26 Oct 2020 09:41:31 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 40D5092F2B;
+	Mon, 26 Oct 2020 09:41:37 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09Q9QGrt001803 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 26 Oct 2020 05:26:17 -0400
+	id 09Q9R6Zl001908 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 26 Oct 2020 05:27:06 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id DAD552166B28; Mon, 26 Oct 2020 09:26:16 +0000 (UTC)
+	id 94D56201E74B; Mon, 26 Oct 2020 09:27:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D4D482166B27
-	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 09:26:14 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8FE1F200E210
+	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 09:27:04 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5C499858296
-	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 09:26:14 +0000 (UTC)
-Received: from szxga06-in.huawei.com (szxga06-in.huawei.com [45.249.212.32])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-510-ECtqsot3MFysy1T1_FO1hA-1; Mon, 26 Oct 2020 05:26:09 -0400
-X-MC-Unique: ECtqsot3MFysy1T1_FO1hA-1
-Received: from DGGEMS414-HUB.china.huawei.com (unknown [172.30.72.58])
-	by szxga06-in.huawei.com (SkyGuard) with ESMTP id 4CKTwg3w4kzhYtC;
-	Mon, 26 Oct 2020 17:26:11 +0800 (CST)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4B2DE811E76
+	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 09:27:04 +0000 (UTC)
+Received: from szxga04-in.huawei.com (szxga04-in.huawei.com
+	[45.249.212.190]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-294-cit1-u6FPIqf24IvK4BZag-1; Mon, 26 Oct 2020 05:26:59 -0400
+X-MC-Unique: cit1-u6FPIqf24IvK4BZag-1
+Received: from DGGEMS405-HUB.china.huawei.com (unknown [172.30.72.59])
+	by szxga04-in.huawei.com (SkyGuard) with ESMTP id 4CKTxc0JpwzkZYg;
+	Mon, 26 Oct 2020 17:27:00 +0800 (CST)
 Received: from [10.174.178.210] (10.174.178.210) by
-	DGGEMS414-HUB.china.huawei.com (10.3.19.214) with Microsoft SMTP Server
-	id 14.3.487.0; Mon, 26 Oct 2020 17:26:00 +0800
+	DGGEMS405-HUB.china.huawei.com (10.3.19.205) with Microsoft SMTP Server
+	id 14.3.487.0; Mon, 26 Oct 2020 17:26:44 +0800
 From: lixiaokeng <lixiaokeng@huawei.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski
 	<bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>,
 	dm-devel mailing list <dm-devel@redhat.com>
 References: <2a95503c-da40-391c-ce76-bdde19636b51@huawei.com>
-Message-ID: <47950e3d-33f8-c1eb-2ee1-a87edd693dee@huawei.com>
-Date: Mon, 26 Oct 2020 17:25:59 +0800
+Message-ID: <f6df9fb3-0a3b-54d9-aca5-44b934e3b312@huawei.com>
+Date: Mon, 26 Oct 2020 17:26:44 +0800
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
 	Thunderbird/68.10.0
 MIME-Version: 1.0
@@ -80,12 +80,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 Cc: linfeilong <linfeilong@huawei.com>,
 	"liuzhiqiang \(I\)" <liuzhiqiang26@huawei.com>
-Subject: [dm-devel] [PATCH 3/6] check pgp to avoid NULL dereference in
-	enable_group
+Subject: [dm-devel] [PATCH 4/6] fix change reservtion key to uint8 for memcmp
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -99,7 +98,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -108,156 +107,50 @@ Content-Language: en-GB
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-If the pgp is NULL, this code will lead to coredump.
-Here we check the pgp before dereference. And there
-are some code enhance.
+The mpp->reservation_key is uint64_t and the paramp->key
+is uint8_t. For example, paramp->key is 0x7d0 and the
+mpp->reservation_key is 0x00000000000007d0. When memcmp
+is called, it will not return 0. We change  reservtion_key
+to uint8 to fix that.
 
+Signed-off-by: Jianbing Jiao <jiaojianbing@huawei.com>
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 ---
- libmultipath/prioritizers/alua.c |  4 ++++
- libmultipath/prioritizers/emc.c  |  2 +-
- libmultipath/prioritizers/hds.c  | 19 +++++++++++--------
- libmultipath/structs_vec.c       |  4 +++-
- multipathd/main.c                |  5 +++++
- 5 files changed, 24 insertions(+), 10 deletions(-)
+ libmpathpersist/mpath_persist.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/prioritizers/alua.c b/libmultipath/prioritizers/alua.c
-index 0ab06e2b..a6307d69 100644
---- a/libmultipath/prioritizers/alua.c
-+++ b/libmultipath/prioritizers/alua.c
-@@ -131,15 +131,19 @@ int getprio (struct path * pp, char * args, unsigned int timeout)
- 		switch(-rc) {
- 		case ALUA_PRIO_NOT_SUPPORTED:
- 			condlog(0, "%s: alua not supported", pp->dev);
-+			rc = 0;
- 			break;
- 		case ALUA_PRIO_RTPG_FAILED:
- 			condlog(0, "%s: couldn't get target port group", pp->dev);
-+			rc = 0;
- 			break;
- 		case ALUA_PRIO_GETAAS_FAILED:
- 			condlog(0, "%s: couldn't get asymmetric access state", pp->dev);
-+			rc = 0;
- 			break;
- 		case ALUA_PRIO_TPGS_FAILED:
- 			condlog(3, "%s: couldn't get supported alua states", pp->dev);
-+			rc = 0;
- 			break;
+diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+index 1f9817ed..02d173dc 100644
+--- a/libmpathpersist/mpath_persist.c
++++ b/libmpathpersist/mpath_persist.c
+@@ -249,6 +249,9 @@ int __mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
+ 	int ret;
+ 	uint64_t prkey;
+ 	struct config *conf;
++	uint8_t  uitmp[8] = {0};
++	uint64_t uireservation = {0};
++	int j;
+
+ 	ret = mpath_get_map(fd, &alias, &mpp);
+ 	if (ret != MPATH_PR_SUCCESS)
+@@ -274,8 +277,14 @@ int __mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
  		}
  	}
-diff --git a/libmultipath/prioritizers/emc.c b/libmultipath/prioritizers/emc.c
-index 3b63cca0..c40f88a0 100644
---- a/libmultipath/prioritizers/emc.c
-+++ b/libmultipath/prioritizers/emc.c
-@@ -19,7 +19,7 @@ int emc_clariion_prio(const char *dev, int fd, unsigned int timeout)
- 	unsigned char inqCmdBlk[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xC0, 0,
- 						sizeof(sense_buffer), 0};
- 	struct sg_io_hdr io_hdr;
--	int ret = PRIO_UNDEF;
-+	int ret = 0;
 
- 	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
- 	memset(&sense_buffer, 0, 128);
-diff --git a/libmultipath/prioritizers/hds.c b/libmultipath/prioritizers/hds.c
-index 88cac5f0..634ae73a 100644
---- a/libmultipath/prioritizers/hds.c
-+++ b/libmultipath/prioritizers/hds.c
-@@ -98,10 +98,11 @@ int hds_modular_prio (const char *dev, int fd, unsigned int timeout)
- 	unsigned char *inqBuffp = inqBuff;
- 	unsigned char sense_buffer[32];
- 	sg_io_hdr_t io_hdr;
-+        int ret = 0;
-
- 	if ((ioctl (fd, SG_GET_VERSION_NUM, &k) < 0) || (k < 30000)) {
- 		pp_hds_log(0, "can't use SG ioctl interface");
--		return -1;
-+		goto out;
- 	}
-
- 	memset (&io_hdr, 0, sizeof (sg_io_hdr_t));
-@@ -118,11 +119,11 @@ int hds_modular_prio (const char *dev, int fd, unsigned int timeout)
-
- 	if (ioctl (fd, SG_IO, &io_hdr) < 0) {
- 		pp_hds_log(0, "SG_IO error");
--		return -1;
-+		goto out;
- 	}
- 	if ((io_hdr.info & SG_INFO_OK_MASK) != SG_INFO_OK) {
- 		pp_hds_log(0, "SCSI error");
--		return -1;
-+		goto out;
- 	}
-
- 	snprintf (vendor, 9, "%.8s", inqBuffp + 8);
-@@ -144,11 +145,11 @@ int hds_modular_prio (const char *dev, int fd, unsigned int timeout)
- 		switch (ldev[3]) {
- 		case '0': case '2': case '4': case '6': case '8': case 'A': case 'C': case 'E':
- 			pp_hds_log(4, "CTRL EVEN, LDEV EVEN, PRIO 1");
--			return 1;
-+			ret = 1;
- 			break;
- 		case '1': case '3': case '5': case '7': case '9': case 'B': case 'D': case 'F':
- 			pp_hds_log(4, "CTRL EVEN, LDEV ODD, PRIO 0");
--			return 0;
-+			ret = 0;
- 			break;
- 		}
- 		break;
-@@ -156,16 +157,18 @@ int hds_modular_prio (const char *dev, int fd, unsigned int timeout)
- 		switch (ldev[3]) {
- 		case '0': case '2': case '4': case '6': case '8': case 'A': case 'C': case 'E':
- 			pp_hds_log(4, "CTRL ODD, LDEV EVEN, PRIO 0");
--			return 0;
-+			ret = 0;
- 			break;
- 		case '1': case '3': case '5': case '7': case '9': case 'B': case 'D': case 'F':
- 			pp_hds_log(4, "CTRL ODD, LDEV ODD, PRIO 1");
--			return 1;
-+			ret = 1;
- 			break;
- 		}
- 		break;
- 	}
--	return -1;
-+
-+out:
-+	return ret;
- }
-
- int getprio (struct path * pp, __attribute__((unused)) char *args,
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 5a73d4ce..51696e36 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -35,8 +35,10 @@ int update_mpp_paths(struct multipath *mpp, vector pathvec)
- 		return 0;
-
- 	if (!mpp->paths &&
--	    !(mpp->paths = vector_alloc()))
-+	    !(mpp->paths = vector_alloc())) {
-+		condlog(2, "mpp->paths alloc failed");
- 		return 1;
-+	}
-
- 	vector_foreach_slot (mpp->pg, pgp, i) {
- 		vector_foreach_slot (pgp->paths, pp, j) {
-diff --git a/multipathd/main.c b/multipathd/main.c
-index a4abbb27..13cb4dec 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1725,6 +1725,11 @@ enable_group(struct path * pp)
-
- 	pgp = VECTOR_SLOT(pp->mpp->pg, pp->pgindex - 1);
-
-+	if (!pgp) {
-+		condlog(2, "%s: pgp is NULL", pp->mpp->alias);
-+		return;
+-	if (memcmp(paramp->key, &mpp->reservation_key, 8) &&
+-	    memcmp(paramp->sa_key, &mpp->reservation_key, 8)) {
++	uireservation = get_be64(mpp->reservation_key);
++	for (j = 7; j >= 0; --j) {
++		uitmp[j] = (uireservation & 0xff);
++		uireservation >>= 8;
 +	}
 +
- 	if (pgp->status == PGSTATE_DISABLED) {
- 		condlog(2, "%s: enable group #%i", pp->mpp->alias, pp->pgindex);
- 		dm_enablegroup(pp->mpp->alias, pp->pgindex);
--- 
++	if (memcmp(paramp->key, uitmp, 8) &&
++	    memcmp(paramp->sa_key, uitmp, 8)) {
+ 		condlog(0, "%s: configured reservation key doesn't match: 0x%" PRIx64, alias, get_be64(mpp->reservation_key));
+ 		ret = MPATH_PR_SYNTAX_ERROR;
+ 		goto out1;
+--
 
 --
 dm-devel mailing list
