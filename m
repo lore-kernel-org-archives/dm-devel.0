@@ -7,65 +7,65 @@ X-Spam-Status: No, score=-11.2 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 87423C4363A
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 09:41:31 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DA36DC4363A
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 09:41:40 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id AD0B7223EA
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 09:41:30 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org AD0B7223EA
+	by mail.kernel.org (Postfix) with ESMTPS id 0E5CD223EA
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Oct 2020 09:41:39 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0E5CD223EA
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=huawei.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-481-BpcnEZYHM32u1UiaaR18hA-1; Mon, 26 Oct 2020 05:41:27 -0400
-X-MC-Unique: BpcnEZYHM32u1UiaaR18hA-1
+ us-mta-422-RY9GKjUpOKm4Ka8llWlztQ-1; Mon, 26 Oct 2020 05:41:36 -0400
+X-MC-Unique: RY9GKjUpOKm4Ka8llWlztQ-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CFFDA80B730;
-	Mon, 26 Oct 2020 09:41:21 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0802D10060C1;
+	Mon, 26 Oct 2020 09:41:32 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B3A1B5B4B4;
-	Mon, 26 Oct 2020 09:41:21 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D5D195B4B3;
+	Mon, 26 Oct 2020 09:41:31 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5BD4792F2A;
-	Mon, 26 Oct 2020 09:41:21 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AB6B992F2B;
+	Mon, 26 Oct 2020 09:41:31 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09Q9PlgO001709 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 26 Oct 2020 05:25:47 -0400
+	id 09Q9QGrt001803 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 26 Oct 2020 05:26:17 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id AEC452166B27; Mon, 26 Oct 2020 09:25:47 +0000 (UTC)
+	id DAD552166B28; Mon, 26 Oct 2020 09:26:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A957A2166B44
-	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 09:25:45 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D4D482166B27
+	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 09:26:14 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 11675800183
-	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 09:25:45 +0000 (UTC)
-Received: from szxga07-in.huawei.com (szxga07-in.huawei.com [45.249.212.35])
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5C499858296
+	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 09:26:14 +0000 (UTC)
+Received: from szxga06-in.huawei.com (szxga06-in.huawei.com [45.249.212.32])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-80-Ncgko71eOjWwKkWO9s0_Cg-1; Mon, 26 Oct 2020 05:25:40 -0400
-X-MC-Unique: Ncgko71eOjWwKkWO9s0_Cg-1
-Received: from DGGEMS403-HUB.china.huawei.com (unknown [172.30.72.60])
-	by szxga07-in.huawei.com (SkyGuard) with ESMTP id 4CKTw614Ctz6xVX;
-	Mon, 26 Oct 2020 17:25:42 +0800 (CST)
+	us-mta-510-ECtqsot3MFysy1T1_FO1hA-1; Mon, 26 Oct 2020 05:26:09 -0400
+X-MC-Unique: ECtqsot3MFysy1T1_FO1hA-1
+Received: from DGGEMS414-HUB.china.huawei.com (unknown [172.30.72.58])
+	by szxga06-in.huawei.com (SkyGuard) with ESMTP id 4CKTwg3w4kzhYtC;
+	Mon, 26 Oct 2020 17:26:11 +0800 (CST)
 Received: from [10.174.178.210] (10.174.178.210) by
-	DGGEMS403-HUB.china.huawei.com (10.3.19.203) with Microsoft SMTP Server
-	id 14.3.487.0; Mon, 26 Oct 2020 17:25:26 +0800
+	DGGEMS414-HUB.china.huawei.com (10.3.19.214) with Microsoft SMTP Server
+	id 14.3.487.0; Mon, 26 Oct 2020 17:26:00 +0800
 From: lixiaokeng <lixiaokeng@huawei.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski
 	<bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>,
 	dm-devel mailing list <dm-devel@redhat.com>
 References: <2a95503c-da40-391c-ce76-bdde19636b51@huawei.com>
-Message-ID: <846ee6d8-f84b-263f-e97e-a0d2f4e82db1@huawei.com>
-Date: Mon, 26 Oct 2020 17:25:26 +0800
+Message-ID: <47950e3d-33f8-c1eb-2ee1-a87edd693dee@huawei.com>
+Date: Mon, 26 Oct 2020 17:25:59 +0800
 User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
 	Thunderbird/68.10.0
 MIME-Version: 1.0
@@ -84,8 +84,8 @@ X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: linfeilong <linfeilong@huawei.com>,
 	"liuzhiqiang \(I\)" <liuzhiqiang26@huawei.com>
-Subject: [dm-devel] [PATCH 2/6] fix lun expansion failure when there is
-	offline path
+Subject: [dm-devel] [PATCH 3/6] check pgp to avoid NULL dereference in
+	enable_group
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -108,116 +108,155 @@ Content-Language: en-GB
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-There are two paths for one multipath device; one path
-is up and the other path is down. Expand the multipath
-device in server. Scan the path size in client. It will
-cause failure expansion in client. The reason:
-When two different-size paths for one device pass to
-kernel. Kerenl will return fail. Multipathd will try to
-delete the multipath device but fail because the
-device is used. Here we check the offline path; if its'
-size is different with other path, delete it.
+If the pgp is NULL, this code will lead to coredump.
+Here we check the pgp before dereference. And there
+are some code enhance.
 
-Signed-off-by: Yanfei Zhang <yanfei.zhang@huawei.com>
 Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
 ---
- libmultipath/configure.c   | 18 ++++++++++++++++++
- libmultipath/structs.c     |  1 +
- libmultipath/structs.h     |  1 +
- libmultipath/structs_vec.c |  6 ++++--
- 4 files changed, 24 insertions(+), 2 deletions(-)
+ libmultipath/prioritizers/alua.c |  4 ++++
+ libmultipath/prioritizers/emc.c  |  2 +-
+ libmultipath/prioritizers/hds.c  | 19 +++++++++++--------
+ libmultipath/structs_vec.c       |  4 +++-
+ multipathd/main.c                |  5 +++++
+ 5 files changed, 24 insertions(+), 10 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 9d6eeba1..00c12929 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -1176,6 +1176,7 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
-
- 	vector_foreach_slot (pathvec, pp1, k) {
- 		int invalid;
-+		condlog(3, "%s %s: start coalesce", pp1->dev, pp1->dev_t);
- 		/* skip this path for some reason */
-
- 		/* 1. if path has no unique id or wwid blacklisted */
-@@ -1213,6 +1214,18 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
- 			continue;
+diff --git a/libmultipath/prioritizers/alua.c b/libmultipath/prioritizers/alua.c
+index 0ab06e2b..a6307d69 100644
+--- a/libmultipath/prioritizers/alua.c
++++ b/libmultipath/prioritizers/alua.c
+@@ -131,15 +131,19 @@ int getprio (struct path * pp, char * args, unsigned int timeout)
+ 		switch(-rc) {
+ 		case ALUA_PRIO_NOT_SUPPORTED:
+ 			condlog(0, "%s: alua not supported", pp->dev);
++			rc = 0;
+ 			break;
+ 		case ALUA_PRIO_RTPG_FAILED:
+ 			condlog(0, "%s: couldn't get target port group", pp->dev);
++			rc = 0;
+ 			break;
+ 		case ALUA_PRIO_GETAAS_FAILED:
+ 			condlog(0, "%s: couldn't get asymmetric access state", pp->dev);
++			rc = 0;
+ 			break;
+ 		case ALUA_PRIO_TPGS_FAILED:
+ 			condlog(3, "%s: couldn't get supported alua states", pp->dev);
++			rc = 0;
+ 			break;
  		}
+ 	}
+diff --git a/libmultipath/prioritizers/emc.c b/libmultipath/prioritizers/emc.c
+index 3b63cca0..c40f88a0 100644
+--- a/libmultipath/prioritizers/emc.c
++++ b/libmultipath/prioritizers/emc.c
+@@ -19,7 +19,7 @@ int emc_clariion_prio(const char *dev, int fd, unsigned int timeout)
+ 	unsigned char inqCmdBlk[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xC0, 0,
+ 						sizeof(sense_buffer), 0};
+ 	struct sg_io_hdr io_hdr;
+-	int ret = PRIO_UNDEF;
++	int ret = 0;
 
-+		/* if path is offline */
-+		if (pp1->state == PATH_DOWN) {
-+			orphan_path(pp1, "skip offline path");
-+			continue;
-+		}
+ 	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
+ 	memset(&sense_buffer, 0, 128);
+diff --git a/libmultipath/prioritizers/hds.c b/libmultipath/prioritizers/hds.c
+index 88cac5f0..634ae73a 100644
+--- a/libmultipath/prioritizers/hds.c
++++ b/libmultipath/prioritizers/hds.c
+@@ -98,10 +98,11 @@ int hds_modular_prio (const char *dev, int fd, unsigned int timeout)
+ 	unsigned char *inqBuffp = inqBuff;
+ 	unsigned char sense_buffer[32];
+ 	sg_io_hdr_t io_hdr;
++        int ret = 0;
+
+ 	if ((ioctl (fd, SG_GET_VERSION_NUM, &k) < 0) || (k < 30000)) {
+ 		pp_hds_log(0, "can't use SG ioctl interface");
+-		return -1;
++		goto out;
+ 	}
+
+ 	memset (&io_hdr, 0, sizeof (sg_io_hdr_t));
+@@ -118,11 +119,11 @@ int hds_modular_prio (const char *dev, int fd, unsigned int timeout)
+
+ 	if (ioctl (fd, SG_IO, &io_hdr) < 0) {
+ 		pp_hds_log(0, "SG_IO error");
+-		return -1;
++		goto out;
+ 	}
+ 	if ((io_hdr.info & SG_INFO_OK_MASK) != SG_INFO_OK) {
+ 		pp_hds_log(0, "SCSI error");
+-		return -1;
++		goto out;
+ 	}
+
+ 	snprintf (vendor, 9, "%.8s", inqBuffp + 8);
+@@ -144,11 +145,11 @@ int hds_modular_prio (const char *dev, int fd, unsigned int timeout)
+ 		switch (ldev[3]) {
+ 		case '0': case '2': case '4': case '6': case '8': case 'A': case 'C': case 'E':
+ 			pp_hds_log(4, "CTRL EVEN, LDEV EVEN, PRIO 1");
+-			return 1;
++			ret = 1;
+ 			break;
+ 		case '1': case '3': case '5': case '7': case '9': case 'B': case 'D': case 'F':
+ 			pp_hds_log(4, "CTRL EVEN, LDEV ODD, PRIO 0");
+-			return 0;
++			ret = 0;
+ 			break;
+ 		}
+ 		break;
+@@ -156,16 +157,18 @@ int hds_modular_prio (const char *dev, int fd, unsigned int timeout)
+ 		switch (ldev[3]) {
+ 		case '0': case '2': case '4': case '6': case '8': case 'A': case 'C': case 'E':
+ 			pp_hds_log(4, "CTRL ODD, LDEV EVEN, PRIO 0");
+-			return 0;
++			ret = 0;
+ 			break;
+ 		case '1': case '3': case '5': case '7': case '9': case 'B': case 'D': case 'F':
+ 			pp_hds_log(4, "CTRL ODD, LDEV ODD, PRIO 1");
+-			return 1;
++			ret = 1;
+ 			break;
+ 		}
+ 		break;
+ 	}
+-	return -1;
 +
-+		/* if path is handled before */
-+		if (pp1->handled) {
-+			condlog(3, "%s: skip handled path.", pp1->dev_t);
-+			continue;
-+		}
-+
- 		/*
- 		 * at this point, we know we really got a new mp
- 		 */
-@@ -1230,10 +1243,15 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
++out:
++	return ret;
+ }
 
- 		for (i = k + 1; i < VECTOR_SIZE(pathvec); i++) {
- 			pp2 = VECTOR_SLOT(pathvec, i);
-+			if (pp2->handled)
-+				continue;
-
- 			if (strcmp(pp1->wwid, pp2->wwid))
- 				continue;
-
-+			if (!pp2->size || pp2->state == PATH_DOWN)
-+				continue;
-+
- 			if (!mpp->size && pp2->size)
- 				mpp->size = pp2->size;
-
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 464596fc..e5de0a7d 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -101,6 +101,7 @@ alloc_path (void)
- 		pp->fd = -1;
- 		pp->tpgs = TPGS_UNDEF;
- 		pp->priority = PRIO_UNDEF;
-+		pp->handled = 0;
- 		pp->checkint = CHECKINT_UNDEF;
- 		checker_clear(&pp->checker);
- 		dm_path_to_gen(pp)->ops = &dm_gen_path_ops;
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 7de93d6c..022ba126 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -280,6 +280,7 @@ struct path {
- 	struct checker checker;
- 	struct multipath * mpp;
- 	int fd;
-+	int handled;
- 	int initialized;
- 	int retriggers;
- 	unsigned int path_failures;
+ int getprio (struct path * pp, __attribute__((unused)) char *args,
 diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 8895fa77..5a73d4ce 100644
+index 5a73d4ce..51696e36 100644
 --- a/libmultipath/structs_vec.c
 +++ b/libmultipath/structs_vec.c
-@@ -738,11 +738,13 @@ int verify_paths(struct multipath *mpp)
+@@ -35,8 +35,10 @@ int update_mpp_paths(struct multipath *mpp, vector pathvec)
  		return 0;
 
- 	vector_foreach_slot (mpp->paths, pp, i) {
-+		pp->handled = 1;
- 		/*
- 		 * see if path is in sysfs
- 		 */
--		if (!pp->udev || sysfs_attr_get_value(pp->udev, "dev",
--					 pp->dev_t, BLK_DEV_SIZE) < 0) {
-+		if ((!pp->udev || sysfs_attr_get_value(pp->udev, "dev",
-+		    pp->dev_t, BLK_DEV_SIZE) < 0) ||
-+		    (pp->state == PATH_DOWN && pp->size != mpp->size)) {
- 			if (pp->state != PATH_DOWN) {
- 				condlog(1, "%s: removing valid path %s in state %d",
- 					mpp->alias, pp->dev, pp->state);
+ 	if (!mpp->paths &&
+-	    !(mpp->paths = vector_alloc()))
++	    !(mpp->paths = vector_alloc())) {
++		condlog(2, "mpp->paths alloc failed");
+ 		return 1;
++	}
+
+ 	vector_foreach_slot (mpp->pg, pgp, i) {
+ 		vector_foreach_slot (pgp->paths, pp, j) {
+diff --git a/multipathd/main.c b/multipathd/main.c
+index a4abbb27..13cb4dec 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1725,6 +1725,11 @@ enable_group(struct path * pp)
+
+ 	pgp = VECTOR_SLOT(pp->mpp->pg, pp->pgindex - 1);
+
++	if (!pgp) {
++		condlog(2, "%s: pgp is NULL", pp->mpp->alias);
++		return;
++	}
++
+ 	if (pgp->status == PGSTATE_DISABLED) {
+ 		condlog(2, "%s: enable group #%i", pp->mpp->alias, pp->pgindex);
+ 		dm_enablegroup(pp->mpp->alias, pp->pgindex);
 -- 
 
 --
