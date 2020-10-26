@@ -6,63 +6,63 @@ X-Spam-Status: No, score=-10.0 required=3.0 tests=BAYES_00,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A1790C2D0A3
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 00:04:20 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A36DFC2D0A3
+	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 00:04:36 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 0E75220882
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 00:04:19 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0E75220882
+	by mail.kernel.org (Postfix) with ESMTPS id 1F546221F7
+	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 00:04:34 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1F546221F7
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-176-W2-ZITCBPai32Qe2JThjEA-1; Mon, 26 Oct 2020 20:04:16 -0400
-X-MC-Unique: W2-ZITCBPai32Qe2JThjEA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-381-R5dFJhodNGCAS9aMH0bw0Q-1; Mon, 26 Oct 2020 20:04:31 -0400
+X-MC-Unique: R5dFJhodNGCAS9aMH0bw0Q-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 28536803F50;
-	Tue, 27 Oct 2020 00:04:09 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 796E5107465B;
+	Tue, 27 Oct 2020 00:04:26 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 104565B4B7;
-	Tue, 27 Oct 2020 00:04:08 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 10BDC5578C;
+	Tue, 27 Oct 2020 00:04:26 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3F6D6181A050;
-	Tue, 27 Oct 2020 00:04:06 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D45BD181A06D;
+	Tue, 27 Oct 2020 00:04:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09QNruNw020986 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 26 Oct 2020 19:53:56 -0400
+	id 09QNuLhW021440 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 26 Oct 2020 19:56:21 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 916872166B44; Mon, 26 Oct 2020 23:53:56 +0000 (UTC)
+	id 244272022799; Mon, 26 Oct 2020 23:56:21 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8C98F2166B27
-	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 23:53:54 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F501207B2D7
+	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 23:56:18 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 514CE102F1E0
-	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 23:53:54 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C7FEF85828D
+	for <dm-devel@redhat.com>; Mon, 26 Oct 2020 23:56:18 +0000 (UTC)
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
-	by relay.mimecast.com with ESMTP id us-mta-51-i3cjHJHEN5CEG07DNIz6eg-1; 
-	Mon, 26 Oct 2020 19:53:46 -0400
-X-MC-Unique: i3cjHJHEN5CEG07DNIz6eg-1
+	by relay.mimecast.com with ESMTP id us-mta-16-DKGbQF7CO_G4LZOJffQUSA-1; 
+	Mon, 26 Oct 2020 19:56:15 -0400
+X-MC-Unique: DKGbQF7CO_G4LZOJffQUSA-1
 Received: from sasha-vm.mshome.net (c-73-47-72-35.hsd1.nh.comcast.net
 	[73.47.72.35])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPSA id A651A21D7B;
-	Mon, 26 Oct 2020 23:53:44 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTPSA id EE53C22202;
+	Mon, 26 Oct 2020 23:56:13 +0000 (UTC)
 From: Sasha Levin <sashal@kernel.org>
 To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Date: Mon, 26 Oct 2020 19:51:13 -0400
-Message-Id: <20201026235205.1023962-81-sashal@kernel.org>
-In-Reply-To: <20201026235205.1023962-1-sashal@kernel.org>
-References: <20201026235205.1023962-1-sashal@kernel.org>
+Date: Mon, 26 Oct 2020 19:54:44 -0400
+Message-Id: <20201026235516.1025100-48-sashal@kernel.org>
+In-Reply-To: <20201026235516.1025100-1-sashal@kernel.org>
+References: <20201026235516.1025100-1-sashal@kernel.org>
 MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
@@ -74,14 +74,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 09QNruNw020986
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 09QNuLhW021440
 X-loop: dm-devel@redhat.com
 Cc: Sasha Levin <sashal@kernel.org>, dm-devel@redhat.com,
 	Mike Snitzer <snitzer@redhat.com>
-Subject: [dm-devel] [PATCH AUTOSEL 5.8 081/132] dm: change max_io_len() to
-	use blk_max_size_offset()
+Subject: [dm-devel] [PATCH AUTOSEL 5.4 48/80] dm: change max_io_len() to use
+	blk_max_size_offset()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -95,7 +95,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -118,10 +118,10 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 8 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 548ad06094e98..4cfd5c88113cb 100644
+index 667db23f10ee1..eed2337934eba 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -1051,22 +1051,18 @@ static sector_t max_io_len_target_boundary(sector_t sector, struct dm_target *ti
+@@ -1027,22 +1027,18 @@ static sector_t max_io_len_target_boundary(sector_t sector, struct dm_target *ti
  static sector_t max_io_len(sector_t sector, struct dm_target *ti)
  {
  	sector_t len = max_io_len_target_boundary(sector, ti);
