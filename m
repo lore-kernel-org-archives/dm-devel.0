@@ -7,61 +7,62 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C8CCC388F9
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 22:51:43 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5CB02C55178
+	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 22:51:45 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E63F720728
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 22:51:42 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E63F720728
+	by mail.kernel.org (Postfix) with ESMTPS id A62EB20728
+	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 22:51:44 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A62EB20728
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-361-W4ALc_TRPJ2e01MG7Hv03g-1; Tue, 27 Oct 2020 18:51:39 -0400
-X-MC-Unique: W4ALc_TRPJ2e01MG7Hv03g-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-584-Tzn9HRX_O0OtY1fUia4vcQ-1; Tue, 27 Oct 2020 18:51:41 -0400
+X-MC-Unique: Tzn9HRX_O0OtY1fUia4vcQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9A3AE809DC9;
-	Tue, 27 Oct 2020 22:51:34 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7C33110013D0;
-	Tue, 27 Oct 2020 22:51:34 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BF9FE186A572;
+	Tue, 27 Oct 2020 22:51:36 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A17026EF6A;
+	Tue, 27 Oct 2020 22:51:36 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4D2F9181A870;
-	Tue, 27 Oct 2020 22:51:34 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 77DBD5810F;
+	Tue, 27 Oct 2020 22:51:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09RMk31V008987 for <dm-devel@listman.util.phx.redhat.com>;
+	id 09RMk3v5009001 for <dm-devel@listman.util.phx.redhat.com>;
 	Tue, 27 Oct 2020 18:46:03 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6F2CC1016D96; Tue, 27 Oct 2020 22:46:03 +0000 (UTC)
+	id B13F02084846; Tue, 27 Oct 2020 22:46:03 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6AD39110D916
-	for <dm-devel@redhat.com>; Tue, 27 Oct 2020 22:46:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AC4A1201156A
+	for <dm-devel@redhat.com>; Tue, 27 Oct 2020 22:46:00 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 39DDC811E78
-	for <dm-devel@redhat.com>; Tue, 27 Oct 2020 22:46:01 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 827831021E17
+	for <dm-devel@redhat.com>; Tue, 27 Oct 2020 22:46:00 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-334-r57bjPZ8MieFJKqOP0-7Ng-1;
-	Tue, 27 Oct 2020 18:45:58 -0400
-X-MC-Unique: r57bjPZ8MieFJKqOP0-7Ng-1
+	relay.mimecast.com with ESMTP id us-mta-117-2FE_LffzNe6lEeB4DcZWWg-1;
+	Tue, 27 Oct 2020 18:45:55 -0400
+X-MC-Unique: 2FE_LffzNe6lEeB4DcZWWg-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 9C0D9B2AA;
-	Tue, 27 Oct 2020 22:45:55 +0000 (UTC)
+	by mx2.suse.de (Postfix) with ESMTP id 5CCB2B1EA;
+	Tue, 27 Oct 2020 22:45:54 +0000 (UTC)
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
 	Xose Vazquez Perez <xose.vazquez@gmail.com>
-Date: Tue, 27 Oct 2020 23:45:36 +0100
-Message-Id: <20201027224536.11662-6-mwilck@suse.com>
+Date: Tue, 27 Oct 2020 23:45:32 +0100
+Message-Id: <20201027224536.11662-2-mwilck@suse.com>
 In-Reply-To: <20201027224536.11662-1-mwilck@suse.com>
 References: <20201027224536.11662-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -73,13 +74,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 09RMk31V008987
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 09RMk3v5009001
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>,
 	Leonardo Arena <rnalrd@alpinelinux.org>
-Subject: [dm-devel] [PATCH 5/5] multipath-tools tests: fix for busybox
+Subject: [dm-devel] [PATCH 1/5] libmultipath: make sure __GLIBC_PREREQ() is
+	defined
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,7 +95,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -103,28 +105,27 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-busybox' "ln" command doesn't support the "-t" syntax of GNU ln.
+Otherwise complilation fails on non-glibc systems.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- tests/Makefile | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/util.h | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index 502377f..3bacabd 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -62,8 +62,8 @@ endif
- 	$(CC) $(CFLAGS) $($*-test_FLAGS) -c -o $@ $<
+diff --git a/libmultipath/util.h b/libmultipath/util.h
+index 0f0f6cb..2b9703a 100644
+--- a/libmultipath/util.h
++++ b/libmultipath/util.h
+@@ -55,6 +55,9 @@ struct scandir_result {
+ };
+ void free_scandir_result(struct scandir_result *);
  
- lib/libchecktur.so:
--	mkdir lib
--	ln -t lib ../libmultipath/{checkers,prioritizers,foreign}/*.so
-+	mkdir -p lib
-+	ln ../libmultipath/*/*.so lib
- 
- %.out:	%-test lib/libchecktur.so
- 	@echo == running $< ==
++#ifndef __GLIBC_PREREQ
++#define __GLIBC_PREREQ(x, y) 0
++#endif
+ /*
+  * ffsll() is also available on glibc < 2.27 if _GNU_SOURCE is defined.
+  * But relying on that would require that every program using this header file
 -- 
 2.29.0
 
