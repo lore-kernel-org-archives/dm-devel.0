@@ -7,62 +7,61 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5CB02C55178
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 22:51:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8DBB6C388F9
+	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 22:51:46 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id A62EB20728
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 22:51:44 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A62EB20728
+	by mail.kernel.org (Postfix) with ESMTPS id 1EC0B20728
+	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 22:51:46 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1EC0B20728
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-584-Tzn9HRX_O0OtY1fUia4vcQ-1; Tue, 27 Oct 2020 18:51:41 -0400
-X-MC-Unique: Tzn9HRX_O0OtY1fUia4vcQ-1
+ us-mta-556-ze_SFez4OKmB8r9xb9LHmg-1; Tue, 27 Oct 2020 18:51:43 -0400
+X-MC-Unique: ze_SFez4OKmB8r9xb9LHmg-1
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BF9FE186A572;
-	Tue, 27 Oct 2020 22:51:36 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B1DCD186843F;
+	Tue, 27 Oct 2020 22:51:38 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A17026EF6A;
-	Tue, 27 Oct 2020 22:51:36 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 99F5B6EF71;
+	Tue, 27 Oct 2020 22:51:38 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 77DBD5810F;
-	Tue, 27 Oct 2020 22:51:36 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7190958112;
+	Tue, 27 Oct 2020 22:51:38 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09RMk3v5009001 for <dm-devel@listman.util.phx.redhat.com>;
+	id 09RMk3W5009002 for <dm-devel@listman.util.phx.redhat.com>;
 	Tue, 27 Oct 2020 18:46:03 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id B13F02084846; Tue, 27 Oct 2020 22:46:03 +0000 (UTC)
+	id B16182086F62; Tue, 27 Oct 2020 22:46:03 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AC4A1201156A
-	for <dm-devel@redhat.com>; Tue, 27 Oct 2020 22:46:00 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AC78B201156B
+	for <dm-devel@redhat.com>; Tue, 27 Oct 2020 22:46:01 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 827831021E17
-	for <dm-devel@redhat.com>; Tue, 27 Oct 2020 22:46:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0751B85828D
+	for <dm-devel@redhat.com>; Tue, 27 Oct 2020 22:46:01 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-117-2FE_LffzNe6lEeB4DcZWWg-1;
-	Tue, 27 Oct 2020 18:45:55 -0400
-X-MC-Unique: 2FE_LffzNe6lEeB4DcZWWg-1
+	relay.mimecast.com with ESMTP id us-mta-567-F2qYxLZxOQGnlgcfzKyttA-1;
+	Tue, 27 Oct 2020 18:45:56 -0400
+X-MC-Unique: F2qYxLZxOQGnlgcfzKyttA-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 5CCB2B1EA;
+	by mx2.suse.de (Postfix) with ESMTP id A97B6B1F8;
 	Tue, 27 Oct 2020 22:45:54 +0000 (UTC)
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
 	Xose Vazquez Perez <xose.vazquez@gmail.com>
-Date: Tue, 27 Oct 2020 23:45:32 +0100
-Message-Id: <20201027224536.11662-2-mwilck@suse.com>
+Date: Tue, 27 Oct 2020 23:45:33 +0100
+Message-Id: <20201027224536.11662-3-mwilck@suse.com>
 In-Reply-To: <20201027224536.11662-1-mwilck@suse.com>
 References: <20201027224536.11662-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -76,12 +75,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 09RMk3v5009001
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 09RMk3W5009002
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>,
 	Leonardo Arena <rnalrd@alpinelinux.org>
-Subject: [dm-devel] [PATCH 1/5] libmultipath: make sure __GLIBC_PREREQ() is
-	defined
+Subject: [dm-devel] [PATCH 2/5] multipath-tools: fix -Wformat errors with
+	musl libc
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,27 +104,48 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-Otherwise complilation fails on non-glibc systems.
+rlim_t type is different on musl libc. A cast to unsigned long
+should be fine. Also, in musl, pthread_t is a pointer.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/util.h | 3 +++
- 1 file changed, 3 insertions(+)
+ libmultipath/util.c | 6 ++++--
+ multipathd/waiter.c | 2 +-
+ 2 files changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/util.h b/libmultipath/util.h
-index 0f0f6cb..2b9703a 100644
---- a/libmultipath/util.h
-+++ b/libmultipath/util.h
-@@ -55,6 +55,9 @@ struct scandir_result {
- };
- void free_scandir_result(struct scandir_result *);
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index 1dad90f..39ccace 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -378,11 +378,13 @@ void set_max_fds(rlim_t max_fds)
+ 		if (setrlimit(RLIMIT_NOFILE, &fd_limit) < 0) {
+ 			condlog(0, "can't set open fds limit to "
+ 				"%lu/%lu : %s",
+-				fd_limit.rlim_cur, fd_limit.rlim_max,
++				(unsigned long)fd_limit.rlim_cur,
++				(unsigned long)fd_limit.rlim_max,
+ 				strerror(errno));
+ 		} else {
+ 			condlog(3, "set open fds limit to %lu/%lu",
+-				fd_limit.rlim_cur, fd_limit.rlim_max);
++				(unsigned long)fd_limit.rlim_cur,
++				(unsigned long)fd_limit.rlim_max);
+ 		}
+ 	}
+ }
+diff --git a/multipathd/waiter.c b/multipathd/waiter.c
+index 16fbdc8..3bc6980 100644
+--- a/multipathd/waiter.c
++++ b/multipathd/waiter.c
+@@ -64,7 +64,7 @@ void stop_waiter_thread (struct multipath *mpp)
+ 		return;
  
-+#ifndef __GLIBC_PREREQ
-+#define __GLIBC_PREREQ(x, y) 0
-+#endif
- /*
-  * ffsll() is also available on glibc < 2.27 if _GNU_SOURCE is defined.
-  * But relying on that would require that every program using this header file
+ 	condlog(3, "%s: stop event checker thread (%lu)", mpp->alias,
+-		mpp->waiter);
++		(unsigned long)mpp->waiter);
+ 	thread = mpp->waiter;
+ 	mpp->waiter = (pthread_t)0;
+ 	pthread_cleanup_push(cleanup_lock, &waiter_lock);
 -- 
 2.29.0
 
