@@ -2,74 +2,115 @@ Return-Path: <SRS0=TXmu=EC=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.2 required=3.0 tests=BAYES_00,DKIM_ADSP_CUSTOM_MED,
+	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D8741C388F9
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 13:20:44 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E371EC388F9
+	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 13:21:13 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4917D20829
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 13:20:44 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RWMMMWDt"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4917D20829
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 5C69820829
+	for <dm-devel@archiver.kernel.org>; Tue, 27 Oct 2020 13:21:13 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5C69820829
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1603804843;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=J1iz8xa2nRUkVBSCGdje0Hawe+SXtRZnzSKEmM8zjek=;
-	b=RWMMMWDtCblqW7tRG2dLna2P64yWK8NUUBpwiGAP8+DzNKVZV/g13B7Hs+GEFvQrOR1c9b
-	yDlnC3rwcpvYVplmz/SHqli6+UyMDNi5X/YP8oiyNM1Z9ybkz7eA4HHyqzVaHlIVPratML
-	s+c/hlyJR/40ZWA/uD/hW7Ky1EAHtAw=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-46-DMKAMqLFNtaQ5m0zwiJxqA-1; Tue, 27 Oct 2020 09:20:39 -0400
-X-MC-Unique: DMKAMqLFNtaQ5m0zwiJxqA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-43-WRFl7vcwPuKX7vYnyQaiEQ-1; Tue, 27 Oct 2020 09:21:09 -0400
+X-MC-Unique: WRFl7vcwPuKX7vYnyQaiEQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1E1181084D67;
-	Tue, 27 Oct 2020 13:20:33 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C03558064D4;
+	Tue, 27 Oct 2020 13:21:03 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 32F9755796;
-	Tue, 27 Oct 2020 13:20:32 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9E4895D9F3;
+	Tue, 27 Oct 2020 13:21:03 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 01F34CF47;
-	Tue, 27 Oct 2020 13:20:29 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com
-	[10.5.11.14])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9234FCF4B;
+	Tue, 27 Oct 2020 13:21:02 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09RDKST3024369 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 27 Oct 2020 09:20:28 -0400
+	id 09RD5NuP022876 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 27 Oct 2020 09:05:23 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 95CA45D9E8; Tue, 27 Oct 2020 13:20:28 +0000 (UTC)
-Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 56F045D9DD;
-	Tue, 27 Oct 2020 13:20:25 +0000 (UTC)
-Date: Tue, 27 Oct 2020 08:19:59 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Sasha Levin <sashal@kernel.org>
-Message-ID: <20201027121959.GA13012@redhat.com>
-References: <20201026234905.1022767-1-sashal@kernel.org>
-	<20201026234905.1022767-89-sashal@kernel.org>
+	id 2AF16110C596; Tue, 27 Oct 2020 13:05:23 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 25AB6110C592
+	for <dm-devel@redhat.com>; Tue, 27 Oct 2020 13:05:18 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B1F9C8582BA
+	for <dm-devel@redhat.com>; Tue, 27 Oct 2020 13:05:18 +0000 (UTC)
+Received: from mail-wm1-f65.google.com (mail-wm1-f65.google.com
+	[209.85.128.65]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-492-_rgpn20zPp-LKceaxBSYJA-1; Tue, 27 Oct 2020 09:05:13 -0400
+X-MC-Unique: _rgpn20zPp-LKceaxBSYJA-1
+Received: by mail-wm1-f65.google.com with SMTP id v5so1316823wmh.1;
+	Tue, 27 Oct 2020 06:05:13 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+	:user-agent:mime-version:in-reply-to:content-language
+	:content-transfer-encoding;
+	bh=myy/l02Rm8F+X0fdWIlyuf1JwB3VU/GU2tmaR4vsSCk=;
+	b=ZntcqqrzdWQqpffOChbWUlBa1K4BcEkYH4GWE5ZUcmCd13A6bql3MmEgM+kRLP24OO
+	UEaNv0ZYAv02489anz+OOQimC/gDJFovwJ0Wg25dW7lCMDg+b5n4J0akLgqIZdZIS9kH
+	5J87pqFU3ZRcS5nKvEix58g8bKdIs8J7f1+OudcQJLlSuDqeK3rayiVqZ8kD1jX8+b2R
+	D+9RvosCwOpcxEvkHwde73ndPZXgMJJgc8L0bEcfmUjLKVVeWb3X3GQ5WcYVJ+m/9OXt
+	I25Sqkpzomx2U4WxNv8nqTw8qIt+hhckxX/fusW80QQNdDD6NT0tdmUMw9bXaajP+oiZ
+	76VQ==
+X-Gm-Message-State: AOAM530sOLsx+Pwlr2gRNozLwKVfi1kPtNFJ8IOhJX3OjbVefpLI69J6
+	H+uDtv1OGMoIMpOEq31eGIc=
+X-Google-Smtp-Source: ABdhPJw2WkckDLSI9JGvq3GUMLI8ZV6nTEuB/GOGNsDV91M7d1D0A1mFL4txXw9pl279LalTttu+tQ==
+X-Received: by 2002:a1c:6643:: with SMTP id a64mr2744990wmc.142.1603803911919; 
+	Tue, 27 Oct 2020 06:05:11 -0700 (PDT)
+Received: from [192.168.2.27] (39.35.broadband4.iol.cz. [85.71.35.39])
+	by smtp.gmail.com with ESMTPSA id o3sm1971923wru.15.2020.10.27.06.05.10
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Tue, 27 Oct 2020 06:05:11 -0700 (PDT)
+To: Gilad Ben-Yossef <gilad@benyossef.com>
+References: <20201026130450.6947-1-gilad@benyossef.com>
+	<20201026130450.6947-4-gilad@benyossef.com>
+	<20201026175231.GG858@sol.localdomain>
+	<d07b062c-1405-4d72-b907-1c4dfa97aecb@gmail.com>
+	<20201026183936.GJ858@sol.localdomain>
+	<fd5e46ce-a4bf-8025-05ea-e20d35485446@gmail.com>
+	<CAOtvUMdatUOnffg90aEGanD0y1LtKc7EeKQ=E+N+W-wpo8Zo3A@mail.gmail.com>
+From: Milan Broz <gmazyland@gmail.com>
+Message-ID: <7c8c1453-94b2-23ec-1c93-7674fc8a413b@gmail.com>
+Date: Tue, 27 Oct 2020 14:05:10 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+	Thunderbird/78.4.0
 MIME-Version: 1.0
-In-Reply-To: <20201026234905.1022767-89-sashal@kernel.org>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+In-Reply-To: <CAOtvUMdatUOnffg90aEGanD0y1LtKc7EeKQ=E+N+W-wpo8Zo3A@mail.gmail.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH AUTOSEL 5.9 089/147] dm: change max_io_len()
- to use blk_max_size_offset()
+Cc: linux-raid@vger.kernel.org, Herbert Xu <herbert@gondor.apana.org.au>,
+	Mike Snitzer <snitzer@redhat.com>,
+	Linux kernel mailing list <linux-kernel@vger.kernel.org>,
+	Eric Biggers <ebiggers@kernel.org>, Song Liu <song@kernel.org>,
+	device-mapper development <dm-devel@redhat.com>,
+	Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
+	"David S. Miller" <davem@davemloft.net>, Alasdair Kergon <agk@redhat.com>,
+	Ofir Drang <ofir.drang@arm.com>
+Subject: Re: [dm-devel] [PATCH 3/4] dm crypt: switch to EBOIV crypto API
+	template
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -83,84 +124,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Oct 26 2020 at  7:48pm -0400,
-Sasha Levin <sashal@kernel.org> wrote:
-
-> From: Mike Snitzer <snitzer@redhat.com>
+On 27/10/2020 07:59, Gilad Ben-Yossef wrote:
+> On Mon, Oct 26, 2020 at 9:04 PM Milan Broz <gmazyland@gmail.com> wrote:
+...
+>> We had all of disk-IV inside dmcrypt before - but once it is partially moved into crypto API
+>> (ESSIV, EBOIV for now), it becomes much more complicated for user to select what he needs.
+>>
+>> I think we have no way to check that IV is available from userspace - it
+>> will report the same error as if block cipher is not available, not helping user much
+>> with the error.
+>>
+>> But then I also think we should add abstract dm-crypt options here (Legacy TrueCrypt modes,
+>> Bitlocker modes) that will select these crypto API configuration switches.
+>> Otherwise it will be only a complicated matrix of crypto API options...
 > 
-> [ Upstream commit 5091cdec56faeaefa79de4b6cb3c3c55e50d1ac3 ]
+> hm... just thinking out loud, but maybe the right say to go is to not
+> have a build dependency,
+> but add some user assistance code in cryptosetup that parses
+> /proc/crypto after failures to
+> try and suggest the user with a way forward?
 > 
-> Using blk_max_size_offset() enables DM core's splitting to impose
-> ti->max_io_len (via q->limits.chunk_sectors) and also fallback to
-> respecting q->limits.max_sectors if chunk_sectors isn't set.
+> e.g. if eboiv mapping initiation fails, scan /proc/crypto and either
+> warn of a lack of AES
+> or, assuming some instance of AES is found, warn of lack of EBOIV.
+> It's a little messy
+> and heuristic code for sure, but it lives in a user space utility.
 > 
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-> Signed-off-by: Sasha Levin <sashal@kernel.org>
+> Does that sound sane?
 
-Not sure why this commit elevated to stable@ picking it up, please
-explain.
+Such an idea (try to parse /proc/crypto) is on my TODO list since 2009 :)
+I expected userspace kernel crypto API could help here, but it seems it is not the case.
 
-But you cannot take this commit standalone. These commits are prereqs:
+So yes, I think we need to add something like this in userspace. In combination with
+the kernel and dmcrypt target version, we could have a pretty good hint matrix for the user,
+instead of (literally) cryptic errors.
 
-22ada802ede8 block: use lcm_not_zero() when stacking chunk_sectors
-07d098e6bbad block: allow 'chunk_sectors' to be non-power-of-2
-882ec4e609c1 dm table: stack 'chunk_sectors' limit to account for target-specific splitting
+(There is also a problem that device-mapper targets are losing detailed error state.
+We often end just with -EINVAL during table create ... and no descriptive log entry.
+And leaking info about encrypted devices activation failures to syslog is not a good idea either.)
 
-This goes for all stable@ trees you AUTOSEL'd commit 5091cdec56f for.
+Anyway, this will not fix existing userspace that is not prepared for this kind
+of EBOIV missing fail, so Herbert's solution seems like the solution for this particular
+problem for now. (But I agree we should perhaps remove these build dependences in future completely...)
 
-Mike
-
-> ---
->  drivers/md/dm.c | 20 ++++++++------------
->  1 file changed, 8 insertions(+), 12 deletions(-)
-> 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 6ed05ca65a0f8..3982012b1309c 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1051,22 +1051,18 @@ static sector_t max_io_len_target_boundary(sector_t sector, struct dm_target *ti
->  static sector_t max_io_len(sector_t sector, struct dm_target *ti)
->  {
->  	sector_t len = max_io_len_target_boundary(sector, ti);
-> -	sector_t offset, max_len;
-> +	sector_t max_len;
->  
->  	/*
->  	 * Does the target need to split even further?
-> +	 * - q->limits.chunk_sectors reflects ti->max_io_len so
-> +	 *   blk_max_size_offset() provides required splitting.
-> +	 * - blk_max_size_offset() also respects q->limits.max_sectors
->  	 */
-> -	if (ti->max_io_len) {
-> -		offset = dm_target_offset(ti, sector);
-> -		if (unlikely(ti->max_io_len & (ti->max_io_len - 1)))
-> -			max_len = sector_div(offset, ti->max_io_len);
-> -		else
-> -			max_len = offset & (ti->max_io_len - 1);
-> -		max_len = ti->max_io_len - max_len;
-> -
-> -		if (len > max_len)
-> -			len = max_len;
-> -	}
-> +	max_len = blk_max_size_offset(dm_table_get_md(ti->table)->queue,
-> +				      dm_target_offset(ti, sector));
-> +	if (len > max_len)
-> +		len = max_len;
->  
->  	return len;
->  }
-> -- 
-> 2.25.1
-> 
+Milan
 
 --
 dm-devel mailing list
