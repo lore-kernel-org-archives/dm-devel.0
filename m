@@ -2,73 +2,100 @@ Return-Path: <SRS0=VcJp=EE=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-5.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 13758C55178
-	for <dm-devel@archiver.kernel.org>; Thu, 29 Oct 2020 09:08:14 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 47D46C55178
+	for <dm-devel@archiver.kernel.org>; Thu, 29 Oct 2020 09:08:16 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 6FCF9206D9
-	for <dm-devel@archiver.kernel.org>; Thu, 29 Oct 2020 09:08:13 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 6FCF9206D9
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=benyossef.com
+	by mail.kernel.org (Postfix) with ESMTPS id A6D2C206D9
+	for <dm-devel@archiver.kernel.org>; Thu, 29 Oct 2020 09:08:15 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A6D2C206D9
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=oracle.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-196-3X5IDoGUOwOT9GhslTnSXg-1; Thu, 29 Oct 2020 05:08:10 -0400
-X-MC-Unique: 3X5IDoGUOwOT9GhslTnSXg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-493-9x43-Y-CMe2m9k7JO07N1g-1; Thu, 29 Oct 2020 05:08:08 -0400
+X-MC-Unique: 9x43-Y-CMe2m9k7JO07N1g-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5625D804B68;
-	Thu, 29 Oct 2020 09:08:03 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8D3B110866B3;
+	Thu, 29 Oct 2020 09:08:01 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 37E6B5B4AA;
-	Thu, 29 Oct 2020 09:08:03 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 702F35D98C;
+	Thu, 29 Oct 2020 09:08:01 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 07785181A884;
-	Thu, 29 Oct 2020 09:08:03 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 43909181A87F;
+	Thu, 29 Oct 2020 09:08:01 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 09SCYhp2015973 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 28 Oct 2020 08:34:43 -0400
+	id 09SG3T0j015884 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 28 Oct 2020 12:03:29 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 500AC1111A75; Wed, 28 Oct 2020 12:34:43 +0000 (UTC)
+	id 4596E1111A7A; Wed, 28 Oct 2020 16:03:29 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4BD831000625
-	for <dm-devel@redhat.com>; Wed, 28 Oct 2020 12:34:43 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4181C1111A5D
+	for <dm-devel@redhat.com>; Wed, 28 Oct 2020 16:03:27 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3388C1078502
-	for <dm-devel@redhat.com>; Wed, 28 Oct 2020 12:34:43 +0000 (UTC)
-Received: from foss.arm.com (foss.arm.com [217.140.110.172]) by
-	relay.mimecast.com with ESMTP id us-mta-147-1tR4qzx4PSq00RWJUoVD9w-1;
-	Wed, 28 Oct 2020 08:34:40 -0400
-X-MC-Unique: 1tR4qzx4PSq00RWJUoVD9w-1
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 4DB2D176B;
-	Wed, 28 Oct 2020 05:34:40 -0700 (PDT)
-Received: from e110176-lin.kfn.arm.com (unknown [172.31.20.19])
-	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 5697C3F719;
-	Wed, 28 Oct 2020 05:34:38 -0700 (PDT)
-From: Gilad Ben-Yossef <gilad@benyossef.com>
-To: Herbert Xu <herbert@gondor.apana.org.au>,
-	"David S. Miller" <davem@davemloft.net>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
-	dm-devel@redhat.com
-Date: Wed, 28 Oct 2020 14:34:19 +0200
-Message-Id: <20201028123420.30623-5-gilad@benyossef.com>
-In-Reply-To: <20201028123420.30623-1-gilad@benyossef.com>
-References: <20201028123420.30623-1-gilad@benyossef.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F2A60185A79C
+	for <dm-devel@redhat.com>; Wed, 28 Oct 2020 16:03:26 +0000 (UTC)
+Received: from aserp2120.oracle.com (aserp2120.oracle.com [141.146.126.78])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-175-eg7kDmsjNgyYAOgh0JYJhg-1; Wed, 28 Oct 2020 12:03:21 -0400
+X-MC-Unique: eg7kDmsjNgyYAOgh0JYJhg-1
+Received: from pps.filterd (aserp2120.oracle.com [127.0.0.1])
+	by aserp2120.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
+	09SFxC9k007759; Wed, 28 Oct 2020 16:03:21 GMT
+Received: from aserp3030.oracle.com (aserp3030.oracle.com [141.146.126.71])
+	by aserp2120.oracle.com with ESMTP id 34cc7m0afj-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=FAIL); Wed, 28 Oct 2020 16:03:20 +0000
+Received: from pps.filterd (aserp3030.oracle.com [127.0.0.1])
+	by aserp3030.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
+	09SG0Tls189667; Wed, 28 Oct 2020 16:01:20 GMT
+Received: from userv0122.oracle.com (userv0122.oracle.com [156.151.31.75])
+	by aserp3030.oracle.com with ESMTP id 34cwunrm9w-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Wed, 28 Oct 2020 16:01:20 +0000
+Received: from abhmp0005.oracle.com (abhmp0005.oracle.com [141.146.116.11])
+	by userv0122.oracle.com (8.14.4/8.14.4) with ESMTP id 09SG1I8W010605;
+	Wed, 28 Oct 2020 16:01:19 GMT
+Received: from [20.15.0.202] (/73.88.28.6)
+	by default (Oracle Beehive Gateway v4.0)
+	with ESMTP ; Wed, 28 Oct 2020 09:01:18 -0700
+To: Mike Snitzer <snitzer@redhat.com>
+References: <1603412870-3627-1-git-send-email-michael.christie@oracle.com>
+	<20201027125506.GB13012@redhat.com>
+From: Mike Christie <michael.christie@oracle.com>
+Message-ID: <1097ab3b-c100-80e1-60fd-d2c300192784@oracle.com>
+Date: Wed, 28 Oct 2020 11:01:17 -0500
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+	Thunderbird/78.3.1
 MIME-Version: 1.0
+In-Reply-To: <20201027125506.GB13012@redhat.com>
+X-Proofpoint-Virus-Version: vendor=nai engine=6000 definitions=9788
+	signatures=668682
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 phishscore=0
+	mlxscore=0 bulkscore=0
+	spamscore=0 adultscore=0 malwarescore=0 mlxlogscore=999 suspectscore=0
+	classifier=spam adjust=0 reason=mlx scancount=1
+	engine=8.12.0-2009150000 definitions=main-2010280106
+X-Proofpoint-Virus-Version: vendor=nai engine=6000 definitions=9788
+	signatures=668682
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0
+	lowpriorityscore=0 adultscore=0
+	malwarescore=0 spamscore=0 clxscore=1015 mlxscore=0 suspectscore=0
+	priorityscore=1501 impostorscore=0 bulkscore=0 phishscore=0
+	mlxlogscore=999 classifier=spam adjust=0 reason=mlx scancount=1
+	engine=8.12.0-2009150000 definitions=main-2010280106
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -78,14 +105,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 09SCYhp2015973
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Thu, 29 Oct 2020 05:07:36 -0400
-Cc: linux-kernel@vger.kernel.org, linux-crypto@vger.kernel.org,
-	Ofir Drang <ofir.drang@arm.com>
-Subject: [dm-devel] [PATCH v2 4/4] crypto: ccree: re-introduce ccree eboiv
-	support
+Cc: dm-devel@redhat.com
+Subject: Re: [dm-devel] [PATCH 1/1] dm mpath: add IO affinity path selector
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -99,258 +122,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-BitLocker eboiv support, which was removed in
-commit 1d8b41ff6991 ("crypto: ccree - remove bitlocker cipher")
-is reintroduced based on the crypto API new support for
-eboiv.
+On 10/27/20 7:55 AM, Mike Snitzer wrote:
+> On Thu, Oct 22 2020 at  8:27pm -0400,
+> Mike Christie <michael.christie@oracle.com> wrote:
+> 
+>> This patch adds a path selector that selects paths based on a CPU to
+>> path mapping the user passes in and what CPU we are executing on. The
+>> primary user for this PS is where the app is optimized to use specific
+>> CPUs so other PSs undo the apps handy work, and the storage and it's
+>> transport are not a bottlneck.
+>>
+>> For these io-affinity PS setups a path's transport/interconnect
+>> perf is not going to flucuate a lot and there is no major differences
+>> between paths, so QL/HST smarts do not help and RR always messes up
+>> what the app is trying to do.
+>>
+>> On a system with 16 cores, where you have a job per CPU:
+>>
+>> fio --filename=/dev/dm-0 --direct=1 --rw=randrw --bs=4k \
+>> --ioengine=libaio --iodepth=128 --numjobs=16
+>>
+>> and a dm-multipath device setup where each CPU is mapped to one path:
+>>
+>> // When in mq mode I had to set dm_mq_nr_hw_queues=$NUM_PATHS.
+> 
+> OK, the modparam was/is a means to an end but the default of 1 is very
+> limiting (especially in that it becomes one-size-fits-all, which isn't
+> true, for all dm-multipath devices in the system).
+> 
+> If you have any ideas for what a sane heuristic would be for
+> dm_mq_nr_hw_queues I'm open to suggestions.  But DM target <-> DM core
+> <-> early block core interface coordination is "fun". ;)
+I do not have any good ideas.
 
-Signed-off-by: Gilad Ben-Yossef <gilad@benyossef.com>
-Fixes: 1d8b41ff6991 ("crypto: ccree - remove bitlocker cipher")
----
- drivers/crypto/ccree/cc_cipher.c     | 132 +++++++++++++++++++--------
- drivers/crypto/ccree/cc_crypto_ctx.h |   1 +
- 2 files changed, 96 insertions(+), 37 deletions(-)
 
-diff --git a/drivers/crypto/ccree/cc_cipher.c b/drivers/crypto/ccree/cc_cipher.c
-index dafa6577a845..a13ae60189ed 100644
---- a/drivers/crypto/ccree/cc_cipher.c
-+++ b/drivers/crypto/ccree/cc_cipher.c
-@@ -74,10 +74,14 @@ static int validate_keys_sizes(struct cc_cipher_ctx *ctx_p, u32 size)
- 	case S_DIN_to_AES:
- 		switch (size) {
- 		case CC_AES_128_BIT_KEY_SIZE:
--		case CC_AES_192_BIT_KEY_SIZE:
- 			if (ctx_p->cipher_mode != DRV_CIPHER_XTS)
- 				return 0;
- 			break;
-+		case CC_AES_192_BIT_KEY_SIZE:
-+			if (ctx_p->cipher_mode != DRV_CIPHER_XTS &&
-+			    ctx_p->cipher_mode != DRV_CIPHER_BITLOCKER)
-+				return 0;
-+			break;
- 		case CC_AES_256_BIT_KEY_SIZE:
- 			return 0;
- 		case (CC_AES_192_BIT_KEY_SIZE * 2):
-@@ -120,6 +124,7 @@ static int validate_data_size(struct cc_cipher_ctx *ctx_p,
- 		case DRV_CIPHER_ECB:
- 		case DRV_CIPHER_CBC:
- 		case DRV_CIPHER_ESSIV:
-+		case DRV_CIPHER_BITLOCKER:
- 			if (IS_ALIGNED(size, AES_BLOCK_SIZE))
- 				return 0;
- 			break;
-@@ -345,7 +350,8 @@ static int cc_cipher_sethkey(struct crypto_skcipher *sktfm, const u8 *key,
- 		}
- 
- 		if (ctx_p->cipher_mode == DRV_CIPHER_XTS ||
--		    ctx_p->cipher_mode == DRV_CIPHER_ESSIV) {
-+		    ctx_p->cipher_mode == DRV_CIPHER_ESSIV ||
-+		    ctx_p->cipher_mode == DRV_CIPHER_BITLOCKER) {
- 			if (hki.hw_key1 == hki.hw_key2) {
- 				dev_err(dev, "Illegal hw key numbers (%d,%d)\n",
- 					hki.hw_key1, hki.hw_key2);
-@@ -543,6 +549,7 @@ static void cc_setup_readiv_desc(struct crypto_tfm *tfm,
- 		break;
- 	case DRV_CIPHER_XTS:
- 	case DRV_CIPHER_ESSIV:
-+	case DRV_CIPHER_BITLOCKER:
- 		/*  IV */
- 		hw_desc_init(&desc[*seq_size]);
- 		set_setup_mode(&desc[*seq_size], SETUP_WRITE_STATE1);
-@@ -597,6 +604,7 @@ static void cc_setup_state_desc(struct crypto_tfm *tfm,
- 		break;
- 	case DRV_CIPHER_XTS:
- 	case DRV_CIPHER_ESSIV:
-+	case DRV_CIPHER_BITLOCKER:
- 		break;
- 	default:
- 		dev_err(dev, "Unsupported cipher mode (%d)\n", cipher_mode);
-@@ -616,56 +624,70 @@ static void cc_setup_xex_state_desc(struct crypto_tfm *tfm,
- 	int flow_mode = ctx_p->flow_mode;
- 	int direction = req_ctx->gen_ctx.op_type;
- 	dma_addr_t key_dma_addr = ctx_p->user.key_dma_addr;
--	unsigned int key_len = (ctx_p->keylen / 2);
- 	dma_addr_t iv_dma_addr = req_ctx->gen_ctx.iv_dma_addr;
--	unsigned int key_offset = key_len;
-+	unsigned int key_len;
-+	unsigned int key_offset;
- 
- 	switch (cipher_mode) {
- 	case DRV_CIPHER_ECB:
--		break;
- 	case DRV_CIPHER_CBC:
- 	case DRV_CIPHER_CBC_CTS:
- 	case DRV_CIPHER_CTR:
- 	case DRV_CIPHER_OFB:
--		break;
--	case DRV_CIPHER_XTS:
--	case DRV_CIPHER_ESSIV:
-+		/* No secondary key for these ciphers, so just return */
-+		return;
- 
--		if (cipher_mode == DRV_CIPHER_ESSIV)
--			key_len = SHA256_DIGEST_SIZE;
-+	case DRV_CIPHER_XTS:
-+		/* Secondary key is same size as primary key and stored after primary key */
-+		key_len = ctx_p->keylen / 2;
-+		key_offset = key_len;
-+		break;
- 
--		/* load XEX key */
--		hw_desc_init(&desc[*seq_size]);
--		set_cipher_mode(&desc[*seq_size], cipher_mode);
--		set_cipher_config0(&desc[*seq_size], direction);
--		if (cc_key_type(tfm) == CC_HW_PROTECTED_KEY) {
--			set_hw_crypto_key(&desc[*seq_size],
--					  ctx_p->hw.key2_slot);
--		} else {
--			set_din_type(&desc[*seq_size], DMA_DLLI,
--				     (key_dma_addr + key_offset),
--				     key_len, NS_BIT);
--		}
--		set_xex_data_unit_size(&desc[*seq_size], nbytes);
--		set_flow_mode(&desc[*seq_size], S_DIN_to_AES2);
--		set_key_size_aes(&desc[*seq_size], key_len);
--		set_setup_mode(&desc[*seq_size], SETUP_LOAD_XEX_KEY);
--		(*seq_size)++;
-+	case DRV_CIPHER_ESSIV:
-+		/* Secondary key is a digest of primary key and stored after primary key */
-+		key_len = SHA256_DIGEST_SIZE;
-+		key_offset = ctx_p->keylen / 2;
-+		break;
- 
--		/* Load IV */
--		hw_desc_init(&desc[*seq_size]);
--		set_setup_mode(&desc[*seq_size], SETUP_LOAD_STATE1);
--		set_cipher_mode(&desc[*seq_size], cipher_mode);
--		set_cipher_config0(&desc[*seq_size], direction);
--		set_key_size_aes(&desc[*seq_size], key_len);
--		set_flow_mode(&desc[*seq_size], flow_mode);
--		set_din_type(&desc[*seq_size], DMA_DLLI, iv_dma_addr,
--			     CC_AES_BLOCK_SIZE, NS_BIT);
--		(*seq_size)++;
-+	case DRV_CIPHER_BITLOCKER:
-+		/* Secondary key is same as primary key */
-+		key_len = ctx_p->keylen;
-+		key_offset = 0;
- 		break;
-+
- 	default:
-+		/* This should never really happen */
- 		dev_err(dev, "Unsupported cipher mode (%d)\n", cipher_mode);
-+		return;
-+	}
-+
-+	/* load XEX key */
-+	hw_desc_init(&desc[*seq_size]);
-+	set_cipher_mode(&desc[*seq_size], cipher_mode);
-+	set_cipher_config0(&desc[*seq_size], direction);
-+	if (cc_key_type(tfm) == CC_HW_PROTECTED_KEY) {
-+		set_hw_crypto_key(&desc[*seq_size],
-+				  ctx_p->hw.key2_slot);
-+	} else {
-+		set_din_type(&desc[*seq_size], DMA_DLLI,
-+			     (key_dma_addr + key_offset),
-+			     key_len, NS_BIT);
- 	}
-+	set_xex_data_unit_size(&desc[*seq_size], nbytes);
-+	set_flow_mode(&desc[*seq_size], S_DIN_to_AES2);
-+	set_key_size_aes(&desc[*seq_size], key_len);
-+	set_setup_mode(&desc[*seq_size], SETUP_LOAD_XEX_KEY);
-+	(*seq_size)++;
-+
-+	/* Load IV */
-+	hw_desc_init(&desc[*seq_size]);
-+	set_setup_mode(&desc[*seq_size], SETUP_LOAD_STATE1);
-+	set_cipher_mode(&desc[*seq_size], cipher_mode);
-+	set_cipher_config0(&desc[*seq_size], direction);
-+	set_key_size_aes(&desc[*seq_size], key_len);
-+	set_flow_mode(&desc[*seq_size], flow_mode);
-+	set_din_type(&desc[*seq_size], DMA_DLLI, iv_dma_addr, CC_AES_BLOCK_SIZE, NS_BIT);
-+	(*seq_size)++;
- }
- 
- static int cc_out_flow_mode(struct cc_cipher_ctx *ctx_p)
-@@ -702,6 +724,7 @@ static void cc_setup_key_desc(struct crypto_tfm *tfm,
- 	case DRV_CIPHER_CTR:
- 	case DRV_CIPHER_OFB:
- 	case DRV_CIPHER_ECB:
-+	case DRV_CIPHER_BITLOCKER:
- 		/* Load key */
- 		hw_desc_init(&desc[*seq_size]);
- 		set_cipher_mode(&desc[*seq_size], cipher_mode);
-@@ -1040,6 +1063,24 @@ static const struct cc_alg_template skcipher_algs[] = {
- 		.std_body = CC_STD_NIST,
- 		.sec_func = true,
- 	},
-+	{
-+		.name = "eboiv(cbc(paes))",
-+		.driver_name = "eboiv-cbc-paes-ccree",
-+		.blocksize = AES_BLOCK_SIZE,
-+		.template_skcipher = {
-+			.setkey = cc_cipher_sethkey,
-+			.encrypt = cc_cipher_encrypt,
-+			.decrypt = cc_cipher_decrypt,
-+			.min_keysize = CC_HW_KEY_SIZE,
-+			.max_keysize = CC_HW_KEY_SIZE,
-+			.ivsize = AES_BLOCK_SIZE,
-+			},
-+		.cipher_mode = DRV_CIPHER_BITLOCKER,
-+		.flow_mode = S_DIN_to_AES,
-+		.min_hw_rev = CC_HW_REV_712,
-+		.std_body = CC_STD_NIST,
-+		.sec_func = true,
-+	},
- 	{
- 		.name = "ecb(paes)",
- 		.driver_name = "ecb-paes-ccree",
-@@ -1168,6 +1209,23 @@ static const struct cc_alg_template skcipher_algs[] = {
- 		.min_hw_rev = CC_HW_REV_712,
- 		.std_body = CC_STD_NIST,
- 	},
-+	{
-+		.name = "eboiv(cbc(aes))",
-+		.driver_name = "eboiv-cbc-aes-ccree",
-+		.blocksize = AES_BLOCK_SIZE,
-+		.template_skcipher = {
-+			.setkey = cc_cipher_setkey,
-+			.encrypt = cc_cipher_encrypt,
-+			.decrypt = cc_cipher_decrypt,
-+			.min_keysize = AES_MIN_KEY_SIZE,
-+			.max_keysize = AES_MAX_KEY_SIZE,
-+			.ivsize = AES_BLOCK_SIZE,
-+			},
-+		.cipher_mode = DRV_CIPHER_BITLOCKER,
-+		.flow_mode = S_DIN_to_AES,
-+		.min_hw_rev = CC_HW_REV_712,
-+		.std_body = CC_STD_NIST,
-+	},
- 	{
- 		.name = "ecb(aes)",
- 		.driver_name = "ecb-aes-ccree",
-diff --git a/drivers/crypto/ccree/cc_crypto_ctx.h b/drivers/crypto/ccree/cc_crypto_ctx.h
-index bd9a1c0896b3..ccf960a0d989 100644
---- a/drivers/crypto/ccree/cc_crypto_ctx.h
-+++ b/drivers/crypto/ccree/cc_crypto_ctx.h
-@@ -108,6 +108,7 @@ enum drv_cipher_mode {
- 	DRV_CIPHER_CBC_CTS = 11,
- 	DRV_CIPHER_GCTR = 12,
- 	DRV_CIPHER_ESSIV = 13,
-+	DRV_CIPHER_BITLOCKER = 14,
- 	DRV_CIPHER_RESERVE32B = S32_MAX
- };
- 
--- 
-2.28.0
+> 
+>> // Bio mode also showed similar results.
+>> 0 16777216 multipath 0 0 1 1 io-affinity 0 16 1 8:16 1 8:32 2 8:64 4
+>> 8:48 8 8:80 10 8:96 20 8:112 40 8:128 80 8:144 100 8:160 200 8:176
+>> 400 8:192 800 8:208 1000 8:224 2000 8:240 4000 65:0 8000
+>>
+>> we can see a IOPs increase of 25%.
+> 
+> Great. What utility/code are you using to extract the path:cpu affinity?
+> Is it array specific?  Which hardware pins IO like this?
 
+It is not specific to an array.
+
+We use it for iscsi. We have fast networks and arrays, but to better 
+utilize them you need to use multiple iscsi sessions (tcp 
+connection/socket). So you typically set it up like how nvme/tcp does 
+its connections/queues by default where that driver will create a TCP 
+connection per CPU then map the connection to a hw queue/ctx. For iscsi, 
+we set the session's IO xmit thread's affinity, then setup networking so 
+the socket/connection's IO is routed to the same CPU. We then create N 
+sessions and do multipath over them.
+
+> 
+> Will you, or others, be enhancing multipath-tools to allow passing such
+> io-affinity DM multipath tables?
+
+Yeah, I am working on that.
 
 --
 dm-devel mailing list
