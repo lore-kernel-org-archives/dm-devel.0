@@ -2,81 +2,79 @@ Return-Path: <SRS0=kRAg=EI=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-5.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 072FCC00A89
-	for <dm-devel@archiver.kernel.org>; Mon,  2 Nov 2020 19:59:04 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 61FE0C00A89
+	for <dm-devel@archiver.kernel.org>; Mon,  2 Nov 2020 19:59:47 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 456D8208B6
-	for <dm-devel@archiver.kernel.org>; Mon,  2 Nov 2020 19:59:02 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTPS id B7CEC208B6
+	for <dm-devel@archiver.kernel.org>; Mon,  2 Nov 2020 19:59:46 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hDtTQvn9"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 456D8208B6
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BZJNDJQw"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org B7CEC208B6
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1604347141;
+	s=mimecast20190719; t=1604347185;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=rE5v3w2P184M6OUC9/pDAXmqQbalTJKUiYzDv6EF6is=;
-	b=hDtTQvn9QWlgkZGgbLEjRqHYKd2fT5ADdUUDDHMPPyRqxoZlwndeeUi8QwwYXa/CiHHQJg
-	9MG42UQRsrnB1G/hbHNPc7MNvR04WFc5eKvGl2xPfjQ9zhP4OuIqv8KZqgs/px7BinLn4a
-	FCZ40135BxJvulhyfW1KLh/EoVu9FHo=
+	bh=K3SSl8Q7VqIn2/cTHQ/67COkkv8NORMDiDRm2RK/w0E=;
+	b=BZJNDJQwT5Sp2ubpX7Rwqd2A0HYkJ4jGMVrZwWCAmwMqTBvd9SeGfy6t0zHQ+trektVVIW
+	fmnZFxZkFgaOwKR14nmR6nw4WD+3/W8bp1kgh+WQW956mr/ypfDxn9KXvV8Ga5rV9dbyEr
+	oqc9ZqeTj3WDLbKjJ9pUjMYQgE3r+Xs=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-543-rODExpEzP8C66k7NGuvwHg-1; Mon, 02 Nov 2020 14:58:59 -0500
-X-MC-Unique: rODExpEzP8C66k7NGuvwHg-1
+ us-mta-258-19KbxptaOgicOO_opXKg-A-1; Mon, 02 Nov 2020 14:59:43 -0500
+X-MC-Unique: 19KbxptaOgicOO_opXKg-A-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BFAB4809DCD;
-	Mon,  2 Nov 2020 19:58:54 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D3C3F21E94;
-	Mon,  2 Nov 2020 19:58:53 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 049EC809DD7;
+	Mon,  2 Nov 2020 19:59:39 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8D0DC21E8B;
+	Mon,  2 Nov 2020 19:59:38 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CF32A8C7B0;
-	Mon,  2 Nov 2020 19:58:50 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
-	[10.5.11.11])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 122A6181A06B;
+	Mon,  2 Nov 2020 19:59:38 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com
+	[10.5.11.14])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0A2JwmSK003229 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 2 Nov 2020 14:58:48 -0500
+	id 0A2Jxa2h003281 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 2 Nov 2020 14:59:36 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 03C825B4A5; Mon,  2 Nov 2020 19:58:48 +0000 (UTC)
+	id B24BA5DA6B; Mon,  2 Nov 2020 19:59:36 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 594C65B4A1;
-	Mon,  2 Nov 2020 19:58:44 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9A7B95D9DD;
+	Mon,  2 Nov 2020 19:59:33 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 0A2Jwg8Q011453; 
-	Mon, 2 Nov 2020 13:58:42 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 0A2JxUQb011461; 
+	Mon, 2 Nov 2020 13:59:30 -0600
 Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 0A2Jwdn2011452;
-	Mon, 2 Nov 2020 13:58:39 -0600
-Date: Mon, 2 Nov 2020 13:58:39 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 0A2JxT6W011460;
+	Mon, 2 Nov 2020 13:59:29 -0600
+Date: Mon, 2 Nov 2020 13:59:29 -0600
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: mwilck@suse.com
-Message-ID: <20201102195839.GR3384@octiron.msp.redhat.com>
+Message-ID: <20201102195929.GS3384@octiron.msp.redhat.com>
 References: <20201027224536.11662-1-mwilck@suse.com>
-	<20201027224536.11662-5-mwilck@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <20201027224536.11662-5-mwilck@suse.com>
+In-Reply-To: <20201027224536.11662-1-mwilck@suse.com>
 User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Leonardo Arena <rnalrd@alpinelinux.org>
-Subject: Re: [dm-devel] [PATCH 4/5] libmultipath tests: fix strerror()
- difference between musl and glibc
+Subject: Re: [dm-devel] [PATCH 0/5] Fixes for musl libc / alpine
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -99,65 +97,37 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Oct 27, 2020 at 11:45:35PM +0100, mwilck@suse.com wrote:
+On Tue, Oct 27, 2020 at 11:45:31PM +0100, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
-> 
-> If an error occurs with errno=0, strerror() on musl returns a different
-> string than "Success". Make sure the test doesn't fail for that reason.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  tests/alias.c    | 2 +-
->  tests/test-log.c | 5 ++++-
->  2 files changed, 5 insertions(+), 2 deletions(-)
-> 
-> diff --git a/tests/alias.c b/tests/alias.c
-> index 5624138..7fda679 100644
-> --- a/tests/alias.c
-> +++ b/tests/alias.c
-> @@ -712,7 +712,7 @@ static void al_write_err(void **state)
->  	will_return(__wrap_write, strlen(ln) - 1);
->  	expect_value(__wrap_ftruncate, length, offset);
->  	will_return(__wrap_ftruncate, 0);
-> -	expect_condlog(0, "Cannot write binding to bindings file : Success\n");
-> +	expect_condlog(0, "Cannot write binding to bindings file :");
->  
->  	alias = allocate_binding(0, "WWIDa", 1, "MPATH");
->  	assert_ptr_equal(alias, NULL);
-> diff --git a/tests/test-log.c b/tests/test-log.c
-> index 051491e..1c901cb 100644
-> --- a/tests/test-log.c
-> +++ b/tests/test-log.c
-> @@ -2,6 +2,7 @@
->  #include <stddef.h>
->  #include <stdarg.h>
->  #include <stdio.h>
-> +#include <string.h>
->  #include <cmocka.h>
->  #include "log.h"
->  #include "test-log.h"
-> @@ -11,12 +12,14 @@ void __wrap_dlog (int sink, int prio, const char * fmt, ...)
->  {
->  	char buff[MAX_MSG_SIZE];
->  	va_list ap;
-> +	char *expected;
->  
->  	check_expected(prio);
->  	va_start(ap, fmt);
->  	vsnprintf(buff, MAX_MSG_SIZE, fmt, ap);
->  	va_end(ap);
-> -	assert_string_equal(buff, mock_ptr_type(char *));
-> +	expected = mock_ptr_type(char *);
-> +	assert_memory_equal(buff, expected, strlen(expected));
 
-This looks fine. I'm just wondering the purpose. Is it just to deal with
-bad, non-null terminated strings?
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
--Ben
+for the set.
 
->  }
->  
->  void expect_condlog(int prio, char *string)
+> 
+> Hi Christophe, Ben, all,
+> 
+> this series of patches fixes the compilation and unit-test
+> problems of latest upstream with musl libc.
+> 
+> Regards,
+> Martin
+> 
+> Martin Wilck (5):
+>   libmultipath: make sure __GLIBC_PREREQ() is defined
+>   multipath-tools: fix -Wformat errors with musl libc
+>   libmultipath: always use glibc basename()
+>   libmultipath tests: fix strerror() difference between musl and glibc
+>   multipath-tools tests: fix for busybox
+> 
+>  libmultipath/util.c | 19 +++++++++++++++++--
+>  libmultipath/util.h |  3 +++
+>  multipathd/waiter.c |  2 +-
+>  tests/Makefile      |  4 ++--
+>  tests/alias.c       |  2 +-
+>  tests/test-log.c    |  5 ++++-
+>  6 files changed, 28 insertions(+), 7 deletions(-)
+> 
 > -- 
 > 2.29.0
 
