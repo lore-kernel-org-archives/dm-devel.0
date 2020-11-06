@@ -2,73 +2,82 @@ Return-Path: <SRS0=owAl=EM=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C99EC2D0A3
-	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 16:22:19 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6FE32C2D0A3
+	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 17:32:45 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C21BD2151B
-	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 16:22:18 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="G50lY2In"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C21BD2151B
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 6D0D12151B
+	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 17:32:44 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 6D0D12151B
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1604679737;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=2HepJtnwwrv2gJAPnRAZnDkjzWGAayWIscXU6GvaOJI=;
-	b=G50lY2InDuEmorintXOH2dRTt4SUnWx4+O2SMQD7O9HjiNHfotenHDjopXe350IaXJS4QZ
-	H8hj7TNqEKVK6KXp8YAM6zWtOYR4cK61TvcJPgi1f9iate9Dh2yuo9q+8ul+2ivVYnku8w
-	EX/5NBVmjAw/169mPdYosN7NzLhlN5Q=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-376-k-W7KHTlMauG32UIcYG1ow-1; Fri, 06 Nov 2020 11:22:15 -0500
-X-MC-Unique: k-W7KHTlMauG32UIcYG1ow-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-551-hzD37cJWN5uUDWC0ZCcwNA-1; Fri, 06 Nov 2020 12:32:36 -0500
+X-MC-Unique: hzD37cJWN5uUDWC0ZCcwNA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 459035F9C1;
-	Fri,  6 Nov 2020 16:22:10 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 129AA879530;
+	Fri,  6 Nov 2020 17:32:31 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6BF0351573;
-	Fri,  6 Nov 2020 16:22:07 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0500E5D9CD;
+	Fri,  6 Nov 2020 17:32:30 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 94387922F3;
-	Fri,  6 Nov 2020 16:22:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
-	[10.5.11.23])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 775B7922F2;
+	Fri,  6 Nov 2020 17:32:27 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0A6GM1Bu008824 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 6 Nov 2020 11:22:01 -0500
+	id 0A6HWPhr017513 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 6 Nov 2020 12:32:25 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id E143421EC3; Fri,  6 Nov 2020 16:22:01 +0000 (UTC)
-Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AE3162617B;
-	Fri,  6 Nov 2020 16:21:58 +0000 (UTC)
-Date: Fri, 6 Nov 2020 10:21:32 -0500
-From: Mike Snitzer <snitzer@redhat.com>
-To: JeffleXu <jefflexu@linux.alibaba.com>
-Message-ID: <20201106152132.GA12366@redhat.com>
-References: <20201103092329.17694-1-jefflexu@linux.alibaba.com>
-	<b042e052-fa66-6542-f382-8bf33c4ffc24@linux.alibaba.com>
+	id 0E7AA2144B52; Fri,  6 Nov 2020 17:32:25 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 098342166B28
+	for <dm-devel@redhat.com>; Fri,  6 Nov 2020 17:32:22 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BEF41802D3D
+	for <dm-devel@redhat.com>; Fri,  6 Nov 2020 17:32:22 +0000 (UTC)
+Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-247-aErkLLsJMw2LPyrElwLemQ-1;
+	Fri, 06 Nov 2020 12:32:18 -0500
+X-MC-Unique: aErkLLsJMw2LPyrElwLemQ-1
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.221.27])
+	by mx2.suse.de (Postfix) with ESMTP id E59A0ACE3;
+	Fri,  6 Nov 2020 17:32:16 +0000 (UTC)
+Message-ID: <39c3227eb6fc8c9edb0f8927b180005e5b4ff445.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	<christophe.varoqui@opensvc.com>
+Date: Fri, 06 Nov 2020 18:32:16 +0100
+In-Reply-To: <20201106004115.GH3384@octiron.msp.redhat.com>
+References: <20201105114952.1059-1-mwilck@suse.com>
+	<20201106004115.GH3384@octiron.msp.redhat.com>
+User-Agent: Evolution 3.36.5
 MIME-Version: 1.0
-In-Reply-To: <b042e052-fa66-6542-f382-8bf33c4ffc24@linux.alibaba.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: joseph.qi@linux.alibaba.com, dm-devel@redhat.com
-Subject: Re: [dm-devel] Why queue_work unneeded for REQUEUE bio
+Cc: dm-devel@redhat.com
+Subject: Re: [dm-devel] [RFC PATCH] libmultipath: prevent DSO unloading with
+ astray checker threads
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -82,100 +91,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Nov 05 2020 at 10:49pm -0500,
-JeffleXu <jefflexu@linux.alibaba.com> wrote:
+On Thu, 2020-11-05 at 18:41 -0600, Benjamin Marzinski wrote:
+> 
+> I can't make this segfault. So that looks good, but it does need
+> libmultipath.version updated to include checker_thread_entry()
 
-> Hi Mike,
-> 
-> 
-> I have another question about dm, though it's irrelevant to this original
-> 
-> mail.
-> 
-> 
-> Currently abnormal IO will call blk_queue_split() and normal IO will
-> 
-> be split considering @max_sectors/@chunk_sectos (in max_io_len()).
-> 
-> 
-> Question 1: Why bio should be split considering queue_limits in dm layer?
-> 
-> After all the underlying device will split themselves by queue_limits if
-> 
-> the dm layer doesn't split by queue_limits.
+Great news, thanks. Well the library version stuff hasn't been
+committed yet anyway, this was against Christophe's current base.
 
-Some targets have "abnormal IO" constraints in their implementation that
-is reflected in the queue_limits -- discards in particular.
+@Christophe, any chance to move forward with the merge?
+(then we can go ahead with this patch later, too...)
 
-> Then Question 2: Currently only @max_sectors is considered when splitting
-> 
-> normal IO in dm layer. Should we also consider
-> @max_segments/@max_segment_size
-> 
-> as blk_queue_split() does?
+Martin
 
-Great question, it does appear the one gap in DM's splitting for
-"normal" IO. I'm less familiar with @max_segments/@max_segment_size. 
-
-Since commit 5091cdec56fa ("dm: change max_io_len() to use
-blk_max_size_offset()") DM is making use of more block core code to
-calculate its splits -- the offset based splitting is much more natural 
-for DM to perform given that potential for spanning multiple targets,
-etc.  But DM targets really don't get involved with concern for
-@max_segments/@max_segment_size
-
-dm-crypt.c:crypt_io_hints is the only DM target code that concerns
-itself with @max_segment_size -- and it is punitive by setting it to
-PAGE_SIZE, please see commit 586b286b110e94e ("dm crypt: constrain crypt
-device's max_segment_size to PAGE_SIZE") for more context.
-
-Mike
-
-
-> On 11/3/20 5:23 PM, Jeffle Xu wrote:
-> >Hi Mike,
-> >
-> >Why queue_work() is unnecessary here for bio with BLK_STS_DM_REQUEUE
-> >returned?
-> >
-> >Thanks
-> >Jeffle Xu
-> >
-> >---
-> >  drivers/md/dm.c | 4 +++-
-> >  1 file changed, 3 insertions(+), 1 deletion(-)
-> >
-> >diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> >index c18fc2548518..ae550daa99b5 100644
-> >--- a/drivers/md/dm.c
-> >+++ b/drivers/md/dm.c
-> >@@ -908,9 +908,11 @@ static void dec_pending(struct dm_io *io, blk_status_t error)
-> >  			 * Target requested pushing back the I/O.
-> >  			 */
-> >  			spin_lock_irqsave(&md->deferred_lock, flags);
-> >-			if (__noflush_suspending(md))
-> >+			if (__noflush_suspending(md)) {
-> >  				/* NOTE early return due to BLK_STS_DM_REQUEUE below */
-> >  				bio_list_add_head(&md->deferred, io->orig_bio);
-> >+				queue_work(md->wq, &md->work);
-> >+			}
-> >  			else
-> >  				/* noflush suspend was interrupted. */
-> >  				io->status = BLK_STS_IOERR;
-> 
-> -- 
-> Thanks,
-> Jeffle
-> 
 
 --
 dm-devel mailing list
