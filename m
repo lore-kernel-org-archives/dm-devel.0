@@ -7,59 +7,59 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 965CEC2D0A3
-	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 19:13:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DE469C388F2
+	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 19:13:36 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 0871F21556
-	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 19:13:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0871F21556
+	by mail.kernel.org (Postfix) with ESMTPS id 272972151B
+	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 19:13:36 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 272972151B
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-60-Qfdoy6RmM12eZ6P26bjMMQ-1; Fri, 06 Nov 2020 14:13:28 -0500
-X-MC-Unique: Qfdoy6RmM12eZ6P26bjMMQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-264-4YmpcPV8MAKOfj64bhU9vg-1; Fri, 06 Nov 2020 14:13:32 -0500
+X-MC-Unique: 4YmpcPV8MAKOfj64bhU9vg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 946548030C1;
-	Fri,  6 Nov 2020 19:13:23 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DDE4F8030BB;
+	Fri,  6 Nov 2020 19:13:27 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 78EEDBA63;
-	Fri,  6 Nov 2020 19:13:23 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BDB441992D;
+	Fri,  6 Nov 2020 19:13:27 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4F8A7180610F;
-	Fri,  6 Nov 2020 19:13:23 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9358B180610F;
+	Fri,  6 Nov 2020 19:13:27 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0A6JDLSm028985 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 6 Nov 2020 14:13:21 -0500
+	id 0A6JDPqJ029001 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 6 Nov 2020 14:13:25 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 64157207A808; Fri,  6 Nov 2020 19:13:21 +0000 (UTC)
+	id 3B68C2144B52; Fri,  6 Nov 2020 19:13:25 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5F9D1207ABFC
-	for <dm-devel@redhat.com>; Fri,  6 Nov 2020 19:13:18 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3624E2166B28
+	for <dm-devel@redhat.com>; Fri,  6 Nov 2020 19:13:23 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DD442185A78B
-	for <dm-devel@redhat.com>; Fri,  6 Nov 2020 19:13:18 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E85CC811E78
+	for <dm-devel@redhat.com>; Fri,  6 Nov 2020 19:13:22 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-377-F9NLzdrtMna9fINHEFvCbQ-1; Fri, 06 Nov 2020 14:13:13 -0500
-X-MC-Unique: F9NLzdrtMna9fINHEFvCbQ-1
+	us-mta-569-2X-do13tPR-9ShPD_hM26w-1; Fri, 06 Nov 2020 14:13:18 -0500
+X-MC-Unique: 2X-do13tPR-9ShPD_hM26w-1
 Received: from [2001:4bb8:184:9a8d:9e34:f7f4:e59e:ad6f] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kb71X-0000tW-UC; Fri, 06 Nov 2020 19:03:50 +0000
+	id 1kb72H-00017b-Qy; Fri, 06 Nov 2020 19:04:34 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Fri,  6 Nov 2020 20:03:13 +0100
-Message-Id: <20201106190337.1973127-2-hch@lst.de>
+Date: Fri,  6 Nov 2020 20:03:35 +0100
+Message-Id: <20201106190337.1973127-24-hch@lst.de>
 In-Reply-To: <20201106190337.1973127-1-hch@lst.de>
 References: <20201106190337.1973127-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,7 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	"Michael S. Tsirkin" <mst@redhat.com>,
@@ -90,8 +90,8 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 01/24] block: remove the call to
-	__invalidate_device in check_disk_size_change
+Subject: [dm-devel] [PATCH 23/24] virtio-blk: remove a spurious call to
+	revalidate_disk_size
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,7 +105,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -113,35 +113,27 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-__invalidate_device without the kill_dirty parameter just invalidates
-various clean entries in caches, which doesn't really help us with
-anything, but can cause all kinds of horrible lock orders due to how
-it calls into the file system.  The only reason this hasn't been a
-major issue is because so many people use partitions, for which no
-invalidation was performed anyway.
+revalidate_disk_size just updates the block device size from the disk
+size.  Thus calling it from revalidate_disk_size doesn't actually do
+anything.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/block_dev.c | 6 ------
- 1 file changed, 6 deletions(-)
+ drivers/block/virtio_blk.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 9e84b1928b9401..66ebf594c97f47 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -1334,12 +1334,6 @@ static void check_disk_size_change(struct gendisk *disk,
- 		i_size_write(bdev->bd_inode, disk_size);
- 	}
- 	spin_unlock(&bdev->bd_size_lock);
--
--	if (bdev_size > disk_size) {
--		if (__invalidate_device(bdev, false))
--			pr_warn("VFS: busy inodes on resized disk %s\n",
--				disk->disk_name);
--	}
+diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
+index 3e812b4c32e669..145606dc52db1e 100644
+--- a/drivers/block/virtio_blk.c
++++ b/drivers/block/virtio_blk.c
+@@ -598,7 +598,6 @@ static void virtblk_update_cache_mode(struct virtio_device *vdev)
+ 	struct virtio_blk *vblk = vdev->priv;
+ 
+ 	blk_queue_write_cache(vblk->disk->queue, writeback, false);
+-	revalidate_disk_size(vblk->disk, true);
  }
  
- /**
+ static const char *const virtblk_cache_types[] = {
 -- 
 2.28.0
 
