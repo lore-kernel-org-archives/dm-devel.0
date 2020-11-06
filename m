@@ -2,82 +2,82 @@ Return-Path: <SRS0=owAl=EM=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6FE32C2D0A3
-	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 17:32:45 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5EFD7C388F2
+	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 18:46:12 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 6D0D12151B
-	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 17:32:44 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 6D0D12151B
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id BE08420702
+	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 18:46:11 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FT9ijN4L"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BE08420702
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1604688370;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=ogX6xTA7NL8KzwtKrWzBJU0VWcLVe1dWnrb7sIh2N3Q=;
+	b=FT9ijN4LXlywUM1MAzPWsf+5XpN2VTVgDnk22bq0q0zolpNAVLWtckoUF75JjMxbQQGY/s
+	t3Mi+RoMGUIDy0YlHyIWMw9y53p9PGOMwZBlP3BNAXa2ABCDiznULtvUXnaO6XGw6dQOaS
+	qPO35xvCPfq7eKspSsywyEE4tBId9pY=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-551-hzD37cJWN5uUDWC0ZCcwNA-1; Fri, 06 Nov 2020 12:32:36 -0500
-X-MC-Unique: hzD37cJWN5uUDWC0ZCcwNA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-80-5OPjjmGsOaS4zhye_9VJaQ-1; Fri, 06 Nov 2020 13:46:07 -0500
+X-MC-Unique: 5OPjjmGsOaS4zhye_9VJaQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 129AA879530;
-	Fri,  6 Nov 2020 17:32:31 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0500E5D9CD;
-	Fri,  6 Nov 2020 17:32:30 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E59C78049F3;
+	Fri,  6 Nov 2020 18:46:01 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C71527664C;
+	Fri,  6 Nov 2020 18:46:00 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 775B7922F2;
-	Fri,  6 Nov 2020 17:32:27 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D28B718037C6;
+	Fri,  6 Nov 2020 18:45:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
+	[10.5.11.11])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0A6HWPhr017513 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 6 Nov 2020 12:32:25 -0500
+	id 0A6IjtcG025991 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 6 Nov 2020 13:45:55 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 0E7AA2144B52; Fri,  6 Nov 2020 17:32:25 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 098342166B28
-	for <dm-devel@redhat.com>; Fri,  6 Nov 2020 17:32:22 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BEF41802D3D
-	for <dm-devel@redhat.com>; Fri,  6 Nov 2020 17:32:22 +0000 (UTC)
-Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-247-aErkLLsJMw2LPyrElwLemQ-1;
-	Fri, 06 Nov 2020 12:32:18 -0500
-X-MC-Unique: aErkLLsJMw2LPyrElwLemQ-1
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id E59A0ACE3;
-	Fri,  6 Nov 2020 17:32:16 +0000 (UTC)
-Message-ID: <39c3227eb6fc8c9edb0f8927b180005e5b4ff445.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	<christophe.varoqui@opensvc.com>
-Date: Fri, 06 Nov 2020 18:32:16 +0100
-In-Reply-To: <20201106004115.GH3384@octiron.msp.redhat.com>
-References: <20201105114952.1059-1-mwilck@suse.com>
-	<20201106004115.GH3384@octiron.msp.redhat.com>
-User-Agent: Evolution 3.36.5
+	id B15ED5B4C6; Fri,  6 Nov 2020 18:45:55 +0000 (UTC)
+Received: from localhost (unknown [10.18.25.174])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1D5E876645;
+	Fri,  6 Nov 2020 18:45:52 +0000 (UTC)
+Date: Fri, 6 Nov 2020 12:45:26 -0500
+From: Mike Snitzer <snitzer@redhat.com>
+To: JeffleXu <jefflexu@linux.alibaba.com>
+Message-ID: <20201106174526.GA13292@redhat.com>
+References: <20201020065420.124885-1-jefflexu@linux.alibaba.com>
+	<20201021203906.GA10896@redhat.com>
+	<da936cfa-93a8-d6ec-bd88-c0fad6c67c8b@linux.alibaba.com>
+	<20201026185334.GA8463@redhat.com>
+	<33c32cd1-5116-9a42-7fe2-b2a383f1c7a0@linux.alibaba.com>
+	<20201102152822.GA20466@redhat.com>
+	<f165f38a-91d1-79aa-829d-a9cc69a5eee6@linux.alibaba.com>
+	<20201104150847.GB32761@redhat.com>
+	<2c5dab21-8125-fcdf-078e-00a158c57f43@linux.alibaba.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+In-Reply-To: <2c5dab21-8125-fcdf-078e-00a158c57f43@linux.alibaba.com>
+User-Agent: Mutt/1.5.21 (2010-09-15)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com
-Subject: Re: [dm-devel] [RFC PATCH] libmultipath: prevent DSO unloading with
- astray checker threads
+Cc: axboe@kernel.dk, xiaoguang.wang@linux.alibaba.com,
+	linux-block@vger.kernel.org, joseph.qi@linux.alibaba.com,
+	dm-devel@redhat.com, haoxu@linux.alibaba.com, io-uring@vger.kernel.org
+Subject: Re: [dm-devel] [RFC 0/3] Add support of iopoll for dm device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -91,27 +91,216 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2020-11-05 at 18:41 -0600, Benjamin Marzinski wrote:
-> 
-> I can't make this segfault. So that looks good, but it does need
-> libmultipath.version updated to include checker_thread_entry()
+On Thu, Nov 05 2020 at  9:51pm -0500,
+JeffleXu <jefflexu@linux.alibaba.com> wrote:
 
-Great news, thanks. Well the library version stuff hasn't been
-committed yet anyway, this was against Christophe's current base.
+>=20
+> On 11/4/20 11:08 PM, Mike Snitzer wrote:
+> >>I'm doubted if this should be implemented in block layer like:
+> >>
+> >>```
+> >>
+> >>struct bio {
+> >>
+> >> =A0=A0=A0 ...
+> >>
+> >> =A0=A0=A0 struct list_head=A0 cookies;
+> >>
+> >>};
+> >>
+> >>```
+> >>
+> >>After all it's only used by bio-based queue, or more specifically
+> >>only dm device currently.
+> >I do think this line of work really should be handled in block core
+> >because I cannot see any reason why MD or bcache or whatever bio-based
+> >device wouldn't want the ability to better support io_uring (with IO
+> >poll).
+> >
+> >>Another design I can come up with is to maintain a global data
+> >>structure for the very beginning
+> >>original bio. Currently the blocking point is that now one original
+> >>bio to the dm device (@bio of dm_submit()) can correspond to multiple
+> >>dm_io and thus we have nowhere to place the @cookies list.
+> >Yes, and that will always be the case.  We need the design to handle an
+> >arbitrary sprawl of splitting from a given bio.  The graph of bios
+> >resulting from that fan-out needs to be walked at various levels -- be
+> >it the top-level original bio's submit_bio() returned cookie or some
+> >intermediate point in the chain of bios.
+> >
+> >The problem is the lifetime of the data structure created for a given
+> >split bio versus layering boundaries (that come from block core's
+> >simplistic recursion via bio using submit_bio).
+> >
+> >>Now we have to maintain one data structure for every original bio,
+> >>something like
+> >>
+> >>```
+> >>
+> >>struct dm_poll_instance {
+> >>
+> >> =A0=A0=A0 ...
+> >>
+> >> =A0=A0=A0 struct list_head cookies;
+> >>
+> >>};
+> >>
+> >>```
+> >I do think we need a hybrid where at the point of recursion we're able
+> >to make the associated data structure available across the recursion
+> >boundary so that modeling the association in a chain of split bios is
+> >possible. (e.g. struct dm_poll_data or dm_poll_instance as you named it,
+> >_but_ that struct definition would live in block core, but would be part
+> >of per-bio-data; so 'struct blk_poll_data' is more logical name when
+> >elevated to block core).
+> >
+> >It _might_ be worthwhile to see if a new BIO_ flag could be added to
+> >allow augmenting the bio_split + bio_chain pattern to also track this
+> >additional case of carrying additional data per-bio while creating
+> >bio-chains.  I may not be clear yet, said differently: augmenting
+> >bio_chain to not only chain bios, but to _also_ thread/chain together
+> >per-bio-data that lives within those chained bios.  SO you have the
+> >chain of bios _and_ the chain of potentially opaque void * that happens
+> >to point to a list head for a list of 'struct blk_poll_data'.
+> >
+> >Does that make sense?
+>=20
+>=20
+> I'm doubted if it really makes sense to maintain a *complete* bio
+> chain across the recursive
+>=20
+> call boundary.
+>=20
+>=20
+> Considering the following device stack:
+>=20
+> ```
+>=20
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 =A0=A0=A0 =A0=A0=A0 =A0 =A0=A0=A0 =A0=
+=A0=A0 =A0=A0=A0 dm0
+>=20
+> =A0=A0=A0 =A0=A0=A0 dm1=A0=A0=A0 =A0=A0=A0 =A0=A0 =A0=A0=A0 =A0=A0=A0 dm2=
+=A0=A0=A0 =A0=A0=A0 =A0=A0 dm3
+>=20
+> nvme0=A0 nvme1=A0=A0=A0=A0=A0=A0=A0=A0=A0 ....=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0 ....
+>=20
+> ```
+>=20
+>=20
+> We have the following bio graph (please let me know if it's wrong or
+> the image can't display)
+>=20
+>=20
+> For example, for dm1 there are three bios containing valid cookie in
+> the end, that is
+>=20
+> bio 9/10/11. We only need to insert the corresponding blk_poll_data
+> (containing
+>=20
+> request_queue, cookie, etc) of these three bios into the very
+> beginning original
+>=20
+> bio (that is bio0). Of course we can track all the sub-bios down
+> through the device
+>=20
+> stack, layer by layer, e.g.,
+>=20
+> - get bio 1/2/3 from bio 0
+>=20
+> - get bio 4 from bio 3
+>=20
+> - finally get bio 9 from bio 4
+>=20
+> But I'm doubted if it's overkill to just implement the iopoll.
+>=20
+>=20
+> Another issue still unclear is that, if we should implement the
+> iopoll in a recursive way.
+>=20
+> In a recursive way, to poll dm 0, we should poll all its
+> sub-devices, that is, bio 4/5/7/8.
+>=20
+> Oppositely we can insert only the bottom bio (bio 9/10/11 which have
+> valid cookie) at
+>=20
+> the very beginning (at submit_bio() phase), and to poll dm 0, we
+> only need to poll bio 9/10/11.
 
-@Christophe, any chance to move forward with the merge?
-(then we can go ahead with this patch later, too...)
+I feel we need the ability to walk the entire graph and call down to
+next level.  The lowest level would be what you call a "valid cookie"
+that blk-mq returned.  But the preceding cookies need to be made valid
+and used when walking the graph (from highest to lowest) and calling
+down to the underlying layers.
 
-Martin
+>=20
+>=20
+> To implement this non-recursive design, we can add a field in struct bio
+>=20
+> ```
+>=20
+> struct bio {
+>=20
+> =A0=A0=A0 ...
+>=20
+> =A0=A0=A0 struct bio *orig;
+>=20
+> }
+>=20
+> ```
+>=20
+> @orig points to the original bio inputted into submit_bio(), that is, bio=
+ 0.
+>=20
+>=20
+> @orig field is transmitted through bio splitting.
+>=20
+> ```
+>=20
+> bio_split()
+>=20
+> =A0=A0=A0 split->orig =3D bio->orig ? : bio
+>=20
+>=20
+> dm.c: __clone_and_map_data_bio
+>=20
+> =A0=A0=A0 clone->orig =3D bio->orig ? : bio
+>=20
+> ```
+>=20
+>=20
+> Finally bio 9/10/11 can be inserted into bio 0.
+>=20
+> ```
+>=20
+> blk-mq.c: blk_mq_submit_bio
+>=20
+> =A0=A0=A0 if (bio->orig)
+>=20
+> =A0=A0=A0 =A0=A0=A0 init blk_poll_data and insert it into bio->orig's @co=
+okies list
+>=20
+> ```
 
+If you feel that is doable: certainly give it a shot.
+
+But it is not clear to me how you intend to translate from cookie passed
+in to ->blk_poll hook (returned from submit_bio) to the saved off
+bio->orig.
+
+What is your cookie strategy in this non-recursive implementation?  What
+will you be returning?  Where will you be storing it?
+
+Mike
 
 --
 dm-devel mailing list
