@@ -7,58 +7,58 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 11BF3C2D0A3
-	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 19:12:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7580CC2D0A3
+	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 19:12:11 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 58D8020B80
-	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 19:12:01 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 58D8020B80
+	by mail.kernel.org (Postfix) with ESMTPS id CC04020882
+	for <dm-devel@archiver.kernel.org>; Fri,  6 Nov 2020 19:12:10 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CC04020882
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-235-9Pvef1l2OaOdBFMLTrrZFA-1; Fri, 06 Nov 2020 14:11:58 -0500
-X-MC-Unique: 9Pvef1l2OaOdBFMLTrrZFA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-189-f13tmTawOYmKtewOV_jXww-1; Fri, 06 Nov 2020 14:12:07 -0500
+X-MC-Unique: f13tmTawOYmKtewOV_jXww-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 58E551868416;
-	Fri,  6 Nov 2020 19:11:52 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0D5EA26327;
-	Fri,  6 Nov 2020 19:11:52 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 529BE1006C81;
+	Fri,  6 Nov 2020 19:12:02 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 34EC77664C;
+	Fri,  6 Nov 2020 19:12:02 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7D72D922EF;
-	Fri,  6 Nov 2020 19:11:51 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0A3D8180B657;
+	Fri,  6 Nov 2020 19:12:02 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0A6JBnLe028644 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 6 Nov 2020 14:11:50 -0500
+	id 0A6JBuXN028676 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 6 Nov 2020 14:11:56 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id C88A51007A26; Fri,  6 Nov 2020 19:11:49 +0000 (UTC)
+	id 589B4F6CC9; Fri,  6 Nov 2020 19:11:56 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C37DB1007A27
-	for <dm-devel@redhat.com>; Fri,  6 Nov 2020 19:11:47 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 538E8F66D9
+	for <dm-devel@redhat.com>; Fri,  6 Nov 2020 19:11:56 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7AF311842083
-	for <dm-devel@redhat.com>; Fri,  6 Nov 2020 19:11:47 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3A6F81842081
+	for <dm-devel@redhat.com>; Fri,  6 Nov 2020 19:11:56 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-354-fNuDupGmPtmcjrcs1w5Aqw-1; Fri, 06 Nov 2020 14:11:43 -0500
-X-MC-Unique: fNuDupGmPtmcjrcs1w5Aqw-1
+	us-mta-428-3eEBsFVYNXSk63NUNeFifg-1; Fri, 06 Nov 2020 14:11:52 -0500
+X-MC-Unique: 3eEBsFVYNXSk63NUNeFifg-1
 Received: from [2001:4bb8:184:9a8d:9e34:f7f4:e59e:ad6f] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kb72G-00016V-3y; Fri, 06 Nov 2020 19:04:32 +0000
+	id 1kb71f-0000uK-9c; Fri, 06 Nov 2020 19:03:56 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Fri,  6 Nov 2020 20:03:34 +0100
-Message-Id: <20201106190337.1973127-23-hch@lst.de>
+Date: Fri,  6 Nov 2020 20:03:16 +0100
+Message-Id: <20201106190337.1973127-5-hch@lst.de>
 In-Reply-To: <20201106190337.1973127-1-hch@lst.de>
 References: <20201106190337.1973127-1-hch@lst.de>
 MIME-Version: 1.0
@@ -72,7 +72,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	"Michael S. Tsirkin" <mst@redhat.com>,
@@ -89,8 +89,8 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 22/24] md: remove a spurious call to
-	revalidate_disk_size in update_size
+Subject: [dm-devel] [PATCH 04/24] sd: update the bdev size in
+	sd_revalidate_disk
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -104,7 +104,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -112,27 +112,49 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-None of the ->resize methods updates the disk size, so calling
-revalidate_disk_size here won't do anything.
+This avoids the extra call to revalidate_disk_size in sd_rescan and
+is otherwise a no-op because the size did not change, or we are in
+the probe path.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/md-cluster.c | 2 --
- 1 file changed, 2 deletions(-)
+ drivers/scsi/sd.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/md-cluster.c b/drivers/md/md-cluster.c
-index 87442dc59f6ca3..35e2690c1803dd 100644
---- a/drivers/md/md-cluster.c
-+++ b/drivers/md/md-cluster.c
-@@ -1299,8 +1299,6 @@ static void update_size(struct mddev *mddev, sector_t old_dev_sectors)
- 	} else {
- 		/* revert to previous sectors */
- 		ret = mddev->pers->resize(mddev, old_dev_sectors);
--		if (!ret)
--			revalidate_disk_size(mddev->gendisk, true);
- 		ret = __sendmsg(cinfo, &cmsg);
- 		if (ret)
- 			pr_err("%s:%d: failed to send METADATA_UPDATED msg\n",
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index 656bcf4940d6d1..4a34dd5b153196 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -1750,10 +1750,8 @@ static int sd_sync_cache(struct scsi_disk *sdkp, struct scsi_sense_hdr *sshdr)
+ static void sd_rescan(struct device *dev)
+ {
+ 	struct scsi_disk *sdkp = dev_get_drvdata(dev);
+-	int ret;
+ 
+-	ret = sd_revalidate_disk(sdkp->disk);
+-	revalidate_disk_size(sdkp->disk, ret == 0);
++	sd_revalidate_disk(sdkp->disk);
+ }
+ 
+ static int sd_ioctl(struct block_device *bdev, fmode_t mode,
+@@ -3266,7 +3264,7 @@ static int sd_revalidate_disk(struct gendisk *disk)
+ 	sdkp->first_scan = 0;
+ 
+ 	set_capacity_revalidate_and_notify(disk,
+-		logical_to_sectors(sdp, sdkp->capacity), false);
++		logical_to_sectors(sdp, sdkp->capacity), true);
+ 	sd_config_write_same(sdkp);
+ 	kfree(buffer);
+ 
+@@ -3276,7 +3274,7 @@ static int sd_revalidate_disk(struct gendisk *disk)
+ 	 * capacity to 0.
+ 	 */
+ 	if (sd_zbc_revalidate_zones(sdkp))
+-		set_capacity_revalidate_and_notify(disk, 0, false);
++		set_capacity_revalidate_and_notify(disk, 0, true);
+ 
+  out:
+ 	return 0;
 -- 
 2.28.0
 
