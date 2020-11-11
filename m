@@ -2,73 +2,89 @@ Return-Path: <SRS0=f+1/=ER=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 15B3CC5517A
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 15:39:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DE0FCC4742C
+	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 18:40:37 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 43F27206A1
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 15:39:50 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DjCTYJA2"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 43F27206A1
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id EC72C205CB
+	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 18:40:36 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org EC72C205CB
+Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1605109189;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=aXizhoVaYcX1VhSNd/7Epd7ovtKBAFKoCoKCxOvIUa0=;
-	b=DjCTYJA2T2aDbQ5ygXr7/Hi1Q0Yt0ruSGNsfn9VHKvxxKVS7ALq8lp7Dw0gpxy4y1hpKcS
-	rScJLbOhCAgF8j+tZMYBmOlE7LabDR/od5aXGqkCqpCfbTxWi9NZK7hYRItedN1EFLp9cB
-	KSAF8rnQx57j0qpNLgQc9vJTRk4aW+w=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-257-uRbC1pWXMOyXp1KAd18-WA-1; Wed, 11 Nov 2020 10:39:45 -0500
-X-MC-Unique: uRbC1pWXMOyXp1KAd18-WA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-129-_-NLzKDSO1OHM6VsoS_uHQ-1; Wed, 11 Nov 2020 13:40:33 -0500
+X-MC-Unique: _-NLzKDSO1OHM6VsoS_uHQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E9BC1420F4;
-	Wed, 11 Nov 2020 15:39:39 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 88CE060CD0;
-	Wed, 11 Nov 2020 15:39:39 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 697D0801FC4;
+	Wed, 11 Nov 2020 18:40:27 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 44A195B4A8;
+	Wed, 11 Nov 2020 18:40:26 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A013818199F7;
-	Wed, 11 Nov 2020 15:39:38 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
-	[10.5.11.23])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7FEA244A7B;
+	Wed, 11 Nov 2020 18:40:23 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0ABFcZoK025696 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 11 Nov 2020 10:38:35 -0500
+	id 0ABCtfJc001206 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 11 Nov 2020 07:55:41 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 13ECE3C89; Wed, 11 Nov 2020 15:38:35 +0000 (UTC)
-Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1A70527BCF;
-	Wed, 11 Nov 2020 15:38:24 +0000 (UTC)
-Date: Wed, 11 Nov 2020 10:38:24 -0500
-From: Mike Snitzer <snitzer@redhat.com>
-To: Jeffle Xu <jefflexu@linux.alibaba.com>
-Message-ID: <20201111153824.GB22834@redhat.com>
-References: <20201110065558.22694-1-jefflexu@linux.alibaba.com>
+	id 64367C54B4; Wed, 11 Nov 2020 12:55:41 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5EF35C6128
+	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 12:55:39 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 229D7811E79
+	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 12:55:39 +0000 (UTC)
+Received: from mx4.veeam.com (mx4.veeam.com [104.41.138.86]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-39-gHLt0eQnMlOItXlPr2zGeA-1;
+	Wed, 11 Nov 2020 07:55:34 -0500
+X-MC-Unique: gHLt0eQnMlOItXlPr2zGeA-1
+Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mx4.veeam.com (Postfix) with ESMTPS id AFC0D8A762;
+	Wed, 11 Nov 2020 15:55:33 +0300 (MSK)
+Received: from prgdevlinuxpatch01.amust.local (172.24.14.5) by
+	prgmbx01.amust.local (172.24.0.171) with Microsoft SMTP Server
+	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	15.2.721.2; Wed, 11 Nov 2020 13:55:32 +0100
+From: Sergei Shtepa <sergei.shtepa@veeam.com>
+To: <agk@redhat.com>, <snitzer@redhat.com>, <dm-devel@redhat.com>,
+	<linux-kernel@vger.kernel.org>
+Date: Wed, 11 Nov 2020 15:55:45 +0300
+Message-ID: <1605099346-3199-1-git-send-email-sergei.shtepa@veeam.com>
 MIME-Version: 1.0
-In-Reply-To: <20201110065558.22694-1-jefflexu@linux.alibaba.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Originating-IP: [172.24.14.5]
+X-ClientProxiedBy: prgmbx01.amust.local (172.24.0.171) To prgmbx01.amust.local
+	(172.24.0.171)
+X-EsetResult: clean, is OK
+X-EsetId: 37303A29C604D26A617667
+X-Veeam-MMEX: True
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: joseph.qi@linux.alibaba.com, dm-devel@redhat.com, koct9i@gmail.com
-Subject: Re: [dm-devel] dm: add support for DM_TARGET_NOWAIT for various
-	targets
+X-Mailman-Approved-At: Wed, 11 Nov 2020 13:39:49 -0500
+Cc: Sergei Shtepa <sergei.shtepa@veeam.com>
+Subject: [dm-devel] [PATCH 0/1] Bug with RCU locking in dm_blk_report_zones()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -82,129 +98,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Nov 10 2020 at  1:55am -0500,
-Jeffle Xu <jefflexu@linux.alibaba.com> wrote:
+The dm_get_live_table() function makes RCU read lock and
+dm_put_live_table() should call even when dm_table map was not found.
 
-> This is one prep patch for supporting iopoll for dm device.
-> 
-> The direct IO routine will set REQ_NOWAIT flag for REQ_HIPRI IO (that
-> is, IO will do iopoll) in bio_set_polled(). Then in the IO submission
-> routine, the ability of handling REQ_NOWAIT of the block device will
-> be checked for REQ_HIPRI IO in submit_bio_checks(). -EOPNOTSUPP will
-> be returned if the block device doesn't support REQ_NOWAIT.
+Sergei Shtepa (1):
+  Fix bug with RCU locking in dm_blk_report_zones().
 
-submit_bio_checks() verifies the request_queue has QUEUE_FLAG_NOWAIT set
-if the bio has REQ_NOWAIT.
+ drivers/md/dm.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-> DM lacks support for REQ_NOWAIT until commit 6abc49468eea ("dm: add
-> support for REQ_NOWAIT and enable it for linear target"). Since then,
-> dm targets that support REQ_NOWAIT should advertise DM_TARGET_NOWAIT
-> feature.
-
-I'm not seeing why DM_TARGET_NOWAIT is needed (since you didn't add any
-code that consumes the flag).
-
-dm-table.c:dm_table_set_restrictions() has:
-
-        if (dm_table_supports_nowait(t))
-                blk_queue_flag_set(QUEUE_FLAG_NOWAIT, q);
-        else
-                blk_queue_flag_clear(QUEUE_FLAG_NOWAIT, q);
-
-> This patch adds support for DM_TARGET_NOWAIT for those dm targets, the
-> .map() algorithm of which just involves sector recalculation.
-
-So you're looking to constrain which targets will properly support
-REQ_NOWAIT, based on whether they do a simple remapping?
-
-
-> Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
-> ---
-> Hi Mike,
-> 
-> I could split these boilerplate code that each dm target have one
-> seperate patch if you think that would be better.
-
-One patch for all these is fine.  But it should include the code that I
-assume you'll be adding to dm_table_supports_nowait() to further verify
-that the targets in the table are all DM_TARGET_NOWAIT.
-
-And why isn't dm-linear setting DM_TARGET_NOWAIT?
-
-Also, other targets _could_ be made to support REQ_NOWAIT by
-conditionally returning bio_wouldblock_error() if appropriate
-(e.g. bio-based dm-multipath's case of queue_if_no_path).
-
-Mike
-
-> ---
->  drivers/md/dm-stripe.c   | 2 +-
->  drivers/md/dm-switch.c   | 1 +
->  drivers/md/dm-unstripe.c | 1 +
->  drivers/md/dm-zero.c     | 1 +
->  4 files changed, 4 insertions(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-> index 151d022b032d..df359d33cda8 100644
-> --- a/drivers/md/dm-stripe.c
-> +++ b/drivers/md/dm-stripe.c
-> @@ -496,7 +496,7 @@ static void stripe_io_hints(struct dm_target *ti,
->  static struct target_type stripe_target = {
->  	.name   = "striped",
->  	.version = {1, 6, 0},
-> -	.features = DM_TARGET_PASSES_INTEGRITY,
-> +	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_NOWAIT,
->  	.module = THIS_MODULE,
->  	.ctr    = stripe_ctr,
->  	.dtr    = stripe_dtr,
-> diff --git a/drivers/md/dm-switch.c b/drivers/md/dm-switch.c
-> index bff4c7fa1cd2..262e2b0fd975 100644
-> --- a/drivers/md/dm-switch.c
-> +++ b/drivers/md/dm-switch.c
-> @@ -550,6 +550,7 @@ static int switch_iterate_devices(struct dm_target *ti,
->  static struct target_type switch_target = {
->  	.name = "switch",
->  	.version = {1, 1, 0},
-> +	.features = DM_TARGET_NOWAIT,
->  	.module = THIS_MODULE,
->  	.ctr = switch_ctr,
->  	.dtr = switch_dtr,
-> diff --git a/drivers/md/dm-unstripe.c b/drivers/md/dm-unstripe.c
-> index e673dacf6418..7357c1bd5863 100644
-> --- a/drivers/md/dm-unstripe.c
-> +++ b/drivers/md/dm-unstripe.c
-> @@ -178,6 +178,7 @@ static void unstripe_io_hints(struct dm_target *ti,
->  static struct target_type unstripe_target = {
->  	.name = "unstriped",
->  	.version = {1, 1, 0},
-> +	.features = DM_TARGET_NOWAIT,
->  	.module = THIS_MODULE,
->  	.ctr = unstripe_ctr,
->  	.dtr = unstripe_dtr,
-> diff --git a/drivers/md/dm-zero.c b/drivers/md/dm-zero.c
-> index b65ca8dcfbdc..faa1dbffc8b4 100644
-> --- a/drivers/md/dm-zero.c
-> +++ b/drivers/md/dm-zero.c
-> @@ -59,6 +59,7 @@ static int zero_map(struct dm_target *ti, struct bio *bio)
->  static struct target_type zero_target = {
->  	.name   = "zero",
->  	.version = {1, 1, 0},
-> +	.features = DM_TARGET_NOWAIT,
->  	.module = THIS_MODULE,
->  	.ctr    = zero_ctr,
->  	.map    = zero_map,
-> -- 
-> 2.27.0
-> 
+-- 
+2.20.1
 
 --
 dm-devel mailing list
