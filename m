@@ -7,59 +7,59 @@ X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 177AFC56201
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 44506C61DD8
 	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 11:34:19 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 676AE2074B
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 11:34:18 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 676AE2074B
+	by mail.kernel.org (Postfix) with ESMTPS id F37512075A
+	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 11:34:17 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org F37512075A
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-587-w89koUMTNt2mCGNFXeBaAA-1; Wed, 11 Nov 2020 06:34:14 -0500
-X-MC-Unique: w89koUMTNt2mCGNFXeBaAA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-284-sqNgr9c8PcqH53qN2WT10g-1; Wed, 11 Nov 2020 06:34:13 -0500
+X-MC-Unique: sqNgr9c8PcqH53qN2WT10g-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 455201087D6D;
-	Wed, 11 Nov 2020 11:34:09 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1FB8B282CA;
-	Wed, 11 Nov 2020 11:34:09 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4FA581009464;
+	Wed, 11 Nov 2020 11:34:07 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2DFA16E713;
+	Wed, 11 Nov 2020 11:34:07 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E0086180B65D;
-	Wed, 11 Nov 2020 11:34:08 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 03F609982;
+	Wed, 11 Nov 2020 11:34:07 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AB8W3Tj026509 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 11 Nov 2020 03:32:03 -0500
+	id 0AB8WnIv026749 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 11 Nov 2020 03:32:49 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B0B3D2156A4D; Wed, 11 Nov 2020 08:32:03 +0000 (UTC)
+	id 277B52156A49; Wed, 11 Nov 2020 08:32:49 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A94F12156A4B
-	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 08:31:56 +0000 (UTC)
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2288F2156A3A
+	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 08:32:49 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 06EA0865468
-	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 08:31:56 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EE921102F222
+	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 08:32:48 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-568-mK7cTqJZN72HXZVFfGkJRw-1; Wed, 11 Nov 2020 03:31:53 -0500
-X-MC-Unique: mK7cTqJZN72HXZVFfGkJRw-1
+	us-mta-88-7_uol4UbO8ufTPwU2a_usA-1; Wed, 11 Nov 2020 03:32:44 -0500
+X-MC-Unique: 7_uol4UbO8ufTPwU2a_usA-1
 Received: from [2001:4bb8:180:6600:bcde:334f:863c:27b8] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kclT8-0007aM-Pa; Wed, 11 Nov 2020 08:27:06 +0000
+	id 1kclTP-0007dc-EI; Wed, 11 Nov 2020 08:27:23 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed, 11 Nov 2020 09:26:40 +0100
-Message-Id: <20201111082658.3401686-7-hch@lst.de>
+Date: Wed, 11 Nov 2020 09:26:52 +0100
+Message-Id: <20201111082658.3401686-19-hch@lst.de>
 In-Reply-To: <20201111082658.3401686-1-hch@lst.de>
 References: <20201111082658.3401686-1-hch@lst.de>
 MIME-Version: 1.0
@@ -91,8 +91,7 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 06/24] block: add a return value to
-	set_capacity_and_notify
+Subject: [dm-devel] [PATCH 18/24] rnbd: use set_capacity_and_notify
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -106,7 +105,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -114,54 +113,28 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Return if the function ended up sending an uevent or not.
+Use set_capacity_and_notify to set the size of both the disk and block
+device.  This also gets the uevent notifications for the resize for free.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/genhd.c         | 7 +++++--
- include/linux/genhd.h | 2 +-
- 2 files changed, 6 insertions(+), 3 deletions(-)
+ drivers/block/rnbd/rnbd-clt.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/block/genhd.c b/block/genhd.c
-index d8d9d6c1c916e1..8c350fecfe8bfe 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -47,9 +47,9 @@ static void disk_release_events(struct gendisk *disk);
- 
- /*
-  * Set disk capacity and notify if the size is not currently zero and will not
-- * be set to zero.
-+ * be set to zero.  Returns true if a uevent was sent, otherwise false.
-  */
--void set_capacity_and_notify(struct gendisk *disk, sector_t size)
-+bool set_capacity_and_notify(struct gendisk *disk, sector_t size)
- {
- 	sector_t capacity = get_capacity(disk);
- 
-@@ -60,7 +60,10 @@ void set_capacity_and_notify(struct gendisk *disk, sector_t size)
- 		char *envp[] = { "RESIZE=1", NULL };
- 
- 		kobject_uevent_env(&disk_to_dev(disk)->kobj, KOBJ_CHANGE, envp);
-+		return true;
- 	}
-+
-+	return false;
+diff --git a/drivers/block/rnbd/rnbd-clt.c b/drivers/block/rnbd/rnbd-clt.c
+index 8b2411ccbda97c..bb13d7dd195a08 100644
+--- a/drivers/block/rnbd/rnbd-clt.c
++++ b/drivers/block/rnbd/rnbd-clt.c
+@@ -100,8 +100,7 @@ static int rnbd_clt_change_capacity(struct rnbd_clt_dev *dev,
+ 	rnbd_clt_info(dev, "Device size changed from %zu to %zu sectors\n",
+ 		       dev->nsectors, new_nsectors);
+ 	dev->nsectors = new_nsectors;
+-	set_capacity(dev->gd, dev->nsectors);
+-	revalidate_disk_size(dev->gd, true);
++	set_capacity_and_notify(dev->gd, dev->nsectors);
+ 	return 0;
  }
- EXPORT_SYMBOL_GPL(set_capacity_and_notify);
  
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 596f31b5a3e133..4b22bfd9336e1a 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -315,7 +315,7 @@ static inline int get_disk_ro(struct gendisk *disk)
- extern void disk_block_events(struct gendisk *disk);
- extern void disk_unblock_events(struct gendisk *disk);
- extern void disk_flush_events(struct gendisk *disk, unsigned int mask);
--void set_capacity_and_notify(struct gendisk *disk, sector_t size);
-+bool set_capacity_and_notify(struct gendisk *disk, sector_t size);
- 
- /* drivers/char/random.c */
- extern void add_disk_randomness(struct gendisk *disk) __latent_entropy;
 -- 
 2.28.0
 
