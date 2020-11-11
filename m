@@ -4,62 +4,62 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 77F91C388F9
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 11:34:37 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E9D33C388F9
+	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 11:35:04 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id CD5B02074B
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 11:34:36 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CD5B02074B
+	by mail.kernel.org (Postfix) with ESMTPS id 456112074B
+	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 11:35:03 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 456112074B
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-353-Z2K7OWxhPHqy2wxy0d3TJA-1; Wed, 11 Nov 2020 06:34:33 -0500
-X-MC-Unique: Z2K7OWxhPHqy2wxy0d3TJA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-33-F6-IG-uePWiQydrxHaCSvw-1; Wed, 11 Nov 2020 06:34:19 -0500
+X-MC-Unique: F6-IG-uePWiQydrxHaCSvw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 981F364A78;
-	Wed, 11 Nov 2020 11:34:18 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7F65E804777;
+	Wed, 11 Nov 2020 11:34:11 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B187A607A4;
-	Wed, 11 Nov 2020 11:34:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 608797666C;
+	Wed, 11 Nov 2020 11:34:11 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 76FC55810F;
-	Wed, 11 Nov 2020 11:34:17 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 25C2D5810F;
+	Wed, 11 Nov 2020 11:34:11 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AB8Wh6X026725 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 11 Nov 2020 03:32:44 -0500
+	id 0AB8WM9l026607 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 11 Nov 2020 03:32:22 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id E16B6207A6FC; Wed, 11 Nov 2020 08:32:43 +0000 (UTC)
+	id 96094B350E; Wed, 11 Nov 2020 08:32:22 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DC7CF2068FE8
-	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 08:32:43 +0000 (UTC)
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 90ED3B551C
+	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 08:32:22 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B4063811E83
-	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 08:32:43 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 77EC290E428
+	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 08:32:22 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-560-oHTVbf1gObKwYrdb7Ka9rA-1; Wed, 11 Nov 2020 03:32:41 -0500
-X-MC-Unique: oHTVbf1gObKwYrdb7Ka9rA-1
+	us-mta-531-_EiGrue3MliZ9oq6QW1Ocw-1; Wed, 11 Nov 2020 03:32:18 -0500
+X-MC-Unique: _EiGrue3MliZ9oq6QW1Ocw-1
 Received: from [2001:4bb8:180:6600:bcde:334f:863c:27b8] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kclT5-0007Zq-BZ; Wed, 11 Nov 2020 08:27:03 +0000
+	id 1kclTT-0007ei-Ov; Wed, 11 Nov 2020 08:27:28 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed, 11 Nov 2020 09:26:37 +0100
-Message-Id: <20201111082658.3401686-4-hch@lst.de>
+Date: Wed, 11 Nov 2020 09:26:55 +0100
+Message-Id: <20201111082658.3401686-22-hch@lst.de>
 In-Reply-To: <20201111082658.3401686-1-hch@lst.de>
 References: <20201111082658.3401686-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,7 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 11 Nov 2020 06:33:51 -0500
 Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
@@ -91,8 +91,7 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 03/24] nvme: let
-	set_capacity_revalidate_and_notify update the bdev size
+Subject: [dm-devel] [PATCH 21/24] md: use set_capacity_and_notify
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -106,7 +105,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -114,43 +113,121 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-There is no good reason to call revalidate_disk_size separately.
+Use set_capacity_and_notify to set the size of both the disk and block
+device.  This also gets the uevent notifications for the resize for free.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Song Liu <song@kernel.org>
 ---
- drivers/nvme/host/core.c | 5 +----
- 1 file changed, 1 insertion(+), 4 deletions(-)
+ drivers/md/md-cluster.c |  6 ++----
+ drivers/md/md-linear.c  |  3 +--
+ drivers/md/md.c         | 24 ++++++++++--------------
+ 3 files changed, 13 insertions(+), 20 deletions(-)
 
-diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index 40ca71b29bb91a..66129b86e97bed 100644
---- a/drivers/nvme/host/core.c
-+++ b/drivers/nvme/host/core.c
-@@ -2053,7 +2053,7 @@ static void nvme_update_disk_info(struct gendisk *disk,
- 			capacity = 0;
- 	}
- 
--	set_capacity_revalidate_and_notify(disk, capacity, false);
-+	set_capacity_revalidate_and_notify(disk, capacity, true);
- 
- 	nvme_config_discard(disk, ns);
- 	nvme_config_write_zeroes(disk, ns);
-@@ -2136,7 +2136,6 @@ static int nvme_update_ns_info(struct nvme_ns *ns, struct nvme_id_ns *id)
- 		blk_stack_limits(&ns->head->disk->queue->limits,
- 				 &ns->queue->limits, 0);
- 		blk_queue_update_readahead(ns->head->disk->queue);
--		nvme_update_bdev_size(ns->head->disk);
- 		blk_mq_unfreeze_queue(ns->head->disk->queue);
- 	}
- #endif
-@@ -3965,8 +3964,6 @@ static void nvme_validate_ns(struct nvme_ns *ns, struct nvme_ns_ids *ids)
- 	 */
- 	if (ret && ret != -ENOMEM && !(ret > 0 && !(ret & NVME_SC_DNR)))
- 		nvme_ns_remove(ns);
--	else
--		revalidate_disk_size(ns->disk, true);
+diff --git a/drivers/md/md-cluster.c b/drivers/md/md-cluster.c
+index 4aaf4820b6f625..87442dc59f6ca3 100644
+--- a/drivers/md/md-cluster.c
++++ b/drivers/md/md-cluster.c
+@@ -581,8 +581,7 @@ static int process_recvd_msg(struct mddev *mddev, struct cluster_msg *msg)
+ 		process_metadata_update(mddev, msg);
+ 		break;
+ 	case CHANGE_CAPACITY:
+-		set_capacity(mddev->gendisk, mddev->array_sectors);
+-		revalidate_disk_size(mddev->gendisk, true);
++		set_capacity_and_notify(mddev->gendisk, mddev->array_sectors);
+ 		break;
+ 	case RESYNCING:
+ 		set_bit(MD_RESYNCING_REMOTE, &mddev->recovery);
+@@ -1296,8 +1295,7 @@ static void update_size(struct mddev *mddev, sector_t old_dev_sectors)
+ 		if (ret)
+ 			pr_err("%s:%d: failed to send CHANGE_CAPACITY msg\n",
+ 			       __func__, __LINE__);
+-		set_capacity(mddev->gendisk, mddev->array_sectors);
+-		revalidate_disk_size(mddev->gendisk, true);
++		set_capacity_and_notify(mddev->gendisk, mddev->array_sectors);
+ 	} else {
+ 		/* revert to previous sectors */
+ 		ret = mddev->pers->resize(mddev, old_dev_sectors);
+diff --git a/drivers/md/md-linear.c b/drivers/md/md-linear.c
+index 5ab22069b5be9c..98f1b4b2bdcef8 100644
+--- a/drivers/md/md-linear.c
++++ b/drivers/md/md-linear.c
+@@ -200,9 +200,8 @@ static int linear_add(struct mddev *mddev, struct md_rdev *rdev)
+ 		"copied raid_disks doesn't match mddev->raid_disks");
+ 	rcu_assign_pointer(mddev->private, newconf);
+ 	md_set_array_sectors(mddev, linear_size(mddev, 0, 0));
+-	set_capacity(mddev->gendisk, mddev->array_sectors);
++	set_capacity_and_notify(mddev->gendisk, mddev->array_sectors);
+ 	mddev_resume(mddev);
+-	revalidate_disk_size(mddev->gendisk, true);
+ 	kfree_rcu(oldconf, rcu);
+ 	return 0;
  }
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 98bac4f304ae26..32e375d50fee17 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -5355,10 +5355,9 @@ array_size_store(struct mddev *mddev, const char *buf, size_t len)
  
- static void nvme_validate_or_alloc_ns(struct nvme_ctrl *ctrl, unsigned nsid)
+ 	if (!err) {
+ 		mddev->array_sectors = sectors;
+-		if (mddev->pers) {
+-			set_capacity(mddev->gendisk, mddev->array_sectors);
+-			revalidate_disk_size(mddev->gendisk, true);
+-		}
++		if (mddev->pers)
++			set_capacity_and_notify(mddev->gendisk,
++						mddev->array_sectors);
+ 	}
+ 	mddev_unlock(mddev);
+ 	return err ?: len;
+@@ -6107,8 +6106,7 @@ int do_md_run(struct mddev *mddev)
+ 	md_wakeup_thread(mddev->thread);
+ 	md_wakeup_thread(mddev->sync_thread); /* possibly kick off a reshape */
+ 
+-	set_capacity(mddev->gendisk, mddev->array_sectors);
+-	revalidate_disk_size(mddev->gendisk, true);
++	set_capacity_and_notify(mddev->gendisk, mddev->array_sectors);
+ 	clear_bit(MD_NOT_READY, &mddev->flags);
+ 	mddev->changed = 1;
+ 	kobject_uevent(&disk_to_dev(mddev->gendisk)->kobj, KOBJ_CHANGE);
+@@ -6423,10 +6421,9 @@ static int do_md_stop(struct mddev *mddev, int mode,
+ 			if (rdev->raid_disk >= 0)
+ 				sysfs_unlink_rdev(mddev, rdev);
+ 
+-		set_capacity(disk, 0);
++		set_capacity_and_notify(disk, 0);
+ 		mutex_unlock(&mddev->open_mutex);
+ 		mddev->changed = 1;
+-		revalidate_disk_size(disk, true);
+ 
+ 		if (mddev->ro)
+ 			mddev->ro = 0;
+@@ -7257,8 +7254,8 @@ static int update_size(struct mddev *mddev, sector_t num_sectors)
+ 		if (mddev_is_clustered(mddev))
+ 			md_cluster_ops->update_size(mddev, old_dev_sectors);
+ 		else if (mddev->queue) {
+-			set_capacity(mddev->gendisk, mddev->array_sectors);
+-			revalidate_disk_size(mddev->gendisk, true);
++			set_capacity_and_notify(mddev->gendisk,
++						mddev->array_sectors);
+ 		}
+ 	}
+ 	return rv;
+@@ -9035,10 +9032,9 @@ void md_do_sync(struct md_thread *thread)
+ 		mddev_lock_nointr(mddev);
+ 		md_set_array_sectors(mddev, mddev->pers->size(mddev, 0, 0));
+ 		mddev_unlock(mddev);
+-		if (!mddev_is_clustered(mddev)) {
+-			set_capacity(mddev->gendisk, mddev->array_sectors);
+-			revalidate_disk_size(mddev->gendisk, true);
+-		}
++		if (!mddev_is_clustered(mddev))
++			set_capacity_and_notify(mddev->gendisk,
++						mddev->array_sectors);
+ 	}
+ 
+ 	spin_lock(&mddev->lock);
 -- 
 2.28.0
 
