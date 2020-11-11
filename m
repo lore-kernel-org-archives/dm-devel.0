@@ -2,67 +2,80 @@ Return-Path: <SRS0=f+1/=ER=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-1.4 required=3.0 tests=BAYES_00,FAKE_REPLY_A1,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CB178C388F9
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 18:41:17 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BF221C388F9
+	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 18:41:20 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 28EEB205CB
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 18:41:16 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 28EEB205CB
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=canonical.com
+	by mail.kernel.org (Postfix) with ESMTPS id 1B463205CA
+	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 18:41:19 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1B463205CA
+Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-240-6zU4Uo7sMAK2W1UhYieELg-1; Wed, 11 Nov 2020 13:41:13 -0500
-X-MC-Unique: 6zU4Uo7sMAK2W1UhYieELg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-443-jY_OJQpdMAmNxdj7SIjwxQ-1; Wed, 11 Nov 2020 13:41:16 -0500
+X-MC-Unique: jY_OJQpdMAmNxdj7SIjwxQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 07CF3803625;
-	Wed, 11 Nov 2020 18:41:09 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DE2CF5DA79;
-	Wed, 11 Nov 2020 18:41:08 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4EAF01074659;
+	Wed, 11 Nov 2020 18:41:11 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 31EA25C1C4;
+	Wed, 11 Nov 2020 18:41:11 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B540D44A7F;
-	Wed, 11 Nov 2020 18:41:08 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0161C181A06D;
+	Wed, 11 Nov 2020 18:41:11 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0ABBjleI016406 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 11 Nov 2020 06:45:47 -0500
+	id 0ABCtium001231 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 11 Nov 2020 07:55:44 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6B00A2014E17; Wed, 11 Nov 2020 11:45:47 +0000 (UTC)
+	id 8FA1B10F1CD9; Wed, 11 Nov 2020 12:55:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6687020110C9
-	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 11:45:45 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8BC9F100404F
+	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 12:55:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1EE17102F1E1
-	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 11:45:45 +0000 (UTC)
-Received: from youngberry.canonical.com (youngberry.canonical.com
-	[91.189.89.112]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-437-aUj_6PIpOZe9uiC1e1arEg-1; Wed, 11 Nov 2020 06:45:42 -0500
-X-MC-Unique: aUj_6PIpOZe9uiC1e1arEg-1
-Received: from 1.general.cking.uk.vpn ([10.172.193.212])
-	by youngberry.canonical.com with esmtpsa
-	(TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128) (Exim 4.86_2)
-	(envelope-from <colin.king@canonical.com>)
-	id 1kcoZG-0006zC-DA; Wed, 11 Nov 2020 11:45:38 +0000
-From: Colin Ian King <colin.king@canonical.com>
-To: Mike Snitzer <snitzer@redhat.com>
-Message-ID: <c5c17cba-3bf2-ce07-ed7f-6e5b5e71427c@canonical.com>
-Date: Wed, 11 Nov 2020 11:45:38 +0000
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
-	Thunderbird/78.4.1
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3EAEA858290
+	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 12:55:41 +0000 (UTC)
+Received: from mx4.veeam.com (mx4.veeam.com [104.41.138.86]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-406-SNPdepi4MGCF-yTp4u4_uw-1;
+	Wed, 11 Nov 2020 07:55:39 -0500
+X-MC-Unique: SNPdepi4MGCF-yTp4u4_uw-1
+Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mx4.veeam.com (Postfix) with ESMTPS id 1CA0992315;
+	Wed, 11 Nov 2020 15:55:38 +0300 (MSK)
+Received: from prgdevlinuxpatch01.amust.local (172.24.14.5) by
+	prgmbx01.amust.local (172.24.0.171) with Microsoft SMTP Server
+	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	15.2.721.2; Wed, 11 Nov 2020 13:55:36 +0100
+From: Sergei Shtepa <sergei.shtepa@veeam.com>
+To: <agk@redhat.com>, <snitzer@redhat.com>, <dm-devel@redhat.com>,
+	<linux-kernel@vger.kernel.org>
+Date: Wed, 11 Nov 2020 15:55:46 +0300
+Message-ID: <1605099346-3199-2-git-send-email-sergei.shtepa@veeam.com>
+In-Reply-To: <1605099346-3199-1-git-send-email-sergei.shtepa@veeam.com>
+References: <1605099346-3199-1-git-send-email-sergei.shtepa@veeam.com>
 MIME-Version: 1.0
+X-Originating-IP: [172.24.14.5]
+X-ClientProxiedBy: prgmbx01.amust.local (172.24.0.171) To prgmbx01.amust.local
+	(172.24.0.171)
+X-EsetResult: clean, is OK
+X-EsetId: 37303A29C604D26A617667
+X-Veeam-MMEX: True
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -71,13 +84,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 11 Nov 2020 13:39:49 -0500
-Cc: linux-raid@vger.kernel.org, Song Liu <song@kernel.org>, dm-devel@redhat.com,
-	Alasdair Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] dm: rename multipath path selector source files to
- have "dm-ps" prefix
+Cc: Sergei Shtepa <sergei.shtepa@veeam.com>
+Subject: [dm-devel] [PATCH 1/1] Fix bug with RCU locking in
+	dm_blk_report_zones().
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -91,58 +103,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
-X-Mimecast-Spam-Score: 1
+X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hi,
+The dm_get_live_table() function makes RCU read lock and
+dm_put_live_table() should call even when dm_table map was not found.
 
-Static analysis on linux-next has detected an initialized variable issue
-with the following recent commit:
+Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
+---
+ drivers/md/dm.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-commit 28784347451fdbf4671ba97018f816041ba2306a
-Author: Mike Snitzer <snitzer@redhat.com>
-Date:   Tue Nov 10 13:41:53 2020 -0500
-
-    dm: rename multipath path selector source files to have "dm-ps" prefix
-
-The analysis is as follows:
-
- 43
-static int ioa_add_path(struct path_selector *ps, struct dm_path *path,
- 44                        int argc, char **argv, char **error)
- 45 {
- 46        struct selector *s = ps->context;
- 47        struct path_info *pi = NULL;
-   1. var_decl: Declaring variable cpu without initializer.
-
- 48        unsigned int cpu;
- 49        int ret;
- 50
-   2. Condition argc != 1, taking false branch.
-
- 51        if (argc != 1) {
- 52                *error = "io-affinity ps: invalid number of arguments";
- 53                return -EINVAL;
- 54        }
- 55
-
-   Uninitialized scalar variable (UNINIT)
-   3. uninit_use_in_call: Using uninitialized value cpu when calling
-__cpu_to_node.
-
- 56        pi = kzalloc_node(sizeof(*pi), GFP_KERNEL, cpu_to_node(cpu));
- 57        if (!pi) {
- 58                *error = "io-affinity ps: Error allocating path context";
- 59                return -ENOMEM;
- 60        }
-
-Colin
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index c18fc2548518..98866e725f25 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -476,8 +476,10 @@ static int dm_blk_report_zones(struct gendisk *disk, sector_t sector,
+ 		return -EAGAIN;
+ 
+ 	map = dm_get_live_table(md, &srcu_idx);
+-	if (!map)
+-		return -EIO;
++	if (!map) {
++		ret = -EIO;
++		goto out;
++	}
+ 
+ 	do {
+ 		struct dm_target *tgt;
+-- 
+2.20.1
 
 --
 dm-devel mailing list
