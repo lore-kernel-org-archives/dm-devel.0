@@ -2,101 +2,68 @@ Return-Path: <SRS0=f+1/=ER=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	UNPARSEABLE_RELAY autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 886CBC388F9
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 08:04:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 331C0C4742C
+	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 08:32:00 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id CCBD620786
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 08:04:45 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CCBD620786
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=oracle.com
+	by mail.kernel.org (Postfix) with ESMTPS id 51C70205CA
+	for <dm-devel@archiver.kernel.org>; Wed, 11 Nov 2020 08:31:58 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 51C70205CA
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-195-SykSPZiCM9KjPwj-FWWgog-1; Wed, 11 Nov 2020 03:04:42 -0500
-X-MC-Unique: SykSPZiCM9KjPwj-FWWgog-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-149-JfNtlnJ1NjWCm88D0xiiBA-1; Wed, 11 Nov 2020 03:31:55 -0500
+X-MC-Unique: JfNtlnJ1NjWCm88D0xiiBA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E093A1009443;
-	Wed, 11 Nov 2020 08:04:35 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 400929F6A;
-	Wed, 11 Nov 2020 08:04:34 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 801BD8AB39D;
+	Wed, 11 Nov 2020 08:31:50 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 568435577A;
+	Wed, 11 Nov 2020 08:31:50 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AE98344A7B;
-	Wed, 11 Nov 2020 08:04:29 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1CDBD1800B72;
+	Wed, 11 Nov 2020 08:31:49 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AB84PBc022649 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 11 Nov 2020 03:04:25 -0500
+	id 0AB8Vl5X026425 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 11 Nov 2020 03:31:47 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8C9CE200E208; Wed, 11 Nov 2020 08:04:25 +0000 (UTC)
+	id 26E59B3516; Wed, 11 Nov 2020 08:31:47 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 874712068FE5
-	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 08:04:22 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2137DB350B
+	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 08:31:45 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3AD1C102F222
-	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 08:04:22 +0000 (UTC)
-Received: from userp2120.oracle.com (userp2120.oracle.com [156.151.31.85])
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E60B390E426
+	for <dm-devel@redhat.com>; Wed, 11 Nov 2020 08:31:44 +0000 (UTC)
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-594-twqECvK9MYWV3leOmaWCaw-1; Wed, 11 Nov 2020 03:04:17 -0500
-X-MC-Unique: twqECvK9MYWV3leOmaWCaw-1
-Received: from pps.filterd (userp2120.oracle.com [127.0.0.1])
-	by userp2120.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
-	0AB49Tbn187079; Wed, 11 Nov 2020 04:18:21 GMT
-Received: from aserp3020.oracle.com (aserp3020.oracle.com [141.146.126.70])
-	by userp2120.oracle.com with ESMTP id 34p72en941-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
-	verify=FAIL); Wed, 11 Nov 2020 04:18:21 +0000
-Received: from pps.filterd (aserp3020.oracle.com [127.0.0.1])
-	by aserp3020.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
-	0AB4Arf2138947; Wed, 11 Nov 2020 04:18:20 GMT
-Received: from aserv0122.oracle.com (aserv0122.oracle.com [141.146.126.236])
-	by aserp3020.oracle.com with ESMTP id 34p5g179j7-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Wed, 11 Nov 2020 04:18:20 +0000
-Received: from abhmp0012.oracle.com (abhmp0012.oracle.com [141.146.116.18])
-	by aserv0122.oracle.com (8.14.4/8.14.4) with ESMTP id 0AB4IBdx000879;
-	Wed, 11 Nov 2020 04:18:11 GMT
-Received: from ca-mkp.ca.oracle.com (/10.159.214.123)
-	by default (Oracle Beehive Gateway v4.0)
-	with ESMTP ; Tue, 10 Nov 2020 20:18:09 -0800
-To: Christoph Hellwig <hch@lst.de>
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Organization: Oracle
-Message-ID: <yq1tutwedcb.fsf@ca-mkp.ca.oracle.com>
-References: <20201106190337.1973127-1-hch@lst.de>
-	<20201106190337.1973127-5-hch@lst.de>
-Date: Tue, 10 Nov 2020 23:18:05 -0500
-In-Reply-To: <20201106190337.1973127-5-hch@lst.de> (Christoph Hellwig's
-	message of "Fri, 6 Nov 2020 20:03:16 +0100")
+	us-mta-145-l8tRwqmUPUC-KJHHxZjF-Q-1; Wed, 11 Nov 2020 03:31:41 -0500
+X-MC-Unique: l8tRwqmUPUC-KJHHxZjF-Q-1
+Received: from [2001:4bb8:180:6600:bcde:334f:863c:27b8] (helo=localhost)
+	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
+	id 1kclT6-0007Zx-Ef; Wed, 11 Nov 2020 08:27:04 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Jens Axboe <axboe@kernel.dk>
+Date: Wed, 11 Nov 2020 09:26:38 +0100
+Message-Id: <20201111082658.3401686-5-hch@lst.de>
+In-Reply-To: <20201111082658.3401686-1-hch@lst.de>
+References: <20201111082658.3401686-1-hch@lst.de>
 MIME-Version: 1.0
-X-Proofpoint-Virus-Version: vendor=nai engine=6000 definitions=9801
-	signatures=668682
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 mlxscore=0
-	spamscore=0 malwarescore=0
-	adultscore=0 phishscore=0 bulkscore=0 mlxlogscore=887 suspectscore=1
-	classifier=spam adjust=0 reason=mlx scancount=1
-	engine=8.12.0-2009150000 definitions=main-2011110019
-X-Proofpoint-Virus-Version: vendor=nai engine=6000 definitions=9801
-	signatures=668682
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 bulkscore=0
-	mlxlogscore=877 mlxscore=0
-	malwarescore=0 suspectscore=1 lowpriorityscore=0 adultscore=0
-	phishscore=0
-	priorityscore=1501 spamscore=0 impostorscore=0 clxscore=1011
-	classifier=spam adjust=0 reason=mlx scancount=1
-	engine=8.12.0-2009150000 definitions=main-2011110019
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+	casper.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -105,25 +72,24 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	"Michael S. Tsirkin" <mst@redhat.com>,
 	Jason Wang <jasowang@redhat.com>, linux-nvme@lists.infradead.org,
-	Song Liu <song@kernel.org>, dm-devel@redhat.com, Konrad,
+	Song Liu <song@kernel.org>, dm-devel@redhat.com,
 	linux-scsi@vger.kernel.org, xen-devel@lists.xenproject.org,
 	Ilya Dryomov <idryomov@gmail.com>, Jack Wang <jinpu.wang@cloud.ionos.com>,
-	Rzeszutek Wilk <konrad.wilk@oracle.com>,
+	Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>,
 	Josef Bacik <josef@toxicpanda.com>, nbd@other.debian.org,
-	linux-block@vger.kernel.org,
-	Stefan Hajnoczi <stefanha@redhat.com>, drbd-dev@tron.linbit.com,
-	ceph-devel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
 	linux-raid@vger.kernel.org,
+	Stefan Hajnoczi <stefanha@redhat.com>, drbd-dev@tron.linbit.com,
+	ceph-devel@vger.kernel.org, linux-block@vger.kernel.org,
 	"Martin K. Petersen" <martin.petersen@oracle.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
-	Roger Pau =?utf-8?Q?Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: Re: [dm-devel] [PATCH 04/24] sd: update the bdev size in
+	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
+Subject: [dm-devel] [PATCH 04/24] sd: update the bdev size in
 	sd_revalidate_disk
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
@@ -138,7 +104,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -146,17 +112,52 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+This avoids the extra call to revalidate_disk_size in sd_rescan and
+is otherwise a no-op because the size did not change, or we are in
+the probe path.
 
-Christoph,
-
-> This avoids the extra call to revalidate_disk_size in sd_rescan and
-> is otherwise a no-op because the size did not change, or we are in
-> the probe path.
-
+Signed-off-by: Christoph Hellwig <hch@lst.de>
 Acked-by: Martin K. Petersen <martin.petersen@oracle.com>
+---
+ drivers/scsi/sd.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
 
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index 656bcf4940d6d1..4a34dd5b153196 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -1750,10 +1750,8 @@ static int sd_sync_cache(struct scsi_disk *sdkp, struct scsi_sense_hdr *sshdr)
+ static void sd_rescan(struct device *dev)
+ {
+ 	struct scsi_disk *sdkp = dev_get_drvdata(dev);
+-	int ret;
+ 
+-	ret = sd_revalidate_disk(sdkp->disk);
+-	revalidate_disk_size(sdkp->disk, ret == 0);
++	sd_revalidate_disk(sdkp->disk);
+ }
+ 
+ static int sd_ioctl(struct block_device *bdev, fmode_t mode,
+@@ -3266,7 +3264,7 @@ static int sd_revalidate_disk(struct gendisk *disk)
+ 	sdkp->first_scan = 0;
+ 
+ 	set_capacity_revalidate_and_notify(disk,
+-		logical_to_sectors(sdp, sdkp->capacity), false);
++		logical_to_sectors(sdp, sdkp->capacity), true);
+ 	sd_config_write_same(sdkp);
+ 	kfree(buffer);
+ 
+@@ -3276,7 +3274,7 @@ static int sd_revalidate_disk(struct gendisk *disk)
+ 	 * capacity to 0.
+ 	 */
+ 	if (sd_zbc_revalidate_zones(sdkp))
+-		set_capacity_revalidate_and_notify(disk, 0, false);
++		set_capacity_revalidate_and_notify(disk, 0, true);
+ 
+  out:
+ 	return 0;
 -- 
-Martin K. Petersen	Oracle Linux Engineering
+2.28.0
 
 --
 dm-devel mailing list
