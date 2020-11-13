@@ -2,117 +2,75 @@ Return-Path: <SRS0=awJs=ET=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,NICE_REPLY_A,
+	SIGNED_OFF_BY,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_SANE_1
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1074DC388F7
-	for <dm-devel@archiver.kernel.org>; Fri, 13 Nov 2020 08:02:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 36BB5C55ABD
+	for <dm-devel@archiver.kernel.org>; Fri, 13 Nov 2020 08:02:55 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 1791820857
-	for <dm-devel@archiver.kernel.org>; Fri, 13 Nov 2020 08:02:52 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1791820857
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.ibm.com
+	by mail.kernel.org (Postfix) with ESMTPS id 739C020857
+	for <dm-devel@archiver.kernel.org>; Fri, 13 Nov 2020 08:02:54 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 739C020857
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-99-FMKgu_FdMT6vA15-5g7XnA-1; Fri, 13 Nov 2020 03:02:49 -0500
-X-MC-Unique: FMKgu_FdMT6vA15-5g7XnA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-321-i36lc8M7OlCLSeCwZ7tbDA-1; Fri, 13 Nov 2020 03:02:51 -0500
+X-MC-Unique: i36lc8M7OlCLSeCwZ7tbDA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8DAA01891E93;
-	Fri, 13 Nov 2020 08:02:42 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6E5BA1C4;
-	Fri, 13 Nov 2020 08:02:42 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 803AD809DFA;
+	Fri, 13 Nov 2020 08:02:44 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 609A55577D;
+	Fri, 13 Nov 2020 08:02:44 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 432BC181A06D;
-	Fri, 13 Nov 2020 08:02:42 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 358F158111;
+	Fri, 13 Nov 2020 08:02:44 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AD06OA8020812 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 12 Nov 2020 19:06:25 -0500
+	id 0AD2CKcW001964 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 12 Nov 2020 21:12:20 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id D196210F8E22; Fri, 13 Nov 2020 00:06:24 +0000 (UTC)
+	id 32EA5F11F3; Fri, 13 Nov 2020 02:12:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CBD2910F8E1D
-	for <dm-devel@redhat.com>; Fri, 13 Nov 2020 00:06:19 +0000 (UTC)
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2DA7410F024
+	for <dm-devel@redhat.com>; Fri, 13 Nov 2020 02:12:16 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BFBCB90E42B
-	for <dm-devel@redhat.com>; Fri, 13 Nov 2020 00:06:19 +0000 (UTC)
-Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com
-	[148.163.156.1]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-382-6GSS0rXSM6CEP1LEjKntSQ-1; Thu, 12 Nov 2020 19:06:15 -0500
-X-MC-Unique: 6GSS0rXSM6CEP1LEjKntSQ-1
-Received: from pps.filterd (m0098410.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.16.0.42/8.16.0.42) with SMTP id
-	0AD03mTp113421; Thu, 12 Nov 2020 19:06:14 -0500
-Received: from pps.reinject (localhost [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com with ESMTP id 34sdrejfkk-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
-	verify=NOT); Thu, 12 Nov 2020 19:06:13 -0500
-Received: from m0098410.ppops.net (m0098410.ppops.net [127.0.0.1])
-	by pps.reinject (8.16.0.36/8.16.0.36) with SMTP id 0AD03rlo113627;
-	Thu, 12 Nov 2020 19:06:13 -0500
-Received: from ppma06fra.de.ibm.com (48.49.7a9f.ip4.static.sl-reverse.com
-	[159.122.73.72])
-	by mx0a-001b2d01.pphosted.com with ESMTP id 34sdrejfje-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
-	verify=NOT); Thu, 12 Nov 2020 19:06:13 -0500
-Received: from pps.filterd (ppma06fra.de.ibm.com [127.0.0.1])
-	by ppma06fra.de.ibm.com (8.16.0.42/8.16.0.42) with SMTP id
-	0ACNvdgB024333; Fri, 13 Nov 2020 00:06:10 GMT
-Received: from b06cxnps3075.portsmouth.uk.ibm.com
-	(d06relay10.portsmouth.uk.ibm.com [9.149.109.195])
-	by ppma06fra.de.ibm.com with ESMTP id 34njuh354q-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
-	verify=NOT); Fri, 13 Nov 2020 00:06:10 +0000
-Received: from d06av25.portsmouth.uk.ibm.com (d06av25.portsmouth.uk.ibm.com
-	[9.149.105.61])
-	by b06cxnps3075.portsmouth.uk.ibm.com (8.14.9/8.14.9/NCO v10.0) with
-	ESMTP id 0AD068EB5898830
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256
-	verify=OK); Fri, 13 Nov 2020 00:06:08 GMT
-Received: from d06av25.portsmouth.uk.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 3545411C050;
-	Fri, 13 Nov 2020 00:06:08 +0000 (GMT)
-Received: from d06av25.portsmouth.uk.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id B371911C069;
-	Fri, 13 Nov 2020 00:06:04 +0000 (GMT)
-Received: from li-f45666cc-3089-11b2-a85c-c57d1a57929f.ibm.com (unknown
-	[9.160.105.204])
-	by d06av25.portsmouth.uk.ibm.com (Postfix) with ESMTP;
-	Fri, 13 Nov 2020 00:06:04 +0000 (GMT)
-Message-ID: <5d8f83824f44cc3dd3963c83f70121b18c1ab3ca.camel@linux.ibm.com>
-From: Mimi Zohar <zohar@linux.ibm.com>
-To: Tushar Sugandhi <tusharsu@linux.microsoft.com>,
-	stephen.smalley.work@gmail.com, casey@schaufler-ca.com, agk@redhat.com, 
-	snitzer@redhat.com, gmazyland@gmail.com, paul@paul-moore.com
-Date: Thu, 12 Nov 2020 19:06:03 -0500
-In-Reply-To: <5826d3df-c263-f6c8-cac0-094b3c5a9395@linux.microsoft.com>
-References: <20201101222626.6111-1-tusharsu@linux.microsoft.com>
-	<20201101222626.6111-6-tusharsu@linux.microsoft.com>
-	<bef97a69db37d358db21668b179fd8821430b1b4.camel@linux.ibm.com>
-	<5826d3df-c263-f6c8-cac0-094b3c5a9395@linux.microsoft.com>
-Mime-Version: 1.0
-X-TM-AS-GCONF: 00
-X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.312, 18.0.737
-	definitions=2020-11-12_16:2020-11-12,
-	2020-11-12 signatures=0
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
-	clxscore=1015 impostorscore=0
-	bulkscore=0 mlxscore=0 priorityscore=1501 lowpriorityscore=0
-	malwarescore=0 spamscore=0 suspectscore=0 mlxlogscore=999 adultscore=0
-	phishscore=0 classifier=spam adjust=0 reason=mlx scancount=1
-	engine=8.12.0-2009150000 definitions=main-2011120132
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D375A1021F88
+	for <dm-devel@redhat.com>; Fri, 13 Nov 2020 02:12:16 +0000 (UTC)
+Received: from out30-43.freemail.mail.aliyun.com
+	(out30-43.freemail.mail.aliyun.com [115.124.30.43]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-4-XXxNgH9KNomtruyCL6lwvA-1;
+	Thu, 12 Nov 2020 21:12:14 -0500
+X-MC-Unique: XXxNgH9KNomtruyCL6lwvA-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R691e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e01424;
+	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=4; SR=0;
+	TI=SMTPD_---0UF8jmCY_1605233529
+Received: from admindeMacBook-Pro-2.local(mailfrom:jefflexu@linux.alibaba.com
+	fp:SMTPD_---0UF8jmCY_1605233529) by smtp.aliyun-inc.com(127.0.0.1);
+	Fri, 13 Nov 2020 10:12:09 +0800
+From: JeffleXu <jefflexu@linux.alibaba.com>
+To: snitzer@redhat.com
+References: <20201110065558.22694-1-jefflexu@linux.alibaba.com>
+	<20201113020551.55716-1-jefflexu@linux.alibaba.com>
+Message-ID: <36d70710-6c8b-0206-6f60-6a3cea5fa3f1@linux.alibaba.com>
+Date: Fri, 13 Nov 2020 10:12:09 +0800
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:68.0)
+	Gecko/20100101 Thunderbird/68.12.1
+MIME-Version: 1.0
+In-Reply-To: <20201113020551.55716-1-jefflexu@linux.alibaba.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -121,15 +79,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Fri, 13 Nov 2020 03:02:15 -0500
-Cc: sashal@kernel.org, dm-devel@redhat.com, selinux@vger.kernel.org,
-	jmorris@namei.org, linux-kernel@vger.kernel.org,
-	nramas@linux.microsoft.com, linux-security-module@vger.kernel.org,
-	tyhicks@linux.microsoft.com, linux-integrity@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH v5 5/7] IMA: validate supported kernel data
- sources before measurement
+Cc: joseph.qi@linux.alibaba.com, dm-devel@redhat.com, koct9i@gmail.com
+Subject: Re: [dm-devel] [PATCH v2] dm: add support for DM_TARGET_NOWAIT for
+ various targets
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -143,22 +98,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-Hi Tushar,
+Hi Mike,
 
-On Thu, 2020-11-12 at 14:09 -0800, Tushar Sugandhi wrote:
-> Could you please let me know if you want us to remove this patch?
+I just tweaks the commit message in this v2 patch to make the purpose 
+clearer,
 
-As neither of us are convinced this is necessary, please drop it.
+while keep the code unstained.
 
-Mimi
+
+Thanks,
+
+Jeffle
+
+
+On 11/13/20 10:05 AM, Jeffle Xu wrote:
+> commit 021a24460dc2 ("block: add QUEUE_FLAG_NOWAIT") adds a new queue
+> flag QUEUE_FLAG_NOWAIT to advertise if the bdev supports handling of
+> REQ_NOWAIT or not. DM core supports this in commit 6abc49468eea ("dm:
+> add support for REQ_NOWAIT and enable it for linear target"), in which
+> only dm-linear is enabled.
+>
+> This patch also enables several dm-linear likely dm targets, the mapping
+> algorithm of which is just simple remapping.
+>
+> Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+> ---
+>   drivers/md/dm-stripe.c   | 2 +-
+>   drivers/md/dm-switch.c   | 1 +
+>   drivers/md/dm-unstripe.c | 1 +
+>   drivers/md/dm-zero.c     | 1 +
+>   4 files changed, 4 insertions(+), 1 deletion(-)
+>
+> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+> index 151d022b032d..df359d33cda8 100644
+> --- a/drivers/md/dm-stripe.c
+> +++ b/drivers/md/dm-stripe.c
+> @@ -496,7 +496,7 @@ static void stripe_io_hints(struct dm_target *ti,
+>   static struct target_type stripe_target = {
+>   	.name   = "striped",
+>   	.version = {1, 6, 0},
+> -	.features = DM_TARGET_PASSES_INTEGRITY,
+> +	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_NOWAIT,
+>   	.module = THIS_MODULE,
+>   	.ctr    = stripe_ctr,
+>   	.dtr    = stripe_dtr,
+> diff --git a/drivers/md/dm-switch.c b/drivers/md/dm-switch.c
+> index bff4c7fa1cd2..262e2b0fd975 100644
+> --- a/drivers/md/dm-switch.c
+> +++ b/drivers/md/dm-switch.c
+> @@ -550,6 +550,7 @@ static int switch_iterate_devices(struct dm_target *ti,
+>   static struct target_type switch_target = {
+>   	.name = "switch",
+>   	.version = {1, 1, 0},
+> +	.features = DM_TARGET_NOWAIT,
+>   	.module = THIS_MODULE,
+>   	.ctr = switch_ctr,
+>   	.dtr = switch_dtr,
+> diff --git a/drivers/md/dm-unstripe.c b/drivers/md/dm-unstripe.c
+> index e673dacf6418..7357c1bd5863 100644
+> --- a/drivers/md/dm-unstripe.c
+> +++ b/drivers/md/dm-unstripe.c
+> @@ -178,6 +178,7 @@ static void unstripe_io_hints(struct dm_target *ti,
+>   static struct target_type unstripe_target = {
+>   	.name = "unstriped",
+>   	.version = {1, 1, 0},
+> +	.features = DM_TARGET_NOWAIT,
+>   	.module = THIS_MODULE,
+>   	.ctr = unstripe_ctr,
+>   	.dtr = unstripe_dtr,
+> diff --git a/drivers/md/dm-zero.c b/drivers/md/dm-zero.c
+> index b65ca8dcfbdc..faa1dbffc8b4 100644
+> --- a/drivers/md/dm-zero.c
+> +++ b/drivers/md/dm-zero.c
+> @@ -59,6 +59,7 @@ static int zero_map(struct dm_target *ti, struct bio *bio)
+>   static struct target_type zero_target = {
+>   	.name   = "zero",
+>   	.version = {1, 1, 0},
+> +	.features = DM_TARGET_NOWAIT,
+>   	.module = THIS_MODULE,
+>   	.ctr    = zero_ctr,
+>   	.map    = zero_map,
+
+-- 
+Thanks,
+Jeffle
 
 --
 dm-devel mailing list
