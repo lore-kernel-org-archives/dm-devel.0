@@ -7,59 +7,58 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 439EEC4742C
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:09:08 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B51B2C5519F
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:09:32 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 9C069223C7
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:09:07 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9C069223C7
+	by mail.kernel.org (Postfix) with ESMTPS id 0C084223C7
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:09:31 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0C084223C7
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-79-GYifx4qGNrOSG5EGO_Dqag-1; Mon, 16 Nov 2020 10:09:01 -0500
-X-MC-Unique: GYifx4qGNrOSG5EGO_Dqag-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-388-4l4W5s7dP4almwykMZ-YGQ-1; Mon, 16 Nov 2020 10:08:56 -0500
+X-MC-Unique: 4l4W5s7dP4almwykMZ-YGQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A8410100F7AB;
-	Mon, 16 Nov 2020 15:08:56 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CD2401028D4D;
+	Mon, 16 Nov 2020 15:08:51 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 84CAC1A3D6;
-	Mon, 16 Nov 2020 15:08:56 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AC3EA50B44;
+	Mon, 16 Nov 2020 15:08:51 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5BE345812A;
-	Mon, 16 Nov 2020 15:08:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7D9E758123;
+	Mon, 16 Nov 2020 15:08:51 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AGF7sSI018550 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 16 Nov 2020 10:07:55 -0500
+	id 0AGF7FOo018399 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 16 Nov 2020 10:07:15 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id DC9312156A34; Mon, 16 Nov 2020 15:07:54 +0000 (UTC)
+	id 65314110F728; Mon, 16 Nov 2020 15:07:15 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D7FB32156A37
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:07:51 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6024B110F72A
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:07:12 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 99593858298
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:07:51 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2CA218007D9
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:07:12 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-514-Z907xV9DN-Kx_D_4OGeSTg-1; Mon, 16 Nov 2020 10:07:47 -0500
-X-MC-Unique: Z907xV9DN-Kx_D_4OGeSTg-1
+	us-mta-62-eOR-dAzBMpGez7Q7lJJefg-1; Mon, 16 Nov 2020 10:07:01 -0500
+X-MC-Unique: eOR-dAzBMpGez7Q7lJJefg-1
 Received: from [2001:4bb8:180:6600:255b:7def:a93:4a09] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kefxu-0003sm-C6; Mon, 16 Nov 2020 14:58:46 +0000
+	id 1kefxL-0003ie-Nn; Mon, 16 Nov 2020 14:58:12 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 16 Nov 2020 15:57:17 +0100
-Message-Id: <20201116145809.410558-27-hch@lst.de>
+Date: Mon, 16 Nov 2020 15:56:52 +0100
+Message-Id: <20201116145809.410558-2-hch@lst.de>
 In-Reply-To: <20201116145809.410558-1-hch@lst.de>
 References: <20201116145809.410558-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,7 +72,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	"Michael S. Tsirkin" <mst@redhat.com>,
@@ -90,7 +89,8 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 26/78] block: add a new set_read_only method
+Subject: [dm-devel] [PATCH 01/78] block: remove the call to
+	__invalidate_device in check_disk_size_change
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -104,7 +104,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -112,44 +112,36 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Add a new method to allow for driver-specific processing when setting or
-clearing the block device read-only state.  This allows to replace the
-cumbersome and error-prone override of the whole ioctl implementation.
+__invalidate_device without the kill_dirty parameter just invalidates
+various clean entries in caches, which doesn't really help us with
+anything, but can cause all kinds of horrible lock orders due to how
+it calls into the file system.  The only reason this hasn't been a
+major issue is because so many people use partitions, for which no
+invalidation was performed anyway.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- block/ioctl.c          | 5 +++++
- include/linux/blkdev.h | 1 +
- 2 files changed, 6 insertions(+)
+ fs/block_dev.c | 6 ------
+ 1 file changed, 6 deletions(-)
 
-diff --git a/block/ioctl.c b/block/ioctl.c
-index c6d8863f040945..a6fa16b9770593 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -389,6 +389,11 @@ static int blkdev_roset(struct block_device *bdev, fmode_t mode,
- 		return ret;
- 	if (get_user(n, (int __user *)arg))
- 		return -EFAULT;
-+	if (bdev->bd_disk->fops->set_read_only) {
-+		ret = bdev->bd_disk->fops->set_read_only(bdev, n);
-+		if (ret)
-+			return ret;
-+	}
- 	set_device_ro(bdev, n);
- 	return 0;
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 9e84b1928b9401..66ebf594c97f47 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -1334,12 +1334,6 @@ static void check_disk_size_change(struct gendisk *disk,
+ 		i_size_write(bdev->bd_inode, disk_size);
+ 	}
+ 	spin_unlock(&bdev->bd_size_lock);
+-
+-	if (bdev_size > disk_size) {
+-		if (__invalidate_device(bdev, false))
+-			pr_warn("VFS: busy inodes on resized disk %s\n",
+-				disk->disk_name);
+-	}
  }
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 639cae2c158b59..5c1ba8a8d2bc7e 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1850,6 +1850,7 @@ struct block_device_operations {
- 	void (*unlock_native_capacity) (struct gendisk *);
- 	int (*revalidate_disk) (struct gendisk *);
- 	int (*getgeo)(struct block_device *, struct hd_geometry *);
-+	int (*set_read_only)(struct block_device *bdev, bool ro);
- 	/* this callback is with swap_lock and sometimes page table lock held */
- 	void (*swap_slot_free_notify) (struct block_device *, unsigned long);
- 	int (*report_zones)(struct gendisk *, sector_t sector,
+ 
+ /**
 -- 
 2.29.2
 
