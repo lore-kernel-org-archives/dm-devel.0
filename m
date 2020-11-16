@@ -4,61 +4,62 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ED889C83010
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:33 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 08913C82550
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:38 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4E3E3241A7
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:33 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4E3E3241A7
+	by mail.kernel.org (Postfix) with ESMTPS id 8AD8C2463C
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:37 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 8AD8C2463C
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-92-YZVCz1prOKS1oR5C-mqT4g-1; Mon, 16 Nov 2020 10:00:29 -0500
-X-MC-Unique: YZVCz1prOKS1oR5C-mqT4g-1
+ us-mta-397-HSxWDwGIP_C4o7pTmhsVRw-1; Mon, 16 Nov 2020 10:00:32 -0500
+X-MC-Unique: HSxWDwGIP_C4o7pTmhsVRw-1
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2EF6DD3F04;
-	Mon, 16 Nov 2020 14:59:53 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DCC6E6FF03;
-	Mon, 16 Nov 2020 14:59:52 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E30CD8CD10A;
+	Mon, 16 Nov 2020 15:00:07 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BFF016EF43;
+	Mon, 16 Nov 2020 15:00:07 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AD899183D022;
-	Mon, 16 Nov 2020 14:59:52 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 88C7D5812C;
+	Mon, 16 Nov 2020 15:00:07 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AGExlmK015661 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 16 Nov 2020 09:59:47 -0500
+	id 0AGF05Mh015805 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 16 Nov 2020 10:00:06 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 121E1110F727; Mon, 16 Nov 2020 14:59:47 +0000 (UTC)
+	id CBBCE110F725; Mon, 16 Nov 2020 15:00:05 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0CFD5110F726
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 14:59:44 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C6D5D110F728
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:00:03 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 763B590E42D
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 14:59:44 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 54D388582A2
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:00:03 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-107-UCSAZY92P_-nRbFYzxOARg-1; Mon, 16 Nov 2020 09:59:39 -0500
-X-MC-Unique: UCSAZY92P_-nRbFYzxOARg-1
+	us-mta-578-HEAPw4DBOH2OQ2VIjxF4Ig-1; Mon, 16 Nov 2020 09:59:59 -0500
+X-MC-Unique: HEAPw4DBOH2OQ2VIjxF4Ig-1
 Received: from [2001:4bb8:180:6600:255b:7def:a93:4a09] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kefyf-00048G-6S; Mon, 16 Nov 2020 14:59:33 +0000
+	id 1kefyy-0004HD-T0; Mon, 16 Nov 2020 14:59:53 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 16 Nov 2020 15:57:49 +0100
-Message-Id: <20201116145809.410558-59-hch@lst.de>
+Date: Mon, 16 Nov 2020 15:58:02 +0100
+Message-Id: <20201116145809.410558-72-hch@lst.de>
 In-Reply-To: <20201116145809.410558-1-hch@lst.de>
 References: <20201116145809.410558-1-hch@lst.de>
 MIME-Version: 1.0
@@ -89,8 +90,7 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 58/78] init: cleanup match_dev_by_uuid and
-	match_dev_by_label
+Subject: [dm-devel] [PATCH 71/78] block: add a bdev_kobj helper
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -112,51 +112,118 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Avoid a totally pointless goto label, and use the same style of
-comparism for both helpers.
+Add a little helper to find the kobject for a struct block_device.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- init/do_mounts.c | 18 ++++++------------
- 1 file changed, 6 insertions(+), 12 deletions(-)
+ drivers/md/bcache/super.c |  7 ++-----
+ drivers/md/md.c           |  4 +---
+ fs/btrfs/sysfs.c          | 15 +++------------
+ include/linux/blk_types.h |  3 +++
+ 4 files changed, 9 insertions(+), 20 deletions(-)
 
-diff --git a/init/do_mounts.c b/init/do_mounts.c
-index afa26a4028d25e..5879edf083b318 100644
---- a/init/do_mounts.c
-+++ b/init/do_mounts.c
-@@ -79,15 +79,10 @@ static int match_dev_by_uuid(struct device *dev, const void *data)
- 	const struct uuidcmp *cmp = data;
- 	struct hd_struct *part = dev_to_part(dev);
+diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+index ea2b80c3e44c38..f6edacc81527c7 100644
+--- a/drivers/md/bcache/super.c
++++ b/drivers/md/bcache/super.c
+@@ -1447,8 +1447,7 @@ static int register_bdev(struct cache_sb *sb, struct cache_sb_disk *sb_disk,
+ 		goto err;
  
--	if (!part->info)
--		goto no_match;
+ 	err = "error creating kobject";
+-	if (kobject_add(&dc->disk.kobj, &part_to_dev(bdev->bd_part)->kobj,
+-			"bcache"))
++	if (kobject_add(&dc->disk.kobj, bdev_kobj(bdev), "bcache"))
+ 		goto err;
+ 	if (bch_cache_accounting_add_kobjs(&dc->accounting, &dc->disk.kobj))
+ 		goto err;
+@@ -2342,9 +2341,7 @@ static int register_cache(struct cache_sb *sb, struct cache_sb_disk *sb_disk,
+ 		goto err;
+ 	}
+ 
+-	if (kobject_add(&ca->kobj,
+-			&part_to_dev(bdev->bd_part)->kobj,
+-			"bcache")) {
++	if (kobject_add(&ca->kobj, bdev_kobj(bdev), "bcache")) {
+ 		err = "error calling kobject_add";
+ 		ret = -ENOMEM;
+ 		goto out;
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index b2edf5e0f965b5..7ce6047c856ea2 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -2414,7 +2414,6 @@ EXPORT_SYMBOL(md_integrity_add_rdev);
+ static int bind_rdev_to_array(struct md_rdev *rdev, struct mddev *mddev)
+ {
+ 	char b[BDEVNAME_SIZE];
+-	struct kobject *ko;
+ 	int err;
+ 
+ 	/* prevent duplicates */
+@@ -2477,9 +2476,8 @@ static int bind_rdev_to_array(struct md_rdev *rdev, struct mddev *mddev)
+ 	if ((err = kobject_add(&rdev->kobj, &mddev->kobj, "dev-%s", b)))
+ 		goto fail;
+ 
+-	ko = &part_to_dev(rdev->bdev->bd_part)->kobj;
+ 	/* failure here is OK */
+-	err = sysfs_create_link(&rdev->kobj, ko, "block");
++	err = sysfs_create_link(&rdev->kobj, bdev_kobj(rdev->bdev), "block");
+ 	rdev->sysfs_state = sysfs_get_dirent_safe(rdev->kobj.sd, "state");
+ 	rdev->sysfs_unack_badblocks =
+ 		sysfs_get_dirent_safe(rdev->kobj.sd, "unacknowledged_bad_blocks");
+diff --git a/fs/btrfs/sysfs.c b/fs/btrfs/sysfs.c
+index 279d9262b676d4..24b6c6dc69000a 100644
+--- a/fs/btrfs/sysfs.c
++++ b/fs/btrfs/sysfs.c
+@@ -1232,8 +1232,6 @@ int btrfs_sysfs_add_space_info_type(struct btrfs_fs_info *fs_info,
+ 
+ void btrfs_sysfs_remove_device(struct btrfs_device *device)
+ {
+-	struct hd_struct *disk;
+-	struct kobject *disk_kobj;
+ 	struct kobject *devices_kobj;
+ 
+ 	/*
+@@ -1243,11 +1241,8 @@ void btrfs_sysfs_remove_device(struct btrfs_device *device)
+ 	devices_kobj = device->fs_info->fs_devices->devices_kobj;
+ 	ASSERT(devices_kobj);
+ 
+-	if (device->bdev) {
+-		disk = device->bdev->bd_part;
+-		disk_kobj = &part_to_dev(disk)->kobj;
+-		sysfs_remove_link(devices_kobj, disk_kobj->name);
+-	}
++	if (device->bdev)
++		sysfs_remove_link(devices_kobj, bdev_kobj(device->bdev)->name);
+ 
+ 	if (device->devid_kobj.state_initialized) {
+ 		kobject_del(&device->devid_kobj);
+@@ -1353,11 +1348,7 @@ int btrfs_sysfs_add_device(struct btrfs_device *device)
+ 	nofs_flag = memalloc_nofs_save();
+ 
+ 	if (device->bdev) {
+-		struct hd_struct *disk;
+-		struct kobject *disk_kobj;
 -
--	if (strncasecmp(cmp->uuid, part->info->uuid, cmp->len))
--		goto no_match;
--
-+	if (!part->info ||
-+	    strncasecmp(cmp->uuid, part->info->uuid, cmp->len))
-+		return 0;
- 	return 1;
--no_match:
--	return 0;
- }
+-		disk = device->bdev->bd_part;
+-		disk_kobj = &part_to_dev(disk)->kobj;
++		struct kobject *disk_kobj = bdev_kobj(device->bdev);
  
- /**
-@@ -174,10 +169,9 @@ static int match_dev_by_label(struct device *dev, const void *data)
- 	const char *label = data;
- 	struct hd_struct *part = dev_to_part(dev);
+ 		ret = sysfs_create_link(devices_kobj, disk_kobj, disk_kobj->name);
+ 		if (ret) {
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index 0735e335ca6c0a..5a5ccacb804cdb 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -49,6 +49,9 @@ struct block_device {
+ #define bdev_whole(_bdev) \
+ 	((_bdev)->bd_disk->part0.bdev)
  
--	if (part->info && !strcmp(label, part->info->volname))
--		return 1;
--
--	return 0;
-+	if (!part->info || strcmp(label, part->info->volname))
-+		return 0;
-+	return 1;
- }
- 
- static dev_t devt_from_partlabel(const char *label)
++#define bdev_kobj(_bdev) \
++	(&part_to_dev((_bdev)->bd_part)->kobj)
++
+ /*
+  * Block error status values.  See block/blk-core:blk_errors for the details.
+  * Alpha cannot write a byte atomically, so we need to use 32-bit value.
 -- 
 2.29.2
 
