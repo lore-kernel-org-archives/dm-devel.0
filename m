@@ -7,58 +7,58 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 117AFC61DD8
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:45 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 32A51C61DD8
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:53 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4FC3F22240
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:41 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4FC3F22240
+	by mail.kernel.org (Postfix) with ESMTPS id A5A0122240
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A5A0122240
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-23-HGxQhMbsO_SNUE2_SOyCVQ-1; Mon, 16 Nov 2020 10:06:32 -0500
-X-MC-Unique: HGxQhMbsO_SNUE2_SOyCVQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-324-VuyBKuNgNbW_GOzSwi_R6w-1; Mon, 16 Nov 2020 10:06:43 -0500
+X-MC-Unique: VuyBKuNgNbW_GOzSwi_R6w-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1706019080AA;
-	Mon, 16 Nov 2020 15:06:24 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DA12B1084D62;
+	Mon, 16 Nov 2020 15:06:37 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E939C5DA75;
-	Mon, 16 Nov 2020 15:06:23 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B96C29F64;
+	Mon, 16 Nov 2020 15:06:37 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BD0235812C;
-	Mon, 16 Nov 2020 15:06:23 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8BA6A5812D;
+	Mon, 16 Nov 2020 15:06:37 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AGF6L1n018111 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 16 Nov 2020 10:06:21 -0500
+	id 0AGF6aeG018175 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 16 Nov 2020 10:06:36 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 68DDC110F728; Mon, 16 Nov 2020 15:06:21 +0000 (UTC)
+	id 11CE9110F728; Mon, 16 Nov 2020 15:06:36 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 621E7110F72B
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:18 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0DF95110F726
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:36 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A1877803527
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:18 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E986A803530
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:35 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-319-Bqp76Uj5NE64gSFRtJ04Uw-1; Mon, 16 Nov 2020 10:06:15 -0500
-X-MC-Unique: Bqp76Uj5NE64gSFRtJ04Uw-1
+	us-mta-427-n3ZTHSCPN8mv2JD1E3iF9Q-1; Mon, 16 Nov 2020 10:06:29 -0500
+X-MC-Unique: n3ZTHSCPN8mv2JD1E3iF9Q-1
 Received: from [2001:4bb8:180:6600:255b:7def:a93:4a09] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kefxn-0003r7-B8; Mon, 16 Nov 2020 14:58:39 +0000
+	id 1kefy5-0003vm-UU; Mon, 16 Nov 2020 14:58:58 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 16 Nov 2020 15:57:12 +0100
-Message-Id: <20201116145809.410558-22-hch@lst.de>
+Date: Mon, 16 Nov 2020 15:57:25 +0100
+Message-Id: <20201116145809.410558-35-hch@lst.de>
 In-Reply-To: <20201116145809.410558-1-hch@lst.de>
 References: <20201116145809.410558-1-hch@lst.de>
 MIME-Version: 1.0
@@ -89,8 +89,7 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 21/78] md: remove a spurious call to
-	revalidate_disk_size in update_size
+Subject: [dm-devel] [PATCH 34/78] block: propagate BLKROSET to all partitions
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -104,7 +103,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -112,28 +111,31 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-None of the ->resize methods updates the disk size, so calling
-revalidate_disk_size here won't do anything.
+When setting the whole device read-only (or clearing the read-only
+state), also update the policy for all partitions.  The s390 dasd
+driver has awlways been doing this and it makes a lot of sense.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Song Liu <song@kernel.org>
 ---
- drivers/md/md-cluster.c | 2 --
- 1 file changed, 2 deletions(-)
+ block/ioctl.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/md-cluster.c b/drivers/md/md-cluster.c
-index 87442dc59f6ca3..35e2690c1803dd 100644
---- a/drivers/md/md-cluster.c
-+++ b/drivers/md/md-cluster.c
-@@ -1299,8 +1299,6 @@ static void update_size(struct mddev *mddev, sector_t old_dev_sectors)
- 	} else {
- 		/* revert to previous sectors */
- 		ret = mddev->pers->resize(mddev, old_dev_sectors);
--		if (!ret)
--			revalidate_disk_size(mddev->gendisk, true);
- 		ret = __sendmsg(cinfo, &cmsg);
+diff --git a/block/ioctl.c b/block/ioctl.c
+index 6b785181344fe1..22f394d118c302 100644
+--- a/block/ioctl.c
++++ b/block/ioctl.c
+@@ -354,7 +354,10 @@ static int blkdev_roset(struct block_device *bdev, fmode_t mode,
  		if (ret)
- 			pr_err("%s:%d: failed to send METADATA_UPDATED msg\n",
+ 			return ret;
+ 	}
+-	bdev->bd_part->policy = n;
++	if (bdev_is_partition(bdev))
++		bdev->bd_part->policy = n;
++	else
++		set_disk_ro(bdev->bd_disk, n);
+ 	return 0;
+ }
+ 
 -- 
 2.29.2
 
