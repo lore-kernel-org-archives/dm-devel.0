@@ -7,58 +7,58 @@ X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 22D80C56202
-	for <dm-devel@archiver.kernel.org>; Wed, 18 Nov 2020 07:29:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 67CF7C56202
+	for <dm-devel@archiver.kernel.org>; Wed, 18 Nov 2020 07:29:29 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 24EC12463B
-	for <dm-devel@archiver.kernel.org>; Wed, 18 Nov 2020 07:29:25 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 24EC12463B
+	by mail.kernel.org (Postfix) with ESMTPS id 70E332462E
+	for <dm-devel@archiver.kernel.org>; Wed, 18 Nov 2020 07:29:28 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 70E332462E
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-541-59Ni3KotMSGqDBaDrTZdsw-1; Wed, 18 Nov 2020 02:29:22 -0500
-X-MC-Unique: 59Ni3KotMSGqDBaDrTZdsw-1
+ us-mta-55-U82GdZvBMo6qdwdcxBd-Rg-1; Wed, 18 Nov 2020 02:29:25 -0500
+X-MC-Unique: U82GdZvBMo6qdwdcxBd-Rg-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6B6E064081;
-	Wed, 18 Nov 2020 07:29:17 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 30FDD1007C89;
+	Wed, 18 Nov 2020 07:29:20 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 01F5F5B4BC;
-	Wed, 18 Nov 2020 07:29:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 114D65B4A0;
+	Wed, 18 Nov 2020 07:29:20 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DB4EE44A69;
-	Wed, 18 Nov 2020 07:29:14 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AF8D244A69;
+	Wed, 18 Nov 2020 07:29:19 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AGF5ttV018011 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 16 Nov 2020 10:05:56 -0500
+	id 0AGF1uBI016211 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 16 Nov 2020 10:01:56 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id D2BA4200E1E0; Mon, 16 Nov 2020 15:05:55 +0000 (UTC)
+	id DDDB52157F4F; Mon, 16 Nov 2020 15:01:55 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CE3C620182A5
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:05:52 +0000 (UTC)
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D979E2157F4A
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:01:53 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6A9CF8FFD60
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:05:52 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7FE1B80088F
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:01:53 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-342--q-OqDCHM_CfFT6fmrWtww-1; Mon, 16 Nov 2020 10:05:49 -0500
-X-MC-Unique: -q-OqDCHM_CfFT6fmrWtww-1
+	us-mta-316-mXjK4OuXOqehXfC3NF0AEA-1; Mon, 16 Nov 2020 10:01:48 -0500
+X-MC-Unique: mXjK4OuXOqehXfC3NF0AEA-1
 Received: from [2001:4bb8:180:6600:255b:7def:a93:4a09] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kefxa-0003md-8r; Mon, 16 Nov 2020 14:58:26 +0000
+	id 1kefxk-0003q9-JB; Mon, 16 Nov 2020 14:58:36 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 16 Nov 2020 15:57:03 +0100
-Message-Id: <20201116145809.410558-13-hch@lst.de>
+Date: Mon, 16 Nov 2020 15:57:10 +0100
+Message-Id: <20201116145809.410558-20-hch@lst.de>
 In-Reply-To: <20201116145809.410558-1-hch@lst.de>
 References: <20201116145809.410558-1-hch@lst.de>
 MIME-Version: 1.0
@@ -72,7 +72,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 18 Nov 2020 02:29:13 -0500
 Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
@@ -90,7 +90,7 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 12/78] dm: use set_capacity_and_notify
+Subject: [dm-devel] [PATCH 19/78] dm-raid: use set_capacity_and_notify
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -118,23 +118,23 @@ device.  This also gets the uevent notifications for the resize for free.
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm.c | 3 +--
+ drivers/md/dm-raid.c | 3 +--
  1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index c18fc25485186d..62ad44925e73ec 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1971,8 +1971,7 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
- 	if (size != dm_get_size(md))
- 		memset(&md->geometry, 0, sizeof(md->geometry));
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 9c1f7c4de65b35..294f34d2d61bae 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -700,8 +700,7 @@ static void rs_set_capacity(struct raid_set *rs)
+ {
+ 	struct gendisk *gendisk = dm_disk(dm_table_get_md(rs->ti->table));
  
--	set_capacity(md->disk, size);
--	bd_set_nr_sectors(md->bdev, size);
-+	set_capacity_and_notify(md->disk, size);
+-	set_capacity(gendisk, rs->md.array_sectors);
+-	revalidate_disk_size(gendisk, true);
++	set_capacity_and_notify(gendisk, rs->md.array_sectors);
+ }
  
- 	dm_table_event_callback(t, event_callback, md);
- 
+ /*
 -- 
 2.29.2
 
