@@ -2,70 +2,70 @@ Return-Path: <SRS0=UzxB=EW=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-8.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SIGNED_OFF_BY,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C085DC63697
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 21:21:11 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5C2A2C388F9
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 23:22:01 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 2E9AE22240
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 21:21:10 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2E9AE22240
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+	by mail.kernel.org (Postfix) with ESMTPS id 3FBB320729
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 23:21:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3FBB320729
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-176-U011ONGqNjS1bQTCD4APZg-1; Mon, 16 Nov 2020 16:21:06 -0500
-X-MC-Unique: U011ONGqNjS1bQTCD4APZg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-591-rcAmiV0ANfeWYGkOPvn6XQ-1; Mon, 16 Nov 2020 18:21:56 -0500
+X-MC-Unique: rcAmiV0ANfeWYGkOPvn6XQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D16F183DCAE;
-	Mon, 16 Nov 2020 21:20:55 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B1DCA10013C4;
-	Mon, 16 Nov 2020 21:20:55 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9B1638030B4;
+	Mon, 16 Nov 2020 23:21:51 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7C4AC5B4A9;
+	Mon, 16 Nov 2020 23:21:50 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8A5B258130;
-	Mon, 16 Nov 2020 21:20:55 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 86082183D021;
+	Mon, 16 Nov 2020 23:21:48 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AGLKY3i030566 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 16 Nov 2020 16:20:35 -0500
+	id 0AGNLkab008557 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 16 Nov 2020 18:21:46 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id C96E086D71; Mon, 16 Nov 2020 21:20:34 +0000 (UTC)
+	id 93E962086F67; Mon, 16 Nov 2020 23:21:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C0FE386D8D
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 21:20:33 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8D7492086F65
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 23:21:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 29C19102F1E3
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 21:20:33 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 15E2590E429
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 23:21:42 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-415-GKta16D2NSCNpQO09kZgfg-1; Mon, 16 Nov 2020 16:20:30 -0500
-X-MC-Unique: GKta16D2NSCNpQO09kZgfg-1
-Received: from [2001:4bb8:180:6600:255b:7def:a93:4a09] (helo=localhost)
+	us-mta-48-H2u9LkzBPeSnv-vf-nIZTQ-1; Mon, 16 Nov 2020 18:21:39 -0500
+X-MC-Unique: H2u9LkzBPeSnv-vf-nIZTQ-1
+Received: from [2601:1c0:6280:3f0::f32]
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kelvG-0007P0-K7; Mon, 16 Nov 2020 21:20:26 +0000
-From: Christoph Hellwig <hch@lst.de>
-To: Jens Axboe <axboe@kernel.dk>, Minchan Kim <minchan@kernel.org>,
-	Mike Snitzer <snitzer@redhat.com>
-Date: Mon, 16 Nov 2020 22:20:18 +0100
-Message-Id: <20201116212020.1099154-5-hch@lst.de>
-In-Reply-To: <20201116212020.1099154-1-hch@lst.de>
-References: <20201116212020.1099154-1-hch@lst.de>
+	id 1kenTh-0004T5-H3; Mon, 16 Nov 2020 23:00:05 +0000
+To: Christian Borntraeger <borntraeger@de.ibm.com>,
+	linux-kernel@vger.kernel.org
+References: <20201113225228.20563-1-rdunlap@infradead.org>
+	<344abf76-9405-58ba-2dc4-27cab88c974d@de.ibm.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+Message-ID: <c29eeb5d-0683-49eb-f729-38b14fac7745@infradead.org>
+Date: Mon, 16 Nov 2020 15:00:01 -0800
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+	Thunderbird/68.12.0
 MIME-Version: 1.0
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
-	casper.infradead.org. See http://www.infradead.org/rpr.html
+In-Reply-To: <344abf76-9405-58ba-2dc4-27cab88c974d@de.ibm.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -74,10 +74,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
-Subject: [dm-devel] [PATCH 4/6] loop: do not call set_blocksize
+Cc: linux-s390@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>,
+	Vasily Gorbik <gor@linux.ibm.com>,
+	Heiko Carstens <hca@linux.ibm.com>, dm-devel@redhat.com,
+	Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH] md: dm-writeback: add __noreturn to BUG-ging
+	function
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -91,38 +95,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-set_blocksize is used by file systems to use their preferred buffer cache
-block size.  Block drivers should not set it.
+On 11/15/20 11:30 PM, Christian Borntraeger wrote:
+> 
+> 
+> On 13.11.20 23:52, Randy Dunlap wrote:
+>> Building on arch/s390/ flags this as an error, so add the
+>> __noreturn attribute modifier to prevent the build error.
+>>
+>> cc1: some warnings being treated as errors
+>> ../drivers/md/dm-writecache.c: In function 'persistent_memory_claim':
+>> ../drivers/md/dm-writecache.c:323:1: error: no return statement in function returning non-void [-Werror=return-type]
+> 
+> ok with me, but I am asking why
+> 
+> the unreachable macro is not good enough. For x86 it obviously is.
+> 
+> form arch/s390/include/asm/bug.h
+> #define BUG() do {                                      \
+>         __EMIT_BUG(0);                                  \
+>         unreachable();                                  \
+> } while (0)
+> 
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- drivers/block/loop.c | 3 ---
- 1 file changed, 3 deletions(-)
+Hi Christian,
 
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index 9a27d4f1c08aac..b42c728620c9e4 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -1164,9 +1164,6 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
- 	size = get_loop_size(lo, file);
- 	loop_set_size(lo, size);
- 
--	set_blocksize(bdev, S_ISBLK(inode->i_mode) ?
--		      block_size(inode->i_bdev) : PAGE_SIZE);
--
- 	lo->lo_state = Lo_bound;
- 	if (part_shift)
- 		lo->lo_flags |= LO_FLAGS_PARTSCAN;
+Good question.
+I don't see any guidance about when to use one or the other etc.
+
+I see __noreturn being used 109 times and unreachable();
+being used 33 times, but only now that I look at them.
+That had nothing to do with why I used __noreturn in the patch.
+
+> 
+>>
+>> Fixes: 48debafe4f2f ("dm: add writecache target")
+>> Signed-off-by: Randy Dunlap <rdunlap@infradead.org>
+>> Cc: Mikulas Patocka <mpatocka@redhat.com>
+>> Cc: Alasdair Kergon <agk@redhat.com>
+>> Cc: Mike Snitzer <snitzer@redhat.com>
+>> Cc: dm-devel@redhat.com
+>> Cc: Heiko Carstens <hca@linux.ibm.com>
+>> Cc: Vasily Gorbik <gor@linux.ibm.com>
+>> Cc: Christian Borntraeger <borntraeger@de.ibm.com>
+>> Cc: linux-s390@vger.kernel.org
+>> ---
+>>  drivers/md/dm-writecache.c |    2 +-
+>>  1 file changed, 1 insertion(+), 1 deletion(-)
+>>
+>> --- linux-next-20201113.orig/drivers/md/dm-writecache.c
+>> +++ linux-next-20201113/drivers/md/dm-writecache.c
+>> @@ -317,7 +317,7 @@ err1:
+>>  	return r;
+>>  }
+>>  #else
+>> -static int persistent_memory_claim(struct dm_writecache *wc)
+>> +static int __noreturn persistent_memory_claim(struct dm_writecache *wc)
+>>  {
+>>  	BUG();
+>>  }
+>>
+
+thanks.
 -- 
-2.29.2
+~Randy
 
 --
 dm-devel mailing list
