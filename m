@@ -7,58 +7,59 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 62107C82540
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:57 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 64979C82555
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:01:00 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id DF3EB24248
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:56 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org DF3EB24248
+	by mail.kernel.org (Postfix) with ESMTPS id E882C24248
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E882C24248
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-307-kzmK3S1mMFy2ByVF0IIsWA-1; Mon, 16 Nov 2020 10:00:39 -0500
-X-MC-Unique: kzmK3S1mMFy2ByVF0IIsWA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-294-k4S1ADzXPzOASfvCQCMDUA-1; Mon, 16 Nov 2020 10:00:13 -0500
+X-MC-Unique: k4S1ADzXPzOASfvCQCMDUA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4D64980EF9F;
-	Mon, 16 Nov 2020 15:00:05 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F0A3D804B82;
+	Mon, 16 Nov 2020 14:59:46 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2A6A450B44;
-	Mon, 16 Nov 2020 15:00:05 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D2A806EF46;
+	Mon, 16 Nov 2020 14:59:46 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id F002658123;
-	Mon, 16 Nov 2020 15:00:04 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A7EC458122;
+	Mon, 16 Nov 2020 14:59:46 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AGExwUT015743 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 16 Nov 2020 09:59:58 -0500
+	id 0AGExVQA015534 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 16 Nov 2020 09:59:32 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 9F9591002976; Mon, 16 Nov 2020 14:59:58 +0000 (UTC)
+	id C0E1E2156A37; Mon, 16 Nov 2020 14:59:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9B6CC10031FA
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 14:59:58 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BB2022156A34
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 14:59:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8057380118B
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 14:59:58 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A255790E42F
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 14:59:31 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-296-PzfTaVfNMz6n--nN6EIQCw-1; Mon, 16 Nov 2020 09:59:51 -0500
-X-MC-Unique: PzfTaVfNMz6n--nN6EIQCw-1
+	us-mta-341--CpRA5KJOtuUtWinYnOMnA-1; Mon, 16 Nov 2020 09:59:24 -0500
+X-MC-Unique: -CpRA5KJOtuUtWinYnOMnA-1
 Received: from [2001:4bb8:180:6600:255b:7def:a93:4a09] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kefyt-0004FO-7Z; Mon, 16 Nov 2020 14:59:47 +0000
+	id 1kefyQ-000416-5g; Mon, 16 Nov 2020 14:59:18 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 16 Nov 2020 15:57:58 +0100
-Message-Id: <20201116145809.410558-68-hch@lst.de>
+Date: Mon, 16 Nov 2020 15:57:39 +0100
+Message-Id: <20201116145809.410558-49-hch@lst.de>
 In-Reply-To: <20201116145809.410558-1-hch@lst.de>
 References: <20201116145809.410558-1-hch@lst.de>
 MIME-Version: 1.0
@@ -72,7 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	"Michael S. Tsirkin" <mst@redhat.com>,
@@ -89,8 +90,8 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 67/78] block: simplify the block device claiming
-	interface
+Subject: [dm-devel] [PATCH 48/78] amiflop: use separate gendisks for Amiga
+	vs MS-DOS mode
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -104,7 +105,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -112,232 +113,193 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Stop passing the whole device as a separate argument given that it
-can be trivially deducted.
+Use separate gendisks (which share a tag_set) for the native Amgiga vs
+the MS-DOS mode instead of redirecting the gendisk lookup using a probe
+callback.  This avoids potential problems with aliased block_device
+instances and will eventually allow for removing the blk_register_region
+framework.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/block/loop.c   | 12 +++-----
- fs/block_dev.c         | 69 +++++++++++++++++++-----------------------
- include/linux/blkdev.h |  6 ++--
- 3 files changed, 38 insertions(+), 49 deletions(-)
+ drivers/block/amiflop.c | 98 +++++++++++++++++++++++------------------
+ 1 file changed, 55 insertions(+), 43 deletions(-)
 
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index b42c728620c9e4..599e94a7e69259 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -1071,7 +1071,6 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
- 	struct file	*file;
- 	struct inode	*inode;
- 	struct address_space *mapping;
--	struct block_device *claimed_bdev = NULL;
- 	int		error;
- 	loff_t		size;
- 	bool		partscan;
-@@ -1090,8 +1089,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
- 	 * here to avoid changing device under exclusive owner.
- 	 */
- 	if (!(mode & FMODE_EXCL)) {
--		claimed_bdev = bdev->bd_contains;
--		error = bd_prepare_to_claim(bdev, claimed_bdev, loop_configure);
-+		error = bd_prepare_to_claim(bdev, loop_configure);
- 		if (error)
- 			goto out_putf;
- 	}
-@@ -1178,15 +1176,15 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
- 	mutex_unlock(&loop_ctl_mutex);
- 	if (partscan)
- 		loop_reread_partitions(lo, bdev);
--	if (claimed_bdev)
--		bd_abort_claiming(bdev, claimed_bdev, loop_configure);
-+	if (!(mode & FMODE_EXCL))
-+		bd_abort_claiming(bdev, loop_configure);
- 	return 0;
+diff --git a/drivers/block/amiflop.c b/drivers/block/amiflop.c
+index 71c2b156455860..9e2d0c6a387721 100644
+--- a/drivers/block/amiflop.c
++++ b/drivers/block/amiflop.c
+@@ -201,7 +201,7 @@ struct amiga_floppy_struct {
+ 	int busy;			/* true when drive is active */
+ 	int dirty;			/* true when trackbuf is not on disk */
+ 	int status;			/* current error code for unit */
+-	struct gendisk *gendisk;
++	struct gendisk *gendisk[2];
+ 	struct blk_mq_tag_set tag_set;
+ };
  
- out_unlock:
- 	mutex_unlock(&loop_ctl_mutex);
- out_bdev:
--	if (claimed_bdev)
--		bd_abort_claiming(bdev, claimed_bdev, loop_configure);
-+	if (!(mode & FMODE_EXCL))
-+		bd_abort_claiming(bdev, loop_configure);
- out_putf:
- 	fput(file);
- out:
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index f36788d7699302..fd4df132a97590 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -110,24 +110,20 @@ EXPORT_SYMBOL(invalidate_bdev);
- int truncate_bdev_range(struct block_device *bdev, fmode_t mode,
- 			loff_t lstart, loff_t lend)
+@@ -1669,6 +1669,11 @@ static int floppy_open(struct block_device *bdev, fmode_t mode)
+ 		return -EBUSY;
+ 	}
+ 
++	if (unit[drive].type->code == FD_NODRIVE) {
++		mutex_unlock(&amiflop_mutex);
++		return -ENXIO;
++	}
++
+ 	if (mode & (FMODE_READ|FMODE_WRITE)) {
+ 		bdev_check_media_change(bdev);
+ 		if (mode & FMODE_WRITE) {
+@@ -1695,7 +1700,7 @@ static int floppy_open(struct block_device *bdev, fmode_t mode)
+ 	unit[drive].dtype=&data_types[system];
+ 	unit[drive].blocks=unit[drive].type->heads*unit[drive].type->tracks*
+ 		data_types[system].sects*unit[drive].type->sect_mult;
+-	set_capacity(unit[drive].gendisk, unit[drive].blocks);
++	set_capacity(unit[drive].gendisk[system], unit[drive].blocks);
+ 
+ 	printk(KERN_INFO "fd%d: accessing %s-disk with %s-layout\n",drive,
+ 	       unit[drive].type->name, data_types[system].name);
+@@ -1772,36 +1777,68 @@ static const struct blk_mq_ops amiflop_mq_ops = {
+ 	.queue_rq = amiflop_queue_rq,
+ };
+ 
+-static struct gendisk *fd_alloc_disk(int drive)
++static int fd_alloc_disk(int drive, int system)
  {
--	struct block_device *claimed_bdev = NULL;
--	int err;
+ 	struct gendisk *disk;
+ 
+ 	disk = alloc_disk(1);
+ 	if (!disk)
+ 		goto out;
 -
- 	/*
- 	 * If we don't hold exclusive handle for the device, upgrade to it
- 	 * while we discard the buffer cache to avoid discarding buffers
- 	 * under live filesystem.
- 	 */
- 	if (!(mode & FMODE_EXCL)) {
--		claimed_bdev = bdev->bd_contains;
--		err = bd_prepare_to_claim(bdev, claimed_bdev,
--					  truncate_bdev_range);
-+		int err = bd_prepare_to_claim(bdev, truncate_bdev_range);
- 		if (err)
- 			return err;
- 	}
-+
- 	truncate_inode_pages_range(bdev->bd_inode->i_mapping, lstart, lend);
--	if (claimed_bdev)
--		bd_abort_claiming(bdev, claimed_bdev, truncate_bdev_range);
-+	if (!(mode & FMODE_EXCL))
-+		bd_abort_claiming(bdev, truncate_bdev_range);
- 	return 0;
- }
- EXPORT_SYMBOL(truncate_bdev_range);
-@@ -1055,7 +1051,6 @@ static bool bd_may_claim(struct block_device *bdev, struct block_device *whole,
- /**
-  * bd_prepare_to_claim - claim a block device
-  * @bdev: block device of interest
-- * @whole: the whole device containing @bdev, may equal @bdev
-  * @holder: holder trying to claim @bdev
-  *
-  * Claim @bdev.  This function fails if @bdev is already claimed by another
-@@ -1065,9 +1060,10 @@ static bool bd_may_claim(struct block_device *bdev, struct block_device *whole,
-  * RETURNS:
-  * 0 if @bdev can be claimed, -EBUSY otherwise.
-  */
--int bd_prepare_to_claim(struct block_device *bdev, struct block_device *whole,
--		void *holder)
-+int bd_prepare_to_claim(struct block_device *bdev, void *holder)
- {
-+	struct block_device *whole = bdev->bd_contains;
-+
- retry:
- 	spin_lock(&bdev_lock);
- 	/* if someone else claimed, fail */
-@@ -1107,15 +1103,15 @@ static void bd_clear_claiming(struct block_device *whole, void *holder)
- /**
-  * bd_finish_claiming - finish claiming of a block device
-  * @bdev: block device of interest
-- * @whole: whole block device
-  * @holder: holder that has claimed @bdev
-  *
-  * Finish exclusive open of a block device. Mark the device as exlusively
-  * open by the holder and wake up all waiters for exclusive open to finish.
-  */
--static void bd_finish_claiming(struct block_device *bdev,
--		struct block_device *whole, void *holder)
-+static void bd_finish_claiming(struct block_device *bdev, void *holder)
- {
-+	struct block_device *whole = bdev->bd_contains;
-+
- 	spin_lock(&bdev_lock);
- 	BUG_ON(!bd_may_claim(bdev, whole, holder));
- 	/*
-@@ -1140,11 +1136,10 @@ static void bd_finish_claiming(struct block_device *bdev,
-  * also used when exclusive open is not actually desired and we just needed
-  * to block other exclusive openers for a while.
-  */
--void bd_abort_claiming(struct block_device *bdev, struct block_device *whole,
--		       void *holder)
-+void bd_abort_claiming(struct block_device *bdev, void *holder)
- {
- 	spin_lock(&bdev_lock);
--	bd_clear_claiming(whole, holder);
-+	bd_clear_claiming(bdev->bd_contains, holder);
- 	spin_unlock(&bdev_lock);
- }
- EXPORT_SYMBOL(bd_abort_claiming);
-@@ -1439,7 +1434,7 @@ static int bdev_get_gendisk(struct gendisk *disk)
- static int __blkdev_get(struct block_device *bdev, fmode_t mode, void *holder,
- 		int for_part)
- {
--	struct block_device *whole = NULL, *claiming = NULL;
-+	struct block_device *whole = NULL;
- 	struct gendisk *disk = bdev->bd_disk;
- 	int ret;
- 	bool first_open = false, unblock_events = true, need_restart;
-@@ -1460,11 +1455,7 @@ static int __blkdev_get(struct block_device *bdev, fmode_t mode, void *holder,
+-	disk->queue = blk_mq_init_sq_queue(&unit[drive].tag_set, &amiflop_mq_ops,
+-						2, BLK_MQ_F_SHOULD_MERGE);
+-	if (IS_ERR(disk->queue)) {
+-		disk->queue = NULL;
++	disk->queue = blk_mq_init_queue(&unit[drive].tag_set);
++	if (IS_ERR(disk->queue))
+ 		goto out_put_disk;
+-	}
  
- 	if (!for_part && (mode & FMODE_EXCL)) {
- 		WARN_ON_ONCE(!holder);
--		if (whole)
--			claiming = whole;
--		else
--			claiming = bdev;
--		ret = bd_prepare_to_claim(bdev, claiming, holder);
-+		ret = bd_prepare_to_claim(bdev, holder);
- 		if (ret)
- 			goto out_put_whole;
- 	}
-@@ -1541,21 +1532,23 @@ static int __blkdev_get(struct block_device *bdev, fmode_t mode, void *holder,
++	disk->major = FLOPPY_MAJOR;
++	disk->first_minor = drive + system;
++	disk->fops = &floppy_fops;
++	disk->events = DISK_EVENT_MEDIA_CHANGE;
++	if (system)
++		sprintf(disk->disk_name, "fd%d_msdos", drive);
++	else
++		sprintf(disk->disk_name, "fd%d", drive);
++	disk->private_data = &unit[drive];
++	set_capacity(disk, 880 * 2);
++
++	unit[drive].gendisk[system] = disk;
++	add_disk(disk);
++	return 0;
++
++out_put_disk:
++	disk->queue = NULL;
++	put_disk(disk);
++out:
++	return -ENOMEM;
++}
++
++static int fd_alloc_drive(int drive)
++{
+ 	unit[drive].trackbuf = kmalloc(FLOPPY_MAX_SECTORS * 512, GFP_KERNEL);
+ 	if (!unit[drive].trackbuf)
+-		goto out_cleanup_queue;
++		goto out;
+ 
+-	return disk;
++	memset(&unit[drive].tag_set, 0, sizeof(unit[drive].tag_set));
++	unit[drive].tag_set.ops = &amiflop_mq_ops;
++	unit[drive].tag_set.nr_hw_queues = 1;
++	unit[drive].tag_set.nr_maps = 1;
++	unit[drive].tag_set.queue_depth = 2;
++	unit[drive].tag_set.numa_node = NUMA_NO_NODE;
++	unit[drive].tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
++	if (blk_mq_alloc_tag_set(&unit[drive].tag_set))
++		goto out_cleanup_trackbuf;
+ 
+-out_cleanup_queue:
+-	blk_cleanup_queue(disk->queue);
+-	disk->queue = NULL;
++	pr_cont(" fd%d", drive);
++
++	if (fd_alloc_disk(drive, 0) || fd_alloc_disk(drive, 1))
++		goto out_cleanup_tagset;
++	return 0;
++
++out_cleanup_tagset:
+ 	blk_mq_free_tag_set(&unit[drive].tag_set);
+-out_put_disk:
+-	put_disk(disk);
++out_cleanup_trackbuf:
++	kfree(unit[drive].trackbuf);
+ out:
+ 	unit[drive].type->code = FD_NODRIVE;
+-	return NULL;
++	return -ENOMEM;
+ }
+ 
+ static int __init fd_probe_drives(void)
+@@ -1812,29 +1849,16 @@ static int __init fd_probe_drives(void)
+ 	drives=0;
+ 	nomem=0;
+ 	for(drive=0;drive<FD_MAX_UNITS;drive++) {
+-		struct gendisk *disk;
+ 		fd_probe(drive);
+ 		if (unit[drive].type->code == FD_NODRIVE)
+ 			continue;
+ 
+-		disk = fd_alloc_disk(drive);
+-		if (!disk) {
++		if (fd_alloc_drive(drive) < 0) {
+ 			pr_cont(" no mem for fd%d", drive);
+ 			nomem = 1;
+ 			continue;
  		}
+-		unit[drive].gendisk = disk;
+ 		drives++;
+-
+-		pr_cont(" fd%d",drive);
+-		disk->major = FLOPPY_MAJOR;
+-		disk->first_minor = drive;
+-		disk->fops = &floppy_fops;
+-		disk->events = DISK_EVENT_MEDIA_CHANGE;
+-		sprintf(disk->disk_name, "fd%d", drive);
+-		disk->private_data = &unit[drive];
+-		set_capacity(disk, 880*2);
+-		add_disk(disk);
  	}
- 	bdev->bd_openers++;
--	if (for_part)
-+	if (for_part) {
- 		bdev->bd_part_count++;
--	if (claiming)
--		bd_finish_claiming(bdev, claiming, holder);
-+	} else if (mode & FMODE_EXCL) {
-+		bd_finish_claiming(bdev, holder);
+ 	if ((drives > 0) || (nomem == 0)) {
+ 		if (drives == 0)
+@@ -1846,15 +1870,6 @@ static int __init fd_probe_drives(void)
+ 	return -ENOMEM;
+ }
+  
+-static struct kobject *floppy_find(dev_t dev, int *part, void *data)
+-{
+-	int drive = *part & 3;
+-	if (unit[drive].type->code == FD_NODRIVE)
+-		return NULL;
+-	*part = 0;
+-	return get_disk_and_module(unit[drive].gendisk);
+-}
+-
+ static int __init amiga_floppy_probe(struct platform_device *pdev)
+ {
+ 	int i, ret;
+@@ -1884,9 +1899,6 @@ static int __init amiga_floppy_probe(struct platform_device *pdev)
+ 	if (fd_probe_drives() < 1) /* No usable drives */
+ 		goto out_probe;
  
--	/*
--	 * Block event polling for write claims if requested.  Any write holder
--	 * makes the write_holder state stick until all are released.  This is
--	 * good enough and tracking individual writeable reference is too
--	 * fragile given the way @mode is used in blkdev_get/put().
--	 */
--	if (claiming && (mode & FMODE_WRITE) && !bdev->bd_write_holder &&
--	    (disk->flags & GENHD_FL_BLOCK_EVENTS_ON_EXCL_WRITE)) {
--		bdev->bd_write_holder = true;
--		unblock_events = false;
-+		/*
-+		 * Block event polling for write claims if requested.  Any write
-+		 * holder makes the write_holder state stick until all are
-+		 * released.  This is good enough and tracking individual
-+		 * writeable reference is too fragile given the way @mode is
-+		 * used in blkdev_get/put().
-+		 */
-+		if ((mode & FMODE_WRITE) && !bdev->bd_write_holder &&
-+		    (disk->flags & GENHD_FL_BLOCK_EVENTS_ON_EXCL_WRITE)) {
-+			bdev->bd_write_holder = true;
-+			unblock_events = false;
-+		}
- 	}
- 	mutex_unlock(&bdev->bd_mutex);
- 
-@@ -1576,8 +1569,8 @@ static int __blkdev_get(struct block_device *bdev, fmode_t mode, void *holder,
- 		__blkdev_put(bdev->bd_contains, mode, 1);
- 	bdev->bd_contains = NULL;
-  out_unlock_bdev:
--	if (claiming)
--		bd_abort_claiming(bdev, claiming, holder);
-+	if (!for_part && (mode & FMODE_EXCL))
-+		bd_abort_claiming(bdev, holder);
- 	mutex_unlock(&bdev->bd_mutex);
- 	disk_unblock_events(disk);
-  out_put_whole:
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 044d9dd159d882..696b2f9c5529d8 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1988,10 +1988,8 @@ void blkdev_show(struct seq_file *seqf, off_t offset);
- struct block_device *blkdev_get_by_path(const char *path, fmode_t mode,
- 		void *holder);
- struct block_device *blkdev_get_by_dev(dev_t dev, fmode_t mode, void *holder);
--int bd_prepare_to_claim(struct block_device *bdev, struct block_device *whole,
--		void *holder);
--void bd_abort_claiming(struct block_device *bdev, struct block_device *whole,
--		void *holder);
-+int bd_prepare_to_claim(struct block_device *bdev, void *holder);
-+void bd_abort_claiming(struct block_device *bdev, void *holder);
- void blkdev_put(struct block_device *bdev, fmode_t mode);
- 
- struct block_device *bdev_alloc(struct gendisk *disk, u8 partno);
+-	blk_register_region(MKDEV(FLOPPY_MAJOR, 0), 256, THIS_MODULE,
+-				floppy_find, NULL, NULL);
+-
+ 	/* initialize variables */
+ 	timer_setup(&motor_on_timer, motor_on_callback, 0);
+ 	motor_on_timer.expires = 0;
 -- 
 2.29.2
 
