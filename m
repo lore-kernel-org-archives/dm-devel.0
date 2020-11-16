@@ -7,59 +7,58 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D0E34C6369E
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:10:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E1646C5519F
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:10:57 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 5ADF6223C7
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:10:11 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5ADF6223C7
+	by mail.kernel.org (Postfix) with ESMTPS id 4D37F22240
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:10:56 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4D37F22240
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-145-aSVmhk1cNPiA1YtsdeTKOw-1; Mon, 16 Nov 2020 10:10:06 -0500
-X-MC-Unique: aSVmhk1cNPiA1YtsdeTKOw-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-497-srzutZK4Pp6dQjsJvd-IIg-1; Mon, 16 Nov 2020 10:10:09 -0500
+X-MC-Unique: srzutZK4Pp6dQjsJvd-IIg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C959A1054F9F;
-	Mon, 16 Nov 2020 15:09:59 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id ABB9A67CE7;
-	Mon, 16 Nov 2020 15:09:59 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 63B221054F9B;
+	Mon, 16 Nov 2020 15:10:03 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3F7395D9D2;
+	Mon, 16 Nov 2020 15:10:03 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 81E4F58128;
-	Mon, 16 Nov 2020 15:09:59 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 10A9F183D023;
+	Mon, 16 Nov 2020 15:10:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AGF8UwH018666 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 16 Nov 2020 10:08:30 -0500
+	id 0AGFA0OM018895 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 16 Nov 2020 10:10:00 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 104302157F4F; Mon, 16 Nov 2020 15:08:30 +0000 (UTC)
+	id C397B110F72C; Mon, 16 Nov 2020 15:10:00 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0B43D2157F4A
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:08:26 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BF044110F72A
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:09:58 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C1347811E98
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:08:26 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3FC1A102F1E5
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:09:58 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-362-2GpHhp9GMZeQjxxzIcUvWg-1; Mon, 16 Nov 2020 10:07:37 -0500
-X-MC-Unique: 2GpHhp9GMZeQjxxzIcUvWg-1
+	us-mta-218-z2CjxcVrO8OO7bKokuxr0Q-1; Mon, 16 Nov 2020 10:01:41 -0500
+X-MC-Unique: z2CjxcVrO8OO7bKokuxr0Q-1
 Received: from [2001:4bb8:180:6600:255b:7def:a93:4a09] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kefyB-0003xB-Ni; Mon, 16 Nov 2020 14:59:04 +0000
+	id 1kefxP-0003j3-EO; Mon, 16 Nov 2020 14:58:15 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 16 Nov 2020 15:57:29 +0100
-Message-Id: <20201116145809.410558-39-hch@lst.de>
+Date: Mon, 16 Nov 2020 15:56:55 +0100
+Message-Id: <20201116145809.410558-5-hch@lst.de>
 In-Reply-To: <20201116145809.410558-1-hch@lst.de>
 References: <20201116145809.410558-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,7 +72,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	"Michael S. Tsirkin" <mst@redhat.com>,
@@ -90,8 +89,8 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 38/78] block: rework requesting modules for
-	unclaimed devices
+Subject: [dm-devel] [PATCH 04/78] sd: update the bdev size in
+	sd_revalidate_disk
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,7 +104,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -113,73 +112,51 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Instead of reusing the ranges in bdev_map, add a new helper that is
-called if no ranges was found.  This is a first step to unpeel and
-eventually remove the complex ranges structure.
+This avoids the extra call to revalidate_disk_size in sd_rescan and
+is otherwise a no-op because the size did not change, or we are in
+the probe path.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Martin K. Petersen <martin.petersen@oracle.com>
 Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- block/genhd.c | 25 +++++++++++++++----------
- 1 file changed, 15 insertions(+), 10 deletions(-)
+ drivers/scsi/sd.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
 
-diff --git a/block/genhd.c b/block/genhd.c
-index 2a20372756625e..8391e7d83a6920 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -1028,6 +1028,13 @@ static ssize_t disk_badblocks_store(struct device *dev,
- 	return badblocks_store(disk->bb, page, len, 0);
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index 656bcf4940d6d1..4a34dd5b153196 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -1750,10 +1750,8 @@ static int sd_sync_cache(struct scsi_disk *sdkp, struct scsi_sense_hdr *sshdr)
+ static void sd_rescan(struct device *dev)
+ {
+ 	struct scsi_disk *sdkp = dev_get_drvdata(dev);
+-	int ret;
+ 
+-	ret = sd_revalidate_disk(sdkp->disk);
+-	revalidate_disk_size(sdkp->disk, ret == 0);
++	sd_revalidate_disk(sdkp->disk);
  }
  
-+static void request_gendisk_module(dev_t devt)
-+{
-+	if (request_module("block-major-%d-%d", MAJOR(devt), MINOR(devt)) > 0)
-+		/* Make old-style 2.4 aliases work */
-+		request_module("block-major-%d", MAJOR(devt));
-+}
-+
- static struct gendisk *lookup_gendisk(dev_t dev, int *partno)
- {
- 	struct kobject *kobj;
-@@ -1052,6 +1059,14 @@ static struct gendisk *lookup_gendisk(dev_t dev, int *partno)
- 		probe = p->probe;
- 		best = p->range - 1;
- 		*partno = dev - p->dev;
-+
-+		if (!probe) {
-+			mutex_unlock(&bdev_map_lock);
-+			module_put(owner);
-+			request_gendisk_module(dev);
-+			goto retry;
-+		}
-+
- 		if (p->lock && p->lock(dev, data) < 0) {
- 			module_put(owner);
- 			continue;
-@@ -1290,15 +1305,6 @@ static const struct seq_operations partitions_op = {
- };
- #endif
+ static int sd_ioctl(struct block_device *bdev, fmode_t mode,
+@@ -3266,7 +3264,7 @@ static int sd_revalidate_disk(struct gendisk *disk)
+ 	sdkp->first_scan = 0;
  
--
--static struct kobject *base_probe(dev_t devt, int *partno, void *data)
--{
--	if (request_module("block-major-%d-%d", MAJOR(devt), MINOR(devt)) > 0)
--		/* Make old-style 2.4 aliases work */
--		request_module("block-major-%d", MAJOR(devt));
--	return NULL;
--}
--
- static void bdev_map_init(void)
- {
- 	struct bdev_map *base;
-@@ -1310,7 +1316,6 @@ static void bdev_map_init(void)
+ 	set_capacity_revalidate_and_notify(disk,
+-		logical_to_sectors(sdp, sdkp->capacity), false);
++		logical_to_sectors(sdp, sdkp->capacity), true);
+ 	sd_config_write_same(sdkp);
+ 	kfree(buffer);
  
- 	base->dev = 1;
- 	base->range = ~0 ;
--	base->probe = base_probe;
- 	for (i = 0; i < 255; i++)
- 		bdev_map[i] = base;
- }
+@@ -3276,7 +3274,7 @@ static int sd_revalidate_disk(struct gendisk *disk)
+ 	 * capacity to 0.
+ 	 */
+ 	if (sd_zbc_revalidate_zones(sdkp))
+-		set_capacity_revalidate_and_notify(disk, 0, false);
++		set_capacity_revalidate_and_notify(disk, 0, true);
+ 
+  out:
+ 	return 0;
 -- 
 2.29.2
 
