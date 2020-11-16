@@ -7,59 +7,58 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 64979C82555
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:01:00 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 28364C82558
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:49 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E882C24248
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:59 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E882C24248
+	by mail.kernel.org (Postfix) with ESMTPS id ADA2422263
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:45 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org ADA2422263
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-294-k4S1ADzXPzOASfvCQCMDUA-1; Mon, 16 Nov 2020 10:00:13 -0500
-X-MC-Unique: k4S1ADzXPzOASfvCQCMDUA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-331-y_V8guUrPQuDGmdFQbhnBg-1; Mon, 16 Nov 2020 10:00:40 -0500
+X-MC-Unique: y_V8guUrPQuDGmdFQbhnBg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F0A3D804B82;
-	Mon, 16 Nov 2020 14:59:46 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9089AD8ED8;
+	Mon, 16 Nov 2020 15:00:14 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D2A806EF46;
-	Mon, 16 Nov 2020 14:59:46 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6EC5E50B44;
+	Mon, 16 Nov 2020 15:00:14 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A7EC458122;
-	Mon, 16 Nov 2020 14:59:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3B9C45812B;
+	Mon, 16 Nov 2020 15:00:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AGExVQA015534 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 16 Nov 2020 09:59:32 -0500
+	id 0AGF0BTi015866 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 16 Nov 2020 10:00:11 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id C0E1E2156A37; Mon, 16 Nov 2020 14:59:31 +0000 (UTC)
+	id 54D4020182A5; Mon, 16 Nov 2020 15:00:11 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BB2022156A34
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 14:59:31 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 507222011553
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:00:11 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A255790E42F
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 14:59:31 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 388CB801184
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:00:11 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-341--CpRA5KJOtuUtWinYnOMnA-1; Mon, 16 Nov 2020 09:59:24 -0500
-X-MC-Unique: -CpRA5KJOtuUtWinYnOMnA-1
+	us-mta-203-UY_82t0wO5eoWa9PwaaZ-Q-1; Mon, 16 Nov 2020 10:00:03 -0500
+X-MC-Unique: UY_82t0wO5eoWa9PwaaZ-Q-1
 Received: from [2001:4bb8:180:6600:255b:7def:a93:4a09] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kefyQ-000416-5g; Mon, 16 Nov 2020 14:59:18 +0000
+	id 1kefz4-0004J1-6I; Mon, 16 Nov 2020 14:59:58 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 16 Nov 2020 15:57:39 +0100
-Message-Id: <20201116145809.410558-49-hch@lst.de>
+Date: Mon, 16 Nov 2020 15:58:06 +0100
+Message-Id: <20201116145809.410558-76-hch@lst.de>
 In-Reply-To: <20201116145809.410558-1-hch@lst.de>
 References: <20201116145809.410558-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,7 +72,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	"Michael S. Tsirkin" <mst@redhat.com>,
@@ -90,8 +89,8 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 48/78] amiflop: use separate gendisks for Amiga
-	vs MS-DOS mode
+Subject: [dm-devel] [PATCH 75/78] block: stop using bdget_disk for partition
+	0
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,7 +104,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -113,193 +112,229 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Use separate gendisks (which share a tag_set) for the native Amgiga vs
-the MS-DOS mode instead of redirecting the gendisk lookup using a probe
-callback.  This avoids potential problems with aliased block_device
-instances and will eventually allow for removing the blk_register_region
-framework.
+We can just dereference the point in struct gendisk instead.  Also
+remove the now unused export.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/block/amiflop.c | 98 +++++++++++++++++++++++------------------
- 1 file changed, 55 insertions(+), 43 deletions(-)
+ block/genhd.c                   |  1 -
+ drivers/block/nbd.c             |  4 +---
+ drivers/block/xen-blkfront.c    | 20 +++++---------------
+ drivers/block/zram/zram_drv.c   | 25 ++-----------------------
+ drivers/md/dm.c                 | 13 ++-----------
+ drivers/s390/block/dasd_ioctl.c |  5 ++---
+ 6 files changed, 12 insertions(+), 56 deletions(-)
 
-diff --git a/drivers/block/amiflop.c b/drivers/block/amiflop.c
-index 71c2b156455860..9e2d0c6a387721 100644
---- a/drivers/block/amiflop.c
-+++ b/drivers/block/amiflop.c
-@@ -201,7 +201,7 @@ struct amiga_floppy_struct {
- 	int busy;			/* true when drive is active */
- 	int dirty;			/* true when trackbuf is not on disk */
- 	int status;			/* current error code for unit */
--	struct gendisk *gendisk;
-+	struct gendisk *gendisk[2];
- 	struct blk_mq_tag_set tag_set;
- };
+diff --git a/block/genhd.c b/block/genhd.c
+index 5dcb8b8902daae..b2a4e68171519a 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -904,7 +904,6 @@ struct block_device *bdget_disk(struct gendisk *disk, int partno)
  
-@@ -1669,6 +1669,11 @@ static int floppy_open(struct block_device *bdev, fmode_t mode)
- 		return -EBUSY;
- 	}
+ 	return bdev;
+ }
+-EXPORT_SYMBOL(bdget_disk);
  
-+	if (unit[drive].type->code == FD_NODRIVE) {
-+		mutex_unlock(&amiflop_mutex);
-+		return -ENXIO;
-+	}
-+
- 	if (mode & (FMODE_READ|FMODE_WRITE)) {
- 		bdev_check_media_change(bdev);
- 		if (mode & FMODE_WRITE) {
-@@ -1695,7 +1700,7 @@ static int floppy_open(struct block_device *bdev, fmode_t mode)
- 	unit[drive].dtype=&data_types[system];
- 	unit[drive].blocks=unit[drive].type->heads*unit[drive].type->tracks*
- 		data_types[system].sects*unit[drive].type->sect_mult;
--	set_capacity(unit[drive].gendisk, unit[drive].blocks);
-+	set_capacity(unit[drive].gendisk[system], unit[drive].blocks);
- 
- 	printk(KERN_INFO "fd%d: accessing %s-disk with %s-layout\n",drive,
- 	       unit[drive].type->name, data_types[system].name);
-@@ -1772,36 +1777,68 @@ static const struct blk_mq_ops amiflop_mq_ops = {
- 	.queue_rq = amiflop_queue_rq,
- };
- 
--static struct gendisk *fd_alloc_disk(int drive)
-+static int fd_alloc_disk(int drive, int system)
+ /*
+  * print a full list of all partitions - intended for places where the root
+diff --git a/drivers/block/nbd.c b/drivers/block/nbd.c
+index 014683968ce174..92f84ed0ba9eb6 100644
+--- a/drivers/block/nbd.c
++++ b/drivers/block/nbd.c
+@@ -1488,12 +1488,10 @@ static int nbd_open(struct block_device *bdev, fmode_t mode)
+ static void nbd_release(struct gendisk *disk, fmode_t mode)
  {
- 	struct gendisk *disk;
+ 	struct nbd_device *nbd = disk->private_data;
+-	struct block_device *bdev = bdget_disk(disk, 0);
  
- 	disk = alloc_disk(1);
- 	if (!disk)
- 		goto out;
--
--	disk->queue = blk_mq_init_sq_queue(&unit[drive].tag_set, &amiflop_mq_ops,
--						2, BLK_MQ_F_SHOULD_MERGE);
--	if (IS_ERR(disk->queue)) {
--		disk->queue = NULL;
-+	disk->queue = blk_mq_init_queue(&unit[drive].tag_set);
-+	if (IS_ERR(disk->queue))
- 		goto out_put_disk;
--	}
+ 	if (test_bit(NBD_RT_DISCONNECT_ON_CLOSE, &nbd->config->runtime_flags) &&
+-			bdev->bd_openers == 0)
++			disk->part0->bd_openers == 0)
+ 		nbd_disconnect_and_put(nbd);
+-	bdput(bdev);
  
-+	disk->major = FLOPPY_MAJOR;
-+	disk->first_minor = drive + system;
-+	disk->fops = &floppy_fops;
-+	disk->events = DISK_EVENT_MEDIA_CHANGE;
-+	if (system)
-+		sprintf(disk->disk_name, "fd%d_msdos", drive);
-+	else
-+		sprintf(disk->disk_name, "fd%d", drive);
-+	disk->private_data = &unit[drive];
-+	set_capacity(disk, 880 * 2);
-+
-+	unit[drive].gendisk[system] = disk;
-+	add_disk(disk);
-+	return 0;
-+
-+out_put_disk:
-+	disk->queue = NULL;
-+	put_disk(disk);
-+out:
-+	return -ENOMEM;
-+}
-+
-+static int fd_alloc_drive(int drive)
-+{
- 	unit[drive].trackbuf = kmalloc(FLOPPY_MAX_SECTORS * 512, GFP_KERNEL);
- 	if (!unit[drive].trackbuf)
--		goto out_cleanup_queue;
-+		goto out;
- 
--	return disk;
-+	memset(&unit[drive].tag_set, 0, sizeof(unit[drive].tag_set));
-+	unit[drive].tag_set.ops = &amiflop_mq_ops;
-+	unit[drive].tag_set.nr_hw_queues = 1;
-+	unit[drive].tag_set.nr_maps = 1;
-+	unit[drive].tag_set.queue_depth = 2;
-+	unit[drive].tag_set.numa_node = NUMA_NO_NODE;
-+	unit[drive].tag_set.flags = BLK_MQ_F_SHOULD_MERGE;
-+	if (blk_mq_alloc_tag_set(&unit[drive].tag_set))
-+		goto out_cleanup_trackbuf;
- 
--out_cleanup_queue:
--	blk_cleanup_queue(disk->queue);
--	disk->queue = NULL;
-+	pr_cont(" fd%d", drive);
-+
-+	if (fd_alloc_disk(drive, 0) || fd_alloc_disk(drive, 1))
-+		goto out_cleanup_tagset;
-+	return 0;
-+
-+out_cleanup_tagset:
- 	blk_mq_free_tag_set(&unit[drive].tag_set);
--out_put_disk:
--	put_disk(disk);
-+out_cleanup_trackbuf:
-+	kfree(unit[drive].trackbuf);
- out:
- 	unit[drive].type->code = FD_NODRIVE;
--	return NULL;
-+	return -ENOMEM;
- }
- 
- static int __init fd_probe_drives(void)
-@@ -1812,29 +1849,16 @@ static int __init fd_probe_drives(void)
- 	drives=0;
- 	nomem=0;
- 	for(drive=0;drive<FD_MAX_UNITS;drive++) {
--		struct gendisk *disk;
- 		fd_probe(drive);
- 		if (unit[drive].type->code == FD_NODRIVE)
- 			continue;
- 
--		disk = fd_alloc_disk(drive);
--		if (!disk) {
-+		if (fd_alloc_drive(drive) < 0) {
- 			pr_cont(" no mem for fd%d", drive);
- 			nomem = 1;
- 			continue;
- 		}
--		unit[drive].gendisk = disk;
- 		drives++;
--
--		pr_cont(" fd%d",drive);
--		disk->major = FLOPPY_MAJOR;
--		disk->first_minor = drive;
--		disk->fops = &floppy_fops;
--		disk->events = DISK_EVENT_MEDIA_CHANGE;
--		sprintf(disk->disk_name, "fd%d", drive);
--		disk->private_data = &unit[drive];
--		set_capacity(disk, 880*2);
--		add_disk(disk);
+ 	nbd_config_put(nbd);
+ 	nbd_put(nbd);
+diff --git a/drivers/block/xen-blkfront.c b/drivers/block/xen-blkfront.c
+index 5b1f99ca77b734..c2721ec73d7291 100644
+--- a/drivers/block/xen-blkfront.c
++++ b/drivers/block/xen-blkfront.c
+@@ -2153,7 +2153,7 @@ static void blkfront_closing(struct blkfront_info *info)
  	}
- 	if ((drives > 0) || (nomem == 0)) {
- 		if (drives == 0)
-@@ -1846,15 +1870,6 @@ static int __init fd_probe_drives(void)
- 	return -ENOMEM;
+ 
+ 	if (info->gd)
+-		bdev = bdget_disk(info->gd, 0);
++		bdev = bdgrab(info->gd->part0);
+ 
+ 	mutex_unlock(&info->mutex);
+ 
+@@ -2518,7 +2518,7 @@ static int blkfront_remove(struct xenbus_device *xbdev)
+ 
+ 	disk = info->gd;
+ 	if (disk)
+-		bdev = bdget_disk(disk, 0);
++		bdev = bdgrab(disk->part0);
+ 
+ 	info->xbdev = NULL;
+ 	mutex_unlock(&info->mutex);
+@@ -2595,19 +2595,11 @@ static int blkif_open(struct block_device *bdev, fmode_t mode)
+ static void blkif_release(struct gendisk *disk, fmode_t mode)
+ {
+ 	struct blkfront_info *info = disk->private_data;
+-	struct block_device *bdev;
+ 	struct xenbus_device *xbdev;
+ 
+ 	mutex_lock(&blkfront_mutex);
+-
+-	bdev = bdget_disk(disk, 0);
+-
+-	if (!bdev) {
+-		WARN(1, "Block device %s yanked out from us!\n", disk->disk_name);
++	if (disk->part0->bd_openers)
+ 		goto out_mutex;
+-	}
+-	if (bdev->bd_openers)
+-		goto out;
+ 
+ 	/*
+ 	 * Check if we have been instructed to close. We will have
+@@ -2619,7 +2611,7 @@ static void blkif_release(struct gendisk *disk, fmode_t mode)
+ 
+ 	if (xbdev && xbdev->state == XenbusStateClosing) {
+ 		/* pending switch to state closed */
+-		dev_info(disk_to_dev(bdev->bd_disk), "releasing disk\n");
++		dev_info(disk_to_dev(disk), "releasing disk\n");
+ 		xlvbd_release_gendisk(info);
+ 		xenbus_frontend_closed(info->xbdev);
+  	}
+@@ -2628,14 +2620,12 @@ static void blkif_release(struct gendisk *disk, fmode_t mode)
+ 
+ 	if (!xbdev) {
+ 		/* sudden device removal */
+-		dev_info(disk_to_dev(bdev->bd_disk), "releasing disk\n");
++		dev_info(disk_to_dev(disk), "releasing disk\n");
+ 		xlvbd_release_gendisk(info);
+ 		disk->private_data = NULL;
+ 		free_info(info);
+ 	}
+ 
+-out:
+-	bdput(bdev);
+ out_mutex:
+ 	mutex_unlock(&blkfront_mutex);
  }
-  
--static struct kobject *floppy_find(dev_t dev, int *part, void *data)
+diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
+index e765765263495f..e7a23638e2f181 100644
+--- a/drivers/block/zram/zram_drv.c
++++ b/drivers/block/zram/zram_drv.c
+@@ -1748,7 +1748,6 @@ static ssize_t reset_store(struct device *dev,
+ 		struct device_attribute *attr, const char *buf, size_t len)
+ {
+ 	struct zram *zram = dev_to_zram(dev);
+-	struct block_device *bdev;
+ 	unsigned short do_reset;
+ 	int ret = 0;
+ 
+@@ -1758,17 +1757,12 @@ static ssize_t reset_store(struct device *dev,
+ 	if (!do_reset)
+ 		return -EINVAL;
+ 
+-	bdev = bdget_disk(zram->disk, 0);
+-	if (!bdev)
+-		return -ENOMEM;
+-
+ 	mutex_lock(&zram->disk->mutex);
+-	if (bdev->bd_openers)
++	if (zram->disk->part0->bd_openers)
+ 		ret = -EBUSY;
+ 	else
+ 		zram_reset_device(zram);
+ 	mutex_unlock(&zram->disk->mutex);
+-	bdput(bdev);
+ 
+ 	return ret ? ret : len;
+ }
+@@ -1931,24 +1925,9 @@ static int zram_add(void)
+ 	return ret;
+ }
+ 
+-static bool zram_busy(struct zram *zram)
 -{
--	int drive = *part & 3;
--	if (unit[drive].type->code == FD_NODRIVE)
--		return NULL;
--	*part = 0;
--	return get_disk_and_module(unit[drive].gendisk);
+-	struct block_device *bdev;
+-	bool busy = false;
+-
+-	bdev = bdget_disk(zram->disk, 0);
+-	if (bdev) {
+-		if (bdev->bd_openers)
+-			busy = true;
+-		bdput(bdev);
+-	}
+-
+-	return busy;
 -}
 -
- static int __init amiga_floppy_probe(struct platform_device *pdev)
+ static int zram_remove(struct zram *zram)
  {
- 	int i, ret;
-@@ -1884,9 +1899,6 @@ static int __init amiga_floppy_probe(struct platform_device *pdev)
- 	if (fd_probe_drives() < 1) /* No usable drives */
- 		goto out_probe;
+-	if (zram_busy(zram))
++	if (zram->disk->part0->bd_openers)
+ 		return -EBUSY;
  
--	blk_register_region(MKDEV(FLOPPY_MAJOR, 0), 256, THIS_MODULE,
--				floppy_find, NULL, NULL);
+ 	del_gendisk(zram->disk);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index ac46f6e41279cc..ec48ccae50dd53 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2375,17 +2375,12 @@ struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
+  */
+ static int lock_fs(struct mapped_device *md)
+ {
+-	struct block_device *bdev;
+ 	int r;
+ 
+ 	WARN_ON(md->frozen_sb);
+ 
+-	bdev = bdget_disk(md->disk, 0);
+-	if (!bdev)
+-		return -ENOMEM;
+-	md->frozen_sb = freeze_bdev(bdev);
++	md->frozen_sb = freeze_bdev(md->disk->part0);
+ 	if (IS_ERR(md->frozen_sb)) {
+-		bdput(bdev);
+ 		r = PTR_ERR(md->frozen_sb);
+ 		md->frozen_sb = NULL;
+ 		return r;
+@@ -2398,14 +2393,10 @@ static int lock_fs(struct mapped_device *md)
+ 
+ static void unlock_fs(struct mapped_device *md)
+ {
+-	struct block_device *bdev;
 -
- 	/* initialize variables */
- 	timer_setup(&motor_on_timer, motor_on_callback, 0);
- 	motor_on_timer.expires = 0;
+ 	if (!test_bit(DMF_FROZEN, &md->flags))
+ 		return;
+ 
+-	bdev = md->frozen_sb->s_bdev;
+-	thaw_bdev(bdev, md->frozen_sb);
+-	bdput(bdev);
++	thaw_bdev(md->frozen_sb->s_bdev, md->frozen_sb);
+ 	md->frozen_sb = NULL;
+ 	clear_bit(DMF_FROZEN, &md->flags);
+ }
+diff --git a/drivers/s390/block/dasd_ioctl.c b/drivers/s390/block/dasd_ioctl.c
+index 304eba1acf163c..9f642440894655 100644
+--- a/drivers/s390/block/dasd_ioctl.c
++++ b/drivers/s390/block/dasd_ioctl.c
+@@ -220,9 +220,8 @@ dasd_format(struct dasd_block *block, struct format_data_t *fdata)
+ 	 * enabling the device later.
+ 	 */
+ 	if (fdata->start_unit == 0) {
+-		struct block_device *bdev = bdget_disk(block->gdp, 0);
+-		bdev->bd_inode->i_blkbits = blksize_bits(fdata->blksize);
+-		bdput(bdev);
++		block->gdp->part0->bd_inode->i_blkbits =
++			blksize_bits(fdata->blksize);
+ 	}
+ 
+ 	rc = base->discipline->format_device(base, fdata, 1);
 -- 
 2.29.2
 
