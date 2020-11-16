@@ -7,58 +7,58 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 014EBC5519F
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 31C29C63699
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:54 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 73C9E223C7
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:52 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 73C9E223C7
+	by mail.kernel.org (Postfix) with ESMTPS id AFEA722240
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:53 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org AFEA722240
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-436-lJpcoAeLPx-aLQfvQ-HgEA-1; Mon, 16 Nov 2020 10:06:48 -0500
-X-MC-Unique: lJpcoAeLPx-aLQfvQ-HgEA-1
+ us-mta-158-JRqqcjNaOO6yz9lhiBxsGQ-1; Mon, 16 Nov 2020 10:06:50 -0500
+X-MC-Unique: JRqqcjNaOO6yz9lhiBxsGQ-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7A517191E2A8;
-	Mon, 16 Nov 2020 15:06:43 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 993E386ABD6;
+	Mon, 16 Nov 2020 15:06:45 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5B3F72B3A0;
-	Mon, 16 Nov 2020 15:06:43 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7058827CC6;
+	Mon, 16 Nov 2020 15:06:45 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3175E58132;
-	Mon, 16 Nov 2020 15:06:43 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3D03858134;
+	Mon, 16 Nov 2020 15:06:45 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AGF6ghU018193 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 16 Nov 2020 10:06:42 -0500
+	id 0AGF6hcW018203 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 16 Nov 2020 10:06:43 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 99A902023598; Mon, 16 Nov 2020 15:06:42 +0000 (UTC)
+	id E82B0200E1E0; Mon, 16 Nov 2020 15:06:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9530C200E1E0
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E3D5020182A5
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1AF8A90E43C
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:40 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CAA658582B1
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:42 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-408-hKTiB0ZAPFy2JTUzy7DP5w-1; Mon, 16 Nov 2020 10:06:34 -0500
-X-MC-Unique: hKTiB0ZAPFy2JTUzy7DP5w-1
+	us-mta-160-SRKt68aJN5qcURg-ufsIiA-1; Mon, 16 Nov 2020 10:06:37 -0500
+X-MC-Unique: SRKt68aJN5qcURg-ufsIiA-1
 Received: from [2001:4bb8:180:6600:255b:7def:a93:4a09] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kefy3-0003uy-0n; Mon, 16 Nov 2020 14:58:55 +0000
+	id 1kefxr-0003sC-Nh; Mon, 16 Nov 2020 14:58:44 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 16 Nov 2020 15:57:23 +0100
-Message-Id: <20201116145809.410558-33-hch@lst.de>
+Date: Mon, 16 Nov 2020 15:57:15 +0100
+Message-Id: <20201116145809.410558-25-hch@lst.de>
 In-Reply-To: <20201116145809.410558-1-hch@lst.de>
 References: <20201116145809.410558-1-hch@lst.de>
 MIME-Version: 1.0
@@ -78,8 +78,9 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	"Michael S. Tsirkin" <mst@redhat.com>,
 	Jason Wang <jasowang@redhat.com>, linux-nvme@lists.infradead.org,
 	Song Liu <song@kernel.org>, dm-devel@redhat.com,
-	linux-scsi@vger.kernel.org, xen-devel@lists.xenproject.org,
-	Ilya Dryomov <idryomov@gmail.com>, Jack Wang <jinpu.wang@cloud.ionos.com>,
+	linux-scsi@vger.kernel.org, Richard Weinberger <richard@nod.at>,
+	xen-devel@lists.xenproject.org, Ilya Dryomov <idryomov@gmail.com>,
+	Jack Wang <jinpu.wang@cloud.ionos.com>,
 	Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>,
 	Josef Bacik <josef@toxicpanda.com>, nbd@other.debian.org,
 	linux-raid@vger.kernel.org,
@@ -89,7 +90,7 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 32/78] block: remove set_device_ro
+Subject: [dm-devel] [PATCH 24/78] mtd_blkdevs: don't override BLKFLSBUF
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -111,58 +112,59 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Fold set_device_ro into its only remaining caller.
+BLKFLSBUF is not supposed to actually send a flush command to the device,
+but to tear down buffer cache structures.  Remove the mtd_blkdevs
+implementation and just use the default semantics instead.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Richard Weinberger <richard@nod.at>
 ---
- block/genhd.c         | 7 -------
- block/ioctl.c         | 2 +-
- include/linux/genhd.h | 1 -
- 3 files changed, 1 insertion(+), 9 deletions(-)
+ drivers/mtd/mtd_blkdevs.c | 28 ----------------------------
+ 1 file changed, 28 deletions(-)
 
-diff --git a/block/genhd.c b/block/genhd.c
-index 8c350fecfe8bfe..b0f0b0cac9aa7f 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -1843,13 +1843,6 @@ static void set_disk_ro_uevent(struct gendisk *gd, int ro)
- 	kobject_uevent_env(&disk_to_dev(gd)->kobj, KOBJ_CHANGE, envp);
+diff --git a/drivers/mtd/mtd_blkdevs.c b/drivers/mtd/mtd_blkdevs.c
+index 0c05f77f9b216e..fb8e12d590a13a 100644
+--- a/drivers/mtd/mtd_blkdevs.c
++++ b/drivers/mtd/mtd_blkdevs.c
+@@ -298,38 +298,10 @@ static int blktrans_getgeo(struct block_device *bdev, struct hd_geometry *geo)
+ 	return ret;
  }
  
--void set_device_ro(struct block_device *bdev, int flag)
+-static int blktrans_ioctl(struct block_device *bdev, fmode_t mode,
+-			      unsigned int cmd, unsigned long arg)
 -{
--	bdev->bd_part->policy = flag;
+-	struct mtd_blktrans_dev *dev = blktrans_dev_get(bdev->bd_disk);
+-	int ret = -ENXIO;
+-
+-	if (!dev)
+-		return ret;
+-
+-	mutex_lock(&dev->lock);
+-
+-	if (!dev->mtd)
+-		goto unlock;
+-
+-	switch (cmd) {
+-	case BLKFLSBUF:
+-		ret = dev->tr->flush ? dev->tr->flush(dev) : 0;
+-		break;
+-	default:
+-		ret = -ENOTTY;
+-	}
+-unlock:
+-	mutex_unlock(&dev->lock);
+-	blktrans_dev_put(dev);
+-	return ret;
 -}
 -
--EXPORT_SYMBOL(set_device_ro);
--
- void set_disk_ro(struct gendisk *disk, int flag)
- {
- 	struct disk_part_iter piter;
-diff --git a/block/ioctl.c b/block/ioctl.c
-index 96cb4544736468..04255dc5f3bff3 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -371,7 +371,7 @@ static int blkdev_roset(struct block_device *bdev, fmode_t mode,
- 		if (ret)
- 			return ret;
- 	}
--	set_device_ro(bdev, n);
-+	bdev->bd_part->policy = n;
- 	return 0;
- }
+ static const struct block_device_operations mtd_block_ops = {
+ 	.owner		= THIS_MODULE,
+ 	.open		= blktrans_open,
+ 	.release	= blktrans_release,
+-	.ioctl		= blktrans_ioctl,
+ 	.getgeo		= blktrans_getgeo,
+ };
  
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 4b22bfd9336e1a..8427ad8bef520d 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -304,7 +304,6 @@ extern void del_gendisk(struct gendisk *gp);
- extern struct gendisk *get_gendisk(dev_t dev, int *partno);
- extern struct block_device *bdget_disk(struct gendisk *disk, int partno);
- 
--extern void set_device_ro(struct block_device *bdev, int flag);
- extern void set_disk_ro(struct gendisk *disk, int flag);
- 
- static inline int get_disk_ro(struct gendisk *disk)
 -- 
 2.29.2
 
