@@ -4,62 +4,62 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SIGNED_OFF_BY,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D214DC4742C
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1C69DC4742C
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:09:06 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4DE4122384
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:54 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4DE4122384
+	by mail.kernel.org (Postfix) with ESMTPS id 548C422240
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:09:05 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 548C422240
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-307-yCEKhp4hP8q1_JV142ruZw-1; Mon, 16 Nov 2020 10:06:50 -0500
-X-MC-Unique: yCEKhp4hP8q1_JV142ruZw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-503-b8UfMwzcPpiMqBH5LIfNLg-1; Mon, 16 Nov 2020 10:09:00 -0500
+X-MC-Unique: b8UfMwzcPpiMqBH5LIfNLg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B3ADD1085956;
-	Mon, 16 Nov 2020 15:06:43 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9457C196FD;
-	Mon, 16 Nov 2020 15:06:43 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 877CD18BA289;
+	Mon, 16 Nov 2020 15:08:54 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 69A7C5D9D2;
+	Mon, 16 Nov 2020 15:08:54 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 66ACB183D025;
-	Mon, 16 Nov 2020 15:06:43 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3CB7B5812A;
+	Mon, 16 Nov 2020 15:08:54 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AGF6gYc018194 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 16 Nov 2020 10:06:42 -0500
+	id 0AGF7dxa018488 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 16 Nov 2020 10:07:40 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 989FE202278E; Mon, 16 Nov 2020 15:06:42 +0000 (UTC)
+	id CD886200E1E0; Mon, 16 Nov 2020 15:07:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 93798201EE2E
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C8B77202278E
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:07:39 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BC3901823613
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:41 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AFD841823614
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:07:39 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-596-a3ZKDwQjMX-2kTbA9EYi3A-1; Mon, 16 Nov 2020 10:05:02 -0500
-X-MC-Unique: a3ZKDwQjMX-2kTbA9EYi3A-1
+	us-mta-231-EHhZA-OoP0itICVAgMHr3w-1; Mon, 16 Nov 2020 10:07:34 -0500
+X-MC-Unique: EHhZA-OoP0itICVAgMHr3w-1
 Received: from [2001:4bb8:180:6600:255b:7def:a93:4a09] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kefy1-0003uf-KX; Mon, 16 Nov 2020 14:58:53 +0000
+	id 1kefxU-0003l1-V7; Mon, 16 Nov 2020 14:58:21 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 16 Nov 2020 15:57:22 +0100
-Message-Id: <20201116145809.410558-32-hch@lst.de>
+Date: Mon, 16 Nov 2020 15:56:59 +0100
+Message-Id: <20201116145809.410558-9-hch@lst.de>
 In-Reply-To: <20201116145809.410558-1-hch@lst.de>
 References: <20201116145809.410558-1-hch@lst.de>
 MIME-Version: 1.0
@@ -90,7 +90,7 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 31/78] loop: use set_disk_ro
+Subject: [dm-devel] [PATCH 08/78] nbd: refactor size updates
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -104,7 +104,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -112,27 +112,116 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Use set_disk_ro instead of set_device_ro to match all other block
-drivers and to ensure all partitions mirror the read-only flag.
+Merge nbd_size_set and nbd_size_update into a single function that also
+updates the nbd_config fields.  This new function takes the device size
+in bytes as the first argument, and the blocksize as the second argument,
+simplifying the calculations required in most callers.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Josef Bacik <josef@toxicpanda.com>
 ---
- drivers/block/loop.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/block/nbd.c | 44 ++++++++++++++++++--------------------------
+ 1 file changed, 18 insertions(+), 26 deletions(-)
 
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index 84a36c242e5550..41caf799df721f 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -1134,7 +1134,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
- 	if (error)
- 		goto out_unlock;
+diff --git a/drivers/block/nbd.c b/drivers/block/nbd.c
+index 48054051e281e6..6e8f2ff715c661 100644
+--- a/drivers/block/nbd.c
++++ b/drivers/block/nbd.c
+@@ -296,28 +296,30 @@ static void nbd_size_clear(struct nbd_device *nbd)
+ 	}
+ }
  
--	set_device_ro(bdev, (lo->lo_flags & LO_FLAGS_READ_ONLY) != 0);
-+	set_disk_ro(lo->lo_disk, (lo->lo_flags & LO_FLAGS_READ_ONLY) != 0);
+-static void nbd_size_update(struct nbd_device *nbd)
++static void nbd_set_size(struct nbd_device *nbd, loff_t bytesize,
++		loff_t blksize)
+ {
+-	struct nbd_config *config = nbd->config;
+-	sector_t nr_sectors = config->bytesize >> 9;
+ 	struct block_device *bdev;
  
- 	lo->use_dio = lo->lo_flags & LO_FLAGS_DIRECT_IO;
- 	lo->lo_device = bdev;
++	nbd->config->bytesize = bytesize;
++	nbd->config->blksize = blksize;
++
+ 	if (!nbd->task_recv)
+ 		return;
+ 
+-	if (config->flags & NBD_FLAG_SEND_TRIM) {
+-		nbd->disk->queue->limits.discard_granularity = config->blksize;
+-		nbd->disk->queue->limits.discard_alignment = config->blksize;
++	if (nbd->config->flags & NBD_FLAG_SEND_TRIM) {
++		nbd->disk->queue->limits.discard_granularity = blksize;
++		nbd->disk->queue->limits.discard_alignment = blksize;
+ 		blk_queue_max_discard_sectors(nbd->disk->queue, UINT_MAX);
+ 	}
+-	blk_queue_logical_block_size(nbd->disk->queue, config->blksize);
+-	blk_queue_physical_block_size(nbd->disk->queue, config->blksize);
++	blk_queue_logical_block_size(nbd->disk->queue, blksize);
++	blk_queue_physical_block_size(nbd->disk->queue, blksize);
+ 
+-	set_capacity(nbd->disk, nr_sectors);
++	set_capacity(nbd->disk, bytesize >> 9);
+ 	bdev = bdget_disk(nbd->disk, 0);
+ 	if (bdev) {
+ 		if (bdev->bd_disk)
+-			bd_set_nr_sectors(bdev, nr_sectors);
++			bd_set_nr_sectors(bdev, bytesize >> 9);
+ 		else
+ 			set_bit(GD_NEED_PART_SCAN, &nbd->disk->state);
+ 		bdput(bdev);
+@@ -325,15 +327,6 @@ static void nbd_size_update(struct nbd_device *nbd)
+ 	kobject_uevent(&nbd_to_dev(nbd)->kobj, KOBJ_CHANGE);
+ }
+ 
+-static void nbd_size_set(struct nbd_device *nbd, loff_t blocksize,
+-			 loff_t nr_blocks)
+-{
+-	struct nbd_config *config = nbd->config;
+-	config->blksize = blocksize;
+-	config->bytesize = blocksize * nr_blocks;
+-	nbd_size_update(nbd);
+-}
+-
+ static void nbd_complete_rq(struct request *req)
+ {
+ 	struct nbd_cmd *cmd = blk_mq_rq_to_pdu(req);
+@@ -1311,7 +1304,7 @@ static int nbd_start_device(struct nbd_device *nbd)
+ 		args->index = i;
+ 		queue_work(nbd->recv_workq, &args->work);
+ 	}
+-	nbd_size_update(nbd);
++	nbd_set_size(nbd, config->bytesize, config->blksize);
+ 	return error;
+ }
+ 
+@@ -1390,15 +1383,14 @@ static int __nbd_ioctl(struct block_device *bdev, struct nbd_device *nbd,
+ 			arg = NBD_DEF_BLKSIZE;
+ 		if (!nbd_is_valid_blksize(arg))
+ 			return -EINVAL;
+-		nbd_size_set(nbd, arg,
+-			     div_s64(config->bytesize, arg));
++		nbd_set_size(nbd, config->bytesize, arg);
+ 		return 0;
+ 	case NBD_SET_SIZE:
+-		nbd_size_set(nbd, config->blksize,
+-			     div_s64(arg, config->blksize));
++		nbd_set_size(nbd, arg, config->blksize);
+ 		return 0;
+ 	case NBD_SET_SIZE_BLOCKS:
+-		nbd_size_set(nbd, config->blksize, arg);
++		nbd_set_size(nbd, arg * config->blksize,
++			     config->blksize);
+ 		return 0;
+ 	case NBD_SET_TIMEOUT:
+ 		nbd_set_cmd_timeout(nbd, arg);
+@@ -1828,7 +1820,7 @@ static int nbd_genl_size_set(struct genl_info *info, struct nbd_device *nbd)
+ 	}
+ 
+ 	if (bytes != config->bytesize || bsize != config->blksize)
+-		nbd_size_set(nbd, bsize, div64_u64(bytes, bsize));
++		nbd_set_size(nbd, bytes, bsize);
+ 	return 0;
+ }
+ 
 -- 
 2.29.2
 
