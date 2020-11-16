@@ -7,58 +7,59 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C3A0DC61DD8
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:10:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D0E34C6369E
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:10:11 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4235D22240
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:10:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4235D22240
+	by mail.kernel.org (Postfix) with ESMTPS id 5ADF6223C7
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:10:11 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5ADF6223C7
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-445-mZU6lCOmP_22NeFJ7hhKNg-1; Mon, 16 Nov 2020 10:10:00 -0500
-X-MC-Unique: mZU6lCOmP_22NeFJ7hhKNg-1
+ us-mta-145-aSVmhk1cNPiA1YtsdeTKOw-1; Mon, 16 Nov 2020 10:10:06 -0500
+X-MC-Unique: aSVmhk1cNPiA1YtsdeTKOw-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A497B11CC7E2;
-	Mon, 16 Nov 2020 15:09:55 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 828CB5C269;
-	Mon, 16 Nov 2020 15:09:55 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C959A1054F9F;
+	Mon, 16 Nov 2020 15:09:59 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id ABB9A67CE7;
+	Mon, 16 Nov 2020 15:09:59 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2D055183D024;
-	Mon, 16 Nov 2020 15:09:55 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 81E4F58128;
+	Mon, 16 Nov 2020 15:09:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AGF7dWG018483 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 16 Nov 2020 10:07:39 -0500
+	id 0AGF8UwH018666 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 16 Nov 2020 10:08:30 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 61EB9200E1E0; Mon, 16 Nov 2020 15:07:39 +0000 (UTC)
+	id 104302157F4F; Mon, 16 Nov 2020 15:08:30 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5CCB92023598
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:07:36 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0B43D2157F4A
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:08:26 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E2E9D102F1E0
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:07:36 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C1347811E98
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:08:26 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-146-ovkXk_9SMdme312M3L54OQ-1; Mon, 16 Nov 2020 10:07:31 -0500
-X-MC-Unique: ovkXk_9SMdme312M3L54OQ-1
+	us-mta-362-2GpHhp9GMZeQjxxzIcUvWg-1; Mon, 16 Nov 2020 10:07:37 -0500
+X-MC-Unique: 2GpHhp9GMZeQjxxzIcUvWg-1
 Received: from [2001:4bb8:180:6600:255b:7def:a93:4a09] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kefxo-0003rX-KZ; Mon, 16 Nov 2020 14:58:41 +0000
+	id 1kefyB-0003xB-Ni; Mon, 16 Nov 2020 14:59:04 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 16 Nov 2020 15:57:13 +0100
-Message-Id: <20201116145809.410558-23-hch@lst.de>
+Date: Mon, 16 Nov 2020 15:57:29 +0100
+Message-Id: <20201116145809.410558-39-hch@lst.de>
 In-Reply-To: <20201116145809.410558-1-hch@lst.de>
 References: <20201116145809.410558-1-hch@lst.de>
 MIME-Version: 1.0
@@ -72,7 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	"Michael S. Tsirkin" <mst@redhat.com>,
@@ -89,8 +90,8 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 22/78] virtio-blk: remove a spurious call to
-	revalidate_disk_size
+Subject: [dm-devel] [PATCH 38/78] block: rework requesting modules for
+	unclaimed devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -112,29 +113,73 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-revalidate_disk_size just updates the block device size from the disk
-size.  Thus calling it from virtblk_update_cache_mode doesn't actually
-do anything.
+Instead of reusing the ranges in bdev_map, add a new helper that is
+called if no ranges was found.  This is a first step to unpeel and
+eventually remove the complex ranges structure.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Stefan Hajnoczi <stefanha@redhat.com>
-Acked-by: Michael S. Tsirkin <mst@redhat.com>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/block/virtio_blk.c | 1 -
- 1 file changed, 1 deletion(-)
+ block/genhd.c | 25 +++++++++++++++----------
+ 1 file changed, 15 insertions(+), 10 deletions(-)
 
-diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
-index 3e812b4c32e669..145606dc52db1e 100644
---- a/drivers/block/virtio_blk.c
-+++ b/drivers/block/virtio_blk.c
-@@ -598,7 +598,6 @@ static void virtblk_update_cache_mode(struct virtio_device *vdev)
- 	struct virtio_blk *vblk = vdev->priv;
- 
- 	blk_queue_write_cache(vblk->disk->queue, writeback, false);
--	revalidate_disk_size(vblk->disk, true);
+diff --git a/block/genhd.c b/block/genhd.c
+index 2a20372756625e..8391e7d83a6920 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -1028,6 +1028,13 @@ static ssize_t disk_badblocks_store(struct device *dev,
+ 	return badblocks_store(disk->bb, page, len, 0);
  }
  
- static const char *const virtblk_cache_types[] = {
++static void request_gendisk_module(dev_t devt)
++{
++	if (request_module("block-major-%d-%d", MAJOR(devt), MINOR(devt)) > 0)
++		/* Make old-style 2.4 aliases work */
++		request_module("block-major-%d", MAJOR(devt));
++}
++
+ static struct gendisk *lookup_gendisk(dev_t dev, int *partno)
+ {
+ 	struct kobject *kobj;
+@@ -1052,6 +1059,14 @@ static struct gendisk *lookup_gendisk(dev_t dev, int *partno)
+ 		probe = p->probe;
+ 		best = p->range - 1;
+ 		*partno = dev - p->dev;
++
++		if (!probe) {
++			mutex_unlock(&bdev_map_lock);
++			module_put(owner);
++			request_gendisk_module(dev);
++			goto retry;
++		}
++
+ 		if (p->lock && p->lock(dev, data) < 0) {
+ 			module_put(owner);
+ 			continue;
+@@ -1290,15 +1305,6 @@ static const struct seq_operations partitions_op = {
+ };
+ #endif
+ 
+-
+-static struct kobject *base_probe(dev_t devt, int *partno, void *data)
+-{
+-	if (request_module("block-major-%d-%d", MAJOR(devt), MINOR(devt)) > 0)
+-		/* Make old-style 2.4 aliases work */
+-		request_module("block-major-%d", MAJOR(devt));
+-	return NULL;
+-}
+-
+ static void bdev_map_init(void)
+ {
+ 	struct bdev_map *base;
+@@ -1310,7 +1316,6 @@ static void bdev_map_init(void)
+ 
+ 	base->dev = 1;
+ 	base->range = ~0 ;
+-	base->probe = base_probe;
+ 	for (i = 0; i < 255; i++)
+ 		bdev_map[i] = base;
+ }
 -- 
 2.29.2
 
