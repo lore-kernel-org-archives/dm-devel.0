@@ -7,59 +7,59 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6E9AAC5519F
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:40 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B4C04C4742C
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:41 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id D484422240
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:39 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D484422240
+	by mail.kernel.org (Postfix) with ESMTPS id 1D59722384
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:06:40 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1D59722384
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-225-yN9jLMBhNQGjdxRCElfzfw-1; Mon, 16 Nov 2020 10:06:34 -0500
-X-MC-Unique: yN9jLMBhNQGjdxRCElfzfw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-23-ysHXoz9mMI-IXf7BqCLKlg-1; Mon, 16 Nov 2020 10:06:33 -0500
+X-MC-Unique: ysHXoz9mMI-IXf7BqCLKlg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C02396D58D;
-	Mon, 16 Nov 2020 15:06:26 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A31745DA75;
-	Mon, 16 Nov 2020 15:06:26 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1909D6D24D;
+	Mon, 16 Nov 2020 15:06:24 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E8C2F6198C;
+	Mon, 16 Nov 2020 15:06:23 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 794005812E;
-	Mon, 16 Nov 2020 15:06:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BC037183D024;
+	Mon, 16 Nov 2020 15:06:23 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AGF6Mwp018121 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 16 Nov 2020 10:06:22 -0500
+	id 0AGF6LLC018110 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 16 Nov 2020 10:06:21 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 791522157F4A; Mon, 16 Nov 2020 15:06:22 +0000 (UTC)
+	id 686C4110F726; Mon, 16 Nov 2020 15:06:21 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 740792157F26
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:19 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 61637110F72A
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:16 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 13D7780159F
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:19 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8774E185A790
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 15:06:16 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-591-XQq53fCLOsKKN7Ru3DDb5w-1; Mon, 16 Nov 2020 10:05:58 -0500
-X-MC-Unique: XQq53fCLOsKKN7Ru3DDb5w-1
+	us-mta-239-COjculDSMbGQfWdC5uOgqw-1; Mon, 16 Nov 2020 10:06:12 -0500
+X-MC-Unique: COjculDSMbGQfWdC5uOgqw-1
 Received: from [2001:4bb8:180:6600:255b:7def:a93:4a09] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kefxy-0003tn-LS; Mon, 16 Nov 2020 14:58:51 +0000
+	id 1kefyD-0003xZ-0p; Mon, 16 Nov 2020 14:59:05 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 16 Nov 2020 15:57:20 +0100
-Message-Id: <20201116145809.410558-30-hch@lst.de>
+Date: Mon, 16 Nov 2020 15:57:30 +0100
+Message-Id: <20201116145809.410558-40-hch@lst.de>
 In-Reply-To: <20201116145809.410558-1-hch@lst.de>
 References: <20201116145809.410558-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,8 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Mimecast-Spam-Signature: yes
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	"Michael S. Tsirkin" <mst@redhat.com>,
@@ -91,8 +90,8 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 29/78] dasd: implement ->set_read_only to hook
-	into BLKROSET processing
+Subject: [dm-devel] [PATCH 39/78] block: add an optional probe callback to
+	major_names
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -106,7 +105,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -114,94 +113,94 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Implement the ->set_read_only method instead of parsing the actual
-ioctl command.
+Add a callback to the major_names array that allows a driver to override
+how to probe for dev_t that doesn't currently have a gendisk registered.
+This will help separating the lookup of the gendisk by dev_t vs probe
+action for a not currently registered dev_t.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/s390/block/dasd.c       |  1 +
- drivers/s390/block/dasd_int.h   |  3 ++-
- drivers/s390/block/dasd_ioctl.c | 27 +++++++++------------------
- 3 files changed, 12 insertions(+), 19 deletions(-)
+ block/genhd.c         | 21 ++++++++++++++++++---
+ include/linux/genhd.h |  5 ++++-
+ 2 files changed, 22 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/s390/block/dasd.c b/drivers/s390/block/dasd.c
-index eb17fea8075c6f..db24e04ee9781e 100644
---- a/drivers/s390/block/dasd.c
-+++ b/drivers/s390/block/dasd.c
-@@ -3394,6 +3394,7 @@ dasd_device_operations = {
- 	.ioctl		= dasd_ioctl,
- 	.compat_ioctl	= dasd_ioctl,
- 	.getgeo		= dasd_getgeo,
-+	.set_read_only	= dasd_set_read_only,
- };
+diff --git a/block/genhd.c b/block/genhd.c
+index 8391e7d83a6920..dc8690bc281c16 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -399,6 +399,7 @@ static struct blk_major_name {
+ 	struct blk_major_name *next;
+ 	int major;
+ 	char name[16];
++	void (*probe)(dev_t devt);
+ } *major_names[BLKDEV_MAJOR_HASH_SIZE];
+ static DEFINE_MUTEX(major_names_lock);
  
- /*******************************************************************************
-diff --git a/drivers/s390/block/dasd_int.h b/drivers/s390/block/dasd_int.h
-index fa552f9f166671..c59a0d63b506e6 100644
---- a/drivers/s390/block/dasd_int.h
-+++ b/drivers/s390/block/dasd_int.h
-@@ -844,7 +844,8 @@ int dasd_scan_partitions(struct dasd_block *);
- void dasd_destroy_partitions(struct dasd_block *);
- 
- /* externals in dasd_ioctl.c */
--int  dasd_ioctl(struct block_device *, fmode_t, unsigned int, unsigned long);
-+int dasd_ioctl(struct block_device *, fmode_t, unsigned int, unsigned long);
-+int dasd_set_read_only(struct block_device *bdev, bool ro);
- 
- /* externals in dasd_proc.c */
- int dasd_proc_init(void);
-diff --git a/drivers/s390/block/dasd_ioctl.c b/drivers/s390/block/dasd_ioctl.c
-index cb6427fb9f3d16..3359559517bfcf 100644
---- a/drivers/s390/block/dasd_ioctl.c
-+++ b/drivers/s390/block/dasd_ioctl.c
-@@ -532,28 +532,22 @@ static int dasd_ioctl_information(struct dasd_block *block, void __user *argp,
- /*
-  * Set read only
+@@ -441,7 +442,8 @@ void blkdev_show(struct seq_file *seqf, off_t offset)
+  * See Documentation/admin-guide/devices.txt for the list of allocated
+  * major numbers.
   */
--static int
--dasd_ioctl_set_ro(struct block_device *bdev, void __user *argp)
-+int dasd_set_read_only(struct block_device *bdev, bool ro)
+-int register_blkdev(unsigned int major, const char *name)
++int __register_blkdev(unsigned int major, const char *name,
++		void (*probe)(dev_t devt))
  {
- 	struct dasd_device *base;
--	int intval, rc;
-+	int rc;
+ 	struct blk_major_name **n, *p;
+ 	int index, ret = 0;
+@@ -480,6 +482,7 @@ int register_blkdev(unsigned int major, const char *name)
+ 	}
  
--	if (!capable(CAP_SYS_ADMIN))
--		return -EACCES;
-+	/* do not manipulate hardware state for partitions */
- 	if (bdev_is_partition(bdev))
--		// ro setting is not allowed for partitions
--		return -EINVAL;
--	if (get_user(intval, (int __user *)argp))
--		return -EFAULT;
-+		return 0;
-+
- 	base = dasd_device_from_gendisk(bdev->bd_disk);
- 	if (!base)
- 		return -ENODEV;
--	if (!intval && test_bit(DASD_FLAG_DEVICE_RO, &base->flags)) {
--		dasd_put_device(base);
--		return -EROFS;
--	}
--	set_disk_ro(bdev->bd_disk, intval);
--	rc = dasd_set_feature(base->cdev, DASD_FEATURE_READONLY, intval);
-+	if (!ro && test_bit(DASD_FLAG_DEVICE_RO, &base->flags))
-+		rc = -EROFS;
-+	else
-+		rc = dasd_set_feature(base->cdev, DASD_FEATURE_READONLY, ro);
- 	dasd_put_device(base);
- 	return rc;
+ 	p->major = major;
++	p->probe = probe;
+ 	strlcpy(p->name, name, sizeof(p->name));
+ 	p->next = NULL;
+ 	index = major_to_index(major);
+@@ -502,8 +505,7 @@ int register_blkdev(unsigned int major, const char *name)
+ 	mutex_unlock(&major_names_lock);
+ 	return ret;
  }
-@@ -633,9 +627,6 @@ int dasd_ioctl(struct block_device *bdev, fmode_t mode,
- 	case BIODASDPRRST:
- 		rc = dasd_ioctl_reset_profile(block);
- 		break;
--	case BLKROSET:
--		rc = dasd_ioctl_set_ro(bdev, argp);
--		break;
- 	case DASDAPIVER:
- 		rc = dasd_ioctl_api_version(argp);
- 		break;
+-
+-EXPORT_SYMBOL(register_blkdev);
++EXPORT_SYMBOL(__register_blkdev);
+ 
+ void unregister_blkdev(unsigned int major, const char *name)
+ {
+@@ -1030,6 +1032,19 @@ static ssize_t disk_badblocks_store(struct device *dev,
+ 
+ static void request_gendisk_module(dev_t devt)
+ {
++	unsigned int major = MAJOR(devt);
++	struct blk_major_name **n;
++
++	mutex_lock(&major_names_lock);
++	for (n = &major_names[major_to_index(major)]; *n; n = &(*n)->next) {
++		if ((*n)->major == major && (*n)->probe) {
++			(*n)->probe(devt);
++			mutex_unlock(&major_names_lock);
++			return;
++		}
++	}
++	mutex_unlock(&major_names_lock);
++
+ 	if (request_module("block-major-%d-%d", MAJOR(devt), MINOR(devt)) > 0)
+ 		/* Make old-style 2.4 aliases work */
+ 		request_module("block-major-%d", MAJOR(devt));
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index 8427ad8bef520d..04f6a6bf577a90 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -366,7 +366,10 @@ extern void blk_unregister_region(dev_t devt, unsigned long range);
+ 
+ #define alloc_disk(minors) alloc_disk_node(minors, NUMA_NO_NODE)
+ 
+-int register_blkdev(unsigned int major, const char *name);
++int __register_blkdev(unsigned int major, const char *name,
++		void (*probe)(dev_t devt));
++#define register_blkdev(major, name) \
++	__register_blkdev(major, name, NULL)
+ void unregister_blkdev(unsigned int major, const char *name);
+ 
+ void revalidate_disk_size(struct gendisk *disk, bool verbose);
 -- 
 2.29.2
 
