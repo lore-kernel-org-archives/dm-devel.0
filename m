@@ -7,59 +7,59 @@ X-Spam-Status: No, score=-9.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D5C77C83011
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:33 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9FC45C83014
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:34 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 38D0F22263
-	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 38D0F22263
+	by mail.kernel.org (Postfix) with ESMTPS id 02C2522263
+	for <dm-devel@archiver.kernel.org>; Mon, 16 Nov 2020 15:00:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 02C2522263
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-159-rLNt9DlvPsO5VyQ6uvpMnA-1; Mon, 16 Nov 2020 10:00:27 -0500
-X-MC-Unique: rLNt9DlvPsO5VyQ6uvpMnA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-428-P8cwWgIMNd2FVaOHk8b10g-1; Mon, 16 Nov 2020 10:00:28 -0500
+X-MC-Unique: P8cwWgIMNd2FVaOHk8b10g-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 490F9884DFC;
-	Mon, 16 Nov 2020 14:59:53 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2B5A95D9D2;
-	Mon, 16 Nov 2020 14:59:53 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3966A8C48FE;
+	Mon, 16 Nov 2020 14:59:57 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1889C196FD;
+	Mon, 16 Nov 2020 14:59:57 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EBC49183D024;
-	Mon, 16 Nov 2020 14:59:52 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E172E5812B;
+	Mon, 16 Nov 2020 14:59:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AGExbuw015598 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 16 Nov 2020 09:59:37 -0500
+	id 0AGExql8015694 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 16 Nov 2020 09:59:52 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 40CCB202278E; Mon, 16 Nov 2020 14:59:37 +0000 (UTC)
+	id E7DF66FA72; Mon, 16 Nov 2020 14:59:51 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3CA3D2011553
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 14:59:37 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E00106FA7B
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 14:59:48 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 24222185A78B
-	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 14:59:37 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 80D0A185A7A2
+	for <dm-devel@redhat.com>; Mon, 16 Nov 2020 14:59:48 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-441-KYqmdScVP4-3_kB5id_pRg-1; Mon, 16 Nov 2020 09:59:32 -0500
-X-MC-Unique: KYqmdScVP4-3_kB5id_pRg-1
+	us-mta-440-Vsp-h6cJPf2kNUViYDue5A-1; Mon, 16 Nov 2020 09:59:45 -0500
+X-MC-Unique: Vsp-h6cJPf2kNUViYDue5A-1
 Received: from [2001:4bb8:180:6600:255b:7def:a93:4a09] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kefyX-00044O-9l; Mon, 16 Nov 2020 14:59:25 +0000
+	id 1kefyl-0004C5-Vu; Mon, 16 Nov 2020 14:59:40 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 16 Nov 2020 15:57:44 +0100
-Message-Id: <20201116145809.410558-54-hch@lst.de>
+Date: Mon, 16 Nov 2020 15:57:53 +0100
+Message-Id: <20201116145809.410558-63-hch@lst.de>
 In-Reply-To: <20201116145809.410558-1-hch@lst.de>
 References: <20201116145809.410558-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,7 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	"Michael S. Tsirkin" <mst@redhat.com>,
@@ -90,8 +90,7 @@ Cc: Justin Sanders <justin@coraid.com>, Mike Snitzer <snitzer@redhat.com>,
 	Minchan Kim <minchan@kernel.org>, linux-fsdevel@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 53/78] blk-cgroup: fix a hd_struct leak in
-	blkcg_fill_root_iostats
+Subject: [dm-devel] [PATCH 62/78] loop: do not call set_blocksize
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,7 +104,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -113,26 +112,28 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-disk_get_part needs to be paired with a disk_put_part.
+set_blocksize is used by file systems to use their preferred buffer cache
+block size.  Block drivers should not set it.
 
-Fixes: ef45fe470e1 ("blk-cgroup: show global disk stats in root cgroup io.stat")
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/blk-cgroup.c | 1 +
- 1 file changed, 1 insertion(+)
+ drivers/block/loop.c | 3 ---
+ 1 file changed, 3 deletions(-)
 
-diff --git a/block/blk-cgroup.c b/block/blk-cgroup.c
-index c68bdf58c9a6e1..54fbe1e80cc41a 100644
---- a/block/blk-cgroup.c
-+++ b/block/blk-cgroup.c
-@@ -849,6 +849,7 @@ static void blkcg_fill_root_iostats(void)
- 			blkg_iostat_set(&blkg->iostat.cur, &tmp);
- 			u64_stats_update_end(&blkg->iostat.sync);
- 		}
-+		disk_put_part(part);
- 	}
- }
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index 9a27d4f1c08aac..b42c728620c9e4 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -1164,9 +1164,6 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
+ 	size = get_loop_size(lo, file);
+ 	loop_set_size(lo, size);
  
+-	set_blocksize(bdev, S_ISBLK(inode->i_mode) ?
+-		      block_size(inode->i_bdev) : PAGE_SIZE);
+-
+ 	lo->lo_state = Lo_bound;
+ 	if (part_shift)
+ 		lo->lo_flags |= LO_FLAGS_PARTSCAN;
 -- 
 2.29.2
 
