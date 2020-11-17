@@ -7,70 +7,70 @@ X-Spam-Status: No, score=-12.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
 	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E452AC2D0E4
-	for <dm-devel@archiver.kernel.org>; Tue, 17 Nov 2020 17:02:23 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D99ADC2D0E4
+	for <dm-devel@archiver.kernel.org>; Tue, 17 Nov 2020 17:03:06 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 53E7322447
-	for <dm-devel@archiver.kernel.org>; Tue, 17 Nov 2020 17:02:23 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTPS id 517E824654
+	for <dm-devel@archiver.kernel.org>; Tue, 17 Nov 2020 17:03:06 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Y26lJKqd"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 53E7322447
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eMcaQ3Zq"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 517E824654
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1605632542;
+	s=mimecast20190719; t=1605632585;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=XTwMvN98fr0zd0IR4MJJMG56kNmY8k1EusLGAS6Tdjw=;
-	b=Y26lJKqd8a5nHd3e3F/aA1azFw2leeOtn9H/E5AerNYySBi19k2mPw2cT+icRGG6sUI4tT
-	eChIbByVhwLvHRqRc7AC6n4bUTVwTc6GZNl9vd9/Gmb485IIqMcSMw69nX/3lmOtxO/ST0
-	IrpMEbkRW0YKJfYf+PLUV5r/c9nWliU=
+	bh=ue3zC7T8fmQuCaDXGubGJRGPv3cmkNzMcgCnlGDArDU=;
+	b=eMcaQ3ZqFcK5w4FsZyMSuU/Bgcnii4lEuqW9Q+T/awyOXyB7ca6zRex5r3bZMEPN9owKdK
+	V9to72pYYMNjflZL0Dju7JH5ZXQvZGZBppwzLcK/nXtIKmCXZrrJPPLQ7C98muucA/3F71
+	UAwgm7h4rhO6SPoS+pgSXa33cg8ppmg=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-409-ejkwM5mlOkOGy4Mkdv8SxA-1; Tue, 17 Nov 2020 12:02:17 -0500
-X-MC-Unique: ejkwM5mlOkOGy4Mkdv8SxA-1
+ us-mta-582-4LP8uQu_NDOUTmiiwjCIqg-1; Tue, 17 Nov 2020 12:03:01 -0500
+X-MC-Unique: 4LP8uQu_NDOUTmiiwjCIqg-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CDC9C835B7B;
-	Tue, 17 Nov 2020 17:02:09 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A70D619746;
-	Tue, 17 Nov 2020 17:02:09 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F35581882FA5;
+	Tue, 17 Nov 2020 17:02:54 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D2C9C196FE;
+	Tue, 17 Nov 2020 17:02:54 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7BB8A8C7A7;
-	Tue, 17 Nov 2020 17:02:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com
-	[10.5.11.14])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9E6E21832FFC;
+	Tue, 17 Nov 2020 17:02:54 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
+	[10.5.11.22])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AHGBntQ028220 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 17 Nov 2020 11:11:49 -0500
+	id 0AHGB3N3028114 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 17 Nov 2020 11:11:03 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B93C05D9CD; Tue, 17 Nov 2020 16:11:49 +0000 (UTC)
+	id 6B83C10013BD; Tue, 17 Nov 2020 16:11:03 +0000 (UTC)
 Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8073C5D9CC;
-	Tue, 17 Nov 2020 16:11:46 +0000 (UTC)
-Date: Tue, 17 Nov 2020 11:11:45 -0500
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 01E091001901;
+	Tue, 17 Nov 2020 16:10:59 +0000 (UTC)
+Date: Tue, 17 Nov 2020 11:10:59 -0500
 From: Mike Snitzer <snitzer@redhat.com>
 To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20201117161145.GB27209@redhat.com>
+Message-ID: <20201117161059.GA27209@redhat.com>
 References: <20201116212020.1099154-1-hch@lst.de>
-	<20201116212020.1099154-7-hch@lst.de>
+	<20201116212020.1099154-6-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20201116212020.1099154-7-hch@lst.de>
+In-Reply-To: <20201116212020.1099154-6-hch@lst.de>
 User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 X-loop: dm-devel@redhat.com
 Cc: Jens Axboe <axboe@kernel.dk>, Minchan Kim <minchan@kernel.org>,
 	dm-devel@redhat.com, linux-block@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH 6/6] dm: remove the block_device reference in
- struct mapped_device
+Subject: Re: [dm-devel] [PATCH 5/6] dm: simplify flush_bio initialization in
+ __send_empty_flush
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -96,10 +96,9 @@ Content-Transfer-Encoding: 7bit
 On Mon, Nov 16 2020 at  4:20pm -0500,
 Christoph Hellwig <hch@lst.de> wrote:
 
-> Get rid of the long-lasting struct block_device reference in
-> struct mapped_device.  The only remaining user is the freeze code,
-> where we can trivially look up the block device at freeze time
-> and release the reference at thaw time.
+> We don't really need the struct block_device to initialize a bio.  So
+> switch from using bio_set_dev to manually setting up bi_disk (bi_partno
+> will always be zero and has been cleared by bio_init already).
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 
