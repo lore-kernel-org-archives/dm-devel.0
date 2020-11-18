@@ -7,59 +7,58 @@ X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3F0B3C63697
-	for <dm-devel@archiver.kernel.org>; Wed, 18 Nov 2020 08:52:17 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 45406C5519F
+	for <dm-devel@archiver.kernel.org>; Wed, 18 Nov 2020 08:52:21 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 6D16120719
-	for <dm-devel@archiver.kernel.org>; Wed, 18 Nov 2020 08:52:16 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 6D16120719
+	by mail.kernel.org (Postfix) with ESMTPS id 5345620719
+	for <dm-devel@archiver.kernel.org>; Wed, 18 Nov 2020 08:52:18 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5345620719
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-456-gB2xg8BSP_-wl4IRavtA6w-1; Wed, 18 Nov 2020 03:52:12 -0500
-X-MC-Unique: gB2xg8BSP_-wl4IRavtA6w-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-273-M-Q0dXT0MRGpSDGIB7kD3w-1; Wed, 18 Nov 2020 03:52:14 -0500
+X-MC-Unique: M-Q0dXT0MRGpSDGIB7kD3w-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8848910B9CA5;
-	Wed, 18 Nov 2020 08:52:08 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6C5585D707;
-	Wed, 18 Nov 2020 08:52:08 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CAE6459;
+	Wed, 18 Nov 2020 08:52:09 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id ACD5B6EF58;
+	Wed, 18 Nov 2020 08:52:09 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 38385181A07B;
-	Wed, 18 Nov 2020 08:52:08 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8576C5A0FF;
+	Wed, 18 Nov 2020 08:52:09 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AI8pmkE019040 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 18 Nov 2020 03:51:48 -0500
+	id 0AI8q097019151 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 18 Nov 2020 03:52:00 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 36F491111C9E; Wed, 18 Nov 2020 08:51:48 +0000 (UTC)
+	id 2A792218DA45; Wed, 18 Nov 2020 08:52:00 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 320B61111423
-	for <dm-devel@redhat.com>; Wed, 18 Nov 2020 08:51:45 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 259AC2014E1B
+	for <dm-devel@redhat.com>; Wed, 18 Nov 2020 08:52:00 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D5E478007D9
-	for <dm-devel@redhat.com>; Wed, 18 Nov 2020 08:51:45 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0FF56811E76
+	for <dm-devel@redhat.com>; Wed, 18 Nov 2020 08:52:00 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-410-OqnkIqRXOICono74i_9AFg-1; Wed, 18 Nov 2020 03:51:43 -0500
-X-MC-Unique: OqnkIqRXOICono74i_9AFg-1
+	us-mta-103-Y3017Ug7Pqu_c9HVoE4QNA-1; Wed, 18 Nov 2020 03:51:58 -0500
+X-MC-Unique: Y3017Ug7Pqu_c9HVoE4QNA-1
 Received: from [2001:4bb8:18c:31ba:32b1:ec66:5459:36a] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kfJ8j-0007p0-Ax; Wed, 18 Nov 2020 08:48:33 +0000
+	id 1kfJ8Q-0007lQ-JE; Wed, 18 Nov 2020 08:48:15 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed, 18 Nov 2020 09:47:58 +0100
-Message-Id: <20201118084800.2339180-19-hch@lst.de>
+Date: Wed, 18 Nov 2020 09:47:47 +0100
+Message-Id: <20201118084800.2339180-8-hch@lst.de>
 In-Reply-To: <20201118084800.2339180-1-hch@lst.de>
 References: <20201118084800.2339180-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,7 +72,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 Cc: linux-bcache@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>,
 	Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>,
@@ -83,8 +82,7 @@ Cc: linux-bcache@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>,
 	dm-devel@redhat.com, linux-mtd@lists.infradead.org,
 	Jan Kara <jack@suse.com>, Tejun Heo <tj@kernel.org>,
 	xen-devel@lists.xenproject.org, linux-mm@kvack.org
-Subject: [dm-devel] [PATCH 18/20] fs: remove get_super_thawed and
-	get_super_exclusive_thawed
+Subject: [dm-devel] [PATCH 07/20] init: refactor name_to_dev_t
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -98,7 +96,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -106,188 +104,250 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Just open code the wait in the only caller of both functions.
+Split each case into a self-contained helper.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/internal.h      |  2 ++
- fs/quota/quota.c   | 31 +++++++++++++++++++++-------
- fs/super.c         | 51 ++--------------------------------------------
- include/linux/fs.h |  4 +---
- 4 files changed, 29 insertions(+), 59 deletions(-)
+ include/linux/genhd.h |   7 +-
+ init/do_mounts.c      | 183 +++++++++++++++++++++---------------------
+ 2 files changed, 91 insertions(+), 99 deletions(-)
 
-diff --git a/fs/internal.h b/fs/internal.h
-index a7cd0f64faa4ab..47be21dfeebef5 100644
---- a/fs/internal.h
-+++ b/fs/internal.h
-@@ -114,7 +114,9 @@ extern struct file *alloc_empty_file_noaccount(int, const struct cred *);
-  */
- extern int reconfigure_super(struct fs_context *);
- extern bool trylock_super(struct super_block *sb);
-+struct super_block *__get_super(struct block_device *bdev, bool excl);
- extern struct super_block *user_get_super(dev_t);
-+void put_super(struct super_block *sb);
- extern bool mount_capable(struct fs_context *);
- 
- /*
-diff --git a/fs/quota/quota.c b/fs/quota/quota.c
-index 9af95c7a0bbe3c..f3d32b0d9008f2 100644
---- a/fs/quota/quota.c
-+++ b/fs/quota/quota.c
-@@ -20,6 +20,7 @@
- #include <linux/writeback.h>
- #include <linux/nospec.h>
- #include "compat.h"
-+#include "../internal.h"
- 
- static int check_quotactl_permission(struct super_block *sb, int type, int cmd,
- 				     qid_t id)
-@@ -868,6 +869,7 @@ static struct super_block *quotactl_block(const char __user *special, int cmd)
- 	struct block_device *bdev;
- 	struct super_block *sb;
- 	struct filename *tmp = getname(special);
-+	bool excl = false, thawed = false;
- 
- 	if (IS_ERR(tmp))
- 		return ERR_CAST(tmp);
-@@ -875,17 +877,32 @@ static struct super_block *quotactl_block(const char __user *special, int cmd)
- 	putname(tmp);
- 	if (IS_ERR(bdev))
- 		return ERR_CAST(bdev);
--	if (quotactl_cmd_onoff(cmd))
--		sb = get_super_exclusive_thawed(bdev);
--	else if (quotactl_cmd_write(cmd))
--		sb = get_super_thawed(bdev);
--	else
--		sb = get_super(bdev);
-+
-+	if (quotactl_cmd_onoff(cmd)) {
-+		excl = true;
-+		thawed = true;
-+	} else if (quotactl_cmd_write(cmd)) {
-+		thawed = true;
-+	}
-+
-+retry:
-+	sb = __get_super(bdev, excl);
-+	if (thawed && sb && sb->s_writers.frozen != SB_UNFROZEN) {
-+		if (excl)
-+			up_write(&sb->s_umount);
-+		else
-+			up_read(&sb->s_umount);
-+		wait_event(sb->s_writers.wait_unfrozen,
-+			   sb->s_writers.frozen == SB_UNFROZEN);
-+		put_super(sb);
-+		goto retry;
-+	}
-+
- 	bdput(bdev);
- 	if (!sb)
- 		return ERR_PTR(-ENODEV);
--
- 	return sb;
-+
- #else
- 	return ERR_PTR(-ENODEV);
- #endif
-diff --git a/fs/super.c b/fs/super.c
-index 98bb0629ee108e..343e5c1e538d2a 100644
---- a/fs/super.c
-+++ b/fs/super.c
-@@ -307,7 +307,7 @@ static void __put_super(struct super_block *s)
-  *	Drops a temporary reference, frees superblock if there's no
-  *	references left.
-  */
--static void put_super(struct super_block *sb)
-+void put_super(struct super_block *sb)
- {
- 	spin_lock(&sb_lock);
- 	__put_super(sb);
-@@ -740,7 +740,7 @@ void iterate_supers_type(struct file_system_type *type,
- 
- EXPORT_SYMBOL(iterate_supers_type);
- 
--static struct super_block *__get_super(struct block_device *bdev, bool excl)
-+struct super_block *__get_super(struct block_device *bdev, bool excl)
- {
- 	struct super_block *sb;
- 
-@@ -789,53 +789,6 @@ struct super_block *get_super(struct block_device *bdev)
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index 22f5b9fd96f8bf..ca5e356084c353 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -388,18 +388,13 @@ static inline void bd_unlink_disk_holder(struct block_device *bdev,
  }
- EXPORT_SYMBOL(get_super);
+ #endif /* CONFIG_SYSFS */
  
--static struct super_block *__get_super_thawed(struct block_device *bdev,
--					      bool excl)
++dev_t blk_lookup_devt(const char *name, int partno);
+ #ifdef CONFIG_BLOCK
+ void printk_all_partitions(void);
+-dev_t blk_lookup_devt(const char *name, int partno);
+ #else /* CONFIG_BLOCK */
+ static inline void printk_all_partitions(void)
+ {
+ }
+-static inline dev_t blk_lookup_devt(const char *name, int partno)
 -{
--	while (1) {
--		struct super_block *s = __get_super(bdev, excl);
--		if (!s || s->s_writers.frozen == SB_UNFROZEN)
--			return s;
--		if (!excl)
--			up_read(&s->s_umount);
--		else
--			up_write(&s->s_umount);
--		wait_event(s->s_writers.wait_unfrozen,
--			   s->s_writers.frozen == SB_UNFROZEN);
--		put_super(s);
--	}
+-	dev_t devt = MKDEV(0, 0);
+-	return devt;
 -}
--
--/**
-- *	get_super_thawed - get thawed superblock of a device
-- *	@bdev: device to get the superblock for
-- *
-- *	Scans the superblock list and finds the superblock of the file system
-- *	mounted on the device. The superblock is returned once it is thawed
-- *	(or immediately if it was not frozen). %NULL is returned if no match
-- *	is found.
-- */
--struct super_block *get_super_thawed(struct block_device *bdev)
--{
--	return __get_super_thawed(bdev, false);
--}
--EXPORT_SYMBOL(get_super_thawed);
--
--/**
-- *	get_super_exclusive_thawed - get thawed superblock of a device
-- *	@bdev: device to get the superblock for
-- *
-- *	Scans the superblock list and finds the superblock of the file system
-- *	mounted on the device. The superblock is returned once it is thawed
-- *	(or immediately if it was not frozen) and s_umount semaphore is held
-- *	in exclusive mode. %NULL is returned if no match is found.
-- */
--struct super_block *get_super_exclusive_thawed(struct block_device *bdev)
--{
--	return __get_super_thawed(bdev, true);
--}
--EXPORT_SYMBOL(get_super_exclusive_thawed);
+ #endif /* CONFIG_BLOCK */
+ 
+ #endif /* _LINUX_GENHD_H */
+diff --git a/init/do_mounts.c b/init/do_mounts.c
+index b5f9604d0c98a2..aef2f24461c7f1 100644
+--- a/init/do_mounts.c
++++ b/init/do_mounts.c
+@@ -90,7 +90,6 @@ static int match_dev_by_uuid(struct device *dev, const void *data)
+ 	return 0;
+ }
+ 
 -
  /**
-  * get_active_super - get an active reference to the superblock of a device
-  * @bdev: device to get the superblock for
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 8667d0cdc71e76..a61df0dd4f1989 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1409,7 +1409,7 @@ enum {
+  * devt_from_partuuid - looks up the dev_t of a partition by its UUID
+  * @uuid_str:	char array containing ascii UUID
+@@ -186,7 +185,83 @@ static int match_dev_by_label(struct device *dev, const void *data)
  
- struct sb_writers {
- 	int				frozen;		/* Is sb frozen? */
--	wait_queue_head_t		wait_unfrozen;	/* for get_super_thawed() */
-+	wait_queue_head_t		wait_unfrozen;	/* wait for thaw */
- 	struct percpu_rw_semaphore	rw_sem[SB_FREEZE_LEVELS];
- };
+ 	return 0;
+ }
+-#endif
++
++static dev_t devt_from_partlabel(const char *label)
++{
++	struct device *dev;
++	dev_t devt = 0;
++
++	dev = class_find_device(&block_class, NULL, label, &match_dev_by_label);
++	if (dev) {
++		devt = dev->devt;
++		put_device(dev);
++	}
++
++	return devt;
++}
++
++static dev_t devt_from_devname(const char *name)
++{
++	dev_t devt = 0;
++	int part;
++	char s[32];
++	char *p;
++
++	if (strlen(name) > 31)
++		return 0;
++	strcpy(s, name);
++	for (p = s; *p; p++) {
++		if (*p == '/')
++			*p = '!';
++	}
++
++	devt = blk_lookup_devt(s, 0);
++	if (devt)
++		return devt;
++
++	/*
++	 * Try non-existent, but valid partition, which may only exist after
++	 * opening the device, like partitioned md devices.
++	 */
++	while (p > s && isdigit(p[-1]))
++		p--;
++	if (p == s || !*p || *p == '0')
++		return 0;
++
++	/* try disk name without <part number> */
++	part = simple_strtoul(p, NULL, 10);
++	*p = '\0';
++	devt = blk_lookup_devt(s, part);
++	if (devt)
++		return devt;
++
++	/* try disk name without p<part number> */
++	if (p < s + 2 || !isdigit(p[-2]) || p[-1] != 'p')
++		return 0;
++	p[-1] = '\0';
++	return blk_lookup_devt(s, part);
++}
++#endif /* CONFIG_BLOCK */
++
++static dev_t devt_from_devnum(const char *name)
++{
++	unsigned maj, min, offset;
++	dev_t devt = 0;
++	char *p, dummy;
++
++	if (sscanf(name, "%u:%u%c", &maj, &min, &dummy) == 2 ||
++	    sscanf(name, "%u:%u:%u:%c", &maj, &min, &offset, &dummy) == 3) {
++		devt = MKDEV(maj, min);
++		if (maj != MAJOR(devt) || min != MINOR(devt))
++			return 0;
++	} else {
++		devt = new_decode_dev(simple_strtoul(name, &p, 16));
++		if (*p)
++			return 0;
++	}
++
++	return devt;
++}
  
-@@ -3132,8 +3132,6 @@ extern struct file_system_type *get_filesystem(struct file_system_type *fs);
- extern void put_filesystem(struct file_system_type *fs);
- extern struct file_system_type *get_fs_type(const char *name);
- extern struct super_block *get_super(struct block_device *);
--extern struct super_block *get_super_thawed(struct block_device *);
--extern struct super_block *get_super_exclusive_thawed(struct block_device *bdev);
- extern struct super_block *get_active_super(struct block_device *bdev);
- extern void drop_super(struct super_block *sb);
- extern void drop_super_exclusive(struct super_block *sb);
+ /*
+  *	Convert a name into device number.  We accept the following variants:
+@@ -218,101 +293,23 @@ static int match_dev_by_label(struct device *dev, const void *data)
+  *	name contains slashes, the device name has them replaced with
+  *	bangs.
+  */
+-
+ dev_t name_to_dev_t(const char *name)
+ {
+-	char s[32];
+-	char *p;
+-	dev_t res = 0;
+-	int part;
+-
++	if (strcmp(name, "/dev/nfs") == 0)
++		return Root_NFS;
++	if (strcmp(name, "/dev/cifs") == 0)
++		return Root_CIFS;
++	if (strcmp(name, "/dev/ram") == 0)
++		return Root_RAM0;
+ #ifdef CONFIG_BLOCK
+-	if (strncmp(name, "PARTUUID=", 9) == 0) {
+-		name += 9;
+-		res = devt_from_partuuid(name);
+-		if (!res)
+-			goto fail;
+-		goto done;
+-	} else if (strncmp(name, "PARTLABEL=", 10) == 0) {
+-		struct device *dev;
+-
+-		dev = class_find_device(&block_class, NULL, name + 10,
+-					&match_dev_by_label);
+-		if (!dev)
+-			goto fail;
+-
+-		res = dev->devt;
+-		put_device(dev);
+-		goto done;
+-	}
++	if (strncmp(name, "PARTUUID=", 9) == 0)
++		return devt_from_partuuid(name + 9);
++	if (strncmp(name, "PARTLABEL=", 10) == 0)
++		return devt_from_partlabel(name + 10);
++	if (strncmp(name, "/dev/", 5) == 0)
++		return devt_from_devname(name + 5);
+ #endif
+-
+-	if (strncmp(name, "/dev/", 5) != 0) {
+-		unsigned maj, min, offset;
+-		char dummy;
+-
+-		if ((sscanf(name, "%u:%u%c", &maj, &min, &dummy) == 2) ||
+-		    (sscanf(name, "%u:%u:%u:%c", &maj, &min, &offset, &dummy) == 3)) {
+-			res = MKDEV(maj, min);
+-			if (maj != MAJOR(res) || min != MINOR(res))
+-				goto fail;
+-		} else {
+-			res = new_decode_dev(simple_strtoul(name, &p, 16));
+-			if (*p)
+-				goto fail;
+-		}
+-		goto done;
+-	}
+-
+-	name += 5;
+-	res = Root_NFS;
+-	if (strcmp(name, "nfs") == 0)
+-		goto done;
+-	res = Root_CIFS;
+-	if (strcmp(name, "cifs") == 0)
+-		goto done;
+-	res = Root_RAM0;
+-	if (strcmp(name, "ram") == 0)
+-		goto done;
+-
+-	if (strlen(name) > 31)
+-		goto fail;
+-	strcpy(s, name);
+-	for (p = s; *p; p++)
+-		if (*p == '/')
+-			*p = '!';
+-	res = blk_lookup_devt(s, 0);
+-	if (res)
+-		goto done;
+-
+-	/*
+-	 * try non-existent, but valid partition, which may only exist
+-	 * after revalidating the disk, like partitioned md devices
+-	 */
+-	while (p > s && isdigit(p[-1]))
+-		p--;
+-	if (p == s || !*p || *p == '0')
+-		goto fail;
+-
+-	/* try disk name without <part number> */
+-	part = simple_strtoul(p, NULL, 10);
+-	*p = '\0';
+-	res = blk_lookup_devt(s, part);
+-	if (res)
+-		goto done;
+-
+-	/* try disk name without p<part number> */
+-	if (p < s + 2 || !isdigit(p[-2]) || p[-1] != 'p')
+-		goto fail;
+-	p[-1] = '\0';
+-	res = blk_lookup_devt(s, part);
+-	if (res)
+-		goto done;
+-
+-fail:
+-	return 0;
+-done:
+-	return res;
++	return devt_from_devnum(name);
+ }
+ EXPORT_SYMBOL_GPL(name_to_dev_t);
+ 
 -- 
 2.29.2
 
