@@ -4,61 +4,61 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 45406C5519F
-	for <dm-devel@archiver.kernel.org>; Wed, 18 Nov 2020 08:52:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A277C56202
+	for <dm-devel@archiver.kernel.org>; Wed, 18 Nov 2020 08:52:23 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 5345620719
-	for <dm-devel@archiver.kernel.org>; Wed, 18 Nov 2020 08:52:18 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5345620719
+	by mail.kernel.org (Postfix) with ESMTPS id 6934920719
+	for <dm-devel@archiver.kernel.org>; Wed, 18 Nov 2020 08:52:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 6934920719
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-273-M-Q0dXT0MRGpSDGIB7kD3w-1; Wed, 18 Nov 2020 03:52:14 -0500
-X-MC-Unique: M-Q0dXT0MRGpSDGIB7kD3w-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-359-SUeyeJfMM7GCP3LJNjRI3Q-1; Wed, 18 Nov 2020 03:52:17 -0500
+X-MC-Unique: SUeyeJfMM7GCP3LJNjRI3Q-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CAE6459;
-	Wed, 18 Nov 2020 08:52:09 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id ACD5B6EF58;
-	Wed, 18 Nov 2020 08:52:09 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 05E021882FA5;
+	Wed, 18 Nov 2020 08:52:13 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DD0205D9CD;
+	Wed, 18 Nov 2020 08:52:12 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8576C5A0FF;
-	Wed, 18 Nov 2020 08:52:09 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A531B181A07C;
+	Wed, 18 Nov 2020 08:52:12 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AI8q097019151 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 18 Nov 2020 03:52:00 -0500
+	id 0AI8qBlF019212 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 18 Nov 2020 03:52:11 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 2A792218DA45; Wed, 18 Nov 2020 08:52:00 +0000 (UTC)
+	id 0969F2022794; Wed, 18 Nov 2020 08:52:11 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 259AC2014E1B
-	for <dm-devel@redhat.com>; Wed, 18 Nov 2020 08:52:00 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 047BC2022792
+	for <dm-devel@redhat.com>; Wed, 18 Nov 2020 08:52:08 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0FF56811E76
-	for <dm-devel@redhat.com>; Wed, 18 Nov 2020 08:52:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7D36690E425
+	for <dm-devel@redhat.com>; Wed, 18 Nov 2020 08:52:08 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-103-Y3017Ug7Pqu_c9HVoE4QNA-1; Wed, 18 Nov 2020 03:51:58 -0500
-X-MC-Unique: Y3017Ug7Pqu_c9HVoE4QNA-1
+	us-mta-146-C56hNZ5xOlGqXtwMQ0OuRQ-1; Wed, 18 Nov 2020 03:52:06 -0500
+X-MC-Unique: C56hNZ5xOlGqXtwMQ0OuRQ-1
 Received: from [2001:4bb8:18c:31ba:32b1:ec66:5459:36a] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kfJ8Q-0007lQ-JE; Wed, 18 Nov 2020 08:48:15 +0000
+	id 1kfJ8l-0007pS-Je; Wed, 18 Nov 2020 08:48:35 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed, 18 Nov 2020 09:47:47 +0100
-Message-Id: <20201118084800.2339180-8-hch@lst.de>
+Date: Wed, 18 Nov 2020 09:47:59 +0100
+Message-Id: <20201118084800.2339180-20-hch@lst.de>
 In-Reply-To: <20201118084800.2339180-1-hch@lst.de>
 References: <20201118084800.2339180-1-hch@lst.de>
 MIME-Version: 1.0
@@ -82,7 +82,7 @@ Cc: linux-bcache@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>,
 	dm-devel@redhat.com, linux-mtd@lists.infradead.org,
 	Jan Kara <jack@suse.com>, Tejun Heo <tj@kernel.org>,
 	xen-devel@lists.xenproject.org, linux-mm@kvack.org
-Subject: [dm-devel] [PATCH 07/20] init: refactor name_to_dev_t
+Subject: [dm-devel] [PATCH 19/20] bcache: remove a superflous lookup_bdev all
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -96,7 +96,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -104,250 +104,76 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Split each case into a self-contained helper.
+Don't bother to call lookup_bdev for just a slightly different error
+message without any functional change.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- include/linux/genhd.h |   7 +-
- init/do_mounts.c      | 183 +++++++++++++++++++++---------------------
- 2 files changed, 91 insertions(+), 99 deletions(-)
+ drivers/md/bcache/super.c | 44 +--------------------------------------
+ 1 file changed, 1 insertion(+), 43 deletions(-)
 
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 22f5b9fd96f8bf..ca5e356084c353 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -388,18 +388,13 @@ static inline void bd_unlink_disk_holder(struct block_device *bdev,
- }
- #endif /* CONFIG_SYSFS */
+diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+index e5db2cdd114112..5c531ed7785280 100644
+--- a/drivers/md/bcache/super.c
++++ b/drivers/md/bcache/super.c
+@@ -2380,40 +2380,6 @@ kobj_attribute_write(register,		register_bcache);
+ kobj_attribute_write(register_quiet,	register_bcache);
+ kobj_attribute_write(pendings_cleanup,	bch_pending_bdevs_cleanup);
  
-+dev_t blk_lookup_devt(const char *name, int partno);
- #ifdef CONFIG_BLOCK
- void printk_all_partitions(void);
--dev_t blk_lookup_devt(const char *name, int partno);
- #else /* CONFIG_BLOCK */
- static inline void printk_all_partitions(void)
- {
- }
--static inline dev_t blk_lookup_devt(const char *name, int partno)
+-static bool bch_is_open_backing(struct block_device *bdev)
 -{
--	dev_t devt = MKDEV(0, 0);
--	return devt;
+-	struct cache_set *c, *tc;
+-	struct cached_dev *dc, *t;
+-
+-	list_for_each_entry_safe(c, tc, &bch_cache_sets, list)
+-		list_for_each_entry_safe(dc, t, &c->cached_devs, list)
+-			if (dc->bdev == bdev)
+-				return true;
+-	list_for_each_entry_safe(dc, t, &uncached_devices, list)
+-		if (dc->bdev == bdev)
+-			return true;
+-	return false;
 -}
- #endif /* CONFIG_BLOCK */
- 
- #endif /* _LINUX_GENHD_H */
-diff --git a/init/do_mounts.c b/init/do_mounts.c
-index b5f9604d0c98a2..aef2f24461c7f1 100644
---- a/init/do_mounts.c
-+++ b/init/do_mounts.c
-@@ -90,7 +90,6 @@ static int match_dev_by_uuid(struct device *dev, const void *data)
- 	return 0;
- }
- 
 -
- /**
-  * devt_from_partuuid - looks up the dev_t of a partition by its UUID
-  * @uuid_str:	char array containing ascii UUID
-@@ -186,7 +185,83 @@ static int match_dev_by_label(struct device *dev, const void *data)
- 
- 	return 0;
- }
--#endif
-+
-+static dev_t devt_from_partlabel(const char *label)
-+{
-+	struct device *dev;
-+	dev_t devt = 0;
-+
-+	dev = class_find_device(&block_class, NULL, label, &match_dev_by_label);
-+	if (dev) {
-+		devt = dev->devt;
-+		put_device(dev);
-+	}
-+
-+	return devt;
-+}
-+
-+static dev_t devt_from_devname(const char *name)
-+{
-+	dev_t devt = 0;
-+	int part;
-+	char s[32];
-+	char *p;
-+
-+	if (strlen(name) > 31)
-+		return 0;
-+	strcpy(s, name);
-+	for (p = s; *p; p++) {
-+		if (*p == '/')
-+			*p = '!';
-+	}
-+
-+	devt = blk_lookup_devt(s, 0);
-+	if (devt)
-+		return devt;
-+
-+	/*
-+	 * Try non-existent, but valid partition, which may only exist after
-+	 * opening the device, like partitioned md devices.
-+	 */
-+	while (p > s && isdigit(p[-1]))
-+		p--;
-+	if (p == s || !*p || *p == '0')
-+		return 0;
-+
-+	/* try disk name without <part number> */
-+	part = simple_strtoul(p, NULL, 10);
-+	*p = '\0';
-+	devt = blk_lookup_devt(s, part);
-+	if (devt)
-+		return devt;
-+
-+	/* try disk name without p<part number> */
-+	if (p < s + 2 || !isdigit(p[-2]) || p[-1] != 'p')
-+		return 0;
-+	p[-1] = '\0';
-+	return blk_lookup_devt(s, part);
-+}
-+#endif /* CONFIG_BLOCK */
-+
-+static dev_t devt_from_devnum(const char *name)
-+{
-+	unsigned maj, min, offset;
-+	dev_t devt = 0;
-+	char *p, dummy;
-+
-+	if (sscanf(name, "%u:%u%c", &maj, &min, &dummy) == 2 ||
-+	    sscanf(name, "%u:%u:%u:%c", &maj, &min, &offset, &dummy) == 3) {
-+		devt = MKDEV(maj, min);
-+		if (maj != MAJOR(devt) || min != MINOR(devt))
-+			return 0;
-+	} else {
-+		devt = new_decode_dev(simple_strtoul(name, &p, 16));
-+		if (*p)
-+			return 0;
-+	}
-+
-+	return devt;
-+}
- 
- /*
-  *	Convert a name into device number.  We accept the following variants:
-@@ -218,101 +293,23 @@ static int match_dev_by_label(struct device *dev, const void *data)
-  *	name contains slashes, the device name has them replaced with
-  *	bangs.
-  */
+-static bool bch_is_open_cache(struct block_device *bdev)
+-{
+-	struct cache_set *c, *tc;
 -
- dev_t name_to_dev_t(const char *name)
- {
--	char s[32];
--	char *p;
--	dev_t res = 0;
--	int part;
+-	list_for_each_entry_safe(c, tc, &bch_cache_sets, list) {
+-		struct cache *ca = c->cache;
 -
-+	if (strcmp(name, "/dev/nfs") == 0)
-+		return Root_NFS;
-+	if (strcmp(name, "/dev/cifs") == 0)
-+		return Root_CIFS;
-+	if (strcmp(name, "/dev/ram") == 0)
-+		return Root_RAM0;
- #ifdef CONFIG_BLOCK
--	if (strncmp(name, "PARTUUID=", 9) == 0) {
--		name += 9;
--		res = devt_from_partuuid(name);
--		if (!res)
--			goto fail;
--		goto done;
--	} else if (strncmp(name, "PARTLABEL=", 10) == 0) {
--		struct device *dev;
--
--		dev = class_find_device(&block_class, NULL, name + 10,
--					&match_dev_by_label);
--		if (!dev)
--			goto fail;
--
--		res = dev->devt;
--		put_device(dev);
--		goto done;
--	}
-+	if (strncmp(name, "PARTUUID=", 9) == 0)
-+		return devt_from_partuuid(name + 9);
-+	if (strncmp(name, "PARTLABEL=", 10) == 0)
-+		return devt_from_partlabel(name + 10);
-+	if (strncmp(name, "/dev/", 5) == 0)
-+		return devt_from_devname(name + 5);
- #endif
--
--	if (strncmp(name, "/dev/", 5) != 0) {
--		unsigned maj, min, offset;
--		char dummy;
--
--		if ((sscanf(name, "%u:%u%c", &maj, &min, &dummy) == 2) ||
--		    (sscanf(name, "%u:%u:%u:%c", &maj, &min, &offset, &dummy) == 3)) {
--			res = MKDEV(maj, min);
--			if (maj != MAJOR(res) || min != MINOR(res))
--				goto fail;
--		} else {
--			res = new_decode_dev(simple_strtoul(name, &p, 16));
--			if (*p)
--				goto fail;
--		}
--		goto done;
+-		if (ca->bdev == bdev)
+-			return true;
 -	}
 -
--	name += 5;
--	res = Root_NFS;
--	if (strcmp(name, "nfs") == 0)
--		goto done;
--	res = Root_CIFS;
--	if (strcmp(name, "cifs") == 0)
--		goto done;
--	res = Root_RAM0;
--	if (strcmp(name, "ram") == 0)
--		goto done;
+-	return false;
+-}
 -
--	if (strlen(name) > 31)
--		goto fail;
--	strcpy(s, name);
--	for (p = s; *p; p++)
--		if (*p == '/')
--			*p = '!';
--	res = blk_lookup_devt(s, 0);
--	if (res)
--		goto done;
+-static bool bch_is_open(struct block_device *bdev)
+-{
+-	return bch_is_open_cache(bdev) || bch_is_open_backing(bdev);
+-}
 -
--	/*
--	 * try non-existent, but valid partition, which may only exist
--	 * after revalidating the disk, like partitioned md devices
--	 */
--	while (p > s && isdigit(p[-1]))
--		p--;
--	if (p == s || !*p || *p == '0')
--		goto fail;
--
--	/* try disk name without <part number> */
--	part = simple_strtoul(p, NULL, 10);
--	*p = '\0';
--	res = blk_lookup_devt(s, part);
--	if (res)
--		goto done;
--
--	/* try disk name without p<part number> */
--	if (p < s + 2 || !isdigit(p[-2]) || p[-1] != 'p')
--		goto fail;
--	p[-1] = '\0';
--	res = blk_lookup_devt(s, part);
--	if (res)
--		goto done;
--
--fail:
--	return 0;
--done:
--	return res;
-+	return devt_from_devnum(name);
- }
- EXPORT_SYMBOL_GPL(name_to_dev_t);
- 
+ struct async_reg_args {
+ 	struct delayed_work reg_work;
+ 	char *path;
+@@ -2535,15 +2501,7 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
+ 				  sb);
+ 	if (IS_ERR(bdev)) {
+ 		if (bdev == ERR_PTR(-EBUSY)) {
+-			bdev = lookup_bdev(strim(path));
+-			mutex_lock(&bch_register_lock);
+-			if (!IS_ERR(bdev) && bch_is_open(bdev))
+-				err = "device already registered";
+-			else
+-				err = "device busy";
+-			mutex_unlock(&bch_register_lock);
+-			if (!IS_ERR(bdev))
+-				bdput(bdev);
++			err = "device busy";
+ 			if (attr == &ksysfs_register_quiet)
+ 				goto done;
+ 		}
 -- 
 2.29.2
 
