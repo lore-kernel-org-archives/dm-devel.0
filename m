@@ -4,63 +4,61 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+	SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 30481C6369E
-	for <dm-devel@archiver.kernel.org>; Thu, 19 Nov 2020 15:14:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 63532C64E69
+	for <dm-devel@archiver.kernel.org>; Thu, 19 Nov 2020 16:49:53 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 74FA622202
-	for <dm-devel@archiver.kernel.org>; Thu, 19 Nov 2020 15:14:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 74FA622202
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+	by mail.kernel.org (Postfix) with ESMTPS id C2DFD22264
+	for <dm-devel@archiver.kernel.org>; Thu, 19 Nov 2020 16:49:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C2DFD22264
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=suse.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-497-9gli2eeJPjyn0wGS0URYHA-1; Thu, 19 Nov 2020 10:14:01 -0500
-X-MC-Unique: 9gli2eeJPjyn0wGS0URYHA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-573-HTQgAnULOcWHYEiES9zDIQ-1; Thu, 19 Nov 2020 11:49:48 -0500
+X-MC-Unique: HTQgAnULOcWHYEiES9zDIQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E086A8144F1;
-	Thu, 19 Nov 2020 15:13:55 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E3A18107564B;
+	Thu, 19 Nov 2020 16:49:43 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 480AA10016DB;
-	Thu, 19 Nov 2020 15:13:55 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5DB4060843;
+	Thu, 19 Nov 2020 16:49:43 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 970614BB7B;
-	Thu, 19 Nov 2020 15:13:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5961B4BB7B;
+	Thu, 19 Nov 2020 16:49:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AJFDqVS019513 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 19 Nov 2020 10:13:52 -0500
+	id 0AJGndir004018 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 19 Nov 2020 11:49:39 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 984E22026D76; Thu, 19 Nov 2020 15:13:52 +0000 (UTC)
+	id 1E585DA67B; Thu, 19 Nov 2020 16:49:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 92DC22026D5D
-	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 15:13:49 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 18FFBDAF2E
+	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 16:49:36 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1726E85829F
-	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 15:13:49 +0000 (UTC)
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-307-d1X5bYRcO--7AGdq57VyBw-1; Thu, 19 Nov 2020 10:13:44 -0500
-X-MC-Unique: d1X5bYRcO--7AGdq57VyBw-1
-Received: from willy by casper.infradead.org with local (Exim 4.92.3 #3 (Red
-	Hat Linux)) id 1kflcb-0002ed-15; Thu, 19 Nov 2020 15:13:17 +0000
-Date: Thu, 19 Nov 2020 15:13:16 +0000
-From: Matthew Wilcox <willy@infradead.org>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20201119151316.GH29991@casper.infradead.org>
-References: <20201118084800.2339180-1-hch@lst.de>
-	<20201118084800.2339180-18-hch@lst.de>
-MIME-Version: 1.0
-In-Reply-To: <20201118084800.2339180-18-hch@lst.de>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BA0F6800BFF
+	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 16:49:36 +0000 (UTC)
+Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-39-qQ4OQiMFNsWx9Nbh47SHZQ-1;
+	Thu, 19 Nov 2020 11:49:33 -0500
+X-MC-Unique: qQ4OQiMFNsWx9Nbh47SHZQ-1
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.221.27])
+	by mx2.suse.de (Postfix) with ESMTP id 3FEC6AC59;
+	Thu, 19 Nov 2020 16:49:31 +0000 (UTC)
+From: Hannes Reinecke <hare@suse.de>
+To: Mike Snitzer <snitzer@redhat.com>
+Date: Thu, 19 Nov 2020 17:49:22 +0100
+Message-Id: <20201119164924.74401-1-hare@suse.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -69,19 +67,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>,
-	Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>,
-	Richard Weinberger <richard@nod.at>,
-	Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>,
-	linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-	dm-devel@redhat.com, linux-mtd@lists.infradead.org,
-	Jan Kara <jack@suse.com>, Tejun Heo <tj@kernel.org>,
-	xen-devel@lists.xenproject.org, linux-bcache@vger.kernel.org,
-	linux-mm@kvack.org
-Subject: Re: [dm-devel] [PATCH 17/20] filemap: consistently use ->f_mapping
- over ->i_mapping
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
+	Christoph Hellwig <hch@lst.de>
+Subject: [dm-devel] [RFC PATCHv2 0/2] block-layer interposer
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,41 +83,72 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Nov 18, 2020 at 09:47:57AM +0100, Christoph Hellwig wrote:
-> @@ -2887,13 +2887,13 @@ EXPORT_SYMBOL(filemap_map_pages);
->  vm_fault_t filemap_page_mkwrite(struct vm_fault *vmf)
->  {
->  	struct page *page = vmf->page;
-> -	struct inode *inode = file_inode(vmf->vma->vm_file);
-> +	struct inode *inode = vmf->vma->vm_file->f_mapping->host;
->  	vm_fault_t ret = VM_FAULT_LOCKED;
->  
->  	sb_start_pagefault(inode->i_sb);
->  	file_update_time(vmf->vma->vm_file);
->  	lock_page(page);
-> -	if (page->mapping != inode->i_mapping) {
-> +	if (page->mapping != vmf->vma->vm_file->f_mapping) {
+Hi all,
 
-Bit messy.  I'd do:
+here's a combined version of the earlier patchset from Sergei, fixing
+some issues I've found during testing and including (some) feedback
+from Mike. So with this patchset I could do a
 
-	struct address_space *mapping = vmf->vma->vm_file->f_mapping;
+echo "0 33554432 linear /dev/sda 0" | dmsetup create sda-cloned
 
-	sb_start_pagefault(mapping->host->i_sb);
+on a system with root-fs on /dev/sda2, and things would continue to
+run just like normal.
 
-	if (page->mapping != mapping)
+There are some things which might need to be improved:
+- I've tried to remove the stub bio clone for the dm interposer as
+suggested by Mike, but that resulted in an endless recursion in
+submit_bio_noacct(). That needs more debugging,  but I'm also not
+sure if we _can_ do it; the end_io callback might refer to
+bi_disk->driver_private, and then will get confused as we've
+reassigned the 'bi_disk' setting. Not sure if there are fixed rules
+for it, so for now I'll probably leave it.
+- The interposer is 'magically' hooked to the first block device
+in the device-mapper table. What I really want is to have an explicit
+listing of the interposer in the output of things like 'dmsetup table'
+like
 
-	sb_end_pagefault(mapping->host->i_sb);
+0 33554432 interposer /dev/dm-0
+0 33554432 linear /dev/sda 0
+
+and the first entry having the device number of /dev/sda.
+Plan was to have that automatically registered once you set up
+the original table, but then I'm not sure if that's the right
+way to go. Mike?
+- The removal of blkdev_get() as an exported API made things
+awkward, as we now have to do a blkdev_get_by_dev(); if not we
+end up with an uninitalized blkcg and a resulting crash.
+We might be able to fix this up by moving bdget() into dm_blk_open(),
+and have md->bdev uninitalized otherwise. But again I'm not
+sure if that's the right way to go.
+
+Anyway, comments and reviews are welcome.
+
+Sergei Shtepa (2):
+  blk_interposer - Block Layer Interposer
+  dm_interposer - blk_interposer for device-mapper
+
+ block/blk-core.c          |  34 +++++++++++
+ block/genhd.c             |  55 ++++++++++++++++++
+ drivers/md/dm-table.c     |  59 +++++++++++++++++++
+ drivers/md/dm.c           | 140 ++++++++++++++++++++++++++++++++++++++++++----
+ drivers/md/dm.h           |   4 +-
+ include/linux/blk_types.h |   6 +-
+ include/linux/genhd.h     |  19 +++++++
+ 7 files changed, 303 insertions(+), 14 deletions(-)
+
+-- 
+2.16.4
 
 --
 dm-devel mailing list
