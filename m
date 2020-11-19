@@ -2,118 +2,67 @@ Return-Path: <SRS0=RcAx=E2=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MSGID_FROM_MTA_HEADER,
-	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AEECBC5519F
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E1771C6379D
 	for <dm-devel@archiver.kernel.org>; Fri, 20 Nov 2020 09:22:57 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E649722264
+	by mail.kernel.org (Postfix) with ESMTPS id 13A64222BA
 	for <dm-devel@archiver.kernel.org>; Fri, 20 Nov 2020 09:22:56 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E649722264
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=nxp.com
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 13A64222BA
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-230-qtzOZ63cO9m1HY5yggLIYA-1; Fri, 20 Nov 2020 04:22:53 -0500
-X-MC-Unique: qtzOZ63cO9m1HY5yggLIYA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-343-GlFnw2__OaWGFpo1DrC6lA-1; Fri, 20 Nov 2020 04:22:53 -0500
+X-MC-Unique: GlFnw2__OaWGFpo1DrC6lA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 54F581DDE1;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id ECA581842145;
 	Fri, 20 Nov 2020 09:22:48 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 333CE60853;
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CEBEC5C1D5;
 	Fri, 20 Nov 2020 09:22:48 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C1D99180954D;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 82B164BB7B;
 	Fri, 20 Nov 2020 09:22:47 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AJITLE9024419 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 19 Nov 2020 13:29:21 -0500
+	id 0AJNQQIJ016041 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 19 Nov 2020 18:26:26 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B92B8DAF2B; Thu, 19 Nov 2020 18:29:21 +0000 (UTC)
+	id 9B3E92026D47; Thu, 19 Nov 2020 23:26:26 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B1F0DDAF39
-	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 18:29:21 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 96D742026D48
+	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 23:26:24 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 99D9318A01A0
-	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 18:29:21 +0000 (UTC)
-Received: from EUR04-HE1-obe.outbound.protection.outlook.com
-	(mail-eopbgr70077.outbound.protection.outlook.com [40.107.7.77]) (Using
-	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-425-xgLTzLybN4Wi5lWoUV-4qQ-1; Thu, 19 Nov 2020 13:29:18 -0500
-X-MC-Unique: xgLTzLybN4Wi5lWoUV-4qQ-1
-Received: from VI1PR0402MB3712.eurprd04.prod.outlook.com
-	(2603:10a6:803:1c::25) by VI1PR04MB5501.eurprd04.prod.outlook.com
-	(2603:10a6:803:d3::11) with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3589.22;
-	Thu, 19 Nov 2020 18:29:16 +0000
-Received: from VI1PR0402MB3712.eurprd04.prod.outlook.com
-	([fe80::ade4:e169:1f4a:28c]) by
-	VI1PR0402MB3712.eurprd04.prod.outlook.com
-	([fe80::ade4:e169:1f4a:28c%4]) with mapi id 15.20.3564.028;
-	Thu, 19 Nov 2020 18:29:16 +0000
-To: Herbert Xu <herbert@gondor.apana.org.au>,
-	Eric Biggers <ebiggers@kernel.org>,
-	Ard Biesheuvel <ard.biesheuvel@linaro.org>
-References: <20200716115538.GA31461@gondor.apana.org.au>
-	<8eefed8b-5ad5-424b-ab32-85e0cbac0a15@nxp.com>
-	<20200722072932.GA27544@gondor.apana.org.au>
-From: Iuliana Prodan <iuliana.prodan@nxp.com>
-Message-ID: <71b6f739-d4a8-8b26-bf78-ce9acf9a0f99@nxp.com>
-Date: Thu, 19 Nov 2020 20:29:10 +0200
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
-	Thunderbird/78.4.2
-In-Reply-To: <20200722072932.GA27544@gondor.apana.org.au>
-X-Originating-IP: [188.26.141.79]
-X-ClientProxiedBy: AM4PR0501CA0055.eurprd05.prod.outlook.com
-	(2603:10a6:200:68::23) To VI1PR0402MB3712.eurprd04.prod.outlook.com
-	(2603:10a6:803:1c::25)
-MIME-Version: 1.0
-X-MS-Exchange-MessageSentRepresentingType: 1
-Received: from [192.168.1.5] (188.26.141.79) by
-	AM4PR0501CA0055.eurprd05.prod.outlook.com
-	(2603:10a6:200:68::23) with Microsoft SMTP Server
-	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384)
-	id 15.20.3589.20 via Frontend Transport;
-	Thu, 19 Nov 2020 18:29:13 +0000
-X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-HT: Tenant
-X-MS-Office365-Filtering-Correlation-Id: 5f9095ab-e9de-482f-8572-08d88cb9053d
-X-MS-TrafficTypeDiagnostic: VI1PR04MB5501:
-X-MS-Exchange-Transport-Forked: True
-X-Microsoft-Antispam-PRVS: <VI1PR04MB5501B8607750C285604AFE1C8CE00@VI1PR04MB5501.eurprd04.prod.outlook.com>
-X-MS-Oob-TLC-OOBClassifiers: OLM:8882
-X-MS-Exchange-SenderADCheck: 1
-X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: TKQqSWdp+lAJcOXKtrhEdABIV2QRaeie4U8n+1RT6vmG8rQAcqQ0YZxUePcq4TyoQbhkmsH7bo9aToYNF+FzSlv3wfftRZ6clmGLp1Y9j7wYlSmyOgN1vaY7lA/aFjA4TOSZnKcGhBhmnhMZK9waDbBtH21+eYNTT4LVbzMWO2PYvPFGqp+JSgEMCq+3YBTSVN7BBK3pIdCVPAZeWzaRHS1D0EajjNoJ4MyinLCtl2f1iP8aFaOZt+ghvEoyTUlSQtWbdQEik3u5tTGkgk3ru/FtCpZuW5RDkQYzntgKCmn4hHc672FfRtBat8ZrotCWKCBaLhYVBPshYE8kPQqV5e4lcY4KmnkQ4OG610jJfXkfK5NAkdWrRAELXzEGmPiuDQGYeYozoyCgNU3e5zfvXWHFha9H047juRiDcgEWVo6IUgVG0pTtI6p5nebzQBkCjCUEvPNvwefFNqfrh2HGuw==
-X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:VI1PR0402MB3712.eurprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(4636009)(376002)(136003)(39860400002)(396003)(346002)(366004)(966005)(31686004)(36756003)(31696002)(4326008)(6486002)(26005)(956004)(2616005)(66946007)(478600001)(66476007)(54906003)(8936002)(2906002)(66556008)(86362001)(45080400002)(186003)(8676002)(52116002)(16526019)(83380400001)(16576012)(110136005)(44832011)(5660300002)(316002)(53546011)(43740500002);
-	DIR:OUT; SFP:1101
-X-MS-Exchange-AntiSpam-MessageData: EauyW3szrujTVUeRhdgIdiKACJVweluW6JsVl4Xp0doXL53wEhoBdl57o7JoVuQMqOvbu9oaq54YcydESSR8zgPnaBYcF8Fp6k9Kv6gVLkEeP5+qlIdotHFkg8l7qawxJFoU4L+CNeGRQukPTi3qZPAtdSObo4v6nk5xUB1W27Pmxn4gbsTRWxsa25QcA+uQl/re7KFHpB3z+Dt4MtPXztMb0ZzXX5l6caS5BhLTcam3rm6luD3YWVoAXIlOwsoJ8HjY74AMmq/TrZPTNWDM3gQFVYcebG6ISR/mBhSsIV6Wc49c7WevGjV9CiJimZfkq5puNKbWevCDJF7CVCMag7QH8dWaHHjU8Ryp5QBmtdEkHRFxGNAezYOgRw73G92PkcgckrxVXvmURojGUr2nzSrQ5O7Ajw/CZQt0Bt8NM19gS4QAAFPDM2aPfEUEkYvY4nJujo9jMTBvj2n19C3hOIMi7Fv8KtPv+gd+SAvC0DjbLFnWu6pvIFfc9cZc67DZshTj/HvMN1rfxiMXqOJHOsTFJaTkgvY3POuieOQDu7YO/DSTvm6Li7MvvSacAQrNrQ2i4knUtRzq/aSl+DziaSZFdkXcwYctwwz3ipg0jIPnmueVDnRvGDmilKCGABk0877g9M88wIM+Ij44Xb4PBqzHm+dCgMlB7JtzoLGRJ0C+xLJetSBEueEXVERpT1MKsgq6xNW2Yl39CWnkwkBoqgTRvQ/7iBXKXfMfRW0isKlpPwdMkHFJtmBDev/chbAohqOhOERa1eRKLYeIPAW8mEVN4dC2/XpfosKy8LsW+T5DTH0L1QCvlCXbQXUC/YHAEQG2QnfqP5FzF+nQ1WTppe3e25FlmpHuWZab+iLn9rMqbsvHqoSPhks74bbakv3IvdOEKBFixF1dvbD2/Nawow==
-X-OriginatorOrg: nxp.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 5f9095ab-e9de-482f-8572-08d88cb9053d
-X-MS-Exchange-CrossTenant-AuthSource: VI1PR0402MB3712.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 19 Nov 2020 18:29:16.0010 (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 686ea1d3-bc2b-4c6f-a92c-d99c5c301635
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: b5zIgxluNjMLbFKacYbyrVRvAT8bj4Eleeo8N4PIgbaH7rWOFwyJruuIRs0eDvDrIGkODi1oy0qLia6t+G5hFg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: VI1PR04MB5501
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7BC44800B3A
+	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 23:26:24 +0000 (UTC)
+Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
+	relay.mimecast.com with ESMTP id us-mta-585-jdXqLg0dPhyPh_F4wlUHBg-1;
+	Thu, 19 Nov 2020 18:26:22 -0500
+X-MC-Unique: jdXqLg0dPhyPh_F4wlUHBg-1
+Received: from tusharsu-Ubuntu.lan (c-71-197-163-6.hsd1.wa.comcast.net
+	[71.197.163.6])
+	by linux.microsoft.com (Postfix) with ESMTPSA id 16CDC20B717A;
+	Thu, 19 Nov 2020 15:26:20 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 16CDC20B717A
+From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+To: zohar@linux.ibm.com, stephen.smalley.work@gmail.com,
+	casey@schaufler-ca.com, agk@redhat.com, snitzer@redhat.com,
+	gmazyland@gmail.com, paul@paul-moore.com
+Date: Thu, 19 Nov 2020 15:26:03 -0800
+Message-Id: <20201119232611.30114-1-tusharsu@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -122,18 +71,15 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 0AJITLE9024419
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Fri, 20 Nov 2020 04:22:46 -0500
-Cc: =?UTF-8?Q?Horia_Geant=c4=83?= <horia.geanta@nxp.com>,
-	Franck LENORMAND <franck.lenormand@nxp.com>, dm-devel@redhat.com,
-	mpatocka@redhat.com, linux-crypto@vger.kernel.org,
-	Silvano Di Ninno <silvano.dininno@nxp.com>,
-	dl-linux-imx <linux-imx@nxp.com>
-Subject: Re: [dm-devel] [PATCH v2 0/7] crypto: add
-	CRYPTO_ALG_ALLOCATES_MEMORY
+Cc: sashal@kernel.org, dm-devel@redhat.com, selinux@vger.kernel.org,
+	jmorris@namei.org, linux-kernel@vger.kernel.org,
+	nramas@linux.microsoft.com, linux-security-module@vger.kernel.org,
+	tyhicks@linux.microsoft.com, linux-integrity@vger.kernel.org
+Subject: [dm-devel] [PATCH v6 0/8] IMA: support for measuring kernel
+	integrity critical data
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -145,45 +91,141 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-CkhpIEhlcmJlcnQsCgpPbiA3LzIyLzIwMjAgMTA6MjkgQU0sIEhlcmJlcnQgWHUgd3JvdGU6Cj4g
-T24gRnJpLCBKdWwgMTcsIDIwMjAgYXQgMDU6NDI6NDNQTSArMDMwMCwgSG9yaWEgR2VhbnTEgyB3
-cm90ZToKPj4KPj4gTG9va3MgbGlrZSB0aGVyZSdzIG5vIG1lbnRpb24gb2YgYSBsaW1pdCBvbiBz
-cmMsIGRzdCBzY2F0dGVybGlzdHMgc2l6ZQo+PiB0aGF0IGNyeXB0byBpbXBsZW1lbnRhdGlvbnMg
-Y291bGQgdXNlIHdoZW4gcHJlLWFsbG9jYXRpbmcgbWVtb3J5Cj4+IGFuZCBjcnlwdG8gdXNlcnMg
-bmVlZGluZyBDUllQVE9fQUxHX0FMTE9DQVRFU19NRU1PUlkgc2hvdWxkIGJlIGF3YXJlIG9mCj4+
-IChmb3IgdGhlIGNvbnRyYWN0IHRvIGJlIGhvbm91cmVkKToKPj4gaHR0cHM6Ly9ldXIwMS5zYWZl
-bGlua3MucHJvdGVjdGlvbi5vdXRsb29rLmNvbS8/dXJsPWh0dHBzJTNBJTJGJTJGbG9yZS5rZXJu
-ZWwub3JnJTJGbGludXgtY3J5cHRvJTJGNzgwY2I1MDAtMjI0MS02MWJjLWViNDQtNmY4NzJhZDU2
-N2QzJTQwbnhwLmNvbSZhbXA7ZGF0YT0wMiU3QzAxJTdDaXVsaWFuYS5wcm9kYW4lNDBueHAuY29t
-JTdDYTA3Nzc4MmNlNDVjNGFkMzQ1OGIwOGQ4MmUxMTAwYWMlN0M2ODZlYTFkM2JjMmI0YzZmYTky
-Y2Q5OWM1YzMwMTYzNSU3QzAlN0MxJTdDNjM3MzA5OTk3ODU1MzUxMTAwJmFtcDtzZGF0YT1UOVJM
-akElMkI0bDN6cHhVU2tGVUdUeEdRRnU0a1dmZ2hRQUtHeWZVY28lMkZiOCUzRCZhbXA7cmVzZXJ2
-ZWQ9MAo+IAo+IEdvb2QgcG9pbnQuICBJIHRoaW5rIHdlIHNob3VsZCBsaW1pdCB0aGlzIGZsYWcg
-b25seSB0byB0aGUgY2FzZXMKPiBhcHBsaWNhYmxlIHRvIGRtLWNyeXB0LCB3aGljaCBzZWVtcyB0
-byBiZSA0IGVudHJpZXMgbWF4aW11bS4KPiAKPiBBbnl0aGluZyBlbHNlIHNob3VsZCBiZSBhbGxv
-d2VkIHRvIGFsbG9jYXRlIGV4dHJhIG1lbW9yeSBhcyBuZWVkZWQuCgpJJ20gd29ya2luZyBvbiBy
-ZW1vdmluZyB0aGUgQ1JZUFRPX0FMR19BTExPQ0FURVNfTUVNT1JZIGZsYWcgZnJvbSBDQUFNLgpG
-b3IgbWVtb3J5IGFsbG9jYXRpb24gSSB3YW50IHRvIHVzZSB0aGUgY3J5cHRvIHJlcXVlc3Qgb2Jq
-ZWN0IGFuZCBzZXQgCnRoZSBzaXplIG5lZWRlZCBpbiByZXFzaXplIChhcyBzdWdnZXN0ZWQgYnkg
-eW91IApodHRwczovL2xvcmUua2VybmVsLm9yZy9saW51eC1jcnlwdG8vMjAyMDA2MTAwMTA0NTAu
-R0E2NDQ5QGdvbmRvci5hcGFuYS5vcmcuYXUvKS4KQnV0IENBQU0gbmVlZHMgRE1BLWFibGUgbWVt
-b3J5IGFuZCB0aGUgY3VycmVudCBtZWNoYW5pc20gZG9lc24ndCBhbGxvdyBpdC4KCkkgd2FudCB0
-byB1c2UgSG9yaWEncyBzb2x1dGlvbiBmcm9tIGEgY291cGxlIG9mIHllYXJzIGFnbyAKKGh0dHBz
-Oi8vbG9yZS5rZXJuZWwub3JnL2xpbnV4LWNyeXB0by8xNDI2MjY2ODgyLTMxNjI2LTEtZ2l0LXNl
-bmQtZW1haWwtaG9yaWEuZ2VhbnRhQGZyZWVzY2FsZS5jb20vKSwgCmJ1dCBtb2RpZnkgcmVxdWVz
-dCBvYmplY3QgYWxsb2NhdGlvbiBvbmx5IGluIENyeXB0byBBUEkuCgpXaGF0IGRvIHlvdSB0aGlu
-az8KClRoYW5rcywKSXVsaWEKCgoKCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVs
-QHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
-dmVs
+Kernel integrity critical data can be defined as the in-memory kernel
+data which if accidentally or maliciously altered, can compromise the
+integrity of the system.
+
+There are several kernel subsystems that contain integrity critical
+data - e.g. LSMs like SELinux, or AppArmor; or device-mapper targets
+like dm-crypt, dm-verity etc. Examples of critical data could be kernel
+in-memory r/o structures, hash of the memory structures, or data that
+represents a linux kernel subsystem state.
+
+This patch set defines a new IMA hook namely ima_measure_critical_data()
+to measure the critical data. Kernel subsystems can use this
+functionality, to take advantage of IMA's measuring and quoting 
+abilities - thus ultimately enabling remote attestation for the
+subsystem specific information stored in the kernel memory.
+
+The functionality is generic enough to measure the data, from the kernel
+subsystems, that is required to protect the integrity of the kernel at
+runtime.
+
+System administrators may want to limit the critical data being
+measured, quoted, and attested. To enable that, a new IMA policy
+condition is defined.
+
+This patch set also addresses the need for measuring kernel critical
+data early, before a custom IMA policy is loaded - by providing a
+builtin IMA policy.
+
+And lastly, the series provides the first consumer of the new IMA hook -
+namely SeLinux.
+
+This series is based on the following repo/branch:
+
+ repo: https://github.com/torvalds/linux
+ branch: master
+ commit 09162bc32c88 ("Linux 5.10-rc4")
+
+This series also has a dependency on the following patch
+https://patchwork.kernel.org/patch/11901423/
+
+Change Log v6:
+Incorporated feedback from Mimi on v5 of this series.
+ - Got rid of patch 5 from the v5 of the series.(the allow list for data
+   sources)
+ - Updated function descriptions, changed variable names etc.
+ - Moved the input param event_data_source in ima_measure_critical_data()
+   to a new patch. (patch 6/8 of this series)
+ - Split patch 4 from v5 of the series into two patches (patch 4/8 and 
+   patch 5/8)
+ - Updated cover letter and patch descriptions as per feedback.
+
+Change Log v5:
+(1) Incorporated feedback from Stephen on the last SeLinux patch.
+ SeLinux Patch: https://patchwork.kernel.org/patch/11801585/
+ - Freed memory in the reverse order of allocation in 
+   selinux_measure_state().
+ - Used scnprintf() instead of snprintf() to create the string for
+   selinux state.
+ - Allocated event name passed to ima_measure_critical_data() before
+   gathering selinux state and policy information for measuring.
+
+(2) Incorporated feedback from Mimi on v4 of this series.
+ V4 of this Series: https://patchwork.kernel.org/project/linux-integrity/list/?series=354437
+
+ - Removed patch "[v4,2/6] IMA: conditionally allow empty rule data"
+ - Reversed the order of following patches.
+      [v4,4/6] IMA: add policy to measure critical data from kernel components
+      [v4,5/6] IMA: add hook to measure critical data from kernel components
+   and renamed them to remove "from kernel components"
+ - Added a new patch to this series - 
+       IMA: add critical_data to built-in policy rules
+
+ - Added the next version of SeLinux patch (mentioned above) to this
+   series 
+       selinux: measure state and hash of the policy using IMA
+
+ - Updated cover-letter description to give broader perspective of the
+   feature, rearranging paragraphs, removing unnecessary info, clarifying
+   terms etc.
+ - Got rid of opt_list param from ima_match_rule_data().
+ - Updated the documentation to remove sources that don't yet exist.
+ - detailed IMA hook description added to ima_measure_critical_data(),
+   as well as elaborating terms event_name, event_data_source. 
+ - "data_sources:=" is not a mandatory policy option for 
+   func=CRITICAL_DATA anymore. If not present, all the data sources
+   specified in __ima_supported_kernel_data_sources will be measured.
+
+Lakshmi Ramasubramanian (2):
+  IMA: add a built-in policy rule for critical data measurement
+  selinux: measure state and hash of the policy using IMA
+
+Tushar Sugandhi (6):
+  IMA: generalize keyring specific measurement constructs
+  IMA: add support to measure buffer data hash
+  IMA: define a hook to measure kernel integrity critical data
+  IMA: add policy rule to measure critical data
+  IMA: extend policy to add data sources as a critical data measurement
+    constraint
+  IMA: add support to critical data hook to limit data sources for
+    measurement
+
+ Documentation/ABI/testing/ima_policy         |  10 +-
+ include/linux/ima.h                          |   8 +
+ security/integrity/ima/ima.h                 |   8 +-
+ security/integrity/ima/ima_api.c             |   8 +-
+ security/integrity/ima/ima_appraise.c        |   2 +-
+ security/integrity/ima/ima_asymmetric_keys.c |   2 +-
+ security/integrity/ima/ima_main.c            |  81 +++++++++-
+ security/integrity/ima/ima_policy.c          | 123 ++++++++++++---
+ security/integrity/ima/ima_queue_keys.c      |   3 +-
+ security/selinux/Makefile                    |   2 +
+ security/selinux/hooks.c                     |   3 +
+ security/selinux/include/security.h          |  11 +-
+ security/selinux/measure.c                   | 157 +++++++++++++++++++
+ security/selinux/selinuxfs.c                 |   8 +
+ security/selinux/ss/services.c               |  71 +++++++--
+ 15 files changed, 448 insertions(+), 49 deletions(-)
+ create mode 100644 security/selinux/measure.c
+
+-- 
+2.17.1
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
 
