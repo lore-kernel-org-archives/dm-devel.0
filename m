@@ -2,79 +2,89 @@ Return-Path: <SRS0=sUON=EZ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-17.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 40DFCC56201
-	for <dm-devel@archiver.kernel.org>; Thu, 19 Nov 2020 16:50:12 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 57188C56201
+	for <dm-devel@archiver.kernel.org>; Thu, 19 Nov 2020 20:37:11 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 457F922227
-	for <dm-devel@archiver.kernel.org>; Thu, 19 Nov 2020 16:50:11 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 457F922227
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=suse.de
+	by mail.kernel.org (Postfix) with ESMTPS id A679D2085B
+	for <dm-devel@archiver.kernel.org>; Thu, 19 Nov 2020 20:37:10 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="c3V6oh8I"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A679D2085B
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1605818229;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=WDmr4MD/zzIJ4MULjPjhgd5IhjieRy316r/OR+oatF8=;
+	b=c3V6oh8IjuK0LWHontJLsS8I2GSMWR7uoxxVWdgm/kIJydZ1jdAPNM2Y0MjULXJC6PpMTp
+	3VVb+ytZdpHJvTsVnbe9FpOxYaJ6jF+FjKBHfLPf2HTHoM/p/5csrDx3f7X2dfZPPiDKtJ
+	q1Y81T9UDig9Zo0vHiBNcNqCPsujHtU=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-539-9_NovrWQP_O0be8i8MzQZA-1; Thu, 19 Nov 2020 11:50:06 -0500
-X-MC-Unique: 9_NovrWQP_O0be8i8MzQZA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-250-b5aGLQgzOXq0TLRqKoDg3A-1; Thu, 19 Nov 2020 15:37:07 -0500
+X-MC-Unique: b5aGLQgzOXq0TLRqKoDg3A-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8249AA0CA0;
-	Thu, 19 Nov 2020 16:50:01 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1787E1005D53;
+	Thu, 19 Nov 2020 20:37:02 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5EC7F5C1D1;
-	Thu, 19 Nov 2020 16:50:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 58B6F5D9C2;
+	Thu, 19 Nov 2020 20:37:00 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 287C54EBC6;
-	Thu, 19 Nov 2020 16:50:01 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DCA8C4BB7B;
+	Thu, 19 Nov 2020 20:36:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
+	[10.5.11.12])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AJGngkN004039 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 19 Nov 2020 11:49:42 -0500
+	id 0AJKatn6019298 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 19 Nov 2020 15:36:55 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id E3CA52166B2D; Thu, 19 Nov 2020 16:49:41 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DA25F2166B29
-	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 16:49:39 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 72A03811E76
-	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 16:49:39 +0000 (UTC)
-Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-39-sDxyZOmNNgm-LXi0mfZaYQ-1;
-	Thu, 19 Nov 2020 11:49:33 -0500
-X-MC-Unique: sDxyZOmNNgm-LXi0mfZaYQ-1
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 44A50AC65;
-	Thu, 19 Nov 2020 16:49:31 +0000 (UTC)
-From: Hannes Reinecke <hare@suse.de>
-To: Mike Snitzer <snitzer@redhat.com>
-Date: Thu, 19 Nov 2020 17:49:23 +0100
-Message-Id: <20201119164924.74401-2-hare@suse.de>
-In-Reply-To: <20201119164924.74401-1-hare@suse.de>
-References: <20201119164924.74401-1-hare@suse.de>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+	id E26B560C05; Thu, 19 Nov 2020 20:36:55 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9859060BE2;
+	Thu, 19 Nov 2020 20:36:52 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
+	id 0AJKaqp9012293; Thu, 19 Nov 2020 15:36:52 -0500
+Received: from localhost (mpatocka@localhost)
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
+	ESMTP id 0AJKapuD012289; Thu, 19 Nov 2020 15:36:51 -0500
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+	owned process doing -bs
+Date: Thu, 19 Nov 2020 15:36:51 -0500 (EST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: David Teigland <teigland@redhat.com>, Jens Axboe <axboe@kernel.dk>
+In-Reply-To: <alpine.LRH.2.02.2011191337180.588@file01.intranet.prod.int.rdu2.redhat.com>
+Message-ID: <alpine.LRH.2.02.2011191517360.10231@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20201118203127.GA30066@redhat.com>
+	<20201118203408.GB30066@redhat.com>
+	<fc7c4efd-0bb3-f023-19c6-54359d279ca8@redhat.com>
+	<alpine.LRH.2.02.2011190810001.32672@file01.intranet.prod.int.rdu2.redhat.com>
+	<20201119172807.GC1879@redhat.com>
+	<alpine.LRH.2.02.2011191337180.588@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 X-loop: dm-devel@redhat.com
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
-	Christoph Hellwig <hch@lst.de>, Sergei Shtepa <sergei.shtepa@veeam.com>
-Subject: [dm-devel] [PATCH 1/2] blk_interposer - Block Layer Interposer
+Cc: linux-block@vger.kernel.org, heinzm@redhat.com, dm-devel@redhat.com,
+	Marian Csontos <mcsontos@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Subject: [dm-devel] [PATCH] blk-settings: make sure that max_sectors is
+ aligned on "logical_block_size" boundary.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -86,10 +96,9 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -97,211 +106,56 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Sergei Shtepa <sergei.shtepa@veeam.com>
+We get these I/O errors when we run md-raid1 on the top of dm-integrity on 
+the top of ramdisk:
+device-mapper: integrity: Bio not aligned on 8 sectors: 0xff00, 0xff
+device-mapper: integrity: Bio not aligned on 8 sectors: 0xff00, 0xff
+device-mapper: integrity: Bio not aligned on 8 sectors: 0xffff, 0x1
+device-mapper: integrity: Bio not aligned on 8 sectors: 0xffff, 0x1
+device-mapper: integrity: Bio not aligned on 8 sectors: 0x8048, 0xff
+device-mapper: integrity: Bio not aligned on 8 sectors: 0x8147, 0xff
+device-mapper: integrity: Bio not aligned on 8 sectors: 0x8246, 0xff
+device-mapper: integrity: Bio not aligned on 8 sectors: 0x8345, 0xbb
 
-The block layer interposer allows to intercept bio requests.
-This allows you to connect device mapper and other kernel
-modules to the block device stack on the fly.
+The ramdisk device has logical_block_size 512 and max_sectors 255. The 
+dm-integrity device uses logical_block_size 4096 and it doesn't affect the 
+"max_sectors" value - thus, it inherits 255 from the ramdisk. So, we have 
+a device with max_sectors not aligned on logical_block_size.
 
-Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
-Signed-off-by: Hannes Reinecke <hare@suse.de>
+The md-raid device sees that the underlying leg has max_sectors 255 and it
+will split the bios on 255-sector boundary, making the bios unaligned on
+logical_block_size.
+
+In order to fix the bug, we round down max_sectors to logical_block_size.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+
 ---
- block/blk-core.c          | 34 +++++++++++++++++++++++++++++
- block/genhd.c             | 55 +++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/blk_types.h |  6 ++++--
- include/linux/genhd.h     | 19 ++++++++++++++++
- 4 files changed, 112 insertions(+), 2 deletions(-)
+ block/blk-settings.c |   10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 2db8bda43b6e..130f0124d939 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1030,6 +1030,37 @@ static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
- 	return ret;
- }
- 
-+static blk_qc_t __submit_bio_interposed(struct bio *bio)
-+{
-+	struct bio_list bio_list[2] = { };
-+	blk_qc_t ret = BLK_QC_T_NONE;
-+
-+	current->bio_list = bio_list;
-+	if (likely(bio_queue_enter(bio) == 0)) {
-+		struct gendisk *disk = bio->bi_disk;
-+
-+		bio_set_flag(bio, BIO_INTERPOSED);
-+		if (likely(blk_has_interposer(disk))) {
-+			struct blk_interposer *ip = disk->interposer;
-+			ret = ip->ip_submit_bio(ip, bio);
-+
-+			if (ret == BLK_QC_T_NONE)
-+				blk_queue_exit(disk->queue);
-+		} else {
-+			/* interposer was removed */
-+			bio_list_add(&current->bio_list[0], bio);
-+			blk_queue_exit(bio->bi_disk->queue);
-+		}
-+	}
-+	current->bio_list = NULL;
-+
-+	/* Resubmit remaining bios */
-+	while ((bio = bio_list_pop(&bio_list[0])))
-+		ret = submit_bio_noacct(bio);
-+
-+	return ret;
-+}
-+
- /**
-  * submit_bio_noacct - re-submit a bio to the block device layer for I/O
-  * @bio:  The bio describing the location in memory and on the device.
-@@ -1055,6 +1086,9 @@ blk_qc_t submit_bio_noacct(struct bio *bio)
- 		return BLK_QC_T_NONE;
+Index: linux-2.6/block/blk-settings.c
+===================================================================
+--- linux-2.6.orig/block/blk-settings.c	2020-10-29 12:20:46.000000000 +0100
++++ linux-2.6/block/blk-settings.c	2020-11-19 21:20:18.000000000 +0100
+@@ -591,6 +591,16 @@ int blk_stack_limits(struct queue_limits
+ 		ret = -1;
  	}
  
-+	if (blk_has_interposer(bio->bi_disk) &&
-+	    !bio_flagged(bio, BIO_INTERPOSED))
-+		return __submit_bio_interposed(bio);
- 	if (!bio->bi_disk->fops->submit_bio)
- 		return __submit_bio_noacct_mq(bio);
- 	return __submit_bio_noacct(bio);
-diff --git a/block/genhd.c b/block/genhd.c
-index 9387f050c248..17b43e2ed06a 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -2364,3 +2364,58 @@ static void disk_release_events(struct gendisk *disk)
- 	WARN_ON_ONCE(disk->ev && disk->ev->block != 1);
- 	kfree(disk->ev);
- }
++	t->max_sectors = round_down(t->max_sectors, t->logical_block_size / 512);
++	if (t->max_sectors < PAGE_SIZE / 512)
++		t->max_sectors = PAGE_SIZE / 512;
++	t->max_hw_sectors = round_down(t->max_hw_sectors, t->logical_block_size / 512);
++	if (t->max_sectors < PAGE_SIZE / 512)
++		t->max_hw_sectors = PAGE_SIZE / 512;
++	t->max_dev_sectors = round_down(t->max_dev_sectors, t->logical_block_size / 512);
++	if (t->max_sectors < PAGE_SIZE / 512)
++		t->max_dev_sectors = PAGE_SIZE / 512;
 +
-+/**
-+ * blk_interposer_attach - Attach interposer to disk
-+ * @disk: target disk
-+ * @interposer: block device interposer
-+ *
-+ * Returns:
-+ *     -EINVAL if @interposer is NULL.
-+ *     -ENODEV if interposer is not initialized,
-+ *     -EBUSY if the block device already has interposer.
-+ */
-+int blk_interposer_attach(struct gendisk *disk,
-+			  struct blk_interposer *interposer)
-+{
-+	int ret = 0;
-+
-+	if (!interposer)
-+		return -EINVAL;
-+
-+	blk_mq_freeze_queue(disk->queue);
-+	blk_mq_quiesce_queue(disk->queue);
-+	if (blk_has_interposer(disk))
-+		ret = -EBUSY;
-+	else
-+		disk->interposer = interposer;
-+	blk_mq_unquiesce_queue(disk->queue);
-+	blk_mq_unfreeze_queue(disk->queue);
-+
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(blk_interposer_attach);
-+
-+/**
-+ * blk_interposer_detach - Detach interposer from disk
-+ * @disk: target disk
-+ *
-+ * Returns the attached interposer or NULL if none was attached.
-+ */
-+struct blk_interposer *blk_interposer_detach(struct gendisk *disk)
-+{
-+	struct blk_interposer *interposer;
-+
-+	if (WARN_ON(!disk))
-+		return NULL;
-+
-+	blk_mq_freeze_queue(disk->queue);
-+	blk_mq_quiesce_queue(disk->queue);
-+	interposer = disk->interposer;
-+	disk->interposer = NULL;
-+	blk_mq_unquiesce_queue(disk->queue);
-+	blk_mq_unfreeze_queue(disk->queue);
-+
-+	return interposer;
-+}
-+EXPORT_SYMBOL_GPL(blk_interposer_detach);
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index d9b69bbde5cc..996b803e5aa1 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -207,7 +207,7 @@ struct bio {
- 						 * top bits REQ_OP. Use
- 						 * accessors.
- 						 */
--	unsigned short		bi_flags;	/* status, etc and bvec pool number */
-+	unsigned int		bi_flags;	/* status, etc and bvec pool number */
- 	unsigned short		bi_ioprio;
- 	unsigned short		bi_write_hint;
- 	blk_status_t		bi_status;
-@@ -284,6 +284,8 @@ enum {
- 				 * of this bio. */
- 	BIO_CGROUP_ACCT,	/* has been accounted to a cgroup */
- 	BIO_TRACKED,		/* set if bio goes through the rq_qos path */
-+	BIO_INTERPOSED,		/* bio has been interposed and can be moved to
-+				 * a different disk */
- 	BIO_FLAG_LAST
- };
- 
-@@ -302,7 +304,7 @@ enum {
-  * freed.
-  */
- #define BVEC_POOL_BITS		(3)
--#define BVEC_POOL_OFFSET	(16 - BVEC_POOL_BITS)
-+#define BVEC_POOL_OFFSET	(32 - BVEC_POOL_BITS)
- #define BVEC_POOL_IDX(bio)	((bio)->bi_flags >> BVEC_POOL_OFFSET)
- #if (1<< BVEC_POOL_BITS) < (BVEC_POOL_NR+1)
- # error "BVEC_POOL_BITS is too small"
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 03da3f603d30..f58ab391deda 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -164,6 +164,15 @@ struct blk_integrity {
- 	unsigned char				tag_size;
- };
- 
-+struct blk_interposer;
-+typedef blk_qc_t (*ip_submit_bio_t) (struct blk_interposer *ip, struct bio *bio);
-+
-+struct blk_interposer {
-+	struct gendisk *ip_disk;
-+	ip_submit_bio_t ip_submit_bio;
-+	void *ip_private;
-+};
-+
- struct gendisk {
- 	/* major, first_minor and minors are input parameters only,
- 	 * don't use directly.  Use disk_devt() and disk_max_parts().
-@@ -188,6 +197,7 @@ struct gendisk {
- 
- 	const struct block_device_operations *fops;
- 	struct request_queue *queue;
-+	struct blk_interposer *interposer;
- 	void *private_data;
- 
- 	int flags;
-@@ -409,4 +419,13 @@ static inline dev_t blk_lookup_devt(const char *name, int partno)
- }
- #endif /* CONFIG_BLOCK */
- 
-+/*
-+ * Block device interposing
-+ */
-+#define blk_has_interposer(d) ((d)->interposer != NULL)
-+#define blk_interposer_active(ip) ((ip)->ip_disk != NULL)
-+
-+int blk_interposer_attach(struct gendisk *, struct blk_interposer *);
-+struct blk_interposer * blk_interposer_detach(struct gendisk *);
-+
- #endif /* _LINUX_GENHD_H */
--- 
-2.16.4
+ 	/* Discard alignment and granularity */
+ 	if (b->discard_granularity) {
+ 		alignment = queue_limit_discard_alignment(b, start);
 
 --
 dm-devel mailing list
