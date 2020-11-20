@@ -4,110 +4,112 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 91F6BC63697
-	for <dm-devel@archiver.kernel.org>; Fri, 20 Nov 2020 01:27:33 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 47476C63697
+	for <dm-devel@archiver.kernel.org>; Fri, 20 Nov 2020 01:27:59 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id F3AE022254
-	for <dm-devel@archiver.kernel.org>; Fri, 20 Nov 2020 01:27:32 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTPS id A75A922254
+	for <dm-devel@archiver.kernel.org>; Fri, 20 Nov 2020 01:27:58 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AV+2px4T"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org F3AE022254
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eNz2G0k2"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A75A922254
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1605835651;
+	s=mimecast20190719; t=1605835677;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=9wrLe8bVJHR/cFT1N7bizSBnPDhvXpHOIHrajP8iEyw=;
-	b=AV+2px4Th5Sr5PO2/Kp1DlqfMYhCCKfKCGppwDPsdBz7ywg36OTt/23ZQW1GPtzTOCs4MF
-	WWp2i31uriuiaJFSRN2CHR63AofuT4XjL/ZjlQlPlYgAjUoEf9RuXniPyj+3E8WlzydP3u
-	6qfvJqAmRcomwdz3xfYhWZsgv3Qw7pM=
+	bh=ASeydp9gK9Vt+M6l3+QguxNXLKEAF5k1/2MqWMRNrz0=;
+	b=eNz2G0k2byH6IMavm361VSQO4Y/2ZO2VRxqL8oWGrqeY+lIlnOhQcVohYPHRMN9iABAOYK
+	5j3y43e+hJfwbrQPwRJzDgBBcM84jay2+NFv9toQJbANCEJRMobMOb+yZFuojVXq0oSauA
+	KaYq67ndawffgOUTt5bA05+la85zDPk=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-167-UWAP5J83N4imWQQTX1FL_A-1; Thu, 19 Nov 2020 20:27:29 -0500
-X-MC-Unique: UWAP5J83N4imWQQTX1FL_A-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-320-lp4Mt6xhO66haJ4CuIwiVQ-1; Thu, 19 Nov 2020 20:27:55 -0500
+X-MC-Unique: lp4Mt6xhO66haJ4CuIwiVQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 97B05107ACE3;
-	Fri, 20 Nov 2020 01:27:24 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4575260BE2;
-	Fri, 20 Nov 2020 01:27:24 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 41A248143F3;
+	Fri, 20 Nov 2020 01:27:51 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 20F2A60853;
+	Fri, 20 Nov 2020 01:27:51 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 16BC84A7C6;
-	Fri, 20 Nov 2020 01:27:24 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EAEA4180954D;
+	Fri, 20 Nov 2020 01:27:50 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AK1RLT3005933 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 19 Nov 2020 20:27:21 -0500
+	id 0AK1Rn3w006008 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 19 Nov 2020 20:27:49 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id EFD2F2166B29; Fri, 20 Nov 2020 01:27:20 +0000 (UTC)
+	id E8EC110F1CD7; Fri, 20 Nov 2020 01:27:48 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E8DFD2166B2B
-	for <dm-devel@redhat.com>; Fri, 20 Nov 2020 01:27:16 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E516610F1CD4
+	for <dm-devel@redhat.com>; Fri, 20 Nov 2020 01:27:45 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5DD3885828C
-	for <dm-devel@redhat.com>; Fri, 20 Nov 2020 01:27:16 +0000 (UTC)
-Received: from mail-ua1-f72.google.com (mail-ua1-f72.google.com
-	[209.85.222.72]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-326-bfOI9NCBNuC1Ihkd0iPujQ-1; Thu, 19 Nov 2020 20:27:15 -0500
-X-MC-Unique: bfOI9NCBNuC1Ihkd0iPujQ-1
-Received: by mail-ua1-f72.google.com with SMTP id f6so2494297uao.5
-	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 17:27:14 -0800 (PST)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 85995811E85
+	for <dm-devel@redhat.com>; Fri, 20 Nov 2020 01:27:45 +0000 (UTC)
+Received: from mail-ua1-f70.google.com (mail-ua1-f70.google.com
+	[209.85.222.70]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-31-Dk-JG_TbM7q6hRYxNPNzhA-1; Thu, 19 Nov 2020 20:27:43 -0500
+X-MC-Unique: Dk-JG_TbM7q6hRYxNPNzhA-1
+Received: by mail-ua1-f70.google.com with SMTP id w19so2490282uap.0
+	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 17:27:43 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20161025;
 	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
 	:message-id:subject:to:cc;
-	bh=DLIVQHvx6BWBfd7HmGxTRnB/+14KaYzo8H+szC2YlPI=;
-	b=kZ4Qy71YzYMKO+thhjrfRW0H5VoinnGezRuk6AEarI42VZnRq7IvK+ueDlzyAmt5CF
-	A7mwWnGnckn3ddy5MkiGh/VL8D8mI6NM6X5NXxm5aZD+kAYB0s3mbIt6HQitWHa/th3U
-	320FSGUoUcBwF5q0W3OhuuMEFfIAQVYnvw9LZB9UOHynlk84N5o6h6B0gc7TKGMoD84Z
-	vQ1bACBETbvtoQ1hSErmNkJ5bju+wCXp3qOmdsj4qS2xmdsxOpJf555AvZF3sZpcENUo
-	PI/tEmd2tjDDPXSvZZKLR3NPfr7jX6+MVJKURwcKQJgtsROWpyhWR4bvaUz82XllBLVF
-	J95w==
-X-Gm-Message-State: AOAM530sfLhnl5hQsm04ubZPAUmSw7NN5Xgax7Ir5rlTbwnXfiYDOC0A
-	3ioH70nIVx7Uy539HImVSwk764+0HYwSdZgpaPGD7ovpGTJyU10hkTf0UWl/lhUhi3DD1Ru960F
-	OxxAFbta35HwUr0oWyH+DduuBrYrBp1w=
-X-Received: by 2002:a67:ead4:: with SMTP id s20mr9956265vso.23.1605835633574; 
-	Thu, 19 Nov 2020 17:27:13 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJxAOprCn+MSLwpUL1KRNzUeNpOM1FggL7enU/sNOGdCf/2dwEQ+lfxQplsQG9tT32TFdvR6vVegizOMc4DLrrs=
-X-Received: by 2002:a67:ead4:: with SMTP id s20mr9956250vso.23.1605835633366; 
-	Thu, 19 Nov 2020 17:27:13 -0800 (PST)
+	bh=MYquISkn3nZV5YB0okA6VfbOmAn2onUZzzDzkWZvjkE=;
+	b=GJcLu+wbBcKr9cv75YRRvKX4HFq4JsU37hqvfKbGO85Hm81SNhiZvuJ9WzUhTCEbBH
+	Ebt2v8I9CJ8iuJyVcQ1a8c6yrQu/8rTzc6NafhIKlQ8U8qGb0gpswmfh6dqSjSHivy8l
+	FNZ+U6r0Tt9DoM4GubV8mWAe27luSyDFyM9z3QQ7oXK/4Kw0vyt2pY1zCy83WC8cH+Jy
+	DlqoT9DjU2SKApcgteNFlCwaneZESNxOoCqhL/DyhNOo0p1b6VO+85ZRr7nCnIczpjL6
+	uchgw3kAHWpiQN+1nENamVu1iQQDlffwfoAK1DSfzbXx11YDcwwPOggOi9nI50Kz9spn
+	D3yg==
+X-Gm-Message-State: AOAM5330sdXiAJWRQEeyHx3m469ZvXAo6GdVP3WpjWi7jVfW9FYpuNxo
+	Mf8s7eNQRcoXb17NZYwkAc4PstcN1MhL0QFWRpupddOIzAICuwK9LT6MedlMytouFMbwW9Ui/Lo
+	thPcaeMqZyFl/yGMDIpORRMVbeFBku9k=
+X-Received: by 2002:ab0:224b:: with SMTP id z11mr13378382uan.103.1605835663206;
+	Thu, 19 Nov 2020 17:27:43 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJzE8trd4VpMwa8E8M6LiMEVo96dOkpqmDZ8DGxXQs4TM+71O6XXrABn/oUZi7Sf+whezhrwuz2dhE2fWIxvft0=
+X-Received: by 2002:ab0:224b:: with SMTP id z11mr13378372uan.103.1605835663000;
+	Thu, 19 Nov 2020 17:27:43 -0800 (PST)
 MIME-Version: 1.0
-References: <20200821020345.3358-1-thunder.leizhen@huawei.com>
-	<b4643e74-aad9-385f-01f2-f8e48ba4dbef@suse.de>
-	<ad100923-e479-faf0-f749-ac8e4cf87899@huawei.com>
-	<8aa638b7-6cfd-bf3d-8015-fbe59f28f31f@suse.de>
-	<c2f8cf50-d9f7-df19-40eb-0543e6208c0d@huawei.com>
-In-Reply-To: <c2f8cf50-d9f7-df19-40eb-0543e6208c0d@huawei.com>
+References: <20201118203127.GA30066@redhat.com>
+	<20201118203408.GB30066@redhat.com>
+	<fc7c4efd-0bb3-f023-19c6-54359d279ca8@redhat.com>
+	<alpine.LRH.2.02.2011190810001.32672@file01.intranet.prod.int.rdu2.redhat.com>
+	<20201119172807.GC1879@redhat.com>
+	<alpine.LRH.2.02.2011191337180.588@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.2011191517360.10231@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2011191517360.10231@file01.intranet.prod.int.rdu2.redhat.com>
 From: John Dorminy <jdorminy@redhat.com>
-Date: Thu, 19 Nov 2020 20:27:02 -0500
-Message-ID: <CAMeeMh_iBFpmSjgm8aC1WO-=iQPU5rQ2-Z6oe0L8nt5ke=+XQw@mail.gmail.com>
-To: "Leizhen (ThunderTown)" <thunder.leizhen@huawei.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+Date: Thu, 19 Nov 2020 20:27:32 -0500
+Message-ID: <CAMeeMh8uaZkOHGUsvfaM7Fyqov5wKNfCp_FfBy7S39EG3Ktc7w@mail.gmail.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>,
-	linux-kernel <linux-kernel@vger.kernel.org>, Coly Li <colyli@suse.de>,
-	linux-block <linux-block@vger.kernel.org>, dm-devel <dm-devel@redhat.com>,
-	linux-bcache <linux-bcache@vger.kernel.org>,
-	Kent Overstreet <kent.overstreet@gmail.com>,
-	Alasdair Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH 1/1] block: move the PAGE_SECTORS definition
-	into <linux/blkdev.h>
+Cc: Jens Axboe <axboe@kernel.dk>, Heinz Mauelshagen <heinzm@redhat.com>,
+	Marian Csontos <mcsontos@redhat.com>,
+	linux-block <linux-block@vger.kernel.org>,
+	device-mapper development <dm-devel@redhat.com>,
+	David Teigland <teigland@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: [dm-devel] [PATCH] blk-settings: make sure that max_sectors is
+ aligned on "logical_block_size" boundary.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -121,7 +123,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -131,115 +133,79 @@ Content-Transfer-Encoding: 7bit
 
 Greetings;
 
-There are a lot of uses of PAGE_SIZE/SECTOR_SIZE scattered around, and
-it seems like a medium improvement to be able to refer to it as
-PAGE_SECTORS everywhere instead of just inside dm, bcache, and
-null_blk. Did this change progress forward somewhere?
+Might I suggest using SECTOR_SIZE instead of 512? Or, perhaps, >>
+SECTOR_SHIFT instead of / 512.
+
+I don't understand the three conditionals. I believe max_sectors is
+supposed to be <= min(max_dev_sectors, max_hw_sectors), but I don't
+understand why max_sectors being small should adjust max_hw_sectors
+and max_dev_sectors. Are the conditions perhaps supposed to be
+different, adjusting each max_*sectors up to at least PAGE_SIZE /
+SECTOR_SIZE? Perhaps, like e.g. blk_queue_max_hw_sectors(), the
+conditionals should log if they are adjusting max_*sectors up to the
+minimum.
 
 Thanks!
 
 John Dorminy
 
-
-On Mon, Sep 7, 2020 at 3:40 AM Leizhen (ThunderTown)
-<thunder.leizhen@huawei.com> wrote:
+On Thu, Nov 19, 2020 at 3:37 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
 >
-> Hi, Jens Axboe, Alasdair Kergon, Mike Snitzer:
->   What's your opinion?
+> We get these I/O errors when we run md-raid1 on the top of dm-integrity on
+> the top of ramdisk:
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0xff00, 0xff
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0xff00, 0xff
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0xffff, 0x1
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0xffff, 0x1
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0x8048, 0xff
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0x8147, 0xff
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0x8246, 0xff
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0x8345, 0xbb
 >
+> The ramdisk device has logical_block_size 512 and max_sectors 255. The
+> dm-integrity device uses logical_block_size 4096 and it doesn't affect the
+> "max_sectors" value - thus, it inherits 255 from the ramdisk. So, we have
+> a device with max_sectors not aligned on logical_block_size.
 >
-> On 2020/8/21 15:05, Coly Li wrote:
-> > On 2020/8/21 14:48, Leizhen (ThunderTown) wrote:
-> >>
-> >>
-> >> On 8/21/2020 12:11 PM, Coly Li wrote:
-> >>> On 2020/8/21 10:03, Zhen Lei wrote:
-> >>>> There are too many PAGE_SECTORS definitions, and all of them are the
-> >>>> same. It looks a bit of a mess. So why not move it into <linux/blkdev.h>,
-> >>>> to achieve a basic and unique definition.
-> >>>>
-> >>>> Signed-off-by: Zhen Lei <thunder.leizhen@huawei.com>
-> >>>
-> >>>
-> >>> A lazy question about page size > 4KB: currently in bcache code the
-> >>> sector size is assumed to be 512 sectors, if kernel page > 4KB, it is
-> >>> possible that PAGE_SECTORS in bcache will be a number > 8 ?
-> >>
-> >> Sorry, I don't fully understand your question. I known that the sector size
-> >> can be 512 or 4K, and the PAGE_SIZE can be 4K or 64K. So even if sector size
-> >> is 4K, isn't it greater than 8 for 64K pages?
-> >>
-> >> I'm not sure if the question you're asking is the one Matthew Wilcox has
-> >> answered before:
-> >> https://www.spinics.net/lists/raid/msg64345.html
-> >
-> > Thank you for the above information. Currently bcache code assumes
-> > sector size is always 512 bytes, you may see how many "<< 9" or ">> 9"
-> > are used. Therefore I doubt whether current code may stably work on e.g.
-> > 4Kn SSDs (this is only doubt because I don't have such SSD).
-> >
-> > Anyway your patch is fine to me. This change to bcache doesn't make
-> > thins worse or better, maybe it can be helpful to trigger my above
-> > suspicious early if people do have this kind of problem on 4Kn sector SSDs.
-> >
-> > For the bcache part of this patch, you may add,
-> > Acked-by: Coly Li <colyli@suse.de>
-> >
-> > Thanks.
-> >
-> > Coly Li
-> >
-> >>>> ---
-> >>>>  drivers/block/brd.c           | 1 -
-> >>>>  drivers/block/null_blk_main.c | 1 -
-> >>>>  drivers/md/bcache/util.h      | 2 --
-> >>>>  include/linux/blkdev.h        | 5 +++--
-> >>>>  include/linux/device-mapper.h | 1 -
-> >>>>  5 files changed, 3 insertions(+), 7 deletions(-)
-> >>>>
-> >>>
-> >>> [snipped]
-> >>>
-> >>>> diff --git a/drivers/md/bcache/util.h b/drivers/md/bcache/util.h
-> >>>> index c029f7443190805..55196e0f37c32c6 100644
-> >>>> --- a/drivers/md/bcache/util.h
-> >>>> +++ b/drivers/md/bcache/util.h
-> >>>> @@ -15,8 +15,6 @@
-> >>>>
-> >>>>  #include "closure.h"
-> >>>>
-> >>>> -#define PAGE_SECTORS              (PAGE_SIZE / 512)
-> >>>> -
-> >>>>  struct closure;
-> >>>>
-> >>>>  #ifdef CONFIG_BCACHE_DEBUG
-> >>>> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> >>>> index bb5636cc17b91a7..b068dfc5f2ef0ab 100644
-> >>>> --- a/include/linux/blkdev.h
-> >>>> +++ b/include/linux/blkdev.h
-> >>>> @@ -949,11 +949,12 @@ static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
-> >>>>   * multiple of 512 bytes. Hence these two constants.
-> >>>>   */
-> >>>>  #ifndef SECTOR_SHIFT
-> >>>> -#define SECTOR_SHIFT 9
-> >>>> +#define SECTOR_SHIFT              9
-> >>>>  #endif
-> >>>>  #ifndef SECTOR_SIZE
-> >>>> -#define SECTOR_SIZE (1 << SECTOR_SHIFT)
-> >>>> +#define SECTOR_SIZE               (1 << SECTOR_SHIFT)
-> >>>>  #endif
-> >>>> +#define PAGE_SECTORS              (PAGE_SIZE / SECTOR_SIZE)
-> >>>>
-> >>>>  /*
-> >>>>   * blk_rq_pos()                   : the current sector
-> >>> [snipped]
-> >>>
-> >>>
-> >>
-> >
-> >
-> > .
-> >
+> The md-raid device sees that the underlying leg has max_sectors 255 and it
+> will split the bios on 255-sector boundary, making the bios unaligned on
+> logical_block_size.
+>
+> In order to fix the bug, we round down max_sectors to logical_block_size.
+>
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org
+>
+> ---
+>  block/blk-settings.c |   10 ++++++++++
+>  1 file changed, 10 insertions(+)
+>
+> Index: linux-2.6/block/blk-settings.c
+> ===================================================================
+> --- linux-2.6.orig/block/blk-settings.c 2020-10-29 12:20:46.000000000 +0100
+> +++ linux-2.6/block/blk-settings.c      2020-11-19 21:20:18.000000000 +0100
+> @@ -591,6 +591,16 @@ int blk_stack_limits(struct queue_limits
+>                 ret = -1;
+>         }
+>
+> +       t->max_sectors = round_down(t->max_sectors, t->logical_block_size / 512);
+> +       if (t->max_sectors < PAGE_SIZE / 512)
+> +               t->max_sectors = PAGE_SIZE / 512;
+> +       t->max_hw_sectors = round_down(t->max_hw_sectors, t->logical_block_size / 512);
+> +       if (t->max_sectors < PAGE_SIZE / 512)
+> +               t->max_hw_sectors = PAGE_SIZE / 512;
+> +       t->max_dev_sectors = round_down(t->max_dev_sectors, t->logical_block_size / 512);
+> +       if (t->max_sectors < PAGE_SIZE / 512)
+> +               t->max_dev_sectors = PAGE_SIZE / 512;
+> +
+>         /* Discard alignment and granularity */
+>         if (b->discard_granularity) {
+>                 alignment = queue_limit_discard_alignment(b, start);
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 >
 
 --
