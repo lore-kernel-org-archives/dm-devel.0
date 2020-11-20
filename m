@@ -2,86 +2,95 @@ Return-Path: <SRS0=RcAx=E2=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-17.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1C7B6C6379F
-	for <dm-devel@archiver.kernel.org>; Fri, 20 Nov 2020 09:23:12 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 95A00C63798
+	for <dm-devel@archiver.kernel.org>; Fri, 20 Nov 2020 09:47:30 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 6DCF02224C
-	for <dm-devel@archiver.kernel.org>; Fri, 20 Nov 2020 09:23:11 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 6DCF02224C
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
+	by mail.kernel.org (Postfix) with ESMTPS id CC93222227
+	for <dm-devel@archiver.kernel.org>; Fri, 20 Nov 2020 09:47:29 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Rm58NpaW"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CC93222227
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1605865648;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=JfhSzFCnJmCqJ6C7jBjjrwVStbMXh2ToivED519eKCo=;
+	b=Rm58NpaWBn5jEaUzwGjPUCkDayxieDifiP78KDakULpwh4AErDwBzDQOCyEddkkZyCS6Wy
+	lBDnYQQFOSs4oWgOxYIJxhm9f10FbsA2887+eA/TbI3gRYnktT9mBR4wHJ/HSTrWyf+ZuP
+	4m5R6n912D+uWQPfhgPrin5eXRwvmHc=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-381-GRZKZwk6PLyFLccwEj8-sw-1; Fri, 20 Nov 2020 04:23:07 -0500
-X-MC-Unique: GRZKZwk6PLyFLccwEj8-sw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-596-WOsFexyNNtm46Do5GjBkBQ-1; Fri, 20 Nov 2020 04:47:23 -0500
+X-MC-Unique: WOsFexyNNtm46Do5GjBkBQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4F1F21842163;
-	Fri, 20 Nov 2020 09:23:02 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9FA8D107AD24;
+	Fri, 20 Nov 2020 09:47:18 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3265860854;
-	Fri, 20 Nov 2020 09:23:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6172B5C1D5;
+	Fri, 20 Nov 2020 09:47:18 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 027B01809CA3;
-	Fri, 20 Nov 2020 09:23:02 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D439D180954D;
+	Fri, 20 Nov 2020 09:47:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com
+	[10.5.11.16])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AJNQVrK016100 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 19 Nov 2020 18:26:31 -0500
+	id 0AK9lGZr026084 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 20 Nov 2020 04:47:16 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6D32F1018E6F; Thu, 19 Nov 2020 23:26:31 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 690E41018E65
-	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 23:26:31 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 524E3858EEC
-	for <dm-devel@redhat.com>; Thu, 19 Nov 2020 23:26:31 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-247-RZqQK0-cPLu62Nuz5Dqf4Q-3;
-	Thu, 19 Nov 2020 18:26:26 -0500
-X-MC-Unique: RZqQK0-cPLu62Nuz5Dqf4Q-3
-Received: from tusharsu-Ubuntu.lan (c-71-197-163-6.hsd1.wa.comcast.net
-	[71.197.163.6])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 3F33020B8007;
-	Thu, 19 Nov 2020 15:26:25 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 3F33020B8007
-From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-To: zohar@linux.ibm.com, stephen.smalley.work@gmail.com,
-	casey@schaufler-ca.com, agk@redhat.com, snitzer@redhat.com,
-	gmazyland@gmail.com, paul@paul-moore.com
-Date: Thu, 19 Nov 2020 15:26:11 -0800
-Message-Id: <20201119232611.30114-9-tusharsu@linux.microsoft.com>
-In-Reply-To: <20201119232611.30114-1-tusharsu@linux.microsoft.com>
-References: <20201119232611.30114-1-tusharsu@linux.microsoft.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+	id 879E75C230; Fri, 20 Nov 2020 09:47:16 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EEA7A5C1D5;
+	Fri, 20 Nov 2020 09:47:09 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
+	id 0AK9l8cu000874; Fri, 20 Nov 2020 04:47:08 -0500
+Received: from localhost (mpatocka@localhost)
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
+	ESMTP id 0AK9l85p000870; Fri, 20 Nov 2020 04:47:08 -0500
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+	owned process doing -bs
+Date: Fri, 20 Nov 2020 04:47:08 -0500 (EST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: John Dorminy <jdorminy@redhat.com>
+In-Reply-To: <CAMeeMh8uaZkOHGUsvfaM7Fyqov5wKNfCp_FfBy7S39EG3Ktc7w@mail.gmail.com>
+Message-ID: <alpine.LRH.2.02.2011200443100.28876@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20201118203127.GA30066@redhat.com>
+	<20201118203408.GB30066@redhat.com>
+	<fc7c4efd-0bb3-f023-19c6-54359d279ca8@redhat.com>
+	<alpine.LRH.2.02.2011190810001.32672@file01.intranet.prod.int.rdu2.redhat.com>
+	<20201119172807.GC1879@redhat.com>
+	<alpine.LRH.2.02.2011191337180.588@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.2011191517360.10231@file01.intranet.prod.int.rdu2.redhat.com>
+	<CAMeeMh8uaZkOHGUsvfaM7Fyqov5wKNfCp_FfBy7S39EG3Ktc7w@mail.gmail.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Fri, 20 Nov 2020 04:22:46 -0500
-Cc: sashal@kernel.org, dm-devel@redhat.com, selinux@vger.kernel.org,
-	jmorris@namei.org, linux-kernel@vger.kernel.org,
-	nramas@linux.microsoft.com, linux-security-module@vger.kernel.org,
-	tyhicks@linux.microsoft.com, linux-integrity@vger.kernel.org
-Subject: [dm-devel] [PATCH v6 8/8] selinux: measure state and hash of the
-	policy using IMA
+Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <msnitzer@redhat.com>,
+	Heinz Mauelshagen <heinzm@redhat.com>,
+	Marian Csontos <mcsontos@redhat.com>,
+	linux-block <linux-block@vger.kernel.org>,
+	device-mapper development <dm-devel@redhat.com>,
+	David Teigland <teigland@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+Subject: Re: [dm-devel] [PATCH] blk-settings: make sure that max_sectors is
+ aligned on "logical_block_size" boundary.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,10 +102,9 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -104,481 +112,102 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Lakshmi Ramasubramanian <nramas@linux.microsoft.com>
 
-IMA measures files and buffer data such as keys, command line arguments
-passed to the kernel on kexec system call, etc. While these measurements
-enable monitoring and validating the integrity of the system, it is not
-sufficient. In-memory data structures maintained by various kernel
-components store the current state and policies configured for
-the components. Updates to these data structures would have an impact on
-the functionalities. For example, the in-memory data structures
-maintained by SELinux store the configuration and policies for this
-security module and thereby determine the security functionalities
-provided by this module. Changes to these data at runtime would have
-an impact on the security guarantees provided by SELinux. Measuring
-such in-memory data structures through IMA subsystem provides a secure
-way for a remote attestation service to know the state of the system
-and also the runtime changes in the state of the system.
 
-SELinux configuration and policy are some of the critical data for this
-security module that need to be measured. This measurement can be used
-by an attestation service, for instance, to verify if the configurations
-and policies have been setup correctly and that they haven't been
-tampered at run-time.
+On Thu, 19 Nov 2020, John Dorminy wrote:
 
-Measure SELinux configurations, policy capabilities settings, and
-the hash of the loaded policy by calling the IMA hook
-ima_measure_critical_data(). Since the size of the loaded policy can
-be large (several MB), measure the hash of the policy instead of
-the entire policy to avoid bloating the IMA log entry.
+> Greetings;
+> 
+> Might I suggest using SECTOR_SIZE instead of 512? Or, perhaps, >>
+> SECTOR_SHIFT instead of / 512.
 
-Add "selinux" to the list of supported data sources maintained by IMA
-to enable measuring SELinux data.
+Yes, that's a good point.
 
-To enable SELinux data measurement, the following steps are required:
+> I don't understand the three conditionals. I believe max_sectors is
+> supposed to be <= min(max_dev_sectors, max_hw_sectors), but I don't
+> understand why max_sectors being small should adjust max_hw_sectors
+> and max_dev_sectors. Are the conditions perhaps supposed to be
+> different, adjusting each max_*sectors up to at least PAGE_SIZE /
+> SECTOR_SIZE?
 
-1, Add "ima_policy=critical_data" to the kernel command line arguments
-   to enable measuring SELinux data at boot time.
-For example,
-  BOOT_IMAGE=/boot/vmlinuz-5.10.0-rc1+ root=UUID=fd643309-a5d2-4ed3-b10d-3c579a5fab2f ro nomodeset security=selinux ima_policy=critical_data
+I copied this pattern from blk_queue_max_hw_sectors. Perhaps, we could 
+use:
+	t->max_sectors = round_down(t->max_sectors, t->logical_block_size / 512);
+	if (!t->max_sectors)
+		t->max_sectors = t->logical_block_size / 512;
+instead.
 
-2, Add the following rule to /etc/ima/ima-policy
-   measure func=CRITICAL_DATA data_sources=selinux template=ima-buf
+Jens, what do you think is better?
 
-Sample measurement of SELinux state and hash of the policy:
+Mikulas
 
-10 e32e...5ac3 ima-buf sha256:86e8...4594 selinux-state-1595389364:287899386 696e697469616c697a65643d313b656e61626c65643d313b656e666f7263696e673d303b636865636b72657170726f743d313b6e6574776f726b5f706565725f636f6e74726f6c733d313b6f70656e5f7065726d733d313b657874656e6465645f736f636b65745f636c6173733d313b616c776179735f636865636b5f6e6574776f726b3d303b6367726f75705f7365636c6162656c3d313b6e6e705f6e6f737569645f7472616e736974696f6e3d313b67656e66735f7365636c6162656c5f73796d6c696e6b733d303
-10 9e81...0857 ima-buf sha256:4941...68fc selinux-policy-hash-1597335667:462051628 8d1d...1834
-
-To verify the measurement check the following:
-
-Execute the following command to extract the measured data
-from the IMA log for SELinux configuration (selinux-state).
-
-  grep "selinux-state" /sys/kernel/security/integrity/ima/ascii_runtime_measurements | tail -1 | cut -d' ' -f 6 | xxd -r -p
-
-The output should be the list of key-value pairs. For example,
- initialized=1;enabled=1;enforcing=0;checkreqprot=1;network_peer_controls=1;open_perms=1;extended_socket_class=1;always_check_network=0;cgroup_seclabel=1;nnp_nosuid_transition=1;genfs_seclabel_symlinks=0;
-
-To verify the measured data with the current SELinux state:
-
- => enabled should be set to 1 if /sys/fs/selinux folder exists,
-    0 otherwise
-
-For other entries, compare the integer value in the files
- => /sys/fs/selinux/enforce
- => /sys/fs/selinux/checkreqprot
-And, each of the policy capabilities files under
- => /sys/fs/selinux/policy_capabilities
-
-Note that the actual verification would be against an expected state
-and done on a system other than the measured system, typically
-requiring "initialized=1; enabled=1;enforcing=1;checkreqprot=0;" for
-a secure state and then whatever policy capabilities are actually set
-in the expected policy (which can be extracted from the policy itself
-via seinfo, for example).
-
-For selinux-policy-hash, the hash of SELinux policy is included
-in the IMA log entry.
-
-To verify the measured data with the current SELinux policy run
-the following commands and verify the output hash values match.
-
-  sha256sum /sys/fs/selinux/policy | cut -d' ' -f 1
-
-  grep "selinux-policy-hash" /sys/kernel/security/integrity/ima/ascii_runtime_measurements | tail -1 | cut -d' ' -f 6
-
-Note that the actual verification of SELinux policy would require loading
-the expected policy into an identical kernel on a pristine/known-safe
-system and run the sha256sum /sys/kernel/selinux/policy there to get
-the expected hash.
-
-Signed-off-by: Lakshmi Ramasubramanian <nramas@linux.microsoft.com>
-Suggested-by: Stephen Smalley <stephen.smalley.work@gmail.com>
----
- Documentation/ABI/testing/ima_policy |   6 +-
- security/selinux/Makefile            |   2 +
- security/selinux/hooks.c             |   3 +
- security/selinux/include/security.h  |  11 +-
- security/selinux/measure.c           | 157 +++++++++++++++++++++++++++
- security/selinux/selinuxfs.c         |   8 ++
- security/selinux/ss/services.c       |  71 ++++++++++--
- 7 files changed, 247 insertions(+), 11 deletions(-)
- create mode 100644 security/selinux/measure.c
-
-diff --git a/Documentation/ABI/testing/ima_policy b/Documentation/ABI/testing/ima_policy
-index ee60442a41cd..db1ee7bcdba7 100644
---- a/Documentation/ABI/testing/ima_policy
-+++ b/Documentation/ABI/testing/ima_policy
-@@ -52,7 +52,7 @@ Description:
- 			template:= name of a defined IMA template type
- 			(eg, ima-ng). Only valid when action is "measure".
- 			pcr:= decimal value
--			data_sources:= list of kernel subsystems that contain
-+			data_sources:= list of kernel subsystems (eg, SeLinux) that contain
- 			kernel in-memory data critical to the integrity of the kernel.
- 			Only valid when action is "measure" and func is
- 			CRITICAL_DATA.
-@@ -135,3 +135,7 @@ Description:
- 		keys added to .builtin_trusted_keys or .ima keyring:
- 
- 			measure func=KEY_CHECK keyrings=.builtin_trusted_keys|.ima
-+
-+		Example of measure rule using CRITICAL_DATA to measure critical data
-+
-+			measure func=CRITICAL_DATA data_sources=selinux
-diff --git a/security/selinux/Makefile b/security/selinux/Makefile
-index 4d8e0e8adf0b..83d512116341 100644
---- a/security/selinux/Makefile
-+++ b/security/selinux/Makefile
-@@ -16,6 +16,8 @@ selinux-$(CONFIG_NETLABEL) += netlabel.o
- 
- selinux-$(CONFIG_SECURITY_INFINIBAND) += ibpkey.o
- 
-+selinux-$(CONFIG_IMA) += measure.o
-+
- ccflags-y := -I$(srctree)/security/selinux -I$(srctree)/security/selinux/include
- 
- $(addprefix $(obj)/,$(selinux-y)): $(obj)/flask.h
-diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
-index 6b1826fc3658..8b9fde47ae28 100644
---- a/security/selinux/hooks.c
-+++ b/security/selinux/hooks.c
-@@ -7398,6 +7398,9 @@ int selinux_disable(struct selinux_state *state)
- 	}
- 
- 	selinux_mark_disabled(state);
-+	mutex_lock(&state->policy_mutex);
-+	selinux_measure_state(state);
-+	mutex_unlock(&state->policy_mutex);
- 
- 	pr_info("SELinux:  Disabled at runtime.\n");
- 
-diff --git a/security/selinux/include/security.h b/security/selinux/include/security.h
-index 3cc8bab31ea8..18ee65c98446 100644
---- a/security/selinux/include/security.h
-+++ b/security/selinux/include/security.h
-@@ -229,7 +229,8 @@ void selinux_policy_cancel(struct selinux_state *state,
- 			struct selinux_policy *policy);
- int security_read_policy(struct selinux_state *state,
- 			 void **data, size_t *len);
--
-+int security_read_policy_kernel(struct selinux_state *state,
-+				void **data, size_t *len);
- int security_policycap_supported(struct selinux_state *state,
- 				 unsigned int req_cap);
- 
-@@ -446,4 +447,12 @@ extern void ebitmap_cache_init(void);
- extern void hashtab_cache_init(void);
- extern int security_sidtab_hash_stats(struct selinux_state *state, char *page);
- 
-+#ifdef CONFIG_IMA
-+extern void selinux_measure_state(struct selinux_state *selinux_state);
-+#else
-+static inline void selinux_measure_state(struct selinux_state *selinux_state)
-+{
-+}
-+#endif
-+
- #endif /* _SELINUX_SECURITY_H_ */
-diff --git a/security/selinux/measure.c b/security/selinux/measure.c
-new file mode 100644
-index 000000000000..65d42059f588
---- /dev/null
-+++ b/security/selinux/measure.c
-@@ -0,0 +1,157 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
-+/*
-+ * Measure SELinux state using IMA subsystem.
-+ */
-+#include <linux/vmalloc.h>
-+#include <linux/ktime.h>
-+#include <linux/ima.h>
-+#include "security.h"
-+
-+/*
-+ * This function creates a unique name by appending the timestamp to
-+ * the given string. This string is passed as "event_name" to the IMA
-+ * hook to measure the given SELinux data.
-+ *
-+ * The data provided by SELinux to the IMA subsystem for measuring may have
-+ * already been measured (for instance the same state existed earlier).
-+ * But for SELinux the current data represents a state change and hence
-+ * needs to be measured again. To enable this, pass a unique "event_name"
-+ * to the IMA hook so that IMA subsystem will always measure the given data.
-+ *
-+ * For example,
-+ * At time T0 SELinux data to be measured is "foo". IMA measures it.
-+ * At time T1 the data is changed to "bar". IMA measures it.
-+ * At time T2 the data is changed to "foo" again. IMA will not measure it
-+ * (since it was already measured) unless the event_name, for instance,
-+ * is different in this call.
-+ */
-+static char *selinux_event_name(const char *name_prefix)
-+{
-+	char *event_name = NULL;
-+	struct timespec64 cur_time;
-+
-+	ktime_get_real_ts64(&cur_time);
-+	event_name = kasprintf(GFP_KERNEL, "%s-%lld:%09ld", name_prefix,
-+			       cur_time.tv_sec, cur_time.tv_nsec);
-+	if (!event_name) {
-+		pr_err("%s: event name not allocated.\n", __func__);
-+		return NULL;
-+	}
-+
-+	return event_name;
-+}
-+
-+static int read_selinux_state(char **state_str, int *state_str_len,
-+			      struct selinux_state *state)
-+{
-+	char *buf, *str_fmt = "%s=%d;";
-+	int i, buf_len, curr;
-+	bool initialized = selinux_initialized(state);
-+	bool enabled = !selinux_disabled(state);
-+	bool enforcing = enforcing_enabled(state);
-+	bool checkreqprot = checkreqprot_get(state);
-+
-+	buf_len = snprintf(NULL, 0, str_fmt, "initialized", initialized);
-+	buf_len += snprintf(NULL, 0, str_fmt, "enabled", enabled);
-+	buf_len += snprintf(NULL, 0, str_fmt, "enforcing", enforcing);
-+	buf_len += snprintf(NULL, 0, str_fmt, "checkreqprot", checkreqprot);
-+
-+	for (i = 0; i < __POLICYDB_CAPABILITY_MAX; i++) {
-+		buf_len += snprintf(NULL, 0, str_fmt,
-+				    selinux_policycap_names[i],
-+				    state->policycap[i]);
-+	}
-+	++buf_len;
-+
-+	buf = kzalloc(buf_len, GFP_KERNEL);
-+	if (!buf)
-+		return -ENOMEM;
-+
-+	curr = scnprintf(buf, buf_len, str_fmt,
-+			 "initialized", initialized);
-+	curr += scnprintf((buf + curr), (buf_len - curr), str_fmt,
-+			  "enabled", enabled);
-+	curr += scnprintf((buf + curr), (buf_len - curr), str_fmt,
-+			  "enforcing", enforcing);
-+	curr += scnprintf((buf + curr), (buf_len - curr), str_fmt,
-+			  "checkreqprot", checkreqprot);
-+
-+	for (i = 0; i < __POLICYDB_CAPABILITY_MAX; i++) {
-+		curr += scnprintf((buf + curr), (buf_len - curr), str_fmt,
-+				  selinux_policycap_names[i],
-+				  state->policycap[i]);
-+	}
-+
-+	*state_str = buf;
-+	*state_str_len = curr;
-+
-+	return 0;
-+}
-+
-+/*
-+ * selinux_measure_state - Measure SELinux state configuration and hash of
-+ *			   the SELinux policy.
-+ * @state: selinux state struct
-+ *
-+ * NOTE: This function must be called with policy_mutex held.
-+ */
-+void selinux_measure_state(struct selinux_state *state)
-+{
-+	void *policy = NULL;
-+	char *state_event_name = NULL;
-+	char *policy_event_name = NULL;
-+	char *state_str = NULL;
-+	size_t policy_len;
-+	int state_str_len, rc = 0;
-+	bool initialized = selinux_initialized(state);
-+
-+	/*
-+	 * Get a unique string for measuring the current SELinux state.
-+	 */
-+	state_event_name = selinux_event_name("selinux-state");
-+	if (!state_event_name) {
-+		pr_err("%s: Event name for state not allocated.\n",
-+		       __func__);
-+		rc = -ENOMEM;
-+		goto out;
-+	}
-+
-+	rc = read_selinux_state(&state_str, &state_str_len, state);
-+	if (rc) {
-+		pr_err("%s: Failed to read state %d.\n", __func__, rc);
-+		goto out;
-+	}
-+
-+	ima_measure_critical_data("selinux", state_event_name,
-+				  state_str, state_str_len, false);
-+
-+	/*
-+	 * Measure SELinux policy only after initialization is completed.
-+	 */
-+	if (!initialized)
-+		goto out;
-+
-+	policy_event_name = selinux_event_name("selinux-policy-hash");
-+	if (!policy_event_name) {
-+		pr_err("%s: Event name for policy not allocated.\n",
-+		       __func__);
-+		rc = -ENOMEM;
-+		goto out;
-+	}
-+
-+	rc = security_read_policy_kernel(state, &policy, &policy_len);
-+	if (rc) {
-+		pr_err("%s: Failed to read policy %d.\n", __func__, rc);
-+		goto out;
-+	}
-+
-+	ima_measure_critical_data("selinux", policy_event_name,
-+				  policy, policy_len, true);
-+
-+	vfree(policy);
-+
-+out:
-+	kfree(policy_event_name);
-+	kfree(state_str);
-+	kfree(state_event_name);
-+}
-diff --git a/security/selinux/selinuxfs.c b/security/selinux/selinuxfs.c
-index 4bde570d56a2..015650220cb2 100644
---- a/security/selinux/selinuxfs.c
-+++ b/security/selinux/selinuxfs.c
-@@ -182,6 +182,10 @@ static ssize_t sel_write_enforce(struct file *file, const char __user *buf,
- 		selinux_status_update_setenforce(state, new_value);
- 		if (!new_value)
- 			call_blocking_lsm_notifier(LSM_POLICY_CHANGE, NULL);
-+
-+		mutex_lock(&state->policy_mutex);
-+		selinux_measure_state(state);
-+		mutex_unlock(&state->policy_mutex);
- 	}
- 	length = count;
- out:
-@@ -762,6 +766,10 @@ static ssize_t sel_write_checkreqprot(struct file *file, const char __user *buf,
- 
- 	checkreqprot_set(fsi->state, (new_value ? 1 : 0));
- 	length = count;
-+
-+	mutex_lock(&fsi->state->policy_mutex);
-+	selinux_measure_state(fsi->state);
-+	mutex_unlock(&fsi->state->policy_mutex);
- out:
- 	kfree(page);
- 	return length;
-diff --git a/security/selinux/ss/services.c b/security/selinux/ss/services.c
-index 9704c8a32303..dfa2e00894ae 100644
---- a/security/selinux/ss/services.c
-+++ b/security/selinux/ss/services.c
-@@ -2180,6 +2180,7 @@ static void selinux_notify_policy_change(struct selinux_state *state,
- 	selinux_status_update_policyload(state, seqno);
- 	selinux_netlbl_cache_invalidate();
- 	selinux_xfrm_notify_policyload();
-+	selinux_measure_state(state);
- }
- 
- void selinux_policy_commit(struct selinux_state *state,
-@@ -3875,8 +3876,33 @@ int security_netlbl_sid_to_secattr(struct selinux_state *state,
- }
- #endif /* CONFIG_NETLABEL */
- 
-+/**
-+ * security_read_selinux_policy - read the policy.
-+ * @policy: SELinux policy
-+ * @data: binary policy data
-+ * @len: length of data in bytes
-+ *
-+ */
-+static int security_read_selinux_policy(struct selinux_policy *policy,
-+					void *data, size_t *len)
-+{
-+	int rc;
-+	struct policy_file fp;
-+
-+	fp.data = data;
-+	fp.len = *len;
-+
-+	rc = policydb_write(&policy->policydb, &fp);
-+	if (rc)
-+		return rc;
-+
-+	*len = (unsigned long)fp.data - (unsigned long)data;
-+	return 0;
-+}
-+
- /**
-  * security_read_policy - read the policy.
-+ * @state: selinux_state
-  * @data: binary policy data
-  * @len: length of data in bytes
-  *
-@@ -3885,8 +3911,6 @@ int security_read_policy(struct selinux_state *state,
- 			 void **data, size_t *len)
- {
- 	struct selinux_policy *policy;
--	int rc;
--	struct policy_file fp;
- 
- 	policy = rcu_dereference_protected(
- 			state->policy, lockdep_is_held(&state->policy_mutex));
-@@ -3898,14 +3922,43 @@ int security_read_policy(struct selinux_state *state,
- 	if (!*data)
- 		return -ENOMEM;
- 
--	fp.data = *data;
--	fp.len = *len;
-+	return security_read_selinux_policy(policy, *data, len);
-+}
- 
--	rc = policydb_write(&policy->policydb, &fp);
--	if (rc)
--		return rc;
-+/**
-+ * security_read_policy_kernel - read the policy.
-+ * @state: selinux_state
-+ * @data: binary policy data
-+ * @len: length of data in bytes
-+ *
-+ * Allocates kernel memory for reading SELinux policy.
-+ * This function is for internal use only and should not
-+ * be used for returning data to user space.
-+ *
-+ * This function must be called with policy_mutex held.
-+ */
-+int security_read_policy_kernel(struct selinux_state *state,
-+				void **data, size_t *len)
-+{
-+	struct selinux_policy *policy;
-+	int rc = 0;
- 
--	*len = (unsigned long)fp.data - (unsigned long)*data;
--	return 0;
-+	policy = rcu_dereference_protected(
-+			state->policy, lockdep_is_held(&state->policy_mutex));
-+	if (!policy) {
-+		rc = -EINVAL;
-+		goto out;
-+	}
-+
-+	*len = policy->policydb.len;
-+	*data = vmalloc(*len);
-+	if (!*data) {
-+		rc = -ENOMEM;
-+		goto out;
-+	}
- 
-+	rc = security_read_selinux_policy(policy, *data, len);
-+
-+out:
-+	return rc;
- }
--- 
-2.17.1
+> Perhaps, like e.g. blk_queue_max_hw_sectors(), the
+> conditionals should log if they are adjusting max_*sectors up to the
+> minimum.
+> 
+> Thanks!
+> 
+> John Dorminy
+> 
+> On Thu, Nov 19, 2020 at 3:37 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
+> >
+> > We get these I/O errors when we run md-raid1 on the top of dm-integrity on
+> > the top of ramdisk:
+> > device-mapper: integrity: Bio not aligned on 8 sectors: 0xff00, 0xff
+> > device-mapper: integrity: Bio not aligned on 8 sectors: 0xff00, 0xff
+> > device-mapper: integrity: Bio not aligned on 8 sectors: 0xffff, 0x1
+> > device-mapper: integrity: Bio not aligned on 8 sectors: 0xffff, 0x1
+> > device-mapper: integrity: Bio not aligned on 8 sectors: 0x8048, 0xff
+> > device-mapper: integrity: Bio not aligned on 8 sectors: 0x8147, 0xff
+> > device-mapper: integrity: Bio not aligned on 8 sectors: 0x8246, 0xff
+> > device-mapper: integrity: Bio not aligned on 8 sectors: 0x8345, 0xbb
+> >
+> > The ramdisk device has logical_block_size 512 and max_sectors 255. The
+> > dm-integrity device uses logical_block_size 4096 and it doesn't affect the
+> > "max_sectors" value - thus, it inherits 255 from the ramdisk. So, we have
+> > a device with max_sectors not aligned on logical_block_size.
+> >
+> > The md-raid device sees that the underlying leg has max_sectors 255 and it
+> > will split the bios on 255-sector boundary, making the bios unaligned on
+> > logical_block_size.
+> >
+> > In order to fix the bug, we round down max_sectors to logical_block_size.
+> >
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > Cc: stable@vger.kernel.org
+> >
+> > ---
+> >  block/blk-settings.c |   10 ++++++++++
+> >  1 file changed, 10 insertions(+)
+> >
+> > Index: linux-2.6/block/blk-settings.c
+> > ===================================================================
+> > --- linux-2.6.orig/block/blk-settings.c 2020-10-29 12:20:46.000000000 +0100
+> > +++ linux-2.6/block/blk-settings.c      2020-11-19 21:20:18.000000000 +0100
+> > @@ -591,6 +591,16 @@ int blk_stack_limits(struct queue_limits
+> >                 ret = -1;
+> >         }
+> >
+> > +       t->max_sectors = round_down(t->max_sectors, t->logical_block_size / 512);
+> > +       if (t->max_sectors < PAGE_SIZE / 512)
+> > +               t->max_sectors = PAGE_SIZE / 512;
+> > +       t->max_hw_sectors = round_down(t->max_hw_sectors, t->logical_block_size / 512);
+> > +       if (t->max_sectors < PAGE_SIZE / 512)
+> > +               t->max_hw_sectors = PAGE_SIZE / 512;
+> > +       t->max_dev_sectors = round_down(t->max_dev_sectors, t->logical_block_size / 512);
+> > +       if (t->max_sectors < PAGE_SIZE / 512)
+> > +               t->max_dev_sectors = PAGE_SIZE / 512;
+> > +
+> >         /* Discard alignment and granularity */
+> >         if (b->discard_granularity) {
+> >                 alignment = queue_limit_discard_alignment(b, start);
+> >
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> >
+> 
 
 --
 dm-devel mailing list
