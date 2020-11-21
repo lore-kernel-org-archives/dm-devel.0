@@ -2,66 +2,84 @@ Return-Path: <SRS0=JGfJ=E5=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-4.0 required=3.0 tests=BAYES_00,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.7 required=3.0 tests=BAYES_00,
+	DKIM_ADSP_CUSTOM_MED,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CE099C6379D
-	for <dm-devel@archiver.kernel.org>; Mon, 23 Nov 2020 08:40:32 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B43A7C2D0E4
+	for <dm-devel@archiver.kernel.org>; Mon, 23 Nov 2020 08:40:35 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 321E820729
-	for <dm-devel@archiver.kernel.org>; Mon, 23 Nov 2020 08:40:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 321E820729
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+	by mail.kernel.org (Postfix) with ESMTPS id CDC4720729
+	for <dm-devel@archiver.kernel.org>; Mon, 23 Nov 2020 08:40:34 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CDC4720729
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-353-UT7crt6yOY-a3w5ef2-Agw-1; Mon, 23 Nov 2020 03:40:28 -0500
-X-MC-Unique: UT7crt6yOY-a3w5ef2-Agw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-504-_HEIrfzlMLGb-YvDg4u_bQ-1; Mon, 23 Nov 2020 03:40:31 -0500
+X-MC-Unique: _HEIrfzlMLGb-YvDg4u_bQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C585D1007321;
-	Mon, 23 Nov 2020 08:40:20 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A588B10016FE;
-	Mon, 23 Nov 2020 08:40:20 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E3379835B70;
+	Mon, 23 Nov 2020 08:40:24 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C626C5C1BD;
+	Mon, 23 Nov 2020 08:40:24 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7E3914EEF6;
-	Mon, 23 Nov 2020 08:40:20 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9AD131809CA5;
+	Mon, 23 Nov 2020 08:40:24 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AKJ37JD017449 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 20 Nov 2020 14:03:07 -0500
+	id 0ALMN5ct032391 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 21 Nov 2020 17:23:05 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6E4D22026D49; Fri, 20 Nov 2020 19:03:07 +0000 (UTC)
+	id 1CB7F1002941; Sat, 21 Nov 2020 22:23:05 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6596E2026D12
-	for <dm-devel@redhat.com>; Fri, 20 Nov 2020 19:03:04 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 187281002050
+	for <dm-devel@redhat.com>; Sat, 21 Nov 2020 22:23:00 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ACCB88007D9
-	for <dm-devel@redhat.com>; Fri, 20 Nov 2020 19:03:04 +0000 (UTC)
-Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
-	by relay.mimecast.com with ESMTP id us-mta-470-XsUbK4HTM1WoFwKt1k-orA-1;
-	Fri, 20 Nov 2020 14:03:00 -0500
-X-MC-Unique: XsUbK4HTM1WoFwKt1k-orA-1
-Received: from kicinski-fedora-pc1c0hjn.dhcp.thefacebook.com (unknown
-	[163.114.132.6])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPSA id D19712242B;
-	Fri, 20 Nov 2020 18:53:45 +0000 (UTC)
-Date: Fri, 20 Nov 2020 10:53:44 -0800
-From: Jakub Kicinski <kuba@kernel.org>
-To: "Gustavo A. R. Silva" <gustavoars@kernel.org>
-Message-ID: <20201120105344.4345c14e@kicinski-fedora-pc1c0hjn.dhcp.thefacebook.com>
-In-Reply-To: <cover.1605896059.git.gustavoars@kernel.org>
-References: <cover.1605896059.git.gustavoars@kernel.org>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B7BBD811E76
+	for <dm-devel@redhat.com>; Sat, 21 Nov 2020 22:23:00 +0000 (UTC)
+Received: from mail-lj1-f194.google.com (mail-lj1-f194.google.com
+	[209.85.208.194]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-391-MZNOAV2gPzuP-N46zOxBNg-1; Sat, 21 Nov 2020 17:22:56 -0500
+X-MC-Unique: MZNOAV2gPzuP-N46zOxBNg-1
+Received: by mail-lj1-f194.google.com with SMTP id y16so13933389ljk.1;
+	Sat, 21 Nov 2020 14:22:55 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+	:content-transfer-encoding;
+	bh=kJ8b4BvA6wzfK+FWWv7arlDw3Ty0opb4cjar+bLcvtg=;
+	b=gu8aZSD1ql/zmcJQX/j8GcuUJ62KI87OffVbby+aNQTikfS+VeTA9wbwjWOXi/QjWh
+	cHVsdRq1DU2ObVx0vtdFgJbwSOP4dqRmF7PmDWzStQSafKn3GJEcU8lFVSE8yDcQ8R/V
+	QVqTGMbqmxeN+WgdW3e7U8AEq+VhKsE6kelX7ZwCtO/9NYvkilp3m5YfM4aXeogBsG8w
+	OH0I4+xklnZog30Ja6dMZCi6qEcSQh3EJyy089lLEhmEUQlDpnECcC+7x43Xh7I45rDG
+	/z3gylRrwkVKbq4IHGlo+u0+RKSTRn8qXIU7KxVS601p1MMMqhZ8xyqBCBoxJrlPKx68
+	iOKA==
+X-Gm-Message-State: AOAM530n3q2hq6TpBAzX0Mp1T0mG1DgezF235jFDaBrrp/E5elUGHB78
+	aDrFmQflx16imdrImyuvauAHOokByiOHrg==
+X-Google-Smtp-Source: ABdhPJxvunX+BdmeGkwBuIss2DHdAFmv5GOCUSZYkJiwA4Sbm+21EhyDXFNsdHffLvAN1Ee1v1SaHA==
+X-Received: by 2002:a2e:b6cd:: with SMTP id m13mr11062641ljo.310.1605997374390;
+	Sat, 21 Nov 2020 14:22:54 -0800 (PST)
+Received: from localhost.localdomain (h-158-174-22-6.NA.cust.bahnhof.se.
+	[158.174.22.6])
+	by smtp.gmail.com with ESMTPSA id k9sm837450lfk.288.2020.11.21.14.22.52
+	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+	Sat, 21 Nov 2020 14:22:53 -0800 (PST)
+From: Rikard Falkeborn <rikard.falkeborn@gmail.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Date: Sat, 21 Nov 2020 23:22:48 +0100
+Message-Id: <20201121222248.6859-1-rikard.falkeborn@gmail.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -71,52 +89,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 23 Nov 2020 03:39:39 -0500
-Cc: alsa-devel@alsa-project.org, linux-atm-general@lists.sourceforge.net,
-	reiserfs-devel@vger.kernel.org, nouveau@lists.freedesktop.org,
-	linux-iio@vger.kernel.org, linux-wireless@vger.kernel.org,
-	linux-fbdev@vger.kernel.org, dri-devel@lists.freedesktop.org,
-	virtualization@lists.linux-foundation.org,
-	Nathan Chancellor <natechancellor@gmail.com>,
-	linux-ide@vger.kernel.org, dm-devel@redhat.com,
-	keyrings@vger.kernel.org, linux-mtd@lists.infradead.org,
-	GR-everest-linux-l2@marvell.com, wcn36xx@lists.infradead.org,
-	samba-technical@lists.samba.org, linux-i3c@lists.infradead.org,
-	linux1394-devel@lists.sourceforge.net, linux-afs@lists.infradead.org,
-	usb-storage@lists.one-eyed-alien.net,
-	target-devel@vger.kernel.org, devel@driverdev.osuosl.org,
-	linux-cifs@vger.kernel.org, rds-devel@oss.oracle.com,
-	Nick Desaulniers <ndesaulniers@google.com>,
-	linux-scsi@vger.kernel.org, linux-rdma@vger.kernel.org,
-	oss-drivers@netronome.com, bridge@lists.linux-foundation.org,
-	linux-security-module@vger.kernel.org, amd-gfx@lists.freedesktop.org,
-	linux-stm32@st-md-mailman.stormreply.com,
-	cluster-devel@redhat.com, linux-acpi@vger.kernel.org,
-	coreteam@netfilter.org, intel-wired-lan@lists.osuosl.org,
-	linux-input@vger.kernel.org, Miguel Ojeda <ojeda@kernel.org>,
-	tipc-discussion@lists.sourceforge.net,
-	linux-ext4@vger.kernel.org, linux-media@vger.kernel.org,
-	linux-watchdog@vger.kernel.org, selinux@vger.kernel.org,
-	linux-arm-msm@vger.kernel.org, intel-gfx@lists.freedesktop.org,
-	linux-geode@lists.infradead.org, linux-can@vger.kernel.org,
-	linux-block@vger.kernel.org, linux-gpio@vger.kernel.org,
-	op-tee@lists.trustedfirmware.org, linux-mediatek@lists.infradead.org,
-	xen-devel@lists.xenproject.org, drbd-dev@tron.linbit.com,
-	linux-hams@vger.kernel.org, ceph-devel@vger.kernel.org,
-	linux-arm-kernel@lists.infradead.org,
-	linux-hwmon@vger.kernel.org, x86@kernel.org,
-	linux-nfs@vger.kernel.org, GR-Linux-NIC-Dev@marvell.com,
-	Kees Cook <keescook@chromium.org>, linux-mm@kvack.org,
-	netdev@vger.kernel.org, linux-decnet-user@lists.sourceforge.net,
-	linux-mmc@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-renesas-soc@vger.kernel.org, linux-sctp@vger.kernel.org,
-	linux-usb@vger.kernel.org, netfilter-devel@vger.kernel.org,
-	linux-crypto@vger.kernel.org, patches@opensource.cirrus.com,
-	Joe Perches <joe@perches.com>, linux-integrity@vger.kernel.org,
-	linux-hardening@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH 000/141] Fix fall-through warnings for Clang
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org,
+	Rikard Falkeborn <rikard.falkeborn@gmail.com>
+Subject: [dm-devel] [PATCH] dm crypt: Constify static crypt_iv_operations
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -130,7 +108,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -138,30 +116,42 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, 20 Nov 2020 12:21:39 -0600 Gustavo A. R. Silva wrote:
-> This series aims to fix almost all remaining fall-through warnings in
-> order to enable -Wimplicit-fallthrough for Clang.
-> 
-> In preparation to enable -Wimplicit-fallthrough for Clang, explicitly
-> add multiple break/goto/return/fallthrough statements instead of just
-> letting the code fall through to the next case.
-> 
-> Notice that in order to enable -Wimplicit-fallthrough for Clang, this
-> change[1] is meant to be reverted at some point. So, this patch helps
-> to move in that direction.
-> 
-> Something important to mention is that there is currently a discrepancy
-> between GCC and Clang when dealing with switch fall-through to empty case
-> statements or to cases that only contain a break/continue/return
-> statement[2][3][4].
+The only usage of these structs is to assign their address to the
+iv_gen_ops field in the crypt config struct, which is a pointer to
+const. Make them const like the rest of the static crypt_iv_operations
+structs. This allows the compiler to put them in read-only memory.
 
-Are we sure we want to make this change? Was it discussed before?
+Signed-off-by: Rikard Falkeborn <rikard.falkeborn@gmail.com>
+---
+ drivers/md/dm-crypt.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-Are there any bugs Clangs puritanical definition of fallthrough helped
-find?
-
-IMVHO compiler warnings are supposed to warn about issues that could
-be bugs. Falling through to default: break; can hardly be a bug?!
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 392337f16ecf..53791138d78b 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1090,16 +1090,16 @@ static const struct crypt_iv_operations crypt_iv_tcw_ops = {
+ 	.post	   = crypt_iv_tcw_post
+ };
+ 
+-static struct crypt_iv_operations crypt_iv_random_ops = {
++static const struct crypt_iv_operations crypt_iv_random_ops = {
+ 	.generator = crypt_iv_random_gen
+ };
+ 
+-static struct crypt_iv_operations crypt_iv_eboiv_ops = {
++static const struct crypt_iv_operations crypt_iv_eboiv_ops = {
+ 	.ctr	   = crypt_iv_eboiv_ctr,
+ 	.generator = crypt_iv_eboiv_gen
+ };
+ 
+-static struct crypt_iv_operations crypt_iv_elephant_ops = {
++static const struct crypt_iv_operations crypt_iv_elephant_ops = {
+ 	.ctr	   = crypt_iv_elephant_ctr,
+ 	.dtr	   = crypt_iv_elephant_dtr,
+ 	.init	   = crypt_iv_elephant_init,
+-- 
+2.29.2
 
 --
 dm-devel mailing list
