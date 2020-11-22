@@ -6,77 +6,75 @@ X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C104BC63777
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B6A6DC56202
 	for <dm-devel@archiver.kernel.org>; Mon, 23 Nov 2020 08:40:45 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 2ED6F2072C
-	for <dm-devel@archiver.kernel.org>; Mon, 23 Nov 2020 08:40:45 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2ED6F2072C
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=hansenpartnership.com
+	by mail.kernel.org (Postfix) with ESMTPS id 09FE820729
+	for <dm-devel@archiver.kernel.org>; Mon, 23 Nov 2020 08:40:44 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 09FE820729
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=perches.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-226-99eO6vqUOCu04AE0qinLwA-1; Mon, 23 Nov 2020 03:40:41 -0500
-X-MC-Unique: 99eO6vqUOCu04AE0qinLwA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-486-XVFVa0mWMaSFr8PANaAdhA-1; Mon, 23 Nov 2020 03:40:40 -0500
+X-MC-Unique: XVFVa0mWMaSFr8PANaAdhA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0AD7C19251AF;
-	Mon, 23 Nov 2020 08:40:27 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E2303189A5;
-	Mon, 23 Nov 2020 08:40:26 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BF4D2DF8C9;
+	Mon, 23 Nov 2020 08:40:28 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9E56410023BF;
+	Mon, 23 Nov 2020 08:40:28 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B87021809CA7;
-	Mon, 23 Nov 2020 08:40:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7626650031;
+	Mon, 23 Nov 2020 08:40:28 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AMISHPi029029 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 22 Nov 2020 13:28:17 -0500
+	id 0AMIPvZD028750 for <dm-devel@listman.util.phx.redhat.com>;
+	Sun, 22 Nov 2020 13:25:57 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id DFEF01000DBE; Sun, 22 Nov 2020 18:28:16 +0000 (UTC)
+	id C05B52026D11; Sun, 22 Nov 2020 18:25:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DB7F7100296D
-	for <dm-devel@redhat.com>; Sun, 22 Nov 2020 18:28:14 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BA85E2026D48
+	for <dm-devel@redhat.com>; Sun, 22 Nov 2020 18:25:55 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D21D7811E78
-	for <dm-devel@redhat.com>; Sun, 22 Nov 2020 18:28:14 +0000 (UTC)
-Received: from bedivere.hansenpartnership.com
-	(bedivere.hansenpartnership.com [96.44.175.130]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-202-QPwWB8QoM5a1iuFV0HmiQg-1;
-	Sun, 22 Nov 2020 13:28:12 -0500
-X-MC-Unique: QPwWB8QoM5a1iuFV0HmiQg-1
-Received: from localhost (localhost [127.0.0.1])
-	by bedivere.hansenpartnership.com (Postfix) with ESMTP id 5BB5B128028F; 
-	Sun, 22 Nov 2020 10:22:04 -0800 (PST)
-Received: from bedivere.hansenpartnership.com ([127.0.0.1])
-	by localhost (bedivere.hansenpartnership.com [127.0.0.1]) (amavisd-new,
-	port 10024)
-	with ESMTP id nGXBdIQjsZJa; Sun, 22 Nov 2020 10:22:04 -0800 (PST)
-Received: from jarvis.int.hansenpartnership.com (unknown
-	[IPv6:2601:600:8280:66d1::527])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by bedivere.hansenpartnership.com (Postfix) with ESMTPSA id
-	DB46B1280287; Sun, 22 Nov 2020 10:22:00 -0800 (PST)
-Message-ID: <9b57fd4914b46f38d54087d75e072d6e947cb56d.camel@HansenPartnership.com>
-From: James Bottomley <James.Bottomley@hansenpartnership.com>
-To: Kees Cook <keescook@chromium.org>, Jakub Kicinski <kuba@kernel.org>
-Date: Sun, 22 Nov 2020 10:21:59 -0800
-In-Reply-To: <202011220816.8B6591A@keescook>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 686AA800B3A
+	for <dm-devel@redhat.com>; Sun, 22 Nov 2020 18:25:55 +0000 (UTC)
+Received: from smtprelay.hostedemail.com (smtprelay0157.hostedemail.com
+	[216.40.44.157]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-13-gYU7xY0NMuu1QlRxuvyI6Q-1; Sun, 22 Nov 2020 13:25:50 -0500
+X-MC-Unique: gYU7xY0NMuu1QlRxuvyI6Q-1
+Received: from filter.hostedemail.com (clb03-v110.bra.tucows.net
+	[216.40.38.60])
+	by smtprelay06.hostedemail.com (Postfix) with ESMTP id 883C21800AEAD;
+	Sun, 22 Nov 2020 18:25:49 +0000 (UTC)
+X-Session-Marker: 6A6F6540706572636865732E636F6D
+X-HE-Tag: stamp54_4305a342735e
+X-Filterd-Recvd-Size: 3841
+Received: from XPS-9350.home (unknown [47.151.128.180])
+	(Authenticated sender: joe@perches.com)
+	by omf09.hostedemail.com (Postfix) with ESMTPA;
+	Sun, 22 Nov 2020 18:25:38 +0000 (UTC)
+Message-ID: <ca071decb87cc7e905411423c05a48f9fd2f58d7.camel@perches.com>
+From: Joe Perches <joe@perches.com>
+To: James Bottomley <James.Bottomley@HansenPartnership.com>, Kees Cook
+	<keescook@chromium.org>, Jakub Kicinski <kuba@kernel.org>
+Date: Sun, 22 Nov 2020 10:25:37 -0800
+In-Reply-To: <9b57fd4914b46f38d54087d75e072d6e947cb56d.camel@HansenPartnership.com>
 References: <cover.1605896059.git.gustavoars@kernel.org>
 	<20201120105344.4345c14e@kicinski-fedora-pc1c0hjn.dhcp.thefacebook.com>
 	<202011201129.B13FDB3C@keescook>
 	<20201120115142.292999b2@kicinski-fedora-pc1c0hjn.dhcp.thefacebook.com>
 	<202011220816.8B6591A@keescook>
-User-Agent: Evolution 3.34.4
+	<9b57fd4914b46f38d54087d75e072d6e947cb56d.camel@HansenPartnership.com>
+User-Agent: Evolution 3.38.1-1
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -86,7 +84,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 23 Nov 2020 03:39:39 -0500
 Cc: alsa-devel@alsa-project.org, linux-atm-general@lists.sourceforge.net,
@@ -129,8 +127,7 @@ Cc: alsa-devel@alsa-project.org, linux-atm-general@lists.sourceforge.net,
 	linux-renesas-soc@vger.kernel.org, linux-sctp@vger.kernel.org,
 	linux-usb@vger.kernel.org, netfilter-devel@vger.kernel.org,
 	linux-crypto@vger.kernel.org, patches@opensource.cirrus.com,
-	Joe Perches <joe@perches.com>, linux-integrity@vger.kernel.org,
-	linux-hardening@vger.kernel.org
+	linux-integrity@vger.kernel.org, linux-hardening@vger.kernel.org
 Subject: Re: [dm-devel] [PATCH 000/141] Fix fall-through warnings for Clang
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
@@ -145,7 +142,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -153,63 +150,13 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sun, 2020-11-22 at 08:17 -0800, Kees Cook wrote:
-> On Fri, Nov 20, 2020 at 11:51:42AM -0800, Jakub Kicinski wrote:
-> > On Fri, 20 Nov 2020 11:30:40 -0800 Kees Cook wrote:
-> > > On Fri, Nov 20, 2020 at 10:53:44AM -0800, Jakub Kicinski wrote:
-> > > > On Fri, 20 Nov 2020 12:21:39 -0600 Gustavo A. R. Silva wrote:  
-> > > > > This series aims to fix almost all remaining fall-through
-> > > > > warnings in order to enable -Wimplicit-fallthrough for Clang.
-> > > > > 
-> > > > > In preparation to enable -Wimplicit-fallthrough for Clang,
-> > > > > explicitly add multiple break/goto/return/fallthrough
-> > > > > statements instead of just letting the code fall through to
-> > > > > the next case.
-> > > > > 
-> > > > > Notice that in order to enable -Wimplicit-fallthrough for
-> > > > > Clang, this change[1] is meant to be reverted at some point.
-> > > > > So, this patch helps to move in that direction.
-> > > > > 
-> > > > > Something important to mention is that there is currently a
-> > > > > discrepancy between GCC and Clang when dealing with switch
-> > > > > fall-through to empty case statements or to cases that only
-> > > > > contain a break/continue/return statement[2][3][4].  
-> > > > 
-> > > > Are we sure we want to make this change? Was it discussed
-> > > > before?
-> > > > 
-> > > > Are there any bugs Clangs puritanical definition of fallthrough
-> > > > helped find?
-> > > > 
-> > > > IMVHO compiler warnings are supposed to warn about issues that
-> > > > could be bugs. Falling through to default: break; can hardly be
-> > > > a bug?!  
-> > > 
-> > > It's certainly a place where the intent is not always clear. I
-> > > think this makes all the cases unambiguous, and doesn't impact
-> > > the machine code, since the compiler will happily optimize away
-> > > any behavioral redundancy.
-> > 
-> > If none of the 140 patches here fix a real bug, and there is no
-> > change to machine code then it sounds to me like a W=2 kind of a
-> > warning.
-> 
-> FWIW, this series has found at least one bug so far:
-> https://lore.kernel.org/lkml/CAFCwf11izHF=g1mGry1fE5kvFFFrxzhPSM6qKAO8gxSp=Kr_CQ@mail.gmail.com/
+On Sun, 2020-11-22 at 10:21 -0800, James Bottomley wrote:
+> Please tell me
+> our reward for all this effort isn't a single missing error print.
 
+There were quite literally dozens of logical defects found
+by the fallthrough additions.  Very few were logging only.
 
-Well, it's a problem in an error leg, sure, but it's not a really
-compelling reason for a 141 patch series, is it?  All that fixing this
-error will do is get the driver to print "oh dear there's a problem"
-under four more conditions than it previously did.
-
-We've been at this for three years now with nearly a thousand patches,
-firstly marking all the fall throughs with /* fall through */ and later
-changing it to fallthrough.  At some point we do have to ask if the
-effort is commensurate with the protection afforded.  Please tell me
-our reward for all this effort isn't a single missing error print.
-
-James
 
 
 --
