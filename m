@@ -2,71 +2,71 @@ Return-Path: <SRS0=JGfJ=E5=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D7CC7C56202
-	for <dm-devel@archiver.kernel.org>; Mon, 23 Nov 2020 08:40:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D29E0C63777
+	for <dm-devel@archiver.kernel.org>; Mon, 23 Nov 2020 08:40:51 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 42A0620729
-	for <dm-devel@archiver.kernel.org>; Mon, 23 Nov 2020 08:40:50 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 42A0620729
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
+	by mail.kernel.org (Postfix) with ESMTPS id 3E82D20729
+	for <dm-devel@archiver.kernel.org>; Mon, 23 Nov 2020 08:40:51 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3E82D20729
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=telegraphics.com.au
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-579-mbDgO7zcMyKtdaSYLUWgxg-1; Mon, 23 Nov 2020 03:40:46 -0500
-X-MC-Unique: mbDgO7zcMyKtdaSYLUWgxg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-105-REmDGf-mNyW6-cSGGvU6Aw-1; Mon, 23 Nov 2020 03:40:47 -0500
+X-MC-Unique: REmDGf-mNyW6-cSGGvU6Aw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E71E61074642;
-	Mon, 23 Nov 2020 08:40:38 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C531D1E2C8;
-	Mon, 23 Nov 2020 08:40:38 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id EBA03107464E;
+	Mon, 23 Nov 2020 08:40:42 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CEDB11349A;
+	Mon, 23 Nov 2020 08:40:42 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 95D0E1809CA8;
-	Mon, 23 Nov 2020 08:40:38 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A5B5450037;
+	Mon, 23 Nov 2020 08:40:42 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AMKrhXS011696 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 22 Nov 2020 15:53:44 -0500
+	id 0AMN2vaV024066 for <dm-devel@listman.util.phx.redhat.com>;
+	Sun, 22 Nov 2020 18:02:58 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id BCFB92166B2B; Sun, 22 Nov 2020 20:53:43 +0000 (UTC)
+	id C31062166B2B; Sun, 22 Nov 2020 23:02:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B7E882166B27
-	for <dm-devel@redhat.com>; Sun, 22 Nov 2020 20:53:41 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BE2312166B27
+	for <dm-devel@redhat.com>; Sun, 22 Nov 2020 23:02:55 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6DE14811E76
-	for <dm-devel@redhat.com>; Sun, 22 Nov 2020 20:53:41 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-199-E-XbmVK5OcWSfD7W83ZwCg-1;
-	Sun, 22 Nov 2020 15:53:38 -0500
-X-MC-Unique: E-XbmVK5OcWSfD7W83ZwCg-1
-Received: from [192.168.86.31] (c-71-197-163-6.hsd1.wa.comcast.net
-	[71.197.163.6])
-	by linux.microsoft.com (Postfix) with ESMTPSA id B7AFB20B717A;
-	Sun, 22 Nov 2020 12:53:36 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com B7AFB20B717A
-To: Pavel Machek <pavel@ucw.cz>
-References: <20201119232611.30114-1-tusharsu@linux.microsoft.com>
-	<20201120124657.GA31468@duo.ucw.cz>
-From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-Message-ID: <aadf6e35-39bc-74d4-6ca3-d708860738a5@linux.microsoft.com>
-Date: Sun, 22 Nov 2020 12:53:35 -0800
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
-	Thunderbird/68.10.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 802098007D9
+	for <dm-devel@redhat.com>; Sun, 22 Nov 2020 23:02:55 +0000 (UTC)
+Received: from kvm5.telegraphics.com.au (kvm5.telegraphics.com.au
+	[98.124.60.144]) by relay.mimecast.com with ESMTP id
+	us-mta-367-AcGf6Y0vN5KyGh3tibnMLg-1; Sun, 22 Nov 2020 18:02:53 -0500
+X-MC-Unique: AcGf6Y0vN5KyGh3tibnMLg-1
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by kvm5.telegraphics.com.au (Postfix) with ESMTP id BF98E29DB3;
+	Sun, 22 Nov 2020 17:54:47 -0500 (EST)
+Date: Mon, 23 Nov 2020 09:54:48 +1100 (AEDT)
+From: Finn Thain <fthain@telegraphics.com.au>
+To: Miguel Ojeda <miguel.ojeda.sandonis@gmail.com>
+In-Reply-To: <CANiq72nZrHWTA4_Msg6MP9snTyenC6-eGfD27CyfNSu7QoVZbw@mail.gmail.com>
+Message-ID: <alpine.LNX.2.23.453.2011230938390.7@nippy.intranet>
+References: <cover.1605896059.git.gustavoars@kernel.org>
+	<20201120105344.4345c14e@kicinski-fedora-pc1c0hjn.dhcp.thefacebook.com>
+	<202011201129.B13FDB3C@keescook>
+	<20201120115142.292999b2@kicinski-fedora-pc1c0hjn.dhcp.thefacebook.com>
+	<202011220816.8B6591A@keescook>
+	<9b57fd4914b46f38d54087d75e072d6e947cb56d.camel@HansenPartnership.com>
+	<CANiq72nZrHWTA4_Msg6MP9snTyenC6-eGfD27CyfNSu7QoVZbw@mail.gmail.com>
 MIME-Version: 1.0
-In-Reply-To: <20201120124657.GA31468@duo.ucw.cz>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -78,16 +78,53 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 23 Nov 2020 03:39:39 -0500
-Cc: sashal@kernel.org, paul@paul-moore.com, snitzer@redhat.com,
-	selinux@vger.kernel.org, stephen.smalley.work@gmail.com,
-	jmorris@namei.org, zohar@linux.ibm.com,
-	linux-kernel@vger.kernel.org, nramas@linux.microsoft.com,
-	linux-security-module@vger.kernel.org,
-	tyhicks@linux.microsoft.com, casey@schaufler-ca.com,
-	linux-integrity@vger.kernel.org, dm-devel@redhat.com,
-	gmazyland@gmail.com, agk@redhat.com
-Subject: Re: [dm-devel] [PATCH v6 0/8] IMA: support for measuring kernel
- integrity critical data
+Cc: alsa-devel@alsa-project.org, linux-atm-general@lists.sourceforge.net,
+	reiserfs-devel@vger.kernel.org, nouveau@lists.freedesktop.org,
+	linux-iio@vger.kernel.org, linux-wireless <linux-wireless@vger.kernel.org>,
+	linux-fbdev@vger.kernel.org, dri-devel@lists.freedesktop.org,
+	"Gustavo A. R. Silva" <gustavoars@kernel.org>,
+	James Bottomley <James.Bottomley@hansenpartnership.com>,
+	linux-ide@vger.kernel.org, dm-devel@redhat.com,
+	keyrings@vger.kernel.org, linux-mtd@lists.infradead.org,
+	GR-everest-linux-l2@marvell.com, wcn36xx@lists.infradead.org,
+	samba-technical@lists.samba.org, linux-i3c@lists.infradead.org,
+	linux1394-devel@lists.sourceforge.net, linux-afs@lists.infradead.org,
+	usb-storage@lists.one-eyed-alien.net,
+	linux-watchdog@vger.kernel.org, devel@driverdev.osuosl.org,
+	linux-cifs@vger.kernel.org, rds-devel@oss.oracle.com,
+	Nick Desaulniers <ndesaulniers@google.com>, linux-scsi@vger.kernel.org,
+	Nathan Chancellor <natechancellor@gmail.com>,
+	linux-rdma@vger.kernel.org, oss-drivers@netronome.com,
+	bridge@lists.linux-foundation.org, linux-security-module@vger.kernel.org,
+	amd-gfx@lists.freedesktop.org, linux-stm32@st-md-mailman.stormreply.com,
+	cluster-devel@redhat.com, linux-acpi@vger.kernel.org,
+	coreteam@netfilter.org, intel-wired-lan@lists.osuosl.org,
+	linux-input <linux-input@vger.kernel.org>, Miguel Ojeda <ojeda@kernel.org>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Ext4 Developers List <linux-ext4@vger.kernel.org>,
+	Linux Media Mailing List <linux-media@vger.kernel.org>,
+	Kees Cook <keescook@chromium.org>, selinux@vger.kernel.org,
+	linux-arm-msm@vger.kernel.org, intel-gfx@lists.freedesktop.org,
+	linux-geode@lists.infradead.org, linux-can@vger.kernel.org,
+	linux-block@vger.kernel.org, linux-gpio@vger.kernel.org,
+	op-tee@lists.trustedfirmware.org, linux-mediatek@lists.infradead.org,
+	xen-devel@lists.xenproject.org, drbd-dev@tron.linbit.com,
+	linux-hams@vger.kernel.org, ceph-devel@vger.kernel.org,
+	virtualization@lists.linux-foundation.org, target-devel@vger.kernel.org,
+	Linux ARM <linux-arm-kernel@lists.infradead.org>,
+	linux-hwmon@vger.kernel.org,
+	"maintainer:X86 ARCHITECTURE \(32-BIT AND 64-BIT\)" <x86@kernel.org>,
+	linux-nfs@vger.kernel.org, GR-Linux-NIC-Dev@marvell.com,
+	tipc-discussion@lists.sourceforge.net, Linux-MM <linux-mm@kvack.org>,
+	Network Development <netdev@vger.kernel.org>,
+	linux-decnet-user@lists.sourceforge.net, linux-mmc@vger.kernel.org,
+	linux-kernel <linux-kernel@vger.kernel.org>,
+	linux-renesas-soc@vger.kernel.org, linux-sctp@vger.kernel.org,
+	linux-usb@vger.kernel.org, netfilter-devel@vger.kernel.org,
+	Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
+	patches@opensource.cirrus.com, Joe Perches <joe@perches.com>,
+	linux-integrity@vger.kernel.org, linux-hardening@vger.kernel.org
+Subject: Re: [dm-devel] [PATCH 000/141] Fix fall-through warnings for Clang
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -101,63 +138,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-Thanks Pavel for looking at this series.
 
-On 2020-11-20 4:46 a.m., Pavel Machek wrote:
-> On Thu 2020-11-19 15:26:03, Tushar Sugandhi wrote:
->> Kernel integrity critical data can be defined as the in-memory kernel
->> data which if accidentally or maliciously altered, can compromise the
->> integrity of the system.
-> 
-> Is that an useful definition?
-I will rework on the definition in the next iteration.
-Meanwhile, if you have any feedback on what can we add to the
-definition, that would help is.
+On Sun, 22 Nov 2020, Miguel Ojeda wrote:
 
 > 
->> There are several kernel subsystems that contain integrity critical
->> data - e.g. LSMs like SELinux, or AppArmor; or device-mapper targets
->> like dm-crypt, dm-verity etc. Examples of critical data could be kernel
->> in-memory r/o structures, hash of the memory structures, or data that
->> represents a linux kernel subsystem state.
->>
->> This patch set defines a new IMA hook namely ima_measure_critical_data()
->> to measure the critical data. Kernel subsystems can use this
->> functionality, to take advantage of IMA's measuring and quoting
->> abilities - thus ultimately enabling remote attestation for the
->> subsystem specific information stored in the kernel memory.
-> 
-> How is it supposed to be useful?
-> 
-> I'm pretty sure there are critical data that are not measured by
-> proposed module... and that are written under normal circumstances.
-> 
-The goal of this series is to introduce the IMA hook
-measure_critical_data() and the necessary policies to use it; and
-illustrate that use with one example (SELinux). It is not scalable to 
-identify and update all the critical data sources to use the proposed
-module at once.
+> It isn't that much effort, isn't it? Plus we need to take into account 
+> the future mistakes that it might prevent, too.
 
-A piecemeal approach to add more critical data measurement in subsequent
-patches would be easy to implement and review.
+We should also take into account optimisim about future improvements in 
+tooling.
 
-Please let me know if you have more thoughts on this. (what critical
-data you think would be useful to measure etc.)
-
-~Tushar
-
-> Best regards,
+> So even if there were zero problems found so far, it is still a positive 
+> change.
 > 
-> 									Pavel
+
+It is if you want to spin it that way.
+
+> I would agree if these changes were high risk, though; but they are 
+> almost trivial.
+> 
+
+This is trivial:
+
+ case 1:
+	this();
++	fallthrough;
+ case 2:
+ 	that();
+
+But what we inevitably get is changes like this:
+
+ case 3:
+        this();
++       break;
+ case 4:
+        hmmm();
+
+Why? Mainly to silence the compiler. Also because the patch author argued 
+successfully that they had found a theoretical bug, often in mature code.
+
+But is anyone keeping score of the regressions? If unreported bugs count, 
+what about unreported regressions?
+
+> Cheers,
+> Miguel
 > 
 
 --
