@@ -6,71 +6,68 @@ X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B8687C2D0E4
-	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 08:54:21 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 45FA8C56201
+	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 08:54:24 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E80C82073C
-	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 08:54:20 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E80C82073C
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=hansenpartnership.com
+	by mail.kernel.org (Postfix) with ESMTPS id 7B5302073C
+	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 08:54:23 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7B5302073C
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=perches.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-15-2eRXhnKbMZO2agG1rjz5Bw-1; Tue, 24 Nov 2020 03:54:16 -0500
-X-MC-Unique: 2eRXhnKbMZO2agG1rjz5Bw-1
+ us-mta-496-l0l9WHl7P3yLovwwD7SVIg-1; Tue, 24 Nov 2020 03:54:18 -0500
+X-MC-Unique: l0l9WHl7P3yLovwwD7SVIg-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 874A19A224;
-	Tue, 24 Nov 2020 08:54:11 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6A2DD5D71D;
-	Tue, 24 Nov 2020 08:54:11 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A75E718C43DE;
+	Tue, 24 Nov 2020 08:54:13 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8A0995D71D;
+	Tue, 24 Nov 2020 08:54:13 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3A4541809CA0;
-	Tue, 24 Nov 2020 08:54:11 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5FB8E4E590;
+	Tue, 24 Nov 2020 08:54:13 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0ANFwM4o015987 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 23 Nov 2020 10:58:23 -0500
+	id 0ANGX2pF020245 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 23 Nov 2020 11:33:02 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id DA0A65F254; Mon, 23 Nov 2020 15:58:22 +0000 (UTC)
+	id 05EB1112C261; Mon, 23 Nov 2020 16:33:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D4A555EDC4
-	for <dm-devel@redhat.com>; Mon, 23 Nov 2020 15:58:19 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 028511031F5F
+	for <dm-devel@redhat.com>; Mon, 23 Nov 2020 16:32:59 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E0DFA800198
-	for <dm-devel@redhat.com>; Mon, 23 Nov 2020 15:58:19 +0000 (UTC)
-Received: from bedivere.hansenpartnership.com
-	(bedivere.hansenpartnership.com [96.44.175.130]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-250-CtzkzVfFO2eTZe0IODHJKw-1;
-	Mon, 23 Nov 2020 10:58:14 -0500
-X-MC-Unique: CtzkzVfFO2eTZe0IODHJKw-1
-Received: from localhost (localhost [127.0.0.1])
-	by bedivere.hansenpartnership.com (Postfix) with ESMTP id 8958812803A6; 
-	Mon, 23 Nov 2020 07:58:10 -0800 (PST)
-Received: from bedivere.hansenpartnership.com ([127.0.0.1])
-	by localhost (bedivere.hansenpartnership.com [127.0.0.1]) (amavisd-new,
-	port 10024)
-	with ESMTP id pNOg0X0CRuCM; Mon, 23 Nov 2020 07:58:10 -0800 (PST)
-Received: from jarvis.int.hansenpartnership.com (unknown
-	[IPv6:2601:600:8280:66d1::527])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by bedivere.hansenpartnership.com (Postfix) with ESMTPSA id
-	1690C12802D9; Mon, 23 Nov 2020 07:58:07 -0800 (PST)
-Message-ID: <fc45750b6d0277c401015b7aa11e16cd15f32ab2.camel@HansenPartnership.com>
-From: James Bottomley <James.Bottomley@hansenpartnership.com>
-To: Miguel Ojeda <miguel.ojeda.sandonis@gmail.com>
-Date: Mon, 23 Nov 2020 07:58:06 -0800
-In-Reply-To: <CANiq72m22Jb5_+62NnwX8xds2iUdWDMAqD8PZw9cuxdHd95W0A@mail.gmail.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C50EB811E9F
+	for <dm-devel@redhat.com>; Mon, 23 Nov 2020 16:32:59 +0000 (UTC)
+Received: from smtprelay.hostedemail.com (smtprelay0092.hostedemail.com
+	[216.40.44.92]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-208-9u3T3Sk8OYaUkTBlnyt1VA-1; Mon, 23 Nov 2020 11:32:55 -0500
+X-MC-Unique: 9u3T3Sk8OYaUkTBlnyt1VA-1
+Received: from filter.hostedemail.com (clb03-v110.bra.tucows.net
+	[216.40.38.60])
+	by smtprelay07.hostedemail.com (Postfix) with ESMTP id A722B181D3025;
+	Mon, 23 Nov 2020 16:32:53 +0000 (UTC)
+X-Session-Marker: 6A6F6540706572636865732E636F6D
+X-HE-Tag: can43_5c1502d27366
+X-Filterd-Recvd-Size: 5503
+Received: from XPS-9350.home (unknown [47.151.128.180])
+	(Authenticated sender: joe@perches.com)
+	by omf03.hostedemail.com (Postfix) with ESMTPA;
+	Mon, 23 Nov 2020 16:32:42 +0000 (UTC)
+Message-ID: <32dc7423124b51da4e144e931bf099a368ab50a8.camel@perches.com>
+From: Joe Perches <joe@perches.com>
+To: James Bottomley <James.Bottomley@HansenPartnership.com>, Miguel Ojeda
+	<miguel.ojeda.sandonis@gmail.com>
+Date: Mon, 23 Nov 2020 08:32:41 -0800
+In-Reply-To: <fc45750b6d0277c401015b7aa11e16cd15f32ab2.camel@HansenPartnership.com>
 References: <cover.1605896059.git.gustavoars@kernel.org>
 	<20201120105344.4345c14e@kicinski-fedora-pc1c0hjn.dhcp.thefacebook.com>
 	<202011201129.B13FDB3C@keescook>
@@ -80,7 +77,8 @@ References: <cover.1605896059.git.gustavoars@kernel.org>
 	<CANiq72nZrHWTA4_Msg6MP9snTyenC6-eGfD27CyfNSu7QoVZbw@mail.gmail.com>
 	<1c7d7fde126bc0acf825766de64bf2f9b888f216.camel@HansenPartnership.com>
 	<CANiq72m22Jb5_+62NnwX8xds2iUdWDMAqD8PZw9cuxdHd95W0A@mail.gmail.com>
-User-Agent: Evolution 3.34.4
+	<fc45750b6d0277c401015b7aa11e16cd15f32ab2.camel@HansenPartnership.com>
+User-Agent: Evolution 3.38.1-1
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -90,7 +88,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Tue, 24 Nov 2020 03:53:49 -0500
 Cc: alsa-devel@alsa-project.org, linux-atm-general@lists.sourceforge.net,
@@ -137,9 +135,8 @@ Cc: alsa-devel@alsa-project.org, linux-atm-general@lists.sourceforge.net,
 	linux-renesas-soc@vger.kernel.org, linux-sctp@vger.kernel.org,
 	linux-usb@vger.kernel.org, netfilter-devel@vger.kernel.org,
 	List <linux-crypto@vger.kernel.org>,
-	patches@opensource.cirrus.com, Joe Perches <joe@perches.com>,
-	linux-integrity@vger.kernel.org, wcn36xx@lists.infradead.org,
-	linux-hardening@vger.kernel.org
+	patches@opensource.cirrus.com, linux-integrity@vger.kernel.org,
+	wcn36xx@lists.infradead.org, linux-hardening@vger.kernel.org
 Subject: Re: [dm-devel] [PATCH 000/141] Fix fall-through warnings for Clang
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
@@ -162,69 +159,44 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, 2020-11-23 at 15:19 +0100, Miguel Ojeda wrote:
-> On Sun, Nov 22, 2020 at 11:36 PM James Bottomley
-> <James.Bottomley@hansenpartnership.com> wrote:
-> > Well, it seems to be three years of someone's time plus the
-> > maintainer review time and series disruption of nearly a thousand
-> > patches.  Let's be conservative and assume the producer worked
-> > about 30% on the series and it takes about 5-10 minutes per patch
-> > to review, merge and for others to rework existing series.  So
-> > let's say it's cost a person year of a relatively junior engineer
-> > producing the patches and say 100h of review and application
-> > time.  The latter is likely the big ticket item because it's what
-> > we have in least supply in the kernel (even though it's 20x vs the
-> > producer time).
+On Mon, 2020-11-23 at 07:58 -0800, James Bottomley wrote:
+> We're also complaining about the inability to recruit maintainers:
 > 
-> How are you arriving at such numbers? It is a total of ~200 trivial
-> lines.
-
-Well, I used git.  It says that as of today in Linus' tree we have 889
-patches related to fall throughs and the first series went in in
-october 2017 ... ignoring a couple of outliers back to February.
-
-> > It's not about the risk of the changes it's about the cost of
-> > implementing them.  Even if you discount the producer time (which
-> > someone gets to pay for, and if I were the engineering manager, I'd
-> > be unhappy about), the review/merge/rework time is pretty
-> > significant in exchange for six minor bug fixes.  Fine, when a new
-> > compiler warning comes along it's certainly reasonable to see if we
-> > can benefit from it and the fact that the compiler people think
-> > it's worthwhile is enough evidence to assume this initially.  But
-> > at some point you have to ask whether that assumption is supported
-> > by the evidence we've accumulated over the time we've been using
-> > it.  And if the evidence doesn't support it perhaps it is time to
-> > stop the experiment.
+> https://www.theregister.com/2020/06/30/hard_to_find_linux_maintainers_says_torvalds/
 > 
-> Maintainers routinely review 1-line trivial patches, not to mention
-> internal API changes, etc.
+> And burn out:
+> 
+> http://antirez.com/news/129
 
-We're also complaining about the inability to recruit maintainers:
+https://www.wired.com/story/open-source-coders-few-tired/
 
-https://www.theregister.com/2020/06/30/hard_to_find_linux_maintainers_says_torvalds/
+> What I'm actually trying to articulate is a way of measuring value of
+> the patch vs cost ... it has nothing really to do with who foots the
+> actual bill.
 
-And burn out:
+It's unclear how to measure value in consistency.
 
-http://antirez.com/news/129
+But one way that costs can be reduced is by automation and _not_
+involving maintainers when the patch itself is provably correct.
 
-The whole crux of your argument seems to be maintainers' time isn't
-important so we should accept all trivial patches ... I'm pushing back
-on that assumption in two places, firstly the valulessness of the time
-and secondly that all trivial patches are valuable.
+> One thesis I'm actually starting to formulate is that this continual
+> devaluing of maintainers is why we have so much difficulty keeping and
+> recruiting them.
 
-> If some company does not want to pay for that, that's fine, but they
-> don't get to be maintainers and claim `Supported`.
+The linux kernel has something like 1500 different maintainers listed
+in the MAINTAINERS file.  That's not a trivial number.
 
-What I'm actually trying to articulate is a way of measuring value of
-the patch vs cost ... it has nothing really to do with who foots the
-actual bill.
+$ git grep '^M:' MAINTAINERS | sort | uniq -c | wc -l
+1543
+$ git grep '^M:' MAINTAINERS| cut -f1 -d'<' | sort | uniq -c | wc -l
+1446
 
-One thesis I'm actually starting to formulate is that this continual
-devaluing of maintainers is why we have so much difficulty keeping and
-recruiting them.
+I think the question you are asking is about trust and how it
+effects development.
 
-James
-
+And back to that wired story, the actual number of what you might
+be considering to be maintainers is likely less than 10% of the
+listed numbers above.
 
 
 --
