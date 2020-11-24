@@ -7,59 +7,59 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7F7EDC64E75
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9300BC2D0E4
 	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:32:54 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id D5DB1206F9
+	by mail.kernel.org (Postfix) with ESMTPS id F378F2076E
 	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:32:53 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D5DB1206F9
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org F378F2076E
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-103-OergituEPEyflI5MiFStSA-1; Tue, 24 Nov 2020 08:32:50 -0500
-X-MC-Unique: OergituEPEyflI5MiFStSA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-69-v8bE1z_ZPdOWtjXdyonS-w-1; Tue, 24 Nov 2020 08:32:50 -0500
+X-MC-Unique: v8bE1z_ZPdOWtjXdyonS-w-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 722058797E6;
-	Tue, 24 Nov 2020 13:32:45 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5677218C520F;
+	Tue, 24 Nov 2020 13:32:43 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 540635D9CC;
-	Tue, 24 Nov 2020 13:32:45 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 37C5C100164C;
+	Tue, 24 Nov 2020 13:32:43 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 225EB1809CA9;
-	Tue, 24 Nov 2020 13:32:45 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 08B3E1809CA0;
+	Tue, 24 Nov 2020 13:32:43 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AODWgPa018963 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 24 Nov 2020 08:32:42 -0500
+	id 0AODWe3B018949 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 24 Nov 2020 08:32:40 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 01C772026D16; Tue, 24 Nov 2020 13:32:42 +0000 (UTC)
+	id 5FE9F30B9D; Tue, 24 Nov 2020 13:32:40 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id F13992026D13
-	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:32:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5A62372916
+	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:32:37 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DDB5B803DD8
-	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:32:41 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 696F4800C00
+	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:32:37 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-177-PFr-QcgHOKqfx7Q3Z8sxPg-1; Tue, 24 Nov 2020 08:32:39 -0500
-X-MC-Unique: PFr-QcgHOKqfx7Q3Z8sxPg-1
+	us-mta-159-LgLtBlykNZyTPVLsfsWTgA-1; Tue, 24 Nov 2020 08:32:33 -0500
+X-MC-Unique: LgLtBlykNZyTPVLsfsWTgA-1
 Received: from [2001:4bb8:180:5443:c70:4a89:bc61:3] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1khYMV-0006Ut-HC; Tue, 24 Nov 2020 13:28:03 +0000
+	id 1khYMR-0006UP-A2; Tue, 24 Nov 2020 13:27:59 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue, 24 Nov 2020 14:27:12 +0100
-Message-Id: <20201124132751.3747337-7-hch@lst.de>
+Date: Tue, 24 Nov 2020 14:27:09 +0100
+Message-Id: <20201124132751.3747337-4-hch@lst.de>
 In-Reply-To: <20201124132751.3747337-1-hch@lst.de>
 References: <20201124132751.3747337-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,9 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Mimecast-Bulk-Signature: yes
-X-Mimecast-Spam-Signature: bulk
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	linux-fsdevel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>,
@@ -88,7 +86,8 @@ Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
 	Tejun Heo <tj@kernel.org>, xen-devel@lists.xenproject.org,
 	linux-mm@kvack.org
-Subject: [dm-devel] [PATCH 06/45] zram: remove the claim mechanism
+Subject: [dm-devel] [PATCH 03/45] fs: remove get_super_thawed and
+	get_super_exclusive_thawed
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -102,7 +101,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -110,142 +109,188 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The zram claim mechanism was added to ensure no new opens come in
-during teardown.  But the proper way to archive that is to call
-del_gendisk first, which takes care of all that.  Once del_gendisk
-is called in the right place, the reset side can also be simplified
-as no I/O can be outstanding on a block device that is not open.
+Just open code the wait in the only caller of both functions.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/zram/zram_drv.c | 72 ++++++++---------------------------
- 1 file changed, 15 insertions(+), 57 deletions(-)
+ fs/internal.h      |  2 ++
+ fs/quota/quota.c   | 31 +++++++++++++++++++++-------
+ fs/super.c         | 51 ++--------------------------------------------
+ include/linux/fs.h |  4 +---
+ 4 files changed, 29 insertions(+), 59 deletions(-)
 
-diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
-index 6d15d51cee2b7e..2e6d75ec1afddb 100644
---- a/drivers/block/zram/zram_drv.c
-+++ b/drivers/block/zram/zram_drv.c
-@@ -1756,64 +1756,33 @@ static ssize_t disksize_store(struct device *dev,
- static ssize_t reset_store(struct device *dev,
- 		struct device_attribute *attr, const char *buf, size_t len)
- {
--	int ret;
--	unsigned short do_reset;
--	struct zram *zram;
-+	struct zram *zram = dev_to_zram(dev);
+diff --git a/fs/internal.h b/fs/internal.h
+index a7cd0f64faa4ab..47be21dfeebef5 100644
+--- a/fs/internal.h
++++ b/fs/internal.h
+@@ -114,7 +114,9 @@ extern struct file *alloc_empty_file_noaccount(int, const struct cred *);
+  */
+ extern int reconfigure_super(struct fs_context *);
+ extern bool trylock_super(struct super_block *sb);
++struct super_block *__get_super(struct block_device *bdev, bool excl);
+ extern struct super_block *user_get_super(dev_t);
++void put_super(struct super_block *sb);
+ extern bool mount_capable(struct fs_context *);
+ 
+ /*
+diff --git a/fs/quota/quota.c b/fs/quota/quota.c
+index 9af95c7a0bbe3c..f3d32b0d9008f2 100644
+--- a/fs/quota/quota.c
++++ b/fs/quota/quota.c
+@@ -20,6 +20,7 @@
+ #include <linux/writeback.h>
+ #include <linux/nospec.h>
+ #include "compat.h"
++#include "../internal.h"
+ 
+ static int check_quotactl_permission(struct super_block *sb, int type, int cmd,
+ 				     qid_t id)
+@@ -868,6 +869,7 @@ static struct super_block *quotactl_block(const char __user *special, int cmd)
  	struct block_device *bdev;
-+	unsigned short do_reset;
-+	int ret = 0;
+ 	struct super_block *sb;
+ 	struct filename *tmp = getname(special);
++	bool excl = false, thawed = false;
  
- 	ret = kstrtou16(buf, 10, &do_reset);
- 	if (ret)
- 		return ret;
--
- 	if (!do_reset)
- 		return -EINVAL;
- 
--	zram = dev_to_zram(dev);
- 	bdev = bdget_disk(zram->disk, 0);
- 	if (!bdev)
- 		return -ENOMEM;
- 
- 	mutex_lock(&bdev->bd_mutex);
--	/* Do not reset an active device or claimed device */
--	if (bdev->bd_openers || zram->claim) {
--		mutex_unlock(&bdev->bd_mutex);
--		bdput(bdev);
--		return -EBUSY;
--	}
--
--	/* From now on, anyone can't open /dev/zram[0-9] */
--	zram->claim = true;
-+	if (bdev->bd_openers)
-+		ret = -EBUSY;
-+	else
-+		zram_reset_device(zram);
- 	mutex_unlock(&bdev->bd_mutex);
--
--	/* Make sure all the pending I/O are finished */
--	fsync_bdev(bdev);
--	zram_reset_device(zram);
+ 	if (IS_ERR(tmp))
+ 		return ERR_CAST(tmp);
+@@ -875,17 +877,32 @@ static struct super_block *quotactl_block(const char __user *special, int cmd)
+ 	putname(tmp);
+ 	if (IS_ERR(bdev))
+ 		return ERR_CAST(bdev);
+-	if (quotactl_cmd_onoff(cmd))
+-		sb = get_super_exclusive_thawed(bdev);
+-	else if (quotactl_cmd_write(cmd))
+-		sb = get_super_thawed(bdev);
+-	else
+-		sb = get_super(bdev);
++
++	if (quotactl_cmd_onoff(cmd)) {
++		excl = true;
++		thawed = true;
++	} else if (quotactl_cmd_write(cmd)) {
++		thawed = true;
++	}
++
++retry:
++	sb = __get_super(bdev, excl);
++	if (thawed && sb && sb->s_writers.frozen != SB_UNFROZEN) {
++		if (excl)
++			up_write(&sb->s_umount);
++		else
++			up_read(&sb->s_umount);
++		wait_event(sb->s_writers.wait_unfrozen,
++			   sb->s_writers.frozen == SB_UNFROZEN);
++		put_super(sb);
++		goto retry;
++	}
++
  	bdput(bdev);
- 
--	mutex_lock(&bdev->bd_mutex);
--	zram->claim = false;
--	mutex_unlock(&bdev->bd_mutex);
+ 	if (!sb)
+ 		return ERR_PTR(-ENODEV);
 -
--	return len;
+ 	return sb;
++
+ #else
+ 	return ERR_PTR(-ENODEV);
+ #endif
+diff --git a/fs/super.c b/fs/super.c
+index 98bb0629ee108e..343e5c1e538d2a 100644
+--- a/fs/super.c
++++ b/fs/super.c
+@@ -307,7 +307,7 @@ static void __put_super(struct super_block *s)
+  *	Drops a temporary reference, frees superblock if there's no
+  *	references left.
+  */
+-static void put_super(struct super_block *sb)
++void put_super(struct super_block *sb)
+ {
+ 	spin_lock(&sb_lock);
+ 	__put_super(sb);
+@@ -740,7 +740,7 @@ void iterate_supers_type(struct file_system_type *type,
+ 
+ EXPORT_SYMBOL(iterate_supers_type);
+ 
+-static struct super_block *__get_super(struct block_device *bdev, bool excl)
++struct super_block *__get_super(struct block_device *bdev, bool excl)
+ {
+ 	struct super_block *sb;
+ 
+@@ -789,53 +789,6 @@ struct super_block *get_super(struct block_device *bdev)
+ }
+ EXPORT_SYMBOL(get_super);
+ 
+-static struct super_block *__get_super_thawed(struct block_device *bdev,
+-					      bool excl)
+-{
+-	while (1) {
+-		struct super_block *s = __get_super(bdev, excl);
+-		if (!s || s->s_writers.frozen == SB_UNFROZEN)
+-			return s;
+-		if (!excl)
+-			up_read(&s->s_umount);
+-		else
+-			up_write(&s->s_umount);
+-		wait_event(s->s_writers.wait_unfrozen,
+-			   s->s_writers.frozen == SB_UNFROZEN);
+-		put_super(s);
+-	}
 -}
 -
--static int zram_open(struct block_device *bdev, fmode_t mode)
+-/**
+- *	get_super_thawed - get thawed superblock of a device
+- *	@bdev: device to get the superblock for
+- *
+- *	Scans the superblock list and finds the superblock of the file system
+- *	mounted on the device. The superblock is returned once it is thawed
+- *	(or immediately if it was not frozen). %NULL is returned if no match
+- *	is found.
+- */
+-struct super_block *get_super_thawed(struct block_device *bdev)
 -{
--	int ret = 0;
--	struct zram *zram;
+-	return __get_super_thawed(bdev, false);
+-}
+-EXPORT_SYMBOL(get_super_thawed);
 -
--	WARN_ON(!mutex_is_locked(&bdev->bd_mutex));
+-/**
+- *	get_super_exclusive_thawed - get thawed superblock of a device
+- *	@bdev: device to get the superblock for
+- *
+- *	Scans the superblock list and finds the superblock of the file system
+- *	mounted on the device. The superblock is returned once it is thawed
+- *	(or immediately if it was not frozen) and s_umount semaphore is held
+- *	in exclusive mode. %NULL is returned if no match is found.
+- */
+-struct super_block *get_super_exclusive_thawed(struct block_device *bdev)
+-{
+-	return __get_super_thawed(bdev, true);
+-}
+-EXPORT_SYMBOL(get_super_exclusive_thawed);
 -
--	zram = bdev->bd_disk->private_data;
--	/* zram was claimed to reset so open request fails */
--	if (zram->claim)
--		ret = -EBUSY;
--
--	return ret;
-+	return ret ? ret : len;
- }
+ /**
+  * get_active_super - get an active reference to the superblock of a device
+  * @bdev: device to get the superblock for
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 8667d0cdc71e76..a61df0dd4f1989 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1409,7 +1409,7 @@ enum {
  
- static const struct block_device_operations zram_devops = {
--	.open = zram_open,
- 	.submit_bio = zram_submit_bio,
- 	.swap_slot_free_notify = zram_slot_free_notify,
- 	.rw_page = zram_rw_page,
-@@ -1821,7 +1790,6 @@ static const struct block_device_operations zram_devops = {
+ struct sb_writers {
+ 	int				frozen;		/* Is sb frozen? */
+-	wait_queue_head_t		wait_unfrozen;	/* for get_super_thawed() */
++	wait_queue_head_t		wait_unfrozen;	/* wait for thaw */
+ 	struct percpu_rw_semaphore	rw_sem[SB_FREEZE_LEVELS];
  };
  
- static const struct block_device_operations zram_wb_devops = {
--	.open = zram_open,
- 	.submit_bio = zram_submit_bio,
- 	.swap_slot_free_notify = zram_slot_free_notify,
- 	.owner = THIS_MODULE
-@@ -1974,32 +1942,22 @@ static int zram_add(void)
- 
- static int zram_remove(struct zram *zram)
- {
--	struct block_device *bdev;
--
--	bdev = bdget_disk(zram->disk, 0);
--	if (!bdev)
--		return -ENOMEM;
-+	struct block_device *bdev = bdget_disk(zram->disk, 0);
- 
--	mutex_lock(&bdev->bd_mutex);
--	if (bdev->bd_openers || zram->claim) {
--		mutex_unlock(&bdev->bd_mutex);
-+	if (bdev) {
-+		if (bdev->bd_openers) {
-+			bdput(bdev);
-+			return -EBUSY;
-+		}
- 		bdput(bdev);
--		return -EBUSY;
- 	}
- 
--	zram->claim = true;
--	mutex_unlock(&bdev->bd_mutex);
--
-+	del_gendisk(zram->disk);
- 	zram_debugfs_unregister(zram);
--
--	/* Make sure all the pending I/O are finished */
--	fsync_bdev(bdev);
- 	zram_reset_device(zram);
--	bdput(bdev);
- 
- 	pr_info("Removed device: %s\n", zram->disk->disk_name);
- 
--	del_gendisk(zram->disk);
- 	blk_cleanup_queue(zram->disk->queue);
- 	put_disk(zram->disk);
- 	kfree(zram);
+@@ -3132,8 +3132,6 @@ extern struct file_system_type *get_filesystem(struct file_system_type *fs);
+ extern void put_filesystem(struct file_system_type *fs);
+ extern struct file_system_type *get_fs_type(const char *name);
+ extern struct super_block *get_super(struct block_device *);
+-extern struct super_block *get_super_thawed(struct block_device *);
+-extern struct super_block *get_super_exclusive_thawed(struct block_device *bdev);
+ extern struct super_block *get_active_super(struct block_device *bdev);
+ extern void drop_super(struct super_block *sb);
+ extern void drop_super_exclusive(struct super_block *sb);
 -- 
 2.29.2
 
