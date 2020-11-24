@@ -7,59 +7,58 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 80D46C8259A
-	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:29:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B99EFC64E8A
+	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:29:35 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id D2864204EC
-	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:29:31 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D2864204EC
+	by mail.kernel.org (Postfix) with ESMTPS id 158D62083E
+	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:29:34 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 158D62083E
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-541-z0pFknkuP_CZuyAFSs3ZHw-1; Tue, 24 Nov 2020 08:29:28 -0500
-X-MC-Unique: z0pFknkuP_CZuyAFSs3ZHw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-23-CVlob-PEOOyKyU6Dv5yd2g-1; Tue, 24 Nov 2020 08:29:29 -0500
+X-MC-Unique: CVlob-PEOOyKyU6Dv5yd2g-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4DA92106B80C;
-	Tue, 24 Nov 2020 13:29:22 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 937C981F02B;
+	Tue, 24 Nov 2020 13:29:24 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BC4A560C4D;
-	Tue, 24 Nov 2020 13:29:21 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 712E8189BB;
+	Tue, 24 Nov 2020 13:29:24 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1803E180954D;
-	Tue, 24 Nov 2020 13:29:20 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3DECA1809C9F;
+	Tue, 24 Nov 2020 13:29:24 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AODTGpX018180 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 24 Nov 2020 08:29:17 -0500
+	id 0AODTM5m018258 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 24 Nov 2020 08:29:22 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 30EB11004049; Tue, 24 Nov 2020 13:29:16 +0000 (UTC)
+	id 528CE2166B27; Tue, 24 Nov 2020 13:29:22 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2C6E71112866
-	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:29:16 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4D8DC2166B2D
+	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:29:22 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1A1E4108C06F
-	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:29:16 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 33FC6800296
+	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:29:22 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-182-h_5qGbZBNTan9LOd0oqNVQ-1; Tue, 24 Nov 2020 08:29:13 -0500
-X-MC-Unique: h_5qGbZBNTan9LOd0oqNVQ-1
+	us-mta-278-1DEAM-_SNse7xSqz7mP8Tg-1; Tue, 24 Nov 2020 08:29:19 -0500
+X-MC-Unique: 1DEAM-_SNse7xSqz7mP8Tg-1
 Received: from [2001:4bb8:180:5443:c70:4a89:bc61:3] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1khYNR-0006hS-0P; Tue, 24 Nov 2020 13:29:01 +0000
+	id 1khYNV-0006iR-O5; Tue, 24 Nov 2020 13:29:06 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue, 24 Nov 2020 14:27:45 +0100
-Message-Id: <20201124132751.3747337-40-hch@lst.de>
+Date: Tue, 24 Nov 2020 14:27:48 +0100
+Message-Id: <20201124132751.3747337-43-hch@lst.de>
 In-Reply-To: <20201124132751.3747337-1-hch@lst.de>
 References: <20201124132751.3747337-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,7 +72,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	linux-fsdevel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>,
@@ -86,8 +85,8 @@ Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
 	Tejun Heo <tj@kernel.org>, xen-devel@lists.xenproject.org,
 	linux-mm@kvack.org
-Subject: [dm-devel] [PATCH 39/45] block: remove the partno field from struct
-	hd_struct
+Subject: [dm-devel] [PATCH 42/45] block: switch disk_part_iter_* to use a
+	struct block_device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -101,7 +100,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -109,140 +108,305 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Just use the bd_partno field in struct block_device everywhere.
+Switch the partition iter infrastructure to iterate over block_device
+references instead of hd_struct ones mostly used to get at the
+block_device.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/genhd.c           | 12 ++++++------
- block/partitions/core.c |  9 ++++-----
- include/linux/genhd.h   |  1 -
- init/do_mounts.c        |  2 +-
- 4 files changed, 11 insertions(+), 13 deletions(-)
+ block/genhd.c             | 57 +++++++++++++++++++--------------------
+ block/partitions/core.c   | 13 +++++----
+ drivers/s390/block/dasd.c |  8 +++---
+ include/linux/genhd.h     |  4 +--
+ 4 files changed, 40 insertions(+), 42 deletions(-)
 
 diff --git a/block/genhd.c b/block/genhd.c
-index 197120c0c60f23..60004bc8ba5b56 100644
+index 2985740eab084b..f0bf10192066ac 100644
 --- a/block/genhd.c
 +++ b/block/genhd.c
-@@ -576,8 +576,8 @@ int blk_alloc_devt(struct hd_struct *part, dev_t *devt)
- 	int idx;
+@@ -231,7 +231,7 @@ EXPORT_SYMBOL_GPL(disk_part_iter_init);
+  * CONTEXT:
+  * Don't care.
+  */
+-struct hd_struct *disk_part_iter_next(struct disk_part_iter *piter)
++struct block_device *disk_part_iter_next(struct disk_part_iter *piter)
+ {
+ 	struct disk_part_tbl *ptbl;
+ 	int inc, end;
+@@ -269,8 +269,7 @@ struct hd_struct *disk_part_iter_next(struct disk_part_iter *piter)
+ 		      piter->idx == 0))
+ 			continue;
  
- 	/* in consecutive minor range? */
--	if (part->partno < disk->minors) {
--		*devt = MKDEV(disk->major, disk->first_minor + part->partno);
-+	if (part->bdev->bd_partno < disk->minors) {
-+		*devt = MKDEV(disk->major, disk->first_minor + part->bdev->bd_partno);
- 		return 0;
+-		get_device(part_to_dev(part->bd_part));
+-		piter->part = part->bd_part;
++		piter->part = bdgrab(part);
+ 		piter->idx += inc;
+ 		break;
  	}
+@@ -292,7 +291,8 @@ EXPORT_SYMBOL_GPL(disk_part_iter_next);
+  */
+ void disk_part_iter_exit(struct disk_part_iter *piter)
+ {
+-	disk_put_part(piter->part);
++	if (piter->part)
++		bdput(piter->part);
+ 	piter->part = NULL;
+ }
+ EXPORT_SYMBOL_GPL(disk_part_iter_exit);
+@@ -333,7 +333,6 @@ struct block_device *disk_map_sector_rcu(struct gendisk *disk, sector_t sector)
  
-@@ -847,7 +847,7 @@ void del_gendisk(struct gendisk *disk)
+ 	for (i = 1; i < ptbl->len; i++) {
+ 		part = rcu_dereference(ptbl->part[i]);
+-
+ 		if (part && sector_in_part(part, sector)) {
+ 			rcu_assign_pointer(ptbl->last_lookup, part);
+ 			goto out_unlock;
+@@ -634,7 +633,7 @@ static void register_disk(struct device *parent, struct gendisk *disk,
+ {
+ 	struct device *ddev = disk_to_dev(disk);
+ 	struct disk_part_iter piter;
+-	struct hd_struct *part;
++	struct block_device *part;
+ 	int err;
+ 
+ 	ddev->parent = parent;
+@@ -684,7 +683,7 @@ static void register_disk(struct device *parent, struct gendisk *disk,
+ 	/* announce possible partitions */
+ 	disk_part_iter_init(&piter, disk, 0);
+ 	while ((part = disk_part_iter_next(&piter)))
+-		kobject_uevent(&part_to_dev(part)->kobj, KOBJ_ADD);
++		kobject_uevent(bdev_kobj(part), KOBJ_ADD);
+ 	disk_part_iter_exit(&piter);
+ 
+ 	if (disk->queue->backing_dev_info->dev) {
+@@ -824,7 +823,7 @@ static void invalidate_partition(struct block_device *bdev)
+ void del_gendisk(struct gendisk *disk)
+ {
+ 	struct disk_part_iter piter;
+-	struct hd_struct *part;
++	struct block_device *part;
+ 
+ 	might_sleep();
+ 
+@@ -840,8 +839,8 @@ void del_gendisk(struct gendisk *disk)
  	disk_part_iter_init(&piter, disk,
  			     DISK_PITER_INCL_EMPTY | DISK_PITER_REVERSE);
  	while ((part = disk_part_iter_next(&piter))) {
--		invalidate_partition(disk, part->partno);
-+		invalidate_partition(disk, part->bdev->bd_partno);
- 		delete_partition(part);
+-		invalidate_partition(part->bdev);
+-		delete_partition(part);
++		invalidate_partition(part);
++		delete_partition(part->bd_part);
  	}
  	disk_part_iter_exit(&piter);
-@@ -989,7 +989,7 @@ void __init printk_all_partitions(void)
+ 
+@@ -958,7 +957,7 @@ void __init printk_all_partitions(void)
+ 	while ((dev = class_dev_iter_next(&iter))) {
+ 		struct gendisk *disk = dev_to_disk(dev);
+ 		struct disk_part_iter piter;
+-		struct hd_struct *part;
++		struct block_device *part;
+ 		char name_buf[BDEVNAME_SIZE];
+ 		char devt_buf[BDEVT_SIZE];
+ 
+@@ -977,14 +976,14 @@ void __init printk_all_partitions(void)
+ 		 */
+ 		disk_part_iter_init(&piter, disk, DISK_PITER_INCL_PART0);
+ 		while ((part = disk_part_iter_next(&piter))) {
+-			bool is_part0 = part == disk->part0->bd_part;
++			bool is_part0 = part == disk->part0;
+ 
  			printk("%s%s %10llu %s %s", is_part0 ? "" : "  ",
- 			       bdevt_str(part_devt(part), devt_buf),
- 			       bdev_nr_sectors(part->bdev) >> 1,
--			       disk_name(disk, part->partno, name_buf),
-+			       disk_name(disk, part->bdev->bd_partno, name_buf),
- 			       part->bdev->bd_meta_info ?
- 					part->bdev->bd_meta_info->uuid : "");
+-			       bdevt_str(part_devt(part), devt_buf),
+-			       bdev_nr_sectors(part->bdev) >> 1,
+-			       disk_name(disk, part->bdev->bd_partno, name_buf),
+-			       part->bdev->bd_meta_info ?
+-					part->bdev->bd_meta_info->uuid : "");
++			       bdevt_str(part->bd_dev, devt_buf),
++			       bdev_nr_sectors(part) >> 1,
++			       disk_name(disk, part->bd_partno, name_buf),
++			       part->bd_meta_info ?
++					part->bd_meta_info->uuid : "");
  			if (is_part0) {
-@@ -1083,7 +1083,7 @@ static int show_partition(struct seq_file *seqf, void *v)
+ 				if (dev->parent && dev->parent->driver)
+ 					printk(" driver: %s\n",
+@@ -1060,7 +1059,7 @@ static int show_partition(struct seq_file *seqf, void *v)
+ {
+ 	struct gendisk *sgp = v;
+ 	struct disk_part_iter piter;
+-	struct hd_struct *part;
++	struct block_device *part;
+ 	char buf[BDEVNAME_SIZE];
+ 
+ 	/* Don't show non-partitionable removeable devices or empty devices */
+@@ -1074,9 +1073,9 @@ static int show_partition(struct seq_file *seqf, void *v)
+ 	disk_part_iter_init(&piter, sgp, DISK_PITER_INCL_PART0);
+ 	while ((part = disk_part_iter_next(&piter)))
  		seq_printf(seqf, "%4d  %7d %10llu %s\n",
- 			   MAJOR(part_devt(part)), MINOR(part_devt(part)),
- 			   bdev_nr_sectors(part->bdev) >> 1,
--			   disk_name(sgp, part->partno, buf));
-+			   disk_name(sgp, part->bdev->bd_partno, buf));
+-			   MAJOR(part_devt(part)), MINOR(part_devt(part)),
+-			   bdev_nr_sectors(part->bdev) >> 1,
+-			   disk_name(sgp, part->bdev->bd_partno, buf));
++			   MAJOR(part->bd_dev), MINOR(part->bd_dev),
++			   bdev_nr_sectors(part) >> 1,
++			   disk_name(sgp, part->bd_partno, buf));
  	disk_part_iter_exit(&piter);
  
  	return 0;
-@@ -1506,7 +1506,7 @@ static int diskstats_show(struct seq_file *seqf, void *v)
+@@ -1470,7 +1469,7 @@ static int diskstats_show(struct seq_file *seqf, void *v)
+ {
+ 	struct gendisk *gp = v;
+ 	struct disk_part_iter piter;
+-	struct hd_struct *hd;
++	struct block_device *hd;
+ 	char buf[BDEVNAME_SIZE];
+ 	unsigned int inflight;
+ 	struct disk_stats stat;
+@@ -1485,11 +1484,11 @@ static int diskstats_show(struct seq_file *seqf, void *v)
+ 
+ 	disk_part_iter_init(&piter, gp, DISK_PITER_INCL_EMPTY_PART0);
+ 	while ((hd = disk_part_iter_next(&piter))) {
+-		part_stat_read_all(hd, &stat);
++		part_stat_read_all(hd->bd_part, &stat);
+ 		if (queue_is_mq(gp->queue))
+-			inflight = blk_mq_in_flight(gp->queue, hd->bdev);
++			inflight = blk_mq_in_flight(gp->queue, hd);
+ 		else
+-			inflight = part_in_flight(hd->bdev);
++			inflight = part_in_flight(hd);
+ 
+ 		seq_printf(seqf, "%4d %7d %s "
+ 			   "%lu %lu %lu %u "
+@@ -1498,8 +1497,8 @@ static int diskstats_show(struct seq_file *seqf, void *v)
+ 			   "%lu %lu %lu %u "
  			   "%lu %u"
  			   "\n",
- 			   MAJOR(part_devt(hd)), MINOR(part_devt(hd)),
--			   disk_name(gp, hd->partno, buf),
-+			   disk_name(gp, hd->bdev->bd_partno, buf),
+-			   MAJOR(part_devt(hd)), MINOR(part_devt(hd)),
+-			   disk_name(gp, hd->bdev->bd_partno, buf),
++			   MAJOR(hd->bd_dev), MINOR(hd->bd_dev),
++			   disk_name(gp, hd->bd_partno, buf),
  			   stat.ios[STAT_READ],
  			   stat.merges[STAT_READ],
  			   stat.sectors[STAT_READ],
-diff --git a/block/partitions/core.c b/block/partitions/core.c
-index 8beab9e7727e27..ee4f4e3237aa2d 100644
---- a/block/partitions/core.c
-+++ b/block/partitions/core.c
-@@ -184,7 +184,7 @@ static ssize_t part_partition_show(struct device *dev,
+@@ -1654,7 +1653,7 @@ static void set_disk_ro_uevent(struct gendisk *gd, int ro)
+ void set_disk_ro(struct gendisk *disk, int flag)
  {
- 	struct hd_struct *p = dev_to_part(dev);
+ 	struct disk_part_iter piter;
+-	struct hd_struct *part;
++	struct block_device *part;
  
--	return sprintf(buf, "%d\n", p->partno);
-+	return sprintf(buf, "%d\n", p->bdev->bd_partno);
+ 	if (disk->part0->bd_read_only != flag) {
+ 		set_disk_ro_uevent(disk, flag);
+@@ -1663,7 +1662,7 @@ void set_disk_ro(struct gendisk *disk, int flag)
+ 
+ 	disk_part_iter_init(&piter, disk, DISK_PITER_INCL_EMPTY);
+ 	while ((part = disk_part_iter_next(&piter)))
+-		part->bdev->bd_read_only = flag;
++		part->bd_read_only = flag;
+ 	disk_part_iter_exit(&piter);
  }
  
- static ssize_t part_start_show(struct device *dev,
-@@ -274,7 +274,7 @@ static int part_uevent(struct device *dev, struct kobj_uevent_env *env)
+diff --git a/block/partitions/core.c b/block/partitions/core.c
+index 45fed1108d4425..c189ebd4569812 100644
+--- a/block/partitions/core.c
++++ b/block/partitions/core.c
+@@ -439,15 +439,14 @@ static bool partition_overlaps(struct gendisk *disk, sector_t start,
+ 		sector_t length, int skip_partno)
  {
- 	struct hd_struct *part = dev_to_part(dev);
- 
--	add_uevent_var(env, "PARTN=%u", part->partno);
-+	add_uevent_var(env, "PARTN=%u", part->bdev->bd_partno);
- 	if (part->bdev->bd_meta_info && part->bdev->bd_meta_info->volname[0])
- 		add_uevent_var(env, "PARTNAME=%s",
- 			       part->bdev->bd_meta_info->volname);
-@@ -298,7 +298,7 @@ void delete_partition(struct hd_struct *part)
- 	struct disk_part_tbl *ptbl =
- 		rcu_dereference_protected(disk->part_tbl, 1);
- 
--	rcu_assign_pointer(ptbl->part[part->partno], NULL);
-+	rcu_assign_pointer(ptbl->part[part->bdev->bd_partno], NULL);
- 	rcu_assign_pointer(ptbl->last_lookup, NULL);
- 
- 	kobject_put(part->bdev->bd_holder_dir);
-@@ -372,7 +372,6 @@ static struct hd_struct *add_partition(struct gendisk *disk, int partno,
- 
- 	bdev->bd_start_sect = start;
- 	bdev_set_nr_sectors(bdev, len);
--	p->partno = partno;
- 	bdev->bd_read_only = get_disk_ro(disk);
- 
- 	if (info) {
-@@ -445,7 +444,7 @@ static bool partition_overlaps(struct gendisk *disk, sector_t start,
+ 	struct disk_part_iter piter;
+-	struct hd_struct *part;
++	struct block_device *part;
+ 	bool overlap = false;
  
  	disk_part_iter_init(&piter, disk, DISK_PITER_INCL_EMPTY);
  	while ((part = disk_part_iter_next(&piter))) {
--		if (part->partno == skip_partno ||
-+		if (part->bdev->bd_partno == skip_partno ||
- 		    start >= part->bdev->bd_start_sect +
- 			bdev_nr_sectors(part->bdev) ||
- 		    start + length <= part->bdev->bd_start_sect)
+-		if (part->bdev->bd_partno == skip_partno ||
+-		    start >= part->bdev->bd_start_sect +
+-			bdev_nr_sectors(part->bdev) ||
+-		    start + length <= part->bdev->bd_start_sect)
++		if (part->bd_partno == skip_partno ||
++		    start >= part->bd_start_sect + bdev_nr_sectors(part) ||
++		    start + length <= part->bd_start_sect)
+ 			continue;
+ 		overlap = true;
+ 		break;
+@@ -568,7 +567,7 @@ static bool disk_unlock_native_capacity(struct gendisk *disk)
+ int blk_drop_partitions(struct block_device *bdev)
+ {
+ 	struct disk_part_iter piter;
+-	struct hd_struct *part;
++	struct block_device *part;
+ 
+ 	if (bdev->bd_part_count)
+ 		return -EBUSY;
+@@ -578,7 +577,7 @@ int blk_drop_partitions(struct block_device *bdev)
+ 
+ 	disk_part_iter_init(&piter, bdev->bd_disk, DISK_PITER_INCL_EMPTY);
+ 	while ((part = disk_part_iter_next(&piter)))
+-		delete_partition(part);
++		delete_partition(part->bd_part);
+ 	disk_part_iter_exit(&piter);
+ 
+ 	return 0;
+diff --git a/drivers/s390/block/dasd.c b/drivers/s390/block/dasd.c
+index db24e04ee9781e..1825fa8d05a780 100644
+--- a/drivers/s390/block/dasd.c
++++ b/drivers/s390/block/dasd.c
+@@ -432,7 +432,7 @@ dasd_state_ready_to_online(struct dasd_device * device)
+ {
+ 	struct gendisk *disk;
+ 	struct disk_part_iter piter;
+-	struct hd_struct *part;
++	struct block_device *part;
+ 
+ 	device->state = DASD_STATE_ONLINE;
+ 	if (device->block) {
+@@ -445,7 +445,7 @@ dasd_state_ready_to_online(struct dasd_device * device)
+ 		disk = device->block->bdev->bd_disk;
+ 		disk_part_iter_init(&piter, disk, DISK_PITER_INCL_PART0);
+ 		while ((part = disk_part_iter_next(&piter)))
+-			kobject_uevent(&part_to_dev(part)->kobj, KOBJ_CHANGE);
++			kobject_uevent(bdev_kobj(part), KOBJ_CHANGE);
+ 		disk_part_iter_exit(&piter);
+ 	}
+ 	return 0;
+@@ -459,7 +459,7 @@ static int dasd_state_online_to_ready(struct dasd_device *device)
+ 	int rc;
+ 	struct gendisk *disk;
+ 	struct disk_part_iter piter;
+-	struct hd_struct *part;
++	struct block_device *part;
+ 
+ 	if (device->discipline->online_to_ready) {
+ 		rc = device->discipline->online_to_ready(device);
+@@ -472,7 +472,7 @@ static int dasd_state_online_to_ready(struct dasd_device *device)
+ 		disk = device->block->bdev->bd_disk;
+ 		disk_part_iter_init(&piter, disk, DISK_PITER_INCL_PART0);
+ 		while ((part = disk_part_iter_next(&piter)))
+-			kobject_uevent(&part_to_dev(part)->kobj, KOBJ_CHANGE);
++			kobject_uevent(bdev_kobj(part), KOBJ_CHANGE);
+ 		disk_part_iter_exit(&piter);
+ 	}
+ 	return 0;
 diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 77443a1031e373..afe27a0b8f5dd8 100644
+index afe27a0b8f5dd8..de2ee5ffeefe45 100644
 --- a/include/linux/genhd.h
 +++ b/include/linux/genhd.h
-@@ -54,7 +54,6 @@ struct partition_meta_info {
- struct hd_struct {
- 	struct block_device *bdev;
- 	struct device __dev;
--	int partno;
+@@ -245,14 +245,14 @@ static inline void disk_put_part(struct hd_struct *part)
+ 
+ struct disk_part_iter {
+ 	struct gendisk		*disk;
+-	struct hd_struct	*part;
++	struct block_device	*part;
+ 	int			idx;
+ 	unsigned int		flags;
  };
  
- /**
-diff --git a/init/do_mounts.c b/init/do_mounts.c
-index 368ccb71850126..86bef93e72ebd6 100644
---- a/init/do_mounts.c
-+++ b/init/do_mounts.c
-@@ -136,7 +136,7 @@ static dev_t devt_from_partuuid(const char *uuid_str)
- 		struct hd_struct *part;
+ extern void disk_part_iter_init(struct disk_part_iter *piter,
+ 				 struct gendisk *disk, unsigned int flags);
+-extern struct hd_struct *disk_part_iter_next(struct disk_part_iter *piter);
++struct block_device *disk_part_iter_next(struct disk_part_iter *piter);
+ extern void disk_part_iter_exit(struct disk_part_iter *piter);
+ extern bool disk_has_partitions(struct gendisk *disk);
  
- 		part = disk_get_part(dev_to_disk(dev),
--				     dev_to_part(dev)->partno + offset);
-+				     dev_to_part(dev)->bdev->bd_partno + offset);
- 		if (part) {
- 			devt = part_devt(part);
- 			put_device(part_to_dev(part));
 -- 
 2.29.2
 
