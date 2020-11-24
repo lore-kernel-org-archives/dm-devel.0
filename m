@@ -7,58 +7,58 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 96110C6379D
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3531BC63798
 	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:33:13 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E87D6205ED
+	by mail.kernel.org (Postfix) with ESMTPS id A9E6F2076E
 	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:33:12 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E87D6205ED
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A9E6F2076E
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-23-qAG81XYUNQGcN1gAUZXwdw-1; Tue, 24 Nov 2020 08:33:08 -0500
-X-MC-Unique: qAG81XYUNQGcN1gAUZXwdw-1
+ us-mta-381-q6b9J0H8PZqxiXDC9xjU-g-1; Tue, 24 Nov 2020 08:33:09 -0500
+X-MC-Unique: q6b9J0H8PZqxiXDC9xjU-g-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7447180EDAC;
-	Tue, 24 Nov 2020 13:32:59 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E46659A256;
+	Tue, 24 Nov 2020 13:33:03 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2EAA810023B4;
-	Tue, 24 Nov 2020 13:32:59 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C300A1002C10;
+	Tue, 24 Nov 2020 13:33:03 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 076ED50034;
-	Tue, 24 Nov 2020 13:32:59 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9813D50036;
+	Tue, 24 Nov 2020 13:33:03 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AODWtGJ019053 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 24 Nov 2020 08:32:55 -0500
+	id 0AODX2K6019094 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 24 Nov 2020 08:33:02 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 9E3841112873; Tue, 24 Nov 2020 13:32:55 +0000 (UTC)
+	id 09E7E1112873; Tue, 24 Nov 2020 13:33:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 99341111286D
-	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:32:53 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 05962111286F
+	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:32:59 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 54CA8800962
-	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:32:53 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B4F83185A7BC
+	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:32:59 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-583-zD_5VVAnM7iAq596FOHfHg-1; Tue, 24 Nov 2020 08:32:47 -0500
-X-MC-Unique: zD_5VVAnM7iAq596FOHfHg-1
+	us-mta-555-xDeZ3R5CMO2r0IWOCJJIQQ-1; Tue, 24 Nov 2020 08:32:57 -0500
+X-MC-Unique: xDeZ3R5CMO2r0IWOCJJIQQ-1
 Received: from [2001:4bb8:180:5443:c70:4a89:bc61:3] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1khYNI-0006fd-9V; Tue, 24 Nov 2020 13:28:52 +0000
+	id 1khYMS-0006UY-Of; Tue, 24 Nov 2020 13:28:01 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue, 24 Nov 2020 14:27:40 +0100
-Message-Id: <20201124132751.3747337-35-hch@lst.de>
+Date: Tue, 24 Nov 2020 14:27:10 +0100
+Message-Id: <20201124132751.3747337-5-hch@lst.de>
 In-Reply-To: <20201124132751.3747337-1-hch@lst.de>
 References: <20201124132751.3747337-1-hch@lst.de>
 MIME-Version: 1.0
@@ -85,8 +85,7 @@ Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
 	Tejun Heo <tj@kernel.org>, xen-devel@lists.xenproject.org,
 	linux-mm@kvack.org
-Subject: [dm-devel] [PATCH 34/45] block: move holder_dir to struct
-	block_device
+Subject: [dm-devel] [PATCH 04/45] fs: simplify freeze_bdev/thaw_bdev
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -108,140 +107,265 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Move the holder_dir field to struct block_device in preparation for
-kill struct hd_struct.
+Store the frozen superblock in struct block_device to avoid the awkward
+interface that can return a sb only used a cookie, an ERR_PTR or NULL.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/genhd.c             |  5 +++--
- block/partitions/core.c   |  8 ++++----
- fs/block_dev.c            | 11 +++++------
+ drivers/md/dm-core.h      |  5 -----
+ drivers/md/dm.c           | 20 ++++++--------------
+ fs/block_dev.c            | 39 ++++++++++++++++-----------------------
+ fs/buffer.c               |  2 +-
+ fs/ext4/ioctl.c           |  2 +-
+ fs/f2fs/file.c            | 14 +++++---------
+ fs/xfs/xfs_fsops.c        |  7 ++-----
  include/linux/blk_types.h |  1 +
- include/linux/genhd.h     |  1 -
- 5 files changed, 13 insertions(+), 13 deletions(-)
+ include/linux/blkdev.h    |  4 ++--
+ 9 files changed, 34 insertions(+), 60 deletions(-)
 
-diff --git a/block/genhd.c b/block/genhd.c
-index 20c7bf6d091e94..a991f0122e53d8 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -671,7 +671,8 @@ static void register_disk(struct device *parent, struct gendisk *disk,
+diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
+index d522093cb39dda..aace147effcacb 100644
+--- a/drivers/md/dm-core.h
++++ b/drivers/md/dm-core.h
+@@ -96,11 +96,6 @@ struct mapped_device {
  	 */
- 	pm_runtime_set_memalloc_noio(ddev, true);
+ 	struct workqueue_struct *wq;
  
--	disk->part0.holder_dir = kobject_create_and_add("holders", &ddev->kobj);
-+	disk->part0.bdev->bd_holder_dir =
-+			kobject_create_and_add("holders", &ddev->kobj);
- 	disk->slave_dir = kobject_create_and_add("slaves", &ddev->kobj);
+-	/*
+-	 * freeze/thaw support require holding onto a super block
+-	 */
+-	struct super_block *frozen_sb;
+-
+ 	/* forced geometry settings */
+ 	struct hd_geometry geometry;
  
- 	if (disk->flags & GENHD_FL_HIDDEN) {
-@@ -871,7 +872,7 @@ void del_gendisk(struct gendisk *disk)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 54739f1b579bc8..50541d336c719b 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2392,27 +2392,19 @@ static int lock_fs(struct mapped_device *md)
+ {
+ 	int r;
  
- 	blk_unregister_queue(disk);
+-	WARN_ON(md->frozen_sb);
++	WARN_ON(test_bit(DMF_FROZEN, &md->flags));
  
--	kobject_put(disk->part0.holder_dir);
-+	kobject_put(disk->part0.bdev->bd_holder_dir);
- 	kobject_put(disk->slave_dir);
+-	md->frozen_sb = freeze_bdev(md->bdev);
+-	if (IS_ERR(md->frozen_sb)) {
+-		r = PTR_ERR(md->frozen_sb);
+-		md->frozen_sb = NULL;
+-		return r;
+-	}
+-
+-	set_bit(DMF_FROZEN, &md->flags);
+-
+-	return 0;
++	r = freeze_bdev(md->bdev);
++	if (!r)
++		set_bit(DMF_FROZEN, &md->flags);
++	return r;
+ }
  
- 	part_stat_set_all(&disk->part0, 0);
-diff --git a/block/partitions/core.c b/block/partitions/core.c
-index e24673b4cba61f..ff60a14ed4dcdd 100644
---- a/block/partitions/core.c
-+++ b/block/partitions/core.c
-@@ -344,7 +344,7 @@ void delete_partition(struct hd_struct *part)
- 	 */
- 	get_device(disk_to_dev(disk));
- 	rcu_assign_pointer(ptbl->part[part->partno], NULL);
--	kobject_put(part->holder_dir);
-+	kobject_put(part->bdev->bd_holder_dir);
- 	device_del(part_to_dev(part));
+ static void unlock_fs(struct mapped_device *md)
+ {
+ 	if (!test_bit(DMF_FROZEN, &md->flags))
+ 		return;
+-
+-	thaw_bdev(md->bdev, md->frozen_sb);
+-	md->frozen_sb = NULL;
++	thaw_bdev(md->bdev);
+ 	clear_bit(DMF_FROZEN, &md->flags);
+ }
  
- 	/*
-@@ -452,8 +452,8 @@ static struct hd_struct *add_partition(struct gendisk *disk, int partno,
- 		goto out_put;
- 
- 	err = -ENOMEM;
--	p->holder_dir = kobject_create_and_add("holders", &pdev->kobj);
--	if (!p->holder_dir)
-+	bdev->bd_holder_dir = kobject_create_and_add("holders", &pdev->kobj);
-+	if (!bdev->bd_holder_dir)
- 		goto out_del;
- 
- 	dev_set_uevent_suppress(pdev, 0);
-@@ -487,7 +487,7 @@ static struct hd_struct *add_partition(struct gendisk *disk, int partno,
- out_remove_file:
- 	device_remove_file(pdev, &dev_attr_whole_disk);
- out_del:
--	kobject_put(p->holder_dir);
-+	kobject_put(bdev->bd_holder_dir);
- 	device_del(pdev);
- out_put:
- 	put_device(pdev);
 diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 2393395201aa6c..0b8d6009486643 100644
+index d8664f5c1ff669..60492620d51866 100644
 --- a/fs/block_dev.c
 +++ b/fs/block_dev.c
-@@ -1137,7 +1137,7 @@ int bd_link_disk_holder(struct block_device *bdev, struct gendisk *disk)
- 	WARN_ON_ONCE(!bdev->bd_holder);
+@@ -548,55 +548,47 @@ EXPORT_SYMBOL(fsync_bdev);
+  * count down in thaw_bdev(). When it becomes 0, thaw_bdev() will unfreeze
+  * actually.
+  */
+-struct super_block *freeze_bdev(struct block_device *bdev)
++int freeze_bdev(struct block_device *bdev)
+ {
+ 	struct super_block *sb;
+ 	int error = 0;
  
- 	/* FIXME: remove the following once add_disk() handles errors */
--	if (WARN_ON(!disk->slave_dir || !bdev->bd_part->holder_dir))
-+	if (WARN_ON(!disk->slave_dir || !bdev->bd_holder_dir))
- 		goto out_unlock;
+ 	mutex_lock(&bdev->bd_fsfreeze_mutex);
+-	if (++bdev->bd_fsfreeze_count > 1) {
+-		/*
+-		 * We don't even need to grab a reference - the first call
+-		 * to freeze_bdev grab an active reference and only the last
+-		 * thaw_bdev drops it.
+-		 */
+-		sb = get_super(bdev);
+-		if (sb)
+-			drop_super(sb);
+-		mutex_unlock(&bdev->bd_fsfreeze_mutex);
+-		return sb;
+-	}
++	if (++bdev->bd_fsfreeze_count > 1)
++		goto done;
  
- 	holder = bd_find_holder_disk(bdev, disk);
-@@ -1160,14 +1160,14 @@ int bd_link_disk_holder(struct block_device *bdev, struct gendisk *disk)
- 	if (ret)
- 		goto out_free;
- 
--	ret = add_symlink(bdev->bd_part->holder_dir, &disk_to_dev(disk)->kobj);
-+	ret = add_symlink(bdev->bd_holder_dir, &disk_to_dev(disk)->kobj);
- 	if (ret)
- 		goto out_del;
- 	/*
- 	 * bdev could be deleted beneath us which would implicitly destroy
- 	 * the holder directory.  Hold on to it.
- 	 */
--	kobject_get(bdev->bd_part->holder_dir);
-+	kobject_get(bdev->bd_holder_dir);
- 
- 	list_add(&holder->list, &bdev->bd_holder_disks);
- 	goto out_unlock;
-@@ -1202,9 +1202,8 @@ void bd_unlink_disk_holder(struct block_device *bdev, struct gendisk *disk)
- 
- 	if (!WARN_ON_ONCE(holder == NULL) && !--holder->refcnt) {
- 		del_symlink(disk->slave_dir, bdev_kobj(bdev));
--		del_symlink(bdev->bd_part->holder_dir,
--			    &disk_to_dev(disk)->kobj);
--		kobject_put(bdev->bd_part->holder_dir);
-+		del_symlink(bdev->bd_holder_dir, &disk_to_dev(disk)->kobj);
-+		kobject_put(bdev->bd_holder_dir);
- 		list_del_init(&holder->list);
- 		kfree(holder);
+ 	sb = get_active_super(bdev);
+ 	if (!sb)
+-		goto out;
++		goto sync;
+ 	if (sb->s_op->freeze_super)
+ 		error = sb->s_op->freeze_super(sb);
+ 	else
+ 		error = freeze_super(sb);
++	deactivate_super(sb);
++
+ 	if (error) {
+-		deactivate_super(sb);
+ 		bdev->bd_fsfreeze_count--;
+-		mutex_unlock(&bdev->bd_fsfreeze_mutex);
+-		return ERR_PTR(error);
++		goto done;
  	}
+-	deactivate_super(sb);
+- out:
++	bdev->bd_fsfreeze_sb = sb;
++
++sync:
+ 	sync_blockdev(bdev);
++done:
+ 	mutex_unlock(&bdev->bd_fsfreeze_mutex);
+-	return sb;	/* thaw_bdev releases s->s_umount */
++	return error;	/* thaw_bdev releases s->s_umount */
+ }
+ EXPORT_SYMBOL(freeze_bdev);
+ 
+ /**
+  * thaw_bdev  -- unlock filesystem
+  * @bdev:	blockdevice to unlock
+- * @sb:		associated superblock
+  *
+  * Unlocks the filesystem and marks it writeable again after freeze_bdev().
+  */
+-int thaw_bdev(struct block_device *bdev, struct super_block *sb)
++int thaw_bdev(struct block_device *bdev)
+ {
++	struct super_block *sb;
+ 	int error = -EINVAL;
+ 
+ 	mutex_lock(&bdev->bd_fsfreeze_mutex);
+@@ -607,6 +599,7 @@ int thaw_bdev(struct block_device *bdev, struct super_block *sb)
+ 	if (--bdev->bd_fsfreeze_count > 0)
+ 		goto out;
+ 
++	sb = bdev->bd_fsfreeze_sb;
+ 	if (!sb)
+ 		goto out;
+ 
+@@ -618,7 +611,7 @@ int thaw_bdev(struct block_device *bdev, struct super_block *sb)
+ 		bdev->bd_fsfreeze_count++;
+ out:
+ 	mutex_unlock(&bdev->bd_fsfreeze_mutex);
+-	return error;
++	return 0;
+ }
+ EXPORT_SYMBOL(thaw_bdev);
+ 
+diff --git a/fs/buffer.c b/fs/buffer.c
+index 23f645657488ba..a7595ada9400ff 100644
+--- a/fs/buffer.c
++++ b/fs/buffer.c
+@@ -523,7 +523,7 @@ static int osync_buffers_list(spinlock_t *lock, struct list_head *list)
+ 
+ void emergency_thaw_bdev(struct super_block *sb)
+ {
+-	while (sb->s_bdev && !thaw_bdev(sb->s_bdev, sb))
++	while (sb->s_bdev && !thaw_bdev(sb->s_bdev))
+ 		printk(KERN_WARNING "Emergency Thaw on %pg\n", sb->s_bdev);
+ }
+ 
+diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
+index f0381876a7e5b0..524e134324475e 100644
+--- a/fs/ext4/ioctl.c
++++ b/fs/ext4/ioctl.c
+@@ -624,7 +624,7 @@ static int ext4_shutdown(struct super_block *sb, unsigned long arg)
+ 	case EXT4_GOING_FLAGS_DEFAULT:
+ 		freeze_bdev(sb->s_bdev);
+ 		set_bit(EXT4_FLAGS_SHUTDOWN, &sbi->s_ext4_flags);
+-		thaw_bdev(sb->s_bdev, sb);
++		thaw_bdev(sb->s_bdev);
+ 		break;
+ 	case EXT4_GOING_FLAGS_LOGFLUSH:
+ 		set_bit(EXT4_FLAGS_SHUTDOWN, &sbi->s_ext4_flags);
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index ee861c6d9ff026..a9fc482a0e60a5 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -2230,16 +2230,12 @@ static int f2fs_ioc_shutdown(struct file *filp, unsigned long arg)
+ 
+ 	switch (in) {
+ 	case F2FS_GOING_DOWN_FULLSYNC:
+-		sb = freeze_bdev(sb->s_bdev);
+-		if (IS_ERR(sb)) {
+-			ret = PTR_ERR(sb);
++		ret = freeze_bdev(sb->s_bdev);
++		if (ret)
+ 			goto out;
+-		}
+-		if (sb) {
+-			f2fs_stop_checkpoint(sbi, false);
+-			set_sbi_flag(sbi, SBI_IS_SHUTDOWN);
+-			thaw_bdev(sb->s_bdev, sb);
+-		}
++		f2fs_stop_checkpoint(sbi, false);
++		set_sbi_flag(sbi, SBI_IS_SHUTDOWN);
++		thaw_bdev(sb->s_bdev);
+ 		break;
+ 	case F2FS_GOING_DOWN_METASYNC:
+ 		/* do checkpoint only */
+diff --git a/fs/xfs/xfs_fsops.c b/fs/xfs/xfs_fsops.c
+index ef1d5bb88b93ab..b7c5783a031c69 100644
+--- a/fs/xfs/xfs_fsops.c
++++ b/fs/xfs/xfs_fsops.c
+@@ -433,13 +433,10 @@ xfs_fs_goingdown(
+ {
+ 	switch (inflags) {
+ 	case XFS_FSOP_GOING_FLAGS_DEFAULT: {
+-		struct super_block *sb = freeze_bdev(mp->m_super->s_bdev);
+-
+-		if (sb && !IS_ERR(sb)) {
++		if (!freeze_bdev(mp->m_super->s_bdev)) {
+ 			xfs_force_shutdown(mp, SHUTDOWN_FORCE_UMOUNT);
+-			thaw_bdev(sb->s_bdev, sb);
++			thaw_bdev(mp->m_super->s_bdev);
+ 		}
+-
+ 		break;
+ 	}
+ 	case XFS_FSOP_GOING_FLAGS_LOGFLUSH:
 diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 2f8ede04e5a94c..c0591e52d7d7ce 100644
+index d9b69bbde5cc54..ebfb4e7c1fd125 100644
 --- a/include/linux/blk_types.h
 +++ b/include/linux/blk_types.h
-@@ -35,6 +35,7 @@ struct block_device {
- #ifdef CONFIG_SYSFS
- 	struct list_head	bd_holder_disks;
- #endif
-+	struct kobject		*bd_holder_dir;
- 	u8			bd_partno;
- 	struct hd_struct *	bd_part;
- 	/* number of times partitions within this device have been opened. */
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 1e52f38b719db3..c2a8cf12c5cab5 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -55,7 +55,6 @@ struct hd_struct {
+@@ -46,6 +46,7 @@ struct block_device {
+ 	int			bd_fsfreeze_count;
+ 	/* Mutex for freeze */
+ 	struct mutex		bd_fsfreeze_mutex;
++	struct super_block	*bd_fsfreeze_sb;
+ } __randomize_layout;
  
- 	struct block_device *bdev;
- 	struct device __dev;
--	struct kobject *holder_dir;
- 	int policy, partno;
- #ifdef CONFIG_FAIL_MAKE_REQUEST
- 	int make_it_fail;
+ /*
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 05b346a68c2eee..12810a19edebc4 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -2020,7 +2020,7 @@ static inline int sync_blockdev(struct block_device *bdev)
+ #endif
+ int fsync_bdev(struct block_device *bdev);
+ 
+-struct super_block *freeze_bdev(struct block_device *bdev);
+-int thaw_bdev(struct block_device *bdev, struct super_block *sb);
++int freeze_bdev(struct block_device *bdev);
++int thaw_bdev(struct block_device *bdev);
+ 
+ #endif /* _LINUX_BLKDEV_H */
 -- 
 2.29.2
 
