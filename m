@@ -7,59 +7,58 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 05BE9C2D0E4
-	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:32:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7F9E1C56201
+	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:32:03 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 59ECD204EC
-	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:31:59 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 59ECD204EC
+	by mail.kernel.org (Postfix) with ESMTPS id DA6E8206F9
+	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:32:00 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org DA6E8206F9
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-556-3x0mNyrCNUCGag2SD894gw-1; Tue, 24 Nov 2020 08:31:55 -0500
-X-MC-Unique: 3x0mNyrCNUCGag2SD894gw-1
+ us-mta-40-cTnhV4LGNXG4e37QV7jCcA-1; Tue, 24 Nov 2020 08:31:57 -0500
+X-MC-Unique: cTnhV4LGNXG4e37QV7jCcA-1
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B6AF610082E3;
-	Tue, 24 Nov 2020 13:31:50 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 99D8960873;
-	Tue, 24 Nov 2020 13:31:50 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4DB6C18C43CC;
+	Tue, 24 Nov 2020 13:31:53 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2E1E260873;
+	Tue, 24 Nov 2020 13:31:53 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3871D180954D;
-	Tue, 24 Nov 2020 13:31:50 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 00BBA5002E;
+	Tue, 24 Nov 2020 13:31:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AODVmsm018627 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 24 Nov 2020 08:31:48 -0500
+	id 0AODVpto018653 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 24 Nov 2020 08:31:52 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 190681003330; Tue, 24 Nov 2020 13:31:48 +0000 (UTC)
+	id DBDA02166B2C; Tue, 24 Nov 2020 13:31:51 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 141801112869
-	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:31:46 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D6D672166B27
+	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:31:49 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A77C28001B8
-	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:31:46 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 78302811E87
+	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:31:49 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-327-hXIbtbDEMDmqnqYJUGe8bw-1; Tue, 24 Nov 2020 08:31:43 -0500
-X-MC-Unique: hXIbtbDEMDmqnqYJUGe8bw-1
+	us-mta-100-G9POvpesMFKXj3o8Z29etQ-1; Tue, 24 Nov 2020 08:31:46 -0500
+X-MC-Unique: G9POvpesMFKXj3o8Z29etQ-1
 Received: from [2001:4bb8:180:5443:c70:4a89:bc61:3] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1khYMe-0006WC-FD; Tue, 24 Nov 2020 13:28:12 +0000
+	id 1khYMk-0006Xd-Im; Tue, 24 Nov 2020 13:28:19 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue, 24 Nov 2020 14:27:18 +0100
-Message-Id: <20201124132751.3747337-13-hch@lst.de>
+Date: Tue, 24 Nov 2020 14:27:22 +0100
+Message-Id: <20201124132751.3747337-17-hch@lst.de>
 In-Reply-To: <20201124132751.3747337-1-hch@lst.de>
 References: <20201124132751.3747337-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,7 +72,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	linux-fsdevel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>,
@@ -86,8 +85,8 @@ Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
 	Tejun Heo <tj@kernel.org>, xen-devel@lists.xenproject.org,
 	linux-mm@kvack.org
-Subject: [dm-devel] [PATCH 12/45] block: remove a superflous check in
-	blkpg_do_ioctl
+Subject: [dm-devel] [PATCH 16/45] block: change the hash used for looking up
+	block devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -109,33 +108,66 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-sector_t is now always a u64, so this check is not needed.
+Adding the minor to the major creates tons of pointless conflicts. Just
+use the dev_t itself, which is 32-bits and thus is guaranteed to fit
+into ino_t.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Reviewed-by: Jan Kara <jack@suse.cz>
 ---
- block/ioctl.c | 9 ---------
- 1 file changed, 9 deletions(-)
+ fs/block_dev.c | 26 ++------------------------
+ 1 file changed, 2 insertions(+), 24 deletions(-)
 
-diff --git a/block/ioctl.c b/block/ioctl.c
-index 6b785181344fe1..0c09bb7a6ff35f 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -35,15 +35,6 @@ static int blkpg_do_ioctl(struct block_device *bdev,
- 	start = p.start >> SECTOR_SHIFT;
- 	length = p.length >> SECTOR_SHIFT;
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index f6a2a06ad262fa..437f67e12b2838 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -863,35 +863,12 @@ void __init bdev_cache_init(void)
+ 	blockdev_superblock = bd_mnt->mnt_sb;   /* For writeback */
+ }
  
--	/* check for fit in a hd_struct */
--	if (sizeof(sector_t) < sizeof(long long)) {
--		long pstart = start, plength = length;
+-/*
+- * Most likely _very_ bad one - but then it's hardly critical for small
+- * /dev and can be fixed when somebody will need really large one.
+- * Keep in mind that it will be fed through icache hash function too.
+- */
+-static inline unsigned long hash(dev_t dev)
+-{
+-	return MAJOR(dev)+MINOR(dev);
+-}
 -
--		if (pstart != start || plength != length || pstart < 0 ||
--		    plength < 0 || p.pno > 65535)
--			return -EINVAL;
--	}
+-static int bdev_test(struct inode *inode, void *data)
+-{
+-	return BDEV_I(inode)->bdev.bd_dev == *(dev_t *)data;
+-}
 -
- 	switch (op) {
- 	case BLKPG_ADD_PARTITION:
- 		/* check if partition is aligned to blocksize */
+-static int bdev_set(struct inode *inode, void *data)
+-{
+-	BDEV_I(inode)->bdev.bd_dev = *(dev_t *)data;
+-	return 0;
+-}
+-
+ static struct block_device *bdget(dev_t dev)
+ {
+ 	struct block_device *bdev;
+ 	struct inode *inode;
+ 
+-	inode = iget5_locked(blockdev_superblock, hash(dev),
+-			bdev_test, bdev_set, &dev);
+-
++	inode = iget_locked(blockdev_superblock, dev);
+ 	if (!inode)
+ 		return NULL;
+ 
+@@ -903,6 +880,7 @@ static struct block_device *bdget(dev_t dev)
+ 		bdev->bd_super = NULL;
+ 		bdev->bd_inode = inode;
+ 		bdev->bd_part_count = 0;
++		bdev->bd_dev = dev;
+ 		inode->i_mode = S_IFBLK;
+ 		inode->i_rdev = dev;
+ 		inode->i_bdev = bdev;
 -- 
 2.29.2
 
