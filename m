@@ -7,58 +7,59 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 37866C63798
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7F7EDC64E75
 	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:32:54 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 91882204EC
+	by mail.kernel.org (Postfix) with ESMTPS id D5DB1206F9
 	for <dm-devel@archiver.kernel.org>; Tue, 24 Nov 2020 13:32:53 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 91882204EC
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D5DB1206F9
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-157-_qDEtKqqNoG4R--Jj0Y6uA-1; Tue, 24 Nov 2020 08:32:50 -0500
-X-MC-Unique: _qDEtKqqNoG4R--Jj0Y6uA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-103-OergituEPEyflI5MiFStSA-1; Tue, 24 Nov 2020 08:32:50 -0500
+X-MC-Unique: OergituEPEyflI5MiFStSA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8DBA88797EE;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 722058797E6;
 	Tue, 24 Nov 2020 13:32:45 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 07D3A19C46;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 540635D9CC;
 	Tue, 24 Nov 2020 13:32:45 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CA29A1809CA7;
-	Tue, 24 Nov 2020 13:32:44 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 225EB1809CA9;
+	Tue, 24 Nov 2020 13:32:45 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AODWgJx018975 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 24 Nov 2020 08:32:43 -0500
+	id 0AODWgPa018963 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 24 Nov 2020 08:32:42 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id CE4552166B2F; Tue, 24 Nov 2020 13:32:42 +0000 (UTC)
+	id 01C772026D16; Tue, 24 Nov 2020 13:32:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C8B762166B2D
-	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:32:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F13992026D13
+	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:32:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E2F28800296
-	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:32:39 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DDB5B803DD8
+	for <dm-devel@redhat.com>; Tue, 24 Nov 2020 13:32:41 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-588-ecar_t4RNJavxMdjESlepA-1; Tue, 24 Nov 2020 08:32:37 -0500
-X-MC-Unique: ecar_t4RNJavxMdjESlepA-1
+	us-mta-177-PFr-QcgHOKqfx7Q3Z8sxPg-1; Tue, 24 Nov 2020 08:32:39 -0500
+X-MC-Unique: PFr-QcgHOKqfx7Q3Z8sxPg-1
 Received: from [2001:4bb8:180:5443:c70:4a89:bc61:3] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1khYMn-0006Y9-FD; Tue, 24 Nov 2020 13:28:21 +0000
+	id 1khYMV-0006Ut-HC; Tue, 24 Nov 2020 13:28:03 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue, 24 Nov 2020 14:27:24 +0100
-Message-Id: <20201124132751.3747337-19-hch@lst.de>
+Date: Tue, 24 Nov 2020 14:27:12 +0100
+Message-Id: <20201124132751.3747337-7-hch@lst.de>
 In-Reply-To: <20201124132751.3747337-1-hch@lst.de>
 References: <20201124132751.3747337-1-hch@lst.de>
 MIME-Version: 1.0
@@ -72,7 +73,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Mimecast-Bulk-Signature: yes
+X-Mimecast-Spam-Signature: bulk
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	linux-fsdevel@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>,
@@ -85,7 +88,7 @@ Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
 	Tejun Heo <tj@kernel.org>, xen-devel@lists.xenproject.org,
 	linux-mm@kvack.org
-Subject: [dm-devel] [PATCH 18/45] init: refactor devt_from_partuuid
+Subject: [dm-devel] [PATCH 06/45] zram: remove the claim mechanism
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -99,7 +102,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -107,118 +110,142 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The code in devt_from_partuuid is very convoluted.  Refactor a bit by
-sanitizing the goto and variable name usage.
+The zram claim mechanism was added to ensure no new opens come in
+during teardown.  But the proper way to archive that is to call
+del_gendisk first, which takes care of all that.  Once del_gendisk
+is called in the right place, the reset side can also be simplified
+as no I/O can be outstanding on a block device that is not open.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Reviewed-by: Jan Kara <jack@suse.cz>
 ---
- init/do_mounts.c | 68 ++++++++++++++++++++++--------------------------
- 1 file changed, 31 insertions(+), 37 deletions(-)
+ drivers/block/zram/zram_drv.c | 72 ++++++++---------------------------
+ 1 file changed, 15 insertions(+), 57 deletions(-)
 
-diff --git a/init/do_mounts.c b/init/do_mounts.c
-index aef2f24461c7f1..afa26a4028d25e 100644
---- a/init/do_mounts.c
-+++ b/init/do_mounts.c
-@@ -105,13 +105,10 @@ static int match_dev_by_uuid(struct device *dev, const void *data)
-  */
- static dev_t devt_from_partuuid(const char *uuid_str)
+diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
+index 6d15d51cee2b7e..2e6d75ec1afddb 100644
+--- a/drivers/block/zram/zram_drv.c
++++ b/drivers/block/zram/zram_drv.c
+@@ -1756,64 +1756,33 @@ static ssize_t disksize_store(struct device *dev,
+ static ssize_t reset_store(struct device *dev,
+ 		struct device_attribute *attr, const char *buf, size_t len)
  {
--	dev_t res = 0;
- 	struct uuidcmp cmp;
- 	struct device *dev = NULL;
--	struct gendisk *disk;
--	struct hd_struct *part;
-+	dev_t devt = 0;
- 	int offset = 0;
--	bool clear_root_wait = false;
- 	char *slash;
+-	int ret;
+-	unsigned short do_reset;
+-	struct zram *zram;
++	struct zram *zram = dev_to_zram(dev);
+ 	struct block_device *bdev;
++	unsigned short do_reset;
++	int ret = 0;
  
- 	cmp.uuid = uuid_str;
-@@ -120,52 +117,49 @@ static dev_t devt_from_partuuid(const char *uuid_str)
- 	/* Check for optional partition number offset attributes. */
- 	if (slash) {
- 		char c = 0;
-+
- 		/* Explicitly fail on poor PARTUUID syntax. */
--		if (sscanf(slash + 1,
--			   "PARTNROFF=%d%c", &offset, &c) != 1) {
--			clear_root_wait = true;
--			goto done;
--		}
-+		if (sscanf(slash + 1, "PARTNROFF=%d%c", &offset, &c) != 1)
-+			goto clear_root_wait;
- 		cmp.len = slash - uuid_str;
- 	} else {
- 		cmp.len = strlen(uuid_str);
- 	}
- 
--	if (!cmp.len) {
--		clear_root_wait = true;
--		goto done;
--	}
-+	if (!cmp.len)
-+		goto clear_root_wait;
- 
--	dev = class_find_device(&block_class, NULL, &cmp,
--				&match_dev_by_uuid);
-+	dev = class_find_device(&block_class, NULL, &cmp, &match_dev_by_uuid);
- 	if (!dev)
--		goto done;
+ 	ret = kstrtou16(buf, 10, &do_reset);
+ 	if (ret)
+ 		return ret;
 -
--	res = dev->devt;
-+		return 0;
+ 	if (!do_reset)
+ 		return -EINVAL;
  
--	/* Attempt to find the partition by offset. */
--	if (!offset)
--		goto no_offset;
-+	if (offset) {
-+		/*
-+		 * Attempt to find the requested partition by adding an offset
-+		 * to the partition number found by UUID.
-+		 */
-+		struct hd_struct *part;
+-	zram = dev_to_zram(dev);
+ 	bdev = bdget_disk(zram->disk, 0);
+ 	if (!bdev)
+ 		return -ENOMEM;
  
--	res = 0;
--	disk = part_to_disk(dev_to_part(dev));
--	part = disk_get_part(disk, dev_to_part(dev)->partno + offset);
--	if (part) {
--		res = part_devt(part);
--		put_device(part_to_dev(part));
-+		part = disk_get_part(dev_to_disk(dev),
-+				     dev_to_part(dev)->partno + offset);
-+		if (part) {
-+			devt = part_devt(part);
-+			put_device(part_to_dev(part));
-+		}
-+	} else {
-+		devt = dev->devt;
- 	}
- 
--no_offset:
- 	put_device(dev);
--done:
--	if (clear_root_wait) {
--		pr_err("VFS: PARTUUID= is invalid.\n"
--		       "Expected PARTUUID=<valid-uuid-id>[/PARTNROFF=%%d]\n");
--		if (root_wait)
--			pr_err("Disabling rootwait; root= is invalid.\n");
--		root_wait = 0;
+ 	mutex_lock(&bdev->bd_mutex);
+-	/* Do not reset an active device or claimed device */
+-	if (bdev->bd_openers || zram->claim) {
+-		mutex_unlock(&bdev->bd_mutex);
+-		bdput(bdev);
+-		return -EBUSY;
 -	}
--	return res;
-+	return devt;
-+
-+clear_root_wait:
-+	pr_err("VFS: PARTUUID= is invalid.\n"
-+	       "Expected PARTUUID=<valid-uuid-id>[/PARTNROFF=%%d]\n");
-+	if (root_wait)
-+		pr_err("Disabling rootwait; root= is invalid.\n");
-+	root_wait = 0;
-+	return 0;
+-
+-	/* From now on, anyone can't open /dev/zram[0-9] */
+-	zram->claim = true;
++	if (bdev->bd_openers)
++		ret = -EBUSY;
++	else
++		zram_reset_device(zram);
+ 	mutex_unlock(&bdev->bd_mutex);
+-
+-	/* Make sure all the pending I/O are finished */
+-	fsync_bdev(bdev);
+-	zram_reset_device(zram);
+ 	bdput(bdev);
+ 
+-	mutex_lock(&bdev->bd_mutex);
+-	zram->claim = false;
+-	mutex_unlock(&bdev->bd_mutex);
+-
+-	return len;
+-}
+-
+-static int zram_open(struct block_device *bdev, fmode_t mode)
+-{
+-	int ret = 0;
+-	struct zram *zram;
+-
+-	WARN_ON(!mutex_is_locked(&bdev->bd_mutex));
+-
+-	zram = bdev->bd_disk->private_data;
+-	/* zram was claimed to reset so open request fails */
+-	if (zram->claim)
+-		ret = -EBUSY;
+-
+-	return ret;
++	return ret ? ret : len;
  }
  
- /**
+ static const struct block_device_operations zram_devops = {
+-	.open = zram_open,
+ 	.submit_bio = zram_submit_bio,
+ 	.swap_slot_free_notify = zram_slot_free_notify,
+ 	.rw_page = zram_rw_page,
+@@ -1821,7 +1790,6 @@ static const struct block_device_operations zram_devops = {
+ };
+ 
+ static const struct block_device_operations zram_wb_devops = {
+-	.open = zram_open,
+ 	.submit_bio = zram_submit_bio,
+ 	.swap_slot_free_notify = zram_slot_free_notify,
+ 	.owner = THIS_MODULE
+@@ -1974,32 +1942,22 @@ static int zram_add(void)
+ 
+ static int zram_remove(struct zram *zram)
+ {
+-	struct block_device *bdev;
+-
+-	bdev = bdget_disk(zram->disk, 0);
+-	if (!bdev)
+-		return -ENOMEM;
++	struct block_device *bdev = bdget_disk(zram->disk, 0);
+ 
+-	mutex_lock(&bdev->bd_mutex);
+-	if (bdev->bd_openers || zram->claim) {
+-		mutex_unlock(&bdev->bd_mutex);
++	if (bdev) {
++		if (bdev->bd_openers) {
++			bdput(bdev);
++			return -EBUSY;
++		}
+ 		bdput(bdev);
+-		return -EBUSY;
+ 	}
+ 
+-	zram->claim = true;
+-	mutex_unlock(&bdev->bd_mutex);
+-
++	del_gendisk(zram->disk);
+ 	zram_debugfs_unregister(zram);
+-
+-	/* Make sure all the pending I/O are finished */
+-	fsync_bdev(bdev);
+ 	zram_reset_device(zram);
+-	bdput(bdev);
+ 
+ 	pr_info("Removed device: %s\n", zram->disk->disk_name);
+ 
+-	del_gendisk(zram->disk);
+ 	blk_cleanup_queue(zram->disk->queue);
+ 	put_disk(zram->disk);
+ 	kfree(zram);
 -- 
 2.29.2
 
