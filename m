@@ -2,72 +2,73 @@ Return-Path: <SRS0=8HMs=E7=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
-	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4EB97C56201
-	for <dm-devel@archiver.kernel.org>; Wed, 25 Nov 2020 07:16:29 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 818DBC5519F
+	for <dm-devel@archiver.kernel.org>; Wed, 25 Nov 2020 07:16:33 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 9430A208B8
-	for <dm-devel@archiver.kernel.org>; Wed, 25 Nov 2020 07:16:28 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9430A208B8
+	by mail.kernel.org (Postfix) with ESMTPS id C57C7208B8
+	for <dm-devel@archiver.kernel.org>; Wed, 25 Nov 2020 07:16:32 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C57C7208B8
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=huawei.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-356-pqahdN1tO6KGfdqh92FTaw-1; Wed, 25 Nov 2020 02:16:25 -0500
-X-MC-Unique: pqahdN1tO6KGfdqh92FTaw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-97-Zi2ECaIbO_-wjo62bikceQ-1; Wed, 25 Nov 2020 02:16:29 -0500
+X-MC-Unique: Zi2ECaIbO_-wjo62bikceQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CF608190A7AE;
-	Wed, 25 Nov 2020 07:16:20 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 858B360873;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 16031101AFC4;
+	Wed, 25 Nov 2020 07:16:21 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EBCC65C1A3;
 	Wed, 25 Nov 2020 07:16:20 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 54CCB50030;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BD4621809CA2;
 	Wed, 25 Nov 2020 07:16:20 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AP6D6iY016666 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 25 Nov 2020 01:13:07 -0500
+	id 0AP6Bsex016572 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 25 Nov 2020 01:11:55 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id D36EF2166B2D; Wed, 25 Nov 2020 06:13:06 +0000 (UTC)
+	id 9B7D92026D37; Wed, 25 Nov 2020 06:11:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CCCCB2166B2B
-	for <dm-devel@redhat.com>; Wed, 25 Nov 2020 06:13:03 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 94D532026D35
+	for <dm-devel@redhat.com>; Wed, 25 Nov 2020 06:11:47 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4A64E8007DF
-	for <dm-devel@redhat.com>; Wed, 25 Nov 2020 06:13:03 +0000 (UTC)
-Received: from szxga05-in.huawei.com (szxga05-in.huawei.com
-	[45.249.212.191]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-490-_2amp-INMqC6Cl93gAm8pw-1; Wed, 25 Nov 2020 01:12:58 -0500
-X-MC-Unique: _2amp-INMqC6Cl93gAm8pw-1
-Received: from DGGEMS414-HUB.china.huawei.com (unknown [172.30.72.58])
-	by szxga05-in.huawei.com (SkyGuard) with ESMTP id 4CgrCH57LvzLtxm;
-	Wed, 25 Nov 2020 14:12:27 +0800 (CST)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DEEB1103B805
+	for <dm-devel@redhat.com>; Wed, 25 Nov 2020 06:11:47 +0000 (UTC)
+Received: from szxga06-in.huawei.com (szxga06-in.huawei.com [45.249.212.32])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-292-PQNul98tOjyWEosHsdKdxw-1; Wed, 25 Nov 2020 01:11:42 -0500
+X-MC-Unique: PQNul98tOjyWEosHsdKdxw-1
+Received: from DGGEMS410-HUB.china.huawei.com (unknown [172.30.72.59])
+	by szxga06-in.huawei.com (SkyGuard) with ESMTP id 4CgrB346lSzhfQ7;
+	Wed, 25 Nov 2020 14:11:23 +0800 (CST)
 Received: from [10.136.114.67] (10.136.114.67) by smtp.huawei.com
-	(10.3.19.214) with Microsoft SMTP Server (TLS) id 14.3.487.0;
-	Wed, 25 Nov 2020 14:12:51 +0800
+	(10.3.19.210) with Microsoft SMTP Server (TLS) id 14.3.487.0;
+	Wed, 25 Nov 2020 14:11:36 +0800
 To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
 References: <20201124132751.3747337-1-hch@lst.de>
-	<20201124132751.3747337-44-hch@lst.de>
+	<20201124132751.3747337-39-hch@lst.de>
 From: Chao Yu <yuchao0@huawei.com>
-Message-ID: <2c7a8f2a-37a3-38c2-9256-6aae2c7a45c1@huawei.com>
-Date: Wed, 25 Nov 2020 14:12:50 +0800
+Message-ID: <fec5c478-c7cb-ce29-a35d-3474fae1c96d@huawei.com>
+Date: Wed, 25 Nov 2020 14:11:35 +0800
 User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:52.0) Gecko/20100101
 	Thunderbird/52.9.1
 MIME-Version: 1.0
-In-Reply-To: <20201124132751.3747337-44-hch@lst.de>
+In-Reply-To: <20201124132751.3747337-39-hch@lst.de>
 X-Originating-IP: [10.136.114.67]
 X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -78,7 +79,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 25 Nov 2020 02:15:21 -0500
 Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
@@ -92,7 +93,8 @@ Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
 	Tejun Heo <tj@kernel.org>, xen-devel@lists.xenproject.org,
 	linux-mm@kvack.org
-Subject: Re: [dm-devel] [PATCH 43/45] f2fs: remove a few bd_part checks
+Subject: Re: [dm-devel] [PATCH 38/45] block: switch partition lookup to use
+ struct block_device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -106,7 +108,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -116,14 +118,42 @@ Content-Transfer-Encoding: 7bit
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
 On 2020/11/24 21:27, Christoph Hellwig wrote:
-> bd_part is never NULL for a block device in use by a file system, so
-> remove the checks.
+> Use struct block_device to lookup partitions on a disk.  This removes
+> all usage of struct hd_struct from the I/O path, and this allows removing
+> the percpu refcount in struct hd_struct.
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> Signed-off-by: Christoph Hellwig<hch@lst.de>
+> ---
+>   block/bio.c                        |  4 +-
+>   block/blk-core.c                   | 66 ++++++++++++++----------------
+>   block/blk-flush.c                  |  2 +-
+>   block/blk-mq.c                     |  9 ++--
+>   block/blk-mq.h                     |  7 ++--
+>   block/blk.h                        |  4 +-
+>   block/genhd.c                      | 56 +++++++++++++------------
+>   block/partitions/core.c            |  7 +---
+>   drivers/block/drbd/drbd_receiver.c |  2 +-
+>   drivers/block/drbd/drbd_worker.c   |  2 +-
+>   drivers/block/zram/zram_drv.c      |  2 +-
+>   drivers/md/bcache/request.c        |  4 +-
+>   drivers/md/dm.c                    |  4 +-
+>   drivers/md/md.c                    |  4 +-
+>   drivers/nvme/target/admin-cmd.c    | 20 ++++-----
+>   fs/ext4/super.c                    | 18 +++-----
+>   fs/ext4/sysfs.c                    | 10 +----
+>   fs/f2fs/f2fs.h                     |  2 +-
+>   fs/f2fs/super.c                    |  6 +--
 
-Reviewed-by: Chao Yu <yuchao0@huawei.com>
+For f2fs part,
+
+Acked-by: Chao Yu <yuchao0@huawei.com>
 
 Thanks,
+
+>   include/linux/blkdev.h             |  8 ++--
+>   include/linux/genhd.h              |  4 +-
+>   include/linux/part_stat.h          | 17 ++++----
+>   22 files changed, 120 insertions(+), 138 deletions(-)
 
 --
 dm-devel mailing list
