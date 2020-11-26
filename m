@@ -7,58 +7,59 @@ X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0D2EFC71156
-	for <dm-devel@archiver.kernel.org>; Thu, 26 Nov 2020 13:33:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A75DC8300B
+	for <dm-devel@archiver.kernel.org>; Thu, 26 Nov 2020 13:33:29 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 65F4D206F7
-	for <dm-devel@archiver.kernel.org>; Thu, 26 Nov 2020 13:33:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 65F4D206F7
+	by mail.kernel.org (Postfix) with ESMTPS id CA78021D40
+	for <dm-devel@archiver.kernel.org>; Thu, 26 Nov 2020 13:33:28 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CA78021D40
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-471-E0zX-FKHNye9mHSuDSxMPQ-1; Thu, 26 Nov 2020 08:33:29 -0500
-X-MC-Unique: E0zX-FKHNye9mHSuDSxMPQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-565-XbTXXrHAM82stpEmoWopbQ-1; Thu, 26 Nov 2020 08:33:25 -0500
+X-MC-Unique: XbTXXrHAM82stpEmoWopbQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4630A805EF2;
-	Thu, 26 Nov 2020 13:33:24 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 246745D6D1;
-	Thu, 26 Nov 2020 13:33:24 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B41A056BF9;
+	Thu, 26 Nov 2020 13:33:20 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 957C75D9C6;
+	Thu, 26 Nov 2020 13:33:20 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EE4191809C9F;
-	Thu, 26 Nov 2020 13:33:23 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6C5875002D;
+	Thu, 26 Nov 2020 13:33:20 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AQDXMVU006151 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 26 Nov 2020 08:33:22 -0500
+	id 0AQDXIGg006128 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 26 Nov 2020 08:33:18 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 22924C77D9; Thu, 26 Nov 2020 13:33:22 +0000 (UTC)
+	id 4A3DA2166B29; Thu, 26 Nov 2020 13:33:18 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1D789C77E4
-	for <dm-devel@redhat.com>; Thu, 26 Nov 2020 13:33:22 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 45A672166B27
+	for <dm-devel@redhat.com>; Thu, 26 Nov 2020 13:33:18 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0A78F800889
-	for <dm-devel@redhat.com>; Thu, 26 Nov 2020 13:33:22 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 31C27811E78
+	for <dm-devel@redhat.com>; Thu, 26 Nov 2020 13:33:18 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-392-_4rGmzC2OtibNlBAn4m_xg-1; Thu, 26 Nov 2020 08:33:20 -0500
-X-MC-Unique: _4rGmzC2OtibNlBAn4m_xg-1
+	us-mta-464-AnVaEysjMLCSQCXknqwLOA-1; Thu, 26 Nov 2020 08:33:16 -0500
+X-MC-Unique: AnVaEysjMLCSQCXknqwLOA-1
 Received: from [2001:4bb8:18c:1dd6:27b8:b8a1:c13e:ceb1] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kiGyx-0003xi-ML; Thu, 26 Nov 2020 13:06:44 +0000
+	id 1kiGz2-0003z9-Fv; Thu, 26 Nov 2020 13:06:48 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Thu, 26 Nov 2020 14:03:45 +0100
-Message-Id: <20201126130422.92945-8-hch@lst.de>
+Date: Thu, 26 Nov 2020 14:03:49 +0100
+Message-Id: <20201126130422.92945-12-hch@lst.de>
 In-Reply-To: <20201126130422.92945-1-hch@lst.de>
 References: <20201126130422.92945-1-hch@lst.de>
 MIME-Version: 1.0
@@ -72,7 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org,
@@ -82,7 +83,8 @@ Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	linux-fsdevel@vger.kernel.org, dm-devel@redhat.com,
 	linux-mtd@lists.infradead.org,
 	Johannes Thumshirn <johannes.thumshirn@wdc.com>, Tejun Heo <tj@kernel.org>
-Subject: [dm-devel] [PATCH 07/44] loop: do not call set_blocksize
+Subject: [dm-devel] [PATCH 11/44] block: remove a superflous check in
+	blkpg_do_ioctl
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -96,7 +98,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -104,29 +106,35 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-set_blocksize is used by file systems to use their preferred buffer cache
-block size.  Block drivers should not set it.
+sector_t is now always a u64, so this check is not needed.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Tejun Heo <tj@kernel.org>
 Reviewed-by: Jan Kara <jack@suse.cz>
 ---
- drivers/block/loop.c | 3 ---
- 1 file changed, 3 deletions(-)
+ block/ioctl.c | 9 ---------
+ 1 file changed, 9 deletions(-)
 
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index 9a27d4f1c08aac..b42c728620c9e4 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -1164,9 +1164,6 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
- 	size = get_loop_size(lo, file);
- 	loop_set_size(lo, size);
+diff --git a/block/ioctl.c b/block/ioctl.c
+index 6b785181344fe1..0c09bb7a6ff35f 100644
+--- a/block/ioctl.c
++++ b/block/ioctl.c
+@@ -35,15 +35,6 @@ static int blkpg_do_ioctl(struct block_device *bdev,
+ 	start = p.start >> SECTOR_SHIFT;
+ 	length = p.length >> SECTOR_SHIFT;
  
--	set_blocksize(bdev, S_ISBLK(inode->i_mode) ?
--		      block_size(inode->i_bdev) : PAGE_SIZE);
+-	/* check for fit in a hd_struct */
+-	if (sizeof(sector_t) < sizeof(long long)) {
+-		long pstart = start, plength = length;
 -
- 	lo->lo_state = Lo_bound;
- 	if (part_shift)
- 		lo->lo_flags |= LO_FLAGS_PARTSCAN;
+-		if (pstart != start || plength != length || pstart < 0 ||
+-		    plength < 0 || p.pno > 65535)
+-			return -EINVAL;
+-	}
+-
+ 	switch (op) {
+ 	case BLKPG_ADD_PARTITION:
+ 		/* check if partition is aligned to blocksize */
 -- 
 2.29.2
 
