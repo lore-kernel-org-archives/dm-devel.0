@@ -7,58 +7,59 @@ X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CB877C63777
-	for <dm-devel@archiver.kernel.org>; Thu, 26 Nov 2020 13:33:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1300EC56202
+	for <dm-devel@archiver.kernel.org>; Thu, 26 Nov 2020 13:33:10 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3FAE2206F7
-	for <dm-devel@archiver.kernel.org>; Thu, 26 Nov 2020 13:33:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3FAE2206F7
+	by mail.kernel.org (Postfix) with ESMTPS id 6E5BF21D40
+	for <dm-devel@archiver.kernel.org>; Thu, 26 Nov 2020 13:33:09 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 6E5BF21D40
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-404-VOgEbPwgPF-EQpoOM1gOKA-1; Thu, 26 Nov 2020 08:33:02 -0500
-X-MC-Unique: VOgEbPwgPF-EQpoOM1gOKA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-230-ANMlGBpdP5iLpgMrj24l-Q-1; Thu, 26 Nov 2020 08:33:05 -0500
+X-MC-Unique: ANMlGBpdP5iLpgMrj24l-Q-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C01341074654;
-	Thu, 26 Nov 2020 13:32:56 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A2FA36085A;
-	Thu, 26 Nov 2020 13:32:56 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 226D41074649;
+	Thu, 26 Nov 2020 13:33:01 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 04FA660C6A;
+	Thu, 26 Nov 2020 13:33:01 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 78ABB1809CA6;
-	Thu, 26 Nov 2020 13:32:56 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CEAE950035;
+	Thu, 26 Nov 2020 13:33:00 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AQDWm2U005870 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 26 Nov 2020 08:32:48 -0500
+	id 0AQDWspd005908 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 26 Nov 2020 08:32:55 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4D72D2026D36; Thu, 26 Nov 2020 13:32:48 +0000 (UTC)
+	id B99BF2026D3B; Thu, 26 Nov 2020 13:32:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 496CF2026D47
-	for <dm-devel@redhat.com>; Thu, 26 Nov 2020 13:32:48 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B41FF2026D47
+	for <dm-devel@redhat.com>; Thu, 26 Nov 2020 13:32:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 34FE08007DF
-	for <dm-devel@redhat.com>; Thu, 26 Nov 2020 13:32:48 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A03FF800B3B
+	for <dm-devel@redhat.com>; Thu, 26 Nov 2020 13:32:54 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-436-jA9dijm3OoatgsCrjC8nDA-1; Thu, 26 Nov 2020 08:32:46 -0500
-X-MC-Unique: jA9dijm3OoatgsCrjC8nDA-1
+	us-mta-157-mwebyvlHNNijBo3lKJZAfQ-1; Thu, 26 Nov 2020 08:32:52 -0500
+X-MC-Unique: mwebyvlHNNijBo3lKJZAfQ-1
 Received: from [2001:4bb8:18c:1dd6:27b8:b8a1:c13e:ceb1] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kiGzY-00046z-IP; Thu, 26 Nov 2020 13:07:21 +0000
+	id 1kiGzM-00043O-Af; Thu, 26 Nov 2020 13:07:08 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Thu, 26 Nov 2020 14:04:11 +0100
-Message-Id: <20201126130422.92945-34-hch@lst.de>
+Date: Thu, 26 Nov 2020 14:04:03 +0100
+Message-Id: <20201126130422.92945-26-hch@lst.de>
 In-Reply-To: <20201126130422.92945-1-hch@lst.de>
 References: <20201126130422.92945-1-hch@lst.de>
 MIME-Version: 1.0
@@ -82,8 +83,7 @@ Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	linux-fsdevel@vger.kernel.org, dm-devel@redhat.com,
 	linux-mtd@lists.infradead.org,
 	Johannes Thumshirn <johannes.thumshirn@wdc.com>, Tejun Heo <tj@kernel.org>
-Subject: [dm-devel] [PATCH 33/44] block: move holder_dir to struct
-	block_device
+Subject: [dm-devel] [PATCH 25/44] block: remove ->bd_contains
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -97,7 +97,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -105,140 +105,162 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Move the holder_dir field to struct block_device in preparation for
-kill struct hd_struct.
+Now that each hd_struct has a reference to the corresponding
+block_device, there is no need for the bd_contains pointer.  Add
+a bdev_whole() helper to look up the whole device block_device
+struture instead.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Acked-by: Tejun Heo <tj@kernel.org>
 ---
- block/genhd.c             |  5 +++--
- block/partitions/core.c   |  8 ++++----
- fs/block_dev.c            | 11 +++++------
- include/linux/blk_types.h |  1 +
- include/linux/genhd.h     |  1 -
- 5 files changed, 13 insertions(+), 13 deletions(-)
+ drivers/block/loop.c      |  2 +-
+ drivers/scsi/scsicam.c    |  2 +-
+ fs/block_dev.c            | 22 ++++++++--------------
+ include/linux/blk_types.h |  4 +++-
+ 4 files changed, 13 insertions(+), 17 deletions(-)
 
-diff --git a/block/genhd.c b/block/genhd.c
-index fe202a12eec096..a964e7532fedd5 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -673,7 +673,8 @@ static void register_disk(struct device *parent, struct gendisk *disk,
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index 26c7aafba7c5f8..c0df88b3300c41 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -1088,7 +1088,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
+ 	 * here to avoid changing device under exclusive owner.
  	 */
- 	pm_runtime_set_memalloc_noio(ddev, true);
+ 	if (!(mode & FMODE_EXCL)) {
+-		claimed_bdev = bdev->bd_contains;
++		claimed_bdev = bdev_whole(bdev);
+ 		error = bd_prepare_to_claim(bdev, claimed_bdev, loop_configure);
+ 		if (error)
+ 			goto out_putf;
+diff --git a/drivers/scsi/scsicam.c b/drivers/scsi/scsicam.c
+index 682cf08ab04153..f1553a453616fd 100644
+--- a/drivers/scsi/scsicam.c
++++ b/drivers/scsi/scsicam.c
+@@ -32,7 +32,7 @@
+  */
+ unsigned char *scsi_bios_ptable(struct block_device *dev)
+ {
+-	struct address_space *mapping = dev->bd_contains->bd_inode->i_mapping;
++	struct address_space *mapping = bdev_whole(dev)->bd_inode->i_mapping;
+ 	unsigned char *res = NULL;
+ 	struct page *page;
  
--	disk->part0.holder_dir = kobject_create_and_add("holders", &ddev->kobj);
-+	disk->part0.bdev->bd_holder_dir =
-+			kobject_create_and_add("holders", &ddev->kobj);
- 	disk->slave_dir = kobject_create_and_add("slaves", &ddev->kobj);
- 
- 	if (disk->flags & GENHD_FL_HIDDEN) {
-@@ -879,7 +880,7 @@ void del_gendisk(struct gendisk *disk)
- 
- 	blk_unregister_queue(disk);
- 
--	kobject_put(disk->part0.holder_dir);
-+	kobject_put(disk->part0.bdev->bd_holder_dir);
- 	kobject_put(disk->slave_dir);
- 
- 	part_stat_set_all(&disk->part0, 0);
-diff --git a/block/partitions/core.c b/block/partitions/core.c
-index 224a22d82fb86f..d1093adf2570e2 100644
---- a/block/partitions/core.c
-+++ b/block/partitions/core.c
-@@ -344,7 +344,7 @@ void delete_partition(struct hd_struct *part)
- 	 */
- 	get_device(disk_to_dev(disk));
- 	rcu_assign_pointer(ptbl->part[part->partno], NULL);
--	kobject_put(part->holder_dir);
-+	kobject_put(part->bdev->bd_holder_dir);
- 	device_del(part_to_dev(part));
- 
- 	/*
-@@ -452,8 +452,8 @@ static struct hd_struct *add_partition(struct gendisk *disk, int partno,
- 		goto out_put;
- 
- 	err = -ENOMEM;
--	p->holder_dir = kobject_create_and_add("holders", &pdev->kobj);
--	if (!p->holder_dir)
-+	bdev->bd_holder_dir = kobject_create_and_add("holders", &pdev->kobj);
-+	if (!bdev->bd_holder_dir)
- 		goto out_del;
- 
- 	dev_set_uevent_suppress(pdev, 0);
-@@ -487,7 +487,7 @@ static struct hd_struct *add_partition(struct gendisk *disk, int partno,
- out_remove_file:
- 	device_remove_file(pdev, &dev_attr_whole_disk);
- out_del:
--	kobject_put(p->holder_dir);
-+	kobject_put(bdev->bd_holder_dir);
- 	device_del(pdev);
- out_put:
- 	put_device(pdev);
 diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 62fae6a0e8aa56..2c91c35149787a 100644
+index 07b869c2ade501..73f45ae1d3d50c 100644
 --- a/fs/block_dev.c
 +++ b/fs/block_dev.c
-@@ -1138,7 +1138,7 @@ int bd_link_disk_holder(struct block_device *bdev, struct gendisk *disk)
- 	WARN_ON_ONCE(!bdev->bd_holder);
- 
- 	/* FIXME: remove the following once add_disk() handles errors */
--	if (WARN_ON(!disk->slave_dir || !bdev->bd_part->holder_dir))
-+	if (WARN_ON(!disk->slave_dir || !bdev->bd_holder_dir))
- 		goto out_unlock;
- 
- 	holder = bd_find_holder_disk(bdev, disk);
-@@ -1161,14 +1161,14 @@ int bd_link_disk_holder(struct block_device *bdev, struct gendisk *disk)
- 	if (ret)
- 		goto out_free;
- 
--	ret = add_symlink(bdev->bd_part->holder_dir, &disk_to_dev(disk)->kobj);
-+	ret = add_symlink(bdev->bd_holder_dir, &disk_to_dev(disk)->kobj);
- 	if (ret)
- 		goto out_del;
- 	/*
- 	 * bdev could be deleted beneath us which would implicitly destroy
- 	 * the holder directory.  Hold on to it.
+@@ -119,7 +119,7 @@ int truncate_bdev_range(struct block_device *bdev, fmode_t mode,
+ 	 * under live filesystem.
  	 */
--	kobject_get(bdev->bd_part->holder_dir);
-+	kobject_get(bdev->bd_holder_dir);
+ 	if (!(mode & FMODE_EXCL)) {
+-		claimed_bdev = bdev->bd_contains;
++		claimed_bdev = bdev_whole(bdev);
+ 		err = bd_prepare_to_claim(bdev, claimed_bdev,
+ 					  truncate_bdev_range);
+ 		if (err)
+@@ -880,7 +880,6 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
+ 	spin_lock_init(&bdev->bd_size_lock);
+ 	bdev->bd_disk = disk;
+ 	bdev->bd_partno = partno;
+-	bdev->bd_contains = NULL;
+ 	bdev->bd_super = NULL;
+ 	bdev->bd_inode = inode;
+ 	bdev->bd_part_count = 0;
+@@ -1343,9 +1342,7 @@ static int __blkdev_get(struct block_device *bdev, fmode_t mode)
+ 	int ret;
  
- 	list_add(&holder->list, &bdev->bd_holder_disks);
- 	goto out_unlock;
-@@ -1203,9 +1203,8 @@ void bd_unlink_disk_holder(struct block_device *bdev, struct gendisk *disk)
+ 	if (!bdev->bd_openers) {
+-		bdev->bd_contains = bdev;
+-
+-		if (!bdev->bd_partno) {
++		if (!bdev_is_partition(bdev)) {
+ 			ret = -ENXIO;
+ 			bdev->bd_part = disk_get_part(disk, 0);
+ 			if (!bdev->bd_part)
+@@ -1385,7 +1382,6 @@ static int __blkdev_get(struct block_device *bdev, fmode_t mode)
+ 			whole->bd_part_count++;
+ 			mutex_unlock(&whole->bd_mutex);
  
- 	if (!WARN_ON_ONCE(holder == NULL) && !--holder->refcnt) {
- 		del_symlink(disk->slave_dir, bdev_kobj(bdev));
--		del_symlink(bdev->bd_part->holder_dir,
--			    &disk_to_dev(disk)->kobj);
--		kobject_put(bdev->bd_part->holder_dir);
-+		del_symlink(bdev->bd_holder_dir, &disk_to_dev(disk)->kobj);
-+		kobject_put(bdev->bd_holder_dir);
- 		list_del_init(&holder->list);
- 		kfree(holder);
- 	}
+-			bdev->bd_contains = whole;
+ 			bdev->bd_part = disk_get_part(disk, bdev->bd_partno);
+ 			if (!bdev->bd_part || !bdev->bd_part->nr_sects) {
+ 				__blkdev_put(whole, mode, 1);
+@@ -1400,7 +1396,7 @@ static int __blkdev_get(struct block_device *bdev, fmode_t mode)
+ 		if (bdev->bd_bdi == &noop_backing_dev_info)
+ 			bdev->bd_bdi = bdi_get(disk->queue->backing_dev_info);
+ 	} else {
+-		if (bdev->bd_contains == bdev) {
++		if (!bdev_is_partition(bdev)) {
+ 			ret = 0;
+ 			if (bdev->bd_disk->fops->open)
+ 				ret = bdev->bd_disk->fops->open(bdev, mode);
+@@ -1418,7 +1414,6 @@ static int __blkdev_get(struct block_device *bdev, fmode_t mode)
+  out_clear:
+ 	disk_put_part(bdev->bd_part);
+ 	bdev->bd_part = NULL;
+-	bdev->bd_contains = NULL;
+ 	return ret;
+ }
+ 
+@@ -1664,8 +1659,7 @@ static void __blkdev_put(struct block_device *bdev, fmode_t mode, int for_part)
+ 		disk_put_part(bdev->bd_part);
+ 		bdev->bd_part = NULL;
+ 		if (bdev_is_partition(bdev))
+-			victim = bdev->bd_contains;
+-		bdev->bd_contains = NULL;
++			victim = bdev_whole(bdev);
+ 	} else {
+ 		if (!bdev_is_partition(bdev) && disk->fops->release)
+ 			disk->fops->release(disk, mode);
+@@ -1684,6 +1678,7 @@ void blkdev_put(struct block_device *bdev, fmode_t mode)
+ 	mutex_lock(&bdev->bd_mutex);
+ 
+ 	if (mode & FMODE_EXCL) {
++		struct block_device *whole = bdev_whole(bdev);
+ 		bool bdev_free;
+ 
+ 		/*
+@@ -1694,13 +1689,12 @@ void blkdev_put(struct block_device *bdev, fmode_t mode)
+ 		spin_lock(&bdev_lock);
+ 
+ 		WARN_ON_ONCE(--bdev->bd_holders < 0);
+-		WARN_ON_ONCE(--bdev->bd_contains->bd_holders < 0);
++		WARN_ON_ONCE(--whole->bd_holders < 0);
+ 
+-		/* bd_contains might point to self, check in a separate step */
+ 		if ((bdev_free = !bdev->bd_holders))
+ 			bdev->bd_holder = NULL;
+-		if (!bdev->bd_contains->bd_holders)
+-			bdev->bd_contains->bd_holder = NULL;
++		if (!whole->bd_holders)
++			whole->bd_holder = NULL;
+ 
+ 		spin_unlock(&bdev_lock);
+ 
 diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 2f8ede04e5a94c..c0591e52d7d7ce 100644
+index 9698f459cc65c9..2e0a9bd9688d28 100644
 --- a/include/linux/blk_types.h
 +++ b/include/linux/blk_types.h
-@@ -35,6 +35,7 @@ struct block_device {
+@@ -32,7 +32,6 @@ struct block_device {
  #ifdef CONFIG_SYSFS
  	struct list_head	bd_holder_disks;
  #endif
-+	struct kobject		*bd_holder_dir;
+-	struct block_device *	bd_contains;
  	u8			bd_partno;
  	struct hd_struct *	bd_part;
  	/* number of times partitions within this device have been opened. */
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 30d7076155b4d2..b4a5c05593b99c 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -55,7 +55,6 @@ struct hd_struct {
+@@ -49,6 +48,9 @@ struct block_device {
+ 	struct super_block	*bd_fsfreeze_sb;
+ } __randomize_layout;
  
- 	struct block_device *bdev;
- 	struct device __dev;
--	struct kobject *holder_dir;
- 	int policy, partno;
- #ifdef CONFIG_FAIL_MAKE_REQUEST
- 	int make_it_fail;
++#define bdev_whole(_bdev) \
++	((_bdev)->bd_disk->part0.bdev)
++
+ #define bdev_kobj(_bdev) \
+ 	(&part_to_dev((_bdev)->bd_part)->kobj)
+ 
 -- 
 2.29.2
 
