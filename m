@@ -2,70 +2,73 @@ Return-Path: <SRS0=2hlQ=FB=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6EB63C2D0E4
-	for <dm-devel@archiver.kernel.org>; Fri, 27 Nov 2020 12:04:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4D941C2D0E4
+	for <dm-devel@archiver.kernel.org>; Fri, 27 Nov 2020 12:45:57 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C154221D81
-	for <dm-devel@archiver.kernel.org>; Fri, 27 Nov 2020 12:04:57 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C154221D81
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=suse.de
+	by mail.kernel.org (Postfix) with ESMTPS id A17BE22245
+	for <dm-devel@archiver.kernel.org>; Fri, 27 Nov 2020 12:45:56 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A17BE22245
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-330-plPP-iuXMiOgmjJ8k9YDAQ-1; Fri, 27 Nov 2020 07:04:54 -0500
-X-MC-Unique: plPP-iuXMiOgmjJ8k9YDAQ-1
+ us-mta-532--onp2JtPOzKAeQ15BM3bpg-1; Fri, 27 Nov 2020 07:45:53 -0500
+X-MC-Unique: -onp2JtPOzKAeQ15BM3bpg-1
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BFDE7185E49E;
-	Fri, 27 Nov 2020 12:04:49 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2114A805EF8;
+	Fri, 27 Nov 2020 12:45:49 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8024860873;
-	Fri, 27 Nov 2020 12:04:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A7AA56085D;
+	Fri, 27 Nov 2020 12:45:48 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 03FE24E58F;
-	Fri, 27 Nov 2020 12:04:49 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id ECD814A7C6;
+	Fri, 27 Nov 2020 12:45:47 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0ARC4lop011256 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 27 Nov 2020 07:04:47 -0500
+	id 0ARCjj0N015568 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 27 Nov 2020 07:45:45 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 5BB1210F26F1; Fri, 27 Nov 2020 12:04:47 +0000 (UTC)
+	id 0DFA22166B2A; Fri, 27 Nov 2020 12:45:45 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 57DFD10F26F0
-	for <dm-devel@redhat.com>; Fri, 27 Nov 2020 12:04:43 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 08ECC2166B28
+	for <dm-devel@redhat.com>; Fri, 27 Nov 2020 12:45:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D56DD186E121
-	for <dm-devel@redhat.com>; Fri, 27 Nov 2020 12:04:43 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B7F058007DF
+	for <dm-devel@redhat.com>; Fri, 27 Nov 2020 12:45:42 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-12-ssi41OheN22NC8ouF5LgVg-1;
-	Fri, 27 Nov 2020 07:04:41 -0500
-X-MC-Unique: ssi41OheN22NC8ouF5LgVg-1
+	relay.mimecast.com with ESMTP id us-mta-196-8WzGRZZnNzqUaos0bR50Dg-1;
+	Fri, 27 Nov 2020 07:45:40 -0500
+X-MC-Unique: 8WzGRZZnNzqUaos0bR50Dg-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 2D8BFADCA;
-	Fri, 27 Nov 2020 12:04:40 +0000 (UTC)
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
+	by mx2.suse.de (Postfix) with ESMTP id 280CAABD7;
+	Fri, 27 Nov 2020 12:45:38 +0000 (UTC)
+Received: by quack2.suse.cz (Postfix, from userid 1000)
+	id 4AC6D1E1318; Fri, 27 Nov 2020 13:45:37 +0100 (CET)
+Date: Fri, 27 Nov 2020 13:45:37 +0100
+From: Jan Kara <jack@suse.cz>
+To: Christoph Hellwig <hch@lst.de>
+Message-ID: <20201127124537.GC27162@quack2.suse.cz>
 References: <20201126130422.92945-1-hch@lst.de>
-	<20201126130422.92945-14-hch@lst.de>
-From: Hannes Reinecke <hare@suse.de>
-Message-ID: <1624f174-4182-744c-56ad-b50a391a6bb7@suse.de>
-Date: Fri, 27 Nov 2020 13:04:38 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
-	Thunderbird/78.4.0
+	<20201126130422.92945-38-hch@lst.de>
+	<20201126182219.GC422@quack2.suse.cz>
+	<20201127094842.GA15984@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20201126130422.92945-14-hch@lst.de>
+In-Reply-To: <20201127094842.GA15984@lst.de>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -74,20 +77,19 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 0ARC4lop011256
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
-	Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org,
-	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+Cc: Jens Axboe <axboe@kernel.dk>, Chao Yu <yuchao0@huawei.com>,
+	Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>,
+	linux-mm@kvack.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
 	Jan Kara <jack@suse.com>, Josef Bacik <josef@toxicpanda.com>,
 	Coly Li <colyli@suse.de>, linux-block@vger.kernel.org,
 	linux-fsdevel@vger.kernel.org, dm-devel@redhat.com,
 	linux-mtd@lists.infradead.org,
-	Johannes Thumshirn <johannes.thumshirn@wdc.com>, Tejun Heo <tj@kernel.org>
-Subject: Re: [dm-devel] [PATCH 13/44] block: use disk_part_iter_exit in
- disk_part_iter_next
+	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
+	Tejun Heo <tj@kernel.org>, linux-bcache@vger.kernel.org
+Subject: Re: [dm-devel] [PATCH 37/44] block: switch partition lookup to use
+ struct block_device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -106,31 +108,62 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gMTEvMjYvMjAgMjowMyBQTSwgQ2hyaXN0b3BoIEhlbGx3aWcgd3JvdGU6Cj4gQ2FsbCBkaXNr
-X3BhcnRfaXRlcl9leGl0IGluIGRpc2tfcGFydF9pdGVyX25leHQgaW5zdGVhZCBvZiBkdXBsaWNh
-dGluZwo+IHRoZSBmdW5jdGlvbmFsaXR5Lgo+IAo+IFNpZ25lZC1vZmYtYnk6IENocmlzdG9waCBI
-ZWxsd2lnIDxoY2hAbHN0LmRlPgo+IFJldmlld2VkLWJ5OiBHcmVnIEtyb2FoLUhhcnRtYW4gPGdy
-ZWdraEBsaW51eGZvdW5kYXRpb24ub3JnPgo+IFJldmlld2VkLWJ5OiBKYW4gS2FyYSA8amFja0Bz
-dXNlLmN6Pgo+IFJldmlld2VkLWJ5OiBKb2hhbm5lcyBUaHVtc2hpcm4gPGpvaGFubmVzLnRodW1z
-aGlybkB3ZGMuY29tPgo+IEFja2VkLWJ5OiBUZWp1biBIZW8gPHRqQGtlcm5lbC5vcmc+Cj4gLS0t
-Cj4gICBibG9jay9nZW5oZC5jIHwgMyArLS0KPiAgIDEgZmlsZSBjaGFuZ2VkLCAxIGluc2VydGlv
-bigrKSwgMiBkZWxldGlvbnMoLSkKPiAKPiBkaWZmIC0tZ2l0IGEvYmxvY2svZ2VuaGQuYyBiL2Js
-b2NrL2dlbmhkLmMKPiBpbmRleCA0ZTAzOTUyNGY5MmI4Zi4uMGJkOWM0MWRkNGNiNjkgMTAwNjQ0
-Cj4gLS0tIGEvYmxvY2svZ2VuaGQuYwo+ICsrKyBiL2Jsb2NrL2dlbmhkLmMKPiBAQCAtMjI3LDgg
-KzIyNyw3IEBAIHN0cnVjdCBoZF9zdHJ1Y3QgKmRpc2tfcGFydF9pdGVyX25leHQoc3RydWN0IGRp
-c2tfcGFydF9pdGVyICpwaXRlcikKPiAgIAlpbnQgaW5jLCBlbmQ7Cj4gICAKPiAgIAkvKiBwdXQg
-dGhlIGxhc3QgcGFydGl0aW9uICovCj4gLQlkaXNrX3B1dF9wYXJ0KHBpdGVyLT5wYXJ0KTsKPiAt
-CXBpdGVyLT5wYXJ0ID0gTlVMTDsKPiArCWRpc2tfcGFydF9pdGVyX2V4aXQocGl0ZXIpOwo+ICAg
-Cj4gICAJLyogZ2V0IHBhcnRfdGJsICovCj4gICAJcmN1X3JlYWRfbG9jaygpOwo+IApSZXZpZXdl
-ZC1ieTogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2UuZGU+CgpDaGVlcnMsCgpIYW5uZXMKLS0g
-CkRyLiBIYW5uZXMgUmVpbmVja2UgICAgICAgICAgICAgICAgS2VybmVsIFN0b3JhZ2UgQXJjaGl0
-ZWN0CmhhcmVAc3VzZS5kZSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICs0OSA5MTEgNzQw
-NTMgNjg4ClNVU0UgU29mdHdhcmUgU29sdXRpb25zIEdtYkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5
-IE7DvHJuYmVyZwpIUkIgMzY4MDkgKEFHIE7DvHJuYmVyZyksIEdlc2Now6RmdHNmw7xocmVyOiBG
-ZWxpeCBJbWVuZMO2cmZmZXIKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
-aGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Fri 27-11-20 10:48:42, Christoph Hellwig wrote:
+> On Thu, Nov 26, 2020 at 07:22:19PM +0100, Jan Kara wrote:
+> > On Thu 26-11-20 14:04:15, Christoph Hellwig wrote:
+> > >  struct hd_struct *disk_get_part(struct gendisk *disk, int partno)
+> > >  {
+> > > -	struct hd_struct *part;
+> > > +	struct block_device *part;
+> > >  
+> > >  	rcu_read_lock();
+> > >  	part = __disk_get_part(disk, partno);
+> > > -	if (part)
+> > > -		get_device(part_to_dev(part));
+> > > -	rcu_read_unlock();
+> > > +	if (!part) {
+> > > +		rcu_read_unlock();
+> > > +		return NULL;
+> > > +	}
+> > >  
+> > > -	return part;
+> > > +	get_device(part_to_dev(part->bd_part));
+> > > +	rcu_read_unlock();
+> > > +	return part->bd_part;
+> > >  }
+> > 
+> > This is not directly related to this particular patch but I'm wondering:
+> > What prevents say del_gendisk() from racing with disk_get_part(), so that
+> > delete_partition() is called just after we fetched 'part' pointer and the
+> > last 'part' kobject ref is dropped before disk_get_part() calls
+> > get_device()? I don't see anything preventing that and so we'd hand out
+> > 'part' that is soon to be freed (after RCU grace period expires).
+> 
+> At this point the hd_struct is already allocated together with the
+> block_device, and thus only freed after the last block_device reference
+> goes away plus the inode freeing RCU grace period.  So the device model
+> ref to part is indeed gone, but that simply does not matter any more.
+
+Well, but once device model ref to part is gone, we're going to free the
+bdev inode ref as well. Thus there's nothing which pins the bdev containing
+hd_struct?
+
+But now as I'm thinking about it you later switch the device model reference
+to just pure inode reference and use igrab() which will reliably return
+NULL if the inode is on it's way to be destroyed so probably we are safe in
+the final state.
+
+								Honza
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
 
