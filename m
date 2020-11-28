@@ -7,59 +7,59 @@ X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 790AFC63777
-	for <dm-devel@archiver.kernel.org>; Sat, 28 Nov 2020 16:23:04 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 620E4C63697
+	for <dm-devel@archiver.kernel.org>; Sat, 28 Nov 2020 16:23:08 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E335C246C3
-	for <dm-devel@archiver.kernel.org>; Sat, 28 Nov 2020 16:23:03 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E335C246C3
+	by mail.kernel.org (Postfix) with ESMTPS id E23EC246C3
+	for <dm-devel@archiver.kernel.org>; Sat, 28 Nov 2020 16:23:07 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E23EC246C3
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-253-_nOt1uTrOoayAdjE_PzF-A-1; Sat, 28 Nov 2020 11:23:00 -0500
-X-MC-Unique: _nOt1uTrOoayAdjE_PzF-A-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-386-TP2-ZsBCMkmMbK1jTlJ5jg-1; Sat, 28 Nov 2020 11:23:05 -0500
+X-MC-Unique: TP2-ZsBCMkmMbK1jTlJ5jg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4F4D4107AD47;
-	Sat, 28 Nov 2020 16:22:55 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id ABA00107AD41;
+	Sat, 28 Nov 2020 16:23:00 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 31B1810023AF;
-	Sat, 28 Nov 2020 16:22:55 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8BBB919C71;
+	Sat, 28 Nov 2020 16:23:00 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0828F50030;
-	Sat, 28 Nov 2020 16:22:55 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 352C950032;
+	Sat, 28 Nov 2020 16:22:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0ASGMpIx023535 for <dm-devel@listman.util.phx.redhat.com>;
-	Sat, 28 Nov 2020 11:22:51 -0500
+	id 0ASGMv89023585 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 28 Nov 2020 11:22:57 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 5A68747CE4; Sat, 28 Nov 2020 16:22:51 +0000 (UTC)
+	id AE26A2166B2A; Sat, 28 Nov 2020 16:22:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4C38647CD9
-	for <dm-devel@redhat.com>; Sat, 28 Nov 2020 16:22:51 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A8EF52166B28
+	for <dm-devel@redhat.com>; Sat, 28 Nov 2020 16:22:57 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 38B66858EEC
-	for <dm-devel@redhat.com>; Sat, 28 Nov 2020 16:22:51 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 94136811E76
+	for <dm-devel@redhat.com>; Sat, 28 Nov 2020 16:22:57 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-352-gtTHSeBIPJGCN628MNxW0A-1; Sat, 28 Nov 2020 11:22:48 -0500
-X-MC-Unique: gtTHSeBIPJGCN628MNxW0A-1
-Received: from [2001:4bb8:18c:1dd6:48f3:741a:602e:7fdd] (helo=localhost)
+	us-mta-504-sXn5p7YrOMaAIfTTUTVuGA-1; Sat, 28 Nov 2020 11:22:55 -0500
+X-MC-Unique: sXn5p7YrOMaAIfTTUTVuGA-1
+Received: from 089144198196.atnat0007.highway.a1.net ([89.144.198.196]
+	helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kj2sy-0000Hf-23; Sat, 28 Nov 2020 16:15:44 +0000
+	id 1kj2zl-0000sI-W1; Sat, 28 Nov 2020 16:22:46 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Sat, 28 Nov 2020 17:14:45 +0100
-Message-Id: <20201128161510.347752-21-hch@lst.de>
+Date: Sat, 28 Nov 2020 17:15:01 +0100
+Message-Id: <20201128161510.347752-37-hch@lst.de>
 In-Reply-To: <20201128161510.347752-1-hch@lst.de>
 References: <20201128161510.347752-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,7 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org,
@@ -83,7 +83,8 @@ Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	linux-fsdevel@vger.kernel.org, dm-devel@redhat.com,
 	linux-mtd@lists.infradead.org,
 	Johannes Thumshirn <johannes.thumshirn@wdc.com>, Tejun Heo <tj@kernel.org>
-Subject: [dm-devel] [PATCH 20/45] block: refactor __blkdev_put
+Subject: [dm-devel] [PATCH 36/45] block: move the policy field to struct
+	block_device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -97,7 +98,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -105,51 +106,134 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Reorder the code to have one big section for the last close, and to use
-bdev_is_partition.
+Move the policy field to struct block_device and rename it to the
+more descriptive bd_read_only.  Also turn the field into a bool as it
+is used as such.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Reviewed-by: Jan Kara <jack@suse.cz>
-Acked-by: Tejun Heo <tj@kernel.org>
 ---
- fs/block_dev.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ block/blk-core.c          | 2 +-
+ block/genhd.c             | 8 ++++----
+ block/ioctl.c             | 2 +-
+ block/partitions/core.c   | 4 ++--
+ include/linux/blk_types.h | 1 +
+ include/linux/genhd.h     | 4 ++--
+ 6 files changed, 11 insertions(+), 10 deletions(-)
 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 962fabe8a67b83..6016777b648336 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -1742,22 +1742,22 @@ static void __blkdev_put(struct block_device *bdev, fmode_t mode, int for_part)
- 		WARN_ON_ONCE(bdev->bd_holders);
- 		sync_blockdev(bdev);
- 		kill_bdev(bdev);
--
- 		bdev_write_inode(bdev);
--	}
--	if (bdev->bd_contains == bdev) {
--		if (disk->fops->release)
-+
-+		if (!bdev_is_partition(bdev) && disk->fops->release)
- 			disk->fops->release(disk, mode);
--	}
--	if (!bdev->bd_openers) {
-+
- 		disk_put_part(bdev->bd_part);
- 		bdev->bd_part = NULL;
- 		bdev->bd_disk = NULL;
--		if (bdev != bdev->bd_contains)
-+		if (bdev_is_partition(bdev))
- 			victim = bdev->bd_contains;
- 		bdev->bd_contains = NULL;
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 9121390be97a76..d64ffcb6f9ae5d 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -696,7 +696,7 @@ static inline bool bio_check_ro(struct bio *bio, struct hd_struct *part)
+ {
+ 	const int op = bio_op(bio);
  
- 		put_disk_and_module(disk);
-+	} else {
-+		if (!bdev_is_partition(bdev) && disk->fops->release)
-+			disk->fops->release(disk, mode);
+-	if (part->policy && op_is_write(op)) {
++	if (part->bdev->bd_read_only && op_is_write(op)) {
+ 		char b[BDEVNAME_SIZE];
+ 
+ 		if (op_is_flush(bio->bi_opf) && !bio_sectors(bio))
+diff --git a/block/genhd.c b/block/genhd.c
+index 0371558ccde14c..ae312ccc6dd7c0 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -1679,14 +1679,14 @@ void set_disk_ro(struct gendisk *disk, int flag)
+ 	struct disk_part_iter piter;
+ 	struct hd_struct *part;
+ 
+-	if (disk->part0.policy != flag) {
++	if (disk->part0.bdev->bd_read_only != flag) {
+ 		set_disk_ro_uevent(disk, flag);
+-		disk->part0.policy = flag;
++		disk->part0.bdev->bd_read_only = flag;
  	}
- 	mutex_unlock(&bdev->bd_mutex);
- 	bdput(bdev);
+ 
+ 	disk_part_iter_init(&piter, disk, DISK_PITER_INCL_EMPTY);
+ 	while ((part = disk_part_iter_next(&piter)))
+-		part->policy = flag;
++		part->bdev->bd_read_only = flag;
+ 	disk_part_iter_exit(&piter);
+ }
+ 
+@@ -1696,7 +1696,7 @@ int bdev_read_only(struct block_device *bdev)
+ {
+ 	if (!bdev)
+ 		return 0;
+-	return bdev->bd_part->policy;
++	return bdev->bd_read_only;
+ }
+ 
+ EXPORT_SYMBOL(bdev_read_only);
+diff --git a/block/ioctl.c b/block/ioctl.c
+index a6d8171221c7dc..d61d652078f41c 100644
+--- a/block/ioctl.c
++++ b/block/ioctl.c
+@@ -345,7 +345,7 @@ static int blkdev_roset(struct block_device *bdev, fmode_t mode,
+ 		if (ret)
+ 			return ret;
+ 	}
+-	bdev->bd_part->policy = n;
++	bdev->bd_read_only = n;
+ 	return 0;
+ }
+ 
+diff --git a/block/partitions/core.c b/block/partitions/core.c
+index c068471fa654f5..060c1be13cd8da 100644
+--- a/block/partitions/core.c
++++ b/block/partitions/core.c
+@@ -199,7 +199,7 @@ static ssize_t part_ro_show(struct device *dev,
+ 			    struct device_attribute *attr, char *buf)
+ {
+ 	struct hd_struct *p = dev_to_part(dev);
+-	return sprintf(buf, "%d\n", p->policy ? 1 : 0);
++	return sprintf(buf, "%d\n", p->bdev->bd_read_only);
+ }
+ 
+ static ssize_t part_alignment_offset_show(struct device *dev,
+@@ -420,7 +420,7 @@ static struct hd_struct *add_partition(struct gendisk *disk, int partno,
+ 	bdev->bd_start_sect = start;
+ 	bdev_set_nr_sectors(bdev, len);
+ 	p->partno = partno;
+-	p->policy = get_disk_ro(disk);
++	bdev->bd_read_only = get_disk_ro(disk);
+ 
+ 	if (info) {
+ 		err = -ENOMEM;
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index b237f1e4081405..758cf71c9aa2a6 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -23,6 +23,7 @@ struct block_device {
+ 	sector_t		bd_start_sect;
+ 	struct disk_stats __percpu *bd_stats;
+ 	unsigned long		bd_stamp;
++	bool			bd_read_only;	/* read-only policy */
+ 	dev_t			bd_dev;
+ 	int			bd_openers;
+ 	struct inode *		bd_inode;	/* will die */
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index 349cf6403ccddc..dcbf9ef7610ea6 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -55,7 +55,7 @@ struct hd_struct {
+ 
+ 	struct block_device *bdev;
+ 	struct device __dev;
+-	int policy, partno;
++	int partno;
+ 	struct rcu_work rcu_work;
+ };
+ 
+@@ -278,7 +278,7 @@ extern void set_disk_ro(struct gendisk *disk, int flag);
+ 
+ static inline int get_disk_ro(struct gendisk *disk)
+ {
+-	return disk->part0.policy;
++	return disk->part0.bdev->bd_read_only;
+ }
+ 
+ extern void disk_block_events(struct gendisk *disk);
 -- 
 2.29.2
 
