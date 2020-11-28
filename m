@@ -7,59 +7,59 @@ X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 37578C63777
-	for <dm-devel@archiver.kernel.org>; Sat, 28 Nov 2020 16:24:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E5AC4C64E7A
+	for <dm-devel@archiver.kernel.org>; Sat, 28 Nov 2020 16:24:08 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id BA445246C3
-	for <dm-devel@archiver.kernel.org>; Sat, 28 Nov 2020 16:24:05 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BA445246C3
+	by mail.kernel.org (Postfix) with ESMTPS id 7947A246C3
+	for <dm-devel@archiver.kernel.org>; Sat, 28 Nov 2020 16:24:08 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7947A246C3
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-190-8cJZkjzMMHKlC-oLns0I7A-1; Sat, 28 Nov 2020 11:24:02 -0500
-X-MC-Unique: 8cJZkjzMMHKlC-oLns0I7A-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-180-4sv29XYDP2uaDfPWgeRx3g-1; Sat, 28 Nov 2020 11:24:05 -0500
+X-MC-Unique: 4sv29XYDP2uaDfPWgeRx3g-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AB0CF2FD14;
-	Sat, 28 Nov 2020 16:23:57 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8BC515D71D;
-	Sat, 28 Nov 2020 16:23:57 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 74C371005D5F;
+	Sat, 28 Nov 2020 16:24:00 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 57D305D9D3;
+	Sat, 28 Nov 2020 16:24:00 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6789B1809CA1;
-	Sat, 28 Nov 2020 16:23:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2F4B35002E;
+	Sat, 28 Nov 2020 16:24:00 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0ASGMAgY023293 for <dm-devel@listman.util.phx.redhat.com>;
-	Sat, 28 Nov 2020 11:22:10 -0500
+	id 0ASGMGI5023312 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 28 Nov 2020 11:22:16 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 399D5202717D; Sat, 28 Nov 2020 16:22:10 +0000 (UTC)
+	id 710FA2166B2A; Sat, 28 Nov 2020 16:22:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 348CF2027EAD
-	for <dm-devel@redhat.com>; Sat, 28 Nov 2020 16:22:10 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6C22B2166B28
+	for <dm-devel@redhat.com>; Sat, 28 Nov 2020 16:22:16 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1EE5F858EEC
-	for <dm-devel@redhat.com>; Sat, 28 Nov 2020 16:22:10 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 574A3811E76
+	for <dm-devel@redhat.com>; Sat, 28 Nov 2020 16:22:16 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-350-GdrJXEspNF2HrE1xYge8uw-1; Sat, 28 Nov 2020 11:22:07 -0500
-X-MC-Unique: GdrJXEspNF2HrE1xYge8uw-1
+	us-mta-460-epZhRK08NeSQN_fAZjzbvA-1; Sat, 28 Nov 2020 11:22:12 -0500
+X-MC-Unique: epZhRK08NeSQN_fAZjzbvA-1
 Received: from [2001:4bb8:18c:1dd6:48f3:741a:602e:7fdd] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kj2sa-0000D7-4t; Sat, 28 Nov 2020 16:15:22 +0000
+	id 1kj2sW-0000Cc-5V; Sat, 28 Nov 2020 16:15:16 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Sat, 28 Nov 2020 17:14:31 +0100
-Message-Id: <20201128161510.347752-7-hch@lst.de>
+Date: Sat, 28 Nov 2020 17:14:28 +0100
+Message-Id: <20201128161510.347752-4-hch@lst.de>
 In-Reply-To: <20201128161510.347752-1-hch@lst.de>
 References: <20201128161510.347752-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,7 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org,
@@ -82,9 +82,9 @@ Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	Coly Li <colyli@suse.de>, linux-block@vger.kernel.org,
 	linux-fsdevel@vger.kernel.org, dm-devel@redhat.com,
 	linux-mtd@lists.infradead.org,
-	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
-	Tejun Heo <tj@kernel.org>, Minchan Kim <minchan@kernel.org>
-Subject: [dm-devel] [PATCH 06/45] zram: do not call set_blocksize
+	Johannes Thumshirn <johannes.thumshirn@wdc.com>, Tejun Heo <tj@kernel.org>
+Subject: [dm-devel] [PATCH 03/45] fs: remove get_super_thawed and
+	get_super_exclusive_thawed
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -98,7 +98,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -106,70 +106,190 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-set_blocksize is used by file systems to use their preferred buffer cache
-block size.  Block drivers should not set it.
+Just open code the wait in the only caller of both functions.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Minchan Kim <minchan@kernel.org>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/block/zram/zram_drv.c | 11 +----------
- drivers/block/zram/zram_drv.h |  1 -
- 2 files changed, 1 insertion(+), 11 deletions(-)
+ fs/internal.h      |  2 ++
+ fs/quota/quota.c   | 31 +++++++++++++++++++++-------
+ fs/super.c         | 51 ++--------------------------------------------
+ include/linux/fs.h |  4 +---
+ 4 files changed, 29 insertions(+), 59 deletions(-)
 
-diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
-index 6d15d51cee2b7e..b5f68951c9d280 100644
---- a/drivers/block/zram/zram_drv.c
-+++ b/drivers/block/zram/zram_drv.c
-@@ -403,13 +403,10 @@ static void reset_bdev(struct zram *zram)
- 		return;
+diff --git a/fs/internal.h b/fs/internal.h
+index a7cd0f64faa4ab..47be21dfeebef5 100644
+--- a/fs/internal.h
++++ b/fs/internal.h
+@@ -114,7 +114,9 @@ extern struct file *alloc_empty_file_noaccount(int, const struct cred *);
+  */
+ extern int reconfigure_super(struct fs_context *);
+ extern bool trylock_super(struct super_block *sb);
++struct super_block *__get_super(struct block_device *bdev, bool excl);
+ extern struct super_block *user_get_super(dev_t);
++void put_super(struct super_block *sb);
+ extern bool mount_capable(struct fs_context *);
  
- 	bdev = zram->bdev;
--	if (zram->old_block_size)
--		set_blocksize(bdev, zram->old_block_size);
- 	blkdev_put(bdev, FMODE_READ|FMODE_WRITE|FMODE_EXCL);
- 	/* hope filp_close flush all of IO */
- 	filp_close(zram->backing_dev, NULL);
- 	zram->backing_dev = NULL;
--	zram->old_block_size = 0;
- 	zram->bdev = NULL;
- 	zram->disk->fops = &zram_devops;
- 	kvfree(zram->bitmap);
-@@ -454,7 +451,7 @@ static ssize_t backing_dev_store(struct device *dev,
- 	struct file *backing_dev = NULL;
- 	struct inode *inode;
- 	struct address_space *mapping;
--	unsigned int bitmap_sz, old_block_size = 0;
-+	unsigned int bitmap_sz;
- 	unsigned long nr_pages, *bitmap = NULL;
- 	struct block_device *bdev = NULL;
- 	int err;
-@@ -509,14 +506,8 @@ static ssize_t backing_dev_store(struct device *dev,
- 		goto out;
- 	}
+ /*
+diff --git a/fs/quota/quota.c b/fs/quota/quota.c
+index 9af95c7a0bbe3c..f3d32b0d9008f2 100644
+--- a/fs/quota/quota.c
++++ b/fs/quota/quota.c
+@@ -20,6 +20,7 @@
+ #include <linux/writeback.h>
+ #include <linux/nospec.h>
+ #include "compat.h"
++#include "../internal.h"
  
--	old_block_size = block_size(bdev);
--	err = set_blocksize(bdev, PAGE_SIZE);
--	if (err)
--		goto out;
--
- 	reset_bdev(zram);
- 
--	zram->old_block_size = old_block_size;
- 	zram->bdev = bdev;
- 	zram->backing_dev = backing_dev;
- 	zram->bitmap = bitmap;
-diff --git a/drivers/block/zram/zram_drv.h b/drivers/block/zram/zram_drv.h
-index f2fd46daa76045..712354a4207c77 100644
---- a/drivers/block/zram/zram_drv.h
-+++ b/drivers/block/zram/zram_drv.h
-@@ -118,7 +118,6 @@ struct zram {
- 	bool wb_limit_enable;
- 	u64 bd_wb_limit;
+ static int check_quotactl_permission(struct super_block *sb, int type, int cmd,
+ 				     qid_t id)
+@@ -868,6 +869,7 @@ static struct super_block *quotactl_block(const char __user *special, int cmd)
  	struct block_device *bdev;
--	unsigned int old_block_size;
- 	unsigned long *bitmap;
- 	unsigned long nr_pages;
+ 	struct super_block *sb;
+ 	struct filename *tmp = getname(special);
++	bool excl = false, thawed = false;
+ 
+ 	if (IS_ERR(tmp))
+ 		return ERR_CAST(tmp);
+@@ -875,17 +877,32 @@ static struct super_block *quotactl_block(const char __user *special, int cmd)
+ 	putname(tmp);
+ 	if (IS_ERR(bdev))
+ 		return ERR_CAST(bdev);
+-	if (quotactl_cmd_onoff(cmd))
+-		sb = get_super_exclusive_thawed(bdev);
+-	else if (quotactl_cmd_write(cmd))
+-		sb = get_super_thawed(bdev);
+-	else
+-		sb = get_super(bdev);
++
++	if (quotactl_cmd_onoff(cmd)) {
++		excl = true;
++		thawed = true;
++	} else if (quotactl_cmd_write(cmd)) {
++		thawed = true;
++	}
++
++retry:
++	sb = __get_super(bdev, excl);
++	if (thawed && sb && sb->s_writers.frozen != SB_UNFROZEN) {
++		if (excl)
++			up_write(&sb->s_umount);
++		else
++			up_read(&sb->s_umount);
++		wait_event(sb->s_writers.wait_unfrozen,
++			   sb->s_writers.frozen == SB_UNFROZEN);
++		put_super(sb);
++		goto retry;
++	}
++
+ 	bdput(bdev);
+ 	if (!sb)
+ 		return ERR_PTR(-ENODEV);
+-
+ 	return sb;
++
+ #else
+ 	return ERR_PTR(-ENODEV);
  #endif
+diff --git a/fs/super.c b/fs/super.c
+index 98bb0629ee108e..343e5c1e538d2a 100644
+--- a/fs/super.c
++++ b/fs/super.c
+@@ -307,7 +307,7 @@ static void __put_super(struct super_block *s)
+  *	Drops a temporary reference, frees superblock if there's no
+  *	references left.
+  */
+-static void put_super(struct super_block *sb)
++void put_super(struct super_block *sb)
+ {
+ 	spin_lock(&sb_lock);
+ 	__put_super(sb);
+@@ -740,7 +740,7 @@ void iterate_supers_type(struct file_system_type *type,
+ 
+ EXPORT_SYMBOL(iterate_supers_type);
+ 
+-static struct super_block *__get_super(struct block_device *bdev, bool excl)
++struct super_block *__get_super(struct block_device *bdev, bool excl)
+ {
+ 	struct super_block *sb;
+ 
+@@ -789,53 +789,6 @@ struct super_block *get_super(struct block_device *bdev)
+ }
+ EXPORT_SYMBOL(get_super);
+ 
+-static struct super_block *__get_super_thawed(struct block_device *bdev,
+-					      bool excl)
+-{
+-	while (1) {
+-		struct super_block *s = __get_super(bdev, excl);
+-		if (!s || s->s_writers.frozen == SB_UNFROZEN)
+-			return s;
+-		if (!excl)
+-			up_read(&s->s_umount);
+-		else
+-			up_write(&s->s_umount);
+-		wait_event(s->s_writers.wait_unfrozen,
+-			   s->s_writers.frozen == SB_UNFROZEN);
+-		put_super(s);
+-	}
+-}
+-
+-/**
+- *	get_super_thawed - get thawed superblock of a device
+- *	@bdev: device to get the superblock for
+- *
+- *	Scans the superblock list and finds the superblock of the file system
+- *	mounted on the device. The superblock is returned once it is thawed
+- *	(or immediately if it was not frozen). %NULL is returned if no match
+- *	is found.
+- */
+-struct super_block *get_super_thawed(struct block_device *bdev)
+-{
+-	return __get_super_thawed(bdev, false);
+-}
+-EXPORT_SYMBOL(get_super_thawed);
+-
+-/**
+- *	get_super_exclusive_thawed - get thawed superblock of a device
+- *	@bdev: device to get the superblock for
+- *
+- *	Scans the superblock list and finds the superblock of the file system
+- *	mounted on the device. The superblock is returned once it is thawed
+- *	(or immediately if it was not frozen) and s_umount semaphore is held
+- *	in exclusive mode. %NULL is returned if no match is found.
+- */
+-struct super_block *get_super_exclusive_thawed(struct block_device *bdev)
+-{
+-	return __get_super_thawed(bdev, true);
+-}
+-EXPORT_SYMBOL(get_super_exclusive_thawed);
+-
+ /**
+  * get_active_super - get an active reference to the superblock of a device
+  * @bdev: device to get the superblock for
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 8667d0cdc71e76..a61df0dd4f1989 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1409,7 +1409,7 @@ enum {
+ 
+ struct sb_writers {
+ 	int				frozen;		/* Is sb frozen? */
+-	wait_queue_head_t		wait_unfrozen;	/* for get_super_thawed() */
++	wait_queue_head_t		wait_unfrozen;	/* wait for thaw */
+ 	struct percpu_rw_semaphore	rw_sem[SB_FREEZE_LEVELS];
+ };
+ 
+@@ -3132,8 +3132,6 @@ extern struct file_system_type *get_filesystem(struct file_system_type *fs);
+ extern void put_filesystem(struct file_system_type *fs);
+ extern struct file_system_type *get_fs_type(const char *name);
+ extern struct super_block *get_super(struct block_device *);
+-extern struct super_block *get_super_thawed(struct block_device *);
+-extern struct super_block *get_super_exclusive_thawed(struct block_device *bdev);
+ extern struct super_block *get_active_super(struct block_device *bdev);
+ extern void drop_super(struct super_block *sb);
+ extern void drop_super_exclusive(struct super_block *sb);
 -- 
 2.29.2
 
