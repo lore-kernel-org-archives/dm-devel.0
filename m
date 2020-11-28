@@ -7,58 +7,59 @@ X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E0C15C63697
-	for <dm-devel@archiver.kernel.org>; Sat, 28 Nov 2020 16:22:03 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ACF74C63777
+	for <dm-devel@archiver.kernel.org>; Sat, 28 Nov 2020 16:22:07 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 59ACB246C3
-	for <dm-devel@archiver.kernel.org>; Sat, 28 Nov 2020 16:22:03 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 59ACB246C3
+	by mail.kernel.org (Postfix) with ESMTPS id 2D440246C3
+	for <dm-devel@archiver.kernel.org>; Sat, 28 Nov 2020 16:22:06 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2D440246C3
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-321-paHKVcwTN6i0WRpYWVY9vA-1; Sat, 28 Nov 2020 11:21:57 -0500
-X-MC-Unique: paHKVcwTN6i0WRpYWVY9vA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-552-n365aFKWP1CRAn0y51-qpA-1; Sat, 28 Nov 2020 11:22:03 -0500
+X-MC-Unique: n365aFKWP1CRAn0y51-qpA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5562D802B46;
-	Sat, 28 Nov 2020 16:21:52 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0769560BF3;
-	Sat, 28 Nov 2020 16:21:52 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3BAB980EF82;
+	Sat, 28 Nov 2020 16:21:59 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1D7785D9D3;
+	Sat, 28 Nov 2020 16:21:59 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9AD774A7C7;
-	Sat, 28 Nov 2020 16:21:51 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EA04E180954D;
+	Sat, 28 Nov 2020 16:21:58 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0ASGLnZY023134 for <dm-devel@listman.util.phx.redhat.com>;
-	Sat, 28 Nov 2020 11:21:49 -0500
+	id 0ASGLt2I023169 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 28 Nov 2020 11:21:55 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1AE751003203; Sat, 28 Nov 2020 16:21:49 +0000 (UTC)
+	id 8238B1003203; Sat, 28 Nov 2020 16:21:55 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 15E031004035
-	for <dm-devel@redhat.com>; Sat, 28 Nov 2020 16:21:45 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7E57B1004029
+	for <dm-devel@redhat.com>; Sat, 28 Nov 2020 16:21:55 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 878608007D9
-	for <dm-devel@redhat.com>; Sat, 28 Nov 2020 16:21:45 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6CA441010439
+	for <dm-devel@redhat.com>; Sat, 28 Nov 2020 16:21:55 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-540-terHq_3-PWuqd3kqmI6tSw-1; Sat, 28 Nov 2020 11:21:43 -0500
-X-MC-Unique: terHq_3-PWuqd3kqmI6tSw-1
+	us-mta-559-2Lr-s0XiMhSqw2KgoUg_cg-1; Sat, 28 Nov 2020 11:21:53 -0500
+X-MC-Unique: 2Lr-s0XiMhSqw2KgoUg_cg-1
 Received: from [2001:4bb8:18c:1dd6:48f3:741a:602e:7fdd] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kj2tK-0000Nl-EB; Sat, 28 Nov 2020 16:16:06 +0000
+	id 1kj2sw-0000HB-Gj; Sat, 28 Nov 2020 16:15:42 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Sat, 28 Nov 2020 17:14:56 +0100
-Message-Id: <20201128161510.347752-32-hch@lst.de>
+Date: Sat, 28 Nov 2020 17:14:44 +0100
+Message-Id: <20201128161510.347752-20-hch@lst.de>
 In-Reply-To: <20201128161510.347752-1-hch@lst.de>
 References: <20201128161510.347752-1-hch@lst.de>
 MIME-Version: 1.0
@@ -82,8 +83,8 @@ Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
 	linux-fsdevel@vger.kernel.org, dm-devel@redhat.com,
 	linux-mtd@lists.infradead.org,
 	Johannes Thumshirn <johannes.thumshirn@wdc.com>, Tejun Heo <tj@kernel.org>
-Subject: [dm-devel] [PATCH 31/45] block: move disk stat accounting to struct
-	block_device
+Subject: [dm-devel] [PATCH 19/45] init: cleanup match_dev_by_uuid and
+	match_dev_by_label
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -97,7 +98,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -105,285 +106,55 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Move the dkstats and stamp field to struct block_device in preparation
-of killing struct hd_struct.
+Avoid a totally pointless goto label, and use the same style of
+comparism for both helpers.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+Acked-by: Tejun Heo <tj@kernel.org>
 ---
- block/blk-cgroup.c        |  2 +-
- block/blk-core.c          |  4 ++--
- block/blk.h               |  1 -
- block/genhd.c             | 14 ++++----------
- block/partitions/core.c   |  9 +--------
- fs/block_dev.c            | 10 ++++++++++
- include/linux/blk_types.h |  2 ++
- include/linux/genhd.h     |  2 --
- include/linux/part_stat.h | 38 +++++++++++++++++++-------------------
- 9 files changed, 39 insertions(+), 43 deletions(-)
+ init/do_mounts.c | 18 ++++++------------
+ 1 file changed, 6 insertions(+), 12 deletions(-)
 
-diff --git a/block/blk-cgroup.c b/block/blk-cgroup.c
-index 19650eb42b9f00..5c0a9d588e6312 100644
---- a/block/blk-cgroup.c
-+++ b/block/blk-cgroup.c
-@@ -830,7 +830,7 @@ static void blkcg_fill_root_iostats(void)
- 		for_each_possible_cpu(cpu) {
- 			struct disk_stats *cpu_dkstats;
+diff --git a/init/do_mounts.c b/init/do_mounts.c
+index afa26a4028d25e..5879edf083b318 100644
+--- a/init/do_mounts.c
++++ b/init/do_mounts.c
+@@ -79,15 +79,10 @@ static int match_dev_by_uuid(struct device *dev, const void *data)
+ 	const struct uuidcmp *cmp = data;
+ 	struct hd_struct *part = dev_to_part(dev);
  
--			cpu_dkstats = per_cpu_ptr(part->dkstats, cpu);
-+			cpu_dkstats = per_cpu_ptr(part->bdev->bd_stats, cpu);
- 			tmp.ios[BLKG_IOSTAT_READ] +=
- 				cpu_dkstats->ios[STAT_READ];
- 			tmp.ios[BLKG_IOSTAT_WRITE] +=
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 988f45094a387b..d2c9cb24e087f3 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1264,9 +1264,9 @@ static void update_io_ticks(struct hd_struct *part, unsigned long now, bool end)
- {
- 	unsigned long stamp;
- again:
--	stamp = READ_ONCE(part->stamp);
-+	stamp = READ_ONCE(part->bdev->bd_stamp);
- 	if (unlikely(stamp != now)) {
--		if (likely(cmpxchg(&part->stamp, stamp, now) == stamp))
-+		if (likely(cmpxchg(&part->bdev->bd_stamp, stamp, now) == stamp))
- 			__part_stat_add(part, io_ticks, end ? now - stamp : 1);
- 	}
- 	if (part->partno) {
-diff --git a/block/blk.h b/block/blk.h
-index 09cee7024fb43e..3f801f6e86f8a1 100644
---- a/block/blk.h
-+++ b/block/blk.h
-@@ -381,7 +381,6 @@ static inline void hd_struct_put(struct hd_struct *part)
- 
- static inline void hd_free_part(struct hd_struct *part)
- {
--	free_percpu(part->dkstats);
- 	kfree(part->info);
- 	bdput(part->bdev);
- 	percpu_ref_exit(&part->ref);
-diff --git a/block/genhd.c b/block/genhd.c
-index c6016fde4725b0..9eead2970cb3d4 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -104,7 +104,7 @@ static void part_stat_read_all(struct hd_struct *part, struct disk_stats *stat)
- 
- 	memset(stat, 0, sizeof(struct disk_stats));
- 	for_each_possible_cpu(cpu) {
--		struct disk_stats *ptr = per_cpu_ptr(part->dkstats, cpu);
-+		struct disk_stats *ptr = per_cpu_ptr(part->bdev->bd_stats, cpu);
- 		int group;
- 
- 		for (group = 0; group < NR_STAT_GROUPS; group++) {
-@@ -883,7 +883,7 @@ void del_gendisk(struct gendisk *disk)
- 	kobject_put(disk->slave_dir);
- 
- 	part_stat_set_all(&disk->part0, 0);
--	disk->part0.stamp = 0;
-+	disk->part0.bdev->bd_stamp = 0;
- 	if (!sysfs_deprecated)
- 		sysfs_remove_link(block_depr, dev_name(disk_to_dev(disk)));
- 	pm_runtime_set_memalloc_noio(disk_to_dev(disk), false);
-@@ -1620,19 +1620,15 @@ struct gendisk *__alloc_disk_node(int minors, int node_id)
- 	if (!disk->part0.bdev)
- 		goto out_free_disk;
- 
--	disk->part0.dkstats = alloc_percpu(struct disk_stats);
--	if (!disk->part0.dkstats)
--		goto out_bdput;
+-	if (!part->info)
+-		goto no_match;
 -
- 	disk->node_id = node_id;
- 	if (disk_expand_part_tbl(disk, 0))
--		goto out_free_bdstats;
-+		goto out_bdput;
- 
- 	ptbl = rcu_dereference_protected(disk->part_tbl, 1);
- 	rcu_assign_pointer(ptbl->part[0], &disk->part0);
- 
- 	if (hd_ref_init(&disk->part0))
--		goto out_free_bdstats;
-+		goto out_bdput;
- 
- 	disk->minors = minors;
- 	rand_initialize_disk(disk);
-@@ -1641,8 +1637,6 @@ struct gendisk *__alloc_disk_node(int minors, int node_id)
- 	device_initialize(disk_to_dev(disk));
- 	return disk;
- 
--out_free_bdstats:
--	free_percpu(disk->part0.dkstats);
- out_bdput:
- 	bdput(disk->part0.bdev);
- out_free_disk:
-diff --git a/block/partitions/core.c b/block/partitions/core.c
-index bcfa8215bd5ef3..8924e1ea8b2ad6 100644
---- a/block/partitions/core.c
-+++ b/block/partitions/core.c
-@@ -409,14 +409,9 @@ static struct hd_struct *add_partition(struct gendisk *disk, int partno,
- 	if (!p)
- 		return ERR_PTR(-EBUSY);
- 
--	err = -ENOMEM;
--	p->dkstats = alloc_percpu(struct disk_stats);
--	if (!p->dkstats)
--		goto out_free;
+-	if (strncasecmp(cmp->uuid, part->info->uuid, cmp->len))
+-		goto no_match;
 -
- 	bdev = bdev_alloc(disk, partno);
- 	if (!bdev)
--		goto out_free_stats;
-+		goto out_free;
- 	p->bdev = bdev;
- 
- 	pdev = part_to_dev(p);
-@@ -490,8 +485,6 @@ static struct hd_struct *add_partition(struct gendisk *disk, int partno,
- 	kfree(p->info);
- out_bdput:
- 	bdput(bdev);
--out_free_stats:
--	free_percpu(p->dkstats);
- out_free:
- 	kfree(p);
- 	return ERR_PTR(err);
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 31ee5a857f7153..0832c7830f3a10 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -32,6 +32,7 @@
- #include <linux/cleancache.h>
- #include <linux/task_io_accounting_ops.h>
- #include <linux/falloc.h>
-+#include <linux/part_stat.h>
- #include <linux/uaccess.h>
- #include <linux/suspend.h>
- #include "internal.h"
-@@ -781,6 +782,10 @@ static struct inode *bdev_alloc_inode(struct super_block *sb)
- 
- static void bdev_free_inode(struct inode *inode)
- {
-+	struct block_device *bdev = I_BDEV(inode);
-+
-+	free_percpu(bdev->bd_stats);
-+
- 	kmem_cache_free(bdev_cachep, BDEV_I(inode));
++	if (!part->info ||
++	    strncasecmp(cmp->uuid, part->info->uuid, cmp->len))
++		return 0;
+ 	return 1;
+-no_match:
+-	return 0;
  }
  
-@@ -875,6 +880,11 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
- #ifdef CONFIG_SYSFS
- 	INIT_LIST_HEAD(&bdev->bd_holder_disks);
- #endif
-+	bdev->bd_stats = alloc_percpu(struct disk_stats);
-+	if (!bdev->bd_stats) {
-+		iput(inode);
-+		return NULL;
-+	}
- 	return bdev;
+ /**
+@@ -174,10 +169,9 @@ static int match_dev_by_label(struct device *dev, const void *data)
+ 	const char *label = data;
+ 	struct hd_struct *part = dev_to_part(dev);
+ 
+-	if (part->info && !strcmp(label, part->info->volname))
+-		return 1;
+-
+-	return 0;
++	if (!part->info || strcmp(label, part->info->volname))
++		return 0;
++	return 1;
  }
  
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 2e0a9bd9688d28..520011b95276fb 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -20,6 +20,8 @@ typedef void (bio_end_io_t) (struct bio *);
- struct bio_crypt_ctx;
- 
- struct block_device {
-+	struct disk_stats __percpu *bd_stats;
-+	unsigned long		bd_stamp;
- 	dev_t			bd_dev;
- 	int			bd_openers;
- 	struct inode *		bd_inode;	/* will die */
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 30d4785b7df8bb..804ac45fbfbc53 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -52,8 +52,6 @@ struct partition_meta_info {
- 
- struct hd_struct {
- 	sector_t start_sect;
--	unsigned long stamp;
--	struct disk_stats __percpu *dkstats;
- 	struct percpu_ref ref;
- 
- 	struct block_device *bdev;
-diff --git a/include/linux/part_stat.h b/include/linux/part_stat.h
-index 24125778ef3ec7..87ad60106e1db0 100644
---- a/include/linux/part_stat.h
-+++ b/include/linux/part_stat.h
-@@ -25,17 +25,17 @@ struct disk_stats {
- #define part_stat_unlock()	preempt_enable()
- 
- #define part_stat_get_cpu(part, field, cpu)				\
--	(per_cpu_ptr((part)->dkstats, (cpu))->field)
-+	(per_cpu_ptr((part)->bdev->bd_stats, (cpu))->field)
- 
- #define part_stat_get(part, field)					\
- 	part_stat_get_cpu(part, field, smp_processor_id())
- 
- #define part_stat_read(part, field)					\
- ({									\
--	typeof((part)->dkstats->field) res = 0;				\
-+	typeof((part)->bdev->bd_stats->field) res = 0;			\
- 	unsigned int _cpu;						\
- 	for_each_possible_cpu(_cpu)					\
--		res += per_cpu_ptr((part)->dkstats, _cpu)->field;	\
-+		res += per_cpu_ptr((part)->bdev->bd_stats, _cpu)->field; \
- 	res;								\
- })
- 
-@@ -44,7 +44,7 @@ static inline void part_stat_set_all(struct hd_struct *part, int value)
- 	int i;
- 
- 	for_each_possible_cpu(i)
--		memset(per_cpu_ptr(part->dkstats, i), value,
-+		memset(per_cpu_ptr(part->bdev->bd_stats, i), value,
- 				sizeof(struct disk_stats));
- }
- 
-@@ -54,7 +54,7 @@ static inline void part_stat_set_all(struct hd_struct *part, int value)
- 	 part_stat_read(part, field[STAT_DISCARD]))
- 
- #define __part_stat_add(part, field, addnd)				\
--	__this_cpu_add((part)->dkstats->field, addnd)
-+	__this_cpu_add((part)->bdev->bd_stats->field, addnd)
- 
- #define part_stat_add(part, field, addnd)	do {			\
- 	__part_stat_add((part), field, addnd);				\
-@@ -63,20 +63,20 @@ static inline void part_stat_set_all(struct hd_struct *part, int value)
- 				field, addnd);				\
- } while (0)
- 
--#define part_stat_dec(gendiskp, field)					\
--	part_stat_add(gendiskp, field, -1)
--#define part_stat_inc(gendiskp, field)					\
--	part_stat_add(gendiskp, field, 1)
--#define part_stat_sub(gendiskp, field, subnd)				\
--	part_stat_add(gendiskp, field, -subnd)
-+#define part_stat_dec(part, field)					\
-+	part_stat_add(part, field, -1)
-+#define part_stat_inc(part, field)					\
-+	part_stat_add(part, field, 1)
-+#define part_stat_sub(part, field, subnd)				\
-+	part_stat_add(part, field, -subnd)
- 
--#define part_stat_local_dec(gendiskp, field)				\
--	local_dec(&(part_stat_get(gendiskp, field)))
--#define part_stat_local_inc(gendiskp, field)				\
--	local_inc(&(part_stat_get(gendiskp, field)))
--#define part_stat_local_read(gendiskp, field)				\
--	local_read(&(part_stat_get(gendiskp, field)))
--#define part_stat_local_read_cpu(gendiskp, field, cpu)			\
--	local_read(&(part_stat_get_cpu(gendiskp, field, cpu)))
-+#define part_stat_local_dec(part, field)				\
-+	local_dec(&(part_stat_get(part, field)))
-+#define part_stat_local_inc(part, field)				\
-+	local_inc(&(part_stat_get(part, field)))
-+#define part_stat_local_read(part, field)				\
-+	local_read(&(part_stat_get(part, field)))
-+#define part_stat_local_read_cpu(part, field, cpu)			\
-+	local_read(&(part_stat_get_cpu(part, field, cpu)))
- 
- #endif /* _LINUX_PART_STAT_H */
+ static dev_t devt_from_partlabel(const char *label)
 -- 
 2.29.2
 
