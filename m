@@ -2,85 +2,110 @@ Return-Path: <SRS0=s6zu=FE=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-18.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5BDF6C64E7B
-	for <dm-devel@archiver.kernel.org>; Mon, 30 Nov 2020 17:31:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 73330C63777
+	for <dm-devel@archiver.kernel.org>; Mon, 30 Nov 2020 17:52:14 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C2349207F7
-	for <dm-devel@archiver.kernel.org>; Mon, 30 Nov 2020 17:31:01 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IEsx2Pd/"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C2349207F7
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id BB98320789
+	for <dm-devel@archiver.kernel.org>; Mon, 30 Nov 2020 17:52:13 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BB98320789
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1606757460;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=IEIMexpk+4bWD6/Fbu64YFMf9jUbM0kVBQP97bePMpA=;
-	b=IEsx2Pd/n+uJJdyoXW+9ikG7sJqzZACBhvePTh1t4B94ZQTSaqtf6DDksKj3fLmCRsD38m
-	h8/xlgww9gYAXvXkNeAXTqyLihToSdyM3ydjHa2Lv1QM1KlAZSQebtN5Tq5Ye+hdJGLFzN
-	M536bNTiurOYtjSgO1au8ZZs84toi0E=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-578-VS3IwKaPMu-BE9T52IPzfA-1; Mon, 30 Nov 2020 12:30:58 -0500
-X-MC-Unique: VS3IwKaPMu-BE9T52IPzfA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-282-fnljIZPyN4SY78C3rBy96w-1; Mon, 30 Nov 2020 12:52:10 -0500
+X-MC-Unique: fnljIZPyN4SY78C3rBy96w-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BE2E28581AF;
-	Mon, 30 Nov 2020 17:30:45 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BF80DE763;
+	Mon, 30 Nov 2020 17:52:05 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BD7EC5DE50;
-	Mon, 30 Nov 2020 17:30:44 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 485459CA0;
+	Mon, 30 Nov 2020 17:52:05 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 817375002C;
-	Mon, 30 Nov 2020 17:30:44 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com
-	[10.5.11.14])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BE9994E58F;
+	Mon, 30 Nov 2020 17:52:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AUHUgBx004191 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 30 Nov 2020 12:30:42 -0500
+	id 0AUHq2QX007233 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 30 Nov 2020 12:52:03 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6FB675DC09; Mon, 30 Nov 2020 17:30:42 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
-	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 33A4A5D973;
-	Mon, 30 Nov 2020 17:30:42 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 0AUHUfiO020604; Mon, 30 Nov 2020 12:30:41 -0500
-Received: from localhost (mpatocka@localhost)
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 0AUHUfsN020600; Mon, 30 Nov 2020 12:30:41 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
-	owned process doing -bs
-Date: Mon, 30 Nov 2020 12:30:41 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>,
-	Alasdair Kergon <agk@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.2011271240290.31117@file01.intranet.prod.int.rdu2.redhat.com>
-Message-ID: <alpine.LRH.2.02.2011301217010.17848@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.2011261003400.11630@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.2011271240290.31117@file01.intranet.prod.int.rdu2.redhat.com>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+	id 9CBB65D21D; Mon, 30 Nov 2020 17:52:02 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 96EBB5D21F
+	for <dm-devel@redhat.com>; Mon, 30 Nov 2020 17:52:00 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 322A4811E85
+	for <dm-devel@redhat.com>; Mon, 30 Nov 2020 17:52:00 +0000 (UTC)
+Received: from mail-pf1-f175.google.com (mail-pf1-f175.google.com
+	[209.85.210.175]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-393-wdDh4ay_N1OHvswKjTT66g-1; Mon, 30 Nov 2020 12:51:57 -0500
+X-MC-Unique: wdDh4ay_N1OHvswKjTT66g-1
+Received: by mail-pf1-f175.google.com with SMTP id t8so10883291pfg.8
+	for <dm-devel@redhat.com>; Mon, 30 Nov 2020 09:51:57 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+	:user-agent:mime-version:in-reply-to:content-language
+	:content-transfer-encoding;
+	bh=zGnnwAdYWjtdhwju8NcFhzJcpMrWjZbZM1FQN8kVDHg=;
+	b=Vqkr7mwXdJirG+JumlAu/dxnYl6TWhnm5UN6v9NR6XEs/SAjg2Y32rPBXt7AGz3kUi
+	bt11u5ph9dg4HhQ3Jl4c+2cMjGZaK9SYTzEIUYZfv1bS61jRqJXnRqUnhKIwa/ms71h1
+	Xd/8L/v4ZRYtzSICyHmqjntycNoA3W1nQKaiMsZSWqlZsKlRmuk3D/DWt+jiAsTZ0IEI
+	xVdp8LMz78Tdo9IcIyrXU7hxxRZsOpSS2c1zXW61LV6sOLYYPbBl6FxMDqWfcxWNKFgZ
+	xro3wlEiYcaTZEApU07YPWADr0lB6YhBzH7FEbYTizsyLLebGkhedS4jQQPDGlI3eceh
+	iTcg==
+X-Gm-Message-State: AOAM532Rz/CQ1zdfGaO1D191vNrgDNUyV2OtsRu+zX/QZQntHZUx7Z8B
+	iBPwKM7ccAUNu4l/ioQJ1cIH3g==
+X-Google-Smtp-Source: ABdhPJwMTZsLj5SnQFza8cXET/WnIEE6pVW7Y7fE9/cYA5ZaExgItRAY6sgUO5JUjmSVf3YBKD1+nQ==
+X-Received: by 2002:a62:ed01:0:b029:19a:a667:9925 with SMTP id
+	u1-20020a62ed010000b029019aa6679925mr17651943pfh.35.1606758716075;
+	Mon, 30 Nov 2020 09:51:56 -0800 (PST)
+Received: from [192.168.1.134] ([66.219.217.173])
+	by smtp.gmail.com with ESMTPSA id
+	w18sm17681748pfi.216.2020.11.30.09.51.54
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Mon, 30 Nov 2020 09:51:55 -0800 (PST)
+To: Christoph Hellwig <hch@lst.de>
+References: <20201128161510.347752-1-hch@lst.de> <20201130171915.GA1499@lst.de>
+From: Jens Axboe <axboe@kernel.dk>
+Message-ID: <e67ffb20-ce91-a3a7-e1f7-6fd32334abc4@kernel.dk>
+Date: Mon, 30 Nov 2020 10:51:53 -0700
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+	Thunderbird/68.10.0
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+In-Reply-To: <20201130171915.GA1499@lst.de>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com
-Subject: [dm-devel] [PATCH v3] dm-crypt: fix deadlock when swapping to
- encrypted device
+Cc: linux-bcache@vger.kernel.org, Jan Kara <jack@suse.cz>,
+	Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	Jan Kara <jack@suse.com>, Josef Bacik <josef@toxicpanda.com>,
+	Coly Li <colyli@suse.de>, linux-block@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org, dm-devel@redhat.com,
+	linux-mtd@lists.infradead.org,
+	Johannes Thumshirn <johannes.thumshirn@wdc.com>, Tejun Heo <tj@kernel.org>
+Subject: Re: [dm-devel] merge struct block_device and struct hd_struct v4
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -94,151 +119,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hi
+On 11/30/20 10:19 AM, Christoph Hellwig wrote:
+> On Sat, Nov 28, 2020 at 05:14:25PM +0100, Christoph Hellwig wrote:
+>> A git tree is available here:
+>>
+>>     git://git.infradead.org/users/hch/block.git bdev-lookup
+>>
+>> Gitweb:
+>>
+>>     http://git.infradead.org/users/hch/block.git/shortlog/refs/heads/bdev-lookup
+> 
+> I've updated the git tree with the set_capacity_and_notify change
+> suggested by Jan, a commit log typo fix and the Reviewed-by tags.
+> 
+> Jens, can you take a look and potentially merge the branch?  That would
+> really help with some of the pending work.
 
-This is the third version of the "swapping on dm-crypt" patch. The only 
-change is that we define MAX_BIOS inversely proportional to page size:
+Done, queued up for 5.11.
 
-#define MAX_BIOS       (16 * 1048576 / PAGE_SIZE)
-
-I tested it on a machine with 8GiB ram with swapping on disk and ssd - on 
-ssd, the system didn't lock-up with increased number of bios, but when the 
-limit was removed, it triggered OOM prematurely and killed the process 
-that allocated memory.
-
-On rotational disk, I got soft lockup at 32768 bios or more. With smaller 
-values, the machine was still somehow responsive during swapping.
-
-
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-The system would deadlock when swapping to a dm-crypt device. The reason
-is that for each incoming write bio, dm-crypt allocates memory that holds
-encrypted data. These excessive allocations exhaust all the memory and the
-result is either deadlock or OOM trigger.
-
-This patch limits the number of in-flight bios, so that the memory
-consumed by dm-crypt is limited. If we are over the limit, we block in the
-function crypt_map, so that the caller will not attempt to send more bios.
-
-This is similar to request-based drivers - they will also block when the
-number of bios is over the limit.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-
-Index: linux-2.6/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-crypt.c
-+++ linux-2.6/drivers/md/dm-crypt.c
-@@ -214,16 +214,24 @@ struct crypt_config {
- 	mempool_t page_pool;
- 
- 	struct bio_set bs;
-+
-+	int bio_limit;
-+	struct semaphore bio_limit_semaphore;
-+	struct mutex bio_limit_lock;
-+
- 	struct mutex bio_alloc_lock;
- 
- 	u8 *authenc_key; /* space for keys in authenc() format (if used) */
- 	u8 key[];
- };
- 
-+#define MAX_BIOS	(16 * 1048576 / PAGE_SIZE)
- #define MIN_IOS		64
- #define MAX_TAG_SIZE	480
- #define POOL_ENTRY_SIZE	512
- 
-+static int bio_limit = MAX_BIOS;
-+
- static DEFINE_SPINLOCK(dm_crypt_clients_lock);
- static unsigned dm_crypt_clients_n = 0;
- static volatile unsigned long dm_crypt_pages_per_client;
-@@ -1713,6 +1721,8 @@ static void crypt_dec_pending(struct dm_
- 		kfree(io->integrity_metadata);
- 
- 	base_bio->bi_status = error;
-+	if (bio_data_dir(base_bio) == WRITE)
-+		up(&cc->bio_limit_semaphore);
- 	bio_endio(base_bio);
- }
- 
-@@ -2567,6 +2577,7 @@ static void crypt_dtr(struct dm_target *
- 	kfree_sensitive(cc->cipher_auth);
- 	kfree_sensitive(cc->authenc_key);
- 
-+	mutex_destroy(&cc->bio_limit_lock);
- 	mutex_destroy(&cc->bio_alloc_lock);
- 
- 	/* Must zero key material before freeing */
-@@ -3007,6 +3018,7 @@ static int crypt_ctr(struct dm_target *t
- 	int key_size;
- 	unsigned int align_mask;
- 	unsigned long long tmpll;
-+	int latch;
- 	int ret;
- 	size_t iv_size_padding, additional_req_size;
- 	char dummy;
-@@ -3106,6 +3118,12 @@ static int crypt_ctr(struct dm_target *t
- 		goto bad;
- 	}
- 
-+	latch = READ_ONCE(bio_limit);
-+	if (unlikely(latch <= 0))
-+		latch = MAX_BIOS;
-+	cc->bio_limit = latch;
-+	sema_init(&cc->bio_limit_semaphore, latch);
-+	mutex_init(&cc->bio_limit_lock);
- 	mutex_init(&cc->bio_alloc_lock);
- 
- 	ret = -EINVAL;
-@@ -3234,6 +3252,25 @@ static int crypt_map(struct dm_target *t
- 	if (unlikely(bio->bi_iter.bi_size & (cc->sector_size - 1)))
- 		return DM_MAPIO_KILL;
- 
-+	if (bio_data_dir(bio) == WRITE) {
-+		int latch = READ_ONCE(bio_limit);
-+		if (unlikely(latch <= 0))
-+			latch = MAX_BIOS;
-+		if (unlikely(cc->bio_limit != latch)) {
-+			mutex_lock(&cc->bio_limit_lock);
-+			while (latch < cc->bio_limit) {
-+				down(&cc->bio_limit_semaphore);
-+				cc->bio_limit--;
-+			}
-+			while (latch > cc->bio_limit) {
-+				up(&cc->bio_limit_semaphore);
-+				cc->bio_limit++;
-+			}
-+			mutex_unlock(&cc->bio_limit_lock);
-+		}
-+		down(&cc->bio_limit_semaphore);
-+	}
-+
- 	io = dm_per_bio_data(bio, cc->per_bio_data_size);
- 	crypt_io_init(io, cc, bio, dm_target_offset(ti, bio->bi_iter.bi_sector));
- 
-@@ -3461,6 +3498,9 @@ static void __exit dm_crypt_exit(void)
- module_init(dm_crypt_init);
- module_exit(dm_crypt_exit);
- 
-+module_param_named(max_bios_in_flight, bio_limit, int, S_IRUGO | S_IWUSR);
-+MODULE_PARM_DESC(max_bios_in_flight, "maximum number of bios in flight");
-+
- MODULE_AUTHOR("Jana Saout <jana@saout.de>");
- MODULE_DESCRIPTION(DM_NAME " target for transparent encryption / decryption");
- MODULE_LICENSE("GPL");
+-- 
+Jens Axboe
 
 --
 dm-devel mailing list
