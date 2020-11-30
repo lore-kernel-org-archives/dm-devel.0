@@ -2,115 +2,85 @@ Return-Path: <SRS0=s6zu=FE=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-18.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E86ACC63777
-	for <dm-devel@archiver.kernel.org>; Mon, 30 Nov 2020 17:30:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5BDF6C64E7B
+	for <dm-devel@archiver.kernel.org>; Mon, 30 Nov 2020 17:31:02 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 560BB20825
-	for <dm-devel@archiver.kernel.org>; Mon, 30 Nov 2020 17:30:39 +0000 (UTC)
+	by mail.kernel.org (Postfix) with ESMTPS id C2349207F7
+	for <dm-devel@archiver.kernel.org>; Mon, 30 Nov 2020 17:31:01 +0000 (UTC)
 Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NKr0UWc2"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 560BB20825
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IEsx2Pd/"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C2349207F7
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1606757438;
+	s=mimecast20190719; t=1606757460;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=1rvY6i5IovSit8IdO5vz9yhRdUzMHi+0Wqkk+bfa5xI=;
-	b=NKr0UWc2OiQuRemzneJgJSV5eUyI9/zZlYaXD6Y25pYmCaKH/+Oj9ztOnANZl+v1/xOo0g
-	rad9NOk2eC8GURbXCxIuDheAzZrAMzJABR2d3alrDtiKyO9KMEuqq55Ig1FbWjjjXcFNOJ
-	0ok0xh0VbI3/MblA/KMrN/4mc1MkW9Q=
+	bh=IEIMexpk+4bWD6/Fbu64YFMf9jUbM0kVBQP97bePMpA=;
+	b=IEsx2Pd/n+uJJdyoXW+9ikG7sJqzZACBhvePTh1t4B94ZQTSaqtf6DDksKj3fLmCRsD38m
+	h8/xlgww9gYAXvXkNeAXTqyLihToSdyM3ydjHa2Lv1QM1KlAZSQebtN5Tq5Ye+hdJGLFzN
+	M536bNTiurOYtjSgO1au8ZZs84toi0E=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-440-_q7J5EJ4NeqCxpnlrxLzug-1; Mon, 30 Nov 2020 12:30:35 -0500
-X-MC-Unique: _q7J5EJ4NeqCxpnlrxLzug-1
+ us-mta-578-VS3IwKaPMu-BE9T52IPzfA-1; Mon, 30 Nov 2020 12:30:58 -0500
+X-MC-Unique: VS3IwKaPMu-BE9T52IPzfA-1
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2461F835DE2;
-	Mon, 30 Nov 2020 17:30:31 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 04CE25D970;
-	Mon, 30 Nov 2020 17:30:31 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BE2E28581AF;
+	Mon, 30 Nov 2020 17:30:45 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BD7EC5DE50;
+	Mon, 30 Nov 2020 17:30:44 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C5B49180954D;
-	Mon, 30 Nov 2020 17:30:30 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 817375002C;
+	Mon, 30 Nov 2020 17:30:44 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com
+	[10.5.11.14])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AUHUSxx004169 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 30 Nov 2020 12:30:28 -0500
+	id 0AUHUgBx004191 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 30 Nov 2020 12:30:42 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 875E62026D46; Mon, 30 Nov 2020 17:30:28 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 819C82026D49
-	for <dm-devel@redhat.com>; Mon, 30 Nov 2020 17:30:25 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 49FA11871CC5
-	for <dm-devel@redhat.com>; Mon, 30 Nov 2020 17:30:25 +0000 (UTC)
-Received: from mail-qt1-f193.google.com (mail-qt1-f193.google.com
-	[209.85.160.193]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-342-FCOvV0b6OOWn_1YbvC6nbA-1; Mon, 30 Nov 2020 12:30:20 -0500
-X-MC-Unique: FCOvV0b6OOWn_1YbvC6nbA-1
-Received: by mail-qt1-f193.google.com with SMTP id f15so8715058qto.13;
-	Mon, 30 Nov 2020 09:30:20 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
-	:references:mime-version:content-disposition:in-reply-to;
-	bh=2ujODu3GPu0HD446PLi4nC6Ve/9CjbsHnV5fvKNJVzI=;
-	b=ItiZFmIcIxayHMsdCCEvm2EY80APhmj4AXTIwga12xL8ZrAPmkNcWe4/s9Go5qs6mI
-	vHYLToJr3AnVLjJcNUWa0i70vMKtrs7nVNrSGmTbY8Um+qr4MyYXeB7m76XlUuclXku2
-	2T2kOPCT0VZ+eXep3RHjmlC9u/d3IbBKru5G4Fi1Ce1psczODx44qkVFa5SnnMDPryv+
-	r/1y0x/WgwJYttgbKLCFkWZrp/z7/w7TD8uw3A19J9xOM0EC+7btbZmx82YIHQ9Jnzyi
-	ydORKpQrucwvNI2qEvTebZwK75K/vi1sBxpjWubQmYOwlFY+idwsSSciHcpy23LIk4lf
-	Obgg==
-X-Gm-Message-State: AOAM531UvnQ+r4obu3dVUmOeJc960qYBDVNa33mW/38xsFXsu+fT1qTt
-	nZrCdZNVVPFIgLJpyOX336HB8kg4gK8=
-X-Google-Smtp-Source: ABdhPJwPgqabZkm+GE8l02BWkkihXJ6szs7qbtAbSsbW4gFnNwvTcR4Vx6vAl80/D/yvAJ7YL5xBtw==
-X-Received: by 2002:ac8:2a2a:: with SMTP id k39mr23516929qtk.232.1606757419804;
-	Mon, 30 Nov 2020 09:30:19 -0800 (PST)
-Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
-	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
-	k15sm15966746qke.75.2020.11.30.09.30.18
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Mon, 30 Nov 2020 09:30:19 -0800 (PST)
-Date: Mon, 30 Nov 2020 12:30:18 -0500
-From: Mike Snitzer <snitzer@redhat.com>
-To: Kirill Tkhai <ktkhai@virtuozzo.com>
-Message-ID: <20201130173018.GA77957@lobo>
-References: <160633733483.339234.11951322983778059158.stgit@localhost.localdomain>
+	id 6FB675DC09; Mon, 30 Nov 2020 17:30:42 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 33A4A5D973;
+	Mon, 30 Nov 2020 17:30:42 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
+	id 0AUHUfiO020604; Mon, 30 Nov 2020 12:30:41 -0500
+Received: from localhost (mpatocka@localhost)
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
+	ESMTP id 0AUHUfsN020600; Mon, 30 Nov 2020 12:30:41 -0500
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+	owned process doing -bs
+Date: Mon, 30 Nov 2020 12:30:41 -0500 (EST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>,
+	Alasdair Kergon <agk@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2011271240290.31117@file01.intranet.prod.int.rdu2.redhat.com>
+Message-ID: <alpine.LRH.2.02.2011301217010.17848@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2011261003400.11630@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.2011271240290.31117@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-In-Reply-To: <160633733483.339234.11951322983778059158.stgit@localhost.localdomain>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com, Bruce Johnston <bjohnsto@redhat.com>,
-	John Dorminy <jdorminy@redhat.com>, agk@redhat.com
-Subject: Re: [dm-devel] dm: Devices not having .iterate_devices may want to
- set max_io_len
+Cc: Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com
+Subject: [dm-devel] [PATCH v3] dm-crypt: fix deadlock when swapping to
+ encrypted device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -129,153 +99,146 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Nov 25 2020 at  3:49pm -0500,
-Kirill Tkhai <ktkhai@virtuozzo.com> wrote:
+Hi
 
-> After commit 5091cdec56fa "dm: change max_io_len() to use
-> blk_max_size_offset()" my out-of-tree driver stopped to work.
-> The reason is that now ti->max_io_len from such target is ignored:
-> max_io_len() ignores ti->max_io_len, while
-> dm_calculate_queue_limits() never stacks ti->chunk_sectors into
-> ti_limits.chunk_sectors.
-> 
-> Here I see two possible solutions, both are in dm_calculate_queue_limits():
-> 
-> 1)Move ti_limits.chunk_sectors assignment down, so it will be made
-> right under combine_limits label. Thus, every time ti->max_io_len
-> will transform into chunk_sectors, even in case of device
-> has no .iterate_devices method;
-> 
-> 2)Move io_hints call under the label (like it's made in this patch),
-> so one can set desired chunk_sectors there.
-> 
-> First solution looks less clear, since in two drivers chunk_sectors
-> are assigned in io_hints (see unstripe_io_hints() and dmz_io_hints()),
-> and this rewrites, and we should not rewrite it.
-> 
-> Second solution does not break anything since we change only
-> order with ->iterate_devices(device_area_is_invalid), while
-> device_area_is_invalid never touches chunk_sectors. So I choosed it.
-> 
-> Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
-> ---
->  drivers/md/dm-table.c |    8 ++++----
->  1 file changed, 4 insertions(+), 4 deletions(-)
-> 
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index 2073ee8d18f4..9994c767dc82 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -1453,10 +1453,6 @@ int dm_calculate_queue_limits(struct dm_table *table,
->  		if (ti->max_io_len)
->  			ti_limits.chunk_sectors = lcm_not_zero(ti->max_io_len,
->  							       ti_limits.chunk_sectors);
-> -		/* Set I/O hints portion of queue limits */
-> -		if (ti->type->io_hints)
-> -			ti->type->io_hints(ti, &ti_limits);
-> -
->  		/*
->  		 * Check each device area is consistent with the target's
->  		 * overall queue limits.
-> @@ -1466,6 +1462,10 @@ int dm_calculate_queue_limits(struct dm_table *table,
->  			return -EINVAL;
->  
->  combine_limits:
-> +		/* Set I/O hints portion of queue limits */
-> +		if (ti->type->io_hints)
-> +			ti->type->io_hints(ti, &ti_limits);
-> +
->  		/*
->  		 * Merge this target's queue limits into the overall limits
->  		 * for the table.
-> 
-> 
+This is the third version of the "swapping on dm-crypt" patch. The only 
+change is that we define MAX_BIOS inversely proportional to page size:
 
-Sorry for the slow response, just got back from PTO today.
+#define MAX_BIOS       (16 * 1048576 / PAGE_SIZE)
 
-So while I appreciate that commit 5091cdec56fa caused your DM target to
-regress I don't think the proper solution is for your driver to take on
-setting chunk_sectors based on the ti->max_io_len you've established.
+I tested it on a machine with 8GiB ram with swapping on disk and ssd - on 
+ssd, the system didn't lock-up with increased number of bios, but when the 
+limit was removed, it triggered OOM prematurely and killed the process 
+that allocated memory.
 
-The use of chunk_sectors is an implementation detail.  One that every DM
-target that doesn't establish .iterate_devices should not need to take
-on worrying about.
+On rotational disk, I got soft lockup at 32768 bios or more. With smaller 
+values, the machine was still somehow responsive during swapping.
 
-Your above proposed patch changes DM core to _start_ to fix the
-regression you've reported but still requires your DM target to change
-too.  Does you DM target have one or more data device(s)?  If so you
-really should have it provide a .iterate_devices hook.  But that aside,
-here is the fix I'll be staging in linux-next shortly and that I'll be
-sending to Linus by the end of the week:
 
-From: Mike Snitzer <snitzer@redhat.com>
-Date: Mon, 30 Nov 2020 10:57:43 -0500
-Subject: [PATCH] dm table: fix IO splitting
 
-Commit 882ec4e609c1 ("dm table: stack 'chunk_sectors' limit to account
-for target-specific splitting") caused a regression for a couple
-reasons:
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-1) Using lcm_not_zero() instead of min_not_zero() when stacking
-   chunk_sectors was a bug because chunk_sectors must reflect the most
-   limited of all devices in the IO stack.
-2) DM targets that set max_io_len but that do _not_ provide an
-   .iterate_devices method no longer had there IO split properly.
+The system would deadlock when swapping to a dm-crypt device. The reason
+is that for each incoming write bio, dm-crypt allocates memory that holds
+encrypted data. These excessive allocations exhaust all the memory and the
+result is either deadlock or OOM trigger.
 
-dm_calculate_queue_limits() must establish the appropriate IO
-splitting limits early, without any dependency on iterating
-data_devices, otherwise IO will not be split as intended.
+This patch limits the number of in-flight bios, so that the memory
+consumed by dm-crypt is limited. If we are over the limit, we block in the
+function crypt_map, so that the caller will not attempt to send more bios.
 
-Fixes: 882ec4e609c1 ("dm table: stack 'chunk_sectors' limit to account for target-specific splitting")
+This is similar to request-based drivers - they will also block when the
+number of bios is over the limit.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Cc: stable@vger.kernel.org
-Reported-by: John Dorminy <jdorminy@redhat.com>
-Reported-by: Bruce Johnston <bjohnsto@redhat.com>
-Reported-by: Kirill Tkhai <ktkhai@virtuozzo.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-table.c | 9 ++++-----
- 1 file changed, 4 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 2073ee8d18f4..4e58f5c68ac0 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -18,7 +18,6 @@
- #include <linux/mutex.h>
- #include <linux/delay.h>
- #include <linux/atomic.h>
--#include <linux/lcm.h>
- #include <linux/blk-mq.h>
- #include <linux/mount.h>
- #include <linux/dax.h>
-@@ -1431,6 +1430,10 @@ int dm_calculate_queue_limits(struct dm_table *table,
+Index: linux-2.6/drivers/md/dm-crypt.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-crypt.c
++++ linux-2.6/drivers/md/dm-crypt.c
+@@ -214,16 +214,24 @@ struct crypt_config {
+ 	mempool_t page_pool;
  
- 		ti = dm_table_get_target(table, i);
- 
-+		/* Set appropriate limits if target-specific splitting is required */
-+		if (ti->max_io_len)
-+			ti_limits.chunk_sectors = ti->max_io_len;
+ 	struct bio_set bs;
 +
- 		if (!ti->type->iterate_devices)
- 			goto combine_limits;
++	int bio_limit;
++	struct semaphore bio_limit_semaphore;
++	struct mutex bio_limit_lock;
++
+ 	struct mutex bio_alloc_lock;
  
-@@ -1449,10 +1452,6 @@ int dm_calculate_queue_limits(struct dm_table *table,
- 			zone_sectors = ti_limits.chunk_sectors;
- 		}
+ 	u8 *authenc_key; /* space for keys in authenc() format (if used) */
+ 	u8 key[];
+ };
  
--		/* Stack chunk_sectors if target-specific splitting is required */
--		if (ti->max_io_len)
--			ti_limits.chunk_sectors = lcm_not_zero(ti->max_io_len,
--							       ti_limits.chunk_sectors);
- 		/* Set I/O hints portion of queue limits */
- 		if (ti->type->io_hints)
- 			ti->type->io_hints(ti, &ti_limits);
--- 
-2.15.0
++#define MAX_BIOS	(16 * 1048576 / PAGE_SIZE)
+ #define MIN_IOS		64
+ #define MAX_TAG_SIZE	480
+ #define POOL_ENTRY_SIZE	512
+ 
++static int bio_limit = MAX_BIOS;
++
+ static DEFINE_SPINLOCK(dm_crypt_clients_lock);
+ static unsigned dm_crypt_clients_n = 0;
+ static volatile unsigned long dm_crypt_pages_per_client;
+@@ -1713,6 +1721,8 @@ static void crypt_dec_pending(struct dm_
+ 		kfree(io->integrity_metadata);
+ 
+ 	base_bio->bi_status = error;
++	if (bio_data_dir(base_bio) == WRITE)
++		up(&cc->bio_limit_semaphore);
+ 	bio_endio(base_bio);
+ }
+ 
+@@ -2567,6 +2577,7 @@ static void crypt_dtr(struct dm_target *
+ 	kfree_sensitive(cc->cipher_auth);
+ 	kfree_sensitive(cc->authenc_key);
+ 
++	mutex_destroy(&cc->bio_limit_lock);
+ 	mutex_destroy(&cc->bio_alloc_lock);
+ 
+ 	/* Must zero key material before freeing */
+@@ -3007,6 +3018,7 @@ static int crypt_ctr(struct dm_target *t
+ 	int key_size;
+ 	unsigned int align_mask;
+ 	unsigned long long tmpll;
++	int latch;
+ 	int ret;
+ 	size_t iv_size_padding, additional_req_size;
+ 	char dummy;
+@@ -3106,6 +3118,12 @@ static int crypt_ctr(struct dm_target *t
+ 		goto bad;
+ 	}
+ 
++	latch = READ_ONCE(bio_limit);
++	if (unlikely(latch <= 0))
++		latch = MAX_BIOS;
++	cc->bio_limit = latch;
++	sema_init(&cc->bio_limit_semaphore, latch);
++	mutex_init(&cc->bio_limit_lock);
+ 	mutex_init(&cc->bio_alloc_lock);
+ 
+ 	ret = -EINVAL;
+@@ -3234,6 +3252,25 @@ static int crypt_map(struct dm_target *t
+ 	if (unlikely(bio->bi_iter.bi_size & (cc->sector_size - 1)))
+ 		return DM_MAPIO_KILL;
+ 
++	if (bio_data_dir(bio) == WRITE) {
++		int latch = READ_ONCE(bio_limit);
++		if (unlikely(latch <= 0))
++			latch = MAX_BIOS;
++		if (unlikely(cc->bio_limit != latch)) {
++			mutex_lock(&cc->bio_limit_lock);
++			while (latch < cc->bio_limit) {
++				down(&cc->bio_limit_semaphore);
++				cc->bio_limit--;
++			}
++			while (latch > cc->bio_limit) {
++				up(&cc->bio_limit_semaphore);
++				cc->bio_limit++;
++			}
++			mutex_unlock(&cc->bio_limit_lock);
++		}
++		down(&cc->bio_limit_semaphore);
++	}
++
+ 	io = dm_per_bio_data(bio, cc->per_bio_data_size);
+ 	crypt_io_init(io, cc, bio, dm_target_offset(ti, bio->bi_iter.bi_sector));
+ 
+@@ -3461,6 +3498,9 @@ static void __exit dm_crypt_exit(void)
+ module_init(dm_crypt_init);
+ module_exit(dm_crypt_exit);
+ 
++module_param_named(max_bios_in_flight, bio_limit, int, S_IRUGO | S_IWUSR);
++MODULE_PARM_DESC(max_bios_in_flight, "maximum number of bios in flight");
++
+ MODULE_AUTHOR("Jana Saout <jana@saout.de>");
+ MODULE_DESCRIPTION(DM_NAME " target for transparent encryption / decryption");
+ MODULE_LICENSE("GPL");
 
 --
 dm-devel mailing list
