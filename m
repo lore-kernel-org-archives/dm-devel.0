@@ -2,106 +2,119 @@ Return-Path: <SRS0=s6zu=FE=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,URIBL_BLOCKED
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 28604C64E7B
-	for <dm-devel@archiver.kernel.org>; Mon, 30 Nov 2020 20:52:32 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 756E0C63777
+	for <dm-devel@archiver.kernel.org>; Mon, 30 Nov 2020 21:01:25 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7C52E2073C
-	for <dm-devel@archiver.kernel.org>; Mon, 30 Nov 2020 20:52:31 +0000 (UTC)
-Authentication-Results: mail.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Q4HnOEuv"
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7C52E2073C
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id C8D98206D4
+	for <dm-devel@archiver.kernel.org>; Mon, 30 Nov 2020 21:01:24 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C8D98206D4
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=oracle.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1606769550;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=LUQalSQSUCRiWE6egcGkTlHYEgv89pVlvBrHhwLvShM=;
-	b=Q4HnOEuv583Lx9qE1xt12qXPbj1taVSWl9Gl0EYnAKABBpDrh10PCFKyXKkir88/VaeD+b
-	iWcEOMYk6yf6Gn4Q+V0+rTw5F/fsG8uwcaqEytKINLoSBWNjwRgtzVsTZACxAsZanNrXog
-	kRd7J3qEomhWWQ3L27MBZbzMgGzi4LU=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-22-edQGXKDlOIKbfI9EVdxtZA-1; Mon, 30 Nov 2020 15:52:27 -0500
-X-MC-Unique: edQGXKDlOIKbfI9EVdxtZA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-515-3bGPAwlOOd6jsE53mL8Inw-1; Mon, 30 Nov 2020 16:01:21 -0500
+X-MC-Unique: 3bGPAwlOOd6jsE53mL8Inw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5A3901092BA0;
-	Mon, 30 Nov 2020 20:52:22 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F81810016F4;
-	Mon, 30 Nov 2020 20:52:20 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 32B451800D42;
+	Mon, 30 Nov 2020 21:01:15 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D6FD819C71;
+	Mon, 30 Nov 2020 21:01:14 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AE17A180954D;
-	Mon, 30 Nov 2020 20:52:16 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 96FD14A7C6;
+	Mon, 30 Nov 2020 21:01:13 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0AUKq6c4028730 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 30 Nov 2020 15:52:06 -0500
+	id 0AUL1B0m029385 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 30 Nov 2020 16:01:11 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B1FE22166B2C; Mon, 30 Nov 2020 20:52:06 +0000 (UTC)
+	id 186542166B2C; Mon, 30 Nov 2020 21:01:11 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AD6232166B2B
-	for <dm-devel@redhat.com>; Mon, 30 Nov 2020 20:52:04 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1340A2166B2B
+	for <dm-devel@redhat.com>; Mon, 30 Nov 2020 21:01:08 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5BA2E185A7BC
-	for <dm-devel@redhat.com>; Mon, 30 Nov 2020 20:52:04 +0000 (UTC)
-Received: from mail-vk1-f199.google.com (mail-vk1-f199.google.com
-	[209.85.221.199]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-584-DBcKjpg4MEK6qqH2HGrTQA-1; Mon, 30 Nov 2020 15:52:02 -0500
-X-MC-Unique: DBcKjpg4MEK6qqH2HGrTQA-1
-Received: by mail-vk1-f199.google.com with SMTP id h22so4495311vkn.22
-	for <dm-devel@redhat.com>; Mon, 30 Nov 2020 12:52:02 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-	:message-id:subject:to:cc;
-	bh=+b2Pp0coGV9j/d9ySwXiIZFcFYYUG+hnak08L/oevVY=;
-	b=BQPZ2qzJcNup7itmD9IXRHz6SPm11wlQmXyPhdaeUaQvWZywtyf6NHGSxWP/E9E2+z
-	MzxWXsjt08M5cjekM7Kmh0JBjfTYplLdr/KKYnSifjYu2IX+uDyQv+nZhcs5VFKikVkL
-	em4RJGBbRiLNlvxiYr/3Szwg+IIaISVLJVBzR2Hn1YIOYHygta49KkJGKitwHumTJNO0
-	bU6jH9KyS2JCXIZEWQ5Zc9rt8M8c5A4eqRk3M4cb5RbrO08oeOzJHwHoqE59HAjCFRkd
-	JLAdijR/Bip7iitZrFycsOmTXBb7A/XN9TJBOP8AMURxH8hHkl2osb0I6Gi7MjxjNgRo
-	T4EQ==
-X-Gm-Message-State: AOAM531zkVIzXDgJVexIXEaTc+k9TASdKKkQAZg5ztQtUSpli3ZHhuFV
-	7KBdJYI4fvBuZ0MNZbTS7X9xC5yuv8Vj/uG4rKA465nJk8/9bwXV3PqXTiLFPlhP/Nj1i6HuwVP
-	D5HRYiIzIFaH15RSiX5g0BJDAxS0mplE=
-X-Received: by 2002:ab0:74d1:: with SMTP id f17mr17280793uaq.30.1606769521905; 
-	Mon, 30 Nov 2020 12:52:01 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJzubma8STl3HCa0vJRhZbqsCE0aoJSMnrUX0e2pI7+Gruh20CEhyGGJL2n7aZ3aL+d5VLu/RCaAHOpASP6gnDQ=
-X-Received: by 2002:ab0:74d1:: with SMTP id f17mr17280758uaq.30.1606769521581; 
-	Mon, 30 Nov 2020 12:52:01 -0800 (PST)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ACD50811E84
+	for <dm-devel@redhat.com>; Mon, 30 Nov 2020 21:01:08 +0000 (UTC)
+Received: from aserp2130.oracle.com (aserp2130.oracle.com [141.146.126.79])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-546-ak-ok3m2MAaYN1-YEUMH-Q-1; Mon, 30 Nov 2020 16:01:03 -0500
+X-MC-Unique: ak-ok3m2MAaYN1-YEUMH-Q-1
+Received: from pps.filterd (aserp2130.oracle.com [127.0.0.1])
+	by aserp2130.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
+	0AUHt6sJ032368; Mon, 30 Nov 2020 17:55:35 GMT
+Received: from aserp3020.oracle.com (aserp3020.oracle.com [141.146.126.70])
+	by aserp2130.oracle.com with ESMTP id 353c2apjs8-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=FAIL); Mon, 30 Nov 2020 17:55:34 +0000
+Received: from pps.filterd (aserp3020.oracle.com [127.0.0.1])
+	by aserp3020.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
+	0AUHk2nh011017; Mon, 30 Nov 2020 17:55:34 GMT
+Received: from userv0121.oracle.com (userv0121.oracle.com [156.151.31.72])
+	by aserp3020.oracle.com with ESMTP id 3540ewv77j-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Mon, 30 Nov 2020 17:55:34 +0000
+Received: from abhmp0004.oracle.com (abhmp0004.oracle.com [141.146.116.10])
+	by userv0121.oracle.com (8.14.4/8.13.8) with ESMTP id 0AUHtSUK012345;
+	Mon, 30 Nov 2020 17:55:28 GMT
+Received: from localhost (/67.169.218.210)
+	by default (Oracle Beehive Gateway v4.0)
+	with ESMTP ; Mon, 30 Nov 2020 09:55:28 -0800
+Date: Mon, 30 Nov 2020 09:55:26 -0800
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+To: Christoph Hellwig <hch@lst.de>
+Message-ID: <20201130175526.GA143012@magnolia>
+References: <20201128161510.347752-1-hch@lst.de>
+	<20201128161510.347752-5-hch@lst.de>
 MIME-Version: 1.0
-References: <20201130171805.77712-1-snitzer@redhat.com>
-In-Reply-To: <20201130171805.77712-1-snitzer@redhat.com>
-From: John Dorminy <jdorminy@redhat.com>
-Date: Mon, 30 Nov 2020 15:51:50 -0500
-Message-ID: <CAMeeMh8fb2JEBmuSuTP8ys6Xr+GpFqcUr5Py73W4wCQb1MCuAw@mail.gmail.com>
-To: Mike Snitzer <snitzer@redhat.com>
+In-Reply-To: <20201128161510.347752-5-hch@lst.de>
+X-Proofpoint-Virus-Version: vendor=nai engine=6000 definitions=9821
+	signatures=668682
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 mlxscore=0
+	malwarescore=0 phishscore=0
+	suspectscore=1 bulkscore=0 spamscore=0 adultscore=0 mlxlogscore=999
+	classifier=spam adjust=0 reason=mlx scancount=1
+	engine=8.12.0-2009150000 definitions=main-2011300116
+X-Proofpoint-Virus-Version: vendor=nai engine=6000 definitions=9821
+	signatures=668682
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 suspectscore=1
+	lowpriorityscore=0
+	clxscore=1011 bulkscore=0 mlxlogscore=999 phishscore=0 malwarescore=0
+	spamscore=0 adultscore=0 mlxscore=0 priorityscore=1501 impostorscore=0
+	classifier=spam adjust=0 reason=mlx scancount=1
+	engine=8.12.0-2009150000 definitions=main-2011300117
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: linux-block <linux-block@vger.kernel.org>,
-	device-mapper development <dm-devel@redhat.com>,
-	Bruce Johnston <bjohnsto@redhat.com>
-Subject: Re: [dm-devel] [PATCH] block: revert to using min_not_zero() when
-	stacking chunk_sectors
+Cc: Jens Axboe <axboe@kernel.dk>, Chao Yu <yuchao0@huawei.com>,
+	Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>,
+	linux-mm@kvack.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	Jan Kara <jack@suse.com>, Josef Bacik <josef@toxicpanda.com>,
+	Coly Li <colyli@suse.de>, linux-block@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org, dm-devel@redhat.com,
+	linux-mtd@lists.infradead.org,
+	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
+	Tejun Heo <tj@kernel.org>, linux-bcache@vger.kernel.org
+Subject: Re: [dm-devel] [PATCH 04/45] fs: simplify freeze_bdev/thaw_bdev
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -115,80 +128,280 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-I don't think this suffices, as it allows IOs that span max(a,b) chunk
-boundaries.
-
-Chunk sectors is defined as "if set, it will prevent merging across
-chunk boundaries". Pulling the example from the last change:
-It is possible, albeit more unlikely, for a block device to have a non
-power-of-2 for chunk_sectors (e.g. 10+2 RAID6 with 128K chunk_sectors,
-which results in a full-stripe size of 1280K. This causes the RAID6's
-io_opt to be advertised as 1280K, and a stacked device _could_ then be
-made to use a blocksize, aka chunk_sectors, that matches non power-of-2
-io_opt of underlying RAID6 -- resulting in stacked device's
-chunk_sectors being a non power-of-2).
-
-Suppose the stacked device had a block size/chunk_sectors of 256k.
-Then, with this change, some IOs issued by the stacked device to the
-RAID beneath could span 1280k sector boundaries, and require further
-splitting still. I think combining as the GCD is better, since any IO
-of size gcd(a,b) definitely spans neither a a-chunk nor a b-chunk
-boundary.
-
-But it's possible I'm misunderstanding the purpose of chunk_sectors,
-or there should be a check that the one of the two devices' chunk
-sizes divides the other.
-
-Thanks.
-
--John
-
-On Mon, Nov 30, 2020 at 12:18 PM Mike Snitzer <snitzer@redhat.com> wrote:
->
-> chunk_sectors must reflect the most limited of all devices in the IO
-> stack.
->
-> Otherwise malformed IO may result. E.g.: prior to this fix,
-> ->chunk_sectors = lcm_not_zero(8, 128) would result in
-> blk_max_size_offset() splitting IO at 128 sectors rather than the
-> required more restrictive 8 sectors.
->
-> Fixes: 22ada802ede8 ("block: use lcm_not_zero() when stacking chunk_sectors")
-> Cc: stable@vger.kernel.org
-> Reported-by: John Dorminy <jdorminy@redhat.com>
-> Reported-by: Bruce Johnston <bjohnsto@redhat.com>
-> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+On Sat, Nov 28, 2020 at 05:14:29PM +0100, Christoph Hellwig wrote:
+> Store the frozen superblock in struct block_device to avoid the awkward
+> interface that can return a sb only used a cookie, an ERR_PTR or NULL.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> Reviewed-by: Jan Kara <jack@suse.cz>
+> Acked-by: Chao Yu <yuchao0@huawei.com>		[f2fs]
 > ---
->  block/blk-settings.c | 5 ++++-
->  1 file changed, 4 insertions(+), 1 deletion(-)
->
-> diff --git a/block/blk-settings.c b/block/blk-settings.c
-> index 9741d1d83e98..1d9decd4646e 100644
-> --- a/block/blk-settings.c
-> +++ b/block/blk-settings.c
-> @@ -547,7 +547,10 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
->
->         t->io_min = max(t->io_min, b->io_min);
->         t->io_opt = lcm_not_zero(t->io_opt, b->io_opt);
-> -       t->chunk_sectors = lcm_not_zero(t->chunk_sectors, b->chunk_sectors);
+>  drivers/md/dm-core.h      |  5 -----
+>  drivers/md/dm.c           | 20 ++++++--------------
+>  fs/block_dev.c            | 37 +++++++++++++++----------------------
+>  fs/buffer.c               |  2 +-
+>  fs/ext4/ioctl.c           |  2 +-
+>  fs/f2fs/file.c            | 14 +++++---------
+>  fs/xfs/xfs_fsops.c        |  7 ++-----
+
+For the xfs part:
+Acked-by: Darrick J. Wong <darrick.wong@oracle.com>
+
+(I did glance at the other 44 patches and didn't see anything that
+screamed 'wrong' but I wouldn't call that a strong review...)
+
+--D
+
+>  include/linux/blk_types.h |  1 +
+>  include/linux/blkdev.h    |  4 ++--
+>  9 files changed, 33 insertions(+), 59 deletions(-)
+> 
+> diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
+> index d522093cb39dda..aace147effcacb 100644
+> --- a/drivers/md/dm-core.h
+> +++ b/drivers/md/dm-core.h
+> @@ -96,11 +96,6 @@ struct mapped_device {
+>  	 */
+>  	struct workqueue_struct *wq;
+>  
+> -	/*
+> -	 * freeze/thaw support require holding onto a super block
+> -	 */
+> -	struct super_block *frozen_sb;
+> -
+>  	/* forced geometry settings */
+>  	struct hd_geometry geometry;
+>  
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 54739f1b579bc8..50541d336c719b 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -2392,27 +2392,19 @@ static int lock_fs(struct mapped_device *md)
+>  {
+>  	int r;
+>  
+> -	WARN_ON(md->frozen_sb);
+> +	WARN_ON(test_bit(DMF_FROZEN, &md->flags));
+>  
+> -	md->frozen_sb = freeze_bdev(md->bdev);
+> -	if (IS_ERR(md->frozen_sb)) {
+> -		r = PTR_ERR(md->frozen_sb);
+> -		md->frozen_sb = NULL;
+> -		return r;
+> -	}
+> -
+> -	set_bit(DMF_FROZEN, &md->flags);
+> -
+> -	return 0;
+> +	r = freeze_bdev(md->bdev);
+> +	if (!r)
+> +		set_bit(DMF_FROZEN, &md->flags);
+> +	return r;
+>  }
+>  
+>  static void unlock_fs(struct mapped_device *md)
+>  {
+>  	if (!test_bit(DMF_FROZEN, &md->flags))
+>  		return;
+> -
+> -	thaw_bdev(md->bdev, md->frozen_sb);
+> -	md->frozen_sb = NULL;
+> +	thaw_bdev(md->bdev);
+>  	clear_bit(DMF_FROZEN, &md->flags);
+>  }
+>  
+> diff --git a/fs/block_dev.c b/fs/block_dev.c
+> index d8664f5c1ff669..33c29106c98907 100644
+> --- a/fs/block_dev.c
+> +++ b/fs/block_dev.c
+> @@ -548,55 +548,47 @@ EXPORT_SYMBOL(fsync_bdev);
+>   * count down in thaw_bdev(). When it becomes 0, thaw_bdev() will unfreeze
+>   * actually.
+>   */
+> -struct super_block *freeze_bdev(struct block_device *bdev)
+> +int freeze_bdev(struct block_device *bdev)
+>  {
+>  	struct super_block *sb;
+>  	int error = 0;
+>  
+>  	mutex_lock(&bdev->bd_fsfreeze_mutex);
+> -	if (++bdev->bd_fsfreeze_count > 1) {
+> -		/*
+> -		 * We don't even need to grab a reference - the first call
+> -		 * to freeze_bdev grab an active reference and only the last
+> -		 * thaw_bdev drops it.
+> -		 */
+> -		sb = get_super(bdev);
+> -		if (sb)
+> -			drop_super(sb);
+> -		mutex_unlock(&bdev->bd_fsfreeze_mutex);
+> -		return sb;
+> -	}
+> +	if (++bdev->bd_fsfreeze_count > 1)
+> +		goto done;
+>  
+>  	sb = get_active_super(bdev);
+>  	if (!sb)
+> -		goto out;
+> +		goto sync;
+>  	if (sb->s_op->freeze_super)
+>  		error = sb->s_op->freeze_super(sb);
+>  	else
+>  		error = freeze_super(sb);
+> +	deactivate_super(sb);
 > +
-> +       if (b->chunk_sectors)
-> +               t->chunk_sectors = min_not_zero(t->chunk_sectors,
-> +                                               b->chunk_sectors);
->
->         /* Physical block size a multiple of the logical block size? */
->         if (t->physical_block_size & (t->logical_block_size - 1)) {
-> --
-> 2.15.0
->
+>  	if (error) {
+> -		deactivate_super(sb);
+>  		bdev->bd_fsfreeze_count--;
+> -		mutex_unlock(&bdev->bd_fsfreeze_mutex);
+> -		return ERR_PTR(error);
+> +		goto done;
+>  	}
+> -	deactivate_super(sb);
+> - out:
+> +	bdev->bd_fsfreeze_sb = sb;
+> +
+> +sync:
+>  	sync_blockdev(bdev);
+> +done:
+>  	mutex_unlock(&bdev->bd_fsfreeze_mutex);
+> -	return sb;	/* thaw_bdev releases s->s_umount */
+> +	return error;
+>  }
+>  EXPORT_SYMBOL(freeze_bdev);
+>  
+>  /**
+>   * thaw_bdev  -- unlock filesystem
+>   * @bdev:	blockdevice to unlock
+> - * @sb:		associated superblock
+>   *
+>   * Unlocks the filesystem and marks it writeable again after freeze_bdev().
+>   */
+> -int thaw_bdev(struct block_device *bdev, struct super_block *sb)
+> +int thaw_bdev(struct block_device *bdev)
+>  {
+> +	struct super_block *sb;
+>  	int error = -EINVAL;
+>  
+>  	mutex_lock(&bdev->bd_fsfreeze_mutex);
+> @@ -607,6 +599,7 @@ int thaw_bdev(struct block_device *bdev, struct super_block *sb)
+>  	if (--bdev->bd_fsfreeze_count > 0)
+>  		goto out;
+>  
+> +	sb = bdev->bd_fsfreeze_sb;
+>  	if (!sb)
+>  		goto out;
+>  
+> diff --git a/fs/buffer.c b/fs/buffer.c
+> index 23f645657488ba..a7595ada9400ff 100644
+> --- a/fs/buffer.c
+> +++ b/fs/buffer.c
+> @@ -523,7 +523,7 @@ static int osync_buffers_list(spinlock_t *lock, struct list_head *list)
+>  
+>  void emergency_thaw_bdev(struct super_block *sb)
+>  {
+> -	while (sb->s_bdev && !thaw_bdev(sb->s_bdev, sb))
+> +	while (sb->s_bdev && !thaw_bdev(sb->s_bdev))
+>  		printk(KERN_WARNING "Emergency Thaw on %pg\n", sb->s_bdev);
+>  }
+>  
+> diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
+> index f0381876a7e5b0..524e134324475e 100644
+> --- a/fs/ext4/ioctl.c
+> +++ b/fs/ext4/ioctl.c
+> @@ -624,7 +624,7 @@ static int ext4_shutdown(struct super_block *sb, unsigned long arg)
+>  	case EXT4_GOING_FLAGS_DEFAULT:
+>  		freeze_bdev(sb->s_bdev);
+>  		set_bit(EXT4_FLAGS_SHUTDOWN, &sbi->s_ext4_flags);
+> -		thaw_bdev(sb->s_bdev, sb);
+> +		thaw_bdev(sb->s_bdev);
+>  		break;
+>  	case EXT4_GOING_FLAGS_LOGFLUSH:
+>  		set_bit(EXT4_FLAGS_SHUTDOWN, &sbi->s_ext4_flags);
+> diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+> index ee861c6d9ff026..a9fc482a0e60a5 100644
+> --- a/fs/f2fs/file.c
+> +++ b/fs/f2fs/file.c
+> @@ -2230,16 +2230,12 @@ static int f2fs_ioc_shutdown(struct file *filp, unsigned long arg)
+>  
+>  	switch (in) {
+>  	case F2FS_GOING_DOWN_FULLSYNC:
+> -		sb = freeze_bdev(sb->s_bdev);
+> -		if (IS_ERR(sb)) {
+> -			ret = PTR_ERR(sb);
+> +		ret = freeze_bdev(sb->s_bdev);
+> +		if (ret)
+>  			goto out;
+> -		}
+> -		if (sb) {
+> -			f2fs_stop_checkpoint(sbi, false);
+> -			set_sbi_flag(sbi, SBI_IS_SHUTDOWN);
+> -			thaw_bdev(sb->s_bdev, sb);
+> -		}
+> +		f2fs_stop_checkpoint(sbi, false);
+> +		set_sbi_flag(sbi, SBI_IS_SHUTDOWN);
+> +		thaw_bdev(sb->s_bdev);
+>  		break;
+>  	case F2FS_GOING_DOWN_METASYNC:
+>  		/* do checkpoint only */
+> diff --git a/fs/xfs/xfs_fsops.c b/fs/xfs/xfs_fsops.c
+> index ef1d5bb88b93ab..b7c5783a031c69 100644
+> --- a/fs/xfs/xfs_fsops.c
+> +++ b/fs/xfs/xfs_fsops.c
+> @@ -433,13 +433,10 @@ xfs_fs_goingdown(
+>  {
+>  	switch (inflags) {
+>  	case XFS_FSOP_GOING_FLAGS_DEFAULT: {
+> -		struct super_block *sb = freeze_bdev(mp->m_super->s_bdev);
+> -
+> -		if (sb && !IS_ERR(sb)) {
+> +		if (!freeze_bdev(mp->m_super->s_bdev)) {
+>  			xfs_force_shutdown(mp, SHUTDOWN_FORCE_UMOUNT);
+> -			thaw_bdev(sb->s_bdev, sb);
+> +			thaw_bdev(mp->m_super->s_bdev);
+>  		}
+> -
+>  		break;
+>  	}
+>  	case XFS_FSOP_GOING_FLAGS_LOGFLUSH:
+> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+> index d9b69bbde5cc54..ebfb4e7c1fd125 100644
+> --- a/include/linux/blk_types.h
+> +++ b/include/linux/blk_types.h
+> @@ -46,6 +46,7 @@ struct block_device {
+>  	int			bd_fsfreeze_count;
+>  	/* Mutex for freeze */
+>  	struct mutex		bd_fsfreeze_mutex;
+> +	struct super_block	*bd_fsfreeze_sb;
+>  } __randomize_layout;
+>  
+>  /*
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index 05b346a68c2eee..12810a19edebc4 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -2020,7 +2020,7 @@ static inline int sync_blockdev(struct block_device *bdev)
+>  #endif
+>  int fsync_bdev(struct block_device *bdev);
+>  
+> -struct super_block *freeze_bdev(struct block_device *bdev);
+> -int thaw_bdev(struct block_device *bdev, struct super_block *sb);
+> +int freeze_bdev(struct block_device *bdev);
+> +int thaw_bdev(struct block_device *bdev);
+>  
+>  #endif /* _LINUX_BLKDEV_H */
+> -- 
+> 2.29.2
+> 
 
 --
 dm-devel mailing list
