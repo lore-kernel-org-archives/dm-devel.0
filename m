@@ -2,85 +2,108 @@ Return-Path: <SRS0=byOr=FF=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-17.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6DF98C64E7B
-	for <dm-devel@archiver.kernel.org>; Tue,  1 Dec 2020 17:04:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4FEFFC64E7A
+	for <dm-devel@archiver.kernel.org>; Tue,  1 Dec 2020 17:43:44 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id ACBFE206B7
-	for <dm-devel@archiver.kernel.org>; Tue,  1 Dec 2020 17:04:38 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org ACBFE206B7
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+	by mail.kernel.org (Postfix) with ESMTPS id A01B020870
+	for <dm-devel@archiver.kernel.org>; Tue,  1 Dec 2020 17:43:43 +0000 (UTC)
+Authentication-Results: mail.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="aTmRmGZ2"
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A01B020870
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1606844622;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=9y/xCCGpCMCZTJ4eNDrzkhXpAjteGt4qRErdVxUnCWk=;
+	b=aTmRmGZ2GtcI6HAVi4i0V1cd5/h2SXH83+r2eD88zCEhY2oBv6vI3Hyao9YQOEDKJEK+Qy
+	+QTb7rYFLGXKf0Ml9xybt5vtN2KzVees1nPDvmRHS0hwIkBbzApm4q8B+UEQfNEmp8xxU8
+	TEOgYHuZD4fksfrIQRwhLfjB9I5npdA=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-418-HMr-VdAgN-2-1gS0XiTQcw-1; Tue, 01 Dec 2020 12:04:34 -0500
-X-MC-Unique: HMr-VdAgN-2-1gS0XiTQcw-1
+ us-mta-114-BFfNonrhNuGN0X8pCaucZw-1; Tue, 01 Dec 2020 12:43:38 -0500
+X-MC-Unique: BFfNonrhNuGN0X8pCaucZw-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3162E100C604;
-	Tue,  1 Dec 2020 17:04:30 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 93C43107AD55;
+	Tue,  1 Dec 2020 17:43:32 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1276910016FF;
-	Tue,  1 Dec 2020 17:04:30 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1C67010016FB;
+	Tue,  1 Dec 2020 17:43:31 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D90021809C9F;
-	Tue,  1 Dec 2020 17:04:29 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 15A8C180954D;
+	Tue,  1 Dec 2020 17:43:28 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B1H4S9x032673 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 1 Dec 2020 12:04:28 -0500
+	id 0B1HhPSn003999 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 1 Dec 2020 12:43:25 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 61E65100414B; Tue,  1 Dec 2020 17:04:28 +0000 (UTC)
+	id 726CD2026D47; Tue,  1 Dec 2020 17:43:25 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5DFC01004046
-	for <dm-devel@redhat.com>; Tue,  1 Dec 2020 17:04:26 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6DF872026D46
+	for <dm-devel@redhat.com>; Tue,  1 Dec 2020 17:43:22 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 23289101A53F
-	for <dm-devel@redhat.com>; Tue,  1 Dec 2020 17:04:26 +0000 (UTC)
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-562-3o-ewoNMPvaeVa9SrshMUg-1; Tue, 01 Dec 2020 12:04:23 -0500
-X-MC-Unique: 3o-ewoNMPvaeVa9SrshMUg-1
-Received: from [2001:4bb8:184:6389:bbd8:a1c2:99e0:f58a] (helo=localhost)
-	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kk8vA-0005ZR-F3; Tue, 01 Dec 2020 16:54:32 +0000
-From: Christoph Hellwig <hch@lst.de>
-To: Jens Axboe <axboe@kernel.dk>
-Date: Tue,  1 Dec 2020 17:54:20 +0100
-Message-Id: <20201201165424.2030647-6-hch@lst.de>
-In-Reply-To: <20201201165424.2030647-1-hch@lst.de>
-References: <20201201165424.2030647-1-hch@lst.de>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F34B01871CC4
+	for <dm-devel@redhat.com>; Tue,  1 Dec 2020 17:43:21 +0000 (UTC)
+Received: from mail-vs1-f72.google.com (mail-vs1-f72.google.com
+	[209.85.217.72]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-509-Vxse6ixeNqOXTB6swd02vA-1; Tue, 01 Dec 2020 12:43:19 -0500
+X-MC-Unique: Vxse6ixeNqOXTB6swd02vA-1
+Received: by mail-vs1-f72.google.com with SMTP id u14so641413vsp.2
+	for <dm-devel@redhat.com>; Tue, 01 Dec 2020 09:43:19 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc;
+	bh=LZGhKypd6JdyTYRhn0b8NIkt9xhU4Eeu0l38PBqCdSE=;
+	b=gbGeXaNvQt9w7CX44bdVqmY7Xq7KLE/9Sb/pr8Hue2uU5DJr7ELoXbFvXQGLIuA4vt
+	L+wBgfEJ1tTF+7JIvH8YsMlivgwyeTTjlql4eIHPpM0cI+oDmDs+Fb1AI52vWYXqHgqh
+	yvXFM5ltcKKsXtonjqsqrjn8lI6nkOP0qAj1ljdi/sBzWNRzTGKy/Mo0eAAybPyEDrIM
+	3eEDbIa7+1s+WNZAMwu6035wodGC/xkcsoLYq+SBrJCQkLUMlsGh6YMZQedNS49Fv9hA
+	BYm93L72jnympXEi4cnMBMrdWbbevi500GjcIdd0FJ4d+1c6QkiBKD/HpgDmLQKxbge8
+	Tjiw==
+X-Gm-Message-State: AOAM531Ji0Ct+Y9fQ6yjFRQv4+9q4CYiJW5X5ymfAPhXZOJG2yYTtpYy
+	CM2oBzOKhWosei2MJAOtxcFPQF9szWzZ3YyOrefzoRXStk6KeRTRGDpBfE5YM2cz/BUgKFk9Fpr
+	9W2Suq1sEiv6GdGyCiyE35JNYJnIKqb8=
+X-Received: by 2002:a1f:1d50:: with SMTP id d77mr3576793vkd.18.1606844598895; 
+	Tue, 01 Dec 2020 09:43:18 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJwnkpGmhM9X2tcCMDc+Bsf0RYjwAyyMjh73nNDrRnmtU3BRg77ZC6gtKZdSWoW2mS780qIV2q6VRprf71ohd4g=
+X-Received: by 2002:a1f:1d50:: with SMTP id d77mr3576751vkd.18.1606844598652; 
+	Tue, 01 Dec 2020 09:43:18 -0800 (PST)
 MIME-Version: 1.0
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
-	casper.infradead.org. See http://www.infradead.org/rpr.html
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+References: <20201130171805.77712-1-snitzer@redhat.com>
+	<20201201160709.31748-1-snitzer@redhat.com>
+In-Reply-To: <20201201160709.31748-1-snitzer@redhat.com>
+From: John Dorminy <jdorminy@redhat.com>
+Date: Tue, 1 Dec 2020 12:43:07 -0500
+Message-ID: <CAMeeMh-dt91dJuwt+EpXPYbR-7Kfr6otBH+C7tBMqEF4toxS8w@mail.gmail.com>
+To: Mike Snitzer <snitzer@redhat.com>
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: linux-s390@vger.kernel.org, linux-bcache@vger.kernel.org,
-	Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org,
-	Song Liu <song@kernel.org>, dm-devel@redhat.com,
-	linux-block@vger.kernel.org, Tejun Heo <tj@kernel.org>
-Subject: [dm-devel] [PATCH 5/9] block: use ->bi_bdev for bio based I/O
-	accounting
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block <linux-block@vger.kernel.org>,
+	device-mapper development <dm-devel@redhat.com>,
+	Bruce Johnston <bjohnsto@redhat.com>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: [dm-devel] [PATCH v2] block: use gcd() to fix chunk_sectors
+	limit stacking
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -102,272 +125,58 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Rework the I/O accounting for bio based drivers to use ->bi_bdev.  This
-means all drivers can now simply use bio_start_io_acct to start
-accounting, and it will take partitions into account automatically.  To
-end I/O account either bio_end_io_acct can be used if the driver never
-remaps I/O to a different device, or bio_end_io_acct_remapped if the
-driver did remap the I/O.
+On Tue, Dec 1, 2020 at 11:07 AM Mike Snitzer <snitzer@redhat.com> wrote:
+>
+> commit 22ada802ede8 ("block: use lcm_not_zero() when stacking
+> chunk_sectors") broke chunk_sectors limit stacking. chunk_sectors must
+> reflect the most limited of all devices in the IO stack.
+>
+> Otherwise malformed IO may result. E.g.: prior to this fix,
+> ->chunk_sectors = lcm_not_zero(8, 128) would result in
+> blk_max_size_offset() splitting IO at 128 sectors rather than the
+> required more restrictive 8 sectors.
+>
+> And since commit 07d098e6bbad ("block: allow 'chunk_sectors' to be
+> non-power-of-2") care must be taken to properly stack chunk_sectors to
+> be compatible with the possibility that a non-power-of-2 chunk_sectors
+> may be stacked. This is why gcd() is used instead of reverting back
+> to using min_not_zero().
+>
+> Fixes: 22ada802ede8 ("block: use lcm_not_zero() when stacking chunk_sectors")
+> Fixes: 07d098e6bbad ("block: allow 'chunk_sectors' to be non-power-of-2")
+> Cc: stable@vger.kernel.org
+> Reported-by: John Dorminy <jdorminy@redhat.com>
+> Reported-by: Bruce Johnston <bjohnsto@redhat.com>
+> Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+> ---
+>  block/blk-settings.c | 5 ++++-
+>  1 file changed, 4 insertions(+), 1 deletion(-)
+>
+> v2: use gcd(), instead of min_not_zero(), as suggested by John Dorminy
+>
+> diff --git a/block/blk-settings.c b/block/blk-settings.c
+> index 9741d1d83e98..659cdb8a07fe 100644
+> --- a/block/blk-settings.c
+> +++ b/block/blk-settings.c
+> @@ -547,7 +547,10 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+>
+>         t->io_min = max(t->io_min, b->io_min);
+>         t->io_opt = lcm_not_zero(t->io_opt, b->io_opt);
+> -       t->chunk_sectors = lcm_not_zero(t->chunk_sectors, b->chunk_sectors);
+> +
+> +       /* Set non-power-of-2 compatible chunk_sectors boundary */
+> +       if (b->chunk_sectors)
+> +               t->chunk_sectors = gcd(t->chunk_sectors, b->chunk_sectors);
+>
+>         /* Physical block size a multiple of the logical block size? */
+>         if (t->physical_block_size & (t->logical_block_size - 1)) {
+> --
+> 2.15.0
+>
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- block/blk-core.c            | 23 +++++++++++++----------
- drivers/md/bcache/request.c | 34 +++++++++++++++++++++-------------
- drivers/md/md.c             |  8 ++++----
- include/linux/blkdev.h      | 21 ++++-----------------
- 4 files changed, 42 insertions(+), 44 deletions(-)
+Reviewed-by: John Dorminy <jdorminy@redhat.com>
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 3a8fef64d36bc1..d53cc887e1b8ea 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1319,14 +1319,17 @@ static unsigned long __part_start_io_acct(struct block_device *part,
- 	return now;
- }
- 
--unsigned long part_start_io_acct(struct gendisk *disk, struct block_device **part,
--				 struct bio *bio)
-+/**
-+ * bio_start_io_acct - start I/O accounting for bio based drivers
-+ * @bio:	bio to start account for
-+ *
-+ * Returns the start time that should be passed back to bio_end_io_acct().
-+ */
-+unsigned long bio_start_io_acct(struct bio *bio)
- {
--	*part = disk_map_sector_rcu(disk, bio->bi_iter.bi_sector);
--
--	return __part_start_io_acct(*part, bio_sectors(bio), bio_op(bio));
-+	return __part_start_io_acct(bio->bi_bdev, bio_sectors(bio), bio_op(bio));
- }
--EXPORT_SYMBOL_GPL(part_start_io_acct);
-+EXPORT_SYMBOL_GPL(bio_start_io_acct);
- 
- unsigned long disk_start_io_acct(struct gendisk *disk, unsigned int sectors,
- 				 unsigned int op)
-@@ -1349,12 +1352,12 @@ static void __part_end_io_acct(struct block_device *part, unsigned int op,
- 	part_stat_unlock();
- }
- 
--void part_end_io_acct(struct block_device *part, struct bio *bio,
--		      unsigned long start_time)
-+void bio_end_io_acct_remapped(struct bio *bio, unsigned long start_time,
-+		struct block_device *orig_bdev)
- {
--	__part_end_io_acct(part, bio_op(bio), start_time);
-+	__part_end_io_acct(orig_bdev, bio_op(bio), start_time);
- }
--EXPORT_SYMBOL_GPL(part_end_io_acct);
-+EXPORT_SYMBOL_GPL(bio_end_io_acct_remapped);
- 
- void disk_end_io_acct(struct gendisk *disk, unsigned int op,
- 		      unsigned long start_time)
-diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
-index dfc35d6d05ed1c..29c231758293e2 100644
---- a/drivers/md/bcache/request.c
-+++ b/drivers/md/bcache/request.c
-@@ -475,7 +475,7 @@ struct search {
- 	unsigned int		read_dirty_data:1;
- 	unsigned int		cache_missed:1;
- 
--	struct block_device	*part;
-+	struct block_device	*orig_bdev;
- 	unsigned long		start_time;
- 
- 	struct btree_op		op;
-@@ -670,8 +670,8 @@ static void bio_complete(struct search *s)
- {
- 	if (s->orig_bio) {
- 		/* Count on bcache device */
--		part_end_io_acct(s->part, s->orig_bio, s->start_time);
--
-+		bio_end_io_acct_remapped(s->orig_bio, s->start_time,
-+					 s->orig_bdev);
- 		trace_bcache_request_end(s->d, s->orig_bio);
- 		s->orig_bio->bi_status = s->iop.status;
- 		bio_endio(s->orig_bio);
-@@ -714,7 +714,8 @@ static void search_free(struct closure *cl)
- }
- 
- static inline struct search *search_alloc(struct bio *bio,
--					  struct bcache_device *d)
-+		struct bcache_device *d, struct block_device *orig_bdev,
-+		unsigned long start_time)
- {
- 	struct search *s;
- 
-@@ -732,7 +733,8 @@ static inline struct search *search_alloc(struct bio *bio,
- 	s->write		= op_is_write(bio_op(bio));
- 	s->read_dirty_data	= 0;
- 	/* Count on the bcache device */
--	s->start_time		= part_start_io_acct(d->disk, &s->part, bio);
-+	s->orig_bdev		= orig_bdev;
-+	s->start_time		= start_time;
- 	s->iop.c		= d->c;
- 	s->iop.bio		= NULL;
- 	s->iop.inode		= d->id;
-@@ -1074,7 +1076,7 @@ struct detached_dev_io_private {
- 	unsigned long		start_time;
- 	bio_end_io_t		*bi_end_io;
- 	void			*bi_private;
--	struct block_device	*part;
-+	struct block_device	*orig_bdev;
- };
- 
- static void detached_dev_end_io(struct bio *bio)
-@@ -1086,7 +1088,7 @@ static void detached_dev_end_io(struct bio *bio)
- 	bio->bi_private = ddip->bi_private;
- 
- 	/* Count on the bcache device */
--	part_end_io_acct(ddip->part, bio, ddip->start_time);
-+	bio_end_io_acct_remapped(bio, ddip->start_time, ddip->orig_bdev);
- 
- 	if (bio->bi_status) {
- 		struct cached_dev *dc = container_of(ddip->d,
-@@ -1099,7 +1101,8 @@ static void detached_dev_end_io(struct bio *bio)
- 	bio->bi_end_io(bio);
- }
- 
--static void detached_dev_do_request(struct bcache_device *d, struct bio *bio)
-+static void detached_dev_do_request(struct bcache_device *d, struct bio *bio,
-+		struct block_device *orig_bdev, unsigned long start_time)
- {
- 	struct detached_dev_io_private *ddip;
- 	struct cached_dev *dc = container_of(d, struct cached_dev, disk);
-@@ -1112,7 +1115,8 @@ static void detached_dev_do_request(struct bcache_device *d, struct bio *bio)
- 	ddip = kzalloc(sizeof(struct detached_dev_io_private), GFP_NOIO);
- 	ddip->d = d;
- 	/* Count on the bcache device */
--	ddip->start_time = part_start_io_acct(d->disk, &ddip->part, bio);
-+	ddip->orig_bdev = orig_bdev;
-+	ddip->start_time = start_time;
- 	ddip->bi_end_io = bio->bi_end_io;
- 	ddip->bi_private = bio->bi_private;
- 	bio->bi_end_io = detached_dev_end_io;
-@@ -1168,8 +1172,10 @@ static void quit_max_writeback_rate(struct cache_set *c,
- blk_qc_t cached_dev_submit_bio(struct bio *bio)
- {
- 	struct search *s;
--	struct bcache_device *d = bio->bi_bdev->bd_disk->private_data;
-+	struct block_device *orig_bdev = bio->bi_bdev;
-+	struct bcache_device *d = orig_bdev->bd_disk->private_data;
- 	struct cached_dev *dc = container_of(d, struct cached_dev, disk);
-+	unsigned long start_time;
- 	int rw = bio_data_dir(bio);
- 
- 	if (unlikely((d->c && test_bit(CACHE_SET_IO_DISABLE, &d->c->flags)) ||
-@@ -1194,11 +1200,13 @@ blk_qc_t cached_dev_submit_bio(struct bio *bio)
- 		}
- 	}
- 
-+	start_time = bio_start_io_acct(bio);
-+
- 	bio_set_dev(bio, dc->bdev);
- 	bio->bi_iter.bi_sector += dc->sb.data_offset;
- 
- 	if (cached_dev_get(dc)) {
--		s = search_alloc(bio, d);
-+		s = search_alloc(bio, d, orig_bdev, start_time);
- 		trace_bcache_request_start(s->d, bio);
- 
- 		if (!bio->bi_iter.bi_size) {
-@@ -1219,7 +1227,7 @@ blk_qc_t cached_dev_submit_bio(struct bio *bio)
- 		}
- 	} else
- 		/* I/O request sent to backing device */
--		detached_dev_do_request(d, bio);
-+		detached_dev_do_request(d, bio, orig_bdev, start_time);
- 
- 	return BLK_QC_T_NONE;
- }
-@@ -1283,7 +1291,7 @@ blk_qc_t flash_dev_submit_bio(struct bio *bio)
- 		return BLK_QC_T_NONE;
- 	}
- 
--	s = search_alloc(bio, d);
-+	s = search_alloc(bio, d, bio->bi_bdev, bio_start_io_acct(bio));
- 	cl = &s->cl;
- 	bio = &s->bio.bio;
- 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 3e72fc24f80f57..ced01ca5d7f090 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -463,8 +463,8 @@ struct md_io {
- 	struct mddev *mddev;
- 	bio_end_io_t *orig_bi_end_io;
- 	void *orig_bi_private;
-+	struct block_device *orig_bi_bdev;
- 	unsigned long start_time;
--	struct block_device *part;
- };
- 
- static void md_end_io(struct bio *bio)
-@@ -472,7 +472,7 @@ static void md_end_io(struct bio *bio)
- 	struct md_io *md_io = bio->bi_private;
- 	struct mddev *mddev = md_io->mddev;
- 
--	part_end_io_acct(md_io->part, bio, md_io->start_time);
-+	bio_end_io_acct_remapped(bio, md_io->start_time, md_io->orig_bi_bdev);
- 
- 	bio->bi_end_io = md_io->orig_bi_end_io;
- 	bio->bi_private = md_io->orig_bi_private;
-@@ -514,12 +514,12 @@ static blk_qc_t md_submit_bio(struct bio *bio)
- 		md_io->mddev = mddev;
- 		md_io->orig_bi_end_io = bio->bi_end_io;
- 		md_io->orig_bi_private = bio->bi_private;
-+		md_io->orig_bi_bdev = bio->bi_bdev;
- 
- 		bio->bi_end_io = md_end_io;
- 		bio->bi_private = md_io;
- 
--		md_io->start_time = part_start_io_acct(mddev->gendisk,
--						       &md_io->part, bio);
-+		md_io->start_time = bio_start_io_acct(bio);
- 	}
- 
- 	/* bio could be mergeable after passing to underlayer */
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 989c5d19eb7d2d..3a6103562fa8f7 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1943,22 +1943,9 @@ unsigned long disk_start_io_acct(struct gendisk *disk, unsigned int sectors,
- void disk_end_io_acct(struct gendisk *disk, unsigned int op,
- 		unsigned long start_time);
- 
--unsigned long part_start_io_acct(struct gendisk *disk,
--		struct block_device **part, struct bio *bio);
--void part_end_io_acct(struct block_device *part, struct bio *bio,
--		      unsigned long start_time);
--
--/**
-- * bio_start_io_acct - start I/O accounting for bio based drivers
-- * @bio:	bio to start account for
-- *
-- * Returns the start time that should be passed back to bio_end_io_acct().
-- */
--static inline unsigned long bio_start_io_acct(struct bio *bio)
--{
--	return disk_start_io_acct(bio->bi_bdev->bd_disk, bio_sectors(bio),
--				  bio_op(bio));
--}
-+unsigned long bio_start_io_acct(struct bio *bio);
-+void bio_end_io_acct_remapped(struct bio *bio, unsigned long start_time,
-+		struct block_device *orig_bdev);
- 
- /**
-  * bio_end_io_acct - end I/O accounting for bio based drivers
-@@ -1967,7 +1954,7 @@ static inline unsigned long bio_start_io_acct(struct bio *bio)
-  */
- static inline void bio_end_io_acct(struct bio *bio, unsigned long start_time)
- {
--	return disk_end_io_acct(bio->bi_bdev->bd_disk, bio_op(bio), start_time);
-+	return bio_end_io_acct_remapped(bio, start_time, bio->bi_bdev);
- }
- 
- int bdev_read_only(struct block_device *bdev);
--- 
-2.29.2
+Thanks!
 
 --
 dm-devel mailing list
