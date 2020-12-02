@@ -6,82 +6,82 @@ X-Spam-Status: No, score=-9.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CDF39C6369E
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Dec 2020 22:40:18 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D1DA7C64E7B
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Dec 2020 22:40:34 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id DA4F6221F7
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Dec 2020 22:40:17 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org DA4F6221F7
+	by mail.kernel.org (Postfix) with ESMTPS id 0AC3C221F7
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Dec 2020 22:40:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0AC3C221F7
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-526-Izd3ihSeMwauRDPOFE4FFA-1; Wed, 02 Dec 2020 17:40:12 -0500
-X-MC-Unique: Izd3ihSeMwauRDPOFE4FFA-1
+ us-mta-359-rUVlgEF_OTORwrb-xAynjQ-1; Wed, 02 Dec 2020 17:40:30 -0500
+X-MC-Unique: rUVlgEF_OTORwrb-xAynjQ-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BED833E747;
-	Wed,  2 Dec 2020 22:40:08 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9B60C19C44;
-	Wed,  2 Dec 2020 22:40:08 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8ADAD107B45F;
+	Wed,  2 Dec 2020 22:40:25 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6A8EE19C44;
+	Wed,  2 Dec 2020 22:40:25 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 457A94BB7B;
-	Wed,  2 Dec 2020 22:40:08 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 40FA2180954D;
+	Wed,  2 Dec 2020 22:40:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B2Me6Gc015406 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 2 Dec 2020 17:40:06 -0500
+	id 0B2MeO2N015436 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 2 Dec 2020 17:40:24 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 94E38D7B02; Wed,  2 Dec 2020 22:40:06 +0000 (UTC)
+	id 19DF11018E59; Wed,  2 Dec 2020 22:40:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8D7B3D7B0B
-	for <dm-devel@redhat.com>; Wed,  2 Dec 2020 22:40:04 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 14F6F1018CBE
+	for <dm-devel@redhat.com>; Wed,  2 Dec 2020 22:40:21 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 091D7858EEC
-	for <dm-devel@redhat.com>; Wed,  2 Dec 2020 22:40:04 +0000 (UTC)
-Received: from mail-qk1-f194.google.com (mail-qk1-f194.google.com
-	[209.85.222.194]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-506-bEHk9m5FMseSq-KM_foC_g-1; Wed, 02 Dec 2020 17:40:01 -0500
-X-MC-Unique: bEHk9m5FMseSq-KM_foC_g-1
-Received: by mail-qk1-f194.google.com with SMTP id b144so332992qkc.13
-	for <dm-devel@redhat.com>; Wed, 02 Dec 2020 14:40:01 -0800 (PST)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8AB86858284
+	for <dm-devel@redhat.com>; Wed,  2 Dec 2020 22:40:21 +0000 (UTC)
+Received: from mail-qt1-f195.google.com (mail-qt1-f195.google.com
+	[209.85.160.195]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-290-ZxOOlrDWP6SiPAzJFGmuaA-1; Wed, 02 Dec 2020 17:40:19 -0500
+X-MC-Unique: ZxOOlrDWP6SiPAzJFGmuaA-1
+Received: by mail-qt1-f195.google.com with SMTP id 7so42161qtp.1
+	for <dm-devel@redhat.com>; Wed, 02 Dec 2020 14:40:19 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20161025;
 	h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
 	:references:mime-version:content-disposition:in-reply-to;
-	bh=lcXYuHAwEN3bFhp+hU4mksRhemmvNH25lzSQUI1hows=;
-	b=F2oOyYl7UtUGcTLWs18hIIf3eFtFy9FBkq0dueWwLDr6ohmHcd3lyNRzGb8oxjQwZH
-	zvbT6NmnildT/B2S5UXM2RZ8Qr7bveCrMjUw8bevlW7qTXmdE5QRm6eQBQv4eM15V+Jn
-	H+R4UKeN5AhjZrG80b4bSXe3WMTWWuQr3M4traNzzXPrnqJBsuijp8wSpRGN+tCp+BxD
-	QLN37i2e2xmlWecWzsO0XcKfyc6zFl2AysYJv+D+p2yJo/9MloC0XeUqNiJpssnsI6QQ
-	EFNgowEnRJm/VZTkSKt4b++SBF6ZrEd9nKsImt24fQ4HvzWqLRpn0+an/xfjOasxMtCI
-	h3wQ==
-X-Gm-Message-State: AOAM532rVS4FSbzPZ7AZ9og2YS0keDpCEDqxpSoLAfImU5KrPFqMmsM4
-	GdKqroBt0V7B6Mql0XprrYg=
-X-Google-Smtp-Source: ABdhPJzlGJwRriEEpzrUJVGgCffXwM6L1NA2hwaKhO2rHq7h+FQnF+3tfM3qdL7QbQn44WCGvJfk/g==
-X-Received: by 2002:a37:4854:: with SMTP id v81mr42262qka.20.1606948801332;
-	Wed, 02 Dec 2020 14:40:01 -0800 (PST)
+	bh=5VWMK8riaN21ed1mnCTXtrML+Qu3sFGPDoSWLxZbmqc=;
+	b=ssTHtvUVC5Pi3q1ebGX+0xWfQ3VP+ufk3iJfNJI28wSWsByuZ0XoU+UBs7qVRL1Pex
+	IOHWtRudO0NbMqiOOCEhO4TvVSU9U+2J/YAhKCkCz+uQ2wB4OIHLYC8jachUAQUV+ZSl
+	0n/0300QPeu2hOOxGahaKjdm5GTiZ7/Cq/C+NVU8PwPOBhFPyC+ihJD/I/+WG26hlHua
+	cDlrnLcYezaz0pTU6yUd6E+Q2ioEBYkxYUaezYKsOqhe19ksJdubAA9Z5IDvshB5wK4J
+	Y/YShsJ5n6LgdG+Q3KNOaNzTRwCV4eyEZb4LY7GLgQ8LQ0W4QR9KerK3w2TVV8w3F3Oq
+	Hy6Q==
+X-Gm-Message-State: AOAM532SkdTS7vjztJZcvMtMPXW0NXcrJhYWeFiBt7zLnL6Wp2N3877E
+	FcNYnvRsZHCCVAyPie5LFlg=
+X-Google-Smtp-Source: ABdhPJyoCrR3r2+acO4knNjPoALcWJhpUyJ+Mg39+EUGpGq4eXtk9K7kIBllhBrw6AWtpTUnu8G/Fw==
+X-Received: by 2002:a05:622a:208:: with SMTP id
+	b8mr441919qtx.124.1606948818638; 
+	Wed, 02 Dec 2020 14:40:18 -0800 (PST)
 Received: from localhost ([2620:10d:c091:480::1:ec0f])
-	by smtp.gmail.com with ESMTPSA id y192sm67899qkb.12.2020.12.02.14.40.00
+	by smtp.gmail.com with ESMTPSA id b64sm56207qkg.19.2020.12.02.14.40.17
 	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Wed, 02 Dec 2020 14:40:00 -0800 (PST)
-Date: Wed, 2 Dec 2020 17:39:32 -0500
+	Wed, 02 Dec 2020 14:40:18 -0800 (PST)
+Date: Wed, 2 Dec 2020 17:39:50 -0500
 From: Tejun Heo <tj@kernel.org>
 To: Christoph Hellwig <hch@lst.de>
-Message-ID: <X8gXpGs34mQTeSJ6@mtj.duckdns.org>
+Message-ID: <X8gXtv4ULMBfVc2p@mtj.duckdns.org>
 References: <20201201165424.2030647-1-hch@lst.de>
-	<20201201165424.2030647-2-hch@lst.de>
+	<20201201165424.2030647-3-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20201201165424.2030647-2-hch@lst.de>
+In-Reply-To: <20201201165424.2030647-3-hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -90,14 +90,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 Cc: Jens Axboe <axboe@kernel.dk>, linux-s390@vger.kernel.org,
 	linux-bcache@vger.kernel.org, Coly Li <colyli@suse.de>,
 	linux-raid@vger.kernel.org, Song Liu <song@kernel.org>,
 	dm-devel@redhat.com, linux-block@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH 1/9] brd: remove the end of device check in
-	brd_do_bvec
+Subject: Re: [dm-devel] [PATCH 2/9] dcssblk: remove the end of device check
+ in brd_do_bvec
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -120,7 +120,7 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Dec 01, 2020 at 05:54:16PM +0100, Christoph Hellwig wrote:
+On Tue, Dec 01, 2020 at 05:54:17PM +0100, Christoph Hellwig wrote:
 > The block layer already checks for this conditions in bio_check_eod
 > before calling the driver.
 > 
