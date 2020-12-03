@@ -1,102 +1,73 @@
-Return-Path: <SRS0=/aYG=FG=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=8v/u=FH=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 26B4DC6369E
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Dec 2020 23:22:57 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D067CC6369E
+	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 03:26:45 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 6741C206F9
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Dec 2020 23:22:55 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 6741C206F9
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+	by mail.kernel.org (Postfix) with ESMTPS id 0DD1720643
+	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 03:26:44 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0DD1720643
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1606966001;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=YCC22kA9BfS7d5D34gfcTwvkVFsR3+F2aB48/+c/SFU=;
+	b=ZJFK0m43YvvJdJAvuKMsvBDn2UAMOgPxwLDz7cq8xvdZdkyPYCSAbYqREa3PCpkXfDxFEs
+	x6UPL4J4w0TsaEXBLqLm9SFcd9GyzC+wj5oxOrVjk02THxFWCAOi80zdbPsO14nmCjmJM1
+	gXOWmnvJDOuZNVhZL+VGQdCUU7EsdNs=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-40-ZG4X7L68NZGiuuPt7Hx_Fw-1; Wed, 02 Dec 2020 18:22:50 -0500
-X-MC-Unique: ZG4X7L68NZGiuuPt7Hx_Fw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-511-gZ8eS6vFOGS64ygwKKpjpQ-1; Wed, 02 Dec 2020 22:26:39 -0500
+X-MC-Unique: gZ8eS6vFOGS64ygwKKpjpQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B2E6380364B;
-	Wed,  2 Dec 2020 23:22:45 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 611A75D6AC;
-	Wed,  2 Dec 2020 23:22:45 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E41EE1007B05;
+	Thu,  3 Dec 2020 03:26:33 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0CBD019C46;
+	Thu,  3 Dec 2020 03:26:33 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0414D4BB7B;
-	Wed,  2 Dec 2020 23:22:44 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 452A5180954D;
+	Thu,  3 Dec 2020 03:26:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com
+	[10.5.11.16])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B2NMiKU020591 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 2 Dec 2020 18:22:44 -0500
+	id 0B33QTlR011578 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 2 Dec 2020 22:26:29 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id DF58A10F2700; Wed,  2 Dec 2020 23:22:43 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B46D510F2704
-	for <dm-devel@redhat.com>; Wed,  2 Dec 2020 23:22:38 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 15D258007D9
-	for <dm-devel@redhat.com>; Wed,  2 Dec 2020 23:22:38 +0000 (UTC)
-Received: from mail-qk1-f193.google.com (mail-qk1-f193.google.com
-	[209.85.222.193]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-361-JJXxWCf8OxuSVczFDxdBlw-1; Wed, 02 Dec 2020 18:22:36 -0500
-X-MC-Unique: JJXxWCf8OxuSVczFDxdBlw-1
-Received: by mail-qk1-f193.google.com with SMTP id z188so457212qke.9
-	for <dm-devel@redhat.com>; Wed, 02 Dec 2020 15:22:35 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
-	:references:mime-version:content-disposition:in-reply-to;
-	bh=b+r2FYviV6fq0hR9F0gW+ANicng0tQNzePfUHujQp90=;
-	b=uI0+jH8cvkWavIkpDEUYBZywKo/menE0GV4glXVnfmWOpfuguPm3AWCLndx6JZ/s5J
-	hkS0PALlwyBUq6/Cs7UqPkc+qKdK8HBsCBkKxxNcIloLDzfazXAU3jI0hLjwu5M7F4KC
-	f2TvLxLqogr0S6rm9/u32eJKAYunU7a4KQ6hMlEZ+oarWpenjYzGF1W2N2gkVEuSOyv8
-	Gmcgnkn0XxhqTMfNnw/oE/CftRjHucZrE3n5KQhnFBsTfBuRM/itwzgvbumn7jEb3MNd
-	y9prhrUcKOb+um2rARZHwK18SjjFD1HISDp6L0v8EiSEPpAtriUnB9VKYBHt7a2oz2UA
-	SSvA==
-X-Gm-Message-State: AOAM530yuGA4Ik7jgtE5YRcFZtU3SYnStg6oRLm9rfB7pSCjJa8QB4SS
-	xhTTXZZwF5s/JVf5KevZsIc=
-X-Google-Smtp-Source: ABdhPJyg0LHfRF85QBVE1aNbA5meOz/wKZPBz7cbhnhS5PHEqBCsQVBc6aBImcA/HPpiZ4RRhxFhxQ==
-X-Received: by 2002:a37:2c82:: with SMTP id s124mr200575qkh.130.1606951355454; 
-	Wed, 02 Dec 2020 15:22:35 -0800 (PST)
-Received: from localhost ([2620:10d:c091:480::1:ec0f])
-	by smtp.gmail.com with ESMTPSA id
-	h125sm169910qkc.36.2020.12.02.15.22.34
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Wed, 02 Dec 2020 15:22:34 -0800 (PST)
-Date: Wed, 2 Dec 2020 18:22:06 -0500
-From: Tejun Heo <tj@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <X8ghnnEfBZWG+nLr@mtj.duckdns.org>
-References: <20201201165424.2030647-1-hch@lst.de>
-	<20201201165424.2030647-10-hch@lst.de>
+	id 3609C5C1BD; Thu,  3 Dec 2020 03:26:29 +0000 (UTC)
+Received: from T590 (ovpn-12-87.pek2.redhat.com [10.72.12.87])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8BD8C5C1B4;
+	Thu,  3 Dec 2020 03:26:13 +0000 (UTC)
+Date: Thu, 3 Dec 2020 11:26:08 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Message-ID: <20201203032608.GD540033@T590>
+References: <20201130171805.77712-1-snitzer@redhat.com>
+	<20201201160709.31748-1-snitzer@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <20201201165424.2030647-10-hch@lst.de>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+In-Reply-To: <20201201160709.31748-1-snitzer@redhat.com>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, linux-s390@vger.kernel.org,
-	linux-bcache@vger.kernel.org, Coly Li <colyli@suse.de>,
-	linux-raid@vger.kernel.org, Song Liu <song@kernel.org>,
-	dm-devel@redhat.com, linux-block@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH 9/9] block: use an xarray for disk->part_tbl
+Cc: axboe@kernel.dk, martin.petersen@oracle.com, jdorminy@redhat.com,
+	bjohnsto@redhat.com, linux-block@vger.kernel.org, dm-devel@redhat.com
+Subject: Re: [dm-devel] [PATCH v2] block: use gcd() to fix chunk_sectors
+	limit stacking
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -110,7 +81,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -119,19 +90,37 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Dec 01, 2020 at 05:54:24PM +0100, Christoph Hellwig wrote:
-> Now that no fast path lookups in the partition table are left, there is
-> no point in micro-optimizing the data structure for it.  Just use a bog
-> standard xarray.
+On Tue, Dec 01, 2020 at 11:07:09AM -0500, Mike Snitzer wrote:
+> commit 22ada802ede8 ("block: use lcm_not_zero() when stacking
+> chunk_sectors") broke chunk_sectors limit stacking. chunk_sectors must
+> reflect the most limited of all devices in the IO stack.
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> Otherwise malformed IO may result. E.g.: prior to this fix,
+> ->chunk_sectors = lcm_not_zero(8, 128) would result in
+> blk_max_size_offset() splitting IO at 128 sectors rather than the
+> required more restrictive 8 sectors.
 
-Acked-by: Tejun Heo <tj@kernel.org>
+What is the user-visible result of splitting IO at 128 sectors?
 
-Thanks!
+I understand it isn't related with correctness, because the underlying
+queue can split by its own chunk_sectors limit further. So is the issue
+too many further-splitting on queue with chunk_sectors 8? then CPU
+utilization is increased? Or other issue?
 
--- 
-tejun
+> 
+> And since commit 07d098e6bbad ("block: allow 'chunk_sectors' to be
+> non-power-of-2") care must be taken to properly stack chunk_sectors to
+> be compatible with the possibility that a non-power-of-2 chunk_sectors
+> may be stacked. This is why gcd() is used instead of reverting back
+> to using min_not_zero().
+
+I guess gcd() won't be better because gcd(a,b) is <= max(a, b), so bio
+size is decreased much with gcd(a, b), and IO performance should be affected.
+Maybe worse than min_not_zero(a, b) which is often > gcd(a, b).
+
+
+Thanks,
+Ming
 
 --
 dm-devel mailing list
