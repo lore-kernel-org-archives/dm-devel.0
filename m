@@ -2,83 +2,86 @@ Return-Path: <SRS0=8v/u=FH=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-10.7 required=3.0 tests=BAYES_00,
+	DKIM_ADSP_CUSTOM_MED,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2F9B2C4361A
-	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 16:18:12 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6DB49C433FE
+	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 16:18:16 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 575F120658
-	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 16:18:10 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 575F120658
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=codeaurora.org
+	by mail.kernel.org (Postfix) with ESMTPS id AD87B20658
+	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 16:18:15 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org AD87B20658
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-538--dUZTUkXPPWliwuP1SBeug-1; Thu, 03 Dec 2020 11:18:08 -0500
-X-MC-Unique: -dUZTUkXPPWliwuP1SBeug-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-521-cWwP1B2APViiq5XvcoPntA-1; Thu, 03 Dec 2020 11:18:11 -0500
+X-MC-Unique: cWwP1B2APViiq5XvcoPntA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 827E4800D53;
-	Thu,  3 Dec 2020 16:18:03 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id EA1C9AFA85;
+	Thu,  3 Dec 2020 16:18:06 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 191B75C1B4;
-	Thu,  3 Dec 2020 16:18:03 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CDC4460854;
+	Thu,  3 Dec 2020 16:18:06 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 901F64BB7B;
-	Thu,  3 Dec 2020 16:18:02 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A158C4A7C6;
+	Thu,  3 Dec 2020 16:18:06 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B2IFVkI020830 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 2 Dec 2020 13:15:31 -0500
+	id 0B30mhq0027431 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 2 Dec 2020 19:48:43 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 9FD6A2026D13; Wed,  2 Dec 2020 18:15:31 +0000 (UTC)
+	id 330F12026D47; Thu,  3 Dec 2020 00:48:43 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9AAB52026D47
-	for <dm-devel@redhat.com>; Wed,  2 Dec 2020 18:15:29 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2DF302026D25
+	for <dm-devel@redhat.com>; Thu,  3 Dec 2020 00:48:40 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2BB11811E86
-	for <dm-devel@redhat.com>; Wed,  2 Dec 2020 18:15:29 +0000 (UTC)
-Received: from a2.mail.mailgun.net (a2.mail.mailgun.net [198.61.254.61])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-100-309SmAhONUCrwm6vcUA98w-1; Wed, 02 Dec 2020 13:15:27 -0500
-X-MC-Unique: 309SmAhONUCrwm6vcUA98w-1
-X-Mailgun-Sending-Ip: 198.61.254.61
-X-Mailgun-Sid: WyJmZGZhMyIsICJkbS1kZXZlbEByZWRoYXQuY29tIiwgImJlOWU0YSJd
-Received: from smtp.codeaurora.org
-	(ec2-35-166-182-171.us-west-2.compute.amazonaws.com [35.166.182.171])
-	by smtp-out-n08.prod.us-west-2.postgun.com with SMTP id
-	5fc7d75d2ef3e1355fe61ea9 (version=TLS1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256); Wed, 02 Dec 2020 18:05:17
-	GMT
-Received: by smtp.codeaurora.org (Postfix, from userid 1001)
-	id 82333C433C6; Wed,  2 Dec 2020 18:05:17 +0000 (UTC)
-Received: from rsiddoji1 (unknown [123.201.165.6])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested) (Authenticated sender: rsiddoji)
-	by smtp.codeaurora.org (Postfix) with ESMTPSA id C2CABC433ED;
-	Wed,  2 Dec 2020 18:05:15 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 smtp.codeaurora.org C2CABC433ED
-From: "Ravi Kumar Siddojigari" <rsiddoji@codeaurora.org>
-To: <linux-block@vger.kernel.org>, <dm-devel@redhat.com>
-References: 
-In-Reply-To: 
-Date: Wed, 2 Dec 2020 23:35:11 +0530
-Organization: The Qualcomm Innovation Center,
-	Inc. is a member of the Code Aurora Forum,
-	\na Linux Foundation Collaborative Project
-Message-ID: <000001d6c8d5$b03e7200$10bb5600$@codeaurora.org>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A7ECA185A794
+	for <dm-devel@redhat.com>; Thu,  3 Dec 2020 00:48:40 +0000 (UTC)
+Received: from mail-pl1-f195.google.com (mail-pl1-f195.google.com
+	[209.85.214.195]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-309-B2BXc_zbNlqQD8UULwNNPw-1; Wed, 02 Dec 2020 19:48:36 -0500
+X-MC-Unique: B2BXc_zbNlqQD8UULwNNPw-1
+Received: by mail-pl1-f195.google.com with SMTP id f1so166299plt.12;
+	Wed, 02 Dec 2020 16:48:36 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+	:content-transfer-encoding;
+	bh=r1vhAw5KYK+A2HTHj95cD8WrBZBiV4qESvc7DBRN6Tk=;
+	b=krjzOtAcNjogAab8G1M9fO+f3hR0O19HqHIXdk0E8e38mZIqmtHftbtvsOCmn/KDHi
+	3SfUeCn2Y52QBBoP0tmXSdAaOcTJdDo8M4qb8JLVg25BJTqkE0Y/WY8LSBmqQzrsqeN7
+	zUyDn5Lf+yJejWysdke4yeKiVyC71uxsLBQY/aN3oaRFZKSmihiSXBk4BJSCl/TYC5fW
+	mUpO8Dn0ogjxbQxKEfGMuq29smOE9aizbfuzyqFMJ6YOyzA/nEKo/AW0Y7V5jYS+duiH
+	FX2//eRS0Hc7N7xQuPhdBDG84uFcKeweyfFR65jagWZ2hBL0gHxtIthwfHbSKjdgTobp
+	Eoew==
+X-Gm-Message-State: AOAM53031wLdlLoQDWbmQMxFOrsEQGi5o+OcEsRMRNRHRQkujxiV3b4x
+	Jh9fSel9hB4U75HWmLMYUNJlW6AOwjAeq0qm
+X-Google-Smtp-Source: ABdhPJyQ8piQnKQ4iYxll6utigDCPUh5mZSGvq4OuRNasqXf4Dn+/FW1ocu523juX23gKb94xR2FiQ==
+X-Received: by 2002:a17:902:b7c3:b029:da:74c3:427 with SMTP id
+	v3-20020a170902b7c3b02900da74c30427mr775860plz.38.1606956514876;
+	Wed, 02 Dec 2020 16:48:34 -0800 (PST)
+Received: from localhost.localdomain ([27.122.242.75])
+	by smtp.gmail.com with ESMTPSA id d68sm241314pfd.32.2020.12.02.16.48.32
+	(version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
+	Wed, 02 Dec 2020 16:48:34 -0800 (PST)
+From: Hyeongseok Kim <hyeongseok@gmail.com>
+To: agk@redhat.com, snitzer@redhat.com
+Date: Thu,  3 Dec 2020 09:46:59 +0900
+Message-Id: <20201203004659.95708-1-hyeongseok@gmail.com>
 MIME-Version: 1.0
-Thread-Index: AQH+wGaSVHC4B8VH2eGDagahwX5nL6mUKdpA
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -90,8 +93,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Thu, 03 Dec 2020 11:17:59 -0500
-Subject: Re: [dm-devel] [PATCH] dm verity: correcting logic used with
-	corrupted_errs counter
+Cc: Hyeongseok Kim <hyeongseok@gmail.com>, dm-devel@redhat.com,
+	samitolvanen@google.com, hyeongseok.kim@lge.com
+Subject: [dm-devel] [PATCH] dm verity: skip verity work on I/O errors when
+	system is shutting down
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,88 +110,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-us
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Sorry,  Resending the patch for comments with  dm-devel added .
+If emergency system shutdown is called, like by thermal shutdown,
+dm device could be alive when the block device couldn't process
+I/O requests anymore. In this status, the handling of I/O errors
+by new dm I/O requests or by those already in-flight can lead to
+a verity corruption state, which is misjudgment.
+So, skip verity work for I/O error when system is shutting down.
 
------Original Message-----
-From: Ravi Kumar Siddojigari <rsiddoji@codeaurora.org> 
-Sent: Friday, November 20, 2020 6:37 PM
-To: 'linux-block@vger.kernel.org' <linux-block@vger.kernel.org>
-Cc: 'dm-devel@redhat.com' <dm-devel@redhat.com>
-Subject: RE: [PATCH] dm verity: correcting logic used with corrupted_errs
-counter
-
-One more question  :
-	Current code has DM_VERITY_MAX_CORRUPTED_ERRS  set to 100  can we
-reduce this ? or is there any  data that made us to keep this 100 ?
-Regards,
-Ravi
-
------Original Message-----
-From: Ravi Kumar Siddojigari <rsiddoji@codeaurora.org> 
-Sent: Wednesday, November 18, 2020 6:17 PM
-To: 'linux-block@vger.kernel.org' <linux-block@vger.kernel.org>
-Subject: [PATCH] dm verity: correcting logic used with corrupted_errs
-counter
-
-In verity_handle_err we see that the "corrupted_errs"  is never going to be
-more than one as the code will fall through "out" label and hit
-panic/kernel_restart on the first error  which is not as expected.. 
-Following patch will make sure that corrupted_errs are incremented and only
-panic/kernel_restart once it reached DM_VERITY_MAX_CORRUPTED_ERRS.
-
-Signed-off-by: Ravi Kumar Siddojigari <rsiddoji@codeaurora.org>
+Signed-off-by: Hyeongseok Kim <hyeongseok@gmail.com>
 ---
- drivers/md/dm-verity-target.c | 8 +++++---
- 1 file changed, 5 insertions(+), 3 deletions(-)
+ drivers/md/dm-verity-target.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index f74982dcbea0..d86900a2a8d7 100644
+index f74982dcbea0..ba62c537798b 100644
 --- a/drivers/md/dm-verity-target.c
 +++ b/drivers/md/dm-verity-target.c
-@@ -221,8 +221,10 @@ static int verity_handle_err(struct dm_verity *v, enum
-verity_block_type type,
- 	/* Corruption should be visible in device status in all modes */
- 	v->hash_failed = 1;
+@@ -64,6 +64,15 @@ struct buffer_aux {
+ 	int hash_verified;
+ };
  
--	if (v->corrupted_errs >= DM_VERITY_MAX_CORRUPTED_ERRS)
-+	if (v->corrupted_errs >= DM_VERITY_MAX_CORRUPTED_ERRS) {
-+		DMERR("%s: reached maximum errors", v->data_dev->name);
- 		goto out;
-+	}
++/*
++ * While system shutdown, skip verity work for I/O error.
++ */
++static inline bool verity_is_system_shutting_down(void)
++{
++	return system_state == SYSTEM_HALT || system_state == SYSTEM_POWER_OFF
++		|| system_state == SYSTEM_RESTART;
++}
++
+ /*
+  * Initialize struct buffer_aux for a freshly created buffer.
+  */
+@@ -564,7 +573,8 @@ static void verity_end_io(struct bio *bio)
+ {
+ 	struct dm_verity_io *io = bio->bi_private;
  
- 	v->corrupted_errs++;
- 
-@@ -240,13 +242,13 @@ static int verity_handle_err(struct dm_verity *v, enum
-verity_block_type type,
- 	DMERR_LIMIT("%s: %s block %llu is corrupted", v->data_dev->name,
- 		    type_str, block);
- 
--	if (v->corrupted_errs == DM_VERITY_MAX_CORRUPTED_ERRS)
--		DMERR("%s: reached maximum errors", v->data_dev->name);
- 
- 	snprintf(verity_env, DM_VERITY_ENV_LENGTH, "%s=%d,%llu",
- 		DM_VERITY_ENV_VAR_NAME, type, block);
- 
- 	kobject_uevent_env(&disk_to_dev(dm_disk(md))->kobj, KOBJ_CHANGE,
-envp);
-+	/* DM_VERITY_MAX_CORRUPTED_ERRS limit not reached yet */
-+		return 0;
- 
- out:
- 	if (v->mode == DM_VERITY_MODE_LOGGING)
---
-The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum, a
-Linux Foundation Collaborative Project
-
+-	if (bio->bi_status && !verity_fec_is_enabled(io->v)) {
++	if (bio->bi_status &&
++		(!verity_fec_is_enabled(io->v) || verity_is_system_shutting_down())) {
+ 		verity_finish_io(io, bio->bi_status);
+ 		return;
+ 	}
+-- 
+2.27.0.83.g0313f36
 
 --
 dm-devel mailing list
