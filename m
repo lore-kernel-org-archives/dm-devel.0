@@ -7,128 +7,128 @@ X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B426C71156
-	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 09:05:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 14DECC63777
+	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 09:06:31 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 471D1206E3
-	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 09:05:22 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 471D1206E3
+	by mail.kernel.org (Postfix) with ESMTPS id 49018217A0
+	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 09:06:29 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 49018217A0
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-201-g5kXD4j2MwCXimI_X8pZsA-1; Thu, 03 Dec 2020 04:05:19 -0500
-X-MC-Unique: g5kXD4j2MwCXimI_X8pZsA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-461-Ym1f0yhfOOW_YaErOwxpNA-1; Thu, 03 Dec 2020 04:06:26 -0500
+X-MC-Unique: Ym1f0yhfOOW_YaErOwxpNA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 388039A22E;
-	Thu,  3 Dec 2020 09:05:14 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1347318A2F;
-	Thu,  3 Dec 2020 09:05:14 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D108E1081B22;
+	Thu,  3 Dec 2020 09:06:20 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8130B5C1B4;
+	Thu,  3 Dec 2020 09:06:20 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A91C6180954D;
-	Thu,  3 Dec 2020 09:05:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1ED685002C;
+	Thu,  3 Dec 2020 09:06:20 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B395CXt012185 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 3 Dec 2020 04:05:12 -0500
+	id 0B396I52012757 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 3 Dec 2020 04:06:19 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id EC9E2D7DFE; Thu,  3 Dec 2020 09:05:11 +0000 (UTC)
+	id C57162166B27; Thu,  3 Dec 2020 09:06:18 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E5824D7DF6
-	for <dm-devel@redhat.com>; Thu,  3 Dec 2020 09:05:09 +0000 (UTC)
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BED3C2166B2B
+	for <dm-devel@redhat.com>; Thu,  3 Dec 2020 09:06:16 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6EB97811E84
-	for <dm-devel@redhat.com>; Thu,  3 Dec 2020 09:05:09 +0000 (UTC)
-Received: from esa2.hgst.iphmx.com (esa2.hgst.iphmx.com [68.232.143.124])
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 994F68007DF
+	for <dm-devel@redhat.com>; Thu,  3 Dec 2020 09:06:16 +0000 (UTC)
+Received: from esa6.hgst.iphmx.com (esa6.hgst.iphmx.com [216.71.154.45])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-27-Xxt-LQ1vNg2zolA-8vFfhQ-1; Thu, 03 Dec 2020 04:05:06 -0500
-X-MC-Unique: Xxt-LQ1vNg2zolA-8vFfhQ-1
-IronPort-SDR: /xaIun1MX7pwirgd2wVgHeTRt9jpQQUvg0rFDJ/7UDHUE4Uf/LKyaWXJn3VeRt0QmigvBovPDi
-	ofCHHzfoCdyDOJF5X94HSVOuYx8vDc8liHGeeUOfQ/oH1ockR3jxMLYvSJObu5L1VjHZ8dii2F
-	0JG8tTlUPowRC9ra/21qN/7HhFEaqSrYUE+JCNICMY3SIWi81ASOqylz6v8ckMEyMp7HLpqWlC
-	+tsP1BU86TGQdw7JUiPrcE4O5deKQuVxljk4nml8aT3LDKuItoFbIQCtXyWw16tEpuHiKnFL4j
-	PYg=
-X-IronPort-AV: E=Sophos;i="5.78,389,1599494400"; d="scan'208";a="257939590"
-Received: from mail-bn8nam08lp2045.outbound.protection.outlook.com (HELO
-	NAM04-BN8-obe.outbound.protection.outlook.com) ([104.47.74.45])
-	by ob1.hgst.iphmx.com with ESMTP; 03 Dec 2020 17:19:10 +0800
+	us-mta-32-SctrQW4ZOVqh_NcEyX7e-w-1; Thu, 03 Dec 2020 04:06:14 -0500
+X-MC-Unique: SctrQW4ZOVqh_NcEyX7e-w-1
+IronPort-SDR: RBccr5No0h8bAoQ5FtqzNVbBGi6+WP6nZ58ZGjqMcrt25TVyyDUwjOSjfwTZdPNuzdZTfiNVdH
+	0DDfhmXjOSpKLGArHFMh8PSW2dyyW4Fv7O8LU/hs/8FS9tlso+0IKA0akrY7qfP4d/wLRPJp5w
+	CQdyMqNsMDUL8CQiSEmK5Zrjkk7PF3M/RRso30bemqYFsRK3V0XSUPHraXZFh/PXtkd95cJ/H4
+	sHr3uRbe//avXuJrvH8oTclskAX3Bv6wE4OHcgrq7fcv2VTHFGq/yCjsWRbGXI5FcDxIfHjEVv
+	yGE=
+X-IronPort-AV: E=Sophos;i="5.78,389,1599494400"; d="scan'208";a="155445590"
+Received: from mail-bn8nam08lp2043.outbound.protection.outlook.com (HELO
+	NAM04-BN8-obe.outbound.protection.outlook.com) ([104.47.74.43])
+	by ob1.hgst.iphmx.com with ESMTP; 03 Dec 2020 17:06:12 +0800
 Received: from CH2PR04MB6522.namprd04.prod.outlook.com (2603:10b6:610:34::19)
 	by CH2PR04MB6854.namprd04.prod.outlook.com (2603:10b6:610:99::15)
 	with Microsoft SMTP Server (version=TLS1_2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3611.23;
-	Thu, 3 Dec 2020 09:02:58 +0000
+	Thu, 3 Dec 2020 09:06:11 +0000
 Received: from CH2PR04MB6522.namprd04.prod.outlook.com
 	([fe80::897c:a04b:4eb0:640a]) by
 	CH2PR04MB6522.namprd04.prod.outlook.com
 	([fe80::897c:a04b:4eb0:640a%7]) with mapi id 15.20.3589.022;
-	Thu, 3 Dec 2020 09:02:58 +0000
+	Thu, 3 Dec 2020 09:06:11 +0000
 From: Damien Le Moal <Damien.LeMoal@wdc.com>
 To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-Thread-Topic: [dm-devel] [PATCH 4/5] block: remove the request_queue argument
-	to the block_bio_remap tracepoint
-Thread-Index: AQHWyVMYnJFmCt1NHkWKCNqf/y7nEA==
-Date: Thu, 3 Dec 2020 09:02:58 +0000
-Message-ID: <CH2PR04MB65229B3EE2DBB2BDD215EEA9E7F20@CH2PR04MB6522.namprd04.prod.outlook.com>
+Thread-Topic: [dm-devel] [PATCH 5/5] block: remove the request_queue to
+	argument request based tracepoints
+Thread-Index: AQHWyVOLwVXcWje+hU6zvE+nFjfD1w==
+Date: Thu, 3 Dec 2020 09:06:11 +0000
+Message-ID: <CH2PR04MB6522A9E5DC906CB816CA6150E7F20@CH2PR04MB6522.namprd04.prod.outlook.com>
 References: <20201130175854.982460-1-hch@lst.de>
-	<20201130175854.982460-5-hch@lst.de>
+	<20201130175854.982460-6-hch@lst.de>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
 x-originating-ip: [129.253.182.59]
 x-ms-publictraffictype: Email
 x-ms-office365-filtering-ht: Tenant
-x-ms-office365-filtering-correlation-id: 9249a803-9606-4da3-2824-08d8976a3b30
+x-ms-office365-filtering-correlation-id: 29d253d3-32c1-4711-2d95-08d8976aae46
 x-ms-traffictypediagnostic: CH2PR04MB6854:
-x-microsoft-antispam-prvs: <CH2PR04MB68540A0E133BD2A6FA23C9A7E7F20@CH2PR04MB6854.namprd04.prod.outlook.com>
+x-microsoft-antispam-prvs: <CH2PR04MB6854325359A2757C2E4AB656E7F20@CH2PR04MB6854.namprd04.prod.outlook.com>
 wdcipoutbound: EOP-TRUE
-x-ms-oob-tlc-oobclassifiers: OLM:61
+x-ms-oob-tlc-oobclassifiers: OLM:2331
 x-ms-exchange-senderadcheck: 1
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: ISM7PcOGfuj5JDvIahkwEnO3OJ3UWojj8drM933QjYfCm+HR0vBCXk1fFpj2WDaEX/ZCubNNu5D1queJ2pAxOGz9nVF4XADpbSXjq57d95iHskEvj8nL2jjTG3SGuR1LDFzXS0u04wyA5TusfW5MurAZ6pvvyqrKo7OIPztP0sjCYIpwtj+R8MaQxGliRdozNytPkUfiCpCAF3EOf3avDmOb5gDBIkaxV1Kg0Byo39dynV8Zah5ckkfa1zl4Oeqx3GdGylDgzRL1Abf5zKiNKnR16OWHBSEALHFJadTY/sqZ2PQsFatyrxrFmkhkWhyH
+x-microsoft-antispam-message-info: HAGZwxzDCh+ZhLKClfp00kZxgfPohGl6rYt++pD0mXHFmK02wMt1xyKZfiraUxxJ3b2+KeORl3j0aZ5sVrhRifIL3Q5djo8th9wnVuuGSqn2GRaI/g0NYybJP30GQOIJxZpmHq/kStyJrQ8acSmF6iGXx+IrfDXKXyv/SPNIGnIoGHht6mCLfFTYPv6zaws8BPRjXtu/0ZjdzpeLdsKvM6vOdl+FVED49yYkr2nfO5JHtZ5nPL6SxrrUWkiNWMAi5iqG2OqkXFYvtpl6KLuLoFpUeOSfgh4Wzv5GuiIp2dGhDabT31rZZH4T+88cGg+hvafFYaR00444jWItfXp1gw==
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
 	IPV:NLI; SFV:NSPM; H:CH2PR04MB6522.namprd04.prod.outlook.com;
 	PTR:; CAT:NONE;
-	SFS:(4636009)(346002)(396003)(136003)(366004)(39860400002)(376002)(66946007)(8676002)(316002)(2906002)(66556008)(64756008)(76116006)(55016002)(66476007)(186003)(66446008)(478600001)(26005)(91956017)(54906003)(110136005)(33656002)(83380400001)(6506007)(4326008)(71200400001)(86362001)(7696005)(5660300002)(9686003)(8936002)(53546011)(52536014);
+	SFS:(4636009)(346002)(396003)(136003)(366004)(39860400002)(376002)(66946007)(8676002)(316002)(2906002)(66556008)(64756008)(76116006)(55016002)(66476007)(186003)(66446008)(478600001)(26005)(91956017)(30864003)(54906003)(110136005)(33656002)(83380400001)(6506007)(4326008)(71200400001)(86362001)(7696005)(5660300002)(9686003)(8936002)(53546011)(52536014);
 	DIR:OUT; SFP:1102
-x-ms-exchange-antispam-messagedata: =?us-ascii?Q?O5fkxDnMJ17LwcWVVrsMdDsCOA7m1Y1DWCHiJC5tuNEfOo1tt4mzhjldaVAv?=
-	=?us-ascii?Q?UbhLyAp4AjBk2JWEkLCO7mt7Hc6qEqSKs979T9HlhDcsC+bQ0ASYNQGHNR7f?=
-	=?us-ascii?Q?Xgl9+5T0jkhjujj7jIjtyrYLAvN0GxGQVvVY+8v4XYdUNwQdhKUYyN82rcxF?=
-	=?us-ascii?Q?lWQLJLFWm4H+o5zafXZ/KFikYFN5gv2hKNdEvX4q72eZDNl448C5ohVQxmRx?=
-	=?us-ascii?Q?bQGXlkYlIYGdm0HxTH09Wjf84HhwAa7kpe0jXsqvZIRN/W0b1ysuGQQ2FuO7?=
-	=?us-ascii?Q?zUThSvptJimepGwLSaXzX3bCyWl6+Tgih6lkPaZPpMWiuwcQRYvGAPZl5Eyc?=
-	=?us-ascii?Q?I2iyu903PvAZYdKM+mTtsGTSpi1OmNzbS7nN8wfy1dCiaGCCa94P1KgZ2sM7?=
-	=?us-ascii?Q?V7H/cqTeLZwT43gsCjT2abGSbXwSZLuOn8pwa3iuTWjrw5mgyxaHaO2JWU/1?=
-	=?us-ascii?Q?z2oJPhL0uxnHJgQRuBfXJfj5lLdVJtdNNRke4FfmQsgMYOnhWOuA1e7tT3mu?=
-	=?us-ascii?Q?4akmkOJL96ro5MSsiNQTSrUS8EGMzFTWVEM8Jw+QHWhdZxcwLKyClukbJEa2?=
-	=?us-ascii?Q?Cl4ZIc6MCyoBXS9I7J3zzUHnp3P9R5cNkcZNcA0XfgqjZfABQ7hGMuoZs0rS?=
-	=?us-ascii?Q?LDX4wTkFI9Hgp8WN5dl6aaalbL6Sk7Wpw70hqROpEnNpY6uvBjPiKSPjuwzV?=
-	=?us-ascii?Q?w2gZGMLlz4yEgkZorw8gS8TuNkL2cmDKucfJ91Sram5T7/PhaJcFYCxBNGGp?=
-	=?us-ascii?Q?dVsbivjPIva16tDnRr/0Mw0NeuitS2ghkEV4qQDiuZiwmOBP1gcnEFnVpz/F?=
-	=?us-ascii?Q?0ALWKqnzK7VCnGkdKW0+fIm8WNG64CqSM7QEJbLnWlFTK38mvqKeCqMn00Vy?=
-	=?us-ascii?Q?EFLIM+FApmzhMIM1aEoarhy4gPpJQnGr5rtQLhS2x+w0Bb5dX15dw8ZrQF8z?=
-	=?us-ascii?Q?hD2/8MoK6xYOA2w0WGAI/9oxaKNyKG3OJ8EJmECZveSwvCw5gLhyBf+8WK58?=
-	=?us-ascii?Q?8s7s?=
+x-ms-exchange-antispam-messagedata: =?us-ascii?Q?GiBbSdoH7CdTs2rXDc/lwdqLnecPpGQHY5tMGFK98pBDwqxcQfzUZclo8cfW?=
+	=?us-ascii?Q?AcWkh71a20BYJ7ispAs8iDa/fWy5F6YYZ64kZEFb3/N2Pjd1l/IZITRC+qLe?=
+	=?us-ascii?Q?WhyIQ3AivAM2XjSR/4f3QDsWnc2Tz7xufN0zxIiEYLX2P9MDq44GZLJZymib?=
+	=?us-ascii?Q?vN80YI/Ur533HYC5WKUm+xsPwjoPbmrYWDSvmGP/46D5VDBmxT4cLMP/Bmq9?=
+	=?us-ascii?Q?P8v+83f+9RnxNMAUGmV/jRZX21Ekx3Z4h4km6lJeiqTgYOiomkvHuRREG/Cc?=
+	=?us-ascii?Q?lm0y2jN5vbGBDqAu/cGBfN7LK8N4rJBd4ivDu7BEi3U5QnmzUDD0ObBzfskt?=
+	=?us-ascii?Q?aC7R82F2KRdzxkPtjviMgUsYMJLnswLkUZQMGyDrPwioqJOhGZs37qLMv9X+?=
+	=?us-ascii?Q?EglGoz9rLcj/CaOJoOvbw4az13tFxUfBTZsH/FD3chygKdT5JYT+FhsLE28Z?=
+	=?us-ascii?Q?zU3JLAMSAwFxSbZv8p42/9OuneXVHu9G2PcAwwxoyfWNa4bRZEUwn9bANcx4?=
+	=?us-ascii?Q?jzJds30Pl/wU6mzaChKy4/n0QfYllTfU8TJcIL+Ro0CmBKjSN34cDra1LhSt?=
+	=?us-ascii?Q?+IeAiuPMnX6t5k7GV6tCYRTR/xSP4q/WScCZ/lLd4Fgyr9zATOt3CtYOuIQk?=
+	=?us-ascii?Q?Avq3A8bXvY8d4Zs2WNtipuKLjsCX0evXCdC1tb+PSr9q/AzZgkDg9oRxBGCh?=
+	=?us-ascii?Q?gOJJjdNPcs3SuLQIXiBbkSIptQ3SK5dx9ckvnJoXgXWCVNuUP8v2Q3AWRiY9?=
+	=?us-ascii?Q?GSYQAShIpyjnCpD46Y6uVOFo4r5M4L44htYXD1kq8ZWpEexYHsj4K/Ee6qRp?=
+	=?us-ascii?Q?vv6WTzMq6NrOUnWZhu8jBCk85VfUgXjKcBIuCpcKuLiTz/LI4D3RCTkRDCRZ?=
+	=?us-ascii?Q?/Cga0uDBQlM021vkLahoGU9dY3hr18XHHk2jFCwUJGOBQzCJ4wKK2NvEXFWR?=
+	=?us-ascii?Q?1GBxIGeP5/NmHxWrHrlRX98fgI2tJkXetrlRvXqjdffd4+huDuSN7nT4dd26?=
+	=?us-ascii?Q?gn4K?=
 x-ms-exchange-transport-forked: True
 MIME-Version: 1.0
 X-OriginatorOrg: wdc.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: CH2PR04MB6522.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 9249a803-9606-4da3-2824-08d8976a3b30
-X-MS-Exchange-CrossTenant-originalarrivaltime: 03 Dec 2020 09:02:58.7338 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 29d253d3-32c1-4711-2d95-08d8976aae46
+X-MS-Exchange-CrossTenant-originalarrivaltime: 03 Dec 2020 09:06:11.7833 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: xo02l5EUbcA2GYEqD/yKWJimF5Vk+2t32idcr1aSMC+vYuBP3TR3lj8obQypFP07jQuMiBs8rvCXsj2aS/Bbfw==
+X-MS-Exchange-CrossTenant-userprincipalname: siB3BbgwIoZ7WXtu+Ec+Toi6T5rRvFkoaVdWOWz+SPQZCMce5+3naHhTcF5mS/dawgHpY0GhHIeM7xhNNzKcdw==
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: CH2PR04MB6854
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -138,16 +138,16 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 0B395CXt012185
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 0B396I52012757
 X-loop: dm-devel@redhat.com
 Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
 	"linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
 	"dm-devel@redhat.com" <dm-devel@redhat.com>,
 	"linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>
-Subject: Re: [dm-devel] [PATCH 4/5] block: remove the request_queue argument
- to the block_bio_remap tracepoint
+Subject: Re: [dm-devel] [PATCH 5/5] block: remove the request_queue to
+ argument request based tracepoints
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -161,7 +161,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -170,260 +170,380 @@ Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 2020/12/01 3:09, Christoph Hellwig wrote:
-> The request_queue can trivially be derived from the bio.
+On 2020/12/01 3:11, Christoph Hellwig wrote:
+> The request_queue can trivially be derived from the request.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
->  block/blk-core.c              |  2 +-
->  drivers/md/dm.c               |  3 +--
->  drivers/md/md-linear.c        |  3 +--
->  drivers/md/md.c               |  5 ++---
->  drivers/md/raid0.c            |  4 ++--
->  drivers/md/raid1.c            |  7 +++----
->  drivers/md/raid10.c           |  6 ++----
->  drivers/md/raid5.c            | 15 +++++++--------
->  drivers/nvme/host/multipath.c |  3 +--
->  include/trace/events/block.h  |  8 +++-----
->  kernel/trace/blktrace.c       | 14 +++++---------
->  11 files changed, 28 insertions(+), 42 deletions(-)
+>  block/blk-merge.c            |  2 +-
+>  block/blk-mq-sched.c         |  2 +-
+>  block/blk-mq.c               |  8 +++----
+>  drivers/md/dm-rq.c           |  2 +-
+>  drivers/s390/scsi/zfcp_fsf.c |  3 +--
+>  include/linux/blktrace_api.h |  5 ++--
+>  include/trace/events/block.h | 30 ++++++++++--------------
+>  kernel/trace/blktrace.c      | 44 ++++++++++++++----------------------
+>  8 files changed, 39 insertions(+), 57 deletions(-)
 > 
-> diff --git a/block/blk-core.c b/block/blk-core.c
-> index cb24654983e1e4..96e5fcd7f071b6 100644
-> --- a/block/blk-core.c
-> +++ b/block/blk-core.c
-> @@ -758,7 +758,7 @@ static inline int blk_partition_remap(struct bio *bio)
->  		if (bio_check_eod(bio, bdev_nr_sectors(p)))
->  			goto out;
->  		bio->bi_iter.bi_sector += p->bd_start_sect;
-> -		trace_block_bio_remap(bio->bi_disk->queue, bio, p->bd_dev,
-> +		trace_block_bio_remap(bio, p->bd_dev,
->  				      bio->bi_iter.bi_sector -
->  				      p->bd_start_sect);
+> diff --git a/block/blk-merge.c b/block/blk-merge.c
+> index 4071daa88a5eaf..7497d86fff3834 100644
+> --- a/block/blk-merge.c
+> +++ b/block/blk-merge.c
+> @@ -799,7 +799,7 @@ static struct request *attempt_merge(struct request_queue *q,
+>  	 */
+>  	blk_account_io_merge_request(next);
+>  
+> -	trace_block_rq_merge(q, next);
+> +	trace_block_rq_merge(next);
+>  
+>  	/*
+>  	 * ownership of bio passed from next to req, return 'next' for
+> diff --git a/block/blk-mq-sched.c b/block/blk-mq-sched.c
+> index d1eafe2c045caa..deff4e826e234d 100644
+> --- a/block/blk-mq-sched.c
+> +++ b/block/blk-mq-sched.c
+> @@ -386,7 +386,7 @@ EXPORT_SYMBOL_GPL(blk_mq_sched_try_insert_merge);
+>  
+>  void blk_mq_sched_request_inserted(struct request *rq)
+>  {
+> -	trace_block_rq_insert(rq->q, rq);
+> +	trace_block_rq_insert(rq);
+>  }
+>  EXPORT_SYMBOL_GPL(blk_mq_sched_request_inserted);
+>  
+> diff --git a/block/blk-mq.c b/block/blk-mq.c
+> index 13636458f32f1c..bb669b415a387e 100644
+> --- a/block/blk-mq.c
+> +++ b/block/blk-mq.c
+> @@ -732,7 +732,7 @@ void blk_mq_start_request(struct request *rq)
+>  {
+>  	struct request_queue *q = rq->q;
+>  
+> -	trace_block_rq_issue(q, rq);
+> +	trace_block_rq_issue(rq);
+>  
+>  	if (test_bit(QUEUE_FLAG_STATS, &q->queue_flags)) {
+>  		rq->io_start_time_ns = ktime_get_ns();
+> @@ -759,7 +759,7 @@ static void __blk_mq_requeue_request(struct request *rq)
+>  
+>  	blk_mq_put_driver_tag(rq);
+>  
+> -	trace_block_rq_requeue(q, rq);
+> +	trace_block_rq_requeue(rq);
+>  	rq_qos_requeue(q, rq);
+>  
+>  	if (blk_mq_request_started(rq)) {
+> @@ -1820,7 +1820,7 @@ static inline void __blk_mq_insert_req_list(struct blk_mq_hw_ctx *hctx,
+>  
+>  	lockdep_assert_held(&ctx->lock);
+>  
+> -	trace_block_rq_insert(hctx->queue, rq);
+> +	trace_block_rq_insert(rq);
+>  
+>  	if (at_head)
+>  		list_add(&rq->queuelist, &ctx->rq_lists[type]);
+> @@ -1877,7 +1877,7 @@ void blk_mq_insert_requests(struct blk_mq_hw_ctx *hctx, struct blk_mq_ctx *ctx,
+>  	 */
+>  	list_for_each_entry(rq, list, queuelist) {
+>  		BUG_ON(rq->mq_ctx != ctx);
+> -		trace_block_rq_insert(hctx->queue, rq);
+> +		trace_block_rq_insert(rq);
 >  	}
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 9a5bd90779c7c4..5181907dc59537 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1276,8 +1276,7 @@ static blk_qc_t __map_bio(struct dm_target_io *tio)
->  		break;
->  	case DM_MAPIO_REMAPPED:
->  		/* the bio has been remapped so dispatch it */
-> -		trace_block_bio_remap(clone->bi_disk->queue, clone,
-> -				      bio_dev(io->orig_bio), sector);
-> +		trace_block_bio_remap(clone, bio_dev(io->orig_bio), sector);
->  		ret = submit_bio_noacct(clone);
->  		break;
->  	case DM_MAPIO_KILL:
-> diff --git a/drivers/md/md-linear.c b/drivers/md/md-linear.c
-> index 98f1b4b2bdcef8..68cac7d1927823 100644
-> --- a/drivers/md/md-linear.c
-> +++ b/drivers/md/md-linear.c
-> @@ -257,8 +257,7 @@ static bool linear_make_request(struct mddev *mddev, struct bio *bio)
->  		bio_endio(bio);
->  	} else {
->  		if (mddev->gendisk)
-> -			trace_block_bio_remap(bio->bi_disk->queue,
-> -					      bio, disk_devt(mddev->gendisk),
-> +			trace_block_bio_remap(bio, disk_devt(mddev->gendisk),
->  					      bio_sector);
->  		mddev_check_writesame(mddev, bio);
->  		mddev_check_write_zeroes(mddev, bio);
-> diff --git a/drivers/md/md.c b/drivers/md/md.c
-> index 0065736f05b428..c555be0a8dce78 100644
-> --- a/drivers/md/md.c
-> +++ b/drivers/md/md.c
-> @@ -8591,9 +8591,8 @@ void md_submit_discard_bio(struct mddev *mddev, struct md_rdev *rdev,
->  	bio_chain(discard_bio, bio);
->  	bio_clone_blkg_association(discard_bio, bio);
->  	if (mddev->gendisk)
-> -		trace_block_bio_remap(bdev_get_queue(rdev->bdev),
-> -			discard_bio, disk_devt(mddev->gendisk),
-> -			bio->bi_iter.bi_sector);
-> +		trace_block_bio_remap(discard_bio, disk_devt(mddev->gendisk),
-> +				      bio->bi_iter.bi_sector);
->  	submit_bio_noacct(discard_bio);
+>  
+>  	spin_lock(&ctx->lock);
+> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+> index 729a72ec30ccae..13b4385f4d5a92 100644
+> --- a/drivers/md/dm-rq.c
+> +++ b/drivers/md/dm-rq.c
+> @@ -397,7 +397,7 @@ static int map_request(struct dm_rq_target_io *tio)
+>  		}
+>  
+>  		/* The target has remapped the I/O so dispatch it */
+> -		trace_block_rq_remap(clone->q, clone, disk_devt(dm_disk(md)),
+> +		trace_block_rq_remap(clone, disk_devt(dm_disk(md)),
+>  				     blk_rq_pos(rq));
+>  		ret = dm_dispatch_clone_request(clone, rq);
+>  		if (ret == BLK_STS_RESOURCE || ret == BLK_STS_DEV_RESOURCE) {
+> diff --git a/drivers/s390/scsi/zfcp_fsf.c b/drivers/s390/scsi/zfcp_fsf.c
+> index 6cb963a0677714..37d450f4695281 100644
+> --- a/drivers/s390/scsi/zfcp_fsf.c
+> +++ b/drivers/s390/scsi/zfcp_fsf.c
+> @@ -2359,8 +2359,7 @@ static void zfcp_fsf_req_trace(struct zfcp_fsf_req *req, struct scsi_cmnd *scsi)
+>  		}
+>  	}
+>  
+> -	blk_add_driver_data(scsi->request->q, scsi->request, &blktrc,
+> -			    sizeof(blktrc));
+> +	blk_add_driver_data(scsi->request, &blktrc, sizeof(blktrc));
 >  }
->  EXPORT_SYMBOL(md_submit_discard_bio);
-> diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-> index 6f44177593a552..e5d7411cba9b46 100644
-> --- a/drivers/md/raid0.c
-> +++ b/drivers/md/raid0.c
-> @@ -571,8 +571,8 @@ static bool raid0_make_request(struct mddev *mddev, struct bio *bio)
->  		tmp_dev->data_offset;
->  
->  	if (mddev->gendisk)
-> -		trace_block_bio_remap(bio->bi_disk->queue, bio,
-> -				disk_devt(mddev->gendisk), bio_sector);
-> +		trace_block_bio_remap(bio, disk_devt(mddev->gendisk),
-> +				      bio_sector);
->  	mddev_check_writesame(mddev, bio);
->  	mddev_check_write_zeroes(mddev, bio);
->  	submit_bio_noacct(bio);
-> diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-> index 960d854c07f897..c0347997f6ff73 100644
-> --- a/drivers/md/raid1.c
-> +++ b/drivers/md/raid1.c
-> @@ -1305,8 +1305,8 @@ static void raid1_read_request(struct mddev *mddev, struct bio *bio,
->  	read_bio->bi_private = r1_bio;
->  
->  	if (mddev->gendisk)
-> -	        trace_block_bio_remap(read_bio->bi_disk->queue, read_bio,
-> -				disk_devt(mddev->gendisk), r1_bio->sector);
-> +	        trace_block_bio_remap(read_bio, disk_devt(mddev->gendisk),
-> +				      r1_bio->sector);
->  
->  	submit_bio_noacct(read_bio);
->  }
-> @@ -1517,8 +1517,7 @@ static void raid1_write_request(struct mddev *mddev, struct bio *bio,
->  		atomic_inc(&r1_bio->remaining);
->  
->  		if (mddev->gendisk)
-> -			trace_block_bio_remap(mbio->bi_disk->queue,
-> -					      mbio, disk_devt(mddev->gendisk),
-> +			trace_block_bio_remap(mbio, disk_devt(mddev->gendisk),
->  					      r1_bio->sector);
->  		/* flush_pending_writes() needs access to the rdev so...*/
->  		mbio->bi_disk = (void *)conf->mirrors[i].rdev;
-> diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-> index b7bca6703df814..a6f99fa0b32cfc 100644
-> --- a/drivers/md/raid10.c
-> +++ b/drivers/md/raid10.c
-> @@ -1200,8 +1200,7 @@ static void raid10_read_request(struct mddev *mddev, struct bio *bio,
->  	read_bio->bi_private = r10_bio;
->  
->  	if (mddev->gendisk)
-> -	        trace_block_bio_remap(read_bio->bi_disk->queue,
-> -	                              read_bio, disk_devt(mddev->gendisk),
-> +	        trace_block_bio_remap(read_bio, disk_devt(mddev->gendisk),
->  	                              r10_bio->sector);
->  	submit_bio_noacct(read_bio);
->  	return;
-> @@ -1250,8 +1249,7 @@ static void raid10_write_one_disk(struct mddev *mddev, struct r10bio *r10_bio,
->  	mbio->bi_private = r10_bio;
->  
->  	if (conf->mddev->gendisk)
-> -		trace_block_bio_remap(mbio->bi_disk->queue,
-> -				      mbio, disk_devt(conf->mddev->gendisk),
-> +		trace_block_bio_remap(mbio, disk_devt(conf->mddev->gendisk),
->  				      r10_bio->sector);
->  	/* flush_pending_writes() needs access to the rdev so...*/
->  	mbio->bi_disk = (void *)rdev;
-> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-> index 39343479ac2a94..3a90cc0e43ca8e 100644
-> --- a/drivers/md/raid5.c
-> +++ b/drivers/md/raid5.c
-> @@ -1222,9 +1222,9 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
->  				set_bit(R5_DOUBLE_LOCKED, &sh->dev[i].flags);
->  
->  			if (conf->mddev->gendisk)
-> -				trace_block_bio_remap(bi->bi_disk->queue,
-> -						      bi, disk_devt(conf->mddev->gendisk),
-> -						      sh->dev[i].sector);
-> +				trace_block_bio_remap(bi,
-> +						disk_devt(conf->mddev->gendisk),
-> +						sh->dev[i].sector);
->  			if (should_defer && op_is_write(op))
->  				bio_list_add(&pending_bios, bi);
->  			else
-> @@ -1272,9 +1272,9 @@ static void ops_run_io(struct stripe_head *sh, struct stripe_head_state *s)
->  			if (op == REQ_OP_DISCARD)
->  				rbi->bi_vcnt = 0;
->  			if (conf->mddev->gendisk)
-> -				trace_block_bio_remap(rbi->bi_disk->queue,
-> -						      rbi, disk_devt(conf->mddev->gendisk),
-> -						      sh->dev[i].sector);
-> +				trace_block_bio_remap(rbi,
-> +						disk_devt(conf->mddev->gendisk),
-> +						sh->dev[i].sector);
->  			if (should_defer && op_is_write(op))
->  				bio_list_add(&pending_bios, rbi);
->  			else
-> @@ -5468,8 +5468,7 @@ static int raid5_read_one_chunk(struct mddev *mddev, struct bio *raid_bio)
->  		spin_unlock_irq(&conf->device_lock);
->  
->  		if (mddev->gendisk)
-> -			trace_block_bio_remap(align_bi->bi_disk->queue,
-> -					      align_bi, disk_devt(mddev->gendisk),
-> +			trace_block_bio_remap(align_bi, disk_devt(mddev->gendisk),
->  					      raid_bio->bi_iter.bi_sector);
->  		submit_bio_noacct(align_bi);
->  		return 1;
-> diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
-> index 74896be40c1769..106cf5c44ee7ab 100644
-> --- a/drivers/nvme/host/multipath.c
-> +++ b/drivers/nvme/host/multipath.c
-> @@ -312,8 +312,7 @@ blk_qc_t nvme_ns_head_submit_bio(struct bio *bio)
->  	if (likely(ns)) {
->  		bio->bi_disk = ns->disk;
->  		bio->bi_opf |= REQ_NVME_MPATH;
-> -		trace_block_bio_remap(bio->bi_disk->queue, bio,
-> -				      disk_devt(ns->head->disk),
-> +		trace_block_bio_remap(bio, disk_devt(ns->head->disk),
->  				      bio->bi_iter.bi_sector);
->  		ret = submit_bio_noacct(bio);
->  	} else if (nvme_available_path(head)) {
-> diff --git a/include/trace/events/block.h b/include/trace/events/block.h
-> index b415e4cba84304..8fb89574d8677f 100644
-> --- a/include/trace/events/block.h
-> +++ b/include/trace/events/block.h
-> @@ -450,9 +450,8 @@ TRACE_EVENT(block_split,
 >  
 >  /**
->   * block_bio_remap - map request for a logical device to the raw device
-> - * @q: queue holding the operation
->   * @bio: revised operation
-> - * @dev: device for the operation
-> + * @dev: original device for the operation
->   * @from: original sector for the operation
+> diff --git a/include/linux/blktrace_api.h b/include/linux/blktrace_api.h
+> index 3b6ff5902edce6..05556573b896a2 100644
+> --- a/include/linux/blktrace_api.h
+> +++ b/include/linux/blktrace_api.h
+> @@ -75,8 +75,7 @@ static inline bool blk_trace_note_message_enabled(struct request_queue *q)
+>  	return ret;
+>  }
+>  
+> -extern void blk_add_driver_data(struct request_queue *q, struct request *rq,
+> -				void *data, size_t len);
+> +extern void blk_add_driver_data(struct request *rq, void *data, size_t len);
+>  extern int blk_trace_setup(struct request_queue *q, char *name, dev_t dev,
+>  			   struct block_device *bdev,
+>  			   char __user *arg);
+> @@ -90,7 +89,7 @@ extern struct attribute_group blk_trace_attr_group;
+>  #else /* !CONFIG_BLK_DEV_IO_TRACE */
+>  # define blk_trace_ioctl(bdev, cmd, arg)		(-ENOTTY)
+>  # define blk_trace_shutdown(q)				do { } while (0)
+> -# define blk_add_driver_data(q, rq, data, len)		do {} while (0)
+> +# define blk_add_driver_data(rq, data, len)		do {} while (0)
+>  # define blk_trace_setup(q, name, dev, bdev, arg)	(-ENOTTY)
+>  # define blk_trace_startstop(q, start)			(-ENOTTY)
+>  # define blk_trace_remove(q)				(-ENOTTY)
+> diff --git a/include/trace/events/block.h b/include/trace/events/block.h
+> index 8fb89574d8677f..0d782663a005dc 100644
+> --- a/include/trace/events/block.h
+> +++ b/include/trace/events/block.h
+> @@ -64,7 +64,6 @@ DEFINE_EVENT(block_buffer, block_dirty_buffer,
+>  
+>  /**
+>   * block_rq_requeue - place block IO request back on a queue
+> - * @q: queue holding operation
+>   * @rq: block IO operation request
 >   *
->   * An operation for a logical device has been mapped to the
-> @@ -460,10 +459,9 @@ TRACE_EVENT(block_split,
+>   * The block operation request @rq is being placed back into queue
+> @@ -73,9 +72,9 @@ DEFINE_EVENT(block_buffer, block_dirty_buffer,
 >   */
->  TRACE_EVENT(block_bio_remap,
+>  TRACE_EVENT(block_rq_requeue,
 >  
-> -	TP_PROTO(struct request_queue *q, struct bio *bio, dev_t dev,
+> -	TP_PROTO(struct request_queue *q, struct request *rq),
+> +	TP_PROTO(struct request *rq),
+>  
+> -	TP_ARGS(q, rq),
+> +	TP_ARGS(rq),
+>  
+>  	TP_STRUCT__entry(
+>  		__field(  dev_t,	dev			)
+> @@ -147,9 +146,9 @@ TRACE_EVENT(block_rq_complete,
+>  
+>  DECLARE_EVENT_CLASS(block_rq,
+>  
+> -	TP_PROTO(struct request_queue *q, struct request *rq),
+> +	TP_PROTO(struct request *rq),
+>  
+> -	TP_ARGS(q, rq),
+> +	TP_ARGS(rq),
+>  
+>  	TP_STRUCT__entry(
+>  		__field(  dev_t,	dev			)
+> @@ -181,7 +180,6 @@ DECLARE_EVENT_CLASS(block_rq,
+>  
+>  /**
+>   * block_rq_insert - insert block operation request into queue
+> - * @q: target queue
+>   * @rq: block IO operation request
+>   *
+>   * Called immediately before block operation request @rq is inserted
+> @@ -191,14 +189,13 @@ DECLARE_EVENT_CLASS(block_rq,
+>   */
+>  DEFINE_EVENT(block_rq, block_rq_insert,
+>  
+> -	TP_PROTO(struct request_queue *q, struct request *rq),
+> +	TP_PROTO(struct request *rq),
+>  
+> -	TP_ARGS(q, rq)
+> +	TP_ARGS(rq)
+>  );
+>  
+>  /**
+>   * block_rq_issue - issue pending block IO request operation to device driver
+> - * @q: queue holding operation
+>   * @rq: block IO operation operation request
+>   *
+>   * Called when block operation request @rq from queue @q is sent to a
+> @@ -206,14 +203,13 @@ DEFINE_EVENT(block_rq, block_rq_insert,
+>   */
+>  DEFINE_EVENT(block_rq, block_rq_issue,
+>  
+> -	TP_PROTO(struct request_queue *q, struct request *rq),
+> +	TP_PROTO(struct request *rq),
+>  
+> -	TP_ARGS(q, rq)
+> +	TP_ARGS(rq)
+>  );
+>  
+>  /**
+>   * block_rq_merge - merge request with another one in the elevator
+> - * @q: queue holding operation
+>   * @rq: block IO operation operation request
+>   *
+>   * Called when block operation request @rq from queue @q is merged to another
+> @@ -221,9 +217,9 @@ DEFINE_EVENT(block_rq, block_rq_issue,
+>   */
+>  DEFINE_EVENT(block_rq, block_rq_merge,
+>  
+> -	TP_PROTO(struct request_queue *q, struct request *rq),
+> +	TP_PROTO(struct request *rq),
+>  
+> -	TP_ARGS(q, rq)
+> +	TP_ARGS(rq)
+>  );
+>  
+>  /**
+> @@ -491,7 +487,6 @@ TRACE_EVENT(block_bio_remap,
+>  
+>  /**
+>   * block_rq_remap - map request for a block operation request
+> - * @q: queue holding the operation
+>   * @rq: block IO operation request
+>   * @dev: device for the operation
+>   * @from: original sector for the operation
+> @@ -502,10 +497,9 @@ TRACE_EVENT(block_bio_remap,
+>   */
+>  TRACE_EVENT(block_rq_remap,
+>  
+> -	TP_PROTO(struct request_queue *q, struct request *rq, dev_t dev,
 > -		 sector_t from),
-> +	TP_PROTO(struct bio *bio, dev_t dev, sector_t from),
+> +	TP_PROTO(struct request *rq, dev_t dev, sector_t from),
 >  
-> -	TP_ARGS(q, bio, dev, from),
-> +	TP_ARGS(bio, dev, from),
+> -	TP_ARGS(q, rq, dev, from),
+> +	TP_ARGS(rq, dev, from),
 >  
 >  	TP_STRUCT__entry(
 >  		__field( dev_t,		dev		)
 > diff --git a/kernel/trace/blktrace.c b/kernel/trace/blktrace.c
-> index 3ca6d62114f461..405637144a0389 100644
+> index 405637144a0389..7839a78205c243 100644
 > --- a/kernel/trace/blktrace.c
 > +++ b/kernel/trace/blktrace.c
-> @@ -993,20 +993,16 @@ static void blk_add_trace_split(void *ignore, struct bio *bio, unsigned int pdu)
->  /**
->   * blk_add_trace_bio_remap - Add a trace for a bio-remap operation
->   * @ignore:	trace callback data parameter (not used)
-> - * @q:		queue the io is for
->   * @bio:	the source bio
-> - * @dev:	target device
-> + * @dev:	source device
->   * @from:	source sector
->   *
-> - * Description:
-> - *     Device mapper or raid target sometimes need to split a bio because
-> - *     it spans a stripe (or similar). Add a trace for that action.
-> - *
-> + * Called after a bio is remapped to a different device and/or sector.
->   **/
-> -static void blk_add_trace_bio_remap(void *ignore,
-> -				    struct request_queue *q, struct bio *bio,
-> -				    dev_t dev, sector_t from)
-> +static void blk_add_trace_bio_remap(void *ignore, struct bio *bio, dev_t dev,
-> +				    sector_t from)
+> @@ -795,12 +795,12 @@ static u64 blk_trace_bio_get_cgid(struct request_queue *q, struct bio *bio)
+>  #endif
+>  
+>  static u64
+> -blk_trace_request_get_cgid(struct request_queue *q, struct request *rq)
+> +blk_trace_request_get_cgid(struct request *rq)
 >  {
-> +	struct request_queue *q = bio->bi_disk->queue;
+>  	if (!rq->bio)
+>  		return 0;
+>  	/* Use the first bio */
+> -	return blk_trace_bio_get_cgid(q, rq->bio);
+> +	return blk_trace_bio_get_cgid(rq->q, rq->bio);
+>  }
+>  
+>  /*
+> @@ -841,40 +841,35 @@ static void blk_add_trace_rq(struct request *rq, int error,
+>  	rcu_read_unlock();
+>  }
+>  
+> -static void blk_add_trace_rq_insert(void *ignore,
+> -				    struct request_queue *q, struct request *rq)
+> +static void blk_add_trace_rq_insert(void *ignore, struct request *rq)
+>  {
+>  	blk_add_trace_rq(rq, 0, blk_rq_bytes(rq), BLK_TA_INSERT,
+> -			 blk_trace_request_get_cgid(q, rq));
+> +			 blk_trace_request_get_cgid(rq));
+>  }
+>  
+> -static void blk_add_trace_rq_issue(void *ignore,
+> -				   struct request_queue *q, struct request *rq)
+> +static void blk_add_trace_rq_issue(void *ignore, struct request *rq)
+>  {
+>  	blk_add_trace_rq(rq, 0, blk_rq_bytes(rq), BLK_TA_ISSUE,
+> -			 blk_trace_request_get_cgid(q, rq));
+> +			 blk_trace_request_get_cgid(rq));
+>  }
+>  
+> -static void blk_add_trace_rq_merge(void *ignore,
+> -				   struct request_queue *q, struct request *rq)
+> +static void blk_add_trace_rq_merge(void *ignore, struct request *rq)
+>  {
+>  	blk_add_trace_rq(rq, 0, blk_rq_bytes(rq), BLK_TA_BACKMERGE,
+> -			 blk_trace_request_get_cgid(q, rq));
+> +			 blk_trace_request_get_cgid(rq));
+>  }
+>  
+> -static void blk_add_trace_rq_requeue(void *ignore,
+> -				     struct request_queue *q,
+> -				     struct request *rq)
+> +static void blk_add_trace_rq_requeue(void *ignore, struct request *rq)
+>  {
+>  	blk_add_trace_rq(rq, 0, blk_rq_bytes(rq), BLK_TA_REQUEUE,
+> -			 blk_trace_request_get_cgid(q, rq));
+> +			 blk_trace_request_get_cgid(rq));
+>  }
+>  
+>  static void blk_add_trace_rq_complete(void *ignore, struct request *rq,
+>  			int error, unsigned int nr_bytes)
+>  {
+>  	blk_add_trace_rq(rq, error, nr_bytes, BLK_TA_COMPLETE,
+> -			 blk_trace_request_get_cgid(rq->q, rq));
+> +			 blk_trace_request_get_cgid(rq));
+>  }
+>  
+>  /**
+> @@ -1037,16 +1032,14 @@ static void blk_add_trace_bio_remap(void *ignore, struct bio *bio, dev_t dev,
+>   *     Add a trace for that action.
+>   *
+>   **/
+> -static void blk_add_trace_rq_remap(void *ignore,
+> -				   struct request_queue *q,
+> -				   struct request *rq, dev_t dev,
+> +static void blk_add_trace_rq_remap(void *ignore, struct request *rq, dev_t dev,
+>  				   sector_t from)
+>  {
 >  	struct blk_trace *bt;
 >  	struct blk_io_trace_remap r;
 >  
+>  	rcu_read_lock();
+> -	bt = rcu_dereference(q->blk_trace);
+> +	bt = rcu_dereference(rq->q->blk_trace);
+>  	if (likely(!bt)) {
+>  		rcu_read_unlock();
+>  		return;
+> @@ -1058,13 +1051,12 @@ static void blk_add_trace_rq_remap(void *ignore,
+>  
+>  	__blk_add_trace(bt, blk_rq_pos(rq), blk_rq_bytes(rq),
+>  			rq_data_dir(rq), 0, BLK_TA_REMAP, 0,
+> -			sizeof(r), &r, blk_trace_request_get_cgid(q, rq));
+> +			sizeof(r), &r, blk_trace_request_get_cgid(rq));
+>  	rcu_read_unlock();
+>  }
+>  
+>  /**
+>   * blk_add_driver_data - Add binary message with driver-specific data
+> - * @q:		queue the io is for
+>   * @rq:		io request
+>   * @data:	driver-specific data
+>   * @len:	length of driver-specific data
+> @@ -1073,14 +1065,12 @@ static void blk_add_trace_rq_remap(void *ignore,
+>   *     Some drivers might want to write driver-specific data per request.
+>   *
+>   **/
+> -void blk_add_driver_data(struct request_queue *q,
+> -			 struct request *rq,
+> -			 void *data, size_t len)
+> +void blk_add_driver_data(struct request *rq, void *data, size_t len)
+>  {
+>  	struct blk_trace *bt;
+>  
+>  	rcu_read_lock();
+> -	bt = rcu_dereference(q->blk_trace);
+> +	bt = rcu_dereference(rq->q->blk_trace);
+>  	if (likely(!bt)) {
+>  		rcu_read_unlock();
+>  		return;
+> @@ -1088,7 +1078,7 @@ void blk_add_driver_data(struct request_queue *q,
+>  
+>  	__blk_add_trace(bt, blk_rq_trace_sector(rq), blk_rq_bytes(rq), 0, 0,
+>  				BLK_TA_DRV_DATA, 0, len, data,
+> -				blk_trace_request_get_cgid(q, rq));
+> +				blk_trace_request_get_cgid(rq));
+>  	rcu_read_unlock();
+>  }
+>  EXPORT_SYMBOL_GPL(blk_add_driver_data);
 > 
 
-Looks good.
+Looks good to me.
 
 Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
 
