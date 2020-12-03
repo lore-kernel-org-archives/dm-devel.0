@@ -2,103 +2,79 @@ Return-Path: <SRS0=8v/u=FH=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-9.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-18.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C25F5C4361A
-	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 20:10:50 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 09BBEC433FE
+	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 20:52:40 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id ECE8A221F2
-	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 20:10:49 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org ECE8A221F2
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+	by mail.kernel.org (Postfix) with ESMTPS id 68880221EC
+	for <dm-devel@archiver.kernel.org>; Thu,  3 Dec 2020 20:52:39 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 68880221EC
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1607028758;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=sl6l2ZCv2O34bRMjN21GyIkr0/X0e1PLB12qJCzfOB4=;
+	b=ToEyA/VagMibJWorDwL2JmhQqNBuBGKBoAqHfc8LMQ2vaFNylfsqsCRWxXdqBGhC0L3aNk
+	y5E/vp+47CSX1JKVjJ4q5OicTsoPyjkAs0N+p3qOYTq2gQJz9lTKXm/tYL0S0PaQiE6Qv1
+	k83Oqi2LgwsrQVUIXrmcHBrcmFu1hKM=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-442-zAnNCRcoMxOndWNqXt3LEw-1; Thu, 03 Dec 2020 15:10:45 -0500
-X-MC-Unique: zAnNCRcoMxOndWNqXt3LEw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-371-uhRAgE7MNvSXpcOHxAbUhQ-1; Thu, 03 Dec 2020 15:52:18 -0500
+X-MC-Unique: uhRAgE7MNvSXpcOHxAbUhQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 016F4800D55;
-	Thu,  3 Dec 2020 20:10:41 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D426E6086F;
-	Thu,  3 Dec 2020 20:10:40 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7D86E858181;
+	Thu,  3 Dec 2020 20:52:13 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0650C189B8;
+	Thu,  3 Dec 2020 20:52:13 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A013F4BB7B;
-	Thu,  3 Dec 2020 20:10:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5AE61180954D;
+	Thu,  3 Dec 2020 20:52:11 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com
+	[10.5.11.16])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B3KAcsH026726 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 3 Dec 2020 15:10:38 -0500
+	id 0B3Kq9iK031550 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 3 Dec 2020 15:52:09 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B4FF72166B2B; Thu,  3 Dec 2020 20:10:38 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AF7F62166B27
-	for <dm-devel@redhat.com>; Thu,  3 Dec 2020 20:10:36 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 83522186E121
-	for <dm-devel@redhat.com>; Thu,  3 Dec 2020 20:10:36 +0000 (UTC)
-Received: from mail-qt1-f194.google.com (mail-qt1-f194.google.com
-	[209.85.160.194]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-152-ipUKuWznN3u2mBV9pPbFqQ-1; Thu, 03 Dec 2020 15:10:34 -0500
-X-MC-Unique: ipUKuWznN3u2mBV9pPbFqQ-1
-Received: by mail-qt1-f194.google.com with SMTP id d5so2345958qtn.0
-	for <dm-devel@redhat.com>; Thu, 03 Dec 2020 12:10:34 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
-	:references:mime-version:content-disposition:in-reply-to;
-	bh=a8LN6ZMh1M/sLnx8l9ItuSsvA2D1+o6tHt6Iazu8FfA=;
-	b=CoRmGdYtUBDMqYvUn7lUWhjdNN01y8gYMgbvO3lgmggqXrbJqNdyt+J96KEnhypM0g
-	l2X6dOEziDeWAQTOKa8Cdw/ysnBKGYXWInzXy973BjcXUEDfdKRl3B1HBdj6WcFHQqHw
-	waF8sTzcm+5Eu8ni52/9LOWCUqP/bMslesHtTX3bk0anLC4uTNdezRQnY05+Xxk46whv
-	Jv5dphoxhW667P+ldLc5lkHXa9cj829oGuc3QwbkQDdpZz4xtPSRe9cbLoH3VasRRDoH
-	/aCXIkD0ET4L+IYQ1RyjlWe7xptXbptFP7rqvKLetQ2gcX0Xxr2b/OjLuffD+X3k7ceI
-	Zc1Q==
-X-Gm-Message-State: AOAM533zgHLEzxOlNlDVo1B9r7b9KTRecGRbBV5gNoTPhCLLysvP5MDF
-	Eh6H8NSP9KcVqxw2cnDct/Y=
-X-Google-Smtp-Source: ABdhPJzqV5axT2LpRD7VrsKOBiSHz4rEGBYx02OU7G8vHf12Od6N8kKCv6sRz1NJS75gA4WM1kHwOw==
-X-Received: by 2002:ac8:5741:: with SMTP id 1mr5012184qtx.294.1607026233859;
-	Thu, 03 Dec 2020 12:10:33 -0800 (PST)
-Received: from localhost ([2620:10d:c091:480::1:6aeb])
-	by smtp.gmail.com with ESMTPSA id
-	z20sm2507477qtb.31.2020.12.03.12.10.32
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Thu, 03 Dec 2020 12:10:33 -0800 (PST)
-Date: Thu, 3 Dec 2020 15:10:06 -0500
-From: Tejun Heo <tj@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <X8lGHsA/qnypPrTN@mtj.duckdns.org>
-References: <20201203162139.2110977-1-hch@lst.de>
-	<20201203162139.2110977-6-hch@lst.de>
+	id 1D8A45C1CF; Thu,  3 Dec 2020 20:52:09 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E995D5C1B4;
+	Thu,  3 Dec 2020 20:52:05 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 0B3Kq4Fh029431; 
+	Thu, 3 Dec 2020 14:52:04 -0600
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 0B3Kq4CG029430;
+	Thu, 3 Dec 2020 14:52:04 -0600
+Date: Thu, 3 Dec 2020 14:52:03 -0600
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Message-ID: <20201203205203.GH3103@octiron.msp.redhat.com>
+References: <1582143705-20886-1-git-send-email-bmarzins@redhat.com>
+	<1582143705-20886-2-git-send-email-bmarzins@redhat.com>
+	<6d9b937e46499c5d35921d2eb62943c987b46425.camel@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <20201203162139.2110977-6-hch@lst.de>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+In-Reply-To: <6d9b937e46499c5d35921d2eb62943c987b46425.camel@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org,
-	Damien Le Moal <damien.lemoal@wdc.com>,
-	linux-s390@vger.kernel.org, linux-block@vger.kernel.org,
-	dm-devel@redhat.com
-Subject: Re: [dm-devel] [PATCH 5/5] block: remove the request_queue to
- argument request based tracepoints
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH v2 1/5] multipath: fix issues found by
+ compiling with gcc 10
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -112,28 +88,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-On Thu, Dec 03, 2020 at 05:21:39PM +0100, Christoph Hellwig wrote:
-> The request_queue can trivially be derived from the request.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> Reviewed-by: Damien Le Moal <damien.lemoal@wdc.com>
-> Reviewed-by: Hannes Reinecke <hare@suse.de>
+On Wed, Dec 02, 2020 at 01:54:57PM +0000, Martin Wilck wrote:
+> Hi Ben,
+>=20
+> On Wed, 2020-02-19 at 14:21 -0600, Benjamin Marzinski wrote:
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  kpartx/dasd.c        |  6 +++---
+> >  libmultipath/print.c | 16 ++++++++--------
+> >  multipath/main.c     |  2 +-
+> >  3 files changed, 12 insertions(+), 12 deletions(-)
+> >=20
+> > diff --git a/kpartx/dasd.c b/kpartx/dasd.c
+> > index 1486ccaa..14b9d3aa 100644
+> > --- a/kpartx/dasd.c
+> > +++ b/kpartx/dasd.c
+> > @@ -186,7 +186,7 @@ read_dasd_pt(int fd, __attribute__((unused))
+> > struct slice all,
+> >  =09=09goto out;
+> >  =09}
+> > =20
+> > -=09if ((!info.FBA_layout) && (!strcmp(info.type, "ECKD")))
+> > +=09if ((!info.FBA_layout) && (!memcmp(info.type, "ECKD", 4)))
+> >  =09=09memcpy (&vlabel, data, sizeof(vlabel));
+> >  =09else {
+> >  =09=09bzero(&vlabel,4);
+>=20
+> are you using different compiler / warning flags here than we usually do?
 
-Acked-by: Tejun Heo <tj@kernel.org>
+When building rhel and fedora packages, there are some flags that differ
+from the upstream set.  Unfortunately, when I just tried rebuilding the
+package with these fixes removed, I didn't hit any compiler errors.
+Perhaps I just noticed these while working on something else, and they
+got included in this commit on accident. Sadly I don't remember the
+details anymore.
 
-Thanks!
-
--- 
-tejun
+-Ben
+>=20
+> I just found that with the standard flags, gcc 10 does *not* complain abo=
+ut
+> the old (badly broken, noting that info.type is declared as char[4]) code=
+.
+> Nor has any other compiler so far, although we're using pretty verbose=20
+> warning options.
+>=20
+> Regards
+> Martin
+>=20
+> --=20
+> Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+> SUSE  Software Solutions Germany GmbH
+> HRB 36809, AG N=FCrnberg GF: Felix
+> Imend=F6rffer
+>=20
 
 --
 dm-devel mailing list
