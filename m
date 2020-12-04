@@ -2,93 +2,130 @@ Return-Path: <SRS0=+j0W=FL=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.6 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NAME_EMAIL_DIFF,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D7D1CC4361B
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E6CA2C4167B
 	for <dm-devel@archiver.kernel.org>; Mon,  7 Dec 2020 10:00:00 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3F7B32311B
-	for <dm-devel@archiver.kernel.org>; Mon,  7 Dec 2020 10:00:00 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3F7B32311B
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=javigon.com
+	by mail.kernel.org (Postfix) with ESMTPS id 3D74C2311A
+	for <dm-devel@archiver.kernel.org>; Mon,  7 Dec 2020 09:59:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3D74C2311A
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=samsung.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-441-J9n37GNjP7yOCihmI3isDQ-1; Mon, 07 Dec 2020 04:59:56 -0500
-X-MC-Unique: J9n37GNjP7yOCihmI3isDQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-276-7X1wZno_ODygXp9fnkt5dQ-1; Mon, 07 Dec 2020 04:59:56 -0500
+X-MC-Unique: 7X1wZno_ODygXp9fnkt5dQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 62679803F62;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 67F87CE64E;
 	Mon,  7 Dec 2020 09:59:40 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 428B55D9DE;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3D9481002393;
 	Mon,  7 Dec 2020 09:59:40 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3AB4D1809CA0;
-	Mon,  7 Dec 2020 09:59:39 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D442B1809C9F;
+	Mon,  7 Dec 2020 09:59:38 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B78GeHr006601 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 7 Dec 2020 03:16:41 -0500
+	id 0B4B9tEk003376 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 4 Dec 2020 06:09:55 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id BDFDF1111C93; Mon,  7 Dec 2020 08:16:40 +0000 (UTC)
+	id A4A9A20296B5; Fri,  4 Dec 2020 11:09:55 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B9E1D1000DBE
-	for <dm-devel@redhat.com>; Mon,  7 Dec 2020 08:16:38 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 99A6B20296BF
+	for <dm-devel@redhat.com>; Fri,  4 Dec 2020 11:09:52 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5664A800183
-	for <dm-devel@redhat.com>; Mon,  7 Dec 2020 08:16:38 +0000 (UTC)
-Received: from mail-ej1-f52.google.com (mail-ej1-f52.google.com
-	[209.85.218.52]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-513-iumu4Dr_MpCkTUBSrWQX5w-1; Mon, 07 Dec 2020 03:16:33 -0500
-X-MC-Unique: iumu4Dr_MpCkTUBSrWQX5w-1
-Received: by mail-ej1-f52.google.com with SMTP id bo9so18121610ejb.13
-	for <dm-devel@redhat.com>; Mon, 07 Dec 2020 00:16:33 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-	:mime-version:content-disposition:in-reply-to;
-	bh=iYj4pUoj9o5PR+qG7Qn3L1SJKXMPS3+hvYYnqb4yHOw=;
-	b=dnIBUvEXpKoBpsOfSzYbrhJzOaMeGVUsp6AbI3xUJbZnPRms3kwEmILN+2hI+b8t02
-	G+emJBhj9LgajJq8bZZQdFJziNYkTdtgWT6ZvJXPI9VYzoFUGBpQGwySY2gEG8wj2SWk
-	qaRL+AzAujipLrzsqvSKMYf4z7BlLeDPWAgNepZ+lJ7xeXRc4GQPJcbJbDc8RAXmAOpo
-	3otnJD5xXayT9WZvTFJ9EwzyBl9MXj952tIleqAn9348zKk2PVHgrn1PBqtrVdO1MdsX
-	Hsr5FfBlHxPFFYZYw7O8j1xVgHbq2JsvVlCTOUIRdBGCAlE1w0pAMl1q+SlZ10hbxtXY
-	Ocwg==
-X-Gm-Message-State: AOAM531F1s/aP8MGEOC8vcneH5zDBHcwsYVrUHK/RJvV/7M2Rr3QDZwu
-	6fId0mfSZu/+f/W78Hb5bpaGiw==
-X-Google-Smtp-Source: ABdhPJwb4jRV2xylIOGlV+IbqS3THEEk1xv/TWj/PDOLR2zfUPpGUmwka3CjMKimmTAV6Dyou0TXtA==
-X-Received: by 2002:a17:906:7b8d:: with SMTP id
-	s13mr1630369ejo.479.1607328992695; 
-	Mon, 07 Dec 2020 00:16:32 -0800 (PST)
-Received: from localhost (5.186.124.214.cgn.fibianet.dk. [5.186.124.214])
-	by smtp.gmail.com with ESMTPSA id
-	n22sm12100137edr.11.2020.12.07.00.16.31
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Mon, 07 Dec 2020 00:16:32 -0800 (PST)
-Date: Mon, 7 Dec 2020 09:16:31 +0100
-From: "javier.gonz@samsung.com" <javier@javigon.com>
-To: Damien Le Moal <Damien.LeMoal@wdc.com>
-Message-ID: <20201207081631.usapwn5jj35c5633@mpHalley>
-References: <CGME20201204094719epcas5p23b3c41223897de3840f92ae3c229cda5@epcas5p2.samsung.com>
-	<20201204094659.12732-1-selvakuma.s1@samsung.com>
-	<CH2PR04MB6522F1188557C829285ED5E8E7F10@CH2PR04MB6522.namprd04.prod.outlook.com>
-	<20201204144003.GA8868@redsun51.ssa.fujisawa.hgst.com>
-	<20201207074616.mocdy6m5qgsn6yqg@mpHalley>
-	<CH2PR04MB6522623991D84D67B13DDF66E7CE0@CH2PR04MB6522.namprd04.prod.outlook.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0FA62186E122
+	for <dm-devel@redhat.com>; Fri,  4 Dec 2020 11:09:52 +0000 (UTC)
+Received: from mailout2.samsung.com (mailout2.samsung.com [203.254.224.25])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-158-SW61dXemP3SjxsAZdrZZlw-1; Fri, 04 Dec 2020 06:09:49 -0500
+X-MC-Unique: SW61dXemP3SjxsAZdrZZlw-1
+Received: from epcas5p1.samsung.com (unknown [182.195.41.39])
+	by mailout2.samsung.com (KnoxPortal) with ESMTP id
+	20201204110237epoutp02404601cef6080adf362041ec015b16fe~NfoZANto53253132531epoutp02L
+	for <dm-devel@redhat.com>; Fri,  4 Dec 2020 11:02:37 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.samsung.com
+	20201204110237epoutp02404601cef6080adf362041ec015b16fe~NfoZANto53253132531epoutp02L
+Received: from epsmges5p3new.samsung.com (unknown [182.195.42.75]) by
+	epcas5p4.samsung.com (KnoxPortal) with ESMTP id
+	20201204110236epcas5p44e480a88dd5f4d1e09dc55b4c42755b6~NfoYZVYNE0722207222epcas5p4U;
+	Fri,  4 Dec 2020 11:02:36 +0000 (GMT)
+Received: from epcas5p4.samsung.com ( [182.195.41.42]) by
+	epsmges5p3new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	6D.E1.33964.C471ACF5; Fri,  4 Dec 2020 20:02:36 +0900 (KST)
+Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
+	epcas5p1.samsung.com (KnoxPortal) with ESMTPA id
+	20201204094747epcas5p121b6eccf78a29ed4cba7c22d6b42d160~NenDZ3B4h1317013170epcas5p1K;
+	Fri,  4 Dec 2020 09:47:47 +0000 (GMT)
+Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
+	epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
+	20201204094747epsmtrp2cbf8c7f11ca1cc9bc229a92b68fad15e~NenDY1msY3021930219epsmtrp2f;
+	Fri,  4 Dec 2020 09:47:47 +0000 (GMT)
+X-AuditID: b6c32a4b-ea1ff700000184ac-a9-5fca174c5e3f
+Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
+	epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	A3.38.13470.2C50ACF5; Fri,  4 Dec 2020 18:47:46 +0900 (KST)
+Received: from localhost.localdomain (unknown [107.110.206.5]) by
+	epsmtip2.samsung.com (KnoxPortal) with ESMTPA id
+	20201204094742epsmtip242cb2d31ecb62fb151ab37d94ac0c0a5~Nem-fZOEc0441104411epsmtip2E;
+	Fri,  4 Dec 2020 09:47:42 +0000 (GMT)
+From: SelvaKumar S <selvakuma.s1@samsung.com>
+To: linux-nvme@lists.infradead.org
+Date: Fri,  4 Dec 2020 15:16:59 +0530
+Message-Id: <20201204094659.12732-3-selvakuma.s1@samsung.com>
+In-Reply-To: <20201204094659.12732-1-selvakuma.s1@samsung.com>
 MIME-Version: 1.0
-In-Reply-To: <CH2PR04MB6522623991D84D67B13DDF66E7CE0@CH2PR04MB6522.namprd04.prod.outlook.com>
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrOKsWRmVeSWpSXmKPExsWy7bCmlq6P+Kl4g3OzxS1W3+1ns2ht/8Zk
+	sffdbFaLlauPMlk8vvOZ3eLo/7dsFpMOXWO02HtL2+LyrjlsFvOXPWW32PZ7PrPFlSmLmC3W
+	vX7PYvHg/XV2i9c/TrJZtG38yugg4LFz1l12j/P3NrJ4XD5b6rFpVSebx+Yl9R67bzawebzf
+	d5XNo2/LKkaPz5vkPNoPdDMFcEVx2aSk5mSWpRbp2yVwZXyfu4W9YI9VxfaJV9gaGPv1uhg5
+	OSQETCT6T35m7mLk4hAS2M0o8eDPEnYI5xOjxMNVs1kgnG+MEgeXXmCDaTnavgAqsZdR4uiO
+	vawQzmdGicnNU1lBqtgEdCWuLdnEAmKLCChJ/F3fBNbBLHCKSaLp3y52kISwgKXEjfNfGbsY
+	OThYBFQlJp3OBQnzCthKXPh0GWqbvMTMS9/ByjkF7CRWbHvHBlEjKHFy5hOw+cxANc1bZ4M9
+	ISHwgEPi/J6dzCAzJQRcJJ61aUPMEZZ4dXwLO4QtJfH53V6o+eUSzzqnMUHYDYwSfe/LIWx7
+	iYt7/jKBjGEW0JRYv0sfIiwrMfXUOiaItXwSvb+fQLXySuyY94QJYquaxKntZhBhGYkPh3dB
+	bfKQ2PXtDRMkqCYySuxde4ptAqPCLCTfzELyzSyEzQsYmVcxSqYWFOempxabFhjnpZbrFSfm
+	Fpfmpesl5+duYgSnPS3vHYyPHnzQO8TIxMF4iFGCg1lJhDdW9WS8EG9KYmVValF+fFFpTmrx
+	IUZpDhYlcV6lH2fihATSE0tSs1NTC1KLYLJMHJxSDUx22g/LRU+ey+K+/32X+S/XOyJyvcd0
+	j9U1et3lik7cajzbSLopUHFu2n2O+We/Hd6x7q+HPpfvZNlLRswNW4SOzltcreN8WGJvgdGU
+	PH1Xvgc5HIuMldZ0mdsELLGoKm/KP/Kd/3ddpHj62Ysvd/zbyhe7WlN7X9G7vFkz7hq/ZlkY
+	93Ra14uSt6e5LvBK+M8I/L4pI493t+iucxJ7/czuXz/T/e7HSxNNyX3TEtzu3pzwJ2jBrTuv
+	sp3YuRbstFzsY60Wej/St4mP7eLLGc4aP/kOv3gcW1cUxz3v878FG19MfJ977oKpLn+kYrBr
+	46o7538lHHh0TDysKfT5AbW6ltzjxd9llUtf7n3dHDlTiaU4I9FQi7moOBEASOiJxOoDAAA=
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFprPIsWRmVeSWpSXmKPExsWy7bCSvO4h1lPxBvd32VisvtvPZtHa/o3J
+	Yu+72awWK1cfZbJ4fOczu8XR/2/ZLCYdusZosfeWtsXlXXPYLOYve8puse33fGaLK1MWMVus
+	e/2exeLB++vsFq9/nGSzaNv4ldFBwGPnrLvsHufvbWTxuHy21GPTqk42j81L6j1232xg83i/
+	7yqbR9+WVYwenzfJebQf6GYK4IrisklJzcksSy3St0vgyvg+dwt7wR6riu0Tr7A1MPbrdTFy
+	ckgImEgcbV/A0sXIxSEksJtRYs7nOcwQCRmJtXc72SBsYYmV/56zQxR9ZJT4/PI4E0iCTUBX
+	4tqSTSwgtoiAksTf9U1gNrPAHSaJbT9cQWxhAUuJG+e/MnYxcnCwCKhKTDqdCxLmFbCVuPDp
+	MtR8eYmZl76zg9icAnYSK7a9A4sLAdU0ty9khKgXlDg58wkLyBhmAXWJ9fOEIDbJSzRvnc08
+	gVFwFpKqWQhVs5BULWBkXsUomVpQnJueW2xYYJiXWq5XnJhbXJqXrpecn7uJERyHWpo7GLev
+	+qB3iJGJg/EQowQHs5IIb6zqyXgh3pTEyqrUovz4otKc1OJDjNIcLErivBe6gFIC6Yklqdmp
+	qQWpRTBZJg5OqQYmNgOdP9wzZj44/lFFVvq0+Qoh3cXPOOLdD0w+VHvj0NkSfm7FiZzbOa8c
+	1M3dt/vDB7GNU56sWbP88ZmdKxhTfDomBzfVvA7Yv8Rrw/TL66/cWTy761nutStrrV+F3p35
+	Z9pb/9krmCZrP9lYpsrnHdHQVf19nuVKY/OIzB8Pnlw82Zhptz1lwzTWE2w/Zk7mFVbX7zKN
+	m/LE4uhKlfyv09+dn3+gwO5I2VrlOpUuLstjUXNnPXrIcLQ5Yo76kZn/pi5wLuXuL7NTt49d
+	4hHhlOs6m3/H9ckfQ35JHs41P+J/+u7BRR2JHh57Pkek3vW/mhn+euIy9iP3/mae+lrSFxj4
+	Nerw0aNupseCD13+kbxTiaU4I9FQi7moOBEAprCWNDIDAAA=
+X-CMS-MailID: 20201204094747epcas5p121b6eccf78a29ed4cba7c22d6b42d160
+X-Msg-Generator: CA
+X-Sendblock-Type: REQ_APPROVE
+CMS-TYPE: 105P
+X-CMS-RootMailID: 20201204094747epcas5p121b6eccf78a29ed4cba7c22d6b42d160
+References: <20201204094659.12732-1-selvakuma.s1@samsung.com>
+	<CGME20201204094747epcas5p121b6eccf78a29ed4cba7c22d6b42d160@epcas5p1.samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -97,23 +134,18 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 0B4B9tEk003376
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 07 Dec 2020 04:59:37 -0500
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>,
-	SelvaKumar S <selvakuma.s1@samsung.com>,
-	"sagi@grimberg.me" <sagi@grimberg.me>,
-	"snitzer@redhat.com" <snitzer@redhat.com>,
-	"selvajove@gmail.com" <selvajove@gmail.com>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"nj.shetty@samsung.com" <nj.shetty@samsung.com>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"joshi.k@samsung.com" <joshi.k@samsung.com>,
-	"Martin K . Petersen" <martin.petersen@oracle.com>,
-	Keith Busch <kbusch@kernel.org>, "hch@lst.de" <hch@lst.de>
-Subject: Re: [dm-devel] [RFC PATCH v2 0/2] add simple copy support
+Cc: axboe@kernel.dk, damien.lemoal@wdc.com,
+	SelvaKumar S <selvakuma.s1@samsung.com>, sagi@grimberg.me,
+	snitzer@redhat.com, selvajove@gmail.com,
+	linux-kernel@vger.kernel.org, nj.shetty@samsung.com,
+	linux-block@vger.kernel.org, dm-devel@redhat.com,
+	joshi.k@samsung.com, kbusch@kernel.org, javier.gonz@samsung.com, hch@lst.de
+Subject: [dm-devel] [RFC PATCH v2 2/2] nvme: add simple copy support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -127,95 +159,141 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On 07.12.2020 08:06, Damien Le Moal wrote:
->On 2020/12/07 16:46, javier.gonz@samsung.com wrote:
->> On 04.12.2020 23:40, Keith Busch wrote:
->>> On Fri, Dec 04, 2020 at 11:25:12AM +0000, Damien Le Moal wrote:
->>>> On 2020/12/04 20:02, SelvaKumar S wrote:
->>>>> This patchset tries to add support for TP4065a ("Simple Copy Command"),
->>>>> v2020.05.04 ("Ratified")
->>>>>
->>>>> The Specification can be found in following link.
->>>>> https://nvmexpress.org/wp-content/uploads/NVM-Express-1.4-Ratified-TPs-1.zip
->>>>>
->>>>> This is an RFC. Looking forward for any feedbacks or other alternate
->>>>> designs for plumbing simple copy to IO stack.
->>>>>
->>>>> Simple copy command is a copy offloading operation and is  used to copy
->>>>> multiple contiguous ranges (source_ranges) of LBA's to a single destination
->>>>> LBA within the device reducing traffic between host and device.
->>>>>
->>>>> This implementation accepts destination, no of sources and arrays of
->>>>> source ranges from application and attach it as payload to the bio and
->>>>> submits to the device.
->>>>>
->>>>> Following limits are added to queue limits and are exposed in sysfs
->>>>> to userspace
->>>>> 	- *max_copy_sectors* limits the sum of all source_range length
->>>>> 	- *max_copy_nr_ranges* limits the number of source ranges
->>>>> 	- *max_copy_range_sectors* limit the maximum number of sectors
->>>>> 		that can constitute a single source range.
->>>>
->>>> Same comment as before. I think this is a good start, but for this to be really
->>>> useful to users and kernel components alike, this really needs copy emulation
->>>> for drives that do not have a native copy feature, similarly to what write zeros
->>>> handling for instance: if the drive does not have a copy command (simple copy
->>>> for NVMe or XCOPY for scsi), then the block layer should issue read/write
->>>> commands to seamlessly execute the copy. Otherwise, this will only serve a small
->>>> niche for users and will not be optimal for FS and DM drivers that could be
->>>> simplified with a generic block layer copy functionality.
->>>>
->>>> This is my 10 cents though, others may differ about this.
->>>
->>> Yes, I agree that copy emulation support should be included with the
->>> hardware enabled solution.
->>
->> Keith, Damien,
->>
->> Can we do the block layer emulation with this patchset and then work in
->> follow-up patchses on (i) the FS interface with F2FS as a first user and
->> (ii) other HW accelerations such as XCOPY?
->
->The initial patchset supporting NVMe simple copy and emulation copy, all under
->an API that probably will be similar that of dm-kcopyd will cover all block
->devices. Other hardware native support for copy functions such as scsi extended
->copy can be added later under the hood without any API changes (or minimal changes).
-
-Sounds good. That we can do. We will add a new patch for this.
-
->
->I am not sure what you mean by "FS interface for F2FS": the block layer API for
->this copy functionality will be what F2FS (and other FSes) will call. That is
->the interface, no ?
-
-Essentially yes.. I mean adding the F2FS logic and potentially some
-helpers to the block layer to aid GC.
-
->
->> For XCOPY, I believe we need to have a separate discussion as much works
->> is already done that we should align to.
->
->I think Martin (added to this thread) and others have looked into it but I do
->not think that anything made it into the kernel yet.
-
-Exactly. Looking at some of the code posted through time and recalling
-the discussions at LSF/MM, seems like there are a number of things we
-are not addressing here that could be incorporated down the road, such
-as dedicated syscalls / extensions, multi namespace / device support,
-etc.
->
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+QWRkIHN1cHBvcnQgZm9yICBUUCA0MDY1YSAoIlNpbXBsZSBDb3B5IENvbW1hbmQiKSwgdjIwMjAu
+MDUuMDQKKCJSYXRpZmllZCIpCgpUaGUgaW1wbGVtZW50YXRpb24gdXNlcyB0aGUgcGF5bG9hZCBw
+YXNzZWQgZnJvbSB0aGUgYmxvY2sgbGF5ZXIKdG8gZm9ybSBzaW1wbGUgY29weSBjb21tYW5kLiBT
+ZXQgdGhlIGRldmljZSBjb3B5IGxpbWl0cyB0byBxdWV1ZQpsaW1pdHMuCgpTaWduZWQtb2ZmLWJ5
+OiBTZWx2YUt1bWFyIFMgPHNlbHZha3VtYS5zMUBzYW1zdW5nLmNvbT4KU2lnbmVkLW9mZi1ieTog
+S2FuY2hhbiBKb3NoaSA8am9zaGkua0BzYW1zdW5nLmNvbT4KU2lnbmVkLW9mZi1ieTogTml0ZXNo
+IFNoZXR0eSA8bmouc2hldHR5QHNhbXN1bmcuY29tPgpTaWduZWQtb2ZmLWJ5OiBKYXZpZXIgR29u
+esOhbGV6IDxqYXZpZXIuZ29uekBzYW1zdW5nLmNvbT4KLS0tCiBkcml2ZXJzL252bWUvaG9zdC9j
+b3JlLmMgfCA4NyArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrCiBpbmNs
+dWRlL2xpbnV4L252bWUuaCAgICAgfCA0MyArKysrKysrKysrKysrKysrKystLQogMiBmaWxlcyBj
+aGFuZ2VkLCAxMjcgaW5zZXJ0aW9ucygrKSwgMyBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9k
+cml2ZXJzL252bWUvaG9zdC9jb3JlLmMgYi9kcml2ZXJzL252bWUvaG9zdC9jb3JlLmMKaW5kZXgg
+OWI2ZWJlYjI5Y2NhLi5mZjQ1ZTU3MjIzZjAgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvbnZtZS9ob3N0
+L2NvcmUuYworKysgYi9kcml2ZXJzL252bWUvaG9zdC9jb3JlLmMKQEAgLTY0Nyw2ICs2NDcsNjUg
+QEAgc3RhdGljIGlubGluZSB2b2lkIG52bWVfc2V0dXBfZmx1c2goc3RydWN0IG52bWVfbnMgKm5z
+LAogCWNtbmQtPmNvbW1vbi5uc2lkID0gY3B1X3RvX2xlMzIobnMtPmhlYWQtPm5zX2lkKTsKIH0K
+IAorc3RhdGljIGlubGluZSBibGtfc3RhdHVzX3QgbnZtZV9zZXR1cF9jb3B5KHN0cnVjdCBudm1l
+X25zICpucywKKwkgICAgICAgc3RydWN0IHJlcXVlc3QgKnJlcSwgc3RydWN0IG52bWVfY29tbWFu
+ZCAqY21uZCkKK3sKKwlzdHJ1Y3QgbnZtZV9jdHJsICpjdHJsID0gbnMtPmN0cmw7CisJc3RydWN0
+IG52bWVfY29weV9yYW5nZSAqcmFuZ2UgPSBOVUxMOworCXN0cnVjdCBibGtfY29weV9wYXlsb2Fk
+ICpwYXlsb2FkOworCXVuc2lnbmVkIHNob3J0IG5yX3JhbmdlID0gMDsKKwl1MTYgY29udHJvbCA9
+IDAsIHNzcmw7CisJdTMyIGRzbWdtdCA9IDA7CisJdTY0IHNsYmE7CisJaW50IGk7CisKKwlwYXls
+b2FkID0gYmlvX2RhdGEocmVxLT5iaW8pOworCW5yX3JhbmdlID0gcGF5bG9hZC0+Y29weV9yYW5n
+ZTsKKworCWlmIChyZXEtPmNtZF9mbGFncyAmIFJFUV9GVUEpCisJCWNvbnRyb2wgfD0gTlZNRV9S
+V19GVUE7CisKKwlpZiAocmVxLT5jbWRfZmxhZ3MgJiBSRVFfRkFJTEZBU1RfREVWKQorCQljb250
+cm9sIHw9IE5WTUVfUldfTFI7CisKKwljbW5kLT5jb3B5Lm9wY29kZSA9IG52bWVfY21kX2NvcHk7
+CisJY21uZC0+Y29weS5uc2lkID0gY3B1X3RvX2xlMzIobnMtPmhlYWQtPm5zX2lkKTsKKwljbW5k
+LT5jb3B5LnNkbGJhID0gY3B1X3RvX2xlNjQoYmxrX3JxX3BvcyhyZXEpID4+IChucy0+bGJhX3No
+aWZ0IC0gOSkpOworCisJcmFuZ2UgPSBrbWFsbG9jX2FycmF5KG5yX3JhbmdlLCBzaXplb2YoKnJh
+bmdlKSwKKwkJCUdGUF9BVE9NSUMgfCBfX0dGUF9OT1dBUk4pOworCWlmICghcmFuZ2UpCisJCXJl
+dHVybiBCTEtfU1RTX1JFU09VUkNFOworCisJZm9yIChpID0gMDsgaSA8IG5yX3JhbmdlOyBpKysp
+IHsKKwkJc2xiYSA9IHBheWxvYWQtPnJhbmdlW2ldLnNyYzsKKwkJc2xiYSA9IHNsYmEgPj4gKG5z
+LT5sYmFfc2hpZnQgLSA5KTsKKworCQlzc3JsID0gcGF5bG9hZC0+cmFuZ2VbaV0ubGVuOworCQlz
+c3JsID0gc3NybCA+PiAobnMtPmxiYV9zaGlmdCAtIDkpOworCisJCXJhbmdlW2ldLnNsYmEgPSBj
+cHVfdG9fbGU2NChzbGJhKTsKKwkJcmFuZ2VbaV0ubmxiID0gY3B1X3RvX2xlMTYoc3NybCAtIDEp
+OworCX0KKworCWNtbmQtPmNvcHkubnJfcmFuZ2UgPSBucl9yYW5nZSAtIDE7CisKKwlyZXEtPnNw
+ZWNpYWxfdmVjLmJ2X3BhZ2UgPSB2aXJ0X3RvX3BhZ2UocmFuZ2UpOworCXJlcS0+c3BlY2lhbF92
+ZWMuYnZfb2Zmc2V0ID0gb2Zmc2V0X2luX3BhZ2UocmFuZ2UpOworCXJlcS0+c3BlY2lhbF92ZWMu
+YnZfbGVuID0gc2l6ZW9mKCpyYW5nZSkgKiBucl9yYW5nZTsKKwlyZXEtPnJxX2ZsYWdzIHw9IFJR
+Rl9TUEVDSUFMX1BBWUxPQUQ7CisKKwlpZiAoY3RybC0+bnJfc3RyZWFtcykKKwkJbnZtZV9hc3Np
+Z25fd3JpdGVfc3RyZWFtKGN0cmwsIHJlcSwgJmNvbnRyb2wsICZkc21nbXQpOworCisJLy9UQkQg
+ZW5kLXRvLWVuZAorCisJY21uZC0+cncuY29udHJvbCA9IGNwdV90b19sZTE2KGNvbnRyb2wpOwor
+CWNtbmQtPnJ3LmRzbWdtdCA9IGNwdV90b19sZTMyKGRzbWdtdCk7CisKKwlyZXR1cm4gQkxLX1NU
+U19PSzsKK30KKwogc3RhdGljIGJsa19zdGF0dXNfdCBudm1lX3NldHVwX2Rpc2NhcmQoc3RydWN0
+IG52bWVfbnMgKm5zLCBzdHJ1Y3QgcmVxdWVzdCAqcmVxLAogCQlzdHJ1Y3QgbnZtZV9jb21tYW5k
+ICpjbW5kKQogewpAQCAtODI5LDYgKzg4OCw5IEBAIGJsa19zdGF0dXNfdCBudm1lX3NldHVwX2Nt
+ZChzdHJ1Y3QgbnZtZV9ucyAqbnMsIHN0cnVjdCByZXF1ZXN0ICpyZXEsCiAJY2FzZSBSRVFfT1Bf
+RElTQ0FSRDoKIAkJcmV0ID0gbnZtZV9zZXR1cF9kaXNjYXJkKG5zLCByZXEsIGNtZCk7CiAJCWJy
+ZWFrOworCWNhc2UgUkVRX09QX0NPUFk6CisJCXJldCA9IG52bWVfc2V0dXBfY29weShucywgcmVx
+LCBjbWQpOworCQlicmVhazsKIAljYXNlIFJFUV9PUF9SRUFEOgogCQlyZXQgPSBudm1lX3NldHVw
+X3J3KG5zLCByZXEsIGNtZCwgbnZtZV9jbWRfcmVhZCk7CiAJCWJyZWFrOwpAQCAtMTg1MCw2ICsx
+OTEyLDI5IEBAIHN0YXRpYyB2b2lkIG52bWVfY29uZmlnX2Rpc2NhcmQoc3RydWN0IGdlbmRpc2sg
+KmRpc2ssIHN0cnVjdCBudm1lX25zICpucykKIAkJYmxrX3F1ZXVlX21heF93cml0ZV96ZXJvZXNf
+c2VjdG9ycyhxdWV1ZSwgVUlOVF9NQVgpOwogfQogCitzdGF0aWMgdm9pZCBudm1lX2NvbmZpZ19j
+b3B5KHN0cnVjdCBnZW5kaXNrICpkaXNrLCBzdHJ1Y3QgbnZtZV9ucyAqbnMsCisJCQkJICAgICAg
+IHN0cnVjdCBudm1lX2lkX25zICppZCkKK3sKKwlzdHJ1Y3QgbnZtZV9jdHJsICpjdHJsID0gbnMt
+PmN0cmw7CisJc3RydWN0IHJlcXVlc3RfcXVldWUgKnF1ZXVlID0gZGlzay0+cXVldWU7CisKKwlp
+ZiAoIShjdHJsLT5vbmNzICYgTlZNRV9DVFJMX09OQ1NfQ09QWSkpIHsKKwkJcXVldWUtPmxpbWl0
+cy5tYXhfY29weV9zZWN0b3JzID0gMDsKKwkJcXVldWUtPmxpbWl0cy5tYXhfY29weV9yYW5nZV9z
+ZWN0b3JzID0gMDsKKwkJcXVldWUtPmxpbWl0cy5tYXhfY29weV9ucl9yYW5nZXMgPSAwOworCQli
+bGtfcXVldWVfZmxhZ19jbGVhcihRVUVVRV9GTEFHX0NPUFksIHF1ZXVlKTsKKwkJcmV0dXJuOwor
+CX0KKworCS8qIHNldHRpbmcgY29weSBsaW1pdHMgKi8KKwlibGtfcXVldWVfZmxhZ190ZXN0X2Fu
+ZF9zZXQoUVVFVUVfRkxBR19DT1BZLCBxdWV1ZSk7CisJcXVldWUtPmxpbWl0cy5tYXhfY29weV9z
+ZWN0b3JzID0gbGU2NF90b19jcHUoaWQtPm1jbCkgKgorCQkoMSA8PCAobnMtPmxiYV9zaGlmdCAt
+IDkpKTsKKwlxdWV1ZS0+bGltaXRzLm1heF9jb3B5X3JhbmdlX3NlY3RvcnMgPSBsZTMyX3RvX2Nw
+dShpZC0+bXNzcmwpICoKKwkJKDEgPDwgKG5zLT5sYmFfc2hpZnQgLSA5KSk7CisJcXVldWUtPmxp
+bWl0cy5tYXhfY29weV9ucl9yYW5nZXMgPSBpZC0+bXNyYyArIDE7Cit9CisKIHN0YXRpYyB2b2lk
+IG52bWVfY29uZmlnX3dyaXRlX3plcm9lcyhzdHJ1Y3QgZ2VuZGlzayAqZGlzaywgc3RydWN0IG52
+bWVfbnMgKm5zKQogewogCXU2NCBtYXhfYmxvY2tzOwpAQCAtMjA0NSw2ICsyMTMwLDcgQEAgc3Rh
+dGljIHZvaWQgbnZtZV91cGRhdGVfZGlza19pbmZvKHN0cnVjdCBnZW5kaXNrICpkaXNrLAogCXNl
+dF9jYXBhY2l0eV9hbmRfbm90aWZ5KGRpc2ssIGNhcGFjaXR5KTsKIAogCW52bWVfY29uZmlnX2Rp
+c2NhcmQoZGlzaywgbnMpOworCW52bWVfY29uZmlnX2NvcHkoZGlzaywgbnMsIGlkKTsKIAludm1l
+X2NvbmZpZ193cml0ZV96ZXJvZXMoZGlzaywgbnMpOwogCiAJaWYgKGlkLT5uc2F0dHIgJiBOVk1F
+X05TX0FUVFJfUk8pCkBAIC00NjE2LDYgKzQ3MDIsNyBAQCBzdGF0aWMgaW5saW5lIHZvaWQgX252
+bWVfY2hlY2tfc2l6ZSh2b2lkKQogCUJVSUxEX0JVR19PTihzaXplb2Yoc3RydWN0IG52bWVfZG93
+bmxvYWRfZmlybXdhcmUpICE9IDY0KTsKIAlCVUlMRF9CVUdfT04oc2l6ZW9mKHN0cnVjdCBudm1l
+X2Zvcm1hdF9jbWQpICE9IDY0KTsKIAlCVUlMRF9CVUdfT04oc2l6ZW9mKHN0cnVjdCBudm1lX2Rz
+bV9jbWQpICE9IDY0KTsKKwlCVUlMRF9CVUdfT04oc2l6ZW9mKHN0cnVjdCBudm1lX2NvcHlfY29t
+bWFuZCkgIT0gNjQpOwogCUJVSUxEX0JVR19PTihzaXplb2Yoc3RydWN0IG52bWVfd3JpdGVfemVy
+b2VzX2NtZCkgIT0gNjQpOwogCUJVSUxEX0JVR19PTihzaXplb2Yoc3RydWN0IG52bWVfYWJvcnRf
+Y21kKSAhPSA2NCk7CiAJQlVJTERfQlVHX09OKHNpemVvZihzdHJ1Y3QgbnZtZV9nZXRfbG9nX3Bh
+Z2VfY29tbWFuZCkgIT0gNjQpOwpkaWZmIC0tZ2l0IGEvaW5jbHVkZS9saW51eC9udm1lLmggYi9p
+bmNsdWRlL2xpbnV4L252bWUuaAppbmRleCBkOTI1MzU5OTc2ODcuLjExZWQ3MmEyMTY0ZCAxMDA2
+NDQKLS0tIGEvaW5jbHVkZS9saW51eC9udm1lLmgKKysrIGIvaW5jbHVkZS9saW51eC9udm1lLmgK
+QEAgLTI4OSw3ICsyODksNyBAQCBzdHJ1Y3QgbnZtZV9pZF9jdHJsIHsKIAlfX3U4CQkJbnZzY2M7
+CiAJX191OAkJCW53cGM7CiAJX19sZTE2CQkJYWN3dTsKLQlfX3U4CQkJcnN2ZDUzNFsyXTsKKwlf
+X2xlMTYJCQlvY2ZzOwogCV9fbGUzMgkJCXNnbHM7CiAJX19sZTMyCQkJbW5hbjsKIAlfX3U4CQkJ
+cnN2ZDU0NFsyMjRdOwpAQCAtMzE0LDYgKzMxNCw3IEBAIGVudW0gewogCU5WTUVfQ1RSTF9PTkNT
+X1dSSVRFX1pFUk9FUwkJPSAxIDw8IDMsCiAJTlZNRV9DVFJMX09OQ1NfUkVTRVJWQVRJT05TCQk9
+IDEgPDwgNSwKIAlOVk1FX0NUUkxfT05DU19USU1FU1RBTVAJCT0gMSA8PCA2LAorCU5WTUVfQ1RS
+TF9PTkNTX0NPUFkJCQk9IDEgPDwgOCwKIAlOVk1FX0NUUkxfVldDX1BSRVNFTlQJCQk9IDEgPDwg
+MCwKIAlOVk1FX0NUUkxfT0FDU19TRUNfU1VQUCAgICAgICAgICAgICAgICAgPSAxIDw8IDAsCiAJ
+TlZNRV9DVFJMX09BQ1NfRElSRUNUSVZFUwkJPSAxIDw8IDUsCkBAIC0zNjIsNyArMzYzLDEwIEBA
+IHN0cnVjdCBudm1lX2lkX25zIHsKIAlfX2xlMTYJCQlucGRnOwogCV9fbGUxNgkJCW5wZGE7CiAJ
+X19sZTE2CQkJbm93czsKLQlfX3U4CQkJcnN2ZDc0WzE4XTsKKwlfX2xlMTYJCQltc3NybDsKKwlf
+X2xlMzIJCQltY2w7CisJX191OAkJCW1zcmM7CisJX191OAkJCXJzdmQ5MVsxMV07CiAJX19sZTMy
+CQkJYW5hZ3JwaWQ7CiAJX191OAkJCXJzdmQ5NlszXTsKIAlfX3U4CQkJbnNhdHRyOwpAQCAtNjcz
+LDYgKzY3Nyw3IEBAIGVudW0gbnZtZV9vcGNvZGUgewogCW52bWVfY21kX3Jlc3ZfcmVwb3J0CT0g
+MHgwZSwKIAludm1lX2NtZF9yZXN2X2FjcXVpcmUJPSAweDExLAogCW52bWVfY21kX3Jlc3ZfcmVs
+ZWFzZQk9IDB4MTUsCisJbnZtZV9jbWRfY29weQkJPSAweDE5LAogCW52bWVfY21kX3pvbmVfbWdt
+dF9zZW5kCT0gMHg3OSwKIAludm1lX2NtZF96b25lX21nbXRfcmVjdgk9IDB4N2EsCiAJbnZtZV9j
+bWRfem9uZV9hcHBlbmQJPSAweDdkLApAQCAtNjkxLDcgKzY5Niw4IEBAIGVudW0gbnZtZV9vcGNv
+ZGUgewogCQludm1lX29wY29kZV9uYW1lKG52bWVfY21kX3Jlc3ZfcmVnaXN0ZXIpLAlcCiAJCW52
+bWVfb3Bjb2RlX25hbWUobnZtZV9jbWRfcmVzdl9yZXBvcnQpLAkJXAogCQludm1lX29wY29kZV9u
+YW1lKG52bWVfY21kX3Jlc3ZfYWNxdWlyZSksCVwKLQkJbnZtZV9vcGNvZGVfbmFtZShudm1lX2Nt
+ZF9yZXN2X3JlbGVhc2UpKQorCQludm1lX29wY29kZV9uYW1lKG52bWVfY21kX3Jlc3ZfcmVsZWFz
+ZSksCVwKKwkJbnZtZV9vcGNvZGVfbmFtZShudm1lX2NtZF9jb3B5KSkKIAogCiAvKgpAQCAtODYz
+LDYgKzg2OSwzNiBAQCBzdHJ1Y3QgbnZtZV9kc21fcmFuZ2UgewogCV9fbGU2NAkJCXNsYmE7CiB9
+OwogCitzdHJ1Y3QgbnZtZV9jb3B5X2NvbW1hbmQgeworCV9fdTggICAgICAgICAgICAgICAgICAg
+IG9wY29kZTsKKwlfX3U4ICAgICAgICAgICAgICAgICAgICBmbGFnczsKKwlfX3UxNiAgICAgICAg
+ICAgICAgICAgICBjb21tYW5kX2lkOworCV9fbGUzMiAgICAgICAgICAgICAgICAgIG5zaWQ7CisJ
+X191NjQgICAgICAgICAgICAgICAgICAgcnN2ZDI7CisJX19sZTY0ICAgICAgICAgICAgICAgICAg
+bWV0YWRhdGE7CisJdW5pb24gbnZtZV9kYXRhX3B0ciAgICAgZHB0cjsKKwlfX2xlNjQgICAgICAg
+ICAgICAgICAgICBzZGxiYTsKKwlfX3U4CQkJbnJfcmFuZ2U7CisJX191OAkJCXJzdmQxMjsKKwlf
+X2xlMTYgICAgICAgICAgICAgICAgICBjb250cm9sOworCV9fbGUxNiAgICAgICAgICAgICAgICAg
+IHJzdmQxMzsKKwlfX2xlMTYJCQlkc3BlYzsKKwlfX2xlMzIgICAgICAgICAgICAgICAgICBpbGJy
+dDsKKwlfX2xlMTYgICAgICAgICAgICAgICAgICBsYmF0OworCV9fbGUxNiAgICAgICAgICAgICAg
+ICAgIGxiYXRtOworfTsKKworc3RydWN0IG52bWVfY29weV9yYW5nZSB7CisJX19sZTY0CQkJcnN2
+ZDA7CisJX19sZTY0CQkJc2xiYTsKKwlfX2xlMTYJCQlubGI7CisJX19sZTE2CQkJcnN2ZDE4Owor
+CV9fbGUzMgkJCXJzdmQyMDsKKwlfX2xlMzIJCQllaWxicnQ7CisJX19sZTE2CQkJZWxiYXQ7CisJ
+X19sZTE2CQkJZWxiYXRtOworfTsKKwogc3RydWN0IG52bWVfd3JpdGVfemVyb2VzX2NtZCB7CiAJ
+X191OAkJCW9wY29kZTsKIAlfX3U4CQkJZmxhZ3M7CkBAIC0xNDAwLDYgKzE0MzYsNyBAQCBzdHJ1
+Y3QgbnZtZV9jb21tYW5kIHsKIAkJc3RydWN0IG52bWVfZG93bmxvYWRfZmlybXdhcmUgZGxmdzsK
+IAkJc3RydWN0IG52bWVfZm9ybWF0X2NtZCBmb3JtYXQ7CiAJCXN0cnVjdCBudm1lX2RzbV9jbWQg
+ZHNtOworCQlzdHJ1Y3QgbnZtZV9jb3B5X2NvbW1hbmQgY29weTsKIAkJc3RydWN0IG52bWVfd3Jp
+dGVfemVyb2VzX2NtZCB3cml0ZV96ZXJvZXM7CiAJCXN0cnVjdCBudm1lX3pvbmVfbWdtdF9zZW5k
+X2NtZCB6bXM7CiAJCXN0cnVjdCBudm1lX3pvbmVfbWdtdF9yZWN2X2NtZCB6bXI7Ci0tIAoyLjI1
+LjEKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
+L3d3dy5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
 
