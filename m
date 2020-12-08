@@ -5,64 +5,64 @@ X-Spam-Level:
 X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A68E4C4361B
-	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 10:22:47 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EDBA1C433FE
+	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 10:30:48 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 2AC4023A9B
-	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 10:22:46 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2AC4023A9B
+	by mail.kernel.org (Postfix) with ESMTPS id 705C423A9D
+	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 10:30:47 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 705C423A9D
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1607422965;
+	s=mimecast20190719; t=1607423446;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Bf3JtLvimu9WWYlo5QGeMYJUn8rIuhsy43X38M6K70M=;
-	b=JEhf71otn8bFpDVIuoLCKtJoAyW0fDfaJTzB0FSqR+xVBEOxhzDEgFRd5djP35/U7etwWG
-	ms7VMRj2EZT9KV7cbC24ZGjkkuRN/kFZBmutJpi3B5j31KcX1C813QyrC0+5SgqLpXfd6R
-	xL2/5YQwGcK7IAOzVNwGa3yb0rrSMFo=
+	bh=kOu4gOO7MTFzEWKTc/5qIUnC+tP9tkqkRHNJbDEzPYA=;
+	b=hRmAId3uZhcRn1kZ6TCTqKE+fG1exhGvGW/Bsa03Lh1rFjgfSGLL7kAQc/PA1SlMgRkvaO
+	ul2dIrOwmHIy82oTaGD5tRWCvdr8LhOrCdtXYX6YLNcBfi3GSBYX5an1GIqjt5YXI+8IKd
+	+NWdiFFmp6DNjIxHvQmTZckB7i48wUs=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-44-KFc12HAUOLKdkipLlZTLXw-1; Tue, 08 Dec 2020 05:22:43 -0500
-X-MC-Unique: KFc12HAUOLKdkipLlZTLXw-1
+ us-mta-441-fpAkk_UhOZqrF3xLHJZGVg-1; Tue, 08 Dec 2020 05:30:40 -0500
+X-MC-Unique: fpAkk_UhOZqrF3xLHJZGVg-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2C77C1005504;
-	Tue,  8 Dec 2020 10:22:39 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B82655C1A1;
-	Tue,  8 Dec 2020 10:22:38 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F0D2C1E7DC;
+	Tue,  8 Dec 2020 10:29:37 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A35645C1A1;
+	Tue,  8 Dec 2020 10:29:37 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6F94D4E58E;
-	Tue,  8 Dec 2020 10:22:37 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
-	[10.5.11.11])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 52CC0180954D;
+	Tue,  8 Dec 2020 10:29:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com
+	[10.5.11.16])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B8AMYPP031855 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 8 Dec 2020 05:22:34 -0500
+	id 0B8ATYK2032457 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 8 Dec 2020 05:29:34 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id F1B131346F; Tue,  8 Dec 2020 10:22:33 +0000 (UTC)
+	id 500E35C1A3; Tue,  8 Dec 2020 10:29:34 +0000 (UTC)
 Received: from T590 (ovpn-12-237.pek2.redhat.com [10.72.12.237])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3F6B260636;
-	Tue,  8 Dec 2020 10:22:15 +0000 (UTC)
-Date: Tue, 8 Dec 2020 18:22:11 +0800
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C59065C1A1;
+	Tue,  8 Dec 2020 10:29:28 +0000 (UTC)
+Date: Tue, 8 Dec 2020 18:29:23 +0800
 From: Ming Lei <ming.lei@redhat.com>
 To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20201208102211.GC1202995@T590>
+Message-ID: <20201208102923.GD1202995@T590>
 References: <20201207131918.2252553-1-hch@lst.de>
-	<20201207131918.2252553-4-hch@lst.de>
+	<20201207131918.2252553-5-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20201207131918.2252553-4-hch@lst.de>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+In-Reply-To: <20201207131918.2252553-5-hch@lst.de>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 X-loop: dm-devel@redhat.com
 Cc: Jens Axboe <axboe@kernel.dk>, Sagi Grimberg <sagi@grimberg.me>,
 	Mike Snitzer <snitzer@redhat.com>, Oleksii Kurochko <olkuroch@cisco.com>,
@@ -71,8 +71,8 @@ Cc: Jens Axboe <axboe@kernel.dk>, Sagi Grimberg <sagi@grimberg.me>,
 	linux-nvme@lists.infradead.org,
 	"Martin K . Petersen" <martin.petersen@oracle.com>,
 	Ilya Dryomov <idryomov@gmail.com>, ceph-devel@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH 3/6] block: add a hard-readonly flag to
-	struct gendisk
+Subject: Re: [dm-devel] [PATCH 4/6] block: propagate BLKROSET on the whole
+ device to all partitions
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -95,112 +95,70 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Dec 07, 2020 at 02:19:15PM +0100, Christoph Hellwig wrote:
-> Commit 20bd1d026aac ("scsi: sd: Keep disk read-only when re-reading
-> partition") addressed a long-standing problem with user read-only
-> policy being overridden as a result of a device-initiated revalidate.
-> The commit has since been reverted due to a regression that left some
-> USB devices read-only indefinitely.
+On Mon, Dec 07, 2020 at 02:19:16PM +0100, Christoph Hellwig wrote:
+> Change the policy so that a BLKROSET on the whole device also affects
+> partitions.  To quote Martin K. Petersen:
 > 
-> To fix the underlying problems with revalidate we need to keep track
-> of hardware state and user policy separately.
+> It's very common for database folks to twiddle the read-only state of
+> block devices and partitions. I know that our users will find it very
+> counter-intuitive that setting /dev/sda read-only won't prevent writes
+> to /dev/sda1.
 > 
-> The gendisk has been updated to reflect the current hardware state set
-> by the device driver. This is done to allow returning the device to
-> the hardware state once the user clears the BLKROSET flag.
+> The existing behavior is inconsistent in the sense that doing:
 > 
-> The resulting semantics are as follows:
+> permits writes. But:
 > 
->  - If BLKROSET sets a given partition read-only, that partition will
->    remain read-only even if the underlying storage stack initiates a
->    revalidate. However, the BLKRRPART ioctl will cause the partition
->    table to be dropped and any user policy on partitions will be lost.
+> <something triggers revalidate>
 > 
->  - If BLKROSET has not been set, both the whole disk device and any
->    partitions will reflect the current write-protect state of the
->    underlying device.
+> doesn't.
 > 
-> Based on a patch from Martin K. Petersen <martin.petersen@oracle.com>.
+> And a subsequent:
 > 
-> Reported-by: Oleksii Kurochko <olkuroch@cisco.com>
-> Bugzilla: https://bugzilla.kernel.org/show_bug.cgi?id=201221
+> doesn't work either since sda1's read-only policy has been inherited
+> from the whole-disk device.
+> 
+> You need to do:
+> 
+> after setting the whole-disk device rw to effectuate the same change on
+> the partitions, otherwise they are stuck being read-only indefinitely.
+> 
+> However, setting the read-only policy on a partition does *not* require
+> the revalidate step. As a matter of fact, doing the revalidate will blow
+> away the policy setting you just made.
+> 
+> So the user needs to take different actions depending on whether they
+> are trying to read-protect a whole-disk device or a partition. Despite
+> using the same ioctl. That is really confusing.
+> 
+> I have lost count how many times our customers have had data clobbered
+> because of ambiguity of the existing whole-disk device policy. The
+> current behavior violates the principle of least surprise by letting the
+> user think they write protected the whole disk when they actually
+> didn't.
+> 
+> Suggested-by: Martin K. Petersen <martin.petersen@oracle.com>
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
-> Reviewed-by: Hannes Reinecke <hare@suse.de>
 > ---
->  block/blk-core.c        |  2 +-
->  block/genhd.c           | 33 +++++++++++++++++++--------------
->  block/partitions/core.c |  3 +--
->  include/linux/genhd.h   |  6 ++++--
->  4 files changed, 25 insertions(+), 19 deletions(-)
+>  block/genhd.c | 3 +--
+>  1 file changed, 1 insertion(+), 2 deletions(-)
 > 
-> diff --git a/block/blk-core.c b/block/blk-core.c
-> index ad041e903b0a8f..ecd68415c6acad 100644
-> --- a/block/blk-core.c
-> +++ b/block/blk-core.c
-> @@ -693,7 +693,7 @@ static inline bool should_fail_request(struct block_device *part,
->  
->  static inline bool bio_check_ro(struct bio *bio)
->  {
-> -	if (op_is_write(bio_op(bio)) && bio->bi_bdev->bd_read_only) {
-> +	if (op_is_write(bio_op(bio)) && bdev_read_only(bio->bi_bdev))
->  		char b[BDEVNAME_SIZE];
->  
->  		if (op_is_flush(bio->bi_opf) && !bio_sectors(bio))
 > diff --git a/block/genhd.c b/block/genhd.c
-> index c87013879b8650..878f94727aaa96 100644
+> index 878f94727aaa96..c214fcd25a05c9 100644
 > --- a/block/genhd.c
 > +++ b/block/genhd.c
-> @@ -1425,27 +1425,32 @@ static void set_disk_ro_uevent(struct gendisk *gd, int ro)
->  	kobject_uevent_env(&disk_to_dev(gd)->kobj, KOBJ_CHANGE, envp);
->  }
->  
-> -void set_disk_ro(struct gendisk *disk, int flag)
-> +/**
-> + * set_disk_ro - set a gendisk read-only
-> + * @disk:	gendisk to operate on
-> + * @ready_only:	%true to set the disk read-only, %false set the disk read/write
-> + *
-> + * This function is used to indicate whether a given disk device should have its
-> + * read-only flag set. set_disk_ro() is typically used by device drivers to
-> + * indicate whether the underlying physical device is write-protected.
-> + */
-> +void set_disk_ro(struct gendisk *disk, bool read_only)
->  {
-> -	struct disk_part_iter piter;
-> -	struct block_device *part;
-> -
-> -	if (disk->part0->bd_read_only != flag) {
-> -		set_disk_ro_uevent(disk, flag);
-> -		disk->part0->bd_read_only = flag;
-> +	if (read_only) {
-> +		if (test_and_set_bit(GD_READ_ONLY, &disk->state))
-> +			return;
-> +	} else {
-> +		if (!test_and_clear_bit(GD_READ_ONLY, &disk->state))
-> +			return;
->  	}
-> -
-> -	disk_part_iter_init(&piter, disk, DISK_PITER_INCL_EMPTY);
-> -	while ((part = disk_part_iter_next(&piter)))
-> -		part->bd_read_only = flag;
-> -	disk_part_iter_exit(&piter);
-> +	set_disk_ro_uevent(disk, read_only);
->  }
-> -
->  EXPORT_SYMBOL(set_disk_ro);
+> @@ -1449,8 +1449,7 @@ EXPORT_SYMBOL(set_disk_ro);
 >  
 >  int bdev_read_only(struct block_device *bdev)
 >  {
-> -	return bdev->bd_read_only;
-> +	return bdev->bd_read_only ||
-> +		test_bit(GD_READ_ONLY, &bdev->bd_disk->state);
+> -	return bdev->bd_read_only ||
+> -		test_bit(GD_READ_ONLY, &bdev->bd_disk->state);
+> +	return bdev->bd_read_only || get_disk_ro(bdev->bd_disk);
 >  }
 >  EXPORT_SYMBOL(bdev_read_only);
 
-Maybe one inline version can be added for fast path(bio_check_ro()), and the approach
-is good:
-
-Reviewed-by: Ming Lei <ming.lei@redhat.com>
+I think this patch should be folded into previous one, otherwise
+bdev_read_only(part) may return false even though ioctl(BLKROSET)
+has been done on the whole disk.
 
 -- 
 Ming
