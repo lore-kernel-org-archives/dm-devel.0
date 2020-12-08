@@ -2,77 +2,87 @@ Return-Path: <SRS0=ZVdP=FM=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EDBA1C433FE
-	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 10:30:48 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E1491C4361B
+	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 10:58:13 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 705C423A9D
-	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 10:30:47 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 705C423A9D
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 58E4123AA7
+	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 10:58:13 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 58E4123AA7
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1607423446;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=kOu4gOO7MTFzEWKTc/5qIUnC+tP9tkqkRHNJbDEzPYA=;
-	b=hRmAId3uZhcRn1kZ6TCTqKE+fG1exhGvGW/Bsa03Lh1rFjgfSGLL7kAQc/PA1SlMgRkvaO
-	ul2dIrOwmHIy82oTaGD5tRWCvdr8LhOrCdtXYX6YLNcBfi3GSBYX5an1GIqjt5YXI+8IKd
-	+NWdiFFmp6DNjIxHvQmTZckB7i48wUs=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-441-fpAkk_UhOZqrF3xLHJZGVg-1; Tue, 08 Dec 2020 05:30:40 -0500
-X-MC-Unique: fpAkk_UhOZqrF3xLHJZGVg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-456-j_HXCmImMka4DJRxGHaHZQ-1; Tue, 08 Dec 2020 05:58:10 -0500
+X-MC-Unique: j_HXCmImMka4DJRxGHaHZQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F0D2C1E7DC;
-	Tue,  8 Dec 2020 10:29:37 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C24D080EF82;
+	Tue,  8 Dec 2020 10:58:05 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A35645C1A1;
-	Tue,  8 Dec 2020 10:29:37 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 20FB46E51B;
+	Tue,  8 Dec 2020 10:58:05 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 52CC0180954D;
-	Tue,  8 Dec 2020 10:29:36 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com
-	[10.5.11.16])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 61931180954D;
+	Tue,  8 Dec 2020 10:58:02 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B8ATYK2032457 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 8 Dec 2020 05:29:34 -0500
+	id 0B8AvwUN004442 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 8 Dec 2020 05:57:58 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 500E35C1A3; Tue,  8 Dec 2020 10:29:34 +0000 (UTC)
-Received: from T590 (ovpn-12-237.pek2.redhat.com [10.72.12.237])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C59065C1A1;
-	Tue,  8 Dec 2020 10:29:28 +0000 (UTC)
-Date: Tue, 8 Dec 2020 18:29:23 +0800
-From: Ming Lei <ming.lei@redhat.com>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20201208102923.GD1202995@T590>
+	id A3EF42166B2A; Tue,  8 Dec 2020 10:57:58 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9F03F2166B27
+	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 10:57:56 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 43F3280088F
+	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 10:57:56 +0000 (UTC)
+Received: from verein.lst.de (verein.lst.de [213.95.11.211]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-98-EJ8AFppUNbe2TMJtPUJmgQ-1;
+	Tue, 08 Dec 2020 05:57:51 -0500
+X-MC-Unique: EJ8AFppUNbe2TMJtPUJmgQ-1
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id 637ED6736F; Tue,  8 Dec 2020 11:57:47 +0100 (CET)
+Date: Tue, 8 Dec 2020 11:57:47 +0100
+From: Christoph Hellwig <hch@lst.de>
+To: Ming Lei <ming.lei@redhat.com>
+Message-ID: <20201208105747.GA21762@lst.de>
 References: <20201207131918.2252553-1-hch@lst.de>
-	<20201207131918.2252553-5-hch@lst.de>
+	<20201207131918.2252553-4-hch@lst.de>
+	<20201208102211.GC1202995@T590>
 MIME-Version: 1.0
-In-Reply-To: <20201207131918.2252553-5-hch@lst.de>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+In-Reply-To: <20201208102211.GC1202995@T590>
+User-Agent: Mutt/1.5.17 (2007-11-01)
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: Jens Axboe <axboe@kernel.dk>, Sagi Grimberg <sagi@grimberg.me>,
 	Mike Snitzer <snitzer@redhat.com>, Oleksii Kurochko <olkuroch@cisco.com>,
-	Dongsheng Yang <dongsheng.yang@easystack.cn>,
+	ceph-devel@vger.kernel.org, Dongsheng Yang <dongsheng.yang@easystack.cn>,
 	linux-block@vger.kernel.org, dm-devel@redhat.com,
 	linux-nvme@lists.infradead.org,
 	"Martin K . Petersen" <martin.petersen@oracle.com>,
-	Ilya Dryomov <idryomov@gmail.com>, ceph-devel@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH 4/6] block: propagate BLKROSET on the whole
- device to all partitions
+	Ilya Dryomov <idryomov@gmail.com>, Christoph Hellwig <hch@lst.de>
+Subject: Re: [dm-devel] [PATCH 3/6] block: add a hard-readonly flag to
+	struct gendisk
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -86,7 +96,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -95,73 +105,21 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Dec 07, 2020 at 02:19:16PM +0100, Christoph Hellwig wrote:
-> Change the policy so that a BLKROSET on the whole device also affects
-> partitions.  To quote Martin K. Petersen:
+On Tue, Dec 08, 2020 at 06:22:11PM +0800, Ming Lei wrote:
+> >  int bdev_read_only(struct block_device *bdev)
+> >  {
+> > -	return bdev->bd_read_only;
+> > +	return bdev->bd_read_only ||
+> > +		test_bit(GD_READ_ONLY, &bdev->bd_disk->state);
+> >  }
+> >  EXPORT_SYMBOL(bdev_read_only);
 > 
-> It's very common for database folks to twiddle the read-only state of
-> block devices and partitions. I know that our users will find it very
-> counter-intuitive that setting /dev/sda read-only won't prevent writes
-> to /dev/sda1.
-> 
-> The existing behavior is inconsistent in the sense that doing:
-> 
-> permits writes. But:
-> 
-> <something triggers revalidate>
-> 
-> doesn't.
-> 
-> And a subsequent:
-> 
-> doesn't work either since sda1's read-only policy has been inherited
-> from the whole-disk device.
-> 
-> You need to do:
-> 
-> after setting the whole-disk device rw to effectuate the same change on
-> the partitions, otherwise they are stuck being read-only indefinitely.
-> 
-> However, setting the read-only policy on a partition does *not* require
-> the revalidate step. As a matter of fact, doing the revalidate will blow
-> away the policy setting you just made.
-> 
-> So the user needs to take different actions depending on whether they
-> are trying to read-protect a whole-disk device or a partition. Despite
-> using the same ioctl. That is really confusing.
-> 
-> I have lost count how many times our customers have had data clobbered
-> because of ambiguity of the existing whole-disk device policy. The
-> current behavior violates the principle of least surprise by letting the
-> user think they write protected the whole disk when they actually
-> didn't.
-> 
-> Suggested-by: Martin K. Petersen <martin.petersen@oracle.com>
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  block/genhd.c | 3 +--
->  1 file changed, 1 insertion(+), 2 deletions(-)
-> 
-> diff --git a/block/genhd.c b/block/genhd.c
-> index 878f94727aaa96..c214fcd25a05c9 100644
-> --- a/block/genhd.c
-> +++ b/block/genhd.c
-> @@ -1449,8 +1449,7 @@ EXPORT_SYMBOL(set_disk_ro);
->  
->  int bdev_read_only(struct block_device *bdev)
->  {
-> -	return bdev->bd_read_only ||
-> -		test_bit(GD_READ_ONLY, &bdev->bd_disk->state);
-> +	return bdev->bd_read_only || get_disk_ro(bdev->bd_disk);
->  }
->  EXPORT_SYMBOL(bdev_read_only);
+> Maybe one inline version can be added for fast path(bio_check_ro()), and the approach
+> is good:
 
-I think this patch should be folded into previous one, otherwise
-bdev_read_only(part) may return false even though ioctl(BLKROSET)
-has been done on the whole disk.
-
--- 
-Ming
+I thought of that, but our header mess means it would have to be a macro.
+I have a plan to reorganize the headers in the not too far future, at which
+point this should become an inline.
 
 --
 dm-devel mailing list
