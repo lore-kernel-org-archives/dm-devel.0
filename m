@@ -2,68 +2,137 @@ Return-Path: <SRS0=ZVdP=FM=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
-	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 06EC7C4361B
-	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 11:04:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C0233C433FE
+	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 12:38:19 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 466832072C
-	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 11:04:25 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 466832072C
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+	by mail.kernel.org (Postfix) with ESMTPS id 23E1423A52
+	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 12:38:18 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 23E1423A52
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-594-h8XHlqyBMfmRFLqmVCog_g-1; Tue, 08 Dec 2020 06:04:22 -0500
-X-MC-Unique: h8XHlqyBMfmRFLqmVCog_g-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-274-qFGvk7x5NX6imH8Yi9cDiA-1; Tue, 08 Dec 2020 07:38:15 -0500
+X-MC-Unique: qFGvk7x5NX6imH8Yi9cDiA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5AC76858180;
-	Tue,  8 Dec 2020 11:04:18 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id F03C260BE2;
-	Tue,  8 Dec 2020 11:04:17 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5DD6F800D55;
+	Tue,  8 Dec 2020 12:38:11 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9E1051001901;
+	Tue,  8 Dec 2020 12:38:09 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BA9484A7C6;
-	Tue,  8 Dec 2020 11:04:16 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1C540180954D;
+	Tue,  8 Dec 2020 12:38:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B8B4EGj004835 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 8 Dec 2020 06:04:14 -0500
+	id 0B8Cc3K7011554 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 8 Dec 2020 07:38:04 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 89A6E94626; Tue,  8 Dec 2020 11:04:14 +0000 (UTC)
+	id AA3752166B27; Tue,  8 Dec 2020 12:38:03 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8414794642
-	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 11:04:11 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A335B2166B2A
+	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 12:38:01 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B03938007D9
-	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 11:04:11 +0000 (UTC)
-Received: from verein.lst.de (verein.lst.de [213.95.11.211]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-466-AXxZ2BwxMfCmNBsSdMtH_g-1;
-	Tue, 08 Dec 2020 06:04:07 -0500
-X-MC-Unique: AXxZ2BwxMfCmNBsSdMtH_g-1
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 503686736F; Tue,  8 Dec 2020 12:04:04 +0100 (CET)
-Date: Tue, 8 Dec 2020 12:04:03 +0100
-From: Christoph Hellwig <hch@lst.de>
-To: Qian Cai <qcai@redhat.com>
-Message-ID: <20201208110403.GA22179@lst.de>
-References: <20201201165424.2030647-1-hch@lst.de>
-	<920899710c9e8dcce16e561c6d832e4e9c03cd73.camel@redhat.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 25A368001B8
+	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 12:38:01 +0000 (UTC)
+Received: from esa3.hgst.iphmx.com (esa3.hgst.iphmx.com [216.71.153.141])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-520-sRMV_DY5OWmubwg2yEWU9g-1; Tue, 08 Dec 2020 07:37:56 -0500
+X-MC-Unique: sRMV_DY5OWmubwg2yEWU9g-1
+IronPort-SDR: abtrLtjU8r7qbebe22o6Ui/fBA1/jmjQ0bCFqV/R//d6Gqk952wtTcJQ+4Or5KrWdSZVzgbI1m
+	3IHfuQvkX+0Wvnk5+kNPoEfUmrljix8usNCBJL9jpz9awgTPWraxS7uN5CjxUPzqMahhWzgJM7
+	iqnZsJjfMQ103kruTfcDAf/Zunf7xPrBXHjDwq5rlFAe9+E5ERT+GsKilfXpmarxpyBg1ThCyR
+	r1mXyetvJEsMXzHm8tCjdB8157q68MBtgx+KjndtljSKoF6Lc1NjYtLk9V/lj5x3iDXGRZKCeQ
+	Fls=
+X-IronPort-AV: E=Sophos;i="5.78,402,1599494400"; d="scan'208";a="159142705"
+Received: from mail-mw2nam12lp2040.outbound.protection.outlook.com (HELO
+	NAM12-MW2-obe.outbound.protection.outlook.com) ([104.47.66.40])
+	by ob1.hgst.iphmx.com with ESMTP; 08 Dec 2020 20:37:53 +0800
+Received: from SN4PR0401MB3598.namprd04.prod.outlook.com
+	(2603:10b6:803:47::21) by SN6PR04MB4688.namprd04.prod.outlook.com
+	(2603:10b6:805:ab::10) with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3632.17;
+	Tue, 8 Dec 2020 12:37:52 +0000
+Received: from SN4PR0401MB3598.namprd04.prod.outlook.com
+	([fe80::65d7:592a:32d4:9f98]) by
+	SN4PR0401MB3598.namprd04.prod.outlook.com
+	([fe80::65d7:592a:32d4:9f98%6]) with mapi id 15.20.3589.038;
+	Tue, 8 Dec 2020 12:37:52 +0000
+From: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
+To: =?iso-8859-1?Q?Javier_Gonz=E1lez?= <javier@javigon.com>
+Thread-Topic: [RFC PATCH v2 0/2] add simple copy support
+Thread-Index: AQHWyi08xMuKL73ZZUaIarInYKlQvg==
+Date: Tue, 8 Dec 2020 12:37:52 +0000
+Message-ID: <SN4PR0401MB35983464199FB173FB0C29479BCD0@SN4PR0401MB3598.namprd04.prod.outlook.com>
+References: <CGME20201204094719epcas5p23b3c41223897de3840f92ae3c229cda5@epcas5p2.samsung.com>
+	<20201204094659.12732-1-selvakuma.s1@samsung.com>
+	<20201207141123.GC31159@lst.de>
+	<01fe46ac-16a5-d4db-f23d-07a03d3935f3@suse.de>
+	<20201207192453.vc6clbdhz73hzs7l@mpHalley>
+	<SN4PR0401MB35988951265391511EBC8C6E9BCD0@SN4PR0401MB3598.namprd04.prod.outlook.com>
+	<20201208122248.utv7pqthmmn6uwv6@mpHalley>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-originating-ip: [129.253.240.72]
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-ht: Tenant
+x-ms-office365-filtering-correlation-id: 50276e26-5770-4e9d-ebe9-08d89b76146e
+x-ms-traffictypediagnostic: SN6PR04MB4688:
+x-ms-exchange-transport-forked: True
+x-microsoft-antispam-prvs: <SN6PR04MB4688CEFDCDD615DB1A9649EC9BCD0@SN6PR04MB4688.namprd04.prod.outlook.com>
+wdcipoutbound: EOP-TRUE
+x-ms-oob-tlc-oobclassifiers: OLM:7691
+x-ms-exchange-senderadcheck: 1
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: 83MaK3bxef/YyUz965MJhh0VWCUK1FzEM8xQPMAlBV/PCnpTj4QsfTwxmr/opNxxz7sezpcT0FuFEXE6+fthlJEolJkPnsWmn1IZey+Xm4odGv/RII+Hm6NgpXJbhNM3ZQwkMJcUFz7KV0gkjUMPhwbvjXla521O0krLnuEcJLcOfv6TleG79Rr/Br99TPv0a9i2JlseJNjwFjYhiRNG3ymLLXUHO/gJjSY/cC40C1bDaqNAJdTgFxUvGvbqmJmU7UeBv/OLzF/gKOA63vWYICchEOYXexj0cjxNyH0j88OD+2I4o9N80tC8l4SMd1Ge
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:SN4PR0401MB3598.namprd04.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(4636009)(366004)(186003)(6506007)(53546011)(5660300002)(66556008)(7416002)(54906003)(4326008)(26005)(86362001)(8936002)(66446008)(91956017)(66946007)(66476007)(64756008)(71200400001)(76116006)(7696005)(2906002)(83380400001)(498600001)(52536014)(6916009)(8676002)(9686003)(55016002)(33656002)(4744005);
+	DIR:OUT; SFP:1102
+x-ms-exchange-antispam-messagedata: =?iso-8859-1?Q?hXoZZYOsSI1tef74rXtmZ/sr9UvCdM+iSb12WHZ/HirFhds/JrG+gVQp8K?=
+	=?iso-8859-1?Q?1glI/qRMoGZ3b2bmWC0GK5xDOGeXnuzNPPfOYwSV5SlwvR0et7XbFSz1h0?=
+	=?iso-8859-1?Q?DBqFl6xfVEVu7b8UB4iwNJY3XFJSbYJphjSTZwP41zAs2TGGEwtCmz+1BY?=
+	=?iso-8859-1?Q?qrXEWlzC4hPpo3DvOO2IsqJpxSmdMoQxXDVekS4Vp72pAn+cNkyY3wB5sl?=
+	=?iso-8859-1?Q?X0AWusHi4rqC0oicsH/ulnsQ92609BZf+wd5lW9VB++Ntlq5TuPgK6Xn7r?=
+	=?iso-8859-1?Q?Jt+PZnKUY8baR33lSv54L5L2ETEZWIq53JWD/VyjasGSo3n6kfD+431QvZ?=
+	=?iso-8859-1?Q?yjQ/sAHL5NBZ8e5Pt/5vLMK9L572MlsRsGFfIntoGgeWiLtEO02wRNPm59?=
+	=?iso-8859-1?Q?IfkaR9sk7EbCd8Hk1YRWutH/yvbopm84LRqJjC8ksQfnAQdVlgDiFTA/H/?=
+	=?iso-8859-1?Q?DRSRogmZRhIF1ETPpGi+D+SFuFbgWPJGU4nM2qUovkgJv7heqCC/22QI4V?=
+	=?iso-8859-1?Q?l/C09l2QFILoQWpMQ4tH7dutI0DbrUN/6yXmTRpsbpgTThOksvIgfmsaz/?=
+	=?iso-8859-1?Q?FTnZ8E3UU3rPFmBCT3kkXYTLFsU4iTHgOgRst8gR9mz5jj7HmmwoVNlWyc?=
+	=?iso-8859-1?Q?yvflC6qgTZdINNHn/xZOf9h2vPYLSzq6ZHXBu1uvBWGc3QYdDHps+l0kVI?=
+	=?iso-8859-1?Q?jczJE+zROarQdSMlmp42fwpO+DcIRMKfCXJlDNzhA1CXSMIMgM84Z/odho?=
+	=?iso-8859-1?Q?iWzlpS4y48WUg1A7YwJSl8pY/KDzEKdHMt+pS9lSh+uGOIBKWf7VKbvqr8?=
+	=?iso-8859-1?Q?M2Nm32qO2kqBNIxLDTJo9ANFRImB/vvb1lksDHUsu2IcdjSlRZv8vKeedc?=
+	=?iso-8859-1?Q?yUomWavPHWpqUtmEAlPevPwTT+23dL/pDv0xV9UHAjyDIsOPzPXbb6IyYE?=
+	=?iso-8859-1?Q?yxL1p8AGGjvMs7wIVFPU8ohUXW60YFbN/VE1Wjxd1W7vhkB0/AZj6TPOcY?=
+	=?iso-8859-1?Q?ZPqL7ixekTYyfYd5SjZFoDaFet/MdV4i/Ddn3m?=
 MIME-Version: 1.0
-In-Reply-To: <920899710c9e8dcce16e561c6d832e4e9c03cd73.camel@redhat.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+X-OriginatorOrg: wdc.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: SN4PR0401MB3598.namprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 50276e26-5770-4e9d-ebe9-08d89b76146e
+X-MS-Exchange-CrossTenant-originalarrivaltime: 08 Dec 2020 12:37:52.3295 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: uoDEvVRI6Bu2bCZj2jMSUK1+BhUKw5uR/UrbKbu355p4YOyYZMw11ucxaAxEf80O9Li5EmBhltmcZrcpKJXmMaJJnsWdP+pAGj6XuP3FiAQ=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SN6PR04MB4688
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -72,17 +141,26 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 0B8Cc3K7011554
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, linux-s390@vger.kernel.org,
-	Stephen Rothwell <sfr@canb.auug.org.au>,
-	linux-bcache@vger.kernel.org, Coly Li <colyli@suse.de>,
-	linux-raid@vger.kernel.org, Song Liu <song@kernel.org>,
-	dm-devel@redhat.com, Linux Next Mailing List <linux-next@vger.kernel.org>,
-	linux-block@vger.kernel.org, Tejun Heo <tj@kernel.org>,
-	Christoph Hellwig <hch@lst.de>
-Subject: Re: [dm-devel] store a pointer to the block_device in struct bio
-	(again)
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, Damien Le Moal <Damien.LeMoal@wdc.com>,
+	S <selvakuma.s1@samsung.com>, "sagi@grimberg.me" <sagi@grimberg.me>,
+	"snitzer@redhat.com" <snitzer@redhat.com>, SelvaKumar,
+	"selvajove@gmail.com" <selvajove@gmail.com>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
+	"nj.shetty@samsung.com" <nj.shetty@samsung.com>,
+	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+	"dm-devel@redhat.com" <dm-devel@redhat.com>, Patocka <mpatocka@redhat.com>,
+	"joshi.k@samsung.com" <joshi.k@samsung.com>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>,
+	"kbusch@kernel.org" <kbusch@kernel.org>,
+	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+	Christoph Hellwig <hch@lst.de>, Mikulas,
+	Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [dm-devel] [RFC PATCH v2 0/2] add simple copy support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -96,200 +174,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-Hi Qian,
+On 08/12/2020 13:22, Javier Gonz=E1lez wrote:
+> Good idea. Are you thinking of a sysfs entry to select the backend?
 
-can you send me details of your device mapper setup, e.g. which targets
-are used, are they used on top of whole device or partitions.  Do you
-use partitions on top of the dm devices?  Are any other stacking devices
-involved?
+Not sure on this one, initially I thought of a sysfs file, but then
+how would you do it. One "global" sysfs entry is probably a bad idea.
+Having one per block device to select native vs emulation maybe? And
+a good way to benchmark.
 
-On Mon, Dec 07, 2020 at 01:56:26PM -0500, Qian Cai wrote:
-> On Tue, 2020-12-01 at 17:54 +0100, Christoph Hellwig wrote:
-> > Hi Jens,
-> > 
-> > this series switches back from storing the gendisk + partno to storing
-> > a block_device pointer in struct bio.  The reason is two fold:  for one
-> > the new struct block_device actually is always available, removing the
-> > need to avoid originally.  Second the merge struct block_device is much
-> > more useful than the old one, as storing it avoids the need for looking
-> > up what used to be hd_struct during partition remapping and I/O
-> > accounting.
-> > 
-> > Note that this series depends on the posted but not merged
-> > "block tracepoint cleanups" series.
-> 
-> Reverting this patchset on the top of today's linux-next fixed data corruptions
-> everywhere, i.e.,
-> 
-> $ git revert --no-edit a54895fa057c..4498a8536c81
-> (with a trivial conflict resolution with the commit "block: move
-> blk_rq_bio_prep() to linux/blk-mq.h")
-> 
-> .config (if ever matters and also happened on POWER9 NV):
-> https://cailca.coding.net/public/linux/mm/git/files/master/x86.config
-> 
-> == XFS failed to mount ==
-> [   55.116279][ T1507] XFS (dm-0): Mounting V5 Filesystem
-> [   55.144671][ T1507] XFS (dm-0): Corruption warning: Metadata has LSN (3:70242) ahead of current LSN (3:66504). Please unmount and run xfs_repair (>= v4.3) to resolve.
-> [   55.159965][ T1507] XFS (dm-0): log mount/recovery failed: error -22
-> [   55.288632][ T1507] XFS (dm-0): log mount failed
-> 
-> In this case, it is not possible to mount the XFS rootfs anymore, and it can be
-> repaired with "-L". However, we could lost vital files. Then, I have to re-
-> install the system.
-> 
-> systemd[1]: System cannot boot: Missing /etc/machine-id and /etc is mounted read-only.
-> systemd[1]: Booting up is supported only when:
-> systemd[1]: 1) /etc/machine-id exists and is populated.
-> systemd[1]: 2) /etc/machine-id exists and is empty.
-> systemd[1]: 3) /etc/machine-id is missing and /etc is writable.
-> lvm2-activation-generator: lvmconfig failed
-> systemd[1]: Failed to populate /etc with preset unit settings, ignoring: No such file or directory
-> 
-> == systemd core dump ==
-> [   46.124485][ T1028] Process 1028(systemd-coredum) has RLIMIT_CORE set to 1
-> [   46.131434][ T1028] Aborting core
-> [   46.143366][ T1027] systemd-cgroups (1027) used greatest stack depth: 23512 bytes left
-> [   46.384430][    T1] printk: systemd: 20 output lines suppressed due to ratelimiting
-> [   46.447620][    T1] traps: systemd[1] trap invalid opcode ip:7f44c485fee6 sp:7ffee96e6960 error:0 in libm-2.28.so[7f44c481a000+181000]
-> [   46.492643][ T1029] traps: systemd-coredum[1029] trap invalid opcode ip:7f2f60471ee6 sp:7ffd58f76e00 error:0 in libm-2.28.so[7f2f6042c000+181000]
-> [   46.505968][ T1029] Process 1029(systemd-coredum) has RLIMIT_CORE set to 1
-> [   46.512900][ T1029] Aborting core
-> [   46.520024][    T1] Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000084
-> [   46.528437][    T1] CPU: 32 PID: 1 Comm: systemd Not tainted 5.10.0-rc6-next-20201207 #1
-> [   46.536581][    T1] Hardware name: HPE ProLiant DL385 Gen10/ProLiant DL385 Gen10, BIOS A40 07/10/2019
-> [   46.545860][    T1] Call Trace:
-> [   46.549038][    T1]  dump_stack+0x99/0xcb
-> [   46.553082][    T1]  panic+0x20c/0x48b
-> [   46.556860][    T1]  ? print_oops_end_marker.cold.10+0x10/0x10
-> [   46.562739][    T1]  ? do_signal_stop+0x690/0x690
-> [   46.567478][    T1]  ? do_exit+0x226/0x2410
-> [   46.571690][    T1]  do_exit.cold.38+0x1de/0x1e5
-> [   46.576346][    T1]  ? rcu_read_lock_sched_held+0xa1/0xd0
-> [   46.581782][    T1]  ? rcu_read_lock_bh_held+0xb0/0xb0
-> [   46.586955][    T1]  ? mm_update_next_owner+0x750/0x750
-> [   46.592215][    T1]  ? get_signal+0x80f/0x1f90
-> [   46.596688][    T1]  do_group_exit+0xf0/0x2e0
-> [   46.601076][    T1]  get_signal+0x35a/0x1f90
-> [   46.605380][    T1]  ? finish_task_switch+0x1bb/0xa80
-> [   46.610468][    T1]  arch_do_signal_or_restart+0x1d8/0x690
-> [   46.615993][    T1]  ? __setup_rt_frame.isra.15+0x1830/0x1830
-> [   46.621781][    T1]  ? __sched_text_start+0x8/0x8
-> [   46.626521][    T1]  ? asm_exc_invalid_op+0xa/0x20
-> [   46.631347][    T1]  exit_to_user_mode_prepare+0xde/0x170
-> [   46.636782][    T1]  irqentry_exit_to_user_mode+0x5/0x30
-> [   46.642129][    T1]  asm_exc_invalid_op+0x12/0x20
-> [   46.646868][    T1] RIP: 0033:0x7f44c485fee6
-> [   46.651171][    T1] Code: 6d 6e 6f 70 71 72 73 74 75 76 77 78 79 7a 0a 00 41 42 43 44 45 46 47 48 49 4a 4b 4c 4d 4e 4f 50 51 52 53 54 55 56 57 58 59 5a <61> 62 63 64 65 66 67 68 6a 69 6b 6c 6d 6e 6f 70 71 72 73 74 75 76
-> [   46.670757][    T1] RSP: 002b:00007ffee96e6960 EFLAGS: 00010202
-> [   46.676719][    T1] RAX: 00007f44c481c780 RBX: 00007f44c4825e78 RCX: 0000000000000000
-> [   46.684600][    T1] RDX: 00007ffee96e6a90 RSI: 0000000000000000 RDI: 00007f44c481c780
-> [   46.692480][    T1] RBP: 00007ffee96e6a90 R08: 00007f44c85d88a8 R09: 00007f44c85d88a8
-> [   46.700360][    T1] R10: 00007f44ca38e4f0 R11: 00007f44c481a000 R12: 00007f44c481c780
-> [   46.708241][    T1] R13: 00007f44c4826088 R14: 00007f44c4b9b128 R15: 00007f44ca38e4f0
-> [   46.716523][    T1] Kernel Offset: 0x11000000 from 0xffffffff81000000 (relocation range: 0xffffffff80000000-0xffffffffbfffffff)
-> [   46.728244][    T1] ---[ end Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000084 ]---
-> 
-> == git coredump == 
-> # coredumpctl dump
->            PID: 1906 (git)
->            UID: 0 (root)
->            GID: 0 (root)
->         Signal: 11 (SEGV)
->      Timestamp: Mon 2020-12-07 10:10:36 EST (34s ago)
->        Boot ID: 5dd9e21b02e4487f96d2ffeed3140f22
->     Machine ID: 00f60cae470d4f54a377e935638619c5
->        Storage: /var/lib/systemd/coredump/core.git.0.5dd9e21b02e4487f96d2ffeed3140f22.1906.1607353836000000.lz4
->        Message: Process 1906 (git) of user 0 dumped core.
->                 
->                 Stack trace of thread 1906:
->                 #0  0x00007fff845af9dc _dl_relocate_object (/usr/lib64/ld-2.28.so)
->                 #1  0x00007fff845a6664 dl_main (/usr/lib64/ld-2.28.so)
->                 #2  0x00007fff845c0448 _dl_sysdep_start (/usr/lib64/ld-2.28.so)
->                 #3  0x00007fff845a1cbc _dl_start_final (/usr/lib64/ld-2.28.so)
->                 #4  0x00007fff845a2dbc _dl_start (/usr/lib64/ld-2.28.so)
->                 #5  0x00007fff845a1458 _start (/usr/lib64/ld-2.28.so)
-> 
-> > 
-> > A git tree is also available:
-> > 
-> >     git://git.infradead.org/users/hch/block.git bi_bdev
-> > 
-> > Gitweb:
-> > 
-> >     http://git.infradead.org/users/hch/block.git/shortlog/refs/heads/bi_bdev
-> > 
-> > Diffstat:
-> >  arch/m68k/emu/nfblock.c             |    2 
-> >  arch/xtensa/platforms/iss/simdisk.c |    2 
-> >  block/bio-integrity.c               |   18 +-
-> >  block/bio.c                         |   31 +---
-> >  block/blk-cgroup.c                  |    7 
-> >  block/blk-core.c                    |   99 ++++++-------
-> >  block/blk-crypto-fallback.c         |    2 
-> >  block/blk-crypto.c                  |    2 
-> >  block/blk-merge.c                   |   17 +-
-> >  block/blk-mq.c                      |    2 
-> >  block/blk-settings.c                |    2 
-> >  block/blk-throttle.c                |    2 
-> >  block/blk.h                         |    9 -
-> >  block/bounce.c                      |    2 
-> >  block/genhd.c                       |  261 +++-------------------------------
-> > --
-> >  block/partitions/core.c             |   31 ----
-> >  drivers/block/brd.c                 |    8 -
-> >  drivers/block/drbd/drbd_int.h       |    4 
-> >  drivers/block/drbd/drbd_req.c       |    2 
-> >  drivers/block/null_blk_main.c       |    2 
-> >  drivers/block/pktcdvd.c             |    4 
-> >  drivers/block/ps3vram.c             |    2 
-> >  drivers/block/rsxx/dev.c            |    2 
-> >  drivers/block/umem.c                |    2 
-> >  drivers/block/zram/zram_drv.c       |    2 
-> >  drivers/lightnvm/pblk-init.c        |    2 
-> >  drivers/md/bcache/debug.c           |    2 
-> >  drivers/md/bcache/request.c         |   39 +++--
-> >  drivers/md/dm-bio-record.h          |    9 -
-> >  drivers/md/dm-raid1.c               |   10 -
-> >  drivers/md/dm.c                     |   14 -
-> >  drivers/md/md-linear.c              |    2 
-> >  drivers/md/md.c                     |   10 -
-> >  drivers/md/md.h                     |    6 
-> >  drivers/md/raid1.c                  |    6 
-> >  drivers/md/raid10.c                 |   12 -
-> >  drivers/md/raid5.c                  |    2 
-> >  drivers/nvdimm/blk.c                |    4 
-> >  drivers/nvdimm/btt.c                |    4 
-> >  drivers/nvdimm/pmem.c               |    4 
-> >  drivers/nvme/host/core.c            |    6 
-> >  drivers/nvme/host/lightnvm.c        |    3 
-> >  drivers/nvme/host/multipath.c       |    6 
-> >  drivers/nvme/host/rdma.c            |    2 
-> >  drivers/s390/block/dasd.c           |   26 ---
-> >  drivers/s390/block/dcssblk.c        |    6 
-> >  drivers/s390/block/xpram.c          |    2 
-> >  fs/btrfs/check-integrity.c          |   10 -
-> >  fs/btrfs/raid56.c                   |    7 
-> >  fs/btrfs/scrub.c                    |    2 
-> >  fs/direct-io.c                      |    2 
-> >  fs/f2fs/data.c                      |   12 -
-> >  include/linux/bio.h                 |   18 +-
-> >  include/linux/blk_types.h           |    3 
-> >  include/linux/blkdev.h              |   20 --
-> >  include/linux/genhd.h               |   21 --
-> >  kernel/trace/blktrace.c             |   16 +-
-> >  mm/page_io.c                        |    2 
-> >  58 files changed, 251 insertions(+), 556 deletions(-)
----end quoted text---
+The other idea would be a benchmark loop on boot like the raid library
+does.
+
+Then on the other hand, there might be workloads that run faster with=20
+the emulation and some that run faster with the hardware acceleration.
+
+I think these points are the reason the last attempts got stuck.
+
+
 
 --
 dm-devel mailing list
