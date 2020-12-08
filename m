@@ -4,61 +4,62 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9B764C433FE
-	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 16:37:40 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 287B2C4361B
+	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 16:37:43 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 292AA233CF
-	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 16:37:39 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 292AA233CF
+	by mail.kernel.org (Postfix) with ESMTPS id A8D2023AC8
+	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 16:37:42 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A8D2023AC8
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-147-2rNZ3T_rNIOLdgi4x84q0g-1; Tue, 08 Dec 2020 11:37:36 -0500
-X-MC-Unique: 2rNZ3T_rNIOLdgi4x84q0g-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-536-gicna_okM_aSv9ASBGAiaA-1; Tue, 08 Dec 2020 11:37:38 -0500
+X-MC-Unique: gicna_okM_aSv9ASBGAiaA-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2F8C051B2;
-	Tue,  8 Dec 2020 16:37:31 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D6695800D53;
+	Tue,  8 Dec 2020 16:37:33 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0E8C15C1A3;
-	Tue,  8 Dec 2020 16:37:31 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B94F850B44;
+	Tue,  8 Dec 2020 16:37:33 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CAD024BB7B;
-	Tue,  8 Dec 2020 16:37:30 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 90ACE5002C;
+	Tue,  8 Dec 2020 16:37:33 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B8GbSL0007885 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 8 Dec 2020 11:37:28 -0500
+	id 0B8GbWES007910 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 8 Dec 2020 11:37:32 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B4AD3112D40B; Tue,  8 Dec 2020 16:37:28 +0000 (UTC)
+	id 612F82026D36; Tue,  8 Dec 2020 16:37:32 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AF9F7112D408
-	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 16:37:26 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5CA2B2026D5D
+	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 16:37:29 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 63DE3858287
-	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 16:37:26 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F0DF5800962
+	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 16:37:28 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-540--XLOaS2IONGz9S22AX-BZg-1; Tue, 08 Dec 2020 11:37:24 -0500
-X-MC-Unique: -XLOaS2IONGz9S22AX-BZg-1
+	us-mta-179-qBJri_2LMYe9GeQht-H26A-1; Tue, 08 Dec 2020 11:37:26 -0500
+X-MC-Unique: qBJri_2LMYe9GeQht-H26A-1
 Received: from [2001:4bb8:188:f36:7a30:8a2b:aea3:231b] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kmfzK-0001OD-V7; Tue, 08 Dec 2020 16:37:19 +0000
+	id 1kmfzI-0001Nu-He; Tue, 08 Dec 2020 16:37:16 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue,  8 Dec 2020 17:28:29 +0100
-Message-Id: <20201208162829.2424563-7-hch@lst.de>
+Date: Tue,  8 Dec 2020 17:28:27 +0100
+Message-Id: <20201208162829.2424563-5-hch@lst.de>
 In-Reply-To: <20201208162829.2424563-1-hch@lst.de>
 References: <20201208162829.2424563-1-hch@lst.de>
 MIME-Version: 1.0
@@ -72,7 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 Cc: Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>,
 	Oleksii Kurochko <olkuroch@cisco.com>,
@@ -80,10 +81,9 @@ Cc: Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>,
 	linux-block@vger.kernel.org, dm-devel@redhat.com,
 	linux-nvme@lists.infradead.org,
 	"Martin K . Petersen" <martin.petersen@oracle.com>,
-	Keith Busch <kbusch@kernel.org>,
 	Ilya Dryomov <idryomov@gmail.com>, ceph-devel@vger.kernel.org
-Subject: [dm-devel] [PATCH 6/6] nvme: allow revalidate to set a namespace
-	read-only
+Subject: [dm-devel] [PATCH 4/6] block: propagate BLKROSET on the whole
+	device to all partitions
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -97,7 +97,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -105,33 +105,77 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Unconditionally call set_disk_ro now that it only updates the hardware
-state.  This allows to properly set up the Linux devices read-only when
-the controller turns a previously writable namespace read-only.
+Change the policy so that a BLKROSET on the whole device also affects
+partitions.  To quote Martin K. Petersen:
 
+It's very common for database folks to twiddle the read-only state of
+block devices and partitions. I know that our users will find it very
+counter-intuitive that setting /dev/sda read-only won't prevent writes
+to /dev/sda1.
+
+The existing behavior is inconsistent in the sense that doing:
+
+  # blockdev --setro /dev/sda
+  # echo foo > /dev/sda1
+
+permits writes. But:
+
+  # blockdev --setro /dev/sda
+  <something triggers revalidate>
+  # echo foo > /dev/sda1
+
+doesn't.
+
+And a subsequent:
+
+  # blockdev --setrw /dev/sda
+  # echo foo > /dev/sda1
+
+doesn't work either since sda1's read-only policy has been inherited
+from the whole-disk device.
+
+You need to do:
+
+  # blockdev --rereadpt
+
+after setting the whole-disk device rw to effectuate the same change on
+the partitions, otherwise they are stuck being read-only indefinitely.
+
+However, setting the read-only policy on a partition does *not* require
+the revalidate step. As a matter of fact, doing the revalidate will blow
+away the policy setting you just made.
+
+So the user needs to take different actions depending on whether they
+are trying to read-protect a whole-disk device or a partition. Despite
+using the same ioctl. That is really confusing.
+
+I have lost count how many times our customers have had data clobbered
+because of ambiguity of the existing whole-disk device policy. The
+current behavior violates the principle of least surprise by letting the
+user think they write protected the whole disk when they actually
+didn't.
+
+Suggested-by: Martin K. Petersen <martin.petersen@oracle.com>
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Keith Busch <kbusch@kernel.org>
 Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
 ---
- drivers/nvme/host/core.c | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
+ block/genhd.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index ce1b6151944131..3a0557ccc9fc5d 100644
---- a/drivers/nvme/host/core.c
-+++ b/drivers/nvme/host/core.c
-@@ -2114,9 +2114,8 @@ static void nvme_update_disk_info(struct gendisk *disk,
- 	nvme_config_discard(disk, ns);
- 	nvme_config_write_zeroes(disk, ns);
+diff --git a/block/genhd.c b/block/genhd.c
+index d9f989c1514123..6e51ecb9280aca 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -1656,8 +1656,7 @@ EXPORT_SYMBOL(set_disk_ro);
  
--	if ((id->nsattr & NVME_NS_ATTR_RO) ||
--	    test_bit(NVME_NS_FORCE_RO, &ns->flags))
--		set_disk_ro(disk, true);
-+	set_disk_ro(disk, (id->nsattr & NVME_NS_ATTR_RO) ||
-+		test_bit(NVME_NS_FORCE_RO, &ns->flags));
+ int bdev_read_only(struct block_device *bdev)
+ {
+-	return bdev->bd_read_only ||
+-		test_bit(GD_READ_ONLY, &bdev->bd_disk->state);
++	return bdev->bd_read_only || get_disk_ro(bdev->bd_disk);
  }
+ EXPORT_SYMBOL(bdev_read_only);
  
- static inline bool nvme_first_scan(struct gendisk *disk)
 -- 
 2.29.2
 
