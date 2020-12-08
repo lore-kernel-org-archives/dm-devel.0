@@ -2,65 +2,64 @@ Return-Path: <SRS0=ZVdP=FM=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8F52BC4361B
-	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 16:33:29 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B81B2C4361B
+	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 16:35:40 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id BDD4923A75
-	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 16:33:28 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BDD4923A75
+	by mail.kernel.org (Postfix) with ESMTPS id 346C923AC8
+	for <dm-devel@archiver.kernel.org>; Tue,  8 Dec 2020 16:35:39 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 346C923AC8
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-169-jKFOuhADON-xKGGiXtl6bg-1; Tue, 08 Dec 2020 11:33:24 -0500
-X-MC-Unique: jKFOuhADON-xKGGiXtl6bg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-494-l72iJHRrMsGT9tWLHKHC_w-1; Tue, 08 Dec 2020 11:35:35 -0500
+X-MC-Unique: l72iJHRrMsGT9tWLHKHC_w-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9CC021800D42;
-	Tue,  8 Dec 2020 16:33:18 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 98F6410054FF;
+	Tue,  8 Dec 2020 16:35:30 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3EF575D977;
-	Tue,  8 Dec 2020 16:33:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7A12A5B4A1;
+	Tue,  8 Dec 2020 16:35:30 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0E2721809C9F;
-	Tue,  8 Dec 2020 16:33:15 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1C400180954D;
+	Tue,  8 Dec 2020 16:35:30 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B8GXBZg006864 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 8 Dec 2020 11:33:11 -0500
+	id 0B8GZLst007394 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 8 Dec 2020 11:35:22 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 2ACF82026D36; Tue,  8 Dec 2020 16:33:11 +0000 (UTC)
+	id E32CA2026D48; Tue,  8 Dec 2020 16:35:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 252412026D5D
-	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 16:33:08 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DEBFF2026D5D
+	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 16:35:17 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3C7CB858287
-	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 16:33:08 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A59388007DF
+	for <dm-devel@redhat.com>; Tue,  8 Dec 2020 16:35:17 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-266-OD7CJO8tOoGiC0svLF9Kqg-1; Tue, 08 Dec 2020 11:33:05 -0500
-X-MC-Unique: OD7CJO8tOoGiC0svLF9Kqg-1
+	us-mta-430-vauQVgB8MIG5Hi1eaO3VBw-1; Tue, 08 Dec 2020 11:35:14 -0500
+X-MC-Unique: vauQVgB8MIG5Hi1eaO3VBw-1
 Received: from 089144200046.atnat0009.highway.a1.net ([89.144.200.46]
 	helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
-	id 1kmfv2-00014p-QV; Tue, 08 Dec 2020 16:32:53 +0000
+	id 1kmfx9-0001Dj-SE; Tue, 08 Dec 2020 16:35:04 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Tue,  8 Dec 2020 17:28:24 +0100
-Message-Id: <20201208162829.2424563-2-hch@lst.de>
+Date: Tue,  8 Dec 2020 17:28:25 +0100
+Message-Id: <20201208162829.2424563-3-hch@lst.de>
 In-Reply-To: <20201208162829.2424563-1-hch@lst.de>
 References: <20201208162829.2424563-1-hch@lst.de>
 MIME-Version: 1.0
@@ -83,8 +82,8 @@ Cc: Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>,
 	dm-devel@redhat.com, linux-nvme@lists.infradead.org,
 	"Martin K . Petersen" <martin.petersen@oracle.com>,
 	Ilya Dryomov <idryomov@gmail.com>, ceph-devel@vger.kernel.org
-Subject: [dm-devel] [PATCH 1/6] dm: use bdev_read_only to check if a device
-	is read-only
+Subject: [dm-devel] [PATCH 2/6] block: remove the NULL bdev check in
+	bdev_read_only
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -98,7 +97,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -106,44 +105,47 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-dm-thin and dm-cache also work on partitions, so use the proper
-interface to check if the device is read-only.
+Only a single caller can end up in bdev_read_only, so move the check
+there.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Ming Lei <ming.lei@redhat.com>
 Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
-Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-cache-metadata.c | 2 +-
- drivers/md/dm-thin-metadata.c  | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ block/genhd.c | 3 ---
+ fs/super.c    | 3 ++-
+ 2 files changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
-index af6d4f898e4c1d..89a73204dbf47f 100644
---- a/drivers/md/dm-cache-metadata.c
-+++ b/drivers/md/dm-cache-metadata.c
-@@ -449,7 +449,7 @@ static int __check_incompat_features(struct cache_disk_superblock *disk_super,
- 	/*
- 	 * Check for read-only metadata to skip the following RDWR checks.
- 	 */
--	if (get_disk_ro(cmd->bdev->bd_disk))
-+	if (bdev_read_only(cmd->bdev))
- 		return 0;
+diff --git a/block/genhd.c b/block/genhd.c
+index b84b8671e6270a..8f2b89d1161813 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -1652,11 +1652,8 @@ EXPORT_SYMBOL(set_disk_ro);
  
- 	features = le32_to_cpu(disk_super->compat_ro_flags) & ~DM_CACHE_FEATURE_COMPAT_RO_SUPP;
-diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
-index 6ebb2127f3e2e0..e75b20480e460e 100644
---- a/drivers/md/dm-thin-metadata.c
-+++ b/drivers/md/dm-thin-metadata.c
-@@ -636,7 +636,7 @@ static int __check_incompat_features(struct thin_disk_superblock *disk_super,
- 	/*
- 	 * Check for read-only metadata to skip the following RDWR checks.
- 	 */
--	if (get_disk_ro(pmd->bdev->bd_disk))
-+	if (bdev_read_only(pmd->bdev))
- 		return 0;
+ int bdev_read_only(struct block_device *bdev)
+ {
+-	if (!bdev)
+-		return 0;
+ 	return bdev->bd_read_only;
+ }
+-
+ EXPORT_SYMBOL(bdev_read_only);
  
- 	features = le32_to_cpu(disk_super->compat_ro_flags) & ~THIN_FEATURE_COMPAT_RO_SUPP;
+ /*
+diff --git a/fs/super.c b/fs/super.c
+index 2c6cdea2ab2d9e..5a1f384ffc74f6 100644
+--- a/fs/super.c
++++ b/fs/super.c
+@@ -865,7 +865,8 @@ int reconfigure_super(struct fs_context *fc)
+ 
+ 	if (fc->sb_flags_mask & SB_RDONLY) {
+ #ifdef CONFIG_BLOCK
+-		if (!(fc->sb_flags & SB_RDONLY) && bdev_read_only(sb->s_bdev))
++		if (!(fc->sb_flags & SB_RDONLY) && sb->s_bdev &&
++		    bdev_read_only(sb->s_bdev))
+ 			return -EACCES;
+ #endif
+ 
 -- 
 2.29.2
 
