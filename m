@@ -7,62 +7,62 @@ X-Spam-Status: No, score=-17.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D5E5CC4361B
-	for <dm-devel@archiver.kernel.org>; Wed,  9 Dec 2020 22:36:42 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A38B0C4167B
+	for <dm-devel@archiver.kernel.org>; Wed,  9 Dec 2020 22:38:38 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 6DBE323B51
-	for <dm-devel@archiver.kernel.org>; Wed,  9 Dec 2020 22:36:42 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 6DBE323B51
+	by mail.kernel.org (Postfix) with ESMTPS id 36ADB23B51
+	for <dm-devel@archiver.kernel.org>; Wed,  9 Dec 2020 22:38:37 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 36ADB23B51
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1607553401;
+	s=mimecast20190719; t=1607553517;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=5plCNkr3Tj+pqxc7SB76u6oKpEFawY5BcHtPwBobz5s=;
-	b=IcBjoSrT6XnmGxFXyA4OBms/8FIb3ONEkIjRadwztpdmPAcr7qox55igMuFXd+ftIUkA4G
-	sy9jtFpLP7LvkN1DEjpFfgYUmrzB6Oy3bvWL7aLWzQB/spZtLdH9a8vB+WU0gyPwWdIWAL
-	k39+ANiK1ZP8HeaxtuMYeWepYxl+ncs=
+	bh=jWQEeQwooJ7Rfv0MFftOx4OnsJIKRU3GcNS1XjdjKag=;
+	b=OSTHOPZru+nS6RZaABjEu/lxnO8k0SD9qFY/BF2alKKMCg3WWGEW3C3NdlR2IpOHADILfy
+	OXPPowFTAPc4H5MQWcoqn5SCBuwmqUFszHhko0LXf8KWTy5+Gvonjp58lfuIy41kKNV8pM
+	nCJHiCGTHU2CqLzN/oLlvG++nWB+QSw=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-406-v-8MLdKCNp24Diy9yUMJjw-1; Wed, 09 Dec 2020 17:36:39 -0500
-X-MC-Unique: v-8MLdKCNp24Diy9yUMJjw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-459-dqStQMMNNW2jANAzvTn76A-1; Wed, 09 Dec 2020 17:38:34 -0500
+X-MC-Unique: dqStQMMNNW2jANAzvTn76A-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 67825180E475;
-	Wed,  9 Dec 2020 22:36:23 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 34E9F5D9CA;
-	Wed,  9 Dec 2020 22:36:21 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 764A819251D7;
+	Wed,  9 Dec 2020 22:38:18 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BC2C877F27;
+	Wed,  9 Dec 2020 22:38:17 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 92F8E4E58E;
-	Wed,  9 Dec 2020 22:36:17 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com
-	[10.5.11.14])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 83E1F180954D;
+	Wed,  9 Dec 2020 22:38:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com
+	[10.5.11.13])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B9MaG3u008361 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 9 Dec 2020 17:36:16 -0500
+	id 0B9McF15008527 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 9 Dec 2020 17:38:15 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 262D05D9E2; Wed,  9 Dec 2020 22:36:16 +0000 (UTC)
+	id 1F6087094A; Wed,  9 Dec 2020 22:38:15 +0000 (UTC)
 Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DA11D5D9CA;
-	Wed,  9 Dec 2020 22:36:15 +0000 (UTC)
-Date: Wed, 9 Dec 2020 17:36:15 -0500
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CA4216F990;
+	Wed,  9 Dec 2020 22:38:02 +0000 (UTC)
+Date: Wed, 9 Dec 2020 17:38:02 -0500
 From: Mike Snitzer <snitzer@redhat.com>
 To: Song Liu <songliubraving@fb.com>, axboe@kernel.dk
-Message-ID: <20201209223615.GA2752@redhat.com>
+Message-ID: <20201209223801.GB2752@redhat.com>
 References: <20201209215814.2623617-1-songliubraving@fb.com>
 MIME-Version: 1.0
 In-Reply-To: <20201209215814.2623617-1-songliubraving@fb.com>
 User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 X-loop: dm-devel@redhat.com
 Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, Xiao Ni <xni@redhat.com>,
 	linux-kernel@vger.kernel.org,
@@ -82,7 +82,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -104,15 +104,6 @@ Song Liu <songliubraving@fb.com> wrote:
 > Cc: Xiao Ni <xni@redhat.com>
 > Cc: Mike Snitzer <snitzer@redhat.com>
 > Signed-off-by: Song Liu <songliubraving@fb.com>
-
-If you're reverting all the MD code that enabled this DM change, then
-obviously the DM change must be reverted too.  But please do _not_
-separate the DM revert from the MD reverts.
-
-Please include this in a v2 pull request to Jens.
-
-Mike
-
 > ---
 >  drivers/md/dm-raid.c | 11 +++++++++++
 >  1 file changed, 11 insertions(+)
@@ -142,6 +133,15 @@ Mike
 > -- 
 > 2.24.1
 > 
+
+Short of you sending a v2 pull request to Jens...
+
+Jens please pick this up once you pull Song's MD pull that reverts all
+the MD raid10 discard changes.
+
+Thanks!
+
+Acked-by: Mike Snitzer <snitzer@redhat.com>
 
 --
 dm-devel mailing list
