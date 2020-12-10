@@ -1,74 +1,107 @@
-Return-Path: <SRS0=UIu2=FN=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=Uigt=FO=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A38B0C4167B
-	for <dm-devel@archiver.kernel.org>; Wed,  9 Dec 2020 22:38:38 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 45959C4361B
+	for <dm-devel@archiver.kernel.org>; Thu, 10 Dec 2020 03:39:22 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 36ADB23B51
-	for <dm-devel@archiver.kernel.org>; Wed,  9 Dec 2020 22:38:37 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 36ADB23B51
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 7B6EF2184D
+	for <dm-devel@archiver.kernel.org>; Thu, 10 Dec 2020 03:39:21 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7B6EF2184D
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=acm.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1607553517;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=jWQEeQwooJ7Rfv0MFftOx4OnsJIKRU3GcNS1XjdjKag=;
-	b=OSTHOPZru+nS6RZaABjEu/lxnO8k0SD9qFY/BF2alKKMCg3WWGEW3C3NdlR2IpOHADILfy
-	OXPPowFTAPc4H5MQWcoqn5SCBuwmqUFszHhko0LXf8KWTy5+Gvonjp58lfuIy41kKNV8pM
-	nCJHiCGTHU2CqLzN/oLlvG++nWB+QSw=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-459-dqStQMMNNW2jANAzvTn76A-1; Wed, 09 Dec 2020 17:38:34 -0500
-X-MC-Unique: dqStQMMNNW2jANAzvTn76A-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-568-Adsj07_nN4i1kgAdJWQhWg-1; Wed, 09 Dec 2020 22:39:18 -0500
+X-MC-Unique: Adsj07_nN4i1kgAdJWQhWg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 764A819251D7;
-	Wed,  9 Dec 2020 22:38:18 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BC2C877F27;
-	Wed,  9 Dec 2020 22:38:17 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7C24718C8C00;
+	Thu, 10 Dec 2020 03:39:12 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DD77010013C0;
+	Thu, 10 Dec 2020 03:39:10 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 83E1F180954D;
-	Wed,  9 Dec 2020 22:38:17 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com
-	[10.5.11.13])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 064C44BB7B;
+	Thu, 10 Dec 2020 03:39:08 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0B9McF15008527 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 9 Dec 2020 17:38:15 -0500
+	id 0BA3d5Ig011986 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 9 Dec 2020 22:39:05 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1F6087094A; Wed,  9 Dec 2020 22:38:15 +0000 (UTC)
-Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CA4216F990;
-	Wed,  9 Dec 2020 22:38:02 +0000 (UTC)
-Date: Wed, 9 Dec 2020 17:38:02 -0500
-From: Mike Snitzer <snitzer@redhat.com>
-To: Song Liu <songliubraving@fb.com>, axboe@kernel.dk
-Message-ID: <20201209223801.GB2752@redhat.com>
-References: <20201209215814.2623617-1-songliubraving@fb.com>
+	id 35B702026D5D; Thu, 10 Dec 2020 03:39:05 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 30CD02026D47
+	for <dm-devel@redhat.com>; Thu, 10 Dec 2020 03:39:02 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 57822800B3A
+	for <dm-devel@redhat.com>; Thu, 10 Dec 2020 03:39:02 +0000 (UTC)
+Received: from mail-pf1-f195.google.com (mail-pf1-f195.google.com
+	[209.85.210.195]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-337-hgwBm6Q-PpKoenk3orIV_w-1; Wed, 09 Dec 2020 22:38:58 -0500
+X-MC-Unique: hgwBm6Q-PpKoenk3orIV_w-1
+Received: by mail-pf1-f195.google.com with SMTP id 11so2755166pfu.4;
+	Wed, 09 Dec 2020 19:38:57 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+	:user-agent:mime-version:in-reply-to:content-language
+	:content-transfer-encoding;
+	bh=vl3B7XtbEhQjt2nq8MXPBFdyJIVZUFP3ezbjFEmRzg8=;
+	b=qHaZ37tGdlEaXanjfLUv7VLZrED1GWH650o4YXi0iEtR13+0ZPNIvgA6/dwoqQQ1i8
+	B2EVSeIEJhR9u5CboWjDcKJ0S/BtBT0h1KlbvdgRRc4zUMBXeCTxZ85g5mPoIIN8Alwh
+	x5xFThddpCa+FTlHrTxbQaWHI6zfZ7D3qEeLRRUQliO8AoyFakyuanG2UthizK3oDHB6
+	50UbwO1R8WCrdpRgurfhduwTHCHtLs+VyLtx0rls4CKHPcxYFDaoVeCcpOnWo9S9CJxV
+	k0tvFR5cm6A6olju8bnW87ibZKO8fRF/81dt7pZ/gsNSPaVrzwfYq3OPngthUYK3iP8C
+	bPCw==
+X-Gm-Message-State: AOAM533mBrkn9usExi9P9pYJuNLjK5k1YnuaKAUgAtWs3DjB+NLNyNjo
+	z9K1EFGUfWvKV5EHpYEVPbk=
+X-Google-Smtp-Source: ABdhPJyk5LMpvJBOnoJv/cjrpAyasLKu4LBxr7jKQq4OCERkzn7Dwo1S3bQcoGiBB3763Qi0ahgwYw==
+X-Received: by 2002:a63:fe41:: with SMTP id x1mr4835088pgj.254.1607571536653; 
+	Wed, 09 Dec 2020 19:38:56 -0800 (PST)
+Received: from [192.168.3.217] (c-73-241-217-19.hsd1.ca.comcast.net.
+	[73.241.217.19])
+	by smtp.gmail.com with ESMTPSA id b4sm3743505pju.33.2020.12.09.19.38.54
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Wed, 09 Dec 2020 19:38:55 -0800 (PST)
+To: Palmer Dabbelt <palmer@dabbelt.com>, Christoph Hellwig <hch@infradead.org>
+References: <mhng-97fc5874-29d0-4d9e-8c92-d3704a482f28@palmerdabbelt-glaptop1>
+From: Bart Van Assche <bvanassche@acm.org>
+Message-ID: <6fb5be2d-c6ca-c21b-dddf-9b314973dcfe@acm.org>
+Date: Wed, 9 Dec 2020 19:38:53 -0800
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+	Thunderbird/78.5.0
 MIME-Version: 1.0
-In-Reply-To: <20201209215814.2623617-1-songliubraving@fb.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+In-Reply-To: <mhng-97fc5874-29d0-4d9e-8c92-d3704a482f28@palmerdabbelt-glaptop1>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, Xiao Ni <xni@redhat.com>,
-	linux-kernel@vger.kernel.org,
-	Matthew Ruffell <matthew.ruffell@canonical.com>
-Subject: Re: [dm-devel] Revert "dm raid: remove unnecessary discard limits
-	for raid10"
+Cc: snitzer@redhat.com, linux-doc@vger.kernel.org, shuah@kernel.org,
+	corbet@lwn.net, linux-kernel@vger.kernel.org,
+	Josef Bacik <josef@toxicpanda.com>, linux-raid@vger.kernel.org,
+	song@kernel.org, dm-devel@redhat.com,
+	Mike Christie <michael.christie@oracle.com>,
+	linux-kselftest@vger.kernel.org, kernel-team@android.com, agk@redhat.com
+Subject: Re: [dm-devel] [PATCH v1 0/5] dm: dm-user: New target that proxies
+ BIOs to userspace
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -82,69 +115,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On Wed, Dec 09 2020 at  4:58pm -0500,
-Song Liu <songliubraving@fb.com> wrote:
-
-> This reverts commit f0e90b6c663a7e3b4736cb318c6c7c589f152c28.
-> 
-> Matthew Ruffell reported data corruption in raid10 due to the changes
-> in discard handling [1]. Revert these changes before we find a proper fix.
-> 
-> [1] https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1907262/
-> Cc: Matthew Ruffell <matthew.ruffell@canonical.com>
-> Cc: Xiao Ni <xni@redhat.com>
-> Cc: Mike Snitzer <snitzer@redhat.com>
-> Signed-off-by: Song Liu <songliubraving@fb.com>
-> ---
->  drivers/md/dm-raid.c | 11 +++++++++++
->  1 file changed, 11 insertions(+)
-> 
-> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> index 9c1f7c4de65b3..dc8568ab96f24 100644
-> --- a/drivers/md/dm-raid.c
-> +++ b/drivers/md/dm-raid.c
-> @@ -3728,6 +3728,17 @@ static void raid_io_hints(struct dm_target *ti, struct queue_limits *limits)
->  
->  	blk_limits_io_min(limits, chunk_size_bytes);
->  	blk_limits_io_opt(limits, chunk_size_bytes * mddev_data_stripes(rs));
-> +
-> +	/*
-> +	 * RAID10 personality requires bio splitting,
-> +	 * RAID0/1/4/5/6 don't and process large discard bios properly.
-> +	 */
-> +	if (rs_is_raid10(rs)) {
-> +		limits->discard_granularity = max(chunk_size_bytes,
-> +						  limits->discard_granularity);
-> +		limits->max_discard_sectors = min_not_zero(rs->md.chunk_sectors,
-> +							   limits->max_discard_sectors);
-> +	}
->  }
->  
->  static void raid_postsuspend(struct dm_target *ti)
-> -- 
-> 2.24.1
-> 
-
-Short of you sending a v2 pull request to Jens...
-
-Jens please pick this up once you pull Song's MD pull that reverts all
-the MD raid10 discard changes.
-
-Thanks!
-
-Acked-by: Mike Snitzer <snitzer@redhat.com>
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+T24gMTIvNy8yMCAxMDo1NSBBTSwgUGFsbWVyIERhYmJlbHQgd3JvdGU6Cj4gQWxsIGluIGFsbCwg
+SSd2ZSBmb3VuZCBpdCBhIGJpdCBoYXJkIHRvIGZpZ3VyZSBvdXQgd2hhdCBzb3J0IG9mIGludGVy
+ZXN0Cj4gcGVvcGxlCj4gaGF2ZSBpbiBkbS11c2VyOiB3aGVuIEkgYnJpbmcgdGhpcyB1cCBJIHNl
+ZW0gdG8gcnVuIGludG8gcGVvcGxlIHdobyd2ZSBkb25lCj4gc2ltaWxhciB0aGluZ3MgYmVmb3Jl
+IGFuZCBhcmUgdmFndWVseSBpbnRlcmVzdGVkLCBidXQgY2VydGFpbmx5IG5vYm9keSBpcwo+IGNo
+b21waW5nIGF0IHRoZSBiaXQuwqAgSSdtIHNlbmRpbmcgaXQgb3V0IGluIHRoaXMgZWFybHkgc3Rh
+dGUgdG8gdHJ5IGFuZAo+IGZpZ3VyZQo+IG91dCBpZiBpdCdzIGludGVyZXN0aW5nIGVub3VnaCB0
+byBrZWVwIGdvaW5nLgoKQ2MtaW5nIEpvc2VmIGFuZCBNaWtlIHNpbmNlIHRoZWlyIG5iZCBjb250
+cmlidXRpb25zIG1ha2UgbWUgd29uZGVyCndoZXRoZXIgdGhpcyBuZXcgZHJpdmVyIGNvdWxkIGJl
+IHVzZWZ1bCB0byB0aGVpciB1c2UgY2FzZXM/CgpUaGFua3MsCgpCYXJ0LgoKLS0KZG0tZGV2ZWwg
+bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9t
+YWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
 
