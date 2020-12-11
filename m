@@ -7,68 +7,68 @@ X-Spam-Status: No, score=-15.3 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E8975C4361B
-	for <dm-devel@archiver.kernel.org>; Fri, 11 Dec 2020 03:27:24 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 05830C433FE
+	for <dm-devel@archiver.kernel.org>; Fri, 11 Dec 2020 03:28:38 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4AFB723E54
-	for <dm-devel@archiver.kernel.org>; Fri, 11 Dec 2020 03:27:24 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4AFB723E54
+	by mail.kernel.org (Postfix) with ESMTPS id 5BFDF23E54
+	for <dm-devel@archiver.kernel.org>; Fri, 11 Dec 2020 03:28:36 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5BFDF23E54
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-541-Q-hByUXoM62OwbNb8_3B-A-1; Thu, 10 Dec 2020 22:27:18 -0500
-X-MC-Unique: Q-hByUXoM62OwbNb8_3B-A-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-140-Ij8GI6B0NPCHKj0NNkBDXg-1; Thu, 10 Dec 2020 22:28:34 -0500
+X-MC-Unique: Ij8GI6B0NPCHKj0NNkBDXg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BE9AD1926DA0;
-	Fri, 11 Dec 2020 03:27:11 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B2AD010016F5;
-	Fri, 11 Dec 2020 03:27:10 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 593A1CC62E;
+	Fri, 11 Dec 2020 03:28:28 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0819160BF1;
+	Fri, 11 Dec 2020 03:28:28 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A0F17180954D;
-	Fri, 11 Dec 2020 03:27:08 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 541C04A7C6;
+	Fri, 11 Dec 2020 03:28:27 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BB3R5TY025271 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 10 Dec 2020 22:27:05 -0500
+	id 0BB3SQ9D025399 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 10 Dec 2020 22:28:26 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 617A4E7792; Fri, 11 Dec 2020 03:27:05 +0000 (UTC)
+	id 333262166B29; Fri, 11 Dec 2020 03:28:26 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5BCEFE778F
-	for <dm-devel@redhat.com>; Fri, 11 Dec 2020 03:27:03 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2D5952166B2B
+	for <dm-devel@redhat.com>; Fri, 11 Dec 2020 03:28:23 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0F9E4800889
-	for <dm-devel@redhat.com>; Fri, 11 Dec 2020 03:27:03 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8FD0D811E84
+	for <dm-devel@redhat.com>; Fri, 11 Dec 2020 03:28:23 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-474-fo0yWMCoOZO3X0HK6K-4_Q-1;
-	Thu, 10 Dec 2020 22:26:58 -0500
-X-MC-Unique: fo0yWMCoOZO3X0HK6K-4_Q-1
+	relay.mimecast.com with ESMTP id us-mta-317-nY3LQJhyNCuJOef3MiEr1A-1;
+	Thu, 10 Dec 2020 22:28:18 -0500
+X-MC-Unique: nY3LQJhyNCuJOef3MiEr1A-1
 Received: from [192.168.86.31] (c-71-197-163-6.hsd1.wa.comcast.net
 	[71.197.163.6])
-	by linux.microsoft.com (Postfix) with ESMTPSA id AA7E420B717A;
-	Thu, 10 Dec 2020 19:26:56 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com AA7E420B717A
+	by linux.microsoft.com (Postfix) with ESMTPSA id 8633220B717A;
+	Thu, 10 Dec 2020 19:28:16 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 8633220B717A
 To: Tyler Hicks <tyhicks@linux.microsoft.com>
 References: <20201209194212.5131-1-tusharsu@linux.microsoft.com>
-	<20201209194212.5131-4-tusharsu@linux.microsoft.com>
-	<20201210230218.GH489768@sequoia>
+	<20201209194212.5131-5-tusharsu@linux.microsoft.com>
+	<20201210231045.GI489768@sequoia>
 From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-Message-ID: <492dd4a8-1edd-211f-42d5-59c24731ddbb@linux.microsoft.com>
-Date: Thu, 10 Dec 2020 19:26:56 -0800
+Message-ID: <472dc503-295c-1723-b329-c9e08fff4574@linux.microsoft.com>
+Date: Thu, 10 Dec 2020 19:28:15 -0800
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
 	Thunderbird/68.10.0
 MIME-Version: 1.0
-In-Reply-To: <20201210230218.GH489768@sequoia>
+In-Reply-To: <20201210231045.GI489768@sequoia>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -77,7 +77,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: sashal@kernel.org, paul@paul-moore.com, snitzer@redhat.com,
 	selinux@vger.kernel.org, stephen.smalley.work@gmail.com,
@@ -86,8 +86,8 @@ Cc: sashal@kernel.org, paul@paul-moore.com, snitzer@redhat.com,
 	linux-security-module@vger.kernel.org, casey@schaufler-ca.com,
 	linux-integrity@vger.kernel.org, dm-devel@redhat.com,
 	gmazyland@gmail.com, agk@redhat.com
-Subject: Re: [dm-devel] [PATCH v7 3/8] IMA: define a hook to measure kernel
- integrity critical data
+Subject: Re: [dm-devel] [PATCH v7 4/8] IMA: add policy rule to measure
+	critical data
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -101,7 +101,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -112,177 +112,120 @@ Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
 
 
-On 2020-12-10 3:02 p.m., Tyler Hicks wrote:
-> On 2020-12-09 11:42:07, Tushar Sugandhi wrote:
->> IMA provides capabilities to measure file data, and in-memory buffer
->> data. However, various data structures, policies, and states
->> stored in kernel memory also impact the integrity of the system.
->> Several kernel subsystems contain such integrity critical data. These
->> kernel subsystems help protect the integrity of a device. Currently,
->> IMA does not provide a generic function for kernel subsystems to measure
->> their integrity critical data.
->>   
->> Define a new IMA hook - ima_measure_critical_data to measure kernel
->> integrity critical data.
+On 2020-12-10 3:10 p.m., Tyler Hicks wrote:
+> On 2020-12-09 11:42:08, Tushar Sugandhi wrote:
+>> A new IMA policy rule is needed for the IMA hook
+>> ima_measure_critical_data() and the corresponding func CRITICAL_DATA for
+>> measuring the input buffer. The policy rule should ensure the buffer
+>> would get measured only when the policy rule allows the action. The
+>> policy rule should also support the necessary constraints (flags etc.)
+>> for integrity critical buffer data measurements.
+>>
+>> Add a policy rule to define the constraints for restricting integrity
+>> critical data measurements.
 >>
 >> Signed-off-by: Tushar Sugandhi <tusharsu@linux.microsoft.com>
 >> ---
->>   Documentation/ABI/testing/ima_policy |  2 +-
->>   include/linux/ima.h                  |  6 +++++
->>   security/integrity/ima/ima.h         |  1 +
->>   security/integrity/ima/ima_api.c     |  2 +-
->>   security/integrity/ima/ima_main.c    | 36 ++++++++++++++++++++++++++++
->>   security/integrity/ima/ima_policy.c  |  2 ++
->>   6 files changed, 47 insertions(+), 2 deletions(-)
+>>   security/integrity/ima/ima_policy.c | 35 +++++++++++++++++++++++++----
+>>   1 file changed, 31 insertions(+), 4 deletions(-)
 >>
->> diff --git a/Documentation/ABI/testing/ima_policy b/Documentation/ABI/testing/ima_policy
->> index e35263f97fc1..6ec7daa87cba 100644
->> --- a/Documentation/ABI/testing/ima_policy
->> +++ b/Documentation/ABI/testing/ima_policy
->> @@ -32,7 +32,7 @@ Description:
->>   			func:= [BPRM_CHECK][MMAP_CHECK][CREDS_CHECK][FILE_CHECK]MODULE_CHECK]
->>   			        [FIRMWARE_CHECK]
->>   				[KEXEC_KERNEL_CHECK] [KEXEC_INITRAMFS_CHECK]
->> -				[KEXEC_CMDLINE] [KEY_CHECK]
->> +				[KEXEC_CMDLINE] [KEY_CHECK] [CRITICAL_DATA]
->>   			mask:= [[^]MAY_READ] [[^]MAY_WRITE] [[^]MAY_APPEND]
->>   			       [[^]MAY_EXEC]
->>   			fsmagic:= hex value
->> diff --git a/include/linux/ima.h b/include/linux/ima.h
->> index ac3d82f962f2..675f54db6264 100644
->> --- a/include/linux/ima.h
->> +++ b/include/linux/ima.h
->> @@ -30,6 +30,9 @@ extern int ima_post_read_file(struct file *file, void *buf, loff_t size,
->>   extern void ima_post_path_mknod(struct dentry *dentry);
->>   extern int ima_file_hash(struct file *file, char *buf, size_t buf_size);
->>   extern void ima_kexec_cmdline(int kernel_fd, const void *buf, int size);
->> +extern void ima_measure_critical_data(const char *event_name,
->> +				      const void *buf, int buf_len,
->> +				      bool measure_buf_hash);
->>   
->>   #ifdef CONFIG_IMA_APPRAISE_BOOTPARAM
->>   extern void ima_appraise_parse_cmdline(void);
->> @@ -122,6 +125,9 @@ static inline int ima_file_hash(struct file *file, char *buf, size_t buf_size)
->>   }
->>   
->>   static inline void ima_kexec_cmdline(int kernel_fd, const void *buf, int size) {}
->> +static inline void ima_measure_critical_data(const char *event_name,
->> +					     const void *buf, int buf_len,
->> +					     bool measure_buf_hash) {}
->>   #endif /* CONFIG_IMA */
->>   
->>   #ifndef CONFIG_IMA_KEXEC
->> diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
->> index fa3044a7539f..7d9deda6a8b3 100644
->> --- a/security/integrity/ima/ima.h
->> +++ b/security/integrity/ima/ima.h
->> @@ -201,6 +201,7 @@ static inline unsigned int ima_hash_key(u8 *digest)
->>   	hook(POLICY_CHECK, policy)			\
->>   	hook(KEXEC_CMDLINE, kexec_cmdline)		\
->>   	hook(KEY_CHECK, key)				\
->> +	hook(CRITICAL_DATA, critical_data)		\
->>   	hook(MAX_CHECK, none)
->>   
->>   #define __ima_hook_enumify(ENUM, str)	ENUM,
->> diff --git a/security/integrity/ima/ima_api.c b/security/integrity/ima/ima_api.c
->> index af218babd198..9917e1730cb6 100644
->> --- a/security/integrity/ima/ima_api.c
->> +++ b/security/integrity/ima/ima_api.c
->> @@ -176,7 +176,7 @@ void ima_add_violation(struct file *file, const unsigned char *filename,
->>    *		subj=, obj=, type=, func=, mask=, fsmagic=
->>    *	subj,obj, and type: are LSM specific.
->>    *	func: FILE_CHECK | BPRM_CHECK | CREDS_CHECK | MMAP_CHECK | MODULE_CHECK
->> - *	| KEXEC_CMDLINE | KEY_CHECK
->> + *	| KEXEC_CMDLINE | KEY_CHECK | CRITICAL_DATA
->>    *	mask: contains the permission mask
->>    *	fsmagic: hex value
->>    *
->> diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
->> index 03aad13e9e70..ae59f4a4dd70 100644
->> --- a/security/integrity/ima/ima_main.c
->> +++ b/security/integrity/ima/ima_main.c
->> @@ -922,6 +922,42 @@ void ima_kexec_cmdline(int kernel_fd, const void *buf, int size)
->>   	fdput(f);
->>   }
->>   
->> +/**
->> + * ima_measure_critical_data - measure kernel integrity critical data
->> + * @event_name: event name to be used for the buffer entry
->> + * @buf: pointer to buffer containing data to measure
->> + * @buf_len: length of buffer(in bytes)
->> + * @measure_buf_hash: measure buffer hash
->> + *
->> + * Measure the kernel subsystem data, critical to the integrity of the kernel,
->> + * into the IMA log and extend the @pcr.
->> + *
->> + * Use @event_name to describe the state/buffer data change.
->> + * Examples of critical data (buf) could be kernel in-memory r/o structures,
->                                   ^
-> 				 @buf
-> 
-Will do.
->> + * hash of the memory structures, or data that represents subsystem state
->> + * change.
->> + *
->> + * If @measure_buf_hash is set to true - measure hash of the buffer data,
->> + * else measure the buffer data itself.
->> + * measure_buf_hash can be used to save space, if the data being measured
->        ^
->        @measure_buf_hash
-> 
->> + * is too large.
->> + *
->> + * The data (buf) can only be measured, not appraised.
->                  ^
-> 		@buf
-> 
-Will do.
->> + */
->> +void ima_measure_critical_data(const char *event_name,
->> +			       const void *buf, int buf_len,
->> +			       bool measure_buf_hash)
->> +{
->> +	if (!event_name || !buf || !buf_len) {
->> +		pr_err("Invalid arguments passed to %s().\n", __func__);
-> 
-> This is a problem for the developer making use of the
-> ima_measure_critical_data() API and shouldn't be logged, IMO, because a
-> user/admin can do nothing about it. I think the error message should be
-> dropped.
-> 
->> +		return;
->> +	}
->> +
->> +	process_buffer_measurement(NULL, buf, buf_len, event_name,
->> +				   CRITICAL_DATA, 0, NULL,
->> +				   measure_buf_hash);
->> +}
->> +
->>   static int __init init_ima(void)
->>   {
->>   	int error;
 >> diff --git a/security/integrity/ima/ima_policy.c b/security/integrity/ima/ima_policy.c
->> index 25419c7ff50b..2a0c0603626e 100644
+>> index 2a0c0603626e..9a8ee80a3128 100644
 >> --- a/security/integrity/ima/ima_policy.c
 >> +++ b/security/integrity/ima/ima_policy.c
->> @@ -1251,6 +1251,8 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
->>   			else if (IS_ENABLED(CONFIG_IMA_MEASURE_ASYMMETRIC_KEYS) &&
->>   				 strcmp(args[0].from, "KEY_CHECK") == 0)
->>   				entry->func = KEY_CHECK;
->> +			else if (strcmp(args[0].from, "CRITICAL_DATA") == 0)
->> +				entry->func = CRITICAL_DATA;
->>   			else
->>   				result = -EINVAL;
->>   			if (!result)
+>> @@ -34,6 +34,7 @@
+>>   #define IMA_PCR		0x0100
+>>   #define IMA_FSNAME	0x0200
+>>   #define IMA_KEYRINGS	0x0400
+>> +#define IMA_DATA_SOURCE	0x0800
 > 
-> This hunk and the above change to Documentation/ABI/testing/ima_policy
-> need to be moved to the next patch when you introduce the policy
-> changes.
+> You introduce data_source= in the next patch. This macro shouldn't be
+> added until the next patch.
+> 
+Ok I will move IMA_DATA_SOURCE to the next patch.
+
+>>   
+>>   #define UNKNOWN		0
+>>   #define MEASURE		0x0001	/* same as IMA_MEASURE */
+>> @@ -85,6 +86,7 @@ struct ima_rule_entry {
+>>   	} lsm[MAX_LSM_RULES];
+>>   	char *fsname;
+>>   	struct ima_rule_opt_list *keyrings; /* Measure keys added to these keyrings */
+>> +	struct ima_rule_opt_list *data_source; /* Measure data from this source */
+>>   	struct ima_template_desc *template;
+>>   };
+>>   
+>> @@ -479,6 +481,12 @@ static bool ima_match_rule_data(struct ima_rule_entry *rule,
+>>   		else
+>>   			opt_list = rule->keyrings;
+>>   		break;
+>> +	case CRITICAL_DATA:
+>> +		if (!rule->data_source)
+>> +			return true;
+>> +		else
+>> +			opt_list = rule->data_source;
+> 
+> If you take my suggestions on patch #1, remove the else and simply
+> assign opt_list here, too.
+> 
+Yup. Will do.
+>> +		break;
+>>   	default:
+>>   		break;
+>>   	}
+>> @@ -518,13 +526,19 @@ static bool ima_match_rules(struct ima_rule_entry *rule, struct inode *inode,
+>>   {
+>>   	int i;
+>>   
+>> -	if (func == KEY_CHECK) {
+>> -		return (rule->flags & IMA_FUNC) && (rule->func == func) &&
+>> -			ima_match_rule_data(rule, func_data, cred);
+>> -	}
+>>   	if ((rule->flags & IMA_FUNC) &&
+>>   	    (rule->func != func && func != POST_SETATTR))
+>>   		return false;
+>> +
+>> +	switch (func) {
+>> +	case KEY_CHECK:
+>> +	case CRITICAL_DATA:
+>> +		return ((rule->func == func) &&
+>> +			ima_match_rule_data(rule, func_data, cred));
+>> +	default:
+>> +		break;
+>> +	}
+>> +
+>>   	if ((rule->flags & IMA_MASK) &&
+>>   	    (rule->mask != mask && func != POST_SETATTR))
+>>   		return false;
+>> @@ -1119,6 +1133,19 @@ static bool ima_validate_rule(struct ima_rule_entry *entry)
+>>   		if (ima_rule_contains_lsm_cond(entry))
+>>   			return false;
+>>   
+>> +		break;
+>> +	case CRITICAL_DATA:
+>> +		if (entry->action & ~(MEASURE | DONT_MEASURE))
+>> +			return false;
+>> +
+>> +		if (!(entry->flags & IMA_DATA_SOURCE) ||
+>> +		    (entry->flags & ~(IMA_FUNC | IMA_UID | IMA_PCR |
+>> +		    IMA_DATA_SOURCE)))
+> 
+> IMA_DATA_SOURCE shouldn't exist in this patch. This isn't the right
+> indentation, either. See how IMA_KEYRINGS is indented in the KEY_CHECK
+> case above.
 > 
 Will do.
 ~Tushar
 > Tyler
 > 
+>> +			return false;
+>> +
+>> +		if (ima_rule_contains_lsm_cond(entry))
+>> +			return false;
+>> +
+>>   		break;
+>>   	default:
+>>   		return false;
 >> -- 
 >> 2.17.1
 >>
