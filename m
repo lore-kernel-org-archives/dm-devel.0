@@ -7,64 +7,64 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D8831C4361B
-	for <dm-devel@archiver.kernel.org>; Mon, 14 Dec 2020 11:00:58 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7BB19C4361B
+	for <dm-devel@archiver.kernel.org>; Mon, 14 Dec 2020 11:01:02 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 5A23B22BEF
-	for <dm-devel@archiver.kernel.org>; Mon, 14 Dec 2020 11:00:58 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5A23B22BEF
+	by mail.kernel.org (Postfix) with ESMTPS id D1BD422BEF
+	for <dm-devel@archiver.kernel.org>; Mon, 14 Dec 2020 11:01:01 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D1BD422BEF
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-98-kMIIdjb9Ona5LDRMoEDjkw-1; Mon, 14 Dec 2020 06:00:55 -0500
-X-MC-Unique: kMIIdjb9Ona5LDRMoEDjkw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-313-v4fRsmblNj2kleIFs1hk5w-1; Mon, 14 Dec 2020 06:00:58 -0500
+X-MC-Unique: v4fRsmblNj2kleIFs1hk5w-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 275FF57037;
-	Mon, 14 Dec 2020 11:00:49 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0A44A5D9D0;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2A9E4107AFB7;
+	Mon, 14 Dec 2020 11:00:50 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B3E1572167;
 	Mon, 14 Dec 2020 11:00:49 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D2D515002C;
-	Mon, 14 Dec 2020 11:00:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7887D1809CA4;
+	Mon, 14 Dec 2020 11:00:49 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BC0P9pp001493 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 11 Dec 2020 19:25:09 -0500
+	id 0BCJKVw4004789 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 12 Dec 2020 14:20:32 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1DA9A2166B29; Sat, 12 Dec 2020 00:25:09 +0000 (UTC)
+	id A6D5A2026D48; Sat, 12 Dec 2020 19:20:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 172CC2166B2A
-	for <dm-devel@redhat.com>; Sat, 12 Dec 2020 00:25:06 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A1BB22026D47
+	for <dm-devel@redhat.com>; Sat, 12 Dec 2020 19:20:29 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DA9C4811E76
-	for <dm-devel@redhat.com>; Sat, 12 Dec 2020 00:25:06 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 48EF48007D9
+	for <dm-devel@redhat.com>; Sat, 12 Dec 2020 19:20:29 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-438-L1AE1LyFN8C0-3ANM0VhjQ-1;
-	Fri, 11 Dec 2020 19:25:04 -0500
-X-MC-Unique: L1AE1LyFN8C0-3ANM0VhjQ-1
+	relay.mimecast.com with ESMTP id us-mta-207-vFUVJa7nNlStOjgXAyK_0w-1;
+	Sat, 12 Dec 2020 14:20:26 -0500
+X-MC-Unique: vFUVJa7nNlStOjgXAyK_0w-1
 Received: from sequoia (162-237-133-238.lightspeed.rcsntx.sbcglobal.net
 	[162.237.133.238])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 206A320B7185;
-	Fri, 11 Dec 2020 16:25:02 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 206A320B7185
-Date: Fri, 11 Dec 2020 18:25:00 -0600
+	by linux.microsoft.com (Postfix) with ESMTPSA id E476820B717A;
+	Sat, 12 Dec 2020 11:20:24 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com E476820B717A
+Date: Sat, 12 Dec 2020 13:20:22 -0600
 From: Tyler Hicks <tyhicks@linux.microsoft.com>
 To: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-Message-ID: <20201212002500.GF4951@sequoia>
-References: <20201211235807.30815-1-tusharsu@linux.microsoft.com>
-	<20201211235807.30815-5-tusharsu@linux.microsoft.com>
+Message-ID: <20201212192022.GI4951@sequoia>
+References: <20201212180251.9943-1-tusharsu@linux.microsoft.com>
+	<20201212180251.9943-5-tusharsu@linux.microsoft.com>
 MIME-Version: 1.0
-In-Reply-To: <20201211235807.30815-5-tusharsu@linux.microsoft.com>
+In-Reply-To: <20201212180251.9943-5-tusharsu@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -73,7 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 14 Dec 2020 06:00:28 -0500
 Cc: sashal@kernel.org, paul@paul-moore.com, snitzer@redhat.com,
@@ -83,7 +83,7 @@ Cc: sashal@kernel.org, paul@paul-moore.com, snitzer@redhat.com,
 	linux-security-module@vger.kernel.org, casey@schaufler-ca.com,
 	linux-integrity@vger.kernel.org, dm-devel@redhat.com,
 	gmazyland@gmail.com, agk@redhat.com
-Subject: Re: [dm-devel] [PATCH v8 4/8] IMA: add policy rule to measure
+Subject: Re: [dm-devel] [PATCH v9 4/8] IMA: add policy rule to measure
 	critical data
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
@@ -98,7 +98,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -107,7 +107,7 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 2020-12-11 15:58:03, Tushar Sugandhi wrote:
+On 2020-12-12 10:02:47, Tushar Sugandhi wrote:
 > A new IMA policy rule is needed for the IMA hook
 > ima_measure_critical_data() and the corresponding func CRITICAL_DATA for
 > measuring the input buffer. The policy rule should ensure the buffer
@@ -119,10 +119,17 @@ On 2020-12-11 15:58:03, Tushar Sugandhi wrote:
 > critical data measurements.
 > 
 > Signed-off-by: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+
+This looks nice. Thanks for the changes!
+
+Reviewed-by: Tyler Hicks <tyhicks@linux.microsoft.com>
+
+Tyler
+
 > ---
 >  Documentation/ABI/testing/ima_policy |  2 +-
->  security/integrity/ima/ima_policy.c  | 34 ++++++++++++++++++++++++----
->  2 files changed, 31 insertions(+), 5 deletions(-)
+>  security/integrity/ima/ima_policy.c  | 29 ++++++++++++++++++++++++----
+>  2 files changed, 26 insertions(+), 5 deletions(-)
 > 
 > diff --git a/Documentation/ABI/testing/ima_policy b/Documentation/ABI/testing/ima_policy
 > index e35263f97fc1..6ec7daa87cba 100644
@@ -138,43 +145,19 @@ On 2020-12-11 15:58:03, Tushar Sugandhi wrote:
 >  			       [[^]MAY_EXEC]
 >  			fsmagic:= hex value
 > diff --git a/security/integrity/ima/ima_policy.c b/security/integrity/ima/ima_policy.c
-> index a09d1a41a290..07116ff35c25 100644
+> index a09d1a41a290..d45c2dbb6d45 100644
 > --- a/security/integrity/ima/ima_policy.c
 > +++ b/security/integrity/ima/ima_policy.c
-> @@ -85,6 +85,7 @@ struct ima_rule_entry {
->  	} lsm[MAX_LSM_RULES];
->  	char *fsname;
->  	struct ima_rule_opt_list *keyrings; /* Measure keys added to these keyrings */
-> +	struct ima_rule_opt_list *data_source; /* Measure data from this source */
-
-Argh, there are still some more instances of data_source sneaking into
-this patch too early instead of waiting until the next patch.
-
->  	struct ima_template_desc *template;
->  };
->  
-> @@ -479,6 +480,12 @@ static bool ima_match_rule_data(struct ima_rule_entry *rule,
+> @@ -479,6 +479,8 @@ static bool ima_match_rule_data(struct ima_rule_entry *rule,
 >  
 >  		opt_list = rule->keyrings;
 >  		break;
 > +	case CRITICAL_DATA:
-> +		if (!rule->data_source)
-> +			return true;
-> +
-> +		opt_list = rule->data_source;
-> +		break;
-
-I guess this case should unconditionally return true in this patch and
-then the include this additional logic in the next patch.
-
-Sorry, I missed these on my last review.
-
-Tyler
-
+> +		return true;
 >  	default:
 >  		return false;
 >  	}
-> @@ -515,13 +522,19 @@ static bool ima_match_rules(struct ima_rule_entry *rule, struct inode *inode,
+> @@ -515,13 +517,19 @@ static bool ima_match_rules(struct ima_rule_entry *rule, struct inode *inode,
 >  {
 >  	int i;
 >  
@@ -198,7 +181,7 @@ Tyler
 >  	if ((rule->flags & IMA_MASK) &&
 >  	    (rule->mask != mask && func != POST_SETATTR))
 >  		return false;
-> @@ -1116,6 +1129,17 @@ static bool ima_validate_rule(struct ima_rule_entry *entry)
+> @@ -1116,6 +1124,17 @@ static bool ima_validate_rule(struct ima_rule_entry *entry)
 >  		if (ima_rule_contains_lsm_cond(entry))
 >  			return false;
 >  
@@ -216,7 +199,7 @@ Tyler
 >  		break;
 >  	default:
 >  		return false;
-> @@ -1248,6 +1272,8 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
+> @@ -1248,6 +1267,8 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 >  			else if (IS_ENABLED(CONFIG_IMA_MEASURE_ASYMMETRIC_KEYS) &&
 >  				 strcmp(args[0].from, "KEY_CHECK") == 0)
 >  				entry->func = KEY_CHECK;
