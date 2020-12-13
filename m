@@ -7,67 +7,68 @@ X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
 	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 06D8AC4361B
-	for <dm-devel@archiver.kernel.org>; Sun, 13 Dec 2020 01:21:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 620E3C4361B
+	for <dm-devel@archiver.kernel.org>; Sun, 13 Dec 2020 01:22:14 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 72D3221E92
-	for <dm-devel@archiver.kernel.org>; Sun, 13 Dec 2020 01:21:47 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 72D3221E92
+	by mail.kernel.org (Postfix) with ESMTPS id C0F8821E92
+	for <dm-devel@archiver.kernel.org>; Sun, 13 Dec 2020 01:22:13 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C0F8821E92
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-87-Zohi1TudNlq6ujXv-oAJ3Q-1; Sat, 12 Dec 2020 20:21:43 -0500
-X-MC-Unique: Zohi1TudNlq6ujXv-oAJ3Q-1
+ us-mta-335-shI92CEGMde9yA4tDBpg9g-1; Sat, 12 Dec 2020 20:22:10 -0500
+X-MC-Unique: shI92CEGMde9yA4tDBpg9g-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 35B621005504;
-	Sun, 13 Dec 2020 01:21:38 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4455D1002388;
-	Sun, 13 Dec 2020 01:21:36 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AA42B800D53;
+	Sun, 13 Dec 2020 01:22:05 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8D26110013BD;
+	Sun, 13 Dec 2020 01:22:05 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6A1A44BB7B;
-	Sun, 13 Dec 2020 01:21:31 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9DA6D180954D;
+	Sun, 13 Dec 2020 01:22:04 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BD1LSBx006574 for <dm-devel@listman.util.phx.redhat.com>;
-	Sat, 12 Dec 2020 20:21:28 -0500
+	id 0BD1Lx1X006660 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 12 Dec 2020 20:21:59 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8543A5D23D; Sun, 13 Dec 2020 01:21:28 +0000 (UTC)
+	id 4DFBA5D239; Sun, 13 Dec 2020 01:21:59 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7F6C75D23B
-	for <dm-devel@redhat.com>; Sun, 13 Dec 2020 01:21:26 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 48CF85D23A
+	for <dm-devel@redhat.com>; Sun, 13 Dec 2020 01:21:57 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 57514800B3B
-	for <dm-devel@redhat.com>; Sun, 13 Dec 2020 01:21:26 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F3B7C8007DF
+	for <dm-devel@redhat.com>; Sun, 13 Dec 2020 01:21:56 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-88-5jsIUFP0OUKWNC23uPSHKg-1;
-	Sat, 12 Dec 2020 20:21:22 -0500
-X-MC-Unique: 5jsIUFP0OUKWNC23uPSHKg-1
+	relay.mimecast.com with ESMTP id us-mta-474-PJUkh0TvPjC188xibb5Zlw-1;
+	Sat, 12 Dec 2020 20:21:54 -0500
+X-MC-Unique: PJUkh0TvPjC188xibb5Zlw-1
 Received: from [192.168.86.31] (c-71-197-163-6.hsd1.wa.comcast.net
 	[71.197.163.6])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 5733E20B717A;
-	Sat, 12 Dec 2020 17:21:20 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 5733E20B717A
+	by linux.microsoft.com (Postfix) with ESMTPSA id AC71F20B717B;
+	Sat, 12 Dec 2020 17:21:52 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com AC71F20B717B
 To: Tyler Hicks <tyhicks@linux.microsoft.com>
 References: <20201212180251.9943-1-tusharsu@linux.microsoft.com>
-	<20201212180251.9943-5-tusharsu@linux.microsoft.com>
-	<20201212192022.GI4951@sequoia>
+	<20201212180251.9943-6-tusharsu@linux.microsoft.com>
+	<20201212192049.GJ4951@sequoia>
 From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-Message-ID: <17b756ea-5097-215e-fcad-c2d06f46ec23@linux.microsoft.com>
-Date: Sat, 12 Dec 2020 17:21:19 -0800
+Message-ID: <7c90e5e5-6408-6f9b-2eed-6fa45cc92806@linux.microsoft.com>
+Date: Sat, 12 Dec 2020 17:21:52 -0800
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
 	Thunderbird/68.10.0
 MIME-Version: 1.0
-In-Reply-To: <20201212192022.GI4951@sequoia>
+In-Reply-To: <20201212192049.GJ4951@sequoia>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -85,8 +86,8 @@ Cc: sashal@kernel.org, paul@paul-moore.com, snitzer@redhat.com,
 	linux-security-module@vger.kernel.org, casey@schaufler-ca.com,
 	linux-integrity@vger.kernel.org, dm-devel@redhat.com,
 	gmazyland@gmail.com, agk@redhat.com
-Subject: Re: [dm-devel] [PATCH v9 4/8] IMA: add policy rule to measure
-	critical data
+Subject: Re: [dm-devel] [PATCH v9 5/8] IMA: limit critical data measurement
+ based on a label
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -112,27 +113,30 @@ Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
 
 On 2020-12-12 11:20 a.m., Tyler Hicks wrote:
-> On 2020-12-12 10:02:47, Tushar Sugandhi wrote:
->> A new IMA policy rule is needed for the IMA hook
->> ima_measure_critical_data() and the corresponding func CRITICAL_DATA for
->> measuring the input buffer. The policy rule should ensure the buffer
->> would get measured only when the policy rule allows the action. The
->> policy rule should also support the necessary constraints (flags etc.)
->> for integrity critical buffer data measurements.
+> On 2020-12-12 10:02:48, Tushar Sugandhi wrote:
+>> System administrators should be able to limit which kernel subsystems
+>> they want to measure the critical data for. To enable that, an IMA policy
+>> condition to choose specific kernel subsystems is needed. This policy
+>> condition would constrain the measurement of the critical data based on
+>> a label for the given subsystems.
 >>
->> Add a policy rule to define the constraints for restricting integrity
->> critical data measurements.
+>> Add a new IMA policy condition - "data_source:=" to the IMA func
+>> CRITICAL_DATA to allow measurement of various kernel subsystems. This
+>> policy condition would enable the system administrators to restrict the
+>> measurement to the labels listed in "data_source:=".
+>>
+>> Limit the measurement to the labels that are specified in the IMA
+>> policy - CRITICAL_DATA+"data_source:=". If "data_sources:=" is not
+>> provided with the func CRITICAL_DATA, the data from all the
+>> supported kernel subsystems is measured.
 >>
 >> Signed-off-by: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-> 
-> This looks nice. Thanks for the changes!
 > 
 > Reviewed-by: Tyler Hicks <tyhicks@linux.microsoft.com>
 > 
 > Tyler
 > 
-Thanks for the detailed review on this series Tyler.
-We really appreciate it.
+Thanks again Tyler.
 
 ~Tushar
 
