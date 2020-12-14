@@ -1,74 +1,79 @@
-Return-Path: <SRS0=vOhN=FR=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=pYhN=FS=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
-	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,HTML_MESSAGE,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 620E3C4361B
-	for <dm-devel@archiver.kernel.org>; Sun, 13 Dec 2020 01:22:14 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A9F2DC4361B
+	for <dm-devel@archiver.kernel.org>; Mon, 14 Dec 2020 08:13:38 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C0F8821E92
-	for <dm-devel@archiver.kernel.org>; Sun, 13 Dec 2020 01:22:13 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C0F8821E92
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
+	by mail.kernel.org (Postfix) with ESMTPS id 91A45229C7
+	for <dm-devel@archiver.kernel.org>; Mon, 14 Dec 2020 08:13:37 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 91A45229C7
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=opensvc.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-335-shI92CEGMde9yA4tDBpg9g-1; Sat, 12 Dec 2020 20:22:10 -0500
-X-MC-Unique: shI92CEGMde9yA4tDBpg9g-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-98-ykArak32Mg6OTzGKfFdrTQ-1; Mon, 14 Dec 2020 03:13:33 -0500
+X-MC-Unique: ykArak32Mg6OTzGKfFdrTQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AA42B800D53;
-	Sun, 13 Dec 2020 01:22:05 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 837D010054FF;
+	Mon, 14 Dec 2020 08:13:28 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8D26110013BD;
-	Sun, 13 Dec 2020 01:22:05 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 77A6E62681;
+	Mon, 14 Dec 2020 08:13:26 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9DA6D180954D;
-	Sun, 13 Dec 2020 01:22:04 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A4346180954D;
+	Mon, 14 Dec 2020 08:13:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BD1Lx1X006660 for <dm-devel@listman.util.phx.redhat.com>;
-	Sat, 12 Dec 2020 20:21:59 -0500
+	id 0BE8DJ0b013595 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 14 Dec 2020 03:13:19 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4DFBA5D239; Sun, 13 Dec 2020 01:21:59 +0000 (UTC)
+	id E4A292026D46; Mon, 14 Dec 2020 08:13:18 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 48CF85D23A
-	for <dm-devel@redhat.com>; Sun, 13 Dec 2020 01:21:57 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DF4EE2026D11
+	for <dm-devel@redhat.com>; Mon, 14 Dec 2020 08:13:16 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F3B7C8007DF
-	for <dm-devel@redhat.com>; Sun, 13 Dec 2020 01:21:56 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-474-PJUkh0TvPjC188xibb5Zlw-1;
-	Sat, 12 Dec 2020 20:21:54 -0500
-X-MC-Unique: PJUkh0TvPjC188xibb5Zlw-1
-Received: from [192.168.86.31] (c-71-197-163-6.hsd1.wa.comcast.net
-	[71.197.163.6])
-	by linux.microsoft.com (Postfix) with ESMTPSA id AC71F20B717B;
-	Sat, 12 Dec 2020 17:21:52 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com AC71F20B717B
-To: Tyler Hicks <tyhicks@linux.microsoft.com>
-References: <20201212180251.9943-1-tusharsu@linux.microsoft.com>
-	<20201212180251.9943-6-tusharsu@linux.microsoft.com>
-	<20201212192049.GJ4951@sequoia>
-From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-Message-ID: <7c90e5e5-6408-6f9b-2eed-6fa45cc92806@linux.microsoft.com>
-Date: Sat, 12 Dec 2020 17:21:52 -0800
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
-	Thunderbird/68.10.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8495C858EEC
+	for <dm-devel@redhat.com>; Mon, 14 Dec 2020 08:13:16 +0000 (UTC)
+Received: from mslow2.mail.gandi.net (mslow2.mail.gandi.net
+	[217.70.178.242]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-262-4sV-KI7-O_CcT2-McuaTLQ-1; Mon, 14 Dec 2020 03:13:14 -0500
+X-MC-Unique: 4sV-KI7-O_CcT2-McuaTLQ-1
+Received: from relay7-d.mail.gandi.net (unknown [217.70.183.200])
+	by mslow2.mail.gandi.net (Postfix) with ESMTP id 5AF693B692F
+	for <dm-devel@redhat.com>; Mon, 14 Dec 2020 07:56:53 +0000 (UTC)
+X-Originating-IP: 209.85.167.48
+Received: from mail-lf1-f48.google.com (mail-lf1-f48.google.com
+	[209.85.167.48]) (Authenticated sender: smtp@opensvc.com)
+	by relay7-d.mail.gandi.net (Postfix) with ESMTPSA id 4E50020006;
+	Mon, 14 Dec 2020 07:56:48 +0000 (UTC)
+Received: by mail-lf1-f48.google.com with SMTP id a9so27778500lfh.2;
+	Sun, 13 Dec 2020 23:56:48 -0800 (PST)
+X-Gm-Message-State: AOAM5327noVB3uhYjBphRPrTZd8H4/r8e9CzlueToyJwTEwkasdUM2wF
+	YTHG3TUzL3dHjBjzuC8Ag70wHcsqN/44Eqbh/eU=
+X-Google-Smtp-Source: ABdhPJx7884KX1RYLk9H7u0mpwK9Pi6wkKpxyolo9SjqFV3TvCRCJyKFlmm7Xm4FKdzJQMalmRWERRRoRLLOdLwwbOE=
+X-Received: by 2002:a05:651c:546:: with SMTP id
+	q6mr9997423ljp.235.1607932607484; 
+	Sun, 13 Dec 2020 23:56:47 -0800 (PST)
 MIME-Version: 1.0
-In-Reply-To: <20201212192049.GJ4951@sequoia>
+From: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Date: Mon, 14 Dec 2020 08:56:36 +0100
+X-Gmail-Original-Message-ID: <CABr-GnfTqde6t2LFTHbrRkp1qMVbsRUEFBqU6tW1M_uR1svHFg@mail.gmail.com>
+Message-ID: <CABr-GnfTqde6t2LFTHbrRkp1qMVbsRUEFBqU6tW1M_uR1svHFg@mail.gmail.com>
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
+	Xose Vazquez Perez <xose.vazquez@gmail.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -77,17 +82,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: sashal@kernel.org, paul@paul-moore.com, snitzer@redhat.com,
-	selinux@vger.kernel.org, stephen.smalley.work@gmail.com,
-	jmorris@namei.org, zohar@linux.ibm.com,
-	linux-kernel@vger.kernel.org, nramas@linux.microsoft.com,
-	linux-security-module@vger.kernel.org, casey@schaufler-ca.com,
-	linux-integrity@vger.kernel.org, dm-devel@redhat.com,
-	gmazyland@gmail.com, agk@redhat.com
-Subject: Re: [dm-devel] [PATCH v9 5/8] IMA: limit critical data measurement
- based on a label
+Cc: device-mapper development <dm-devel@redhat.com>
+Subject: [dm-devel] uxsock_timeout default value in man page
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -101,47 +99,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Type: multipart/mixed; boundary="===============3717309719997054853=="
+
+--===============3717309719997054853==
+Content-Type: multipart/alternative; boundary="000000000000e45b9b05b667fbfc"
+
+--000000000000e45b9b05b667fbfc
+Content-Type: text/plain; charset="UTF-8"
+
+Hello,
+
+a user brought to my attention "multipathd show config | grep
+usock_timeout" does not agree with the default value stated in the manpage
+: 4000 instead of 1000.
+
+And indeed,
+
+./libmpathcmd/mpath_cmd.h:#define DEFAULT_REPLY_TIMEOUT 4000
+
+Can you confirm this change is valid ?
+
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index d2101ed6..7242d39b 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -1153,7 +1153,7 @@ In these cases it is recommended to increase the CLI
+timeout to avoid
+ those issues.
+ .RS
+ .TP
+-The default is: \fB1000\fR
++The default is: \fB4000\fR
+ .RE
+ .
+ .
+
+Best Regards,
+Christophe
+
+--000000000000e45b9b05b667fbfc
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">Hello,<div><br></div><div>a user brought to my attention &=
+quot;multipathd show config | grep usock_timeout&quot; does=C2=A0not agree =
+with the default value stated in the manpage : 4000 instead of 1000.</div><=
+div><br></div><div>And indeed,</div><div><br></div><div>./libmpathcmd/mpath=
+_cmd.h:#define DEFAULT_REPLY_TIMEOUT=094000<br></div><div><br></div><div>Ca=
+n you confirm this change is valid ?</div><div><br></div><div>diff --git a/=
+multipath/multipath.conf.5 b/multipath/multipath.conf.5<br>index d2101ed6..=
+7242d39b 100644<br>--- a/multipath/multipath.conf.5<br>+++ b/multipath/mult=
+ipath.conf.5<br>@@ -1153,7 +1153,7 @@ In these cases it is recommended to i=
+ncrease the CLI timeout to avoid<br>=C2=A0those issues.<br>=C2=A0.RS<br>=C2=
+=A0.TP<br>-The default is: \fB1000\fR<br>+The default is: \fB4000\fR<br>=C2=
+=A0.RE<br>=C2=A0.<br>=C2=A0.<br></div><div><br></div><div>Best Regards,</di=
+v><div>Christophe</div></div>
+
+--000000000000e45b9b05b667fbfc--
+
+--===============3717309719997054853==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-
-
-
-On 2020-12-12 11:20 a.m., Tyler Hicks wrote:
-> On 2020-12-12 10:02:48, Tushar Sugandhi wrote:
->> System administrators should be able to limit which kernel subsystems
->> they want to measure the critical data for. To enable that, an IMA policy
->> condition to choose specific kernel subsystems is needed. This policy
->> condition would constrain the measurement of the critical data based on
->> a label for the given subsystems.
->>
->> Add a new IMA policy condition - "data_source:=" to the IMA func
->> CRITICAL_DATA to allow measurement of various kernel subsystems. This
->> policy condition would enable the system administrators to restrict the
->> measurement to the labels listed in "data_source:=".
->>
->> Limit the measurement to the labels that are specified in the IMA
->> policy - CRITICAL_DATA+"data_source:=". If "data_sources:=" is not
->> provided with the func CRITICAL_DATA, the data from all the
->> supported kernel subsystems is measured.
->>
->> Signed-off-by: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-> 
-> Reviewed-by: Tyler Hicks <tyhicks@linux.microsoft.com>
-> 
-> Tyler
-> 
-Thanks again Tyler.
-
-~Tushar
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://www.redhat.com/mailman/listinfo/dm-devel
+--===============3717309719997054853==--
 
