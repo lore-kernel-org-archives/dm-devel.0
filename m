@@ -7,61 +7,61 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 56B52C2BBCD
-	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 18:19:11 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5D4EEC4361B
+	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 18:19:12 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id B1CC625CB0
-	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 18:19:10 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org B1CC625CB0
+	by mail.kernel.org (Postfix) with ESMTPS id CD39625CB2
+	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 18:19:11 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CD39625CB2
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-508-tN3qxNBONxakIDB7AnK5zw-1; Wed, 16 Dec 2020 13:19:05 -0500
-X-MC-Unique: tN3qxNBONxakIDB7AnK5zw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-541-aqogdIacM8uCdmpBeasAlg-1; Wed, 16 Dec 2020 13:19:07 -0500
+X-MC-Unique: aqogdIacM8uCdmpBeasAlg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 61A2B8144E7;
-	Wed, 16 Dec 2020 18:18:57 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2A06B8144ED;
+	Wed, 16 Dec 2020 18:18:59 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 434E162A25;
-	Wed, 16 Dec 2020 18:18:57 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0B16F60C15;
+	Wed, 16 Dec 2020 18:18:59 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 136A250030;
-	Wed, 16 Dec 2020 18:18:57 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D02F750031;
+	Wed, 16 Dec 2020 18:18:58 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BGIIcr5018043 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 16 Dec 2020 13:18:38 -0500
+	id 0BGIId5s018077 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 16 Dec 2020 13:18:39 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1A49A2166B2F; Wed, 16 Dec 2020 18:18:38 +0000 (UTC)
+	id 2EECA2166B2C; Wed, 16 Dec 2020 18:18:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 10B232166B32
-	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 18:18:34 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2A1402166B27
+	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 18:18:39 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B07D5800C00
-	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 18:18:34 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 16CB9803CE8
+	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 18:18:39 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-233-LhHF60ZhOOiXhj0CK28Nxw-1;
-	Wed, 16 Dec 2020 13:18:30 -0500
-X-MC-Unique: LhHF60ZhOOiXhj0CK28Nxw-1
+	relay.mimecast.com with ESMTP id us-mta-428-H6ICNcP9PJ6vdzhhMUENxA-1;
+	Wed, 16 Dec 2020 13:18:34 -0500
+X-MC-Unique: H6ICNcP9PJ6vdzhhMUENxA-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 90D5FAF4D;
-	Wed, 16 Dec 2020 18:18:28 +0000 (UTC)
+	by mx2.suse.de (Postfix) with ESMTP id E0A2FAF49;
+	Wed, 16 Dec 2020 18:18:32 +0000 (UTC)
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Wed, 16 Dec 2020 19:16:42 +0100
-Message-Id: <20201216181708.22224-4-mwilck@suse.com>
+Date: Wed, 16 Dec 2020 19:16:57 +0100
+Message-Id: <20201216181708.22224-19-mwilck@suse.com>
 In-Reply-To: <20201216181708.22224-1-mwilck@suse.com>
 References: <20201216181708.22224-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -75,11 +75,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 0BGIIcr5018043
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 0BGIId5s018077
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH v3 03/29] multipathd: move handling of
-	io_err_stat_attr into libmultipath
+Subject: [dm-devel] [PATCH v3 18/29] libmultipath: fix log_thread startup
+	and teardown
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,7 +93,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -103,143 +103,145 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-This thread attribute can be dynamically initialized and destroyed.
-No need to carry it along in multipathd. Removal of the symbol
-requires to bump the ABI version to 3.
+This fixes several issues with the log_thread. First, the running flag
+logq_running should be set by the thread itself, not by
+log_thread_start()/_stop(). Second, the thread was both cancelled and
+terminated via a flag (again, logq_running). It's sufficient to just cancel
+and join it. Third, the locking wasn't cancel-safe in some places. Forth,
+log_thread_start() didn't wait for startup properly. Fifth, using (pthread_t)0
+is wrong (pthread_t is opaque; there's no guarantee that 0 is not a valid
+pthread_t value). Sixth, pthread_cancel() was called under logq_lock, which
+doesn't make sense to me.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/io_err_stat.c        |  7 +++++--
- libmultipath/libmultipath.version | 23 ++++++++---------------
- multipathd/main.c                 |  2 --
- 3 files changed, 13 insertions(+), 19 deletions(-)
+ libmultipath/log_pthread.c | 62 +++++++++++++++++++++++++++-----------
+ 1 file changed, 45 insertions(+), 17 deletions(-)
 
-diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
-index 58bc1dd..5363049 100644
---- a/libmultipath/io_err_stat.c
-+++ b/libmultipath/io_err_stat.c
-@@ -34,6 +34,7 @@
+diff --git a/libmultipath/log_pthread.c b/libmultipath/log_pthread.c
+index 0c327ff..3a2566a 100644
+--- a/libmultipath/log_pthread.c
++++ b/libmultipath/log_pthread.c
+@@ -13,6 +13,7 @@
+ #include "log_pthread.h"
+ #include "log.h"
  #include "lock.h"
- #include "time-util.h"
- #include "io_err_stat.h"
 +#include "util.h"
  
- #define TIMEOUT_NO_IO_NSEC		10000000 /*10ms = 10000000ns*/
- #define FLAKY_PATHFAIL_THRESHOLD	2
-@@ -70,8 +71,7 @@ struct io_err_stat_path {
- 	int		err_rate_threshold;
- };
+ static pthread_t log_thr;
  
--pthread_t		io_err_stat_thr;
--pthread_attr_t		io_err_stat_attr;
-+static pthread_t	io_err_stat_thr;
+@@ -56,35 +57,52 @@ static void flush_logqueue (void)
+ 	} while (empty == 0);
+ }
  
- static pthread_mutex_t io_err_thread_lock = PTHREAD_MUTEX_INITIALIZER;
- static pthread_cond_t io_err_thread_cond = PTHREAD_COND_INITIALIZER;
-@@ -727,6 +727,7 @@ static void *io_err_stat_loop(void *data)
- int start_io_err_stat_thread(void *data)
- {
- 	int ret;
-+	pthread_attr_t io_err_stat_attr;
- 
- 	if (uatomic_read(&io_err_thread_running) == 1)
- 		return 0;
-@@ -739,6 +740,7 @@ int start_io_err_stat_thread(void *data)
- 	if (!paths)
- 		goto destroy_ctx;
- 
-+	setup_thread_attr(&io_err_stat_attr, 32 * 1024, 0);
- 	pthread_mutex_lock(&io_err_thread_lock);
- 	pthread_cleanup_push(cleanup_unlock, &io_err_thread_lock);
- 
-@@ -750,6 +752,7 @@ int start_io_err_stat_thread(void *data)
- 				 &io_err_thread_lock) == 0);
- 
- 	pthread_cleanup_pop(1);
-+	pthread_attr_destroy(&io_err_stat_attr);
- 
- 	if (ret) {
- 		io_err_stat_log(0, "cannot create io_error statistic thread");
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 0c300c8..84beb7f 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -31,7 +31,7 @@
-  *   The new version inherits the previous ones.
-  */
- 
--LIBMULTIPATH_2.0.0 {
-+LIBMULTIPATH_3.0.0 {
- global:
- 	/* symbols referenced by multipath and multipathd */
- 	add_foreign;
-@@ -121,7 +121,6 @@ global:
- 	init_checkers;
- 	init_foreign;
- 	init_prio;
--	io_err_stat_attr;
- 	io_err_stat_handle_pathfail;
- 	is_path_valid;
- 	is_quote;
-@@ -242,30 +241,24 @@ global:
- 	free_scandir_result;
- 	sysfs_attr_get_value;
- 
--local:
--	*;
--};
--
--LIBMULTIPATH_2.1.0 {
--global:
-+	/* added in 2.1.0 */
- 	libmp_dm_task_run;
- 	cleanup_mutex;
--} LIBMULTIPATH_2.0.0;
- 
--LIBMULTIPATH_2.2.0 {
--global:
-+	/* added in 2.2.0 */
- 	libmp_get_multipath_config;
- 	get_multipath_config;
- 	libmp_put_multipath_config;
- 	put_multipath_config;
- 	init_config;
- 	uninit_config;
--} LIBMULTIPATH_2.1.0;
- 
--LIBMULTIPATH_2.3.0 {
--global:
-+	/* added in 2.3.0 */
- 	udev;
- 	logsink;
- 	libmultipath_init;
- 	libmultipath_exit;
--} LIBMULTIPATH_2.2.0;
++static void cleanup_log_thread(__attribute((unused)) void *arg)
++{
++	logdbg(stderr, "log thread exiting");
++	pthread_mutex_lock(&logev_lock);
++	logq_running = 0;
++	pthread_mutex_unlock(&logev_lock);
++}
 +
-+local:
-+	*;
-+};
-diff --git a/multipathd/main.c b/multipathd/main.c
-index ce14bb6..abc6a9f 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2954,7 +2954,6 @@ child (__attribute__((unused)) void *param)
- 	setup_thread_attr(&misc_attr, 64 * 1024, 0);
- 	setup_thread_attr(&uevent_attr, DEFAULT_UEVENT_STACKSIZE * 1024, 0);
- 	setup_thread_attr(&waiter_attr, 32 * 1024, 1);
--	setup_thread_attr(&io_err_stat_attr, 32 * 1024, 0);
+ static void * log_thread (__attribute__((unused)) void * et)
+ {
+ 	int running;
  
- 	if (logsink == 1) {
- 		setup_thread_attr(&log_attr, 64 * 1024, 0);
-@@ -3164,7 +3163,6 @@ child (__attribute__((unused)) void *param)
- 	rcu_assign_pointer(multipath_conf, NULL);
- 	call_rcu(&conf->rcu, rcu_free_config);
- 	pthread_attr_destroy(&waiter_attr);
--	pthread_attr_destroy(&io_err_stat_attr);
- #ifdef _DEBUG_
- 	dbg_free_final(NULL);
- #endif
+ 	pthread_mutex_lock(&logev_lock);
+-	logq_running = 1;
++	running = logq_running;
++	if (!running)
++		logq_running = 1;
++	pthread_cond_signal(&logev_cond);
+ 	pthread_mutex_unlock(&logev_lock);
++	if (running)
++		/* already started */
++		return NULL;
++	pthread_cleanup_push(cleanup_log_thread, NULL);
+ 
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
+ 	logdbg(stderr,"enter log_thread\n");
+ 
+ 	while (1) {
+ 		pthread_mutex_lock(&logev_lock);
+-		if (logq_running && !log_messages_pending)
++		pthread_cleanup_push(cleanup_mutex, &logev_lock);
++		while (!log_messages_pending)
++			/* this is a cancellation point */
+ 			pthread_cond_wait(&logev_cond, &logev_lock);
+ 		log_messages_pending = 0;
+-		running = logq_running;
+-		pthread_mutex_unlock(&logev_lock);
+-		if (!running)
+-			break;
++		pthread_cleanup_pop(1);
++
+ 		flush_logqueue();
+ 	}
++	pthread_cleanup_pop(1);
+ 	return NULL;
+ }
+ 
+ void log_thread_start (pthread_attr_t *attr)
+ {
+-	logdbg(stderr,"enter log_thread_start\n");
++	int running = 0;
+ 
++	logdbg(stderr,"enter log_thread_start\n");
+ 	pthread_mutex_init(&logq_lock, NULL);
+ 	pthread_mutex_init(&logev_lock, NULL);
+ 	pthread_cond_init(&logev_cond, NULL);
+@@ -93,7 +111,15 @@ void log_thread_start (pthread_attr_t *attr)
+ 		fprintf(stderr,"can't initialize log buffer\n");
+ 		exit(1);
+ 	}
+-	if (pthread_create(&log_thr, attr, log_thread, NULL)) {
++
++	pthread_mutex_lock(&logev_lock);
++	pthread_cleanup_push(cleanup_mutex, &logev_lock);
++	if (!pthread_create(&log_thr, attr, log_thread, NULL))
++		while (!(running = logq_running))
++			pthread_cond_wait(&logev_cond, &logev_lock);
++	pthread_cleanup_pop(1);
++
++	if (!running) {
+ 		fprintf(stderr,"can't start log thread\n");
+ 		exit(1);
+ 	}
+@@ -112,23 +138,25 @@ void log_thread_reset (void)
+ 
+ void log_thread_stop (void)
+ {
++	int running;
++
+ 	if (!la)
+ 		return;
+ 
+ 	logdbg(stderr,"enter log_thread_stop\n");
+ 
+ 	pthread_mutex_lock(&logev_lock);
+-	logq_running = 0;
+-	pthread_cond_signal(&logev_cond);
+-	pthread_mutex_unlock(&logev_lock);
+-
+-	pthread_mutex_lock(&logq_lock);
+-	pthread_cancel(log_thr);
+-	pthread_mutex_unlock(&logq_lock);
+-	pthread_join(log_thr, NULL);
+-	log_thr = (pthread_t)0;
++	pthread_cleanup_push(cleanup_mutex, &logev_lock);
++	running = logq_running;
++	if (running) {
++		pthread_cancel(log_thr);
++		pthread_cond_signal(&logev_cond);
++	}
++	pthread_cleanup_pop(1);
+ 
+ 	flush_logqueue();
++	if (running)
++		pthread_join(log_thr, NULL);
+ 
+ 	pthread_mutex_destroy(&logq_lock);
+ 	pthread_mutex_destroy(&logev_lock);
 -- 
 2.29.0
 
