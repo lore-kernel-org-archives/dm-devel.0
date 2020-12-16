@@ -2,71 +2,128 @@ Return-Path: <SRS0=g9U1=FU=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-18.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8A181C4361B
-	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 20:00:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C7315C4361B
+	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 20:52:27 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 8B47320578
-	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 20:00:03 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 8B47320578
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=matrixstorm.com
+	by mail.kernel.org (Postfix) with ESMTPS id 2E9A8233EB
+	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 20:52:26 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2E9A8233EB
+Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-399-fUgAUOswM8m37enEZDafFg-1; Wed, 16 Dec 2020 14:59:59 -0500
-X-MC-Unique: fUgAUOswM8m37enEZDafFg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-521-eDYO5uheNk-LJG8R50p1Nw-1; Wed, 16 Dec 2020 15:52:23 -0500
+X-MC-Unique: eDYO5uheNk-LJG8R50p1Nw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C86A259;
-	Wed, 16 Dec 2020 19:59:53 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id F0AD21E5;
-	Wed, 16 Dec 2020 19:59:51 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0D0499CC09;
+	Wed, 16 Dec 2020 20:52:18 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B90AC60CC4;
+	Wed, 16 Dec 2020 20:52:17 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1E90F180954D;
-	Wed, 16 Dec 2020 19:59:47 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C01024BB7B;
+	Wed, 16 Dec 2020 20:52:16 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BGJxjHw029822 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 16 Dec 2020 14:59:45 -0500
+	id 0BGKqEOU003226 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 16 Dec 2020 15:52:14 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 7A2482026D5D; Wed, 16 Dec 2020 19:59:45 +0000 (UTC)
+	id 833B1D1D12; Wed, 16 Dec 2020 20:52:14 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 73E132026D76
-	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 19:59:43 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7ACB6D1E97
+	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 20:52:12 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4360C8007D9
-	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 19:59:43 +0000 (UTC)
-Received: from mo4-p00-ob.smtp.rzone.de (mo4-p00-ob.smtp.rzone.de
-	[81.169.146.221]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-437-83he0w11OsCXJfXVnhjf0Q-1; Wed, 16 Dec 2020 14:59:40 -0500
-X-MC-Unique: 83he0w11OsCXJfXVnhjf0Q-1
-X-RZG-AUTH: ":P3gBZUipdd99EFhDYOISZA2ym5zGOgAd5ykVVQQWw7fG5QErre8LbX52SwnSyIMB1hwG7x8pm1U="
-X-RZG-CLASS-ID: mo00
-Received: from [172.24.6.159] by smtp.strato.de (RZmta 47.9.1 DYNA|AUTH)
-	with ESMTPSA id z076b7wBGJrc0Da
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256 bits))
-	(Client did not present a certificate) for <dm-devel@redhat.com>;
-	Wed, 16 Dec 2020 20:53:38 +0100 (CET)
-From: =?UTF-8?Q?Stephan_B=c3=a4rwolf?= <stephan@matrixstorm.com>
-To: dm-devel@redhat.com
-Message-ID: <fddbff8b-a7b5-ec89-9e60-d0b35940d117@matrixstorm.com>
-Date: Wed, 16 Dec 2020 20:53:37 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
-	Thunderbird/78.3.1
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 12AE680088F
+	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 20:52:12 +0000 (UTC)
+Received: from de-smtp-delivery-102.mimecast.com
+	(de-smtp-delivery-102.mimecast.com [194.104.109.102]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-580-qr9txoUEPnmYtToSTUWGrg-1;
+	Wed, 16 Dec 2020 15:52:09 -0500
+X-MC-Unique: qr9txoUEPnmYtToSTUWGrg-1
+Received: from EUR05-AM6-obe.outbound.protection.outlook.com
+	(mail-am6eur05lp2111.outbound.protection.outlook.com [104.47.18.111])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	de-mta-3-oFCUjhaWMzWLlWrzo-eAeQ-1; Wed, 16 Dec 2020 21:52:06 +0100
+X-MC-Unique: oFCUjhaWMzWLlWrzo-eAeQ-1
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
+	by DB7PR04MB5068.eurprd04.prod.outlook.com (2603:10a6:10:14::30) with
+	Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3654.14;
+	Wed, 16 Dec 2020 20:52:05 +0000
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
+	([fe80::c1ce:f675:7:30f6]) by DB8PR04MB6555.eurprd04.prod.outlook.com
+	([fe80::c1ce:f675:7:30f6%3]) with mapi id 15.20.3654.021;
+	Wed, 16 Dec 2020 20:52:05 +0000
+From: Martin Wilck <martin.wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
+	"christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Thread-Topic: [PATCH v3 0/4] add library to check if device is a valid path
+Thread-Index: AQHWp/Ku9LkAs41VFU2tawoAA7qy2qn6ireA
+Date: Wed, 16 Dec 2020 20:52:04 +0000
+Message-ID: <c62a2a29c7e958ae2671bca67f0c689885a7164b.camel@suse.com>
+References: <1603316366-28735-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1603316366-28735-1-git-send-email-bmarzins@redhat.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Evolution 3.36.5
+x-originating-ip: [2.203.204.191]
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: e8f69908-3e70-4828-ba17-08d8a2047225
+x-ms-traffictypediagnostic: DB7PR04MB5068:
+x-microsoft-antispam-prvs: <DB7PR04MB506803418A08DF70FD7C3F8CFCC50@DB7PR04MB5068.eurprd04.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:9508
+x-ms-exchange-senderadcheck: 1
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: OVbaj00mNifYag7SwjFUSnMn6PbiblRp0HdO8Rt5333L/uWtC4lxNEI8rXtNzMBFgGuDTKLnaUgpIueGfNhxhQ6+B9hlp0Z0QQjqqFCWPYI6wtZ96J70Dnh5Dc+Wd1dwUdyzBh/dn/IAiEf/DddwVZGViCDSNN3r9yxFqKRrou2Sy1DAA6r6w+yZt6Wum3QwK36OnOi8lfN5u4gP5Q6NLmmd38x2BDnLVyPgG6qEJHcQE/m6YBPiMUg4Gq4GsSe50LFLify9A4NGfGI0w3NNendmWINK75f/L1B5WRLNYdtvOPWm/ai6nGXhz4ED1HnX8efY6nCpATLZ2lU6xdzqQ+KV7cnNqNPN81T1v0eb451BHrtm0PY7N043SLwYapgcRJJh5eJ0ygdIsj2H0+tnbw==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(346002)(136003)(376002)(366004)(396003)(39860400002)(5660300002)(44832011)(966005)(64756008)(6486002)(6506007)(26005)(4001150100001)(66946007)(2616005)(71200400001)(8676002)(36756003)(76116006)(110136005)(2906002)(86362001)(91956017)(66556008)(478600001)(6512007)(4326008)(66574015)(66476007)(186003)(316002)(83380400001)(66446008)(8936002);
+	DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata: =?iso-8859-15?Q?0Xty4pE1890VivN5Fk0jrodNNSqbd1ZfTWKMn8Xn62QJSuvyzP65RnXUJ?=
+	=?iso-8859-15?Q?0l/l5FUNiIQHamX5aURuRwAWQNAyZJqVlGbkzJb6yKVneczFicJogWAzb?=
+	=?iso-8859-15?Q?mihJVYCqBundqWhw+rxDN44OFyZk4UCP0PdKCxudqESc1OQSd6tVmihIj?=
+	=?iso-8859-15?Q?RJkEVU+YwyzZnVYmsbHIav44m620SEkGsx0y5KABJ4XMIEV+UzMfHaLTf?=
+	=?iso-8859-15?Q?apZIk1aJQgg7CHnDrWrmNY//fXDMZ5dq5TDIdBQ+JrCSNnYSmeBwSFBM1?=
+	=?iso-8859-15?Q?W5j8iAFiOmRr+hlekSSZ+8myN4jTK+KDnIxS/4HbHWQ6n2//FhZccxTO2?=
+	=?iso-8859-15?Q?gq1tRQIukBKXyxaYF5d6i+11tiGHfy20qz70VkkNkp8leWXdZMWa9719V?=
+	=?iso-8859-15?Q?nq+YBVbOv4SSL+hM3OtFFFpHTU8G7rb7TH9ep08kD88aDhgY/OdtweStF?=
+	=?iso-8859-15?Q?ZhmnF5VMkG/hJDCm3rlb4XFQBMIJmTQzCdHFYTJu+kzy096fNx+YqaVRq?=
+	=?iso-8859-15?Q?yUuSFNItfSjHaEa2lFt5tBpfkGQUDsS1LbLRxl3Q+zJ4snf6S8LniwAL0?=
+	=?iso-8859-15?Q?uJyZ8cWfeGdD/YCsvvtiH8sLB/7CJcVwgDRDBCL4rlSniS0hSGB+gXaiZ?=
+	=?iso-8859-15?Q?pEs+klRxamwnr+AQC2uu9VDx1hkGfMS9jT1yXIPa5PrWmXeoe2Mt8Q5I/?=
+	=?iso-8859-15?Q?3xUQ12m6j1ez6KWpm7H2r6lYBMqucqKrOEnJdA4HvxI+Vr4rVZrONwzBv?=
+	=?iso-8859-15?Q?NOgESaNegHTeTP1iCal6bzbS4SCVnzSHFDa8yDNz6HZwye0NKpt2y2uJR?=
+	=?iso-8859-15?Q?05ILPsgfL6IjnHeiPTbjFCXB6F7DLNj/Y//xzUIcw3kKGqnjWGNW9eZqv?=
+	=?iso-8859-15?Q?18B7yJRkhQcjZU+8F1E9kQOWgOJx4UV+zEJKjDK+I1cJGlZY9rDBVpCeZ?=
+	=?iso-8859-15?Q?O4Q8W9dVdKWyjE3eifOwe3GcsXHMCP/TjDj4ClR51DqhUu5qCTOm7Ojsg?=
+	=?iso-8859-15?Q?XH7OP1tCWv5W4iwAIaznvk2Ds8Alweu/MuJx4cz50i0r9OAhvVkGn+W?=
+x-ms-exchange-transport-forked: True
 MIME-Version: 1.0
+X-OriginatorOrg: suse.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: e8f69908-3e70-4828-ba17-08d8a2047225
+X-MS-Exchange-CrossTenant-originalarrivaltime: 16 Dec 2020 20:52:05.0050 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: twrtocUiUHfYCzC3spTYUusmdRAj11bC6iIzg3AoWX1mF9Q4RmI3I+j9IHK20MGq3fv70JDAVoqmODhQwOBZBw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB7PR04MB5068
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -75,10 +132,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 0BGKqEOU003226
 X-loop: dm-devel@redhat.com
-Subject: [dm-devel] [PATCH] dm-raid: set discard_granularity non-zero if
-	possible
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH v3 0/4] add library to check if device is a
+	valid path
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -92,117 +152,116 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="------------81761FAEFC9D3EF1DBF7A602"
-Content-Language: de-CH
+Content-Language: en-US
+Content-ID: <3293644E494B6E4D8C398F63B9C199AB@eurprd04.prod.outlook.com>
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-This is a multi-part message in MIME format.
---------------81761FAEFC9D3EF1DBF7A602
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Hi Ben:
 
-Hi
+On Wed, 2020-10-21 at 16:39 -0500, Benjamin Marzinski wrote:
+> The main part of the this patchset is the first patch, which adds a
+> new library interface to check whether devices are valid paths. This
+> was designed for use in the Storage Instantiation Daemon (SID).
+>=20
+> https://github.com/sid-project
+>=20
+> The seconds patch adds unit tests for this library. The third patch
+> adds
+> get_uid fallback code for dasd devices. The fourth patch just changes
+> the get_uid log level for devices configured with uid_attribute "".
+> This
+> is because it is currently necessary to configure multipath with
+>=20
+> overrides {
+>         uid_attribute ""
+> }
+>=20
+> to claim multipath devices with SID (instead of using
+> multipath.rules),
+> since SID doesn't currently get the UID information itself, and it is
+> called by udev before this information is added to the udev database.
+>=20
+> changes from v1 to v2
+> ---------------------
+> 0001: This patch is now rebased on top of, and makes use of Martin's
+> patches that provide a default *_multipath_config, udev, and logsink.
+> Because of this, mpathvalid_init() now has a parameter used to set
+> logsink. There is also a new API function,
+> mpathvalid_reload_config().
+>=20
+> 0003: This is completely new, since Martin pointed out that adding a
+> new
+> config option to always use the fallback getuid code was unnecessary.
+> It
+> just makes a uid_attribute of "" log at normal levels.
+>=20
+> changes from v2 to v3
+> ---------------------
+> 0001:   rebased on top of Martin's latest patches, fixed some small
+> bugs
+>         and added documentation to mpath_valid.h
+> 0002:   New
+> 0004:   was 0003. Untangled the logic, at Martin's suggestion.
+>=20
+> Benjamin Marzinski (4):
+>   multipath: add libmpathvalid library
+>   multipath-tools tests: and unit tests for libmpathvalid
+>   libmultipath: add uid failback for dasd devices
+>   libmultipath: change log level for null uid_attribute
+>=20
+>  Makefile                            |   3 +-
+>  Makefile.inc                        |   1 +
+>  libmpathvalid/Makefile              |  39 +++
+>  libmpathvalid/libmpathvalid.version |  10 +
+>  libmpathvalid/mpath_valid.c         | 202 ++++++++++++
+>  libmpathvalid/mpath_valid.h         | 155 +++++++++
+>  libmultipath/defaults.h             |   1 +
+>  libmultipath/discovery.c            |  45 ++-
+>  libmultipath/libmultipath.version   |   6 +
+>  tests/Makefile                      |   5 +-
+>  tests/mpathvalid.c                  | 467
+> ++++++++++++++++++++++++++++
+>  11 files changed, 929 insertions(+), 5 deletions(-)
+>  create mode 100644 libmpathvalid/Makefile
+>  create mode 100644 libmpathvalid/libmpathvalid.version
+>  create mode 100644 libmpathvalid/mpath_valid.c
+>  create mode 100644 libmpathvalid/mpath_valid.h
+>  create mode 100644 tests/mpathvalid.c
+>=20
 
-I hope this address is the right place for this patch.
-It is supposed to fix the triggering of block/blklib.c:51 WARN_ON_ONCE(..) when using LVM2 raid1 with SSD-PVs.
-Since commit b35fd7422c2f8e04496f5a770bd4e1a205414b3f and without this patchthere are tons of printks logging "Error: discard_granularity is 0." to kmsg.
-Also there is no discard/TRIM happening anymore...
+For the set:
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-This is a rough patch for WARNING-issue
+I have created a new branch=20
+https://github.com/openSUSE/multipath-tools/tree/upstream-tip
 
-"block/blk-lib.c:51 __blkdev_issue_discard+0x1f6/0x250"
-[...] "Error: discard_granularity is 0." [...]
-introduced in commit b35fd7422c2f8e04496f5a770bd4e1a205414b3f
-("block: check queue's limits.discard_granularity in __blkdev_issue_discard()")
+where this is series applied on my recently posted series
+"libmultipath: improve cleanup on exit" (v3), in the hope that it will
+pass review, too. It has to be this way around because your set
+requires libmp_verbosity.
 
-in conjunction with LVM2 raid1 volumes on discardable (SSD) backing.
-It seems until now, LVM-raid1 reported "discard_granularity" as 0,
-as well as "max_discard_sectors" as 0. (see "lsblk --discard").
+As soon as my series is finalized, this will be pushed to upstream-
+queue.
 
-The idea here is to fix the issue by calculating "max_discard_sectors"
-as the minimum over all involved block devices. (We use the meta-data
-for this to work here.)
-For calculating the "discard_granularity" we would have to calculate the
-lcm (least common multiple) of all discard_granularities of all involved
-block devices and finally round up to next power of 2.
+Regards,
+Martin
 
-However, since all "discard_granularity" are powers of 2, this algorithm
-will simplify to just determining the maximum and filtering for "0"-cases.
-
-Signed-off-by: Stephan Baerwolf <stephan@matrixstorm.com>
----
-drivers/md/dm-raid.c | 32 ++++++++++++++++++++++++++++++--
-1 file changed, 30 insertions(+), 2 deletions(-)
+--=20
+Dr. Martin Wilck <mwilck@suse.com>, Tel. +49 (0)911 74053 2107
+SUSE  Software Solutions Germany GmbH
+HRB 36809, AG N=FCrnberg GF: Felix
+Imend=F6rffer
 
 
-
-
---------------81761FAEFC9D3EF1DBF7A602
-Content-Type: text/x-patch; charset=UTF-8;
-	name="0001-dm-raid-set-discard_granularity-non-zero-if-possible.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
-	filename*0="0001-dm-raid-set-discard_granularity-non-zero-if-possible.pa";
-	filename*1="tch"
-
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 8d2b835d7a10..4c769fd93ced 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3734,8 +3734,36 @@ static void raid_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 	 * RAID0/4/5/6 don't and process large discard bios properly.
- 	 */
- 	if (rs_is_raid1(rs) || rs_is_raid10(rs)) {
--		limits->discard_granularity = chunk_size_bytes;
--		limits->max_discard_sectors = rs->md.chunk_sectors;
-+        /* HACK */
-+        if (chunk_size_bytes==0) {
-+            unsigned int i, chunk_sectors=(UINT_MAX >>  SECTOR_SHIFT);
-+            struct request_queue *q = NULL;
-+
-+            DMINFO("chunk_size is 0 for raid1 - preventing issue with TRIM");
-+
-+            for (i=0;i<rs->raid_disks;i++) {
-+                q=bdev_get_queue(rs->dev[i].meta_dev->bdev);
-+                if (chunk_sectors >  q->limits.max_discard_sectors) {
-+                    chunk_sectors = q->limits.max_discard_sectors;
-+                }
-+                if (chunk_size_bytes < q->limits.discard_granularity) {
-+                    chunk_size_bytes = q->limits.discard_granularity;
-+                }
-+
-+                /* lcm(x,y,...,0) = 0 */
-+                if (q->limits.discard_granularity == 0) {
-+                    chunk_size_bytes = 0;
-+                    break;
-+                }
-+            }
-+
-+            limits->discard_granularity = chunk_size_bytes;
-+            limits->max_discard_sectors = chunk_sectors;
-+        /* end of HACK (but not of if) */
-+        } else {
-+            limits->discard_granularity = chunk_size_bytes;
-+            limits->max_discard_sectors = rs->md.chunk_sectors;
-+        }
- 	}
- }
- 
-
-
---------------81761FAEFC9D3EF1DBF7A602
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://www.redhat.com/mailman/listinfo/dm-devel
---------------81761FAEFC9D3EF1DBF7A602--
 
