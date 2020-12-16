@@ -1,99 +1,84 @@
-Return-Path: <SRS0=VSmt=FT=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=g9U1=FU=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.7 required=3.0 tests=BAYES_00,DKIM_ADSP_CUSTOM_MED,
+	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
+	HTML_MESSAGE,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1EF96C4361B
-	for <dm-devel@archiver.kernel.org>; Tue, 15 Dec 2020 23:46:25 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 50BA6C4361B
+	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 06:17:44 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id A794B22C7D
-	for <dm-devel@archiver.kernel.org>; Tue, 15 Dec 2020 23:46:24 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A794B22C7D
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=ucw.cz
+	by mail.kernel.org (Postfix) with ESMTPS id 9DD9123356
+	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 06:17:43 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9DD9123356
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-49-plYdLWMZNiS8jfJaHVszKQ-1; Tue, 15 Dec 2020 18:46:20 -0500
-X-MC-Unique: plYdLWMZNiS8jfJaHVszKQ-1
+ us-mta-522-Lhh0LKXQOWqzV4RWJTX3OQ-1; Wed, 16 Dec 2020 01:17:39 -0500
+X-MC-Unique: Lhh0LKXQOWqzV4RWJTX3OQ-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 04FB7107ACE6;
-	Tue, 15 Dec 2020 23:46:15 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CB0AE5C1C4;
-	Tue, 15 Dec 2020 23:46:13 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 222ED800D62;
+	Wed, 16 Dec 2020 06:17:35 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1069C5C67A;
+	Wed, 16 Dec 2020 06:17:34 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3BD54180954D;
-	Tue, 15 Dec 2020 23:46:11 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9ADAE4BB7B;
+	Wed, 16 Dec 2020 06:17:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BFNk8dQ015277 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 15 Dec 2020 18:46:09 -0500
+	id 0BG6HT0G021378 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 16 Dec 2020 01:17:29 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id A9994A9F03; Tue, 15 Dec 2020 23:46:08 +0000 (UTC)
+	id 58CFE2166B27; Wed, 16 Dec 2020 06:17:29 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A3522AB5B8
-	for <dm-devel@redhat.com>; Tue, 15 Dec 2020 23:46:06 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 507492166B2E
+	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 06:17:25 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8062F8007D9
-	for <dm-devel@redhat.com>; Tue, 15 Dec 2020 23:46:06 +0000 (UTC)
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=dkim.mimecast.com; s=201903; t=1608075966;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	in-reply-to:in-reply-to:references:references;
-	bh=t1/qxnzYKVKNAy/tOFal+TcrX4omMH6BzevqOyH0aNk=;
-	b=RkgDj+Cm5FrYEVunNod+Mk79RL9cofZGLb47wY/kwmhEteUAtZtULDuUJYpPc1U5thD6KX
-	rTOssSA3yC6wRhFccZsijxjkeD859q+1fxwYLodFD8WRf85gxQHrpJGBt3vxeQ0Qi4JJB+
-	cRVcNUTWcCokXsW+FrLnSEXHXlFRbfWauWciw4TLTb9wKwub0oNuXr8ydSIZFRi2KIdiZn
-	XJ1pdz8bnFMpR6tKTtOCpAcJeXHdpOw0AQmyCp9rgfkko5iaRZjOH1GiN3Xz5P03D1vekH
-	XmEvur8UlsHc4K5VAh0sMDeqy3xWvKB4TXCswRFhdhqNbqxpZyS3SRGy/dkSkA==
-ARC-Seal: i=1; s=201903; d=dkim.mimecast.com; t=1608075966; a=rsa-sha256;
-	cv=none;
-	b=sNxyNFXoQ0Hk6kp7Ym4ktewoW+lVvlLKyVYKyoPJfX8wDRYy6azQcmdmBD2nV7DXl14wkr
-	E9cOpcq729QozEC4SsvzDxrUXQXDYiWLcd37y7BHBg6luyvk3OltHeRSHlLauKywkCUhEZ
-	LLadkXvPIIvCtPk+pw3CuvAPbKk6kacsGbEmp00FOAoq3JAMgDf5cHxrNOmzYLU2RB3CJ0
-	9P154d+OoHwwaoYfjA48WcFDMLm48QshBBuPg/VPQRsNQodey2iFQqMIIpHo9/Jsga7ZSn
-	HX+mjnUGY/YJKgrybkn9R47ps44R/GFbwjlEsPsnDpw9HL+FWih2/0xm/QcGag==
-ARC-Authentication-Results: i=1; relay.mimecast.com; dkim=none; dmarc=none;
-	spf=none (relay.mimecast.com: domain of pavel@ucw.cz has no SPF policy
-	when checking 46.255.230.98) smtp.mailfrom=pavel@ucw.cz
-Received: from jabberwock.ucw.cz (jabberwock.ucw.cz [46.255.230.98]) (Using
-	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-340-FkTnp9wzOVe6VbNbAX6naQ-1; Tue, 15 Dec 2020 18:46:03 -0500
-X-MC-Unique: FkTnp9wzOVe6VbNbAX6naQ-1
-Received: by jabberwock.ucw.cz (Postfix, from userid 1017)
-	id 8EAD91C0B78; Wed, 16 Dec 2020 00:45:59 +0100 (CET)
-Date: Wed, 16 Dec 2020 00:45:59 +0100
-From: Pavel Machek <pavel@ucw.cz>
-To: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
-Message-ID: <20201215234558.GA18281@amd>
-References: <CGME20201204094719epcas5p23b3c41223897de3840f92ae3c229cda5@epcas5p2.samsung.com>
-	<20201204094659.12732-1-selvakuma.s1@samsung.com>
-	<20201207141123.GC31159@lst.de>
-	<01fe46ac-16a5-d4db-f23d-07a03d3935f3@suse.de>
-	<20201207192453.vc6clbdhz73hzs7l@mpHalley>
-	<SN4PR0401MB35988951265391511EBC8C6E9BCD0@SN4PR0401MB3598.namprd04.prod.outlook.com>
-	<20201208122248.utv7pqthmmn6uwv6@mpHalley>
-	<SN4PR0401MB35983464199FB173FB0C29479BCD0@SN4PR0401MB3598.namprd04.prod.outlook.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8404E185A7BC
+	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 06:17:25 +0000 (UTC)
+Received: from mail-lf1-f46.google.com (mail-lf1-f46.google.com
+	[209.85.167.46]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-140-IIWUiQtxO8-LKfBNFeKggg-1; Wed, 16 Dec 2020 01:17:20 -0500
+X-MC-Unique: IIWUiQtxO8-LKfBNFeKggg-1
+Received: by mail-lf1-f46.google.com with SMTP id l11so45538242lfg.0;
+	Tue, 15 Dec 2020 22:17:19 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc;
+	bh=c4c5Uqnx/ZYLg8U+sxy43UFKzr5WMUZLqiMO6kX7uAk=;
+	b=IQHwEXG1yIUVAavJBonKJ1ngbO+PplgpK+TQTzrGN8H16czOrWuLgbLvaIy6165AK8
+	Z1wJ4TPfG53h0V+7nuQG4H8NgEDXTz8BZ4e4K8qcDPMD1Q9siza0e7tPfgmFYs3tnwuk
+	M07PfiI83KjT2u7shfWJeyMKVLWhhd31/jfPW9zCyXpLOp/9vY9YGU8Qvdx6OR+CGJ/5
+	qVT7h9eEMnDXeFsQJQ+xdzi9VN0wyTqXEqJmUzmQeS1HIoxQNAUD8AzoH/H5Rhm2u4uX
+	zk3s1C6larLBA18Qx3RSuqst3NjOYDYvKyE/JTXTr1MN3Z/3S+/+2Det3+CwLQmxrL0f
+	uS1A==
+X-Gm-Message-State: AOAM530B0S24TYAgNJIJgaYTRag92F0wwJ3HvBXWrbLnffWnychWJ6QE
+	QFKIcHRrquDCgemJ4w3fF83qGV+3r1AkIl9TaAc=
+X-Google-Smtp-Source: ABdhPJxDR11m2Sgt69z38YiTJB8E3ncaJq80639ZEZP690NCvNPizvbEDlG3B6zSClqJdf3b/t7ze7R4zCcbgh14Gbw=
+X-Received: by 2002:a2e:9084:: with SMTP id l4mr13334296ljg.375.1608099438138; 
+	Tue, 15 Dec 2020 22:17:18 -0800 (PST)
 MIME-Version: 1.0
-In-Reply-To: <SN4PR0401MB35983464199FB173FB0C29479BCD0@SN4PR0401MB3598.namprd04.prod.outlook.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-Authentication-Results: relay.mimecast.com; dkim=none; dmarc=none;
-	spf=none (relay.mimecast.com: domain of pavel@ucw.cz has no SPF policy
-	when checking 46.255.230.98) smtp.mailfrom=pavel@ucw.cz
-X-Mimecast-Spam-Score: 0
+References: <30d39293-80a4-9ef5-92bb-6b6dec464be3@toxicpanda.com>
+	<mhng-2da5b1a2-20f9-4b0e-9ffd-7f60a161ebf0@palmerdabbelt-glaptop>
+In-Reply-To: <mhng-2da5b1a2-20f9-4b0e-9ffd-7f60a161ebf0@palmerdabbelt-glaptop>
+From: Akira Hayakawa <ruby.wktk@gmail.com>
+Date: Wed, 16 Dec 2020 15:17:06 +0900
+Message-ID: <CABmKtjfdDS-iO+jLkwt7x-oDHt9V1p-cpYHjL5EV2NKwHxqN1Q@mail.gmail.com>
+To: Palmer Dabbelt <palmer@dabbelt.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -102,27 +87,17 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>,
-	Javier =?iso-8859-1?Q?Gonz=E1lez?= <javier@javigon.com>,
-	SelvaKumar S <selvakuma.s1@samsung.com>,
-	"sagi@grimberg.me" <sagi@grimberg.me>,
-	"snitzer@redhat.com" <snitzer@redhat.com>,
-	"selvajove@gmail.com" <selvajove@gmail.com>,
-	Damien Le Moal <Damien.LeMoal@wdc.com>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	"joshi.k@samsung.com" <joshi.k@samsung.com>,
-	"nj.shetty@samsung.com" <nj.shetty@samsung.com>,
-	"kbusch@kernel.org" <kbusch@kernel.org>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	Christoph Hellwig <hch@lst.de>, Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [dm-devel] [RFC PATCH v2 0/2] add simple copy support
+Cc: Christoph Hellwig <hch@infradead.org>, bvanassche@acm.org,
+	Mike Snitzer <snitzer@redhat.com>, linux-doc@vger.kernel.org,
+	kernel-team@android.com, corbet@lwn.net, josef@toxicpanda.com,
+	linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
+	song@kernel.org, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>,
+	linux-kselftest@vger.kernel.org, shuah@kernel.org,
+	michael.christie@oracle.com
+Subject: Re: [dm-devel] [PATCH v1 0/5] dm: dm-user: New target that proxies
+ BIOs to userspace
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -134,58 +109,338 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Content-Type: multipart/mixed; boundary="===============0866071274918900058=="
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+Authentication-Results: relay.mimecast.com;
+	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; boundary="===============8571211547438565926=="
 
---===============0866071274918900058==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="d6Gm4EdcadzBjdND"
-Content-Disposition: inline
+--===============8571211547438565926==
+Content-Type: multipart/alternative; boundary="000000000000c61a2c05b68ed3b6"
 
---d6Gm4EdcadzBjdND
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+--000000000000c61a2c05b68ed3b6
+Content-Type: text/plain; charset="UTF-8"
+
+Hi my name is Akira Hayakawa. I am maintaining an out-of-tree DM target
+named dm-writeboost.
+
+Sorry to step in. But this is a very interesting topic at least to me.
+
+I have been looking for something like dm-user because I believe we should
+be able to implement virtual block devices in Rust language.
+
+I know proxying IO requests to userland always causes some overhead but for
+some type of device that performance doesn't matter or some research
+prototyping or pseudo device for testing, this way should be developed. Of
+course, implementation in Rust will give us opportunities to develop more
+complicated software in high quality.
+
+I noticed this thread few days ago then I started to prototype this library
+https://github.com/akiradeveloper/userland-io
+
+It is what I want but the transport is still NBD which I don't like so
+much. If dm-user is available, I will implement a transport using dm-user.
+
+- Akira
+
+On Tue, Dec 15, 2020 at 7:00 PM Palmer Dabbelt <palmer@dabbelt.com> wrote:
+
+> On Thu, 10 Dec 2020 09:03:21 PST (-0800), josef@toxicpanda.com wrote:
+> > On 12/9/20 10:38 PM, Bart Van Assche wrote:
+> >> On 12/7/20 10:55 AM, Palmer Dabbelt wrote:
+> >>> All in all, I've found it a bit hard to figure out what sort of
+> interest
+> >>> people
+> >>> have in dm-user: when I bring this up I seem to run into people who've
+> done
+> >>> similar things before and are vaguely interested, but certainly nobody
+> is
+> >>> chomping at the bit.  I'm sending it out in this early state to try and
+> >>> figure
+> >>> out if it's interesting enough to keep going.
+> >>
+> >> Cc-ing Josef and Mike since their nbd contributions make me wonder
+> >> whether this new driver could be useful to their use cases?
+> >>
+> >
+> > Sorry gmail+imap sucks and I can't get my email client to get at the
+> original
+> > thread.  However here is my take.
+>
+> and I guess I then have to apoligize for missing your email ;).  Hopefully
+> that
+> was the problem, but who knows.
+>
+> > 1) The advantages of using dm-user of NBD that you listed aren't actually
+> > problems for NBD.  We have NBD working in production where you can hand
+> off the
+> > sockets for the server without ending in timeouts, it was actually the
+> main
+> > reason we wrote our own server so we could use the FD transfer stuff to
+> restart
+> > the server without impacting any clients that had the device in use.
+>
+> OK.  So you just send the FD around using one of the standard mechanisms to
+> orchestrate the handoff?  I guess that might work for our use case,
+> assuming
+> whatever the security side of things was doing was OK with the old FD.
+> TBH I'm
+> not sure how all that works and while we thought about doing that sort of
+> transfer scheme we decided to just open it again -- not sure how far we
+> were
+> down the dm-user rabbit hole at that point, though, as this sort of arose
+> out
+> of some other ideas.
+>
+> > 2) The extra copy is a big deal, in fact we already have too many copies
+> in our
+> > existing NBD setup and are actively looking for ways to avoid those.
+> >
+> > Don't take this as I don't think dm-user is a good idea, but I think at
+> the very
+> > least it should start with the very best we have to offer, starting with
+> as few
+> > copies as possible.
+>
+> I was really experting someone to say that.  It does seem kind of silly to
+> build
+> out the new interface, but not go all the way to a ring buffer.  We just
+> didn't
+> really have any way to justify the extra complexity as our use cases aren't
+> that high performance.   I kind of like to have benchmarks for this sort of
+> thing, though, and I didn't have anyone who had bothered avoiding the last
+> copy
+> to compare against.
+>
+> > If you are using it currently in production then cool, there's clearly a
+> usecase
+> > for it.  Personally as I get older and grouchier I want less things in
+> the
+> > kernel, so if this enables us to eventually do everything NBD related in
+> > userspace with no performance drop then I'd be down.  I don't think you
+> need to
+> > make that your primary goal, but at least polishing this up so it could
+> > potentially be abused in the future would make it more compelling for
+> merging.
+> > Thanks,
+>
+> Ya, it's in Android already and we'll be shipping it as part of the new OTA
+> flow for the next release.  The rules on deprecation are a bit different
+> over
+> there, though, so it's not like we're wed to it.  The whole point of
+> bringing
+> this up here was to try and get something usable by everyone, and while I'd
+> eventually like to get whatever's in Android into the kernel proper we'd
+> really
+> planned on supporting an extra Android-only ABI for a cycle at least.
+>
+> I'm kind of inclined to take a crack at the extra copy, to at least see if
+> building something that eliminates it is viable.  I'm not really sure if
+> it is
+> (or at least, if it'll net us a meaningful amount of performance), but
+> it'd at
+> least be interesting to try.
+>
+> It'd be nice to have some benchmark target, though, as otherwise this stuff
+> hangs on forever.  My workloads are in selftests later on in the patch
+> set, but
+> I'm essentially using tmpfs as a baseline to compare against ext4+dm-user
+> with
+> some FIO examples as workloads.  Our early benchmark numbers indicated
+> this was
+> way faster than we needed, so I didn't even bother putting together a
+> proper
+> system to run on so I don't really have any meaningful numbers there.  Is
+> there
+> an NBD server that's fast that I should be comparing against?
+>
+> I haven't gotten a whole lot of feedback, so I'm inclined to at least have
+> some
+> reasonable performance numbers before bothering with a v2.
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
+
+
+-- 
+Akira Hayakawa
+
+--000000000000c61a2c05b68ed3b6
+Content-Type: text/html; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-Hi!
+<div dir=3D"ltr"><div>Hi my name is Akira Hayakawa. I am maintaining an out=
+-of-tree DM target named dm-writeboost.</div><div><br></div><div>Sorry to s=
+tep in. But this is a very interesting topic at least to me.</div><div><br>=
+</div><div>I have been looking for something like dm-user because I believe=
+ we should be able to implement virtual block devices in Rust language.</di=
+v><div><br></div><div>I
+ know proxying IO requests to userland always causes some overhead but=20
+for some type of device that performance doesn&#39;t matter or some=20
+research prototyping or pseudo device for testing, this way should be=20
+developed. Of course, implementation in Rust will give us opportunities=20
+to develop more complicated software in high quality.<br></div><div><br></d=
+iv><div>I noticed this thread few days ago then I started to prototype this=
+ library <a href=3D"https://github.com/akiradeveloper/userland-io" target=
+=3D"_blank">https://github.com/akiradeveloper/userland-io</a><br></div><div=
+><br></div><div>It is what I want but the transport is still NBD which I do=
+n&#39;t like so much. If dm-user is available, I will implement a transport=
+ using dm-use<font color=3D"#888888"><font color=3D"#000000">r.<br></font><=
+/font></div><div><font color=3D"#888888"><font color=3D"#000000"><br></font=
+></font></div><div><font color=3D"#888888"><font color=3D"#000000">- Akira<=
+/font><br></font></div></div><br><div class=3D"gmail_quote"><div dir=3D"ltr=
+" class=3D"gmail_attr">On Tue, Dec 15, 2020 at 7:00 PM Palmer Dabbelt &lt;<=
+a href=3D"mailto:palmer@dabbelt.com">palmer@dabbelt.com</a>&gt; wrote:<br><=
+/div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex;bo=
+rder-left:1px solid rgb(204,204,204);padding-left:1ex">On Thu, 10 Dec 2020 =
+09:03:21 PST (-0800), <a href=3D"mailto:josef@toxicpanda.com" target=3D"_bl=
+ank">josef@toxicpanda.com</a> wrote:<br>
+&gt; On 12/9/20 10:38 PM, Bart Van Assche wrote:<br>
+&gt;&gt; On 12/7/20 10:55 AM, Palmer Dabbelt wrote:<br>
+&gt;&gt;&gt; All in all, I&#39;ve found it a bit hard to figure out what so=
+rt of interest<br>
+&gt;&gt;&gt; people<br>
+&gt;&gt;&gt; have in dm-user: when I bring this up I seem to run into peopl=
+e who&#39;ve done<br>
+&gt;&gt;&gt; similar things before and are vaguely interested, but certainl=
+y nobody is<br>
+&gt;&gt;&gt; chomping at the bit.=C2=A0 I&#39;m sending it out in this earl=
+y state to try and<br>
+&gt;&gt;&gt; figure<br>
+&gt;&gt;&gt; out if it&#39;s interesting enough to keep going.<br>
+&gt;&gt;<br>
+&gt;&gt; Cc-ing Josef and Mike since their nbd contributions make me wonder=
+<br>
+&gt;&gt; whether this new driver could be useful to their use cases?<br>
+&gt;&gt;<br>
+&gt;<br>
+&gt; Sorry gmail+imap sucks and I can&#39;t get my email client to get at t=
+he original<br>
+&gt; thread.=C2=A0 However here is my take.<br>
+<br>
+and I guess I then have to apoligize for missing your email ;).=C2=A0 Hopef=
+ully that<br>
+was the problem, but who knows.<br>
+<br>
+&gt; 1) The advantages of using dm-user of NBD that you listed aren&#39;t a=
+ctually<br>
+&gt; problems for NBD.=C2=A0 We have NBD working in production where you ca=
+n hand off the<br>
+&gt; sockets for the server without ending in timeouts, it was actually the=
+ main<br>
+&gt; reason we wrote our own server so we could use the FD transfer stuff t=
+o restart<br>
+&gt; the server without impacting any clients that had the device in use.<b=
+r>
+<br>
+OK.=C2=A0 So you just send the FD around using one of the standard mechanis=
+ms to<br>
+orchestrate the handoff?=C2=A0 I guess that might work for our use case, as=
+suming<br>
+whatever the security side of things was doing was OK with the old FD.=C2=
+=A0 TBH I&#39;m<br>
+not sure how all that works and while we thought about doing that sort of<b=
+r>
+transfer scheme we decided to just open it again -- not sure how far we wer=
+e<br>
+down the dm-user rabbit hole at that point, though, as this sort of arose o=
+ut<br>
+of some other ideas.<br>
+<br>
+&gt; 2) The extra copy is a big deal, in fact we already have too many copi=
+es in our<br>
+&gt; existing NBD setup and are actively looking for ways to avoid those.<b=
+r>
+&gt;<br>
+&gt; Don&#39;t take this as I don&#39;t think dm-user is a good idea, but I=
+ think at the very<br>
+&gt; least it should start with the very best we have to offer, starting wi=
+th as few<br>
+&gt; copies as possible.<br>
+<br>
+I was really experting someone to say that.=C2=A0 It does seem kind of sill=
+y to build<br>
+out the new interface, but not go all the way to a ring buffer.=C2=A0 We ju=
+st didn&#39;t<br>
+really have any way to justify the extra complexity as our use cases aren&#=
+39;t<br>
+that high performance.=C2=A0 =C2=A0I kind of like to have benchmarks for th=
+is sort of<br>
+thing, though, and I didn&#39;t have anyone who had bothered avoiding the l=
+ast copy<br>
+to compare against.<br>
+<br>
+&gt; If you are using it currently in production then cool, there&#39;s cle=
+arly a usecase<br>
+&gt; for it.=C2=A0 Personally as I get older and grouchier I want less thin=
+gs in the<br>
+&gt; kernel, so if this enables us to eventually do everything NBD related =
+in<br>
+&gt; userspace with no performance drop then I&#39;d be down.=C2=A0 I don&#=
+39;t think you need to<br>
+&gt; make that your primary goal, but at least polishing this up so it coul=
+d<br>
+&gt; potentially be abused in the future would make it more compelling for =
+merging.<br>
+&gt; Thanks,<br>
+<br>
+Ya, it&#39;s in Android already and we&#39;ll be shipping it as part of the=
+ new OTA<br>
+flow for the next release.=C2=A0 The rules on deprecation are a bit differe=
+nt over<br>
+there, though, so it&#39;s not like we&#39;re wed to it.=C2=A0 The whole po=
+int of bringing<br>
+this up here was to try and get something usable by everyone, and while I&#=
+39;d<br>
+eventually like to get whatever&#39;s in Android into the kernel proper we&=
+#39;d really<br>
+planned on supporting an extra Android-only ABI for a cycle at least.=C2=A0=
+ <br>
+<br>
+I&#39;m kind of inclined to take a crack at the extra copy, to at least see=
+ if<br>
+building something that eliminates it is viable.=C2=A0 I&#39;m not really s=
+ure if it is<br>
+(or at least, if it&#39;ll net us a meaningful amount of performance), but =
+it&#39;d at<br>
+least be interesting to try.<br>
+<br>
+It&#39;d be nice to have some benchmark target, though, as otherwise this s=
+tuff<br>
+hangs on forever.=C2=A0 My workloads are in selftests later on in the patch=
+ set, but<br>
+I&#39;m essentially using tmpfs as a baseline to compare against ext4+dm-us=
+er with<br>
+some FIO examples as workloads.=C2=A0 Our early benchmark numbers indicated=
+ this was<br>
+way faster than we needed, so I didn&#39;t even bother putting together a p=
+roper<br>
+system to run on so I don&#39;t really have any meaningful numbers there.=
+=C2=A0 Is there<br>
+an NBD server that&#39;s fast that I should be comparing against?<br>
+<br>
+I haven&#39;t gotten a whole lot of feedback, so I&#39;m inclined to at lea=
+st have some<br>
+reasonable performance numbers before bothering with a v2.<br>
+<br>
+--<br>
+dm-devel mailing list<br>
+<a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.co=
+m</a><br>
+<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" rel=3D"norefer=
+rer" target=3D"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a>=
+</blockquote></div><br clear=3D"all"><br>-- <br><div dir=3D"ltr" class=3D"g=
+mail_signature">Akira Hayakawa</div>
 
-> > Good idea. Are you thinking of a sysfs entry to select the backend?
->=20
-> Not sure on this one, initially I thought of a sysfs file, but then
-> how would you do it. One "global" sysfs entry is probably a bad idea.
-> Having one per block device to select native vs emulation maybe? And
-> a good way to benchmark.
->=20
-> The other idea would be a benchmark loop on boot like the raid library
-> does.
+--000000000000c61a2c05b68ed3b6--
 
-Doing copy benchmarking would require writes on the media, right?
-
-Kernel should not do such stuff without userspace requesting it...
-
-Best regards,
-=09=09=09=09=09=09=09=09Pavel
---=20
-http://www.livejournal.com/~pavelmachek
-
---d6Gm4EdcadzBjdND
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iEYEARECAAYFAl/ZSrYACgkQMOfwapXb+vK5rACeLJojhyDVgpGZfTaitdzO94sJ
-RKoAn0eHTH191kYNNiXqgRZfCOo1aVIE
-=wLdn
------END PGP SIGNATURE-----
-
---d6Gm4EdcadzBjdND--
-
-
---===============0866071274918900058==
+--===============8571211547438565926==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -195,5 +450,5 @@ Content-Disposition: inline
 dm-devel mailing list
 dm-devel@redhat.com
 https://www.redhat.com/mailman/listinfo/dm-devel
---===============0866071274918900058==--
+--===============8571211547438565926==--
 
