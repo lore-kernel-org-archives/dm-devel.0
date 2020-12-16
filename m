@@ -7,61 +7,60 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8A188C2BBD4
-	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 18:19:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 71762C0018C
+	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 18:19:17 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E714325CBB
-	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 18:19:14 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E714325CBB
+	by mail.kernel.org (Postfix) with ESMTPS id CD0D325CBA
+	for <dm-devel@archiver.kernel.org>; Wed, 16 Dec 2020 18:19:16 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CD0D325CBA
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-178-k05zBGalNBK3qbPfgLvJWQ-1; Wed, 16 Dec 2020 13:19:10 -0500
-X-MC-Unique: k05zBGalNBK3qbPfgLvJWQ-1
+ us-mta-46-e1HYJ7SxMIqxAT5SQM_3WA-1; Wed, 16 Dec 2020 13:19:11 -0500
+X-MC-Unique: e1HYJ7SxMIqxAT5SQM_3WA-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6B63087951D;
-	Wed, 16 Dec 2020 18:19:01 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 61043107AD26;
+	Wed, 16 Dec 2020 18:19:05 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 49C941971D;
-	Wed, 16 Dec 2020 18:19:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 405F0E716;
+	Wed, 16 Dec 2020 18:19:05 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1DE221809CA9;
-	Wed, 16 Dec 2020 18:19:01 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0E9171809CA8;
+	Wed, 16 Dec 2020 18:19:05 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BGIIaOH017981 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 16 Dec 2020 13:18:36 -0500
+	id 0BGIIcsl018050 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 16 Dec 2020 13:18:38 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 7FDF7101925B; Wed, 16 Dec 2020 18:18:36 +0000 (UTC)
+	id 407B3C77F5; Wed, 16 Dec 2020 18:18:38 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7A8611019256
-	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 18:18:33 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3A60BCF630
+	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 18:18:38 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0CC2080088F
-	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 18:18:33 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 27AB8186E122
+	for <dm-devel@redhat.com>; Wed, 16 Dec 2020 18:18:38 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-504-tjFocs-lO7CQLEYKAAlJJA-1;
-	Wed, 16 Dec 2020 13:18:30 -0500
-X-MC-Unique: tjFocs-lO7CQLEYKAAlJJA-1
+	relay.mimecast.com with ESMTP id us-mta-466-XlDyYynxNYWua-YzwxvDXg-1;
+	Wed, 16 Dec 2020 13:18:35 -0500
+X-MC-Unique: XlDyYynxNYWua-YzwxvDXg-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 04B11AF49;
-	Wed, 16 Dec 2020 18:18:28 +0000 (UTC)
+	by mx2.suse.de (Postfix) with ESMTP id 06DFDAF4D;
+	Wed, 16 Dec 2020 18:18:34 +0000 (UTC)
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Wed, 16 Dec 2020 19:16:40 +0100
-Message-Id: <20201216181708.22224-2-mwilck@suse.com>
+Date: Wed, 16 Dec 2020 19:17:01 +0100
+Message-Id: <20201216181708.22224-23-mwilck@suse.com>
 In-Reply-To: <20201216181708.22224-1-mwilck@suse.com>
 References: <20201216181708.22224-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -73,13 +72,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 0BGIIaOH017981
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 0BGIIcsl018050
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH v3 01/29] multipathd: uxlsnr: avoid deadlock on
-	exit
+Subject: [dm-devel] [PATCH v3 22/29] multipath: fix leaks in
+	check_path_valid()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -103,103 +102,95 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-The uxlsnr wouldn't always release the client lock when cancelled,
-causing a deadlock in uxsock_cleanup(). While this hasn't been
-caused by commit 3d611a2, the deadlock seems to have become much
-more likely after that patch. Solving this means that we have to
-treat reallocation failure of the pollfd array differently.
-We will now just ignore any clients above the last valid pfd index.
-That's a minor problem, as we're in an OOM situation anyway.
+There were two leaks in check_path_valid(): if path status was
+successfully determined before calling store_pathvec(), free_path()
+wasn't called. Also, if an error exit occured, neither cleanup
+function was called.
 
-Moreover, client_lock is not a "struct lock", but a plain
-pthread_mutex_t.
+This patch fixes both, at the cost of using "static" for the pp and
+pathvec variables.
 
-Fixes: 3d611a2 ("multipathd: cancel threads early during shutdown")
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/uxlsnr.c | 24 ++++++++++++++----------
- 1 file changed, 14 insertions(+), 10 deletions(-)
+ multipath/main.c | 29 +++++++++++++++++++----------
+ 1 file changed, 19 insertions(+), 10 deletions(-)
 
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 1c5ce9d..ce2b680 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -35,6 +35,7 @@
- #include "config.h"
- #include "mpath_cmd.h"
- #include "time-util.h"
-+#include "util.h"
+diff --git a/multipath/main.c b/multipath/main.c
+index 1949a1c..056e29a 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -93,7 +93,7 @@ void rcu_register_thread_memb(void) {}
+ void rcu_unregister_thread_memb(void) {}
  
- #include "main.h"
- #include "cli.h"
-@@ -116,7 +117,7 @@ static void _dead_client(struct client *c)
- 
- static void dead_client(struct client *c)
+ static int
+-filter_pathvec (vector pathvec, char * refwwid)
++filter_pathvec (vector pathvec, const char *refwwid)
  {
--	pthread_cleanup_push(cleanup_lock, &client_lock);
-+	pthread_cleanup_push(cleanup_mutex, &client_lock);
- 	pthread_mutex_lock(&client_lock);
- 	_dead_client(c);
- 	pthread_cleanup_pop(1);
-@@ -302,10 +303,11 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
- 	sigdelset(&mask, SIGUSR1);
- 	while (1) {
- 		struct client *c, *tmp;
--		int i, poll_count, num_clients;
-+		int i, n_pfds, poll_count, num_clients;
+ 	int i;
+ 	struct path * pp;
+@@ -594,8 +594,9 @@ static int
+ check_path_valid(const char *name, struct config *conf, bool is_uevent)
+ {
+ 	int fd, r = PATH_IS_ERROR;
+-	struct path *pp = NULL;
++	struct path *pp;
+ 	vector pathvec = NULL;
++	const char *wwid;
  
- 		/* setup for a poll */
- 		pthread_mutex_lock(&client_lock);
-+		pthread_cleanup_push(cleanup_mutex, &client_lock);
- 		num_clients = 0;
- 		list_for_each_entry(c, &clients, node) {
- 			num_clients++;
-@@ -322,14 +324,13 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
- 						sizeof(struct pollfd));
- 			}
- 			if (!new) {
--				pthread_mutex_unlock(&client_lock);
- 				condlog(0, "%s: failed to realloc %d poll fds",
- 					"uxsock", 2 + num_clients);
--				sched_yield();
--				continue;
-+				num_clients = old_clients;
-+			} else {
-+				old_clients = num_clients;
-+				polls = new;
- 			}
--			old_clients = num_clients;
--			polls = new;
- 		}
- 		polls[0].fd = ux_sock;
- 		polls[0].events = POLLIN;
-@@ -347,11 +348,14 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
- 			polls[i].fd = c->fd;
- 			polls[i].events = POLLIN;
- 			i++;
-+			if (i >= 2 + num_clients)
-+				break;
- 		}
--		pthread_mutex_unlock(&client_lock);
-+		n_pfds = i;
-+		pthread_cleanup_pop(1);
+ 	pp = alloc_path();
+ 	if (!pp)
+@@ -665,13 +666,17 @@ check_path_valid(const char *name, struct config *conf, bool is_uevent)
+ 	if (store_path(pathvec, pp) != 0) {
+ 		free_path(pp);
+ 		goto fail;
++	} else {
++		/* make sure path isn't freed twice */
++		wwid = pp->wwid;
++		pp = NULL;
+ 	}
  
- 		/* most of our life is spent in this call */
--		poll_count = ppoll(polls, i, &sleep_time, &mask);
-+		poll_count = ppoll(polls, n_pfds, &sleep_time, &mask);
+ 	/* For find_multipaths = SMART, if there is more than one path
+ 	 * matching the refwwid, then the path is valid */
+ 	if (path_discovery(pathvec, DI_SYSFS | DI_WWID) < 0)
+ 		goto fail;
+-	filter_pathvec(pathvec, pp->wwid);
++	filter_pathvec(pathvec, wwid);
+ 	if (VECTOR_SIZE(pathvec) > 1)
+ 		r = PATH_IS_VALID;
+ 	else
+@@ -679,21 +684,25 @@ check_path_valid(const char *name, struct config *conf, bool is_uevent)
  
- 		handle_signals(false);
- 		if (poll_count == -1) {
-@@ -384,7 +388,7 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
- 		}
+ out:
+ 	r = print_cmd_valid(r, pathvec, conf);
+-	free_pathvec(pathvec, FREE_PATHS);
+ 	/*
+ 	 * multipath -u must exit with status 0, otherwise udev won't
+ 	 * import its output.
+ 	 */
+ 	if (!is_uevent && r == PATH_IS_NOT_VALID)
+-		return RTVL_FAIL;
+-	return RTVL_OK;
++		r = RTVL_FAIL;
++	else
++		r = RTVL_OK;
++	goto cleanup;
  
- 		/* see if a client wants to speak to us */
--		for (i = 2; i < num_clients + 2; i++) {
-+		for (i = 2; i < n_pfds; i++) {
- 			if (polls[i].revents & POLLIN) {
- 				struct timespec start_time;
+ fail:
+-	if (pathvec)
++	r = RTVL_FAIL;
++
++cleanup:
++	if (pp != NULL)
++		free(pp);
++	if (pathvec != NULL)
+ 		free_pathvec(pathvec, FREE_PATHS);
+-	else
+-		free_path(pp);
+-	return RTVL_FAIL;
++	return r;
+ }
  
+ static int
 -- 
 2.29.0
 
