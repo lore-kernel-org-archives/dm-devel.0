@@ -7,72 +7,73 @@ X-Spam-Status: No, score=-17.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2B42EC4361B
-	for <dm-devel@archiver.kernel.org>; Thu, 17 Dec 2020 01:20:00 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5B856C4361B
+	for <dm-devel@archiver.kernel.org>; Thu, 17 Dec 2020 02:28:10 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7C2BB233FB
-	for <dm-devel@archiver.kernel.org>; Thu, 17 Dec 2020 01:19:59 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7C2BB233FB
+	by mail.kernel.org (Postfix) with ESMTPS id C94FF23718
+	for <dm-devel@archiver.kernel.org>; Thu, 17 Dec 2020 02:28:09 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C94FF23718
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1608167998;
+	s=mimecast20190719; t=1608172088;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=cu1EbvjthzSoHRW5lWHb8P9CIQOc2jdrSrKie8Cweu0=;
-	b=bZR7IsxFUCF/fJsjpjXvHvz5OlgTlz6jMYIopKVTCPeuOfuLEX/b2x1xLAaYLSGb8adcoW
-	UMeDk34Pl1WXb0/WYxN5SulaNQ0DPmKJprkN0lnF43YP2Ig1n/epBxym59IZefs3qvQuWT
-	aqsHVeZ2sAJpr+CMz3z5eMtsdZ10mYI=
+	bh=OXnZH0MTkvlH62RBwhwNi02Uaq//K1A7CETKEANdzN0=;
+	b=BBu3c8lGwIXCpDBHJQc2Sau7em2M7IS6vFyIG0+kb9wtiEdkWcWTiUwc01sjna1Xj9LFEV
+	OCmz89qvzArLcpk0z41yN17gkQ/tJYbsI9m1mTZ7E0T5NGpXHxOf8GQ7VpwzWfrNPGaS9X
+	wQkdcl1kJsq1JpX70HVbNlGxoHbG9bI=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-39-i8NLqECXMVikJDJXggj0Lw-1; Wed, 16 Dec 2020 20:19:56 -0500
-X-MC-Unique: i8NLqECXMVikJDJXggj0Lw-1
+ us-mta-26-jYW7tEJkNFykVlM3zXLUSg-1; Wed, 16 Dec 2020 21:28:04 -0500
+X-MC-Unique: jYW7tEJkNFykVlM3zXLUSg-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 46B25107ACE8;
-	Thu, 17 Dec 2020 01:19:51 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8DDDC19D9F;
-	Thu, 17 Dec 2020 01:19:50 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 07C80800D62;
+	Thu, 17 Dec 2020 02:28:00 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C39BA19D9F;
+	Thu, 17 Dec 2020 02:27:58 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9BFDF4A7C6;
-	Thu, 17 Dec 2020 01:19:49 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com
-	[10.5.11.16])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DEE711809C9F;
+	Thu, 17 Dec 2020 02:27:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
+	[10.5.11.12])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BH1JmDV032731 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 16 Dec 2020 20:19:48 -0500
+	id 0BH2O6dg005724 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 16 Dec 2020 21:24:06 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 0F5B217577; Thu, 17 Dec 2020 01:19:48 +0000 (UTC)
+	id F324560C43; Thu, 17 Dec 2020 02:24:05 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id EE6AB18796;
-	Thu, 17 Dec 2020 01:19:44 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 01DF060C15;
+	Thu, 17 Dec 2020 02:24:01 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 0BH1JhOM027685; 
-	Wed, 16 Dec 2020 19:19:43 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 0BH2O064027931; 
+	Wed, 16 Dec 2020 20:24:00 -0600
 Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 0BH1JgeI027684;
-	Wed, 16 Dec 2020 19:19:42 -0600
-Date: Wed, 16 Dec 2020 19:19:42 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 0BH2NxPw027930;
+	Wed, 16 Dec 2020 20:23:59 -0600
+Date: Wed, 16 Dec 2020 20:23:59 -0600
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: mwilck@suse.com
-Message-ID: <20201217011942.GS3103@octiron.msp.redhat.com>
+Message-ID: <20201217022359.GT3103@octiron.msp.redhat.com>
 References: <20201216181708.22224-1-mwilck@suse.com>
-	<20201216181708.22224-3-mwilck@suse.com>
+	<20201216181708.22224-19-mwilck@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <20201216181708.22224-3-mwilck@suse.com>
+In-Reply-To: <20201216181708.22224-19-mwilck@suse.com>
 User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com
-Subject: Re: [dm-devel] [PATCH v3 02/29] multipathd: Fix liburcu memory leak
+Subject: Re: [dm-devel] [PATCH v3 18/29] libmultipath: fix log_thread
+ startup and teardown
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -95,99 +96,149 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Dec 16, 2020 at 07:16:41PM +0100, mwilck@suse.com wrote:
+On Wed, Dec 16, 2020 at 07:16:57PM +0100, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> Fix this leak in multipathd, reported by valgrind, that messes up
-> multipathd's otherwise clean leak report:
-> 
-> ==23823== 336 bytes in 1 blocks are possibly lost in loss record 3 of 3
-> ==23823==    at 0x483AB65: calloc (in /usr/lib64/valgrind/vgpreload_memcheck-amd64-linux.so)
-> ==23823==    by 0x4012F16: _dl_allocate_tls (in /lib64/ld-2.31.so)
-> ==23823==    by 0x493BB8E: pthread_create@@GLIBC_2.2.5 (in /lib64/libpthread-2.31.so)
-> ==23823==    by 0x492A9A9: call_rcu_data_init (urcu-call-rcu-impl.h:437)
-> ==23823==    by 0x492AD2F: UnknownInlinedFun (urcu-call-rcu-impl.h:492)
-> ==23823==    by 0x492AD2F: create_call_rcu_data_memb (urcu-call-rcu-impl.h:504)
-> ==23823==    by 0x1164E3: child.constprop.0.isra.0 (main.c:2915)
-> ==23823==    by 0x10F50C: main (main.c:3335)
-> ==23823==
-> ==23823== LEAK SUMMARY:
-> ==23823==    definitely lost: 0 bytes in 0 blocks
-> ==23823==    indirectly lost: 0 bytes in 0 blocks
-> ==23823==      possibly lost: 336 bytes in 1 blocks
-> 
-> The problem is caused by using liburcu's default RCU call handler,
-> which liburcu refuses to stop/join. See comments in the code.
+> This fixes several issues with the log_thread. First, the running flag
+> logq_running should be set by the thread itself, not by
+> log_thread_start()/_stop(). Second, the thread was both cancelled and
+> terminated via a flag (again, logq_running). It's sufficient to just cancel
+> and join it. Third, the locking wasn't cancel-safe in some places. Forth,
+> log_thread_start() didn't wait for startup properly. Fifth, using (pthread_t)0
+> is wrong (pthread_t is opaque; there's no guarantee that 0 is not a valid
+> pthread_t value). Sixth, pthread_cancel() was called under logq_lock, which
+> doesn't make sense to me.
 > 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  multipathd/main.c | 45 ++++++++++++++++++++++++++++++++++++++++++++-
->  1 file changed, 44 insertions(+), 1 deletion(-)
+>  libmultipath/log_pthread.c | 62 +++++++++++++++++++++++++++-----------
+>  1 file changed, 45 insertions(+), 17 deletions(-)
 > 
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index c5c374b..ce14bb6 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -2889,6 +2889,48 @@ set_oom_adj (void)
->  	condlog(0, "couldn't adjust oom score");
+> diff --git a/libmultipath/log_pthread.c b/libmultipath/log_pthread.c
+> index 0c327ff..3a2566a 100644
+> --- a/libmultipath/log_pthread.c
+> +++ b/libmultipath/log_pthread.c
+> @@ -13,6 +13,7 @@
+>  #include "log_pthread.h"
+>  #include "log.h"
+>  #include "lock.h"
+> +#include "util.h"
+>  
+>  static pthread_t log_thr;
+>  
+> @@ -56,35 +57,52 @@ static void flush_logqueue (void)
+>  	} while (empty == 0);
 >  }
 >  
-> +/*
-> + * Use a non-default call_rcu_data for child().
-> + *
-> + * We do this to avoid a memory leak from liburcu.
-> + * liburcu never frees the default rcu handler (see comments on
-> + * call_rcu_data_free() in urcu-call-rcu-impl.h), its thread
-> + * can't be joined with pthread_join(), leaving a memory leak.
-> + *
-> + * Therefore we create our own, which can be destroyed and joined.
-> + */
-> +static struct call_rcu_data *setup_rcu(void)
+> +static void cleanup_log_thread(__attribute((unused)) void *arg)
 > +{
-> +	struct call_rcu_data *crdp;
-> +
-> +	rcu_init();
-> +	rcu_register_thread();
-> +	crdp = create_call_rcu_data(0UL, -1);
-> +	if (crdp != NULL)
-> +		set_thread_call_rcu_data(crdp);
-> +	return crdp;
+> +	logdbg(stderr, "log thread exiting");
+> +	pthread_mutex_lock(&logev_lock);
+> +	logq_running = 0;
+> +	pthread_mutex_unlock(&logev_lock);
 > +}
 > +
-> +static struct call_rcu_data *mp_rcu_data;
-> +
-> +static void cleanup_rcu(void)
-> +{
-> +	pthread_t rcu_thread;
-> +
-> +	/* Wait for any pending RCU calls */
-> +	rcu_barrier();
-> +	if (mp_rcu_data != NULL) {
-> +		rcu_thread = get_call_rcu_thread(mp_rcu_data);
-> +		/* detach this thread from the RCU thread */
-> +		set_thread_call_rcu_data(NULL);
-> +		synchronize_rcu();
-> +		/* tell RCU thread to exit */
-> +		call_rcu_data_free(mp_rcu_data);
-> +		pthread_join(rcu_thread, NULL);
-> +	}
-> +	rcu_unregister_thread();
-> +}
-> +
->  static int
->  child (__attribute__((unused)) void *param)
+>  static void * log_thread (__attribute__((unused)) void * et)
 >  {
-> @@ -2906,7 +2948,8 @@ child (__attribute__((unused)) void *param)
+>  	int running;
+>  
+>  	pthread_mutex_lock(&logev_lock);
+> -	logq_running = 1;
+> +	running = logq_running;
+> +	if (!running)
+> +		logq_running = 1;
+> +	pthread_cond_signal(&logev_cond);
+>  	pthread_mutex_unlock(&logev_lock);
+> +	if (running)
+> +		/* already started */
+> +		return NULL;
+> +	pthread_cleanup_push(cleanup_log_thread, NULL);
 >  
 >  	mlockall(MCL_CURRENT | MCL_FUTURE);
->  	signal_init();
-> -	rcu_init();
-> +	mp_rcu_data = setup_rcu();
-> +	atexit(cleanup_rcu);
+>  	logdbg(stderr,"enter log_thread\n");
 >  
->  	setup_thread_attr(&misc_attr, 64 * 1024, 0);
->  	setup_thread_attr(&uevent_attr, DEFAULT_UEVENT_STACKSIZE * 1024, 0);
+>  	while (1) {
+>  		pthread_mutex_lock(&logev_lock);
+> -		if (logq_running && !log_messages_pending)
+> +		pthread_cleanup_push(cleanup_mutex, &logev_lock);
+> +		while (!log_messages_pending)
+> +			/* this is a cancellation point */
+>  			pthread_cond_wait(&logev_cond, &logev_lock);
+>  		log_messages_pending = 0;
+> -		running = logq_running;
+> -		pthread_mutex_unlock(&logev_lock);
+> -		if (!running)
+> -			break;
+> +		pthread_cleanup_pop(1);
+> +
+>  		flush_logqueue();
+>  	}
+> +	pthread_cleanup_pop(1);
+>  	return NULL;
+>  }
+>  
+>  void log_thread_start (pthread_attr_t *attr)
+>  {
+> -	logdbg(stderr,"enter log_thread_start\n");
+> +	int running = 0;
+>  
+> +	logdbg(stderr,"enter log_thread_start\n");
+>  	pthread_mutex_init(&logq_lock, NULL);
+>  	pthread_mutex_init(&logev_lock, NULL);
+>  	pthread_cond_init(&logev_cond, NULL);
+> @@ -93,7 +111,15 @@ void log_thread_start (pthread_attr_t *attr)
+>  		fprintf(stderr,"can't initialize log buffer\n");
+>  		exit(1);
+>  	}
+> -	if (pthread_create(&log_thr, attr, log_thread, NULL)) {
+> +
+> +	pthread_mutex_lock(&logev_lock);
+> +	pthread_cleanup_push(cleanup_mutex, &logev_lock);
+> +	if (!pthread_create(&log_thr, attr, log_thread, NULL))
+> +		while (!(running = logq_running))
+> +			pthread_cond_wait(&logev_cond, &logev_lock);
+> +	pthread_cleanup_pop(1);
+> +
+> +	if (!running) {
+>  		fprintf(stderr,"can't start log thread\n");
+>  		exit(1);
+>  	}
+> @@ -112,23 +138,25 @@ void log_thread_reset (void)
+>  
+>  void log_thread_stop (void)
+>  {
+> +	int running;
+> +
+>  	if (!la)
+>  		return;
+>  
+>  	logdbg(stderr,"enter log_thread_stop\n");
+>  
+>  	pthread_mutex_lock(&logev_lock);
+> -	logq_running = 0;
+> -	pthread_cond_signal(&logev_cond);
+> -	pthread_mutex_unlock(&logev_lock);
+> -
+> -	pthread_mutex_lock(&logq_lock);
+> -	pthread_cancel(log_thr);
+> -	pthread_mutex_unlock(&logq_lock);
+> -	pthread_join(log_thr, NULL);
+> -	log_thr = (pthread_t)0;
+> +	pthread_cleanup_push(cleanup_mutex, &logev_lock);
+> +	running = logq_running;
+> +	if (running) {
+> +		pthread_cancel(log_thr);
+> +		pthread_cond_signal(&logev_cond);
+> +	}
+> +	pthread_cleanup_pop(1);
+>  
+>  	flush_logqueue();
+> +	if (running)
+> +		pthread_join(log_thr, NULL);
+>  
+>  	pthread_mutex_destroy(&logq_lock);
+>  	pthread_mutex_destroy(&logev_lock);
 > -- 
 > 2.29.0
 
