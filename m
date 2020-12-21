@@ -2,105 +2,68 @@ Return-Path: <SRS0=ovTT=GH=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-6.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 40E38C433DB
-	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:03 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CB8A2C433E6
+	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:04 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id AE6412068D
-	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:02 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org AE6412068D
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=dabbelt.com
+	by mail.kernel.org (Postfix) with ESMTPS id 68423206A4
+	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:04 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 68423206A4
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1609787043;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=/SpIhlmb83gG+pEIJoHLvXS5iQQki6CjlDuEnKXKXao=;
+	b=DNvr02CkphO3FUfkd6Wq06WsMEdYgk26iGedqGbDK99Lf7KMUWltHPBorsMzC1A9nBVjzq
+	KzSMtxzbuOgGL+VAS9bMzn0+qaVmdgWaGHzgqYmRlu3umYRF3lDqWr3tId2SQT8aeZXaqZ
+	tOxQmebwxARmXdI5Tt9I0FV423ZEoMs=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-7-AKCDroK2M4-y0MJ4WlVIGA-1; Mon, 04 Jan 2021 14:03:58 -0500
-X-MC-Unique: AKCDroK2M4-y0MJ4WlVIGA-1
+ us-mta-345-DVDLDWDBPU2SwKwfaI64qQ-1; Mon, 04 Jan 2021 14:03:39 -0500
+X-MC-Unique: DVDLDWDBPU2SwKwfaI64qQ-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 23BC8801ADD;
-	Mon,  4 Jan 2021 19:03:49 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 03E9D1001281;
-	Mon,  4 Jan 2021 19:03:49 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C26781842156;
+	Mon,  4 Jan 2021 19:03:32 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A37EF100239A;
+	Mon,  4 Jan 2021 19:03:32 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C901550038;
-	Mon,  4 Jan 2021 19:03:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 797A31809CA7;
+	Mon,  4 Jan 2021 19:03:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
+	[10.5.11.15])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BMKcaP1030528 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 22 Dec 2020 15:38:36 -0500
+	id 0BLFns5j007028 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 21 Dec 2020 10:49:54 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 35757110F0B3; Tue, 22 Dec 2020 20:38:36 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 31BA0110F0AE
-	for <dm-devel@redhat.com>; Tue, 22 Dec 2020 20:38:33 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D0B1B800157
-	for <dm-devel@redhat.com>; Tue, 22 Dec 2020 20:38:33 +0000 (UTC)
-Received: from mail-pj1-f48.google.com (mail-pj1-f48.google.com
-	[209.85.216.48]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-487-o1A4d1R7PAC4anpGV7O7gg-1; Tue, 22 Dec 2020 15:38:30 -0500
-X-MC-Unique: o1A4d1R7PAC4anpGV7O7gg-1
-Received: by mail-pj1-f48.google.com with SMTP id hk16so1974693pjb.4
-	for <dm-devel@redhat.com>; Tue, 22 Dec 2020 12:38:30 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:date:subject:in-reply-to:cc:from:to:message-id
-	:mime-version:content-transfer-encoding;
-	bh=w7wUorTulI1SLGLyUAtcsZM5JvELPWd2Jp06S7SjCVY=;
-	b=E/7LFneAHqJEFlf3hVMH9vWtapUPxFqhjYhLmWOoEPcNz8WzyLJDPh0y2zTmuxgbmc
-	/85CmDN/hrg4tvPKNMUsJTf1RS5hQ4GbnQRMO69n/wSKvZCuoNqpvSZhVERb4YQekL+s
-	VQc7iVrw7YtrIfGhULIn15keXYcw2ibYMw651XfxrsaFLxml2/dSCQ7FRtYM14lA47jU
-	WqlaYvY/qQ8vkhtgK0UgLGICPGkP6Wvo1rxtUD0tym+Fw9GQTxrbSO/tLRSRp4bloCC9
-	6PUQm/qSzQBpVFTBOjpJgcWSzR0Q+ABUQ1PzPlxyWRCbs2jXYkrHsD+jq0bStghEMe8C
-	iv0Q==
-X-Gm-Message-State: AOAM5333ffjEH/MeelOteJs7FMIsaCYIE+CY0/LWH5Kn4UN1EqZ76fU+
-	esFuUZiwt/uzg6nuAXyWl0XPAQ==
-X-Google-Smtp-Source: ABdhPJyrUEeQS+6tCykxcXi4wBUYC0ygmbARaXIsYIp63WsLg3f/qvwDb9rwYmvpLbj3fuqqf4mwnw==
-X-Received: by 2002:a17:90a:301:: with SMTP id
-	1mr23852780pje.195.1608669509537; 
-	Tue, 22 Dec 2020 12:38:29 -0800 (PST)
-Received: from localhost (76-210-143-223.lightspeed.sntcca.sbcglobal.net.
-	[76.210.143.223]) by smtp.gmail.com with ESMTPSA id
-	g30sm21624684pfr.152.2020.12.22.12.38.28
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Tue, 22 Dec 2020 12:38:28 -0800 (PST)
-Date: Tue, 22 Dec 2020 12:38:28 -0800 (PST)
-X-Google-Original-Date: Tue, 22 Dec 2020 12:38:26 PST (-0800)
-In-Reply-To: <20201222143616.GB12885@redhat.com>
-From: Palmer Dabbelt <palmer@dabbelt.com>
-To: snitzer@redhat.com
-Message-ID: <mhng-26d96d8e-77aa-415b-a8ee-518a0e91b6ef@palmerdabbelt-glaptop>
-Mime-Version: 1.0 (MHng)
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+	id 446ED5B697; Mon, 21 Dec 2020 15:49:54 +0000 (UTC)
+Received: from pick.fieldses.org (ovpn-112-93.phx2.redhat.com [10.3.112.93])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 145245B695
+	for <dm-devel@redhat.com>; Mon, 21 Dec 2020 15:49:50 +0000 (UTC)
+Received: by pick.fieldses.org (Postfix, from userid 2815)
+	id 85CA31218D4; Mon, 21 Dec 2020 10:49:49 -0500 (EST)
+Date: Mon, 21 Dec 2020 10:49:49 -0500
+From: "J. Bruce Fields" <bfields@redhat.com>
+To: dm-devel@redhat.com
+Message-ID: <20201221154949.GA305202@pick.fieldses.org>
+MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 04 Jan 2021 14:03:12 -0500
-Cc: linux-raid@vger.kernel.org, bvanassche@acm.org, corbet@lwn.net,
-	shuah@kernel.org, linux-doc@vger.kernel.org,
-	josef@toxicpanda.com, linux-kernel@vger.kernel.org,
-	Christoph Hellwig <hch@infradead.org>, song@kernel.org,
-	dm-devel@redhat.com, michael.christie@oracle.com,
-	linux-kselftest@vger.kernel.org, kernel-team@android.com, agk@redhat.com
-Subject: Re: [dm-devel] [PATCH v1 0/5] dm: dm-user: New target that proxies
-	BIOs to userspace
+Subject: [dm-devel] writecache performance, nfs export, optane
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -119,51 +82,44 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On Tue, 22 Dec 2020 06:36:16 PST (-0800), snitzer@redhat.com wrote:
-> On Tue, Dec 22 2020 at  8:32am -0500,
-> Christoph Hellwig <hch@infradead.org> wrote:
->
->> On Mon, Dec 14, 2020 at 07:00:57PM -0800, Palmer Dabbelt wrote:
->> > I haven't gotten a whole lot of feedback, so I'm inclined to at least have some
->> > reasonable performance numbers before bothering with a v2.
->>
->> FYI, my other main worry beside duplicating nbd is that device mapper
->> really is a stacked interface that sits on top of other block device.
->> Turning this into something else that just pipes data to userspace
->> seems very strange.
->
-> I agree.  Only way I'd be interested is if it somehow tackled enabling
-> much more efficient IO.  Earlier discussion in this thread mentioned
-> that zero-copy and low overhead wasn't a priority (because it is hard,
-> etc).  But the hard work has already been done with io_uring.  If
-> dm-user had a prereq of leaning heavily on io_uring and also enabled IO
-> polling for bio-based then there may be a win to supporting it.
->
-> But unless lower latency (or some other more significant win) is made
-> possible I just don't care to prop up an unnatural DM bolt-on.
+I'm experimenting with dm-writecache with one of the little 16G optane
+SSDs as the cache device in front of a couple hard drives and it's not
+helping, and I'm curious why not.
 
-I don't remember if I mentioned this in the thread, but it was definately in
-the Plumbers talk, but I'd had the general idea bouncing around that it would
-be possible to write a high-performance version of this using an interface
-similar to the one provided here while relying on io_uring for the
-high-performance userspace.  That definately won't work with exactly the
-current interface, but my hope was to avoid writing my own high-performance
-ring buffer.  My worry was that it'll be too tricky to map this all to
-zero-copy, and I guess I forgot about it.
+My test is just to NFS-export the hard drive and the run
 
-Now that you bring it up, it certainly seems worth taking a shot at.  We'd
-essentially have the best of both worlds: userspace implementations that want
-to be simple could just use read()/write(), while those that want to be higher
-performance could have their implicit ring buffer.
+	time tar -xzvf ~/linux-5.9.tar.gz
 
-I'm currently trying to put together a benchmarking setup that is of sufficient
-fidelity that I would believe the numbers, which is really why I don't have any
-performance numbers yet (no sense posting numbers I would shoot down :)).  I'll
-try to remember to take a shot at an io_uring based userspace (probably with
-some dm-user interface modifications) to see how it feels.
+from an NFS client.  (So it's reading from local disk and writing to
+NFS.)
+
+NFS servers aren't allowed to reply to clients until operations reach
+stable storage, for metadata operations like create, unlink, rename, or
+setattr, so this is kind of a worst case: untar of a kernel tree to
+local filesystem takes me 12 seconds, but nearly 2 hours to exported
+hard drives, as that untar is a single thread that ends up waiting for
+hundreds of thousands of seeks.
+
+If I just export the optane, total time is about 4 minutes.  If I export
+a dm-writecache device using the optane, it's back to 2 hours.
+
+For now I'm using an xfs filesystem with external journal on the optane,
+which is sort of OK (about 15 minutes on this test), but I'm curious why
+dm-writecache is acting like this.
+
+Is this expected?  Are there any statistics I should be watching to
+understand what's going on?
+
+I'm pretty ignorant here, so it's also possible I just misconfigured
+something somehow.  I set it up with just "lvconvert --type writecache
+--cachevol optane export", and haven't tried tweaking any options.  I'm
+on recent Fedora (with kernel-5.9.14-200.fc33.x86_64).
+
+--b.
 
 --
 dm-devel mailing list
