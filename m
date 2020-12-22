@@ -1,69 +1,69 @@
-Return-Path: <SRS0=TBMM=FZ=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=qgMK=F2=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B602EC433DB
-	for <dm-devel@archiver.kernel.org>; Mon, 21 Dec 2020 23:24:26 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B25CDC433E6
+	for <dm-devel@archiver.kernel.org>; Tue, 22 Dec 2020 13:57:02 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 261AB22B2B
-	for <dm-devel@archiver.kernel.org>; Mon, 21 Dec 2020 23:24:25 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 261AB22B2B
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+	by mail.kernel.org (Postfix) with ESMTPS id 1ABCF23105
+	for <dm-devel@archiver.kernel.org>; Tue, 22 Dec 2020 13:57:01 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1ABCF23105
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-39-CQwe25FMPDakqTk6nG3N-g-1; Mon, 21 Dec 2020 18:24:22 -0500
-X-MC-Unique: CQwe25FMPDakqTk6nG3N-g-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-420-QkBNeqZCNvy0iZpi3fzi5w-1; Tue, 22 Dec 2020 08:56:58 -0500
+X-MC-Unique: QkBNeqZCNvy0iZpi3fzi5w-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A1C46107ACE3;
-	Mon, 21 Dec 2020 23:24:17 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3C5616064B;
-	Mon, 21 Dec 2020 23:24:14 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 51BF0100F341;
+	Tue, 22 Dec 2020 13:56:54 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CE3EA60C64;
+	Tue, 22 Dec 2020 13:56:52 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3FC791809C9F;
-	Mon, 21 Dec 2020 23:24:10 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3519A5002C;
+	Tue, 22 Dec 2020 13:56:49 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BLNNj6j023788 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 21 Dec 2020 18:23:46 -0500
+	id 0BMDuioY017119 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 22 Dec 2020 08:56:45 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id CA8305F25E; Mon, 21 Dec 2020 23:23:45 +0000 (UTC)
+	id 6117D2166B28; Tue, 22 Dec 2020 13:56:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C55DB621BF
-	for <dm-devel@redhat.com>; Mon, 21 Dec 2020 23:23:42 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5C6DF2166B29
+	for <dm-devel@redhat.com>; Tue, 22 Dec 2020 13:56:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4D627101A560
-	for <dm-devel@redhat.com>; Mon, 21 Dec 2020 23:23:42 +0000 (UTC)
-Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-280-gVbbufvNOXGGphFt2DhSTA-1;
-	Mon, 21 Dec 2020 18:23:38 -0500
-X-MC-Unique: gVbbufvNOXGGphFt2DhSTA-1
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 8FAD9AC93;
-	Mon, 21 Dec 2020 23:05:33 +0000 (UTC)
-Date: Tue, 22 Dec 2020 00:05:31 +0100
-From: Petr Vorel <pvorel@suse.cz>
-To: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-Message-ID: <20201221230531.GD4453@pevik>
-References: <20200928035605.22701-1-tusharsu@linux.microsoft.com>
-	<20200928035605.22701-2-tusharsu@linux.microsoft.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 01297811E78
+	for <dm-devel@redhat.com>; Tue, 22 Dec 2020 13:56:42 +0000 (UTC)
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-97-d_r-q3IXMjCqbsCMKW4Jdg-1; Tue, 22 Dec 2020 08:56:38 -0500
+X-MC-Unique: d_r-q3IXMjCqbsCMKW4Jdg-1
+Received: from hch by casper.infradead.org with local (Exim 4.92.3 #3 (Red Hat
+	Linux)) id 1krhmQ-0001SZ-29; Tue, 22 Dec 2020 13:32:46 +0000
+Date: Tue, 22 Dec 2020 13:32:46 +0000
+From: Christoph Hellwig <hch@infradead.org>
+To: Palmer Dabbelt <palmer@dabbelt.com>
+Message-ID: <20201222133246.GA5099@infradead.org>
+References: <30d39293-80a4-9ef5-92bb-6b6dec464be3@toxicpanda.com>
+	<mhng-2da5b1a2-20f9-4b0e-9ffd-7f60a161ebf0@palmerdabbelt-glaptop>
 MIME-Version: 1.0
-In-Reply-To: <20200928035605.22701-2-tusharsu@linux.microsoft.com>
+In-Reply-To: <mhng-2da5b1a2-20f9-4b0e-9ffd-7f60a161ebf0@palmerdabbelt-glaptop>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+	casper.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -72,16 +72,19 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: snitzer@redhat.com, zohar@linux.ibm.com, nramas@linux.microsoft.com,
-	dm-devel@redhat.com, ltp@lists.linux.it,
-	linux-integrity@vger.kernel.org, gmazyland@gmail.com, agk@redhat.com
-Subject: Re: [dm-devel] [PATCH v2 1/2] IMA: generalize key measurement tests
+Cc: linux-raid@vger.kernel.org, bvanassche@acm.org, snitzer@redhat.com,
+	corbet@lwn.net, shuah@kernel.org, linux-doc@vger.kernel.org,
+	josef@toxicpanda.com, linux-kernel@vger.kernel.org,
+	Christoph Hellwig <hch@infradead.org>, song@kernel.org,
+	dm-devel@redhat.com, michael.christie@oracle.com,
+	linux-kselftest@vger.kernel.org, kernel-team@android.com, agk@redhat.com
+Subject: Re: [dm-devel] [PATCH v1 0/5] dm: dm-user: New target that proxies
+ BIOs to userspace
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
-Reply-To: Petr Vorel <pvorel@suse.cz>
 List-Id: device-mapper development <dm-devel.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -92,7 +95,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -101,271 +104,14 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hi Tushar,
+On Mon, Dec 14, 2020 at 07:00:57PM -0800, Palmer Dabbelt wrote:
+> I haven't gotten a whole lot of feedback, so I'm inclined to at least have some
+> reasonable performance numbers before bothering with a v2.
 
-I'm very sorry about the delay. I'll finish this review in January,
-here just some quick thoughts (minor style nits, I'll fix it before merge).
-
-Generally LGTM, thanks for your work.
-
-Reviewed-by: Petr Vorel <pvorel@suse.cz>
-
-> New functionality is being added in IMA to measure data provided by
-> kernel components. Tests have to be added in LTP to validate this new
-> feature. The functionality in ima_keys.sh can be reused to test this new
-> feature if it is made generic.
-
-> Refactor check_keys_policy() and test1() implemented in ima_keys.sh to
-> make it generic, and move the functionality to ima_setup.sh as new
-> functions - check_policy_pattern() and check_ima_ascii_log_for_policy().
-
-> Signed-off-by: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-> ---
->  .../security/integrity/ima/tests/ima_keys.sh  | 62 +++------------
->  .../security/integrity/ima/tests/ima_setup.sh | 79 +++++++++++++++++++
->  2 files changed, 92 insertions(+), 49 deletions(-)
-
-> diff --git a/testcases/kernel/security/integrity/ima/tests/ima_keys.sh b/testcases/kernel/security/integrity/ima/tests/ima_keys.sh
-> index c9eef4b68..c2120358a 100755
-> --- a/testcases/kernel/security/integrity/ima/tests/ima_keys.sh
-> +++ b/testcases/kernel/security/integrity/ima/tests/ima_keys.sh
-> @@ -6,7 +6,7 @@
-
->  # Verify that keys are measured correctly based on policy.
-
-> -TST_NEEDS_CMDS="cmp cut grep sed xxd"
-> +TST_NEEDS_CMDS="cmp cut grep xxd"
-It still requires sed, it's just hidden in check_ima_ascii_log_for_policy
-
-Maybe just put at the top of check_ima_ascii_log_for_policy():
-tst_require_cmds cut grep sed xxd
-
-And here still keep
-TST_NEEDS_CMDS="cmp cut grep tail xxd"
-
-This leads to duplicity in check, but it will not lead to hidden "command not
-found".
-
->  TST_CNT=2
->  TST_NEEDS_DEVICE=1
->  TST_SETUP=setup
-> @@ -28,64 +28,28 @@ cleanup()
->  	tst_is_num $KEYRING_ID && keyctl clear $KEYRING_ID
->  }
-
-> -check_keys_policy()
-> -{
-> -	local pattern="$1"
-> -
-> -	if ! grep -E "$pattern" $TST_TMPDIR/policy.txt; then
-> -		tst_res TCONF "IMA policy must specify $pattern, $FUNC_KEYCHECK, $TEMPLATE_BUF"
-> -		return 1
-> -	fi
-> -	return 0
-> -}
-> -
->  # Based on https://lkml.org/lkml/2019/12/13/564.
->  # (450d0fd51564 - "IMA: Call workqueue functions to measure queued keys")
-OK, it has been merged in v5.6-rc1. Any more relevant commits, changes since
-then?
-
->  test1()
->  {
->  	local keycheck_lines i keyrings templates
->  	local pattern='keyrings=[^[:space:]]+'
-> -	local test_file="file.txt" tmp_file="file2.txt"
-> +	local policy="keyrings"
-> +	local tmp_file="$TST_TMPDIR/keycheck_tmp_file.txt"
-> +	local res
-Will be unused, see below.
-
->  	tst_res TINFO "verify key measurement for keyrings and templates specified in IMA policy"
-
-> -	check_keys_policy "$pattern" > $tmp_file || return
-> -	keycheck_lines=$(cat $tmp_file)
-> -	keyrings=$(for i in $keycheck_lines; do echo "$i" | grep "keyrings" | \
-> -		sed "s/\./\\\./g" | cut -d'=' -f2; done | sed ':a;N;$!ba;s/\n/|/g')
-> -	if [ -z "$keyrings" ]; then
-> -		tst_res TCONF "IMA policy has a keyring key-value specifier, but no specified keyrings"
-> -		return
-> -	fi
-> -
-> -	templates=$(for i in $keycheck_lines; do echo "$i" | grep "template" | \
-> -		cut -d'=' -f2; done | sed ':a;N;$!ba;s/\n/|/g')
-> -
-> -	tst_res TINFO "keyrings: '$keyrings'"
-> -	tst_res TINFO "templates: '$templates'"
-> -
-> -	grep -E "($templates).*($keyrings)" $ASCII_MEASUREMENTS | while read line
-> -	do
-> -		local digest expected_digest algorithm
-> -
-> -		digest=$(echo "$line" | cut -d' ' -f4 | cut -d':' -f2)
-> -		algorithm=$(echo "$line" | cut -d' ' -f4 | cut -d':' -f1)
-> -		keyring=$(echo "$line" | cut -d' ' -f5)
-> +	check_policy_pattern "$pattern" $FUNC_KEYCHECK $TEMPLATE_BUF > $tmp_file || return
-
-> -		echo "$line" | cut -d' ' -f6 | xxd -r -p > $test_file
-> +	res="$(check_ima_ascii_log_for_policy $policy $tmp_file)"
-
-> -		if ! expected_digest="$(compute_digest $algorithm $test_file)"; then
-> -			tst_res TCONF "cannot compute digest for $algorithm"
-> -			return
-> -		fi
-> -
-> -		if [ "$digest" != "$expected_digest" ]; then
-> -			tst_res TFAIL "incorrect digest was found for $keyring keyring"
-> -			return
-> -		fi
-> -	done
-> +	if [ "$res" = "0" ]; then
-> +		tst_res TPASS "specified keyrings were measured correctly"
-> +	else
-> +		tst_res TFAIL "failed to measure specified keyrings"
-> +	fi
-
-Instead of:
-       res="$(check_ima_ascii_log_for_policy $policy $tmp_file)"
-       if [ "$res" = "0" ]; then
-
-I'd prefer to have it as:
-       check_ima_ascii_log_for_policy $policy $tmp_file
-       if [ $? -eq 0 ]; then
-
-
-> -	tst_res TPASS "specified keyrings were measured correctly"
->  }
-
->  # Create a new keyring, import a certificate into it, and verify
-> @@ -97,11 +61,11 @@ test2()
->  	local cert_file="$TST_DATAROOT/x509_ima.der"
->  	local keyring_name="key_import_test"
->  	local pattern="keyrings=[^[:space:]]*$keyring_name"
-> -	local temp_file="file.txt"
-> +	local temp_file="$TST_TMPDIR/key_import_test_file.txt"
-
->  	tst_res TINFO "verify measurement of certificate imported into a keyring"
-
-> -	check_keys_policy "$pattern" >/dev/null || return
-> +	check_policy_pattern "$pattern" $FUNC_KEYCHECK $TEMPLATE_BUF >/dev/null || return
-
->  	KEYRING_ID=$(keyctl newring $keyring_name @s) || \
->  		tst_brk TBROK "unable to create a new keyring"
-> diff --git a/testcases/kernel/security/integrity/ima/tests/ima_setup.sh b/testcases/kernel/security/integrity/ima/tests/ima_setup.sh
-> index 1f17aa707..2841d7df5 100644
-> --- a/testcases/kernel/security/integrity/ima/tests/ima_setup.sh
-> +++ b/testcases/kernel/security/integrity/ima/tests/ima_setup.sh
-> @@ -54,6 +54,85 @@ compute_digest()
->  	return 1
->  }
-
-> +check_policy_pattern()
-> +{
-> +	local pattern="$1"
-> +	local func="$2"
-> +	local template="$3"
-> +
-> +	if ! grep -E "$pattern" $TST_TMPDIR/policy.txt; then
-> +		tst_res TCONF "IMA policy must specify $pattern, $func, $template"
-> +		return 1
-> +	fi
-> +	return 0
-> +}
-Probably ok for now (yes, it removes the duplicity with function used in two
-tests, it's very policy specific).
-
-> +
-> +check_ima_ascii_log_for_policy()
-> +{
-> +	local test_file="$TST_TMPDIR/ascii_log_test_file.txt"
-> +	local grep_file="$TST_TMPDIR/ascii_log_grep_file.txt"
-nit: Since the real description is in variable, I'd just use:
-
-local test_file="$TST_TMPDIR/test.txt"
-local grep_file="$TST_TMPDIR/grep.txt"
-
-> +	local func_lines sources templates i src 
-> +	local input_digest_res=1
-> +	local policy_option="$1"
-> +	local input_digest="$3"
-
-tst_require_cmds cut grep sed xxd
-> +
-> +	func_lines=$(cat $2)
-> +
-> +	sources=$(for i in $func_lines; do echo "$i" | grep "$policy_option" | \
-> +		sed "s/\./\\\./g" | cut -d'=' -f2; done | sed ':a;N;$!ba;s/\n/|/g')
-> +	if [ -z "$sources" ]; then
-> +		tst_res TCONF "IMA policy $policy_option is a key-value specifier, but no values specified"
-> +		echo "1"
-> +		return
-> +	fi
-> +
-> +	templates=$(for i in $func_lines; do echo "$i" | grep "template" | \
-> +		cut -d'=' -f2; done | sed ':a;N;$!ba;s/\n/|/g')
-> +
-> +	tst_res TINFO "policy sources: '$sources'"
-> +	tst_res TINFO "templates: '$templates'"
-> +
-> +	grep -E "($templates).*($sources)" $ASCII_MEASUREMENTS > $grep_file
-> +
-> +	while read line
-> +	do
-> +		local digest expected_digest algorithm
-> +
-> +		digest=$(echo "$line" | cut -d' ' -f4 | cut -d':' -f2)
-> +		algorithm=$(echo "$line" | cut -d' ' -f4 | cut -d':' -f1)
-> +		src_line=$(echo "$line" | cut -d' ' -f5)
-> +
-> +		echo "$line" | cut -d' ' -f6 | xxd -r -p > $test_file
-> +
-> +		if ! expected_digest="$(compute_digest $algorithm $test_file)"; then
-> +			tst_res TCONF "cannot compute digest for $algorithm"
-> +			echo "1"
-> +			return
-> +		fi
-> +
-> +		if [ "$digest" != "$expected_digest" ]; then
-> +			tst_res TINFO "incorrect digest was found for $src_line $policy_option"
-> +			echo "1"	
-> +			return
-> +		fi
-> +
-> +		if [ "$input_digest" ]; then
-> +			if [ "$digest" = "$input_digest" ]; then
-> +				input_digest_res=0
-> +			fi
-> +		fi
-I'd prefer it as single if:
-        if [ -n "$input_digest" -a "$digest" = "$input_digest" ]; then
-            input_digest_res=0
-        fi
-
-> +
-> +	done < $grep_file
-> +
-> +	if [ "$input_digest" ]; then
-> +		echo "$input_digest_res"
-> +		return
-this return is redundant.
-> +	else
-> +		echo "0"
-> +		return
-Also this one.
-
-> +	fi
-
-And actually, instead of whole if/else block wouldn't be just this enough?
-echo "$input_digest_res"
-
-Isn't it the zero value set in the loop at:
-
-        if [ -n "$input_digest" -a "$digest" = "$input_digest" ]; then
-            input_digest_res=0
-        fi
-
-Kind regards,
-Petr
+FYI, my other main worry beside duplicating nbd is that device mapper
+really is a stacked interface that sits on top of other block device.
+Turning this into something else that just pipes data to userspace
+seems very strange.
 
 --
 dm-devel mailing list
