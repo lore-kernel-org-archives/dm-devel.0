@@ -2,73 +2,64 @@ Return-Path: <SRS0=ovTT=GH=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2A04DC433E0
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6CD80C433E6
 	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:03:51 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3FB5F206A4
+	by mail.kernel.org (Postfix) with ESMTPS id D5C0421D93
 	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:03:50 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3FB5F206A4
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=maciej.szmigiero.name
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D5C0421D93
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-72-6uZ0zM1ZOyCGAjaeEumkkw-1; Mon, 04 Jan 2021 14:03:45 -0500
-X-MC-Unique: 6uZ0zM1ZOyCGAjaeEumkkw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-347-SEHFQfUiM7ivew6055d-Mw-1; Mon, 04 Jan 2021 14:03:47 -0500
+X-MC-Unique: SEHFQfUiM7ivew6055d-Mw-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E5FF9107AD43;
-	Mon,  4 Jan 2021 19:03:40 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 22C74184217A;
+	Mon,  4 Jan 2021 19:03:41 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C111D27C2E;
-	Mon,  4 Jan 2021 19:03:40 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 04FED61F2B;
+	Mon,  4 Jan 2021 19:03:41 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 91AF11809CAD;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C78961809CAF;
 	Mon,  4 Jan 2021 19:03:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BOIrmL9031922 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 24 Dec 2020 13:53:48 -0500
+	id 0BNMlwip014941 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 23 Dec 2020 17:47:58 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1CE802166B2B; Thu, 24 Dec 2020 18:53:48 +0000 (UTC)
+	id 6F2821134CC0; Wed, 23 Dec 2020 22:47:58 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 181E22166B29
-	for <dm-devel@redhat.com>; Thu, 24 Dec 2020 18:53:45 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 33B881134CBF
+	for <dm-devel@redhat.com>; Wed, 23 Dec 2020 22:47:56 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A738D800B3B
-	for <dm-devel@redhat.com>; Thu, 24 Dec 2020 18:53:45 +0000 (UTC)
-Received: from vps-vb.mhejs.net (vps-vb.mhejs.net [37.28.154.113]) (Using
-	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-498-x8INx1EpPFiqmlp7E_G8uQ-1; Thu, 24 Dec 2020 13:53:43 -0500
-X-MC-Unique: x8INx1EpPFiqmlp7E_G8uQ-1
-Received: from MUA by vps-vb.mhejs.net with esmtps
-	(TLS1.2:ECDHE-RSA-AES128-GCM-SHA256:128) (Exim 4.93.0.4)
-	(envelope-from <mail@maciej.szmigiero.name>)
-	id 1ksVjV-0003Ga-OE; Thu, 24 Dec 2020 19:53:05 +0100
-To: Ignat Korchagin <ignat@cloudflare.com>
-References: <16ffadab-42ba-f9c7-8203-87fda3dc9b44@maciej.szmigiero.name>
-	<74c7129b-a437-ebc4-1466-7fb9f034e006@maciej.szmigiero.name>
-	<20201223205642.GA19817@gondor.apana.org.au>
-	<CALrw=nFRLxpG+Qzy=wki1m6HnQUqPK9CQFGEEnB1tjSF0ex4UQ@mail.gmail.com>
-From: "Maciej S. Szmigiero" <mail@maciej.szmigiero.name>
-Message-ID: <f3b3c90e-90e6-9228-f2e5-172997eebf85@maciej.szmigiero.name>
-Date: Thu, 24 Dec 2020 19:52:58 +0100
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
-	Thunderbird/78.6.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EF955186E120
+	for <dm-devel@redhat.com>; Wed, 23 Dec 2020 22:47:55 +0000 (UTC)
+Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
+	by relay.mimecast.com with ESMTP id us-mta-447-PiZiql2QO5CWWlKwlYBW0A-1;
+	Wed, 23 Dec 2020 17:47:53 -0500
+X-MC-Unique: PiZiql2QO5CWWlKwlYBW0A-1
+Received: by mail.kernel.org (Postfix) with ESMTPSA id C3B88224B2;
+	Wed, 23 Dec 2020 22:39:03 +0000 (UTC)
+From: Ard Biesheuvel <ardb@kernel.org>
+To: linux-crypto@vger.kernel.org
+Date: Wed, 23 Dec 2020 23:38:33 +0100
+Message-Id: <20201223223841.11311-3-ardb@kernel.org>
+In-Reply-To: <20201223223841.11311-1-ardb@kernel.org>
+References: <20201223223841.11311-1-ardb@kernel.org>
 MIME-Version: 1.0
-In-Reply-To: <CALrw=nFRLxpG+Qzy=wki1m6HnQUqPK9CQFGEEnB1tjSF0ex4UQ@mail.gmail.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -77,23 +68,17 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 0BNMlwip014941
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Mon, 04 Jan 2021 14:03:12 -0500
-Cc: Damien Le Moal <Damien.LeMoal@wdc.com>,
-	Herbert Xu <herbert@gondor.apana.org.au>,
-	Mike Snitzer <snitzer@redhat.com>,
-	kernel-team <kernel-team@cloudflare.com>, dm-crypt@saout.de,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	Nobuto Murata <nobuto.murata@canonical.com>,
-	Eric Biggers <ebiggers@kernel.org>, Chris Mason <clm@fb.com>,
-	device-mapper development <dm-devel@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	linux-btrfs@vger.kernel.org, David Sterba <dsterba@suse.com>,
-	Josef Bacik <josef@toxicpanda.com>, Alasdair G Kergon <agk@redhat.com>,
-	linux-crypto <linux-crypto@vger.kernel.org>
-Subject: Re: [dm-devel] dm-crypt with no_read_workqueue and
- no_write_workqueue + btrfs scrub = BUG()
+X-Mailman-Approved-At: Mon, 04 Jan 2021 14:03:11 -0500
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, Mike Snitzer <snitzer@redhat.com>,
+	Ard Biesheuvel <ardb@kernel.org>,
+	Eric Biggers <ebiggers@kernel.org>, dm-devel@redhat.com,
+	Milan Broz <gmazyland@gmail.com>, Megha Dey <megha.dey@intel.com>
+Subject: [dm-devel] [RFC PATCH 02/10] crypto: x86/cast6 - switch to XTS
+	template
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -107,51 +92,130 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On 24.12.2020 19:46, Ignat Korchagin wrote:
-> On Wed, Dec 23, 2020 at 8:57 PM Herbert Xu <herbert@gondor.apana.org.au> wrote:
->>
->> On Wed, Dec 23, 2020 at 04:37:34PM +0100, Maciej S. Szmigiero wrote:
->>>
->>> It looks like to me that the skcipher API might not be safe to
->>> call from a softirq context, after all.
->>
->> skcipher is safe to use in a softirq.  The problem is only in
->> dm-crypt where it tries to allocate memory with GFP_NOIO.
-> 
-> Hm.. After eliminating the GFP_NOIO (as well as some other sleeping
-> paths) from dm-crypt softirq code I still hit an occasional crash in
-> my extreme setup (QEMU with 1 CPU and cryptd_max_cpu_qlen set to 1)
-> (decoded with stacktrace_decode.sh):
-(..)
-> This happens when running dm-crypt with no_read_workqueues on top of
-> an emulated NVME in QEMU (NVME driver "completes" IO in IRQ context).
-> Somehow sending decryption requests to cryptd in some fashion in
-> softirq context corrupts the crypto queue it seems.
-
-You can try compiling your test kernel with KASAN, as it often
-immediately points out where the memory starts to get corrupted
-(if that's the bug).
-
-Enabling other "checking" kernel debug options might help debugging
-the root case of this, too.
-
-> Regards,
-> Ignat
-
-Thanks,
-Maciej
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+Tm93IHRoYXQgdGhlIFhUUyB0ZW1wbGF0ZSBjYW4gd3JhcCBhY2NlbGVyYXRlZCBFQ0IgbW9kZXMs
+IGl0IGNhbiBiZQp1c2VkIHRvIGltcGxlbWVudCBDQVNUNiBpbiBYVFMgbW9kZSBhcyB3ZWxsLCB3
+aGljaCB0dXJucyBvdXQgdG8KYmUgYXQgbGVhc3QgYXMgZmFzdCwgYW5kIHNvbWV0aW1lcyBldmVu
+IGZhc3RlcgoKU2lnbmVkLW9mZi1ieTogQXJkIEJpZXNoZXV2ZWwgPGFyZGJAa2VybmVsLm9yZz4K
+LS0tCiBhcmNoL3g4Ni9jcnlwdG8vY2FzdDYtYXZ4LXg4Nl82NC1hc21fNjQuUyB8IDU2IC0tLS0t
+LS0tLS0tCiBhcmNoL3g4Ni9jcnlwdG8vY2FzdDZfYXZ4X2dsdWUuYyAgICAgICAgICB8IDk4IC0t
+LS0tLS0tLS0tLS0tLS0tLS0tCiAyIGZpbGVzIGNoYW5nZWQsIDE1NCBkZWxldGlvbnMoLSkKCmRp
+ZmYgLS1naXQgYS9hcmNoL3g4Ni9jcnlwdG8vY2FzdDYtYXZ4LXg4Nl82NC1hc21fNjQuUyBiL2Fy
+Y2gveDg2L2NyeXB0by9jYXN0Ni1hdngteDg2XzY0LWFzbV82NC5TCmluZGV4IDkzMmEzY2UzMmE4
+OC4uMGMxZWE4MzYyMTVhIDEwMDY0NAotLS0gYS9hcmNoL3g4Ni9jcnlwdG8vY2FzdDYtYXZ4LXg4
+Nl82NC1hc21fNjQuUworKysgYi9hcmNoL3g4Ni9jcnlwdG8vY2FzdDYtYXZ4LXg4Nl82NC1hc21f
+NjQuUwpAQCAtMjEyLDggKzIxMiw2IEBACiAKIC5zZWN0aW9uCS5yb2RhdGEuY3N0MTYsICJhTSIs
+IEBwcm9nYml0cywgMTYKIC5hbGlnbiAxNgotLkx4dHNfZ2YxMjhtdWxfYW5kX3NobDFfbWFzazoK
+LQkuYnl0ZSAweDg3LCAwLCAwLCAwLCAwLCAwLCAwLCAwLCAxLCAwLCAwLCAwLCAwLCAwLCAwLCAw
+CiAuTGJzd2FwX21hc2s6CiAJLmJ5dGUgMywgMiwgMSwgMCwgNywgNiwgNSwgNCwgMTEsIDEwLCA5
+LCA4LCAxNSwgMTQsIDEzLCAxMgogLkxic3dhcDEyOF9tYXNrOgpAQCAtNDQwLDU3ICs0MzgsMyBA
+QCBTWU1fRlVOQ19TVEFSVChjYXN0Nl9jdHJfOHdheSkKIAlGUkFNRV9FTkQKIAlyZXQ7CiBTWU1f
+RlVOQ19FTkQoY2FzdDZfY3RyXzh3YXkpCi0KLVNZTV9GVU5DX1NUQVJUKGNhc3Q2X3h0c19lbmNf
+OHdheSkKLQkvKiBpbnB1dDoKLQkgKgklcmRpOiBjdHgsIENUWAotCSAqCSVyc2k6IGRzdAotCSAq
+CSVyZHg6IHNyYwotCSAqCSVyY3g6IGl2ICh0IOKKlSDOseKBvyDiiIggR0YoMsK5wrLigbgpKQot
+CSAqLwotCUZSQU1FX0JFR0lOCi0JcHVzaHEgJXIxNTsKLQotCW1vdnEgJXJkaSwgQ1RYCi0JbW92
+cSAlcnNpLCAlcjExOwotCi0JLyogcmVncyA8PSBzcmMsIGRzdCA8PSBJVnMsIHJlZ3MgPD0gcmVn
+cyB4b3IgSVZzICovCi0JbG9hZF94dHNfOHdheSglcmN4LCAlcmR4LCAlcnNpLCBSQTEsIFJCMSwg
+UkMxLCBSRDEsIFJBMiwgUkIyLCBSQzIsIFJEMiwKLQkJICAgICAgUlgsIFJLUiwgUktNLCAuTHh0
+c19nZjEyOG11bF9hbmRfc2hsMV9tYXNrKTsKLQotCWNhbGwgX19jYXN0Nl9lbmNfYmxrODsKLQot
+CS8qIGRzdCA8PSByZWdzIHhvciBJVnMoaW4gZHN0KSAqLwotCXN0b3JlX3h0c184d2F5KCVyMTEs
+IFJBMSwgUkIxLCBSQzEsIFJEMSwgUkEyLCBSQjIsIFJDMiwgUkQyKTsKLQotCXBvcHEgJXIxNTsK
+LQlGUkFNRV9FTkQKLQlyZXQ7Ci1TWU1fRlVOQ19FTkQoY2FzdDZfeHRzX2VuY184d2F5KQotCi1T
+WU1fRlVOQ19TVEFSVChjYXN0Nl94dHNfZGVjXzh3YXkpCi0JLyogaW5wdXQ6Ci0JICoJJXJkaTog
+Y3R4LCBDVFgKLQkgKgklcnNpOiBkc3QKLQkgKgklcmR4OiBzcmMKLQkgKgklcmN4OiBpdiAodCDi
+ipUgzrHigb8g4oiIIEdGKDLCucKy4oG4KSkKLQkgKi8KLQlGUkFNRV9CRUdJTgotCXB1c2hxICVy
+MTU7Ci0KLQltb3ZxICVyZGksIENUWAotCW1vdnEgJXJzaSwgJXIxMTsKLQotCS8qIHJlZ3MgPD0g
+c3JjLCBkc3QgPD0gSVZzLCByZWdzIDw9IHJlZ3MgeG9yIElWcyAqLwotCWxvYWRfeHRzXzh3YXko
+JXJjeCwgJXJkeCwgJXJzaSwgUkExLCBSQjEsIFJDMSwgUkQxLCBSQTIsIFJCMiwgUkMyLCBSRDIs
+Ci0JCSAgICAgIFJYLCBSS1IsIFJLTSwgLkx4dHNfZ2YxMjhtdWxfYW5kX3NobDFfbWFzayk7Ci0K
+LQljYWxsIF9fY2FzdDZfZGVjX2Jsazg7Ci0KLQkvKiBkc3QgPD0gcmVncyB4b3IgSVZzKGluIGRz
+dCkgKi8KLQlzdG9yZV94dHNfOHdheSglcjExLCBSQTEsIFJCMSwgUkMxLCBSRDEsIFJBMiwgUkIy
+LCBSQzIsIFJEMik7Ci0KLQlwb3BxICVyMTU7Ci0JRlJBTUVfRU5ECi0JcmV0OwotU1lNX0ZVTkNf
+RU5EKGNhc3Q2X3h0c19kZWNfOHdheSkKZGlmZiAtLWdpdCBhL2FyY2gveDg2L2NyeXB0by9jYXN0
+Nl9hdnhfZ2x1ZS5jIGIvYXJjaC94ODYvY3J5cHRvL2Nhc3Q2X2F2eF9nbHVlLmMKaW5kZXggNDhl
+MGYzNzc5NmZhLi41YTIxZDNlOTA0MWMgMTAwNjQ0Ci0tLSBhL2FyY2gveDg2L2NyeXB0by9jYXN0
+Nl9hdnhfZ2x1ZS5jCisrKyBiL2FyY2gveDg2L2NyeXB0by9jYXN0Nl9hdnhfZ2x1ZS5jCkBAIC0x
+NSw3ICsxNSw2IEBACiAjaW5jbHVkZSA8Y3J5cHRvL2FsZ2FwaS5oPgogI2luY2x1ZGUgPGNyeXB0
+by9jYXN0Ni5oPgogI2luY2x1ZGUgPGNyeXB0by9pbnRlcm5hbC9zaW1kLmg+Ci0jaW5jbHVkZSA8
+Y3J5cHRvL3h0cy5oPgogI2luY2x1ZGUgPGFzbS9jcnlwdG8vZ2x1ZV9oZWxwZXIuaD4KIAogI2Rl
+ZmluZSBDQVNUNl9QQVJBTExFTF9CTE9DS1MgOApAQCAtMjcsMjcgKzI2LDEyIEBAIGFzbWxpbmth
+Z2Ugdm9pZCBjYXN0Nl9jYmNfZGVjXzh3YXkoY29uc3Qgdm9pZCAqY3R4LCB1OCAqZHN0LCBjb25z
+dCB1OCAqc3JjKTsKIGFzbWxpbmthZ2Ugdm9pZCBjYXN0Nl9jdHJfOHdheShjb25zdCB2b2lkICpj
+dHgsIHU4ICpkc3QsIGNvbnN0IHU4ICpzcmMsCiAJCQkgICAgICAgbGUxMjggKml2KTsKIAotYXNt
+bGlua2FnZSB2b2lkIGNhc3Q2X3h0c19lbmNfOHdheShjb25zdCB2b2lkICpjdHgsIHU4ICpkc3Qs
+IGNvbnN0IHU4ICpzcmMsCi0JCQkJICAgbGUxMjggKml2KTsKLWFzbWxpbmthZ2Ugdm9pZCBjYXN0
+Nl94dHNfZGVjXzh3YXkoY29uc3Qgdm9pZCAqY3R4LCB1OCAqZHN0LCBjb25zdCB1OCAqc3JjLAot
+CQkJCSAgIGxlMTI4ICppdik7Ci0KIHN0YXRpYyBpbnQgY2FzdDZfc2V0a2V5X3NrY2lwaGVyKHN0
+cnVjdCBjcnlwdG9fc2tjaXBoZXIgKnRmbSwKIAkJCQkgY29uc3QgdTggKmtleSwgdW5zaWduZWQg
+aW50IGtleWxlbikKIHsKIAlyZXR1cm4gY2FzdDZfc2V0a2V5KCZ0Zm0tPmJhc2UsIGtleSwga2V5
+bGVuKTsKIH0KIAotc3RhdGljIHZvaWQgY2FzdDZfeHRzX2VuYyhjb25zdCB2b2lkICpjdHgsIHU4
+ICpkc3QsIGNvbnN0IHU4ICpzcmMsIGxlMTI4ICppdikKLXsKLQlnbHVlX3h0c19jcnlwdF8xMjhi
+aXRfb25lKGN0eCwgZHN0LCBzcmMsIGl2LCBfX2Nhc3Q2X2VuY3J5cHQpOwotfQotCi1zdGF0aWMg
+dm9pZCBjYXN0Nl94dHNfZGVjKGNvbnN0IHZvaWQgKmN0eCwgdTggKmRzdCwgY29uc3QgdTggKnNy
+YywgbGUxMjggKml2KQotewotCWdsdWVfeHRzX2NyeXB0XzEyOGJpdF9vbmUoY3R4LCBkc3QsIHNy
+YywgaXYsIF9fY2FzdDZfZGVjcnlwdCk7Ci19Ci0KIHN0YXRpYyB2b2lkIGNhc3Q2X2NyeXB0X2N0
+cihjb25zdCB2b2lkICpjdHgsIHU4ICpkLCBjb25zdCB1OCAqcywgbGUxMjggKml2KQogewogCWJl
+MTI4IGN0cmJsazsKQEAgLTg3LDE5ICs3MSw2IEBAIHN0YXRpYyBjb25zdCBzdHJ1Y3QgY29tbW9u
+X2dsdWVfY3R4IGNhc3Q2X2N0ciA9IHsKIAl9IH0KIH07CiAKLXN0YXRpYyBjb25zdCBzdHJ1Y3Qg
+Y29tbW9uX2dsdWVfY3R4IGNhc3Q2X2VuY194dHMgPSB7Ci0JLm51bV9mdW5jcyA9IDIsCi0JLmZw
+dV9ibG9ja3NfbGltaXQgPSBDQVNUNl9QQVJBTExFTF9CTE9DS1MsCi0KLQkuZnVuY3MgPSB7IHsK
+LQkJLm51bV9ibG9ja3MgPSBDQVNUNl9QQVJBTExFTF9CTE9DS1MsCi0JCS5mbl91ID0geyAueHRz
+ID0gY2FzdDZfeHRzX2VuY184d2F5IH0KLQl9LCB7Ci0JCS5udW1fYmxvY2tzID0gMSwKLQkJLmZu
+X3UgPSB7IC54dHMgPSBjYXN0Nl94dHNfZW5jIH0KLQl9IH0KLX07Ci0KIHN0YXRpYyBjb25zdCBz
+dHJ1Y3QgY29tbW9uX2dsdWVfY3R4IGNhc3Q2X2RlYyA9IHsKIAkubnVtX2Z1bmNzID0gMiwKIAku
+ZnB1X2Jsb2Nrc19saW1pdCA9IENBU1Q2X1BBUkFMTEVMX0JMT0NLUywKQEAgLTEyNiwxOSArOTcs
+NiBAQCBzdGF0aWMgY29uc3Qgc3RydWN0IGNvbW1vbl9nbHVlX2N0eCBjYXN0Nl9kZWNfY2JjID0g
+ewogCX0gfQogfTsKIAotc3RhdGljIGNvbnN0IHN0cnVjdCBjb21tb25fZ2x1ZV9jdHggY2FzdDZf
+ZGVjX3h0cyA9IHsKLQkubnVtX2Z1bmNzID0gMiwKLQkuZnB1X2Jsb2Nrc19saW1pdCA9IENBU1Q2
+X1BBUkFMTEVMX0JMT0NLUywKLQotCS5mdW5jcyA9IHsgewotCQkubnVtX2Jsb2NrcyA9IENBU1Q2
+X1BBUkFMTEVMX0JMT0NLUywKLQkJLmZuX3UgPSB7IC54dHMgPSBjYXN0Nl94dHNfZGVjXzh3YXkg
+fQotCX0sIHsKLQkJLm51bV9ibG9ja3MgPSAxLAotCQkuZm5fdSA9IHsgLnh0cyA9IGNhc3Q2X3h0
+c19kZWMgfQotCX0gfQotfTsKLQogc3RhdGljIGludCBlY2JfZW5jcnlwdChzdHJ1Y3Qgc2tjaXBo
+ZXJfcmVxdWVzdCAqcmVxKQogewogCXJldHVybiBnbHVlX2VjYl9yZXFfMTI4Yml0KCZjYXN0Nl9l
+bmMsIHJlcSk7CkBAIC0xNjQsNDggKzEyMiw2IEBAIHN0YXRpYyBpbnQgY3RyX2NyeXB0KHN0cnVj
+dCBza2NpcGhlcl9yZXF1ZXN0ICpyZXEpCiAJcmV0dXJuIGdsdWVfY3RyX3JlcV8xMjhiaXQoJmNh
+c3Q2X2N0ciwgcmVxKTsKIH0KIAotc3RydWN0IGNhc3Q2X3h0c19jdHggewotCXN0cnVjdCBjYXN0
+Nl9jdHggdHdlYWtfY3R4OwotCXN0cnVjdCBjYXN0Nl9jdHggY3J5cHRfY3R4OwotfTsKLQotc3Rh
+dGljIGludCB4dHNfY2FzdDZfc2V0a2V5KHN0cnVjdCBjcnlwdG9fc2tjaXBoZXIgKnRmbSwgY29u
+c3QgdTggKmtleSwKLQkJCSAgICB1bnNpZ25lZCBpbnQga2V5bGVuKQotewotCXN0cnVjdCBjYXN0
+Nl94dHNfY3R4ICpjdHggPSBjcnlwdG9fc2tjaXBoZXJfY3R4KHRmbSk7Ci0JaW50IGVycjsKLQot
+CWVyciA9IHh0c192ZXJpZnlfa2V5KHRmbSwga2V5LCBrZXlsZW4pOwotCWlmIChlcnIpCi0JCXJl
+dHVybiBlcnI7Ci0KLQkvKiBmaXJzdCBoYWxmIG9mIHh0cy1rZXkgaXMgZm9yIGNyeXB0ICovCi0J
+ZXJyID0gX19jYXN0Nl9zZXRrZXkoJmN0eC0+Y3J5cHRfY3R4LCBrZXksIGtleWxlbiAvIDIpOwot
+CWlmIChlcnIpCi0JCXJldHVybiBlcnI7Ci0KLQkvKiBzZWNvbmQgaGFsZiBvZiB4dHMta2V5IGlz
+IGZvciB0d2VhayAqLwotCXJldHVybiBfX2Nhc3Q2X3NldGtleSgmY3R4LT50d2Vha19jdHgsIGtl
+eSArIGtleWxlbiAvIDIsIGtleWxlbiAvIDIpOwotfQotCi1zdGF0aWMgaW50IHh0c19lbmNyeXB0
+KHN0cnVjdCBza2NpcGhlcl9yZXF1ZXN0ICpyZXEpCi17Ci0Jc3RydWN0IGNyeXB0b19za2NpcGhl
+ciAqdGZtID0gY3J5cHRvX3NrY2lwaGVyX3JlcXRmbShyZXEpOwotCXN0cnVjdCBjYXN0Nl94dHNf
+Y3R4ICpjdHggPSBjcnlwdG9fc2tjaXBoZXJfY3R4KHRmbSk7Ci0KLQlyZXR1cm4gZ2x1ZV94dHNf
+cmVxXzEyOGJpdCgmY2FzdDZfZW5jX3h0cywgcmVxLCBfX2Nhc3Q2X2VuY3J5cHQsCi0JCQkJICAg
+JmN0eC0+dHdlYWtfY3R4LCAmY3R4LT5jcnlwdF9jdHgsIGZhbHNlKTsKLX0KLQotc3RhdGljIGlu
+dCB4dHNfZGVjcnlwdChzdHJ1Y3Qgc2tjaXBoZXJfcmVxdWVzdCAqcmVxKQotewotCXN0cnVjdCBj
+cnlwdG9fc2tjaXBoZXIgKnRmbSA9IGNyeXB0b19za2NpcGhlcl9yZXF0Zm0ocmVxKTsKLQlzdHJ1
+Y3QgY2FzdDZfeHRzX2N0eCAqY3R4ID0gY3J5cHRvX3NrY2lwaGVyX2N0eCh0Zm0pOwotCi0JcmV0
+dXJuIGdsdWVfeHRzX3JlcV8xMjhiaXQoJmNhc3Q2X2RlY194dHMsIHJlcSwgX19jYXN0Nl9lbmNy
+eXB0LAotCQkJCSAgICZjdHgtPnR3ZWFrX2N0eCwgJmN0eC0+Y3J5cHRfY3R4LCB0cnVlKTsKLX0K
+LQogc3RhdGljIHN0cnVjdCBza2NpcGhlcl9hbGcgY2FzdDZfYWxnc1tdID0gewogCXsKIAkJLmJh
+c2UuY3JhX25hbWUJCT0gIl9fZWNiKGNhc3Q2KSIsCkBAIC0yNDksMjAgKzE2NSw2IEBAIHN0YXRp
+YyBzdHJ1Y3Qgc2tjaXBoZXJfYWxnIGNhc3Q2X2FsZ3NbXSA9IHsKIAkJLnNldGtleQkJCT0gY2Fz
+dDZfc2V0a2V5X3NrY2lwaGVyLAogCQkuZW5jcnlwdAkJPSBjdHJfY3J5cHQsCiAJCS5kZWNyeXB0
+CQk9IGN0cl9jcnlwdCwKLQl9LCB7Ci0JCS5iYXNlLmNyYV9uYW1lCQk9ICJfX3h0cyhjYXN0Niki
+LAotCQkuYmFzZS5jcmFfZHJpdmVyX25hbWUJPSAiX194dHMtY2FzdDYtYXZ4IiwKLQkJLmJhc2Uu
+Y3JhX3ByaW9yaXR5CT0gMjAwLAotCQkuYmFzZS5jcmFfZmxhZ3MJCT0gQ1JZUFRPX0FMR19JTlRF
+Uk5BTCwKLQkJLmJhc2UuY3JhX2Jsb2Nrc2l6ZQk9IENBU1Q2X0JMT0NLX1NJWkUsCi0JCS5iYXNl
+LmNyYV9jdHhzaXplCT0gc2l6ZW9mKHN0cnVjdCBjYXN0Nl94dHNfY3R4KSwKLQkJLmJhc2UuY3Jh
+X21vZHVsZQk9IFRISVNfTU9EVUxFLAotCQkubWluX2tleXNpemUJCT0gMiAqIENBU1Q2X01JTl9L
+RVlfU0laRSwKLQkJLm1heF9rZXlzaXplCQk9IDIgKiBDQVNUNl9NQVhfS0VZX1NJWkUsCi0JCS5p
+dnNpemUJCQk9IENBU1Q2X0JMT0NLX1NJWkUsCi0JCS5zZXRrZXkJCQk9IHh0c19jYXN0Nl9zZXRr
+ZXksCi0JCS5lbmNyeXB0CQk9IHh0c19lbmNyeXB0LAotCQkuZGVjcnlwdAkJPSB4dHNfZGVjcnlw
+dCwKIAl9LAogfTsKIAotLSAKMi4xNy4xCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
+dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly93d3cucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
+LWRldmVs
 
