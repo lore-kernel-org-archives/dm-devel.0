@@ -2,114 +2,72 @@ Return-Path: <SRS0=ovTT=GH=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DBD90C433DB
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DAB04C433E0
 	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:20 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 43F5D2068D
+	by mail.kernel.org (Postfix) with ESMTPS id 4E86821D93
 	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:20 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 43F5D2068D
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.ibm.com
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4E86821D93
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-112-ZIpcSDqGPza_nqnVvuD_Pg-1; Mon, 04 Jan 2021 14:04:13 -0500
-X-MC-Unique: ZIpcSDqGPza_nqnVvuD_Pg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-45-8nL5RCOYNUWvAGNqAc5fCQ-1; Mon, 04 Jan 2021 14:04:15 -0500
+X-MC-Unique: 8nL5RCOYNUWvAGNqAc5fCQ-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 70C949CC1E;
-	Mon,  4 Jan 2021 19:04:05 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4F73E27C50;
-	Mon,  4 Jan 2021 19:04:05 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F0E06107AD3C;
+	Mon,  4 Jan 2021 19:03:54 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D3ABB60C04;
+	Mon,  4 Jan 2021 19:03:54 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1F8F61809CBE;
-	Mon,  4 Jan 2021 19:04:05 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A8C975003F;
+	Mon,  4 Jan 2021 19:03:54 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BOD6ciH032309 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 24 Dec 2020 08:06:38 -0500
+	id 0BNBQeL3019579 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 23 Dec 2020 06:26:40 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 060E12026D11; Thu, 24 Dec 2020 13:06:38 +0000 (UTC)
+	id 05B1D94629; Wed, 23 Dec 2020 11:26:40 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 00E602026D76
-	for <dm-devel@redhat.com>; Thu, 24 Dec 2020 13:06:35 +0000 (UTC)
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F3B609462A
+	for <dm-devel@redhat.com>; Wed, 23 Dec 2020 11:26:36 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8B131185A794
-	for <dm-devel@redhat.com>; Thu, 24 Dec 2020 13:06:35 +0000 (UTC)
-Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com
-	[148.163.156.1]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-212-jNg4EKXZO2G8Y2b281S76w-1; Thu, 24 Dec 2020 08:06:33 -0500
-X-MC-Unique: jNg4EKXZO2G8Y2b281S76w-1
-Received: from pps.filterd (m0098410.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.16.0.42/8.16.0.42) with SMTP id
-	0BOD2aWl134882; Thu, 24 Dec 2020 08:06:31 -0500
-Received: from pps.reinject (localhost [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com with ESMTP id 35mtdk9enj-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
-	verify=NOT); Thu, 24 Dec 2020 08:06:31 -0500
-Received: from m0098410.ppops.net (m0098410.ppops.net [127.0.0.1])
-	by pps.reinject (8.16.0.36/8.16.0.36) with SMTP id 0BOD3D5G137112;
-	Thu, 24 Dec 2020 08:06:31 -0500
-Received: from ppma04ams.nl.ibm.com (63.31.33a9.ip4.static.sl-reverse.com
-	[169.51.49.99])
-	by mx0a-001b2d01.pphosted.com with ESMTP id 35mtdk9emr-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
-	verify=NOT); Thu, 24 Dec 2020 08:06:31 -0500
-Received: from pps.filterd (ppma04ams.nl.ibm.com [127.0.0.1])
-	by ppma04ams.nl.ibm.com (8.16.0.42/8.16.0.42) with SMTP id
-	0BOD27lf022354; Thu, 24 Dec 2020 13:06:28 GMT
-Received: from b06avi18626390.portsmouth.uk.ibm.com
-	(b06avi18626390.portsmouth.uk.ibm.com [9.149.26.192])
-	by ppma04ams.nl.ibm.com with ESMTP id 35kwqkhb2a-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
-	verify=NOT); Thu, 24 Dec 2020 13:06:28 +0000
-Received: from d06av25.portsmouth.uk.ibm.com (d06av25.portsmouth.uk.ibm.com
-	[9.149.105.61])
-	by b06avi18626390.portsmouth.uk.ibm.com (8.14.9/8.14.9/NCO v10.0) with
-	ESMTP id 0BOD6PfE24052042
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256
-	verify=OK); Thu, 24 Dec 2020 13:06:25 GMT
-Received: from d06av25.portsmouth.uk.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 8B9E911C050;
-	Thu, 24 Dec 2020 13:06:26 +0000 (GMT)
-Received: from d06av25.portsmouth.uk.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id E099111C04A;
-	Thu, 24 Dec 2020 13:06:23 +0000 (GMT)
-Received: from li-f45666cc-3089-11b2-a85c-c57d1a57929f.ibm.com (unknown
-	[9.160.1.132]) by d06av25.portsmouth.uk.ibm.com (Postfix) with ESMTP;
-	Thu, 24 Dec 2020 13:06:23 +0000 (GMT)
-Message-ID: <acec2f96b5fa5ae8fb0e12e76f508cf6e7f7ec97.camel@linux.ibm.com>
-From: Mimi Zohar <zohar@linux.ibm.com>
-To: Tushar Sugandhi <tusharsu@linux.microsoft.com>,
-	stephen.smalley.work@gmail.com, casey@schaufler-ca.com, agk@redhat.com, 
-	snitzer@redhat.com, gmazyland@gmail.com, paul@paul-moore.com
-Date: Thu, 24 Dec 2020 08:06:22 -0500
-In-Reply-To: <20201212180251.9943-2-tusharsu@linux.microsoft.com>
-References: <20201212180251.9943-1-tusharsu@linux.microsoft.com>
-	<20201212180251.9943-2-tusharsu@linux.microsoft.com>
-Mime-Version: 1.0
-X-TM-AS-GCONF: 00
-X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.343, 18.0.737
-	definitions=2020-12-24_08:2020-12-24,
-	2020-12-24 signatures=0
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
-	phishscore=0 bulkscore=0
-	malwarescore=0 adultscore=0 mlxlogscore=999 clxscore=1015 mlxscore=0
-	lowpriorityscore=0 suspectscore=0 impostorscore=0 spamscore=0
-	priorityscore=1501 classifier=spam adjust=0 reason=mlx scancount=1
-	engine=8.12.0-2009150000 definitions=main-2012240079
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 462C08007D9
+	for <dm-devel@redhat.com>; Wed, 23 Dec 2020 11:26:36 +0000 (UTC)
+Received: from out30-130.freemail.mail.aliyun.com
+	(out30-130.freemail.mail.aliyun.com [115.124.30.130]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-176-65Be3-sfPQOMs8RWedjGiQ-1;
+	Wed, 23 Dec 2020 06:26:31 -0500
+X-MC-Unique: 65Be3-sfPQOMs8RWedjGiQ-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R171e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04394;
+	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=4; SR=0;
+	TI=SMTPD_---0UJXV94N_1608722786
+Received: from localhost(mailfrom:jefflexu@linux.alibaba.com
+	fp:SMTPD_---0UJXV94N_1608722786) by smtp.aliyun-inc.com(127.0.0.1);
+	Wed, 23 Dec 2020 19:26:27 +0800
+From: Jeffle Xu <jefflexu@linux.alibaba.com>
+To: snitzer@redhat.com
+Date: Wed, 23 Dec 2020 19:26:23 +0800
+Message-Id: <20201223112624.78955-7-jefflexu@linux.alibaba.com>
+In-Reply-To: <20201223112624.78955-1-jefflexu@linux.alibaba.com>
+References: <20201223112624.78955-1-jefflexu@linux.alibaba.com>
+MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -118,15 +76,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 04 Jan 2021 14:03:12 -0500
-Cc: sashal@kernel.org, dm-devel@redhat.com, selinux@vger.kernel.org,
-	jmorris@namei.org, linux-kernel@vger.kernel.org,
-	nramas@linux.microsoft.com, linux-security-module@vger.kernel.org,
-	tyhicks@linux.microsoft.com, linux-integrity@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH v9 1/8] IMA: generalize keyring specific
- measurement constructs
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, io-uring@vger.kernel.org
+Subject: [dm-devel] [PATCH RFC 6/7] block: track cookies of split bios for
+	bio-based device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -140,7 +95,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -148,150 +103,241 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sat, 2020-12-12 at 10:02 -0800, Tushar Sugandhi wrote:
-> 
-> diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
-> index 68956e884403..e76ef4bfd0f4 100644
-> --- a/security/integrity/ima/ima_main.c
-> +++ b/security/integrity/ima/ima_main.c
-> @@ -786,13 +786,13 @@ int ima_post_load_data(char *buf, loff_t size,
->   * @eventname: event name to be used for the buffer entry.
->   * @func: IMA hook
->   * @pcr: pcr to extend the measurement
-> - * @keyring: keyring name to determine the action to be performed
-> + * @func_data: private data specific to @func, can be NULL.
+This is actuaaly the core when supporting iopoll for bio-based device.
 
-This can be simplified to "func specific data, may be NULL".   Please
-update in all places.
+A list is maintained in the top bio (the original bio submitted to dm
+device), which is used to maintain all valid cookies of split bios. The
+IO polling routine will actually iterate this list and poll on
+corresponding hardware queues of the underlying mq devices.
 
->   *
->   * Based on policy, the buffer is measured into the ima log.
->   */
->  void process_buffer_measurement(struct inode *inode, const void *buf, int size,
->  				const char *eventname, enum ima_hooks func,
-> -				int pcr, const char *keyring)
-> +				int pcr, const char *func_data)
->  {
->  	int ret = 0;
->  	const char *audit_cause = "ENOMEM";
-> @@ -831,7 +831,7 @@ void process_buffer_measurement(struct inode *inode, const void *buf, int size,
->  	if (func) {
->  		security_task_getsecid(current, &secid);
->  		action = ima_get_action(inode, current_cred(), secid, 0, func,
-> -					&pcr, &template, keyring);
-> +					&pcr, &template, func_data);
->  		if (!(action & IMA_MEASURE))
->  			return;
->  	}
-> diff --git a/security/integrity/ima/ima_policy.c b/security/integrity/ima/ima_policy.c
-> index 823a0c1379cb..a09d1a41a290 100644
-> --- a/security/integrity/ima/ima_policy.c
-> +++ b/security/integrity/ima/ima_policy.c
-> @@ -453,30 +453,41 @@ int ima_lsm_policy_change(struct notifier_block *nb, unsigned long event,
->  }
->  
->  /**
-> - * ima_match_keyring - determine whether the keyring matches the measure rule
-> - * @rule: a pointer to a rule
-> - * @keyring: name of the keyring to match against the measure rule
-> + * ima_match_rule_data - determine whether the given func_data matches
-> + *			 the measure rule data
+Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+---
+ block/bio.c               |  8 ++++
+ block/blk-core.c          | 84 ++++++++++++++++++++++++++++++++++++++-
+ include/linux/blk_types.h | 39 ++++++++++++++++++
+ 3 files changed, 129 insertions(+), 2 deletions(-)
 
-After the function_name is a brief description of the function, which
-should not span multiple lines.  Refer to Documentation/doc-
-guide/kernel-doc.rst for details. 
-
-Please trim the function description to:
-determine whether func_data matches the policy rule
-
-> + * @rule: IMA policy rule
-
-This patch should be limited to renaming "keyring" to "func_data".   It
-shouldn't make other changes, even simple ones like this.
-
-> + * @func_data: data to match against the measure rule data
->   * @cred: a pointer to a credentials structure for user validation
->   *
-> - * Returns true if keyring matches one in the rule, false otherwise.
-> + * Returns true if func_data matches one in the rule, false otherwise.
->   */
-> -static bool ima_match_keyring(struct ima_rule_entry *rule,
-> -			      const char *keyring, const struct cred *cred)
-> +static bool ima_match_rule_data(struct ima_rule_entry *rule,
-> +				const char *func_data,
-> +				const struct cred *cred)
->  {
-> +	const struct ima_rule_opt_list *opt_list = NULL;
->  	bool matched = false;
->  	size_t i;
->  
->  	if ((rule->flags & IMA_UID) && !rule->uid_op(cred->uid, rule->uid))
->  		return false;
->  
-> -	if (!rule->keyrings)
-> -		return true;
-> +	switch (rule->func) {
-> +	case KEY_CHECK:
-> +		if (!rule->keyrings)
-> +			return true;
-> +
-> +		opt_list = rule->keyrings;
-> +		break;
-> +	default:
-> +		return false;
-> +	}
->  
-> -	if (!keyring)
-> +	if (!func_data)
->  		return false;
->  
-> -	for (i = 0; i < rule->keyrings->count; i++) {
-> -		if (!strcmp(rule->keyrings->items[i], keyring)) {
-> +	for (i = 0; i < opt_list->count; i++) {
-> +		if (!strcmp(opt_list->items[i], func_data)) {
->  			matched = true;
->  			break;
->  		}
-> @@ -493,20 +504,20 @@ static bool ima_match_keyring(struct ima_rule_entry *rule,
->   * @secid: the secid of the task to be validated
->   * @func: LIM hook identifier
->   * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC)
-> - * @keyring: keyring name to check in policy for KEY_CHECK func
-> + * @func_data: private data specific to @func, can be NULL.
-
-Update as previously suggested.
-
->   *
->   * Returns true on rule match, false on failure.
->   */
->  static bool ima_match_rules(struct ima_rule_entry *rule, struct inode *inode,
->  			    const struct cred *cred, u32 secid,
->  			    enum ima_hooks func, int mask,
-> -			    const char *keyring)
-> +			    const char *func_data)
->  {
->  	int i;
->  
->  	if (func == KEY_CHECK) {
->  		return (rule->flags & IMA_FUNC) && (rule->func == func) &&
-> -		       ima_match_keyring(rule, keyring, cred);
-> +			ima_match_rule_data(rule, func_data, cred);
->  	}
->  	if ((rule->flags & IMA_FUNC) &&
->  	    (rule->func != func && func != POST_SETATTR))
-> @@ -610,8 +621,7 @@ static int get_subaction(struct ima_rule_entry *rule, enum ima_hooks func)
->   * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC)
->   * @pcr: set the pcr to extend
->   * @template_desc: the template that should be used for this rule
-> - * @keyring: the keyring name, if given, to be used to check in the policy.
-> - *           keyring can be NULL if func is anything other than KEY_CHECK.
-> + * @func_data: private data specific to @func, can be NULL.
-
-And again here.
-
-thanks,
-
-Mimi
+diff --git a/block/bio.c b/block/bio.c
+index 1f2cc1fbe283..ca6d1a7ee196 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -284,6 +284,10 @@ void bio_init(struct bio *bio, struct bio_vec *table,
+ 
+ 	bio->bi_io_vec = table;
+ 	bio->bi_max_vecs = max_vecs;
++
++	INIT_LIST_HEAD(&bio->bi_plist);
++	INIT_LIST_HEAD(&bio->bi_pnode);
++	spin_lock_init(&bio->bi_plock);
+ }
+ EXPORT_SYMBOL(bio_init);
+ 
+@@ -689,6 +693,7 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
+ 	bio->bi_write_hint = bio_src->bi_write_hint;
+ 	bio->bi_iter = bio_src->bi_iter;
+ 	bio->bi_io_vec = bio_src->bi_io_vec;
++	bio->bi_root = bio_src->bi_root;
+ 
+ 	bio_clone_blkg_association(bio, bio_src);
+ 	blkcg_bio_issue_init(bio);
+@@ -1425,6 +1430,8 @@ void bio_endio(struct bio *bio)
+ 	if (bio->bi_disk)
+ 		rq_qos_done_bio(bio->bi_disk->queue, bio);
+ 
++	bio_del_poll_list(bio);
++
+ 	/*
+ 	 * Need to have a real endio function for chained bios, otherwise
+ 	 * various corner cases will break (like stacking block devices that
+@@ -1446,6 +1453,7 @@ void bio_endio(struct bio *bio)
+ 	blk_throtl_bio_endio(bio);
+ 	/* release cgroup info */
+ 	bio_uninit(bio);
++
+ 	if (bio->bi_end_io)
+ 		bio->bi_end_io(bio);
+ }
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 2f5c51ce32e3..5a332af01939 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -960,12 +960,31 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
+ {
+ 	struct bio_list bio_list_on_stack[2];
+ 	blk_qc_t ret = BLK_QC_T_NONE;
++	bool iopoll;
++	struct bio *root;
+ 
+ 	BUG_ON(bio->bi_next);
+ 
+ 	bio_list_init(&bio_list_on_stack[0]);
+ 	current->bio_list = bio_list_on_stack;
+ 
++	iopoll = test_bit(QUEUE_FLAG_POLL, &bio->bi_disk->queue->queue_flags);
++	iopoll = iopoll && (bio->bi_opf & REQ_HIPRI);
++
++	if (iopoll) {
++		bio->bi_root = root = bio;
++		/*
++		 * We need to pin root bio here since there's a reference from
++		 * the returned cookie. bio_get() is not enough since the whole
++		 * bio and the corresponding kiocb/dio may have already
++		 * completed and thus won't call blk_poll() at all, in which
++		 * case the pairing bio_put() in blk_bio_poll() won't be called.
++		 * The side effect of bio_inc_remaining() is that, the whole bio
++		 * won't complete until blk_poll() called.
++		 */
++		bio_inc_remaining(root);
++	}
++
+ 	do {
+ 		struct request_queue *q = bio->bi_disk->queue;
+ 		struct bio_list lower, same;
+@@ -979,7 +998,18 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
+ 		bio_list_on_stack[1] = bio_list_on_stack[0];
+ 		bio_list_init(&bio_list_on_stack[0]);
+ 
+-		ret = __submit_bio(bio);
++		if (iopoll) {
++			/* See the comments of above bio_inc_remaining(). */
++			bio_inc_remaining(bio);
++			bio->bi_cookie = __submit_bio(bio);
++
++			if (blk_qc_t_valid(bio->bi_cookie))
++				bio_add_poll_list(bio);
++
++			bio_endio(bio);
++		} else {
++			ret = __submit_bio(bio);
++		}
+ 
+ 		/*
+ 		 * Sort new bios into those for a lower level and those for the
+@@ -1002,7 +1032,11 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
+ 	} while ((bio = bio_list_pop(&bio_list_on_stack[0])));
+ 
+ 	current->bio_list = NULL;
+-	return ret;
++
++	if (iopoll)
++		return (blk_qc_t)root;
++
++	return BLK_QC_T_NONE;
+ }
+ 
+ static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
+@@ -1131,6 +1165,52 @@ blk_qc_t submit_bio(struct bio *bio)
+ }
+ EXPORT_SYMBOL(submit_bio);
+ 
++int blk_bio_poll(struct request_queue *q, blk_qc_t cookie)
++{
++	int ret = 0;
++	struct bio *bio, *root = (struct bio*)cookie;
++
++	if (list_empty(&root->bi_plist)) {
++		bio_endio(root);
++		return 1;
++	}
++
++	spin_lock(&root->bi_plock);
++	bio = list_first_entry_or_null(&root->bi_plist, struct bio, bi_pnode);
++
++	while (bio) {
++		struct request_queue *q = bio->bi_disk->queue;
++		blk_qc_t cookie = bio->bi_cookie;
++
++		spin_unlock(&root->bi_plock);
++		BUG_ON(!blk_qc_t_valid(cookie));
++
++		ret += blk_mq_poll(q, cookie);
++
++		spin_lock(&root->bi_plock);
++		/*
++		 * One blk_mq_poll() call could complete multiple bios, and
++		 * thus multiple bios could be removed from root->bi_plock
++		 * list.
++		 */
++		bio = list_first_entry_or_null(&root->bi_plist, struct bio, bi_pnode);
++	}
++
++	spin_unlock(&root->bi_plock);
++
++	if (list_empty(&root->bi_plist)) {
++		bio_endio(root);
++		/*
++		 * 'ret' may be 0 here. root->bi_plist may be empty once we
++		 * acquire the list spinlock.
++		 */
++		ret = max(ret, 1);
++	}
++
++	return ret;
++}
++EXPORT_SYMBOL(blk_bio_poll);
++
+ static bool blk_poll_hybrid(struct request_queue *q, blk_qc_t cookie)
+ {
+ 	struct blk_mq_hw_ctx *hctx;
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index 2e05244fc16d..2cf5d8f0ea34 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -277,6 +277,12 @@ struct bio {
+ 
+ 	struct bio_set		*bi_pool;
+ 
++	struct bio		*bi_root;	/* original bio of submit_bio() */
++	struct list_head        bi_plist;
++	struct list_head        bi_pnode;
++	struct spinlock         bi_plock;
++	blk_qc_t		bi_cookie;
++
+ 	/*
+ 	 * We can inline a number of vecs at the end of the bio, to avoid
+ 	 * double allocations for a small number of bio_vecs. This member
+@@ -557,6 +563,39 @@ static inline bool blk_qc_t_is_internal(blk_qc_t cookie)
+ 	return (cookie & BLK_QC_T_INTERNAL) != 0;
+ }
+ 
++static inline void bio_add_poll_list(struct bio *bio)
++{
++	struct bio *root = bio->bi_root;
++
++	/*
++	 * The spin_lock() variant is enough since bios in root->bi_plist are
++	 * all enqueued into polling mode hardware queue, thus the list_del()
++	 * operation is handled only in process context.
++	 */
++	spin_lock(&root->bi_plock);
++	list_add_tail(&bio->bi_pnode, &root->bi_plist);
++	spin_unlock(&root->bi_plock);
++}
++
++static inline void bio_del_poll_list(struct bio *bio)
++{
++	struct bio *root = bio->bi_root;
++
++	/*
++	 * bios in mq routine: @bi_root is NULL, @bi_cookie is 0;
++	 * bios in bio-based routine: @bi_root is non-NULL, @bi_cookie is valid
++	 * (including 0) for those in root->bi_plist, invalid for the
++	 * remaining.
++	 */
++	if (bio->bi_root && blk_qc_t_valid(bio->bi_cookie)) {
++		spin_lock(&root->bi_plock);
++		list_del(&bio->bi_pnode);
++		spin_unlock(&root->bi_plock);
++	}
++}
++
++int blk_bio_poll(struct request_queue *q, blk_qc_t cookie);
++
+ struct blk_rq_stat {
+ 	u64 mean;
+ 	u64 min;
+-- 
+2.27.0
 
 --
 dm-devel mailing list
