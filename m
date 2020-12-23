@@ -2,68 +2,84 @@ Return-Path: <SRS0=ovTT=GH=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CB8A2C433E6
-	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 07438C433E0
+	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:05 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 68423206A4
+	by mail.kernel.org (Postfix) with ESMTPS id 509452068D
 	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 68423206A4
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 509452068D
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1609787043;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=/SpIhlmb83gG+pEIJoHLvXS5iQQki6CjlDuEnKXKXao=;
-	b=DNvr02CkphO3FUfkd6Wq06WsMEdYgk26iGedqGbDK99Lf7KMUWltHPBorsMzC1A9nBVjzq
-	KzSMtxzbuOgGL+VAS9bMzn0+qaVmdgWaGHzgqYmRlu3umYRF3lDqWr3tId2SQT8aeZXaqZ
-	tOxQmebwxARmXdI5Tt9I0FV423ZEoMs=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-345-DVDLDWDBPU2SwKwfaI64qQ-1; Mon, 04 Jan 2021 14:03:39 -0500
-X-MC-Unique: DVDLDWDBPU2SwKwfaI64qQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-572-Kt3u6hruMPCaVYm2oWNAAA-1; Mon, 04 Jan 2021 14:03:59 -0500
+X-MC-Unique: Kt3u6hruMPCaVYm2oWNAAA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C26781842156;
-	Mon,  4 Jan 2021 19:03:32 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 25E5C107AD37;
+	Mon,  4 Jan 2021 19:03:53 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A37EF100239A;
-	Mon,  4 Jan 2021 19:03:32 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 09E5471C8D;
+	Mon,  4 Jan 2021 19:03:53 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 797A31809CA7;
-	Mon,  4 Jan 2021 19:03:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
-	[10.5.11.15])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D326D1809CB2;
+	Mon,  4 Jan 2021 19:03:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BLFns5j007028 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 21 Dec 2020 10:49:54 -0500
+	id 0BNBQehW019578 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 23 Dec 2020 06:26:40 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 446ED5B697; Mon, 21 Dec 2020 15:49:54 +0000 (UTC)
-Received: from pick.fieldses.org (ovpn-112-93.phx2.redhat.com [10.3.112.93])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 145245B695
-	for <dm-devel@redhat.com>; Mon, 21 Dec 2020 15:49:50 +0000 (UTC)
-Received: by pick.fieldses.org (Postfix, from userid 2815)
-	id 85CA31218D4; Mon, 21 Dec 2020 10:49:49 -0500 (EST)
-Date: Mon, 21 Dec 2020 10:49:49 -0500
-From: "J. Bruce Fields" <bfields@redhat.com>
-To: dm-devel@redhat.com
-Message-ID: <20201221154949.GA305202@pick.fieldses.org>
+	id E8A742026D3C; Wed, 23 Dec 2020 11:26:39 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E09102026D5D
+	for <dm-devel@redhat.com>; Wed, 23 Dec 2020 11:26:37 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6D28E101A562
+	for <dm-devel@redhat.com>; Wed, 23 Dec 2020 11:26:37 +0000 (UTC)
+Received: from out30-45.freemail.mail.aliyun.com
+	(out30-45.freemail.mail.aliyun.com [115.124.30.45]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-140-X4ZwJno5MSGfNOh2qRn6uQ-1;
+	Wed, 23 Dec 2020 06:26:32 -0500
+X-MC-Unique: X4ZwJno5MSGfNOh2qRn6uQ-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R151e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04420;
+	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=4; SR=0;
+	TI=SMTPD_---0UJXjw8Y_1608722785
+Received: from localhost(mailfrom:jefflexu@linux.alibaba.com
+	fp:SMTPD_---0UJXjw8Y_1608722785) by smtp.aliyun-inc.com(127.0.0.1);
+	Wed, 23 Dec 2020 19:26:26 +0800
+From: Jeffle Xu <jefflexu@linux.alibaba.com>
+To: snitzer@redhat.com
+Date: Wed, 23 Dec 2020 19:26:21 +0800
+Message-Id: <20201223112624.78955-5-jefflexu@linux.alibaba.com>
+In-Reply-To: <20201223112624.78955-1-jefflexu@linux.alibaba.com>
+References: <20201223112624.78955-1-jefflexu@linux.alibaba.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 04 Jan 2021 14:03:12 -0500
-Subject: [dm-devel] writecache performance, nfs export, optane
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, io-uring@vger.kernel.org
+Subject: [dm-devel] [PATCH RFC 4/7] block: define blk_qc_t as uintptr_t
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -77,49 +93,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-I'm experimenting with dm-writecache with one of the little 16G optane
-SSDs as the cache device in front of a couple hard drives and it's not
-helping, and I'm curious why not.
+To support iopoll for bio-based device, the returned cookie is actually
+a pointer to an implementation specific object, e.g. an object
+maintaining all split bios.
 
-My test is just to NFS-export the hard drive and the run
+In such case, blk_qc_t should be large enough to contain one pointer,
+for which uintptr_t is used here. Since uintptr_t is actually an integer
+type in essence, there's no need of type casting in the original mq
+path, while type casting is indeed needed in bio-based routine.
 
-	time tar -xzvf ~/linux-5.9.tar.gz
+Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+---
+ include/linux/types.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-from an NFS client.  (So it's reading from local disk and writing to
-NFS.)
-
-NFS servers aren't allowed to reply to clients until operations reach
-stable storage, for metadata operations like create, unlink, rename, or
-setattr, so this is kind of a worst case: untar of a kernel tree to
-local filesystem takes me 12 seconds, but nearly 2 hours to exported
-hard drives, as that untar is a single thread that ends up waiting for
-hundreds of thousands of seeks.
-
-If I just export the optane, total time is about 4 minutes.  If I export
-a dm-writecache device using the optane, it's back to 2 hours.
-
-For now I'm using an xfs filesystem with external journal on the optane,
-which is sort of OK (about 15 minutes on this test), but I'm curious why
-dm-writecache is acting like this.
-
-Is this expected?  Are there any statistics I should be watching to
-understand what's going on?
-
-I'm pretty ignorant here, so it's also possible I just misconfigured
-something somehow.  I set it up with just "lvconvert --type writecache
---cachevol optane export", and haven't tried tweaking any options.  I'm
-on recent Fedora (with kernel-5.9.14-200.fc33.x86_64).
-
---b.
+diff --git a/include/linux/types.h b/include/linux/types.h
+index da5ca7e1bea9..f6301014a459 100644
+--- a/include/linux/types.h
++++ b/include/linux/types.h
+@@ -126,7 +126,7 @@ typedef u64 sector_t;
+ typedef u64 blkcnt_t;
+ 
+ /* cookie used for IO polling */
+-typedef unsigned int blk_qc_t;
++typedef uintptr_t blk_qc_t;
+ 
+ /*
+  * The type of an index into the pagecache.
+-- 
+2.27.0
 
 --
 dm-devel mailing list
