@@ -2,87 +2,72 @@ Return-Path: <SRS0=ovTT=GH=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8963FC433E0
-	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0C670C433DB
+	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:09 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 169B12068D
-	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 169B12068D
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=dabbelt.com
+	by mail.kernel.org (Postfix) with ESMTPS id 875CC206A4
+	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:08 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 875CC206A4
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-448-DqK3FP7hMEanVl_aobN5tw-1; Mon, 04 Jan 2021 14:03:58 -0500
-X-MC-Unique: DqK3FP7hMEanVl_aobN5tw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-242-Y-0dUlnSM7KjVU5TjLBpbQ-1; Mon, 04 Jan 2021 14:04:00 -0500
+X-MC-Unique: Y-0dUlnSM7KjVU5TjLBpbQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 285EE107AD28;
-	Mon,  4 Jan 2021 19:03:47 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0ACC46F924;
-	Mon,  4 Jan 2021 19:03:47 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1E7719CC0D;
+	Mon,  4 Jan 2021 19:03:51 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F21541002393;
+	Mon,  4 Jan 2021 19:03:50 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D78A35003A;
-	Mon,  4 Jan 2021 19:03:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C5AAD1809CB2;
+	Mon,  4 Jan 2021 19:03:50 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BMKVki1028883 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 22 Dec 2020 15:31:46 -0500
+	id 0BNBQcDl019570 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 23 Dec 2020 06:26:38 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 67A57110F0AE; Tue, 22 Dec 2020 20:31:46 +0000 (UTC)
+	id 18A1B2166B2D; Wed, 23 Dec 2020 11:26:38 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 63D1F110F0AD
-	for <dm-devel@redhat.com>; Tue, 22 Dec 2020 20:31:44 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1425D2166B2B
+	for <dm-devel@redhat.com>; Wed, 23 Dec 2020 11:26:34 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E878F101A53F
-	for <dm-devel@redhat.com>; Tue, 22 Dec 2020 20:31:43 +0000 (UTC)
-Received: from mail-pj1-f47.google.com (mail-pj1-f47.google.com
-	[209.85.216.47]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-175-8wVG6qM7Mma8WVzlpFJUng-1; Tue, 22 Dec 2020 15:31:41 -0500
-X-MC-Unique: 8wVG6qM7Mma8WVzlpFJUng-1
-Received: by mail-pj1-f47.google.com with SMTP id b5so1976731pjl.0
-	for <dm-devel@redhat.com>; Tue, 22 Dec 2020 12:31:41 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:date:subject:in-reply-to:cc:from:to:message-id
-	:mime-version:content-transfer-encoding;
-	bh=K3t0gQbM6vz2TJwWgefdmZ2h7DY9X/bWdXKHVBct5Bo=;
-	b=s5FJCDTQQIynmV1BIjjKVQ5JSJaB9NxBXZqE0CWIBc+YWRCOdMnyB3pZJiHcDlXWxR
-	hKSttixZ+s+/qliB1D1xCzoS4PZlLKhik9rIbpukGanHpmoljEi5CC6yYDJNxIBydZvU
-	FdwmRxQPiEuIBIdA6Duqqiyp+37cpjAFln6oG0wdwr+F/Uy+HY5MFrih9o9U6f+4hT8z
-	mHQ7EFDrxHWh66LTn/5VOt3b/RgWNgUgcg6ukgfXBCfwAdImqNzfz7xbafiRmbzdQFhV
-	AmZI7j09GQHNpVWY/aG0rDOmnsi6e1hnoE6UQXw/Z954Pccmau0CgbUsiuRbFqSym/R0
-	MnKQ==
-X-Gm-Message-State: AOAM533YhLG3P6OMTyGXi6oQPmo7FxxQc4MCBoOi+/DLcvCWDX4uCLlL
-	4sTqITiNxuSaoLGOGhMoWSVwbQ==
-X-Google-Smtp-Source: ABdhPJxmDWHlPtP4ZhkG5oNkIvaR9bXeCaw5WhU7AWPPpJheCeEpfLo0O3inkKuWstj+VTyDNxvnQw==
-X-Received: by 2002:a17:90a:e005:: with SMTP id
-	u5mr23339455pjy.64.1608669100205; 
-	Tue, 22 Dec 2020 12:31:40 -0800 (PST)
-Received: from localhost (76-210-143-223.lightspeed.sntcca.sbcglobal.net.
-	[76.210.143.223]) by smtp.gmail.com with ESMTPSA id
-	w27sm17486740pfq.104.2020.12.22.12.31.39
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Tue, 22 Dec 2020 12:31:39 -0800 (PST)
-Date: Tue, 22 Dec 2020 12:31:39 -0800 (PST)
-X-Google-Original-Date: Tue, 22 Dec 2020 12:31:37 PST (-0800)
-In-Reply-To: <20201222133246.GA5099@infradead.org>
-From: Palmer Dabbelt <palmer@dabbelt.com>
-To: Christoph Hellwig <hch@infradead.org>
-Message-ID: <mhng-843a42fb-63aa-4626-a60d-6e4d28a7bb73@palmerdabbelt-glaptop>
-Mime-Version: 1.0 (MHng)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9B7D8811E87
+	for <dm-devel@redhat.com>; Wed, 23 Dec 2020 11:26:34 +0000 (UTC)
+Received: from out30-130.freemail.mail.aliyun.com
+	(out30-130.freemail.mail.aliyun.com [115.124.30.130]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-217-w6JDPqz6MOKyl6fqyGZvyA-1;
+	Wed, 23 Dec 2020 06:26:29 -0500
+X-MC-Unique: w6JDPqz6MOKyl6fqyGZvyA-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R431e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04407;
+	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=4; SR=0;
+	TI=SMTPD_---0UJWwKPG_1608722785
+Received: from localhost(mailfrom:jefflexu@linux.alibaba.com
+	fp:SMTPD_---0UJWwKPG_1608722785) by smtp.aliyun-inc.com(127.0.0.1);
+	Wed, 23 Dec 2020 19:26:25 +0800
+From: Jeffle Xu <jefflexu@linux.alibaba.com>
+To: snitzer@redhat.com
+Date: Wed, 23 Dec 2020 19:26:19 +0800
+Message-Id: <20201223112624.78955-3-jefflexu@linux.alibaba.com>
+In-Reply-To: <20201223112624.78955-1-jefflexu@linux.alibaba.com>
+References: <20201223112624.78955-1-jefflexu@linux.alibaba.com>
+MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -91,17 +76,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 04 Jan 2021 14:03:12 -0500
-Cc: linux-raid@vger.kernel.org, bvanassche@acm.org, snitzer@redhat.com,
-	corbet@lwn.net, shuah@kernel.org, linux-doc@vger.kernel.org,
-	josef@toxicpanda.com, linux-kernel@vger.kernel.org,
-	Christoph Hellwig <hch@infradead.org>, song@kernel.org,
-	dm-devel@redhat.com, michael.christie@oracle.com,
-	linux-kselftest@vger.kernel.org, kernel-team@android.com, agk@redhat.com
-Subject: Re: [dm-devel] [PATCH v1 0/5] dm: dm-user: New target that proxies
-	BIOs to userspace
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, io-uring@vger.kernel.org
+Subject: [dm-devel] [PATCH RFC 2/7] block: add helper function fetching
+	gendisk from queue
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -115,38 +95,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On Tue, 22 Dec 2020 05:32:46 PST (-0800), Christoph Hellwig wrote:
-> On Mon, Dec 14, 2020 at 07:00:57PM -0800, Palmer Dabbelt wrote:
->> I haven't gotten a whole lot of feedback, so I'm inclined to at least have some
->> reasonable performance numbers before bothering with a v2.
->
-> FYI, my other main worry beside duplicating nbd is that device mapper
-> really is a stacked interface that sits on top of other block device.
-> Turning this into something else that just pipes data to userspace
-> seems very strange.
+Sometimes we need to get the corresponding gendisk from request_queue.
 
-Agreed.  It certainly doesn't fit the DM model.  We'd considered doing a non-DM
-version of this (maybe "ubd"), but decided to stick with dm-user because we
-didn't want to duplicate all the device creation stuff that DM provides.  A
-simple version of that wouldn't be that hard to do, but the DM version has a
-lot of features and we get that all for free.  We essentially decided to run
-with DM until it gets in the way, and the only sticking point we ended up with
-was that REQUEUE stuff (though not sure how that would show up with a bare
-block device) and that scheduler question.
+One such use case is that, the block device driver had ever stored the
+same private data both in queue->queuedata and gendisk->private_data,
+while nowadays gendisk->private_data is more preferable in such case,
+e.g. commit c4a59c4e5db3 ("dm: stop using ->queuedata"). So if only
+request_queue given, we need to get the corresponding gendisk from
+queue, to get the private data stored in gendisk.
 
-I'm going to stick with DM for now, unless it gets in the way, to avoid coming
-up with a device creation scheme myself.  In the long term it's probably best
-to have this be a standalone thing, but I don't want to dump a bunch of time
-into putting that stuff together only to find that this isn't interesting
-enough from a performance perspective to stick around.
+Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+---
+ include/linux/blkdev.h       | 2 ++
+ include/trace/events/kyber.h | 6 +++---
+ 2 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 070de09425ad..2303d06a5a82 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -691,6 +691,8 @@ static inline bool blk_account_rq(struct request *rq)
+ 	dma_map_page_attrs(dev, (bv)->bv_page, (bv)->bv_offset, (bv)->bv_len, \
+ 	(dir), (attrs))
+ 
++#define queue_to_disk(q)	(dev_to_disk(kobj_to_dev((q)->kobj.parent)))
++
+ static inline bool queue_is_mq(struct request_queue *q)
+ {
+ 	return q->mq_ops;
+diff --git a/include/trace/events/kyber.h b/include/trace/events/kyber.h
+index c0e7d24ca256..f9802562edf6 100644
+--- a/include/trace/events/kyber.h
++++ b/include/trace/events/kyber.h
+@@ -30,7 +30,7 @@ TRACE_EVENT(kyber_latency,
+ 	),
+ 
+ 	TP_fast_assign(
+-		__entry->dev		= disk_devt(dev_to_disk(kobj_to_dev(q->kobj.parent)));
++		__entry->dev		= disk_devt(queue_to_disk(q));
+ 		strlcpy(__entry->domain, domain, sizeof(__entry->domain));
+ 		strlcpy(__entry->type, type, sizeof(__entry->type));
+ 		__entry->percentile	= percentile;
+@@ -59,7 +59,7 @@ TRACE_EVENT(kyber_adjust,
+ 	),
+ 
+ 	TP_fast_assign(
+-		__entry->dev		= disk_devt(dev_to_disk(kobj_to_dev(q->kobj.parent)));
++		__entry->dev		= disk_devt(queue_to_disk(q));
+ 		strlcpy(__entry->domain, domain, sizeof(__entry->domain));
+ 		__entry->depth		= depth;
+ 	),
+@@ -81,7 +81,7 @@ TRACE_EVENT(kyber_throttled,
+ 	),
+ 
+ 	TP_fast_assign(
+-		__entry->dev		= disk_devt(dev_to_disk(kobj_to_dev(q->kobj.parent)));
++		__entry->dev		= disk_devt(queue_to_disk(q));
+ 		strlcpy(__entry->domain, domain, sizeof(__entry->domain));
+ 	),
+ 
+-- 
+2.27.0
 
 --
 dm-devel mailing list
