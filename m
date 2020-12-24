@@ -2,63 +2,76 @@ Return-Path: <SRS0=ovTT=GH=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0F9A9C433E0
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6832CC433DB
 	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:23 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 803862068D
-	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:22 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 803862068D
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+	by mail.kernel.org (Postfix) with ESMTPS id DCCFB206A4
+	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 19:04:15 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org DCCFB206A4
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-19-1-Gq60KUMDm5k4Phh5MBZg-1; Mon, 04 Jan 2021 14:04:17 -0500
-X-MC-Unique: 1-Gq60KUMDm5k4Phh5MBZg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-402-hRsg0UW-MpOAVMnHBSFX_Q-1; Mon, 04 Jan 2021 14:04:10 -0500
+X-MC-Unique: hRsg0UW-MpOAVMnHBSFX_Q-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3463F801B1A;
-	Mon,  4 Jan 2021 19:03:59 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 51A611005504;
+	Mon,  4 Jan 2021 19:04:01 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 12FCB6A8E6;
-	Mon,  4 Jan 2021 19:03:59 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 34C061001E73;
+	Mon,  4 Jan 2021 19:04:01 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D43B21809CB9;
-	Mon,  4 Jan 2021 19:03:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0D7F61809CBA;
+	Mon,  4 Jan 2021 19:04:01 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BNMm0Uk014986 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 23 Dec 2020 17:48:00 -0500
+	id 0BO2VnIk003164 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 23 Dec 2020 21:31:50 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4D05D2166B2F; Wed, 23 Dec 2020 22:48:00 +0000 (UTC)
+	id 6153D2026D3A; Thu, 24 Dec 2020 02:31:49 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 45D922166B2B
-	for <dm-devel@redhat.com>; Wed, 23 Dec 2020 22:47:57 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5C9F12026D48
+	for <dm-devel@redhat.com>; Thu, 24 Dec 2020 02:31:46 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B6582858280
-	for <dm-devel@redhat.com>; Wed, 23 Dec 2020 22:47:57 +0000 (UTC)
-Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
-	by relay.mimecast.com with ESMTP id us-mta-133-CWZyzHZyPUW8fTFxbnOFEA-1;
-	Wed, 23 Dec 2020 17:47:53 -0500
-X-MC-Unique: CWZyzHZyPUW8fTFxbnOFEA-1
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 0974C22510;
-	Wed, 23 Dec 2020 22:39:10 +0000 (UTC)
-From: Ard Biesheuvel <ardb@kernel.org>
-To: linux-crypto@vger.kernel.org
-Date: Wed, 23 Dec 2020 23:38:36 +0100
-Message-Id: <20201223223841.11311-6-ardb@kernel.org>
-In-Reply-To: <20201223223841.11311-1-ardb@kernel.org>
-References: <20201223223841.11311-1-ardb@kernel.org>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DE07180018D
+	for <dm-devel@redhat.com>; Thu, 24 Dec 2020 02:31:46 +0000 (UTC)
+Received: from out30-44.freemail.mail.aliyun.com
+	(out30-44.freemail.mail.aliyun.com [115.124.30.44]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-492-SlU5tb6lMFWzXsgC81qCoA-1;
+	Wed, 23 Dec 2020 21:31:44 -0500
+X-MC-Unique: SlU5tb6lMFWzXsgC81qCoA-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R431e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04407;
+	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=4; SR=0;
+	TI=SMTPD_---0UJb3v1l_1608776183
+Received: from admindeMacBook-Pro-2.local(mailfrom:jefflexu@linux.alibaba.com
+	fp:SMTPD_---0UJb3v1l_1608776183) by smtp.aliyun-inc.com(127.0.0.1);
+	Thu, 24 Dec 2020 10:16:23 +0800
+To: Ignat Korchagin <ignat@cloudflare.com>,
+	device-mapper development <dm-devel@redhat.com>,
+	Mike Snitzer <snitzer@redhat.com>
+References: <CALrw=nGkAgqPDCaYLKreD3+6MGZOW1krAfVfvV0mKH-rjHriFQ@mail.gmail.com>
+From: JeffleXu <jefflexu@linux.alibaba.com>
+Message-ID: <9b86dd1c-8370-eaeb-db43-48f88759dade@linux.alibaba.com>
+Date: Thu, 24 Dec 2020 10:16:22 +0800
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
+	Gecko/20100101 Thunderbird/78.6.0
+MIME-Version: 1.0
+In-Reply-To: <CALrw=nGkAgqPDCaYLKreD3+6MGZOW1krAfVfvV0mKH-rjHriFQ@mail.gmail.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -67,15 +80,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Mon, 04 Jan 2021 14:03:11 -0500
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, Mike Snitzer <snitzer@redhat.com>,
-	Ard Biesheuvel <ardb@kernel.org>,
-	Eric Biggers <ebiggers@kernel.org>, dm-devel@redhat.com,
-	Milan Broz <gmazyland@gmail.com>, Megha Dey <megha.dey@intel.com>
-Subject: [dm-devel] [RFC PATCH 05/10] crypto: x86/glue-helper - drop XTS
-	helper routines
+X-Mailman-Approved-At: Mon, 04 Jan 2021 14:03:12 -0500
+Cc: kernel-team <kernel-team@cloudflare.com>
+Subject: Re: [dm-devel] dm crypt: export sysfs of kcryptd workqueue - broken
+ dmsetup reload
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -87,389 +97,137 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The glue helper's XTS routines are no longer used, so drop them.
+Sorry for the bug.
 
-Signed-off-by: Ard Biesheuvel <ardb@kernel.org>
----
- arch/x86/crypto/glue_helper-asm-avx.S     |  59 --------
- arch/x86/crypto/glue_helper-asm-avx2.S    |  78 ----------
- arch/x86/crypto/glue_helper.c             | 154 --------------------
- arch/x86/include/asm/crypto/glue_helper.h |  12 --
- 4 files changed, 303 deletions(-)
+It seems that the reload table routine will create new table prior to
+destroying old table, in which case the duplicate sysfs name collision
+happens when creating the new table.
 
-diff --git a/arch/x86/crypto/glue_helper-asm-avx.S b/arch/x86/crypto/glue_helper-asm-avx.S
-index d08fc575ef7f..a94511432803 100644
---- a/arch/x86/crypto/glue_helper-asm-avx.S
-+++ b/arch/x86/crypto/glue_helper-asm-avx.S
-@@ -79,62 +79,3 @@
- 	vpxor (6*16)(src), x6, x6; \
- 	vpxor (7*16)(src), x7, x7; \
- 	store_8way(dst, x0, x1, x2, x3, x4, x5, x6, x7);
--
--#define gf128mul_x_ble(iv, mask, tmp) \
--	vpsrad $31, iv, tmp; \
--	vpaddq iv, iv, iv; \
--	vpshufd $0x13, tmp, tmp; \
--	vpand mask, tmp, tmp; \
--	vpxor tmp, iv, iv;
--
--#define load_xts_8way(iv, src, dst, x0, x1, x2, x3, x4, x5, x6, x7, tiv, t0, \
--		      t1, xts_gf128mul_and_shl1_mask) \
--	vmovdqa xts_gf128mul_and_shl1_mask, t0; \
--	\
--	/* load IV */ \
--	vmovdqu (iv), tiv; \
--	vpxor (0*16)(src), tiv, x0; \
--	vmovdqu tiv, (0*16)(dst); \
--	\
--	/* construct and store IVs, also xor with source */ \
--	gf128mul_x_ble(tiv, t0, t1); \
--	vpxor (1*16)(src), tiv, x1; \
--	vmovdqu tiv, (1*16)(dst); \
--	\
--	gf128mul_x_ble(tiv, t0, t1); \
--	vpxor (2*16)(src), tiv, x2; \
--	vmovdqu tiv, (2*16)(dst); \
--	\
--	gf128mul_x_ble(tiv, t0, t1); \
--	vpxor (3*16)(src), tiv, x3; \
--	vmovdqu tiv, (3*16)(dst); \
--	\
--	gf128mul_x_ble(tiv, t0, t1); \
--	vpxor (4*16)(src), tiv, x4; \
--	vmovdqu tiv, (4*16)(dst); \
--	\
--	gf128mul_x_ble(tiv, t0, t1); \
--	vpxor (5*16)(src), tiv, x5; \
--	vmovdqu tiv, (5*16)(dst); \
--	\
--	gf128mul_x_ble(tiv, t0, t1); \
--	vpxor (6*16)(src), tiv, x6; \
--	vmovdqu tiv, (6*16)(dst); \
--	\
--	gf128mul_x_ble(tiv, t0, t1); \
--	vpxor (7*16)(src), tiv, x7; \
--	vmovdqu tiv, (7*16)(dst); \
--	\
--	gf128mul_x_ble(tiv, t0, t1); \
--	vmovdqu tiv, (iv);
--
--#define store_xts_8way(dst, x0, x1, x2, x3, x4, x5, x6, x7) \
--	vpxor (0*16)(dst), x0, x0; \
--	vpxor (1*16)(dst), x1, x1; \
--	vpxor (2*16)(dst), x2, x2; \
--	vpxor (3*16)(dst), x3, x3; \
--	vpxor (4*16)(dst), x4, x4; \
--	vpxor (5*16)(dst), x5, x5; \
--	vpxor (6*16)(dst), x6, x6; \
--	vpxor (7*16)(dst), x7, x7; \
--	store_8way(dst, x0, x1, x2, x3, x4, x5, x6, x7);
-diff --git a/arch/x86/crypto/glue_helper-asm-avx2.S b/arch/x86/crypto/glue_helper-asm-avx2.S
-index d84508c85c13..456bface1e5d 100644
---- a/arch/x86/crypto/glue_helper-asm-avx2.S
-+++ b/arch/x86/crypto/glue_helper-asm-avx2.S
-@@ -95,81 +95,3 @@
- 	vpxor (6*32)(src), x6, x6; \
- 	vpxor (7*32)(src), x7, x7; \
- 	store_16way(dst, x0, x1, x2, x3, x4, x5, x6, x7);
--
--#define gf128mul_x_ble(iv, mask, tmp) \
--	vpsrad $31, iv, tmp; \
--	vpaddq iv, iv, iv; \
--	vpshufd $0x13, tmp, tmp; \
--	vpand mask, tmp, tmp; \
--	vpxor tmp, iv, iv;
--
--#define gf128mul_x2_ble(iv, mask1, mask2, tmp0, tmp1) \
--	vpsrad $31, iv, tmp0; \
--	vpaddq iv, iv, tmp1; \
--	vpsllq $2, iv, iv; \
--	vpshufd $0x13, tmp0, tmp0; \
--	vpsrad $31, tmp1, tmp1; \
--	vpand mask2, tmp0, tmp0; \
--	vpshufd $0x13, tmp1, tmp1; \
--	vpxor tmp0, iv, iv; \
--	vpand mask1, tmp1, tmp1; \
--	vpxor tmp1, iv, iv;
--
--#define load_xts_16way(iv, src, dst, x0, x1, x2, x3, x4, x5, x6, x7, tiv, \
--		       tivx, t0, t0x, t1, t1x, t2, t2x, t3, \
--		       xts_gf128mul_and_shl1_mask_0, \
--		       xts_gf128mul_and_shl1_mask_1) \
--	vbroadcasti128 xts_gf128mul_and_shl1_mask_0, t1; \
--	\
--	/* load IV and construct second IV */ \
--	vmovdqu (iv), tivx; \
--	vmovdqa tivx, t0x; \
--	gf128mul_x_ble(tivx, t1x, t2x); \
--	vbroadcasti128 xts_gf128mul_and_shl1_mask_1, t2; \
--	vinserti128 $1, tivx, t0, tiv; \
--	vpxor (0*32)(src), tiv, x0; \
--	vmovdqu tiv, (0*32)(dst); \
--	\
--	/* construct and store IVs, also xor with source */ \
--	gf128mul_x2_ble(tiv, t1, t2, t0, t3); \
--	vpxor (1*32)(src), tiv, x1; \
--	vmovdqu tiv, (1*32)(dst); \
--	\
--	gf128mul_x2_ble(tiv, t1, t2, t0, t3); \
--	vpxor (2*32)(src), tiv, x2; \
--	vmovdqu tiv, (2*32)(dst); \
--	\
--	gf128mul_x2_ble(tiv, t1, t2, t0, t3); \
--	vpxor (3*32)(src), tiv, x3; \
--	vmovdqu tiv, (3*32)(dst); \
--	\
--	gf128mul_x2_ble(tiv, t1, t2, t0, t3); \
--	vpxor (4*32)(src), tiv, x4; \
--	vmovdqu tiv, (4*32)(dst); \
--	\
--	gf128mul_x2_ble(tiv, t1, t2, t0, t3); \
--	vpxor (5*32)(src), tiv, x5; \
--	vmovdqu tiv, (5*32)(dst); \
--	\
--	gf128mul_x2_ble(tiv, t1, t2, t0, t3); \
--	vpxor (6*32)(src), tiv, x6; \
--	vmovdqu tiv, (6*32)(dst); \
--	\
--	gf128mul_x2_ble(tiv, t1, t2, t0, t3); \
--	vpxor (7*32)(src), tiv, x7; \
--	vmovdqu tiv, (7*32)(dst); \
--	\
--	vextracti128 $1, tiv, tivx; \
--	gf128mul_x_ble(tivx, t1x, t2x); \
--	vmovdqu tivx, (iv);
--
--#define store_xts_16way(dst, x0, x1, x2, x3, x4, x5, x6, x7) \
--	vpxor (0*32)(dst), x0, x0; \
--	vpxor (1*32)(dst), x1, x1; \
--	vpxor (2*32)(dst), x2, x2; \
--	vpxor (3*32)(dst), x3, x3; \
--	vpxor (4*32)(dst), x4, x4; \
--	vpxor (5*32)(dst), x5, x5; \
--	vpxor (6*32)(dst), x6, x6; \
--	vpxor (7*32)(dst), x7, x7; \
--	store_16way(dst, x0, x1, x2, x3, x4, x5, x6, x7);
-diff --git a/arch/x86/crypto/glue_helper.c b/arch/x86/crypto/glue_helper.c
-index d3d91a0abf88..786ffda1caf4 100644
---- a/arch/x86/crypto/glue_helper.c
-+++ b/arch/x86/crypto/glue_helper.c
-@@ -12,10 +12,8 @@
- 
- #include <linux/module.h>
- #include <crypto/b128ops.h>
--#include <crypto/gf128mul.h>
- #include <crypto/internal/skcipher.h>
- #include <crypto/scatterwalk.h>
--#include <crypto/xts.h>
- #include <asm/crypto/glue_helper.h>
- 
- int glue_ecb_req_128bit(const struct common_glue_ctx *gctx,
-@@ -226,156 +224,4 @@ int glue_ctr_req_128bit(const struct common_glue_ctx *gctx,
- }
- EXPORT_SYMBOL_GPL(glue_ctr_req_128bit);
- 
--static unsigned int __glue_xts_req_128bit(const struct common_glue_ctx *gctx,
--					  void *ctx,
--					  struct skcipher_walk *walk)
--{
--	const unsigned int bsize = 128 / 8;
--	unsigned int nbytes = walk->nbytes;
--	u128 *src = walk->src.virt.addr;
--	u128 *dst = walk->dst.virt.addr;
--	unsigned int num_blocks, func_bytes;
--	unsigned int i;
--
--	/* Process multi-block batch */
--	for (i = 0; i < gctx->num_funcs; i++) {
--		num_blocks = gctx->funcs[i].num_blocks;
--		func_bytes = bsize * num_blocks;
--
--		if (nbytes >= func_bytes) {
--			do {
--				gctx->funcs[i].fn_u.xts(ctx, (u8 *)dst,
--							(const u8 *)src,
--							walk->iv);
--
--				src += num_blocks;
--				dst += num_blocks;
--				nbytes -= func_bytes;
--			} while (nbytes >= func_bytes);
--
--			if (nbytes < bsize)
--				goto done;
--		}
--	}
--
--done:
--	return nbytes;
--}
--
--int glue_xts_req_128bit(const struct common_glue_ctx *gctx,
--			struct skcipher_request *req,
--			common_glue_func_t tweak_fn, void *tweak_ctx,
--			void *crypt_ctx, bool decrypt)
--{
--	const bool cts = (req->cryptlen % XTS_BLOCK_SIZE);
--	const unsigned int bsize = 128 / 8;
--	struct skcipher_request subreq;
--	struct skcipher_walk walk;
--	bool fpu_enabled = false;
--	unsigned int nbytes, tail;
--	int err;
--
--	if (req->cryptlen < XTS_BLOCK_SIZE)
--		return -EINVAL;
--
--	if (unlikely(cts)) {
--		struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
--
--		tail = req->cryptlen % XTS_BLOCK_SIZE + XTS_BLOCK_SIZE;
--
--		skcipher_request_set_tfm(&subreq, tfm);
--		skcipher_request_set_callback(&subreq,
--					      crypto_skcipher_get_flags(tfm),
--					      NULL, NULL);
--		skcipher_request_set_crypt(&subreq, req->src, req->dst,
--					   req->cryptlen - tail, req->iv);
--		req = &subreq;
--	}
--
--	err = skcipher_walk_virt(&walk, req, false);
--	nbytes = walk.nbytes;
--	if (err)
--		return err;
--
--	/* set minimum length to bsize, for tweak_fn */
--	fpu_enabled = glue_fpu_begin(bsize, gctx->fpu_blocks_limit,
--				     &walk, fpu_enabled,
--				     nbytes < bsize ? bsize : nbytes);
--
--	/* calculate first value of T */
--	tweak_fn(tweak_ctx, walk.iv, walk.iv);
--
--	while (nbytes) {
--		nbytes = __glue_xts_req_128bit(gctx, crypt_ctx, &walk);
--
--		err = skcipher_walk_done(&walk, nbytes);
--		nbytes = walk.nbytes;
--	}
--
--	if (unlikely(cts)) {
--		u8 *next_tweak, *final_tweak = req->iv;
--		struct scatterlist *src, *dst;
--		struct scatterlist s[2], d[2];
--		le128 b[2];
--
--		dst = src = scatterwalk_ffwd(s, req->src, req->cryptlen);
--		if (req->dst != req->src)
--			dst = scatterwalk_ffwd(d, req->dst, req->cryptlen);
--
--		if (decrypt) {
--			next_tweak = memcpy(b, req->iv, XTS_BLOCK_SIZE);
--			gf128mul_x_ble(b, b);
--		} else {
--			next_tweak = req->iv;
--		}
--
--		skcipher_request_set_crypt(&subreq, src, dst, XTS_BLOCK_SIZE,
--					   next_tweak);
--
--		err = skcipher_walk_virt(&walk, req, false) ?:
--		      skcipher_walk_done(&walk,
--				__glue_xts_req_128bit(gctx, crypt_ctx, &walk));
--		if (err)
--			goto out;
--
--		scatterwalk_map_and_copy(b, dst, 0, XTS_BLOCK_SIZE, 0);
--		memcpy(b + 1, b, tail - XTS_BLOCK_SIZE);
--		scatterwalk_map_and_copy(b, src, XTS_BLOCK_SIZE,
--					 tail - XTS_BLOCK_SIZE, 0);
--		scatterwalk_map_and_copy(b, dst, 0, tail, 1);
--
--		skcipher_request_set_crypt(&subreq, dst, dst, XTS_BLOCK_SIZE,
--					   final_tweak);
--
--		err = skcipher_walk_virt(&walk, req, false) ?:
--		      skcipher_walk_done(&walk,
--				__glue_xts_req_128bit(gctx, crypt_ctx, &walk));
--	}
--
--out:
--	glue_fpu_end(fpu_enabled);
--
--	return err;
--}
--EXPORT_SYMBOL_GPL(glue_xts_req_128bit);
--
--void glue_xts_crypt_128bit_one(const void *ctx, u8 *dst, const u8 *src,
--			       le128 *iv, common_glue_func_t fn)
--{
--	le128 ivblk = *iv;
--
--	/* generate next IV */
--	gf128mul_x_ble(iv, &ivblk);
--
--	/* CC <- T xor C */
--	u128_xor((u128 *)dst, (const u128 *)src, (u128 *)&ivblk);
--
--	/* PP <- D(Key2,CC) */
--	fn(ctx, dst, dst);
--
--	/* P <- T xor PP */
--	u128_xor((u128 *)dst, (u128 *)dst, (u128 *)&ivblk);
--}
--EXPORT_SYMBOL_GPL(glue_xts_crypt_128bit_one);
--
- MODULE_LICENSE("GPL");
-diff --git a/arch/x86/include/asm/crypto/glue_helper.h b/arch/x86/include/asm/crypto/glue_helper.h
-index 777c0f63418c..62680775d189 100644
---- a/arch/x86/include/asm/crypto/glue_helper.h
-+++ b/arch/x86/include/asm/crypto/glue_helper.h
-@@ -15,8 +15,6 @@ typedef void (*common_glue_func_t)(const void *ctx, u8 *dst, const u8 *src);
- typedef void (*common_glue_cbc_func_t)(const void *ctx, u8 *dst, const u8 *src);
- typedef void (*common_glue_ctr_func_t)(const void *ctx, u8 *dst, const u8 *src,
- 				       le128 *iv);
--typedef void (*common_glue_xts_func_t)(const void *ctx, u8 *dst, const u8 *src,
--				       le128 *iv);
- 
- struct common_glue_func_entry {
- 	unsigned int num_blocks; /* number of blocks that @fn will process */
-@@ -24,7 +22,6 @@ struct common_glue_func_entry {
- 		common_glue_func_t ecb;
- 		common_glue_cbc_func_t cbc;
- 		common_glue_ctr_func_t ctr;
--		common_glue_xts_func_t xts;
- 	} fn_u;
- };
- 
-@@ -106,13 +103,4 @@ extern int glue_cbc_decrypt_req_128bit(const struct common_glue_ctx *gctx,
- extern int glue_ctr_req_128bit(const struct common_glue_ctx *gctx,
- 			       struct skcipher_request *req);
- 
--extern int glue_xts_req_128bit(const struct common_glue_ctx *gctx,
--			       struct skcipher_request *req,
--			       common_glue_func_t tweak_fn, void *tweak_ctx,
--			       void *crypt_ctx, bool decrypt);
--
--extern void glue_xts_crypt_128bit_one(const void *ctx, u8 *dst,
--				      const u8 *src, le128 *iv,
--				      common_glue_func_t fn);
--
- #endif /* _CRYPTO_GLUE_HELPER_H */
+Maybe we could add a hash string (hashed from the address of struct
+dm_table) as part of the sysfs name such as kcryptd-252:0-dsfggfh...,
+since the value of 'struct dm_table *' differs at that time. But I
+wonder it may not be acceptable to export such nonsense hash string to
+the user space....
+
+On 12/24/20 5:48 AM, Ignat Korchagin wrote:
+> Hi,
+> 
+> Looks like a2b8b2d975673b1a50ab0bcce5d146b9335edfad broke the ability
+> to reload dm-crypt targets.
+> 
+> I usually used to enable additional flags like this on an existing
+> dm-crypt instance:
+> 
+> ignat@dev:~$ sudo dmsetup table --showkeys test | sed 's/$/ 2
+> no_read_workqueue no_write_workqueue/' | sudo dmsetup reload test
+> 
+> Now the command fails with below:
+> 
+> device-mapper: reload ioctl on test  failed: Cannot allocate memory
+> Command failed.
+> 
+> I also get this in the kernel log:
+> 
+> [   61.138067][ T2594] sysfs: cannot create duplicate filename
+> '/devices/virtual/workqueue/kcryptd-251:0'
+> [   61.139949][ T2594] CPU: 0 PID: 2594 Comm: dmsetup Not tainted 5.10.0+ #48
+> [   61.141176][ T2594] Hardware name: QEMU Standard PC (i440FX + PIIX,
+> 1996), BIOS 0.0.0 02/06/2015
+> [   61.142726][ T2594] Call Trace:
+> [   61.143293][ T2594]  dump_stack+0x7d/0xa3
+> [   61.144030][ T2594]  sysfs_warn_dup.cold+0x17/0x24
+> [   61.144897][ T2594]  sysfs_create_dir_ns+0x1f3/0x270
+> [   61.145844][ T2594]  ? sysfs_create_mount_point+0x90/0x90
+> [   61.146830][ T2594]  ? _raw_spin_lock+0x81/0xd0
+> [   61.147674][ T2594]  kobject_add_internal+0x2a6/0x860
+> [   61.148594][ T2594]  ? table_load+0x2d7/0x690
+> [   61.149372][ T2594]  ? ctl_ioctl+0x3a1/0x950
+> [   61.150122][ T2594]  kobject_add+0x125/0x190
+> [   61.150914][ T2594]  ? kset_create_and_add+0x160/0x160
+> [   61.151812][ T2594]  ? unpoison_range+0x3a/0x60
+> [   61.152616][ T2594]  ? ____kasan_kmalloc.constprop.0+0x82/0xa0
+> [   61.153633][ T2594]  ? unpoison_range+0x3a/0x60
+> [   61.154459][ T2594]  device_add+0x2d7/0x1a40
+> [   61.155235][ T2594]  ? dev_set_name+0xb0/0xe0
+> [   61.156001][ T2594]  ? memset+0x20/0x40
+> [   61.156680][ T2594]  ? __fw_devlink_link_to_suppliers+0x560/0x560
+> [   61.157762][ T2594]  ? pm_runtime_init+0x2a3/0x380
+> [   61.158646][ T2594]  workqueue_sysfs_register+0x17e/0x370
+> [   61.159593][ T2594]  alloc_workqueue+0x559/0xb50
+> [   61.160401][ T2594]  ? workqueue_sysfs_register+0x370/0x370
+> [   61.161387][ T2594]  ? sscanf+0xab/0xe0
+> [   61.162063][ T2594]  ? bioset_init+0x41a/0x710
+> [   61.162870][ T2594]  crypt_ctr+0x24d5/0x2f90
+> [   61.163624][ T2594]  ? crypt_ctr_cipher_new.constprop.0+0xa30/0xa30
+> [   61.164703][ T2594]  ? realloc_argv+0xd2/0x110
+> [   61.165492][ T2594]  ? dm_table_destroy+0x410/0x410
+> [   61.166357][ T2594]  dm_table_add_target+0x45d/0xc40
+> [   61.167239][ T2594]  ? dm_table_create+0xd8/0x320
+> [   61.168090][ T2594]  ? dm_split_args+0x580/0x580
+> [   61.168910][ T2594]  ? __mutex_lock_slowpath+0x10/0x10
+> [   61.169800][ T2594]  ? dm_table_create+0x12b/0x320
+> [   61.170651][ T2594]  table_load+0x2d7/0x690
+> [   61.171395][ T2594]  ? __kasan_kmalloc_large+0x89/0xb0
+> [   61.172295][ T2594]  ? dev_suspend+0x4a0/0x4a0
+> [   61.173109][ T2594]  ? __kmalloc_node+0x275/0x320
+> [   61.173960][ T2594]  ? __might_fault+0x4f/0x70
+> [   61.174733][ T2594]  ctl_ioctl+0x3a1/0x950
+> [   61.175492][ T2594]  ? dev_suspend+0x4a0/0x4a0
+> [   61.176248][ T2594]  ? free_params+0x30/0x30
+> [   61.176968][ T2594]  dm_ctl_ioctl+0xa/0x10
+> [   61.177659][ T2594]  __x64_sys_ioctl+0x7ff/0x1110
+> [   61.178472][ T2594]  ? generic_block_fiemap+0x60/0x60
+> [   61.179308][ T2594]  do_syscall_64+0x33/0x40
+> [   61.180045][ T2594]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
+> [   61.181007][ T2594] RIP: 0033:0x7f48230e0427
+> [   61.181722][ T2594] Code: 00 00 90 48 8b 05 69 aa 0c 00 64 c7 00 26
+> 00 00 00 48 c7 c0 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 b8 10
+> 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d 39 aa 0c 00 f7 d8
+> 64 89 01 48
+> [   61.184908][ T2594] RSP: 002b:00007ffd1469cb68 EFLAGS: 00000202
+> ORIG_RAX: 0000000000000010
+> [   61.186262][ T2594] RAX: ffffffffffffffda RBX: 00007f48231bea7f
+> RCX: 00007f48230e0427
+> [   61.187590][ T2594] RDX: 0000556251e1dea0 RSI: 00000000c138fd09
+> RDI: 0000000000000003
+> [   61.188970][ T2594] RBP: 00007ffd1469cc20 R08: 00007f482320d310
+> R09: 00007ffd1469c9d0
+> [   61.190290][ T2594] R10: 00007f482320c65a R11: 0000000000000202
+> R12: 00007f482320c65a
+> [   61.191639][ T2594] R13: 00007f482320c65a R14: 00007f482320c65a
+> R15: 00007f482320c65a
+> [   61.193014][ T2594] kobject_add_internal failed for kcryptd-251:0
+> with -EEXIST, don't try to register things with the same name in the
+> same directory.
+> [   61.201542][ T2594] device-mapper: table: 251:0: crypt: Couldn't
+> create kcryptd queue
+> [   61.203050][ T2594] device-mapper: ioctl: error adding target to table
+> 
+> Seems we're missing a clean-up somewhere, so it tries to create multiple queues.
+> 
+> Regards,
+> Ignat
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+
 -- 
-2.17.1
+Thanks,
+Jeffle
 
 --
 dm-devel mailing list
