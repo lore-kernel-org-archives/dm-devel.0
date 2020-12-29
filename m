@@ -7,60 +7,61 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 802C0C433E0
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A9438C433E9
 	for <dm-devel@archiver.kernel.org>; Tue, 29 Dec 2020 09:28:54 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id DB67F207D1
+	by mail.kernel.org (Postfix) with ESMTPS id 079A2208D5
 	for <dm-devel@archiver.kernel.org>; Tue, 29 Dec 2020 09:28:53 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org DB67F207D1
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 079A2208D5
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=synology.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-181-D6bB5r7BOEKEVVv9wyM7Uw-1; Tue, 29 Dec 2020 04:28:50 -0500
-X-MC-Unique: D6bB5r7BOEKEVVv9wyM7Uw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-587-Fxku0a7YNluAIUaoSMhkrg-1; Tue, 29 Dec 2020 04:28:50 -0500
+X-MC-Unique: Fxku0a7YNluAIUaoSMhkrg-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6A760107ACF5;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5D00B425C9;
 	Tue, 29 Dec 2020 09:28:45 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 04DED10013C1;
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3FED071CBE;
 	Tue, 29 Dec 2020 09:28:45 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 49E764A7C7;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 49DD8180954D;
 	Tue, 29 Dec 2020 09:28:40 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BT9SbBV013082 for <dm-devel@listman.util.phx.redhat.com>;
+	id 0BT9Sbjb013083 for <dm-devel@listman.util.phx.redhat.com>;
 	Tue, 29 Dec 2020 04:28:37 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 83A04111286E; Tue, 29 Dec 2020 09:28:37 +0000 (UTC)
+	id 84C3C111286D; Tue, 29 Dec 2020 09:28:37 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7FDA5111286F
-	for <dm-devel@redhat.com>; Tue, 29 Dec 2020 09:28:35 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 802BF1112870
+	for <dm-devel@redhat.com>; Tue, 29 Dec 2020 09:28:36 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 22C90858285
-	for <dm-devel@redhat.com>; Tue, 29 Dec 2020 09:28:35 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B266A101A560
+	for <dm-devel@redhat.com>; Tue, 29 Dec 2020 09:28:36 +0000 (UTC)
 Received: from synology.com (mail.synology.com [211.23.38.101]) (Using TLS)
-	by relay.mimecast.com with ESMTP id us-mta-406-x-Lq11oKNcSZxLDUgQ_QvQ-1;
+	by relay.mimecast.com with ESMTP id us-mta-157-MYFnKmrTNDiotIEbS83sfg-1;
 	Tue, 29 Dec 2020 04:28:31 -0500
-X-MC-Unique: x-Lq11oKNcSZxLDUgQ_QvQ-1
+X-MC-Unique: MYFnKmrTNDiotIEbS83sfg-1
 Received: from localhost.localdomain (unknown [10.17.198.239])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by synology.com (Postfix) with ESMTPSA id 553B1CE781AC;
+	by synology.com (Postfix) with ESMTPSA id 1876FCE781A7;
 	Tue, 29 Dec 2020 17:21:11 +0800 (CST)
 From: dannyshih <dannyshih@synology.com>
 To: axboe@kernel.dk
-Date: Tue, 29 Dec 2020 17:18:42 +0800
-Message-Id: <1609233522-25837-5-git-send-email-dannyshih@synology.com>
+Date: Tue, 29 Dec 2020 17:18:39 +0800
+Message-Id: <1609233522-25837-2-git-send-email-dannyshih@synology.com>
 In-Reply-To: <1609233522-25837-1-git-send-email-dannyshih@synology.com>
 References: <1609233522-25837-1-git-send-email-dannyshih@synology.com>
 X-Synology-MCP-Status: no
@@ -80,8 +81,7 @@ X-loop: dm-devel@redhat.com
 Cc: linux-raid@vger.kernel.org, snitzer@redhat.com, linux-block@vger.kernel.org,
 	song@kernel.org, dm-devel@redhat.com,
 	Danny Shih <dannyshih@synology.com>, agk@redhat.com
-Subject: [dm-devel] [PATCH 4/4] md: use submit_bio_noacct_add_head for split
-	bio sending back
+Subject: [dm-devel] [PATCH 1/4] block: introduce submit_bio_noacct_add_head
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -96,7 +96,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -106,112 +106,101 @@ Content-Transfer-Encoding: 7bit
 
 From: Danny Shih <dannyshih@synology.com>
 
-Use submit_bio_noacct_add_head when sending split bio back to md device.
-Otherwise, it might be handled after the lately split bio.
+Porvide a way for stacking block device to re-submit the bio
+which sholud be handled firstly.
 
 Signed-off-by: Danny Shih <dannyshih@synology.com>
 Reviewed-by: Allen Peng <allenpeng@synology.com>
 Reviewed-by: Alex Wu <alexwu@synology.com>
 ---
- drivers/md/md-linear.c | 2 +-
- drivers/md/raid0.c     | 4 ++--
- drivers/md/raid1.c     | 4 ++--
- drivers/md/raid10.c    | 4 ++--
- drivers/md/raid5.c     | 2 +-
- 5 files changed, 8 insertions(+), 8 deletions(-)
+ block/blk-core.c       | 44 +++++++++++++++++++++++++++++++++-----------
+ include/linux/blkdev.h |  1 +
+ 2 files changed, 34 insertions(+), 11 deletions(-)
 
-diff --git a/drivers/md/md-linear.c b/drivers/md/md-linear.c
-index 68cac7d..24418ee 100644
---- a/drivers/md/md-linear.c
-+++ b/drivers/md/md-linear.c
-@@ -243,7 +243,7 @@ static bool linear_make_request(struct mddev *mddev, struct bio *bio)
- 		struct bio *split = bio_split(bio, end_sector - bio_sector,
- 					      GFP_NOIO, &mddev->bio_set);
- 		bio_chain(split, bio);
--		submit_bio_noacct(bio);
-+		submit_bio_noacct_add_head(bio);
- 		bio = split;
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 96e5fcd..693dc83 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1031,16 +1031,7 @@ static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
+ 	return ret;
+ }
+ 
+-/**
+- * submit_bio_noacct - re-submit a bio to the block device layer for I/O
+- * @bio:  The bio describing the location in memory and on the device.
+- *
+- * This is a version of submit_bio() that shall only be used for I/O that is
+- * resubmitted to lower level drivers by stacking block drivers.  All file
+- * systems and other upper level users of the block layer should use
+- * submit_bio() instead.
+- */
+-blk_qc_t submit_bio_noacct(struct bio *bio)
++static blk_qc_t do_submit_bio_noacct(struct bio *bio, bool add_head)
+ {
+ 	if (!submit_bio_checks(bio))
+ 		return BLK_QC_T_NONE;
+@@ -1052,7 +1043,10 @@ blk_qc_t submit_bio_noacct(struct bio *bio)
+ 	 * it is active, and then process them after it returned.
+ 	 */
+ 	if (current->bio_list) {
+-		bio_list_add(&current->bio_list[0], bio);
++		if (add_head)
++			bio_list_add_head(&current->bio_list[0], bio);
++		else
++			bio_list_add(&current->bio_list[0], bio);
+ 		return BLK_QC_T_NONE;
  	}
  
-diff --git a/drivers/md/raid0.c b/drivers/md/raid0.c
-index 67f157f..92e82d5 100644
---- a/drivers/md/raid0.c
-+++ b/drivers/md/raid0.c
-@@ -447,7 +447,7 @@ static void raid0_handle_discard(struct mddev *mddev, struct bio *bio)
- 			zone->zone_end - bio->bi_iter.bi_sector, GFP_NOIO,
- 			&mddev->bio_set);
- 		bio_chain(split, bio);
--		submit_bio_noacct(bio);
-+		submit_bio_noacct_add_head(bio);
- 		bio = split;
- 		end = zone->zone_end;
- 	} else
-@@ -552,7 +552,7 @@ static bool raid0_make_request(struct mddev *mddev, struct bio *bio)
- 		struct bio *split = bio_split(bio, sectors, GFP_NOIO,
- 					      &mddev->bio_set);
- 		bio_chain(split, bio);
--		submit_bio_noacct(bio);
-+		submit_bio_noacct_add_head(bio);
- 		bio = split;
- 	}
+@@ -1060,9 +1054,37 @@ blk_qc_t submit_bio_noacct(struct bio *bio)
+ 		return __submit_bio_noacct_mq(bio);
+ 	return __submit_bio_noacct(bio);
+ }
++
++/**
++ * submit_bio_noacct - re-submit a bio to the block device layer for I/O
++ * @bio:  The bio describing the location in memory and on the device.
++ *
++ * This is a version of submit_bio() that shall only be used for I/O that is
++ * resubmitted to lower level drivers by stacking block drivers.  All file
++ * systems and other upper level users of the block layer should use
++ * submit_bio() instead.
++ */
++blk_qc_t submit_bio_noacct(struct bio *bio)
++{
++	return do_submit_bio_noacct(bio, false);
++}
+ EXPORT_SYMBOL(submit_bio_noacct);
  
-diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-index c034799..31cec76 100644
---- a/drivers/md/raid1.c
-+++ b/drivers/md/raid1.c
-@@ -1282,7 +1282,7 @@ static void raid1_read_request(struct mddev *mddev, struct bio *bio,
- 		struct bio *split = bio_split(bio, max_sectors,
- 					      gfp, &conf->bio_split);
- 		bio_chain(split, bio);
--		submit_bio_noacct(bio);
-+		submit_bio_noacct_add_head(bio);
- 		bio = split;
- 		r1_bio->master_bio = bio;
- 		r1_bio->sectors = max_sectors;
-@@ -1453,7 +1453,7 @@ static void raid1_write_request(struct mddev *mddev, struct bio *bio,
- 		struct bio *split = bio_split(bio, max_sectors,
- 					      GFP_NOIO, &conf->bio_split);
- 		bio_chain(split, bio);
--		submit_bio_noacct(bio);
-+		submit_bio_noacct_add_head(bio);
- 		bio = split;
- 		r1_bio->master_bio = bio;
- 		r1_bio->sectors = max_sectors;
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index c5d88ef..c4dc970 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -1177,7 +1177,7 @@ static void raid10_read_request(struct mddev *mddev, struct bio *bio,
- 					      gfp, &conf->bio_split);
- 		bio_chain(split, bio);
- 		allow_barrier(conf);
--		submit_bio_noacct(bio);
-+		submit_bio_noacct_add_head(bio);
- 		wait_barrier(conf);
- 		bio = split;
- 		r10_bio->master_bio = bio;
-@@ -1460,7 +1460,7 @@ static void raid10_write_request(struct mddev *mddev, struct bio *bio,
- 					      GFP_NOIO, &conf->bio_split);
- 		bio_chain(split, bio);
- 		allow_barrier(conf);
--		submit_bio_noacct(bio);
-+		submit_bio_noacct_add_head(bio);
- 		wait_barrier(conf);
- 		bio = split;
- 		r10_bio->master_bio = bio;
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 3a90cc0..17458ac 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -5490,7 +5490,7 @@ static struct bio *chunk_aligned_read(struct mddev *mddev, struct bio *raid_bio)
- 		struct r5conf *conf = mddev->private;
- 		split = bio_split(raid_bio, sectors, GFP_NOIO, &conf->bio_split);
- 		bio_chain(split, raid_bio);
--		submit_bio_noacct(raid_bio);
-+		submit_bio_noacct_add_head(raid_bio);
- 		raid_bio = split;
- 	}
- 
+ /**
++ * submit_bio_noacct - re-submit a bio, which needs to be handle firstly,
++ *                     to the block device layer for I/O
++ * @bio:  The bio describing the location in memory and on the device.
++ *
++ * alternative submit_bio_noacct() which add bio to the head of
++ * current->bio_list.
++ */
++blk_qc_t submit_bio_noacct_add_head(struct bio *bio)
++{
++	return do_submit_bio_noacct(bio, true);
++}
++EXPORT_SYMBOL(submit_bio_noacct_add_head);
++
++/**
+  * submit_bio - submit a bio to the block device layer for I/O
+  * @bio: The &struct bio which describes the I/O
+  *
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 070de09..b0080d0 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -905,6 +905,7 @@ static inline void rq_flush_dcache_pages(struct request *rq)
+ extern int blk_register_queue(struct gendisk *disk);
+ extern void blk_unregister_queue(struct gendisk *disk);
+ blk_qc_t submit_bio_noacct(struct bio *bio);
++blk_qc_t submit_bio_noacct_add_head(struct bio *bio);
+ extern void blk_rq_init(struct request_queue *q, struct request *rq);
+ extern void blk_put_request(struct request *);
+ extern struct request *blk_get_request(struct request_queue *, unsigned int op,
 -- 
 2.7.4
 
