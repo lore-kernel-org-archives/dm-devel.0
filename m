@@ -2,71 +2,66 @@ Return-Path: <SRS0=/4vF=GC=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8AE0CC433E0
-	for <dm-devel@archiver.kernel.org>; Wed, 30 Dec 2020 12:24:19 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B9EAFC433DB
+	for <dm-devel@archiver.kernel.org>; Wed, 30 Dec 2020 13:15:12 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7354E22209
-	for <dm-devel@archiver.kernel.org>; Wed, 30 Dec 2020 12:24:18 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7354E22209
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=youngman.org.uk
+	by mail.kernel.org (Postfix) with ESMTPS id 3ADA02220B
+	for <dm-devel@archiver.kernel.org>; Wed, 30 Dec 2020 13:15:11 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3ADA02220B
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-196-j1nmnCyqOkK0znhZfFfNJA-1; Wed, 30 Dec 2020 07:24:15 -0500
-X-MC-Unique: j1nmnCyqOkK0znhZfFfNJA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-155-RxIvWtnhOXS-NVBf0wmcIw-1; Wed, 30 Dec 2020 08:15:08 -0500
+X-MC-Unique: RxIvWtnhOXS-NVBf0wmcIw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 72826100C661;
-	Wed, 30 Dec 2020 12:24:10 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9D90D5F7D8;
-	Wed, 30 Dec 2020 12:24:09 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 58CF01005504;
+	Wed, 30 Dec 2020 13:15:03 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 334855D9CC;
+	Wed, 30 Dec 2020 13:15:03 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 890A71809CA1;
-	Wed, 30 Dec 2020 12:24:07 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 02FB64BB7B;
+	Wed, 30 Dec 2020 13:15:01 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 0BUCLH4r031650 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 30 Dec 2020 07:21:17 -0500
+	id 0BUD42CP008470 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 30 Dec 2020 08:04:02 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6F3331111A65; Wed, 30 Dec 2020 12:21:17 +0000 (UTC)
+	id A2D755D237; Wed, 30 Dec 2020 13:04:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6AB931111A64
-	for <dm-devel@redhat.com>; Wed, 30 Dec 2020 12:21:13 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9D4055D228
+	for <dm-devel@redhat.com>; Wed, 30 Dec 2020 13:03:59 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 43B4F101A53F
-	for <dm-devel@redhat.com>; Wed, 30 Dec 2020 12:21:13 +0000 (UTC)
-Received: from smtp.hosts.co.uk (smtp.hosts.co.uk [85.233.160.19]) (Using
-	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-587-CC8-LW8zPJ-TBmGAVHWSGQ-1; Wed, 30 Dec 2020 07:21:11 -0500
-X-MC-Unique: CC8-LW8zPJ-TBmGAVHWSGQ-1
-Received: from host86-158-105-41.range86-158.btcentralplus.com
-	([86.158.105.41] helo=[192.168.1.65])
-	by smtp.hosts.co.uk with esmtpa (Exim)
-	(envelope-from <antlists@youngman.org.uk>)
-	id 1kuZla-0001U5-DV; Wed, 30 Dec 2020 11:35:46 +0000
-To: John Stoffel <john@stoffel.org>, dannyshih <dannyshih@synology.com>
-References: <1609233522-25837-1-git-send-email-dannyshih@synology.com>
-	<1609233522-25837-2-git-send-email-dannyshih@synology.com>
-	<24555.49943.411197.147225@quad.stoffel.home>
-From: antlists <antlists@youngman.org.uk>
-Message-ID: <d841085f-5fd7-bd5c-a40b-fbb953c80598@youngman.org.uk>
-Date: Wed, 30 Dec 2020 11:35:45 +0000
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
-	Thunderbird/78.6.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5AC6C186E121
+	for <dm-devel@redhat.com>; Wed, 30 Dec 2020 13:03:59 +0000 (UTC)
+Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
+	by relay.mimecast.com with ESMTP id us-mta-340-HGc5tFTzOd6VewppgDw8Tw-1;
+	Wed, 30 Dec 2020 08:03:54 -0500
+X-MC-Unique: HGc5tFTzOd6VewppgDw8Tw-1
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 6B214224F4;
+	Wed, 30 Dec 2020 13:03:52 +0000 (UTC)
+From: Sasha Levin <sashal@kernel.org>
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Date: Wed, 30 Dec 2020 08:03:11 -0500
+Message-Id: <20201230130314.3636961-29-sashal@kernel.org>
+In-Reply-To: <20201230130314.3636961-1-sashal@kernel.org>
+References: <20201230130314.3636961-1-sashal@kernel.org>
 MIME-Version: 1.0
-In-Reply-To: <24555.49943.411197.147225@quad.stoffel.home>
+X-stable: review
+X-Patchwork-Hint: Ignore
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -75,13 +70,15 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 0BUD42CP008470
 X-loop: dm-devel@redhat.com
-Cc: axboe@kernel.dk, linux-raid@vger.kernel.org, snitzer@redhat.com,
-	linux-block@vger.kernel.org, song@kernel.org,
-	dm-devel@redhat.com, agk@redhat.com
-Subject: Re: [dm-devel] [PATCH 1/4] block: introduce
-	submit_bio_noacct_add_head
+Cc: Sasha Levin <sashal@kernel.org>, Hyeongseok Kim <hyeongseok@gmail.com>,
+	dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>,
+	Sami Tolvanen <samitolvanen@google.com>
+Subject: [dm-devel] [PATCH AUTOSEL 5.10 29/31] dm verity: skip verity work
+	if I/O error when system is shutting down
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -95,32 +92,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-GB
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 30/12/2020 00:00, John Stoffel wrote:
-> dannyshih> From: Danny Shih<dannyshih@synology.com>
-> dannyshih> Porvide a way for stacking block device to re-submit the bio
-> dannyshih> which sholud be handled firstly.
-> 
-> You're spelling needs to be fixed in these messages.
+From: Hyeongseok Kim <hyeongseok@gmail.com>
 
-   ^^^^^^
+[ Upstream commit 252bd1256396cebc6fc3526127fdb0b317601318 ]
 
-It is traditional, when correcting someone else's spelling, to make one 
-of your own ... :-)
+If emergency system shutdown is called, like by thermal shutdown,
+a dm device could be alive when the block device couldn't process
+I/O requests anymore. In this state, the handling of I/O errors
+by new dm I/O requests or by those already in-flight can lead to
+a verity corruption state, which is a misjudgment.
 
-Sorry, but if we're being pedantic for furriners, it behoves us to be 
-correct ourselves :-)
+So, skip verity work in response to I/O error when system is shutting
+down.
 
-Cheers,
-Wol
+Signed-off-by: Hyeongseok Kim <hyeongseok@gmail.com>
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
+---
+ drivers/md/dm-verity-target.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index f74982dcbea0d..6b8e5bdd8526d 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -537,6 +537,15 @@ static int verity_verify_io(struct dm_verity_io *io)
+ 	return 0;
+ }
+ 
++/*
++ * Skip verity work in response to I/O error when system is shutting down.
++ */
++static inline bool verity_is_system_shutting_down(void)
++{
++	return system_state == SYSTEM_HALT || system_state == SYSTEM_POWER_OFF
++		|| system_state == SYSTEM_RESTART;
++}
++
+ /*
+  * End one "io" structure with a given error.
+  */
+@@ -564,7 +573,8 @@ static void verity_end_io(struct bio *bio)
+ {
+ 	struct dm_verity_io *io = bio->bi_private;
+ 
+-	if (bio->bi_status && !verity_fec_is_enabled(io->v)) {
++	if (bio->bi_status &&
++	    (!verity_fec_is_enabled(io->v) || verity_is_system_shutting_down())) {
+ 		verity_finish_io(io, bio->bi_status);
+ 		return;
+ 	}
+-- 
+2.27.0
+
 
 --
 dm-devel mailing list
