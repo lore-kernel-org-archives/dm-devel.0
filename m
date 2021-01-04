@@ -7,65 +7,65 @@ X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 702C3C433DB
-	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 20:28:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A4CC9C433DB
+	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 20:30:56 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E298C2072C
-	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 20:28:07 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E298C2072C
+	by mail.kernel.org (Postfix) with ESMTPS id 23B9F2072C
+	for <dm-devel@archiver.kernel.org>; Mon,  4 Jan 2021 20:30:56 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 23B9F2072C
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1609792086;
+	s=mimecast20190719; t=1609792255;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=99kjQEEXbVP5jIIhYB9UVyALcf6tO1j+RNzpk8TSzh8=;
-	b=h89rKM1tU4dQuKGOJVk5fyM8chsishc0u7YXcPgh3bwluoMbWwKK3kLjGGcHfIYCQ/0U8a
-	z+ID0oZ1DidmyWJ7SZCWORDjjIlKnS2t4Vc9qgyP+kP/S/s9ZF4IgGGamj5vQtyoC3Pudq
-	3iMs03GmSvVsFhgCMnHEZx44se2ikfk=
+	bh=kjYR5kg62ffOdfgC5gOr1gkz/GTOZu/ZU9Y46ADgwB8=;
+	b=T5iaqV3vxPuUFtSWPC3dxgioYBuysH/6sDpw27Kri6E3rSlPzslVVT9TVPj+SVyKA0f+uR
+	/+KuevzsR/YLU+9OQWiuaboIyDm/7o4cmktq5X3AefMgoieA8RUv6wp2jaR7QOcAId7CL7
+	d93f8W7azfRt1EoXFf1Dc1bJeCosVBw=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-160-qfgFYhYuORKzEifWoYosxQ-1; Mon, 04 Jan 2021 15:28:05 -0500
-X-MC-Unique: qfgFYhYuORKzEifWoYosxQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-192-vuI1DWYSN4SRLYl7HjtTyA-1; Mon, 04 Jan 2021 15:30:52 -0500
+X-MC-Unique: vuI1DWYSN4SRLYl7HjtTyA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7693C107ACE4;
-	Mon,  4 Jan 2021 20:28:00 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AB8E610054FF;
+	Mon,  4 Jan 2021 20:30:48 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 89B505D9C6;
-	Mon,  4 Jan 2021 20:27:58 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 86DE15D751;
+	Mon,  4 Jan 2021 20:30:48 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 92AA14BB7B;
-	Mon,  4 Jan 2021 20:27:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com
-	[10.5.11.16])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D92F64BB7B;
+	Mon,  4 Jan 2021 20:30:47 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
+	[10.5.11.15])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 104KRspY031769 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 4 Jan 2021 15:27:54 -0500
+	id 104KUkS5032566 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 4 Jan 2021 15:30:46 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 2975171C8E; Mon,  4 Jan 2021 20:27:54 +0000 (UTC)
+	id 96D325D765; Mon,  4 Jan 2021 20:30:46 +0000 (UTC)
 Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A86B517250;
-	Mon,  4 Jan 2021 20:27:50 +0000 (UTC)
-Date: Mon, 4 Jan 2021 15:27:50 -0500
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 454806A8E6;
+	Mon,  4 Jan 2021 20:30:43 +0000 (UTC)
+Date: Mon, 4 Jan 2021 15:30:42 -0500
 From: Mike Snitzer <snitzer@redhat.com>
-To: Defang Bo <bodefang@126.com>
-Message-ID: <20210104202749.GA3721@redhat.com>
-References: <1608878926-2283057-1-git-send-email-bodefang@126.com>
+To: Lukas Straub <lukasstraub2@web.de>
+Message-ID: <20210104203042.GB3721@redhat.com>
+References: <20201220140222.2f341344@gecko.fritz.box>
 MIME-Version: 1.0
-In-Reply-To: <1608878926-2283057-1-git-send-email-bodefang@126.com>
+In-Reply-To: <20201220140222.2f341344@gecko.fritz.box>
 User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
-Subject: Re: [dm-devel] dm snap : add sanity checks to snapshot_ctr
+Cc: dm-devel <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] dm-integrity: Fix flush with external metadata device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -79,7 +79,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -88,50 +88,60 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Dec 25 2020 at  1:48am -0500,
-Defang Bo <bodefang@126.com> wrote:
+On Sun, Dec 20 2020 at  8:02am -0500,
+Lukas Straub <lukasstraub2@web.de> wrote:
 
-> Similar to commit<70de2cbd>,there should be a check for argc and argv to prevent Null pointer dereferencing
-> when the dm_get_device invoked twice on the same device path with differnt mode.
+> With an external metadata device, flush requests aren't passed down
+> to the data device.
 > 
-> Signed-off-by: Defang Bo <bodefang@126.com>
+> Fix this by issuing flush in the right places: In integrity_commit
+> when not in journal mode, in do_journal_write after writing the
+> contents of the journal to the disk and in dm_integrity_postsuspend.
+> 
+> Signed-off-by: Lukas Straub <lukasstraub2@web.de>
 > ---
->  drivers/md/dm-snap.c | 7 +++++++
->  1 file changed, 7 insertions(+)
+>  drivers/md/dm-integrity.c | 8 ++++++++
+>  1 file changed, 8 insertions(+)
 > 
-> diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-> index 4668b2c..dccce8b 100644
-> --- a/drivers/md/dm-snap.c
-> +++ b/drivers/md/dm-snap.c
-> @@ -1258,6 +1258,13 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+> index 5a7a1b90e671..a26ed65869f6 100644
+> --- a/drivers/md/dm-integrity.c
+> +++ b/drivers/md/dm-integrity.c
+> @@ -2196,6 +2196,8 @@ static void integrity_commit(struct work_struct *w)
+>  	if (unlikely(ic->mode != 'J')) {
+>  		spin_unlock_irq(&ic->endio_wait.lock);
+>  		dm_integrity_flush_buffers(ic);
+> +		if (ic->meta_dev)
+> +			blkdev_issue_flush(ic->dev->bdev, GFP_NOIO);
+>  		goto release_flush_bios;
+>  	}
 >  
->  	as.argc = argc;
->  	as.argv = argv;
+> @@ -2410,6 +2412,9 @@ static void do_journal_write(struct dm_integrity_c *ic, unsigned write_start,
+>  	wait_for_completion_io(&comp.comp);
+>  
+>  	dm_integrity_flush_buffers(ic);
+> +	if (ic->meta_dev)
+> +		blkdev_issue_flush(ic->dev->bdev, GFP_NOIO);
 > +
-> +	if (!strcmp(argv[0], argv[1])) {
-> +		ti->error = "Error setting metadata or data device";
-> +		r = -EINVAL;
-> +		goto bad;
-> +	}
+>  }
+>  
+>  static void integrity_writer(struct work_struct *w)
+> @@ -2949,6 +2954,9 @@ static void dm_integrity_postsuspend(struct dm_target *ti)
+>  #endif
+>  	}
+>  
+> +	if (ic->meta_dev)
+> +		blkdev_issue_flush(ic->dev->bdev, GFP_NOIO);
 > +
->  	dm_consume_args(&as, 4);
->  	r = parse_snapshot_features(&as, s, ti);
->  	if (r)
+>  	BUG_ON(!RB_EMPTY_ROOT(&ic->in_progress));
+>  
+>  	ic->journal_uptodate = true;
 > -- 
-> 2.7.4
-> 
+> 2.20.1
 
-We already have this later in snapshot_ctr:
 
-        if (cow_dev && cow_dev == origin_dev) {
-                ti->error = "COW device cannot be the same as origin device";
-                r = -EINVAL;
-                goto bad_cow;
-        }
-
-Which happens before the 2nd dm_get_device() for the cow device.  So
-I'm not seeing how you could experience the NULL pointer you say is
-possible.
+Seems like a pretty bad oversight... but shouldn't you also make sure to
+flush the data device _before_ the metadata is flushed?
 
 Mike
 
