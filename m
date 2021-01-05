@@ -2,128 +2,74 @@ Return-Path: <SRS0=jKmk=GI=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+X-Spam-Status: No, score=-10.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,NICE_REPLY_A,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9EDF5C433DB
-	for <dm-devel@archiver.kernel.org>; Tue,  5 Jan 2021 10:58:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EA2A2C433E0
+	for <dm-devel@archiver.kernel.org>; Tue,  5 Jan 2021 18:49:22 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 123A02251F
-	for <dm-devel@archiver.kernel.org>; Tue,  5 Jan 2021 10:58:14 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 123A02251F
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id 5D9B622D04
+	for <dm-devel@archiver.kernel.org>; Tue,  5 Jan 2021 18:49:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5D9B622D04
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-375-w7KMJaB0Ooi4EqBsv8O2iA-1; Tue, 05 Jan 2021 05:58:12 -0500
-X-MC-Unique: w7KMJaB0Ooi4EqBsv8O2iA-1
+ us-mta-249-Fq21qX3TPZSoVFfjswPfrQ-1; Tue, 05 Jan 2021 13:49:17 -0500
+X-MC-Unique: Fq21qX3TPZSoVFfjswPfrQ-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D5A56107ACE8;
-	Tue,  5 Jan 2021 10:58:06 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B46F110016F7;
-	Tue,  5 Jan 2021 10:58:06 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6D596801AC0;
+	Tue,  5 Jan 2021 18:49:12 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A917510016FE;
+	Tue,  5 Jan 2021 18:49:11 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 54E89180954D;
-	Tue,  5 Jan 2021 10:58:06 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AFD064BB7B;
+	Tue,  5 Jan 2021 18:49:09 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 105Aw45Y021403 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 5 Jan 2021 05:58:04 -0500
+	id 105In5YN009719 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 5 Jan 2021 13:49:05 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 59BAB5D211; Tue,  5 Jan 2021 10:58:04 +0000 (UTC)
+	id 958582166B2A; Tue,  5 Jan 2021 18:49:05 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 536295D218
-	for <dm-devel@redhat.com>; Tue,  5 Jan 2021 10:58:02 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8FF852166B29
+	for <dm-devel@redhat.com>; Tue,  5 Jan 2021 18:49:02 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 25953101A560
-	for <dm-devel@redhat.com>; Tue,  5 Jan 2021 10:58:02 +0000 (UTC)
-Received: from de-smtp-delivery-102.mimecast.com
-	(de-smtp-delivery-102.mimecast.com [194.104.109.102]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-181-rkyDPSxiPHqiLzUWd2pSxQ-1;
-	Tue, 05 Jan 2021 05:58:00 -0500
-X-MC-Unique: rkyDPSxiPHqiLzUWd2pSxQ-1
-Received: from EUR05-AM6-obe.outbound.protection.outlook.com
-	(mail-am6eur05lp2112.outbound.protection.outlook.com [104.47.18.112])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	de-mta-21-S2ne9NSZNG-GaabXTWyC_g-1; Tue, 05 Jan 2021 11:57:57 +0100
-X-MC-Unique: S2ne9NSZNG-GaabXTWyC_g-1
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
-	by DBAPR04MB7463.eurprd04.prod.outlook.com (2603:10a6:10:1ad::10)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3721.22;
-	Tue, 5 Jan 2021 10:57:57 +0000
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::c1ce:f675:7:30f6]) by DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::c1ce:f675:7:30f6%3]) with mapi id 15.20.3721.024;
-	Tue, 5 Jan 2021 10:57:57 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
-	"christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Thread-Topic: [PATCH 0/2] multipath cleanup patches
-Thread-Index: AQHW4xdEIx1GX0xd2UmPek13D87jiKoY3RAA
-Date: Tue, 5 Jan 2021 10:57:57 +0000
-Message-ID: <a4023fca93f83c6481b81a3d1e9253b0f12b96a1.camel@suse.com>
-References: <1609819195-18306-1-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1609819195-18306-1-git-send-email-bmarzins@redhat.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Evolution 3.38.2
-x-originating-ip: [2.203.204.191]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: cccdc56c-e24b-48bb-1ee6-08d8b168c296
-x-ms-traffictypediagnostic: DBAPR04MB7463:
-x-microsoft-antispam-prvs: <DBAPR04MB74636FD4913D103FA2197CCBFCD10@DBAPR04MB7463.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:5797
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: oJHx3BNxshhjWW4oInsdVf2THhsf+HJJQwIeSvs0Tj84hP70AnytGegMUJfzxBQsBJr9kwZPIHEOAy8kGNEt/zJ1kH6DC2t0FGFie/0xcZPUOOFz+zvHMVkGjYQmNPOAx6UWzBIVhCp+ldvybOF7K0klDxQqrGwnE5ITBL2JuwSCFycoIVtkoWgH0iVD5Kgk9yBsdb70UwQ04iskJTSIKgXoh6yZCGbOV/snj4r3yoZWEvvrZIDxqw6fYReHrTdeiqIl1w+u7iPn9hfE03ZaH9fqywx5khXftUxXDAMfYv2FSX5ErXAAM1hJrYgxLPOuwhTCLhTviVqkP8zYMJdZSiW1ceF0p74JVValRw1Lvs21a7OKabAv+vNujxl8X9tLGb+WmB0c5BTuDvYnciSlIg==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(396003)(136003)(39860400002)(366004)(376002)(346002)(6512007)(66556008)(316002)(2616005)(8936002)(83380400001)(76116006)(36756003)(66946007)(64756008)(91956017)(66476007)(66446008)(478600001)(86362001)(4326008)(4744005)(6506007)(26005)(44832011)(5660300002)(186003)(110136005)(6486002)(71200400001)(2906002)(8676002);
-	DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata: =?iso-8859-15?Q?ti0/Ug+MNxM78d6vWFyrhzRieeAqxmPkX6+eBZ1YrK53kBVue3V+i3Hfl?=
-	=?iso-8859-15?Q?okm9BHffEVxmcGuIcY6Md6QdQabG6Vbcv2skZMdtk/6Xa1H7V33l4VDu/?=
-	=?iso-8859-15?Q?yMHXjHYEqC0iLWHaRHRFQfSA4Q5632pEdk0Kbs0y3EzMz0c6Y5py7bbuI?=
-	=?iso-8859-15?Q?bZ/RP0Yoq525Om11kaXi6xCSABSIvL1xjiWAX2tDT+eoqXinRuSY/JKWr?=
-	=?iso-8859-15?Q?NB5ZgvVTi1ZkBJDRmlY4Tn93NYpg++KJfzDwvYJ74txVp8UkmkKI2hrWz?=
-	=?iso-8859-15?Q?LpbbO9DXQXxmcgWvOtLjrN/alhzlKKgvfdT1rfJ1lVyu8i8XedS44tuG1?=
-	=?iso-8859-15?Q?Lc9FKCDNcyNVnqRnvrAM6/sBHf17FscQTzfwPN+pVQgAwzhDreXWR+oiG?=
-	=?iso-8859-15?Q?5d2efuqRZnZhQ+9mE56xYG31kks/nwUtOQbQy1EYgBoWO5Y9djKneg/4t?=
-	=?iso-8859-15?Q?odHfbJxnrGGFcqTA+fBojjqGH13wEoeOUjXOevIQoyQNiH3idpj/VfsI9?=
-	=?iso-8859-15?Q?NZKpWDPN2f9CyIBy3CoQGwZq0H2HSzeEt10AwvgUzXUGDDO8L5l2ESMqN?=
-	=?iso-8859-15?Q?G5y9zTqRZpnq6uVN+rb2esnzj0nYsZIEnCghPxUJoZvyHcmHvRQY0/DEF?=
-	=?iso-8859-15?Q?XKFfTJEMNyY5VG5ODAexUBRQx8zFdjOsHlMfSDWrtNscA/FFtEzniV2A6?=
-	=?iso-8859-15?Q?T2Iu6Dwq9sMqz0oOObhmX2HlNRAkhMGilr6GWsgu3lVoK3nrN6dROLhpx?=
-	=?iso-8859-15?Q?RqhgjNaHms8yhzmCnKVSe8worSbwJXdp3h1lsj0OvPgr+8B8kkAI7Yfcg?=
-	=?iso-8859-15?Q?p7CEsTZWCmWHAMY1M7rlZEus1BiZgDN/qjbUI5EE5Hz/bMNqr5Pxpnw+Z?=
-	=?iso-8859-15?Q?nvR3vbriexyAezwUpKkgBLqrjmc8VxHpz8lKS8y6xiv9bn2YkMPKES1F0?=
-	=?iso-8859-15?Q?a6mBeEGUbOZD8DFqrzCpFRff6idm/0zbgxrpcvouMJkz+hin9iP64CjF2?=
-	=?iso-8859-15?Q?bto1+M/tn7Ly4HUyMZ8dPFl3kyGLP1oF4OnKHz3sqbBtt/1BPzHbs31?=
-x-ms-exchange-transport-forked: True
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AE7BE811E98
+	for <dm-devel@redhat.com>; Tue,  5 Jan 2021 18:49:02 +0000 (UTC)
+Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
+	relay.mimecast.com with ESMTP id us-mta-470--56XWt4yNVWo8R6T44jLFQ-1;
+	Tue, 05 Jan 2021 13:49:00 -0500
+X-MC-Unique: -56XWt4yNVWo8R6T44jLFQ-1
+Received: from [192.168.86.31] (c-71-197-163-6.hsd1.wa.comcast.net
+	[71.197.163.6])
+	by linux.microsoft.com (Postfix) with ESMTPSA id 02E0720B7192;
+	Tue,  5 Jan 2021 10:48:57 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 02E0720B7192
+To: Mimi Zohar <zohar@linux.ibm.com>, stephen.smalley.work@gmail.com,
+	casey@schaufler-ca.com, agk@redhat.com, snitzer@redhat.com,
+	gmazyland@gmail.com, paul@paul-moore.com
+References: <20201212180251.9943-1-tusharsu@linux.microsoft.com>
+	<20201212180251.9943-2-tusharsu@linux.microsoft.com>
+	<acec2f96b5fa5ae8fb0e12e76f508cf6e7f7ec97.camel@linux.ibm.com>
+From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+Message-ID: <1f5354ba-e68d-6e3c-9b7e-3ac7b522182e@linux.microsoft.com>
+Date: Tue, 5 Jan 2021 10:48:57 -0800
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+	Thunderbird/68.10.0
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: cccdc56c-e24b-48bb-1ee6-08d8b168c296
-X-MS-Exchange-CrossTenant-originalarrivaltime: 05 Jan 2021 10:57:57.1149 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: sd95pTUfAD7bFWkDGUAffYKF4dxWHHtVKpDcv9jrnhuJgQuJWzdEu+gJM9v3YUP14ZsVfpqIZxOQtatPu8WtGg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DBAPR04MB7463
+In-Reply-To: <acec2f96b5fa5ae8fb0e12e76f508cf6e7f7ec97.camel@linux.ibm.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -132,12 +78,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 105Aw45Y021403
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Subject: Re: [dm-devel] [PATCH 0/2] multipath cleanup patches
+Cc: sashal@kernel.org, dm-devel@redhat.com, selinux@vger.kernel.org,
+	jmorris@namei.org, linux-kernel@vger.kernel.org,
+	nramas@linux.microsoft.com, linux-security-module@vger.kernel.org,
+	tyhicks@linux.microsoft.com, linux-integrity@vger.kernel.org
+Subject: Re: [dm-devel] [PATCH v9 1/8] IMA: generalize keyring specific
+ measurement constructs
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -157,39 +105,167 @@ Authentication-Results: relay.mimecast.com;
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <2FE70DF791BA6142B3A87F3F0079AA9D@eurprd04.prod.outlook.com>
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On Mon, 2021-01-04 at 21:59 -0600, Benjamin Marzinski wrote:
-> These patches are cleanups that Martin mentioned for my last
-> patchset.
-> The first is some code that should have been in patch 4/6
-> (libmultipath:
-> ignore multipaths sections without wwid option). The second is V2 of
-> patch 6/6 (multipath.conf.5: Improve checker_timeout description),
-> which
-> was updated based on Martin's comments.
->=20
-> Benjamin Marzinski (2):
-> =A0 libmultipath: check for null wwid before strcmp
-> =A0 multipath.conf.5: Improve checker_timeout description
->=20
-> =A0libmultipath/config.c=A0=A0=A0=A0=A0 |=A0 2 +-
-> =A0multipath/multipath.conf.5 | 20 ++++++++++++--------
-> =A02 files changed, 13 insertions(+), 9 deletions(-)
->=20
+Hello Mimi,
+Sorry for the late response. I was on vacation last week.
 
-For the set:
+On 2020-12-24 5:06 a.m., Mimi Zohar wrote:
+> On Sat, 2020-12-12 at 10:02 -0800, Tushar Sugandhi wrote:
+>>
+>> diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
+>> index 68956e884403..e76ef4bfd0f4 100644
+>> --- a/security/integrity/ima/ima_main.c
+>> +++ b/security/integrity/ima/ima_main.c
+>> @@ -786,13 +786,13 @@ int ima_post_load_data(char *buf, loff_t size,
+>>    * @eventname: event name to be used for the buffer entry.
+>>    * @func: IMA hook
+>>    * @pcr: pcr to extend the measurement
+>> - * @keyring: keyring name to determine the action to be performed
+>> + * @func_data: private data specific to @func, can be NULL.
+> 
+> This can be simplified to "func specific data, may be NULL".   Please
+> update in all places.
+> 
+Ok, will do.
+>>    *
+>>    * Based on policy, the buffer is measured into the ima log.
+>>    */
+>>   void process_buffer_measurement(struct inode *inode, const void *buf, int size,
+>>   				const char *eventname, enum ima_hooks func,
+>> -				int pcr, const char *keyring)
+>> +				int pcr, const char *func_data)
+>>   {
+>>   	int ret = 0;
+>>   	const char *audit_cause = "ENOMEM";
+>> @@ -831,7 +831,7 @@ void process_buffer_measurement(struct inode *inode, const void *buf, int size,
+>>   	if (func) {
+>>   		security_task_getsecid(current, &secid);
+>>   		action = ima_get_action(inode, current_cred(), secid, 0, func,
+>> -					&pcr, &template, keyring);
+>> +					&pcr, &template, func_data);
+>>   		if (!(action & IMA_MEASURE))
+>>   			return;
+>>   	}
+>> diff --git a/security/integrity/ima/ima_policy.c b/security/integrity/ima/ima_policy.c
+>> index 823a0c1379cb..a09d1a41a290 100644
+>> --- a/security/integrity/ima/ima_policy.c
+>> +++ b/security/integrity/ima/ima_policy.c
+>> @@ -453,30 +453,41 @@ int ima_lsm_policy_change(struct notifier_block *nb, unsigned long event,
+>>   }
+>>   
+>>   /**
+>> - * ima_match_keyring - determine whether the keyring matches the measure rule
+>> - * @rule: a pointer to a rule
+>> - * @keyring: name of the keyring to match against the measure rule
+>> + * ima_match_rule_data - determine whether the given func_data matches
+>> + *			 the measure rule data
+> 
+> After the function_name is a brief description of the function, which
+> should not span multiple lines.  Refer to Documentation/doc-
+> guide/kernel-doc.rst for details.
+> 
+> Please trim the function description to:
+> determine whether func_data matches the policy rule
+> 
+Thanks, will do.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+>> + * @rule: IMA policy rule
+> 
+> This patch should be limited to renaming "keyring" to "func_data".   It
+> shouldn't make other changes, even simple ones like this.
+> 
+Agreed. I will revert the rule description to the old one.
+>> + * @func_data: data to match against the measure rule data
+>>    * @cred: a pointer to a credentials structure for user validation
+>>    *
+>> - * Returns true if keyring matches one in the rule, false otherwise.
+>> + * Returns true if func_data matches one in the rule, false otherwise.
+>>    */
+>> -static bool ima_match_keyring(struct ima_rule_entry *rule,
+>> -			      const char *keyring, const struct cred *cred)
+>> +static bool ima_match_rule_data(struct ima_rule_entry *rule,
+>> +				const char *func_data,
+>> +				const struct cred *cred)
+>>   {
+>> +	const struct ima_rule_opt_list *opt_list = NULL;
+>>   	bool matched = false;
+>>   	size_t i;
+>>   
+>>   	if ((rule->flags & IMA_UID) && !rule->uid_op(cred->uid, rule->uid))
+>>   		return false;
+>>   
+>> -	if (!rule->keyrings)
+>> -		return true;
+>> +	switch (rule->func) {
+>> +	case KEY_CHECK:
+>> +		if (!rule->keyrings)
+>> +			return true;
+>> +
+>> +		opt_list = rule->keyrings;
+>> +		break;
+>> +	default:
+>> +		return false;
+>> +	}
+>>   
+>> -	if (!keyring)
+>> +	if (!func_data)
+>>   		return false;
+>>   
+>> -	for (i = 0; i < rule->keyrings->count; i++) {
+>> -		if (!strcmp(rule->keyrings->items[i], keyring)) {
+>> +	for (i = 0; i < opt_list->count; i++) {
+>> +		if (!strcmp(opt_list->items[i], func_data)) {
+>>   			matched = true;
+>>   			break;
+>>   		}
+>> @@ -493,20 +504,20 @@ static bool ima_match_keyring(struct ima_rule_entry *rule,
+>>    * @secid: the secid of the task to be validated
+>>    * @func: LIM hook identifier
+>>    * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC)
+>> - * @keyring: keyring name to check in policy for KEY_CHECK func
+>> + * @func_data: private data specific to @func, can be NULL.
+> 
+> Update as previously suggested.
+> 
+Yes.
+>>    *
+>>    * Returns true on rule match, false on failure.
+>>    */
+>>   static bool ima_match_rules(struct ima_rule_entry *rule, struct inode *inode,
+>>   			    const struct cred *cred, u32 secid,
+>>   			    enum ima_hooks func, int mask,
+>> -			    const char *keyring)
+>> +			    const char *func_data)
+>>   {
+>>   	int i;
+>>   
+>>   	if (func == KEY_CHECK) {
+>>   		return (rule->flags & IMA_FUNC) && (rule->func == func) &&
+>> -		       ima_match_keyring(rule, keyring, cred);
+>> +			ima_match_rule_data(rule, func_data, cred);
+>>   	}
+>>   	if ((rule->flags & IMA_FUNC) &&
+>>   	    (rule->func != func && func != POST_SETATTR))
+>> @@ -610,8 +621,7 @@ static int get_subaction(struct ima_rule_entry *rule, enum ima_hooks func)
+>>    * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC)
+>>    * @pcr: set the pcr to extend
+>>    * @template_desc: the template that should be used for this rule
+>> - * @keyring: the keyring name, if given, to be used to check in the policy.
+>> - *           keyring can be NULL if func is anything other than KEY_CHECK.
+>> + * @func_data: private data specific to @func, can be NULL.
+> 
+> And again here.
+> 
+Yes.
+> thanks,
+> 
+> Mimi
+> 
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
-SUSE Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix Imend=F6rffer
-
-
+Thanks,
+Tushar
 
 --
 dm-devel mailing list
