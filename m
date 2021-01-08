@@ -2,90 +2,81 @@ Return-Path: <SRS0=H596=GL=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.5 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,
-	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 794BAC433E0
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 10:31:58 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 16AEFC433E0
+	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 16:12:23 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id BEBFE23770
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 10:31:57 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BEBFE23770
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
+	by mail.kernel.org (Postfix) with ESMTPS id 82E242399C
+	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 16:12:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 82E242399C
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1610122341;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=jd1THHCQrQKMMxcSQBeW6W7GQ2b3nJM/xcR+c6ArpsU=;
+	b=R3sn86HEp9PP8qwGbO49V7/gaBqu+G+reYLHiyXWk47C0vUW5VKZIznotwgYNk1ZmFvtM0
+	2PyEYIzNoQjRQMiMtL3jG6KxPrPpLQxKq9izwRgzKHHAqfDlXL/bj8bvNh4Pl/1ya9WT7H
+	PbrVjJYcAk5dLsJf/cPhhAFuDxULW88=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-435-I6F0cdikOwmzY1LvlnMzCw-1; Fri, 08 Jan 2021 05:31:54 -0500
-X-MC-Unique: I6F0cdikOwmzY1LvlnMzCw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-522-T3nx_1xBNViXHj3TsKphbg-1; Fri, 08 Jan 2021 11:12:18 -0500
+X-MC-Unique: T3nx_1xBNViXHj3TsKphbg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C9104802B47;
-	Fri,  8 Jan 2021 10:31:49 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A914519C48;
-	Fri,  8 Jan 2021 10:31:49 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C5348107ACFE;
+	Fri,  8 Jan 2021 16:12:13 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1906D19C9B;
+	Fri,  8 Jan 2021 16:12:12 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7F98E5002C;
-	Fri,  8 Jan 2021 10:31:49 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EAB77180954D;
+	Fri,  8 Jan 2021 16:12:09 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
+	[10.5.11.11])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 108397Hi002006 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 7 Jan 2021 22:09:07 -0500
+	id 108GC84T017373 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 8 Jan 2021 11:12:08 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id E4ABFD7B3C; Fri,  8 Jan 2021 03:09:06 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DEA35D7B3E
-	for <dm-devel@redhat.com>; Fri,  8 Jan 2021 03:09:04 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ACEFC858280
-	for <dm-devel@redhat.com>; Fri,  8 Jan 2021 03:09:04 +0000 (UTC)
-Received: from out30-131.freemail.mail.aliyun.com
-	(out30-131.freemail.mail.aliyun.com [115.124.30.131]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-338-pEA748nsNuarh1V6JlJj-A-1;
-	Thu, 07 Jan 2021 22:09:00 -0500
-X-MC-Unique: pEA748nsNuarh1V6JlJj-A-1
-X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R961e4; CH=green; DM=||false|;
-	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04394;
-	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=4; SR=0;
-	TI=SMTPD_---0UL14HDq_1610075329
-Received: from admindeMacBook-Pro-2.local(mailfrom:jefflexu@linux.alibaba.com
-	fp:SMTPD_---0UL14HDq_1610075329) by smtp.aliyun-inc.com(127.0.0.1);
-	Fri, 08 Jan 2021 11:08:50 +0800
+	id 4CFA519C99; Fri,  8 Jan 2021 16:12:08 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D867012D7E;
+	Fri,  8 Jan 2021 16:12:01 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
+	id 108GC1Jw026994; Fri, 8 Jan 2021 11:12:01 -0500
+Received: from localhost (mpatocka@localhost)
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
+	ESMTP id 108GC03Z026990; Fri, 8 Jan 2021 11:12:00 -0500
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+	owned process doing -bs
+Date: Fri, 8 Jan 2021 11:12:00 -0500 (EST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-References: <20201223112624.78955-1-jefflexu@linux.alibaba.com>
-	<20201223112624.78955-7-jefflexu@linux.alibaba.com>
-	<20210107221825.GF21239@redhat.com>
-From: JeffleXu <jefflexu@linux.alibaba.com>
-Message-ID: <97ec2025-4937-b476-4f15-446cc304e799@linux.alibaba.com>
-Date: Fri, 8 Jan 2021 11:08:49 +0800
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
-	Gecko/20100101 Thunderbird/78.6.0
+In-Reply-To: <20210104203042.GB3721@redhat.com>
+Message-ID: <alpine.LRH.2.02.2101081104490.17896@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20201220140222.2f341344@gecko.fritz.box>
+	<20210104203042.GB3721@redhat.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-In-Reply-To: <20210107221825.GF21239@redhat.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Fri, 08 Jan 2021 05:31:42 -0500
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, io-uring@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH RFC 6/7] block: track cookies of split bios
- for bio-based device
+Cc: dm-devel <dm-devel@redhat.com>, Lukas Straub <lukasstraub2@web.de>
+Subject: Re: [dm-devel] dm-integrity: Fix flush with external metadata device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -99,410 +90,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Thanks for reviewing.
 
 
-On 1/8/21 6:18 AM, Mike Snitzer wrote:
-> On Wed, Dec 23 2020 at  6:26am -0500,
-> Jeffle Xu <jefflexu@linux.alibaba.com> wrote:
+On Mon, 4 Jan 2021, Mike Snitzer wrote:
+
+> On Sun, Dec 20 2020 at  8:02am -0500,
+> Lukas Straub <lukasstraub2@web.de> wrote:
 > 
->> This is actuaaly the core when supporting iopoll for bio-based device.
->>
->> A list is maintained in the top bio (the original bio submitted to dm
->> device), which is used to maintain all valid cookies of split bios. The
->> IO polling routine will actually iterate this list and poll on
->> corresponding hardware queues of the underlying mq devices.
->>
->> Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
-> 
-> Like I said in response to patch 4 in this series: please fold patch 4
-> into this patch and _really_ improve this patch header.
-> 
-> In particular, the (ab)use of bio_inc_remaining() needs be documented in
-> this patch header very well.
-> 
-> But its use could easily be why you're seeing a performance hit (coupled
-> with the extra spinlock locking and list management used).  Just added
-> latency and contention across CPUs.
-
-Indeed bio_inc_remaining() is abused here and the code seems quite hacky
-here.
-
-Actually I'm regarding implementing the split bio tracking mechanism in
-a recursive way you had ever suggested. That is, the split bios could be
-maintained in an array, which is allocated with 'struct dm_io'. This way
-the overhead of spinlock protecting the &root->bi_plist may be omitted
-here. Also the lifetime management may be simplified somehow. But the
-block core needs to fetch the per-bio private data now, just like what
-you had ever suggested before.
-
-How do you think, Mike?
-
-
-Besides the lifetime management is quite annoying to me. As long as the
-tracking object representing a valid split bio) is dynamically
-allocated, no matter it's embedded directly in 'struct bio' (in this
-patch), or allocated with 'struct dm_io', the lifetime management of the
-tracking object comes in. Here the so called tracking object is
-something like
-
-struct node {
-    struct blk_mq_hw_ctx *hctx;
-    blk_qc_t cookie;
-};
-
-
-Actually currently the tracking objects are all allocated with 'struct
-bio', then the lifetime management of the tracking objects is actually
-equivalent to lifetime management of bio. Since the returned cookie is
-actually a pointer to the bio, the refcount of this bio must be
-incremented, since we release a reference to this bio through the
-returned cookie, in which case the abuse of the refcount trick seems
-unavoidable? Unless we allocate the tracking object individually, then
-the returned cookie is actually pointing to the tracking object, and the
-refcount is individually maintained for the tracking object.
-
-
-> 
->> ---
->>  block/bio.c               |  8 ++++
->>  block/blk-core.c          | 84 ++++++++++++++++++++++++++++++++++++++-
->>  include/linux/blk_types.h | 39 ++++++++++++++++++
->>  3 files changed, 129 insertions(+), 2 deletions(-)
->>
->> diff --git a/block/bio.c b/block/bio.c
->> index 1f2cc1fbe283..ca6d1a7ee196 100644
->> --- a/block/bio.c
->> +++ b/block/bio.c
->> @@ -284,6 +284,10 @@ void bio_init(struct bio *bio, struct bio_vec *table,
->>  
->>  	bio->bi_io_vec = table;
->>  	bio->bi_max_vecs = max_vecs;
->> +
->> +	INIT_LIST_HEAD(&bio->bi_plist);
->> +	INIT_LIST_HEAD(&bio->bi_pnode);
->> +	spin_lock_init(&bio->bi_plock);
->>  }
->>  EXPORT_SYMBOL(bio_init);
->>  
->> @@ -689,6 +693,7 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
->>  	bio->bi_write_hint = bio_src->bi_write_hint;
->>  	bio->bi_iter = bio_src->bi_iter;
->>  	bio->bi_io_vec = bio_src->bi_io_vec;
->> +	bio->bi_root = bio_src->bi_root;
->>  
->>  	bio_clone_blkg_association(bio, bio_src);
->>  	blkcg_bio_issue_init(bio);
->> @@ -1425,6 +1430,8 @@ void bio_endio(struct bio *bio)
->>  	if (bio->bi_disk)
->>  		rq_qos_done_bio(bio->bi_disk->queue, bio);
->>  
->> +	bio_del_poll_list(bio);
->> +
->>  	/*
->>  	 * Need to have a real endio function for chained bios, otherwise
->>  	 * various corner cases will break (like stacking block devices that
->> @@ -1446,6 +1453,7 @@ void bio_endio(struct bio *bio)
->>  	blk_throtl_bio_endio(bio);
->>  	/* release cgroup info */
->>  	bio_uninit(bio);
->> +
->>  	if (bio->bi_end_io)
->>  		bio->bi_end_io(bio);
->>  }
->> diff --git a/block/blk-core.c b/block/blk-core.c
->> index 2f5c51ce32e3..5a332af01939 100644
->> --- a/block/blk-core.c
->> +++ b/block/blk-core.c
->> @@ -960,12 +960,31 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
->>  {
->>  	struct bio_list bio_list_on_stack[2];
->>  	blk_qc_t ret = BLK_QC_T_NONE;
->> +	bool iopoll;
->> +	struct bio *root;
->>  
->>  	BUG_ON(bio->bi_next);
->>  
->>  	bio_list_init(&bio_list_on_stack[0]);
->>  	current->bio_list = bio_list_on_stack;
->>  
->> +	iopoll = test_bit(QUEUE_FLAG_POLL, &bio->bi_disk->queue->queue_flags);
->> +	iopoll = iopoll && (bio->bi_opf & REQ_HIPRI);
->> +
->> +	if (iopoll) {
->> +		bio->bi_root = root = bio;
->> +		/*
->> +		 * We need to pin root bio here since there's a reference from
->> +		 * the returned cookie. bio_get() is not enough since the whole
->> +		 * bio and the corresponding kiocb/dio may have already
->> +		 * completed and thus won't call blk_poll() at all, in which
->> +		 * case the pairing bio_put() in blk_bio_poll() won't be called.
->> +		 * The side effect of bio_inc_remaining() is that, the whole bio
->> +		 * won't complete until blk_poll() called.
->> +		 */
->> +		bio_inc_remaining(root);
->> +	}
->> +
->>  	do {
->>  		struct request_queue *q = bio->bi_disk->queue;
->>  		struct bio_list lower, same;
->> @@ -979,7 +998,18 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
->>  		bio_list_on_stack[1] = bio_list_on_stack[0];
->>  		bio_list_init(&bio_list_on_stack[0]);
->>  
->> -		ret = __submit_bio(bio);
->> +		if (iopoll) {
->> +			/* See the comments of above bio_inc_remaining(). */
->> +			bio_inc_remaining(bio);
->> +			bio->bi_cookie = __submit_bio(bio);
->> +
->> +			if (blk_qc_t_valid(bio->bi_cookie))
->> +				bio_add_poll_list(bio);
->> +
->> +			bio_endio(bio);
->> +		} else {
->> +			ret = __submit_bio(bio);
->> +		}
->>  
->>  		/*
->>  		 * Sort new bios into those for a lower level and those for the
->> @@ -1002,7 +1032,11 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
->>  	} while ((bio = bio_list_pop(&bio_list_on_stack[0])));
->>  
->>  	current->bio_list = NULL;
->> -	return ret;
->> +
->> +	if (iopoll)
->> +		return (blk_qc_t)root;
->> +
->> +	return BLK_QC_T_NONE;
->>  }
->>  
->>  static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
->> @@ -1131,6 +1165,52 @@ blk_qc_t submit_bio(struct bio *bio)
->>  }
->>  EXPORT_SYMBOL(submit_bio);
->>  
->> +int blk_bio_poll(struct request_queue *q, blk_qc_t cookie)
->> +{
->> +	int ret = 0;
->> +	struct bio *bio, *root = (struct bio*)cookie;
->> +
->> +	if (list_empty(&root->bi_plist)) {
->> +		bio_endio(root);
->> +		return 1;
->> +	}
->> +
->> +	spin_lock(&root->bi_plock);
->> +	bio = list_first_entry_or_null(&root->bi_plist, struct bio, bi_pnode);
->> +
->> +	while (bio) {
->> +		struct request_queue *q = bio->bi_disk->queue;
->> +		blk_qc_t cookie = bio->bi_cookie;
->> +
->> +		spin_unlock(&root->bi_plock);
->> +		BUG_ON(!blk_qc_t_valid(cookie));
->> +
->> +		ret += blk_mq_poll(q, cookie);
-> 
-> Not yet clear to me how you _know_ this q is blk-mq...
-> What about a deep stack of bio-based DM devices?
-> 
-
-This design works in arbitrary bio-based DM stacking.
-
-
-> Or are you confining bio-based DM IO polling support to bio-based
-> stacked directly on blk-mq? (patch 7 likely shows that to be the case).
-> 
-
-patch 7 works in arbitrary bio-based DM stacking. Please see the reply
-for patch 7 for details.
-
-
-> If so, I'm not liking that at all.  So if your implementation doesn't
-> support arbitrary bio-based IO stacks then this bio-based IO polling
-> support really has limited utility still.
-> 
-> Helps explin how you got away with having bio-based DM always returning
-> BLK_QC_T_NONE in patch 5 though... feels far too simplistic.  Patch 5+6
-> together are implicitly ignoring the complexity that results from
-> arbitrary bio-based DM stacking.
-> 
-> Or am I missing something?
-
-The magic is in patch 5. Bios submitted directly to DM device won't be
-enqueue into this &root->bi_plist list, since all bios submitted
-directly to DM device will return BLK_QC_T_NONE since patch 5, and
-__submit_bio_noacct() only enqueues split bios with valid cookie into
-&root->bi_plist list. Thus only bios submitted to mq device will be
-enqueued into this &root->bi_plist list.
-
-Following is the related logic (the blk_qc_t_valid() part).
-
-
->> -		ret = __submit_bio(bio);
->> +		if (iopoll) {
->> +			/* See the comments of above bio_inc_remaining(). */
->> +			bio_inc_remaining(bio);
->> +			bio->bi_cookie = __submit_bio(bio);
->> +
->> +			if (blk_qc_t_valid(bio->bi_cookie))
->> +				bio_add_poll_list(bio);
->> +
->> +			bio_endio(bio);
->> +		} else {
->> +			ret = __submit_bio(bio);
->> +		}
-
-
-
-Suppose we have the following device stack hierarchy, that is, dm0 is
-stacked on dm1, while dm1 is stacked on nvme0 and nvme1.
-
-    dm0
-    dm1
-nvme0  nvme1
-
-
-Then the bio graph is like:
-
-
-                                   +------------+
-                                   |bio0(to dm0)|
-                                   +------------+
-                                         ^
-                                         | orig_bio
-                                   +--------------------+
-                                   |struct dm_io of bio0|
-+--------------------+ bi_private  ----------------------
-|bio3(to dm1)        |------------>|bio1(to dm1)        |
-+--------------------+             +--------------------+
-        ^                                ^
-        | ->orig_bio                     | ->orig_bio
-+--------------------+             +--------------------+
-|struct dm_io        |             |struct dm_io        |
-----------------------             ----------------------
-|bio2(to nvme0)      |             |bio4(to nvme1)      |
-+--------------------+             +--------------------+
-
-In this way, bio 0/1/3 will return BLK_QC_T_NONE and won't be enqueued
-into &root->bi_plist list, while bio 2/4 will be enqueued if they return
-valid cookie.
-
+> > With an external metadata device, flush requests aren't passed down
+> > to the data device.
+> > 
+> > Fix this by issuing flush in the right places: In integrity_commit
+> > when not in journal mode, in do_journal_write after writing the
+> > contents of the journal to the disk and in dm_integrity_postsuspend.
+> > 
+> > Signed-off-by: Lukas Straub <lukasstraub2@web.de>
+> > ---
+> >  drivers/md/dm-integrity.c | 8 ++++++++
+> >  1 file changed, 8 insertions(+)
+> > 
+> > diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+> > index 5a7a1b90e671..a26ed65869f6 100644
+> > --- a/drivers/md/dm-integrity.c
+> > +++ b/drivers/md/dm-integrity.c
+> > @@ -2196,6 +2196,8 @@ static void integrity_commit(struct work_struct *w)
+> >  	if (unlikely(ic->mode != 'J')) {
+> >  		spin_unlock_irq(&ic->endio_wait.lock);
+> >  		dm_integrity_flush_buffers(ic);
+> > +		if (ic->meta_dev)
+> > +			blkdev_issue_flush(ic->dev->bdev, GFP_NOIO);
+> >  		goto release_flush_bios;
+> >  	}
+> >  
+> > @@ -2410,6 +2412,9 @@ static void do_journal_write(struct dm_integrity_c *ic, unsigned write_start,
+> >  	wait_for_completion_io(&comp.comp);
+> >  
+> >  	dm_integrity_flush_buffers(ic);
+> > +	if (ic->meta_dev)
+> > +		blkdev_issue_flush(ic->dev->bdev, GFP_NOIO);
+> > +
+> >  }
+> >  
+> >  static void integrity_writer(struct work_struct *w)
+> > @@ -2949,6 +2954,9 @@ static void dm_integrity_postsuspend(struct dm_target *ti)
+> >  #endif
+> >  	}
+> >  
+> > +	if (ic->meta_dev)
+> > +		blkdev_issue_flush(ic->dev->bdev, GFP_NOIO);
+> > +
+> >  	BUG_ON(!RB_EMPTY_ROOT(&ic->in_progress));
+> >  
+> >  	ic->journal_uptodate = true;
+> > -- 
+> > 2.20.1
 > 
 > 
->> +
->> +		spin_lock(&root->bi_plock);
->> +		/*
->> +		 * One blk_mq_poll() call could complete multiple bios, and
->> +		 * thus multiple bios could be removed from root->bi_plock
->> +		 * list.
->> +		 */
->> +		bio = list_first_entry_or_null(&root->bi_plist, struct bio, bi_pnode);
->> +	}
->> +
->> +	spin_unlock(&root->bi_plock);
->> +
->> +	if (list_empty(&root->bi_plist)) {
->> +		bio_endio(root);
->> +		/*
->> +		 * 'ret' may be 0 here. root->bi_plist may be empty once we
->> +		 * acquire the list spinlock.
->> +		 */
->> +		ret = max(ret, 1);
->> +	}
->> +
->> +	return ret;
->> +}
->> +EXPORT_SYMBOL(blk_bio_poll);
->> +
->>  static bool blk_poll_hybrid(struct request_queue *q, blk_qc_t cookie)
->>  {
->>  	struct blk_mq_hw_ctx *hctx;
->> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
->> index 2e05244fc16d..2cf5d8f0ea34 100644
->> --- a/include/linux/blk_types.h
->> +++ b/include/linux/blk_types.h
->> @@ -277,6 +277,12 @@ struct bio {
->>  
->>  	struct bio_set		*bi_pool;
->>  
->> +	struct bio		*bi_root;	/* original bio of submit_bio() */
->> +	struct list_head        bi_plist;
->> +	struct list_head        bi_pnode;
->> +	struct spinlock         bi_plock;
->> +	blk_qc_t		bi_cookie;
->> +
->>  	/*
->>  	 * We can inline a number of vecs at the end of the bio, to avoid
->>  	 * double allocations for a small number of bio_vecs. This member
->> @@ -557,6 +563,39 @@ static inline bool blk_qc_t_is_internal(blk_qc_t cookie)
->>  	return (cookie & BLK_QC_T_INTERNAL) != 0;
->>  }
->>  
->> +static inline void bio_add_poll_list(struct bio *bio)
->> +{
->> +	struct bio *root = bio->bi_root;
->> +
->> +	/*
->> +	 * The spin_lock() variant is enough since bios in root->bi_plist are
->> +	 * all enqueued into polling mode hardware queue, thus the list_del()
->> +	 * operation is handled only in process context.
->> +	 */
->> +	spin_lock(&root->bi_plock);
->> +	list_add_tail(&bio->bi_pnode, &root->bi_plist);
->> +	spin_unlock(&root->bi_plock);
->> +}
->> +
->> +static inline void bio_del_poll_list(struct bio *bio)
->> +{
->> +	struct bio *root = bio->bi_root;
->> +
->> +	/*
->> +	 * bios in mq routine: @bi_root is NULL, @bi_cookie is 0;
->> +	 * bios in bio-based routine: @bi_root is non-NULL, @bi_cookie is valid
->> +	 * (including 0) for those in root->bi_plist, invalid for the
->> +	 * remaining.
->> +	 */
->> +	if (bio->bi_root && blk_qc_t_valid(bio->bi_cookie)) {
->> +		spin_lock(&root->bi_plock);
->> +		list_del(&bio->bi_pnode);
->> +		spin_unlock(&root->bi_plock);
->> +	}
->> +}
->> +
->> +int blk_bio_poll(struct request_queue *q, blk_qc_t cookie);
->> +
->>  struct blk_rq_stat {
->>  	u64 mean;
->>  	u64 min;
->> -- 
->> 2.27.0
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
+> Seems like a pretty bad oversight... but shouldn't you also make sure to
+> flush the data device _before_ the metadata is flushed?
 > 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+> Mike
 
--- 
-Thanks,
-Jeffle
+I think, ordering is not a problem.
+
+A disk may flush its cache spontaneously anytime, so it doesn't matter in 
+which order do we flush them. Similarly a dm-bufio buffer may be flushed 
+anytime - if the machine is running out of memory and a dm-bufio shrinker 
+is called.
+
+I'll send another patch for this - I've created a patch that flushes the 
+metadata device cache and data device cache in parallel, so that 
+performance degradation is reduced.
+
+My patch also doesn't use GFP_NOIO allocation - which can in theory 
+deadlock if we are swapping on dm-integrity device.
+
+Mikulas
 
 --
 dm-devel mailing list
