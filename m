@@ -1,73 +1,101 @@
-Return-Path: <SRS0=1Ivj=GK=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=H596=GL=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9CFCEC433E0
-	for <dm-devel@archiver.kernel.org>; Thu,  7 Jan 2021 22:18:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C4451C433DB
+	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 03:13:36 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 2689F235FD
-	for <dm-devel@archiver.kernel.org>; Thu,  7 Jan 2021 22:18:42 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2689F235FD
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 9D280208B3
+	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 03:13:35 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9D280208B3
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=chinatelecom.cn
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1610057921;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=Z1OMVADit2uCYS/+Iqi/tcXeL7KFqm3NYSmRWOndx+A=;
-	b=DOoAFtdYUUvjoOHCEbecbuW4JF/Bqt4kbFYOIZuZhfCOL1iGYD/vo2K1/sykq/z06z9GGE
-	o6AX3HSWZM/GfXbiCXIeRTQopBmyC91Tymmfj7W+9LbFlvs8O52E55+5h50B+yfDDol0+N
-	6Feh26BpfJ1veuO8fl4FHbfWuP0/b/w=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-293--ZjWWRqrPdC3p7cp-_2p-g-1; Thu, 07 Jan 2021 17:18:38 -0500
-X-MC-Unique: -ZjWWRqrPdC3p7cp-_2p-g-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-489-bVhIJCTSP6WkZyaC5S9Q7A-1; Thu, 07 Jan 2021 22:13:32 -0500
+X-MC-Unique: bVhIJCTSP6WkZyaC5S9Q7A-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5DEBA107ACE6;
-	Thu,  7 Jan 2021 22:18:33 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1CB455C260;
-	Thu,  7 Jan 2021 22:18:33 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 959EE15720;
+	Fri,  8 Jan 2021 03:13:26 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B370A19C66;
+	Fri,  8 Jan 2021 03:13:23 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 65C50180954D;
-	Thu,  7 Jan 2021 22:18:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
-	[10.5.11.22])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 42FA44BB7B;
+	Fri,  8 Jan 2021 03:13:18 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 107MIUwB027326 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 7 Jan 2021 17:18:30 -0500
+	id 1083DD8Y002290 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 7 Jan 2021 22:13:16 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 0B03B1002391; Thu,  7 Jan 2021 22:18:30 +0000 (UTC)
-Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4006D1001B2C;
-	Thu,  7 Jan 2021 22:18:25 +0000 (UTC)
-Date: Thu, 7 Jan 2021 17:18:25 -0500
-From: Mike Snitzer <snitzer@redhat.com>
-To: Jeffle Xu <jefflexu@linux.alibaba.com>
-Message-ID: <20210107221825.GF21239@redhat.com>
-References: <20201223112624.78955-1-jefflexu@linux.alibaba.com>
-	<20201223112624.78955-7-jefflexu@linux.alibaba.com>
+	id B8EF694655; Fri,  8 Jan 2021 03:13:13 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B3567D7DE2
+	for <dm-devel@redhat.com>; Fri,  8 Jan 2021 03:13:11 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8673B8007D9
+	for <dm-devel@redhat.com>; Fri,  8 Jan 2021 03:13:11 +0000 (UTC)
+Received: from chinatelecom.cn (prt-mail.chinatelecom.cn [42.123.76.220]) by
+	relay.mimecast.com with ESMTP id us-mta-403-Yz3rWMF8OH6P8VnJhyyORA-1;
+	Thu, 07 Jan 2021 22:13:08 -0500
+X-MC-Unique: Yz3rWMF8OH6P8VnJhyyORA-1
+HMM_SOURCE_IP: 172.18.0.48:2526.610695259
+HMM_ATTACHE_NUM: 0000
+HMM_SOURCE_TYPE: SMTP
+Received: from clientip-202.80.192.21?logid-0753db9c0e6e467a995a2978d078436c
+	(unknown [172.18.0.48])
+	by chinatelecom.cn (HERMES) with SMTP id 72D0B28009D;
+	Fri,  8 Jan 2021 11:13:03 +0800 (CST)
+X-189-SAVE-TO-SEND: wucy11@chinatelecom.cn
+Received: from  ([172.18.0.48])
+	by App0024 with ESMTP id 0753db9c0e6e467a995a2978d078436c for
+	zhangzijian@chinatelecom.cn; Fri Jan  8 11:13:05 2021
+X-Transaction-ID: 0753db9c0e6e467a995a2978d078436c
+X-filter-score: filter<0>
+X-Real-From: wucy11@chinatelecom.cn
+X-Receive-IP: 172.18.0.48
+X-MEDUSA-Status: 0
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
+	"dm-devel@redhat.com" <dm-devel@redhat.com>
+References: <4ca7da32-5777-9089-1e96-a5dbb46c585a@chinatelecom.cn>
+	<4c7286abbdd79fc0c726fd119fdda3b7a140e056.camel@suse.com>
+	<ffb39ebe-ab7e-f82a-f4cb-5b8353bfda2a@chinatelecom.cn>
+	<bdeb04efcac09880451505ca2970c6d322c48da5.camel@suse.com>
+From: Chongyun Wu <wucy11@chinatelecom.cn>
+Message-ID: <13b96493-5e48-8c56-9e56-b5d42f4a3b07@chinatelecom.cn>
+Date: Fri, 8 Jan 2021 11:13:01 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
+	Thunderbird/78.6.0
 MIME-Version: 1.0
-In-Reply-To: <20201223112624.78955-7-jefflexu@linux.alibaba.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+In-Reply-To: <bdeb04efcac09880451505ca2970c6d322c48da5.camel@suse.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1083DD8Y002290
 X-loop: dm-devel@redhat.com
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, io-uring@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH RFC 6/7] block: track cookies of split bios
- for bio-based device
+Cc: yubin1@chinatelecom.cn, zhangzijian@chinatelecom.cn
+Subject: Re: [dm-devel] [PATCH] multipathd: LUN protection by checking
+ path's wwid change status
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -81,290 +109,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="iso-8859-15"; Format="flowed"
 
-On Wed, Dec 23 2020 at  6:26am -0500,
-Jeffle Xu <jefflexu@linux.alibaba.com> wrote:
+Thanks Martin, I will try to reproduce this issue with the latest version w=
+hen=20
+the enviroments ready, if reproduce it again I will let you know, thanks ag=
+ain~
 
-> This is actuaaly the core when supporting iopoll for bio-based device.
-> 
-> A list is maintained in the top bio (the original bio submitted to dm
-> device), which is used to maintain all valid cookies of split bios. The
-> IO polling routine will actually iterate this list and poll on
-> corresponding hardware queues of the underlying mq devices.
-> 
-> Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+On 2021/1/7 19:27, Martin Wilck wrote:
+> On Thu, 2021-01-07 at 10:23 +0800, Chongyun Wu wrote:
+>> Hello Martin,
+>> Thanks for view this patch.
+>>
+>> On 2021/1/7 5:10, Martin Wilck wrote:
+>>> Hello Chongyun,
+>>>
+>>> On Mon, 2020-12-28 at 11:34 +0800, Chongyun Wu wrote:
+>>>>  =A0=A0From 37c74873acfc1587e79a6504ca3d42b8fa00d49e Mon Sep 17
+>>>> 00:00:00
+>>>> 2001
+>>>>
+>>>> From: Chongyun Wu <wucy11@chinatelecom.cn>
+>>>> Date: Mon, 21 Dec 2020 09:51:20 +0800
+>>>> Subject: [PATCH] multipathd: LUN data protection by checking
+>>>> path's
+>>>> wwid
+>>>>  =A0=A0=A0change status
+>>>>
+>>>> Issue description:
+>>>> A) Device sda and sdb correspend to LUN1 and LUN2 in storage
+>>>> backend
+>>>> and
+>>>> the upper layer application uses those two devices.
+>>>> B) Doing illegal operation: unmapping LUN1 and LUN2 in storage
+>>>> backend,
+>>>> and export LUN2 and LUN1 to host with exchanged assignment
+>>>> relation
+>>>> between sda and sdb.
+>>>> C) The upper layer application run for a while and found that the
+>>>> data
+>>>> in both LUN1 and LUN2 has been corrupted.
+>>>
+>>> Can you please be explicit about which multipath-tools version you
+>>> have
+>>> tested? I thought we had the wwid change issues covered. Ben and I
+>>> have
+>>> been putting quite some effort into this recently. Of course we can
+>>> be
+>>> wrong, but I'd like to understand the issue fully.
+>>>
+>> The test version is 0.8.3.
+>=20
+> A test with 0.8.5 would be in necessary, then. The INIT_REMOVED logic
+> has been added after 0.8.4.
+>>>
+>>> Please confirm that you've been using the latest version from
+>>> Christophe's repo (or better even, from my upstream-queue), and
+>>> provide
+>>> -v3 logs showing what goes wrong.
+>> Sorry Martin, I haven't save the logs and the enviroment is
+>> unavailable now.
+>=20
+> Well, please report back if you can reproduce the issue with current
+> upstream.
+>=20
+> Regards,
+> Martin
+>=20
+>=20
 
-Like I said in response to patch 4 in this series: please fold patch 4
-into this patch and _really_ improve this patch header.
+--=20
+Best Regard,
+Chongyun Wu
 
-In particular, the (ab)use of bio_inc_remaining() needs be documented in
-this patch header very well.
-
-But its use could easily be why you're seeing a performance hit (coupled
-with the extra spinlock locking and list management used).  Just added
-latency and contention across CPUs.
-
-> ---
->  block/bio.c               |  8 ++++
->  block/blk-core.c          | 84 ++++++++++++++++++++++++++++++++++++++-
->  include/linux/blk_types.h | 39 ++++++++++++++++++
->  3 files changed, 129 insertions(+), 2 deletions(-)
-> 
-> diff --git a/block/bio.c b/block/bio.c
-> index 1f2cc1fbe283..ca6d1a7ee196 100644
-> --- a/block/bio.c
-> +++ b/block/bio.c
-> @@ -284,6 +284,10 @@ void bio_init(struct bio *bio, struct bio_vec *table,
->  
->  	bio->bi_io_vec = table;
->  	bio->bi_max_vecs = max_vecs;
-> +
-> +	INIT_LIST_HEAD(&bio->bi_plist);
-> +	INIT_LIST_HEAD(&bio->bi_pnode);
-> +	spin_lock_init(&bio->bi_plock);
->  }
->  EXPORT_SYMBOL(bio_init);
->  
-> @@ -689,6 +693,7 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
->  	bio->bi_write_hint = bio_src->bi_write_hint;
->  	bio->bi_iter = bio_src->bi_iter;
->  	bio->bi_io_vec = bio_src->bi_io_vec;
-> +	bio->bi_root = bio_src->bi_root;
->  
->  	bio_clone_blkg_association(bio, bio_src);
->  	blkcg_bio_issue_init(bio);
-> @@ -1425,6 +1430,8 @@ void bio_endio(struct bio *bio)
->  	if (bio->bi_disk)
->  		rq_qos_done_bio(bio->bi_disk->queue, bio);
->  
-> +	bio_del_poll_list(bio);
-> +
->  	/*
->  	 * Need to have a real endio function for chained bios, otherwise
->  	 * various corner cases will break (like stacking block devices that
-> @@ -1446,6 +1453,7 @@ void bio_endio(struct bio *bio)
->  	blk_throtl_bio_endio(bio);
->  	/* release cgroup info */
->  	bio_uninit(bio);
-> +
->  	if (bio->bi_end_io)
->  		bio->bi_end_io(bio);
->  }
-> diff --git a/block/blk-core.c b/block/blk-core.c
-> index 2f5c51ce32e3..5a332af01939 100644
-> --- a/block/blk-core.c
-> +++ b/block/blk-core.c
-> @@ -960,12 +960,31 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
->  {
->  	struct bio_list bio_list_on_stack[2];
->  	blk_qc_t ret = BLK_QC_T_NONE;
-> +	bool iopoll;
-> +	struct bio *root;
->  
->  	BUG_ON(bio->bi_next);
->  
->  	bio_list_init(&bio_list_on_stack[0]);
->  	current->bio_list = bio_list_on_stack;
->  
-> +	iopoll = test_bit(QUEUE_FLAG_POLL, &bio->bi_disk->queue->queue_flags);
-> +	iopoll = iopoll && (bio->bi_opf & REQ_HIPRI);
-> +
-> +	if (iopoll) {
-> +		bio->bi_root = root = bio;
-> +		/*
-> +		 * We need to pin root bio here since there's a reference from
-> +		 * the returned cookie. bio_get() is not enough since the whole
-> +		 * bio and the corresponding kiocb/dio may have already
-> +		 * completed and thus won't call blk_poll() at all, in which
-> +		 * case the pairing bio_put() in blk_bio_poll() won't be called.
-> +		 * The side effect of bio_inc_remaining() is that, the whole bio
-> +		 * won't complete until blk_poll() called.
-> +		 */
-> +		bio_inc_remaining(root);
-> +	}
-> +
->  	do {
->  		struct request_queue *q = bio->bi_disk->queue;
->  		struct bio_list lower, same;
-> @@ -979,7 +998,18 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
->  		bio_list_on_stack[1] = bio_list_on_stack[0];
->  		bio_list_init(&bio_list_on_stack[0]);
->  
-> -		ret = __submit_bio(bio);
-> +		if (iopoll) {
-> +			/* See the comments of above bio_inc_remaining(). */
-> +			bio_inc_remaining(bio);
-> +			bio->bi_cookie = __submit_bio(bio);
-> +
-> +			if (blk_qc_t_valid(bio->bi_cookie))
-> +				bio_add_poll_list(bio);
-> +
-> +			bio_endio(bio);
-> +		} else {
-> +			ret = __submit_bio(bio);
-> +		}
->  
->  		/*
->  		 * Sort new bios into those for a lower level and those for the
-> @@ -1002,7 +1032,11 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
->  	} while ((bio = bio_list_pop(&bio_list_on_stack[0])));
->  
->  	current->bio_list = NULL;
-> -	return ret;
-> +
-> +	if (iopoll)
-> +		return (blk_qc_t)root;
-> +
-> +	return BLK_QC_T_NONE;
->  }
->  
->  static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
-> @@ -1131,6 +1165,52 @@ blk_qc_t submit_bio(struct bio *bio)
->  }
->  EXPORT_SYMBOL(submit_bio);
->  
-> +int blk_bio_poll(struct request_queue *q, blk_qc_t cookie)
-> +{
-> +	int ret = 0;
-> +	struct bio *bio, *root = (struct bio*)cookie;
-> +
-> +	if (list_empty(&root->bi_plist)) {
-> +		bio_endio(root);
-> +		return 1;
-> +	}
-> +
-> +	spin_lock(&root->bi_plock);
-> +	bio = list_first_entry_or_null(&root->bi_plist, struct bio, bi_pnode);
-> +
-> +	while (bio) {
-> +		struct request_queue *q = bio->bi_disk->queue;
-> +		blk_qc_t cookie = bio->bi_cookie;
-> +
-> +		spin_unlock(&root->bi_plock);
-> +		BUG_ON(!blk_qc_t_valid(cookie));
-> +
-> +		ret += blk_mq_poll(q, cookie);
-
-Not yet clear to me how you _know_ this q is blk-mq...
-What about a deep stack of bio-based DM devices?
-
-Or are you confining bio-based DM IO polling support to bio-based
-stacked directly on blk-mq? (patch 7 likely shows that to be the case).
-
-If so, I'm not liking that at all.  So if your implementation doesn't
-support arbitrary bio-based IO stacks then this bio-based IO polling
-support really has limited utility still.
-
-Helps explin how you got away with having bio-based DM always returning
-BLK_QC_T_NONE in patch 5 though... feels far too simplistic.  Patch 5+6
-together are implicitly ignoring the complexity that results from
-arbitrary bio-based DM stacking.
-
-Or am I missing something?
-
-Mike
-
-
-> +
-> +		spin_lock(&root->bi_plock);
-> +		/*
-> +		 * One blk_mq_poll() call could complete multiple bios, and
-> +		 * thus multiple bios could be removed from root->bi_plock
-> +		 * list.
-> +		 */
-> +		bio = list_first_entry_or_null(&root->bi_plist, struct bio, bi_pnode);
-> +	}
-> +
-> +	spin_unlock(&root->bi_plock);
-> +
-> +	if (list_empty(&root->bi_plist)) {
-> +		bio_endio(root);
-> +		/*
-> +		 * 'ret' may be 0 here. root->bi_plist may be empty once we
-> +		 * acquire the list spinlock.
-> +		 */
-> +		ret = max(ret, 1);
-> +	}
-> +
-> +	return ret;
-> +}
-> +EXPORT_SYMBOL(blk_bio_poll);
-> +
->  static bool blk_poll_hybrid(struct request_queue *q, blk_qc_t cookie)
->  {
->  	struct blk_mq_hw_ctx *hctx;
-> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-> index 2e05244fc16d..2cf5d8f0ea34 100644
-> --- a/include/linux/blk_types.h
-> +++ b/include/linux/blk_types.h
-> @@ -277,6 +277,12 @@ struct bio {
->  
->  	struct bio_set		*bi_pool;
->  
-> +	struct bio		*bi_root;	/* original bio of submit_bio() */
-> +	struct list_head        bi_plist;
-> +	struct list_head        bi_pnode;
-> +	struct spinlock         bi_plock;
-> +	blk_qc_t		bi_cookie;
-> +
->  	/*
->  	 * We can inline a number of vecs at the end of the bio, to avoid
->  	 * double allocations for a small number of bio_vecs. This member
-> @@ -557,6 +563,39 @@ static inline bool blk_qc_t_is_internal(blk_qc_t cookie)
->  	return (cookie & BLK_QC_T_INTERNAL) != 0;
->  }
->  
-> +static inline void bio_add_poll_list(struct bio *bio)
-> +{
-> +	struct bio *root = bio->bi_root;
-> +
-> +	/*
-> +	 * The spin_lock() variant is enough since bios in root->bi_plist are
-> +	 * all enqueued into polling mode hardware queue, thus the list_del()
-> +	 * operation is handled only in process context.
-> +	 */
-> +	spin_lock(&root->bi_plock);
-> +	list_add_tail(&bio->bi_pnode, &root->bi_plist);
-> +	spin_unlock(&root->bi_plock);
-> +}
-> +
-> +static inline void bio_del_poll_list(struct bio *bio)
-> +{
-> +	struct bio *root = bio->bi_root;
-> +
-> +	/*
-> +	 * bios in mq routine: @bi_root is NULL, @bi_cookie is 0;
-> +	 * bios in bio-based routine: @bi_root is non-NULL, @bi_cookie is valid
-> +	 * (including 0) for those in root->bi_plist, invalid for the
-> +	 * remaining.
-> +	 */
-> +	if (bio->bi_root && blk_qc_t_valid(bio->bi_cookie)) {
-> +		spin_lock(&root->bi_plock);
-> +		list_del(&bio->bi_pnode);
-> +		spin_unlock(&root->bi_plock);
-> +	}
-> +}
-> +
-> +int blk_bio_poll(struct request_queue *q, blk_qc_t cookie);
-> +
->  struct blk_rq_stat {
->  	u64 mean;
->  	u64 min;
-> -- 
-> 2.27.0
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
 
 --
 dm-devel mailing list
