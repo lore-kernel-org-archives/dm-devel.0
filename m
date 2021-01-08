@@ -7,60 +7,60 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B439C433E0
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 17:01:36 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 329FEC433E6
+	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 17:01:37 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 5E0F022E02
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 17:01:35 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5E0F022E02
+	by mail.kernel.org (Postfix) with ESMTPS id 9F99922E02
+	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 17:01:36 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9F99922E02
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-567-fAnaPXSfNdKsH5mBebblQw-1; Fri, 08 Jan 2021 12:01:31 -0500
-X-MC-Unique: fAnaPXSfNdKsH5mBebblQw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-318-fji_a114NPGOc_uwezvmSg-1; Fri, 08 Jan 2021 12:01:31 -0500
+X-MC-Unique: fji_a114NPGOc_uwezvmSg-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8F8BF1005D4C;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DAFC8C7404;
 	Fri,  8 Jan 2021 17:01:26 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6FA785D9DE;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6922018811;
 	Fri,  8 Jan 2021 17:01:26 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2A93F4A7C6;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3FC654E58E;
 	Fri,  8 Jan 2021 17:01:25 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 108H1OL3022597 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 8 Jan 2021 12:01:24 -0500
+	id 108H1Neu022583 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 8 Jan 2021 12:01:23 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 380F32166B2F; Fri,  8 Jan 2021 17:01:24 +0000 (UTC)
+	id A222B2166B2E; Fri,  8 Jan 2021 17:01:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 329FA2166B29
-	for <dm-devel@redhat.com>; Fri,  8 Jan 2021 17:01:22 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9D7412166B28
+	for <dm-devel@redhat.com>; Fri,  8 Jan 2021 17:01:21 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D70EB858281
-	for <dm-devel@redhat.com>; Fri,  8 Jan 2021 17:01:22 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 720AD858280
+	for <dm-devel@redhat.com>; Fri,  8 Jan 2021 17:01:21 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-171-OIYCIzfXMBet1L5SW4FkyA-1;
+	relay.mimecast.com with ESMTP id us-mta-338-KOlJUU1TP1KenYD-m9-71g-1;
 	Fri, 08 Jan 2021 12:01:16 -0500
-X-MC-Unique: OIYCIzfXMBet1L5SW4FkyA-1
+X-MC-Unique: KOlJUU1TP1KenYD-m9-71g-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 8AAB5AD57;
-	Fri,  8 Jan 2021 17:01:14 +0000 (UTC)
+	by mx2.suse.de (Postfix) with ESMTP id 00DE7AD87;
+	Fri,  8 Jan 2021 17:01:15 +0000 (UTC)
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri,  8 Jan 2021 18:00:42 +0100
-Message-Id: <20210108170044.7883-2-mwilck@suse.com>
+Date: Fri,  8 Jan 2021 18:00:44 +0100
+Message-Id: <20210108170044.7883-4-mwilck@suse.com>
 In-Reply-To: <20210108170044.7883-1-mwilck@suse.com>
 References: <20210108170044.7883-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -74,11 +74,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 108H1OL3022597
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 108H1Neu022583
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH 1/3] libmultipath: select_action(): skip
-	is_mpp_known_to_udev() test
+Subject: [dm-devel] [PATCH 3/3] Revert "multipathd: uev_trigger(): handle
+	incomplete ADD events"
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -92,7 +92,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -102,47 +102,56 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-This test is now superseded by the check introduced in
-0d66e03 ("libmultipath: force map reload if udev incomplete").
+cb10d38 ("multipathd: uev_trigger(): handle incomplete ADD events") was an
+attempt to fix issues with incompletely initialized multipath maps observed
+in various scenarious. However, that patch was wrong. Spurious "change" events
+as this patch would generate have no effect, because they are ignored by
+the device-mapper udev rules. The correct fix for the problem we were
+facing is 0d66e03 ("libmultipath: force map reload if udev incomplete"),
+which forces a full map reload.
 
+Reverts: cb10d38 ("multipathd: uev_trigger(): handle incomplete ADD events")
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/configure.c | 15 ---------------
- 1 file changed, 15 deletions(-)
+ multipathd/main.c | 25 -------------------------
+ 1 file changed, 25 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index d9fd9cb..999f310 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -635,15 +635,6 @@ trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
- 	mpp->needs_paths_uevent = 0;
- }
- 
--static int
--is_mpp_known_to_udev(const struct multipath *mpp)
--{
--	struct udev_device *udd = get_udev_for_mpp(mpp);
--	int ret = (udd != NULL);
--	udev_device_unref(udd);
--	return ret;
--}
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 7612430..92c45d4 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1499,31 +1499,6 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 			uev_pathfail_check(uev, vecs);
+ 		} else if (!strncmp(uev->action, "remove", 6)) {
+ 			r = uev_remove_map(uev, vecs);
+-		} else if (!strncmp(uev->action, "add", 3)) {
+-			const char *ev_name;
+-			char *dm_name;
+-			int major = -1, minor = -1;
 -
- static int
- sysfs_set_max_sectors_kb(struct multipath *mpp, int is_reload)
- {
-@@ -865,12 +856,6 @@ void select_action (struct multipath *mpp, const struct _vector *curmp,
- 			mpp->alias);
- 		return;
+-			/*
+-			 * If DM_NAME is not set for a valid map, trigger a
+-			 * change event. This can happen during coldplug
+-			 * if udev was killed between handling the 'add' and
+-			 * 'change' events before.
+-			 */
+-			ev_name = uevent_get_dm_name(uev);
+-			if (!ev_name) {
+-				major = uevent_get_major(uev);
+-				minor = uevent_get_minor(uev);
+-				dm_name = dm_mapname(major, minor);
+-				if (dm_name && *dm_name) {
+-					condlog(2, "%s: received incomplete 'add' uevent, triggering change",
+-						dm_name);
+-					udev_device_set_sysattr_value(uev->udev,
+-								      "uevent",
+-								      "change");
+-					free(dm_name);
+-				}
+-			}
+ 		}
+ 		goto out;
  	}
--	if (!is_mpp_known_to_udev(cmpp)) {
--		mpp->action = ACT_RELOAD;
--		condlog(3, "%s: set ACT_RELOAD (udev device not initialized)",
--			mpp->alias);
--		return;
--	}
- 	mpp->action = ACT_NOTHING;
- 	condlog(3, "%s: set ACT_NOTHING (map unchanged)",
- 		mpp->alias);
 -- 
 2.29.2
 
