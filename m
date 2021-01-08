@@ -7,76 +7,78 @@ X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 16AEFC433E0
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 16:12:23 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E92B9C433E0
+	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 16:16:35 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 82E242399C
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 16:12:22 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 82E242399C
+	by mail.kernel.org (Postfix) with ESMTPS id 679B62333E
+	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 16:16:35 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 679B62333E
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1610122341;
+	s=mimecast20190719; t=1610122594;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=jd1THHCQrQKMMxcSQBeW6W7GQ2b3nJM/xcR+c6ArpsU=;
-	b=R3sn86HEp9PP8qwGbO49V7/gaBqu+G+reYLHiyXWk47C0vUW5VKZIznotwgYNk1ZmFvtM0
-	2PyEYIzNoQjRQMiMtL3jG6KxPrPpLQxKq9izwRgzKHHAqfDlXL/bj8bvNh4Pl/1ya9WT7H
-	PbrVjJYcAk5dLsJf/cPhhAFuDxULW88=
+	bh=aORLnmlJQtzubKiPcMryEWUe+kpyR0DffFuJGY3j7hY=;
+	b=dOBrGj9Y0fwY9hL0rSaQGlxGk058ochy85AaofUJCJDMlep+OAiHH6hPE4369sQ/RegwdY
+	DmkIubHd7djoGLTPpZAI3vQjqdVYd6BYllXjjltfax7LritM3LQAzkirh7OxSNHk0ODVUx
+	ANceMr2h1j6AcUoFbcJEkrYSEbQRap4=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-522-T3nx_1xBNViXHj3TsKphbg-1; Fri, 08 Jan 2021 11:12:18 -0500
-X-MC-Unique: T3nx_1xBNViXHj3TsKphbg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-49-TYU6z47AP76EtI5eMTN-FQ-1; Fri, 08 Jan 2021 11:16:30 -0500
+X-MC-Unique: TYU6z47AP76EtI5eMTN-FQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C5348107ACFE;
-	Fri,  8 Jan 2021 16:12:13 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1906D19C9B;
-	Fri,  8 Jan 2021 16:12:12 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4D937801AA3;
+	Fri,  8 Jan 2021 16:16:16 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DBE526D036;
+	Fri,  8 Jan 2021 16:16:14 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EAB77180954D;
-	Fri,  8 Jan 2021 16:12:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
-	[10.5.11.11])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 599DF4BB7B;
+	Fri,  8 Jan 2021 16:16:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com
+	[10.5.11.14])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 108GC84T017373 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 8 Jan 2021 11:12:08 -0500
+	id 108GGCZ4017656 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 8 Jan 2021 11:16:12 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4CFA519C99; Fri,  8 Jan 2021 16:12:08 +0000 (UTC)
+	id 61C3A5D9E2; Fri,  8 Jan 2021 16:16:12 +0000 (UTC)
 Received: from file01.intranet.prod.int.rdu2.redhat.com
 	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D867012D7E;
-	Fri,  8 Jan 2021 16:12:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3B4FE5D9F1;
+	Fri,  8 Jan 2021 16:15:57 +0000 (UTC)
 Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
 	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 108GC1Jw026994; Fri, 8 Jan 2021 11:12:01 -0500
+	id 108GFuM0027253; Fri, 8 Jan 2021 11:15:56 -0500
 Received: from localhost (mpatocka@localhost)
 	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 108GC03Z026990; Fri, 8 Jan 2021 11:12:00 -0500
+	ESMTP id 108GFuNT027249; Fri, 8 Jan 2021 11:15:56 -0500
 X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
 	owned process doing -bs
-Date: Fri, 8 Jan 2021 11:12:00 -0500 (EST)
+Date: Fri, 8 Jan 2021 11:15:56 -0500 (EST)
 From: Mikulas Patocka <mpatocka@redhat.com>
 X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
 To: Mike Snitzer <snitzer@redhat.com>
-In-Reply-To: <20210104203042.GB3721@redhat.com>
-Message-ID: <alpine.LRH.2.02.2101081104490.17896@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2101081104490.17896@file01.intranet.prod.int.rdu2.redhat.com>
+Message-ID: <alpine.LRH.2.02.2101081112090.17896@file01.intranet.prod.int.rdu2.redhat.com>
 References: <20201220140222.2f341344@gecko.fritz.box>
 	<20210104203042.GB3721@redhat.com>
+	<alpine.LRH.2.02.2101081104490.17896@file01.intranet.prod.int.rdu2.redhat.com>
 User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 X-loop: dm-devel@redhat.com
 Cc: dm-devel <dm-devel@redhat.com>, Lukas Straub <lukasstraub2@web.de>
-Subject: Re: [dm-devel] dm-integrity: Fix flush with external metadata device
+Subject: [dm-devel] [PATCH] dm-integrity: Fix flush with external metadata
+	device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -90,7 +92,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -98,82 +100,180 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+With external metadata device, flush requests are not passed down to the
+data device.
 
+Fix this by submitting the flush request in dm_integrity_flush_buffers. In
+order to not degrade performance, we overlap the data device flush with
+the metadata device flush.
 
-On Mon, 4 Jan 2021, Mike Snitzer wrote:
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Reported-by: Lukas Straub <lukasstraub2@web.de>
+Cc: stable@vger.kernel.org
 
-> On Sun, Dec 20 2020 at  8:02am -0500,
-> Lukas Straub <lukasstraub2@web.de> wrote:
-> 
-> > With an external metadata device, flush requests aren't passed down
-> > to the data device.
-> > 
-> > Fix this by issuing flush in the right places: In integrity_commit
-> > when not in journal mode, in do_journal_write after writing the
-> > contents of the journal to the disk and in dm_integrity_postsuspend.
-> > 
-> > Signed-off-by: Lukas Straub <lukasstraub2@web.de>
-> > ---
-> >  drivers/md/dm-integrity.c | 8 ++++++++
-> >  1 file changed, 8 insertions(+)
-> > 
-> > diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> > index 5a7a1b90e671..a26ed65869f6 100644
-> > --- a/drivers/md/dm-integrity.c
-> > +++ b/drivers/md/dm-integrity.c
-> > @@ -2196,6 +2196,8 @@ static void integrity_commit(struct work_struct *w)
-> >  	if (unlikely(ic->mode != 'J')) {
-> >  		spin_unlock_irq(&ic->endio_wait.lock);
-> >  		dm_integrity_flush_buffers(ic);
-> > +		if (ic->meta_dev)
-> > +			blkdev_issue_flush(ic->dev->bdev, GFP_NOIO);
-> >  		goto release_flush_bios;
-> >  	}
-> >  
-> > @@ -2410,6 +2412,9 @@ static void do_journal_write(struct dm_integrity_c *ic, unsigned write_start,
-> >  	wait_for_completion_io(&comp.comp);
-> >  
-> >  	dm_integrity_flush_buffers(ic);
-> > +	if (ic->meta_dev)
-> > +		blkdev_issue_flush(ic->dev->bdev, GFP_NOIO);
-> > +
-> >  }
-> >  
-> >  static void integrity_writer(struct work_struct *w)
-> > @@ -2949,6 +2954,9 @@ static void dm_integrity_postsuspend(struct dm_target *ti)
-> >  #endif
-> >  	}
-> >  
-> > +	if (ic->meta_dev)
-> > +		blkdev_issue_flush(ic->dev->bdev, GFP_NOIO);
-> > +
-> >  	BUG_ON(!RB_EMPTY_ROOT(&ic->in_progress));
-> >  
-> >  	ic->journal_uptodate = true;
-> > -- 
-> > 2.20.1
-> 
-> 
-> Seems like a pretty bad oversight... but shouldn't you also make sure to
-> flush the data device _before_ the metadata is flushed?
-> 
-> Mike
+---
+ drivers/md/dm-bufio.c     |    6 ++++
+ drivers/md/dm-integrity.c |   60 +++++++++++++++++++++++++++++++++++++---------
+ include/linux/dm-bufio.h  |    1 
+ 3 files changed, 56 insertions(+), 11 deletions(-)
 
-I think, ordering is not a problem.
-
-A disk may flush its cache spontaneously anytime, so it doesn't matter in 
-which order do we flush them. Similarly a dm-bufio buffer may be flushed 
-anytime - if the machine is running out of memory and a dm-bufio shrinker 
-is called.
-
-I'll send another patch for this - I've created a patch that flushes the 
-metadata device cache and data device cache in parallel, so that 
-performance degradation is reduced.
-
-My patch also doesn't use GFP_NOIO allocation - which can in theory 
-deadlock if we are swapping on dm-integrity device.
-
-Mikulas
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2021-01-07 17:22:39.000000000 +0100
++++ linux-2.6/drivers/md/dm-integrity.c	2021-01-08 15:51:19.000000000 +0100
+@@ -1379,12 +1379,52 @@ thorough_test:
+ #undef MAY_BE_HASH
+ }
+ 
+-static void dm_integrity_flush_buffers(struct dm_integrity_c *ic)
++struct flush_request {
++	struct dm_io_request io_req;
++	struct dm_io_region io_reg;
++	struct dm_integrity_c *ic;
++	struct completion comp;
++};
++
++static void flush_notify(unsigned long error, void *fr_)
++{
++	struct flush_request *fr = fr_;
++	if (unlikely(error != 0))
++		dm_integrity_io_error(fr->ic, "flusing disk cache", -EIO);
++	complete(&fr->comp);
++}
++
++static void dm_integrity_flush_buffers(struct dm_integrity_c *ic, bool flush_data)
+ {
+ 	int r;
++
++	struct flush_request fr;
++
++	if (!ic->meta_dev)
++		flush_data = false;
++	if (flush_data) {
++		fr.io_req.bi_op = REQ_OP_WRITE,
++		fr.io_req.bi_op_flags = REQ_PREFLUSH | REQ_SYNC,
++		fr.io_req.mem.type = DM_IO_KMEM,
++		fr.io_req.mem.ptr.addr = NULL,
++		fr.io_req.notify.fn = flush_notify,
++		fr.io_req.notify.context = &fr;
++		fr.io_req.client = dm_bufio_get_dm_io_client(ic->bufio),
++		fr.io_reg.bdev = ic->dev->bdev,
++		fr.io_reg.sector = 0,
++		fr.io_reg.count = 0,
++		fr.ic = ic;
++		init_completion(&fr.comp);
++		r = dm_io(&fr.io_req, 1, &fr.io_reg, NULL);
++		BUG_ON(r);
++	}
++
+ 	r = dm_bufio_write_dirty_buffers(ic->bufio);
+ 	if (unlikely(r))
+ 		dm_integrity_io_error(ic, "writing tags", r);
++
++	if (flush_data)
++		wait_for_completion(&fr.comp);
+ }
+ 
+ static void sleep_on_endio_wait(struct dm_integrity_c *ic)
+@@ -2110,7 +2150,7 @@ offload_to_thread:
+ 
+ 	if (unlikely(dio->op == REQ_OP_DISCARD) && likely(ic->mode != 'D')) {
+ 		integrity_metadata(&dio->work);
+-		dm_integrity_flush_buffers(ic);
++		dm_integrity_flush_buffers(ic, false);
+ 
+ 		dio->in_flight = (atomic_t)ATOMIC_INIT(1);
+ 		dio->completion = NULL;
+@@ -2195,7 +2235,7 @@ static void integrity_commit(struct work
+ 	flushes = bio_list_get(&ic->flush_bio_list);
+ 	if (unlikely(ic->mode != 'J')) {
+ 		spin_unlock_irq(&ic->endio_wait.lock);
+-		dm_integrity_flush_buffers(ic);
++		dm_integrity_flush_buffers(ic, true);
+ 		goto release_flush_bios;
+ 	}
+ 
+@@ -2409,7 +2449,7 @@ skip_io:
+ 	complete_journal_op(&comp);
+ 	wait_for_completion_io(&comp.comp);
+ 
+-	dm_integrity_flush_buffers(ic);
++	dm_integrity_flush_buffers(ic, true);
+ }
+ 
+ static void integrity_writer(struct work_struct *w)
+@@ -2451,7 +2491,7 @@ static void recalc_write_super(struct dm
+ {
+ 	int r;
+ 
+-	dm_integrity_flush_buffers(ic);
++	dm_integrity_flush_buffers(ic, false);
+ 	if (dm_integrity_failed(ic))
+ 		return;
+ 
+@@ -2654,7 +2694,7 @@ static void bitmap_flush_work(struct wor
+ 	unsigned long limit;
+ 	struct bio *bio;
+ 
+-	dm_integrity_flush_buffers(ic);
++	dm_integrity_flush_buffers(ic, false);
+ 
+ 	range.logical_sector = 0;
+ 	range.n_sectors = ic->provided_data_sectors;
+@@ -2663,9 +2703,7 @@ static void bitmap_flush_work(struct wor
+ 	add_new_range_and_wait(ic, &range);
+ 	spin_unlock_irq(&ic->endio_wait.lock);
+ 
+-	dm_integrity_flush_buffers(ic);
+-	if (ic->meta_dev)
+-		blkdev_issue_flush(ic->dev->bdev, GFP_NOIO);
++	dm_integrity_flush_buffers(ic, true);
+ 
+ 	limit = ic->provided_data_sectors;
+ 	if (ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING)) {
+@@ -2934,11 +2972,11 @@ static void dm_integrity_postsuspend(str
+ 		if (ic->meta_dev)
+ 			queue_work(ic->writer_wq, &ic->writer_work);
+ 		drain_workqueue(ic->writer_wq);
+-		dm_integrity_flush_buffers(ic);
++		dm_integrity_flush_buffers(ic, true);
+ 	}
+ 
+ 	if (ic->mode == 'B') {
+-		dm_integrity_flush_buffers(ic);
++		dm_integrity_flush_buffers(ic, true);
+ #if 1
+ 		/* set to 0 to test bitmap replay code */
+ 		init_journal(ic, 0, ic->journal_sections, 0);
+Index: linux-2.6/include/linux/dm-bufio.h
+===================================================================
+--- linux-2.6.orig/include/linux/dm-bufio.h	2020-09-05 10:01:42.000000000 +0200
++++ linux-2.6/include/linux/dm-bufio.h	2021-01-08 15:12:31.000000000 +0100
+@@ -150,6 +150,7 @@ void dm_bufio_set_minimum_buffers(struct
+ 
+ unsigned dm_bufio_get_block_size(struct dm_bufio_client *c);
+ sector_t dm_bufio_get_device_size(struct dm_bufio_client *c);
++struct dm_io_client *dm_bufio_get_dm_io_client(struct dm_bufio_client *c);
+ sector_t dm_bufio_get_block_number(struct dm_buffer *b);
+ void *dm_bufio_get_block_data(struct dm_buffer *b);
+ void *dm_bufio_get_aux_data(struct dm_buffer *b);
+Index: linux-2.6/drivers/md/dm-bufio.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-bufio.c	2021-01-08 15:11:20.000000000 +0100
++++ linux-2.6/drivers/md/dm-bufio.c	2021-01-08 15:12:25.000000000 +0100
+@@ -1534,6 +1534,12 @@ sector_t dm_bufio_get_device_size(struct
+ }
+ EXPORT_SYMBOL_GPL(dm_bufio_get_device_size);
+ 
++struct dm_io_client *dm_bufio_get_dm_io_client(struct dm_bufio_client *c)
++{
++	return c->dm_io;
++}
++EXPORT_SYMBOL_GPL(dm_bufio_get_dm_io_client);
++
+ sector_t dm_bufio_get_block_number(struct dm_buffer *b)
+ {
+ 	return b->block;
 
 --
 dm-devel mailing list
