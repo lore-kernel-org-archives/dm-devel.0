@@ -2,83 +2,83 @@ Return-Path: <SRS0=H596=GL=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E92B9C433E0
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 16:16:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B439C433E0
+	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 17:01:36 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 679B62333E
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 16:16:35 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 679B62333E
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 5E0F022E02
+	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 17:01:35 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5E0F022E02
+Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1610122594;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=aORLnmlJQtzubKiPcMryEWUe+kpyR0DffFuJGY3j7hY=;
-	b=dOBrGj9Y0fwY9hL0rSaQGlxGk058ochy85AaofUJCJDMlep+OAiHH6hPE4369sQ/RegwdY
-	DmkIubHd7djoGLTPpZAI3vQjqdVYd6BYllXjjltfax7LritM3LQAzkirh7OxSNHk0ODVUx
-	ANceMr2h1j6AcUoFbcJEkrYSEbQRap4=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-49-TYU6z47AP76EtI5eMTN-FQ-1; Fri, 08 Jan 2021 11:16:30 -0500
-X-MC-Unique: TYU6z47AP76EtI5eMTN-FQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-567-fAnaPXSfNdKsH5mBebblQw-1; Fri, 08 Jan 2021 12:01:31 -0500
+X-MC-Unique: fAnaPXSfNdKsH5mBebblQw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4D937801AA3;
-	Fri,  8 Jan 2021 16:16:16 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8F8BF1005D4C;
+	Fri,  8 Jan 2021 17:01:26 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DBE526D036;
-	Fri,  8 Jan 2021 16:16:14 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6FA785D9DE;
+	Fri,  8 Jan 2021 17:01:26 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 599DF4BB7B;
-	Fri,  8 Jan 2021 16:16:14 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com
-	[10.5.11.14])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2A93F4A7C6;
+	Fri,  8 Jan 2021 17:01:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 108GGCZ4017656 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 8 Jan 2021 11:16:12 -0500
+	id 108H1OL3022597 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 8 Jan 2021 12:01:24 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 61C3A5D9E2; Fri,  8 Jan 2021 16:16:12 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
-	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3B4FE5D9F1;
-	Fri,  8 Jan 2021 16:15:57 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 108GFuM0027253; Fri, 8 Jan 2021 11:15:56 -0500
-Received: from localhost (mpatocka@localhost)
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 108GFuNT027249; Fri, 8 Jan 2021 11:15:56 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
-	owned process doing -bs
-Date: Fri, 8 Jan 2021 11:15:56 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.2101081104490.17896@file01.intranet.prod.int.rdu2.redhat.com>
-Message-ID: <alpine.LRH.2.02.2101081112090.17896@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20201220140222.2f341344@gecko.fritz.box>
-	<20210104203042.GB3721@redhat.com>
-	<alpine.LRH.2.02.2101081104490.17896@file01.intranet.prod.int.rdu2.redhat.com>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+	id 380F32166B2F; Fri,  8 Jan 2021 17:01:24 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 329FA2166B29
+	for <dm-devel@redhat.com>; Fri,  8 Jan 2021 17:01:22 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D70EB858281
+	for <dm-devel@redhat.com>; Fri,  8 Jan 2021 17:01:22 +0000 (UTC)
+Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-171-OIYCIzfXMBet1L5SW4FkyA-1;
+	Fri, 08 Jan 2021 12:01:16 -0500
+X-MC-Unique: OIYCIzfXMBet1L5SW4FkyA-1
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.221.27])
+	by mx2.suse.de (Postfix) with ESMTP id 8AAB5AD57;
+	Fri,  8 Jan 2021 17:01:14 +0000 (UTC)
+From: mwilck@suse.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Date: Fri,  8 Jan 2021 18:00:42 +0100
+Message-Id: <20210108170044.7883-2-mwilck@suse.com>
+In-Reply-To: <20210108170044.7883-1-mwilck@suse.com>
+References: <20210108170044.7883-1-mwilck@suse.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 108H1OL3022597
 X-loop: dm-devel@redhat.com
-Cc: dm-devel <dm-devel@redhat.com>, Lukas Straub <lukasstraub2@web.de>
-Subject: [dm-devel] [PATCH] dm-integrity: Fix flush with external metadata
-	device
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Subject: [dm-devel] [PATCH 1/3] libmultipath: select_action(): skip
+	is_mpp_known_to_udev() test
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -92,7 +92,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -100,180 +100,52 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-With external metadata device, flush requests are not passed down to the
-data device.
+From: Martin Wilck <mwilck@suse.com>
 
-Fix this by submitting the flush request in dm_integrity_flush_buffers. In
-order to not degrade performance, we overlap the data device flush with
-the metadata device flush.
+This test is now superseded by the check introduced in
+0d66e03 ("libmultipath: force map reload if udev incomplete").
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Reported-by: Lukas Straub <lukasstraub2@web.de>
-Cc: stable@vger.kernel.org
-
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- drivers/md/dm-bufio.c     |    6 ++++
- drivers/md/dm-integrity.c |   60 +++++++++++++++++++++++++++++++++++++---------
- include/linux/dm-bufio.h  |    1 
- 3 files changed, 56 insertions(+), 11 deletions(-)
+ libmultipath/configure.c | 15 ---------------
+ 1 file changed, 15 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-integrity.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-integrity.c	2021-01-07 17:22:39.000000000 +0100
-+++ linux-2.6/drivers/md/dm-integrity.c	2021-01-08 15:51:19.000000000 +0100
-@@ -1379,12 +1379,52 @@ thorough_test:
- #undef MAY_BE_HASH
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index d9fd9cb..999f310 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -635,15 +635,6 @@ trigger_paths_udev_change(struct multipath *mpp, bool is_mpath)
+ 	mpp->needs_paths_uevent = 0;
  }
  
--static void dm_integrity_flush_buffers(struct dm_integrity_c *ic)
-+struct flush_request {
-+	struct dm_io_request io_req;
-+	struct dm_io_region io_reg;
-+	struct dm_integrity_c *ic;
-+	struct completion comp;
-+};
-+
-+static void flush_notify(unsigned long error, void *fr_)
-+{
-+	struct flush_request *fr = fr_;
-+	if (unlikely(error != 0))
-+		dm_integrity_io_error(fr->ic, "flusing disk cache", -EIO);
-+	complete(&fr->comp);
-+}
-+
-+static void dm_integrity_flush_buffers(struct dm_integrity_c *ic, bool flush_data)
+-static int
+-is_mpp_known_to_udev(const struct multipath *mpp)
+-{
+-	struct udev_device *udd = get_udev_for_mpp(mpp);
+-	int ret = (udd != NULL);
+-	udev_device_unref(udd);
+-	return ret;
+-}
+-
+ static int
+ sysfs_set_max_sectors_kb(struct multipath *mpp, int is_reload)
  {
- 	int r;
-+
-+	struct flush_request fr;
-+
-+	if (!ic->meta_dev)
-+		flush_data = false;
-+	if (flush_data) {
-+		fr.io_req.bi_op = REQ_OP_WRITE,
-+		fr.io_req.bi_op_flags = REQ_PREFLUSH | REQ_SYNC,
-+		fr.io_req.mem.type = DM_IO_KMEM,
-+		fr.io_req.mem.ptr.addr = NULL,
-+		fr.io_req.notify.fn = flush_notify,
-+		fr.io_req.notify.context = &fr;
-+		fr.io_req.client = dm_bufio_get_dm_io_client(ic->bufio),
-+		fr.io_reg.bdev = ic->dev->bdev,
-+		fr.io_reg.sector = 0,
-+		fr.io_reg.count = 0,
-+		fr.ic = ic;
-+		init_completion(&fr.comp);
-+		r = dm_io(&fr.io_req, 1, &fr.io_reg, NULL);
-+		BUG_ON(r);
-+	}
-+
- 	r = dm_bufio_write_dirty_buffers(ic->bufio);
- 	if (unlikely(r))
- 		dm_integrity_io_error(ic, "writing tags", r);
-+
-+	if (flush_data)
-+		wait_for_completion(&fr.comp);
- }
- 
- static void sleep_on_endio_wait(struct dm_integrity_c *ic)
-@@ -2110,7 +2150,7 @@ offload_to_thread:
- 
- 	if (unlikely(dio->op == REQ_OP_DISCARD) && likely(ic->mode != 'D')) {
- 		integrity_metadata(&dio->work);
--		dm_integrity_flush_buffers(ic);
-+		dm_integrity_flush_buffers(ic, false);
- 
- 		dio->in_flight = (atomic_t)ATOMIC_INIT(1);
- 		dio->completion = NULL;
-@@ -2195,7 +2235,7 @@ static void integrity_commit(struct work
- 	flushes = bio_list_get(&ic->flush_bio_list);
- 	if (unlikely(ic->mode != 'J')) {
- 		spin_unlock_irq(&ic->endio_wait.lock);
--		dm_integrity_flush_buffers(ic);
-+		dm_integrity_flush_buffers(ic, true);
- 		goto release_flush_bios;
- 	}
- 
-@@ -2409,7 +2449,7 @@ skip_io:
- 	complete_journal_op(&comp);
- 	wait_for_completion_io(&comp.comp);
- 
--	dm_integrity_flush_buffers(ic);
-+	dm_integrity_flush_buffers(ic, true);
- }
- 
- static void integrity_writer(struct work_struct *w)
-@@ -2451,7 +2491,7 @@ static void recalc_write_super(struct dm
- {
- 	int r;
- 
--	dm_integrity_flush_buffers(ic);
-+	dm_integrity_flush_buffers(ic, false);
- 	if (dm_integrity_failed(ic))
+@@ -865,12 +856,6 @@ void select_action (struct multipath *mpp, const struct _vector *curmp,
+ 			mpp->alias);
  		return;
- 
-@@ -2654,7 +2694,7 @@ static void bitmap_flush_work(struct wor
- 	unsigned long limit;
- 	struct bio *bio;
- 
--	dm_integrity_flush_buffers(ic);
-+	dm_integrity_flush_buffers(ic, false);
- 
- 	range.logical_sector = 0;
- 	range.n_sectors = ic->provided_data_sectors;
-@@ -2663,9 +2703,7 @@ static void bitmap_flush_work(struct wor
- 	add_new_range_and_wait(ic, &range);
- 	spin_unlock_irq(&ic->endio_wait.lock);
- 
--	dm_integrity_flush_buffers(ic);
--	if (ic->meta_dev)
--		blkdev_issue_flush(ic->dev->bdev, GFP_NOIO);
-+	dm_integrity_flush_buffers(ic, true);
- 
- 	limit = ic->provided_data_sectors;
- 	if (ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING)) {
-@@ -2934,11 +2972,11 @@ static void dm_integrity_postsuspend(str
- 		if (ic->meta_dev)
- 			queue_work(ic->writer_wq, &ic->writer_work);
- 		drain_workqueue(ic->writer_wq);
--		dm_integrity_flush_buffers(ic);
-+		dm_integrity_flush_buffers(ic, true);
  	}
- 
- 	if (ic->mode == 'B') {
--		dm_integrity_flush_buffers(ic);
-+		dm_integrity_flush_buffers(ic, true);
- #if 1
- 		/* set to 0 to test bitmap replay code */
- 		init_journal(ic, 0, ic->journal_sections, 0);
-Index: linux-2.6/include/linux/dm-bufio.h
-===================================================================
---- linux-2.6.orig/include/linux/dm-bufio.h	2020-09-05 10:01:42.000000000 +0200
-+++ linux-2.6/include/linux/dm-bufio.h	2021-01-08 15:12:31.000000000 +0100
-@@ -150,6 +150,7 @@ void dm_bufio_set_minimum_buffers(struct
- 
- unsigned dm_bufio_get_block_size(struct dm_bufio_client *c);
- sector_t dm_bufio_get_device_size(struct dm_bufio_client *c);
-+struct dm_io_client *dm_bufio_get_dm_io_client(struct dm_bufio_client *c);
- sector_t dm_bufio_get_block_number(struct dm_buffer *b);
- void *dm_bufio_get_block_data(struct dm_buffer *b);
- void *dm_bufio_get_aux_data(struct dm_buffer *b);
-Index: linux-2.6/drivers/md/dm-bufio.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-bufio.c	2021-01-08 15:11:20.000000000 +0100
-+++ linux-2.6/drivers/md/dm-bufio.c	2021-01-08 15:12:25.000000000 +0100
-@@ -1534,6 +1534,12 @@ sector_t dm_bufio_get_device_size(struct
- }
- EXPORT_SYMBOL_GPL(dm_bufio_get_device_size);
- 
-+struct dm_io_client *dm_bufio_get_dm_io_client(struct dm_bufio_client *c)
-+{
-+	return c->dm_io;
-+}
-+EXPORT_SYMBOL_GPL(dm_bufio_get_dm_io_client);
-+
- sector_t dm_bufio_get_block_number(struct dm_buffer *b)
- {
- 	return b->block;
+-	if (!is_mpp_known_to_udev(cmpp)) {
+-		mpp->action = ACT_RELOAD;
+-		condlog(3, "%s: set ACT_RELOAD (udev device not initialized)",
+-			mpp->alias);
+-		return;
+-	}
+ 	mpp->action = ACT_NOTHING;
+ 	condlog(3, "%s: set ACT_NOTHING (map unchanged)",
+ 		mpp->alias);
+-- 
+2.29.2
+
 
 --
 dm-devel mailing list
