@@ -2,74 +2,114 @@ Return-Path: <SRS0=H596=GL=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-16.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 276F1C433E0
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 17:26:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E8AC8C433DB
+	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 17:33:41 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7E44823A5A
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 17:26:55 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7E44823A5A
+	by mail.kernel.org (Postfix) with ESMTPS id 2A0B62333E
+	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 17:33:40 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2A0B62333E
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1610126814;
+	s=mimecast20190719; t=1610127219;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=UPagLOSKjhzbWrGcMjqf43XliS5X1SaqsOxWp/63pvU=;
-	b=bUXWtoESSer8rPMAwoV7Quy+Sw04Jf9ztr3zm7y2r3bbwxguqeCLDIIGUy1P/2HvF431rN
-	HtefuiAvKZumTktlqhFzEFpbvwu795cyn/+ShdTHxnBMiR0tLZoFzrKG4ksxrW7S5e5AdP
-	2BFuVRUJebkcA8ebe4iz7Fp+i0mZI3s=
+	bh=JjoqFxRUke2L7E2hq0JdboAi15/AS3X6miXXeGdOlTw=;
+	b=gwyTUTXsIMe0WXHrPWlGcqZXLTLCDRIGCYMqMNETYhEcfdKqLerd9CrQ3S0L9v7VO0zGJb
+	DhA8QiyXbefTcn/uz7D6Fg2OOrqUuQTtKuqOjSazCzrA4BYiukRSnFDArsJU58ODuDcGSq
+	eC8I2gCWQSra0d+ntomh5BXj90UqYL4=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-488-o4bO83bbPfqPPRG9wxoJcA-1; Fri, 08 Jan 2021 12:26:51 -0500
-X-MC-Unique: o4bO83bbPfqPPRG9wxoJcA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-536-8_Wi4qXDNgm7q20uAVRz8g-1; Fri, 08 Jan 2021 12:33:37 -0500
+X-MC-Unique: 8_Wi4qXDNgm7q20uAVRz8g-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BE03E803620;
-	Fri,  8 Jan 2021 17:26:46 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0B9001005504;
+	Fri,  8 Jan 2021 17:33:33 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C91AF614EF;
-	Fri,  8 Jan 2021 17:26:45 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A5ACD10013BD;
+	Fri,  8 Jan 2021 17:33:32 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0D0D1180954D;
-	Fri,  8 Jan 2021 17:26:43 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
-	[10.5.11.22])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 05A86180954D;
+	Fri,  8 Jan 2021 17:33:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 108HQdh4024594 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 8 Jan 2021 12:26:39 -0500
+	id 108HXS80026098 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 8 Jan 2021 12:33:28 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id C246D10016F4; Fri,  8 Jan 2021 17:26:39 +0000 (UTC)
-Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 42EE910013C1;
-	Fri,  8 Jan 2021 17:26:35 +0000 (UTC)
-Date: Fri, 8 Jan 2021 12:26:35 -0500
+	id 20FF5101B871; Fri,  8 Jan 2021 17:33:28 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1C82D112D165
+	for <dm-devel@redhat.com>; Fri,  8 Jan 2021 17:33:25 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7DEDE1010431
+	for <dm-devel@redhat.com>; Fri,  8 Jan 2021 17:33:25 +0000 (UTC)
+Received: from mail-qk1-f173.google.com (mail-qk1-f173.google.com
+	[209.85.222.173]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-528-5lYINAx-MI2SsT5QjNH1aQ-1; Fri, 08 Jan 2021 12:33:23 -0500
+X-MC-Unique: 5lYINAx-MI2SsT5QjNH1aQ-1
+Received: by mail-qk1-f173.google.com with SMTP id v126so9086846qkd.11
+	for <dm-devel@redhat.com>; Fri, 08 Jan 2021 09:33:23 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
+	:references:mime-version:content-disposition:in-reply-to;
+	bh=niCrEzZ4Zwb/AmCjiCKG8IO1Lknv6I/uxlNpmIn2B8s=;
+	b=pdLgnFgCTT9rGFuqQhTaBC14Eo7Zxt+cfj5eFNgkrwkZc7661TqJ5xiHo84CT6mLIj
+	QJT+mN07T3EHMFbMPPc9cAu3tUt8C2f7r0OYdHxSGWx8+0z6HR+uZShOJS9tpFa3EfZM
+	AjSA9fNSRsdkne3OkzAzxXi5lfl6zMBeVpG8TzQrY9vkFemmIf3biq4CdHb/rqqA7b54
+	hYOMtcofcPaszROZcfGDwssbZmzA0NWIP6y4VelQPEjOy/4TaTTauDQAJ3vWNeMUh3Lx
+	0DlbMyZzMqIpARtPlbCorSXF0LtbAM9tr6ePU8GYabIE2Rj8eloXNyJPf8hbBNiVTnKc
+	xHkA==
+X-Gm-Message-State: AOAM531fnIjwLjmB+nimih+JoQmmgLG4s4e15XuO2+ZGLXIyQZ+X0dNZ
+	qqPRgN5LqxJ2AUdTaX3Cmx9QcOlCpzs=
+X-Google-Smtp-Source: ABdhPJxj7c8wIBkEzVGUVgEwDiWQq0r77+LRdemzPoh7f3yF2CAg0W6rbK0iizbA9aGmN+YqKTJvhw==
+X-Received: by 2002:ae9:ed41:: with SMTP id c62mr4855441qkg.111.1610127202932; 
+	Fri, 08 Jan 2021 09:33:22 -0800 (PST)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+	m64sm5145000qkb.90.2021.01.08.09.33.21
+	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+	Fri, 08 Jan 2021 09:33:21 -0800 (PST)
+Date: Fri, 8 Jan 2021 12:33:20 -0500
 From: Mike Snitzer <snitzer@redhat.com>
 To: JeffleXu <jefflexu@linux.alibaba.com>
-Message-ID: <20210108172635.GA29915@redhat.com>
+Message-ID: <20210108173320.GA6584@lobo>
 References: <20201223112624.78955-1-jefflexu@linux.alibaba.com>
-	<20201223112624.78955-7-jefflexu@linux.alibaba.com>
-	<20210107221825.GF21239@redhat.com>
-	<97ec2025-4937-b476-4f15-446cc304e799@linux.alibaba.com>
+	<20201223112624.78955-4-jefflexu@linux.alibaba.com>
+	<20210107214758.GC21239@redhat.com>
+	<b081f3bd-fc6f-f7c1-80eb-c8380fc8e8b9@linux.alibaba.com>
 MIME-Version: 1.0
-In-Reply-To: <97ec2025-4937-b476-4f15-446cc304e799@linux.alibaba.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+In-Reply-To: <b081f3bd-fc6f-f7c1-80eb-c8380fc8e8b9@linux.alibaba.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, io-uring@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH RFC 6/7] block: track cookies of split bios
- for bio-based device
+Subject: Re: [dm-devel] [PATCH RFC 3/7] block: add iopoll method for non-mq
+	device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -83,7 +123,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -92,339 +132,260 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Jan 07 2021 at 10:08pm -0500,
+On Thu, Jan 07 2021 at 10:24pm -0500,
 JeffleXu <jefflexu@linux.alibaba.com> wrote:
 
-> Thanks for reviewing.
 > 
 > 
-> On 1/8/21 6:18 AM, Mike Snitzer wrote:
+> On 1/8/21 5:47 AM, Mike Snitzer wrote:
 > > On Wed, Dec 23 2020 at  6:26am -0500,
 > > Jeffle Xu <jefflexu@linux.alibaba.com> wrote:
 > > 
-> >> This is actuaaly the core when supporting iopoll for bio-based device.
+> >> ->poll_fn is introduced in commit ea435e1b9392 ("block: add a poll_fn
+> >> callback to struct request_queue") for supporting non-mq queues such as
+> >> nvme multipath, but removed in commit 529262d56dbe ("block: remove
+> >> ->poll_fn").
 > >>
-> >> A list is maintained in the top bio (the original bio submitted to dm
-> >> device), which is used to maintain all valid cookies of split bios. The
-> >> IO polling routine will actually iterate this list and poll on
-> >> corresponding hardware queues of the underlying mq devices.
-> >>
+> >> To add support of IO polling for non-mq device, this method need to be
+> >> back. Since commit c62b37d96b6e ("block: move ->make_request_fn to
+> >> struct block_device_operations") has moved all callbacks into struct
+> >> block_device_operations in gendisk, we also add the new method named
+> >> ->iopoll in block_device_operations.
+> > 
+> > Please update patch subject and header to:
+> > 
+> > block: add iopoll method to support bio-based IO polling
+> > 
+> > ->poll_fn was introduced in commit ea435e1b9392 ("block: add a poll_fn
+> > callback to struct request_queue") to support bio-based queues such as
+> > nvme multipath, but was later removed in commit 529262d56dbe ("block:
+> > remove ->poll_fn").
+> > 
+> > Given commit c62b37d96b6e ("block: move ->make_request_fn to struct
+> > block_device_operations") restore the possibility of bio-based IO
+> > polling support by adding an ->iopoll method to gendisk->fops.
+> > Elevate bulk of blk_mq_poll() implementation to blk_poll() and reduce
+> > blk_mq_poll() to blk-mq specific code that is called from blk_poll().
+> > 
 > >> Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
-> > 
-> > Like I said in response to patch 4 in this series: please fold patch 4
-> > into this patch and _really_ improve this patch header.
-> > 
-> > In particular, the (ab)use of bio_inc_remaining() needs be documented in
-> > this patch header very well.
-> > 
-> > But its use could easily be why you're seeing a performance hit (coupled
-> > with the extra spinlock locking and list management used).  Just added
-> > latency and contention across CPUs.
-> 
-> Indeed bio_inc_remaining() is abused here and the code seems quite hacky
-> here.
-> 
-> Actually I'm regarding implementing the split bio tracking mechanism in
-> a recursive way you had ever suggested. That is, the split bios could be
-> maintained in an array, which is allocated with 'struct dm_io'. This way
-> the overhead of spinlock protecting the &root->bi_plist may be omitted
-> here. Also the lifetime management may be simplified somehow. But the
-> block core needs to fetch the per-bio private data now, just like what
-> you had ever suggested before.
-> 
-> How do you think, Mike?
-
-Yes, using per-bio-data is a requirement (we cannot bloat 'struct bio').
-
-As for using an array, how would you index the array?  blk-mq is able to
-use an array (with cookie to hctx index translation) because there are a
-finite number of fixed hctx for the life of the device.  But with
-stacked bio-based DM devices, each DM table associated with a DM device
-can change via table reload.  Any reloads should flush outstanding IO,
-but there are cases where no flushing occurs (e.g. dm-multipath when no
-paths are available, _but_ in that instance, there wouldn't be any
-mapping that results in a blk-mq hctx endpoint).
-
-All the DM edge cases aside, you need to ensure that the lifetime of the
-per-bio-data that holds the 'struct node' (that you correctly detailed
-needing below) doesn't somehow get used _after_ the hctx and/or cookie
-are no longer valid.  So to start we'll need some BUG_ON() to validate
-the lifetime is correct.
-
-> Besides the lifetime management is quite annoying to me. As long as the
-> tracking object representing a valid split bio) is dynamically
-> allocated, no matter it's embedded directly in 'struct bio' (in this
-> patch), or allocated with 'struct dm_io', the lifetime management of the
-> tracking object comes in. Here the so called tracking object is
-> something like
-> 
-> struct node {
->     struct blk_mq_hw_ctx *hctx;
->     blk_qc_t cookie;
-> };
-
-Needs a better name, think I had 'struct dm_poll_data'
- 
-> Actually currently the tracking objects are all allocated with 'struct
-> bio', then the lifetime management of the tracking objects is actually
-> equivalent to lifetime management of bio. Since the returned cookie is
-> actually a pointer to the bio, the refcount of this bio must be
-> incremented, since we release a reference to this bio through the
-> returned cookie, in which case the abuse of the refcount trick seems
-> unavoidable? Unless we allocate the tracking object individually, then
-> the returned cookie is actually pointing to the tracking object, and the
-> refcount is individually maintained for the tracking object.
-
-The refcounting and lifetime of the per-bio-data should all work as is.
-Would hope you can avoid extra bio_inc_remaining().. that infratsructure
-is way too tightly coupled to bio_chain()'ing, etc.
-
-The challenge you have is the array that would point at these various
-per-bio-data needs to be rooted somewhere (you put it in the topmost
-original bio with the current patchset).  But why not manage that as
-part of 'struct mapped_device'?  It'd need proper management at DM table
-reload boundaries and such but it seems like the most logical place to
-put the array.  But again, this array needs to be dynamic.. so thinking
-further, maybe a better model would be to have a fixed array in 'struct
-dm_table' for each hctx associated with a blk_mq _data_ device directly
-used/managed by that dm_table?
-
-And ideally, access to these arrays should be as lockless as possible
-(rcu, or whatever) so that scaling to many cpus isn't a problem.
-
 > >> ---
-> >>  block/bio.c               |  8 ++++
-> >>  block/blk-core.c          | 84 ++++++++++++++++++++++++++++++++++++++-
-> >>  include/linux/blk_types.h | 39 ++++++++++++++++++
-> >>  3 files changed, 129 insertions(+), 2 deletions(-)
+> >>  block/blk-core.c       | 79 ++++++++++++++++++++++++++++++++++++++++++
+> >>  block/blk-mq.c         | 70 +++++--------------------------------
+> >>  include/linux/blk-mq.h |  3 ++
+> >>  include/linux/blkdev.h |  1 +
+> >>  4 files changed, 92 insertions(+), 61 deletions(-)
 > >>
-> >> diff --git a/block/bio.c b/block/bio.c
-> >> index 1f2cc1fbe283..ca6d1a7ee196 100644
-> >> --- a/block/bio.c
-> >> +++ b/block/bio.c
-> >> @@ -284,6 +284,10 @@ void bio_init(struct bio *bio, struct bio_vec *table,
-> >>  
-> >>  	bio->bi_io_vec = table;
-> >>  	bio->bi_max_vecs = max_vecs;
-> >> +
-> >> +	INIT_LIST_HEAD(&bio->bi_plist);
-> >> +	INIT_LIST_HEAD(&bio->bi_pnode);
-> >> +	spin_lock_init(&bio->bi_plock);
-> >>  }
-> >>  EXPORT_SYMBOL(bio_init);
-> >>  
-> >> @@ -689,6 +693,7 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
-> >>  	bio->bi_write_hint = bio_src->bi_write_hint;
-> >>  	bio->bi_iter = bio_src->bi_iter;
-> >>  	bio->bi_io_vec = bio_src->bi_io_vec;
-> >> +	bio->bi_root = bio_src->bi_root;
-> >>  
-> >>  	bio_clone_blkg_association(bio, bio_src);
-> >>  	blkcg_bio_issue_init(bio);
-> >> @@ -1425,6 +1430,8 @@ void bio_endio(struct bio *bio)
-> >>  	if (bio->bi_disk)
-> >>  		rq_qos_done_bio(bio->bi_disk->queue, bio);
-> >>  
-> >> +	bio_del_poll_list(bio);
-> >> +
-> >>  	/*
-> >>  	 * Need to have a real endio function for chained bios, otherwise
-> >>  	 * various corner cases will break (like stacking block devices that
-> >> @@ -1446,6 +1453,7 @@ void bio_endio(struct bio *bio)
-> >>  	blk_throtl_bio_endio(bio);
-> >>  	/* release cgroup info */
-> >>  	bio_uninit(bio);
-> >> +
-> >>  	if (bio->bi_end_io)
-> >>  		bio->bi_end_io(bio);
-> >>  }
 > >> diff --git a/block/blk-core.c b/block/blk-core.c
-> >> index 2f5c51ce32e3..5a332af01939 100644
+> >> index 96e5fcd7f071..2f5c51ce32e3 100644
 > >> --- a/block/blk-core.c
 > >> +++ b/block/blk-core.c
-> >> @@ -960,12 +960,31 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
-> >>  {
-> >>  	struct bio_list bio_list_on_stack[2];
-> >>  	blk_qc_t ret = BLK_QC_T_NONE;
-> >> +	bool iopoll;
-> >> +	struct bio *root;
-> >>  
-> >>  	BUG_ON(bio->bi_next);
-> >>  
-> >>  	bio_list_init(&bio_list_on_stack[0]);
-> >>  	current->bio_list = bio_list_on_stack;
-> >>  
-> >> +	iopoll = test_bit(QUEUE_FLAG_POLL, &bio->bi_disk->queue->queue_flags);
-> >> +	iopoll = iopoll && (bio->bi_opf & REQ_HIPRI);
-> >> +
-> >> +	if (iopoll) {
-> >> +		bio->bi_root = root = bio;
-> >> +		/*
-> >> +		 * We need to pin root bio here since there's a reference from
-> >> +		 * the returned cookie. bio_get() is not enough since the whole
-> >> +		 * bio and the corresponding kiocb/dio may have already
-> >> +		 * completed and thus won't call blk_poll() at all, in which
-> >> +		 * case the pairing bio_put() in blk_bio_poll() won't be called.
-> >> +		 * The side effect of bio_inc_remaining() is that, the whole bio
-> >> +		 * won't complete until blk_poll() called.
-> >> +		 */
-> >> +		bio_inc_remaining(root);
-> >> +	}
-> >> +
-> >>  	do {
-> >>  		struct request_queue *q = bio->bi_disk->queue;
-> >>  		struct bio_list lower, same;
-> >> @@ -979,7 +998,18 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
-> >>  		bio_list_on_stack[1] = bio_list_on_stack[0];
-> >>  		bio_list_init(&bio_list_on_stack[0]);
-> >>  
-> >> -		ret = __submit_bio(bio);
-> >> +		if (iopoll) {
-> >> +			/* See the comments of above bio_inc_remaining(). */
-> >> +			bio_inc_remaining(bio);
-> >> +			bio->bi_cookie = __submit_bio(bio);
-> >> +
-> >> +			if (blk_qc_t_valid(bio->bi_cookie))
-> >> +				bio_add_poll_list(bio);
-> >> +
-> >> +			bio_endio(bio);
-> >> +		} else {
-> >> +			ret = __submit_bio(bio);
-> >> +		}
-> >>  
-> >>  		/*
-> >>  		 * Sort new bios into those for a lower level and those for the
-> >> @@ -1002,7 +1032,11 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
-> >>  	} while ((bio = bio_list_pop(&bio_list_on_stack[0])));
-> >>  
-> >>  	current->bio_list = NULL;
-> >> -	return ret;
-> >> +
-> >> +	if (iopoll)
-> >> +		return (blk_qc_t)root;
-> >> +
-> >> +	return BLK_QC_T_NONE;
-> >>  }
-> >>  
-> >>  static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
-> >> @@ -1131,6 +1165,52 @@ blk_qc_t submit_bio(struct bio *bio)
+> >> @@ -1131,6 +1131,85 @@ blk_qc_t submit_bio(struct bio *bio)
 > >>  }
 > >>  EXPORT_SYMBOL(submit_bio);
 > >>  
-> >> +int blk_bio_poll(struct request_queue *q, blk_qc_t cookie)
+> >> +static bool blk_poll_hybrid(struct request_queue *q, blk_qc_t cookie)
 > >> +{
-> >> +	int ret = 0;
-> >> +	struct bio *bio, *root = (struct bio*)cookie;
+> >> +	struct blk_mq_hw_ctx *hctx;
 > >> +
-> >> +	if (list_empty(&root->bi_plist)) {
-> >> +		bio_endio(root);
+> >> +	/* TODO: bio-based device doesn't support hybrid poll. */
+> >> +	if (!queue_is_mq(q))
+> >> +		return false;
+> >> +
+> >> +	hctx = q->queue_hw_ctx[blk_qc_t_to_queue_num(cookie)];
+> >> +	if (blk_mq_poll_hybrid(q, hctx, cookie))
+> >> +		return true;
+> >> +
+> >> +	hctx->poll_considered++;
+> >> +	return false;
+> >> +}
+> > 
+> > I don't see where you ever backfill bio-based hybrid support (in
+> > the following patches in this series, so it is lingering TODO).
+> 
+> Yes the hybrid polling is not implemented and thus bypassed for
+> bio-based device currently.
+> 
+> > 
+> >> +
+> >> +/**
+> >> + * blk_poll - poll for IO completions
+> >> + * @q:  the queue
+> >> + * @cookie: cookie passed back at IO submission time
+> >> + * @spin: whether to spin for completions
+> >> + *
+> >> + * Description:
+> >> + *    Poll for completions on the passed in queue. Returns number of
+> >> + *    completed entries found. If @spin is true, then blk_poll will continue
+> >> + *    looping until at least one completion is found, unless the task is
+> >> + *    otherwise marked running (or we need to reschedule).
+> >> + */
+> >> +int blk_poll(struct request_queue *q, blk_qc_t cookie, bool spin)
+> >> +{
+> >> +	long state;
+> >> +
+> >> +	if (!blk_qc_t_valid(cookie) ||
+> >> +	    !test_bit(QUEUE_FLAG_POLL, &q->queue_flags))
+> >> +		return 0;
+> >> +
+> >> +	if (current->plug)
+> >> +		blk_flush_plug_list(current->plug, false);
+> >> +
+> >> +	/*
+> >> +	 * If we sleep, have the caller restart the poll loop to reset
+> >> +	 * the state. Like for the other success return cases, the
+> >> +	 * caller is responsible for checking if the IO completed. If
+> >> +	 * the IO isn't complete, we'll get called again and will go
+> >> +	 * straight to the busy poll loop. If specified not to spin,
+> >> +	 * we also should not sleep.
+> >> +	 */
+> >> +	if (spin && blk_poll_hybrid(q, cookie))
 > >> +		return 1;
-> >> +	}
 > >> +
-> >> +	spin_lock(&root->bi_plock);
-> >> +	bio = list_first_entry_or_null(&root->bi_plist, struct bio, bi_pnode);
+> >> +	state = current->state;
+> >> +	do {
+> >> +		int ret;
+> >> +		struct gendisk *disk = queue_to_disk(q);
 > >> +
-> >> +	while (bio) {
-> >> +		struct request_queue *q = bio->bi_disk->queue;
-> >> +		blk_qc_t cookie = bio->bi_cookie;
-> >> +
-> >> +		spin_unlock(&root->bi_plock);
-> >> +		BUG_ON(!blk_qc_t_valid(cookie));
-> >> +
-> >> +		ret += blk_mq_poll(q, cookie);
-> > 
-> > Not yet clear to me how you _know_ this q is blk-mq...
-> > What about a deep stack of bio-based DM devices?
-> > 
+> >> +		if (disk->fops->iopoll)
+> >> +			ret = disk->fops->iopoll(q, cookie);
+> >> +		else
+> >> +			ret = blk_mq_poll(q, cookie);
 > 
-> This design works in arbitrary bio-based DM stacking.
-> 
-> 
-> > Or are you confining bio-based DM IO polling support to bio-based
-> > stacked directly on blk-mq? (patch 7 likely shows that to be the case).
-> > 
-> 
-> patch 7 works in arbitrary bio-based DM stacking. Please see the reply
-> for patch 7 for details.
+> The original code is indeed buggy. For bio-based device, ->iopoll() may
+> not be implemented while QUEUE_FLAG_POLL flag is still set, in which
+> case blk_mq_poll() will be called for this bio-based device.
 
-OK, I see.  Definitely need to capture that aspect of the design in the
-relevant patch header(s).
+Yes, here is the patch I created to capture my suggestions.  Provided it
+looks good to you, please fold it into patch 3 when you rebase for
+posting a v2 of your patchset:
 
-And likely a block comment in blk_bio_poll().
+From: Mike Snitzer <snitzer@redhat.com>
+Date: Thu, 7 Jan 2021 20:45:17 -0500
+Subject: [PATCH] fixup patch 3
 
-> > If so, I'm not liking that at all.  So if your implementation doesn't
-> > support arbitrary bio-based IO stacks then this bio-based IO polling
-> > support really has limited utility still.
-> > 
-> > Helps explin how you got away with having bio-based DM always returning
-> > BLK_QC_T_NONE in patch 5 though... feels far too simplistic.  Patch 5+6
-> > together are implicitly ignoring the complexity that results from
-> > arbitrary bio-based DM stacking.
-> > 
-> > Or am I missing something?
-> 
-> The magic is in patch 5. Bios submitted directly to DM device won't be
-> enqueue into this &root->bi_plist list, since all bios submitted
-> directly to DM device will return BLK_QC_T_NONE since patch 5, and
-> __submit_bio_noacct() only enqueues split bios with valid cookie into
-> &root->bi_plist list. Thus only bios submitted to mq device will be
-> enqueued into this &root->bi_plist list.
-> 
-> Following is the related logic (the blk_qc_t_valid() part).
-> 
-> 
-> >> -		ret = __submit_bio(bio);
-> >> +		if (iopoll) {
-> >> +			/* See the comments of above bio_inc_remaining(). */
-> >> +			bio_inc_remaining(bio);
-> >> +			bio->bi_cookie = __submit_bio(bio);
-> >> +
-> >> +			if (blk_qc_t_valid(bio->bi_cookie))
-> >> +				bio_add_poll_list(bio);
-> >> +
-> >> +			bio_endio(bio);
-> >> +		} else {
-> >> +			ret = __submit_bio(bio);
-> >> +		}
-> 
-> 
-> 
-> Suppose we have the following device stack hierarchy, that is, dm0 is
-> stacked on dm1, while dm1 is stacked on nvme0 and nvme1.
-> 
->     dm0
->     dm1
-> nvme0  nvme1
-> 
-> 
-> Then the bio graph is like:
-> 
-> 
->                                    +------------+
->                                    |bio0(to dm0)|
->                                    +------------+
->                                          ^
->                                          | orig_bio
->                                    +--------------------+
->                                    |struct dm_io of bio0|
-> +--------------------+ bi_private  ----------------------
-> |bio3(to dm1)        |------------>|bio1(to dm1)        |
-> +--------------------+             +--------------------+
->         ^                                ^
->         | ->orig_bio                     | ->orig_bio
-> +--------------------+             +--------------------+
-> |struct dm_io        |             |struct dm_io        |
-> ----------------------             ----------------------
-> |bio2(to nvme0)      |             |bio4(to nvme1)      |
-> +--------------------+             +--------------------+
-> 
-> In this way, bio 0/1/3 will return BLK_QC_T_NONE and won't be enqueued
-> into &root->bi_plist list, while bio 2/4 will be enqueued if they return
-> valid cookie.
+---
+ block/blk-core.c       | 51 +++++++++++++++++++++-----------------------------
+ block/blk-mq.c         |  6 ++----
+ include/linux/blk-mq.h |  3 ++-
+ 3 files changed, 25 insertions(+), 35 deletions(-)
 
-Yes, useful insight, thanks.
-
-Mike
+diff --git a/block/blk-core.c b/block/blk-core.c
+index e6671f6ce1a4..44f62dc0fa9f 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1212,22 +1212,6 @@ int blk_bio_poll(struct request_queue *q, blk_qc_t cookie)
+ }
+ EXPORT_SYMBOL(blk_bio_poll);
+ 
+-static bool blk_poll_hybrid(struct request_queue *q, blk_qc_t cookie)
+-{
+-	struct blk_mq_hw_ctx *hctx;
+-
+-	/* TODO: bio-based device doesn't support hybrid poll. */
+-	if (!queue_is_mq(q))
+-		return false;
+-
+-	hctx = q->queue_hw_ctx[blk_qc_t_to_queue_num(cookie)];
+-	if (blk_mq_poll_hybrid(q, hctx, cookie))
+-		return true;
+-
+-	hctx->poll_considered++;
+-	return false;
+-}
+-
+ /**
+  * blk_poll - poll for IO completions
+  * @q:  the queue
+@@ -1243,6 +1227,8 @@ static bool blk_poll_hybrid(struct request_queue *q, blk_qc_t cookie)
+ int blk_poll(struct request_queue *q, blk_qc_t cookie, bool spin)
+ {
+ 	long state;
++	struct blk_mq_hw_ctx *hctx = NULL;
++	struct gendisk *disk = NULL;
+ 
+ 	if (!blk_qc_t_valid(cookie) ||
+ 	    !test_bit(QUEUE_FLAG_POLL, &q->queue_flags))
+@@ -1251,26 +1237,31 @@ int blk_poll(struct request_queue *q, blk_qc_t cookie, bool spin)
+ 	if (current->plug)
+ 		blk_flush_plug_list(current->plug, false);
+ 
+-	/*
+-	 * If we sleep, have the caller restart the poll loop to reset
+-	 * the state. Like for the other success return cases, the
+-	 * caller is responsible for checking if the IO completed. If
+-	 * the IO isn't complete, we'll get called again and will go
+-	 * straight to the busy poll loop. If specified not to spin,
+-	 * we also should not sleep.
+-	 */
+-	if (spin && blk_poll_hybrid(q, cookie))
+-		return 1;
++	if (queue_is_mq(q)) {
++		/*
++		 * If we sleep, have the caller restart the poll loop to reset
++		 * the state. Like for the other success return cases, the
++		 * caller is responsible for checking if the IO completed. If
++		 * the IO isn't complete, we'll get called again and will go
++		 * straight to the busy poll loop. If specified not to spin,
++		 * we also should not sleep.
++		 */
++		hctx = q->queue_hw_ctx[blk_qc_t_to_queue_num(cookie)];
++		if (spin && blk_mq_poll_hybrid(q, hctx, cookie))
++			return 1;
++		hctx->poll_considered++;
++	} else
++		disk = queue_to_disk(q);
+ 
+ 	state = current->state;
+ 	do {
+ 		int ret;
+-		struct gendisk *disk = queue_to_disk(q);
+ 
+-		if (disk->fops->iopoll)
++		if (hctx)
++			ret = blk_mq_poll(q, hctx, cookie);
++		else if (disk->fops->iopoll)
+ 			ret = disk->fops->iopoll(q, cookie);
+-		else
+-			ret = blk_mq_poll(q, cookie);
++
+ 		if (ret > 0) {
+ 			__set_current_state(TASK_RUNNING);
+ 			return ret;
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index fcb44604f806..90d8dead1da5 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -3826,12 +3826,10 @@ bool blk_mq_poll_hybrid(struct request_queue *q,
+ 	return blk_mq_poll_hybrid_sleep(q, rq);
+ }
+ 
+-int blk_mq_poll(struct request_queue *q, blk_qc_t cookie)
++int blk_mq_poll(struct request_queue *q,
++		struct blk_mq_hw_ctx *hctx, blk_qc_t cookie)
+ {
+ 	int ret;
+-	struct blk_mq_hw_ctx *hctx;
+-
+-	hctx = q->queue_hw_ctx[blk_qc_t_to_queue_num(cookie)];
+ 
+ 	hctx->poll_invoked++;
+ 	ret = q->mq_ops->poll(hctx);
+diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
+index 2f3742207df5..b95f2ffa866f 100644
+--- a/include/linux/blk-mq.h
++++ b/include/linux/blk-mq.h
+@@ -607,7 +607,8 @@ static inline void blk_rq_bio_prep(struct request *rq, struct bio *bio,
+ }
+ 
+ blk_qc_t blk_mq_submit_bio(struct bio *bio);
+-int blk_mq_poll(struct request_queue *q, blk_qc_t cookie);
++int blk_mq_poll(struct request_queue *q,
++		struct blk_mq_hw_ctx *hctx, blk_qc_t cookie);
+ bool blk_mq_poll_hybrid(struct request_queue *q,
+ 		struct blk_mq_hw_ctx *hctx, blk_qc_t cookie);
+ void blk_mq_hctx_set_fq_lock_class(struct blk_mq_hw_ctx *hctx,
+-- 
+2.15.0
 
 --
 dm-devel mailing list
