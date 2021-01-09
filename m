@@ -2,63 +2,64 @@ Return-Path: <SRS0=+RIL=GM=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 00429C433E0
-	for <dm-devel@archiver.kernel.org>; Sat,  9 Jan 2021 10:48:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E1BE2C433E0
+	for <dm-devel@archiver.kernel.org>; Sat,  9 Jan 2021 10:48:49 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3E0D423A1E
-	for <dm-devel@archiver.kernel.org>; Sat,  9 Jan 2021 10:48:44 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3E0D423A1E
+	by mail.kernel.org (Postfix) with ESMTPS id 6E0CD23A1E
+	for <dm-devel@archiver.kernel.org>; Sat,  9 Jan 2021 10:48:49 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 6E0CD23A1E
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-565-8mrQV5LXNYGzr1XQvdWYzg-1; Sat, 09 Jan 2021 05:48:40 -0500
-X-MC-Unique: 8mrQV5LXNYGzr1XQvdWYzg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-549-O7CeL5ugN62YtSrIOzCgjA-1; Sat, 09 Jan 2021 05:48:46 -0500
+X-MC-Unique: O7CeL5ugN62YtSrIOzCgjA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DB7A7E757;
-	Sat,  9 Jan 2021 10:48:35 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E06EA801AA5;
+	Sat,  9 Jan 2021 10:48:41 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C181F5D9C2;
-	Sat,  9 Jan 2021 10:48:35 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C2B9077707;
+	Sat,  9 Jan 2021 10:48:41 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9A2584E58E;
-	Sat,  9 Jan 2021 10:48:35 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9C57E4E58F;
+	Sat,  9 Jan 2021 10:48:41 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 109AmXKh026217 for <dm-devel@listman.util.phx.redhat.com>;
-	Sat, 9 Jan 2021 05:48:34 -0500
+	id 109AmdsJ026232 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 9 Jan 2021 05:48:40 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id C3E781018E65; Sat,  9 Jan 2021 10:48:33 +0000 (UTC)
+	id C36FF2026D3A; Sat,  9 Jan 2021 10:48:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BFD17101B553
-	for <dm-devel@redhat.com>; Sat,  9 Jan 2021 10:48:30 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BEC162026D14
+	for <dm-devel@redhat.com>; Sat,  9 Jan 2021 10:48:36 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 96EF6185A794
-	for <dm-devel@redhat.com>; Sat,  9 Jan 2021 10:48:30 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 39F82800140
+	for <dm-devel@redhat.com>; Sat,  9 Jan 2021 10:48:36 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-342-EmQhxN7IO12zAQDlVViyeQ-1; Sat, 09 Jan 2021 05:48:28 -0500
-X-MC-Unique: EmQhxN7IO12zAQDlVViyeQ-1
+	us-mta-120-TvEokYv2Mmu1wmjm_tQkeg-1; Sat, 09 Jan 2021 05:48:31 -0500
+X-MC-Unique: TvEokYv2Mmu1wmjm_tQkeg-1
 Received: from [2001:4bb8:19b:e528:4197:a20:99de:e7b0] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.94 #2 (Red Hat Linux))
-	id 1kyBlg-000TGF-Cc; Sat, 09 Jan 2021 10:47:20 +0000
+	id 1kyBmY-000TMB-Aq; Sat, 09 Jan 2021 10:47:49 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Sat,  9 Jan 2021 11:42:53 +0100
-Message-Id: <20210109104254.1077093-6-hch@lst.de>
+Date: Sat,  9 Jan 2021 11:42:54 +0100
+Message-Id: <20210109104254.1077093-7-hch@lst.de>
 In-Reply-To: <20210109104254.1077093-1-hch@lst.de>
 References: <20210109104254.1077093-1-hch@lst.de>
 MIME-Version: 1.0
@@ -72,7 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 Cc: Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>,
 	Oleksii Kurochko <olkuroch@cisco.com>,
@@ -80,8 +81,10 @@ Cc: Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>,
 	linux-block@vger.kernel.org, dm-devel@redhat.com,
 	linux-nvme@lists.infradead.org,
 	"Martin K . Petersen" <martin.petersen@oracle.com>,
+	Keith Busch <kbusch@kernel.org>,
 	Ilya Dryomov <idryomov@gmail.com>, ceph-devel@vger.kernel.org
-Subject: [dm-devel] [PATCH 5/6] rbd: remove the ->set_read_only method
+Subject: [dm-devel] [PATCH 6/6] nvme: allow revalidate to set a namespace
+	read-only
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -95,7 +98,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -103,51 +106,33 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Now that the hardware read-only state can't be changed by the BLKROSET
-ioctl, the code in this method is not required anymore.
+Unconditionally call set_disk_ro now that it only updates the hardware
+state.  This allows to properly set up the Linux devices read-only when
+the controller turns a previously writable namespace read-only.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Hannes Reinecke <hare@suse.de>
-Acked-by: Ilya Dryomov <idryomov@gmail.com>
+Reviewed-by: Keith Busch <kbusch@kernel.org>
 Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
 ---
- drivers/block/rbd.c | 19 -------------------
- 1 file changed, 19 deletions(-)
+ drivers/nvme/host/core.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
-index 59cfe71d0b3a39..bbb88eb009e0ba 100644
---- a/drivers/block/rbd.c
-+++ b/drivers/block/rbd.c
-@@ -692,29 +692,10 @@ static void rbd_release(struct gendisk *disk, fmode_t mode)
- 	put_device(&rbd_dev->dev);
+diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
+index ce1b6151944131..3a0557ccc9fc5d 100644
+--- a/drivers/nvme/host/core.c
++++ b/drivers/nvme/host/core.c
+@@ -2114,9 +2114,8 @@ static void nvme_update_disk_info(struct gendisk *disk,
+ 	nvme_config_discard(disk, ns);
+ 	nvme_config_write_zeroes(disk, ns);
+ 
+-	if ((id->nsattr & NVME_NS_ATTR_RO) ||
+-	    test_bit(NVME_NS_FORCE_RO, &ns->flags))
+-		set_disk_ro(disk, true);
++	set_disk_ro(disk, (id->nsattr & NVME_NS_ATTR_RO) ||
++		test_bit(NVME_NS_FORCE_RO, &ns->flags));
  }
  
--static int rbd_set_read_only(struct block_device *bdev, bool ro)
--{
--	struct rbd_device *rbd_dev = bdev->bd_disk->private_data;
--
--	/*
--	 * Both images mapped read-only and snapshots can't be marked
--	 * read-write.
--	 */
--	if (!ro) {
--		if (rbd_is_ro(rbd_dev))
--			return -EROFS;
--
--		rbd_assert(!rbd_is_snap(rbd_dev));
--	}
--
--	return 0;
--}
--
- static const struct block_device_operations rbd_bd_ops = {
- 	.owner			= THIS_MODULE,
- 	.open			= rbd_open,
- 	.release		= rbd_release,
--	.set_read_only		= rbd_set_read_only,
- };
- 
- /*
+ static inline bool nvme_first_scan(struct gendisk *disk)
 -- 
 2.29.2
 
