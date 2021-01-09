@@ -1,84 +1,89 @@
-Return-Path: <SRS0=H596=GL=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=+RIL=GM=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A4C10C433DB
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 19:01:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E17F7C433DB
+	for <dm-devel@archiver.kernel.org>; Sat,  9 Jan 2021 10:46:11 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 28DCD23A81
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Jan 2021 19:01:00 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 28DCD23A81
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 4E4D423A63
+	for <dm-devel@archiver.kernel.org>; Sat,  9 Jan 2021 10:46:10 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4E4D423A63
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1610132459;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=C9Baf0/CVTcGU+w9gLQpLeSUbDzWAOtPFUiGGxrB0pA=;
-	b=WPcoFR4ybmYbFCF5cD75pOW9+JWQ2waE1f2E8SZuZOiK+1Iz/Aa2hOd7TwsneZIRav0JgL
-	NI3+s0rMXQ7a+AHs1cgsqAyqHQu5/mIIG37ygWvyDvAVXGKsSqS+/+XG2kLhD38kk2S0Tv
-	Q45yYs71a5ptwM4BzvB8a1Q2xAqEjlo=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-371-4NZHOUj4M3WAqolKz2QhZA-1; Fri, 08 Jan 2021 14:00:57 -0500
-X-MC-Unique: 4NZHOUj4M3WAqolKz2QhZA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-113-JWnd8M7ENJC8JsxHA5S2eg-1; Sat, 09 Jan 2021 05:46:07 -0500
+X-MC-Unique: JWnd8M7ENJC8JsxHA5S2eg-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9F70D1926DA1;
-	Fri,  8 Jan 2021 19:00:52 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 23D0C180A098;
+	Sat,  9 Jan 2021 10:46:02 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4C96310016F4;
-	Fri,  8 Jan 2021 19:00:52 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 33ACA74440;
+	Sat,  9 Jan 2021 10:45:59 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 58FF84E58E;
-	Fri,  8 Jan 2021 19:00:51 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
-	[10.5.11.11])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E901A4A7C6;
+	Sat,  9 Jan 2021 10:45:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 108J0nGh000301 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 8 Jan 2021 14:00:49 -0500
+	id 109Ajj55025897 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 9 Jan 2021 05:45:47 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 746EB19809; Fri,  8 Jan 2021 19:00:49 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
-	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 477D912D7E;
-	Fri,  8 Jan 2021 19:00:49 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 108J0mhZ009987; Fri, 8 Jan 2021 14:00:48 -0500
-Received: from localhost (mpatocka@localhost)
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 108J0mC1009980; Fri, 8 Jan 2021 14:00:48 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
-	owned process doing -bs
-Date: Fri, 8 Jan 2021 14:00:48 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-In-Reply-To: <20210108183817.GA30360@redhat.com>
-Message-ID: <alpine.LRH.2.02.2101081349400.2554@file01.intranet.prod.int.rdu2.redhat.com>
-References: <20201220140222.2f341344@gecko.fritz.box>
-	<20210104203042.GB3721@redhat.com>
-	<alpine.LRH.2.02.2101081104490.17896@file01.intranet.prod.int.rdu2.redhat.com>
-	<20210108183817.GA30360@redhat.com>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+	id D1DEF2166B28; Sat,  9 Jan 2021 10:45:45 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CCE9A2166B27
+	for <dm-devel@redhat.com>; Sat,  9 Jan 2021 10:45:43 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A2DFA101A53F
+	for <dm-devel@redhat.com>; Sat,  9 Jan 2021 10:45:43 +0000 (UTC)
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-577-tPdQ8RzdMvedQLIrYO8GFA-1; Sat, 09 Jan 2021 05:45:40 -0500
+X-MC-Unique: tPdQ8RzdMvedQLIrYO8GFA-1
+Received: from [2001:4bb8:19b:e528:4197:a20:99de:e7b0] (helo=localhost)
+	by casper.infradead.org with esmtpsa (Exim 4.94 #2 (Red Hat Linux))
+	id 1kyBim-000SyX-HT; Sat, 09 Jan 2021 10:44:04 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Jens Axboe <axboe@kernel.dk>
+Date: Sat,  9 Jan 2021 11:42:49 +0100
+Message-Id: <20210109104254.1077093-2-hch@lst.de>
+In-Reply-To: <20210109104254.1077093-1-hch@lst.de>
+References: <20210109104254.1077093-1-hch@lst.de>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+	casper.infradead.org. See http://www.infradead.org/rpr.html
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: dm-devel <dm-devel@redhat.com>, Lukas Straub <lukasstraub2@web.de>
-Subject: Re: [dm-devel] dm-integrity: Fix flush with external metadata device
+Cc: Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>,
+	Oleksii Kurochko <olkuroch@cisco.com>,
+	Dongsheng Yang <dongsheng.yang@easystack.cn>,
+	Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org,
+	dm-devel@redhat.com, linux-nvme@lists.infradead.org,
+	"Martin K . Petersen" <martin.petersen@oracle.com>,
+	Ilya Dryomov <idryomov@gmail.com>, ceph-devel@vger.kernel.org
+Subject: [dm-devel] [PATCH 1/6] dm: use bdev_read_only to check if a device
+	is read-only
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -92,7 +97,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -100,56 +105,46 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+dm-thin and dm-cache also work on partitions, so use the proper
+interface to check if the device is read-only.
 
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Ming Lei <ming.lei@redhat.com>
+Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
+---
+ drivers/md/dm-cache-metadata.c | 2 +-
+ drivers/md/dm-thin-metadata.c  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-On Fri, 8 Jan 2021, Mike Snitzer wrote:
-
-> > > Seems like a pretty bad oversight... but shouldn't you also make sure to
-> > > flush the data device _before_ the metadata is flushed?
-> > > 
-> > > Mike
-> > 
-> > I think, ordering is not a problem.
-> > 
-> > A disk may flush its cache spontaneously anytime, so it doesn't matter in 
-> > which order do we flush them. Similarly a dm-bufio buffer may be flushed 
-> > anytime - if the machine is running out of memory and a dm-bufio shrinker 
-> > is called.
-> > 
-> > I'll send another patch for this - I've created a patch that flushes the 
-> > metadata device cache and data device cache in parallel, so that 
-> > performance degradation is reduced.
-> > 
-> > My patch also doesn't use GFP_NOIO allocation - which can in theory 
-> > deadlock if we are swapping on dm-integrity device.
-> 
-> OK, I see your patch, but my concern about ordering was more to do with
-> crash consistency.  What if metadata is updated but data isn't?
-
-In journal mode: do_journal_write will copy data from the journal to 
-appropriate places and then flushes both data and metadata device. If a 
-crash happens during flush, the journal will be replayed on next reboot - 
-the replay operation will overwrite both data and metadata from the 
-journal.
-
-In bitmap mode: bitmap_flush_work will first issue flush on both data and 
-metadata device, and then clear the dirty bits in a bitmap. If a crash 
-happens during the flush, the bits in the bitmap are still set and the 
-checksums will be recalculated on next reboot.
-
-> On the surface, your approach of issuing the flushes in parallel seems
-> to expose us to inconsistency upon recovery from a crash.
-> If that isn't the case please explain why not.
-
-The disk may flush its internal cache anytime. So, if you do 
-"blkdev_issue_flush(disk1); blkdev_issue_flush(disk2);" there is no 
-ordering guarantee at all. The firmware in disk2 may flush the cache 
-spontaneously, before you called blkdev_issue_flush(disk1).
-
-> Thanks,
-> Mike
-
-Mikulas
+diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
+index af6d4f898e4c1d..89a73204dbf47f 100644
+--- a/drivers/md/dm-cache-metadata.c
++++ b/drivers/md/dm-cache-metadata.c
+@@ -449,7 +449,7 @@ static int __check_incompat_features(struct cache_disk_superblock *disk_super,
+ 	/*
+ 	 * Check for read-only metadata to skip the following RDWR checks.
+ 	 */
+-	if (get_disk_ro(cmd->bdev->bd_disk))
++	if (bdev_read_only(cmd->bdev))
+ 		return 0;
+ 
+ 	features = le32_to_cpu(disk_super->compat_ro_flags) & ~DM_CACHE_FEATURE_COMPAT_RO_SUPP;
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+index 6ebb2127f3e2e0..e75b20480e460e 100644
+--- a/drivers/md/dm-thin-metadata.c
++++ b/drivers/md/dm-thin-metadata.c
+@@ -636,7 +636,7 @@ static int __check_incompat_features(struct thin_disk_superblock *disk_super,
+ 	/*
+ 	 * Check for read-only metadata to skip the following RDWR checks.
+ 	 */
+-	if (get_disk_ro(pmd->bdev->bd_disk))
++	if (bdev_read_only(pmd->bdev))
+ 		return 0;
+ 
+ 	features = le32_to_cpu(disk_super->compat_ro_flags) & ~THIN_FEATURE_COMPAT_RO_SUPP;
+-- 
+2.29.2
 
 --
 dm-devel mailing list
