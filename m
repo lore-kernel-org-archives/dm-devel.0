@@ -1,133 +1,129 @@
-Return-Path: <SRS0=+RIL=GM=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=l7Hk=GN=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-10.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 26AA9C433E0
-	for <dm-devel@archiver.kernel.org>; Sat,  9 Jan 2021 20:27:52 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F41FDC433DB
+	for <dm-devel@archiver.kernel.org>; Sun, 10 Jan 2021 10:09:59 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 8EBFC23AFB
-	for <dm-devel@archiver.kernel.org>; Sat,  9 Jan 2021 20:27:51 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 8EBFC23AFB
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
+	by mail.kernel.org (Postfix) with ESMTPS id 64C7F2396D
+	for <dm-devel@archiver.kernel.org>; Sun, 10 Jan 2021 10:09:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 64C7F2396D
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=web.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-245-EHPmqQHfPZW2FCxHJcY1yQ-1; Sat, 09 Jan 2021 15:27:48 -0500
-X-MC-Unique: EHPmqQHfPZW2FCxHJcY1yQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-590-dRn3QQzzMViysWe6G8jKvw-1; Sun, 10 Jan 2021 05:09:55 -0500
+X-MC-Unique: dRn3QQzzMViysWe6G8jKvw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6ECD1800D53;
-	Sat,  9 Jan 2021 20:27:43 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1045019C45;
-	Sat,  9 Jan 2021 20:27:43 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A6CDB10054FF;
+	Sun, 10 Jan 2021 10:09:50 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9B1AD60C43;
+	Sun, 10 Jan 2021 10:09:49 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7AEB54A7C6;
-	Sat,  9 Jan 2021 20:27:42 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E664D180954D;
+	Sun, 10 Jan 2021 10:09:46 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 109KRd2E011311 for <dm-devel@listman.util.phx.redhat.com>;
-	Sat, 9 Jan 2021 15:27:39 -0500
+	id 10AA9ipT022539 for <dm-devel@listman.util.phx.redhat.com>;
+	Sun, 10 Jan 2021 05:09:44 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 897BA2166B28; Sat,  9 Jan 2021 20:27:39 +0000 (UTC)
+	id 36A1C44014; Sun, 10 Jan 2021 10:09:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 82B6D2166B27
-	for <dm-devel@redhat.com>; Sat,  9 Jan 2021 20:27:36 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3044B4405F
+	for <dm-devel@redhat.com>; Sun, 10 Jan 2021 10:09:40 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 50FA5858EEC
-	for <dm-devel@redhat.com>; Sat,  9 Jan 2021 20:27:36 +0000 (UTC)
-Received: from esa5.hgst.iphmx.com (esa5.hgst.iphmx.com [216.71.153.144])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-27-4fVNVaeWPfuAnhWLbyxAeQ-1; Sat, 09 Jan 2021 15:27:31 -0500
-X-MC-Unique: 4fVNVaeWPfuAnhWLbyxAeQ-1
-IronPort-SDR: AeY8xXEamel0IdX0nPmcK2S8R9vvsbF72t0cfjqb3VWe99gvyABW7AbnDaPFlUAKY8fHIl7ix7
-	Uk9LiMce8EWa1r89fKIhHoJqQ9My49KG8XYzlOWZ6DEwO+Ua0yIsQ5glizz+9erk9uAnH4I7wW
-	oOt3RpuOs+c31ZmhEgz1trlAjXCxuG8TBJIeR1+CMxw/MrUPUZThtUbu9oaP7CY+FD606Ijk1g
-	3nFYw0VXbIaUopLqmXInwN/1wET+fYmUDtHUNbQYr+OqB/lo9DHKtKjBQADv9PKLPSN9Yhjyth
-	XGI=
-X-IronPort-AV: E=Sophos;i="5.79,334,1602518400"; d="scan'208";a="157043541"
-Received: from mail-mw2nam12lp2048.outbound.protection.outlook.com (HELO
-	NAM12-MW2-obe.outbound.protection.outlook.com) ([104.47.66.48])
-	by ob1.hgst.iphmx.com with ESMTP; 10 Jan 2021 04:27:29 +0800
-Received: from BYAPR04MB4965.namprd04.prod.outlook.com (2603:10b6:a03:4d::25)
-	by BYAPR04MB5430.namprd04.prod.outlook.com (2603:10b6:a03:c7::31)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3742.6;
-	Sat, 9 Jan 2021 20:27:27 +0000
-Received: from BYAPR04MB4965.namprd04.prod.outlook.com
-	([fe80::716c:4e0c:c6d1:298a]) by
-	BYAPR04MB4965.namprd04.prod.outlook.com
-	([fe80::716c:4e0c:c6d1:298a%6]) with mapi id 15.20.3742.009;
-	Sat, 9 Jan 2021 20:27:26 +0000
-From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-Thread-Topic: [PATCH 6/6] nvme: allow revalidate to set a namespace read-only
-Thread-Index: AQHW5nUj2CJyK2PmHkCmuBYx3pEKEQ==
-Date: Sat, 9 Jan 2021 20:27:26 +0000
-Message-ID: <BYAPR04MB4965CD87B0E6CBA2FFD0B09886AD0@BYAPR04MB4965.namprd04.prod.outlook.com>
-References: <20210109104254.1077093-1-hch@lst.de>
-	<20210109104254.1077093-7-hch@lst.de>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [199.255.45.62]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-ht: Tenant
-x-ms-office365-filtering-correlation-id: d08f02bd-c482-40f0-926e-08d8b4dcfad6
-x-ms-traffictypediagnostic: BYAPR04MB5430:
-x-microsoft-antispam-prvs: <BYAPR04MB5430106A8922A21DF3D5531E86AD0@BYAPR04MB5430.namprd04.prod.outlook.com>
-wdcipoutbound: EOP-TRUE
-x-ms-oob-tlc-oobclassifiers: OLM:6430
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: 5zKg7IJilH0Xs1Bxa8SM4W4G5ecbM7jTulN2kAj/B5/6Wjzlr2QQ4zQu73ZKG3D15DArH4luuRplQwbyjOqO4UQK9g3MVcBWbIX4xDsk41yuZ9ALZM+3aWu0m58PH0FML0m7jzmdLqjKd7bKSHyiYK6ZM5nfWntjg5EqtJ0HFqSzcCR2yyUJIcqkS5o/yprprI5sZxfiecx/jtNAu//phRv3bArCaNukQuCHJkCUvPpNaov+tRZVVcEKSwcdGy70mh8GwxIQVBdD8+Mn5cxPai1949Us7SOBl0Y1nXHVGnlhU39EhjByW85PLe2QYprnaQzT+TNP3Ew75z73g6sV5ffukoCIzrdzclrRkgEjpRLHKCj6KJf2Dj1Icp+tQIk+8UZf6oihKy/4hojILoorOg==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:BYAPR04MB4965.namprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(4636009)(396003)(39860400002)(346002)(136003)(376002)(366004)(76116006)(2906002)(66556008)(66476007)(7416002)(5660300002)(52536014)(26005)(4326008)(53546011)(316002)(186003)(6506007)(110136005)(66946007)(33656002)(66446008)(71200400001)(7696005)(54906003)(64756008)(478600001)(8936002)(55016002)(83380400001)(8676002)(9686003)(86362001);
-	DIR:OUT; SFP:1102
-x-ms-exchange-antispam-messagedata: =?us-ascii?Q?3Km9/v4XeC8e4TNNr7OdvVC0kInaVNzZ+PlvyFEDKSVROxOIdB5O9BzApV4V?=
-	=?us-ascii?Q?LCx1biZw8uoWq2bsNEByXLPJE2Wn2gd3vA+PJFjo+Hc2rQfXSLuSp+TqTA9Z?=
-	=?us-ascii?Q?JAyzyhKFCV+w3li26eabUOk7urAOsgZxv394ZHKbllDslE4PG/f2LUbMEGQP?=
-	=?us-ascii?Q?SrLEEuvYWEUBGNnS/INZF9wH0OKtpBdym6i6TOX7rfzcReiZmfGf7syD6L0P?=
-	=?us-ascii?Q?pfINU09L9yiFNfdC75fL6uQPQxGMgS8RyHo8U7CMyT8e10ikGzAwu1E+0bM2?=
-	=?us-ascii?Q?gRHAgd72jSu3KPGS6e9gB9wmUtIAt6umEhHFmuDZWpLqM/IihslGrMGvqDFv?=
-	=?us-ascii?Q?xg+g7cHgK8mbZcVzfDues8P6lHplWEQquztm0dqHO3xNFQ6txIpkctC152Wg?=
-	=?us-ascii?Q?B1AoY7k5UXl4UXds+sQHTEeH2V22vZ/LojgQhxd9OWKomhl7XD5mKrQs2meL?=
-	=?us-ascii?Q?p92VWpwTs1DFWuMUklhQKVKjWcTuear6A4Tqi7cNwzcaCbxKiEnSQXilbOlY?=
-	=?us-ascii?Q?YaJ6Xt6NbkJCO54vRrXmJm7DSnEu3BFOROQxA8TnyLvQTVhl+wCChWXgtIK2?=
-	=?us-ascii?Q?jM7C1L3HBTQqJEGnaGgmUNuE7tzpCNkuIhDwwZRwhDejm9Zmy2cPY0DjPy84?=
-	=?us-ascii?Q?N5LcQv407+GdnRRwFQwPvxcxrZiLkJJxB0YRJ+jAz2POxq7NeDu0wT3dwbDs?=
-	=?us-ascii?Q?HKYyZdqBO1pMsq+0rZ3e1dj5X6emD/DzpKLNQDto6r+KXIAgYz4TMQiTm71Z?=
-	=?us-ascii?Q?i1+fIDBuRIPUlS4Vq770JXFrRY11UE/klh/6eNOFyoBeROfeMF3yqGO+8LJL?=
-	=?us-ascii?Q?IRq3fLthZqBSVV7Pu54FYe4V6zmnoYLcg0P52hhyK6KCkKs9YqhwSbkWDOxq?=
-	=?us-ascii?Q?A8eeYsTDTyrJTQ1vsAjdYBHc+EU0XuTIM303yG26WWcoDs7FgaOMu8LjD80Y?=
-	=?us-ascii?Q?Cv7MvOOpLRJ4IzH+GFzg2wU2V8azzDNcFhFXUfBc1KTHd1wDEtJFy9n4PS3a?=
-	=?us-ascii?Q?UpR3?=
-x-ms-exchange-transport-forked: True
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8F7DB185A794
+	for <dm-devel@redhat.com>; Sun, 10 Jan 2021 10:09:40 +0000 (UTC)
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=dkim.mimecast.com; s=201903; t=1610273380;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	in-reply-to:in-reply-to:references:references:dkim-signature;
+	bh=MDRFgtO9HLXDp4gprZkt+uOIe7zn/W+xchdFVQJq25U=;
+	b=QBLZVgFaXQOeFTRi33Xjz0m6/RsRuNdVp7CiMNSO8Z98EcIbyjec2RfUyl/WgJOT56sYzy
+	EQP8Z6ewDszbIEziNwc5dqoqQpI8zoPqReVHGPE1hbhmCjDXF0yKu6iTajvKwZdPUsxpEb
+	ET8LUfIJ9GOxL7tnaJE63XgmBr2VQvHYcLTEw73y32HvXSecRd1j2hjK8w6T3AhqxdQslk
+	oNZzR4c/HFw0N6cHOtomNrJNDb8gpPy7R2aZJj5u8N/oqW4rna4sk2yLN1QuBZTotqKF2t
+	ECmhjXrnXzLbjm1tKJkAX0CoLNeMqGMjoImQVdkPeQauJKgr7DmLZYPs/QlFcA==
+ARC-Seal: i=1; s=201903; d=dkim.mimecast.com; t=1610273380; a=rsa-sha256;
+	cv=none;
+	b=ZnTgbb610IcRqzncTbEE/qNzYoRWPKOZMLrFvJrXxg/RpCJps+mV8nOWtYoJIWCoMtkw3E
+	ZundoHKWjjBgNm9bPQW2zKrUJ4KvuodbTZXX4f07FyxtI+nc+fOnFQnZQlb7fzCt4Shaua
+	g7Xd/WKcNaj/dJgg8p2327HWU78Ts2Nw0bCl7gTeQuDtyThaGEdTCbyLxsDKdTNQIZswPN
+	HoqA07q0Qer3fM+EAmWuriGmrbGSK8JNevy2wt3IHa4n3Yq5C//deUAtknjdqyIn6HPL4u
+	gSjv+zYdqgQFwBRPq5uzGgrEpGZ0pJ4A2T3Jo5nGYTASaGmFLvogkheo7ldnHw==
+ARC-Authentication-Results: i=1; relay.mimecast.com;
+	dkim=pass header.d=web.de header.s=dbaedf251592 header.b=mAZwcz6Q;
+	dmarc=pass (policy=none) header.from=web.de;
+	spf=pass (relay.mimecast.com: domain of lukasstraub2@web.de designates
+	212.227.15.14 as permitted sender)
+	smtp.mailfrom=lukasstraub2@web.de
+Received: from mout.web.de (mout.web.de [212.227.15.14]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-512-PW3nxiekPZKcaFnLHZw7eg-1;
+	Sun, 10 Jan 2021 05:09:36 -0500
+X-MC-Unique: PW3nxiekPZKcaFnLHZw7eg-1
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=web.de;
+	s=dbaedf251592; t=1610273375;
+	bh=AxyjR0avIzTuolbHm/HjCdZ2NfdLPX6wKNxqy+3mjk8=;
+	h=X-UI-Sender-Class:Date:From:To:Cc:Subject:In-Reply-To:References;
+	b=mAZwcz6QDRAAqEF6zWDRmQ6chYHKPGRbky4Obqgyb57aavtlDnJodNeLX0xvjaAfi
+	TwZGBv+FpLif9m2wA8zwLNXcx2BLAbwe8/o8nh7roqDxzZ5cbbfTUX343fYLA26UOT
+	hdjqCq9kKyCtwpZVNHfZNsVqdARzuZ6BinxejM2I=
+X-UI-Sender-Class: c548c8c5-30a9-4db5-a2e7-cb6cb037b8f9
+Received: from gecko.fritz.box ([94.134.180.121]) by smtp.web.de (mrweb005
+	[213.165.67.108]) with ESMTPSA (Nemesis) id 1M76bb-1kslMH2UZz-008UbK;
+	Sun, 10 Jan 2021 11:04:30 +0100
+Date: Sun, 10 Jan 2021 11:04:22 +0100
+From: Lukas Straub <lukasstraub2@web.de>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Message-ID: <20210110110422.3e48d140@gecko.fritz.box>
+In-Reply-To: <alpine.LRH.2.02.2101081112090.17896@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20201220140222.2f341344@gecko.fritz.box>
+	<20210104203042.GB3721@redhat.com>
+	<alpine.LRH.2.02.2101081104490.17896@file01.intranet.prod.int.rdu2.redhat.com>
+	<alpine.LRH.2.02.2101081112090.17896@file01.intranet.prod.int.rdu2.redhat.com>
 MIME-Version: 1.0
-X-OriginatorOrg: wdc.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: BYAPR04MB4965.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: d08f02bd-c482-40f0-926e-08d8b4dcfad6
-X-MS-Exchange-CrossTenant-originalarrivaltime: 09 Jan 2021 20:27:26.6252 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: EHwS9qQDhhu8i5c/fE9qdQv5ao2jZNgIeyHs0gGZZ2rUhflGDLpbwuEzb9XWsW539ENucHfztLdu0yLNc8WzFJHQ6bJ8qsPwIQnHK6JPKvI=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR04MB5430
+X-Provags-ID: V03:K1:H8BXHWIg9hG3VSHgwrzJurWl3W9KkMrmpAUBTabhaf3oFRz6OCx
+	FrUkFCxh0+f2vcOgwCdDBT0pkWXNSZvNwQ5w1sc60i/O6ER1prgt0JmLE5ZS0eN7MeX0sDZ
+	fqhlTT0fsVrO3/6XwXcW2MFOsaVith1gQViaUisrlbWedBTaip8l8zX0dPOr5ba11i0cQMS
+	fIARWFFUG5Q1dj7PPYfvw==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:RYoKliJfOYU=:pAASHhEMC2nxz+uhdMgka3
+	M2CYdUD4/SyUewxbQMSNkCZfHRUhTWuPytB8DUcfooWAWteZclYsTZIlnZ6Z12k2XuadHfZNx
+	sWqxPMaeVx9FmTDNY94ehdwc0KvjvOCII+ztA4dQianrstLxntwLAAvs4muFuTPuyNleec7br
+	YUZla07N7bxVsRUA7pN8wf4E3NEBDryTH24EAJXf1NuiLE6nIcVhbI2izdecfIZvvWGgFdAEH
+	wB4+xSgZit+CjlwJ85va8U3J4Pbqz2Q4w8PgzpNd2lfCRcDhkVBUF0mO3OF21Pw8G2BHqlBku
+	eRMtm5uCM/zTmBO7d/1Hbjjpjir/RQwKwSPIXdj7Xw7KTnAz1Wv6DMn9/pYWnSn/W6V1EwVms
+	ydadv6UXaI7x3cdIzqKPpIUAswyFEC9G/GE2TjEUVX3assiLKbSNUKIM700gM/NzfhyK+MzoT
+	Mx7r31a1AMnaeXphFcsx3sgLQHK0EfyWiJ6fOwdsYxAy8TDaDxlr3CNPgqQva65RI7ZVsNQjd
+	a/cHTm2vBWIAkgBtdIcEtS0DTtQftNxa9b0qWSZEIeeU27w0/egkgk6vuju5WZOUjvERuJEnY
+	JZtzKLteMhy4wCwDejAffyONA1XBOrRpf9+4RyCSipV0j/VgZICf/0mnUwoxsZFRQaxqIIUeC
+	9r02YRW1/TLIFofGuWvmlM3WAFbo5cKd+iQR86cbJAHUM1EJvojiJd06SiobLe4zVBi7Pb6PT
+	VtVor4Oa3+RUM9d7YzTK3hjemmobqMfd2BeQaAOikgVHmm8y2QzxQKD6D7dCYGYcci3hQlq6o
+	zXrHCSYKo9hbsjBkbN/cSMyh5GMFI1MQtjjfw36h6+wIQDl9jkIfSQ0MZSGdElzjqmi9uAqkJ
+	2yDaNXhVRzm1Ssnaiz+oOXeu2euaTyj1/zPstMszg=
+Authentication-Results: relay.mimecast.com;
+	dkim=pass header.d=web.de header.s=dbaedf251592 header.b=mAZwcz6Q;
+	dmarc=pass (policy=none) header.from=web.de;
+	spf=pass (relay.mimecast.com: domain of lukasstraub2@web.de designates
+	212.227.15.14 as permitted sender)
+	smtp.mailfrom=lukasstraub2@web.de
+X-Mimecast-Spam-Score: -5
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -136,21 +132,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 109KRd2E011311
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>,
-	Oleksii Kurochko <olkuroch@cisco.com>,
-	Dongsheng Yang <dongsheng.yang@easystack.cn>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"Martin K . Petersen" <martin.petersen@oracle.com>,
-	Busch <kbusch@kernel.org>, Ilya Dryomov <idryomov@gmail.com>,
-	Keith, "ceph-devel@vger.kernel.org" <ceph-devel@vger.kernel.org>
-Subject: Re: [dm-devel] [PATCH 6/6] nvme: allow revalidate to set a
-	namespace read-only
+Cc: dm-devel <dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [dm-devel] [PATCH] dm-integrity: Fix flush with external
+	metadata device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -162,73 +148,259 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Content-Type: multipart/mixed; boundary="===============7674295867305403413=="
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
-Authentication-Results: relay.mimecast.com;
-	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 
-On 1/9/21 02:49, Christoph Hellwig wrote:
-> Unconditionally call set_disk_ro now that it only updates the hardware
-> state.  This allows to properly set up the Linux devices read-only when
-> the controller turns a previously writable namespace read-only.
->
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> Reviewed-by: Keith Busch <kbusch@kernel.org>
-> Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
+--===============7674295867305403413==
+Content-Type: multipart/signed; boundary="Sig_/0Vt9dhgwBpz6j5.IXFhOAvA";
+	protocol="application/pgp-signature"; micalg=pgp-sha256
+
+--Sig_/0Vt9dhgwBpz6j5.IXFhOAvA
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
+
+On Fri, 8 Jan 2021 11:15:56 -0500 (EST)
+Mikulas Patocka <mpatocka@redhat.com> wrote:
+
+> With external metadata device, flush requests are not passed down to the
+> data device.
+>=20
+> Fix this by submitting the flush request in dm_integrity_flush_buffers. I=
+n
+> order to not degrade performance, we overlap the data device flush with
+> the metadata device flush.
+>=20
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Reported-by: Lukas Straub <lukasstraub2@web.de>
+> Cc: stable@vger.kernel.org
+
+Looks good to me.
+Reviewed-by: Lukas Straub <lukasstraub2@web.de>
+
+Regards,
+Lukas Straub
+
 > ---
->  drivers/nvme/host/core.c | 5 ++---
->  1 file changed, 2 insertions(+), 3 deletions(-)
->
-> diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-> index ce1b6151944131..3a0557ccc9fc5d 100644
-> --- a/drivers/nvme/host/core.c
-> +++ b/drivers/nvme/host/core.c
-> @@ -2114,9 +2114,8 @@ static void nvme_update_disk_info(struct gendisk *disk,
->  	nvme_config_discard(disk, ns);
->  	nvme_config_write_zeroes(disk, ns);
->  
-> -	if ((id->nsattr & NVME_NS_ATTR_RO) ||
-> -	    test_bit(NVME_NS_FORCE_RO, &ns->flags))
-> -		set_disk_ro(disk, true);
-> +	set_disk_ro(disk, (id->nsattr & NVME_NS_ATTR_RO) ||
-> +		test_bit(NVME_NS_FORCE_RO, &ns->flags));
+>  drivers/md/dm-bufio.c     |    6 ++++
+>  drivers/md/dm-integrity.c |   60 +++++++++++++++++++++++++++++++++++++--=
+-------
+>  include/linux/dm-bufio.h  |    1=20
+>  3 files changed, 56 insertions(+), 11 deletions(-)
+>=20
+> Index: linux-2.6/drivers/md/dm-integrity.c
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.orig/drivers/md/dm-integrity.c=092021-01-07 17:22:39.000000=
+000 +0100
+> +++ linux-2.6/drivers/md/dm-integrity.c=092021-01-08 15:51:19.000000000 +=
+0100
+> @@ -1379,12 +1379,52 @@ thorough_test:
+>  #undef MAY_BE_HASH
 >  }
->  
+> =20
+> -static void dm_integrity_flush_buffers(struct dm_integrity_c *ic)
+> +struct flush_request {
+> +=09struct dm_io_request io_req;
+> +=09struct dm_io_region io_reg;
+> +=09struct dm_integrity_c *ic;
+> +=09struct completion comp;
+> +};
+> +
+> +static void flush_notify(unsigned long error, void *fr_)
+> +{
+> +=09struct flush_request *fr =3D fr_;
+> +=09if (unlikely(error !=3D 0))
+> +=09=09dm_integrity_io_error(fr->ic, "flusing disk cache", -EIO);
+> +=09complete(&fr->comp);
+> +}
+> +
+> +static void dm_integrity_flush_buffers(struct dm_integrity_c *ic, bool f=
+lush_data)
+>  {
+>  =09int r;
+> +
+> +=09struct flush_request fr;
+> +
+> +=09if (!ic->meta_dev)
+> +=09=09flush_data =3D false;
+> +=09if (flush_data) {
+> +=09=09fr.io_req.bi_op =3D REQ_OP_WRITE,
+> +=09=09fr.io_req.bi_op_flags =3D REQ_PREFLUSH | REQ_SYNC,
+> +=09=09fr.io_req.mem.type =3D DM_IO_KMEM,
+> +=09=09fr.io_req.mem.ptr.addr =3D NULL,
+> +=09=09fr.io_req.notify.fn =3D flush_notify,
+> +=09=09fr.io_req.notify.context =3D &fr;
+> +=09=09fr.io_req.client =3D dm_bufio_get_dm_io_client(ic->bufio),
+> +=09=09fr.io_reg.bdev =3D ic->dev->bdev,
+> +=09=09fr.io_reg.sector =3D 0,
+> +=09=09fr.io_reg.count =3D 0,
+> +=09=09fr.ic =3D ic;
+> +=09=09init_completion(&fr.comp);
+> +=09=09r =3D dm_io(&fr.io_req, 1, &fr.io_reg, NULL);
+> +=09=09BUG_ON(r);
+> +=09}
+> +
+>  =09r =3D dm_bufio_write_dirty_buffers(ic->bufio);
+>  =09if (unlikely(r))
+>  =09=09dm_integrity_io_error(ic, "writing tags", r);
+> +
+> +=09if (flush_data)
+> +=09=09wait_for_completion(&fr.comp);
+>  }
+> =20
+>  static void sleep_on_endio_wait(struct dm_integrity_c *ic)
+> @@ -2110,7 +2150,7 @@ offload_to_thread:
+> =20
+>  =09if (unlikely(dio->op =3D=3D REQ_OP_DISCARD) && likely(ic->mode !=3D '=
+D')) {
+>  =09=09integrity_metadata(&dio->work);
+> -=09=09dm_integrity_flush_buffers(ic);
+> +=09=09dm_integrity_flush_buffers(ic, false);
+> =20
+>  =09=09dio->in_flight =3D (atomic_t)ATOMIC_INIT(1);
+>  =09=09dio->completion =3D NULL;
+> @@ -2195,7 +2235,7 @@ static void integrity_commit(struct work
+>  =09flushes =3D bio_list_get(&ic->flush_bio_list);
+>  =09if (unlikely(ic->mode !=3D 'J')) {
+>  =09=09spin_unlock_irq(&ic->endio_wait.lock);
+> -=09=09dm_integrity_flush_buffers(ic);
+> +=09=09dm_integrity_flush_buffers(ic, true);
+>  =09=09goto release_flush_bios;
+>  =09}
+> =20
+> @@ -2409,7 +2449,7 @@ skip_io:
+>  =09complete_journal_op(&comp);
+>  =09wait_for_completion_io(&comp.comp);
+> =20
+> -=09dm_integrity_flush_buffers(ic);
+> +=09dm_integrity_flush_buffers(ic, true);
+>  }
+> =20
+>  static void integrity_writer(struct work_struct *w)
+> @@ -2451,7 +2491,7 @@ static void recalc_write_super(struct dm
+>  {
+>  =09int r;
+> =20
+> -=09dm_integrity_flush_buffers(ic);
+> +=09dm_integrity_flush_buffers(ic, false);
+>  =09if (dm_integrity_failed(ic))
+>  =09=09return;
+> =20
+> @@ -2654,7 +2694,7 @@ static void bitmap_flush_work(struct wor
+>  =09unsigned long limit;
+>  =09struct bio *bio;
+> =20
+> -=09dm_integrity_flush_buffers(ic);
+> +=09dm_integrity_flush_buffers(ic, false);
+> =20
+>  =09range.logical_sector =3D 0;
+>  =09range.n_sectors =3D ic->provided_data_sectors;
+> @@ -2663,9 +2703,7 @@ static void bitmap_flush_work(struct wor
+>  =09add_new_range_and_wait(ic, &range);
+>  =09spin_unlock_irq(&ic->endio_wait.lock);
+> =20
+> -=09dm_integrity_flush_buffers(ic);
+> -=09if (ic->meta_dev)
+> -=09=09blkdev_issue_flush(ic->dev->bdev, GFP_NOIO);
+> +=09dm_integrity_flush_buffers(ic, true);
+> =20
+>  =09limit =3D ic->provided_data_sectors;
+>  =09if (ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING)) {
+> @@ -2934,11 +2972,11 @@ static void dm_integrity_postsuspend(str
+>  =09=09if (ic->meta_dev)
+>  =09=09=09queue_work(ic->writer_wq, &ic->writer_work);
+>  =09=09drain_workqueue(ic->writer_wq);
+> -=09=09dm_integrity_flush_buffers(ic);
+> +=09=09dm_integrity_flush_buffers(ic, true);
+>  =09}
+> =20
+>  =09if (ic->mode =3D=3D 'B') {
+> -=09=09dm_integrity_flush_buffers(ic);
+> +=09=09dm_integrity_flush_buffers(ic, true);
+>  #if 1
+>  =09=09/* set to 0 to test bitmap replay code */
+>  =09=09init_journal(ic, 0, ic->journal_sections, 0);
+> Index: linux-2.6/include/linux/dm-bufio.h
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.orig/include/linux/dm-bufio.h=092020-09-05 10:01:42.0000000=
+00 +0200
+> +++ linux-2.6/include/linux/dm-bufio.h=092021-01-08 15:12:31.000000000 +0=
+100
+> @@ -150,6 +150,7 @@ void dm_bufio_set_minimum_buffers(struct
+> =20
+>  unsigned dm_bufio_get_block_size(struct dm_bufio_client *c);
+>  sector_t dm_bufio_get_device_size(struct dm_bufio_client *c);
+> +struct dm_io_client *dm_bufio_get_dm_io_client(struct dm_bufio_client *c=
+);
+>  sector_t dm_bufio_get_block_number(struct dm_buffer *b);
+>  void *dm_bufio_get_block_data(struct dm_buffer *b);
+>  void *dm_bufio_get_aux_data(struct dm_buffer *b);
+> Index: linux-2.6/drivers/md/dm-bufio.c
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.orig/drivers/md/dm-bufio.c=092021-01-08 15:11:20.000000000 =
++0100
+> +++ linux-2.6/drivers/md/dm-bufio.c=092021-01-08 15:12:25.000000000 +0100
+> @@ -1534,6 +1534,12 @@ sector_t dm_bufio_get_device_size(struct
+>  }
+>  EXPORT_SYMBOL_GPL(dm_bufio_get_device_size);
+> =20
+> +struct dm_io_client *dm_bufio_get_dm_io_client(struct dm_bufio_client *c=
+)
+> +{
+> +=09return c->dm_io;
+> +}
+> +EXPORT_SYMBOL_GPL(dm_bufio_get_dm_io_client);
+> +
+>  sector_t dm_bufio_get_block_number(struct dm_buffer *b)
+>  {
+>  =09return b->block;
+>=20
 
-If we are adding a multi-line function call can we please consider
-following, on the top of this that matches earlier multi-line function
-call in the same nvme_update_disk_into() :-
-
-diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index 3a0557ccc9fc..5cf0f801a95e 100644
---- a/drivers/nvme/host/core.c
-+++ b/drivers/nvme/host/core.c
-@@ -2115,7 +2115,7 @@ static void nvme_update_disk_info(struct gendisk
-*disk,
-        nvme_config_write_zeroes(disk, ns);
- 
-        set_disk_ro(disk, (id->nsattr & NVME_NS_ATTR_RO) ||
--               test_bit(NVME_NS_FORCE_RO, &ns->flags));
-+                   test_bit(NVME_NS_FORCE_RO, &ns->flags));
- }
- 
-static inline bool nvme_first_scan(struct gendisk *disk)
-
-Otherwise, looks good.
-Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
->  static inline bool nvme_first_scan(struct gendisk *disk)
 
 
+--=20
 
+
+--Sig_/0Vt9dhgwBpz6j5.IXFhOAvA
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEg/qxWKDZuPtyYo+kNasLKJxdslgFAl/60SYACgkQNasLKJxd
+sljg+xAAodLk9+/HC6eMIGjRpesK+O+GGUMxZ1EH88CwwSFRibqdTKeDSx8miRvU
+9xiZP6OgM3MYL2qvoVdSDwbQRrqRSnCKbN9Nm1LM0oeu0/gtLdlgxCIZ8VxlXYMd
+lRglIsvmvb0wTjLpeHkD94sKD/M+lCoA/zy+rqcmZwxtwbJ2Rcn7R9KX2RYFzYP7
+88AVeZI2fJVatOueKbarmlOm57EDnbZGlYtTHdU61p3rThV4Hud8hgSXTJ6cUYZX
+ScubxDC8snzudjnSvo0a15F62ZaVBm9/fa4jNs0SJ1oq83AbWKGjqrX8LgE0udvC
+Xxq50Z7RVNZHET7wjxog2A7lvjfPMBzlzUZP64v53NA47r2PCqqljaR2V/KKU7v6
+5O/9Svf3i0LsAKCFa/SZmHzEVILUGKAJglhhDF84ZNa/KMkLdLjWi3ev9jKo0dK9
+k5Gd2+MLbtuglI2NSsiWMgZL86yYeQfzc/hETpowWBeh3B16g1e/2pRNJFm3uo/z
+YRQ2CVsu1y3xwHmBEeFBYcJYwYObmg9aeMoUW5toXbWI/WL7TTH1+B1BXm6Za6x4
+ZPiz8SkU2aNWSVxUt1YFT8bfJCV6WHBZ//7BJDhgZZdsgOtE1pJFt83UfKyKNZPn
+Ii2ZNlak5POQGeCDDEE3LkWBT9TAjgPignGdfXFBo2Ldn/qN0Hk=
+=73Bl
+-----END PGP SIGNATURE-----
+
+--Sig_/0Vt9dhgwBpz6j5.IXFhOAvA--
+
+
+--===============7674295867305403413==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://www.redhat.com/mailman/listinfo/dm-devel
+--===============7674295867305403413==--
 
