@@ -1,71 +1,75 @@
-Return-Path: <SRS0=l7Hk=GN=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=9DFT=GO=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DCE56C433DB
-	for <dm-devel@archiver.kernel.org>; Sun, 10 Jan 2021 15:01:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AE1AEC433E0
+	for <dm-devel@archiver.kernel.org>; Mon, 11 Jan 2021 07:43:54 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4F297229EF
-	for <dm-devel@archiver.kernel.org>; Sun, 10 Jan 2021 15:01:37 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4F297229EF
+	by mail.kernel.org (Postfix) with ESMTPS id E190A229CA
+	for <dm-devel@archiver.kernel.org>; Mon, 11 Jan 2021 07:43:53 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E190A229CA
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=suse.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-571-LrElrTpLPY29EGQtopwA-Q-1; Sun, 10 Jan 2021 10:01:35 -0500
-X-MC-Unique: LrElrTpLPY29EGQtopwA-Q-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-473-1fpAKZ5gN1K06i0r7GJOCA-1; Mon, 11 Jan 2021 02:43:48 -0500
+X-MC-Unique: 1fpAKZ5gN1K06i0r7GJOCA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 39DC710054FF;
-	Sun, 10 Jan 2021 15:01:30 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 166F65D6D5;
-	Sun, 10 Jan 2021 15:01:30 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A1F3A107ACF7;
+	Mon, 11 Jan 2021 07:43:43 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4EA885D9F1;
+	Mon, 11 Jan 2021 07:43:42 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E03B2180954D;
-	Sun, 10 Jan 2021 15:01:29 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DDA714BB7B;
+	Mon, 11 Jan 2021 07:43:38 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10AF1SYf015858 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 10 Jan 2021 10:01:28 -0500
+	id 10B7haVO001363 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 11 Jan 2021 02:43:36 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6783F2026D49; Sun, 10 Jan 2021 15:01:28 +0000 (UTC)
+	id 21CC7111285E; Mon, 11 Jan 2021 07:43:36 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 633942026D47
-	for <dm-devel@redhat.com>; Sun, 10 Jan 2021 15:01:25 +0000 (UTC)
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1DCA0111285C
+	for <dm-devel@redhat.com>; Mon, 11 Jan 2021 07:43:32 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E1209811E78
-	for <dm-devel@redhat.com>; Sun, 10 Jan 2021 15:01:25 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9AB4180391A
+	for <dm-devel@redhat.com>; Mon, 11 Jan 2021 07:43:32 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-190-wdDDtkSiMnmy-lY4e-Ifyg-1;
-	Sun, 10 Jan 2021 10:01:20 -0500
-X-MC-Unique: wdDDtkSiMnmy-lY4e-Ifyg-1
+	relay.mimecast.com with ESMTP id us-mta-124-8X7v2K9qOHOr-fTmepERnQ-1;
+	Mon, 11 Jan 2021 02:43:28 -0500
+X-MC-Unique: 8X7v2K9qOHOr-fTmepERnQ-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 09169ACC6;
-	Sun, 10 Jan 2021 15:01:19 +0000 (UTC)
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-References: <20210109104254.1077093-1-hch@lst.de>
-	<20210109104254.1077093-7-hch@lst.de>
+	by mx2.suse.de (Postfix) with ESMTP id 9D16CAD18;
+	Mon, 11 Jan 2021 07:43:26 +0000 (UTC)
+To: Martin Wilck <mwilck@suse.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+References: <3baec678cfdc3c8ed2024b2df2f316d1694fe699.camel@suse.com>
+	<CABr-Gnd1TJhd7QSge+vAwrJZSHuUjW7hbKd-sFwx=zdNotv_Eg@mail.gmail.com>
+	<85d7c08115fd50c413ddcd957f22f40db2215f19.camel@suse.com>
+	<f74cbc725ec8cb75016e8061c46eeb628d30bb25.camel@suse.com>
 From: Hannes Reinecke <hare@suse.de>
-Message-ID: <3269f70a-2bd4-9aa6-5f14-b13e5b67687e@suse.de>
-Date: Sun, 10 Jan 2021 16:01:17 +0100
+Message-ID: <eabe0f24-b32f-ff5f-b808-b2c501263d8f@suse.de>
+Date: Mon, 11 Jan 2021 08:43:26 +0100
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
 	Thunderbird/78.4.0
 MIME-Version: 1.0
-In-Reply-To: <20210109104254.1077093-7-hch@lst.de>
+In-Reply-To: <f74cbc725ec8cb75016e8061c46eeb628d30bb25.camel@suse.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -74,20 +78,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 10AF1SYf015858
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 10B7haVO001363
 X-loop: dm-devel@redhat.com
-Cc: Sagi Grimberg <sagi@grimberg.me>, Mike Snitzer <snitzer@redhat.com>,
-	Oleksii Kurochko <olkuroch@cisco.com>,
-	Dongsheng Yang <dongsheng.yang@easystack.cn>,
-	linux-block@vger.kernel.org, dm-devel@redhat.com,
-	linux-nvme@lists.infradead.org,
-	"Martin K . Petersen" <martin.petersen@oracle.com>,
-	Keith Busch <kbusch@kernel.org>,
-	Ilya Dryomov <idryomov@gmail.com>, ceph-devel@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH 6/6] nvme: allow revalidate to set a
-	namespace read-only
+Cc: dm-devel mailing list <dm-devel@redhat.com>,
+	Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [dm-devel] New draft openSUSE multipath-tools repo on github
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -101,41 +98,81 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="iso-8859-15"; Format="flowed"
 
-T24gMS85LzIxIDExOjQyIEFNLCBDaHJpc3RvcGggSGVsbHdpZyB3cm90ZToKPiBVbmNvbmRpdGlv
-bmFsbHkgY2FsbCBzZXRfZGlza19ybyBub3cgdGhhdCBpdCBvbmx5IHVwZGF0ZXMgdGhlIGhhcmR3
-YXJlCj4gc3RhdGUuICBUaGlzIGFsbG93cyB0byBwcm9wZXJseSBzZXQgdXAgdGhlIExpbnV4IGRl
-dmljZXMgcmVhZC1vbmx5IHdoZW4KPiB0aGUgY29udHJvbGxlciB0dXJucyBhIHByZXZpb3VzbHkg
-d3JpdGFibGUgbmFtZXNwYWNlIHJlYWQtb25seS4KPiAKPiBTaWduZWQtb2ZmLWJ5OiBDaHJpc3Rv
-cGggSGVsbHdpZyA8aGNoQGxzdC5kZT4KPiBSZXZpZXdlZC1ieTogS2VpdGggQnVzY2ggPGtidXNj
-aEBrZXJuZWwub3JnPgo+IFJldmlld2VkLWJ5OiBNYXJ0aW4gSy4gUGV0ZXJzZW4gPG1hcnRpbi5w
-ZXRlcnNlbkBvcmFjbGUuY29tPgo+IC0tLQo+ICAgZHJpdmVycy9udm1lL2hvc3QvY29yZS5jIHwg
-NSArKy0tLQo+ICAgMSBmaWxlIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygrKSwgMyBkZWxldGlvbnMo
-LSkKPiAKPiBkaWZmIC0tZ2l0IGEvZHJpdmVycy9udm1lL2hvc3QvY29yZS5jIGIvZHJpdmVycy9u
-dm1lL2hvc3QvY29yZS5jCj4gaW5kZXggY2UxYjYxNTE5NDQxMzEuLjNhMDU1N2NjYzlmYzVkIDEw
-MDY0NAo+IC0tLSBhL2RyaXZlcnMvbnZtZS9ob3N0L2NvcmUuYwo+ICsrKyBiL2RyaXZlcnMvbnZt
-ZS9ob3N0L2NvcmUuYwo+IEBAIC0yMTE0LDkgKzIxMTQsOCBAQCBzdGF0aWMgdm9pZCBudm1lX3Vw
-ZGF0ZV9kaXNrX2luZm8oc3RydWN0IGdlbmRpc2sgKmRpc2ssCj4gICAJbnZtZV9jb25maWdfZGlz
-Y2FyZChkaXNrLCBucyk7Cj4gICAJbnZtZV9jb25maWdfd3JpdGVfemVyb2VzKGRpc2ssIG5zKTsK
-PiAgIAo+IC0JaWYgKChpZC0+bnNhdHRyICYgTlZNRV9OU19BVFRSX1JPKSB8fAo+IC0JICAgIHRl
-c3RfYml0KE5WTUVfTlNfRk9SQ0VfUk8sICZucy0+ZmxhZ3MpKQo+IC0JCXNldF9kaXNrX3JvKGRp
-c2ssIHRydWUpOwo+ICsJc2V0X2Rpc2tfcm8oZGlzaywgKGlkLT5uc2F0dHIgJiBOVk1FX05TX0FU
-VFJfUk8pIHx8Cj4gKwkJdGVzdF9iaXQoTlZNRV9OU19GT1JDRV9STywgJm5zLT5mbGFncykpOwo+
-ICAgfQo+ICAgCj4gICBzdGF0aWMgaW5saW5lIGJvb2wgbnZtZV9maXJzdF9zY2FuKHN0cnVjdCBn
-ZW5kaXNrICpkaXNrKQo+IApSZXZpZXdlZC1ieTogSGFubmVzIFJlaW5lY2tlIDxoYXJlQHN1c2Uu
-ZGU+CgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UgICAgICAgICAgICAg
-ICAgS2VybmVsIFN0b3JhZ2UgQXJjaGl0ZWN0CmhhcmVAc3VzZS5kZSAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgU29mdHdhcmUgU29sdXRpb25zIEdt
-YkgsIE1heGZlbGRzdHIuIDUsIDkwNDA5IE7DvHJuYmVyZwpIUkIgMzY4MDkgKEFHIE7DvHJuYmVy
-ZyksIEdlc2Now6RmdHNmw7xocmVyOiBGZWxpeCBJbWVuZMO2cmZmZXIKCgotLQpkbS1kZXZlbCBt
-YWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL3d3dy5yZWRoYXQuY29tL21h
-aWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On 1/6/21 11:45 PM, Martin Wilck wrote:
+> Hi Christophe, Ben, everybody,
+>=20
+> On Tue, 2021-01-05 at 22:45 +0100, Martin Wilck wrote:
+>> Hi Christophe,
+>>
+>> On Sat, 2020-12-19 at 11:26 +0100, Christophe Varoqui wrote:
+>>> Sure, nice work.
+>>>
+>>> Would you like to create a PR, to merge it upstream ?
+>>> So we can test if this process makes sense.
+>>
+>> Sure, will do.
+>>
+>> One problem that I currently have is that the openSUSE/multipath-
+>> tools
+>> repo is a fork of your old repo, and it's impossible to change the
+>> upstream repo in github, AFAICS. Therefore I can't create a PR
+>> directly
+>> from openSUSE/multipath-tools.
+>>
+>> I guess I'll have to re-build the openSUSE/multipath-tools repo "from
+>> scratch" as a fork of your new github repo before we can
+>> realistically
+>> work with github PRs. That's a bit of work because there are many
+>> branches, and it needs to be discussed and coordinated in our
+>> organization.
+>=20
+> I've drafted the new openSUSE multipath-tools github repo now:
+>=20
+> https://github.com/openSUSE/multipath-tools-1
+>=20
+> (the repo name will change!)
+>=20
+> This repo is forked from Christophe's github repo and will thus allow
+> creating Pull Requests for Christophe.
+>=20
+> I have simplified the branch names that matter for upstream development
+> wrt the old repo:
+>=20
+>    upstream-queue -> queue
+>    upstream-fixes -> fixes
+>    upstream-tip -> tip (this one contains github CI)
+>=20
+> Besides these, the repo contains some (open)SUSE-specific branches and
+> tags, but I've left out a lot of old stuff which will continue to live
+> on the old openSUSE repo only.
+>=20
+> Please have a look. If I get positive feedback, I'll rename the current
+> openSUSE multipath-tools repo to "openSUSE/multipath-tools-pre2021" and
+> rename this one to "openSUSE/multipath-tools".
+>=20
+Looks good to me.
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke                Kernel Storage Architect
+hare@suse.de                              +49 911 74053 688
+SUSE Software Solutions GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+HRB 36809 (AG N=FCrnberg), Gesch=E4ftsf=FChrer: Felix Imend=F6rffer
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
 
