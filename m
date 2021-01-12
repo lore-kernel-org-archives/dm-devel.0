@@ -2,84 +2,86 @@ Return-Path: <SRS0=y4zT=GP=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 073E0C433DB
-	for <dm-devel@archiver.kernel.org>; Tue, 12 Jan 2021 20:22:28 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 43A62C433DB
+	for <dm-devel@archiver.kernel.org>; Tue, 12 Jan 2021 23:13:26 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 708C42310F
-	for <dm-devel@archiver.kernel.org>; Tue, 12 Jan 2021 20:22:27 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 708C42310F
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 93C0C23123
+	for <dm-devel@archiver.kernel.org>; Tue, 12 Jan 2021 23:13:25 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 93C0C23123
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1610482946;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=gVU2JQPiVW63fRgUx/EA4Vx7bOwpnYZkmfakFUtjAPw=;
-	b=JMA8AW34v9fABhSp8tHI5eUEer2QxTVkKpSf9J6jdNSgCDDO6bccos4udBW2d7s9/HC7Gz
-	GGAZVJ650djhsmPQPYDENagiWvOxQYRJwVb2C+U3/S30EnGuuSg4x5J2aSHw2jTsrg4fc4
-	jXnS/ACKYtlE76h2xsuMbQz7RO7C4FM=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-61-jgmUw0JyM4OSaup4bG0uyA-1; Tue, 12 Jan 2021 15:22:24 -0500
-X-MC-Unique: jgmUw0JyM4OSaup4bG0uyA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-260-ZSGRwYtGP0CExBMfWF3ZPg-1; Tue, 12 Jan 2021 18:13:22 -0500
+X-MC-Unique: ZSGRwYtGP0CExBMfWF3ZPg-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2B946180DE0E;
-	Tue, 12 Jan 2021 20:22:18 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CFA371F0;
-	Tue, 12 Jan 2021 20:22:17 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 982E0AFA82;
+	Tue, 12 Jan 2021 23:13:17 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9873B5C239;
+	Tue, 12 Jan 2021 23:13:16 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0B67A4BB7B;
-	Tue, 12 Jan 2021 20:22:16 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
-	[10.5.11.23])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 144A1180954D;
+	Tue, 12 Jan 2021 23:13:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10CKMFCc006839 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 12 Jan 2021 15:22:15 -0500
+	id 10CNDBNw022610 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 12 Jan 2021 18:13:11 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 0CE111975E; Tue, 12 Jan 2021 20:22:15 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
-	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 341531851C;
-	Tue, 12 Jan 2021 20:21:40 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 10CKLdFI008074; Tue, 12 Jan 2021 15:21:39 -0500
-Received: from localhost (mpatocka@localhost)
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 10CKLd7J008060; Tue, 12 Jan 2021 15:21:39 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
-	owned process doing -bs
-Date: Tue, 12 Jan 2021 15:21:39 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-In-Reply-To: <20210112200417.GA15241@redhat.com>
-Message-ID: <alpine.LRH.2.02.2101121508130.31583@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.2101121453090.31583@file01.intranet.prod.int.rdu2.redhat.com>
-	<20210112200417.GA15241@redhat.com>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+	id 2BA10110F0BC; Tue, 12 Jan 2021 23:13:11 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 28022110F0B9
+	for <dm-devel@redhat.com>; Tue, 12 Jan 2021 23:13:08 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BE91B185A794
+	for <dm-devel@redhat.com>; Tue, 12 Jan 2021 23:13:08 +0000 (UTC)
+Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-89-OcIQ-KaYPL68NRd_TADbkw-1;
+	Tue, 12 Jan 2021 18:13:04 -0500
+X-MC-Unique: OcIQ-KaYPL68NRd_TADbkw-1
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.221.27])
+	by mx2.suse.de (Postfix) with ESMTP id 6EC26AB7A;
+	Tue, 12 Jan 2021 23:13:02 +0000 (UTC)
+Date: Wed, 13 Jan 2021 00:13:00 +0100
+From: Petr Vorel <pvorel@suse.cz>
+To: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+Message-ID: <X/4s/AhZ6+eTcYnv@pevik>
+References: <20200928035605.22701-1-tusharsu@linux.microsoft.com>
+	<20200928035605.22701-3-tusharsu@linux.microsoft.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+In-Reply-To: <20200928035605.22701-3-tusharsu@linux.microsoft.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com
-Subject: Re: [dm-devel] dm-integrity: fix the maximum number of arguments
+Cc: snitzer@redhat.com, zohar@linux.ibm.com, nramas@linux.microsoft.com,
+	dm-devel@redhat.com, ltp@lists.linux.it,
+	linux-integrity@vger.kernel.org, gmazyland@gmail.com, agk@redhat.com
+Subject: Re: [dm-devel] [PATCH v2 2/2] IMA: Add test for dm-crypt measurement
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
+Reply-To: Petr Vorel <pvorel@suse.cz>
 List-Id: device-mapper development <dm-devel.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -90,64 +92,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+Hi Tushar,
 
+...
+> +++ b/testcases/kernel/security/integrity/ima/tests/ima_dm_crypt.sh
+> @@ -0,0 +1,60 @@
+> +#!/bin/sh
+> +# SPDX-License-Identifier: GPL-2.0-or-later
+> +# Copyright (c) 2020 Microsoft Corporation
+> +# Author: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+> +#
+> +# Verify that DM target dm-crypt are measured correctly based on policy.
+> +
+> +TST_NEEDS_CMDS="dmsetup"
+> +TST_CNT=1
+> +TST_NEEDS_DEVICE=1
+> +TST_SETUP=setup
+> +TST_CLEANUP=cleanup
+> +
+> +. ima_setup.sh
+> +
+> +FUNC_CRIT_DATA='func=CRITICAL_DATA'
+> +TEMPLATE_BUF='template=ima-buf'
+> +REQUIRED_POLICY="^measure.*($FUNC_CRIT_DATA.*$TEMPLATE_BUF|$TEMPLATE_BUF.*$FUNC_CRIT_DATA)"
+> +
+> +setup()
+> +{
+> +	require_ima_policy_content "$REQUIRED_POLICY" '-E' > $TST_TMPDIR/policy.txt
+> +}
+> +
+> +cleanup()
+> +{
+> +	ROD "dmsetup remove test-crypt"
+FYI: there should be check that dmsetup create was run.
+https://github.com/linux-test-project/ltp/wiki/Test-Writing-Guidelines#a-word-about-the-cleanup-callback
 
-On Tue, 12 Jan 2021, Mike Snitzer wrote:
+i.e. here:
 
-> On Tue, Jan 12 2021 at  2:54pm -0500,
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
-> 
-> > Advance the maximum number of arguments to 15.
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Cc: stable@vger.kernel.org	# v4.19+
-> > 
-> > ---
-> >  drivers/md/dm-integrity.c |    2 +-
-> >  1 file changed, 1 insertion(+), 1 deletion(-)
-> > 
-> > Index: linux-2.6/drivers/md/dm-integrity.c
-> > ===================================================================
-> > --- linux-2.6.orig/drivers/md/dm-integrity.c	2021-01-12 20:45:23.000000000 +0100
-> > +++ linux-2.6/drivers/md/dm-integrity.c	2021-01-12 20:46:15.000000000 +0100
-> > @@ -3792,7 +3792,7 @@ static int dm_integrity_ctr(struct dm_ta
-> >  	unsigned extra_args;
-> >  	struct dm_arg_set as;
-> >  	static const struct dm_arg _args[] = {
-> > -		{0, 9, "Invalid number of feature args"},
-> > +		{0, 15, "Invalid number of feature args"},
-> >  	};
-> >  	unsigned journal_sectors, interleave_sectors, buffer_sectors, journal_watermark, sync_msec;
-> >  	bool should_write_sb;
-> 
-> Can you please expand on which args weren't accounted for?
+[ "$dmsetup_run" ] || return
+ROD "dmsetup remove test-crypt"
 
-The kernel 4.19 added "meta_device" 
-(356d9d52e1221ba0c9f10b8b38652f78a5298329) and "recalculate" 
-(a3fcf7253139609bf9ff901fbf955fba047e75dd) flags.
++ see below.
 
-The commit 468dfca38b1a6fbdccd195d875599cb7c8875cd9 added 
-"sectors_per_bit" and "bitmap_flush_interval".
+> +}
+> +
+> +test1()
+> +{
+> +	local input_digest="039d8ff71918608d585adca3e5aab2e3f41f84d6"
+> +	local pattern='data_sources=[^[:space:]]+'
+> +	local tmp_file="$TST_TMPDIR/dm_crypt_tmp.txt"
+> +	local policy="data_sources"
+> +	local arg key res
+> +
+> +	tst_res TINFO "verifying dm target - dmcrypt gets measured correctly"
+> +
+> +	check_policy_pattern "$pattern" $FUNC_CRIT_DATA $TEMPLATE_BUF > $tmp_file || return
+> +
+> +	tgt="crypt"
+> +	key="faf453b4ee938cff2f0d2c869a0b743f59125c0a37f5bcd8f1dbbd911a78abaa"
+> +
+> +	arg="'0 1953125 crypt aes-xts-plain64 "
+> +	arg="$arg $key 0 "
+> +	arg="$arg /dev/loop0 0 1 allow_discards'"
+> +
+> +	ROD "dmsetup create test-crypt --table $arg"
+adding 
+dmsetup_run=1
 
-The commit 84597a44a9d86ac949900441cea7da0af0f2f473 added 
-"allow_discards".
-
-The commit d537858ac8aaf4311b51240893add2fc62003b97 added "fix_padding".
-
-> Which commit introduced the problem? (I'd like a "Fixes:" reference)
-> 
-> Thanks,
-> Mike
-
-Mikulas
+Kind regards,
+Petr
 
 --
 dm-devel mailing list
