@@ -2,93 +2,77 @@ Return-Path: <SRS0=kuEZ=GQ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B8CDC433DB
-	for <dm-devel@archiver.kernel.org>; Wed, 13 Jan 2021 14:20:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 93898C433E0
+	for <dm-devel@archiver.kernel.org>; Wed, 13 Jan 2021 17:10:31 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3B08B233FB
-	for <dm-devel@archiver.kernel.org>; Wed, 13 Jan 2021 14:20:23 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3B08B233FB
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
+	by mail.kernel.org (Postfix) with ESMTPS id B29972339F
+	for <dm-devel@archiver.kernel.org>; Wed, 13 Jan 2021 17:10:30 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org B29972339F
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1610557829;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=MV6K81P5bjjETeHoQuJDq+1lAbWhbpYmoG5ihVRzDyo=;
+	b=DDQPdUi0lnMiLuDCO4C0kS6Kix670ks4a7UM+wlsMhBKqCcdShXnX1gkYvaTQwyqv2vUpl
+	/RWUabENUhFGDKKQtV3WRthEUzTdzV5w/PtF1Tg4VNi/brHmwRapuLjyNEzXX7MLkKH7sa
+	Cmlq3tPmRS7Sx3zL0hK8gfWCKXA7aRY=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-164-HHGduVe1O7GWWvXDlbGVIQ-1; Wed, 13 Jan 2021 09:20:19 -0500
-X-MC-Unique: HHGduVe1O7GWWvXDlbGVIQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-506-cE4lC2CHP4WsAA4tMUU8-g-1; Wed, 13 Jan 2021 12:10:27 -0500
+X-MC-Unique: cE4lC2CHP4WsAA4tMUU8-g-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7286C814601;
-	Wed, 13 Jan 2021 14:20:15 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 49EE6100AE34;
-	Wed, 13 Jan 2021 14:20:14 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2008518C8C00;
+	Wed, 13 Jan 2021 17:10:23 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3B73719C47;
+	Wed, 13 Jan 2021 17:10:21 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3699A4A7C6;
-	Wed, 13 Jan 2021 14:20:12 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0C8D71809C9F;
+	Wed, 13 Jan 2021 17:10:19 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
+	[10.5.11.23])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10CIPKxX027675 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 12 Jan 2021 13:25:20 -0500
+	id 10DH9mfg003396 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 13 Jan 2021 12:09:48 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8F676110E9AE; Tue, 12 Jan 2021 18:25:20 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8B34F110E9AB
-	for <dm-devel@redhat.com>; Tue, 12 Jan 2021 18:25:16 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5B370186E120
-	for <dm-devel@redhat.com>; Tue, 12 Jan 2021 18:25:16 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-321-kWs__zQOOj2JdUs2RA0VDA-1;
-	Tue, 12 Jan 2021 13:25:14 -0500
-X-MC-Unique: kWs__zQOOj2JdUs2RA0VDA-1
-Received: from [192.168.0.104] (c-73-42-176-67.hsd1.wa.comcast.net
-	[73.42.176.67])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 7792220B6C40;
-	Tue, 12 Jan 2021 10:25:11 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 7792220B6C40
-To: Paul Moore <paul@paul-moore.com>,
-	Tushar Sugandhi <tusharsu@linux.microsoft.com>
-References: <20210108040708.8389-1-tusharsu@linux.microsoft.com>
-	<20210108040708.8389-9-tusharsu@linux.microsoft.com>
-	<CAHC9VhSJk0wG=WzO3bwsueiy19mMi9m6MamTrQfH8C=gXUtvGw@mail.gmail.com>
-From: Lakshmi Ramasubramanian <nramas@linux.microsoft.com>
-Message-ID: <1b076701-3af8-6997-82ae-7196c263a7f4@linux.microsoft.com>
-Date: Tue, 12 Jan 2021 10:25:11 -0800
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
-	Thunderbird/68.10.0
+	id 4EFF219934; Wed, 13 Jan 2021 17:09:48 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CDAAE19C47;
+	Wed, 13 Jan 2021 17:09:43 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 10DH9gju013529; 
+	Wed, 13 Jan 2021 11:09:42 -0600
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 10DH9faP013528;
+	Wed, 13 Jan 2021 11:09:41 -0600
+Date: Wed, 13 Jan 2021 11:09:41 -0600
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Message-ID: <20210113170941.GY3103@octiron.msp.redhat.com>
+References: <1610495575-8177-1-git-send-email-bmarzins@redhat.com>
+	<d4899abd850929066473f4165940d431f20fa6e1.camel@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <CAHC9VhSJk0wG=WzO3bwsueiy19mMi9m6MamTrQfH8C=gXUtvGw@mail.gmail.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+In-Reply-To: <d4899abd850929066473f4165940d431f20fa6e1.camel@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Wed, 13 Jan 2021 09:20:09 -0500
-Cc: sashal@kernel.org, dm-devel@redhat.com, snitzer@redhat.com,
-	selinux@vger.kernel.org, Stephen Smalley <stephen.smalley.work@gmail.com>,
-	James Morris <jmorris@namei.org>, zohar@linux.ibm.com,
-	linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org,
-	tyhicks@linux.microsoft.com, casey@schaufler-ca.com,
-	linux-integrity@vger.kernel.org, gmazyland@gmail.com, agk@redhat.com
-Subject: Re: [dm-devel] [PATCH v10 8/8] selinux: include a consumer of the
- new IMA critical data hook
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH 0/3] Multipath io_err_stat fixes
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -102,79 +86,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Disposition: inline
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-On 1/12/21 8:27 AM, Paul Moore wrote:
-> On Thu, Jan 7, 2021 at 11:07 PM Tushar Sugandhi
-> <tusharsu@linux.microsoft.com> wrote:
->> From: Lakshmi Ramasubramanian <nramas@linux.microsoft.com>
->>
->> SELinux stores the active policy in memory, so the changes to this data
->> at runtime would have an impact on the security guarantees provided
->> by SELinux.  Measuring in-memory SELinux policy through IMA subsystem
->> provides a secure way for the attestation service to remotely validate
->> the policy contents at runtime.
->>
->> Measure the hash of the loaded policy by calling the IMA hook
->> ima_measure_critical_data().  Since the size of the loaded policy
->> can be large (several MB), measure the hash of the policy instead of
->> the entire policy to avoid bloating the IMA log entry.
->>
->> To enable SELinux data measurement, the following steps are required:
->>
->> 1, Add "ima_policy=critical_data" to the kernel command line arguments
->>     to enable measuring SELinux data at boot time.
->> For example,
->>    BOOT_IMAGE=/boot/vmlinuz-5.10.0-rc1+ root=UUID=fd643309-a5d2-4ed3-b10d-3c579a5fab2f ro nomodeset security=selinux ima_policy=critical_data
->>
->> 2, Add the following rule to /etc/ima/ima-policy
->>     measure func=CRITICAL_DATA label=selinux
->>
->> Sample measurement of the hash of SELinux policy:
->>
->> To verify the measured data with the current SELinux policy run
->> the following commands and verify the output hash values match.
->>
->>    sha256sum /sys/fs/selinux/policy | cut -d' ' -f 1
->>
->>    grep "selinux-policy-hash" /sys/kernel/security/integrity/ima/ascii_runtime_measurements | tail -1 | cut -d' ' -f 6
->>
->> Note that the actual verification of SELinux policy would require loading
->> the expected policy into an identical kernel on a pristine/known-safe
->> system and run the sha256sum /sys/kernel/selinux/policy there to get
->> the expected hash.
->>
->> Signed-off-by: Lakshmi Ramasubramanian <nramas@linux.microsoft.com>
->> Suggested-by: Stephen Smalley <stephen.smalley.work@gmail.com>
->> Reviewed-by: Tyler Hicks <tyhicks@linux.microsoft.com>
->> ---
->>   Documentation/ABI/testing/ima_policy |  3 +-
->>   security/selinux/Makefile            |  2 +
->>   security/selinux/ima.c               | 64 ++++++++++++++++++++++++++++
->>   security/selinux/include/ima.h       | 24 +++++++++++
->>   security/selinux/include/security.h  |  3 +-
->>   security/selinux/ss/services.c       | 64 ++++++++++++++++++++++++----
->>   6 files changed, 149 insertions(+), 11 deletions(-)
->>   create mode 100644 security/selinux/ima.c
->>   create mode 100644 security/selinux/include/ima.h
-> 
-> I remain concerned about the possibility of bypassing a measurement by
-> tampering with the time, but I appear to be the only one who is
-> worried about this so I'm not going to block this patch on those
-> grounds.
-> 
-> Acked-by: Paul Moore <paul@paul-moore.com>
+On Wed, Jan 13, 2021 at 11:45:55AM +0000, Martin Wilck wrote:
+> On Tue, 2021-01-12 at 17:52 -0600, Benjamin Marzinski wrote:
+> > I found an ABBA deadlock in the io_err_stat marginal path code, and
+> > in
+> > the process of fixing it, noticed a potential crash on shutdown. This
+> > patchset addresses both of the issues.
+> >=20
+> > Benjamin Marzinski (3):
+> > =A0 libmultipath: make find_err_path_by_dev() static
+> > =A0 multipathd: avoid io_err_stat crash during shutdown
+> > =A0 multipathd: avoid io_err_stat ABBA deadlock
+> >=20
+> > =A0libmultipath/io_err_stat.c | 159 +++++++++++++++++------------------
+> > --
+> > =A01 file changed, 73 insertions(+), 86 deletions(-)
+> >=20
+>=20
+> Thanks, the series looks good, I have only minor nits.
+>=20
+> I've made some remarks about the io_err_stat code in the review. While
+> you're working at it, would you be willing to fix those issues too?
 
-Thanks Paul.
+Sure. I'll send out a v2 patchset that addresses all your issues.
 
-  -lakshmi
+-Ben
+
+>=20
+> Cheers,
+> Martin
+>=20
+> --=20
+> Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
+> SUSE Software Solutions Germany GmbH
+> HRB 36809, AG N=FCrnberg GF: Felix Imend=F6rffer
+>=20
 
 --
 dm-devel mailing list
