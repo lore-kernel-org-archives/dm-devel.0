@@ -2,74 +2,142 @@ Return-Path: <SRS0=q6c7=GR=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 535ABC433DB
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Jan 2021 16:06:49 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0D53BC433DB
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Jan 2021 16:45:05 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id CBA2D23B28
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Jan 2021 16:06:48 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CBA2D23B28
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 7713523B1C
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Jan 2021 16:45:04 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7713523B1C
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.ibm.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1610640407;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=S6nRzX74Yswkr0WH2sdd1Fp8FsHmJlTd5bE7lwKGI/Y=;
-	b=Am1p2nCCYrPl+cj+w300XyGgiCtXSYAJXDZIKTFFLVhLHHEN8XcodpKn0XmLDBLACCcn8H
-	qoJabilAW3LWDe30STBmjOyyStQw2BXB+stakwbGqebI2O5c7C8k/wHf21TU8c6KjDVdHn
-	M3gLWPb/LlPatpQ2yHDe0WzERpGbg5c=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-179-epDgPSNsOt-0pJgZAlwXkg-1; Thu, 14 Jan 2021 11:06:45 -0500
-X-MC-Unique: epDgPSNsOt-0pJgZAlwXkg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-144-65U9r5CdO0i3AitKJOqI2A-1; Thu, 14 Jan 2021 11:45:01 -0500
+X-MC-Unique: 65U9r5CdO0i3AitKJOqI2A-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 886EE1005D50;
-	Thu, 14 Jan 2021 16:06:39 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C86551842141;
+	Thu, 14 Jan 2021 16:44:56 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9638C19934;
-	Thu, 14 Jan 2021 16:06:38 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 544655D734;
+	Thu, 14 Jan 2021 16:44:56 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 00DE84E58F;
-	Thu, 14 Jan 2021 16:06:35 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
-	[10.5.11.15])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 68F104A7C6;
+	Thu, 14 Jan 2021 16:44:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10EG6XZ7004917 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 14 Jan 2021 11:06:33 -0500
+	id 10EGifSB009444 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 14 Jan 2021 11:44:41 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1A06D5D739; Thu, 14 Jan 2021 16:06:33 +0000 (UTC)
-Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A286A5D734;
-	Thu, 14 Jan 2021 16:06:29 +0000 (UTC)
-Date: Thu, 14 Jan 2021 11:06:29 -0500
-From: Mike Snitzer <snitzer@redhat.com>
-To: Satya Tangirala <satyat@google.com>
-Message-ID: <20210114160628.GA26178@redhat.com>
-References: <20201229085524.2795331-1-satyat@google.com>
-	<20201229085524.2795331-3-satyat@google.com>
-MIME-Version: 1.0
-In-Reply-To: <20201229085524.2795331-3-satyat@google.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+	id ADBDE2026D14; Thu, 14 Jan 2021 16:44:41 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A7C862026D12
+	for <dm-devel@redhat.com>; Thu, 14 Jan 2021 16:44:39 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 727A485828A
+	for <dm-devel@redhat.com>; Thu, 14 Jan 2021 16:44:39 +0000 (UTC)
+Received: from mx0a-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com
+	[148.163.158.5]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-279-MAW5UUjPOAWCU2DUsnENag-1; Thu, 14 Jan 2021 11:44:37 -0500
+X-MC-Unique: MAW5UUjPOAWCU2DUsnENag-1
+Received: from pps.filterd (m0098413.ppops.net [127.0.0.1])
+	by mx0b-001b2d01.pphosted.com (8.16.0.42/8.16.0.42) with SMTP id
+	10EGgr0c055922; Thu, 14 Jan 2021 11:44:36 -0500
+Received: from pps.reinject (localhost [127.0.0.1])
+	by mx0b-001b2d01.pphosted.com with ESMTP id 362sqbr128-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Thu, 14 Jan 2021 11:44:36 -0500
+Received: from m0098413.ppops.net (m0098413.ppops.net [127.0.0.1])
+	by pps.reinject (8.16.0.36/8.16.0.36) with SMTP id 10EGh70j056353;
+	Thu, 14 Jan 2021 11:44:36 -0500
+Received: from ppma05fra.de.ibm.com (6c.4a.5195.ip4.static.sl-reverse.com
+	[149.81.74.108])
+	by mx0b-001b2d01.pphosted.com with ESMTP id 362sqbr11m-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Thu, 14 Jan 2021 11:44:36 -0500
+Received: from pps.filterd (ppma05fra.de.ibm.com [127.0.0.1])
+	by ppma05fra.de.ibm.com (8.16.0.42/8.16.0.42) with SMTP id
+	10EGbVht003453; Thu, 14 Jan 2021 16:44:34 GMT
+Received: from b06avi18878370.portsmouth.uk.ibm.com
+	(b06avi18878370.portsmouth.uk.ibm.com [9.149.26.194])
+	by ppma05fra.de.ibm.com with ESMTP id 35y448be54-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Thu, 14 Jan 2021 16:44:34 +0000
+Received: from d06av22.portsmouth.uk.ibm.com (d06av22.portsmouth.uk.ibm.com
+	[9.149.105.58])
+	by b06avi18878370.portsmouth.uk.ibm.com (8.14.9/8.14.9/NCO v10.0) with
+	ESMTP id 10EGiQUF33161524
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=OK); Thu, 14 Jan 2021 16:44:26 GMT
+Received: from d06av22.portsmouth.uk.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id EE11E4C046;
+	Thu, 14 Jan 2021 16:44:31 +0000 (GMT)
+Received: from d06av22.portsmouth.uk.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 8C3244C04E;
+	Thu, 14 Jan 2021 16:44:28 +0000 (GMT)
+Received: from sig-9-65-209-51.ibm.com (unknown [9.65.209.51])
+	by d06av22.portsmouth.uk.ibm.com (Postfix) with ESMTP;
+	Thu, 14 Jan 2021 16:44:28 +0000 (GMT)
+Message-ID: <99be76345f375bb2f485f08a53dcb8ed806dc538.camel@linux.ibm.com>
+From: Mimi Zohar <zohar@linux.ibm.com>
+To: Lakshmi Ramasubramanian <nramas@linux.microsoft.com>, Paul Moore
+	<paul@paul-moore.com>, Sasha Levin <sashal@kernel.org>
+Date: Thu, 14 Jan 2021 11:44:27 -0500
+In-Reply-To: <fc80b1a1-ff4d-3bf2-59bd-2cb56135bf0f@linux.microsoft.com>
+References: <20210108040708.8389-1-tusharsu@linux.microsoft.com>
+	<20210108040708.8389-9-tusharsu@linux.microsoft.com>
+	<CAHC9VhSJk0wG=WzO3bwsueiy19mMi9m6MamTrQfH8C=gXUtvGw@mail.gmail.com>
+	<97328fc71687a0e1c327f6821548be9ba35bb193.camel@linux.ibm.com>
+	<CAHC9VhTzaQ_q8gJ0oeok_yJ54XLETNvOuhhKnyRwgqsqvpBLCw@mail.gmail.com>
+	<71cddb6c8676ccd63c89364d805cfca76d32cb6e.camel@linux.ibm.com>
+	<CAHC9VhRhYWEcK7TepZ=LK1m=9Zn_gtOZyAYfamP-TFU3rRH+zw@mail.gmail.com>
+	<e29a618645b0e73ec06960a02b6da465614689ff.camel@linux.ibm.com>
+	<CAHC9VhTHqwKem=MyQBY4TNAq-DOVhwEZS8pjrSE=4OxdEVm-GA@mail.gmail.com>
+	<3746bc7673df25354411151442a7772b867be396.camel@linux.ibm.com>
+	<fc80b1a1-ff4d-3bf2-59bd-2cb56135bf0f@linux.microsoft.com>
+Mime-Version: 1.0
+X-TM-AS-GCONF: 00
+X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.343, 18.0.737
+	definitions=2021-01-14_05:2021-01-14,
+	2021-01-14 signatures=0
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+	lowpriorityscore=0
+	spamscore=0 malwarescore=0 mlxlogscore=999 mlxscore=0 bulkscore=0
+	impostorscore=0 clxscore=1015 priorityscore=1501 adultscore=0
+	phishscore=0
+	suspectscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+	engine=8.12.0-2009150000 definitions=main-2101140091
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, Eric Biggers <ebiggers@google.com>,
-	linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
-	dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH v3 2/6] block: keyslot-manager: Introduce
- functions for device mapper support
+Cc: sashal@kernel.org, dm-devel@redhat.com, snitzer@redhat.com,
+	selinux@vger.kernel.org, Stephen Smalley <stephen.smalley.work@gmail.com>,
+	James Morris <jmorris@namei.org>, linux-kernel@vger.kernel.org,
+	casey@schaufler-ca.com, linux-security-module@vger.kernel.org,
+	tyhicks@linux.microsoft.com,
+	Tushar Sugandhi <tusharsu@linux.microsoft.com>,
+	linux-integrity@vger.kernel.org, gmazyland@gmail.com, agk@redhat.com
+Subject: Re: [dm-devel] [PATCH v10 8/8] selinux: include a consumer of the
+ new IMA critical data hook
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -83,180 +151,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Dec 29 2020 at  3:55am -0500,
-Satya Tangirala <satyat@google.com> wrote:
+[Cc'ing Sasha]
 
-> Introduce blk_ksm_update_capabilities() to update the capabilities of
-> a keyslot manager (ksm) in-place. The pointer to a ksm in a device's
-> request queue may not be easily replaced, because upper layers like
-> the filesystem might access it (e.g. for programming keys/checking
-> capabilities) at the same time the device wants to replace that
-> request queue's ksm (and free the old ksm's memory). This function
-> allows the device to update the capabilities of the ksm in its request
-> queue directly.
+Hi Lakshmi,
+
+On Thu, 2021-01-14 at 08:22 -0800, Lakshmi Ramasubramanian wrote:
+> On 1/13/21 6:49 PM, Mimi Zohar wrote:
+
+> >>> Lakshmi is trying to address the situation where an event changes a
+> >>> value, but then is restored to the original value.  The original and
+> >>> subsequent events are measured, but restoring to the original value
+> >>> isn't re-measured.  This isn't any different than when a file is
+> >>> modified and then reverted.
+> >>>
+> >>> Instead of changing the name like this, which doesn't work for files,
+> >>> allowing duplicate measurements should be generic, based on policy.
+> >>
+> >> Perhaps it is just the end of the day and I'm a bit tired, but I just
+> >> read all of the above and I have no idea what your current thoughts
+> >> are regarding this patch.
+> > 
+> > Other than appending the timestamp, which is a hack, the patch is fine.
+> > Support for re-measuring an event can be upstreamed independently.
+> > 
 > 
-> Also introduce blk_ksm_is_superset() which checks whether one ksm's
-> capabilities are a (not necessarily strict) superset of another ksm's.
-> The blk-crypto framework requires that crypto capabilities that were
-> advertised when a bio was created continue to be supported by the
-> device until that bio is ended - in practice this probably means that
-> a device's advertised crypto capabilities can *never* "shrink" (since
-> there's no synchronization between bio creation and when a device may
-> want to change its advertised capabilities) - so a previously
-> advertised crypto capability must always continue to be supported.
-> This function can be used to check that a new ksm is a valid
-> replacement for an old ksm.
+> Thanks for clarifying the details related to duplicate measurement 
+> detection and re-measuring.
 > 
-> Signed-off-by: Satya Tangirala <satyat@google.com>
-> ---
->  block/keyslot-manager.c         | 91 +++++++++++++++++++++++++++++++++
->  include/linux/keyslot-manager.h |  9 ++++
->  2 files changed, 100 insertions(+)
-> 
-> diff --git a/block/keyslot-manager.c b/block/keyslot-manager.c
-> index ac7ce83a76e8..f13ab7410eca 100644
-> --- a/block/keyslot-manager.c
-> +++ b/block/keyslot-manager.c
-> @@ -424,6 +424,97 @@ void blk_ksm_unregister(struct request_queue *q)
->  	q->ksm = NULL;
->  }
->  
-> +/**
-> + * blk_ksm_intersect_modes() - restrict supported modes by child device
-> + * @parent: The keyslot manager for parent device
-> + * @child: The keyslot manager for child device, or NULL
-> + *
-> + * Clear any crypto mode support bits in @parent that aren't set in @child.
-> + * If @child is NULL, then all parent bits are cleared.
-> + *
-> + * Only use this when setting up the keyslot manager for a layered device,
-> + * before it's been exposed yet.
-> + */
-> +void blk_ksm_intersect_modes(struct blk_keyslot_manager *parent,
-> +			     const struct blk_keyslot_manager *child)
-> +{
-> +	if (child) {
-> +		unsigned int i;
-> +
-> +		parent->max_dun_bytes_supported =
-> +			min(parent->max_dun_bytes_supported,
-> +			    child->max_dun_bytes_supported);
-> +		for (i = 0; i < ARRAY_SIZE(child->crypto_modes_supported);
-> +		     i++) {
-> +			parent->crypto_modes_supported[i] &=
-> +				child->crypto_modes_supported[i];
-> +		}
-> +	} else {
-> +		parent->max_dun_bytes_supported = 0;
-> +		memset(parent->crypto_modes_supported, 0,
-> +		       sizeof(parent->crypto_modes_supported));
-> +	}
-> +}
-> +EXPORT_SYMBOL_GPL(blk_ksm_intersect_modes);
-> +
-> +/**
-> + * blk_ksm_is_superset() - Check if a KSM supports a superset of crypto modes
-> + *			   and DUN bytes that another KSM supports. Here,
-> + *			   "superset" refers to the mathematical meaning of the
-> + *			   word - i.e. if two KSMs have the *same* capabilities,
-> + *			   they *are* considered supersets of each other.
-> + * @ksm_superset: The KSM that we want to verify is a superset
-> + * @ksm_subset: The KSM that we want to verify is a subset
-> + *
-> + * Return: True if @ksm_superset supports a superset of the crypto modes and DUN
-> + *	   bytes that @ksm_subset supports.
-> + */
-> +bool blk_ksm_is_superset(struct blk_keyslot_manager *ksm_superset,
-> +			 struct blk_keyslot_manager *ksm_subset)
-> +{
-> +	int i;
-> +
-> +	if (!ksm_subset)
-> +		return true;
-> +
-> +	if (!ksm_superset)
-> +		return false;
-> +
-> +	for (i = 0; i < ARRAY_SIZE(ksm_superset->crypto_modes_supported); i++) {
-> +		if (ksm_subset->crypto_modes_supported[i] &
-> +		    (~ksm_superset->crypto_modes_supported[i])) {
-> +			return false;
-> +		}
-> +	}
-> +
-> +	if (ksm_subset->max_dun_bytes_supported >
-> +	    ksm_superset->max_dun_bytes_supported) {
-> +		return false;
-> +	}
-> +
-> +	return true;
-> +}
-> +EXPORT_SYMBOL_GPL(blk_ksm_is_superset);
-> +
-> +/**
-> + * blk_ksm_update_capabilities() - Update the restrictions of a KSM to those of
-> + *				   another KSM
-> + * @target_ksm: The KSM whose restrictions to update.
-> + * @reference_ksm: The KSM to whose restrictions this function will update
-> + *		   @target_ksm's restrictions to,
-> + */
-> +void blk_ksm_update_capabilities(struct blk_keyslot_manager *target_ksm,
-> +				 struct blk_keyslot_manager *reference_ksm)
-> +{
-> +	memcpy(target_ksm->crypto_modes_supported,
-> +	       reference_ksm->crypto_modes_supported,
-> +	       sizeof(target_ksm->crypto_modes_supported));
-> +
-> +	target_ksm->max_dun_bytes_supported =
-> +				reference_ksm->max_dun_bytes_supported;
-> +}
-> +EXPORT_SYMBOL_GPL(blk_ksm_update_capabilities);
-> +
+> I will keep the timestamp for the time being, even though its a hack, as 
+> it helps with re-measuring state changes in SELinux. We will add support 
+> for "policy driven" re-measurement as a subsequent patch series.
 
-Given the patch header's preamble about FS possibly accessing/checking
-the existing ksm: without any locking or other coordination how is
-blk_ksm_update_capabilities() safe?
+Once including the timestamp is upstreamed, removing it will be
+difficult, especially if different userspace applications are dependent
+on it.  Unless everyone is on board that removing the timestamp
+wouldn't be considered a regression, it cannot be upstreamed.
 
-Please document any assumptions about the caller (e.g. DM) that enables
-blk_ksm_update_capabilities() to be used safely.
+thanks,
 
-Mike
-
->  /**
->   * blk_ksm_init_passthrough() - Init a passthrough keyslot manager
->   * @ksm: The keyslot manager to init
-> diff --git a/include/linux/keyslot-manager.h b/include/linux/keyslot-manager.h
-> index 323e15dd6fa7..164568f52be7 100644
-> --- a/include/linux/keyslot-manager.h
-> +++ b/include/linux/keyslot-manager.h
-> @@ -103,6 +103,15 @@ void blk_ksm_reprogram_all_keys(struct blk_keyslot_manager *ksm);
->  
->  void blk_ksm_destroy(struct blk_keyslot_manager *ksm);
->  
-> +void blk_ksm_intersect_modes(struct blk_keyslot_manager *parent,
-> +			     const struct blk_keyslot_manager *child);
-> +
->  void blk_ksm_init_passthrough(struct blk_keyslot_manager *ksm);
->  
-> +bool blk_ksm_is_superset(struct blk_keyslot_manager *ksm_superset,
-> +			 struct blk_keyslot_manager *ksm_subset);
-> +
-> +void blk_ksm_update_capabilities(struct blk_keyslot_manager *target_ksm,
-> +				 struct blk_keyslot_manager *reference_ksm);
-> +
->  #endif /* __LINUX_KEYSLOT_MANAGER_H */
-> -- 
-> 2.29.2.729.g45daf8777d-goog
-> 
+Mimi
 
 --
 dm-devel mailing list
