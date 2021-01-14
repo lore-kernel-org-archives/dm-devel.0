@@ -2,80 +2,83 @@ Return-Path: <SRS0=Ey+N=GS=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
-	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_SANE_1
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 647D0C433E0
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Jan 2021 08:29:10 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0E805C433E6
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Jan 2021 08:29:11 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 62BB222C7D
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Jan 2021 08:29:08 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 62BB222C7D
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
+	by mail.kernel.org (Postfix) with ESMTPS id 54DAB23118
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Jan 2021 08:29:10 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 54DAB23118
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-560-uCE1gBvUOT2Do-6QeRI_Sg-1; Fri, 15 Jan 2021 03:29:05 -0500
-X-MC-Unique: uCE1gBvUOT2Do-6QeRI_Sg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-87-oZpd9rOtMfynMVBtXzrc8w-1; Fri, 15 Jan 2021 03:29:06 -0500
+X-MC-Unique: oZpd9rOtMfynMVBtXzrc8w-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 405321009462;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7F734180A092;
 	Fri, 15 Jan 2021 08:29:01 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0BEAD6F44D;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0BEF7648A1;
 	Fri, 15 Jan 2021 08:29:01 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 992231809CA0;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 991D518095C7;
 	Fri, 15 Jan 2021 08:28:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10E9GRlt025336 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 14 Jan 2021 04:16:29 -0500
+	id 10EJLxdU024363 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 14 Jan 2021 14:21:59 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id D962A1020452; Thu, 14 Jan 2021 09:16:27 +0000 (UTC)
+	id 606D0E77BE; Thu, 14 Jan 2021 19:21:59 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D54881020451
-	for <dm-devel@redhat.com>; Thu, 14 Jan 2021 09:16:25 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 59DB1E77BF
+	for <dm-devel@redhat.com>; Thu, 14 Jan 2021 19:21:56 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 676F18007D9
-	for <dm-devel@redhat.com>; Thu, 14 Jan 2021 09:16:25 +0000 (UTC)
-Received: from out30-131.freemail.mail.aliyun.com
-	(out30-131.freemail.mail.aliyun.com [115.124.30.131]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-183-F8BhreesMQyABX0w2o5UVg-1;
-	Thu, 14 Jan 2021 04:16:22 -0500
-X-MC-Unique: F8BhreesMQyABX0w2o5UVg-1
-X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R141e4; CH=green; DM=||false|;
-	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04426;
-	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=4; SR=0;
-	TI=SMTPD_---0ULhhF75_1610615776
-Received: from admindeMacBook-Pro-2.local(mailfrom:jefflexu@linux.alibaba.com
-	fp:SMTPD_---0ULhhF75_1610615776) by smtp.aliyun-inc.com(127.0.0.1);
-	Thu, 14 Jan 2021 17:16:17 +0800
-To: Mike Snitzer <snitzer@redhat.com>
-References: <20201223112624.78955-1-jefflexu@linux.alibaba.com>
-	<20201223112624.78955-7-jefflexu@linux.alibaba.com>
-	<20210107221825.GF21239@redhat.com>
-	<97ec2025-4937-b476-4f15-446cc304e799@linux.alibaba.com>
-	<20210108172635.GA29915@redhat.com>
-	<16ba3a63-86f5-1acd-c129-767540186689@linux.alibaba.com>
-	<20210112161320.GA13931@redhat.com>
-From: JeffleXu <jefflexu@linux.alibaba.com>
-Message-ID: <56e1f2a2-9300-e3c8-4013-9d371385a082@linux.alibaba.com>
-Date: Thu, 14 Jan 2021 17:16:16 +0800
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
-	Gecko/20100101 Thunderbird/78.6.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 72833801231
+	for <dm-devel@redhat.com>; Thu, 14 Jan 2021 19:21:56 +0000 (UTC)
+Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
+	relay.mimecast.com with ESMTP id us-mta-583-c4H4B1FXNd6QB0K3WXMTSw-1;
+	Thu, 14 Jan 2021 14:21:52 -0500
+X-MC-Unique: c4H4B1FXNd6QB0K3WXMTSw-1
+Received: from [192.168.0.104] (c-73-42-176-67.hsd1.wa.comcast.net
+	[73.42.176.67])
+	by linux.microsoft.com (Postfix) with ESMTPSA id 662FE20B6C40;
+	Thu, 14 Jan 2021 11:21:50 -0800 (PST)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 662FE20B6C40
+From: Lakshmi Ramasubramanian <nramas@linux.microsoft.com>
+To: Mimi Zohar <zohar@linux.ibm.com>, Paul Moore <paul@paul-moore.com>,
+	Sasha Levin <sashal@kernel.org>
+References: <20210108040708.8389-1-tusharsu@linux.microsoft.com>
+	<20210108040708.8389-9-tusharsu@linux.microsoft.com>
+	<CAHC9VhSJk0wG=WzO3bwsueiy19mMi9m6MamTrQfH8C=gXUtvGw@mail.gmail.com>
+	<97328fc71687a0e1c327f6821548be9ba35bb193.camel@linux.ibm.com>
+	<CAHC9VhTzaQ_q8gJ0oeok_yJ54XLETNvOuhhKnyRwgqsqvpBLCw@mail.gmail.com>
+	<71cddb6c8676ccd63c89364d805cfca76d32cb6e.camel@linux.ibm.com>
+	<CAHC9VhRhYWEcK7TepZ=LK1m=9Zn_gtOZyAYfamP-TFU3rRH+zw@mail.gmail.com>
+	<e29a618645b0e73ec06960a02b6da465614689ff.camel@linux.ibm.com>
+	<CAHC9VhTHqwKem=MyQBY4TNAq-DOVhwEZS8pjrSE=4OxdEVm-GA@mail.gmail.com>
+	<3746bc7673df25354411151442a7772b867be396.camel@linux.ibm.com>
+	<fc80b1a1-ff4d-3bf2-59bd-2cb56135bf0f@linux.microsoft.com>
+	<99be76345f375bb2f485f08a53dcb8ed806dc538.camel@linux.ibm.com>
+	<f42d49d2e876379c0ef6e31a34027be95ffb1375.camel@linux.ibm.com>
+	<e883298b-1027-2a58-dcf8-fc940ebc27ff@linux.microsoft.com>
+Message-ID: <507ebab8-828b-8b44-45be-2dbff3406b72@linux.microsoft.com>
+Date: Thu, 14 Jan 2021 11:21:46 -0800
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+	Thunderbird/68.10.0
 MIME-Version: 1.0
-In-Reply-To: <20210112161320.GA13931@redhat.com>
+In-Reply-To: <e883298b-1027-2a58-dcf8-fc940ebc27ff@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -84,12 +87,20 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 10EJLxdU024363
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Fri, 15 Jan 2021 03:28:56 -0500
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, io-uring@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH RFC 6/7] block: track cookies of split bios
- for bio-based device
+X-Mailman-Approved-At: Fri, 15 Jan 2021 03:28:57 -0500
+Cc: dm-devel@redhat.com, snitzer@redhat.com, selinux@vger.kernel.org,
+	Stephen Smalley <stephen.smalley.work@gmail.com>,
+	James Morris <jmorris@namei.org>, linux-kernel@vger.kernel.org,
+	casey@schaufler-ca.com, linux-security-module@vger.kernel.org,
+	tyhicks@linux.microsoft.com,
+	Tushar Sugandhi <tusharsu@linux.microsoft.com>,
+	linux-integrity@vger.kernel.org, gmazyland@gmail.com, agk@redhat.com
+Subject: Re: [dm-devel] [PATCH v10 8/8] selinux: include a consumer of the
+ new IMA critical data hook
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -103,288 +114,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="iso-8859-15"; Format="flowed"
 
-
-
-On 1/13/21 12:13 AM, Mike Snitzer wrote:
-> On Tue, Jan 12 2021 at 12:46am -0500,
-> JeffleXu <jefflexu@linux.alibaba.com> wrote:
-> 
->>
->>
->> On 1/9/21 1:26 AM, Mike Snitzer wrote:
->>> On Thu, Jan 07 2021 at 10:08pm -0500,
->>> JeffleXu <jefflexu@linux.alibaba.com> wrote:
+On 1/14/21 9:48 AM, Lakshmi Ramasubramanian wrote:
+> On 1/14/21 8:50 AM, Mimi Zohar wrote:
+>> On Thu, 2021-01-14 at 11:44 -0500, Mimi Zohar wrote:
+>>> [Cc'ing Sasha]
 >>>
->>>> Thanks for reviewing.
->>>>
->>>>
->>>> On 1/8/21 6:18 AM, Mike Snitzer wrote:
->>>>> On Wed, Dec 23 2020 at  6:26am -0500,
->>>>> Jeffle Xu <jefflexu@linux.alibaba.com> wrote:
->>>>>
->>>>>> This is actuaaly the core when supporting iopoll for bio-based device.
+>>> Hi Lakshmi,
+>>>
+>>> On Thu, 2021-01-14 at 08:22 -0800, Lakshmi Ramasubramanian wrote:
+>>>> On 1/13/21 6:49 PM, Mimi Zohar wrote:
+>>>
+>>>>>>> Lakshmi is trying to address the situation where an event changes a
+>>>>>>> value, but then is restored to the original value.=A0 The original =
+and
+>>>>>>> subsequent events are measured, but restoring to the original value
+>>>>>>> isn't re-measured.=A0 This isn't any different than when a file is
+>>>>>>> modified and then reverted.
+>>>>>>>
+>>>>>>> Instead of changing the name like this, which doesn't work for=20
+>>>>>>> files,
+>>>>>>> allowing duplicate measurements should be generic, based on policy.
 >>>>>>
->>>>>> A list is maintained in the top bio (the original bio submitted to dm
->>>>>> device), which is used to maintain all valid cookies of split bios. The
->>>>>> IO polling routine will actually iterate this list and poll on
->>>>>> corresponding hardware queues of the underlying mq devices.
->>>>>>
->>>>>> Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+>>>>>> Perhaps it is just the end of the day and I'm a bit tired, but I jus=
+t
+>>>>>> read all of the above and I have no idea what your current thoughts
+>>>>>> are regarding this patch.
 >>>>>
->>>>> Like I said in response to patch 4 in this series: please fold patch 4
->>>>> into this patch and _really_ improve this patch header.
+>>>>> Other than appending the timestamp, which is a hack, the patch is=20
+>>>>> fine.
+>>>>> Support for re-measuring an event can be upstreamed independently.
 >>>>>
->>>>> In particular, the (ab)use of bio_inc_remaining() needs be documented in
->>>>> this patch header very well.
->>>>>
->>>>> But its use could easily be why you're seeing a performance hit (coupled
->>>>> with the extra spinlock locking and list management used).  Just added
->>>>> latency and contention across CPUs.
 >>>>
->>>> Indeed bio_inc_remaining() is abused here and the code seems quite hacky
->>>> here.
+>>>> Thanks for clarifying the details related to duplicate measurement
+>>>> detection and re-measuring.
 >>>>
->>>> Actually I'm regarding implementing the split bio tracking mechanism in
->>>> a recursive way you had ever suggested. That is, the split bios could be
->>>> maintained in an array, which is allocated with 'struct dm_io'. This way
->>>> the overhead of spinlock protecting the &root->bi_plist may be omitted
->>>> here. Also the lifetime management may be simplified somehow. But the
->>>> block core needs to fetch the per-bio private data now, just like what
->>>> you had ever suggested before.
->>>>
->>>> How do you think, Mike?
+>>>> I will keep the timestamp for the time being, even though its a=20
+>>>> hack, as
+>>>> it helps with re-measuring state changes in SELinux. We will add=20
+>>>> support
+>>>> for "policy driven" re-measurement as a subsequent patch series.
 >>>
->>> Yes, using per-bio-data is a requirement (we cannot bloat 'struct bio').
+>>> Once including the timestamp is upstreamed, removing it will be
+>>> difficult, especially if different userspace applications are dependent
+>>> on it.=A0 Unless everyone is on board that removing the timestamp
+>>> wouldn't be considered a regression, it cannot be upstreamed.
 >>
->> Agreed. Then MD will need some refactor to support IO polling, if
->> possible, since just like I mentioned in patch 0 before, MD doesn't
->> allocate extra clone bio, and just re-uses the original bio structure.
+>> Feel free to just re-post just this one patch.=A0 Otherwise the patch se=
+t
+>> looks good.
 >>
+>> thanks,
 >>
->>>
->>> As for using an array, how would you index the array?  
->>
->> The 'array' here is not an array of 'struct blk_mq_hw_ctx *' maintained
->> in struct dm_table as you mentioned. Actually what I mean is to maintain
->> an array of struct dm_poll_data (or something like that, e.g. just
->> struct blk_mq_hw_ctx *) in per-bio private data. The size of the array
->> just equals the number of the target devices.
->>
->> For example, for the following device stack,
->>
->>>>
->>>> Suppose we have the following device stack hierarchy, that is, dm0 is
->>>> stacked on dm1, while dm1 is stacked on nvme0 and nvme1.
->>>>
->>>>     dm0
->>>>     dm1
->>>> nvme0  nvme1
->>>>
->>>>
->>>> Then the bio graph is like:
->>>>
->>>>
->>>>                                    +------------+
->>>>                                    |bio0(to dm0)|
->>>>                                    +------------+
->>>>                                          ^
->>>>                                          | orig_bio
->>>>                                    +--------------------+
->>>>                                    |struct dm_io A      |
->>>> +--------------------+ bi_private  ----------------------
->>>> |bio3(to dm1)        |------------>|bio1(to dm1)        |
->>>> +--------------------+             +--------------------+
->>>>         ^                                ^
->>>>         | ->orig_bio                     | ->orig_bio
->>>> +--------------------+             +--------------------+
->>>> |struct dm_io        |             |struct dm_io B      |
->>>> ----------------------             ----------------------
->>>> |bio2(to nvme0)      |             |bio4(to nvme1)      |
->>>> +--------------------+             +--------------------+
->>>>
->>
->> An array of struct blk_mq_hw_ctx * is maintained in struct dm_io B.
->>
->>
->> struct blk_mq_hw_ctx * hctxs[2];
->>
->> The array size is two since dm1 maps to two target devices (i.e. nvme0
->> and nvme1). Then hctxs[0] points to the hw queue of nvme0, while
->> hctxs[1] points to the hw queue of nvme1.
-> 
-> Both nvme0 and nvme1 may have multiple hctxs.  Not sure why you're
-> thinking there is just one per device?
-> 
->>
->>
->> This mechanism supports arbitrary device stacking. Similarly, an array
->> of struct blk_mq_hw_ctx * is maintained in struct dm_io A. The array
->> size is one since dm0 only maps to one target device (i.e. dm1). In this
->> case, hctx[0] points to the struct dm_io of the next level, i.e. struct
->> dm_io B.
->>
->>
->> But I'm afraid the implementation of this style may be more complex.
-> 
-> We are running the risk of talking in circles about this design...
+>=20
+> Sounds good Mimi - I will remove the timestamp and re-post the selinux=20
+> patch.
+>=20
 
-Sorry for the inconvenience. I have started working on the next version,
-but I do want to clarify some design issues first.
+I have removed the timestamp in the event name and have posted the=20
+selinux patch alone.
 
-> 
-> 
->>>> struct node {
->>>>     struct blk_mq_hw_ctx *hctx;
->>>>     blk_qc_t cookie;
->>>> };
->>>
->>> Needs a better name, think I had 'struct dm_poll_data'
->>
->> Sure, the name here is just for example.
->>
->>
->>>  
->>>> Actually currently the tracking objects are all allocated with 'struct
->>>> bio', then the lifetime management of the tracking objects is actually
->>>> equivalent to lifetime management of bio. Since the returned cookie is
->>>> actually a pointer to the bio, the refcount of this bio must be
->>>> incremented, since we release a reference to this bio through the
->>>> returned cookie, in which case the abuse of the refcount trick seems
->>>> unavoidable? Unless we allocate the tracking object individually, then
->>>> the returned cookie is actually pointing to the tracking object, and the
->>>> refcount is individually maintained for the tracking object.
->>>
->>> The refcounting and lifetime of the per-bio-data should all work as is.
->>> Would hope you can avoid extra bio_inc_remaining().. that infratsructure
->>> is way too tightly coupled to bio_chain()'ing, etc.
->>>
->>> The challenge you have is the array that would point at these various
->>> per-bio-data needs to be rooted somewhere (you put it in the topmost
->>> original bio with the current patchset).  But why not manage that as
->>> part of 'struct mapped_device'?  It'd need proper management at DM table
->>> reload boundaries and such but it seems like the most logical place to
->>> put the array.  But again, this array needs to be dynamic.. so thinking
->>> further, maybe a better model would be to have a fixed array in 'struct
->>> dm_table' for each hctx associated with a blk_mq _data_ device directly
->>> used/managed by that dm_table?
->>
+Thanks a lot for reviewing the changes.
 
-Confusion also stated in the following comment. How 'struct
-dm_poll_data' could be involved with 'struct dm_table' or 'struct
-mapped_device'. In the current patchset, every bio need to maintain one
-list to track all its 'struct dm_poll_data' structures. Then how to
-maintain this per-bio information in one single 'struct dm_table' or
-'struct mapped_device'?
+  -lakshmi
 
 
->> It seems that you are referring 'array' here as an array of 'struct
->> blk_mq_hw_ctx *'? Such as
->>
->> struct dm_table {
->>     ...
->>     struct blk_mq_hw_ctx *hctxs[];
->> };
->>
->> Certainly with this we can replace the original 'struct blk_mq_hw_ctx *'
->> pointer in 'struct dm_poll_data' with the index into this array, such as
->>
->> struct dm_poll_data {
->>      int hctx_index; /* index into dm_table->hctxs[] */
->>      blk_qc_t cookie;
->> };
-> 
-> You seized on my mentioning blk-mq's array of hctx too literally.  I was
-> illustrating that blk-mq's cookie is converted to an index into that
-> array.
-> 
-> But for this DM bio-polling application we'd need to map the blk-mq
-> returned cookie to a request_queue.  Hence the original 2 members of
-> dm_poll_data needing to be 'struct request_queue *' and blk_qc_t.
-> 
->> But I'm doubted if this makes much sense. The core difficulty here is
->> maintaining a list (or dynamic sized array) to track all split bios.
->> With the array of 'struct blk_mq_hw_ctx *' maintained in struct
->> dm_table, we still need some **per-bio** structure (e.g., &bio->bi_plist
->> in current patch set) to track these split bios.
-> 
-> One primary goal of all of this design is to achieve bio-polling cleanly
-> (without extra locking, without block core data structure bloat, etc).
-> I know you share that goal.  But we need to nail down the core data
-> structures and what needs tracking at scale and then associate them with
-> DM's associated objects with consideration for object lifetime.
-> 
-> My suggestion was to anchor your core data structures (e.g. 'struct
-> dm_poll_data' array, etc) to 'struct dm_table'.  I suggested that
-> because the dm_table is what dm_get_device()s each underlying _data_
-> device (a subset of all devices in a dm_table, as iterated through
-> .iterate_devices).  But a DM 'struct mapped_device' has 2 potential
-> dm_tables, active and inactive slots, that would imply some complexity
-> in handing off any outstanding bio's associated 'struct dm_poll_data'
-> array on DM table reload.
-
-1) If 'struct dm_poll_data' resides in per-bio-data, then how do you
-**link** or **associate** all the 'struct dm_poll_data' structures from
-one original bio? Do we link them by the internal relationship between
-bio/dm_io/dm_target_io, or some other auxiliary data structure?
-
-2) I get confused how 'struct dm_poll_data' could be involved with
-'struct dm_table'. Is there an array of 'struct dm_poll_data' or 'struct
-dm_poll_data *' maintained in 'struct dm_table'? If this is the case,
-then the size of the array may be incredible large, or expanded/shrank
-frequently, since one dm_table could correspond to millions bios.
-
-
-
-> 
-> Anyway, you seem to be gravitating to a more simplistic approach of a
-> single array of 'struct dm_poll_data' for each DM device (regardless of
-> how arbitrarily deep that DM device stack is, the topmost DM device
-> would accumulate the list of 'struct dm_poll_data'?).
-
-I'm open to this. At least you don't need to care the lifetime of other
-disparate 'struct dm_poll_data's, if all 'struct dm_poll_data's are
-accumulated in one (e.g., the topmost) place.
-
-
-> 
-> I'm now questioning the need for any high-level data structure to track
-> all N of the 'struct dm_poll_data' that may result from a given bio (as
-> it is split to multiple blk-mq hctxs across multiple blk-mq devices).
-> Each 'struct dm_poll_data', that will be returned to block core and
-> stored in struct kiocb's ki_cookie, would have an object lifetime that
-> matches the original DM bio clone's per-bio-data that the 'struct
-> dm_poll_data' was part of; then we just need to cast that ki_cookie's
-> blk_qc_t as 'struct dm_poll_data' and call blk_poll().
-> 
-> The hardest part is to ensure that all the disparate 'struct
-> dm_poll_data' (and associated clone bios) aren't free'd until the
-> _original_ bio completes.  That would create quite some back-pressure
-> with more potential to exhaust system resources -- because then the
-> cataylst for dropping reference counts on these clone bios would then
-> need to be tied to the blk_bio_poll() interface... which feels "wrong"
-> (e.g. it ushers in the (ab)use of bio_inc_remaining you had in your most
-> recent patchset).
-> 
-> All said, maybe post a v2 that takes the incremental steps of:
-> 1) using DM per-bio-data for 'struct dm_poll_data'
-> 2) simplify blk_bio_poll() to call into DM to translate provided
->    blk_qc_t (from struct kiocb's ki_cookie) to request_queue and
->    blk_qc_t.
->    - this eliminates any need for extra list processing
-> 3) keep your (ab)use of bio_inc_remaining() to allow for exploring this 
-
--- 
-Thanks,
-Jeffle
 
 --
 dm-devel mailing list
