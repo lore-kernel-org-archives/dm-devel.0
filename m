@@ -2,78 +2,74 @@ Return-Path: <SRS0=q6c7=GR=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B223AC433E0
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Jan 2021 14:31:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 535ABC433DB
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Jan 2021 16:06:49 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E23052222D
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Jan 2021 14:31:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E23052222D
+	by mail.kernel.org (Postfix) with ESMTPS id CBA2D23B28
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Jan 2021 16:06:48 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CBA2D23B28
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1610634691;
+	s=mimecast20190719; t=1610640407;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=fRRLKaN6pHu6TY/euABWMEZ7SksddlBavFh/AEg/Oo0=;
-	b=QRhLiUeMFwWCsFU7BWWAaxua9cogt7n4+jSBg7vzu18DJeFDMbU0eI8NFO1BvG15JZeydU
-	udpzLxYdJwVWiIbeji/v6CMBSGZ+RLJ1SkTxsinbzhfodFx7iY1BFLCn1T1HjfKv0Vqjr5
-	fgQ0P198AJj9cyf0QthgnCaSdIPJkxw=
+	bh=S6nRzX74Yswkr0WH2sdd1Fp8FsHmJlTd5bE7lwKGI/Y=;
+	b=Am1p2nCCYrPl+cj+w300XyGgiCtXSYAJXDZIKTFFLVhLHHEN8XcodpKn0XmLDBLACCcn8H
+	qoJabilAW3LWDe30STBmjOyyStQw2BXB+stakwbGqebI2O5c7C8k/wHf21TU8c6KjDVdHn
+	M3gLWPb/LlPatpQ2yHDe0WzERpGbg5c=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-4-Bask5SRfPNSCE5dA_BN9NA-1; Thu, 14 Jan 2021 09:30:26 -0500
-X-MC-Unique: Bask5SRfPNSCE5dA_BN9NA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-179-epDgPSNsOt-0pJgZAlwXkg-1; Thu, 14 Jan 2021 11:06:45 -0500
+X-MC-Unique: epDgPSNsOt-0pJgZAlwXkg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 95DA0108444A;
-	Thu, 14 Jan 2021 14:30:21 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 886EE1005D50;
+	Thu, 14 Jan 2021 16:06:39 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 246E960657;
-	Thu, 14 Jan 2021 14:30:19 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9638C19934;
+	Thu, 14 Jan 2021 16:06:38 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 69D634BB7B;
-	Thu, 14 Jan 2021 14:30:16 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 00DE84E58F;
+	Thu, 14 Jan 2021 16:06:35 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
 	[10.5.11.15])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10EEUEr4029740 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 14 Jan 2021 09:30:14 -0500
+	id 10EG6XZ7004917 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 14 Jan 2021 11:06:33 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1A2735D71D; Thu, 14 Jan 2021 14:30:14 +0000 (UTC)
+	id 1A06D5D739; Thu, 14 Jan 2021 16:06:33 +0000 (UTC)
 Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 093BF5D736;
-	Thu, 14 Jan 2021 14:30:05 +0000 (UTC)
-Date: Thu, 14 Jan 2021 09:30:05 -0500
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A286A5D734;
+	Thu, 14 Jan 2021 16:06:29 +0000 (UTC)
+Date: Thu, 14 Jan 2021 11:06:29 -0500
 From: Mike Snitzer <snitzer@redhat.com>
-To: JeffleXu <jefflexu@linux.alibaba.com>
-Message-ID: <20210114143004.GA25823@redhat.com>
-References: <20201223112624.78955-1-jefflexu@linux.alibaba.com>
-	<20201223112624.78955-7-jefflexu@linux.alibaba.com>
-	<20210107221825.GF21239@redhat.com>
-	<97ec2025-4937-b476-4f15-446cc304e799@linux.alibaba.com>
-	<20210108172635.GA29915@redhat.com>
-	<16ba3a63-86f5-1acd-c129-767540186689@linux.alibaba.com>
-	<20210112161320.GA13931@redhat.com>
-	<56e1f2a2-9300-e3c8-4013-9d371385a082@linux.alibaba.com>
+To: Satya Tangirala <satyat@google.com>
+Message-ID: <20210114160628.GA26178@redhat.com>
+References: <20201229085524.2795331-1-satyat@google.com>
+	<20201229085524.2795331-3-satyat@google.com>
 MIME-Version: 1.0
-In-Reply-To: <56e1f2a2-9300-e3c8-4013-9d371385a082@linux.alibaba.com>
+In-Reply-To: <20201229085524.2795331-3-satyat@google.com>
 User-Agent: Mutt/1.5.21 (2010-09-15)
 X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 X-loop: dm-devel@redhat.com
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, io-uring@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH RFC 6/7] block: track cookies of split bios
- for bio-based device
+Cc: Jens Axboe <axboe@kernel.dk>, Eric Biggers <ebiggers@google.com>,
+	linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
+	dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH v3 2/6] block: keyslot-manager: Introduce
+ functions for device mapper support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -87,7 +83,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -96,303 +92,170 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Jan 14 2021 at  4:16am -0500,
-JeffleXu <jefflexu@linux.alibaba.com> wrote:
+On Tue, Dec 29 2020 at  3:55am -0500,
+Satya Tangirala <satyat@google.com> wrote:
 
+> Introduce blk_ksm_update_capabilities() to update the capabilities of
+> a keyslot manager (ksm) in-place. The pointer to a ksm in a device's
+> request queue may not be easily replaced, because upper layers like
+> the filesystem might access it (e.g. for programming keys/checking
+> capabilities) at the same time the device wants to replace that
+> request queue's ksm (and free the old ksm's memory). This function
+> allows the device to update the capabilities of the ksm in its request
+> queue directly.
 > 
+> Also introduce blk_ksm_is_superset() which checks whether one ksm's
+> capabilities are a (not necessarily strict) superset of another ksm's.
+> The blk-crypto framework requires that crypto capabilities that were
+> advertised when a bio was created continue to be supported by the
+> device until that bio is ended - in practice this probably means that
+> a device's advertised crypto capabilities can *never* "shrink" (since
+> there's no synchronization between bio creation and when a device may
+> want to change its advertised capabilities) - so a previously
+> advertised crypto capability must always continue to be supported.
+> This function can be used to check that a new ksm is a valid
+> replacement for an old ksm.
 > 
-> On 1/13/21 12:13 AM, Mike Snitzer wrote:
-> > On Tue, Jan 12 2021 at 12:46am -0500,
-> > JeffleXu <jefflexu@linux.alibaba.com> wrote:
-> > 
-> >>
-> >>
-> >> On 1/9/21 1:26 AM, Mike Snitzer wrote:
-> >>> On Thu, Jan 07 2021 at 10:08pm -0500,
-> >>> JeffleXu <jefflexu@linux.alibaba.com> wrote:
-> >>>
-> >>>> Thanks for reviewing.
-> >>>>
-> >>>>
-> >>>> On 1/8/21 6:18 AM, Mike Snitzer wrote:
-> >>>>> On Wed, Dec 23 2020 at  6:26am -0500,
-> >>>>> Jeffle Xu <jefflexu@linux.alibaba.com> wrote:
-> >>>>>
-> >>>>>> This is actuaaly the core when supporting iopoll for bio-based device.
-> >>>>>>
-> >>>>>> A list is maintained in the top bio (the original bio submitted to dm
-> >>>>>> device), which is used to maintain all valid cookies of split bios. The
-> >>>>>> IO polling routine will actually iterate this list and poll on
-> >>>>>> corresponding hardware queues of the underlying mq devices.
-> >>>>>>
-> >>>>>> Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
-> >>>>>
-> >>>>> Like I said in response to patch 4 in this series: please fold patch 4
-> >>>>> into this patch and _really_ improve this patch header.
-> >>>>>
-> >>>>> In particular, the (ab)use of bio_inc_remaining() needs be documented in
-> >>>>> this patch header very well.
-> >>>>>
-> >>>>> But its use could easily be why you're seeing a performance hit (coupled
-> >>>>> with the extra spinlock locking and list management used).  Just added
-> >>>>> latency and contention across CPUs.
-> >>>>
-> >>>> Indeed bio_inc_remaining() is abused here and the code seems quite hacky
-> >>>> here.
-> >>>>
-> >>>> Actually I'm regarding implementing the split bio tracking mechanism in
-> >>>> a recursive way you had ever suggested. That is, the split bios could be
-> >>>> maintained in an array, which is allocated with 'struct dm_io'. This way
-> >>>> the overhead of spinlock protecting the &root->bi_plist may be omitted
-> >>>> here. Also the lifetime management may be simplified somehow. But the
-> >>>> block core needs to fetch the per-bio private data now, just like what
-> >>>> you had ever suggested before.
-> >>>>
-> >>>> How do you think, Mike?
-> >>>
-> >>> Yes, using per-bio-data is a requirement (we cannot bloat 'struct bio').
-> >>
-> >> Agreed. Then MD will need some refactor to support IO polling, if
-> >> possible, since just like I mentioned in patch 0 before, MD doesn't
-> >> allocate extra clone bio, and just re-uses the original bio structure.
-> >>
-> >>
-> >>>
-> >>> As for using an array, how would you index the array?  
-> >>
-> >> The 'array' here is not an array of 'struct blk_mq_hw_ctx *' maintained
-> >> in struct dm_table as you mentioned. Actually what I mean is to maintain
-> >> an array of struct dm_poll_data (or something like that, e.g. just
-> >> struct blk_mq_hw_ctx *) in per-bio private data. The size of the array
-> >> just equals the number of the target devices.
-> >>
-> >> For example, for the following device stack,
-> >>
-> >>>>
-> >>>> Suppose we have the following device stack hierarchy, that is, dm0 is
-> >>>> stacked on dm1, while dm1 is stacked on nvme0 and nvme1.
-> >>>>
-> >>>>     dm0
-> >>>>     dm1
-> >>>> nvme0  nvme1
-> >>>>
-> >>>>
-> >>>> Then the bio graph is like:
-> >>>>
-> >>>>
-> >>>>                                    +------------+
-> >>>>                                    |bio0(to dm0)|
-> >>>>                                    +------------+
-> >>>>                                          ^
-> >>>>                                          | orig_bio
-> >>>>                                    +--------------------+
-> >>>>                                    |struct dm_io A      |
-> >>>> +--------------------+ bi_private  ----------------------
-> >>>> |bio3(to dm1)        |------------>|bio1(to dm1)        |
-> >>>> +--------------------+             +--------------------+
-> >>>>         ^                                ^
-> >>>>         | ->orig_bio                     | ->orig_bio
-> >>>> +--------------------+             +--------------------+
-> >>>> |struct dm_io        |             |struct dm_io B      |
-> >>>> ----------------------             ----------------------
-> >>>> |bio2(to nvme0)      |             |bio4(to nvme1)      |
-> >>>> +--------------------+             +--------------------+
-> >>>>
-> >>
-> >> An array of struct blk_mq_hw_ctx * is maintained in struct dm_io B.
-> >>
-> >>
-> >> struct blk_mq_hw_ctx * hctxs[2];
-> >>
-> >> The array size is two since dm1 maps to two target devices (i.e. nvme0
-> >> and nvme1). Then hctxs[0] points to the hw queue of nvme0, while
-> >> hctxs[1] points to the hw queue of nvme1.
-> > 
-> > Both nvme0 and nvme1 may have multiple hctxs.  Not sure why you're
-> > thinking there is just one per device?
-> > 
-> >>
-> >>
-> >> This mechanism supports arbitrary device stacking. Similarly, an array
-> >> of struct blk_mq_hw_ctx * is maintained in struct dm_io A. The array
-> >> size is one since dm0 only maps to one target device (i.e. dm1). In this
-> >> case, hctx[0] points to the struct dm_io of the next level, i.e. struct
-> >> dm_io B.
-> >>
-> >>
-> >> But I'm afraid the implementation of this style may be more complex.
-> > 
-> > We are running the risk of talking in circles about this design...
+> Signed-off-by: Satya Tangirala <satyat@google.com>
+> ---
+>  block/keyslot-manager.c         | 91 +++++++++++++++++++++++++++++++++
+>  include/linux/keyslot-manager.h |  9 ++++
+>  2 files changed, 100 insertions(+)
 > 
-> Sorry for the inconvenience. I have started working on the next version,
-> but I do want to clarify some design issues first.
-> 
-> > 
-> > 
-> >>>> struct node {
-> >>>>     struct blk_mq_hw_ctx *hctx;
-> >>>>     blk_qc_t cookie;
-> >>>> };
-> >>>
-> >>> Needs a better name, think I had 'struct dm_poll_data'
-> >>
-> >> Sure, the name here is just for example.
-> >>
-> >>
-> >>>  
-> >>>> Actually currently the tracking objects are all allocated with 'struct
-> >>>> bio', then the lifetime management of the tracking objects is actually
-> >>>> equivalent to lifetime management of bio. Since the returned cookie is
-> >>>> actually a pointer to the bio, the refcount of this bio must be
-> >>>> incremented, since we release a reference to this bio through the
-> >>>> returned cookie, in which case the abuse of the refcount trick seems
-> >>>> unavoidable? Unless we allocate the tracking object individually, then
-> >>>> the returned cookie is actually pointing to the tracking object, and the
-> >>>> refcount is individually maintained for the tracking object.
-> >>>
-> >>> The refcounting and lifetime of the per-bio-data should all work as is.
-> >>> Would hope you can avoid extra bio_inc_remaining().. that infratsructure
-> >>> is way too tightly coupled to bio_chain()'ing, etc.
-> >>>
-> >>> The challenge you have is the array that would point at these various
-> >>> per-bio-data needs to be rooted somewhere (you put it in the topmost
-> >>> original bio with the current patchset).  But why not manage that as
-> >>> part of 'struct mapped_device'?  It'd need proper management at DM table
-> >>> reload boundaries and such but it seems like the most logical place to
-> >>> put the array.  But again, this array needs to be dynamic.. so thinking
-> >>> further, maybe a better model would be to have a fixed array in 'struct
-> >>> dm_table' for each hctx associated with a blk_mq _data_ device directly
-> >>> used/managed by that dm_table?
-> >>
-> 
-> Confusion also stated in the following comment. How 'struct
-> dm_poll_data' could be involved with 'struct dm_table' or 'struct
-> mapped_device'. In the current patchset, every bio need to maintain one
-> list to track all its 'struct dm_poll_data' structures. Then how to
-> maintain this per-bio information in one single 'struct dm_table' or
-> 'struct mapped_device'?
-> 
-> 
-> >> It seems that you are referring 'array' here as an array of 'struct
-> >> blk_mq_hw_ctx *'? Such as
-> >>
-> >> struct dm_table {
-> >>     ...
-> >>     struct blk_mq_hw_ctx *hctxs[];
-> >> };
-> >>
-> >> Certainly with this we can replace the original 'struct blk_mq_hw_ctx *'
-> >> pointer in 'struct dm_poll_data' with the index into this array, such as
-> >>
-> >> struct dm_poll_data {
-> >>      int hctx_index; /* index into dm_table->hctxs[] */
-> >>      blk_qc_t cookie;
-> >> };
-> > 
-> > You seized on my mentioning blk-mq's array of hctx too literally.  I was
-> > illustrating that blk-mq's cookie is converted to an index into that
-> > array.
-> > 
-> > But for this DM bio-polling application we'd need to map the blk-mq
-> > returned cookie to a request_queue.  Hence the original 2 members of
-> > dm_poll_data needing to be 'struct request_queue *' and blk_qc_t.
-> > 
-> >> But I'm doubted if this makes much sense. The core difficulty here is
-> >> maintaining a list (or dynamic sized array) to track all split bios.
-> >> With the array of 'struct blk_mq_hw_ctx *' maintained in struct
-> >> dm_table, we still need some **per-bio** structure (e.g., &bio->bi_plist
-> >> in current patch set) to track these split bios.
-> > 
-> > One primary goal of all of this design is to achieve bio-polling cleanly
-> > (without extra locking, without block core data structure bloat, etc).
-> > I know you share that goal.  But we need to nail down the core data
-> > structures and what needs tracking at scale and then associate them with
-> > DM's associated objects with consideration for object lifetime.
-> > 
-> > My suggestion was to anchor your core data structures (e.g. 'struct
-> > dm_poll_data' array, etc) to 'struct dm_table'.  I suggested that
-> > because the dm_table is what dm_get_device()s each underlying _data_
-> > device (a subset of all devices in a dm_table, as iterated through
-> > .iterate_devices).  But a DM 'struct mapped_device' has 2 potential
-> > dm_tables, active and inactive slots, that would imply some complexity
-> > in handing off any outstanding bio's associated 'struct dm_poll_data'
-> > array on DM table reload.
-> 
-> 1) If 'struct dm_poll_data' resides in per-bio-data, then how do you
-> **link** or **associate** all the 'struct dm_poll_data' structures from
-> one original bio? Do we link them by the internal relationship between
-> bio/dm_io/dm_target_io, or some other auxiliary data structure?
-> 
-> 2) I get confused how 'struct dm_poll_data' could be involved with
-> 'struct dm_table'. Is there an array of 'struct dm_poll_data' or 'struct
-> dm_poll_data *' maintained in 'struct dm_table'? If this is the case,
-> then the size of the array may be incredible large, or expanded/shrank
-> frequently, since one dm_table could correspond to millions bios.
+> diff --git a/block/keyslot-manager.c b/block/keyslot-manager.c
+> index ac7ce83a76e8..f13ab7410eca 100644
+> --- a/block/keyslot-manager.c
+> +++ b/block/keyslot-manager.c
+> @@ -424,6 +424,97 @@ void blk_ksm_unregister(struct request_queue *q)
+>  	q->ksm = NULL;
+>  }
+>  
+> +/**
+> + * blk_ksm_intersect_modes() - restrict supported modes by child device
+> + * @parent: The keyslot manager for parent device
+> + * @child: The keyslot manager for child device, or NULL
+> + *
+> + * Clear any crypto mode support bits in @parent that aren't set in @child.
+> + * If @child is NULL, then all parent bits are cleared.
+> + *
+> + * Only use this when setting up the keyslot manager for a layered device,
+> + * before it's been exposed yet.
+> + */
+> +void blk_ksm_intersect_modes(struct blk_keyslot_manager *parent,
+> +			     const struct blk_keyslot_manager *child)
+> +{
+> +	if (child) {
+> +		unsigned int i;
+> +
+> +		parent->max_dun_bytes_supported =
+> +			min(parent->max_dun_bytes_supported,
+> +			    child->max_dun_bytes_supported);
+> +		for (i = 0; i < ARRAY_SIZE(child->crypto_modes_supported);
+> +		     i++) {
+> +			parent->crypto_modes_supported[i] &=
+> +				child->crypto_modes_supported[i];
+> +		}
+> +	} else {
+> +		parent->max_dun_bytes_supported = 0;
+> +		memset(parent->crypto_modes_supported, 0,
+> +		       sizeof(parent->crypto_modes_supported));
+> +	}
+> +}
+> +EXPORT_SYMBOL_GPL(blk_ksm_intersect_modes);
+> +
+> +/**
+> + * blk_ksm_is_superset() - Check if a KSM supports a superset of crypto modes
+> + *			   and DUN bytes that another KSM supports. Here,
+> + *			   "superset" refers to the mathematical meaning of the
+> + *			   word - i.e. if two KSMs have the *same* capabilities,
+> + *			   they *are* considered supersets of each other.
+> + * @ksm_superset: The KSM that we want to verify is a superset
+> + * @ksm_subset: The KSM that we want to verify is a subset
+> + *
+> + * Return: True if @ksm_superset supports a superset of the crypto modes and DUN
+> + *	   bytes that @ksm_subset supports.
+> + */
+> +bool blk_ksm_is_superset(struct blk_keyslot_manager *ksm_superset,
+> +			 struct blk_keyslot_manager *ksm_subset)
+> +{
+> +	int i;
+> +
+> +	if (!ksm_subset)
+> +		return true;
+> +
+> +	if (!ksm_superset)
+> +		return false;
+> +
+> +	for (i = 0; i < ARRAY_SIZE(ksm_superset->crypto_modes_supported); i++) {
+> +		if (ksm_subset->crypto_modes_supported[i] &
+> +		    (~ksm_superset->crypto_modes_supported[i])) {
+> +			return false;
+> +		}
+> +	}
+> +
+> +	if (ksm_subset->max_dun_bytes_supported >
+> +	    ksm_superset->max_dun_bytes_supported) {
+> +		return false;
+> +	}
+> +
+> +	return true;
+> +}
+> +EXPORT_SYMBOL_GPL(blk_ksm_is_superset);
+> +
+> +/**
+> + * blk_ksm_update_capabilities() - Update the restrictions of a KSM to those of
+> + *				   another KSM
+> + * @target_ksm: The KSM whose restrictions to update.
+> + * @reference_ksm: The KSM to whose restrictions this function will update
+> + *		   @target_ksm's restrictions to,
+> + */
+> +void blk_ksm_update_capabilities(struct blk_keyslot_manager *target_ksm,
+> +				 struct blk_keyslot_manager *reference_ksm)
+> +{
+> +	memcpy(target_ksm->crypto_modes_supported,
+> +	       reference_ksm->crypto_modes_supported,
+> +	       sizeof(target_ksm->crypto_modes_supported));
+> +
+> +	target_ksm->max_dun_bytes_supported =
+> +				reference_ksm->max_dun_bytes_supported;
+> +}
+> +EXPORT_SYMBOL_GPL(blk_ksm_update_capabilities);
+> +
 
-My line of thinking didn't account for the fan-out of clone bios and
-the 'struct dm_poll_data' associated with each needing to be tracked
-with an auxillary data structure.  I was just thinking in terms of a
-single cookie for each bio.  That model works for blk-mq because a
-request isn't ever split.
+Given the patch header's preamble about FS possibly accessing/checking
+the existing ksm: without any locking or other coordination how is
+blk_ksm_update_capabilities() safe?
 
-So I had a blindspot/hope we could avoid the complexity but I was
-mistaken.
-
-> > Anyway, you seem to be gravitating to a more simplistic approach of a
-> > single array of 'struct dm_poll_data' for each DM device (regardless of
-> > how arbitrarily deep that DM device stack is, the topmost DM device
-> > would accumulate the list of 'struct dm_poll_data'?).
-> 
-> I'm open to this. At least you don't need to care the lifetime of other
-> disparate 'struct dm_poll_data's, if all 'struct dm_poll_data's are
-> accumulated in one (e.g., the topmost) place.
-
-Treating the entire IO stack as if it can all be accumulated/managed in
-a single pool of objects is dangerous.  It ushers in serious lifetime
-problems associated with completion of IO that must occur in order for
-DM targets to work as designed.  Waiting for a chain of bios to complete
-at various layers is fine.  But if that chain spans targets boundaries
-I think we could easily introduce problems.
-
-So not only am I struggling to see how we avoid a data structure to
-track all split bios' dm_poll_data: I also don't yet see how we can
-safely allow per-bio-data to linger waiting for blk_bio_poll() to
-eventually reap bios whose completion has been delayed for IO polling's
-benefit.
-
-This IO polling model is really awkward to apply to bio-based IO.
+Please document any assumptions about the caller (e.g. DM) that enables
+blk_ksm_update_capabilities() to be used safely.
 
 Mike
 
-> > I'm now questioning the need for any high-level data structure to track
-> > all N of the 'struct dm_poll_data' that may result from a given bio (as
-> > it is split to multiple blk-mq hctxs across multiple blk-mq devices).
-> > Each 'struct dm_poll_data', that will be returned to block core and
-> > stored in struct kiocb's ki_cookie, would have an object lifetime that
-> > matches the original DM bio clone's per-bio-data that the 'struct
-> > dm_poll_data' was part of; then we just need to cast that ki_cookie's
-> > blk_qc_t as 'struct dm_poll_data' and call blk_poll().
-> > 
-> > The hardest part is to ensure that all the disparate 'struct
-> > dm_poll_data' (and associated clone bios) aren't free'd until the
-> > _original_ bio completes.  That would create quite some back-pressure
-> > with more potential to exhaust system resources -- because then the
-> > cataylst for dropping reference counts on these clone bios would then
-> > need to be tied to the blk_bio_poll() interface... which feels "wrong"
-> > (e.g. it ushers in the (ab)use of bio_inc_remaining you had in your most
-> > recent patchset).
-> > 
-> > All said, maybe post a v2 that takes the incremental steps of:
-> > 1) using DM per-bio-data for 'struct dm_poll_data'
-> > 2) simplify blk_bio_poll() to call into DM to translate provided
-> >    blk_qc_t (from struct kiocb's ki_cookie) to request_queue and
-> >    blk_qc_t.
-> >    - this eliminates any need for extra list processing
-> > 3) keep your (ab)use of bio_inc_remaining() to allow for exploring this 
-> 
+>  /**
+>   * blk_ksm_init_passthrough() - Init a passthrough keyslot manager
+>   * @ksm: The keyslot manager to init
+> diff --git a/include/linux/keyslot-manager.h b/include/linux/keyslot-manager.h
+> index 323e15dd6fa7..164568f52be7 100644
+> --- a/include/linux/keyslot-manager.h
+> +++ b/include/linux/keyslot-manager.h
+> @@ -103,6 +103,15 @@ void blk_ksm_reprogram_all_keys(struct blk_keyslot_manager *ksm);
+>  
+>  void blk_ksm_destroy(struct blk_keyslot_manager *ksm);
+>  
+> +void blk_ksm_intersect_modes(struct blk_keyslot_manager *parent,
+> +			     const struct blk_keyslot_manager *child);
+> +
+>  void blk_ksm_init_passthrough(struct blk_keyslot_manager *ksm);
+>  
+> +bool blk_ksm_is_superset(struct blk_keyslot_manager *ksm_superset,
+> +			 struct blk_keyslot_manager *ksm_subset);
+> +
+> +void blk_ksm_update_capabilities(struct blk_keyslot_manager *target_ksm,
+> +				 struct blk_keyslot_manager *reference_ksm);
+> +
+>  #endif /* __LINUX_KEYSLOT_MANAGER_H */
 > -- 
-> Thanks,
-> Jeffle
+> 2.29.2.729.g45daf8777d-goog
 > 
 
 --
