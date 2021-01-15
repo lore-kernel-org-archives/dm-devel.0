@@ -7,14 +7,14 @@ X-Spam-Status: No, score=-16.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 03BEDC433E6
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Jan 2021 02:21:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BCBDFC433DB
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Jan 2021 02:21:05 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7438023AC4
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Jan 2021 02:21:05 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7438023AC4
+	by mail.kernel.org (Postfix) with ESMTPS id 376A123AC2
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Jan 2021 02:21:04 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 376A123AC2
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
@@ -25,53 +25,53 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=NF1lb0JNb1FKB3L3UmRDr6TmvQGKXtmn/GfoPOBBsgg=;
-	b=Ywpd6imjtBCtVN4oHORsViM0qz0wVJXBuh5MTRjGbpAQpcH54pcFJAL/gVZ2jniGEkQpZN
-	UOGxojj6256a5sr921rfGTydue4ondax7hcxCQk6dmWR6jotCpQbNs4oTWQjmj2aV/HsVq
-	eezsl43GFz4sL4qNBB/yQp14XXBvSCc=
+	bh=DRsQviOo5tsHOMhVZCBcN3g20fZAlOaGYOC4IpyT8zw=;
+	b=c40HY8Qh1cTGARiwJiGCArNrCwlDI0pTO1CtAsOd6yVaEEYTrZf/toyiBtksbQQN6R/ddi
+	9FGmMUogtUclDiQpJVgqLBL7Q/hKTxvTYkpZhKIJ5v2gd+PXLdoUJLWiJ8pXoMD8iobAwN
+	9S4Ux4Vyfma/+H+DfYlg3XOf7oU4R/4=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-312-kCNCWYHyMqeTDERmdAhnOQ-1; Thu, 14 Jan 2021 21:21:02 -0500
-X-MC-Unique: kCNCWYHyMqeTDERmdAhnOQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-74-uDAJIUTmOKe4GlRx97hqiA-1; Thu, 14 Jan 2021 21:21:02 -0500
+X-MC-Unique: uDAJIUTmOKe4GlRx97hqiA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A9291107AD50;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A111E1005D73;
 	Fri, 15 Jan 2021 02:20:57 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 879FB610F4;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 844FC5D739;
 	Fri, 15 Jan 2021 02:20:57 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5831A1809CA2;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 544601809CA1;
 	Fri, 15 Jan 2021 02:20:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com
-	[10.5.11.16])
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
+	[10.5.11.12])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10F2KaGq031002 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 14 Jan 2021 21:20:36 -0500
+	id 10F2KXoK030968 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 14 Jan 2021 21:20:33 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 9331571D52; Fri, 15 Jan 2021 02:20:36 +0000 (UTC)
+	id 40D1660C6B; Fri, 15 Jan 2021 02:20:33 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7C6CB63746;
-	Fri, 15 Jan 2021 02:20:33 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A557460C6E;
+	Fri, 15 Jan 2021 02:20:31 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 10F2KWYC023604; 
-	Thu, 14 Jan 2021 20:20:32 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 10F2KUZT023596; 
+	Thu, 14 Jan 2021 20:20:30 -0600
 Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 10F2KVr1023603;
-	Thu, 14 Jan 2021 20:20:31 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 10F2KU3k023595;
+	Thu, 14 Jan 2021 20:20:30 -0600
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Thu, 14 Jan 2021 20:20:25 -0600
-Message-Id: <1610677227-23550-5-git-send-email-bmarzins@redhat.com>
+Date: Thu, 14 Jan 2021 20:20:23 -0600
+Message-Id: <1610677227-23550-3-git-send-email-bmarzins@redhat.com>
 In-Reply-To: <1610677227-23550-1-git-send-email-bmarzins@redhat.com>
 References: <1610677227-23550-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 X-loop: dm-devel@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>,
 	Martin Wilck <Martin.Wilck@suse.com>
-Subject: [dm-devel] [PATCH v2 4/6] multipathd: use get_monotonic_time() in
-	io_err_stat code
+Subject: [dm-devel] [PATCH v2 2/6] multipathd: avoid io_err_stat crash
+	during shutdown
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -86,7 +86,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -94,108 +94,254 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Instead of calling clock_gettime(), and dealing with failure
-conditions, just call get_monotonic_time().
+The checker thread is reponsible for enqueueing paths for the
+io_err_stat thread to check. During shutdown, the io_err_stat thread is
+shut down and cleaned up before the checker thread.  There is no code
+to make sure that the checker thread isn't accessing the io_err_stat
+pathvec or its mutex while they are being freed, which can lead to
+memory corruption crashes.
+
+To solve this, get rid of the io_err_stat_pathvec structure, and
+statically define the mutex.  This means that the mutex is always valid
+to access, and the io_err_stat pathvec can only be accessed while
+holding it.  If the io_err_stat thread has already been cleaned up
+when the checker tries to access the pathvec, it will be NULL, and the
+checker will simply fail to enqueue the path.
+
+This change also fixes a bug in free_io_err_pathvec(), which previously
+only attempted to free the pathvec if it was not set, instead of when it
+was set.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/io_err_stat.c | 34 +++++++++++-----------------------
- 1 file changed, 11 insertions(+), 23 deletions(-)
+ libmultipath/io_err_stat.c | 111 ++++++++++++++-----------------------
+ 1 file changed, 43 insertions(+), 68 deletions(-)
 
 diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
-index 775e7259..92871f40 100644
+index 2e48ee81..feb66469 100644
 --- a/libmultipath/io_err_stat.c
 +++ b/libmultipath/io_err_stat.c
-@@ -295,8 +295,7 @@ int io_err_stat_handle_pathfail(struct path *path)
- 	 * the repeated count threshold and time frame, we assume a path
- 	 * which fails at least twice within 60 seconds is flaky.
- 	 */
--	if (clock_gettime(CLOCK_MONOTONIC, &curr_time) != 0)
--		return 1;
-+	get_monotonic_time(&curr_time);
- 	if (path->io_err_pathfail_cnt == 0) {
- 		path->io_err_pathfail_cnt++;
- 		path->io_err_pathfail_starttime = curr_time.tv_sec;
-@@ -352,9 +351,9 @@ int need_io_err_check(struct path *pp)
- 	}
- 	if (pp->io_err_pathfail_cnt != PATH_IO_ERR_WAITING_TO_CHECK)
- 		return 1;
--	if (clock_gettime(CLOCK_MONOTONIC, &curr_time) != 0 ||
--	    (curr_time.tv_sec - pp->io_err_dis_reinstate_time) >
--			pp->mpp->marginal_path_err_recheck_gap_time) {
-+	get_monotonic_time(&curr_time);
-+	if ((curr_time.tv_sec - pp->io_err_dis_reinstate_time) >
-+	    pp->mpp->marginal_path_err_recheck_gap_time) {
- 		io_err_stat_log(4, "%s: reschedule checking after %d seconds",
- 				pp->dev,
- 				pp->mpp->marginal_path_err_recheck_gap_time);
-@@ -400,8 +399,7 @@ static int io_err_stat_time_up(struct io_err_stat_path *pp)
- {
- 	struct timespec currtime, difftime;
+@@ -46,12 +46,6 @@
+ #define io_err_stat_log(prio, fmt, args...) \
+ 	condlog(prio, "io error statistic: " fmt, ##args)
  
--	if (clock_gettime(CLOCK_MONOTONIC, &currtime) != 0)
--		return 0;
-+	get_monotonic_time(&currtime);
- 	timespecsub(&currtime, &pp->start_time, &difftime);
- 	if (difftime.tv_sec < pp->total_time)
- 		return 0;
-@@ -414,8 +412,7 @@ static void end_io_err_stat(struct io_err_stat_path *pp)
- 	struct path *path;
- 	double err_rate;
+-
+-struct io_err_stat_pathvec {
+-	pthread_mutex_t mutex;
+-	vector		pathvec;
+-};
+-
+ struct dio_ctx {
+ 	struct timespec	io_starttime;
+ 	unsigned int	blksize;
+@@ -75,9 +69,10 @@ static pthread_t	io_err_stat_thr;
  
--	if (clock_gettime(CLOCK_MONOTONIC, &currtime) != 0)
--		currtime = pp->start_time;
-+	get_monotonic_time(&currtime);
+ static pthread_mutex_t io_err_thread_lock = PTHREAD_MUTEX_INITIALIZER;
+ static pthread_cond_t io_err_thread_cond = PTHREAD_COND_INITIALIZER;
++static pthread_mutex_t io_err_pathvec_lock = PTHREAD_MUTEX_INITIALIZER;
+ static int io_err_thread_running = 0;
  
- 	io_err_stat_log(4, "%s: check end", pp->devname);
+-static struct io_err_stat_pathvec *paths;
++static vector io_err_pathvec;
+ struct vectors *vecs;
+ io_context_t	ioctx;
  
-@@ -464,11 +461,7 @@ static int send_each_async_io(struct dio_ctx *ct, int fd, char *dev)
- 			ct->io_starttime.tv_sec == 0) {
- 		struct iocb *ios[1] = { &ct->io };
- 
--		if (clock_gettime(CLOCK_MONOTONIC, &ct->io_starttime) != 0) {
--			ct->io_starttime.tv_sec = 0;
--			ct->io_starttime.tv_nsec = 0;
--			return rc;
--		}
-+		get_monotonic_time(&ct->io_starttime);
- 		io_prep_pread(&ct->io, fd, ct->buf, ct->blksize, 0);
- 		if (io_submit(ioctx, 1, ios) != 1) {
- 			io_err_stat_log(5, "%s: io_submit error %i",
-@@ -487,8 +480,7 @@ static void send_batch_async_ios(struct io_err_stat_path *pp)
- 	struct dio_ctx *ct;
- 	struct timespec currtime, difftime;
- 
--	if (clock_gettime(CLOCK_MONOTONIC, &currtime) != 0)
--		return;
-+	get_monotonic_time(&currtime);
- 	/*
- 	 * Give a free time for all IO to complete or timeout
- 	 */
-@@ -503,11 +495,8 @@ static void send_batch_async_ios(struct io_err_stat_path *pp)
- 		if (!send_each_async_io(ct, pp->fd, pp->devname))
- 			pp->io_nr++;
- 	}
--	if (pp->start_time.tv_sec == 0 && pp->start_time.tv_nsec == 0 &&
--		clock_gettime(CLOCK_MONOTONIC, &pp->start_time)) {
--		pp->start_time.tv_sec = 0;
--		pp->start_time.tv_nsec = 0;
--	}
-+	if (pp->start_time.tv_sec == 0 && pp->start_time.tv_nsec == 0)
-+		get_monotonic_time(&pp->start_time);
+@@ -207,46 +202,23 @@ static void free_io_err_stat_path(struct io_err_stat_path *p)
+ 	FREE(p);
  }
  
- static int try_to_cancel_timeout_io(struct dio_ctx *ct, struct timespec *t,
-@@ -546,8 +535,7 @@ static void poll_async_io_timeout(void)
- 	int		rc = PATH_UNCHECKED;
- 	int		i, j;
+-static struct io_err_stat_pathvec *alloc_pathvec(void)
+-{
+-	struct io_err_stat_pathvec *p;
+-	int r;
+-
+-	p = (struct io_err_stat_pathvec *)MALLOC(sizeof(*p));
+-	if (!p)
+-		return NULL;
+-	p->pathvec = vector_alloc();
+-	if (!p->pathvec)
+-		goto out_free_struct_pathvec;
+-	r = pthread_mutex_init(&p->mutex, NULL);
+-	if (r)
+-		goto out_free_member_pathvec;
+-
+-	return p;
+-
+-out_free_member_pathvec:
+-	vector_free(p->pathvec);
+-out_free_struct_pathvec:
+-	FREE(p);
+-	return NULL;
+-}
+-
+-static void free_io_err_pathvec(struct io_err_stat_pathvec *p)
++static void free_io_err_pathvec(void)
+ {
+ 	struct io_err_stat_path *path;
+ 	int i;
  
--	if (clock_gettime(CLOCK_MONOTONIC, &curr_time) != 0)
+-	if (!p)
 -		return;
-+	get_monotonic_time(&curr_time);
- 	vector_foreach_slot(io_err_pathvec, pp, i) {
+-	pthread_mutex_destroy(&p->mutex);
+-	if (!p->pathvec) {
+-		vector_foreach_slot(p->pathvec, path, i) {
+-			destroy_directio_ctx(path);
+-			free_io_err_stat_path(path);
+-		}
+-		vector_free(p->pathvec);
++	pthread_mutex_lock(&io_err_pathvec_lock);
++	pthread_cleanup_push(cleanup_mutex, &io_err_pathvec_lock);
++	if (!io_err_pathvec)
++		goto out;
++	vector_foreach_slot(io_err_pathvec, path, i) {
++		destroy_directio_ctx(path);
++		free_io_err_stat_path(path);
+ 	}
+-	FREE(p);
++	vector_free(io_err_pathvec);
++	io_err_pathvec = NULL;
++out:
++	pthread_cleanup_pop(1);
+ }
+ 
+ /*
+@@ -258,13 +230,13 @@ static int enqueue_io_err_stat_by_path(struct path *path)
+ {
+ 	struct io_err_stat_path *p;
+ 
+-	pthread_mutex_lock(&paths->mutex);
+-	p = find_err_path_by_dev(paths->pathvec, path->dev);
++	pthread_mutex_lock(&io_err_pathvec_lock);
++	p = find_err_path_by_dev(io_err_pathvec, path->dev);
+ 	if (p) {
+-		pthread_mutex_unlock(&paths->mutex);
++		pthread_mutex_unlock(&io_err_pathvec_lock);
+ 		return 0;
+ 	}
+-	pthread_mutex_unlock(&paths->mutex);
++	pthread_mutex_unlock(&io_err_pathvec_lock);
+ 
+ 	p = alloc_io_err_stat_path();
+ 	if (!p)
+@@ -276,18 +248,18 @@ static int enqueue_io_err_stat_by_path(struct path *path)
+ 
+ 	if (setup_directio_ctx(p))
+ 		goto free_ioerr_path;
+-	pthread_mutex_lock(&paths->mutex);
+-	if (!vector_alloc_slot(paths->pathvec))
++	pthread_mutex_lock(&io_err_pathvec_lock);
++	if (!vector_alloc_slot(io_err_pathvec))
+ 		goto unlock_destroy;
+-	vector_set_slot(paths->pathvec, p);
+-	pthread_mutex_unlock(&paths->mutex);
++	vector_set_slot(io_err_pathvec, p);
++	pthread_mutex_unlock(&io_err_pathvec_lock);
+ 
+ 	io_err_stat_log(2, "%s: enqueue path %s to check",
+ 			path->mpp->alias, path->dev);
+ 	return 0;
+ 
+ unlock_destroy:
+-	pthread_mutex_unlock(&paths->mutex);
++	pthread_mutex_unlock(&io_err_pathvec_lock);
+ 	destroy_directio_ctx(p);
+ free_ioerr_path:
+ 	free_io_err_stat_path(p);
+@@ -412,9 +384,9 @@ static int delete_io_err_stat_by_addr(struct io_err_stat_path *p)
+ {
+ 	int i;
+ 
+-	i = find_slot(paths->pathvec, p);
++	i = find_slot(io_err_pathvec, p);
+ 	if (i != -1)
+-		vector_del_slot(paths->pathvec, i);
++		vector_del_slot(io_err_pathvec, i);
+ 
+ 	destroy_directio_ctx(p);
+ 	free_io_err_stat_path(p);
+@@ -585,7 +557,7 @@ static void poll_async_io_timeout(void)
+ 
+ 	if (clock_gettime(CLOCK_MONOTONIC, &curr_time) != 0)
+ 		return;
+-	vector_foreach_slot(paths->pathvec, pp, i) {
++	vector_foreach_slot(io_err_pathvec, pp, i) {
  		for (j = 0; j < CONCUR_NR_EVENT; j++) {
  			rc = try_to_cancel_timeout_io(pp->dio_ctx_array + j,
+ 					&curr_time, pp->devname);
+@@ -631,7 +603,7 @@ static void handle_async_io_done_event(struct io_event *io_evt)
+ 	int rc = PATH_UNCHECKED;
+ 	int i, j;
+ 
+-	vector_foreach_slot(paths->pathvec, pp, i) {
++	vector_foreach_slot(io_err_pathvec, pp, i) {
+ 		for (j = 0; j < CONCUR_NR_EVENT; j++) {
+ 			ct = pp->dio_ctx_array + j;
+ 			if (&ct->io == io_evt->obj) {
+@@ -665,19 +637,14 @@ static void service_paths(void)
+ 	struct io_err_stat_path *pp;
+ 	int i;
+ 
+-	pthread_mutex_lock(&paths->mutex);
+-	vector_foreach_slot(paths->pathvec, pp, i) {
++	pthread_mutex_lock(&io_err_pathvec_lock);
++	vector_foreach_slot(io_err_pathvec, pp, i) {
+ 		send_batch_async_ios(pp);
+ 		process_async_ios_event(TIMEOUT_NO_IO_NSEC, pp->devname);
+ 		poll_async_io_timeout();
+ 		poll_io_err_stat(vecs, pp);
+ 	}
+-	pthread_mutex_unlock(&paths->mutex);
+-}
+-
+-static void cleanup_unlock(void *arg)
+-{
+-	pthread_mutex_unlock((pthread_mutex_t*) arg);
++	pthread_mutex_unlock(&io_err_pathvec_lock);
+ }
+ 
+ static void cleanup_exited(__attribute__((unused)) void *arg)
+@@ -736,13 +703,18 @@ int start_io_err_stat_thread(void *data)
+ 		io_err_stat_log(4, "io_setup failed");
+ 		return 1;
+ 	}
+-	paths = alloc_pathvec();
+-	if (!paths)
++
++	pthread_mutex_lock(&io_err_pathvec_lock);
++	io_err_pathvec = vector_alloc();
++	if (!io_err_pathvec) {
++		pthread_mutex_unlock(&io_err_pathvec_lock);
+ 		goto destroy_ctx;
++	}
++	pthread_mutex_unlock(&io_err_pathvec_lock);
+ 
+ 	setup_thread_attr(&io_err_stat_attr, 32 * 1024, 0);
+ 	pthread_mutex_lock(&io_err_thread_lock);
+-	pthread_cleanup_push(cleanup_unlock, &io_err_thread_lock);
++	pthread_cleanup_push(cleanup_mutex, &io_err_thread_lock);
+ 
+ 	ret = pthread_create(&io_err_stat_thr, &io_err_stat_attr,
+ 			     io_err_stat_loop, data);
+@@ -763,7 +735,10 @@ int start_io_err_stat_thread(void *data)
+ 	return 0;
+ 
+ out_free:
+-	free_io_err_pathvec(paths);
++	pthread_mutex_lock(&io_err_pathvec_lock);
++	vector_free(io_err_pathvec);
++	io_err_pathvec = NULL;
++	pthread_mutex_unlock(&io_err_pathvec_lock);
+ destroy_ctx:
+ 	io_destroy(ioctx);
+ 	io_err_stat_log(0, "failed to start io_error statistic thread");
+@@ -779,6 +754,6 @@ void stop_io_err_stat_thread(void)
+ 		pthread_cancel(io_err_stat_thr);
+ 
+ 	pthread_join(io_err_stat_thr, NULL);
+-	free_io_err_pathvec(paths);
++	free_io_err_pathvec();
+ 	io_destroy(ioctx);
+ }
 -- 
 2.17.2
 
