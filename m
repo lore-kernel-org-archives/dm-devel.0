@@ -7,71 +7,71 @@ X-Spam-Status: No, score=-16.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 27D5AC433E9
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Jan 2021 02:21:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 98095C433DB
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Jan 2021 02:21:10 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 9844223AC2
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Jan 2021 02:21:06 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9844223AC2
+	by mail.kernel.org (Postfix) with ESMTPS id EB07323AC2
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Jan 2021 02:21:09 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org EB07323AC2
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1610677265;
+	s=mimecast20190719; t=1610677268;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=SN2yBXCeAHkd+3MyFGMc+ufnBe7nA9XXVLJmYVTQGWE=;
-	b=d+9mhz0GDHx9cABNiBZ6agsW9vsAqvj01J6bHh4DBxkyYEgsPkecKq0Uh575ZWW2kL3jq2
-	p/+SWAWNlcjKmMRkluXe6HmjEWnzzFTcHyWs61TquNsy1abmw/tuWM4k4RDpvGr0zXutiN
-	i2985IljRMhDxiN8x/TdB6ZNhJeolXU=
+	bh=avnTjgRJ1ouR7DvgQLfqncjXDJch9F6ORs2qfK/7MxA=;
+	b=Ks3mPsMPYsv7hZVDg/phDrt05tMsBFDC5YyX6VUep3u2/d26Kga6EzQCLHaNTKa2zF8pGE
+	/Au9uVS21LrY5pG8sgTb4aiNUpvdCqTYTtGoF+N1EoY+zm6OdaPEEuGTGAbQlirF61LFEW
+	s1URYqfnuIHJvzcG1+Aw3Oigq6n5KAE=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-177-rkn_izLePQmC1YDqMcQ-5w-1; Thu, 14 Jan 2021 21:21:02 -0500
-X-MC-Unique: rkn_izLePQmC1YDqMcQ-5w-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-519-ZT_0z3KlNYWG19mwqsDYSw-1; Thu, 14 Jan 2021 21:21:06 -0500
+X-MC-Unique: ZT_0z3KlNYWG19mwqsDYSw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 971C8806689;
-	Fri, 15 Jan 2021 02:20:57 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C8B97806675;
+	Fri, 15 Jan 2021 02:20:59 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7C9F25F70B;
-	Fri, 15 Jan 2021 02:20:57 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AABAC77A1A;
+	Fri, 15 Jan 2021 02:20:59 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 51E419989;
-	Fri, 15 Jan 2021 02:20:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com
-	[10.5.11.14])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8142C5002D;
+	Fri, 15 Jan 2021 02:20:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com
+	[10.5.11.13])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10F2KZLM030991 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 14 Jan 2021 21:20:35 -0500
+	id 10F2Kcx7031030 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 14 Jan 2021 21:20:38 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id CA1F85DA2E; Fri, 15 Jan 2021 02:20:35 +0000 (UTC)
+	id AAC336FEED; Fri, 15 Jan 2021 02:20:38 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8E0775D9C2;
-	Fri, 15 Jan 2021 02:20:32 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 55C247770F;
+	Fri, 15 Jan 2021 02:20:35 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 10F2KV4c023600; 
-	Thu, 14 Jan 2021 20:20:31 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 10F2KY95023612; 
+	Thu, 14 Jan 2021 20:20:34 -0600
 Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 10F2KV7b023599;
-	Thu, 14 Jan 2021 20:20:31 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 10F2KXq4023611;
+	Thu, 14 Jan 2021 20:20:33 -0600
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Thu, 14 Jan 2021 20:20:24 -0600
-Message-Id: <1610677227-23550-4-git-send-email-bmarzins@redhat.com>
+Date: Thu, 14 Jan 2021 20:20:27 -0600
+Message-Id: <1610677227-23550-7-git-send-email-bmarzins@redhat.com>
 In-Reply-To: <1610677227-23550-1-git-send-email-bmarzins@redhat.com>
 References: <1610677227-23550-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 X-loop: dm-devel@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>,
 	Martin Wilck <Martin.Wilck@suse.com>
-Subject: [dm-devel] [PATCH v2 3/6] multipathd: avoid io_err_stat ABBA
-	deadlock
+Subject: [dm-devel] [PATCH v2 6/6] multipathd: cleanup logging for marginal
+	paths
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -86,7 +86,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -94,143 +94,113 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-When the checker thread enqueues paths for the io_err_stat thread to
-check, it calls enqueue_io_err_stat_by_path() with the vecs lock held.
-start_io_err_stat_thread() is also called with the vecs lock held.
-These two functions both lock io_err_pathvec_lock. When the io_err_stat
-thread updates the paths in vecs->pathvec in poll_io_err_stat(), it has
-the io_err_pathvec_lock held, and then locks the vecs lock. This can
-cause an ABBA deadlock.
-
-To solve this, service_paths() no longer updates the paths in
-vecs->pathvec with the io_err_pathvec_lock held.  It does this by moving
-the io_err_stat_path from io_err_pathvec to a local vector when it needs
-to update the path. After releasing the io_err_pathvec_lock, it goes
-through this temporary vector, updates the paths with the vecs lock
-held, and then frees everything.
-
-This change fixes a bug in service_paths() where elements were being
-deleted from io_err_pathvec, without the index being decremented,
-causing the loop to skip elements. Also, service_paths() could be
-cancelled while holding the io_err_pathvec_lock, so it should have a
-cleanup handler.
+io_err_stat logged at level 2 whenever it enqueued a path to check,
+which could happen multiple times while a path was marginal.  On the
+other hand if marginal_pathgroups wasn't set, multipathd didn't log when
+paths were set to marginal. Now io_err_stat only logs at level 2 when
+something unexpected happens, but multipathd will always log when a
+path switches its marginal state.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/io_err_stat.c | 56 ++++++++++++++++++++++----------------
- 1 file changed, 32 insertions(+), 24 deletions(-)
+ libmultipath/io_err_stat.c |  7 +++----
+ multipathd/main.c          | 25 ++++++++++++++-----------
+ 2 files changed, 17 insertions(+), 15 deletions(-)
 
 diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
-index feb66469..775e7259 100644
+index bf78a236..abdd0b4f 100644
 --- a/libmultipath/io_err_stat.c
 +++ b/libmultipath/io_err_stat.c
-@@ -380,20 +380,6 @@ recover:
+@@ -252,7 +252,7 @@ static int enqueue_io_err_stat_by_path(struct path *path)
+ 	vector_set_slot(io_err_pathvec, p);
+ 	pthread_mutex_unlock(&io_err_pathvec_lock);
+ 
+-	io_err_stat_log(2, "%s: enqueue path %s to check",
++	io_err_stat_log(3, "%s: enqueue path %s to check",
+ 			path->mpp->alias, path->dev);
  	return 0;
- }
  
--static int delete_io_err_stat_by_addr(struct io_err_stat_path *p)
--{
--	int i;
--
--	i = find_slot(io_err_pathvec, p);
--	if (i != -1)
--		vector_del_slot(io_err_pathvec, i);
--
--	destroy_directio_ctx(p);
--	free_io_err_stat_path(p);
--
--	return 0;
--}
--
- static void account_async_io_state(struct io_err_stat_path *pp, int rc)
- {
- 	switch (rc) {
-@@ -410,17 +396,26 @@ static void account_async_io_state(struct io_err_stat_path *pp, int rc)
- 	}
- }
- 
--static int poll_io_err_stat(struct vectors *vecs, struct io_err_stat_path *pp)
-+static int io_err_stat_time_up(struct io_err_stat_path *pp)
- {
- 	struct timespec currtime, difftime;
--	struct path *path;
--	double err_rate;
- 
- 	if (clock_gettime(CLOCK_MONOTONIC, &currtime) != 0)
--		return 1;
-+		return 0;
- 	timespecsub(&currtime, &pp->start_time, &difftime);
- 	if (difftime.tv_sec < pp->total_time)
+@@ -343,7 +343,7 @@ int need_io_err_check(struct path *pp)
+ 	if (uatomic_read(&io_err_thread_running) == 0)
  		return 0;
-+	return 1;
-+}
-+
-+static void end_io_err_stat(struct io_err_stat_path *pp)
-+{
-+	struct timespec currtime;
-+	struct path *path;
-+	double err_rate;
-+
-+	if (clock_gettime(CLOCK_MONOTONIC, &currtime) != 0)
-+		currtime = pp->start_time;
- 
- 	io_err_stat_log(4, "%s: check end", pp->devname);
- 
-@@ -459,10 +454,6 @@ static int poll_io_err_stat(struct vectors *vecs, struct io_err_stat_path *pp)
- 				pp->devname);
+ 	if (count_active_paths(pp->mpp) <= 0) {
+-		io_err_stat_log(2, "%s: recover path early", pp->dev);
++		io_err_stat_log(2, "%s: no paths. recovering early", pp->dev);
+ 		goto recover;
  	}
- 	lock_cleanup_pop(vecs->lock);
--
--	delete_io_err_stat_by_addr(pp);
--
--	return 0;
- }
- 
- static int send_each_async_io(struct dio_ctx *ct, int fd, char *dev)
-@@ -622,6 +613,7 @@ static void process_async_ios_event(int timeout_nsecs, char *dev)
- 	struct timespec	timeout = { .tv_nsec = timeout_nsecs };
- 
- 	errno = 0;
-+	pthread_testcancel();
- 	n = io_getevents(ioctx, 1L, CONCUR_NR_EVENT, events, &timeout);
- 	if (n < 0) {
- 		io_err_stat_log(3, "%s: async io events returned %d (errno=%s)",
-@@ -634,17 +626,33 @@ static void process_async_ios_event(int timeout_nsecs, char *dev)
- 
- static void service_paths(void)
- {
-+	struct _vector _pathvec = {0};
-+	/* avoid gcc warnings that &_pathvec will never be NULL in vector ops */
-+	struct _vector * const tmp_pathvec = &_pathvec;
- 	struct io_err_stat_path *pp;
- 	int i;
- 
- 	pthread_mutex_lock(&io_err_pathvec_lock);
-+	pthread_cleanup_push(cleanup_mutex, &io_err_pathvec_lock);
- 	vector_foreach_slot(io_err_pathvec, pp, i) {
- 		send_batch_async_ios(pp);
- 		process_async_ios_event(TIMEOUT_NO_IO_NSEC, pp->devname);
- 		poll_async_io_timeout();
--		poll_io_err_stat(vecs, pp);
-+		if (io_err_stat_time_up(pp)) {
-+			if (!vector_alloc_slot(tmp_pathvec))
-+				continue;
-+			vector_del_slot(io_err_pathvec, i--);
-+			vector_set_slot(tmp_pathvec, pp);
-+		}
+ 	if (pp->io_err_pathfail_cnt != PATH_IO_ERR_WAITING_TO_CHECK)
+@@ -361,8 +361,7 @@ int need_io_err_check(struct path *pp)
+ 		 * Or else,  return 1 to set path state to PATH_SHAKY
+ 		 */
+ 		if (r == 1) {
+-			io_err_stat_log(3, "%s: enqueue fails, to recover",
+-					pp->dev);
++			io_err_stat_log(2, "%s: enqueue failed. recovering early", pp->dev);
+ 			goto recover;
+ 		} else
+ 			pp->io_err_pathfail_cnt = PATH_IO_ERR_IN_CHECKING;
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 92c45d44..99a89a69 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2132,8 +2132,8 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 		pathinfo(pp, conf, 0);
+ 		pthread_cleanup_pop(1);
+ 		return 1;
+-	} else if ((newstate != PATH_UP && newstate != PATH_GHOST) &&
+-			(pp->state == PATH_DELAYED)) {
++	} else if ((newstate != PATH_UP && newstate != PATH_GHOST &&
++		    newstate != PATH_PENDING) && (pp->state == PATH_DELAYED)) {
+ 		/* If path state become failed again cancel path delay state */
+ 		pp->state = newstate;
+ 		/*
+@@ -2200,8 +2200,9 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 	if ((newstate == PATH_UP || newstate == PATH_GHOST) &&
+ 	    (san_path_check_enabled(pp->mpp) ||
+ 	     marginal_path_check_enabled(pp->mpp))) {
+-		int was_marginal = pp->marginal;
+ 		if (should_skip_path(pp)) {
++			if (!pp->marginal && pp->state != PATH_DELAYED)
++				condlog(2, "%s: path is now marginal", pp->dev);
+ 			if (!marginal_pathgroups) {
+ 				if (marginal_path_check_enabled(pp->mpp))
+ 					/* to reschedule as soon as possible,
+@@ -2211,13 +2212,18 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 				pp->state = PATH_DELAYED;
+ 				return 1;
+ 			}
+-			if (!was_marginal) {
++			if (!pp->marginal) {
+ 				pp->marginal = 1;
+ 				marginal_changed = 1;
+ 			}
+-		} else if (marginal_pathgroups && was_marginal) {
+-			pp->marginal = 0;
+-			marginal_changed = 1;
++		} else {
++			if (pp->marginal || pp->state == PATH_DELAYED)
++				condlog(2, "%s: path is no longer marginal",
++					pp->dev);
++			if (marginal_pathgroups && pp->marginal) {
++				pp->marginal = 0;
++				marginal_changed = 1;
++			}
+ 		}
  	}
--	pthread_mutex_unlock(&io_err_pathvec_lock);
-+	pthread_cleanup_pop(1);
-+	vector_foreach_slot_backwards(tmp_pathvec, pp, i) {
-+		end_io_err_stat(pp);
-+		vector_del_slot(tmp_pathvec, i);
-+		destroy_directio_ctx(pp);
-+		free_io_err_stat_path(pp);
-+	}
-+	vector_reset(tmp_pathvec);
- }
  
- static void cleanup_exited(__attribute__((unused)) void *arg)
+@@ -2343,11 +2349,8 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 	 */
+ 	condlog(4, "path prio refresh");
+ 
+-	if (marginal_changed) {
+-		condlog(2, "%s: path is %s marginal", pp->dev,
+-			(pp->marginal)? "now" : "no longer");
++	if (marginal_changed)
+ 		reload_and_sync_map(pp->mpp, vecs, 1);
+-	}
+ 	else if (update_prio(pp, new_path_up) &&
+ 	    (pp->mpp->pgpolicyfn == (pgpolicyfn *)group_by_prio) &&
+ 	     pp->mpp->pgfailback == -FAILBACK_IMMEDIATE) {
 -- 
 2.17.2
 
