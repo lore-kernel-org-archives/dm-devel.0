@@ -2,96 +2,86 @@ Return-Path: <SRS0=/PHZ=GW=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5B240C433E0
-	for <dm-devel@archiver.kernel.org>; Tue, 19 Jan 2021 15:04:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CB18BC433DB
+	for <dm-devel@archiver.kernel.org>; Tue, 19 Jan 2021 20:40:58 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id CD3622250E
-	for <dm-devel@archiver.kernel.org>; Tue, 19 Jan 2021 15:04:26 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CD3622250E
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=toxicpanda.com
-Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 4798E23107
+	for <dm-devel@archiver.kernel.org>; Tue, 19 Jan 2021 20:40:56 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4798E23107
+Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=cloudflare.com
+Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-545-knIeWIybOn6RwIVVn5hdog-1; Tue, 19 Jan 2021 10:01:49 -0500
-X-MC-Unique: knIeWIybOn6RwIVVn5hdog-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-507-B8asVnsgMh-S-vE08MFv0g-1; Tue, 19 Jan 2021 15:40:53 -0500
+X-MC-Unique: B8asVnsgMh-S-vE08MFv0g-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7B83B107ACF6;
-	Tue, 19 Jan 2021 15:01:44 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 44C9D800D53;
+	Tue, 19 Jan 2021 20:40:48 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2CBDB60D43;
-	Tue, 19 Jan 2021 15:01:44 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B600D5D760;
+	Tue, 19 Jan 2021 20:40:46 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7CC261809CA0;
-	Tue, 19 Jan 2021 15:01:43 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9B4E3180954D;
+	Tue, 19 Jan 2021 20:40:42 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10JF1dwk025176 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 19 Jan 2021 10:01:39 -0500
+	id 10JKeea0028665 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 19 Jan 2021 15:40:40 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8AE311111C7E; Tue, 19 Jan 2021 15:01:39 +0000 (UTC)
+	id DE816A9F37; Tue, 19 Jan 2021 20:40:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7FA7C110F73C
-	for <dm-devel@redhat.com>; Tue, 19 Jan 2021 15:01:34 +0000 (UTC)
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D98BCA9FA1
+	for <dm-devel@redhat.com>; Tue, 19 Jan 2021 20:40:35 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BBAF9811E98
-	for <dm-devel@redhat.com>; Tue, 19 Jan 2021 15:01:34 +0000 (UTC)
-Received: from mail-qt1-f171.google.com (mail-qt1-f171.google.com
-	[209.85.160.171]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-1-YWTHUBheNeW4c7liOx3Xsw-1; Tue, 19 Jan 2021 10:01:05 -0500
-X-MC-Unique: YWTHUBheNeW4c7liOx3Xsw-1
-Received: by mail-qt1-f171.google.com with SMTP id d15so8409318qtw.12
-	for <dm-devel@redhat.com>; Tue, 19 Jan 2021 07:01:05 -0800 (PST)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 959AC8001B8
+	for <dm-devel@redhat.com>; Tue, 19 Jan 2021 20:40:35 +0000 (UTC)
+Received: from mail-wm1-f44.google.com (mail-wm1-f44.google.com
+	[209.85.128.44]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-571-9bjiR1F5Nl2T0Zj_v-nGCg-1; Tue, 19 Jan 2021 15:40:33 -0500
+X-MC-Unique: 9bjiR1F5Nl2T0Zj_v-nGCg-1
+Received: by mail-wm1-f44.google.com with SMTP id u14so928748wmq.4
+	for <dm-devel@redhat.com>; Tue, 19 Jan 2021 12:40:33 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20161025;
-	h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-	:user-agent:mime-version:in-reply-to:content-language
+	h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
 	:content-transfer-encoding;
-	bh=vn5Y0TrG3Ui6LBbbxvYnxl2nn5t3OepGIypDVq8V4YM=;
-	b=M8nXeaxvwkvpwmiVtbgPLGR16rkyu1sM1S/L9Xu1Qg/tUQceRY9JUFCH+LXc8NWFoo
-	xJGqNXEx4kCRvYZ5rAKt89XSc0Pe1bnkyU8m+yxcVINx+zjzi78q5a05oki4ZDkV97/J
-	o6GZBtSB9Sik4MA/BmvEppESMyRKWuqcoRFydrAoXKzgBjq7XG50HE3HJ5Q/2jAp3/ij
-	oTSGAZPzrb8aFJZja2Jwc3SQh35tIdQ47cMJ3YWnVYHb0SkXB4aSzfB1gbuk2gHpF303
-	Qv7W+oFNwSCZ25kblmb20OVcEgfJp2/K0/0ujV6/SIAFGqjOPjIfGxO56N8Zt3EKmGRu
-	Lsbg==
-X-Gm-Message-State: AOAM531K0cEPeMPRHEnlaIUpUuk0cQE/lW5MES5IWYaYh1stnmpciWk+
-	CXsMfzQEyJhVgUiOmXzKNJ2fIw==
-X-Google-Smtp-Source: ABdhPJw9hzTjA0HJ6VQUPwDH9drSNqii0WFZZyVd4uYqJRq1euvOSRi+J16/swjVIXriRDU/RjWmOQ==
-X-Received: by 2002:ac8:6f07:: with SMTP id g7mr4493450qtv.308.1611068464463; 
-	Tue, 19 Jan 2021 07:01:04 -0800 (PST)
-Received: from ?IPv6:2620:10d:c0a8:11d1::117a? ([2620:10d:c091:480::1:150f])
-	by smtp.gmail.com with ESMTPSA id
-	w91sm6339412qte.83.2021.01.19.07.01.00
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Tue, 19 Jan 2021 07:01:03 -0800 (PST)
-To: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>,
-	linux-block@vger.kernel.org, linux-xfs@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-	drbd-dev@tron.linbit.com, linux-bcache@vger.kernel.org,
-	linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org,
-	linux-scsi@vger.kernel.org, target-devel@vger.kernel.org,
-	linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org,
-	cluster-devel@redhat.com
-References: <20210119050631.57073-1-chaitanya.kulkarni@wdc.com>
-From: Josef Bacik <josef@toxicpanda.com>
-Message-ID: <6eab7373-3c7f-fccf-8a6f-b02519258d23@toxicpanda.com>
-Date: Tue, 19 Jan 2021 10:00:59 -0500
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
-	Gecko/20100101 Thunderbird/78.6.1
+	bh=Hqz5KkIUWAsMMr4Nkw2DHVorD8Rmr14UkHNWJhlYZr4=;
+	b=YC+ewY2EnPBauG0Dtrz2CJDhTV9ixSB5hkRDFflj5XEvg9VLjtMv+ED+VIfrznw3dw
+	7kZqh7UNHsuWpv7UqSXsFcZTzskHyEkhthcAD3MI/dWRjS/dIU3q3iBJbOBPy7sAPsXe
+	Hunh6g6GE/sxSguZu5R7OkBKjdSdYsRCdvO6z2o4ehXzgxZsScBp50sAC6vsVaW9QMDl
+	yILbF3cTujfCgvyb6FP401wtZkoCvYvZpHJuBtqhqJicvlKpcxtJ5I39SWeLnWo/3hnc
+	H/qPROdw1nwi9upuVd2g1qTEM+2f67duYzn8Wbdwexauwt7nqF/LuTloERFBlJPZ0OBa
+	RTSQ==
+X-Gm-Message-State: AOAM53183/SUTOqA7l0FqTXf/pkreIX++OUNq1IuSh5rU0QaEvbymFfQ
+	lIdBelo+/lf+YhGsZGMbIq85vw==
+X-Google-Smtp-Source: ABdhPJxhg7dmzxe2FdXAxsUXYiD0FnIa6AXlhUScb/esR/2HsvsfX6Iamf+TH80zY5689pHsjLT1lQ==
+X-Received: by 2002:a7b:cbd5:: with SMTP id n21mr1280568wmi.5.1611088832105;
+	Tue, 19 Jan 2021 12:40:32 -0800 (PST)
+Received: from localhost.localdomain (29.177.200.146.dyn.plus.net.
+	[146.200.177.29]) by smtp.gmail.com with ESMTPSA id
+	x128sm6642847wmb.29.2021.01.19.12.40.31
+	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+	Tue, 19 Jan 2021 12:40:31 -0800 (PST)
+From: Ignat Korchagin <ignat@cloudflare.com>
+To: agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com, dm-crypt@saout.de,
+	linux-kernel@vger.kernel.org
+Date: Tue, 19 Jan 2021 20:40:15 +0000
+Message-Id: <20210119204015.49516-1-ignat@cloudflare.com>
 MIME-Version: 1.0
-In-Reply-To: <20210119050631.57073-1-chaitanya.kulkarni@wdc.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -100,21 +90,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: shaggy@kernel.org, jfs-discussion@lists.sourceforge.net, snitzer@redhat.com,
-	gustavo@embeddedor.com, clm@fb.com, dm-devel@redhat.com,
-	adilger.kernel@dilger.ca, hch@lst.de, agk@redhat.com,
-	naohiro.aota@wdc.com, sagi@grimberg.me, darrick.wong@oracle.com,
-	osandov@fb.com, kent.overstreet@gmail.com, efremov@linux.com,
-	colyli@suse.de, tj@kernel.org, viro@zeniv.linux.org.uk,
-	dsterba@suse.com, bvanassche@acm.org, agruenba@redhat.com,
-	axboe@kernel.dk, damien.lemoal@wdc.com, tytso@mit.edu,
-	martin.petersen@oracle.com, song@kernel.org,
-	philipp.reisner@linbit.com, jefflexu@linux.alibaba.com,
-	rpeterso@redhat.com, lars.ellenberg@linbit.com, jth@kernel.org,
-	asml.silence@gmail.com
-Subject: Re: [dm-devel] [RFC PATCH 00/37] block: introduce bio_init_fields()
+Cc: pavel@denx.de, kernel-team@cloudflare.com, stable@vger.kernel.org,
+	Ignat Korchagin <ignat@cloudflare.com>
+Subject: [dm-devel] [PATCH] dm crypt: fix invalid copy paste in
+	crypt_alloc_req_aead
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -128,41 +109,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 1/19/21 12:05 AM, Chaitanya Kulkarni wrote:
-> Hi,
-> 
-> This is a *compile only RFC* which adds a generic helper to initialize
-> the various fields of the bio that is repeated all the places in
-> file-systems, block layer, and drivers.
-> 
-> The new helper allows callers to initialize various members such as
-> bdev, sector, private, end io callback, io priority, and write hints.
-> 
-> The objective of this RFC is to only start a discussion, this it not
-> completely tested at all.
+In commit d68b295 ("dm crypt: use GFP_ATOMIC when allocating crypto requests
+from softirq") I wrongly copy pasted crypto request allocation code from
+crypt_alloc_req_skcipher to crypt_alloc_req_aead. It is OK from runtime
+perspective as both simple encryption request pointer and AEAD request pointer
+are part of a union, but may confuse code reviewers.
 
-It would help to know what you're trying to accomplish here.  I'd echo Mike's 
-comments about how it makes it annoying to update things in the future.  In 
-addition, there's so many fields that I'm not going to remember what each one is 
-without having to look it up, which makes it annoying to use and to review.  If 
-it's simply to make sure fields are initialized then you could add debug sanity 
-checks to submit_bio().  If it's to clean up duplication, well I'd argue that 
-the duplication is much clearer than positional arguments in a giant function 
-call.  If you are wanting to change a particular part of the bio to be 
-initialized properly, like Dennis's work to make sure the bi_blkg was 
-initialized at bi_bdev set time, then a more targeted patch series with a 
-specific intent will be more useful and more successful.  Thanks,
+Fixes: d68b295 ("dm crypt: use GFP_ATOMIC when allocating crypto requests from softirq")
+Cc: stable@vger.kernel.org # v5.9+
+Reported-by: Pavel Machek <pavel@denx.de>
+Signed-off-by: Ignat Korchagin <ignat@cloudflare.com>
+---
+ drivers/md/dm-crypt.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-Josef
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 8c874710f0bc..5a55617a08e6 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1481,9 +1481,9 @@ static int crypt_alloc_req_skcipher(struct crypt_config *cc,
+ static int crypt_alloc_req_aead(struct crypt_config *cc,
+ 				 struct convert_context *ctx)
+ {
+-	if (!ctx->r.req) {
+-		ctx->r.req = mempool_alloc(&cc->req_pool, in_interrupt() ? GFP_ATOMIC : GFP_NOIO);
+-		if (!ctx->r.req)
++	if (!ctx->r.req_aead) {
++		ctx->r.req_aead = mempool_alloc(&cc->req_pool, in_interrupt() ? GFP_ATOMIC : GFP_NOIO);
++		if (!ctx->r.req_aead)
+ 			return -ENOMEM;
+ 	}
+ 
+-- 
+2.20.1
 
 --
 dm-devel mailing list
