@@ -7,74 +7,74 @@ X-Spam-Status: No, score=-17.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E7464C433E0
-	for <dm-devel@archiver.kernel.org>; Wed, 20 Jan 2021 12:58:19 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 260B6C433E6
+	for <dm-devel@archiver.kernel.org>; Wed, 20 Jan 2021 12:59:11 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 705C42333C
-	for <dm-devel@archiver.kernel.org>; Wed, 20 Jan 2021 12:58:18 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 705C42333C
+	by mail.kernel.org (Postfix) with ESMTPS id 3FE9723355
+	for <dm-devel@archiver.kernel.org>; Wed, 20 Jan 2021 12:59:10 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3FE9723355
 Authentication-Results: mail.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1611147497;
+	s=mimecast20190719; t=1611147549;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=N2tUkmT/VWU0ce+1SlfND/xBx1ugpjWrFtuPxGIuwwg=;
-	b=RLc3XkiBKdL7755aUMMHy18B+9MkNr6cjWp+CSloh0Ma2LXgeoQCb5L+KUtVdBd0OgXV+o
-	LmyaYSLoG9+NlHBwxCNjE6IxWbbyKAnLunKzlDzCCtzLJwnpiDlufi0LKG7AIqZZ+rk/cX
-	8j38KSXhAKF289lP3BTSG+AtrJ7vqgA=
+	bh=zNQgLlKmvSmHhQnr39M49bmAyBJRJS7HJrDkx+3qJDo=;
+	b=fwtCPEI+1ipL0nm1dssireBENNW9zMh86CepdAR24ZTM08qbRXC7qFMfKesr0t5zubGZx/
+	OTPCH9J9bTScg1HHGhuFfj/DKfqt2/pROkG2JeKn4BA24JiEwcWeWYHs4eShHo0NXeN1uB
+	SjeZuP1keLegbxXT2vmxt7tZUC8TzXs=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-444-jJcofbMMP9Gz16Izi08Flw-1; Wed, 20 Jan 2021 07:58:15 -0500
-X-MC-Unique: jJcofbMMP9Gz16Izi08Flw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-141-qO4KebtkNuSdo1I4h9YJ4Q-1; Wed, 20 Jan 2021 07:59:07 -0500
+X-MC-Unique: qO4KebtkNuSdo1I4h9YJ4Q-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 981FC801817;
-	Wed, 20 Jan 2021 12:58:10 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8FD7A5D9C2;
-	Wed, 20 Jan 2021 12:58:08 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A28128143EA;
+	Wed, 20 Jan 2021 12:59:01 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8251118226;
+	Wed, 20 Jan 2021 12:59:01 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DC370180954D;
-	Wed, 20 Jan 2021 12:58:05 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4CFC54BB7B;
+	Wed, 20 Jan 2021 12:59:01 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
 	[10.5.11.23])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10KCw36j004686 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 20 Jan 2021 07:58:04 -0500
+	id 10KCwRVV004823 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 20 Jan 2021 07:58:27 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id F10351D7; Wed, 20 Jan 2021 12:58:03 +0000 (UTC)
+	id 893FC1A3D8; Wed, 20 Jan 2021 12:58:27 +0000 (UTC)
 Received: from file01.intranet.prod.int.rdu2.redhat.com
 	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6E81B27C38;
-	Wed, 20 Jan 2021 12:58:00 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 23BE01F462;
+	Wed, 20 Jan 2021 12:58:24 +0000 (UTC)
 Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
 	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 10KCvxH1012420; Wed, 20 Jan 2021 07:57:59 -0500
+	id 10KCwNfm012447; Wed, 20 Jan 2021 07:58:23 -0500
 Received: from localhost (mpatocka@localhost)
 	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 10KCvxKL012417; Wed, 20 Jan 2021 07:57:59 -0500
+	ESMTP id 10KCwNPh012443; Wed, 20 Jan 2021 07:58:23 -0500
 X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
 	owned process doing -bs
-Date: Wed, 20 Jan 2021 07:57:59 -0500 (EST)
+Date: Wed, 20 Jan 2021 07:58:23 -0500 (EST)
 From: Mikulas Patocka <mpatocka@redhat.com>
 X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
 To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>,
 	Ondrej Kozina <okozina@redhat.com>
-Message-ID: <alpine.LRH.2.02.2101200757220.12379@file01.intranet.prod.int.rdu2.redhat.com>
+Message-ID: <alpine.LRH.2.02.2101200758010.12379@file01.intranet.prod.int.rdu2.redhat.com>
 User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
 X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com
-Subject: [dm-devel] [PATCH 1/2] dm-integrity: introduce the "fix_hmac"
-	argument
+Subject: [dm-devel] [PATCH 2/2] dm-integrity: disable recalculate due to
+ secrurity reasons
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -88,7 +88,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -96,266 +96,112 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Introduce the "fix_hmac" arguent. It improves security of journal_mac:
-- the section number is mixed to the mac, so that an attacker can't
-  copy sectors from one journal section to another journal section
-- the superblock is protected by journal_mac
+Disable recalculating if we don't have fix_hmac, the journal hash
+algorithm is using a kay and we don't have the "legacy_recalculate" flag.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- Documentation/admin-guide/device-mapper/dm-integrity.rst |   12 +
- drivers/md/dm-integrity.c                                |  104 +++++++++++++--
- 2 files changed, 105 insertions(+), 11 deletions(-)
 
 Index: linux-2.6/drivers/md/dm-integrity.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-integrity.c
 +++ linux-2.6/drivers/md/dm-integrity.c
-@@ -57,6 +57,7 @@
- #define SB_VERSION_2			2
- #define SB_VERSION_3			3
- #define SB_VERSION_4			4
-+#define SB_VERSION_5			5
- #define SB_SECTORS			8
- #define MAX_SECTORS_PER_BLOCK		8
- 
-@@ -78,6 +79,7 @@ struct superblock {
- #define SB_FLAG_RECALCULATING		0x2
- #define SB_FLAG_DIRTY_BITMAP		0x4
- #define SB_FLAG_FIXED_PADDING		0x8
-+#define SB_FLAG_FIXED_HMAC		0x10
- 
- #define	JOURNAL_ENTRY_ROUNDUP		8
- 
-@@ -257,8 +259,9 @@ struct dm_integrity_c {
- 	bool journal_uptodate;
- 	bool just_formatted;
- 	bool recalculate_flag;
--	bool fix_padding;
+@@ -262,6 +262,7 @@ struct dm_integrity_c {
  	bool discard;
-+	bool fix_padding;
-+	bool fix_hmac;
+ 	bool fix_padding;
+ 	bool fix_hmac;
++	bool legacy_recalculate;
  
  	struct alg_spec internal_hash_alg;
  	struct alg_spec journal_crypt_alg;
-@@ -468,7 +471,9 @@ static void wraparound_section(struct dm
- 
- static void sb_set_version(struct dm_integrity_c *ic)
- {
--	if (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_PADDING))
-+	if (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC))
-+		ic->sb->version = SB_VERSION_5;
-+	else if (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_PADDING))
- 		ic->sb->version = SB_VERSION_4;
- 	else if (ic->mode == 'B' || ic->sb->flags & cpu_to_le32(SB_FLAG_DIRTY_BITMAP))
- 		ic->sb->version = SB_VERSION_3;
-@@ -478,10 +483,58 @@ static void sb_set_version(struct dm_int
- 		ic->sb->version = SB_VERSION_1;
+@@ -389,6 +390,15 @@ static int dm_integrity_failed(struct dm
+ 	return READ_ONCE(ic->failed);
  }
  
-+static int sb_mac(struct dm_integrity_c *ic, bool wr)
++static bool dm_integrity_disable_recalculate(struct dm_integrity_c *ic)
 +{
-+	SHASH_DESC_ON_STACK(desc, ic->journal_mac);
-+	int r;
-+	unsigned size = crypto_shash_digestsize(ic->journal_mac);
-+
-+	if (sizeof(struct superblock) + size > 1 << SECTOR_SHIFT) {
-+		dm_integrity_io_error(ic, "digest is too long", -EINVAL);
-+		return -EINVAL;
-+	}
-+
-+	desc->tfm = ic->journal_mac;
-+
-+	r = crypto_shash_init(desc);
-+	if (unlikely(r)) {
-+		dm_integrity_io_error(ic, "crypto_shash_init", r);
-+		return r;
-+	}
-+
-+	r = crypto_shash_update(desc, (__u8 *)ic->sb, (1 << SECTOR_SHIFT) - size);
-+	if (unlikely(r)) {
-+		dm_integrity_io_error(ic, "crypto_shash_update", r);
-+		return r;
-+	}
-+
-+	if (likely(wr)) {
-+		r = crypto_shash_final(desc, (__u8 *)ic->sb + (1 << SECTOR_SHIFT) - size);
-+		if (unlikely(r)) {
-+			dm_integrity_io_error(ic, "crypto_shash_final", r);
-+			return r;
-+		}
-+	} else {
-+		__u8 result[HASH_MAX_DIGESTSIZE];
-+		r = crypto_shash_final(desc, result);
-+		if (unlikely(r)) {
-+			dm_integrity_io_error(ic, "crypto_shash_final", r);
-+			return r;
-+		}
-+		if (memcmp((__u8 *)ic->sb + (1 << SECTOR_SHIFT) - size, result, size)) {
-+			dm_integrity_io_error(ic, "superblock mac", -EILSEQ);
-+			return -EILSEQ;
-+		}
-+	}
-+
-+	return 0;
++	if (!ic->fix_hmac &&
++	     ic->journal_mac_alg.key &&
++	    !ic->legacy_recalculate)
++		return true;
++	return false;
 +}
 +
- static int sync_rw_sb(struct dm_integrity_c *ic, int op, int op_flags)
+ static commit_id_t dm_integrity_commit_id(struct dm_integrity_c *ic, unsigned i,
+ 					  unsigned j, unsigned char seq)
  {
- 	struct dm_io_request io_req;
- 	struct dm_io_region io_loc;
-+	int r;
- 
- 	io_req.bi_op = op;
- 	io_req.bi_op_flags = op_flags;
-@@ -493,10 +546,28 @@ static int sync_rw_sb(struct dm_integrit
- 	io_loc.sector = ic->start;
- 	io_loc.count = SB_SECTORS;
- 
--	if (op == REQ_OP_WRITE)
-+	if (op == REQ_OP_WRITE) {
- 		sb_set_version(ic);
-+		if (ic->journal_mac && ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) {
-+			r = sb_mac(ic, true);
-+			if (unlikely(r))
-+				return r;
-+		}
-+	}
-+
-+	r = dm_io(&io_req, 1, &io_loc, NULL);
-+	if (unlikely(r))
-+		return r;
- 
--	return dm_io(&io_req, 1, &io_loc, NULL);
-+	if (op == REQ_OP_READ) {
-+		if (ic->mode != 'R' && ic->journal_mac && ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) {
-+			r = sb_mac(ic, false);
-+			if (unlikely(r))
-+				return r;
-+		}
-+	}
-+
-+	return 0;
- }
- 
- #define BITMAP_OP_TEST_ALL_SET		0
-@@ -718,6 +789,15 @@ static void section_mac(struct dm_integr
- 		goto err;
- 	}
- 
-+	if (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) {
-+		uint64_t section_le = cpu_to_le64(section);
-+		r = crypto_shash_update(desc, (__u8 *)&section_le, sizeof section_le);
-+		if (unlikely(r)) {
-+			dm_integrity_io_error(ic, "crypto_shash_update", r);
-+			goto err;
-+		}
-+	}
-+
- 	for (j = 0; j < ic->journal_section_entries; j++) {
- 		struct journal_entry *je = access_journal_entry(ic, section, j);
- 		r = crypto_shash_update(desc, (__u8 *)&je->u.sector, sizeof je->u.sector);
-@@ -3140,6 +3220,7 @@ static void dm_integrity_status(struct d
- 		arg_count += !!ic->journal_crypt_alg.alg_string;
+@@ -3221,6 +3231,7 @@ static void dm_integrity_status(struct d
  		arg_count += !!ic->journal_mac_alg.alg_string;
  		arg_count += (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_PADDING)) != 0;
-+		arg_count += (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) != 0;
+ 		arg_count += (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) != 0;
++		arg_count += ic->legacy_recalculate;
  		DMEMIT("%s %llu %u %c %u", ic->dev->name, ic->start,
  		       ic->tag_size, ic->mode, arg_count);
  		if (ic->meta_dev)
-@@ -3163,6 +3244,8 @@ static void dm_integrity_status(struct d
- 		}
- 		if ((ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_PADDING)) != 0)
+@@ -3246,6 +3257,8 @@ static void dm_integrity_status(struct d
  			DMEMIT(" fix_padding");
-+		if ((ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) != 0)
-+			DMEMIT(" fix_hmac");
+ 		if ((ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) != 0)
+ 			DMEMIT(" fix_hmac");
++		if (ic->legacy_recalculate)
++			DMEMIT(" legacy_recalculate");
  
  #define EMIT_ALG(a, n)							\
  		do {							\
-@@ -3298,6 +3381,9 @@ static int initialize_superblock(struct
- 	if (!journal_sections)
- 		journal_sections = 1;
- 
-+	if (ic->fix_hmac && ic->journal_mac_alg.alg_string)
-+		ic->sb->flags |= cpu_to_le32(SB_FLAG_FIXED_HMAC);
-+
- 	if (!ic->meta_dev) {
- 		if (ic->fix_padding)
- 			ic->sb->flags |= cpu_to_le32(SB_FLAG_FIXED_PADDING);
-@@ -3792,7 +3878,7 @@ static int dm_integrity_ctr(struct dm_ta
+@@ -3878,7 +3891,7 @@ static int dm_integrity_ctr(struct dm_ta
  	unsigned extra_args;
  	struct dm_arg_set as;
  	static const struct dm_arg _args[] = {
--		{0, 15, "Invalid number of feature args"},
-+		{0, 16, "Invalid number of feature args"},
+-		{0, 16, "Invalid number of feature args"},
++		{0, 17, "Invalid number of feature args"},
  	};
  	unsigned journal_sectors, interleave_sectors, buffer_sectors, journal_watermark, sync_msec;
  	bool should_write_sb;
-@@ -3930,7 +4016,7 @@ static int dm_integrity_ctr(struct dm_ta
- 			if (r)
- 				goto bad;
- 		} else if (!strncmp(opt_string, "journal_mac:", strlen("journal_mac:"))) {
--			r = get_alg_and_key(opt_string, &ic->journal_mac_alg,  &ti->error,
-+			r = get_alg_and_key(opt_string, &ic->journal_mac_alg, &ti->error,
- 					    "Invalid journal_mac argument");
- 			if (r)
- 				goto bad;
-@@ -3940,6 +4026,8 @@ static int dm_integrity_ctr(struct dm_ta
- 			ic->discard = true;
- 		} else if (!strcmp(opt_string, "fix_padding")) {
+@@ -4028,6 +4041,8 @@ static int dm_integrity_ctr(struct dm_ta
  			ic->fix_padding = true;
-+		} else if (!strcmp(opt_string, "fix_hmac")) {
-+			ic->fix_hmac = true;
+ 		} else if (!strcmp(opt_string, "fix_hmac")) {
+ 			ic->fix_hmac = true;
++		} else if (!strcmp(opt_string, "legacy_recalculate")) {
++			ic->legacy_recalculate = true;
  		} else {
  			r = -EINVAL;
  			ti->error = "Invalid argument";
-@@ -4096,7 +4184,7 @@ static int dm_integrity_ctr(struct dm_ta
- 			should_write_sb = true;
+@@ -4331,6 +4346,14 @@ try_smaller_buffer:
+ 		}
  	}
  
--	if (!ic->sb->version || ic->sb->version > SB_VERSION_4) {
-+	if (!ic->sb->version || ic->sb->version > SB_VERSION_5) {
- 		r = -EINVAL;
- 		ti->error = "Unknown version";
- 		goto bad;
-@@ -4420,7 +4508,7 @@ static void dm_integrity_dtr(struct dm_t
- 
- static struct target_type integrity_target = {
- 	.name			= "integrity",
--	.version		= {1, 6, 0},
-+	.version		= {1, 7, 0},
- 	.module			= THIS_MODULE,
- 	.features		= DM_TARGET_SINGLETON | DM_TARGET_INTEGRITY,
- 	.ctr			= dm_integrity_ctr,
++	if (ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING) &&
++	    le64_to_cpu(ic->sb->recalc_sector) < ic->provided_data_sectors &&
++	    dm_integrity_disable_recalculate(ic)) {
++		ti->error = "Recalculating with \"fix_hmac\" is disable for security reasons - if you really need it, use the argument \"legacy_recalculate\"";
++		r = -EOPNOTSUPP;
++		goto bad;
++	}
++
+ 	ic->bufio = dm_bufio_client_create(ic->meta_dev ? ic->meta_dev->bdev : ic->dev->bdev,
+ 			1U << (SECTOR_SHIFT + ic->log2_buffer_sectors), 1, 0, NULL, NULL);
+ 	if (IS_ERR(ic->bufio)) {
 Index: linux-2.6/Documentation/admin-guide/device-mapper/dm-integrity.rst
 ===================================================================
 --- linux-2.6.orig/Documentation/admin-guide/device-mapper/dm-integrity.rst
 +++ linux-2.6/Documentation/admin-guide/device-mapper/dm-integrity.rst
-@@ -177,14 +177,20 @@ bitmap_flush_interval:number
- 	The bitmap flush interval in milliseconds. The metadata buffers
- 	are synchronized when this interval expires.
+@@ -128,9 +128,15 @@ internal_hash:algorithm(:key)	(the key i
  
-+allow_discards
-+	Allow block discard requests (a.k.a. TRIM) for the integrity device.
-+	Discards are only allowed to devices using internal hash.
+ 	You can use a crc algorithm (such as crc32), then integrity target
+ 	will protect the data against accidental corruption.
+-	You can also use a hmac algorithm (for example
+-	"hmac(sha256):0123456789abcdef"), in this mode it will provide
+-	cryptographic authentication of the data without encryption.
 +
- fix_padding
- 	Use a smaller padding of the tag area that is more
- 	space-efficient. If this option is not present, large padding is
- 	used - that is for compatibility with older kernels.
++	In order to provide cryptographic authentication of the data
++	without encryption, you need:
++	* the kernel 5.12 and integritysetup 2.3.5
++	* specfiy internal_hash as a hmac function with a key, for example
++	  hmac(sha256):0123456789abcdef
++	* specify journal_hash as a hmac function with a key, for example
++	  hmac(sha256):0123456789abcdef
++	* specify the fix_hmac argument
  
--allow_discards
--	Allow block discard requests (a.k.a. TRIM) for the integrity device.
--	Discards are only allowed to devices using internal hash.
-+fix_hmac
-+	Improve security of journal_mac:
-+	- the section number is mixed to the mac, so that an attacker can't
-+	  copy sectors from one journal section to another journal section
-+	- the superblock is protected by journal_mac
- 
- The journal mode (D/J), buffer_sectors, journal_watermark, commit_time and
- allow_discards can be changed when reloading the target (load an inactive
+ 	When this argument is not used, the integrity tags are accepted
+ 	from an upper layer target, such as dm-crypt. The upper layer
 
 --
 dm-devel mailing list
