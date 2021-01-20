@@ -2,76 +2,142 @@ Return-Path: <SRS0=zaPp=GX=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 59077C433DB
-	for <dm-devel@archiver.kernel.org>; Wed, 20 Jan 2021 02:31:35 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CCC1FC433E0
+	for <dm-devel@archiver.kernel.org>; Wed, 20 Jan 2021 03:28:27 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 492FE2250E
-	for <dm-devel@archiver.kernel.org>; Wed, 20 Jan 2021 02:31:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 492FE2250E
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=huawei.com
+	by mail.kernel.org (Postfix) with ESMTPS id 8FB49207CF
+	for <dm-devel@archiver.kernel.org>; Wed, 20 Jan 2021 03:28:26 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 8FB49207CF
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-368-ee_AdLfWNae4Dp8j5kIgAg-1; Tue, 19 Jan 2021 21:31:28 -0500
-X-MC-Unique: ee_AdLfWNae4Dp8j5kIgAg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-279-eavdwQZyNDOG5FDYHFs3WA-1; Tue, 19 Jan 2021 22:28:23 -0500
+X-MC-Unique: eavdwQZyNDOG5FDYHFs3WA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4D808800D53;
-	Wed, 20 Jan 2021 02:31:24 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4B01D800D55;
+	Wed, 20 Jan 2021 03:28:18 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 392746D01A;
-	Wed, 20 Jan 2021 02:31:23 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AAECC10013BD;
+	Wed, 20 Jan 2021 03:28:17 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6F4AE180954D;
-	Wed, 20 Jan 2021 02:31:21 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8B9D5180954D;
+	Wed, 20 Jan 2021 03:28:16 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10K2VJMg001150 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 19 Jan 2021 21:31:19 -0500
+	id 10K3SCf8006907 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 19 Jan 2021 22:28:12 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id ED8C22166AF6; Wed, 20 Jan 2021 02:31:18 +0000 (UTC)
+	id 0E6721134CB0; Wed, 20 Jan 2021 03:28:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E8F302166AF4
-	for <dm-devel@redhat.com>; Wed, 20 Jan 2021 02:31:15 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 08CA11134CAD
+	for <dm-devel@redhat.com>; Wed, 20 Jan 2021 03:28:09 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C410811E76
-	for <dm-devel@redhat.com>; Wed, 20 Jan 2021 02:31:15 +0000 (UTC)
-Received: from szxga05-in.huawei.com (szxga05-in.huawei.com
-	[45.249.212.191]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-370-CganCrO8Mea-espxQXv-VA-1; Tue, 19 Jan 2021 21:31:13 -0500
-X-MC-Unique: CganCrO8Mea-espxQXv-VA-1
-Received: from DGGEMS401-HUB.china.huawei.com (unknown [172.30.72.59])
-	by szxga05-in.huawei.com (SkyGuard) with ESMTP id 4DL8cp6KYLzj9yc;
-	Wed, 20 Jan 2021 10:30:02 +0800 (CST)
-Received: from [10.174.178.113] (10.174.178.113) by
-	DGGEMS401-HUB.china.huawei.com (10.3.19.201) with Microsoft SMTP Server
-	id 14.3.498.0; Wed, 20 Jan 2021 10:30:59 +0800
-To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
-	Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel mailing list
-	<dm-devel@redhat.com>
-References: <063bbeeb-15aa-f7c0-b881-7526c3a2720c@huawei.com>
-	<f86753b17cc7e85e7e0f7e711adec349323a7c5a.camel@suse.com>
-From: lixiaokeng <lixiaokeng@huawei.com>
-Message-ID: <d8ba8118-ce98-249a-cafd-021f0c1831a5@huawei.com>
-Date: Wed, 20 Jan 2021 10:30:58 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
-	Thunderbird/68.10.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 64341800183
+	for <dm-devel@redhat.com>; Wed, 20 Jan 2021 03:28:09 +0000 (UTC)
+Received: from esa4.hgst.iphmx.com (esa4.hgst.iphmx.com [216.71.154.42])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-593-1XRqnMYgMguN9LWkkg4EYg-1; Tue, 19 Jan 2021 22:28:06 -0500
+X-MC-Unique: 1XRqnMYgMguN9LWkkg4EYg-1
+IronPort-SDR: 5+xZGKwR+vWn59Bhi8mkKXqNz/iW4w9Vnu9yAMcqM7RBpWTonEGmyTXdWeHqap0mKuHzjPub3F
+	kgz6zEPhIoanstfyptbr7W4g57Bpiof0QZAMtTOoXa/rDvjPmSz0nab0wpZJcAry9GnAZ8+qcC
+	M3b7Rsuhp8LY8AgjbdN8oEFWgMWeg2ZnqeOsT8yp/K2it2xvQgYSpT/y5b9E/hAldiyfDW2Px3
+	/9Iq5djCd2PWE28ff0fVjFhEynFv3+Q3c6J+cJMdUYE1InGosCicYxFZO8mhm4eSrukifCaTdo
+	RGI=
+X-IronPort-AV: E=Sophos;i="5.79,360,1602518400"; d="scan'208";a="157859380"
+Received: from mail-bn8nam12lp2171.outbound.protection.outlook.com (HELO
+	NAM12-BN8-obe.outbound.protection.outlook.com) ([104.47.55.171])
+	by ob1.hgst.iphmx.com with ESMTP; 20 Jan 2021 11:27:58 +0800
+Received: from BYAPR04MB4965.namprd04.prod.outlook.com (2603:10b6:a03:4d::25)
+	by BYAPR04MB4872.namprd04.prod.outlook.com (2603:10b6:a03:42::27)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3784.11;
+	Wed, 20 Jan 2021 03:27:55 +0000
+Received: from BYAPR04MB4965.namprd04.prod.outlook.com
+	([fe80::716c:4e0c:c6d1:298a]) by
+	BYAPR04MB4965.namprd04.prod.outlook.com
+	([fe80::716c:4e0c:c6d1:298a%6]) with mapi id 15.20.3742.012;
+	Wed, 20 Jan 2021 03:27:55 +0000
+From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
+To: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+	"linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
+	"linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"drbd-dev@lists.linbit.com" <drbd-dev@tron.linbit.com>,
+	"linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>,
+	"linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
+	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
+	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+	"target-devel@vger.kernel.org" <target-devel@vger.kernel.org>,
+	"linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>,
+	"linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>,
+	"cluster-devel@redhat.com" <cluster-devel@redhat.com>
+Thread-Topic: [RFC PATCH 00/37] block: introduce bio_init_fields()
+Thread-Index: AQHW7iDfXiv5iuHOl0mGSxMcJ7OwhA==
+Date: Wed, 20 Jan 2021 03:27:55 +0000
+Message-ID: <BYAPR04MB49652C7B57396757FF064C6686A20@BYAPR04MB4965.namprd04.prod.outlook.com>
+References: <20210119050631.57073-1-chaitanya.kulkarni@wdc.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-originating-ip: [199.255.45.62]
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-ht: Tenant
+x-ms-office365-filtering-correlation-id: a5b4c018-b955-4aff-42d9-08d8bcf3608a
+x-ms-traffictypediagnostic: BYAPR04MB4872:
+x-ms-exchange-transport-forked: True
+x-microsoft-antispam-prvs: <BYAPR04MB48725C6EE06AE9513255BA5C86A29@BYAPR04MB4872.namprd04.prod.outlook.com>
+wdcipoutbound: EOP-TRUE
+x-ms-oob-tlc-oobclassifiers: OLM:8882
+x-ms-exchange-senderadcheck: 1
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: lqw/FI7V3h3I7N6LUDiMWfhW2chPZ0fK5VoXZLC7RQTD04IRNr4lXPyMYMfMUREUCjhqbsEYNkR0i0ntiSZcIAZqmjdF57HMmj47+NooF42/0RPaWT26C5YZdfVo75rKokHq9PHjl7dxwLYdYsGdDfeeSENfAfCuDQ6aQWFFVFPiLrgilW2mfde9/lHnT4hAxNphtCZIW+V5C2Py1PVUDiHlYPv2SPmmXl7/djmz9Qbq0Nki1YnQIwziZVTKalwz+WddcgkSnLau7w5rNtFQH859+NQBj6hCuAnSQuBzU1mThUFpsvhXA0yfEbPr+mL40U7l2JqTnG571BQR+R+aM9sPYuQHp0BOzVNjTSR8vodGszQKXWhtLuuwquyO8nXZQjgc+4qjPKcH0W2oDvW51k7EwOI1xZ5LXvKta7v96r3le8A9o3BLdb2CfPmvgpU1Oft1BbJlI4NLPQmkxMqn6sK7khwZMWz9cxpawhQGe8pg2Ierz/Nis188soVv0v/o3jfWHv0lnergYaYQYoLOwQpy9PedA2SAlM0R2GY7OBp1nP3el2JC9YrwDPIXhkfu
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:BYAPR04MB4965.namprd04.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(4636009)(346002)(136003)(366004)(396003)(376002)(39860400002)(83380400001)(8676002)(921005)(7416002)(64756008)(66446008)(54906003)(53546011)(7696005)(6506007)(71200400001)(86362001)(52536014)(2906002)(5660300002)(478600001)(76116006)(66556008)(66946007)(7406005)(33656002)(66476007)(110136005)(8936002)(316002)(186003)(4744005)(55016002)(26005)(9686003)(4326008);
+	DIR:OUT; SFP:1102
+x-ms-exchange-antispam-messagedata: =?us-ascii?Q?CYeIwzL7+LDwBcGUtwWpgfGZXas4/+HyoB5dQvzgRXUwabx1wNppES5QTFxT?=
+	=?us-ascii?Q?kMs/MvxFLYVZI5XqHFhuJeOq9onZPVWZNgeM1d1TVfokEb23W8IjRI9/kJQ8?=
+	=?us-ascii?Q?njDQexyJ0VEFzXOM2fBaNuy8G56NIO9iILmStR8rTXkc+GN1VWuYWqmyqz1p?=
+	=?us-ascii?Q?M8UvAerZCHQTENnAamWt49x4NLAfr9FFpZfux/lxafxQafyaTIS3nxDmer6n?=
+	=?us-ascii?Q?8JRBu5PudXaoLVCIX5TFxJ9BHaj5MvpPcwnMe9yBtbXqD1lRlqEUUHnvhwfK?=
+	=?us-ascii?Q?UIftvmnTQROjFbfkJXhZccpAoL/aq5AS0W+TYV2JB6qHUFtSaFLOv3m+7JSZ?=
+	=?us-ascii?Q?KB9qT49sztiW8OklmFBypBXzxVxH+sFpG6dedI3pzoiKl+1l+yv8lx+IHIc0?=
+	=?us-ascii?Q?bnPJo+pPjByH83zID56ASid+n3EMXQ+AQvu66L3G8/pfCvGGrwcnjiN+wYuE?=
+	=?us-ascii?Q?jgn5p46CJnUPI8fVsBvsOPPQvD6RahqlpOCKp6O2gNqlabFChMaHTa/HtLeg?=
+	=?us-ascii?Q?XaXE4rLcbgkaSWEuoLPG8GlN6LNp18Xjm2RS/25dq8vNTwk1NzTSmsv6RRZc?=
+	=?us-ascii?Q?IhQ78OnwWHRVLF+ZyQ9faxQPYis+oX25aE/PAdTk/AV3kke9/XNbjlyjz6sQ?=
+	=?us-ascii?Q?KIglOzm3XKue4E4mZ/Oc+2YadCcFDjxtp0hf2tyIs9TJL1r/GKvdcThyYVBL?=
+	=?us-ascii?Q?wRV66Eex1KUdgrzLeEjXT1fMhAelxL2Wq+SWqiZp6VmrBxF5LExsi7A+978r?=
+	=?us-ascii?Q?TGNkHEzmUVLuoOEUMQ5T44Jv1898R9lxeWj4JeItOojNBXT3Tq4OcRsZELf6?=
+	=?us-ascii?Q?R1dvqhysFLFxXmuVei/nYnRFepqrdE1rAIghfvG53HAVCMokkzIzD53g+VJu?=
+	=?us-ascii?Q?kM1xatRvJtNTqOB350/tIRKqR8GtrILKDN38GJ3VpbZ6v0ZDSUF2VCgTSLt7?=
+	=?us-ascii?Q?l91pWwrHQtmycz370urFgVYRNv18k5jQ1qOlRwMHa2D1aKdGKoCKPFMikA/F?=
+	=?us-ascii?Q?ocZw?=
 MIME-Version: 1.0
-In-Reply-To: <f86753b17cc7e85e7e0f7e711adec349323a7c5a.camel@suse.com>
-X-Originating-IP: [10.174.178.113]
-X-CFilter-Loop: Reflected
+X-OriginatorOrg: wdc.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: BYAPR04MB4965.namprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: a5b4c018-b955-4aff-42d9-08d8bcf3608a
+X-MS-Exchange-CrossTenant-originalarrivaltime: 20 Jan 2021 03:27:55.2569 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: 6GChSPAwRaJR+pnJ/NXEbGatSLvEkK5o5I/huExAKkTALRKQxBWJkWD8S6meD32zVWEaMR/TBIKWTtYqKFHLrIZporw6ZI089anAFL9wihk=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR04MB4872
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -80,14 +146,40 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 10K2VJMg001150
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 10K3SCf8006907
 X-loop: dm-devel@redhat.com
-Cc: linfeilong <linfeilong@huawei.com>,
-	"liuzhiqiang \(I\)" <liuzhiqiang26@huawei.com>, lihaotian9@huawei.com
-Subject: Re: [dm-devel] [QUESTION]: multipath device with wrong path lead to
-	metadata err
+Cc: "shaggy@kernel.org" <shaggy@kernel.org>,
+	"jfs-discussion@lists.sourceforge.net"
+	<jfs-discussion@lists.sourceforge.net>,
+	"snitzer@redhat.com" <snitzer@redhat.com>,
+	"gustavo@embeddedor.com" <gustavo@embeddedor.com>,
+	"clm@fb.com" <clm@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>,
+	"adilger.kernel@dilger.ca" <adilger.kernel@dilger.ca>,
+	"hch@lst.de" <hch@lst.de>, "agk@redhat.com" <agk@redhat.com>,
+	Naohiro Aota <Naohiro.Aota@wdc.com>, "sagi@grimberg.me" <sagi@grimberg.me>,
+	"darrick.wong@oracle.com" <darrick.wong@oracle.com>,
+	"osandov@fb.com" <osandov@fb.com>,
+	"kent.overstreet@gmail.com" <kent.overstreet@gmail.com>,
+	"josef@toxicpanda.com" <josef@toxicpanda.com>,
+	"efremov@linux.com" <efremov@linux.com>, "colyli@suse.de" <colyli@suse.de>,
+	"tj@kernel.org" <tj@kernel.org>,
+	"viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>,
+	"dsterba@suse.com" <dsterba@suse.com>,
+	"bvanassche@acm.org" <bvanassche@acm.org>,
+	"agruenba@redhat.com" <agruenba@redhat.com>,
+	"axboe@kernel.dk" <axboe@kernel.dk>,
+	Moal <Damien.LeMoal@wdc.com>, "tytso@mit.edu" <tytso@mit.edu>,
+	"martin.petersen@oracle.com" <martin.petersen@oracle.com>,
+	"song@kernel.org" <song@kernel.org>, Damien,
+	"philipp.reisner@linbit.com" <philipp.reisner@linbit.com>,
+	"jefflexu@linux.alibaba.com" <jefflexu@linux.alibaba.com>,
+	"rpeterso@redhat.com" <rpeterso@redhat.com>,
+	"lars.ellenberg@linbit.com" <lars.ellenberg@linbit.com>,
+	"jth@kernel.org" <jth@kernel.org>,
+	"asml.silence@gmail.com" <asml.silence@gmail.com>
+Subject: Re: [dm-devel] [RFC PATCH 00/37] block: introduce bio_init_fields()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -101,56 +193,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-GB
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-SGkgTWFydGluOgogICAgVGhhbmtzIGZvciB5b3VyIHJlcGx5LgoKCj4gdmVyaWZ5X3BhdGhzKCkg
-d291bGQgZGV0ZWN0IHRoaXMuIFdlIGRvIGNhbGwgdmVyaWZ5X3BhdGhzKCkgaW4KPiBjb2FsZXNj
-ZV9wYXRocygpIGJlZm9yZSBjYWxsaW5nIGRvbWFwKCksIGJ1dCBub3QgaW1tZWRpYXRlbHkgYmVm
-b3JlLgo+IFBlcmhhcHMgd2Ugc2hvdWxkIG1vdmUgdGhlIHZlcmlmeV9wYXRocygpIGNhbGwgZG93
-biB0byBpbW1lZGlhdGVseQo+IGJlZm9yZSB0aGUgZG9tYXAoKSBjYWxsLsKgVGhhdCB3b3VsZCBh
-dCBsZWFzdCBtaW5pbWl6ZSB0aGUgdGltZSB3aW5kb3cKPiBmb3IgdGhpcyByYWNlLiBJdCdzIGhh
-cmQgdG8gYXZvaWQgaXQgZW50aXJlbHkuIFRoZSB3YXkgbXVsdGlwYXRoZCBpcwo+IHdyaXR0ZW4s
-IHRoZSB2ZWNzIGxvY2sgaXMgaGVsZCBhbGwgdGhlIHRpbWUgZHVyaW5nIGNvYWxlc2NlX3BhdGhz
-KCksIAo+IGFuZCB0aHVzIG5vIHVldmVudHMgY2FuIGJlIHByb2Nlc3NlZC4gV2UgY291bGQgYWxz
-byBjb25zaWRlciBjYWxsaW5nCj4gdmVyaWZ5X3BhdGhzKCkgYmVmb3JlICphbmQqIGFmdGVyIGRv
-bWFwKCkuCgpDYW4gY2FsbGluZyB2ZXJpZnlfcGF0aHMoKSBiZWZvcmUgKmFuZCogYWZ0ZXIgZG9t
-YXAoKSBkZWFsIHRoaXMgZW50aXJlbHk/Cgo+IFdhcyB0aGlzIGEgbWFwIGNyZWF0aW9uIG9yIGEg
-bWFwIHJlbG9hZD8gV2FzIHRoZSBtYXAgcmVtb3ZlZCBhZnRlciB0aGUKPiBmYWlsdXJlPyBEbyB5
-b3Ugb2JzZXJ2ZSB0aGUgbWVzc2FnZSAiaWdub3JpbmcgbWFwIiBvciAicmVtb3ZpbmcgbWFwIj8K
-Pgo+IERvIHlvdSBvYnNlcnZlIGEgInJlbW92ZSIgdWV2ZW50IGZvciBzZGk/IAoKVGhpcyB3YXMg
-YSBtYXAgcmVsb2FkIGJ1dCBzZGkgd2FzIG5vdCBpbiBvbGQgbWFwLiBUaGUgICJyZW1vdmluZyBt
-YXAiCndhcyBvYnNlcnZlZC4gVGhlICJyZW1vdmUiIHVldmVudCBmb3Igc2RpIHdhcyBub3Qgb2Jz
-ZXJ2ZWQgaGVyZS4KCj4gSSB3b25kZXIgaWYgeW91J2Qgc2VlIHRoZSBpc3N1ZSBhbHNvIGlmIHlv
-dSBydW4gdGhlIHNhbWUgdGVzdCB3aXRob3V0Cj4gdGhlICJtdWx0aXBhdGggLUY7IG11bHRpcGF0
-aCAtciIgbG9vcCwgb3Igd2l0aCBqdXN0IG9uZS4gT2ssIG9uZQo+IG11bHRpcGF0aF9xdWVyeSgp
-IGxvb3Agc2ltdWxhdGVzIGFuIGFkbWluIHdvcmtpbmcgb24gdGhlIHN5c3RlbSwgYnV0IDIKPiBw
-YXJhbGxlbCBsb29wcyAtIDIgYWRtaW5zIHdvcmtpbmcgaW4gcGFyYWxsZWwsIHBsdXMgdGhlIGlu
-dGVuc2l2ZQo+IHNlcXVlbmNlIG9mIGFjdGlvbnMgZG9uZSBpbiBtdWx0aXBhdGhkX3F1ZXJ5IGF0
-IHRoZSBzYW1lIHRpbWU/IFRoZQo+IHJlcGVhdGVkICJtdWx0aXBhdGggLXIiIGNhbGxzIGFuZCBt
-dWx0aXBhdGhkIGNvbW1hbmRzIHdpbGwgY2F1c2UKPiBtdWx0aXBhdGhkIHRvIHNwZW5kIGEgbG90
-IG9mIHRpbWUgaW4gcmVjb25maWd1cmUoKSBhbmQgaW4gY2xpXyogY2FsbHMKPiBob2xkaW5nIHRo
-ZSB2ZWNzIGxvY2ssIHdoaWNoIG1ha2VzIGl0IGxpa2VseSB0aGF0IHVldmVudHMgYXJlIG1pc3Nl
-ZCBvcgo+IHByb2Nlc3NlZCBsYXRlLgoKQXMgeW91IHNhaWQsIHRoZXJlIHdlcmUgbG90cyBvZiBj
-bGlfKiBjYWxscyBidXQgbm8gdWV2ZW50IHdoZW4gZXJyb3IKY2F1c2VkLiBBbmQgYWZ0ZXIgZmlu
-aXNoaW5nIHRoZW0sIGh1bmRyZWRzIG9mIHVldmVudCB3aWxsIGJlIGZvdW5kIChmb3IKZXhhbXBs
-ZSAsIkZvcndhcmRpbmcgMjAxIHVldmVudHMiIGluIGxvZykuCgo+IERvbid0IGdldCBtZSB3cm9u
-ZywgSSBkb24ndCBhcmd1ZSBhZ2FpbnN0IHRvdWdoIHRlc3RpbmcuIEJ1dCB3ZSBzaG91bGQKPiBi
-ZSBhd2FyZSB0aGF0IHRoZXJlIGFyZSBhbHdheXMgdGltZSBpbnRlcnZhbHMgZHVyaW5nIHdoaWNo
-IG11bHRpcGF0aGQncwo+IHBpY3R1cmUgb2YgdGhlIHByZXNlbnQgZGV2aWNlcyBpcyBkaWZmZXJl
-bnQgZnJvbSB3aGF0IHRoZSBrZXJuZWwgc2Vlcy4KCldoYXQgeW91IHNhaWQgaXMgdmVyeSByZWFz
-b25hYmxlLiBXaGVuIHRoaXMgcHJvYmxlbSB3YXMgZm91bmQsIEkgdGhpbmsKaXQgaXMgZGlmZmlj
-dWx0IHRvIHNvbHZlIHRoYXQgZW50aXJlbHksIHdoaWxlIGl0IGlzIGhhcmQgdG8gaGFwcGVuLiBX
-ZWxsLApJIHdpbGwgZGlzY3VzcyB0aGUgcmF0aW9uYWxpdHkgb2YgdGVzdCBzY3JpcHRzIHdpdGgg
-dGVzdGVycy4KCj4gVGhlcmUncyBkZWZpbml0ZWx5IHJvb20gZm9yIGltcHJvdmVtZW50IGluIG11
-bHRpcGF0aGQgd3J0IGxvY2tpbmcgYW5kCj4gZXZlbnQgcHJvY2Vzc2luZyBpbiBnZW5lcmFsLCBi
-dXQgdGhhdCdzIGEgQklHIHBpZWNlIG9mIHdvcmsuCgpUaGFua3MgYWdhaW4hClJlZ2FyZHMKTGl4
-aWFva2VuZwoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0
-dHBzOi8vd3d3LnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+On 1/18/21 21:06, Chaitanya Kulkarni wrote:
+> Hi,
+>
+> This is a *compile only RFC* which adds a generic helper to initialize
+> the various fields of the bio that is repeated all the places in
+> file-systems, block layer, and drivers.
+>
+> The new helper allows callers to initialize various members such as
+> bdev, sector, private, end io callback, io priority, and write hints.
+>
+> The objective of this RFC is to only start a discussion, this it not 
+> completely tested at all.                                                                                                            
+> Following diff shows code level benefits of this helper :-
+>  38 files changed, 124 insertions(+), 236 deletions(-)
+>
+> -ck
+Thanks for replying Mike, Josef and Christoph.
+
+I'll move forward with Christoph's suggestion and get rid of
+optional parameters which is making this API hard to use.
+
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
 
