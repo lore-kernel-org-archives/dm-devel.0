@@ -1,87 +1,85 @@
-Return-Path: <SRS0=NMP0=G2=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=PWLs=G3=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 49129C433E0
-	for <dm-devel@archiver.kernel.org>; Sat, 23 Jan 2021 20:27:12 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2F660C433DB
+	for <dm-devel@archiver.kernel.org>; Sun, 24 Jan 2021 10:06:42 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 842F222C9F
-	for <dm-devel@archiver.kernel.org>; Sat, 23 Jan 2021 20:27:11 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 842F222C9F
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 797DC225A9
+	for <dm-devel@archiver.kernel.org>; Sun, 24 Jan 2021 10:06:41 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 797DC225A9
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1611433630;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=Oy//P2a3gmvR8mCiMjLpT0on0qh4osnpKAyeJzI5hb0=;
-	b=AA9msrkNOxoRB2YPAf7lkQ45OLA/H5valed0lR478RfzvhMRnVaWreYcWdUOX0j4uckpBK
-	aHMtpyjXnu6k6Po5y9CJ8qgo/rrvHaCNgtYSAXv/rrdMoNabW9fgT0mM4Yi+T4djFI3PCh
-	Ccpvu2IPAbOUVAnVFgyQ0ldfZ/QoRNY=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-173-U0p9FUIBODumEXxI2Yv_4Q-1; Sat, 23 Jan 2021 15:27:07 -0500
-X-MC-Unique: U0p9FUIBODumEXxI2Yv_4Q-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-330-2liYO0vPOSCUgJS7fWreqA-1; Sun, 24 Jan 2021 05:06:38 -0500
+X-MC-Unique: 2liYO0vPOSCUgJS7fWreqA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4B971425CC;
-	Sat, 23 Jan 2021 20:27:02 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A158F806663;
+	Sun, 24 Jan 2021 10:06:33 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 45AE15D723;
-	Sat, 23 Jan 2021 20:26:59 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7295F60C66;
+	Sun, 24 Jan 2021 10:06:32 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D71394BB7B;
-	Sat, 23 Jan 2021 20:26:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com
-	[10.5.11.16])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9861F4A7C6;
+	Sun, 24 Jan 2021 10:06:29 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10NKQp2H024902 for <dm-devel@listman.util.phx.redhat.com>;
-	Sat, 23 Jan 2021 15:26:51 -0500
+	id 10OA6PKb004981 for <dm-devel@listman.util.phx.redhat.com>;
+	Sun, 24 Jan 2021 05:06:27 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id E5A2A5C6B8; Sat, 23 Jan 2021 20:26:51 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
-	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 90C775C25D;
-	Sat, 23 Jan 2021 20:26:48 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 10NKQmZs032459; Sat, 23 Jan 2021 15:26:48 -0500
-Received: from localhost (mpatocka@localhost)
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 10NKQlHc032455; Sat, 23 Jan 2021 15:26:47 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
-	owned process doing -bs
-Date: Sat, 23 Jan 2021 15:26:47 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, Milan Broz <mbroz@redhat.com>,
-	Ondrej Kozina <okozina@redhat.com>
-In-Reply-To: <alpine.LRH.2.02.2101211009060.13545@file01.intranet.prod.int.rdu2.redhat.com>
-Message-ID: <alpine.LRH.2.02.2101231525540.28834@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.2101201359160.16623@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.2101210737550.18628@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.2101211009060.13545@file01.intranet.prod.int.rdu2.redhat.com>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+	id 470881111C81; Sun, 24 Jan 2021 10:06:25 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 431431004057
+	for <dm-devel@redhat.com>; Sun, 24 Jan 2021 10:06:22 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D5EE2811E78
+	for <dm-devel@redhat.com>; Sun, 24 Jan 2021 10:06:22 +0000 (UTC)
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-457-5WjMKkouOTWpjXA7RBhpQQ-1; Sun, 24 Jan 2021 05:06:20 -0500
+X-MC-Unique: 5WjMKkouOTWpjXA7RBhpQQ-1
+Received: from [2001:4bb8:188:1954:a3b3:627f:702b:2136] (helo=localhost)
+	by casper.infradead.org with esmtpsa (Exim 4.94 #2 (Red Hat Linux))
+	id 1l3cHQ-002qAo-TX; Sun, 24 Jan 2021 10:06:03 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Jens Axboe <axboe@kernel.dk>
+Date: Sun, 24 Jan 2021 11:02:41 +0100
+Message-Id: <20210124100241.1167849-11-hch@lst.de>
+In-Reply-To: <20210124100241.1167849-1-hch@lst.de>
+References: <20210124100241.1167849-1-hch@lst.de>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+	casper.infradead.org. See http://www.infradead.org/rpr.html
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: Laura Abbott <laura@labbott.name>, dm-devel@redhat.com, security@kernel.org,
-	Alasdair Kergon <agk@redhat.com>,
-	=?ISO-8859-15?Q?Daniel_Gl=F6ckner?= <dg@emlix.com>
-Subject: [dm-devel] [PATCH v5 2/2] dm-integrity: introduce the "fix_hmac"
-	argument
+Cc: linux-s390@vger.kernel.org, linux-bcache@vger.kernel.org,
+	Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org,
+	Song Liu <song@kernel.org>, dm-devel@redhat.com,
+	linux-block@vger.kernel.org, Tejun Heo <tj@kernel.org>
+Subject: [dm-devel] [PATCH 10/10] block: use an xarray for disk->part_tbl
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -95,7 +93,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -103,344 +101,427 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Introduce the "fix_hmac" arguent. It improves security of journal_mac:
-- the section number is mixed to the mac, so that an attacker can't
-  copy sectors from one journal section to another journal section
-- the superblock is protected by journal_mac
-- mix a 16-byte salt to the mac, so that it can't be detected that two
-  volumes have the same hmac key - and also to disallow the attacker to
-  move sectors from one disk to another
+Now that no fast path lookups in the partition table are left, there is
+no point in micro-optimizing the data structure for it.  Just use a bog
+standard xarray.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Reported-by: Daniel Glockner <dg@emlix.com>
-
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Acked-by: Tejun Heo <tj@kernel.org>
 ---
- Documentation/admin-guide/device-mapper/dm-integrity.rst |   12 +
- drivers/md/dm-integrity.c                                |  104 +++++++++++++--
- 2 files changed, 105 insertions(+), 11 deletions(-)
+ block/blk-settings.c    |   2 +-
+ block/blk.h             |   1 -
+ block/genhd.c           | 163 +++-------------------------------------
+ block/partitions/core.c |  31 ++------
+ include/linux/genhd.h   |  18 +----
+ 5 files changed, 22 insertions(+), 193 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-integrity.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-integrity.c
-+++ linux-2.6/drivers/md/dm-integrity.c
-@@ -40,6 +40,7 @@
- #define BITMAP_BLOCK_SIZE		4096	/* don't change it */
- #define BITMAP_FLUSH_INTERVAL		(10 * HZ)
- #define DISCARD_FILLER			0xf6
-+#define SALT_SIZE			16
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index 43990b1d148b87..4c974340f1a992 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -865,7 +865,7 @@ void blk_queue_set_zoned(struct gendisk *disk, enum blk_zoned_model model)
+ 		 * we do nothing special as far as the block layer is concerned.
+ 		 */
+ 		if (!IS_ENABLED(CONFIG_BLK_DEV_ZONED) ||
+-		    disk_has_partitions(disk))
++		    !xa_empty(&disk->part_tbl))
+ 			model = BLK_ZONED_NONE;
+ 		break;
+ 	case BLK_ZONED_NONE:
+diff --git a/block/blk.h b/block/blk.h
+index d965cacc5bdaa1..ab0aaf958553bc 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -345,7 +345,6 @@ int bdev_add_partition(struct block_device *bdev, int partno,
+ int bdev_del_partition(struct block_device *bdev, int partno);
+ int bdev_resize_partition(struct block_device *bdev, int partno,
+ 		sector_t start, sector_t length);
+-int disk_expand_part_tbl(struct gendisk *disk, int target);
  
+ int bio_add_hw_page(struct request_queue *q, struct bio *bio,
+ 		struct page *page, unsigned int len, unsigned int offset,
+diff --git a/block/genhd.c b/block/genhd.c
+index 1832add5c73849..d3ef29fbc53639 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -161,15 +161,6 @@ static void part_in_flight_rw(struct block_device *part,
+ 		inflight[1] = 0;
+ }
+ 
+-static struct block_device *__disk_get_part(struct gendisk *disk, int partno)
+-{
+-	struct disk_part_tbl *ptbl = rcu_dereference(disk->part_tbl);
+-
+-	if (unlikely(partno < 0 || partno >= ptbl->len))
+-		return NULL;
+-	return rcu_dereference(ptbl->part[partno]);
+-}
+-
+ /**
+  * disk_part_iter_init - initialize partition iterator
+  * @piter: iterator to initialize
+@@ -204,41 +195,26 @@ void disk_part_iter_init(struct disk_part_iter *piter, struct gendisk *disk,
+  */
+ struct block_device *disk_part_iter_next(struct disk_part_iter *piter)
+ {
+-	struct disk_part_tbl *ptbl;
++	struct block_device *part;
++	unsigned long idx;
+ 
+ 	/* put the last partition */
+ 	disk_part_iter_exit(piter);
+ 
+-	/* get part_tbl */
+ 	rcu_read_lock();
+-	ptbl = rcu_dereference(piter->disk->part_tbl);
+-
+-	/* iterate to the next partition */
+-	for (; piter->idx != ptbl->len; piter->idx += 1) {
+-		struct block_device *part;
+-
+-		part = rcu_dereference(ptbl->part[piter->idx]);
+-		if (!part)
+-			continue;
+-		piter->part = bdgrab(part);
+-		if (!piter->part)
+-			continue;
++	xa_for_each_start(&piter->disk->part_tbl, idx, part, piter->idx) {
+ 		if (!bdev_nr_sectors(part) &&
+ 		    !(piter->flags & DISK_PITER_INCL_EMPTY) &&
+ 		    !(piter->flags & DISK_PITER_INCL_EMPTY_PART0 &&
+-		      piter->idx == 0)) {
+-			bdput(piter->part);
+-			piter->part = NULL;
++		      piter->idx == 0))
+ 			continue;
+-		}
+ 
+ 		piter->part = bdgrab(part);
+ 		if (!piter->part)
+ 			continue;
+-		piter->idx += 1;
++		piter->idx = idx + 1;
+ 		break;
+ 	}
+-
+ 	rcu_read_unlock();
+ 
+ 	return piter->part;
+@@ -260,42 +236,6 @@ void disk_part_iter_exit(struct disk_part_iter *piter)
+ 	piter->part = NULL;
+ }
+ 
+-/**
+- * disk_has_partitions
+- * @disk: gendisk of interest
+- *
+- * Walk through the partition table and check if valid partition exists.
+- *
+- * CONTEXT:
+- * Don't care.
+- *
+- * RETURNS:
+- * True if the gendisk has at least one valid non-zero size partition.
+- * Otherwise false.
+- */
+-bool disk_has_partitions(struct gendisk *disk)
+-{
+-	struct disk_part_tbl *ptbl;
+-	int i;
+-	bool ret = false;
+-
+-	rcu_read_lock();
+-	ptbl = rcu_dereference(disk->part_tbl);
+-
+-	/* Iterate partitions skipping the whole device at index 0 */
+-	for (i = 1; i < ptbl->len; i++) {
+-		if (rcu_dereference(ptbl->part[i])) {
+-			ret = true;
+-			break;
+-		}
+-	}
+-
+-	rcu_read_unlock();
+-
+-	return ret;
+-}
+-EXPORT_SYMBOL_GPL(disk_has_partitions);
+-
  /*
-  * Warning - DEBUG_PRINT prints security-sensitive data to the log,
-@@ -57,6 +58,7 @@
- #define SB_VERSION_2			2
- #define SB_VERSION_3			3
- #define SB_VERSION_4			4
-+#define SB_VERSION_5			5
- #define SB_SECTORS			8
- #define MAX_SECTORS_PER_BLOCK		8
+  * Can be deleted altogether. Later.
+  *
+@@ -858,7 +798,7 @@ struct block_device *bdget_disk(struct gendisk *disk, int partno)
+ 	struct block_device *bdev = NULL;
  
-@@ -72,12 +74,15 @@ struct superblock {
- 	__u8 log2_blocks_per_bitmap_bit;
- 	__u8 pad[2];
- 	__u64 recalc_sector;
-+	__u8 pad2[8];
-+	__u8 salt[SALT_SIZE];
+ 	rcu_read_lock();
+-	bdev = __disk_get_part(disk, partno);
++	bdev = xa_load(&disk->part_tbl, partno);
+ 	if (bdev && !bdgrab(bdev))
+ 		bdev = NULL;
+ 	rcu_read_unlock();
+@@ -1248,83 +1188,6 @@ static const struct attribute_group *disk_attr_groups[] = {
+ 	NULL
  };
  
- #define SB_FLAG_HAVE_JOURNAL_MAC	0x1
- #define SB_FLAG_RECALCULATING		0x2
- #define SB_FLAG_DIRTY_BITMAP		0x4
- #define SB_FLAG_FIXED_PADDING		0x8
-+#define SB_FLAG_FIXED_HMAC		0x10
- 
- #define	JOURNAL_ENTRY_ROUNDUP		8
- 
-@@ -259,6 +264,7 @@ struct dm_integrity_c {
- 	bool recalculate_flag;
- 	bool discard;
- 	bool fix_padding;
-+	bool fix_hmac;
- 	bool legacy_recalculate;
- 
- 	struct alg_spec internal_hash_alg;
-@@ -389,8 +395,11 @@ static int dm_integrity_failed(struct dm
- 
- static bool dm_integrity_disable_recalculate(struct dm_integrity_c *ic)
+-/**
+- * disk_replace_part_tbl - replace disk->part_tbl in RCU-safe way
+- * @disk: disk to replace part_tbl for
+- * @new_ptbl: new part_tbl to install
+- *
+- * Replace disk->part_tbl with @new_ptbl in RCU-safe way.  The
+- * original ptbl is freed using RCU callback.
+- *
+- * LOCKING:
+- * Matching bd_mutex locked or the caller is the only user of @disk.
+- */
+-static void disk_replace_part_tbl(struct gendisk *disk,
+-				  struct disk_part_tbl *new_ptbl)
+-{
+-	struct disk_part_tbl *old_ptbl =
+-		rcu_dereference_protected(disk->part_tbl, 1);
+-
+-	rcu_assign_pointer(disk->part_tbl, new_ptbl);
+-
+-	if (old_ptbl) {
+-		rcu_assign_pointer(old_ptbl->last_lookup, NULL);
+-		kfree_rcu(old_ptbl, rcu_head);
+-	}
+-}
+-
+-/**
+- * disk_expand_part_tbl - expand disk->part_tbl
+- * @disk: disk to expand part_tbl for
+- * @partno: expand such that this partno can fit in
+- *
+- * Expand disk->part_tbl such that @partno can fit in.  disk->part_tbl
+- * uses RCU to allow unlocked dereferencing for stats and other stuff.
+- *
+- * LOCKING:
+- * Matching bd_mutex locked or the caller is the only user of @disk.
+- * Might sleep.
+- *
+- * RETURNS:
+- * 0 on success, -errno on failure.
+- */
+-int disk_expand_part_tbl(struct gendisk *disk, int partno)
+-{
+-	struct disk_part_tbl *old_ptbl =
+-		rcu_dereference_protected(disk->part_tbl, 1);
+-	struct disk_part_tbl *new_ptbl;
+-	int len = old_ptbl ? old_ptbl->len : 0;
+-	int i, target;
+-
+-	/*
+-	 * check for int overflow, since we can get here from blkpg_ioctl()
+-	 * with a user passed 'partno'.
+-	 */
+-	target = partno + 1;
+-	if (target < 0)
+-		return -EINVAL;
+-
+-	/* disk_max_parts() is zero during initialization, ignore if so */
+-	if (disk_max_parts(disk) && target > disk_max_parts(disk))
+-		return -EINVAL;
+-
+-	if (target <= len)
+-		return 0;
+-
+-	new_ptbl = kzalloc_node(struct_size(new_ptbl, part, target), GFP_KERNEL,
+-				disk->node_id);
+-	if (!new_ptbl)
+-		return -ENOMEM;
+-
+-	new_ptbl->len = target;
+-
+-	for (i = 0; i < len; i++)
+-		rcu_assign_pointer(new_ptbl->part[i], old_ptbl->part[i]);
+-
+-	disk_replace_part_tbl(disk, new_ptbl);
+-	return 0;
+-}
+-
+ /**
+  * disk_release - releases all allocated resources of the gendisk
+  * @dev: the device representing this disk
+@@ -1348,7 +1211,7 @@ static void disk_release(struct device *dev)
+ 	blk_free_devt(dev->devt);
+ 	disk_release_events(disk);
+ 	kfree(disk->random);
+-	disk_replace_part_tbl(disk, NULL);
++	xa_destroy(&disk->part_tbl);
+ 	bdput(disk->part0);
+ 	if (disk->queue)
+ 		blk_put_queue(disk->queue);
+@@ -1501,7 +1364,6 @@ dev_t blk_lookup_devt(const char *name, int partno)
+ struct gendisk *__alloc_disk_node(int minors, int node_id)
  {
--	if ((ic->internal_hash_alg.key || ic->journal_mac_alg.key) &&
--	    !ic->legacy_recalculate)
-+	if (ic->legacy_recalculate)
-+		return false;
-+	if (!(ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) ?
-+	    ic->internal_hash_alg.key || ic->journal_mac_alg.key :
-+	    ic->internal_hash_alg.key && !ic->journal_mac_alg.key)
- 		return true;
- 	return false;
- }
-@@ -477,7 +486,9 @@ static void wraparound_section(struct dm
+ 	struct gendisk *disk;
+-	struct disk_part_tbl *ptbl;
  
- static void sb_set_version(struct dm_integrity_c *ic)
+ 	if (minors > DISK_MAX_PARTS) {
+ 		printk(KERN_ERR
+@@ -1519,11 +1381,9 @@ struct gendisk *__alloc_disk_node(int minors, int node_id)
+ 		goto out_free_disk;
+ 
+ 	disk->node_id = node_id;
+-	if (disk_expand_part_tbl(disk, 0))
+-		goto out_bdput;
+-
+-	ptbl = rcu_dereference_protected(disk->part_tbl, 1);
+-	rcu_assign_pointer(ptbl->part[0], disk->part0);
++	xa_init(&disk->part_tbl);
++	if (xa_insert(&disk->part_tbl, 0, disk->part0, GFP_KERNEL))
++		goto out_destroy_part_tbl;
+ 
+ 	disk->minors = minors;
+ 	rand_initialize_disk(disk);
+@@ -1532,7 +1392,8 @@ struct gendisk *__alloc_disk_node(int minors, int node_id)
+ 	device_initialize(disk_to_dev(disk));
+ 	return disk;
+ 
+-out_bdput:
++out_destroy_part_tbl:
++	xa_destroy(&disk->part_tbl);
+ 	bdput(disk->part0);
+ out_free_disk:
+ 	kfree(disk);
+diff --git a/block/partitions/core.c b/block/partitions/core.c
+index 168d5906077cfd..b1cdf88f96e236 100644
+--- a/block/partitions/core.c
++++ b/block/partitions/core.c
+@@ -287,13 +287,7 @@ struct device_type part_type = {
+  */
+ void delete_partition(struct block_device *part)
  {
--	if (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_PADDING))
-+	if (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC))
-+		ic->sb->version = SB_VERSION_5;
-+	else if (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_PADDING))
- 		ic->sb->version = SB_VERSION_4;
- 	else if (ic->mode == 'B' || ic->sb->flags & cpu_to_le32(SB_FLAG_DIRTY_BITMAP))
- 		ic->sb->version = SB_VERSION_3;
-@@ -487,10 +498,58 @@ static void sb_set_version(struct dm_int
- 		ic->sb->version = SB_VERSION_1;
- }
+-	struct gendisk *disk = part->bd_disk;
+-	struct disk_part_tbl *ptbl =
+-		rcu_dereference_protected(disk->part_tbl, 1);
+-
+-	rcu_assign_pointer(ptbl->part[part->bd_partno], NULL);
+-	rcu_assign_pointer(ptbl->last_lookup, NULL);
+-
++	xa_erase(&part->bd_disk->part_tbl, part->bd_partno);
+ 	kobject_put(part->bd_holder_dir);
+ 	device_del(&part->bd_device);
  
-+static int sb_mac(struct dm_integrity_c *ic, bool wr)
-+{
-+	SHASH_DESC_ON_STACK(desc, ic->journal_mac);
-+	int r;
-+	unsigned size = crypto_shash_digestsize(ic->journal_mac);
-+
-+	if (sizeof(struct superblock) + size > 1 << SECTOR_SHIFT) {
-+		dm_integrity_io_error(ic, "digest is too long", -EINVAL);
-+		return -EINVAL;
-+	}
-+
-+	desc->tfm = ic->journal_mac;
-+
-+	r = crypto_shash_init(desc);
-+	if (unlikely(r < 0)) {
-+		dm_integrity_io_error(ic, "crypto_shash_init", r);
-+		return r;
-+	}
-+
-+	r = crypto_shash_update(desc, (__u8 *)ic->sb, (1 << SECTOR_SHIFT) - size);
-+	if (unlikely(r < 0)) {
-+		dm_integrity_io_error(ic, "crypto_shash_update", r);
-+		return r;
-+	}
-+
-+	if (likely(wr)) {
-+		r = crypto_shash_final(desc, (__u8 *)ic->sb + (1 << SECTOR_SHIFT) - size);
-+		if (unlikely(r < 0)) {
-+			dm_integrity_io_error(ic, "crypto_shash_final", r);
-+			return r;
-+		}
-+	} else {
-+		__u8 result[HASH_MAX_DIGESTSIZE];
-+		r = crypto_shash_final(desc, result);
-+		if (unlikely(r < 0)) {
-+			dm_integrity_io_error(ic, "crypto_shash_final", r);
-+			return r;
-+		}
-+		if (memcmp((__u8 *)ic->sb + (1 << SECTOR_SHIFT) - size, result, size)) {
-+			dm_integrity_io_error(ic, "superblock mac", -EILSEQ);
-+			return -EILSEQ;
-+		}
-+	}
-+
-+	return 0;
-+}
-+
- static int sync_rw_sb(struct dm_integrity_c *ic, int op, int op_flags)
- {
- 	struct dm_io_request io_req;
- 	struct dm_io_region io_loc;
-+	int r;
+@@ -325,7 +319,6 @@ static struct block_device *add_partition(struct gendisk *disk, int partno,
+ 	struct device *ddev = disk_to_dev(disk);
+ 	struct device *pdev;
+ 	struct block_device *bdev;
+-	struct disk_part_tbl *ptbl;
+ 	const char *dname;
+ 	int err;
  
- 	io_req.bi_op = op;
- 	io_req.bi_op_flags = op_flags;
-@@ -502,10 +561,28 @@ static int sync_rw_sb(struct dm_integrit
- 	io_loc.sector = ic->start;
- 	io_loc.count = SB_SECTORS;
- 
--	if (op == REQ_OP_WRITE)
-+	if (op == REQ_OP_WRITE) {
- 		sb_set_version(ic);
-+		if (ic->journal_mac && ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) {
-+			r = sb_mac(ic, true);
-+			if (unlikely(r))
-+				return r;
-+		}
-+	}
- 
--	return dm_io(&io_req, 1, &io_loc, NULL);
-+	r = dm_io(&io_req, 1, &io_loc, NULL);
-+	if (unlikely(r))
-+		return r;
-+
-+	if (op == REQ_OP_READ) {
-+		if (ic->mode != 'R' && ic->journal_mac && ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) {
-+			r = sb_mac(ic, false);
-+			if (unlikely(r))
-+				return r;
-+		}
-+	}
-+
-+	return 0;
- }
- 
- #define BITMAP_OP_TEST_ALL_SET		0
-@@ -722,15 +799,32 @@ static void section_mac(struct dm_integr
- 	desc->tfm = ic->journal_mac;
- 
- 	r = crypto_shash_init(desc);
--	if (unlikely(r)) {
-+	if (unlikely(r < 0)) {
- 		dm_integrity_io_error(ic, "crypto_shash_init", r);
- 		goto err;
+@@ -347,12 +340,7 @@ static struct block_device *add_partition(struct gendisk *disk, int partno,
+ 		break;
  	}
  
-+	if (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) {
-+		uint64_t section_le;
-+
-+		r = crypto_shash_update(desc, (__u8 *)&ic->sb->salt, SALT_SIZE);
-+		if (unlikely(r < 0)) {
-+			dm_integrity_io_error(ic, "crypto_shash_update", r);
-+			goto err;
-+		}
-+
-+		section_le = cpu_to_le64(section);
-+		r = crypto_shash_update(desc, (__u8 *)&section_le, sizeof section_le);
-+		if (unlikely(r < 0)) {
-+			dm_integrity_io_error(ic, "crypto_shash_update", r);
-+			goto err;
-+		}
-+	}
-+
- 	for (j = 0; j < ic->journal_section_entries; j++) {
- 		struct journal_entry *je = access_journal_entry(ic, section, j);
- 		r = crypto_shash_update(desc, (__u8 *)&je->u.sector, sizeof je->u.sector);
--		if (unlikely(r)) {
-+		if (unlikely(r < 0)) {
- 			dm_integrity_io_error(ic, "crypto_shash_update", r);
- 			goto err;
- 		}
-@@ -740,7 +834,7 @@ static void section_mac(struct dm_integr
+-	err = disk_expand_part_tbl(disk, partno);
+-	if (err)
+-		return ERR_PTR(err);
+-	ptbl = rcu_dereference_protected(disk->part_tbl, 1);
+-
+-	if (ptbl->part[partno])
++	if (xa_load(&disk->part_tbl, partno))
+ 		return ERR_PTR(-EBUSY);
  
- 	if (likely(size <= JOURNAL_MAC_SIZE)) {
- 		r = crypto_shash_final(desc, result);
--		if (unlikely(r)) {
-+		if (unlikely(r < 0)) {
- 			dm_integrity_io_error(ic, "crypto_shash_final", r);
- 			goto err;
- 		}
-@@ -753,7 +847,7 @@ static void section_mac(struct dm_integr
- 			goto err;
- 		}
- 		r = crypto_shash_final(desc, digest);
--		if (unlikely(r)) {
-+		if (unlikely(r < 0)) {
- 			dm_integrity_io_error(ic, "crypto_shash_final", r);
- 			goto err;
- 		}
-@@ -1556,6 +1650,14 @@ static void integrity_sector_checksum(st
- 		goto failed;
+ 	bdev = bdev_alloc(disk, partno);
+@@ -405,8 +393,10 @@ static struct block_device *add_partition(struct gendisk *disk, int partno,
  	}
  
-+	if (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) {
-+		r = crypto_shash_update(req, (__u8 *)&ic->sb->salt, SALT_SIZE);
-+		if (unlikely(r < 0)) {
-+			dm_integrity_io_error(ic, "crypto_shash_update", r);
-+			goto failed;
-+		}
-+	}
-+
- 	r = crypto_shash_update(req, (const __u8 *)&sector_le, sizeof sector_le);
- 	if (unlikely(r < 0)) {
- 		dm_integrity_io_error(ic, "crypto_shash_update", r);
-@@ -3149,6 +3251,7 @@ static void dm_integrity_status(struct d
- 		arg_count += !!ic->journal_crypt_alg.alg_string;
- 		arg_count += !!ic->journal_mac_alg.alg_string;
- 		arg_count += (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_PADDING)) != 0;
-+		arg_count += (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) != 0;
- 		arg_count += ic->legacy_recalculate;
- 		DMEMIT("%s %llu %u %c %u", ic->dev->name, ic->start,
- 		       ic->tag_size, ic->mode, arg_count);
-@@ -3173,6 +3276,8 @@ static void dm_integrity_status(struct d
- 		}
- 		if ((ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_PADDING)) != 0)
- 			DMEMIT(" fix_padding");
-+		if ((ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) != 0)
-+			DMEMIT(" fix_hmac");
- 		if (ic->legacy_recalculate)
- 			DMEMIT(" legacy_recalculate");
+ 	/* everything is up and running, commence */
++	err = xa_insert(&disk->part_tbl, partno, bdev, GFP_KERNEL);
++	if (err)
++		goto out_del;
+ 	bdev_add(bdev, devt);
+-	rcu_assign_pointer(ptbl->part[partno], bdev);
  
-@@ -3310,6 +3415,11 @@ static int initialize_superblock(struct
- 	if (!journal_sections)
- 		journal_sections = 1;
+ 	/* suppress uevent if the disk suppresses it */
+ 	if (!dev_get_uevent_suppress(ddev))
+@@ -612,7 +602,7 @@ static bool blk_add_partition(struct gendisk *disk, struct block_device *bdev,
+ int blk_add_partitions(struct gendisk *disk, struct block_device *bdev)
+ {
+ 	struct parsed_partitions *state;
+-	int ret = -EAGAIN, p, highest;
++	int ret = -EAGAIN, p;
  
-+	if (ic->fix_hmac && (ic->internal_hash_alg.alg_string || ic->journal_mac_alg.alg_string)) {
-+		ic->sb->flags |= cpu_to_le32(SB_FLAG_FIXED_HMAC);
-+		get_random_bytes(ic->sb->salt, SALT_SIZE);
-+	}
-+
- 	if (!ic->meta_dev) {
- 		if (ic->fix_padding)
- 			ic->sb->flags |= cpu_to_le32(SB_FLAG_FIXED_PADDING);
-@@ -3804,7 +3914,7 @@ static int dm_integrity_ctr(struct dm_ta
- 	unsigned extra_args;
- 	struct dm_arg_set as;
- 	static const struct dm_arg _args[] = {
--		{0, 16, "Invalid number of feature args"},
-+		{0, 17, "Invalid number of feature args"},
- 	};
- 	unsigned journal_sectors, interleave_sectors, buffer_sectors, journal_watermark, sync_msec;
- 	bool should_write_sb;
-@@ -3942,7 +4052,7 @@ static int dm_integrity_ctr(struct dm_ta
- 			if (r)
- 				goto bad;
- 		} else if (!strncmp(opt_string, "journal_mac:", strlen("journal_mac:"))) {
--			r = get_alg_and_key(opt_string, &ic->journal_mac_alg,  &ti->error,
-+			r = get_alg_and_key(opt_string, &ic->journal_mac_alg, &ti->error,
- 					    "Invalid journal_mac argument");
- 			if (r)
- 				goto bad;
-@@ -3952,6 +4062,8 @@ static int dm_integrity_ctr(struct dm_ta
- 			ic->discard = true;
- 		} else if (!strcmp(opt_string, "fix_padding")) {
- 			ic->fix_padding = true;
-+		} else if (!strcmp(opt_string, "fix_hmac")) {
-+			ic->fix_hmac = true;
- 		} else if (!strcmp(opt_string, "legacy_recalculate")) {
- 			ic->legacy_recalculate = true;
- 		} else {
-@@ -4110,7 +4222,7 @@ static int dm_integrity_ctr(struct dm_ta
- 			should_write_sb = true;
- 	}
+ 	if (!disk_part_scan_enabled(disk))
+ 		return 0;
+@@ -660,15 +650,6 @@ int blk_add_partitions(struct gendisk *disk, struct block_device *bdev)
+ 	/* tell userspace that the media / partition table may have changed */
+ 	kobject_uevent(&disk_to_dev(disk)->kobj, KOBJ_CHANGE);
  
--	if (!ic->sb->version || ic->sb->version > SB_VERSION_4) {
-+	if (!ic->sb->version || ic->sb->version > SB_VERSION_5) {
- 		r = -EINVAL;
- 		ti->error = "Unknown version";
- 		goto bad;
-@@ -4442,7 +4554,7 @@ static void dm_integrity_dtr(struct dm_t
+-	/*
+-	 * Detect the highest partition number and preallocate disk->part_tbl.
+-	 * This is an optimization and not strictly necessary.
+-	 */
+-	for (p = 1, highest = 0; p < state->limit; p++)
+-		if (state->parts[p].size)
+-			highest = p;
+-	disk_expand_part_tbl(disk, highest);
+-
+ 	for (p = 1; p < state->limit; p++)
+ 		if (!blk_add_partition(disk, bdev, state, p))
+ 			goto out_free_state;
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index 51609133c9a347..f364619092cca0 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -32,6 +32,7 @@ extern struct class block_class;
+ #include <linux/string.h>
+ #include <linux/fs.h>
+ #include <linux/workqueue.h>
++#include <linux/xarray.h>
  
- static struct target_type integrity_target = {
- 	.name			= "integrity",
--	.version		= {1, 6, 0},
-+	.version		= {1, 7, 0},
- 	.module			= THIS_MODULE,
- 	.features		= DM_TARGET_SINGLETON | DM_TARGET_INTEGRITY,
- 	.ctr			= dm_integrity_ctr,
-Index: linux-2.6/Documentation/admin-guide/device-mapper/dm-integrity.rst
-===================================================================
---- linux-2.6.orig/Documentation/admin-guide/device-mapper/dm-integrity.rst
-+++ linux-2.6/Documentation/admin-guide/device-mapper/dm-integrity.rst
-@@ -186,6 +186,16 @@ fix_padding
- 	space-efficient. If this option is not present, large padding is
- 	used - that is for compatibility with older kernels.
+ #define PARTITION_META_INFO_VOLNAMELTH	64
+ /*
+@@ -116,13 +117,6 @@ enum {
+ 	DISK_EVENT_FLAG_UEVENT			= 1 << 1,
+ };
  
-+fix_hmac
-+	Improve security of internal_hash and journal_mac:
-+	- the section number is mixed to the mac, so that an attacker can't
-+	  copy sectors from one journal section to another journal section
-+	- the superblock is protected by journal_mac
-+	- a 16-byte salt stored in the superblock is mixed to the mac, so
-+	  that the attaker can't detect that two disks have the same hmac
-+	  key and also to disallow the attacker to move sectors from one
-+	  disk to another
-+
- legacy_recalculate
- 	Allow recalculating of volumes with HMAC keys. This is disabled by
- 	default for security reasons - an attacker could modify the volume,
+-struct disk_part_tbl {
+-	struct rcu_head rcu_head;
+-	int len;
+-	struct block_device __rcu *last_lookup;
+-	struct block_device __rcu *part[];
+-};
+-
+ struct disk_events;
+ struct badblocks;
+ 
+@@ -148,12 +142,7 @@ struct gendisk {
+ 	unsigned short events;		/* supported events */
+ 	unsigned short event_flags;	/* flags related to event processing */
+ 
+-	/* Array of pointers to partitions indexed by partno.
+-	 * Protected with matching bdev lock but stat and other
+-	 * non-critical accesses use RCU.  Always access through
+-	 * helpers.
+-	 */
+-	struct disk_part_tbl __rcu *part_tbl;
++	struct xarray part_tbl;
+ 	struct block_device *part0;
+ 
+ 	const struct block_device_operations *fops;
+@@ -225,7 +214,7 @@ void disk_uevent(struct gendisk *disk, enum kobject_action action);
+ struct disk_part_iter {
+ 	struct gendisk		*disk;
+ 	struct block_device	*part;
+-	int			idx;
++	unsigned long		idx;
+ 	unsigned int		flags;
+ };
+ 
+@@ -233,7 +222,6 @@ extern void disk_part_iter_init(struct disk_part_iter *piter,
+ 				 struct gendisk *disk, unsigned int flags);
+ struct block_device *disk_part_iter_next(struct disk_part_iter *piter);
+ extern void disk_part_iter_exit(struct disk_part_iter *piter);
+-extern bool disk_has_partitions(struct gendisk *disk);
+ 
+ /* block/genhd.c */
+ extern void device_add_disk(struct device *parent, struct gendisk *disk,
+-- 
+2.29.2
 
 --
 dm-devel mailing list
