@@ -1,70 +1,78 @@
-Return-Path: <SRS0=PWLs=G3=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=BcWr=G4=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9CA02C433E0
-	for <dm-devel@archiver.kernel.org>; Sun, 24 Jan 2021 10:14:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 602FAC433E0
+	for <dm-devel@archiver.kernel.org>; Mon, 25 Jan 2021 01:34:02 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 1F0E522C7E
-	for <dm-devel@archiver.kernel.org>; Sun, 24 Jan 2021 10:14:12 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1F0E522C7E
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+	by mail.kernel.org (Postfix) with ESMTPS id 8197D227BF
+	for <dm-devel@archiver.kernel.org>; Mon, 25 Jan 2021 01:34:01 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 8197D227BF
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=huawei.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-241-FG8QXfM3MPinW2XuOYv0fQ-1; Sun, 24 Jan 2021 05:14:09 -0500
-X-MC-Unique: FG8QXfM3MPinW2XuOYv0fQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-19-zdRyvUeAM-u4o6peZuj9Tw-1; Sun, 24 Jan 2021 20:33:56 -0500
+X-MC-Unique: zdRyvUeAM-u4o6peZuj9Tw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DBA4B425C8;
-	Sun, 24 Jan 2021 10:14:04 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BD7A260C66;
-	Sun, 24 Jan 2021 10:14:04 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A6106180A095;
+	Mon, 25 Jan 2021 01:33:50 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1D56F5D9D7;
+	Mon, 25 Jan 2021 01:33:48 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 41019180954D;
-	Sun, 24 Jan 2021 10:14:04 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 37FB85002C;
+	Mon, 25 Jan 2021 01:33:42 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10OAE3Os005779 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 24 Jan 2021 05:14:03 -0500
+	id 10P1XcWN016311 for <dm-devel@listman.util.phx.redhat.com>;
+	Sun, 24 Jan 2021 20:33:39 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 135AE2026D25; Sun, 24 Jan 2021 10:14:03 +0000 (UTC)
+	id A4A4A9D43; Mon, 25 Jan 2021 01:33:38 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0EBCD2026D46
-	for <dm-devel@redhat.com>; Sun, 24 Jan 2021 10:14:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9F7AD3322D
+	for <dm-devel@redhat.com>; Mon, 25 Jan 2021 01:33:36 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E7D35101A53F
-	for <dm-devel@redhat.com>; Sun, 24 Jan 2021 10:14:00 +0000 (UTC)
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3F72F8039DD
+	for <dm-devel@redhat.com>; Mon, 25 Jan 2021 01:33:36 +0000 (UTC)
+Received: from szxga07-in.huawei.com (szxga07-in.huawei.com [45.249.212.35])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-587-lMsngHpoN02Zjs7SF7Ui5g-1; Sun, 24 Jan 2021 05:13:59 -0500
-X-MC-Unique: lMsngHpoN02Zjs7SF7Ui5g-1
-Received: from [2001:4bb8:188:1954:a3b3:627f:702b:2136] (helo=localhost)
-	by casper.infradead.org with esmtpsa (Exim 4.94 #2 (Red Hat Linux))
-	id 1l3cGh-002q98-LP; Sun, 24 Jan 2021 10:05:26 +0000
-From: Christoph Hellwig <hch@lst.de>
-To: Jens Axboe <axboe@kernel.dk>
-Date: Sun, 24 Jan 2021 11:02:33 +0100
-Message-Id: <20210124100241.1167849-3-hch@lst.de>
-In-Reply-To: <20210124100241.1167849-1-hch@lst.de>
-References: <20210124100241.1167849-1-hch@lst.de>
+	us-mta-329-t2lYi0IDPmW7r4vxFHNeSQ-1; Sun, 24 Jan 2021 20:33:31 -0500
+X-MC-Unique: t2lYi0IDPmW7r4vxFHNeSQ-1
+Received: from DGGEMS414-HUB.china.huawei.com (unknown [172.30.72.58])
+	by szxga07-in.huawei.com (SkyGuard) with ESMTP id 4DPC5s1rXXz7Vmg;
+	Mon, 25 Jan 2021 09:32:17 +0800 (CST)
+Received: from [10.174.178.113] (10.174.178.113) by
+	DGGEMS414-HUB.china.huawei.com (10.3.19.214) with Microsoft SMTP Server
+	id 14.3.498.0; Mon, 25 Jan 2021 09:33:21 +0800
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
+	Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel mailing list
+	<dm-devel@redhat.com>
+References: <063bbeeb-15aa-f7c0-b881-7526c3a2720c@huawei.com>
+	<f86753b17cc7e85e7e0f7e711adec349323a7c5a.camel@suse.com>
+	<d8ba8118-ce98-249a-cafd-021f0c1831a5@huawei.com>
+	<f1961d4104b14c80183b161a53262e1766e0df70.camel@suse.com>
+From: lixiaokeng <lixiaokeng@huawei.com>
+Message-ID: <c52487a2-5c15-977c-704b-7cad5f6e275e@huawei.com>
+Date: Mon, 25 Jan 2021 09:33:20 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
+	Thunderbird/68.10.0
 MIME-Version: 1.0
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
-	casper.infradead.org. See http://www.infradead.org/rpr.html
+In-Reply-To: <f1961d4104b14c80183b161a53262e1766e0df70.camel@suse.com>
+X-Originating-IP: [10.174.178.113]
+X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -73,14 +81,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: linux-s390@vger.kernel.org, linux-bcache@vger.kernel.org,
-	Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org,
-	Song Liu <song@kernel.org>, dm-devel@redhat.com,
-	linux-block@vger.kernel.org, Tejun Heo <tj@kernel.org>
-Subject: [dm-devel] [PATCH 02/10] dcssblk: remove the end of device check in
-	dcssblk_submit_bio
+Cc: linfeilong <linfeilong@huawei.com>,
+	"liuzhiqiang \(I\)" <liuzhiqiang26@huawei.com>, lihaotian9@huawei.com
+Subject: Re: [dm-devel] [QUESTION]: multipath device with wrong path lead to
+	metadata err
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -94,40 +100,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-GB
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The block layer already checks for this conditions in bio_check_eod
-before calling the driver.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Tejun Heo <tj@kernel.org>
----
- drivers/s390/block/dcssblk.c | 4 ----
- 1 file changed, 4 deletions(-)
+>>> verify_paths() before *and* after domap().
+>>
+>> Can calling verify_paths() before *and* after domap() deal this
+>> entirely?
+> 
+Hi,
+  Unfortunately the verify_path() called before *and* after domap() in
+coalesce_paths can't solve this problem. I think it is another way to
+lead multipath with wrong path, but now I can't find the way from log.
 
-diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
-index 299e77ec2c4163..5c5cff3f237452 100644
---- a/drivers/s390/block/dcssblk.c
-+++ b/drivers/s390/block/dcssblk.c
-@@ -886,10 +886,6 @@ dcssblk_submit_bio(struct bio *bio)
- 	    (bio->bi_iter.bi_size & 4095) != 0)
- 		/* Request is not page-aligned. */
- 		goto fail;
--	if (bio_end_sector(bio) > get_capacity(bio->bi_disk)) {
--		/* Request beyond end of DCSS segment. */
--		goto fail;
--	}
- 	/* verify data transfer direction */
- 	if (dev_info->is_shared) {
- 		switch (dev_info->segment_type) {
--- 
-2.29.2
+Regards,
+Lixiaokeng
 
 --
 dm-devel mailing list
