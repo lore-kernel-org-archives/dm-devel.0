@@ -2,71 +2,68 @@ Return-Path: <SRS0=BcWr=G4=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D5089C433DB
-	for <dm-devel@archiver.kernel.org>; Mon, 25 Jan 2021 12:29:09 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E982CC433E0
+	for <dm-devel@archiver.kernel.org>; Mon, 25 Jan 2021 12:43:31 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 397732311B
-	for <dm-devel@archiver.kernel.org>; Mon, 25 Jan 2021 12:29:08 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 397732311B
+	by mail.kernel.org (Postfix) with ESMTPS id 0EDBE22D04
+	for <dm-devel@archiver.kernel.org>; Mon, 25 Jan 2021 12:43:30 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0EDBE22D04
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-98-f9AJZeFyOxugcZNzE_UKXQ-1; Mon, 25 Jan 2021 07:29:05 -0500
-X-MC-Unique: f9AJZeFyOxugcZNzE_UKXQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-265-uwvyfxuRPh-zQOdJ0v1W4Q-1; Mon, 25 Jan 2021 07:43:27 -0500
+X-MC-Unique: uwvyfxuRPh-zQOdJ0v1W4Q-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4F6D8107ACE4;
-	Mon, 25 Jan 2021 12:29:00 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 609BC1005513;
+	Mon, 25 Jan 2021 12:43:22 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id F1F905D6AB;
-	Mon, 25 Jan 2021 12:28:58 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D5FA360C9C;
+	Mon, 25 Jan 2021 12:43:21 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0068E18095FF;
-	Mon, 25 Jan 2021 12:28:56 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 44F5618095FF;
+	Mon, 25 Jan 2021 12:43:21 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10PCSAHE022722 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 25 Jan 2021 07:28:10 -0500
+	id 10PChKQg024006 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 25 Jan 2021 07:43:20 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id BB3DC1111A5F; Mon, 25 Jan 2021 12:28:10 +0000 (UTC)
+	id 1A7441111A6B; Mon, 25 Jan 2021 12:43:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B74221111A64
-	for <dm-devel@redhat.com>; Mon, 25 Jan 2021 12:28:08 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 167E31111A6A
+	for <dm-devel@redhat.com>; Mon, 25 Jan 2021 12:43:18 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 645E0811E78
-	for <dm-devel@redhat.com>; Mon, 25 Jan 2021 12:28:08 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E6DF7811E76
+	for <dm-devel@redhat.com>; Mon, 25 Jan 2021 12:43:17 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-570-g4YOC81XP-KbqBdHhjp4yQ-1;
-	Mon, 25 Jan 2021 07:28:06 -0500
-X-MC-Unique: g4YOC81XP-KbqBdHhjp4yQ-1
+	relay.mimecast.com with ESMTP id us-mta-92-vQ-mbLkQPIi05PjNm1SXcA-1;
+	Mon, 25 Jan 2021 07:43:13 -0500
+X-MC-Unique: vQ-mbLkQPIi05PjNm1SXcA-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id E39BFACF4;
-	Mon, 25 Jan 2021 12:28:04 +0000 (UTC)
-Message-ID: <cd3cae852bffc2d4a9be2e7f4334eb346cfaae8d.camel@suse.com>
+	by mx2.suse.de (Postfix) with ESMTP id 69884B2D1;
+	Mon, 25 Jan 2021 12:43:12 +0000 (UTC)
+Message-ID: <ab556abe7dd1df90489f86bb91ea6578cd29a648.camel@suse.com>
 From: Martin Wilck <mwilck@suse.com>
 To: lixiaokeng <lixiaokeng@huawei.com>, Benjamin Marzinski
 	<bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	dm-devel mailing list <dm-devel@redhat.com>
-Date: Mon, 25 Jan 2021 13:28:04 +0100
-In-Reply-To: <c52487a2-5c15-977c-704b-7cad5f6e275e@huawei.com>
-References: <063bbeeb-15aa-f7c0-b881-7526c3a2720c@huawei.com>
-	<f86753b17cc7e85e7e0f7e711adec349323a7c5a.camel@suse.com>
-	<d8ba8118-ce98-249a-cafd-021f0c1831a5@huawei.com>
-	<f1961d4104b14c80183b161a53262e1766e0df70.camel@suse.com>
-	<c52487a2-5c15-977c-704b-7cad5f6e275e@huawei.com>
+Date: Mon, 25 Jan 2021 13:43:11 +0100
+In-Reply-To: <a2693d7a-55f1-234e-74a1-f234c152a490@huawei.com>
+References: <a2693d7a-55f1-234e-74a1-f234c152a490@huawei.com>
 User-Agent: Evolution 3.38.2
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -79,12 +76,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 10PCSAHE022722
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 10PChKQg024006
 X-loop: dm-devel@redhat.com
 Cc: linfeilong <linfeilong@huawei.com>,
-	"liuzhiqiang \(I\)" <liuzhiqiang26@huawei.com>, lihaotian9@huawei.com
-Subject: Re: [dm-devel] [QUESTION]: multipath device with wrong path lead to
- metadata err
+	"liuzhiqiang \(I\)" <liuzhiqiang26@huawei.com>
+Subject: Re: [dm-devel] [PATCH] libmultipath: fix NULL dereference in
+	find_path_by_dev
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -98,7 +95,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -106,31 +103,66 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="iso-8859-15"
 Content-Transfer-Encoding: quoted-printable
 
-Hi lixiaokeng,
-
-On Mon, 2021-01-25 at 09:33 +0800, lixiaokeng wrote:
+On Sat, 2021-01-23 at 16:19 +0800, lixiaokeng wrote:
+> When I test the 0.8.5 code with iscsi login/out, multipathd command
+> and multipath command concurrently, there is a multipathd coredump.
+> The stack is shown:
 >=20
-> > > > verify_paths() before *and* after domap().
-> > >=20
-> > > Can calling verify_paths() before *and* after domap() deal this
-> > > entirely?
-> >=20
-> Hi,
-> =A0 Unfortunately the verify_path() called before *and* after domap()
-> in
-> coalesce_paths can't solve this problem. I think it is another way to
-> lead multipath with wrong path, but now I can't find the way from
-> log.
+> uxlsnrloop
+> =A0 ->cli_list_devices
+> =A0=A0=A0 ->show_devices
+> =A0=A0=A0=A0=A0 ->snprint_devices
+> =A0=A0=A0=A0=A0=A0=A0 ->find_path_by_dev
+>=20
+> The reason is that devname is NULL in snprint_devices, then it will
+> be dereference. Here we check dev in find_path_by_dev.
+> ---
+> =A0libmultipath/structs.c | 4 ++--
+> =A01 file changed, 2 insertions(+), 2 deletions(-)
+>=20
+> diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+> index 464596f..a3f27fd 100644
+> --- a/libmultipath/structs.c
+> +++ b/libmultipath/structs.c
+> @@ -453,12 +453,12 @@ find_mp_by_str (const struct _vector *mpvec,
+> const char * str)
+> =A0}
+>=20
+> =A0struct path *
+> -find_path_by_dev (const struct _vector *pathvec, const char * dev)
+> +find_path_by_dev (const struct _vector *pathvec, const char *dev)
+> =A0{
+> =A0=A0=A0 int i;
+> =A0=A0=A0 struct path * pp;
+>=20
+> -=A0=A0 if (!pathvec)
+> +=A0=A0 if (!pathvec || !dev)
+> =A0=A0=A0=A0=A0=A0=A0 return NULL;
+>=20
+> =A0=A0=A0 vector_foreach_slot (pathvec, pp, i)
 
-Can you provide multipathd -v3 logs, and kernel logs? Maybe I'll see
-something.
+Reviewed-by: Martin Wilck <mwilck@suse.de>
+
+However, the actual issue is in snprint_devices():
+
+=09r =3D udev_enumerate_scan_devices(enm);
+=09first =3D udev_enumerate_get_list_entry(enm);
+=09udev_list_entry_foreach(item, first) {
+
+=09=09path =3D udev_list_entry_get_name(item);
+=09=09u_dev =3D udev_device_new_from_syspath(udev, path);
+=09=09devname =3D udev_device_get_sysname(u_dev);
+                pp =3D find_path_by_dev(vecs->pathvec, devname);
+
+if devname was NULL here, it means that the list returned by
+udev_enumerate_scan_devices() contains devices that don't exist
+(any more), even though the call to udev_enumerate_scan_devices() was
+just a few LoC above. It's the kind of thing you don't expect, but you
+should expect when you deal with udev :-/
+
+I'll send a patch for that, too.
 
 Martin
-
-
-
-
-
 
 
 
