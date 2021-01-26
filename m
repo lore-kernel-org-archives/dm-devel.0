@@ -7,59 +7,58 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9E908C433DB
-	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 15:00:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 61458C433E0
+	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 15:01:04 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 23CFE22D58
-	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 15:00:55 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 23CFE22D58
+	by mail.kernel.org (Postfix) with ESMTPS id CBD1722D58
+	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 15:01:03 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CBD1722D58
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-140-a9Myqm2FPmu0qT2zLVGCRg-1; Tue, 26 Jan 2021 10:00:52 -0500
-X-MC-Unique: a9Myqm2FPmu0qT2zLVGCRg-1
+ us-mta-172-CHs2zT1IMPKlWB-z3G5bgg-1; Tue, 26 Jan 2021 10:00:59 -0500
+X-MC-Unique: CHs2zT1IMPKlWB-z3G5bgg-1
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 72BE91005E41;
-	Tue, 26 Jan 2021 15:00:47 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BF33A1005E5C;
+	Tue, 26 Jan 2021 15:00:54 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1959E6E50A;
-	Tue, 26 Jan 2021 15:00:47 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 65C1360CCE;
+	Tue, 26 Jan 2021 15:00:54 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 601874A7C6;
-	Tue, 26 Jan 2021 15:00:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 39A0C4E590;
+	Tue, 26 Jan 2021 15:00:54 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10QExFHv012033 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 26 Jan 2021 09:59:16 -0500
+	id 10QF0orl012255 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 26 Jan 2021 10:00:50 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 687D82026D48; Tue, 26 Jan 2021 14:59:15 +0000 (UTC)
+	id 98F4B94655; Tue, 26 Jan 2021 15:00:50 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 60EE72026D76
-	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 14:59:13 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 90AE5946BB
+	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 15:00:48 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4538482DFE3
-	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 14:59:13 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 214F2805BD9
+	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 15:00:48 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-457-fqEXCRU1MMCQUTlbadKumw-1; Tue, 26 Jan 2021 09:59:10 -0500
-X-MC-Unique: fqEXCRU1MMCQUTlbadKumw-1
+	us-mta-334-oFkQwMt8PACcdyX-FdiE8g-1; Tue, 26 Jan 2021 10:00:45 -0500
+X-MC-Unique: oFkQwMt8PACcdyX-FdiE8g-1
 Received: from [2001:4bb8:191:e347:5918:ac86:61cb:8801] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.94 #2 (Red Hat Linux))
-	id 1l4Pl3-005mG9-Rr; Tue, 26 Jan 2021 14:56:33 +0000
+	id 1l4Pmc-005mP7-SH; Tue, 26 Jan 2021 14:58:39 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>
-Date: Tue, 26 Jan 2021 15:52:32 +0100
-Message-Id: <20210126145247.1964410-3-hch@lst.de>
+Date: Tue, 26 Jan 2021 15:52:33 +0100
+Message-Id: <20210126145247.1964410-4-hch@lst.de>
 In-Reply-To: <20210126145247.1964410-1-hch@lst.de>
 References: <20210126145247.1964410-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,7 +72,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: Mike Snitzer <snitzer@redhat.com>, David Sterba <dsterba@suse.com>,
 	dm-devel@redhat.com, Naohiro Aota <naohiro.aota@wdc.com>,
@@ -88,7 +87,8 @@ Cc: Mike Snitzer <snitzer@redhat.com>, David Sterba <dsterba@suse.com>,
 	Philipp Reisner <philipp.reisner@linbit.com>,
 	linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org,
 	Lars Ellenberg <lars.ellenberg@linbit.com>, linux-btrfs@vger.kernel.org
-Subject: [dm-devel] [PATCH 02/17] btrfs: use bio_kmalloc in __alloc_device
+Subject: [dm-devel] [PATCH 03/17] blk-crypto: use bio_kmalloc in
+	blk_crypto_clone_bio
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -114,22 +114,22 @@ Use bio_kmalloc instead of open coding it.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/btrfs/volumes.c | 2 +-
+ block/blk-crypto-fallback.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/btrfs/volumes.c b/fs/btrfs/volumes.c
-index 0a6de859eb2226..584ba093cf4966 100644
---- a/fs/btrfs/volumes.c
-+++ b/fs/btrfs/volumes.c
-@@ -421,7 +421,7 @@ static struct btrfs_device *__alloc_device(struct btrfs_fs_info *fs_info)
- 	 * Preallocate a bio that's always going to be used for flushing device
- 	 * barriers and matches the device lifespan
- 	 */
--	dev->flush_bio = bio_alloc_bioset(GFP_KERNEL, 0, NULL);
-+	dev->flush_bio = bio_kmalloc(GFP_KERNEL, 0);
- 	if (!dev->flush_bio) {
- 		kfree(dev);
- 		return ERR_PTR(-ENOMEM);
+diff --git a/block/blk-crypto-fallback.c b/block/blk-crypto-fallback.c
+index 50c225398e4d60..e8327c50d7c9f4 100644
+--- a/block/blk-crypto-fallback.c
++++ b/block/blk-crypto-fallback.c
+@@ -164,7 +164,7 @@ static struct bio *blk_crypto_clone_bio(struct bio *bio_src)
+ 	struct bio_vec bv;
+ 	struct bio *bio;
+ 
+-	bio = bio_alloc_bioset(GFP_NOIO, bio_segments(bio_src), NULL);
++	bio = bio_kmalloc(GFP_NOIO, bio_segments(bio_src));
+ 	if (!bio)
+ 		return NULL;
+ 	bio->bi_bdev		= bio_src->bi_bdev;
 -- 
 2.29.2
 
