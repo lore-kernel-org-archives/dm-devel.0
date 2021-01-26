@@ -2,73 +2,94 @@ Return-Path: <SRS0=Cj1z=G5=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 01B36C433DB
-	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 05:31:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 96F0CC433E0
+	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 06:40:49 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7C3CD206F7
-	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 05:31:26 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7C3CD206F7
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 0CE8722B3F
+	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 06:40:48 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0CE8722B3F
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=huawei.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1611639085;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=K1BskJXRIgflEsmJB3kg+9etmQuCaazj1Zpfk75nyfs=;
-	b=AWIdlqVLMxsKmMRzVm3/Ln+3r5i8edHjKk+t4fG9cB5w3K4RG+XjnPwOUzRH0Oo2NY72q7
-	uuz0ST6sswJ5x2e7/lKOypvGwZBHF/SYMF5tcKaCFfgf2MGJH0YdErsjAOeHC02+6+eb6N
-	etOrhkecmP5CN9EtNFdkG4SGAlhlg7Q=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-434-060L7qk4P7iD3d8CmsDr6A-1; Tue, 26 Jan 2021 00:31:22 -0500
-X-MC-Unique: 060L7qk4P7iD3d8CmsDr6A-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-170-4mP2fCsFOWGpCkIIidEnxw-1; Tue, 26 Jan 2021 01:40:46 -0500
+X-MC-Unique: 4mP2fCsFOWGpCkIIidEnxw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 77DFB801817;
-	Tue, 26 Jan 2021 05:31:17 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C11FF190A7A0;
+	Tue, 26 Jan 2021 06:40:41 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 799CB7047C;
-	Tue, 26 Jan 2021 05:31:15 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 841975D9C2;
+	Tue, 26 Jan 2021 06:40:40 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 478B2180954D;
-	Tue, 26 Jan 2021 05:31:12 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
-	[10.5.11.12])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id ACE131809C9F;
+	Tue, 26 Jan 2021 06:40:37 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10Q5VAx1013331 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 26 Jan 2021 00:31:10 -0500
+	id 10Q6eZJM019664 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 26 Jan 2021 01:40:35 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 07A5060C5F; Tue, 26 Jan 2021 05:31:10 +0000 (UTC)
-Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0B03660C47;
-	Tue, 26 Jan 2021 05:31:06 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 10Q5V5Mf008225; 
-	Mon, 25 Jan 2021 23:31:05 -0600
-Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 10Q5V4FC008224;
-	Mon, 25 Jan 2021 23:31:04 -0600
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Mon, 25 Jan 2021 23:31:04 -0600
-Message-Id: <1611639064-8187-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+	id E35FF2166B28; Tue, 26 Jan 2021 06:40:34 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DE5922166B29
+	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 06:40:32 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6CE11185A794
+	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 06:40:32 +0000 (UTC)
+Received: from szxga05-in.huawei.com (szxga05-in.huawei.com
+	[45.249.212.191]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-76-HKHqzjkEOKuSEy2Ob4rEbQ-1; Tue, 26 Jan 2021 01:40:28 -0500
+X-MC-Unique: HKHqzjkEOKuSEy2Ob4rEbQ-1
+Received: from DGGEMS402-HUB.china.huawei.com (unknown [172.30.72.60])
+	by szxga05-in.huawei.com (SkyGuard) with ESMTP id 4DPxs44hfKzMQ93;
+	Tue, 26 Jan 2021 14:38:48 +0800 (CST)
+Received: from [10.174.178.113] (10.174.178.113) by
+	DGGEMS402-HUB.china.huawei.com (10.3.19.202) with Microsoft SMTP Server
+	id 14.3.498.0; Tue, 26 Jan 2021 14:40:09 +0800
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
+	Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel mailing list
+	<dm-devel@redhat.com>
+References: <063bbeeb-15aa-f7c0-b881-7526c3a2720c@huawei.com>
+	<f86753b17cc7e85e7e0f7e711adec349323a7c5a.camel@suse.com>
+	<d8ba8118-ce98-249a-cafd-021f0c1831a5@huawei.com>
+	<f1961d4104b14c80183b161a53262e1766e0df70.camel@suse.com>
+	<c52487a2-5c15-977c-704b-7cad5f6e275e@huawei.com>
+	<cd3cae852bffc2d4a9be2e7f4334eb346cfaae8d.camel@suse.com>
+From: lixiaokeng <lixiaokeng@huawei.com>
+Message-ID: <1cb9f9ba-811b-f4c5-33df-a16a096022ff@huawei.com>
+Date: Tue, 26 Jan 2021 14:40:09 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
+	Thunderbird/68.10.0
+MIME-Version: 1.0
+In-Reply-To: <cd3cae852bffc2d4a9be2e7f4334eb346cfaae8d.camel@suse.com>
+X-Originating-IP: [10.174.178.113]
+X-CFilter-Loop: Reflected
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>,
-	Martin Wilck <Martin.Wilck@suse.com>
-Subject: [dm-devel] [PATCH] libmpathpersist: fix thread safety of default
-	functions
+Cc: linfeilong <linfeilong@huawei.com>,
+	"liuzhiqiang \(I\)" <liuzhiqiang26@huawei.com>, lihaotian9@huawei.com
+Subject: Re: [dm-devel] [QUESTION]: multipath device with wrong path lead to
+	metadata err
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -80,284 +101,31 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-GB
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-commit a839e39e ("libmpathpersist: factor out initialization and
-teardown") made mpath_presistent_reserve_{in,out} use share variables
-for curmp and pathvec.  There are users of this library that call these
-functions in a multi-threaded process, and this change causes their
-application to crash. config and udev are also shared variables, but
-libmpathpersist doesn't write to the config in
-mpath_presistent_reserve_{in,out}, and looking into the libudev code, I
-don't see any place where libmpathpersist uses the udev object in a way
-that isn't thread-safe.
 
-This patch makes mpath_presistent_reserve_{in,out} go back to using
-local variables for curmp and pathvec, so that multiple threads won't
-be operating on these variables at the same time.
+> 
+> Can you provide multipathd -v3 logs, and kernel logs? Maybe I'll see
+> something.
+> 
 
-Fixes: a839e39e ("libmpathpersist: factor out initialization and teardown")
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmpathpersist/mpath_persist.c | 116 +++++++++++++++++++++-----------
- libmpathpersist/mpath_persist.h |  24 +++++--
- 2 files changed, 94 insertions(+), 46 deletions(-)
+Hi Martin,
+  The first scene was not found, so I can't provide some useful logs.
+I will try again to get more information from the logs.
+  If possible, please use scripts to reproduce the problem.
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 08077936..e4c24b93 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -133,69 +133,57 @@ mpath_prin_activepath (struct multipath *mpp, int rq_servact,
- 	return ret;
- }
- 
--int mpath_persistent_reserve_in (int fd, int rq_servact,
--	struct prin_resp *resp, int noisy, int verbose)
--{
--	int ret = mpath_persistent_reserve_init_vecs(verbose);
--
--	if (ret != MPATH_PR_SUCCESS)
--		return ret;
--	ret = __mpath_persistent_reserve_in(fd, rq_servact, resp, noisy);
--	mpath_persistent_reserve_free_vecs();
--	return ret;
--}
--
--int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
--	unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy, int verbose)
--{
--	int ret = mpath_persistent_reserve_init_vecs(verbose);
--
--	if (ret != MPATH_PR_SUCCESS)
--		return ret;
--	ret = __mpath_persistent_reserve_out(fd, rq_servact, rq_scope, rq_type,
--					     paramp, noisy);
--	mpath_persistent_reserve_free_vecs();
--	return ret;
--}
--
- static vector curmp;
- static vector pathvec;
- 
--void mpath_persistent_reserve_free_vecs(void)
-+static void __mpath_persistent_reserve_free_vecs(vector curmp, vector pathvec)
- {
- 	free_multipathvec(curmp, KEEP_PATHS);
- 	free_pathvec(pathvec, FREE_PATHS);
-+}
-+
-+void mpath_persistent_reserve_free_vecs(void)
-+{
-+	__mpath_persistent_reserve_free_vecs(curmp, pathvec);
- 	curmp = pathvec = NULL;
- }
- 
--int mpath_persistent_reserve_init_vecs(int verbose)
-+static int __mpath_persistent_reserve_init_vecs(vector *curmp_p,
-+						vector *pathvec_p, int verbose)
- {
- 	libmp_verbosity = verbose;
- 
--	if (curmp)
-+	if (*curmp_p)
- 		return MPATH_PR_SUCCESS;
- 	/*
- 	 * allocate core vectors to store paths and multipaths
- 	 */
--	curmp = vector_alloc ();
--	pathvec = vector_alloc ();
-+	*curmp_p = vector_alloc ();
-+	*pathvec_p = vector_alloc ();
- 
--	if (!curmp || !pathvec){
-+	if (!*curmp_p || !*pathvec_p){
- 		condlog (0, "vector allocation failed.");
- 		goto err;
- 	}
- 
--	if (dm_get_maps(curmp))
-+	if (dm_get_maps(*curmp_p))
- 		goto err;
- 
- 	return MPATH_PR_SUCCESS;
- 
- err:
--	mpath_persistent_reserve_free_vecs();
-+	__mpath_persistent_reserve_free_vecs(*curmp_p, *pathvec_p);
-+	*curmp_p = *pathvec_p = NULL;
- 	return MPATH_PR_DMMP_ERROR;
- }
- 
--static int mpath_get_map(int fd, char **palias, struct multipath **pmpp)
-+int mpath_persistent_reserve_init_vecs(int verbose)
-+{
-+	return __mpath_persistent_reserve_init_vecs(&curmp, &pathvec, verbose);
-+}
-+
-+static int mpath_get_map(vector curmp, vector pathvec, int fd, char **palias,
-+			 struct multipath **pmpp)
- {
- 	int ret = MPATH_PR_DMMP_ERROR;
- 	struct stat info;
-@@ -255,13 +243,13 @@ out:
- 	return ret;
- }
- 
--int __mpath_persistent_reserve_in (int fd, int rq_servact,
--	struct prin_resp *resp, int noisy)
-+static int do_mpath_persistent_reserve_in (vector curmp, vector pathvec,
-+	int fd, int rq_servact, struct prin_resp *resp, int noisy)
- {
- 	struct multipath *mpp;
- 	int ret;
- 
--	ret = mpath_get_map(fd, NULL, &mpp);
-+	ret = mpath_get_map(curmp, pathvec, fd, NULL, &mpp);
- 	if (ret != MPATH_PR_SUCCESS)
- 		return ret;
- 
-@@ -270,8 +258,17 @@ int __mpath_persistent_reserve_in (int fd, int rq_servact,
- 	return ret;
- }
- 
--int __mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
--	unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy)
-+
-+int __mpath_persistent_reserve_in (int fd, int rq_servact,
-+	struct prin_resp *resp, int noisy)
-+{
-+	return do_mpath_persistent_reserve_in(curmp, pathvec, fd, rq_servact,
-+					      resp, noisy);
-+}
-+
-+static int do_mpath_persistent_reserve_out(vector curmp, vector pathvec, int fd,
-+	int rq_servact, int rq_scope, unsigned int rq_type,
-+	struct prout_param_descriptor *paramp, int noisy)
- {
- 	struct multipath *mpp;
- 	char *alias;
-@@ -279,7 +276,7 @@ int __mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
- 	uint64_t prkey;
- 	struct config *conf;
- 
--	ret = mpath_get_map(fd, &alias, &mpp);
-+	ret = mpath_get_map(curmp, pathvec, fd, &alias, &mpp);
- 	if (ret != MPATH_PR_SUCCESS)
- 		return ret;
- 
-@@ -349,6 +346,45 @@ out1:
- 	return ret;
- }
- 
-+
-+int __mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
-+	unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy)
-+{
-+	return do_mpath_persistent_reserve_out(curmp, pathvec, fd, rq_servact,
-+					       rq_scope, rq_type, paramp,
-+					       noisy);
-+}
-+
-+int mpath_persistent_reserve_in (int fd, int rq_servact,
-+	struct prin_resp *resp, int noisy, int verbose)
-+{
-+	vector curmp, pathvec;
-+	int ret = __mpath_persistent_reserve_init_vecs(&curmp, &pathvec,
-+						       verbose);
-+
-+	if (ret != MPATH_PR_SUCCESS)
-+		return ret;
-+	ret = do_mpath_persistent_reserve_in(curmp, pathvec, fd, rq_servact,
-+					     resp, noisy);
-+	__mpath_persistent_reserve_free_vecs(curmp, pathvec);
-+	return ret;
-+}
-+
-+int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
-+	unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy, int verbose)
-+{
-+	vector curmp, pathvec;
-+	int ret = __mpath_persistent_reserve_init_vecs(&curmp, &pathvec,
-+						       verbose);
-+
-+	if (ret != MPATH_PR_SUCCESS)
-+		return ret;
-+	ret = do_mpath_persistent_reserve_out(curmp, pathvec, fd, rq_servact,
-+					      rq_scope, rq_type, paramp, noisy);
-+	__mpath_persistent_reserve_free_vecs(curmp, pathvec);
-+	return ret;
-+}
-+
- int
- get_mpvec (vector curmp, vector pathvec, char * refwwid)
- {
-diff --git a/libmpathpersist/mpath_persist.h b/libmpathpersist/mpath_persist.h
-index 5435eae4..9e9c0a82 100644
---- a/libmpathpersist/mpath_persist.h
-+++ b/libmpathpersist/mpath_persist.h
-@@ -246,9 +246,13 @@ extern int mpath_persistent_reserve_in (int fd, int rq_servact, struct prin_resp
- 
- /*
-  * DESCRIPTION :
-- * This function is like mpath_persistent_reserve_in(), except that it doesn't call
-- * mpath_persistent_reserve_init_vecs() and mpath_persistent_reserve_free_vecs()
-- * before and after the actual PR call.
-+ * This function is like mpath_persistent_reserve_in(), except that it
-+ * requires mpath_persistent_reserve_init_vecs() to be called before the
-+ * PR call to set up internal variables. These must later be cleanup up
-+ * by calling mpath_persistent_reserve_free_vecs().
-+ *
-+ * RESTRICTIONS:
-+ * This function uses static internal variables, and is not thread-safe.
-  */
- extern int __mpath_persistent_reserve_in(int fd, int rq_servact,
- 		struct prin_resp *resp, int noisy);
-@@ -280,9 +284,13 @@ extern int mpath_persistent_reserve_out ( int fd, int rq_servact, int rq_scope,
- 		int verbose);
- /*
-  * DESCRIPTION :
-- * This function is like mpath_persistent_reserve_out(), except that it doesn't call
-- * mpath_persistent_reserve_init_vecs() and mpath_persistent_reserve_free_vecs()
-- * before and after the actual PR call.
-+ * This function is like mpath_persistent_reserve_out(), except that it
-+ * requires mpath_persistent_reserve_init_vecs() to be called before the
-+ * PR call to set up internal variables. These must later be cleanup up
-+ * by calling mpath_persistent_reserve_free_vecs().
-+ *
-+ * RESTRICTIONS:
-+ * This function uses static internal variables, and is not thread-safe.
-  */
- extern int __mpath_persistent_reserve_out( int fd, int rq_servact, int rq_scope,
- 		unsigned int rq_type, struct prout_param_descriptor *paramp,
-@@ -296,6 +304,7 @@ extern int __mpath_persistent_reserve_out( int fd, int rq_servact, int rq_scope,
-  * @verbose: Set verbosity level. Input argument. value:0 to 3. 0->disabled, 3->Max verbose
-  *
-  * RESTRICTIONS:
-+ * This function uses static internal variables, and is not thread-safe.
-  *
-  * RETURNS: MPATH_PR_SUCCESS if successful else returns any of the status specified
-  *       above in RETURN_STATUS.
-@@ -306,6 +315,9 @@ int mpath_persistent_reserve_init_vecs(int verbose);
-  * DESCRIPTION :
-  * This function frees data structures allocated by
-  * mpath_persistent_reserve_init_vecs().
-+ *
-+ * RESTRICTIONS:
-+ * This function uses static internal variables, and is not thread-safe.
-  */
- void mpath_persistent_reserve_free_vecs(void);
- 
--- 
-2.17.2
+Regards,
+Lixiaokeng
+
 
 --
 dm-devel mailing list
