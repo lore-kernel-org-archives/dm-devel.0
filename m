@@ -2,75 +2,71 @@ Return-Path: <SRS0=jLbn=G6=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B45D5C433DB
-	for <dm-devel@archiver.kernel.org>; Wed, 27 Jan 2021 10:02:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4E5E2C433E0
+	for <dm-devel@archiver.kernel.org>; Wed, 27 Jan 2021 10:05:51 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 238FB2076E
-	for <dm-devel@archiver.kernel.org>; Wed, 27 Jan 2021 10:02:52 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 238FB2076E
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+	by mail.kernel.org (Postfix) with ESMTPS id 9068B2072C
+	for <dm-devel@archiver.kernel.org>; Wed, 27 Jan 2021 10:05:50 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9068B2072C
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-339--uFSLEMYMbu7AxaVD37B-Q-1; Wed, 27 Jan 2021 05:02:49 -0500
-X-MC-Unique: -uFSLEMYMbu7AxaVD37B-Q-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-601-o-zv60NsPQCILUmtbos3EA-1; Wed, 27 Jan 2021 05:05:46 -0500
+X-MC-Unique: o-zv60NsPQCILUmtbos3EA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 08489EC1AB;
-	Wed, 27 Jan 2021 10:02:44 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D776C1F40F;
-	Wed, 27 Jan 2021 10:02:43 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 01888107ACF6;
+	Wed, 27 Jan 2021 10:05:42 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D4ED710023B7;
+	Wed, 27 Jan 2021 10:05:41 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A63B550030;
-	Wed, 27 Jan 2021 10:02:43 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A25C0180954D;
+	Wed, 27 Jan 2021 10:05:41 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10R7NBXj007023 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 27 Jan 2021 02:23:11 -0500
+	id 10Q9cP00005024 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 26 Jan 2021 04:38:25 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4DA8B2166B2A; Wed, 27 Jan 2021 07:23:11 +0000 (UTC)
+	id 8453A2166B29; Tue, 26 Jan 2021 09:38:25 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 44B472166B2E
-	for <dm-devel@redhat.com>; Wed, 27 Jan 2021 07:23:08 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7F3992166B28
+	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 09:38:22 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C205858287
-	for <dm-devel@redhat.com>; Wed, 27 Jan 2021 07:23:08 +0000 (UTC)
-Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
-	by relay.mimecast.com with ESMTP id us-mta-242-eAUU--fTNFGVpmUMMsjCKQ-1;
-	Wed, 27 Jan 2021 02:23:04 -0500
-X-MC-Unique: eAUU--fTNFGVpmUMMsjCKQ-1
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 9F65B20739;
-	Wed, 27 Jan 2021 07:16:05 +0000 (UTC)
-Received: by mail-lf1-f51.google.com with SMTP id h12so1219637lfp.9;
-	Tue, 26 Jan 2021 23:16:05 -0800 (PST)
-X-Gm-Message-State: AOAM531RPT/Lo4rUP5QnNI8iE8xzEbtLuIysy8ljwg+VmYsPrbi2JVCf
-	tUOETshlr6ajL3BYWnMrEEwN5yfdGLOG4Ulw1kg=
-X-Google-Smtp-Source: ABdhPJwFmb6CVFGHBWXlzQnS58PALEhepsv7f0h0Je/37NQinPkKDgqPDkTeBlpmndchuGkIHeS1z4Fyx1z/Fa+aNwE=
-X-Received: by 2002:a05:6512:b1b:: with SMTP id
-	w27mr4506047lfu.10.1611731763892; 
-	Tue, 26 Jan 2021 23:16:03 -0800 (PST)
-MIME-Version: 1.0
-References: <20210126145247.1964410-1-hch@lst.de>
-	<20210126145247.1964410-15-hch@lst.de>
-In-Reply-To: <20210126145247.1964410-15-hch@lst.de>
-From: Song Liu <song@kernel.org>
-Date: Tue, 26 Jan 2021 23:15:52 -0800
-X-Gmail-Original-Message-ID: <CAPhsuW599kbe-YFX0FOOGJy30gy3V2_hMYW3jg3sK_VwaayEBQ@mail.gmail.com>
-Message-ID: <CAPhsuW599kbe-YFX0FOOGJy30gy3V2_hMYW3jg3sK_VwaayEBQ@mail.gmail.com>
-To: Christoph Hellwig <hch@lst.de>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C680D1875049
+	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 09:38:22 +0000 (UTC)
+Received: from out30-132.freemail.mail.aliyun.com
+	(out30-132.freemail.mail.aliyun.com [115.124.30.132]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-504-JPQV9dedMOuvivjAxvOmVw-1;
+	Tue, 26 Jan 2021 04:38:20 -0500
+X-MC-Unique: JPQV9dedMOuvivjAxvOmVw-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R701e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1;
+	HT=alimailimapcm10staff010182156082;
+	MF=abaci-bugfix@linux.alibaba.com; NM=1; PH=DS; RN=5; SR=0;
+	TI=SMTPD_---0UMyJmYd_1611653554
+Received: from
+	j63c13417.sqa.eu95.tbsite.net(mailfrom:abaci-bugfix@linux.alibaba.com
+	fp:SMTPD_---0UMyJmYd_1611653554) by smtp.aliyun-inc.com(127.0.0.1);
+	Tue, 26 Jan 2021 17:32:51 +0800
+From: Jiapeng Zhong <abaci-bugfix@linux.alibaba.com>
+To: agk@redhat.com
+Date: Tue, 26 Jan 2021 17:32:32 +0800
+Message-Id: <1611653552-84056-1-git-send-email-abaci-bugfix@linux.alibaba.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -82,23 +78,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 27 Jan 2021 05:02:17 -0500
-Cc: Mike Snitzer <snitzer@redhat.com>, David Sterba <dsterba@suse.com>,
-	dm-devel@redhat.com, Naohiro Aota <naohiro.aota@wdc.com>,
-	linux-nilfs@vger.kernel.org, Chao Yu <chao@kernel.org>,
-	Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>,
-	linux-raid <linux-raid@vger.kernel.org>,
-	linux-bcache@vger.kernel.org, drbd-dev@tron.linbit.com,
-	Jaegeuk Kim <jaegeuk@kernel.org>,
-	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
-	Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	Damien Le Moal <damien.lemoal@wdc.com>,
-	Andrew Morton <akpm@linux-foundation.org>, Linux-MM <linux-mm@kvack.org>,
-	Philipp Reisner <philipp.reisner@linbit.com>,
-	linux-f2fs-devel@lists.sourceforge.net,
-	Linux-Fsdevel <linux-fsdevel@vger.kernel.org>,
-	Lars Ellenberg <lars.ellenberg@linbit.com>,
-	linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH 14/17] md/raid6: refactor raid5_read_one_chunk
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, snitzer@redhat.com,
+	Jiapeng Zhong <abaci-bugfix@linux.alibaba.com>
+Subject: [dm-devel] [PATCH] dm writecache: remove redundant NULL check
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -110,9 +92,10 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -120,165 +103,44 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Jan 26, 2021 at 7:19 AM Christoph Hellwig <hch@lst.de> wrote:
->
-> Refactor raid5_read_one_chunk so that all simple checks are done
-> before allocating the bio.
->
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+Fix below warnings reported by coccicheck:
+./drivers/md/dm-writecache.c:2008:2-7: WARNING: NULL check before some
+freeing functions is not needed.
+./drivers/md/dm-writecache.c:2024:2-7: WARNING: NULL check before some
+freeing functions is not needed.
 
-Acked-by: Song Liu <song@kernel.org>
+Reported-by: Abaci Robot <abaci@linux.alibaba.com>
+Signed-off-by: Jiapeng Zhong <abaci-bugfix@linux.alibaba.com>
+---
+ drivers/md/dm-writecache.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
 
-Thanks for the clean-up!
-
-
-> ---
->  drivers/md/raid5.c | 108 +++++++++++++++++++--------------------------
->  1 file changed, 45 insertions(+), 63 deletions(-)
->
-> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-> index f411b9e5c332f4..a348b2adf2a9f9 100644
-> --- a/drivers/md/raid5.c
-> +++ b/drivers/md/raid5.c
-> @@ -5393,90 +5393,72 @@ static void raid5_align_endio(struct bio *bi)
->  static int raid5_read_one_chunk(struct mddev *mddev, struct bio *raid_bio)
->  {
->         struct r5conf *conf = mddev->private;
-> -       int dd_idx;
-> -       struct bio* align_bi;
-> +       struct bio *align_bio;
->         struct md_rdev *rdev;
-> -       sector_t end_sector;
-> +       sector_t sector, end_sector, first_bad;
-> +       int bad_sectors, dd_idx;
->
->         if (!in_chunk_boundary(mddev, raid_bio)) {
->                 pr_debug("%s: non aligned\n", __func__);
->                 return 0;
->         }
-> -       /*
-> -        * use bio_clone_fast to make a copy of the bio
-> -        */
-> -       align_bi = bio_clone_fast(raid_bio, GFP_NOIO, &mddev->bio_set);
-> -       if (!align_bi)
-> -               return 0;
-> -       /*
-> -        *   set bi_end_io to a new function, and set bi_private to the
-> -        *     original bio.
-> -        */
-> -       align_bi->bi_end_io  = raid5_align_endio;
-> -       align_bi->bi_private = raid_bio;
-> -       /*
-> -        *      compute position
-> -        */
-> -       align_bi->bi_iter.bi_sector =
-> -               raid5_compute_sector(conf, raid_bio->bi_iter.bi_sector,
-> -                                    0, &dd_idx, NULL);
->
-> -       end_sector = bio_end_sector(align_bi);
-> +       sector = raid5_compute_sector(conf, raid_bio->bi_iter.bi_sector, 0,
-> +                                     &dd_idx, NULL);
-> +       end_sector = bio_end_sector(raid_bio);
-> +
->         rcu_read_lock();
-> +       if (r5c_big_stripe_cached(conf, sector))
-> +               goto out_rcu_unlock;
-> +
->         rdev = rcu_dereference(conf->disks[dd_idx].replacement);
->         if (!rdev || test_bit(Faulty, &rdev->flags) ||
->             rdev->recovery_offset < end_sector) {
->                 rdev = rcu_dereference(conf->disks[dd_idx].rdev);
-> -               if (rdev &&
-> -                   (test_bit(Faulty, &rdev->flags) ||
-> +               if (!rdev)
-> +                       goto out_rcu_unlock;
-> +               if (test_bit(Faulty, &rdev->flags) ||
->                     !(test_bit(In_sync, &rdev->flags) ||
-> -                     rdev->recovery_offset >= end_sector)))
-> -                       rdev = NULL;
-> +                     rdev->recovery_offset >= end_sector))
-> +                       goto out_rcu_unlock;
->         }
->
-> -       if (r5c_big_stripe_cached(conf, align_bi->bi_iter.bi_sector)) {
-> -               rcu_read_unlock();
-> -               bio_put(align_bi);
-> +       atomic_inc(&rdev->nr_pending);
-> +       rcu_read_unlock();
-> +
-> +       align_bio = bio_clone_fast(raid_bio, GFP_NOIO, &mddev->bio_set);
-> +       bio_set_dev(align_bio, rdev->bdev);
-> +       align_bio->bi_end_io = raid5_align_endio;
-> +       align_bio->bi_private = raid_bio;
-> +       align_bio->bi_iter.bi_sector = sector;
-> +
-> +       raid_bio->bi_next = (void *)rdev;
-> +
-> +       if (is_badblock(rdev, sector, bio_sectors(align_bio), &first_bad,
-> +                       &bad_sectors)) {
-> +               bio_put(align_bio);
-> +               rdev_dec_pending(rdev, mddev);
->                 return 0;
->         }
->
-> -       if (rdev) {
-> -               sector_t first_bad;
-> -               int bad_sectors;
-> -
-> -               atomic_inc(&rdev->nr_pending);
-> -               rcu_read_unlock();
-> -               raid_bio->bi_next = (void*)rdev;
-> -               bio_set_dev(align_bi, rdev->bdev);
-> -
-> -               if (is_badblock(rdev, align_bi->bi_iter.bi_sector,
-> -                               bio_sectors(align_bi),
-> -                               &first_bad, &bad_sectors)) {
-> -                       bio_put(align_bi);
-> -                       rdev_dec_pending(rdev, mddev);
-> -                       return 0;
-> -               }
-> +       /* No reshape active, so we can trust rdev->data_offset */
-> +       align_bio->bi_iter.bi_sector += rdev->data_offset;
->
-> -               /* No reshape active, so we can trust rdev->data_offset */
-> -               align_bi->bi_iter.bi_sector += rdev->data_offset;
-> +       spin_lock_irq(&conf->device_lock);
-> +       wait_event_lock_irq(conf->wait_for_quiescent, conf->quiesce == 0,
-> +                           conf->device_lock);
-> +       atomic_inc(&conf->active_aligned_reads);
-> +       spin_unlock_irq(&conf->device_lock);
->
-> -               spin_lock_irq(&conf->device_lock);
-> -               wait_event_lock_irq(conf->wait_for_quiescent,
-> -                                   conf->quiesce == 0,
-> -                                   conf->device_lock);
-> -               atomic_inc(&conf->active_aligned_reads);
-> -               spin_unlock_irq(&conf->device_lock);
-> +       if (mddev->gendisk)
-> +               trace_block_bio_remap(align_bio, disk_devt(mddev->gendisk),
-> +                                     raid_bio->bi_iter.bi_sector);
-> +       submit_bio_noacct(align_bio);
-> +       return 1;
->
-> -               if (mddev->gendisk)
-> -                       trace_block_bio_remap(align_bi, disk_devt(mddev->gendisk),
-> -                                             raid_bio->bi_iter.bi_sector);
-> -               submit_bio_noacct(align_bi);
-> -               return 1;
-> -       } else {
-> -               rcu_read_unlock();
-> -               bio_put(align_bi);
-> -               return 0;
-> -       }
-> +out_rcu_unlock:
-> +       rcu_read_unlock();
-> +       return 0;
->  }
->
->  static struct bio *chunk_aligned_read(struct mddev *mddev, struct bio *raid_bio)
-> --
-> 2.29.2
->
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index d5223a0..8abf185 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -2004,8 +2004,7 @@ static void writecache_dtr(struct dm_target *ti)
+ 	if (wc->ssd_dev)
+ 		dm_put_device(ti, wc->ssd_dev);
+ 
+-	if (wc->entries)
+-		vfree(wc->entries);
++	vfree(wc->entries);
+ 
+ 	if (wc->memory_map) {
+ 		if (WC_MODE_PMEM(wc))
+@@ -2020,8 +2019,7 @@ static void writecache_dtr(struct dm_target *ti)
+ 	if (wc->dm_io)
+ 		dm_io_client_destroy(wc->dm_io);
+ 
+-	if (wc->dirty_bitmap)
+-		vfree(wc->dirty_bitmap);
++	vfree(wc->dirty_bitmap);
+ 
+ 	kfree(wc);
+ }
+-- 
+1.8.3.1
 
 --
 dm-devel mailing list
