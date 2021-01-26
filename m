@@ -7,58 +7,58 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D79DEC433E0
-	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 15:08:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3597EC433DB
+	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 15:11:03 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4026C22D58
-	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 15:08:56 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4026C22D58
+	by mail.kernel.org (Postfix) with ESMTPS id 8BFD0230FE
+	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 15:11:02 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 8BFD0230FE
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-105-F0PDVXz7P_Sj3dGzHlaF-A-1; Tue, 26 Jan 2021 10:08:53 -0500
-X-MC-Unique: F0PDVXz7P_Sj3dGzHlaF-A-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-531-3-xLPe2KNNO-HYiV-ru9ww-1; Tue, 26 Jan 2021 10:10:59 -0500
+X-MC-Unique: 3-xLPe2KNNO-HYiV-ru9ww-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 335A58018A3;
-	Tue, 26 Jan 2021 15:08:48 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E222415720;
+	Tue, 26 Jan 2021 15:10:53 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1164E63746;
-	Tue, 26 Jan 2021 15:08:48 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C091510016FF;
+	Tue, 26 Jan 2021 15:10:53 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D42E85002C;
-	Tue, 26 Jan 2021 15:08:47 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8FA9F5002E;
+	Tue, 26 Jan 2021 15:10:53 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10QF8kak013740 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 26 Jan 2021 10:08:47 -0500
+	id 10QFAY2l014017 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 26 Jan 2021 10:10:34 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id D2C7C1004148; Tue, 26 Jan 2021 15:08:46 +0000 (UTC)
+	id 5A0B19465C; Tue, 26 Jan 2021 15:10:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9D72B10070AF
-	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 15:08:43 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 54DEA94655
+	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 15:10:29 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7E6C6100FBC8
-	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 15:08:43 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DFE54100B165
+	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 15:10:29 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-311-E-vEzF9jPSmS5d-2SK1Z2Q-1; Tue, 26 Jan 2021 10:08:41 -0500
-X-MC-Unique: E-vEzF9jPSmS5d-2SK1Z2Q-1
+	us-mta-303-Px0aHgmHONupDKH_8pDCOA-1; Tue, 26 Jan 2021 10:10:25 -0500
+X-MC-Unique: Px0aHgmHONupDKH_8pDCOA-1
 Received: from [2001:4bb8:191:e347:5918:ac86:61cb:8801] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.94 #2 (Red Hat Linux))
-	id 1l4PuS-005nI7-1q; Tue, 26 Jan 2021 15:06:07 +0000
+	id 1l4PwO-005nSC-70; Tue, 26 Jan 2021 15:07:53 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>
-Date: Tue, 26 Jan 2021 15:52:38 +0100
-Message-Id: <20210126145247.1964410-9-hch@lst.de>
+Date: Tue, 26 Jan 2021 15:52:39 +0100
+Message-Id: <20210126145247.1964410-10-hch@lst.de>
 In-Reply-To: <20210126145247.1964410-1-hch@lst.de>
 References: <20210126145247.1964410-1-hch@lst.de>
 MIME-Version: 1.0
@@ -72,7 +72,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: Mike Snitzer <snitzer@redhat.com>, David Sterba <dsterba@suse.com>,
 	dm-devel@redhat.com, Naohiro Aota <naohiro.aota@wdc.com>,
@@ -87,7 +87,7 @@ Cc: Mike Snitzer <snitzer@redhat.com>, David Sterba <dsterba@suse.com>,
 	Philipp Reisner <philipp.reisner@linbit.com>,
 	linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org,
 	Lars Ellenberg <lars.ellenberg@linbit.com>, linux-btrfs@vger.kernel.org
-Subject: [dm-devel] [PATCH 08/17] f2fs: remove FAULT_ALLOC_BIO
+Subject: [dm-devel] [PATCH 09/17] drbd: remove bio_alloc_drbd
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -101,7 +101,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -109,107 +109,81 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Sleeping bio allocations do not fail, which means that injecting an error
-into sleeping bio allocations is a little silly.
+Given that drbd_md_io_bio_set is initialized during module initialization
+and the module fails to load if the initialization fails there is no need
+to fall back to plain bio_alloc.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- Documentation/filesystems/f2fs.rst |  1 -
- fs/f2fs/data.c                     | 29 ++++-------------------------
- fs/f2fs/f2fs.h                     |  1 -
- fs/f2fs/super.c                    |  1 -
- 4 files changed, 4 insertions(+), 28 deletions(-)
+ drivers/block/drbd/drbd_actlog.c |  2 +-
+ drivers/block/drbd/drbd_bitmap.c |  2 +-
+ drivers/block/drbd/drbd_int.h    |  2 --
+ drivers/block/drbd/drbd_main.c   | 13 -------------
+ 4 files changed, 2 insertions(+), 17 deletions(-)
 
-diff --git a/Documentation/filesystems/f2fs.rst b/Documentation/filesystems/f2fs.rst
-index dae15c96e659e2..624f5f3ed93e86 100644
---- a/Documentation/filesystems/f2fs.rst
-+++ b/Documentation/filesystems/f2fs.rst
-@@ -179,7 +179,6 @@ fault_type=%d		 Support configuring fault injection type, should be
- 			 FAULT_KVMALLOC		  0x000000002
- 			 FAULT_PAGE_ALLOC	  0x000000004
- 			 FAULT_PAGE_GET		  0x000000008
--			 FAULT_ALLOC_BIO	  0x000000010
- 			 FAULT_ALLOC_NID	  0x000000020
- 			 FAULT_ORPHAN		  0x000000040
- 			 FAULT_BLOCK		  0x000000080
-diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
-index 0cf0c605992431..9fb6be65592b1f 100644
---- a/fs/f2fs/data.c
-+++ b/fs/f2fs/data.c
-@@ -50,28 +50,6 @@ void f2fs_destroy_bioset(void)
- 	bioset_exit(&f2fs_bioset);
- }
+diff --git a/drivers/block/drbd/drbd_actlog.c b/drivers/block/drbd/drbd_actlog.c
+index 7227fc7ab8ed1e..72cf7603d51fc7 100644
+--- a/drivers/block/drbd/drbd_actlog.c
++++ b/drivers/block/drbd/drbd_actlog.c
+@@ -138,7 +138,7 @@ static int _drbd_md_sync_page_io(struct drbd_device *device,
+ 		op_flags |= REQ_FUA | REQ_PREFLUSH;
+ 	op_flags |= REQ_SYNC;
  
--static inline struct bio *__f2fs_bio_alloc(gfp_t gfp_mask,
--						unsigned int nr_iovecs)
--{
--	return bio_alloc_bioset(gfp_mask, nr_iovecs, &f2fs_bioset);
--}
--
--static struct bio *f2fs_bio_alloc(struct f2fs_sb_info *sbi, int npages,
--		bool noio)
--{
--	if (noio) {
--		/* No failure on bio allocation */
--		return __f2fs_bio_alloc(GFP_NOIO, npages);
--	}
--
--	if (time_to_inject(sbi, FAULT_ALLOC_BIO)) {
--		f2fs_show_injection_info(sbi, FAULT_ALLOC_BIO);
--		return NULL;
--	}
--
--	return __f2fs_bio_alloc(GFP_KERNEL, npages);
--}
--
- static bool __is_cp_guaranteed(struct page *page)
+-	bio = bio_alloc_drbd(GFP_NOIO);
++	bio = bio_alloc_bioset(GFP_NOIO, 1, &drbd_md_io_bio_set);
+ 	bio_set_dev(bio, bdev->md_bdev);
+ 	bio->bi_iter.bi_sector = sector;
+ 	err = -EIO;
+diff --git a/drivers/block/drbd/drbd_bitmap.c b/drivers/block/drbd/drbd_bitmap.c
+index df53dca5d02c7e..c1f816f896a89a 100644
+--- a/drivers/block/drbd/drbd_bitmap.c
++++ b/drivers/block/drbd/drbd_bitmap.c
+@@ -976,7 +976,7 @@ static void drbd_bm_endio(struct bio *bio)
+ 
+ static void bm_page_io_async(struct drbd_bm_aio_ctx *ctx, int page_nr) __must_hold(local)
  {
- 	struct address_space *mapping = page->mapping;
-@@ -433,7 +411,7 @@ static struct bio *__bio_alloc(struct f2fs_io_info *fio, int npages)
- 	struct f2fs_sb_info *sbi = fio->sbi;
- 	struct bio *bio;
+-	struct bio *bio = bio_alloc_drbd(GFP_NOIO);
++	struct bio *bio = bio_alloc_bioset(GFP_NOIO, 1, &drbd_md_io_bio_set);
+ 	struct drbd_device *device = ctx->device;
+ 	struct drbd_bitmap *b = device->bitmap;
+ 	struct page *page;
+diff --git a/drivers/block/drbd/drbd_int.h b/drivers/block/drbd/drbd_int.h
+index b2c93a29c251fd..02db50d7e4c668 100644
+--- a/drivers/block/drbd/drbd_int.h
++++ b/drivers/block/drbd/drbd_int.h
+@@ -1422,8 +1422,6 @@ extern mempool_t drbd_md_io_page_pool;
+ /* We also need to make sure we get a bio
+  * when we need it for housekeeping purposes */
+ extern struct bio_set drbd_md_io_bio_set;
+-/* to allocate from that set */
+-extern struct bio *bio_alloc_drbd(gfp_t gfp_mask);
  
--	bio = f2fs_bio_alloc(sbi, npages, true);
-+	bio = bio_alloc_bioset(GFP_NOIO, npages, &f2fs_bioset);
+ /* And a bio_set for cloning */
+ extern struct bio_set drbd_io_bio_set;
+diff --git a/drivers/block/drbd/drbd_main.c b/drivers/block/drbd/drbd_main.c
+index 1c8c18b2a25f33..788dd97e6026b8 100644
+--- a/drivers/block/drbd/drbd_main.c
++++ b/drivers/block/drbd/drbd_main.c
+@@ -138,19 +138,6 @@ static const struct block_device_operations drbd_ops = {
+ 	.release	= drbd_release,
+ };
  
- 	f2fs_target_device(sbi, fio->new_blkaddr, bio);
- 	if (is_read_io(fio->op)) {
-@@ -1029,8 +1007,9 @@ static struct bio *f2fs_grab_read_bio(struct inode *inode, block_t blkaddr,
- 	struct bio_post_read_ctx *ctx;
- 	unsigned int post_read_steps = 0;
- 
--	bio = f2fs_bio_alloc(sbi, min_t(int, nr_pages, BIO_MAX_PAGES),
--								for_write);
-+	bio = bio_alloc_bioset(for_write ? GFP_NOIO : GFP_KERNEL,
-+			       min_t(int, nr_pages, BIO_MAX_PAGES),
-+			       &f2fs_bioset);
- 	if (!bio)
- 		return ERR_PTR(-ENOMEM);
- 
-diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index 902bd3267c03e1..6c78365d80ceb5 100644
---- a/fs/f2fs/f2fs.h
-+++ b/fs/f2fs/f2fs.h
-@@ -43,7 +43,6 @@ enum {
- 	FAULT_KVMALLOC,
- 	FAULT_PAGE_ALLOC,
- 	FAULT_PAGE_GET,
--	FAULT_ALLOC_BIO,
- 	FAULT_ALLOC_NID,
- 	FAULT_ORPHAN,
- 	FAULT_BLOCK,
-diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
-index b4a07fe62d1a58..3a312642907e86 100644
---- a/fs/f2fs/super.c
-+++ b/fs/f2fs/super.c
-@@ -45,7 +45,6 @@ const char *f2fs_fault_name[FAULT_MAX] = {
- 	[FAULT_KVMALLOC]	= "kvmalloc",
- 	[FAULT_PAGE_ALLOC]	= "page alloc",
- 	[FAULT_PAGE_GET]	= "page get",
--	[FAULT_ALLOC_BIO]	= "alloc bio",
- 	[FAULT_ALLOC_NID]	= "alloc nid",
- 	[FAULT_ORPHAN]		= "orphan",
- 	[FAULT_BLOCK]		= "no more block",
+-struct bio *bio_alloc_drbd(gfp_t gfp_mask)
+-{
+-	struct bio *bio;
+-
+-	if (!bioset_initialized(&drbd_md_io_bio_set))
+-		return bio_alloc(gfp_mask, 1);
+-
+-	bio = bio_alloc_bioset(gfp_mask, 1, &drbd_md_io_bio_set);
+-	if (!bio)
+-		return NULL;
+-	return bio;
+-}
+-
+ #ifdef __CHECKER__
+ /* When checking with sparse, and this is an inline function, sparse will
+    give tons of false positives. When this is a real functions sparse works.
 -- 
 2.29.2
 
