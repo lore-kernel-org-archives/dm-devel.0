@@ -7,59 +7,58 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 00B19C433E6
-	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 15:03:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 23C84C433E0
+	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 15:04:04 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 5C9CD20724
-	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 15:03:29 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5C9CD20724
+	by mail.kernel.org (Postfix) with ESMTPS id 9705B23101
+	for <dm-devel@archiver.kernel.org>; Tue, 26 Jan 2021 15:04:03 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9705B23101
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-412-4y1CT0nnNVS9oHVPcQs3iA-1; Tue, 26 Jan 2021 10:03:26 -0500
-X-MC-Unique: 4y1CT0nnNVS9oHVPcQs3iA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-548-DCxOon2GPWyyJ_NFC-4NuQ-1; Tue, 26 Jan 2021 10:04:00 -0500
+X-MC-Unique: DCxOon2GPWyyJ_NFC-4NuQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5D417107ACF7;
-	Tue, 26 Jan 2021 15:03:21 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2CC8E60C47;
-	Tue, 26 Jan 2021 15:03:21 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CFE5C801AB5;
+	Tue, 26 Jan 2021 15:03:55 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A7A1E10013C0;
+	Tue, 26 Jan 2021 15:03:55 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B83FF180954D;
-	Tue, 26 Jan 2021 15:03:20 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 554C05002E;
+	Tue, 26 Jan 2021 15:03:55 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10QF3Iks012531 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 26 Jan 2021 10:03:18 -0500
+	id 10QF3r3J012682 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 26 Jan 2021 10:03:53 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B81FD110F75A; Tue, 26 Jan 2021 15:03:18 +0000 (UTC)
+	id AE409110F75E; Tue, 26 Jan 2021 15:03:53 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B384510054D3
-	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 15:03:15 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AA18F110F72C
+	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 15:03:51 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BCD488008A5
-	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 15:03:15 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5C485805F4E
+	for <dm-devel@redhat.com>; Tue, 26 Jan 2021 15:03:51 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-266-k4CkpLCnNF6e-gUcRzn49A-1; Tue, 26 Jan 2021 10:03:10 -0500
-X-MC-Unique: k4CkpLCnNF6e-gUcRzn49A-1
+	us-mta-425-xOUlmIIpOymdIWvDpcF0uQ-1; Tue, 26 Jan 2021 10:03:48 -0500
+X-MC-Unique: xOUlmIIpOymdIWvDpcF0uQ-1
 Received: from [2001:4bb8:191:e347:5918:ac86:61cb:8801] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.94 #2 (Red Hat Linux))
-	id 1l4PoW-005mZ0-Km; Tue, 26 Jan 2021 14:59:54 +0000
+	id 1l4PqP-005mns-Ef; Tue, 26 Jan 2021 15:01:48 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>, Song Liu <song@kernel.org>
-Date: Tue, 26 Jan 2021 15:52:34 +0100
-Message-Id: <20210126145247.1964410-5-hch@lst.de>
+Date: Tue, 26 Jan 2021 15:52:35 +0100
+Message-Id: <20210126145247.1964410-6-hch@lst.de>
 In-Reply-To: <20210126145247.1964410-1-hch@lst.de>
 References: <20210126145247.1964410-1-hch@lst.de>
 MIME-Version: 1.0
@@ -88,8 +87,8 @@ Cc: Mike Snitzer <snitzer@redhat.com>, David Sterba <dsterba@suse.com>,
 	Philipp Reisner <philipp.reisner@linbit.com>,
 	linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org,
 	Lars Ellenberg <lars.ellenberg@linbit.com>, linux-btrfs@vger.kernel.org
-Subject: [dm-devel] [PATCH 04/17] block: split bio_kmalloc from
-	bio_alloc_bioset
+Subject: [dm-devel] [PATCH 05/17] block: use an on-stack bio in
+	blkdev_issue_flush
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -103,7 +102,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -111,259 +110,400 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-bio_kmalloc shares almost no logic with the bio_set based fast path
-in bio_alloc_bioset.  Split it into an entirely separate implementation.
+There is no point in allocating memory for a synchronous flush.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/bio.c         | 167 ++++++++++++++++++++++----------------------
- include/linux/bio.h |   6 +-
- 2 files changed, 86 insertions(+), 87 deletions(-)
+ block/blk-flush.c                 | 17 ++++++-----------
+ drivers/md/dm-zoned-metadata.c    |  6 +++---
+ drivers/md/raid5-ppl.c            |  2 +-
+ drivers/nvme/target/io-cmd-bdev.c |  2 +-
+ fs/block_dev.c                    |  2 +-
+ fs/exfat/file.c                   |  2 +-
+ fs/ext4/fast_commit.c             |  4 ++--
+ fs/ext4/fsync.c                   |  2 +-
+ fs/ext4/ialloc.c                  |  2 +-
+ fs/ext4/super.c                   |  2 +-
+ fs/fat/file.c                     |  2 +-
+ fs/hfsplus/inode.c                |  2 +-
+ fs/hfsplus/super.c                |  2 +-
+ fs/jbd2/checkpoint.c              |  2 +-
+ fs/jbd2/commit.c                  |  4 ++--
+ fs/jbd2/recovery.c                |  2 +-
+ fs/libfs.c                        |  2 +-
+ fs/nilfs2/the_nilfs.h             |  2 +-
+ fs/ocfs2/file.c                   |  2 +-
+ fs/reiserfs/file.c                |  2 +-
+ fs/xfs/xfs_super.c                |  2 +-
+ fs/zonefs/super.c                 |  2 +-
+ include/linux/blkdev.h            |  4 ++--
+ 23 files changed, 33 insertions(+), 38 deletions(-)
 
-diff --git a/block/bio.c b/block/bio.c
-index dfd7740a32300a..d4375619348c52 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -396,123 +396,101 @@ static void punt_bios_to_rescuer(struct bio_set *bs)
-  * @nr_iovecs:	number of iovecs to pre-allocate
-  * @bs:		the bio_set to allocate from.
+diff --git a/block/blk-flush.c b/block/blk-flush.c
+index 76c1624cb06c05..7942ca6ed3211c 100644
+--- a/block/blk-flush.c
++++ b/block/blk-flush.c
+@@ -432,23 +432,18 @@ void blk_insert_flush(struct request *rq)
+ /**
+  * blkdev_issue_flush - queue a flush
+  * @bdev:	blockdev to issue flush for
+- * @gfp_mask:	memory allocation flags (for bio_alloc)
   *
-- * Description:
-- *   If @bs is NULL, uses kmalloc() to allocate the bio; else the allocation is
-- *   backed by the @bs's mempool.
-+ * Allocate a bio from the mempools in @bs.
-  *
-- *   When @bs is not NULL, if %__GFP_DIRECT_RECLAIM is set then bio_alloc will
-- *   always be able to allocate a bio. This is due to the mempool guarantees.
-- *   To make this work, callers must never allocate more than 1 bio at a time
-- *   from this pool. Callers that need to allocate more than 1 bio must always
-- *   submit the previously allocated bio for IO before attempting to allocate
-- *   a new one. Failure to do so can cause deadlocks under memory pressure.
-+ * If %__GFP_DIRECT_RECLAIM is set then bio_alloc will always be able to
-+ * allocate a bio.  This is due to the mempool guarantees.  To make this work,
-+ * callers must never allocate more than 1 bio at a time from the general pool.
-+ * Callers that need to allocate more than 1 bio must always submit the
-+ * previously allocated bio for IO before attempting to allocate a new one.
-+ * Failure to do so can cause deadlocks under memory pressure.
-  *
-- *   Note that when running under submit_bio_noacct() (i.e. any block
-- *   driver), bios are not submitted until after you return - see the code in
-- *   submit_bio_noacct() that converts recursion into iteration, to prevent
-- *   stack overflows.
-+ * Note that when running under submit_bio_noacct() (i.e. any block driver),
-+ * bios are not submitted until after you return - see the code in
-+ * submit_bio_noacct() that converts recursion into iteration, to prevent
-+ * stack overflows.
-  *
-- *   This would normally mean allocating multiple bios under
-- *   submit_bio_noacct() would be susceptible to deadlocks, but we have
-- *   deadlock avoidance code that resubmits any blocked bios from a rescuer
-- *   thread.
-+ * This would normally mean allocating multiple bios under submit_bio_noacct()
-+ * would be susceptible to deadlocks, but we have
-+ * deadlock avoidance code that resubmits any blocked bios from a rescuer
-+ * thread.
-  *
-- *   However, we do not guarantee forward progress for allocations from other
-- *   mempools. Doing multiple allocations from the same mempool under
-- *   submit_bio_noacct() should be avoided - instead, use bio_set's front_pad
-- *   for per bio allocations.
-+ * However, we do not guarantee forward progress for allocations from other
-+ * mempools. Doing multiple allocations from the same mempool under
-+ * submit_bio_noacct() should be avoided - instead, use bio_set's front_pad
-+ * for per bio allocations.
-  *
-- *   RETURNS:
-- *   Pointer to new bio on success, NULL on failure.
-+ * Returns: Pointer to new bio on success, NULL on failure.
+  * Description:
+  *    Issue a flush for the block device in question.
   */
- struct bio *bio_alloc_bioset(gfp_t gfp_mask, unsigned int nr_iovecs,
- 			     struct bio_set *bs)
+-int blkdev_issue_flush(struct block_device *bdev, gfp_t gfp_mask)
++int blkdev_issue_flush(struct block_device *bdev)
  {
- 	gfp_t saved_gfp = gfp_mask;
--	unsigned front_pad;
--	unsigned inline_vecs;
--	struct bio_vec *bvl = NULL;
- 	struct bio *bio;
- 	void *p;
+-	struct bio *bio;
+-	int ret = 0;
++	struct bio bio;
  
--	if (!bs) {
--		if (nr_iovecs > UIO_MAXIOV)
--			return NULL;
+-	bio = bio_alloc(gfp_mask, 0);
+-	bio_set_dev(bio, bdev);
+-	bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
 -
--		p = kmalloc(struct_size(bio, bi_inline_vecs, nr_iovecs), gfp_mask);
--		front_pad = 0;
--		inline_vecs = nr_iovecs;
--	} else {
--		/* should not use nobvec bioset for nr_iovecs > 0 */
--		if (WARN_ON_ONCE(!mempool_initialized(&bs->bvec_pool) &&
--				 nr_iovecs > 0))
--			return NULL;
--		/*
--		 * submit_bio_noacct() converts recursion to iteration; this
--		 * means if we're running beneath it, any bios we allocate and
--		 * submit will not be submitted (and thus freed) until after we
--		 * return.
--		 *
--		 * This exposes us to a potential deadlock if we allocate
--		 * multiple bios from the same bio_set() while running
--		 * underneath submit_bio_noacct(). If we were to allocate
--		 * multiple bios (say a stacking block driver that was splitting
--		 * bios), we would deadlock if we exhausted the mempool's
--		 * reserve.
--		 *
--		 * We solve this, and guarantee forward progress, with a rescuer
--		 * workqueue per bio_set. If we go to allocate and there are
--		 * bios on current->bio_list, we first try the allocation
--		 * without __GFP_DIRECT_RECLAIM; if that fails, we punt those
--		 * bios we would be blocking to the rescuer workqueue before
--		 * we retry with the original gfp_flags.
--		 */
--
--		if (current->bio_list &&
--		    (!bio_list_empty(&current->bio_list[0]) ||
--		     !bio_list_empty(&current->bio_list[1])) &&
--		    bs->rescue_workqueue)
--			gfp_mask &= ~__GFP_DIRECT_RECLAIM;
-+	/* should not use nobvec bioset for nr_iovecs > 0 */
-+	if (WARN_ON_ONCE(!mempool_initialized(&bs->bvec_pool) && nr_iovecs > 0))
-+		return NULL;
+-	ret = submit_bio_wait(bio);
+-	bio_put(bio);
+-	return ret;
++	bio_init(&bio, NULL, 0);
++	bio_set_dev(&bio, bdev);
++	bio.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
++	return submit_bio_wait(&bio);
+ }
+ EXPORT_SYMBOL(blkdev_issue_flush);
  
-+	/*
-+	 * submit_bio_noacct() converts recursion to iteration; this means if
-+	 * we're running beneath it, any bios we allocate and submit will not be
-+	 * submitted (and thus freed) until after we return.
-+	 *
-+	 * This exposes us to a potential deadlock if we allocate multiple bios
-+	 * from the same bio_set() while running underneath submit_bio_noacct().
-+	 * If we were to allocate multiple bios (say a stacking block driver
-+	 * that was splitting bios), we would deadlock if we exhausted the
-+	 * mempool's reserve.
-+	 *
-+	 * We solve this, and guarantee forward progress, with a rescuer
-+	 * workqueue per bio_set. If we go to allocate and there are bios on
-+	 * current->bio_list, we first try the allocation without
-+	 * __GFP_DIRECT_RECLAIM; if that fails, we punt those bios we would be
-+	 * blocking to the rescuer workqueue before we retry with the original
-+	 * gfp_flags.
-+	 */
-+	if (current->bio_list &&
-+	    (!bio_list_empty(&current->bio_list[0]) ||
-+	     !bio_list_empty(&current->bio_list[1])) &&
-+	    bs->rescue_workqueue)
-+		gfp_mask &= ~__GFP_DIRECT_RECLAIM;
-+
-+	p = mempool_alloc(&bs->bio_pool, gfp_mask);
-+	if (!p && gfp_mask != saved_gfp) {
-+		punt_bios_to_rescuer(bs);
-+		gfp_mask = saved_gfp;
- 		p = mempool_alloc(&bs->bio_pool, gfp_mask);
--		if (!p && gfp_mask != saved_gfp) {
--			punt_bios_to_rescuer(bs);
--			gfp_mask = saved_gfp;
--			p = mempool_alloc(&bs->bio_pool, gfp_mask);
--		}
--
--		front_pad = bs->front_pad;
--		inline_vecs = BIO_INLINE_VECS;
- 	}
--
- 	if (unlikely(!p))
- 		return NULL;
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index b298fefb022eb9..039d17b2893849 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -819,7 +819,7 @@ static int dmz_write_sb(struct dmz_metadata *zmd, unsigned int set)
+ 	ret = dmz_rdwr_block(dev, REQ_OP_WRITE, zmd->sb[set].block,
+ 			     mblk->page);
+ 	if (ret == 0)
+-		ret = blkdev_issue_flush(dev->bdev, GFP_NOIO);
++		ret = blkdev_issue_flush(dev->bdev);
  
--	bio = p + front_pad;
--	bio_init(bio, NULL, 0);
--
--	if (nr_iovecs > inline_vecs) {
-+	bio = p + bs->front_pad;
-+	if (nr_iovecs > BIO_INLINE_VECS) {
- 		unsigned long idx = 0;
-+		struct bio_vec *bvl = NULL;
+ 	return ret;
+ }
+@@ -862,7 +862,7 @@ static int dmz_write_dirty_mblocks(struct dmz_metadata *zmd,
  
- 		bvl = bvec_alloc(gfp_mask, nr_iovecs, &idx, &bs->bvec_pool);
- 		if (!bvl && gfp_mask != saved_gfp) {
- 			punt_bios_to_rescuer(bs);
- 			gfp_mask = saved_gfp;
--			bvl = bvec_alloc(gfp_mask, nr_iovecs, &idx, &bs->bvec_pool);
-+			bvl = bvec_alloc(gfp_mask, nr_iovecs, &idx,
-+					 &bs->bvec_pool);
- 		}
+ 	/* Flush drive cache (this will also sync data) */
+ 	if (ret == 0)
+-		ret = blkdev_issue_flush(dev->bdev, GFP_NOIO);
++		ret = blkdev_issue_flush(dev->bdev);
  
- 		if (unlikely(!bvl))
- 			goto err_free;
+ 	return ret;
+ }
+@@ -933,7 +933,7 @@ int dmz_flush_metadata(struct dmz_metadata *zmd)
  
- 		bio->bi_flags |= idx << BVEC_POOL_OFFSET;
--		bio->bi_max_vecs = bvec_nr_vecs(idx);
-+		bio_init(bio, bvl, bvec_nr_vecs(idx));
- 	} else if (nr_iovecs) {
--		bvl = bio->bi_inline_vecs;
--		bio->bi_max_vecs = inline_vecs;
-+		bio_init(bio, bio->bi_inline_vecs, BIO_INLINE_VECS);
-+	} else {
-+		bio_init(bio, NULL, 0);
+ 	/* If there are no dirty metadata blocks, just flush the device cache */
+ 	if (list_empty(&write_list)) {
+-		ret = blkdev_issue_flush(dev->bdev, GFP_NOIO);
++		ret = blkdev_issue_flush(dev->bdev);
+ 		goto err;
  	}
  
- 	bio->bi_pool = bs;
--	bio->bi_io_vec = bvl;
- 	return bio;
+diff --git a/drivers/md/raid5-ppl.c b/drivers/md/raid5-ppl.c
+index d0f540296fe91e..e8c118e05dfd46 100644
+--- a/drivers/md/raid5-ppl.c
++++ b/drivers/md/raid5-ppl.c
+@@ -1037,7 +1037,7 @@ static int ppl_recover(struct ppl_log *log, struct ppl_header *pplhdr,
+ 	}
  
- err_free:
-@@ -521,6 +499,31 @@ struct bio *bio_alloc_bioset(gfp_t gfp_mask, unsigned int nr_iovecs,
- }
- EXPORT_SYMBOL(bio_alloc_bioset);
+ 	/* flush the disk cache after recovery if necessary */
+-	ret = blkdev_issue_flush(rdev->bdev, GFP_KERNEL);
++	ret = blkdev_issue_flush(rdev->bdev);
+ out:
+ 	__free_page(page);
+ 	return ret;
+diff --git a/drivers/nvme/target/io-cmd-bdev.c b/drivers/nvme/target/io-cmd-bdev.c
+index 125dde3f410ee7..bf6e0ac9ad2890 100644
+--- a/drivers/nvme/target/io-cmd-bdev.c
++++ b/drivers/nvme/target/io-cmd-bdev.c
+@@ -333,7 +333,7 @@ static void nvmet_bdev_execute_flush(struct nvmet_req *req)
  
-+/**
-+ * bio_kmalloc - kmalloc a bio for I/O
-+ * @gfp_mask:   the GFP_* mask given to the slab allocator
-+ * @nr_iovecs:	number of iovecs to pre-allocate
-+ *
-+ * Use kmalloc to allocate and initialize a bio.
-+ *
-+ * Returns: Pointer to new bio on success, NULL on failure.
-+ */
-+struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned int nr_iovecs)
-+{
-+	struct bio *bio;
-+
-+	if (nr_iovecs > UIO_MAXIOV)
-+		return NULL;
-+
-+	bio = kmalloc(struct_size(bio, bi_inline_vecs, nr_iovecs), gfp_mask);
-+	if (unlikely(!bio))
-+		return NULL;
-+	bio_init(bio, nr_iovecs ? bio->bi_inline_vecs : NULL, nr_iovecs);
-+	bio->bi_pool = NULL;
-+	return bio;
-+}
-+EXPORT_SYMBOL(bio_kmalloc);
-+
- void zero_fill_bio_iter(struct bio *bio, struct bvec_iter start)
+ u16 nvmet_bdev_flush(struct nvmet_req *req)
  {
- 	unsigned long flags;
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 676870b2c88d80..c74857cf12528c 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -408,6 +408,7 @@ extern int biovec_init_pool(mempool_t *pool, int pool_entries);
- extern int bioset_init_from_src(struct bio_set *bs, struct bio_set *src);
+-	if (blkdev_issue_flush(req->ns->bdev, GFP_KERNEL))
++	if (blkdev_issue_flush(req->ns->bdev))
+ 		return NVME_SC_INTERNAL | NVME_SC_DNR;
+ 	return 0;
+ }
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 6f5bd9950baf45..bc957ef7cebaae 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -681,7 +681,7 @@ int blkdev_fsync(struct file *filp, loff_t start, loff_t end, int datasync)
+ 	 * i_mutex and doing so causes performance issues with concurrent
+ 	 * O_SYNC writers to a block device.
+ 	 */
+-	error = blkdev_issue_flush(bdev, GFP_KERNEL);
++	error = blkdev_issue_flush(bdev);
+ 	if (error == -EOPNOTSUPP)
+ 		error = 0;
  
- extern struct bio *bio_alloc_bioset(gfp_t, unsigned int, struct bio_set *);
-+struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned int nr_iovecs);
- extern void bio_put(struct bio *);
+diff --git a/fs/exfat/file.c b/fs/exfat/file.c
+index a92478eabfa4e4..183ffdf4d43c5f 100644
+--- a/fs/exfat/file.c
++++ b/fs/exfat/file.c
+@@ -361,7 +361,7 @@ int exfat_file_fsync(struct file *filp, loff_t start, loff_t end, int datasync)
+ 	if (err)
+ 		return err;
  
- extern void __bio_clone_fast(struct bio *, struct bio *);
-@@ -420,11 +421,6 @@ static inline struct bio *bio_alloc(gfp_t gfp_mask, unsigned int nr_iovecs)
- 	return bio_alloc_bioset(gfp_mask, nr_iovecs, &fs_bio_set);
+-	return blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL);
++	return blkdev_issue_flush(inode->i_sb->s_bdev);
  }
  
--static inline struct bio *bio_kmalloc(gfp_t gfp_mask, unsigned int nr_iovecs)
--{
--	return bio_alloc_bioset(gfp_mask, nr_iovecs, NULL);
--}
--
- extern blk_qc_t submit_bio(struct bio *);
+ const struct file_operations exfat_file_operations = {
+diff --git a/fs/ext4/fast_commit.c b/fs/ext4/fast_commit.c
+index 0a14a7c87bf82e..6e8208acfc62ac 100644
+--- a/fs/ext4/fast_commit.c
++++ b/fs/ext4/fast_commit.c
+@@ -1076,7 +1076,7 @@ static int ext4_fc_perform_commit(journal_t *journal)
+ 	 * flush before we start writing fast commit blocks.
+ 	 */
+ 	if (journal->j_fs_dev != journal->j_dev)
+-		blkdev_issue_flush(journal->j_fs_dev, GFP_NOFS);
++		blkdev_issue_flush(journal->j_fs_dev);
  
- extern void bio_endio(struct bio *);
+ 	blk_start_plug(&plug);
+ 	if (sbi->s_fc_bytes == 0) {
+@@ -1535,7 +1535,7 @@ static int ext4_fc_replay_inode(struct super_block *sb, struct ext4_fc_tl *tl)
+ out:
+ 	iput(inode);
+ 	if (!ret)
+-		blkdev_issue_flush(sb->s_bdev, GFP_KERNEL);
++		blkdev_issue_flush(sb->s_bdev);
+ 
+ 	return 0;
+ }
+diff --git a/fs/ext4/fsync.c b/fs/ext4/fsync.c
+index 113bfb023a4a09..027a7d7037a07b 100644
+--- a/fs/ext4/fsync.c
++++ b/fs/ext4/fsync.c
+@@ -174,7 +174,7 @@ int ext4_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
+ 		ret = ext4_fsync_journal(inode, datasync, &needs_barrier);
+ 
+ 	if (needs_barrier) {
+-		err = blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL);
++		err = blkdev_issue_flush(inode->i_sb->s_bdev);
+ 		if (!ret)
+ 			ret = err;
+ 	}
+diff --git a/fs/ext4/ialloc.c b/fs/ext4/ialloc.c
+index b215c564bc318a..20f2fcb799f55f 100644
+--- a/fs/ext4/ialloc.c
++++ b/fs/ext4/ialloc.c
+@@ -1583,7 +1583,7 @@ int ext4_init_inode_table(struct super_block *sb, ext4_group_t group,
+ 	if (ret < 0)
+ 		goto err_out;
+ 	if (barrier)
+-		blkdev_issue_flush(sb->s_bdev, GFP_NOFS);
++		blkdev_issue_flush(sb->s_bdev);
+ 
+ skip_zeroout:
+ 	ext4_lock_group(sb, group);
+diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+index 9a6f9875aa3499..fb5985102c1db7 100644
+--- a/fs/ext4/super.c
++++ b/fs/ext4/super.c
+@@ -5709,7 +5709,7 @@ static int ext4_sync_fs(struct super_block *sb, int wait)
+ 		needs_barrier = true;
+ 	if (needs_barrier) {
+ 		int err;
+-		err = blkdev_issue_flush(sb->s_bdev, GFP_KERNEL);
++		err = blkdev_issue_flush(sb->s_bdev);
+ 		if (!ret)
+ 			ret = err;
+ 	}
+diff --git a/fs/fat/file.c b/fs/fat/file.c
+index f9ee27cf4d7c2f..5fee74f1ad611d 100644
+--- a/fs/fat/file.c
++++ b/fs/fat/file.c
+@@ -195,7 +195,7 @@ int fat_file_fsync(struct file *filp, loff_t start, loff_t end, int datasync)
+ 	if (err)
+ 		return err;
+ 
+-	return blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL);
++	return blkdev_issue_flush(inode->i_sb->s_bdev);
+ }
+ 
+ 
+diff --git a/fs/hfsplus/inode.c b/fs/hfsplus/inode.c
+index e3da9e96b83578..ca464328b79cc5 100644
+--- a/fs/hfsplus/inode.c
++++ b/fs/hfsplus/inode.c
+@@ -340,7 +340,7 @@ int hfsplus_file_fsync(struct file *file, loff_t start, loff_t end,
+ 	}
+ 
+ 	if (!test_bit(HFSPLUS_SB_NOBARRIER, &sbi->flags))
+-		blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL);
++		blkdev_issue_flush(inode->i_sb->s_bdev);
+ 
+ 	inode_unlock(inode);
+ 
+diff --git a/fs/hfsplus/super.c b/fs/hfsplus/super.c
+index 807119ae5adf73..b9e3db3f855f96 100644
+--- a/fs/hfsplus/super.c
++++ b/fs/hfsplus/super.c
+@@ -239,7 +239,7 @@ static int hfsplus_sync_fs(struct super_block *sb, int wait)
+ 	mutex_unlock(&sbi->vh_mutex);
+ 
+ 	if (!test_bit(HFSPLUS_SB_NOBARRIER, &sbi->flags))
+-		blkdev_issue_flush(sb->s_bdev, GFP_KERNEL);
++		blkdev_issue_flush(sb->s_bdev);
+ 
+ 	return error;
+ }
+diff --git a/fs/jbd2/checkpoint.c b/fs/jbd2/checkpoint.c
+index 472932b9e6bca9..63b526d44886d0 100644
+--- a/fs/jbd2/checkpoint.c
++++ b/fs/jbd2/checkpoint.c
+@@ -416,7 +416,7 @@ int jbd2_cleanup_journal_tail(journal_t *journal)
+ 	 * jbd2_cleanup_journal_tail() doesn't get called all that often.
+ 	 */
+ 	if (journal->j_flags & JBD2_BARRIER)
+-		blkdev_issue_flush(journal->j_fs_dev, GFP_NOFS);
++		blkdev_issue_flush(journal->j_fs_dev);
+ 
+ 	return __jbd2_update_log_tail(journal, first_tid, blocknr);
+ }
+diff --git a/fs/jbd2/commit.c b/fs/jbd2/commit.c
+index b121d7d434c675..3cc4ab2ba7f4f2 100644
+--- a/fs/jbd2/commit.c
++++ b/fs/jbd2/commit.c
+@@ -825,7 +825,7 @@ void jbd2_journal_commit_transaction(journal_t *journal)
+ 	if (commit_transaction->t_need_data_flush &&
+ 	    (journal->j_fs_dev != journal->j_dev) &&
+ 	    (journal->j_flags & JBD2_BARRIER))
+-		blkdev_issue_flush(journal->j_fs_dev, GFP_NOFS);
++		blkdev_issue_flush(journal->j_fs_dev);
+ 
+ 	/* Done it all: now write the commit record asynchronously. */
+ 	if (jbd2_has_feature_async_commit(journal)) {
+@@ -932,7 +932,7 @@ void jbd2_journal_commit_transaction(journal_t *journal)
+ 	stats.run.rs_blocks_logged++;
+ 	if (jbd2_has_feature_async_commit(journal) &&
+ 	    journal->j_flags & JBD2_BARRIER) {
+-		blkdev_issue_flush(journal->j_dev, GFP_NOFS);
++		blkdev_issue_flush(journal->j_dev);
+ 	}
+ 
+ 	if (err)
+diff --git a/fs/jbd2/recovery.c b/fs/jbd2/recovery.c
+index dc0694fcfcd123..69f18fe2092369 100644
+--- a/fs/jbd2/recovery.c
++++ b/fs/jbd2/recovery.c
+@@ -326,7 +326,7 @@ int jbd2_journal_recover(journal_t *journal)
+ 		err = err2;
+ 	/* Make sure all replayed data is on permanent storage */
+ 	if (journal->j_flags & JBD2_BARRIER) {
+-		err2 = blkdev_issue_flush(journal->j_fs_dev, GFP_KERNEL);
++		err2 = blkdev_issue_flush(journal->j_fs_dev);
+ 		if (!err)
+ 			err = err2;
+ 	}
+diff --git a/fs/libfs.c b/fs/libfs.c
+index d1c3bade9f30dd..8398a0efb401c6 100644
+--- a/fs/libfs.c
++++ b/fs/libfs.c
+@@ -1117,7 +1117,7 @@ int generic_file_fsync(struct file *file, loff_t start, loff_t end,
+ 	err = __generic_file_fsync(file, start, end, datasync);
+ 	if (err)
+ 		return err;
+-	return blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL);
++	return blkdev_issue_flush(inode->i_sb->s_bdev);
+ }
+ EXPORT_SYMBOL(generic_file_fsync);
+ 
+diff --git a/fs/nilfs2/the_nilfs.h b/fs/nilfs2/the_nilfs.h
+index b55cdeb4d16991..987c8ab02aeee6 100644
+--- a/fs/nilfs2/the_nilfs.h
++++ b/fs/nilfs2/the_nilfs.h
+@@ -375,7 +375,7 @@ static inline int nilfs_flush_device(struct the_nilfs *nilfs)
+ 	 */
+ 	smp_wmb();
+ 
+-	err = blkdev_issue_flush(nilfs->ns_bdev, GFP_KERNEL);
++	err = blkdev_issue_flush(nilfs->ns_bdev);
+ 	if (err != -EIO)
+ 		err = 0;
+ 	return err;
+diff --git a/fs/ocfs2/file.c b/fs/ocfs2/file.c
+index 85979e2214b39d..df6d709d2ae3b6 100644
+--- a/fs/ocfs2/file.c
++++ b/fs/ocfs2/file.c
+@@ -194,7 +194,7 @@ static int ocfs2_sync_file(struct file *file, loff_t start, loff_t end,
+ 		needs_barrier = true;
+ 	err = jbd2_complete_transaction(journal, commit_tid);
+ 	if (needs_barrier) {
+-		ret = blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL);
++		ret = blkdev_issue_flush(inode->i_sb->s_bdev);
+ 		if (!err)
+ 			err = ret;
+ 	}
+diff --git a/fs/reiserfs/file.c b/fs/reiserfs/file.c
+index 0b641ae694f123..1db0254bc38b26 100644
+--- a/fs/reiserfs/file.c
++++ b/fs/reiserfs/file.c
+@@ -159,7 +159,7 @@ static int reiserfs_sync_file(struct file *filp, loff_t start, loff_t end,
+ 	barrier_done = reiserfs_commit_for_inode(inode);
+ 	reiserfs_write_unlock(inode->i_sb);
+ 	if (barrier_done != 1 && reiserfs_barrier_flush(inode->i_sb))
+-		blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL);
++		blkdev_issue_flush(inode->i_sb->s_bdev);
+ 	inode_unlock(inode);
+ 	if (barrier_done < 0)
+ 		return barrier_done;
+diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
+index 813be879a5e51d..c3e32789829f90 100644
+--- a/fs/xfs/xfs_super.c
++++ b/fs/xfs/xfs_super.c
+@@ -342,7 +342,7 @@ void
+ xfs_blkdev_issue_flush(
+ 	xfs_buftarg_t		*buftarg)
+ {
+-	blkdev_issue_flush(buftarg->bt_bdev, GFP_NOFS);
++	blkdev_issue_flush(buftarg->bt_bdev);
+ }
+ 
+ STATIC void
+diff --git a/fs/zonefs/super.c b/fs/zonefs/super.c
+index faea2ed34b4a37..ab68e27bb322e0 100644
+--- a/fs/zonefs/super.c
++++ b/fs/zonefs/super.c
+@@ -541,7 +541,7 @@ static int zonefs_file_fsync(struct file *file, loff_t start, loff_t end,
+ 	if (ZONEFS_I(inode)->i_ztype == ZONEFS_ZTYPE_CNV)
+ 		ret = file_write_and_wait_range(file, start, end);
+ 	if (!ret)
+-		ret = blkdev_issue_flush(inode->i_sb->s_bdev, GFP_KERNEL);
++		ret = blkdev_issue_flush(inode->i_sb->s_bdev);
+ 
+ 	if (ret)
+ 		zonefs_io_error(inode, true);
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 20f3706b6b2e68..09f7ac5507d146 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1288,7 +1288,7 @@ static inline bool blk_needs_flush_plug(struct task_struct *tsk)
+ 		 !list_empty(&plug->cb_list));
+ }
+ 
+-int blkdev_issue_flush(struct block_device *, gfp_t);
++int blkdev_issue_flush(struct block_device *bdev);
+ long nr_blockdev_pages(void);
+ #else /* CONFIG_BLOCK */
+ struct blk_plug {
+@@ -1316,7 +1316,7 @@ static inline bool blk_needs_flush_plug(struct task_struct *tsk)
+ 	return false;
+ }
+ 
+-static inline int blkdev_issue_flush(struct block_device *bdev, gfp_t gfp_mask)
++static inline int blkdev_issue_flush(struct block_device *bdev)
+ {
+ 	return 0;
+ }
 -- 
 2.29.2
 
