@@ -2,114 +2,72 @@ Return-Path: <SRS0=jLbn=G6=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-7.6 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7BD1CC433DB
-	for <dm-devel@archiver.kernel.org>; Wed, 27 Jan 2021 16:54:09 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E1F03C433DB
+	for <dm-devel@archiver.kernel.org>; Wed, 27 Jan 2021 17:19:58 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id A178760187
-	for <dm-devel@archiver.kernel.org>; Wed, 27 Jan 2021 16:54:08 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A178760187
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+	by mail.kernel.org (Postfix) with ESMTPS id 578C764DA5
+	for <dm-devel@archiver.kernel.org>; Wed, 27 Jan 2021 17:19:58 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 578C764DA5
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1611767997;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=IMfZofwr0KQSoiUQGybgoIZ46tzcc2QYSOUkuEPNe84=;
+	b=W/JPIoiVvb0fQwrXaWh0ttzbz27CG0wYUpeapAfz/Yh8nkxhZYPQP9vtK57g+xE2DMF3FG
+	734mfz7kpSsjUeOSUWsuXL9Kof5nAHjqcLeWHUQMLswEuAsL/sbvmAH+QeGCoPrfZx5TYh
+	pzD1RE75C4lHclnTR6QEt4ynMoleCsA=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-215-JYYiBW2oMOCeJyl9LnHY1w-1; Wed, 27 Jan 2021 11:54:05 -0500
-X-MC-Unique: JYYiBW2oMOCeJyl9LnHY1w-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-280-iTb58Id_N6OrQeAIrpVKyg-1; Wed, 27 Jan 2021 12:19:54 -0500
+X-MC-Unique: iTb58Id_N6OrQeAIrpVKyg-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3194363CC2;
-	Wed, 27 Jan 2021 16:53:59 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 81DEF1005D44;
+	Wed, 27 Jan 2021 17:19:49 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 355606F940;
-	Wed, 27 Jan 2021 16:53:58 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E833C5D744;
+	Wed, 27 Jan 2021 17:19:48 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BFFFB1809CA0;
-	Wed, 27 Jan 2021 16:53:55 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0B578180954D;
+	Wed, 27 Jan 2021 17:19:46 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
+	[10.5.11.22])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10RGqO1o012815 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 27 Jan 2021 11:52:24 -0500
+	id 10RHJjTt015994 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 27 Jan 2021 12:19:45 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 40609D1E83; Wed, 27 Jan 2021 16:52:24 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 39065D1EB9
-	for <dm-devel@redhat.com>; Wed, 27 Jan 2021 16:52:19 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 618D8800198
-	for <dm-devel@redhat.com>; Wed, 27 Jan 2021 16:52:19 +0000 (UTC)
-Received: from mail-pl1-f169.google.com (mail-pl1-f169.google.com
-	[209.85.214.169]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-12-VnxgNwsCPvi1Mw1fpiDukw-1; Wed, 27 Jan 2021 11:52:16 -0500
-X-MC-Unique: VnxgNwsCPvi1Mw1fpiDukw-1
-Received: by mail-pl1-f169.google.com with SMTP id g3so1368113plp.2
-	for <dm-devel@redhat.com>; Wed, 27 Jan 2021 08:52:15 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-	:user-agent:mime-version:in-reply-to:content-language
-	:content-transfer-encoding;
-	bh=lQKD9AgPexRDubj64bboSIKnHej4WVBTeYTVGyeOaHk=;
-	b=sJcT8LDpImVBBDbSI7huya/MSemEUJXphneLAA4VUHD/7HP72725/u847SS2XKzBUx
-	V/1APT2dcLg5j3wosQLUUVAHjDfUPxfoYX0AhOXZTYVu6Z5jkSqyWynskI1Uo7+La/W8
-	1weO9E9rOptZeCgyeYolA/mxsBG0X6kcHhKAuTUCw4L66Q18wKlWJgDC2hTAbDn38TpG
-	YvYZgxYl6GpOtVy3JTmdGGZ9FYL5FYH3ih9UzZMeM3SnUFDpkuwRBvc75wVt+X4mOVmP
-	MSPo3gUjizTfRVAZ0oxvhYbGPs9hYBfp65Q0ElYB+hBrYsqTrt/G1pQuALfrj9xv5vMe
-	UPKQ==
-X-Gm-Message-State: AOAM531Y6HDw6F/9VzEXAassjEK1mgUqPJzimOuur3kRsNK+W/rJ0Gu4
-	bYzE+wPqcEuWYqlr9tzzGNQ0Hw==
-X-Google-Smtp-Source: ABdhPJznkZAkmGjzE0K3XJ7r+1OuPOB/uSu+0QVk0qZGt1uSi7gcicfz36VtRv3b8tVtY1Mr6zsRVA==
-X-Received: by 2002:a17:90a:b782:: with SMTP id
-	m2mr6555276pjr.220.1611766334716; 
-	Wed, 27 Jan 2021 08:52:14 -0800 (PST)
-Received: from [192.168.4.41] (cpe-72-132-29-68.dc.res.rr.com. [72.132.29.68])
-	by smtp.gmail.com with ESMTPSA id
-	z13sm2914261pgf.89.2021.01.27.08.52.11
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Wed, 27 Jan 2021 08:52:14 -0800 (PST)
-To: Christoph Hellwig <hch@lst.de>, Song Liu <song@kernel.org>
-References: <20210126145247.1964410-1-hch@lst.de>
-From: Jens Axboe <axboe@kernel.dk>
-Message-ID: <53e9b2e0-7169-f2fe-3c33-5f8a28cbd01b@kernel.dk>
-Date: Wed, 27 Jan 2021 09:52:10 -0700
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
-	Thunderbird/68.10.0
+	id D0ED810023AB; Wed, 27 Jan 2021 17:19:45 +0000 (UTC)
+Received: from localhost (unknown [10.18.25.174])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AD19D10246E0;
+	Wed, 27 Jan 2021 17:19:42 +0000 (UTC)
+Date: Wed, 27 Jan 2021 12:19:42 -0500
+From: Mike Snitzer <snitzer@redhat.com>
+To: Jeffle Xu <jefflexu@linux.alibaba.com>
+Message-ID: <20210127171941.GA11530@redhat.com>
+References: <20210125121340.70459-1-jefflexu@linux.alibaba.com>
 MIME-Version: 1.0
-In-Reply-To: <20210126145247.1964410-1-hch@lst.de>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+In-Reply-To: <20210125121340.70459-1-jefflexu@linux.alibaba.com>
+User-Agent: Mutt/1.5.21 (2010-09-15)
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 X-loop: dm-devel@redhat.com
-Cc: Mike Snitzer <snitzer@redhat.com>, David Sterba <dsterba@suse.com>,
-	dm-devel@redhat.com, Naohiro Aota <naohiro.aota@wdc.com>,
-	linux-nilfs@vger.kernel.org, Josef Bacik <josef@toxicpanda.com>,
-	Chao Yu <chao@kernel.org>, linux-nfs@vger.kernel.org,
-	Coly Li <colyli@suse.de>, linux-raid@vger.kernel.org,
-	linux-bcache@vger.kernel.org, drbd-dev@tron.linbit.com,
-	Jaegeuk Kim <jaegeuk@kernel.org>,
-	Ryusuke Konishi <konishi.ryusuke@gmail.com>, linux-block@vger.kernel.org,
-	Damien Le Moal <damien.lemoal@wdc.com>,
-	Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org,
-	Philipp Reisner <philipp.reisner@linbit.com>,
-	linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org,
-	Lars Ellenberg <lars.ellenberg@linbit.com>, linux-btrfs@vger.kernel.org
-Subject: Re: [dm-devel] misc bio allocation cleanups
+Cc: linux-block@vger.kernel.org, joseph.qi@linux.alibaba.com,
+	dm-devel@redhat.com, io-uring@vger.kernel.org
+Subject: Re: [dm-devel] [PATCH v2 0/6] dm: support IO polling for bio-based
+	dm device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -123,25 +81,89 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 1/26/21 7:52 AM, Christoph Hellwig wrote:
-> Hi Jens,
+On Mon, Jan 25 2021 at  7:13am -0500,
+Jeffle Xu <jefflexu@linux.alibaba.com> wrote:
+
+> Since currently we have no simple but efficient way to implement the
+> bio-based IO polling in the split-bio tracking style, this patch set
+> turns to the original implementation mechanism that iterates and
+> polls all underlying hw queues in polling mode. One optimization is
+> introduced to mitigate the race of one hw queue among multiple polling
+> instances.
 > 
-> this series contains various cleanups for how bios are allocated or
-> initialized plus related fallout.
+> I'm still open to the split bio tracking mechanism, if there's
+> reasonable way to implement it.
+> 
+> 
+> [Performance Test]
+> The performance is tested by fio (engine=io_uring) 4k randread on
+> dm-linear device. The dm-linear device is built upon nvme devices,
+> and every nvme device has one polling hw queue (nvme.poll_queues=1).
+> 
+> Test Case		    | IOPS in IRQ mode | IOPS in polling mode | Diff
+> 			    | (hipri=0)	       | (hipri=1)	      |
+> --------------------------- | ---------------- | -------------------- | ----
+> 3 target nvme, num_jobs = 1 | 198k 	       | 276k		      | ~40%
+> 3 target nvme, num_jobs = 3 | 608k 	       | 705k		      | ~16%
+> 6 target nvme, num_jobs = 6 | 1197k 	       | 1347k		      | ~13%
+> 3 target nvme, num_jobs = 6 | 1285k 	       | 1293k		      | ~0%
+> 
+> As the number of polling instances (num_jobs) increases, the
+> performance improvement decreases, though it's still positive
+> compared to the IRQ mode.
 
-Applied, thanks.
+I think there is serious room for improvement for DM's implementation;
+but the block changes for this are all we'd need for DM in the longrun
+anyway (famous last words). So on a block interface level I'm OK with
+block patches 1-3.
 
--- 
-Jens Axboe
+I don't see why patch 5 is needed (said the same in reply to it; but I
+just saw your reason below..).
+
+Anyway, I can pick up DM patches 4 and 6 via linux-dm.git if Jens picks
+up patches 1-3. Jens, what do you think?
+
+> [Optimization]
+> To mitigate the race when iterating all the underlying hw queues, one
+> flag is maintained on a per-hw-queue basis. This flag is used to
+> indicate whether this polling hw queue currently being polled on or
+> not. Every polling hw queue is exclusive to one polling instance, i.e.,
+> the polling instance will skip this polling hw queue if this hw queue
+> currently is being polled by another polling instance, and start
+> polling on the next hw queue.
+> 
+> This per-hw-queue flag map is currently maintained in dm layer. In
+> the table load phase, a table describing all underlying polling hw
+> queues is built and stored in 'struct dm_table'. It is safe when
+> reloading the mapping table.
+> 
+> 
+> changes since v1:
+> - patch 1,2,4 is the same as v1 and have already been reviewed
+> - patch 3 is refactored a bit on the basis of suggestions from
+> Mike Snitzer.
+> - patch 5 is newly added and introduces one new queue flag
+> representing if the queue is capable of IO polling. This mainly
+> simplifies the logic in queue_poll_store().
+
+Ah OK, don't see why we want to eat a queue flag for that though!
+
+> - patch 6 implements the core mechanism supporting IO polling.
+> The sanity check checking if the dm device supports IO polling is
+> also folded into this patch, and the queue flag will be cleared if
+> it doesn't support, in case of table reloading.
+
+Thanks,
+Mike
 
 --
 dm-devel mailing list
