@@ -2,82 +2,66 @@ Return-Path: <SRS0=tECb=HA=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,
-	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 933B3C433DB
-	for <dm-devel@archiver.kernel.org>; Fri, 29 Jan 2021 09:38:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7001BC433E0
+	for <dm-devel@archiver.kernel.org>; Fri, 29 Jan 2021 09:38:23 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id DF93164DFA
-	for <dm-devel@archiver.kernel.org>; Fri, 29 Jan 2021 09:38:20 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org DF93164DFA
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
+	by mail.kernel.org (Postfix) with ESMTPS id CBD5264DE2
+	for <dm-devel@archiver.kernel.org>; Fri, 29 Jan 2021 09:38:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CBD5264DE2
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-369-uuc2oa-4PI2BeJ1rwu3U9w-1; Fri, 29 Jan 2021 04:38:17 -0500
-X-MC-Unique: uuc2oa-4PI2BeJ1rwu3U9w-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-495-pJ6zu6a7NDKtvkb9H8EpgQ-1; Fri, 29 Jan 2021 04:38:19 -0500
+X-MC-Unique: pJ6zu6a7NDKtvkb9H8EpgQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A911A801AA3;
-	Fri, 29 Jan 2021 09:38:12 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BAF9E1800D41;
+	Fri, 29 Jan 2021 09:38:14 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8BB3060BE2;
-	Fri, 29 Jan 2021 09:38:12 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9D3CF5D740;
+	Fri, 29 Jan 2021 09:38:14 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 62B754EEF6;
-	Fri, 29 Jan 2021 09:38:12 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 707A34EEF6;
+	Fri, 29 Jan 2021 09:38:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10SCJC0D007472 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 28 Jan 2021 07:19:13 -0500
+	id 10SGINL6005876 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 28 Jan 2021 11:18:23 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id D7B63101F0AB; Thu, 28 Jan 2021 12:19:12 +0000 (UTC)
+	id 2C4842166B2B; Thu, 28 Jan 2021 16:18:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D3ED7101F0A3
-	for <dm-devel@redhat.com>; Thu, 28 Jan 2021 12:19:09 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 273BC2166B2A
+	for <dm-devel@redhat.com>; Thu, 28 Jan 2021 16:18:20 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 93B7B81F467
-	for <dm-devel@redhat.com>; Thu, 28 Jan 2021 12:19:09 +0000 (UTC)
-Received: from out30-44.freemail.mail.aliyun.com
-	(out30-44.freemail.mail.aliyun.com [115.124.30.44]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-61-HICElwQrMkGKMpK36HXwTg-1;
-	Thu, 28 Jan 2021 07:19:05 -0500
-X-MC-Unique: HICElwQrMkGKMpK36HXwTg-1
-X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R261e4; CH=green; DM=||false|;
-	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04357;
-	MF=joseph.qi@linux.alibaba.com; NM=1; PH=DS; RN=56; SR=0;
-	TI=SMTPD_---0UN8ZMkY_1611836008
-Received: from B-D1K7ML85-0059.local(mailfrom:joseph.qi@linux.alibaba.com
-	fp:SMTPD_---0UN8ZMkY_1611836008) by smtp.aliyun-inc.com(127.0.0.1);
-	Thu, 28 Jan 2021 20:13:29 +0800
-To: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>, linux-xfs@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org, dm-devel@redhat.com,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	drbd-dev@tron.linbit.com, xen-devel@lists.xenproject.org,
-	linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org,
-	target-devel@vger.kernel.org, linux-fscrypt@vger.kernel.org,
-	jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org,
-	ocfs2-devel@oss.oracle.com, linux-pm@vger.kernel.org, linux-mm@kvack.org
-References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
-	<20210128071133.60335-26-chaitanya.kulkarni@wdc.com>
-From: Joseph Qi <joseph.qi@linux.alibaba.com>
-Message-ID: <8ba2c461-6042-757d-a3c1-0490932e749e@linux.alibaba.com>
-Date: Thu, 28 Jan 2021 20:13:28 +0800
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
-	Gecko/20100101 Thunderbird/78.6.1
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 78280800B3A
+	for <dm-devel@redhat.com>; Thu, 28 Jan 2021 16:18:20 +0000 (UTC)
+Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
+	by relay.mimecast.com with ESMTP id us-mta-453-5mSykEfOOFqeV5NfM4GlZQ-1;
+	Thu, 28 Jan 2021 11:18:15 -0500
+X-MC-Unique: 5mSykEfOOFqeV5NfM4GlZQ-1
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 15C7D64DE5;
+	Thu, 28 Jan 2021 16:11:30 +0000 (UTC)
+Date: Thu, 28 Jan 2021 08:11:28 -0800
+From: Jaegeuk Kim <jaegeuk@kernel.org>
+To: Christoph Hellwig <hch@lst.de>
+Message-ID: <YBLiMN7zm44VWaBI@google.com>
+References: <20210126145247.1964410-1-hch@lst.de>
+	<20210126145247.1964410-9-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20210128071133.60335-26-chaitanya.kulkarni@wdc.com>
+In-Reply-To: <20210126145247.1964410-9-hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -86,25 +70,24 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Fri, 29 Jan 2021 04:33:26 -0500
-Cc: shaggy@kernel.org, sergey.senozhatsky.work@gmail.com, snitzer@redhat.com,
-	tiwai@suse.de, djwong@kernel.org, gustavoars@kernel.org,
-	pavel@ucw.cz, alex.shi@linux.alibaba.com, hch@lst.de,
-	agk@redhat.com, naohiro.aota@wdc.com, sagi@grimberg.me,
-	mark@fasheh.com, osandov@fb.com, ebiggers@kernel.org,
-	ngupta@vflare.org, len.brown@intel.com, konrad.wilk@oracle.com,
-	ming.lei@redhat.com, viro@zeniv.linux.org.uk,
-	jefflexu@linux.alibaba.com, jaegeuk@kernel.org,
-	konishi.ryusuke@gmail.com, bvanassche@acm.org, axboe@kernel.dk,
-	damien.lemoal@wdc.com, jth@kernel.org, tytso@mit.edu,
-	akpm@linux-foundation.org, martin.petersen@oracle.com,
-	rjw@rjwysocki.net, philipp.reisner@linbit.com,
-	minchan@kernel.org, tj@kernel.org, lars.ellenberg@linbit.com,
-	roger.pau@citrix.com, asml.silence@gmail.com, jlbec@evilplan.org
-Subject: Re: [dm-devel] [RFC PATCH 25/34] ocfs/cluster: use bio_new in
-	dm-log-writes
+Cc: Mike Snitzer <snitzer@redhat.com>, Song Liu <song@kernel.org>,
+	dm-devel@redhat.com, Naohiro Aota <naohiro.aota@wdc.com>,
+	linux-nilfs@vger.kernel.org, Chao Yu <chao@kernel.org>,
+	Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>,
+	linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org,
+	David Sterba <dsterba@suse.com>, drbd-dev@tron.linbit.com,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+	Damien Le Moal <damien.lemoal@wdc.com>,
+	Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org,
+	Philipp Reisner <philipp.reisner@linbit.com>,
+	linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org,
+	Lars Ellenberg <lars.ellenberg@linbit.com>,
+	linux-nfs@vger.kernel.org, linux-btrfs@vger.kernel.org
+Subject: Re: [dm-devel] [PATCH 08/17] f2fs: remove FAULT_ALLOC_BIO
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -118,58 +101,124 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-I think you send a wrong subject by mistake.
+On 01/26, Christoph Hellwig wrote:
+> Sleeping bio allocations do not fail, which means that injecting an error
+> into sleeping bio allocations is a little silly.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-Thanks,
-Joseph
+Already merged tho.
 
-On 1/28/21 3:11 PM, Chaitanya Kulkarni wrote:
-> Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
+Acked-by: Jaegeuk Kim <jaegeuk@kernel.org>
+
 > ---
->  fs/ocfs2/cluster/heartbeat.c | 6 ++----
->  1 file changed, 2 insertions(+), 4 deletions(-)
+>  Documentation/filesystems/f2fs.rst |  1 -
+>  fs/f2fs/data.c                     | 29 ++++-------------------------
+>  fs/f2fs/f2fs.h                     |  1 -
+>  fs/f2fs/super.c                    |  1 -
+>  4 files changed, 4 insertions(+), 28 deletions(-)
 > 
-> diff --git a/fs/ocfs2/cluster/heartbeat.c b/fs/ocfs2/cluster/heartbeat.c
-> index 0179a73a3fa2..b34518036446 100644
-> --- a/fs/ocfs2/cluster/heartbeat.c
-> +++ b/fs/ocfs2/cluster/heartbeat.c
-> @@ -515,12 +515,13 @@ static struct bio *o2hb_setup_one_bio(struct o2hb_region *reg,
->  	unsigned int cs = *current_slot;
+> diff --git a/Documentation/filesystems/f2fs.rst b/Documentation/filesystems/f2fs.rst
+> index dae15c96e659e2..624f5f3ed93e86 100644
+> --- a/Documentation/filesystems/f2fs.rst
+> +++ b/Documentation/filesystems/f2fs.rst
+> @@ -179,7 +179,6 @@ fault_type=%d		 Support configuring fault injection type, should be
+>  			 FAULT_KVMALLOC		  0x000000002
+>  			 FAULT_PAGE_ALLOC	  0x000000004
+>  			 FAULT_PAGE_GET		  0x000000008
+> -			 FAULT_ALLOC_BIO	  0x000000010
+>  			 FAULT_ALLOC_NID	  0x000000020
+>  			 FAULT_ORPHAN		  0x000000040
+>  			 FAULT_BLOCK		  0x000000080
+> diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
+> index 0cf0c605992431..9fb6be65592b1f 100644
+> --- a/fs/f2fs/data.c
+> +++ b/fs/f2fs/data.c
+> @@ -50,28 +50,6 @@ void f2fs_destroy_bioset(void)
+>  	bioset_exit(&f2fs_bioset);
+>  }
+>  
+> -static inline struct bio *__f2fs_bio_alloc(gfp_t gfp_mask,
+> -						unsigned int nr_iovecs)
+> -{
+> -	return bio_alloc_bioset(gfp_mask, nr_iovecs, &f2fs_bioset);
+> -}
+> -
+> -static struct bio *f2fs_bio_alloc(struct f2fs_sb_info *sbi, int npages,
+> -		bool noio)
+> -{
+> -	if (noio) {
+> -		/* No failure on bio allocation */
+> -		return __f2fs_bio_alloc(GFP_NOIO, npages);
+> -	}
+> -
+> -	if (time_to_inject(sbi, FAULT_ALLOC_BIO)) {
+> -		f2fs_show_injection_info(sbi, FAULT_ALLOC_BIO);
+> -		return NULL;
+> -	}
+> -
+> -	return __f2fs_bio_alloc(GFP_KERNEL, npages);
+> -}
+> -
+>  static bool __is_cp_guaranteed(struct page *page)
+>  {
+>  	struct address_space *mapping = page->mapping;
+> @@ -433,7 +411,7 @@ static struct bio *__bio_alloc(struct f2fs_io_info *fio, int npages)
+>  	struct f2fs_sb_info *sbi = fio->sbi;
 >  	struct bio *bio;
->  	struct page *page;
-> +	sector_t sect = (reg->hr_start_block + cs) << (bits - 9);
 >  
->  	/* Testing has shown this allocation to take long enough under
->  	 * GFP_KERNEL that the local node can get fenced. It would be
->  	 * nicest if we could pre-allocate these bios and avoid this
->  	 * all together. */
-> -	bio = bio_alloc(GFP_ATOMIC, 16);
-> +	bio = bio_new(reg->hr_bdev, sect, op, op_flags, 16, GFP_ATOMIC);
->  	if (!bio) {
->  		mlog(ML_ERROR, "Could not alloc slots BIO!\n");
->  		bio = ERR_PTR(-ENOMEM);
-> @@ -528,11 +529,8 @@ static struct bio *o2hb_setup_one_bio(struct o2hb_region *reg,
->  	}
+> -	bio = f2fs_bio_alloc(sbi, npages, true);
+> +	bio = bio_alloc_bioset(GFP_NOIO, npages, &f2fs_bioset);
 >  
->  	/* Must put everything in 512 byte sectors for the bio... */
-> -	bio->bi_iter.bi_sector = (reg->hr_start_block + cs) << (bits - 9);
-> -	bio_set_dev(bio, reg->hr_bdev);
->  	bio->bi_private = wc;
->  	bio->bi_end_io = o2hb_bio_end_io;
-> -	bio_set_op_attrs(bio, op, op_flags);
+>  	f2fs_target_device(sbi, fio->new_blkaddr, bio);
+>  	if (is_read_io(fio->op)) {
+> @@ -1029,8 +1007,9 @@ static struct bio *f2fs_grab_read_bio(struct inode *inode, block_t blkaddr,
+>  	struct bio_post_read_ctx *ctx;
+>  	unsigned int post_read_steps = 0;
 >  
->  	vec_start = (cs << bits) % PAGE_SIZE;
->  	while(cs < max_slots) {
-> 
+> -	bio = f2fs_bio_alloc(sbi, min_t(int, nr_pages, BIO_MAX_PAGES),
+> -								for_write);
+> +	bio = bio_alloc_bioset(for_write ? GFP_NOIO : GFP_KERNEL,
+> +			       min_t(int, nr_pages, BIO_MAX_PAGES),
+> +			       &f2fs_bioset);
+>  	if (!bio)
+>  		return ERR_PTR(-ENOMEM);
+>  
+> diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
+> index 902bd3267c03e1..6c78365d80ceb5 100644
+> --- a/fs/f2fs/f2fs.h
+> +++ b/fs/f2fs/f2fs.h
+> @@ -43,7 +43,6 @@ enum {
+>  	FAULT_KVMALLOC,
+>  	FAULT_PAGE_ALLOC,
+>  	FAULT_PAGE_GET,
+> -	FAULT_ALLOC_BIO,
+>  	FAULT_ALLOC_NID,
+>  	FAULT_ORPHAN,
+>  	FAULT_BLOCK,
+> diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
+> index b4a07fe62d1a58..3a312642907e86 100644
+> --- a/fs/f2fs/super.c
+> +++ b/fs/f2fs/super.c
+> @@ -45,7 +45,6 @@ const char *f2fs_fault_name[FAULT_MAX] = {
+>  	[FAULT_KVMALLOC]	= "kvmalloc",
+>  	[FAULT_PAGE_ALLOC]	= "page alloc",
+>  	[FAULT_PAGE_GET]	= "page get",
+> -	[FAULT_ALLOC_BIO]	= "alloc bio",
+>  	[FAULT_ALLOC_NID]	= "alloc nid",
+>  	[FAULT_ORPHAN]		= "orphan",
+>  	[FAULT_BLOCK]		= "no more block",
+> -- 
+> 2.29.2
 
 --
 dm-devel mailing list
