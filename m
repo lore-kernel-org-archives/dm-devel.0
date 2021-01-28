@@ -2,82 +2,175 @@ Return-Path: <SRS0=tECb=HA=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,MSGID_FROM_MTA_HEADER,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1367AC433DB
-	for <dm-devel@archiver.kernel.org>; Fri, 29 Jan 2021 09:37:07 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F0848C433DB
+	for <dm-devel@archiver.kernel.org>; Fri, 29 Jan 2021 09:37:27 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3996D64E25
-	for <dm-devel@archiver.kernel.org>; Fri, 29 Jan 2021 09:37:06 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3996D64E25
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+	by mail.kernel.org (Postfix) with ESMTPS id 59F1964E27
+	for <dm-devel@archiver.kernel.org>; Fri, 29 Jan 2021 09:37:26 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 59F1964E27
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=oracle.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-23-0rt_SqdmNleX0Xq-0Rh7Bw-1; Fri, 29 Jan 2021 04:37:02 -0500
-X-MC-Unique: 0rt_SqdmNleX0Xq-0Rh7Bw-1
+ us-mta-596-B3YMMoERNzalOZRzIn0rpg-1; Fri, 29 Jan 2021 04:37:24 -0500
+X-MC-Unique: B3YMMoERNzalOZRzIn0rpg-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CE15C18C8C04;
-	Fri, 29 Jan 2021 09:36:54 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E92971005513;
+	Fri, 29 Jan 2021 09:37:18 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 620925D740;
-	Fri, 29 Jan 2021 09:36:53 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B17715D740;
+	Fri, 29 Jan 2021 09:37:18 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 958AD1809C9F;
-	Fri, 29 Jan 2021 09:36:50 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 74DF41809CA1;
+	Fri, 29 Jan 2021 09:37:18 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10SALvh2026379 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 28 Jan 2021 05:21:57 -0500
+	id 10SDuMDs020283 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 28 Jan 2021 08:56:22 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B7D2B101B560; Thu, 28 Jan 2021 10:21:57 +0000 (UTC)
+	id 09B2E1020445; Thu, 28 Jan 2021 13:56:22 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B3BB1101F0A3
-	for <dm-devel@redhat.com>; Thu, 28 Jan 2021 10:21:54 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0477C1000DBC
+	for <dm-devel@redhat.com>; Thu, 28 Jan 2021 13:56:19 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 52D6E858281
-	for <dm-devel@redhat.com>; Thu, 28 Jan 2021 10:21:54 +0000 (UTC)
-Received: from mail-ot1-f51.google.com (mail-ot1-f51.google.com
-	[209.85.210.51]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-285-LZki4iDRMeGYbNZmasfDCg-1; Thu, 28 Jan 2021 05:21:50 -0500
-X-MC-Unique: LZki4iDRMeGYbNZmasfDCg-1
-Received: by mail-ot1-f51.google.com with SMTP id i20so4676794otl.7;
-	Thu, 28 Jan 2021 02:21:49 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-	:message-id:subject:to:cc;
-	bh=HDfQ7EgSz4He6IVrUzqy89nGy356H19n/4Ap6Knawyw=;
-	b=K3pQiqrppdagBIeDmhVOMeCc2Dfb07jFgDlUI6okog80VOuYGeSbb9mvmLub1gPv7T
-	OY96ih1DBa3IBn2mbKP6qV4pm/rArT5QKbtJFVh39mR02bxtRKZdP2p7mjTjO556wm6m
-	ltF+BeUoydzT/ai4uMj3loSZuEBLGe4ocDdLNAfKdpFZ+BMZaDMlLCAT0bznxs5HMqbj
-	SkvRmJNmJegDhRfxuKaHkrUiEaExqwxMwfd6sgduamv5ZCe5Mdxmd5pbIIdKZcDM9BCr
-	OckSNMfDjdb6mVLGPHvCI4MyaoqnI0T0RbIKFDJvJphtQ8q+ROws7GnSvGW6AFwlw1lC
-	dbFg==
-X-Gm-Message-State: AOAM531R20EOHeTJgaSYykOqqKQVrs0M4E8m7Zl3zjnlu2WiGodqjZSS
-	ECnbofplNhKX27Idh3LoFZJebGWY/r4I87SDUmM=
-X-Google-Smtp-Source: ABdhPJwJviHVEMHN6dwg9pHl9sFzPeOTWi/Tyw7MUMRzUkqGbWVHXybuLc31QSYFbmu849bxozre+7WWIBRJddZRpNc=
-X-Received: by 2002:a05:6830:2313:: with SMTP id
-	u19mr11117098ote.321.1611829309173; 
-	Thu, 28 Jan 2021 02:21:49 -0800 (PST)
-MIME-Version: 1.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2D278800B3B
+	for <dm-devel@redhat.com>; Thu, 28 Jan 2021 13:56:19 +0000 (UTC)
+Received: from userp2130.oracle.com (userp2130.oracle.com [156.151.31.86])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-553-Oq0xJ05fP1C6Lhb2_LCang-1; Thu, 28 Jan 2021 08:56:15 -0500
+X-MC-Unique: Oq0xJ05fP1C6Lhb2_LCang-1
+Received: from pps.filterd (userp2130.oracle.com [127.0.0.1])
+	by userp2130.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
+	10SCYAiu192248; Thu, 28 Jan 2021 12:43:16 GMT
+Received: from aserp3030.oracle.com (aserp3030.oracle.com [141.146.126.71])
+	by userp2130.oracle.com with ESMTP id 368b7r3xs7-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Thu, 28 Jan 2021 12:43:16 +0000
+Received: from pps.filterd (aserp3030.oracle.com [127.0.0.1])
+	by aserp3030.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
+	10SCbobd047153; Thu, 28 Jan 2021 12:43:15 GMT
+Received: from nam11-co1-obe.outbound.protection.outlook.com
+	(mail-co1nam11lp2172.outbound.protection.outlook.com [104.47.56.172])
+	by aserp3030.oracle.com with ESMTP id 368wcqmysx-2
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Thu, 28 Jan 2021 12:43:15 +0000
+Received: from CH2PR10MB4118.namprd10.prod.outlook.com (2603:10b6:610:a4::8)
+	by CH2PR10MB3941.namprd10.prod.outlook.com (2603:10b6:610:4::19) with
+	Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3784.15;
+	Thu, 28 Jan 2021 12:43:11 +0000
+Received: from CH2PR10MB4118.namprd10.prod.outlook.com
+	([fe80::2cd3:dc36:f8d4:ea2a]) by
+	CH2PR10MB4118.namprd10.prod.outlook.com
+	([fe80::2cd3:dc36:f8d4:ea2a%8]) with mapi id 15.20.3784.019;
+	Thu, 28 Jan 2021 12:43:11 +0000
+To: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>, linux-xfs@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org, dm-devel@redhat.com,
+	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+	drbd-dev@tron.linbit.com, xen-devel@lists.xenproject.org,
+	linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org,
+	target-devel@vger.kernel.org, linux-fscrypt@vger.kernel.org,
+	jfs-discussion@lists.sourceforge.net, linux-nilfs@vger.kernel.org,
+	ocfs2-devel@oss.oracle.com, linux-pm@vger.kernel.org, linux-mm@kvack.org
 References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
-	<20210128071133.60335-30-chaitanya.kulkarni@wdc.com>
-In-Reply-To: <20210128071133.60335-30-chaitanya.kulkarni@wdc.com>
-From: "Rafael J. Wysocki" <rafael@kernel.org>
-Date: Thu, 28 Jan 2021 11:21:36 +0100
-Message-ID: <CAJZ5v0h01e4LgV0c5FxLorcc6iFW2LVzC=hJcd7LNAJ6D0E8jg@mail.gmail.com>
-To: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
+	<20210128071133.60335-20-chaitanya.kulkarni@wdc.com>
+From: Dave Kleikamp <dave.kleikamp@oracle.com>
+Message-ID: <8d3f7e70-1c7a-567a-0e60-97bac846bf13@oracle.com>
+Date: Thu, 28 Jan 2021 06:43:03 -0600
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+	Thunderbird/78.6.1
+In-Reply-To: <20210128071133.60335-20-chaitanya.kulkarni@wdc.com>
+X-Originating-IP: [68.201.65.98]
+X-ClientProxiedBy: SN4PR0501CA0077.namprd05.prod.outlook.com
+	(2603:10b6:803:22::15) To CH2PR10MB4118.namprd10.prod.outlook.com
+	(2603:10b6:610:a4::8)
+MIME-Version: 1.0
+X-MS-Exchange-MessageSentRepresentingType: 1
+Received: from [192.168.0.190] (68.201.65.98) by
+	SN4PR0501CA0077.namprd05.prod.outlook.com
+	(2603:10b6:803:22::15) with Microsoft SMTP Server
+	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384)
+	id 15.20.3825.8 via Frontend Transport;
+	Thu, 28 Jan 2021 12:43:07 +0000
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-Correlation-Id: 0e01d42d-3bc2-4bab-28da-08d8c38a4555
+X-MS-TrafficTypeDiagnostic: CH2PR10MB3941:
+X-MS-Exchange-Transport-Forked: True
+X-Microsoft-Antispam-PRVS: <CH2PR10MB39411E0FD376FAA86E74219987BA9@CH2PR10MB3941.namprd10.prod.outlook.com>
+X-MS-Oob-TLC-OOBClassifiers: OLM:260
+X-MS-Exchange-SenderADCheck: 1
+X-Microsoft-Antispam: BCL:0
+X-Microsoft-Antispam-Message-Info: pJ5ccHGdfMIuYnzx8aq0wBe7CGK5hELGkFwmW+UbSGKkOVpfgd4YBi0vrc+er51UtFKESCZAyt1Tp5H5X6cEG9b1EeQrBf4RSEyzl3baouUCAYXgXHVFR0/RrNoIj7y0HIIMRk7rAHMY0vw04eZ0KN1Rg0nSmRbIXxfIzHm/+llfg5vXr7mz+bpOE+7sfq/1lFfhHLxDCXXWejvvBjnCeOxXqgBDiOXdG5T5s0+D4oxdxJZFuttUOavuECY7bCePtreJrvjchJOPXhU1BoOiRU4gVcpEp8gkj+VeGWMkfFRlm0cCmZbfS3BfDuXDIT7v3vdL8Q9W39+CtghNyBZ4KaMGtxayQFhOQ6Po0F1ZVyaiiuZ85rlA4rjv24EJRBq6/z02CElTZrxJeLOHNl1EFko6t5wnFfQCXczxRrfrpdXumXasRKoJ/+16Gw0rrPZY85eRY7PEoxjxU7PLkD4+F17RBlIaAnKfg+aLMDxGkkoSN9BOBtMlkavxKTCf8ofiLHhjadTYZo2E3Uz0awpIg+XtnZwMJu+yQJg5YabAYiD3ogLMFP/9xSg9wyCqCxIWb2px3qKIgj4zJ8SqXI+ievvKAKlegmf0tVnNgoQvfibMDk1NTpx5Py49FzNeNngt
+X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:CH2PR10MB4118.namprd10.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(346002)(396003)(136003)(39860400002)(366004)(376002)(7366002)(6486002)(36756003)(2616005)(66556008)(83380400001)(2906002)(921005)(16526019)(5660300002)(8676002)(66476007)(7406005)(478600001)(7416002)(86362001)(186003)(6666004)(316002)(16576012)(31696002)(66946007)(8936002)(53546011)(956004)(4326008)(26005)(31686004)(44832011)(45980500001)(43740500002);
+	DIR:OUT; SFP:1101
+X-MS-Exchange-AntiSpam-MessageData: =?utf-8?B?Vm4rTktBWm5uc09iM3FnVVBkdjNUVHBpdWs5Q0ZDTkk5R0E3ODRnYUZMMktU?=
+	=?utf-8?B?RG56Y1hFZjFxaXJGM1N2TnlIN0ZCOFJCa2FKYmpJMEZDTGJIcU81MkkvWUN5?=
+	=?utf-8?B?TFd0TUV5cERHM1RvKytObUVJd0NXSmpZa1NRZk5iRGhldTRMSlVvajhDTlhR?=
+	=?utf-8?B?T0txelh4S3RUTDRrN20rSjFIZzBwdk1OOFRtMHBOUTdjMUhHby9mcWVJWFBm?=
+	=?utf-8?B?bndkYzh1dWM1NVZXRk9pTEFmbG9Mcnl2N1h1YzhDVTVSdWdjczNKMFk1LzM5?=
+	=?utf-8?B?STBkVWthUEIzamRkOTlvS0xNUHdFNFhkbVRxQXEvKzdEODZhdmlMSDRjbU9T?=
+	=?utf-8?B?aENkbks2SEo1ZzNJanV3Z2pHVW1pUFF6eXdlRVkyTVBrRE42a2FjbWIwWkpl?=
+	=?utf-8?B?TDdURFBoVFVSMnh4U0VLcjFTTUJrM2JXbXBSY3J3T3pQb3E0eHFTSWdZcXNX?=
+	=?utf-8?B?cm9INjZLZG9QQ0dJR2JXZS9LNUtGeVZhTDlmTXV3SHVlczBrbldTWHFGdjhI?=
+	=?utf-8?B?YlFTR2pCalVGQWo0aTUxblpoR1h3RjZKd3J3R2FCZDlNc0RVSUdtUFMyODht?=
+	=?utf-8?B?Qi9pd1NrdlJoL243S2U1eUsyVEtJZ3FYckRmMFRmUllPcW1leFZnSnVEY2R3?=
+	=?utf-8?B?Z2hDdUx4R3FyRjJqVEZ2WkRBWWJOdy9iY3JsUXFtSzhBYmhOZlp1MEZmMW1J?=
+	=?utf-8?B?RU1udXJkREFRS0lFMUU0dlNRazZ4Vmw5UGlrTnExV3RKdzBodnZseFFKQTVz?=
+	=?utf-8?B?Uy9FdkhyUjJtVU85aklWcXkzd0g4a0FMYllNR01TUFl5dkQ3ZkpJdUJDMksx?=
+	=?utf-8?B?VjMvUWVUVnFpNzd0ZE1PZEtMaElncUlFYjYvNFBQZ3hVeXBrVDNVOXhORTA3?=
+	=?utf-8?B?azNUa1FVUXZzTXZxQWIxeXUvdjlvbHRrR3ZTbEpwRUZpOVc5ZUZvWWVjWGFM?=
+	=?utf-8?B?dGh5MTFxYVdobnA3dDZtckhsallCWHU1SXBwYkxXNHFNb2dLR3BMQ3BEWEFt?=
+	=?utf-8?B?K2tRNnZ0eU9EZHF3TmVycGZzY0RSWHJibHlOcnYvamJCZEZmSzk0cnN1NXRR?=
+	=?utf-8?B?RjBrd0I1eGVTSWlUb3RPbjNVUnhLMGxqeko1Vk41emRZMWxjRlZmNE5yRkxD?=
+	=?utf-8?B?Ri9ITS8vQ3c4dDVYbnlHbU8zU0RqS09wK0NXaFRaWnkxd3JDL2thTSttS1lv?=
+	=?utf-8?B?VnR3MlVIdjRlSy85QTdCS1FhekYvbnZyTjZlZTJtcU85NmtER3o5S0RDV3JL?=
+	=?utf-8?B?cTJiTEFPUlJDWksyeS81NzVueSt5QmdieUYwVHd2bGRZZzdUYlB4QzhLNUtQ?=
+	=?utf-8?B?Rjk0eGVMVGV0aFF4WS8zUG8xbGQ2NG9jUzZzbWNYTXBvRTZsUDVRSTV5ZXB6?=
+	=?utf-8?B?VTRKOTgvaTZIb0dDR2pPQzNnM3V6Z3kvMUd3azhpYnRoTFdhbEg0N2hlb21t?=
+	=?utf-8?Q?xgW5/je/?=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 0e01d42d-3bc2-4bab-28da-08d8c38a4555
+X-MS-Exchange-CrossTenant-AuthSource: CH2PR10MB4118.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 28 Jan 2021 12:43:11.2780 (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: tFBedDYhghl7XP3cZN2/McX0JwxYw4Cu7FZ5NDxZqDAklfqhu0dMXnszrFIG3H4zPpJnTe1yGk1iM6Mt6c63XUXi/NVyG5gbxkRVEUnPYnc=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: CH2PR10MB3941
+X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=9877
+	signatures=668683
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 adultscore=0
+	mlxscore=0 suspectscore=0
+	phishscore=0 mlxlogscore=999 bulkscore=0 malwarescore=0 spamscore=0
+	classifier=spam adjust=0 reason=mlx scancount=1
+	engine=8.12.0-2009150000 definitions=main-2101280064
+X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=9877
+	signatures=668683
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 suspectscore=0
+	spamscore=0 phishscore=0
+	adultscore=0 impostorscore=0 malwarescore=0 lowpriorityscore=0
+	bulkscore=0
+	priorityscore=1501 mlxscore=0 clxscore=1011 mlxlogscore=999
+	classifier=spam adjust=0 reason=mlx scancount=1
+	engine=8.12.0-2009150000 definitions=main-2101280064
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -88,42 +181,24 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Fri, 29 Jan 2021 04:33:25 -0500
-Cc: shaggy@kernel.org, jfs-discussion@lists.sourceforge.net,
-	"Gustavo A. R. Silva" <gustavoars@kernel.org>,
-	Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>,
-	Mike Snitzer <snitzer@redhat.com>, Takashi Iwai <tiwai@suse.de>,
-	djwong@kernel.org, linux-nvme <linux-nvme@lists.infradead.org>,
-	Philipp Reisner <philipp.reisner@linbit.com>,
-	Linux Memory Management List <linux-mm@kvack.org>,
-	dm-devel@redhat.com, target-devel@vger.kernel.org,
-	Pavel Machek <pavel@ucw.cz>, Alex Shi <alex.shi@linux.alibaba.com>,
-	Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>,
-	naohiro.aota@wdc.com, linux-nilfs@vger.kernel.org,
-	Sagi Grimberg <sagi@grimberg.me>,
-	"open list:TARGET SUBSYSTEM" <linux-scsi@vger.kernel.org>,
-	Mark Fasheh <mark@fasheh.com>,
-	Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>, osandov@fb.com,
-	Eric Biggers <ebiggers@kernel.org>,
-	xen-devel@lists.xenproject.org, ngupta@vflare.org,
-	Len Brown <len.brown@intel.com>, Linux PM <linux-pm@vger.kernel.org>,
-	Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org,
-	Tejun Heo <tj@kernel.org>, linux-fscrypt@vger.kernel.org,
-	Al Viro <viro@zeniv.linux.org.uk>, drbd-dev@tron.linbit.com,
-	jaegeuk@kernel.org, Joel Becker <jlbec@evilplan.org>,
-	konishi.ryusuke@gmail.com, Bart Van Assche <bvanassche@acm.org>,
-	Jens Axboe <axboe@kernel.dk>, damien.lemoal@wdc.com,
-	Ted Ts'o <tytso@mit.edu>, Andrew Morton <akpm@linux-foundation.org>,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	Joseph Qi <joseph.qi@linux.alibaba.com>,
-	"Rafael J. Wysocki" <rjw@rjwysocki.net>,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-	linux-xfs@vger.kernel.org, Minchan Kim <minchan@kernel.org>,
-	jefflexu@linux.alibaba.com, linux-fsdevel@vger.kernel.org,
-	Lars Ellenberg <lars.ellenberg@linbit.com>, jth@kernel.org,
-	asml.silence@gmail.com, ocfs2-devel@oss.oracle.com, roger.pau@citrix.com
-Subject: Re: [dm-devel] [RFC PATCH 29/34] power/swap: use bio_new in
-	hib_submit_io
+X-Mailman-Approved-At: Fri, 29 Jan 2021 04:33:26 -0500
+Cc: shaggy@kernel.org, sergey.senozhatsky.work@gmail.com, snitzer@redhat.com,
+	tiwai@suse.de, djwong@kernel.org, gustavoars@kernel.org,
+	joseph.qi@linux.alibaba.com, pavel@ucw.cz,
+	alex.shi@linux.alibaba.com, hch@lst.de, agk@redhat.com,
+	naohiro.aota@wdc.com, sagi@grimberg.me, mark@fasheh.com,
+	osandov@fb.com, ebiggers@kernel.org, ngupta@vflare.org,
+	len.brown@intel.com, konrad.wilk@oracle.com, ming.lei@redhat.com,
+	viro@zeniv.linux.org.uk, jefflexu@linux.alibaba.com,
+	jaegeuk@kernel.org, konishi.ryusuke@gmail.com,
+	bvanassche@acm.org, axboe@kernel.dk, damien.lemoal@wdc.com,
+	jth@kernel.org, tytso@mit.edu, akpm@linux-foundation.org,
+	martin.petersen@oracle.com, rjw@rjwysocki.net,
+	philipp.reisner@linbit.com, minchan@kernel.org, tj@kernel.org,
+	lars.ellenberg@linbit.com, roger.pau@citrix.com,
+	asml.silence@gmail.com, jlbec@evilplan.org
+Subject: Re: [dm-devel] [RFC PATCH 19/34] fs/jfs/jfs_logmgr.c: use bio_new
+	in lbmRead
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -142,44 +217,46 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On Thu, Jan 28, 2021 at 8:21 AM Chaitanya Kulkarni
-<chaitanya.kulkarni@wdc.com> wrote:
->
+You probably don't need 4 patches to fs/jfs/. These can be combined into 
+a single patch.
 
-Please explain in the changelog why making this change is a good idea.
+Dave
 
+On 1/28/21 1:11 AM, Chaitanya Kulkarni wrote:
 > Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 > ---
->  kernel/power/swap.c | 7 +++----
->  1 file changed, 3 insertions(+), 4 deletions(-)
->
-> diff --git a/kernel/power/swap.c b/kernel/power/swap.c
-> index c73f2e295167..e92e36c053a6 100644
-> --- a/kernel/power/swap.c
-> +++ b/kernel/power/swap.c
-> @@ -271,13 +271,12 @@ static int hib_submit_io(int op, int op_flags, pgoff_t page_off, void *addr,
->                 struct hib_bio_batch *hb)
->  {
->         struct page *page = virt_to_page(addr);
-> +       sector_t sect = page_off * (PAGE_SIZE >> 9);
->         struct bio *bio;
->         int error = 0;
->
-> -       bio = bio_alloc(GFP_NOIO | __GFP_HIGH, 1);
-> -       bio->bi_iter.bi_sector = page_off * (PAGE_SIZE >> 9);
-> -       bio_set_dev(bio, hib_resume_bdev);
-> -       bio_set_op_attrs(bio, op, op_flags);
-> +       bio = bio_new(hib_resume_bdev, sect, op, op_flags, 1,
-> +                     GFP_NOIO | __GFP_HIGH);
->
->         if (bio_add_page(bio, page, PAGE_SIZE, 0) < PAGE_SIZE) {
->                 pr_err("Adding page to bio failed at %llu\n",
-> --
-> 2.22.1
->
+>   fs/jfs/jfs_logmgr.c | 7 ++-----
+>   1 file changed, 2 insertions(+), 5 deletions(-)
+> 
+> diff --git a/fs/jfs/jfs_logmgr.c b/fs/jfs/jfs_logmgr.c
+> index 9330eff210e0..4481f3e33a3f 100644
+> --- a/fs/jfs/jfs_logmgr.c
+> +++ b/fs/jfs/jfs_logmgr.c
+> @@ -1979,17 +1979,14 @@ static int lbmRead(struct jfs_log * log, int pn, struct lbuf ** bpp)
+>   
+>   	bp->l_flag |= lbmREAD;
+>   
+> -	bio = bio_alloc(GFP_NOFS, 1);
+> -
+> -	bio->bi_iter.bi_sector = bp->l_blkno << (log->l2bsize - 9);
+> -	bio_set_dev(bio, log->bdev);
+> +	bio = bio_new(log->bdev, bp->l_blkno << (log->l2bsize - 9),
+> +			REQ_OP_READ, 0, 1, GFP_NOFS);
+>   
+>   	bio_add_page(bio, bp->l_page, LOGPSIZE, bp->l_offset);
+>   	BUG_ON(bio->bi_iter.bi_size != LOGPSIZE);
+>   
+>   	bio->bi_end_io = lbmIODone;
+>   	bio->bi_private = bp;
+> -	bio->bi_opf = REQ_OP_READ;
+>   	/*check if journaling to disk has been disabled*/
+>   	if (log->no_integrity) {
+>   		bio->bi_iter.bi_size = 0;
+> 
 
 --
 dm-devel mailing list
