@@ -2,65 +2,76 @@ Return-Path: <SRS0=tECb=HA=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
+	NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 28951C433E0
-	for <dm-devel@archiver.kernel.org>; Fri, 29 Jan 2021 09:37:40 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4F8BCC433DB
+	for <dm-devel@archiver.kernel.org>; Fri, 29 Jan 2021 09:37:44 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7BECE64E24
-	for <dm-devel@archiver.kernel.org>; Fri, 29 Jan 2021 09:37:39 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7BECE64E24
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+	by mail.kernel.org (Postfix) with ESMTPS id 8C14564E25
+	for <dm-devel@archiver.kernel.org>; Fri, 29 Jan 2021 09:37:43 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 8C14564E25
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=huawei.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-373-68IniprBMee6bLs0IKHAQw-1; Fri, 29 Jan 2021 04:37:35 -0500
-X-MC-Unique: 68IniprBMee6bLs0IKHAQw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-368-5T3e8sZvPKSP_hVR_JYdPA-1; Fri, 29 Jan 2021 04:37:39 -0500
+X-MC-Unique: 5T3e8sZvPKSP_hVR_JYdPA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B786B8017FC;
-	Fri, 29 Jan 2021 09:37:30 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9A8F760BE2;
-	Fri, 29 Jan 2021 09:37:30 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 01BD018C8C01;
+	Fri, 29 Jan 2021 09:37:35 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 80B4510023B9;
+	Fri, 29 Jan 2021 09:37:34 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 706C24A7C7;
-	Fri, 29 Jan 2021 09:37:30 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 574741809CA2;
+	Fri, 29 Jan 2021 09:37:34 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 10SHOANO014858 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 28 Jan 2021 12:24:10 -0500
+	id 10T1MN7J011977 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 28 Jan 2021 20:22:23 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1EE542166B2E; Thu, 28 Jan 2021 17:24:10 +0000 (UTC)
+	id 1A2C210D16B1; Fri, 29 Jan 2021 01:22:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 18D832166B2F
-	for <dm-devel@redhat.com>; Thu, 28 Jan 2021 17:24:07 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 166B710D16B0
+	for <dm-devel@redhat.com>; Fri, 29 Jan 2021 01:22:20 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0D937811E78
-	for <dm-devel@redhat.com>; Thu, 28 Jan 2021 17:24:07 +0000 (UTC)
-Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
-	by relay.mimecast.com with ESMTP id us-mta-555-JHyur5a0PfeumZ9T2VWskg-1;
-	Thu, 28 Jan 2021 12:24:04 -0500
-X-MC-Unique: JHyur5a0PfeumZ9T2VWskg-1
-Received: by mail.kernel.org (Postfix) with ESMTPSA id B21F464DF9;
-	Thu, 28 Jan 2021 17:24:02 +0000 (UTC)
-Date: Thu, 28 Jan 2021 09:24:02 -0800
-From: "Darrick J. Wong" <djwong@kernel.org>
-To: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-Message-ID: <20210128172402.GO7698@magnolia>
-References: <20210128071133.60335-1-chaitanya.kulkarni@wdc.com>
-	<20210128071133.60335-19-chaitanya.kulkarni@wdc.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E4ACE1875040
+	for <dm-devel@redhat.com>; Fri, 29 Jan 2021 01:22:20 +0000 (UTC)
+Received: from szxga04-in.huawei.com (szxga04-in.huawei.com
+	[45.249.212.190]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-289-GKR8-Y4JPMyy1rUsh-MPDQ-1; Thu, 28 Jan 2021 20:22:18 -0500
+X-MC-Unique: GKR8-Y4JPMyy1rUsh-MPDQ-1
+Received: from DGGEMS411-HUB.china.huawei.com (unknown [172.30.72.59])
+	by szxga04-in.huawei.com (SkyGuard) with ESMTP id 4DRfFy4p1VzlCJD;
+	Fri, 29 Jan 2021 09:02:46 +0800 (CST)
+Received: from [10.136.110.154] (10.136.110.154) by smtp.huawei.com
+	(10.3.19.211) with Microsoft SMTP Server (TLS) id 14.3.498.0;
+	Fri, 29 Jan 2021 09:04:19 +0800
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>, Song Liu
+	<song@kernel.org>
+References: <20210126145247.1964410-1-hch@lst.de>
+	<20210126145247.1964410-9-hch@lst.de>
+From: Chao Yu <yuchao0@huawei.com>
+Message-ID: <3301f2da-60c5-79ca-ab3b-0fe3345f0731@huawei.com>
+Date: Fri, 29 Jan 2021 09:04:17 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:52.0) Gecko/20100101
+	Thunderbird/52.9.1
 MIME-Version: 1.0
-In-Reply-To: <20210128071133.60335-19-chaitanya.kulkarni@wdc.com>
+In-Reply-To: <20210126145247.1964410-9-hch@lst.de>
+X-Originating-IP: [10.136.110.154]
+X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -69,34 +80,22 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Fri, 29 Jan 2021 04:33:26 -0500
-Cc: shaggy@kernel.org, jfs-discussion@lists.sourceforge.net,
-	gustavoars@kernel.org, sergey.senozhatsky.work@gmail.com,
-	snitzer@redhat.com, tiwai@suse.de,
-	linux-nvme@lists.infradead.org, philipp.reisner@linbit.com,
-	linux-mm@kvack.org, dm-devel@redhat.com,
-	target-devel@vger.kernel.org, pavel@ucw.cz,
-	alex.shi@linux.alibaba.com, hch@lst.de, agk@redhat.com,
-	naohiro.aota@wdc.com, linux-nilfs@vger.kernel.org,
-	sagi@grimberg.me, linux-scsi@vger.kernel.org, mark@fasheh.com,
-	konrad.wilk@oracle.com, osandov@fb.com, ebiggers@kernel.org,
-	xen-devel@lists.xenproject.org, ngupta@vflare.org,
-	len.brown@intel.com, linux-pm@vger.kernel.org,
-	ming.lei@redhat.com, linux-block@vger.kernel.org, tj@kernel.org,
-	linux-fscrypt@vger.kernel.org, viro@zeniv.linux.org.uk,
-	drbd-dev@tron.linbit.com, jaegeuk@kernel.org, jlbec@evilplan.org,
-	konishi.ryusuke@gmail.com, bvanassche@acm.org, axboe@kernel.dk,
-	damien.lemoal@wdc.com, tytso@mit.edu, akpm@linux-foundation.org,
-	martin.petersen@oracle.com, joseph.qi@linux.alibaba.com,
-	rjw@rjwysocki.net, linux-kernel@vger.kernel.org,
-	linux-xfs@vger.kernel.org, minchan@kernel.org,
-	jefflexu@linux.alibaba.com, linux-fsdevel@vger.kernel.org,
-	lars.ellenberg@linbit.com, jth@kernel.org,
-	asml.silence@gmail.com, ocfs2-devel@oss.oracle.com, roger.pau@citrix.com
-Subject: Re: [dm-devel] [RFC PATCH 18/34] iomap: use bio_new in
-	iomap_dio_bio_actor
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-mm@kvack.org, dm-devel@redhat.com,
+	Naohiro Aota <naohiro.aota@wdc.com>, linux-nilfs@vger.kernel.org,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	drbd-dev@tron.linbit.com, Damien Le Moal <damien.lemoal@wdc.com>,
+	Josef Bacik <josef@toxicpanda.com>, linux-block@vger.kernel.org,
+	linux-bcache@vger.kernel.org, David Sterba <dsterba@suse.com>,
+	Jaegeuk Kim <jaegeuk@kernel.org>, Coly Li <colyli@suse.de>,
+	Lars Ellenberg <lars.ellenberg@linbit.com>,
+	linux-raid@vger.kernel.org, linux-nfs@vger.kernel.org,
+	Philipp Reisner <philipp.reisner@linbit.com>,
+	linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org,
+	Andrew Morton <akpm@linux-foundation.org>, linux-btrfs@vger.kernel.org
+Subject: Re: [dm-devel] [f2fs-dev] [PATCH 08/17] f2fs: remove FAULT_ALLOC_BIO
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -110,50 +109,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On Wed, Jan 27, 2021 at 11:11:17PM -0800, Chaitanya Kulkarni wrote:
-> Signed-off-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
-> ---
->  fs/iomap/direct-io.c | 5 ++---
->  1 file changed, 2 insertions(+), 3 deletions(-)
+On 2021/1/26 22:52, Christoph Hellwig wrote:
+> Sleeping bio allocations do not fail, which means that injecting an error
+> into sleeping bio allocations is a little silly.
 > 
-> diff --git a/fs/iomap/direct-io.c b/fs/iomap/direct-io.c
-> index f6c557a1bd25..0737192f7e5c 100644
-> --- a/fs/iomap/direct-io.c
-> +++ b/fs/iomap/direct-io.c
-> @@ -267,9 +267,8 @@ iomap_dio_bio_actor(struct inode *inode, loff_t pos, loff_t length,
->  			goto out;
->  		}
->  
-> -		bio = bio_alloc(GFP_KERNEL, nr_pages);
-> -		bio_set_dev(bio, iomap->bdev);
-> -		bio->bi_iter.bi_sector = iomap_sector(iomap, pos);
-> +		bio = bio_new(iomap->bdev, iomap_sector(iomap, pos), 0, 0,
-> +			      nr_pages, GFP_KERNEL);
+> Signed-off-by: Christoph Hellwig<hch@lst.de>
 
-op == 0?  It seems a little odd to me that we'd set the field to zero
-and then construct bi_opf later.
+Acked-by: Chao Yu <yuchao0@huawei.com>
 
-It also strikes me as a little strange that bi_opf is combined from the
-third and fourth parameters, but maybe some day you'll want to do some
-parameter verification on debug kernels or something...?
-
---D
-
->  		bio->bi_write_hint = dio->iocb->ki_hint;
->  		bio->bi_ioprio = dio->iocb->ki_ioprio;
->  		bio->bi_private = dio;
-> -- 
-> 2.22.1
-> 
+Thanks,
 
 --
 dm-devel mailing list
