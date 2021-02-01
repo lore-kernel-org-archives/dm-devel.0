@@ -7,76 +7,74 @@ X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A8ADAC433DB
-	for <dm-devel@archiver.kernel.org>; Mon,  1 Feb 2021 05:10:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 624D2C433E0
+	for <dm-devel@archiver.kernel.org>; Mon,  1 Feb 2021 05:10:49 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 2050E64E2B
-	for <dm-devel@archiver.kernel.org>; Mon,  1 Feb 2021 05:10:50 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2050E64E2B
+	by mail.kernel.org (Postfix) with ESMTPS id C395564E2F
+	for <dm-devel@archiver.kernel.org>; Mon,  1 Feb 2021 05:10:48 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C395564E2F
 Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=google.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-462-1c4Ff538PMiFMLgdmPbrFg-1; Mon, 01 Feb 2021 00:10:46 -0500
-X-MC-Unique: 1c4Ff538PMiFMLgdmPbrFg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-578-ZxOKP8jbOjGPMD4Ofg5hXQ-1; Mon, 01 Feb 2021 00:10:45 -0500
+X-MC-Unique: ZxOKP8jbOjGPMD4Ofg5hXQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C697E612B0;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1C801107ACE6;
 	Mon,  1 Feb 2021 05:10:41 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9F4545D961;
-	Mon,  1 Feb 2021 05:10:41 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B99126A90E;
+	Mon,  1 Feb 2021 05:10:40 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 72BE650038;
-	Mon,  1 Feb 2021 05:10:41 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 591FC180954D;
+	Mon,  1 Feb 2021 05:10:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1115AdPf015713 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 1 Feb 2021 00:10:39 -0500
+	id 1115Ac2Z015693 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 1 Feb 2021 00:10:38 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 870C51111A5C; Mon,  1 Feb 2021 05:10:39 +0000 (UTC)
+	id 29D8B2026D13; Mon,  1 Feb 2021 05:10:38 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8353D1111C9F
-	for <dm-devel@redhat.com>; Mon,  1 Feb 2021 05:10:39 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2503F2026D12
+	for <dm-devel@redhat.com>; Mon,  1 Feb 2021 05:10:38 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 722AC801223
-	for <dm-devel@redhat.com>; Mon,  1 Feb 2021 05:10:39 +0000 (UTC)
-Received: from mail-yb1-f202.google.com (mail-yb1-f202.google.com
-	[209.85.219.202]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-510-QtOgbNW1Mp2x8pc-InZwYw-1; Mon, 01 Feb 2021 00:10:37 -0500
-X-MC-Unique: QtOgbNW1Mp2x8pc-InZwYw-1
-Received: by mail-yb1-f202.google.com with SMTP id 203so18378814ybz.2
-	for <dm-devel@redhat.com>; Sun, 31 Jan 2021 21:10:37 -0800 (PST)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1165188CC48
+	for <dm-devel@redhat.com>; Mon,  1 Feb 2021 05:10:38 +0000 (UTC)
+Received: from mail-qk1-f202.google.com (mail-qk1-f202.google.com
+	[209.85.222.202]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-198-XruvVs1ePx-RNR8MkC9kHQ-1; Mon, 01 Feb 2021 00:10:35 -0500
+X-MC-Unique: XruvVs1ePx-RNR8MkC9kHQ-1
+Received: by mail-qk1-f202.google.com with SMTP id i11so12323669qkn.21
+	for <dm-devel@redhat.com>; Sun, 31 Jan 2021 21:10:35 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20161025;
 	h=x-gm-message-state:sender:date:in-reply-to:message-id:mime-version
 	:references:subject:from:to:cc;
-	bh=tsR7HhO1/8EFXvkT3LKZR+I5g9ZmXVYdpiXsfnhKFQE=;
-	b=O+Nfr/asHJbf+VeYwaOypZDhDYGOVTVx6NE9MOOc5IXV44RP+pkAN2sIvSEYlB6TF5
-	7FxMj+qvg7fC43MixJHR4vX4FM004VtAWUmPN7WrkOwcVFuwZOzHHmQP5MQVZ7F+JdvH
-	aoIPObU7F8jFfGqe02xdxwx+UEgT3hkGte1FER9qEMxjdE41zulJDpAYd3KnfeacPQb/
-	3aFIX4oqAo6LoY0LsGjmGHpeTttSmL+wgEI79iJydvN86ao7tHKEBByXKVNLSq7XCgRE
-	naXEh3sEeLCoEXeYkBWJSrnIxz6VMAIuW/4BgINNfjlBo4DwczIe3Rit76uqXfHWxlCD
-	qOcg==
-X-Gm-Message-State: AOAM533M56L8njVJpIFL4bgfL81QNAfjBd4JknpLEb82V9LWhaTa2GbQ
-	501X3CoMasAZfUHrKUCCJ/SwO3tND3E=
-X-Google-Smtp-Source: ABdhPJzHvb+x5wi/WXBWFc/y/S6NWvFLWKYpHtLIzOFQg75s1lLXTb+FaOcNF1B8+TRzc4ds1FTwCDFqop4=
+	bh=5dbuBvoORvra44H0T//SJ47+OoScs3v/BXdSuFHjKFQ=;
+	b=jJtLdBbPu7PfeGupI9aupKHRloqYbdveBe7LlkfiGdzLFmuhjsakvRqXGv0NWub5Rb
+	RpCJc8xVASa02Y09VaA+94tc6Ww9cVYJqU2fo+fSo/Mo2wACEwfB0oy4cO91zVFgrIQj
+	UhQaxPUTkkS7AUaO5hlJg25fmDREm8NCeppDLd5FUteYxz3cywnKcfhHnh6ktOItAaxz
+	UQGrP7AWHhLQt62r9KVcN8Wd62apvSE0LS4+m4ARP9wlorlQDKSdCUyR6L+Ibm+rQJbI
+	nDeZBTkybX4lfGm3SRU+94ZcKm6d3iz74ehEQ329ZbRdiZwSbyV0ATxX1kWkbw3GWgD7
+	jrxQ==
+X-Gm-Message-State: AOAM532TV58AOz/H3ZleNah+imIEZUx4sC2UECp/N14Lm4TQEOhthQek
+	gmn5ROfunaDdDBFiVlukqKDfuZtB0qY=
+X-Google-Smtp-Source: ABdhPJx2Pz6TVDQTUDY5UjV6VySHGazkLYybFgOpdTP2fqdUKVzBm7DGVFWGS8nr/koqhTJ4IyZGDdXh7Lo=
 X-Received: from satyaprateek.c.googlers.com
 	([fda3:e722:ac3:10:24:72f4:c0a8:1092])
-	(user=satyat job=sendgmr) by 2002:a25:1402:: with SMTP id
-	2mr19186874ybu.15.1612156236927; 
-	Sun, 31 Jan 2021 21:10:36 -0800 (PST)
-Date: Mon,  1 Feb 2021 05:10:19 +0000
+	(user=satyat job=sendgmr) by 2002:a05:6214:1103:: with SMTP id
+	e3mr14313403qvs.12.1612156235204; Sun, 31 Jan 2021 21:10:35 -0800 (PST)
+Date: Mon,  1 Feb 2021 05:10:18 +0000
 In-Reply-To: <20210201051019.1174983-1-satyat@google.com>
-Message-Id: <20210201051019.1174983-6-satyat@google.com>
+Message-Id: <20210201051019.1174983-5-satyat@google.com>
 Mime-Version: 1.0
 References: <20210201051019.1174983-1-satyat@google.com>
 From: Satya Tangirala <satyat@google.com>
@@ -90,13 +88,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 Cc: Jens Axboe <axboe@kernel.dk>, Satya Tangirala <satyat@google.com>,
 	Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>,
 	Eric Biggers <ebiggers@google.com>
-Subject: [dm-devel] [PATCH v4 5/5] dm: set DM_TARGET_PASSES_CRYPTO feature
-	for some targets
+Subject: [dm-devel] [PATCH v4 4/5] dm: support key eviction from keyslot
+ managers of underlying devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -110,7 +108,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -118,50 +116,99 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-dm-linear and dm-flakey obviously can pass through inline crypto support.
+Now that device mapper supports inline encryption, add the ability to
+evict keys from all underlying devices. When an upper layer requests
+a key eviction, we simply iterate through all underlying devices
+and evict that key from each device.
 
 Co-developed-by: Eric Biggers <ebiggers@google.com>
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 Signed-off-by: Satya Tangirala <satyat@google.com>
 ---
- drivers/md/dm-flakey.c | 4 +++-
- drivers/md/dm-linear.c | 5 +++--
- 2 files changed, 6 insertions(+), 3 deletions(-)
+ block/blk-crypto.c    |  1 +
+ drivers/md/dm-table.c | 53 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 54 insertions(+)
 
-diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-index a2cc9e45cbba..30c6bc151213 100644
---- a/drivers/md/dm-flakey.c
-+++ b/drivers/md/dm-flakey.c
-@@ -482,8 +482,10 @@ static struct target_type flakey_target = {
- 	.name   = "flakey",
- 	.version = {1, 5, 0},
- #ifdef CONFIG_BLK_DEV_ZONED
--	.features = DM_TARGET_ZONED_HM,
-+	.features = DM_TARGET_ZONED_HM | DM_TARGET_PASSES_CRYPTO,
- 	.report_zones = flakey_report_zones,
-+#else
-+	.features = DM_TARGET_PASSES_CRYPTO,
- #endif
- 	.module = THIS_MODULE,
- 	.ctr    = flakey_ctr,
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 00774b5d7668..fc9c4272c10d 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -229,10 +229,11 @@ static struct target_type linear_target = {
- 	.version = {1, 4, 0},
- #ifdef CONFIG_BLK_DEV_ZONED
- 	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_NOWAIT |
--		    DM_TARGET_ZONED_HM,
-+		    DM_TARGET_ZONED_HM | DM_TARGET_PASSES_CRYPTO,
- 	.report_zones = linear_report_zones,
- #else
--	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_NOWAIT,
-+	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_NOWAIT |
-+		    DM_TARGET_PASSES_CRYPTO,
- #endif
- 	.module = THIS_MODULE,
- 	.ctr    = linear_ctr,
+diff --git a/block/blk-crypto.c b/block/blk-crypto.c
+index 5da43f0973b4..c2be8f15006c 100644
+--- a/block/blk-crypto.c
++++ b/block/blk-crypto.c
+@@ -409,3 +409,4 @@ int blk_crypto_evict_key(struct request_queue *q,
+ 	 */
+ 	return blk_crypto_fallback_evict_key(key);
+ }
++EXPORT_SYMBOL_GPL(blk_crypto_evict_key);
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index b37f69343923..3eacc5329603 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1214,6 +1214,58 @@ struct dm_keyslot_manager {
+ 	struct mapped_device *md;
+ };
+ 
++struct dm_keyslot_evict_args {
++	const struct blk_crypto_key *key;
++	int err;
++};
++
++static int dm_keyslot_evict_callback(struct dm_target *ti, struct dm_dev *dev,
++				     sector_t start, sector_t len, void *data)
++{
++	struct dm_keyslot_evict_args *args = data;
++	int err;
++
++	err = blk_crypto_evict_key(bdev_get_queue(dev->bdev), args->key);
++	if (!args->err)
++		args->err = err;
++	/* Always try to evict the key from all devices. */
++	return 0;
++}
++
++/*
++ * When an inline encryption key is evicted from a device-mapper device, evict
++ * it from all the underlying devices.
++ */
++static int dm_keyslot_evict(struct blk_keyslot_manager *ksm,
++			    const struct blk_crypto_key *key, unsigned int slot)
++{
++	struct dm_keyslot_manager *dksm = container_of(ksm,
++						       struct dm_keyslot_manager,
++						       ksm);
++	struct mapped_device *md = dksm->md;
++	struct dm_keyslot_evict_args args = { key };
++	struct dm_table *t;
++	int srcu_idx;
++	int i;
++	struct dm_target *ti;
++
++	t = dm_get_live_table(md, &srcu_idx);
++	if (!t)
++		return 0;
++	for (i = 0; i < dm_table_get_num_targets(t); i++) {
++		ti = dm_table_get_target(t, i);
++		if (!ti->type->iterate_devices)
++			continue;
++		ti->type->iterate_devices(ti, dm_keyslot_evict_callback, &args);
++	}
++	dm_put_live_table(md, srcu_idx);
++	return args.err;
++}
++
++static struct blk_ksm_ll_ops dm_ksm_ll_ops = {
++	.keyslot_evict = dm_keyslot_evict,
++};
++
+ static int device_intersect_crypto_modes(struct dm_target *ti,
+ 					 struct dm_dev *dev, sector_t start,
+ 					 sector_t len, void *data)
+@@ -1269,6 +1321,7 @@ dm_table_construct_keyslot_manager(struct dm_table *t)
+ 
+ 	ksm = &dksm->ksm;
+ 	blk_ksm_init_passthrough(ksm);
++	ksm->ksm_ll_ops = dm_ksm_ll_ops;
+ 	ksm->max_dun_bytes_supported = UINT_MAX;
+ 	memset(ksm->crypto_modes_supported, 0xFF,
+ 	       sizeof(ksm->crypto_modes_supported));
 -- 
 2.30.0.365.g02bc693789-goog
 
