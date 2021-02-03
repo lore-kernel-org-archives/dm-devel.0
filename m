@@ -2,97 +2,76 @@ Return-Path: <SRS0=/TsO=HF=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-17.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 08812C433E0
-	for <dm-devel@archiver.kernel.org>; Wed,  3 Feb 2021 15:55:19 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6CBF3C433DB
+	for <dm-devel@archiver.kernel.org>; Wed,  3 Feb 2021 16:10:24 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 549EA64F65
-	for <dm-devel@archiver.kernel.org>; Wed,  3 Feb 2021 15:55:18 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 549EA64F65
-Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
+	by mail.kernel.org (Postfix) with ESMTPS id C3BFB64E2E
+	for <dm-devel@archiver.kernel.org>; Wed,  3 Feb 2021 16:10:23 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C3BFB64E2E
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1612368622;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=+f66qfNxXOpMZGXwGtxnx6zPxmJeWh7ZevqUuV5H0YY=;
+	b=cFd82hYDpgjnvQYRODoWZzSthdLMn2/pjxk9Qr6hSzkD2CqoFERyYieritI4GsxlTkh+ak
+	RZVyfHDJXg/lEoPA7giV/2XiuygriYoqzr6zZsIfLW8sANFIT1oOsXvIO9zfb90TL9pzQJ
+	f4LUhwWhP2IBI5iGjkwv9l/THyAamnQ=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-176-TTJmpNZ3OKi-ktPs5gng8A-1; Wed, 03 Feb 2021 10:55:14 -0500
-X-MC-Unique: TTJmpNZ3OKi-ktPs5gng8A-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-457-AXekGQ2cMV6e-lJZEGETnw-1; Wed, 03 Feb 2021 11:10:20 -0500
+X-MC-Unique: AXekGQ2cMV6e-lJZEGETnw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D2280107ACE8;
-	Wed,  3 Feb 2021 15:55:09 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B1DEA5D9E3;
-	Wed,  3 Feb 2021 15:55:09 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BA532107ACF2;
+	Wed,  3 Feb 2021 16:10:13 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 910355885D;
+	Wed,  3 Feb 2021 16:10:13 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7F95D58077;
-	Wed,  3 Feb 2021 15:55:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 309E618095CB;
+	Wed,  3 Feb 2021 16:10:13 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com
+	[10.5.11.16])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 113Ft5Ud006771 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 3 Feb 2021 10:55:06 -0500
+	id 113GA3Cl011208 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 3 Feb 2021 11:10:03 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B0EC9F7850; Wed,  3 Feb 2021 15:55:04 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A98FCF7851
-	for <dm-devel@redhat.com>; Wed,  3 Feb 2021 15:55:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2546E85A5A6
-	for <dm-devel@redhat.com>; Wed,  3 Feb 2021 15:55:01 +0000 (UTC)
-Received: from mx2.veeam.com (mx2.veeam.com [64.129.123.6]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-354-X_VDwCs9OMaP8BA9hx_U7w-1;
-	Wed, 03 Feb 2021 10:54:57 -0500
-X-MC-Unique: X_VDwCs9OMaP8BA9hx_U7w-1
-Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mx2.veeam.com (Postfix) with ESMTPS id 3009441585;
-	Wed,  3 Feb 2021 10:54:53 -0500 (EST)
-Received: from prgdevlinuxpatch01.amust.local (172.24.14.5) by
-	prgmbx01.amust.local (172.24.0.171) with Microsoft SMTP Server
-	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	15.2.721.2; Wed, 3 Feb 2021 16:54:28 +0100
-From: Sergei Shtepa <sergei.shtepa@veeam.com>
-To: <Damien.LeMoal@wdc.com>, <snitzer@redhat.com>, <hare@suse.de>,
-	<ming.lei@redhat.com>, <agk@redhat.com>, <corbet@lwn.net>,
-	<axboe@kernel.dk>, <jack@suse.cz>, <johannes.thumshirn@wdc.com>,
-	<gregkh@linuxfoundation.org>, <koct9i@gmail.com>, <steve@sk2.org>,
-	<dm-devel@redhat.com>, <linux-block@vger.kernel.org>,
-	<linux-doc@vger.kernel.org>, <linux-kernel@vger.kernel.org>
-Date: Wed, 3 Feb 2021 18:53:58 +0300
-Message-ID: <1612367638-3794-7-git-send-email-sergei.shtepa@veeam.com>
-In-Reply-To: <1612367638-3794-1-git-send-email-sergei.shtepa@veeam.com>
+	id 067D41E6; Wed,  3 Feb 2021 16:10:03 +0000 (UTC)
+Received: from localhost (unknown [10.18.25.174])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7AF005FC3A;
+	Wed,  3 Feb 2021 16:09:56 +0000 (UTC)
+Date: Wed, 3 Feb 2021 11:09:55 -0500
+From: Mike Snitzer <snitzer@redhat.com>
+To: Sergei Shtepa <sergei.shtepa@veeam.com>
+Message-ID: <20210203160955.GA21359@redhat.com>
 References: <1612367638-3794-1-git-send-email-sergei.shtepa@veeam.com>
+	<1612367638-3794-4-git-send-email-sergei.shtepa@veeam.com>
 MIME-Version: 1.0
-X-Originating-IP: [172.24.14.5]
-X-ClientProxiedBy: prgmbx02.amust.local (172.24.0.172) To prgmbx01.amust.local
-	(172.24.0.171)
-X-EsetResult: clean, is OK
-X-EsetId: 37303A29C604D265667062
-X-Veeam-MMEX: True
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+In-Reply-To: <1612367638-3794-4-git-send-email-sergei.shtepa@veeam.com>
+User-Agent: Mutt/1.5.21 (2010-09-15)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 X-loop: dm-devel@redhat.com
-Cc: pavgel.tide@veeam.com, sergei.shtepa@veeam.com
-Subject: [dm-devel] [PATCH v4 6/6] docs: device-mapper: 'noexcl' option for
-	dm-linear
+Cc: axboe@kernel.dk, Damien.LeMoal@wdc.com, jack@suse.cz, corbet@lwn.net,
+	johannes.thumshirn@wdc.com, linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org, ming.lei@redhat.com,
+	linux-block@vger.kernel.org, dm-devel@redhat.com,
+	gregkh@linuxfoundation.org, steve@sk2.org, koct9i@gmail.com,
+	agk@redhat.com, pavgel.tide@veeam.com
+Subject: Re: [dm-devel] [PATCH v4 3/6] block: add blk_mq_is_queue_frozen()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -106,68 +85,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-New 'noexcl' option allow to open underlying block-device
-without FMODE_EXCL flag.
+On Wed, Feb 03 2021 at 10:53am -0500,
+Sergei Shtepa <sergei.shtepa@veeam.com> wrote:
 
-Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
----
- .../admin-guide/device-mapper/linear.rst      | 26 ++++++++++++++++---
- 1 file changed, 23 insertions(+), 3 deletions(-)
+> blk_mq_is_queue_frozen() allow to assert that the queue is frozen.
+> 
+> Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
+> ---
+>  block/blk-mq.c         | 13 +++++++++++++
+>  include/linux/blk-mq.h |  1 +
+>  2 files changed, 14 insertions(+)
+> 
+> diff --git a/block/blk-mq.c b/block/blk-mq.c
+> index f285a9123a8b..924ec26fae5f 100644
+> --- a/block/blk-mq.c
+> +++ b/block/blk-mq.c
+> @@ -161,6 +161,19 @@ int blk_mq_freeze_queue_wait_timeout(struct request_queue *q,
+>  }
+>  EXPORT_SYMBOL_GPL(blk_mq_freeze_queue_wait_timeout);
+>  
+> +
+> +bool blk_mq_is_queue_frozen(struct request_queue *q)
+> +{
+> +	bool ret;
+> +
+> +	mutex_lock(&q->mq_freeze_lock);
+> +	ret = percpu_ref_is_dying(&q->q_usage_counter) && percpu_ref_is_zero(&q->q_usage_counter);
+> +	mutex_unlock(&q->mq_freeze_lock);
+> +
+> +	return ret;
+> +}
+> +EXPORT_SYMBOL_GPL(blk_mq_is_queue_frozen);
+> +
+>  /*
+>   * Guarantee no request is in use, so we can change any data structure of
+>   * the queue afterward.
+> diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
+> index d705b174d346..9d1e8c4e922e 100644
+> --- a/include/linux/blk-mq.h
+> +++ b/include/linux/blk-mq.h
+> @@ -525,6 +525,7 @@ void blk_freeze_queue_start(struct request_queue *q);
+>  void blk_mq_freeze_queue_wait(struct request_queue *q);
+>  int blk_mq_freeze_queue_wait_timeout(struct request_queue *q,
+>  				     unsigned long timeout);
+> +bool blk_mq_is_queue_frozen(struct request_queue *q);
+>  
+>  int blk_mq_map_queues(struct blk_mq_queue_map *qmap);
+>  void blk_mq_update_nr_hw_queues(struct blk_mq_tag_set *set, int nr_hw_queues);
+> -- 
+> 2.20.1
+> 
 
-diff --git a/Documentation/admin-guide/device-mapper/linear.rst b/Documentation/admin-guide/device-mapper/linear.rst
-index 9d17fc6e64a9..f035cd7ad78c 100644
---- a/Documentation/admin-guide/device-mapper/linear.rst
-+++ b/Documentation/admin-guide/device-mapper/linear.rst
-@@ -6,12 +6,22 @@ Device-Mapper's "linear" target maps a linear range of the Device-Mapper
- device onto a linear range of another device.  This is the basic building
- block of logical volume managers.
- 
--Parameters: <dev path> <offset>
-+Parameters: <dev path> <offset> [<options>]
-     <dev path>:
--	Full pathname to the underlying block-device, or a
-+        Full pathname to the underlying block-device, or a
-         "major:minor" device-number.
-     <offset>:
--	Starting sector within the device.
-+        Starting sector within the device.
-+    <options>:
-+        Options allow to set the exclusivity mode. The exclusivity mode
-+        can be 'excl' and 'noexcl'. By default, then options is not set,
-+        the 'excl' mode is used. 'noexcl' mode allow to open device
-+        without FMODE_EXCL flag. This allow to create liner device with
-+        underlying block-device that are already used by the system. For
-+        example, the file system on this device is already mounted.
-+        The 'noexcl' option should be used when creating dm devices that
-+        will be used as acceptor when connecting the device mapper to an
-+        existing block device with the 'dmsetup remap' command.
- 
- 
- Example scripts
-@@ -61,3 +71,13 @@ Example scripts
-   }
- 
-   `echo \"$table\" | dmsetup create $name`;
-+
-+::
-+
-+  #!/bin/sh
-+  # Create linear device and remap all requests from the original device
-+  # to new linear.
-+  DEV=$1
-+
-+  echo "0 `blockdev --getsz $DEV` linear $DEV 0 noexcl" | dmsetup create dm-noexcl
-+  dmsetup remap start dm-noexcl $DEV
--- 
-2.20.1
+This needs to come before patch 2 (since patch 2 uses it).
+
+Mike
 
 --
 dm-devel mailing list
