@@ -2,70 +2,80 @@ Return-Path: <SRS0=/TsO=HF=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D55C6C433E0
-	for <dm-devel@archiver.kernel.org>; Wed,  3 Feb 2021 13:58:19 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 51F6FC433E0
+	for <dm-devel@archiver.kernel.org>; Wed,  3 Feb 2021 15:54:41 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 0DDD564E4B
-	for <dm-devel@archiver.kernel.org>; Wed,  3 Feb 2021 13:58:18 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0DDD564E4B
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id 9E8C664F5D
+	for <dm-devel@archiver.kernel.org>; Wed,  3 Feb 2021 15:54:40 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9E8C664F5D
+Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-601-wtv1lU0JOjSSZAeJADutsw-1; Wed, 03 Feb 2021 08:58:15 -0500
-X-MC-Unique: wtv1lU0JOjSSZAeJADutsw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-42-fQWKghqDNLKASGIZzs0Wfw-1; Wed, 03 Feb 2021 10:54:37 -0500
+X-MC-Unique: fQWKghqDNLKASGIZzs0Wfw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8F43E85B6C3;
-	Wed,  3 Feb 2021 13:58:10 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4C4BB801962;
+	Wed,  3 Feb 2021 15:54:32 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 27C5260C66;
-	Wed,  3 Feb 2021 13:58:10 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B690A5D9E8;
+	Wed,  3 Feb 2021 15:54:31 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3835118095CB;
-	Wed,  3 Feb 2021 13:58:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BE96918095CB;
+	Wed,  3 Feb 2021 15:54:29 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 113DvhuP016001 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 3 Feb 2021 08:57:43 -0500
+	id 113FsR0a005961 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 3 Feb 2021 10:54:27 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 2160B1031F48; Wed,  3 Feb 2021 13:57:43 +0000 (UTC)
+	id 0E6A2200A39A; Wed,  3 Feb 2021 15:54:27 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1C76F10F8E24
-	for <dm-devel@redhat.com>; Wed,  3 Feb 2021 13:57:38 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0895620234A6
+	for <dm-devel@redhat.com>; Wed,  3 Feb 2021 15:54:23 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 32019185A795
-	for <dm-devel@redhat.com>; Wed,  3 Feb 2021 13:57:38 +0000 (UTC)
-Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-371-_mLsCAglNli03RYei3cx2w-1;
-	Wed, 03 Feb 2021 08:57:32 -0500
-X-MC-Unique: _mLsCAglNli03RYei3cx2w-1
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id E78A6ACBA;
-	Wed,  3 Feb 2021 13:57:30 +0000 (UTC)
-Message-ID: <dcc6fb2a344ce75972242e2c78e2e485b58140da.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: lixiaokeng <lixiaokeng@huawei.com>, Benjamin Marzinski
-	<bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Wed, 03 Feb 2021 14:57:29 +0100
-In-Reply-To: <99488b1b-2339-338d-e951-0b8f3e78449b@huawei.com>
-References: <20210128210852.23207-1-mwilck@suse.com>
-	<c1dddccecfe0e12a2fe2dca66faad740a30acd53.camel@suse.com>
-	<99488b1b-2339-338d-e951-0b8f3e78449b@huawei.com>
-User-Agent: Evolution 3.38.2
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 86A4F858EEB
+	for <dm-devel@redhat.com>; Wed,  3 Feb 2021 15:54:23 +0000 (UTC)
+Received: from mx2.veeam.com (mx2.veeam.com [64.129.123.6]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-482-cHQoDRScPfWWcqAvuiWB5A-1;
+	Wed, 03 Feb 2021 10:54:19 -0500
+X-MC-Unique: cHQoDRScPfWWcqAvuiWB5A-1
+Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mx2.veeam.com (Postfix) with ESMTPS id 49B004146C;
+	Wed,  3 Feb 2021 10:54:15 -0500 (EST)
+Received: from prgdevlinuxpatch01.amust.local (172.24.14.5) by
+	prgmbx01.amust.local (172.24.0.171) with Microsoft SMTP Server
+	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	15.2.721.2; Wed, 3 Feb 2021 16:54:13 +0100
+From: Sergei Shtepa <sergei.shtepa@veeam.com>
+To: <Damien.LeMoal@wdc.com>, <snitzer@redhat.com>, <hare@suse.de>,
+	<ming.lei@redhat.com>, <agk@redhat.com>, <corbet@lwn.net>,
+	<axboe@kernel.dk>, <jack@suse.cz>, <johannes.thumshirn@wdc.com>,
+	<gregkh@linuxfoundation.org>, <koct9i@gmail.com>, <steve@sk2.org>,
+	<dm-devel@redhat.com>, <linux-block@vger.kernel.org>,
+	<linux-doc@vger.kernel.org>, <linux-kernel@vger.kernel.org>
+Date: Wed, 3 Feb 2021 18:53:52 +0300
+Message-ID: <1612367638-3794-1-git-send-email-sergei.shtepa@veeam.com>
 MIME-Version: 1.0
+X-Originating-IP: [172.24.14.5]
+X-ClientProxiedBy: prgmbx02.amust.local (172.24.0.172) To prgmbx01.amust.local
+	(172.24.0.171)
+X-EsetResult: clean, is OK
+X-EsetId: 37303A29C604D265667062
+X-Veeam-MMEX: True
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -74,12 +84,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 113DvhuP016001
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com
-Subject: Re: [dm-devel] [PATCH] multipathd: avoid crash in uevent_cleanup()
+Cc: pavgel.tide@veeam.com, sergei.shtepa@veeam.com
+Subject: [dm-devel] [PATCH v4 0/6] block-layer interposer
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,91 +101,124 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Wed, 2021-02-03 at 18:48 +0800, lixiaokeng wrote:
->=20
->=20
-> On 2021/2/3 4:52, Martin Wilck wrote:
-> > did this fix your "crash on exit" issue?
->=20
-> Unfortunately, the issue is not solved.
->=20
-> There will be some different coredump stack.
->=20
-> 0.8.5 (I'm not sure there are only two stacks in 0.8.5)
-> First stack:
-> Program terminated with signal SIGSEGV, Segmentation fault.
-> #0=A0 0x00007f59a0109647 in ?? ()
-> [Current thread is 1 (LWP 1997690)]
-> (gdb) bt
-> #0=A0 0x00007f59a0109647 in ?? ()
-> #1=A0 0x0000000000000000 in ?? ()
-> (gdb) info threads
-> =A0 Id=A0=A0 Target Id=A0=A0=A0=A0=A0=A0=A0=A0 Frame
-> * 1=A0=A0=A0 LWP 1997690=A0=A0=A0=A0=A0=A0 0x00007f59a0109647 in ?? ()
-> =A0 2=A0=A0=A0 LWP 1996840=A0=A0=A0=A0=A0=A0 0x00007f59a0531de7 in ?? ()
-> =A0 3=A0=A0=A0 LWP 1997692=A0=A0=A0=A0=A0=A0 0x00007f59a0109647 in ?? ()
-> =A0 4=A0=A0=A0 LWP 1996857=A0=A0=A0=A0=A0=A0 0x00007f59a020d169 in ?? ()
->=20
-> Second stack:
-> #0=A0 0x0000ffffb6118f4c in aarch64_fallback_frame_state
-> (context=3D0xffffb523f200, context=3D0xffffb523f200, fs=3D0xffffb523e700)
-> at ./md-unwind-support.h:74
-> #1=A0 uw_frame_state_for (context=3Dcontext@entry=3D0xffffb523f200,=20
-> fs=3Dfs@entry=3D0xffffb523e700) at ../../../libgcc/unwind-dw2.c:1257
-> #2=A0 0x0000ffffb6119ef4 in _Unwind_ForcedUnwind_Phase2
-> (exc=3Dexc@entry=3D0xffffb52403b0, context=3Dcontext@entry=3D0xffffb523f2=
-00)
-> at ../../../libgcc/unwind.inc:155
-> #3=A0 0x0000ffffb611a284 in _Unwind_ForcedUnwind (exc=3D0xffffb52403b0,=
-=20
-> stop=3Dstop@entry=3D0xffffb64846c0 <unwind_stop>,
-> stop_argument=3D0xffffb523f630) at ../../../libgcc/unwind.inc:207
-> #4=A0 0x0000ffffb6484860 in __GI___pthread_unwind (buf=3D<optimized out>)
-> at unwind.c:121
-> #5=A0 0x0000ffffb6482d08 in __do_cancel () at pthreadP.h:304
-> #6=A0 __GI___pthread_testcancel () at pthread_testcancel.c:26
-> #7=A0 0x0000ffffb5c528e8 in ?? ()
->=20
+Hi all.
 
-Please check your glibc and gcc versions. Google turns up some general
-issues with pthread_cancel() and certain library versions, especially
-on ARM. There's a chance that this isn't a multipath-tools bug after
-all.
+I'm ready to suggest the block-layer interposer (blk_interposer).
+blk_interposer allows to intercept bio requests, remap bio to another
+devices or add new bios.
 
-https://www.google.com/search?q=3DSIGSEGV+_Unwind_ForcedUnwind_Phase2
+This patch series adds support blk_interposer for dm-linear.
 
-You could also try to compile with clang and see if the error goes
-away.
+In the first patch, I suggest the remap_and_filter.rst file.
+Yes, Mike, it's probably too early for documentation, but maybe it will be
+interesting for someone. In the documentation I tried to explain
+the purpose of blk_interposer and what prospects it opens up.
 
-> If exit() before all pthread_cancel in child of 0.7.7, there is no
-> any crash.
+The second patch is dedicated to blk_interposer itself, which provides
+the ability to intercept bio.
 
-What do you mean with "exit() before all pthread_cancel"? If this
-happens on pthread_cancel(), and you don't call that function, this
-would actually be expected.
+The third - adds the function blk_mq_is_queue_frozen(). It allows to
+assert a queue state.
 
-Regards,
-Martin
+The fourth one adds support for blk_interposer from the device mapper.
+Added ioctl DM_DEV_REMAP_CMD.
 
-> So I believe there are many races in thread cancel but I don't know
-> how it comes.
+In the fifth - added the 'noexcl' option for dm-linear, which allows
+to open the underlying block-device without the FMODE_EXCL mode.
+This allows to create a dm device to which can redirect bio requests
+using DM_DEV_REMAP_CMD.
 
+Here I would like to discuss the implementation.
+I don't like to play with flags. Adding the non_exclusive flags creates
+an excessive complexity. An alternative solution is to explicitly specify
+the FMODE_EXCL mode for each dm-target. The problem is that in this case,
+we will have to change each dm-target. It doesn't look cool either.
 
+The latest patch changes linear.rst with the description of the 'noexcl'
+option that is added for dm-linear.
 
->=20
-> Regards,
-> Lixiaokeng
->=20
+A little history of changes:
 
+v4 - current patch set
+Mostly changes were made, due to Damien's comments:
+ * on the design of the code;
+ * by the patch set organization;
+ * bug with passing a wrong parameter to dm_get_device();
+ * description of the 'noexcl' parameter in the linear.rst.
+Also added remap_and_filter.rst.
 
+v3 - https://patchwork.kernel.org/project/linux-block/cover/1611853955-32167-1-git-send-email-sergei.shtepa@veeam.com/
+In this version, I already suggested blk_interposer to apply to dm-linear.
+Problems were solved:
+ * Interception of bio requests from a specific device on the disk, not
+   from the entire disk. To do this, we added the dm_interposed_dev
+   structure and an interval tree to store these structures.
+ * Implemented ioctl DM_DEV_REMAP_CMD. A patch with changes in the lvm2
+   project was sent to the team lvm-devel@redhat.com.
+ * Added the 'noexcl' option for dm-linear, which allows you to open
+   the underlying block-device without FMODE_EXCL mode.
+
+v2 - https://patchwork.kernel.org/project/linux-block/cover/1607518911-30692-1-git-send-email-sergei.shtepa@veeam.com/
+I tried to suggest blk_interposer without using it in device mapper,
+but with the addition of a sample of its use. It was then that I learned
+about the maintainers' attitudes towards the samples directory :).
+
+v1 - https://lwn.net/ml/linux-block/20201119164924.74401-1-hare@suse.de/
+This Hannes's patch can be considered as a starting point, since this is
+where the interception mechanism and the term blk_interposer itself
+appeared. It became clear that blk_interposer can be useful for
+device mapper.
+
+before v1 - https://patchwork.kernel.org/project/linux-block/cover/1603271049-20681-1-git-send-email-sergei.shtepa@veeam.com/
+I tried to offer a rather cumbersome blk-filter and a monster-like
+blk-snap module for creating snapshots.
+
+Thank you to everyone who was able to take the time to review
+the previous versions.
+I hope that this time I achieved the required quality.
+
+Thanks,
+Sergei.
+
+Sergei Shtepa (6):
+  docs: device-mapper: add remap_and_filter
+  block: add blk_interposer
+  block: add blk_mq_is_queue_frozen()
+  dm: new ioctl DM_DEV_REMAP_CMD
+  dm: add 'noexcl' option for dm-linear
+  docs: device-mapper: 'noexcl' option for dm-linear
+
+ .../admin-guide/device-mapper/index.rst       |   1 +
+ .../admin-guide/device-mapper/linear.rst      |  26 +-
+ .../device-mapper/remap_and_filter.rst        | 132 ++++++
+ block/bio.c                                   |   2 +
+ block/blk-core.c                              |  33 ++
+ block/blk-mq.c                                |  13 +
+ block/genhd.c                                 |  82 ++++
+ drivers/md/dm-core.h                          |  20 +
+ drivers/md/dm-ioctl.c                         |  39 ++
+ drivers/md/dm-linear.c                        |  14 +-
+ drivers/md/dm-table.c                         |  12 +-
+ drivers/md/dm.c                               | 400 +++++++++++++++++-
+ drivers/md/dm.h                               |   2 +-
+ include/linux/blk-mq.h                        |   1 +
+ include/linux/blk_types.h                     |   6 +-
+ include/linux/device-mapper.h                 |   7 +
+ include/linux/genhd.h                         |  18 +
+ include/uapi/linux/dm-ioctl.h                 |  15 +-
+ 18 files changed, 792 insertions(+), 31 deletions(-)
+ create mode 100644 Documentation/admin-guide/device-mapper/remap_and_filter.rst
+
+--
+2.20.1
 
 --
 dm-devel mailing list
