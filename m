@@ -2,69 +2,76 @@ Return-Path: <SRS0=5DIA=HG=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.4 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
+	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A5A79C433DB
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Feb 2021 02:51:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 03848C433E0
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Feb 2021 04:21:15 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C40E964DEE
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Feb 2021 02:51:38 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C40E964DEE
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=goodmis.org
+	by mail.kernel.org (Postfix) with ESMTPS id 228FB64E06
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Feb 2021 04:21:13 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 228FB64E06
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-333-_e1kKElCOZu6xt3yCwNv7Q-1; Wed, 03 Feb 2021 21:51:35 -0500
-X-MC-Unique: _e1kKElCOZu6xt3yCwNv7Q-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-601-6PCqCOJ4MO2IhYPpjdRDBQ-1; Wed, 03 Feb 2021 23:21:10 -0500
+X-MC-Unique: 6PCqCOJ4MO2IhYPpjdRDBQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7FD2F10059D6;
-	Thu,  4 Feb 2021 02:51:29 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A8424AFA82;
+	Thu,  4 Feb 2021 04:21:05 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 703841A8A9;
-	Thu,  4 Feb 2021 02:51:28 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BA044100763D;
+	Thu,  4 Feb 2021 04:21:04 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BBDA74EE76;
-	Thu,  4 Feb 2021 02:51:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CE57658074;
+	Thu,  4 Feb 2021 04:21:02 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1142pNJo025952 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 3 Feb 2021 21:51:23 -0500
+	id 1144KxhX007542 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 3 Feb 2021 23:20:59 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B3306200A4F5; Thu,  4 Feb 2021 02:51:23 +0000 (UTC)
+	id 61BB61055320; Thu,  4 Feb 2021 04:20:59 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AE18C2026D11
-	for <dm-devel@redhat.com>; Thu,  4 Feb 2021 02:51:18 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5CDB5105507F
+	for <dm-devel@redhat.com>; Thu,  4 Feb 2021 04:20:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9BF63101A56C
-	for <dm-devel@redhat.com>; Thu,  4 Feb 2021 02:51:18 +0000 (UTC)
-Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
-	by relay.mimecast.com with ESMTP id us-mta-152-zMf2GXPaPUSEsndCesJJNA-1;
-	Wed, 03 Feb 2021 21:51:16 -0500
-X-MC-Unique: zMf2GXPaPUSEsndCesJJNA-1
-Received: from oasis.local.home (cpe-66-24-58-225.stny.res.rr.com
-	[66.24.58.225])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPSA id 9B0CA64F4A;
-	Thu,  4 Feb 2021 02:44:50 +0000 (UTC)
-Date: Wed, 3 Feb 2021 21:44:48 -0500
-From: Steven Rostedt <rostedt@goodmis.org>
-To: Ivan Babrou <ivan@cloudflare.com>
-Message-ID: <20210203214448.2703930e@oasis.local.home>
-In-Reply-To: <CABWYdi27baYc3ShHcZExmmXVmxOQXo9sGO+iFhfZLq78k8iaAg@mail.gmail.com>
-References: <CABWYdi3HjduhY-nQXzy2ezGbiMB1Vk9cnhW2pMypUa+P1OjtzQ@mail.gmail.com>
-	<CABWYdi27baYc3ShHcZExmmXVmxOQXo9sGO+iFhfZLq78k8iaAg@mail.gmail.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 01D6285A59D
+	for <dm-devel@redhat.com>; Thu,  4 Feb 2021 04:20:54 +0000 (UTC)
+Received: from merlin.infradead.org (merlin.infradead.org [205.233.59.134])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-538-l9meFMjyMkKlk_gD5ddznw-1; Wed, 03 Feb 2021 23:20:50 -0500
+X-MC-Unique: l9meFMjyMkKlk_gD5ddznw-1
+Received: from [2601:1c0:6280:3f0::aec2]
+	by merlin.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
+	id 1l7W2w-0002Ru-Mv; Thu, 04 Feb 2021 04:15:11 +0000
+To: Sergei Shtepa <sergei.shtepa@veeam.com>, Damien.LeMoal@wdc.com,
+	snitzer@redhat.com, hare@suse.de, ming.lei@redhat.com, agk@redhat.com, 
+	corbet@lwn.net, axboe@kernel.dk, jack@suse.cz,
+	johannes.thumshirn@wdc.com, gregkh@linuxfoundation.org,
+	koct9i@gmail.com, steve@sk2.org, dm-devel@redhat.com,
+	linux-block@vger.kernel.org, linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+References: <1612367638-3794-1-git-send-email-sergei.shtepa@veeam.com>
+	<1612367638-3794-2-git-send-email-sergei.shtepa@veeam.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+Message-ID: <ef604ad7-1348-1ffa-e3c4-67d153620e08@infradead.org>
+Date: Wed, 3 Feb 2021 20:15:03 -0800
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+	Thunderbird/78.4.0
 MIME-Version: 1.0
+In-Reply-To: <1612367638-3794-2-git-send-email-sergei.shtepa@veeam.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -73,33 +80,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: Song Liu <songliubraving@fb.com>, Mike Snitzer <snitzer@redhat.com>,
-	"Peter Zijlstra \(Intel\)" <peterz@infradead.org>,
-	Yonghong Song <yhs@fb.com>, Ignat Korchagin <ignat@cloudflare.com>,
-	Alexei Starovoitov <ast@kernel.org>, linux-mm@kvack.org,
-	dm-devel@redhat.com, Alexander Potapenko <glider@google.com>,
-	"H. Peter Anvin" <hpa@zytor.com>, "Joel Fernandes
-	\(Google\)" <joel@joelfernandes.org>, Miroslav Benes <mbenes@suse.cz>,
-	Jiri Slaby <jirislaby@kernel.org>, Alasdair Kergon <agk@redhat.com>, Ingo,
-	Daniel Borkmann <daniel@iogearbox.net>,
-	kernel-team <kernel-team@cloudflare.com>,
-	Hailong liu <liu.hailong6@zte.com.cn>, x86@kernel.org,
-	John Fastabend <john.fastabend@gmail.com>,
-	kasan-dev@googlegroups.com, Molnar <mingo@redhat.com>,
-	Ryabinin <aryabinin@virtuozzo.com>,
-	Andrii Nakryiko <andriin@fb.com>, Andrey,
-	Robert Richter <rric@kernel.org>, Borislav Petkov <bp@alien8.de>,
-	Josh Poimboeuf <jpoimboe@redhat.com>, KP Singh <kpsingh@chromium.org>,
-	Thomas Gleixner <tglx@linutronix.de>, bpf@vger.kernel.org,
-	Dmitry Vyukov <dvyukov@google.com>, Julien Thierry <jthierry@redhat.com>,
-	Linux Kernel Network Developers <netdev@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-	Andrew Morton <akpm@linux-foundation.org>, Martin KaFai Lau <kafai@fb.com>
-Subject: Re: [dm-devel] BUG: KASAN: stack-out-of-bounds in
- unwind_next_frame+0x1df5/0x2650
+Cc: pavgel.tide@veeam.com
+Subject: Re: [dm-devel] [PATCH v4 1/6] docs: device-mapper: add
+	remap_and_filter
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -113,151 +98,226 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, 2 Feb 2021 19:09:44 -0800
-Ivan Babrou <ivan@cloudflare.com> wrote:
+On 2/3/21 7:53 AM, Sergei Shtepa wrote:
+> remap_and_filter - describes the new features that
+> blk_interposer provides for device mapper.
+> 
+> Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
 
-> On Thu, Jan 28, 2021 at 7:35 PM Ivan Babrou <ivan@cloudflare.com> wrote:
-> >
-> > Hello,
-> >
-> > We've noticed the following regression in Linux 5.10 branch:
-> >
-> > [  128.367231][    C0]
-> > ==================================================================
-> > [  128.368523][    C0] BUG: KASAN: stack-out-of-bounds in
-> > unwind_next_frame (arch/x86/kernel/unwind_orc.c:371
-
-The bug is a stack-out-of-bounds error in unwind_orc.c, right?
-
-> > arch/x86/kernel/unwind_orc.c:544)
-> > [  128.369744][    C0] Read of size 8 at addr ffff88802fceede0 by task
-> > kworker/u2:2/591
-> > [  128.370916][    C0]
-> > [  128.371269][    C0] CPU: 0 PID: 591 Comm: kworker/u2:2 Not tainted
-> > 5.10.11-cloudflare-kasan-2021.1.15 #1
-> > [  128.372626][    C0] Hardware name: QEMU Standard PC (i440FX + PIIX,
-> > 1996), BIOS rel-1.12.1-0-ga5cab58e9a3f-prebuilt.qemu.org 04/01/2014
-> > [  128.374346][    C0] Workqueue: writeback wb_workfn (flush-254:0)
-> > [  128.375275][    C0] Call Trace:
-> > [  128.375763][    C0]  <IRQ>
-> > [  128.376221][    C0]  dump_stack+0x7d/0xa3
-> > [  128.376843][    C0]  print_address_description.constprop.0+0x1c/0x210
-[ snip ? results ]
-> > (arch/x86/kernel/unwind_orc.c:371 arch/x86/kernel/unwind_orc.c:544)
-[ snip ]
-> > [  128.381736][    C0]  kasan_report.cold+0x1f/0x37
-[ snip ]
-> > [  128.383192][    C0]  unwind_next_frame+0x1df5/0x2650
-[ snip ]
-> > [  128.391550][    C0]  arch_stack_walk+0x8d/0xf0
-[ snip ]
-> > [  128.392807][    C0]  stack_trace_save+0x96/0xd0
-[ snip ]
-> > arch/x86/include/asm/irq_stack.h:77 arch/x86/kernel/irq_64.c:77)
-[ snip ]
-> > [  128.399759][    C0]  kasan_save_stack+0x20/0x50
-[ snip ]
-> > [  128.427691][    C0]  kasan_set_track+0x1c/0x30
-> > [  128.428366][    C0]  kasan_set_free_info+0x1b/0x30
-> > [  128.429113][    C0]  __kasan_slab_free+0x110/0x150
-> > [  128.429838][    C0]  slab_free_freelist_hook+0x66/0x120
-> > [  128.430628][    C0]  kfree+0xbf/0x4d0
-
-[ snip the rest ]
-
-> > [  128.441287][    C0] RIP: 0010:skcipher_walk_next
-> > (crypto/skcipher.c:322 crypto/skcipher.c:384)
-
-Why do we have an RIP in skcipher_walk_next, if its the unwinder that
-had a bug? Or are they related?
-
-Or did skcipher_walk_next trigger something in KASAN which did a stack
-walk via the unwinder, and that caused another issue?
-
-Looking at the unwinder code in question, we have:
-
-static bool deref_stack_regs(struct unwind_state *state, unsigned long addr,
-                             unsigned long *ip, unsigned long *sp)
-{
-        struct pt_regs *regs = (struct pt_regs *)addr;
-
-        /* x86-32 support will be more complicated due to the &regs->sp hack */
-        BUILD_BUG_ON(IS_ENABLED(CONFIG_X86_32));
-
-        if (!stack_access_ok(state, addr, sizeof(struct pt_regs)))
-                return false;
-
-        *ip = regs->ip;
-        *sp = regs->sp; <- pointer to here
-        return true;
-}
-
-and the caller of the above static function:
-
-        case UNWIND_HINT_TYPE_REGS:
-                if (!deref_stack_regs(state, sp, &state->ip, &state->sp)) {
-                        orc_warn_current("can't access registers at %pB\n",
-                                         (void *)orig_ip);
-                        goto err;
-                }
+Hi--
+Please see comments below.
 
 
-Could it possibly be that there's some magic canary on the stack that
-causes KASAN to trigger if you read it? For example, there's this in
-the stack tracer:
+> ---
+>  .../admin-guide/device-mapper/index.rst       |   1 +
+>  .../device-mapper/remap_and_filter.rst        | 132 ++++++++++++++++++
+>  2 files changed, 133 insertions(+)
+>  create mode 100644 Documentation/admin-guide/device-mapper/remap_and_filter.rst
 
-kernel/trace/trace_stack.c: check_stack()
+> diff --git a/Documentation/admin-guide/device-mapper/remap_and_filter.rst b/Documentation/admin-guide/device-mapper/remap_and_filter.rst
+> new file mode 100644
+> index 000000000000..616b67998305
+> --- /dev/null
+> +++ b/Documentation/admin-guide/device-mapper/remap_and_filter.rst
+> @@ -0,0 +1,132 @@
+> +=================
+> +DM remap & filter
+> +=================
+> +
+> +Introduction
+> +============
+> +
+> +Usually LVM should be used for new devices.
+> +The administrator have to create logical volumes for the system partition
 
-        while (i < stack_trace_nr_entries) {
-                int found = 0;
+                     has
 
-                stack_trace_index[x] = this_size;
-                p = start;
+> +when installing the operating system. For a running system with
+> +partitioned disk space and mounted file systems, it is quite difficult to
+> +reconfigure to logical volumes. As a result, all the features that Device
+> +Mapper provides are not available for non-LVM systems.
+> +This problem is partially solved by the dm remap functionality, which
+> +uses the kernel's blk_interposer.
+> +
+> +blk_interposer
+> +==============
+> +
+> +Blk_interposer extends the capabilities of the DM, as it allows to
+> +intercept and redirect bio requests for block devices that are not
+> +dm device. At the same time, blk_interposer allows to attach and detach
 
-                for (; p < top && i < stack_trace_nr_entries; p++) {
-                        /*
-                         * The READ_ONCE_NOCHECK is used to let KASAN know that
-                         * this is not a stack-out-of-bounds error.
-                         */
-                        if ((READ_ONCE_NOCHECK(*p)) == stack_dump_trace[i]) {
-                                stack_dump_trace[x] = stack_dump_trace[i++];
-                                this_size = stack_trace_index[x++] =
-                                        (top - p) * sizeof(unsigned long);
-                                found = 1;
+      devices.
+
+> +from devices "on the fly", without stopping the execution of user
+> +programs.
+> +
+> +Blk_interposer allows to do two tasks: remap and filter.
+> +Remap allows to redirect all requests from one block device to another.
+> +Filter allows to do additional processing of the request, but without
+> +redirection. An intercepted request can get to the block device to which
+> +it was addressed, without changes.
+> +
+> +Remap
+> +=====
+> +
+> +Consider the functionality of the remap. This will allow to connect
+> +any block device with a dm device "on the fly".
+> +Suppose we have a file system mounted on the block device /dev/sda1::
+> +
+> +  +-------------+
+> +  | file system |
+> +  +-------------+
+> +        ||
+> +        \/
+> +  +-------------+
+> +  | /dev/sda1   |
+> +  +-------------+
+> +
+> +Creating a new DM device that will be mapped on the same /dev/sda1::
+
+Sometimes it's "DM", other times it's "dm" device. Please be consistent.
+
+> +
+> +  +-------------+  +-----------+
+> +  | file system |  | dm-linear |
+> +  +-------------+  +-----------+
+> +           ||         ||
+> +           \/         \/
+> +         +---------------+
+> +         |   /dev/sda1   |
+> +         +---------------+
+> +
+> +Redirecting all bio requests for the /dev/sda1 device to the new dm
+> +device::
+> +
+> +  +-------------+
+> +  | file system |
+> +  +-------------+
+> +        ||
+> +        \/
+> +   +----------+    +-----------+
+> +   |  remap   | => | dm-linear |
+> +   +----------+    +-----------+
+> +                         ||
+> +                         \/
+> +                   +-----------+
+> +                   | /dev/sda1 |
+> +                   +-----------+
+> +
+> +To achieve this, you need to:
+> +
+> +Create new dm device with option 'noexcl'. It's allow to open
+
+                                                   allowed to open the
+
+> +underlying block-device without the FMODE_EXCL flag::
+> +
+> +  echo "0 `blockdev --getsz $1` linear $DEV 0 noexcl" | dmsetup create dm-noexcl
+> +
+> +Call remap command::
+> +
+> +  dmsetup remap start dm-noexcl $1
+> +
+> +Remap can be used to extend the functionality of dm-snap. This will allow
+> +to take snapshots from any block devices, not just logical volumes.
+> +
+> +Filter
+> +======
+> +
+> +Filter does not redirect the bio to another device. It does not create
+> +a clone of the bio request. After receiving the request, the filter can
+> +only add some processing, complete the bio request, or return the bio
+> +for further processing.
+> +
+> +Suppose we have a file system mounted on the block device /dev/sda1::
+> +
+> +  +-------------+
+> +  | file system |
+> +  +-------------+
+> +        ||
+> +        \/
+> +  +-------------+
+> +  | /dev/sda1   |
+> +  +-------------+
+> +
+> +Creating a new dm device that will implement filter::
+> +
+> +  +-------------+
+> +  | file system |
+> +  +-------------+
+> +        ||
+> +        \/
+> +    +--------+    +----------+
+> +    | filter | => | dm-delay |
+> +    +--------+    +----------+
+> +        ||
+> +        \/
+> +  +-------------+
+> +  | /dev/sda1   |
+> +  +-------------+
+> +
+> +Using filter we can change the behavior of debugging tools:
+> + * dm-dust,
+> + * dm-delay,
+> + * dm-flakey,
+> + * dm-verity.
+> +
+> +In the new version, they are will be able to change the behavior of any
+
+          Either       they are able to change the behavior of any
+            or         they will be able to change the behavior of any
+
+I prefer the first choice.
+
+> +existing block device, without creating a new one.
 
 
-That is because I read the entire stack frame looking for values, and I
-know where the top of the stack is, and will not go past it. But it too
-triggered a stack-out-of-bounds error, which required the above
-READ_ONCE_NOCHECK() to quiet KASAN. Not to mention there's already some
-READ_ONCE_NOCHECK() calls in the unwinder. Maybe this too is required?
+According to Documentation/doc-guide/sphinx.rst, here is how
+chapters, sections, etc., should be indicated:
 
-Would this work?
 
-diff --git a/arch/x86/kernel/unwind_orc.c b/arch/x86/kernel/unwind_orc.c
-index 73f800100066..22eaf3683c2a 100644
---- a/arch/x86/kernel/unwind_orc.c
-+++ b/arch/x86/kernel/unwind_orc.c
-@@ -367,8 +367,8 @@ static bool deref_stack_regs(struct unwind_state *state, unsigned long addr,
- 	if (!stack_access_ok(state, addr, sizeof(struct pt_regs)))
- 		return false;
- 
--	*ip = regs->ip;
--	*sp = regs->sp;
-+	*ip = READ_ONCE_NOCHECK(regs->ip);
-+	*sp = READ_ONCE_NOCHECK(regs->sp);
- 	return true;
- }
- 
--- Steve
+* Please stick to this order of heading adornments:
+
+  1. ``=`` with overline for document title::
+
+       ==============
+       Document title
+       ==============
+
+  2. ``=`` for chapters::
+
+       Chapters
+       ========
+
+  3. ``-`` for sections::
+
+       Section
+       -------
+
+  4. ``~`` for subsections::
+
+       Subsection
+       ~~~~~~~~~~
+
+  Although RST doesn't mandate a specific order ("Rather than imposing a fixed
+  number and order of section title adornment styles, the order enforced will be
+  the order as encountered."), having the higher levels the same overall makes
+  it easier to follow the documents.
+
+
+
+thanks.
+-- 
+~Randy
 
 --
 dm-devel mailing list
