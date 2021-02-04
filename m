@@ -2,96 +2,88 @@ Return-Path: <SRS0=5DIA=HG=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.4 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,
+	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ED661C433E9
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Feb 2021 09:15:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EE236C433DB
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Feb 2021 09:15:14 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 8092564DF2
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Feb 2021 09:15:12 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 8092564DF2
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 52DDA64E34
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Feb 2021 09:15:13 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 52DDA64E34
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1612430111;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=vM7T1yanmVRqE1evQxgWUFFB5GckGctSGrjWu3Ld93Y=;
-	b=fb5BrWJpHqDDwZkV+f0kmgqZ99httuG5Syk3hWVNTViP3RQ8lHqBCiviO4Vxr4XPxT4043
-	NjhABU5Eho6UxrghCnVN37ZvsbAngIyZkerWdoMGdUODGOzQg4ZlM6Vj0DEiA4x0RbWQBi
-	fLqV1P+Pd1B5JUc+7FOlNIh4B7wRtHc=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-9-Y7IEnWITPWG3737DINs6vA-1; Thu, 04 Feb 2021 04:15:09 -0500
-X-MC-Unique: Y7IEnWITPWG3737DINs6vA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-11-iseb6_zcOdG8DMEO9wNyUw-1; Thu, 04 Feb 2021 04:15:10 -0500
+X-MC-Unique: iseb6_zcOdG8DMEO9wNyUw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 037D0AFA86;
-	Thu,  4 Feb 2021 09:15:03 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D6C1C5D762;
-	Thu,  4 Feb 2021 09:15:02 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6A070801965;
+	Thu,  4 Feb 2021 09:15:04 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4A4485D9C9;
+	Thu,  4 Feb 2021 09:15:04 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9FC8657DFA;
-	Thu,  4 Feb 2021 09:15:02 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com
-	[10.5.11.14])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 11EF71809C92;
+	Thu,  4 Feb 2021 09:15:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1143A1dA027892 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 3 Feb 2021 22:10:01 -0500
+	id 1146gWP3028856 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 4 Feb 2021 01:42:32 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1B27D5D9C9; Thu,  4 Feb 2021 03:10:01 +0000 (UTC)
-Received: from treble (ovpn-113-81.rdu2.redhat.com [10.10.113.81])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D31EF5D9C0;
-	Thu,  4 Feb 2021 03:09:50 +0000 (UTC)
-Date: Wed, 3 Feb 2021 21:09:48 -0600
-From: Josh Poimboeuf <jpoimboe@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Message-ID: <20210204030948.dmsmwyw6fu5kzgey@treble>
-References: <CABWYdi3HjduhY-nQXzy2ezGbiMB1Vk9cnhW2pMypUa+P1OjtzQ@mail.gmail.com>
-	<CABWYdi27baYc3ShHcZExmmXVmxOQXo9sGO+iFhfZLq78k8iaAg@mail.gmail.com>
-	<20210203214448.2703930e@oasis.local.home>
+	id 257A42026D46; Thu,  4 Feb 2021 06:42:32 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 204EE2026D11
+	for <dm-devel@redhat.com>; Thu,  4 Feb 2021 06:42:29 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 770E8811E88
+	for <dm-devel@redhat.com>; Thu,  4 Feb 2021 06:42:29 +0000 (UTC)
+Received: from out30-131.freemail.mail.aliyun.com
+	(out30-131.freemail.mail.aliyun.com [115.124.30.131]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-71-dq82QDIiMqyfvT7MLSzmaA-1;
+	Thu, 04 Feb 2021 01:42:24 -0500
+X-MC-Unique: dq82QDIiMqyfvT7MLSzmaA-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R101e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04426;
+	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=6; SR=0;
+	TI=SMTPD_---0UNpW.4x_1612420936
+Received: from admindeMacBook-Pro-2.local(mailfrom:jefflexu@linux.alibaba.com
+	fp:SMTPD_---0UNpW.4x_1612420936) by smtp.aliyun-inc.com(127.0.0.1);
+	Thu, 04 Feb 2021 14:42:17 +0800
+From: JeffleXu <jefflexu@linux.alibaba.com>
+To: snitzer@redhat.com
+References: <20210202033528.76166-1-jefflexu@linux.alibaba.com>
+Message-ID: <b12bf9f6-c815-c97a-87c4-884b0e13542e@linux.alibaba.com>
+Date: Thu, 4 Feb 2021 14:42:16 +0800
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
+	Gecko/20100101 Thunderbird/78.6.1
 MIME-Version: 1.0
-In-Reply-To: <20210203214448.2703930e@oasis.local.home>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+In-Reply-To: <20210202033528.76166-1-jefflexu@linux.alibaba.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Thu, 04 Feb 2021 04:14:38 -0500
-Cc: Song Liu <songliubraving@fb.com>, Mike Snitzer <snitzer@redhat.com>,
-	"Peter Zijlstra \(Intel\)" <peterz@infradead.org>,
-	Ignat Korchagin <ignat@cloudflare.com>,
-	Alexei Starovoitov <ast@kernel.org>, linux-mm@kvack.org,
-	dm-devel@redhat.com, Alexander Potapenko <glider@google.com>,
-	"H. Peter Anvin" <hpa@zytor.com>,
-	"Joel Fernandes \(Google\)" <joel@joelfernandes.org>,
-	Miroslav Benes <mbenes@suse.cz>, Jiri Slaby <jirislaby@kernel.org>,
-	Alasdair Kergon <agk@redhat.com>, Daniel Borkmann <daniel@iogearbox.net>,
-	kernel-team <kernel-team@cloudflare.com>,
-	Hailong liu <liu.hailong6@zte.com.cn>, x86@kernel.org,
-	John Fastabend <john.fastabend@gmail.com>,
-	kasan-dev@googlegroups.com, Ingo Molnar <mingo@redhat.com>,
-	Andrey Ryabinin <aryabinin@virtuozzo.com>,
-	Andrii Nakryiko <andriin@fb.com>,
-	Robert Richter <rric@kernel.org>, Borislav Petkov <bp@alien8.de>,
-	Yonghong Song <yhs@fb.com>, KP Singh <kpsingh@chromium.org>,
-	Thomas Gleixner <tglx@linutronix.de>, bpf@vger.kernel.org,
-	Dmitry Vyukov <dvyukov@google.com>, Julien Thierry <jthierry@redhat.com>,
-	Linux Kernel Network Developers <netdev@vger.kernel.org>,
-	linux-kernel <linux-kernel@vger.kernel.org>,
-	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Ivan Babrou <ivan@cloudflare.com>, Martin KaFai Lau <kafai@fb.com>
-Subject: Re: [dm-devel] BUG: KASAN: stack-out-of-bounds in
- unwind_next_frame+0x1df5/0x2650
+Cc: joseph.qi@linux.alibaba.com, msb@chromium.org, dm-devel@redhat.com,
+	toshi.kani@hpe.com, mbroz@redhat.com
+Subject: Re: [dm-devel] [PATCH] dm: fix iterate_device sanity check
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,156 +97,272 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Feb 03, 2021 at 09:44:48PM -0500, Steven Rostedt wrote:
-> > > [  128.441287][    C0] RIP: 0010:skcipher_walk_next
-> > > (crypto/skcipher.c:322 crypto/skcipher.c:384)
+Any comment?
+
+Thanks,
+Jeffle
+
+
+On 2/2/21 11:35 AM, Jeffle Xu wrote:
+> According to the definition of dm_iterate_devices_fn:
+>  * This function must iterate through each section of device used by the
+>  * target until it encounters a non-zero return code, which it then returns.
+>  * Returns zero if no callout returned non-zero.
 > 
-> Why do we have an RIP in skcipher_walk_next, if its the unwinder that
-> had a bug? Or are they related?
+> For some target type (e.g., dm-stripe), one call of iterate_devices() may
+> iterate multiple underlying devices internally, in which case a non-zero
+> return code returned by iterate_devices_callout_fn will stop the iteration
+> in advance.
 > 
-> Or did skcipher_walk_next trigger something in KASAN which did a stack
-> walk via the unwinder, and that caused another issue?
-
-It was interrupted by an IRQ, which then called kfree(), which then
-called kasan_save_stack(), which then called the unwinder, which then
-read "out-of-bounds" between stack frames.
-
-In this case it was because of some crypto code missing ORC annotations.
-
-> Looking at the unwinder code in question, we have:
+> Thus if we want to ensure that _all_ underlying devices support some kind of
+> attribute, the iteration structure like dm_table_supports_nowait() should be
+> used, while the input iterate_devices_callout_fn should handle the 'not
+> support' semantics. On the opposite, the iteration structure like
+> dm_table_any_device_attribute() should be used if _any_ underlying device
+> supporting this attibute is sufficient. In this case, the input
+> iterate_devices_callout_fn should handle the 'support' semantics.
 > 
-> static bool deref_stack_regs(struct unwind_state *state, unsigned long addr,
->                              unsigned long *ip, unsigned long *sp)
-> {
->         struct pt_regs *regs = (struct pt_regs *)addr;
+> Fixes: 545ed20e6df6 ("dm: add infrastructure for DAX support")
+> Fixes: c3c4555edd10 ("dm table: clear add_random unless all devices have it set")
+> Fixes: 4693c9668fdc ("dm table: propagate non rotational flag")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+> ---
+>  drivers/md/dm-table.c | 84 ++++++++++++++++++++++---------------------
+>  drivers/md/dm.c       |  2 +-
+>  drivers/md/dm.h       |  2 +-
+>  3 files changed, 46 insertions(+), 42 deletions(-)
 > 
->         /* x86-32 support will be more complicated due to the &regs->sp hack */
->         BUILD_BUG_ON(IS_ENABLED(CONFIG_X86_32));
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 4acf2342f7ad..53dcbf75eda9 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -820,24 +820,24 @@ void dm_table_set_type(struct dm_table *t, enum dm_queue_mode type)
+>  EXPORT_SYMBOL_GPL(dm_table_set_type);
+>  
+>  /* validate the dax capability of the target device span */
+> -int device_supports_dax(struct dm_target *ti, struct dm_dev *dev,
+> +int device_not_dax_capable(struct dm_target *ti, struct dm_dev *dev,
+>  			sector_t start, sector_t len, void *data)
+>  {
+>  	int blocksize = *(int *) data, id;
+>  	bool rc;
+>  
+>  	id = dax_read_lock();
+> -	rc = dax_supported(dev->dax_dev, dev->bdev, blocksize, start, len);
+> +	rc = !dax_supported(dev->dax_dev, dev->bdev, blocksize, start, len);
+>  	dax_read_unlock(id);
+>  
+>  	return rc;
+>  }
+>  
+>  /* Check devices support synchronous DAX */
+> -static int device_dax_synchronous(struct dm_target *ti, struct dm_dev *dev,
+> +static int device_not_dax_synchronous_capable(struct dm_target *ti, struct dm_dev *dev,
+>  				  sector_t start, sector_t len, void *data)
+>  {
+> -	return dev->dax_dev && dax_synchronous(dev->dax_dev);
+> +	return !dev->dax_dev || !dax_synchronous(dev->dax_dev);
+>  }
+>  
+>  bool dm_table_supports_dax(struct dm_table *t,
+> @@ -854,7 +854,7 @@ bool dm_table_supports_dax(struct dm_table *t,
+>  			return false;
+>  
+>  		if (!ti->type->iterate_devices ||
+> -		    !ti->type->iterate_devices(ti, iterate_fn, blocksize))
+> +		    ti->type->iterate_devices(ti, iterate_fn, blocksize))
+>  			return false;
+>  	}
+>  
+> @@ -925,7 +925,7 @@ static int dm_table_determine_type(struct dm_table *t)
+>  verify_bio_based:
+>  		/* We must use this table as bio-based */
+>  		t->type = DM_TYPE_BIO_BASED;
+> -		if (dm_table_supports_dax(t, device_supports_dax, &page_size) ||
+> +		if (dm_table_supports_dax(t, device_not_dax_capable, &page_size) ||
+>  		    (list_empty(devices) && live_md_type == DM_TYPE_DAX_BIO_BASED)) {
+>  			t->type = DM_TYPE_DAX_BIO_BASED;
+>  		}
+> @@ -1595,12 +1595,12 @@ static int dm_table_supports_dax_write_cache(struct dm_table *t)
+>  	return false;
+>  }
+>  
+> -static int device_is_nonrot(struct dm_target *ti, struct dm_dev *dev,
+> +static int device_is_rot(struct dm_target *ti, struct dm_dev *dev,
+>  			    sector_t start, sector_t len, void *data)
+>  {
+>  	struct request_queue *q = bdev_get_queue(dev->bdev);
+>  
+> -	return q && blk_queue_nonrot(q);
+> +	return q && !blk_queue_nonrot(q);
+>  }
+>  
+>  static int device_is_not_random(struct dm_target *ti, struct dm_dev *dev,
+> @@ -1611,8 +1611,8 @@ static int device_is_not_random(struct dm_target *ti, struct dm_dev *dev,
+>  	return q && !blk_queue_add_random(q);
+>  }
+>  
+> -static bool dm_table_all_devices_attribute(struct dm_table *t,
+> -					   iterate_devices_callout_fn func)
+> +static bool dm_table_any_device_attribute(struct dm_table *t,
+> +					  iterate_devices_callout_fn func)
+>  {
+>  	struct dm_target *ti;
+>  	unsigned i;
+> @@ -1620,12 +1620,12 @@ static bool dm_table_all_devices_attribute(struct dm_table *t,
+>  	for (i = 0; i < dm_table_get_num_targets(t); i++) {
+>  		ti = dm_table_get_target(t, i);
+>  
+> -		if (!ti->type->iterate_devices ||
+> -		    !ti->type->iterate_devices(ti, func, NULL))
+> -			return false;
+> +		if (ti->type->iterate_devices &&
+> +		    ti->type->iterate_devices(ti, func, NULL))
+> +			return true;
+>  	}
+>  
+> -	return true;
+> +	return false;
+>  }
+>  
+>  static int device_not_write_same_capable(struct dm_target *ti, struct dm_dev *dev,
+> @@ -1780,26 +1780,25 @@ static int device_requires_stable_pages(struct dm_target *ti,
+>  }
+>  
+>  /*
+> - * If any underlying device requires stable pages, a table must require
+> - * them as well.  Only targets that support iterate_devices are considered:
+> - * don't want error, zero, etc to require stable pages.
+> + * type->iterate_devices() should be called when the sanity check needs to
+> + * iterate and check all underlying data devices. iterate_devices() will
+> + * iterate all underlying data devices until it encounters a non-zero return
+> + * code, returned by whether the input iterate_devices_callout_fn, or
+> + * iterate_devices() itself internally.
+> + *
+> + * For some target type (e.g., dm-stripe), one call of iterate_devices() may
+> + * iterate multiple underlying devices internally, in which case a non-zero
+> + * return code returned by iterate_devices_callout_fn will stop the iteration
+> + * in advance.
+> + *
+> + * Thus if we want to ensure that _all_ underlying devices support some kind of
+> + * attribute, the iteration structure like dm_table_supports_nowait() should be
+> + * used, while the input iterate_devices_callout_fn should handle the 'not
+> + * support' semantics. On the opposite, the iteration structure like
+> + * dm_table_any_device_attribute() should be used if _any_ underlying device
+> + * supporting this attibute is sufficient. In this case, the input
+> + * iterate_devices_callout_fn should handle the 'support' semantics.
+>   */
+> -static bool dm_table_requires_stable_pages(struct dm_table *t)
+> -{
+> -	struct dm_target *ti;
+> -	unsigned i;
+> -
+> -	for (i = 0; i < dm_table_get_num_targets(t); i++) {
+> -		ti = dm_table_get_target(t, i);
+> -
+> -		if (ti->type->iterate_devices &&
+> -		    ti->type->iterate_devices(ti, device_requires_stable_pages, NULL))
+> -			return true;
+> -	}
+> -
+> -	return false;
+> -}
+> -
+>  void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+>  			       struct queue_limits *limits)
+>  {
+> @@ -1837,9 +1836,9 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+>  	}
+>  	blk_queue_write_cache(q, wc, fua);
+>  
+> -	if (dm_table_supports_dax(t, device_supports_dax, &page_size)) {
+> +	if (dm_table_supports_dax(t, device_not_dax_capable, &page_size)) {
+>  		blk_queue_flag_set(QUEUE_FLAG_DAX, q);
+> -		if (dm_table_supports_dax(t, device_dax_synchronous, NULL))
+> +		if (dm_table_supports_dax(t, device_not_dax_synchronous_capable, NULL))
+>  			set_dax_synchronous(t->md->dax_dev);
+>  	}
+>  	else
+> @@ -1849,10 +1848,10 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+>  		dax_write_cache(t->md->dax_dev, true);
+>  
+>  	/* Ensure that all underlying devices are non-rotational. */
+> -	if (dm_table_all_devices_attribute(t, device_is_nonrot))
+> -		blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
+> -	else
+> +	if (dm_table_any_device_attribute(t, device_is_rot))
+>  		blk_queue_flag_clear(QUEUE_FLAG_NONROT, q);
+> +	else
+> +		blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
+>  
+>  	if (!dm_table_supports_write_same(t))
+>  		q->limits.max_write_same_sectors = 0;
+> @@ -1864,8 +1863,11 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+>  	/*
+>  	 * Some devices don't use blk_integrity but still want stable pages
+>  	 * because they do their own checksumming.
+> +	 * If any underlying device requires stable pages, a table must require
+> +	 * them as well.  Only targets that support iterate_devices are considered:
+> +	 * don't want error, zero, etc to require stable pages.
+>  	 */
+> -	if (dm_table_requires_stable_pages(t))
+> +	if (dm_table_any_device_attribute(t, device_requires_stable_pages))
+>  		blk_queue_flag_set(QUEUE_FLAG_STABLE_WRITES, q);
+>  	else
+>  		blk_queue_flag_clear(QUEUE_FLAG_STABLE_WRITES, q);
+> @@ -1876,8 +1878,10 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+>  	 * Clear QUEUE_FLAG_ADD_RANDOM if any underlying device does not
+>  	 * have it set.
+>  	 */
+> -	if (blk_queue_add_random(q) && dm_table_all_devices_attribute(t, device_is_not_random))
+> +	if (dm_table_any_device_attribute(t, device_is_not_random))
+>  		blk_queue_flag_clear(QUEUE_FLAG_ADD_RANDOM, q);
+> +	else
+> +		blk_queue_flag_set(QUEUE_FLAG_ADD_RANDOM, q);
+>  
+>  	/*
+>  	 * For a zoned target, the number of zones should be updated for the
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 7bac564f3faa..8a3d73efb9dd 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1128,7 +1128,7 @@ static bool dm_dax_supported(struct dax_device *dax_dev, struct block_device *bd
+>  	if (!map)
+>  		goto out;
+>  
+> -	ret = dm_table_supports_dax(map, device_supports_dax, &blocksize);
+> +	ret = dm_table_supports_dax(map, device_not_dax_capable, &blocksize);
+>  
+>  out:
+>  	dm_put_live_table(md, srcu_idx);
+> diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+> index fffe1e289c53..b441ad772c18 100644
+> --- a/drivers/md/dm.h
+> +++ b/drivers/md/dm.h
+> @@ -73,7 +73,7 @@ void dm_table_free_md_mempools(struct dm_table *t);
+>  struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
+>  bool dm_table_supports_dax(struct dm_table *t, iterate_devices_callout_fn fn,
+>  			   int *blocksize);
+> -int device_supports_dax(struct dm_target *ti, struct dm_dev *dev,
+> +int device_not_dax_capable(struct dm_target *ti, struct dm_dev *dev,
+>  			   sector_t start, sector_t len, void *data);
+>  
+>  void dm_lock_md_type(struct mapped_device *md);
 > 
->         if (!stack_access_ok(state, addr, sizeof(struct pt_regs)))
->                 return false;
-> 
->         *ip = regs->ip;
->         *sp = regs->sp; <- pointer to here
->         return true;
-> }
-> 
-> and the caller of the above static function:
-> 
->         case UNWIND_HINT_TYPE_REGS:
->                 if (!deref_stack_regs(state, sp, &state->ip, &state->sp)) {
->                         orc_warn_current("can't access registers at %pB\n",
->                                          (void *)orig_ip);
->                         goto err;
->                 }
-> 
-> 
-> Could it possibly be that there's some magic canary on the stack that
-> causes KASAN to trigger if you read it?
 
-Right, the unwinder isn't allowed to read between stack frames.
-
-In fact, you read my mind, I was looking at the other warning in network
-code:
-
-  [160676.598929][    C4]  asm_common_interrupt+0x1e/0x40
-  [160676.608966][    C4] RIP: 0010:0xffffffffc17d814c
-  [160676.618812][    C4] Code: 8b 4c 24 40 4c 8b 44 24 48 48 8b 7c 24 70 48 8b 74 24 68 48 8b 54 24 60 48 8b 4c 24 58 48 8b 44 24 50 48 81 c4 a8 00 00 00 9d <c3> 20 27 af 8f ff ff ff ff 00 00 00 00 00 00 00 00 00 00 00 00 00
-  [160676.649371][    C4] RSP: 0018:ffff8893dfd4f620 EFLAGS: 00000282
-  [160676.661073][    C4] RAX: 0000000000000000 RBX: ffff8881be9c9c80 RCX: 0000000000000000
-  [160676.674788][    C4] RDX: dffffc0000000000 RSI: 000000000000000b RDI: ffff8881be9c9c80
-  [160676.688508][    C4] RBP: ffff8881be9c9ce0 R08: 0000000000000000 R09: ffff8881908c4c97
-  [160676.702249][    C4] R10: ffffed1032118992 R11: ffff88818a4ce68c R12: ffff8881be9c9eea
-  [160676.716000][    C4] R13: ffff8881be9c9c92 R14: ffff8880063ba5ac R15: ffff8880063ba5a8
-  [160676.729895][    C4]  ? tcp_set_state+0x5/0x620
-  [160676.740426][    C4]  ? tcp_fin+0xeb/0x5a0
-  [160676.750287][    C4]  ? tcp_data_queue+0x1e78/0x4ce0
-  [160676.761089][    C4]  ? tcp_urg+0x76/0xc50
-
-This line gives a big clue:
-
-  [160676.608966][    C4] RIP: 0010:0xffffffffc17d814c
-
-That address, without a function name, most likely means that it was
-running in some generated code (mostly likely BPF) when it got
-interrupted.
-
-Right now, the ORC unwinder tries to fall back to frame pointers when it
-encounters generated code:
-
-	orc = orc_find(state->signal ? state->ip : state->ip - 1);
-	if (!orc)
-		/*
-		 * As a fallback, try to assume this code uses a frame pointer.
-		 * This is useful for generated code, like BPF, which ORC
-		 * doesn't know about.  This is just a guess, so the rest of
-		 * the unwind is no longer considered reliable.
-		 */
-		orc = &orc_fp_entry;
-		state->error = true;
-	}
-
-Because the ORC unwinder is guessing from that point onward, it's
-possible for it to read the KASAN stack redzone, if the generated code
-hasn't set up frame pointers.  So the best fix may be for the unwinder
-to just always bypass KASAN when reading the stack.
-
-The unwinder has a mechanism for detecting and warning about
-out-of-bounds, and KASAN is short-circuiting that.
-
-This should hopefully get rid of *all* the KASAN unwinder warnings, both
-crypto and networking.
-
-diff --git a/arch/x86/kernel/unwind_orc.c b/arch/x86/kernel/unwind_orc.c
-index 040194d079b6..1f69a23a4715 100644
---- a/arch/x86/kernel/unwind_orc.c
-+++ b/arch/x86/kernel/unwind_orc.c
-@@ -376,8 +376,8 @@ static bool deref_stack_regs(struct unwind_state *state, unsigned long addr,
- 	if (!stack_access_ok(state, addr, sizeof(struct pt_regs)))
- 		return false;
- 
--	*ip = regs->ip;
--	*sp = regs->sp;
-+	*ip = READ_ONCE_NOCHECK(regs->ip);
-+	*sp = READ_ONCE_NOCHECK(regs->sp);
- 	return true;
- }
- 
-@@ -389,8 +389,8 @@ static bool deref_stack_iret_regs(struct unwind_state *state, unsigned long addr
- 	if (!stack_access_ok(state, addr, IRET_FRAME_SIZE))
- 		return false;
- 
--	*ip = regs->ip;
--	*sp = regs->sp;
-+	*ip = READ_ONCE_NOCHECK(regs->ip);
-+	*sp = READ_ONCE_NOCHECK(regs->sp);
- 	return true;
- }
- 
-@@ -411,12 +411,12 @@ static bool get_reg(struct unwind_state *state, unsigned int reg_off,
- 		return false;
- 
- 	if (state->full_regs) {
--		*val = ((unsigned long *)state->regs)[reg];
-+		*val = READ_ONCE_NOCHECK(((unsigned long *)state->regs)[reg]);
- 		return true;
- 	}
- 
- 	if (state->prev_regs) {
--		*val = ((unsigned long *)state->prev_regs)[reg];
-+		*val = READ_ONCE_NOCHECK(((unsigned long *)state->prev_regs)[reg]);
- 		return true;
- 	}
- 
+-- 
+Thanks,
+Jeffle
 
 --
 dm-devel mailing list
