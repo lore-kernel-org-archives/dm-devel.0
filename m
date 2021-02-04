@@ -2,78 +2,113 @@ Return-Path: <SRS0=5DIA=HG=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.6 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 94B8BC433E0
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Feb 2021 10:21:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0BEE1C433DB
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Feb 2021 11:06:26 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C245564E0F
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Feb 2021 10:21:14 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C245564E0F
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id E5F1464DE1
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Feb 2021 11:06:23 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E5F1464DE1
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1612434073;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=hZT27bqSovztwLbfO33iu962+1Nnj3t2ONodbGI9FoI=;
-	b=M/ElBISqwijmlMm77NDaQcUkqIRQHbGtkhFTmC0llUGrAUN0xgJBjdeOjSQ5ElJ+zVUi4G
-	3jcJOgS6DCQE9uH2cV51jEyTkzmWIDME3n7tGCjeIQlOd199ysoCieIw0JA0st98sQjXcY
-	lkLQ4Z5ZNB5iFhOdOhEDualBHE5vAg4=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-5-YWp2uMWcM-u6Vzv0DJkGsQ-1; Thu, 04 Feb 2021 05:21:06 -0500
-X-MC-Unique: YWp2uMWcM-u6Vzv0DJkGsQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-71-66wPOT2iPXuVzrN_YBWrEg-1; Thu, 04 Feb 2021 06:06:18 -0500
+X-MC-Unique: 66wPOT2iPXuVzrN_YBWrEg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DC015100CA87;
-	Thu,  4 Feb 2021 10:21:00 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 108795B695;
-	Thu,  4 Feb 2021 10:21:00 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D837A107ACE4;
+	Thu,  4 Feb 2021 11:06:13 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5BCF8100164C;
+	Thu,  4 Feb 2021 11:06:13 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 03B5E18095CB;
-	Thu,  4 Feb 2021 10:20:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
-	[10.5.11.12])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6B81D58074;
+	Thu,  4 Feb 2021 11:06:12 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 114AKuSF030601 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 4 Feb 2021 05:20:56 -0500
+	id 114B679w003918 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 4 Feb 2021 06:06:08 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6281760C73; Thu,  4 Feb 2021 10:20:56 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
-	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3E6AD60C13;
-	Thu,  4 Feb 2021 10:20:53 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 114AKqla006761; Thu, 4 Feb 2021 05:20:52 -0500
-Received: from localhost (mpatocka@localhost)
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 114AKqe4006758; Thu, 4 Feb 2021 05:20:52 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
-	owned process doing -bs
-Date: Thu, 4 Feb 2021 05:20:52 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Zdenek Kabelac <zkabelac@redhat.com>, David Teigland <teigland@redhat.com>
-Message-ID: <alpine.LRH.2.02.2102040519550.3912@file01.intranet.prod.int.rdu2.redhat.com>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+	id D4AB92026D13; Thu,  4 Feb 2021 11:06:07 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CECB82026D48
+	for <dm-devel@redhat.com>; Thu,  4 Feb 2021 11:05:59 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 76193800C44
+	for <dm-devel@redhat.com>; Thu,  4 Feb 2021 11:05:59 +0000 (UTC)
+Received: from merlin.infradead.org (merlin.infradead.org [205.233.59.134])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-280-vYqNKCVFPV-kfWYm0oZOLA-1; Thu, 04 Feb 2021 06:05:57 -0500
+X-MC-Unique: vYqNKCVFPV-kfWYm0oZOLA-1
+Received: from j217100.upc-j.chello.nl ([24.132.217.100]
+	helo=noisy.programming.kicks-ass.net)
+	by merlin.infradead.org with esmtpsa (Exim 4.92.3 #3 (Red Hat Linux))
+	id 1l7aqj-0008Nd-U9; Thu, 04 Feb 2021 09:22:54 +0000
+Received: from hirez.programming.kicks-ass.net
+	(hirez.programming.kicks-ass.net [192.168.1.225])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(Client did not present a certificate)
+	by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 385F2301A32;
+	Thu,  4 Feb 2021 10:22:48 +0100 (CET)
+Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
+	id 15BDD213D2E27; Thu,  4 Feb 2021 10:22:48 +0100 (CET)
+Date: Thu, 4 Feb 2021 10:22:48 +0100
+From: Peter Zijlstra <peterz@infradead.org>
+To: Ivan Babrou <ivan@cloudflare.com>
+Message-ID: <YBu86G1ckCckRyim@hirez.programming.kicks-ass.net>
+References: <CABWYdi3HjduhY-nQXzy2ezGbiMB1Vk9cnhW2pMypUa+P1OjtzQ@mail.gmail.com>
+	<CABWYdi27baYc3ShHcZExmmXVmxOQXo9sGO+iFhfZLq78k8iaAg@mail.gmail.com>
+	<YBrTaVVfWu2R0Hgw@hirez.programming.kicks-ass.net>
+	<CABWYdi2ephz57BA8bns3reMGjvs5m0hYp82+jBLZ6KD3Ba6zdQ@mail.gmail.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+In-Reply-To: <CABWYdi2ephz57BA8bns3reMGjvs5m0hYp82+jBLZ6KD3Ba6zdQ@mail.gmail.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com
-Subject: [dm-devel] [PATCH] dm writecache: return the exact values that were
-	set
+Cc: Song Liu <songliubraving@fb.com>, Mike Snitzer <snitzer@redhat.com>,
+	Alexey Kardashevskiy <aik@ozlabs.ru>, Yonghong Song <yhs@fb.com>,
+	Ignat Korchagin <ignat@cloudflare.com>,
+	Alexei Starovoitov <ast@kernel.org>, linux-mm@kvack.org,
+	dm-devel@redhat.com, Alexander Potapenko <glider@google.com>,
+	"H. Peter Anvin" <hpa@zytor.com>,
+	"Joel Fernandes \(Google\)" <joel@joelfernandes.org>,
+	Miroslav Benes <mbenes@suse.cz>, Jiri Slaby <jirislaby@kernel.org>,
+	Alasdair Kergon <agk@redhat.com>, Daniel Borkmann <daniel@iogearbox.net>,
+	kernel-team <kernel-team@cloudflare.com>,
+	Hailong liu <liu.hailong6@zte.com.cn>, x86@kernel.org,
+	John Fastabend <john.fastabend@gmail.com>,
+	kasan-dev@googlegroups.com, Ingo Molnar <mingo@redhat.com>,
+	Andrey Ryabinin <aryabinin@virtuozzo.com>,
+	Andrii Nakryiko <andriin@fb.com>, Robert Richter <rric@kernel.org>,
+	"Steven Rostedt \(VMware\)" <rostedt@goodmis.org>,
+	Borislav Petkov <bp@alien8.de>, Josh Poimboeuf <jpoimboe@redhat.com>,
+	KP Singh <kpsingh@chromium.org>,
+	Thomas Gleixner <tglx@linutronix.de>, bpf@vger.kernel.org,
+	Dmitry Vyukov <dvyukov@google.com>, Julien Thierry <jthierry@redhat.com>,
+	Linux Kernel Network Developers <netdev@vger.kernel.org>,
+	linux-kernel <linux-kernel@vger.kernel.org>,
+	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+	Andrew Morton <akpm@linux-foundation.org>, Martin KaFai Lau <kafai@fb.com>
+Subject: Re: [dm-devel] BUG: KASAN: stack-out-of-bounds in
+ unwind_next_frame+0x1df5/0x2650
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -87,172 +122,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-LVM doesn't like it when the target returns different values from what was
-set in the constructor. This patch fixes dm-writecache, so that the
-returned values are exactly the same as requested values.
+On Wed, Feb 03, 2021 at 09:46:55AM -0800, Ivan Babrou wrote:
+> > Can you pretty please not line-wrap console output? It's unreadable.
+> 
+> GMail doesn't make it easy, I'll send a link to a pastebin next time.
+> Let me know if you'd like me to regenerate the decoded stack.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org	# v4.18+
-
-Index: linux-2.6/drivers/md/dm-writecache.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-writecache.c
-+++ linux-2.6/drivers/md/dm-writecache.c
-@@ -159,14 +159,22 @@ struct dm_writecache {
- 	bool overwrote_committed:1;
- 	bool memory_vmapped:1;
- 
-+	bool start_sector_set:1;
- 	bool high_wm_percent_set:1;
- 	bool low_wm_percent_set:1;
- 	bool max_writeback_jobs_set:1;
- 	bool autocommit_blocks_set:1;
- 	bool autocommit_time_set:1;
-+	bool max_age_set:1;
- 	bool writeback_fua_set:1;
- 	bool flush_on_suspend:1;
- 	bool cleaner:1;
-+	bool cleaner_set:1;
-+
-+	unsigned high_wm_percent_value;
-+	unsigned low_wm_percent_value;
-+	unsigned autocommit_time_value;
-+	unsigned max_age_value;
- 
- 	unsigned writeback_all;
- 	struct workqueue_struct *writeback_wq;
-@@ -2205,6 +2213,7 @@ static int writecache_ctr(struct dm_targ
- 			if (sscanf(string, "%llu%c", &start_sector, &dummy) != 1)
- 				goto invalid_optional;
- 			wc->start_sector = start_sector;
-+			wc->start_sector_set = true;
- 			if (wc->start_sector != start_sector ||
- 			    wc->start_sector >= wc->memory_map_size >> SECTOR_SHIFT)
- 				goto invalid_optional;
-@@ -2214,6 +2223,7 @@ static int writecache_ctr(struct dm_targ
- 				goto invalid_optional;
- 			if (high_wm_percent < 0 || high_wm_percent > 100)
- 				goto invalid_optional;
-+			wc->high_wm_percent_value = high_wm_percent;
- 			wc->high_wm_percent_set = true;
- 		} else if (!strcasecmp(string, "low_watermark") && opt_params >= 1) {
- 			string = dm_shift_arg(&as), opt_params--;
-@@ -2221,6 +2231,7 @@ static int writecache_ctr(struct dm_targ
- 				goto invalid_optional;
- 			if (low_wm_percent < 0 || low_wm_percent > 100)
- 				goto invalid_optional;
-+			wc->low_wm_percent_value = low_wm_percent;
- 			wc->low_wm_percent_set = true;
- 		} else if (!strcasecmp(string, "writeback_jobs") && opt_params >= 1) {
- 			string = dm_shift_arg(&as), opt_params--;
-@@ -2240,6 +2251,7 @@ static int writecache_ctr(struct dm_targ
- 			if (autocommit_msecs > 3600000)
- 				goto invalid_optional;
- 			wc->autocommit_jiffies = msecs_to_jiffies(autocommit_msecs);
-+			wc->autocommit_time_value = autocommit_msecs;
- 			wc->autocommit_time_set = true;
- 		} else if (!strcasecmp(string, "max_age") && opt_params >= 1) {
- 			unsigned max_age_msecs;
-@@ -2249,7 +2261,10 @@ static int writecache_ctr(struct dm_targ
- 			if (max_age_msecs > 86400000)
- 				goto invalid_optional;
- 			wc->max_age = msecs_to_jiffies(max_age_msecs);
-+			wc->max_age_set = true;
-+			wc->max_age_value = max_age_msecs;
- 		} else if (!strcasecmp(string, "cleaner")) {
-+			wc->cleaner_set = true;
- 			wc->cleaner = true;
- 		} else if (!strcasecmp(string, "fua")) {
- 			if (WC_MODE_PMEM(wc)) {
-@@ -2455,7 +2470,6 @@ static void writecache_status(struct dm_
- 	struct dm_writecache *wc = ti->private;
- 	unsigned extra_args;
- 	unsigned sz = 0;
--	uint64_t x;
- 
- 	switch (type) {
- 	case STATUSTYPE_INFO:
-@@ -2467,11 +2481,11 @@ static void writecache_status(struct dm_
- 		DMEMIT("%c %s %s %u ", WC_MODE_PMEM(wc) ? 'p' : 's',
- 				wc->dev->name, wc->ssd_dev->name, wc->block_size);
- 		extra_args = 0;
--		if (wc->start_sector)
-+		if (wc->start_sector_set)
- 			extra_args += 2;
--		if (wc->high_wm_percent_set && !wc->cleaner)
-+		if (wc->high_wm_percent_set)
- 			extra_args += 2;
--		if (wc->low_wm_percent_set && !wc->cleaner)
-+		if (wc->low_wm_percent_set)
- 			extra_args += 2;
- 		if (wc->max_writeback_jobs_set)
- 			extra_args += 2;
-@@ -2479,37 +2493,29 @@ static void writecache_status(struct dm_
- 			extra_args += 2;
- 		if (wc->autocommit_time_set)
- 			extra_args += 2;
--		if (wc->max_age != MAX_AGE_UNSPECIFIED)
-+		if (wc->max_age_set)
- 			extra_args += 2;
--		if (wc->cleaner)
-+		if (wc->cleaner_set)
- 			extra_args++;
- 		if (wc->writeback_fua_set)
- 			extra_args++;
- 
- 		DMEMIT("%u", extra_args);
--		if (wc->start_sector)
-+		if (wc->start_sector_set)
- 			DMEMIT(" start_sector %llu", (unsigned long long)wc->start_sector);
--		if (wc->high_wm_percent_set && !wc->cleaner) {
--			x = (uint64_t)wc->freelist_high_watermark * 100;
--			x += wc->n_blocks / 2;
--			do_div(x, (size_t)wc->n_blocks);
--			DMEMIT(" high_watermark %u", 100 - (unsigned)x);
--		}
--		if (wc->low_wm_percent_set && !wc->cleaner) {
--			x = (uint64_t)wc->freelist_low_watermark * 100;
--			x += wc->n_blocks / 2;
--			do_div(x, (size_t)wc->n_blocks);
--			DMEMIT(" low_watermark %u", 100 - (unsigned)x);
--		}
-+		if (wc->high_wm_percent_set)
-+			DMEMIT(" high_watermark %u", wc->high_wm_percent_value);
-+		if (wc->low_wm_percent_set)
-+			DMEMIT(" low_watermark %u", wc->low_wm_percent_value);
- 		if (wc->max_writeback_jobs_set)
- 			DMEMIT(" writeback_jobs %u", wc->max_writeback_jobs);
- 		if (wc->autocommit_blocks_set)
- 			DMEMIT(" autocommit_blocks %u", wc->autocommit_blocks);
- 		if (wc->autocommit_time_set)
--			DMEMIT(" autocommit_time %u", jiffies_to_msecs(wc->autocommit_jiffies));
--		if (wc->max_age != MAX_AGE_UNSPECIFIED)
--			DMEMIT(" max_age %u", jiffies_to_msecs(wc->max_age));
--		if (wc->cleaner)
-+			DMEMIT(" autocommit_time %u", wc->autocommit_time_value);
-+		if (wc->max_age_set)
-+			DMEMIT(" max_age %u", wc->max_age_value);
-+		if (wc->cleaner_set)
- 			DMEMIT(" cleaner");
- 		if (wc->writeback_fua_set)
- 			DMEMIT(" %sfua", wc->writeback_fua ? "" : "no");
-@@ -2519,7 +2525,7 @@ static void writecache_status(struct dm_
- 
- static struct target_type writecache_target = {
- 	.name			= "writecache",
--	.version		= {1, 3, 0},
-+	.version		= {1, 4, 0},
- 	.module			= THIS_MODULE,
- 	.ctr			= writecache_ctr,
- 	.dtr			= writecache_dtr,
+Not my problem that you can't use email proper. Links go in the
+bitbucket. Either its in the email or it don't exist.
 
 --
 dm-devel mailing list
