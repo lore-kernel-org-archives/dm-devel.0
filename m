@@ -2,80 +2,80 @@ Return-Path: <SRS0=CL6l=HT=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9B847C433DB
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:37:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D9F75C433DB
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:38:13 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 2253B64E2F
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:37:55 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2253B64E2F
+	by mail.kernel.org (Postfix) with ESMTPS id 4972164DA1
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:38:13 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4972164DA1
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=cn.fujitsu.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-199-ZcgLTq6JMdqCXatO_rhlcA-1; Wed, 17 Feb 2021 10:37:51 -0500
-X-MC-Unique: ZcgLTq6JMdqCXatO_rhlcA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-469-NHl3Te1JPNSstyiXikDrOg-1; Wed, 17 Feb 2021 10:38:09 -0500
+X-MC-Unique: NHl3Te1JPNSstyiXikDrOg-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B3C9179EC1;
-	Wed, 17 Feb 2021 15:37:46 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6B797835E21;
+	Wed, 17 Feb 2021 15:38:04 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 89A2E10013D7;
-	Wed, 17 Feb 2021 15:37:46 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 471245C1A3;
+	Wed, 17 Feb 2021 15:38:04 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5337A1809C91;
-	Wed, 17 Feb 2021 15:37:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1161B18095CB;
+	Wed, 17 Feb 2021 15:38:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 118AtsFO011377 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 8 Feb 2021 05:55:54 -0500
+	id 118Atv4i011391 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 8 Feb 2021 05:55:57 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 852312166B30; Mon,  8 Feb 2021 10:55:54 +0000 (UTC)
+	id 4A5081111A7E; Mon,  8 Feb 2021 10:55:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7F9662166B2C
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 466041111A6A
 	for <dm-devel@redhat.com>; Mon,  8 Feb 2021 10:55:54 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 67854858F1B
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BE024101A53A
 	for <dm-devel@redhat.com>; Mon,  8 Feb 2021 10:55:54 +0000 (UTC)
 Received: from heian.cn.fujitsu.com (mail.cn.fujitsu.com [183.91.158.132])
-	by relay.mimecast.com with ESMTP id us-mta-222-7_a0_JP8ODOPnZb6cF6OOg-2;
-	Mon, 08 Feb 2021 05:55:44 -0500
-X-MC-Unique: 7_a0_JP8ODOPnZb6cF6OOg-2
-X-IronPort-AV: E=Sophos;i="5.81,161,1610380800"; d="scan'208";a="104328062"
+	by relay.mimecast.com with ESMTP id us-mta-185-rvDo6hmBNSSFYJuGKSiaiw-3;
+	Mon, 08 Feb 2021 05:55:50 -0500
+X-MC-Unique: rvDo6hmBNSSFYJuGKSiaiw-3
+X-IronPort-AV: E=Sophos;i="5.81,161,1610380800"; d="scan'208";a="104328077"
 Received: from unknown (HELO cn.fujitsu.com) ([10.167.33.5])
-	by heian.cn.fujitsu.com with ESMTP; 08 Feb 2021 18:55:40 +0800
-Received: from G08CNEXMBPEKD06.g08.fujitsu.local (unknown [10.167.33.206])
-	by cn.fujitsu.com (Postfix) with ESMTP id BCA0B4CE6F83;
-	Mon,  8 Feb 2021 18:55:38 +0800 (CST)
+	by heian.cn.fujitsu.com with ESMTP; 08 Feb 2021 18:55:47 +0800
+Received: from G08CNEXMBPEKD04.g08.fujitsu.local (unknown [10.167.33.201])
+	by cn.fujitsu.com (Postfix) with ESMTP id 5CF2A4CE6F80;
+	Mon,  8 Feb 2021 18:55:42 +0800 (CST)
 Received: from G08CNEXCHPEKD04.g08.fujitsu.local (10.167.33.200) by
-	G08CNEXMBPEKD06.g08.fujitsu.local (10.167.33.206) with Microsoft SMTP
-	Server (TLS) id 15.0.1497.2; Mon, 8 Feb 2021 18:55:39 +0800
+	G08CNEXMBPEKD04.g08.fujitsu.local (10.167.33.201) with Microsoft SMTP
+	Server (TLS) id 15.0.1497.2; Mon, 8 Feb 2021 18:55:44 +0800
 Received: from irides.mr.mr.mr (10.167.225.141) by
 	G08CNEXCHPEKD04.g08.fujitsu.local (10.167.33.209) with Microsoft SMTP
 	Server
-	id 15.0.1497.2 via Frontend Transport; Mon, 8 Feb 2021 18:55:40 +0800
+	id 15.0.1497.2 via Frontend Transport; Mon, 8 Feb 2021 18:55:44 +0800
 From: Shiyang Ruan <ruansy.fnst@cn.fujitsu.com>
 To: <linux-kernel@vger.kernel.org>, <linux-xfs@vger.kernel.org>,
 	<linux-nvdimm@lists.01.org>, <linux-mm@kvack.org>,
 	<linux-fsdevel@vger.kernel.org>, <dm-devel@redhat.com>
-Date: Mon, 8 Feb 2021 18:55:24 +0800
-Message-ID: <20210208105530.3072869-6-ruansy.fnst@cn.fujitsu.com>
+Date: Mon, 8 Feb 2021 18:55:27 +0800
+Message-ID: <20210208105530.3072869-9-ruansy.fnst@cn.fujitsu.com>
 In-Reply-To: <20210208105530.3072869-1-ruansy.fnst@cn.fujitsu.com>
 References: <20210208105530.3072869-1-ruansy.fnst@cn.fujitsu.com>
 MIME-Version: 1.0
-X-yoursite-MailScanner-ID: BCA0B4CE6F83.A157B
+X-yoursite-MailScanner-ID: 5CF2A4CE6F80.AE3E8
 X-yoursite-MailScanner: Found to be clean
 X-yoursite-MailScanner-From: ruansy.fnst@cn.fujitsu.com
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -86,14 +86,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 17 Feb 2021 10:31:26 -0500
 Cc: qi.fuli@fujitsu.com, snitzer@redhat.com, darrick.wong@oracle.com,
 	rgoldwyn@suse.de, david@fromorbit.com, y-goto@fujitsu.com,
 	dan.j.williams@intel.com, hch@lst.de, agk@redhat.com
-Subject: [dm-devel] [PATCH v3 05/11] mm,
-	fsdax: Refactor memory-failure handler for dax mapping
+Subject: [dm-devel] [PATCH v3 08/11] dm: Introduce ->rmap() to find bdev
+	offset
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -107,7 +107,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -115,296 +115,88 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The current memory_failure_dev_pagemap() can only handle single-mapped
-dax page for fsdax mode.  The dax page could be mapped by multiple files
-and offsets if we let reflink feature & fsdax mode work together.  So,
-we refactor current implementation to support handle memory failure on
-each file and offset.
+Pmem device could be a target of mapped device.  In order to obtain
+superblock on the mapped device, we introduce this to translate offset
+from target device to md device.
+
+Currently, we implement it on linear target, which is easy to do the
+translation.  Other targets will be supported in the future.  However,
+some targets may not support it because of the non-linear mapping.
 
 Signed-off-by: Shiyang Ruan <ruansy.fnst@cn.fujitsu.com>
 ---
- fs/dax.c            | 21 ++++++++++
- include/linux/dax.h |  1 +
- include/linux/mm.h  |  9 +++++
- mm/memory-failure.c | 98 ++++++++++++++++++++++++++++++++++-----------
- 4 files changed, 105 insertions(+), 24 deletions(-)
+ drivers/md/dm-linear.c        | 20 ++++++++++++++++++++
+ include/linux/device-mapper.h |  5 +++++
+ 2 files changed, 25 insertions(+)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index 26d5dcd2d69e..c64c3a0e76a6 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -378,6 +378,27 @@ static struct page *dax_busy_page(void *entry)
- 	return NULL;
- }
- 
-+/*
-+ * dax_load_pfn - Load pfn of the DAX entry corresponding to a page
-+ * @mapping: The file whose entry we want to load
-+ * @index:   The offset where the DAX entry located in
-+ *
-+ * Return:   pfn of the DAX entry
-+ */
-+unsigned long dax_load_pfn(struct address_space *mapping, unsigned long index)
-+{
-+	XA_STATE(xas, &mapping->i_pages, index);
-+	void *entry;
-+	unsigned long pfn;
-+
-+	xas_lock_irq(&xas);
-+	entry = xas_load(&xas);
-+	pfn = dax_to_pfn(entry);
-+	xas_unlock_irq(&xas);
-+
-+	return pfn;
-+}
-+
- /*
-  * dax_lock_mapping_entry - Lock the DAX entry corresponding to a page
-  * @page: The page whose entry we want to lock
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index b52f084aa643..89e56ceeffc7 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -150,6 +150,7 @@ int dax_writeback_mapping_range(struct address_space *mapping,
- 
- struct page *dax_layout_busy_page(struct address_space *mapping);
- struct page *dax_layout_busy_page_range(struct address_space *mapping, loff_t start, loff_t end);
-+unsigned long dax_load_pfn(struct address_space *mapping, unsigned long index);
- dax_entry_t dax_lock_page(struct page *page);
- void dax_unlock_page(struct page *page, dax_entry_t cookie);
- #else
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index ecdf8a8cd6ae..ab52bc633d84 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -1157,6 +1157,14 @@ static inline bool is_device_private_page(const struct page *page)
- 		page->pgmap->type == MEMORY_DEVICE_PRIVATE;
- }
- 
-+static inline bool is_device_fsdax_page(const struct page *page)
-+{
-+	return IS_ENABLED(CONFIG_DEV_PAGEMAP_OPS) &&
-+		IS_ENABLED(CONFIG_FS_DAX) &&
-+		is_zone_device_page(page) &&
-+		page->pgmap->type == MEMORY_DEVICE_FS_DAX;
-+}
-+
- static inline bool is_pci_p2pdma_page(const struct page *page)
- {
- 	return IS_ENABLED(CONFIG_DEV_PAGEMAP_OPS) &&
-@@ -3045,6 +3053,7 @@ enum mf_flags {
- 	MF_MUST_KILL = 1 << 2,
- 	MF_SOFT_OFFLINE = 1 << 3,
- };
-+extern int mf_dax_mapping_kill_procs(struct address_space *mapping, pgoff_t index, int flags);
- extern int memory_failure(unsigned long pfn, int flags);
- extern void memory_failure_queue(unsigned long pfn, int flags);
- extern void memory_failure_queue_kick(int cpu);
-diff --git a/mm/memory-failure.c b/mm/memory-failure.c
-index e9481632fcd1..158fe0c8e602 100644
---- a/mm/memory-failure.c
-+++ b/mm/memory-failure.c
-@@ -56,6 +56,7 @@
- #include <linux/kfifo.h>
- #include <linux/ratelimit.h>
- #include <linux/page-isolation.h>
-+#include <linux/dax.h>
- #include "internal.h"
- #include "ras/ras_event.h"
- 
-@@ -120,6 +121,13 @@ static int hwpoison_filter_dev(struct page *p)
- 	if (PageSlab(p))
- 		return -EINVAL;
- 
-+	if (pfn_valid(page_to_pfn(p))) {
-+		if (is_device_fsdax_page(p))
-+			return 0;
-+		else
-+			return -EINVAL;
-+	}
-+
- 	mapping = page_mapping(p);
- 	if (mapping == NULL || mapping->host == NULL)
- 		return -EINVAL;
-@@ -286,10 +294,9 @@ void shake_page(struct page *p, int access)
- }
- EXPORT_SYMBOL_GPL(shake_page);
- 
--static unsigned long dev_pagemap_mapping_shift(struct page *page,
--		struct vm_area_struct *vma)
-+static unsigned long dev_pagemap_mapping_shift(struct vm_area_struct *vma,
-+					       unsigned long address)
- {
--	unsigned long address = vma_address(page, vma);
- 	pgd_t *pgd;
- 	p4d_t *p4d;
- 	pud_t *pud;
-@@ -329,9 +336,8 @@ static unsigned long dev_pagemap_mapping_shift(struct page *page,
-  * Schedule a process for later kill.
-  * Uses GFP_ATOMIC allocations to avoid potential recursions in the VM.
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 00774b5d7668..90fdb4700afd 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -5,6 +5,7 @@
   */
--static void add_to_kill(struct task_struct *tsk, struct page *p,
--		       struct vm_area_struct *vma,
--		       struct list_head *to_kill)
-+static void add_to_kill(struct task_struct *tsk, struct page *p, pgoff_t pgoff,
-+			struct vm_area_struct *vma, struct list_head *to_kill)
- {
- 	struct to_kill *tk;
  
-@@ -342,9 +348,12 @@ static void add_to_kill(struct task_struct *tsk, struct page *p,
+ #include "dm.h"
++#include "dm-core.h"
+ #include <linux/module.h>
+ #include <linux/init.h>
+ #include <linux/blkdev.h>
+@@ -119,6 +120,24 @@ static void linear_status(struct dm_target *ti, status_type_t type,
  	}
- 
- 	tk->addr = page_address_in_vma(p, vma);
--	if (is_zone_device_page(p))
--		tk->size_shift = dev_pagemap_mapping_shift(p, vma);
--	else
-+	if (is_zone_device_page(p)) {
-+		if (is_device_fsdax_page(p))
-+			tk->addr = vma->vm_start +
-+					((pgoff - vma->vm_pgoff) << PAGE_SHIFT);
-+		tk->size_shift = dev_pagemap_mapping_shift(vma, tk->addr);
-+	} else
- 		tk->size_shift = page_shift(compound_head(p));
- 
- 	/*
-@@ -492,7 +501,7 @@ static void collect_procs_anon(struct page *page, struct list_head *to_kill,
- 			if (!page_mapped_in_vma(page, vma))
- 				continue;
- 			if (vma->vm_mm == t->mm)
--				add_to_kill(t, page, vma, to_kill);
-+				add_to_kill(t, page, 0, vma, to_kill);
- 		}
- 	}
- 	read_unlock(&tasklist_lock);
-@@ -502,24 +511,19 @@ static void collect_procs_anon(struct page *page, struct list_head *to_kill,
- /*
-  * Collect processes when the error hit a file mapped page.
-  */
--static void collect_procs_file(struct page *page, struct list_head *to_kill,
--				int force_early)
-+static void collect_procs_file(struct page *page, struct address_space *mapping,
-+		pgoff_t pgoff, struct list_head *to_kill, int force_early)
- {
- 	struct vm_area_struct *vma;
- 	struct task_struct *tsk;
--	struct address_space *mapping = page->mapping;
--	pgoff_t pgoff;
- 
- 	i_mmap_lock_read(mapping);
- 	read_lock(&tasklist_lock);
--	pgoff = page_to_pgoff(page);
- 	for_each_process(tsk) {
- 		struct task_struct *t = task_early_kill(tsk, force_early);
--
- 		if (!t)
- 			continue;
--		vma_interval_tree_foreach(vma, &mapping->i_mmap, pgoff,
--				      pgoff) {
-+		vma_interval_tree_foreach(vma, &mapping->i_mmap, pgoff, pgoff) {
- 			/*
- 			 * Send early kill signal to tasks where a vma covers
- 			 * the page but the corrupted page is not necessarily
-@@ -528,7 +532,7 @@ static void collect_procs_file(struct page *page, struct list_head *to_kill,
- 			 * to be informed of all such data corruptions.
- 			 */
- 			if (vma->vm_mm == t->mm)
--				add_to_kill(t, page, vma, to_kill);
-+				add_to_kill(t, page, pgoff, vma, to_kill);
- 		}
- 	}
- 	read_unlock(&tasklist_lock);
-@@ -547,7 +551,8 @@ static void collect_procs(struct page *page, struct list_head *tokill,
- 	if (PageAnon(page))
- 		collect_procs_anon(page, tokill, force_early);
- 	else
--		collect_procs_file(page, tokill, force_early);
-+		collect_procs_file(page, page_mapping(page), page_to_pgoff(page),
-+				   tokill, force_early);
  }
  
- static const char *action_name[] = {
-@@ -1214,6 +1219,50 @@ static int try_to_split_thp_page(struct page *page, const char *msg)
- 	return 0;
- }
- 
-+int mf_dax_mapping_kill_procs(struct address_space *mapping, pgoff_t index, int flags)
++static int linear_rmap(struct dm_target *ti, sector_t offset,
++		       rmap_callout_fn fn, void *data)
 +{
-+	const bool unmap_success = true;
-+	unsigned long pfn, size = 0;
-+	struct to_kill *tk;
-+	LIST_HEAD(to_kill);
-+	int rc = -EBUSY;
-+	loff_t start;
++	struct linear_c *lc = (struct linear_c *) ti->private;
++	struct mapped_device *md = ti->table->md;
++	struct block_device *bdev;
++	sector_t disk_sect = offset - dm_target_offset(ti, lc->start);
++	int rc = -ENODEV;
 +
-+	/* load the pfn of the dax mapping file */
-+	pfn = dax_load_pfn(mapping, index);
-+	if (!pfn)
++	bdev = bdget_disk_sector(md->disk, offset);
++	if (!bdev)
 +		return rc;
-+	/*
-+	 * Unlike System-RAM there is no possibility to swap in a
-+	 * different physical page at a given virtual address, so all
-+	 * userspace consumption of ZONE_DEVICE memory necessitates
-+	 * SIGBUS (i.e. MF_MUST_KILL)
-+	 */
-+	flags |= MF_ACTION_REQUIRED | MF_MUST_KILL;
-+	collect_procs_file(pfn_to_page(pfn), mapping, index, &to_kill,
-+			   flags & MF_ACTION_REQUIRED);
 +
-+	list_for_each_entry(tk, &to_kill, nd)
-+		if (tk->size_shift)
-+			size = max(size, 1UL << tk->size_shift);
-+	if (size) {
-+		/*
-+		 * Unmap the largest mapping to avoid breaking up
-+		 * device-dax mappings which are constant size. The
-+		 * actual size of the mapping being torn down is
-+		 * communicated in siginfo, see kill_proc()
-+		 */
-+		start = (index << PAGE_SHIFT) & ~(size - 1);
-+		unmap_mapping_range(mapping, start, start + size, 0);
-+	}
-+
-+	kill_procs(&to_kill, flags & MF_MUST_KILL, !unmap_success,
-+		   pfn, flags);
-+	rc = 0;
++	rc = fn(ti, bdev, disk_sect, data);
++	bdput(bdev);
 +	return rc;
 +}
-+EXPORT_SYMBOL_GPL(mf_dax_mapping_kill_procs);
 +
- static int memory_failure_hugetlb(unsigned long pfn, int flags)
+ static int linear_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
  {
- 	struct page *p = pfn_to_page(pfn);
-@@ -1297,7 +1346,7 @@ static int memory_failure_dev_pagemap(unsigned long pfn, int flags,
- 	const bool unmap_success = true;
- 	unsigned long size = 0;
- 	struct to_kill *tk;
--	LIST_HEAD(tokill);
-+	LIST_HEAD(to_kill);
- 	int rc = -EBUSY;
- 	loff_t start;
- 	dax_entry_t cookie;
-@@ -1345,9 +1394,10 @@ static int memory_failure_dev_pagemap(unsigned long pfn, int flags,
- 	 * SIGBUS (i.e. MF_MUST_KILL)
- 	 */
- 	flags |= MF_ACTION_REQUIRED | MF_MUST_KILL;
--	collect_procs(page, &tokill, flags & MF_ACTION_REQUIRED);
-+	collect_procs_file(page, page->mapping, page->index, &to_kill,
-+			   flags & MF_ACTION_REQUIRED);
- 
--	list_for_each_entry(tk, &tokill, nd)
-+	list_for_each_entry(tk, &to_kill, nd)
- 		if (tk->size_shift)
- 			size = max(size, 1UL << tk->size_shift);
- 	if (size) {
-@@ -1360,7 +1410,7 @@ static int memory_failure_dev_pagemap(unsigned long pfn, int flags,
- 		start = (page->index << PAGE_SHIFT) & ~(size - 1);
- 		unmap_mapping_range(page->mapping, start, start + size, 0);
- 	}
--	kill_procs(&tokill, flags & MF_MUST_KILL, !unmap_success, pfn, flags);
-+	kill_procs(&to_kill, flags & MF_MUST_KILL, !unmap_success, pfn, flags);
- 	rc = 0;
- unlock:
- 	dax_unlock_page(page, cookie);
+ 	struct linear_c *lc = (struct linear_c *) ti->private;
+@@ -238,6 +257,7 @@ static struct target_type linear_target = {
+ 	.ctr    = linear_ctr,
+ 	.dtr    = linear_dtr,
+ 	.map    = linear_map,
++	.rmap   = linear_rmap,
+ 	.status = linear_status,
+ 	.prepare_ioctl = linear_prepare_ioctl,
+ 	.iterate_devices = linear_iterate_devices,
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 61a66fb8ebb3..c5cd1009a08d 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -58,6 +58,10 @@ typedef void (*dm_dtr_fn) (struct dm_target *ti);
+  * = 2: The target wants to push back the io
+  */
+ typedef int (*dm_map_fn) (struct dm_target *ti, struct bio *bio);
++typedef int (*rmap_callout_fn) (struct dm_target *ti, struct block_device *bdev,
++				sector_t sect, void *data);
++typedef int (*dm_rmap_fn) (struct dm_target *ti, sector_t offset,
++			   rmap_callout_fn fn, void *data);
+ typedef int (*dm_clone_and_map_request_fn) (struct dm_target *ti,
+ 					    struct request *rq,
+ 					    union map_info *map_context,
+@@ -175,6 +179,7 @@ struct target_type {
+ 	dm_ctr_fn ctr;
+ 	dm_dtr_fn dtr;
+ 	dm_map_fn map;
++	dm_rmap_fn rmap;
+ 	dm_clone_and_map_request_fn clone_and_map_rq;
+ 	dm_release_clone_request_fn release_clone_rq;
+ 	dm_endio_fn end_io;
 -- 
 2.30.0
 
