@@ -4,66 +4,66 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY autolearn=ham
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E2692C433DB
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B4C92C433E6
 	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:35:08 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 739B564E0F
+	by mail.kernel.org (Postfix) with ESMTPS id 21DCE64E15
 	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:35:08 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 739B564E0F
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 21DCE64E15
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-246-66o09tk1NBqSQ3yYaWPjCw-1; Wed, 17 Feb 2021 10:35:05 -0500
-X-MC-Unique: 66o09tk1NBqSQ3yYaWPjCw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-534-YGzYfeRtNbGu0Y0gO0AR5A-1; Wed, 17 Feb 2021 10:35:02 -0500
+X-MC-Unique: YGzYfeRtNbGu0Y0gO0AR5A-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BF38D835E22;
-	Wed, 17 Feb 2021 15:35:00 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4CC7039A5F;
-	Wed, 17 Feb 2021 15:35:00 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8F09379EC0;
+	Wed, 17 Feb 2021 15:34:58 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6DE815D9D2;
+	Wed, 17 Feb 2021 15:34:58 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1933618095CA;
-	Wed, 17 Feb 2021 15:35:00 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 34EC357DFA;
+	Wed, 17 Feb 2021 15:34:58 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1188qu7U030005 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 8 Feb 2021 03:52:56 -0500
+	id 1188qxVJ030039 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 8 Feb 2021 03:52:59 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id DEF602166B2F; Mon,  8 Feb 2021 08:52:55 +0000 (UTC)
+	id 0D9E62166B2B; Mon,  8 Feb 2021 08:52:59 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D8E182166B29
-	for <dm-devel@redhat.com>; Mon,  8 Feb 2021 08:52:53 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 086342166B29
+	for <dm-devel@redhat.com>; Mon,  8 Feb 2021 08:52:59 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 893E1858F1B
-	for <dm-devel@redhat.com>; Mon,  8 Feb 2021 08:52:53 +0000 (UTC)
-Received: from out30-44.freemail.mail.aliyun.com
-	(out30-44.freemail.mail.aliyun.com [115.124.30.44]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-33-5n0LtQFGNx6jAaJG8bLpNA-1;
-	Mon, 08 Feb 2021 03:52:48 -0500
-X-MC-Unique: 5n0LtQFGNx6jAaJG8bLpNA-1
-X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R411e4; CH=green; DM=||false|;
-	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04423;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E85C4811E88
+	for <dm-devel@redhat.com>; Mon,  8 Feb 2021 08:52:58 +0000 (UTC)
+Received: from out30-42.freemail.mail.aliyun.com
+	(out30-42.freemail.mail.aliyun.com [115.124.30.42]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-262-62iVc3XbO_u7pn43Dg7wKA-1;
+	Mon, 08 Feb 2021 03:52:56 -0500
+X-MC-Unique: 62iVc3XbO_u7pn43Dg7wKA-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R181e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04357;
 	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=8; SR=0;
-	TI=SMTPD_---0UO8W.Pu_1612774364
+	TI=SMTPD_---0UO9kQia_1612774371
 Received: from localhost(mailfrom:jefflexu@linux.alibaba.com
-	fp:SMTPD_---0UO8W.Pu_1612774364) by smtp.aliyun-inc.com(127.0.0.1);
-	Mon, 08 Feb 2021 16:52:45 +0800
+	fp:SMTPD_---0UO9kQia_1612774371) by smtp.aliyun-inc.com(127.0.0.1);
+	Mon, 08 Feb 2021 16:52:51 +0800
 From: Jeffle Xu <jefflexu@linux.alibaba.com>
 To: snitzer@redhat.com, axboe@kernel.dk
-Date: Mon,  8 Feb 2021 16:52:33 +0800
-Message-Id: <20210208085243.82367-2-jefflexu@linux.alibaba.com>
+Date: Mon,  8 Feb 2021 16:52:39 +0800
+Message-Id: <20210208085243.82367-8-jefflexu@linux.alibaba.com>
 In-Reply-To: <20210208085243.82367-1-jefflexu@linux.alibaba.com>
 References: <20210208085243.82367-1-jefflexu@linux.alibaba.com>
 MIME-Version: 1.0
@@ -80,8 +80,8 @@ X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 17 Feb 2021 10:31:26 -0500
 Cc: caspar@linux.alibaba.com, hch@lst.de, linux-block@vger.kernel.org,
 	joseph.qi@linux.alibaba.com, dm-devel@redhat.com, io-uring@vger.kernel.org
-Subject: [dm-devel] [PATCH v3 01/11] block: move definition of blk_qc_t to
-	types.h
+Subject: [dm-devel] [PATCH v3 07/11] dm: always return BLK_QC_T_NONE for
+	bio-based device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -95,7 +95,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -103,58 +103,139 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-So that kiocb.ki_cookie can be defined as blk_qc_t, which will enforce
-the encapsulation.
+Currently the returned cookie of bio-based device is not used at all.
+
+Cookie of bio-based device will be refactored in the following patch.
 
 Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- include/linux/blk_types.h | 2 +-
- include/linux/fs.h        | 2 +-
- include/linux/types.h     | 3 +++
- 3 files changed, 5 insertions(+), 2 deletions(-)
+ drivers/md/dm.c | 26 ++++++++++----------------
+ 1 file changed, 10 insertions(+), 16 deletions(-)
 
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 866f74261b3b..2e05244fc16d 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -532,7 +532,7 @@ static inline int op_stat_group(unsigned int op)
- 	return op_is_write(op);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 7bac564f3faa..46ca3b739396 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1252,14 +1252,13 @@ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors)
+ }
+ EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
+ 
+-static blk_qc_t __map_bio(struct dm_target_io *tio)
++static void __map_bio(struct dm_target_io *tio)
+ {
+ 	int r;
+ 	sector_t sector;
+ 	struct bio *clone = &tio->clone;
+ 	struct dm_io *io = tio->io;
+ 	struct dm_target *ti = tio->ti;
+-	blk_qc_t ret = BLK_QC_T_NONE;
+ 
+ 	clone->bi_end_io = clone_endio;
+ 
+@@ -1278,7 +1277,7 @@ static blk_qc_t __map_bio(struct dm_target_io *tio)
+ 	case DM_MAPIO_REMAPPED:
+ 		/* the bio has been remapped so dispatch it */
+ 		trace_block_bio_remap(clone, bio_dev(io->orig_bio), sector);
+-		ret = submit_bio_noacct(clone);
++		submit_bio_noacct(clone);
+ 		break;
+ 	case DM_MAPIO_KILL:
+ 		free_tio(tio);
+@@ -1292,8 +1291,6 @@ static blk_qc_t __map_bio(struct dm_target_io *tio)
+ 		DMWARN("unimplemented target map return value: %d", r);
+ 		BUG();
+ 	}
+-
+-	return ret;
  }
  
--typedef unsigned int blk_qc_t;
-+/* Macros for blk_qc_t */
- #define BLK_QC_T_NONE		-1U
- #define BLK_QC_T_SHIFT		16
- #define BLK_QC_T_INTERNAL	(1U << 31)
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index fd47deea7c17..04b687150736 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -330,7 +330,7 @@ struct kiocb {
- 	u16			ki_hint;
- 	u16			ki_ioprio; /* See linux/ioprio.h */
- 	union {
--		unsigned int		ki_cookie; /* for ->iopoll */
-+		blk_qc_t		ki_cookie; /* for ->iopoll */
- 		struct wait_page_queue	*ki_waitq; /* for async buffered IO */
- 	};
+ static void bio_setup_sector(struct bio *bio, sector_t sector, unsigned len)
+@@ -1380,7 +1377,7 @@ static void alloc_multiple_bios(struct bio_list *blist, struct clone_info *ci,
+ 	}
+ }
  
-diff --git a/include/linux/types.h b/include/linux/types.h
-index a147977602b5..da5ca7e1bea9 100644
---- a/include/linux/types.h
-+++ b/include/linux/types.h
-@@ -125,6 +125,9 @@ typedef s64			int64_t;
- typedef u64 sector_t;
- typedef u64 blkcnt_t;
+-static blk_qc_t __clone_and_map_simple_bio(struct clone_info *ci,
++static void __clone_and_map_simple_bio(struct clone_info *ci,
+ 					   struct dm_target_io *tio, unsigned *len)
+ {
+ 	struct bio *clone = &tio->clone;
+@@ -1391,7 +1388,7 @@ static blk_qc_t __clone_and_map_simple_bio(struct clone_info *ci,
+ 	if (len)
+ 		bio_setup_sector(clone, ci->sector, *len);
  
-+/* cookie used for IO polling */
-+typedef unsigned int blk_qc_t;
-+
+-	return __map_bio(tio);
++	__map_bio(tio);
+ }
+ 
+ static void __send_duplicate_bios(struct clone_info *ci, struct dm_target *ti,
+@@ -1405,7 +1402,7 @@ static void __send_duplicate_bios(struct clone_info *ci, struct dm_target *ti,
+ 
+ 	while ((bio = bio_list_pop(&blist))) {
+ 		tio = container_of(bio, struct dm_target_io, clone);
+-		(void) __clone_and_map_simple_bio(ci, tio, len);
++		__clone_and_map_simple_bio(ci, tio, len);
+ 	}
+ }
+ 
+@@ -1450,7 +1447,7 @@ static int __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti,
+ 		free_tio(tio);
+ 		return r;
+ 	}
+-	(void) __map_bio(tio);
++	__map_bio(tio);
+ 
+ 	return 0;
+ }
+@@ -1565,11 +1562,10 @@ static void init_clone_info(struct clone_info *ci, struct mapped_device *md,
  /*
-  * The type of an index into the pagecache.
+  * Entry point to split a bio into clones and submit them to the targets.
   */
+-static blk_qc_t __split_and_process_bio(struct mapped_device *md,
++static void __split_and_process_bio(struct mapped_device *md,
+ 					struct dm_table *map, struct bio *bio)
+ {
+ 	struct clone_info ci;
+-	blk_qc_t ret = BLK_QC_T_NONE;
+ 	int error = 0;
+ 
+ 	init_clone_info(&ci, md, map, bio);
+@@ -1613,7 +1609,7 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
+ 
+ 				bio_chain(b, bio);
+ 				trace_block_split(b, bio->bi_iter.bi_sector);
+-				ret = submit_bio_noacct(bio);
++				submit_bio_noacct(bio);
+ 				break;
+ 			}
+ 		}
+@@ -1621,13 +1617,11 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
+ 
+ 	/* drop the extra reference count */
+ 	dec_pending(ci.io, errno_to_blk_status(error));
+-	return ret;
+ }
+ 
+ static blk_qc_t dm_submit_bio(struct bio *bio)
+ {
+ 	struct mapped_device *md = bio->bi_disk->private_data;
+-	blk_qc_t ret = BLK_QC_T_NONE;
+ 	int srcu_idx;
+ 	struct dm_table *map;
+ 
+@@ -1657,10 +1651,10 @@ static blk_qc_t dm_submit_bio(struct bio *bio)
+ 	if (is_abnormal_io(bio))
+ 		blk_queue_split(&bio);
+ 
+-	ret = __split_and_process_bio(md, map, bio);
++	__split_and_process_bio(md, map, bio);
+ out:
+ 	dm_put_live_table(md, srcu_idx);
+-	return ret;
++	return BLK_QC_T_NONE;
+ }
+ 
+ /*-----------------------------------------------------------------
 -- 
 2.27.0
 
