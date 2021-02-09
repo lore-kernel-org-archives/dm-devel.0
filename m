@@ -2,75 +2,115 @@ Return-Path: <SRS0=bAPj=HL=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.5 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,NICE_REPLY_A,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 95424C433E0
-	for <dm-devel@archiver.kernel.org>; Tue,  9 Feb 2021 18:32:11 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 91C09C433DB
+	for <dm-devel@archiver.kernel.org>; Tue,  9 Feb 2021 18:54:34 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C6D9B64E54
-	for <dm-devel@archiver.kernel.org>; Tue,  9 Feb 2021 18:32:10 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C6D9B64E54
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
+	by mail.kernel.org (Postfix) with ESMTPS id 9735E64E8A
+	for <dm-devel@archiver.kernel.org>; Tue,  9 Feb 2021 18:54:31 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9735E64E8A
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.ibm.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-24-ilis2WGhO1KEAhmY_or2nw-1; Tue, 09 Feb 2021 13:32:07 -0500
-X-MC-Unique: ilis2WGhO1KEAhmY_or2nw-1
+ us-mta-100-jVPA99vbPy2S9QYya048CQ-1; Tue, 09 Feb 2021 13:54:28 -0500
+X-MC-Unique: jVPA99vbPy2S9QYya048CQ-1
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 808FA114;
-	Tue,  9 Feb 2021 18:32:02 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 668B4106BB4B;
+	Tue,  9 Feb 2021 18:54:23 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E23935D9C0;
-	Tue,  9 Feb 2021 18:32:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 128E35D9C0;
+	Tue,  9 Feb 2021 18:54:23 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DF64418095CB;
-	Tue,  9 Feb 2021 18:31:59 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 73AA218095CB;
+	Tue,  9 Feb 2021 18:54:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 119IVvKm031547 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 9 Feb 2021 13:31:57 -0500
+	id 119IsJKI001176 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 9 Feb 2021 13:54:19 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id A11DAA9EE0; Tue,  9 Feb 2021 18:31:57 +0000 (UTC)
+	id 1B807112D438; Tue,  9 Feb 2021 18:54:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 99F45A9E6F
-	for <dm-devel@redhat.com>; Tue,  9 Feb 2021 18:31:52 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 17B09112D436
+	for <dm-devel@redhat.com>; Tue,  9 Feb 2021 18:54:17 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5563F857AB2
-	for <dm-devel@redhat.com>; Tue,  9 Feb 2021 18:31:52 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-266-zUmXh-0DPpu7p8GhIyd0kw-1;
-	Tue, 09 Feb 2021 13:31:46 -0500
-X-MC-Unique: zUmXh-0DPpu7p8GhIyd0kw-1
-Received: from [192.168.86.31] (c-71-197-163-6.hsd1.wa.comcast.net
-	[71.197.163.6])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 7089D2020E9E;
-	Tue,  9 Feb 2021 10:31:44 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 7089D2020E9E
-To: Mimi Zohar <zohar@linux.ibm.com>, stephen.smalley.work@gmail.com,
-	casey@schaufler-ca.com, agk@redhat.com, snitzer@redhat.com,
-	gmazyland@gmail.com, paul@paul-moore.com
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 00B3E185A793
+	for <dm-devel@redhat.com>; Tue,  9 Feb 2021 18:54:17 +0000 (UTC)
+Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com
+	[148.163.158.5]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-515-DvSqduj9Mv-6f-RtBxxM-Q-1; Tue, 09 Feb 2021 13:54:14 -0500
+X-MC-Unique: DvSqduj9Mv-6f-RtBxxM-Q-1
+Received: from pps.filterd (m0098417.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.16.0.42/8.16.0.42) with SMTP id
+	119Is76U159528; Tue, 9 Feb 2021 13:54:14 -0500
+Received: from pps.reinject (localhost [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com with ESMTP id 36kycu99a3-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Tue, 09 Feb 2021 13:54:14 -0500
+Received: from m0098417.ppops.net (m0098417.ppops.net [127.0.0.1])
+	by pps.reinject (8.16.0.36/8.16.0.36) with SMTP id 119IsDIR160458;
+	Tue, 9 Feb 2021 13:54:13 -0500
+Received: from ppma02fra.de.ibm.com (47.49.7a9f.ip4.static.sl-reverse.com
+	[159.122.73.71])
+	by mx0a-001b2d01.pphosted.com with ESMTP id 36kycu994f-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Tue, 09 Feb 2021 13:54:13 -0500
+Received: from pps.filterd (ppma02fra.de.ibm.com [127.0.0.1])
+	by ppma02fra.de.ibm.com (8.16.0.42/8.16.0.42) with SMTP id
+	119IkxF4012350; Tue, 9 Feb 2021 18:54:01 GMT
+Received: from b06cxnps3074.portsmouth.uk.ibm.com
+	(d06relay09.portsmouth.uk.ibm.com [9.149.109.194])
+	by ppma02fra.de.ibm.com with ESMTP id 36hjr89x4s-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Tue, 09 Feb 2021 18:54:00 +0000
+Received: from d06av21.portsmouth.uk.ibm.com (d06av21.portsmouth.uk.ibm.com
+	[9.149.105.232])
+	by b06cxnps3074.portsmouth.uk.ibm.com (8.14.9/8.14.9/NCO v10.0) with
+	ESMTP id 119IrwJH27394458
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=OK); Tue, 9 Feb 2021 18:53:58 GMT
+Received: from d06av21.portsmouth.uk.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id A1BCF5204E;
+	Tue,  9 Feb 2021 18:53:58 +0000 (GMT)
+Received: from li-f45666cc-3089-11b2-a85c-c57d1a57929f.ibm.com (unknown
+	[9.160.79.210])
+	by d06av21.portsmouth.uk.ibm.com (Postfix) with ESMTP id 75F275204F;
+	Tue,  9 Feb 2021 18:53:56 +0000 (GMT)
+Message-ID: <38ba5889d517ee010a6bf370f8892059dd7d3bfe.camel@linux.ibm.com>
+From: Mimi Zohar <zohar@linux.ibm.com>
+To: Tushar Sugandhi <tusharsu@linux.microsoft.com>,
+	stephen.smalley.work@gmail.com, casey@schaufler-ca.com, agk@redhat.com, 
+	snitzer@redhat.com, gmazyland@gmail.com, paul@paul-moore.com
+Date: Tue, 09 Feb 2021 13:53:55 -0500
+In-Reply-To: <c5ecccbe-9e23-f297-8a79-2a9dd62a40fb@linux.microsoft.com>
 References: <20210130004519.25106-1-tusharsu@linux.microsoft.com>
-	<20210130004519.25106-4-tusharsu@linux.microsoft.com>
-	<158dc2d3398316edefbafdb1cfea5eca840a06e6.camel@linux.ibm.com>
-From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-Message-ID: <8af5bf67-54d3-f358-6cb6-34733fc72df2@linux.microsoft.com>
-Date: Tue, 9 Feb 2021 10:31:43 -0800
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
-	Thunderbird/68.10.0
-MIME-Version: 1.0
-In-Reply-To: <158dc2d3398316edefbafdb1cfea5eca840a06e6.camel@linux.ibm.com>
+	<27f73411fc1d6ce6dd16a29344d729d9aa760250.camel@linux.ibm.com>
+	<27a4592c3b75861d2b9c8fb1511f593aa987222c.camel@linux.ibm.com>
+	<c5ecccbe-9e23-f297-8a79-2a9dd62a40fb@linux.microsoft.com>
+Mime-Version: 1.0
+X-TM-AS-GCONF: 00
+X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.369, 18.0.737
+	definitions=2021-02-09_05:2021-02-09,
+	2021-02-09 signatures=0
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+	suspectscore=0
+	lowpriorityscore=0 mlxlogscore=999 spamscore=0 impostorscore=0
+	bulkscore=0
+	malwarescore=0 phishscore=0 clxscore=1015 adultscore=0
+	priorityscore=1501
+	mlxscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+	engine=8.12.0-2009150000 definitions=main-2102090086
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -79,14 +119,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 Cc: sashal@kernel.org, dm-devel@redhat.com, selinux@vger.kernel.org,
 	jmorris@namei.org, linux-kernel@vger.kernel.org,
 	nramas@linux.microsoft.com, linux-security-module@vger.kernel.org,
 	tyhicks@linux.microsoft.com, linux-integrity@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH 3/3] IMA: add support to measure duplicate
- buffer for critical data hook
+Subject: Re: [dm-devel] [PATCH 0/3] support for duplicate measurement of
+ integrity critical data
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,78 +145,51 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-
-
-On 2021-02-08 12:24 p.m., Mimi Zohar wrote:
-> Hi Tushar,
+On Tue, 2021-02-09 at 10:23 -0800, Tushar Sugandhi wrote:
+> > On Mon, 2021-02-08 at 15:22 -0500, Mimi Zohar wrote:
+> >> On Fri, 2021-01-29 at 16:45 -0800, Tushar Sugandhi wrote:
+> >>> IMA does not measure duplicate buffer data since TPM extend is a very
+> >>> expensive operation.  However, in some cases for integrity critical
+> >>> data, the measurement of duplicate data is necessary to accurately
+> >>> determine the current state of the system.  Eg, SELinux state changing
+> >>> from 'audit', to 'enforcing', and back to 'audit' again.  In this
+> >>> example, currently, IMA will not measure the last state change to
+> >>> 'audit'.  This limits the ability of attestation services to accurately
+> >>> determine the current state of the integrity critical data on the
+> >>> system.
+> >>>
+> >>> This series addresses this gap by providing the ability to measure
+> >>> duplicate entries for integrity critical data, driven by policy.
+> >>
+> >> The same reason for re-measuring buffer data is equally applicable to
+> >> files.  In both cases, the file or the buffer isn't re-measured if it
+> >> already exists in the htable.   Please don't limit this patch set to
+> >> just buffer data.
+> > 
+> Agreed.  I wasn't sure if you wanted the support for files, or other 
+> buffer measurement scenarios, except critical data.  So I started the 
+> implementation with supporting just critical data.  Happy to extend it 
+> to files and other buffer measurement scenarios as you suggested.
 > 
-> On Fri, 2021-01-29 at 16:45 -0800, Tushar Sugandhi wrote:
-> 
->> diff --git a/security/integrity/ima/ima_queue.c b/security/integrity/ima/ima_queue.c
->>
->> index c096ef8945c7..fbf359495fa8 100644
->> --- a/security/integrity/ima/ima_queue.c
->> +++ b/security/integrity/ima/ima_queue.c
->> @@ -158,7 +158,7 @@ static int ima_pcr_extend(struct tpm_digest *digests_arg, int pcr)
->>    */
->>   int ima_add_template_entry(struct ima_template_entry *entry, int violation,
->>   			   const char *op, struct inode *inode,
->> -			   const unsigned char *filename)
->> +			   const unsigned char *filename, bool allow_dup)
->>   {
->>   	u8 *digest = entry->digests[ima_hash_algo_idx].digest;
->>
->   	struct tpm_digestate_entry(struct ima_template_entry *entry, int violation,
-Not sure I understand this.  Maybe a typo?  Could you please explain?
+> > Instead of making the change on a per measurement rule basis, disabling
+> > "htable" would be the simplest way of forcing re-measurements.  All
+> > that would be needed is a new Kconfig (e.g. CONFIG_IMA_DISABLE_HTABLE)
+> > and the associated test in ima_add_template_entry().
+> > 
+> Agreed.  Earlier I wasn't sure if you wanted allow_dup support for all 
+> the scenarios.  Now that it is clear,  I will implement it as you 
+> suggested.  Thank you so much for the pointers.  Appreciate it.
 
->>   
->>   	mutex_lock(&ima_extend_list_mutex);
->>   	if (!violation) {
->> -		if (ima_lookup_digest_entry(digest, entry->pcr)) {
->> +		if (!allow_dup &&
->> +		    ima_lookup_digest_entry(digest, entry->pcr)) {
-> 
-> Can't this change be simplified to "if (!violation && !allow_dup)"?
-> 
-Sure.  Will do.
+There are two different solutions - per measurement rule, disabling
+htable - being discussed.   Disabling htable requires miminumal
+changes.  Which version are you thinking of implementing?
 
-Earlier I wasn't sure if 'violation' would touch any other use-cases 
-inadvertently.  That's why I localized the change as above.
+thanks,
 
-But now since we are supporting other scenarios as well,
-I believe "if (!violation && !allow_dup)" would be cleaner.
-
-> Also perhaps instead of passing another variable "allow_dup" to each of
-> these functions, pass a mask containing violation and allow_dup.
-> 
-There were examples of both approaches in ima_match_policy().
-  - int *pcr/ima_template_desc **template_desc as an out-param;
-  - and various actions as flags in return int.
-
-Earlier I couldn't decide one way or the other, so I picked the 
-out-param approach.
-
-But since allow_dup is just a single bit info, returning it as a bit in 
-the action flag is a cleaner solution.
-Will implement it with flag in the next iteration.
-
-Thanks again for reviewing the series.  Really appreciate it.
-
-Thanks,
-Tushar
-
->>   			audit_cause = "hash_exists";
->>   			result = -EEXIST;
->>   			goto out;
-> 
-> thanks,
-> 
-> Mimi
-> 
+Mimi
 
 --
 dm-devel mailing list
