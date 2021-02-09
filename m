@@ -2,83 +2,77 @@ Return-Path: <SRS0=CL6l=HT=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+	SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 23EE3C433DB
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:38:34 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 96F26C433DB
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:38:36 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7F13D64D9A
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:38:33 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7F13D64D9A
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=huawei.com
+	by mail.kernel.org (Postfix) with ESMTPS id 1484A64D9F
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:38:35 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1484A64D9F
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-325-E6WXR1IJPqehgvHC-62NfQ-1; Wed, 17 Feb 2021 10:38:30 -0500
-X-MC-Unique: E6WXR1IJPqehgvHC-62NfQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-20-G5GzAqMfMEOuKUxriUUbmw-1; Wed, 17 Feb 2021 10:38:33 -0500
+X-MC-Unique: G5GzAqMfMEOuKUxriUUbmw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F06F679EC1;
-	Wed, 17 Feb 2021 15:38:24 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CE70F6F7EA;
-	Wed, 17 Feb 2021 15:38:24 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6FD48100CCC1;
+	Wed, 17 Feb 2021 15:38:27 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3F30E10016FD;
+	Wed, 17 Feb 2021 15:38:27 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9B06958073;
-	Wed, 17 Feb 2021 15:38:24 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0DDF218095CB;
+	Wed, 17 Feb 2021 15:38:27 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 11A2mb2x028182 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 9 Feb 2021 21:48:37 -0500
+	id 1196DpZZ003321 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 9 Feb 2021 01:13:51 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 86223A9E5E; Wed, 10 Feb 2021 02:48:37 +0000 (UTC)
+	id 8C4CF6D9DB; Tue,  9 Feb 2021 06:13:51 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 80E78A9EED
-	for <dm-devel@redhat.com>; Wed, 10 Feb 2021 02:48:34 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 85EB4906B4
+	for <dm-devel@redhat.com>; Tue,  9 Feb 2021 06:13:48 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B7522185A795
-	for <dm-devel@redhat.com>; Wed, 10 Feb 2021 02:48:34 +0000 (UTC)
-Received: from szxga07-in.huawei.com (szxga07-in.huawei.com [45.249.212.35])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-447-V8OMRT7SP4SqNWY_16oEPg-1; Tue, 09 Feb 2021 21:48:32 -0500
-X-MC-Unique: V8OMRT7SP4SqNWY_16oEPg-1
-Received: from DGGEMS408-HUB.china.huawei.com (unknown [172.30.72.58])
-	by szxga07-in.huawei.com (SkyGuard) with ESMTP id 4Db3bD6z5nz7jVC;
-	Wed, 10 Feb 2021 10:28:24 +0800 (CST)
-Received: from [10.174.177.4] (10.174.177.4) by DGGEMS408-HUB.china.huawei.com
-	(10.3.19.208) with Microsoft SMTP Server id 14.3.498.0;
-	Wed, 10 Feb 2021 10:29:40 +0800
-To: lixiaokeng <lixiaokeng@huawei.com>, Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	<christophe.varoqui@opensvc.com>
-References: <20210128210852.23207-1-mwilck@suse.com>
-	<c1dddccecfe0e12a2fe2dca66faad740a30acd53.camel@suse.com>
-	<99488b1b-2339-338d-e951-0b8f3e78449b@huawei.com>
-	<15415073-3b0b-c5a3-ec1d-ced704a42a86@huawei.com>
-	<05408634d2361998782d80b34b7de64d452ba09c.camel@suse.com>
-	<6c80ccbe-0c35-aef8-e95b-97acd06a3487@huawei.com>
-	<7b2c571eb7ff9d54c51037a4fae87796ead1144e.camel@suse.com>
-	<3c8f215a-75d5-0f7b-1008-c8c565bb0cf3@huawei.com>
-	<11c072c152937004e5f08ecff8dd9ded7d915af6.camel@suse.com>
-	<3e0d931e-d0df-69e3-21f7-456b99e5b6f3@huawei.com>
-From: "Hexiaowen (Hex, EulerOS)" <hexiaowen@huawei.com>
-Message-ID: <d1359701-6c22-f199-8c36-15ea733f7ccc@huawei.com>
-Date: Wed, 10 Feb 2021 10:29:40 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
-	Thunderbird/78.7.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B7339101A54E
+	for <dm-devel@redhat.com>; Tue,  9 Feb 2021 06:13:48 +0000 (UTC)
+Received: from out30-45.freemail.mail.aliyun.com
+	(out30-45.freemail.mail.aliyun.com [115.124.30.45]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-323-F2IIfDcCOjK7j0Ztxna20w-1;
+	Tue, 09 Feb 2021 01:13:45 -0500
+X-MC-Unique: F2IIfDcCOjK7j0Ztxna20w-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R151e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1;
+	HT=alimailimapcm10staff010182156082;
+	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=9; SR=0;
+	TI=SMTPD_---0UOH.b00_1612851218
+Received: from admindeMacBook-Pro-2.local(mailfrom:jefflexu@linux.alibaba.com
+	fp:SMTPD_---0UOH.b00_1612851218) by smtp.aliyun-inc.com(127.0.0.1);
+	Tue, 09 Feb 2021 14:13:38 +0800
+To: Ming Lei <ming.lei@redhat.com>
+References: <20210208085243.82367-1-jefflexu@linux.alibaba.com>
+	<20210208085243.82367-10-jefflexu@linux.alibaba.com>
+	<20210209031122.GA63798@T590>
+From: JeffleXu <jefflexu@linux.alibaba.com>
+Message-ID: <a499a33f-da2e-b5aa-5266-9e7c76a34b48@linux.alibaba.com>
+Date: Tue, 9 Feb 2021 14:13:38 +0800
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
+	Gecko/20100101 Thunderbird/78.7.0
 MIME-Version: 1.0
-In-Reply-To: <3e0d931e-d0df-69e3-21f7-456b99e5b6f3@huawei.com>
-X-Originating-IP: [10.174.177.4]
-X-CFilter-Loop: Reflected
+In-Reply-To: <20210209031122.GA63798@T590>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -88,12 +82,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 11A2mb2x028182
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 17 Feb 2021 10:31:26 -0500
-Cc: linfeilong <linfeilong@huawei.com>, dm-devel@redhat.com
-Subject: Re: [dm-devel] [PATCH] multipathd: avoid crash in uevent_cleanup()
+Cc: axboe@kernel.dk, snitzer@redhat.com, caspar@linux.alibaba.com,
+	io-uring@vger.kernel.org, linux-block@vger.kernel.org,
+	joseph.qi@linux.alibaba.com, dm-devel@redhat.com, hch@lst.de
+Subject: Re: [dm-devel] [PATCH v3 09/11] dm: support IO polling for
+	bio-based dm device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -107,29 +102,94 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-CgrlnKggMjAyMS8yLzEwIDEwOjAyLCBsaXhpYW9rZW5nIOWGmemBkzoKPiAKPiAKPj4KPj4gTm93
-IEkgZ290IGl0LCBldmVudHVhbGx5IDotKSBUaGFua3MgZm9yIHRoZSBjbGFyaWZpY2F0aW9uLiBX
-b3VsZCBpdCBiZQo+PiBvc3NpYmxlIGZvciB5b3UgdG8gY2F0ZWdvcml6ZSB0aGUgZGlmZmVyZW50
-wqBpc3N1ZXMgYW5kIHByb3ZpZGUgY29yZQo+PiBkdW1wcz8KPj4KPiAKPiBXaGVuIGJsb2NraW5n
-IG9mIHRocmVhZCBjYW5jZWxsYXRpb24gZHVyaW5nIHVkZXZfbW9uaXRvcl9yZWNlaXZlX2Rldmlj
-ZSgpLAo+IHRoZXJlIGFyZSBqdXN0ID8/KCkgYW5kIHB0aHJlYWRfdGVzdGNhbmNlbCgpIGNyYXNo
-Lgo+IFRoZSBzdGFjazEudGd6IGlzID8/KCkgY29yZWR1bXAgYW5kIHRoZSBzdGFjazIudGd6IGlz
-IHB0aHJlYWRfdGVzdGNhbmNlbCgpCj4gY29yZWR1bXBzLgo+IAo+PiBZb3UgbWVudGlvbmVkIGlu
-IHRoZSBzeXN0ZW1kIGlzc3VlIHRoYXQgeW91IHdlcmUgcGxheWluZyBhcm91bmQgd2l0aAo+PiB0
-aGUgZ2NjIC1mZXhjZXB0aW9ucyBmbGFnLiBBcyBJIHJlbWFya2VkIHRoZXJlIC0gaG93IGRpZCBp
-dCBnZXQgc2V0IGluCj4+IHRoZSBmaXJzdCBwbGFjZT8gV2hhdCBkaXN0cm8gYXJlIHlvdSB1c2lu
-Zz8KPiAKPiBIZSBYaWFvd2VuLCBwbGVhc2UgYW5zd2VyIHRoaXMgcXVlc3Rpb24uCgpXZSB1c2Ug
-dGhlIHJlbGVhc2UgdmVyc2lvbiBvcGVuRXVsZXIgMjAuMDMgTFRTIGFuZCB0aGUgc3lzdGVtZCB2
-ZXJzaW9uIDI0My4KCkR1cmluZyBSUE1idWlsZCwgYWRkIC1mZXhjZXB0aW9ucyBnbG9iYWxseSB0
-byBDRkxBR1MuCgo+IAo+IFJlZ2FyZHMsCj4gTGl4aWFva2VuZwo+IAoKCi0tCmRtLWRldmVsIG1h
-aWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29t
-L21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+
+
+On 2/9/21 11:11 AM, Ming Lei wrote:
+> On Mon, Feb 08, 2021 at 04:52:41PM +0800, Jeffle Xu wrote:
+>> DM will iterate and poll all polling hardware queues of all target mq
+>> devices when polling IO for dm device. To mitigate the race introduced
+>> by iterating all target hw queues, a per-hw-queue flag is maintained
+> 
+> What is the per-hw-queue flag?
+
+Sorry I forgot to update the commit message as the implementation
+changed. Actually this mechanism is implemented by patch 10 of this
+patch set.
+
+> 
+>> to indicate whether this polling hw queue currently being polled on or
+>> not. Every polling hw queue is exclusive to one polling instance, i.e.,
+>> the polling instance will skip this polling hw queue if this hw queue
+>> currently is being polled by another polling instance, and start
+>> polling on the next hw queue.
+> 
+> Not see such skip in dm_poll_one_dev() in which
+> queue_for_each_poll_hw_ctx() is called directly for polling all POLL
+> hctxs of the request queue, so can you explain it a bit more about this
+> skip mechanism?
+> 
+
+It is implemented as patch 10 of this patch set. When spin_trylock()
+fails, the polling instance will return immediately, instead of busy
+waiting.
+
+
+> Even though such skipping is implemented, not sure if good performance
+> can be reached because hctx poll may be done in ping-pong style
+> among several CPUs. But blk-mq hctx is supposed to have its cpu affinities.
+> 
+
+Yes, the mechanism of iterating all hw queues can make the competition
+worse.
+
+If every underlying data device has **only** one polling hw queue, then
+this ping-pong style polling still exist, even when we implement split
+bio tracking mechanism, i.e., acquiring the specific hw queue the bio
+enqueued into. Because multiple polling instance has to compete for the
+only polling hw queue.
+
+But if multiple polling hw queues per device are reserved for multiple
+polling instances, (e.g., every underlying data device has 3 polling hw
+queues when there are 3 polling instances), just as what we practice on
+mq polling, then the current implementation of iterating all hw queues
+will indeed works in a ping-pong style, while this issue shall not exist
+when accurate split bio tracking mechanism could be implemented.
+
+As for the performance, I cite the test results here, as summarized in
+the cover-letter
+(https://lore.kernel.org/io-uring/20210208085243.82367-1-jefflexu@linux.alibaba.com/)
+
+	    | IOPS (IRQ mode) | IOPS (iopoll=1 mode) | diff
+----------- | --------------- | -------------------- | ----
+without opt | 		 318k |		 	256k | ~-20%
+with opt    |		 314k |		 	354k | ~13%
+
+The 'opt' refers to the optimization of patch 10, i.e., the skipping
+mechanism. There are 3 polling instances (i.e., 3 CPUs) in this test case.
+
+
+Indeed the current implementation of iterating all hw queues is some
+sort of compromise, as I find it really difficult to implement the
+accurate split bio mechanism, and to achieve high performance at the
+same time. Thus I turn to optimizing the original implementation of
+iterating all hw queues, such as optimization of patch 10 and 11.
+
+
+-- 
+Thanks,
+Jeffle
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
