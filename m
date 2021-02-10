@@ -2,115 +2,71 @@ Return-Path: <SRS0=/g2B=HM=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-17.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=ham autolearn_force=no version=3.4.0
+	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 61F2AC433DB
-	for <dm-devel@archiver.kernel.org>; Wed, 10 Feb 2021 18:49:03 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 73501C433DB
+	for <dm-devel@archiver.kernel.org>; Wed, 10 Feb 2021 19:23:42 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id DB29C64E26
-	for <dm-devel@archiver.kernel.org>; Wed, 10 Feb 2021 18:49:02 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org DB29C64E26
+	by mail.kernel.org (Postfix) with ESMTPS id B532864E77
+	for <dm-devel@archiver.kernel.org>; Wed, 10 Feb 2021 19:23:41 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org B532864E77
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1612982941;
+	s=mimecast20190719; t=1612985020;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=pgZxiyZ71uDNG2kGKiVpf83eDHmEhpkNFRUUtJKiYe8=;
-	b=WwHU1tNkXKoRaE4sh+JU/C7s2kJ/6fVfczcfidiIMEV1qE5V1KcQkmtIWpyW7oX8a8q8kn
-	s+gxo/m68wFU34TQh6rKXXu6ZuMvYc/1YuWlpAxFxa1ptnrI6uwRIQfURQ4YziVz3/gl9I
-	g4aLMAhKXKbFP9vtOP+FIy+rWQdOfEs=
+	bh=zfNjjdOovm6mBGMw/IX7hgFQtb315R/y6h6riYg5FHE=;
+	b=V6nph8dEG0DGolVjbseiym0I5H4w8xeaMP6ON1XW2ge3PXjPmVXdjrSnPkMODpZV1JLHg9
+	Yw6YBrJSVY1mMdl6f+snF1gohZjZtrP9QXDO4/N3xKaPyH9ApRX41W4x5aBkruFW2oE8y4
+	O9hqIrb3R1mg7ohuf3nBf+bpvBQuLUI=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-211-8IWEnS8fMXuqQLnZHnsvVQ-1; Wed, 10 Feb 2021 13:48:59 -0500
-X-MC-Unique: 8IWEnS8fMXuqQLnZHnsvVQ-1
+ us-mta-334-nZUfcp1aMomLDvUAlRGIyQ-1; Wed, 10 Feb 2021 14:23:37 -0500
+X-MC-Unique: nZUfcp1aMomLDvUAlRGIyQ-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C44AF1936B69;
-	Wed, 10 Feb 2021 18:48:53 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9AA1219809;
-	Wed, 10 Feb 2021 18:48:53 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 17119CC621;
+	Wed, 10 Feb 2021 19:23:32 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4CD2912D7E;
+	Wed, 10 Feb 2021 19:23:31 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 398AD18095C9;
-	Wed, 10 Feb 2021 18:48:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 003C24E58E;
+	Wed, 10 Feb 2021 19:23:28 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
+	[10.5.11.11])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 11AImptI032207 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 10 Feb 2021 13:48:51 -0500
+	id 11AJNRZS004842 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 10 Feb 2021 14:23:27 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id E0796EAF92; Wed, 10 Feb 2021 18:48:50 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DB234ED15D
-	for <dm-devel@redhat.com>; Wed, 10 Feb 2021 18:48:48 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9D8B8101A53A
-	for <dm-devel@redhat.com>; Wed, 10 Feb 2021 18:48:48 +0000 (UTC)
-Received: from mail-qk1-f173.google.com (mail-qk1-f173.google.com
-	[209.85.222.173]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-403-_tHYcBQMMTani0ty3L6o6g-1; Wed, 10 Feb 2021 13:48:44 -0500
-X-MC-Unique: _tHYcBQMMTani0ty3L6o6g-1
-Received: by mail-qk1-f173.google.com with SMTP id t63so2713358qkc.1;
-	Wed, 10 Feb 2021 10:48:44 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
-	:references:mime-version:content-disposition:in-reply-to;
-	bh=Ao3wY8+fOOb7xqabTB1quMITdoXuuKn4x/hiLYN+Iv4=;
-	b=oLDBrk0/FpYixBQSztps65lVAf7IZ66yUdkiC1ygF9P/2DrW+JweEKzVmQ1OmhW290
-	WX24ZHoEF6PWRmaL00X/RWNPxuDHRt66MCc411ZaskvPmyG3P4K0WGhRb8irtxLZE8Hu
-	vphXxhSS5qpnCrLQOiNgB97Fnqpeg2lvYFXWyBrn0aqN5fLogHgXi3riWroHlEcSbq52
-	cOjSf3yqPwsoGHyxBehyN6xXJDgxXsHtYnTQeOWUbqXJnAvNBsQaUTGOShdoIAl3lzgh
-	KJnGXgS2GIVWbUvI4TWCzIeeG7XfKanpHrPWwIRsKzYQQHGdjO9btCINID0oxGXzrY5/
-	X52Q==
-X-Gm-Message-State: AOAM530jAm3xrhnNxpajZBExkmogsQR0wrNwxP3HqjjjsOhE6Zp3AgzI
-	7ZQ1JbafMP2sH0t7MeiTtPfG5uVyuB963Q==
-X-Google-Smtp-Source: ABdhPJyEehPEZh0rQA3Zg7GNpL0wxIYUZPAaGIwf37KB4xd0SLCNL+KEPTCHO56x0QM3IkYwRghMmQ==
-X-Received: by 2002:a05:620a:2041:: with SMTP id
-	d1mr4675671qka.326.1612982923618; 
-	Wed, 10 Feb 2021 10:48:43 -0800 (PST)
-Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
-	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
-	d22sm1840126qtp.34.2021.02.10.10.48.42
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Wed, 10 Feb 2021 10:48:42 -0800 (PST)
-Date: Wed, 10 Feb 2021 13:48:42 -0500
+	id B6C0A19CB0; Wed, 10 Feb 2021 19:23:27 +0000 (UTC)
+Received: from localhost (unknown [10.18.25.174])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 102C06F92A;
+	Wed, 10 Feb 2021 19:23:24 +0000 (UTC)
+Date: Wed, 10 Feb 2021 14:23:23 -0500
 From: Mike Snitzer <snitzer@redhat.com>
-To: Nikos Tsironis <ntsironis@arrikto.com>
-Message-ID: <20210210184842.GA6689@lobo>
-References: <20210122152556.24822-1-ntsironis@arrikto.com>
-	<20210122152556.24822-5-ntsironis@arrikto.com>
-	<20210210181205.GA7904@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Message-ID: <20210210192323.GC7904@redhat.com>
+References: <alpine.LRH.2.02.2102101140420.30253@file01.intranet.prod.int.rdu2.redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <20210210181205.GA7904@redhat.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+In-Reply-To: <alpine.LRH.2.02.2102101140420.30253@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Mutt/1.5.21 (2010-09-15)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com, ejt@redhat.com, agk@redhat.com
-Subject: Re: [dm-devel] [PATCH 4/4] dm era: Remove unreachable resize
- operation in pre-resume function
+Cc: Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com,
+	Milan Broz <mbroz@redhat.com>
+Subject: Re: [dm-devel] dm: fix deadlock when swapping to encrypted device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -133,104 +89,129 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Feb 10 2021 at  1:12P -0500,
-Mike Snitzer <snitzer@redhat.com> wrote:
+On Wed, Feb 10 2021 at 11:50am -0500,
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> On Fri, Jan 22 2021 at 10:25am -0500,
-> Nikos Tsironis <ntsironis@arrikto.com> wrote:
+> Hi
 > 
-> > The device metadata are resized in era_ctr(), so the metadata resize
-> > operation in era_preresume() never runs.
-> > 
-> > Also, note, that if the operation did ever run it would deadlock, since
-> > the worker has not been started at this point.
-
-It wouldn't have deadlocked, it'd have queued the work (see wake_worker)
-
-> > 
-> > Fixes: eec40579d84873 ("dm: add era target")
-> > Cc: stable@vger.kernel.org # v3.15+
-> > Signed-off-by: Nikos Tsironis <ntsironis@arrikto.com>
-> > ---
-> >  drivers/md/dm-era-target.c | 9 ---------
-> >  1 file changed, 9 deletions(-)
-> > 
-> > diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
-> > index 104fb110cd4e..c40e132e50cd 100644
-> > --- a/drivers/md/dm-era-target.c
-> > +++ b/drivers/md/dm-era-target.c
-> > @@ -1567,15 +1567,6 @@ static int era_preresume(struct dm_target *ti)
-> >  {
-> >  	int r;
-> >  	struct era *era = ti->private;
-> > -	dm_block_t new_size = calc_nr_blocks(era);
-> > -
-> > -	if (era->nr_blocks != new_size) {
-> > -		r = in_worker1(era, metadata_resize, &new_size);
-> > -		if (r)
-> > -			return r;
-> > -
-> > -		era->nr_blocks = new_size;
-> > -	}
-> >  
-> >  	start_worker(era);
-> >  
-> > -- 
-> > 2.11.0
-> > 
+> Here I'm sending the patch that fixes swapping to dm-crypt.
 > 
-> Resize shouldn't actually happen in the ctr.  The ctr loads a temporary
-> (inactive) table that will only become active upon resume.  That is why
-> resize should always be done in terms of resume.
+> The logic that limits the number of in-progress I/Os was moved to generic 
+> device mapper. A dm target can activate it by setting ti->limit_swap. The 
+> actual limit can be set in /sys/module/dm_mod/parameters/swap_ios.
 > 
-> I'll look closer but ctr shouldn't do the actual resize, and the
-> start_worker() should be moved above the resize code you've removed
-> above.
+> This patch only limits swap bios (those with REQ_SWAP set). I don't limit 
+> other bios, because limiting them causes performance degradation due to 
+> cache line bouncing when taking the semaphore - and there are no reports 
+> that non-swap I/O on dm crypt causes deadlocks.
+> 
+> Mikulas
+> 
+> 
+> 
+> From: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> The system would deadlock when swapping to a dm-crypt device. The reason
+> is that for each incoming write bio, dm-crypt allocates memory that holds
+> encrypted data. These excessive allocations exhaust all the memory and the
+> result is either deadlock or OOM trigger.
+> 
+> This patch limits the number of in-flight swap bios, so that the memory
+> consumed by dm-crypt is limited. The limit is enforced if the target set
+> the "limit_swap" variable and if the bio has REQ_SWAP set.
+> 
+> Non-swap bios are not affected becuase taking the semaphore would cause
+> performance degradation.
+> 
+> This is similar to request-based drivers - they will also block when the
+> number of requests is over the limit.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org
+> 
+> ---
+>  drivers/md/dm-core.h          |    4 ++
+>  drivers/md/dm-crypt.c         |    1 
+>  drivers/md/dm.c               |   61 ++++++++++++++++++++++++++++++++++++++++++
+>  include/linux/device-mapper.h |    5 +++
+>  4 files changed, 71 insertions(+)
+> 
+> Index: linux-2.6/drivers/md/dm.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm.c	2021-02-10 15:04:53.000000000 +0100
+> +++ linux-2.6/drivers/md/dm.c	2021-02-10 16:29:04.000000000 +0100
 
-Does this work for you?  If so I'll get it staged (like I've just
-staged all your other dm-era fixes for 5.12).
+> @@ -1271,6 +1307,15 @@ static blk_qc_t __map_bio(struct dm_targ
+>  	atomic_inc(&io->io_count);
+>  	sector = clone->bi_iter.bi_sector;
+>  
+> +	if (unlikely(swap_io_limit(ti, clone))) {
+> +		struct mapped_device *md = io->md;
+> +		int latch = get_swap_ios();
+> +		if (unlikely(latch != md->swap_ios)) {
+> +			__set_swap_io_limit(md, latch);
+> +		}
 
- drivers/md/dm-era-target.c | 13 ++-----------
- 1 file changed, 2 insertions(+), 11 deletions(-)
+Don't need these curly braces...
 
-diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
-index d0e75fd31c1e..ec198e9cdafb 100644
---- a/drivers/md/dm-era-target.c
-+++ b/drivers/md/dm-era-target.c
-@@ -1501,15 +1501,6 @@ static int era_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	}
- 	era->md = md;
- 
--	era->nr_blocks = calc_nr_blocks(era);
--
--	r = metadata_resize(era->md, &era->nr_blocks);
--	if (r) {
--		ti->error = "couldn't resize metadata";
--		era_destroy(era);
--		return -ENOMEM;
--	}
--
- 	era->wq = alloc_ordered_workqueue("dm-" DM_MSG_PREFIX, WQ_MEM_RECLAIM);
- 	if (!era->wq) {
- 		ti->error = "could not create workqueue for metadata object";
-@@ -1583,6 +1574,8 @@ static int era_preresume(struct dm_target *ti)
- 	struct era *era = ti->private;
- 	dm_block_t new_size = calc_nr_blocks(era);
- 
-+	start_worker(era);
-+
- 	if (era->nr_blocks != new_size) {
- 		r = in_worker1(era, metadata_resize, &new_size);
- 		if (r)
-@@ -1591,8 +1584,6 @@ static int era_preresume(struct dm_target *ti)
- 		era->nr_blocks = new_size;
- 	}
- 
--	start_worker(era);
--
- 	r = in_worker0(era, metadata_era_rollover);
- 	if (r) {
- 		DMERR("%s: metadata_era_rollover failed", __func__);
+> +		down(&md->swap_ios_semaphore);
+> +	}
+> +
+>  	r = ti->type->map(ti, clone);
+>  	switch (r) {
+>  	case DM_MAPIO_SUBMITTED:
+
+> @@ -1814,6 +1868,10 @@ static struct mapped_device *alloc_dev(i
+>  	init_waitqueue_head(&md->eventq);
+>  	init_completion(&md->kobj_holder.completion);
+>  
+> +	md->swap_ios = get_swap_ios();
+> +	sema_init(&md->swap_ios_semaphore, md->swap_ios);
+> +	mutex_init(&md->swap_ios_lock);
+> +
+>  	md->disk->major = _major;
+>  	md->disk->first_minor = minor;
+>  	md->disk->fops = &dm_blk_dops;
+
+This is only applicable for bio-based DM.  But probably not worth
+avoiding the setup for request-based...
+
+> @@ -3097,6 +3155,9 @@ MODULE_PARM_DESC(reserved_bio_based_ios,
+>  module_param(dm_numa_node, int, S_IRUGO | S_IWUSR);
+>  MODULE_PARM_DESC(dm_numa_node, "NUMA node for DM device memory allocations");
+>  
+> +module_param(swap_ios, int, S_IRUGO | S_IWUSR);
+> +MODULE_PARM_DESC(swap_ios, "The number of swap I/Os in flight");
+> +
+
+Can you please rename this to modparam to "swap_bios"?  And rename other
+variables/members, etc (e.g. "swap_bios_semaphore", "swap_bios_lock",
+etc)?
+
+> Index: linux-2.6/include/linux/device-mapper.h
+> ===================================================================
+> --- linux-2.6.orig/include/linux/device-mapper.h	2020-11-25 13:40:44.000000000 +0100
+> +++ linux-2.6/include/linux/device-mapper.h	2021-02-10 15:52:54.000000000 +0100
+> @@ -325,6 +325,11 @@ struct dm_target {
+>  	 * whether or not its underlying devices have support.
+>  	 */
+>  	bool discards_supported:1;
+> +
+> +	/*
+> +	 * Set if we need to limit the number of in-flight bios when swapping.
+> +	 */
+> +	bool limit_swap:1;
+>  };
+>  
+>  void *dm_per_bio_data(struct bio *bio, size_t data_size);
+
+Please rename to "limit_swap_bios".
+
+Other than these nits this looks good to me.
+Once you send v2 I can get it staged for 5.12.
+
+Thanks,
+Mike
 
 --
 dm-devel mailing list
