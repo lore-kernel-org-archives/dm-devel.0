@@ -2,139 +2,90 @@ Return-Path: <SRS0=/g2B=HM=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	PDS_BAD_THREAD_QP_64,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.5 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,NICE_REPLY_A,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A9A2AC433E0
-	for <dm-devel@archiver.kernel.org>; Wed, 10 Feb 2021 19:57:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0E263C433DB
+	for <dm-devel@archiver.kernel.org>; Wed, 10 Feb 2021 20:00:24 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id DA51064EE8
-	for <dm-devel@archiver.kernel.org>; Wed, 10 Feb 2021 19:57:30 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org DA51064EE8
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id C415264E35
+	for <dm-devel@archiver.kernel.org>; Wed, 10 Feb 2021 20:00:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C415264E35
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-11-ZnsReLBIN7aTPRnDENkk3Q-1; Wed, 10 Feb 2021 14:57:27 -0500
-X-MC-Unique: ZnsReLBIN7aTPRnDENkk3Q-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-475-upM4VSYHNj6LuW338ABZAg-1; Wed, 10 Feb 2021 15:00:19 -0500
+X-MC-Unique: upM4VSYHNj6LuW338ABZAg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E608DCE642;
-	Wed, 10 Feb 2021 19:57:21 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 241B0100CCC1;
+	Wed, 10 Feb 2021 20:00:13 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C4FD862467;
-	Wed, 10 Feb 2021 19:57:21 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E9A251A86F;
+	Wed, 10 Feb 2021 20:00:12 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 610D918095C9;
-	Wed, 10 Feb 2021 19:57:21 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7DC5C18095C9;
+	Wed, 10 Feb 2021 20:00:12 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 11AJvI1f008252 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 10 Feb 2021 14:57:18 -0500
+	id 11AK0A6F008539 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 10 Feb 2021 15:00:10 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6FE2CE2A65; Wed, 10 Feb 2021 19:57:18 +0000 (UTC)
+	id 2CF802026D13; Wed, 10 Feb 2021 20:00:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6950ADEE7C
-	for <dm-devel@redhat.com>; Wed, 10 Feb 2021 19:57:16 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 273462026D16
+	for <dm-devel@redhat.com>; Wed, 10 Feb 2021 20:00:07 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3866D8032E3
-	for <dm-devel@redhat.com>; Wed, 10 Feb 2021 19:57:16 +0000 (UTC)
-Received: from de-smtp-delivery-102.mimecast.com
-	(de-smtp-delivery-102.mimecast.com [194.104.109.102]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-148-2e1T0O1lNeWBoXjWgRTi7Q-1;
-	Wed, 10 Feb 2021 14:57:13 -0500
-X-MC-Unique: 2e1T0O1lNeWBoXjWgRTi7Q-1
-Received: from EUR03-AM5-obe.outbound.protection.outlook.com
-	(mail-am5eur03lp2057.outbound.protection.outlook.com [104.47.8.57])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	de-mta-31-ijOELds3PAerSfL8KcLGjg-1; Wed, 10 Feb 2021 20:57:10 +0100
-X-MC-Unique: ijOELds3PAerSfL8KcLGjg-1
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
-	by DB7PR04MB4924.eurprd04.prod.outlook.com (2603:10a6:10:14::33) with
-	Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3846.26;
-	Wed, 10 Feb 2021 19:57:08 +0000
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::69bd:c9ff:f910:faeb]) by
-	DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::69bd:c9ff:f910:faeb%7]) with mapi id 15.20.3825.030;
-	Wed, 10 Feb 2021 19:57:08 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "bblock@linux.ibm.com" <bblock@linux.ibm.com>
-Thread-Topic: [dm-devel] [PATCH 2/2] multipathd: add recheck_wwid_time option
-	to verify the path wwid
-Thread-Index: AQHW/qMuQs93dFGIW0CwQCKCag2SdapQZg8AgAFMbICAAB4QgA==
-Date: Wed, 10 Feb 2021 19:57:08 +0000
-Message-ID: <cf6a5910c2ab53e710c6692c574b3e2d3b78a4bb.camel@suse.com>
-References: <1612847967-8813-1-git-send-email-bmarzins@redhat.com>
-	<1612847967-8813-3-git-send-email-bmarzins@redhat.com>
-	<e8131e361f84ef1caee140183a26c9f60b172f24.camel@suse.com>
-	<YCQhW4uHx4j+xXmL@t480-pf1aa2c2.linux.ibm.com>
-In-Reply-To: <YCQhW4uHx4j+xXmL@t480-pf1aa2c2.linux.ibm.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Evolution 3.38.2
-x-originating-ip: [84.58.19.219]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 9714758a-d602-4383-4d12-08d8cdfe0c6c
-x-ms-traffictypediagnostic: DB7PR04MB4924:
-x-microsoft-antispam-prvs: <DB7PR04MB49241390E8F47C08BC0B5E9EFC8D9@DB7PR04MB4924.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:10000
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: V6biFF0UmDYTzwMNX5BphI+bA4t2CSMkNaD+b3zNETNpH5Qc2pEiJKTP7NyefOaPY0lATDQ/98rAisogi6NrgJvwRJrY9PcdA3dMDEtF+wdv8b2Cd1KGfLfB8DSCt+sBjFLRx5/6dvcQ9ltTQJs2bkMGHFF+47GuiR95nUE/ACwI1expqNXxIDA22bsSkeW5ErOdi+QI57UjTgJbeTbcwJlXEy4ITK19avGQJMkzyuyHEhzpb5/Ghmv/pGsZFdfiwdebJ13Y4K3N0lAN9altmzSdo0E5JTRDvPq/kFxfD7mKgXnlkFZd2W6cyIdp1TUQZ9XzTOpk8rdxpAKiVBg4A2cwp71JgvD+2TwjclsvcLshQ6TbjBMSNfQaPm1N9UjFDjBANLe6mrFFjTSk6fqVtfmCP5Z0115BwcTPG1qrs4fBvkLiSb3uiV8oK3psmFx5h1hGJ3qNdUnjaPUIIgsIcB5bbyU3wFUw+1hJlwF3yyb/i4M6mycPdCSuotRpZBK7pGqwCvxJ/jR/c6LfmpTU1GhY+v1nfx9DOOTgUbX4ZOCOemLM0ZX7MFEpk7VE9Hj46tM6kjENXW83AnmSPmKfU28eY1zfBOMwif4jei4SY9I=
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(346002)(39860400002)(376002)(136003)(366004)(396003)(26005)(186003)(54906003)(5660300002)(86362001)(6486002)(4326008)(478600001)(44832011)(6916009)(6506007)(2616005)(316002)(966005)(8936002)(4744005)(8676002)(83380400001)(66476007)(66446008)(66556008)(64756008)(66946007)(91956017)(76116006)(6512007)(36756003)(71200400001)(2906002)(66574015);
-	DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata: =?iso-8859-15?Q?8UOSMR1Wge/s5d49C4ruUr0sq3S+qq/8UVqazb4ExCkuSWJF3e1yMmvqP?=
-	=?iso-8859-15?Q?6+Zc8LYl2wYQrrLzBfIT/t4vnaBBGyTN9jlt5f40jQGhotXPJBGA84k6h?=
-	=?iso-8859-15?Q?/YxInYgEV2iWQS0s1DWxoIkXCRTeWg9vT3RAwhmK5/tNbIwwJ8g+q186W?=
-	=?iso-8859-15?Q?KnbiAi8djtwzCSgkHUO4PY5MNOSJLv8gCPW2y+3CmltHIHEGRWbhJmI6x?=
-	=?iso-8859-15?Q?O1ghtVvhRO7DHZg3r8QH5zT/LXpxNYWqSYBINY/0QIRZCanIWZRfaD9Yw?=
-	=?iso-8859-15?Q?Ag6nLJWrxE2qhDlmffeW8oKv8n/j/oe+bMVRp+QoFUgxVH7HOokUn62n2?=
-	=?iso-8859-15?Q?cXhRkLzjnS2AF5YUllZnm0b5pF8Vc8xQkw5XGvC4pPMTH/zzWAktuzIYJ?=
-	=?iso-8859-15?Q?+hjMkNmUFpW/bNpi+REbcgdx1vyliyGAZVzHg0l7+CuXjdQWeKnorFcah?=
-	=?iso-8859-15?Q?N2pYnchc+cEB0vNuJGvPvdgw1AQ8BzBsUa5G4acBxLog2ILvqt1PZ9fyA?=
-	=?iso-8859-15?Q?yUv/HqNXpziieOvRrT83MrD1vVNkHEy5CpibsAPU8oa+8p5BrjoCWIWT9?=
-	=?iso-8859-15?Q?PZPKdL/0n/mUnzPQNAbbfulJ+fLD9YfU4ZExM/XL/7mRSp1o8jQEQS5gA?=
-	=?iso-8859-15?Q?/BPsiE7jFBuuO9Hr3ffY1ESmg9YnRftIGfn7qHSX5lU2hikvbIRELOG9g?=
-	=?iso-8859-15?Q?2uVTAdBwNRWm1IXDvwght38hBPGSmC+mR0b/TwjWl/U5kLSncZj99ZWj+?=
-	=?iso-8859-15?Q?i6VEbEUa/xmjPJZCXEOY4DrCXM64CBvkECWldEoP6N/vjg8QfIen5ixyt?=
-	=?iso-8859-15?Q?IOZWtDg7zvw7EAUENl8RW7KD4jBgAJ6IAMf/QXEq0iL12lkW6OiiYNBWA?=
-	=?iso-8859-15?Q?fjkoSeSskayoT8J/aCW7M9InXQ8+sQ+Bc9N7Qu5FIrq84cXzdInwzBNgf?=
-	=?iso-8859-15?Q?W/HSjwf99Wpgr3G43RIyLlyPcHnu/QEl8Db5cH6lE+17QUzayixutQA3D?=
-	=?iso-8859-15?Q?IehvcDKdP6a9C1FsBp9UbxQ4zYNIRJ7/C1UK9t6aLDAoTcN6Kk8yxProp?=
-	=?iso-8859-15?Q?KbV3WRNDWYOUT6jVGVM+GQvL0P7Yf/3fTicLQon7DlMZAGekcZ19fYcM3?=
-	=?iso-8859-15?Q?beABPn5LkCbuj6SZq+9VY9fYsNBttN/oHbt+9Cul20Z3fEL0e8AHKaPmY?=
-	=?iso-8859-15?Q?JJcTO+7HjvqG8aDFiba0pB3+/Esd3bcKQkt3gCN5Phv3pLgEOSwNFd2pD?=
-	=?iso-8859-15?Q?JSbXCmLFSVkvkroqMkohlx5cKbwDmMk546FdAyzvGs/cie5Lw8m8zF/WM?=
-	=?iso-8859-15?Q?QIEaZ6qrjsgexMx4xViuQF416Ne6Q0hjRzZ460k+/+4QQAwNR3ovu74r0?=
-	=?iso-8859-15?Q?2DWrSifhS/Pcc8hclA+E6innkJG5CQ5sV?=
-x-ms-exchange-transport-forked: True
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 21891801182
+	for <dm-devel@redhat.com>; Wed, 10 Feb 2021 20:00:07 +0000 (UTC)
+Received: from mail-pl1-f170.google.com (mail-pl1-f170.google.com
+	[209.85.214.170]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-39-6bGGdmtKMjCiFIt0992POA-1; Wed, 10 Feb 2021 15:00:03 -0500
+X-MC-Unique: 6bGGdmtKMjCiFIt0992POA-1
+Received: by mail-pl1-f170.google.com with SMTP id e9so1825082plh.3
+	for <dm-devel@redhat.com>; Wed, 10 Feb 2021 12:00:02 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+	:user-agent:mime-version:in-reply-to:content-language
+	:content-transfer-encoding;
+	bh=X/pjMNA9NPnucWtVQcDsHQiSVC+LIE3WWhwdtkccKX8=;
+	b=Y/8J/zP2p/vFRk+JTvDg6CIiFC0rJeX+ZDmXhfLh9TkH/8JHXhwJCy6iZOMOAjs7Vm
+	C564ZgzSsWglxteQ6B1JHhQb9mQ+DXWDDzuRyim6s3Il/wuccVuX8X3jqxDZN4ic/hlb
+	4VFc2dXrm8RCL5QeF5AjS7/D4ynBoWhVslkgtc8Ir+7O6FPKuvFC/rKeCQ/3PHncVtHl
+	w6BiIQvIPxQ88xQ6allMHzzmpkbstHVovTcUJ8m1148sKdBzloLaZ08/owwaUIDNP+aZ
+	+yuIxfASKmqQXdOWcDCR/6/FNo6k5OmZj5H7/YhAXor56QzlkwqVPBB2dmAV83BryzPG
+	gsLw==
+X-Gm-Message-State: AOAM532aC6A/XacoZ5aQwGyOThKBA+IaR/Q7t2+d2Nr2zzEExCNv0wLU
+	X11v11ox/f3z1MNAp/k1+rlwyw==
+X-Google-Smtp-Source: ABdhPJywKtOCis9FESO3dFlgiTKGML+vt7LocNs28KG6U3dQRCW1fqRB8r5RgpR9pPnlW/MYGXyTGg==
+X-Received: by 2002:a17:90b:224f:: with SMTP id
+	hk15mr532927pjb.31.1612987200996; 
+	Wed, 10 Feb 2021 12:00:00 -0800 (PST)
+Received: from ?IPv6:2620:10d:c085:21c1::194c? ([2620:10d:c090:400::5:a5c1])
+	by smtp.gmail.com with ESMTPSA id j3sm2865402pjs.50.2021.02.10.11.59.59
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Wed, 10 Feb 2021 12:00:00 -0800 (PST)
+To: Mike Snitzer <snitzer@redhat.com>, Satya Tangirala <satyat@google.com>
+References: <20210201051019.1174983-1-satyat@google.com>
+	<20210210193327.GA8226@redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
+Message-ID: <c681d976-f1bd-482c-8ead-b099986b70e5@kernel.dk>
+Date: Wed, 10 Feb 2021 12:59:59 -0700
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+	Thunderbird/68.10.0
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 9714758a-d602-4383-4d12-08d8cdfe0c6c
-X-MS-Exchange-CrossTenant-originalarrivaltime: 10 Feb 2021 19:57:08.5607 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: 3vtWzCTOJWa2O7j2co0see1/Ad4HwRStM6mLq06txGoqMhtqcRSpq1UJEvCuD7EMnReqp+DP7xete4oUGcR32A==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB7PR04MB4924
+In-Reply-To: <20210210193327.GA8226@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -143,14 +94,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 11AJvI1f008252
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"wucy11@chinatelecom.cn" <wucy11@chinatelecom.cn>
-Subject: Re: [dm-devel] [PATCH 2/2] multipathd: add recheck_wwid_time option
- to verify the path wwid
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
+	linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>,
+	Eric Biggers <ebiggers@google.com>
+Subject: Re: [dm-devel] [PATCH v4 0/5] add support for inline encryption to
+	device mapper
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -164,45 +114,155 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <8E6776222C3B1348905A570FB0CD6AAF@eurprd04.prod.outlook.com>
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Wed, 2021-02-10 at 19:09 +0100, Benjamin Block wrote:
->=20
-> Yeah, just for reference, I saw this happening in practice when
-> something with the LU mapping changed on IBM storage - IIRC I saw it
-> with capacity changes. You end up in this code in the kernel:
-> =A0=A0=A0=20
-> https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/d=
-rivers/scsi/scsi_error.c?id=3D92bf22614b21a2706f4993b278017e437f7785b3#n416
->=20
-> And from there you ought to get an uevent for the sdev.
->=20
-> The WWID in sysfs might still be wrong though AFAIK. The kernel seems
-> to
-> ignore the UA after it delivered the uevent.
+On 2/10/21 12:33 PM, Mike Snitzer wrote:
+> On Mon, Feb 01 2021 at 12:10am -0500,
+> Satya Tangirala <satyat@google.com> wrote:
+> 
+>> This patch series adds support for inline encryption to the device mapper.
+>>
+>> Patch 1 introduces the "passthrough" keyslot manager.
+>>
+>> The regular keyslot manager is designed for inline encryption hardware that
+>> have only a small fixed number of keyslots. A DM device itself does not
+>> actually have only a small fixed number of keyslots - it doesn't actually
+>> have any keyslots in the first place, and programming an encryption context
+>> into a DM device doesn't make much semantic sense. It is possible for a DM
+>> device to set up a keyslot manager with some "sufficiently large" number of
+>> keyslots in its request queue, so that upper layers can use the inline
+>> encryption capabilities of the DM device's underlying devices, but the
+>> memory being allocated for the DM device's keyslots is a waste since they
+>> won't actually be used by the DM device.
+>>
+>> The passthrough keyslot manager solves this issue - when the block layer
+>> sees that a request queue has a passthrough keyslot manager, it doesn't
+>> attempt to program any encryption context into the keyslot manager. The
+>> passthrough keyslot manager only allows the device to expose its inline
+>> encryption capabilities, and a way for upper layers to evict keys if
+>> necessary.
+>>
+>> There also exist inline encryption hardware that can handle encryption
+>> contexts directly, and allow users to pass them a data request along with
+>> the encryption context (as opposed to inline encryption hardware that
+>> require users to first program a keyslot with an encryption context, and
+>> then require the users to pass the keyslot index with the data request).
+>> Such devices can also make use of the passthrough keyslot manager.
+>>
+>> Patch 2 introduces some keyslot manager functions useful for the device
+>> mapper.
+>>
+>> Patch 3 introduces the changes for inline encryption support for the device
+>> mapper. A DM device only exposes the intersection of the crypto
+>> capabilities of its underlying devices. This is so that in case a bio with
+>> an encryption context is eventually mapped to an underlying device that
+>> doesn't support that encryption context, the blk-crypto-fallback's cipher
+>> tfms are allocated ahead of time by the call to blk_crypto_start_using_key.
+>>
+>> Each DM target can now also specify the "DM_TARGET_PASSES_CRYPTO" flag in
+>> the target type features to opt-in to supporting passing through the
+>> underlying inline encryption capabilities.  This flag is needed because it
+>> doesn't make much semantic sense for certain targets like dm-crypt to
+>> expose the underlying inline encryption capabilities to the upper layers.
+>> Again, the DM exposes inline encryption capabilities of the underlying
+>> devices only if all of them opt-in to passing through inline encryption
+>> support.
+>>
+>> A keyslot manager is created for a table when it is loaded. However, the
+>> mapped device's exposed capabilities *only* updated once the table is
+>> swapped in (until the new table is swapped in, the mapped device continues
+>> to expose the old table's crypto capabilities).
+>>
+>> This patch only allows the keyslot manager's capabilities to *expand*
+>> because of table changes. Any attempt to load a new table that doesn't
+>> support a crypto capability that the old table did is rejected.
+>>
+>> This patch also only exposes the intersection of the underlying device's
+>> capabilities, which has the effect of causing en/decryption of a bio to
+>> fall back to the kernel crypto API (if the fallback is enabled) whenever
+>> any of the underlying devices doesn't support the encryption context of the
+>> bio - it might be possible to make the bio only fall back to the kernel
+>> crypto API if the bio's target underlying device doesn't support the bio's
+>> encryption context, but the use case may be uncommon enough in the first
+>> place not to warrant worrying about it right now.
+>>
+>> Patch 4 makes DM evict a key from all its underlying devices when asked to
+>> evict a key.
+>>
+>> Patch 5 makes some DM targets opt-in to passing through inline encryption
+>> support. It does not (yet) try to enable this option with dm-raid, since
+>> users can "hot add" disks to a raid device, which makes this not completely
+>> straightforward (we'll need to ensure that any "hot added" disks must have
+>> a superset of the inline encryption capabilities of the rest of the disks
+>> in the raid device, due to the way Patch 2 of this series works).
+>>
+>> Changes v3 => v4:
+>>  - Allocate the memory for the ksm of the mapped device in
+>>    dm_table_complete(), and install the ksm in the md queue in __bind()
+>>    (as suggested by Mike). Also drop patch 5 from v3 since it's no longer
+>>    needed.
+>>  - Some cleanups
+>>
+>> Changes v2 => v3:
+>>  - Split up the main DM patch into 4 separate patches
+>>  - Removed the priv variable added to struct keyslot manager in v2
+>>  - Use a flag in target type features for opting-in to inline encryption
+>>    support, instead of using "may_passthrough_inline_crypto"
+>>  - cleanups, improve docs and restructure code
+>>
+>> Changes v1 => v2:
+>>  - Introduce private field to struct blk_keyslot_manager
+>>  - Allow the DM keyslot manager to expand its crypto capabilities if the
+>>    table is changed.
+>>  - Make DM reject table changes that would otherwise cause crypto
+>>    capabilities to be dropped.
+>>  - Allocate the DM device's keyslot manager only when at least one crypto
+>>    capability is supported (since a NULL value for q->ksm represents "no
+>>    crypto support" anyway).
+>>  - Remove the struct blk_keyslot_manager field from struct mapped_device.
+>>    This patch now relies on just directly setting up the keyslot manager in
+>>    the request queue, since each DM device is tied to only 1 queue.
+>>
+>> Satya Tangirala (5):
+>>   block: keyslot-manager: Introduce passthrough keyslot manager
+>>   block: keyslot-manager: Introduce functions for device mapper support
+>>   dm: add support for passing through inline crypto support
+>>   dm: support key eviction from keyslot managers of underlying devices
+>>   dm: set DM_TARGET_PASSES_CRYPTO feature for some targets
+>>
+>>  block/blk-crypto.c              |   1 +
+>>  block/keyslot-manager.c         | 146 ++++++++++++++++++++++
+>>  drivers/md/dm-core.h            |   5 +
+>>  drivers/md/dm-flakey.c          |   4 +-
+>>  drivers/md/dm-linear.c          |   5 +-
+>>  drivers/md/dm-table.c           | 210 ++++++++++++++++++++++++++++++++
+>>  drivers/md/dm.c                 |  18 ++-
+>>  include/linux/device-mapper.h   |  11 ++
+>>  include/linux/keyslot-manager.h |  11 ++
+>>  9 files changed, 407 insertions(+), 4 deletions(-)
+>>
+>> -- 
+>> 2.30.0.365.g02bc693789-goog
+>>
+> 
+> This set looks good to me now.
+> 
+> To avoid DM needing another rebase on block: Jens (and others), would
+> you like to review patches 1 and 2 (and reply with your Reviewed-by) so
+> I could pickup the DM required keyslot-manager changes along with
+> patches 3-5?
 
-Right.
+You can add my acked-by to 1+2 and queue it up.
 
-We could trigger a device rescan if such an event was received. Could
-be done from udev rules, or even from multipathd itself.
-
-Thanks,
-Martin
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
-SUSE Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix Imend=F6rffer
-
-
+-- 
+Jens Axboe
 
 --
 dm-devel mailing list
