@@ -2,81 +2,75 @@ Return-Path: <SRS0=CL6l=HT=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A3364C433E0
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:37:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 02BF5C433E0
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:37:34 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 2A4EB64E2F
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:37:30 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2A4EB64E2F
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=cn.fujitsu.com
+	by mail.kernel.org (Postfix) with ESMTPS id 55CDC64E15
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:37:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 55CDC64E15
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=quuxlogic.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-446-RuCRvoZ_N_6lrh2byJRkQw-1; Wed, 17 Feb 2021 10:37:27 -0500
-X-MC-Unique: RuCRvoZ_N_6lrh2byJRkQw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-274-lkysFbbOMZa5McNCAcZX1g-1; Wed, 17 Feb 2021 10:37:30 -0500
+X-MC-Unique: lkysFbbOMZa5McNCAcZX1g-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D101D801984;
-	Wed, 17 Feb 2021 15:37:22 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AE5045D74E;
-	Wed, 17 Feb 2021 15:37:22 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F1FC579ED0;
+	Wed, 17 Feb 2021 15:37:25 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D22F7648A2;
+	Wed, 17 Feb 2021 15:37:25 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7C65858073;
-	Wed, 17 Feb 2021 15:37:22 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A211C18095CC;
+	Wed, 17 Feb 2021 15:37:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 118Atltj011308 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 8 Feb 2021 05:55:47 -0500
+	id 11BMjNpI003839 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 11 Feb 2021 17:45:23 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 5F9C12166B32; Mon,  8 Feb 2021 10:55:47 +0000 (UTC)
+	id 1F2C610340E; Thu, 11 Feb 2021 22:45:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 593E12166B2C
-	for <dm-devel@redhat.com>; Mon,  8 Feb 2021 10:55:44 +0000 (UTC)
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 18DAF103401
+	for <dm-devel@redhat.com>; Thu, 11 Feb 2021 22:45:19 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C5F82800B28
-	for <dm-devel@redhat.com>; Mon,  8 Feb 2021 10:55:44 +0000 (UTC)
-Received: from heian.cn.fujitsu.com (mail.cn.fujitsu.com [183.91.158.132])
-	by relay.mimecast.com with ESMTP id us-mta-222-2jFVmccDOVuDySGYNw8Bbg-1;
-	Mon, 08 Feb 2021 05:55:42 -0500
-X-MC-Unique: 2jFVmccDOVuDySGYNw8Bbg-1
-X-IronPort-AV: E=Sophos;i="5.81,161,1610380800"; d="scan'208";a="104328064"
-Received: from unknown (HELO cn.fujitsu.com) ([10.167.33.5])
-	by heian.cn.fujitsu.com with ESMTP; 08 Feb 2021 18:55:40 +0800
-Received: from G08CNEXMBPEKD05.g08.fujitsu.local (unknown [10.167.33.204])
-	by cn.fujitsu.com (Postfix) with ESMTP id 58EDC4CE6F82;
-	Mon,  8 Feb 2021 18:55:37 +0800 (CST)
-Received: from G08CNEXCHPEKD04.g08.fujitsu.local (10.167.33.200) by
-	G08CNEXMBPEKD05.g08.fujitsu.local (10.167.33.204) with Microsoft SMTP
-	Server (TLS) id 15.0.1497.2; Mon, 8 Feb 2021 18:55:40 +0800
-Received: from irides.mr.mr.mr (10.167.225.141) by
-	G08CNEXCHPEKD04.g08.fujitsu.local (10.167.33.209) with Microsoft SMTP
-	Server
-	id 15.0.1497.2 via Frontend Transport; Mon, 8 Feb 2021 18:55:39 +0800
-From: Shiyang Ruan <ruansy.fnst@cn.fujitsu.com>
-To: <linux-kernel@vger.kernel.org>, <linux-xfs@vger.kernel.org>,
-	<linux-nvdimm@lists.01.org>, <linux-mm@kvack.org>,
-	<linux-fsdevel@vger.kernel.org>, <dm-devel@redhat.com>
-Date: Mon, 8 Feb 2021 18:55:23 +0800
-Message-ID: <20210208105530.3072869-5-ruansy.fnst@cn.fujitsu.com>
-In-Reply-To: <20210208105530.3072869-1-ruansy.fnst@cn.fujitsu.com>
-References: <20210208105530.3072869-1-ruansy.fnst@cn.fujitsu.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CFE2A101A56D
+	for <dm-devel@redhat.com>; Thu, 11 Feb 2021 22:45:19 +0000 (UTC)
+Received: from e2i688.smtp2go.com (e2i688.smtp2go.com [103.2.142.176])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-294-Scit0Ox5MQ6Born7Abg47Q-1; Thu, 11 Feb 2021 17:45:16 -0500
+X-MC-Unique: Scit0Ox5MQ6Born7Abg47Q-1
+Received: from [10.66.228.43] (helo=SmtpCorp)
+	by smtpcorp.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+	(Exim 4.92-S2G) (envelope-from <j.schicke@quuxlogic.com>)
+	id 1lAKi3-qt4FzU-LE
+	for dm-devel@redhat.com; Thu, 11 Feb 2021 22:45:15 +0000
+Received: from [10.94.217.231] (helo=eta-carinae)
+	by smtpcorp.com with esmtpsa (TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256)
+	(Exim 4.92-S2G) (envelope-from <j.schicke@quuxlogic.com>)
+	id 1lAKi2-wSEQhh-H9
+	for dm-devel@redhat.com; Thu, 11 Feb 2021 22:45:14 +0000
+Date: Thu, 11 Feb 2021 23:45:11 +0100
+From: Jens-Wolfhard Schicke-Uffmann <j.schicke@quuxlogic.com>
+To: dm-devel@redhat.com
+Message-ID: <20210211224511.GA109939@eta-carinae>
 MIME-Version: 1.0
-X-yoursite-MailScanner-ID: 58EDC4CE6F82.A0C98
-X-yoursite-MailScanner: Found to be clean
-X-yoursite-MailScanner-From: ruansy.fnst@cn.fujitsu.com
+User-Agent: Mutt/1.9.3 (2018-01-21)
+X-Smtpcorp-Track: 1_jKi2wSEQhhH9.JQN7J35QTEhAx
+Feedback-ID: 183594m:183594a34a5n5:183594sml2ixx3B3
+X-Report-Abuse: Please forward a copy of this message, including all headers,
+	to <abuse-report@smtp2go.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -85,14 +79,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 17 Feb 2021 10:31:26 -0500
-Cc: qi.fuli@fujitsu.com, snitzer@redhat.com, darrick.wong@oracle.com,
-	rgoldwyn@suse.de, david@fromorbit.com, y-goto@fujitsu.com,
-	dan.j.williams@intel.com, hch@lst.de, agk@redhat.com
-Subject: [dm-devel] [PATCH v3 04/11] block_dev: Introduce
-	bd_corrupted_range() for block device
+Subject: [dm-devel] Cache writethrough mode skips writes to source
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -106,120 +96,63 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-As is show in the call tree:
- ...
- pgmap->ops->memory_failure()
-  gendisk->fops->corrupted_range()
-   sb->s_ops->currupted_range()
-    ...
-currupted_range() is called from disk(pmem) to superblock(filesystem).
-Thus, we need to introduce a helper function to obtain the superblock
-from a given disk.
+Hi,
 
-Normally, a filesystem can be created by mkfs directly on a block device
-or a parted disk. We can obtain the superblock by calling get_super().
+while debugging an I/O load issue at a client, I came across cases of system
+reboots (which apparently included an unclear device shutdown), where a
+dm-cache was marked all-dirty, as described e.g. in admin-guide/device-mapper/cache.rst
+> The 'dirty' state for a cache block changes far too frequently for us to keep
+> updating it on the fly. So we treat it as a hint. In normal operation it will
+> be written when the dm device is suspended. If the system crashes all cache
+> blocks will be assumed dirty when restarted.
 
-But get_super() is not suitable for mapped device, such as LVM. To
-obtain MD's superblock, we can iterate bd_holder_disks of a block device
-to find out the MD that contains it. By this way, MD is able to call
-corrupted_range() from its target block device.
+As the caches were in front of a RAID1 they were configured "writethrough" in order
+not to reduce data redundancy. As per documentation:
+> write through caching that prohibits cache block content from being
+> different from origin block content.
 
-Signed-off-by: Shiyang Ruan <ruansy.fnst@cn.fujitsu.com>
----
- fs/block_dev.c        | 47 ++++++++++++++++++++++++++++++++++++++++++-
- include/linux/genhd.h |  2 ++
- 2 files changed, 48 insertions(+), 1 deletion(-)
+While trying to understand caching behavior in more detail, I noticed that in
+dm-cache-target.c, map_bio this guarantee seems to be violated
 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 3b8963e228a1..755b0d351479 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -1079,6 +1079,28 @@ struct bd_holder_disk {
- 	int			refcnt;
- };
- 
-+static int bd_disk_holder_corrupted_range(struct block_device *bdev, loff_t off,
-+					  size_t len, void *data)
-+{
-+	struct bd_holder_disk *holder;
-+	struct gendisk *disk;
-+	int rc = 0;
-+
-+	if (list_empty(&(bdev->bd_holder_disks)))
-+		return -ENODEV;
-+
-+	list_for_each_entry(holder, &bdev->bd_holder_disks, list) {
-+		disk = holder->disk;
-+		if (disk->fops->corrupted_range) {
-+			rc = disk->fops->corrupted_range(disk, bdev, off,
-+							 len, data);
-+			if (rc != -ENODEV)
-+				break;
-+		}
-+	}
-+	return rc;
-+}
-+
- static struct bd_holder_disk *bd_find_holder_disk(struct block_device *bdev,
- 						  struct gendisk *disk)
- {
-@@ -1212,7 +1234,30 @@ void bd_unlink_disk_holder(struct block_device *bdev, struct gendisk *disk)
- 	mutex_unlock(&bdev->bd_mutex);
- }
- EXPORT_SYMBOL_GPL(bd_unlink_disk_holder);
--#endif
-+#else
-+static inline int bd_disk_holder_corrupted_range(struct block_device *bdev,
-+					loff_t off, size_t len, void *data)
-+{
-+	return -EOPNOTSUPP;
-+}
-+#endif /* CONFIG_SYSFS */
-+
-+int bd_corrupted_range(struct block_device *bdev, loff_t disk_off,
-+		       loff_t bdev_off, size_t len, void *data)
-+{
-+	struct super_block *sb = get_super(bdev);
-+	int rc = -EOPNOTSUPP;
-+
-+	if (!sb) {
-+		rc = bd_disk_holder_corrupted_range(bdev, disk_off, len, data);
-+		return rc;
-+	} else if (sb->s_op->corrupted_range)
-+		rc = sb->s_op->corrupted_range(sb, bdev, bdev_off, len, data);
-+	drop_super(sb);
-+
-+	return rc;
-+}
-+EXPORT_SYMBOL(bd_corrupted_range);
- 
- static void __blkdev_put(struct block_device *bdev, fmode_t mode, int for_part);
- 
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 809aaa32d53c..751cbd559bba 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -314,6 +314,8 @@ void unregister_blkdev(unsigned int major, const char *name);
- bool bdev_check_media_change(struct block_device *bdev);
- int __invalidate_device(struct block_device *bdev, bool kill_dirty);
- void set_capacity(struct gendisk *disk, sector_t size);
-+int bd_corrupted_range(struct block_device *bdev, loff_t disk_off,
-+		       loff_t bdev_off, size_t len, void *data);
- 
- /* for drivers/char/raw.c: */
- int blkdev_ioctl(struct block_device *, fmode_t, unsigned, unsigned long);
--- 
-2.30.0
+if (passthrough_mode(cache)) {
+	if (bio_data_dir(bio) == WRITE) {
+		bio_drop_shared_lock(cache, bio);
+		atomic_inc(&cache->stats.demotion);
+		invalidate_start(cache, cblock, block, bio);
+	} else
+		remap_to_origin_clear_discard(cache, bio, block);
+} else {
+	if (bio_data_dir(bio) == WRITE && writethrough_mode(cache) &&
+			!is_dirty(cache, cblock)) {
+                          // ^----- !!!BUG!!!
+		remap_to_origin_and_cache(cache, bio, block, cblock);
+		accounted_begin(cache, bio);
+	} else
+		remap_to_cache_dirty(cache, bio, block, cblock);
+}
+
+... in case a writethrough cache ever gets dirty cblocks, which is to say
+after an unclean shutdown.
+
+And indeed, a quick comparison of device contents showed a lot of differences
+between the cached block device and the source RAID1.
 
 
+It seems to me that the is_dirty condition can simply be dropped, but the
+comment above remap_to_origin_and_cache()
+> When running in writethrough mode we need to send writes to clean blocks
+suggests there is a reason why it exists.
+
+- Jens
 
 --
 dm-devel mailing list
