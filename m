@@ -7,77 +7,76 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1FE79C433DB
-	for <dm-devel@archiver.kernel.org>; Sat, 13 Feb 2021 14:31:34 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 658E9C433E0
+	for <dm-devel@archiver.kernel.org>; Sat, 13 Feb 2021 14:52:59 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 91F4264D9E
-	for <dm-devel@archiver.kernel.org>; Sat, 13 Feb 2021 14:31:33 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 91F4264D9E
+	by mail.kernel.org (Postfix) with ESMTPS id C29DE64DE7
+	for <dm-devel@archiver.kernel.org>; Sat, 13 Feb 2021 14:52:58 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C29DE64DE7
 Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=cloudflare.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-4-O8XVbynlNES6xYwc-gciyA-1; Sat, 13 Feb 2021 09:31:28 -0500
-X-MC-Unique: O8XVbynlNES6xYwc-gciyA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-109-x7GzyjiNNSad2SJexWu6gg-1; Sat, 13 Feb 2021 09:52:55 -0500
+X-MC-Unique: x7GzyjiNNSad2SJexWu6gg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D2271801965;
-	Sat, 13 Feb 2021 14:31:22 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CD19719D6C;
-	Sat, 13 Feb 2021 14:31:21 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9DE15427D1;
+	Sat, 13 Feb 2021 14:52:50 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AF94260855;
+	Sat, 13 Feb 2021 14:52:49 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EAA764E58D;
-	Sat, 13 Feb 2021 14:31:18 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0A32A18095CB;
+	Sat, 13 Feb 2021 14:52:49 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 11DEVG8Y015926 for <dm-devel@listman.util.phx.redhat.com>;
-	Sat, 13 Feb 2021 09:31:16 -0500
+	id 11DEqlQM017648 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 13 Feb 2021 09:52:47 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B1F70F8083; Sat, 13 Feb 2021 14:31:16 +0000 (UTC)
+	id DC65810070AF; Sat, 13 Feb 2021 14:52:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AC4FCF882A
-	for <dm-devel@redhat.com>; Sat, 13 Feb 2021 14:31:13 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D859F1003213
+	for <dm-devel@redhat.com>; Sat, 13 Feb 2021 14:52:44 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CF763101A53A
-	for <dm-devel@redhat.com>; Sat, 13 Feb 2021 14:31:13 +0000 (UTC)
-Received: from mail-io1-f42.google.com (mail-io1-f42.google.com
-	[209.85.166.42]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-312-s40lDPzONHyNm0GOBYtnRA-1; Sat, 13 Feb 2021 09:31:11 -0500
-X-MC-Unique: s40lDPzONHyNm0GOBYtnRA-1
-Received: by mail-io1-f42.google.com with SMTP id s24so2235526iob.6
-	for <dm-devel@redhat.com>; Sat, 13 Feb 2021 06:31:11 -0800 (PST)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6B960800C81
+	for <dm-devel@redhat.com>; Sat, 13 Feb 2021 14:52:44 +0000 (UTC)
+Received: from mail-io1-f41.google.com (mail-io1-f41.google.com
+	[209.85.166.41]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-206-Yoh6_BJUNFKgoYWHBraafQ-1; Sat, 13 Feb 2021 09:52:42 -0500
+X-MC-Unique: Yoh6_BJUNFKgoYWHBraafQ-1
+Received: by mail-io1-f41.google.com with SMTP id e133so2260388iof.8
+	for <dm-devel@redhat.com>; Sat, 13 Feb 2021 06:52:41 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20161025;
 	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
 	:message-id:subject:to:cc;
-	bh=rniKDU34XJpqVs430BoWVbbHkdXsJ4LKoINpdbDDUU4=;
-	b=HjVt7C4eGk0uKsO2oDNBN1QpM1SB1CELyAoOnUsnbzdQ6TavlyASvaygHLCea64Nmo
-	h50YIoAbBTSq8YkoDIrIXx6GoGasBc4FhGa/1t2InHWuXW/ZcslgdSr02e9uPvJpzSn3
-	HEJh2QgCKHICn0ID5dT3aVmkw4bU1bEfGqLQMmNp2LQ9d6rnic61wxQ2uNbU9h7gUl8+
-	++wLz6aKVBgieccuWCiev0Ay91+cNLikJFcCD/t2M6FGD0DKnzgpNgTT1XkFOEHq+Yw9
-	pj8XG4bmoL27LCaGM2XA+m5zJRAt7yJYy585+4keZZ6Ud4Eia925vQX+8t3zurHZT2cX
-	SKAg==
-X-Gm-Message-State: AOAM5321V/MgsKNPWNuXer1nQ/Tmyom3xJTi0WPOF3BV7b639JuXeHEE
-	LBec9BUIPeUToY9hlZGMZbKCIVReF+vMIyA8asgq+w==
-X-Google-Smtp-Source: ABdhPJwyJSiClGjGTmjgkJnsptVXgWHuuI0fr6SHolP+KB1m3HYlbs80qMqXYlm86eJGrySBBSuS9rjNbhPwvwZsrss=
-X-Received: by 2002:a5d:8ac5:: with SMTP id e5mr5958325iot.33.1613226670891;
-	Sat, 13 Feb 2021 06:31:10 -0800 (PST)
+	bh=nZDJw6Sn8s3t0+Hv8hFRdOYU9AqCIvryt88cY5O1DkE=;
+	b=eGZlX0sR+5Dn2wzYwq3z+/z8AQ/xp3OaClimNJ7nrJNNH2FHvcu7J2EnKqHRkmqZa1
+	q39vSj1lir+IN+kXYBcMaUsz/351wogerZ+1kM6jn65nmbHBUsJc6je1G9N4vq0bjRhG
+	mkpAYc6Lqq0DwTb9nvCrMWR1SR2jBBfLWdIkDFuG+4vkLFABpQkzyvFLb0b16hyicdbz
+	oV+YRocFGAQlPCxtvaixI/sYKn6nxqm3ROaYtHmPlHyeSzZGTvLiKAgt6zovbn715iUg
+	olgIDB/IRWsjs24e/keTx5+mQ9K3H9mxCDoAP9prUNOpV1qM6sOi1obqGWhWohu5Cdae
+	6gjQ==
+X-Gm-Message-State: AOAM5324qWrrH58lRE+GUJtoyJyte43HxUZDXJz/qt+bDa4ItR/AR0H9
+	TzUGX+H7v3j6iyFXlzR0ScKI5c9kcaNOOM230RPAAQ==
+X-Google-Smtp-Source: ABdhPJyAvINbfwkmAtSheHBvqQ34kxZO8gNMY+XCKWWu0A6G5+6H+1ho7kvjXbC30y2sh1CEinYbcF7B1ZyY23mV2oQ=
+X-Received: by 2002:a5d:9717:: with SMTP id h23mr6161730iol.4.1613227961140;
+	Sat, 13 Feb 2021 06:52:41 -0800 (PST)
 MIME-Version: 1.0
 References: <20210213111146.3080152-1-bigeasy@linutronix.de>
-	<20210213111146.3080152-3-bigeasy@linutronix.de>
-In-Reply-To: <20210213111146.3080152-3-bigeasy@linutronix.de>
+	<20210213111146.3080152-5-bigeasy@linutronix.de>
+In-Reply-To: <20210213111146.3080152-5-bigeasy@linutronix.de>
 From: Ignat Korchagin <ignat@cloudflare.com>
-Date: Sat, 13 Feb 2021 14:31:00 +0000
-Message-ID: <CALrw=nHhOST4udsCrExA7CVLWjWQyNLPau8jde6yq3FR7ONQMw@mail.gmail.com>
+Date: Sat, 13 Feb 2021 14:52:30 +0000
+Message-ID: <CALrw=nEtYqXX_cjwYA_F40gPy8BVFMBFr8+ownbXHGPmuDLJ8A@mail.gmail.com>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -87,13 +86,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>, Mike Snitzer <snitzer@redhat.com>,
 	Alasdair Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH 2/6] dm crypt: Handle DM_CRYPT_NO_*_WORKQUEUE
-	more explicit.
+Subject: Re: [dm-devel] [PATCH 4/6] dm crypt: Revisit the atomic argument
+	passed to crypt_convert().
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -107,7 +106,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -118,93 +117,62 @@ Content-Transfer-Encoding: 7bit
 On Sat, Feb 13, 2021 at 11:11 AM Sebastian Andrzej Siewior
 <bigeasy@linutronix.de> wrote:
 >
-> By looking at the handling of DM_CRYPT_NO_*_WORKQUEUE in
-> kcryptd_queue_crypt() it appears that READ and WRITE requests might be
-> handled in the tasklet context as long as interrupts are disabled or it
-> is handled in hardirq context.
+> The atomic argument of crypto_convert() is used to decide if
+> cond_resched() may be invoked.
 >
-> The WRITE requests should always be fed in preemptible context. There
-> are other requirements in the write path which sleep or acquire a mutex.
+> kcryptd_crypt_write_continue() and kcryptd_crypt_read_continue() pass
+> true here but both are invoked by a worker where scheduling is possible.
 >
-> The READ requests should come from the storage driver, likely not in a
-> preemptible context. The source of the requests depends on the driver
-> and other factors like multiple queues in the block layer.
-
-My personal opinion: I really don't like the guesswork and
-assumptions. If we want
-to remove the usage of in_*irq() and alike, we should propagate the execution
-context from the source. Storage drivers have this information and can
-pass it on to the device-mapper framework, which in turn can pass it
-on to dm modules.
-
-Assuming WRITE requests are always in preemptible context might break with the
-addition of some new type of obscure storage hardware.
-
-In our testing we saw a lot of cases with SATA disks, where READ requests come
-from preemptible contexts, so probably don't want to pay (no matter how small)
-tasklet setup overhead, not to mention executing it in softirq, which
-is hard later to
-attribute to a specific process in metrics.
-
-In other words, I think we should be providing support for this in the
-device-mapper
-framework itself, not start from individual modules.
-
-> To simplify the handling of DM_CRYPT_NO_*_WORKQUEUE, handle READ
-> requests always in tasklet/softirq context since the requests will be
-> passed in hard or softirq context.
-> Handle the WRITE requests directly because they are already in
-> preemptible context and must not be passed to the taslket/softirq.
+> kcryptd_crypt_write_convert() is invoked from preemptible context even
+> if DM_CRYPT_NO_WRITE_WORKQUEUE is set.
 >
+> Set the atomic argument to false in the three cases because
+> cond_resched() is not forbidden.
+
+"atomic" parameter name might be confusing here as usually it is
+related to the execution context.
+But here it has additional meaning - it is also bound to the
+DM_NO_*_WORKQUEUE flags. Basically,
+as a user, if I set these flags - my intention is that dm-crypt should
+process requests ASAP, so I don't
+want it to voluntarily yield CPU even if the context is preemptible.
+
 > Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 > ---
->  drivers/md/dm-crypt.c | 26 +++++++++-----------------
->  1 file changed, 9 insertions(+), 17 deletions(-)
+>  drivers/md/dm-crypt.c | 7 +++----
+>  1 file changed, 3 insertions(+), 4 deletions(-)
 >
 > diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index 506655e5eecba..a498de3604a67 100644
+> index f5eafc32d32c5..1151a0108ae78 100644
 > --- a/drivers/md/dm-crypt.c
 > +++ b/drivers/md/dm-crypt.c
-> @@ -2215,30 +2215,22 @@ static void kcryptd_crypt_tasklet(struct tasklet_struct *t)
->  {
->         struct dm_crypt_io *io = from_tasklet(io, t, tasklet);
+> @@ -2019,7 +2019,7 @@ static void kcryptd_crypt_write_continue(struct work_struct *work)
+>         wait_for_completion(&ctx->restart);
+>         reinit_completion(&ctx->restart);
 >
-> -       if (bio_data_dir(io->base_bio) == READ)
-> -               kcryptd_crypt_read_convert(io);
-> -       else
-> -               kcryptd_crypt_write_convert(io);
-Should we add BUG_ON(bio_data_dir(io->base_bio) != READ) here?
-> +       kcryptd_crypt_read_convert(io);
->  }
+> -       r = crypt_convert(cc, &io->ctx, true, false);
+> +       r = crypt_convert(cc, &io->ctx, false, false);
+>         if (r)
+>                 io->error = r;
+>         crypt_finished = atomic_dec_and_test(&ctx->cc_pending);
+> @@ -2065,8 +2065,7 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+>         sector += bio_sectors(clone);
 >
->  static void kcryptd_queue_crypt(struct dm_crypt_io *io)
->  {
->         struct crypt_config *cc = io->cc;
+>         crypt_inc_pending(io);
+> -       r = crypt_convert(cc, ctx,
+> -                         test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags), true);
+> +       r = crypt_convert(cc, ctx, false, true);
+>         /*
+>          * Crypto API backlogged the request, because its queue was full
+>          * and we're in softirq context, so continue from a workqueue
+> @@ -2110,7 +2109,7 @@ static void kcryptd_crypt_read_continue(struct work_struct *work)
+>         wait_for_completion(&io->ctx.restart);
+>         reinit_completion(&io->ctx.restart);
 >
-> -       if ((bio_data_dir(io->base_bio) == READ && test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags)) ||
-> -           (bio_data_dir(io->base_bio) == WRITE && test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags))) {
-> -               /*
-> -                * in_irq(): Crypto API's skcipher_walk_first() refuses to work in hard IRQ context.
-> -                * irqs_disabled(): the kernel may run some IO completion from the idle thread, but
-> -                * it is being executed with irqs disabled.
-> -                */
-> -               if (in_irq() || irqs_disabled()) {
-> -                       tasklet_setup(&io->tasklet, kcryptd_crypt_tasklet);
-> -                       tasklet_schedule(&io->tasklet);
-> -                       return;
-> -               }
-> +       if (bio_data_dir(io->base_bio) == READ &&
-> +           test_bit(DM_CRYPT_NO_READ_WORKQUEUE, &cc->flags)) {
-> +               tasklet_setup(&io->tasklet, kcryptd_crypt_tasklet);
-> +               tasklet_schedule(&io->tasklet);
-> +               return;
->
-> -               kcryptd_crypt(&io->work);
-> +       } else if (bio_data_dir(io->base_bio) == WRITE &&
-> +                  test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags)) {
-> +               kcryptd_crypt_write_convert(io);
->                 return;
->         }
+> -       r = crypt_convert(cc, &io->ctx, true, false);
+> +       r = crypt_convert(cc, &io->ctx, false, false);
+>         if (r)
+>                 io->error = r;
 >
 > --
 > 2.30.0
