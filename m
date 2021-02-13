@@ -4,80 +4,61 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D9F75C433DB
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:38:13 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 973FBC433DB
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:38:15 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4972164DA1
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:38:13 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4972164DA1
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=cn.fujitsu.com
+	by mail.kernel.org (Postfix) with ESMTPS id 0D8BF64D9A
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:38:14 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0D8BF64D9A
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linutronix.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-469-NHl3Te1JPNSstyiXikDrOg-1; Wed, 17 Feb 2021 10:38:09 -0500
-X-MC-Unique: NHl3Te1JPNSstyiXikDrOg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-214-TfLKTluBMFOs-HamKEWHeQ-1; Wed, 17 Feb 2021 10:38:12 -0500
+X-MC-Unique: TfLKTluBMFOs-HamKEWHeQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6B797835E21;
-	Wed, 17 Feb 2021 15:38:04 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 471245C1A3;
-	Wed, 17 Feb 2021 15:38:04 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E6379192D789;
+	Wed, 17 Feb 2021 15:38:06 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C46095D9D2;
+	Wed, 17 Feb 2021 15:38:06 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1161B18095CB;
-	Wed, 17 Feb 2021 15:38:04 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9582858076;
+	Wed, 17 Feb 2021 15:38:06 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 118Atv4i011391 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 8 Feb 2021 05:55:57 -0500
+	id 11DBLu7O030531 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 13 Feb 2021 06:21:56 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4A5081111A7E; Mon,  8 Feb 2021 10:55:57 +0000 (UTC)
+	id 3252C10336DE; Sat, 13 Feb 2021 11:21:56 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 466041111A6A
-	for <dm-devel@redhat.com>; Mon,  8 Feb 2021 10:55:54 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2E9D9100B161
+	for <dm-devel@redhat.com>; Sat, 13 Feb 2021 11:21:53 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BE024101A53A
-	for <dm-devel@redhat.com>; Mon,  8 Feb 2021 10:55:54 +0000 (UTC)
-Received: from heian.cn.fujitsu.com (mail.cn.fujitsu.com [183.91.158.132])
-	by relay.mimecast.com with ESMTP id us-mta-185-rvDo6hmBNSSFYJuGKSiaiw-3;
-	Mon, 08 Feb 2021 05:55:50 -0500
-X-MC-Unique: rvDo6hmBNSSFYJuGKSiaiw-3
-X-IronPort-AV: E=Sophos;i="5.81,161,1610380800"; d="scan'208";a="104328077"
-Received: from unknown (HELO cn.fujitsu.com) ([10.167.33.5])
-	by heian.cn.fujitsu.com with ESMTP; 08 Feb 2021 18:55:47 +0800
-Received: from G08CNEXMBPEKD04.g08.fujitsu.local (unknown [10.167.33.201])
-	by cn.fujitsu.com (Postfix) with ESMTP id 5CF2A4CE6F80;
-	Mon,  8 Feb 2021 18:55:42 +0800 (CST)
-Received: from G08CNEXCHPEKD04.g08.fujitsu.local (10.167.33.200) by
-	G08CNEXMBPEKD04.g08.fujitsu.local (10.167.33.201) with Microsoft SMTP
-	Server (TLS) id 15.0.1497.2; Mon, 8 Feb 2021 18:55:44 +0800
-Received: from irides.mr.mr.mr (10.167.225.141) by
-	G08CNEXCHPEKD04.g08.fujitsu.local (10.167.33.209) with Microsoft SMTP
-	Server
-	id 15.0.1497.2 via Frontend Transport; Mon, 8 Feb 2021 18:55:44 +0800
-From: Shiyang Ruan <ruansy.fnst@cn.fujitsu.com>
-To: <linux-kernel@vger.kernel.org>, <linux-xfs@vger.kernel.org>,
-	<linux-nvdimm@lists.01.org>, <linux-mm@kvack.org>,
-	<linux-fsdevel@vger.kernel.org>, <dm-devel@redhat.com>
-Date: Mon, 8 Feb 2021 18:55:27 +0800
-Message-ID: <20210208105530.3072869-9-ruansy.fnst@cn.fujitsu.com>
-In-Reply-To: <20210208105530.3072869-1-ruansy.fnst@cn.fujitsu.com>
-References: <20210208105530.3072869-1-ruansy.fnst@cn.fujitsu.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4D1308032E4
+	for <dm-devel@redhat.com>; Sat, 13 Feb 2021 11:21:53 +0000 (UTC)
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-189-51CxZKqGOH6rd1W8CclxiQ-1; Sat, 13 Feb 2021 06:21:47 -0500
+X-MC-Unique: 51CxZKqGOH6rd1W8CclxiQ-1
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: dm-devel@redhat.com
+Date: Sat, 13 Feb 2021 12:11:44 +0100
+Message-Id: <20210213111146.3080152-5-bigeasy@linutronix.de>
+In-Reply-To: <20210213111146.3080152-1-bigeasy@linutronix.de>
+References: <20210213111146.3080152-1-bigeasy@linutronix.de>
 MIME-Version: 1.0
-X-yoursite-MailScanner-ID: 5CF2A4CE6F80.AE3E8
-X-yoursite-MailScanner: Found to be clean
-X-yoursite-MailScanner-From: ruansy.fnst@cn.fujitsu.com
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -87,13 +68,16 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 11DBLu7O030531
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 17 Feb 2021 10:31:26 -0500
-Cc: qi.fuli@fujitsu.com, snitzer@redhat.com, darrick.wong@oracle.com,
-	rgoldwyn@suse.de, david@fromorbit.com, y-goto@fujitsu.com,
-	dan.j.williams@intel.com, hch@lst.de, agk@redhat.com
-Subject: [dm-devel] [PATCH v3 08/11] dm: Introduce ->rmap() to find bdev
-	offset
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>,
+	Ignat Korchagin <ignat@cloudflare.com>
+Subject: [dm-devel] [PATCH 4/6] dm crypt: Revisit the atomic argument passed
+	to crypt_convert().
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -107,7 +91,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -115,91 +99,57 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Pmem device could be a target of mapped device.  In order to obtain
-superblock on the mapped device, we introduce this to translate offset
-from target device to md device.
+The atomic argument of crypto_convert() is used to decide if
+cond_resched() may be invoked.
 
-Currently, we implement it on linear target, which is easy to do the
-translation.  Other targets will be supported in the future.  However,
-some targets may not support it because of the non-linear mapping.
+kcryptd_crypt_write_continue() and kcryptd_crypt_read_continue() pass
+true here but both are invoked by a worker where scheduling is possible.
 
-Signed-off-by: Shiyang Ruan <ruansy.fnst@cn.fujitsu.com>
+kcryptd_crypt_write_convert() is invoked from preemptible context even
+if DM_CRYPT_NO_WRITE_WORKQUEUE is set.
+
+Set the atomic argument to false in the three cases because
+cond_resched() is not forbidden.
+
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- drivers/md/dm-linear.c        | 20 ++++++++++++++++++++
- include/linux/device-mapper.h |  5 +++++
- 2 files changed, 25 insertions(+)
+ drivers/md/dm-crypt.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 00774b5d7668..90fdb4700afd 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -5,6 +5,7 @@
-  */
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index f5eafc32d32c5..1151a0108ae78 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -2019,7 +2019,7 @@ static void kcryptd_crypt_write_continue(struct work_struct *work)
+ 	wait_for_completion(&ctx->restart);
+ 	reinit_completion(&ctx->restart);
  
- #include "dm.h"
-+#include "dm-core.h"
- #include <linux/module.h>
- #include <linux/init.h>
- #include <linux/blkdev.h>
-@@ -119,6 +120,24 @@ static void linear_status(struct dm_target *ti, status_type_t type,
- 	}
- }
+-	r = crypt_convert(cc, &io->ctx, true, false);
++	r = crypt_convert(cc, &io->ctx, false, false);
+ 	if (r)
+ 		io->error = r;
+ 	crypt_finished = atomic_dec_and_test(&ctx->cc_pending);
+@@ -2065,8 +2065,7 @@ static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
+ 	sector += bio_sectors(clone);
  
-+static int linear_rmap(struct dm_target *ti, sector_t offset,
-+		       rmap_callout_fn fn, void *data)
-+{
-+	struct linear_c *lc = (struct linear_c *) ti->private;
-+	struct mapped_device *md = ti->table->md;
-+	struct block_device *bdev;
-+	sector_t disk_sect = offset - dm_target_offset(ti, lc->start);
-+	int rc = -ENODEV;
-+
-+	bdev = bdget_disk_sector(md->disk, offset);
-+	if (!bdev)
-+		return rc;
-+
-+	rc = fn(ti, bdev, disk_sect, data);
-+	bdput(bdev);
-+	return rc;
-+}
-+
- static int linear_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
- {
- 	struct linear_c *lc = (struct linear_c *) ti->private;
-@@ -238,6 +257,7 @@ static struct target_type linear_target = {
- 	.ctr    = linear_ctr,
- 	.dtr    = linear_dtr,
- 	.map    = linear_map,
-+	.rmap   = linear_rmap,
- 	.status = linear_status,
- 	.prepare_ioctl = linear_prepare_ioctl,
- 	.iterate_devices = linear_iterate_devices,
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 61a66fb8ebb3..c5cd1009a08d 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -58,6 +58,10 @@ typedef void (*dm_dtr_fn) (struct dm_target *ti);
-  * = 2: The target wants to push back the io
-  */
- typedef int (*dm_map_fn) (struct dm_target *ti, struct bio *bio);
-+typedef int (*rmap_callout_fn) (struct dm_target *ti, struct block_device *bdev,
-+				sector_t sect, void *data);
-+typedef int (*dm_rmap_fn) (struct dm_target *ti, sector_t offset,
-+			   rmap_callout_fn fn, void *data);
- typedef int (*dm_clone_and_map_request_fn) (struct dm_target *ti,
- 					    struct request *rq,
- 					    union map_info *map_context,
-@@ -175,6 +179,7 @@ struct target_type {
- 	dm_ctr_fn ctr;
- 	dm_dtr_fn dtr;
- 	dm_map_fn map;
-+	dm_rmap_fn rmap;
- 	dm_clone_and_map_request_fn clone_and_map_rq;
- 	dm_release_clone_request_fn release_clone_rq;
- 	dm_endio_fn end_io;
+ 	crypt_inc_pending(io);
+-	r = crypt_convert(cc, ctx,
+-			  test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags), true);
++	r = crypt_convert(cc, ctx, false, true);
+ 	/*
+ 	 * Crypto API backlogged the request, because its queue was full
+ 	 * and we're in softirq context, so continue from a workqueue
+@@ -2110,7 +2109,7 @@ static void kcryptd_crypt_read_continue(struct work_struct *work)
+ 	wait_for_completion(&io->ctx.restart);
+ 	reinit_completion(&io->ctx.restart);
+ 
+-	r = crypt_convert(cc, &io->ctx, true, false);
++	r = crypt_convert(cc, &io->ctx, false, false);
+ 	if (r)
+ 		io->error = r;
+ 
 -- 
 2.30.0
-
 
 
 --
