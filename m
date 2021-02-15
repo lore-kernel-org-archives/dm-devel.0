@@ -2,77 +2,72 @@ Return-Path: <SRS0=CL6l=HT=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-15.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 96F26C433DB
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:38:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 54410C433E6
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:38:37 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 1484A64D9F
+	by mail.kernel.org (Postfix) with ESMTPS id A7E9D64D9A
 	for <dm-devel@archiver.kernel.org>; Wed, 17 Feb 2021 15:38:35 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1484A64D9F
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A7E9D64D9A
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=molgen.mpg.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-20-G5GzAqMfMEOuKUxriUUbmw-1; Wed, 17 Feb 2021 10:38:33 -0500
-X-MC-Unique: G5GzAqMfMEOuKUxriUUbmw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-62-MUAu8oasNQ61j3HIfxhUVA-1; Wed, 17 Feb 2021 10:38:32 -0500
+X-MC-Unique: MUAu8oasNQ61j3HIfxhUVA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6FD48100CCC1;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3E478107ACF2;
 	Wed, 17 Feb 2021 15:38:27 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3F30E10016FD;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 197E319D6C;
 	Wed, 17 Feb 2021 15:38:27 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0DDF218095CB;
-	Wed, 17 Feb 2021 15:38:27 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D70FE18095CA;
+	Wed, 17 Feb 2021 15:38:26 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1196DpZZ003321 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 9 Feb 2021 01:13:51 -0500
+	id 11FBEo9P024493 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 15 Feb 2021 06:14:51 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8C4CF6D9DB; Tue,  9 Feb 2021 06:13:51 +0000 (UTC)
+	id C31394405C; Mon, 15 Feb 2021 11:14:50 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 85EB4906B4
-	for <dm-devel@redhat.com>; Tue,  9 Feb 2021 06:13:48 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BC9835F253
+	for <dm-devel@redhat.com>; Mon, 15 Feb 2021 11:14:44 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B7339101A54E
-	for <dm-devel@redhat.com>; Tue,  9 Feb 2021 06:13:48 +0000 (UTC)
-Received: from out30-45.freemail.mail.aliyun.com
-	(out30-45.freemail.mail.aliyun.com [115.124.30.45]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-323-F2IIfDcCOjK7j0Ztxna20w-1;
-	Tue, 09 Feb 2021 01:13:45 -0500
-X-MC-Unique: F2IIfDcCOjK7j0Ztxna20w-1
-X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R151e4; CH=green; DM=||false|;
-	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1;
-	HT=alimailimapcm10staff010182156082;
-	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=9; SR=0;
-	TI=SMTPD_---0UOH.b00_1612851218
-Received: from admindeMacBook-Pro-2.local(mailfrom:jefflexu@linux.alibaba.com
-	fp:SMTPD_---0UOH.b00_1612851218) by smtp.aliyun-inc.com(127.0.0.1);
-	Tue, 09 Feb 2021 14:13:38 +0800
-To: Ming Lei <ming.lei@redhat.com>
-References: <20210208085243.82367-1-jefflexu@linux.alibaba.com>
-	<20210208085243.82367-10-jefflexu@linux.alibaba.com>
-	<20210209031122.GA63798@T590>
-From: JeffleXu <jefflexu@linux.alibaba.com>
-Message-ID: <a499a33f-da2e-b5aa-5266-9e7c76a34b48@linux.alibaba.com>
-Date: Tue, 9 Feb 2021 14:13:38 +0800
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
-	Gecko/20100101 Thunderbird/78.7.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0ECA3857AB1
+	for <dm-devel@redhat.com>; Mon, 15 Feb 2021 11:14:44 +0000 (UTC)
+Received: from mx1.molgen.mpg.de (mx3.molgen.mpg.de [141.14.17.11]) (Using
+	TLS) by relay.mimecast.com with ESMTP id
+	us-mta-156-KLZzO1mnOwK-V1Mzl-CqCA-1; Mon, 15 Feb 2021 06:14:40 -0500
+X-MC-Unique: KLZzO1mnOwK-V1Mzl-CqCA-1
+Received: from [192.168.0.6] (ip5f5aea71.dynamic.kabel-deutschland.de
+	[95.90.234.113])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested) (Authenticated sender: pmenzel)
+	by mx.molgen.mpg.de (Postfix) with ESMTPSA id 788182064791F;
+	Mon, 15 Feb 2021 12:07:58 +0100 (CET)
+To: Guoqing Jiang <guoqing.jiang@cloud.ionos.com>, song@kernel.org
+References: <1613177399-22024-1-git-send-email-guoqing.jiang@cloud.ionos.com>
+From: Paul Menzel <pmenzel@molgen.mpg.de>
+Message-ID: <36a660ed-b995-839e-ac82-dc4ca25ccb8a@molgen.mpg.de>
+Date: Mon, 15 Feb 2021 12:07:58 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+	Thunderbird/78.7.1
 MIME-Version: 1.0
-In-Reply-To: <20210209031122.GA63798@T590>
+In-Reply-To: <1613177399-22024-1-git-send-email-guoqing.jiang@cloud.ionos.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -81,14 +76,15 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Mimecast-Bulk-Signature: yes
+X-Mimecast-Spam-Signature: bulk
 X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 17 Feb 2021 10:31:26 -0500
-Cc: axboe@kernel.dk, snitzer@redhat.com, caspar@linux.alibaba.com,
-	io-uring@vger.kernel.org, linux-block@vger.kernel.org,
-	joseph.qi@linux.alibaba.com, dm-devel@redhat.com, hch@lst.de
-Subject: Re: [dm-devel] [PATCH v3 09/11] dm: support IO polling for
-	bio-based dm device
+Cc: snitzer@redhat.com, linux-raid@vger.kernel.org, dm-devel@redhat.com,
+	agk@redhat.com, Donald Buczek <buczek@molgen.mpg.de>, it+raid@molgen.mpg.de
+Subject: Re: [dm-devel] [PATCH V2] md: don't unregister sync_thread with
+ reconfig_mutex held
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -102,91 +98,135 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
+[+cc Donald]
 
-
-On 2/9/21 11:11 AM, Ming Lei wrote:
-> On Mon, Feb 08, 2021 at 04:52:41PM +0800, Jeffle Xu wrote:
->> DM will iterate and poll all polling hardware queues of all target mq
->> devices when polling IO for dm device. To mitigate the race introduced
->> by iterating all target hw queues, a per-hw-queue flag is maintained
+Am 13.02.21 um 01:49 schrieb Guoqing Jiang:
+> Unregister sync_thread doesn't need to hold reconfig_mutex since it
+> doesn't reconfigure array.
 > 
-> What is the per-hw-queue flag?
-
-Sorry I forgot to update the commit message as the implementation
-changed. Actually this mechanism is implemented by patch 10 of this
-patch set.
-
+> And it could cause deadlock problem for raid5 as follows:
 > 
->> to indicate whether this polling hw queue currently being polled on or
->> not. Every polling hw queue is exclusive to one polling instance, i.e.,
->> the polling instance will skip this polling hw queue if this hw queue
->> currently is being polled by another polling instance, and start
->> polling on the next hw queue.
+> 1. process A tried to reap sync thread with reconfig_mutex held after echo
+>     idle to sync_action.
+> 2. raid5 sync thread was blocked if there were too many active stripes.
+> 3. SB_CHANGE_PENDING was set (because of write IO comes from upper layer)
+>     which causes the number of active stripes can't be decreased.
+> 4. SB_CHANGE_PENDING can't be cleared since md_check_recovery was not able
+>     to hold reconfig_mutex.
 > 
-> Not see such skip in dm_poll_one_dev() in which
-> queue_for_each_poll_hw_ctx() is called directly for polling all POLL
-> hctxs of the request queue, so can you explain it a bit more about this
-> skip mechanism?
+> More details in the link:
+> https://lore.kernel.org/linux-raid/5ed54ffc-ce82-bf66-4eff-390cb23bc1ac@molgen.mpg.de/T/#t
 > 
-
-It is implemented as patch 10 of this patch set. When spin_trylock()
-fails, the polling instance will return immediately, instead of busy
-waiting.
-
-
-> Even though such skipping is implemented, not sure if good performance
-> can be reached because hctx poll may be done in ping-pong style
-> among several CPUs. But blk-mq hctx is supposed to have its cpu affinities.
+> And add one parameter to md_reap_sync_thread since it could be called by
+> dm-raid which doesn't hold reconfig_mutex.
 > 
-
-Yes, the mechanism of iterating all hw queues can make the competition
-worse.
-
-If every underlying data device has **only** one polling hw queue, then
-this ping-pong style polling still exist, even when we implement split
-bio tracking mechanism, i.e., acquiring the specific hw queue the bio
-enqueued into. Because multiple polling instance has to compete for the
-only polling hw queue.
-
-But if multiple polling hw queues per device are reserved for multiple
-polling instances, (e.g., every underlying data device has 3 polling hw
-queues when there are 3 polling instances), just as what we practice on
-mq polling, then the current implementation of iterating all hw queues
-will indeed works in a ping-pong style, while this issue shall not exist
-when accurate split bio tracking mechanism could be implemented.
-
-As for the performance, I cite the test results here, as summarized in
-the cover-letter
-(https://lore.kernel.org/io-uring/20210208085243.82367-1-jefflexu@linux.alibaba.com/)
-
-	    | IOPS (IRQ mode) | IOPS (iopoll=1 mode) | diff
------------ | --------------- | -------------------- | ----
-without opt | 		 318k |		 	256k | ~-20%
-with opt    |		 314k |		 	354k | ~13%
-
-The 'opt' refers to the optimization of patch 10, i.e., the skipping
-mechanism. There are 3 polling instances (i.e., 3 CPUs) in this test case.
-
-
-Indeed the current implementation of iterating all hw queues is some
-sort of compromise, as I find it really difficult to implement the
-accurate split bio mechanism, and to achieve high performance at the
-same time. Thus I turn to optimizing the original implementation of
-iterating all hw queues, such as optimization of patch 10 and 11.
-
-
--- 
-Thanks,
-Jeffle
+> Reported-and-tested-by: Donald Buczek <buczek@molgen.mpg.de>
+> Signed-off-by: Guoqing Jiang <guoqing.jiang@cloud.ionos.com>
+> ---
+> V2:
+> 1. add one parameter to md_reap_sync_thread per Jack's suggestion.
+> 
+>   drivers/md/dm-raid.c |  2 +-
+>   drivers/md/md.c      | 14 +++++++++-----
+>   drivers/md/md.h      |  2 +-
+>   3 files changed, 11 insertions(+), 7 deletions(-)
+> 
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index cab12b2..0c4cbba 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -3668,7 +3668,7 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
+>   	if (!strcasecmp(argv[0], "idle") || !strcasecmp(argv[0], "frozen")) {
+>   		if (mddev->sync_thread) {
+>   			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+> -			md_reap_sync_thread(mddev);
+> +			md_reap_sync_thread(mddev, false);
+>   		}
+>   	} else if (decipher_sync_action(mddev, mddev->recovery) != st_idle)
+>   		return -EBUSY;
+> diff --git a/drivers/md/md.c b/drivers/md/md.c
+> index ca40942..0c12b7f 100644
+> --- a/drivers/md/md.c
+> +++ b/drivers/md/md.c
+> @@ -4857,7 +4857,7 @@ action_store(struct mddev *mddev, const char *page, size_t len)
+>   				flush_workqueue(md_misc_wq);
+>   			if (mddev->sync_thread) {
+>   				set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+> -				md_reap_sync_thread(mddev);
+> +				md_reap_sync_thread(mddev, true);
+>   			}
+>   			mddev_unlock(mddev);
+>   		}
+> @@ -6234,7 +6234,7 @@ static void __md_stop_writes(struct mddev *mddev)
+>   		flush_workqueue(md_misc_wq);
+>   	if (mddev->sync_thread) {
+>   		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+> -		md_reap_sync_thread(mddev);
+> +		md_reap_sync_thread(mddev, true);
+>   	}
+>   
+>   	del_timer_sync(&mddev->safemode_timer);
+> @@ -9256,7 +9256,7 @@ void md_check_recovery(struct mddev *mddev)
+>   			 * ->spare_active and clear saved_raid_disk
+>   			 */
+>   			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+> -			md_reap_sync_thread(mddev);
+> +			md_reap_sync_thread(mddev, true);
+>   			clear_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
+>   			clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
+>   			clear_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
+> @@ -9291,7 +9291,7 @@ void md_check_recovery(struct mddev *mddev)
+>   			goto unlock;
+>   		}
+>   		if (mddev->sync_thread) {
+> -			md_reap_sync_thread(mddev);
+> +			md_reap_sync_thread(mddev, true);
+>   			goto unlock;
+>   		}
+>   		/* Set RUNNING before clearing NEEDED to avoid
+> @@ -9364,14 +9364,18 @@ void md_check_recovery(struct mddev *mddev)
+>   }
+>   EXPORT_SYMBOL(md_check_recovery);
+>   
+> -void md_reap_sync_thread(struct mddev *mddev)
+> +void md_reap_sync_thread(struct mddev *mddev, bool reconfig_mutex_held)
+>   {
+>   	struct md_rdev *rdev;
+>   	sector_t old_dev_sectors = mddev->dev_sectors;
+>   	bool is_reshaped = false;
+>   
+>   	/* resync has finished, collect result */
+> +	if (reconfig_mutex_held)
+> +		mddev_unlock(mddev);
+>   	md_unregister_thread(&mddev->sync_thread);
+> +	if (reconfig_mutex_held)
+> +		mddev_lock_nointr(mddev);
+>   	if (!test_bit(MD_RECOVERY_INTR, &mddev->recovery) &&
+>   	    !test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery) &&
+>   	    mddev->degraded != mddev->raid_disks) {
+> diff --git a/drivers/md/md.h b/drivers/md/md.h
+> index 34070ab..7ae3d98 100644
+> --- a/drivers/md/md.h
+> +++ b/drivers/md/md.h
+> @@ -705,7 +705,7 @@ extern struct md_thread *md_register_thread(
+>   extern void md_unregister_thread(struct md_thread **threadp);
+>   extern void md_wakeup_thread(struct md_thread *thread);
+>   extern void md_check_recovery(struct mddev *mddev);
+> -extern void md_reap_sync_thread(struct mddev *mddev);
+> +extern void md_reap_sync_thread(struct mddev *mddev, bool reconfig_mutex_held);
+>   extern int mddev_init_writes_pending(struct mddev *mddev);
+>   extern bool md_write_start(struct mddev *mddev, struct bio *bi);
+>   extern void md_write_inc(struct mddev *mddev, struct bio *bi);
+> 
 
 --
 dm-devel mailing list
