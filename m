@@ -2,85 +2,68 @@ Return-Path: <SRS0=AlgS=HU=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8653FC433DB
-	for <dm-devel@archiver.kernel.org>; Thu, 18 Feb 2021 03:23:04 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ADC3EC433E0
+	for <dm-devel@archiver.kernel.org>; Thu, 18 Feb 2021 08:34:02 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id D928B64D79
-	for <dm-devel@archiver.kernel.org>; Thu, 18 Feb 2021 03:23:01 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D928B64D79
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=chinatelecom.cn
+	by mail.kernel.org (Postfix) with ESMTPS id C6D3564E79
+	for <dm-devel@archiver.kernel.org>; Thu, 18 Feb 2021 08:34:01 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C6D3564E79
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-376-QKSEH59MPImCkoVxFMfyRA-1; Wed, 17 Feb 2021 22:22:56 -0500
-X-MC-Unique: QKSEH59MPImCkoVxFMfyRA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-579-CLwY5_liPumEQemyMfUsJA-1; Thu, 18 Feb 2021 03:33:58 -0500
+X-MC-Unique: CLwY5_liPumEQemyMfUsJA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3C40F79EC0;
-	Thu, 18 Feb 2021 03:22:52 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 979111005501;
+	Thu, 18 Feb 2021 08:33:52 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7C6E15C730;
-	Thu, 18 Feb 2021 03:22:51 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 98ACA19C47;
+	Thu, 18 Feb 2021 08:33:51 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BD7754E58E;
-	Thu, 18 Feb 2021 03:22:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 204909979;
+	Thu, 18 Feb 2021 08:33:49 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 11I3Mcih017601 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 17 Feb 2021 22:22:46 -0500
+	id 11I8WfcT017683 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 18 Feb 2021 03:32:41 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B7658200AC37; Thu, 18 Feb 2021 03:22:38 +0000 (UTC)
+	id DD4BA11902C; Thu, 18 Feb 2021 08:32:40 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B1ACA2126C9E
-	for <dm-devel@redhat.com>; Thu, 18 Feb 2021 03:22:35 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D7E6C107660
+	for <dm-devel@redhat.com>; Thu, 18 Feb 2021 08:32:38 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B67B3800B28
-	for <dm-devel@redhat.com>; Thu, 18 Feb 2021 03:22:35 +0000 (UTC)
-Received: from chinatelecom.cn (prt-mail.chinatelecom.cn [42.123.76.220]) by
-	relay.mimecast.com with ESMTP id us-mta-174-rHFZWMtLOnWDYJIBI-zhyg-1;
-	Wed, 17 Feb 2021 22:22:31 -0500
-X-MC-Unique: rHFZWMtLOnWDYJIBI-zhyg-1
-HMM_SOURCE_IP: 172.18.0.92:13115.1919750152
-HMM_ATTACHE_NUM: 0000
-HMM_SOURCE_TYPE: SMTP
-Received: from clientip-202.80.192.21?logid-9eb2d1d5db9340d2af8aa147d4e0424c
-	(unknown [172.18.0.92])
-	by chinatelecom.cn (HERMES) with SMTP id 6050E2800AF;
-	Thu, 18 Feb 2021 11:22:20 +0800 (CST)
-X-189-SAVE-TO-SEND: wucy11@chinatelecom.cn
-Received: from  ([172.18.0.92])
-	by App0021 with ESMTP id 9eb2d1d5db9340d2af8aa147d4e0424c for
-	christophe.varoqui@opensvc.com; Thu Feb 18 11:22:30 2021
-X-Transaction-ID: 9eb2d1d5db9340d2af8aa147d4e0424c
-X-filter-score: filter<0>
-X-Real-From: wucy11@chinatelecom.cn
-X-Receive-IP: 172.18.0.92
-X-MEDUSA-Status: 0
-To: Martin Wilck <martin.wilck@suse.com>,
-	"bmarzins@redhat.com" <bmarzins@redhat.com>
-References: <1612847967-8813-1-git-send-email-bmarzins@redhat.com>
-	<1612847967-8813-3-git-send-email-bmarzins@redhat.com>
-	<e8131e361f84ef1caee140183a26c9f60b172f24.camel@suse.com>
-	<20210211044833.GJ15006@octiron.msp.redhat.com>
-	<293ad1261123efb63dcfff4d02440e1728b3c013.camel@suse.com>
-From: Chongyun Wu <wucy11@chinatelecom.cn>
-Message-ID: <e930e111-d98d-bae2-baad-501c2c591d02@chinatelecom.cn>
-Date: Thu, 18 Feb 2021 11:22:10 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
-	Thunderbird/78.7.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9199B81D9EA
+	for <dm-devel@redhat.com>; Thu, 18 Feb 2021 08:32:38 +0000 (UTC)
+Received: from verein.lst.de (verein.lst.de [213.95.11.211]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-125-ua0oZ-pXPyONMp5DY1gfVQ-1;
+	Thu, 18 Feb 2021 03:32:34 -0500
+X-MC-Unique: ua0oZ-pXPyONMp5DY1gfVQ-1
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id B425D6736F; Thu, 18 Feb 2021 09:32:30 +0100 (CET)
+Date: Thu, 18 Feb 2021 09:32:30 +0100
+From: Christoph Hellwig <hch@lst.de>
+To: Ruan Shiyang <ruansy.fnst@cn.fujitsu.com>
+Message-ID: <20210218083230.GA17913@lst.de>
+References: <20210208105530.3072869-1-ruansy.fnst@cn.fujitsu.com>
+	<20210208105530.3072869-6-ruansy.fnst@cn.fujitsu.com>
+	<20210210133347.GD30109@lst.de>
+	<45a20d88-63ee-d678-ad86-6ccd8cdf7453@cn.fujitsu.com>
 MIME-Version: 1.0
-In-Reply-To: <293ad1261123efb63dcfff4d02440e1728b3c013.camel@suse.com>
+In-Reply-To: <45a20d88-63ee-d678-ad86-6ccd8cdf7453@cn.fujitsu.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -89,11 +72,17 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Subject: Re: [dm-devel] [PATCH 2/2] multipathd: add recheck_wwid_time option
- to verify the path wwid
+Cc: y-goto@fujitsu.com, qi.fuli@fujitsu.com, snitzer@redhat.com,
+	linux-nvdimm@lists.01.org, rgoldwyn@suse.de,
+	darrick.wong@oracle.com, david@fromorbit.com,
+	linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org,
+	linux-mm@kvack.org, dm-devel@redhat.com,
+	linux-fsdevel@vger.kernel.org, dan.j.williams@intel.com,
+	Christoph Hellwig <hch@lst.de>, agk@redhat.com
+Subject: Re: [dm-devel] [PATCH v3 05/11] mm,
+ fsdax: Refactor memory-failure handler for dax mapping
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -107,55 +96,29 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
+On Wed, Feb 17, 2021 at 10:56:11AM +0800, Ruan Shiyang wrote:
+> I'd like to confirm one thing...  I have checked all of this patchset by 
+> checkpatch.pl and it did not report the overly long line warning.  So, I 
+> should still obey the rule of 80 chars one line?
 
+checkpatch.pl is completely broken, I would not rely on it.
 
-On 2021/2/11 20:14, Martin Wilck wrote:
+Here is the quote from the coding style document:
 
->>> But foremost, do we really have to try to deal with configuration
->>> mistakes as blatant as this? What if a user sets the same WWID for
->>> different devices, or re-uses the same WWID on different storage
->>> servers? I already hesitated about the code I added myself for
->>> catching
->>> user errors in the WWIDs file, but this seems even more far-
->>> fetched.
->>>
->>> Please convince me.
->>
->> Err.. An important customer corrupted their data and while they admit
->> that they were at fault, it's hard for them to guarantee that
->> something
->> like this won't happen in the future, and they asked if multipath
->> could
->> do a better job of catching these sorts of mistakes. Obviously this
->> is
->> more convincing when it's coming from your customer. But the fact
->> still
->> stands that this has happened to multiple users even with our
->> existing
->> code to catch this.
-> 
-> I wasn't aware of multiple affected users. I saw Chongyun's post and it
-> looked to me as if this had happend once, likely in his organization.
-> It wasn't even clear to me whether production data were affected.
-> 
-Had customers have made incorrect storage back-end operations during the 
-expansion process, which has caused the destruction of customer data, which 
-cannot be repaired using any tools. And I reproduce it in our lab too.
-Customers definitely hope that multipath-tools can probide protection in
-this case, becuase if it is important custmer data storage in the LUN, the
-loss will be great.
+"The preferred limit on the length of a single line is 80 columns.
 
--- 
-Best Regard,
-Chongyun Wu
+Statements longer than 80 columns should be broken into sensible chunks,
+unless exceeding 80 columns significantly increases readability and does
+not hide information."
 
 --
 dm-devel mailing list
