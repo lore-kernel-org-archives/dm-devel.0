@@ -2,77 +2,88 @@ Return-Path: <SRS0=l+U7=HY=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8837CC433DB
-	for <dm-devel@archiver.kernel.org>; Mon, 22 Feb 2021 01:32:13 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0D6ADC433E0
+	for <dm-devel@archiver.kernel.org>; Mon, 22 Feb 2021 08:51:19 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 1E3EB64F02
-	for <dm-devel@archiver.kernel.org>; Mon, 22 Feb 2021 01:32:13 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1E3EB64F02
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 1C77164E61
+	for <dm-devel@archiver.kernel.org>; Mon, 22 Feb 2021 08:51:17 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1C77164E61
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1613957532;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=cpMI8RbqZ5yojYqB0FSsIk4+Bl4AJinTpOo1TcoRC/k=;
-	b=gYWj5Dzu7zx2A1BmE+hFaS9UIRto/csn0o9du2VhnxKwl/CDlVJ8lRn7flKSxXtZsTFaK1
-	CC3Ak73FG5AfKX5jrMjWplkHxTgdgYeiiaAXRiyjS+KKYi31jKbm406yHRxqMWLpUhbf5e
-	9cwosvcdV+YUcm/dwdnEoN9hTAlTLqg=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-439-IatOAa6UPw-26_clQ5tkKA-1; Sun, 21 Feb 2021 20:32:09 -0500
-X-MC-Unique: IatOAa6UPw-26_clQ5tkKA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-332-D2W7v8M2MxerJFOsS0TOVw-1; Mon, 22 Feb 2021 03:51:14 -0500
+X-MC-Unique: D2W7v8M2MxerJFOsS0TOVw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6A5EB1934100;
-	Mon, 22 Feb 2021 01:32:04 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2B97D18449E0;
+	Mon, 22 Feb 2021 08:51:10 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CD6251A44A;
-	Mon, 22 Feb 2021 01:32:03 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C7A7960C0F;
+	Mon, 22 Feb 2021 08:51:08 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CB7E918095CB;
-	Mon, 22 Feb 2021 01:32:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
-	[10.5.11.23])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3A89618095CC;
+	Mon, 22 Feb 2021 08:51:02 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 11M1VvrU017368 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 21 Feb 2021 20:31:57 -0500
+	id 11KB6pJ5010438 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 20 Feb 2021 06:06:51 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id E7A061A44A; Mon, 22 Feb 2021 01:31:57 +0000 (UTC)
-Received: from T590 (ovpn-12-196.pek2.redhat.com [10.72.12.196])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7972B1A867;
-	Mon, 22 Feb 2021 01:31:37 +0000 (UTC)
-Date: Mon, 22 Feb 2021 09:31:33 +0800
-From: Ming Lei <ming.lei@redhat.com>
-To: SelvaKumar S <selvakuma.s1@samsung.com>
-Message-ID: <YDMJdekWhy/Y1Y1r@T590>
-References: <CGME20210219124555epcas5p1334e7c4d64ada5dc4a2ca0feb48c1d44@epcas5p1.samsung.com>
-	<20210219124517.79359-1-selvakuma.s1@samsung.com>
+	id 896B1200BD73; Sat, 20 Feb 2021 11:06:51 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 82D7F2126C9E
+	for <dm-devel@redhat.com>; Sat, 20 Feb 2021 11:06:50 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E6EFE85A5A6
+	for <dm-devel@redhat.com>; Sat, 20 Feb 2021 11:06:49 +0000 (UTC)
+Received: from out30-57.freemail.mail.aliyun.com
+	(out30-57.freemail.mail.aliyun.com [115.124.30.57]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-271-seylu2FVNdin9focofr30g-1;
+	Sat, 20 Feb 2021 06:06:45 -0500
+X-MC-Unique: seylu2FVNdin9focofr30g-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R161e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04423;
+	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=9; SR=0;
+	TI=SMTPD_---0UP1O7oY_1613819199
+Received: from localhost(mailfrom:jefflexu@linux.alibaba.com
+	fp:SMTPD_---0UP1O7oY_1613819199) by smtp.aliyun-inc.com(127.0.0.1);
+	Sat, 20 Feb 2021 19:06:40 +0800
+From: Jeffle Xu <jefflexu@linux.alibaba.com>
+To: snitzer@redhat.com, axboe@kernel.dk
+Date: Sat, 20 Feb 2021 19:06:27 +0800
+Message-Id: <20210220110637.50305-3-jefflexu@linux.alibaba.com>
+In-Reply-To: <20210220110637.50305-1-jefflexu@linux.alibaba.com>
+References: <20210220110637.50305-1-jefflexu@linux.alibaba.com>
 MIME-Version: 1.0
-In-Reply-To: <20210219124517.79359-1-selvakuma.s1@samsung.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: axboe@kernel.dk, damien.lemoal@wdc.com, kch@kernel.org, sagi@grimberg.me,
-	snitzer@redhat.com, selvajove@gmail.com,
-	linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
-	nj.shetty@samsung.com, linux-block@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org, dm-devel@redhat.com,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	joshi.k@samsung.com, javier.gonz@samsung.com, kbusch@kernel.org,
-	joshiiitr@gmail.com, linux-scsi@vger.kernel.org, hch@lst.de
-Subject: Re: [dm-devel] [RFC PATCH v5 0/4] add simple copy support
+X-Mailman-Approved-At: Mon, 22 Feb 2021 03:49:50 -0500
+Cc: caspar@linux.alibaba.com, io-uring@vger.kernel.org,
+	linux-block@vger.kernel.org, joseph.qi@linux.alibaba.com,
+	dm-devel@redhat.com, ming.lei@redhat.com, hch@lst.de
+Subject: [dm-devel] [PATCH v4 02/12] block: add queue_to_disk() to get
+	gendisk from request_queue
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -86,50 +97,76 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Feb 19, 2021 at 06:15:13PM +0530, SelvaKumar S wrote:
-> This patchset tries to add support for TP4065a ("Simple Copy Command"),
-> v2020.05.04 ("Ratified")
-> 
-> The Specification can be found in following link.
-> https://nvmexpress.org/wp-content/uploads/NVM-Express-1.4-Ratified-TPs-1.zip
-> 
-> Simple copy command is a copy offloading operation and is  used to copy
-> multiple contiguous ranges (source_ranges) of LBA's to a single destination
-> LBA within the device reducing traffic between host and device.
-> 
-> This implementation doesn't add native copy offload support for stacked
-> devices rather copy offload is done through emulation. Possible use
-> cases are F2FS gc and BTRFS relocation/balance.
-> 
-> *blkdev_issue_copy* takes source bdev, no of sources, array of source
-> ranges (in sectors), destination bdev and destination offset(in sectors).
-> If both source and destination block devices are same and copy_offload = 1,
-> then copy is done through native copy offloading. Copy emulation is used
-> in other cases.
-> 
-> As SCSI XCOPY can take two different block devices and no of source range is
-> equal to 1, this interface can be extended in future to support SCSI XCOPY.
+Sometimes we need to get the corresponding gendisk from request_queue.
 
-The patchset adds ioctl(BLKCOPY) and two userspace visible data
-struture(range_entry, and copy_range), all belong to kabi stuff, and the
-interface is generic block layer kabi.
+It is preferred that block drivers store private data in
+gendisk->private_data rather than request_queue->queuedata, e.g. see:
+commit c4a59c4e5db3 ("dm: stop using ->queuedata").
 
-The API has to be allowed to extend for supporting SCSI XCOPY in future or similar
-block copy commands without breaking previous application, so please CC linux-scsi
-and scsi guys in your next post.
+So if only request_queue is given, we need to get its corresponding
+gendisk to get the private data stored in that gendisk.
 
+Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+Reviewed-by: Mike Snitzer <snitzer@redhat.com>
+---
+ include/linux/blkdev.h       | 2 ++
+ include/trace/events/kyber.h | 6 +++---
+ 2 files changed, 5 insertions(+), 3 deletions(-)
 
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index f94ee3089e01..2a802e011a95 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -687,6 +687,8 @@ static inline bool blk_account_rq(struct request *rq)
+ 	dma_map_page_attrs(dev, (bv)->bv_page, (bv)->bv_offset, (bv)->bv_len, \
+ 	(dir), (attrs))
+ 
++#define queue_to_disk(q)	(dev_to_disk(kobj_to_dev((q)->kobj.parent)))
++
+ static inline bool queue_is_mq(struct request_queue *q)
+ {
+ 	return q->mq_ops;
+diff --git a/include/trace/events/kyber.h b/include/trace/events/kyber.h
+index c0e7d24ca256..f9802562edf6 100644
+--- a/include/trace/events/kyber.h
++++ b/include/trace/events/kyber.h
+@@ -30,7 +30,7 @@ TRACE_EVENT(kyber_latency,
+ 	),
+ 
+ 	TP_fast_assign(
+-		__entry->dev		= disk_devt(dev_to_disk(kobj_to_dev(q->kobj.parent)));
++		__entry->dev		= disk_devt(queue_to_disk(q));
+ 		strlcpy(__entry->domain, domain, sizeof(__entry->domain));
+ 		strlcpy(__entry->type, type, sizeof(__entry->type));
+ 		__entry->percentile	= percentile;
+@@ -59,7 +59,7 @@ TRACE_EVENT(kyber_adjust,
+ 	),
+ 
+ 	TP_fast_assign(
+-		__entry->dev		= disk_devt(dev_to_disk(kobj_to_dev(q->kobj.parent)));
++		__entry->dev		= disk_devt(queue_to_disk(q));
+ 		strlcpy(__entry->domain, domain, sizeof(__entry->domain));
+ 		__entry->depth		= depth;
+ 	),
+@@ -81,7 +81,7 @@ TRACE_EVENT(kyber_throttled,
+ 	),
+ 
+ 	TP_fast_assign(
+-		__entry->dev		= disk_devt(dev_to_disk(kobj_to_dev(q->kobj.parent)));
++		__entry->dev		= disk_devt(queue_to_disk(q));
+ 		strlcpy(__entry->domain, domain, sizeof(__entry->domain));
+ 	),
+ 
 -- 
-Ming
+2.27.0
 
 --
 dm-devel mailing list
