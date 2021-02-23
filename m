@@ -1,87 +1,107 @@
-Return-Path: <SRS0=l+U7=HY=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=Sgdu=HZ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.7 required=3.0 tests=BAYES_00,
-	DKIM_ADSP_CUSTOM_MED,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-8.5 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 561B0C433DB
-	for <dm-devel@archiver.kernel.org>; Mon, 22 Feb 2021 21:17:03 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0A43CC433E0
+	for <dm-devel@archiver.kernel.org>; Tue, 23 Feb 2021 03:07:17 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 96B8664E02
-	for <dm-devel@archiver.kernel.org>; Mon, 22 Feb 2021 21:17:02 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 96B8664E02
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
+	by mail.kernel.org (Postfix) with ESMTPS id 565BD64E02
+	for <dm-devel@archiver.kernel.org>; Tue, 23 Feb 2021 03:07:16 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 565BD64E02
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=zougloub.eu
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-602-9NccFFmVPiGvrFDjHuUcPQ-1; Mon, 22 Feb 2021 16:15:59 -0500
-X-MC-Unique: 9NccFFmVPiGvrFDjHuUcPQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-22-Oh9nrj8oNr6AwCfI2F4Ihg-1; Mon, 22 Feb 2021 22:07:11 -0500
+X-MC-Unique: Oh9nrj8oNr6AwCfI2F4Ihg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9D4811083E94;
-	Mon, 22 Feb 2021 21:15:54 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id ECB7F107ACE6;
+	Tue, 23 Feb 2021 03:07:06 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1D32A5C1BD;
-	Mon, 22 Feb 2021 21:15:54 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9DEE66E71A;
+	Tue, 23 Feb 2021 03:07:03 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2315F57DFA;
-	Mon, 22 Feb 2021 21:15:51 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 41D724E58D;
+	Tue, 23 Feb 2021 03:06:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 11MLFmNk014513 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 22 Feb 2021 16:15:48 -0500
+	id 11N36s8d019908 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 22 Feb 2021 22:06:55 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 91137200AC37; Mon, 22 Feb 2021 21:15:48 +0000 (UTC)
+	id 939E8202E956; Tue, 23 Feb 2021 03:06:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8BA702166B2F
-	for <dm-devel@redhat.com>; Mon, 22 Feb 2021 21:15:46 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8D5AD202E946
+	for <dm-devel@redhat.com>; Tue, 23 Feb 2021 03:06:51 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4057185828C
-	for <dm-devel@redhat.com>; Mon, 22 Feb 2021 21:15:46 +0000 (UTC)
-Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com
-	[209.85.128.51]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-415-u437MtFeOkehDfwKcNNv5g-1; Mon, 22 Feb 2021 16:15:42 -0500
-X-MC-Unique: u437MtFeOkehDfwKcNNv5g-1
-Received: by mail-wm1-f51.google.com with SMTP id m1so545744wml.2;
-	Mon, 22 Feb 2021 13:15:41 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-	:content-transfer-encoding;
-	bh=PTZ2O6n1+huK+yenKFB2tBEu7kgtsTkONtfh5Lrynjs=;
-	b=orGA93iHc5gJN4Aq4gOaOJFc9w+uFu5hnrdCt8GN0trZDWcWJARgdIPxZuboI6bcB+
-	h3x1iawtC+kL+RNCrKoeZ7hwbxilcNSX8WEDk4v/5hTcYrINI4y071+PokorZ/uSMfeA
-	cobF8xDsRCE74Nq/SMgXNZTIA7VXNkhoVLdfY6DCmvjc7/6mTqJpGvhrbFyly1D6xO4B
-	zNClG5wC8nN60r1+xGcz/LzxH9msaH1Qtijo2saaiIGw791FlEZkjujPd1OLs0Yeh2k4
-	C87+QIfPByJ44ve7fnHzCZEAogk6TwsGEXKSZND9tpjCFPbj7EUrHsb+1z8+hiQCYP9q
-	M5dQ==
-X-Gm-Message-State: AOAM531hTBojPsIuyk+mCmQ6z+XS5Xk9L+PZWqmzaiz85xfzKX14Nl8W
-	g89OX/VYMrpNw0mbaGVuBnwY/fjIpc8=
-X-Google-Smtp-Source: ABdhPJwKxO7ww55rWxTCKE28swLyHI8Kc3r9qyZulBxzgdHlFeXPxUGcimZpekQdjmoxzZ4AhAcAdA==
-X-Received: by 2002:a7b:c249:: with SMTP id b9mr6554345wmj.99.1614028540887;
-	Mon, 22 Feb 2021 13:15:40 -0800 (PST)
-Received: from merlot.mazyland.net (39.35.broadband4.iol.cz. [85.71.35.39])
-	by smtp.googlemail.com with ESMTPSA id
-	h11sm483413wmq.26.2021.02.22.13.15.39
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Mon, 22 Feb 2021 13:15:40 -0800 (PST)
-From: Milan Broz <gmazyland@gmail.com>
-To: dm-devel@redhat.com
-Date: Mon, 22 Feb 2021 22:15:28 +0100
-Message-Id: <20210222211528.848441-1-gmazyland@gmail.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CD33B1022F0A
+	for <dm-devel@redhat.com>; Tue, 23 Feb 2021 03:06:51 +0000 (UTC)
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=dkim.mimecast.com; s=201903; t=1614049611;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	in-reply-to:in-reply-to:dkim-signature;
+	bh=fCMi6wNXfxDmHZyyyKoARX6GjpR39eHR0rJsUk74BM4=;
+	b=b55V/lRUBLhdbwDUgsjDOB44iY96Ogg50+MEVjwHy08wrOzFR4+FzMtWN9hdLcMsm9NUim
+	YatWoUvDO9CuUeO+d0S+rzGLsSSZXQtj0jy+zLGk5EAXKTfmVfE1abrorIwYL1anasYThr
+	FIY3rEDzB5+TVR/2C7wwEANFzzjhkSOGJe6WeN7skjb7c0R8bhFIkRrZpcW+TJt3u9I8vT
+	8Gm9HakAwHDo9yQ+iJyEoGS6LnJTb8T7tesYwM8ZRin68j/qqjaPb1HH4xfSG5NMOPLj8Y
+	F3AWlRHZeaB+/uKiQNaGU9837eEEZK7z4HOcrviV65gE09F+slQCgtkSFihUOA==
+ARC-Seal: i=1; s=201903; d=dkim.mimecast.com; t=1614049611; a=rsa-sha256;
+	cv=none;
+	b=iadj1nvD+22ugif4toCBs/3xSzwBUULgc0L/hniP1cnUH0eqtIh5g9hPDD3bvAjd58GH9M
+	nrH//ylSeTclgg5WAxTi6u3thbIHStC2xQKUOwZ48oV7j4aEjHnhKKVscY/hz5T1HrWp8Z
+	RgPDRdgQ64OsKq03T6rBiSwO446zhcn7VuxmyArJ5bqZg+F6KdZaAu2tUZH+1MytrX7qio
+	4XsWOeQichrVrgwHvHWGoWCJUqyucV3dGb4AC+pngOtxDdymjyyDRxc3vY4VhoqjyDuyi1
+	eKfW+mgAU7BV/3S+52FedRx31iKg0eOk+3mRZ9w9XNCZS5y1Bs8CqdwzMXvyjg==
+ARC-Authentication-Results: i=1; relay.mimecast.com;
+	dkim=pass header.d=zougloub.eu header.s=zougloub.eu header.b=cg2RtDZo; 
+	dmarc=none;
+	spf=pass (relay.mimecast.com: domain of cj-ko@zougloub.eu designates
+	69.70.16.42 as permitted sender)
+	smtp.mailfrom=cj-ko@zougloub.eu
+Received: from zougloub.eu (zougloub.eu [69.70.16.42]) by relay.mimecast.com
+	with ESMTP id us-mta-558-AagQ90Y1PmOKwkLdniLspA-1; Mon, 22 Feb 2021
+	22:06:46 -0500
+X-MC-Unique: AagQ90Y1PmOKwkLdniLspA-1
+Received: from pouet.cJ (exmakhina.com [69.70.16.43])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange ECDHE (P-256) server-signature RSA-PSS (2048 bits)
+	server-digest SHA256) (No client certificate requested)
+	by zougloub.eu (Postfix) with ESMTPSA id A45F814C6AEB;
+	Mon, 22 Feb 2021 22:01:12 -0500 (EST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=zougloub.eu;
+	s=zougloub.eu; t=1614049272;
+	bh=fCMi6wNXfxDmHZyyyKoARX6GjpR39eHR0rJsUk74BM4=;
+	h=Date:From:To:Cc:Subject:In-Reply-To;
+	b=cg2RtDZo3tnseM3qvvC2x2at1TX21obojSHCP5WLErLA1pHTD+nyoDZLuKqlfaIzC
+	bloTdTGbBN4ZQPyMupTqEDqWD4hB2dRrYAgCeu+OOYp4djkwyxn3ik6Wj9BBEHNJc6
+	4753//MJlFxm8cDmzHIxw9zXWA6F7PoCRQDwPm0Q=
+Date: Mon, 22 Feb 2021 22:00:43 -0500
+From: =?UTF-8?B?SsOpcsO0bWU=?= Carretero <cJ-ko@zougloub.eu>
+To: gmazyland@gmail.com
+Message-ID: <20210222220110.22ee6d0e@pouet.cJ>
+In-Reply-To: <20210222211528.848441-1-gmazyland@gmail.com>
 MIME-Version: 1.0
+Authentication-Results: relay.mimecast.com;
+	dkim=pass header.d=zougloub.eu header.s=zougloub.eu header.b=cg2RtDZo; 
+	dmarc=none;
+	spf=pass (relay.mimecast.com: domain of cj-ko@zougloub.eu designates
+	69.70.16.42 as permitted sender)
+	smtp.mailfrom=cj-ko@zougloub.eu
+X-Mimecast-Spam-Score: -5
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -90,12 +110,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: mpatocka@redhat.com, Milan Broz <gmazyland@gmail.com>,
-	samitolvanen@google.com
-Subject: [dm-devel] [PATCH] dm-verity: Fix FEC for RS roots non-aligned to
-	block size
+Cc: dm-devel@redhat.com, mpatocka@redhat.com, samitolvanen@google.com
+Subject: Re: [dm-devel] [PATCH] dm-verity: Fix FEC for RS roots non-aligned
+ to block size
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -107,144 +126,64 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Content-Type: multipart/mixed; boundary="===============7330885356595869202=="
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
-Authentication-Results: relay.mimecast.com;
-	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+
+--===============7330885356595869202==
+Content-Type: multipart/signed; boundary="Sig_/eoGBHlJoA07ceIlOkTc_b8=";
+	protocol="application/pgp-signature"; micalg=pgp-sha256
+
+--Sig_/eoGBHlJoA07ceIlOkTc_b8=
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+Tested-by: J=C3=A9r=C3=B4me Carretero <cJ-ko@zougloub.eu>
+
+
+I smoke-tested by fuzzing contiguous ranges of user data (not hash
+tree) and correction works up to the amount of added correction (since
+erasures are identified by hashes).
+
+Since the fix looks obvious, this should probably CC to stable?
+
+--=20
+J=C3=A9r=C3=B4me
+
+--Sig_/eoGBHlJoA07ceIlOkTc_b8=
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEk5TkdsnFh9XvC+SieNwb2r75s3MFAmA0b/YACgkQeNwb2r75
+s3NPZBAArz65nZc8QbaUR0gEeyLr8km6LAkpZFbKAxHFwyKjfVaJSN3J34qe3mja
+7CdNYTItY/ihKLKKtDn6JtsBjwXkOUnCFRTlJq8OqaljfEjsJCQkE8q9W5sqT9jb
+a9Fq9I1ibzcFPZHTV6SXABCsq9cd0aQGD9ImgOUifjHRV0hgLuzh6HZZPY8qWJ6K
+hFQXW4JiKduvzyARfPhlInwPXSQLymhsmF0eZevcGQ6aH4fqpyAijr62W9uUOVDK
+ZSKjUd0SAM/NihOi/XZ9WVPBEbCZnLjrztMWbmRnFvf9BNCFFLx7dLf03APo3Jps
+C7GkuC7luGu+cU0WM1UzhLyvA4bFepgdvUUHIzBBvqtXhcr+4ri2bAZtAxzBXj7b
+XRogcPTgTrwXjneySG4bWMe0GAhnMMKr6ARklfy14lBgrPjChMQMs7vUY0un5xyC
+6pr1e644Q+RUR4qXSRWknvbxMKyh9Zo+kN8hs/adWuE78AN8XtZRMFDHeqXZiL4Q
+j43yTP7FxrG2CrrAI7bqnrh6in4QG7dfWe0lOD86DZP/fsmIh88wXr9jJFCPaPFu
+CNwISAbN2lSDNmkQUjAHnTNyATCZztK9WkaOy9LKbZIM7YydvKlYIynaXlM6tzdN
+K440wXgoZzIIH8SBCKoaoGlX8uBRtuH2/VHbGjlVxtvhbRyrltQ=
+=v7Vx
+-----END PGP SIGNATURE-----
+
+--Sig_/eoGBHlJoA07ceIlOkTc_b8=--
+
+
+--===============7330885356595869202==
 Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-Optional Forward Error Correction (FEC) code in dm-verity uses
-Reed-Solomon code and should support roots from 2 to 24.
-
-The error correction parity bytes (of roots lengths per RS block) are stored
-on a separate device in sequence without any padding.
-
-Currently, to access FEC device, the dm-verity-fec code uses dm-bufio client
-with block size set to verity data block (usually 4096 or 512 bytes).
-
-Because this block size is not divisible by some (most!) of the roots
-supported lengths, data repair cannot work for partially stored
-parity bytes.
-
-This patch changes FEC device dm-bufio block size to "roots << SECTOR_SHIFT"
-where we can be sure that the full parity data is always available.
-(There cannot be partial FEC blocks because parity must cover whole sectors.)
-
-Because the optional FEC starting offset could be unaligned to this
-new block size, we have to use dm_bufio_set_sector_offset() to configure it.
-
-The problem is easily reproducible using veritysetup,
-here for example for roots=13:
-
-  # create verity device with RS FEC
-  dd if=/dev/urandom of=data.img bs=4096 count=8 status=none
-  veritysetup format data.img hash.img --fec-device=fec.img --fec-roots=13 | awk '/^Root hash/{ print $3 }' >roothash
-
-  # create an erasure that should be always repairable with this roots setting
-  dd if=/dev/zero of=data.img conv=notrunc bs=1 count=8 seek=4088 status=none
-
-  # try to read it through dm-verity
-  veritysetup open data.img test hash.img --fec-device=fec.img --fec-roots=13 $(cat roothash)
-  dd if=/dev/mapper/test of=/dev/null bs=4096 status=noxfer
-  # wait for possible recursive recovery in kernel
-  udevadm settle
-  veritysetup close test
-
-Without it, FEC code usually ends on unrecoverable failure in RS decoder:
-  device-mapper: verity-fec: 7:1: FEC 0: failed to correct: -74
-  ...
-
-With the patch, errors are properly repaired.
-  device-mapper: verity-fec: 7:1: FEC 0: corrected 8 errors
-  ...
-
-This problem is present in all kernels since the FEC code introduction (kernel 4.5).
-
-AFAIK the problem is not visible in Android  ecosystem because it always
-use default RS roots=2.
-
-Signed-off-by: Milan Broz <gmazyland@gmail.com>
----
- drivers/md/dm-verity-fec.c | 23 +++++++++++++----------
- 1 file changed, 13 insertions(+), 10 deletions(-)
-
-diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-index fb41b4f23c48..be170581eb69 100644
---- a/drivers/md/dm-verity-fec.c
-+++ b/drivers/md/dm-verity-fec.c
-@@ -61,18 +61,18 @@ static int fec_decode_rs8(struct dm_verity *v, struct dm_verity_fec_io *fio,
- static u8 *fec_read_parity(struct dm_verity *v, u64 rsb, int index,
- 			   unsigned *offset, struct dm_buffer **buf)
- {
--	u64 position, block;
-+	u64 position, block, rem;
- 	u8 *res;
- 
- 	position = (index + rsb) * v->fec->roots;
--	block = position >> v->data_dev_block_bits;
--	*offset = (unsigned)(position - (block << v->data_dev_block_bits));
-+	block = div64_u64_rem(position, v->fec->roots << SECTOR_SHIFT, &rem);
-+	*offset = (unsigned)rem;
- 
--	res = dm_bufio_read(v->fec->bufio, v->fec->start + block, buf);
-+	res = dm_bufio_read(v->fec->bufio, block, buf);
- 	if (IS_ERR(res)) {
- 		DMERR("%s: FEC %llu: parity read failed (block %llu): %ld",
- 		      v->data_dev->name, (unsigned long long)rsb,
--		      (unsigned long long)(v->fec->start + block),
-+		      (unsigned long long)(block),
- 		      PTR_ERR(res));
- 		*buf = NULL;
- 	}
-@@ -155,7 +155,7 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_fec_io *fio,
- 
- 		/* read the next block when we run out of parity bytes */
- 		offset += v->fec->roots;
--		if (offset >= 1 << v->data_dev_block_bits) {
-+		if (offset >= (v->fec->roots << SECTOR_SHIFT)) {
- 			dm_bufio_release(buf);
- 
- 			par = fec_read_parity(v, rsb, block_offset, &offset, &buf);
-@@ -674,7 +674,7 @@ int verity_fec_ctr(struct dm_verity *v)
- {
- 	struct dm_verity_fec *f = v->fec;
- 	struct dm_target *ti = v->ti;
--	u64 hash_blocks;
-+	u64 hash_blocks, start_blocks, fec_blocks;
- 	int ret;
- 
- 	if (!verity_fec_is_enabled(v)) {
-@@ -744,15 +744,18 @@ int verity_fec_ctr(struct dm_verity *v)
- 	}
- 
- 	f->bufio = dm_bufio_client_create(f->dev->bdev,
--					  1 << v->data_dev_block_bits,
-+					  f->roots << SECTOR_SHIFT,
- 					  1, 0, NULL, NULL);
- 	if (IS_ERR(f->bufio)) {
- 		ti->error = "Cannot initialize FEC bufio client";
- 		return PTR_ERR(f->bufio);
- 	}
- 
--	if (dm_bufio_get_device_size(f->bufio) <
--	    ((f->start + f->rounds * f->roots) >> v->data_dev_block_bits)) {
-+	dm_bufio_set_sector_offset(f->bufio, f->start << v->data_dev_block_bits >> SECTOR_SHIFT);
-+
-+	start_blocks = div64_u64(f->start << v->data_dev_block_bits, v->fec->roots << SECTOR_SHIFT);
-+	fec_blocks   = div64_u64(f->rounds * f->roots, v->fec->roots << SECTOR_SHIFT);
-+	if (dm_bufio_get_device_size(f->bufio) < (start_blocks + fec_blocks)) {
- 		ti->error = "FEC device is too small";
- 		return -E2BIG;
- 	}
--- 
-2.30.1
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+--===============7330885356595869202==--
 
