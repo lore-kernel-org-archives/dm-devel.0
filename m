@@ -2,83 +2,95 @@ Return-Path: <SRS0=Sgdu=HZ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.3 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
+	DKIM_ADSP_CUSTOM_MED,HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CBFB5C433E0
-	for <dm-devel@archiver.kernel.org>; Tue, 23 Feb 2021 16:28:54 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5BD74C433E0
+	for <dm-devel@archiver.kernel.org>; Tue, 23 Feb 2021 16:52:49 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 229EC60234
-	for <dm-devel@archiver.kernel.org>; Tue, 23 Feb 2021 16:28:54 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 229EC60234
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id C1FEA64E60
+	for <dm-devel@archiver.kernel.org>; Tue, 23 Feb 2021 16:52:48 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C1FEA64E60
+Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=google.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1614097733;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=0taOcv+vQGRe3l++m9NUoc0XAwSLpjdx6GinTGQZo8s=;
-	b=AIF+9uknpDUtwxtrPb0SQeZiHJxSm63zSritmH7pFqMLjxLEEvCQZvc93ti15wyEzPk4VX
-	hJk0/9sd3k8TLFmywocXPfK4YRzVSSrjJge63uuc3kKvEjGFD/ODw7W/99hDNULEk92FN0
-	cqPv7di4IE1GlgKn6DEy0IF1gHsrOi8=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-570-_b8tBbFnM82JCIqTvaviqQ-1; Tue, 23 Feb 2021 11:28:47 -0500
-X-MC-Unique: _b8tBbFnM82JCIqTvaviqQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-385-0St4FGDJPRKT_hJD-7P7qA-1; Tue, 23 Feb 2021 11:52:44 -0500
+X-MC-Unique: 0St4FGDJPRKT_hJD-7P7qA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4FB16107ACF8;
-	Tue, 23 Feb 2021 16:28:42 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 763A15D6A1;
-	Tue, 23 Feb 2021 16:28:40 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7BA3A107ACE6;
+	Tue, 23 Feb 2021 16:52:39 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D5F2560936;
+	Tue, 23 Feb 2021 16:52:38 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AF66118095CB;
-	Tue, 23 Feb 2021 16:28:35 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
-	[10.5.11.15])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0312F4EA32;
+	Tue, 23 Feb 2021 16:52:37 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 11NGSYxa032345 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 23 Feb 2021 11:28:34 -0500
+	id 11NGpr89001999 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 23 Feb 2021 11:51:53 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id E999D5D6BA; Tue, 23 Feb 2021 16:28:34 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
-	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BDE525D6AC;
-	Tue, 23 Feb 2021 16:28:28 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 11NGSSLe028212; Tue, 23 Feb 2021 11:28:28 -0500
-Received: from localhost (mpatocka@localhost)
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 11NGSRxm028208; Tue, 23 Feb 2021 11:28:28 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
-	owned process doing -bs
-Date: Tue, 23 Feb 2021 11:28:27 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Jens Axboe <axboe@kernel.dk>, Ming Lei <ming.lei@redhat.com>
-In-Reply-To: <YDSwyrLeiP/fKgZH@T590>
-Message-ID: <alpine.LRH.2.02.2102231125170.27597@file01.intranet.prod.int.rdu2.redhat.com>
-References: <alpine.LRH.2.02.2102221312070.5407@file01.intranet.prod.int.rdu2.redhat.com>
-	<YDSwyrLeiP/fKgZH@T590>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+	id 22ADFF49A1; Tue, 23 Feb 2021 16:51:53 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1C5F9F783C
+	for <dm-devel@redhat.com>; Tue, 23 Feb 2021 16:51:50 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 41937967F60
+	for <dm-devel@redhat.com>; Tue, 23 Feb 2021 16:51:46 +0000 (UTC)
+Received: from mail-ua1-f53.google.com (mail-ua1-f53.google.com
+	[209.85.222.53]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-420-dqb2C2lzM7awaa5CMMWkBg-1; Tue, 23 Feb 2021 11:51:13 -0500
+X-MC-Unique: dqb2C2lzM7awaa5CMMWkBg-1
+Received: by mail-ua1-f53.google.com with SMTP id m15so502089uah.7
+	for <dm-devel@redhat.com>; Tue, 23 Feb 2021 08:51:13 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc;
+	bh=BQZTt3RWxAHT7X2G1dusHZyy5pbdHfsZvlDfjbah2TI=;
+	b=AGX9HS/VuHTQtBu95EmVgQp+VWGOET4rtUzIQcHI/J8YSFtpt6VelKPFakOs8Ec5UI
+	KgZAgZz/u57jc9MgRsC0NBTi1pQ4alpX0gmdHo4GJ22oVy0UydLfFof3Cj+lW8+Ftv6H
+	hW1wRfa5DDUJsDH17nfILEvTbSxJF3iEaXQmmFENR70RqV/NZmynt0rMSKskOIMEIhlj
+	jM4hPj5PghVh/0lS6vGdOL7Rm9h3qd1m5XTDgBgTAHI74dxuil8CqAJcPzUVi3CRkPF1
+	ZX6pHogL1aNhbQhc5h3hYs99W4tcefq7yy5hYRTV2h22cVBQpM+VGrim2t1Ayc68NC/5
+	nvIw==
+X-Gm-Message-State: AOAM530mZd+a6f8GFWoMQ3TkHY/dfQL7NVNk7tQ1sjE4WuWjNiD42TJj
+	GT+zLeGlXKnS/YsM48qveVowEJZTDAd6JKt8O3Kx7A==
+X-Google-Smtp-Source: ABdhPJxVk8cwstVcOoaD5HxjxaW2MeUnluqwlS4V0ukeCBAuOoobWux3ADbtBhV+VkdBOCQaA7DSLcoDYYkTTh1Ag74=
+X-Received: by 2002:ab0:6ecf:: with SMTP id c15mr18403228uav.52.1614099073078; 
+	Tue, 23 Feb 2021 08:51:13 -0800 (PST)
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+References: <20210222211528.848441-1-gmazyland@gmail.com>
+In-Reply-To: <20210222211528.848441-1-gmazyland@gmail.com>
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Tue, 23 Feb 2021 08:51:01 -0800
+Message-ID: <CABCJKufZjA4G4-ncU_+8aS_SS9wU5frFyCThxVg2i-rBTu-KkQ@mail.gmail.com>
+To: Milan Broz <gmazyland@gmail.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: linux-block@vger.kernel.org, Mike Snitzer <msnitzer@redhat.com>,
-	Marian Csontos <mcsontos@redhat.com>, dm-devel@redhat.com
-Subject: [dm-devel] [PATCH v2] blk-settings: make sure that max_sectors is
- aligned on "logical_block_size" boundary
+Cc: device-mapper development <dm-devel@redhat.com>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [dm-devel] [PATCH] dm-verity: Fix FEC for RS roots non-aligned
+	to block size
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -92,7 +104,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -100,79 +112,151 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+Hi Milan,
 
+On Mon, Feb 22, 2021 at 1:15 PM Milan Broz <gmazyland@gmail.com> wrote:
+>
+> Optional Forward Error Correction (FEC) code in dm-verity uses
+> Reed-Solomon code and should support roots from 2 to 24.
+>
+> The error correction parity bytes (of roots lengths per RS block) are stored
+> on a separate device in sequence without any padding.
+>
+> Currently, to access FEC device, the dm-verity-fec code uses dm-bufio client
+> with block size set to verity data block (usually 4096 or 512 bytes).
+>
+> Because this block size is not divisible by some (most!) of the roots
+> supported lengths, data repair cannot work for partially stored
+> parity bytes.
 
-On Tue, 23 Feb 2021, Ming Lei wrote:
+Ah, good catch!
 
-> I'd suggest to add a helper(such as, blk_round_down_sectors()) to round_down each
-> one.
+> This patch changes FEC device dm-bufio block size to "roots << SECTOR_SHIFT"
+> where we can be sure that the full parity data is always available.
+> (There cannot be partial FEC blocks because parity must cover whole sectors.)
+>
+> Because the optional FEC starting offset could be unaligned to this
+> new block size, we have to use dm_bufio_set_sector_offset() to configure it.
+>
+> The problem is easily reproducible using veritysetup,
+> here for example for roots=13:
+>
+>   # create verity device with RS FEC
+>   dd if=/dev/urandom of=data.img bs=4096 count=8 status=none
+>   veritysetup format data.img hash.img --fec-device=fec.img --fec-roots=13 | awk '/^Root hash/{ print $3 }' >roothash
+>
+>   # create an erasure that should be always repairable with this roots setting
+>   dd if=/dev/zero of=data.img conv=notrunc bs=1 count=8 seek=4088 status=none
+>
+>   # try to read it through dm-verity
+>   veritysetup open data.img test hash.img --fec-device=fec.img --fec-roots=13 $(cat roothash)
+>   dd if=/dev/mapper/test of=/dev/null bs=4096 status=noxfer
+>   # wait for possible recursive recovery in kernel
+>   udevadm settle
+>   veritysetup close test
+>
+> Without it, FEC code usually ends on unrecoverable failure in RS decoder:
+>   device-mapper: verity-fec: 7:1: FEC 0: failed to correct: -74
+>   ...
+>
+> With the patch, errors are properly repaired.
+>   device-mapper: verity-fec: 7:1: FEC 0: corrected 8 errors
+>   ...
+>
+> This problem is present in all kernels since the FEC code introduction (kernel 4.5).
+>
+> AFAIK the problem is not visible in Android  ecosystem because it always
+> use default RS roots=2.
 
-Yes - Here I'm sending the updated patch.
+That's correct, Android always uses the default value to minimize
+space overhead, which is why we never ran into this.
 
-> -- 
-> Ming
+>
+> Signed-off-by: Milan Broz <gmazyland@gmail.com>
+> ---
+>  drivers/md/dm-verity-fec.c | 23 +++++++++++++----------
+>  1 file changed, 13 insertions(+), 10 deletions(-)
+>
+> diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
+> index fb41b4f23c48..be170581eb69 100644
+> --- a/drivers/md/dm-verity-fec.c
+> +++ b/drivers/md/dm-verity-fec.c
+> @@ -61,18 +61,18 @@ static int fec_decode_rs8(struct dm_verity *v, struct dm_verity_fec_io *fio,
+>  static u8 *fec_read_parity(struct dm_verity *v, u64 rsb, int index,
+>                            unsigned *offset, struct dm_buffer **buf)
+>  {
+> -       u64 position, block;
+> +       u64 position, block, rem;
+>         u8 *res;
+>
+>         position = (index + rsb) * v->fec->roots;
+> -       block = position >> v->data_dev_block_bits;
+> -       *offset = (unsigned)(position - (block << v->data_dev_block_bits));
+> +       block = div64_u64_rem(position, v->fec->roots << SECTOR_SHIFT, &rem);
+> +       *offset = (unsigned)rem;
+>
+> -       res = dm_bufio_read(v->fec->bufio, v->fec->start + block, buf);
+> +       res = dm_bufio_read(v->fec->bufio, block, buf);
+>         if (IS_ERR(res)) {
+>                 DMERR("%s: FEC %llu: parity read failed (block %llu): %ld",
+>                       v->data_dev->name, (unsigned long long)rsb,
+> -                     (unsigned long long)(v->fec->start + block),
+> +                     (unsigned long long)(block),
 
-From: Mikulas Patocka <mpatocka@redhat.com>
+Nit: parentheses not needed around block.
 
-We get I/O errors when we run md-raid1 on the top of dm-integrity on the
-top of ramdisk.
-device-mapper: integrity: Bio not aligned on 8 sectors: 0xff00, 0xff
-device-mapper: integrity: Bio not aligned on 8 sectors: 0xff00, 0xff
-device-mapper: integrity: Bio not aligned on 8 sectors: 0xffff, 0x1
-device-mapper: integrity: Bio not aligned on 8 sectors: 0xffff, 0x1
-device-mapper: integrity: Bio not aligned on 8 sectors: 0x8048, 0xff
-device-mapper: integrity: Bio not aligned on 8 sectors: 0x8147, 0xff
-device-mapper: integrity: Bio not aligned on 8 sectors: 0x8246, 0xff
-device-mapper: integrity: Bio not aligned on 8 sectors: 0x8345, 0xbb
+>                       PTR_ERR(res));
+>                 *buf = NULL;
+>         }
+> @@ -155,7 +155,7 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_fec_io *fio,
+>
+>                 /* read the next block when we run out of parity bytes */
+>                 offset += v->fec->roots;
+> -               if (offset >= 1 << v->data_dev_block_bits) {
+> +               if (offset >= (v->fec->roots << SECTOR_SHIFT)) {
 
-The ramdisk device has logical_block_size 512 and max_sectors 255. The
-dm-integrity device uses logical_block_size 4096 and it doesn't affect the
-"max_sectors" value - thus, it inherits 255 from the ramdisk. So, we have
-a device with max_sectors not aligned on logical_block_size.
+Same here, but I suppose it might help with readability.
 
-The md-raid device sees that the underlying leg has max_sectors 255 and it
-will split the bios on 255-sector boundary, making the bios unaligned on
-logical_block_size.
+>                         dm_bufio_release(buf);
+>
+>                         par = fec_read_parity(v, rsb, block_offset, &offset, &buf);
+> @@ -674,7 +674,7 @@ int verity_fec_ctr(struct dm_verity *v)
+>  {
+>         struct dm_verity_fec *f = v->fec;
+>         struct dm_target *ti = v->ti;
+> -       u64 hash_blocks;
+> +       u64 hash_blocks, start_blocks, fec_blocks;
+>         int ret;
+>
+>         if (!verity_fec_is_enabled(v)) {
+> @@ -744,15 +744,18 @@ int verity_fec_ctr(struct dm_verity *v)
+>         }
+>
+>         f->bufio = dm_bufio_client_create(f->dev->bdev,
+> -                                         1 << v->data_dev_block_bits,
+> +                                         f->roots << SECTOR_SHIFT,
+>                                           1, 0, NULL, NULL);
+>         if (IS_ERR(f->bufio)) {
+>                 ti->error = "Cannot initialize FEC bufio client";
+>                 return PTR_ERR(f->bufio);
+>         }
+>
+> -       if (dm_bufio_get_device_size(f->bufio) <
+> -           ((f->start + f->rounds * f->roots) >> v->data_dev_block_bits)) {
+> +       dm_bufio_set_sector_offset(f->bufio, f->start << v->data_dev_block_bits >> SECTOR_SHIFT);
+> +
+> +       start_blocks = div64_u64(f->start << v->data_dev_block_bits, v->fec->roots << SECTOR_SHIFT);
+> +       fec_blocks   = div64_u64(f->rounds * f->roots, v->fec->roots << SECTOR_SHIFT);
+> +       if (dm_bufio_get_device_size(f->bufio) < (start_blocks + fec_blocks)) {
+>                 ti->error = "FEC device is too small";
+>                 return -E2BIG;
+>         }
 
-In order to fix the bug, we round down max_sectors to logical_block_size.
+I haven't tested the code, but it looks correct to me. Thanks for fixing this!
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
 
----
- block/blk-settings.c |   12 ++++++++++++
- 1 file changed, 12 insertions(+)
-
-Index: linux-2.6/block/blk-settings.c
-===================================================================
---- linux-2.6.orig/block/blk-settings.c	2021-02-23 17:18:59.000000000 +0100
-+++ linux-2.6/block/blk-settings.c	2021-02-23 17:23:58.000000000 +0100
-@@ -481,6 +481,14 @@ void blk_queue_io_opt(struct request_que
- }
- EXPORT_SYMBOL(blk_queue_io_opt);
- 
-+static unsigned int blk_round_down_sectors(unsigned int sectors, unsigned int lbs)
-+{
-+	sectors = round_down(sectors, lbs >> SECTOR_SHIFT);
-+	if (sectors < PAGE_SIZE >> SECTOR_SHIFT)
-+		sectors = PAGE_SIZE >> SECTOR_SHIFT;
-+	return sectors;
-+}
-+
- /**
-  * blk_stack_limits - adjust queue_limits for stacked devices
-  * @t:	the stacking driver limits (top device)
-@@ -607,6 +615,10 @@ int blk_stack_limits(struct queue_limits
- 		ret = -1;
- 	}
- 
-+	t->max_sectors = blk_round_down_sectors(t->max_sectors, t->logical_block_size);
-+	t->max_hw_sectors = blk_round_down_sectors(t->max_hw_sectors, t->logical_block_size);
-+	t->max_dev_sectors = blk_round_down_sectors(t->max_dev_sectors, t->logical_block_size);
-+
- 	/* Discard alignment and granularity */
- 	if (b->discard_granularity) {
- 		alignment = queue_limit_discard_alignment(b, start);
+Sami
 
 --
 dm-devel mailing list
