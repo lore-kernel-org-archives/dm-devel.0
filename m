@@ -2,74 +2,127 @@ Return-Path: <SRS0=mVW8=H2=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E0E4C433DB
-	for <dm-devel@archiver.kernel.org>; Wed, 24 Feb 2021 00:39:45 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8DD00C433E0
+	for <dm-devel@archiver.kernel.org>; Wed, 24 Feb 2021 00:44:59 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C445D64EDB
-	for <dm-devel@archiver.kernel.org>; Wed, 24 Feb 2021 00:39:44 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C445D64EDB
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 07BF864DB1
+	for <dm-devel@archiver.kernel.org>; Wed, 24 Feb 2021 00:44:58 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 07BF864DB1
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.ibm.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1614127183;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=diQTx0Y2I+jWK0uJv5aiWGrNc1JEeNAjMdhnYoBqSPE=;
-	b=cv5TGrN9HmMs7+MFH5XTHjgqvu35z2IICQdQ5MdVHDI6tfv4ABKKbJn7zv1WQtQoKbZ9ui
-	+2HxfOvJCwkLBXmQB82TLAnuKAPMKC1OHVeYkXKKMWvUNjqe3ejgdUhoF2IBGIE9O9gtm9
-	6AnSQPUnbKZCuPSRXKGF3zYbIO3OcdI=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-397-ABNUPGM2MKSR5as1vGD1qA-1; Tue, 23 Feb 2021 19:39:41 -0500
-X-MC-Unique: ABNUPGM2MKSR5as1vGD1qA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-584-YATa1wA-M8ai4qcJD4GBvA-1; Tue, 23 Feb 2021 19:44:56 -0500
+X-MC-Unique: YATa1wA-M8ai4qcJD4GBvA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A7A701E56D;
-	Wed, 24 Feb 2021 00:39:36 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B30C9803F47;
+	Wed, 24 Feb 2021 00:44:51 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3484A19725;
-	Wed, 24 Feb 2021 00:39:35 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8C2BE5E1A7;
+	Wed, 24 Feb 2021 00:44:51 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1168E4E58E;
-	Wed, 24 Feb 2021 00:39:33 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com
-	[10.5.11.13])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 07D3E4E58E;
+	Wed, 24 Feb 2021 00:44:51 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 11O0dVV5025767 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 23 Feb 2021 19:39:31 -0500
+	id 11O0imZF026698 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 23 Feb 2021 19:44:49 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1CF7F6FEF0; Wed, 24 Feb 2021 00:39:31 +0000 (UTC)
-Received: from T590 (ovpn-12-117.pek2.redhat.com [10.72.12.117])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BB3B66F998;
-	Wed, 24 Feb 2021 00:39:21 +0000 (UTC)
-Date: Wed, 24 Feb 2021 08:39:17 +0800
-From: Ming Lei <ming.lei@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Message-ID: <YDWgNbz9ZX2Rjc+X@T590>
-References: <alpine.LRH.2.02.2102221312070.5407@file01.intranet.prod.int.rdu2.redhat.com>
-	<YDSwyrLeiP/fKgZH@T590>
-	<alpine.LRH.2.02.2102231125170.27597@file01.intranet.prod.int.rdu2.redhat.com>
-MIME-Version: 1.0
-In-Reply-To: <alpine.LRH.2.02.2102231125170.27597@file01.intranet.prod.int.rdu2.redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+	id D8B4F21121A4; Wed, 24 Feb 2021 00:44:48 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D37832126CA2
+	for <dm-devel@redhat.com>; Wed, 24 Feb 2021 00:44:46 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A34F85A59D
+	for <dm-devel@redhat.com>; Wed, 24 Feb 2021 00:44:46 +0000 (UTC)
+Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com
+	[148.163.156.1]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-73-25KDDIcDNKicSO-ALhbUnA-1; Tue, 23 Feb 2021 19:44:42 -0500
+X-MC-Unique: 25KDDIcDNKicSO-ALhbUnA-1
+Received: from pps.filterd (m0098404.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.16.0.43/8.16.0.43) with SMTP id
+	11O0buQc108082; Tue, 23 Feb 2021 19:44:40 -0500
+Received: from pps.reinject (localhost [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com with ESMTP id 36vkfm5nkd-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Tue, 23 Feb 2021 19:44:40 -0500
+Received: from m0098404.ppops.net (m0098404.ppops.net [127.0.0.1])
+	by pps.reinject (8.16.0.43/8.16.0.43) with SMTP id 11O0ht0b147073;
+	Tue, 23 Feb 2021 19:43:55 -0500
+Received: from ppma02fra.de.ibm.com (47.49.7a9f.ip4.static.sl-reverse.com
+	[159.122.73.71])
+	by mx0a-001b2d01.pphosted.com with ESMTP id 36vkfm5njp-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Tue, 23 Feb 2021 19:43:55 -0500
+Received: from pps.filterd (ppma02fra.de.ibm.com [127.0.0.1])
+	by ppma02fra.de.ibm.com (8.16.0.42/8.16.0.42) with SMTP id
+	11O0RwxR017511; Wed, 24 Feb 2021 00:43:53 GMT
+Received: from b06cxnps4075.portsmouth.uk.ibm.com
+	(d06relay12.portsmouth.uk.ibm.com [9.149.109.197])
+	by ppma02fra.de.ibm.com with ESMTP id 36tt289m58-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Wed, 24 Feb 2021 00:43:53 +0000
+Received: from d06av24.portsmouth.uk.ibm.com (mk.ibm.com [9.149.105.60])
+	by b06cxnps4075.portsmouth.uk.ibm.com (8.14.9/8.14.9/NCO v10.0) with
+	ESMTP id 11O0houY36110818
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=OK); Wed, 24 Feb 2021 00:43:50 GMT
+Received: from d06av24.portsmouth.uk.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id B816F42041;
+	Wed, 24 Feb 2021 00:43:50 +0000 (GMT)
+Received: from d06av24.portsmouth.uk.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 161C242042;
+	Wed, 24 Feb 2021 00:43:48 +0000 (GMT)
+Received: from li-f45666cc-3089-11b2-a85c-c57d1a57929f.ibm.com (unknown
+	[9.211.65.43]) by d06av24.portsmouth.uk.ibm.com (Postfix) with ESMTP;
+	Wed, 24 Feb 2021 00:43:47 +0000 (GMT)
+Message-ID: <0a25f4b7ed53566b13211d5aeea18e7f13f12bd7.camel@linux.ibm.com>
+From: Mimi Zohar <zohar@linux.ibm.com>
+To: Petr Vorel <pvorel@suse.cz>, ltp@lists.linux.it
+Date: Tue, 23 Feb 2021 19:43:46 -0500
+In-Reply-To: <20210223225930.27095-1-pvorel@suse.cz>
+References: <20210223225930.27095-1-pvorel@suse.cz>
+Mime-Version: 1.0
+X-TM-AS-GCONF: 00
+X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.369, 18.0.761
+	definitions=2021-02-23_12:2021-02-23,
+	2021-02-23 signatures=0
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+	impostorscore=0 mlxscore=0
+	priorityscore=1501 mlxlogscore=999 bulkscore=0 suspectscore=0
+	phishscore=0
+	clxscore=1015 malwarescore=0 adultscore=0 spamscore=0
+	lowpriorityscore=0
+	classifier=spam adjust=0 reason=mlx scancount=1
+	engine=8.12.0-2009150000 definitions=main-2102240001
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	Mike Snitzer <msnitzer@redhat.com>,
-	Marian Csontos <mcsontos@redhat.com>, dm-devel@redhat.com
-Subject: Re: [dm-devel] [PATCH v2] blk-settings: make sure that max_sectors
- is aligned on "logical_block_size" boundary
+Cc: snitzer@redhat.com, Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
+	dm-devel@redhat.com, Tushar Sugandhi <tusharsu@linux.microsoft.com>,
+	linux-integrity@vger.kernel.org,
+	Mimi Zohar <zohar@linux.vnet.ibm.com>, gmazyland@gmail.com, agk@redhat.com
+Subject: Re: [dm-devel] [PATCH v3 0/2]	IMA: Add test for dm-crypt measurement
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -83,94 +136,38 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Feb 23, 2021 at 11:28:27AM -0500, Mikulas Patocka wrote:
-> 
-> 
-> On Tue, 23 Feb 2021, Ming Lei wrote:
-> 
-> > I'd suggest to add a helper(such as, blk_round_down_sectors()) to round_down each
-> > one.
-> 
-> Yes - Here I'm sending the updated patch.
-> 
-> > -- 
-> > Ming
-> 
-> From: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> We get I/O errors when we run md-raid1 on the top of dm-integrity on the
-> top of ramdisk.
-> device-mapper: integrity: Bio not aligned on 8 sectors: 0xff00, 0xff
-> device-mapper: integrity: Bio not aligned on 8 sectors: 0xff00, 0xff
-> device-mapper: integrity: Bio not aligned on 8 sectors: 0xffff, 0x1
-> device-mapper: integrity: Bio not aligned on 8 sectors: 0xffff, 0x1
-> device-mapper: integrity: Bio not aligned on 8 sectors: 0x8048, 0xff
-> device-mapper: integrity: Bio not aligned on 8 sectors: 0x8147, 0xff
-> device-mapper: integrity: Bio not aligned on 8 sectors: 0x8246, 0xff
-> device-mapper: integrity: Bio not aligned on 8 sectors: 0x8345, 0xbb
-> 
-> The ramdisk device has logical_block_size 512 and max_sectors 255. The
-> dm-integrity device uses logical_block_size 4096 and it doesn't affect the
-> "max_sectors" value - thus, it inherits 255 from the ramdisk. So, we have
-> a device with max_sectors not aligned on logical_block_size.
-> 
-> The md-raid device sees that the underlying leg has max_sectors 255 and it
-> will split the bios on 255-sector boundary, making the bios unaligned on
-> logical_block_size.
-> 
-> In order to fix the bug, we round down max_sectors to logical_block_size.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: stable@vger.kernel.org
-> 
-> ---
->  block/blk-settings.c |   12 ++++++++++++
->  1 file changed, 12 insertions(+)
-> 
-> Index: linux-2.6/block/blk-settings.c
-> ===================================================================
-> --- linux-2.6.orig/block/blk-settings.c	2021-02-23 17:18:59.000000000 +0100
-> +++ linux-2.6/block/blk-settings.c	2021-02-23 17:23:58.000000000 +0100
-> @@ -481,6 +481,14 @@ void blk_queue_io_opt(struct request_que
->  }
->  EXPORT_SYMBOL(blk_queue_io_opt);
->  
-> +static unsigned int blk_round_down_sectors(unsigned int sectors, unsigned int lbs)
-> +{
-> +	sectors = round_down(sectors, lbs >> SECTOR_SHIFT);
-> +	if (sectors < PAGE_SIZE >> SECTOR_SHIFT)
-> +		sectors = PAGE_SIZE >> SECTOR_SHIFT;
-> +	return sectors;
-> +}
-> +
->  /**
->   * blk_stack_limits - adjust queue_limits for stacked devices
->   * @t:	the stacking driver limits (top device)
-> @@ -607,6 +615,10 @@ int blk_stack_limits(struct queue_limits
->  		ret = -1;
->  	}
->  
-> +	t->max_sectors = blk_round_down_sectors(t->max_sectors, t->logical_block_size);
-> +	t->max_hw_sectors = blk_round_down_sectors(t->max_hw_sectors, t->logical_block_size);
-> +	t->max_dev_sectors = blk_round_down_sectors(t->max_dev_sectors, t->logical_block_size);
-> +
->  	/* Discard alignment and granularity */
->  	if (b->discard_granularity) {
->  		alignment = queue_limit_discard_alignment(b, start);
+Hi Petr,
 
-Reviewed-by: Ming Lei <ming.lei@redhat.com>
+On Tue, 2021-02-23 at 23:59 +0100, Petr Vorel wrote:
+> Hi!
+> 
+> I updated Tushar's patchset to speedup things.
+> 
+> Changes v2->v3
+> * rename function s/check_ima_ascii_log_for_policy/test_policy_measurement/
+> * move tst_res TPASS/TFAIL into test_policy_measurement()
+> * drop template=ima-buf (see Lakshmi's patch [1] and discussion about
+>   it, it will be removed from ima_keys.sh as well)
+> * moved ima_dm_crypt.sh specific changes to second commit
+> * further API and style related cleanup
+> 
+> Could you please check this patchset?
 
--- 
-Ming
+I'm not sure about the status of the associated IMA dm-crypt kernel
+patch set.  It hasn't even been reviewed, definitely not upstreamed.  
+ I would hold off on upstreaming the associated ltp test.
+
+thanks,
+
+Mimi
 
 --
 dm-devel mailing list
