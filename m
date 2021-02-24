@@ -1,87 +1,75 @@
-Return-Path: <SRS0=Sgdu=HZ=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=mVW8=H2=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 26B15C433DB
-	for <dm-devel@archiver.kernel.org>; Tue, 23 Feb 2021 23:00:05 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E0E4C433DB
+	for <dm-devel@archiver.kernel.org>; Wed, 24 Feb 2021 00:39:45 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id A900864E7A
-	for <dm-devel@archiver.kernel.org>; Tue, 23 Feb 2021 23:00:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A900864E7A
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+	by mail.kernel.org (Postfix) with ESMTPS id C445D64EDB
+	for <dm-devel@archiver.kernel.org>; Wed, 24 Feb 2021 00:39:44 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C445D64EDB
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1614127183;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=diQTx0Y2I+jWK0uJv5aiWGrNc1JEeNAjMdhnYoBqSPE=;
+	b=cv5TGrN9HmMs7+MFH5XTHjgqvu35z2IICQdQ5MdVHDI6tfv4ABKKbJn7zv1WQtQoKbZ9ui
+	+2HxfOvJCwkLBXmQB82TLAnuKAPMKC1OHVeYkXKKMWvUNjqe3ejgdUhoF2IBGIE9O9gtm9
+	6AnSQPUnbKZCuPSRXKGF3zYbIO3OcdI=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-434-Y92JypqdO_KZT4dIQV6zXw-1; Tue, 23 Feb 2021 18:00:00 -0500
-X-MC-Unique: Y92JypqdO_KZT4dIQV6zXw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-397-ABNUPGM2MKSR5as1vGD1qA-1; Tue, 23 Feb 2021 19:39:41 -0500
+X-MC-Unique: ABNUPGM2MKSR5as1vGD1qA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E7D6B107ACC7;
-	Tue, 23 Feb 2021 22:59:55 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A7A701E56D;
+	Wed, 24 Feb 2021 00:39:36 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C869F19C95;
-	Tue, 23 Feb 2021 22:59:55 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3484A19725;
+	Wed, 24 Feb 2021 00:39:35 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 99DDF58078;
-	Tue, 23 Feb 2021 22:59:55 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1168E4E58E;
+	Wed, 24 Feb 2021 00:39:33 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com
+	[10.5.11.13])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 11NMxm0Z015743 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 23 Feb 2021 17:59:48 -0500
+	id 11O0dVV5025767 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 23 Feb 2021 19:39:31 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B2ABE2026D11; Tue, 23 Feb 2021 22:59:48 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id ADBF82026D48
-	for <dm-devel@redhat.com>; Tue, 23 Feb 2021 22:59:46 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 46147100AFE0
-	for <dm-devel@redhat.com>; Tue, 23 Feb 2021 22:59:46 +0000 (UTC)
-Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-352-1Wj89RRXPnO0lW9B6GNGzA-1;
-	Tue, 23 Feb 2021 17:59:39 -0500
-X-MC-Unique: 1Wj89RRXPnO0lW9B6GNGzA-1
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id DCF81AF45;
-	Tue, 23 Feb 2021 22:59:37 +0000 (UTC)
-From: Petr Vorel <pvorel@suse.cz>
-To: ltp@lists.linux.it
-Date: Tue, 23 Feb 2021 23:59:29 +0100
-Message-Id: <20210223225930.27095-2-pvorel@suse.cz>
-In-Reply-To: <20210223225930.27095-1-pvorel@suse.cz>
-References: <20210223225930.27095-1-pvorel@suse.cz>
+	id 1CF7F6FEF0; Wed, 24 Feb 2021 00:39:31 +0000 (UTC)
+Received: from T590 (ovpn-12-117.pek2.redhat.com [10.72.12.117])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BB3B66F998;
+	Wed, 24 Feb 2021 00:39:21 +0000 (UTC)
+Date: Wed, 24 Feb 2021 08:39:17 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Message-ID: <YDWgNbz9ZX2Rjc+X@T590>
+References: <alpine.LRH.2.02.2102221312070.5407@file01.intranet.prod.int.rdu2.redhat.com>
+	<YDSwyrLeiP/fKgZH@T590>
+	<alpine.LRH.2.02.2102231125170.27597@file01.intranet.prod.int.rdu2.redhat.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 11NMxm0Z015743
+In-Reply-To: <alpine.LRH.2.02.2102231125170.27597@file01.intranet.prod.int.rdu2.redhat.com>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 X-loop: dm-devel@redhat.com
-Cc: snitzer@redhat.com, Petr Vorel <pvorel@suse.cz>,
-	Lakshmi Ramasubramanian <nramas@linux.microsoft.com>, dm-devel@redhat.com,
-	Tushar Sugandhi <tusharsu@linux.microsoft.com>,
-	linux-integrity@vger.kernel.org,
-	Mimi Zohar <zohar@linux.vnet.ibm.com>, gmazyland@gmail.com, agk@redhat.com
-Subject: [dm-devel] [PATCH v3 1/2] IMA: Generalize key measurement tests
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+	Mike Snitzer <msnitzer@redhat.com>,
+	Marian Csontos <mcsontos@redhat.com>, dm-devel@redhat.com
+Subject: Re: [dm-devel] [PATCH v2] blk-settings: make sure that max_sectors
+ is aligned on "logical_block_size" boundary
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -95,209 +83,94 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+On Tue, Feb 23, 2021 at 11:28:27AM -0500, Mikulas Patocka wrote:
+> 
+> 
+> On Tue, 23 Feb 2021, Ming Lei wrote:
+> 
+> > I'd suggest to add a helper(such as, blk_round_down_sectors()) to round_down each
+> > one.
+> 
+> Yes - Here I'm sending the updated patch.
+> 
+> > -- 
+> > Ming
+> 
+> From: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> We get I/O errors when we run md-raid1 on the top of dm-integrity on the
+> top of ramdisk.
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0xff00, 0xff
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0xff00, 0xff
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0xffff, 0x1
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0xffff, 0x1
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0x8048, 0xff
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0x8147, 0xff
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0x8246, 0xff
+> device-mapper: integrity: Bio not aligned on 8 sectors: 0x8345, 0xbb
+> 
+> The ramdisk device has logical_block_size 512 and max_sectors 255. The
+> dm-integrity device uses logical_block_size 4096 and it doesn't affect the
+> "max_sectors" value - thus, it inherits 255 from the ramdisk. So, we have
+> a device with max_sectors not aligned on logical_block_size.
+> 
+> The md-raid device sees that the underlying leg has max_sectors 255 and it
+> will split the bios on 255-sector boundary, making the bios unaligned on
+> logical_block_size.
+> 
+> In order to fix the bug, we round down max_sectors to logical_block_size.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org
+> 
+> ---
+>  block/blk-settings.c |   12 ++++++++++++
+>  1 file changed, 12 insertions(+)
+> 
+> Index: linux-2.6/block/blk-settings.c
+> ===================================================================
+> --- linux-2.6.orig/block/blk-settings.c	2021-02-23 17:18:59.000000000 +0100
+> +++ linux-2.6/block/blk-settings.c	2021-02-23 17:23:58.000000000 +0100
+> @@ -481,6 +481,14 @@ void blk_queue_io_opt(struct request_que
+>  }
+>  EXPORT_SYMBOL(blk_queue_io_opt);
+>  
+> +static unsigned int blk_round_down_sectors(unsigned int sectors, unsigned int lbs)
+> +{
+> +	sectors = round_down(sectors, lbs >> SECTOR_SHIFT);
+> +	if (sectors < PAGE_SIZE >> SECTOR_SHIFT)
+> +		sectors = PAGE_SIZE >> SECTOR_SHIFT;
+> +	return sectors;
+> +}
+> +
+>  /**
+>   * blk_stack_limits - adjust queue_limits for stacked devices
+>   * @t:	the stacking driver limits (top device)
+> @@ -607,6 +615,10 @@ int blk_stack_limits(struct queue_limits
+>  		ret = -1;
+>  	}
+>  
+> +	t->max_sectors = blk_round_down_sectors(t->max_sectors, t->logical_block_size);
+> +	t->max_hw_sectors = blk_round_down_sectors(t->max_hw_sectors, t->logical_block_size);
+> +	t->max_dev_sectors = blk_round_down_sectors(t->max_dev_sectors, t->logical_block_size);
+> +
+>  	/* Discard alignment and granularity */
+>  	if (b->discard_granularity) {
+>  		alignment = queue_limit_discard_alignment(b, start);
 
-Refactor check_keys_policy() and test1() implemented in ima_keys.sh to
-make it generic, and move the functionality to ima_setup.sh,
-to be used for measurements in other tests in the future.
+Reviewed-by: Ming Lei <ming.lei@redhat.com>
 
-Suggested-by: Petr Vorel <pvorel@suse.cz>
-Reviewed-by: Petr Vorel <pvorel@suse.cz>
-Signed-off-by: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-[ pvorel: move tst_res TPASS/TFAIL into test_policy_measurement(),
-further cleanup ]
-Signed-off-by: Petr Vorel <pvorel@suse.cz>
----
- .../security/integrity/ima/tests/ima_keys.sh  | 58 ++---------------
- .../security/integrity/ima/tests/ima_setup.sh | 62 +++++++++++++++++++
- 2 files changed, 68 insertions(+), 52 deletions(-)
-
-diff --git a/testcases/kernel/security/integrity/ima/tests/ima_keys.sh b/testcases/kernel/security/integrity/ima/tests/ima_keys.sh
-index c9eef4b68..1aeb1cd89 100755
---- a/testcases/kernel/security/integrity/ima/tests/ima_keys.sh
-+++ b/testcases/kernel/security/integrity/ima/tests/ima_keys.sh
-@@ -6,7 +6,7 @@
- #
- # Verify that keys are measured correctly based on policy.
- 
--TST_NEEDS_CMDS="cmp cut grep sed xxd"
-+TST_NEEDS_CMDS="cmp cut grep tail xxd"
- TST_CNT=2
- TST_NEEDS_DEVICE=1
- TST_SETUP=setup
-@@ -28,64 +28,18 @@ cleanup()
- 	tst_is_num $KEYRING_ID && keyctl clear $KEYRING_ID
- }
- 
--check_keys_policy()
--{
--	local pattern="$1"
--
--	if ! grep -E "$pattern" $TST_TMPDIR/policy.txt; then
--		tst_res TCONF "IMA policy must specify $pattern, $FUNC_KEYCHECK, $TEMPLATE_BUF"
--		return 1
--	fi
--	return 0
--}
--
- # Based on https://lkml.org/lkml/2019/12/13/564.
- # (450d0fd51564 - "IMA: Call workqueue functions to measure queued keys")
- test1()
- {
- 	local keycheck_lines i keyrings templates
- 	local pattern='keyrings=[^[:space:]]+'
--	local test_file="file.txt" tmp_file="file2.txt"
-+	local temp_file="test1.txt"
- 
- 	tst_res TINFO "verify key measurement for keyrings and templates specified in IMA policy"
- 
--	check_keys_policy "$pattern" > $tmp_file || return
--	keycheck_lines=$(cat $tmp_file)
--	keyrings=$(for i in $keycheck_lines; do echo "$i" | grep "keyrings" | \
--		sed "s/\./\\\./g" | cut -d'=' -f2; done | sed ':a;N;$!ba;s/\n/|/g')
--	if [ -z "$keyrings" ]; then
--		tst_res TCONF "IMA policy has a keyring key-value specifier, but no specified keyrings"
--		return
--	fi
--
--	templates=$(for i in $keycheck_lines; do echo "$i" | grep "template" | \
--		cut -d'=' -f2; done | sed ':a;N;$!ba;s/\n/|/g')
--
--	tst_res TINFO "keyrings: '$keyrings'"
--	tst_res TINFO "templates: '$templates'"
--
--	grep -E "($templates).*($keyrings)" $ASCII_MEASUREMENTS | while read line
--	do
--		local digest expected_digest algorithm
--
--		digest=$(echo "$line" | cut -d' ' -f4 | cut -d':' -f2)
--		algorithm=$(echo "$line" | cut -d' ' -f4 | cut -d':' -f1)
--		keyring=$(echo "$line" | cut -d' ' -f5)
--
--		echo "$line" | cut -d' ' -f6 | xxd -r -p > $test_file
--
--		if ! expected_digest="$(compute_digest $algorithm $test_file)"; then
--			tst_res TCONF "cannot compute digest for $algorithm"
--			return
--		fi
--
--		if [ "$digest" != "$expected_digest" ]; then
--			tst_res TFAIL "incorrect digest was found for $keyring keyring"
--			return
--		fi
--	done
--
--	tst_res TPASS "specified keyrings were measured correctly"
-+	check_policy_pattern "$pattern" $FUNC_KEYCHECK $TEMPLATE_BUF > $temp_file || return
-+	test_policy_measurement keyrings $temp_file
- }
- 
- # Create a new keyring, import a certificate into it, and verify
-@@ -97,11 +51,11 @@ test2()
- 	local cert_file="$TST_DATAROOT/x509_ima.der"
- 	local keyring_name="key_import_test"
- 	local pattern="keyrings=[^[:space:]]*$keyring_name"
--	local temp_file="file.txt"
-+	local temp_file="test2.txt"
- 
- 	tst_res TINFO "verify measurement of certificate imported into a keyring"
- 
--	check_keys_policy "$pattern" >/dev/null || return
-+	check_policy_pattern "$pattern" $FUNC_KEYCHECK $TEMPLATE_BUF >/dev/null || return
- 
- 	KEYRING_ID=$(keyctl newring $keyring_name @s) || \
- 		tst_brk TBROK "unable to create a new keyring"
-diff --git a/testcases/kernel/security/integrity/ima/tests/ima_setup.sh b/testcases/kernel/security/integrity/ima/tests/ima_setup.sh
-index 59a7ffeac..605db0ff6 100644
---- a/testcases/kernel/security/integrity/ima/tests/ima_setup.sh
-+++ b/testcases/kernel/security/integrity/ima/tests/ima_setup.sh
-@@ -54,6 +54,19 @@ compute_digest()
- 	return 1
- }
- 
-+check_policy_pattern()
-+{
-+	local pattern="$1"
-+	local func="$2"
-+	local template="$3"
-+
-+	if ! grep -E "$pattern" $TST_TMPDIR/policy.txt; then
-+		tst_res TCONF "IMA policy must specify $pattern, $func, $template"
-+		return 1
-+	fi
-+	return 0
-+}
-+
- check_policy_readable()
- {
- 	if [ ! -f $IMA_POLICY ]; then
-@@ -269,6 +282,55 @@ get_algorithm_digest()
- 	echo "$algorithm|$digest"
- }
- 
-+test_policy_measurement()
-+{
-+	local policy_option="$1"
-+	local lines=$(cat $2)
-+	local input_digest="$3"
-+	local test_file="$TST_TMPDIR/test.txt"
-+	local grep_file="$TST_TMPDIR/grep.txt"
-+	local i sources templates
-+
-+	tst_require_cmds cut sed xxd
-+
-+	sources=$(for i in $lines; do echo "$i" | grep "$policy_option" | \
-+		sed "s/\./\\\./g" | cut -d'=' -f2; done | sed ':a;N;$!ba;s/\n/|/g')
-+	if [ -z "$sources" ]; then
-+		tst_res TCONF "IMA policy $policy_option is a key-value specifier, but no values specified"
-+		return
-+	fi
-+
-+	templates=$(for i in $lines; do echo "$i" | grep "template" | \
-+		cut -d'=' -f2; done | sed ':a;N;$!ba;s/\n/|/g')
-+
-+	tst_res TINFO "policy sources: '$sources'"
-+	tst_res TINFO "templates: '$templates'"
-+
-+	grep -E "($templates).*($sources)" $ASCII_MEASUREMENTS > $grep_file
-+
-+	while read line; do
-+		local algorithm digest expected_digest src_line
-+
-+		digest=$(echo "$line" | cut -d' ' -f4 | cut -d':' -f2)
-+		algorithm=$(echo "$line" | cut -d' ' -f4 | cut -d':' -f1)
-+		src_line=$(echo "$line" | cut -d' ' -f5)
-+
-+		echo "$line" | cut -d' ' -f6 | xxd -r -p > $test_file
-+
-+		if ! expected_digest="$(compute_digest $algorithm $test_file)"; then
-+			tst_res TCONF "cannot compute digest for $algorithm"
-+			return
-+		fi
-+
-+		if [ "$digest" != "$expected_digest" ]; then
-+			tst_res TFAIL "incorrect digest was found for $src_line $policy_option"
-+			return
-+		fi
-+	done < $grep_file
-+
-+	tst_res TPASS "$policy_option measured correctly"
-+}
-+
- # loop device is needed to use only for tmpfs
- TMPDIR="${TMPDIR:-/tmp}"
- if [ "$(df -T $TMPDIR | tail -1 | awk '{print $2}')" != "tmpfs" -a -n "$TST_NEEDS_DEVICE" ]; then
 -- 
-2.30.1
-
+Ming
 
 --
 dm-devel mailing list
