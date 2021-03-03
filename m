@@ -2,88 +2,77 @@ Return-Path: <SRS0=/efG=IB=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.7 required=3.0 tests=BAYES_00,DKIM_ADSP_CUSTOM_MED,
-	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AD7B0C433E0
-	for <dm-devel@archiver.kernel.org>; Wed,  3 Mar 2021 01:24:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 56233C433E6
+	for <dm-devel@archiver.kernel.org>; Wed,  3 Mar 2021 08:47:31 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id BFE9564FB8
-	for <dm-devel@archiver.kernel.org>; Wed,  3 Mar 2021 01:24:29 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BFE9564FB8
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
+	by mail.kernel.org (Postfix) with ESMTPS id 4AF3864EDE
+	for <dm-devel@archiver.kernel.org>; Wed,  3 Mar 2021 08:47:30 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4AF3864EDE
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-502-CAmMs8btOmqmD3Ox9XKuuw-1; Tue, 02 Mar 2021 20:24:26 -0500
-X-MC-Unique: CAmMs8btOmqmD3Ox9XKuuw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-530-QbVpkNLYPoWX8KOD9uMyag-1; Wed, 03 Mar 2021 03:47:27 -0500
+X-MC-Unique: QbVpkNLYPoWX8KOD9uMyag-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D8416100CCC6;
-	Wed,  3 Mar 2021 01:24:20 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id EEAFB10023AD;
-	Wed,  3 Mar 2021 01:24:18 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 335EA85B663;
+	Wed,  3 Mar 2021 08:47:23 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F08D85C8B3;
+	Wed,  3 Mar 2021 08:47:21 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1ECF718095CB;
-	Wed,  3 Mar 2021 01:24:15 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4577857DFC;
+	Wed,  3 Mar 2021 08:47:18 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1231OCZs026596 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 2 Mar 2021 20:24:12 -0500
+	id 1231tnxj030883 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 2 Mar 2021 20:55:50 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 875F411EB17; Wed,  3 Mar 2021 01:24:12 +0000 (UTC)
+	id 8C7342026D14; Wed,  3 Mar 2021 01:55:49 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8158C11FC8D
-	for <dm-devel@redhat.com>; Wed,  3 Mar 2021 01:24:09 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8799D2026D48
+	for <dm-devel@redhat.com>; Wed,  3 Mar 2021 01:55:47 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B27191871BF3
-	for <dm-devel@redhat.com>; Wed,  3 Mar 2021 01:24:09 +0000 (UTC)
-Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com
-	[209.85.221.41]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-489-JgTsrLZwO8KxWT0ck1K2dg-1; Tue, 02 Mar 2021 20:24:07 -0500
-X-MC-Unique: JgTsrLZwO8KxWT0ck1K2dg-1
-Received: by mail-wr1-f41.google.com with SMTP id d11so21834531wrj.7
-	for <dm-devel@redhat.com>; Tue, 02 Mar 2021 17:24:07 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:subject:to:references:from:message-id:date
-	:mime-version:in-reply-to:content-language:content-transfer-encoding;
-	bh=j+TskAmxVvB6XS/wZqmaLwtizhGj4SCvwaNpjLgPyEE=;
-	b=g50NqPuT1JEkYIryH5qmNGoeRoQKiNNMsWI+6GoFyoJtQTbufRnUrd/nxcwn2tRtcR
-	WAx/+MIujK/iNOuF0oxkp8qZmHWHT8WAJXmJQxQfKUoX+whSy1mpd8JPPUsKlWRuGPXU
-	z78IdqOvJH5bX8pNAyiJL0yJXU2QMsHxa6wbmf+ys0+/sv8suQHsZnwZrdAXQJrQcu8Q
-	FWUhVgFvVN99/gaAaQrh8n2sdJMxqv3RWdtHjGGk7QxkE4V0X6QYpYABN3feu38F4ovH
-	Q5BuNTOgDrJqHV7BqALDBaIztn3FZLlVz8MAjKxBBoF0/uoytbjN2V1U1FQ49C8MbYti
-	pwBA==
-X-Gm-Message-State: AOAM531xUBrY5VupnQ5sI5v6N/+YszA8uBZPhjsSO9TSu2lQokfTuyew
-	KZy7WT9BKDGGqrHKUX/FOuorNwhY+Q==
-X-Google-Smtp-Source: ABdhPJybwxvpiDLNdXCquMpOqtHOMrPM2ffP9nJUSBjgJvTgsurYI74a4JMtw3oYkhpuQ6gTpISc8Q==
-X-Received: by 2002:adf:dc91:: with SMTP id r17mr21102882wrj.293.1614734646463;
-	Tue, 02 Mar 2021 17:24:06 -0800 (PST)
-Received: from localhost (157.red-83-38-167.dynamicip.rima-tde.net.
-	[83.38.167.157]) by smtp.gmail.com with ESMTPSA id
-	u3sm13472449wrt.82.2021.03.02.17.24.05
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Tue, 02 Mar 2021 17:24:06 -0800 (PST)
-To: Benoit Chatelain <bchatelain@cines.fr>, DM-DEVEL ML <dm-devel@redhat.com>
-References: <388321540.261431070.1614606275832.JavaMail.zimbra@cines.fr>
-	<e8c80d5b-419e-2799-072e-4a2e91940838@gmail.com>
-	<668683972.267173179.1614699701122.JavaMail.zimbra@cines.fr>
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Message-ID: <8506a3a7-ccb4-59f5-2575-2b631d7e6117@gmail.com>
-Date: Wed, 3 Mar 2021 02:24:04 +0100
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 002248630D2
+	for <dm-devel@redhat.com>; Wed,  3 Mar 2021 01:55:46 +0000 (UTC)
+Received: from out30-44.freemail.mail.aliyun.com
+	(out30-44.freemail.mail.aliyun.com [115.124.30.44]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-202-Xkaf49nxM6akrtE0shk8_g-1;
+	Tue, 02 Mar 2021 20:55:42 -0500
+X-MC-Unique: Xkaf49nxM6akrtE0shk8_g-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R101e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04420;
+	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=9; SR=0;
+	TI=SMTPD_---0UQ9w27U_1614736537
+Received: from admindeMacBook-Pro-2.local(mailfrom:jefflexu@linux.alibaba.com
+	fp:SMTPD_---0UQ9w27U_1614736537) by smtp.aliyun-inc.com(127.0.0.1);
+	Wed, 03 Mar 2021 09:55:38 +0800
+To: Mikulas Patocka <mpatocka@redhat.com>
+References: <20210208085243.82367-1-jefflexu@linux.alibaba.com>
+	<20210208085243.82367-12-jefflexu@linux.alibaba.com>
+	<alpine.LRH.2.02.2102191351200.10545@file01.intranet.prod.int.rdu2.redhat.com>
+	<af9223b9-8960-1ed4-799a-bcd56299c587@linux.alibaba.com>
+	<alpine.LRH.2.02.2103021353490.9353@file01.intranet.prod.int.rdu2.redhat.com>
+From: JeffleXu <jefflexu@linux.alibaba.com>
+Message-ID: <3ce93e18-190a-fb63-3efa-9d0d7119920c@linux.alibaba.com>
+Date: Wed, 3 Mar 2021 09:55:37 +0800
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
+	Gecko/20100101 Thunderbird/78.7.0
 MIME-Version: 1.0
-In-Reply-To: <668683972.267173179.1614699701122.JavaMail.zimbra@cines.fr>
+In-Reply-To: <alpine.LRH.2.02.2103021353490.9353@file01.intranet.prod.int.rdu2.redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -92,9 +81,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Subject: Re: [dm-devel] multipath with SAS and FC.
+X-Mailman-Approved-At: Wed, 03 Mar 2021 03:47:16 -0500
+Cc: axboe@kernel.dk, snitzer@redhat.com, caspar@linux.alibaba.com, hch@lst.de,
+	linux-block@vger.kernel.org, joseph.qi@linux.alibaba.com,
+	dm-devel@redhat.com, io-uring@vger.kernel.org
+Subject: Re: [dm-devel] [PATCH v3 11/11] dm: fastpath of bio-based polling
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -108,36 +101,82 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 3/2/21 4:41 PM, bchatelain@cines.fr wrote:
 
-> It's work good.
+
+On 3/3/21 3:03 AM, Mikulas Patocka wrote:
 > 
-> I have add this line to device in multipath.conf :
->    path_grouping_policy "group_by_prio
+> 
+> On Fri, 26 Feb 2021, JeffleXu wrote:
+> 
+>>
+>>
+>> On 2/20/21 3:38 AM, Mikulas Patocka wrote:
+>>>
+>>>
+>>> On Mon, 8 Feb 2021, Jeffle Xu wrote:
+>>>
+>>>> Offer one fastpath of bio-based polling when bio submitted to dm device
+>>>> is not split.
+>>>>
+>>>> In this case, there will be only one bio submitted to only one polling
+>>>> hw queue of one underlying mq device, and thus we don't need to track
+>>>> all split bios or iterate through all polling hw queues. The pointer to
+>>>> the polling hw queue the bio submitted to is returned here as the
+>>>> returned cookie.
+>>>
+>>> This doesn't seem safe - note that between submit_bio() and blk_poll(), no 
+>>> locks are held - so the device mapper device may be reconfigured 
+>>> arbitrarily. When you call blk_poll() with a pointer returned by 
+>>> submit_bio(), the pointer may point to a stale address.
+>>>
+>>
+>> Thanks for the feedback. Indeed maybe it's not a good idea to directly
+>> return a 'struct blk_mq_hw_ctx *' pointer as the returned cookie.
+>>
+>> Currently I have no idea to fix it, orz... The
+>> blk_get_queue()/blk_put_queue() tricks may not work in this case.
+>> Because the returned cookie may not be used at all. Before calling
+>> blk_poll(), the polling routine may find that the corresponding IO has
+>> already completed, and thus won't call blk_poll(), in which case we have
+>> no place to put the refcount.
+>>
+>> But I really don't want to drop this optimization, since this
+>> optimization is quite intuitive when dm device maps to a lot of
+>> underlying devices. Though this optimization doesn't actually achieve
+>> reasonable performance gain in my test, maybe because there are at most
+>> seven nvme devices in my test machine.
+>>
+>> Any thoughts?
+>>
+>> Thanks,
+>> Jeffle
+> 
+> Hi
+> 
+> I reworked device mapper polling, so that we poll in the function 
+> __split_and_process_bio. The pointer to a queue and the polling cookie is 
+> passed only inside device mapper code, it never leaves it.
+> 
+> I'll send you my patches - try them and tell me how does it perform 
+> compared to your patchset.
+> 
 
-That's not enough to run properly in active/passive mode with ALUA.
-Mainly, because the default value of failback is "manual".
+Thanks. Be glad to hear that you're also working on this. I'm glad to
+give some comments on your patch set.
 
-This is a minimal config to work flawlessly:
-devices {
-	device {
-		vendor "COMPELNT"
-		product "Compellent Vol"
-		path_grouping_policy "group_by_prio"
-		prio "alua"
-		failback "immediate"
-		no_path_retry 30
-	}
-}
+
+-- 
+Thanks,
+Jeffle
 
 --
 dm-devel mailing list
