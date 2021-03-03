@@ -7,67 +7,68 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 51066C433E6
-	for <dm-devel@archiver.kernel.org>; Wed,  3 Mar 2021 12:31:05 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6DDFAC433DB
+	for <dm-devel@archiver.kernel.org>; Wed,  3 Mar 2021 12:31:20 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id BED3B64ECF
-	for <dm-devel@archiver.kernel.org>; Wed,  3 Mar 2021 12:31:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BED3B64ECF
+	by mail.kernel.org (Postfix) with ESMTPS id D7E2164ECF
+	for <dm-devel@archiver.kernel.org>; Wed,  3 Mar 2021 12:31:19 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D7E2164ECF
 Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-336-p6Y9RPFWMB2MqDtT-5Uknw-1; Wed, 03 Mar 2021 07:31:00 -0500
-X-MC-Unique: p6Y9RPFWMB2MqDtT-5Uknw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-74-ebUeCRSuOQSspRvU8kLzCw-1; Wed, 03 Mar 2021 07:31:16 -0500
+X-MC-Unique: ebUeCRSuOQSspRvU8kLzCw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B799251F7;
-	Wed,  3 Mar 2021 12:30:55 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D9E84800D55;
+	Wed,  3 Mar 2021 12:31:11 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 24C2010016FA;
-	Wed,  3 Mar 2021 12:30:55 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B466E5C261;
+	Wed,  3 Mar 2021 12:31:11 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C01EA18089CC;
-	Wed,  3 Mar 2021 12:30:52 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7C81A1809C8F;
+	Wed,  3 Mar 2021 12:31:11 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 123CUp0A011533 for <dm-devel@listman.util.phx.redhat.com>;
+	id 123CUp9k011543 for <dm-devel@listman.util.phx.redhat.com>;
 	Wed, 3 Mar 2021 07:30:51 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id EA6991302A9A; Wed,  3 Mar 2021 12:30:50 +0000 (UTC)
+	id 360A32B5300; Wed,  3 Mar 2021 12:30:51 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A861B1302A71
-	for <dm-devel@redhat.com>; Wed,  3 Mar 2021 12:30:50 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BCB1F2B2B10
+	for <dm-devel@redhat.com>; Wed,  3 Mar 2021 12:30:48 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 857DE805F27
-	for <dm-devel@redhat.com>; Wed,  3 Mar 2021 12:30:50 +0000 (UTC)
-Received: from mx4.veeam.com (mx4.veeam.com [104.41.138.86]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-383-f2V8cH79N_qld5rp58SQpA-1;
-	Wed, 03 Mar 2021 07:30:45 -0500
-X-MC-Unique: f2V8cH79N_qld5rp58SQpA-1
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2547E862FFE
+	for <dm-devel@redhat.com>; Wed,  3 Mar 2021 12:30:44 +0000 (UTC)
+Received: from mx2.veeam.com (mx2.veeam.com [64.129.123.6]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-370-RWdslpKcOG25uGHvuTP-3g-1;
+	Wed, 03 Mar 2021 07:30:42 -0500
+X-MC-Unique: RWdslpKcOG25uGHvuTP-3g-1
 Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mx4.veeam.com (Postfix) with ESMTPS id 488D8114A96;
-	Wed,  3 Mar 2021 15:30:43 +0300 (MSK)
+	by mx2.veeam.com (Postfix) with ESMTPS id 42C0E41501;
+	Wed,  3 Mar 2021 07:30:38 -0500 (EST)
 Received: from prgdevlinuxpatch01.amust.local (172.24.14.5) by
 	prgmbx01.amust.local (172.24.0.171) with Microsoft SMTP Server
 	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	15.2.721.2; Wed, 3 Mar 2021 13:30:41 +0100
+	15.2.721.2; Wed, 3 Mar 2021 13:30:36 +0100
 From: Sergei Shtepa <sergei.shtepa@veeam.com>
 To: <snitzer@redhat.com>, <agk@redhat.com>, <hare@suse.de>, <song@kernel.org>, 
 	<axboe@kernel.dk>, <dm-devel@redhat.com>,
 	<linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
 	<linux-raid@vger.kernel.org>, <linux-api@vger.kernel.org>
-Date: Wed, 3 Mar 2021 15:30:16 +0300
-Message-ID: <1614774618-22410-3-git-send-email-sergei.shtepa@veeam.com>
+Date: Wed, 3 Mar 2021 15:30:15 +0300
+Message-ID: <1614774618-22410-2-git-send-email-sergei.shtepa@veeam.com>
 In-Reply-To: <1614774618-22410-1-git-send-email-sergei.shtepa@veeam.com>
 References: <1614774618-22410-1-git-send-email-sergei.shtepa@veeam.com>
 MIME-Version: 1.0
@@ -85,10 +86,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: pavel.tide@veeam.com, sergei.shtepa@veeam.com
-Subject: [dm-devel] [PATCH v6 2/4] block: add blk_interposer
+Subject: [dm-devel] [PATCH v6 1/4] block: add blk_mq_is_queue_frozen()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -102,7 +103,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -110,248 +111,49 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-blk_interposer allows to intercept bio requests, remap bio
-to another devices or add new bios.
+blk_mq_is_queue_frozen() allow to assert that the queue is frozen.
 
 Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
 ---
- block/bio.c               |  2 +
- block/blk-core.c          | 36 +++++++++++++++
- block/genhd.c             | 93 +++++++++++++++++++++++++++++++++++++++
- include/linux/blk_types.h |  4 ++
- include/linux/blkdev.h    | 17 +++++++
- 5 files changed, 152 insertions(+)
+ block/blk-mq.c         | 12 ++++++++++++
+ include/linux/blk-mq.h |  1 +
+ 2 files changed, 13 insertions(+)
 
-diff --git a/block/bio.c b/block/bio.c
-index a1c4d2900c7a..0bfbf06475ee 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -640,6 +640,8 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
- 		bio_set_flag(bio, BIO_THROTTLED);
- 	if (bio_flagged(bio_src, BIO_REMAPPED))
- 		bio_set_flag(bio, BIO_REMAPPED);
-+	if (bio_flagged(bio_src, BIO_INTERPOSED))
-+		bio_set_flag(bio, BIO_INTERPOSED);
- 	bio->bi_opf = bio_src->bi_opf;
- 	bio->bi_ioprio = bio_src->bi_ioprio;
- 	bio->bi_write_hint = bio_src->bi_write_hint;
-diff --git a/block/blk-core.c b/block/blk-core.c
-index fc60ff208497..e749507cadd3 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -1018,6 +1018,34 @@ static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
- 	return ret;
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index d4d7c1caa439..d5e7122789fc 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -161,6 +161,18 @@ int blk_mq_freeze_queue_wait_timeout(struct request_queue *q,
  }
+ EXPORT_SYMBOL_GPL(blk_mq_freeze_queue_wait_timeout);
  
-+static blk_qc_t __submit_bio_interposed(struct bio *bio)
++bool blk_mq_is_queue_frozen(struct request_queue *q)
 +{
-+	struct bio_list bio_list[2] = { };
-+	blk_qc_t ret = BLK_QC_T_NONE;
++	bool ret;
 +
-+	current->bio_list = bio_list;
-+	if (likely(bio_queue_enter(bio) == 0)) {
-+		struct block_device *bdev = bio->bi_bdev;
-+
-+		if (likely(bdev_has_interposer(bdev))) {
-+			bio_set_flag(bio, BIO_INTERPOSED);
-+			bdev->bd_interposer->ip_submit_bio(bio);
-+		} else {
-+			/* interposer was removed */
-+			bio_list_add(&current->bio_list[0], bio);
-+		}
-+
-+		blk_queue_exit(bdev->bd_disk->queue);
-+	}
-+	current->bio_list = NULL;
-+
-+	/* Resubmit remaining bios */
-+	while ((bio = bio_list_pop(&bio_list[0])))
-+		ret = submit_bio_noacct(bio);
++	mutex_lock(&q->mq_freeze_lock);
++	ret = percpu_ref_is_dying(&q->q_usage_counter) && percpu_ref_is_zero(&q->q_usage_counter);
++	mutex_unlock(&q->mq_freeze_lock);
 +
 +	return ret;
 +}
++EXPORT_SYMBOL_GPL(blk_mq_is_queue_frozen);
 +
- /**
-  * submit_bio_noacct - re-submit a bio to the block device layer for I/O
-  * @bio:  The bio describing the location in memory and on the device.
-@@ -1043,6 +1071,14 @@ blk_qc_t submit_bio_noacct(struct bio *bio)
- 		return BLK_QC_T_NONE;
- 	}
+ /*
+  * Guarantee no request is in use, so we can change any data structure of
+  * the queue afterward.
+diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
+index 2c473c9b8990..6f01971abf7b 100644
+--- a/include/linux/blk-mq.h
++++ b/include/linux/blk-mq.h
+@@ -533,6 +533,7 @@ void blk_freeze_queue_start(struct request_queue *q);
+ void blk_mq_freeze_queue_wait(struct request_queue *q);
+ int blk_mq_freeze_queue_wait_timeout(struct request_queue *q,
+ 				     unsigned long timeout);
++bool blk_mq_is_queue_frozen(struct request_queue *q);
  
-+	/*
-+	 * Checking the BIO_INTERPOSED flag is necessary so that the bio
-+	 * created by the bdev_interposer do not get to it for processing.
-+	 */
-+	if (bdev_has_interposer(bio->bi_bdev) &&
-+	    !bio_flagged(bio, BIO_INTERPOSED))
-+		return __submit_bio_interposed(bio);
-+
- 	if (!bio->bi_bdev->bd_disk->fops->submit_bio)
- 		return __submit_bio_noacct_mq(bio);
- 	return __submit_bio_noacct(bio);
-diff --git a/block/genhd.c b/block/genhd.c
-index fcc530164b5a..1ae8516643c8 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -30,6 +30,11 @@
- static struct kobject *block_depr;
- 
- DECLARE_RWSEM(bdev_lookup_sem);
-+/*
-+ * Prevents different block-layer interposers from attaching or detaching
-+ * to the block device at the same time.
-+ */
-+DEFINE_MUTEX(bdev_interposer_attach_lock);
- 
- /* for extended dynamic devt allocation, currently only one major is used */
- #define NR_EXT_DEVT		(1 << MINORBITS)
-@@ -1941,3 +1946,91 @@ static void disk_release_events(struct gendisk *disk)
- 	WARN_ON_ONCE(disk->ev && disk->ev->block != 1);
- 	kfree(disk->ev);
- }
-+
-+/**
-+ * bdev_interposer_attach - Attach interposer to block device
-+ * @bdev: target block device
-+ * @interposer: block device interposer
-+ * @ip_submit_bio: hook for submit_bio()
-+ *
-+ * Returns:
-+ *     -EINVAL if @interposer is NULL.
-+ *     -EPERM if queue is not frozen.
-+ *     -EBUSY if the block device already has @interposer.
-+ *     -EALREADY if the block device already has @interposer with same callback.
-+ *     -ENODEV if the block device cannot be referenced.
-+ *
-+ * Disk must be frozen by blk_mq_freeze_queue().
-+ */
-+int bdev_interposer_attach(struct block_device *bdev, struct bdev_interposer *interposer,
-+			  const ip_submit_bio_t ip_submit_bio)
-+{
-+	int ret = 0;
-+
-+	if (WARN_ON(!interposer))
-+		return -EINVAL;
-+
-+	if (!blk_mq_is_queue_frozen(bdev->bd_disk->queue))
-+		return -EPERM;
-+
-+	mutex_lock(&bdev_interposer_attach_lock);
-+	if (bdev_has_interposer(bdev)) {
-+		if (bdev->bd_interposer->ip_submit_bio == ip_submit_bio)
-+			ret = -EALREADY;
-+		else
-+			ret = -EBUSY;
-+		goto out;
-+	}
-+
-+	interposer->ip_submit_bio = ip_submit_bio;
-+
-+	interposer->bdev = bdgrab(bdev);
-+	if (!interposer->bdev) {
-+		ret = -ENODEV;
-+		goto out;
-+	}
-+
-+	bdev->bd_interposer = interposer;
-+out:
-+	mutex_unlock(&bdev_interposer_attach_lock);
-+
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(bdev_interposer_attach);
-+
-+/**
-+ * bdev_interposer_detach - Detach interposer from block device
-+ * @interposer: block device interposer
-+ * @ip_submit_bio: hook for submit_bio()
-+ *
-+ * Disk must be frozen by blk_mq_freeze_queue().
-+ */
-+void bdev_interposer_detach(struct bdev_interposer *interposer,
-+			  const ip_submit_bio_t ip_submit_bio)
-+{
-+	struct block_device *bdev;
-+
-+	if (WARN_ON(!interposer))
-+		return;
-+
-+	mutex_lock(&bdev_interposer_attach_lock);
-+
-+	/* Check if the interposer is still active. */
-+	bdev = interposer->bdev;
-+	if (WARN_ON(!bdev))
-+		goto out;
-+
-+	if (WARN_ON(!blk_mq_is_queue_frozen(bdev->bd_disk->queue)))
-+		goto out;
-+
-+	/* Check if it is really our interposer. */
-+	if (WARN_ON(bdev->bd_interposer->ip_submit_bio != ip_submit_bio))
-+		goto out;
-+
-+	bdev->bd_interposer = NULL;
-+	interposer->bdev = NULL;
-+	bdput(bdev);
-+out:
-+	mutex_unlock(&bdev_interposer_attach_lock);
-+}
-+EXPORT_SYMBOL_GPL(bdev_interposer_detach);
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index db026b6ec15a..2b43f65bb356 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -19,6 +19,7 @@ struct io_context;
- struct cgroup_subsys_state;
- typedef void (bio_end_io_t) (struct bio *);
- struct bio_crypt_ctx;
-+struct bdev_interposer;
- 
- struct block_device {
- 	sector_t		bd_start_sect;
-@@ -46,6 +47,7 @@ struct block_device {
- 	spinlock_t		bd_size_lock; /* for bd_inode->i_size updates */
- 	struct gendisk *	bd_disk;
- 	struct backing_dev_info *bd_bdi;
-+	struct bdev_interposer * bd_interposer;
- 
- 	/* The counter of freeze processes */
- 	int			bd_fsfreeze_count;
-@@ -304,6 +306,8 @@ enum {
- 	BIO_CGROUP_ACCT,	/* has been accounted to a cgroup */
- 	BIO_TRACKED,		/* set if bio goes through the rq_qos path */
- 	BIO_REMAPPED,
-+	BIO_INTERPOSED,		/* bio has been interposed and can be moved to
-+				 * a different block device */
- 	BIO_FLAG_LAST
- };
- 
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index c032cfe133c7..82f8515fa3c8 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -2033,4 +2033,21 @@ int fsync_bdev(struct block_device *bdev);
- int freeze_bdev(struct block_device *bdev);
- int thaw_bdev(struct block_device *bdev);
- 
-+/*
-+ * block layer interposers structure and functions
-+ */
-+typedef void (*ip_submit_bio_t) (struct bio *bio);
-+
-+struct bdev_interposer {
-+	ip_submit_bio_t ip_submit_bio;
-+	struct block_device *bdev;
-+};
-+
-+#define bdev_has_interposer(bd) ((bd)->bd_interposer != NULL)
-+
-+int bdev_interposer_attach(struct block_device *bdev, struct bdev_interposer *interposer,
-+			   const ip_submit_bio_t ip_submit_bio);
-+void bdev_interposer_detach(struct bdev_interposer *interposer,
-+			    const ip_submit_bio_t ip_submit_bio);
-+
- #endif /* _LINUX_BLKDEV_H */
+ int blk_mq_map_queues(struct blk_mq_queue_map *qmap);
+ void blk_mq_update_nr_hw_queues(struct blk_mq_tag_set *set, int nr_hw_queues);
 -- 
 2.20.1
 
