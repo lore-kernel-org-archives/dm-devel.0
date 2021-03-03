@@ -2,82 +2,78 @@ Return-Path: <SRS0=/efG=IB=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,NICE_REPLY_A,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AEF30C433E0
-	for <dm-devel@archiver.kernel.org>; Wed,  3 Mar 2021 10:42:45 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B9EF3C433DB
+	for <dm-devel@archiver.kernel.org>; Wed,  3 Mar 2021 12:31:03 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 0A51064EE1
-	for <dm-devel@archiver.kernel.org>; Wed,  3 Mar 2021 10:42:44 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0A51064EE1
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=huawei.com
+	by mail.kernel.org (Postfix) with ESMTPS id 0F4A564ECF
+	for <dm-devel@archiver.kernel.org>; Wed,  3 Mar 2021 12:31:02 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0F4A564ECF
+Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-556-InlH_0JhO4-skgbswDmDIQ-1; Wed, 03 Mar 2021 05:42:42 -0500
-X-MC-Unique: InlH_0JhO4-skgbswDmDIQ-1
+ us-mta-98-EPAZbzrnOMiUnykZSBcaOw-1; Wed, 03 Mar 2021 07:30:59 -0500
+X-MC-Unique: EPAZbzrnOMiUnykZSBcaOw-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 808E610082F5;
-	Wed,  3 Mar 2021 10:42:37 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2710619716;
-	Wed,  3 Mar 2021 10:42:37 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 961191005501;
+	Wed,  3 Mar 2021 12:30:55 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1D05C19725;
+	Wed,  3 Mar 2021 12:30:55 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 68F5B58074;
-	Wed,  3 Mar 2021 10:42:36 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A399618089C9;
+	Wed,  3 Mar 2021 12:30:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 123AgYlp026428 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 3 Mar 2021 05:42:35 -0500
+	id 123CUpum011534 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 3 Mar 2021 07:30:51 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 96820200E275; Wed,  3 Mar 2021 10:42:34 +0000 (UTC)
+	id 2BA8E1304A9A; Wed,  3 Mar 2021 12:30:51 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 814552026D3A
-	for <dm-devel@redhat.com>; Wed,  3 Mar 2021 10:42:30 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1AB0D1302ABE
+	for <dm-devel@redhat.com>; Wed,  3 Mar 2021 12:30:48 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 50C0C86EB33
-	for <dm-devel@redhat.com>; Wed,  3 Mar 2021 10:42:30 +0000 (UTC)
-Received: from szxga05-in.huawei.com (szxga05-in.huawei.com
-	[45.249.212.191]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-390-CItWoNKgOpGeMcdckVl4MQ-1; Wed, 03 Mar 2021 05:42:25 -0500
-X-MC-Unique: CItWoNKgOpGeMcdckVl4MQ-1
-Received: from DGGEMS401-HUB.china.huawei.com (unknown [172.30.72.60])
-	by szxga05-in.huawei.com (SkyGuard) with ESMTP id 4Dr9W073GqzMhQk;
-	Wed,  3 Mar 2021 18:40:12 +0800 (CST)
-Received: from [10.174.178.113] (10.174.178.113) by
-	DGGEMS401-HUB.china.huawei.com (10.3.19.201) with Microsoft SMTP Server
-	id 14.3.498.0; Wed, 3 Mar 2021 18:42:13 +0800
-To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
-	Christophe Varoqui <christophe.varoqui@opensvc.com>
-References: <20210128210852.23207-1-mwilck@suse.com>
-	<c1dddccecfe0e12a2fe2dca66faad740a30acd53.camel@suse.com>
-	<99488b1b-2339-338d-e951-0b8f3e78449b@huawei.com>
-	<dcc6fb2a344ce75972242e2c78e2e485b58140da.camel@suse.com>
-	<655de0b3-9625-bf3c-85f8-d19832bd84d8@huawei.com>
-	<79f18cdb19b41be24d082d5528ab2325e6552395.camel@suse.com>
-	<05c23ce9-4859-b0c3-3acb-c74f2c4510d6@huawei.com>
-	<41e79d67f568baf8de6b28e4924620240f0a2731.camel@suse.com>
-From: lixiaokeng <lixiaokeng@huawei.com>
-Message-ID: <58a88880-8977-7439-86d6-898d8a2b4bed@huawei.com>
-Date: Wed, 3 Mar 2021 18:42:13 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
-	Thunderbird/68.10.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EE91A18DFABD
+	for <dm-devel@redhat.com>; Wed,  3 Mar 2021 12:30:39 +0000 (UTC)
+Received: from mx4.veeam.com (mx4.veeam.com [104.41.138.86]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-268-7XaVkA9kMdKebYn57M4F-Q-1;
+	Wed, 03 Mar 2021 07:30:35 -0500
+X-MC-Unique: 7XaVkA9kMdKebYn57M4F-Q-1
+Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mx4.veeam.com (Postfix) with ESMTPS id 45D99114A78;
+	Wed,  3 Mar 2021 15:30:33 +0300 (MSK)
+Received: from prgdevlinuxpatch01.amust.local (172.24.14.5) by
+	prgmbx01.amust.local (172.24.0.171) with Microsoft SMTP Server
+	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	15.2.721.2; Wed, 3 Mar 2021 13:30:31 +0100
+From: Sergei Shtepa <sergei.shtepa@veeam.com>
+To: <snitzer@redhat.com>, <agk@redhat.com>, <hare@suse.de>, <song@kernel.org>, 
+	<axboe@kernel.dk>, <dm-devel@redhat.com>,
+	<linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+	<linux-raid@vger.kernel.org>, <linux-api@vger.kernel.org>
+Date: Wed, 3 Mar 2021 15:30:14 +0300
+Message-ID: <1614774618-22410-1-git-send-email-sergei.shtepa@veeam.com>
 MIME-Version: 1.0
-In-Reply-To: <41e79d67f568baf8de6b28e4924620240f0a2731.camel@suse.com>
-X-Originating-IP: [10.174.178.113]
-X-CFilter-Loop: Reflected
+X-Originating-IP: [172.24.14.5]
+X-ClientProxiedBy: prgmbx01.amust.local (172.24.0.171) To prgmbx01.amust.local
+	(172.24.0.171)
+X-EsetResult: clean, is OK
+X-EsetId: 37303A29C604D265637363
+X-Veeam-MMEX: True
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -86,12 +82,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 123AgYlp026428
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: linfeilong <linfeilong@huawei.com>, dm-devel@redhat.com
-Subject: Re: [dm-devel] [PATCH] multipathd: avoid crash in uevent_cleanup()
+Cc: pavel.tide@veeam.com, sergei.shtepa@veeam.com
+Subject: [dm-devel] [PATCH v6 0/4] block-layer interposer
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -110,90 +104,119 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-GB
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
+Hi all.
 
->> Mar 02 11:40:35 localhost.localdomain multipathd[85474]: directio
->> checker refcount 6
->> Mar 02 11:40:35 localhost.localdomain multipathd[85474]: lxk free tur
->> checker=A0 //checker_put
->=20
->=20
-> So we do not see "unloading tur checker". Like you said, that suggests
-> that the crash occurs between libcheck_free() and the thread exiting.
+I'm joyful to suggest the block-layer interposer (blk_interposer) v6.
+blk_interposer allows to intercept bio requests, remap bio to another
+devices or add new bios.
 
+This series of patches adds the ability to use blk_interposer for
+any dm-target using the DM_INTERPOSED_FLAG flag.
 
+The first patch adds the function blk_mq_is_queue_frozen(). It allows to
+assert a queue state.
 
-"lxk free tur checker" is add in free_checker called by checker_put.
-I don't change the level of "unloading tur checker", so we don't see it.
+The second patch is dedicated to blk_interposer itself, which provides
+the ability to intercept bio.
 
-@@ -58,7 +58,7 @@ void free_checker (struct checker * c)
-                return;
-        c->refcount--;
-        if (c->refcount) {
--               condlog(3, "%s checker refcount %d",
-+               condlog(2, "%s checker refcount %d",
-                        c->name, c->refcount);
-                return;
-        }
-@@ -77,6 +77,7 @@ void free_checker (struct checker * c)
-                        pthread_join(ct->thread, NULL);
-                };
-        }
-+       condlog(2, "lxk free %s checker", c->name);
-        FREE(c);
- }
+The third one adds support for blk_interposer from the device mapper.
 
+The fourth patch adds the DM_INTERPOSED_FLAG flag. When this flag is
+applied with the ioctl DM_TABLE_LOAD_CMD, the underlying devices are
+opened without the FMODE_EXCL flag and connected via blk_interposer.
 
-> I suggest you put a message in tur.c:libcheck_free (), AFTER the call
-> to cleanup_context(), printing the values of "running" and "holders"
-> Anyway:
->=20
-> =09holders =3D uatomic_sub_return(&ct->holders, 1);
-> =09if (!holders)
-> =09=09cleanup_context(ct);
->=20
-> Whatever mistakes we have made, only one actor can have seen=A0
-> holders =3D=3D 0, and have called cleanup_context().
->=20
+Changes:
+v6 - current patch set
+  * designed for 5.12;
+  * thanks to the new design of the bio structure in v5.12, it is
+    possible to perform interception not for the entire disk, but
+    for each block device;
+  * instead of the new ioctl DM_DEV_REMAP_CMD and the 'noexcl' option,
+    the DM_INTERPOSED_FLAG flag for the ioctl DM_TABLE_LOAD_CMD is
+    applied.
 
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 4ea63af..900f960 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -105,8 +105,11 @@ void libcheck_free (struct checker * c)
-                        pthread_cancel(ct->thread);
-                ct->thread =3D 0;
-                holders =3D uatomic_sub_return(&ct->holders, 1);
--               if (!holders)
-+               if (!holders) {
-+                       running =3D uatomic_xchg(&ct->running, 0);
-                        cleanup_context(ct);
-+                       condlog(2, "lxk tur running is %d", running);
-+               }
-                c->context =3D NULL;
-        }
-        return;
+v5 - https://patchwork.kernel.org/project/linux-block/cover/1612881028-7878-1-git-send-email-sergei.shtepa@veeam.com/
+ * rebase for v5.11-rc7;
+ * patch set organization;
+ * fix defects in documentation;
+ * add some comments;
+ * change mutex names for better code readability;
+ * remove calling bd_unlink_disk_holder() for targets with non-exclusive
+   flag;
+ * change type for struct dm_remap_param from uint8_t to __u8.
 
+v4 - https://patchwork.kernel.org/project/linux-block/cover/1612367638-3794-1-git-send-email-sergei.shtepa@veeam.com/
+Mostly changes were made, due to Damien's comments:
+ * on the design of the code;
+ * by the patch set organization;
+ * bug with passing a wrong parameter to dm_get_device();
+ * description of the 'noexcl' parameter in the linear.rst.
+Also added remap_and_filter.rst.
 
-Here I add running print but it is zero.
+v3 - https://patchwork.kernel.org/project/linux-block/cover/1611853955-32167-1-git-send-email-sergei.shtepa@veeam.com/
+In this version, I already suggested blk_interposer to apply to dm-linear.
+Problems were solved:
+ * Interception of bio requests from a specific device on the disk, not
+   from the entire disk. To do this, we added the dm_interposed_dev
+   structure and an interval tree to store these structures.
+ * Implemented ioctl DM_DEV_REMAP_CMD. A patch with changes in the lvm2
+   project was sent to the team lvm-devel@redhat.com.
+ * Added the 'noexcl' option for dm-linear, which allows you to open
+   the underlying block-device without FMODE_EXCL mode.
 
-> The stacks you have shown indicate that the instruction pointers were
-> broken. That would suggest something similar as dicussed in the ML
-> thread leading to 38ffd89 ("libmultipath: prevent DSO unloading with
-> astray checker threads"). Your logs show "tur checker refcount 1", so
-> the next call to checker_put would have unloaded the DSO.=20
+v2 - https://patchwork.kernel.org/project/linux-block/cover/1607518911-30692-1-git-send-email-sergei.shtepa@veeam.com/
+I tried to suggest blk_interposer without using it in device mapper,
+but with the addition of a sample of its use. It was then that I learned
+about the maintainers' attitudes towards the samples directory :).
 
-Here I test 0.8.5 master code with commit 38ffd89. There is no crash
-in five hours (without patch, crash happen in running test script
-for 30 to 40 minutes.)
+v1 - https://lwn.net/ml/linux-block/20201119164924.74401-1-hare@suse.de/
+This Hannes's patch can be considered as a starting point, since this is
+where the interception mechanism and the term blk_interposer itself
+appeared. It became clear that blk_interposer can be useful for
+device mapper.
 
-Regards,
-Lixiaokeng
+before v1 - https://patchwork.kernel.org/project/linux-block/cover/1603271049-20681-1-git-send-email-sergei.shtepa@veeam.com/
+I tried to offer a rather cumbersome blk-filter and a monster-like
+blk-snap module for creating snapshots.
 
+Thank you to everyone who was able to take the time to review
+the previous versions.
+I hope that this time I achieved the required quality.
 
+Thanks,
+Sergei.
+
+Sergei Shtepa (4):
+  block: add blk_mq_is_queue_frozen()
+  block: add blk_interposer
+  dm: introduce dm-interposer
+  dm: add DM_INTERPOSED_FLAG
+
+ block/bio.c                   |   2 +
+ block/blk-core.c              |  36 +++++
+ block/blk-mq.c                |  12 ++
+ block/genhd.c                 |  93 ++++++++++++
+ drivers/md/Makefile           |   2 +-
+ drivers/md/dm-core.h          |   6 +
+ drivers/md/dm-interposer.c    | 258 ++++++++++++++++++++++++++++++++++
+ drivers/md/dm-interposer.h    |  40 ++++++
+ drivers/md/dm-ioctl.c         |   9 ++
+ drivers/md/dm-table.c         | 115 +++++++++++++--
+ drivers/md/dm.c               |  38 +++--
+ include/linux/blk-mq.h        |   1 +
+ include/linux/blk_types.h     |   4 +
+ include/linux/blkdev.h        |  17 +++
+ include/linux/device-mapper.h |   1 +
+ include/uapi/linux/dm-ioctl.h |   6 +
+ 16 files changed, 618 insertions(+), 22 deletions(-)
+ create mode 100644 drivers/md/dm-interposer.c
+ create mode 100644 drivers/md/dm-interposer.h
+
+-- 
+2.20.1
 
 --
 dm-devel mailing list
