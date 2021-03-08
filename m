@@ -2,69 +2,86 @@ Return-Path: <SRS0=Ydjc=IG=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-18.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 621A4C433DB
-	for <dm-devel@archiver.kernel.org>; Mon,  8 Mar 2021 15:31:47 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6F7C8C433DB
+	for <dm-devel@archiver.kernel.org>; Mon,  8 Mar 2021 18:02:20 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C688A65268
-	for <dm-devel@archiver.kernel.org>; Mon,  8 Mar 2021 15:31:46 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C688A65268
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id 00447652A7
+	for <dm-devel@archiver.kernel.org>; Mon,  8 Mar 2021 18:02:19 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 00447652A7
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=intel.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-342-9YFKQ_qUP2q5f0M8j_htdw-1; Mon, 08 Mar 2021 10:31:43 -0500
-X-MC-Unique: 9YFKQ_qUP2q5f0M8j_htdw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-339-sKOvLE3UPViuJptptx6BJg-1; Mon, 08 Mar 2021 13:02:13 -0500
+X-MC-Unique: sKOvLE3UPViuJptptx6BJg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F0A1657;
-	Mon,  8 Mar 2021 15:31:38 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A067860C04;
-	Mon,  8 Mar 2021 15:31:37 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E6900CC623;
+	Mon,  8 Mar 2021 18:02:07 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 222EC5D9CD;
+	Mon,  8 Mar 2021 18:02:07 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3892C1809C86;
-	Mon,  8 Mar 2021 15:31:35 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D9B4157DC0;
+	Mon,  8 Mar 2021 18:02:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 128FVWW8013421 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 8 Mar 2021 10:31:33 -0500
+	id 128I21vh030730 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 8 Mar 2021 13:02:01 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B8AF2215671F; Mon,  8 Mar 2021 15:31:32 +0000 (UTC)
+	id A43AB305A5; Mon,  8 Mar 2021 18:02:01 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B27A7215671E
-	for <dm-devel@redhat.com>; Mon,  8 Mar 2021 15:31:30 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9E53630858
+	for <dm-devel@redhat.com>; Mon,  8 Mar 2021 18:01:59 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 73D6885A5B9
-	for <dm-devel@redhat.com>; Mon,  8 Mar 2021 15:31:30 +0000 (UTC)
-Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-207-T4MEOxbAPAqBsdPgGi-HVg-1;
-	Mon, 08 Mar 2021 10:31:28 -0500
-X-MC-Unique: T4MEOxbAPAqBsdPgGi-HVg-1
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id AA312ADDB;
-	Mon,  8 Mar 2021 15:31:26 +0000 (UTC)
-Message-ID: <717279ef3e16f19602633bd8ec4bc984afb59672.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Date: Mon, 08 Mar 2021 16:31:25 +0100
-In-Reply-To: <20210306153022.38449-1-xose.vazquez@gmail.com>
-References: <20210306153022.38449-1-xose.vazquez@gmail.com>
-User-Agent: Evolution 3.38.2
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E257F855211
+	for <dm-devel@redhat.com>; Mon,  8 Mar 2021 18:01:58 +0000 (UTC)
+Received: from mail-ed1-f50.google.com (mail-ed1-f50.google.com
+	[209.85.208.50]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-243-GwnHJjxgPa-aoCLNrkrnFQ-1; Mon, 08 Mar 2021 13:01:56 -0500
+X-MC-Unique: GwnHJjxgPa-aoCLNrkrnFQ-1
+Received: by mail-ed1-f50.google.com with SMTP id bd6so16017123edb.10
+	for <dm-devel@redhat.com>; Mon, 08 Mar 2021 10:01:56 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc;
+	bh=+zcp9aSnYoFbyB3tMeqX2oxWSrOP4DQTmgBJZuYBvDA=;
+	b=JL2kMDRKLv+Rs+KI4amYg8Km/cX/+9nn8H/nbCT6y4efLQvYTSs/7XE7LuWeXhJgMD
+	MgHpIhlewrNUKucGH9ijuY/y19+Vr0UdA/hyypAFBYVid85xxC2ZmtgBFgJe3fUuETPE
+	T7BQM6sheHKkkK5JJKjTLTeS5MnSBkH/i7z/N/1z58TAZ1TJ87lUMhhSbe9viJB/uRBs
+	LERktMAlPrf4AvNIWoAoIyGhjKhAMnXfDlOk7bPdQaeqA+efKyTFdtr3anrO6hu/2JiM
+	yHdbs99bTvv8qAP9pdBJipylgnGHCNKJ+9rAfKV5Lfhfd0F3k2aJIta2JVSpDK0FbkjF
+	8JjQ==
+X-Gm-Message-State: AOAM532yfcAUlB52gzvpeoZPmZ5FQtLcVsURRtV5J5QA3ACdU+n6NO3a
+	JNBcQlW2nhsokSvoDvrJrEEVGUQYNFU3Woil1iukcw==
+X-Google-Smtp-Source: ABdhPJyiH5A/Lsq6qgR2AevlyxpZfOCI02f/Sq+KNGBFf5iXaQ47vO/OVkIBwMUvOxYfFtKqEcOogvchILyJzJrHkW4=
+X-Received: by 2002:a05:6402:11c9:: with SMTP id
+	j9mr11617699edw.348.1615226515542; 
+	Mon, 08 Mar 2021 10:01:55 -0800 (PST)
 MIME-Version: 1.0
+References: <20210208105530.3072869-1-ruansy.fnst@cn.fujitsu.com>
+	<20210208105530.3072869-2-ruansy.fnst@cn.fujitsu.com>
+	<CAPcyv4jqEdPoF5YM+jSYJd74KqRTwbbEum7=moa3=Wyn6UyU9g@mail.gmail.com>
+	<OSBPR01MB29207A1C06968705C2FEBACFF4939@OSBPR01MB2920.jpnprd01.prod.outlook.com>
+	<CAPcyv4iBnWbG0FYw6-K0MaH--rq62s7RY_yoT9rOYWMa94Yakw@mail.gmail.com>
+	<OSBPR01MB29203F891F9584CC53616FB8F4939@OSBPR01MB2920.jpnprd01.prod.outlook.com>
+In-Reply-To: <OSBPR01MB29203F891F9584CC53616FB8F4939@OSBPR01MB2920.jpnprd01.prod.outlook.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Date: Mon, 8 Mar 2021 10:01:52 -0800
+Message-ID: <CAPcyv4gn_AvT6BA7g4jLKRFODSpt7_ORowVd3KgyWxyaFG0k9g@mail.gmail.com>
+To: "ruansy.fnst@fujitsu.com" <ruansy.fnst@fujitsu.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -73,13 +90,21 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 128FVWW8013421
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: DM-DEVEL ML <dm-devel@redhat.com>
-Subject: Re: [dm-devel] [PATCH] multipath-tools: add more info about
- max_sectors_kb in multipath.conf.5
+Cc: "y-goto@fujitsu.com" <y-goto@fujitsu.com>,
+	"qi.fuli@fujitsu.com" <qi.fuli@fujitsu.com>,
+	Mike Snitzer <snitzer@redhat.com>,
+	linux-nvdimm <linux-nvdimm@lists.01.org>,
+	Goldwyn Rodrigues <rgoldwyn@suse.de>,
+	"Darrick J. Wong" <darrick.wong@oracle.com>, david <david@fromorbit.com>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	linux-xfs <linux-xfs@vger.kernel.org>, Linux MM <linux-mm@kvack.org>,
+	device-mapper development <dm-devel@redhat.com>,
+	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+	Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH v3 01/11] pagemap: Introduce
+	->memory_failure()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,93 +118,104 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Sat, 2021-03-06 at 16:30 +0100, Xose Vazquez Perez wrote:
-> Change of the default value in the kernel:
-> =20
-> https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit=
-/?id=3Dd2be537c3ba35
->=20
-> To query the device:
-> sg_inq -p 0xb0 /dev/sdX | grep "[ml] transfer length:"
->=20
->=20
-> Note: some arrays does not report any value.
-> =A0=A0=A0=A0=A0 3PAR: 65534 blocks
-> =A0=A0=A0=A0=A0 RDAC: not reported
-> =A0=A0=A0=A0=A0 Hitachi VSP: query error
->=20
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEVEL ML <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
-> =A0multipath/multipath.conf.5 | 4 +++-
-> =A01 file changed, 3 insertions(+), 1 deletion(-)
->=20
-> diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-> index 8ef3a747..21963813 100644
-> --- a/multipath/multipath.conf.5
-> +++ b/multipath/multipath.conf.5
-> @@ -1240,9 +1240,11 @@ The default is: \fB0\fR
-> =A0.B max_sectors_kb
-> =A0Sets the max_sectors_kb device parameter on all path devices and the
-> multipath
-> =A0device to the specified value.
-> +If the storage device(array, hard disk, ...) does not export the
-> value to the
-> +system, the kernel sets it to 512(kernel < 4.3) or 1024(kernel >=3D
-> 4.3).
+On Mon, Mar 8, 2021 at 3:34 AM ruansy.fnst@fujitsu.com
+<ruansy.fnst@fujitsu.com> wrote:
+> > > > >  1 file changed, 8 insertions(+)
+> > > > >
+> > > > > diff --git a/include/linux/memremap.h b/include/linux/memremap.h
+> > > > > index 79c49e7f5c30..0bcf2b1e20bd 100644
+> > > > > --- a/include/linux/memremap.h
+> > > > > +++ b/include/linux/memremap.h
+> > > > > @@ -87,6 +87,14 @@ struct dev_pagemap_ops {
+> > > > >          * the page back to a CPU accessible page.
+> > > > >          */
+> > > > >         vm_fault_t (*migrate_to_ram)(struct vm_fault *vmf);
+> > > > > +
+> > > > > +       /*
+> > > > > +        * Handle the memory failure happens on one page.  Notify the processes
+> > > > > +        * who are using this page, and try to recover the data on this page
+> > > > > +        * if necessary.
+> > > > > +        */
+> > > > > +       int (*memory_failure)(struct dev_pagemap *pgmap, unsigned long pfn,
+> > > > > +                             int flags);
+> > > > >  };
+> > > >
+> > > > After the conversation with Dave I don't see the point of this. If
+> > > > there is a memory_failure() on a page, why not just call
+> > > > memory_failure()? That already knows how to find the inode and the
+> > > > filesystem can be notified from there.
+> > >
+> > > We want memory_failure() supports reflinked files.  In this case, we are not
+> > > able to track multiple files from a page(this broken page) because
+> > > page->mapping,page->index can only track one file.  Thus, I introduce this
+> > > ->memory_failure() implemented in pmem driver, to call ->corrupted_range()
+> > > upper level to upper level, and finally find out files who are
+> > > using(mmapping) this page.
+> > >
+> >
+> > I know the motivation, but this implementation seems backwards. It's
+> > already the case that memory_failure() looks up the address_space
+> > associated with a mapping. From there I would expect a new 'struct
+> > address_space_operations' op to let the fs handle the case when there
+> > are multiple address_spaces associated with a given file.
+> >
+>
+> Let me think about it.  In this way, we
+>     1. associate file mapping with dax page in dax page fault;
 
-I don't think this information belongs into the multipath.conf(5) man
-page. We shouldn't start documenting changes of kernel defaults in this
-man page, unless we intend to continue doing so and keep the
-information up-to-date, and I don't think we can promise that. Also,
-the kernel major/minor number information may easily be wrong for
-distribution kernels that have backported the respective change. Kernel
-behavior should be documented in the kernel documentation as provided
-by the distribution.
+I think this needs to be a new type of association that proxies the
+representation of the reflink across all involved address_spaces.
 
-The way the kernel handles max_sectors and max_hw_sectors is actually
-pretty complex, and I wouldn't even attempt to try and explain it in
-this man page.
+>     2. iterate files reflinked to notify `kill processes signal` by the
+>           new address_space_operation;
+>     3. re-associate to another reflinked file mapping when unmmaping
+>         (rmap qeury in filesystem to get the another file).
 
-That said, what's actually important for users to realize is the fact
-that changes of max_sectors_kb don't propagate up the storage stack.
-Once a DM device is first created, it will inherit the max_sectors_kb
-value of the dm target(s). But if the value is changed for low-level
-devices later, upper-level devices won't see the change. A typical
-mistake is to run an udev rule decreasing max_sectors_kb for a SCSI
-device after a multipath map has already been set up on that SCSI
-device (e.g. in the initrd). The  multipath map will have a larger
-max_sectors_kb value than the path device, and IO may actually fail for
-that reason.
+Perhaps the proxy object is reference counted per-ref-link. It seems
+error prone to keep changing the association of the pfn while the
+reflink is in-tact.
 
-Thus it's generally recommended to use multipath.conf for applying
-max_sectors_kb changes. If other devices (e.g. LVM) are stacked on top
-of multipath, the same reasoning applies; therefore max_sectors_kb
-shouldn't be changed at runtime without double-checking the entire
-storage stack.
+> It did not handle those dax pages are not in use, because their ->mapping are
+> not associated to any file.  I didn't think it through until reading your
+> conversation.  Here is my understanding: this case should be handled by
+> badblock mechanism in pmem driver.  This badblock mechanism will call
+> ->corrupted_range() to tell filesystem to repaire the data if possible.
 
-Regards,
-Martin
+There are 2 types of notifications. There are badblocks discovered by
+the driver (see notify_pmem()) and there are memory_failures()
+signalled by the CPU machine-check handler, or the platform BIOS. In
+the case of badblocks that needs to be information considered by the
+fs block allocator to avoid / try-to-repair badblocks on allocate, and
+to allow listing damaged files that need repair. The memory_failure()
+notification needs immediate handling to tear down mappings to that
+pfn and signal processes that have consumed it with
+SIGBUS-action-required. Processes that have the poison mapped, but
+have not consumed it receive SIGBUS-action-optional.
 
-> =A0.RS
-> =A0.TP
-> -The default is: \fB<device dependent>\fR
-> +The default is: \fB<device dependent>\fR, or kernel provided if
-> there is no value.
+> So, we split it into two parts.  And dax device and block device won't be mixed
+> up again.   Is my understanding right?
 
+Right, it's only the filesystem that knows that the block_device and
+the dax_device alias data at the same logical offset. The requirements
+for sector error handling and page error handling are separate like
+block_device_operations and dax_operations.
 
+> But the solution above is to solve the hwpoison on one or couple pages, which
+> happens rarely(I think).  Do the 'pmem remove' operation cause hwpoison too?
+> Call memory_failure() so many times?  I havn't understood this yet.
 
+I'm working on a patch here to call memory_failure() on a wide range
+for the surprise remove of a dax_device while a filesystem might be
+mounted. It won't be efficient, but there is no other way to notify
+the kernel that it needs to immediately stop referencing a page.
 
 --
 dm-devel mailing list
