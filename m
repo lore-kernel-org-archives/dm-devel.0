@@ -7,69 +7,69 @@ X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CCBBCC433DB
-	for <dm-devel@archiver.kernel.org>; Wed, 10 Mar 2021 22:21:49 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CC468C433DB
+	for <dm-devel@archiver.kernel.org>; Wed, 10 Mar 2021 23:18:25 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 5B74D64FC6
-	for <dm-devel@archiver.kernel.org>; Wed, 10 Mar 2021 22:21:49 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5B74D64FC6
+	by mail.kernel.org (Postfix) with ESMTPS id E76FF64FC3
+	for <dm-devel@archiver.kernel.org>; Wed, 10 Mar 2021 23:18:24 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E76FF64FC3
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1615414908;
+	s=mimecast20190719; t=1615418303;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=hy1QTTxOe0Vt/eZa0aSFyreTQLa1UU9Qdfpk15sINkg=;
-	b=fOIrzl/Ev1FKVoXAGgcYiHLj2Xo0NrLZmzjHi0KHIEeBRoEV18ltSQ69mPijBKNYPgkTWt
-	5wP9/koiv7KUnzD/+31Pg5yI/Tt6TEH2k4Nmg0xXgx3020oumRQzo/o8vTe2vWJa2U1Sv1
-	iTJWwFcNV+wTw4uuzZz588BqRslT1sk=
+	bh=MAORcR69r4XWetmI1Fj9iaHFK2LP8RIasRUh4wU07p0=;
+	b=BF/iH24iZwY8ywp9TE+sGdsWHRABF6orS7187Q+zFQtMhA7R2foE9Cn38NECXdrQBDeM8h
+	dLZ96AsK3RNPcxFsDTZeu12B38J+I/QduGSyn5k2YBOiKF0cqgf3BQOhFyO/C1ki9ZzOCb
+	m/XbQMk9+W2Fo49RfsSEo7ZJnbtmjFw=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-37-KOODKrN7Pl-PBEwkfiwOwA-1; Wed, 10 Mar 2021 17:21:46 -0500
-X-MC-Unique: KOODKrN7Pl-PBEwkfiwOwA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-254-vQ2_me9gNSS4omVDsziBLQ-1; Wed, 10 Mar 2021 18:18:21 -0500
+X-MC-Unique: vQ2_me9gNSS4omVDsziBLQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8EE361005D4A;
-	Wed, 10 Mar 2021 22:21:40 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2936E1005D4A;
+	Wed, 10 Mar 2021 23:18:17 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A9B165D6D7;
-	Wed, 10 Mar 2021 22:21:39 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B965D19C48;
+	Wed, 10 Mar 2021 23:18:16 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 133AA1809C86;
-	Wed, 10 Mar 2021 22:21:37 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0B31E1809C86;
+	Wed, 10 Mar 2021 23:18:15 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
 	[10.5.11.15])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12AMLZCk021741 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 10 Mar 2021 17:21:35 -0500
+	id 12ANICKe026543 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 10 Mar 2021 18:18:12 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 35CB95D746; Wed, 10 Mar 2021 22:21:35 +0000 (UTC)
+	id C71F55B6BF; Wed, 10 Mar 2021 23:18:12 +0000 (UTC)
 Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 39ED05D6D7;
-	Wed, 10 Mar 2021 22:21:30 +0000 (UTC)
-Date: Wed, 10 Mar 2021 17:21:30 -0500
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3CDE05D6D7;
+	Wed, 10 Mar 2021 23:18:08 +0000 (UTC)
+Date: Wed, 10 Mar 2021 18:18:08 -0500
 From: Mike Snitzer <snitzer@redhat.com>
 To: Jeffle Xu <jefflexu@linux.alibaba.com>
-Message-ID: <20210310222130.GC23410@redhat.com>
+Message-ID: <20210310231808.GD23410@redhat.com>
 References: <20210303115740.127001-1-jefflexu@linux.alibaba.com>
-	<20210303115740.127001-5-jefflexu@linux.alibaba.com>
+	<20210303115740.127001-11-jefflexu@linux.alibaba.com>
 MIME-Version: 1.0
-In-Reply-To: <20210303115740.127001-5-jefflexu@linux.alibaba.com>
+In-Reply-To: <20210303115740.127001-11-jefflexu@linux.alibaba.com>
 User-Agent: Mutt/1.5.21 (2010-09-15)
 X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 X-loop: dm-devel@redhat.com
 Cc: axboe@kernel.dk, caspar@linux.alibaba.com, linux-block@vger.kernel.org,
 	joseph.qi@linux.alibaba.com, dm-devel@redhat.com,
 	mpatocka@redhat.com, io-uring@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH v5 04/12] block: add poll_capable method to
- support bio-based IO polling
+Subject: Re: [dm-devel] [PATCH v5 10/12] block: fastpath for bio-based
+	polling
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -83,7 +83,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -95,81 +95,304 @@ Content-Transfer-Encoding: 7bit
 On Wed, Mar 03 2021 at  6:57am -0500,
 Jeffle Xu <jefflexu@linux.alibaba.com> wrote:
 
-> This method can be used to check if bio-based device supports IO polling
-> or not. For mq devices, checking for hw queue in polling mode is
-> adequate, while the sanity check shall be implementation specific for
-> bio-based devices. For example, dm device needs to check if all
-> underlying devices are capable of IO polling.
+> Offer one fastpath for bio-based polling when bio submitted to dm
+> device is not split.
 > 
-> Though bio-based device may have done the sanity check during the
-> device initialization phase, cacheing the result of this sanity check
-> (such as by cacheing in the queue_flags) may not work. Because for dm
-
-s/cacheing/caching/
-
-> devices, users could change the state of the underlying devices through
-> '/sys/block/<dev>/io_poll', bypassing the dm device above. In this case,
-> the cached result of the very beginning sanity check could be
-> out-of-date. Thus the sanity check needs to be done every time 'io_poll'
-> is to be modified.
+> In this case, there will be only one bio submitted to only one polling
+> hw queue of one underlying mq device, and thus we don't need to track
+> all split bios or iterate through all polling hw queues. The pointer to
+> the polling hw queue the bio submitted to is returned here as the
+> returned cookie. In this case, the polling routine will call
+> mq_ops->poll() directly with the hw queue converted from the input
+> cookie.
+> 
+> If the original bio submitted to dm device is split to multiple bios and
+> thus submitted to multiple polling hw queues, the polling routine will
+> fall back to iterating all hw queues (in polling mode) of all underlying
+> mq devices.
 > 
 > Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+> ---
+>  block/blk-core.c          | 73 +++++++++++++++++++++++++++++++++++++--
+>  include/linux/blk_types.h | 66 +++++++++++++++++++++++++++++++++--
+>  include/linux/types.h     |  2 +-
+>  3 files changed, 135 insertions(+), 6 deletions(-)
+> 
+> diff --git a/block/blk-core.c b/block/blk-core.c
+> index 6d7d53030d7c..e5cd4ff08f5c 100644
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -947,14 +947,22 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
+>  {
+>  	struct bio_list bio_list_on_stack[2];
+>  	blk_qc_t ret = BLK_QC_T_NONE;
+> +	struct request_queue *top_q;
+> +	bool poll_on;
+>  
+>  	BUG_ON(bio->bi_next);
+>  
+>  	bio_list_init(&bio_list_on_stack[0]);
+>  	current->bio_list = bio_list_on_stack;
+>  
+> +	top_q = bio->bi_bdev->bd_disk->queue;
+> +	poll_on = test_bit(QUEUE_FLAG_POLL, &top_q->queue_flags) &&
+> +		  (bio->bi_opf & REQ_HIPRI);
+> +
+>  	do {
+> -		struct request_queue *q = bio->bi_bdev->bd_disk->queue;
+> +		blk_qc_t cookie;
+> +		struct block_device *bdev = bio->bi_bdev;
+> +		struct request_queue *q = bdev->bd_disk->queue;
+>  		struct bio_list lower, same;
+>  
+>  		if (unlikely(bio_queue_enter(bio) != 0))
+> @@ -966,7 +974,23 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
+>  		bio_list_on_stack[1] = bio_list_on_stack[0];
+>  		bio_list_init(&bio_list_on_stack[0]);
+>  
+> -		ret = __submit_bio(bio);
+> +		cookie = __submit_bio(bio);
+> +
+> +		if (poll_on && blk_qc_t_valid(cookie)) {
+> +			unsigned int queue_num = blk_qc_t_to_queue_num(cookie);
+> +			unsigned int devt = bdev_whole(bdev)->bd_dev;
+> +
+> +			cookie = blk_qc_t_get_by_devt(devt, queue_num);
 
-Ideally QUEUE_FLAG_POLL would be authoritative.. but I appreciate the
-problem you've described.  Though I do wonder if this should be solved
-by bio-based's fops->poll() method clearing the request_queue's
-QUEUE_FLAG_POLL if it finds an underlying device doesn't have
-QUEUE_FLAG_POLL set.  Though making bio-based's fops->poll() always need
-to validate the an underlying device does support polling is pretty
-unfortunate.
+The need to rebuild the cookie here is pretty awkward.  This
+optimization living in block core may be worthwhile but the duality of
+block core conditionally overriding the driver's returned cookie (that
+is meant to be opaque to upper layer) is not great.
 
-Either way, queue_poll_store() will need to avoid blk-mq specific poll
-checking for bio-based devices.
+> +
+> +			if (!blk_qc_t_valid(ret)) {
+> +				/* set initial value */
+> +				ret = cookie;
+> +			} else if (ret != cookie) {
+> +				/* bio gets split and enqueued to multi hctxs */
+> +				ret = BLK_QC_T_BIO_POLL_ALL;
+> +				poll_on = false;
+> +			}
+> +		}
+>  
+>  		/*
+>  		 * Sort new bios into those for a lower level and those for the
+> @@ -989,6 +1013,7 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
+>  	} while ((bio = bio_list_pop(&bio_list_on_stack[0])));
+>  
+>  	current->bio_list = NULL;
+> +
+>  	return ret;
+>  }
+
+Nit: Not seeing need to alter white space here.
+
+>  
+> @@ -1119,6 +1144,44 @@ blk_qc_t submit_bio(struct bio *bio)
+>  }
+>  EXPORT_SYMBOL(submit_bio);
+>  
+> +static int blk_poll_bio(blk_qc_t cookie)
+> +{
+> +	unsigned int devt = blk_qc_t_to_devt(cookie);
+> +	unsigned int queue_num = blk_qc_t_to_queue_num(cookie);
+> +	struct block_device *bdev;
+> +	struct request_queue *q;
+> +	struct blk_mq_hw_ctx *hctx;
+> +	int ret;
+> +
+> +	bdev = blkdev_get_no_open(devt);
+
+As you pointed out to me in private, but for the benefit of others,
+blkdev_get_no_open()'s need to take inode lock is not ideal here.
+
+> +
+> +	/*
+> +	 * One such case is that dm device has reloaded table and the original
+> +	 * underlying device the bio submitted to has been detached. When
+> +	 * reloading table, dm will ensure that previously submitted IOs have
+> +	 * all completed, thus return directly here.
+> +	 */
+> +	if (!bdev)
+> +		return 1;
+> +
+> +	q = bdev->bd_disk->queue;
+> +	hctx = q->queue_hw_ctx[queue_num];
+> +
+> +	/*
+> +	 * Similar to the case described in the above comment, that dm device
+> +	 * has reloaded table and the original underlying device the bio
+> +	 * submitted to has been detached. Thus the dev_t stored in cookie may
+> +	 * be reused by another blkdev, and if that's the case, return directly
+> +	 * here.
+> +	 */
+> +	if (hctx->type != HCTX_TYPE_POLL)
+> +		return 1;
+
+These checks really aren't authoritative or safe enough.  If the bdev
+may have changed then it may not have queue_num hctxs (so you'd access
+out-of-bounds). Similarly, a new bdev may have queue_num hctxs and may
+just so happen to have its type be HCTX_TYPE_POLL.. but in reality it
+isn't the same bdev the cookie was generated from.
+
+And I'm now curious how blk-mq's polling code isn't subject to async io
+polling tripping over the possibility of the underlying device having
+been changed out from under it -- meaning should this extra validation
+be common to bio and request-based?  If not, why not?
+
+> +
+> +	ret = blk_mq_poll_hctx(q, hctx);
+> +
+> +	blkdev_put_no_open(bdev);
+> +	return ret;
+> +}
+>  
+>  static int blk_bio_poll(struct request_queue *q, blk_qc_t cookie, bool spin)
+>  {
+> @@ -1129,7 +1192,11 @@ static int blk_bio_poll(struct request_queue *q, blk_qc_t cookie, bool spin)
+>  	do {
+>  		int ret;
+>  
+> -		ret = disk->fops->poll(q, cookie);
+> +		if (unlikely(blk_qc_t_is_poll_multi(cookie)))
+> +			ret = disk->fops->poll(q, cookie);
+> +		else
+> +			ret = blk_poll_bio(cookie);
+> +
+
+Again, this just seems too limiting. Would rather always call into
+disk->fops->poll and have it optimize for single hctx based on cookie it
+established.
+
+Not seeing why all this needs to be driven by block core _yet_.
+Could be I'm just wanting some flexibility for the design to harden (and
+potential for optimization left as a driver concern.. as I mentioned in
+my reply to the 0th patch header for this v5 patchset).
+
+>  		if (ret > 0) {
+>  			__set_current_state(TASK_RUNNING);
+>  			return ret;
+> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+> index fb429daaa909..8f970e026be9 100644
+> --- a/include/linux/blk_types.h
+> +++ b/include/linux/blk_types.h
+> @@ -505,10 +505,19 @@ static inline int op_stat_group(unsigned int op)
+>  	return op_is_write(op);
+>  }
+>  
+> -/* Macros for blk_qc_t */
+> +/*
+> + * blk_qc_t for request-based mq devices.
+> + * 63                    31 30          15          0 (bit)
+> + * +----------------------+-+-----------+-----------+
+> + * |      reserved        | | queue_num |    tag    |
+> + * +----------------------+-+-----------+-----------+
+> + *                         ^
+> + *                         BLK_QC_T_INTERNAL
+> + */
+>  #define BLK_QC_T_NONE		-1U
+>  #define BLK_QC_T_SHIFT		16
+>  #define BLK_QC_T_INTERNAL	(1U << 31)
+> +#define BLK_QC_T_QUEUE_NUM_SIZE	15
+>  
+>  static inline bool blk_qc_t_valid(blk_qc_t cookie)
+>  {
+> @@ -517,7 +526,8 @@ static inline bool blk_qc_t_valid(blk_qc_t cookie)
+>  
+>  static inline unsigned int blk_qc_t_to_queue_num(blk_qc_t cookie)
+>  {
+> -	return (cookie & ~BLK_QC_T_INTERNAL) >> BLK_QC_T_SHIFT;
+> +	return (cookie >> BLK_QC_T_SHIFT) &
+> +	       ((1u << BLK_QC_T_QUEUE_NUM_SIZE) - 1);
+>  }
+>  
+>  static inline unsigned int blk_qc_t_to_tag(blk_qc_t cookie)
+> @@ -530,6 +540,58 @@ static inline bool blk_qc_t_is_internal(blk_qc_t cookie)
+>  	return (cookie & BLK_QC_T_INTERNAL) != 0;
+>  }
+>  
+> +/*
+> + * blk_qc_t for bio-based devices.
+> + *
+> + * 1. When @bio is not split, the returned cookie has following format.
+> + *    @dev_t specifies the dev_t number of the underlying device the bio
+> + *    submitted to, while @queue_num specifies the hw queue the bio submitted
+> + *    to.
+> + *
+> + * 63                    31 30          15          0 (bit)
+> + * +----------------------+-+-----------+-----------+
+> + * |        dev_t         | | queue_num |  reserved |
+> + * +----------------------+-+-----------+-----------+
+> + *                         ^
+> + *                         reserved for compatibility with mq
+> + *
+> + * 2. When @bio gets split and enqueued into multi hw queues, the returned
+> + *    cookie is just BLK_QC_T_BIO_POLL_ALL flag.
+> + *
+> + * 63                                              0 (bit)
+> + * +----------------------------------------------+-+
+> + * |                                              |1|
+> + * +----------------------------------------------+-+
+> + *                                                 ^
+> + *                                                 BLK_QC_T_BIO_POLL_ALL
+> + *
+> + * 3. Otherwise, return BLK_QC_T_NONE as the cookie.
+> + *
+> + * 63                                              0 (bit)
+> + * +-----------------------------------------------+
+> + * |                  BLK_QC_T_NONE                |
+> + * +-----------------------------------------------+
+> + */
+> +#define BLK_QC_T_HIGH_SHIFT	32
+> +#define BLK_QC_T_BIO_POLL_ALL	1U
+
+Pulling on same thread I raised above, the cookie is meant to be
+opaque.  Pinning down how the cookie is (ab)used in block core seems to
+undermine the intended flexibility.
+
+I'd much rather these details be pushed into drivers/md/bio-poll.h or
+something for the near-term.  We can always elevate it to block core
+if/when there is sufficient justification.
+
+Just feels we're getting too constraining too quickly.
 
 Mike
 
-> ---
->  block/blk-sysfs.c      | 14 +++++++++++---
->  include/linux/blkdev.h |  1 +
->  2 files changed, 12 insertions(+), 3 deletions(-)
-> 
-> diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-> index 0f4f0c8a7825..367c1d9a55c6 100644
-> --- a/block/blk-sysfs.c
-> +++ b/block/blk-sysfs.c
-> @@ -426,9 +426,17 @@ static ssize_t queue_poll_store(struct request_queue *q, const char *page,
->  	unsigned long poll_on;
->  	ssize_t ret;
->  
-> -	if (!q->tag_set || q->tag_set->nr_maps <= HCTX_TYPE_POLL ||
-> -	    !q->tag_set->map[HCTX_TYPE_POLL].nr_queues)
-> -		return -EINVAL;
-> +	if (queue_is_mq(q)) {
-> +		if (!q->tag_set || q->tag_set->nr_maps <= HCTX_TYPE_POLL ||
-> +		    !q->tag_set->map[HCTX_TYPE_POLL].nr_queues)
-> +			return -EINVAL;
-> +	} else {
-> +		struct gendisk *disk = queue_to_disk(q);
+
 > +
-> +		if (!disk->fops->poll_capable ||
-> +		    !disk->fops->poll_capable(disk))
-> +			return -EINVAL;
-> +	}
+> +static inline unsigned int blk_qc_t_to_devt(blk_qc_t cookie)
+> +{
+> +	return cookie >> BLK_QC_T_HIGH_SHIFT;
+> +}
+> +
+> +static inline blk_qc_t blk_qc_t_get_by_devt(unsigned int dev,
+> +					    unsigned int queue_num)
+> +{
+> +	return ((blk_qc_t)dev << BLK_QC_T_HIGH_SHIFT) |
+> +	       (queue_num << BLK_QC_T_SHIFT);
+> +}
+> +
+> +static inline bool blk_qc_t_is_poll_multi(blk_qc_t cookie)
+> +{
+> +	return cookie & BLK_QC_T_BIO_POLL_ALL;
+> +}
+> +
+>  struct blk_rq_stat {
+>  	u64 mean;
+>  	u64 min;
+> diff --git a/include/linux/types.h b/include/linux/types.h
+> index 52a54ed6ffac..7ff4bb96e0ea 100644
+> --- a/include/linux/types.h
+> +++ b/include/linux/types.h
+> @@ -126,7 +126,7 @@ typedef u64 sector_t;
+>  typedef u64 blkcnt_t;
 >  
->  	ret = queue_var_store(&poll_on, page, count);
->  	if (ret < 0)
-> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> index 9dc83c30e7bc..7df40792c032 100644
-> --- a/include/linux/blkdev.h
-> +++ b/include/linux/blkdev.h
-> @@ -1867,6 +1867,7 @@ static inline void blk_ksm_unregister(struct request_queue *q) { }
->  struct block_device_operations {
->  	blk_qc_t (*submit_bio) (struct bio *bio);
->  	int (*poll)(struct request_queue *q, blk_qc_t cookie);
-> +	bool (*poll_capable)(struct gendisk *disk);
->  	int (*open) (struct block_device *, fmode_t);
->  	void (*release) (struct gendisk *, fmode_t);
->  	int (*rw_page)(struct block_device *, sector_t, struct page *, unsigned int);
+>  /* cookie used for IO polling */
+> -typedef unsigned int blk_qc_t;
+> +typedef u64 blk_qc_t;
+>  
+>  /*
+>   * The type of an index into the pagecache.
 > -- 
 > 2.27.0
 > 
