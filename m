@@ -2,73 +2,75 @@ Return-Path: <SRS0=AZSO=II=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D83D2C433E0
-	for <dm-devel@archiver.kernel.org>; Wed, 10 Mar 2021 04:54:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 88BC1C433DB
+	for <dm-devel@archiver.kernel.org>; Wed, 10 Mar 2021 05:28:43 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 444AE64F82
-	for <dm-devel@archiver.kernel.org>; Wed, 10 Mar 2021 04:54:02 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 444AE64F82
+	by mail.kernel.org (Postfix) with ESMTPS id DA18064F51
+	for <dm-devel@archiver.kernel.org>; Wed, 10 Mar 2021 05:28:42 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org DA18064F51
 Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-533-i-7sSS2DNvGVGLgMHqZU1g-1; Tue, 09 Mar 2021 23:53:59 -0500
-X-MC-Unique: i-7sSS2DNvGVGLgMHqZU1g-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-419-RPLC0JxkOAyIGzGpztMZOQ-1; Wed, 10 Mar 2021 00:28:39 -0500
+X-MC-Unique: RPLC0JxkOAyIGzGpztMZOQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B4C05184214B;
-	Wed, 10 Mar 2021 04:53:53 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 79A0C10866A5;
+	Wed, 10 Mar 2021 05:28:34 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7C6FB5C233;
-	Wed, 10 Mar 2021 04:53:51 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0E04710013C1;
+	Wed, 10 Mar 2021 05:28:33 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 05B371809C86;
-	Wed, 10 Mar 2021 04:53:49 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 376711809C86;
+	Wed, 10 Mar 2021 05:28:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12A4rW0f007948 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 9 Mar 2021 23:53:32 -0500
+	id 12A5SUvS010385 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 10 Mar 2021 00:28:30 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 55F012156A2E; Wed, 10 Mar 2021 04:53:32 +0000 (UTC)
+	id F3658E204B; Wed, 10 Mar 2021 05:28:29 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 510762156A21
-	for <dm-devel@redhat.com>; Wed, 10 Mar 2021 04:53:29 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EDD2FE204E
+	for <dm-devel@redhat.com>; Wed, 10 Mar 2021 05:28:26 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 53DC2185A7BC
-	for <dm-devel@redhat.com>; Wed, 10 Mar 2021 04:53:29 +0000 (UTC)
-Received: from mx4.veeam.com (mx4.veeam.com [104.41.138.86]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-593-LmxFWqD7ObqYhq8XMS5-vg-1;
-	Tue, 09 Mar 2021 23:53:25 -0500
-X-MC-Unique: LmxFWqD7ObqYhq8XMS5-vg-1
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4CB3C85A5AA
+	for <dm-devel@redhat.com>; Wed, 10 Mar 2021 05:28:26 +0000 (UTC)
+Received: from mx2.veeam.com (mx2.veeam.com [64.129.123.6]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-63-cv1QxcfWM7if7W6tq8S2gw-1;
+	Wed, 10 Mar 2021 00:28:21 -0500
+X-MC-Unique: cv1QxcfWM7if7W6tq8S2gw-1
 Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mx4.veeam.com (Postfix) with ESMTPS id 258C58A78F;
-	Wed, 10 Mar 2021 07:53:23 +0300 (MSK)
+	by mx2.veeam.com (Postfix) with ESMTPS id E94784134D;
+	Wed, 10 Mar 2021 00:28:17 -0500 (EST)
 Received: from veeam.com (172.24.14.5) by prgmbx01.amust.local (172.24.0.171)
 	with Microsoft SMTP Server (version=TLS1_2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.721.2;
-	Wed, 10 Mar 2021 05:53:20 +0100
-Date: Wed, 10 Mar 2021 07:53:13 +0300
+	Wed, 10 Mar 2021 06:28:15 +0100
+Date: Wed, 10 Mar 2021 08:28:12 +0300
 From: Sergei Shtepa <sergei.shtepa@veeam.com>
 To: Christoph Hellwig <hch@infradead.org>
-Message-ID: <20210310045313.GA26929@veeam.com>
+Message-ID: <20210310052812.GB26929@veeam.com>
 References: <1614774618-22410-1-git-send-email-sergei.shtepa@veeam.com>
-	<1614774618-22410-3-git-send-email-sergei.shtepa@veeam.com>
-	<20210309172717.GB201344@infradead.org>
+	<1614774618-22410-5-git-send-email-sergei.shtepa@veeam.com>
+	<20210309173555.GC201344@infradead.org>
 MIME-Version: 1.0
-In-Reply-To: <20210309172717.GB201344@infradead.org>
+In-Reply-To: <20210309173555.GC201344@infradead.org>
 X-Originating-IP: [172.24.14.5]
 X-ClientProxiedBy: prgmbx02.amust.local (172.24.0.172) To prgmbx01.amust.local
 	(172.24.0.171)
@@ -83,7 +85,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: "axboe@kernel.dk" <axboe@kernel.dk>,
 	"linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
@@ -95,7 +97,7 @@ Cc: "axboe@kernel.dk" <axboe@kernel.dk>,
 	"song@kernel.org" <song@kernel.org>,
 	"dm-devel@redhat.com" <dm-devel@redhat.com>,
 	"agk@redhat.com" <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH v6 2/4] block: add blk_interposer
+Subject: Re: [dm-devel] [PATCH v6 4/4] dm: add DM_INTERPOSED_FLAG
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -109,7 +111,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -118,156 +120,154 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Thank you, Christoph, for the review.
-I will correct all except two points.
-
-The 03/09/2021 20:27, Christoph Hellwig wrote:
-> > +static blk_qc_t __submit_bio_interposed(struct bio *bio)
+The 03/09/2021 20:35, Christoph Hellwig wrote:
+> On Wed, Mar 03, 2021 at 03:30:18PM +0300, Sergei Shtepa wrote:
+> > DM_INTERPOSED_FLAG allow to create dm targets on "the fly".
+> > Underlying block device opens without a flag FMODE_EXCL.
+> > Dm target receives bio from the original device via
+> > blk_interposer.
+> > 
+> > Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
+> > ---
+> >  drivers/md/dm-core.h          |   6 ++
+> >  drivers/md/dm-ioctl.c         |   9 +++
+> >  drivers/md/dm-table.c         | 115 +++++++++++++++++++++++++++++++---
+> >  drivers/md/dm.c               |  38 +++++++----
+> >  include/linux/device-mapper.h |   1 +
+> >  include/uapi/linux/dm-ioctl.h |   6 ++
+> >  6 files changed, 154 insertions(+), 21 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
+> > index 5953ff2bd260..e5c845f9b1df 100644
+> > --- a/drivers/md/dm-core.h
+> > +++ b/drivers/md/dm-core.h
+> > @@ -21,6 +21,8 @@
+> >  
+> >  #define DM_RESERVED_MAX_IOS		1024
+> >  
+> > +struct dm_interposed_dev;
+> > +
+> >  struct dm_kobject_holder {
+> >  	struct kobject kobj;
+> >  	struct completion completion;
+> > @@ -114,6 +116,10 @@ struct mapped_device {
+> >  	bool init_tio_pdu:1;
+> >  
+> >  	struct srcu_struct io_barrier;
+> > +
+> > +	/* for interposers logic */
+> > +	bool is_interposed;
+> > +	struct dm_interposed_dev *ip_dev;
+> >  };
+> >  
+> >  void disable_discard(struct mapped_device *md);
+> > diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+> > index 5e306bba4375..2bcb316144a1 100644
+> > --- a/drivers/md/dm-ioctl.c
+> > +++ b/drivers/md/dm-ioctl.c
+> > @@ -1267,6 +1267,11 @@ static inline fmode_t get_mode(struct dm_ioctl *param)
+> >  	return mode;
+> >  }
+> >  
+> > +static inline bool get_interposer_flag(struct dm_ioctl *param)
 > > +{
-> > +	struct bio_list bio_list[2] = { };
-> > +	blk_qc_t ret = BLK_QC_T_NONE;
-> > +
-> > +	current->bio_list = bio_list;
-> > +	if (likely(bio_queue_enter(bio) == 0)) {
-> > +		struct block_device *bdev = bio->bi_bdev;
-> > +
-> > +		if (likely(bdev_has_interposer(bdev))) {
-> > +			bio_set_flag(bio, BIO_INTERPOSED);
-> > +			bdev->bd_interposer->ip_submit_bio(bio);
-> > +		} else {
-> > +			/* interposer was removed */
-> > +			bio_list_add(&current->bio_list[0], bio);
-> > +		}
-> > +
-> > +		blk_queue_exit(bdev->bd_disk->queue);
-> > +	}
-> > +	current->bio_list = NULL;
-> > +
-> > +	/* Resubmit remaining bios */
-> > +	while ((bio = bio_list_pop(&bio_list[0])))
-> > +		ret = submit_bio_noacct(bio);
-> > +
-> > +	return ret;
+> > +	return (param->flags & DM_INTERPOSED_FLAG);
 > > +}
 > > +
-> >  /**
-> >   * submit_bio_noacct - re-submit a bio to the block device layer for I/O
-> >   * @bio:  The bio describing the location in memory and on the device.
-> > @@ -1043,6 +1071,14 @@ blk_qc_t submit_bio_noacct(struct bio *bio)
-> >  		return BLK_QC_T_NONE;
-> >  	}
+> >  static int next_target(struct dm_target_spec *last, uint32_t next, void *end,
+> >  		       struct dm_target_spec **spec, char **target_params)
+> >  {
+> > @@ -1338,6 +1343,8 @@ static int table_load(struct file *filp, struct dm_ioctl *param, size_t param_si
+> >  	if (!md)
+> >  		return -ENXIO;
 > >  
-> > +	/*
-> > +	 * Checking the BIO_INTERPOSED flag is necessary so that the bio
-> > +	 * created by the bdev_interposer do not get to it for processing.
-> > +	 */
-> > +	if (bdev_has_interposer(bio->bi_bdev) &&
-> > +	    !bio_flagged(bio, BIO_INTERPOSED))
-> > +		return __submit_bio_interposed(bio);
+> > +	md->is_interposed = get_interposer_flag(param);
 > > +
-> >  	if (!bio->bi_bdev->bd_disk->fops->submit_bio)
-> >  		return __submit_bio_noacct_mq(bio);
-> >  	return __submit_bio_noacct(bio);
-> > diff --git a/block/genhd.c b/block/genhd.c
-> > index fcc530164b5a..1ae8516643c8 100644
-> > --- a/block/genhd.c
-> > +++ b/block/genhd.c
-> > @@ -30,6 +30,11 @@
-> >  static struct kobject *block_depr;
+> >  	r = dm_table_create(&t, get_mode(param), param->target_count, md);
+> >  	if (r)
+> >  		goto err;
+> > @@ -2098,6 +2105,8 @@ int __init dm_early_create(struct dm_ioctl *dmi,
+> >  	if (r)
+> >  		goto err_hash_remove;
 > >  
-> >  DECLARE_RWSEM(bdev_lookup_sem);
+> > +	md->is_interposed = get_interposer_flag(dmi);
+> > +
+> >  	/* add targets */
+> >  	for (i = 0; i < dmi->target_count; i++) {
+> >  		r = dm_table_add_target(t, spec_array[i]->target_type,
+> > diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> > index 95391f78b8d5..0b2f9b66ade5 100644
+> > --- a/drivers/md/dm-table.c
+> > +++ b/drivers/md/dm-table.c
+> > @@ -6,6 +6,7 @@
+> >   */
+> >  
+> >  #include "dm-core.h"
+> > +#include "dm-interposer.h"
+> >  
+> >  #include <linux/module.h>
+> >  #include <linux/vmalloc.h>
+> > @@ -225,12 +226,13 @@ void dm_table_destroy(struct dm_table *t)
+> >  /*
+> >   * See if we've already got a device in the list.
+> >   */
+> > -static struct dm_dev_internal *find_device(struct list_head *l, dev_t dev)
+> > +static struct dm_dev_internal *find_device(struct list_head *l, dev_t dev, bool is_interposed)
+> >  {
+> >  	struct dm_dev_internal *dd;
+> >  
+> >  	list_for_each_entry (dd, l, list)
+> > -		if (dd->dm_dev->bdev->bd_dev == dev)
+> > +		if ((dd->dm_dev->bdev->bd_dev == dev) &&
+> > +		    (dd->dm_dev->is_interposed == is_interposed))
+> >  			return dd;
+> >  
+> >  	return NULL;
+> > @@ -358,6 +360,90 @@ dev_t dm_get_dev_t(const char *path)
+> >  }
+> >  EXPORT_SYMBOL_GPL(dm_get_dev_t);
+> >  
 > > +/*
-> > + * Prevents different block-layer interposers from attaching or detaching
-> > + * to the block device at the same time.
+> > + * Redirect bio from interposed device to dm device
 > > + */
-> > +DEFINE_MUTEX(bdev_interposer_attach_lock);
-> 
-> This one can and should be marked static.
-> 
-> > +int bdev_interposer_attach(struct block_device *bdev, struct bdev_interposer *interposer,
-> 
-> Please avoid the overly long line.
-> 
-> > +	int ret = 0;
+> > +static void dm_interpose_fn(struct dm_interposed_dev *ip_dev, struct bio *bio)
+> > +{
+> > +	struct mapped_device *md = ip_dev->private;
 > > +
-> > +	if (WARN_ON(!interposer))
-> 
-> WARN_ON_ONCE?
-
-This function should be called quite rarely, and the absence of the interposer
-parameter indicates that the function is being used incorrectly.
-I would like to see this warning every time.
-
-> 
-> > +		return -EINVAL;
+> > +	if (bio_flagged(bio, BIO_REMAPPED)) {
+> > +		/*
+> > +		 * Since bio has already been remapped, we need to subtract
+> > +		 * the block device offset from the beginning of the disk.
+> > +		 */
+> > +		bio->bi_iter.bi_sector -= get_start_sect(bio->bi_bdev);
 > > +
-> > +	if (!blk_mq_is_queue_frozen(bdev->bd_disk->queue))
-> > +		return -EPERM;
-> 
-> This probly should be a WARN_ON_ONCE() as well.
-
-I think it's better to apply WARN_ON here.
-
-> 
-> > +
-> > +	mutex_lock(&bdev_interposer_attach_lock);
-> > +	if (bdev_has_interposer(bdev)) {
-> > +		if (bdev->bd_interposer->ip_submit_bio == ip_submit_bio)
-> > +			ret = -EALREADY;
-> > +		else
-> > +			ret = -EBUSY;
-> > +		goto out;
+> > +		bio_clear_flag(bio, BIO_REMAPPED);
 > > +	}
 > 
-> Do we really need the two different error codes here?
+> So instead of doing this shoudn't the imposer just always submit to the
+> whole device?  But if we keep it, the logic in this funtion should go
+> into a block layer helper, passing a block device instead of the
+> dm_interposed_dev.  This avoids having such fragile logic in drivers.
 
-I think I need it. If we try to initialize the interposer again, the reason
-for this error is most likely in the logic of the module itself.
-If the interposer is occupied by someone else, then we need to let know
-about it.
+device-mapper allows to create devices of any size using only part of
+the underlying device. Therefore, it is not possible to apply the
+interposer to the whole block device.
+Perhaps it makes sense to put the blk_partition_unremap() function in the
+block layer? I'm not sure that's a good thing.
 
 > 
+> > +	if ((ofs + len) > bdev_nr_sectors(bdev)) {
+> > +		DMERR("The specified range of sectors exceeds of the size of the block device.");
+> > +		return -ERANGE;
+> > +	}
 > > +
-> > +	interposer->ip_submit_bio = ip_submit_bio;
-> 
-> I'd rather let the caller initialize the field instead of passing the
-> submit function separately.
-
-Yes, I think so. This will allow to keep only one parameter of the function.
-
-> 
-> > +void bdev_interposer_detach(struct bdev_interposer *interposer,
-> > +			  const ip_submit_bio_t ip_submit_bio)
-> > +{
-> 
-> > +	/* Check if it is really our interposer. */
-> > +	if (WARN_ON(bdev->bd_interposer->ip_submit_bio != ip_submit_bio))
-> > +		goto out;
-> 
-> I don't really see any need to pass ip_submit_bio just for this check.
-> 
-> > +	struct bdev_interposer * bd_interposer;
-> 
-> The * goes just before the member name.
-> 
-> > +/*
-> > + * block layer interposers structure and functions
-> > + */
-> > +typedef void (*ip_submit_bio_t) (struct bio *bio);
+> > +	md->ip_dev = kzalloc(sizeof(struct dm_interposed_dev), GFP_KERNEL);
+> > +	if (!md->ip_dev)
+> > +		return -ENOMEM;
 > > +
-> > +struct bdev_interposer {
-> > +	ip_submit_bio_t ip_submit_bio;
-> > +	struct block_device *bdev;
+> > +	if ((ofs == 0) && (len == 0))
 > 
-> Do we need the ip_ prefix here?  Also we probably don't really the
-> the typedef for the function pointer.
-
-Ok. Maybe submit_bio_hook would be better? or submit_bio_interposer.
-
-> 
-> > +#define bdev_has_interposer(bd) ((bd)->bd_interposer != NULL)
-> 
-> And inline function would be nice here.
+> Lots of superflous inner braces.
 
 -- 
 Sergei Shtepa
