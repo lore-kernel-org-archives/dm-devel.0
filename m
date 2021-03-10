@@ -2,77 +2,90 @@ Return-Path: <SRS0=AZSO=II=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C2B55C433E0
-	for <dm-devel@archiver.kernel.org>; Wed, 10 Mar 2021 10:18:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 06821C433DB
+	for <dm-devel@archiver.kernel.org>; Wed, 10 Mar 2021 10:30:14 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 2B00B64FDF
-	for <dm-devel@archiver.kernel.org>; Wed, 10 Mar 2021 10:18:19 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2B00B64FDF
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 5D64B64F72
+	for <dm-devel@archiver.kernel.org>; Wed, 10 Mar 2021 10:30:13 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5D64B64F72
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1615371498;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=3rcflq67WEqvqYqKzp3SwxVvKmua1Ax+lUb9/8F85Ic=;
-	b=S506+XETQUxiTJmFyF3jBclGow2YzfTaaoQsvNKqBlg/jTV+c0nPTkdvugrXVX7Iv6rJV4
-	wa2GynmzkHGUuf8k2/k/PiPvPnof3uYPfND6DFN08I+hUSmk4AxsvvVnUgcp4mkf151L65
-	O7Ws7S77vd0tzx3pQuq5l9sj9hHEL9Y=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-329-RuHeZq4DPSKBQm_9XzprqQ-1; Wed, 10 Mar 2021 05:18:16 -0500
-X-MC-Unique: RuHeZq4DPSKBQm_9XzprqQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-97-m8MZLwevMC6jd8D45of77w-1; Wed, 10 Mar 2021 05:30:10 -0500
+X-MC-Unique: m8MZLwevMC6jd8D45of77w-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3176B801817;
-	Wed, 10 Mar 2021 10:18:11 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0AF3D1002391;
-	Wed, 10 Mar 2021 10:18:11 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8A8A91018F72;
+	Wed, 10 Mar 2021 10:30:03 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4B0B06FEE0;
+	Wed, 10 Mar 2021 10:30:03 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3CEA81809C86;
-	Wed, 10 Mar 2021 10:18:10 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
-	[10.5.11.15])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9999257DC0;
+	Wed, 10 Mar 2021 10:30:02 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12AAI8ON003764 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 10 Mar 2021 05:18:08 -0500
+	id 12AATxPM004455 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 10 Mar 2021 05:30:00 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 3B86C5452A; Wed, 10 Mar 2021 10:18:08 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
-	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5874F62A1B;
-	Wed, 10 Mar 2021 10:18:04 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 12AAI3L6006966; Wed, 10 Mar 2021 05:18:03 -0500
-Received: from localhost (mpatocka@localhost)
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 12AAI3m3006962; Wed, 10 Mar 2021 05:18:03 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
-	owned process doing -bs
-Date: Wed, 10 Mar 2021 05:18:03 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
-Message-ID: <alpine.LRH.2.02.2103100516330.6862@file01.intranet.prod.int.rdu2.redhat.com>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+	id 92A98E77A3; Wed, 10 Mar 2021 10:29:59 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8C2CF6B585
+	for <dm-devel@redhat.com>; Wed, 10 Mar 2021 10:29:57 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 63BC88564E2
+	for <dm-devel@redhat.com>; Wed, 10 Mar 2021 10:29:57 +0000 (UTC)
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-290-QO6erwWGOZC0ZZYwXAEWhQ-1; Wed, 10 Mar 2021 05:29:55 -0500
+X-MC-Unique: QO6erwWGOZC0ZZYwXAEWhQ-1
+Received: from hch by casper.infradead.org with local (Exim 4.94 #2 (Red Hat
+	Linux)) id 1lJvho-0036nv-IR; Wed, 10 Mar 2021 10:04:42 +0000
+Date: Wed, 10 Mar 2021 10:04:40 +0000
+From: Christoph Hellwig <hch@infradead.org>
+To: Sergei Shtepa <sergei.shtepa@veeam.com>
+Message-ID: <20210310100440.GA736136@infradead.org>
+References: <1614774618-22410-1-git-send-email-sergei.shtepa@veeam.com>
+	<1614774618-22410-3-git-send-email-sergei.shtepa@veeam.com>
+	<20210309172717.GB201344@infradead.org>
+	<20210310045313.GA26929@veeam.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+In-Reply-To: <20210310045313.GA26929@veeam.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+	casper.infradead.org. See http://www.infradead.org/rpr.html
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com
-Subject: [dm-devel] [PATCH] dm-ioctl: replace hash with red-black tree
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>,
+	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+	"linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
+	"snitzer@redhat.com" <snitzer@redhat.com>,
+	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+	Pavel Tide <Pavel.TIde@veeam.com>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	Christoph Hellwig <hch@infradead.org>, "song@kernel.org" <song@kernel.org>,
+	"dm-devel@redhat.com" <dm-devel@redhat.com>,
+	"agk@redhat.com" <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH v6 2/4] block: add blk_interposer
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -86,437 +99,42 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Zdenek reported that for high number of dm devices, the 64-entry hash
-table has non-trivial overhead. This patch replaces the hash table with a
-red-black tree.
+On Wed, Mar 10, 2021 at 07:53:13AM +0300, Sergei Shtepa wrote:
+> > Please avoid the overly long line.
+> > 
+> > > +	int ret = 0;
+> > > +
+> > > +	if (WARN_ON(!interposer))
+> > 
+> > WARN_ON_ONCE?
+> 
+> This function should be called quite rarely, and the absence of the interposer
+> parameter indicates that the function is being used incorrectly.
+> I would like to see this warning every time.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Yes.  Most kernel code would in fact just remove the check entirely
+and let the kernel crash to indicate this.  Maybe that is an even
+better option for such a grave API usage mistake.
 
----
- drivers/md/dm-ioctl.c |  256 +++++++++++++++++++++++++++-----------------------
- 1 file changed, 143 insertions(+), 113 deletions(-)
+> > > +struct bdev_interposer {
+> > > +	ip_submit_bio_t ip_submit_bio;
+> > > +	struct block_device *bdev;
+> > 
+> > Do we need the ip_ prefix here?  Also we probably don't really the
+> > the typedef for the function pointer.
+> 
+> Ok. Maybe submit_bio_hook would be better? or submit_bio_interposer.
 
-Index: linux-2.6/drivers/md/dm-ioctl.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-ioctl.c	2021-02-05 20:21:22.000000000 +0100
-+++ linux-2.6/drivers/md/dm-ioctl.c	2021-03-09 21:04:07.000000000 +0100
-@@ -14,6 +14,7 @@
- #include <linux/init.h>
- #include <linux/wait.h>
- #include <linux/slab.h>
-+#include <linux/rbtree.h>
- #include <linux/dm-ioctl.h>
- #include <linux/hdreg.h>
- #include <linux/compat.h>
-@@ -36,8 +37,10 @@ struct dm_file {
-  * name or uuid.
-  *---------------------------------------------------------------*/
- struct hash_cell {
--	struct list_head name_list;
--	struct list_head uuid_list;
-+	struct rb_node name_node;
-+	struct rb_node uuid_node;
-+	bool name_set;
-+	bool uuid_set;
- 
- 	char *name;
- 	char *uuid;
-@@ -53,10 +56,8 @@ struct vers_iter {
- };
- 
- 
--#define NUM_BUCKETS 64
--#define MASK_BUCKETS (NUM_BUCKETS - 1)
--static struct list_head _name_buckets[NUM_BUCKETS];
--static struct list_head _uuid_buckets[NUM_BUCKETS];
-+static struct rb_root name_rb_tree = RB_ROOT;
-+static struct rb_root uuid_rb_tree = RB_ROOT;
- 
- static void dm_hash_remove_all(bool keep_open_devices, bool mark_deferred, bool only_deferred);
- 
-@@ -70,73 +71,110 @@ static DECLARE_RWSEM(_hash_lock);
-  */
- static DEFINE_MUTEX(dm_hash_cells_mutex);
- 
--static void init_buckets(struct list_head *buckets)
--{
--	unsigned int i;
--
--	for (i = 0; i < NUM_BUCKETS; i++)
--		INIT_LIST_HEAD(buckets + i);
--}
--
--static int dm_hash_init(void)
--{
--	init_buckets(_name_buckets);
--	init_buckets(_uuid_buckets);
--	return 0;
--}
--
- static void dm_hash_exit(void)
- {
- 	dm_hash_remove_all(false, false, false);
- }
- 
- /*-----------------------------------------------------------------
-- * Hash function:
-- * We're not really concerned with the str hash function being
-- * fast since it's only used by the ioctl interface.
-- *---------------------------------------------------------------*/
--static unsigned int hash_str(const char *str)
--{
--	const unsigned int hash_mult = 2654435387U;
--	unsigned int h = 0;
--
--	while (*str)
--		h = (h + (unsigned int) *str++) * hash_mult;
--
--	return h & MASK_BUCKETS;
--}
--
--/*-----------------------------------------------------------------
-  * Code for looking up a device by name
-  *---------------------------------------------------------------*/
- static struct hash_cell *__get_name_cell(const char *str)
- {
--	struct hash_cell *hc;
--	unsigned int h = hash_str(str);
-+	struct rb_node *n = name_rb_tree.rb_node;
- 
--	list_for_each_entry (hc, _name_buckets + h, name_list)
--		if (!strcmp(hc->name, str)) {
-+	while (n) {
-+		struct hash_cell *hc = container_of(n, struct hash_cell, name_node);
-+		int c = strcmp(hc->name, str);
-+		if (!c) {
- 			dm_get(hc->md);
- 			return hc;
- 		}
-+		n = c >= 0 ? n->rb_left : n->rb_right;
-+	}
- 
- 	return NULL;
- }
- 
- static struct hash_cell *__get_uuid_cell(const char *str)
- {
--	struct hash_cell *hc;
--	unsigned int h = hash_str(str);
-+	struct rb_node *n = uuid_rb_tree.rb_node;
- 
--	list_for_each_entry (hc, _uuid_buckets + h, uuid_list)
--		if (!strcmp(hc->uuid, str)) {
-+	while (n) {
-+		struct hash_cell *hc = container_of(n, struct hash_cell, uuid_node);
-+		int c = strcmp(hc->uuid, str);
-+		if (!c) {
- 			dm_get(hc->md);
- 			return hc;
- 		}
-+		n = c >= 0 ? n->rb_left : n->rb_right;
-+	}
- 
- 	return NULL;
- }
- 
-+static void __unlink_name(struct hash_cell *hc)
-+{
-+	if (hc->name_set) {
-+		hc->name_set = false;
-+		rb_erase(&hc->name_node, &name_rb_tree);
-+	}
-+}
-+
-+static void __unlink_uuid(struct hash_cell *hc)
-+{
-+	if (hc->uuid_set) {
-+		hc->uuid_set = false;
-+		rb_erase(&hc->uuid_node, &uuid_rb_tree);
-+	}
-+}
-+
-+static void __link_name(struct hash_cell *new_hc)
-+{
-+	struct rb_node **n, *parent;
-+
-+	__unlink_name(new_hc);
-+
-+	new_hc->name_set = true;
-+
-+	n = &name_rb_tree.rb_node;
-+	parent = NULL;
-+
-+	while (*n) {
-+		struct hash_cell *hc = container_of(*n, struct hash_cell, name_node);
-+		int c = strcmp(hc->name, new_hc->name);
-+		BUG_ON(!c);
-+		parent = *n;
-+		n = c >= 0 ? &hc->name_node.rb_left : &hc->name_node.rb_right;
-+	}
-+
-+	rb_link_node(&new_hc->name_node, parent, n);
-+	rb_insert_color(&new_hc->name_node, &name_rb_tree);
-+}
-+
-+static void __link_uuid(struct hash_cell *new_hc)
-+{
-+	struct rb_node **n, *parent;
-+
-+	__unlink_uuid(new_hc);
-+
-+	new_hc->uuid_set = true;
-+
-+	n = &uuid_rb_tree.rb_node;
-+	parent = NULL;
-+
-+	while (*n) {
-+		struct hash_cell *hc = container_of(*n, struct hash_cell, uuid_node);
-+		int c = strcmp(hc->uuid, new_hc->uuid);
-+		BUG_ON(!c);
-+		parent = *n;
-+		n = c > 0 ? &hc->uuid_node.rb_left : &hc->uuid_node.rb_right;
-+	}
-+
-+	rb_link_node(&new_hc->uuid_node, parent, n);
-+	rb_insert_color(&new_hc->uuid_node, &uuid_rb_tree);
-+}
-+
- static struct hash_cell *__get_dev_cell(uint64_t dev)
- {
- 	struct mapped_device *md;
-@@ -185,8 +223,7 @@ static struct hash_cell *alloc_cell(cons
- 		}
- 	}
- 
--	INIT_LIST_HEAD(&hc->name_list);
--	INIT_LIST_HEAD(&hc->uuid_list);
-+	hc->name_set = hc->uuid_set = false;
- 	hc->md = md;
- 	hc->new_map = NULL;
- 	return hc;
-@@ -226,16 +263,16 @@ static int dm_hash_insert(const char *na
- 		goto bad;
- 	}
- 
--	list_add(&cell->name_list, _name_buckets + hash_str(name));
-+	__link_name(cell);
- 
- 	if (uuid) {
- 		hc = __get_uuid_cell(uuid);
- 		if (hc) {
--			list_del(&cell->name_list);
-+			__unlink_name(cell);
- 			dm_put(hc->md);
- 			goto bad;
- 		}
--		list_add(&cell->uuid_list, _uuid_buckets + hash_str(uuid));
-+		__link_uuid(cell);
- 	}
- 	dm_get(md);
- 	mutex_lock(&dm_hash_cells_mutex);
-@@ -256,9 +293,9 @@ static struct dm_table *__hash_remove(st
- 	struct dm_table *table;
- 	int srcu_idx;
- 
--	/* remove from the dev hash */
--	list_del(&hc->uuid_list);
--	list_del(&hc->name_list);
-+	/* remove from the dev trees */
-+	__unlink_name(hc);
-+	__unlink_uuid(hc);
- 	mutex_lock(&dm_hash_cells_mutex);
- 	dm_set_mdptr(hc->md, NULL);
- 	mutex_unlock(&dm_hash_cells_mutex);
-@@ -279,7 +316,8 @@ static struct dm_table *__hash_remove(st
- 
- static void dm_hash_remove_all(bool keep_open_devices, bool mark_deferred, bool only_deferred)
- {
--	int i, dev_skipped;
-+	int dev_skipped;
-+	struct rb_node *n;
- 	struct hash_cell *hc;
- 	struct mapped_device *md;
- 	struct dm_table *t;
-@@ -289,40 +327,39 @@ retry:
- 
- 	down_write(&_hash_lock);
- 
--	for (i = 0; i < NUM_BUCKETS; i++) {
--		list_for_each_entry(hc, _name_buckets + i, name_list) {
--			md = hc->md;
--			dm_get(md);
--
--			if (keep_open_devices &&
--			    dm_lock_for_deletion(md, mark_deferred, only_deferred)) {
--				dm_put(md);
--				dev_skipped++;
--				continue;
--			}
-+	for (n = rb_first(&name_rb_tree); n; n = rb_next(n)) {
-+		hc = container_of(n, struct hash_cell, name_node);
-+		md = hc->md;
-+		dm_get(md);
-+
-+		if (keep_open_devices &&
-+		    dm_lock_for_deletion(md, mark_deferred, only_deferred)) {
-+			dm_put(md);
-+			dev_skipped++;
-+			continue;
-+		}
- 
--			t = __hash_remove(hc);
-+		t = __hash_remove(hc);
- 
--			up_write(&_hash_lock);
-+		up_write(&_hash_lock);
- 
--			if (t) {
--				dm_sync_table(md);
--				dm_table_destroy(t);
--			}
--			dm_put(md);
--			if (likely(keep_open_devices))
--				dm_destroy(md);
--			else
--				dm_destroy_immediate(md);
--
--			/*
--			 * Some mapped devices may be using other mapped
--			 * devices, so repeat until we make no further
--			 * progress.  If a new mapped device is created
--			 * here it will also get removed.
--			 */
--			goto retry;
-+		if (t) {
-+			dm_sync_table(md);
-+			dm_table_destroy(t);
- 		}
-+		dm_put(md);
-+		if (likely(keep_open_devices))
-+			dm_destroy(md);
-+		else
-+			dm_destroy_immediate(md);
-+
-+		/*
-+		 * Some mapped devices may be using other mapped
-+		 * devices, so repeat until we make no further
-+		 * progress.  If a new mapped device is created
-+		 * here it will also get removed.
-+		 */
-+		goto retry;
- 	}
- 
- 	up_write(&_hash_lock);
-@@ -340,7 +377,7 @@ static void __set_cell_uuid(struct hash_
- 	hc->uuid = new_uuid;
- 	mutex_unlock(&dm_hash_cells_mutex);
- 
--	list_add(&hc->uuid_list, _uuid_buckets + hash_str(new_uuid));
-+	__link_uuid(hc);
- }
- 
- /*
-@@ -354,14 +391,14 @@ static char *__change_cell_name(struct h
- 	/*
- 	 * Rename and move the name cell.
- 	 */
--	list_del(&hc->name_list);
-+	__unlink_name(hc);
- 	old_name = hc->name;
- 
- 	mutex_lock(&dm_hash_cells_mutex);
- 	hc->name = new_name;
- 	mutex_unlock(&dm_hash_cells_mutex);
- 
--	list_add(&hc->name_list, _name_buckets + hash_str(new_name));
-+	__link_name(hc);
- 
- 	return old_name;
- }
-@@ -505,7 +542,7 @@ static void *get_result_buffer(struct dm
- 
- static int list_devices(struct file *filp, struct dm_ioctl *param, size_t param_size)
- {
--	unsigned int i;
-+	struct rb_node *n;
- 	struct hash_cell *hc;
- 	size_t len, needed = 0;
- 	struct gendisk *disk;
-@@ -518,11 +555,10 @@ static int list_devices(struct file *fil
- 	 * Loop through all the devices working out how much
- 	 * space we need.
- 	 */
--	for (i = 0; i < NUM_BUCKETS; i++) {
--		list_for_each_entry (hc, _name_buckets + i, name_list) {
--			needed += align_val(offsetof(struct dm_name_list, name) + strlen(hc->name) + 1);
--			needed += align_val(sizeof(uint32_t));
--		}
-+	for (n = rb_first(&name_rb_tree); n; n = rb_next(n)) {
-+		hc = container_of(n, struct hash_cell, name_node);
-+		needed += align_val(offsetof(struct dm_name_list, name) + strlen(hc->name) + 1);
-+		needed += align_val(sizeof(uint32_t));
- 	}
- 
- 	/*
-@@ -540,21 +576,20 @@ static int list_devices(struct file *fil
- 	/*
- 	 * Now loop through filling out the names.
- 	 */
--	for (i = 0; i < NUM_BUCKETS; i++) {
--		list_for_each_entry (hc, _name_buckets + i, name_list) {
--			if (old_nl)
--				old_nl->next = (uint32_t) ((void *) nl -
--							   (void *) old_nl);
--			disk = dm_disk(hc->md);
--			nl->dev = huge_encode_dev(disk_devt(disk));
--			nl->next = 0;
--			strcpy(nl->name, hc->name);
--
--			old_nl = nl;
--			event_nr = align_ptr(nl->name + strlen(hc->name) + 1);
--			*event_nr = dm_get_event_nr(hc->md);
--			nl = align_ptr(event_nr + 1);
--		}
-+	for (n = rb_first(&name_rb_tree); n; n = rb_next(n)) {
-+		hc = container_of(n, struct hash_cell, name_node);
-+		if (old_nl)
-+			old_nl->next = (uint32_t) ((void *) nl -
-+						   (void *) old_nl);
-+		disk = dm_disk(hc->md);
-+		nl->dev = huge_encode_dev(disk_devt(disk));
-+		nl->next = 0;
-+		strcpy(nl->name, hc->name);
-+
-+		old_nl = nl;
-+		event_nr = align_ptr(nl->name + strlen(hc->name) + 1);
-+		*event_nr = dm_get_event_nr(hc->md);
-+		nl = align_ptr(event_nr + 1);
- 	}
- 	/*
- 	 * If mismatch happens, security may be compromised due to buffer
-@@ -1991,14 +2026,9 @@ int __init dm_interface_init(void)
- {
- 	int r;
- 
--	r = dm_hash_init();
--	if (r)
--		return r;
--
- 	r = misc_register(&_dm_misc);
- 	if (r) {
- 		DMERR("misc_register failed for control device");
--		dm_hash_exit();
- 		return r;
- 	}
- 
+Or interpose_bio?
 
 --
 dm-devel mailing list
