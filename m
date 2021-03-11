@@ -2,151 +2,80 @@ Return-Path: <SRS0=c+In=IJ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D9296C433E0
-	for <dm-devel@archiver.kernel.org>; Thu, 11 Mar 2021 21:33:54 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CA521C433DB
+	for <dm-devel@archiver.kernel.org>; Thu, 11 Mar 2021 21:34:06 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 53A4D64EBB
-	for <dm-devel@archiver.kernel.org>; Thu, 11 Mar 2021 21:33:54 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 53A4D64EBB
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id 4D32064F84
+	for <dm-devel@archiver.kernel.org>; Thu, 11 Mar 2021 21:34:06 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4D32064F84
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1615498445;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=qjCbOM01HbvABM4uMDXzbkgcIqsUKsNrEnUnDgphQW0=;
+	b=PoMMQRwZixpi07ltZDIbSEuEq1RgLm74SBsDdWeVeQQxCHBNWwrkstcjagRtItgPV3ANHT
+	HAC7ARLuDgp3iZ9J3VCmGTp1pxyRVkK7mzcRq4fSg4hWfhIkdRP2DC9qphn8vbCnKfInqi
+	SFP0RuU5glC1XFCoC8s5fuYmpFWikKw=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-20-vtfdwIWXOh-js58OKou0Ag-1; Thu, 11 Mar 2021 16:33:51 -0500
-X-MC-Unique: vtfdwIWXOh-js58OKou0Ag-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-540-7AYPsa7ENSeny-TH6ROfzQ-1; Thu, 11 Mar 2021 16:34:01 -0500
+X-MC-Unique: 7AYPsa7ENSeny-TH6ROfzQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DF57C817468;
-	Thu, 11 Mar 2021 21:33:46 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6CBA819704;
-	Thu, 11 Mar 2021 21:33:46 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3591819253C8;
+	Thu, 11 Mar 2021 21:33:57 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 118275C1C5;
+	Thu, 11 Mar 2021 21:33:57 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B5AF218155DE;
-	Thu, 11 Mar 2021 21:33:45 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B269357DC1;
+	Thu, 11 Mar 2021 21:33:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
+	[10.5.11.15])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12BLXiE3013872 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 11 Mar 2021 16:33:44 -0500
+	id 12BLXtD4013902 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 11 Mar 2021 16:33:55 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 41CC7FED47; Thu, 11 Mar 2021 21:33:44 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 353B8FED46
-	for <dm-devel@redhat.com>; Thu, 11 Mar 2021 21:33:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C108E857AA1
-	for <dm-devel@redhat.com>; Thu, 11 Mar 2021 21:33:40 +0000 (UTC)
-Received: from de-smtp-delivery-102.mimecast.com
-	(de-smtp-delivery-102.mimecast.com [194.104.109.102]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-594-eeo5zCu6McaIRBnxGCPYJg-1;
-	Thu, 11 Mar 2021 16:33:38 -0500
-X-MC-Unique: eeo5zCu6McaIRBnxGCPYJg-1
-Received: from EUR04-HE1-obe.outbound.protection.outlook.com
-	(mail-he1eur04lp2052.outbound.protection.outlook.com [104.47.13.52])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	de-mta-31-TsRZJke4MNWbGH89frVA7Q-1; Thu, 11 Mar 2021 22:33:36 +0100
-X-MC-Unique: TsRZJke4MNWbGH89frVA7Q-1
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
-	by DBAPR04MB7351.eurprd04.prod.outlook.com (2603:10a6:10:1b2::15)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3912.27;
-	Thu, 11 Mar 2021 21:33:35 +0000
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::69bd:c9ff:f910:faeb]) by
-	DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::69bd:c9ff:f910:faeb%7]) with mapi id 15.20.3912.029;
-	Thu, 11 Mar 2021 21:33:35 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
-	"christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Thread-Topic: [PATCH 2/2] tests: add tests for checking if alias is in use
-Thread-Index: AQHXFfKFOQCqPfZLjkO8jcApFJHsd6p/UHsA
-Date: Thu, 11 Mar 2021 21:33:35 +0000
-Message-ID: <092a945926de8bd51f6c80088a7cdf14c6ba46e5.camel@suse.com>
-References: <1615410915-12555-1-git-send-email-bmarzins@redhat.com>
-	<1615410915-12555-3-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1615410915-12555-3-git-send-email-bmarzins@redhat.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Evolution 3.38.2
-x-originating-ip: [2.202.118.173]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 50098e62-375a-49e2-279d-08d8e4d55376
-x-ms-traffictypediagnostic: DBAPR04MB7351:
-x-microsoft-antispam-prvs: <DBAPR04MB7351B4AC12802E2594217D34FC909@DBAPR04MB7351.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:644
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: Jo8bkf1hoUMiQP2J/0SlJQXKh4nx5x/mfu28uVZ8xuNUWx/m2P93mLbfwJdh1e1TZSUHtLxNBoMpl4WZS6XJtvQ03klRkJn/W1CqpAndZuxYpNUYPDkmObAegN8hSUvssyvArpSEqtzSjyzRp3e6JSGH47kXXxdiGhu4dyWK4cW0+mMwobEStLtZMcXGTBFmMCcLvU2+MFh7E4EOWA58sfmKxW9Q/PrssfRR0LeYGMaP0eASgRJtPtErwhjD+8vj9eBvl5GPVgr3clvIrw1NVxBnb5JHEVH1+TNVxqpJ/x3y4cTale6l6fQiEv6jXV24vpDzeVgkID80BhPBl3ZKN3tA5hsc9+okR989HsFFGIFXUJH2MuHmkiFs9sVuVwZTNSG502SXSVEE/iD1ZVQZmy5dhYp31wUUb0ZwrHnpksAVd1iK3G0yf9Ph5MkmIjSlzcNXFRgpecPu94NTUGcT4xui9C3YHMP4cDh9ngAYSpny3ozCZbAWfqSBik5HLKuRV7bw92UQYJrS81x1N1Fbfw==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(346002)(366004)(376002)(39850400004)(396003)(136003)(66476007)(8936002)(66556008)(91956017)(76116006)(66946007)(6512007)(86362001)(71200400001)(110136005)(6486002)(6506007)(316002)(36756003)(8676002)(2616005)(44832011)(26005)(5660300002)(186003)(2906002)(64756008)(478600001)(66446008)(558084003)(4326008);
-	DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata: =?iso-8859-15?Q?T5NPBgrup8dbok3kGZtNcgSnBhj/DDxfTs3GLnTxcKFvfxfNI+8x3NSx7?=
-	=?iso-8859-15?Q?FgEHoZkJsJCMSEcCkS4OpaNo0soqb8b4DOwoyefCP70wxSKVq/QJh82JI?=
-	=?iso-8859-15?Q?X2SVVxgdJ/T78zkYyzMdwH65B2EG6DZV8FZmN4e7jro70u5Eyakm2ZZtt?=
-	=?iso-8859-15?Q?DdbtoeVhjGOJFpS1PJ15HlSY45bAKmWKeWQwRI6VpWTy1mHrfY2HKw1py?=
-	=?iso-8859-15?Q?PsYdzJX7GA6CuarISmvvB5GbgiFsrVYxNs4Q+orWFEnd06Jpswvr7gqHE?=
-	=?iso-8859-15?Q?pwCqkImBAFlpCQFytBT9mHMsZUP7msOmDj3GPYvqWKovLQcjX/V0pmwKq?=
-	=?iso-8859-15?Q?ETEUY9xbDVDqoDEtOCnK9RW/zJNbHqIG78gGrS8NaCaor1LRCSg/+iOJt?=
-	=?iso-8859-15?Q?Ujo4bDMWaJfzoM9UaW9Ziemh5xPylGlQr7dl/tRovYUQtETbkr24frtZ/?=
-	=?iso-8859-15?Q?yzxg1guJwtIQAp7zyAs2VL0Pgd+0z/gYbqLlFTDt7QbtD1niu0XmjLk88?=
-	=?iso-8859-15?Q?Q9KEtCu4MO6daFlk5y1mEdalgWrkkCqRbSeYz8nv/cEPkfdv1dowSQge/?=
-	=?iso-8859-15?Q?dLUcaIprR8A3cnrFwAcWnXxQGxtAYPmCERRwhGrIW/vFiS/Jp8AfO/lzO?=
-	=?iso-8859-15?Q?vsLZiuuDq2LWFctETUnTkQW7JI0yrPOjovL04GtMmlR//Tfqo8kaJzskh?=
-	=?iso-8859-15?Q?9ZXex4YCvBo9cHiVoUhFGRDU/z2bkEXivWB200g+x7FGPJJOqMzcszHfw?=
-	=?iso-8859-15?Q?KWykWReosspt/M0HxSjzQGJe4JHnPOPEXb/ldJXvF/dZH75DUig2jweBQ?=
-	=?iso-8859-15?Q?g3cWrJMR4qXgJrnWttl6ZQx0iLd3M/aEqNC9s/Wcwlc5pQKd1DQ9Mf8zv?=
-	=?iso-8859-15?Q?fIxLMbxfpbiojf1BglHpllyVfhi0cAN1diUIiGZdEGSoDRgepm7U9KE/X?=
-	=?iso-8859-15?Q?fPiC7rbgwzLgSMe2JFiZLM3PWFOj2E5FtQ1HFo1UYVQsBuWwMQwmfhL/2?=
-	=?iso-8859-15?Q?RM5Ye5ZGkVNgJFnXtj5K1Kh/khR9/oY7CkDYByRBWJ43IpNTFKEPEddEm?=
-	=?iso-8859-15?Q?NYLSQxo94md6NTGHlYk3r0jvC7RGLFYo9U+twnGsmp6cSIoIJiho1xF2N?=
-	=?iso-8859-15?Q?uV+8qgwlebkWMJi6iAZl6dvsItuX2HntZv0Qr3StdF6eZxLHB/Z6HybI5?=
-	=?iso-8859-15?Q?3VjYuuITx73DlInenDBP/oIm2MuQOkedk6xSF9IfBFVJed4+fDxVsJfP8?=
-	=?iso-8859-15?Q?1SCIZIDItNIQGvSdCGIqG6pbmKiZgy1ktfhjaBPIxuALZgIOMdtR2OAPz?=
-	=?iso-8859-15?Q?S2AiU5wSaMlMoV3YWLk5rUK4x8oJpz61o1gQ0z6Y71FBbTGs1/BqZdycE?=
-	=?iso-8859-15?Q?gs8kIC5LfuMqHisZ/MZHnl3i//KnFJyz0?=
-x-ms-exchange-transport-forked: True
+	id 38AC25B697; Thu, 11 Mar 2021 21:33:55 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F0D195D74C;
+	Thu, 11 Mar 2021 21:33:51 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 12BLXogV032677; 
+	Thu, 11 Mar 2021 15:33:50 -0600
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 12BLXms1032676;
+	Thu, 11 Mar 2021 15:33:48 -0600
+Date: Thu, 11 Mar 2021 15:33:47 -0600
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Message-ID: <20210311213347.GU15006@octiron.msp.redhat.com>
+References: <1614148402-19847-1-git-send-email-bmarzins@redhat.com>
+	<1614148402-19847-4-git-send-email-bmarzins@redhat.com>
+	<8f500bcd5d5a683edcfa4d59567a50cc794cb085.camel@suse.com>
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 50098e62-375a-49e2-279d-08d8e4d55376
-X-MS-Exchange-CrossTenant-originalarrivaltime: 11 Mar 2021 21:33:35.1135 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: XjQC6NBf/LxBTn52DBCqXabhKhJmOmgf+iKngty1rvln/s4cyCyQObYiVyA2P6Mb/F3Zj08EAHOGG9tSdsiKpA==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DBAPR04MB7351
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 12BLXiE3013872
+In-Reply-To: <8f500bcd5d5a683edcfa4d59567a50cc794cb085.camel@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 X-loop: dm-devel@redhat.com
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Subject: Re: [dm-devel] [PATCH 2/2] tests: add tests for checking if alias
-	is in use
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
+	"wucy11@chinatelecom.cn" <wucy11@chinatelecom.cn>
+Subject: Re: [dm-devel] [PATCH v2 3/3] multipathd: add recheck_wwid option
+ to verify the path wwid
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -160,23 +89,232 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-ID: <5B31C77E45011F4C8FC3C3C2F83E90A1@eurprd04.prod.outlook.com>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-On Wed, 2021-03-10 at 15:15 -0600, Benjamin Marzinski wrote:
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+On Thu, Mar 11, 2021 at 08:30:51PM +0000, Martin Wilck wrote:
+> On Wed, 2021-02-24 at 00:33 -0600, Benjamin Marzinski wrote:
+> > There are cases where the wwid of a path changes due to LUN remapping
+> > without triggering uevent for the changed path. Multipathd has no
+> > method
+> > for trying to catch these cases, and corruption has resulted because
+> > of
+> > it.
+> >=20
+> > In order to have a better chance at catching these cases, multipath
+> > now
+> > has a recheck_wwid option. If this is set to "yes", when a failed
+> > path
+> > has become active again, multipathd will recheck its wwid. If
+> > multipathd
+> > notices that a path's wwid has changed, it will remove and re-add the
+> > path, just like the existing wwid checking code for change events
+> > does.
+> > In cases where the no uevent occurs, both the udev database entry and
+> > sysfs will have the old wwid, so the only way to get a current wwid
+> > is
+> > to ask the device directly. Currently multipath only has code to
+> > directly get the wwid for scsi devices, so this option only effects
+> > scsi
+> > devices, and they must be configured to be able to use the
+> > uid_fallback
+> > methods. To make sure both the sysfs and udev database values are
+> > updated, multipathd triggers a both a rescan of the device and a udev
+> > add event.
+> >=20
+> > Co-developed-by: Chongyun Wu <wucy11@chinatelecom.cn>
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+>=20
+> Two minor remarks below, but:
+>=20
+> Reviewed-by: Martin Wilck <mwilck@suse.com>
+>=20
+> > =A0
+> > +static void
+> > +rescan_path(struct udev_device *parent)
+> > +{
+> > +=A0=A0=A0=A0=A0=A0=A0while(parent) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0const char *subsys =3D
+> > udev_device_get_subsystem(parent);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (subsys && !strncmp(su=
+bsys, "scsi", 4))
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0b=
+reak;
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0parent =3D udev_device_ge=
+t_parent(parent);
+> > +=A0=A0=A0=A0=A0=A0=A0}
+>=20
+> You could have used udev_device_get_parent_with_subsystem_devtype()
+> here.=20
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+fair enough.
+=20
+> > +=A0=A0=A0=A0=A0=A0=A0if (parent)
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0sysfs_attr_set_value(pare=
+nt, "rescan", "1",
+> > strlen("1"));
+> > +}
+> > +
+> > +void
+> > +handle_path_wwid_change(struct path *pp, struct vectors *vecs)
+> > +{
+> > +=A0=A0=A0=A0=A0=A0=A0struct udev_device *udd;
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0if (!pp || !pp->udev)
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return;
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0udd =3D udev_device_ref(pp->udev);
+> > +=A0=A0=A0=A0=A0=A0=A0if (ev_remove_path(pp, vecs, 1) !=3D 0 && pp->mpp=
+) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->dmstate =3D PSTATE_FA=
+ILED;
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0dm_fail_path(pp->mpp->ali=
+as, pp->dev_t);
+> > +=A0=A0=A0=A0=A0=A0=A0}
+> > +=A0=A0=A0=A0=A0=A0=A0rescan_path(udd);
+> > +=A0=A0=A0=A0=A0=A0=A0sysfs_attr_set_value(udd, "uevent", "add", strlen=
+("add"));
+> > +=A0=A0=A0=A0=A0=A0=A0trigger_partitions_udev_change(udd, "add", strlen=
+("add"));
+>=20
+> Why do you need to do this for the partitions?
 
-Added this and your other series to my "queue" branch.
+When I tested this before, it didn't appear that an add event ever got
+retrigger for any existing partitions. But since the device got
+remapped, the udev information about those partitions most also be
+wrong. The idea was to get them to be using better data. Admittedly,
+this isn't really necessary for kpartx. It just seems like since
+multipath noticed it, it should try to clean it up.  But actually, there
+might not even be partitions on the device anymore, so perhaps it's best
+to just leave them alone.
 
+I can respin this using udev_device_get_parent_with_subsystem_devtype(),
+and removing the udev triggers on the partitions, if you want.
+
+-Ben
+
+> > +=A0=A0=A0=A0=A0=A0=A0udev_device_unref(udd);
+> > +}
+> > +
+> > +bool
+> > +check_path_wwid_change(struct path *pp)
+> > +{
+> > +=A0=A0=A0=A0=A0=A0=A0char wwid[WWID_SIZE];
+> > +=A0=A0=A0=A0=A0=A0=A0int len =3D 0;
+> > +=A0=A0=A0=A0=A0=A0=A0size_t i;
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0if (!strlen(pp->wwid))
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return false;
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0/* Get the real fresh device wwid by sgio. sysfs =
+still has
+> > old
+> > +=A0=A0=A0=A0=A0=A0=A0 * data, so only get_vpd_sgio will work to get th=
+e new wwid
+> > */
+> > +=A0=A0=A0=A0=A0=A0=A0len =3D get_vpd_sgio(pp->fd, 0x83, 0, wwid, WWID_=
+SIZE);
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0if (len <=3D 0) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(2, "%s: failed to=
+ check wwid by sgio: len =3D
+> > %d",
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p=
+p->dev, len);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return false;
+> > +=A0=A0=A0=A0=A0=A0=A0}
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0/*Strip any trailing blanks */
+> > +=A0=A0=A0=A0=A0=A0=A0for (i =3D strlen(pp->wwid); i > 0 && pp->wwid[i-=
+1] =3D=3D ' '; i--
+> > );
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* no-op */
+> > +=A0=A0=A0=A0=A0=A0=A0pp->wwid[i] =3D '\0';
+> > +=A0=A0=A0=A0=A0=A0=A0condlog(4, "%s: Got wwid %s by sgio", pp->dev, ww=
+id);
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0if (strncmp(wwid, pp->wwid, WWID_SIZE)) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(0, "%s: wwid '%s'=
+ doesn't match wwid '%s'
+> > from device",
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p=
+p->dev, pp->wwid, wwid);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return true;
+> > +=A0=A0=A0=A0=A0=A0=A0}
+> > +
+> > +=A0=A0=A0=A0=A0=A0=A0return false;
+> > +}
+> > +
+> > =A0static int
+> > =A0uev_add_path (struct uevent *uev, struct vectors * vecs, int
+> > need_do_map)
+> > =A0{
+> > @@ -1296,6 +1363,7 @@ uev_update_path (struct uevent *uev, struct
+> > vectors * vecs)
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0condlog(0, "%s: path wwid changed from '%s'
+> > to '%s'",
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0uev->kernel, wwid, pp->wwid);
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0ev_remove_path(pp, vecs, 1);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0r=
+escan_path(uev->udev);
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0needs_reinit =3D 1;
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0goto out;
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0} else {
+> > @@ -2197,6 +2265,16 @@ check_path (struct vectors * vecs, struct path
+> > * pp, unsigned int ticks)
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
+> > =A0=A0=A0=A0=A0=A0=A0=A0set_no_path_retry(pp->mpp);
+> > =A0
+> > +=A0=A0=A0=A0=A0=A0=A0if (pp->recheck_wwid =3D=3D RECHECK_WWID_ON &&
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 (newstate =3D=3D PATH_UP || newstate =
+=3D=3D PATH_GHOST) &&
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 ((pp->state !=3D PATH_UP && pp->state !=
+=3D PATH_GHOST) ||
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->dmstate =3D=3D PSTATE_FAILED) &&
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 check_path_wwid_change(pp)) {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(0, "%s: path wwid=
+ change detected. Removing",
+> > pp->dev);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0handle_path_wwid_change(p=
+p, vecs);
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
+> > +=A0=A0=A0=A0=A0=A0=A0}
+> > +
+> > =A0=A0=A0=A0=A0=A0=A0=A0if ((newstate =3D=3D PATH_UP || newstate =3D=3D=
+ PATH_GHOST) &&
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 (san_path_check_enabled(pp->mpp) ||
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 marginal_path_check_enabled(pp->mp=
+p))) {
+> > diff --git a/multipathd/main.h b/multipathd/main.h
+> > index 5abbe97b..ddd953f9 100644
+> > --- a/multipathd/main.h
+> > +++ b/multipathd/main.h
+> > @@ -50,4 +50,6 @@ int update_multipath (struct vectors *vecs, char
+> > *mapname, int reset);
+> > =A0int reload_and_sync_map(struct multipath *mpp, struct vectors *vecs,
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0int refresh);
+> > =A0
+> > +void handle_path_wwid_change(struct path *pp, struct vectors *vecs);
+> > +bool check_path_wwid_change(struct path *pp);
+> > =A0#endif /* MAIN_H */
+>=20
+> --=20
+> Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
+> SUSE Software Solutions Germany GmbH
+> HRB 36809, AG N=FCrnberg GF: Felix Imend=F6rffer
+>=20
 
 --
 dm-devel mailing list
