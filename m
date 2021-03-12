@@ -2,82 +2,136 @@ Return-Path: <SRS0=XTDI=IK=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+X-Spam-Status: No, score=-7.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
+	PDS_BAD_THREAD_QP_64,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B892CC433E0
-	for <dm-devel@archiver.kernel.org>; Fri, 12 Mar 2021 16:21:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2DE51C433DB
+	for <dm-devel@archiver.kernel.org>; Fri, 12 Mar 2021 16:21:22 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 2DA7D64EC0
-	for <dm-devel@archiver.kernel.org>; Fri, 12 Mar 2021 16:21:17 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2DA7D64EC0
-Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
+	by mail.kernel.org (Postfix) with ESMTPS id 96F0C65006
+	for <dm-devel@archiver.kernel.org>; Fri, 12 Mar 2021 16:21:21 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 96F0C65006
+Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-109-_-8luUwVNfy3y7WMuT15eQ-1; Fri, 12 Mar 2021 11:21:13 -0500
-X-MC-Unique: _-8luUwVNfy3y7WMuT15eQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-509-FtX85VxUNEGo_f6KjyYm2Q-1; Fri, 12 Mar 2021 11:21:17 -0500
+X-MC-Unique: FtX85VxUNEGo_f6KjyYm2Q-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 72931802B7F;
-	Fri, 12 Mar 2021 16:21:07 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 85E25760CF;
+	Fri, 12 Mar 2021 16:21:11 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4869A163F4;
-	Fri, 12 Mar 2021 16:21:07 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 629C559475;
+	Fri, 12 Mar 2021 16:21:11 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CD6AA57DC4;
-	Fri, 12 Mar 2021 16:21:06 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2D5B257DC6;
+	Fri, 12 Mar 2021 16:21:11 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12CFjUDB017716 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 12 Mar 2021 10:45:30 -0500
+	id 12CFrcY6018708 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 12 Mar 2021 10:53:38 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4254F1134CB8; Fri, 12 Mar 2021 15:45:30 +0000 (UTC)
+	id E02262026D65; Fri, 12 Mar 2021 15:53:37 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3AF831134CBE
-	for <dm-devel@redhat.com>; Fri, 12 Mar 2021 15:45:26 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DA23E2026D60
+	for <dm-devel@redhat.com>; Fri, 12 Mar 2021 15:53:35 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2A84E108BDC9
-	for <dm-devel@redhat.com>; Fri, 12 Mar 2021 15:45:26 +0000 (UTC)
-Received: from mx4.veeam.com (mx4.veeam.com [104.41.138.86]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-532--Ho6l87aMy6-rtkb91-Feg-1;
-	Fri, 12 Mar 2021 10:45:23 -0500
-X-MC-Unique: -Ho6l87aMy6-rtkb91-Feg-1
-Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mx4.veeam.com (Postfix) with ESMTPS id F1A3B88818;
-	Fri, 12 Mar 2021 18:45:21 +0300 (MSK)
-Received: from prgdevlinuxpatch01.amust.local (172.24.14.5) by
-	prgmbx01.amust.local (172.24.0.171) with Microsoft SMTP Server
-	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	15.2.721.2; Fri, 12 Mar 2021 16:45:19 +0100
-From: Sergei Shtepa <sergei.shtepa@veeam.com>
-To: Christoph Hellwig <hch@infradead.org>, Mike Snitzer <snitzer@redhat.com>, 
-	Alasdair Kergon <agk@redhat.com>, Hannes Reinecke <hare@suse.de>,
-	Jens Axboe <axboe@kernel.dk>, <dm-devel@redhat.com>,
-	<linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
-	<linux-api@vger.kernel.org>
-Date: Fri, 12 Mar 2021 18:44:55 +0300
-Message-ID: <1615563895-28565-4-git-send-email-sergei.shtepa@veeam.com>
-In-Reply-To: <1615563895-28565-1-git-send-email-sergei.shtepa@veeam.com>
-References: <1615563895-28565-1-git-send-email-sergei.shtepa@veeam.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 81ECD800B24
+	for <dm-devel@redhat.com>; Fri, 12 Mar 2021 15:53:35 +0000 (UTC)
+Received: from de-smtp-delivery-102.mimecast.com
+	(de-smtp-delivery-102.mimecast.com [62.140.7.102]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-341-yhYuRRvAMPS65caYg4VjTA-1;
+	Fri, 12 Mar 2021 10:53:33 -0500
+X-MC-Unique: yhYuRRvAMPS65caYg4VjTA-1
+Received: from EUR05-AM6-obe.outbound.protection.outlook.com
+	(mail-am6eur05lp2104.outbound.protection.outlook.com [104.47.18.104])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	de-mta-20-0G-lEncIPfOG29yrxy4EXw-1; Fri, 12 Mar 2021 16:53:31 +0100
+X-MC-Unique: 0G-lEncIPfOG29yrxy4EXw-1
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
+	by DBBPR04MB7802.eurprd04.prod.outlook.com (2603:10a6:10:1f0::20)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3912.26;
+	Fri, 12 Mar 2021 15:53:30 +0000
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
+	([fe80::69bd:c9ff:f910:faeb]) by
+	DB8PR04MB6555.eurprd04.prod.outlook.com
+	([fe80::69bd:c9ff:f910:faeb%7]) with mapi id 15.20.3912.029;
+	Fri, 12 Mar 2021 15:53:30 +0000
+From: Martin Wilck <martin.wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
+	"christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Thread-Topic: [PATCH] kpartx: free loop device after listing partitions
+Thread-Index: AQHXCnMMp2KKJ3bzH0GSZg6+D98KM6qAmsqA
+Date: Fri, 12 Mar 2021 15:53:30 +0000
+Message-ID: <4ad7249fac6055a3f0dfa2082a4bf6a98640c60c.camel@suse.com>
+References: <1614146713-19694-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1614146713-19694-1-git-send-email-bmarzins@redhat.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Evolution 3.38.2
+x-originating-ip: [2.202.118.173]
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: cb7801e3-01bb-4501-d890-08d8e56efbca
+x-ms-traffictypediagnostic: DBBPR04MB7802:
+x-microsoft-antispam-prvs: <DBBPR04MB78020561913F447C0BD51F9EFC6F9@DBBPR04MB7802.eurprd04.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:4941
+x-ms-exchange-senderadcheck: 1
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: YFdoNn3eZsJUP1DuNsKWSdi8uNksRdLJe4o/hxvgGgT6I0B1mptZ6TN6Zc+AW3hl/1PoKqrPwB2ORJWyjNzZi1Y9EFsrJ0PteaMawfrAliZFERxgLIiW7Xf4SElopommtmgiw4bbOUUzPxlKcSHKnHX0FBzISNmlp5zPZ7+e77jnJd/8WcpTG4ZHvnRJ2VXiXTSIcxAdxxaU1MXV7fNPMzbh8xcCBIQMVTxIXEkLfsNr9IqOUBo4V0eRU7H0er7jGn4S270xcx5mPMENjLDN20g/s0q+rQGsGB5VpmWrGS5UVUj/ScYxpXxqQujFdT0JH8RYOUfqqiv/jWKX9zWROFR1UjQtACFmvB+JLV8yCNWYEWpHr2SCAEfGPmBl+g3hDAjmoJMW5qX9fM/tms40dQiUyIwTBcBoSJixXYV1vGlQRFbhfkPZvFCiPNnVVNwDE5udlMNiTjTvQ9WrCxUgFLakywTz1aNQVYBUFpxStYnUYszeFWfRluysf/3J8Epip80ipJX+wmwZ0kUcifHbQg==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(136003)(346002)(396003)(366004)(39860400002)(376002)(66446008)(76116006)(66556008)(66476007)(6486002)(2616005)(8936002)(66946007)(36756003)(478600001)(44832011)(4326008)(2906002)(6512007)(316002)(4744005)(110136005)(8676002)(186003)(26005)(64756008)(86362001)(91956017)(71200400001)(5660300002)(6506007);
+	DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata: =?iso-8859-15?Q?XPlV/OjT7Wwq5KvPK0NgdtWmmIE1P9QzWFHyNDXvySo0Vutvbuk5qAXYq?=
+	=?iso-8859-15?Q?I4oIsG3PPvjBpxljx6Ex5ev1yrYOtg6rROk3wC0UxH11Bs/hJ0MOtSvCt?=
+	=?iso-8859-15?Q?Is7Pz+Phpqw+xAQEGFaoKaD8SKNA0qrLr9VGvVSIjBbt15xoqAy76d2ED?=
+	=?iso-8859-15?Q?Z0ksT0hjXp3sQrQiO+a+E/eKE+Mij0L6BZSGmIFa4HJSwc4PzPXK909wW?=
+	=?iso-8859-15?Q?ep4bshyx76VuUo2a2f+89hMhMXSBHYav+skxUiRIDARvBPEquqHvcgv3a?=
+	=?iso-8859-15?Q?rp44YeofsISE5ZUZFMy36ohGJrzq4g26VMVrOa4wztnplAFkVMQBErRw2?=
+	=?iso-8859-15?Q?rvpbb7zAHMxUhn/YI26CwWTKCRdswcVoI1r3QIO3gA1eega5W7DOzQrfh?=
+	=?iso-8859-15?Q?eeLsZa8DEyuWPTiDaKb5sb3w6rlNMCAbzoB0zzss/JMpuO3Dzzga0uZvn?=
+	=?iso-8859-15?Q?gJ6xOrGgaiEZX6XjNnIrroF46GCYrjkmdz6zyC8esXHh5VnEh8Q+WeFHR?=
+	=?iso-8859-15?Q?QifNHNFwaP5lPMutDu6s7QNI825P7woQ+B6kIhfRCkrp1t9Hv5jutzkOP?=
+	=?iso-8859-15?Q?tciZD/ZFv/cVZHn6txVGkt0x/TtnjPUWeMLv4uZDu+83tph1ZFC1aHRXz?=
+	=?iso-8859-15?Q?kpFZjdvADOTVZBEsMV4+Pa1Z0ey2xlJxei88hoYkN/qnsLgF7dNtmyPgb?=
+	=?iso-8859-15?Q?TO5q7ASbrJ/gZhXpzwd7vFaw8Z1m/Oi3FahPOLyhf0/1+LYibr6b2+LNu?=
+	=?iso-8859-15?Q?rWyCFr1/cDqKIX7oAxhYXyQRLGONtWxNfNfl8TWO5t35g6cLp8N/BUEmf?=
+	=?iso-8859-15?Q?/nmwRXuQf3e3afThUgPFp7huqWQBowddVxL1T1FU1zPE7v8kpq3HdwIqp?=
+	=?iso-8859-15?Q?FRuGxNgm2Opwm56h1NkgAC2+QBguqU/VSApfqZtrbJtY9JcIaostrFB3G?=
+	=?iso-8859-15?Q?s1gz8b16oeK6tJFeL29GLMJ/UVgbHdBWdcS9JaxfPscNHBEhov4In7hMu?=
+	=?iso-8859-15?Q?SyyHyQGdY/HzQ4hvmmZZaLrAuORe7MVQerpmlKYWxsvSpKkoudmk1bDAP?=
+	=?iso-8859-15?Q?SuobwwG8f+0SnSnL0qvUHxpeU+0ERRHbYWpY8ookjYwIRgBRis2pFNlwl?=
+	=?iso-8859-15?Q?eaXN09XrvsW7V+NULroZpn2/SAO8zuFw6Mofdlcin8k7PAoU8JVqCVXhR?=
+	=?iso-8859-15?Q?0xTPb1ncXlEoFpNk6V2b6fxLbG13DeT4SmSVhZDNUGm4BoiGVm4bE549W?=
+	=?iso-8859-15?Q?6Zns9cp/roVt57S/xmjGnmfWZxTZKl2uuqublbzRYwdHf1lxWz5TIGzpt?=
+	=?iso-8859-15?Q?plE7dDwLik17gmjkAJyTu7NXAne6su+Kswf5Cb/B8h8DbnSkBEzLjYUhP?=
+	=?iso-8859-15?Q?fDsuY9B3Ksx8JGh+aBJ9HlEb5qgcyQt2n?=
+x-ms-exchange-transport-forked: True
 MIME-Version: 1.0
-X-Originating-IP: [172.24.14.5]
-X-ClientProxiedBy: prgmbx02.amust.local (172.24.0.172) To prgmbx01.amust.local
-	(172.24.0.171)
-X-EsetResult: clean, is OK
-X-EsetId: 37303A29D2A50B58627366
-X-Veeam-MMEX: True
+X-OriginatorOrg: suse.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: cb7801e3-01bb-4501-d890-08d8e56efbca
+X-MS-Exchange-CrossTenant-originalarrivaltime: 12 Mar 2021 15:53:30.5443 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: 1yTXncvVPKaF+Fbz/ulzw9WaiYmqx9/84UXHaaqVDmahDkKfbD20CxRduRm845FRl58y8x5BEXiPyiEHUGiAqg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DBBPR04MB7802
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -86,10 +140,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 12CFrcY6018708
 X-loop: dm-devel@redhat.com
-Cc: pavel.tide@veeam.com, sergei.shtepa@veeam.com
-Subject: [dm-devel] [PATCH v7 3/3] dm: add DM_INTERPOSED_FLAG
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH] kpartx: free loop device after listing
+	partitions
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -103,312 +160,41 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+Content-ID: <5F1151C1762D704B96E7AAF57AC5F41E@eurprd04.prod.outlook.com>
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-DM_INTERPOSED_FLAG allow to create DM targets on "the fly".
-Underlying block device opens without a flag FMODE_EXCL.
-DM target receives bio from the original device via
-bdev_interposer.
+On Wed, 2021-02-24 at 00:05 -0600, Benjamin Marzinski wrote:
+> If "kpartx -l" is run on a file that doesn't already have a loop
+> device
+> associated with it, it will create a loop device to run the command.
+> Starting with da59d15c6 ("Fix loopback file with kpartx -av"), it
+> will
+> not free the loop device when exitting. This is because it checks if
+> the
+> the file it stat()ed is a regular file, before freeing the loop
+> device.
+> However, after da59d15c6, stat() is rerun on the loop device itself,
+> so
+> the check fails.=A0 There is no need to check this, if loopcreated is
+> true, then the file will be a kpartx created loop device, and should
+> be
+> freed.
+>=20
+> Also, keep kpartx from printing that the loop device has been removed
+> at normal verbosity.
+>=20
+> Fixes: da59d15c6 ("Fix loopback file with kpartx -av")
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
----
- drivers/md/dm-core.h          |  3 ++
- drivers/md/dm-ioctl.c         | 13 ++++++++
- drivers/md/dm-table.c         | 61 +++++++++++++++++++++++++++++------
- drivers/md/dm.c               | 38 +++++++++++++++-------
- include/linux/device-mapper.h |  1 +
- include/uapi/linux/dm-ioctl.h |  6 ++++
- 6 files changed, 101 insertions(+), 21 deletions(-)
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
-index 5953ff2bd260..9eae419c7b18 100644
---- a/drivers/md/dm-core.h
-+++ b/drivers/md/dm-core.h
-@@ -114,6 +114,9 @@ struct mapped_device {
- 	bool init_tio_pdu:1;
- 
- 	struct srcu_struct io_barrier;
-+
-+	/* attach target via block-layer interposer */
-+	bool is_interposed;
- };
- 
- void disable_discard(struct mapped_device *md);
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 5e306bba4375..2b4c9557c283 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1267,6 +1267,11 @@ static inline fmode_t get_mode(struct dm_ioctl *param)
- 	return mode;
- }
- 
-+static inline bool get_interposer_flag(struct dm_ioctl *param)
-+{
-+	return (param->flags & DM_INTERPOSED_FLAG);
-+}
-+
- static int next_target(struct dm_target_spec *last, uint32_t next, void *end,
- 		       struct dm_target_spec **spec, char **target_params)
- {
-@@ -1293,6 +1298,10 @@ static int populate_table(struct dm_table *table,
- 		DMWARN("populate_table: no targets specified");
- 		return -EINVAL;
- 	}
-+	if (table->md->is_interposed && (param->target_count != 1)) {
-+		DMWARN("%s: with interposer should be specified only one target", __func__);
-+		return -EINVAL;
-+	}
- 
- 	for (i = 0; i < param->target_count; i++) {
- 
-@@ -1338,6 +1347,8 @@ static int table_load(struct file *filp, struct dm_ioctl *param, size_t param_si
- 	if (!md)
- 		return -ENXIO;
- 
-+	md->is_interposed = get_interposer_flag(param);
-+
- 	r = dm_table_create(&t, get_mode(param), param->target_count, md);
- 	if (r)
- 		goto err;
-@@ -2098,6 +2109,8 @@ int __init dm_early_create(struct dm_ioctl *dmi,
- 	if (r)
- 		goto err_hash_remove;
- 
-+	md->is_interposed = get_interposer_flag(dmi);
-+
- 	/* add targets */
- 	for (i = 0; i < dmi->target_count; i++) {
- 		r = dm_table_add_target(t, spec_array[i]->target_type,
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 95391f78b8d5..f6e2eb3f8949 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -225,12 +225,13 @@ void dm_table_destroy(struct dm_table *t)
- /*
-  * See if we've already got a device in the list.
-  */
--static struct dm_dev_internal *find_device(struct list_head *l, dev_t dev)
-+static struct dm_dev_internal *find_device(struct list_head *l, dev_t dev, bool is_interposed)
- {
- 	struct dm_dev_internal *dd;
- 
- 	list_for_each_entry (dd, l, list)
--		if (dd->dm_dev->bdev->bd_dev == dev)
-+		if ((dd->dm_dev->bdev->bd_dev == dev) &&
-+		    (dd->dm_dev->is_interposed == is_interposed))
- 			return dd;
- 
- 	return NULL;
-@@ -358,6 +359,18 @@ dev_t dm_get_dev_t(const char *path)
- }
- EXPORT_SYMBOL_GPL(dm_get_dev_t);
- 
-+static inline void dm_disk_freeze(struct gendisk *disk)
-+{
-+	blk_mq_freeze_queue(disk->queue);
-+	blk_mq_quiesce_queue(disk->queue);
-+}
-+
-+static inline void dm_disk_unfreeze(struct gendisk *disk)
-+{
-+	blk_mq_unquiesce_queue(disk->queue);
-+	blk_mq_unfreeze_queue(disk->queue);
-+}
-+
- /*
-  * Add a device to the list, or just increment the usage count if
-  * it's already present.
-@@ -385,7 +398,7 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
- 			return -ENODEV;
- 	}
- 
--	dd = find_device(&t->devices, dev);
-+	dd = find_device(&t->devices, dev, t->md->is_interposed);
- 	if (!dd) {
- 		dd = kmalloc(sizeof(*dd), GFP_KERNEL);
- 		if (!dd)
-@@ -398,15 +411,38 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
- 
- 		refcount_set(&dd->count, 1);
- 		list_add(&dd->list, &t->devices);
--		goto out;
--
- 	} else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
- 		r = upgrade_mode(dd, mode, t->md);
- 		if (r)
- 			return r;
-+		refcount_inc(&dd->count);
- 	}
--	refcount_inc(&dd->count);
--out:
-+
-+	if (t->md->is_interposed) {
-+		struct block_device *original = dd->dm_dev->bdev;
-+		struct block_device *interposer = t->md->disk->part0;
-+
-+		if ((ti->begin != 0) || (ti->len < bdev_nr_sectors(original))) {
-+			dm_put_device(ti, dd->dm_dev);
-+			DMERR("The interposer device should not be less than the original.");
-+			return -EINVAL;
-+		}
-+
-+		/*
-+		 * Attach mapped interposer device to original.
-+		 * It is quite convenient that device mapper creates
-+		 * one disk for one block device.
-+		 */
-+		dm_disk_freeze(original->bd_disk);
-+		r = bdev_interposer_attach(original, interposer);
-+		dm_disk_unfreeze(original->bd_disk);
-+		if (r) {
-+			dm_put_device(ti, dd->dm_dev);
-+			DMERR("Failed to attach dm interposer.");
-+			return r;
-+		}
-+	}
-+
- 	*result = dd->dm_dev;
- 	return 0;
- }
-@@ -446,6 +482,7 @@ void dm_put_device(struct dm_target *ti, struct dm_dev *d)
- {
- 	int found = 0;
- 	struct list_head *devices = &ti->table->devices;
-+	struct mapped_device *md = ti->table->md;
- 	struct dm_dev_internal *dd;
- 
- 	list_for_each_entry(dd, devices, list) {
-@@ -456,11 +493,17 @@ void dm_put_device(struct dm_target *ti, struct dm_dev *d)
- 	}
- 	if (!found) {
- 		DMWARN("%s: device %s not in table devices list",
--		       dm_device_name(ti->table->md), d->name);
-+		       dm_device_name(md), d->name);
- 		return;
- 	}
-+	if (md->is_interposed) {
-+		dm_disk_freeze(d->bdev->bd_disk);
-+		bdev_interposer_detach(d->bdev);
-+		dm_disk_unfreeze(d->bdev->bd_disk);
-+	}
-+
- 	if (refcount_dec_and_test(&dd->count)) {
--		dm_put_table_device(ti->table->md, d);
-+		dm_put_table_device(md, d);
- 		list_del(&dd->list);
- 		kfree(dd);
- 	}
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 50b693d776d6..466bf70a66b0 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -762,16 +762,24 @@ static int open_table_device(struct table_device *td, dev_t dev,
- 
- 	BUG_ON(td->dm_dev.bdev);
- 
--	bdev = blkdev_get_by_dev(dev, td->dm_dev.mode | FMODE_EXCL, _dm_claim_ptr);
--	if (IS_ERR(bdev))
--		return PTR_ERR(bdev);
-+	if (md->is_interposed) {
- 
--	r = bd_link_disk_holder(bdev, dm_disk(md));
--	if (r) {
--		blkdev_put(bdev, td->dm_dev.mode | FMODE_EXCL);
--		return r;
-+		bdev = blkdev_get_by_dev(dev, td->dm_dev.mode, NULL);
-+		if (IS_ERR(bdev))
-+			return PTR_ERR(bdev);
-+	} else {
-+		bdev = blkdev_get_by_dev(dev, td->dm_dev.mode | FMODE_EXCL, _dm_claim_ptr);
-+		if (IS_ERR(bdev))
-+			return PTR_ERR(bdev);
-+
-+		r = bd_link_disk_holder(bdev, dm_disk(md));
-+		if (r) {
-+			blkdev_put(bdev, td->dm_dev.mode | FMODE_EXCL);
-+			return r;
-+		}
- 	}
- 
-+	td->dm_dev.is_interposed = md->is_interposed;
- 	td->dm_dev.bdev = bdev;
- 	td->dm_dev.dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
- 	return 0;
-@@ -785,20 +793,26 @@ static void close_table_device(struct table_device *td, struct mapped_device *md
- 	if (!td->dm_dev.bdev)
- 		return;
- 
--	bd_unlink_disk_holder(td->dm_dev.bdev, dm_disk(md));
--	blkdev_put(td->dm_dev.bdev, td->dm_dev.mode | FMODE_EXCL);
-+	if (td->dm_dev.is_interposed)
-+		blkdev_put(td->dm_dev.bdev, td->dm_dev.mode);
-+	else {
-+		bd_unlink_disk_holder(td->dm_dev.bdev, dm_disk(md));
-+		blkdev_put(td->dm_dev.bdev, td->dm_dev.mode | FMODE_EXCL);
-+	}
- 	put_dax(td->dm_dev.dax_dev);
- 	td->dm_dev.bdev = NULL;
- 	td->dm_dev.dax_dev = NULL;
- }
- 
- static struct table_device *find_table_device(struct list_head *l, dev_t dev,
--					      fmode_t mode)
-+					      fmode_t mode, bool is_interposed)
- {
- 	struct table_device *td;
- 
- 	list_for_each_entry(td, l, list)
--		if (td->dm_dev.bdev->bd_dev == dev && td->dm_dev.mode == mode)
-+		if (td->dm_dev.bdev->bd_dev == dev &&
-+		    td->dm_dev.mode == mode &&
-+		    td->dm_dev.is_interposed == is_interposed)
- 			return td;
- 
- 	return NULL;
-@@ -811,7 +825,7 @@ int dm_get_table_device(struct mapped_device *md, dev_t dev, fmode_t mode,
- 	struct table_device *td;
- 
- 	mutex_lock(&md->table_devices_lock);
--	td = find_table_device(&md->table_devices, dev, mode);
-+	td = find_table_device(&md->table_devices, dev, mode, md->is_interposed);
- 	if (!td) {
- 		td = kmalloc_node(sizeof(*td), GFP_KERNEL, md->numa_node_id);
- 		if (!td) {
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 7f4ac87c0b32..76a6dfb1cb29 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -159,6 +159,7 @@ struct dm_dev {
- 	struct block_device *bdev;
- 	struct dax_device *dax_dev;
- 	fmode_t mode;
-+	bool is_interposed;
- 	char name[16];
- };
- 
-diff --git a/include/uapi/linux/dm-ioctl.h b/include/uapi/linux/dm-ioctl.h
-index fcff6669137b..fc4d06bb3dbb 100644
---- a/include/uapi/linux/dm-ioctl.h
-+++ b/include/uapi/linux/dm-ioctl.h
-@@ -362,4 +362,10 @@ enum {
-  */
- #define DM_INTERNAL_SUSPEND_FLAG	(1 << 18) /* Out */
- 
-+/*
-+ * If set, the underlying device should open without FMODE_EXCL
-+ * and attach mapped device via bdev_interposer.
-+ */
-+#define DM_INTERPOSED_FLAG		(1 << 19) /* In */
-+
- #endif				/* _LINUX_DM_IOCTL_H */
--- 
-2.20.1
 
 --
 dm-devel mailing list
