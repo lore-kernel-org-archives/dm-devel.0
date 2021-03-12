@@ -2,138 +2,149 @@ Return-Path: <SRS0=VWZ+=IN=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C4F66C433DB
-	for <dm-devel@archiver.kernel.org>; Mon, 15 Mar 2021 08:55:59 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AECA3C433E0
+	for <dm-devel@archiver.kernel.org>; Mon, 15 Mar 2021 08:56:02 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E590364E3F
-	for <dm-devel@archiver.kernel.org>; Mon, 15 Mar 2021 08:55:58 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E590364E3F
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=samsung.com
+	by mail.kernel.org (Postfix) with ESMTPS id 01B5E64E90
+	for <dm-devel@archiver.kernel.org>; Mon, 15 Mar 2021 08:56:01 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 01B5E64E90
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=fujitsu.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-446-eTy5sah1NYWWRlWUXljuJw-1; Mon, 15 Mar 2021 04:55:55 -0400
-X-MC-Unique: eTy5sah1NYWWRlWUXljuJw-1
+ us-mta-78-daPbB9JdNw-Hkx8VNuHYSg-1; Mon, 15 Mar 2021 04:55:58 -0400
+X-MC-Unique: daPbB9JdNw-Hkx8VNuHYSg-1
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 92A658030D7;
-	Mon, 15 Mar 2021 08:55:51 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 741FB5D9DC;
-	Mon, 15 Mar 2021 08:55:51 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E8D948189C7;
+	Mon, 15 Mar 2021 08:55:53 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C86F15D9DC;
+	Mon, 15 Mar 2021 08:55:53 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3A8611800848;
-	Mon, 15 Mar 2021 08:55:51 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 99FDD57DC3;
+	Mon, 15 Mar 2021 08:55:53 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12C74KUr031395 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 12 Mar 2021 02:04:21 -0500
+	id 12CAKNqV017457 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 12 Mar 2021 05:20:23 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id C42562026D6B; Fri, 12 Mar 2021 07:04:20 +0000 (UTC)
+	id B879F100D86; Fri, 12 Mar 2021 10:20:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BE3EE2026D60
-	for <dm-devel@redhat.com>; Fri, 12 Mar 2021 07:04:18 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B170610378A
+	for <dm-devel@redhat.com>; Fri, 12 Mar 2021 10:20:21 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 81280800883
-	for <dm-devel@redhat.com>; Fri, 12 Mar 2021 07:04:18 +0000 (UTC)
-Received: from mailout4.samsung.com (mailout4.samsung.com [203.254.224.34])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-432-5ADJOWL7PJ6KB6DF6ljMhg-1; Fri, 12 Mar 2021 02:04:15 -0500
-X-MC-Unique: 5ADJOWL7PJ6KB6DF6ljMhg-1
-Received: from epcas1p2.samsung.com (unknown [182.195.41.46])
-	by mailout4.samsung.com (KnoxPortal) with ESMTP id
-	20210312070412epoutp04051317d3d905d64cf439b47ce765fd1b~rhmNxFtgS1553115531epoutp04u
-	for <dm-devel@redhat.com>; Fri, 12 Mar 2021 07:04:12 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout4.samsung.com
-	20210312070412epoutp04051317d3d905d64cf439b47ce765fd1b~rhmNxFtgS1553115531epoutp04u
-Received: from epsnrtp3.localdomain (unknown [182.195.42.164]) by
-	epcas1p2.samsung.com (KnoxPortal) with ESMTP id
-	20210312070412epcas1p220db33dbd7e90c9e72df6733d1ee8af2~rhmNkxCTi2276122761epcas1p2-;
-	Fri, 12 Mar 2021 07:04:12 +0000 (GMT)
-Received: from epsmges1p5.samsung.com (unknown [182.195.40.160]) by
-	epsnrtp3.localdomain (Postfix) with ESMTP id 4DxcHb5gDSz4x9QK;
-	Fri, 12 Mar 2021 07:04:11 +0000 (GMT)
-Received: from epcas1p1.samsung.com ( [182.195.41.45]) by
-	epsmges1p5.samsung.com (Symantec Messaging Gateway) with SMTP id
-	57.A7.11962.8621B406; Fri, 12 Mar 2021 16:04:08 +0900 (KST)
-Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
-	epcas1p3.samsung.com (KnoxPortal) with ESMTPA id
-	20210312070408epcas1p356f1421f0af1d29d3ca7abd37f73bd4c~rhmJkma7t1738017380epcas1p3H;
-	Fri, 12 Mar 2021 07:04:08 +0000 (GMT)
-Received: from epsmgms1p2.samsung.com (unknown [182.195.42.42]) by
-	epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
-	20210312070408epsmtrp2049685e0484be4ca80067eefd2a3995f~rhmJj6ucQ1539915399epsmtrp2d;
-	Fri, 12 Mar 2021 07:04:08 +0000 (GMT)
-X-AuditID: b6c32a39-b5d34a8000002eba-76-604b1268512e
-Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
-	epsmgms1p2.samsung.com (Symantec Messaging Gateway) with SMTP id
-	98.ED.08745.8621B406; Fri, 12 Mar 2021 16:04:08 +0900 (KST)
-Received: from jhs2lee03 (unknown [10.253.102.101]) by epsmtip2.samsung.com
-	(KnoxPortal) with ESMTPA id
-	20210312070408epsmtip2f8d0ec93a4a62a13d6da9166d726a940~rhmJaD79u1964919649epsmtip2I;
-	Fri, 12 Mar 2021 07:04:08 +0000 (GMT)
-From: =?utf-8?B?7J207KCV7ZiE?= <jhs2.lee@samsung.com>
-To: "'Sami Tolvanen'" <samitolvanen@google.com>
-In-Reply-To: <CABCJKucMyQbtt-LACCRSk6bxAqmS05eVhv-5ou3_XZ1Nz+XYug@mail.gmail.com>
-Date: Fri, 12 Mar 2021 16:04:08 +0900
-Message-ID: <009001d7170d$e584d360$b08e7a20$@samsung.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 559F885A5BA
+	for <dm-devel@redhat.com>; Fri, 12 Mar 2021 10:20:21 +0000 (UTC)
+Received: from esa3.fujitsucc.c3s2.iphmx.com (esa3.fujitsucc.c3s2.iphmx.com
+	[68.232.151.212]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-499-DM58qPUYNRyEjJCWoI12fA-1; Fri, 12 Mar 2021 05:20:17 -0500
+X-MC-Unique: DM58qPUYNRyEjJCWoI12fA-1
+IronPort-SDR: BE2kqCUOs+YbkO4/TfSI2mmOojSUF5CJrJYiQamO0sI0APOg/iE5xsvJAtjI/uvkMY0tMi3MiG
+	kSU7Po0gumyjlMFHYbzEGws4HXXVihAUkRWQRGI6sQgI6ri4p8ptYlOxxFB54exDQ1f8DwIDWZ
+	7Zu+59skBnN8Sh4WsL5Ki2AImhrN6yyAbMyqBkILa0DSgHCE7Zso5ZXUH9YWgMqvcfXhdVdHEX
+	Ln2qXqYj/VDzmW6Q2MEwgPZa+MKbO0MAZtK+4Gd+3cn0CWFH5o7VqG8ExPvt05CdgYtKmX+OFH
+	ovE=
+X-IronPort-AV: E=McAfee;i="6000,8403,9920"; a="35826815"
+X-IronPort-AV: E=Sophos;i="5.81,243,1610377200"; d="scan'208";a="35826815"
+Received: from mail-ty1jpn01lp2054.outbound.protection.outlook.com (HELO
+	JPN01-TY1-obe.outbound.protection.outlook.com) ([104.47.93.54])
+	by ob1.fujitsucc.c3s2.iphmx.com with
+	ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Mar 2021 19:19:09 +0900
+Received: from OSBPR01MB2920.jpnprd01.prod.outlook.com (2603:1096:604:18::16)
+	by OSBPR01MB3285.jpnprd01.prod.outlook.com (2603:1096:604:1f::17)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3912.19;
+	Fri, 12 Mar 2021 10:18:59 +0000
+Received: from OSBPR01MB2920.jpnprd01.prod.outlook.com
+	([fe80::c482:fa93:9877:5063]) by
+	OSBPR01MB2920.jpnprd01.prod.outlook.com
+	([fe80::c482:fa93:9877:5063%3]) with mapi id 15.20.3912.027;
+	Fri, 12 Mar 2021 10:18:59 +0000
+From: "ruansy.fnst@fujitsu.com" <ruansy.fnst@fujitsu.com>
+To: Dan Williams <dan.j.williams@intel.com>
+Thread-Topic: [PATCH v3 01/11] pagemap: Introduce ->memory_failure()
+Thread-Index: AQHW/gjzAa5hnh6PaUq187fVBTbxkqp3lL+AgAIDAHSAACKcgIAARgh1gACNxwCABb8rEA==
+Date: Fri, 12 Mar 2021 10:18:58 +0000
+Message-ID: <OSBPR01MB2920E46CBE4816CDF711E004F46F9@OSBPR01MB2920.jpnprd01.prod.outlook.com>
+References: <20210208105530.3072869-1-ruansy.fnst@cn.fujitsu.com>
+	<20210208105530.3072869-2-ruansy.fnst@cn.fujitsu.com>
+	<CAPcyv4jqEdPoF5YM+jSYJd74KqRTwbbEum7=moa3=Wyn6UyU9g@mail.gmail.com>
+	<OSBPR01MB29207A1C06968705C2FEBACFF4939@OSBPR01MB2920.jpnprd01.prod.outlook.com>
+	<CAPcyv4iBnWbG0FYw6-K0MaH--rq62s7RY_yoT9rOYWMa94Yakw@mail.gmail.com>
+	<OSBPR01MB29203F891F9584CC53616FB8F4939@OSBPR01MB2920.jpnprd01.prod.outlook.com>
+	<CAPcyv4gn_AvT6BA7g4jLKRFODSpt7_ORowVd3KgyWxyaFG0k9g@mail.gmail.com>
+In-Reply-To: <CAPcyv4gn_AvT6BA7g4jLKRFODSpt7_ORowVd3KgyWxyaFG0k9g@mail.gmail.com>
+Accept-Language: en-US, zh-CN
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-originating-ip: [180.96.28.100]
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: 035cdfb5-f722-4166-77e7-08d8e5404029
+x-ms-traffictypediagnostic: OSBPR01MB3285:
+x-ms-exchange-transport-forked: True
+x-microsoft-antispam-prvs: <OSBPR01MB3285FF7DDC5D33573D21ABDCF46F9@OSBPR01MB3285.jpnprd01.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:10000
+x-ms-exchange-senderadcheck: 1
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: wezIMGHhX/LzoDNXoLe/G9/AIK8zzdReRQWz+f1UbDjtmXIPQdB48Tq1Kn9EggqNFy3stPHrinDyfBQNGS4QWTWNu5Uqm6OX8euhYU8+vMEaVXbq7g6dyAmZB6ZdkXdqo4bSiATvcrzb20aMmjWyAv5Sjt+gun4WoQ7RslzwcfrX93N1hdGqNxmNKueqfr2uFwyP7z/6GCVWQGAZPD1HlChD4WS6lq95BOizTKdqAQDtDAMA4ZHtHz14qDLv/oJv//1gMN4RpKmHJbVL0NDNQLM6EwAK3RNCUOUVMn3QefoaELd/klyZDZ8a/pR9ICghKfmtqpJsXW4Jr7bnJ+RvQxgocemoWcMkt4CTJTSt6FCxUHdNU/iJkDC8T80fTIu4vhM1mIDNr809R77nqTMmdNWY0qX+O0350WrfAjSZICN5H/wlOj4UXa6UteVgtsPGhdLu3hR7XHo2IUcLb5lCexdg9s6G9Bw3LwFaORLHMLVqrzx/Oqly1yK6hbG5aoluNvrKvOB5ogyviCeEF4JsLw==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:OSBPR01MB2920.jpnprd01.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(4636009)(136003)(346002)(396003)(366004)(376002)(39860400002)(33656002)(9686003)(76116006)(52536014)(7416002)(83380400001)(5660300002)(316002)(66556008)(8936002)(26005)(66946007)(6916009)(55016002)(7696005)(66446008)(186003)(6506007)(53546011)(478600001)(71200400001)(54906003)(2906002)(4326008)(86362001)(8676002)(107886003)(85182001)(64756008)(66476007);
+	DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata: =?utf-8?B?eVNWV2hnQVNodmswNFdIb0doQlBMbzhqVUsrK3JlcWFWQjR5NmVCY2E4cGhq?=
+	=?utf-8?B?Q3MyZ3dEUk16VEYzU21FMFFyV1pGVUlvSk9IOURESEwyb01oSFkyYzcyeUdr?=
+	=?utf-8?B?czN3L0cveFhQNThUZk11M2VlYW1Wd0hHTzluTEQvUmY5ZDZyQ21DUTE0RG5V?=
+	=?utf-8?B?ZUNLZFlYalBsZngxWGFKem5EcllyUXJjWGNFbFJhbzVYRFJPaDUxa0Znendp?=
+	=?utf-8?B?WW81MGNBRGJjaWFHU0NCbjZUTFR4azZUVHJyQStRZGdudDFwWFlCZmRLUW40?=
+	=?utf-8?B?Qk1zelkxRkRxamE0Q1hwWmZVa3k4bUhSVUZFYjVLcGVJdmYxZUJHbFg4U3Vt?=
+	=?utf-8?B?VXFuYXNZUFg2bElxVFJjVXdXL3pJOVN1NVkramJpZ0xOcHZuQnIvMnN4Q25P?=
+	=?utf-8?B?dnY2TXorK3c3Z0xQdmo4MTZjUlVsS1Zla1Rjd1Nrdm8rbmEzb0UzZGxsOFA2?=
+	=?utf-8?B?Z1RNNVFSY0NwRkttZmV0cXJvWmNxSmVNbU5LM2NrY2N5eG1qUlRSa2FBWUda?=
+	=?utf-8?B?b2QxQktGcVM3NFFyNTVTTStDUTZVUzRZSzI5SUJrYTlrWnpuZjJjeTcxbGl3?=
+	=?utf-8?B?NFFKSUgvUi9oYjYxQ0FOK0VyZ3Vmb1VkbCtNQXFhUzZvNitLUm1welg0Njk3?=
+	=?utf-8?B?em5MeUErVlNFOVNoRnBkekdCcHZIc1BWa2pmeHFHMm1OZHVFV0QwNUJaNlMz?=
+	=?utf-8?B?Z2dqNDdGV2dBUWdYM2lHMjZNT0F6Y0xlbVBEODdycUthNDRBVklZbVV0UG50?=
+	=?utf-8?B?bFRTYlY5QmVIMmRpZXg0dCtNODk3aklaUjMzbnYwQ1dZVWt5TDZTRDF0R0xs?=
+	=?utf-8?B?c3dZcDBnYmJ1YjVPcFlrQ0xJdXgzVGtVR0UraXFyREpxSUora3VHanZoWTMr?=
+	=?utf-8?B?VVFYS204UVB4b3QzUElDdjdWeGlja3hOckZ3TG50SURRdXhOc1pKc2JiWGE5?=
+	=?utf-8?B?MXNKYXV6Vm13RDNpSzduRUROeFhOME5YbDlzRVpxSk41WElxc000RFIrSXRU?=
+	=?utf-8?B?R3FuTEhZcHNqYnRxZDAxaENUTFVteUUwUWhyYW9SVUtxN1drS2ZMa0ZwZGZZ?=
+	=?utf-8?B?WHpzdnJzRmRXY09uQk1kb0FTS2VLb3k1MS9sVTl3T0wwWFlmSXFuc3V0eURl?=
+	=?utf-8?B?aDMydE15V2dOVlNCemlsdmJlTStKaXhuR05YTmZGT1hTT1JMb3g5OEFIdS9M?=
+	=?utf-8?B?NTdtS2h5WW00VHNRaXBFZ0huQVhWNU8zL3RHWjFIdkk0bXRFZjE1b01FeDdt?=
+	=?utf-8?B?T0V0ZWNlK3hZMUoycHRUSWZuTEtQenJFVkxmanhIM3VIeWdIVVYvZHVpcDNx?=
+	=?utf-8?B?eWd6ZGFnMnE0NFpZNE5PdVZBdnFUME83ZER6S0EwZklCZWdrczRRSHAyTnRx?=
+	=?utf-8?B?dGo5VmZRdkhWblBjQlk1Q0RPVXFsVENLSU1sN3JFWmVBOXd5NHBQYTFIUjZQ?=
+	=?utf-8?B?RlJyU2R1MFRQV3NQbms0WEJDV0VRRlRiZUZ2UU9zN3daWUNPT0xXSERtcUc0?=
+	=?utf-8?B?c1R5WGZlcUxGZlJQdlhFUjR1YmFqOVZ4NExkVzA4OE11dmZNbUxQZ0s3L0RZ?=
+	=?utf-8?B?NEkrNG1DdjhablJER2tuWXBndCtQbktLVUdiUmV5dmErZDlseFlDV3Q2ZVp2?=
+	=?utf-8?B?TDJXV25rV2NZRzNrSDNIdlk0NFF3Q1lXbFVXMWludURMbnBoTmpSWHJRS0FF?=
+	=?utf-8?B?dWdZSFZMbDJyeDJzKzdjelJQR3JyRVNwU1FwOXZRMXV2ZGowd0I2c1NGRTVj?=
+	=?utf-8?Q?qSqJb39YAxFfNo1ceMNqst3pS+aZlYkoQRzCdIN?=
 MIME-Version: 1.0
-Thread-Index: AQJywKbl46ZRzKPvCQNOoTqt3A/c2AF7PY8mAhqlor8B7jzycakcb2ag
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFmpkk+LIzCtJLcpLzFFi42LZdlhTVzdDyDvBYEeHjcX6U8eYLfa+m81q
-	cXnXHDaLpSveslq0bfzK6MDqsWBTqcf7fVfZPD5vkgtgjsqxyUhNTEktUkjNS85PycxLt1Xy
-	Do53jjc1MzDUNbS0MFdSyEvMTbVVcvEJ0HXLzAHaqKRQlphTChQKSCwuVtK3synKLy1JVcjI
-	Ly6xVUotSMkpMDQo0CtOzC0uzUvXS87PtTI0MDAyBapMyMn429/LWNCvUrF61zemBsYPkl2M
-	nBwSAiYS1zdPYuxi5OIQEtjBKHHo41M2COcTo8SxVUehMp8ZJd7sucYI03J/QR9UYhejxOe9
-	W8ESQgIvGCUW3eMAsdkETCUOLlkCFhcR0Jf4e/UxmM0ssJFRorWdB8TmFAiUuHn8OXsXIweH
-	sICdxIIv6SBhFgFVifZNL9hBbF4BS4kbH26xQNiCEidnPmGBGKMtsWzha2aIexQkdn86ygoy
-	RkTATeLSA3eIEhGJ2Z1tzCBnSgj8ZJf49nUTC0S9i8TBxstQvwhLvDq+hR3ClpL4/G4vG0RD
-	N6PE/fOv2SASExglenuYQBZICNhLvL9kAWIyC2hKrN+lD1GhKLHz91yoD/kk3n3tYYWo5pXo
-	aBOCKFGSWPHvGtQFEhIbDnezTWBUmoXksVlIHpuF5INZCMsWMLKsYhRLLSjOTU8tNiwwRY7q
-	TYzgtKhluYNx+tsPeocYmTgYDzFKcDArifBeeOmVIMSbklhZlVqUH19UmpNafIjRFBjUE5ml
-	RJPzgYk5ryTe0NTI2NjYwsTM3MzUWEmcN8ngQbyQQHpiSWp2ampBahFMHxMHp1QDE9tTQR5z
-	oXqDdtPNZYIuWR/SHRVS9Bgu39XyE9Gds/D5JcW/mw5ffTrpWMqGj+2yT1bIOIuKNT2wc6j7
-	wJ+894qah4r+hDDr3jD2YzYlp/ZnpF8zXOT1O/m4Ydvf1W4vd9vtcny6meGa0OxVmt3Lfu34
-	bzHnX/li5c44bSP9b5/T2GzeeV/vX3Vzy9X+4iaRH09e55+o32exIvez6uotDt7Rxz7cnX3q
-	2vLb840+eQasWaS4saQwo/5g8dPGsmvrJ9tHPjRK5TpXLNWTtnCG8uKKo8cUeJ5++XFF4PtT
-	d7GcpjjfUx1NC16emr9xpkSzvEoMexaf6reqlttbHrMYzNr4wNt9xgmJjZ4M+b/ZmpRYijMS
-	DbWYi4oTAYalL7UUBAAA
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFnrLLMWRmVeSWpSXmKPExsWy7bCSvG6GkHeCwaR5khbrTx1jttj7bjar
-	xeVdc9gslq54y2rRtvErowOrx4JNpR7v911l8/i8SS6AOYrLJiU1J7MstUjfLoEr49mLjewF
-	h5Urfu9ex9LAOEOyi5GTQ0LAROL+gj7GLkYuDiGBHYwSzz7+ZYNISEhs2LSWvYuRA8gWljh8
-	uBii5hmjxJ2OnSwgNWwCphIHlyxhBLFFBPQl/l59DDaIWWAzo0THurcsEB1TmCQWTzjDDlLF
-	KRAocfP4c7CpwgJ2Egu+pIOEWQRUJdo3vQAr4RWwlLjx4RYLhC0ocXLmEzCbWUBb4unNp3D2
-	soWvmSEOVZDY/ekoK8hIEQE3iUsP3CFKRCRmd7YxT2AUnoVk0iwkk2YhmTQLScsCRpZVjJKp
-	BcW56bnFhgVGeanlesWJucWleel6yfm5mxjBMaKltYNxz6oPeocYmTgYDzFKcDArifBeeOmV
-	IMSbklhZlVqUH19UmpNafIhRmoNFSZz3QtfJeCGB9MSS1OzU1ILUIpgsEwenVAMTL/OdiKr/
-	O55bhXJOti34e2MLr19u+53Z7/6oyN80tpuXvXVtJu+92PDrPhqvG1nWdsxWrjv1xpJ593Hr
-	jJ7MVUz2s9sc+EUfCEfUzZBTYvkpO91IU5oxzMBiT+IU7wevb5365R7Xdtvm0nLxBRuufxXc
-	cN3mx9LoOI6/Vj+jFs3lPru8OGjehxlNRo3593aKSj/tivy5uNXiJh8fz+/zPzmVfHPj4rKu
-	xMi6Mf4IeZy7QPXH7ZgGuz9vz9ye33UlRHiu6j2Z9MnXQn/xbxDnW39r9cYI88IjdrLTb6y+
-	s3u9deOGK7sFUttX3qmKm3Pi0sTYTatdlTO+7na4qv7mg3Ox/+SLp5Pn8Bk4/X59U4mlOCPR
-	UIu5qDgRAGlsocAAAwAA
-X-CMS-MailID: 20210312070408epcas1p356f1421f0af1d29d3ca7abd37f73bd4c
-X-Msg-Generator: CA
-X-Sendblock-Type: SVC_REQ_APPROVE
-CMS-TYPE: 101P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20210311121850epcas1p493c255a586998916febfebaf994bc5dc
-References: <CGME20210311121850epcas1p493c255a586998916febfebaf994bc5dc@epcas1p4.samsung.com>
-	<1615464651-23675-1-git-send-email-jhs2.lee@samsung.com>
-	<1615464651-23675-2-git-send-email-jhs2.lee@samsung.com>
-	<CABCJKucMyQbtt-LACCRSk6bxAqmS05eVhv-5ou3_XZ1Nz+XYug@mail.gmail.com>
+X-OriginatorOrg: fujitsu.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: OSBPR01MB2920.jpnprd01.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 035cdfb5-f722-4166-77e7-08d8e5404029
+X-MS-Exchange-CrossTenant-originalarrivaltime: 12 Mar 2021 10:18:58.9642 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: a19f121d-81e1-4858-a9d8-736e267fd4c7
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: 1eZsFLftvM3Vo++GjOZfyLJ6WHkqfsDwkjPVaPdnZ6qaMSW+ucjusr7wZlwsTmWe9BYyYqfWSBUeuguVUgwwlg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: OSBPR01MB3285
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -142,15 +153,24 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 12C74KUr031395
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-MIME-Autoconverted: from base64 to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 12CAKNqV017457
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 15 Mar 2021 04:55:29 -0400
-Cc: 'device-mapper development' <dm-devel@redhat.com>,
-	'Alasdair Kergon' <agk@redhat.com>, 'Mike Snitzer' <snitzer@redhat.com>,
-	'LKML' <linux-kernel@vger.kernel.org>
-Subject: Re: [dm-devel] [PATCH 2/2] dm verity: allow only one verify mode
+Cc: "y-goto@fujitsu.com" <y-goto@fujitsu.com>,
+	"qi.fuli@fujitsu.com" <qi.fuli@fujitsu.com>,
+	Mike Snitzer <snitzer@redhat.com>,
+	linux-nvdimm <linux-nvdimm@lists.01.org>,
+	Goldwyn Rodrigues <rgoldwyn@suse.de>,
+	"Darrick J. Wong" <darrick.wong@oracle.com>, david <david@fromorbit.com>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	linux-xfs <linux-xfs@vger.kernel.org>, MM <linux-mm@kvack.org>,
+	device-mapper development <dm-devel@redhat.com>, Linux,
+	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+	Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH v3 01/11] pagemap: Introduce
+	->memory_failure()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -169,124 +189,125 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: ko
+Content-Language: zh-CN
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hello, Dear Sami Tolvanen.
-Thank you for reply.
-
-> I agree that we shouldn't allow this, at least not without a warning, but
-> out of curiosity, do you actually have a situation where this could happen?
-> One ideally shouldn't be passing untrusted parameters to dm-verity.
-
-Of course, I don't think this will happen because they are dm-verity experts.
-But since we are humans, I think this case could happen accidentally.
-So it would be a good at preventing these cases.
-
-> I don't have a strong opinion about this, but the documentation doesn't
-> talk about verity modes, so perhaps this could be reworded to something
-> like "Conflicting error handling parameters"?
-
-Yes of course. That looks better.
-
-I also had some ambiguous about how to express it. 
-This is because I couldn't find it in document. 
-The code says verity mode, so I wrote it down. never mind it :) 
-
-like this)
-    case DM_VERITY_MODE_LOGGING:
-    case DM_VERITY_MODE_RESTART:
-    case DM_VERITY_MODE_PANIC:
 
 
-> On Thu, Mar 11, 2021 at 4:19 AM JeongHyeon Lee <jhs2.lee@samsung.com>
-> wrote:
-> >
-> > If there are multiple verity mode when parsing the verity mode of dm
-> > verity table, it will be set as the last one.
-> > So set to 'allow only once' to prevent it.
+> -----Original Message-----
+> From: Dan Williams <dan.j.williams@intel.com>
+> Subject: Re: [PATCH v3 01/11] pagemap: Introduce ->memory_failure()
 > 
-> I agree that we shouldn't allow this, at least not without a warning, but
-> out of curiosity, do you actually have a situation where this could happen?
-> One ideally shouldn't be passing untrusted parameters to dm-verity.
+> On Mon, Mar 8, 2021 at 3:34 AM ruansy.fnst@fujitsu.com
+> <ruansy.fnst@fujitsu.com> wrote:
+> > > > > >  1 file changed, 8 insertions(+)
+> > > > > >
+> > > > > > diff --git a/include/linux/memremap.h
+> > > > > > b/include/linux/memremap.h index 79c49e7f5c30..0bcf2b1e20bd
+> > > > > > 100644
+> > > > > > --- a/include/linux/memremap.h
+> > > > > > +++ b/include/linux/memremap.h
+> > > > > > @@ -87,6 +87,14 @@ struct dev_pagemap_ops {
+> > > > > >          * the page back to a CPU accessible page.
+> > > > > >          */
+> > > > > >         vm_fault_t (*migrate_to_ram)(struct vm_fault *vmf);
+> > > > > > +
+> > > > > > +       /*
+> > > > > > +        * Handle the memory failure happens on one page.  Notify
+> the processes
+> > > > > > +        * who are using this page, and try to recover the data on
+> this page
+> > > > > > +        * if necessary.
+> > > > > > +        */
+> > > > > > +       int (*memory_failure)(struct dev_pagemap *pgmap,
+> unsigned long pfn,
+> > > > > > +                             int flags);
+> > > > > >  };
+> > > > >
+> > > > > After the conversation with Dave I don't see the point of this.
+> > > > > If there is a memory_failure() on a page, why not just call
+> > > > > memory_failure()? That already knows how to find the inode and
+> > > > > the filesystem can be notified from there.
+> > > >
+> > > > We want memory_failure() supports reflinked files.  In this case,
+> > > > we are not able to track multiple files from a page(this broken
+> > > > page) because
+> > > > page->mapping,page->index can only track one file.  Thus, I
+> > > > page->introduce this
+> > > > ->memory_failure() implemented in pmem driver, to call
+> > > > ->->corrupted_range()
+> > > > upper level to upper level, and finally find out files who are
+> > > > using(mmapping) this page.
+> > > >
+> > >
+> > > I know the motivation, but this implementation seems backwards. It's
+> > > already the case that memory_failure() looks up the address_space
+> > > associated with a mapping. From there I would expect a new 'struct
+> > > address_space_operations' op to let the fs handle the case when
+> > > there are multiple address_spaces associated with a given file.
+> > >
+> >
+> > Let me think about it.  In this way, we
+> >     1. associate file mapping with dax page in dax page fault;
 > 
-> >
-> > Signed-off-by: JeongHyeon Lee <jhs2.lee@samsung.com>
-> > ---
-> >  drivers/md/dm-verity-target.c | 38
-> > ++++++++++++++++++++++++++---------
-> >  1 file changed, 28 insertions(+), 10 deletions(-)
-> >
-> > diff --git a/drivers/md/dm-verity-target.c
-> > b/drivers/md/dm-verity-target.c index 808a98ef624c..b76431dc7721
-> > 100644
-> > --- a/drivers/md/dm-verity-target.c
-> > +++ b/drivers/md/dm-verity-target.c
-> > @@ -893,6 +893,28 @@ static int verity_alloc_zero_digest(struct
-> dm_verity *v)
-> >         return r;
-> >  }
-> >
-> > +static inline bool verity_is_verity_mode(const char *arg_name) {
-> > +       return (!strcasecmp(arg_name, DM_VERITY_OPT_LOGGING) ||
-> > +               !strcasecmp(arg_name, DM_VERITY_OPT_RESTART) ||
-> > +               !strcasecmp(arg_name, DM_VERITY_OPT_PANIC)); }
-> > +
-> > +static int verity_parse_verity_mode(struct dm_verity *v, const char
-> > +*arg_name) {
-> > +       if (v->mode)
-> > +               return -EINVAL;
-> > +
-> > +       if (!strcasecmp(arg_name, DM_VERITY_OPT_LOGGING))
-> > +               v->mode = DM_VERITY_MODE_LOGGING;
-> > +       else if (!strcasecmp(arg_name, DM_VERITY_OPT_RESTART))
-> > +               v->mode = DM_VERITY_MODE_RESTART;
-> > +       else if (!strcasecmp(arg_name, DM_VERITY_OPT_PANIC))
-> > +               v->mode = DM_VERITY_MODE_PANIC;
-> > +
-> > +       return 0;
-> > +}
-> > +
-> >  static int verity_parse_opt_args(struct dm_arg_set *as, struct
-> dm_verity *v,
-> >                                  struct dm_verity_sig_opts
-> > *verify_args)  { @@ -916,16 +938,12 @@ static int
-> > verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
-> >                 arg_name = dm_shift_arg(as);
-> >                 argc--;
-> >
-> > -               if (!strcasecmp(arg_name, DM_VERITY_OPT_LOGGING)) {
-> > -                       v->mode = DM_VERITY_MODE_LOGGING;
-> > -                       continue;
-> > -
-> > -               } else if (!strcasecmp(arg_name, DM_VERITY_OPT_RESTART)) {
-> > -                       v->mode = DM_VERITY_MODE_RESTART;
-> > -                       continue;
-> > -
-> > -               } else if (!strcasecmp(arg_name, DM_VERITY_OPT_PANIC)) {
-> > -                       v->mode = DM_VERITY_MODE_PANIC;
-> > +               if (verity_is_verity_mode(arg_name)) {
-> > +                       r = verity_parse_verity_mode(v, arg_name);
-> > +                       if (r) {
-> > +                               ti->error = "Already verity mode set";
+> I think this needs to be a new type of association that proxies the representation
+> of the reflink across all involved address_spaces.
 > 
-> I don't have a strong opinion about this, but the documentation doesn't
-> talk about verity modes, so perhaps this could be reworded to something
-> like "Conflicting error handling parameters"?
+> >     2. iterate files reflinked to notify `kill processes signal` by the
+> >           new address_space_operation;
+> >     3. re-associate to another reflinked file mapping when unmmaping
+> >         (rmap qeury in filesystem to get the another file).
 > 
-> > +                               return r;
-> > +                       }
-> >                         continue;
-> >
-> >                 } else if (!strcasecmp(arg_name,
-> > DM_VERITY_OPT_IGN_ZEROES)) {
-> > --
-> > 2.17.1
-> >
-> 
-> Sami
+> Perhaps the proxy object is reference counted per-ref-link. It seems error prone
+> to keep changing the association of the pfn while the reflink is in-tact.
+Hi, Dan
 
+I think my early rfc patchset was implemented in this way:
+ - Create a per-page 'dax-rmap tree' to store each reflinked file's (mapping, offset) when causing dax page fault.
+ - Mount this tree on page->zone_device_data which is not used in fsdax, so that we can iterate reflinked file mappings in memory_failure() easily.
+In my understanding, the dax-rmap tree is the proxy object you mentioned.  If so, I have to say, this method was rejected. Because this will cause huge overhead in some case that every dax page have one dax-rmap tree.
+
+
+--
+Thanks,
+Ruan Shiyang.
+> 
+> > It did not handle those dax pages are not in use, because their
+> > ->mapping are not associated to any file.  I didn't think it through
+> > until reading your conversation.  Here is my understanding: this case
+> > should be handled by badblock mechanism in pmem driver.  This badblock
+> > mechanism will call
+> > ->corrupted_range() to tell filesystem to repaire the data if possible.
+> 
+> There are 2 types of notifications. There are badblocks discovered by the driver
+> (see notify_pmem()) and there are memory_failures() signalled by the CPU
+> machine-check handler, or the platform BIOS. In the case of badblocks that
+> needs to be information considered by the fs block allocator to avoid /
+> try-to-repair badblocks on allocate, and to allow listing damaged files that need
+> repair. The memory_failure() notification needs immediate handling to tear
+> down mappings to that pfn and signal processes that have consumed it with
+> SIGBUS-action-required. Processes that have the poison mapped, but have not
+> consumed it receive SIGBUS-action-optional.
+> 
+> > So, we split it into two parts.  And dax device and block device won't be
+> mixed
+> > up again.   Is my understanding right?
+> 
+> Right, it's only the filesystem that knows that the block_device and the
+> dax_device alias data at the same logical offset. The requirements for sector
+> error handling and page error handling are separate like
+> block_device_operations and dax_operations.
+> 
+> > But the solution above is to solve the hwpoison on one or couple
+> > pages, which happens rarely(I think).  Do the 'pmem remove' operation
+> cause hwpoison too?
+> > Call memory_failure() so many times?  I havn't understood this yet.
+> 
+> I'm working on a patch here to call memory_failure() on a wide range for the
+> surprise remove of a dax_device while a filesystem might be mounted. It won't
+> be efficient, but there is no other way to notify the kernel that it needs to
+> immediately stop referencing a page.
 
 --
 dm-devel mailing list
