@@ -2,76 +2,77 @@ Return-Path: <SRS0=VWZ+=IN=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 43AB1C433E0
-	for <dm-devel@archiver.kernel.org>; Mon, 15 Mar 2021 12:30:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CDE50C433DB
+	for <dm-devel@archiver.kernel.org>; Mon, 15 Mar 2021 12:34:40 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 959E064E89
-	for <dm-devel@archiver.kernel.org>; Mon, 15 Mar 2021 12:30:28 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 959E064E89
+	by mail.kernel.org (Postfix) with ESMTPS id 312AB64E86
+	for <dm-devel@archiver.kernel.org>; Mon, 15 Mar 2021 12:34:40 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 312AB64E86
 Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-213-Yu1-LDbyM8aCE-AatyaTsg-1; Mon, 15 Mar 2021 08:30:25 -0400
-X-MC-Unique: Yu1-LDbyM8aCE-AatyaTsg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-557-sOU9wgV8N9ay_tF4yYRazw-1; Mon, 15 Mar 2021 08:34:36 -0400
+X-MC-Unique: sOU9wgV8N9ay_tF4yYRazw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F15B7100C662;
-	Mon, 15 Mar 2021 12:30:18 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 810175D71B;
-	Mon, 15 Mar 2021 12:30:17 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 75E1C100C61C;
+	Mon, 15 Mar 2021 12:34:31 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D4D455D9C0;
+	Mon, 15 Mar 2021 12:34:30 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1C1A157DC1;
-	Mon, 15 Mar 2021 12:30:14 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 89C741832DF7;
+	Mon, 15 Mar 2021 12:34:30 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12FCUCEU029585 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 15 Mar 2021 08:30:12 -0400
+	id 12FC6OOi025823 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 15 Mar 2021 08:06:25 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 0966D110DBA9; Mon, 15 Mar 2021 12:30:12 +0000 (UTC)
+	id C2C401111C87; Mon, 15 Mar 2021 12:06:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 03C4A110DBA4
-	for <dm-devel@redhat.com>; Mon, 15 Mar 2021 12:30:09 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BEB321111C86
+	for <dm-devel@redhat.com>; Mon, 15 Mar 2021 12:06:22 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4395F811E7A
-	for <dm-devel@redhat.com>; Mon, 15 Mar 2021 12:30:09 +0000 (UTC)
-Received: from mx2.veeam.com (mx2.veeam.com [64.129.123.6]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-537-POgCPLS3NK-Z8MXVEBXeZQ-1;
-	Mon, 15 Mar 2021 08:30:07 -0400
-X-MC-Unique: POgCPLS3NK-Z8MXVEBXeZQ-1
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3E07B800B30
+	for <dm-devel@redhat.com>; Mon, 15 Mar 2021 12:06:22 +0000 (UTC)
+Received: from mx4.veeam.com (mx4.veeam.com [104.41.138.86]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-237-7OEh6qQgMQCx1DbjSLZgcQ-1;
+	Mon, 15 Mar 2021 08:06:20 -0400
+X-MC-Unique: 7OEh6qQgMQCx1DbjSLZgcQ-1
 Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mx2.veeam.com (Postfix) with ESMTPS id E21B341535;
-	Mon, 15 Mar 2021 08:30:02 -0400 (EDT)
+	by mx4.veeam.com (Postfix) with ESMTPS id 32402171E;
+	Mon, 15 Mar 2021 15:06:18 +0300 (MSK)
 Received: from veeam.com (172.24.14.5) by prgmbx01.amust.local (172.24.0.171)
 	with Microsoft SMTP Server (version=TLS1_2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.721.2;
-	Mon, 15 Mar 2021 13:30:00 +0100
-Date: Mon, 15 Mar 2021 15:29:58 +0300
+	Mon, 15 Mar 2021 13:06:16 +0100
+Date: Mon, 15 Mar 2021 15:06:08 +0300
 From: Sergei Shtepa <sergei.shtepa@veeam.com>
-To: Mike Snitzer <snitzer@redhat.com>
-Message-ID: <20210315122958.GB30489@veeam.com>
+To: Christoph Hellwig <hch@infradead.org>
+Message-ID: <20210315120608.GA30489@veeam.com>
 References: <1615563895-28565-1-git-send-email-sergei.shtepa@veeam.com>
-	<1615563895-28565-4-git-send-email-sergei.shtepa@veeam.com>
-	<20210312190013.GA2004@redhat.com>
+	<1615563895-28565-2-git-send-email-sergei.shtepa@veeam.com>
+	<20210312190641.GA2550@redhat.com>
+	<20210314091441.GA3773360@infradead.org>
 MIME-Version: 1.0
-In-Reply-To: <20210312190013.GA2004@redhat.com>
+In-Reply-To: <20210314091441.GA3773360@infradead.org>
 X-Originating-IP: [172.24.14.5]
-X-ClientProxiedBy: prgmbx02.amust.local (172.24.0.172) To prgmbx01.amust.local
+X-ClientProxiedBy: prgmbx01.amust.local (172.24.0.171) To prgmbx01.amust.local
 	(172.24.0.171)
 X-EsetResult: clean, is OK
 X-EsetId: 37303A29D2A50B58627C62
@@ -86,15 +87,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>,
 	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
 	Pavel Tide <Pavel.TIde@veeam.com>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	Christoph Hellwig <hch@infradead.org>,
+	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
 	"dm-devel@redhat.com" <dm-devel@redhat.com>,
 	Alasdair Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH v7 3/3] dm: add DM_INTERPOSED_FLAG
+Subject: Re: [dm-devel] [PATCH v7 1/3] block: add blk_mq_is_queue_frozen()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -108,7 +108,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -117,426 +117,16 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The 03/12/2021 22:00, Mike Snitzer wrote:
-> On Fri, Mar 12 2021 at 10:44am -0500,
-> Sergei Shtepa <sergei.shtepa@veeam.com> wrote:
+The 03/14/2021 12:14, Christoph Hellwig wrote:
+> On Fri, Mar 12, 2021 at 02:06:41PM -0500, Mike Snitzer wrote:
+> > This is returning a frozen state that is immediately stale.  I don't
+> > think any code calling this is providing the guarantees you think it
+> > does due to the racey nature of this state once the mutex is dropped.
 > 
-> > DM_INTERPOSED_FLAG allow to create DM targets on "the fly".
-> > Underlying block device opens without a flag FMODE_EXCL.
-> > DM target receives bio from the original device via
-> > bdev_interposer.
-> > 
-> > Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
-> > ---
-> >  drivers/md/dm-core.h          |  3 ++
-> >  drivers/md/dm-ioctl.c         | 13 ++++++++
-> >  drivers/md/dm-table.c         | 61 +++++++++++++++++++++++++++++------
-> >  drivers/md/dm.c               | 38 +++++++++++++++-------
-> >  include/linux/device-mapper.h |  1 +
-> >  include/uapi/linux/dm-ioctl.h |  6 ++++
-> >  6 files changed, 101 insertions(+), 21 deletions(-)
-> > 
-> > diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
-> > index 5953ff2bd260..9eae419c7b18 100644
-> > --- a/drivers/md/dm-core.h
-> > +++ b/drivers/md/dm-core.h
-> > @@ -114,6 +114,9 @@ struct mapped_device {
-> >  	bool init_tio_pdu:1;
-> >  
-> >  	struct srcu_struct io_barrier;
-> > +
-> > +	/* attach target via block-layer interposer */
-> > +	bool is_interposed;
-> >  };
-> 
-> This flag is a mix of uses.  First it is used to store that
-> DM_INTERPOSED_FLAG was provided as input param during load.
-> 
-> And the same 'is_interposed' name is used in 'struct dm_dev'.
-> 
-> To me this state should be elevated to block core -- awkward for every
-> driver that might want to use blk-interposer to be sprinkling state
-> around its core structures.
-> 
-> So I'd prefer you:
-> 1) rename 'struct mapped_device' to 'interpose' _and_ add it just after
->    "bool init_tio_pdu:1;" with "bool interpose:1;" -- this reflects
->    interpose was requested during load.
-> 2) bdev_interposer_attach() should be made to set some block core state
->    that is able to be tested to check if a device is_interposed.
-> 3) Don't add an 'is_interposed' flag to 'struct dm_dev'
+> The code only uses it for asserts in the form of WARN_ONs.
 
-Ok, but little fix in "rename 'struct mapped_device' to 'interpose'".
-Maybe "rename 'bool is_interposed' to 'bool interpose:1'"?
-I think I understand your idea, I'll try to implement it.
-
-> 
-> >  
-> >  void disable_discard(struct mapped_device *md);
-> > diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-> > index 5e306bba4375..2b4c9557c283 100644
-> > --- a/drivers/md/dm-ioctl.c
-> > +++ b/drivers/md/dm-ioctl.c
-> > @@ -1267,6 +1267,11 @@ static inline fmode_t get_mode(struct dm_ioctl *param)
-> >  	return mode;
-> >  }
-> >  
-> > +static inline bool get_interposer_flag(struct dm_ioctl *param)
-> > +{
-> > +	return (param->flags & DM_INTERPOSED_FLAG);
-> > +}
-> > +
-> 
-> As I mention at the end: rename to DM_INTERPOSE_FLAG
-
-Ok.
-
-> 
-> >  static int next_target(struct dm_target_spec *last, uint32_t next, void *end,
-> >  		       struct dm_target_spec **spec, char **target_params)
-> >  {
-> > @@ -1293,6 +1298,10 @@ static int populate_table(struct dm_table *table,
-> >  		DMWARN("populate_table: no targets specified");
-> >  		return -EINVAL;
-> >  	}
-> > +	if (table->md->is_interposed && (param->target_count != 1)) {
-> > +		DMWARN("%s: with interposer should be specified only one target", __func__);
-> 
-> This error/warning reads very awkwardly. Maybe?:
-> "%s: interposer requires only a single target be specified"
-
-Ok.
-
-> 
-> > +		return -EINVAL;
-> > +	}
-> >  
-> >  	for (i = 0; i < param->target_count; i++) {
-> >  
-> > @@ -1338,6 +1347,8 @@ static int table_load(struct file *filp, struct dm_ioctl *param, size_t param_si
-> >  	if (!md)
-> >  		return -ENXIO;
-> >  
-> > +	md->is_interposed = get_interposer_flag(param);
-> > +
-> >  	r = dm_table_create(&t, get_mode(param), param->target_count, md);
-> >  	if (r)
-> >  		goto err;
-> > @@ -2098,6 +2109,8 @@ int __init dm_early_create(struct dm_ioctl *dmi,
-> >  	if (r)
-> >  		goto err_hash_remove;
-> >  
-> > +	md->is_interposed = get_interposer_flag(dmi);
-> > +
-> >  	/* add targets */
-> >  	for (i = 0; i < dmi->target_count; i++) {
-> >  		r = dm_table_add_target(t, spec_array[i]->target_type,
-> > diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> > index 95391f78b8d5..f6e2eb3f8949 100644
-> > --- a/drivers/md/dm-table.c
-> > +++ b/drivers/md/dm-table.c
-> > @@ -225,12 +225,13 @@ void dm_table_destroy(struct dm_table *t)
-> >  /*
-> >   * See if we've already got a device in the list.
-> >   */
-> > -static struct dm_dev_internal *find_device(struct list_head *l, dev_t dev)
-> > +static struct dm_dev_internal *find_device(struct list_head *l, dev_t dev, bool is_interposed)
-> 
-> Think in make more sense to internalize the need to consider
-> md->interpose here.
-> 
-> So:
-> 
-> static struct dm_dev_internal *find_device(struct dm_table *t, dev_t dev)
-> {
->         struct list_head *l = &t->devices;
->         bool is_interposed = t->md->interpose;
->         ...
-
-Yes.
-
-> 
-> >  {
-> >  	struct dm_dev_internal *dd;
-> >  
-> >  	list_for_each_entry (dd, l, list)
-> > -		if (dd->dm_dev->bdev->bd_dev == dev)
-> > +		if ((dd->dm_dev->bdev->bd_dev == dev) &&
-> > +		    (dd->dm_dev->is_interposed == is_interposed))
-> >  			return dd;
-> 
-> But why must this extra state be used/tested?  Seems like quite a deep
-> embedding of interposer into dm_dev_internal.. feels unnecessary.
-
-Yeah, I guess so.
-Since dm_table is unique for each dm_target and in our case will generally
-contain only one device.
-
-> 
-> >  
-> >  	return NULL;
-> > @@ -358,6 +359,18 @@ dev_t dm_get_dev_t(const char *path)
-> >  }
-> >  EXPORT_SYMBOL_GPL(dm_get_dev_t);
-> >  
-> > +static inline void dm_disk_freeze(struct gendisk *disk)
-> > +{
-> > +	blk_mq_freeze_queue(disk->queue);
-> > +	blk_mq_quiesce_queue(disk->queue);
-> > +}
-> > +
-> > +static inline void dm_disk_unfreeze(struct gendisk *disk)
-> > +{
-> > +	blk_mq_unquiesce_queue(disk->queue);
-> > +	blk_mq_unfreeze_queue(disk->queue);
-> > +}
-> > +
-> 
-> These interfaces don't account for bio-based at all (pretty sure we've
-> been over this and you pointed out that they'll just return early), but
-> they also don't take steps to properly flush outstanding DM io.
-> Shouldn't you require DM devices do an internal suspend/resume?  And if
-> original device isn't DM then fallback to blk_mq calls?
-
-I thought that was enough.
-The function dm_disk_freeze() guarantees that no bio will be processed,
-which means that we can safely attach or detach the interposer.
-All bios will continue their processing after dm_disk_unfreeze().
-Sorry, but I don't understand why it is required for DM devices to do
-internal suspend/resume.
-If this is not too difficult, can you explain what problem can cause
-a simple queue freeze?
-
-> 
-> >  /*
-> >   * Add a device to the list, or just increment the usage count if
-> >   * it's already present.
-> > @@ -385,7 +398,7 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
-> >  			return -ENODEV;
-> >  	}
-> >  
-> > -	dd = find_device(&t->devices, dev);
-> > +	dd = find_device(&t->devices, dev, t->md->is_interposed);
-> >  	if (!dd) {
-> >  		dd = kmalloc(sizeof(*dd), GFP_KERNEL);
-> >  		if (!dd)
-> > @@ -398,15 +411,38 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
-> >  
-> >  		refcount_set(&dd->count, 1);
-> >  		list_add(&dd->list, &t->devices);
-> > -		goto out;
-> > -
-> >  	} else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
-> >  		r = upgrade_mode(dd, mode, t->md);
-> >  		if (r)
-> >  			return r;
-> > +		refcount_inc(&dd->count);
-> >  	}
-> > -	refcount_inc(&dd->count);
-> 
-> This looks bogus... you cannot only increment refcount with the mode
-> check/upgrade branch (IIRC: I've made this same mistake in the past)
-> 
-
-I realized my mistake. I wanted to remove the unnecessary goto,
-but I change the logic.
-
-> > -out:
-> > +
-> > +	if (t->md->is_interposed) {
-> > +		struct block_device *original = dd->dm_dev->bdev;
-> > +		struct block_device *interposer = t->md->disk->part0;
-> > +
-> > +		if ((ti->begin != 0) || (ti->len < bdev_nr_sectors(original))) {
-> > +			dm_put_device(ti, dd->dm_dev);
-> > +			DMERR("The interposer device should not be less than the original.");
-> > +			return -EINVAL;
-> 
-> Can you explain why allowing the device to be larger is meaningful?  Not
-> saying it isn't I'd just like to understand use-cases you forsee.
-
-Hmm... Maybe strict equality would be better.
-
-> 
-> > +		}
-> > +
-> > +		/*
-> > +		 * Attach mapped interposer device to original.
-> > +		 * It is quite convenient that device mapper creates
-> > +		 * one disk for one block device.
-> > +		 */
-> > +		dm_disk_freeze(original->bd_disk);
-> > +		r = bdev_interposer_attach(original, interposer);
-> > +		dm_disk_unfreeze(original->bd_disk);
-> > +		if (r) {
-> > +			dm_put_device(ti, dd->dm_dev);
-> > +			DMERR("Failed to attach dm interposer.");
-> > +			return r;
-> > +		}
-> > +	}
-> > +
-> >  	*result = dd->dm_dev;
-> >  	return 0;
-> >  }
-> > @@ -446,6 +482,7 @@ void dm_put_device(struct dm_target *ti, struct dm_dev *d)
-> >  {
-> >  	int found = 0;
-> >  	struct list_head *devices = &ti->table->devices;
-> > +	struct mapped_device *md = ti->table->md;
-> >  	struct dm_dev_internal *dd;
-> >  
-> >  	list_for_each_entry(dd, devices, list) {
-> > @@ -456,11 +493,17 @@ void dm_put_device(struct dm_target *ti, struct dm_dev *d)
-> >  	}
-> >  	if (!found) {
-> >  		DMWARN("%s: device %s not in table devices list",
-> > -		       dm_device_name(ti->table->md), d->name);
-> > +		       dm_device_name(md), d->name);
-> >  		return;
-> >  	}
-> > +	if (md->is_interposed) {
-> > +		dm_disk_freeze(d->bdev->bd_disk);
-> > +		bdev_interposer_detach(d->bdev);
-> > +		dm_disk_unfreeze(d->bdev->bd_disk);
-> > +	}
-> > +
-> >  	if (refcount_dec_and_test(&dd->count)) {
-> > -		dm_put_table_device(ti->table->md, d);
-> > +		dm_put_table_device(md, d);
-> >  		list_del(&dd->list);
-> >  		kfree(dd);
-> >  	}
-> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > index 50b693d776d6..466bf70a66b0 100644
-> > --- a/drivers/md/dm.c
-> > +++ b/drivers/md/dm.c
-> > @@ -762,16 +762,24 @@ static int open_table_device(struct table_device *td, dev_t dev,
-> >  
-> >  	BUG_ON(td->dm_dev.bdev);
-> >  
-> > -	bdev = blkdev_get_by_dev(dev, td->dm_dev.mode | FMODE_EXCL, _dm_claim_ptr);
-> > -	if (IS_ERR(bdev))
-> > -		return PTR_ERR(bdev);
-> > +	if (md->is_interposed) {
-> >  
-> > -	r = bd_link_disk_holder(bdev, dm_disk(md));
-> > -	if (r) {
-> > -		blkdev_put(bdev, td->dm_dev.mode | FMODE_EXCL);
-> > -		return r;
-> > +		bdev = blkdev_get_by_dev(dev, td->dm_dev.mode, NULL);
-> > +		if (IS_ERR(bdev))
-> > +			return PTR_ERR(bdev);
-> > +	} else {
-> > +		bdev = blkdev_get_by_dev(dev, td->dm_dev.mode | FMODE_EXCL, _dm_claim_ptr);
-> > +		if (IS_ERR(bdev))
-> > +			return PTR_ERR(bdev);
-> > +
-> > +		r = bd_link_disk_holder(bdev, dm_disk(md));
-> > +		if (r) {
-> > +			blkdev_put(bdev, td->dm_dev.mode | FMODE_EXCL);
-> > +			return r;
-> > +		}
-> >  	}
-> >  
-> > +	td->dm_dev.is_interposed = md->is_interposed;
-> 
-> This _should_ hopefully get cleaned up by pushing such state into block
-> core's interposer interfaces.
-> 
-> But again, not seeing what utility/safety this extra flag is providing
-> to begin with.  Is this state _actually_ needed at all?
-> 
-
-Yes, it is not necessary.
-
-> 
-> >  	td->dm_dev.bdev = bdev;
-> >  	td->dm_dev.dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
-> >  	return 0;
-> > @@ -785,20 +793,26 @@ static void close_table_device(struct table_device *td, struct mapped_device *md
-> >  	if (!td->dm_dev.bdev)
-> >  		return;
-> >  
-> > -	bd_unlink_disk_holder(td->dm_dev.bdev, dm_disk(md));
-> > -	blkdev_put(td->dm_dev.bdev, td->dm_dev.mode | FMODE_EXCL);
-> > +	if (td->dm_dev.is_interposed)
-> > +		blkdev_put(td->dm_dev.bdev, td->dm_dev.mode);
-> > +	else {
-> > +		bd_unlink_disk_holder(td->dm_dev.bdev, dm_disk(md));
-> > +		blkdev_put(td->dm_dev.bdev, td->dm_dev.mode | FMODE_EXCL);
-> > +	}
-> >  	put_dax(td->dm_dev.dax_dev);
-> >  	td->dm_dev.bdev = NULL;
-> >  	td->dm_dev.dax_dev = NULL;
-> >  }
-> >  
-> >  static struct table_device *find_table_device(struct list_head *l, dev_t dev,
-> > -					      fmode_t mode)
-> > +					      fmode_t mode, bool is_interposed)
-> >  {
-> >  	struct table_device *td;
-> >  
-> >  	list_for_each_entry(td, l, list)
-> > -		if (td->dm_dev.bdev->bd_dev == dev && td->dm_dev.mode == mode)
-> > +		if (td->dm_dev.bdev->bd_dev == dev &&
-> > +		    td->dm_dev.mode == mode &&
-> > +		    td->dm_dev.is_interposed == is_interposed)
-> >  			return td;
-> >  
-> >  	return NULL;
-> > @@ -811,7 +825,7 @@ int dm_get_table_device(struct mapped_device *md, dev_t dev, fmode_t mode,
-> >  	struct table_device *td;
-> >  
-> >  	mutex_lock(&md->table_devices_lock);
-> > -	td = find_table_device(&md->table_devices, dev, mode);
-> > +	td = find_table_device(&md->table_devices, dev, mode, md->is_interposed);
-> >  	if (!td) {
-> >  		td = kmalloc_node(sizeof(*td), GFP_KERNEL, md->numa_node_id);
-> >  		if (!td) {
-> > diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-> > index 7f4ac87c0b32..76a6dfb1cb29 100644
-> > --- a/include/linux/device-mapper.h
-> > +++ b/include/linux/device-mapper.h
-> > @@ -159,6 +159,7 @@ struct dm_dev {
-> >  	struct block_device *bdev;
-> >  	struct dax_device *dax_dev;
-> >  	fmode_t mode;
-> > +	bool is_interposed;
-> 
-> Again, I'd like this state to be part of 'struct block_device'
-
-Ok.
-
-> 
-> >  	char name[16];
-> >  };
-> >  
-> > diff --git a/include/uapi/linux/dm-ioctl.h b/include/uapi/linux/dm-ioctl.h
-> > index fcff6669137b..fc4d06bb3dbb 100644
-> > --- a/include/uapi/linux/dm-ioctl.h
-> > +++ b/include/uapi/linux/dm-ioctl.h
-> > @@ -362,4 +362,10 @@ enum {
-> >   */
-> >  #define DM_INTERNAL_SUSPEND_FLAG	(1 << 18) /* Out */
-> >  
-> > +/*
-> > + * If set, the underlying device should open without FMODE_EXCL
-> > + * and attach mapped device via bdev_interposer.
-> > + */
-> > +#define DM_INTERPOSED_FLAG		(1 << 19) /* In */
-> 
-> Please rename to DM_INTERPOSE_FLAG
-
-Ok.
-
-> 
-> > +
-> >  #endif				/* _LINUX_DM_IOCTL_H */
-> > -- 
-> > 2.20.1
-> > 
-> 
-
+But perhaps it is possible to come up with a more elegant solution?
+I'll think about it.
 -- 
 Sergei Shtepa
 Veeam Software developer.
