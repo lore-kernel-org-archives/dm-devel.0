@@ -2,134 +2,80 @@ Return-Path: <SRS0=VWZ+=IN=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.3 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
-	autolearn=unavailable autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3FDB6C433DB
-	for <dm-devel@archiver.kernel.org>; Mon, 15 Mar 2021 08:56:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 43AB1C433E0
+	for <dm-devel@archiver.kernel.org>; Mon, 15 Mar 2021 12:30:29 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 9F44464E90
-	for <dm-devel@archiver.kernel.org>; Mon, 15 Mar 2021 08:56:05 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9F44464E90
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=samsung.com
+	by mail.kernel.org (Postfix) with ESMTPS id 959E064E89
+	for <dm-devel@archiver.kernel.org>; Mon, 15 Mar 2021 12:30:28 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 959E064E89
+Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-193-IuzkhgN1NsGWaXYQlwpzzw-1; Mon, 15 Mar 2021 04:56:01 -0400
-X-MC-Unique: IuzkhgN1NsGWaXYQlwpzzw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-213-Yu1-LDbyM8aCE-AatyaTsg-1; Mon, 15 Mar 2021 08:30:25 -0400
+X-MC-Unique: Yu1-LDbyM8aCE-AatyaTsg-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8A5D68189CD;
-	Mon, 15 Mar 2021 08:55:56 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6CE5C5D9DC;
-	Mon, 15 Mar 2021 08:55:56 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F15B7100C662;
+	Mon, 15 Mar 2021 12:30:18 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 810175D71B;
+	Mon, 15 Mar 2021 12:30:17 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3E6821800B72;
-	Mon, 15 Mar 2021 08:55:56 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1C1A157DC1;
+	Mon, 15 Mar 2021 12:30:14 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12F3dRrx001096 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 14 Mar 2021 23:39:28 -0400
+	id 12FCUCEU029585 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 15 Mar 2021 08:30:12 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id A90761111A41; Mon, 15 Mar 2021 03:39:27 +0000 (UTC)
+	id 0966D110DBA9; Mon, 15 Mar 2021 12:30:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A40AC1111A40
-	for <dm-devel@redhat.com>; Mon, 15 Mar 2021 03:39:25 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 03C4A110DBA4
+	for <dm-devel@redhat.com>; Mon, 15 Mar 2021 12:30:09 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1806D800B28
-	for <dm-devel@redhat.com>; Mon, 15 Mar 2021 03:39:25 +0000 (UTC)
-Received: from mailout2.samsung.com (mailout2.samsung.com [203.254.224.25])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-600-rNTzQfHuO366hrVNWLsoqA-1; Sun, 14 Mar 2021 23:39:22 -0400
-X-MC-Unique: rNTzQfHuO366hrVNWLsoqA-1
-Received: from epcas1p1.samsung.com (unknown [182.195.41.45])
-	by mailout2.samsung.com (KnoxPortal) with ESMTP id
-	20210315033919epoutp02a96f5e1e01d05b9020c968cc8614fe47~sZvLRaiG-1365913659epoutp02Q
-	for <dm-devel@redhat.com>; Mon, 15 Mar 2021 03:39:19 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.samsung.com
-	20210315033919epoutp02a96f5e1e01d05b9020c968cc8614fe47~sZvLRaiG-1365913659epoutp02Q
-Received: from epsnrtp1.localdomain (unknown [182.195.42.162]) by
-	epcas1p4.samsung.com (KnoxPortal) with ESMTP id
-	20210315033919epcas1p4a2015de13a4d1ec33c9e48ed8a626e70~sZvLFDfnB1168711687epcas1p48;
-	Mon, 15 Mar 2021 03:39:19 +0000 (GMT)
-Received: from epsmges1p1.samsung.com (unknown [182.195.40.161]) by
-	epsnrtp1.localdomain (Postfix) with ESMTP id 4DzMbp1grlz4x9QJ;
-	Mon, 15 Mar 2021 03:39:18 +0000 (GMT)
-Received: from epcas1p1.samsung.com ( [182.195.41.45]) by
-	epsmges1p1.samsung.com (Symantec Messaging Gateway) with SMTP id
-	2B.6F.02418.6E6DE406; Mon, 15 Mar 2021 12:39:18 +0900 (KST)
-Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
-	epcas1p3.samsung.com (KnoxPortal) with ESMTPA id
-	20210315033917epcas1p39ee45fb36b097aae1fb4cac32464e8dc~sZvJsakAi0336603366epcas1p32;
-	Mon, 15 Mar 2021 03:39:17 +0000 (GMT)
-Received: from epsmgms1p2.samsung.com (unknown [182.195.42.42]) by
-	epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
-	20210315033917epsmtrp175811e8eeb0f7d06bc617eb9b14969c5~sZvJrxqn21319713197epsmtrp1B;
-	Mon, 15 Mar 2021 03:39:17 +0000 (GMT)
-X-AuditID: b6c32a35-c23ff70000010972-4a-604ed6e66b11
-Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
-	epsmgms1p2.samsung.com (Symantec Messaging Gateway) with SMTP id
-	23.C0.08745.5E6DE406; Mon, 15 Mar 2021 12:39:17 +0900 (KST)
-Received: from jjungs-linux (unknown [10.253.101.104]) by
-	epsmtip1.samsung.com (KnoxPortal) with ESMTPA id
-	20210315033917epsmtip115028f0ce1f6615e595f32b01a9540cd~sZvJfIEPT0180001800epsmtip1d;
-	Mon, 15 Mar 2021 03:39:17 +0000 (GMT)
-Date: Mon, 15 Mar 2021 12:33:42 +0900
-From: JeongHyeon Lee <jhs2.lee@samsung.com>
-To: samitolvanen@google.com
-Message-ID: <20210315033342.GB13408@jjungs-linux>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4395F811E7A
+	for <dm-devel@redhat.com>; Mon, 15 Mar 2021 12:30:09 +0000 (UTC)
+Received: from mx2.veeam.com (mx2.veeam.com [64.129.123.6]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-537-POgCPLS3NK-Z8MXVEBXeZQ-1;
+	Mon, 15 Mar 2021 08:30:07 -0400
+X-MC-Unique: POgCPLS3NK-Z8MXVEBXeZQ-1
+Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mx2.veeam.com (Postfix) with ESMTPS id E21B341535;
+	Mon, 15 Mar 2021 08:30:02 -0400 (EDT)
+Received: from veeam.com (172.24.14.5) by prgmbx01.amust.local (172.24.0.171)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.721.2;
+	Mon, 15 Mar 2021 13:30:00 +0100
+Date: Mon, 15 Mar 2021 15:29:58 +0300
+From: Sergei Shtepa <sergei.shtepa@veeam.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Message-ID: <20210315122958.GB30489@veeam.com>
+References: <1615563895-28565-1-git-send-email-sergei.shtepa@veeam.com>
+	<1615563895-28565-4-git-send-email-sergei.shtepa@veeam.com>
+	<20210312190013.GA2004@redhat.com>
 MIME-Version: 1.0
-User-Agent: Mutt/1.5.24 (2015-08-30)
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFvrMKsWRmVeSWpSXmKPExsWy7bCmru6za34JBv9nclqsP3WM2WLvu9ms
-	Fpd3zWGzWLriLatF28avjA6sHgs2lXq833eVzePzJrkA5qgcm4zUxJTUIoXUvOT8lMy8dFsl
-	7+B453hTMwNDXUNLC3MlhbzE3FRbJRefAF23zBygjUoKZYk5pUChgMTiYiV9O5ui/NKSVIWM
-	/OISW6XUgpScAkODAr3ixNzi0rx0veT8XCtDAwMjU6DKhJyM3t6DTAUT1SruTl7D2MB4VrqL
-	kZNDQsBE4tqc5+xdjFwcQgI7GCXuPV3IBOF8YpS4e3U9O0iVkMBnRonH27NhOh5cnccKEd/F
-	KHHroxhEw2tGidbnG9hAEiwCqhKTn+xiBLHZBLQlbrdsAhskIiAtcWnWDCYQm1kgWmLb5mNA
-	NgeHsICdxIIv6SBhXgFDiU+LWhghbEGJkzOfsICUiAqoSLw6WA+ySkJgH7vEkv6LjCBxCQEX
-	iTmbCyBOE5Z4dXwLO4QtJfGyv40dor6bUeL++ddsEIkJjBK9PUwQvfYS7y9ZQFyTKfFv6wyo
-	XkWJnb/nMkLE+STefe1hhSjnlehoE4IoUZJY8e8aC4QtIbHhcDfUdA+JhvM3oaEWK3Hpxm2m
-	CYxys5A8MwvJNghbR2LB7k9ss4A2MAPDZ/k/DghTU2L9Lv0FjKyrGMVSC4pz01OLDQsMkSN3
-	EyM49WmZ7mCc+PaD3iFGJg7GQ4wSHMxKIryfdXwThHhTEiurUovy44tKc1KLDzGaAiNmIrOU
-	aHI+MPnmlcQbmhoZGxtbmJiZm5kaK4nzJhk8iBcSSE8sSc1OTS1ILYLpY+LglGpgMm//bBgZ
-	vbPhwYYp/gmlm5ruaxpea1r9lE/5NlOY8DXBLQf7uQoED3JwW3sc3PH6WreLb072x7sliesa
-	mPR2Zha6xHj8iXxnEjlPU+jk9htVDV/VDIMTyhad2SY6ac78oCXrDizYHWXUwnrq1p4XD4LE
-	mENVHmftbTa5udj4n153nN/BBxalngtmPxZn3pBdvnV1+hEjj7u5C0IDs6UZpW19Nljuu/Bm
-	lcCK9q5bH4r1S238Crg/pG7+cUOauaiszzQvcp/OqdQ/P+J7Xs56YfZUoIl9m8Nd0aUmLkuL
-	vf7zmc2+u/NhKiNv4tqdV5TN5C74nwv+KnnRruLPmTtPD9soOCqx3BGS0ds5+bi/EktxRqKh
-	FnNRcSIA/jlfjQYEAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFlrDLMWRmVeSWpSXmKPExsWy7bCSnO7Ta34JBmeeKlmsP3WM2WLvu9ms
-	Fpd3zWGzWLriLatF28avjA6sHgs2lXq833eVzePzJrkA5igum5TUnMyy1CJ9uwSujJXtL9kK
-	zilXbHpo1sC4WLKLkZNDQsBE4sHVeaxdjFwcQgI7GCVufrrFDpGQkNiwaS2QzQFkC0scPlwM
-	UfOSUeL+6RWsIDUsAqoSk5/sYgSx2QS0JW63bALrFRGQlrg0awYTiM0sEC2xbfMxJpA5wgJ2
-	Egu+pIOEeQUMJT4tamGEsAUlTs58wgJRriVx499LsHJmoDHL/3GAmKICKhKvDtZPYOSfhaRh
-	FpKGWQgNCxiZVzFKphYU56bnFhsWGOWllusVJ+YWl+al6yXn525iBAeoltYOxj2rPugdYmTi
-	YDzEKMHBrCTC+1nHN0GINyWxsiq1KD++qDQntfgQozQHi5I474Wuk/FCAumJJanZqakFqUUw
-	WSYOTqkGJldWn7zs7xFM/R69vhfue7wuCj5vVfCyZwKz5W/3coZCk8KN4onXot7tNf9wZWfw
-	i8lcFuwfFzw2bC7tya/MvvZv3/HatMe6274uU96u9H7zrgt77p2dJv5PcU/o053cezh49xzL
-	vHZP5LXS0fP2T+xcHgbxy55QbShY+eeensHkWSUqKy7zLNSMjKrM/CUsfkxmnbvYvXmiCayB
-	x1he7WiuNBec/ibKtnKKxtNpj9+lVCVlbQibNrHrqUjOuYTt0YzLROu0bQXPyb/03p5tt0zw
-	7+UCzr0Kcx90e8858rLZS6HD+8xmtUoXdptqSUudgwxcefPfyUTNnHlm5oOWst9rz3ww3qid
-	tdA7S3jfMSWW4oxEQy3mouJEACN+hRy/AgAA
-X-CMS-MailID: 20210315033917epcas1p39ee45fb36b097aae1fb4cac32464e8dc
-X-Msg-Generator: CA
-X-Sendblock-Type: SVC_REQ_APPROVE
-CMS-TYPE: 101P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20210315033917epcas1p39ee45fb36b097aae1fb4cac32464e8dc
-References: <CGME20210315033917epcas1p39ee45fb36b097aae1fb4cac32464e8dc@epcas1p3.samsung.com>
+In-Reply-To: <20210312190013.GA2004@redhat.com>
+X-Originating-IP: [172.24.14.5]
+X-ClientProxiedBy: prgmbx02.amust.local (172.24.0.172) To prgmbx01.amust.local
+	(172.24.0.171)
+X-EsetResult: clean, is OK
+X-EsetId: 37303A29D2A50B58627C62
+X-Veeam-MMEX: True
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -140,10 +86,15 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Mon, 15 Mar 2021 04:55:29 -0400
-Cc: dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com,
-	linux-kernel@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH 2/2] dm verity: allow only one verify mode
+Cc: Jens Axboe <axboe@kernel.dk>,
+	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+	Pavel Tide <Pavel.TIde@veeam.com>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	Christoph Hellwig <hch@infradead.org>,
+	"dm-devel@redhat.com" <dm-devel@redhat.com>,
+	Alasdair Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH v7 3/3] dm: add DM_INTERPOSED_FLAG
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -157,148 +108,441 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed;
-	boundary="----V1oBYrHh8kVlH0vl1DhTBnbYZqliemR8pfKkIoDTIwboyIJz=_300463_"
-
-------V1oBYrHh8kVlH0vl1DhTBnbYZqliemR8pfKkIoDTIwboyIJz=_300463_
-Content-Type: text/plain; charset="us-ascii"
 Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-Hello, Dear Sami Tolvanen.
-Thank you for reply. Sorry, I send it again because my setting is wrong.
-
-> I agree that we shouldn't allow this, at least not without a warning, but
-> out of curiosity, do you actually have a situation where this could happen?
-> One ideally shouldn't be passing untrusted parameters to dm-verity.
-
-Of course, I don't think this will happen because they are dm-verity experts.
-But since we are humans, I think this case could happen accidentally.
-So it would be a good at preventing these cases.
-
-> I don't have a strong opinion about this, but the documentation doesn't
-> talk about verity modes, so perhaps this could be reworded to something
-> like "Conflicting error handling parameters"?
-
-Yes of course. That looks better.
-
-I also had some ambiguous about how to express it. 
-This is because I couldn't find it in document. 
-The code says verity mode, so I wrote it down. never mind it :) 
-
-like this)
-    case DM_VERITY_MODE_LOGGING:
-    case DM_VERITY_MODE_RESTART:
-    case DM_VERITY_MODE_PANIC:
-
-Thank you,
-JeongHyeon Lee.
-
-> On Thu, Mar 11, 2021 at 4:19 AM JeongHyeon Lee <jhs2.lee@samsung.com>
-> wrote:
-> >
-> > If there are multiple verity mode when parsing the verity mode of dm
-> > verity table, it will be set as the last one.
-> > So set to 'allow only once' to prevent it.
+The 03/12/2021 22:00, Mike Snitzer wrote:
+> On Fri, Mar 12 2021 at 10:44am -0500,
+> Sergei Shtepa <sergei.shtepa@veeam.com> wrote:
 > 
-> I agree that we shouldn't allow this, at least not without a warning, but
-> out of curiosity, do you actually have a situation where this could happen?
-> One ideally shouldn't be passing untrusted parameters to dm-verity.
-> 
-> >
-> > Signed-off-by: JeongHyeon Lee <jhs2.lee@samsung.com>
+> > DM_INTERPOSED_FLAG allow to create DM targets on "the fly".
+> > Underlying block device opens without a flag FMODE_EXCL.
+> > DM target receives bio from the original device via
+> > bdev_interposer.
+> > 
+> > Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
 > > ---
-> >  drivers/md/dm-verity-target.c | 38
-> > ++++++++++++++++++++++++++---------
-> >  1 file changed, 28 insertions(+), 10 deletions(-)
-> >
-> > diff --git a/drivers/md/dm-verity-target.c
-> > b/drivers/md/dm-verity-target.c index 808a98ef624c..b76431dc7721
-> > 100644
-> > --- a/drivers/md/dm-verity-target.c
-> > +++ b/drivers/md/dm-verity-target.c
-> > @@ -893,6 +893,28 @@ static int verity_alloc_zero_digest(struct
-> dm_verity *v)
-> >         return r;
+> >  drivers/md/dm-core.h          |  3 ++
+> >  drivers/md/dm-ioctl.c         | 13 ++++++++
+> >  drivers/md/dm-table.c         | 61 +++++++++++++++++++++++++++++------
+> >  drivers/md/dm.c               | 38 +++++++++++++++-------
+> >  include/linux/device-mapper.h |  1 +
+> >  include/uapi/linux/dm-ioctl.h |  6 ++++
+> >  6 files changed, 101 insertions(+), 21 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
+> > index 5953ff2bd260..9eae419c7b18 100644
+> > --- a/drivers/md/dm-core.h
+> > +++ b/drivers/md/dm-core.h
+> > @@ -114,6 +114,9 @@ struct mapped_device {
+> >  	bool init_tio_pdu:1;
+> >  
+> >  	struct srcu_struct io_barrier;
+> > +
+> > +	/* attach target via block-layer interposer */
+> > +	bool is_interposed;
+> >  };
+> 
+> This flag is a mix of uses.  First it is used to store that
+> DM_INTERPOSED_FLAG was provided as input param during load.
+> 
+> And the same 'is_interposed' name is used in 'struct dm_dev'.
+> 
+> To me this state should be elevated to block core -- awkward for every
+> driver that might want to use blk-interposer to be sprinkling state
+> around its core structures.
+> 
+> So I'd prefer you:
+> 1) rename 'struct mapped_device' to 'interpose' _and_ add it just after
+>    "bool init_tio_pdu:1;" with "bool interpose:1;" -- this reflects
+>    interpose was requested during load.
+> 2) bdev_interposer_attach() should be made to set some block core state
+>    that is able to be tested to check if a device is_interposed.
+> 3) Don't add an 'is_interposed' flag to 'struct dm_dev'
+
+Ok, but little fix in "rename 'struct mapped_device' to 'interpose'".
+Maybe "rename 'bool is_interposed' to 'bool interpose:1'"?
+I think I understand your idea, I'll try to implement it.
+
+> 
+> >  
+> >  void disable_discard(struct mapped_device *md);
+> > diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+> > index 5e306bba4375..2b4c9557c283 100644
+> > --- a/drivers/md/dm-ioctl.c
+> > +++ b/drivers/md/dm-ioctl.c
+> > @@ -1267,6 +1267,11 @@ static inline fmode_t get_mode(struct dm_ioctl *param)
+> >  	return mode;
 > >  }
-> >
-> > +static inline bool verity_is_verity_mode(const char *arg_name) {
-> > +       return (!strcasecmp(arg_name, DM_VERITY_OPT_LOGGING) ||
-> > +               !strcasecmp(arg_name, DM_VERITY_OPT_RESTART) ||
-> > +               !strcasecmp(arg_name, DM_VERITY_OPT_PANIC)); }
-> > +
-> > +static int verity_parse_verity_mode(struct dm_verity *v, const char
-> > +*arg_name) {
-> > +       if (v->mode)
-> > +               return -EINVAL;
-> > +
-> > +       if (!strcasecmp(arg_name, DM_VERITY_OPT_LOGGING))
-> > +               v->mode = DM_VERITY_MODE_LOGGING;
-> > +       else if (!strcasecmp(arg_name, DM_VERITY_OPT_RESTART))
-> > +               v->mode = DM_VERITY_MODE_RESTART;
-> > +       else if (!strcasecmp(arg_name, DM_VERITY_OPT_PANIC))
-> > +               v->mode = DM_VERITY_MODE_PANIC;
-> > +
-> > +       return 0;
+> >  
+> > +static inline bool get_interposer_flag(struct dm_ioctl *param)
+> > +{
+> > +	return (param->flags & DM_INTERPOSED_FLAG);
 > > +}
 > > +
-> >  static int verity_parse_opt_args(struct dm_arg_set *as, struct
-> dm_verity *v,
-> >                                  struct dm_verity_sig_opts
-> > *verify_args)  { @@ -916,16 +938,12 @@ static int
-> > verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
-> >                 arg_name = dm_shift_arg(as);
-> >                 argc--;
-> >
-> > -               if (!strcasecmp(arg_name, DM_VERITY_OPT_LOGGING)) {
-> > -                       v->mode = DM_VERITY_MODE_LOGGING;
-> > -                       continue;
+> 
+> As I mention at the end: rename to DM_INTERPOSE_FLAG
+
+Ok.
+
+> 
+> >  static int next_target(struct dm_target_spec *last, uint32_t next, void *end,
+> >  		       struct dm_target_spec **spec, char **target_params)
+> >  {
+> > @@ -1293,6 +1298,10 @@ static int populate_table(struct dm_table *table,
+> >  		DMWARN("populate_table: no targets specified");
+> >  		return -EINVAL;
+> >  	}
+> > +	if (table->md->is_interposed && (param->target_count != 1)) {
+> > +		DMWARN("%s: with interposer should be specified only one target", __func__);
+> 
+> This error/warning reads very awkwardly. Maybe?:
+> "%s: interposer requires only a single target be specified"
+
+Ok.
+
+> 
+> > +		return -EINVAL;
+> > +	}
+> >  
+> >  	for (i = 0; i < param->target_count; i++) {
+> >  
+> > @@ -1338,6 +1347,8 @@ static int table_load(struct file *filp, struct dm_ioctl *param, size_t param_si
+> >  	if (!md)
+> >  		return -ENXIO;
+> >  
+> > +	md->is_interposed = get_interposer_flag(param);
+> > +
+> >  	r = dm_table_create(&t, get_mode(param), param->target_count, md);
+> >  	if (r)
+> >  		goto err;
+> > @@ -2098,6 +2109,8 @@ int __init dm_early_create(struct dm_ioctl *dmi,
+> >  	if (r)
+> >  		goto err_hash_remove;
+> >  
+> > +	md->is_interposed = get_interposer_flag(dmi);
+> > +
+> >  	/* add targets */
+> >  	for (i = 0; i < dmi->target_count; i++) {
+> >  		r = dm_table_add_target(t, spec_array[i]->target_type,
+> > diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> > index 95391f78b8d5..f6e2eb3f8949 100644
+> > --- a/drivers/md/dm-table.c
+> > +++ b/drivers/md/dm-table.c
+> > @@ -225,12 +225,13 @@ void dm_table_destroy(struct dm_table *t)
+> >  /*
+> >   * See if we've already got a device in the list.
+> >   */
+> > -static struct dm_dev_internal *find_device(struct list_head *l, dev_t dev)
+> > +static struct dm_dev_internal *find_device(struct list_head *l, dev_t dev, bool is_interposed)
+> 
+> Think in make more sense to internalize the need to consider
+> md->interpose here.
+> 
+> So:
+> 
+> static struct dm_dev_internal *find_device(struct dm_table *t, dev_t dev)
+> {
+>         struct list_head *l = &t->devices;
+>         bool is_interposed = t->md->interpose;
+>         ...
+
+Yes.
+
+> 
+> >  {
+> >  	struct dm_dev_internal *dd;
+> >  
+> >  	list_for_each_entry (dd, l, list)
+> > -		if (dd->dm_dev->bdev->bd_dev == dev)
+> > +		if ((dd->dm_dev->bdev->bd_dev == dev) &&
+> > +		    (dd->dm_dev->is_interposed == is_interposed))
+> >  			return dd;
+> 
+> But why must this extra state be used/tested?  Seems like quite a deep
+> embedding of interposer into dm_dev_internal.. feels unnecessary.
+
+Yeah, I guess so.
+Since dm_table is unique for each dm_target and in our case will generally
+contain only one device.
+
+> 
+> >  
+> >  	return NULL;
+> > @@ -358,6 +359,18 @@ dev_t dm_get_dev_t(const char *path)
+> >  }
+> >  EXPORT_SYMBOL_GPL(dm_get_dev_t);
+> >  
+> > +static inline void dm_disk_freeze(struct gendisk *disk)
+> > +{
+> > +	blk_mq_freeze_queue(disk->queue);
+> > +	blk_mq_quiesce_queue(disk->queue);
+> > +}
+> > +
+> > +static inline void dm_disk_unfreeze(struct gendisk *disk)
+> > +{
+> > +	blk_mq_unquiesce_queue(disk->queue);
+> > +	blk_mq_unfreeze_queue(disk->queue);
+> > +}
+> > +
+> 
+> These interfaces don't account for bio-based at all (pretty sure we've
+> been over this and you pointed out that they'll just return early), but
+> they also don't take steps to properly flush outstanding DM io.
+> Shouldn't you require DM devices do an internal suspend/resume?  And if
+> original device isn't DM then fallback to blk_mq calls?
+
+I thought that was enough.
+The function dm_disk_freeze() guarantees that no bio will be processed,
+which means that we can safely attach or detach the interposer.
+All bios will continue their processing after dm_disk_unfreeze().
+Sorry, but I don't understand why it is required for DM devices to do
+internal suspend/resume.
+If this is not too difficult, can you explain what problem can cause
+a simple queue freeze?
+
+> 
+> >  /*
+> >   * Add a device to the list, or just increment the usage count if
+> >   * it's already present.
+> > @@ -385,7 +398,7 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+> >  			return -ENODEV;
+> >  	}
+> >  
+> > -	dd = find_device(&t->devices, dev);
+> > +	dd = find_device(&t->devices, dev, t->md->is_interposed);
+> >  	if (!dd) {
+> >  		dd = kmalloc(sizeof(*dd), GFP_KERNEL);
+> >  		if (!dd)
+> > @@ -398,15 +411,38 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+> >  
+> >  		refcount_set(&dd->count, 1);
+> >  		list_add(&dd->list, &t->devices);
+> > -		goto out;
 > > -
-> > -               } else if (!strcasecmp(arg_name, DM_VERITY_OPT_RESTART)) {
-> > -                       v->mode = DM_VERITY_MODE_RESTART;
-> > -                       continue;
-> > -
-> > -               } else if (!strcasecmp(arg_name, DM_VERITY_OPT_PANIC)) {
-> > -                       v->mode = DM_VERITY_MODE_PANIC;
-> > +               if (verity_is_verity_mode(arg_name)) {
-> > +                       r = verity_parse_verity_mode(v, arg_name);
-> > +                       if (r) {
-> > +                               ti->error = "Already verity mode set";
+> >  	} else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
+> >  		r = upgrade_mode(dd, mode, t->md);
+> >  		if (r)
+> >  			return r;
+> > +		refcount_inc(&dd->count);
+> >  	}
+> > -	refcount_inc(&dd->count);
 > 
-> I don't have a strong opinion about this, but the documentation doesn't
-> talk about verity modes, so perhaps this could be reworded to something
-> like "Conflicting error handling parameters"?
+> This looks bogus... you cannot only increment refcount with the mode
+> check/upgrade branch (IIRC: I've made this same mistake in the past)
 > 
-> > +                               return r;
-> > +                       }
-> >                         continue;
-> >
-> >                 } else if (!strcasecmp(arg_name,
-> > DM_VERITY_OPT_IGN_ZEROES)) {
-> > --
-> > 2.17.1
-> >
+
+I realized my mistake. I wanted to remove the unnecessary goto,
+but I change the logic.
+
+> > -out:
+> > +
+> > +	if (t->md->is_interposed) {
+> > +		struct block_device *original = dd->dm_dev->bdev;
+> > +		struct block_device *interposer = t->md->disk->part0;
+> > +
+> > +		if ((ti->begin != 0) || (ti->len < bdev_nr_sectors(original))) {
+> > +			dm_put_device(ti, dd->dm_dev);
+> > +			DMERR("The interposer device should not be less than the original.");
+> > +			return -EINVAL;
 > 
-> Sami
+> Can you explain why allowing the device to be larger is meaningful?  Not
+> saying it isn't I'd just like to understand use-cases you forsee.
 
+Hmm... Maybe strict equality would be better.
 
-------V1oBYrHh8kVlH0vl1DhTBnbYZqliemR8pfKkIoDTIwboyIJz=_300463_
-Content-Type: text/plain; charset="utf-8"
+> 
+> > +		}
+> > +
+> > +		/*
+> > +		 * Attach mapped interposer device to original.
+> > +		 * It is quite convenient that device mapper creates
+> > +		 * one disk for one block device.
+> > +		 */
+> > +		dm_disk_freeze(original->bd_disk);
+> > +		r = bdev_interposer_attach(original, interposer);
+> > +		dm_disk_unfreeze(original->bd_disk);
+> > +		if (r) {
+> > +			dm_put_device(ti, dd->dm_dev);
+> > +			DMERR("Failed to attach dm interposer.");
+> > +			return r;
+> > +		}
+> > +	}
+> > +
+> >  	*result = dd->dm_dev;
+> >  	return 0;
+> >  }
+> > @@ -446,6 +482,7 @@ void dm_put_device(struct dm_target *ti, struct dm_dev *d)
+> >  {
+> >  	int found = 0;
+> >  	struct list_head *devices = &ti->table->devices;
+> > +	struct mapped_device *md = ti->table->md;
+> >  	struct dm_dev_internal *dd;
+> >  
+> >  	list_for_each_entry(dd, devices, list) {
+> > @@ -456,11 +493,17 @@ void dm_put_device(struct dm_target *ti, struct dm_dev *d)
+> >  	}
+> >  	if (!found) {
+> >  		DMWARN("%s: device %s not in table devices list",
+> > -		       dm_device_name(ti->table->md), d->name);
+> > +		       dm_device_name(md), d->name);
+> >  		return;
+> >  	}
+> > +	if (md->is_interposed) {
+> > +		dm_disk_freeze(d->bdev->bd_disk);
+> > +		bdev_interposer_detach(d->bdev);
+> > +		dm_disk_unfreeze(d->bdev->bd_disk);
+> > +	}
+> > +
+> >  	if (refcount_dec_and_test(&dd->count)) {
+> > -		dm_put_table_device(ti->table->md, d);
+> > +		dm_put_table_device(md, d);
+> >  		list_del(&dd->list);
+> >  		kfree(dd);
+> >  	}
+> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> > index 50b693d776d6..466bf70a66b0 100644
+> > --- a/drivers/md/dm.c
+> > +++ b/drivers/md/dm.c
+> > @@ -762,16 +762,24 @@ static int open_table_device(struct table_device *td, dev_t dev,
+> >  
+> >  	BUG_ON(td->dm_dev.bdev);
+> >  
+> > -	bdev = blkdev_get_by_dev(dev, td->dm_dev.mode | FMODE_EXCL, _dm_claim_ptr);
+> > -	if (IS_ERR(bdev))
+> > -		return PTR_ERR(bdev);
+> > +	if (md->is_interposed) {
+> >  
+> > -	r = bd_link_disk_holder(bdev, dm_disk(md));
+> > -	if (r) {
+> > -		blkdev_put(bdev, td->dm_dev.mode | FMODE_EXCL);
+> > -		return r;
+> > +		bdev = blkdev_get_by_dev(dev, td->dm_dev.mode, NULL);
+> > +		if (IS_ERR(bdev))
+> > +			return PTR_ERR(bdev);
+> > +	} else {
+> > +		bdev = blkdev_get_by_dev(dev, td->dm_dev.mode | FMODE_EXCL, _dm_claim_ptr);
+> > +		if (IS_ERR(bdev))
+> > +			return PTR_ERR(bdev);
+> > +
+> > +		r = bd_link_disk_holder(bdev, dm_disk(md));
+> > +		if (r) {
+> > +			blkdev_put(bdev, td->dm_dev.mode | FMODE_EXCL);
+> > +			return r;
+> > +		}
+> >  	}
+> >  
+> > +	td->dm_dev.is_interposed = md->is_interposed;
+> 
+> This _should_ hopefully get cleaned up by pushing such state into block
+> core's interposer interfaces.
+> 
+> But again, not seeing what utility/safety this extra flag is providing
+> to begin with.  Is this state _actually_ needed at all?
+> 
 
+Yes, it is not necessary.
 
-------V1oBYrHh8kVlH0vl1DhTBnbYZqliemR8pfKkIoDTIwboyIJz=_300463_
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+> 
+> >  	td->dm_dev.bdev = bdev;
+> >  	td->dm_dev.dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
+> >  	return 0;
+> > @@ -785,20 +793,26 @@ static void close_table_device(struct table_device *td, struct mapped_device *md
+> >  	if (!td->dm_dev.bdev)
+> >  		return;
+> >  
+> > -	bd_unlink_disk_holder(td->dm_dev.bdev, dm_disk(md));
+> > -	blkdev_put(td->dm_dev.bdev, td->dm_dev.mode | FMODE_EXCL);
+> > +	if (td->dm_dev.is_interposed)
+> > +		blkdev_put(td->dm_dev.bdev, td->dm_dev.mode);
+> > +	else {
+> > +		bd_unlink_disk_holder(td->dm_dev.bdev, dm_disk(md));
+> > +		blkdev_put(td->dm_dev.bdev, td->dm_dev.mode | FMODE_EXCL);
+> > +	}
+> >  	put_dax(td->dm_dev.dax_dev);
+> >  	td->dm_dev.bdev = NULL;
+> >  	td->dm_dev.dax_dev = NULL;
+> >  }
+> >  
+> >  static struct table_device *find_table_device(struct list_head *l, dev_t dev,
+> > -					      fmode_t mode)
+> > +					      fmode_t mode, bool is_interposed)
+> >  {
+> >  	struct table_device *td;
+> >  
+> >  	list_for_each_entry(td, l, list)
+> > -		if (td->dm_dev.bdev->bd_dev == dev && td->dm_dev.mode == mode)
+> > +		if (td->dm_dev.bdev->bd_dev == dev &&
+> > +		    td->dm_dev.mode == mode &&
+> > +		    td->dm_dev.is_interposed == is_interposed)
+> >  			return td;
+> >  
+> >  	return NULL;
+> > @@ -811,7 +825,7 @@ int dm_get_table_device(struct mapped_device *md, dev_t dev, fmode_t mode,
+> >  	struct table_device *td;
+> >  
+> >  	mutex_lock(&md->table_devices_lock);
+> > -	td = find_table_device(&md->table_devices, dev, mode);
+> > +	td = find_table_device(&md->table_devices, dev, mode, md->is_interposed);
+> >  	if (!td) {
+> >  		td = kmalloc_node(sizeof(*td), GFP_KERNEL, md->numa_node_id);
+> >  		if (!td) {
+> > diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+> > index 7f4ac87c0b32..76a6dfb1cb29 100644
+> > --- a/include/linux/device-mapper.h
+> > +++ b/include/linux/device-mapper.h
+> > @@ -159,6 +159,7 @@ struct dm_dev {
+> >  	struct block_device *bdev;
+> >  	struct dax_device *dax_dev;
+> >  	fmode_t mode;
+> > +	bool is_interposed;
+> 
+> Again, I'd like this state to be part of 'struct block_device'
+
+Ok.
+
+> 
+> >  	char name[16];
+> >  };
+> >  
+> > diff --git a/include/uapi/linux/dm-ioctl.h b/include/uapi/linux/dm-ioctl.h
+> > index fcff6669137b..fc4d06bb3dbb 100644
+> > --- a/include/uapi/linux/dm-ioctl.h
+> > +++ b/include/uapi/linux/dm-ioctl.h
+> > @@ -362,4 +362,10 @@ enum {
+> >   */
+> >  #define DM_INTERNAL_SUSPEND_FLAG	(1 << 18) /* Out */
+> >  
+> > +/*
+> > + * If set, the underlying device should open without FMODE_EXCL
+> > + * and attach mapped device via bdev_interposer.
+> > + */
+> > +#define DM_INTERPOSED_FLAG		(1 << 19) /* In */
+> 
+> Please rename to DM_INTERPOSE_FLAG
+
+Ok.
+
+> 
+> > +
+> >  #endif				/* _LINUX_DM_IOCTL_H */
+> > -- 
+> > 2.20.1
+> > 
+> 
+
+-- 
+Sergei Shtepa
+Veeam Software developer.
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
-------V1oBYrHh8kVlH0vl1DhTBnbYZqliemR8pfKkIoDTIwboyIJz=_300463_--
 
