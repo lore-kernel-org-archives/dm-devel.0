@@ -2,137 +2,77 @@ Return-Path: <SRS0=mox9=IO=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 04FAAC433DB
-	for <dm-devel@archiver.kernel.org>; Tue, 16 Mar 2021 06:15:43 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8D5B2C433E0
+	for <dm-devel@archiver.kernel.org>; Tue, 16 Mar 2021 06:54:47 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 8817E650EC
-	for <dm-devel@archiver.kernel.org>; Tue, 16 Mar 2021 06:15:42 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 8817E650EC
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
+	by mail.kernel.org (Postfix) with ESMTPS id A8D816511D
+	for <dm-devel@archiver.kernel.org>; Tue, 16 Mar 2021 06:54:46 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A8D816511D
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-295-ahw-rYu_M-ycvZ15PqhcWA-1; Tue, 16 Mar 2021 02:15:37 -0400
-X-MC-Unique: ahw-rYu_M-ycvZ15PqhcWA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-602-aw03sqq4Pi6A7-2DBD1o6w-1; Tue, 16 Mar 2021 02:54:42 -0400
+X-MC-Unique: aw03sqq4Pi6A7-2DBD1o6w-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7C93D760C1;
-	Tue, 16 Mar 2021 06:15:31 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3366B5C1A1;
-	Tue, 16 Mar 2021 06:15:30 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C825719057A1;
+	Tue, 16 Mar 2021 06:54:37 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8562D6BC2D;
+	Tue, 16 Mar 2021 06:54:37 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D38DD1800848;
-	Tue, 16 Mar 2021 06:15:27 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9194B4A717;
+	Tue, 16 Mar 2021 06:54:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12G6FPm0021603 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 16 Mar 2021 02:15:25 -0400
+	id 12G3RFoj004109 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 15 Mar 2021 23:27:16 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 3BBCE2166BB1; Tue, 16 Mar 2021 06:15:25 +0000 (UTC)
+	id 9B531568F1; Tue, 16 Mar 2021 03:27:15 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 346962166BA4
-	for <dm-devel@redhat.com>; Tue, 16 Mar 2021 06:15:22 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B1C81801E8D
-	for <dm-devel@redhat.com>; Tue, 16 Mar 2021 06:15:22 +0000 (UTC)
-Received: from esa1.hgst.iphmx.com (esa1.hgst.iphmx.com [68.232.141.245])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-95-VUnuZSJ9OjeIotaUTKKRKA-1; Tue, 16 Mar 2021 02:15:20 -0400
-X-MC-Unique: VUnuZSJ9OjeIotaUTKKRKA-1
-IronPort-SDR: 8lTYCC2dyGDEwpad/xnlxkJsujbsjNwcpoK+mA5konPRC0L2i1ImdDu7LrZ04Ogmg66ZOy9ta1
-	m85KeE4MqnWHVEMwA7Dp5pqQyEO2/Ws/vFZk52VZt/getgodSy5FQZOZjgYV/jdyh9wiTX/JfF
-	SRiS/VPcoGdrSCYiPA5597Rk9PBwV7WZ4mJsAOJAlIyBGo04Swyj3ObKcH01g4qvWFmQV1rL1L
-	DyidkIwE7OEWTsNrkVhfz4LE639RvEnBKVRInRTrp5wN+asOUU8JGS8DX5shqdOmDv5Q6F0qq7
-	mR8=
-X-IronPort-AV: E=Sophos;i="5.81,251,1610380800"; d="scan'208";a="272951558"
-Received: from mail-dm6nam10lp2104.outbound.protection.outlook.com (HELO
-	NAM10-DM6-obe.outbound.protection.outlook.com) ([104.47.58.104])
-	by ob1.hgst.iphmx.com with ESMTP; 16 Mar 2021 14:14:15 +0800
-Received: from BL0PR04MB6514.namprd04.prod.outlook.com (2603:10b6:208:1ca::23)
-	by BL0PR04MB4739.namprd04.prod.outlook.com (2603:10b6:208:48::12)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3933.32;
-	Tue, 16 Mar 2021 06:14:14 +0000
-Received: from BL0PR04MB6514.namprd04.prod.outlook.com
-	([fe80::e9c5:588:89e:6887]) by BL0PR04MB6514.namprd04.prod.outlook.com
-	([fe80::e9c5:588:89e:6887%3]) with mapi id 15.20.3933.032;
-	Tue, 16 Mar 2021 06:14:14 +0000
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-To: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>, "dm-devel@redhat.com"
-	<dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Thread-Topic: [PATCH v2] dm table: Fix zoned model check and zone sectors check
-Thread-Index: AQHXGh3izz670F4QskaqbJkCtpIqbg==
-Date: Tue, 16 Mar 2021 06:14:14 +0000
-Message-ID: <BL0PR04MB6514D80C4CDFE34F1A293397E76B9@BL0PR04MB6514.namprd04.prod.outlook.com>
-References: <20210316043602.1208915-1-shinichiro.kawasaki@wdc.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [2400:2411:43c0:6000:d8f9:73e8:b1d8:d796]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-ht: Tenant
-x-ms-office365-filtering-correlation-id: f845604d-a2de-4f24-cc32-08d8e842b901
-x-ms-traffictypediagnostic: BL0PR04MB4739:
-x-ms-exchange-transport-forked: True
-x-microsoft-antispam-prvs: <BL0PR04MB4739B2F967FCAFC2398A2CE6E76B9@BL0PR04MB4739.namprd04.prod.outlook.com>
-wdcipoutbound: EOP-TRUE
-x-ms-oob-tlc-oobclassifiers: OLM:328
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: AnGyesi+QXSGln2s7XDWKKZS02NEQE8+ju5kqvnOujE8Bkltbvao2Vlm6XEakvvMV/ZlBBadBxjBAa3p94BSL5Iq5YHV9SAeO4V6QM5FUhSkEPbs5vWp49XkAw93FdLwf4H/AO+qYBE7V4EDBX2wxEPQSbn7Bom/X9RlW406oS3WAs147BnZIRs80bFHSq7mvmgM9CP5UkPypf3f88SXmAT8btT+ZW6zwhMZyshGa/4jkcoVL4A/hsVJSz1COaaeiQX8l40YAav/itc0QzxzBOrvhOE8hRAv6z1sEaW5DedCkDg2NO3Oo7jJuZzcq7wpEohNloMCuX4WE5B5S9pmwnCtPWfF1t3on76JMonRB0ZDbSqnu3tqIQ+olbbEpHXhCdoCi3suoeazpm+/VWCNR8fCePBLJ47UAi+H4INf90duBIN965eY0SLU6Rzwovvk7E8iI/RhVU6cXJQCxMrlAjE5X6XM0S0WyPRTlREobqTo8f6vWm8E/oXNajq6kyPt5vhuyjFIR5q8UJZXabzLrjZlDRUPRiIilwKEbTXzKDx9tZkLHDdI6TgsVgEe7i+N
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:BL0PR04MB6514.namprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(4636009)(39860400002)(366004)(396003)(346002)(376002)(136003)(66556008)(86362001)(478600001)(91956017)(316002)(64756008)(66446008)(5660300002)(66946007)(4326008)(66476007)(8676002)(83380400001)(76116006)(8936002)(55016002)(53546011)(9686003)(186003)(7696005)(52536014)(71200400001)(33656002)(2906002)(110136005)(6506007);
-	DIR:OUT; SFP:1102
-x-ms-exchange-antispam-messagedata: =?us-ascii?Q?4ihnYKIjqF6uGu5ci1r7AgunOt2Fq9D5gVu0J6HFRTXbs/ojtRVsyEGLamca?=
-	=?us-ascii?Q?AQWpx2Mm71yekyqqA6Y2OhryO21M5S8q1RSidVifbGnGCWe/fnAye6n9xA8j?=
-	=?us-ascii?Q?ALp7EfEDhE963YsGHWZDlY48uvq1cAWr6inpJc6wCvqpmarNJDJ0BOh+WeLZ?=
-	=?us-ascii?Q?MPkzcLoCLg/rcdQLaKYleYoFnb08750HV3pKAGUAnETo2Yd3suzRZaifL5kq?=
-	=?us-ascii?Q?qW8XAb18grEF9p2IsQwaDLmSPfO6mJtcdyuPfNlfP/ip6efDvYXJldV4KQf5?=
-	=?us-ascii?Q?F5/90tisJvol5+bNdVej+TYXn1wJcHEjUq2xQhmt6MxQmtTqzs/RyneVuy/O?=
-	=?us-ascii?Q?yzY//ilm9EZu8ZBgpFuIccnT2phTtKxevmsu5JPg2xOtLavaxhM2C7yXr/sH?=
-	=?us-ascii?Q?3cR1oStnfK80ep5yyVAzLUKGb6wMcMH80OvoxAdu4df0ZbnF1kN9xmOosuWD?=
-	=?us-ascii?Q?3uR4u7+GwSgVtdpk3d5gET11s4BaEu271mH5OMaKb3sxw8hq6RWWE8Vpv0jz?=
-	=?us-ascii?Q?E9NqOIavorauevQ5W2N7G4RIUKYd9LKHokjXjm8lebV43Lwd3qm5SWitnDeE?=
-	=?us-ascii?Q?KjDxA3qcuL6+0jryVGdE03Gh5IGJv6/gD7CkQqGRRV+o1wawy3ET80ab+BmJ?=
-	=?us-ascii?Q?LHD/yi3T1VT3uZvpBXZl22y0beORl+Y0RgL2JqRvKFL3xXGwrRsWWrRN9YM7?=
-	=?us-ascii?Q?VwpOtYc2Gpnth5Ggtq5l/BLpbFM5kgxknBQMdmGlQ6ypZ8WENX35+SQ+yc17?=
-	=?us-ascii?Q?3t+gg7R7dFtskiDtGOQq2idkJHFZ0fOxns2ZVyuxiQVpS/B+5qRnYqIz69Ua?=
-	=?us-ascii?Q?av2oyykuzP/Qs7UM84WuJx2EAQMMKml6RybCHI9MUJi8zx85TAGu93DF6pXf?=
-	=?us-ascii?Q?yTymVttiK00gr4byoHKMPF7R8Qu3ReBYL7C3Z4DJrBhm1q7PYX3odGXe35ro?=
-	=?us-ascii?Q?SaldKSmvoW7ilCR4llugXfdJNIbXLWTRvuHgpXko2mUATLoTB/F8LalA9N/x?=
-	=?us-ascii?Q?M2eEipAG6lfcFkA68KOnI97BK6An1E3oW7ERdcugN6eps0Qzv1KpgX92iQZn?=
-	=?us-ascii?Q?pGeoUv2BMBNV4bIbHnKGNQjg0qWxCRbwrIxT13IeZi1Ye9T8nhIi4wdUUnfu?=
-	=?us-ascii?Q?oFbgRkE6os3aA7RRRZhw5xOle7pvK3XB0NX8trWDPBMsOO2uV3i4NogeZJn0?=
-	=?us-ascii?Q?yAO19SGY3wNHAL5Ou3VX/lnkSa8SdLddXQgRJpukm3Ku9ZqSh/kyBpEg3ZxJ?=
-	=?us-ascii?Q?vFlHVEYPzkD79bwt5A33anD2c7Wv6CPq4xZ/5nkmwf84jKViU/YnkFGeTD3T?=
-	=?us-ascii?Q?OealLz15usXoluOHZflT+AD5GkkgNWJhehz51vBZO1AnW3gilNQEYZaX1z3g?=
-	=?us-ascii?Q?RXqGsXbr/y4UmxXJueMXqtle7vdVe6eK7c7OtGPWdFGRTmussQ=3D=3D?=
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 95D5D6CA80
+	for <dm-devel@redhat.com>; Tue, 16 Mar 2021 03:27:13 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 257B180B91F
+	for <dm-devel@redhat.com>; Tue, 16 Mar 2021 03:27:13 +0000 (UTC)
+Received: from out30-132.freemail.mail.aliyun.com
+	(out30-132.freemail.mail.aliyun.com [115.124.30.132]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-571-HtiW6SLnNeizXTMjM2tGtQ-1;
+	Mon, 15 Mar 2021 23:27:07 -0400
+X-MC-Unique: HtiW6SLnNeizXTMjM2tGtQ-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R801e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04426;
+	MF=zhongjiang-ali@linux.alibaba.com; NM=1; PH=DS; RN=16; SR=0;
+	TI=SMTPD_---0US4IWG9_1615864901
+Received: from L-X1DSLVDL-1420.local(mailfrom:zhongjiang-ali@linux.alibaba.com
+	fp:SMTPD_---0US4IWG9_1615864901) by smtp.aliyun-inc.com(127.0.0.1);
+	Tue, 16 Mar 2021 11:21:42 +0800
+Message-ID: <e1be1767-f9c0-e17a-5c14-22bb2f0ca5aa@linux.alibaba.com>
+Date: Tue, 16 Mar 2021 11:21:41 +0800
 MIME-Version: 1.0
-X-OriginatorOrg: wdc.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: BL0PR04MB6514.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: f845604d-a2de-4f24-cc32-08d8e842b901
-X-MS-Exchange-CrossTenant-originalarrivaltime: 16 Mar 2021 06:14:14.1059 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: 1tjgRqEVrmXhTPTUjus6SS4zQKdnJ+cGCcIGPQreH7a0K3O2ESduBLr5rtJGU3o34rOy7KmQbcSmY5/Dhp+LlA==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BL0PR04MB4739
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:87.0)
+	Gecko/20100101 Thunderbird/87.0
+To: Shiyang Ruan <ruansy.fnst@cn.fujitsu.com>, linux-kernel@vger.kernel.org,
+	linux-xfs@vger.kernel.org, linux-nvdimm@lists.01.org,
+	linux-mm@kvack.org, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com
+References: <20210208105530.3072869-1-ruansy.fnst@cn.fujitsu.com>
+	<20210208105530.3072869-6-ruansy.fnst@cn.fujitsu.com>
+From: zhong jiang <zhongjiang-ali@linux.alibaba.com>
+In-Reply-To: <20210208105530.3072869-6-ruansy.fnst@cn.fujitsu.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -141,13 +81,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 12G6FPm0021603
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: Jeffle Xu <jefflexu@linux.alibaba.com>
-Subject: Re: [dm-devel] [PATCH v2] dm table: Fix zoned model check and zone
-	sectors check
+X-Mailman-Approved-At: Tue, 16 Mar 2021 02:54:36 -0400
+Cc: qi.fuli@fujitsu.com, snitzer@redhat.com, darrick.wong@oracle.com,
+	rgoldwyn@suse.de, david@fromorbit.com, y-goto@fujitsu.com,
+	dan.j.williams@intel.com, hch@lst.de, agk@redhat.com
+Subject: Re: [dm-devel] [PATCH v3 05/11] mm,
+ fsdax: Refactor memory-failure handler for dax mapping
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -161,187 +102,205 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-On 2021/03/16 13:36, Shin'ichiro Kawasaki wrote:
-> Commit 24f6b6036c9e ("dm table: fix zoned iterate_devices based device
-> capability checks") triggered dm table load failure when dm-zoned device
-> is set up for zoned block devices and a regular device for cache.
-> 
-> The commit inverted logic of two callback functions for iterate_devices:
-> device_is_zoned_model() and device_matches_zone_sectors(). The logic of
-> device_is_zoned_model() was inverted then all destination devices of all
-> targets in dm table are required to have the expected zoned model. This
-> is fine for dm-linear, dm-flakey and dm-crypt on zoned block devices
-> since each target has only one destination device. However, this results
-> in failure for dm-zoned with regular cache device since that target has
-> both regular block device and zoned block devices.
-> 
-> As for device_matches_zone_sectors(), the commit inverted the logic to
-> require all zoned block devices in each target have the specified
-> zone_sectors. This check also fails for regular block device which does
-> not have zones.
-> 
-> To avoid the check failures, fix the zone model check and the zone
-> sectors check. For zone model check, introduce the new feature flag
-> DM_TARGET_MIXED_ZONED_MODEL, and set it to dm-zoned target. When the
-> target has this flag, allow it to have destination devices with any
-> zoned model. For zone sectors check, skip the check if the destination
-> device is not a zoned block device. Also add comments and improve an
-> error message to clarify expectations to the two checks.
-> 
-> Fixes: 24f6b6036c9e ("dm table: fix zoned iterate_devices based device capability checks")
-> Signed-off-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-> ---
-> Changes from v1:
-> * Added DM_TARGET_MIXED_ZONED_MODEL feature for zoned model check of dm-zoned
-> 
->  drivers/md/dm-table.c         | 34 ++++++++++++++++++++++++++--------
->  drivers/md/dm-zoned-target.c  |  2 +-
->  include/linux/device-mapper.h | 15 ++++++++++++++-
->  3 files changed, 41 insertions(+), 10 deletions(-)
-> 
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index 95391f78b8d5..cc73d5b473eb 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -1594,6 +1594,13 @@ static int device_not_zoned_model(struct dm_target *ti, struct dm_dev *dev,
->  	return blk_queue_zoned_model(q) != *zoned_model;
->  }
->  
-> +/*
-> + * Check the device zoned model based on the target feature flag. If the target
-> + * has the DM_TARGET_ZONED_HM feature flag set, host-managed zoned devices are
-> + * also accepted but all devices must have the same zoned model. If the target
-> + * has the DM_TARGET_MIXED_ZONED_MODEL feature set, the devices can have any
-> + * zoned model with all zoned devices having the same zone size.
-> + */
->  static bool dm_table_supports_zoned_model(struct dm_table *t,
->  					  enum blk_zoned_model zoned_model)
->  {
-> @@ -1603,13 +1610,16 @@ static bool dm_table_supports_zoned_model(struct dm_table *t,
->  	for (i = 0; i < dm_table_get_num_targets(t); i++) {
->  		ti = dm_table_get_target(t, i);
->  
-> -		if (zoned_model == BLK_ZONED_HM &&
-> -		    !dm_target_supports_zoned_hm(ti->type))
-> -			return false;
-> -
-> -		if (!ti->type->iterate_devices ||
-> -		    ti->type->iterate_devices(ti, device_not_zoned_model, &zoned_model))
-> -			return false;
-> +		if (dm_target_supports_zoned_hm(ti->type)) {
-> +			if (!ti->type->iterate_devices ||
-> +			    ti->type->iterate_devices(ti,
-> +						      device_not_zoned_model,
-> +						      &zoned_model))
-> +				return false;
-> +		} else if (!dm_target_supports_mixed_zoned_model(ti->type)) {
-> +			if (zoned_model == BLK_ZONED_HM)
-> +				return false;
-> +		}
->  	}
->  
->  	return true;
-> @@ -1621,9 +1631,17 @@ static int device_not_matches_zone_sectors(struct dm_target *ti, struct dm_dev *
->  	struct request_queue *q = bdev_get_queue(dev->bdev);
->  	unsigned int *zone_sectors = data;
->  
-> +	if (!blk_queue_is_zoned(q))
-> +		return 0;
-> +
->  	return blk_queue_zone_sectors(q) != *zone_sectors;
->  }
->  
-> +/*
-> + * Check consistency of zoned model and zone sectors across all targets. For
-> + * zone sectors, if the destination device is a zoned block device, it shall
-> + * have the specified zone_sectors.
-> + */
->  static int validate_hardware_zoned_model(struct dm_table *table,
->  					 enum blk_zoned_model zoned_model,
->  					 unsigned int zone_sectors)
-> @@ -1642,7 +1660,7 @@ static int validate_hardware_zoned_model(struct dm_table *table,
->  		return -EINVAL;
->  
->  	if (dm_table_any_dev_attr(table, device_not_matches_zone_sectors, &zone_sectors)) {
-> -		DMERR("%s: zone sectors is not consistent across all devices",
-> +		DMERR("%s: zone sectors is not consistent across all zoned devices",
->  		      dm_device_name(table->md));
->  		return -EINVAL;
->  	}
-> diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-> index 697f9de37355..7e88df64d197 100644
-> --- a/drivers/md/dm-zoned-target.c
-> +++ b/drivers/md/dm-zoned-target.c
-> @@ -1143,7 +1143,7 @@ static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
->  static struct target_type dmz_type = {
->  	.name		 = "zoned",
->  	.version	 = {2, 0, 0},
-> -	.features	 = DM_TARGET_SINGLETON | DM_TARGET_ZONED_HM,
-> +	.features	 = DM_TARGET_SINGLETON | DM_TARGET_MIXED_ZONED_MODEL,
-
-Thinking about it, DM_TARGET_SINGLETON is wrong for dm-zoned now that we can
-create devices using multiple devices... But it does not seem to matter much
-since it really looks like this flag is totally unused/unchecked by DM core.
-Maybe something we can remove in a followup cleanup ? Mike ?
-
-
->  	.module		 = THIS_MODULE,
->  	.ctr		 = dmz_ctr,
->  	.dtr		 = dmz_dtr,
-> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-> index 7f4ac87c0b32..5c641f930caf 100644
-> --- a/include/linux/device-mapper.h
-> +++ b/include/linux/device-mapper.h
-> @@ -253,7 +253,11 @@ struct target_type {
->  #define dm_target_passes_integrity(type) ((type)->features & DM_TARGET_PASSES_INTEGRITY)
->  
->  /*
-> - * Indicates that a target supports host-managed zoned block devices.
-> + * Indicates support for zoned block devices:
-> + * - DM_TARGET_ZONED_HM: the target also supports host-managed zoned
-> + *   block devices but does not support combining different zoned models.
-> + * - DM_TARGET_MIXED_ZONED_MODEL: the target supports combining multiple
-> + *   devices with different zoned models.
->   */
->  #ifdef CONFIG_BLK_DEV_ZONED
->  #define DM_TARGET_ZONED_HM		0x00000040
-> @@ -275,6 +279,15 @@ struct target_type {
->  #define DM_TARGET_PASSES_CRYPTO		0x00000100
->  #define dm_target_passes_crypto(type) ((type)->features & DM_TARGET_PASSES_CRYPTO)
->  
-> +#ifdef CONFIG_BLK_DEV_ZONED
-> +#define DM_TARGET_MIXED_ZONED_MODEL	0x00000200
-> +#define dm_target_supports_mixed_zoned_model(type) \
-> +	((type)->features & DM_TARGET_MIXED_ZONED_MODEL)
-> +#else
-> +#define DM_TARGET_MIXED_ZONED_MODEL	0x00000000
-> +#define dm_target_supports_mixed_zoned_model(type) (false)
-> +#endif
-> +
->  struct dm_target {
->  	struct dm_table *table;
->  	struct target_type *type;
-> 
-
-
--- 
-Damien Le Moal
-Western Digital Research
-
-
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+Ck9uIDIwMjEvMi84IDY6NTUg5LiL5Y2ILCBTaGl5YW5nIFJ1YW4gd3JvdGU6Cj4gVGhlIGN1cnJl
+bnQgbWVtb3J5X2ZhaWx1cmVfZGV2X3BhZ2VtYXAoKSBjYW4gb25seSBoYW5kbGUgc2luZ2xlLW1h
+cHBlZAo+IGRheCBwYWdlIGZvciBmc2RheCBtb2RlLiAgVGhlIGRheCBwYWdlIGNvdWxkIGJlIG1h
+cHBlZCBieSBtdWx0aXBsZSBmaWxlcwo+IGFuZCBvZmZzZXRzIGlmIHdlIGxldCByZWZsaW5rIGZl
+YXR1cmUgJiBmc2RheCBtb2RlIHdvcmsgdG9nZXRoZXIuICBTbywKPiB3ZSByZWZhY3RvciBjdXJy
+ZW50IGltcGxlbWVudGF0aW9uIHRvIHN1cHBvcnQgaGFuZGxlIG1lbW9yeSBmYWlsdXJlIG9uCj4g
+ZWFjaCBmaWxlIGFuZCBvZmZzZXQuCj4KPiBTaWduZWQtb2ZmLWJ5OiBTaGl5YW5nIFJ1YW4gPHJ1
+YW5zeS5mbnN0QGNuLmZ1aml0c3UuY29tPgo+IC0tLQo+ICAgZnMvZGF4LmMgICAgICAgICAgICB8
+IDIxICsrKysrKysrKysKPiAgIGluY2x1ZGUvbGludXgvZGF4LmggfCAgMSArCj4gICBpbmNsdWRl
+L2xpbnV4L21tLmggIHwgIDkgKysrKysKPiAgIG1tL21lbW9yeS1mYWlsdXJlLmMgfCA5OCArKysr
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrLS0tLS0tLS0tLS0KPiAgIDQgZmlsZXMgY2hh
+bmdlZCwgMTA1IGluc2VydGlvbnMoKyksIDI0IGRlbGV0aW9ucygtKQo+Cj4gZGlmZiAtLWdpdCBh
+L2ZzL2RheC5jIGIvZnMvZGF4LmMKPiBpbmRleCAyNmQ1ZGNkMmQ2OWUuLmM2NGMzYTBlNzZhNiAx
+MDA2NDQKPiAtLS0gYS9mcy9kYXguYwo+ICsrKyBiL2ZzL2RheC5jCj4gQEAgLTM3OCw2ICszNzgs
+MjcgQEAgc3RhdGljIHN0cnVjdCBwYWdlICpkYXhfYnVzeV9wYWdlKHZvaWQgKmVudHJ5KQo+ICAg
+CXJldHVybiBOVUxMOwo+ICAgfQo+ICAgCj4gKy8qCj4gKyAqIGRheF9sb2FkX3BmbiAtIExvYWQg
+cGZuIG9mIHRoZSBEQVggZW50cnkgY29ycmVzcG9uZGluZyB0byBhIHBhZ2UKPiArICogQG1hcHBp
+bmc6IFRoZSBmaWxlIHdob3NlIGVudHJ5IHdlIHdhbnQgdG8gbG9hZAo+ICsgKiBAaW5kZXg6ICAg
+VGhlIG9mZnNldCB3aGVyZSB0aGUgREFYIGVudHJ5IGxvY2F0ZWQgaW4KPiArICoKPiArICogUmV0
+dXJuOiAgIHBmbiBvZiB0aGUgREFYIGVudHJ5Cj4gKyAqLwo+ICt1bnNpZ25lZCBsb25nIGRheF9s
+b2FkX3BmbihzdHJ1Y3QgYWRkcmVzc19zcGFjZSAqbWFwcGluZywgdW5zaWduZWQgbG9uZyBpbmRl
+eCkKPiArewo+ICsJWEFfU1RBVEUoeGFzLCAmbWFwcGluZy0+aV9wYWdlcywgaW5kZXgpOwo+ICsJ
+dm9pZCAqZW50cnk7Cj4gKwl1bnNpZ25lZCBsb25nIHBmbjsKPiArCj4gKwl4YXNfbG9ja19pcnEo
+Jnhhcyk7Cj4gKwllbnRyeSA9IHhhc19sb2FkKCZ4YXMpOwo+ICsJcGZuID0gZGF4X3RvX3Bmbihl
+bnRyeSk7Cj4gKwl4YXNfdW5sb2NrX2lycSgmeGFzKTsKPiArCj4gKwlyZXR1cm4gcGZuOwo+ICt9
+Cj4gKwo+ICAgLyoKPiAgICAqIGRheF9sb2NrX21hcHBpbmdfZW50cnkgLSBMb2NrIHRoZSBEQVgg
+ZW50cnkgY29ycmVzcG9uZGluZyB0byBhIHBhZ2UKPiAgICAqIEBwYWdlOiBUaGUgcGFnZSB3aG9z
+ZSBlbnRyeSB3ZSB3YW50IHRvIGxvY2sKPiBkaWZmIC0tZ2l0IGEvaW5jbHVkZS9saW51eC9kYXgu
+aCBiL2luY2x1ZGUvbGludXgvZGF4LmgKPiBpbmRleCBiNTJmMDg0YWE2NDMuLjg5ZTU2Y2VlZmZj
+NyAxMDA2NDQKPiAtLS0gYS9pbmNsdWRlL2xpbnV4L2RheC5oCj4gKysrIGIvaW5jbHVkZS9saW51
+eC9kYXguaAo+IEBAIC0xNTAsNiArMTUwLDcgQEAgaW50IGRheF93cml0ZWJhY2tfbWFwcGluZ19y
+YW5nZShzdHJ1Y3QgYWRkcmVzc19zcGFjZSAqbWFwcGluZywKPiAgIAo+ICAgc3RydWN0IHBhZ2Ug
+KmRheF9sYXlvdXRfYnVzeV9wYWdlKHN0cnVjdCBhZGRyZXNzX3NwYWNlICptYXBwaW5nKTsKPiAg
+IHN0cnVjdCBwYWdlICpkYXhfbGF5b3V0X2J1c3lfcGFnZV9yYW5nZShzdHJ1Y3QgYWRkcmVzc19z
+cGFjZSAqbWFwcGluZywgbG9mZl90IHN0YXJ0LCBsb2ZmX3QgZW5kKTsKPiArdW5zaWduZWQgbG9u
+ZyBkYXhfbG9hZF9wZm4oc3RydWN0IGFkZHJlc3Nfc3BhY2UgKm1hcHBpbmcsIHVuc2lnbmVkIGxv
+bmcgaW5kZXgpOwo+ICAgZGF4X2VudHJ5X3QgZGF4X2xvY2tfcGFnZShzdHJ1Y3QgcGFnZSAqcGFn
+ZSk7Cj4gICB2b2lkIGRheF91bmxvY2tfcGFnZShzdHJ1Y3QgcGFnZSAqcGFnZSwgZGF4X2VudHJ5
+X3QgY29va2llKTsKPiAgICNlbHNlCj4gZGlmZiAtLWdpdCBhL2luY2x1ZGUvbGludXgvbW0uaCBi
+L2luY2x1ZGUvbGludXgvbW0uaAo+IGluZGV4IGVjZGY4YThjZDZhZS4uYWI1MmJjNjMzZDg0IDEw
+MDY0NAo+IC0tLSBhL2luY2x1ZGUvbGludXgvbW0uaAo+ICsrKyBiL2luY2x1ZGUvbGludXgvbW0u
+aAo+IEBAIC0xMTU3LDYgKzExNTcsMTQgQEAgc3RhdGljIGlubGluZSBib29sIGlzX2RldmljZV9w
+cml2YXRlX3BhZ2UoY29uc3Qgc3RydWN0IHBhZ2UgKnBhZ2UpCj4gICAJCXBhZ2UtPnBnbWFwLT50
+eXBlID09IE1FTU9SWV9ERVZJQ0VfUFJJVkFURTsKPiAgIH0KPiAgIAo+ICtzdGF0aWMgaW5saW5l
+IGJvb2wgaXNfZGV2aWNlX2ZzZGF4X3BhZ2UoY29uc3Qgc3RydWN0IHBhZ2UgKnBhZ2UpCj4gK3sK
+PiArCXJldHVybiBJU19FTkFCTEVEKENPTkZJR19ERVZfUEFHRU1BUF9PUFMpICYmCj4gKwkJSVNf
+RU5BQkxFRChDT05GSUdfRlNfREFYKSAmJgo+ICsJCWlzX3pvbmVfZGV2aWNlX3BhZ2UocGFnZSkg
+JiYKPiArCQlwYWdlLT5wZ21hcC0+dHlwZSA9PSBNRU1PUllfREVWSUNFX0ZTX0RBWDsKPiArfQo+
+ICsKPiAgIHN0YXRpYyBpbmxpbmUgYm9vbCBpc19wY2lfcDJwZG1hX3BhZ2UoY29uc3Qgc3RydWN0
+IHBhZ2UgKnBhZ2UpCj4gICB7Cj4gICAJcmV0dXJuIElTX0VOQUJMRUQoQ09ORklHX0RFVl9QQUdF
+TUFQX09QUykgJiYKPiBAQCAtMzA0NSw2ICszMDUzLDcgQEAgZW51bSBtZl9mbGFncyB7Cj4gICAJ
+TUZfTVVTVF9LSUxMID0gMSA8PCAyLAo+ICAgCU1GX1NPRlRfT0ZGTElORSA9IDEgPDwgMywKPiAg
+IH07Cj4gK2V4dGVybiBpbnQgbWZfZGF4X21hcHBpbmdfa2lsbF9wcm9jcyhzdHJ1Y3QgYWRkcmVz
+c19zcGFjZSAqbWFwcGluZywgcGdvZmZfdCBpbmRleCwgaW50IGZsYWdzKTsKPiAgIGV4dGVybiBp
+bnQgbWVtb3J5X2ZhaWx1cmUodW5zaWduZWQgbG9uZyBwZm4sIGludCBmbGFncyk7Cj4gICBleHRl
+cm4gdm9pZCBtZW1vcnlfZmFpbHVyZV9xdWV1ZSh1bnNpZ25lZCBsb25nIHBmbiwgaW50IGZsYWdz
+KTsKPiAgIGV4dGVybiB2b2lkIG1lbW9yeV9mYWlsdXJlX3F1ZXVlX2tpY2soaW50IGNwdSk7Cj4g
+ZGlmZiAtLWdpdCBhL21tL21lbW9yeS1mYWlsdXJlLmMgYi9tbS9tZW1vcnktZmFpbHVyZS5jCj4g
+aW5kZXggZTk0ODE2MzJmY2QxLi4xNThmZTBjOGU2MDIgMTAwNjQ0Cj4gLS0tIGEvbW0vbWVtb3J5
+LWZhaWx1cmUuYwo+ICsrKyBiL21tL21lbW9yeS1mYWlsdXJlLmMKPiBAQCAtNTYsNiArNTYsNyBA
+QAo+ICAgI2luY2x1ZGUgPGxpbnV4L2tmaWZvLmg+Cj4gICAjaW5jbHVkZSA8bGludXgvcmF0ZWxp
+bWl0Lmg+Cj4gICAjaW5jbHVkZSA8bGludXgvcGFnZS1pc29sYXRpb24uaD4KPiArI2luY2x1ZGUg
+PGxpbnV4L2RheC5oPgo+ICAgI2luY2x1ZGUgImludGVybmFsLmgiCj4gICAjaW5jbHVkZSAicmFz
+L3Jhc19ldmVudC5oIgo+ICAgCj4gQEAgLTEyMCw2ICsxMjEsMTMgQEAgc3RhdGljIGludCBod3Bv
+aXNvbl9maWx0ZXJfZGV2KHN0cnVjdCBwYWdlICpwKQo+ICAgCWlmIChQYWdlU2xhYihwKSkKPiAg
+IAkJcmV0dXJuIC1FSU5WQUw7Cj4gICAKPiArCWlmIChwZm5fdmFsaWQocGFnZV90b19wZm4ocCkp
+KSB7Cj4gKwkJaWYgKGlzX2RldmljZV9mc2RheF9wYWdlKHApKQo+ICsJCQlyZXR1cm4gMDsKPiAr
+CQllbHNlCj4gKwkJCXJldHVybiAtRUlOVkFMOwo+ICsJfQo+ICsKPiAgIAltYXBwaW5nID0gcGFn
+ZV9tYXBwaW5nKHApOwo+ICAgCWlmIChtYXBwaW5nID09IE5VTEwgfHwgbWFwcGluZy0+aG9zdCA9
+PSBOVUxMKQo+ICAgCQlyZXR1cm4gLUVJTlZBTDsKPiBAQCAtMjg2LDEwICsyOTQsOSBAQCB2b2lk
+IHNoYWtlX3BhZ2Uoc3RydWN0IHBhZ2UgKnAsIGludCBhY2Nlc3MpCj4gICB9Cj4gICBFWFBPUlRf
+U1lNQk9MX0dQTChzaGFrZV9wYWdlKTsKPiAgIAo+IC1zdGF0aWMgdW5zaWduZWQgbG9uZyBkZXZf
+cGFnZW1hcF9tYXBwaW5nX3NoaWZ0KHN0cnVjdCBwYWdlICpwYWdlLAo+IC0JCXN0cnVjdCB2bV9h
+cmVhX3N0cnVjdCAqdm1hKQo+ICtzdGF0aWMgdW5zaWduZWQgbG9uZyBkZXZfcGFnZW1hcF9tYXBw
+aW5nX3NoaWZ0KHN0cnVjdCB2bV9hcmVhX3N0cnVjdCAqdm1hLAo+ICsJCQkJCSAgICAgICB1bnNp
+Z25lZCBsb25nIGFkZHJlc3MpCj4gICB7Cj4gLQl1bnNpZ25lZCBsb25nIGFkZHJlc3MgPSB2bWFf
+YWRkcmVzcyhwYWdlLCB2bWEpOwo+ICAgCXBnZF90ICpwZ2Q7Cj4gICAJcDRkX3QgKnA0ZDsKPiAg
+IAlwdWRfdCAqcHVkOwo+IEBAIC0zMjksOSArMzM2LDggQEAgc3RhdGljIHVuc2lnbmVkIGxvbmcg
+ZGV2X3BhZ2VtYXBfbWFwcGluZ19zaGlmdChzdHJ1Y3QgcGFnZSAqcGFnZSwKPiAgICAqIFNjaGVk
+dWxlIGEgcHJvY2VzcyBmb3IgbGF0ZXIga2lsbC4KPiAgICAqIFVzZXMgR0ZQX0FUT01JQyBhbGxv
+Y2F0aW9ucyB0byBhdm9pZCBwb3RlbnRpYWwgcmVjdXJzaW9ucyBpbiB0aGUgVk0uCj4gICAgKi8K
+PiAtc3RhdGljIHZvaWQgYWRkX3RvX2tpbGwoc3RydWN0IHRhc2tfc3RydWN0ICp0c2ssIHN0cnVj
+dCBwYWdlICpwLAo+IC0JCSAgICAgICBzdHJ1Y3Qgdm1fYXJlYV9zdHJ1Y3QgKnZtYSwKPiAtCQkg
+ICAgICAgc3RydWN0IGxpc3RfaGVhZCAqdG9fa2lsbCkKPiArc3RhdGljIHZvaWQgYWRkX3RvX2tp
+bGwoc3RydWN0IHRhc2tfc3RydWN0ICp0c2ssIHN0cnVjdCBwYWdlICpwLCBwZ29mZl90IHBnb2Zm
+LAo+ICsJCQlzdHJ1Y3Qgdm1fYXJlYV9zdHJ1Y3QgKnZtYSwgc3RydWN0IGxpc3RfaGVhZCAqdG9f
+a2lsbCkKPiAgIHsKPiAgIAlzdHJ1Y3QgdG9fa2lsbCAqdGs7Cj4gICAKPiBAQCAtMzQyLDkgKzM0
+OCwxMiBAQCBzdGF0aWMgdm9pZCBhZGRfdG9fa2lsbChzdHJ1Y3QgdGFza19zdHJ1Y3QgKnRzaywg
+c3RydWN0IHBhZ2UgKnAsCj4gICAJfQo+ICAgCj4gICAJdGstPmFkZHIgPSBwYWdlX2FkZHJlc3Nf
+aW5fdm1hKHAsIHZtYSk7Cj4gLQlpZiAoaXNfem9uZV9kZXZpY2VfcGFnZShwKSkKPiAtCQl0ay0+
+c2l6ZV9zaGlmdCA9IGRldl9wYWdlbWFwX21hcHBpbmdfc2hpZnQocCwgdm1hKTsKPiAtCWVsc2UK
+PiArCWlmIChpc196b25lX2RldmljZV9wYWdlKHApKSB7Cj4gKwkJaWYgKGlzX2RldmljZV9mc2Rh
+eF9wYWdlKHApKQo+ICsJCQl0ay0+YWRkciA9IHZtYS0+dm1fc3RhcnQgKwo+ICsJCQkJCSgocGdv
+ZmYgLSB2bWEtPnZtX3Bnb2ZmKSA8PCBQQUdFX1NISUZUKTsKPiArCQl0ay0+c2l6ZV9zaGlmdCA9
+IGRldl9wYWdlbWFwX21hcHBpbmdfc2hpZnQodm1hLCB0ay0+YWRkcik7Cj4gKwl9IGVsc2UKPiAg
+IAkJdGstPnNpemVfc2hpZnQgPSBwYWdlX3NoaWZ0KGNvbXBvdW5kX2hlYWQocCkpOwo+ICAgCj4g
+ICAJLyoKPiBAQCAtNDkyLDcgKzUwMSw3IEBAIHN0YXRpYyB2b2lkIGNvbGxlY3RfcHJvY3NfYW5v
+bihzdHJ1Y3QgcGFnZSAqcGFnZSwgc3RydWN0IGxpc3RfaGVhZCAqdG9fa2lsbCwKPiAgIAkJCWlm
+ICghcGFnZV9tYXBwZWRfaW5fdm1hKHBhZ2UsIHZtYSkpCj4gICAJCQkJY29udGludWU7Cj4gICAJ
+CQlpZiAodm1hLT52bV9tbSA9PSB0LT5tbSkKPiAtCQkJCWFkZF90b19raWxsKHQsIHBhZ2UsIHZt
+YSwgdG9fa2lsbCk7Cj4gKwkJCQlhZGRfdG9fa2lsbCh0LCBwYWdlLCAwLCB2bWEsIHRvX2tpbGwp
+Owo+ICAgCQl9Cj4gICAJfQo+ICAgCXJlYWRfdW5sb2NrKCZ0YXNrbGlzdF9sb2NrKTsKPiBAQCAt
+NTAyLDI0ICs1MTEsMTkgQEAgc3RhdGljIHZvaWQgY29sbGVjdF9wcm9jc19hbm9uKHN0cnVjdCBw
+YWdlICpwYWdlLCBzdHJ1Y3QgbGlzdF9oZWFkICp0b19raWxsLAo+ICAgLyoKPiAgICAqIENvbGxl
+Y3QgcHJvY2Vzc2VzIHdoZW4gdGhlIGVycm9yIGhpdCBhIGZpbGUgbWFwcGVkIHBhZ2UuCj4gICAg
+Ki8KPiAtc3RhdGljIHZvaWQgY29sbGVjdF9wcm9jc19maWxlKHN0cnVjdCBwYWdlICpwYWdlLCBz
+dHJ1Y3QgbGlzdF9oZWFkICp0b19raWxsLAo+IC0JCQkJaW50IGZvcmNlX2Vhcmx5KQo+ICtzdGF0
+aWMgdm9pZCBjb2xsZWN0X3Byb2NzX2ZpbGUoc3RydWN0IHBhZ2UgKnBhZ2UsIHN0cnVjdCBhZGRy
+ZXNzX3NwYWNlICptYXBwaW5nLAo+ICsJCXBnb2ZmX3QgcGdvZmYsIHN0cnVjdCBsaXN0X2hlYWQg
+KnRvX2tpbGwsIGludCBmb3JjZV9lYXJseSkKPiAgIHsKPiAgIAlzdHJ1Y3Qgdm1fYXJlYV9zdHJ1
+Y3QgKnZtYTsKPiAgIAlzdHJ1Y3QgdGFza19zdHJ1Y3QgKnRzazsKPiAtCXN0cnVjdCBhZGRyZXNz
+X3NwYWNlICptYXBwaW5nID0gcGFnZS0+bWFwcGluZzsKPiAtCXBnb2ZmX3QgcGdvZmY7Cj4gICAK
+PiAgIAlpX21tYXBfbG9ja19yZWFkKG1hcHBpbmcpOwo+ICAgCXJlYWRfbG9jaygmdGFza2xpc3Rf
+bG9jayk7Cj4gLQlwZ29mZiA9IHBhZ2VfdG9fcGdvZmYocGFnZSk7Cj4gICAJZm9yX2VhY2hfcHJv
+Y2Vzcyh0c2spIHsKPiAgIAkJc3RydWN0IHRhc2tfc3RydWN0ICp0ID0gdGFza19lYXJseV9raWxs
+KHRzaywgZm9yY2VfZWFybHkpOwo+IC0KPiAgIAkJaWYgKCF0KQo+ICAgCQkJY29udGludWU7Cj4g
+LQkJdm1hX2ludGVydmFsX3RyZWVfZm9yZWFjaCh2bWEsICZtYXBwaW5nLT5pX21tYXAsIHBnb2Zm
+LAo+IC0JCQkJICAgICAgcGdvZmYpIHsKPiArCQl2bWFfaW50ZXJ2YWxfdHJlZV9mb3JlYWNoKHZt
+YSwgJm1hcHBpbmctPmlfbW1hcCwgcGdvZmYsIHBnb2ZmKSB7Cj4gICAJCQkvKgo+ICAgCQkJICog
+U2VuZCBlYXJseSBraWxsIHNpZ25hbCB0byB0YXNrcyB3aGVyZSBhIHZtYSBjb3ZlcnMKPiAgIAkJ
+CSAqIHRoZSBwYWdlIGJ1dCB0aGUgY29ycnVwdGVkIHBhZ2UgaXMgbm90IG5lY2Vzc2FyaWx5Cj4g
+QEAgLTUyOCw3ICs1MzIsNyBAQCBzdGF0aWMgdm9pZCBjb2xsZWN0X3Byb2NzX2ZpbGUoc3RydWN0
+IHBhZ2UgKnBhZ2UsIHN0cnVjdCBsaXN0X2hlYWQgKnRvX2tpbGwsCj4gICAJCQkgKiB0byBiZSBp
+bmZvcm1lZCBvZiBhbGwgc3VjaCBkYXRhIGNvcnJ1cHRpb25zLgo+ICAgCQkJICovCj4gICAJCQlp
+ZiAodm1hLT52bV9tbSA9PSB0LT5tbSkKPiAtCQkJCWFkZF90b19raWxsKHQsIHBhZ2UsIHZtYSwg
+dG9fa2lsbCk7Cj4gKwkJCQlhZGRfdG9fa2lsbCh0LCBwYWdlLCBwZ29mZiwgdm1hLCB0b19raWxs
+KTsKPiAgIAkJfQo+ICAgCX0KPiAgIAlyZWFkX3VubG9jaygmdGFza2xpc3RfbG9jayk7Cj4gQEAg
+LTU0Nyw3ICs1NTEsOCBAQCBzdGF0aWMgdm9pZCBjb2xsZWN0X3Byb2NzKHN0cnVjdCBwYWdlICpw
+YWdlLCBzdHJ1Y3QgbGlzdF9oZWFkICp0b2tpbGwsCj4gICAJaWYgKFBhZ2VBbm9uKHBhZ2UpKQo+
+ICAgCQljb2xsZWN0X3Byb2NzX2Fub24ocGFnZSwgdG9raWxsLCBmb3JjZV9lYXJseSk7Cj4gICAJ
+ZWxzZQo+IC0JCWNvbGxlY3RfcHJvY3NfZmlsZShwYWdlLCB0b2tpbGwsIGZvcmNlX2Vhcmx5KTsK
+PiArCQljb2xsZWN0X3Byb2NzX2ZpbGUocGFnZSwgcGFnZV9tYXBwaW5nKHBhZ2UpLCBwYWdlX3Rv
+X3Bnb2ZmKHBhZ2UpLAo+ICsJCQkJICAgdG9raWxsLCBmb3JjZV9lYXJseSk7Cj4gICB9Cj4gICAK
+PiAgIHN0YXRpYyBjb25zdCBjaGFyICphY3Rpb25fbmFtZVtdID0gewo+IEBAIC0xMjE0LDYgKzEy
+MTksNTAgQEAgc3RhdGljIGludCB0cnlfdG9fc3BsaXRfdGhwX3BhZ2Uoc3RydWN0IHBhZ2UgKnBh
+Z2UsIGNvbnN0IGNoYXIgKm1zZykKPiAgIAlyZXR1cm4gMDsKPiAgIH0KPiAgIAo+ICtpbnQgbWZf
+ZGF4X21hcHBpbmdfa2lsbF9wcm9jcyhzdHJ1Y3QgYWRkcmVzc19zcGFjZSAqbWFwcGluZywgcGdv
+ZmZfdCBpbmRleCwgaW50IGZsYWdzKQo+ICt7Cj4gKwljb25zdCBib29sIHVubWFwX3N1Y2Nlc3Mg
+PSB0cnVlOwo+ICsJdW5zaWduZWQgbG9uZyBwZm4sIHNpemUgPSAwOwo+ICsJc3RydWN0IHRvX2tp
+bGwgKnRrOwo+ICsJTElTVF9IRUFEKHRvX2tpbGwpOwo+ICsJaW50IHJjID0gLUVCVVNZOwo+ICsJ
+bG9mZl90IHN0YXJ0Owo+ICsKPiArCS8qIGxvYWQgdGhlIHBmbiBvZiB0aGUgZGF4IG1hcHBpbmcg
+ZmlsZSAqLwo+ICsJcGZuID0gZGF4X2xvYWRfcGZuKG1hcHBpbmcsIGluZGV4KTsKPiArCWlmICgh
+cGZuKQo+ICsJCXJldHVybiByYzsKPiArCS8qCj4gKwkgKiBVbmxpa2UgU3lzdGVtLVJBTSB0aGVy
+ZSBpcyBubyBwb3NzaWJpbGl0eSB0byBzd2FwIGluIGEKPiArCSAqIGRpZmZlcmVudCBwaHlzaWNh
+bCBwYWdlIGF0IGEgZ2l2ZW4gdmlydHVhbCBhZGRyZXNzLCBzbyBhbGwKPiArCSAqIHVzZXJzcGFj
+ZSBjb25zdW1wdGlvbiBvZiBaT05FX0RFVklDRSBtZW1vcnkgbmVjZXNzaXRhdGVzCj4gKwkgKiBT
+SUdCVVMgKGkuZS4gTUZfTVVTVF9LSUxMKQo+ICsJICovCj4gKwlmbGFncyB8PSBNRl9BQ1RJT05f
+UkVRVUlSRUQgfCBNRl9NVVNUX0tJTEw7CgpNRl9BQ1RJT05fUkVRVUlSRUQgb25seSBraWxsIHRo
+ZSBjdXJyZW50IGV4ZWN1dGlvbiBjb250ZXh0LiBBIHBhZ2UgY2FuIGJlIHNoYXJlZAp3aGVuIHJl
+ZmxpbmsgZmlsZSBiZSBtYXBwZWQgYnkgZGlmZmVyZW50IHByb2Nlc3MuIFdlIGNhbiBub3Qga2ls
+bCBhbGwgcHJvY2VzcwpzaGFyZWQgdGhlIHBhZ2UuICBPdGhlciBwcm9jZXNzIHN0aWxsIGNhbiBh
+Y2Nlc3MgdGhlIHBvc2lvbmVkIHBhZ2UgPwoKVGhhbmtzLAp6aG9uZyBqaWFuZwoKPiArCWNvbGxl
+Y3RfcHJvY3NfZmlsZShwZm5fdG9fcGFnZShwZm4pLCBtYXBwaW5nLCBpbmRleCwgJnRvX2tpbGws
+Cj4gKwkJCSAgIGZsYWdzICYgTUZfQUNUSU9OX1JFUVVJUkVEKTsKPiArCj4gKwlsaXN0X2Zvcl9l
+YWNoX2VudHJ5KHRrLCAmdG9fa2lsbCwgbmQpCj4gKwkJaWYgKHRrLT5zaXplX3NoaWZ0KQo+ICsJ
+CQlzaXplID0gbWF4KHNpemUsIDFVTCA8PCB0ay0+c2l6ZV9zaGlmdCk7Cj4gKwlpZiAoc2l6ZSkg
+ewo+ICsJCS8qCj4gKwkJICogVW5tYXAgdGhlIGxhcmdlc3QgbWFwcGluZyB0byBhdm9pZCBicmVh
+a2luZyB1cAo+ICsJCSAqIGRldmljZS1kYXggbWFwcGluZ3Mgd2hpY2ggYXJlIGNvbnN0YW50IHNp
+emUuIFRoZQo+ICsJCSAqIGFjdHVhbCBzaXplIG9mIHRoZSBtYXBwaW5nIGJlaW5nIHRvcm4gZG93
+biBpcwo+ICsJCSAqIGNvbW11bmljYXRlZCBpbiBzaWdpbmZvLCBzZWUga2lsbF9wcm9jKCkKPiAr
+CQkgKi8KPiArCQlzdGFydCA9IChpbmRleCA8PCBQQUdFX1NISUZUKSAmIH4oc2l6ZSAtIDEpOwo+
+ICsJCXVubWFwX21hcHBpbmdfcmFuZ2UobWFwcGluZywgc3RhcnQsIHN0YXJ0ICsgc2l6ZSwgMCk7
+Cj4gKwl9Cj4gKwo+ICsJa2lsbF9wcm9jcygmdG9fa2lsbCwgZmxhZ3MgJiBNRl9NVVNUX0tJTEws
+ICF1bm1hcF9zdWNjZXNzLAo+ICsJCSAgIHBmbiwgZmxhZ3MpOwo+ICsJcmMgPSAwOwo+ICsJcmV0
+dXJuIHJjOwo+ICt9Cj4gK0VYUE9SVF9TWU1CT0xfR1BMKG1mX2RheF9tYXBwaW5nX2tpbGxfcHJv
+Y3MpOwo+ICsKPiAgIHN0YXRpYyBpbnQgbWVtb3J5X2ZhaWx1cmVfaHVnZXRsYih1bnNpZ25lZCBs
+b25nIHBmbiwgaW50IGZsYWdzKQo+ICAgewo+ICAgCXN0cnVjdCBwYWdlICpwID0gcGZuX3RvX3Bh
+Z2UocGZuKTsKPiBAQCAtMTI5Nyw3ICsxMzQ2LDcgQEAgc3RhdGljIGludCBtZW1vcnlfZmFpbHVy
+ZV9kZXZfcGFnZW1hcCh1bnNpZ25lZCBsb25nIHBmbiwgaW50IGZsYWdzLAo+ICAgCWNvbnN0IGJv
+b2wgdW5tYXBfc3VjY2VzcyA9IHRydWU7Cj4gICAJdW5zaWduZWQgbG9uZyBzaXplID0gMDsKPiAg
+IAlzdHJ1Y3QgdG9fa2lsbCAqdGs7Cj4gLQlMSVNUX0hFQUQodG9raWxsKTsKPiArCUxJU1RfSEVB
+RCh0b19raWxsKTsKPiAgIAlpbnQgcmMgPSAtRUJVU1k7Cj4gICAJbG9mZl90IHN0YXJ0Owo+ICAg
+CWRheF9lbnRyeV90IGNvb2tpZTsKPiBAQCAtMTM0NSw5ICsxMzk0LDEwIEBAIHN0YXRpYyBpbnQg
+bWVtb3J5X2ZhaWx1cmVfZGV2X3BhZ2VtYXAodW5zaWduZWQgbG9uZyBwZm4sIGludCBmbGFncywK
+PiAgIAkgKiBTSUdCVVMgKGkuZS4gTUZfTVVTVF9LSUxMKQo+ICAgCSAqLwo+ICAgCWZsYWdzIHw9
+IE1GX0FDVElPTl9SRVFVSVJFRCB8IE1GX01VU1RfS0lMTDsKPiAtCWNvbGxlY3RfcHJvY3MocGFn
+ZSwgJnRva2lsbCwgZmxhZ3MgJiBNRl9BQ1RJT05fUkVRVUlSRUQpOwo+ICsJY29sbGVjdF9wcm9j
+c19maWxlKHBhZ2UsIHBhZ2UtPm1hcHBpbmcsIHBhZ2UtPmluZGV4LCAmdG9fa2lsbCwKPiArCQkJ
+ICAgZmxhZ3MgJiBNRl9BQ1RJT05fUkVRVUlSRUQpOwo+ICAgCj4gLQlsaXN0X2Zvcl9lYWNoX2Vu
+dHJ5KHRrLCAmdG9raWxsLCBuZCkKPiArCWxpc3RfZm9yX2VhY2hfZW50cnkodGssICZ0b19raWxs
+LCBuZCkKPiAgIAkJaWYgKHRrLT5zaXplX3NoaWZ0KQo+ICAgCQkJc2l6ZSA9IG1heChzaXplLCAx
+VUwgPDwgdGstPnNpemVfc2hpZnQpOwo+ICAgCWlmIChzaXplKSB7Cj4gQEAgLTEzNjAsNyArMTQx
+MCw3IEBAIHN0YXRpYyBpbnQgbWVtb3J5X2ZhaWx1cmVfZGV2X3BhZ2VtYXAodW5zaWduZWQgbG9u
+ZyBwZm4sIGludCBmbGFncywKPiAgIAkJc3RhcnQgPSAocGFnZS0+aW5kZXggPDwgUEFHRV9TSElG
+VCkgJiB+KHNpemUgLSAxKTsKPiAgIAkJdW5tYXBfbWFwcGluZ19yYW5nZShwYWdlLT5tYXBwaW5n
+LCBzdGFydCwgc3RhcnQgKyBzaXplLCAwKTsKPiAgIAl9Cj4gLQlraWxsX3Byb2NzKCZ0b2tpbGws
+IGZsYWdzICYgTUZfTVVTVF9LSUxMLCAhdW5tYXBfc3VjY2VzcywgcGZuLCBmbGFncyk7Cj4gKwlr
+aWxsX3Byb2NzKCZ0b19raWxsLCBmbGFncyAmIE1GX01VU1RfS0lMTCwgIXVubWFwX3N1Y2Nlc3Ms
+IHBmbiwgZmxhZ3MpOwo+ICAgCXJjID0gMDsKPiAgIHVubG9jazoKPiAgIAlkYXhfdW5sb2NrX3Bh
+Z2UocGFnZSwgY29va2llKTsKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRo
+YXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2
+ZWw=
 
