@@ -2,137 +2,87 @@ Return-Path: <SRS0=mox9=IO=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
-	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 06B06C433DB
-	for <dm-devel@archiver.kernel.org>; Tue, 16 Mar 2021 03:28:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5E26AC433E0
+	for <dm-devel@archiver.kernel.org>; Tue, 16 Mar 2021 04:36:32 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 5EC1C64F40
-	for <dm-devel@archiver.kernel.org>; Tue, 16 Mar 2021 03:28:49 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5EC1C64F40
+	by mail.kernel.org (Postfix) with ESMTPS id DBD8565105
+	for <dm-devel@archiver.kernel.org>; Tue, 16 Mar 2021 04:36:31 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org DBD8565105
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-45-OvwYvNOkMzWNabz_6XhmCg-1; Mon, 15 Mar 2021 23:28:46 -0400
-X-MC-Unique: OvwYvNOkMzWNabz_6XhmCg-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-261-UpoEuX5LPjmjYBE2D2YLPQ-1; Tue, 16 Mar 2021 00:36:28 -0400
+X-MC-Unique: UpoEuX5LPjmjYBE2D2YLPQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0AE4D3B7C;
-	Tue, 16 Mar 2021 03:28:41 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B69226A038;
-	Tue, 16 Mar 2021 03:28:40 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D4DB184BA4D;
+	Tue, 16 Mar 2021 04:36:22 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E41951F445;
+	Tue, 16 Mar 2021 04:36:21 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5CCAF57DC1;
-	Tue, 16 Mar 2021 03:28:40 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2C78B18155DE;
+	Tue, 16 Mar 2021 04:36:20 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12G3Sc1g004352 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 15 Mar 2021 23:28:38 -0400
+	id 12G4aH6M011471 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 16 Mar 2021 00:36:17 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 32CEB568F1; Tue, 16 Mar 2021 03:28:38 +0000 (UTC)
+	id 6F7C363F24; Tue, 16 Mar 2021 04:36:17 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2AF1463799
-	for <dm-devel@redhat.com>; Tue, 16 Mar 2021 03:28:35 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 68DDE6B5B4
+	for <dm-devel@redhat.com>; Tue, 16 Mar 2021 04:36:10 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A555D811E93
-	for <dm-devel@redhat.com>; Tue, 16 Mar 2021 03:28:35 +0000 (UTC)
-Received: from esa2.hgst.iphmx.com (esa2.hgst.iphmx.com [68.232.143.124])
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8DADA800140
+	for <dm-devel@redhat.com>; Tue, 16 Mar 2021 04:36:10 +0000 (UTC)
+Received: from esa5.hgst.iphmx.com (esa5.hgst.iphmx.com [216.71.153.144])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-483-8dXgVYzTOdynyDx46D1YAQ-1; Mon, 15 Mar 2021 23:28:31 -0400
-X-MC-Unique: 8dXgVYzTOdynyDx46D1YAQ-1
-IronPort-SDR: 9EMduOO6OPjR74EfRZTpPAqS550guTfvSpYzR/qfqh19qO6Q4rMpA6JeUNzw90Mf88fjh9NtWr
-	TXG1PBsAZhtzRSGlQ5x+9+TAsXstgGIfxGkZTQnADMXGh7qGQRC2SNljvKr+FaJMr0+N+1Tnnl
-	jmA5LAEmnEV0Hm/6LDCskn7011VN9K5k49rpAXFx6dJZqbvpryunu0BDmtIIFF9hQskwcn29l/
-	fk/QaPNiCVDVOiOLfATG6pqVPNTrxQj6mgfmy0qj7jX8B/pBQO6MtAy5Aj8UKex6fehMd5P1Wy
-	QVI=
-X-IronPort-AV: E=Sophos;i="5.81,251,1610380800"; d="scan'208";a="266605817"
-Received: from mail-mw2nam12lp2049.outbound.protection.outlook.com (HELO
-	NAM12-MW2-obe.outbound.protection.outlook.com) ([104.47.66.49])
-	by ob1.hgst.iphmx.com with ESMTP; 16 Mar 2021 11:26:28 +0800
-Received: from BYAPR04MB4965.namprd04.prod.outlook.com (2603:10b6:a03:4d::25)
-	by BYAPR04MB5333.namprd04.prod.outlook.com (2603:10b6:a03:c2::27)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3933.32;
-	Tue, 16 Mar 2021 03:26:25 +0000
-Received: from BYAPR04MB4965.namprd04.prod.outlook.com
-	([fe80::c897:a1f8:197a:706b]) by
-	BYAPR04MB4965.namprd04.prod.outlook.com
-	([fe80::c897:a1f8:197a:706b%5]) with mapi id 15.20.3933.032;
-	Tue, 16 Mar 2021 03:26:24 +0000
-From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
-To: Ming Lei <ming.lei@redhat.com>, Jens Axboe <axboe@kernel.dk>
-Thread-Topic: [RFC PATCH 01/11] block: add helper of blk_queue_poll
-Thread-Index: AQHXGhMMI3cXeBzoIUOBWmHIqtHowg==
-Date: Tue, 16 Mar 2021 03:26:24 +0000
-Message-ID: <BYAPR04MB49657BD04960EA2C63ACF4A6866B9@BYAPR04MB4965.namprd04.prod.outlook.com>
-References: <20210316031523.864506-1-ming.lei@redhat.com>
-	<20210316031523.864506-2-ming.lei@redhat.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [199.255.45.62]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-ht: Tenant
-x-ms-office365-filtering-correlation-id: 69e2ca13-5439-41cd-5ea6-08d8e82b4730
-x-ms-traffictypediagnostic: BYAPR04MB5333:
-x-microsoft-antispam-prvs: <BYAPR04MB53338B035384CFEDF0AABCC8866B9@BYAPR04MB5333.namprd04.prod.outlook.com>
-wdcipoutbound: EOP-TRUE
-x-ms-oob-tlc-oobclassifiers: OLM:669
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: aloSD8vFkdniZp6I/LQCofV1gTEEOC3y5oneysx/3fZ3u0H18TpQEThLl232i73PSJHYqI28pTv9BqmGAGYHFTI94duXORq01EBjjnyIOevJ03HlTPbt+J3dn6vcVwtQbfvr9jbtVMR0HpgiIqBGsKGCsyVAAWqxdhr5SbdwCKkvPQi835vqk6tE+81mZD5Zp45dZKaDdL70cereLKm9D1LoVdl7I66brhMtwEtuaXEsZPh9kFHrZHdZC2OSRA6mtpYMnOxbXRT+dKMsKxjWl5LPompBW83Sryl4LONKUWfF6Od4Cc23T2xk8kae5PURprDTGXLH/xj/f8smEMLHPI7/tc+uKIpWLz6FRLnrdozwbE76k5tFKfT+grIVyf2+NNqoMcnnBniA3JlZVQqMSdgYFaQ9WjbZ6TTVs/YtW8AjH/MsXpdxrNHEz8d3aM+urJ3Yb9Le0y6Y2sTThR5QEAABSPl725JJp73l0ropRtzcxAYg+lyYr+iHPibTyRFK6Knoclo6W/w2h4LIQeIUQteLfZwCs1pNB5JcSwHFK+Nsbjxe5sni7BeP3PChMv9x
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:BYAPR04MB4965.namprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(4636009)(366004)(346002)(39860400002)(376002)(396003)(136003)(91956017)(66556008)(53546011)(66476007)(66446008)(33656002)(64756008)(66946007)(76116006)(26005)(110136005)(316002)(6506007)(558084003)(4326008)(71200400001)(5660300002)(186003)(54906003)(86362001)(8936002)(7696005)(55016002)(8676002)(2906002)(9686003)(478600001)(52536014);
-	DIR:OUT; SFP:1102
-x-ms-exchange-antispam-messagedata: =?us-ascii?Q?2g9lpXD1lsk9lGkAJJRNTm1St/lIPS2HmKuICAkZuWWgdv03LvsXK9Jk1n6P?=
-	=?us-ascii?Q?yNP8Hc9+GH/MbU5X53Px/U2dpghuPiTAhY2GJ2noka9RFfeltCxaqsdFP5A+?=
-	=?us-ascii?Q?SP1U3tGUtO4id+bWQLb+IpThl2THCRpSzxyyxuFxVrC+vs4Pgx7smpTa6r4x?=
-	=?us-ascii?Q?qXskcT8W4IBphTGx5Hir5Xc+SA6J2sd2XmpJd9mZn/dE/6+zM5cADLb1S+9E?=
-	=?us-ascii?Q?VBkij5ornVya6UXLRF3qBJ+SPtr6WILlsU2juPfw+BmevfYnWjkbhUGOPA+z?=
-	=?us-ascii?Q?4kB2m+KTxEWAt8ipQ3kExm356Rm/hArIYO2PfojbR+QDZ+3cXDZyHGesMDv4?=
-	=?us-ascii?Q?sIf/M30yp2NoNILUQ7SosD10OljzsrluckXZxfwc5n6T+D9qWxikt4jCwOJf?=
-	=?us-ascii?Q?eGJXGTNmfrqbuKQ16QXqYLvgeaVNPKWrtHqJYlie9QldXFHVhKDW99YkoP4j?=
-	=?us-ascii?Q?YVOJeDJQMKUyKpZoazb7XhgzrWPeJUSYI2LCkVVZvbjYo9g0/i2y3E0Z5Sju?=
-	=?us-ascii?Q?S4kVNuaG1wtitqVQiSnYGmnpktOyYfbj0PSlnWAYoHLpbqvA4zrEURNLxOmc?=
-	=?us-ascii?Q?D9c/7zRmTeEx6JpEb/1IIVGC8O7BJAznqTf7t60mpE41qntNFNFxEW4anYon?=
-	=?us-ascii?Q?pSPFUuTN5Ppu0jbp1hIOJh3ErP+TjVkzRtbiE00mKv8Kf7YSj2+EM1En5Bas?=
-	=?us-ascii?Q?YBVWHI2yyHnBOT3UepOiAL0iVMtIKALZZ+3c7wUaz10O8eewey1XiWj8BU18?=
-	=?us-ascii?Q?/qgZVJUFmuo3HUQST+TKBtccVy+7tlIX/lDzjWkhVzqrtLkl/vbLvTjg9i5M?=
-	=?us-ascii?Q?GIAkPnwc3u7Fmy0RSt2pVZL25XRyuZdfiRwsRw8hB93WgVDhKsWatvDlKf9s?=
-	=?us-ascii?Q?FXV7qA6MWYHL+wdlSPZGGetZhirttjTU63XUM+3GFiozKw62J+78b1eUH//x?=
-	=?us-ascii?Q?Y8aOWUeRlV0EEoL+z9f7LbprBQwIRybVeOC6PZwViVGPq5H1HEMV8DFKxZSH?=
-	=?us-ascii?Q?aG3UxhovzXnp0Cp724rBZi8v+5O/fUPeGXnPr3MXo+qHVfvETvnKgFAiurwM?=
-	=?us-ascii?Q?64YrU3I5pcuJo+yVCU/mXXtKFhEPTjHvrrHypogq+4ELoiQUt94RjkKIX1Cg?=
-	=?us-ascii?Q?v9hRsonJwPkcrEm7EeIDhW1cZhxvhtZCowjK2AqO/CGuERbrLrn69dO/VCBv?=
-	=?us-ascii?Q?yD2EQ9jdL5oI4TfnfA/PnT8Us4Qm+t+gDLCv4GjaDVxw7ws5Vr19YJ0nszPj?=
-	=?us-ascii?Q?94B1XOnjwc0cIccBoG1EB2UqVUZEh52XB2IrKM4OciUHh+FWxAoDKJO4LFNX?=
-	=?us-ascii?Q?DlzkqNsomAepHCZZeVMsSKio?=
-x-ms-exchange-transport-forked: True
+	us-mta-289-wCkbUCyzMBqCHms1xbB71A-1; Tue, 16 Mar 2021 00:36:06 -0400
+X-MC-Unique: wCkbUCyzMBqCHms1xbB71A-1
+IronPort-SDR: TdPuOUBfQ6euiMWXfO7yV0GZQdvbsZ4wyRz+Z/3NnBRZnEGDLw+Z5aomjtccoBazif8WSqK9CQ
+	5nG5Q5+OTCMCOLYW6gSjdLeN3UV3K+a4ySPwK1upB+5nF+eOJYAF840lhrwtjGVRvVJbn95Cr6
+	GNAl63izWaWvgHyH71LE2PUWmxu3pzNPjIRnAToag4KKUfGeF10Qt+EjW8M7nFq+7RQjs3WeOL
+	bVefOQ1TQEnQE80JW8TEHNhFNftLlFhw9hl2iMXIR9UmWDGdlw8XjLkZqGqQW0z5XVNzujBdDV
+	b08=
+X-IronPort-AV: E=Sophos;i="5.81,251,1610380800"; d="scan'208";a="162237835"
+Received: from uls-op-cesaip02.wdc.com (HELO uls-op-cesaep02.wdc.com)
+	([199.255.45.15])
+	by ob1.hgst.iphmx.com with ESMTP; 16 Mar 2021 12:36:04 +0800
+IronPort-SDR: zawZe/rqwVCtfQ1WOBR2CpSxoesZkbB9MZD7u9+mo/gy4cM4BfkMmHV2QHzB3fEstuXOYrfAJc
+	tCWEg8c733EucdMBTjr6SHzD6deg8g7GGNXmdYQBwN0vpGQE3LUfmFcqrUxFvSUQRVekSX2Wn3
+	yMK/9+5l4BJk1Qy+SiIlkuS3vtxcGQ99seDT4Fmi6cO2oYNTJIgycSl6K1dJlRuhCPS55O+dCF
+	sbFlSC08LoeXL//g4OJdMgK4KYZg9woPhyx8cfVYXdk0fzAWQHc3htvJwowXHzuBC7gx/46OQd
+	W3TKjqtnphiqEwnZaBWePNDs
+Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
+	by uls-op-cesaep02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+	15 Mar 2021 21:16:41 -0700
+IronPort-SDR: Oc/Rx3lW89E9ToktVSNltBD/g4+lo3IrURmH/Wug/pU2+8UHum4rXEmFjlYbqetN5BmWPa0Ivw
+	BVdQKjtGqr4/tn/M2LvOXTAuRXMebESEkUt9bhM1v2llMAxsgN86zmy7suf+fCXeM2AyVeK+LE
+	lgceRkIJz4k07vfQtMZ1k/uzIeb/KxZlPHbVllxrFzEubkHG5o3KX15loG1K9LTHJkfxPCyR5h
+	ulaqj1UbNa/esAW+0utIlk9rGXhp8ahyd9ZKdw4tCXCIFL48e3WuKrLmVxI93ixBmDTZ2sBod6
+	CeE=
+WDCIronportException: Internal
+Received: from shindev.dhcp.fujisawa.hgst.com ([10.149.52.189])
+	by uls-op-cesaip02.wdc.com with ESMTP; 15 Mar 2021 21:36:03 -0700
+From: "Shin'ichiro Kawasaki" <shinichiro.kawasaki@wdc.com>
+To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Date: Tue, 16 Mar 2021 13:36:02 +0900
+Message-Id: <20210316043602.1208915-1-shinichiro.kawasaki@wdc.com>
 MIME-Version: 1.0
-X-OriginatorOrg: wdc.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: BYAPR04MB4965.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 69e2ca13-5439-41cd-5ea6-08d8e82b4730
-X-MS-Exchange-CrossTenant-originalarrivaltime: 16 Mar 2021 03:26:24.7018 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: qA44kAFMh6+GowQdIqkJTgrTPas8G7uRa38evEQugvXxV6e4vTsPUiNiqfSO7unsTqSdJJoVTgoTAEsfk83c669Ji8jcyh7kkFupYSKUTPY=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR04MB5333
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -142,14 +92,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 12G3Sc1g004352
 X-loop: dm-devel@redhat.com
-Cc: Mike Snitzer <snitzer@redhat.com>, Christoph,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	Jeffle Xu <jefflexu@linux.alibaba.com>, Hellwig <hch@lst.de>
-Subject: Re: [dm-devel] [RFC PATCH 01/11] block: add helper of blk_queue_poll
+Cc: Jeffle Xu <jefflexu@linux.alibaba.com>,
+	Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>,
+	Damien Le Moal <Damien.LeMoal@wdc.com>
+Subject: [dm-devel] [PATCH v2] dm table: Fix zoned model check and zone
+	sectors check
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -163,26 +111,169 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 3/15/21 20:18, Ming Lei wrote:
-> There has been 3 users, and will be more, so add one such helper.
->
-> Signed-off-by: Ming Lei <ming.lei@redhat.com>
+Commit 24f6b6036c9e ("dm table: fix zoned iterate_devices based device
+capability checks") triggered dm table load failure when dm-zoned device
+is set up for zoned block devices and a regular device for cache.
 
-This looks good to me irrespective of RFC.
+The commit inverted logic of two callback functions for iterate_devices:
+device_is_zoned_model() and device_matches_zone_sectors(). The logic of
+device_is_zoned_model() was inverted then all destination devices of all
+targets in dm table are required to have the expected zoned model. This
+is fine for dm-linear, dm-flakey and dm-crypt on zoned block devices
+since each target has only one destination device. However, this results
+in failure for dm-zoned with regular cache device since that target has
+both regular block device and zoned block devices.
 
-Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
+As for device_matches_zone_sectors(), the commit inverted the logic to
+require all zoned block devices in each target have the specified
+zone_sectors. This check also fails for regular block device which does
+not have zones.
 
+To avoid the check failures, fix the zone model check and the zone
+sectors check. For zone model check, introduce the new feature flag
+DM_TARGET_MIXED_ZONED_MODEL, and set it to dm-zoned target. When the
+target has this flag, allow it to have destination devices with any
+zoned model. For zone sectors check, skip the check if the destination
+device is not a zoned block device. Also add comments and improve an
+error message to clarify expectations to the two checks.
 
+Fixes: 24f6b6036c9e ("dm table: fix zoned iterate_devices based device capability checks")
+Signed-off-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+---
+Changes from v1:
+* Added DM_TARGET_MIXED_ZONED_MODEL feature for zoned model check of dm-zoned
 
+ drivers/md/dm-table.c         | 34 ++++++++++++++++++++++++++--------
+ drivers/md/dm-zoned-target.c  |  2 +-
+ include/linux/device-mapper.h | 15 ++++++++++++++-
+ 3 files changed, 41 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 95391f78b8d5..cc73d5b473eb 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1594,6 +1594,13 @@ static int device_not_zoned_model(struct dm_target *ti, struct dm_dev *dev,
+ 	return blk_queue_zoned_model(q) != *zoned_model;
+ }
+ 
++/*
++ * Check the device zoned model based on the target feature flag. If the target
++ * has the DM_TARGET_ZONED_HM feature flag set, host-managed zoned devices are
++ * also accepted but all devices must have the same zoned model. If the target
++ * has the DM_TARGET_MIXED_ZONED_MODEL feature set, the devices can have any
++ * zoned model with all zoned devices having the same zone size.
++ */
+ static bool dm_table_supports_zoned_model(struct dm_table *t,
+ 					  enum blk_zoned_model zoned_model)
+ {
+@@ -1603,13 +1610,16 @@ static bool dm_table_supports_zoned_model(struct dm_table *t,
+ 	for (i = 0; i < dm_table_get_num_targets(t); i++) {
+ 		ti = dm_table_get_target(t, i);
+ 
+-		if (zoned_model == BLK_ZONED_HM &&
+-		    !dm_target_supports_zoned_hm(ti->type))
+-			return false;
+-
+-		if (!ti->type->iterate_devices ||
+-		    ti->type->iterate_devices(ti, device_not_zoned_model, &zoned_model))
+-			return false;
++		if (dm_target_supports_zoned_hm(ti->type)) {
++			if (!ti->type->iterate_devices ||
++			    ti->type->iterate_devices(ti,
++						      device_not_zoned_model,
++						      &zoned_model))
++				return false;
++		} else if (!dm_target_supports_mixed_zoned_model(ti->type)) {
++			if (zoned_model == BLK_ZONED_HM)
++				return false;
++		}
+ 	}
+ 
+ 	return true;
+@@ -1621,9 +1631,17 @@ static int device_not_matches_zone_sectors(struct dm_target *ti, struct dm_dev *
+ 	struct request_queue *q = bdev_get_queue(dev->bdev);
+ 	unsigned int *zone_sectors = data;
+ 
++	if (!blk_queue_is_zoned(q))
++		return 0;
++
+ 	return blk_queue_zone_sectors(q) != *zone_sectors;
+ }
+ 
++/*
++ * Check consistency of zoned model and zone sectors across all targets. For
++ * zone sectors, if the destination device is a zoned block device, it shall
++ * have the specified zone_sectors.
++ */
+ static int validate_hardware_zoned_model(struct dm_table *table,
+ 					 enum blk_zoned_model zoned_model,
+ 					 unsigned int zone_sectors)
+@@ -1642,7 +1660,7 @@ static int validate_hardware_zoned_model(struct dm_table *table,
+ 		return -EINVAL;
+ 
+ 	if (dm_table_any_dev_attr(table, device_not_matches_zone_sectors, &zone_sectors)) {
+-		DMERR("%s: zone sectors is not consistent across all devices",
++		DMERR("%s: zone sectors is not consistent across all zoned devices",
+ 		      dm_device_name(table->md));
+ 		return -EINVAL;
+ 	}
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index 697f9de37355..7e88df64d197 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -1143,7 +1143,7 @@ static int dmz_message(struct dm_target *ti, unsigned int argc, char **argv,
+ static struct target_type dmz_type = {
+ 	.name		 = "zoned",
+ 	.version	 = {2, 0, 0},
+-	.features	 = DM_TARGET_SINGLETON | DM_TARGET_ZONED_HM,
++	.features	 = DM_TARGET_SINGLETON | DM_TARGET_MIXED_ZONED_MODEL,
+ 	.module		 = THIS_MODULE,
+ 	.ctr		 = dmz_ctr,
+ 	.dtr		 = dmz_dtr,
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 7f4ac87c0b32..5c641f930caf 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -253,7 +253,11 @@ struct target_type {
+ #define dm_target_passes_integrity(type) ((type)->features & DM_TARGET_PASSES_INTEGRITY)
+ 
+ /*
+- * Indicates that a target supports host-managed zoned block devices.
++ * Indicates support for zoned block devices:
++ * - DM_TARGET_ZONED_HM: the target also supports host-managed zoned
++ *   block devices but does not support combining different zoned models.
++ * - DM_TARGET_MIXED_ZONED_MODEL: the target supports combining multiple
++ *   devices with different zoned models.
+  */
+ #ifdef CONFIG_BLK_DEV_ZONED
+ #define DM_TARGET_ZONED_HM		0x00000040
+@@ -275,6 +279,15 @@ struct target_type {
+ #define DM_TARGET_PASSES_CRYPTO		0x00000100
+ #define dm_target_passes_crypto(type) ((type)->features & DM_TARGET_PASSES_CRYPTO)
+ 
++#ifdef CONFIG_BLK_DEV_ZONED
++#define DM_TARGET_MIXED_ZONED_MODEL	0x00000200
++#define dm_target_supports_mixed_zoned_model(type) \
++	((type)->features & DM_TARGET_MIXED_ZONED_MODEL)
++#else
++#define DM_TARGET_MIXED_ZONED_MODEL	0x00000000
++#define dm_target_supports_mixed_zoned_model(type) (false)
++#endif
++
+ struct dm_target {
+ 	struct dm_table *table;
+ 	struct target_type *type;
+-- 
+2.29.2
 
 --
 dm-devel mailing list
