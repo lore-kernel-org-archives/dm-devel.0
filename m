@@ -2,82 +2,97 @@ Return-Path: <SRS0=F0YI=IP=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5E828C433DB
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Mar 2021 19:13:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 65FCFC433E0
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Mar 2021 19:39:38 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 9D49364F10
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Mar 2021 19:13:40 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9D49364F10
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id B2B8064EEC
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Mar 2021 19:39:37 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org B2B8064EEC
+Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=purestorage.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1616008419;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=lqvWGbYfYWuBCh6yfK4L2NlBGqG2OSL21bmw2br4SCA=;
-	b=i5zcnH5zwk0yTdrpqNjj8vEnmgAbBTDWp1mFTEQaz1gUqVp1V5Oh5V7KNdLrd7vfb0qZiB
-	MUBryzfz5tKb664blWz8ELr7DzDj9NlaKGDaFk4ppNo3yl3mVzX4yOmCFfsMpmmkcVnSht
-	9PI/Qya0yVJZsv44e9UidLMgnhuDUdk=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-302-DzlY6WYvO4y2wAlU7_9RyA-1; Wed, 17 Mar 2021 15:13:35 -0400
-X-MC-Unique: DzlY6WYvO4y2wAlU7_9RyA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-592-AEMuIe8_Nfm2MexZ3X1YRw-1; Wed, 17 Mar 2021 15:39:34 -0400
+X-MC-Unique: AEMuIe8_Nfm2MexZ3X1YRw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0CA99107ACCA;
-	Wed, 17 Mar 2021 19:13:30 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4F12D10866A0;
+	Wed, 17 Mar 2021 19:39:30 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9B03D60C13;
-	Wed, 17 Mar 2021 19:13:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8EA0D50AC6;
+	Wed, 17 Mar 2021 19:39:28 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B44771809C83;
-	Wed, 17 Mar 2021 19:13:28 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
-	[10.5.11.22])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7399C1809C83;
+	Wed, 17 Mar 2021 19:39:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12HJDRt1014689 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 17 Mar 2021 15:13:27 -0400
+	id 12HJdPOO016733 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 17 Mar 2021 15:39:25 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 11CDA10023B2; Wed, 17 Mar 2021 19:13:27 +0000 (UTC)
-Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 796A71007625;
-	Wed, 17 Mar 2021 19:13:20 +0000 (UTC)
-Date: Wed, 17 Mar 2021 15:13:19 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Sergei Shtepa <sergei.shtepa@veeam.com>
-Message-ID: <20210317191319.GA30376@redhat.com>
-References: <1615563895-28565-1-git-send-email-sergei.shtepa@veeam.com>
-	<1615563895-28565-3-git-send-email-sergei.shtepa@veeam.com>
-	<YFBnypYemiR08A/c@T590> <20210316163544.GA31272@veeam.com>
-	<YFFxdz84esfiTvNk@T590> <20210317122217.GA31781@veeam.com>
-	<20210317150441.GB29481@redhat.com>
-	<20210317181413.GB31781@veeam.com>
-MIME-Version: 1.0
-In-Reply-To: <20210317181413.GB31781@veeam.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+	id 51AD7F5677; Wed, 17 Mar 2021 19:39:25 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4C068F5587
+	for <dm-devel@redhat.com>; Wed, 17 Mar 2021 19:39:22 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2D27E85A5BA
+	for <dm-devel@redhat.com>; Wed, 17 Mar 2021 19:39:22 +0000 (UTC)
+Received: from mail-qv1-f46.google.com (mail-qv1-f46.google.com
+	[209.85.219.46]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-417-J4w31oW3NvWjyVDbW7WgHw-1; Wed, 17 Mar 2021 15:39:20 -0400
+X-MC-Unique: J4w31oW3NvWjyVDbW7WgHw-1
+Received: by mail-qv1-f46.google.com with SMTP id q9so1975932qvm.6
+	for <dm-devel@redhat.com>; Wed, 17 Mar 2021 12:39:19 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:from:content-transfer-encoding:mime-version
+	:subject:message-id:date:to;
+	bh=dl24h6rvUnlGzkqonk3cydn40MXkH1vG2xIqeXvOik8=;
+	b=NXgt5lR68MQrHApdd4h97HmSFfyAxIP9w7gSGqAmHjqYSSUjzgJyb99LbA4kjug7yd
+	gK/sroI/Ov/kTmIDDj87u2R1B67jZwVHk+rktjR7H3kGkfPxbIwfCRmXP/a2O6ImlimZ
+	5vs7a0/tNA/kNigOlXtjSB85VTRT6FgtjaiahpRQMfgd4iCwjUxe/UIkEgFlGT7YseuZ
+	8AZRwwQIh9+tZGIMxmKhuoga8XwafDC57MdtA1GQfcjMJzdm1VJcPAL9V5sP3ujeMgN4
+	Y+2C2Cn8tbR1zMWbNQ9E56HZY6/EDC4pBBvFlSKFvVmlYeqJJrYuQZSkwN6j9WJxNnd0
+	Hxhw==
+X-Gm-Message-State: AOAM531lkbOYWzWDDVu7ZS/Tk84fPUKctS0/CBW2fR8hc7JkNfhkJn85
+	KF72P2iYI1Ul3aQOJYbyEAsxnUCWEoSicIrgi403bQeUT3/8hmyohMfTDqqe55YfvlrDuH0Wbs6
+	eiHHcmxH6pc4Uc4h1HtUDyJUKOnYBEHPOXOu/BVDAkTklobidR7IZoEvqsYJdZ5F9P/E=
+X-Google-Smtp-Source: ABdhPJx4n4G9IcPHfV9u+qCimI79xIYcHarXvNAqt3OrPiVXij4j/yv1Ek5bTvxlNt6ofjhMxPH2Hg==
+X-Received: by 2002:a0c:fa48:: with SMTP id k8mr749405qvo.19.1616009958859;
+	Wed, 17 Mar 2021 12:39:18 -0700 (PDT)
+Received: from smtpclient.apple ([2600:1700:6970:bea0:15ce:9be6:f7c3:fb2d])
+	by smtp.gmail.com with ESMTPSA id
+	s24sm18216653qks.127.2021.03.17.12.39.17 for <dm-devel@redhat.com>
+	(version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
+	Wed, 17 Mar 2021 12:39:18 -0700 (PDT)
+From: Brian Bunker <brian@purestorage.com>
+Mime-Version: 1.0 (Mac OS X Mail 14.0 \(3654.80.0.2.43\))
+Message-Id: <7D803042-0316-4C64-A273-D35CFFEC7D78@purestorage.com>
+Date: Wed, 17 Mar 2021 12:39:16 -0700
+To: device-mapper development <dm-devel@redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 12HJdPOO016733
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-	Pavel Tide <Pavel.TIde@veeam.com>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	Ming Lei <ming.lei@redhat.com>, Christoph Hellwig <hch@infradead.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH v7 2/3] block: add bdev_interposer
+Subject: [dm-devel] ALUA state unavailable and device discovery
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -91,303 +106,88 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Mar 17 2021 at  2:14pm -0400,
-Sergei Shtepa <sergei.shtepa@veeam.com> wrote:
+Hello All,
 
-> The 03/17/2021 18:04, Mike Snitzer wrote:
-> > On Wed, Mar 17 2021 at  8:22am -0400,
-> > Sergei Shtepa <sergei.shtepa@veeam.com> wrote:
-> > 
-> > > The 03/17/2021 06:03, Ming Lei wrote:
-> > > > On Tue, Mar 16, 2021 at 07:35:44PM +0300, Sergei Shtepa wrote:
-> > > > > The 03/16/2021 11:09, Ming Lei wrote:
-> > > > > > On Fri, Mar 12, 2021 at 06:44:54PM +0300, Sergei Shtepa wrote:
-> > > > > > > bdev_interposer allows to redirect bio requests to another devices.
-> > > > > > > 
-> > > > > > > Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
-> > > > > > > ---
-> > > > > > >  block/bio.c               |  2 ++
-> > > > > > >  block/blk-core.c          | 57 +++++++++++++++++++++++++++++++++++++++
-> > > > > > >  block/genhd.c             | 54 +++++++++++++++++++++++++++++++++++++
-> > > > > > >  include/linux/blk_types.h |  3 +++
-> > > > > > >  include/linux/blkdev.h    |  9 +++++++
-> > > > > > >  5 files changed, 125 insertions(+)
-> > > > > > > 
-> > > > > > > diff --git a/block/bio.c b/block/bio.c
-> > > > > > > index a1c4d2900c7a..0bfbf06475ee 100644
-> > > > > > > --- a/block/bio.c
-> > > > > > > +++ b/block/bio.c
-> > > > > > > @@ -640,6 +640,8 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
-> > > > > > >  		bio_set_flag(bio, BIO_THROTTLED);
-> > > > > > >  	if (bio_flagged(bio_src, BIO_REMAPPED))
-> > > > > > >  		bio_set_flag(bio, BIO_REMAPPED);
-> > > > > > > +	if (bio_flagged(bio_src, BIO_INTERPOSED))
-> > > > > > > +		bio_set_flag(bio, BIO_INTERPOSED);
-> > > > > > >  	bio->bi_opf = bio_src->bi_opf;
-> > > > > > >  	bio->bi_ioprio = bio_src->bi_ioprio;
-> > > > > > >  	bio->bi_write_hint = bio_src->bi_write_hint;
-> > > > > > > diff --git a/block/blk-core.c b/block/blk-core.c
-> > > > > > > index fc60ff208497..da1abc4c27a9 100644
-> > > > > > > --- a/block/blk-core.c
-> > > > > > > +++ b/block/blk-core.c
-> > > > > > > @@ -1018,6 +1018,55 @@ static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
-> > > > > > >  	return ret;
-> > > > > > >  }
-> > > > > > >  
-> > > > > > > +static noinline blk_qc_t submit_bio_interposed(struct bio *bio)
-> > > > > > > +{
-> > > > > > > +	blk_qc_t ret = BLK_QC_T_NONE;
-> > > > > > > +	struct bio_list bio_list[2] = { };
-> > > > > > > +	struct gendisk *orig_disk;
-> > > > > > > +
-> > > > > > > +	if (current->bio_list) {
-> > > > > > > +		bio_list_add(&current->bio_list[0], bio);
-> > > > > > > +		return BLK_QC_T_NONE;
-> > > > > > > +	}
-> > > > > > > +
-> > > > > > > +	orig_disk = bio->bi_bdev->bd_disk;
-> > > > > > > +	if (unlikely(bio_queue_enter(bio)))
-> > > > > > > +		return BLK_QC_T_NONE;
-> > > > > > > +
-> > > > > > > +	current->bio_list = bio_list;
-> > > > > > > +
-> > > > > > > +	do {
-> > > > > > > +		struct block_device *interposer = bio->bi_bdev->bd_interposer;
-> > > > > > > +
-> > > > > > > +		if (unlikely(!interposer)) {
-> > > > > > > +			/* interposer was removed */
-> > > > > > > +			bio_list_add(&current->bio_list[0], bio);
-> > > > > > > +			break;
-> > > > > > > +		}
-> > > > > > > +		/* assign bio to interposer device */
-> > > > > > > +		bio_set_dev(bio, interposer);
-> > > > > > > +		bio_set_flag(bio, BIO_INTERPOSED);
-> > > > > > > +
-> > > > > > > +		if (!submit_bio_checks(bio))
-> > > > > > > +			break;
-> > > > > > > +		/*
-> > > > > > > +		 * Because the current->bio_list is initialized,
-> > > > > > > +		 * the submit_bio callback will always return BLK_QC_T_NONE.
-> > > > > > > +		 */
-> > > > > > > +		interposer->bd_disk->fops->submit_bio(bio);
-> > > > > > 
-> > > > > > Given original request queue may become live when calling attach() and
-> > > > > > detach(), see below comment. bdev_interposer_detach() may be run
-> > > > > > when running ->submit_bio(), meantime the interposer device is
-> > > > > > gone during the period, then kernel oops.
-> > > > > 
-> > > > > I think that since the bio_queue_enter() function was called,
-> > > > > q->q_usage_counter will not allow the critical code in the attach/detach
-> > > > > functions to be executed, which is located between the blk_freeze_queue
-> > > > > and blk_unfreeze_queue calls.
-> > > > > Please correct me if I'm wrong.
-> > > > > 
-> > > > > > 
-> > > > > > > +	} while (false);
-> > > > > > > +
-> > > > > > > +	current->bio_list = NULL;
-> > > > > > > +
-> > > > > > > +	blk_queue_exit(orig_disk->queue);
-> > > > > > > +
-> > > > > > > +	/* Resubmit remaining bios */
-> > > > > > > +	while ((bio = bio_list_pop(&bio_list[0])))
-> > > > > > > +		ret = submit_bio_noacct(bio);
-> > > > > > > +
-> > > > > > > +	return ret;
-> > > > > > > +}
-> > > > > > > +
-> > > > > > >  /**
-> > > > > > >   * submit_bio_noacct - re-submit a bio to the block device layer for I/O
-> > > > > > >   * @bio:  The bio describing the location in memory and on the device.
-> > > > > > > @@ -1029,6 +1078,14 @@ static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
-> > > > > > >   */
-> > > > > > >  blk_qc_t submit_bio_noacct(struct bio *bio)
-> > > > > > >  {
-> > > > > > > +	/*
-> > > > > > > +	 * Checking the BIO_INTERPOSED flag is necessary so that the bio
-> > > > > > > +	 * created by the bdev_interposer do not get to it for processing.
-> > > > > > > +	 */
-> > > > > > > +	if (bdev_has_interposer(bio->bi_bdev) &&
-> > > > > > > +	    !bio_flagged(bio, BIO_INTERPOSED))
-> > > > > > > +		return submit_bio_interposed(bio);
-> > > > > > > +
-> > > > > > >  	if (!submit_bio_checks(bio))
-> > > > > > >  		return BLK_QC_T_NONE;
-> > > > > > >  
-> > > > > > > diff --git a/block/genhd.c b/block/genhd.c
-> > > > > > > index c55e8f0fced1..c840ecffea68 100644
-> > > > > > > --- a/block/genhd.c
-> > > > > > > +++ b/block/genhd.c
-> > > > > > > @@ -30,6 +30,11 @@
-> > > > > > >  static struct kobject *block_depr;
-> > > > > > >  
-> > > > > > >  DECLARE_RWSEM(bdev_lookup_sem);
-> > > > > > > +/*
-> > > > > > > + * Prevents different block-layer interposers from attaching or detaching
-> > > > > > > + * to the block device at the same time.
-> > > > > > > + */
-> > > > > > > +static DEFINE_MUTEX(bdev_interposer_attach_lock);
-> > > > > > >  
-> > > > > > >  /* for extended dynamic devt allocation, currently only one major is used */
-> > > > > > >  #define NR_EXT_DEVT		(1 << MINORBITS)
-> > > > > > > @@ -1940,3 +1945,52 @@ static void disk_release_events(struct gendisk *disk)
-> > > > > > >  	WARN_ON_ONCE(disk->ev && disk->ev->block != 1);
-> > > > > > >  	kfree(disk->ev);
-> > > > > > >  }
-> > > > > > > +
-> > > > > > > +int bdev_interposer_attach(struct block_device *original,
-> > > > > > > +			   struct block_device *interposer)
-> > > > > > > +{
-> > > > > > > +	int ret = 0;
-> > > > > > > +
-> > > > > > > +	if (WARN_ON(((!original) || (!interposer))))
-> > > > > > > +		return -EINVAL;
-> > > > > > > +	/*
-> > > > > > > +	 * interposer should be simple, no a multi-queue device
-> > > > > > > +	 */
-> > > > > > > +	if (!interposer->bd_disk->fops->submit_bio)
-> > > > > > > +		return -EINVAL;
-> > > > > > > +
-> > > > > > > +	if (WARN_ON(!blk_mq_is_queue_frozen(original->bd_disk->queue)))
-> > > > > > > +		return -EPERM;
-> > > > > > 
-> > > > > > The original request queue may become live now...
-> > > > > 
-> > > > > Yes.
-> > > > > I will remove the blk_mq_is_queue_frozen() function and use a different
-> > > > > approach.
-> > > > 
-> > > > Looks what attach and detach needs is that queue is kept as frozen state
-> > > > instead of being froze simply at the beginning of the two functions, so
-> > > > you can simply call freeze/unfreeze inside the two functions.
-> > > > 
-> > > > But what if 'original' isn't a MQ queue?  queue usage counter is just
-> > > > grabed when calling ->submit_bio(), and queue freeze doesn't guarantee there
-> > > > isn't any io activity, is that a problem for bdev_interposer use case?
-> > > > 
-> > > > -- 
-> > > > Ming
-> > > > 
-> > > 
-> > > It makes sense to add freeze_bdev/thaw_bdev. This will be useful.
-> > > For the main file systems, the freeze functions are defined 
-> > > sb->s_op->freeze_super() or sb - >s_op->freeze_fs()
-> > > (btrfs, ext2, ext4, f2fs, jfs, nilfs2, reiserfs, xfs).
-> > > If the file system is frozen, then no new requests should be received.
-> > > 
-> > > But if the file system does not support freeze or the disk is used without
-> > > a file system, as for some databases, freeze_bdev seems useless to me.
-> > > In this case, we will need to stop working with the disk from user-space,
-> > > for example, to freeze the database itself.
-> > > 
-> > > I can add dm_suspend() before bdev_interposer_detach(). This will ensure that
-> > > all intercepted requests have been processed. Applying dm_suspend() before
-> > > bdev_interposer_attach() is pointless. The attachment is made when the target
-> > > is created, and at this time the target is not ready to work yet.
-> > > There shouldn't be any bio requests, I suppose. In addition,
-> > > sb->s_op->freeze_fs() for the interposer will not be called, because the file
-> > > system is not mounted for the interposer device. It should not be able to
-> > > be mounted. To do this, I will add an exclusive opening of the interposer
-> > > device.
-> > > 
-> > > I'll add freeze_bdev() for the original device and dm_suspend() for the
-> > > interposer to the DM code. For normal operation of bdev_interposer,
-> > > it is enough to transfer blk_mq_freeze_queue and blk_mq_quiesce_queue to
-> > > bdev_interposer_attach/bdev_interposer_detach.
-> > > The lock on the counter q->q_usage_counter is enough to not catch NULL in
-> > > bd_interposer.
-> > > 
-> > > Do you think this is enough?
-> > > I think there are no other ways to stop the block device queue.
-> > 
-> > Either you're pretty confused, or I am... regardless.. I think we need
-> > to cover the basics of how interposer is expected to be paired with
-> > an "original" device.
-> 
-> Thank you Mike for your patience. I really appreciate it.
-> I really may not understand something. Let me get this straight.
-> 
-> > 
-> > Those "original" device are already active and potentially in use
-> > right?  They may be either request-based blk-mq _or_ bio-based.
-> 
-> Yes. Exactly.
-> 
-> > 
-> > So what confuses me is that you're making assertions about how actively
-> > used bio-based DM devices aren't in use until the interposed device
-> > create happens... this is all getting very muddled.
-> 
-> The original device is indeed already actively used and already mounted.
-> This is most likely not a DM device.
-> If it is a request-based blk-mq, then it is enough to stop its queue by
-> blk_mq_freeze_queue(). 
-> If it is a bio-based device, then we can try to stop it by freeze_bdev.
-> But in both cases, if the blk_mq_freeze_bdev() function was called, bio cannot
-> get into the critical section between bio_queue_enter() and blk_queue_exit().
-> This allows to safely change the value of original->bd_interposer.
+There seems to be an incompatibility in the Linux SCSI code between SCSI disk
+discovery and the ALUA state unavailable. From the SPC specification if you use
+ALUA state unavailable you also set the peripheral qualifier for that path.
 
-Even though bios cannot get into underlying blk-mq they are already
-inflight on behalf of the upper-layer bio-based device. I'll look closer
-at the code but it seems like there is potential for the original
-device's bios to still be queued to original, past the ->submit_bio
-entry, and waiting for blk-mq to unfreeze.  Meaning upon return from
-what I _think_ you're saying will be sufficient: DM bio-based device
-will carry on submitting IO to the blk-mq device that has since been
-interposed.. that IO will _not_ complete in terms of the interposed
-device.. so you'll have a split-brain dual completion of IO from the
-original bio-based DM device _and_ the interposed device (for any new io
-that hits ->submit_bio after the interposed device is in place).
+While in the unavailable primary target port asymmetric access state, the device
+server shall support those of the following commands that it supports while in the 
+active/optimized state:
+a) INQUIRY (the peripheral qualifier (see 6.6.2) shall be set to 001b)
+...
 
-I think you need to have original bio-based DM suspend, interpose
-device, and then resume the original.  Anything entering original's
-->submit_bio from that point will all get sent to interposed
-device. Right?
+The problem with that is that it limits when the host can discover disks or reboot.
+In order for an sd device to be created, the PQ must be 0. This seems to come from the
+scsi_bus_match function in scsi_sysfs.c.
 
-> To intercept requests to the original device, we create a new md with
-> the DM_INTERPOSE_FLAG flag. It is this interposer device that has not
-> yet been initialized by this time. It just runs DM_TABLE_LOAD_CMD.
-> That is why I think that the queue of this device should not be stopped,
-> since this device has not yet been initialized.
-> 
-> > 
-> > And your lack of understanding of these various IO flushing methods
-> > (freeze/thaw, suspend/resume, etc) is showing.  Please slow down and
-> > approach this more systematically.
-> 
-> For any block device, we can call the freeze_bdev() function. It will 
-> allow to wait until the processing of previously sent requests is 
-> completed and block the sending of new ones. blk_mq_freeze_queue() 
-> allows to change the bd_interposer variable. This allow to attach/detach 
-> the interposer to original device.
+return (sdp->inq_periph_qual == SCSI_INQ_PQ_CON)? 1: 0;
 
-freeze_bdev/thaw_bdev are only relevant if a filesystem is layered
-ontop.  A bio-based DM device can be used directly (by a database or
-whatever).
+So it only will return 1, if the PQ is 0. 
 
-> dm_suspend() is used to stop mapped device. This is what I plan to use
-> before detaching the interposer. It will allow to wait for the
-> completion of all the bios that were sent for the interposer.
+As a result if a SCSI device is discovered while the ALUA state for that path is
+in the unavailable state, an sd device will not be created. An sg device will but
+not an sd one. As a result multipath will not create a dm device. Or, if an existing
+dm device exists, a path for this newly discovered device will not be created. This
+means when the device moves out of unavailable to an active ALUA state, or even
+standby, there is no device, so no path to change the state of in multipath's dm
+device.
 
-Yes, but you need to suspend before attaching the interposer too, to
-flush any in-flight bios that might be in-flight within the various DM
-target code.
+For this reason the ALUA state standby looks attractive since it doesn't have
+the PQ requirement. But looking at the commands required for support in the standby
+ALUA state, there are some that are difficult to support in the disconnected peer
+state, most notably persistent reservations, where not having access to a peer
+can result in an inability to keep a consistent state when and if the path again
+becomes available. The unavailable ALUA state has the right command list to support
+in being disconnected from the source of truth, but the PQ requirement is the
+trade off.
 
-DM should be able to internalize all this when handling the
-DM_INTERPOSE_FLAG during the new table load.  It'd call into
-dm_internal_suspend_fast and then dm_internal_resume_fast for the
-original md device.
+Is the PQ check here because of INQUIRY requests sent to non-existent LUNs leading
+to sd devices being created?
 
-Mike
+In response to an INQUIRY command received by an incorrect logical unit, the SCSI
+target device shall return the INQUIRY data with the peripheral qualifier set to the
+value defined in 6.6.2.
+
+As a test, I changed this line to this to allow sd to create devices where the
+peripheral qualifier is not 011b as opposed to needing to be 000b.
+
+return (sdp->inq_periph_qual != SCSI_INQ_PQ_NOT_CAP)? 1: 0;
+
+This does allow an sd device to be created and multipath to create a path for it
+in a dm device.
+
+3624a93706a10c27f300a496100011010 dm-2 PURE    ,FlashArray      
+size=2.0T features='0' hwhandler='1 alua' wp=rw
+`-+- policy='service-time 0' prio=0 status=enabled
+ `- 7:0:0:1 sdb 8:16 failed undef running
+
+It is in the failed state, but when it comes back to an online ALUA state, the path
+will return to active. There is an inconsistency since if the device was in any other
+state than unavailable when it was discovered and then transitions to the unavailable
+state, the device is already created so it can be transitioned in multipath and all
+is good.
+
+Is there a way to handle both unintended consequence and the ALUA unavailable state?
+
+Thanks,
+Brian
+
+Brian Bunker
+SW Eng
+brian@purestorage.com
+
+
+
 
 --
 dm-devel mailing list
