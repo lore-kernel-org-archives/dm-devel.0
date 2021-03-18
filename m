@@ -1,98 +1,78 @@
-Return-Path: <SRS0=F0YI=IP=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=wQ+j=IQ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 65FCFC433E0
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Mar 2021 19:39:38 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 897BFC433E0
+	for <dm-devel@archiver.kernel.org>; Thu, 18 Mar 2021 02:36:17 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id B2B8064EEC
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Mar 2021 19:39:37 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org B2B8064EEC
-Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=purestorage.com
+	by mail.kernel.org (Postfix) with ESMTPS id E37EB64F20
+	for <dm-devel@archiver.kernel.org>; Thu, 18 Mar 2021 02:36:16 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E37EB64F20
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1616034975;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=vvEuiWczGi1OH/hMhR1QBV192ooSsG9rQQa+IphvFHw=;
+	b=W8C/fZZRxzd6CASFxMCD/kSrdZpg+Ux9P1u5l/S9IScxxEJghprmLnamQ8H5S5A5RKpCSJ
+	RpyaZf15bO4NFenY58qzYdVrjWJ0L3OJOucZM2HWyEgEIin6/OaK3jueR4LxsKBkBmT2oZ
+	JJn1Jj3WWsTVL9HSNefnndl1K/gmtzs=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-592-AEMuIe8_Nfm2MexZ3X1YRw-1; Wed, 17 Mar 2021 15:39:34 -0400
-X-MC-Unique: AEMuIe8_Nfm2MexZ3X1YRw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-531-VAl2lCcoNiKvlMmkWEQZRg-1; Wed, 17 Mar 2021 22:36:09 -0400
+X-MC-Unique: VAl2lCcoNiKvlMmkWEQZRg-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4F12D10866A0;
-	Wed, 17 Mar 2021 19:39:30 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8EA0D50AC6;
-	Wed, 17 Mar 2021 19:39:28 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 52CA7814314;
+	Thu, 18 Mar 2021 02:36:02 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 17B3362678;
+	Thu, 18 Mar 2021 02:36:01 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7399C1809C83;
-	Wed, 17 Mar 2021 19:39:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B901A4BB7C;
+	Thu, 18 Mar 2021 02:35:58 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com
+	[10.5.11.13])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12HJdPOO016733 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 17 Mar 2021 15:39:25 -0400
+	id 12I2ZulJ026644 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 17 Mar 2021 22:35:56 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 51AD7F5677; Wed, 17 Mar 2021 19:39:25 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4C068F5587
-	for <dm-devel@redhat.com>; Wed, 17 Mar 2021 19:39:22 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2D27E85A5BA
-	for <dm-devel@redhat.com>; Wed, 17 Mar 2021 19:39:22 +0000 (UTC)
-Received: from mail-qv1-f46.google.com (mail-qv1-f46.google.com
-	[209.85.219.46]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-417-J4w31oW3NvWjyVDbW7WgHw-1; Wed, 17 Mar 2021 15:39:20 -0400
-X-MC-Unique: J4w31oW3NvWjyVDbW7WgHw-1
-Received: by mail-qv1-f46.google.com with SMTP id q9so1975932qvm.6
-	for <dm-devel@redhat.com>; Wed, 17 Mar 2021 12:39:19 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:from:content-transfer-encoding:mime-version
-	:subject:message-id:date:to;
-	bh=dl24h6rvUnlGzkqonk3cydn40MXkH1vG2xIqeXvOik8=;
-	b=NXgt5lR68MQrHApdd4h97HmSFfyAxIP9w7gSGqAmHjqYSSUjzgJyb99LbA4kjug7yd
-	gK/sroI/Ov/kTmIDDj87u2R1B67jZwVHk+rktjR7H3kGkfPxbIwfCRmXP/a2O6ImlimZ
-	5vs7a0/tNA/kNigOlXtjSB85VTRT6FgtjaiahpRQMfgd4iCwjUxe/UIkEgFlGT7YseuZ
-	8AZRwwQIh9+tZGIMxmKhuoga8XwafDC57MdtA1GQfcjMJzdm1VJcPAL9V5sP3ujeMgN4
-	Y+2C2Cn8tbR1zMWbNQ9E56HZY6/EDC4pBBvFlSKFvVmlYeqJJrYuQZSkwN6j9WJxNnd0
-	Hxhw==
-X-Gm-Message-State: AOAM531lkbOYWzWDDVu7ZS/Tk84fPUKctS0/CBW2fR8hc7JkNfhkJn85
-	KF72P2iYI1Ul3aQOJYbyEAsxnUCWEoSicIrgi403bQeUT3/8hmyohMfTDqqe55YfvlrDuH0Wbs6
-	eiHHcmxH6pc4Uc4h1HtUDyJUKOnYBEHPOXOu/BVDAkTklobidR7IZoEvqsYJdZ5F9P/E=
-X-Google-Smtp-Source: ABdhPJx4n4G9IcPHfV9u+qCimI79xIYcHarXvNAqt3OrPiVXij4j/yv1Ek5bTvxlNt6ofjhMxPH2Hg==
-X-Received: by 2002:a0c:fa48:: with SMTP id k8mr749405qvo.19.1616009958859;
-	Wed, 17 Mar 2021 12:39:18 -0700 (PDT)
-Received: from smtpclient.apple ([2600:1700:6970:bea0:15ce:9be6:f7c3:fb2d])
-	by smtp.gmail.com with ESMTPSA id
-	s24sm18216653qks.127.2021.03.17.12.39.17 for <dm-devel@redhat.com>
-	(version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-	Wed, 17 Mar 2021 12:39:18 -0700 (PDT)
-From: Brian Bunker <brian@purestorage.com>
-Mime-Version: 1.0 (Mac OS X Mail 14.0 \(3654.80.0.2.43\))
-Message-Id: <7D803042-0316-4C64-A273-D35CFFEC7D78@purestorage.com>
-Date: Wed, 17 Mar 2021 12:39:16 -0700
-To: device-mapper development <dm-devel@redhat.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 12HJdPOO016733
+	id C1C6B60C03; Thu, 18 Mar 2021 02:35:56 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 537836F978;
+	Thu, 18 Mar 2021 02:35:53 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 12I2ZpRJ013453; 
+	Wed, 17 Mar 2021 21:35:52 -0500
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 12I2Zp68013452;
+	Wed, 17 Mar 2021 21:35:51 -0500
+Date: Wed, 17 Mar 2021 21:35:51 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: mwilck@suse.com
+Message-ID: <20210318023551.GY15006@octiron.msp.redhat.com>
+References: <20210317172727.8364-1-mwilck@suse.com>
+MIME-Version: 1.0
+In-Reply-To: <20210317172727.8364-1-mwilck@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 X-loop: dm-devel@redhat.com
-Subject: [dm-devel] ALUA state unavailable and device discovery
+Cc: dm-devel@redhat.com
+Subject: Re: [dm-devel] [PATCH 1/2] libmultipath: merge
+ update_multipath_table() and update_multipath_status()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -106,88 +86,249 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hello All,
+On Wed, Mar 17, 2021 at 06:27:26PM +0100, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+> 
+> Since 378cb66 ("multipath: use update_pathvec_from_dm()"),
+> we remove paths and even pathgroups from multipathd's data structures
+> in update_multipath_table() if these paths are found to be non-existent.
+> But update_multipath_status() is called afterwards, and it
+> uses the kernel's mapping of pathgroups and paths, which won't match
+> any more if any members had been removed. disassemble_status() returns
+> an error if the number of path groups doesn't match, causing the
+> entire structure setup to fail. And because disassemble_status()
+> doesn't check the dev_t against the corresponding values in multipathd's
+> data structures, it may assign wrong DM state to paths.
+> 
+> Fix this by calling disassemble_status() before making any changes to
+> the data structure in update_pathvec_from_dm(). This can be easily
+> done, because every call to update_multipath_status() is preceded
+> by a call to update_multipath_table() anyway, and vice versa. So
+> we simply merge the two functions into one. This actually simplifies
+> the code for all callers.
+> 
+> As we remove a symbol, the major library version must be bumped.
 
-There seems to be an incompatibility in the Linux SCSI code between SCSI disk
-discovery and the ALUA state unavailable. From the SPC specification if you use
-ALUA state unavailable you also set the peripheral qualifier for that path.
+A few small questions and comments below
 
-While in the unavailable primary target port asymmetric access state, the device
-server shall support those of the following commands that it supports while in the 
-active/optimized state:
-a) INQUIRY (the peripheral qualifier (see 6.6.2) shall be set to 001b)
-...
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  libmpathpersist/mpath_persist.c   |  1 -
+>  libmultipath/libmultipath.version | 30 ++++++++-----------------
+>  libmultipath/structs_vec.c        | 37 ++++++-------------------------
+>  multipath/main.c                  |  6 ++---
+>  multipathd/main.c                 |  5 +----
+>  5 files changed, 19 insertions(+), 60 deletions(-)
+> 
+> diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
+> index 5c95af2..190e970 100644
+> --- a/libmpathpersist/mpath_persist.c
+> +++ b/libmpathpersist/mpath_persist.c
+> @@ -408,7 +408,6 @@ get_mpvec (vector curmp, vector pathvec, char * refwwid)
+>  			continue;
+>  
+>  		if (update_multipath_table(mpp, pathvec, DI_CHECKER) != DMP_OK ||
+> -		    update_multipath_status(mpp) != DMP_OK ||
+>  		    update_mpp_paths(mpp, pathvec)) {
+>  			condlog(1, "error parsing map %s", mpp->wwid);
+>  			remove_map(mpp, pathvec, curmp, PURGE_VEC);
+> diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+> index e9b4608..0cff311 100644
+> --- a/libmultipath/libmultipath.version
+> +++ b/libmultipath/libmultipath.version
+> @@ -31,7 +31,7 @@
+>   *   The new version inherits the previous ones.
+>   */
+>  
+> -LIBMULTIPATH_4.0.0 {
+> +LIBMULTIPATH_5.0.0 {
+>  global:
+>  	/* symbols referenced by multipath and multipathd */
+>  	add_foreign;
+> @@ -198,7 +198,6 @@ global:
+>  	uevent_is_mpath;
+>  	uevent_listen;
+>  	update_mpp_paths;
+> -	update_multipath_status;
+>  	update_multipath_strings;
+>  	update_multipath_table;
+>  	update_pathvec_from_dm;
+> @@ -256,33 +255,22 @@ global:
+>  	libmultipath_init;
+>  	libmultipath_exit;
+>  
+> -local:
+> -	*;
+> -};
+> -
+> -LIBMULTIPATH_4.1.0 {
+> -global:
+> +	/* added in 4.1.0 */
+>  	libmp_verbosity;
+> -} LIBMULTIPATH_4.0.0;
+>  
+> -LIBMULTIPATH_4.2.0 {
+> -global:
+> +	/* added in 4.2.0 */
+>  	dm_prereq;
+>  	skip_libmp_dm_init;
+> -} LIBMULTIPATH_4.1.0;
+>  
+> -LIBMULTIPATH_4.3.0 {
+> -global:
+> +	/* added in 4.3.0 */
+>  	start_checker_thread;
+> -} LIBMULTIPATH_4.2.0;
+>  
+> -LIBMULTIPATH_4.4.0 {
+> -global:
+> +	/* added in 4.4.0 */
+>  	get_next_string;
+> -} LIBMULTIPATH_4.3.0;
+>  
+> -LIBMULITIPATH_4.5.0 {
+> -global:
+> +	/* added in 4.5.0 */
+>  	get_vpd_sgio;
+>  	trigger_partitions_udev_change;
+> -} LIBMULTIPATH_4.4.0;
+> +local:
+> +	*;
+> +};
+> diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+> index 57cd88a..33c522f 100644
+> --- a/libmultipath/structs_vec.c
+> +++ b/libmultipath/structs_vec.c
+> @@ -432,31 +432,14 @@ update_multipath_table (struct multipath *mpp, vector pathvec, int flags)
+>  		return DMP_ERR;
+>  	}
+>  
+> -	/* FIXME: we should deal with the return value here */
+> -	update_pathvec_from_dm(pathvec, mpp, flags);
+> -
+> -	return DMP_OK;
+> -}
+> -
+> -int
+> -update_multipath_status (struct multipath *mpp)
+> -{
+> -	int r = DMP_ERR;
+> -	char status[PARAMS_SIZE] = {0};
+> -
+> -	if (!mpp)
+> -		return r;
+> -
+> -	r = dm_get_status(mpp->alias, status);
+> -	if (r != DMP_OK) {
+> +	*params = '\0';
+> +	if (dm_get_status(mpp->alias, params) != DMP_OK)
+>  		condlog(3, "%s: %s", mpp->alias, (r == DMP_ERR)? "error getting status" : "map not present");
+> -		return r;
+> -	}
+> -
+> -	if (disassemble_status(status, mpp)) {
+> +	else if (disassemble_status(params, mpp))
+>  		condlog(3, "%s: cannot disassemble status", mpp->alias);
+> -		return DMP_ERR;
+> -	}
 
-The problem with that is that it limits when the host can discover disks or reboot.
-In order for an sd device to be created, the PQ must be 0. This seems to come from the
-scsi_bus_match function in scsi_sysfs.c.
+Is the idea that updating the path/pathgroup status is not critical, so
+even if it fails, update_multipath_table() can still succeed? That makes
+some sense, but it seems like failing to update the status is at least
+not expected, so we should increase the log level.
 
-return (sdp->inq_periph_qual == SCSI_INQ_PQ_CON)? 1: 0;
+> +
+> +	/* FIXME: we should deal with the return value here */
+> +	update_pathvec_from_dm(pathvec, mpp, flags);
+>  
+>  	return DMP_OK;
+>  }
+> @@ -536,19 +519,13 @@ update_multipath_strings(struct multipath *mpp, vector pathvec)
+>  	mpp->pg = NULL;
+>  
+>  	r = update_multipath_table(mpp, pathvec, 0);
+> -	if (r != DMP_OK)
+> -		return r;
 
-So it only will return 1, if the PQ is 0. 
+This one makes less sense to me.  If we failed getting the table, why do
+we still sync the paths? Admittedly, it's hard to know what the right
+thing to do is, when we fail to get the table.
 
-As a result if a SCSI device is discovered while the ALUA state for that path is
-in the unavailable state, an sd device will not be created. An sg device will but
-not an sd one. As a result multipath will not create a dm device. Or, if an existing
-dm device exists, a path for this newly discovered device will not be created. This
-means when the device moves out of unavailable to an active ALUA state, or even
-standby, there is no device, so no path to change the state of in multipath's dm
-device.
+-Ben
 
-For this reason the ALUA state standby looks attractive since it doesn't have
-the PQ requirement. But looking at the commands required for support in the standby
-ALUA state, there are some that are difficult to support in the disconnected peer
-state, most notably persistent reservations, where not having access to a peer
-can result in an inability to keep a consistent state when and if the path again
-becomes available. The unavailable ALUA state has the right command list to support
-in being disconnected from the source of truth, but the PQ requirement is the
-trade off.
-
-Is the PQ check here because of INQUIRY requests sent to non-existent LUNs leading
-to sd devices being created?
-
-In response to an INQUIRY command received by an incorrect logical unit, the SCSI
-target device shall return the INQUIRY data with the peripheral qualifier set to the
-value defined in 6.6.2.
-
-As a test, I changed this line to this to allow sd to create devices where the
-peripheral qualifier is not 011b as opposed to needing to be 000b.
-
-return (sdp->inq_periph_qual != SCSI_INQ_PQ_NOT_CAP)? 1: 0;
-
-This does allow an sd device to be created and multipath to create a path for it
-in a dm device.
-
-3624a93706a10c27f300a496100011010 dm-2 PURE    ,FlashArray      
-size=2.0T features='0' hwhandler='1 alua' wp=rw
-`-+- policy='service-time 0' prio=0 status=enabled
- `- 7:0:0:1 sdb 8:16 failed undef running
-
-It is in the failed state, but when it comes back to an online ALUA state, the path
-will return to active. There is an inconsistency since if the device was in any other
-state than unavailable when it was discovered and then transitions to the unavailable
-state, the device is already created so it can be transitioned in multipath and all
-is good.
-
-Is there a way to handle both unintended consequence and the ALUA unavailable state?
-
-Thanks,
-Brian
-
-Brian Bunker
-SW Eng
-brian@purestorage.com
-
-
-
+>  	sync_paths(mpp, pathvec);
+>  
+> -	r = update_multipath_status(mpp);
+> -	if (r != DMP_OK)
+> -		return r;
+> -
+>  	vector_foreach_slot(mpp->pg, pgp, i)
+>  		if (pgp->paths)
+>  			path_group_prio_update(pgp);
+>  
+> -	return DMP_OK;
+> +	return r;
+>  }
+>  
+>  static void enter_recovery_mode(struct multipath *mpp)
+> diff --git a/multipath/main.c b/multipath/main.c
+> index 3f97582..ef89c7c 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -196,8 +196,7 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+>  			continue;
+>  		}
+>  
+> -		if (update_multipath_table(mpp, pathvec, flags) != DMP_OK ||
+> -		    update_multipath_status(mpp) != DMP_OK) {
+> +		if (update_multipath_table(mpp, pathvec, flags) != DMP_OK) {
+>  			condlog(1, "error parsing map %s", mpp->wwid);
+>  			remove_map(mpp, pathvec, curmp, PURGE_VEC);
+>  			i--;
+> @@ -263,8 +262,7 @@ static int check_usable_paths(struct config *conf,
+>  	if (mpp == NULL)
+>  		goto free;
+>  
+> -	if (update_multipath_table(mpp, pathvec, 0) != DMP_OK ||
+> -		    update_multipath_status(mpp) != DMP_OK)
+> +	if (update_multipath_table(mpp, pathvec, 0) != DMP_OK)
+>  		    goto free;
+>  
+>  	vector_foreach_slot (mpp->pg, pg, i) {
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index e0797cc..154a4ee 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -559,8 +559,6 @@ add_map_without_path (struct vectors *vecs, const char *alias)
+>  
+>  	if (update_multipath_table(mpp, vecs->pathvec, 0) != DMP_OK)
+>  		goto out;
+> -	if (update_multipath_status(mpp) != DMP_OK)
+> -		goto out;
+>  
+>  	if (!vector_alloc_slot(vecs->mpvec))
+>  		goto out;
+> @@ -1469,8 +1467,7 @@ map_discovery (struct vectors * vecs)
+>  		return 1;
+>  
+>  	vector_foreach_slot (vecs->mpvec, mpp, i)
+> -		if (update_multipath_table(mpp, vecs->pathvec, 0) != DMP_OK ||
+> -		    update_multipath_status(mpp) != DMP_OK) {
+> +		if (update_multipath_table(mpp, vecs->pathvec, 0) != DMP_OK) {
+>  			remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
+>  			i--;
+>  		}
+> -- 
+> 2.30.1
 
 --
 dm-devel mailing list
