@@ -2,79 +2,104 @@ Return-Path: <SRS0=wQ+j=IQ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 660B4C433DB
-	for <dm-devel@archiver.kernel.org>; Thu, 18 Mar 2021 14:52:20 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A855BC433DB
+	for <dm-devel@archiver.kernel.org>; Thu, 18 Mar 2021 14:56:46 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id ACEC764F01
-	for <dm-devel@archiver.kernel.org>; Thu, 18 Mar 2021 14:52:19 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org ACEC764F01
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 329AB64F24
+	for <dm-devel@archiver.kernel.org>; Thu, 18 Mar 2021 14:56:46 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 329AB64F24
+Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1616079138;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=EVsIbn0ZnAx7kIqt7spxwEQJr70nZRBuKWZLOoeOLiE=;
-	b=Ij9EgrdGhuy6FvGD80ahwiQqs8plhj7I1XOF9BXzpcJ0//aXWG4Xxb53VwYpjcsazn7s5v
-	8Mjxm3B8ui+IkYUnOjSp5WkPiZP3uQdQ/t/OW9EH+2zXtBquVpP9vVuJ6kC/LHcRGUaodI
-	Mx4/pQv1LorajoFig9Gv463jqBGIQzo=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-101-aIfqVev7NOqnquoxGulHRw-1; Thu, 18 Mar 2021 10:52:16 -0400
-X-MC-Unique: aIfqVev7NOqnquoxGulHRw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-280-zmMzfK84No-ljkNykXaNDg-1; Thu, 18 Mar 2021 10:56:41 -0400
+X-MC-Unique: zmMzfK84No-ljkNykXaNDg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CE28419251CF;
-	Thu, 18 Mar 2021 14:52:01 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C8D90107ACCD;
+	Thu, 18 Mar 2021 14:56:36 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 72F9080009;
-	Thu, 18 Mar 2021 14:51:59 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 79CC019D9B;
+	Thu, 18 Mar 2021 14:56:36 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D8DF61809C84;
-	Thu, 18 Mar 2021 14:51:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
-	[10.5.11.11])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B20321809C83;
+	Thu, 18 Mar 2021 14:56:35 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12IEpvLk011890 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 18 Mar 2021 10:51:57 -0400
+	id 12IEuYrt012487 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 18 Mar 2021 10:56:34 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id C6C6B83E98; Thu, 18 Mar 2021 14:51:56 +0000 (UTC)
-Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3CC178001E;
-	Thu, 18 Mar 2021 14:51:30 +0000 (UTC)
-Date: Thu, 18 Mar 2021 10:51:30 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Ming Lei <ming.lei@redhat.com>
-Message-ID: <20210318145129.GA3305@redhat.com>
-References: <20210316031523.864506-1-ming.lei@redhat.com>
-	<20210316031523.864506-9-ming.lei@redhat.com>
-	<b4dce8c6-61dd-9524-0a55-41db63eb084d@linux.alibaba.com>
-	<YFBbjY+oDpjIHI3P@T590>
-	<b2a33da7-84e6-14ba-c960-988bba448bf4@linux.alibaba.com>
-	<d080f674-d3df-3142-ba69-d117523341d2@linux.alibaba.com>
-	<YFGtaNxL4+Aqr+Go@T590>
+	id 6E4992166BCC; Thu, 18 Mar 2021 14:56:34 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6877D2166BA4
+	for <dm-devel@redhat.com>; Thu, 18 Mar 2021 14:56:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1C260800B24
+	for <dm-devel@redhat.com>; Thu, 18 Mar 2021 14:56:31 +0000 (UTC)
+Received: from mx4.veeam.com (mx4.veeam.com [104.41.138.86]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-449-iK1lOIzwPwKUEp4E--QI-w-1;
+	Thu, 18 Mar 2021 10:56:27 -0400
+X-MC-Unique: iK1lOIzwPwKUEp4E--QI-w-1
+Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mx4.veeam.com (Postfix) with ESMTPS id 768A12F60F;
+	Thu, 18 Mar 2021 17:56:24 +0300 (MSK)
+Received: from veeam.com (172.24.14.5) by prgmbx01.amust.local (172.24.0.171)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.721.2;
+	Thu, 18 Mar 2021 15:56:23 +0100
+Date: Thu, 18 Mar 2021 17:56:17 +0300
+From: Sergei Shtepa <sergei.shtepa@veeam.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Message-ID: <20210318145617.GA32467@veeam.com>
+References: <1615563895-28565-1-git-send-email-sergei.shtepa@veeam.com>
+	<1615563895-28565-3-git-send-email-sergei.shtepa@veeam.com>
+	<YFBnypYemiR08A/c@T590> <20210316163544.GA31272@veeam.com>
+	<YFFxdz84esfiTvNk@T590> <20210317122217.GA31781@veeam.com>
+	<20210317150441.GB29481@redhat.com>
+	<20210317181413.GB31781@veeam.com>
+	<20210317191319.GA30376@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <YFGtaNxL4+Aqr+Go@T590>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+In-Reply-To: <20210317191319.GA30376@redhat.com>
+X-Originating-IP: [172.24.14.5]
+X-ClientProxiedBy: prgmbx02.amust.local (172.24.0.172) To prgmbx01.amust.local
+	(172.24.0.171)
+X-EsetResult: clean, is OK
+X-EsetId: 37303A29D2A50B586D7663
+X-Veeam-MMEX: True
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: JeffleXu <jefflexu@linux.alibaba.com>, Jens Axboe <axboe@kernel.dk>,
-	dm-devel@redhat.com, linux-block@vger.kernel.org,
-	Christoph Hellwig <hch@lst.de>
-Subject: Re: [dm-devel] [RFC PATCH 08/11] block: use per-task poll context
- to implement bio based io poll
+Cc: Jens Axboe <axboe@kernel.dk>,
+	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+	Pavel Tide <Pavel.TIde@veeam.com>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	Ming Lei <ming.lei@redhat.com>, Christoph Hellwig <hch@infradead.org>,
+	"dm-devel@redhat.com" <dm-devel@redhat.com>,
+	Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH v7 2/3] block: add bdev_interposer
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -88,7 +113,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -97,336 +122,321 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Mar 17 2021 at  3:19am -0400,
-Ming Lei <ming.lei@redhat.com> wrote:
-
-> On Wed, Mar 17, 2021 at 11:49:00AM +0800, JeffleXu wrote:
-> > 
-> > 
-> > On 3/16/21 7:00 PM, JeffleXu wrote:
+The 03/17/2021 22:13, Mike Snitzer wrote:
+> On Wed, Mar 17 2021 at  2:14pm -0400,
+> Sergei Shtepa <sergei.shtepa@veeam.com> wrote:
+> 
+> > The 03/17/2021 18:04, Mike Snitzer wrote:
+> > > On Wed, Mar 17 2021 at  8:22am -0400,
+> > > Sergei Shtepa <sergei.shtepa@veeam.com> wrote:
 > > > 
+> > > > The 03/17/2021 06:03, Ming Lei wrote:
+> > > > > On Tue, Mar 16, 2021 at 07:35:44PM +0300, Sergei Shtepa wrote:
+> > > > > > The 03/16/2021 11:09, Ming Lei wrote:
+> > > > > > > On Fri, Mar 12, 2021 at 06:44:54PM +0300, Sergei Shtepa wrote:
+> > > > > > > > bdev_interposer allows to redirect bio requests to another devices.
+> > > > > > > > 
+> > > > > > > > Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
+> > > > > > > > ---
+> > > > > > > >  block/bio.c               |  2 ++
+> > > > > > > >  block/blk-core.c          | 57 +++++++++++++++++++++++++++++++++++++++
+> > > > > > > >  block/genhd.c             | 54 +++++++++++++++++++++++++++++++++++++
+> > > > > > > >  include/linux/blk_types.h |  3 +++
+> > > > > > > >  include/linux/blkdev.h    |  9 +++++++
+> > > > > > > >  5 files changed, 125 insertions(+)
+> > > > > > > > 
+> > > > > > > > diff --git a/block/bio.c b/block/bio.c
+> > > > > > > > index a1c4d2900c7a..0bfbf06475ee 100644
+> > > > > > > > --- a/block/bio.c
+> > > > > > > > +++ b/block/bio.c
+> > > > > > > > @@ -640,6 +640,8 @@ void __bio_clone_fast(struct bio *bio, struct bio *bio_src)
+> > > > > > > >  		bio_set_flag(bio, BIO_THROTTLED);
+> > > > > > > >  	if (bio_flagged(bio_src, BIO_REMAPPED))
+> > > > > > > >  		bio_set_flag(bio, BIO_REMAPPED);
+> > > > > > > > +	if (bio_flagged(bio_src, BIO_INTERPOSED))
+> > > > > > > > +		bio_set_flag(bio, BIO_INTERPOSED);
+> > > > > > > >  	bio->bi_opf = bio_src->bi_opf;
+> > > > > > > >  	bio->bi_ioprio = bio_src->bi_ioprio;
+> > > > > > > >  	bio->bi_write_hint = bio_src->bi_write_hint;
+> > > > > > > > diff --git a/block/blk-core.c b/block/blk-core.c
+> > > > > > > > index fc60ff208497..da1abc4c27a9 100644
+> > > > > > > > --- a/block/blk-core.c
+> > > > > > > > +++ b/block/blk-core.c
+> > > > > > > > @@ -1018,6 +1018,55 @@ static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
+> > > > > > > >  	return ret;
+> > > > > > > >  }
+> > > > > > > >  
+> > > > > > > > +static noinline blk_qc_t submit_bio_interposed(struct bio *bio)
+> > > > > > > > +{
+> > > > > > > > +	blk_qc_t ret = BLK_QC_T_NONE;
+> > > > > > > > +	struct bio_list bio_list[2] = { };
+> > > > > > > > +	struct gendisk *orig_disk;
+> > > > > > > > +
+> > > > > > > > +	if (current->bio_list) {
+> > > > > > > > +		bio_list_add(&current->bio_list[0], bio);
+> > > > > > > > +		return BLK_QC_T_NONE;
+> > > > > > > > +	}
+> > > > > > > > +
+> > > > > > > > +	orig_disk = bio->bi_bdev->bd_disk;
+> > > > > > > > +	if (unlikely(bio_queue_enter(bio)))
+> > > > > > > > +		return BLK_QC_T_NONE;
+> > > > > > > > +
+> > > > > > > > +	current->bio_list = bio_list;
+> > > > > > > > +
+> > > > > > > > +	do {
+> > > > > > > > +		struct block_device *interposer = bio->bi_bdev->bd_interposer;
+> > > > > > > > +
+> > > > > > > > +		if (unlikely(!interposer)) {
+> > > > > > > > +			/* interposer was removed */
+> > > > > > > > +			bio_list_add(&current->bio_list[0], bio);
+> > > > > > > > +			break;
+> > > > > > > > +		}
+> > > > > > > > +		/* assign bio to interposer device */
+> > > > > > > > +		bio_set_dev(bio, interposer);
+> > > > > > > > +		bio_set_flag(bio, BIO_INTERPOSED);
+> > > > > > > > +
+> > > > > > > > +		if (!submit_bio_checks(bio))
+> > > > > > > > +			break;
+> > > > > > > > +		/*
+> > > > > > > > +		 * Because the current->bio_list is initialized,
+> > > > > > > > +		 * the submit_bio callback will always return BLK_QC_T_NONE.
+> > > > > > > > +		 */
+> > > > > > > > +		interposer->bd_disk->fops->submit_bio(bio);
+> > > > > > > 
+> > > > > > > Given original request queue may become live when calling attach() and
+> > > > > > > detach(), see below comment. bdev_interposer_detach() may be run
+> > > > > > > when running ->submit_bio(), meantime the interposer device is
+> > > > > > > gone during the period, then kernel oops.
+> > > > > > 
+> > > > > > I think that since the bio_queue_enter() function was called,
+> > > > > > q->q_usage_counter will not allow the critical code in the attach/detach
+> > > > > > functions to be executed, which is located between the blk_freeze_queue
+> > > > > > and blk_unfreeze_queue calls.
+> > > > > > Please correct me if I'm wrong.
+> > > > > > 
+> > > > > > > 
+> > > > > > > > +	} while (false);
+> > > > > > > > +
+> > > > > > > > +	current->bio_list = NULL;
+> > > > > > > > +
+> > > > > > > > +	blk_queue_exit(orig_disk->queue);
+> > > > > > > > +
+> > > > > > > > +	/* Resubmit remaining bios */
+> > > > > > > > +	while ((bio = bio_list_pop(&bio_list[0])))
+> > > > > > > > +		ret = submit_bio_noacct(bio);
+> > > > > > > > +
+> > > > > > > > +	return ret;
+> > > > > > > > +}
+> > > > > > > > +
+> > > > > > > >  /**
+> > > > > > > >   * submit_bio_noacct - re-submit a bio to the block device layer for I/O
+> > > > > > > >   * @bio:  The bio describing the location in memory and on the device.
+> > > > > > > > @@ -1029,6 +1078,14 @@ static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
+> > > > > > > >   */
+> > > > > > > >  blk_qc_t submit_bio_noacct(struct bio *bio)
+> > > > > > > >  {
+> > > > > > > > +	/*
+> > > > > > > > +	 * Checking the BIO_INTERPOSED flag is necessary so that the bio
+> > > > > > > > +	 * created by the bdev_interposer do not get to it for processing.
+> > > > > > > > +	 */
+> > > > > > > > +	if (bdev_has_interposer(bio->bi_bdev) &&
+> > > > > > > > +	    !bio_flagged(bio, BIO_INTERPOSED))
+> > > > > > > > +		return submit_bio_interposed(bio);
+> > > > > > > > +
+> > > > > > > >  	if (!submit_bio_checks(bio))
+> > > > > > > >  		return BLK_QC_T_NONE;
+> > > > > > > >  
+> > > > > > > > diff --git a/block/genhd.c b/block/genhd.c
+> > > > > > > > index c55e8f0fced1..c840ecffea68 100644
+> > > > > > > > --- a/block/genhd.c
+> > > > > > > > +++ b/block/genhd.c
+> > > > > > > > @@ -30,6 +30,11 @@
+> > > > > > > >  static struct kobject *block_depr;
+> > > > > > > >  
+> > > > > > > >  DECLARE_RWSEM(bdev_lookup_sem);
+> > > > > > > > +/*
+> > > > > > > > + * Prevents different block-layer interposers from attaching or detaching
+> > > > > > > > + * to the block device at the same time.
+> > > > > > > > + */
+> > > > > > > > +static DEFINE_MUTEX(bdev_interposer_attach_lock);
+> > > > > > > >  
+> > > > > > > >  /* for extended dynamic devt allocation, currently only one major is used */
+> > > > > > > >  #define NR_EXT_DEVT		(1 << MINORBITS)
+> > > > > > > > @@ -1940,3 +1945,52 @@ static void disk_release_events(struct gendisk *disk)
+> > > > > > > >  	WARN_ON_ONCE(disk->ev && disk->ev->block != 1);
+> > > > > > > >  	kfree(disk->ev);
+> > > > > > > >  }
+> > > > > > > > +
+> > > > > > > > +int bdev_interposer_attach(struct block_device *original,
+> > > > > > > > +			   struct block_device *interposer)
+> > > > > > > > +{
+> > > > > > > > +	int ret = 0;
+> > > > > > > > +
+> > > > > > > > +	if (WARN_ON(((!original) || (!interposer))))
+> > > > > > > > +		return -EINVAL;
+> > > > > > > > +	/*
+> > > > > > > > +	 * interposer should be simple, no a multi-queue device
+> > > > > > > > +	 */
+> > > > > > > > +	if (!interposer->bd_disk->fops->submit_bio)
+> > > > > > > > +		return -EINVAL;
+> > > > > > > > +
+> > > > > > > > +	if (WARN_ON(!blk_mq_is_queue_frozen(original->bd_disk->queue)))
+> > > > > > > > +		return -EPERM;
+> > > > > > > 
+> > > > > > > The original request queue may become live now...
+> > > > > > 
+> > > > > > Yes.
+> > > > > > I will remove the blk_mq_is_queue_frozen() function and use a different
+> > > > > > approach.
+> > > > > 
+> > > > > Looks what attach and detach needs is that queue is kept as frozen state
+> > > > > instead of being froze simply at the beginning of the two functions, so
+> > > > > you can simply call freeze/unfreeze inside the two functions.
+> > > > > 
+> > > > > But what if 'original' isn't a MQ queue?  queue usage counter is just
+> > > > > grabed when calling ->submit_bio(), and queue freeze doesn't guarantee there
+> > > > > isn't any io activity, is that a problem for bdev_interposer use case?
+> > > > > 
+> > > > > -- 
+> > > > > Ming
+> > > > > 
+> > > > 
+> > > > It makes sense to add freeze_bdev/thaw_bdev. This will be useful.
+> > > > For the main file systems, the freeze functions are defined 
+> > > > sb->s_op->freeze_super() or sb - >s_op->freeze_fs()
+> > > > (btrfs, ext2, ext4, f2fs, jfs, nilfs2, reiserfs, xfs).
+> > > > If the file system is frozen, then no new requests should be received.
+> > > > 
+> > > > But if the file system does not support freeze or the disk is used without
+> > > > a file system, as for some databases, freeze_bdev seems useless to me.
+> > > > In this case, we will need to stop working with the disk from user-space,
+> > > > for example, to freeze the database itself.
+> > > > 
+> > > > I can add dm_suspend() before bdev_interposer_detach(). This will ensure that
+> > > > all intercepted requests have been processed. Applying dm_suspend() before
+> > > > bdev_interposer_attach() is pointless. The attachment is made when the target
+> > > > is created, and at this time the target is not ready to work yet.
+> > > > There shouldn't be any bio requests, I suppose. In addition,
+> > > > sb->s_op->freeze_fs() for the interposer will not be called, because the file
+> > > > system is not mounted for the interposer device. It should not be able to
+> > > > be mounted. To do this, I will add an exclusive opening of the interposer
+> > > > device.
+> > > > 
+> > > > I'll add freeze_bdev() for the original device and dm_suspend() for the
+> > > > interposer to the DM code. For normal operation of bdev_interposer,
+> > > > it is enough to transfer blk_mq_freeze_queue and blk_mq_quiesce_queue to
+> > > > bdev_interposer_attach/bdev_interposer_detach.
+> > > > The lock on the counter q->q_usage_counter is enough to not catch NULL in
+> > > > bd_interposer.
+> > > > 
+> > > > Do you think this is enough?
+> > > > I think there are no other ways to stop the block device queue.
 > > > 
-> > > On 3/16/21 3:17 PM, Ming Lei wrote:
-> > >> On Tue, Mar 16, 2021 at 02:46:08PM +0800, JeffleXu wrote:
-> > >>> It is a giant progress to gather all split bios that need to be polled
-> > >>> in a per-task queue. Still some comments below.
-> > >>>
-> > >>>
-> > >>> On 3/16/21 11:15 AM, Ming Lei wrote:
-> > >>>> Currently bio based IO poll needs to poll all hw queue blindly, this way
-> > >>>> is very inefficient, and the big reason is that we can't pass bio
-> > >>>> submission result to io poll task.
-> > >>>>
-> > >>>> In IO submission context, store associated underlying bios into the
-> > >>>> submission queue and save 'cookie' poll data in bio->bi_iter.bi_private_data,
-> > >>>> and return current->pid to caller of submit_bio() for any DM or bio based
-> > >>>> driver's IO, which is submitted from FS.
-> > >>>>
-> > >>>> In IO poll context, the passed cookie tells us the PID of submission
-> > >>>> context, and we can find the bio from that submission context. Moving
-> > >>>> bio from submission queue to poll queue of the poll context, and keep
-> > >>>> polling until these bios are ended. Remove bio from poll queue if the
-> > >>>> bio is ended. Add BIO_DONE and BIO_END_BY_POLL for such purpose.
-> > >>>>
-> > >>>> Usually submission shares context with io poll. The per-task poll context
-> > >>>> is just like stack variable, and it is cheap to move data between the two
-> > >>>> per-task queues.
-> > >>>>
-> > >>>> Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> > >>>> ---
-> > >>>>  block/bio.c               |   5 ++
-> > >>>>  block/blk-core.c          |  74 +++++++++++++++++-
-> > >>>>  block/blk-mq.c            | 156 +++++++++++++++++++++++++++++++++++++-
-> > >>>>  include/linux/blk_types.h |   3 +
-> > >>>>  4 files changed, 235 insertions(+), 3 deletions(-)
-> > >>>>
-> > >>>> diff --git a/block/bio.c b/block/bio.c
-> > >>>> index a1c4d2900c7a..bcf5eca0e8e3 100644
-> > >>>> --- a/block/bio.c
-> > >>>> +++ b/block/bio.c
-> > >>>> @@ -1402,6 +1402,11 @@ static inline bool bio_remaining_done(struct bio *bio)
-> > >>>>   **/
-> > >>>>  void bio_endio(struct bio *bio)
-> > >>>>  {
-> > >>>> +	/* BIO_END_BY_POLL has to be set before calling submit_bio */
-> > >>>> +	if (bio_flagged(bio, BIO_END_BY_POLL)) {
-> > >>>> +		bio_set_flag(bio, BIO_DONE);
-> > >>>> +		return;
-> > >>>> +	}
-> > >>>>  again:
-> > >>>>  	if (!bio_remaining_done(bio))
-> > >>>>  		return;
-> > >>>> diff --git a/block/blk-core.c b/block/blk-core.c
-> > >>>> index a082bbc856fb..970b23fa2e6e 100644
-> > >>>> --- a/block/blk-core.c
-> > >>>> +++ b/block/blk-core.c
-> > >>>> @@ -854,6 +854,40 @@ static inline void blk_bio_poll_preprocess(struct request_queue *q,
-> > >>>>  		bio->bi_opf |= REQ_TAG;
-> > >>>>  }
-> > >>>>  
-> > >>>> +static bool blk_bio_poll_prep_submit(struct io_context *ioc, struct bio *bio)
-> > >>>> +{
-> > >>>> +	struct blk_bio_poll_data data = {
-> > >>>> +		.bio	=	bio,
-> > >>>> +	};
-> > >>>> +	struct blk_bio_poll_ctx *pc = ioc->data;
-> > >>>> +	unsigned int queued;
-> > >>>> +
-> > >>>> +	/* lock is required if there is more than one writer */
-> > >>>> +	if (unlikely(atomic_read(&ioc->nr_tasks) > 1)) {
-> > >>>> +		spin_lock(&pc->lock);
-> > >>>> +		queued = kfifo_put(&pc->sq, data);
-> > >>>> +		spin_unlock(&pc->lock);
-> > >>>> +	} else {
-> > >>>> +		queued = kfifo_put(&pc->sq, data);
-> > >>>> +	}
-> > >>>> +
-> > >>>> +	/*
-> > >>>> +	 * Now the bio is added per-task fifo, mark it as END_BY_POLL,
-> > >>>> +	 * so we can save cookie into this bio after submit_bio().
-> > >>>> +	 */
-> > >>>> +	if (queued)
-> > >>>> +		bio_set_flag(bio, BIO_END_BY_POLL);
-> > >>>> +	else
-> > >>>> +		bio->bi_opf &= ~(REQ_HIPRI | REQ_TAG);
-> > >>>> +
-> > >>>> +	return queued;
-> > >>>> +}
-> > >>>
-> > >>> The size of kfifo is limited, and it seems that once the sq of kfifio is
-> > >>> full, REQ_HIPRI flag is cleared and the corresponding bio is actually
-> > >>> enqueued into the default hw queue, which is IRQ driven.
-> > >>
-> > >> Yeah, this patch starts with 64 queue depth, and we can increase it to
-> > >> 128, which should cover most of cases.
-> > >>
-> > >>>
-> > >>>
-> > >>>> +
-> > >>>> +static void blk_bio_poll_post_submit(struct bio *bio, blk_qc_t cookie)
-> > >>>> +{
-> > >>>> +	bio->bi_iter.bi_private_data = cookie;
-> > >>>> +}
-> > >>>> +
-> > >>>>  static noinline_for_stack bool submit_bio_checks(struct bio *bio)
-> > >>>>  {
-> > >>>>  	struct block_device *bdev = bio->bi_bdev;
-> > >>>> @@ -1008,7 +1042,7 @@ static blk_qc_t __submit_bio(struct bio *bio)
-> > >>>>   * bio_list_on_stack[1] contains bios that were submitted before the current
-> > >>>>   *	->submit_bio_bio, but that haven't been processed yet.
-> > >>>>   */
-> > >>>> -static blk_qc_t __submit_bio_noacct(struct bio *bio)
-> > >>>> +static blk_qc_t __submit_bio_noacct_int(struct bio *bio, struct io_context *ioc)
-> > >>>>  {
-> > >>>>  	struct bio_list bio_list_on_stack[2];
-> > >>>>  	blk_qc_t ret = BLK_QC_T_NONE;
-> > >>>> @@ -1031,7 +1065,16 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
-> > >>>>  		bio_list_on_stack[1] = bio_list_on_stack[0];
-> > >>>>  		bio_list_init(&bio_list_on_stack[0]);
-> > >>>>  
-> > >>>> -		ret = __submit_bio(bio);
-> > >>>> +		if (ioc && queue_is_mq(q) &&
-> > >>>> +				(bio->bi_opf & (REQ_HIPRI | REQ_TAG))) {
-> > >>>> +			bool queued = blk_bio_poll_prep_submit(ioc, bio);
-> > >>>> +
-> > >>>> +			ret = __submit_bio(bio);
-> > >>>> +			if (queued)
-> > >>>> +				blk_bio_poll_post_submit(bio, ret);
-> > >>>> +		} else {
-> > >>>> +			ret = __submit_bio(bio);
-> > >>>> +		}
-> > >>>>  
-> > >>>>  		/*
-> > >>>>  		 * Sort new bios into those for a lower level and those for the
-> > >>>> @@ -1057,6 +1100,33 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
-> > >>>>  	return ret;
-> > >>>>  }
-> > >>>>  
-> > >>>> +static inline blk_qc_t __submit_bio_noacct_poll(struct bio *bio,
-> > >>>> +		struct io_context *ioc)
-> > >>>> +{
-> > >>>> +	struct blk_bio_poll_ctx *pc = ioc->data;
-> > >>>> +	int entries = kfifo_len(&pc->sq);
-> > >>>> +
-> > >>>> +	__submit_bio_noacct_int(bio, ioc);
-> > >>>> +
-> > >>>> +	/* bio submissions queued to per-task poll context */
-> > >>>> +	if (kfifo_len(&pc->sq) > entries)
-> > >>>> +		return current->pid;
-> > >>>> +
-> > >>>> +	/* swapper's pid is 0, but it can't submit poll IO for us */
-> > >>>> +	return 0;
-> > >>>> +}
-> > >>>> +
-> > >>>> +static inline blk_qc_t __submit_bio_noacct(struct bio *bio)
-> > >>>> +{
-> > >>>> +	struct io_context *ioc = current->io_context;
-> > >>>> +
-> > >>>> +	if (ioc && ioc->data && (bio->bi_opf & REQ_HIPRI))
-> > >>>> +		return __submit_bio_noacct_poll(bio, ioc);
-> > >>>> +
-> > >>>> +	return __submit_bio_noacct_int(bio, NULL);
-> > >>>> +}
-> > >>>> +
-> > >>>> +
-> > >>>>  static blk_qc_t __submit_bio_noacct_mq(struct bio *bio)
-> > >>>>  {
-> > >>>>  	struct bio_list bio_list[2] = { };
-> > >>>> diff --git a/block/blk-mq.c b/block/blk-mq.c
-> > >>>> index 03f59915fe2c..4e6f1467d303 100644
-> > >>>> --- a/block/blk-mq.c
-> > >>>> +++ b/block/blk-mq.c
-> > >>>> @@ -3865,14 +3865,168 @@ static inline int blk_mq_poll_hctx(struct request_queue *q,
-> > >>>>  	return ret;
-> > >>>>  }
-> > >>>>  
-> > >>>> +static blk_qc_t bio_get_poll_cookie(struct bio *bio)
-> > >>>> +{
-> > >>>> +	return bio->bi_iter.bi_private_data;
-> > >>>> +}
-> > >>>> +
-> > >>>> +static int blk_mq_poll_io(struct bio *bio)
-> > >>>> +{
-> > >>>> +	struct request_queue *q = bio->bi_bdev->bd_disk->queue;
-> > >>>> +	blk_qc_t cookie = bio_get_poll_cookie(bio);
-> > >>>> +	int ret = 0;
-> > >>>> +
-> > >>>> +	if (!bio_flagged(bio, BIO_DONE) && blk_qc_t_valid(cookie)) {
-> > >>>> +		struct blk_mq_hw_ctx *hctx =
-> > >>>> +			q->queue_hw_ctx[blk_qc_t_to_queue_num(cookie)];
-> > >>>> +
-> > >>>> +		ret += blk_mq_poll_hctx(q, hctx);
-> > >>>> +	}
-> > >>>> +	return ret;
-> > >>>> +}
-> > >>>> +
-> > >>>> +static int blk_bio_poll_and_end_io(struct request_queue *q,
-> > >>>> +		struct blk_bio_poll_ctx *poll_ctx)
-> > >>>> +{
-> > >>>> +	struct blk_bio_poll_data *poll_data = &poll_ctx->pq[0];
-> > >>>> +	int ret = 0;
-> > >>>> +	int i;
-> > >>>> +
-> > >>>> +	for (i = 0; i < BLK_BIO_POLL_PQ_SZ; i++) {
-> > >>>> +		struct bio *bio = poll_data[i].bio;
-> > >>>> +
-> > >>>> +		if (!bio)
-> > >>>> +			continue;
-> > >>>> +
-> > >>>> +		ret += blk_mq_poll_io(bio);
-> > >>>> +		if (bio_flagged(bio, BIO_DONE)) {
-> > >>>> +			poll_data[i].bio = NULL;
-> > >>>> +
-> > >>>> +			/* clear BIO_END_BY_POLL and end me really */
-> > >>>> +			bio_clear_flag(bio, BIO_END_BY_POLL);
-> > >>>> +			bio_endio(bio);
-> > >>>> +		}
-> > >>>> +	}
-> > >>>> +	return ret;
-> > >>>> +}
-> > >>>
-> > >>> When there are multiple threads polling, saying thread A and thread B,
-> > >>> then there's one bio which should be polled by thread A (the pid is
-> > >>> passed to thread A), while it's actually completed by thread B. In this
-> > >>> case, when the bio is completed by thread B, the bio is not really
-> > >>> completed and one extra blk_poll() still needs to be called.
-> > >>
-> > >> When this happens, the dm bio can't be completed, and the associated
-> > >> kiocb can't be completed too, io_uring or other poll code context will
-> > >> keep calling blk_poll() by passing thread A's pid until this dm bio is
-> > >> done, since the dm bio is submitted from thread A.
-> > >>
+> > > Either you're pretty confused, or I am... regardless.. I think we need
+> > > to cover the basics of how interposer is expected to be paired with
+> > > an "original" device.
+> > 
+> > Thank you Mike for your patience. I really appreciate it.
+> > I really may not understand something. Let me get this straight.
+> > 
 > > > 
-> > > This will affect the multi-thread polling performance. I tested
-> > > dm-stripe, in which every bio will be split and enqueued into all
-> > > underlying devices, and thus amplify the interference between multiple
-> > > threads.
+> > > Those "original" device are already active and potentially in use
+> > > right?  They may be either request-based blk-mq _or_ bio-based.
+> > 
+> > Yes. Exactly.
+> > 
 > > > 
-> > > Test Result:
-> > > IOPS: 332k (IRQ) -> 363k (iopoll), aka ~10% performance gain
+> > > So what confuses me is that you're making assertions about how actively
+> > > used bio-based DM devices aren't in use until the interposed device
+> > > create happens... this is all getting very muddled.
 > > 
-> > Sorry this performance drop is not related to this bio refcount issue
-> > here. Still it's due to the limited kfifo size.
-> > 
-> > 
-> > I did another through test on another machine (aarch64 with more nvme
-> > disks).
-> > 
-> > - Without mentioned specifically, the configuration is 'iodepth=128,
-> > kfifo queue depth =128'.
-> > - The number before '->' indicates the IOPS in IRQ mode, i.e.,
-> > 'hipri=0', while the number after '->' indicates the IOPS in polling
-> > mode, i.e., 'hipri=1'.
-> > 
-> > ```
-> > 3-threads  dm-linear-3 targets (4k randread IOPS, unit K)
-> > 5.12-rc1: 667
-> > leiming: 674 -> 849
-> > ours 8353c1a: 623 -> 811
-> > 
-> > 3-threads  dm-stripe-3 targets  (12k randread IOPS, unit K)
-> > 5.12-rc1: 321
-> > leiming: 313 -> 349
-> > leiming : 313 -> 409 (iodepth=32, kfifo queue depth =128)
-> > leiming : 314 -> 409 (iodepth=128, kfifo queue depth =512)
-> > ours 8353c1a: 310 -> 406
-> > 
-> > 
-> > 1-thread  dm-linear-3 targets  (4k randread IOPS, unit K)
-> > 5.12-rc1: 224
-> > leiming:  218 -> 288
-> > ours 8353c1a: 210 -> 280
-> > 
-> > 1-threads  dm-stripe-3 targets (12k randread IOPS, unit K)
-> > 5.12-rc1: 109
-> > leiming: 107 -> 120
-> > leiming : 107 -> 145 (iodepth=32, kfifo queue depth =128)
-> > leiming : 108 -> 145 (iodepth=128, kfifo queue depth =512)
-> > ours 8353c1a: 107 -> 146
-> > ```
-> > 
-> > 
-> > Some hints:
-> > 
-> > 1. When configured as 'iodepth=128, kfifo queue depth =128', dm-stripe
-> > doesn't perform well in polling mode. It's because it's more likely that
-> > the original bio will be split into split bios in dm-stripe, and thus
-> > kfifo will be more likely used up in this case. So the size of kfifo
-> > need to be tuned according to iodepth and the IO load. Thus exporting
-> > the size of kfifo as a sysfs entry may be need in the following patch.
+> > The original device is indeed already actively used and already mounted.
+> > This is most likely not a DM device.
+> > If it is a request-based blk-mq, then it is enough to stop its queue by
+> > blk_mq_freeze_queue(). 
+> > If it is a bio-based device, then we can try to stop it by freeze_bdev.
+> > But in both cases, if the blk_mq_freeze_bdev() function was called, bio cannot
+> > get into the critical section between bio_queue_enter() and blk_queue_exit().
+> > This allows to safely change the value of original->bd_interposer.
 > 
-> Yeah, I think your analysis is right.
+> Even though bios cannot get into underlying blk-mq they are already
+> inflight on behalf of the upper-layer bio-based device. I'll look closer
+> at the code but it seems like there is potential for the original
+> device's bios to still be queued to original, past the ->submit_bio
+> entry, and waiting for blk-mq to unfreeze. Meaning upon return from
+> what I _think_ you're saying will be sufficient: DM bio-based device
+> will carry on submitting IO to the blk-mq device that has since been
+> interposed.. that IO will _not_ complete in terms of the interposed
+> device.. so you'll have a split-brain dual completion of IO from the
+> original bio-based DM device _and_ the interposed device (for any new io
+> that hits ->submit_bio after the interposed device is in place).
 > 
-> On simple approach to address the scalability issue is to put submitted
-> bio into a per-task list, however one new field(8bytes) needs to be
-> added to bio, or something like below:
-> 
-> 1) disable hipri bio merge, then we can reuse bio->bi_next
-> 
-> or
-> 
-> 2) track request instead of bio, then it should be easier to get one
-> field from 'struct request' for such purpose, such as 'ipi_list'.
-> 
-> Seems 2) is possible, will try it and see if the approach is really doable.
 
-Not (yet) seeing how making tracking (either requests or bios) per-task
-will help.  Though tracking in terms of requests reduces the amount of
-polling (due to hopeful merging, at least in sequential IO case) it
-doesn't _really_ make the task cookie -> polled_object mapping any more
-efficient for the single thread test-case Jeffle ran: the fan-out of
-bio-splits for _random_ IO issued to 3-way dm-stripe is inherently messy
-to track.
+Yes, You right. I looked closer at function submit_bio_noacct().
+Indeed, the bio can wait to enter to the queue after checking that
+the device has a interposer.
+This means that some bio requests can go to the original device after
+attaching the interposer. Conversely, bio requests can fall into
+the function submit_bio_interposer() at a time when the interposer
+has already been detached. In submit_bio_interposer() for this case,
+there is a re-check that the interposer is there.
 
-Basically I'm just wondering where you see your per-task request-based
-tracking approach helping? Multithreaded sequential workloads?
+I don't see what kind of problems this can cause when attaching
+the interposer, but detaching it bothers me.
+I need to take a timeout and think it through.
 
-Feels like the poll cookie being a task id is just extremely coarse.
-Doesn't really allow polling to be done more precisely... what am I
-missing?
+> I think you need to have original bio-based DM suspend, interpose
+> device, and then resume the original.  Anything entering original's
+> ->submit_bio from that point will all get sent to interposed
+> device. Right?
 
-Thanks,
-Mike
+A small remark. The original device is not a DM device. The DM device
+plays the role of the interposer. And it really needs to be suspended.
+
+> 
+> > To intercept requests to the original device, we create a new md with
+> > the DM_INTERPOSE_FLAG flag. It is this interposer device that has not
+> > yet been initialized by this time. It just runs DM_TABLE_LOAD_CMD.
+> > That is why I think that the queue of this device should not be stopped,
+> > since this device has not yet been initialized.
+> > 
+> > > 
+> > > And your lack of understanding of these various IO flushing methods
+> > > (freeze/thaw, suspend/resume, etc) is showing.  Please slow down and
+> > > approach this more systematically.
+> > 
+> > For any block device, we can call the freeze_bdev() function. It will 
+> > allow to wait until the processing of previously sent requests is 
+> > completed and block the sending of new ones. blk_mq_freeze_queue() 
+> > allows to change the bd_interposer variable. This allow to attach/detach 
+> > the interposer to original device.
+> 
+> freeze_bdev/thaw_bdev are only relevant if a filesystem is layered
+> ontop.  A bio-based DM device can be used directly (by a database or
+> whatever).
+> 
+> > dm_suspend() is used to stop mapped device. This is what I plan to use
+> > before detaching the interposer. It will allow to wait for the
+> > completion of all the bios that were sent for the interposer.
+> 
+> Yes, but you need to suspend before attaching the interposer too, to
+> flush any in-flight bios that might be in-flight within the various DM
+> target code.
+> 
+> DM should be able to internalize all this when handling the
+> DM_INTERPOSE_FLAG during the new table load.  It'd call into
+> dm_internal_suspend_fast and then dm_internal_resume_fast for the
+> original md device.
+
+The dm_internal_suspend_fast() function looks very useful. I'll try it.
+
+> 
+> Mike
+> 
+
+-- 
+Sergei Shtepa
+Veeam Software developer.
 
 --
 dm-devel mailing list
