@@ -7,67 +7,67 @@ X-Spam-Status: No, score=-16.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BAC6BC433DB
-	for <dm-devel@archiver.kernel.org>; Thu, 18 Mar 2021 16:50:12 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3E2DCC433DB
+	for <dm-devel@archiver.kernel.org>; Thu, 18 Mar 2021 16:51:31 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 64ACC64F1C
-	for <dm-devel@archiver.kernel.org>; Thu, 18 Mar 2021 16:50:12 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 64ACC64F1C
+	by mail.kernel.org (Postfix) with ESMTPS id D8DF964ED2
+	for <dm-devel@archiver.kernel.org>; Thu, 18 Mar 2021 16:51:30 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D8DF964ED2
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1616086211;
+	s=mimecast20190719; t=1616086289;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=sp1Du772nyRSvA5JpD/a4dWd9SeUu3+IsQGqKmOBjmI=;
-	b=XcU8hK7asy10wnSuMg76AjHAj9FUK73DoEOiFfGHjrYmxAzdEQaKOHmCxqKRvb/sn9Lcr6
-	BzdsSjs+oTY6Tt8wuG6f5NYIXAKad2MEMFeAp6/OPTGzAjYqdjDMmqHbYMCwMnRsK8cmMi
-	G7ITYkcIk+Vpzo3uCrdG/A+/7cP4/qs=
+	bh=NUppJdWriToEulnS9oayHw9dM3k8sGGW6Owz6UkVr1M=;
+	b=g8+htTjjzx2rQPZILE9C7iLpiGi2pzo3q5dmP0iFqWqT1kPhxdNiB/uW5K9iZbMOf7NrUq
+	Gv7RJqEEJrU+Z/Q6MFQqHNQx1AGusSGEsvUCikTp3aEOmniOTzmkoUY6SMX4EgxgczEzfi
+	YMu6QTb12jqa2BKmLKLE/pU0pRI8O48=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-566-1nSLcF66NVmj4OL52G_wPA-1; Thu, 18 Mar 2021 12:50:09 -0400
-X-MC-Unique: 1nSLcF66NVmj4OL52G_wPA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-61-dGKoSFFSML6ij8IzhI9Puw-1; Thu, 18 Mar 2021 12:49:51 -0400
+X-MC-Unique: dGKoSFFSML6ij8IzhI9Puw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6C8C98042C1;
-	Thu, 18 Mar 2021 16:50:03 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0EFC1100A8F9;
+	Thu, 18 Mar 2021 16:49:33 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3EC4410023BE;
-	Thu, 18 Mar 2021 16:50:03 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C8BD81992D;
+	Thu, 18 Mar 2021 16:49:32 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 09E7918155DD;
-	Thu, 18 Mar 2021 16:50:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
-	[10.5.11.12])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8F90E1809C83;
+	Thu, 18 Mar 2021 16:49:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
+	[10.5.11.11])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12IGo1CK030728 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 18 Mar 2021 12:50:01 -0400
+	id 12IGnKBI030483 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 18 Mar 2021 12:49:20 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 77EF0610F3; Thu, 18 Mar 2021 16:50:01 +0000 (UTC)
+	id B47DA6064B; Thu, 18 Mar 2021 16:49:20 +0000 (UTC)
 Received: from localhost (ovpn-12-24.pek2.redhat.com [10.72.12.24])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B9E61610F1;
-	Thu, 18 Mar 2021 16:50:00 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D0C662BFE1;
+	Thu, 18 Mar 2021 16:49:19 +0000 (UTC)
 From: Ming Lei <ming.lei@redhat.com>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Fri, 19 Mar 2021 00:48:27 +0800
-Message-Id: <20210318164827.1481133-14-ming.lei@redhat.com>
+Date: Fri, 19 Mar 2021 00:48:17 +0800
+Message-Id: <20210318164827.1481133-4-ming.lei@redhat.com>
 In-Reply-To: <20210318164827.1481133-1-ming.lei@redhat.com>
 References: <20210318164827.1481133-1-ming.lei@redhat.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 X-loop: dm-devel@redhat.com
 Cc: Mike Snitzer <snitzer@redhat.com>, Ming Lei <ming.lei@redhat.com>,
 	linux-block@vger.kernel.org, dm-devel@redhat.com,
 	Jeffle Xu <jefflexu@linux.alibaba.com>, Christoph Hellwig <hch@lst.de>
-Subject: [dm-devel] [RFC PATCH V2 13/13] blk-mq: limit hw queues to be
-	polled in each blk_poll()
+Subject: [dm-devel] [RFC PATCH V2 03/13] block: add helper of
+	blk_create_io_context
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -81,7 +81,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -89,108 +89,66 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Limit at most 8 queues are polled in each blk_pull(), avoid to
-add extra latency when queue depth is high.
+Add one helper for creating io context and prepare for supporting
+efficient bio based io poll.
+
+Meantime move the code of creating io_context before checking bio's
+REQ_HIPRI flag because the following patch may change to clear REQ_HIPRI
+if io_context can't be created.
 
 Signed-off-by: Ming Lei <ming.lei@redhat.com>
 ---
- block/blk-mq.c | 66 +++++++++++++++++++++++++++++++++++---------------
- 1 file changed, 46 insertions(+), 20 deletions(-)
+ block/blk-core.c | 23 ++++++++++++++---------
+ 1 file changed, 14 insertions(+), 9 deletions(-)
 
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index f26950a51f4a..9c94b7f0bf4b 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -3870,33 +3870,31 @@ static blk_qc_t bio_get_poll_cookie(struct bio *bio)
- 	return bio->bi_iter.bi_private_data;
+diff --git a/block/blk-core.c b/block/blk-core.c
+index a31371d55b9d..d58f8a0c80de 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -792,6 +792,18 @@ static inline blk_status_t blk_check_zone_append(struct request_queue *q,
+ 	return BLK_STS_OK;
  }
  
--static int blk_mq_poll_io(struct bio *bio)
-+#define POLL_HCTX_MAX_CNT 8
-+
-+static bool blk_add_unique_hctx(struct blk_mq_hw_ctx **data, int *cnt,
-+		struct blk_mq_hw_ctx *hctx)
- {
--	struct request_queue *q = bio->bi_bdev->bd_disk->queue;
--	blk_qc_t cookie = bio_get_poll_cookie(bio);
--	int ret = 0;
-+	int i;
- 
--	if (!bio_flagged(bio, BIO_DONE) && blk_qc_t_valid(cookie)) {
--		struct blk_mq_hw_ctx *hctx =
--			q->queue_hw_ctx[blk_qc_t_to_queue_num(cookie)];
-+	for (i = 0; i < *cnt; i++) {
-+		if (data[i] == hctx)
-+			goto exit;
-+	}
- 
--		ret += blk_mq_poll_hctx(q, hctx);
-+	if (i < POLL_HCTX_MAX_CNT) {
-+		data[i] = hctx;
-+		(*cnt)++;
- 	}
--	return ret;
-+ exit:
-+	return *cnt == POLL_HCTX_MAX_CNT;
- }
- 
--static int blk_bio_poll_and_end_io(struct request_queue *q,
--		struct blk_bio_poll_ctx *poll_ctx)
-+static void blk_build_poll_queues(struct blk_bio_poll_ctx *poll_ctx,
-+		struct blk_mq_hw_ctx **data, int *cnt)
- {
--	int ret = 0;
- 	int i;
- 
--	/*
--	 * Poll hw queue first.
--	 *
--	 * TODO: limit max poll times and make sure to not poll same
--	 * hw queue one more time.
--	 */
- 	for (i = 0; i < poll_ctx->pq->max_nr_grps; i++) {
- 		struct bio_grp_list_data *grp = &poll_ctx->pq->head[i];
- 		struct bio *bio;
-@@ -3904,9 +3902,37 @@ static int blk_bio_poll_and_end_io(struct request_queue *q,
- 		if (bio_grp_list_grp_empty(grp))
- 			continue;
- 
--		for (bio = grp->list.head; bio; bio = bio->bi_poll)
--			ret += blk_mq_poll_io(bio);
-+		for (bio = grp->list.head; bio; bio = bio->bi_poll) {
-+			blk_qc_t  cookie;
-+			struct blk_mq_hw_ctx *hctx;
-+			struct request_queue *q;
-+
-+			if (bio_flagged(bio, BIO_DONE))
-+				continue;
-+			cookie = bio_get_poll_cookie(bio);
-+			if (!blk_qc_t_valid(cookie))
-+				continue;
-+
-+			q = bio->bi_bdev->bd_disk->queue;
-+			hctx = q->queue_hw_ctx[blk_qc_t_to_queue_num(cookie)];
-+			if (blk_add_unique_hctx(data, cnt, hctx))
-+				return;
-+		}
- 	}
++static inline void blk_create_io_context(struct request_queue *q)
++{
++	/*
++	 * Various block parts want %current->io_context, so allocate it up
++	 * front rather than dealing with lots of pain to allocate it only
++	 * where needed. This may fail and the block layer knows how to live
++	 * with it.
++	 */
++	if (unlikely(!current->io_context))
++		create_task_io_context(current, GFP_ATOMIC, q->node);
 +}
 +
-+static int blk_bio_poll_and_end_io(struct request_queue *q,
-+		struct blk_bio_poll_ctx *poll_ctx)
-+{
-+	int ret = 0;
-+	int i;
-+	struct blk_mq_hw_ctx *hctx[POLL_HCTX_MAX_CNT];
-+	int cnt = 0;
-+
-+	blk_build_poll_queues(poll_ctx, hctx, &cnt);
-+
-+	for (i = 0; i < cnt; i++)
-+		ret += blk_mq_poll_hctx(hctx[i]->queue, hctx[i]);
+ static noinline_for_stack bool submit_bio_checks(struct bio *bio)
+ {
+ 	struct block_device *bdev = bio->bi_bdev;
+@@ -836,6 +848,8 @@ static noinline_for_stack bool submit_bio_checks(struct bio *bio)
+ 		}
+ 	}
  
- 	/* reap bios */
- 	for (i = 0; i < poll_ctx->pq->max_nr_grps; i++) {
++	blk_create_io_context(q);
++
+ 	if (!blk_queue_poll(q))
+ 		bio->bi_opf &= ~REQ_HIPRI;
+ 
+@@ -876,15 +890,6 @@ static noinline_for_stack bool submit_bio_checks(struct bio *bio)
+ 		break;
+ 	}
+ 
+-	/*
+-	 * Various block parts want %current->io_context, so allocate it up
+-	 * front rather than dealing with lots of pain to allocate it only
+-	 * where needed. This may fail and the block layer knows how to live
+-	 * with it.
+-	 */
+-	if (unlikely(!current->io_context))
+-		create_task_io_context(current, GFP_ATOMIC, q->node);
+-
+ 	if (blk_throtl_bio(bio)) {
+ 		blkcg_bio_issue_init(bio);
+ 		return false;
 -- 
 2.29.2
 
