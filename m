@@ -2,73 +2,99 @@ Return-Path: <SRS0=/8Bn=IX=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.7 required=3.0 tests=BAYES_00,
+	DKIM_ADSP_CUSTOM_MED,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D38D3C433C1
-	for <dm-devel@archiver.kernel.org>; Thu, 25 Mar 2021 18:45:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5FBF9C433DB
+	for <dm-devel@archiver.kernel.org>; Thu, 25 Mar 2021 22:34:39 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 363D561A3E
-	for <dm-devel@archiver.kernel.org>; Thu, 25 Mar 2021 18:45:39 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 363D561A3E
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id A6B7661A3C
+	for <dm-devel@archiver.kernel.org>; Thu, 25 Mar 2021 22:34:38 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A6B7661A3C
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1616697937;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=ZXEF9VGbUp6kgaYDlD9ahIEvFpSN6MKAQQINrIfmFxg=;
-	b=JQcIUVwOtSjH7JdA/YtOHxjKfKLKkC44AcBPTKW8gbaekbj9PvCYeNtrl4cqjyAUELqkzo
-	zGCEq67weWiAuuppRKtUqp/8qhUNLmRzs/TY8id9lC2RR+Sl0ATaR/4l5V9AIDzn2eQf9K
-	4NMC9i6tAAmWANKxKhr/WShFlJYtMYg=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-238-gDfbrtz_O9WEMtdzW4vdTw-1; Thu, 25 Mar 2021 14:45:35 -0400
-X-MC-Unique: gDfbrtz_O9WEMtdzW4vdTw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-180-93R_3QFKMC2M37gTDYfr7g-1; Thu, 25 Mar 2021 18:34:35 -0400
+X-MC-Unique: 93R_3QFKMC2M37gTDYfr7g-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5A0C1801817;
-	Thu, 25 Mar 2021 18:45:31 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 38EC610023AB;
-	Thu, 25 Mar 2021 18:45:30 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B314B1052A16;
+	Thu, 25 Mar 2021 22:34:31 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 92FB388F10;
+	Thu, 25 Mar 2021 22:34:30 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8D14E4BB7C;
-	Thu, 25 Mar 2021 18:45:27 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com
-	[10.5.11.16])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E09341809C83;
+	Thu, 25 Mar 2021 22:34:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12PIjP0d013860 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 25 Mar 2021 14:45:25 -0400
+	id 12PMYORq005272 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 25 Mar 2021 18:34:24 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 364325C260; Thu, 25 Mar 2021 18:45:25 +0000 (UTC)
-Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7506E77520;
-	Thu, 25 Mar 2021 18:45:19 +0000 (UTC)
-Date: Thu, 25 Mar 2021 14:45:19 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Ming Lei <ming.lei@redhat.com>
-Message-ID: <20210325184519.GB17820@redhat.com>
-References: <20210324121927.362525-1-ming.lei@redhat.com>
-	<20210324121927.362525-14-ming.lei@redhat.com>
+	id 4E49F2157F24; Thu, 25 Mar 2021 22:34:24 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 48AD82157F23
+	for <dm-devel@redhat.com>; Thu, 25 Mar 2021 22:34:22 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F4237800140
+	for <dm-devel@redhat.com>; Thu, 25 Mar 2021 22:34:21 +0000 (UTC)
+Received: from mail-wr1-f48.google.com (mail-wr1-f48.google.com
+	[209.85.221.48]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-17-C4I2twuAME6X_VaAoJTpuQ-1; Thu, 25 Mar 2021 18:34:19 -0400
+X-MC-Unique: C4I2twuAME6X_VaAoJTpuQ-1
+Received: by mail-wr1-f48.google.com with SMTP id v11so3825396wro.7;
+	Thu, 25 Mar 2021 15:34:19 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+	:content-transfer-encoding;
+	bh=rvDJcSuhahwZKUR7zftgbeJV6zOq1fQBVl22nQPZMOU=;
+	b=Cs/h/Aj0RgdOkrSVQA5JmIkwhFig5VUcAOiz/wT4eQ7MzT0/7g/ixsMIfczh3OnRRV
+	+zOj8SsfsEckytEelseG9MEXinkLUk6HrGZ7twV5jT42n4FKfxwrMgMkqDM+hSuzrtRg
+	gGGj872OAmJQodC/TDsIjApQS/YdnE8A27z0eDNCyBZb43paIY4lQ7kfAke/23SOJHSK
+	30ALmU+LganB8AbmOSAzU6UbV1acL6gZKhjmKiwEiwBaownK+BjBiLkeK8gghWdxYkD2
+	i5ZVASdaRkyeVMQ9t6T+ppC/MVqvxz2baj9vQvD7lBCIHZ4GUYM+qU1/unMK8XU4UWgR
+	veCw==
+X-Gm-Message-State: AOAM532+vNJNc21VCe3HTolGF2kBBEneeoI9b2U0/XoHWXMPsNdYjrlg
+	LNHeH1k7TseL8210jkMIdA==
+X-Google-Smtp-Source: ABdhPJw8W/n+Au8xdjsOiRQ0jCUtO607ylASoTcLx3+ixW34GbzW/52TZVdmnhpnsB2CrclsmQzyjg==
+X-Received: by 2002:adf:e485:: with SMTP id i5mr11314651wrm.26.1616711658328; 
+	Thu, 25 Mar 2021 15:34:18 -0700 (PDT)
+Received: from localhost (220.red-83-38-250.dynamicip.rima-tde.net.
+	[83.38.250.220]) by smtp.gmail.com with ESMTPSA id
+	e13sm9995464wrg.72.2021.03.25.15.34.17
+	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+	Thu, 25 Mar 2021 15:34:17 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Date: Thu, 25 Mar 2021 23:34:12 +0100
+Message-Id: <20210325223414.5185-1-xose.vazquez@gmail.com>
 MIME-Version: 1.0
-In-Reply-To: <20210324121927.362525-14-ming.lei@redhat.com>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Patchwork-Bot: notify
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	dm-devel@redhat.com, Jeffle Xu <jefflexu@linux.alibaba.com>
-Subject: Re: [dm-devel] [PATCH V3 13/13] dm: support IO polling for
-	bio-based dm device
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>,
+	DM-DEVEL ML <dm-devel@redhat.com>
+Subject: [dm-devel] [PATCH 0/2] multipath-tools: add more ALUA info to docs
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -82,80 +108,34 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Mar 24 2021 at  8:19am -0400,
-Ming Lei <ming.lei@redhat.com> wrote:
+Xose Vazquez Perez (2):
+  multipath-tools: add info about how to enable ALUA in Huawei OceanStor arrays
+  multipath-tools: add more info about ALUA for CLARiiON arrays
 
-> From: Jeffle Xu <jefflexu@linux.alibaba.com>
-> 
-> IO polling is enabled when all underlying target devices are capable
-> of IO polling. The sanity check supports the stacked device model, in
-> which one dm device may be build upon another dm device. In this case,
-> the mapped device will check if the underlying dm target device
-> supports IO polling.
-> 
-> Signed-off-by: Jeffle Xu <jefflexu@linux.alibaba.com>
-> Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> ---
->  drivers/md/dm-table.c         | 24 ++++++++++++++++++++++++
->  drivers/md/dm.c               | 14 ++++++++++++++
->  include/linux/device-mapper.h |  1 +
->  3 files changed, 39 insertions(+)
-> 
+ README.alua | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-...
-
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 50b693d776d6..fe6893b078dc 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1720,6 +1720,19 @@ static blk_qc_t dm_submit_bio(struct bio *bio)
->  	return ret;
->  }
->  
-> +static bool dm_bio_poll_capable(struct gendisk *disk)
-> +{
-> +	int ret, srcu_idx;
-> +	struct mapped_device *md = disk->private_data;
-> +	struct dm_table *t;
-> +
-> +	t = dm_get_live_table(md, &srcu_idx);
-> +	ret = dm_table_supports_poll(t);
-> +	dm_put_live_table(md, srcu_idx);
-> +
-> +	return ret;
-> +}
-> +
-
-I know this code will only get called by blk-core if bio-based but there
-isn't anything about this method's implementation that is inherently
-bio-based only.
-
-So please rename from dm_bio_poll_capable to dm_poll_capable
-
-Other than that:
-
-Reviewed-by: Mike Snitzer <snitzer@redhat.com>
-
->  /*-----------------------------------------------------------------
->   * An IDR is used to keep track of allocated minor numbers.
->   *---------------------------------------------------------------*/
-> @@ -3132,6 +3145,7 @@ static const struct pr_ops dm_pr_ops = {
->  };
->  
->  static const struct block_device_operations dm_blk_dops = {
-> +	.poll_capable = dm_bio_poll_capable,
->  	.submit_bio = dm_submit_bio,
->  	.open = dm_blk_open,
->  	.release = dm_blk_close,
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+BTW, some "new" generations of fully symmetrical Active-Active arrays support ALUA
+(by default ???), but in the multipath-tools hwtable they are defined as "multibus":
+- IBM DS8000, since ???
+- IBM XIV, since Gen2 with microcode 10.2.1
+- EMC SYMMETRIX, since VMAX 3 with HYPERMAX OS 5977.811.784
+-- 
+2.30.2
 
 --
 dm-devel mailing list
