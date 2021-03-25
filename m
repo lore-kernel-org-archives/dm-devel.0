@@ -2,92 +2,73 @@ Return-Path: <SRS0=/8Bn=IX=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+X-Spam-Status: No, score=-16.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6574BC433E4
-	for <dm-devel@archiver.kernel.org>; Thu, 25 Mar 2021 01:22:21 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 617A7C433E4
+	for <dm-devel@archiver.kernel.org>; Thu, 25 Mar 2021 02:52:29 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id AFA2761A1F
-	for <dm-devel@archiver.kernel.org>; Thu, 25 Mar 2021 01:22:20 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org AFA2761A1F
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=huawei.com
+	by mail.kernel.org (Postfix) with ESMTPS id EC8AD61A16
+	for <dm-devel@archiver.kernel.org>; Thu, 25 Mar 2021 02:52:28 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org EC8AD61A16
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1616640747;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=m/YdomLl2oWyjBltNS445HIed4Dv40B7S9Y4ZmrjldU=;
+	b=guin3BpsadfgcGIvvUXatpCF0DJT3Ko3RfjglQhROMKxQTHV+SeVYecEoNAYnj83C4THro
+	xbivwMV1eoLlQnZrRG7fPkg/FPRdMwP8chxcQ4qIddn0pPTwIc+Ld05y8R9GyATlFAX/EQ
+	SvoxfGo5nKFuTQFt7sjrFpD4SutCYM4=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-450-8iPT2BM_PTm1I-ETU3UWHA-1; Wed, 24 Mar 2021 21:22:17 -0400
-X-MC-Unique: 8iPT2BM_PTm1I-ETU3UWHA-1
+ us-mta-308-Fkyy2EuFOZGHCLDr45nw6Q-1; Wed, 24 Mar 2021 22:52:25 -0400
+X-MC-Unique: Fkyy2EuFOZGHCLDr45nw6Q-1
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C66B3101964E;
-	Thu, 25 Mar 2021 01:22:13 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 96F528189C6;
+	Thu, 25 Mar 2021 02:52:21 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7D4726BF74;
-	Thu, 25 Mar 2021 01:22:13 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9F17E7094D;
+	Thu, 25 Mar 2021 02:52:20 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 193F11809C83;
-	Thu, 25 Mar 2021 01:22:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C1C9C1809C83;
+	Thu, 25 Mar 2021 02:52:12 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
+	[10.5.11.11])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12P1MAEV027741 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 24 Mar 2021 21:22:10 -0400
+	id 12P2qBGv002103 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 24 Mar 2021 22:52:11 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 514A0F51B5; Thu, 25 Mar 2021 01:22:10 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4B524F5573
-	for <dm-devel@redhat.com>; Thu, 25 Mar 2021 01:22:07 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 74072811E93
-	for <dm-devel@redhat.com>; Thu, 25 Mar 2021 01:22:07 +0000 (UTC)
-Received: from szxga05-in.huawei.com (szxga05-in.huawei.com
-	[45.249.212.191]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-39-1Trkws-QPaWi6zeA1-frVQ-1; Wed, 24 Mar 2021 21:22:04 -0400
-X-MC-Unique: 1Trkws-QPaWi6zeA1-frVQ-1
-Received: from DGGEMS403-HUB.china.huawei.com (unknown [172.30.72.60])
-	by szxga05-in.huawei.com (SkyGuard) with ESMTP id 4F5S1r5WxszNmxN;
-	Thu, 25 Mar 2021 09:19:28 +0800 (CST)
-Received: from [127.0.0.1] (10.174.176.117) by DGGEMS403-HUB.china.huawei.com
-	(10.3.19.203) with Microsoft SMTP Server id 14.3.498.0;
-	Thu, 25 Mar 2021 09:21:51 +0800
-To: Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@infradead.org>
-References: <c8f86351-3036-0945-90d2-2e020d68ccf2@huawei.com>
-	<20210322081155.GE1946905@infradead.org>
-	<20210322142207.GB30698@redhat.com>
-From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-Message-ID: <cd71d0fa-31d1-5cd8-74a1-8b124724b3b1@huawei.com>
-Date: Thu, 25 Mar 2021 09:21:50 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:68.0) Gecko/20100101
-	Thunderbird/68.2.2
+	id 511A36A251; Thu, 25 Mar 2021 02:52:11 +0000 (UTC)
+Received: from T590 (ovpn-12-137.pek2.redhat.com [10.72.12.137])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5E80E63BA7;
+	Thu, 25 Mar 2021 02:51:57 +0000 (UTC)
+Date: Thu, 25 Mar 2021 10:51:54 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: JeffleXu <jefflexu@linux.alibaba.com>
+Message-ID: <YFv6yvj/mGytuFhC@T590>
+References: <20210324121927.362525-1-ming.lei@redhat.com>
+	<20210324121927.362525-5-ming.lei@redhat.com>
+	<0bc4e13a-53ba-5f29-5a6d-5cda1aea098a@linux.alibaba.com>
 MIME-Version: 1.0
-In-Reply-To: <20210322142207.GB30698@redhat.com>
-X-Originating-IP: [10.174.176.117]
-X-CFilter-Loop: Reflected
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+In-Reply-To: <0bc4e13a-53ba-5f29-5a6d-5cda1aea098a@linux.alibaba.com>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 X-loop: dm-devel@redhat.com
-Cc: lixiaokeng <lixiaokeng@huawei.com>, "wubo \(T\)" <wubo40@huawei.com>,
-	"martin.petersen@oracle.com" <martin.petersen@oracle.com>,
-	linux-scsi@vger.kernel.org, "jejb@linux.ibm.com" <jejb@linux.ibm.com>,
-	linux-kernel@vger.kernel.org, linfeilong <linfeilong@huawei.com>,
-	dm-devel@redhat.com, agk@redhat.com
-Subject: Re: [dm-devel] md/dm-mpath: check whether all pgpaths have same
- uuid in multipath_ctr()
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+	dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [dm-devel] [PATCH V3 04/13] block: create io poll context for
+ submission and poll task
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -106,103 +87,218 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-
-
-On 2021/3/22 22:22, Mike Snitzer wrote:
-> On Mon, Mar 22 2021 at  4:11am -0400,
-> Christoph Hellwig <hch@infradead.org> wrote:
+On Thu, Mar 25, 2021 at 10:34:02AM +0800, JeffleXu wrote:
 > 
->> On Sat, Mar 20, 2021 at 03:19:23PM +0800, Zhiqiang Liu wrote:
->>> From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
->>>
->>> When we make IO stress test on multipath device, there will
->>> be a metadata err because of wrong path. In the test, we
->>> concurrent execute 'iscsi device login|logout' and
->>> 'multipath -r' command with IO stress on multipath device.
->>> In some case, systemd-udevd may have not time to process
->>> uevents of iscsi device logout|login, and then 'multipath -r'
->>> command triggers multipathd daemon calls ioctl to load table
->>> with incorrect old device info from systemd-udevd.
->>> Then, one iscsi path may be incorrectly attached to another
->>> multipath which has different uuid. Finally, the metadata err
->>> occurs when umounting filesystem to down write metadata on
->>> the iscsi device which is actually not owned by the multipath
->>> device.
->>>
->>> So we need to check whether all pgpaths of one multipath have
->>> the same uuid, if not, we should throw a error.
->>>
->>> Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
->>> Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
->>> Signed-off-by: linfeilong <linfeilong@huawei.com>
->>> Signed-off-by: Wubo <wubo40@huawei.com>
->>> ---
->>>  drivers/md/dm-mpath.c   | 52 +++++++++++++++++++++++++++++++++++++++++
->>>  drivers/scsi/scsi_lib.c |  1 +
->>>  2 files changed, 53 insertions(+)
->>>
->>> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
->>> index bced42f082b0..f0b995784b53 100644
->>> --- a/drivers/md/dm-mpath.c
->>> +++ b/drivers/md/dm-mpath.c
->>> @@ -24,6 +24,7 @@
->>>  #include <linux/workqueue.h>
->>>  #include <linux/delay.h>
->>>  #include <scsi/scsi_dh.h>
->>> +#include <linux/dm-ioctl.h>
->>>  #include <linux/atomic.h>
->>>  #include <linux/blk-mq.h>
->>>
->>> @@ -1169,6 +1170,45 @@ static int parse_features(struct dm_arg_set *as, struct multipath *m)
->>>  	return r;
->>>  }
->>>
->>> +#define SCSI_VPD_LUN_ID_PREFIX_LEN 4
->>> +#define MPATH_UUID_PREFIX_LEN 7
->>> +static int check_pg_uuid(struct priority_group *pg, char *md_uuid)
->>> +{
->>> +	char pgpath_uuid[DM_UUID_LEN] = {0};
->>> +	struct request_queue *q;
->>> +	struct pgpath *pgpath;
->>> +	struct scsi_device *sdev;
->>> +	ssize_t count;
->>> +	int r = 0;
->>> +
->>> +	list_for_each_entry(pgpath, &pg->pgpaths, list) {
->>> +		q = bdev_get_queue(pgpath->path.dev->bdev);
->>> +		sdev = scsi_device_from_queue(q);
->>
->> Common dm-multipath code should never poke into scsi internals.  This
->> is something for the device handler to check.  It probably also won't
->> work for all older devices.
 > 
-> Definitely.
+> On 3/24/21 8:19 PM, Ming Lei wrote:
+> > Create per-task io poll context for both IO submission and poll task
+> > if the queue is bio based and supports polling.
+> > 
+> > This io polling context includes two queues:
+> > 
+> > 1) submission queue(sq) for storing HIPRI bio, written by submission task
+> >    and read by poll task.
+> > 2) polling queue(pq) for holding data moved from sq, only used in poll
+> >    context for running bio polling.
+> > 
+> > Following patches will support bio based io polling.
+> > 
+> > Signed-off-by: Ming Lei <ming.lei@redhat.com>
+> > ---
+> >  block/blk-core.c          | 71 ++++++++++++++++++++++++++++++++-------
+> >  block/blk-ioc.c           |  1 +
+> >  block/blk-mq.c            | 14 ++++++++
+> >  block/blk.h               | 45 +++++++++++++++++++++++++
+> >  include/linux/iocontext.h |  2 ++
+> >  5 files changed, 121 insertions(+), 12 deletions(-)
+> > 
+> > diff --git a/block/blk-core.c b/block/blk-core.c
+> > index d58f8a0c80de..4671bbf31fd3 100644
+> > --- a/block/blk-core.c
+> > +++ b/block/blk-core.c
+> > @@ -792,16 +792,59 @@ static inline blk_status_t blk_check_zone_append(struct request_queue *q,
+> >  	return BLK_STS_OK;
+> >  }
+> >  
+> > -static inline void blk_create_io_context(struct request_queue *q)
+> > +static inline struct blk_bio_poll_ctx *blk_get_bio_poll_ctx(void)
+> >  {
+> > -	/*
+> > -	 * Various block parts want %current->io_context, so allocate it up
+> > -	 * front rather than dealing with lots of pain to allocate it only
+> > -	 * where needed. This may fail and the block layer knows how to live
+> > -	 * with it.
+> > -	 */
+> > -	if (unlikely(!current->io_context))
+> > -		create_task_io_context(current, GFP_ATOMIC, q->node);
+> > +	struct io_context *ioc = current->io_context;
+> > +
+> > +	return ioc ? ioc->data : NULL;
+> > +}
+> > +
+> > +static inline unsigned int bio_grp_list_size(unsigned int nr_grps)
+> > +{
+> > +	return sizeof(struct bio_grp_list) + nr_grps *
+> > +		sizeof(struct bio_grp_list_data);
+> > +}
+> > +
+> > +static void bio_poll_ctx_init(struct blk_bio_poll_ctx *pc)
+> > +{
+> > +	pc->sq = (void *)pc + sizeof(*pc);
+> > +	pc->sq->max_nr_grps = BLK_BIO_POLL_SQ_SZ;
+> > +
+> > +	pc->pq = (void *)pc->sq + bio_grp_list_size(BLK_BIO_POLL_SQ_SZ);
+> > +	pc->pq->max_nr_grps = BLK_BIO_POLL_PQ_SZ;
+> > +
+> > +	spin_lock_init(&pc->sq_lock);
+> > +	spin_lock_init(&pc->pq_lock);
+> > +}
+> > +
+> > +void bio_poll_ctx_alloc(struct io_context *ioc)
+> > +{
+> > +	struct blk_bio_poll_ctx *pc;
+> > +	unsigned int size = sizeof(*pc) +
+> > +		bio_grp_list_size(BLK_BIO_POLL_SQ_SZ) +
+> > +		bio_grp_list_size(BLK_BIO_POLL_PQ_SZ);
+> > +
+> > +	pc = kzalloc(GFP_ATOMIC, size);
+> > +	if (pc) {
+> > +		bio_poll_ctx_init(pc);
+> > +		if (cmpxchg(&ioc->data, NULL, (void *)pc))
+> > +			kfree(pc);
+> > +	}
 > 
-> But that aside, userspace (multipathd) _should_ be able to do extra
-> validation, _before_ pushing down a new table to the kernel, rather than
-> forcing the kernel to do it.
+> Why don't put these in blk-ioc.c?
 
-As your said, it is better to do extra validation in userspace (multipathd).
-However, in some cases, the userspace cannot see the real-time present devices
-info as Martin (committer of multipath-tools) said.
-In addition, the kernel can see right device info in the table at any time,
-so the uuid check in kernel can ensure one multipath is composed with paths mapped to
-the same device.
-
-Considering the severity of the wrong path in multipath, I think it worths more
-checking.
-
-Regards
-Zhiqiang Liu.
-
+It is for implementing bio polling, not necessary for moving it to
+blk-ioc.c.
 
 > 
-> .
 > 
+> > +}
+> > +
+> > +static inline bool blk_queue_support_bio_poll(struct request_queue *q)
+> > +{
+> > +	return !queue_is_mq(q) && blk_queue_poll(q);
+> > +}
+> > +
+> > +static inline void blk_bio_poll_preprocess(struct request_queue *q,
+> > +		struct bio *bio)
+> > +{
+> > +	if (!(bio->bi_opf & REQ_HIPRI))
+> > +		return;
+> > +
+> > +	if (!blk_queue_poll(q) || (!queue_is_mq(q) && !blk_get_bio_poll_ctx()))
+> > +		bio->bi_opf &= ~REQ_HIPRI;
+> >  }
+> >  
+> >  static noinline_for_stack bool submit_bio_checks(struct bio *bio)
+> > @@ -848,10 +891,14 @@ static noinline_for_stack bool submit_bio_checks(struct bio *bio)
+> >  		}
+> >  	}
+> >  
+> > -	blk_create_io_context(q);
+> > +	/*
+> > +	 * Create per-task io poll ctx if bio polling supported and HIPRI
+> > +	 * set.
+> > +	 */
+> > +	blk_create_io_context(q, blk_queue_support_bio_poll(q) &&
+> > +			(bio->bi_opf & REQ_HIPRI));
+> >  
+> > -	if (!blk_queue_poll(q))
+> > -		bio->bi_opf &= ~REQ_HIPRI;
+> > +	blk_bio_poll_preprocess(q, bio);
+> >  
+> >  	switch (bio_op(bio)) {
+> >  	case REQ_OP_DISCARD:
+> > diff --git a/block/blk-ioc.c b/block/blk-ioc.c
+> > index b0cde18c4b8c..5574c398eff6 100644
+> > --- a/block/blk-ioc.c
+> > +++ b/block/blk-ioc.c
+> > @@ -19,6 +19,7 @@ static struct kmem_cache *iocontext_cachep;
+> >  
+> >  static inline void free_io_context(struct io_context *ioc)
+> >  {
+> > +	kfree(ioc->data);
+> >  	kmem_cache_free(iocontext_cachep, ioc);
+> >  }
+> >  
+> > diff --git a/block/blk-mq.c b/block/blk-mq.c
+> > index 63c81df3b8b5..c832faa52ca0 100644
+> > --- a/block/blk-mq.c
+> > +++ b/block/blk-mq.c
+> > @@ -3852,6 +3852,17 @@ static bool blk_mq_poll_hybrid(struct request_queue *q,
+> >  	return blk_mq_poll_hybrid_sleep(q, rq);
+> >  }
+> >  
+> > +static int blk_bio_poll(struct request_queue *q, blk_qc_t cookie, bool spin)
+> > +{
+> > +	/*
+> > +	 * Create poll queue for storing poll bio and its cookie from
+> > +	 * submission queue
+> > +	 */
+> > +	blk_create_io_context(q, true);
+> > +
+> > +	return 0;
+> > +}
+> > +
+> >  /**
+> >   * blk_poll - poll for IO completions
+> >   * @q:  the queue
+> > @@ -3875,6 +3886,9 @@ int blk_poll(struct request_queue *q, blk_qc_t cookie, bool spin)
+> >  	if (current->plug)
+> >  		blk_flush_plug_list(current->plug, false);
+> >  
+> > +	if (!queue_is_mq(q))
+> > +		return blk_bio_poll(q, cookie, spin);
+> > +
+> >  	hctx = q->queue_hw_ctx[blk_qc_t_to_queue_num(cookie)];
+> >  
+> >  	/*
+> > diff --git a/block/blk.h b/block/blk.h
+> > index 3b53e44b967e..424949f2226d 100644
+> > --- a/block/blk.h
+> > +++ b/block/blk.h
+> > @@ -357,4 +357,49 @@ int bio_add_hw_page(struct request_queue *q, struct bio *bio,
+> >  		struct page *page, unsigned int len, unsigned int offset,
+> >  		unsigned int max_sectors, bool *same_page);
+> >  
+> > +/* Grouping bios that share same data into one list */
+> > +struct bio_grp_list_data {
+> > +	void *grp_data;
+> > +
+> > +	/* all bios in this list share same 'grp_data' */
+> > +	struct bio_list list;
+> > +};
+> > +
+> > +struct bio_grp_list {
+> > +	unsigned int max_nr_grps, nr_grps;
+> > +	struct bio_grp_list_data head[0];
+> > +};
+> > +
+> > +struct blk_bio_poll_ctx {
+> > +	spinlock_t sq_lock;
+> > +	struct bio_grp_list *sq;
+> > +
+> > +	spinlock_t pq_lock;
+> > +	struct bio_grp_list *pq;
+> > +};
+> > +
+> > +#define BLK_BIO_POLL_SQ_SZ		16U
+> > +#define BLK_BIO_POLL_PQ_SZ		(BLK_BIO_POLL_SQ_SZ * 2)
+> 
+> And these in iocontext.h?
+
+All are internal definition for bio polling, not necessary to put
+it into one public header.
+
+
+Thanks, 
+Ming
 
 --
 dm-devel mailing list
