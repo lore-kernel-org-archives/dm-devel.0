@@ -7,60 +7,61 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 36CB4C433DB
-	for <dm-devel@archiver.kernel.org>; Fri, 26 Mar 2021 21:30:58 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EF2E5C433DB
+	for <dm-devel@archiver.kernel.org>; Fri, 26 Mar 2021 21:31:02 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id CEB4F619F7
-	for <dm-devel@archiver.kernel.org>; Fri, 26 Mar 2021 21:30:57 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CEB4F619F7
+	by mail.kernel.org (Postfix) with ESMTPS id 7848861A2A
+	for <dm-devel@archiver.kernel.org>; Fri, 26 Mar 2021 21:31:02 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7848861A2A
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-86-xlQV5nmBNBmkA9N-l_wUeg-1; Fri, 26 Mar 2021 17:30:54 -0400
-X-MC-Unique: xlQV5nmBNBmkA9N-l_wUeg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-405-CFdqDw3YMQ6upBGhCAyGew-1; Fri, 26 Mar 2021 17:30:58 -0400
+X-MC-Unique: CFdqDw3YMQ6upBGhCAyGew-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 84FE6180FCA5;
-	Fri, 26 Mar 2021 21:30:50 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 34BBE107B7C3;
+	Fri, 26 Mar 2021 21:30:53 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 63FD7607CB;
-	Fri, 26 Mar 2021 21:30:50 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 173215D6DC;
+	Fri, 26 Mar 2021 21:30:53 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 28F29180C5A9;
-	Fri, 26 Mar 2021 21:30:50 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D5C5F180B450;
+	Fri, 26 Mar 2021 21:30:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12QLU8RT001674 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 26 Mar 2021 17:30:08 -0400
+	id 12QLU9pC001680 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 26 Mar 2021 17:30:09 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8C7DB21121D1; Fri, 26 Mar 2021 21:30:08 +0000 (UTC)
+	id 021E32026D48; Fri, 26 Mar 2021 21:30:09 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8608D21121D2
-	for <dm-devel@redhat.com>; Fri, 26 Mar 2021 21:30:08 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EFFC92026D07
+	for <dm-devel@redhat.com>; Fri, 26 Mar 2021 21:30:05 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 05C53801E8D
-	for <dm-devel@redhat.com>; Fri, 26 Mar 2021 21:30:08 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BA207803C9F
+	for <dm-devel@redhat.com>; Fri, 26 Mar 2021 21:30:05 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-260-KIahAughPOWBDfaxooWR7g-1;
+	relay.mimecast.com with ESMTP id us-mta-298-UMO3hp_aN4KhPnxgK0I8JA-1;
 	Fri, 26 Mar 2021 17:30:03 -0400
-X-MC-Unique: KIahAughPOWBDfaxooWR7g-1
+X-MC-Unique: UMO3hp_aN4KhPnxgK0I8JA-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 3E8D5AF4F;
+	by mx2.suse.de (Postfix) with ESMTP id C9087AF98;
 	Fri, 26 Mar 2021 21:30:00 +0000 (UTC)
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri, 26 Mar 2021 22:29:42 +0100
-Message-Id: <20210326212944.3136-6-mwilck@suse.com>
+Date: Fri, 26 Mar 2021 22:29:44 +0100
+Message-Id: <20210326212944.3136-8-mwilck@suse.com>
 In-Reply-To: <20210326212944.3136-1-mwilck@suse.com>
 References: <20210326212944.3136-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -72,14 +73,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 12QLU8RT001674
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 12QLU9pC001680
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH 5/7] multipath-tools Makefile: build before
-	install
+Subject: [dm-devel] [PATCH 7/7] libmultipath: fix warning with clang 3.5
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,7 +93,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -103,27 +103,30 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-"make install" in a clean directory fails. Fix it by making "all"
-a dependency of "install".
+Fixes the following warning with clang 3.5:
+
+io_err_stat.c:613:31: error: missing field 'slot' initializer
+[-Werror,-Wmissing-field-initializers]
+        struct _vector _pathvec = {0,};
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- Makefile | 2 +-
+ libmultipath/io_err_stat.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Makefile b/Makefile
-index c5bedcf..7f21db8 100644
---- a/Makefile
-+++ b/Makefile
-@@ -48,7 +48,7 @@ $(BUILDDIRS:=.uninstall):
- 	$(MAKE) -C ${@:.uninstall=} uninstall
+diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
+index abdd0b4..d8d91f6 100644
+--- a/libmultipath/io_err_stat.c
++++ b/libmultipath/io_err_stat.c
+@@ -610,7 +610,7 @@ static void process_async_ios_event(int timeout_nsecs, char *dev)
  
- clean: $(BUILDDIRS.clean)
--install: $(BUILDDIRS:=.install)
-+install: all $(BUILDDIRS:=.install)
- uninstall: $(BUILDDIRS:=.uninstall)
- 
- test-progs:	all
+ static void service_paths(void)
+ {
+-	struct _vector _pathvec = {0};
++	struct _vector _pathvec = { .allocated = 0 };
+ 	/* avoid gcc warnings that &_pathvec will never be NULL in vector ops */
+ 	struct _vector * const tmp_pathvec = &_pathvec;
+ 	struct io_err_stat_path *pp;
 -- 
 2.30.1
 
