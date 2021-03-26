@@ -2,74 +2,139 @@ Return-Path: <SRS0=sRxI=IY=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,PDS_BAD_THREAD_QP_64,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 87176C433C1
-	for <dm-devel@archiver.kernel.org>; Fri, 26 Mar 2021 17:12:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B09FCC433DB
+	for <dm-devel@archiver.kernel.org>; Fri, 26 Mar 2021 17:12:56 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id BB43C61A24
-	for <dm-devel@archiver.kernel.org>; Fri, 26 Mar 2021 17:12:53 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BB43C61A24
+	by mail.kernel.org (Postfix) with ESMTPS id 0461B619FF
+	for <dm-devel@archiver.kernel.org>; Fri, 26 Mar 2021 17:12:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0461B619FF
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-341-INekoiamN7KdPzdoHmFxMA-1; Fri, 26 Mar 2021 13:12:50 -0400
-X-MC-Unique: INekoiamN7KdPzdoHmFxMA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-191-C82HlE1xMve8mLhRFjJixw-1; Fri, 26 Mar 2021 13:12:52 -0400
+X-MC-Unique: C82HlE1xMve8mLhRFjJixw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8E3A11005D54;
-	Fri, 26 Mar 2021 17:12:44 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 359AD5DDAD;
-	Fri, 26 Mar 2021 17:12:44 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 87FE08143F2;
+	Fri, 26 Mar 2021 17:12:47 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6030C1378E;
+	Fri, 26 Mar 2021 17:12:47 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7FB821809C83;
-	Fri, 26 Mar 2021 17:12:43 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 253A54BB7C;
+	Fri, 26 Mar 2021 17:12:47 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12QHCZYo006445 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 26 Mar 2021 13:12:35 -0400
+	id 12QHCj0C006470 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 26 Mar 2021 13:12:46 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 63DA72026D11; Fri, 26 Mar 2021 17:12:35 +0000 (UTC)
+	id CE7D22157F24; Fri, 26 Mar 2021 17:12:45 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5F6602026D65
-	for <dm-devel@redhat.com>; Fri, 26 Mar 2021 17:12:28 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C7EB72157F23
+	for <dm-devel@redhat.com>; Fri, 26 Mar 2021 17:12:43 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B1422800C5B
-	for <dm-devel@redhat.com>; Fri, 26 Mar 2021 17:12:28 +0000 (UTC)
-Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-368-r-hUPkmVPsiCdnBrkgd1sQ-1;
-	Fri, 26 Mar 2021 13:12:24 -0400
-X-MC-Unique: r-hUPkmVPsiCdnBrkgd1sQ-1
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id AF578AD8D;
-	Fri, 26 Mar 2021 17:12:22 +0000 (UTC)
-Message-ID: <3ea650fd67ddea9a4145985e687dcff29134a37c.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Mike Snitzer <snitzer@redhat.com>, Zhiqiang Liu <liuzhiqiang26@huawei.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>, Hannes Reinecke <hare@suse.com>
-Date: Fri, 26 Mar 2021 18:12:21 +0100
-In-Reply-To: <20210325151407.GA17059@redhat.com>
-References: <c8f86351-3036-0945-90d2-2e020d68ccf2@huawei.com>
-	<20210322081155.GE1946905@infradead.org>
-	<20210322142207.GB30698@redhat.com>
-	<cd71d0fa-31d1-5cd8-74a1-8b124724b3b1@huawei.com>
-	<20210325151407.GA17059@redhat.com>
-User-Agent: Evolution 3.38.4
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7693285A5A8
+	for <dm-devel@redhat.com>; Fri, 26 Mar 2021 17:12:43 +0000 (UTC)
+Received: from de-smtp-delivery-102.mimecast.com
+	(de-smtp-delivery-102.mimecast.com [62.140.7.102]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-442-F0SIrp2PP_CSohKVSHV72w-1;
+	Fri, 26 Mar 2021 13:12:41 -0400
+X-MC-Unique: F0SIrp2PP_CSohKVSHV72w-1
+Received: from EUR04-HE1-obe.outbound.protection.outlook.com
+	(mail-he1eur04lp2059.outbound.protection.outlook.com [104.47.13.59])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	de-mta-28-ybQ6UF2fNmeLqJpLVOj9vg-2; Fri, 26 Mar 2021 18:12:38 +0100
+X-MC-Unique: ybQ6UF2fNmeLqJpLVOj9vg-2
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
+	by DB3PR0402MB3643.eurprd04.prod.outlook.com (2603:10a6:8:5::25) with
+	Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3977.29;
+	Fri, 26 Mar 2021 17:12:36 +0000
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
+	([fe80::69bd:c9ff:f910:faeb]) by
+	DB8PR04MB6555.eurprd04.prod.outlook.com
+	([fe80::69bd:c9ff:f910:faeb%7]) with mapi id 15.20.3977.026;
+	Fri, 26 Mar 2021 17:12:36 +0000
+From: Martin Wilck <martin.wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>, Hannes Reinecke
+	<hare@suse.com>, "christophe.varoqui@opensvc.com"
+	<christophe.varoqui@opensvc.com>
+Thread-Topic: [PATCH 2/4] libmultipath: fix priorities in parse_vpd_pg83
+Thread-Index: AQHXIdphHMXt7za5/0CjNSBmSMx0R6qWe/iA
+Date: Fri, 26 Mar 2021 17:12:36 +0000
+Message-ID: <1088f960e04492a26530385040b2485b3691c94e.camel@suse.com>
+References: <1616719966-10221-1-git-send-email-bmarzins@redhat.com>
+	<1616719966-10221-3-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1616719966-10221-3-git-send-email-bmarzins@redhat.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Evolution 3.38.4
+x-originating-ip: [2.202.118.173]
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: 52a5165a-72a7-4a74-429b-08d8f07a5a4b
+x-ms-traffictypediagnostic: DB3PR0402MB3643:
+x-ld-processed: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba,ExtFwd
+x-ms-exchange-transport-forked: True
+x-microsoft-antispam-prvs: <DB3PR0402MB364321B4738FECF96ED56F65FC619@DB3PR0402MB3643.eurprd04.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:7691
+x-ms-exchange-senderadcheck: 1
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: 8h4Ff44AlaYzoCco/uFLAC9SZ3FNwRleTkGEnoW0uUtF1rmFI4GObwYE0y3Bwr0qZtGVQoiPmeKCTT3PU8E9N5Ry7T19JGYF4mBIW4y1CB71f/ZGViUNiOVFv3evzY4U1ZtvKBidjVQ+0DEWMroYF9qnAoF0LoRTJ6tp2wA4yBVFZnqoA3thubPJvRQQJ3SohEL1uNVlXojeS9SCKpvFNJk9G38mFmTbJ6XKROqFg9q/bcrG/NfdEGINfxPEMy6Vf7EUF/nepKcHfIDWz3niewEN55Ozgc9AgEo63neC2mMBa+jZfmi7YZRTcoIkwdLLKRTgy3y9igalNq8ZuhmcRObcIDTo43ggi2X8/K+c/+qMJGlmKjt3OZcfVxHrj3kUEUz47rYTD0kIjO3CvjITwi/EAxd6Sq9GJ1O7jkGEPpupDa0YtCbTm+Aq7J7tZ+YWSY5GSFnKlS+dBs+QhQe6f9B9VRlXtG1O4AzVvg4qDSIrn/m2t883UmpWQfHSm09oUh84So6KJMYlVhhDVx0q2klZyQqLa2W4dsBOEnCKuiomC1S8E+ka3FLlQ19EGYZ5QBNzcEkl7Lh5gYq2htmefh/OhHmgtUY5n2RJBBRzYDTdaWOzZF8dfNJMbHpkig/p/VPgJhFP3bV3Yx0gIz5g1nT8B8yr8tFtXXdBpIZE/9JeZ0HqejI9/6WMOiQ+ShU5kLjD64aiYaLuauMFqhuM4Hcw/+gCYB1nuYSzf6Dr/1o=
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(376002)(346002)(396003)(39860400002)(366004)(136003)(2906002)(36756003)(6506007)(5660300002)(71200400001)(6486002)(83380400001)(316002)(6512007)(4326008)(8936002)(86362001)(8676002)(91956017)(76116006)(66946007)(66446008)(66556008)(66476007)(64756008)(186003)(478600001)(38100700001)(2616005)(966005)(26005)(44832011)(110136005);
+	DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata: =?iso-8859-15?Q?yBMxn/imK4WpYucX3u9vybN+Pt1EDjaugOY3WhHKNLU1cfgDhvJhpZsDB?=
+	=?iso-8859-15?Q?PMC4Dx7VcGZMS44gDqU/HXD7njxgcW5lAKQxOtI1S5Zl3vQ2iqQrcaDqz?=
+	=?iso-8859-15?Q?jCvpbz9Yxz6CqIGbryHvtoWs8y/J2WwFESqbkr0j8i19WzhcDLeDi6B4Y?=
+	=?iso-8859-15?Q?NTzqEzs81av8Gw32oib2ER6yFKGt0Pu2E/bowC4IgQK45Di3Q9QxK/LT6?=
+	=?iso-8859-15?Q?UloN0qxZxH1y4qDJn5SmOYcpvhfxxxAcWQVHm1hl5GP0BltI9fFx3PXv1?=
+	=?iso-8859-15?Q?ycGvAXiMXcqDS0qtxKJX/kdeyzgwTY0tMhxj3iP9CHetm43V1LdAZtygC?=
+	=?iso-8859-15?Q?Keml7+CEAevdNt/xiWw47ZqdKV/idSXtNU8WrCBrUuujHYog4LVQFQ6fj?=
+	=?iso-8859-15?Q?8anAJXNLkKv4qLMeVGURSS26ac6qtVry8ZUodWJ0AtlYV6at4FBfN0nwW?=
+	=?iso-8859-15?Q?52BEhTJIVphWuRDVX0pJ1fXusjDgcH9cLxSHSLSvwHDn7Eee6ogplGiuu?=
+	=?iso-8859-15?Q?GzktM+2IFObckAVuLMRDQg7XbogqQc4sSI1ES6b0MOXqZ0M6+vfkY8J6v?=
+	=?iso-8859-15?Q?fsZWlOsnlMOzZ2sTfDyLBgoK/hzC3ZbteOZlysAmXIRJXWbnQT0SfkXTZ?=
+	=?iso-8859-15?Q?h8v7DZxYHHFolGMDW5ciZ2VzSGPtrDHT1HjLPLxwow1sgjMl4ALFjJwqn?=
+	=?iso-8859-15?Q?RGfERTTsaJeb4bqMGWhgVmuMUMG0Ii041WP4Rh9JByzzlHetu3/bAZFNc?=
+	=?iso-8859-15?Q?t/sFoX/lKc9qS1wtRik0so5Vg3Y2Jbah+O5DAOB74WV8+hAFPpggAb1TS?=
+	=?iso-8859-15?Q?kG/dhaD2k09aDOFqtXWYVgq5lgKQn+VO+MQ/VIoFy+StqJQFxjF1gfG2b?=
+	=?iso-8859-15?Q?Ghk5AMPA6KJ5gTZk81A6RRSDIyJ4fbAtcasb/Hy+69S5BO+zG/lX/rr6X?=
+	=?iso-8859-15?Q?Yi5cI8bFKRxM8lsRcpjEVY+nzDBvRSKyWifEchDMmRSnSIffjWwTBx7gH?=
+	=?iso-8859-15?Q?oBbeyVo/caZZUbTY+19iohqUjZ6WgWEgp6wrAFxuguJMXQzKFbjsytvyz?=
+	=?iso-8859-15?Q?/PH3qvAyVWFK06MxmM3rPtBgBEqjffKtcI9A4vadB6WboNWzIAHsyIb63?=
+	=?iso-8859-15?Q?8OvQSK1r+A+WmeQ1sGUd4q5R5pZZ3FW3Lul+6MwcYTT8MTL6a15bzjpTP?=
+	=?iso-8859-15?Q?0mueq/OTBEMWVIqiLWMXAmW3r4HNohqXuy9MwWDybVlmqd4zrCj/xdlx4?=
+	=?iso-8859-15?Q?Kgx5TktfiItvorjiLizGQKweCtIWdixHpz/v812b+ljbF+bgq50aXJzqa?=
+	=?iso-8859-15?Q?+WT6+VhFUSUsOdyBCaAeo9k/OeZK0f1adfUiRv9E98JOYFQg5Nk9lQLrz?=
+	=?iso-8859-15?Q?VxCz8fg3++AGtPycee0aCeFiczYYMKPUC?=
 MIME-Version: 1.0
+X-OriginatorOrg: suse.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 52a5165a-72a7-4a74-429b-08d8f07a5a4b
+X-MS-Exchange-CrossTenant-originalarrivaltime: 26 Mar 2021 17:12:36.2914 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: xdU0HB3N4OXlbA18QsuiXVtUkwsZFgJQ8ZVxCVCkRC4v73iOA0kjxnmtAy6ZzghWpZAPx3rRx0kQFS6YN6VERg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB3PR0402MB3643
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -78,18 +143,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 12QHCZYo006445
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 12QHCj0C006470
 X-loop: dm-devel@redhat.com
-Cc: lixiaokeng <lixiaokeng@huawei.com>, Christoph Hellwig <hch@infradead.org>,
-	linux-scsi@vger.kernel.org,
-	"martin.petersen@oracle.com" <martin.petersen@oracle.com>,
-	"jejb@linux.ibm.com" <jejb@linux.ibm.com>,
-	linux-kernel@vger.kernel.org, linfeilong <linfeilong@huawei.com>,
-	dm-devel@redhat.com, agk@redhat.com, "wubo \(T\)" <wubo40@huawei.com>
-Subject: Re: [dm-devel] md/dm-mpath: check whether all pgpaths have same
- uuid in multipath_ctr()
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH 2/4] libmultipath: fix priorities in
+	parse_vpd_pg83
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -103,150 +163,97 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-ID: <5FCE9EB0013AF04A9F52533DA5D74411@eurprd04.prod.outlook.com>
 Content-Type: text/plain; charset="iso-8859-15"
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2021-03-25 at 11:14 -0400, Mike Snitzer wrote:
-> On Wed, Mar 24 2021 at=A0 9:21pm -0400,
-> Zhiqiang Liu <liuzhiqiang26@huawei.com> wrote:
->=20
-> >=20
-> >=20
-> > On 2021/3/22 22:22, Mike Snitzer wrote:
-> > > On Mon, Mar 22 2021 at=A0 4:11am -0400,
-> > > Christoph Hellwig <hch@infradead.org> wrote:
-> > >=20
-> > > > On Sat, Mar 20, 2021 at 03:19:23PM +0800, Zhiqiang Liu wrote:
-> > > > > From: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> > > > >=20
-> > > > > When we make IO stress test on multipath device, there will
-> > > > > be a metadata err because of wrong path. In the test, we
-> > > > > concurrent execute 'iscsi device login|logout' and
-> > > > > 'multipath -r' command with IO stress on multipath device.
-> > > > > In some case, systemd-udevd may have not time to process
-> > > > > uevents of iscsi device logout|login, and then 'multipath -r'
-> > > > > command triggers multipathd daemon calls ioctl to load table
-> > > > > with incorrect old device info from systemd-udevd.
-> > > > > Then, one iscsi path may be incorrectly attached to another
-> > > > > multipath which has different uuid. Finally, the metadata err
-> > > > > occurs when umounting filesystem to down write metadata on
-> > > > > the iscsi device which is actually not owned by the multipath
-> > > > > device.
-> > > > >=20
-> > > > > So we need to check whether all pgpaths of one multipath have
-> > > > > the same uuid, if not, we should throw a error.
-> > > > >=20
-> > > > > Signed-off-by: Zhiqiang Liu <liuzhiqiang26@huawei.com>
-> > > > > Signed-off-by: lixiaokeng <lixiaokeng@huawei.com>
-> > > > > Signed-off-by: linfeilong <linfeilong@huawei.com>
-> > > > > Signed-off-by: Wubo <wubo40@huawei.com>
-> > > > > ---
-> > > > > =A0drivers/md/dm-mpath.c=A0=A0 | 52
-> > > > > +++++++++++++++++++++++++++++++++++++++++
-> > > > > =A0drivers/scsi/scsi_lib.c |=A0 1 +
-> > > > > =A02 files changed, 53 insertions(+)
-> > > > >=20
-> > > > > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> > > > > index bced42f082b0..f0b995784b53 100644
-> > > > > --- a/drivers/md/dm-mpath.c
-> > > > > +++ b/drivers/md/dm-mpath.c
-> > > > > @@ -24,6 +24,7 @@
-> > > > > =A0#include <linux/workqueue.h>
-> > > > > =A0#include <linux/delay.h>
-> > > > > =A0#include <scsi/scsi_dh.h>
-> > > > > +#include <linux/dm-ioctl.h>
-> > > > > =A0#include <linux/atomic.h>
-> > > > > =A0#include <linux/blk-mq.h>
-> > > > >=20
-> > > > > @@ -1169,6 +1170,45 @@ static int parse_features(struct
-> > > > > dm_arg_set *as, struct multipath *m)
-> > > > > =A0=A0=A0=A0=A0=A0=A0=A0return r;
-> > > > > =A0}
-> > > > >=20
-> > > > > +#define SCSI_VPD_LUN_ID_PREFIX_LEN 4
-> > > > > +#define MPATH_UUID_PREFIX_LEN 7
-> > > > > +static int check_pg_uuid(struct priority_group *pg, char
-> > > > > *md_uuid)
-> > > > > +{
-> > > > > +=A0=A0=A0=A0=A0=A0=A0char pgpath_uuid[DM_UUID_LEN] =3D {0};
-> > > > > +=A0=A0=A0=A0=A0=A0=A0struct request_queue *q;
-> > > > > +=A0=A0=A0=A0=A0=A0=A0struct pgpath *pgpath;
-> > > > > +=A0=A0=A0=A0=A0=A0=A0struct scsi_device *sdev;
-> > > > > +=A0=A0=A0=A0=A0=A0=A0ssize_t count;
-> > > > > +=A0=A0=A0=A0=A0=A0=A0int r =3D 0;
-> > > > > +
-> > > > > +=A0=A0=A0=A0=A0=A0=A0list_for_each_entry(pgpath, &pg->pgpaths, l=
-ist) {
-> > > > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0q =3D bdev_get_queu=
-e(pgpath->path.dev->bdev);
-> > > > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0sdev =3D scsi_devic=
-e_from_queue(q);
-> > > >=20
-> > > > Common dm-multipath code should never poke into scsi
-> > > > internals.=A0 This
-> > > > is something for the device handler to check.=A0 It probably also
-> > > > won't
-> > > > work for all older devices.
-> > >=20
-> > > Definitely.
-> > >=20
-> > > But that aside, userspace (multipathd) _should_ be able to do
-> > > extra
-> > > validation, _before_ pushing down a new table to the kernel,
-> > > rather than
-> > > forcing the kernel to do it.
-> >=20
-> > As your said, it is better to do extra validation in userspace
-> > (multipathd).
-> > However, in some cases, the userspace cannot see the real-time
-> > present devices
-> > info as Martin (committer of multipath-tools) said.
-> > In addition, the kernel can see right device info in the table at
-> > any time,
-> > so the uuid check in kernel can ensure one multipath is composed
-> > with paths mapped to
-> > the same device.
-> >=20
-> > Considering the severity of the wrong path in multipath, I think it
-> > worths more
-> > checking.
->=20
-> As already said: this should be fixable in userspace.=A0 Please work
-> with
-> multipath-tools developers to address this.
+On Thu, 2021-03-25 at 19:52 -0500, Benjamin Marzinski wrote:
+> The priorities for the EUI-64 (0x02) and NAME (0x08) scsi identifiers
+> in
+> parse_vpd_pg83() don't match their priorities in 55-scsi-sg3_id.rules.
+> Switch them so that they match.
 
-I agree this patch won't help, because the kernel doesn't (re)attach
-devices to multipath maps by itself. If multipathd actively adds a
-device to a map, it must check the WWID beforehand, and so it does (and
-has been doing so for years).
+I think we should rather change the udev rules file, to be consistent
+with what the kernel does:
 
-But in general, it's hard to avoid WWID mismatches entirely in user
-space. We have no problem if a device is removed an re-added. But if it
-looks like a device just having been offline or unreachable for some
-time and then reappear, it gets tricky. We might even miss the fact
-that the device was temporarily away. multipathd can't constantly poll
-devices just to detect changes - and what if the sysfs vpd attributes
-stay the same because the kernel didn't even notice?
-
-It would be great if userspace could rely on the kernel to deliver
-events in such cases. I want look into monitoring SCSI UNIT ATTENTION
-events, which multipathd currently doesn't. That might cover many
-situations. But I've been told that in some situations really no event
-arrived in user space, and I'm not sure if that was a fault of the
-storage involved (no UNIT ATTENTION sent) or something else.
-
-Another possibility would be that the kernel used sysfs_notify() for
-the inquiry or vpd_pgXY attributes for SCSI (and similar attirbutes for
-other device types).
+https://elixir.bootlin.com/linux/latest/A/ident/designator_prio
 
 Regards
 Martin
 
+
+
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+> =A0libmultipath/discovery.c | 16 ++++++++--------
+> =A01 file changed, 8 insertions(+), 8 deletions(-)
+>=20
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index 5727f7a6..f8044141 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -1152,19 +1152,19 @@ parse_vpd_pg83(const unsigned char *in, size_t
+> in_len,
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0vpd =3D d;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0b=
+reak;
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0case 0x8:
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* =
+SCSI Name: Prio 4 */
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if =
+(memcmp(d + 4, "eui.", 4) &&
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0 memcmp(d + 4, "naa.", 4) &&
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0 memcmp(d + 4, "iqn.", 4))
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0break;
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0case 0x2:
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* =
+EUI-64: Prio 4 */
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0i=
+f (prio < 4) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0prio =3D 4;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0vpd =3D d;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0b=
+reak;
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0case 0x2:
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* =
+EUI-64: Prio 3 */
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0case 0x8:
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* =
+SCSI Name: Prio 3 */
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if =
+(memcmp(d + 4, "eui.", 4) &&
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0 memcmp(d + 4, "naa.", 4) &&
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0 memcmp(d + 4, "iqn.", 4))
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0break;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0i=
+f (prio < 3) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0prio =3D 3;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0vpd =3D d;
+
+--=20
+Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
+SUSE Software Solutions Germany GmbH
+HRB 36809, AG N=FCrnberg GF: Felix Imend=F6rffer
 
 
 
