@@ -7,61 +7,60 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EF2E5C433DB
-	for <dm-devel@archiver.kernel.org>; Fri, 26 Mar 2021 21:31:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1AA1CC433C1
+	for <dm-devel@archiver.kernel.org>; Fri, 26 Mar 2021 21:31:09 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7848861A2A
-	for <dm-devel@archiver.kernel.org>; Fri, 26 Mar 2021 21:31:02 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7848861A2A
+	by mail.kernel.org (Postfix) with ESMTPS id B283D619D3
+	for <dm-devel@archiver.kernel.org>; Fri, 26 Mar 2021 21:31:08 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org B283D619D3
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-405-CFdqDw3YMQ6upBGhCAyGew-1; Fri, 26 Mar 2021 17:30:58 -0400
-X-MC-Unique: CFdqDw3YMQ6upBGhCAyGew-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-139-UvneSkX9NTO-k8ADHYeKAQ-1; Fri, 26 Mar 2021 17:31:04 -0400
+X-MC-Unique: UvneSkX9NTO-k8ADHYeKAQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 34BBE107B7C3;
-	Fri, 26 Mar 2021 21:30:53 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 173215D6DC;
-	Fri, 26 Mar 2021 21:30:53 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DF62D81426D;
+	Fri, 26 Mar 2021 21:30:57 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BDA835DDAD;
+	Fri, 26 Mar 2021 21:30:57 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D5C5F180B450;
-	Fri, 26 Mar 2021 21:30:52 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 884EE4A7C9;
+	Fri, 26 Mar 2021 21:30:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12QLU9pC001680 for <dm-devel@listman.util.phx.redhat.com>;
+	id 12QLU9Go001695 for <dm-devel@listman.util.phx.redhat.com>;
 	Fri, 26 Mar 2021 17:30:09 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 021E32026D48; Fri, 26 Mar 2021 21:30:09 +0000 (UTC)
+	id 879011037B4; Fri, 26 Mar 2021 21:30:09 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id EFFC92026D07
-	for <dm-devel@redhat.com>; Fri, 26 Mar 2021 21:30:05 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BA207803C9F
-	for <dm-devel@redhat.com>; Fri, 26 Mar 2021 21:30:05 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 824441037B1
+	for <dm-devel@redhat.com>; Fri, 26 Mar 2021 21:30:08 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1018480C8DB
+	for <dm-devel@redhat.com>; Fri, 26 Mar 2021 21:30:08 +0000 (UTC)
 Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-298-UMO3hp_aN4KhPnxgK0I8JA-1;
+	relay.mimecast.com with ESMTP id us-mta-449-Hj3DB2_wPw-5ZXyNDqAwNQ-1;
 	Fri, 26 Mar 2021 17:30:03 -0400
-X-MC-Unique: UMO3hp_aN4KhPnxgK0I8JA-1
+X-MC-Unique: Hj3DB2_wPw-5ZXyNDqAwNQ-1
 X-Virus-Scanned: by amavisd-new at test-mx.suse.de
 Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id C9087AF98;
+	by mx2.suse.de (Postfix) with ESMTP id 8640EAF95;
 	Fri, 26 Mar 2021 21:30:00 +0000 (UTC)
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri, 26 Mar 2021 22:29:44 +0100
-Message-Id: <20210326212944.3136-8-mwilck@suse.com>
+Date: Fri, 26 Mar 2021 22:29:43 +0100
+Message-Id: <20210326212944.3136-7-mwilck@suse.com>
 In-Reply-To: <20210326212944.3136-1-mwilck@suse.com>
 References: <20210326212944.3136-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -73,13 +72,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 12QLU9pC001680
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 12QLU9Go001695
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH 7/7] libmultipath: fix warning with clang 3.5
+Subject: [dm-devel] [PATCH 6/7] fixup "multipath-tools tests: check if
+	/sys/dev/block is non-empty"
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,7 +93,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -103,30 +103,28 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-Fixes the following warning with clang 3.5:
+Don't run closedir() if opendir() failed.
 
-io_err_stat.c:613:31: error: missing field 'slot' initializer
-[-Werror,-Wmissing-field-initializers]
-        struct _vector _pathvec = {0,};
-
+Fixes: "multipath-tools tests: check if /sys/dev/block is non-empty"
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/io_err_stat.c | 2 +-
+ tests/devt.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
-index abdd0b4..d8d91f6 100644
---- a/libmultipath/io_err_stat.c
-+++ b/libmultipath/io_err_stat.c
-@@ -610,7 +610,7 @@ static void process_async_ios_event(int timeout_nsecs, char *dev)
+diff --git a/tests/devt.c b/tests/devt.c
+index d971302..0ad100a 100644
+--- a/tests/devt.c
++++ b/tests/devt.c
+@@ -37,8 +37,8 @@ static bool sys_dev_block_exists(void)
+ 				break;
+ 			}
+ 		}
++		closedir(dir);
+ 	}
+-	closedir(dir);
+ 	return rc;
+ }
  
- static void service_paths(void)
- {
--	struct _vector _pathvec = {0};
-+	struct _vector _pathvec = { .allocated = 0 };
- 	/* avoid gcc warnings that &_pathvec will never be NULL in vector ops */
- 	struct _vector * const tmp_pathvec = &_pathvec;
- 	struct io_err_stat_path *pp;
 -- 
 2.30.1
 
