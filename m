@@ -2,84 +2,81 @@ Return-Path: <SRS0=Y5I9=I3=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 78785C433C1
-	for <dm-devel@archiver.kernel.org>; Mon, 29 Mar 2021 20:12:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A0179C433DB
+	for <dm-devel@archiver.kernel.org>; Mon, 29 Mar 2021 20:43:17 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E112E617ED
-	for <dm-devel@archiver.kernel.org>; Mon, 29 Mar 2021 20:12:21 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E112E617ED
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 3085C61996
+	for <dm-devel@archiver.kernel.org>; Mon, 29 Mar 2021 20:43:17 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3085C61996
+Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1617048740;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=AJy0YnHsb+YLAouEkLkTbLMkLfwTTODJWVmWz1+we6k=;
-	b=MEM5v+OcHgyK/PMAmiTB4jo3gbonDNB5FQY2HThKHHsgoz6SH09GX2ZiafDT+nHESiMPqn
-	7xhLgJUd3uOO6EvoP2P2tKnH1aR3/bWz5zw68LixFQWMLwIHXLQBYNBkt4kHNjVOCA27qL
-	pmlLlK/YW5s7M8b9Y0/C1gWnI84NIYg=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-595-DLnHLaY2ML-K8pRw7AzA5Q-1; Mon, 29 Mar 2021 16:12:18 -0400
-X-MC-Unique: DLnHLaY2ML-K8pRw7AzA5Q-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-97-MsgoWFI5PUCoK9rg7GTKHg-1; Mon, 29 Mar 2021 16:43:10 -0400
+X-MC-Unique: MsgoWFI5PUCoK9rg7GTKHg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 41BCB80063;
-	Mon, 29 Mar 2021 20:12:12 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4DDDC5D768;
-	Mon, 29 Mar 2021 20:12:11 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 324C01922960;
+	Mon, 29 Mar 2021 20:43:05 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7BE115B4A6;
+	Mon, 29 Mar 2021 20:43:04 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3DCD11809C83;
-	Mon, 29 Mar 2021 20:12:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
-	[10.5.11.12])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E91074BB7C;
+	Mon, 29 Mar 2021 20:43:02 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12TK9oKn015219 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 29 Mar 2021 16:09:50 -0400
+	id 12TKdoTd018732 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 29 Mar 2021 16:39:51 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 5BF2590A01; Mon, 29 Mar 2021 20:09:50 +0000 (UTC)
-Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 702FC50455;
-	Mon, 29 Mar 2021 20:09:47 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 12TK9jdF004107; 
-	Mon, 29 Mar 2021 15:09:46 -0500
-Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 12TK9jwc004106;
-	Mon, 29 Mar 2021 15:09:45 -0500
-Date: Mon, 29 Mar 2021 15:09:45 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Message-ID: <20210329200945.GL15006@octiron.msp.redhat.com>
-References: <1616719966-10221-1-git-send-email-bmarzins@redhat.com>
-	<1616719966-10221-3-git-send-email-bmarzins@redhat.com>
-	<1088f960e04492a26530385040b2485b3691c94e.camel@suse.com>
-	<20210327021853.GI15006@octiron.msp.redhat.com>
-	<31162621ac38601976bfa51db92989471fd4c23e.camel@suse.com>
-	<20210329182033.GJ15006@octiron.msp.redhat.com>
-	<facc763d175793d4d21822f8880522574364680a.camel@suse.com>
+	id C729E4411E; Mon, 29 Mar 2021 20:39:50 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BFF8B47CDC
+	for <dm-devel@redhat.com>; Mon, 29 Mar 2021 20:39:48 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1424085A5AA
+	for <dm-devel@redhat.com>; Mon, 29 Mar 2021 20:39:48 +0000 (UTC)
+Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-556-4G7rZjfaO4-oFxdk3fzzpw-1;
+	Mon, 29 Mar 2021 16:39:43 -0400
+X-MC-Unique: 4G7rZjfaO4-oFxdk3fzzpw-1
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.221.27])
+	by mx2.suse.de (Postfix) with ESMTP id 10587B08C;
+	Mon, 29 Mar 2021 20:39:42 +0000 (UTC)
+From: mwilck@suse.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Date: Mon, 29 Mar 2021 22:39:35 +0200
+Message-Id: <20210329203935.19691-1-mwilck@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <facc763d175793d4d21822f8880522574364680a.camel@suse.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 12TKdoTd018732
 X-loop: dm-devel@redhat.com
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
-	Hannes Reinecke <hare@suse.com>
-Subject: Re: [dm-devel] [PATCH 2/4] libmultipath: fix priorities in
-	parse_vpd_pg83
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Subject: [dm-devel] [PATCH] multipathd: give up "add missing path" after
+	multiple failures
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,66 +90,92 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Mon, Mar 29, 2021 at 07:08:14PM +0000, Martin Wilck wrote:
-> On Mon, 2021-03-29 at 13:20 -0500, Benjamin Marzinski wrote:
-> > >=20
-> > > multipathd could figure out the system configuration from the (non)
-> > > availability of certain properties, and use an appropriate fallback
-> > > logic for either case.
-> >=20
-> > That seems like reasonable first step, although one that won't help
-> > SID,
-> > since it can't rely on getting the wwid from udev.=A0
->=20
-> Can you conceive of a different approach that would be better for SID?
-> I'd like to hear about it.
+From: Martin Wilck <mwilck@suse.com>
 
-I assume that we will continue to have a fallback function to get the
-wwid, that will get the proper wwid. As long as you are O.k. with
-multipath autodetecting if SID is running, it can just continue to use
-the fallback method, so this should be fine.
+After b7aae60 ("multipathd: improve "add missing path" handling"),
+a path that failed to initialize after multiple udev retriggers
+would still be checked in check_path(). However, if a path is up,
+has been checked more than once, the failback WWID methods have
+been tried, and still there is no usable WWID, we may conclude
+that something is fishy and we shouldn't keep trying.
 
-> >  This actually brings
-> > up a different point I have. Is your main objection to adding more
-> > config options that it is complicating the code, or confusing the
-> > users?
->=20
-> Both, with emphasis on the latter. I'm quite positive that we have too
-> many options already. That doesn't mean I would generally oppose new
-> options if they make sense. We should rather try to get rid of some new
-> ones that nobody uses any more.
->=20
-> > Because multipath wouldn't need to add any configuration options to
-> > be
-> > easily usable with SID (the current workaround, setting uid_attribute
-> > to
-> > "", is pretty non-obvious to users) if it could just check if sid was
-> > running, and key off that.=A0 However this adds even more code
-> > complexity
-> > than simply checking a config option. I don't know how you would feel
-> > about accepting a patch that does this, when SID is production ready.
->=20
-> I could live well with this autodetection. I think it would be better
-> than doing the same thing with a configuration options.
->=20
-> Regards,
-> Martin
->=20
->=20
-> --=20
-> Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
-> SUSE Software Solutions Germany GmbH
-> HRB 36809, AG N=FCrnberg GF: Felix Imend=F6rffer
->=20
+Without this patch, totally WWID-less devices (seen e.g. on ESXi)
+will cause a "add missing path" message in every checker iteration.
+
+Fixes: b7aae60 ("multipathd: improve "add missing path" handling")
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/discovery.c | 16 ++++++++++++++++
+ multipathd/main.c        |  6 ++++--
+ 2 files changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index f804414..ec99a7a 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -2370,6 +2370,22 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
+ 			if (pp->initialized != INIT_FAILED) {
+ 				pp->initialized = INIT_MISSING_UDEV;
+ 				pp->tick = conf->retrigger_delay;
++			} else if (pp->retriggers >= conf->retrigger_tries &&
++				   (pp->state == PATH_UP || pp->state == PATH_GHOST)) {
++				/*
++				 * We have failed to read udev info for this path
++				 * repeatedly. We used the fallback in get_uid()
++				 * if there was any, and still got no WWID,
++				 * although the path is allegedly up.
++				 * It's likely that this path is not fit for
++				 * multipath use.
++				 */
++				char buf[16];
++
++				snprint_path(buf, sizeof(buf), "%T", pp, 0);
++				condlog(1, "%s: no WWID in state \"%s\", giving up",
++					pp->dev, buf);
++				return PATHINFO_SKIPPED;
+ 			}
+ 			return PATHINFO_OK;
+ 		}
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 3579bad..102946b 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2218,13 +2218,13 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
+ 				ev_add_path(pp, vecs, 1);
+ 				pp->tick = 1;
+ 			} else {
++				if (ret == PATHINFO_SKIPPED)
++					return -1;
+ 				/*
+ 				 * We failed multiple times to initialize this
+ 				 * path properly. Don't re-check too often.
+ 				 */
+ 				pp->checkint = max_checkint;
+-				if (ret == PATHINFO_SKIPPED)
+-					return -1;
+ 			}
+ 		}
+ 		return 0;
+@@ -2504,6 +2504,8 @@ checkerloop (void *ap)
+ 		vector_foreach_slot (vecs->pathvec, pp, i) {
+ 			rc = check_path(vecs, pp, ticks);
+ 			if (rc < 0) {
++				condlog(1, "%s: check_path() failed, removing",
++					pp->dev);
+ 				vector_del_slot(vecs->pathvec, i);
+ 				free_path(pp);
+ 				i--;
+-- 
+2.30.1
+
 
 --
 dm-devel mailing list
