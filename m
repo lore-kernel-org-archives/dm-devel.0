@@ -3,135 +3,136 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-7.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
 	PDS_BAD_THREAD_QP_64,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E1D84C433DB
-	for <dm-devel@archiver.kernel.org>; Mon, 29 Mar 2021 08:48:04 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 61212C433C1
+	for <dm-devel@archiver.kernel.org>; Mon, 29 Mar 2021 09:59:18 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 59CE86146B
-	for <dm-devel@archiver.kernel.org>; Mon, 29 Mar 2021 08:48:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 59CE86146B
+	by mail.kernel.org (Postfix) with ESMTPS id CDF6661554
+	for <dm-devel@archiver.kernel.org>; Mon, 29 Mar 2021 09:59:17 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CDF6661554
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-34-sm1yRFD_NnKNxs-dbnJWrA-1; Mon, 29 Mar 2021 04:48:00 -0400
-X-MC-Unique: sm1yRFD_NnKNxs-dbnJWrA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-379-5TiadDyjNVqgbDmUQ_ixRg-1; Mon, 29 Mar 2021 05:59:14 -0400
+X-MC-Unique: 5TiadDyjNVqgbDmUQ_ixRg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0AA42501F4;
-	Mon, 29 Mar 2021 08:47:57 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 674FE1005D54;
+	Mon, 29 Mar 2021 09:59:08 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D7EC75C8A8;
-	Mon, 29 Mar 2021 08:47:56 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 68ACB60D79;
+	Mon, 29 Mar 2021 09:59:07 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 56B771809C83;
-	Mon, 29 Mar 2021 08:47:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 07F761809C83;
+	Mon, 29 Mar 2021 09:59:01 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12T8lsUU009647 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 29 Mar 2021 04:47:54 -0400
+	id 12T9wxAE016711 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 29 Mar 2021 05:59:00 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 732D421CAC6C; Mon, 29 Mar 2021 08:47:54 +0000 (UTC)
+	id D59492026D07; Mon, 29 Mar 2021 09:58:59 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6793621CAC6F
-	for <dm-devel@redhat.com>; Mon, 29 Mar 2021 08:47:50 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CF7A32026D7F
+	for <dm-devel@redhat.com>; Mon, 29 Mar 2021 09:58:56 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3D2E280331A
-	for <dm-devel@redhat.com>; Mon, 29 Mar 2021 08:47:50 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 89615811E9C
+	for <dm-devel@redhat.com>; Mon, 29 Mar 2021 09:58:56 +0000 (UTC)
 Received: from de-smtp-delivery-102.mimecast.com
-	(de-smtp-delivery-102.mimecast.com [194.104.109.102]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-30-JWMQoZQjO1-vJ4TNTO8GyQ-1;
-	Mon, 29 Mar 2021 04:47:47 -0400
-X-MC-Unique: JWMQoZQjO1-vJ4TNTO8GyQ-1
-Received: from EUR03-VE1-obe.outbound.protection.outlook.com
-	(mail-ve1eur03lp2051.outbound.protection.outlook.com [104.47.9.51])
+	(de-smtp-delivery-102.mimecast.com [62.140.7.102]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-380-PUJubdOtNfic28x0XL5Mjw-1;
+	Mon, 29 Mar 2021 05:58:54 -0400
+X-MC-Unique: PUJubdOtNfic28x0XL5Mjw-1
+Received: from EUR04-DB3-obe.outbound.protection.outlook.com
+	(mail-db3eur04lp2053.outbound.protection.outlook.com [104.47.12.53])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	de-mta-35-tQcYTJReMumhgrUhcDEPPw-1; Mon, 29 Mar 2021 10:47:45 +0200
-X-MC-Unique: tQcYTJReMumhgrUhcDEPPw-1
+	de-mta-22-fADNTX6MOKCaZ8Vl5fZV2g-2; Mon, 29 Mar 2021 11:58:52 +0200
+X-MC-Unique: fADNTX6MOKCaZ8Vl5fZV2g-2
 Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
-	by DB7PR04MB5387.eurprd04.prod.outlook.com (2603:10a6:10:8b::15) with
-	Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3977.25;
-	Mon, 29 Mar 2021 08:47:44 +0000
+	by DB9PR04MB8347.eurprd04.prod.outlook.com (2603:10a6:10:245::15)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3977.24;
+	Mon, 29 Mar 2021 09:58:50 +0000
 Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
 	([fe80::69bd:c9ff:f910:faeb]) by
 	DB8PR04MB6555.eurprd04.prod.outlook.com
 	([fe80::69bd:c9ff:f910:faeb%7]) with mapi id 15.20.3977.033;
-	Mon, 29 Mar 2021 08:47:44 +0000
+	Mon, 29 Mar 2021 09:58:50 +0000
 From: Martin Wilck <martin.wilck@suse.com>
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
-	"christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Thread-Topic: [PATCH 2/4] libmultipath: fix priorities in parse_vpd_pg83
-Thread-Index: AQHXIdphHMXt7za5/0CjNSBmSMx0R6qarKiA
-Date: Mon, 29 Mar 2021 08:47:44 +0000
-Message-ID: <4d6e8e67bf360ffceba16b14e018576206d5996a.camel@suse.com>
-References: <1616719966-10221-1-git-send-email-bmarzins@redhat.com>
-	<1616719966-10221-3-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1616719966-10221-3-git-send-email-bmarzins@redhat.com>
+To: "hch@lst.de" <hch@lst.de>, "jejb@linux.vnet.ibm.com"
+	<jejb@linux.vnet.ibm.com>, "bmarzins@redhat.com" <bmarzins@redhat.com>,
+	Hannes Reinecke <hare@suse.com>, "martin.petersen@oracle.com"
+	<martin.petersen@oracle.com>
+Thread-Topic: RFC: one more time: SCSI device identification
+Thread-Index: AQHXJIIevKqEvjcbJUy9Ai14uQzKmQ==
+Date: Mon, 29 Mar 2021 09:58:49 +0000
+Message-ID: <c524ce68d9a9582732db8350f8a1def461a1a847.camel@suse.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
 user-agent: Evolution 3.38.4
 x-originating-ip: [2.202.118.173]
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: e598cf44-9c2d-493c-2ff6-08d8f28f5226
-x-ms-traffictypediagnostic: DB7PR04MB5387:
-x-microsoft-antispam-prvs: <DB7PR04MB5387AB572B2D73C151C593AFFC7E9@DB7PR04MB5387.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:4125
+x-ms-office365-filtering-correlation-id: b8549d9c-b607-40fd-c3fe-08d8f2994091
+x-ms-traffictypediagnostic: DB9PR04MB8347:
+x-ld-processed: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba,ExtFwd
+x-ms-exchange-transport-forked: True
+x-microsoft-antispam-prvs: <DB9PR04MB834743787C009DCCEEA1B60AFC7E9@DB9PR04MB8347.eurprd04.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:10000
 x-ms-exchange-senderadcheck: 1
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: f2XDCc4R1WGrz/EXSxOVeXrLnhw7BBCFn0rJ16w/cHAYrl2nEySEBugbJkFDWYDfKWj2Agyi5cbD5S1VxAqKxrpoyvtoJArrcfLg3iM2AXnPXRXB+i58pUGJhop5M6NhcPXEQjeiOkUPzehscU/Tv7+sk7OlBB+MzA5iL8VAB1GAYTc7ciz03axYkIruG0g2ApbkmEQvfWjKPKXN554U8R2aO6Jzv6YBMip5/C1FuqJ68oUWvl2BgxWKYMUrFB5Z1Yrgx43vXvFiOnr6UAkAzvY69Bn9sqF7UjpqomQFkQ+pEJQT2yzUHNb+icuRXF7J6iwTz3qVY33CLFwN6thPdwLAeqoSUNEkI+MFpGyYTdG7u0k7zM5wXsoQAtwjCwf1lVNy8tn/YXuHvRUi4ODJNcbvIx8wyp+hRzEavFA+2ZGSBBzbb/jJi5i0HE2jP+1ZmZYLM2oOKd+GFOLnyb3rUFyPo7mV1270Fqp1If5A3iRRJXtZZqwmUXtUNY63r2nP2BqLpPAk9oK/Gx7e7z3wIzecNUSIOSBPK1hhQPCyx71/M0tELnMnrRpXva6beOQBvi4GdT7Ca+YQGESfejAXYXxlN5bBRU9edD5A0WNUXGcaVjs5GuSXxZxQ3kE2Gt45wv3fE6b9rzvm16u98S8VKQK2pEsju1x/nEgPAn9qLic=
+x-microsoft-antispam-message-info: /anSMDmjRI9sCB8BxY0XzEc3UQUuxD7WIo1UJf5fCqPr6Pd24km4NLfvEjRv5P8SbbDcJ2GfEa4I3uVhLbnG2I/WcI0hrpgCwaH4y3swBR/u2bEqQVocgYt/Uwg5K5IWsWCy7Lhyy+1jbvNBQCEI6BGlWBmz8oXsIRw4ytOy9+dq4Fvd3UG1yKd09OqY1vxiozWkjKqpkEye5qg88Vh4aT0xUGd8pxJ51NVVPBJUt+H45qLjqaVM7BsYv1J6IBf8AJdh5bHlGHJb3ptytZjb605yWK49VDeihewLtJUdDl3tD7k8PcnKsqEI7CVNU0DZ/LuIQAGf68ntSQoc4X3dMkBVxDUTFj9hu2Ji4Qsh7c0iha+89QLQjCc8QR9dRh1bUzwx2TpD0CYMKD64wkLjVS6n0iM5ISNrtuMswcDMm57Vd4PUBE2Q/bHmTetuCAcd9EvV1AIlqSlerkiY3vvumXb32JYnHYkpqYyRaDwB79dB2ZxMzDUZl6rL16gAf6iYBcf9MyPhuS99xC7S6EIC8TlgCEMJjiBDTv6gzwkVZJP4+y2EtCraO8ZJdy9k8r3aZ0lZdrkI6i2XZDsWV3Q4N2AnLXEgTleayf0O9sAF3jzfaL5VpuOEcwghG9sAYajXjbymlULDC61U6UvyIkejRVrYNyJsAx0FLkvlxdlKuDVM8xhTBzqL1k0D7UaKWjSVOMBN5MgXedpdVUjV3T1VAVdNGcabKG5Aat+b4UJMLU2qmqnhCzgUmz7ASKdpXp/T
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
 	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
 	PTR:; CAT:NONE;
-	SFS:(366004)(376002)(39860400002)(136003)(396003)(346002)(91956017)(6512007)(478600001)(8676002)(2616005)(6506007)(76116006)(66446008)(8936002)(5660300002)(316002)(6486002)(64756008)(44832011)(26005)(110136005)(2906002)(66946007)(4326008)(86362001)(38100700001)(4744005)(186003)(36756003)(66556008)(66476007)(71200400001);
+	SFS:(366004)(376002)(39860400002)(136003)(396003)(346002)(86362001)(8676002)(6512007)(44832011)(76116006)(66946007)(6486002)(6506007)(2906002)(54906003)(110136005)(8936002)(71200400001)(316002)(83380400001)(66574015)(64756008)(2616005)(26005)(186003)(66556008)(478600001)(966005)(5660300002)(91956017)(4326008)(36756003)(66476007)(38100700001)(66446008);
 	DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata: =?iso-8859-15?Q?FKkwuOl/JiZ0HQDU1+QJH9ZUmP+vgc7LcNCytvb2hXQ8RXpJcINcerDXe?=
-	=?iso-8859-15?Q?r/4JuJ1mM/D0jeGmMk95I2ceQlQrpvGu+PIJRJ/y0wwK0QSxAalxWIkR+?=
-	=?iso-8859-15?Q?WZhwJ/3JTiXizF0YbPUlcw9sLx4Wm76kKN4u6WX7bgcVpA3hoBzVTDOY7?=
-	=?iso-8859-15?Q?swvrbX7+aD7Lo6UziJ9OSxgAV+AwZfMikANGPxSjxjBnxd4SOMwX8eTmE?=
-	=?iso-8859-15?Q?RlxchUj3H5iBaEZbT9NSpytm5GS0QZNPOLjisfehUHcs+7K34f6XOk8Us?=
-	=?iso-8859-15?Q?LCuNpDAD87Wop02X+ZUoI8LS/kDYQF/gnU3rzefILQYZtWUueKpTnVKfT?=
-	=?iso-8859-15?Q?Jf+H0VBw7B/f0GfQkMQ5EK4VozaWPEjxfvpDx/YAN4ZuIZ1XhJQ8toAb+?=
-	=?iso-8859-15?Q?FOy00gq0YJYKgWbkyWXohIXzF8okootB5pw1DwUe1QgB67q3lx7zvm0CK?=
-	=?iso-8859-15?Q?i6FCr2/1QXx2eArk9+52conG8m0VaCWL+1Og0twzie6Rw40lXE+Sw1U2Z?=
-	=?iso-8859-15?Q?mRKym+dCMU+AEmAVg41U05TsgBtBtA/OiP0hfCnSzdmsNTc3mV7UOw+0u?=
-	=?iso-8859-15?Q?2cZhV3RpNpfZdZejTKJb9WGn04JchcuXolM/oPHzujYWZF7aQpvcnSgyd?=
-	=?iso-8859-15?Q?sPcuFiYpkwVBn3LuOvHQlNLDc5tfRQ/3xR8iL/B42Cmy7i2uo/8uk8Wrc?=
-	=?iso-8859-15?Q?GwcST2MGxL2Q3PLu3QZJKEECWxccKDtjX98jjJT+akberD3YJsEcOLggJ?=
-	=?iso-8859-15?Q?NGfCQCu36KMB+rDAlM2IKAwSTp1f6DWR2bejS9POECFMJfU9vwbOzYUdc?=
-	=?iso-8859-15?Q?Xvcv7WP3T2kuLkPeEHzK4n6ZALBmPuF82tYZk9OaQWALq+L8tmwpaZHKQ?=
-	=?iso-8859-15?Q?swgsP6/icoyDeJy6LVi+FzkPvLlFa9hn1SKDqVwSpz4srTJ4izA9amRbJ?=
-	=?iso-8859-15?Q?tsunPY7SAoUHUV7ztJ+JtR8T4Tw/kbdyAyCIKfiAC0F8EtsAUbEVJ+xxB?=
-	=?iso-8859-15?Q?uIhf8U96YkKKIpO+1kxe6j50zPkGt5uIdwQw0t/16Kpw4/myP5WhkyoEw?=
-	=?iso-8859-15?Q?lUlUqbvEhMql/BoLSYgWSunABBwnGDLHq3lBl1QYSzSTzi5tO7uo072PH?=
-	=?iso-8859-15?Q?ba/h7bjQv7kvMvr9gcMdBFQ4AeLS++VwVUlt6n/+ZPWBG3HdA8NNmN88b?=
-	=?iso-8859-15?Q?V4kk/C+l5mUUFpKAq9ESDeCPBz+BOnboNPu+CR3vCOQKaJGLTAdXGr6tI?=
-	=?iso-8859-15?Q?kxef/9uJmTIQt+clt4yfdVza3lb3yAWbYwuJFJPwL1YN8CamDGSkH6ctl?=
-	=?iso-8859-15?Q?Criczq9NMpuU94wTgfiV2wg8zjK2fLWri+3KpySgEuz+7ht9xmMEAhopW?=
-	=?iso-8859-15?Q?h3lZLrt4gEl+RO8vqiGj4VLW20dMPCHro?=
-x-ms-exchange-transport-forked: True
+x-ms-exchange-antispam-messagedata: =?iso-8859-15?Q?CdEUoOEY8TM7H5wOCDDzFmSD0kNkmEtpTvZ+WEuJ+5JCMo9i+HFPJh3lR?=
+	=?iso-8859-15?Q?+OGC/ixeHaEWh4zv5aRiWa31FDGa+5wicJTq6U0gsoU+nUT2Xv8RfYL/F?=
+	=?iso-8859-15?Q?X2h6hgMomAyJZKcoAQZOSNRvbVDci3T5rkZXY6V7hWlX6CO/Vj5yl9Okw?=
+	=?iso-8859-15?Q?p7MYrvT5UyidBVVKOhD41MMjnomJEFDTVeWb8YbEB9CzR7o0MhSX+y4d/?=
+	=?iso-8859-15?Q?eUKd2vTCDzGc2ZVW8yX/4t0c186qEZ8o1ZUXKl6LIHShP6k3LPZCAPle0?=
+	=?iso-8859-15?Q?ZMLnMiB3eeCmTZJAnU3uG5X/ZiRwjYftXLc47FtAEGNTzuHcob+TlnXVV?=
+	=?iso-8859-15?Q?b5mtni9Z0D+ShsptTi7Ss0N/9v5RdkKyW9TA5i+y45C1kucgXK5lmxI3H?=
+	=?iso-8859-15?Q?SPUj5S6v4cHVzmKOZcZkv9iLr0rDX8zHJzbwRg/Xk//lskUTBfkCLPxF0?=
+	=?iso-8859-15?Q?aw6vV9nJtYE43FPFusUmAutEIl+9g4oD+n3h4jHYuLpWL3/S8wz03Tt2F?=
+	=?iso-8859-15?Q?T5XwGHLY4CkvNMI5Y4ctWEsxOcRwNypj2wszXPsWtpcBbvoJq1eF10Dv7?=
+	=?iso-8859-15?Q?3jRarUAAE74qhlPnQN4+jpuZLVrQUeuEDqPYkuuhfpwupVnICSzFxxalb?=
+	=?iso-8859-15?Q?OMFXNHrO0mPlhoSjH/4ghA9lv7oVFlVPrpDZtERUaLi71idPDJP9NPGfK?=
+	=?iso-8859-15?Q?hGWh+o9zigpWXx0hW8xflZMMP/DdmBp8t2jW/0/6lE/r2ONP4TnE53rPR?=
+	=?iso-8859-15?Q?C1UrcCt9uc4RLGua5FfIn2tlhpqPVmN/O5gBGvFnYkgw0UJWmWFG/8vs0?=
+	=?iso-8859-15?Q?FkGEQsZKzcpXQxwUmmKtNkIJxC7CZ9Iq9M5xcBSSb0vaQTVrB6xjXir12?=
+	=?iso-8859-15?Q?7zBYrKTHbGpHcO6C3PWSJ1pESNnEo3ned+PDUyd0GYiGgkScJ164e+Y9e?=
+	=?iso-8859-15?Q?JVFZml7qQl8l73i10k/vCR6+CaiJwR1EmtXH5nt774hdUuo51yVeIMuEm?=
+	=?iso-8859-15?Q?o+bce2bqwTgo7R4R0fELCesDNGnT58TCrwfInuXzlMcHNFOyWKFBtXfjm?=
+	=?iso-8859-15?Q?3a5IxgwrrHobCXXZI4ECotJ6Vz/xbBSGOoR+HnzOFNdqhH90oy5X1FIP9?=
+	=?iso-8859-15?Q?3+IM5bkDHSCNkvd+t2U0D+9+lf4f0Ji4uEG94WkQ4y8HBrLhpJpcEEjz3?=
+	=?iso-8859-15?Q?pVJCZF9maxkiyoqfI2ba45i60aIq0DrfEWVXAlopFZYK1BDHlWlXfzEBb?=
+	=?iso-8859-15?Q?gvSFJr0cyoVXpYAu9w5v5TQ+8R7v6uCd1EMgUAuhRmD4+kc6mm222zk4v?=
+	=?iso-8859-15?Q?TUreJieKji5DqpcJeuPQNVhwo8GYMy9xXMun1DAKstaPucEUqbMTMA61l?=
+	=?iso-8859-15?Q?+NWubLfju5CYRniWoB6QI+fZXqtz1TkLc?=
 MIME-Version: 1.0
 X-OriginatorOrg: suse.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: e598cf44-9c2d-493c-2ff6-08d8f28f5226
-X-MS-Exchange-CrossTenant-originalarrivaltime: 29 Mar 2021 08:47:44.4725 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: b8549d9c-b607-40fd-c3fe-08d8f2994091
+X-MS-Exchange-CrossTenant-originalarrivaltime: 29 Mar 2021 09:58:49.9678 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: NYetELyP6xfmn5doWvkpMLfonfDl0L1eF++hoMCXn4CTXrMQNJQeKHGqwmtAkA7SJaZ+U9bX3mC7t43B4SyPRg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB7PR04MB5387
+X-MS-Exchange-CrossTenant-userprincipalname: FjmZR8C+vOv34CiLQqOOqyGbtcbsZWam4DE8yZZOqYaVu//yo0AkdBnsBJeYZ6v2a7fdpKHMzSSMpGzlhyMFrg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB9PR04MB8347
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -140,13 +141,16 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 12T8lsUU009647
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 12T9wxAE016711
 X-loop: dm-devel@redhat.com
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Subject: Re: [dm-devel] [PATCH 2/4] libmultipath: fix priorities in
-	parse_vpd_pg83
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
+	"systemd-devel@lists.freedesktop.org"
+	<systemd-devel@lists.freedesktop.org>,
+	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+	"dgilbert@interlog.com" <dgilbert@interlog.com>
+Subject: [dm-devel] RFC: one more time: SCSI device identification
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -160,35 +164,89 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <892A55947E3603489010517783AB92C4@eurprd04.prod.outlook.com>
+Content-ID: <B74465EEC83557459A05A1E61BDE7C0B@eurprd04.prod.outlook.com>
 Content-Type: text/plain; charset="iso-8859-15"
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2021-03-25 at 19:52 -0500, Benjamin Marzinski wrote:
-> The priorities for the EUI-64 (0x02) and NAME (0x08) scsi identifiers
-> in
-> parse_vpd_pg83() don't match their priorities in 55-scsi-
-> sg3_id.rules.
-> Switch them so that they match.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Hello,
 
-After further discussion:
+[sorry for cross-posting, I think this is relevant to multiple
+communities.]
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+I'm referring to the recent discussion about SCSI device identification
+for multipath-tools=A0
+(https://listman.redhat.com/archives/dm-devel/2021-March/msg00332.html)
+
+As you all know, there are different designators to identify SCSI LUNs,
+and the specs don't mandate priorities for devices that support
+multiple designator types. There are various implementations for device
+identification, which use different priorities (summarized below).
+
+It's highly desirable to clean up this confusion and settle on a single
+instance and a unique priority order. I believe this instance should be
+the kernel.
+
+OTOH, changing device WWIDs is highly dangerous for productive systems.
+The WWID is prominently used in multipath-tools, but also in lots of
+other important places such as fstab, grub.cfg, dracut, etc. No doubt
+that we'll be stuck with the different algorithms for years, especially
+for LTS distributions. But perhaps we can figure out a long-term exit
+strategy?
+
+The kernel's preference for type 8 designators (see below) is in
+contrast with the established user space algorithms, which determine
+SCSI WWIDs on productive systems in practice. User space can try to
+adapt to the kernel logic, but it will necessarily be a slow and
+painful path if we want to avoid breaking user setups.
+
+In principle, I believe the kernel is "right" to prefer type 8. But
+because the "wwid" attribute isn't actually used for device
+identification today, changing the kernel logic would be less prone to
+regressions than changing user space, even if it violates the principle
+that the kernel's user space API must remain stable.
+
+Would it be an option to modify the kernel logic?
+
+If we can't, I think we should start with making the "wwid" attribute
+part of the udev rule logic, and letting distros configure whether the
+kernel logic or the traditional udev logic would be used.
+
+Please tell me your thoughts on this matter.
+
+Regards,
+Martin
+
+PS: Incomplete list of algorithms for SCSI designator priorities:
+
+The kernel ("wwid" sysfs attribute) prefers "SCSI name string" (type 8)
+designators over other types
+(https://elixir.bootlin.com/linux/latest/A/ident/designator_prio).
+
+The current set of udev rules in sg3_utils
+(https://github.com/hreinecke/sg3_utils/blob/master/scripts/55-scsi-sg3_id.=
+rules)
+don't use the kernel's wwid attribute; they parse VPD 83 and 80
+instead and prioritize types 36, 35, 32, and 2 over type 8.
+
+udev's "scsi_id" tool, historically the first attempt to implement a
+priority for this, doesn't look at the SCSI name attribute at all:
+https://github.com/systemd/systemd/blob/main/src/udev/scsi_id/scsi_serial.c
+
+There's a "fallback" logic in multipath-tools in case udev doesn't
+provide a WWID:
+https://github.com/opensvc/multipath-tools/blob/a41a61e8482def33e3ca8c9e363=
+9ad2c37611551/libmultipath/discovery.c#L1040
 
 --=20
 Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
 SUSE Software Solutions Germany GmbH
 HRB 36809, AG N=FCrnberg GF: Felix Imend=F6rffer
-
-
 
 
 
