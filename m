@@ -1,82 +1,80 @@
-Return-Path: <SRS0=Y5I9=I3=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=BXbM=I4=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-22.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A0179C433DB
-	for <dm-devel@archiver.kernel.org>; Mon, 29 Mar 2021 20:43:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7BD7BC433DB
+	for <dm-devel@archiver.kernel.org>; Tue, 30 Mar 2021 03:30:33 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3085C61996
-	for <dm-devel@archiver.kernel.org>; Mon, 29 Mar 2021 20:43:17 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3085C61996
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id E859561490
+	for <dm-devel@archiver.kernel.org>; Tue, 30 Mar 2021 03:30:32 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E859561490
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1617075031;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=YgaO8UMfIs4CiTXnxcUUPUDxDEpcMy2HtQInwWp6BPc=;
+	b=SDsQw3FFsOGDGLUc5o3A5t6s54kDEMYbtSOfAVuQumrc1J/Krr69PGWIOyPeHMVVRjQeK2
+	boYCoAptkVE/0D3XjF8Lct9O7TJDHmklTUEdLYWDVgXwww7jHBb5IvMRF+SMvcBU1Yoeur
+	1zfFXsQuZTzztWzSZidpEVfJ3pUeUrc=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-97-MsgoWFI5PUCoK9rg7GTKHg-1; Mon, 29 Mar 2021 16:43:10 -0400
-X-MC-Unique: MsgoWFI5PUCoK9rg7GTKHg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-435-i1GIfNQsP6GBwtaiBFPDyw-1; Mon, 29 Mar 2021 23:30:29 -0400
+X-MC-Unique: i1GIfNQsP6GBwtaiBFPDyw-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 324C01922960;
-	Mon, 29 Mar 2021 20:43:05 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7BE115B4A6;
-	Mon, 29 Mar 2021 20:43:04 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id EDEF29CDA3;
+	Tue, 30 Mar 2021 03:30:23 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8A7245D768;
+	Tue, 30 Mar 2021 03:30:22 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E91074BB7C;
-	Mon, 29 Mar 2021 20:43:02 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AEB371809C83;
+	Tue, 30 Mar 2021 03:30:18 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
+	[10.5.11.22])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12TKdoTd018732 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 29 Mar 2021 16:39:51 -0400
+	id 12U3NZ6Z022249 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 29 Mar 2021 23:23:35 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id C729E4411E; Mon, 29 Mar 2021 20:39:50 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BFF8B47CDC
-	for <dm-devel@redhat.com>; Mon, 29 Mar 2021 20:39:48 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1424085A5AA
-	for <dm-devel@redhat.com>; Mon, 29 Mar 2021 20:39:48 +0000 (UTC)
-Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-556-4G7rZjfaO4-oFxdk3fzzpw-1;
-	Mon, 29 Mar 2021 16:39:43 -0400
-X-MC-Unique: 4G7rZjfaO4-oFxdk3fzzpw-1
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id 10587B08C;
-	Mon, 29 Mar 2021 20:39:42 +0000 (UTC)
-From: mwilck@suse.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Mon, 29 Mar 2021 22:39:35 +0200
-Message-Id: <20210329203935.19691-1-mwilck@suse.com>
+	id 1F49A100239A; Tue, 30 Mar 2021 03:23:35 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A9B5610023BE;
+	Tue, 30 Mar 2021 03:23:31 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 12U3NU91006652; 
+	Mon, 29 Mar 2021 22:23:30 -0500
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 12U3NTGG006651;
+	Mon, 29 Mar 2021 22:23:29 -0500
+Date: Mon, 29 Mar 2021 22:23:29 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: mwilck@suse.com
+Message-ID: <20210330032329.GM15006@octiron.msp.redhat.com>
+References: <20210326212944.3136-1-mwilck@suse.com>
+	<20210326212944.3136-4-mwilck@suse.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 12TKdoTd018732
+In-Reply-To: <20210326212944.3136-4-mwilck@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH] multipathd: give up "add missing path" after
-	multiple failures
+Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: Re: [dm-devel] [PATCH 3/7] github workflows: add containerized /
+ multi-arch tests
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -90,92 +88,210 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Martin Wilck <mwilck@suse.com>
+On Fri, Mar 26, 2021 at 10:29:40PM +0100, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+> 
+> Until now, our CI only tested builds on Ubuntu, the default github
+> runner. This commit adds containerized build/test workflows, which can cover a
+> much larger range of distributions and environments.
+> 
+> I've distinguished "native" runs, where the architecture is compatible with
+> the architecture of the runners (assumed to be x86_64), and "foreign" runs
+> with different architectures. The former can run "make test" just like in
+> any ordinary environment. To run tests in "foreign arch" environments,
+> I use qemu-user for runtime emulation. That's done with the help of the
+> "multiarch/qemu-user-static" container. Runtime containers for testing need
+> to have the qemu-user-static binary (compiled for x86_64) for their target
+> architecture built in. In theory, we could do the same thing for build
+> containers too, but it would be grossly inefficient. Instead, I've focused
+> on Debian environments for the foreign architectures, relying on Debian's
+> nice multiarch / cross-compilation features. Compilation is run in a dedicated
+> cross-build container, and only the test runs are carried out in the emulation.
+> 
+> The set of tests currently includes:
+> 
+> native:
+>  - Debian Jessie, x86_64/i386 (gcc 4.9, clang 3.5, glibc 2.19)
+>  - Debian Buster, x86_64/i386 (gcc 8.3, clang 7.0, glibc 2.28)
+>  - Debian Sid, x86_64/i386 (gcc 10.2, clang 11.0, glibc 2.31)
+>  - Alpine, x86_64/i386 (gcc 10.2, clang 10.0, musl libc 1.2)
+>  - Fedora 34, x86_64 (gcc 11.0, clang 12.0, glibc 2.33)
+> 
+> foreign:
+>  - Debian Buster, ppc64le/aarch64/s390x
+> 
+> This covers a rather broad range of compiler and C library versions and
+> should be fine for some time to come.
+> 
+> Note: In theory, it would be possible to just fetch base containers
+> via github actions, and install the dependencies as part of the build
+> procedure. But that would be quite resource-intensive and slow. Therefore
+> I've decided to use pre-built containers. The current container setup
+> fetches containers from my docker hub repository. The containers there
+> (multipath-build-$os-$arch and multipath-run-$os-$arch) come from my
+> "build-multipath" repository (https://github.com/mwilck/build-multipath),
+> and are created via github actions, too. The upload of the built container
+> images to docker hub requires the use of tokens and secrets.
+> 
+> I'd considered adding these container definitions and workflows to the
+> multipath-tools repository. We'd just need to create reasonable rules
+> for running the respective workflows. I expect these container images
+> to remain relatively stable; it makes no sense to rebuild the images
+> for every multipath-tools commit.
+> 
+> Tell me if you want this in the multipath-tools repo, and if you're ok
+> with hosting the images in my docker hub repo.
 
-After b7aae60 ("multipathd: improve "add missing path" handling"),
-a path that failed to initialize after multiple udev retriggers
-would still be checked in check_path(). However, if a path is up,
-has been checked more than once, the failback WWID methods have
-been tried, and still there is no usable WWID, we may conclude
-that something is fishy and we shouldn't keep trying.
+I don't have problems with this setup. I haven't really looked into
+github actions, and so really don't know how easy it setup rules to run
+actions on events other that pushes, pull requests, etc. It seems
+reasonable to store those in a seperate repository. It would probably be
+good to have Christophe weigh in as well before adding these. Although I
+suppose it's always possible to disable these actions in other repos.
 
-Without this patch, totally WWID-less devices (seen e.g. on ESXi)
-will cause a "add missing path" message in every checker iteration.
-
-Fixes: b7aae60 ("multipathd: improve "add missing path" handling")
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/discovery.c | 16 ++++++++++++++++
- multipathd/main.c        |  6 ++++--
- 2 files changed, 20 insertions(+), 2 deletions(-)
-
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index f804414..ec99a7a 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -2370,6 +2370,22 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 			if (pp->initialized != INIT_FAILED) {
- 				pp->initialized = INIT_MISSING_UDEV;
- 				pp->tick = conf->retrigger_delay;
-+			} else if (pp->retriggers >= conf->retrigger_tries &&
-+				   (pp->state == PATH_UP || pp->state == PATH_GHOST)) {
-+				/*
-+				 * We have failed to read udev info for this path
-+				 * repeatedly. We used the fallback in get_uid()
-+				 * if there was any, and still got no WWID,
-+				 * although the path is allegedly up.
-+				 * It's likely that this path is not fit for
-+				 * multipath use.
-+				 */
-+				char buf[16];
-+
-+				snprint_path(buf, sizeof(buf), "%T", pp, 0);
-+				condlog(1, "%s: no WWID in state \"%s\", giving up",
-+					pp->dev, buf);
-+				return PATHINFO_SKIPPED;
- 			}
- 			return PATHINFO_OK;
- 		}
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 3579bad..102946b 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2218,13 +2218,13 @@ check_path (struct vectors * vecs, struct path * pp, unsigned int ticks)
- 				ev_add_path(pp, vecs, 1);
- 				pp->tick = 1;
- 			} else {
-+				if (ret == PATHINFO_SKIPPED)
-+					return -1;
- 				/*
- 				 * We failed multiple times to initialize this
- 				 * path properly. Don't re-check too often.
- 				 */
- 				pp->checkint = max_checkint;
--				if (ret == PATHINFO_SKIPPED)
--					return -1;
- 			}
- 		}
- 		return 0;
-@@ -2504,6 +2504,8 @@ checkerloop (void *ap)
- 		vector_foreach_slot (vecs->pathvec, pp, i) {
- 			rc = check_path(vecs, pp, ticks);
- 			if (rc < 0) {
-+				condlog(1, "%s: check_path() failed, removing",
-+					pp->dev);
- 				vector_del_slot(vecs->pathvec, i);
- 				free_path(pp);
- 				i--;
--- 
-2.30.1
-
+-Ben
+ 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  .github/workflows/build-and-unittest.yaml |  4 +-
+>  .github/workflows/foreign.yaml            | 65 +++++++++++++++++++++++
+>  .github/workflows/native.yaml             | 31 +++++++++++
+>  3 files changed, 99 insertions(+), 1 deletion(-)
+>  create mode 100644 .github/workflows/foreign.yaml
+>  create mode 100644 .github/workflows/native.yaml
+> 
+> diff --git a/.github/workflows/build-and-unittest.yaml b/.github/workflows/build-and-unittest.yaml
+> index 4173576..bf37b13 100644
+> --- a/.github/workflows/build-and-unittest.yaml
+> +++ b/.github/workflows/build-and-unittest.yaml
+> @@ -1,5 +1,7 @@
+>  name: basic-build-and-ci
+> -on:   [push]
+> +on:
+> +  push:
+> +    branches: [master queue tip]
+>  jobs:
+>    bionic:
+>      runs-on: ubuntu-18.04
+> diff --git a/.github/workflows/foreign.yaml b/.github/workflows/foreign.yaml
+> new file mode 100644
+> index 0000000..505a777
+> --- /dev/null
+> +++ b/.github/workflows/foreign.yaml
+> @@ -0,0 +1,65 @@
+> +name: compile and unit test on foreign arch
+> +on:
+> +  push:
+> +    branches:
+> +      - master
+> +      - queue
+> +      - tip
+> +
+> +jobs:
+> +
+> +  build:
+> +    runs-on: ubuntu-20.04
+> +    strategy:
+> +      matrix:
+> +        os: [buster]
+> +        arch: ['ppc64le', 'aarch64', 's390x']
+> +    container: mwilck/multipath-build-${{ matrix.os }}-${{ matrix.arch }}
+> +    steps:
+> +      - name: checkout
+> +        uses: actions/checkout@v1
+> +      - name: build and test
+> +        if: ${{ matrix.arch == '' || matrix.arch == '-i386' }}
+> +        run: make test
+> +      - name: build
+> +        if: ${{ matrix.arch != '' && matrix.arch != '-i386' }}
+> +        run: make test-progs
+> +      - name: archive
+> +        if: ${{ matrix.arch != '' && matrix.arch != '-i386' }}
+> +        run: >
+> +          tar cfv binaries.tar
+> +          Makefile*
+> +          libmpathcmd/*.so* libmultipath/*.so*
+> +          tests/lib tests/*-test tests/Makefile tests/*.so*
+> +      - uses: actions/upload-artifact@v1
+> +        if: ${{ matrix.arch != '' && matrix.arch != '-i386' }}
+> +        with:
+> +          name: multipath-${{ matrix.os }}-${{ matrix.arch }}
+> +          path: binaries.tar
+> +
+> +  test:
+> +    runs-on: ubuntu-20.04
+> +    needs: build
+> +    strategy:
+> +      matrix:
+> +        os: [buster]
+> +        arch: ['ppc64le', 'aarch64', 's390x']
+> +    steps:
+> +      - name: get binaries
+> +        uses: actions/download-artifact@v1
+> +        with:
+> +          name: multipath-${{ matrix.os }}-${{ matrix.arch }}
+> +      - name: unpack
+> +        run: tar xfv multipath-${{ matrix.os }}-${{ matrix.arch }}/binaries.tar
+> +      - name: enable foreign arch
+> +        run: sudo docker run --rm --privileged multiarch/qemu-user-static:register --reset
+> +      - name: run tests
+> +        # Github actions doesn't support referencing docker images with
+> +        # context variables. Workaround: use mosteo-actions/docker-run action
+> +        # See https://github.community/t/expressions-in-docker-uri/16271
+> +        uses: mosteo-actions/docker-run@v1
+> +        with:
+> +          image: mwilck/multipath-run-${{ matrix.os }}-${{ matrix.arch }}
+> +          # The runner is an image that has "make" as entrypoint
+> +          # So run "make -C tests" here
+> +          command: -C tests
+> diff --git a/.github/workflows/native.yaml b/.github/workflows/native.yaml
+> new file mode 100644
+> index 0000000..abd39a0
+> --- /dev/null
+> +++ b/.github/workflows/native.yaml
+> @@ -0,0 +1,31 @@
+> +name: compile and unit test on native arch
+> +on:
+> +  push:
+> +    branches:
+> +      - master
+> +      - queue
+> +      - tip
+> +
+> +jobs:
+> +  build-and-test:
+> +    runs-on: ubuntu-20.04
+> +    strategy:
+> +      matrix:
+> +        os: [buster, jessie, sid, alpine, fedora-34]
+> +        arch: ['', '-i386']
+> +        exclude:
+> +          - os: fedora-34
+> +            arch: '-i386'
+> +    container: mwilck/multipath-build-${{ matrix.os }}${{ matrix.arch }}
+> +    steps:
+> +      - name: checkout
+> +        uses: actions/checkout@v1
+> +      - name: build and test
+> +        run: make test
+> +      - name: clean
+> +        run: make clean
+> +      - name: clang
+> +        env:
+> +          CC: clang
+> +        run: make test
+> +
+> -- 
+> 2.30.1
 
 --
 dm-devel mailing list
