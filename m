@@ -2,82 +2,109 @@ Return-Path: <SRS0=fKNG=I5=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
-	PDS_BAD_THREAD_QP_64,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+X-Spam-Status: No, score=-8.6 required=3.0 tests=BAYES_00,DKIM_INVALID,
+	DKIM_SIGNED,HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 95DE2C433ED
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E7F2DC433B4
 	for <dm-devel@archiver.kernel.org>; Wed, 31 Mar 2021 13:33:11 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 1ECA061987
+	by mail.kernel.org (Postfix) with ESMTPS id 81AC861985
 	for <dm-devel@archiver.kernel.org>; Wed, 31 Mar 2021 13:33:11 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1ECA061987
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 81AC861985
+Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=broadcom.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-525-XzW1_gU9O0KPOOx0gtAvmg-1; Wed, 31 Mar 2021 09:33:08 -0400
-X-MC-Unique: XzW1_gU9O0KPOOx0gtAvmg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-196-y4RNBSvZMpebz2MQG5U22w-1; Wed, 31 Mar 2021 09:33:03 -0400
+X-MC-Unique: y4RNBSvZMpebz2MQG5U22w-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 54B45108BD07;
-	Wed, 31 Mar 2021 13:33:02 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 22AF210016F4;
-	Wed, 31 Mar 2021 13:33:02 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7358083DD28;
+	Wed, 31 Mar 2021 13:32:59 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1EEF84F3C6;
+	Wed, 31 Mar 2021 13:32:59 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CCA4C4A7CB;
-	Wed, 31 Mar 2021 13:33:01 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EBEE318155DD;
+	Wed, 31 Mar 2021 13:32:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 12VCfHof028166 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 31 Mar 2021 08:41:17 -0400
+	id 12VBvi62017149 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 31 Mar 2021 07:57:45 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 415952026D64; Wed, 31 Mar 2021 12:41:17 +0000 (UTC)
+	id D16D385788; Wed, 31 Mar 2021 11:57:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3AA3D2026D7F
-	for <dm-devel@redhat.com>; Wed, 31 Mar 2021 12:41:14 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CABD785784
+	for <dm-devel@redhat.com>; Wed, 31 Mar 2021 11:57:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 69BD0805F43
-	for <dm-devel@redhat.com>; Wed, 31 Mar 2021 12:41:14 +0000 (UTC)
-Received: from de-smtp-delivery-102.mimecast.com
-	(de-smtp-delivery-102.mimecast.com [194.104.109.102]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-72-iGtRUKxrMhiU6EzX-DAlAA-1;
-	Wed, 31 Mar 2021 08:41:12 -0400
-X-MC-Unique: iGtRUKxrMhiU6EzX-DAlAA-1
-Received: from EUR02-AM5-obe.outbound.protection.outlook.com
-	(mail-am5eur02lp2054.outbound.protection.outlook.com [104.47.4.54])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	de-mta-1-tllA3xUFMViha84DpmUiyw-1; Wed, 31 Mar 2021 14:41:09 +0200
-X-MC-Unique: tllA3xUFMViha84DpmUiyw-1
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
-	by DB7PR04MB4747.eurprd04.prod.outlook.com (2603:10a6:10:18::12) with
-	Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3955.18;
-	Wed, 31 Mar 2021 12:41:07 +0000
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::cc21:35e2:da7c:1490]) by
-	DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::cc21:35e2:da7c:1490%7]) with mapi id 15.20.3999.027;
-	Wed, 31 Mar 2021 12:41:07 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "erwin@erwinvanlonden.net" <erwin@erwinvanlonden.net>,
-	"muneendra.kumar@broadcom.com" <muneendra.kumar@broadcom.com>,
-	"bblock@linux.ibm.com" <bblock@linux.ibm.com>,
-	"hare@suse.de" <hare@suse.de>
-Thread-Topic: [dm-devel] dm-multipath - IO queue dispatch based on FPIN
-	Congestion/Latency notifications.
-Thread-Index: AQHXH8ZRsvMl6pS9x02jEI+NQfbmHaqU4l6AgAFApYCAB5ulQoAAKk8AgAAORwCAAA/hAIAAAiQAgAABQ4CAAAwogA==
-Date: Wed, 31 Mar 2021 12:41:06 +0000
-Message-ID: <5a0f7c60adbad68fc1df91e1a6c192fab04b66fc.camel@suse.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 052A3100DE7D
+	for <dm-devel@redhat.com>; Wed, 31 Mar 2021 11:57:41 +0000 (UTC)
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=dkim.mimecast.com; s=201903; t=1617191860;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	in-reply-to:in-reply-to:references:references:dkim-signature;
+	bh=HTRz/2CJNva6cXvqbSedqIlRhiKVdKWzSbTy26NDQ8g=;
+	b=JxhZnH4jcLiqs1xrNPJOcKxGuvm9kqLidAKFCIEDrFSCwKG4KEoXGo4JJ00NSQEFW8CI32
+	XHtTBj1RRCgdsuArCvVaRFznQMa9phfV51uzSD7ZE1eew2hsuBSisAhcQm5vy8foaxUmPd
+	n7jiWA9y1Iq9JEVtn3vf3Q+BZS4sb71ddWEzMLbx0LETlTjM1vvVmXL11ICVg+p1jylYfh
+	VC4v4YUB46vt5Jx3f0MNcWeTLZfuw2JjkBjiGbqmKtK8t68sDuz2DePMJr1XdmMcM8qUju
+	M/Hz42rJwReIR2V9b6Q7B10t93WUbI2iq+pvSq+XQDTpzEE3kECcYA99rSC3XQ==
+ARC-Seal: i=1; s=201903; d=dkim.mimecast.com; t=1617191860; a=rsa-sha256;
+	cv=none;
+	b=gpVsXTHs5bSv7GLC1xZAo2WyZuPk+RzAH2mTtWaII/WT/z4zguBFlChj5T+AFAa9nPTIgV
+	PMdXQ5XTIur/2mXlyCSVcrSkZS7/SYbxcNZBRD9NFHDwLPkb8EUec5J9VheJAA7Bq5E+JZ
+	Vw7MY2LeHq5uy65fgcHQaifuZByaScyQ16jezupzoqnk08krFSCJlzbKiShg/Ra1FvSIvz
+	lH1Tyg7+6n1WUJEQd/ngCM86aN4h3ohzgAWGo/RDZqZaw6XHu38bgEYLOxHi7wqQ79ADWP
+	QbKeUD/fBWlW2TunJaiZnx096Gd8Zqzt8JkkMRXOvZ3KyWgEAIEMvmr4BAgjxw==
+ARC-Authentication-Results: i=1; relay.mimecast.com;
+	dkim=pass header.d=broadcom.com header.s=google header.b=EAxmOFWu;
+	dmarc=pass (policy=quarantine) header.from=broadcom.com;
+	spf=pass (relay.mimecast.com: domain of muneendra.kumar@broadcom.com
+	designates 209.85.210.47 as permitted sender)
+	smtp.mailfrom=muneendra.kumar@broadcom.com
+Received: from mail-ot1-f47.google.com (mail-ot1-f47.google.com
+	[209.85.210.47]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-208-8v-mkIwpMrmdxZ8g9Hg2IA-1; Wed, 31 Mar 2021 07:57:38 -0400
+X-MC-Unique: 8v-mkIwpMrmdxZ8g9Hg2IA-1
+Received: by mail-ot1-f47.google.com with SMTP id
+	91-20020a9d08640000b0290237d9c40382so18645288oty.12
+	for <dm-devel@redhat.com>; Wed, 31 Mar 2021 04:57:38 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=broadcom.com; s=google;
+	h=from:references:in-reply-to:mime-version:thread-index:date
+	:message-id:subject:to:cc;
+	bh=HTRz/2CJNva6cXvqbSedqIlRhiKVdKWzSbTy26NDQ8g=;
+	b=EAxmOFWu/zP7U97DgtTxFHUqwf3P/uNYCcfopC9SewkcR+at4LYXxwE415z2+WJ5uf
+	FT6f/A8zlDj2nHD1SUBXDiPsO9Lvw/QluRuF7BjED1Pg5jx4qgTbyagCpUzn5i9E6JkY
+	gT7slbF2yP3FC+17jHr4TJ3wdobD2V8B0NQa8=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:from:references:in-reply-to:mime-version
+	:thread-index:date:message-id:subject:to:cc;
+	bh=HTRz/2CJNva6cXvqbSedqIlRhiKVdKWzSbTy26NDQ8g=;
+	b=Av60yi7l8tqQ1+hfllxbodJIb2t6z9b8NRAV1aGZFGAuOSF1zEjXtJXnMCK6d26PkU
+	NGFx7pScCt0nD2eTN2oxZp1XnuL0fJB9WNk4FELMln+k9movYkBfStfrqn0zdOAQlsMG
+	NDjtbqc/jeaRBS7P7Xm8ChWAwVRsQcokPkwIsDg8eNA/OEgu+fGtg7KoNvt/zm7qbPc3
+	H9JZwUb9twS9l1eMkCmsCDm7/GRW7tta0rBiDsLpmsWG2j2WD7sTwuL5TA8MW+PiwVqa
+	gUAHywm7zcIvlMTzQQ9zvKUPcH27FtmS6ISFAm5Op3fK0Zld08lb16mAnaKBEYs9iNlJ
+	CsoQ==
+X-Gm-Message-State: AOAM531s1P93nWH9u7aIgHL5/ePJFGTVZkmQwJf49a6Ipz6k788ac53x
+	LBL7znqHpoSRhwHQYyJubYuKYWnKgiqLS1zI1aTUia7qGQ4HMCB2Qa2VLFLkoVv/26bGIDCHLOd
+	LIYGWTbPL10GtD2UfHv4=
+X-Google-Smtp-Source: ABdhPJz+8CvthkxedKNGrLLzxD7wR/9NfxNOiI7RU6gEm86AXhtPqIcO0PlTVRh4HR2yiQCf6yHnU32DIJsS0yiBH54=
+X-Received: by 2002:a9d:2f04:: with SMTP id h4mr2358330otb.364.1617191857579; 
+	Wed, 31 Mar 2021 04:57:37 -0700 (PDT)
+From: Muneendra Kumar M <muneendra.kumar@broadcom.com>
 References: <5b87a64d88a13eb8b4917a1cc0d35691f9fc8227.camel@erwinvanlonden.net>
 	<YFy1Q6nvJEcRzwyl@t480-pf1aa2c2.linux.ibm.com>
 	<b3025c4bf84fe357712fa0fe32bfa3e9@mail.gmail.com>
@@ -87,62 +114,20 @@ References: <5b87a64d88a13eb8b4917a1cc0d35691f9fc8227.camel@erwinvanlonden.net>
 	<30cb8c2e97ea8303ee1dfef8a4c34599@mail.gmail.com>
 	<7b7663da1edf9fcb3e2515e41602ab68de02d2a9.camel@suse.com>
 	<0419387c-071c-2c5e-79f4-8873553e5da3@suse.de>
-	<c661804f254c8dec17b57c6b95f0fe05@mail.gmail.com>
-In-Reply-To: <c661804f254c8dec17b57c6b95f0fe05@mail.gmail.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Evolution 3.38.4
-x-originating-ip: [2.202.118.173]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 42a8f298-8f6d-4341-5ff1-08d8f442412d
-x-ms-traffictypediagnostic: DB7PR04MB4747:
-x-microsoft-antispam-prvs: <DB7PR04MB4747354384113CA413576ED3FC7C9@DB7PR04MB4747.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:10000
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: 4BI4r8dfjNdasjkMoZaLh7F158LR7nzV9d+KWjoSrPYugg29aSRk9szJf81t7Z6r2trOXEwj9nhMgr/ZNiOpK7SCm9WHRXt6ob88bPwUWFVz3uVTwiEoz1fDLrSNxKDfXfI6MeVWLnp8+kjmar2jSX+Myx+aMuFyjkkAcXjQVAkdVQuindNrWSsaW4k44uYRr41sNeUv/Y1QoHNh5va9/CSoB5BY8N70T1X8OdgYfEbKq1lpsNd5Zi1pet0Lb0j8P0UUURzvJmzZWiY5yjNcDsE0IQ8tzdUlOffbyHuOAVo2m1+7dfaHYQbkd7BaeTllZ/JdyEf8tY4g3AtmhVzITV5qzTHHF77PEUcVg8dL4WASPNmH6iFSFTo3wppPITtF7HBRsknPC2GsNZAFprHpE4ygdh16sIwmj35nc5011BeHJNGVHeyaVsO0q+UyKUW3LNalw2XhlaSmZ5E8EbQ/xfQ13LcSLv5ctyjo+aTEmjy4UI30It6vMpfZZdWxJeUGGlXaOSbOiQC7Ydf5mUIKa1prW03Z5nC4ttSocvRzizCTZAwzM4rYyGgNdslxo5Wn/Xb62EQ1f+tSBPb3DrxIRzE1VakDef2cGJWYwnWinnyJPIYSI5O4iPY7JGQrrgsafkrdH0CMSau4ANfhJ0evD7PyBJkdef305M3kA09TJBo8ZE+hgH4+2hQzO0Uq3Zywh7oEt67ieD6VdbtfQ5uWzk+V0XZw0D6cDDjT0iYcZRY=
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(136003)(39860400002)(366004)(376002)(346002)(396003)(186003)(8676002)(6512007)(36756003)(86362001)(38100700001)(5660300002)(478600001)(66476007)(8936002)(2906002)(2616005)(26005)(316002)(110136005)(44832011)(54906003)(66446008)(66556008)(91956017)(66946007)(71200400001)(6506007)(6486002)(4326008)(76116006)(64756008)(966005);
-	DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata: =?iso-8859-15?Q?hvXj57ZIGh1x0dAgajCMmkaCNKTsVdJAeoUFx4yEn4DsSmqelF3xtJepU?=
-	=?iso-8859-15?Q?M95v/FIryjY+SqpLsONsIDIJiShFpqdLLyOE5DFWHIQiwfdrRk3F9NHm7?=
-	=?iso-8859-15?Q?pCmagT5f4VOq/KnYCiqh3Jh7oCIeHktHHYPVAHghp9QQemyhyi4OIQF/j?=
-	=?iso-8859-15?Q?6ZN25z6A5BpKp9p3gGQ7jhlohvbPZtOzQE1iS8UkjSDejgSheXqYP7T1O?=
-	=?iso-8859-15?Q?C+oK8kFyMAR2yVXBbdKf5YEQVOD212wxu9kHaWqryzscs/gchnw+6hHsw?=
-	=?iso-8859-15?Q?NAUo6/Mryvp1Ue5dKSJ0Oxk3JxuA4OinKW4LsehlkGdab3AuuZqMpYYD8?=
-	=?iso-8859-15?Q?82mxJgM0E/Y9PE24CsWy0Wi7mDiveZ3SyWPtsWH3S6lOwJdu0CKHInBNK?=
-	=?iso-8859-15?Q?fG6zn2sKuhNA8+GR7N0juyII5JZXKT4XMXH07k8RznqbjPGl8DEkUZlku?=
-	=?iso-8859-15?Q?+rpA8n4CkQCrTsac0xA5Kr6ppKGgpGYJ1zMhfY+MvCcw8J+KahmK3/66B?=
-	=?iso-8859-15?Q?JCyZlxrVF87HUAG/zfe8+icQtVVoy4WFx+IEoraexFuqYQrtbiFNCBYPC?=
-	=?iso-8859-15?Q?8wfSxZLXEngQ7M0hyY4yvsmp5e2bcpUf9R3ty4VeE7r91VTqcfhrYZecr?=
-	=?iso-8859-15?Q?glDVDwLJlghyB1Ybl04uitax6p++GzYCQympqMNVKuSJ8UjYYTrEFXNRO?=
-	=?iso-8859-15?Q?idtFJ9k8G9O7ECPvxmTUCiCX1QSuOSQubC+3HAYKwMpyKpOcuJaCJJ5Ge?=
-	=?iso-8859-15?Q?xL+ukeWU267SLOVZsukYk0snJhaq7xVBv7Oxb+bmsviVgkC40H10zuAWV?=
-	=?iso-8859-15?Q?ABPWdSFc/stXagTMURMKBSYK7pi7YVOYKosIxLXuQ3xDkDizH8MWQPQFP?=
-	=?iso-8859-15?Q?houyttD82dLc6zc797OcI+V0lf+WIhRznkjDmZBy0uPbWD28QvvXTM7ZY?=
-	=?iso-8859-15?Q?QooxNTicVPj78v83MdDG5AZYwyOqk0XSyWjmAyL3oCGystbwXdMILERJd?=
-	=?iso-8859-15?Q?olGttmK0nmeb0Wj7E8YotwkNKLuX1hQrU0XYP5np8N/jYswI6Vo26s5BG?=
-	=?iso-8859-15?Q?iKw81siPYr4tNtP3kaVuBIUVq7wDKTmZ2ixyHd6awXwyPGQwS/xHCh+Ye?=
-	=?iso-8859-15?Q?9srV9cztkXCjZ0SwefuWi9ftkaZ0SDcqhgShUwtbDv3AaWZ8lzjzy3BRA?=
-	=?iso-8859-15?Q?FaBqk5pNMaQZTla5diqwOjnXPic9Qu84Snwg6fYZwRys7RacKZiMso0pM?=
-	=?iso-8859-15?Q?TcOfaw/1nU7kFVL3EI6JJ+vA0Q5BTuoB1R5pkoNWptcbPuJ6JDXhZLLMG?=
-	=?iso-8859-15?Q?nD07LLChTVr9qZl/HbrtfqWyII+fD+VCwcLwoWklOcvAqdVJKA8PVxMQF?=
-	=?iso-8859-15?Q?iFqQe4v5MQr00cY9CxK4tGwz+DLS0X8D9?=
-x-ms-exchange-transport-forked: True
+In-Reply-To: <0419387c-071c-2c5e-79f4-8873553e5da3@suse.de>
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 42a8f298-8f6d-4341-5ff1-08d8f442412d
-X-MS-Exchange-CrossTenant-originalarrivaltime: 31 Mar 2021 12:41:06.8478 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: 32c1NfyPIO44mb/tgJJU30N0zX0cqDTzZIl0W0TVpmiUYfK7P/Gd5M2utonzsCq18f+vvSp8trEsQu2kstHDww==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB7PR04MB4747
+Thread-Index: AQLUV1ngcOMspX6X38mhg1atAytU1gI8PjAEAcHXiSEBxD6w4wJahNoMAZbORjYBrNJNuwFYuwXHAqJvYLmoKL1usA==
+Date: Wed, 31 Mar 2021 17:27:35 +0530
+Message-ID: <c661804f254c8dec17b57c6b95f0fe05@mail.gmail.com>
+To: Hannes Reinecke <hare@suse.de>, Martin Wilck <martin.wilck@suse.com>,
+	erwin@erwinvanlonden.net, bblock@linux.ibm.com
+Authentication-Results: relay.mimecast.com;
+	dkim=pass header.d=broadcom.com header.s=google header.b=EAxmOFWu;
+	dmarc=pass (policy=quarantine) header.from=broadcom.com;
+	spf=pass (relay.mimecast.com: domain of muneendra.kumar@broadcom.com
+	designates 209.85.210.47 as permitted sender)
+	smtp.mailfrom=muneendra.kumar@broadcom.com
+X-Mimecast-Spam-Score: -1
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -151,12 +136,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 12VCfHof028166
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Wed, 31 Mar 2021 09:32:19 -0400
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+X-Mailman-Approved-At: Wed, 31 Mar 2021 09:32:18 -0400
+Cc: dm-devel@redhat.com
 Subject: Re: [dm-devel] dm-multipath - IO queue dispatch based on FPIN
  Congestion/Latency notifications.
 X-BeenThere: dm-devel@redhat.com
@@ -170,67 +153,145 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Content-Type: multipart/mixed; boundary="===============7620927685154239394=="
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
-Authentication-Results: relay.mimecast.com;
-	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-ID: <B091488962172F40B5E617C00EBA8297@eurprd04.prod.outlook.com>
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 
-On Wed, 2021-03-31 at 17:27 +0530, Muneendra Kumar M wrote:
-> Hi Martin,
->=20
-> > >=20
-> > > I'm aware of Ben's work, but I hadn't realized it had anything to
-> > > do
-> > > with FPIN. As of today, multipathd doesn't listen on the
-> > > NETLINK_SCSITRANSPORT socket. Does any user space tool do this?
-> > > Google didn't show me anything.
-> > >=20
-> > I did, once, but that was years ago.
->=20
-> We have user space daemon(Broadcom'sFiber Channel Transport Daemon)
-> called
-> fctxpd (Benjamin was talking in his patch) which acts on fpin-li events
-> by listening=A0 on NETLINK_SCSITRANSPORT socket
-> And it sets the path to marginal path group on receiving FPIN events.
-> This daemon is part of epel8.
-> Below is the path for the same where we have changes
-> https://github.com/brocade/bsn-fc-txptd
->=20
-> Regards,
-> Muneendra.
+--===============7620927685154239394==
+Content-Type: multipart/signed; protocol="application/pkcs7-signature";
+	micalg=sha-256; boundary="00000000000039077405bed3d2f8"
 
-I see, and this daemon uses multipathd's "set marginal" command to make
-multipathd act on it. I can see now that Ben talked about "Broadcom's
-Fiber Channel Transport Daemon" back then, but he didn't go into
-details, and I either overlooked it entirely, or forgot about it.
-I recall that I was wondering by myself whether the "set marginal"
-command had any use other than manual testing.
+--00000000000039077405bed3d2f8
+Content-Type: text/plain; charset="UTF-8"
 
-I wonder if we could / should incorporate this functionality into
-multipathd itself.
+Hi Martin,
 
-But anyway, it seems that this part of the FPIN mechanism works
-already.
+>>
+>> I'm aware of Ben's work, but I hadn't realized it had anything to do
+>> with FPIN. As of today, multipathd doesn't listen on the
+>> NETLINK_SCSITRANSPORT socket. Does any user space tool do this?
+> >Google didn't show me anything.
+> >
+>I did, once, but that was years ago.
 
-Thanks
-Martin
+We have user space daemon(Broadcom'sFiber Channel Transport Daemon) called
+fctxpd (Benjamin was talking in his patch) which acts on fpin-li events
+by listening  on NETLINK_SCSITRANSPORT socket
+And it sets the path to marginal path group on receiving FPIN events.
+This daemon is part of epel8.
+Below is the path for the same where we have changes
+https://github.com/brocade/bsn-fc-txptd
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
-SUSE Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix Imend=F6rffer
+Regards,
+Muneendra.
+
+-- 
+This electronic communication and the information and any files transmitted 
+with it, or attached to it, are confidential and are intended solely for 
+the use of the individual or entity to whom it is addressed and may contain 
+information that is confidential, legally privileged, protected by privacy 
+laws, or otherwise restricted from disclosure to anyone else. If you are 
+not the intended recipient or the person responsible for delivering the 
+e-mail to the intended recipient, you are hereby notified that any use, 
+copying, distributing, dissemination, forwarding, printing, or copying of 
+this e-mail is strictly prohibited. If you received this e-mail in error, 
+please return the e-mail to the sender, delete it from your computer, and 
+destroy any printed copy of it.
+
+--00000000000039077405bed3d2f8
+Content-Type: application/pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+Content-Description: S/MIME Cryptographic Signature
+
+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
+6dyIRB5g0cWmkcO89O0W56d+wWwa7GeeTIJHMzJ0rco8nzcXkz/oeEmXSjZU3erpKBaLCQBkZud1
+iNM/8mFL1vZxCwUACcMw+a8FhrHJq29QwrBHqDJ1ocrJlDaZcn1UDQIDAQABo4IB3TCCAdkwDgYD
+VR0PAQH/BAQDAgWgMIGjBggrBgEFBQcBAQSBljCBkzBOBggrBgEFBQcwAoZCaHR0cDovL3NlY3Vy
+ZS5nbG9iYWxzaWduLmNvbS9jYWNlcnQvZ3NnY2NyM3BlcnNvbmFsc2lnbjJjYTIwMjAuY3J0MEEG
+CCsGAQUFBzABhjVodHRwOi8vb2NzcC5nbG9iYWxzaWduLmNvbS9nc2djY3IzcGVyc29uYWxzaWdu
+MmNhMjAyMDBNBgNVHSAERjBEMEIGCisGAQQBoDIBKAowNDAyBggrBgEFBQcCARYmaHR0cHM6Ly93
+d3cuZ2xvYmFsc2lnbi5jb20vcmVwb3NpdG9yeS8wCQYDVR0TBAIwADBJBgNVHR8EQjBAMD6gPKA6
+hjhodHRwOi8vY3JsLmdsb2JhbHNpZ24uY29tL2dzZ2NjcjNwZXJzb25hbHNpZ24yY2EyMDIwLmNy
+bDAnBgNVHREEIDAegRxtdW5lZW5kcmEua3VtYXJAYnJvYWRjb20uY29tMBMGA1UdJQQMMAoGCCsG
+AQUFBwMEMB8GA1UdIwQYMBaAFJYz0eZYF1s0dYqBVmTVvkjeoY/PMB0GA1UdDgQWBBTMJfPJzmVP
+1lwJptwb21ozx4G7wzANBgkqhkiG9w0BAQsFAAOCAQEAmz4/3oyLhfXMYVZWtDEKcP5Bk/6JAhfa
+9q4eZDy1W/1FSuRfEWMq7xi9T3DvxUQqJtpJ8bM6SU37fZAvvMdRF23qdKRy6gBZ9NkYOCP7Tr2u
+wNYznMfaHEGY/aa65EiywAsbVn1X7vKMKqSj3cmpEUO2I+FcRtPdyicqyU2E3856b5d+fMc01FRg
+pQQRz3kWlIpG/CJ2SiOg0gpkZIkUde0r4e6ipDi+xVSoBdOOJzirs8IkwOeJ4w9GPS9uOkB1bRvJ
+RU+Nz1h4p9eH2nsPAq7S5l6y/n3+g/olazbUoiEx8GRFqzoHLudsqmnzISDPoe+rczkpYreF/mEU
+Y6pL2DGCAm0wggJpAgEBMGswWzELMAkGA1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYt
+c2ExMTAvBgNVBAMTKEdsb2JhbFNpZ24gR0NDIFIzIFBlcnNvbmFsU2lnbiAyIENBIDIwMjACDHE+
+9dgalq0zfRWBQDANBglghkgBZQMEAgEFAKCB1DAvBgkqhkiG9w0BCQQxIgQg5vxthizNWXVR7VHQ
+mqTj9Iz5WkEygTR8p6/xH7dEPB0wGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0B
+CQUxDxcNMjEwMzMxMTE1NzM3WjBpBgkqhkiG9w0BCQ8xXDBaMAsGCWCGSAFlAwQBKjALBglghkgB
+ZQMEARYwCwYJYIZIAWUDBAECMAoGCCqGSIb3DQMHMAsGCSqGSIb3DQEBCjALBgkqhkiG9w0BAQcw
+CwYJYIZIAWUDBAIBMA0GCSqGSIb3DQEBAQUABIIBABKvPmEE5K5/2QitJND2Hc0RFwwiVe1mQW7M
+c6rsyvfPj1UxLDrpjF4f5xc+zg9Y1ikwYp6nBc+3sbZyxViarnMaHUj8ZBHR0OkSAAqGmdxkzON7
+6OfScQVP0zv8+2rkD2aPC4MlfEu8frY0GM3Yctr+IRiQrb4qkZK9mD7OyN1gUdmZ4OC/+Hay/1U0
+FsunopVBq64FPwbHXJb2luk6jzqZKrkbV1hGkFELLgbSmen8yNdNkIajXWlR9oYXimk8324h0le6
+Ls74yX5nnN6abaY8PhJmgarka6ns8weYvbO0KG1iCW2nxof56bNg1ccJl0Od09HcPCl+Hbxetv+Z
+be0=
+--00000000000039077405bed3d2f8--
 
 
+--===============7620927685154239394==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+--===============7620927685154239394==--
 
