@@ -2,164 +2,105 @@ Return-Path: <SRS0=HU+X=JD=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MSGID_FROM_MTA_HEADER,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,HTML_MESSAGE,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DA119C433B4
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Apr 2021 05:40:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B9903C433B4
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Apr 2021 11:40:54 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 0F7C3613AD
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Apr 2021 05:40:51 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0F7C3613AD
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=oracle.com
+	by mail.kernel.org (Postfix) with ESMTPS id E04B06136A
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Apr 2021 11:40:53 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E04B06136A
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=erwinvanlonden.net
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-478-B_TWn0R-OFO6nO7509oysQ-1; Tue, 06 Apr 2021 01:40:48 -0400
-X-MC-Unique: B_TWn0R-OFO6nO7509oysQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-110-D9NPN7bwOhy-LDewRaQX_Q-1; Tue, 06 Apr 2021 07:40:48 -0400
+X-MC-Unique: D9NPN7bwOhy-LDewRaQX_Q-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5DC26108BD08;
-	Tue,  6 Apr 2021 05:40:43 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id EC5A76787D;
-	Tue,  6 Apr 2021 05:40:39 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3DBF81800D50;
+	Tue,  6 Apr 2021 11:40:43 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8AA9560C3A;
+	Tue,  6 Apr 2021 11:40:41 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6B6ED1809C83;
-	Tue,  6 Apr 2021 05:40:35 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1BD154A7C8;
+	Tue,  6 Apr 2021 11:40:38 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1365ZNxx026723 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 6 Apr 2021 01:35:23 -0400
+	id 131Muv7P014940 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 1 Apr 2021 18:56:57 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 732711002972; Tue,  6 Apr 2021 05:35:23 +0000 (UTC)
+	id 0EB70115D36C; Thu,  1 Apr 2021 22:56:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6D47E1111450
-	for <dm-devel@redhat.com>; Tue,  6 Apr 2021 05:35:20 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8640285A5AA
-	for <dm-devel@redhat.com>; Tue,  6 Apr 2021 05:35:20 +0000 (UTC)
-Received: from userp2130.oracle.com (userp2130.oracle.com [156.151.31.86])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-113-nFhMR8oaO2OY20-j8GLfNQ-1; Tue, 06 Apr 2021 01:35:16 -0400
-X-MC-Unique: nFhMR8oaO2OY20-j8GLfNQ-1
-Received: from pps.filterd (userp2130.oracle.com [127.0.0.1])
-	by userp2130.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
-	1364eaU0061403; Tue, 6 Apr 2021 04:47:23 GMT
-Received: from userp3020.oracle.com (userp3020.oracle.com [156.151.31.79])
-	by userp2130.oracle.com with ESMTP id 37qfuxbbmx-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 06 Apr 2021 04:47:23 +0000
-Received: from pps.filterd (userp3020.oracle.com [127.0.0.1])
-	by userp3020.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
-	1364f0um037740; Tue, 6 Apr 2021 04:47:23 GMT
-Received: from nam10-dm6-obe.outbound.protection.outlook.com
-	(mail-dm6nam10lp2109.outbound.protection.outlook.com [104.47.58.109])
-	by userp3020.oracle.com with ESMTP id 37q2ptrd9b-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 06 Apr 2021 04:47:22 +0000
-Received: from PH0PR10MB4759.namprd10.prod.outlook.com (2603:10b6:510:3d::12)
-	by PH0PR10MB4502.namprd10.prod.outlook.com (2603:10b6:510:31::24)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.3999.28;
-	Tue, 6 Apr 2021 04:47:20 +0000
-Received: from PH0PR10MB4759.namprd10.prod.outlook.com
-	([fe80::dc39:c9fa:7365:8c8e]) by
-	PH0PR10MB4759.namprd10.prod.outlook.com
-	([fe80::dc39:c9fa:7365:8c8e%5]) with mapi id 15.20.3999.032;
-	Tue, 6 Apr 2021 04:47:20 +0000
-To: Martin Wilck <martin.wilck@suse.com>
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Organization: Oracle Corporation
-Message-ID: <yq135w4cam3.fsf@ca-mkp.ca.oracle.com>
-References: <c524ce68d9a9582732db8350f8a1def461a1a847.camel@suse.com>
-Date: Tue, 06 Apr 2021 00:47:17 -0400
-In-Reply-To: <c524ce68d9a9582732db8350f8a1def461a1a847.camel@suse.com> (Martin
-	Wilck's message of "Mon, 29 Mar 2021 09:58:49 +0000")
-X-Originating-IP: [138.3.200.58]
-X-ClientProxiedBy: SN4PR0701CA0020.namprd07.prod.outlook.com
-	(2603:10b6:803:28::30) To PH0PR10MB4759.namprd10.prod.outlook.com
-	(2603:10b6:510:3d::12)
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 09574115D368
+	for <dm-devel@redhat.com>; Thu,  1 Apr 2021 22:56:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 35A1D101A531
+	for <dm-devel@redhat.com>; Thu,  1 Apr 2021 22:56:54 +0000 (UTC)
+Received: from gateway23.websitewelcome.com (gateway23.websitewelcome.com
+	[192.185.48.251]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-415-P_CCY_mqPM2meTqwIEk-5w-1; Thu, 01 Apr 2021 18:56:51 -0400
+X-MC-Unique: P_CCY_mqPM2meTqwIEk-5w-1
+Received: from cm16.websitewelcome.com (cm16.websitewelcome.com [100.42.49.19])
+	by gateway23.websitewelcome.com (Postfix) with ESMTP id F15E539EE
+	for <dm-devel@redhat.com>; Thu,  1 Apr 2021 17:08:45 -0500 (CDT)
+Received: from just2098.justhost.com ([173.254.31.45]) by cmsmtp with SMTP
+	id S5UblQHGGb8LyS5UblgocP; Thu, 01 Apr 2021 17:08:45 -0500
+X-Authority-Reason: nr=8
+Received: from 116-240-66-4.sta.dodo.net.au ([116.240.66.4]:50332
+	helo=[192.168.1.104])
+	by just2098.justhost.com with esmtpsa (TLS1.2) tls
+	TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 (Exim 4.93)
+	(envelope-from <erwin@erwinvanlonden.net>)
+	id 1lS5Ua-001AJU-P1; Thu, 01 Apr 2021 16:08:45 -0600
+Message-ID: <d6c3e5c7682d209263de5ca3612228b9468051a2.camel@erwinvanlonden.net>
+From: Erwin van Londen <erwin@erwinvanlonden.net>
+To: Martin Wilck <martin.wilck@suse.com>, "muneendra.kumar@broadcom.com"
+	<muneendra.kumar@broadcom.com>, "bblock@linux.ibm.com"
+	<bblock@linux.ibm.com>, "hare@suse.de" <hare@suse.de>
+In-Reply-To: <93f19c1bb5731394225f71936e1cc44509020152.camel@suse.com>
+References: <5b87a64d88a13eb8b4917a1cc0d35691f9fc8227.camel@erwinvanlonden.net>
+	<YFy1Q6nvJEcRzwyl@t480-pf1aa2c2.linux.ibm.com>
+	<b3025c4bf84fe357712fa0fe32bfa3e9@mail.gmail.com>
+	<2c6ff107ccf5f0589520ef124cd9ecc4cdcc355e.camel@erwinvanlonden.net>
+	<8966fcda-b1ca-5d50-398a-13195dab3c44@suse.de>
+	<4fff162d56dd8eebaa7d13be9d6ff580cacbe15f.camel@suse.com>
+	<30cb8c2e97ea8303ee1dfef8a4c34599@mail.gmail.com>
+	<7b5ce0567f03bc3d394481642a97a3d499fe3976.camel@erwinvanlonden.net>
+	<93f19c1bb5731394225f71936e1cc44509020152.camel@suse.com>
+Date: Fri, 02 Apr 2021 08:04:56 +1000
 MIME-Version: 1.0
-X-MS-Exchange-MessageSentRepresentingType: 1
-Received: from ca-mkp.ca.oracle.com (138.3.200.58) by
-	SN4PR0701CA0020.namprd07.prod.outlook.com
-	(2603:10b6:803:28::30) with Microsoft SMTP Server
-	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384)
-	id 15.20.3999.27 via Frontend Transport;
-	Tue, 6 Apr 2021 04:47:20 +0000
-X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: d128db98-ce30-4e0b-1703-08d8f8b71026
-X-MS-TrafficTypeDiagnostic: PH0PR10MB4502:
-X-MS-Exchange-Transport-Forked: True
-X-Microsoft-Antispam-PRVS: <PH0PR10MB45027DC13CC0C854932048AF8E769@PH0PR10MB4502.namprd10.prod.outlook.com>
-X-MS-Oob-TLC-OOBClassifiers: OLM:10000
-X-MS-Exchange-SenderADCheck: 1
-X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: jGOmVYGwuo04DnuiIHZpZgLOouiZ3Wvuk2XY248Y1IqaboxzoBXaTFS4adBIJOrhXtAvK1m04tWuDFg5uAQbEcINNsdnazRS+W5KKDMKtsxVNl0WNQn51QezF8a7n2DdYEK9Sp7Y7Ofqfa58zbFOEFF8xR/fj9usv9c1nrq1gJ46bO7gPRr7VqjLDieIpP3dYLawff4YS5WRq6UjHt4oMWXjP4oPslsvq0+jaFV7XmmYV9yK1t2+vqc4DbUrg27zFWGiDLu2IFq7o5qBF5JttDqFb95tjQuuNzaocTRSlJOxuxH4kISTYLaPBNQ06qgLvbRc9OhZWaXglACgsT2rVtEQBQBoW+nxJ5gzDqEiLjrwndrqF/lI1/3GCWiMAbIKHwL28TgFkq1k7t0TydswJDQx0eEMjk8XIWVWxNNcD9FFaORDYuKV5fRN3WRqPyEezk2gqWNckz+F2SD1DwOXt3+SGfIfHKzlhNOApSfDD8byrlPkVULWRUIcA+OITUj7eJUL5luVHDpnw3y/MDzsrBSOcOwPyelEoHCGiPCgYwRPoHGMKU990DHWbMfci/q0wBSHdRu6MUHoKs47uMXNZIh2B2uPQmWuH0mDN8F4xRvaDHtFsnbU9l4XfV8jkpC4VYhtY2KSTCxnt58yCpFdmicmfWWPW8krSxDLMnkdhw+kVbhyOqHnS3J+4QagbnBe
-X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:PH0PR10MB4759.namprd10.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(366004)(136003)(376002)(39860400002)(346002)(396003)(38350700001)(186003)(8936002)(26005)(16526019)(478600001)(66476007)(66946007)(6666004)(83380400001)(86362001)(66556008)(956004)(7696005)(52116002)(2906002)(54906003)(36916002)(316002)(38100700001)(6916009)(8676002)(5660300002)(55016002)(4326008);
-	DIR:OUT; SFP:1101
-X-MS-Exchange-AntiSpam-MessageData: =?us-ascii?Q?4NvH6nrB4aEZIGV+V4p6ZIQ3e9IAJMknmWpWckJRoJlUdcxXJ2oQcj3v9sGY?=
-	=?us-ascii?Q?rMgIL+T1d9ZB54Pr5AzdWDRMBYvbhe/l1Lwqp4BrtwHdJbb/3aKxe0Bl1bk6?=
-	=?us-ascii?Q?uqb3/kclycRp0iVYBzVHilFMw/L0q01lWJJPjBF+rT0/E/a6UoKPcNArIS/L?=
-	=?us-ascii?Q?WwRYRMd1++/V0cEk+nIV3HpOtxHsLVL+LoK7yI6hEZKPbybd5kPxDXJS4lrh?=
-	=?us-ascii?Q?+A4Ib6m0DGZmDbAmXvfCsqzXvJ+M+27amoQ4BvGjno3j/VfiqcM8D40AnCKl?=
-	=?us-ascii?Q?aiOflhk0K7DnGziRKLkxVjaMwxfvl9QzVhWUxX3Dzve7q9ojfjfTdf1c92lw?=
-	=?us-ascii?Q?QqYXbJXG2DMiINt5M6iuzYjNHWSAFSJJu0iN0eTsMNn8SABUdnwzgJd4jUQM?=
-	=?us-ascii?Q?b3LxDmfJPksaopntqYx3YUw0eTxL6Q7QmMqPyB8Vr5sTUziQnvV0aNONg1Mh?=
-	=?us-ascii?Q?7o4Q3i20KJQXDZTtJTIv5dKzDkq94JXn7rBHFfm29wQZ0Kj3GFOalrae4iPw?=
-	=?us-ascii?Q?su0j8PNT/+Gv/WKaV7t0A4OcQu1Qy1ImcMo7YkwfXi/f/+JwkCW1CjFFsV91?=
-	=?us-ascii?Q?3ryit4odJfchJKVAB3TBPdj0Z79iBWxO9N5c/kMsGfJZT5bSgNDNN5cAKERg?=
-	=?us-ascii?Q?rxCocQu4hV0Oj/w8Ng8ocUu8VqhY4UNA0tEEBiG8rjl1SkKMTocwIS27SMuI?=
-	=?us-ascii?Q?cEcdhb8m7vzZsgNP3cM5cKdiur01+ybYwfBJHaQ/nPB8Hxq8ulcEFzdxP5LX?=
-	=?us-ascii?Q?+2uYXh9C9HUq8aTQwWshYUQML1/ayettpn6pzQj6SiGE/mHReIJj5ukr4SBd?=
-	=?us-ascii?Q?3PdGiRl3TSgvcZiFvUp3FmGRJ/Gnl98zBlaZ9VIIlk6jhU9Vmy36NlJ5uTyf?=
-	=?us-ascii?Q?ABcUn7xrS/yytNSmfP6P0/JApFdXsZobwRDOnlrHTziCkSxOTnd3ode4jw51?=
-	=?us-ascii?Q?+VfuZoqXzbJMZrcSJls43fTwWCxnZn+Jo+jMq/qngZi1q9h+rOAWOzTmT5KM?=
-	=?us-ascii?Q?amT26pC10Suc9CZi4s0FJJRrRVp+3LhxBOxQxTxkrHo05JekU9+uluAx/eRj?=
-	=?us-ascii?Q?fW7HDD30WuxNiaY4NEOXwsIXK8YnsuxTWJFnCiYUY23F5EIk+zJ1MxeDT53/?=
-	=?us-ascii?Q?ZLmgHO602GZRM1dQ/MplTIJV18vN4fEK9idhYcidg6OM+0mL3E3RaPbn8SPF?=
-	=?us-ascii?Q?qBQOitu9wA6qpja7yzhE8Dq95PN0RiHjhvoNewLApdq36zl3l5qeyBNL3mV7?=
-	=?us-ascii?Q?drCuUoNmC5J24+cTKtp1uBTcd1T4YrVVIVdhJqVQq7tsVLPOHGxD0ooWAMYY?=
-	=?us-ascii?Q?FlPQSNiCDxP8CCkq7hMeahjX?=
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: d128db98-ce30-4e0b-1703-08d8f8b71026
-X-MS-Exchange-CrossTenant-AuthSource: PH0PR10MB4759.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 06 Apr 2021 04:47:20.7994 (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: Fz3cvtuLsz9OwBtStBgo1trFn952jijuz/HysbS0SPiOS00ghgwXYl7v2lLnGZI2xnh86SIZnAAUtrPGBE2Nm92UshQVo+a/vw2mkMH/vDk=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH0PR10MB4502
-X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=9945
-	signatures=668683
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 adultscore=0
-	suspectscore=0
-	malwarescore=0 phishscore=0 bulkscore=0 mlxscore=0 spamscore=0
-	mlxlogscore=999 classifier=spam adjust=0 reason=mlx scancount=1
-	engine=8.12.0-2104030000 definitions=main-2104060029
-X-Proofpoint-GUID: bJ8vv5zmdageLP5oEEXj_ofLUj3-YnUM
-X-Proofpoint-ORIG-GUID: bJ8vv5zmdageLP5oEEXj_ofLUj3-YnUM
-X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=9945
-	signatures=668683
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 clxscore=1011
-	malwarescore=0
-	suspectscore=0 impostorscore=0 mlxscore=0 priorityscore=1501
-	mlxlogscore=999 bulkscore=0 spamscore=0 adultscore=0 phishscore=0
-	lowpriorityscore=0 classifier=spam adjust=0 reason=mlx scancount=1
-	engine=8.12.0-2104030000 definitions=main-2104060029
+User-Agent: Evolution 3.38.4 (3.38.4-1.fc33)
+X-AntiAbuse: This header was added to track abuse,
+	please include it with any abuse report
+X-AntiAbuse: Primary Hostname - just2098.justhost.com
+X-AntiAbuse: Original Domain - redhat.com
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - erwinvanlonden.net
+X-BWhitelist: no
+X-Source-IP: 116.240.66.4
+X-Source-L: No
+X-Exim-ID: 1lS5Ua-001AJU-P1
+X-Source: 
+X-Source-Args: 
+X-Source-Dir: 
+X-Source-Sender: 116-240-66-4.sta.dodo.net.au ([192.168.1.104])
+	[116.240.66.4]:50332
+X-Source-Auth: erwin@erwinvanlonden.net
+X-Email-Count: 2
+X-Source-Cap: aGl0YWNoaTE7aGl0YWNoaTE7anVzdDIwOTguanVzdGhvc3QuY29t
+X-Local-Domain: yes
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -170,15 +111,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: Hannes Reinecke <hare@suse.com>,
-	"jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>,
-	"martin.petersen@oracle.com" <martin.petersen@oracle.com>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"dgilbert@interlog.com" <dgilbert@interlog.com>,
-	"systemd-devel@lists.freedesktop.org"
-	<systemd-devel@lists.freedesktop.org>, "hch@lst.de" <hch@lst.de>
-Subject: Re: [dm-devel] RFC: one more time: SCSI device identification
+X-Mailman-Approved-At: Tue, 06 Apr 2021 07:35:52 -0400
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Subject: Re: [dm-devel] dm-multipath - IO queue dispatch based on FPIN
+ Congestion/Latency notifications.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -192,57 +128,186 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; boundary="===============2484464756393903996=="
+
+--===============2484464756393903996==
+Content-Type: multipart/related; type="multipart/alternative";
+	boundary="=-hq+HMKMb+n38/XQ3DR2G"
+
+--=-hq+HMKMb+n38/XQ3DR2G
+Content-Type: multipart/alternative; boundary="=-S6Ff2Jt5O9mfoengEDLC"
+
+--=-S6Ff2Jt5O9mfoengEDLC
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hello Martin,
+
+On Thu, 2021-04-01 at 10:16 +0000, Martin Wilck wrote:
+> On Thu, 2021-04-01 at 12:48 +1000, Erwin van Londen wrote:
+> > >=20
+> > > Benjamin has added a marginal_path group(multipath marginal
+> > > pathgroups) in
+> > > the dm-multipath.
+> > > https://patchwork.kernel.org/project/dm-devel/cover/1564763622-31752-=
+1-git
+> > > -send-email-bmarzins@redhat.com/
+> > >=20
+> > > One of the intention of the Benjamin's patch (support for maginal
+> > > path) is
+> > > to support for the FPIN events we receive from fabric.
+> > > On receiving the fpin-li our intention was to=C2=A0 place all the
+> > > paths
+> > > that
+> > > are affected into the marginal path group.
+> > I think this should all be done in kernel space as we're talking
+> > sub-
+> > millisecond timings here when it comes to fpins and the reaction
+> > time
+> > expected. I may be wrong but I'll leave that up to you.
+>=20
+> Sub-ms latency is impossible with this setup=C2=A0 (kernel -> broadcom FC
+> daemon -> multipathd -> kernel). It's only suitable for "fatal" FPINs
+> that would suggest taking a path offline on the time scale of
+> minutes.
+> I suppose that would work well for LN FPINs, but not for the other
+> types.
+I agree. I was hoping the FC drivers would be able to play a role in
+this and provide a direct hook into the FPIN notifications in such a
+way that userspace daemons would not be required and multipath would be
+able to play a direct role here.
+When it comes to latency in a san we're indeed talking about sub-ms
+when it comes to impacting other parts of the fabrics having an
+immediate effect on multiple initiators and targets due to the shared
+nature of the beast.
+>=20
+> > >=20
+> > > On receiving the congestion notifications our intention is to
+> > > slowdown the
+> > > work load gradually from the host until it stops receiving the
+> > > congestion
+> > > notifications.
+> > > We need to validate the same how we can achieve the same of
+> > > decreasing the
+> > > workloads with the help of dm-multipath.
+> > Would it be possible to piggyback on the service time path selector
+> > in this when it pertains latency? =C2=A0
+>=20
+> Not on service-time itself, but someone could write a new path
+> selector
+> algorithm. IMO we'd still have the problem that this would be seen as
+> a
+> layering violation. In the long run dm-mpath may need to add
+> transport-
+> specific callbacks. But for a proof-of-concept, a selector algorithm
+> with layering violations would be ok, I believe.
+Is that an offer of volunteering?? :-)
+>=20
+> Regards
+> Martin
+>=20
+
+--=-S6Ff2Jt5O9mfoengEDLC
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<html><head></head><body><div>Hello Martin,</div><div><span></span></div><d=
+iv><br></div><div>On Thu, 2021-04-01 at 10:16 +0000, Martin Wilck wrote:</d=
+iv><blockquote type=3D"cite" style=3D"margin:0 0 0 .8ex; border-left:2px #7=
+29fcf solid;padding-left:1ex"><div>On Thu, 2021-04-01 at 12:48 +1000, Erwin=
+ van Londen wrote:<br></div><blockquote type=3D"cite" style=3D"margin:0 0 0=
+ .8ex; border-left:2px #729fcf solid;padding-left:1ex"><blockquote type=3D"=
+cite" style=3D"margin:0 0 0 .8ex; border-left:2px #729fcf solid;padding-lef=
+t:1ex"><div><br></div><div>Benjamin has added a marginal_path group(multipa=
+th marginal<br></div><div>pathgroups) in<br></div><div>the dm-multipath.<br=
+></div><div><a href=3D"https://patchwork.kernel.org/project/dm-devel/cover/=
+1564763622-31752-1-git">https://patchwork.kernel.org/project/dm-devel/cover=
+/1564763622-31752-1-git</a><br></div><div><a href=3D"mailto:-send-email-bma=
+rzins@redhat.com">-send-email-bmarzins@redhat.com</a>/<br></div><div><br></=
+div><div>One of the intention of the Benjamin's patch (support for maginal<=
+br></div><div>path) is<br></div><div>to support for the FPIN events we rece=
+ive from fabric.<br></div><div>On receiving the fpin-li our intention was t=
+o&nbsp; place all the paths<br></div><div>that<br></div><div>are affected i=
+nto the marginal path group.<br></div></blockquote><div>I think this should=
+ all be done in kernel space as we're talking sub-<br></div><div>millisecon=
+d timings here when it comes to fpins and the reaction time<br></div><div>e=
+xpected. I may be wrong but I'll leave that up to you.<br></div></blockquot=
+e><div><br></div><div>Sub-ms latency is impossible with this setup&nbsp; (k=
+ernel -&gt; broadcom FC<br></div><div>daemon -&gt; multipathd -&gt; kernel)=
+. It's only suitable for "fatal" FPINs<br></div><div>that would suggest tak=
+ing a path offline on the time scale of minutes.<br></div><div>I suppose th=
+at would work well for LN FPINs, but not for the other<br></div><div>types.=
+<br></div></blockquote><div>I agree. I was hoping the FC drivers would be a=
+ble to play a role in this and provide a direct hook into the FPIN notifica=
+tions in such a way that userspace daemons would not be required and multip=
+ath would be able to play a direct role here.</div><div>When it comes to la=
+tency in a san we're indeed talking about sub-ms when it comes to impacting=
+ other parts of the fabrics having an immediate effect on multiple initiato=
+rs and targets due to the shared nature of the beast.</div><blockquote type=
+=3D"cite" style=3D"margin:0 0 0 .8ex; border-left:2px #729fcf solid;padding=
+-left:1ex"><div><br></div><blockquote type=3D"cite" style=3D"margin:0 0 0 .=
+8ex; border-left:2px #729fcf solid;padding-left:1ex"><blockquote type=3D"ci=
+te" style=3D"margin:0 0 0 .8ex; border-left:2px #729fcf solid;padding-left:=
+1ex"><div><br></div><div>On receiving the congestion notifications our inte=
+ntion is to<br></div><div>slowdown the<br></div><div>work load gradually fr=
+om the host until it stops receiving the<br></div><div>congestion<br></div>=
+<div>notifications.<br></div><div>We need to validate the same how we can a=
+chieve the same of<br></div><div>decreasing the<br></div><div>workloads wit=
+h the help of dm-multipath.<br></div></blockquote><div>Would it be possible=
+ to piggyback on the service time path selector<br></div><div>in this when =
+it pertains latency? &nbsp;<br></div></blockquote><div><br></div><div>Not o=
+n service-time itself, but someone could write a new path selector<br></div=
+><div>algorithm. IMO we'd still have the problem that this would be seen as=
+ a<br></div><div>layering violation. In the long run dm-mpath may need to a=
+dd transport-<br></div><div>specific callbacks. But for a proof-of-concept,=
+ a selector algorithm<br></div><div>with layering violations would be ok, I=
+ believe.<br></div></blockquote><div>Is that an offer of volunteering?? <im=
+g src=3D"cid:88740517b7df4d6319c3f74bbf138f921aa2fb37.camel@erwinvanlonden.=
+net-0" alt=3D":-)" width=3D"16px" height=3D"16px"></div><blockquote type=3D=
+"cite" style=3D"margin:0 0 0 .8ex; border-left:2px #729fcf solid;padding-le=
+ft:1ex"><div><br></div><div>Regards<br></div><div>Martin<br></div><div><br>=
+</div></blockquote></body></html>
+
+--=-S6Ff2Jt5O9mfoengEDLC--
+
+--=-hq+HMKMb+n38/XQ3DR2G
+Content-ID: <88740517b7df4d6319c3f74bbf138f921aa2fb37.camel@erwinvanlonden.net-0>
+Content-Disposition: inline; filename="face-smile.png"
+Content-Type: image/png; name="face-smile.png"
+Content-Transfer-Encoding: base64
+
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAADLklEQVR4AV2MA5Q0uRpAb6raPTj9
+G2PjvbVt27btPV7btm3btjW23Swklax5P1PwH+49bYNqQsHhEdvaCSGWasA2esRV5mktwrcdfPHb
+ffyDvx48uvvutqwaugzLOqp1hapwWXNrKDZvHgKBm04z3NYuv/q8TSlf3Vg8UnHmHo89Fvz14K2z
+NwoN5bxXFqbia627w26JSCqJ1m2YsAtohB9BmDoCJ8lbTz9YGBic+HDBZPVWvz6xATZbZck184oj
+22+0x9EJCt/x2HOP8tNImtY1yrBiYYzJcs4591PMBOtufWh4rLdtyZA3OP/lL0dfsW49Zb0GP9CH
+rrvptgk59iHBzPv80OfyXXsaEYnBrxZP8nVHnm+/+xav42E2226vhA9HnnfQSvWWdOWxDYsSkUhp
+GX73sxgM0YggHrMB/ZsJo3+ro1GBGvkQy59lrZbaiPKCY+wtVl58y9or/T8V8kbQ6R+xYxESC1PU
+NS5h+fIoKB9yGVRWsmalJildtONTvPT/1idff7c45AVmcbJkAbmxL8lMeywpcVh1SQx7sYuZGAYD
+Opdll1UVctwlyEqmhrsRDWvhSJaGPGmEk5sjYiRaKp5+d5bKSklzs0/J/CQC0I6DM5Pn+x+z/NSd
+p26Jw8orhfEDbYWklFMD/e3L6lI28+yALf8/j++nI9zxxBhYGtsSKD8gn1O0lpWySWsR84oX0N/5
+FVKqyV8emJe/6ug7qHyVWgtXEcpMseKiJayywoZIO4lUGtuOYCsXPfY9argNv6SaT77+VkulXxIn
+7NS0qkXw7naV+URDkcQSWXQ8ihQW0ooRiDg68LC8LLFAETIJevQC7vrMLfi+Wc/+pG1qdNX6eSsN
+p2VNqZkIF2tFKDCIQKOlT1DII1yHqPTB8emd83iyXThpx3r2kfcGrrcBVm6MvZDzYrsNFqLF8VAh
+bAUBESUJKUX4F8OXzLma7qzguYF5zng+2i0Cs92PQxkl+IP9t1icNCp2nzFmi9qSdKI2WRCpqAJg
+xgvRlYmb9tliB8RLrqsPeO6LkQKA4D/svE7l2rbQJwGbB1ACYAkyGF412Fc/+UHfx/yDnwGHuJ5z
+2Cp4/gAAAABJRU5ErkJggg==
+--=-hq+HMKMb+n38/XQ3DR2G--
+
+--===============2484464756393903996==
 Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-
-Martin,
-
-> The kernel's preference for type 8 designators (see below) is in
-> contrast with the established user space algorithms, which determine
-> SCSI WWIDs on productive systems in practice. User space can try to
-> adapt to the kernel logic, but it will necessarily be a slow and
-> painful path if we want to avoid breaking user setups.
-
-I was concerned when you changed the kernel prioritization a while back
-and I still don't think that we should tweak that code any further.
-
-If the kernel picks one ID over another, that should be for the kernel's
-use. Letting the kernel decide which ID is best for userland is not a
-good approach.
-
-So while I originally liked the idea of exposing a transport and
-protocol agnostic wwid for each block device, I think that all the
-descriptors and ID formats available in both SCSI and NVMe have shown
-that that approach is fraught with peril.
-
-Descriptors that provide "good uniqueness" on one device may be a
-completely sub-optimal choice for another (zero-padded values, full of
-spaces, vendors getting things wrong in general).
-
-So I think my inclination would be to leave the current wwid as-is to
-avoid the risk of breaking things. And then export all ID descriptors
-reported in sysfs. Even though vpd83 is already exported in its
-entirety, I don't have any particular concerns about the individual
-values being exported separately. That makes many userland things so
-much easier. And I think the kernel is in a good position to disseminate
-information reported by the hardware.
-
-This puts the prioritization entirely in the distro/udev/scripting
-domain. Taking the kernel out of the picture will make migration
-easier. And it allows a user to pick their descriptor of choice should a
-device report something completely unusable in type 8.
-
--- 
-Martin K. Petersen	Oracle Linux Engineering
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+--===============2484464756393903996==--
 
