@@ -2,79 +2,142 @@ Return-Path: <SRS0=RJDn=JK=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.7 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-2.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,PDS_BAD_THREAD_QP_64,
+	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5501AC433B4
-	for <dm-devel@archiver.kernel.org>; Tue, 13 Apr 2021 10:12:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4FEF8C433B4
+	for <dm-devel@archiver.kernel.org>; Tue, 13 Apr 2021 18:38:22 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id CE353613B7
-	for <dm-devel@archiver.kernel.org>; Tue, 13 Apr 2021 10:12:38 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CE353613B7
-Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
+	by mail.kernel.org (Postfix) with ESMTPS id B02B6613C7
+	for <dm-devel@archiver.kernel.org>; Tue, 13 Apr 2021 18:38:21 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org B02B6613C7
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-565-vOh2_hvoMc62tmh-nqWaDQ-1; Tue, 13 Apr 2021 06:12:35 -0400
-X-MC-Unique: vOh2_hvoMc62tmh-nqWaDQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-459-FCfsqlduPHCAeBunZnhE8w-1; Tue, 13 Apr 2021 14:38:17 -0400
+X-MC-Unique: FCfsqlduPHCAeBunZnhE8w-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9BABF802B56;
-	Tue, 13 Apr 2021 10:12:30 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 541BE6D4E3;
+	Tue, 13 Apr 2021 18:38:07 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C673B10023B0;
-	Tue, 13 Apr 2021 10:12:28 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 790665D9D0;
+	Tue, 13 Apr 2021 18:38:04 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 715D81806D15;
-	Tue, 13 Apr 2021 10:12:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id ACBE11806D15;
+	Tue, 13 Apr 2021 18:37:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13DACNvj012411 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 13 Apr 2021 06:12:24 -0400
+	id 13DIbvUK031805 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 13 Apr 2021 14:37:57 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id B0C1C100332F; Tue, 13 Apr 2021 10:12:23 +0000 (UTC)
+	id 9566920148F1; Tue, 13 Apr 2021 18:37:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AAE1B100698F
-	for <dm-devel@redhat.com>; Tue, 13 Apr 2021 10:12:20 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8E63C20148F8
+	for <dm-devel@redhat.com>; Tue, 13 Apr 2021 18:37:55 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B9A96100E640
-	for <dm-devel@redhat.com>; Tue, 13 Apr 2021 10:12:20 +0000 (UTC)
-Received: from mx2.veeam.com (mx2.veeam.com [64.129.123.6]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-471-Mqry6g8XPL2BrtPqrFN6XA-1;
-	Tue, 13 Apr 2021 06:12:16 -0400
-X-MC-Unique: Mqry6g8XPL2BrtPqrFN6XA-1
-Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mx2.veeam.com (Postfix) with ESMTPS id 845C4413F8;
-	Tue, 13 Apr 2021 06:12:13 -0400 (EDT)
-Received: from veeam.com (172.24.14.5) by prgmbx01.amust.local (172.24.0.171)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 03339100DE7A
+	for <dm-devel@redhat.com>; Tue, 13 Apr 2021 18:37:55 +0000 (UTC)
+Received: from esa5.hgst.iphmx.com (esa5.hgst.iphmx.com [216.71.153.144])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-548-_bdPfGg4NQ-AEcEAvLLUTA-1; Tue, 13 Apr 2021 14:37:52 -0400
+X-MC-Unique: _bdPfGg4NQ-AEcEAvLLUTA-1
+IronPort-SDR: wIA1KIacVeS4Hvqog9ySjbZa/cZctLWFdoYxhoaX6Tij8PqMsjrMU4IjFZJPVVMeeE4B8yw74m
+	wxRH/ZWn7lhgLqRidhBwSAJ1HXg05q7/g5dFWQZ4QXSOSOauLDflQAXepKQ/6SbeZb1NEJu/oq
+	yIx8arVS31WhCF6ItXZzzDDHKwdm0V2PXneRJF8jpSjWEJ3Sy1bj4vybuyFzLVwEF79CSxQ3FZ
+	/nW+he5zOkd1A9M/qDefJT4zl7WTddQS/wK9lC3Y/7HliWdz0UyqzDbXE9DW7dnxH7IWtpCvKT
+	UzE=
+X-IronPort-AV: E=Sophos;i="5.82,220,1613404800"; d="scan'208";a="164633132"
+Received: from mail-bn8nam12lp2173.outbound.protection.outlook.com (HELO
+	NAM12-BN8-obe.outbound.protection.outlook.com) ([104.47.55.173])
+	by ob1.hgst.iphmx.com with ESMTP; 14 Apr 2021 02:36:40 +0800
+Received: from BYAPR04MB4965.namprd04.prod.outlook.com (2603:10b6:a03:4d::25)
+	by BYAPR04MB5831.namprd04.prod.outlook.com (2603:10b6:a03:10d::30)
 	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.721.2;
-	Tue, 13 Apr 2021 12:12:11 +0200
-Date: Tue, 13 Apr 2021 13:12:06 +0300
-From: Sergei Shtepa <sergei.shtepa@veeam.com>
-To: Mike Snitzer <snitzer@redhat.com>
-Message-ID: <20210413101206.GA17754@veeam.com>
-References: <1617968884-15149-1-git-send-email-sergei.shtepa@veeam.com>
-	<20210409152355.GA15109@redhat.com>
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4020.18;
+	Tue, 13 Apr 2021 18:36:22 +0000
+Received: from BYAPR04MB4965.namprd04.prod.outlook.com
+	([fe80::c897:a1f8:197a:706b]) by
+	BYAPR04MB4965.namprd04.prod.outlook.com
+	([fe80::c897:a1f8:197a:706b%5]) with mapi id 15.20.4020.022;
+	Tue, 13 Apr 2021 18:36:22 +0000
+From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
+To: =?iso-8859-1?Q?Javier_Gonz=E1lez?= <javier@javigon.com>, Max Gurtovoy
+	<mgurtovoy@nvidia.com>
+Thread-Topic: [RFC PATCH v5 0/4] add simple copy support
+Thread-Index: AQHXByxPYjd3lKFugEyHev6iOAHEsg==
+Date: Tue, 13 Apr 2021 18:36:21 +0000
+Message-ID: <BYAPR04MB4965A79071C8DC9DA9D49FC8864F9@BYAPR04MB4965.namprd04.prod.outlook.com>
+References: <BYAPR04MB49652982D00724001AE758C986729@BYAPR04MB4965.namprd04.prod.outlook.com>
+	<5BE5E1D9-675F-4122-A845-B0A29BB74447@javigon.com>
+	<c7848f1c-c2c1-6955-bf20-f413a44f9969@nvidia.com>
+	<20210411192641.ya6ntxannk3gjyl5@mpHalley.localdomain>
+	<3a52cc06-27ce-96a4-b180-60fc269719ba@nvidia.com>
+	<20210413182558.v2lynge6aleazgbv@mpHalley.localdomain>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-originating-ip: [199.255.45.62]
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: 07d44658-af8d-42c8-1008-08d8feab094c
+x-ms-traffictypediagnostic: BYAPR04MB5831:
+x-ms-exchange-transport-forked: True
+x-microsoft-antispam-prvs: <BYAPR04MB583150F9937AF4B9E369E0CB864F9@BYAPR04MB5831.namprd04.prod.outlook.com>
+wdcipoutbound: EOP-TRUE
+x-ms-oob-tlc-oobclassifiers: OLM:9508
+x-ms-exchange-senderadcheck: 1
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: JBr7pG6TnGVl6YdKYyIZ4BhOioPkmcuNaUz7klkiqHAYb54p8fwqXp0C2DKZA/vfdfvjcED4RDCzOwkbws+aMlhcWzcZWz4tIJxrJ6bux0J0QoPhughkFKwqB29ObDMaYMlVlx1Hz1aTSnYVMnjdxkA3Z91rA4a2AVgfPhfD8FnFFnJNGtcTxmbqfeI9wV2MvXeRYKBJTVCBbwQbIxSF4XquAsi/G7TMhG3h81r/MJrliUrqmrOgZrcnvE6zmWDWCY1nP0u4gndHsJtP+5Uh5KLCqFU5zEo27NIS1jIqYfaElNJtkT+6XzyU2Z986VY498TZgZculD59Pro+33EJIZ0KhBeFWIXEio5ONCaboOLfOCjEhE8nPuQ0/dzYfmCvtmcWHe6rqm0mPrfN1CKAU8FFaoRSPBkwKDLFLL3uo7x8zLO8ExiASy3NPNjZG9NbYqTSuJbvh49tTP6FzdrRbKUP/5upo5d38VySNtfOJtQfXyKoUPoERe6bY9UYh9m3Z4NVUrSkRM35naE6o+YusMErFIMkRel1S7F+KSTD2Yy218MxXpyH8jUC1+2bHHTFWQqG9VcnnDWLRfXuAoFvXPBN8Y9vSctXyrBL3WN2HPQ=
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:BYAPR04MB4965.namprd04.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(4636009)(136003)(396003)(39850400004)(376002)(346002)(366004)(6506007)(7696005)(55016002)(53546011)(8676002)(8936002)(110136005)(33656002)(316002)(2906002)(478600001)(54906003)(71200400001)(26005)(66446008)(86362001)(52536014)(66946007)(76116006)(122000001)(9686003)(66476007)(5660300002)(4744005)(66556008)(186003)(64756008)(7416002)(4326008)(38100700002);
+	DIR:OUT; SFP:1102
+x-ms-exchange-antispam-messagedata: =?iso-8859-1?Q?M5TpDuBSP8cM9nhAeCTpefAVq13+lWPJeQs8R5A+RbOAs5J0Tz0mr9AQ4L?=
+	=?iso-8859-1?Q?F81EoaDFoMJdNNkr7ssJTSRljTk9SD6tWfO8ms+E/WdWbJQy3WzM6faSPc?=
+	=?iso-8859-1?Q?M2y2e1b9W+6plqeaIXJQem9/DbBL9TswHAqGtox5ldaYLjIyOIF/O8KXgF?=
+	=?iso-8859-1?Q?R540QX2pWui4cDA47CfnfbFNKnnooEnBg2yy8CuZUYaUFiUdwKo/BdLbFE?=
+	=?iso-8859-1?Q?XKAfCT0cFXFDEaZXWNHuV/SVThjvzjxArFy72b4AadATx0lsgpnejAJ64e?=
+	=?iso-8859-1?Q?h0AsUp3+UE5FUXZBMFAawHkuybQJAjSA69dvKhMlowJnDUcCuasEAFT0Ps?=
+	=?iso-8859-1?Q?wK2eDhP5Jv+gzqVwgrc+IXxqG7hiU9l2FmXL2dnYbGzZd7hWGXPTdCRxNz?=
+	=?iso-8859-1?Q?uDvvnjH5PgRrAARQUWefEZDvsKyLTsi928F/KUlH93Gliy2djrYLZJx8o1?=
+	=?iso-8859-1?Q?kYmQRY4UDXj4zcye2r02r3up3DabvwQcD+rz8SIo9ePgysoIEnDk5p7Zi8?=
+	=?iso-8859-1?Q?Pt3G4vGI4S7pkQ1HMWllSlMCf0aKvxNN7RBeoLvQVJKmImXb2VWBzLxMGm?=
+	=?iso-8859-1?Q?RCnbBDJVu3YMkLvd+Hd28Zxrqti4Z7PC8/iBWU4FLzjwoHJaHsD5MVC65d?=
+	=?iso-8859-1?Q?LP04d8MBTAk5Zhmie9KrErEAmz6vAhNQ+EhXlme77VK4Zhg0XCMZQYWOvJ?=
+	=?iso-8859-1?Q?tO9cJXgvNbs/sndAum7e4h/WFvyWr5kr3vKBO7bbi6hkZKUZxSa/Jml9Kl?=
+	=?iso-8859-1?Q?RDyWvl0IV74VlYi7bp+77X/Xi2ywtYVLTgJiVoMafoMNZa+DVMvkhzf2XK?=
+	=?iso-8859-1?Q?D2/QW8B1KBFexCLMkJ1UOml/kwrcQaJ0mfUbBYIGz1Zlp67ieLxEKkNlTn?=
+	=?iso-8859-1?Q?XCDw/iytrrGmOVS+pexg5U45EE92g4875iydhZiNY9XV0Da0RiyEdcBKJK?=
+	=?iso-8859-1?Q?/rnymwfJ05VRU/n7AjlbNQG2BAmRRi5D7W8K8FHaCy6O1oeQ7iEGe/Eiq1?=
+	=?iso-8859-1?Q?P/itxnsIuK+AiiAGaZRWwJtBDwp9pZJMl6jAfOexbhdDPsYvZOCJfhTj9f?=
+	=?iso-8859-1?Q?ncI0WhXERQG2VgTC3XGfFzja+XQX2heEgSSIFgi0cG58XGUthi/61uNTMj?=
+	=?iso-8859-1?Q?zfJP3i5xqUxAvzKdSrMbvzSXEVAhd/bcOdLTW6Nu9Z7uyqfodCpitW6TJO?=
+	=?iso-8859-1?Q?leJq0Z53OUHjGFi1Sya501gAYWiC/eVj5uat+372iN7UTD/vvLw4mzl+05?=
+	=?iso-8859-1?Q?oM4kRSg0NaIx2EkDarpl5heJou0cu4NvQ0mFr8ZPA5suqTWnR39pu0IweP?=
+	=?iso-8859-1?Q?rpsAoi8yzEno7WbF8yrpSKp/Gg2W7fDhum/pfrNT7oRabJYx0HQJT6UXkl?=
+	=?iso-8859-1?Q?A+6rdS8nq5?=
 MIME-Version: 1.0
-In-Reply-To: <20210409152355.GA15109@redhat.com>
-X-Originating-IP: [172.24.14.5]
-X-ClientProxiedBy: prgmbx02.amust.local (172.24.0.172) To prgmbx01.amust.local
-	(172.24.0.171)
-X-EsetResult: clean, is OK
-X-EsetId: 37303A29D2A50B59647461
-X-Veeam-MMEX: True
+X-OriginatorOrg: wdc.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: BYAPR04MB4965.namprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 07d44658-af8d-42c8-1008-08d8feab094c
+X-MS-Exchange-CrossTenant-originalarrivaltime: 13 Apr 2021 18:36:21.9379 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: aQk3lW+pLtNEJaw5UIPu+n5AFE/A8oQRNwDjAjm6oHMAyu0LP9WmDOsb68NccbHEFTRPO9hMVwBDlSjMkOBsdMPgv/Qe81f99GpO9FE2oXM=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR04MB5831
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -83,17 +146,26 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 13DIbvUK031805
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	Pavel Tide <Pavel.TIde@veeam.com>,
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, Le Moal <Damien.LeMoal@wdc.com>,
+	"kch@kernel.org" <kch@kernel.org>, SelvaKumar S <selvakuma.s1@samsung.com>,
+	"sagi@grimberg.me" <sagi@grimberg.me>,
+	"snitzer@redhat.com" <snitzer@redhat.com>, Damien,
+	"selvajove@gmail.com" <selvajove@gmail.com>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	Christoph Hellwig <hch@infradead.org>,
+	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
+	"hch@lst.de" <hch@lst.de>,
+	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+	"kbusch@kernel.org" <kbusch@kernel.org>,
 	"dm-devel@redhat.com" <dm-devel@redhat.com>,
+	"joshi.k@samsung.com" <joshi.k@samsung.com>,
 	"linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-	Alasdair Kergon <agk@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>
-Subject: Re: [dm-devel] [PATCH v8 0/4] block device interposer
+	"joshiiitr@gmail.com" <joshiiitr@gmail.com>,
+	"nj.shetty@samsung.com" <nj.shetty@samsung.com>
+Subject: Re: [dm-devel] [RFC PATCH v5 0/4] add simple copy support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -107,441 +179,42 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-The 04/09/2021 18:23, Mike Snitzer wrote:
-> On Fri, Apr 09 2021 at  7:48am -0400,
-> Sergei Shtepa <sergei.shtepa@veeam.com> wrote:
-> 
-> > I think I'm ready to suggest the next version of block device interposer
-> > (blk_interposer). It allows to redirect bio requests to other block
-> > devices.
-> > 
-> > In this series of patches, I reviewed the process of attaching and
-> > detaching device mapper via blk_interposer.
-> > 
-> > Now the dm-target is attached to the interposed block device when the
-> > interposer dm-target is fully ready to accept requests, and the interposed
-> > block device queue is locked, and the file system on it is frozen.
-> > The detaching is also performed when the file system on the interposed
-> > block device is in a frozen state, the queue is locked, and the interposer
-> > dm-target is suspended.
-> > 
-> > To make it possible to lock the receipt of new bio requests without locking
-> > the processing of bio requests that the interposer creates, I had to change
-> > the submit_bio_noacct() function and add a lock. To minimize the impact of
-> > locking, I chose percpu_rw_sem. I tried to do without a new lock, but I'm
-> > afraid it's impossible.
-> > 
-> > Checking the operation of the interposer, I did not limit myself to
-> > a simple dm-linear. When I experimented with dm-era, I noticed that it
-> > accepts two block devices. Since Mike was against changing the logic in
-> > the dm-targets itself to support the interrupter, I decided to add the
-> > [interpose] option to the block device path.
-> > 
-> >  echo "0 ${DEV_SZ} era ${META} [interpose]${DEV} ${BLK_SZ}" | \
-> >  	dmsetup create dm-era --interpose
-> > 
-> > I believe this option can replace the DM_INTERPOSE_FLAG flag. Of course,
-> > we can assume that if the device cannot be opened with the FMODE_EXCL,
-> > then it is considered an interposed device, but it seems to me that
-> > algorithm is unsafe. I hope to get Mike's opinion on this.
-> > 
-> > I have successfully tried taking snapshots. But I ran into a problem
-> > when I removed origin-target:
-> > [   49.031156] ------------[ cut here ]------------
-> > [   49.031180] kernel BUG at block/bio.c:1476!
-> > [   49.031198] invalid opcode: 0000 [#1] SMP NOPTI
-> > [   49.031213] CPU: 9 PID: 636 Comm: dmsetup Tainted: G            E     5.12.0-rc6-ip+ #52
-> > [   49.031235] Hardware name: innotek GmbH VirtualBox/VirtualBox, BIOS VirtualBox 12/01/2006
-> > [   49.031257] RIP: 0010:bio_split+0x74/0x80
-> > [   49.031273] Code: 89 c7 e8 5f 56 03 00 41 8b 74 24 28 48 89 ef e8 12 ea ff ff f6 45 15 01 74 08 66 41 81 4c 24 14 00 01 4c 89 e0 5b 5d 41 5c c3 <0f> 0b 0f 0b 0f 0b 45 31 e4 eb ed 90 0f 1f 44 00 00 39 77 28 76 05
-> > [   49.031322] RSP: 0018:ffff9a6100993ab0 EFLAGS: 00010246
-> > [   49.031337] RAX: 0000000000000008 RBX: 0000000000000000 RCX: ffff8e26938f96d8
-> > [   49.031357] RDX: 0000000000000c00 RSI: 0000000000000000 RDI: ffff8e26937d1300
-> > [   49.031375] RBP: ffff8e2692ddc000 R08: 0000000000000000 R09: 0000000000000000
-> > [   49.031394] R10: ffff8e2692b1de00 R11: ffff8e2692b1de58 R12: ffff8e26937d1300
-> > [   49.031413] R13: ffff8e2692ddcd18 R14: ffff8e2691d22140 R15: ffff8e26937d1300
-> > [   49.031432] FS:  00007efffa6e7800(0000) GS:ffff8e269bc80000(0000) knlGS:0000000000000000
-> > [   49.031453] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-> > [   49.031470] CR2: 00007efffa96cda0 CR3: 0000000114bd0000 CR4: 00000000000506e0
-> > [   49.031490] Call Trace:
-> > [   49.031501]  dm_submit_bio+0x383/0x500 [dm_mod]
-> > [   49.031522]  submit_bio_noacct+0x370/0x770
-> > [   49.031537]  submit_bh_wbc+0x160/0x190
-> > [   49.031550]  __sync_dirty_buffer+0x65/0x130
-> > [   49.031564]  ext4_commit_super+0xbc/0x120 [ext4]
-> > [   49.031602]  ext4_freeze+0x54/0x80 [ext4]
-> > [   49.031631]  freeze_super+0xc8/0x160
-> > [   49.031643]  freeze_bdev+0xb2/0xc0
-> > [   49.031654]  lock_bdev_fs+0x1c/0x30 [dm_mod]
-> > [   49.031671]  __dm_suspend+0x2b9/0x3b0 [dm_mod]
-> > [   49.032095]  dm_suspend+0xed/0x160 [dm_mod]
-> > [   49.032496]  ? __find_device_hash_cell+0x5b/0x2a0 [dm_mod]
-> > [   49.032897]  ? remove_all+0x30/0x30 [dm_mod]
-> > [   49.033299]  dev_remove+0x4c/0x1c0 [dm_mod]
-> > [   49.033679]  ctl_ioctl+0x1a5/0x470 [dm_mod]
-> > [   49.034067]  dm_ctl_ioctl+0xa/0x10 [dm_mod]
-> > [   49.034432]  __x64_sys_ioctl+0x83/0xb0
-> > [   49.034785]  do_syscall_64+0x33/0x80
-> > [   49.035139]  entry_SYSCALL_64_after_hwframe+0x44/0xae
-> > When suspend is executed for origin-target before the interposer is
-> > being detached, in the origin_map() function the value of the
-> > o->split_binary variable is zero, since no snapshots were connected to it.
-> > I think that if no snapshots are connected, then it does not make sense
-> > to split the bio request into parts.
-> 
-> The dm-snapshot code requires careful order of operations.  You say you
-> removed the origin target.. please show exactly what you did.  Your 4th
-> patch shouldn't be tied to this patchset. Can be dealt with
-> independently.
+On 4/13/21 11:26, Javier Gonz=E1lez wrote:
+>>> I believe there is space for extensions to simple copy. But given the
+>>> experience with XCOPY, I can imagine that changes will be incremental,
+>>> based on very specific use cases.
+>>>
+>>> I think getting support upstream and bringing deployed cases is a very
+>>> good start.
+>> Copying data (files) within the controller/subsystem from ns_A to ns_B=
+=20
+>> using NVMf will reduce network BW and memory BW in the host server.
+>>
+>> This feature is well known and the use case is well known.
+> Definitely.
+>
 
-To create a snapshot, the snapshot-origin from dm-snap must be connected to
-the device. I do it like this:
- DEV=/dev/nvme0n1p2
- DEV_SZ=$(blockdev --getsz ${DEV})
- echo "0 ${DEV_SZ} snapshot-origin [interpose]${DEV}" | \
- 	dmsetup create dm-origin --interpose
+I've a working code for nvmet for simple copy, I'm waiting to resolve
+the host interface for REQ_OP_COPY so I can post it with this series.
 
-Next, I create the snapshot itself and mount it:
- META=/dev/nvme0n1p1
- ORIGIN=/dev/mapper/dm-origin
- echo "0 ${DEV_SZ} snapshot ${ORIGIN} ${META} N 8" | \
- 	dmsetup create dm-snapshot
- mount /dev/mapper/dm-snapshot /mnt/snap
+Let me know if someone wants to collaborate offline on that.
 
-Releasing the snapshot:
- umount /mnt/snap
- dmsetup remove dm-snapshot
+IMHO we first need to sort out the host side interface which is
+a challenge for years and it is not that easy to get it right
+based on the history.
 
-Remove snapshot-origin:
- dmsetup remove dm-origin
 
-I think it's hard to make a mistake here, although the documentation describes
-creating a snapshot using lvcreate, not dmsetup.
 
-As for the fourth patch - I agree - this should be the next step, after the
-idea of the interposer is accepted.
 
-> 
-> > Changes summary for this patchset v7:
-> >   * The attaching and detaching to interposed device moved to
-> >     __dm_suspend() and __dm_resume() functions.
-> 
-> Why? Those hooks are inherently more constrained.  And in the case of
-> resume, failure is not an option.
-> 
-> >   * Redesigned th submit_bio_noacct() function and added a lock for the
-> >     block device interposer.
-> >   * Adds [interpose] option to block device patch in dm table.
-> 
-> I'm struggling to see why you need "[interpose]" (never mind that this
-> idea of device options is a new construct): what are the implications?
-> Are you saying that a table will have N devices with only a subset that
-> are interposed?
-
-I'm analyzing how dmsetup works with strace. I get something like this
-diagram:
- ioctl(3, DM_VERSION, ...
- ...
- read(0, "0 14675935 snapshot-origin [inte"..., 4096) = 53
- ...
- ioctl(3, DM_DEV_CREATE, ...
- ioctl(3, DM_TABLE_LOAD, ...
- ioctl(3, DM_DEV_SUSPEND, ...
-
-ioctl DM_DEV_SUSPEND without the DM_SUSPEND_FLAG flag, which means that the
-do_resume function is started. It turns out that only after the do_resume
-DM target works, the target becomes ready to work.
-
-Before that, we cannot attach the interposer, as the bio will not be
-successfully processed by the interposer. It turns out that it is at the
-final stage of initialization that we can safely connect the interposer.
-Note that a special DMF_INTERPOSER_ATTACHED flag was provided, this allows
-to connect the interposer only at the first resume.
-
-When removing a DM target, there is a requirement that the DM target is closed
-and not used by anyone. This ensures that no new bio requests to the DM target
-will be received. But in the case of the interposer, this is not enough.
-We need to lock the queue of the original block device and wait for all
-previously created bio requests to complete. To do this, run dm_suspend() with
-the DM_SUSPEND_DETACH_IP_FLAG flag.
-
-If we look at the do_resume() function, it can finish with an error code for
-various malfunctions and their processing is provided.
-
-> 
-> Just feels very awkward but I'll try to keep an open mind until I can
-> better understand.
-
-Ok. Let's look at a simple example. We need to attach the dm-era using the
-interposer. This target uses two devices ${DEV} and ${META}.
- echo "0 `blockdev --getsz ${DEV}` era ${META} ${DEV} 128" | \
- 	dmsetup create dm-era --interpose
-
-The ${DEV} device needs to be attached using a interposer, while ${META} is
-used to output the result of the module and must be opened in FMODE_EXCL mode.
-
-It turns out that only the dm-target itself depends on which of the devices
-can be connected via the interposer, and which can not. The [interpose] option
-allows to explicitly specify this.
-
-I don't really like the design with the [interpret] option either.
-I think it's best to change the dm_get_device() call and explicitly specify
-which device to open via the interposer. It depends on the DM target itself
-whether it supports connection via the interposer and for which devices.
-This would make the code more visual. But to do this, we will need to change
-one line in each existing dm_target. You have already spoken out against
-a similar decision. But maybe can you look at this solution again?
-It will look something like this:
-
-diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
-index d9ac7372108c..461fd7656751 100644
---- a/drivers/md/dm-era-target.c
-+++ b/drivers/md/dm-era-target.c
-@@ -1455,14 +1455,16 @@ static int era_ctr(struct dm_target *ti, unsigned argc, char **argv)
-
- 	era->ti = ti;
-
--	r = dm_get_device(ti, argv[0], FMODE_READ | FMODE_WRITE, &era->metadata_dev);
-+	r = dm_get_device(ti, argv[0], FMODE_READ | FMODE_WRITE, false, &era->metadata_dev);
- 	if (r) {
- 		ti->error = "Error opening metadata device";
- 		era_destroy(era);
- 		return -EINVAL;
- 	}
-
--	r = dm_get_device(ti, argv[1], FMODE_READ | FMODE_WRITE, &era->origin_dev);
-+	r = dm_get_device(ti, argv[1], FMODE_READ | FMODE_WRITE, ti->table->md->interpose, &era->origin_dev);
- 	if (r) {
- 		ti->error = "Error opening data device";
- 		era_destroy(era);
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index e5f0f1703c5d..dc08e9b0c2fc 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -327,14 +327,14 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
-  * it is accessed concurrently.
-  */
- static int upgrade_mode(struct dm_dev_internal *dd, fmode_t new_mode,
--			struct mapped_device *md)
-+			bool interpose, struct mapped_device *md)
- {
- 	int r;
- 	struct dm_dev *old_dev, *new_dev;
-
- 	old_dev = dd->dm_dev;
-
--	r = dm_get_table_device(md, dd->dm_dev->bdev->bd_dev,
-+	r = dm_get_table_device(md, dd->dm_dev->bdev->bd_dev, interpose,
- 				dd->dm_dev->mode | new_mode, &new_dev);
- 	if (r)
- 		return r;
-@@ -363,7 +363,7 @@ EXPORT_SYMBOL_GPL(dm_get_dev_t);
-  * it's already present.
-  */
- int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
--		  struct dm_dev **result)
-+		  bool interpose, struct dm_dev **result)
- {
- 	int r;
- 	dev_t dev;
-@@ -391,7 +391,7 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
- 		if (!dd)
- 			return -ENOMEM;
-
--		if ((r = dm_get_table_device(t->md, dev, mode, &dd->dm_dev))) {
-+		if ((r = dm_get_table_device(t->md, dev, mode, interpose, &dd->dm_dev))) {
- 			kfree(dd);
- 			return r;
- 		}
-@@ -401,7 +401,7 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
- 		goto out;
-
- 	} else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
--		r = upgrade_mode(dd, mode, t->md);
-+		r = upgrade_mode(dd, mode, interpose, t->md);
- 		if (r)
- 			return r;
- 	}
-> 
-> >   * Fix origin_map() then o->split_binary value is zero.
-> 
-> Overall this effort, while appreciated in general, is getting more and
-> more muddled -- you're having to sprinkle obscure code all over DM. And
-> your patch headers are severely lacking for a v8 patch
-> submission. Terse bullet points don't paint a very comprehensive
-> picture. Please detail how a user is expected to drive this (either in
-> patch headers and/or some Documentation file).
-> 
-> Mike
-> 
-
-Mike, thank you for appreciating my efforts. I'm getting deeper and deeper
-into the DM code and trying to add new functionality to it in a harmonious way.
-When discussing the previous patch, you were quite right to say that the
-connection and disconnection of the interposer was not safe, although the code
-looked simpler.
-This time I tried to understand in detail the processes of creating and
-removing DM targets. I tried to write the code as simple as possible and added
-comments to make it as easy as possible to understand.
-I think it would be great if you would indicate which code you found
-"more muddled". I will be happy to rewrite it or give additional comments.
-
-How a user is expected to drive this - I'll try to describe it in this email.
-If this text suits you, I will create documentation based on it in the future.
-At the current stage, I would not want to distract the people who are engaged
-in checking the documentation, so as not to throw their work into the trash bin
-as it happened with the documentation for the v4 patch.
-
-===================
-DM & blk_interposer
-===================
-
-Usually LVM should be used for new devices. The administrator have to create
-logical volumes for the system partition when installing the operating system.
-For a running system with partitioned disk space and mounted file systems,
-it is quite difficult to reconfigure to logical volumes. As a result, all
-the features that Device Mapper provides are not available for non-LVM systems.
-This problem is partially solved by the interposer functionality, which uses
-the kernel's blk_interposer.
-
-Blk_interposer it allows to redirect bio requests from ordinal block devices
-to DM target. It allows to attach interposer to original device "on the fly"
-without stopping the execution of users programs.
-
-Interposer for dm-flakey
-========================
-In a classic dm-flakey application, the /dev/sda1 device must be unmounted.
-We have to create a new block device /dev/mapper/test and mount it. ::
- echo "0 `blockdev --getsz /dev/sda1` flakey /dev/sda1 0 1 3" | \
- 	dmsetup create test
- mount /dev/mapper/test /mnt/test
-
-The relationship diagram will look like this:
-  +-------------+
-  | file system |
-  +-------------+
-        ||
-        \/
-  +------------------+
-  | /dev/mapper/test |
-  +------------------+
-        ||
-        \/
-  +-------------+
-  | /dev/sda1   |
-  +-------------+
-
-blk_interposer allows to connect the DM target to a device that is already
-mounted. Adding the --interpose flag to the command::
- echo "0 `blockdev --getsz /dev/sda1` flakey /dev/sda1 0 1 3" | \
-     dmsetup create test --interpose
-
-Now the relationship diagram will look like this:
-  +-------------+
-  | file system |
-  +-------------+
-        ||
-        \/
-  +----------------+
-  | blk_interposer |
-  +----------------+
-        ||
-        \/
-  +--------------+
-  | /dev/mapper/ |
-  | test         |
-  +--------------+
-        ||
-        \/
-  +-------------+
-  | /dev/sda1   |
-  +-------------+
-
-At the same time, we do not need to remount the file system. The new DM target
-was added to the stack "on the fly" unnoticed by the user-space environment.
-
-Interposer for dm-snap
-======================
-
-Suppose we have a file system mounted on the block device /dev/sda1::
-  +-------------+
-  | file system |
-  +-------------+
-        ||
-        \/
-  +-------------+
-  | /dev/sda1   |
-  +-------------+
-
-To create a snapshot of a block device, we need to connect the dm-snap to this
-device. To do this, use the --interpose flag when creating snapshot-origin.
- echo "0 `blockdev --getsz /dev/sda1` snapshot-origin /dev/sda1" | \
- 	dmsetup create origin --interpose
-
-In this case, thanks to blk_interposer, all bio requests from the file system
-will be redirected to the new device /dev/mapper/origin.
-Diagram ::
-
-  +-------------+
-  | file system |
-  +-------------+
-        ||
-        \/
- +----------------+
- | blk_interposer |
- +----------------+
-        ||
-        \/
- +--------------+
- | /dev/mapper/ |
- | origin       |
- +--------------+
-        || 
-        \/
-  +-----------+
-  | /dev/sda1 |
-  +-----------+
-
-To create a snapshot, just use the new device /dev/mapper/origin:
- echo "0 `blockdev --getsz /dev/sda1` snapshot /dev/mapper/origin ${COW_DEVICE} N 8" | \
- 	dmesetup create snapshot
-
-Diagram::
-  +-------------+       +--------------+
-  | file system |       | backup agent |
-  +-------------+       +--------------+
-        ||                    ||
-        \/                    ||
-  +----------------+          ||
-  | blk_interposer |          ||
-  +----------------+          ||
-        ||                    ||
-        \/                    \/
-  +--------------+     +---------------+
-  | /dev/mapper/ | <=> | /dev/mapper/  |
-  | origin       |     | snapshot      |
-  +--------------+     +---------------+
-        ||                    ||
-        \/                    \/
-  +-----------+        +---------------+
-  | /dev/sda1 |        | ${COW_DEVICE} |
-  +-----------+        +---------------+
-
-The snapshot device on the /dev/mapper/snapshot device is now available for
-mounting or backup.
-
--- 
-Sergei Shtepa
-Veeam Software developer.
 
 --
 dm-devel mailing list
