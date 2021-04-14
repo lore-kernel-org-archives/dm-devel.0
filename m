@@ -2,75 +2,62 @@ Return-Path: <SRS0=OBV6=JL=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A9FBBC433B4
-	for <dm-devel@archiver.kernel.org>; Wed, 14 Apr 2021 17:15:46 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4F1C6C433B4
+	for <dm-devel@archiver.kernel.org>; Wed, 14 Apr 2021 17:18:34 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 1F0D361177
-	for <dm-devel@archiver.kernel.org>; Wed, 14 Apr 2021 17:15:46 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1F0D361177
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
+	by mail.kernel.org (Postfix) with ESMTPS id BE73261164
+	for <dm-devel@archiver.kernel.org>; Wed, 14 Apr 2021 17:18:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BE73261164
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-167-PLN3XeNAMImn8Z4SVmjmqQ-1; Wed, 14 Apr 2021 13:15:41 -0400
-X-MC-Unique: PLN3XeNAMImn8Z4SVmjmqQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-604-U8oPDavOOtOJskSdLOhoww-1; Wed, 14 Apr 2021 13:18:30 -0400
+X-MC-Unique: U8oPDavOOtOJskSdLOhoww-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2F9971854E28;
-	Wed, 14 Apr 2021 17:15:35 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7144319D9B;
-	Wed, 14 Apr 2021 17:15:33 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9E3981006C85;
+	Wed, 14 Apr 2021 17:18:26 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 59FBE62AF7;
+	Wed, 14 Apr 2021 17:18:26 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4593D1806D0F;
-	Wed, 14 Apr 2021 17:15:29 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 726139971;
+	Wed, 14 Apr 2021 17:18:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13E8ccK9018705 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 14 Apr 2021 04:38:39 -0400
+	id 13EFSwFT007099 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 14 Apr 2021 11:28:58 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 368AD20378EF; Wed, 14 Apr 2021 08:38:38 +0000 (UTC)
+	id 5BB0BF556A; Wed, 14 Apr 2021 15:28:58 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 30B8520378E6
-	for <dm-devel@redhat.com>; Wed, 14 Apr 2021 08:38:35 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C8A0285A5A8
-	for <dm-devel@redhat.com>; Wed, 14 Apr 2021 08:38:35 +0000 (UTC)
-Received: from out30-57.freemail.mail.aliyun.com
-	(out30-57.freemail.mail.aliyun.com [115.124.30.57]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-67-jnXbK0AsOv-Y6Dg-HfcP_Q-1;
-	Wed, 14 Apr 2021 04:38:30 -0400
-X-MC-Unique: jnXbK0AsOv-Y6Dg-HfcP_Q-1
-X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R121e4; CH=green; DM=||false|;
-	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04400;
-	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=7; SR=0;
-	TI=SMTPD_---0UVX9aPU_1618389505
-Received: from admindeMacBook-Pro-2.local(mailfrom:jefflexu@linux.alibaba.com
-	fp:SMTPD_---0UVX9aPU_1618389505) by smtp.aliyun-inc.com(127.0.0.1);
-	Wed, 14 Apr 2021 16:38:26 +0800
-To: Christoph Hellwig <hch@infradead.org>, Ming Lei <ming.lei@redhat.com>
-References: <20210401021927.343727-1-ming.lei@redhat.com>
-	<20210401021927.343727-12-ming.lei@redhat.com>
-	<20210412093856.GA978201@infradead.org>
-From: JeffleXu <jefflexu@linux.alibaba.com>
-Message-ID: <a6d46979-810e-bc53-bc19-8acd449e3718@linux.alibaba.com>
-Date: Wed, 14 Apr 2021 16:38:25 +0800
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
-	Gecko/20100101 Thunderbird/78.7.1
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 52A7AF51BB
+	for <dm-devel@redhat.com>; Wed, 14 Apr 2021 15:28:55 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DF7EF802A61
+	for <dm-devel@redhat.com>; Wed, 14 Apr 2021 15:28:54 +0000 (UTC)
+Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
+	by relay.mimecast.com with ESMTP id us-mta-214-O20dFFBXOdmRuj40IJ_ptA-1;
+	Wed, 14 Apr 2021 11:28:51 -0400
+X-MC-Unique: O20dFFBXOdmRuj40IJ_ptA-1
+Received: by mail.kernel.org (Postfix) with ESMTPSA id A122D61158;
+	Wed, 14 Apr 2021 15:28:50 +0000 (UTC)
+From: Jaegeuk Kim <jaegeuk@kernel.org>
+To: dm-devel@redhat.com
+Date: Wed, 14 Apr 2021 08:28:28 -0700
+Message-Id: <20210414152828.760900-1-jaegeuk@kernel.org>
 MIME-Version: 1.0
-In-Reply-To: <20210412093856.GA978201@infradead.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -79,13 +66,16 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 13EFSwFT007099
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 14 Apr 2021 13:14:03 -0400
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [dm-devel] [PATCH V5 11/12] block: add poll_capable method to
- support bio-based IO polling
+Cc: snitzer@redhat.com, gregkh@linuxfoundation.org,
+	linux-kernel@vger.kernel.org, stable@vger.kernel.org,
+	Jaegeuk Kim <jaegeuk@google.com>, kernel-team@android.com, agk@redhat.com
+Subject: [dm-devel] [PATCH RESEND] dm verity: fix not aligned logical block
+	size of RS roots IO
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -99,69 +89,86 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+From: Jaegeuk Kim <jaegeuk@google.com>
 
+commit df7b59ba9245 ("dm verity: fix FEC for RS roots unaligned to block size")
+made dm_bufio->block_size 1024, if f->roots is 2. But, that gives the below EIO
+if the logical block size of the device is 4096, given v->data_dev_block_bits=12.
 
-On 4/12/21 5:38 PM, Christoph Hellwig wrote:
-> On Thu, Apr 01, 2021 at 10:19:26AM +0800, Ming Lei wrote:
->> From: Jeffle Xu <jefflexu@linux.alibaba.com>
->>
->> This method can be used to check if bio-based device supports IO polling
->> or not. For mq devices, checking for hw queue in polling mode is
->> adequate, while the sanity check shall be implementation specific for
->> bio-based devices. For example, dm device needs to check if all
->> underlying devices are capable of IO polling.
->>
->> Though bio-based device may have done the sanity check during the
->> device initialization phase, cacheing the result of this sanity check
->> (such as by cacheing in the queue_flags) may not work. Because for dm
->> devices, users could change the state of the underlying devices through
->> '/sys/block/<dev>/io_poll', bypassing the dm device above. In this case,
->> the cached result of the very beginning sanity check could be
->> out-of-date. Thus the sanity check needs to be done every time 'io_poll'
->> is to be modified.
-> 
-> I really don't think thi should be a method, and I really do dislike
-> how we have all this "if (is_mq)" junk.  Why can't we have a flag on
-> the gendisk that signals if the device can support polling that
-> is autoamtically set for blk-mq and as-needed by bio based drivers?
+E sd 0    : 0:0:0: [sda] tag#30 request not aligned to the logical block size
+E blk_update_request: I/O error, dev sda, sector 10368424 op 0x0:(READ) flags 0x0 phys_seg 1 prio class 0
+E device-mapper: verity-fec: 254:8: FEC 9244672: parity read failed (block 18056): -5
 
-That would consume one more bit of queue->queue_flags.
+Let's use f->roots for dm_bufio iff it's aligned to v->data_dev_block_bits.
 
-Besides, DM/MD is somehow special here that when one of the underlying
-devices is disabled polling through '/sys/block/<dev>/io_poll',
-currently there's no mechanism notifying the above MD/DM to clear the
-previously set queue_flags. Thus the outdated queue_flags still
-indicates this DM/MD is capable of polling, while in fact one of the
-underlying device has been disabled for polling.
+Fixes: df7b59ba9245 ("dm verity: fix FEC for RS roots unaligned to block size")
+Cc: stable@vger.kernel.org
+Signed-off-by: Jaegeuk Kim <jaegeuk@google.com>
+---
+ drivers/md/dm-verity-fec.c | 11 ++++++++---
+ drivers/md/dm-verity-fec.h |  1 +
+ 2 files changed, 9 insertions(+), 3 deletions(-)
 
-Mike had ever suggested that we can trust the queue_flag, and clear the
-outdated queue_flags when later the IO submission or polling routine
-finally finds that the device is not capable of polling. Currently
-submit_bio_checks() will silently clear the REQ_HIPRI flag and still
-submit the bio when the device is actually not capable of polling. To
-fix the issue, could we break the submission and return an error code in
-submit_bio_checks() if the device is not capable of polling when
-submitting HIPRI bio?
-
-
-> And please move everything that significantly hanges things for the
-> mq based path to separate prep patches early in th series.
-> 
-
-
-
+diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
+index 66f4c6398f67..cea2b3789736 100644
+--- a/drivers/md/dm-verity-fec.c
++++ b/drivers/md/dm-verity-fec.c
+@@ -65,7 +65,7 @@ static u8 *fec_read_parity(struct dm_verity *v, u64 rsb, int index,
+ 	u8 *res;
+ 
+ 	position = (index + rsb) * v->fec->roots;
+-	block = div64_u64_rem(position, v->fec->roots << SECTOR_SHIFT, &rem);
++	block = div64_u64_rem(position, v->fec->io_size, &rem);
+ 	*offset = (unsigned)rem;
+ 
+ 	res = dm_bufio_read(v->fec->bufio, block, buf);
+@@ -154,7 +154,7 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_fec_io *fio,
+ 
+ 		/* read the next block when we run out of parity bytes */
+ 		offset += v->fec->roots;
+-		if (offset >= v->fec->roots << SECTOR_SHIFT) {
++		if (offset >= v->fec->io_size) {
+ 			dm_bufio_release(buf);
+ 
+ 			par = fec_read_parity(v, rsb, block_offset, &offset, &buf);
+@@ -742,8 +742,13 @@ int verity_fec_ctr(struct dm_verity *v)
+ 		return -E2BIG;
+ 	}
+ 
++	if ((f->roots << SECTOR_SHIFT) & ((1 << v->data_dev_block_bits) - 1))
++		f->io_size = 1 << v->data_dev_block_bits;
++	else
++		f->io_size = v->fec->roots << SECTOR_SHIFT;
++
+ 	f->bufio = dm_bufio_client_create(f->dev->bdev,
+-					  f->roots << SECTOR_SHIFT,
++					  f->io_size,
+ 					  1, 0, NULL, NULL);
+ 	if (IS_ERR(f->bufio)) {
+ 		ti->error = "Cannot initialize FEC bufio client";
+diff --git a/drivers/md/dm-verity-fec.h b/drivers/md/dm-verity-fec.h
+index 42fbd3a7fc9f..3c46c8d61883 100644
+--- a/drivers/md/dm-verity-fec.h
++++ b/drivers/md/dm-verity-fec.h
+@@ -36,6 +36,7 @@ struct dm_verity_fec {
+ 	struct dm_dev *dev;	/* parity data device */
+ 	struct dm_bufio_client *data_bufio;	/* for data dev access */
+ 	struct dm_bufio_client *bufio;		/* for parity data access */
++	size_t io_size;		/* IO size for roots */
+ 	sector_t start;		/* parity data start in blocks */
+ 	sector_t blocks;	/* number of blocks covered */
+ 	sector_t rounds;	/* number of interleaving rounds */
 -- 
-Thanks,
-Jeffle
+2.31.1.295.g9ea45b61b8-goog
+
 
 --
 dm-devel mailing list
