@@ -4,80 +4,79 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 39F7FC433ED
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Apr 2021 03:07:02 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 15EB0C433B4
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Apr 2021 03:07:03 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id A986F61152
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Apr 2021 03:07:01 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A986F61152
+	by mail.kernel.org (Postfix) with ESMTPS id 77F766113D
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Apr 2021 03:07:02 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 77F766113D
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-117-DXsKI0uVOGGcw5S_uaTy2Q-1; Thu, 15 Apr 2021 23:06:57 -0400
-X-MC-Unique: DXsKI0uVOGGcw5S_uaTy2Q-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-580-87YSejbJOhGKJ0kGUa_4Lg-1; Thu, 15 Apr 2021 23:06:59 -0400
+X-MC-Unique: 87YSejbJOhGKJ0kGUa_4Lg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C45D281425A;
-	Fri, 16 Apr 2021 03:06:52 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AA6A159472;
-	Fri, 16 Apr 2021 03:06:52 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8EFF11008063;
+	Fri, 16 Apr 2021 03:06:55 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6A65647;
+	Fri, 16 Apr 2021 03:06:55 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 825661806D16;
-	Fri, 16 Apr 2021 03:06:52 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 17CB744A62;
+	Fri, 16 Apr 2021 03:06:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13G36JWh030592 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 15 Apr 2021 23:06:19 -0400
+	id 13G36aMb030658 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 15 Apr 2021 23:06:36 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 3FAA221111CF; Fri, 16 Apr 2021 03:06:19 +0000 (UTC)
+	id 4A8ABFC73A; Fri, 16 Apr 2021 03:06:36 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3988D21111CD
-	for <dm-devel@redhat.com>; Fri, 16 Apr 2021 03:06:19 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 215F3805F47
-	for <dm-devel@redhat.com>; Fri, 16 Apr 2021 03:06:19 +0000 (UTC)
-Received: from esa2.hgst.iphmx.com (esa2.hgst.iphmx.com [68.232.143.124])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 43DDCFC72B
+	for <dm-devel@redhat.com>; Fri, 16 Apr 2021 03:06:32 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CEF08100DE79
+	for <dm-devel@redhat.com>; Fri, 16 Apr 2021 03:06:32 +0000 (UTC)
+Received: from esa4.hgst.iphmx.com (esa4.hgst.iphmx.com [216.71.154.42])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-198-iixD1uXMNL2mMTLpeKj0Uw-1; Thu, 15 Apr 2021 23:06:15 -0400
-X-MC-Unique: iixD1uXMNL2mMTLpeKj0Uw-1
-IronPort-SDR: PPNuOPRBi2hZ7qf8N1jMxEi12yQRxZ5g1wgvaej8xJSsQggHP2aDBnqLIaO2cir3z79PYN1cpr
-	EbLImeGIFuMb/3NDAzdzCDLTAchDEquZ1HXAd6AWFDQF+gItPem5vZSpoF/JMyfGIK55XScJPx
-	rTNvYO0KqWJHPl6IGb1QgdtYVi9C+wAui6TpGozxG7SRTp1D34CbPcheqQtQJ94UtnUQL6wAov
-	wg9Vf/Lo1ja3Slhy72C/weCoDN+3ST1QMPx3x/q5+A8j5HGM507X13z85E6ocsJgIlLHxCF+2N
-	gEE=
-X-IronPort-AV: E=Sophos;i="5.82,226,1613404800"; d="scan'208";a="269048637"
-Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com)
+	us-mta-297-qTTSM8-aNWy4b9m3Sn8HJw-1; Thu, 15 Apr 2021 23:06:28 -0400
+X-MC-Unique: qTTSM8-aNWy4b9m3Sn8HJw-1
+IronPort-SDR: JrLEM8e0UujlaAM39LEMrESyswaEodGxQCb7U5SZGKKwBeWy8cA5+jROYUQYYfqbcCj75kDZ8k
+	MWCYR+KTL7cir4fm1abz7L354l43kTZ/Npyj+DODJq4O4He3dA7KFOqpQih6vfkC+H5J0+Ng64
+	f3nW0+AVdzNQHDrTQMon0tvBLoVRdsY4Mo+5ymHiUbZcj8nHfeI2zWgJIuj0lPQvi9hbA9GQEP
+	L4dqPOgrr7uIs7lwcNek6MbYJu1DA6TodMfDmhf3fw2PFvxoFYPxqyOIo8u8h2SqO8lTa0DRdk
+	he0=
+X-IronPort-AV: E=Sophos;i="5.82,226,1613404800"; d="scan'208";a="164423092"
+Received: from uls-op-cesaip01.wdc.com (HELO uls-op-cesaep01.wdc.com)
 	([199.255.45.14])
-	by ob1.hgst.iphmx.com with ESMTP; 16 Apr 2021 11:05:52 +0800
-IronPort-SDR: XexYiSc6WEb+QboW35b2Bxh51EMNxMdZfZFPF4PVNS3y+TgS35kieQj9LL5/6XLudsN9CM/cWx
-	M8cTM4VPnpKjPjYGbgLhgkun5mXSp+XbypCifrToL/Lkrq1bd/dtKeE5Cub0j/NZlCHqkfl0hw
-	BIyWY/bCxk0bGexN75nUTzVuh8I1Vbb1N1+ptxE7IMcWyKun0oLG6JxlLSGbvjvR8mliO9Hsfe
-	uDZJ7PhCYnzbZXs0lhFM2KlcTiR1JDxqDjTjCehUE6xoCjo+Qj3rQZY9pzwwHIE9jjyv5FGaj0
-	uyiHRDOVSXVCrGiMOtgwetzg
+	by ob1.hgst.iphmx.com with ESMTP; 16 Apr 2021 11:05:53 +0800
+IronPort-SDR: w6HZ886ZE4qGJNDSWKR2GRS/X5Re8WQHgbxbw+7dVc0cUBOkndY3dfW4amAe4yId3gBq/lG1P1
+	TM/Ng+2cI0wkJdU7dxKyM01HDcoCJlPLwoazuP6Ki0+C/Eap0c/69Y7z1wD3VXaKcABwIz3bHT
+	Wf+EfgdeOMzTT6L0PAWaqrJaicHAaLWyvZ5OWy58NHUuL0xWDT9+9hprAoKeSD28eO3A3Azstw
+	K0YEnX/9KejOplqCHig5LPDBTD0nhftNEdGfkIxa3ph9w/pWWqQdlznb8ETT7HolsPP4iCXY4y
+	htblTr7ziERiu8AST+sCbMBU
 Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
 	by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
-	15 Apr 2021 19:46:27 -0700
-IronPort-SDR: Uc9KTrW6k6VQOr13ItTIaG8m3FB4YcJF1CzR6j/OxyKZ6But3DAOGBk6j8DkP8U3UokM2KOgF7
-	bp6T/GYt4q1nYRIGoeV5RTgAl77CZr4yaRyzL+yL5c7TyFo7XOWZXM7gQgHLK5gymIHR6nlCfR
-	iHQyTFiLU5CBMsrjLAlzrcCNPhqBRWgObvhXD4wNc83bClCRUuptsE2Ssn/mOwjvp72nn7sUMn
-	0nPclDz8ZKEhM3vTrOVPZRiOZ5yCYZucvpACEdx8vTk9aaFV6EM0QgE7PsLZTC2lmjJAhNKH16
-	wXc=
+	15 Apr 2021 19:46:29 -0700
+IronPort-SDR: reXaIl08fufcrKmwqlTrWikXVN+K7DeRaEHrim6atgn6l0Yzshs6cwZfuVPyG/kvBFwDZwOrfr
+	KS+rIvyqVDxgc7Gk/123Bm8msgUO6s4kvzkQ+qbbMhLQMA2VUtrz2kPI7Uz0wH9p97zvdy+QzB
+	dBNntEhDmRfVb+H6+MNJdlgbWRYLOtg4nGCU+7WubVXDhzMhGvHAgjkXjcQHedj6A+mGlgbgKU
+	F2qkOL1fodLfhCMmK6ceLxyGqBvX+6LMi073Jjr5TrHhAQGPfhL+ssy2/DyhiIJ0c5n+L76/P5
+	VD8=
 WDCIronportException: Internal
 Received: from washi.fujisawa.hgst.com ([10.149.53.254])
-	by uls-op-cesaip02.wdc.com with ESMTP; 15 Apr 2021 20:05:32 -0700
+	by uls-op-cesaip02.wdc.com with ESMTP; 15 Apr 2021 20:05:35 -0700
 From: Damien Le Moal <damien.lemoal@wdc.com>
 To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>,
 	linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
@@ -86,8 +85,8 @@ To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>,
 	"Martin K . Petersen" <martin.petersen@oracle.com>,
 	linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org,
 	David Sterba <dsterba@suse.com>, Josef Bacik <josef@toxicpanda.com>
-Date: Fri, 16 Apr 2021 12:05:25 +0900
-Message-Id: <20210416030528.757513-2-damien.lemoal@wdc.com>
+Date: Fri, 16 Apr 2021 12:05:26 +0900
+Message-Id: <20210416030528.757513-3-damien.lemoal@wdc.com>
 In-Reply-To: <20210416030528.757513-1-damien.lemoal@wdc.com>
 References: <20210416030528.757513-1-damien.lemoal@wdc.com>
 MIME-Version: 1.0
@@ -99,14 +98,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Mimecast-Bulk-Signature: yes
-X-Mimecast-Spam-Signature: bulk
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>,
 	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
 	Naohiro Aota <naohiro.aota@wdc.com>
-Subject: [dm-devel] [PATCH 1/4] dm: Introduce zone append support control
+Subject: [dm-devel] [PATCH 2/4] dm crypt: Fix zoned block device support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -120,7 +117,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -128,103 +125,135 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Add the boolean field zone_append_not_supported to the dm_target
-structure to allow a target implementing a zoned block device to
-explicitly opt out from zone append (REQ_OP_ZONE_APPEND) operations
-support. When set to true by the target constructor, the target device
-queue limit max_zone_append_sectors is set to 0 in
-dm_table_set_restrictions() so that users of the target (e.g. file
-systems) can detect that the device cannot process zone append
-operations.
+Zone append BIOs (REQ_OP_ZONE_APPEND) always specify the start sector of
+the zone to be written instead of the actual location sector to write.
+The write location is determined by the device and returned to the host
+upon completion of the operation. This interface, while simple and
+efficient for writing into sequential zones of a zoned block device, is
+incompatible with the use of sector values to calculate a cypher block
+IV. All data written in a zone end up using the same IV values
+corresponding to the first sectors of the zone, but read operation will
+specify any sector within the zone, resulting in an IV mismatch between
+encryption and decryption.
 
-Detection for the target support of zone append is done similarly to
-the detection for other device features such as secure erase, using a
-helper function. For zone append, the function
-dm_table_supports_zone_append() is defined if CONFIG_BLK_DEV_ZONED is
-enabled.
+Using a single sector value (e.g. the zone start sector) for all read
+and writes into a zone can solve this problem, but at the cost of
+weakening the cypher chosen by the user. Instead, to solve this
+problem, explicitly disable support for zone append operations using
+the zone_append_not_supported field of struct dm_target if the IV mode
+used is sector-based, that is for all IVs modes except null and random.
 
+The cypher flag CRYPT_IV_NO_SECTORS iis introduced to indicate that the
+cypher does not use sector values. This flag is set in
+crypt_ctr_ivmode() for the null and random IV modes and checked in
+crypt_ctr() to set to true zone_append_not_supported if
+CRYPT_IV_NO_SECTORS is not set for the chosen cypher.
+
+Reported-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
 Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
 ---
- drivers/md/dm-table.c         | 41 +++++++++++++++++++++++++++++++++++
- include/linux/device-mapper.h |  6 +++++
- 2 files changed, 47 insertions(+)
+ drivers/md/dm-crypt.c | 48 +++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 39 insertions(+), 9 deletions(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index e5f0f1703c5d..9efd7a0ee27e 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1999,6 +1999,37 @@ static int device_requires_stable_pages(struct dm_target *ti,
- 	return blk_queue_stable_writes(q);
- }
- 
-+#ifdef CONFIG_BLK_DEV_ZONED
-+static int device_not_zone_append_capable(struct dm_target *ti,
-+					  struct dm_dev *dev, sector_t start,
-+					  sector_t len, void *data)
-+{
-+	struct request_queue *q = bdev_get_queue(dev->bdev);
-+
-+	return !blk_queue_is_zoned(q) ||
-+		!q->limits.max_zone_append_sectors;
-+}
-+
-+static bool dm_table_supports_zone_append(struct dm_table *t)
-+{
-+	struct dm_target *ti;
-+	unsigned int i;
-+
-+	for (i = 0; i < dm_table_get_num_targets(t); i++) {
-+		ti = dm_table_get_target(t, i);
-+
-+		if (ti->zone_append_not_supported)
-+			return false;
-+
-+		if (!ti->type->iterate_devices ||
-+		    ti->type->iterate_devices(ti, device_not_zone_append_capable, NULL))
-+			return false;
-+	}
-+
-+	return true;
-+}
-+#endif
-+
- void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 			       struct queue_limits *limits)
- {
-@@ -2091,6 +2122,16 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	if (blk_queue_is_zoned(q)) {
- 		WARN_ON_ONCE(queue_is_mq(q));
- 		q->nr_zones = blkdev_nr_zones(t->md->disk);
-+
-+		/*
-+		 * All zoned devices support zone append by default. However,
-+		 * some zoned targets (e.g. dm-crypt) cannot support this
-+		 * operation. Check here if the target indicated the lack of
-+		 * support for zone append and set max_zone_append_sectors to 0
-+		 * in that case so that users (e.g. an FS) can detect this fact.
-+		 */
-+		if (!dm_table_supports_zone_append(t))
-+			q->limits.max_zone_append_sectors = 0;
- 	}
- #endif
- 
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 5c641f930caf..4da699add262 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -361,6 +361,12 @@ struct dm_target {
- 	 * Set if we need to limit the number of in-flight bios when swapping.
- 	 */
- 	bool limit_swap_bios:1;
-+
-+	/*
-+	 * Set if this target is a zoned device that cannot accept
-+	 * zone append operations.
-+	 */
-+	bool zone_append_not_supported:1;
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index b0ab080f2567..0a44bc0ff960 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -137,6 +137,7 @@ enum cipher_flags {
+ 	CRYPT_MODE_INTEGRITY_AEAD,	/* Use authenticated mode for cipher */
+ 	CRYPT_IV_LARGE_SECTORS,		/* Calculate IV from sector_size, not 512B sectors */
+ 	CRYPT_ENCRYPT_PREPROCESS,	/* Must preprocess data for encryption (elephant) */
++	CRYPT_IV_NO_SECTORS,		/* IV calculation does not use sectors */
  };
  
- void *dm_per_bio_data(struct bio *bio, size_t data_size);
+ /*
+@@ -2750,9 +2751,10 @@ static int crypt_ctr_ivmode(struct dm_target *ti, const char *ivmode)
+ 	}
+ 
+ 	/* Choose ivmode, see comments at iv code. */
+-	if (ivmode == NULL)
++	if (ivmode == NULL) {
+ 		cc->iv_gen_ops = NULL;
+-	else if (strcmp(ivmode, "plain") == 0)
++		set_bit(CRYPT_IV_NO_SECTORS, &cc->cipher_flags);
++	} else if (strcmp(ivmode, "plain") == 0)
+ 		cc->iv_gen_ops = &crypt_iv_plain_ops;
+ 	else if (strcmp(ivmode, "plain64") == 0)
+ 		cc->iv_gen_ops = &crypt_iv_plain64_ops;
+@@ -2762,9 +2764,10 @@ static int crypt_ctr_ivmode(struct dm_target *ti, const char *ivmode)
+ 		cc->iv_gen_ops = &crypt_iv_essiv_ops;
+ 	else if (strcmp(ivmode, "benbi") == 0)
+ 		cc->iv_gen_ops = &crypt_iv_benbi_ops;
+-	else if (strcmp(ivmode, "null") == 0)
++	else if (strcmp(ivmode, "null") == 0) {
+ 		cc->iv_gen_ops = &crypt_iv_null_ops;
+-	else if (strcmp(ivmode, "eboiv") == 0)
++		set_bit(CRYPT_IV_NO_SECTORS, &cc->cipher_flags);
++	} else if (strcmp(ivmode, "eboiv") == 0)
+ 		cc->iv_gen_ops = &crypt_iv_eboiv_ops;
+ 	else if (strcmp(ivmode, "elephant") == 0) {
+ 		cc->iv_gen_ops = &crypt_iv_elephant_ops;
+@@ -2791,6 +2794,7 @@ static int crypt_ctr_ivmode(struct dm_target *ti, const char *ivmode)
+ 		cc->key_extra_size = cc->iv_size + TCW_WHITENING_SIZE;
+ 	} else if (strcmp(ivmode, "random") == 0) {
+ 		cc->iv_gen_ops = &crypt_iv_random_ops;
++		set_bit(CRYPT_IV_NO_SECTORS, &cc->cipher_flags);
+ 		/* Need storage space in integrity fields. */
+ 		cc->integrity_iv_size = cc->iv_size;
+ 	} else {
+@@ -3281,14 +3285,31 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 	cc->start = tmpll;
+ 
+-	/*
+-	 * For zoned block devices, we need to preserve the issuer write
+-	 * ordering. To do so, disable write workqueues and force inline
+-	 * encryption completion.
+-	 */
+ 	if (bdev_is_zoned(cc->dev->bdev)) {
++		/*
++		 * For zoned block devices, we need to preserve the issuer write
++		 * ordering. To do so, disable write workqueues and force inline
++		 * encryption completion.
++		 */
+ 		set_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags);
+ 		set_bit(DM_CRYPT_WRITE_INLINE, &cc->flags);
++
++		/*
++		 * All zone append writes to a zone of a zoned block device will
++		 * have the same BIO sector (the start of the zone). When the
++		 * cypher IV mode uses sector values, all data targeting a
++		 * zone will be encrypted using the first sector numbers of the
++		 * zone. This will not result in write errors but will
++		 * cause most reads to fail as reads will use the sector values
++		 * for the actual data location, resulting in IV mismatch.
++		 * To avoid this problem, allow zone append operations only for
++		 * cyphers with an IV mode not using sector values (null and
++		 * random IVs).
++		 */
++		if (!test_bit(CRYPT_IV_NO_SECTORS, &cc->cipher_flags)) {
++			DMWARN("Zone append is not supported with sector-based IV cyphers");
++			ti->zone_append_not_supported = true;
++		}
+ 	}
+ 
+ 	if (crypt_integrity_aead(cc) || cc->integrity_iv_size) {
+@@ -3356,6 +3377,15 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
+ 	struct dm_crypt_io *io;
+ 	struct crypt_config *cc = ti->private;
+ 
++	/*
++	 * For zoned targets using a sector based IV, zone append is not
++	 * supported. We should not see any such operation in that case.
++	 * In the unlikely case we do, warn and fail the request.
++	 */
++	if (WARN_ON_ONCE(bio_op(bio) == REQ_OP_ZONE_APPEND &&
++			 !test_bit(CRYPT_IV_NO_SECTORS, &cc->cipher_flags)))
++		return DM_MAPIO_KILL;
++
+ 	/*
+ 	 * If bio is REQ_PREFLUSH or REQ_OP_DISCARD, just bypass crypt queues.
+ 	 * - for REQ_PREFLUSH device-mapper core ensures that no IO is in-flight
 -- 
 2.30.2
 
