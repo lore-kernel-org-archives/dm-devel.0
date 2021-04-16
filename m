@@ -6,71 +6,71 @@ X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
 	SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AE83DC433ED
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Apr 2021 06:53:09 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 388B5C43460
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Apr 2021 06:55:45 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id ED783610FC
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Apr 2021 06:53:08 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org ED783610FC
+	by mail.kernel.org (Postfix) with ESMTPS id 975306117A
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Apr 2021 06:55:44 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 975306117A
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-479-pg_Un-WaPrmYLdUuA1cWFA-1; Fri, 16 Apr 2021 02:53:06 -0400
-X-MC-Unique: pg_Un-WaPrmYLdUuA1cWFA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-602-8KJ0t0y6M8-p010FZRd1Tw-1; Fri, 16 Apr 2021 02:55:41 -0400
+X-MC-Unique: 8KJ0t0y6M8-p010FZRd1Tw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 21ADB10059C1;
-	Fri, 16 Apr 2021 06:53:01 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 79A232B0DC;
-	Fri, 16 Apr 2021 06:53:00 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 17A7C8189C8;
+	Fri, 16 Apr 2021 06:55:37 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BFB1D5D9C6;
+	Fri, 16 Apr 2021 06:55:36 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B7C213809;
-	Fri, 16 Apr 2021 06:52:59 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8EDB91806D15;
+	Fri, 16 Apr 2021 06:55:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13G6qvK2018640 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 16 Apr 2021 02:52:57 -0400
+	id 13G6tY93018881 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 16 Apr 2021 02:55:35 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 62DB020FD3DB; Fri, 16 Apr 2021 06:52:57 +0000 (UTC)
+	id D61B1112D431; Fri, 16 Apr 2021 06:55:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5C13A20FD3DA
-	for <dm-devel@redhat.com>; Fri, 16 Apr 2021 06:52:54 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D01C4112D42F
+	for <dm-devel@redhat.com>; Fri, 16 Apr 2021 06:55:32 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C5357185A7B8
-	for <dm-devel@redhat.com>; Fri, 16 Apr 2021 06:52:54 +0000 (UTC)
-Received: from esa1.hgst.iphmx.com (esa1.hgst.iphmx.com [68.232.141.245])
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 49657811E93
+	for <dm-devel@redhat.com>; Fri, 16 Apr 2021 06:55:32 +0000 (UTC)
+Received: from esa4.hgst.iphmx.com (esa4.hgst.iphmx.com [216.71.154.42])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-267-JUWidc9nNv-YmbsGXzbuTg-1; Fri, 16 Apr 2021 02:52:52 -0400
-X-MC-Unique: JUWidc9nNv-YmbsGXzbuTg-1
-IronPort-SDR: bgWh6DPrNkqBT3Iyaj/kYXgihbOd8qpHH8eDilIcLRl9l5yJalaP7Uu/Mkki7fWgjYvMz2qDH/
-	ZSzun7FPWrc9cqZ+plxWL2P9E89DR65K6tr4n1XZpQRbKHG5tNLuTCwk+RBE5qSt6kRy9DAwai
-	mTKw+Hi1Ni+/gebdf6kZjZgjTTqfpcodYPZrL3pRANeSkkBgFa40Kpv+3xqgwC/EpzOHl4/jUi
-	bSb2r4ZjnwB/z/EtOvr0ZtoOuEkhAm4zPotHR/mPTX3irlG3YXEAFWuSREXC3x0Q5M1jP9psdr
-	gCQ=
-X-IronPort-AV: E=Sophos;i="5.82,226,1613404800"; d="scan'208";a="275974625"
-Received: from mail-dm6nam12lp2176.outbound.protection.outlook.com (HELO
-	NAM12-DM6-obe.outbound.protection.outlook.com) ([104.47.59.176])
-	by ob1.hgst.iphmx.com with ESMTP; 16 Apr 2021 14:51:46 +0800
+	us-mta-99-dVhU_A1wNmWsK5ymJEQkqg-1; Fri, 16 Apr 2021 02:55:28 -0400
+X-MC-Unique: dVhU_A1wNmWsK5ymJEQkqg-1
+IronPort-SDR: XObSiK8eJtCESMuEYkJT66MmS/q61AfgxHyiD/rxgvvmz7tnIlBlnQTNgyJZCmD6EpNiTcIQ1Z
+	gVMHJXMnNuczJRvKVpvcbDxS3wHTr8Oa2ZH9ISrgfSBazfnKYQiHciKrDV5+o4ERkflDNKykCo
+	ocyYMQ8bDswq4EukER/E4fcYLR9u0OqKQxGip21HIIFdTNZLYRg4Ys1BV8OSiu0/5+b1hKYG3j
+	qLFEO16XFJTkQ2o0BHnV1deCkEkZCO3KeYW12jyFjR3eIhXuoS1syelfx81GWFgKW8wmSHQlRs
+	n0A=
+X-IronPort-AV: E=Sophos;i="5.82,226,1613404800"; d="scan'208";a="164435572"
+Received: from mail-bn7nam10lp2107.outbound.protection.outlook.com (HELO
+	NAM10-BN7-obe.outbound.protection.outlook.com) ([104.47.70.107])
+	by ob1.hgst.iphmx.com with ESMTP; 16 Apr 2021 14:50:33 +0800
 Received: from PH0PR04MB7416.namprd04.prod.outlook.com (2603:10b6:510:12::17)
-	by PH0PR04MB7334.namprd04.prod.outlook.com (2603:10b6:510:b::22) with
-	Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4020.21;
-	Fri, 16 Apr 2021 06:51:45 +0000
+	by PH0PR04MB7416.namprd04.prod.outlook.com (2603:10b6:510:12::17)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4042.18;
+	Fri, 16 Apr 2021 06:50:15 +0000
 Received: from PH0PR04MB7416.namprd04.prod.outlook.com
 	([fe80::99a5:9eaa:4863:3ef3]) by
 	PH0PR04MB7416.namprd04.prod.outlook.com
 	([fe80::99a5:9eaa:4863:3ef3%4]) with mapi id 15.20.4042.018;
-	Fri, 16 Apr 2021 06:51:45 +0000
+	Fri, 16 Apr 2021 06:50:15 +0000
 From: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
 To: Damien Le Moal <Damien.LeMoal@wdc.com>, "dm-devel@redhat.com"
 	<dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
@@ -82,66 +82,67 @@ To: Damien Le Moal <Damien.LeMoal@wdc.com>, "dm-devel@redhat.com"
 	<linux-fsdevel@vger.kernel.org>, "linux-btrfs@vger.kernel.org"
 	<linux-btrfs@vger.kernel.org>, David Sterba <dsterba@suse.com>, Josef Bacik
 	<josef@toxicpanda.com>
-Thread-Topic: [PATCH 1/4] dm: Introduce zone append support control
-Thread-Index: AQHXMm1gL8WU7E5fp06Z3hjUVfsrGg==
-Date: Fri, 16 Apr 2021 06:51:45 +0000
-Message-ID: <PH0PR04MB741615DD316F6B22E1A4D8929B4C9@PH0PR04MB7416.namprd04.prod.outlook.com>
+Thread-Topic: [PATCH 4/4] zonefs: fix synchronous write to sequential zone
+	files
+Thread-Index: AQHXMm1m7H5bwoYRjkK0xFA15aMquw==
+Date: Fri, 16 Apr 2021 06:50:15 +0000
+Message-ID: <PH0PR04MB74163E5D0B2D9FFAB2AD74ED9B4C9@PH0PR04MB7416.namprd04.prod.outlook.com>
 References: <20210416030528.757513-1-damien.lemoal@wdc.com>
-	<20210416030528.757513-2-damien.lemoal@wdc.com>
+	<20210416030528.757513-5-damien.lemoal@wdc.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
 x-originating-ip: [2001:a62:15ab:1:e10b:72a5:d443:5e5c]
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 56402fca-d0ac-4eec-8aaf-08d900a4198b
-x-ms-traffictypediagnostic: PH0PR04MB7334:
+x-ms-office365-filtering-correlation-id: 40b16cf9-000a-4475-43f9-08d900a3e3f4
+x-ms-traffictypediagnostic: PH0PR04MB7416:
 x-ms-exchange-transport-forked: True
-x-microsoft-antispam-prvs: <PH0PR04MB7334515AAC714D814DB51B3D9B4C9@PH0PR04MB7334.namprd04.prod.outlook.com>
+x-microsoft-antispam-prvs: <PH0PR04MB741633E3A168CEAAA2781CD39B4C9@PH0PR04MB7416.namprd04.prod.outlook.com>
 wdcipoutbound: EOP-TRUE
 x-ms-oob-tlc-oobclassifiers: OLM:1728
 x-ms-exchange-senderadcheck: 1
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: nWXKf3vsSAWGMZ0YfJZg3U3AW87jFpLJunl7aiUVltj9piGfyTvGlQT0ZNeozBG74OnrqeIWlZQ4qV5gyUZHyTkWST4nMB/c5DvKX4Odifi9TnGBvGmICGjb7+jXW7uQS9IOUs/VQddNr6SlVxlQcyF9qjzGtzP7jzjV1RK0/eoix+0dZe7NIZwm5iNkTZdwEYxFhucwA/JmxLK+DOXUHTj25JvRG5jUHnhuqKQHE7esshm/aRUOiEbAakFzKm6jVv1XZ5k3I6IMKqLYSKIWPrpMlkC0vQjEmZTJxuPVtpldjxC4guVihtcuvJ5ZDm+z/y3nLcBpsMmU0jBub36gyUAop0LJvX/JQRSSjI52zPZ8vMDsqqjvSiRgy+epkvrzXt2DOz4hcttthaPtCKEPYF+7IlPPqhnqm1fS2fC2dskNC9Zuby0s/lUcWJQv2+ajQ2aJvysZJ5aEHCpRstwBk8q5UV1OC5PNTrOMbaDbjpPlOvLdpewmnyBxpurSAhb69hsp5hsKWKf9KFdvGqK3YFcPSnO3fiF6lOyq2DwDNscTaVnQeHKLUrHF8S/2y38KSdtgoX60wda+oCXKgiaO2yDFkoaTxdQ5AZfexY8rITLq8yOF4Kh7O4KpUSAqDW4ojl9YHEeVKw9KGmXBW2gtuA==
+x-microsoft-antispam-message-info: WrDKmQYrw5Yy4sKEGHMRfpeoY0Na/G7VNJ1366PO+B94yQaI/8LpLdEkYmWqopBJWluZjrgFPh4lpnUXskwhhXjde5Mw2CUpL4Li5Qz7SfQQiYAkrzp126Gc+qJQd5ntHvGjhhGkpytHm213RAQG946l1a8hf476iUC0Z2GC2KdrNt51Vnt0b0Rko2/xLj0fUVY7mAaUeiHDenC39gQjoy3QArZ7Ob8YHRU6xr4oXWFd1bvdji7urwGhlOcAUGi5KllIOzEnzwn8GQboubmaoPitni3rgcbZe+uxecUGIDRsuT6UWkTd0M6IN8wfBm8hKtzJcRwkszEc7rQDatLB3Au944lfWnFL0aDnQ4X5JdD8U+xwhGiB7lvpqUoWRG1reXT0NFASX63QE70K4fi6JHWAbbAwMQ+4m+1gfiRXvUU7xA1uBeSA+pHR9a+Z2kZMpaFlWmfmxeeHWTlRdGrme8QIUty6FQZRGa3UOO+9X5GOqpHssPYNxipu03Z+DyhxsqkelCrFo/+s6pdWRVC2T6lYkNfamYGEGib1Kncl4kSV1onG8S94R9vdm9fWKqnAtpxuCL+z/BKAqKjUysOiVVW+Tv1LayZL8sqSW0ui7ffOzxtuJCj3+N/TZuylfL9+UxxHbmQq0lN1np1IIUeCBg==
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
 	IPV:NLI; SFV:NSPM; H:PH0PR04MB7416.namprd04.prod.outlook.com;
 	PTR:; CAT:NONE;
-	SFS:(4636009)(376002)(366004)(396003)(136003)(346002)(39860400002)(316002)(66476007)(66946007)(558084003)(122000001)(19618925003)(76116006)(91956017)(66446008)(8936002)(64756008)(8676002)(921005)(6506007)(110136005)(9686003)(2906002)(71200400001)(4326008)(7696005)(54906003)(86362001)(66556008)(52536014)(478600001)(7416002)(55016002)(4270600006)(186003)(38100700002)(5660300002)(33656002);
+	SFS:(4636009)(396003)(136003)(376002)(366004)(39860400002)(346002)(6506007)(4270600006)(55016002)(9686003)(52536014)(186003)(5660300002)(71200400001)(122000001)(66476007)(66946007)(66556008)(38100700002)(76116006)(86362001)(91956017)(66446008)(7416002)(8676002)(8936002)(558084003)(4326008)(64756008)(478600001)(7696005)(54906003)(19618925003)(110136005)(33656002)(316002)(2906002)(921005);
 	DIR:OUT; SFP:1102
-x-ms-exchange-antispam-messagedata: =?us-ascii?Q?pMyEPy4tuVErH5BMrTvk00eAsVBaBA4QX9cJ5F5IJOdyR7qY/em2NeI0cn/O?=
-	=?us-ascii?Q?i/zbkajtYoITGM9gzrSHCKnjT5Z40bHATGGhUJ19YxXU10fAtZ7rTT1oVE5s?=
-	=?us-ascii?Q?DUclRtGY5kRqfzGQTdBm/0ei5b/vQTdL4ucGV5Jc68uC59BygtdQpBrbVldJ?=
-	=?us-ascii?Q?pMPsAzJ0Pl+vS0oYii+f92ASdzcqv1RJMKbwqBRXP68IAwo3T68Cil61uZ0e?=
-	=?us-ascii?Q?i8Tiqe1BZcpYJhf740MugGUxRGDRSSZC/ZcuENqM6PdeZbZTc2LW5cul+xOJ?=
-	=?us-ascii?Q?Zx+iSxKMDBln+zY7wgDJGZ//4Pqo8A5nKP76Lq+861u3LhIFUZbkRCZd+s9p?=
-	=?us-ascii?Q?XAUnlrz5T9VPsNZwkp26wyIIylNp9b+GkkZcSzA1rnZ09S9NVea8nzIjcX49?=
-	=?us-ascii?Q?fAHhQ/daMlOYFBSfxjCdQYAbwUIhVopMszLa81y6075/LPCaw+z35Jc5fKCC?=
-	=?us-ascii?Q?8oIOLaJr4W/o5zn1HUZutah+6gcmerlK8Et9M+tIKtoCXpG1+2b2SVzZTnZZ?=
-	=?us-ascii?Q?WtdB1vE8uk5K6wMDrGH7SdkRBg+js0OtC/CwxLaaumfp2dtAjUmiZgQnES62?=
-	=?us-ascii?Q?XsKk/Ta/lZzqIwm+h7AsDXE204Hmq9gW/KPeblojVp/DgHV112tYoGoCEf3s?=
-	=?us-ascii?Q?jFhHc7A2yEOpIb1+b7Z817lOSoe31aXmU0YEcNyDbf7LOLU9cX/gypjjxmO2?=
-	=?us-ascii?Q?/GsF/ucdIiByWUUm8E3YNxymrU0ol0cixF7okVEefuPYZwWmZFOMaGp0+lkO?=
-	=?us-ascii?Q?owgH4bwZmLOjvF9dap8W4hxY/CmKQ1cr8HCWSsZbYEeA65+8UMhSr4xVnROj?=
-	=?us-ascii?Q?bV1fqh/IKvFW0iQRqzop2bO1ECAXFWAAzGAng/v9pUvRWdGxD51QS0Oh1qbd?=
-	=?us-ascii?Q?4YYhpQHTGL6T7n5jmw0kux8wJvUvSPF5UiPSRUunc+/zUsRy6PHLOxYeUub3?=
-	=?us-ascii?Q?2yXt9xxuWyJzhB6bkOOsCs7F2hSi9JoAkWnfIL6/7ELse3CBK3QsA8qnBHH+?=
-	=?us-ascii?Q?MISjHSTWe96GpcbyKhqZlkEG0RvFr6CbSaCYuVBLw0XmSZyt1Uw8NzTsLzkj?=
-	=?us-ascii?Q?/5HUak4dRFM64TpRUeMUDDBKHXHlKi/kFENSG4LFHcoFH/F50ZVZIIWJjyKL?=
-	=?us-ascii?Q?H+xWOMnxWda9QRh5+rDasP7hH1ZJNHWsio4DFio69QIpwHYZ+Ls8CjMTUjiw?=
-	=?us-ascii?Q?Rrk/Q5ZITGhcfHx18wNMTyUou3xdjmeKIhIlTWt3XwNogc7aVEsHVbVpJg5h?=
-	=?us-ascii?Q?pAPrJPys173465W5m2TIKn06/LhULh5ibMhRKFAVPwQqmwXhF1wGVmYrQnkm?=
-	=?us-ascii?Q?h6d2hhU4GJN9L8aPLk+RUYF9qh39qHTfupMp5bQgbH7O5zhbwKcednDEm5bs?=
-	=?us-ascii?Q?p17umDkpJNdV+1N+bz0ETdrg1I83?=
+x-ms-exchange-antispam-messagedata: =?us-ascii?Q?11D44UkIl3ymG7H5mxIeCAv5yGiPWAXaZWo2erilNq6U+TuQWfhEBi1FVIMk?=
+	=?us-ascii?Q?N9mM9tz4qADa4l7OUpaF5yjrMwP6gfZlJ2SdF+O0tQXASSFOcFgdYdF5F3dq?=
+	=?us-ascii?Q?2Aql9UEvnMYv6+5XU5oKm8S8hWOWgdrwzAC4cvXtxhSAHHT4nB6qs0HC1aP0?=
+	=?us-ascii?Q?L5JcjkGe8YAnQfb+zTbARnpbfw5GAqnN1YIjBPG5Sj5R24DrPis2RulTW51D?=
+	=?us-ascii?Q?mxD89f1/TXd3swLW8RcYzbaZi1Qhyywge32bAbv2Hf8sDKHcJSUPVVOGhwa/?=
+	=?us-ascii?Q?pa65btFLKz/fad4MG+3toxiROyJovHFnec90+nrTj7zHc8v8wHupWcL5MlMk?=
+	=?us-ascii?Q?k4P92AVkq8JbnB+Sk3MUCddwDmEIShuY+xtYVT+5bvsi6aGlEQsY/UfhVOZk?=
+	=?us-ascii?Q?a59n5blJoufkiQfqpjUsru96qAK4dmQyMkD+UO9Dcv6ZnFPgYWwNxcWm8GLk?=
+	=?us-ascii?Q?5eaLExiwpWPZUamDxw+vSqE1KUarQ82UfoFbY2LWTWLsXO5ltanbZxvbsn1/?=
+	=?us-ascii?Q?0KCsFdiVq1GuP1Eh4UTZ2UK4Lh1SCpTUlemNlTteS8kbkLhKPjCKq5PCBk6f?=
+	=?us-ascii?Q?WLY8Dk2t0iSbmBFsCCbaqQ8xsiewUj+Y45oMl+Fzf9rac3C1HrURzhF40Kbf?=
+	=?us-ascii?Q?AJnaifCL/I9V6QFCFK0NmuCBjIdhZrOOEG08ztT9v6T/j1z/Es5pSUvrWzLs?=
+	=?us-ascii?Q?XA8Qo9LNfQVAZiSM5XWex/TX+KUB0ejD5T+2M7+6co+v6xqj2/bmFTXElaNE?=
+	=?us-ascii?Q?vdCPGjDUm11np9nJwx/6LloSjWPenWlFdleU4S2eTkv4fnBTf0vXl004d6vE?=
+	=?us-ascii?Q?m3abmUz9ajwo75YHaxBJtPb2bPL1rYpPlG+HzbhhGfZPXPsiTTbF2smhELB1?=
+	=?us-ascii?Q?526Qw4eftUbaZgbfRqTcTzWRrikNl9VuaBSPQR1oqGernpspkRFDBOLx6hIQ?=
+	=?us-ascii?Q?EkugQCX6Sj7zPIVW8cG5a/ScxP02gnfn2Xi7fzLQYC6Rz6fLB+JZc8MbJdGx?=
+	=?us-ascii?Q?l3NQu6aVF7Paq7SA0D40hPnI8mkeUBfTQpfFelAqnjWm6KZsoRQd2+YCVjLX?=
+	=?us-ascii?Q?G0HR+yuRtuelbvMx7d2ysNwQAnBrpbGb1ktNrbocG4riHVrFxZGbfZL7Q4aD?=
+	=?us-ascii?Q?eoG1adDOQSrkN5/H6EovoNB8NdxiTeiLozUvrc+RR7tn8U7UMOzF2rRkw4Q4?=
+	=?us-ascii?Q?yQfTWVUcDIOF4yMDcoXenKeyUXzHdsKrolTmWH8E9oFvVJI/uocRPqSAnfDE?=
+	=?us-ascii?Q?FmThfLvys1CPKAD5YoZr7ALRyjWG6PJLwOQmBSpWRrM46tuKFkM12sIq7vq7?=
+	=?us-ascii?Q?TIWvhfKOND2Xuwn9j8ie6Ey95ZRkTl6R4Ew1MRq494Wa7PKWbsRN2H4xuWW4?=
+	=?us-ascii?Q?I66tSMtlUzDDNp9SirCVlwtZpsl0?=
 MIME-Version: 1.0
 X-OriginatorOrg: wdc.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: PH0PR04MB7416.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 56402fca-d0ac-4eec-8aaf-08d900a4198b
-X-MS-Exchange-CrossTenant-originalarrivaltime: 16 Apr 2021 06:51:45.0776 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 40b16cf9-000a-4475-43f9-08d900a3e3f4
+X-MS-Exchange-CrossTenant-originalarrivaltime: 16 Apr 2021 06:50:15.1580 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: yvmZnU6qTLkVYUsaKzL4kF8NkKKABmGOBtPKyt8Cz8HoIyelKYXWQf0JgzwrGr4/vIyWeqGN48tXo2LYUY8EyjjFSaeT5bhk6e3JGEYKPK4=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH0PR04MB7334
+X-MS-Exchange-CrossTenant-userprincipalname: QTrJp8UjEbTCW8Ch6nnDHSfTI100ZvESwpEFUmyvcUVEti7HZXCVjOwsPpLOLEp9Q5TgvxAjudQ42hRS8dAOpmFxwcDu1tThja4eLcpsn+A=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH0PR04MB7416
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -150,13 +151,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 13G6qvK2018640
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 13G6tY93018881
 X-loop: dm-devel@redhat.com
 Cc: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>,
 	Naohiro Aota <Naohiro.Aota@wdc.com>
-Subject: Re: [dm-devel] [PATCH 1/4] dm: Introduce zone append support control
+Subject: Re: [dm-devel] [PATCH 4/4] zonefs: fix synchronous write to
+ sequential zone files
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -170,7 +172,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
