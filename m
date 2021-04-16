@@ -7,91 +7,90 @@ X-Spam-Status: No, score=-15.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 02084C433B4
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Apr 2021 23:53:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 22A74C433ED
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Apr 2021 23:54:00 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 891BA6115B
-	for <dm-devel@archiver.kernel.org>; Fri, 16 Apr 2021 23:53:48 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 891BA6115B
+	by mail.kernel.org (Postfix) with ESMTPS id A276361152
+	for <dm-devel@archiver.kernel.org>; Fri, 16 Apr 2021 23:53:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A276361152
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1618617227;
+	s=mimecast20190719; t=1618617238;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=66D/u0gBSrGAT9L1jxOhCQyDK5+fotQ1emZYKt/GVtg=;
-	b=W5UXkD/HHkWwUnOgAWo1DpJTOJTeUQ9Hq5DVGlKiLBViCbDYqJblyUkcgqm6v/D972jRcY
-	lv5RwSLsD4lSiXj2K7ijIN090MF/KQhDPPWTpTdygZUhxOrV1tYMa28kGLcsxai7DlS22O
-	j5/cGfvY1nZCGzuGsdvD3HU15h6PgVw=
+	bh=9LNVfs+asjB33ffk37DkexKwWVeUDpPVxPEAPbigWHM=;
+	b=AHkpnr9SMs4lD4nPE9kLBUO2DOlULylS+48oNg0tIcRO2ZDahAY7zX47X+bqirh1yqGck1
+	Q41PYBYvIxS9L7gycN+qamZR62ROfrZF40GD0LWhRV/TopmgeEhbf5z6AzI8lxo5czxN8V
+	p+KJbHGgSJOEKk2FKRIuUxGS4iIazXc=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-512-47W94a6dPtaHaHeQCB1JVA-1; Fri, 16 Apr 2021 19:53:45 -0400
-X-MC-Unique: 47W94a6dPtaHaHeQCB1JVA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-198-ORA_N1YMNBKWKGHJRV0TIQ-1; Fri, 16 Apr 2021 19:53:56 -0400
+X-MC-Unique: ORA_N1YMNBKWKGHJRV0TIQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7B4FD18397A9;
-	Fri, 16 Apr 2021 23:53:41 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 67EF28018A7;
+	Fri, 16 Apr 2021 23:53:52 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1D9965C257;
-	Fri, 16 Apr 2021 23:53:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4AC8E614F5;
+	Fri, 16 Apr 2021 23:53:52 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 73D101806D0F;
-	Fri, 16 Apr 2021 23:53:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 25B561806D16;
+	Fri, 16 Apr 2021 23:53:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13GNrc8i018867 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 16 Apr 2021 19:53:38 -0400
+	id 13GNrdO6018872 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 16 Apr 2021 19:53:39 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 51E302021473; Fri, 16 Apr 2021 23:53:38 +0000 (UTC)
+	id 69E8820FE6DD; Fri, 16 Apr 2021 23:53:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4BB0B2021470
-	for <dm-devel@redhat.com>; Fri, 16 Apr 2021 23:53:38 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6511220FE6DC
+	for <dm-devel@redhat.com>; Fri, 16 Apr 2021 23:53:39 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2BF0F805C1D
-	for <dm-devel@redhat.com>; Fri, 16 Apr 2021 23:53:38 +0000 (UTC)
-Received: from mail-qt1-f175.google.com (mail-qt1-f175.google.com
-	[209.85.160.175]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-312-F1AbFHB8MEOovKcYFYb9eA-1; Fri, 16 Apr 2021 19:53:34 -0400
-X-MC-Unique: F1AbFHB8MEOovKcYFYb9eA-1
-Received: by mail-qt1-f175.google.com with SMTP id y12so22083895qtx.11;
-	Fri, 16 Apr 2021 16:53:33 -0700 (PDT)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4CA6A1021E07
+	for <dm-devel@redhat.com>; Fri, 16 Apr 2021 23:53:39 +0000 (UTC)
+Received: from mail-qv1-f47.google.com (mail-qv1-f47.google.com
+	[209.85.219.47]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-318-lW23PHH8MGuwWOg1r1lymQ-1; Fri, 16 Apr 2021 19:53:35 -0400
+X-MC-Unique: lW23PHH8MGuwWOg1r1lymQ-1
+Received: by mail-qv1-f47.google.com with SMTP id i3so8757642qvj.7;
+	Fri, 16 Apr 2021 16:53:35 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20161025;
 	h=x-gm-message-state:sender:from:to:cc:subject:date:message-id
 	:in-reply-to:references;
-	bh=a1nvUyKb7Km0hekKdxHGyN60tpfHzRrsEqFGAZI+ni4=;
-	b=anvzRuoitYfE3MkQS/5n5hDI3RqVH2JXr005Xq/GmVlfPr4hq0npr6RF8nZr3dJa+z
-	NbiF2FUX/T2GvI1fgPq5lc9zc7PLnvdtbx8mL4Yfls/KD446hvbXe4k+BA1RDhz5a5NZ
-	I8WbM3kOwCf1cqU9yVxHi5PHZz55fedZIrOErGqVk87p5Hq0lDVJmSzxD6jTlVL0hMeL
-	4UmWxKHkTlbw0l/C3rickxzx4+w8ECz8nTAxszUh+Nva7x37A+tamQp50PXEyip2xto4
-	yaVV7sOY+6W3+LGqmaIryFLHGwn+vYeoMneD3/ehPqIt9DiE1Z8G/socFhGGf2rP0lrz
-	ooTg==
-X-Gm-Message-State: AOAM533yfjKW0NH4EtOroMIb0+bj/I09n4wtIT3v42Y7fhzuIaz/V+kV
-	9zUdyfp1cukRsYkrr0n0CDu7Fm+lZjPhpQ==
-X-Google-Smtp-Source: ABdhPJxYYCrNVTkBMHh7ujpabmWkrGvRS/5k9AOlVSsGCZug6eBYSy3tgv0ntn47DVL2D4MVf0kk9A==
-X-Received: by 2002:ac8:6b46:: with SMTP id x6mr1598672qts.150.1618617213544; 
-	Fri, 16 Apr 2021 16:53:33 -0700 (PDT)
+	bh=6W4dFuQZFZDxrcjNEtMiTx3DGVpbYyuLvbl05NbuH68=;
+	b=l2zC4UK7kYWpOeNIC2E+JDLbSj1HH0ZjvdMUXOhTyBEmQm1oz3XhTx17kYe/kMKDZJ
+	fKv5nnVW60G5gBrvGjCs26GtqWef/EnG5NB+GLhRcBjpTpdIP5WXjH/YkUUYg5ZeRQWX
+	BVPHD08l5TjKo86cc1h3fwQ7DWNyfjM056IdEWsJmiaqUkrVBsH9vC7iL6lUw0E663nO
+	WFm5xXGrLi4TwBq9OyTHQYFC9gqP8ICfMHPyA53DYE9xqq3H1i3wbUMBMSTMpfktT+Ob
+	R0J+9cmlTCncMLz0yBr7V8xPlcqY/Ghe0P1VvNlkhLObnAYFlFSiM92j27dX5lD5mgVG
+	fa4w==
+X-Gm-Message-State: AOAM533GCx98i2EKxecgZGEyeuE4BpGfDRD9c9HWl6tkSB5KKUuEuVJF
+	/LRRR0+Xhhy54P5nhqqu654=
+X-Google-Smtp-Source: ABdhPJwh6XHQ4W/sFJBzn//P5eE+pQK3iiAapSkSAHYWj127GoJpxUHJsFoe6ImvSyp0IpaHo7CJxA==
+X-Received: by 2002:a0c:b38b:: with SMTP id t11mr11025259qve.25.1618617214793; 
+	Fri, 16 Apr 2021 16:53:34 -0700 (PDT)
 Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
 	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
-	a66sm1377452qkc.74.2021.04.16.16.53.32
+	l199sm768557qke.118.2021.04.16.16.53.34
 	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Fri, 16 Apr 2021 16:53:33 -0700 (PDT)
+	Fri, 16 Apr 2021 16:53:34 -0700 (PDT)
 From: Mike Snitzer <snitzer@redhat.com>
 To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-Date: Fri, 16 Apr 2021 19:53:28 -0400
-Message-Id: <20210416235329.49234-3-snitzer@redhat.com>
+Date: Fri, 16 Apr 2021 19:53:29 -0400
+Message-Id: <20210416235329.49234-4-snitzer@redhat.com>
 In-Reply-To: <20210416235329.49234-1-snitzer@redhat.com>
 References: <20210416235329.49234-1-snitzer@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -102,12 +101,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
 	linux-nvme@lists.infradead.org
-Subject: [dm-devel] [PATCH v4 2/3] nvme: allow local retry and proper
-	failover for REQ_FAILFAST_TRANSPORT
+Subject: [dm-devel] [PATCH v4 3/3] nvme: decouple basic ANA log page re-read
+	support from native multipathing
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -122,7 +121,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -130,85 +129,109 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-REQ_FAILFAST_TRANSPORT is set by upper layer software that handles
-multipathing. Unlike SCSI, NVMe's error handling was specifically
-designed to handle local retry for non-path errors. As such, allow
-NVMe's local retry mechanism to be used for requests marked with
-REQ_FAILFAST_TRANSPORT.
+Whether or not ANA is present is a choice of the target implementation;
+the host (and whether it supports multipathing) has _zero_ influence on
+this. If the target declares a path as 'inaccessible' the path _is_
+inaccessible to the host. As such, ANA support should be functional
+even if native multipathing is not.
 
-In this way, the mechanism of NVMe multipath or other multipath are
-now equivalent. The mechanism is: non path related error will be
-retried locally, path related error is handled by multipath.
+Introduce ability to always re-read ANA log page as required due to ANA
+error and make current ANA state available via sysfs -- even if native
+multipathing is disabled on the host (e.g. nvme_core.multipath=N).
+This is achieved by factoring out nvme_update_ana() and calling it in
+nvme_complete_rq() for all FAILOVER requests.
 
-Also, introduce FAILUP handling for REQ_FAILFAST_TRANSPORT. Update
-NVMe to allow failover of requests marked with either REQ_NVME_MPATH
-or REQ_FAILFAST_TRANSPORT. This allows such requests to be given a
-disposition of either FAILOVER or FAILUP respectively.
+This affords userspace access to the current ANA state independent of
+which layer might be doing multipathing. This makes 'nvme list-subsys'
+show ANA state for all NVMe subsystems with multiple controllers. It
+also allows userspace multipath-tools to rely on the NVMe driver for
+ANA support while dm-multipath takes care of multipathing.
 
-nvme_complete_rq() is updated to call nvme_failup_req() if
-nvme_decide_disposition() returns FAILUP. nvme_failup_req() ensures
-the request is completed with a retryable path error.
+And as always, if embedded NVMe users do not want any performance
+overhead associated with ANA or native NVMe multipathing they can
+disable CONFIG_NVME_MULTIPATH.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/nvme/host/core.c | 17 ++++++++++++++---
- 1 file changed, 14 insertions(+), 3 deletions(-)
+ drivers/nvme/host/core.c      |  2 ++
+ drivers/nvme/host/multipath.c | 16 +++++++++++-----
+ drivers/nvme/host/nvme.h      |  4 ++++
+ 3 files changed, 17 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index 540d6fd8ffef..a12b10a1383c 100644
+index a12b10a1383c..83ca96292157 100644
 --- a/drivers/nvme/host/core.c
 +++ b/drivers/nvme/host/core.c
-@@ -299,6 +299,7 @@ enum nvme_disposition {
- 	COMPLETE,
- 	RETRY,
- 	FAILOVER,
-+	FAILUP,
- };
+@@ -340,6 +340,8 @@ static inline void nvme_end_req(struct request *req)
  
- static inline enum nvme_disposition nvme_decide_disposition(struct request *req)
-@@ -306,15 +307,16 @@ static inline enum nvme_disposition nvme_decide_disposition(struct request *req)
- 	if (likely(nvme_req(req)->status == 0))
- 		return COMPLETE;
- 
--	if (blk_noretry_request(req) ||
-+	if ((req->cmd_flags & (REQ_FAILFAST_DEV | REQ_FAILFAST_DRIVER)) ||
- 	    (nvme_req(req)->status & NVME_SC_DNR) ||
- 	    nvme_req(req)->retries >= nvme_max_retries)
- 		return COMPLETE;
- 
--	if (req->cmd_flags & REQ_NVME_MPATH) {
-+	if (req->cmd_flags & (REQ_NVME_MPATH | REQ_FAILFAST_TRANSPORT)) {
- 		if (nvme_is_path_error(nvme_req(req)->status) ||
- 		    blk_queue_dying(req->q))
--			return FAILOVER;
-+			return (req->cmd_flags & REQ_NVME_MPATH) ?
-+				FAILOVER : FAILUP;
- 	} else {
- 		if (blk_queue_dying(req->q))
- 			return COMPLETE;
-@@ -336,6 +338,12 @@ static inline void nvme_end_req(struct request *req)
- 	blk_mq_end_request(req, status);
- }
- 
-+static inline void nvme_failup_req(struct request *req)
-+{
-+	nvme_req(req)->status = NVME_SC_HOST_PATH_ERROR;
-+	nvme_end_req(req);
-+}
-+
- void nvme_complete_rq(struct request *req)
+ static inline void nvme_failup_req(struct request *req)
  {
- 	trace_nvme_complete_rq(req);
-@@ -354,6 +362,9 @@ void nvme_complete_rq(struct request *req)
- 	case FAILOVER:
- 		nvme_failover_req(req);
- 		return;
-+	case FAILUP:
-+		nvme_failup_req(req);
-+		return;
++	nvme_update_ana(req);
++
+ 	nvme_req(req)->status = NVME_SC_HOST_PATH_ERROR;
+ 	nvme_end_req(req);
+ }
+diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
+index a1d476e1ac02..7d94250264aa 100644
+--- a/drivers/nvme/host/multipath.c
++++ b/drivers/nvme/host/multipath.c
+@@ -65,23 +65,29 @@ void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
  	}
  }
- EXPORT_SYMBOL_GPL(nvme_complete_rq);
+ 
+-void nvme_failover_req(struct request *req)
++void nvme_update_ana(struct request *req)
+ {
+ 	struct nvme_ns *ns = req->q->queuedata;
+ 	u16 status = nvme_req(req)->status & 0x7ff;
+-	unsigned long flags;
+-
+-	nvme_mpath_clear_current_path(ns);
+ 
+ 	/*
+ 	 * If we got back an ANA error, we know the controller is alive but not
+-	 * ready to serve this namespace.  Kick of a re-read of the ANA
++	 * ready to serve this namespace.  Kick off a re-read of the ANA
+ 	 * information page, and just try any other available path for now.
+ 	 */
+ 	if (nvme_is_ana_error(status) && ns->ctrl->ana_log_buf) {
+ 		set_bit(NVME_NS_ANA_PENDING, &ns->flags);
+ 		queue_work(nvme_wq, &ns->ctrl->ana_work);
+ 	}
++}
++
++void nvme_failover_req(struct request *req)
++{
++	struct nvme_ns *ns = req->q->queuedata;
++	unsigned long flags;
++
++	nvme_mpath_clear_current_path(ns);
++	nvme_update_ana(req);
+ 
+ 	spin_lock_irqsave(&ns->head->requeue_lock, flags);
+ 	blk_steal_bios(&ns->head->requeue_list, req);
+diff --git a/drivers/nvme/host/nvme.h b/drivers/nvme/host/nvme.h
+index 07b34175c6ce..4eed8536625c 100644
+--- a/drivers/nvme/host/nvme.h
++++ b/drivers/nvme/host/nvme.h
+@@ -664,6 +664,7 @@ void nvme_mpath_start_freeze(struct nvme_subsystem *subsys);
+ void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
+ 			struct nvme_ctrl *ctrl, int *flags);
+ void nvme_failover_req(struct request *req);
++void nvme_update_ana(struct request *req);
+ void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl);
+ int nvme_mpath_alloc_disk(struct nvme_ctrl *ctrl,struct nvme_ns_head *head);
+ void nvme_mpath_add_disk(struct nvme_ns *ns, struct nvme_id_ns *id);
+@@ -714,6 +715,9 @@ static inline void nvme_set_disk_name(char *disk_name, struct nvme_ns *ns,
+ static inline void nvme_failover_req(struct request *req)
+ {
+ }
++static inline void nvme_update_ana(struct request *req)
++{
++}
+ static inline void nvme_kick_requeue_lists(struct nvme_ctrl *ctrl)
+ {
+ }
 -- 
 2.15.0
 
