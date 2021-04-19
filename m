@@ -2,162 +2,75 @@ Return-Path: <SRS0=qgW3=JQ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.8 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E9B2FC433ED
-	for <dm-devel@archiver.kernel.org>; Mon, 19 Apr 2021 13:02:37 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CEC5DC433ED
+	for <dm-devel@archiver.kernel.org>; Mon, 19 Apr 2021 13:40:01 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 64A836113C
-	for <dm-devel@archiver.kernel.org>; Mon, 19 Apr 2021 13:02:37 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 64A836113C
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
+	by mail.kernel.org (Postfix) with ESMTPS id 15249611CE
+	for <dm-devel@archiver.kernel.org>; Mon, 19 Apr 2021 13:40:00 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 15249611CE
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1618839600;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=P6ZuqSY1Ll1Dg+ISnEBT6YqEBSaig0vghBHmB40Qbc8=;
+	b=QZ899zjkyvAPX2k4M6vatslWMSklf4U4A5HWhuHhEgden2x4XeTF9OyzzEZIP3HVVScATJ
+	Yb40Vq/LZxvafqWsjLUtFvdSbzM5o8Ji5t/pADVptCPr3mVOgG4MXeTF4pcHh7kgKm5rdc
+	xHeyR5R0RqOxJp0rBVvEutp1parYCio=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-392-zTFu0xtQOpOcqYL02lCdTA-1; Mon, 19 Apr 2021 09:02:33 -0400
-X-MC-Unique: zTFu0xtQOpOcqYL02lCdTA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-519-3GG_Y0CtPa6TGhWk-e5MUw-1; Mon, 19 Apr 2021 09:39:58 -0400
+X-MC-Unique: 3GG_Y0CtPa6TGhWk-e5MUw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9CD7F79EC2;
-	Mon, 19 Apr 2021 13:02:29 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D63A0817469;
+	Mon, 19 Apr 2021 13:39:52 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2E900610F1;
-	Mon, 19 Apr 2021 13:02:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8C71219809;
+	Mon, 19 Apr 2021 13:39:52 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0C9231806D17;
-	Mon, 19 Apr 2021 13:02:28 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id ED8691806D17;
+	Mon, 19 Apr 2021 13:39:51 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
+	[10.5.11.12])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13JD2PxK023745 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 19 Apr 2021 09:02:26 -0400
+	id 13JDah9P028274 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 19 Apr 2021 09:36:43 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id CFD994368B; Mon, 19 Apr 2021 13:02:25 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C8C4543686
-	for <dm-devel@redhat.com>; Mon, 19 Apr 2021 13:02:23 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 54A0985A5BA
-	for <dm-devel@redhat.com>; Mon, 19 Apr 2021 13:02:23 +0000 (UTC)
-Received: from esa3.hgst.iphmx.com (esa3.hgst.iphmx.com [216.71.153.141])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-165-umfxQvGhMnCPYv9W1eSdEA-1; Mon, 19 Apr 2021 09:02:18 -0400
-X-MC-Unique: umfxQvGhMnCPYv9W1eSdEA-1
-IronPort-SDR: xqNcnZx1ZhrN+1NAKilfediZFlV5NiWhPTYVkmuEWjlDOoMtP08cwPMaGWmpEgaMuGUyzPIsG+
-	jUOmD1VhuBGp27+ZNJgxSB4pvQ0g7AHy8sV2NV4yOoijs4UYRBwCvEGp5OQ7j7w9K8ttVAjWbA
-	QkrgEXC5jZhCR80RfJuyME+/m4iFtqd5P0iANFqvxnHzhk4FO8WEbofUDviOQ6oHxUnfwPu9Ft
-	hDq8gZyDdIvclATsejykKOLdIPDZJ4FnSK7skV3EfZozIk+BeIv3KqZHmqhTLim4UqLpJKYTjW
-	kp8=
-X-IronPort-AV: E=Sophos;i="5.82,234,1613404800"; d="scan'208";a="169974056"
-Received: from mail-bn7nam10lp2100.outbound.protection.outlook.com (HELO
-	NAM10-BN7-obe.outbound.protection.outlook.com) ([104.47.70.100])
-	by ob1.hgst.iphmx.com with ESMTP; 19 Apr 2021 21:02:15 +0800
-Received: from BL0PR04MB6514.namprd04.prod.outlook.com (2603:10b6:208:1ca::23)
-	by BL0PR04MB5059.namprd04.prod.outlook.com (2603:10b6:208:54::29)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4042.19;
-	Mon, 19 Apr 2021 13:02:12 +0000
-Received: from BL0PR04MB6514.namprd04.prod.outlook.com
-	([fe80::8557:ab07:8b6b:da78]) by
-	BL0PR04MB6514.namprd04.prod.outlook.com
-	([fe80::8557:ab07:8b6b:da78%3]) with mapi id 15.20.4042.024;
-	Mon, 19 Apr 2021 13:02:12 +0000
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Thread-Topic: [dm-devel] [PATCH v2 0/3] Fix dm-crypt zoned block device support
-Thread-Index: AQHXMzIMIWm8p8e930y0CZBnJXiLwQ==
-Date: Mon, 19 Apr 2021 13:02:11 +0000
-Message-ID: <BL0PR04MB65147D94E7E30C3E1063A282E7499@BL0PR04MB6514.namprd04.prod.outlook.com>
-References: <20210417023323.852530-1-damien.lemoal@wdc.com>
-	<alpine.LRH.2.02.2104190840310.9677@file01.intranet.prod.int.rdu2.redhat.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [2400:2411:43c0:6000:d019:11b6:a627:87d8]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: ff83eae9-22da-4d86-49bc-08d9033358f1
-x-ms-traffictypediagnostic: BL0PR04MB5059:
-x-ms-exchange-transport-forked: True
-x-microsoft-antispam-prvs: <BL0PR04MB5059115DD2989DC5D1C603E1E7499@BL0PR04MB5059.namprd04.prod.outlook.com>
-wdcipoutbound: EOP-TRUE
-x-ms-oob-tlc-oobclassifiers: OLM:10000
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: SLHAkeTYE0P0uo1U/rYH8iSdgehgTg/sFkMgpBvjhSFCP1l1tj7W39a9KUtJgcw/Sfb1uVXr30DNPj1yKdawH69GL6CU3Xs67IEojj9ISP1IIhVrW2IfGRlq+S9AN02+ezuMq+2t35h4hhjz5ukFqdh1xZlRh6h+0uQLi7x2DhQdE9zDGyoIWAjQT1N/carpjoIiJzzH+VHwHRmH2LhzNXvvFxTNeSVxiQF8rPrK0y/ndmw1pKtEqQsmQHyv6wkwXPjgtAoIX7/5QruTKc/CtI6ARGobRM5DT2vM+vg49GLEuDg5cj6KOxxVeA6bjEl+/gBJMhG+tHu6FC6oBLEUULrLMHaEfK997x75KD1wWFITB3nOvU0lCclVg3/JkpU4AA3C+aOsYFgJDnOk2eUShXLHl2ks450Ksch6T81Do7zGQj7yp+IyXPT+ZDgRN27XO1U7cWZIAbQ88DaaTUofmT+vM5nzUwnZCTiGTuHHVCLdrYnMl4pUQGK0N+qopoU7IXuqrtMo7q8U7ilwoqLYVnpMdsG1LlVM43qPVDM3OY6WzEFc57I/+eNonLMYYyKA5qlM/wq/YVZe512XKsGBAyKs6dbs4DXBJ1ELF3+rCsU=
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:BL0PR04MB6514.namprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(4636009)(376002)(346002)(136003)(39860400002)(366004)(396003)(8676002)(64756008)(55016002)(66946007)(52536014)(71200400001)(66446008)(9686003)(86362001)(66556008)(122000001)(54906003)(6916009)(316002)(66476007)(33656002)(478600001)(5660300002)(8936002)(91956017)(38100700002)(76116006)(4326008)(7696005)(7416002)(6506007)(53546011)(186003)(2906002)(83380400001);
-	DIR:OUT; SFP:1102
-x-ms-exchange-antispam-messagedata: =?us-ascii?Q?j9TpK8qi93hXUy7xagj8wmKl6ChndPsz9D/LbdK43dE74uTGpGzqy//kBxiK?=
-	=?us-ascii?Q?MuFsoV/OPUvzJiN75kJ8IvaF4b14cBDGzxIQ0BVmN7qdfFct3uUDzTkpCAHI?=
-	=?us-ascii?Q?/QqYyOZtHEU+vR70kte5xhBi0NKH8BWEr9OTLnLvWlLuCdqmykb89fivPmmX?=
-	=?us-ascii?Q?BWQHnJ3ATWswfgRqTAsh63gTZwg1bMahLUFWa34cX3QRk1Q0nMgaCseHBWU7?=
-	=?us-ascii?Q?ZCTE2MUoL4Qfm/xyPUUet52Lmievw07WZa0cka/tiiWWpYAgnF5aAhhYw6WQ?=
-	=?us-ascii?Q?T2YXIbpUoaWCFezyTYnlvsUJ6sUHmkosItPRleO/dtOd0rA0UoZl/eozndwG?=
-	=?us-ascii?Q?Uc7W7Mc7gLfomR10aFYsN9ksl9EadgKPqckmtzcNM6WiPhxV5xOyA0lWqekU?=
-	=?us-ascii?Q?x5rBoEs9O/MYfUnYIal2CxsCABzCNSzO1SNJK9tj878/XQaFRhfIuAs2EN7I?=
-	=?us-ascii?Q?i8Zow/thZBm4JMqRwysYnml260g5W9g1YiVH/NVqlpgu56o72ftdhouIYWvD?=
-	=?us-ascii?Q?XyxVKNuvMLe6kFfySIahhXi4jtG1r6+/F4YR9e+LinhDH+tBYciXLC6l/TAk?=
-	=?us-ascii?Q?naeT96hUQcW+Gjkdcz1Xxqjj4dsp31DS+s+8HTCg909eQM2rmtJit1VwTFBq?=
-	=?us-ascii?Q?klFlbrVk5WoffdK3/o5q8h5GJd9gmztkiUiNdPE7iIoZRCrJJ3pTKhVDykLw?=
-	=?us-ascii?Q?7jiWeozPmCoUa7rHTF7cWnDMwGs6fP8A5y003TIm3+lo6A0dm+F93fyVFmBe?=
-	=?us-ascii?Q?PdTYO83Z9CpozSd87itMDghN/IyGXlBGLQtnLzO+zntJU2AaDMozfBflfIKj?=
-	=?us-ascii?Q?j4iyqNZ0TaLMdgsWSjjqgJKmGcl3toqvClW1E04A2u2REtcuQpPc/Rx4JEn5?=
-	=?us-ascii?Q?QJ1C3+t+/s1UBt4TTwP3faaEfoGyq2riTmYQT8utlsdkwijV66wnfmiOqdZS?=
-	=?us-ascii?Q?FevaafR9GrgD8fHayWoLNUkNQSvEHrxuZPsBAq4Sk0OAFl/SLV9eYQBOYUsc?=
-	=?us-ascii?Q?8C/mj9wlq47+yj8ton2vsDgdlHaeD1mEiPIkAxjdLQyu6locaZYrMgaaO82c?=
-	=?us-ascii?Q?RJmwLK2+EVevHmnKr2Er8ZGPWSnU7j/RiZekR26XMePoZik0m0kJuG8S3kvg?=
-	=?us-ascii?Q?BGS/hOzrvNFBtk0+7dDcGTlicOHCXl2boLHPiKZKXmUGb8i4GN9mK35FUVip?=
-	=?us-ascii?Q?b3wtfk0RIRzHqrnzJv69+QcNv2VjBtT7Y6Ex1bjLzUkc7ETGnKlLYqpDCyfp?=
-	=?us-ascii?Q?qtHSc/vjO1bkaC0fdw9TVx83yAJD4WETepu1/wHhRSleaXWMIOPeUsvzssG9?=
-	=?us-ascii?Q?mcAouGJhdU+q4sSJHs6nr2tSXV4bvPik5Sluk0DEFhDtE8WtZRtB4MhVGpGY?=
-	=?us-ascii?Q?qZ5wuiRSuFK/4tHaWYl0Y27QMiZOF9yD7NUATXNQV1kyoLjF1w=3D=3D?=
+	id 277B8610F3; Mon, 19 Apr 2021 13:36:43 +0000 (UTC)
+Received: from T590 (ovpn-12-222.pek2.redhat.com [10.72.12.222])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AA29060C04;
+	Mon, 19 Apr 2021 13:36:21 +0000 (UTC)
+Date: Mon, 19 Apr 2021 21:36:18 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: JeffleXu <jefflexu@linux.alibaba.com>
+Message-ID: <YH2HUs8FV0pNDluk@T590>
+References: <20210401021927.343727-12-ming.lei@redhat.com>
+	<20210416080037.26335-1-jefflexu@linux.alibaba.com>
+	<YHlTtVtTEBpxa8Gh@T590>
+	<1fb6e15e-fb4d-a2bf-9f65-2ae2aa15a8a2@linux.alibaba.com>
+	<YHzpJsOYJL/AGC7k@T590>
+	<c0085cb4-2396-b0c2-c880-c6fa8fb7e491@linux.alibaba.com>
 MIME-Version: 1.0
-X-OriginatorOrg: wdc.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: BL0PR04MB6514.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: ff83eae9-22da-4d86-49bc-08d9033358f1
-X-MS-Exchange-CrossTenant-originalarrivaltime: 19 Apr 2021 13:02:11.8894 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: GbIpHg7w9ScOXSYD0TxBTIArKUGC9rYLMkyxOMERoZ91nKQ3az01MHoWhy1CkMeVL2A/aCWYT20jgSau4jiJbQ==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BL0PR04MB5059
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 13JD2PxK023745
+In-Reply-To: <c0085cb4-2396-b0c2-c880-c6fa8fb7e491@linux.alibaba.com>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	Mike Snitzer <snitzer@redhat.com>, Christoph,
-	Johannes Thumshirn <Johannes.Thumshirn@wdc.com>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"Martin K . Petersen" <martin.petersen@oracle.com>,
-	"linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-	Hellwig <hch@lst.de>
-Subject: Re: [dm-devel] [PATCH v2 0/3] Fix dm-crypt zoned block device
-	support
+Cc: axboe@kernel.dk, linux-block@vger.kernel.org, dm-devel@redhat.com,
+	snitzer@redhat.com
+Subject: Re: [dm-devel] [PATCH] block: introduce QUEUE_FLAG_POLL_CAP flag
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -171,79 +84,147 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 2021/04/19 21:52, Mikulas Patocka wrote:
+On Mon, Apr 19, 2021 at 01:40:21PM +0800, JeffleXu wrote:
 > 
 > 
-> On Sat, 17 Apr 2021, Damien Le Moal wrote:
+> On 4/19/21 10:21 AM, Ming Lei wrote:
+> > On Sat, Apr 17, 2021 at 10:06:53PM +0800, JeffleXu wrote:
+> >>
+> >>
+> >> On 4/16/21 5:07 PM, Ming Lei wrote:
+> >>> On Fri, Apr 16, 2021 at 04:00:37PM +0800, Jeffle Xu wrote:
+> >>>> Hi,
+> >>>> How about this patch to remove the extra poll_capable() method?
+> >>>>
+> >>>> And the following 'dm: support IO polling for bio-based dm device' needs
+> >>>> following change.
+> >>>>
+> >>>> ```
+> >>>> +       /*
+> >>>> +        * Check for request-based device is remained to
+> >>>> +        * dm_mq_init_request_queue()->blk_mq_init_allocated_queue().
+> >>>> +        * For bio-based device, only set QUEUE_FLAG_POLL when all underlying
+> >>>> +        * devices supporting polling.
+> >>>> +        */
+> >>>> +       if (__table_type_bio_based(t->type)) {
+> >>>> +               if (dm_table_supports_poll(t)) {
+> >>>> +                       blk_queue_flag_set(QUEUE_FLAG_POLL_CAP, q);
+> >>>> +                       blk_queue_flag_set(QUEUE_FLAG_POLL, q);
+> >>>> +               }
+> >>>> +               else {
+> >>>> +                       blk_queue_flag_clear(QUEUE_FLAG_POLL, q);
+> >>>> +                       blk_queue_flag_clear(QUEUE_FLAG_POLL_CAP, q);
+> >>>> +               }
+> >>>> +       }
+> >>>> ```
+> >>>
+> >>> Frankly speaking, I don't see any value of using QUEUE_FLAG_POLL_CAP for
+> >>> DM, and the result is basically subset of treating DM as always being capable
+> >>> of polling.
+> >>>
+> >>> Also underlying queue change(either limits or flag) won't be propagated
+> >>> to DM/MD automatically. Strictly speaking it doesn't matter if all underlying
+> >>> queues are capable of supporting polling at the exact time of 'write sysfs/poll',
+> >>> cause any of them may change in future.
+> >>>
+> >>> So why not start with the simplest approach(always capable of polling)
+> >>> which does meet normal bio based polling requirement?
+> >>>
+> >>
+> >> I find one scenario where this issue may matter. Consider the scenario
+> >> where HIPRI bios are submitted to DM device though **all** underlying
+> >> devices has been disabled for polling. In this case, a **valid** cookie
+> >> (pid of current submitting process) is still returned. Then if @spin of
+> >> the following blk_poll() is true, blk_poll() will get stuck in dead loop
+> >> because blk_mq_poll() always returns 0, since previously submitted bios
+> >> are all enqueued into IRQ hw queue.
+> >>
+> >> Maybe you need to re-remove the bio from the poll context if the
+> >> returned cookie is BLK_QC_T_NONE?
+> > 
+> > It won't be one issue, see blk_bio_poll_preprocess() which is called
+> > from submit_bio_checks(), so any bio's HIPRI will be cleared if the
+> > queue doesn't support POLL, that code does cover underlying bios.
 > 
->> Mike,
->>
->> Zone append BIOs (REQ_OP_ZONE_APPEND) always specify the start sector
->> of the zone to be written instead of the actual location sector to
->> write. The write location is determined by the device and returned to
->> the host upon completion of the operation.
+> Sorry there may be some confusion in my description. Let's discuss in
+> the following scenario: MD/DM advertise QUEUE_FLAG_POLL, though **all**
+> underlying devices are without QUEUE_FLAG_POLL. This scenario is
+> possible, if you want to enable MD/DM's polling without checking the
+> capability of underlying devices.
 > 
-> I'd like to ask what's the reason for this semantics? Why can't users of 
-> the zoned device supply real sector numbers?
-
-They can, if they use regular write commands :)
-
-Zone append was designed to address sequential write ordering difficulties on
-the host. Unlike regular writes which must be delivered to the device in
-sequential order, zone append commands can be sent to the device in any order.
-The device will process the write at the WP position when the command is
-executed and return the first sector written. This command makes it easy on the
-host in multi-queue environment and avoids the need for serializing commands &
-locking zones for writing. So very efficient performance.
-
->> This interface, while simple and efficient for writing into sequential
->> zones of a zoned block device, is incompatible with the use of sector
->> values to calculate a cypher block IV. All data written in a zone is
->> encrypted using an IV calculated from the first sectors of the zone,
->> but read operation will specify any sector within the zone, resulting
->> in an IV mismatch between encryption and decryption. Reads fail in that
->> case.
+> In this case, it seems that REQ_HIPRI is kept for both MD/DM and
+> underlying blk-mq devices. I used to think that REQ_HIPRI will be
+> cleared for underlying blk-mq deivces, but now it seems that REQ_HIPRI
+> of bios submitted to underlying blk-mq deivces won't be cleared, since
+> submit_bio_checks() is only called in the entry of submit_bio(), not in
+> the while() loop of __submit_bio_noacct_ctx(). Though these underlying
+> blk-mq devices don't support IO polling at all, or they all have been
+> disabled for polling, REQ_HIPRI bios are finally submitted down.
 > 
-> I would say that it is incompatible with all dm targets - even the linear 
-> target is changing the sector number and so it may redirect the write 
-> outside of the range specified in dm-table and cause corruption.
+> Or do I miss something?
 
-DM remapping of BIO sectors is zone compatible because target entries must be
-zone aligned. In the case of zone append, the BIO sector always point to the
-start sector of the target zone. DM sector remapping will remap that to another
-zone start as all zones are the same size. No issue here. We extensively use
-dm-linear for various test environment to reduce the size of the device tested
-(to speed up tests). I am confident there are no problems there.
+No matter the loop, the bios are actually submitted to the
+current->bio_list via submit_bio_noacct() or submit_bio().
+'grep -r submit_bio drivers/md' will show you the point.
 
-> Instead of complicating device mapper with imperfect support, I would just 
-> disable REQ_OP_ZONE_APPEND on device mapper at all.
+Also it is a bug if one underlying bio is submitted without being checked.
 
-That was my initial approach, but for dm-crypt only since other targets that
-support zoned devices are fine. However, this breaks zoned block device
-requirement that zone append be supported so that users are presented with a
-uniform interface for different devices. So while simple to do, disabling zone
-append is far from ideal.
+You can observe it by the following bpftrace when you run io_uring on dm
+disk:
+
+#include <linux/blkdev.h>
+
+kprobe:blk_mq_submit_bio
+/strncmp(((struct bio *)arg0)->bi_bdev->bd_disk->disk_name, "nvme", 4) == 0/
+{
+	$b = (struct bio *)arg0;
+	$hipri = $b->bi_opf & (1 << __REQ_HIPRI);
+
+	printf("%s %d: %s %lu %lu high prio %d\n", comm, tid, $b->bi_bdev->bd_disk->disk_name,
+		$b->bi_iter.bi_sector, $b->bi_iter.bi_size, $hipri);
+}
+
 
 > 
-> Mikulas
 > 
+> > 
+> >>
+> >>
+> >> Something like:
+> >>
+> >> -static blk_qc_t __submit_bio_noacct(struct bio *bio)
+> >> +static blk_qc_t __submit_bio_noacct_ctx(struct bio *bio, struct
+> >> io_context *ioc)
+> >>  {
+> >>  	struct bio_list bio_list_on_stack[2];
+> >>  	blk_qc_t ret = BLK_QC_T_NONE;
+> >> @@ -1047,7 +1163,15 @@ static blk_qc_t __submit_bio_noacct(struct bio *bio)
+> >>  		bio_list_on_stack[1] = bio_list_on_stack[0];
+> >>  		bio_list_init(&bio_list_on_stack[0]);
+> >>
+> >> 		if (ioc && queue_is_mq(q) && (bio->bi_opf & REQ_HIPRI)) {
+> > 
+> > REQ_HIPRI won't be set for underlying bios which queue doesn't support
+> > poll, so this branch won't be reached. 
 > 
+> Sorry I missed the '(bio->bi_opf & REQ_HIPRI)' condition here. Indeed
+> bio without REQ_HIPRI won't be enqueued into the poll_context.
 
+Even though these bios are queued, blk_poll() still can handle them
+easily by just ignoring queues which aren't POLL_TYPE. However, I still
+think their HIPRI will be cleared.
 
--- 
-Damien Le Moal
-Western Digital Research
-
-
+Thanks,
+Ming
 
 --
 dm-devel mailing list
