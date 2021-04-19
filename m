@@ -2,140 +2,75 @@ Return-Path: <SRS0=vg7B=JR=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,
+	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 17672C433ED
-	for <dm-devel@archiver.kernel.org>; Tue, 20 Apr 2021 01:35:48 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [63.128.21.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AFFA8C433ED
+	for <dm-devel@archiver.kernel.org>; Tue, 20 Apr 2021 07:21:47 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 8DA7E61221
-	for <dm-devel@archiver.kernel.org>; Tue, 20 Apr 2021 01:35:47 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 8DA7E61221
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
+	by mail.kernel.org (Postfix) with ESMTPS id F1DFD60FEA
+	for <dm-devel@archiver.kernel.org>; Tue, 20 Apr 2021 07:21:46 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org F1DFD60FEA
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-602-3iem_39gO7qrj12NuoytUw-1; Mon, 19 Apr 2021 21:35:44 -0400
-X-MC-Unique: 3iem_39gO7qrj12NuoytUw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-464-DrLOUguhMcuT6lWoq0Lc0g-1; Tue, 20 Apr 2021 03:21:43 -0400
+X-MC-Unique: DrLOUguhMcuT6lWoq0Lc0g-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A1D4B93B;
-	Tue, 20 Apr 2021 01:35:39 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0A61319172;
-	Tue, 20 Apr 2021 01:35:39 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5DB938E48BB;
+	Tue, 20 Apr 2021 07:18:40 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0AC7F5D9C0;
+	Tue, 20 Apr 2021 07:18:40 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C23F71806D17;
-	Tue, 20 Apr 2021 01:35:36 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E705D44A5C;
+	Tue, 20 Apr 2021 07:18:37 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13K1ZZIt032608 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 19 Apr 2021 21:35:35 -0400
+	id 13JC5xVJ015535 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 19 Apr 2021 08:05:59 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 221A020378E6; Tue, 20 Apr 2021 01:35:35 +0000 (UTC)
+	id 1AFAF2077FBD; Mon, 19 Apr 2021 12:05:59 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 19C6420389E0
-	for <dm-devel@redhat.com>; Tue, 20 Apr 2021 01:35:31 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 167952077FBA
+	for <dm-devel@redhat.com>; Mon, 19 Apr 2021 12:05:55 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 637EA80B921
-	for <dm-devel@redhat.com>; Tue, 20 Apr 2021 01:35:31 +0000 (UTC)
-Received: from esa4.hgst.iphmx.com (esa4.hgst.iphmx.com [216.71.154.42])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-376-xZtZuVirMIOXwxcMvCqo1g-1; Mon, 19 Apr 2021 21:35:26 -0400
-X-MC-Unique: xZtZuVirMIOXwxcMvCqo1g-1
-IronPort-SDR: lq3hOnSjbfl602vcd8q1ccLg6lvVv6Y6lWpbiymUa/mgilnlv94PMoN9UJz+N198SI5jRWZjty
-	P52rfab5tPiqVVqT+/8Un6aGsMHVD3C/kukTj4TM0gSwOw0YtfG/HmRgmnIE0GIyikOyw7dZ80
-	zZDvUWKJbajZFgVVFbWauI9cZkTL+hcNfygpL8Ch6VIZoKqtCmPpSqeVD5rqEQz6Gc1LNY/UxO
-	gg9u3yz5uennl4V9UVFz/6YIEO71LT2UcfQJtej8PpMHCeb3PwNPQ3uZxBHeeEzpfL+w7LX2pw
-	nGc=
-X-IronPort-AV: E=Sophos;i="5.82,235,1613404800"; d="scan'208";a="164838428"
-Received: from mail-dm6nam11lp2169.outbound.protection.outlook.com (HELO
-	NAM11-DM6-obe.outbound.protection.outlook.com) ([104.47.57.169])
-	by ob1.hgst.iphmx.com with ESMTP; 20 Apr 2021 09:35:25 +0800
-Received: from BL0PR04MB6514.namprd04.prod.outlook.com (2603:10b6:208:1ca::23)
-	by MN2PR04MB7008.namprd04.prod.outlook.com (2603:10b6:208:1ed::19)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4042.21;
-	Tue, 20 Apr 2021 01:35:22 +0000
-Received: from BL0PR04MB6514.namprd04.prod.outlook.com
-	([fe80::8557:ab07:8b6b:da78]) by
-	BL0PR04MB6514.namprd04.prod.outlook.com
-	([fe80::8557:ab07:8b6b:da78%3]) with mapi id 15.20.4042.024;
-	Tue, 20 Apr 2021 01:35:22 +0000
-From: Damien Le Moal <Damien.LeMoal@wdc.com>
-To: "dgilbert@interlog.com" <dgilbert@interlog.com>, Christoph Hellwig
-	<hch@lst.de>
-Thread-Topic: [PATCH v2 3/3] zonefs: fix synchronous write to sequential zone
-	files
-Thread-Index: AQHXMzIUD8ZVvai2c0OhPeRaKpo++w==
-Date: Tue, 20 Apr 2021 01:35:21 +0000
-Message-ID: <BL0PR04MB651451976F15C55D5578C131E7489@BL0PR04MB6514.namprd04.prod.outlook.com>
-References: <20210417023323.852530-1-damien.lemoal@wdc.com>
-	<20210417023323.852530-4-damien.lemoal@wdc.com>
-	<20210419064529.GA19041@lst.de>
-	<9a4d5090-1a70-129a-72f7-3699db0038a1@interlog.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [2400:2411:43c0:6000:b085:266a:414b:c56a]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: bdc245fa-646d-4c17-52df-08d9039c9051
-x-ms-traffictypediagnostic: MN2PR04MB7008:
-x-ms-exchange-transport-forked: True
-x-microsoft-antispam-prvs: <MN2PR04MB70086E344A5C589F191CCCA0E7489@MN2PR04MB7008.namprd04.prod.outlook.com>
-wdcipoutbound: EOP-TRUE
-x-ms-oob-tlc-oobclassifiers: OLM:4502
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: U4bcyF1KlDCACFTH0byril27zQ/UGlodb390pXRKdqHOKZ9Ik6fBGNMsTW1NoOBgNsP7TWvmK1H+xE3ai81m6iTpUw9tTwlMxoXHK6VNgfad1FbKrqRhX72sRm2+RAVLAC6JaXucUfG40qyHBK4EuQiSxe26HMz9WWCSz3U563/Ep/Uxl6swjKDzl0sfWolLI6vUTV0iqRzOV0cigvI3h6tm5oqb+GeZRpMRjwYN4dv3LhjcsevAWUhlUZZ1BDmiemfzWgPq4A60Td2CeOBGKh2fO60Kw5deFnyTHc7UUNh6ZZqyoQe5NI7B38QtNt9Yyliz1GeucQqkvCF841dfT17c9eEd5/Ts0SYxNeGZCrTpgZRhsAIQz3Stkd1X0em/7TGToSkrKNXpkjuoSR6r5+EsXmavTwDldm5N41zPY8Vf85n4ZBliCGuoJvXsCdyZ3N3WvQpwlIMHx6g1Jay575GTlDaS8E7/KsSpEllLbP1nd2GJEcMQ6OGr+2MD09LiCDK0owiW1mkE9ocTxpdXpLJ8I29tNbkXmsgewuvO/QaSiPTNa/YNpQd561oRPAKYNNmQJA3OQavrr7Va8auzTBggQrSzcQe8IZvWpuadIWQ=
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:BL0PR04MB6514.namprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(4636009)(396003)(136003)(39860400002)(376002)(366004)(346002)(7696005)(53546011)(6506007)(8676002)(38100700002)(316002)(66476007)(64756008)(9686003)(76116006)(478600001)(2906002)(54906003)(66946007)(55016002)(91956017)(66556008)(122000001)(7416002)(110136005)(8936002)(66446008)(83380400001)(5660300002)(186003)(71200400001)(4326008)(33656002)(86362001)(52536014);
-	DIR:OUT; SFP:1102
-x-ms-exchange-antispam-messagedata: =?us-ascii?Q?3EStXqiTBffkjQ3C7PGe0ee+qwuJF51+Eh75DitD3c4i8yBoI2uMoi0Tm8vE?=
-	=?us-ascii?Q?9g9mxdAmSxAmRy1khL/435XT67f836aywmXcPIdkPF8arDn2CRjUV++EzIbN?=
-	=?us-ascii?Q?ZU9V8uWZRw3ubxdbcSyNCHv89rKMN+CX1eJNfh9zDq7foRkhOp9T5S6TOAQ2?=
-	=?us-ascii?Q?dUj39MJ41/V2DVZHdT5Uma8pswnKbTRrAqHaTvC6k+Z3Xugb0ukeLB64ndvu?=
-	=?us-ascii?Q?P2Le6h6XOVs0JouZ+72gfx54AkXA57Dc+oFcbeBvlQq04e08r6SYGCEhMrLX?=
-	=?us-ascii?Q?A2xrj3Fbl8ywp+cKbUtLfwgYWkYEEYZ4cH6pK4tYLLs0XDVG+SWtwquMobnL?=
-	=?us-ascii?Q?SemUuJFzJYkAN3icE7Ka3X3mzbD6l7FgaW3wEsZu2NcKo6p+SzbaC1EAlUbu?=
-	=?us-ascii?Q?4rgtN7u4QB6tySiwgVGFR0VzhgxIrv9/n+oYf1/h2lknKGekDBDXchxSKqsx?=
-	=?us-ascii?Q?AN1I4ZPXtu8Pb6e1rxUWhvZJO5+3fmW6irQ7p+1HSKhXNzsjYw51cUUBEG9p?=
-	=?us-ascii?Q?6KVKD82XzTKE+tIDTUbrcDJLaGbAH0vAKHlc7XfTjGnI5IfGZDp5iB0ABCul?=
-	=?us-ascii?Q?L2d3Epduxpt9uQOXR8t4dVRI70K3lX+rDeq4zVUUK3U/S/n5ucDN2A4l87rx?=
-	=?us-ascii?Q?bAWrtNNCe1iUgR+d3Yh5i5zD+YS6YMwiKgAFrXL0Vwdv+pKEzLhvnK9ydtlQ?=
-	=?us-ascii?Q?KO8TbJ9O/svig9mKApuRJev0oMvAEJJK99uIDFfpcu0A+46io2AHFRwLO36E?=
-	=?us-ascii?Q?8/1HX0cm373i+lkveg+3KrkIlOm+MoWRjidqFPO6au5AFgiHE1sgORajTmI5?=
-	=?us-ascii?Q?BxUnslTnjqVsToyErMvIK2B90lXOpd2c5cha/sEjvV7sxa/l3DHF+me0wWmT?=
-	=?us-ascii?Q?GAR5tjG7oEocbyfR4S7P72NwX+yLCYJ3i8Wp3hc5/XYc2/khnRBDdRcsP25s?=
-	=?us-ascii?Q?zF4iLvYF0QQtfDEhGiLQ9MproeAw/jXkyFNmu+QA468IpmEaxYV2P3WzdQor?=
-	=?us-ascii?Q?g2EhmvAohaGCljcGiwjFBaIeUS7gqRjOGRbY6rewq8pzUbGmkT2SpWGtIwGF?=
-	=?us-ascii?Q?upGHMVq6ZbeRwRymLmhz1iK1AL83nJ2xTEA+s6QSA6PCqDJBCVn0JayFaxqG?=
-	=?us-ascii?Q?KcgBrnEIh77uGUHadF5Fw5b2xrJGxSe337jIXyXHnLlnFo2tSU8qJpNmhRX2?=
-	=?us-ascii?Q?D2zg7C1fxP9tE/N3Y8S3ehfsR1340gPHo1dX65Irs8BdDiJlimS2aNL0hkqY?=
-	=?us-ascii?Q?DbCfX4xqLMhwXT5j6NqFjcx9CHLtHWPjHGTJz2iQupHIoaq2cmkCfalE2W9s?=
-	=?us-ascii?Q?xDjpVoS28bGbpTKZ0Diin6w854tQMrszLtpS0faNmf2+TpjP7tykD1doa43i?=
-	=?us-ascii?Q?DGisWkobsht4kH9+WOUH2UsdiZSvzSmfY7RHU2J0n3UgfDj4nQ=3D=3D?=
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D436D857AA0
+	for <dm-devel@redhat.com>; Mon, 19 Apr 2021 12:05:55 +0000 (UTC)
+Received: from out30-130.freemail.mail.aliyun.com
+	(out30-130.freemail.mail.aliyun.com [115.124.30.130]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-298-u79MmJgVPVaL1Xnd7aTLFA-1;
+	Mon, 19 Apr 2021 08:05:52 -0400
+X-MC-Unique: u79MmJgVPVaL1Xnd7aTLFA-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R121e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04394;
+	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=10; SR=0;
+	TI=SMTPD_---0UW4X65e_1618833946
+Received: from admindeMacBook-Pro-2.local(mailfrom:jefflexu@linux.alibaba.com
+	fp:SMTPD_---0UW4X65e_1618833946) by smtp.aliyun-inc.com(127.0.0.1);
+	Mon, 19 Apr 2021 20:05:46 +0800
+To: Ming Lei <ming.lei@redhat.com>, Jens Axboe <axboe@kernel.dk>
+References: <20210415103310.1513841-1-ming.lei@redhat.com>
+	<20210415103310.1513841-3-ming.lei@redhat.com>
+From: JeffleXu <jefflexu@linux.alibaba.com>
+Message-ID: <b1db72f3-f0a1-72f2-be12-6fd50c29e231@linux.alibaba.com>
+Date: Mon, 19 Apr 2021 20:05:46 +0800
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
+	Gecko/20100101 Thunderbird/78.7.1
 MIME-Version: 1.0
-X-OriginatorOrg: wdc.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: BL0PR04MB6514.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: bdc245fa-646d-4c17-52df-08d9039c9051
-X-MS-Exchange-CrossTenant-originalarrivaltime: 20 Apr 2021 01:35:21.9590 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: VdwDmpU0srsXULzQJMEHRDRmuJMCLSYoLrXQ+/nBsUq7nAwfGOxV5lJwf97nUnc7QAsyYSaCvLrR59Pmi0bz5g==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: MN2PR04MB7008
+In-Reply-To: <20210415103310.1513841-3-ming.lei@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -144,22 +79,16 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 13K1ZZIt032608
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+X-Mailman-Approved-At: Tue, 20 Apr 2021 03:18:36 -0400
+Cc: linux-block@vger.kernel.org, Bart Van Assche <bvanassche@acm.org>,
 	Mike Snitzer <snitzer@redhat.com>,
-	Johannes Thumshirn <Johannes.Thumshirn@wdc.com>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>, "Martin K .
-	Petersen" <martin.petersen@oracle.com>,
-	"linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
-Subject: Re: [dm-devel] [PATCH v2 3/3] zonefs: fix synchronous write to
- sequential zone files
+	linux-nvme@lists.infradead.org, linux-raid@vger.kernel.org,
+	Song Liu <song@kernel.org>, dm-devel@redhat.com,
+	Christoph Hellwig <hch@lst.de>
+Subject: Re: [dm-devel] [RFC PATCH 2/2] block: support to freeze bio based
+ request queue
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -173,7 +102,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -182,37 +111,277 @@ Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 2021/04/20 10:20, Douglas Gilbert wrote:
-> On 2021-04-19 2:45 a.m., Christoph Hellwig wrote:
->> On Sat, Apr 17, 2021 at 11:33:23AM +0900, Damien Le Moal wrote:
->>> Synchronous writes to sequential zone files cannot use zone append
->>> operations if the underlying zoned device queue limit
->>> max_zone_append_sectors is 0, indicating that the device does not
->>> support this operation. In this case, fall back to using regular write
->>> operations.
->>
->> Zone append is a mandatory feature of the zoned device API.
+
+
+On 4/15/21 6:33 PM, Ming Lei wrote:
+> For bio based request queue, the queue usage refcnt is only grabbed
+> during submission, which isn't consistent with request base queue.
 > 
-> So a hack required for ZNS and not needed by ZBC and ZAC becomes
-> a "mandatory feature" in a Linux API. Like many hacks, that one might
-> come back to bite you :-)
+> Queue freezing has been used widely, and turns out it is very useful
+> to quiesce queue activity.
+> 
+> Support to freeze bio based request queue by the following approach:
+> 
+> 1) grab two queue usage refcount for blk-mq before submitting blk-mq
+> bio, one is for bio, anther is for request;
 
-Zone append is not a hack in ZNS. It is a write interface that fits very well
-with the multi-queue nature of NVMe. The "hack" is the emulation in scsi.
 
-We decided on having this mandatory for zoned devices (all types) to make sure
-that file systems do not have to implement different IO paths for sequential
-writing to zones. Zone append does simplify a lot of things and allows to get
-the best performance from ZNS drives. Zone write locking/serialization of writes
-per zones using regular writes is much harder to implement, make a mess of the
-file system code, and would kill write performance on ZNS.
+Hi, I can't understand the sense of grabbing two refcounts on the
+@q_usage_count of the underlying blk-mq device, while
+@q_usage_count of the MD/DM device is kept untouched.
 
+In the following calling stack
+
+```
+queue_poll_store
+	blk_mq_freeze_queue(q)
+```
+
+Is the input @q still the request queue of MD/DM device?
+
+
+> 
+> 2) add bio flag of BIO_QUEUE_REFFED for making sure that only one
+> refcnt is grabbed for each bio, so we can put the refcnt when the
+> bio is going away
+> 
+> 3) nvme mpath is a bit special, because same bio is used for both
+> mpath queue and underlying nvme queue. So we put the mpath queue's
+> usage refcnt before completing the nvme request.
+> 
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: Bart Van Assche <bvanassche@acm.org>
+> Signed-off-by: Ming Lei <ming.lei@redhat.com>
+> ---
+>  block/bio.c                   | 12 ++++++++++--
+>  block/blk-core.c              | 23 +++++++++++++++++------
+>  drivers/nvme/host/core.c      | 16 ++++++++++++++++
+>  drivers/nvme/host/multipath.c |  6 ++++++
+>  include/linux/blk-mq.h        |  2 ++
+>  include/linux/blk_types.h     |  1 +
+>  include/linux/blkdev.h        |  7 ++++++-
+>  7 files changed, 58 insertions(+), 9 deletions(-)
+> 
+> diff --git a/block/bio.c b/block/bio.c
+> index 303298996afe..941a306e390b 100644
+> --- a/block/bio.c
+> +++ b/block/bio.c
+> @@ -1365,14 +1365,18 @@ static inline bool bio_remaining_done(struct bio *bio)
+>   **/
+>  void bio_endio(struct bio *bio)
+>  {
+> +	struct block_device *bdev;
+> +	bool put_queue;
+>  again:
+> +	bdev = bio->bi_bdev;
+> +	put_queue = bio_flagged(bio, BIO_QUEUE_REFFED);
+>  	if (!bio_remaining_done(bio))
+>  		return;
+>  	if (!bio_integrity_endio(bio))
+>  		return;
+>  
+> -	if (bio->bi_bdev)
+> -		rq_qos_done_bio(bio->bi_bdev->bd_disk->queue, bio);
+> +	if (bdev)
+> +		rq_qos_done_bio(bdev->bd_disk->queue, bio);
+>  
+>  	/*
+>  	 * Need to have a real endio function for chained bios, otherwise
+> @@ -1384,6 +1388,8 @@ void bio_endio(struct bio *bio)
+>  	 */
+>  	if (bio->bi_end_io == bio_chain_endio) {
+>  		bio = __bio_chain_endio(bio);
+> +		if (bdev && put_queue)
+> +			blk_queue_exit(bdev->bd_disk->queue);
+>  		goto again;
+>  	}
+>  
+> @@ -1397,6 +1403,8 @@ void bio_endio(struct bio *bio)
+>  	bio_uninit(bio);
+>  	if (bio->bi_end_io)
+>  		bio->bi_end_io(bio);
+> +	if (bdev && put_queue)
+> +		blk_queue_exit(bdev->bd_disk->queue);
+>  }
+>  EXPORT_SYMBOL(bio_endio);
+>  
+> diff --git a/block/blk-core.c b/block/blk-core.c
+> index 09f774e7413d..f71e4b433030 100644
+> --- a/block/blk-core.c
+> +++ b/block/blk-core.c
+> @@ -431,12 +431,13 @@ EXPORT_SYMBOL(blk_cleanup_queue);
+>  int blk_queue_enter(struct request_queue *q, blk_mq_req_flags_t flags)
+>  {
+>  	const bool pm = flags & BLK_MQ_REQ_PM;
+> +	const unsigned int nr = (flags & BLK_MQ_REQ_DOUBLE_REF) ? 2 : 1;
+>  
+>  	while (true) {
+>  		bool success = false;
+>  
+>  		rcu_read_lock();
+> -		if (percpu_ref_tryget_live(&q->q_usage_counter)) {
+> +		if (percpu_ref_tryget_many_live(&q->q_usage_counter, nr)) {
+>  			/*
+>  			 * The code that increments the pm_only counter is
+>  			 * responsible for ensuring that that counter is
+> @@ -446,7 +447,7 @@ int blk_queue_enter(struct request_queue *q, blk_mq_req_flags_t flags)
+>  			    !blk_queue_pm_only(q)) {
+>  				success = true;
+>  			} else {
+> -				percpu_ref_put(&q->q_usage_counter);
+> +				percpu_ref_put_many(&q->q_usage_counter, nr);
+>  			}
+>  		}
+>  		rcu_read_unlock();
+> @@ -480,8 +481,18 @@ static inline int bio_queue_enter(struct bio *bio)
+>  	struct request_queue *q = bio->bi_bdev->bd_disk->queue;
+>  	bool nowait = bio->bi_opf & REQ_NOWAIT;
+>  	int ret;
+> +	blk_mq_req_flags_t flags = nowait ? BLK_MQ_REQ_NOWAIT : 0;
+> +	bool reffed = bio_flagged(bio, BIO_QUEUE_REFFED);
+>  
+> -	ret = blk_queue_enter(q, nowait ? BLK_MQ_REQ_NOWAIT : 0);
+> +	if (!reffed)
+> +		bio_set_flag(bio, BIO_QUEUE_REFFED);
+> +
+> +	/*
+> +	 * Grab two queue references for blk-mq, one is for bio, and
+> +	 * another is for blk-mq request.
+> +	 */
+> +	ret = blk_queue_enter(q, q->mq_ops && !reffed ?
+> +			(flags | BLK_MQ_REQ_DOUBLE_REF) : flags);
+>  	if (unlikely(ret)) {
+>  		if (nowait && !blk_queue_dying(q))
+>  			bio_wouldblock_error(bio);
+> @@ -492,10 +503,11 @@ static inline int bio_queue_enter(struct bio *bio)
+>  	return ret;
+>  }
+>  
+> -void blk_queue_exit(struct request_queue *q)
+> +void __blk_queue_exit(struct request_queue *q, unsigned int nr)
+>  {
+> -	percpu_ref_put(&q->q_usage_counter);
+> +	percpu_ref_put_many(&q->q_usage_counter, nr);
+>  }
+> +EXPORT_SYMBOL_GPL(__blk_queue_exit);
+>  
+>  static void blk_queue_usage_counter_release(struct percpu_ref *ref)
+>  {
+> @@ -920,7 +932,6 @@ static blk_qc_t __submit_bio(struct bio *bio)
+>  			return blk_mq_submit_bio(bio);
+>  		ret = disk->fops->submit_bio(bio);
+>  	}
+> -	blk_queue_exit(disk->queue);
+>  	return ret;
+>  }
+>  
+> diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
+> index 34b8c78f88e0..791638a7164b 100644
+> --- a/drivers/nvme/host/core.c
+> +++ b/drivers/nvme/host/core.c
+> @@ -323,14 +323,30 @@ static inline enum nvme_disposition nvme_decide_disposition(struct request *req)
+>  static inline void nvme_end_req(struct request *req)
+>  {
+>  	blk_status_t status = nvme_error_status(nvme_req(req)->status);
+> +	const bool mpath = req->cmd_flags & REQ_NVME_MPATH;
+> +	unsigned int nr = 0;
+> +	struct bio *bio;
+> +	struct nvme_ns *ns;
+>  
+>  	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) &&
+>  	    req_op(req) == REQ_OP_ZONE_APPEND)
+>  		req->__sector = nvme_lba_to_sect(req->q->queuedata,
+>  			le64_to_cpu(nvme_req(req)->result.u64));
+>  
+> +	if (mpath) {
+> +		ns = req->q->queuedata;
+> +		__rq_for_each_bio(bio, req)
+> +			nr++;
+> +	}
+>  	nvme_trace_bio_complete(req);
+>  	blk_mq_end_request(req, status);
+> +
+> +	/*
+> +	 * We changed multipath bio->bi_bdev, so have to drop the queue
+> +	 * reference manually
+> +	 */
+> +	if (mpath && nr)
+> +		__blk_queue_exit(ns->head->disk->queue, nr);
+>  }
+>  
+>  void nvme_complete_rq(struct request *req)
+> diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
+> index a1d476e1ac02..017487c835fb 100644
+> --- a/drivers/nvme/host/multipath.c
+> +++ b/drivers/nvme/host/multipath.c
+> @@ -312,6 +312,12 @@ blk_qc_t nvme_ns_head_submit_bio(struct bio *bio)
+>  	srcu_idx = srcu_read_lock(&head->srcu);
+>  	ns = nvme_find_path(head);
+>  	if (likely(ns)) {
+> +		/*
+> +		 * this bio's ownership is transferred to underlying queue, so
+> +		 * clear the queue reffed flag and let underlying queue to put
+> +		 * the multipath queue for us.
+> +		 */
+> +		bio_clear_flag(bio, BIO_QUEUE_REFFED);
+>  		bio_set_dev(bio, ns->disk->part0);
+>  		bio->bi_opf |= REQ_NVME_MPATH;
+>  		trace_block_bio_remap(bio, disk_devt(ns->head->disk),
+> diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
+> index 2c473c9b8990..b96ac162e703 100644
+> --- a/include/linux/blk-mq.h
+> +++ b/include/linux/blk-mq.h
+> @@ -445,6 +445,8 @@ enum {
+>  	BLK_MQ_REQ_RESERVED	= (__force blk_mq_req_flags_t)(1 << 1),
+>  	/* set RQF_PM */
+>  	BLK_MQ_REQ_PM		= (__force blk_mq_req_flags_t)(1 << 2),
+> +	/* double queue reference */
+> +	BLK_MQ_REQ_DOUBLE_REF	= (__force blk_mq_req_flags_t)(1 << 3),
+>  };
+>  
+>  struct request *blk_mq_alloc_request(struct request_queue *q, unsigned int op,
+> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+> index 57099b37ef3a..e7f7d67198cc 100644
+> --- a/include/linux/blk_types.h
+> +++ b/include/linux/blk_types.h
+> @@ -305,6 +305,7 @@ enum {
+>  	BIO_CGROUP_ACCT,	/* has been accounted to a cgroup */
+>  	BIO_TRACKED,		/* set if bio goes through the rq_qos path */
+>  	BIO_REMAPPED,
+> +	BIO_QUEUE_REFFED,	/* need to put queue refcnt */
+>  	BIO_FLAG_LAST
+>  };
+>  
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index 62944d06a80f..6ad09b2ff2d1 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -925,7 +925,7 @@ extern int get_sg_io_hdr(struct sg_io_hdr *hdr, const void __user *argp);
+>  extern int put_sg_io_hdr(const struct sg_io_hdr *hdr, void __user *argp);
+>  
+>  extern int blk_queue_enter(struct request_queue *q, blk_mq_req_flags_t flags);
+> -extern void blk_queue_exit(struct request_queue *q);
+> +extern void __blk_queue_exit(struct request_queue *q, unsigned int nr);
+>  extern void blk_sync_queue(struct request_queue *q);
+>  extern int blk_rq_map_user(struct request_queue *, struct request *,
+>  			   struct rq_map_data *, void __user *, unsigned long,
+> @@ -947,6 +947,11 @@ blk_status_t errno_to_blk_status(int errno);
+>  
+>  int blk_poll(struct request_queue *q, blk_qc_t cookie, bool spin);
+>  
+> +static inline void blk_queue_exit(struct request_queue *q)
+> +{
+> +	__blk_queue_exit(q, 1);
+> +}
+> +
+>  static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
+>  {
+>  	return bdev->bd_disk->queue;	/* this is never NULL */
+> 
 
 -- 
-Damien Le Moal
-Western Digital Research
-
-
+Thanks,
+Jeffle
 
 --
 dm-devel mailing list
