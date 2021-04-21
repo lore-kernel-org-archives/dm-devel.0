@@ -2,73 +2,76 @@ Return-Path: <SRS0=/8Iv=JS=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 460C2C43461
-	for <dm-devel@archiver.kernel.org>; Wed, 21 Apr 2021 16:46:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7151AC433ED
+	for <dm-devel@archiver.kernel.org>; Wed, 21 Apr 2021 16:46:53 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 9BF2A61456
-	for <dm-devel@archiver.kernel.org>; Wed, 21 Apr 2021 16:46:41 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9BF2A61456
+	by mail.kernel.org (Postfix) with ESMTPS id E11F060232
+	for <dm-devel@archiver.kernel.org>; Wed, 21 Apr 2021 16:46:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E11F060232
 Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-93-Oc8xPbgDM_ycaeR3hdGJNw-1; Wed, 21 Apr 2021 12:46:32 -0400
-X-MC-Unique: Oc8xPbgDM_ycaeR3hdGJNw-1
+ us-mta-443-XB3M5eQyPfK6Q97Jc-yoSw-1; Wed, 21 Apr 2021 12:46:48 -0400
+X-MC-Unique: XB3M5eQyPfK6Q97Jc-yoSw-1
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 038306DD5A;
-	Wed, 21 Apr 2021 16:46:15 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6879B6091B;
-	Wed, 21 Apr 2021 16:46:13 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1392A192205F;
+	Wed, 21 Apr 2021 16:46:33 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EC78F6085A;
+	Wed, 21 Apr 2021 16:46:32 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E0EDE4ED7A;
-	Wed, 21 Apr 2021 16:46:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BE5F81806D1C;
+	Wed, 21 Apr 2021 16:46:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13LGk703013303 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 21 Apr 2021 12:46:08 -0400
+	id 13LGkUjP013378 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 21 Apr 2021 12:46:30 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 05A205F274; Wed, 21 Apr 2021 16:46:07 +0000 (UTC)
+	id A770820FD3BC; Wed, 21 Apr 2021 16:46:30 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C54E2F66BB
-	for <dm-devel@redhat.com>; Wed, 21 Apr 2021 16:46:04 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A0CCA20FD3B8
+	for <dm-devel@redhat.com>; Wed, 21 Apr 2021 16:46:28 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 04F2480270A
-	for <dm-devel@redhat.com>; Wed, 21 Apr 2021 16:46:04 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 42760858EFF
+	for <dm-devel@redhat.com>; Wed, 21 Apr 2021 16:46:28 +0000 (UTC)
 Received: from mx2.veeam.com (mx2.veeam.com [64.129.123.6]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-194-h4QNxq_4NFKpSoLbEaQFnA-1;
-	Wed, 21 Apr 2021 12:45:59 -0400
-X-MC-Unique: h4QNxq_4NFKpSoLbEaQFnA-1
+	relay.mimecast.com with ESMTP id us-mta-356-xk2P7MXoOWOcwHK3RsIUYA-1;
+	Wed, 21 Apr 2021 12:46:21 -0400
+X-MC-Unique: xk2P7MXoOWOcwHK3RsIUYA-1
 Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mx2.veeam.com (Postfix) with ESMTPS id 5EBE742406;
-	Wed, 21 Apr 2021 12:45:55 -0400 (EDT)
+	by mx2.veeam.com (Postfix) with ESMTPS id 55116424B9;
+	Wed, 21 Apr 2021 12:46:16 -0400 (EDT)
 Received: from prgdevlinuxpatch01.amust.local (172.24.14.5) by
 	prgmbx01.amust.local (172.24.0.171) with Microsoft SMTP Server
 	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	15.2.858.5; Wed, 21 Apr 2021 18:45:53 +0200
+	15.2.858.5; Wed, 21 Apr 2021 18:46:00 +0200
 From: Sergei Shtepa <sergei.shtepa@veeam.com>
 To: Christoph Hellwig <hch@infradead.org>, Hannes Reinecke <hare@suse.de>,
 	Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>,
 	Alexander Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, 
 	<dm-devel@redhat.com>, <linux-fsdevel@vger.kernel.org>,
 	<linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>
-Date: Wed, 21 Apr 2021 19:45:41 +0300
-Message-ID: <1619023545-23431-1-git-send-email-sergei.shtepa@veeam.com>
+Date: Wed, 21 Apr 2021 19:45:45 +0300
+Message-ID: <1619023545-23431-5-git-send-email-sergei.shtepa@veeam.com>
+In-Reply-To: <1619023545-23431-1-git-send-email-sergei.shtepa@veeam.com>
+References: <1619023545-23431-1-git-send-email-sergei.shtepa@veeam.com>
 MIME-Version: 1.0
 X-Originating-IP: [172.24.14.5]
 X-ClientProxiedBy: prgmbx02.amust.local (172.24.0.172) To prgmbx01.amust.local
@@ -84,10 +87,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: pavel.tide@veeam.com, sergei.shtepa@veeam.com
-Subject: [dm-devel] [PATCH v9 0/4] block device interposer
+Subject: [dm-devel] [PATCH v9 4/4] Using dm_get_device_ex() instead of
+	dm_get_device()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -109,121 +113,154 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-A new version of a block device interposer (blk_interposer).
+Not every DM target needs the ability to attach via blk_interposer.
+A DM target can attach and detach 'on the fly' only if the DM
+target works as a filter without changing the location of the blocks
+on the block device.
 
-In this series of patches,  I have tried to take into account the comments
-made by Mike to the previous version.
+Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
+---
+ drivers/md/dm-cache-target.c | 5 +++--
+ drivers/md/dm-delay.c        | 3 ++-
+ drivers/md/dm-dust.c         | 3 ++-
+ drivers/md/dm-era-target.c   | 4 +++-
+ drivers/md/dm-flakey.c       | 3 ++-
+ drivers/md/dm-linear.c       | 3 ++-
+ drivers/md/dm-log-writes.c   | 3 ++-
+ drivers/md/dm-snap.c         | 3 ++-
+ drivers/md/dm-writecache.c   | 3 ++-
+ 9 files changed, 20 insertions(+), 10 deletions(-)
 
-First of all, this applies to more detailed explanations of the commits.
-Indeed, the changes in blk-core.c and dm.c may seem complicated, but they
-are no more complicated than the rest of the code in these files.
-
-Removed the [interpose] option for block devices opened by the DM target.
-Instead, the dm_get_device_ex() function is added, which allows to
-explicitly specify which devices can be used for the interposer and which
-can not.
-
-Additional testing has revealed a problem with suspending and resuming DM
-targets attached via blk_interposer. This has been fixed.
-
-History:
-v8 - https://patchwork.kernel.org/project/linux-block/cover/1617968884-15149-1-git-send-email-sergei.shtepa@veeam.com/
-  * The attaching and detaching to interposed device moved to
-    __dm_suspend() and __dm_resume() functions.
-  * Redesigned the submit_bio_noacct() function and added a lock for the
-    block device interposer.
-  * Adds [interpose] option to block device patch in dm table.
-  * Fix origin_map() then o->split_binary value is zero.
-
-v7 - https://patchwork.kernel.org/project/linux-block/cover/1615563895-28565-1-git-send-email-sergei.shtepa@veeam.com/
-  * the request interception mechanism. Now the interposer is
-    a block device that receives requests instead of the original device;
-  * code design fixes.
-
-v6 - https://patchwork.kernel.org/project/linux-block/cover/1614774618-22410-1-git-send-email-sergei.shtepa@veeam.com/
-  * designed for 5.12;
-  * thanks to the new design of the bio structure in v5.12, it is
-    possible to perform interception not for the entire disk, but
-    for each block device;
-  * instead of the new ioctl DM_DEV_REMAP_CMD and the 'noexcl' option,
-    the DM_INTERPOSED_FLAG flag for the ioctl DM_TABLE_LOAD_CMD is
-    applied.
-
-v5 - https://patchwork.kernel.org/project/linux-block/cover/1612881028-7878-1-git-send-email-sergei.shtepa@veeam.com/
- * rebase for v5.11-rc7;
- * patch set organization;
- * fix defects in documentation;
- * add some comments;
- * change mutex names for better code readability;
- * remove calling bd_unlink_disk_holder() for targets with non-exclusive
-   flag;
- * change type for struct dm_remap_param from uint8_t to __u8.
-
-v4 - https://patchwork.kernel.org/project/linux-block/cover/1612367638-3794-1-git-send-email-sergei.shtepa@veeam.com/
-Mostly changes were made, due to Damien's comments:
- * on the design of the code;
- * by the patch set organization;
- * bug with passing a wrong parameter to dm_get_device();
- * description of the 'noexcl' parameter in the linear.rst.
-Also added remap_and_filter.rst.
-
-v3 - https://patchwork.kernel.org/project/linux-block/cover/1611853955-32167-1-git-send-email-sergei.shtepa@veeam.com/
-In this version, I already suggested blk_interposer to apply to dm-linear.
-Problems were solved:
- * Interception of bio requests from a specific device on the disk, not
-   from the entire disk. To do this, we added the dm_interposed_dev
-   structure and an interval tree to store these structures.
- * Implemented ioctl DM_DEV_REMAP_CMD. A patch with changes in the lvm2
-   project was sent to the team lvm-devel@redhat.com.
- * Added the 'noexcl' option for dm-linear, which allows you to open
-   the underlying block-device without FMODE_EXCL mode.
-
-v2 - https://patchwork.kernel.org/project/linux-block/cover/1607518911-30692-1-git-send-email-sergei.shtepa@veeam.com/
-I tried to suggest blk_interposer without using it in device mapper,
-but with the addition of a sample of its use. It was then that I learned
-about the maintainers' attitudes towards the samples directory :).
-
-v1 - https://lwn.net/ml/linux-block/20201119164924.74401-1-hare@suse.de/
-This Hannes's patch can be considered as a starting point, since this is
-where the interception mechanism and the term blk_interposer itself
-appeared. It became clear that blk_interposer can be useful for
-device mapper.
-
-before v1 - https://patchwork.kernel.org/project/linux-block/cover/1603271049-20681-1-git-send-email-sergei.shtepa@veeam.com/
-I tried to offer a rather cumbersome blk-filter and a monster-like
-blk-snap module for creating snapshots.
-
-Sergei Shtepa (4):
-  Adds blk_interposer
-  Applying the blk_interposer in the block device layer
-  Add blk_interposer in DM
-  Using dm_get_device_ex() instead of dm_get_device()
-
- block/bio.c                   |   2 +
- block/blk-core.c              | 194 ++++++++++++++-------------
- block/genhd.c                 |  52 ++++++++
- drivers/md/dm-cache-target.c  |   5 +-
- drivers/md/dm-core.h          |   1 +
- drivers/md/dm-delay.c         |   3 +-
- drivers/md/dm-dust.c          |   3 +-
- drivers/md/dm-era-target.c    |   4 +-
- drivers/md/dm-flakey.c        |   3 +-
- drivers/md/dm-ioctl.c         |  59 ++++++++-
- drivers/md/dm-linear.c        |   3 +-
- drivers/md/dm-log-writes.c    |   3 +-
- drivers/md/dm-snap.c          |   3 +-
- drivers/md/dm-table.c         |  21 ++-
- drivers/md/dm-writecache.c    |   3 +-
- drivers/md/dm.c               | 242 ++++++++++++++++++++++++++++++----
- drivers/md/dm.h               |   8 +-
- fs/block_dev.c                |   3 +
- include/linux/blk_types.h     |   6 +
- include/linux/blkdev.h        |  32 +++++
- include/linux/device-mapper.h |  11 +-
- include/uapi/linux/dm-ioctl.h |   6 +
- 22 files changed, 530 insertions(+), 137 deletions(-)
-
---
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 541c45027cc8..885a6fde1b9b 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -2140,8 +2140,9 @@ static int parse_origin_dev(struct cache_args *ca, struct dm_arg_set *as,
+ 	if (!at_least_one_arg(as, error))
+ 		return -EINVAL;
+ 
+-	r = dm_get_device(ca->ti, dm_shift_arg(as), FMODE_READ | FMODE_WRITE,
+-			  &ca->origin_dev);
++	r = dm_get_device_ex(ca->ti, dm_shift_arg(as), FMODE_READ | FMODE_WRITE,
++			     dm_table_is_interposer(ca->ti->table),
++			     &ca->origin_dev);
+ 	if (r) {
+ 		*error = "Error opening origin device";
+ 		return r;
+diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
+index 2628a832787b..1b051a023a5d 100644
+--- a/drivers/md/dm-delay.c
++++ b/drivers/md/dm-delay.c
+@@ -153,7 +153,8 @@ static int delay_class_ctr(struct dm_target *ti, struct delay_class *c, char **a
+ 		return -EINVAL;
+ 	}
+ 
+-	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &c->dev);
++	ret = dm_get_device_ex(ti, argv[0], dm_table_get_mode(ti->table),
++			       dm_table_is_interposer(ti->table), &c->dev);
+ 	if (ret) {
+ 		ti->error = "Device lookup failed";
+ 		return ret;
+diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
+index cbe1058ee589..5eb930ea8034 100644
+--- a/drivers/md/dm-dust.c
++++ b/drivers/md/dm-dust.c
+@@ -366,7 +366,8 @@ static int dust_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		return -ENOMEM;
+ 	}
+ 
+-	if (dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &dd->dev)) {
++	if (dm_get_device_ex(ti, argv[0], dm_table_get_mode(ti->table),
++			     dm_table_is_interposer(ti->table), &dd->dev)) {
+ 		ti->error = "Device lookup failed";
+ 		kfree(dd);
+ 		return -EINVAL;
+diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
+index d9ac7372108c..db8791981605 100644
+--- a/drivers/md/dm-era-target.c
++++ b/drivers/md/dm-era-target.c
+@@ -1462,7 +1462,9 @@ static int era_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		return -EINVAL;
+ 	}
+ 
+-	r = dm_get_device(ti, argv[1], FMODE_READ | FMODE_WRITE, &era->origin_dev);
++	r = dm_get_device_ex(ti, argv[1], FMODE_READ | FMODE_WRITE,
++			     dm_table_is_interposer(ti->table),
++			     &era->origin_dev);
+ 	if (r) {
+ 		ti->error = "Error opening data device";
+ 		era_destroy(era);
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index b7fee9936f05..89bb77545757 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -243,7 +243,8 @@ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	if (r)
+ 		goto bad;
+ 
+-	r = dm_get_device(ti, devname, dm_table_get_mode(ti->table), &fc->dev);
++	r = dm_get_device_ex(ti, devname, dm_table_get_mode(ti->table),
++			     dm_table_is_interposer(ti->table), &fc->dev);
+ 	if (r) {
+ 		ti->error = "Device lookup failed";
+ 		goto bad;
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 92db0f5e7f28..1301b11dd2af 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -51,7 +51,8 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	}
+ 	lc->start = tmp;
+ 
+-	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &lc->dev);
++	ret = dm_get_device_ex(ti, argv[0], dm_table_get_mode(ti->table),
++			       dm_table_is_interposer(ti->table), &lc->dev);
+ 	if (ret) {
+ 		ti->error = "Device lookup failed";
+ 		goto bad;
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index 57882654ffee..32a389ea4eb1 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -554,7 +554,8 @@ static int log_writes_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	atomic_set(&lc->pending_blocks, 0);
+ 
+ 	devname = dm_shift_arg(&as);
+-	ret = dm_get_device(ti, devname, dm_table_get_mode(ti->table), &lc->dev);
++	ret = dm_get_device_ex(ti, devname, dm_table_get_mode(ti->table),
++			       dm_table_is_interposer(ti->table), &lc->dev);
+ 	if (ret) {
+ 		ti->error = "Device lookup failed";
+ 		goto bad;
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 11890db71f3f..eab96db253e1 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -2646,7 +2646,8 @@ static int origin_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto bad_alloc;
+ 	}
+ 
+-	r = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &o->dev);
++	r = dm_get_device_ex(ti, argv[0], dm_table_get_mode(ti->table),
++			     dm_table_is_interposer(ti->table), &o->dev);
+ 	if (r) {
+ 		ti->error = "Cannot get target device";
+ 		goto bad_open;
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index 4f72b6f66c3a..bb0801fe4c63 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -2169,7 +2169,8 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	string = dm_shift_arg(&as);
+ 	if (!string)
+ 		goto bad_arguments;
+-	r = dm_get_device(ti, string, dm_table_get_mode(ti->table), &wc->dev);
++	r = dm_get_device_ex(ti, string, dm_table_get_mode(ti->table),
++			     dm_table_is_interposer(ti->table), &wc->dev);
+ 	if (r) {
+ 		ti->error = "Origin data device lookup failed";
+ 		goto bad;
+-- 
 2.20.1
 
 --
