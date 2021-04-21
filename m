@@ -7,69 +7,68 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7151AC433ED
-	for <dm-devel@archiver.kernel.org>; Wed, 21 Apr 2021 16:46:53 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 65330C433ED
+	for <dm-devel@archiver.kernel.org>; Wed, 21 Apr 2021 16:47:00 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E11F060232
-	for <dm-devel@archiver.kernel.org>; Wed, 21 Apr 2021 16:46:52 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E11F060232
+	by mail.kernel.org (Postfix) with ESMTPS id BA41A6144E
+	for <dm-devel@archiver.kernel.org>; Wed, 21 Apr 2021 16:46:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BA41A6144E
 Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-443-XB3M5eQyPfK6Q97Jc-yoSw-1; Wed, 21 Apr 2021 12:46:48 -0400
-X-MC-Unique: XB3M5eQyPfK6Q97Jc-yoSw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-520-agsN_G6iMp-uI3BLn0pC7g-1; Wed, 21 Apr 2021 12:46:45 -0400
+X-MC-Unique: agsN_G6iMp-uI3BLn0pC7g-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1392A192205F;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 35FCE102C84A;
 	Wed, 21 Apr 2021 16:46:33 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id EC78F6085A;
-	Wed, 21 Apr 2021 16:46:32 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1B1525D747;
+	Wed, 21 Apr 2021 16:46:33 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BE5F81806D1C;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DBC8A44A58;
 	Wed, 21 Apr 2021 16:46:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13LGkUjP013378 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 21 Apr 2021 12:46:30 -0400
+	id 13LGkCG5013333 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 21 Apr 2021 12:46:12 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id A770820FD3BC; Wed, 21 Apr 2021 16:46:30 +0000 (UTC)
+	id C28405F274; Wed, 21 Apr 2021 16:46:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A0CCA20FD3B8
-	for <dm-devel@redhat.com>; Wed, 21 Apr 2021 16:46:28 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 42760858EFF
-	for <dm-devel@redhat.com>; Wed, 21 Apr 2021 16:46:28 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BE169F66BB
+	for <dm-devel@redhat.com>; Wed, 21 Apr 2021 16:46:12 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A2AE0183B3CA
+	for <dm-devel@redhat.com>; Wed, 21 Apr 2021 16:46:12 +0000 (UTC)
 Received: from mx2.veeam.com (mx2.veeam.com [64.129.123.6]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-356-xk2P7MXoOWOcwHK3RsIUYA-1;
-	Wed, 21 Apr 2021 12:46:21 -0400
-X-MC-Unique: xk2P7MXoOWOcwHK3RsIUYA-1
+	relay.mimecast.com with ESMTP id us-mta-547-HUbiXuEOP_OYb91BaxcukA-1;
+	Wed, 21 Apr 2021 12:46:10 -0400
+X-MC-Unique: HUbiXuEOP_OYb91BaxcukA-1
 Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mx2.veeam.com (Postfix) with ESMTPS id 55116424B9;
-	Wed, 21 Apr 2021 12:46:16 -0400 (EDT)
+	by mx2.veeam.com (Postfix) with ESMTPS id D101D424BD;
+	Wed, 21 Apr 2021 12:46:05 -0400 (EDT)
 Received: from prgdevlinuxpatch01.amust.local (172.24.14.5) by
 	prgmbx01.amust.local (172.24.0.171) with Microsoft SMTP Server
 	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	15.2.858.5; Wed, 21 Apr 2021 18:46:00 +0200
+	15.2.858.5; Wed, 21 Apr 2021 18:45:58 +0200
 From: Sergei Shtepa <sergei.shtepa@veeam.com>
 To: Christoph Hellwig <hch@infradead.org>, Hannes Reinecke <hare@suse.de>,
 	Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>,
 	Alexander Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, 
 	<dm-devel@redhat.com>, <linux-fsdevel@vger.kernel.org>,
 	<linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>
-Date: Wed, 21 Apr 2021 19:45:45 +0300
-Message-ID: <1619023545-23431-5-git-send-email-sergei.shtepa@veeam.com>
+Date: Wed, 21 Apr 2021 19:45:44 +0300
+Message-ID: <1619023545-23431-4-git-send-email-sergei.shtepa@veeam.com>
 In-Reply-To: <1619023545-23431-1-git-send-email-sergei.shtepa@veeam.com>
 References: <1619023545-23431-1-git-send-email-sergei.shtepa@veeam.com>
 MIME-Version: 1.0
@@ -87,11 +86,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: pavel.tide@veeam.com, sergei.shtepa@veeam.com
-Subject: [dm-devel] [PATCH v9 4/4] Using dm_get_device_ex() instead of
-	dm_get_device()
+Subject: [dm-devel] [PATCH v9 3/4] Add blk_interposer in DM
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,7 +103,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -113,153 +111,713 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Not every DM target needs the ability to attach via blk_interposer.
-A DM target can attach and detach 'on the fly' only if the DM
-target works as a filter without changing the location of the blocks
-on the block device.
+A new 'DM_INTERPOSE_FLAG' flag allows to specify that a DM target should
+be attached via blk_interposer. This flag defines the value of the
+'interpose' flag in a mapped_device structure. The 'interpose' flag in
+the dm_dev structure indicates which device in the device table is
+attached via blk_interposer.
+
+To safely attach a DM target to blk_interposer, the DM target must be
+fully initialized. Immediately after attaching to blk_interposer,
+the DM device can receive bio requests and those must be processed.
+Therefore, the connection is performed in the __dm_resume() function.
+
+To safely detach a DM target from blk_interposer, the DM target must be
+suspended. Only in this case we can be sure that all DM target requests
+have been processed. Therefore, detaching from blk_interposer is called
+from the __dm_suspend() function. However, we must lock the request queue
+from the original device before calling __dm_suspend(). That is why
+the locking of the queue of the original device is made as a separate
+function.
+
+A new dm_get_device_ex() function can be used instead of
+dm_get_device() if we need to specify the 'interposer' flag for dm_dev.
+The old dm_get_device() function sets the 'interposer' flag to false.
+It allows to not change every DM target. At the same time, the new
+function allows to explicitly specify which block devices and in which
+DM targets can be attached via blk_interposer.
 
 Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
 ---
- drivers/md/dm-cache-target.c | 5 +++--
- drivers/md/dm-delay.c        | 3 ++-
- drivers/md/dm-dust.c         | 3 ++-
- drivers/md/dm-era-target.c   | 4 +++-
- drivers/md/dm-flakey.c       | 3 ++-
- drivers/md/dm-linear.c       | 3 ++-
- drivers/md/dm-log-writes.c   | 3 ++-
- drivers/md/dm-snap.c         | 3 ++-
- drivers/md/dm-writecache.c   | 3 ++-
- 9 files changed, 20 insertions(+), 10 deletions(-)
+ drivers/md/dm-core.h          |   1 +
+ drivers/md/dm-ioctl.c         |  59 ++++++++-
+ drivers/md/dm-table.c         |  21 ++-
+ drivers/md/dm.c               | 242 ++++++++++++++++++++++++++++++----
+ drivers/md/dm.h               |   8 +-
+ include/linux/device-mapper.h |  11 +-
+ include/uapi/linux/dm-ioctl.h |   6 +
+ 7 files changed, 309 insertions(+), 39 deletions(-)
 
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 541c45027cc8..885a6fde1b9b 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -2140,8 +2140,9 @@ static int parse_origin_dev(struct cache_args *ca, struct dm_arg_set *as,
- 	if (!at_least_one_arg(as, error))
- 		return -EINVAL;
+diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
+index 5953ff2bd260..431b82461eae 100644
+--- a/drivers/md/dm-core.h
++++ b/drivers/md/dm-core.h
+@@ -112,6 +112,7 @@ struct mapped_device {
+ 	/* for blk-mq request-based DM support */
+ 	struct blk_mq_tag_set *tag_set;
+ 	bool init_tio_pdu:1;
++	bool interpose:1;
  
--	r = dm_get_device(ca->ti, dm_shift_arg(as), FMODE_READ | FMODE_WRITE,
--			  &ca->origin_dev);
-+	r = dm_get_device_ex(ca->ti, dm_shift_arg(as), FMODE_READ | FMODE_WRITE,
-+			     dm_table_is_interposer(ca->ti->table),
-+			     &ca->origin_dev);
- 	if (r) {
- 		*error = "Error opening origin device";
+ 	struct srcu_struct io_barrier;
+ };
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index 1ca65b434f1f..cd36fa3cb627 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -301,6 +301,24 @@ static void dm_hash_remove_all(bool keep_open_devices, bool mark_deferred, bool
+ 				continue;
+ 			}
+ 
++			if (md->interpose) {
++				int r;
++
++				/*
++				 * Interposer should be suspended and detached
++				 * from the interposed block device.
++				 */
++				r = dm_suspend(md, DM_SUSPEND_DETACH_IP_FLAG |
++						   DM_SUSPEND_LOCKFS_FLAG);
++				if (r) {
++					DMERR("%s: unable to suspend and detach interposer",
++						dm_device_name(md));
++					dm_put(md);
++					dev_skipped++;
++					continue;
++				}
++			}
++
+ 			t = __hash_remove(hc);
+ 
+ 			up_write(&_hash_lock);
+@@ -732,6 +750,9 @@ static void __dev_status(struct mapped_device *md, struct dm_ioctl *param)
+ 	if (dm_test_deferred_remove_flag(md))
+ 		param->flags |= DM_DEFERRED_REMOVE;
+ 
++	if (dm_interposer_attached(md))
++		param->flags |= DM_INTERPOSE_FLAG;
++
+ 	param->dev = huge_encode_dev(disk_devt(disk));
+ 
+ 	/*
+@@ -893,6 +914,21 @@ static int dev_remove(struct file *filp, struct dm_ioctl *param, size_t param_si
+ 		dm_put(md);
  		return r;
-diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
-index 2628a832787b..1b051a023a5d 100644
---- a/drivers/md/dm-delay.c
-+++ b/drivers/md/dm-delay.c
-@@ -153,7 +153,8 @@ static int delay_class_ctr(struct dm_target *ti, struct delay_class *c, char **a
- 		return -EINVAL;
  	}
++	if (md->interpose) {
++		/*
++		 * Interposer should be suspended and detached from
++		 * the interposed block device.
++		 */
++		r = dm_suspend(md, DM_SUSPEND_DETACH_IP_FLAG |
++				   DM_SUSPEND_LOCKFS_FLAG);
++		if (r) {
++			DMERR("%s: unable to suspend and detach interposer",
++				dm_device_name(md));
++			up_write(&_hash_lock);
++			dm_put(md);
++			return r;
++		}
++	}
  
--	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &c->dev);
-+	ret = dm_get_device_ex(ti, argv[0], dm_table_get_mode(ti->table),
-+			       dm_table_is_interposer(ti->table), &c->dev);
- 	if (ret) {
- 		ti->error = "Device lookup failed";
- 		return ret;
-diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
-index cbe1058ee589..5eb930ea8034 100644
---- a/drivers/md/dm-dust.c
-+++ b/drivers/md/dm-dust.c
-@@ -366,7 +366,8 @@ static int dust_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		return -ENOMEM;
- 	}
+ 	t = __hash_remove(hc);
+ 	up_write(&_hash_lock);
+@@ -1063,8 +1099,18 @@ static int do_resume(struct dm_ioctl *param)
+ 			suspend_flags &= ~DM_SUSPEND_LOCKFS_FLAG;
+ 		if (param->flags & DM_NOFLUSH_FLAG)
+ 			suspend_flags |= DM_SUSPEND_NOFLUSH_FLAG;
+-		if (!dm_suspended_md(md))
+-			dm_suspend(md, suspend_flags);
++
++		if (md->interpose) {
++			/*
++			 * Interposer should be detached before loading
++			 * a new table
++			 */
++			if (!dm_suspended_md(md) || dm_interposer_attached(md))
++				dm_suspend(md, suspend_flags | DM_SUSPEND_DETACH_IP_FLAG);
++		} else {
++			if (!dm_suspended_md(md))
++				dm_suspend(md, suspend_flags);
++		}
  
--	if (dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &dd->dev)) {
-+	if (dm_get_device_ex(ti, argv[0], dm_table_get_mode(ti->table),
-+			     dm_table_is_interposer(ti->table), &dd->dev)) {
- 		ti->error = "Device lookup failed";
- 		kfree(dd);
- 		return -EINVAL;
-diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
-index d9ac7372108c..db8791981605 100644
---- a/drivers/md/dm-era-target.c
-+++ b/drivers/md/dm-era-target.c
-@@ -1462,7 +1462,9 @@ static int era_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 		return -EINVAL;
- 	}
+ 		old_map = dm_swap_table(md, new_map);
+ 		if (IS_ERR(old_map)) {
+@@ -1267,6 +1313,11 @@ static inline fmode_t get_mode(struct dm_ioctl *param)
+ 	return mode;
+ }
  
--	r = dm_get_device(ti, argv[1], FMODE_READ | FMODE_WRITE, &era->origin_dev);
-+	r = dm_get_device_ex(ti, argv[1], FMODE_READ | FMODE_WRITE,
-+			     dm_table_is_interposer(ti->table),
-+			     &era->origin_dev);
- 	if (r) {
- 		ti->error = "Error opening data device";
- 		era_destroy(era);
-diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-index b7fee9936f05..89bb77545757 100644
---- a/drivers/md/dm-flakey.c
-+++ b/drivers/md/dm-flakey.c
-@@ -243,7 +243,8 @@ static int flakey_ctr(struct dm_target *ti, unsigned int argc, char **argv)
++static inline bool get_interpose_flag(struct dm_ioctl *param)
++{
++	return (param->flags & DM_INTERPOSE_FLAG);
++}
++
+ static int next_target(struct dm_target_spec *last, uint32_t next, void *end,
+ 		       struct dm_target_spec **spec, char **target_params)
+ {
+@@ -1338,6 +1389,8 @@ static int table_load(struct file *filp, struct dm_ioctl *param, size_t param_si
+ 	if (!md)
+ 		return -ENXIO;
+ 
++	md->interpose = get_interpose_flag(param);
++
+ 	r = dm_table_create(&t, get_mode(param), param->target_count, md);
  	if (r)
- 		goto bad;
+ 		goto err;
+@@ -2098,6 +2151,8 @@ int __init dm_early_create(struct dm_ioctl *dmi,
+ 	if (r)
+ 		goto err_hash_remove;
  
--	r = dm_get_device(ti, devname, dm_table_get_mode(ti->table), &fc->dev);
-+	r = dm_get_device_ex(ti, devname, dm_table_get_mode(ti->table),
-+			     dm_table_is_interposer(ti->table), &fc->dev);
- 	if (r) {
- 		ti->error = "Device lookup failed";
- 		goto bad;
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 92db0f5e7f28..1301b11dd2af 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -51,7 +51,8 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
++	md->interpose = get_interpose_flag(dmi);
++
+ 	/* add targets */
+ 	for (i = 0; i < dmi->target_count; i++) {
+ 		r = dm_table_add_target(t, spec_array[i]->target_type,
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index e5f0f1703c5d..cc6b852cc967 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -327,14 +327,14 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+  * it is accessed concurrently.
+  */
+ static int upgrade_mode(struct dm_dev_internal *dd, fmode_t new_mode,
+-			struct mapped_device *md)
++			bool interpose, struct mapped_device *md)
+ {
+ 	int r;
+ 	struct dm_dev *old_dev, *new_dev;
+ 
+ 	old_dev = dd->dm_dev;
+ 
+-	r = dm_get_table_device(md, dd->dm_dev->bdev->bd_dev,
++	r = dm_get_table_device(md, dd->dm_dev->bdev->bd_dev, interpose,
+ 				dd->dm_dev->mode | new_mode, &new_dev);
+ 	if (r)
+ 		return r;
+@@ -362,8 +362,8 @@ EXPORT_SYMBOL_GPL(dm_get_dev_t);
+  * Add a device to the list, or just increment the usage count if
+  * it's already present.
+  */
+-int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+-		  struct dm_dev **result)
++int dm_get_device_ex(struct dm_target *ti, const char *path, fmode_t mode,
++		     bool interpose, struct dm_dev **result)
+ {
+ 	int r;
+ 	dev_t dev;
+@@ -391,7 +391,8 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 		if (!dd)
+ 			return -ENOMEM;
+ 
+-		if ((r = dm_get_table_device(t->md, dev, mode, &dd->dm_dev))) {
++		r = dm_get_table_device(t->md, dev, mode, interpose, &dd->dm_dev);
++		if (r) {
+ 			kfree(dd);
+ 			return r;
+ 		}
+@@ -401,7 +402,7 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 		goto out;
+ 
+ 	} else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
+-		r = upgrade_mode(dd, mode, t->md);
++		r = upgrade_mode(dd, mode, interpose, t->md);
+ 		if (r)
+ 			return r;
  	}
- 	lc->start = tmp;
+@@ -410,7 +411,7 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 	*result = dd->dm_dev;
+ 	return 0;
+ }
+-EXPORT_SYMBOL(dm_get_device);
++EXPORT_SYMBOL(dm_get_device_ex);
  
--	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &lc->dev);
-+	ret = dm_get_device_ex(ti, argv[0], dm_table_get_mode(ti->table),
-+			       dm_table_is_interposer(ti->table), &lc->dev);
- 	if (ret) {
- 		ti->error = "Device lookup failed";
- 		goto bad;
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index 57882654ffee..32a389ea4eb1 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -554,7 +554,8 @@ static int log_writes_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	atomic_set(&lc->pending_blocks, 0);
+ static int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+ 				sector_t start, sector_t len, void *data)
+@@ -2206,6 +2207,12 @@ struct mapped_device *dm_table_get_md(struct dm_table *t)
+ }
+ EXPORT_SYMBOL(dm_table_get_md);
  
- 	devname = dm_shift_arg(&as);
--	ret = dm_get_device(ti, devname, dm_table_get_mode(ti->table), &lc->dev);
-+	ret = dm_get_device_ex(ti, devname, dm_table_get_mode(ti->table),
-+			       dm_table_is_interposer(ti->table), &lc->dev);
- 	if (ret) {
- 		ti->error = "Device lookup failed";
- 		goto bad;
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 11890db71f3f..eab96db253e1 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -2646,7 +2646,8 @@ static int origin_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		goto bad_alloc;
++bool dm_table_is_interposer(struct dm_table *t)
++{
++	return t->md->interpose;
++}
++EXPORT_SYMBOL(dm_table_is_interposer);
++
+ const char *dm_table_device_name(struct dm_table *t)
+ {
+ 	return dm_device_name(t->md);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 3f3be9408afa..818462b46c91 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -149,6 +149,7 @@ EXPORT_SYMBOL_GPL(dm_bio_get_target_bio_nr);
+ #define DMF_DEFERRED_REMOVE 6
+ #define DMF_SUSPENDED_INTERNALLY 7
+ #define DMF_POST_SUSPENDING 8
++#define DMF_INTERPOSER_ATTACHED 9
+ 
+ #define DM_NUMA_NODE NUMA_NO_NODE
+ static int dm_numa_node = DM_NUMA_NODE;
+@@ -757,18 +758,24 @@ static int open_table_device(struct table_device *td, dev_t dev,
+ 			     struct mapped_device *md)
+ {
+ 	struct block_device *bdev;
+-
++	fmode_t mode = td->dm_dev.mode;
++	void *holder = NULL;
+ 	int r;
+ 
+ 	BUG_ON(td->dm_dev.bdev);
+ 
+-	bdev = blkdev_get_by_dev(dev, td->dm_dev.mode | FMODE_EXCL, _dm_claim_ptr);
++	if (!td->dm_dev.interpose) {
++		mode |= FMODE_EXCL;
++		holder = _dm_claim_ptr;
++	}
++
++	bdev = blkdev_get_by_dev(dev, mode, holder);
+ 	if (IS_ERR(bdev))
+ 		return PTR_ERR(bdev);
+ 
+ 	r = bd_link_disk_holder(bdev, dm_disk(md));
+ 	if (r) {
+-		blkdev_put(bdev, td->dm_dev.mode | FMODE_EXCL);
++		blkdev_put(bdev, mode);
+ 		return r;
  	}
  
--	r = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &o->dev);
-+	r = dm_get_device_ex(ti, argv[0], dm_table_get_mode(ti->table),
-+			     dm_table_is_interposer(ti->table), &o->dev);
- 	if (r) {
- 		ti->error = "Cannot get target device";
- 		goto bad_open;
-diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-index 4f72b6f66c3a..bb0801fe4c63 100644
---- a/drivers/md/dm-writecache.c
-+++ b/drivers/md/dm-writecache.c
-@@ -2169,7 +2169,8 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	string = dm_shift_arg(&as);
- 	if (!string)
- 		goto bad_arguments;
--	r = dm_get_device(ti, string, dm_table_get_mode(ti->table), &wc->dev);
-+	r = dm_get_device_ex(ti, string, dm_table_get_mode(ti->table),
-+			     dm_table_is_interposer(ti->table), &wc->dev);
- 	if (r) {
- 		ti->error = "Origin data device lookup failed";
- 		goto bad;
+@@ -782,11 +789,16 @@ static int open_table_device(struct table_device *td, dev_t dev,
+  */
+ static void close_table_device(struct table_device *td, struct mapped_device *md)
+ {
++	fmode_t mode = td->dm_dev.mode;
++
+ 	if (!td->dm_dev.bdev)
+ 		return;
+ 
+ 	bd_unlink_disk_holder(td->dm_dev.bdev, dm_disk(md));
+-	blkdev_put(td->dm_dev.bdev, td->dm_dev.mode | FMODE_EXCL);
++	if (!td->dm_dev.interpose)
++		mode |= FMODE_EXCL;
++	blkdev_put(td->dm_dev.bdev, mode);
++
+ 	put_dax(td->dm_dev.dax_dev);
+ 	td->dm_dev.bdev = NULL;
+ 	td->dm_dev.dax_dev = NULL;
+@@ -805,7 +817,7 @@ static struct table_device *find_table_device(struct list_head *l, dev_t dev,
+ }
+ 
+ int dm_get_table_device(struct mapped_device *md, dev_t dev, fmode_t mode,
+-			struct dm_dev **result)
++			bool interpose, struct dm_dev **result)
+ {
+ 	int r;
+ 	struct table_device *td;
+@@ -821,6 +833,7 @@ int dm_get_table_device(struct mapped_device *md, dev_t dev, fmode_t mode,
+ 
+ 		td->dm_dev.mode = mode;
+ 		td->dm_dev.bdev = NULL;
++		td->dm_dev.interpose = interpose;
+ 
+ 		if ((r = open_table_device(td, dev, md))) {
+ 			mutex_unlock(&md->table_devices_lock);
+@@ -1696,6 +1709,13 @@ static blk_qc_t dm_submit_bio(struct bio *bio)
+ 		goto out;
+ 	}
+ 
++	/*
++	 * If md is an interposer, then we must set the BIO_INTERPOSE flag
++	 * so that the request is not re-interposed.
++	 */
++	if (md->interpose)
++		bio_set_flag(bio, BIO_INTERPOSED);
++
+ 	/* If suspended, queue this IO for later */
+ 	if (unlikely(test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags))) {
+ 		if (bio->bi_opf & REQ_NOWAIT)
+@@ -2453,26 +2473,50 @@ struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
+  * Functions to lock and unlock any filesystem running on the
+  * device.
+  */
+-static int lock_fs(struct mapped_device *md)
++static int lock_bdev_fs(struct mapped_device *md, struct block_device *bdev)
+ {
+ 	int r;
+ 
+ 	WARN_ON(test_bit(DMF_FROZEN, &md->flags));
+ 
+-	r = freeze_bdev(md->disk->part0);
++	r = freeze_bdev(bdev);
+ 	if (!r)
+ 		set_bit(DMF_FROZEN, &md->flags);
+ 	return r;
+ }
+ 
+-static void unlock_fs(struct mapped_device *md)
++static void unlock_bdev_fs(struct mapped_device *md, struct block_device *bdev)
+ {
+ 	if (!test_bit(DMF_FROZEN, &md->flags))
+ 		return;
+-	thaw_bdev(md->disk->part0);
++	thaw_bdev(bdev);
+ 	clear_bit(DMF_FROZEN, &md->flags);
+ }
+ 
++static inline int lock_fs(struct mapped_device *md)
++{
++	return lock_bdev_fs(md, md->disk->part0);
++}
++
++static inline void unlock_fs(struct mapped_device *md)
++{
++	unlock_bdev_fs(md, md->disk->part0);
++}
++
++static inline struct block_device *get_interposed_bdev(struct dm_table *t)
++{
++	struct dm_dev_internal *dd;
++
++	/*
++	 * For interposer should be only one device in dm table
++	 */
++	list_for_each_entry(dd, dm_table_get_devices(t), list)
++		if (dd->dm_dev->interpose)
++			return bdgrab(dd->dm_dev->bdev);
++
++	return NULL;
++}
++
+ /*
+  * @suspend_flags: DM_SUSPEND_LOCKFS_FLAG and/or DM_SUSPEND_NOFLUSH_FLAG
+  * @task_state: e.g. TASK_INTERRUPTIBLE or TASK_UNINTERRUPTIBLE
+@@ -2488,7 +2532,10 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
+ {
+ 	bool do_lockfs = suspend_flags & DM_SUSPEND_LOCKFS_FLAG;
+ 	bool noflush = suspend_flags & DM_SUSPEND_NOFLUSH_FLAG;
+-	int r;
++	bool detach_ip = suspend_flags & DM_SUSPEND_DETACH_IP_FLAG
++			 && md->interpose;
++	struct block_device *original_bdev = NULL;
++	int r = 0;
+ 
+ 	lockdep_assert_held(&md->suspend_lock);
+ 
+@@ -2507,18 +2554,50 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
+ 	 */
+ 	dm_table_presuspend_targets(map);
+ 
++	if (!md->interpose) {
++		/*
++		 * Flush I/O to the device.
++		 * Any I/O submitted after lock_fs() may not be flushed.
++		 * noflush takes precedence over do_lockfs.
++		 * (lock_fs() flushes I/Os and waits for them to complete.)
++		 */
++		if (!noflush && do_lockfs)
++			r = lock_fs(md);
++	} else if (map) {
++		/*
++		 * Interposer should not lock mapped device, but
++		 * should freeze interposed device and lock it.
++		 */
++		original_bdev = get_interposed_bdev(map);
++		if (!original_bdev) {
++			r = -EINVAL;
++			DMERR("%s: interposer cannot get interposed device from table",
++				dm_device_name(md));
++			goto presuspend_undo;
++		}
++
++		if (!noflush && do_lockfs) {
++			r = lock_bdev_fs(md, original_bdev);
++			if (r) {
++				DMERR("%s: interposer cannot freeze interposed device",
++					dm_device_name(md));
++				goto presuspend_undo;
++			}
++		}
++
++		bdev_interposer_lock(original_bdev);
++	}
+ 	/*
+-	 * Flush I/O to the device.
+-	 * Any I/O submitted after lock_fs() may not be flushed.
+-	 * noflush takes precedence over do_lockfs.
+-	 * (lock_fs() flushes I/Os and waits for them to complete.)
++	 * If map is not initialized, then we cannot suspend
++	 * interposed device
+ 	 */
+-	if (!noflush && do_lockfs) {
+-		r = lock_fs(md);
+-		if (r) {
+-			dm_table_presuspend_undo_targets(map);
+-			return r;
+-		}
++
++presuspend_undo:
++	if (r) {
++		if (original_bdev)
++			bdput(original_bdev);
++		dm_table_presuspend_undo_targets(map);
++		return r;
+ 	}
+ 
+ 	/*
+@@ -2559,14 +2638,40 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
+ 	if (map)
+ 		synchronize_srcu(&md->io_barrier);
+ 
+-	/* were we interrupted ? */
+-	if (r < 0) {
++	if (r == 0) { /* the wait ended successfully */
++		if (md->interpose && original_bdev) {
++			if (detach_ip) {
++				bdev_interposer_detach(original_bdev);
++				clear_bit(DMF_INTERPOSER_ATTACHED, &md->flags);
++			}
++
++			bdev_interposer_unlock(original_bdev);
++
++			if (detach_ip) {
++				/*
++				 * If th interposer is detached, then there is
++				 * no reason in keeping the queue of the
++				 * interposed device stopped.
++				 */
++				unlock_bdev_fs(md, original_bdev);
++			}
++
++			bdput(original_bdev);
++		}
++	} else { /* were we interrupted ? */
+ 		dm_queue_flush(md);
+ 
+ 		if (dm_request_based(md))
+ 			dm_start_queue(md->queue);
+ 
+-		unlock_fs(md);
++		if (md->interpose && original_bdev) {
++			bdev_interposer_unlock(original_bdev);
++			unlock_bdev_fs(md, original_bdev);
++
++			bdput(original_bdev);
++		} else
++			unlock_fs(md);
++
+ 		dm_table_presuspend_undo_targets(map);
+ 		/* pushback list is already flushed, so skip flush */
+ 	}
+@@ -2574,6 +2679,47 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
+ 	return r;
+ }
+ 
++static struct block_device *__dm_get_original_bdev(struct mapped_device *md)
++{
++	struct dm_table *map;
++	struct block_device *original_bdev = NULL;
++
++	map = rcu_dereference_protected(md->map,
++					lockdep_is_held(&md->suspend_lock));
++	if (!map) {
++		DMERR("%s: interposers table is not initialized",
++			dm_device_name(md));
++		return ERR_PTR(-EINVAL);
++	}
++
++	original_bdev = get_interposed_bdev(map);
++	if (!original_bdev) {
++		DMERR("%s: interposer cannot get interposed device from table",
++			dm_device_name(md));
++		return ERR_PTR(-EINVAL);
++	}
++
++	return original_bdev;
++}
++
++static int __dm_detach_interposer(struct mapped_device *md)
++{
++	struct block_device *original_bdev;
++
++	original_bdev = __dm_get_original_bdev(md);
++	if (IS_ERR(original_bdev))
++		return PTR_ERR(original_bdev);
++
++	bdev_interposer_lock(original_bdev);
++
++	bdev_interposer_detach(original_bdev);
++	clear_bit(DMF_INTERPOSER_ATTACHED, &md->flags);
++
++	bdev_interposer_unlock(original_bdev);
++
++	bdput(original_bdev);
++	return 0;
++}
+ /*
+  * We need to be able to change a mapping table under a mounted
+  * filesystem.  For example we might want to move some data in
+@@ -2599,7 +2745,17 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+ 	mutex_lock_nested(&md->suspend_lock, SINGLE_DEPTH_NESTING);
+ 
+ 	if (dm_suspended_md(md)) {
+-		r = -EINVAL;
++		if (suspend_flags & DM_SUSPEND_DETACH_IP_FLAG) {
++			/*
++			 * If mapped device is suspended, but should be
++			 * detached we just detach without freeze fs on
++			 * interposed device.
++			 */
++			if (dm_interposer_attached(md))
++				r = __dm_detach_interposer(md);
++		} else
++			r = -EINVAL;
++
+ 		goto out_unlock;
+ 	}
+ 
+@@ -2629,8 +2785,11 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+ 
+ static int __dm_resume(struct mapped_device *md, struct dm_table *map)
+ {
++	int r = 0;
++	struct block_device *original_bdev;
++
+ 	if (map) {
+-		int r = dm_table_resume_targets(map);
++		r = dm_table_resume_targets(map);
+ 		if (r)
+ 			return r;
+ 	}
+@@ -2645,9 +2804,33 @@ static int __dm_resume(struct mapped_device *md, struct dm_table *map)
+ 	if (dm_request_based(md))
+ 		dm_start_queue(md->queue);
+ 
+-	unlock_fs(md);
++	if (!md->interpose) {
++		unlock_fs(md);
++		return 0;
++	}
+ 
+-	return 0;
++	original_bdev = __dm_get_original_bdev(md);
++	if (IS_ERR(original_bdev))
++		return PTR_ERR(original_bdev);
++
++	if (dm_interposer_attached(md)) {
++		bdev_interposer_lock(original_bdev);
++
++		r = bdev_interposer_attach(original_bdev, dm_disk(md)->part0);
++		if (r)
++			DMERR("%s: failed to attach interposer",
++				dm_device_name(md));
++		else
++			set_bit(DMF_INTERPOSER_ATTACHED, &md->flags);
++
++		bdev_interposer_unlock(original_bdev);
++	}
++
++	unlock_bdev_fs(md, original_bdev);
++
++	bdput(original_bdev);
++
++	return r;
+ }
+ 
+ int dm_resume(struct mapped_device *md)
+@@ -2880,6 +3063,11 @@ int dm_suspended_md(struct mapped_device *md)
+ 	return test_bit(DMF_SUSPENDED, &md->flags);
+ }
+ 
++int dm_interposer_attached(struct mapped_device *md)
++{
++	return test_bit(DMF_INTERPOSER_ATTACHED, &md->flags);
++}
++
+ static int dm_post_suspending_md(struct mapped_device *md)
+ {
+ 	return test_bit(DMF_POST_SUSPENDING, &md->flags);
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index b441ad772c18..35f71e48abd1 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -28,6 +28,7 @@
+  */
+ #define DM_SUSPEND_LOCKFS_FLAG		(1 << 0)
+ #define DM_SUSPEND_NOFLUSH_FLAG		(1 << 1)
++#define DM_SUSPEND_DETACH_IP_FLAG	(1 << 2)
+ 
+ /*
+  * Status feature flags
+@@ -122,6 +123,11 @@ int dm_deleting_md(struct mapped_device *md);
+  */
+ int dm_suspended_md(struct mapped_device *md);
+ 
++/*
++ * Is the interposer of this mapped_device is attached?
++ */
++int dm_interposer_attached(struct mapped_device *md);
++
+ /*
+  * Internal suspend and resume methods.
+  */
+@@ -180,7 +186,7 @@ int dm_lock_for_deletion(struct mapped_device *md, bool mark_deferred, bool only
+ int dm_cancel_deferred_remove(struct mapped_device *md);
+ int dm_request_based(struct mapped_device *md);
+ int dm_get_table_device(struct mapped_device *md, dev_t dev, fmode_t mode,
+-			struct dm_dev **result);
++			bool interpose, struct dm_dev **result);
+ void dm_put_table_device(struct mapped_device *md, struct dm_dev *d);
+ 
+ int dm_kobject_uevent(struct mapped_device *md, enum kobject_action action,
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 5c641f930caf..aa94c7e10ecc 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -159,6 +159,7 @@ struct dm_dev {
+ 	struct block_device *bdev;
+ 	struct dax_device *dax_dev;
+ 	fmode_t mode;
++	bool interpose;
+ 	char name[16];
+ };
+ 
+@@ -168,8 +169,13 @@ dev_t dm_get_dev_t(const char *path);
+  * Constructors should call these functions to ensure destination devices
+  * are opened/closed correctly.
+  */
+-int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+-		  struct dm_dev **result);
++int dm_get_device_ex(struct dm_target *ti, const char *path, fmode_t mode,
++		     bool interpose, struct dm_dev **result);
++static inline int dm_get_device(struct dm_target *ti, const char *path,
++				fmode_t mode, struct dm_dev **result)
++{
++	return dm_get_device_ex(ti, path, mode, false, result);
++};
+ void dm_put_device(struct dm_target *ti, struct dm_dev *d);
+ 
+ /*
+@@ -550,6 +556,7 @@ sector_t dm_table_get_size(struct dm_table *t);
+ unsigned int dm_table_get_num_targets(struct dm_table *t);
+ fmode_t dm_table_get_mode(struct dm_table *t);
+ struct mapped_device *dm_table_get_md(struct dm_table *t);
++bool dm_table_is_interposer(struct dm_table *t);
+ const char *dm_table_device_name(struct dm_table *t);
+ 
+ /*
+diff --git a/include/uapi/linux/dm-ioctl.h b/include/uapi/linux/dm-ioctl.h
+index fcff6669137b..7f88f3d2d852 100644
+--- a/include/uapi/linux/dm-ioctl.h
++++ b/include/uapi/linux/dm-ioctl.h
+@@ -362,4 +362,10 @@ enum {
+  */
+ #define DM_INTERNAL_SUSPEND_FLAG	(1 << 18) /* Out */
+ 
++/*
++ * If set, the underlying device should open without FMODE_EXCL
++ * and attach mapped device via blk_interposer.
++ */
++#define DM_INTERPOSE_FLAG		(1 << 19) /* In/Out */
++
+ #endif				/* _LINUX_DM_IOCTL_H */
 -- 
 2.20.1
 
