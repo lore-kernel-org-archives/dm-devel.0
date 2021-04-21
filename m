@@ -2,80 +2,83 @@ Return-Path: <SRS0=/8Iv=JS=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4485EC433B4
-	for <dm-devel@archiver.kernel.org>; Wed, 21 Apr 2021 07:30:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BB472C433ED
+	for <dm-devel@archiver.kernel.org>; Wed, 21 Apr 2021 16:46:41 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 8F8276142B
-	for <dm-devel@archiver.kernel.org>; Wed, 21 Apr 2021 07:30:30 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 8F8276142B
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
+	by mail.kernel.org (Postfix) with ESMTPS id 2662661448
+	for <dm-devel@archiver.kernel.org>; Wed, 21 Apr 2021 16:46:41 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2662661448
+Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=veeam.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-140-IbLYorgOPwek4SxLTl2Jkw-1; Wed, 21 Apr 2021 03:30:24 -0400
-X-MC-Unique: IbLYorgOPwek4SxLTl2Jkw-1
+ us-mta-258-12pXaamVMN2ncV5kYHxdnA-1; Wed, 21 Apr 2021 12:46:37 -0400
+X-MC-Unique: 12pXaamVMN2ncV5kYHxdnA-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E9B4619251A8;
-	Wed, 21 Apr 2021 07:30:20 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 766385D6A1;
-	Wed, 21 Apr 2021 07:30:20 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 88F0118BA297;
+	Wed, 21 Apr 2021 16:46:15 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DDA1A5D747;
+	Wed, 21 Apr 2021 16:46:13 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 327FB44A58;
-	Wed, 21 Apr 2021 07:30:20 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 09C361806D1A;
+	Wed, 21 Apr 2021 16:46:13 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13K7Pbr2029984 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 20 Apr 2021 03:25:37 -0400
+	id 13LGkAsG013321 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 21 Apr 2021 12:46:10 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1DE1A20389F0; Tue, 20 Apr 2021 07:25:37 +0000 (UTC)
+	id 83CC8219AAC8; Wed, 21 Apr 2021 16:46:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1845B200FA52
-	for <dm-devel@redhat.com>; Tue, 20 Apr 2021 07:25:34 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7E2A621993E2
+	for <dm-devel@redhat.com>; Wed, 21 Apr 2021 16:46:07 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9943B85A5A8
-	for <dm-devel@redhat.com>; Tue, 20 Apr 2021 07:25:34 +0000 (UTC)
-Received: from out30-57.freemail.mail.aliyun.com
-	(out30-57.freemail.mail.aliyun.com [115.124.30.57]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-549-qS4MinsyMQSzQqejZFtz6A-1;
-	Tue, 20 Apr 2021 03:25:27 -0400
-X-MC-Unique: qS4MinsyMQSzQqejZFtz6A-1
-X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R481e4; CH=green; DM=||false|;
-	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04400;
-	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=5; SR=0;
-	TI=SMTPD_---0UWBJ9g1_1618903521
-Received: from admindeMacBook-Pro-2.local(mailfrom:jefflexu@linux.alibaba.com
-	fp:SMTPD_---0UWBJ9g1_1618903521) by smtp.aliyun-inc.com(127.0.0.1);
-	Tue, 20 Apr 2021 15:25:22 +0800
-To: Ming Lei <ming.lei@redhat.com>
-References: <20210401021927.343727-12-ming.lei@redhat.com>
-	<20210416080037.26335-1-jefflexu@linux.alibaba.com>
-	<YHlTtVtTEBpxa8Gh@T590>
-	<1fb6e15e-fb4d-a2bf-9f65-2ae2aa15a8a2@linux.alibaba.com>
-	<YHzpJsOYJL/AGC7k@T590>
-	<c0085cb4-2396-b0c2-c880-c6fa8fb7e491@linux.alibaba.com>
-	<YH2HUs8FV0pNDluk@T590>
-From: JeffleXu <jefflexu@linux.alibaba.com>
-Message-ID: <0b762419-4c46-1e31-d97e-4ce2abc6a91c@linux.alibaba.com>
-Date: Tue, 20 Apr 2021 15:25:21 +0800
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
-	Gecko/20100101 Thunderbird/78.7.1
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0191A80D643
+	for <dm-devel@redhat.com>; Wed, 21 Apr 2021 16:46:07 +0000 (UTC)
+Received: from mx2.veeam.com (mx2.veeam.com [64.129.123.6]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-326-GShat291PUWyJdbgXui8LA-1;
+	Wed, 21 Apr 2021 12:46:02 -0400
+X-MC-Unique: GShat291PUWyJdbgXui8LA-1
+Received: from mail.veeam.com (prgmbx01.amust.local [172.24.0.171])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mx2.veeam.com (Postfix) with ESMTPS id 0FDFA424B9;
+	Wed, 21 Apr 2021 12:45:59 -0400 (EDT)
+Received: from prgdevlinuxpatch01.amust.local (172.24.14.5) by
+	prgmbx01.amust.local (172.24.0.171) with Microsoft SMTP Server
+	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	15.2.858.5; Wed, 21 Apr 2021 18:45:56 +0200
+From: Sergei Shtepa <sergei.shtepa@veeam.com>
+To: Christoph Hellwig <hch@infradead.org>, Hannes Reinecke <hare@suse.de>,
+	Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>,
+	Alexander Viro <viro@zeniv.linux.org.uk>, Jens Axboe <axboe@kernel.dk>, 
+	<dm-devel@redhat.com>, <linux-fsdevel@vger.kernel.org>,
+	<linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>
+Date: Wed, 21 Apr 2021 19:45:42 +0300
+Message-ID: <1619023545-23431-2-git-send-email-sergei.shtepa@veeam.com>
+In-Reply-To: <1619023545-23431-1-git-send-email-sergei.shtepa@veeam.com>
+References: <1619023545-23431-1-git-send-email-sergei.shtepa@veeam.com>
 MIME-Version: 1.0
-In-Reply-To: <YH2HUs8FV0pNDluk@T590>
+X-Originating-IP: [172.24.14.5]
+X-ClientProxiedBy: prgmbx02.amust.local (172.24.0.172) To prgmbx01.amust.local
+	(172.24.0.171)
+X-EsetResult: clean, is OK
+X-EsetId: 37303A29D2A50B59677566
+X-Veeam-MMEX: True
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -84,12 +87,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Wed, 21 Apr 2021 03:27:41 -0400
-Cc: axboe@kernel.dk, linux-block@vger.kernel.org, dm-devel@redhat.com,
-	snitzer@redhat.com
-Subject: Re: [dm-devel] [PATCH] block: introduce QUEUE_FLAG_POLL_CAP flag
+Cc: pavel.tide@veeam.com, sergei.shtepa@veeam.com
+Subject: [dm-devel] [PATCH v9 1/4] Adds blk_interposer
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -108,103 +109,178 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+Additional fields were added in the block_device structure:
+bd_interposer and bd_interposer_lock. The bd_interposer field contains
+a pointer to an interposer block device. bd_interposer_lock is a lock
+which allows to safely attach and detach the interposer device.
 
+New functions bdev_interposer_attach() and bdev_interposer_detach()
+allow to attach and detach an interposer device. But first it is
+required to lock the processing of bio requests by the block device
+with bdev_interposer_lock() function.
 
-On 4/19/21 9:36 PM, Ming Lei wrote:
-> On Mon, Apr 19, 2021 at 01:40:21PM +0800, JeffleXu wrote:
->>
->>
->> On 4/19/21 10:21 AM, Ming Lei wrote:
->>> On Sat, Apr 17, 2021 at 10:06:53PM +0800, JeffleXu wrote:
->>>>
->>>>
->>>> On 4/16/21 5:07 PM, Ming Lei wrote:
->>>>> On Fri, Apr 16, 2021 at 04:00:37PM +0800, Jeffle Xu wrote:
->>>>>> Hi,
->>>>>> How about this patch to remove the extra poll_capable() method?
->>>>>>
->>>>>> And the following 'dm: support IO polling for bio-based dm device' needs
->>>>>> following change.
->>>>>>
->>>>>> ```
->>>>>> +       /*
->>>>>> +        * Check for request-based device is remained to
->>>>>> +        * dm_mq_init_request_queue()->blk_mq_init_allocated_queue().
->>>>>> +        * For bio-based device, only set QUEUE_FLAG_POLL when all underlying
->>>>>> +        * devices supporting polling.
->>>>>> +        */
->>>>>> +       if (__table_type_bio_based(t->type)) {
->>>>>> +               if (dm_table_supports_poll(t)) {
->>>>>> +                       blk_queue_flag_set(QUEUE_FLAG_POLL_CAP, q);
->>>>>> +                       blk_queue_flag_set(QUEUE_FLAG_POLL, q);
->>>>>> +               }
->>>>>> +               else {
->>>>>> +                       blk_queue_flag_clear(QUEUE_FLAG_POLL, q);
->>>>>> +                       blk_queue_flag_clear(QUEUE_FLAG_POLL_CAP, q);
->>>>>> +               }
->>>>>> +       }
->>>>>> ```
->>>>>
->>>>> Frankly speaking, I don't see any value of using QUEUE_FLAG_POLL_CAP for
->>>>> DM, and the result is basically subset of treating DM as always being capable
->>>>> of polling.
->>>>>
->>>>> Also underlying queue change(either limits or flag) won't be propagated
->>>>> to DM/MD automatically. Strictly speaking it doesn't matter if all underlying
->>>>> queues are capable of supporting polling at the exact time of 'write sysfs/poll',
->>>>> cause any of them may change in future.
->>>>>
->>>>> So why not start with the simplest approach(always capable of polling)
->>>>> which does meet normal bio based polling requirement?
->>>>>
->>>>
->>>> I find one scenario where this issue may matter. Consider the scenario
->>>> where HIPRI bios are submitted to DM device though **all** underlying
->>>> devices has been disabled for polling. In this case, a **valid** cookie
->>>> (pid of current submitting process) is still returned. Then if @spin of
->>>> the following blk_poll() is true, blk_poll() will get stuck in dead loop
->>>> because blk_mq_poll() always returns 0, since previously submitted bios
->>>> are all enqueued into IRQ hw queue.
->>>>
->>>> Maybe you need to re-remove the bio from the poll context if the
->>>> returned cookie is BLK_QC_T_NONE?
->>>
->>> It won't be one issue, see blk_bio_poll_preprocess() which is called
->>> from submit_bio_checks(), so any bio's HIPRI will be cleared if the
->>> queue doesn't support POLL, that code does cover underlying bios.
->>
->> Sorry there may be some confusion in my description. Let's discuss in
->> the following scenario: MD/DM advertise QUEUE_FLAG_POLL, though **all**
->> underlying devices are without QUEUE_FLAG_POLL. This scenario is
->> possible, if you want to enable MD/DM's polling without checking the
->> capability of underlying devices.
->>
->> In this case, it seems that REQ_HIPRI is kept for both MD/DM and
->> underlying blk-mq devices. I used to think that REQ_HIPRI will be
->> cleared for underlying blk-mq deivces, but now it seems that REQ_HIPRI
->> of bios submitted to underlying blk-mq deivces won't be cleared, since
->> submit_bio_checks() is only called in the entry of submit_bio(), not in
->> the while() loop of __submit_bio_noacct_ctx(). Though these underlying
->> blk-mq devices don't support IO polling at all, or they all have been
->> disabled for polling, REQ_HIPRI bios are finally submitted down.
->>
->> Or do I miss something?
-> 
-> No matter the loop, the bios are actually submitted to the
-> current->bio_list via submit_bio_noacct() or submit_bio().
-> 'grep -r submit_bio drivers/md' will show you the point.
+The BIO_INTERPOSED flag means that the bio request has been already
+interposed. This flag avoids recursive bio request interception.
 
-Oops. I forgot that. Thanks and sorry for the noise.
+Signed-off-by: Sergei Shtepa <sergei.shtepa@veeam.com>
+---
+ block/genhd.c             | 52 +++++++++++++++++++++++++++++++++++++++
+ fs/block_dev.c            |  3 +++
+ include/linux/blk_types.h |  6 +++++
+ include/linux/blkdev.h    | 32 ++++++++++++++++++++++++
+ 4 files changed, 93 insertions(+)
 
-So if that's the case, it seems that patch 11/12 are not needed anymore.
-
+diff --git a/block/genhd.c b/block/genhd.c
+index 8c8f543572e6..3ec77947b3ba 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -1938,3 +1938,55 @@ static void disk_release_events(struct gendisk *disk)
+ 	WARN_ON_ONCE(disk->ev && disk->ev->block != 1);
+ 	kfree(disk->ev);
+ }
++
++/**
++ * bdev_interposer_attach - Attach an interposer block device to original
++ * @original: original block device
++ * @interposer: interposer block device
++ *
++ * Before attaching an interposer, it is necessary to lock the processing
++ * of bio requests of the original device by calling bdev_interposer_lock().
++ *
++ * The bdev_interposer_detach() function allows to detach the interposer
++ * from the original block device.
++ */
++int bdev_interposer_attach(struct block_device *original,
++			   struct block_device *interposer)
++{
++	struct block_device *bdev;
++
++	WARN_ON(!original);
++	if (original->bd_interposer)
++		return -EBUSY;
++
++	bdev = bdgrab(interposer);
++	if (!bdev)
++		return -ENODEV;
++
++	original->bd_interposer = bdev;
++	return 0;
++}
++EXPORT_SYMBOL_GPL(bdev_interposer_attach);
++
++/**
++ * bdev_interposer_detach - Detach interposer from block device
++ * @original: original block device
++ *
++ * Before detaching an interposer, it is necessary to lock the processing
++ * of bio requests of the original device by calling bdev_interposer_lock().
++ *
++ * The interposer should be attached using the bdev_interposer_attach()
++ * function.
++ */
++void bdev_interposer_detach(struct block_device *original)
++{
++	if (WARN_ON(!original))
++		return;
++
++	if (!original->bd_interposer)
++		return;
++
++	bdput(original->bd_interposer);
++	original->bd_interposer = NULL;
++}
++EXPORT_SYMBOL_GPL(bdev_interposer_detach);
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 09d6f7229db9..a98a56cc634f 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -809,6 +809,7 @@ static void bdev_free_inode(struct inode *inode)
+ {
+ 	struct block_device *bdev = I_BDEV(inode);
+ 
++	percpu_free_rwsem(&bdev->bd_interposer_lock);
+ 	free_percpu(bdev->bd_stats);
+ 	kfree(bdev->bd_meta_info);
+ 
+@@ -909,6 +910,8 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
+ 		iput(inode);
+ 		return NULL;
+ 	}
++	bdev->bd_interposer = NULL;
++	percpu_init_rwsem(&bdev->bd_interposer_lock);
+ 	return bdev;
+ }
+ 
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index db026b6ec15a..8e4309eb3b18 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -46,6 +46,11 @@ struct block_device {
+ 	spinlock_t		bd_size_lock; /* for bd_inode->i_size updates */
+ 	struct gendisk *	bd_disk;
+ 	struct backing_dev_info *bd_bdi;
++	/* The interposer allows to redirect bio to another device */
++	struct block_device	*bd_interposer;
++	/* Lock the queue of block device to attach or detach interposer.
++	 * Allows to safely suspend and flush interposer. */
++	struct percpu_rw_semaphore bd_interposer_lock;
+ 
+ 	/* The counter of freeze processes */
+ 	int			bd_fsfreeze_count;
+@@ -304,6 +309,7 @@ enum {
+ 	BIO_CGROUP_ACCT,	/* has been accounted to a cgroup */
+ 	BIO_TRACKED,		/* set if bio goes through the rq_qos path */
+ 	BIO_REMAPPED,
++	BIO_INTERPOSED,		/* bio was reassigned to another block device */
+ 	BIO_FLAG_LAST
+ };
+ 
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 158aefae1030..3e38b0c40b9d 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -2029,4 +2029,36 @@ int fsync_bdev(struct block_device *bdev);
+ int freeze_bdev(struct block_device *bdev);
+ int thaw_bdev(struct block_device *bdev);
+ 
++/**
++ * bdev_interposer_lock - Lock bio processing
++ * @bdev: locking block device
++ *
++ * Lock the bio processing in submit_bio_noacct() for the new requests in the
++ * original block device. Requests from the interposer will not be locked.
++ *
++ * To unlock, use the bdev_interposer_unlock() function.
++ *
++ * This lock should be used to attach/detach the interposer to the device.
++ */
++static inline void bdev_interposer_lock(struct block_device *bdev)
++{
++	percpu_down_write(&bdev->bd_interposer_lock);
++}
++
++/**
++ * bdev_interposer_unlock - Unlock bio processing
++ * @bdev: locked block device
++ *
++ * Unlock the bio processing that was locked by bdev_interposer_lock() function.
++ *
++ * This lock should be used to attach/detach the interposer to the device.
++ */
++static inline void bdev_interposer_unlock(struct block_device *bdev)
++{
++	percpu_up_write(&bdev->bd_interposer_lock);
++}
++
++int bdev_interposer_attach(struct block_device *original,
++			   struct block_device *interposer);
++void bdev_interposer_detach(struct block_device *original);
+ #endif /* _LINUX_BLKDEV_H */
 -- 
-Thanks,
-Jeffle
+2.20.1
 
 --
 dm-devel mailing list
