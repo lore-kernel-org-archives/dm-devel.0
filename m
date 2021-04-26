@@ -2,68 +2,83 @@ Return-Path: <SRS0=wTOt=JX=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E1166C433ED
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Apr 2021 08:00:47 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 63A3CC433B4
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Apr 2021 09:08:13 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 65EF361041
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Apr 2021 08:00:47 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 65EF361041
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id BAC786102A
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Apr 2021 09:08:12 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BAC786102A
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=suse.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1619424046;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=VAiCMM0dzkJIYWqJbT5V08LZA38VzhxUyCk/WTD0Xfs=;
-	b=gIcl6q51O5tTDpFqKJJe6NT6nayfwUhxAf8KaiUd+LIBxm3Y6uL6uEz9vaxAONgIRlVEXb
-	fAxA8TML5G6qApzgHzMrzblp0u4fgZVKI6uXaoBWok57hsioRUE+Qv9e2xXVFMw5c4mlYZ
-	0nLlg5wU4cevKFjzFwqS/he2CBDyvQE=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-556-ZXYLMEnJOiCp6rT1ylRNqg-1; Mon, 26 Apr 2021 04:00:42 -0400
-X-MC-Unique: ZXYLMEnJOiCp6rT1ylRNqg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-107-Ipg-QYuuOhW10cDFxtcB-A-1; Mon, 26 Apr 2021 05:08:08 -0400
+X-MC-Unique: Ipg-QYuuOhW10cDFxtcB-A-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4C8AE1926DA0;
-	Mon, 26 Apr 2021 08:00:38 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7CFF081744F;
+	Mon, 26 Apr 2021 09:08:03 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1B1155C1CF;
-	Mon, 26 Apr 2021 08:00:38 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DDDC319D80;
+	Mon, 26 Apr 2021 09:08:00 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9E1CE44A58;
-	Mon, 26 Apr 2021 08:00:37 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
-	[10.5.11.23])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C11F944A58;
+	Mon, 26 Apr 2021 09:07:58 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13Q80Zbm016041 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 26 Apr 2021 04:00:35 -0400
+	id 13Q95iH1022162 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 26 Apr 2021 05:05:44 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8E3BC1992D; Mon, 26 Apr 2021 08:00:35 +0000 (UTC)
-Received: from T590 (ovpn-13-194.pek2.redhat.com [10.72.13.194])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C7C4A1A86A;
-	Mon, 26 Apr 2021 08:00:19 +0000 (UTC)
-Date: Mon, 26 Apr 2021 16:00:24 +0800
-From: Ming Lei <ming.lei@redhat.com>
-To: Hannes Reinecke <hare@suse.de>
-Message-ID: <YIZzGAxaNnNE0Ipa@T590>
+	id 3D9702179392; Mon, 26 Apr 2021 09:05:44 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3794A217938E
+	for <dm-devel@redhat.com>; Mon, 26 Apr 2021 09:05:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B4A86858F0D
+	for <dm-devel@redhat.com>; Mon, 26 Apr 2021 09:05:41 +0000 (UTC)
+Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-575-BEC2TEQnPVaXN4wghjYVqg-1;
+	Mon, 26 Apr 2021 05:05:39 -0400
+X-MC-Unique: BEC2TEQnPVaXN4wghjYVqg-1
+X-Virus-Scanned: by amavisd-new at test-mx.suse.de
+Received: from relay2.suse.de (unknown [195.135.221.27])
+	by mx2.suse.de (Postfix) with ESMTP id 6DF1BB029;
+	Mon, 26 Apr 2021 09:05:37 +0000 (UTC)
+To: Ming Lei <ming.lei@redhat.com>
 References: <20210422122038.2192933-1-ming.lei@redhat.com>
 	<20210422122038.2192933-11-ming.lei@redhat.com>
-	<b6a1f1fa-bad2-e072-6292-363510fc7017@suse.de>
+	<b6a1f1fa-bad2-e072-6292-363510fc7017@suse.de> <YIZzGAxaNnNE0Ipa@T590>
+From: Hannes Reinecke <hare@suse.de>
+Organization: SUSE Linux GmbH
+Message-ID: <f1a13439-9ea7-9cdd-7489-2da4abd7256f@suse.de>
+Date: Mon, 26 Apr 2021 11:05:31 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+	Thunderbird/78.9.1
 MIME-Version: 1.0
-In-Reply-To: <b6a1f1fa-bad2-e072-6292-363510fc7017@suse.de>
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+In-Reply-To: <YIZzGAxaNnNE0Ipa@T590>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 13Q95iH1022162
 X-loop: dm-devel@redhat.com
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
 	dm-devel@redhat.com, Jeffle Xu <jefflexu@linux.alibaba.com>,
@@ -83,159 +98,98 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On Mon, Apr 26, 2021 at 09:19:20AM +0200, Hannes Reinecke wrote:
-> On 4/22/21 2:20 PM, Ming Lei wrote:
-> > Limit at most 8 queues are polled in each blk_pull(), avoid to
-> > add extra latency when queue depth is high.
-> > 
-> > Reviewed-by: Jeffle Xu <jefflexu@linux.alibaba.com>
-> > Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> > ---
-> >  block/blk-poll.c | 78 ++++++++++++++++++++++++++++++++++--------------
-> >  1 file changed, 55 insertions(+), 23 deletions(-)
-> > 
-> > diff --git a/block/blk-poll.c b/block/blk-poll.c
-> > index 249d73ff6f81..20e7c47cc984 100644
-> > --- a/block/blk-poll.c
-> > +++ b/block/blk-poll.c
-> > @@ -288,36 +288,32 @@ static void bio_grp_list_move(struct bio_grp_list *dst,
-> >  	src->nr_grps -= cnt;
-> >  }
-> >  
-> > -static int blk_mq_poll_io(struct bio *bio)
-> > +#define POLL_HCTX_MAX_CNT 8
-> > +
-> > +static bool blk_add_unique_hctx(struct blk_mq_hw_ctx **data, int *cnt,
-> > +		struct blk_mq_hw_ctx *hctx)
-> >  {
-> > -	struct request_queue *q = bio->bi_bdev->bd_disk->queue;
-> > -	blk_qc_t cookie = bio_get_poll_data(bio);
-> > -	int ret = 0;
-> > +	int i;
-> >  
-> > -	/* wait until the bio is submitted really */
-> > -	if (!blk_qc_t_ready(cookie))
-> > -		return 0;
-> >  
-> > -	if (!bio_flagged(bio, BIO_DONE) && blk_qc_t_valid(cookie)) {
-> > -		struct blk_mq_hw_ctx *hctx =
-> > -			q->queue_hw_ctx[blk_qc_t_to_queue_num(cookie)];
-> > +	for (i = 0; i < *cnt; i++) {
-> > +		if (data[i] == hctx)
-> > +			goto exit;
-> > +	}
-> >  
-> > -		ret += blk_mq_poll_hctx(q, hctx);
-> > +	if (i < POLL_HCTX_MAX_CNT) {
-> > +		data[i] = hctx;
-> > +		(*cnt)++;
-> >  	}
-> > -	return ret;
-> > + exit:
-> > +	return *cnt == POLL_HCTX_MAX_CNT;
-> >  }
-> >  
-> > -static int blk_bio_poll_and_end_io(struct bio_grp_list *grps)
-> > +static void blk_build_poll_queues(struct bio_grp_list *grps,
-> > +		struct blk_mq_hw_ctx **data, int *cnt)
-> >  {
-> > -	int ret = 0;
-> >  	int i;
-> >  
-> > -	/*
-> > -	 * Poll hw queue first.
-> > -	 *
-> > -	 * TODO: limit max poll times and make sure to not poll same
-> > -	 * hw queue one more time.
-> > -	 */
-> >  	for (i = 0; i < grps->nr_grps; i++) {
-> >  		struct bio_grp_list_data *grp = &grps->head[i];
-> >  		struct bio *bio;
-> > @@ -325,11 +321,31 @@ static int blk_bio_poll_and_end_io(struct bio_grp_list *grps)
-> >  		if (bio_grp_list_grp_empty(grp))
-> >  			continue;
-> >  
-> > -		for (bio = grp->list.head; bio; bio = bio->bi_poll)
-> > -			ret += blk_mq_poll_io(bio);
-> > +		for (bio = grp->list.head; bio; bio = bio->bi_poll) {
-> > +			blk_qc_t  cookie;
-> > +			struct blk_mq_hw_ctx *hctx;
-> > +			struct request_queue *q;
-> > +
-> > +			if (bio_flagged(bio, BIO_DONE))
-> > +				continue;
-> > +
-> > +			/* wait until the bio is submitted really */
-> > +			cookie = bio_get_poll_data(bio);
-> > +			if (!blk_qc_t_ready(cookie) || !blk_qc_t_valid(cookie))
-> > +				continue;
-> > +
-> > +			q = bio->bi_bdev->bd_disk->queue;
-> > +			hctx = q->queue_hw_ctx[blk_qc_t_to_queue_num(cookie)];
-> > +			if (blk_add_unique_hctx(data, cnt, hctx))
-> > +				return;
-> > +		}
-> >  	}
-> > +}
-> > +
-> > +static void blk_bio_poll_reap_ios(struct bio_grp_list *grps)
-> > +{
-> > +	int i;
-> >  
-> > -	/* reap bios */
-> >  	for (i = 0; i < grps->nr_grps; i++) {
-> >  		struct bio_grp_list_data *grp = &grps->head[i];
-> >  		struct bio *bio;
-> > @@ -354,6 +370,22 @@ static int blk_bio_poll_and_end_io(struct bio_grp_list *grps)
-> >  		}
-> >  		__bio_grp_list_merge(&grp->list, &bl);
-> >  	}
-> > +}
-> > +
-> > +static int blk_bio_poll_and_end_io(struct bio_grp_list *grps)
-> > +{
-> > +	int ret = 0;
-> > +	int i;
-> > +	struct blk_mq_hw_ctx *hctx[POLL_HCTX_MAX_CNT];
-> > +	int cnt = 0;
-> > +
-> > +	blk_build_poll_queues(grps, hctx, &cnt);
-> > +
-> > +	for (i = 0; i < cnt; i++)
-> > +		ret += blk_mq_poll_hctx(hctx[i]->queue, hctx[i]);
-> > +
-> > +	blk_bio_poll_reap_ios(grps);
-> > +
-> >  	return ret;
-> >  }
-> >  
-> > 
-> Can't we make it a sysfs attribute instead of hard-coding it?
-> '8' seems a bit arbitrary to me, I'd rather have the ability to modify it...
-
-I'd rather not add such code in the feature 'enablement' stage since I doesn't
-observe the number plays a big role yet. It is added for holding hw queues to
-be polled on stack variables, also avoid to add too much latency if there is
-too many bios from too many hw queues to be reaped.
-
-Also the actual polled hw queues can be observed easily via bpftrace, so debug
-purpose from sysfs isn't necessary too.
-
-
-Thanks, 
-Ming
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gNC8yNi8yMSAxMDowMCBBTSwgTWluZyBMZWkgd3JvdGU6Cj4gT24gTW9uLCBBcHIgMjYsIDIw
+MjEgYXQgMDk6MTk6MjBBTSArMDIwMCwgSGFubmVzIFJlaW5lY2tlIHdyb3RlOgo+PiBPbiA0LzIy
+LzIxIDI6MjAgUE0sIE1pbmcgTGVpIHdyb3RlOgo+Pj4gTGltaXQgYXQgbW9zdCA4IHF1ZXVlcyBh
+cmUgcG9sbGVkIGluIGVhY2ggYmxrX3B1bGwoKSwgYXZvaWQgdG8KPj4+IGFkZCBleHRyYSBsYXRl
+bmN5IHdoZW4gcXVldWUgZGVwdGggaXMgaGlnaC4KPj4+Cj4+PiBSZXZpZXdlZC1ieTogSmVmZmxl
+IFh1IDxqZWZmbGV4dUBsaW51eC5hbGliYWJhLmNvbT4KPj4+IFNpZ25lZC1vZmYtYnk6IE1pbmcg
+TGVpIDxtaW5nLmxlaUByZWRoYXQuY29tPgo+Pj4gLS0tCj4+PiAgYmxvY2svYmxrLXBvbGwuYyB8
+IDc4ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKystLS0tLS0tLS0tLS0tLQo+Pj4g
+IDEgZmlsZSBjaGFuZ2VkLCA1NSBpbnNlcnRpb25zKCspLCAyMyBkZWxldGlvbnMoLSkKPj4+Cj4+
+PiBkaWZmIC0tZ2l0IGEvYmxvY2svYmxrLXBvbGwuYyBiL2Jsb2NrL2Jsay1wb2xsLmMKPj4+IGlu
+ZGV4IDI0OWQ3M2ZmNmY4MS4uMjBlN2M0N2NjOTg0IDEwMDY0NAo+Pj4gLS0tIGEvYmxvY2svYmxr
+LXBvbGwuYwo+Pj4gKysrIGIvYmxvY2svYmxrLXBvbGwuYwo+Pj4gQEAgLTI4OCwzNiArMjg4LDMy
+IEBAIHN0YXRpYyB2b2lkIGJpb19ncnBfbGlzdF9tb3ZlKHN0cnVjdCBiaW9fZ3JwX2xpc3QgKmRz
+dCwKPj4+ICAJc3JjLT5ucl9ncnBzIC09IGNudDsKPj4+ICB9Cj4+PiAgCj4+PiAtc3RhdGljIGlu
+dCBibGtfbXFfcG9sbF9pbyhzdHJ1Y3QgYmlvICpiaW8pCj4+PiArI2RlZmluZSBQT0xMX0hDVFhf
+TUFYX0NOVCA4Cj4+PiArCj4+PiArc3RhdGljIGJvb2wgYmxrX2FkZF91bmlxdWVfaGN0eChzdHJ1
+Y3QgYmxrX21xX2h3X2N0eCAqKmRhdGEsIGludCAqY250LAo+Pj4gKwkJc3RydWN0IGJsa19tcV9o
+d19jdHggKmhjdHgpCj4+PiAgewo+Pj4gLQlzdHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcSA9IGJpby0+
+YmlfYmRldi0+YmRfZGlzay0+cXVldWU7Cj4+PiAtCWJsa19xY190IGNvb2tpZSA9IGJpb19nZXRf
+cG9sbF9kYXRhKGJpbyk7Cj4+PiAtCWludCByZXQgPSAwOwo+Pj4gKwlpbnQgaTsKPj4+ICAKPj4+
+IC0JLyogd2FpdCB1bnRpbCB0aGUgYmlvIGlzIHN1Ym1pdHRlZCByZWFsbHkgKi8KPj4+IC0JaWYg
+KCFibGtfcWNfdF9yZWFkeShjb29raWUpKQo+Pj4gLQkJcmV0dXJuIDA7Cj4+PiAgCj4+PiAtCWlm
+ICghYmlvX2ZsYWdnZWQoYmlvLCBCSU9fRE9ORSkgJiYgYmxrX3FjX3RfdmFsaWQoY29va2llKSkg
+ewo+Pj4gLQkJc3RydWN0IGJsa19tcV9od19jdHggKmhjdHggPQo+Pj4gLQkJCXEtPnF1ZXVlX2h3
+X2N0eFtibGtfcWNfdF90b19xdWV1ZV9udW0oY29va2llKV07Cj4+PiArCWZvciAoaSA9IDA7IGkg
+PCAqY250OyBpKyspIHsKPj4+ICsJCWlmIChkYXRhW2ldID09IGhjdHgpCj4+PiArCQkJZ290byBl
+eGl0Owo+Pj4gKwl9Cj4+PiAgCj4+PiAtCQlyZXQgKz0gYmxrX21xX3BvbGxfaGN0eChxLCBoY3R4
+KTsKPj4+ICsJaWYgKGkgPCBQT0xMX0hDVFhfTUFYX0NOVCkgewo+Pj4gKwkJZGF0YVtpXSA9IGhj
+dHg7Cj4+PiArCQkoKmNudCkrKzsKPj4+ICAJfQo+Pj4gLQlyZXR1cm4gcmV0Owo+Pj4gKyBleGl0
+Ogo+Pj4gKwlyZXR1cm4gKmNudCA9PSBQT0xMX0hDVFhfTUFYX0NOVDsKPj4+ICB9Cj4+PiAgCj4+
+PiAtc3RhdGljIGludCBibGtfYmlvX3BvbGxfYW5kX2VuZF9pbyhzdHJ1Y3QgYmlvX2dycF9saXN0
+ICpncnBzKQo+Pj4gK3N0YXRpYyB2b2lkIGJsa19idWlsZF9wb2xsX3F1ZXVlcyhzdHJ1Y3QgYmlv
+X2dycF9saXN0ICpncnBzLAo+Pj4gKwkJc3RydWN0IGJsa19tcV9od19jdHggKipkYXRhLCBpbnQg
+KmNudCkKPj4+ICB7Cj4+PiAtCWludCByZXQgPSAwOwo+Pj4gIAlpbnQgaTsKPj4+ICAKPj4+IC0J
+LyoKPj4+IC0JICogUG9sbCBodyBxdWV1ZSBmaXJzdC4KPj4+IC0JICoKPj4+IC0JICogVE9ETzog
+bGltaXQgbWF4IHBvbGwgdGltZXMgYW5kIG1ha2Ugc3VyZSB0byBub3QgcG9sbCBzYW1lCj4+PiAt
+CSAqIGh3IHF1ZXVlIG9uZSBtb3JlIHRpbWUuCj4+PiAtCSAqLwo+Pj4gIAlmb3IgKGkgPSAwOyBp
+IDwgZ3Jwcy0+bnJfZ3JwczsgaSsrKSB7Cj4+PiAgCQlzdHJ1Y3QgYmlvX2dycF9saXN0X2RhdGEg
+KmdycCA9ICZncnBzLT5oZWFkW2ldOwo+Pj4gIAkJc3RydWN0IGJpbyAqYmlvOwo+Pj4gQEAgLTMy
+NSwxMSArMzIxLDMxIEBAIHN0YXRpYyBpbnQgYmxrX2Jpb19wb2xsX2FuZF9lbmRfaW8oc3RydWN0
+IGJpb19ncnBfbGlzdCAqZ3JwcykKPj4+ICAJCWlmIChiaW9fZ3JwX2xpc3RfZ3JwX2VtcHR5KGdy
+cCkpCj4+PiAgCQkJY29udGludWU7Cj4+PiAgCj4+PiAtCQlmb3IgKGJpbyA9IGdycC0+bGlzdC5o
+ZWFkOyBiaW87IGJpbyA9IGJpby0+YmlfcG9sbCkKPj4+IC0JCQlyZXQgKz0gYmxrX21xX3BvbGxf
+aW8oYmlvKTsKPj4+ICsJCWZvciAoYmlvID0gZ3JwLT5saXN0LmhlYWQ7IGJpbzsgYmlvID0gYmlv
+LT5iaV9wb2xsKSB7Cj4+PiArCQkJYmxrX3FjX3QgIGNvb2tpZTsKPj4+ICsJCQlzdHJ1Y3QgYmxr
+X21xX2h3X2N0eCAqaGN0eDsKPj4+ICsJCQlzdHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcTsKPj4+ICsK
+Pj4+ICsJCQlpZiAoYmlvX2ZsYWdnZWQoYmlvLCBCSU9fRE9ORSkpCj4+PiArCQkJCWNvbnRpbnVl
+Owo+Pj4gKwo+Pj4gKwkJCS8qIHdhaXQgdW50aWwgdGhlIGJpbyBpcyBzdWJtaXR0ZWQgcmVhbGx5
+ICovCj4+PiArCQkJY29va2llID0gYmlvX2dldF9wb2xsX2RhdGEoYmlvKTsKPj4+ICsJCQlpZiAo
+IWJsa19xY190X3JlYWR5KGNvb2tpZSkgfHwgIWJsa19xY190X3ZhbGlkKGNvb2tpZSkpCj4+PiAr
+CQkJCWNvbnRpbnVlOwo+Pj4gKwo+Pj4gKwkJCXEgPSBiaW8tPmJpX2JkZXYtPmJkX2Rpc2stPnF1
+ZXVlOwo+Pj4gKwkJCWhjdHggPSBxLT5xdWV1ZV9od19jdHhbYmxrX3FjX3RfdG9fcXVldWVfbnVt
+KGNvb2tpZSldOwo+Pj4gKwkJCWlmIChibGtfYWRkX3VuaXF1ZV9oY3R4KGRhdGEsIGNudCwgaGN0
+eCkpCj4+PiArCQkJCXJldHVybjsKPj4+ICsJCX0KPj4+ICAJfQo+Pj4gK30KPj4+ICsKPj4+ICtz
+dGF0aWMgdm9pZCBibGtfYmlvX3BvbGxfcmVhcF9pb3Moc3RydWN0IGJpb19ncnBfbGlzdCAqZ3Jw
+cykKPj4+ICt7Cj4+PiArCWludCBpOwo+Pj4gIAo+Pj4gLQkvKiByZWFwIGJpb3MgKi8KPj4+ICAJ
+Zm9yIChpID0gMDsgaSA8IGdycHMtPm5yX2dycHM7IGkrKykgewo+Pj4gIAkJc3RydWN0IGJpb19n
+cnBfbGlzdF9kYXRhICpncnAgPSAmZ3Jwcy0+aGVhZFtpXTsKPj4+ICAJCXN0cnVjdCBiaW8gKmJp
+bzsKPj4+IEBAIC0zNTQsNiArMzcwLDIyIEBAIHN0YXRpYyBpbnQgYmxrX2Jpb19wb2xsX2FuZF9l
+bmRfaW8oc3RydWN0IGJpb19ncnBfbGlzdCAqZ3JwcykKPj4+ICAJCX0KPj4+ICAJCV9fYmlvX2dy
+cF9saXN0X21lcmdlKCZncnAtPmxpc3QsICZibCk7Cj4+PiAgCX0KPj4+ICt9Cj4+PiArCj4+PiAr
+c3RhdGljIGludCBibGtfYmlvX3BvbGxfYW5kX2VuZF9pbyhzdHJ1Y3QgYmlvX2dycF9saXN0ICpn
+cnBzKQo+Pj4gK3sKPj4+ICsJaW50IHJldCA9IDA7Cj4+PiArCWludCBpOwo+Pj4gKwlzdHJ1Y3Qg
+YmxrX21xX2h3X2N0eCAqaGN0eFtQT0xMX0hDVFhfTUFYX0NOVF07Cj4+PiArCWludCBjbnQgPSAw
+Owo+Pj4gKwo+Pj4gKwlibGtfYnVpbGRfcG9sbF9xdWV1ZXMoZ3JwcywgaGN0eCwgJmNudCk7Cj4+
+PiArCj4+PiArCWZvciAoaSA9IDA7IGkgPCBjbnQ7IGkrKykKPj4+ICsJCXJldCArPSBibGtfbXFf
+cG9sbF9oY3R4KGhjdHhbaV0tPnF1ZXVlLCBoY3R4W2ldKTsKPj4+ICsKPj4+ICsJYmxrX2Jpb19w
+b2xsX3JlYXBfaW9zKGdycHMpOwo+Pj4gKwo+Pj4gIAlyZXR1cm4gcmV0Owo+Pj4gIH0KPj4+ICAK
+Pj4+Cj4+IENhbid0IHdlIG1ha2UgaXQgYSBzeXNmcyBhdHRyaWJ1dGUgaW5zdGVhZCBvZiBoYXJk
+LWNvZGluZyBpdD8KPj4gJzgnIHNlZW1zIGEgYml0IGFyYml0cmFyeSB0byBtZSwgSSdkIHJhdGhl
+ciBoYXZlIHRoZSBhYmlsaXR5IHRvIG1vZGlmeSBpdC4uLgo+IAo+IEknZCByYXRoZXIgbm90IGFk
+ZCBzdWNoIGNvZGUgaW4gdGhlIGZlYXR1cmUgJ2VuYWJsZW1lbnQnIHN0YWdlIHNpbmNlIEkgZG9l
+c24ndAo+IG9ic2VydmUgdGhlIG51bWJlciBwbGF5cyBhIGJpZyByb2xlIHlldC4gSXQgaXMgYWRk
+ZWQgZm9yIGhvbGRpbmcgaHcgcXVldWVzIHRvCj4gYmUgcG9sbGVkIG9uIHN0YWNrIHZhcmlhYmxl
+cywgYWxzbyBhdm9pZCB0byBhZGQgdG9vIG11Y2ggbGF0ZW5jeSBpZiB0aGVyZSBpcwo+IHRvbyBt
+YW55IGJpb3MgZnJvbSB0b28gbWFueSBodyBxdWV1ZXMgdG8gYmUgcmVhcGVkLgo+IAo+IEFsc28g
+dGhlIGFjdHVhbCBwb2xsZWQgaHcgcXVldWVzIGNhbiBiZSBvYnNlcnZlZCBlYXNpbHkgdmlhIGJw
+ZnRyYWNlLCBzbyBkZWJ1Zwo+IHB1cnBvc2UgZnJvbSBzeXNmcyBpc24ndCBuZWNlc3NhcnkgdG9v
+Lgo+IApPa2F5LiBZb3UgY2FuIGFkZCBteQoKUmV2aWV3ZWQtYnk6IEhhbm5lcyBSZWluZWNrZSA8
+aGFyZUBzdXNlLmRlPgoKQ2hlZXJzLAoKSGFubmVzCi0tIApEci4gSGFubmVzIFJlaW5lY2tlCQkg
+ICAgICAgIEtlcm5lbCBTdG9yYWdlIEFyY2hpdGVjdApoYXJlQHN1c2UuZGUJCQkgICAgICAgICAg
+ICAgICArNDkgOTExIDc0MDUzIDY4OApTVVNFIFNvZnR3YXJlIFNvbHV0aW9ucyBHZXJtYW55IEdt
+YkgsIDkwNDA5IE7DvHJuYmVyZwpHRjogRi4gSW1lbmTDtnJmZmVyLCBIUkIgMzY4MDkgKEFHIE7D
+vHJuYmVyZykKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpo
+dHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
 
