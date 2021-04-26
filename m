@@ -2,163 +2,81 @@ Return-Path: <SRS0=wTOt=JX=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,PDS_BAD_THREAD_QP_64,
-	SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-12.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EB6F6C433ED
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Apr 2021 13:17:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A4201C433B4
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Apr 2021 15:33:51 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3676D61359
-	for <dm-devel@archiver.kernel.org>; Mon, 26 Apr 2021 13:17:27 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3676D61359
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id F3A126135D
+	for <dm-devel@archiver.kernel.org>; Mon, 26 Apr 2021 15:33:50 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org F3A126135D
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1619451229;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=iT32Ff8tJNH4azoiq7IJy5+EX41hAxxXsMhx851N7Do=;
+	b=d8Ctrtd2bpMvG2ZN1PSJ5DoHFFEzXuVaCqOL9joEPE9yEy1fvKSeBzCcBGykYlSaRBvXdf
+	BIsKuzr8CBYvB6+LbWJ1nnO6slL+oIPt5WLn1h82uqI+PCJjbZ+6EWO0nzU5mXPYI7h2CJ
+	B8YTVYkbRihGOqBOr5MBIniqqS2ce9I=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-529-44iHDzEXPDGc8AdwR21fyA-1; Mon, 26 Apr 2021 09:17:23 -0400
-X-MC-Unique: 44iHDzEXPDGc8AdwR21fyA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-161-Kr64y70SOMOCSc-xvpKgJQ-1; Mon, 26 Apr 2021 11:33:47 -0400
+X-MC-Unique: Kr64y70SOMOCSc-xvpKgJQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C5452343A6;
-	Mon, 26 Apr 2021 13:17:16 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7EE2560C4A;
-	Mon, 26 Apr 2021 13:17:15 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5C9F8114;
+	Mon, 26 Apr 2021 15:33:41 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C0EE45C1CF;
+	Mon, 26 Apr 2021 15:33:39 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 34E8A44A58;
-	Mon, 26 Apr 2021 13:17:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0985C1806D1A;
+	Mon, 26 Apr 2021 15:33:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
+	[10.5.11.15])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13QDHAv1017570 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 26 Apr 2021 09:17:10 -0400
+	id 13QFXXek029224 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 26 Apr 2021 11:33:33 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 7D143110FBE5; Mon, 26 Apr 2021 13:17:10 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 77B9A110FBF1
-	for <dm-devel@redhat.com>; Mon, 26 Apr 2021 13:17:07 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 920EB8001A6
-	for <dm-devel@redhat.com>; Mon, 26 Apr 2021 13:17:07 +0000 (UTC)
-Received: from de-smtp-delivery-102.mimecast.com
-	(de-smtp-delivery-102.mimecast.com [62.140.7.102]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-92-SQ2AxR8bM4mh9nI7hrARlw-1;
-	Mon, 26 Apr 2021 09:17:04 -0400
-X-MC-Unique: SQ2AxR8bM4mh9nI7hrARlw-1
-Received: from EUR01-DB5-obe.outbound.protection.outlook.com
-	(mail-db5eur01lp2051.outbound.protection.outlook.com [104.47.2.51])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	de-mta-36-YHU2edWvPvCFWWjT5Os39w-1; Mon, 26 Apr 2021 15:17:01 +0200
-X-MC-Unique: YHU2edWvPvCFWWjT5Os39w-1
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
-	by DB7PR04MB4618.eurprd04.prod.outlook.com (2603:10a6:5:38::23) with
-	Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4065.23;
-	Mon, 26 Apr 2021 13:16:59 +0000
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::cc21:35e2:da7c:1490]) by
-	DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::cc21:35e2:da7c:1490%7]) with mapi id 15.20.4065.027;
-	Mon, 26 Apr 2021 13:16:59 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "Ulrich.Windl@rz.uni-regensburg.de" <Ulrich.Windl@rz.uni-regensburg.de>,
-	"martin.petersen@oracle.com" <martin.petersen@oracle.com>
-Thread-Topic: RFC: one more time: SCSI device identification
-Thread-Index: AQHXOp5vFUyf6ZqRIUKuQYht/xcQrg==
-Date: Mon, 26 Apr 2021 13:16:58 +0000
-Message-ID: <59dc346de26997a6b8e3ae3d86d84ada60b3d26b.camel@suse.com>
-References: <c524ce68d9a9582732db8350f8a1def461a1a847.camel@suse.com>
-	<yq135w4cam3.fsf@ca-mkp.ca.oracle.com>
-	<06489ea37311fe7bf73b27a41b5209ee4cca85fe.camel@suse.com>
-	<yq1pmynt6f6.fsf@ca-mkp.ca.oracle.com>
-	<685c40341d2ddef2fe5a54dd656d10104b0c1bfa.camel@suse.com>
-	<yq1im4dre94.fsf@ca-mkp.ca.oracle.com>
-	<e3184501cbf23ab0ae94d664725e72b693c64ba9.camel@suse.com>
-	<6086A0B2020000A100040BBE@gwsmtp.uni-regensburg.de>
-In-Reply-To: <6086A0B2020000A100040BBE@gwsmtp.uni-regensburg.de>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Evolution 3.38.4
-x-originating-ip: [2.202.118.173]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 9e55b656-3a11-40e5-55c5-08d908b5928c
-x-ms-traffictypediagnostic: DB7PR04MB4618:
-x-ld-processed: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba,ExtFwd
-x-ms-exchange-transport-forked: True
-x-microsoft-antispam-prvs: <DB7PR04MB46182435EDC00C095EABEE19FC429@DB7PR04MB4618.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:10000
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: lRK7FTyG/koDg4KnnBxASO2yX8bFw7YUBhW9saeFCheEj3jJkNq7inKgizeyvOMQZB15KxSIt3wq3n6p7C2vfEYaZGO+FyArfedGLkyWwchbWhOsoPK9XK6+sIwglX71vkLL7sGg/rUqbKxdB+1iUTblkMJKF0KLrdeWFsZViyeFxhp1g7bXFGk5644nB8qcf9RIAYDOQeV9tuWbPxdHyNSLsFaDgDdCdSAFDUzh1EUtMFsDoRrIFWzESCYpHsVxzO+4BosRtpXz7RWCtRzPJuIGoPpIvuGkoS+WQvNmNwrTh/B3iejEEzQIjkpNhsdShTYOme9MoSGlA6Ps0yxYF2e4p6dQYLxSwDkJc0lQ3KgvV7kjmqum1ZNjf7Y3kAGyEHdwPqLG2fBnEtCwG3gUap3ifzICfBY2JpFtyYGtmu0EqGpe/eAcX/IpcsOioB+tLLj7YwKr8lMmg6wMAVeBb9+0wxf9XXvPbQG7dRrQ9cpPVioFn75hsVulfyeljvWpWmQL7wERQf2pPsAY0zoPuW1DopUHRLBtLW3UNDtj5eeFpwflD+41ggos64yw7ww2fe43T6zf1sXUkFbgONl3IDkJlEj5u+lZ7abx+wevE4M=
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(346002)(136003)(376002)(39850400004)(396003)(366004)(54906003)(6506007)(2906002)(110136005)(86362001)(316002)(36756003)(186003)(26005)(71200400001)(2616005)(83380400001)(4326008)(5660300002)(44832011)(122000001)(6486002)(64756008)(478600001)(66556008)(66446008)(66476007)(76116006)(38100700002)(66574015)(91956017)(66946007)(6512007)(8676002)(8936002);
-	DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata: =?iso-8859-15?Q?V2HxDLFse0mqDy7Loy8lDpFT3tn12pTq9+Z12vqPcxv7t83dKH4WZSjCO?=
-	=?iso-8859-15?Q?R+dgwLO/I8lDju7/1DSFmuAZaJqICE/L2CvO7k5UldM9hgiopMNXf8vrJ?=
-	=?iso-8859-15?Q?l1Y4nfGe5uzBq4ZTua5OZb36QP5Gjcv/f4m8AzSKFJ7fCuv8280pMGOBu?=
-	=?iso-8859-15?Q?3y4JNM+wrg+BOo0/YE0Ouq2nvviuMG46TNgDVZmNscL4F2hoxbxW6ReMk?=
-	=?iso-8859-15?Q?JJ1Xl5KxGdf+G6drrtbwNFTnrJihRazqnAOntVKaX7NVmDnazfPcTxqi9?=
-	=?iso-8859-15?Q?DTqKi15Ee1ZR6F1IDLeQeOx81W1/oqOQEJdqrQRlmYPcsKThKVpPX05Tn?=
-	=?iso-8859-15?Q?Fm76HN3PoYwKCfKLdskF5oRONIKTbuxCLRPjSZvaQe0OOHReb4BUHFw0X?=
-	=?iso-8859-15?Q?luBbjx/kR/PWGgDZLn2P+4+7yVGGe8Ue82A0R4knd6iMlxq9iMQBkVo+k?=
-	=?iso-8859-15?Q?9PB2ORK0UxVkgWU0pW+XrNNc5PNjmKOmXEp08z275Wnviz0dWIIqJJtGA?=
-	=?iso-8859-15?Q?aQh45bvbl0WtglfFE0GIk53FL314yizXsXALo9qpAEQrN9kO0mcXgesGF?=
-	=?iso-8859-15?Q?q6HKLVBmi5MkTgzp5DWi028WNfKgrt1JyXsSzJ03qSIhHxvhGCw/+z2Ny?=
-	=?iso-8859-15?Q?0rAf6yMvs/KEDnRsnU3zHq7cpVt7bEyKykjc2oLhfWyTHxIz7b8KVpv09?=
-	=?iso-8859-15?Q?KTNUd3ARiOVoB2o9oRgMcllL1wlYpWS/ftQzPpD60NMLYumd6HuV6wb4N?=
-	=?iso-8859-15?Q?0ziY8XjaQ5R+1hASQ85GkRcoCatKqixfXVqAkODkMQ7ibqmqlV066Rb2z?=
-	=?iso-8859-15?Q?S4+anHcG5LiNqqXeyC8Hn4hNRof16NKJu7wkIZy5zv9+pkE6LCHNNNGvp?=
-	=?iso-8859-15?Q?qabxfxMyOkIHCy7yChxpQ1b4IYK49AmGLOPBhDW6Eopq8yXH0ykoQIyFt?=
-	=?iso-8859-15?Q?x/TRAfgTLaU59Xdvri3VuXkSJu9RpbUmet7Y0ldABa/jmQ5HVGo64aEDO?=
-	=?iso-8859-15?Q?gQ2xAIJH7+c4vPVEJjQmoZ1PMUlmNYEGIz6sLq3KVacuAQii+TetdPk/e?=
-	=?iso-8859-15?Q?qXWBWZrTac6jvnkwPUDYM3OsxYBPE9C6FA0rIE/US6vUAlM4l+ps+btkT?=
-	=?iso-8859-15?Q?6M4AvCZIrDYolzCbN24UbN1g6tC9AFJGq3VI3IhcMiWyr1FHJoik8btrw?=
-	=?iso-8859-15?Q?x3kGTMua+gXp5LzP3phDxprDNReay6wcKrS54mnXNMYGEveLW7l3Tie1O?=
-	=?iso-8859-15?Q?yp/rAAMuH7V+opF2mg6ey+CHY5IcNp/dtFxDjl2w+TX6krK1zGsT37Mtd?=
-	=?iso-8859-15?Q?dLAAjHQXi4ohf2N7x6OYrE98eBfI3t0Gb+OhQU7aDBNf8QiycDbaDjgRN?=
-	=?iso-8859-15?Q?CQ/bptf6WnVHdcdgJbazRJujNhbC+dQ/q?=
+	id D5BC05D71F; Mon, 26 Apr 2021 15:33:33 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B384E5D6BA;
+	Mon, 26 Apr 2021 15:33:33 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
+	id 13QFXXhr025108; Mon, 26 Apr 2021 11:33:33 -0400
+Received: from localhost (mpatocka@localhost)
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
+	ESMTP id 13QFXW0h025104; Mon, 26 Apr 2021 11:33:33 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+	owned process doing -bs
+Date: Mon, 26 Apr 2021 11:33:32 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Melvin Vermeeren <vermeeren@vermwa.re>
+In-Reply-To: <4219669.2KqOsUsilv@verm-r4e>
+Message-ID: <alpine.LRH.2.02.2104261124360.24039@file01.intranet.prod.int.rdu2.redhat.com>
+References: <4219669.2KqOsUsilv@verm-r4e>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 9e55b656-3a11-40e5-55c5-08d908b5928c
-X-MS-Exchange-CrossTenant-originalarrivaltime: 26 Apr 2021 13:16:58.9329 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: GP/s9mROFEQ1bcmmnCOyTF2fN7MK9Z73ZjZq5V9nznSz9GzVOyow/PBUBxDBAfaEtoG0CqVsQK6FyHIJESUN1A==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB7PR04MB4618
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 13QDHAv1017570
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 X-loop: dm-devel@redhat.com
-Cc: Hannes Reinecke <hare@suse.com>,
-	"jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"dgilbert@interlog.com" <dgilbert@interlog.com>,
-	"systemd-devel@lists.freedesktop.org"
-	<systemd-devel@lists.freedesktop.org>, "hch@lst.de" <hch@lst.de>
-Subject: Re: [dm-devel] RFC: one more time: SCSI device identification
+Cc: dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>
+Subject: Re: [dm-devel] Integrity discard/trim extremely slow on NVMe SSD
+ storage (~10GiB/minute)
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -172,68 +90,104 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-ID: <F5CFB572D8BA14429034FDCFDD757CDC@eurprd04.prod.outlook.com>
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
-
-On Mon, 2021-04-26 at 13:14 +0200, Ulrich Windl wrote:
-> > >=20
-> >=20
-> > While we're at it, I'd like to mention another issue: WWID changes.
-> >=20
-> > This is a big problem for multipathd. The gist is that the device
-> > identification attributes in sysfs only change after rescanning the
-> > device. Thus if a user changes LUN assignments on a storage system,
-> > it can happen that a direct INQUIRY returns a different WWID as in
-> > sysfs, which is fatal. If we plan to rely more on sysfs for device
-> > identification in the future, the problem gets worse.=20
->=20
-> I think many devices rely on the fact that they are identified by
-> Vendor/model/serial_nr, because in most professional SAN storage
-> systems you
-> can pre-set the serial number to a custom value; so if you want a new
-> disk
-> (maybe a snapshot) to be compatible with the old one, just assign the
-> same
-> serial number. I guess that's the idea behind.
-
-What you are saying sounds dangerous to me. If a snapshot has the same
-WWID as the device it's a snapshot of, it must not be exposed to any
-host(s) at the same time with its origin, otherwise the host may
-happily combine it with the origin into one multipath map, and data
-corruption will almost certainly result.=20
-
-My argument is about how the host is supposed to deal with a WWID
-change if it happens. Here, "WWID change" means that a given H:C:T:L
-suddenly exposes different device designators than it used to, while
-this device is in use by a host. Here, too, data corruption is
-imminent, and can happen in a blink of an eye. To avoid this, several
-things are needed:
-
- 1) the host needs to get notified about the change (likely by an UA of
-some sort)
- 2) the kernel needs to react to the notification immediately, e.g. by
-blocking IO to the device,
- 3) userspace tooling such as udev or multipathd need to figure out how
-to  how to deal with the situation cleanly, and eventually unblock it.
-
-Wrt 1), we can only hope that it's the case. But 2) and 3) need work,
-afaics.
-
-Martin
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>, Tel.=A0+49 (0)911 74053 2107
-SUSE Software Solutions Germany GmbH
-HRB 36809, AG N=FCrnberg GF: Felix Imend=F6rffer
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
 
+
+On Mon, 19 Apr 2021, Melvin Vermeeren wrote:
+
+> Note: This was originally posted on cryptsetup GitLab.
+> Note: Reposting here for better visibility as it appears to be a kernel bug.
+> Ref: https://gitlab.com/cryptsetup/cryptsetup/-/issues/639
+> 
+> Issue description
+> -----------------
+> 
+> With a Seagate FireCuda 520 2TB NVMe SSD running in PCIe 3.0 x4 mode (my 
+> motherboard does not have PCIe 4.0), discards through `dm-integrity` 
+> layer are extremely slow to the point of being almost unusable or in 
+> some cases fully unusable.
+> 
+> This is so slow that having the `discard` option on swap in not 
+> possible, as it takes around 3 minutes to complete for 32GiB swap 
+> causing timeouts during boot which in turn causes various other services 
+> to fail resulting in a drop to the emergency shell.
+> 
+> `blkdiscard` directly to NVMe device takes I think 10 sec or so for the 
+> entire 2TB, but through `dm-integrity` the rate is approx 10GiB per 
+> minute, meaning over 3 hours to discard the entire 2TB. Normal read and 
+> write operations are not affected and are high performance, easily 
+> reaching 2GiB/s through the entire layer: `disk dm-integrity mdadm luks 
+> lvm ext4`.
+> 
+> Checking the kernel thread usage in htop quite some 
+> `dm-integrity-offload` threads are in the `D` state with `0.0` CPU usage 
+> when discarding, which is rather odd. No integrity threads are actually 
+> working and read-write disk usage measured with `dstat` is not even 
+> 1MiB/s.
+> 
+> To detail the above, `dstat` shows extremely clear timings: 2 seconds 0k 
+> write, 1 second 512k write, repeat. Possible timeout in locks somewhere 
+> or other problematic lock situation?
+> 
+> Steps for reproducing the issue
+> -------------------------------
+> 
+> 1. Create two 10G partitions on SSD.
+> 2. Setup `dm-integrity` on one of these and open the device with `--allow-
+> discards`.
+> 3. `blkdiscard` both partitions.
+> 	* Raw partition is done instantly.
+> 	* Integrity partition takes around a minute.
+> 
+> Additional info
+> ---------------
+> 
+> The NVMe device is formatted to native 4096 byte sectors and the `dm-
+> integrity` layer also uses 4096 byte sectors.
+> 
+> Debian bullseye (testing), kernel 5.10.0-6-rt-amd64 5.10.28-1. Same issue 
+> occurred during testing with Arch Linux liveiso which is kernel 5.11.x. 
+> Cryptsetup package version 2.3.5.
+> 
+> On another server system (IBM POWER9, ppc64le) with SAS 3.0 SSD discard is 
+> working properly at more than acceptable speeds, showing significant CPU usage 
+> while discarding. In this case it is a regular Intel amd64 desktop system.
+> 
+> Debug log
+> ---------
+> 
+> Nothing really fails, dmesg and syslog show no issues/warnings at all, not 
+> sure what to include.
+> 
+> Only appears to effect NVMe
+> ---------------------------
+> 
+> Further tests on the same machine show that SATA SSD is not affected by this 
+> issue and discards at high performance. Appears to be NVMe-specific bug:
+> Ref: https://gitlab.com/cryptsetup/cryptsetup/-/issues/639#note_555208783
+
+I tried it on my nvme device (Samsung SSD 960 EVO 500GB) and I could 
+discard 32GB in 5 seconds.
+
+I assume that it is specific to the nvme device you are using. The device 
+is perhaps slow due to a mix of dicard+read+write requests that 
+dm-integrity generates.
+
+> If there is anything I can do to help feel free to let me know.
+> Note that I am not subscribed to dm-level, please CC me directly.
+> 
+> Thanks,
+
+Could you try it on other nvme disks?
+
+Mikulas
 
 --
 dm-devel mailing list
