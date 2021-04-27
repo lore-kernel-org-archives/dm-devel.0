@@ -2,65 +2,69 @@ Return-Path: <SRS0=s6iH=JY=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B2BF3C433ED
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Apr 2021 08:21:24 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 810CFC433B4
+	for <dm-devel@archiver.kernel.org>; Tue, 27 Apr 2021 10:57:17 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 198B061182
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Apr 2021 08:21:23 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 198B061182
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=suse.de
+	by mail.kernel.org (Postfix) with ESMTPS id 35427613BF
+	for <dm-devel@archiver.kernel.org>; Tue, 27 Apr 2021 10:57:16 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 35427613BF
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=rz.uni-regensburg.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-174-048FukUjNdq5S66MnwXnFQ-1; Tue, 27 Apr 2021 04:21:20 -0400
-X-MC-Unique: 048FukUjNdq5S66MnwXnFQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-203-KUCaKCjyPjO6KmVBPwSB4g-1; Tue, 27 Apr 2021 06:57:12 -0400
+X-MC-Unique: KUCaKCjyPjO6KmVBPwSB4g-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 412451006C81;
-	Tue, 27 Apr 2021 08:21:17 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id ABF9C1002388;
-	Tue, 27 Apr 2021 08:21:16 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 857C61898296;
+	Tue, 27 Apr 2021 10:57:06 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 421816A8EA;
+	Tue, 27 Apr 2021 10:57:05 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 22FB144A58;
-	Tue, 27 Apr 2021 08:21:15 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 777CA1806D1B;
+	Tue, 27 Apr 2021 10:57:01 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13R8LBGY023719 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 27 Apr 2021 04:21:11 -0400
+	id 13RAqgA0007419 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 27 Apr 2021 06:52:42 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 9DC00568C3; Tue, 27 Apr 2021 08:21:11 +0000 (UTC)
+	id 8084851E1; Tue, 27 Apr 2021 10:52:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 99BC850174
-	for <dm-devel@redhat.com>; Tue, 27 Apr 2021 08:21:09 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7AE354404A
+	for <dm-devel@redhat.com>; Tue, 27 Apr 2021 10:52:40 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1DDE1A2880D
-	for <dm-devel@redhat.com>; Tue, 27 Apr 2021 08:21:09 +0000 (UTC)
-Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-409-NOi-ouvSNQqGiAlamTODEw-1;
-	Tue, 27 Apr 2021 04:21:06 -0400
-X-MC-Unique: NOi-ouvSNQqGiAlamTODEw-1
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id CCEEAB001;
-	Tue, 27 Apr 2021 08:21:04 +0000 (UTC)
-To: Martin Wilck <martin.wilck@suse.com>,
-	"erwin@erwinvanlonden.net" <erwin@erwinvanlonden.net>,
-	"Ulrich.Windl@rz.uni-regensburg.de" <Ulrich.Windl@rz.uni-regensburg.de>,
-	"martin.petersen@oracle.com" <martin.petersen@oracle.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2FD02857A86
+	for <dm-devel@redhat.com>; Tue, 27 Apr 2021 10:52:40 +0000 (UTC)
+Received: from mx3.uni-regensburg.de (mx3.uni-regensburg.de
+	[194.94.157.148]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-278-lEIJlAM9NnuusqKSWmZRyg-1; Tue, 27 Apr 2021 06:52:37 -0400
+X-MC-Unique: lEIJlAM9NnuusqKSWmZRyg-1
+Received: from mx3.uni-regensburg.de (localhost [127.0.0.1])
+	by localhost (Postfix) with SMTP id 71932600004D
+	for <dm-devel@redhat.com>; Tue, 27 Apr 2021 12:52:35 +0200 (CEST)
+Received: from gwsmtp.uni-regensburg.de (gwsmtp1.uni-regensburg.de
+	[132.199.5.51])
+	by mx3.uni-regensburg.de (Postfix) with ESMTP id 49E1C600005E
+	for <dm-devel@redhat.com>; Tue, 27 Apr 2021 12:52:34 +0200 (CEST)
+Received: from uni-regensburg-smtp1-MTA by gwsmtp.uni-regensburg.de
+	with Novell_GroupWise; Tue, 27 Apr 2021 12:52:34 +0200
+Message-Id: <6087ECF1020000A100040C7F@gwsmtp.uni-regensburg.de>
+Date: Tue, 27 Apr 2021 12:52:33 +0200
+From: "Ulrich Windl" <Ulrich.Windl@rz.uni-regensburg.de>
+To: <erwin@erwinvanlonden.net>, <martin.petersen@oracle.com>,
+	<martin.wilck@suse.com>, <hare@suse.de>
 References: <c524ce68d9a9582732db8350f8a1def461a1a847.camel@suse.com>
 	<yq135w4cam3.fsf@ca-mkp.ca.oracle.com>
 	<06489ea37311fe7bf73b27a41b5209ee4cca85fe.camel@suse.com>
@@ -72,14 +76,9 @@ References: <c524ce68d9a9582732db8350f8a1def461a1a847.camel@suse.com>
 	<59dc346de26997a6b8e3ae3d86d84ada60b3d26b.camel@suse.com>
 	<b5f288fb43bc79e0206794a901aef5b1761813de.camel@erwinvanlonden.net>
 	<15e1a6a493f55051eab844bab2a107f783dc27ee.camel@suse.com>
-From: Hannes Reinecke <hare@suse.de>
-Organization: SUSE Linux GmbH
-Message-ID: <2a6903e4-ff2b-67d5-e772-6971db8448fb@suse.de>
-Date: Tue, 27 Apr 2021 10:21:03 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
-	Thunderbird/78.9.1
-MIME-Version: 1.0
-In-Reply-To: <15e1a6a493f55051eab844bab2a107f783dc27ee.camel@suse.com>
+	<2a6903e4-ff2b-67d5-e772-6971db8448fb@suse.de>
+In-Reply-To: <2a6903e4-ff2b-67d5-e772-6971db8448fb@suse.de>
+Mime-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -90,16 +89,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 13R8LBGY023719
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 13RAqgA0007419
 X-loop: dm-devel@redhat.com
-Cc: Hannes Reinecke <hare@suse.com>, "systemd-devel@lists.freedesktop.org"
+Cc: hare@suse.com, "systemd-devel@lists.freedesktop.org"
 	<systemd-devel@lists.freedesktop.org>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"dgilbert@interlog.com" <dgilbert@interlog.com>,
-	"jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>,
-	"hch@lst.de" <hch@lst.de>
-Subject: Re: [dm-devel] RFC: one more time: SCSI device identification
+	linux-scsi@vger.kernel.org, dm-devel@redhat.com,
+	dgilbert@interlog.com, jejb@linux.vnet.ibm.com, hch@lst.de
+Subject: [dm-devel] Antw: [EXT] Re: RFC: one more time: SCSI device
+ identification
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -113,64 +110,69 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On 4/27/21 10:10 AM, Martin Wilck wrote:
-> On Tue, 2021-04-27 at 13:48 +1000, Erwin van Londen wrote:
->>>
->>> Wrt 1), we can only hope that it's the case. But 2) and 3) need work,
->>> afaics.
->>>
->> In my view the WWID should never change.=A0
->=20
-> In an ideal world, perhaps not. But in the dm-multipath realm, we know
-> that WWID changes can happen with certain storage arrays. See=A0
-> https://listman.redhat.com/archives/dm-devel/2021-February/msg00116.html=
-=A0
-> and follow-ups, for example.
->=20
-And it's actually something which might happen quite easily.
-The storage array can unmap a LUN, delete it, create a new one, and map
-that one into the same LUN number than the old one.
-If we didn't do I/O during that interval upon the next I/O we will be
-getting the dreaded 'Power-On/Reset' sense code.
-_And nothing else_, due to the arcane rules for sense code generation in
-SAM.
-But we end up with a completely different device.
-
-The only way out of it is to do a rescan for every POR sense code, and
-disable the device eg via DID_NO_CONNECT whenever we find that the
-identification has changed. We already have a copy of the original VPD
-page 0x83 at hand, so that should be reasonably easy.
-
-I had a rather lengthy discussion with Fred Knight @ NetApp about
-Power-On/Reset handling, what with him complaining that we don't handle
-is correctly. So this really is something we should be looking into,
-even independently of multipathing.
-
-But actually I like the idea from Martin Petersen to expose the parsed
-VPD identifiers to sysfs; that would allow us to drop sg_inq completely
-from the udev rules.
-
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke=09=09        Kernel Storage Architect
-hare@suse.de=09=09=09               +49 911 74053 688
-SUSE Software Solutions Germany GmbH, 90409 N=FCrnberg
-GF: F. Imend=F6rffer, HRB 36809 (AG N=FCrnberg)
-
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+Pj4+IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBzdXNlLmRlPiBzY2hyaWViIGFtIDI3LjA0LjIwMjEg
+dW0gMTA6MjEgaW4gTmFjaHJpY2h0CjwyYTY5MDNlNC1mZjJiLTY3ZDUtZTc3Mi02OTcxZGI4NDQ4
+ZmJAc3VzZS5kZT46Cj4gT24gNC8yNy8yMSAxMDoxMCBBTSwgTWFydGluIFdpbGNrIHdyb3RlOgo+
+PiBPbiBUdWUsIDIwMjHigJEwNOKAkTI3IGF0IDEzOjQ4ICsxMDAwLCBFcndpbiB2YW4gTG9uZGVu
+IHdyb3RlOgo+Pj4+Cj4+Pj4gV3J0IDEpLCB3ZSBjYW4gb25seSBob3BlIHRoYXQgaXQncyB0aGUg
+Y2FzZS4gQnV0IDIpIGFuZCAzKSBuZWVkIHdvcmssCj4+Pj4gYWZhaWNzLgo+Pj4+Cj4+PiBJbiBt
+eSB2aWV3IHRoZSBXV0lEIHNob3VsZCBuZXZlciBjaGFuZ2UuIAo+PiAKPj4gSW4gYW4gaWRlYWwg
+d29ybGQsIHBlcmhhcHMgbm90LiBCdXQgaW4gdGhlIGRt4oCRbXVsdGlwYXRoIHJlYWxtLCB3ZSBr
+bm93Cj4+IHRoYXQgV1dJRCBjaGFuZ2VzIGNhbiBoYXBwZW4gd2l0aCBjZXJ0YWluIHN0b3JhZ2Ug
+YXJyYXlzLiBTZWUgCj4+IGh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL2FyY2hpdmVzL2Rt4oCR
+ZGV2ZWwvMjAyMeKAkUZlYnJ1YXJ5L21zZzAwMTE2Lmh0bWwgCj4+IGFuZCBmb2xsb3figJF1cHMs
+IGZvciBleGFtcGxlLgo+PiAKPiBBbmQgaXQncyBhY3R1YWxseSBzb21ldGhpbmcgd2hpY2ggbWln
+aHQgaGFwcGVuIHF1aXRlIGVhc2lseS4KPiBUaGUgc3RvcmFnZSBhcnJheSBjYW4gdW5tYXAgYSBM
+VU4sIGRlbGV0ZSBpdCwgY3JlYXRlIGEgbmV3IG9uZSwgYW5kIG1hcAo+IHRoYXQgb25lIGludG8g
+dGhlIHNhbWUgTFVOIG51bWJlciB0aGFuIHRoZSBvbGQgb25lLgo+IElmIHdlIGRpZG4ndCBkbyBJ
+L08gZHVyaW5nIHRoYXQgaW50ZXJ2YWwgdXBvbiB0aGUgbmV4dCBJL08gd2Ugd2lsbCBiZQo+IGdl
+dHRpbmcgdGhlIGRyZWFkZWQgJ1Bvd2Vy4oCRT24vUmVzZXQnIHNlbnNlIGNvZGUuCj4gX0FuZCBu
+b3RoaW5nIGVsc2VfLCBkdWUgdG8gdGhlIGFyY2FuZSBydWxlcyBmb3Igc2Vuc2UgY29kZSBnZW5l
+cmF0aW9uIGluCj4gU0FNLgo+IEJ1dCB3ZSBlbmQgdXAgd2l0aCBhIGNvbXBsZXRlbHkgZGlmZmVy
+ZW50IGRldmljZS4KPiAKPiBUaGUgb25seSB3YXkgb3V0IG9mIGl0IGlzIHRvIGRvIGEgcmVzY2Fu
+IGZvciBldmVyeSBQT1Igc2Vuc2UgY29kZSwgYW5kCj4gZGlzYWJsZSB0aGUgZGV2aWNlIGVnIHZp
+YSBESURfTk9fQ09OTkVDVCB3aGVuZXZlciB3ZSBmaW5kIHRoYXQgdGhlCj4gaWRlbnRpZmljYXRp
+b24gaGFzIGNoYW5nZWQuIFdlIGFscmVhZHkgaGF2ZSBhIGNvcHkgb2YgdGhlIG9yaWdpbmFsIFZQ
+RAo+IHBhZ2UgMHg4MyBhdCBoYW5kLCBzbyB0aGF0IHNob3VsZCBiZSByZWFzb25hYmx5IGVhc3ku
+CgpJIGRvbid0IGtub3cgdGhlIGRlcHRoIG9mIHRoZSBTQ1NJIG9yIEZDIHByb3RvY29sLCBidXQg
+c3RvcmFnZSBzeXN0ZW1zCnR5cGljYWxseSBzaWduYWwgc3VjaCBldmVudHMsIG1heWJlIGVpdGhl
+ciB2aWEgc29tZSB1bml0IGF0dGVudGlvbiBvciBzb21lIEZDCmV2ZW50LiBPbGRlciBrZXJuZWxz
+IGxvZ2dlZCB0aGF0IHRoZXJlIHdhcyBhIGNoYW5nZSwgYnV0IGEgbWFudWFsIFNDU0kgYnVzIHNj
+YW4KaXMgbmVlZGVkLCB3aGlsZSBuZXdlciBrZXJuZWxzIGZpbmQgbmV3IGRldmljZXMgImF1dG9t
+YWdpY2FsbHkiIGZvciBzb21lCnByb2R1Y3RzLiBUaGUgSFAgRVZBIDYwMDAgc2VyaWVzIHdvcmVk
+IHRoYXQgd2F5LCBhIDNQQVIgU290b3JTZXJ2IDgwMDAgc2VyaWVzCmFsc28gc2VlbXMgdG8gd29y
+ayB0aGF0IHdheSwgYnV0IG5vdCBQdXJlIFN0b3JhZ2UgWDcwIFIzLiBGT3IgdGhlIGxhdHRlciB5
+b3UKbmVlZCBzb21ldGhpbmcgbGlrZSBhIEZDIExJUCB0byBtYWtlIHRoZSBrZXJuZWwgZGV0ZWN0
+IHRoZSBuZXcgZGV2aWNlcyAoTFVOcykuCkknbSB1bnN1cmUgd2hlcmUgdGhlIHByb2JsZW0gaXMs
+IGJ1dCBpbiBwcmluY2lwbGUgdGhlIGtlcm5lbCBjYW4gYmUKbm90aWZpZWQuLi4KCj4gCj4gSSBo
+YWQgYSByYXRoZXIgbGVuZ3RoeSBkaXNjdXNzaW9uIHdpdGggRnJlZCBLbmlnaHQgQCBOZXRBcHAg
+YWJvdXQKPiBQb3dlcuKAkU9uL1Jlc2V0IGhhbmRsaW5nLCB3aGF0IHdpdGggaGltIGNvbXBsYWlu
+aW5nIHRoYXQgd2UgZG9uJ3QgaGFuZGxlCj4gaXMgY29ycmVjdGx5LiBTbyB0aGlzIHJlYWxseSBp
+cyBzb21ldGhpbmcgd2Ugc2hvdWxkIGJlIGxvb2tpbmcgaW50bywKPiBldmVuIGluZGVwZW5kZW50
+bHkgb2YgbXVsdGlwYXRoaW5nLgo+IAo+IEJ1dCBhY3R1YWxseSBJIGxpa2UgdGhlIGlkZWEgZnJv
+bSBNYXJ0aW4gUGV0ZXJzZW4gdG8gZXhwb3NlIHRoZSBwYXJzZWQKPiBWUEQgaWRlbnRpZmllcnMg
+dG8gc3lzZnM7IHRoYXQgd291bGQgYWxsb3cgdXMgdG8gZHJvcCBzZ19pbnEgY29tcGxldGVseQo+
+IGZyb20gdGhlIHVkZXYgcnVsZXMuCgpUYWxraW5nIG9mIFZQRHM6IFNvbWV3aGVyZSBpbiB0aGUg
+bGFzdCAxMiB5ZWFycyAod2l0aGluIFNMRVMgMTEpdGhlcmUgd2FzIGEKa2VybmVsIGNoYW5nZSBy
+ZWdhcmRpbmcgdHJhaWxpbmcgYmxhbmtzIGluIFZQRCBkYXRhLiBUaGF0IGNoYW5nZSBibGV3IHVw
+CnNldmVyYWwgY29uZmlndXJhdGlvbnMgYmVpbmcgdW5hYmxlIHRvIHJlLXJlY29nbml6ZSB0aGUg
+ZGV2aWNlcy4gSW4gb25lIGNhc2UKdGhlIHNvZnR3YXJlIGV2ZW4gaGFkIGJvdW5kIGEgbGljZW5z
+ZSB0byBhIHNwZWNpZmljIGRldmljZSB3aXRoIHNlcmlhbCBudW1iZXIsCmFuZCB0aGF0IHNvZnR3
+YXJlIGZvdW5kICJuZXciIGRldmljZXMgd2hpbGUgbWlzc2luZyB0aGUgIm9sZCIgb25lcy4uLgoK
+UmVnYXJkcywKVWxyaWNoCgo+IAo+IENoZWVycywKPiAKPiBIYW5uZXMKPiDigJHigJEgCj4gRHIu
+IEhhbm5lcyBSZWluZWNrZQkJICAgICAgICBLZXJuZWwgU3RvcmFnZSBBcmNoaXRlY3QKPiBoYXJl
+QHN1c2UuZGUJCQkgICAgICAgICAgICAgICArNDkgOTExIDc0MDUzIDY4OAo+IFNVU0UgU29mdHdh
+cmUgU29sdXRpb25zIEdlcm1hbnkgR21iSCwgOTA0MDkgTsO8cm5iZXJnCj4gR0Y6IEYuIEltZW5k
+w7ZyZmZlciwgSFJCIDM2ODA5IChBRyBOw7xybmJlcmcpCgoKCgotLQpkbS1kZXZlbCBtYWlsaW5n
+IGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWls
+bWFuL2xpc3RpbmZvL2RtLWRldmVs
 
