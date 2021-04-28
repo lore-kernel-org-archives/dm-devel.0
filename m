@@ -1,67 +1,75 @@
-Return-Path: <SRS0=s6iH=JY=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=Tzat=JZ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-0.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,HTML_MESSAGE,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 23539C43470
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Apr 2021 20:43:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 69B4CC433ED
+	for <dm-devel@archiver.kernel.org>; Wed, 28 Apr 2021 00:15:03 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id A6DEF613FB
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Apr 2021 20:43:54 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A6DEF613FB
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id AE702613F7
+	for <dm-devel@archiver.kernel.org>; Wed, 28 Apr 2021 00:15:02 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org AE702613F7
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=erwinvanlonden.net
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1619556233;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=I5R+AIvTxNMUm9y5uKWdAtxIfha2VTz1ofxGFDzx5TQ=;
-	b=R5M0DC5Fl1/02d6G4U6xB2xAgCHzH0saXoYX/9RvutE0NUHNf2n58aVyL/1oqjbtDzDPil
-	FvON6y39R3Zct1JhuDBIFFd+VUosaGFVOWeI0DGgYnkfnjNnh6S5EOCluQyDGTOF4qAvAL
-	Iw2tM9sFrnm8yIv+7xkZNvtOPKPGMX0=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-581-EmnCEBO3NsSvu99J2CcIIg-1; Tue, 27 Apr 2021 16:43:51 -0400
-X-MC-Unique: EmnCEBO3NsSvu99J2CcIIg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-79-_mZpXO3yOsOQ1WrSkQylfA-1; Tue, 27 Apr 2021 20:14:58 -0400
+X-MC-Unique: _mZpXO3yOsOQ1WrSkQylfA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 52F93107ACC7;
-	Tue, 27 Apr 2021 20:43:46 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BB4815C23E;
-	Tue, 27 Apr 2021 20:43:45 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4EC14107ACCA;
+	Wed, 28 Apr 2021 00:14:53 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4B48B5D9C0;
+	Wed, 28 Apr 2021 00:14:52 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2F11E18095C9;
-	Tue, 27 Apr 2021 20:43:45 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
-	[10.5.11.22])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 03F5235B76;
+	Wed, 28 Apr 2021 00:14:48 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13RKfod7031571 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 27 Apr 2021 16:41:50 -0400
+	id 13S0EiWa016400 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 27 Apr 2021 20:14:45 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id ACAAC1037E8A; Tue, 27 Apr 2021 20:41:50 +0000 (UTC)
-Received: from ovpn-112-203.phx2.redhat.com (ovpn-112-203.phx2.redhat.com
-	[10.3.112.203])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3C65C100763B;
-	Tue, 27 Apr 2021 20:41:46 +0000 (UTC)
-Message-ID: <c8ede601244e1710dbf320c33c0f7853e249bbee.camel@redhat.com>
-From: "Ewan D. Milne" <emilne@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>,
+	id D770621D01DB; Wed, 28 Apr 2021 00:14:44 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D2D8121C85F6
+	for <dm-devel@redhat.com>; Wed, 28 Apr 2021 00:14:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 953AB803DDA
+	for <dm-devel@redhat.com>; Wed, 28 Apr 2021 00:14:42 +0000 (UTC)
+Received: from gateway22.websitewelcome.com (gateway22.websitewelcome.com
+	[192.185.47.129]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-314-SY4zvCq0Mzqkpesc6t4SyA-1; Tue, 27 Apr 2021 20:14:40 -0400
+X-MC-Unique: SY4zvCq0Mzqkpesc6t4SyA-1
+Received: from cm14.websitewelcome.com (cm14.websitewelcome.com [100.42.49.7])
+	by gateway22.websitewelcome.com (Postfix) with ESMTP id CCF6926C5E
+	for <dm-devel@redhat.com>; Tue, 27 Apr 2021 19:14:38 -0500 (CDT)
+Received: from just2098.justhost.com ([173.254.31.45]) by cmsmtp with SMTP
+	id bXqglndk1w11MbXqglBBXV; Tue, 27 Apr 2021 19:14:38 -0500
+X-Authority-Reason: nr=8
+Received: from 116-240-66-4.sta.dodo.net.au ([116.240.66.4]:48746
+	helo=[192.168.1.104])
+	by just2098.justhost.com with esmtpsa (TLS1.2) tls
+	TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 (Exim 4.94)
+	(envelope-from <erwin@erwinvanlonden.net>)
+	id 1lbXqf-001ARM-IW; Tue, 27 Apr 2021 18:14:38 -0600
+Message-ID: <455a6e5086831323af86a150d21d5a0a7c2299eb.camel@erwinvanlonden.net>
+From: Erwin van Londen <erwin@erwinvanlonden.net>
+To: "Ewan D. Milne" <emilne@redhat.com>, Martin Wilck <martin.wilck@suse.com>,
 	"Ulrich.Windl@rz.uni-regensburg.de" <Ulrich.Windl@rz.uni-regensburg.de>,
 	"martin.petersen@oracle.com" <martin.petersen@oracle.com>
-Date: Tue, 27 Apr 2021 16:41:45 -0400
-In-Reply-To: <488ef3e7fa0cca4f0a0cb2e9307ddaa08385d3f7.camel@suse.com>
+In-Reply-To: <c8ede601244e1710dbf320c33c0f7853e249bbee.camel@redhat.com>
 References: <c524ce68d9a9582732db8350f8a1def461a1a847.camel@suse.com>
 	<yq135w4cam3.fsf@ca-mkp.ca.oracle.com>
 	<06489ea37311fe7bf73b27a41b5209ee4cca85fe.camel@suse.com>
@@ -73,16 +81,46 @@ References: <c524ce68d9a9582732db8350f8a1def461a1a847.camel@suse.com>
 	<59dc346de26997a6b8e3ae3d86d84ada60b3d26b.camel@suse.com>
 	<65f66a5e03081dd3b470fa9aeff9a77dbc41743c.camel@redhat.com>
 	<488ef3e7fa0cca4f0a0cb2e9307ddaa08385d3f7.camel@suse.com>
-Mime-Version: 1.0
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+	<c8ede601244e1710dbf320c33c0f7853e249bbee.camel@redhat.com>
+Date: Wed, 28 Apr 2021 10:09:25 +1000
+MIME-Version: 1.0
+User-Agent: Evolution 3.38.4 (3.38.4-1.fc33)
+X-AntiAbuse: This header was added to track abuse,
+	please include it with any abuse report
+X-AntiAbuse: Primary Hostname - just2098.justhost.com
+X-AntiAbuse: Original Domain - redhat.com
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - erwinvanlonden.net
+X-BWhitelist: no
+X-Source-IP: 116.240.66.4
+X-Source-L: No
+X-Exim-ID: 1lbXqf-001ARM-IW
+X-Source: 
+X-Source-Args: 
+X-Source-Dir: 
+X-Source-Sender: 116-240-66-4.sta.dodo.net.au ([192.168.1.104])
+	[116.240.66.4]:48746
+X-Source-Auth: erwin@erwinvanlonden.net
+X-Email-Count: 4
+X-Source-Cap: aGl0YWNoaTE7aGl0YWNoaTE7anVzdDIwOTguanVzdGhvc3QuY29t
+X-Local-Domain: yes
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: Hannes Reinecke <hare@suse.com>,
-	"jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>,
+Cc: Hannes Reinecke <hare@suse.com>, "systemd-devel@lists.freedesktop.org"
+	<systemd-devel@lists.freedesktop.org>,
 	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
 	"dm-devel@redhat.com" <dm-devel@redhat.com>,
 	"dgilbert@interlog.com" <dgilbert@interlog.com>,
-	"systemd-devel@lists.freedesktop.org"
-	<systemd-devel@lists.freedesktop.org>, "hch@lst.de" <hch@lst.de>
+	"jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>,
+	"hch@lst.de" <hch@lst.de>
 Subject: Re: [dm-devel] RFC: one more time: SCSI device identification
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
@@ -97,56 +135,172 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; boundary="===============8723577805685795230=="
+
+--===============8723577805685795230==
+Content-Type: multipart/alternative; boundary="=-6itdzK+JZI6c9hhwPbqQ"
+
+--=-6itdzK+JZI6c9hhwPbqQ
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+
+
+On Tue, 2021-04-27 at 16:41 -0400, Ewan D. Milne wrote:
+> On Tue, 2021-04-27 at 20:33 +0000, Martin Wilck wrote:
+> > On Tue, 2021-04-27 at 16:14 -0400, Ewan D. Milne wrote:
+> > >=20
+> > > There's no way to do that, in principle.=C2=A0 Because there could be
+> > > other I/Os in flight.=C2=A0 You might (somehow) avoid retrying an I/O
+> > > that got a UA until you figured out if something changed, but
+> > > other
+> > > I/Os can already have been sent to the target, or issued before
+> > > you
+> > > get to look at the status.
+
+If something happens on a storage side where a lun gets it's attributes
+changed (any, doesn't matter which one) a UA should be sent. Also all
+outstanding IO's on that lun should be returning an Abort as it can no
+longer warrant the validity of any IO due to these changes. Especially
+when parameters are involved like reservations (PR's) etc. If that does
+not happen from an array side all bets are off as the only way to be
+able to get back in business is to start from scratch.
+
+> >=20
+> >=20
+> > Right. But in practice, a WWID change will hardly happen under full
+> > IO
+> > load. The storage side will probably have to block IO while this
+> > happens, at least for a short time period. So blocking and
+> > quiescing
+> > the queue upon an UA might still work, most of the time. Even if we
+> > were too late already, the sooner we stop the queue, the better.
+
+I think in most cases when something happens on an array side you will
+see IO's being aborted. That might be a good time to start doing TUR's
+and if these come back OK do a new inquiry. From a host side there is
+only so much you can do.
+
+> >=20
+> > The current algorithm in multipath-tools needs to detect a path
+> > going
+> > down and being reinstated. The time interval during which a WWID
+> > change
+> > will go unnoticed is one or more path checker intervals, typically
+> > on
+> > the order of 5-30 seconds. If we could decrease this interval to a
+> > sub-
+> > second or even millisecond range by blocking the queue in the
+> > kernel
+> > quickly, we'd have made a big step forward.
+>=20
+> Yes, and in many situations this may help.=C2=A0 But in the general case
+> we can't protect against a storage array misconfiguration,
+> where something like this can happen.=C2=A0 So I worry about people
+> believing the host software will protect them against a mistake,
+> when we can't really do that.
+
+My thought exactly.=C2=A0
+
+>=20
+> All it takes is one I/O (a discard) to make a thorough mess of the
+> LUN.
+>=20
+> -Ewan
+>=20
+> >=20
+> > Regards
+> > Martin
+> >=20
+>=20
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://listman.redhat.com/mailman/listinfo/dm-devel
+>=20
+
+--=-6itdzK+JZI6c9hhwPbqQ
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<html><head></head><body><div><br></div><div><span></span></div><div><br></=
+div><div>On Tue, 2021-04-27 at 16:41 -0400, Ewan D. Milne wrote:</div><bloc=
+kquote type=3D"cite" style=3D"margin:0 0 0 .8ex; border-left:2px #729fcf so=
+lid;padding-left:1ex"><div>On Tue, 2021-04-27 at 20:33 +0000, Martin Wilck =
+wrote:<br></div><blockquote type=3D"cite" style=3D"margin:0 0 0 .8ex; borde=
+r-left:2px #729fcf solid;padding-left:1ex"><div>On Tue, 2021-04-27 at 16:14=
+ -0400, Ewan D. Milne wrote:<br></div><blockquote type=3D"cite" style=3D"ma=
+rgin:0 0 0 .8ex; border-left:2px #729fcf solid;padding-left:1ex"><div><br><=
+/div><div>There's no way to do that, in principle.&nbsp; Because there coul=
+d be<br></div><div>other I/Os in flight.&nbsp; You might (somehow) avoid re=
+trying an I/O<br></div><div>that got a UA until you figured out if somethin=
+g changed, but other<br></div><div>I/Os can already have been sent to the t=
+arget, or issued before you<br></div><div>get to look at the status.<br></d=
+iv></blockquote></blockquote></blockquote><div><br></div><div>If something =
+happens on a storage side where a lun gets it's attributes changed (any, do=
+esn't matter which one) a UA should be sent. Also all outstanding IO's on t=
+hat lun should be returning an Abort as it can no longer warrant the validi=
+ty of any IO due to these changes. Especially when parameters are involved =
+like reservations (PR's) etc. If that does not happen from an array side al=
+l bets are off as the only way to be able to get back in business is to sta=
+rt from scratch.</div><div><br></div><blockquote type=3D"cite" style=3D"mar=
+gin:0 0 0 .8ex; border-left:2px #729fcf solid;padding-left:1ex"><blockquote=
+ type=3D"cite" style=3D"margin:0 0 0 .8ex; border-left:2px #729fcf solid;pa=
+dding-left:1ex"><blockquote type=3D"cite" style=3D"margin:0 0 0 .8ex; borde=
+r-left:2px #729fcf solid;padding-left:1ex"></blockquote><div><br></div><div=
+>Right. But in practice, a WWID change will hardly happen under full<br></d=
+iv><div>IO<br></div><div>load. The storage side will probably have to block=
+ IO while this<br></div><div>happens, at least for a short time period. So =
+blocking and quiescing<br></div><div>the queue upon an UA might still work,=
+ most of the time. Even if we<br></div><div>were too late already, the soon=
+er we stop the queue, the better.<br></div></blockquote></blockquote><div><=
+br></div><div>I think in most cases when something happens on an array side=
+ you will see IO's being aborted. That might be a good time to start doing =
+TUR's and if these come back OK do a new inquiry. From a host side there is=
+ only so much you can do.</div><div><br></div><blockquote type=3D"cite" sty=
+le=3D"margin:0 0 0 .8ex; border-left:2px #729fcf solid;padding-left:1ex"><b=
+lockquote type=3D"cite" style=3D"margin:0 0 0 .8ex; border-left:2px #729fcf=
+ solid;padding-left:1ex"><div><br></div><div>The current algorithm in multi=
+path-tools needs to detect a path going<br></div><div>down and being reinst=
+ated. The time interval during which a WWID<br></div><div>change<br></div><=
+div>will go unnoticed is one or more path checker intervals, typically on<b=
+r></div><div>the order of 5-30 seconds. If we could decrease this interval =
+to a<br></div><div>sub-<br></div><div>second or even millisecond range by b=
+locking the queue in the kernel<br></div><div>quickly, we'd have made a big=
+ step forward.<br></div></blockquote><div><br></div><div>Yes, and in many s=
+ituations this may help.&nbsp; But in the general case<br></div><div>we can=
+'t protect against a storage array misconfiguration,<br></div><div>where so=
+mething like this can happen.&nbsp; So I worry about people<br></div><div>b=
+elieving the host software will protect them against a mistake,<br></div><d=
+iv>when we can't really do that.<br></div></blockquote><div><br></div><div>=
+My thought exactly.&nbsp;</div><div><br></div><blockquote type=3D"cite" sty=
+le=3D"margin:0 0 0 .8ex; border-left:2px #729fcf solid;padding-left:1ex"><d=
+iv><br></div><div>All it takes is one I/O (a discard) to make a thorough me=
+ss of the LUN.<br></div><div><br></div><div>-Ewan<br></div><div><br></div><=
+blockquote type=3D"cite" style=3D"margin:0 0 0 .8ex; border-left:2px #729fc=
+f solid;padding-left:1ex"><div><br></div><div>Regards<br></div><div>Martin<=
+br></div><div><br></div></blockquote><div><br></div><div>--<br></div><div>d=
+m-devel mailing list<br></div><div><a href=3D"mailto:dm-devel@redhat.com">d=
+m-devel@redhat.com</a><br></div><div><a href=3D"https://listman.redhat.com/=
+mailman/listinfo/dm-devel">https://listman.redhat.com/mailman/listinfo/dm-d=
+evel</a><br></div><div><br></div></blockquote></body></html>
+
+--=-6itdzK+JZI6c9hhwPbqQ--
+
+--===============8723577805685795230==
 Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-On Tue, 2021-04-27 at 20:33 +0000, Martin Wilck wrote:
-> On Tue, 2021-04-27 at 16:14 -0400, Ewan D. Milne wrote:
-> > 
-> > There's no way to do that, in principle.  Because there could be
-> > other I/Os in flight.  You might (somehow) avoid retrying an I/O
-> > that got a UA until you figured out if something changed, but other
-> > I/Os can already have been sent to the target, or issued before you
-> > get to look at the status.
-> 
-> Right. But in practice, a WWID change will hardly happen under full
-> IO
-> load. The storage side will probably have to block IO while this
-> happens, at least for a short time period. So blocking and quiescing
-> the queue upon an UA might still work, most of the time. Even if we
-> were too late already, the sooner we stop the queue, the better.
-> 
-> The current algorithm in multipath-tools needs to detect a path going
-> down and being reinstated. The time interval during which a WWID
-> change
-> will go unnoticed is one or more path checker intervals, typically on
-> the order of 5-30 seconds. If we could decrease this interval to a
-> sub-
-> second or even millisecond range by blocking the queue in the kernel
-> quickly, we'd have made a big step forward.
-
-Yes, and in many situations this may help.  But in the general case
-we can't protect against a storage array misconfiguration,
-where something like this can happen.  So I worry about people
-believing the host software will protect them against a mistake,
-when we can't really do that.
-
-All it takes is one I/O (a discard) to make a thorough mess of the LUN.
-
--Ewan
-
-> 
-> Regards
-> Martin
-> 
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+--===============8723577805685795230==--
 
