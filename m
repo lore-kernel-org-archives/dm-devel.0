@@ -1,111 +1,99 @@
-Return-Path: <SRS0=KYOW=J2=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=Ylab=J3=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-2.2 required=3.0 tests=BAYES_00,DATE_IN_PAST_06_12,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 714E8C433ED
-	for <dm-devel@archiver.kernel.org>; Thu, 29 Apr 2021 23:33:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E5514C433ED
+	for <dm-devel@archiver.kernel.org>; Fri, 30 Apr 2021 07:18:52 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id BE5C961460
-	for <dm-devel@archiver.kernel.org>; Thu, 29 Apr 2021 23:33:28 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BE5C961460
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=erwinvanlonden.net
+	by mail.kernel.org (Postfix) with ESMTPS id 6AF6361424
+	for <dm-devel@archiver.kernel.org>; Fri, 30 Apr 2021 07:18:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 6AF6361424
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=canonical.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-304-CGFhxbIuMe-YFuUm1l3rbg-1; Thu, 29 Apr 2021 19:33:25 -0400
-X-MC-Unique: CGFhxbIuMe-YFuUm1l3rbg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-298-EKW6JPugP7uK15tpUEpzAw-1; Fri, 30 Apr 2021 03:18:49 -0400
+X-MC-Unique: EKW6JPugP7uK15tpUEpzAw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C2D76501E7;
-	Thu, 29 Apr 2021 23:33:21 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DA7F01A8A69;
+	Fri, 30 Apr 2021 07:18:44 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5AD565D9C6;
-	Thu, 29 Apr 2021 23:33:20 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0672F19C45;
+	Fri, 30 Apr 2021 07:18:42 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CEBB244A68;
-	Thu, 29 Apr 2021 23:33:16 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CC63044A69;
+	Fri, 30 Apr 2021 07:18:39 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13TNWi5v024444 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 29 Apr 2021 19:32:44 -0400
+	id 13TMUCBp019478 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 29 Apr 2021 18:30:12 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id A7F1F1054FAB; Thu, 29 Apr 2021 23:32:44 +0000 (UTC)
+	id 4CF9B10CD616; Thu, 29 Apr 2021 22:30:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A36D01054FB5
-	for <dm-devel@redhat.com>; Thu, 29 Apr 2021 23:32:39 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 483AD1054FB8
+	for <dm-devel@redhat.com>; Thu, 29 Apr 2021 22:30:10 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0467F858F0D
-	for <dm-devel@redhat.com>; Thu, 29 Apr 2021 23:32:39 +0000 (UTC)
-Received: from gateway20.websitewelcome.com (gateway20.websitewelcome.com
-	[192.185.47.18]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-211-TyVv5wmEPr2iea9lrNWecw-1; Thu, 29 Apr 2021 19:32:36 -0400
-X-MC-Unique: TyVv5wmEPr2iea9lrNWecw-1
-Received: from cm10.websitewelcome.com (cm10.websitewelcome.com [100.42.49.4])
-	by gateway20.websitewelcome.com (Postfix) with ESMTP id 561E0400FBEB1
-	for <dm-devel@redhat.com>; Thu, 29 Apr 2021 18:21:06 -0500 (CDT)
-Received: from just2098.justhost.com ([173.254.31.45]) by cmsmtp with SMTP
-	id cG94lZhBIL7DmcG94lZUA0; Thu, 29 Apr 2021 18:32:34 -0500
-X-Authority-Reason: nr=8
-Received: from 116-240-66-4.sta.dodo.net.au ([116.240.66.4]:32928
-	helo=[192.168.1.104])
-	by just2098.justhost.com with esmtpsa (TLS1.2) tls
-	TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 (Exim 4.94)
-	(envelope-from <erwin@erwinvanlonden.net>)
-	id 1lcG93-000Art-Fh; Thu, 29 Apr 2021 17:32:34 -0600
-Message-ID: <d26cbf916bbff974cda28536b128129ea3a0f13b.camel@erwinvanlonden.net>
-From: Erwin van Londen <erwin@erwinvanlonden.net>
-To: Martin Wilck <martin.wilck@suse.com>, "hare@suse.de" <hare@suse.de>,
-	"Ulrich.Windl@rz.uni-regensburg.de" <Ulrich.Windl@rz.uni-regensburg.de>,
-	"martin.petersen@oracle.com" <martin.petersen@oracle.com>
-In-Reply-To: <643e5f7eb3e2d48517a3288c07af001b30e22075.camel@suse.com>
-References: <c524ce68d9a9582732db8350f8a1def461a1a847.camel@suse.com>
-	<yq135w4cam3.fsf@ca-mkp.ca.oracle.com>
-	<06489ea37311fe7bf73b27a41b5209ee4cca85fe.camel@suse.com>
-	<yq1pmynt6f6.fsf@ca-mkp.ca.oracle.com>
-	<685c40341d2ddef2fe5a54dd656d10104b0c1bfa.camel@suse.com>
-	<yq1im4dre94.fsf@ca-mkp.ca.oracle.com>
-	<e3184501cbf23ab0ae94d664725e72b693c64ba9.camel@suse.com>
-	<6086A0B2020000A100040BBE@gwsmtp.uni-regensburg.de>
-	<59dc346de26997a6b8e3ae3d86d84ada60b3d26b.camel@suse.com>
-	<b5f288fb43bc79e0206794a901aef5b1761813de.camel@erwinvanlonden.net>
-	<15e1a6a493f55051eab844bab2a107f783dc27ee.camel@suse.com>
-	<2a6903e4-ff2b-67d5-e772-6971db8448fb@suse.de>
-	<ff5b30ca02ecfad00097ad5f8b84d053514fb61c.camel@erwinvanlonden.net>
-	<643e5f7eb3e2d48517a3288c07af001b30e22075.camel@suse.com>
-Date: Fri, 30 Apr 2021 00:47:57 +1000
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0D94E185A7A5
+	for <dm-devel@redhat.com>; Thu, 29 Apr 2021 22:30:10 +0000 (UTC)
+Received: from youngberry.canonical.com (youngberry.canonical.com
+	[91.189.89.112]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-411-pXo8qosEN7Cq7_4OtfjG-Q-1; Thu, 29 Apr 2021 18:30:08 -0400
+X-MC-Unique: pXo8qosEN7Cq7_4OtfjG-Q-1
+Received: from mail-pf1-f199.google.com ([209.85.210.199])
+	by youngberry.canonical.com with esmtps
+	(TLS1.2:ECDHE_RSA_AES_128_GCM_SHA256:128) (Exim 4.86_2)
+	(envelope-from <matthew.ruffell@canonical.com>) id 1lcEv7-0006TZ-FY
+	for dm-devel@redhat.com; Thu, 29 Apr 2021 22:14:05 +0000
+Received: by mail-pf1-f199.google.com with SMTP id
+	h22-20020aa786d60000b029027d0956e914so3740448pfo.23
+	for <dm-devel@redhat.com>; Thu, 29 Apr 2021 15:14:05 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:to:cc:from:subject:message-id:date:user-agent
+	:mime-version:content-language:content-transfer-encoding;
+	bh=QgsWf7Yqqo+/RN9txyd7qvZjC+YxWkPrNWjS7tr+Hig=;
+	b=HDCmLmnL7ShRmpIvJGbvardaAqIr5XCHVuzTu2b06aFZ1znjxtcktuMHsKJprGSyTr
+	aGKA3jD1LUm66coXDbsRsTSr+fl0DB1lKi+FE8+7KX+PsiZlNBno60iF/z0hwrT8LHsL
+	jotex8a5hgMkpInTB5lLrYAdlYEVvibWaAdS4dIextrpS+ZmLC2tQx0drBp9PIdDQIOH
+	E5lFGz4GnDp5b2BG28P/WpKbnj+qpNDR0iWnQt9aR38UhBm0n78bs3SJNBPy0hEQeem2
+	NjUh0NgpjsHeNYNlw5uNkmLYOmPanMx+7OB5fS6/3CfoRzAb2J+qwJgcrMwZlYsTwBdW
+	3PAg==
+X-Gm-Message-State: AOAM5323yoLPQQzdMljM5WOxlKM+qhPNXg92YhNH1UYK4lHoakJfc/bX
+	2Y+7+GiYr/Szqzo0BqpdsTGc2NjW6iNm0CKunUYy2YU092BrR5uQ32/ZKp2zw5+HSJQhwxS6vDw
+	e4fIQZ6rPzGX1zVzBtlLdtD2UlWAVDg==
+X-Received: by 2002:a05:6a00:150d:b029:27a:ce95:bb0e with SMTP id
+	q13-20020a056a00150db029027ace95bb0emr1867082pfu.64.1619734443996;
+	Thu, 29 Apr 2021 15:14:03 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJxjb2FNHAo8qT/cTKTND0W0E5SX3CTE/GBTiKsKTK0gpPeOj9qqn7zYzH74htmkVEXtb4+Vmw==
+X-Received: by 2002:a05:6a00:150d:b029:27a:ce95:bb0e with SMTP id
+	q13-20020a056a00150db029027ace95bb0emr1867068pfu.64.1619734443733;
+	Thu, 29 Apr 2021 15:14:03 -0700 (PDT)
+Received: from [192.168.1.107] (122-58-78-211-adsl.sparkbb.co.nz.
+	[122.58.78.211])
+	by smtp.gmail.com with ESMTPSA id n20sm890386pgv.15.2021.04.29.15.14.00
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Thu, 29 Apr 2021 15:14:03 -0700 (PDT)
+To: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
+From: Matthew Ruffell <matthew.ruffell@canonical.com>
+Message-ID: <158e5646-ee2c-ae9c-adb1-1c0d4db1ca6d@canonical.com>
+Date: Fri, 30 Apr 2021 10:13:57 +1200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+	Thunderbird/78.8.1
 MIME-Version: 1.0
-User-Agent: Evolution 3.38.4 (3.38.4-1.fc33)
-X-AntiAbuse: This header was added to track abuse,
-	please include it with any abuse report
-X-AntiAbuse: Primary Hostname - just2098.justhost.com
-X-AntiAbuse: Original Domain - redhat.com
-X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
-X-AntiAbuse: Sender Address Domain - erwinvanlonden.net
-X-BWhitelist: no
-X-Source-IP: 116.240.66.4
-X-Source-L: No
-X-Exim-ID: 1lcG93-000Art-Fh
-X-Source: 
-X-Source-Args: 
-X-Source-Dir: 
-X-Source-Sender: 116-240-66-4.sta.dodo.net.au ([192.168.1.104])
-	[116.240.66.4]:32928
-X-Source-Auth: erwin@erwinvanlonden.net
-X-Email-Count: 4
-X-Source-Cap: aGl0YWNoaTE7aGl0YWNoaTE7anVzdDIwOTguanVzdGhvc3QuY29t
-X-Local-Domain: yes
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -115,17 +103,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 13TNWi5v024444
 X-loop: dm-devel@redhat.com
-Cc: Hannes Reinecke <hare@suse.com>, "systemd-devel@lists.freedesktop.org"
-	<systemd-devel@lists.freedesktop.org>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"dgilbert@interlog.com" <dgilbert@interlog.com>,
-	"jejb@linux.vnet.ibm.com" <jejb@linux.vnet.ibm.com>,
-	"hch@lst.de" <hch@lst.de>
-Subject: Re: [dm-devel] RFC: one more time: SCSI device identification
+X-Mailman-Approved-At: Fri, 30 Apr 2021 03:15:55 -0400
+Cc: linux-raid <linux-raid@vger.kernel.org>, Xiao Ni <xni@redhat.com>
+Subject: [dm-devel] Raid1 and Raid10 Discard Limit Fixups for 5.13 Merge
+	Window
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -139,90 +121,46 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-CgpPbiBXZWQsIDIwMjEtMDQtMjggYXQgMDY6MzQgKzAwMDAsIE1hcnRpbiBXaWxjayB3cm90ZToK
-PiBPbiBXZWQsIDIwMjEtMDQtMjggYXQgMTE6MDEgKzEwMDAsIEVyd2luIHZhbiBMb25kZW4gd3Jv
-dGU6Cj4gPiAKPiA+IFRoZSB3YXkgb3V0IG9mIHRoaXMgaXMgdG8gY2h1Y2sgdGhlIGFycmF5IGlu
-IHRoZSBiaW4uIEFzIEkgbWVudGlvbmVkCj4gPiBpbiBvbmUgb2YgbXkgb3RoZXIgZW1haWxzIHdo
-ZW4gYSBzY2VuYXJpbyBoYXBwZW5zIGFzIHlvdSBkZXNjcmliZWQKPiA+IGFib3ZlIGFuZCB0aGUg
-YXJyYXkgZG9lcyBub3QgaW5mb3JtIHRoZSBpbml0aWF0b3IgaXQgZ29lcyBhZ2FpbnN0IHRoZQo+
-ID4gU0FNLTUgc3RhbmRhcmQuCj4gPiAKPiA+IFRoYXQgc3RhbmRhcmQgc2hvd3M6Cj4gPiA1LjE0
-IFVuaXQgYXR0ZW50aW9uIGNvbmRpdGlvbnMKPiA+IDUuMTQuMSBVbml0IGF0dGVudGlvbiBjb25k
-aXRpb25zIHRoYXQgYXJlIG5vdCBjb2FsZXNjZWQKPiA+IEVhY2ggbG9naWNhbCB1bml0IHNoYWxs
-IGVzdGFibGlzaCBhIHVuaXQgYXR0ZW50aW9uIGNvbmRpdGlvbiB3aGVuZXZlcgo+ID4gb25lIG9m
-IHRoZSBmb2xsb3dpbmcgZXZlbnRzIG9jY3VyczoKPiA+IMKgwqDCoMKgwqDCoMKgwqBhKSBhIHBv
-d2VyIG9uIChzZWUgNi4zLjEpLCBoYXJkIHJlc2V0IChzZWUgNi4zLjIpLCBsb2dpY2FsCj4gPiB1
-bml0IHJlc2V0IChzZWUgNi4zLjMpLCBJX1QgbmV4dXMgbG9zcyAoc2VlIDYuMy40KSwgb3IgcG93
-ZXIgbG9zcwo+ID4gZXhwZWN0ZWQgKHNlZSA2LjMuNSkgb2NjdXJzOwo+ID4gwqDCoMKgwqDCoMKg
-wqDCoGIpIGNvbW1hbmRzIHJlY2VpdmVkIG9uIHRoaXMgSV9UIG5leHVzIGhhdmUgYmVlbiBjbGVh
-cmVkIGJ5Cj4gPiBhIGNvbW1hbmQgb3IgYSB0YXNrIG1hbmFnZW1lbnQgZnVuY3Rpb24gYXNzb2Np
-YXRlZCB3aXRoIGFub3RoZXIgSV9UCj4gPiBuZXh1cyBhbmQgdGhlIFRBUyBiaXQgd2FzIHNldCB0
-byB6ZXJvIGluIHRoZSBDb250cm9sIG1vZGUgcGFnZQo+ID4gYXNzb2NpYXRlZCB3aXRoIHRoaXMg
-SV9UIG5leHVzIChzZWUgNS42KTsKPiA+IMKgwqDCoMKgwqDCoMKgwqBjKSB0aGUgcG9ydGlvbiBv
-ZiB0aGUgbG9naWNhbCB1bml0IGludmVudG9yeSB0aGF0IGNvbnNpc3RzCj4gPiBvZiBhZG1pbmlz
-dHJhdGl2ZSBsb2dpY2FsIHVuaXRzIGFuZCBoaWVyYXJjaGljYWwgbG9naWNhbCB1bml0cyBoYXMK
-PiA+IGJlZW4gY2hhbmdlZCAoc2VlIDQuNi4xOC4xKTsgb3IKPiA+IMKgwqDCoMKgwqDCoMKgwqBk
-KSBhbnkgb3RoZXIgZXZlbnQgcmVxdWlyaW5nIHRoZSBhdHRlbnRpb24gb2YgdGhlIFNDU0kKPiA+
-IGluaXRpYXRvciBkZXZpY2UuCj4gPiAKPiA+IEVzcGVjaWFsbHkgdGhlIElfVCBuZXh1cyBsb3Nz
-IHVuZGVyIGEgaXMgYW4gaW1wb3J0YW50IHRyaWdnZXIuCj4gPiAKPiA+IC0tLQo+ID4gNi4zLjQg
-SV9UIG5leHVzIGxvc3MKPiA+IEFuIElfVCBuZXh1cyBsb3NzIGlzIGEgU0NTSSBkZXZpY2UgY29u
-ZGl0aW9uIHJlc3VsdGluZyBmcm9tOgo+ID4gCj4gPiDCoGEpIGEgaGFyZCByZXNldCBjb25kaXRp
-b24gKHNlZSA2LjMuMik7Cj4gPiDCoGIpIGFuIElfVCBuZXh1cyBsb3NzIGV2ZW50IChlLmcuLCBs
-b2dvdXQpIGluZGljYXRlZCBieSBhIE5leHVzIExvc3MKPiA+IGV2ZW50IG5vdGlmaWNhdGlvbiAo
-c2VlIDYuNCk7Cj4gPiDCoGMpIGluZGljYXRpb24gdGhhdCBhbiBJX1QgTkVYVVMgUkVTRVQgdGFz
-ayBtYW5hZ2VtZW50IHJlcXVlc3QgKHNlZQo+ID4gNy42KSBoYXMgYmVlbiBwcm9jZXNzZWQ7IG9y
-Cj4gPiDCoGQpIGFuIGluZGljYXRpb24gdGhhdCBhIFJFTU9WRSBJX1QgTkVYVVMgY29tbWFuZCAo
-c2VlIFNQQy00KSBoYXMKPiA+IGJlZW4gcHJvY2Vzc2VkLgo+ID4gQW4gSV9UIG5leHVzIGxvc3Mg
-ZXZlbnQgaXMgYW4gaW5kaWNhdGlvbiBmcm9tIHRoZSBTQ1NJIHRyYW5zcG9ydAo+ID4gcHJvdG9j
-b2wgdG8gdGhlIFNBTCB0aGF0IGFuIElfVCBuZXh1cyBubwo+ID4gbG9uZ2VyIGV4aXN0cy4gU0NT
-SSB0cmFuc3BvcnQgcHJvdG9jb2xzIG1heSBkZWZpbmUgSV9UIG5leHVzIGxvc3MKPiA+IGV2ZW50
-cy4KPiA+IAo+ID4gRWFjaCBTQ1NJIHRyYW5zcG9ydCBwcm90b2NvbCBzdGFuZGFyZCB0aGF0IGRl
-ZmluZXMgSV9UIG5leHVzIGxvc3MKPiA+IGV2ZW50cyBzaG91bGQgc3BlY2lmeSB3aGVuIHRob3Nl
-IGV2ZW50cwo+ID4gcmVzdWx0IGluIHRoZSBkZWxpdmVyeSBvZiBhIE5leHVzIExvc3MgZXZlbnQg
-bm90aWZpY2F0aW9uIHRvIHRoZSBTQUwuCj4gPiAKPiA+IFRoZSBJX1QgbmV4dXMgbG9zcyBjb25k
-aXRpb24gYXBwbGllcyB0byBib3RoIFNDU0kgaW5pdGlhdG9yIGRldmljZXMKPiA+IGFuZCBTQ1NJ
-IHRhcmdldCBkZXZpY2VzLgo+ID4gCj4gPiBJZiBhIFNDU0kgdGFyZ2V0IHBvcnQgZGV0ZWN0cyBh
-biBJX1QgbmV4dXMgbG9zcywgdGhlbiBhIE5leHVzIExvc3MKPiA+IGV2ZW50IG5vdGlmaWNhdGlv
-biBzaGFsbCBiZSBkZWxpdmVyZWQgdG8KPiA+IGVhY2ggbG9naWNhbCB1bml0IHRvIHdoaWNoIHRo
-ZSBJX1QgbmV4dXMgaGFzIGFjY2Vzcy4KPiA+IAo+ID4gSW4gcmVzcG9uc2UgdG8gYW4gSV9UIG5l
-eHVzIGxvc3MgY29uZGl0aW9uIGEgbG9naWNhbCB1bml0IHNoYWxsIHRha2UKPiA+IHRoZSBmb2xs
-b3dpbmcgYWN0aW9uczoKPiA+IGEpIGFib3J0IGFsbCBjb21tYW5kcyByZWNlaXZlZCBvbiB0aGUg
-SV9UIG5leHVzIGFzIGRlc2NyaWJlZCBpbiA1LjY7Cj4gPiBiKSBhYm9ydCBhbGwgYmFja2dyb3Vu
-ZCB0aGlyZC1wYXJ0eSBjb3B5IG9wZXJhdGlvbnMgKHNlZSBTUEMtNCkgdGhhdAo+ID4gYXJlIHVz
-aW5nIHRoZSBJX1QgbmV4dXM7Cj4gPiBjKSB0ZXJtaW5hdGUgYWxsIHRhc2sgbWFuYWdlbWVudCBm
-dW5jdGlvbnMgcmVjZWl2ZWQgb24gdGhlIElfVCBuZXh1czsKPiA+IGQpIGNsZWFyIGFsbCBBQ0Eg
-Y29uZGl0aW9ucyAoc2VlIDUuOS41KSBhc3NvY2lhdGVkIHdpdGggdGhlIElfVAo+ID4gbmV4dXM7
-Cj4gPiBlKSBlc3RhYmxpc2ggYSB1bml0IGF0dGVudGlvbiBjb25kaXRpb24gZm9yIHRoZSBTQ1NJ
-IGluaXRpYXRvciBwb3J0Cj4gPiBhc3NvY2lhdGVkIHdpdGggdGhlIElfVCBuZXh1cyAoc2VlIDUu
-MTQKPiA+IGFuZCA2LjIpOyBhbmQKPiA+IGYpIHBlcmZvcm0gYW55IGFkZGl0aW9uYWwgZnVuY3Rp
-b25zIHJlcXVpcmVkIGJ5IHRoZSBhcHBsaWNhYmxlCj4gPiBjb21tYW5kIHN0YW5kYXJkcy4KPiA+
-IC0tLQo+ID4gCj4gPiBUaGlzIGRvZXMgYWxzbyBtZWFuIHRoYXQgYW55IHVuZGVybHlpbmcgdHJh
-bnNwb3J0IHByb3RvY29sIGlzc3Vlcwo+ID4gbGlrZSBvbiBGQyBvciBUQ1AgZm9yIGlTQ1NJIHdp
-bGwgdmVyeSBvZnRlbiB0cmlnZ2VyIGFib3J0ZWQgY29tbWFuZHMKPiA+IG9yIFVBJ3MgYXMgd2Vs
-bCB3aGljaCB3aWxsIGJlIHBpY2tlZCB1cCBieSB0aGUga2VybmVsL3Jlc3BlY3RlZAo+ID4gZHJp
-dmVycy4KPiAKPiBUaGFua3MgYSBsb3QuIEknbSBub3QgcXVpdGUgY2VydGFpbiB3aGljaCBvZiB0
-aGVzZSBwYXJhZ3JhcGhzIHdvdWxkCj4gYXBwbHkgdG8gdGhlIHNpdHVhdGlvbiBJIGhhZCBpbiBt
-aW5kIChhZG1pbmlzdHJhdG9yIHJlbWFwcGluZyBhbgo+IGV4aXN0aW5nIExVTiBvbiBhIHN0b3Jh
-Z2UgYXJyYXkgdG8gYSBkaWZmZXJlbnQgdm9sdW1lKS4gVGhhdCBzY2VuYXJpbwo+IHdvdWxkbid0
-IG5lY2Vzc2FyaWx5IGludm9sdmUgdHJhbnNwb3J0LWxldmVsIGVycm9ycywgb3IgYW4gSV9UIG5l
-eHVzCj4gbG9zcy4gNS4xNC4xIGMpIG9yIGQpIG1pZ2h0IGFwcGx5LCBpcyB0aGF0IHdoYXQgeW91
-IG1lYW50PwoKSSB3YXMgaW5kZWVkIG1vc3RseSByZWZlcnJpbmcgdG86CgogCWMpIHRoZSBwb3J0
-aW9uIG9mIHRoZSBsb2dpY2FsIHVuaXQgaW52ZW50b3J5IHRoYXQgY29uc2lzdHMKIG9mIGFkbWlu
-aXN0cmF0aXZlIGxvZ2ljYWwgdW5pdHMgYW5kIGhpZXJhcmNoaWNhbCBsb2dpY2FsIHVuaXRzIGhh
-cwogYmVlbiBjaGFuZ2VkIChzZWUgNC42LjE4LjEpOyBvcgogCWQpIGFueSBvdGhlciBldmVudCBy
-ZXF1aXJpbmcgdGhlIGF0dGVudGlvbiBvZiB0aGUgU0NTSQogaW5pdGlhdG9yIGRldmljZS4KClRo
-ZSBJVCBuZXh1cyBzdGF0dXMgaXRzZWxmIG1pZ2h0IG5vdCBoYXZlIGNoYW5nZWQgYnV0IGlmIGFu
-IGFic3RyYWN0aW9uCmxheWVyIHJlcHJlc2VudGluZyBhIHRvdGFsbHkgZGlmZmVyZW50IHNldCBv
-ZiBkYXRhIHRoYXQgd291bGQgbW9zdApkZWZpbml0ZWx5IGZhbGwgdW5kZXIgZC4gSSB0aGluayBz
-d2FwcGluZyBiZXR3ZWVuIGEgdm9sdW1lIGFuZCBvbmUgb2YKaXRzIHNuYXBzaG90cyBhbHNvIGZh
-bGxzIHVuZGVyIHRoaXMgCgoKPiAKPiBSZWdhcmRzCj4gTWFydGluCj4gCgoKLS0KZG0tZGV2ZWwg
-bWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5j
-b20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Hi Mike,
+
+The Raid10 block discard performance patchset from Xiao Ni has reached mainline
+this morning in the following commits:
+
+254c271da071 md/raid10: improve discard request for far layout
+d30588b2731f md/raid10: improve raid10 discard request
+f2e7e269a752 md/raid10: pull the code that wait for blocked dev into one function
+c2968285925a md/raid10: extend r10bio devs to raid disks
+cf78408f937a md: add md_submit_discard_bio() for submitting discard bio
+
+I was wondering, are you planning to resubmit your patches to fixup discard
+limits for raid1 and raid10 this merge cycle?
+
+commit e0910c8e4f87bb9f767e61a778b0d9271c4dc512
+Author: Mike Snitzer <snitzer@redhat.com>
+Date: Thu Sep 24 13:14:52 2020 -0400
+Subject: dm raid: fix discard limits for raid1 and raid10
+Link: https://github.com/torvalds/linux/commit/e0910c8e4f87bb9f767e61a778b0d9271c4dc512
+
+commit f0e90b6c663a7e3b4736cb318c6c7c589f152c28
+Author: Mike Snitzer <snitzer@redhat.com>
+Date: Thu Sep 24 16:40:12 2020 -0400
+Subject: dm raid: remove unnecessary discard limits for raid10
+Link: https://github.com/torvalds/linux/commit/f0e90b6c663a7e3b4736cb318c6c7c589f152c28
+
+Thanks,
+Matthew
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
