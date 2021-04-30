@@ -2,76 +2,109 @@ Return-Path: <SRS0=Ylab=J3=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 52246C433B4
-	for <dm-devel@archiver.kernel.org>; Fri, 30 Apr 2021 20:20:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9C5C6C433ED
+	for <dm-devel@archiver.kernel.org>; Fri, 30 Apr 2021 21:13:06 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id D978361450
-	for <dm-devel@archiver.kernel.org>; Fri, 30 Apr 2021 20:20:22 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D978361450
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 236A261466
+	for <dm-devel@archiver.kernel.org>; Fri, 30 Apr 2021 21:13:06 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 236A261466
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=acm.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1619814021;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=ZF8KPFCtbwl2phU9ztNYyFX0YKvMTD7akOHvAUQl880=;
-	b=ZcID0x0jFvEvTL+KnnQd2qOqmOso3KuKr190HWHakSlr3ZFw1h+B07Uw+P1SHHSneKThgK
-	1MMmJYNKaruCrPJpA6AmoKrQ+L6G9eMJyByJh0Q9sAyQjWCi5v0N8kS/pQrgSDeWuSFPua
-	qFUf4A2QGLcX0Tk0SE7vooTqpYRHtwU=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-474-8v8L1ipxOW6-U__Ht8m6ug-1; Fri, 30 Apr 2021 16:20:19 -0400
-X-MC-Unique: 8v8L1ipxOW6-U__Ht8m6ug-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-560-iP8qnxkGNpCGZCvPefivxg-1; Fri, 30 Apr 2021 17:13:03 -0400
+X-MC-Unique: iP8qnxkGNpCGZCvPefivxg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9CE35107ACE3;
-	Fri, 30 Apr 2021 20:20:15 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 34EC8107ACC7;
+	Fri, 30 Apr 2021 21:12:59 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id F405810016F8;
-	Fri, 30 Apr 2021 20:20:13 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 347FB19C66;
+	Fri, 30 Apr 2021 21:12:58 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3F7A055346;
-	Fri, 30 Apr 2021 20:20:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
-	[10.5.11.15])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 656F855341;
+	Fri, 30 Apr 2021 21:12:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 13UKFmgb025188 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 30 Apr 2021 16:15:48 -0400
+	id 13ULCtdl030671 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 30 Apr 2021 17:12:55 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6166A5B687; Fri, 30 Apr 2021 20:15:48 +0000 (UTC)
-Received: from localhost (unknown [10.18.25.174])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B99835B685;
-	Fri, 30 Apr 2021 20:15:43 +0000 (UTC)
-Date: Fri, 30 Apr 2021 16:15:43 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Hannes Reinecke <hare@suse.de>
-Message-ID: <20210430201542.GA7880@redhat.com>
-References: <20210422202130.30906-1-mwilck@suse.com>
-	<20210428195457.GA46518@lobo>
-	<7124009b-1ea5-61eb-419f-956e659a0996@suse.de>
+	id 04DEA209A818; Fri, 30 Apr 2021 21:12:55 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 00287209A817
+	for <dm-devel@redhat.com>; Fri, 30 Apr 2021 21:12:51 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8E6788CDDEE
+	for <dm-devel@redhat.com>; Fri, 30 Apr 2021 21:12:51 +0000 (UTC)
+Received: from mail-pf1-f170.google.com (mail-pf1-f170.google.com
+	[209.85.210.170]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-31-bUyW8Ae1OP2tBmhxr-lorQ-1; Fri, 30 Apr 2021 17:12:49 -0400
+X-MC-Unique: bUyW8Ae1OP2tBmhxr-lorQ-1
+Received: by mail-pf1-f170.google.com with SMTP id b27so972192pfp.9;
+	Fri, 30 Apr 2021 14:12:48 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+	:user-agent:mime-version:in-reply-to:content-language
+	:content-transfer-encoding;
+	bh=IJVRbjgMjkBqhc3MOP/kRS9kVrpbjy+Gj7VZlV7M4Sw=;
+	b=fjDR12lvf/Wg0wFcaYILiHRXJFjQaLd3022IdJ/Ufluy0xjEpNC+/GLkwoUcIvMBEl
+	oF09yRgKaHxOeYK//Fi5qbXa6H1cq89Y/zTc95G4IG4RkOD3XQqjpXx9I2oifIACHhsW
+	GuwDzo4u8SkngU6TYEu1RDXWwyMTXQzlMKvw2tRUAnutqFuf9FMLRtJMnnt64tYISGk0
+	++aB0KNdipwQ+VUUsF9vAdQ4KB2uA6Qlz2UkUILz1oVI6FU6HmpN2uMvO4JB/7lxoAHD
+	WWB7oLRWTp+8rfXuBq6BUMvg0fiNHnV12wSu+Pha3syFF+DmTkTB1uPVNJmVhCNjUuK1
+	fcag==
+X-Gm-Message-State: AOAM533I9d+jYLdOn21V1nJymfCNKlf8ZEuP1vimtlk6jhz3WAJ32oXd
+	nWYrJ55JgCbX8entmhsjXn0=
+X-Google-Smtp-Source: ABdhPJz3eL+t6Dg1nqOMtbXH8G3Q/sOwzwjQbJpqJixOkSvPC4i/h6TqfkrtvQUScR89exTuAoOjyA==
+X-Received: by 2002:a63:205d:: with SMTP id r29mr6472707pgm.340.1619817167797; 
+	Fri, 30 Apr 2021 14:12:47 -0700 (PDT)
+Received: from ?IPv6:2601:647:4000:d7:a75c:e2e0:cb86:23e0?
+	([2601:647:4000:d7:a75c:e2e0:cb86:23e0])
+	by smtp.gmail.com with ESMTPSA id
+	m188sm2821390pfm.167.2021.04.30.14.12.46
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Fri, 30 Apr 2021 14:12:46 -0700 (PDT)
+To: Martin Wilck <mwilck@suse.com>, Mike Snitzer <snitzer@redhat.com>,
+	Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com,
+	Hannes Reinecke <hare@suse.de>
+References: <20210429155024.4947-1-mwilck@suse.com>
+	<20210429155024.4947-2-mwilck@suse.com>
+	<08440651-6e8f-734a-ef43-561d9c2596a6@acm.org>
+	<bb30875e11913a33bcaf491d0f752132ebb9ce5e.camel@suse.com>
+From: Bart Van Assche <bvanassche@acm.org>
+Message-ID: <39a59df5-9fdb-a1f1-39a2-c41b62e8076c@acm.org>
+Date: Fri, 30 Apr 2021 14:12:45 -0700
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+	Thunderbird/78.10.0
 MIME-Version: 1.0
-In-Reply-To: <7124009b-1ea5-61eb-419f-956e659a0996@suse.de>
-User-Agent: Mutt/1.5.21 (2010-09-15)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+In-Reply-To: <bb30875e11913a33bcaf491d0f752132ebb9ce5e.camel@suse.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: linux-scsi@vger.kernel.org, Daniel Wagner <dwagner@suse.de>,
-	Christoph Hellwig <hch@lst.de>, linux-block@vger.kernel.org,
-	dm-devel@redhat.com, Paolo Bonzini <pbonzini@redhat.com>,
-	mwilck@suse.com, Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] dm: dm_blk_ioctl(): implement failover for SG_IO on
-	dm-multipath
+Cc: linux-block@vger.kernel.org, Paolo Bonzini <pbonzini@redhat.com>,
+	Christoph Hellwig <hch@lst.de>, Daniel Wagner <dwagner@suse.de>
+Subject: Re: [dm-devel] [RFC PATCH v2 1/2] scsi: convert
+ scsi_result_to_blk_status() to inline
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -85,193 +118,52 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="iso-8859-1"
+Content-Language: en-US
+Content-Type: text/plain; charset="iso-8859-15"
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Apr 29 2021 at  2:02am -0400,
-Hannes Reinecke <hare@suse.de> wrote:
+On 4/29/21 1:33 PM, Martin Wilck wrote:
+> On Thu, 2021-04-29 at 09:20 -0700, Bart Van Assche wrote:
+>> On 4/29/21 8:50 AM, mwilck@suse.com=A0wrote:
+>>> This makes it possible to use scsi_result_to_blk_status() from
+>>> code that shouldn't depend on scsi_mod (e.g. device mapper).
+>>
+>> I think that's the wrong reason to make a function inline. Please
+>> consider moving scsi_result_to_blk_status() into one of the block
+>> layer
+>> source code files that already deals with SG I/O, e.g.
+>> block/scsi_ioctl.c.
+>=20
+> scsi_ioctl.c, are you certain? scsi_result_to_blk_status() is an
+> important part of the block/scsi interface... You're right that that
+> this function is not a prime candidate for inlining, but I'm still
+> wondering where it belongs if we don't.
 
-> On 4/28/21 9:54 PM, Mike Snitzer wrote:
-> >On Thu, Apr 22 2021 at  4:21P -0400,
-> >mwilck@suse.com <mwilck@suse.com> wrote:
-> >
-> >>From: Martin Wilck <mwilck@suse.com>
-> >>
-> >>In virtual deployments, SCSI passthrough over dm-multipath devices is a
-> >>common setup. The qemu "pr-helper" was specifically invented for it. I
-> >>believe that this is the most important real-world scenario for sending
-> >>SG_IO ioctls to device-mapper devices.
-> >>
-> >>In this configuration, guests send SCSI IO to the hypervisor in the for=
-m of
-> >>SG_IO ioctls issued by qemu. But on the device-mapper level, these SCSI
-> >>ioctls aren't treated like regular IO. Until commit 2361ae595352 ("dm m=
-path:
-> >>switch paths in dm_blk_ioctl() code path"), no path switching was done =
-at
-> >>all. Worse though, if an SG_IO call fails because of a path error,
-> >>dm-multipath doesn't retry the IO on a another path; rather, the failur=
-e is
-> >>passed back to the guest, and paths are not marked as faulty.  This is =
-in
-> >>stark contrast with regular block IO of guests on dm-multipath devices,=
- and
-> >>certainly comes as a surprise to users who switch to SCSI passthrough i=
-n
-> >>qemu. In general, users of dm-multipath devices would probably expect f=
-ailover
-> >>to work at least in a basic way.
-> >>
-> >>This patch fixes this by taking a special code path for SG_IO on reques=
-t-
-> >>based device mapper targets. Rather then just choosing a single path,
-> >>sending the IO to it, and failing to the caller if the IO on the path
-> >>failed, it retries the same IO on another path for certain error codes,
-> >>using the same logic as blk_path_error() to determine if a retry would =
-make
-> >>sense for the given error code. Moreover, it sends a message to the
-> >>multipath target to mark the path as failed.
-> >>
-> >>I am aware that this looks sort of hack-ish. I'm submitting it here as =
-an
-> >>RFC, asking for guidance how to reach a clean implementation that would=
- be
-> >>acceptable in mainline. I believe that it fixes an important problem.
-> >>Actually, it fixes the qemu SCSI-passthrough use case on dm-multipath,
-> >>which is non-functional without it.
-> >>
-> >>One problem remains open: if all paths in a multipath map are failed,
-> >>normal multipath IO may switch to queueing mode (depending on
-> >>configuration). This isn't possible for SG_IO, as SG_IO requests can't
-> >>easily be queued like regular block I/O. Thus in the "no path" case, th=
-e
-> >>guest will still see an error. If anybody can conceive of a solution fo=
-r
-> >>that, I'd be interested.
-> >>
-> >>Signed-off-by: Martin Wilck <mwilck@suse.com>
-> >>---
-> >>  block/scsi_ioctl.c     |   5 +-
-> >>  drivers/md/dm.c        | 134 ++++++++++++++++++++++++++++++++++++++++=
--
-> >>  include/linux/blkdev.h |   2 +
-> >>  3 files changed, 137 insertions(+), 4 deletions(-)
-> >>
-> >>diff --git a/block/scsi_ioctl.c b/block/scsi_ioctl.c
-> >>index 6599bac0a78c..bcc60552f7b1 100644
-> >>--- a/block/scsi_ioctl.c
-> >>+++ b/block/scsi_ioctl.c
-> >>@@ -279,8 +279,8 @@ static int blk_complete_sghdr_rq(struct request *rq=
-, struct sg_io_hdr *hdr,
-> >>  =09return ret;
-> >>  }
-> >>-static int sg_io(struct request_queue *q, struct gendisk *bd_disk,
-> >>-=09=09struct sg_io_hdr *hdr, fmode_t mode)
-> >>+int sg_io(struct request_queue *q, struct gendisk *bd_disk,
-> >>+=09  struct sg_io_hdr *hdr, fmode_t mode)
-> >>  {
-> >>  =09unsigned long start_time;
-> >>  =09ssize_t ret =3D 0;
-> >>@@ -369,6 +369,7 @@ static int sg_io(struct request_queue *q, struct ge=
-ndisk *bd_disk,
-> >>  =09blk_put_request(rq);
-> >>  =09return ret;
-> >>  }
-> >>+EXPORT_SYMBOL_GPL(sg_io);
-> >>  /**
-> >>   * sg_scsi_ioctl  --  handle deprecated SCSI_IOCTL_SEND_COMMAND ioctl
-> >>diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> >>index 50b693d776d6..443ac5e5406c 100644
-> >>--- a/drivers/md/dm.c
-> >>+++ b/drivers/md/dm.c
-> >>@@ -29,6 +29,8 @@
-> >>  #include <linux/part_stat.h>
-> >>  #include <linux/blk-crypto.h>
-> >>  #include <linux/keyslot-manager.h>
-> >>+#include <scsi/sg.h>
-> >>+#include <scsi/scsi.h>
-> >>  #define DM_MSG_PREFIX "core"
-> >
-> >Ngh... not loving this at all.  But here is a patch (that I didn't
-> >compile test) that should be folded in, still have to think about how
-> >this could be made cleaner in general though.
-> >
-> >Also, dm_sg_io_ioctl should probably be in dm-rq.c (maybe even dm-mpath.=
-c!?)
-> >
-> I fully share your sentiments; this just feels so awkward, having to
-> redo the logic in scsi_cmd_ioctl().
->=20
-> My original idea to that was to _use_ scsi_cmd_ioctl() directly from
-> dm_blk_ioctl:
->=20
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 50b693d776d6..007ff981f888 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -567,6 +567,9 @@ static int dm_blk_ioctl(struct block_device
-> *bdev, fmode_t mode,
->         struct mapped_device *md =3D bdev->bd_disk->private_data;
->         int r, srcu_idx;
->=20
-> +       if (cmd =3D=3D SG_IO)
-> +               return scsi_cmd_blk_ioctl(bdev, mode, cmd, arg);
-> +
->         r =3D dm_prepare_ioctl(md, &srcu_idx, &bdev);
->         if (r < 0)
->                 goto out;
->=20
->=20
-> But that crashes horribly as sg_io() expects the request pdu to be
-> of type 'scsi_request', which it definitely isn't here.
->=20
-> We _could_ prepend struct dm_rq_target_io with a struct
-> scsi_request, seeing that basically _all_ dm-rq installations are on
-> SCSI devices:
+The block/scsi_ioctl.c file is included in the kernel if and only if
+BLK_SCSI_REQUEST is enabled. And that Kconfig symbol only selects the
+block/scsi_ioctl.c file. Additionally, the following occurs in the SCSI
+Kconfig file:
 
-If calling sg_io() is an issue then how does Martin's latest patchset,
-that exports and calls sg_io direct from DM, work!?
+config SCSI
+=09tristate "SCSI device support"
+=09[ ... ]
+=09select BLK_SCSI_REQUEST
 
-And _no_ I have no interest in embedding struct scsi_request in
-dm_rq_target_io.
+In other words, block/scsi_ioctl.c is built unconditionally if SCSI is
+enabled. Adding the scsi_result_to_blk_status() function to the
+block/scsi_ioctl.c file would increase the size of kernels that enable
+bsg, ide, the SCSI target code or nfsd but not the SCSI initiator code.
+If the latter is a concern, how about moving scsi_result_to_blk_status()
+into a new file in the block directory?
 
-Mike
+Thanks,
 
->=20
-> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-> index 13b4385f4d5a..aa7856621f83 100644
-> --- a/drivers/md/dm-rq.c
-> +++ b/drivers/md/dm-rq.c
-> @@ -16,6 +16,7 @@
->   * One of these is allocated per request.
->   */
->  struct dm_rq_target_io {
-> +       struct scsi_request scsi_req;
->         struct mapped_device *md;
->         struct dm_target *ti;
->         struct request *orig, *clone;
->=20
-> Then the above should work, but we would increase the size of
-> dm_rq_target_io by quite a lot. Although, given the current size of
-> it, question is whether it matters...
->=20
-> Hmm?
->=20
-> Cheers,
->=20
-> Hannes
-> --=20
-> Dr. Hannes Reinecke                Kernel Storage Architect
-> hare@suse.de                              +49 911 74053 688
-> SUSE Software Solutions GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> HRB 36809 (AG N=FCrnberg), Gesch=E4ftsf=FChrer: Felix Imend=F6rffer
->=20
+Bart.
 
 --
 dm-devel mailing list
