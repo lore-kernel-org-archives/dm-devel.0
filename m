@@ -2,141 +2,100 @@ Return-Path: <SRS0=/P3g=KH=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,HTML_MESSAGE,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 50629C433B4
-	for <dm-devel@archiver.kernel.org>; Wed, 12 May 2021 07:33:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 93E46C433B4
+	for <dm-devel@archiver.kernel.org>; Wed, 12 May 2021 08:03:18 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id AB93061936
-	for <dm-devel@archiver.kernel.org>; Wed, 12 May 2021 07:33:25 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org AB93061936
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
+	by mail.kernel.org (Postfix) with ESMTPS id E52AB613B4
+	for <dm-devel@archiver.kernel.org>; Wed, 12 May 2021 08:03:17 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E52AB613B4
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=erwinvanlonden.net
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-314-_9SqfW7qMfaCjo8kxJKARA-1; Wed, 12 May 2021 03:33:22 -0400
-X-MC-Unique: _9SqfW7qMfaCjo8kxJKARA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-352-P8Knu3NQMRSsEww0nncfjg-1; Wed, 12 May 2021 04:03:04 -0400
+X-MC-Unique: P8Knu3NQMRSsEww0nncfjg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5E6D86D4E8;
-	Wed, 12 May 2021 07:33:18 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 66F88761E7;
-	Wed, 12 May 2021 07:33:17 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3FB6A19251AB;
+	Wed, 12 May 2021 08:03:01 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0AE945D9C0;
+	Wed, 12 May 2021 08:03:00 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6A5A9180B463;
-	Wed, 12 May 2021 07:33:15 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 049C7E16F;
+	Wed, 12 May 2021 08:02:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 14C7XCTB022677 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 12 May 2021 03:33:12 -0400
+	id 14C82tPw026624 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 12 May 2021 04:02:55 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 10F0B10379E; Wed, 12 May 2021 07:33:12 +0000 (UTC)
+	id 12F0810EB2AB; Wed, 12 May 2021 08:02:55 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 086101037B4
-	for <dm-devel@redhat.com>; Wed, 12 May 2021 07:33:09 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 62F2A185A79C
-	for <dm-devel@redhat.com>; Wed, 12 May 2021 07:33:09 +0000 (UTC)
-Received: from esa2.hgst.iphmx.com (esa2.hgst.iphmx.com [68.232.143.124])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-26-3JdUhV8SOZy6mZiEU4tMWA-1; Wed, 12 May 2021 03:33:07 -0400
-X-MC-Unique: 3JdUhV8SOZy6mZiEU4tMWA-1
-IronPort-SDR: lyJuZPLRt5GxyFWdqR9bvSGVcnwnr3ujS2xMNZR35ud0U+BngjXPQwgSZ3PCJps8f0JGQMKhsH
-	NkWAnCTm9IgIrz6AUMY3UUhmIs7bT6qxk43AxXVIXZxPVFZWvPJz7gcCU/WCtV+9pTaNMq6j5L
-	qEZ1+pmP9MPgYqRfvG1GY81W0nrCUsGFQ4Zov1ppvmOqiggR+LeFotmScOLtsaNQaVXCAVBDaM
-	XVKhPkEnHFVvVtIwn5argGMlgsXoSyZ7r7lDLMxn0WWBAX+ZCG9noYAWR2RyjNfisdqj+AZNBR
-	aP0=
-X-IronPort-AV: E=Sophos;i="5.82,293,1613404800"; d="scan'208";a="271843966"
-Received: from mail-co1nam11lp2169.outbound.protection.outlook.com (HELO
-	NAM11-CO1-obe.outbound.protection.outlook.com) ([104.47.56.169])
-	by ob1.hgst.iphmx.com with ESMTP; 12 May 2021 15:31:03 +0800
-Received: from PH0PR04MB7416.namprd04.prod.outlook.com (2603:10b6:510:12::17)
-	by PH0PR04MB7256.namprd04.prod.outlook.com (2603:10b6:510:1a::11)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4129.26;
-	Wed, 12 May 2021 07:31:00 +0000
-Received: from PH0PR04MB7416.namprd04.prod.outlook.com
-	([fe80::99a5:9eaa:4863:3ef3]) by
-	PH0PR04MB7416.namprd04.prod.outlook.com
-	([fe80::99a5:9eaa:4863:3ef3%4]) with mapi id 15.20.4108.031;
-	Wed, 12 May 2021 07:30:59 +0000
-From: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0D63910EB2A8
+	for <dm-devel@redhat.com>; Wed, 12 May 2021 08:02:51 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9545083395A
+	for <dm-devel@redhat.com>; Wed, 12 May 2021 08:02:51 +0000 (UTC)
+Received: from gateway36.websitewelcome.com (gateway36.websitewelcome.com
+	[192.185.200.11]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-587-LFAqBzY4PseVirhFZ6cTaw-1; Wed, 12 May 2021 04:02:49 -0400
+X-MC-Unique: LFAqBzY4PseVirhFZ6cTaw-1
+Received: from cm14.websitewelcome.com (cm14.websitewelcome.com [100.42.49.7])
+	by gateway36.websitewelcome.com (Postfix) with ESMTP id 6DA97400CA335
+	for <dm-devel@redhat.com>; Wed, 12 May 2021 02:41:19 -0500 (CDT)
+Received: from just2098.justhost.com ([173.254.31.45]) by cmsmtp with SMTP
+	id gjUcloB7q8ElSgjUdlL6eh; Wed, 12 May 2021 02:41:19 -0500
+X-Authority-Reason: nr=8
+Received: from 116-240-66-4.sta.dodo.net.au ([116.240.66.4]:39340
+	helo=[192.168.1.104])
+	by just2098.justhost.com with esmtpsa (TLS1.2) tls
+	TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 (Exim 4.94.2)
+	(envelope-from <erwin@erwinvanlonden.net>)
+	id 1lgjUb-000VAM-Od; Wed, 12 May 2021 01:41:18 -0600
+Message-ID: <9e1898e3905dfaff25ddef59a4e2fc6c590fc8e8.camel@erwinvanlonden.net>
+From: Erwin van Londen <erwin@erwinvanlonden.net>
 To: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>,
 	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
 	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
 	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
 	"dm-devel@redhat.com" <dm-devel@redhat.com>,
 	"lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
-Thread-Topic: [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy Offload
-Thread-Index: AQHXRfrE+mT6pvaiwEOWn89Dsv4XaA==
-Date: Wed, 12 May 2021 07:30:59 +0000
-Message-ID: <PH0PR04MB74161CD0BD15882BBD8838AB9B529@PH0PR04MB7416.namprd04.prod.outlook.com>
+In-Reply-To: <BYAPR04MB49652C4B75E38F3716F3C06386539@BYAPR04MB4965.namprd04.prod.outlook.com>
 References: <BYAPR04MB49652C4B75E38F3716F3C06386539@BYAPR04MB4965.namprd04.prod.outlook.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [2001:a62:152f:cc01:2079:86fb:b3fc:1190]
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 5d68beba-92db-471b-fc85-08d91517e3cd
-x-ms-traffictypediagnostic: PH0PR04MB7256:
-x-ms-exchange-transport-forked: True
-x-microsoft-antispam-prvs: <PH0PR04MB725661D975B16B6558016E029B529@PH0PR04MB7256.namprd04.prod.outlook.com>
-wdcipoutbound: EOP-TRUE
-x-ms-oob-tlc-oobclassifiers: OLM:10000
-x-ms-exchange-senderadcheck: 1
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: e0dsVs7Ja7xxFnkfyj8UANuku9WoxDwCoWvD+AZCIqlFRl0syHUXH9HcX+6HrAnmCH6U52bR4QZLRK2dWX/NBUlAkgtVeBKIE50gduFk1aGvIVcV7yZ+szQXae/5ebaR5eH6vvLOT1MLY3+9fGLVWJOHLpVYmybFfu/2Te2fcY/d7qnNaZ8yZepKD9FDm/sr8w+z5Ter7o06Tmr7D9cJp9lx1kmWVU7oafcj97Ffb4tgWAQA07HmQQpM1rnhxojdOyM4/gXK9dsG5tc+hYZeDfIbQzY85hyEAI0di1ZckJ1VRZMIShnk7aRfy/ASnsIStI+ikiBKltaRf2vxjsMvjSbk8LHX7Ag8/v/Oe+MDP0YvgRH3HSCjEU2tVceIn44RSfsD9JBpoBm7QDcEcVsqweXSm49zKwa2WExwuZvtA4jRg81OKcqUtUSQoln/4Ue5k2nLdaasq1egvn3yhnyvEMXEHH4RdiaO3SVA87x2FUoeYEsb7G02fRHNbVPgY+A0rxI6ms/fiWwn2SukfPYk1Yt9LfhiqGx54xx1lVnjMlUBlDKbUXOThxnovRGRW4LbmxwvRGsOJSxz/Lpq0DiWAF6TYb8dF8TlIrymTWdRstw=
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:PH0PR04MB7416.namprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(4636009)(396003)(136003)(39860400002)(346002)(366004)(376002)(86362001)(8936002)(7696005)(53546011)(6506007)(33656002)(38100700002)(83380400001)(122000001)(8676002)(71200400001)(7416002)(2906002)(52536014)(55016002)(9686003)(5660300002)(478600001)(54906003)(316002)(110136005)(66946007)(66446008)(66476007)(66556008)(64756008)(76116006)(91956017)(4326008)(186003);
-	DIR:OUT; SFP:1102
-x-ms-exchange-antispam-messagedata: =?us-ascii?Q?H0NCOAO4x3gXiz5Kffc3II1BmoVmu7KwMq5oVbpwec1jy/D9JztAbbO43T1L?=
-	=?us-ascii?Q?PxdQRtNpn5oTm+EjbQhi6df8eCJMtyc2DP+Iv6v0Hm/lCnsFukZGS0XdhIMK?=
-	=?us-ascii?Q?K3YLh0eosSu7VF1w4mG45TyMhx5FNv6ZWp+7EEv9o8XqAUHCbZn1c0UQ3SRP?=
-	=?us-ascii?Q?Oj941wnQCO4U5+liXANqCsrVciz3psGR69WSncGcgrZFYjobgJ6nYoeWY/2/?=
-	=?us-ascii?Q?IShpNLWB39h9AzJDTslxMV33r1Wu4rd1+7t5EujvucMeqRtUljD4LQhfQ+ss?=
-	=?us-ascii?Q?XmOzr129tc3SqnZD6ENlk5hkyPkS9LEgGjmyRea5tDOMwPjK6naMdvrxYWjo?=
-	=?us-ascii?Q?USzIYNV072urfgwiJjQ44EdxJYUFluq86rDb5xXJ4bEFSpZ/Wm1YIiZmZ8ir?=
-	=?us-ascii?Q?1UKOI9QbixhjDgvg9KHR5rTuzNaSybp2uokdcYUQmvghMFvQTTTXv/43BnC8?=
-	=?us-ascii?Q?WVvjSF0Do5uCZGrEEw58IS4PE5SF8cKWA/Z9/ttcFS9EuTCGPxrV/YBTenv3?=
-	=?us-ascii?Q?qzPW7jQfLsoBS41DjwVIt0xaoitJif/FdOFODa56QkvvZwQhUzf5HkN3e19b?=
-	=?us-ascii?Q?9Et66I4x4Zry2OjBwWljEg21+aEBgFhRjMut38xL82p8hlhHmn5OnCWSF9Cz?=
-	=?us-ascii?Q?vp1GizjVc+l2LkflT5f5y62MTIAQIzxM9s6UKR2/B7sBKY1r/ecxJEeZ5ba+?=
-	=?us-ascii?Q?UFpSpQZCXsTuVQNfnq7rl3SmZ93YxfgZKniUZVpX9Fz9V7tRmXMF6EPXUQJT?=
-	=?us-ascii?Q?lyAGXsN7DMYIorKCGJYHuoxYxbQhWg+j+YKbitxx0V6V0Qw1zZAfDk9Qj7EW?=
-	=?us-ascii?Q?pQ2bwrPj7cKlb0t/aGhuPmz0horIc4HwxMEEJiwMnB6ytxnc0Dj20diF5Igs?=
-	=?us-ascii?Q?FvfHBgRtBjDxrqSZn5lW7e+4Rv/NGjEvyKRj7z8BAfQ/8ZS77tx0fHpNg17m?=
-	=?us-ascii?Q?HYeX3WRvtQeU6CpB72pLLd9/6VS/8lgylruhM75VxVKPfcsI35zE7IUKPYl+?=
-	=?us-ascii?Q?vgJeJY0veiPhEQCyp5tKbOTcJ2QqH676W3L6RWvfxJsWYVoTBpJVOti0d1BW?=
-	=?us-ascii?Q?fevi1I6DeyXagbyVlmKM9B81xjlVI6xVI4VknEMoOOz15rWgINfZF+rQB0Ai?=
-	=?us-ascii?Q?V6GmNMrxB1OJDt5IYJ+n3SEtgH4b8bzjwbK27ufYxjQzXhBFL6xQamNzA2eb?=
-	=?us-ascii?Q?1kzryMIXhX6+oE9u22HGDxNEqg7wEjiqBA2tHD1C8KdZ8FUZchvUxRhO+Aew?=
-	=?us-ascii?Q?LaPaCnF5Vlzcxj194lmSZ1TwZezi0wL2gbdzjUgivcyI8oUpGxNYzNJejPIz?=
-	=?us-ascii?Q?mGnzuU94rwgpIdjZuEoS3pIPdFJzenoxA3kKfa2xLBheN5fiqxzCvGjWZBEH?=
-	=?us-ascii?Q?IAwN0pvcetCAiktEhqDoNuBt/nF+zJYkyExZTuYUIvMZSF2XOA=3D=3D?=
+Date: Wed, 12 May 2021 17:36:02 +1000
 MIME-Version: 1.0
-X-OriginatorOrg: wdc.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: PH0PR04MB7416.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 5d68beba-92db-471b-fc85-08d91517e3cd
-X-MS-Exchange-CrossTenant-originalarrivaltime: 12 May 2021 07:30:59.8252 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: y3sCZyGWHLmUE2T3zyzy4pjcnFOYZdZuj8QMapJiN5LcnWc+ltdmjUz9gnThOBNGDahyy/gYmF3tjyDQ8+7Q2dnEnOhWZoO2iIDOtHlprzE=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH0PR04MB7256
+User-Agent: Evolution 3.38.4 (3.38.4-1.fc33)
+X-AntiAbuse: This header was added to track abuse,
+	please include it with any abuse report
+X-AntiAbuse: Primary Hostname - just2098.justhost.com
+X-AntiAbuse: Original Domain - redhat.com
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - erwinvanlonden.net
+X-BWhitelist: no
+X-Source-IP: 116.240.66.4
+X-Source-L: No
+X-Exim-ID: 1lgjUb-000VAM-Od
+X-Source: 
+X-Source-Args: 
+X-Source-Dir: 
+X-Source-Sender: 116-240-66-4.sta.dodo.net.au ([192.168.1.104])
+	[116.240.66.4]:39340
+X-Source-Auth: erwin@erwinvanlonden.net
+X-Email-Count: 14
+X-Source-Cap: aGl0YWNoaTE7aGl0YWNoaTE7anVzdDIwOTguanVzdGhvc3QuY29t
+X-Local-Domain: yes
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -145,23 +104,24 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 14C7XCTB022677
+X-Mimecast-Bulk-Signature: yes
+X-Mimecast-Spam-Signature: bulk
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 Cc: "axboe@kernel.dk" <axboe@kernel.dk>,
 	"msnitzer@redhat.com" <msnitzer@redhat.com>,
 	"bvanassche@acm.org" <bvanassche@acm.org>,
 	"martin.petersen@oracle.com" <martin.petersen@oracle.com>,
-	"osandov@fb.com" <osandov@fb.com>,
+	"hch@lst.de" <hch@lst.de>,
 	"roland@purestorage.com" <roland@purestorage.com>,
 	"mpatocka@redhat.com" <mpatocka@redhat.com>,
 	"kbusch@kernel.org" <kbusch@kernel.org>,
-	"rwheeler@redhat.com" <rwheeler@redhat.com>, "hch@lst.de" <hch@lst.de>,
+	"rwheeler@redhat.com" <rwheeler@redhat.com>,
+	"osandov@fb.com" <osandov@fb.com>,
 	"Frederick.Knight@netapp.com" <Frederick.Knight@netapp.com>,
 	"zach.brown@ni.com" <zach.brown@ni.com>
 Subject: Re: [dm-devel] [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy
-	Offload
+ Offload
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -175,75 +135,99 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============7856776635630984785=="
 
-On 11/05/2021 02:15, Chaitanya Kulkarni wrote:
+--===============7856776635630984785==
+Content-Type: multipart/alternative; boundary="=-uSPdWrFKFXArN7HrIx2R"
+
+--=-uSPdWrFKFXArN7HrIx2R
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+
+
+On Tue, 2021-05-11 at 00:15 +0000, Chaitanya Kulkarni wrote:
 > Hi,
-> 
+>=20
 > * Background :-
-> -----------------------------------------------------------------------
-> 
+> ---------------------------------------------------------------------
+> --
+>=20
 > Copy offload is a feature that allows file-systems or storage devices
 > to be instructed to copy files/logical blocks without requiring
 > involvement of the local CPU.
-> 
+>=20
 > With reference to the RISC-V summit keynote [1] single threaded
 > performance is limiting due to Denard scaling and multi-threaded
-> performance is slowing down due Moore's law limitations. With the rise
+> performance is slowing down due Moore's law limitations. With the
+> rise
 > of SNIA Computation Technical Storage Working Group (TWG) [2],
 > offloading computations to the device or over the fabrics is becoming
-> popular as there are several solutions available [2]. One of the common
-> operation which is popular in the kernel and is not merged yet is Copy
+> popular as there are several solutions available [2]. One of the
+> common
+> operation which is popular in the kernel and is not merged yet is
+> Copy
 > offload over the fabrics or on to the device.
-> 
+>=20
 > * Problem :-
-> -----------------------------------------------------------------------
-> 
+> ---------------------------------------------------------------------
+> --
+>=20
 > The original work which is done by Martin is present here [3]. The
-> latest work which is posted by Mikulas [4] is not merged yet. These two
+> latest work which is posted by Mikulas [4] is not merged yet. These
+> two
 > approaches are totally different from each other. Several storage
-> vendors discourage mixing copy offload requests with regular READ/WRITE
+> vendors discourage mixing copy offload requests with regular
+> READ/WRITE
 > I/O. Also, the fact that the operation fails if a copy request ever
 > needs to be split as it traverses the stack it has the unfortunate
 > side-effect of preventing copy offload from working in pretty much
 > every common deployment configuration out there.
-> 
+>=20
 > * Current state of the work :-
-> -----------------------------------------------------------------------
-> 
+> ---------------------------------------------------------------------
+> --
+>=20
 > With [3] being hard to handle arbitrary DM/MD stacking without
 > splitting the command in two, one for copying IN and one for copying
-> OUT. Which is then demonstrated by the [4] why [3] it is not a suitable
+> OUT. Which is then demonstrated by the [4] why [3] it is not a
+> suitable
 > candidate. Also, with [4] there is an unresolved problem with the
 > two-command approach about how to handle changes to the DM layout
 > between an IN and OUT operations.
-> 
+>=20
 > * Why Linux Kernel Storage System needs Copy Offload support now ?
-> -----------------------------------------------------------------------
-> 
-> With the rise of the SNIA Computational Storage TWG and solutions [2],
-> existing SCSI XCopy support in the protocol, recent advancement in the
+> ---------------------------------------------------------------------
+> --
+>=20
+> With the rise of the SNIA Computational Storage TWG and solutions
+> [2],
+> existing SCSI XCopy support in the protocol, recent advancement in
+> the
 > Linux Kernel File System for Zoned devices (Zonefs [5]), Peer to Peer
 > DMA support in the Linux Kernel mainly for NVMe devices [7] and
 > eventually NVMe Devices and subsystem (NVMe PCIe/NVMeOF) will benefit
 > from Copy offload operation.
-> 
-> With this background we have significant number of use-cases which are
-> strong candidates waiting for outstanding Linux Kernel Block Layer Copy
-> Offload support, so that Linux Kernel Storage subsystem can to address
-> previously mentioned problems [1] and allow efficient offloading of the
+>=20
+> With this background we have significant number of use-cases which
+> are
+> strong candidates waiting for outstanding Linux Kernel Block Layer
+> Copy
+> Offload support, so that Linux Kernel Storage subsystem can to
+> address
+> previously mentioned problems [1] and allow efficient offloading of
+> the
 > data related operations. (Such as move/copy etc.)
-> 
-> For reference following is the list of the use-cases/candidates waiting
+>=20
+> For reference following is the list of the use-cases/candidates
+> waiting
 > for Copy Offload support :-
-> 
+>=20
 > 1. SCSI-attached storage arrays.
 > 2. Stacking drivers supporting XCopy DM/MD.
 > 3. Computational Storage solutions.
@@ -251,30 +235,32 @@ On 11/05/2021 02:15, Chaitanya Kulkarni wrote:
 > 4. Block devices :- Distributed, local, and Zoned devices.
 > 5. Peer to Peer DMA support solutions.
 > 6. Potentially NVMe subsystem both NVMe PCIe and NVMeOF.
-> 
+>=20
 > * What we will discuss in the proposed session ?
-> -----------------------------------------------------------------------
-> 
+> ---------------------------------------------------------------------
+> --
+>=20
 > I'd like to propose a session to go over this topic to understand :-
-> 
+>=20
 > 1. What are the blockers for Copy Offload implementation ?
 > 2. Discussion about having a file system interface.
 > 3. Discussion about having right system call for user-space.
 > 4. What is the right way to move this work forward ?
 > 5. How can we help to contribute and move this work forward ?
-> 
+>=20
 > * Required Participants :-
-> -----------------------------------------------------------------------
-> 
+> ---------------------------------------------------------------------
+> --
+>=20
 > I'd like to invite file system, block layer, and device drivers
 > developers to:-
-> 
+>=20
 > 1. Share their opinion on the topic.
 > 2. Share their experience and any other issues with [4].
 > 3. Uncover additional details that are missing from this proposal.
-> 
+>=20
 > Required attendees :-
-> 
+>=20
 > Martin K. Petersen
 > Jens Axboe
 > Christoph Hellwig
@@ -290,16 +276,170 @@ On 11/05/2021 02:15, Chaitanya Kulkarni wrote:
 > Frederick Knight
 > Mikulas Patocka
 > Keith Busch
->
+>=20
+> Regards,
+> Chaitanya
+>=20
 
-I would like to participate in this discussion as well. A generic block layer
-copy API is extremely helpful for filesystem garbage collection and copy operations
-like copy_file_range().
++1 here. I would like to see how this pans out as many differences may
+be observed from a standards, implementation and operations point of
+view.
 
+> [1]https://content.riscv.org/wp-content/uploads/2018/12/A-New-Golden-Age-=
+for-Computer-Architecture-History-Challenges-and-Opportunities-David-Patter=
+son-.pdf
+> [2] https://www.snia.org/computational
+> https://www.napatech.com/support/resources/solution-descriptions/napatech=
+-smartnic-solution-for-hardware-offload/
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 https://www.eideticom.com/products.html
+> https://www.xilinx.com/applications/data-center/computational-storage.htm=
+l
+> [3] git://git.kernel.org/pub/scm/linux/kernel/git/mkp/linux.git xcopy
+> [4] https://www.spinics.net/lists/linux-block/msg00599.html
+> [5] https://lwn.net/Articles/793585/
+> [6] https://nvmexpress.org/new-nvmetm-specification-defines-zoned-
+> namespaces-zns-as-go-to-industry-technology/
+> [7] https://github.com/sbates130272/linux-p2pmem
+> [8] https://kernel.dk/io_uring.pdf
+>=20
+>=20
+>=20
+>=20
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://listman.redhat.com/mailman/listinfo/dm-devel
+>=20
 
+--=-uSPdWrFKFXArN7HrIx2R
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<html><head></head><body><div><br></div><div><span></span></div><div><br></=
+div><div>On Tue, 2021-05-11 at 00:15 +0000, Chaitanya Kulkarni wrote:</div>=
+<blockquote type=3D"cite" style=3D"margin:0 0 0 .8ex; border-left:2px #729f=
+cf solid;padding-left:1ex"><div>Hi,<br></div><div><br></div><div>* Backgrou=
+nd :-<br></div><div>-------------------------------------------------------=
+----------------<br></div><div><br></div><div>Copy offload is a feature tha=
+t allows file-systems or storage devices<br></div><div>to be instructed to =
+copy files/logical blocks without requiring<br></div><div>involvement of th=
+e local CPU.<br></div><div><br></div><div>With reference to the RISC-V summ=
+it keynote [1] single threaded<br></div><div>performance is limiting due to=
+ Denard scaling and multi-threaded<br></div><div>performance is slowing dow=
+n due Moore's law limitations. With the rise<br></div><div>of SNIA Computat=
+ion Technical Storage Working Group (TWG) [2],<br></div><div>offloading com=
+putations to the device or over the fabrics is becoming<br></div><div>popul=
+ar as there are several solutions available [2]. One of the common<br></div=
+><div>operation which is popular in the kernel and is not merged yet is Cop=
+y<br></div><div>offload over the fabrics or on to the device.<br></div><div=
+><br></div><div>* Problem :-<br></div><div>--------------------------------=
+---------------------------------------<br></div><div><br></div><div>The or=
+iginal work which is done by Martin is present here [3]. The<br></div><div>=
+latest work which is posted by Mikulas [4] is not merged yet. These two<br>=
+</div><div>approaches are totally different from each other. Several storag=
+e<br></div><div>vendors discourage mixing copy offload requests with regula=
+r READ/WRITE<br></div><div>I/O. Also, the fact that the operation fails if =
+a copy request ever<br></div><div>needs to be split as it traverses the sta=
+ck it has the unfortunate<br></div><div>side-effect of preventing copy offl=
+oad from working in pretty much<br></div><div>every common deployment confi=
+guration out there.<br></div><div><br></div><div>* Current state of the wor=
+k :-<br></div><div>--------------------------------------------------------=
+---------------<br></div><div><br></div><div>With [3] being hard to handle =
+arbitrary DM/MD stacking without<br></div><div>splitting the command in two=
+, one for copying IN and one for copying<br></div><div>OUT. Which is then d=
+emonstrated by the [4] why [3] it is not a suitable<br></div><div>candidate=
+. Also, with [4] there is an unresolved problem with the<br></div><div>two-=
+command approach about how to handle changes to the DM layout<br></div><div=
+>between an IN and OUT operations.<br></div><div><br></div><div>* Why Linux=
+ Kernel Storage System needs Copy Offload support now ?<br></div><div>-----=
+------------------------------------------------------------------<br></div=
+><div><br></div><div>With the rise of the SNIA Computational Storage TWG an=
+d solutions [2],<br></div><div>existing SCSI XCopy support in the protocol,=
+ recent advancement in the<br></div><div>Linux Kernel File System for Zoned=
+ devices (Zonefs [5]), Peer to Peer<br></div><div>DMA support in the Linux =
+Kernel mainly for NVMe devices [7] and<br></div><div>eventually NVMe Device=
+s and subsystem (NVMe PCIe/NVMeOF) will benefit<br></div><div>from Copy off=
+load operation.<br></div><div><br></div><div>With this background we have s=
+ignificant number of use-cases which are<br></div><div>strong candidates wa=
+iting for outstanding Linux Kernel Block Layer Copy<br></div><div>Offload s=
+upport, so that Linux Kernel Storage subsystem can to address<br></div><div=
+>previously mentioned problems [1] and allow efficient offloading of the<br=
+></div><div>data related operations. (Such as move/copy etc.)<br></div><div=
+><br></div><div>For reference following is the list of the use-cases/candid=
+ates waiting<br></div><div>for Copy Offload support :-<br></div><div><br></=
+div><div>1. SCSI-attached storage arrays.<br></div><div>2. Stacking drivers=
+ supporting XCopy DM/MD.<br></div><div>3. Computational Storage solutions.<=
+br></div><div>7. File systems :- Local, NFS and Zonefs.<br></div><div>4. Bl=
+ock devices :- Distributed, local, and Zoned devices.<br></div><div>5. Peer=
+ to Peer DMA support solutions.<br></div><div>6. Potentially NVMe subsystem=
+ both NVMe PCIe and NVMeOF.<br></div><div><br></div><div>* What we will dis=
+cuss in the proposed session ?<br></div><div>------------------------------=
+-----------------------------------------<br></div><div><br></div><div>I'd =
+like to propose a session to go over this topic to understand :-<br></div><=
+div><br></div><div>1. What are the blockers for Copy Offload implementation=
+ ?<br></div><div>2. Discussion about having a file system interface.<br></d=
+iv><div>3. Discussion about having right system call for user-space.<br></d=
+iv><div>4. What is the right way to move this work forward ?<br></div><div>=
+5. How can we help to contribute and move this work forward ?<br></div><div=
+><br></div><div>* Required Participants :-<br></div><div>------------------=
+-----------------------------------------------------<br></div><div><br></d=
+iv><div>I'd like to invite file system, block layer, and device drivers<br>=
+</div><div>developers to:-<br></div><div><br></div><div>1. Share their opin=
+ion on the topic.<br></div><div>2. Share their experience and any other iss=
+ues with [4].<br></div><div>3. Uncover additional details that are missing =
+from this proposal.<br></div><div><br></div><div>Required attendees :-<br><=
+/div><div><br></div><div>Martin K. Petersen<br></div><div>Jens Axboe<br></d=
+iv><div>Christoph Hellwig<br></div><div>Bart Van Assche<br></div><div>Zach =
+Brown<br></div><div>Roland Dreier<br></div><div>Ric Wheeler<br></div><div>T=
+rond Myklebust<br></div><div>Mike Snitzer<br></div><div>Keith Busch<br></di=
+v><div>Sagi Grimberg<br></div><div>Hannes Reinecke<br></div><div>Frederick =
+Knight<br></div><div>Mikulas Patocka<br></div><div>Keith Busch<br></div><di=
+v><br></div><div>Regards,<br></div><div>Chaitanya<br></div><div><br></div><=
+/blockquote><div><br></div><div>+1 here. I would like to see how this pans =
+out as many differences may be observed from a standards, implementation an=
+d operations point of view.</div><div><br></div><blockquote type=3D"cite" s=
+tyle=3D"margin:0 0 0 .8ex; border-left:2px #729fcf solid;padding-left:1ex">=
+<div>[1]<a href=3D"https://content.riscv.org/wp-content/uploads/2018/12/A-N=
+ew-Golden-Age-for-Computer-Architecture-History-Challenges-and-Opportunitie=
+s-David-Patterson-.pdf">https://content.riscv.org/wp-content/uploads/2018/1=
+2/A-New-Golden-Age-for-Computer-Architecture-History-Challenges-and-Opportu=
+nities-David-Patterson-.pdf</a><br></div><div>[2] <a href=3D"https://www.sn=
+ia.org/computational">https://www.snia.org/computational</a><br></div><div>=
+<a href=3D"https://www.napatech.com/support/resources/solution-descriptions=
+/napatech-smartnic-solution-for-hardware-offload/">https://www.napatech.com=
+/support/resources/solution-descriptions/napatech-smartnic-solution-for-har=
+dware-offload/</a><br></div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href=3D"=
+https://www.eideticom.com/products.html">https://www.eideticom.com/products=
+.html</a><br></div><div><a href=3D"https://www.xilinx.com/applications/data=
+-center/computational-storage.html">https://www.xilinx.com/applications/dat=
+a-center/computational-storage.html</a><br></div><div>[3] git://git.kernel.=
+org/pub/scm/linux/kernel/git/mkp/linux.git xcopy<br></div><div>[4] <a href=
+=3D"https://www.spinics.net/lists/linux-block/msg00599.html">https://www.sp=
+inics.net/lists/linux-block/msg00599.html</a><br></div><div>[5] <a href=3D"=
+https://lwn.net/Articles/793585/">https://lwn.net/Articles/793585/</a><br><=
+/div><div>[6] <a href=3D"https://nvmexpress.org/new-nvmetm-specification-de=
+fines-zoned">https://nvmexpress.org/new-nvmetm-specification-defines-zoned<=
+/a>-<br></div><div>namespaces-zns-as-go-to-industry-technology/<br></div><d=
+iv>[7] <a href=3D"https://github.com/sbates130272/linux-p2pmem">https://git=
+hub.com/sbates130272/linux-p2pmem</a><br></div><div>[8] <a href=3D"https://=
+kernel.dk/io_uring.pdf">https://kernel.dk/io_uring.pdf</a><br></div><div><b=
+r></div><div><br></div><div><br></div><div><br></div><div>--<br></div><div>=
+dm-devel mailing list<br></div><div><a href=3D"mailto:dm-devel@redhat.com">=
+dm-devel@redhat.com</a><br></div><div><a href=3D"https://listman.redhat.com=
+/mailman/listinfo/dm-devel">https://listman.redhat.com/mailman/listinfo/dm-=
+devel</a><br></div><div><br></div></blockquote></body></html>
+
+--=-uSPdWrFKFXArN7HrIx2R--
+
+--===============7856776635630984785==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+--===============7856776635630984785==--
 
