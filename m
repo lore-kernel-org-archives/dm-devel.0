@@ -2,19 +2,19 @@ Return-Path: <SRS0=HAWy=KJ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-11.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 61525C433B4
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ADC1AC43461
 	for <dm-devel@archiver.kernel.org>; Fri, 14 May 2021 20:11:19 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id EA1A0613BB
-	for <dm-devel@archiver.kernel.org>; Fri, 14 May 2021 20:11:18 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org EA1A0613BB
+	by mail.kernel.org (Postfix) with ESMTPS id 3F2D06145B
+	for <dm-devel@archiver.kernel.org>; Fri, 14 May 2021 20:11:19 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3F2D06145B
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
@@ -22,56 +22,52 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=AFZq7eSnxQywK5MkDAcvXHpmV+/ZhDcVIfhcPOEQinI=;
-	b=Qurgo1BqPVJg9iLmSqcYtP4q3BoOlIJzqIr3W8haDWGdDXT/UPo/CueXMswaYT8gEYqLLU
-	gma4F6gvOxi9iG8V464020xfDRHx4Sj/o3enT4TEQnXRwoYHUa0qgm1ayrEowv0SuYkh4C
-	pl+i6j8zH9ejXtD5pdGsrFrGKnk091k=
+	bh=96sKzSju4EB78242tG5lle4PL9A7vC9y2WlJt43k+i4=;
+	b=NPgsM4UPmXRbmP6vYy0rTnPwGS6fD08A58/XD82vet1GdbClJ43DdHAUtkQ1Dthfsj80Kk
+	hvp+CqaY5FVj4NQgmeqDK2yI5+6q6GLsY4dKbKmqzkY4HdCXgcmCjYqgt6Adah+zbMq6mJ
+	VTBybOLr8/EMP0KzFMtbPgL51C/3jUE=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-570-vWXo-mWgNpyO21tBvPmAUw-1; Fri, 14 May 2021 16:11:14 -0400
-X-MC-Unique: vWXo-mWgNpyO21tBvPmAUw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-128-jpUwbaJlP-Ga1IASwUkixQ-1; Fri, 14 May 2021 16:11:14 -0400
+X-MC-Unique: jpUwbaJlP-Ga1IASwUkixQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 379241854E25;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 238E9FC9A;
 	Fri, 14 May 2021 20:11:10 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8D7B51971B;
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 813CC5C1C2;
 	Fri, 14 May 2021 20:11:09 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 786FC55351;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 78084180B463;
 	Fri, 14 May 2021 20:11:07 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
 	[10.5.11.11])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 14EKB5P8010816 for <dm-devel@listman.util.phx.redhat.com>;
+	id 14EKB5P4010817 for <dm-devel@listman.util.phx.redhat.com>;
 	Fri, 14 May 2021 16:11:05 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id D650B18A9E; Fri, 14 May 2021 20:11:05 +0000 (UTC)
+	id D71221962F; Fri, 14 May 2021 20:11:05 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4228E39A63;
-	Fri, 14 May 2021 20:11:03 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 915852BFEB;
+	Fri, 14 May 2021 20:11:02 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 14EKB110020053; 
-	Fri, 14 May 2021 15:11:02 -0500
-Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 14EKB1BQ020052;
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 14EKB03l020049; 
 	Fri, 14 May 2021 15:11:01 -0500
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 14EKB0pw020048;
+	Fri, 14 May 2021 15:11:00 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Fri, 14 May 2021 15:10:55 -0500
-Message-Id: <1621023060-20011-2-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1621023060-20011-1-git-send-email-bmarzins@redhat.com>
-References: <1621023060-20011-1-git-send-email-bmarzins@redhat.com>
+Date: Fri, 14 May 2021 15:10:54 -0500
+Message-Id: <1621023060-20011-1-git-send-email-bmarzins@redhat.com>
 X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 X-loop: dm-devel@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>,
 	Martin Wilck <Martin.Wilck@suse.com>
-Subject: [dm-devel] [PATCH v3 1/6] multipathd: don't fail to remove path
-	once the map is removed
+Subject: [dm-devel] [PATCH v3 0/6] Memory issues found by coverity
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -86,7 +82,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -94,71 +90,40 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-In ev_remove_path(), if update_mpp_paths() fails, we delete the entire
-map. However, since update_mpp_paths() happens before we call
-set_path_removed(), pp->initialized isn't set to INIT_REMOVED, so
-remove_map_and_stop_waiter() doesn't remove the path when in removes the
-map.  But with the map removed, there's nothing to keep us from removing
-the path.
+This is collection of issues found by coverity. The first three patches
+deal with ev_remove_path() removing the path, but returning failure,
+causing a use-after-free error. The next two patches fix memory leaks.
+The final patch removes an unnecessary call to rescan_paths() from
+uev_update_path()
 
-Call set_path_removed() before update_mpp_paths() to avoid the odd case
-of ev_remove_path() removing the map but not the path.
+Changes from v2:
+0003: Combined with v2 patch 0006, with changes changes in comments,
+      how the return codes are defined, and how they are handled, based
+      on Martin's suggestions
+0006: New patch based on Martin's suggestions about wwid change handling
+      in uev_update_path().
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-Reviewed-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/structs_vec.c |  4 ++--
- multipathd/main.c          | 13 ++++++++-----
- 2 files changed, 10 insertions(+), 7 deletions(-)
+Changes from v1:
+0001: changed comment based on Martin's suggestion
+0004: moved location of atexit() call based on Martin's suggestion
+0006: New patch, based on Martin's comments on patch 0003
 
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index d242c06b..75390198 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -45,8 +45,8 @@ int update_mpp_paths(struct multipath *mpp, vector pathvec)
- 
- 				/*
- 				 * Avoid adding removed paths to the map again
--				 * when we reload it. Such paths may exist if
--				 * domap fails in ev_remove_path().
-+				 * when we reload it. Such paths may exist in
-+				 * ev_remove_paths() or if it returns failure.
- 				 */
- 				pp1 = find_path_by_devt(pathvec, pp->dev_t);
- 				if (pp1 && pp->initialized != INIT_REMOVED &&
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 102946bf..449ce384 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1199,6 +1199,13 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
- 	 * avoid referring to the map of an orphaned path
- 	 */
- 	if ((mpp = pp->mpp)) {
-+		/*
-+		 * Mark the path as removed. In case of success, we
-+		 * will delete it for good. Otherwise, it will be deleted
-+		 * later, unless all attempts to reload this map fail.
-+		 */
-+		set_path_removed(pp);
-+
- 		/*
- 		 * transform the mp->pg vector of vectors of paths
- 		 * into a mp->params string to feed the device-mapper
-@@ -1210,13 +1217,9 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
- 		}
- 
- 		/*
--		 * Mark the path as removed. In case of success, we
--		 * will delete it for good. Otherwise, it will be deleted
--		 * later, unless all attempts to reload this map fail.
--		 * Note: we have to explicitly remove pp from mpp->paths,
-+		 * we have to explicitly remove pp from mpp->paths,
- 		 * update_mpp_paths() doesn't do that.
- 		 */
--		set_path_removed(pp);
- 		i = find_slot(mpp->paths, pp);
- 		if (i != -1)
- 			vector_del_slot(mpp->paths, i);
+Benjamin Marzinski (6):
+  multipathd: don't fail to remove path once the map is removed
+  multipathd: remove duplicate orphan_paths in flush_map
+  multipathd: fix ev_remove_path return code handling
+  multipath: free vectors in configure
+  kpartx: Don't leak memory when getblock returns NULL
+  multipathd: don't rescan_path on wwid change in uev_update_path
+
+ kpartx/kpartx.c            |  2 ++
+ libmultipath/structs_vec.c |  4 +--
+ multipath/main.c           |  7 ++++-
+ multipathd/cli_handlers.c  | 14 ++++++++--
+ multipathd/main.c          | 56 ++++++++++++++++++++------------------
+ multipathd/main.h          | 14 ++++++++++
+ 6 files changed, 65 insertions(+), 32 deletions(-)
+
 -- 
 2.17.2
 
