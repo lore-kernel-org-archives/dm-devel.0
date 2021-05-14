@@ -2,72 +2,76 @@ Return-Path: <SRS0=HAWy=KJ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-16.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ADC1AC43461
-	for <dm-devel@archiver.kernel.org>; Fri, 14 May 2021 20:11:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A9726C433B4
+	for <dm-devel@archiver.kernel.org>; Fri, 14 May 2021 20:11:31 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3F2D06145B
-	for <dm-devel@archiver.kernel.org>; Fri, 14 May 2021 20:11:19 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3F2D06145B
+	by mail.kernel.org (Postfix) with ESMTPS id 43420613C8
+	for <dm-devel@archiver.kernel.org>; Fri, 14 May 2021 20:11:31 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 43420613C8
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1621023078;
+	s=mimecast20190719; t=1621023090;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=96sKzSju4EB78242tG5lle4PL9A7vC9y2WlJt43k+i4=;
-	b=NPgsM4UPmXRbmP6vYy0rTnPwGS6fD08A58/XD82vet1GdbClJ43DdHAUtkQ1Dthfsj80Kk
-	hvp+CqaY5FVj4NQgmeqDK2yI5+6q6GLsY4dKbKmqzkY4HdCXgcmCjYqgt6Adah+zbMq6mJ
-	VTBybOLr8/EMP0KzFMtbPgL51C/3jUE=
+	bh=kV7MYd9rMGAfbP6NW97s/QCKumTCeIGbb5KODDJ1Wx0=;
+	b=XjREaZ72X23s0U3aYWCaG+QQZQ6vjEiNzujJ1edusK7Kt7b9J0Uo2lbzV+Zzy8FkDr+bmN
+	kn8H82lU9ZJcGXjCV054McXu2Xqhd95lLDkqFdz7mI/VxaNyiNjZ0Jd5z0539lmwnNXZ8i
+	n2WjdgGLvHxMbE7+rrbqCSaHh7V3/Nk=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-128-jpUwbaJlP-Ga1IASwUkixQ-1; Fri, 14 May 2021 16:11:14 -0400
-X-MC-Unique: jpUwbaJlP-Ga1IASwUkixQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-482-a_CxkDWtPSG762djwWbcfA-1; Fri, 14 May 2021 16:11:27 -0400
+X-MC-Unique: a_CxkDWtPSG762djwWbcfA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 238E9FC9A;
-	Fri, 14 May 2021 20:11:10 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 89686800D55;
+	Fri, 14 May 2021 20:11:23 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 813CC5C1C2;
-	Fri, 14 May 2021 20:11:09 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6B8795D9D0;
+	Fri, 14 May 2021 20:11:23 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 78084180B463;
-	Fri, 14 May 2021 20:11:07 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
-	[10.5.11.11])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 45B75180102A;
+	Fri, 14 May 2021 20:11:23 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com
+	[10.5.11.13])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 14EKB5P4010817 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 14 May 2021 16:11:05 -0400
+	id 14EKB87L010837 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 14 May 2021 16:11:08 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id D71221962F; Fri, 14 May 2021 20:11:05 +0000 (UTC)
+	id 349DD2B0B9; Fri, 14 May 2021 20:11:08 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 915852BFEB;
-	Fri, 14 May 2021 20:11:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 53F7060CEB;
+	Fri, 14 May 2021 20:11:04 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 14EKB03l020049; 
-	Fri, 14 May 2021 15:11:01 -0500
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 14EKB2MH020057; 
+	Fri, 14 May 2021 15:11:02 -0500
 Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 14EKB0pw020048;
-	Fri, 14 May 2021 15:11:00 -0500
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 14EKB2gu020056;
+	Fri, 14 May 2021 15:11:02 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Fri, 14 May 2021 15:10:54 -0500
-Message-Id: <1621023060-20011-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+Date: Fri, 14 May 2021 15:10:56 -0500
+Message-Id: <1621023060-20011-3-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1621023060-20011-1-git-send-email-bmarzins@redhat.com>
+References: <1621023060-20011-1-git-send-email-bmarzins@redhat.com>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 X-loop: dm-devel@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>,
 	Martin Wilck <Martin.Wilck@suse.com>
-Subject: [dm-devel] [PATCH v3 0/6] Memory issues found by coverity
+Subject: [dm-devel] [PATCH v3 2/6] multipathd: remove duplicate orphan_paths
+	in flush_map
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -82,7 +86,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -90,40 +94,28 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-This is collection of issues found by coverity. The first three patches
-deal with ev_remove_path() removing the path, but returning failure,
-causing a use-after-free error. The next two patches fix memory leaks.
-The final patch removes an unnecessary call to rescan_paths() from
-uev_update_path()
+remove_map_and_stop_waiter() already calls orphan_paths() so flush_map()
+doesn't need to call orphan_paths() before calling
+remove_map_and_stop_waiter().
 
-Changes from v2:
-0003: Combined with v2 patch 0006, with changes changes in comments,
-      how the return codes are defined, and how they are handled, based
-      on Martin's suggestions
-0006: New patch based on Martin's suggestions about wwid change handling
-      in uev_update_path().
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+---
+ multipathd/main.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-Changes from v1:
-0001: changed comment based on Martin's suggestion
-0004: moved location of atexit() call based on Martin's suggestion
-0006: New patch, based on Martin's comments on patch 0003
-
-Benjamin Marzinski (6):
-  multipathd: don't fail to remove path once the map is removed
-  multipathd: remove duplicate orphan_paths in flush_map
-  multipathd: fix ev_remove_path return code handling
-  multipath: free vectors in configure
-  kpartx: Don't leak memory when getblock returns NULL
-  multipathd: don't rescan_path on wwid change in uev_update_path
-
- kpartx/kpartx.c            |  2 ++
- libmultipath/structs_vec.c |  4 +--
- multipath/main.c           |  7 ++++-
- multipathd/cli_handlers.c  | 14 ++++++++--
- multipathd/main.c          | 56 ++++++++++++++++++++------------------
- multipathd/main.h          | 14 ++++++++++
- 6 files changed, 65 insertions(+), 32 deletions(-)
-
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 449ce384..6090434c 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -660,7 +660,6 @@ flush_map(struct multipath * mpp, struct vectors * vecs, int nopaths)
+ 	else
+ 		condlog(2, "%s: map flushed", mpp->alias);
+ 
+-	orphan_paths(vecs->pathvec, mpp, "map flushed");
+ 	remove_map_and_stop_waiter(mpp, vecs);
+ 
+ 	return 0;
 -- 
 2.17.2
 
