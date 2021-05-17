@@ -2,138 +2,73 @@ Return-Path: <SRS0=cSVF=KM=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,NICE_REPLY_A,
+	SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,USER_AGENT_SANE_1
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 997F9C433ED
-	for <dm-devel@archiver.kernel.org>; Mon, 17 May 2021 07:51:28 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F049BC433B4
+	for <dm-devel@archiver.kernel.org>; Mon, 17 May 2021 07:51:32 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 0ACA4611ED
-	for <dm-devel@archiver.kernel.org>; Mon, 17 May 2021 07:51:27 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0ACA4611ED
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=samsung.com
+	by mail.kernel.org (Postfix) with ESMTPS id 822F4601FA
+	for <dm-devel@archiver.kernel.org>; Mon, 17 May 2021 07:51:32 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 822F4601FA
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-318-rLsFjxm9OjeZboRutWNxww-1; Mon, 17 May 2021 03:51:25 -0400
-X-MC-Unique: rLsFjxm9OjeZboRutWNxww-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-489-zDwtQaquNmm1ACXrPYM2Gw-1; Mon, 17 May 2021 03:51:29 -0400
+X-MC-Unique: zDwtQaquNmm1ACXrPYM2Gw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 61F126D590;
-	Mon, 17 May 2021 07:51:21 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 43D9329692;
-	Mon, 17 May 2021 07:51:21 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 45B2E6D587;
+	Mon, 17 May 2021 07:51:23 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 28E662A764;
+	Mon, 17 May 2021 07:51:23 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1E72E180B463;
-	Mon, 17 May 2021 07:51:21 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E7D0355353;
+	Mon, 17 May 2021 07:51:22 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 14EApTvW027450 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 14 May 2021 06:51:29 -0400
+	id 14H6GpfG013641 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 17 May 2021 02:16:51 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1706F2172F1D; Fri, 14 May 2021 10:51:29 +0000 (UTC)
+	id 1837D203DE74; Mon, 17 May 2021 06:16:51 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 120AB207636A
-	for <dm-devel@redhat.com>; Fri, 14 May 2021 10:51:26 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 123A42039DBE
+	for <dm-devel@redhat.com>; Mon, 17 May 2021 06:16:48 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0C4D6101A531
-	for <dm-devel@redhat.com>; Fri, 14 May 2021 10:51:26 +0000 (UTC)
-Received: from mailout4.samsung.com (mailout4.samsung.com [203.254.224.34])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-268-1LS-437ZPGugibebyB9lrQ-1; Fri, 14 May 2021 06:51:23 -0400
-X-MC-Unique: 1LS-437ZPGugibebyB9lrQ-1
-Received: from epcas1p2.samsung.com (unknown [182.195.41.46])
-	by mailout4.samsung.com (KnoxPortal) with ESMTP id
-	20210514104428epoutp0440c5f901c93d7c844c8f5d8ebbf4a2fc~_6Pg2Y4Ct2582525825epoutp04X
-	for <dm-devel@redhat.com>; Fri, 14 May 2021 10:44:28 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout4.samsung.com
-	20210514104428epoutp0440c5f901c93d7c844c8f5d8ebbf4a2fc~_6Pg2Y4Ct2582525825epoutp04X
-Received: from epsnrtp3.localdomain (unknown [182.195.42.164]) by
-	epcas1p2.samsung.com (KnoxPortal) with ESMTP id
-	20210514104428epcas1p2137dce660926fb01549871c9f6e3597c~_6PgZ55Hd0555605556epcas1p2M;
-	Fri, 14 May 2021 10:44:28 +0000 (GMT)
-Received: from epsmges1p4.samsung.com (unknown [182.195.40.165]) by
-	epsnrtp3.localdomain (Postfix) with ESMTP id 4FhQBg1sGtz4x9Px;
-	Fri, 14 May 2021 10:44:27 +0000 (GMT)
-Received: from epcas1p2.samsung.com ( [182.195.41.46]) by
-	epsmges1p4.samsung.com (Symantec Messaging Gateway) with SMTP id
-	64.D4.10258.B845E906; Fri, 14 May 2021 19:44:27 +0900 (KST)
-Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
-	epcas1p3.samsung.com (KnoxPortal) with ESMTPA id
-	20210514104426epcas1p3ee2f22f8e18c961118795c356e6a14ae~_6PfFHYjm1546315463epcas1p3A;
-	Fri, 14 May 2021 10:44:26 +0000 (GMT)
-Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
-	epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
-	20210514104426epsmtrp2b4b61e2a32c20e413f6f376b6f951881~_6PfEO0Pg1199011990epsmtrp2Q;
-	Fri, 14 May 2021 10:44:26 +0000 (GMT)
-X-AuditID: b6c32a38-419ff70000002812-57-609e548bcb48
-Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
-	epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	0E.13.08637.A845E906; Fri, 14 May 2021 19:44:26 +0900 (KST)
-Received: from localhost.localdomain (unknown [10.253.99.105]) by
-	epsmtip2.samsung.com (KnoxPortal) with ESMTPA id
-	20210514104426epsmtip2751bc9e19e43c18b0a2e5d6b85b92001~_6Pe0Wb0O2557925579epsmtip2T;
-	Fri, 14 May 2021 10:44:26 +0000 (GMT)
-From: Changheun Lee <nanich.lee@samsung.com>
-To: alex_y_xu@yahoo.ca
-Date: Fri, 14 May 2021 19:26:14 +0900
-Message-Id: <20210514102614.3804-1-nanich.lee@samsung.com>
-In-Reply-To: <alpine.LRH.2.02.2105140544010.22439@file01.intranet.prod.int.rdu2.redhat.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 080CE83395A
+	for <dm-devel@redhat.com>; Mon, 17 May 2021 06:16:48 +0000 (UTC)
+Received: from out30-45.freemail.mail.aliyun.com
+	(out30-45.freemail.mail.aliyun.com [115.124.30.45]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-20-YZT24uTGPbS6tAmS_J8aCg-1;
+	Mon, 17 May 2021 02:16:45 -0400
+X-MC-Unique: YZT24uTGPbS6tAmS_J8aCg-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R821e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e01424;
+	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=6; SR=0;
+	TI=SMTPD_---0UZ4SGva_1621232199
+Received: from admindeMacBook-Pro-2.local(mailfrom:jefflexu@linux.alibaba.com
+	fp:SMTPD_---0UZ4SGva_1621232199) by smtp.aliyun-inc.com(127.0.0.1);
+	Mon, 17 May 2021 14:16:39 +0800
+To: Ming Lei <ming.lei@redhat.com>, Jens Axboe <axboe@kernel.dk>
+References: <20210422122038.2192933-1-ming.lei@redhat.com>
+From: JeffleXu <jefflexu@linux.alibaba.com>
+Message-ID: <630a63ef-f9e0-6ad6-d6be-ec7a46e5ec45@linux.alibaba.com>
+Date: Mon, 17 May 2021 14:16:39 +0800
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
+	Gecko/20100101 Thunderbird/78.7.1
 MIME-Version: 1.0
-X-Brightmail-Tracker: H4sIAAAAAAAAA01Tf0xTVxT29j1eX2GwJ0K9NsbVN1kUBVpL8UrELJGZFyULCewPZQlU+gZs
-	/bW+VmVmE8U6+RHGwDEpozWOsEgHTobjZwULjLIBiQFGqjBGwMG2CAymDkVYS0vGf9+55/vO
-	Od+595JY8AghIrM0BlavUahowh//oXNPZERBsiVNMj4ZgOpGv+Uj29hnBGq5bwWobH4JQw9z
-	nxPIPlvhh35sN/PRTVs3D03dMmPI/mAvKreMEmiw5SsCWasf8ZGjNJeHTIVLfDQyUEa8STGD
-	Q8eZZvMYnxnsNzL1NXkE833VeabVlUMwF/u6MWbu7jDB9LX18JjF+h2Mw1GNJQacVB3KZBVK
-	Vi9mNelaZZYmI44+npR6JFUeI5FGSA+iA7RYo1CzcXR8QmLE0SyV2w0tPq1QGd1HiQqOo6MO
-	H9JrjQZWnKnlDHE0q1OqdFKJLpJTqDmjJiMyXauOlUok++VuZpoqs70kB+icQWcb7k775YDW
-	gHwgICEVDe/duADygT8ZTDUBmLNk4nuDBQB/G633ZZ66M6WlvHXJyrNnmDdhB9A83++TLAL4
-	Zdk87mER1D5Y9PgB4cEhlBAuWZdwDwmj7vOga7LLLx+Q5BbqBLSaKA8Hp8LgVUetnwcHUrGw
-	tdMzh6fba3B5vBDzYAGVApunLuJezmbYWz61hjE3J/dOxdpEkBoiYcHqNeAVx8PilSbci7fA
-	P3safEVFcHHWTngFBQDmXrYCb1AMYNV0tc+oDC4sLgLPpBi1B95qifIe74TNLyqBt3MQnH1S
-	uGYGUoHwyuVgL2UX7Ls0jq33mq5t9lVkoOvShG+ndQAuz3bixUBs3mDIvMGQ+f/O1wFWA4Ss
-	jlNnsJxUF73xkuvB2gsPR02g8vF8pAPwSOAAkMTokEDhqYq04EClIvsjVq9N1RtVLOcAcve6
-	P8dEoela9xfRGFKl8v0ymQxFxxyIkcvorYEZR86lBVMZCgP7AcvqWP26jkcKRDm8CwfrskNF
-	Tvr8Nr7tdMe221srZvCbM21Fh2sox76ql5PtjbWO31d0D+MXXifUe3vlE61hfR/bSxPej7E2
-	ZSV1vvPTF98JjtWxA/ey4/IShM4/hsnR8PRfk6mUrrLVr8+0zuiHPn03KdN+paXj6txMlMCZ
-	Z/rXETQ3r9sEtxfcYIY/kaVK3uoP8jtnO9Uzu7P42LUkdVfM7pLt11M2/6Ie8f/wPWejC7co
-	hUdDxjrqhZKa5d4TFPcCf86F7bA+eRtV/dX1Uuy08S1k6NOFuKKBv++8Yik5s/Bz98lHytXK
-	N/zLRSbUtmm3iDCHRb26kjyRHLt8tjH5n9uk4ZtdhRZTgyubxrlMhTQc03OK/wBoL72TagQA
-	AA==
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFuphkeLIzCtJLcpLzFFi42LZdlhJXrcrZF6CwdOLKhbr7qxht1h9t5/N
-	YtfF+YwW0z78ZLa43fyLzWLvu9msFsf2z2K3WLn6KJPFk/WzmC323tK2mDnvDpvF5V1z2Czm
-	L3vKbnFocjOTRWvPT3aL6+emsTkIeFy+4u2xc9Zddo/LZ0s9Nq3qZPPYvKTeY/fNBjaPpjNH
-	mT3e77vK5nFmz3Emj8+b5DwOHVrGHMAdxWWTkpqTWZZapG+XwJWxf1IDY8EJvoot+56zNjDu
-	5u5i5OSQEDCR+Pf9OzOILSSwm1HizTxpiLiUxPETb1m7GDmAbGGJw4eLuxi5gEo+MkpMmn6K
-	FaSGTUBHou/tLTYQW0RATOLn/J8sIEXMAk+ZJJoWnmIGaRYWCJdouu4EUsMioCox5dBasF5e
-	ASuJ3Ydb2SF2yUv8ud8DdgOnQLTEzidNLBD3REn8PXSFGaJeUOLkzCdgcWag+uats5knMArM
-	QpKahSS1gJFpFaNkakFxbnpusWGBYV5quV5xYm5xaV66XnJ+7iZGcIRpae5g3L7qg94hRiYO
-	xkOMEhzMSiK8YkmzE4R4UxIrq1KL8uOLSnNSiw8xSnOwKInzXug6GS8kkJ5YkpqdmlqQWgST
-	ZeLglGpgiqzTW58446l/zvKD8xKXb66vuqC84LR5maFqQnh7fvzVjUePP/R+siYjSonNZ2a2
-	o71BRWvtvv33F056ddPfbcVtaZH+nwG/JguVeRqUXv8prF33rD3px1KNg97F7xcV8sf6XXmp
-	NcHr95YTaucUyrq3TbFIWeb+6uKJfNOJdoum/b7A9XLWFrfHXa/uTY76FCF5W/eD9XI1vdZ5
-	y7gYE1ZybXu/ovZgzC5xQWWjRSGJuiGGZtMzQtPSS04XBnfstXjGoZtb8/6rjyTf4mVKHver
-	/fct2h+3Wu3L4QnzTmq1357Z9HB50BvtgPod05qWPlJbf+3rVmMlxpnm9/R3sBqeeXrHed8F
-	Q5103m8bVZVYijMSDbWYi4oTAV1pZqQfAwAA
-X-CMS-MailID: 20210514104426epcas1p3ee2f22f8e18c961118795c356e6a14ae
-X-Msg-Generator: CA
-X-Sendblock-Type: SVC_REQ_APPROVE
-CMS-TYPE: 101P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20210514104426epcas1p3ee2f22f8e18c961118795c356e6a14ae
-References: <alpine.LRH.2.02.2105140544010.22439@file01.intranet.prod.int.rdu2.redhat.com>
-	<CGME20210514104426epcas1p3ee2f22f8e18c961118795c356e6a14ae@epcas1p3.samsung.com>
+In-Reply-To: <20210422122038.2192933-1-ming.lei@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -143,18 +78,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 14EApTvW027450
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 17 May 2021 03:51:00 -0400
-Cc: axboe@kernel.dk, ming.lei@redhat.com, tytso@mit.edu, bvanassche@acm.org,
-	bgoncalv@redhat.com, dm-crypt@saout.de,
-	linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
-	hch@lst.de, linux-block@vger.kernel.org, dm-devel@redhat.com,
-	yi.zhang@redhat.com, jaegeuk@kernel.org,
-	linux-ext4@vger.kernel.org, gmazyland@gmail.com
-Subject: Re: [dm-devel] regression: data corruption with ext4 on LUKS on
- nvme with torvalds master
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
+	Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [dm-devel] [PATCH V6 00/12] block: support bio based io polling
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -168,50 +96,136 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-> On 5/13/21 7:15 AM, Theodore Ts'o wrote:
-> > On Thu, May 13, 2021 at 06:42:22PM +0900, Changheun Lee wrote:
-> >>
-> >> Problem might be casued by exhausting of memory. And memory exhausting
-> >> would be caused by setting of small bio_max_size. Actually it was not
-> >> reproduced in my VM environment at first. But, I reproduced same problem
-> >> when bio_max_size is set with 8KB forced. Too many bio allocation would
-> >> be occurred by setting of 8KB bio_max_size.
-> > 
-> > Hmm... I'm not sure how to align your diagnosis with the symptoms in
-> > the bug report.  If we were limited by memory, that should slow down
-> > the I/O, but we should still be making forward progress, no?  And a
-> > forced reboot should not result in data corruption, unless maybe there
-> 
-> If you use data=writeback, data writes and journal writes are not 
-> synchronized. So, it may be possible that a journal write made it through, 
-> a data write didn't - the end result would be a file containing random 
-> contents that was on the disk.
-> 
-> Changheun - do you use data=writeback? Did the corruption happen only in 
-> newly created files? Or did it corrupt existing files?
+Hi all,
 
-Actually I didn't reproduced data corruption. I only reproduced hang during
-making ext4 filesystem. Alex, could you check it?
+What's the latest progress of this bio-based polling feature?
 
+I've noticed that hch has also sent a patch set on this [1]. But as far
+as I know, hch's patch set only refactors the interface of polling in
+the block layer. It indeed helps bio-based polling for some kind of
+bio-based driver, but for DM/MD where one bio could be mapped to several
+split bios, more work is obviously needed, just like Lei Ming's
+io_context related code in this patch set.
+
+hch may have better idea, after all [1] is just a preparation patch set.
+
+
+[1]
+https://lore.kernel.org/linux-block/20210427161619.1294399-2-hch@lst.de/T/
+
+
+-- 
+Thanks,
+Jeffle
+
+
+On 4/22/21 8:20 PM, Ming Lei wrote:
+> Hi Jens,
 > 
-> > was a missing check for a failed memory allocation, causing data to be
-> > written to the wrong location, a missing error check leading to the
-> > block or file system layer not noticing that a write had failed
-> > (although again, memory exhaustion should not lead to failed writes;
-> > it might slow us down, sure, but if writes are being failed, something
-> > is Badly Going Wrong --- things like writes to the swap device or
-> > writes by the page cleaner must succeed, or else Things Would Go Bad
-> > In A Hurry).
+> Add per-task io poll context for holding HIPRI blk-mq/underlying bios
+> queued from bio based driver's io submission context, and reuse one bio
+> padding field for storing 'cookie' returned from submit_bio() for these
+> bios. Also explicitly end these bios in poll context by adding two
+> new bio flags.
 > 
-> Mikulas
+> In this way, we needn't to poll all underlying hw queues any more,
+> which is implemented in Jeffle's patches. And we can just poll hw queues
+> in which there is HIPRI IO queued.
+> 
+> Usually io submission and io poll share same context, so the added io
+> poll context data is just like one stack variable, and the cost for
+> saving bios is cheap.
+> 
+> V6:
+> 	- move poll code into block/blk-poll.c, as suggested by Christoph
+> 	- define bvec_iter as __packed, and add one new field to bio, as
+> 	  suggested by Christoph
+> 	- re-organize patch order, as suggested by Christoph
+> 	- add one flag for checking if the disk is capable of bio polling
+> 	  and remove .poll_capable(), as suggested by Christoph
+> 	- fix type of .bi_poll
+> 
+> V5:
+> 	- fix one use-after-free issue in case that polling is from another
+> 	context: adds one new cookie of BLK_QC_T_NOT_READY for preventing
+> 	this issue in patch 8/12
+> 	- add reviewed-by & tested-by tag
+> 
+> V4:
+> 	- cover one more test_bit(QUEUE_FLAG_POLL, ...) suggested by
+> 	  Jeffle(01/12)
+> 	- drop patch of 'block: add helper of blk_create_io_context'
+> 	- add new helper of blk_create_io_poll_context() (03/12)
+> 	- drain submission queues in exit_io_context(), suggested by
+> 	  Jeffle(08/13)
+> 	- considering shared io context case for blk_bio_poll_io_drain()
+> 	(08/13)
+> 	- fix one issue in blk_bio_poll_pack_groups() as suggested by
+> 	Jeffle(08/13)
+> 	- add reviewed-by tag
+> V3:
+> 	- fix cookie returned for bio based driver, as suggested by Jeffle Xu
+> 	- draining pending bios when submission context is exiting
+> 	- patch style and comment fix, as suggested by Mike
+> 	- allow poll context data to be NULL by always polling on submission queue
+> 	- remove RFC, and reviewed-by
+> 
+> V2:
+> 	- address queue depth scalability issue reported by Jeffle via bio
+> 	group list. Reuse .bi_end_io for linking bios which share same
+> 	.bi_end_io, and support 32 such groups in submit queue. With this way,
+> 	the scalability issue caused by kfifio is solved. Before really
+> 	ending bio, .bi_end_io is recovered from the group head.
+> 
+> 
+> 
+> Jeffle Xu (2):
+>   block: extract one helper function polling hw queue
+>   dm: support IO polling for bio-based dm device
+> 
+> Ming Lei (10):
+>   block: add helper of blk_queue_poll
+>   block: define 'struct bvec_iter' as packed
+>   block: add one helper to free io_context
+>   block: move block polling code into one dedicated source file
+>   block: prepare for supporting bio_list via other link
+>   block: create io poll context for submission and poll task
+>   block: add req flag of REQ_POLL_CTX
+>   block: use per-task poll context to implement bio based io polling
+>   block: limit hw queues to be polled in each blk_poll()
+>   block: allow to control FLAG_POLL via sysfs for bio poll capable queue
+> 
+>  block/Makefile                |   3 +-
+>  block/bio.c                   |   5 +
+>  block/blk-core.c              |  68 +++-
+>  block/blk-ioc.c               |  15 +-
+>  block/blk-mq.c                | 231 -------------
+>  block/blk-mq.h                |  40 +++
+>  block/blk-poll.c              | 632 ++++++++++++++++++++++++++++++++++
+>  block/blk-sysfs.c             |  16 +-
+>  block/blk.h                   | 112 ++++++
+>  drivers/md/dm-table.c         |  24 ++
+>  drivers/md/dm.c               |   2 +
+>  drivers/nvme/host/core.c      |   2 +-
+>  include/linux/bio.h           | 132 +++----
+>  include/linux/blk_types.h     |  31 +-
+>  include/linux/blkdev.h        |   1 +
+>  include/linux/bvec.h          |   2 +-
+>  include/linux/device-mapper.h |   1 +
+>  include/linux/genhd.h         |   2 +
+>  include/linux/iocontext.h     |   2 +
+>  19 files changed, 1003 insertions(+), 318 deletions(-)
+>  create mode 100644 block/blk-poll.c
+> 
 
 
 --
