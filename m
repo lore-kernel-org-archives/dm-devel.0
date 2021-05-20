@@ -7,72 +7,73 @@ X-Spam-Status: No, score=-17.6 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B0FCC433B4
-	for <dm-devel@archiver.kernel.org>; Thu, 20 May 2021 15:49:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 82030C433ED
+	for <dm-devel@archiver.kernel.org>; Thu, 20 May 2021 15:50:03 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id D69D5610CC
-	for <dm-devel@archiver.kernel.org>; Thu, 20 May 2021 15:49:34 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D69D5610CC
+	by mail.kernel.org (Postfix) with ESMTPS id 2274360C41
+	for <dm-devel@archiver.kernel.org>; Thu, 20 May 2021 15:50:03 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2274360C41
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1621525773;
+	s=mimecast20190719; t=1621525802;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=g0Sv3NRJhIkxALGuk3X+LJzwL2WyJYaRkagjyHdUZrc=;
-	b=QQpf74wWkHOxs41w6SqPbutYrhRBsJZXjvC4REanrn9xWb+iaPm4145RbUnhWJu0JsLybI
-	awJ2szeBLJefv/hkLXDDNiRgEqSDtAeShjCBTY1ObJebS0Lng3gY8hUf12W9XzXhxINxDo
-	BkDG1n7yroM402206EWbDc6m1xYzWX8=
+	bh=lrTHDmWPbF9yX9O7uRKMWJrDmBBJKz0+EcBsTX8A4+k=;
+	b=brlVu76XSG5ntWWixxC4o1ibrHeZUkdCaqUl/UK9hNzdBN+VtJVh716k81jnlugKjdKvNF
+	oi5OOmWNKvH5wPZr3hSQTNAiiB8Fc2EHnily+AZMXRWaHLn3LIxKuqJWLdAJ0Aifp/Wz8j
+	FQaFPfTChFmNpdUk0RG3f34PMnAoFPw=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-171-2vDTKCW5O0-Q2X6QXpF73Q-1; Thu, 20 May 2021 11:49:31 -0400
-X-MC-Unique: 2vDTKCW5O0-Q2X6QXpF73Q-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-525-NVo1bUEfM16rfGmbYhqFeA-1; Thu, 20 May 2021 11:50:00 -0400
+X-MC-Unique: NVo1bUEfM16rfGmbYhqFeA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F16EB801106;
-	Thu, 20 May 2021 15:49:24 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id ADA836064B;
-	Thu, 20 May 2021 15:49:22 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A8C37801106;
+	Thu, 20 May 2021 15:49:54 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 57D2C687DB;
+	Thu, 20 May 2021 15:49:54 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 66C7C180B463;
-	Thu, 20 May 2021 15:49:18 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com
-	[10.5.11.13])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CE69544A5D;
+	Thu, 20 May 2021 15:49:53 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
+	[10.5.11.22])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 14KFepX5021192 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 20 May 2021 11:40:51 -0400
+	id 14KFfD0s021274 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 20 May 2021 11:41:13 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id AAB7B36D5; Thu, 20 May 2021 15:40:51 +0000 (UTC)
+	id 8757210016F4; Thu, 20 May 2021 15:41:13 +0000 (UTC)
 Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0FCA560C03;
-	Thu, 20 May 2021 15:40:47 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EA7D310013C1;
+	Thu, 20 May 2021 15:41:09 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 14KFekBa029692; 
-	Thu, 20 May 2021 10:40:46 -0500
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 14KFf7NJ029699; 
+	Thu, 20 May 2021 10:41:08 -0500
 Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 14KFejOc029690;
-	Thu, 20 May 2021 10:40:45 -0500
-Date: Thu, 20 May 2021 10:40:45 -0500
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 14KFf7Lq029698;
+	Thu, 20 May 2021 10:41:07 -0500
+Date: Thu, 20 May 2021 10:41:07 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: mwilck@suse.com
-Message-ID: <20210520154045.GP25887@octiron.msp.redhat.com>
+Message-ID: <20210520154107.GQ25887@octiron.msp.redhat.com>
 References: <20210517212727.25229-1-mwilck@suse.com>
+	<20210517212727.25229-2-mwilck@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <20210517212727.25229-1-mwilck@suse.com>
+In-Reply-To: <20210517212727.25229-2-mwilck@suse.com>
 User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: Re: [dm-devel] [PATCH v2 1/4] multipathd: cli_handlers: cleanup
- setting reply length
+Subject: Re: [dm-devel] [PATCH v2 2/4] multipathd: cli_getprkey(): fix
+	return value
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -86,7 +87,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -95,86 +96,57 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, May 17, 2021 at 11:27:24PM +0200, mwilck@suse.com wrote:
+On Mon, May 17, 2021 at 11:27:25PM +0200, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> Create a macro for setting the reply length for string literals
-> correctly, and use it where necessary.
-> 
-> In cli_del_path(), don't change the function's return code
-> if just the buffer allocation for the reply failed.
+> By setting (*reply)[19] = '\0', we always truncated a possible
+> ":aptpl" suffix. Fix it, and use the return value of snprintf()
+> as length.
 > 
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  multipathd/cli_handlers.c | 33 ++++++++++++---------------------
->  1 file changed, 12 insertions(+), 21 deletions(-)
+>  multipathd/cli_handlers.c | 17 ++++++++---------
+>  1 file changed, 8 insertions(+), 9 deletions(-)
 > 
 > diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-> index 6765fcf..9606494 100644
+> index 9606494..59d44b4 100644
 > --- a/multipathd/cli_handlers.c
 > +++ b/multipathd/cli_handlers.c
-> @@ -32,6 +32,12 @@
->  #include "foreign.h"
->  #include "cli_handlers.h"
+> @@ -1540,7 +1540,7 @@ cli_getprkey(void * v, char ** reply, int * len, void * data)
+>  	struct multipath * mpp;
+>  	struct vectors * vecs = (struct vectors *)data;
+>  	char *mapname = get_keyparam(v, MAP);
+> -	char *flagstr = "";
+> +	uint64_t key;
 >  
-> +#define SET_REPLY_AND_LEN(__rep, __len, string_literal)			\
-> +	do {								\
-> +		*(__rep) = strdup(string_literal);			\
-> +		*(__len) = *(__rep) ? sizeof(string_literal) : 0;	\
-> +	} while (0)
-> +
->  int
->  show_paths (char ** r, int * len, struct vectors * vecs, char * style,
->  	    int pretty)
-> @@ -802,8 +808,7 @@ cli_add_path (void * v, char ** reply, int * len, void * data)
+>  	mapname = convert_dev(mapname, 0);
+>  	condlog(3, "%s: get persistent reservation key (operator)", mapname);
+> @@ -1553,17 +1553,16 @@ cli_getprkey(void * v, char ** reply, int * len, void * data)
+>  	if (!*reply)
+>  		return 1;
+>  
+> -	if (!get_be64(mpp->reservation_key)) {
+> +	key = get_be64(mpp->reservation_key);
+> +	if (!key) {
+>  		sprintf(*reply, "none\n");
+> -		*len = strlen(*reply) + 1;
+> +		*len = sizeof("none\n");
+>  		return 0;
 >  	}
->  	return ev_add_path(pp, vecs, 1);
->  blacklisted:
-> -	*reply = strdup("blacklisted\n");
+> -	if (mpp->sa_flags & MPATH_F_APTPL_MASK)
+> -		flagstr = ":aptpl";
+> -	snprintf(*reply, 26, "0x%" PRIx64 "%s\n",
+> -		 get_be64(mpp->reservation_key), flagstr);
+> -	(*reply)[19] = '\0';
 > -	*len = strlen(*reply) + 1;
-> +	SET_REPLY_AND_LEN(reply, len, "blacklisted\n");
->  	condlog(2, "%s: path blacklisted", param);
+> +
+> +	/* This snprintf() can't overflow - PRIx64 needs max 16 chars */
+> +	*len = snprintf(*reply, 26, "0x%" PRIx64 "%s\n", key,
+> +			mpp->sa_flags & MPATH_F_APTPL_MASK ? ":aptpl" : "") + 1;
 >  	return 0;
 >  }
-> @@ -824,23 +829,10 @@ cli_del_path (void * v, char ** reply, int * len, void * data)
->  		return 1;
->  	}
->  	ret = ev_remove_path(pp, vecs, 1);
-> -	if (ret == REMOVE_PATH_DELAY) {
-> -		*reply = strdup("delayed\n");
-> -		if (*reply)
-> -			*len = strlen(*reply) + 1;
-> -		else {
-> -			*len = 0;
-> -			ret = REMOVE_PATH_FAILURE;
-> -		}
-> -	} else if (ret == REMOVE_PATH_MAP_ERROR) {
-> -		*reply = strdup("map reload error. removed\n");
-> -		if (*reply)
-> -			*len = strlen(*reply) + 1;
-> -		else {
-> -			*len = 0;
-> -			ret = REMOVE_PATH_FAILURE;
-> -		}
-> -	}
-> +	if (ret == REMOVE_PATH_DELAY)
-> +		SET_REPLY_AND_LEN(reply, len, "delayed\n");
-> +	else if (ret == REMOVE_PATH_MAP_ERROR)
-> +		SET_REPLY_AND_LEN(reply, len, "map reload error. removed\n");
->  	return (ret == REMOVE_PATH_FAILURE);
->  }
 >  
-> @@ -865,8 +857,7 @@ cli_add_map (void * v, char ** reply, int * len, void * data)
->  		invalid = 1;
->  	pthread_cleanup_pop(1);
->  	if (invalid) {
-> -		*reply = strdup("blacklisted\n");
-> -		*len = strlen(*reply) + 1;
-> +		SET_REPLY_AND_LEN(reply, len, "blacklisted\n");
->  		condlog(2, "%s: map blacklisted", param);
->  		return 1;
->  	}
 > -- 
 > 2.31.1
 
