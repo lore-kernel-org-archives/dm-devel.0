@@ -4,85 +4,85 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4754EC433B4
-	for <dm-devel@archiver.kernel.org>; Fri, 21 May 2021 03:02:21 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0C1CDC43460
+	for <dm-devel@archiver.kernel.org>; Fri, 21 May 2021 03:02:23 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C6B146128A
-	for <dm-devel@archiver.kernel.org>; Fri, 21 May 2021 03:02:20 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C6B146128A
+	by mail.kernel.org (Postfix) with ESMTPS id A051361353
+	for <dm-devel@archiver.kernel.org>; Fri, 21 May 2021 03:02:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A051361353
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-67-zQLJUKCOPvKpvx6qfVAq3w-1; Thu, 20 May 2021 23:02:17 -0400
-X-MC-Unique: zQLJUKCOPvKpvx6qfVAq3w-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-64-uIjq0gknO2qML3sQOxE2Rw-1; Thu, 20 May 2021 23:02:18 -0400
+X-MC-Unique: uIjq0gknO2qML3sQOxE2Rw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 57FD61883520;
-	Fri, 21 May 2021 03:02:12 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 81B7E80362A;
+	Fri, 21 May 2021 03:02:14 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3808F5D9DC;
-	Fri, 21 May 2021 03:02:12 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5E43C2B45B;
+	Fri, 21 May 2021 03:02:14 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0C97644A5F;
-	Fri, 21 May 2021 03:02:12 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 31B9D44A5F;
+	Fri, 21 May 2021 03:02:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 14L31YNb013450 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 20 May 2021 23:01:34 -0400
+	id 14L31ZCH013453 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 20 May 2021 23:01:35 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id B5B1A20951A3; Fri, 21 May 2021 03:01:34 +0000 (UTC)
+	id E8954212AA8C; Fri, 21 May 2021 03:01:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B15E620951A2
-	for <dm-devel@redhat.com>; Fri, 21 May 2021 03:01:34 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E3A2E212AA8E
+	for <dm-devel@redhat.com>; Fri, 21 May 2021 03:01:31 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 998BA1857F2A
-	for <dm-devel@redhat.com>; Fri, 21 May 2021 03:01:34 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7789C9124DD
+	for <dm-devel@redhat.com>; Fri, 21 May 2021 03:01:31 +0000 (UTC)
 Received: from esa3.hgst.iphmx.com (esa3.hgst.iphmx.com [216.71.153.141])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-262-DJS7uXD5MyGr4EhK3Kj6vw-2; Thu, 20 May 2021 23:01:32 -0400
-X-MC-Unique: DJS7uXD5MyGr4EhK3Kj6vw-2
-IronPort-SDR: JJGzIXc7oyINvuhU6fvC4VKSNU+W08AA97qry3pLXbl5RlXLvDpbJBsyQf3NmL+RVULhLl/avR
-	SjoeJVXbq93KY7ygFylbcFpmR2C7e+NNU1hqPa1re/F8NJihXMQtqWdxDFPk9b+fWN8GFyHjrV
-	o6Tp23RizfCuXKJgCv3860a8ydWosWOPw15+O5Az7ET1NHMGCLYDYvoOrzHfM4EpwLudNk/yoV
-	07tGex/i336O9dTFYIHkHzRO0dzI2yACJiFdaWvcYIwDsaMVkWAhsRVUODqkjThCqcnN2KuklZ
-	Slg=
-X-IronPort-AV: E=Sophos;i="5.82,313,1613404800"; d="scan'208";a="173591091"
+	us-mta-129-qGItXFo2MeO9-PVEkFKZBA-1; Thu, 20 May 2021 23:01:28 -0400
+X-MC-Unique: qGItXFo2MeO9-PVEkFKZBA-1
+IronPort-SDR: zAAuWr8vU/xDAUH2OwWtscriIAgGFrccdJtCoETNmc5u7ExFNwR8jrU9vicmPe710ZhoJ0/R7z
+	vqxZWf+JTPz7CAZi/08O9Qx+F98KRNKkyWepph5oIsGSjrlKOxeFE4lNirhLWG+C+mty5Y+mdk
+	ptTHk07UQIwqmTEsE/FLx9x6anCDsrNQ4NhNtK1BCiTGzX86D8OaTd1XKRb1VIEmPcCTCAfT2M
+	XgFCh5jkGu2qHnHUos1qyMV8QIM3y7ABumUk3Mi407rOkxJCQ12YVHjOTqsNZxMdooJAaHvyWv
+	Rs0=
+X-IronPort-AV: E=Sophos;i="5.82,313,1613404800"; d="scan'208";a="173591083"
 Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com)
 	([199.255.45.14])
-	by ob1.hgst.iphmx.com with ESMTP; 21 May 2021 11:01:29 +0800
-IronPort-SDR: sWh/+bOwqwzZKrO1NEJ6Vv6T7aGvJw3mGmeZEiWitU+0xqPniGHQMzqe4Mnoeq3t8BKfvxCh0h
-	+1F4otRvdtkzHlL+JStzZvS6b3MHewhFMDLmnppJY5L1YH6yDGyfSv1FvVoxucH+67f0/PBp4e
-	7aC5LQWN0ruH/CXO9oOQ9w0ebme1ivModwmd6APCT55+AiUySRlAHAM1t7cbp8GirAiE4V019Q
-	bbtaAyvMmlqTBXwLcagV1C8W1iGFgWbyz9bCnxhCOD/CtKIb2gWUUEHZB1tjiOdrhsh9AIlIrU
-	YOePpNqc7fTXbkrHA8nT6cPP
+	by ob1.hgst.iphmx.com with ESMTP; 21 May 2021 11:01:25 +0800
+IronPort-SDR: nDHLZbcideZ9F7yU5tyXB7Bkpaufp0uBHXwZj0R6tThvCqdAT4/pN03rkGthBgb1GAnRz3rV7r
+	dCCvXzna+vxG4Ghn77cCAt9QsewcUWUCqXnkY2B6SiaLH75bv81rrAHnwRaGnX5oHRFubuUZ85
+	0EnjYPAZdekc6yAh3uTgwpnakkpvrhx2Ugpa8M971Fs1zCwyJrbiRm07jyiXvRwjNvpbeKvCBd
+	22+fymeHl9M1oBgkUsSo6VuJR4vucoCx2l0elWPka3lyCrvIdEFk/dJaJyGOMMbRv2Oxn4sgaI
+	j1B5wQ4sjTubGivh0VyVAMMg
 Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
 	by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
-	20 May 2021 19:41:07 -0700
-IronPort-SDR: XTzp68aMOYTDkar2IQ8AuQcI3JQX77oPn7SA8j/h+8A/9jF7cuJS1owUIgiHJBx6rOTuqHiRK4
-	7mbOvkzUZov5f5P9QhcAmIIa5E+LK+B/9c5SpWJOACEfliqcT03VDrKY1DhAPQWyD+DyyB4IzU
-	I5VRTuvaCWBsXYcfmZTcGK0aWHTCNxq7QSjxqSv4g9qoUtjrAjIVBV4B0jg8NdiA0bafjs0yzs
-	DGKA7wCKnOobWrXlrB80PE7YEYtiXVHbG7YrrlEv8JfiFJ5fd/zFjecEWOe2XILUrhce3FpKpq
-	fa4=
+	20 May 2021 19:41:02 -0700
+IronPort-SDR: 0rXFbAARo+VBtr5JRENEYPHlGpVr3hVF0f/SSFtwxSu9j0wbFEysCpN3hFtPOBkbKZwaVJT1h1
+	Th87fWx/CNKLTWDVs1UBk8pC7kB/VEu057k0lhIn2lJ81cZue8HyNUsFeUn6eGTz+RhITO1onq
+	S6OalEtQQTiluUhkcB76VTR9lurzyhS/c8x+7UIrAb5duuOcY3O8EoryDiERSb1nhDZlwIGh99
+	3aD0v/0Sor0/Yx0H/IZGHiE6tLARLZa6iombSzX09yTJhU0NoYi2o111mUCkFFnQFjRFwzzfwx
+	b80=
 WDCIronportException: Internal
 Received: from washi.fujisawa.hgst.com ([10.149.53.254])
-	by uls-op-cesaip02.wdc.com with ESMTP; 20 May 2021 20:01:30 -0700
+	by uls-op-cesaip02.wdc.com with ESMTP; 20 May 2021 20:01:26 -0700
 From: Damien Le Moal <damien.lemoal@wdc.com>
 To: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>,
 	linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>
-Date: Fri, 21 May 2021 12:01:15 +0900
-Message-Id: <20210521030119.1209035-8-damien.lemoal@wdc.com>
+Date: Fri, 21 May 2021 12:01:12 +0900
+Message-Id: <20210521030119.1209035-5-damien.lemoal@wdc.com>
 In-Reply-To: <20210521030119.1209035-1-damien.lemoal@wdc.com>
 References: <20210521030119.1209035-1-damien.lemoal@wdc.com>
 MIME-Version: 1.0
@@ -94,9 +94,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Subject: [dm-devel] [PATCH v3 07/11] dm: Introduce dm_report_zones()
+Subject: [dm-devel] [PATCH v3 04/11] dm: Fix dm_accept_partial_bio()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -110,7 +110,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -118,141 +118,51 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-To simplify the implementation of the report_zones operation of a zoned
-target, introduce the function dm_report_zones() to set a target
-mapping start sector in struct dm_report_zones_args and call
-blkdev_report_zones(). This new function is exported and the report
-zones callback function dm_report_zones_cb() is not.
+Fix dm_accept_partial_bio() to actually check that zone management
+commands are not passed as explained in the function documentation
+comment. Also, since a zone append operation cannot be split, add
+REQ_OP_ZONE_APPEND as a forbidden command.
 
-dm-linear, dm-flakey and dm-crypt are modified to use dm_report_zones().
+White lines are added around the group of BUG_ON() calls to make the
+code more legible.
 
 Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
 Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-crypt.c         |  7 +++----
- drivers/md/dm-flakey.c        |  7 +++----
- drivers/md/dm-linear.c        |  7 +++----
- drivers/md/dm-zone.c          | 23 ++++++++++++++++++++---
- include/linux/device-mapper.h |  3 ++-
- 5 files changed, 31 insertions(+), 16 deletions(-)
+ drivers/md/dm.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index b0ab080f2567..f410ceee51d7 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -3138,11 +3138,10 @@ static int crypt_report_zones(struct dm_target *ti,
- 		struct dm_report_zones_args *args, unsigned int nr_zones)
- {
- 	struct crypt_config *cc = ti->private;
--	sector_t sector = cc->start + dm_target_offset(ti, args->next_sector);
- 
--	args->start = cc->start;
--	return blkdev_report_zones(cc->dev->bdev, sector, nr_zones,
--				   dm_report_zones_cb, args);
-+	return dm_report_zones(cc->dev->bdev, cc->start,
-+			cc->start + dm_target_offset(ti, args->next_sector),
-+			args, nr_zones);
- }
- #else
- #define crypt_report_zones NULL
-diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-index b7fee9936f05..5877220c01ed 100644
---- a/drivers/md/dm-flakey.c
-+++ b/drivers/md/dm-flakey.c
-@@ -463,11 +463,10 @@ static int flakey_report_zones(struct dm_target *ti,
- 		struct dm_report_zones_args *args, unsigned int nr_zones)
- {
- 	struct flakey_c *fc = ti->private;
--	sector_t sector = flakey_map_sector(ti, args->next_sector);
- 
--	args->start = fc->start;
--	return blkdev_report_zones(fc->dev->bdev, sector, nr_zones,
--				   dm_report_zones_cb, args);
-+	return dm_report_zones(fc->dev->bdev, fc->start,
-+			       flakey_map_sector(ti, args->next_sector),
-+			       args, nr_zones);
- }
- #else
- #define flakey_report_zones NULL
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 92db0f5e7f28..c91f1e2e2f65 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -140,11 +140,10 @@ static int linear_report_zones(struct dm_target *ti,
- 		struct dm_report_zones_args *args, unsigned int nr_zones)
- {
- 	struct linear_c *lc = ti->private;
--	sector_t sector = linear_map_sector(ti, args->next_sector);
- 
--	args->start = lc->start;
--	return blkdev_report_zones(lc->dev->bdev, sector, nr_zones,
--				   dm_report_zones_cb, args);
-+	return dm_report_zones(lc->dev->bdev, lc->start,
-+			       linear_map_sector(ti, args->next_sector),
-+			       args, nr_zones);
- }
- #else
- #define linear_report_zones NULL
-diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-index 3243c42b7951..b42474043249 100644
---- a/drivers/md/dm-zone.c
-+++ b/drivers/md/dm-zone.c
-@@ -56,7 +56,8 @@ int dm_blk_report_zones(struct gendisk *disk, sector_t sector,
- 	return ret;
- }
- 
--int dm_report_zones_cb(struct blk_zone *zone, unsigned int idx, void *data)
-+static int dm_report_zones_cb(struct blk_zone *zone, unsigned int idx,
-+			      void *data)
- {
- 	struct dm_report_zones_args *args = data;
- 	sector_t sector_diff = args->tgt->begin - args->start;
-@@ -84,7 +85,24 @@ int dm_report_zones_cb(struct blk_zone *zone, unsigned int idx, void *data)
- 	args->next_sector = zone->start + zone->len;
- 	return args->orig_cb(zone, args->zone_idx++, args->orig_data);
- }
--EXPORT_SYMBOL_GPL(dm_report_zones_cb);
-+
-+/*
-+ * Helper for drivers of zoned targets to implement struct target_type
-+ * report_zones operation.
-+ */
-+int dm_report_zones(struct block_device *bdev, sector_t start, sector_t sector,
-+		    struct dm_report_zones_args *args, unsigned int nr_zones)
-+{
-+	/*
-+	 * Set the target mapping start sector first so that
-+	 * dm_report_zones_cb() can correctly remap zone information.
-+	 */
-+	args->start = start;
-+
-+	return blkdev_report_zones(bdev, sector, nr_zones,
-+				   dm_report_zones_cb, args);
-+}
-+EXPORT_SYMBOL_GPL(dm_report_zones);
- 
- void dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q)
- {
-@@ -99,4 +117,3 @@ void dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q)
- 	WARN_ON_ONCE(queue_is_mq(q));
- 	q->nr_zones = blkdev_nr_zones(t->md->disk);
- }
--
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index ff700fb6ce1d..caea0a079d2d 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -478,7 +478,8 @@ struct dm_report_zones_args {
- 	/* must be filled by ->report_zones before calling dm_report_zones_cb */
- 	sector_t start;
- };
--int dm_report_zones_cb(struct blk_zone *zone, unsigned int idx, void *data);
-+int dm_report_zones(struct block_device *bdev, sector_t start, sector_t sector,
-+		    struct dm_report_zones_args *args, unsigned int nr_zones);
- #endif /* CONFIG_BLK_DEV_ZONED */
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index ca2aedd8ee7d..a9211575bfed 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1237,8 +1237,9 @@ static int dm_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
  
  /*
+  * A target may call dm_accept_partial_bio only from the map routine.  It is
+- * allowed for all bio types except REQ_PREFLUSH, REQ_OP_ZONE_RESET,
+- * REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE and REQ_OP_ZONE_FINISH.
++ * allowed for all bio types except REQ_PREFLUSH, zone management operations
++ * (REQ_OP_ZONE_RESET, REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE and
++ * REQ_OP_ZONE_FINISH) and zone append writes.
+  *
+  * dm_accept_partial_bio informs the dm that the target only wants to process
+  * additional n_sectors sectors of the bio and the rest of the data should be
+@@ -1268,9 +1269,13 @@ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors)
+ {
+ 	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
+ 	unsigned bi_size = bio->bi_iter.bi_size >> SECTOR_SHIFT;
++
+ 	BUG_ON(bio->bi_opf & REQ_PREFLUSH);
++	BUG_ON(op_is_zone_mgmt(bio_op(bio)));
++	BUG_ON(bio_op(bio) == REQ_OP_ZONE_APPEND);
+ 	BUG_ON(bi_size > *tio->len_ptr);
+ 	BUG_ON(n_sectors > bi_size);
++
+ 	*tio->len_ptr -= bi_size - n_sectors;
+ 	bio->bi_iter.bi_size = n_sectors << SECTOR_SHIFT;
+ }
 -- 
 2.31.1
 
