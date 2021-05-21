@@ -7,55 +7,55 @@ X-Spam-Status: No, score=-13.7 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 68DACC43462
-	for <dm-devel@archiver.kernel.org>; Fri, 21 May 2021 05:52:59 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9B214C4363F
+	for <dm-devel@archiver.kernel.org>; Fri, 21 May 2021 05:52:58 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id F18BA6128A
-	for <dm-devel@archiver.kernel.org>; Fri, 21 May 2021 05:52:58 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org F18BA6128A
+	by mail.kernel.org (Postfix) with ESMTPS id 176686128A
+	for <dm-devel@archiver.kernel.org>; Fri, 21 May 2021 05:52:57 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 176686128A
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-44-DHg815PmOo6Zjnmbja0_RA-1; Fri, 21 May 2021 01:52:55 -0400
-X-MC-Unique: DHg815PmOo6Zjnmbja0_RA-1
+ us-mta-309-O4gk55g1PxePypO1CMDw-g-1; Fri, 21 May 2021 01:52:55 -0400
+X-MC-Unique: O4gk55g1PxePypO1CMDw-g-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3403780293B;
-	Fri, 21 May 2021 05:52:52 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 185C060C4A;
-	Fri, 21 May 2021 05:52:52 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 05E29102CB6B;
+	Fri, 21 May 2021 05:52:50 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DDE8160C4A;
+	Fri, 21 May 2021 05:52:49 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DF3E344A5C;
-	Fri, 21 May 2021 05:52:51 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B7050180B464;
+	Fri, 21 May 2021 05:52:49 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 14L5qnKJ027281 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 21 May 2021 01:52:50 -0400
+	id 14L5qkEY027265 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 21 May 2021 01:52:47 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id D89741084486; Fri, 21 May 2021 05:52:49 +0000 (UTC)
+	id 2AA94107CCE4; Fri, 21 May 2021 05:52:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D427D107CCE4
-	for <dm-devel@redhat.com>; Fri, 21 May 2021 05:52:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 26AD810031EF
+	for <dm-devel@redhat.com>; Fri, 21 May 2021 05:52:46 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BC17F80D0E0
-	for <dm-devel@redhat.com>; Fri, 21 May 2021 05:52:49 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0F73180D0E2
+	for <dm-devel@redhat.com>; Fri, 21 May 2021 05:52:46 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-333-Da4-94KyMK2czAiTA4HVng-1; Fri, 21 May 2021 01:52:47 -0400
-X-MC-Unique: Da4-94KyMK2czAiTA4HVng-1
+	us-mta-467-IPyY5gJDOKy-ZbSuDD1pNw-1; Fri, 21 May 2021 01:52:43 -0400
+X-MC-Unique: IPyY5gJDOKy-ZbSuDD1pNw-1
 Received: from [2001:4bb8:180:5add:4fd7:4137:d2f2:46e6] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94 #2 (Red Hat Linux))
-	id 1ljy5H-00GqDA-1a; Fri, 21 May 2021 05:52:31 +0000
+	id 1ljy58-00GqAV-Tf; Fri, 21 May 2021 05:52:23 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>, Geert Uytterhoeven <geert@linux-m68k.org>,
 	Chris Zankel <chris@zankel.net>, Max Filippov <jcmvbkbc@gmail.com>,
@@ -73,8 +73,8 @@ To: Jens Axboe <axboe@kernel.dk>, Geert Uytterhoeven <geert@linux-m68k.org>,
 	Dave Jiang <dave.jiang@intel.com>, Heiko Carstens <hca@linux.ibm.com>, 
 	Vasily Gorbik <gor@linux.ibm.com>,
 	Christian Borntraeger <borntraeger@de.ibm.com>
-Date: Fri, 21 May 2021 07:51:12 +0200
-Message-Id: <20210521055116.1053587-23-hch@lst.de>
+Date: Fri, 21 May 2021 07:51:10 +0200
+Message-Id: <20210521055116.1053587-21-hch@lst.de>
 In-Reply-To: <20210521055116.1053587-1-hch@lst.de>
 References: <20210521055116.1053587-1-hch@lst.de>
 MIME-Version: 1.0
@@ -96,7 +96,7 @@ Cc: linux-xtensa@linux-xtensa.org, linux-m68k@vger.kernel.org,
 	linux-bcache@vger.kernel.org, linux-nvme@lists.infradead.org,
 	linux-block@vger.kernel.org, dm-devel@redhat.com,
 	drbd-dev@tron.linbit.com, linuxppc-dev@lists.ozlabs.org
-Subject: [dm-devel] [PATCH 22/26] ps3vram: convert to
+Subject: [dm-devel] [PATCH 20/26] simdisk: convert to
 	blk_alloc_disk/blk_cleanup_disk
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
@@ -119,94 +119,79 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Convert the ps3vram driver to use the blk_alloc_disk and blk_cleanup_disk
+Convert the simdisk driver to use the blk_alloc_disk and blk_cleanup_disk
 helpers to simplify gendisk and request_queue allocation.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/ps3vram.c | 31 ++++++++-----------------------
- 1 file changed, 8 insertions(+), 23 deletions(-)
+ arch/xtensa/platforms/iss/simdisk.c | 29 +++++++----------------------
+ 1 file changed, 7 insertions(+), 22 deletions(-)
 
-diff --git a/drivers/block/ps3vram.c b/drivers/block/ps3vram.c
-index 1d738999fb69..7fbf469651c4 100644
---- a/drivers/block/ps3vram.c
-+++ b/drivers/block/ps3vram.c
-@@ -67,7 +67,6 @@ struct ps3vram_cache {
- };
- 
- struct ps3vram_priv {
+diff --git a/arch/xtensa/platforms/iss/simdisk.c b/arch/xtensa/platforms/iss/simdisk.c
+index fc09be7b1347..3cdfa00738e0 100644
+--- a/arch/xtensa/platforms/iss/simdisk.c
++++ b/arch/xtensa/platforms/iss/simdisk.c
+@@ -27,7 +27,6 @@
+ struct simdisk {
+ 	const char *filename;
+ 	spinlock_t lock;
 -	struct request_queue *queue;
- 	struct gendisk *gendisk;
+ 	struct gendisk *gd;
+ 	struct proc_dir_entry *procfile;
+ 	int users;
+@@ -266,21 +265,13 @@ static int __init simdisk_setup(struct simdisk *dev, int which,
+ 	spin_lock_init(&dev->lock);
+ 	dev->users = 0;
  
- 	u64 size;
-@@ -613,7 +612,6 @@ static int ps3vram_probe(struct ps3_system_bus_device *dev)
- {
- 	struct ps3vram_priv *priv;
- 	int error, status;
--	struct request_queue *queue;
- 	struct gendisk *gendisk;
- 	u64 ddr_size, ddr_lpar, ctrl_lpar, info_lpar, reports_lpar,
- 	    reports_size, xdr_lpar;
-@@ -736,33 +734,23 @@ static int ps3vram_probe(struct ps3_system_bus_device *dev)
- 
- 	ps3vram_proc_init(dev);
- 
--	queue = blk_alloc_queue(NUMA_NO_NODE);
--	if (!queue) {
--		dev_err(&dev->core, "blk_alloc_queue failed\n");
--		error = -ENOMEM;
--		goto out_cache_cleanup;
+-	dev->queue = blk_alloc_queue(NUMA_NO_NODE);
+-	if (dev->queue == NULL) {
+-		pr_err("blk_alloc_queue failed\n");
+-		goto out_alloc_queue;
 -	}
 -
--	priv->queue = queue;
--	blk_queue_max_segments(queue, BLK_MAX_SEGMENTS);
--	blk_queue_max_segment_size(queue, BLK_MAX_SEGMENT_SIZE);
--	blk_queue_max_hw_sectors(queue, BLK_SAFE_MAX_SECTORS);
--
--	gendisk = alloc_disk(1);
-+	gendisk = blk_alloc_disk(NUMA_NO_NODE);
- 	if (!gendisk) {
--		dev_err(&dev->core, "alloc_disk failed\n");
-+		dev_err(&dev->core, "blk_alloc_disk failed\n");
- 		error = -ENOMEM;
--		goto fail_cleanup_queue;
-+		goto out_cache_cleanup;
- 	}
+-	dev->gd = alloc_disk(SIMDISK_MINORS);
+-	if (dev->gd == NULL) {
+-		pr_err("alloc_disk failed\n");
+-		goto out_alloc_disk;
+-	}
++	dev->gd = blk_alloc_disk(NUMA_NO_NODE);
++	if (!dev->gd)
++		return -ENOMEM;
+ 	dev->gd->major = simdisk_major;
+ 	dev->gd->first_minor = which;
++	dev->gd->minors = SIMDISK_MINORS;
+ 	dev->gd->fops = &simdisk_ops;
+-	dev->gd->queue = dev->queue;
+ 	dev->gd->private_data = dev;
+ 	snprintf(dev->gd->disk_name, 32, "simdisk%d", which);
+ 	set_capacity(dev->gd, 0);
+@@ -288,12 +279,6 @@ static int __init simdisk_setup(struct simdisk *dev, int which,
  
- 	priv->gendisk = gendisk;
- 	gendisk->major = ps3vram_major;
--	gendisk->first_minor = 0;
-+	gendisk->minors = 1;
- 	gendisk->fops = &ps3vram_fops;
--	gendisk->queue = queue;
- 	gendisk->private_data = dev;
- 	strlcpy(gendisk->disk_name, DEVICE_NAME, sizeof(gendisk->disk_name));
- 	set_capacity(gendisk, priv->size >> 9);
-+	blk_queue_max_segments(gendisk->queue, BLK_MAX_SEGMENTS);
-+	blk_queue_max_segment_size(gendisk->queue, BLK_MAX_SEGMENT_SIZE);
-+	blk_queue_max_hw_sectors(gendisk->queue, BLK_SAFE_MAX_SECTORS);
- 
- 	dev_info(&dev->core, "%s: Using %llu MiB of GPU memory\n",
- 		 gendisk->disk_name, get_capacity(gendisk) >> 11);
-@@ -770,8 +758,6 @@ static int ps3vram_probe(struct ps3_system_bus_device *dev)
- 	device_add_disk(&dev->core, gendisk, NULL);
+ 	dev->procfile = proc_create_data(tmp, 0644, procdir, &simdisk_proc_ops, dev);
  	return 0;
+-
+-out_alloc_disk:
+-	blk_cleanup_queue(dev->queue);
+-	dev->queue = NULL;
+-out_alloc_queue:
+-	return -ENOMEM;
+ }
  
--fail_cleanup_queue:
--	blk_cleanup_queue(queue);
- out_cache_cleanup:
- 	remove_proc_entry(DEVICE_NAME, NULL);
- 	ps3vram_cache_cleanup(dev);
-@@ -802,8 +788,7 @@ static void ps3vram_remove(struct ps3_system_bus_device *dev)
- 	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
+ static int __init simdisk_init(void)
+@@ -343,10 +328,10 @@ static void simdisk_teardown(struct simdisk *dev, int which,
+ 	char tmp[2] = { '0' + which, 0 };
  
- 	del_gendisk(priv->gendisk);
--	put_disk(priv->gendisk);
--	blk_cleanup_queue(priv->queue);
-+	blk_cleanup_disk(priv->gendisk);
- 	remove_proc_entry(DEVICE_NAME, NULL);
- 	ps3vram_cache_cleanup(dev);
- 	iounmap(priv->reports);
+ 	simdisk_detach(dev);
+-	if (dev->gd)
++	if (dev->gd) {
+ 		del_gendisk(dev->gd);
+-	if (dev->queue)
+-		blk_cleanup_queue(dev->queue);
++		blk_cleanup_disk(dev->gd);
++	}
+ 	remove_proc_entry(tmp, procdir);
+ }
+ 
 -- 
 2.30.2
 
