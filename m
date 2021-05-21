@@ -2,71 +2,82 @@ Return-Path: <SRS0=AQTU=KQ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,
-	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 640FCC433ED
-	for <dm-devel@archiver.kernel.org>; Fri, 21 May 2021 06:33:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7C60EC433B4
+	for <dm-devel@archiver.kernel.org>; Fri, 21 May 2021 08:38:56 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id DC0C6613BD
-	for <dm-devel@archiver.kernel.org>; Fri, 21 May 2021 06:33:51 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org DC0C6613BD
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=suse.de
+	by mail.kernel.org (Postfix) with ESMTPS id DA0D161363
+	for <dm-devel@archiver.kernel.org>; Fri, 21 May 2021 08:38:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org DA0D161363
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=linux-m68k.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-364-WPehTFyaNMaCZGiDFAFFrQ-1; Fri, 21 May 2021 02:33:48 -0400
-X-MC-Unique: WPehTFyaNMaCZGiDFAFFrQ-1
+ us-mta-604-iqVR0Mz3M8-BCF_NOHda_g-1; Fri, 21 May 2021 04:38:53 -0400
+X-MC-Unique: iqVR0Mz3M8-BCF_NOHda_g-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CBBCF107ACC7;
-	Fri, 21 May 2021 06:33:44 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 331881A8A62;
+	Fri, 21 May 2021 08:38:49 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9CB5E5D76F;
-	Fri, 21 May 2021 06:33:44 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 73E9B5D764;
+	Fri, 21 May 2021 08:38:47 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2008C180B463;
-	Fri, 21 May 2021 06:33:43 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 53C141800BB4;
+	Fri, 21 May 2021 08:38:45 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 14L6Xfn9031327 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 21 May 2021 02:33:41 -0400
+	id 14L8cDig009590 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 21 May 2021 04:38:13 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 7111D212AA99; Fri, 21 May 2021 06:33:41 +0000 (UTC)
+	id 4F08B165431; Fri, 21 May 2021 08:38:13 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6C2B7212AAA5
-	for <dm-devel@redhat.com>; Fri, 21 May 2021 06:33:39 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4A2E516542E
+	for <dm-devel@redhat.com>; Fri, 21 May 2021 08:38:10 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 260DB857D08
-	for <dm-devel@redhat.com>; Fri, 21 May 2021 06:33:39 +0000 (UTC)
-Received: from mx2.suse.de (mx2.suse.de [195.135.220.15]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-346-1SscrpJuON2ac395jUamHA-1;
-	Fri, 21 May 2021 02:33:37 -0400
-X-MC-Unique: 1SscrpJuON2ac395jUamHA-1
-X-Virus-Scanned: by amavisd-new at test-mx.suse.de
-Received: from relay2.suse.de (unknown [195.135.221.27])
-	by mx2.suse.de (Postfix) with ESMTP id C9DB4AC87;
-	Fri, 21 May 2021 06:15:41 +0000 (UTC)
-To: Christoph Hellwig <hch@lst.de>
-References: <20210521055116.1053587-1-hch@lst.de>
-	<20210521055116.1053587-13-hch@lst.de>
-From: Coly Li <colyli@suse.de>
-Message-ID: <d4f1c005-2ce0-51b5-c861-431f0ffb3dcf@suse.de>
-Date: Fri, 21 May 2021 14:15:32 +0800
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
-	Gecko/20100101 Thunderbird/78.10.1
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BB70D80D0E4
+	for <dm-devel@redhat.com>; Fri, 21 May 2021 08:38:10 +0000 (UTC)
+Received: from mail-vk1-f171.google.com (mail-vk1-f171.google.com
+	[209.85.221.171]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-522-XbsZ9rrgPwaVqJArOnJGBA-1; Fri, 21 May 2021 04:38:08 -0400
+X-MC-Unique: XbsZ9rrgPwaVqJArOnJGBA-1
+Received: by mail-vk1-f171.google.com with SMTP id u205so4119761vke.10;
+	Fri, 21 May 2021 01:38:08 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc;
+	bh=RVHzs0poOF+hVS1v1BAW6iRpurNI2FLCHK2qQooBQc8=;
+	b=kv0SEpA2MOsMRA1lpy+RzQ405UtHgUPoMZIETFN1RrgfDekSc5dJbx5LrZ6Ra5CdSN
+	URgkhv7cxuPCDLyTmL4Q6xRzJVpVc9MancKrjGyNtZh3Q4jbqqIfMbjuFq0OOHMh/2UW
+	iXZI9bZGydJ725uLmm7+SxMQH2tVhk8MVdUMgH1HI64B2ZiJqA6hBScHqxPvXXK4xSdt
+	toI06jqETlJA9ujpyDh2yA3BL7FamjMQqMNL+4S5Z1AaidHWXHxwn8RhpPa5K3wgX+1/
+	0QfpUbvJfi+D+6/ihNkVPP1FAlMJEI1QfbbwfwPR/qSIvnZ5ocPeIXxrkgtvdwOWxkMb
+	9OOQ==
+X-Gm-Message-State: AOAM531LciuVx/X/uFCiI/JjG7Vwmv3qwBLriNRzoZK8PqWLTw/hBjMX
+	HuCgbGrYGxua9GRnysPKMBoNxlxWtrLQ26oV9JI=
+X-Google-Smtp-Source: ABdhPJzGTg0SxZhAyS6W3ANe8pj0R0i+6+zDbI/+BVCcJpHhTvw5AwmdUSLpxqeMfSWaogZWi2MJbcqhNDfvoXw93hU=
+X-Received: by 2002:a1f:2504:: with SMTP id l4mr9071521vkl.5.1621586288105;
+	Fri, 21 May 2021 01:38:08 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <20210521055116.1053587-13-hch@lst.de>
+References: <20210521055116.1053587-1-hch@lst.de>
+	<20210521055116.1053587-20-hch@lst.de>
+In-Reply-To: <20210521055116.1053587-20-hch@lst.de>
+From: Geert Uytterhoeven <geert@linux-m68k.org>
+Date: Fri, 21 May 2021 10:37:56 +0200
+Message-ID: <CAMuHMdUReZCGwii_rJuOOag+jmn4E3yfH+=P3a=5bJDf8CJvrQ@mail.gmail.com>
+To: Christoph Hellwig <hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -75,32 +86,33 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 14L6Xfn9031327
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: nvdimm@lists.linux.dev, linux-m68k@vger.kernel.org,
-	Mike Snitzer <snitzer@redhat.com>, Ulf Hansson <ulf.hansson@linaro.org>,
+Cc: nvdimm@lists.linux.dev, Ulf Hansson <ulf.hansson@linaro.org>,
+	Mike Snitzer <snitzer@redhat.com>, linux-m68k <linux-m68k@vger.kernel.org>,
 	linux-nvme@lists.infradead.org, Song Liu <song@kernel.org>,
 	dm-devel@redhat.com, Joshua Morris <josh.h.morris@us.ibm.com>,
-	linux-s390@vger.kernel.org, Dave Jiang <dave.jiang@intel.com>,
+	linux-s390 <linux-s390@vger.kernel.org>, Dave Jiang <dave.jiang@intel.com>,
 	Maxim Levitsky <maximlevitsky@gmail.com>,
 	Vishal Verma <vishal.l.verma@intel.com>,
 	Christian Borntraeger <borntraeger@de.ibm.com>,
-	Geert Uytterhoeven <geert@linux-m68k.org>,
 	Matias Bjorling <mb@lightnvm.io>, Nitin Gupta <ngupta@vflare.org>,
-	Vasily Gorbik <gor@linux.ibm.com>, linux-xtensa@linux-xtensa.org,
-	Alex Dubov <oakad@yahoo.com>, Heiko Carstens <hca@linux.ibm.com>,
-	linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org,
-	linux-block@vger.kernel.org, drbd-dev@tron.linbit.com,
+	Vasily Gorbik <gor@linux.ibm.com>,
+	"open list:TENSILICA XTENSA PORT \(xtensa\)"
+	<linux-xtensa@linux-xtensa.org>, Alex Dubov <oakad@yahoo.com>,
+	Heiko Carstens <hca@linux.ibm.com>, Coly Li <colyli@suse.de>,
+	linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
+	Lars Ellenberg <drbd-dev@tron.linbit.com>,
 	Philip Kelleher <pjk1939@linux.ibm.com>,
 	Dan Williams <dan.j.williams@intel.com>,
 	Jens Axboe <axboe@kernel.dk>, Chris Zankel <chris@zankel.net>,
-	Max Filippov <jcmvbkbc@gmail.com>, linux-mmc@vger.kernel.org,
+	linux-raid@vger.kernel.org, Max Filippov <jcmvbkbc@gmail.com>,
+	Linux MMC List <linux-mmc@vger.kernel.org>,
 	Philipp Reisner <philipp.reisner@linbit.com>,
 	Jim Paris <jim@jtan.com>, Minchan Kim <minchan@kernel.org>,
-	Lars Ellenberg <lars.ellenberg@linbit.com>, linuxppc-dev@lists.ozlabs.org
-Subject: Re: [dm-devel] [PATCH 12/26] bcache: convert to
+	Lars Ellenberg <lars.ellenberg@linbit.com>,
+	linuxppc-dev <linuxppc-dev@lists.ozlabs.org>
+Subject: Re: [dm-devel] [PATCH 19/26] nfblock: convert to
 	blk_alloc_disk/blk_cleanup_disk
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
@@ -120,83 +132,27 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 5/21/21 1:51 PM, Christoph Hellwig wrote:
-> Convert the bcache driver to use the blk_alloc_disk and blk_cleanup_disk
+On Fri, May 21, 2021 at 7:52 AM Christoph Hellwig <hch@lst.de> wrote:
+> Convert the nfblock driver to use the blk_alloc_disk and blk_cleanup_disk
 > helpers to simplify gendisk and request_queue allocation.
-> 
+>
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  drivers/md/bcache/super.c | 15 ++++-----------
->  1 file changed, 4 insertions(+), 11 deletions(-)
-> 
-> diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
-> index bea8c4429ae8..185246a0d855 100644
-> --- a/drivers/md/bcache/super.c
-> +++ b/drivers/md/bcache/super.c
-> @@ -890,13 +890,9 @@ static void bcache_device_free(struct bcache_device *d)
->  		if (disk_added)
->  			del_gendisk(disk);
->  
-> -		if (disk->queue)
-> -			blk_cleanup_queue(disk->queue);
-> -
-> +		blk_cleanup_disk(disk);
->  		ida_simple_remove(&bcache_device_idx,
->  				  first_minor_to_idx(disk->first_minor));
-> -		if (disk_added)
-> -			put_disk(disk);
 
-The  above 2 lines are added on purpose to prevent an refcount
-underflow. It is from commit 86da9f736740 ("bcache: fix refcount
-underflow in bcache_device_free()").
+Acked-by: Geert Uytterhoeven <geert@linux-m68k.org>
 
-Maybe add a parameter to blk_cleanup_disk() or checking (disk->flags &
-GENHD_FL_UP) inside blk_cleanup_disk() ?
+Gr{oetje,eeting}s,
 
-Coly Li
+                        Geert
 
+-- 
+Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
 
->  	}
->  
->  	bioset_exit(&d->bio_split);
-> @@ -946,7 +942,7 @@ static int bcache_device_init(struct bcache_device *d, unsigned int block_size,
->  			BIOSET_NEED_BVECS|BIOSET_NEED_RESCUER))
->  		goto err;
->  
-> -	d->disk = alloc_disk(BCACHE_MINORS);
-> +	d->disk = blk_alloc_disk(NUMA_NO_NODE);
->  	if (!d->disk)
->  		goto err;
->  
-> @@ -955,14 +951,11 @@ static int bcache_device_init(struct bcache_device *d, unsigned int block_size,
->  
->  	d->disk->major		= bcache_major;
->  	d->disk->first_minor	= idx_to_first_minor(idx);
-> +	d->disk->minors		= BCACHE_MINORS;
->  	d->disk->fops		= ops;
->  	d->disk->private_data	= d;
->  
-> -	q = blk_alloc_queue(NUMA_NO_NODE);
-> -	if (!q)
-> -		return -ENOMEM;
-> -
-> -	d->disk->queue			= q;
-> +	q = d->disk->queue;
->  	q->limits.max_hw_sectors	= UINT_MAX;
->  	q->limits.max_sectors		= UINT_MAX;
->  	q->limits.max_segment_size	= UINT_MAX;
-> 
-
-The rested looks fine to me.
-
-Thanks.
-
-Coly Li
-
+In personal conversations with technical people, I call myself a hacker. But
+when I'm talking to journalists I just say "programmer" or something like that.
+                                -- Linus Torvalds
 
 --
 dm-devel mailing list
