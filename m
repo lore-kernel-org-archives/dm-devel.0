@@ -6,62 +6,63 @@ X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E9F9DC04FF3
-	for <dm-devel@archiver.kernel.org>; Mon, 24 May 2021 07:27:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1F099C04FF3
+	for <dm-devel@archiver.kernel.org>; Mon, 24 May 2021 07:30:13 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 5714D61153
-	for <dm-devel@archiver.kernel.org>; Mon, 24 May 2021 07:27:02 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5714D61153
+	by mail.kernel.org (Postfix) with ESMTPS id 9A2E1611AC
+	for <dm-devel@archiver.kernel.org>; Mon, 24 May 2021 07:30:12 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9A2E1611AC
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-373-V3kT-D2mN0WuziBv7ncXIA-1; Mon, 24 May 2021 03:26:59 -0400
-X-MC-Unique: V3kT-D2mN0WuziBv7ncXIA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-405-ZEKz22iSNeu-2s7ADLKQww-1; Mon, 24 May 2021 03:30:09 -0400
+X-MC-Unique: ZEKz22iSNeu-2s7ADLKQww-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 25F4E180FD69;
-	Mon, 24 May 2021 07:26:54 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 26317100946A;
+	Mon, 24 May 2021 07:30:04 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0D99F61F20;
-	Mon, 24 May 2021 07:26:54 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D31D37059A;
+	Mon, 24 May 2021 07:30:03 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D20695BBEB;
-	Mon, 24 May 2021 07:26:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 93BAC5BBE8;
+	Mon, 24 May 2021 07:30:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 14O7Qq7g012635 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 24 May 2021 03:26:52 -0400
+	id 14O7U19N012811 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 24 May 2021 03:30:02 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 5C16843673; Mon, 24 May 2021 07:26:52 +0000 (UTC)
+	id C1DCD110DBA1; Mon, 24 May 2021 07:30:01 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 56F3743676
-	for <dm-devel@redhat.com>; Mon, 24 May 2021 07:26:47 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BD6D8110DBA0
+	for <dm-devel@redhat.com>; Mon, 24 May 2021 07:29:58 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 50D54800182
-	for <dm-devel@redhat.com>; Mon, 24 May 2021 07:26:47 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 25AF210334A1
+	for <dm-devel@redhat.com>; Mon, 24 May 2021 07:29:58 +0000 (UTC)
 Received: from verein.lst.de (verein.lst.de [213.95.11.211]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-576-TYt6VEycNdW5jRTpJaCwow-1;
-	Mon, 24 May 2021 03:26:45 -0400
-X-MC-Unique: TYt6VEycNdW5jRTpJaCwow-1
+	relay.mimecast.com with ESMTP id us-mta-534-FohmUguqOqa_dOH3EQtdrg-1;
+	Mon, 24 May 2021 03:29:55 -0400
+X-MC-Unique: FohmUguqOqa_dOH3EQtdrg-1
 Received: by verein.lst.de (Postfix, from userid 2407)
-	id 1676267373; Mon, 24 May 2021 09:26:43 +0200 (CEST)
-Date: Mon, 24 May 2021 09:26:42 +0200
+	id 025C467373; Mon, 24 May 2021 09:29:50 +0200 (CEST)
+Date: Mon, 24 May 2021 09:29:50 +0200
 From: Christoph Hellwig <hch@lst.de>
 To: Hannes Reinecke <hare@suse.de>
-Message-ID: <20210524072642.GF23890@lst.de>
+Message-ID: <20210524072950.GG23890@lst.de>
 References: <20210521055116.1053587-1-hch@lst.de>
-	<20210521055116.1053587-15-hch@lst.de>
-	<e65de9e6-337c-3e41-b5c2-d033ff236582@suse.de>
+	<20210521055116.1053587-19-hch@lst.de>
+	<1a771bf9-5083-c440-f0e1-5f6920b5b017@suse.de>
 MIME-Version: 1.0
-In-Reply-To: <e65de9e6-337c-3e41-b5c2-d033ff236582@suse.de>
+In-Reply-To: <1a771bf9-5083-c440-f0e1-5f6920b5b017@suse.de>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -71,15 +72,15 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 Cc: nvdimm@lists.linux.dev, Ulf Hansson <ulf.hansson@linaro.org>,
 	Mike Snitzer <snitzer@redhat.com>, linux-m68k@vger.kernel.org,
 	linux-nvme@lists.infradead.org, Song Liu <song@kernel.org>,
-	dm-devel@redhat.com, Joshua Morris <josh.h.morris@us.ibm.com>,
+	dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>,
 	linux-s390@vger.kernel.org, Dave Jiang <dave.jiang@intel.com>,
 	Maxim Levitsky <maximlevitsky@gmail.com>,
-	Vishal Verma <vishal.l.verma@intel.com>, Christoph Hellwig <hch@lst.de>,
+	Vishal Verma <vishal.l.verma@intel.com>,
 	Christian Borntraeger <borntraeger@de.ibm.com>,
 	Geert Uytterhoeven <geert@linux-m68k.org>,
 	Matias Bjorling <mb@lightnvm.io>, Nitin Gupta <ngupta@vflare.org>,
@@ -94,8 +95,8 @@ Cc: nvdimm@lists.linux.dev, Ulf Hansson <ulf.hansson@linaro.org>,
 	linux-mmc@vger.kernel.org, Philipp Reisner <philipp.reisner@linbit.com>,
 	Jim Paris <jim@jtan.com>, Minchan Kim <minchan@kernel.org>,
 	Lars Ellenberg <lars.ellenberg@linbit.com>, linuxppc-dev@lists.ozlabs.org
-Subject: Re: [dm-devel] [PATCH 14/26] md: convert to
-	blk_alloc_disk/blk_cleanup_disk
+Subject: Re: [dm-devel] [PATCH 18/26] nvme-multipath: convert to
+ blk_alloc_disk/blk_cleanup_disk
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -109,7 +110,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -118,17 +119,15 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sun, May 23, 2021 at 10:12:49AM +0200, Hannes Reinecke wrote:
->> +	blk_set_stacking_limits(&mddev->queue->limits);
->>   	blk_queue_write_cache(mddev->queue, true, true);
->>   	/* Allow extended partitions.  This makes the
->>   	 * 'mdp' device redundant, but we can't really
->>
-> Wouldn't it make sense to introduce a helper 'blk_queue_from_disk()' or 
-> somesuch to avoid having to keep an explicit 'queue' pointer?
+On Sun, May 23, 2021 at 10:20:27AM +0200, Hannes Reinecke wrote:
+> What about the check for GENHD_FL_UP a bit further up in line 766?
+> Can this still happen with the new allocation scheme, ie is there still a 
+> difference in lifetime between ->disk and ->disk->queue?
 
-My rought plan is that a few series from now bio based drivers will
-never directly deal with the request_queue at all.
+Yes, nvme_free_ns_head can still be called before device_add_disk was
+called for an allocated nshead gendisk during error handling of the
+setup path.  There is still a difference in the lifetime in that they
+are separately refcounted, but it does not matter to the driver.
 
 --
 dm-devel mailing list
