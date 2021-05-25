@@ -7,169 +7,169 @@ X-Spam-Status: No, score=-15.3 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,MSGID_FROM_MTA_HEADER,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CB4BEC47082
-	for <dm-devel@archiver.kernel.org>; Wed, 26 May 2021 11:00:41 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B972AC2B9F7
+	for <dm-devel@archiver.kernel.org>; Wed, 26 May 2021 11:00:44 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 57BA3613F4
-	for <dm-devel@archiver.kernel.org>; Wed, 26 May 2021 11:00:38 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 57BA3613F4
+	by mail.kernel.org (Postfix) with ESMTPS id 4DDF86109E
+	for <dm-devel@archiver.kernel.org>; Wed, 26 May 2021 11:00:44 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4DDF86109E
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=oracle.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-445-DMjcsoSTNLyl2rLskhgQyQ-1; Wed, 26 May 2021 07:00:34 -0400
-X-MC-Unique: DMjcsoSTNLyl2rLskhgQyQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-598-lcOrfMdiMT-KCa_rHgn1_A-1; Wed, 26 May 2021 07:00:25 -0400
+X-MC-Unique: lcOrfMdiMT-KCa_rHgn1_A-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 843116D4E3;
-	Wed, 26 May 2021 11:00:26 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5AEC5629DA;
-	Wed, 26 May 2021 11:00:26 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 813DE8042AA;
+	Wed, 26 May 2021 11:00:19 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 186E15E27F;
+	Wed, 26 May 2021 11:00:19 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 038F11800BBE;
-	Wed, 26 May 2021 11:00:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D5B0855351;
+	Wed, 26 May 2021 11:00:18 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 14PLtMwk005562 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 25 May 2021 17:55:22 -0400
+	id 14PJHRnJ023812 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 25 May 2021 15:17:27 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 33FB42087A4E; Tue, 25 May 2021 21:55:22 +0000 (UTC)
+	id 512C41033C67; Tue, 25 May 2021 19:17:27 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2E77B2087A35
-	for <dm-devel@redhat.com>; Tue, 25 May 2021 21:55:19 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4B83E1033C64
+	for <dm-devel@redhat.com>; Tue, 25 May 2021 19:17:24 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ED7EB80D0E9
-	for <dm-devel@redhat.com>; Tue, 25 May 2021 21:55:18 +0000 (UTC)
-Received: from userp2130.oracle.com (userp2130.oracle.com [156.151.31.86])
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 573C618E0920
+	for <dm-devel@redhat.com>; Tue, 25 May 2021 19:17:24 +0000 (UTC)
+Received: from userp2120.oracle.com (userp2120.oracle.com [156.151.31.85])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-28--IZtGEJDO_-bBaso9JoY-g-1; Tue, 25 May 2021 17:55:16 -0400
-X-MC-Unique: -IZtGEJDO_-bBaso9JoY-g-1
-Received: from pps.filterd (userp2130.oracle.com [127.0.0.1])
-	by userp2130.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
-	14PJ6iYE179690; Tue, 25 May 2021 19:10:06 GMT
-Received: from aserp3020.oracle.com (aserp3020.oracle.com [141.146.126.70])
-	by userp2130.oracle.com with ESMTP id 38q3q8xgg6-1
+	us-mta-330-vA89HDHXNT69PXnxpvfU3Q-1; Tue, 25 May 2021 15:17:19 -0400
+X-MC-Unique: vA89HDHXNT69PXnxpvfU3Q-1
+Received: from pps.filterd (userp2120.oracle.com [127.0.0.1])
+	by userp2120.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
+	14PJFf9h146637; Tue, 25 May 2021 19:17:16 GMT
+Received: from userp3020.oracle.com (userp3020.oracle.com [156.151.31.79])
+	by userp2120.oracle.com with ESMTP id 38ptkp70qe-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 25 May 2021 19:10:06 +0000
-Received: from pps.filterd (aserp3020.oracle.com [127.0.0.1])
-	by aserp3020.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
-	14PJ51ew098258; Tue, 25 May 2021 19:10:05 GMT
-Received: from nam11-dm6-obe.outbound.protection.outlook.com
-	(mail-dm6nam11lp2170.outbound.protection.outlook.com [104.47.57.170])
-	by aserp3020.oracle.com with ESMTP id 38rehau06k-1
+	Tue, 25 May 2021 19:17:16 +0000
+Received: from pps.filterd (userp3020.oracle.com [127.0.0.1])
+	by userp3020.oracle.com (8.16.0.42/8.16.0.42) with SMTP id
+	14PJGEsA125357; Tue, 25 May 2021 19:17:16 GMT
+Received: from nam10-bn7-obe.outbound.protection.outlook.com
+	(mail-bn7nam10lp2105.outbound.protection.outlook.com [104.47.70.105])
+	by userp3020.oracle.com with ESMTP id 38qbqshrbb-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 25 May 2021 19:10:05 +0000
+	Tue, 25 May 2021 19:17:15 +0000
 Received: from SN6PR10MB2943.namprd10.prod.outlook.com (2603:10b6:805:d4::19)
-	by SN6PR10MB3024.namprd10.prod.outlook.com (2603:10b6:805:d1::32)
+	by SN6PR10MB2768.namprd10.prod.outlook.com (2603:10b6:805:4a::25)
 	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4129.28;
-	Tue, 25 May 2021 19:10:02 +0000
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4150.26;
+	Tue, 25 May 2021 19:17:14 +0000
 Received: from SN6PR10MB2943.namprd10.prod.outlook.com
 	([fe80::168:1a9:228:46f3]) by SN6PR10MB2943.namprd10.prod.outlook.com
 	([fe80::168:1a9:228:46f3%7]) with mapi id 15.20.4150.027;
-	Tue, 25 May 2021 19:10:02 +0000
+	Tue, 25 May 2021 19:17:14 +0000
 To: Damien Le Moal <damien.lemoal@wdc.com>, dm-devel@redhat.com,
 	Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org,
 	Jens Axboe <axboe@kernel.dk>
 References: <20210525022539.119661-1-damien.lemoal@wdc.com>
-	<20210525022539.119661-5-damien.lemoal@wdc.com>
+	<20210525022539.119661-10-damien.lemoal@wdc.com>
 From: Himanshu Madhani <himanshu.madhani@oracle.com>
 Organization: Oracle
-Message-ID: <8d6ffa67-e21a-a47e-0ac2-a8c0a9403d5f@oracle.com>
-Date: Tue, 25 May 2021 14:10:00 -0500
+Message-ID: <ce4477cb-64b9-27e2-6f6c-3204fac8ed24@oracle.com>
+Date: Tue, 25 May 2021 14:17:12 -0500
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
 	Thunderbird/78.10.1
-In-Reply-To: <20210525022539.119661-5-damien.lemoal@wdc.com>
+In-Reply-To: <20210525022539.119661-10-damien.lemoal@wdc.com>
 X-Originating-IP: [70.114.128.235]
-X-ClientProxiedBy: SA9PR13CA0004.namprd13.prod.outlook.com
-	(2603:10b6:806:21::9) To SN6PR10MB2943.namprd10.prod.outlook.com
+X-ClientProxiedBy: SN7PR04CA0080.namprd04.prod.outlook.com
+	(2603:10b6:806:121::25) To SN6PR10MB2943.namprd10.prod.outlook.com
 	(2603:10b6:805:d4::19)
 MIME-Version: 1.0
 X-MS-Exchange-MessageSentRepresentingType: 1
 Received: from [192.168.1.28] (70.114.128.235) by
-	SA9PR13CA0004.namprd13.prod.outlook.com (2603:10b6:806:21::9)
+	SN7PR04CA0080.namprd04.prod.outlook.com (2603:10b6:806:121::25)
 	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4173.12
-	via Frontend Transport; Tue, 25 May 2021 19:10:02 +0000
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4150.23
+	via Frontend Transport; Tue, 25 May 2021 19:17:13 +0000
 X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: c8936e9d-46fb-43a9-4a48-08d91fb0b2c0
-X-MS-TrafficTypeDiagnostic: SN6PR10MB3024:
-X-Microsoft-Antispam-PRVS: <SN6PR10MB3024A2CA37B53039D6DECA8DE6259@SN6PR10MB3024.namprd10.prod.outlook.com>
-X-MS-Oob-TLC-OOBClassifiers: OLM:5797
+X-MS-Office365-Filtering-Correlation-Id: e26a4611-d332-48a6-f566-08d91fb1b3ea
+X-MS-TrafficTypeDiagnostic: SN6PR10MB2768:
+X-Microsoft-Antispam-PRVS: <SN6PR10MB2768E4C546132CB2DBF3003BE6259@SN6PR10MB2768.namprd10.prod.outlook.com>
+X-MS-Oob-TLC-OOBClassifiers: OLM:7219
 X-MS-Exchange-SenderADCheck: 1
 X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: DmjVTrr5PWR3jYHNzZvm+sWSAn3WmyFvGG2P29iSFEw/xNa4qHUPalcWePau9fcQdxUWzq7uLNl5S27X3zlEqVzRZ+E0NXVxPCutXq3tQD0BMgFXE0padfYx88M2++YIASIwju/c2r0Z5oYwlSWPZ0BvMd/qdg6ExMTWrXhgD7FLfCmXlBjuFXvk2nc8c9UGboHvwWWXdujzoeN/L3VuQaRmSlEbO5YTignQUJ1Jm8tVE6iFk1/Wb6ZELVSizflHGumafxVhV/meWyUwjKAFIiAk1aK66oX+lX1/t/6ClTz3NzASMouH6bvGod/ccW9rEMMeDgsu0ZpO0gRTEjQn8SOuNz9PqJ0jfVQYJWSsOk4I3SQT+OmRV9tzo8nSa+9NcCUrsBQUfCc/8yCyYMnHmejiOmRFZHEhdphjYLQPKPxQS4iOErJtRZCmJyKCelvAJX0vUgU5AvvsDbNSMLQDOhxzNtR2g6CCNMAfuBZHlox7KrGZ/gpbF/5mrWR9i/2NkbcRYuNMgdzB66FEg+jf2Nbfx0lCvp2RSouAkK/a7IzAHY7F/M60SrnYfceqI/AMQ1ZY7GWZllx9zTxyizmdmMogeNTwnsWAm1N8eN92WXWbJbEUJic7o1Ps99zuLNPCTnv06akUnnpScIoBIR6sVqzHPZz37w+V0deVf0xzczamOqSIZvGd5B+6K9tHm7tX
+X-Microsoft-Antispam-Message-Info: ZPeuy5K6rn80wnxQlD7bk7XYFXCSsgbAXerlt+fRatLNq7n8uR9tEAUNwLD4AM/4PZ2uWjKHEtI8svrCRzk/6hYC+n4qwgdUY+owOKdR2gcLr/ZaeIO7v6nJIa2OgXm6XlOokubou23Pyh7jBNzCWXU35/+cj1KC0PxGJYTRQ6zyY+KwZ+YmhAhF/5zaTGKD5YGuP9qLvltF536I1QoMLEG5WfE/87B0kF2xW6E/vHzMitBbDWR6EA+tyUnv4ALvsSmVxDb/Z2HW+Y0vMaYVwXnS55sLLI1+yuFvb9nSt5mFrBhT4wORCEMwJYCW60G/w/PT7TuExTczkv5esSisqLzQ+kb/XIDNAwVD/+yWMYy+T+91tb4X1IzXS3P5TtOw2dK6T08RZIVbhk4cRrHzuzu6CJaiaf8oiysIw27ol1BUoh/iroGRULk9eVtYPH9sn1ZhaDpPu8Osf9glzZj02R/O6NDZpGHXEnDhYmP62mBZbnPeSclXHFke4GdJkhHWHLhaFpVaOwnNWGRfNFxf+yxsdbnoObKMKm/5pkuaXHqVEb3P334nZ4M/JnOXNsGdKrGhnY3ZMzUmiNQJ8VqGZZ0Vf+Zc+aqgI+gZrAF7yhWPi3flMy6tpIzOANNH93WybrPpHW3yHAgaheBdFUEs+GOQBTHjY+qNRDTtLKWXiZm0LBQkCz6kF96dhss1lW2T
 X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
 	IPV:NLI; SFV:NSPM; H:SN6PR10MB2943.namprd10.prod.outlook.com;
 	PTR:; CAT:NONE;
-	SFS:(396003)(39860400002)(346002)(366004)(136003)(376002)(2616005)(66556008)(66476007)(110136005)(8936002)(26005)(2906002)(83380400001)(6486002)(31696002)(66946007)(31686004)(38100700002)(956004)(186003)(53546011)(86362001)(8676002)(36916002)(44832011)(478600001)(16526019)(16576012)(36756003)(316002)(5660300002)(43740500002)(45980500001);
+	SFS:(396003)(136003)(366004)(39860400002)(376002)(346002)(26005)(956004)(44832011)(2906002)(31696002)(16526019)(478600001)(8936002)(6486002)(186003)(2616005)(110136005)(36756003)(66476007)(31686004)(5660300002)(66556008)(83380400001)(66946007)(38100700002)(36916002)(86362001)(16576012)(316002)(8676002)(53546011)(43740500002)(45980500001);
 	DIR:OUT; SFP:1101
-X-MS-Exchange-AntiSpam-MessageData: =?utf-8?B?TXVpc3FkMTV6eVpKM3YxcmI5Y3RTbVE4NzIwYXBPb0Y5dytyMUY0aVNOK01D?=
-	=?utf-8?B?bGNHemNheHdlY2hnb3BURmxwVnZqa2xDOFJ1S1V0UzJuTzFLK2NLRW9OYUFo?=
-	=?utf-8?B?UTl1aURoQXZPdlptZGhCd0haOXlWbGdHL1RMUDNnTU1QMVJ1eHdzL3JGbExO?=
-	=?utf-8?B?L3RUdUI1QVlEQWRnT0Q5OElqZHhXT0Z3TkFkOXBIaWRKNFYvakhLZG9xUTB3?=
-	=?utf-8?B?RTFObzE2SUtJSGJkWGFabFZsZHJFVFNWT1kxQWpVbjM5ZWNMMndMS04wNnhC?=
-	=?utf-8?B?bmhsRjA5S1J4MjY1aXdPY0NnYmRSR01td09kUFUwczhkdG9hbUFQM0ZQaElF?=
-	=?utf-8?B?Q0R6eWdpZDdSeHdPRE5pNDZUY2tNcGdxR0xPOGcwWmx5TTQ5Y25KRTBSS2Fh?=
-	=?utf-8?B?RVV6U2duaGowZnBxNGRoUFlRU0QrV01MSmZiZG5YYnNrZS9tRXFGeXFaV1ZT?=
-	=?utf-8?B?TEltaHJGN2J2Nk93WmZLY0dLbUpTZGYwZHRuRVZJbE1uWFl2ckpUNEptRlkw?=
-	=?utf-8?B?bVBuZmhxZXNIMWV6R2dQT1JNaVpvSVp1eHFxcTRxbi9WUnZ4Y01DTDJQUVd6?=
-	=?utf-8?B?SW9BbmE1SGVCVmFINGl1emt4UWVEOWZzRmFwRTNreTFXdXoyM2dlL3Y2eCt1?=
-	=?utf-8?B?RWRTSVBPdHNpWjNQTktmeEpPWm9qYmhrL1RKN2VtNHdDTGxhVkRreW00cWRE?=
-	=?utf-8?B?MHBMUmFKaWNFeEJYMm9COWxzc3lSSnA4WWl6SUMzMHJoR1Qxa0J6YWpxT202?=
-	=?utf-8?B?WmVTUi9xYlY2UklYVFg3aEZLTW1iY3lHMGRSbzlDaUl4b3NJT1hmQVNCZEM2?=
-	=?utf-8?B?VGtIbWlMTHEvKzZnSjFURlN3NDg2eFFkdXBTeW9qWlBYeUlFVjFQTjU4SHh5?=
-	=?utf-8?B?UENQcVMrSXpMRnRRQlV2QmFVY1hrdWljU3U2L3lLODZYODN3bmUzbWNnaVpW?=
-	=?utf-8?B?VUkwWWhkZlhvalA0Sy9ielp5RENJMEg4T0F4Vy80K29CWGNnTlRiaHVGUVdm?=
-	=?utf-8?B?QU93ZVU0WWRQYm0zTG1mN25JbHhNYktxWGo2M0d2bXpuL0ozdk10cTg2bDVD?=
-	=?utf-8?B?RVhBcXZOam1DSlNhNW1lQVViY1VQMTEyc0NjRWowNG9FaXJhbkphczZDRXNE?=
-	=?utf-8?B?TisyQ2hxTS8xV1dydGpaWmxvaHMvaElWdTJ1VkdxWWVGOWdrQ0dTbWpjSWxJ?=
-	=?utf-8?B?eEN0dVZKUDdPU1cyN1JGN2ZXUDNIeU1UNmhMb21CNzVWMWNweVdpWGFzeDEv?=
-	=?utf-8?B?a2JMN3AvOVlOMkFVQ1k3OGNybUh0RzErQS9wWmM4eHFyMC9HcHp3SDMvT0hi?=
-	=?utf-8?B?MkM4bHFUcWJNeW9ITXMrMlNEcWxqWkFTK2JDSTVCcGRiN0dFdXFSd25PRU9t?=
-	=?utf-8?B?ZmtGdjI4M3RhNXJMWFdrbDRJWXJkZ0ZWTjBKbkhyTlhhL2VzSDkzcGdkdlI4?=
-	=?utf-8?B?d0R3NEtRenZBNVdQMjdHMDNXT2RndWU3NnVpbHh3bWk5K3NtSkpmUUh4M3hV?=
-	=?utf-8?B?ejMvUldyZ3VOYUlQWVlwUTZiQVM4ZUJJdGpFZi9ELzFyNDd0Ry9lYnZwVE10?=
-	=?utf-8?B?dzhuNk9KcnpyUnRHcU1kaDFxWUt0dVBkaE5RY1BmU05NY1habHJQblBFWVB2?=
-	=?utf-8?B?cTlpWnNMODk5clRaZmU4SjhGWFZJVHZxbzVLSk1LUVVDblFEUnpIY21BSTJm?=
-	=?utf-8?B?YS9JY2dhSytJMFZDZmJoR3lzc2IxYlJxOWJvSDZWMHVkb29tSEJqcFFKOCtM?=
-	=?utf-8?Q?0M4+5rHmaD4zQGpUuLDr8tPW6NMY7W3rR8Z3bBq?=
+X-MS-Exchange-AntiSpam-MessageData: =?utf-8?B?MjF3RU4xNURpR2VLTXd6aEl6NnkvMkVRR2Z5L1BqK2RVYzdUbDI3Y0hmbzBX?=
+	=?utf-8?B?OFowOGZUbzVoOFNFOU9OQ2ZUOVdoTVFxajY5WTVNWmt1MEF6T0dUR01reFkw?=
+	=?utf-8?B?VVVDMWgzcytNUXdsU09qbDRhYVJRYlM5Y2lDZlhNM0NHT1VwenJXUXJqTmVZ?=
+	=?utf-8?B?a21XUVhzUnZyaGp6OU96VUx2WHp3ekxNV0dmbEM2NW9ISEhnWEE4TksxUmFE?=
+	=?utf-8?B?UHI5TDRLNWNrY0FEbTZZalplamZXWng2Y1dLYkYyd3NzRE1hNVRUbXdJQXBs?=
+	=?utf-8?B?dzR1c2VZcEZFSmZPV3ZqN21UTWIyWk1oUVVET3B6RmpLY2hCcStoRWQ3cnV6?=
+	=?utf-8?B?cEZjelhtVm45WmZRWVpaNW91eW1Da21EcnJmK1NKdDdFV0pKMmdMdUsxMmJ1?=
+	=?utf-8?B?WmVsdWpVOXhHbFljREdHakdrcjhzVlhHVjNuSzhGWndacDV0SlFYb2NVR0VE?=
+	=?utf-8?B?RmJ0VEY1bzE1MnAzTkJiTkIzWHBwc05sbVB2VlhaZDdvQjIwZmpJanNtV0hr?=
+	=?utf-8?B?M1pFUnVzOVhHZTB3TzluZUNseEdtUWZMelNPSHZ4cDJIY3NLam54ajUxWlcr?=
+	=?utf-8?B?eUk0bGt3VnErUXlIREJXYU5tMWRGSU1XbngrZEx1V3dNRFZiRUJ6d01KTjVx?=
+	=?utf-8?B?cTJWbU1ndDB1RWtEazlCbmpTL29QbUoyS2s2TFEwZ0JOUm5hbDZVbVZrVzcv?=
+	=?utf-8?B?QklHSUJ6M0lGT3hJdnZQUGNqS0s1dE1FSmxWcE42bG92NnQ2ZlkveFpZN0xV?=
+	=?utf-8?B?anZyemFDTWdTQ2p1dm9lKy9IYlRETDlYZGIxT09VaFg2eHB0UGd3TS9jK21Y?=
+	=?utf-8?B?V0tkSzRPZ1dZaExwSExYR3pjQWxPdHhCTDhsQi9NdzRlTFBBUTUvK1locXVJ?=
+	=?utf-8?B?L2xhK3I4RDd1MG1iVE1Neit0RWpSQ0dVcmxCdlpiM3dZMEhTQVhsYlB4Uk9y?=
+	=?utf-8?B?RktmZHYzbGNjRmlHV3BFWVJ6VFQ5S2VsNzFudVl4RnBSZ1VyaTJHOHZnQnNz?=
+	=?utf-8?B?L0pRNThGcElHcjYvdVhmbEZXZldzQ0JIWjdtaHJpQm9UVWpXOEp4VlEwaU5j?=
+	=?utf-8?B?Y1BPTnVOaW9zNkxyeTZ1WS9VejJjajgwelpjekpXNStFbXVhQjNBU1ZjMmNZ?=
+	=?utf-8?B?ZkFEclRkRm42R2NmeHdycTZmVDlGKyt2VzkyR1NmQ3VEWWlubWJqVTVxZGdv?=
+	=?utf-8?B?YUVTOUJuUVBqdmJ2NDcxTTBBQkRBQUZxMGdCYUx0UDhZeGFBYmlhZXRSQ1Jq?=
+	=?utf-8?B?dXF6WE1iYXBpVnAxc1duZnBVa3JnUjVuV0M5M1pPbHVjbWMrVG9aS0kraFZh?=
+	=?utf-8?B?anRZWFRydG1iTUxGQmFTVkx5clhYVUNoSDJRbVlxN0hYN0RhWlFEbDY1aEh2?=
+	=?utf-8?B?dW94S1lUYXd0cGJDSHk2bmxtVmZFOGNySjhlNkRRQitlRnpQN0RTV3pFTitP?=
+	=?utf-8?B?VDdFYUk5SEF3V3JlYTFEYXUxUDIxdWw3MXFqWjhIN0hXWmFCOTJ1VEViK2xC?=
+	=?utf-8?B?ZHhnVzBkelVpckFITVg3NnlNR2FvZTBaSGVDYjVVMlp6S3RxTTBLWDF0MVI2?=
+	=?utf-8?B?TWpUNElUenE4bUd6YlFMdUJWajBzbzJUSEFScE8yTTZQYjVCaHV5NVZQOXo5?=
+	=?utf-8?B?QmYyMWFGUXVaWCtEQ204SzZObk4rSURaTDZOVnlWT1pUMXhaeFc4c2d1dFpM?=
+	=?utf-8?B?WHFwZklkc0hwQTliNU15eWxJTXVleCt0TVU1NHJ4UkZDZ2FZMTNHbkZtVVVq?=
+	=?utf-8?Q?8KrX3X5zZ/q2pEN92D/ReqxNJvQTnCsFedEEERy?=
 X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: c8936e9d-46fb-43a9-4a48-08d91fb0b2c0
+X-MS-Exchange-CrossTenant-Network-Message-Id: e26a4611-d332-48a6-f566-08d91fb1b3ea
 X-MS-Exchange-CrossTenant-AuthSource: SN6PR10MB2943.namprd10.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 25 May 2021 19:10:02.3907 (UTC)
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 25 May 2021 19:17:13.8947 (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: DL9Cv6Hj/UW2G9QPFb3iFUtl9+i+8APFGuozCR5FkJ66TcnSFKA2uR58ypCtk+/Dpv8VjiUv0Y3pj/kEVWcYQkj2bakKt8nEGiaLetVqjB4=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SN6PR10MB3024
+X-MS-Exchange-CrossTenant-UserPrincipalName: QlFRQl3S1V5CJmnCC8jPFtGACzracn4RgESKy0/Z0oESIZo9rgE0bzluf/Glsqkfd78cH74cBut/TjeBCm+fbvGmIYZkuDK9SHoB9SP4HOg=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SN6PR10MB2768
 X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=9995
 	signatures=668682
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 suspectscore=0
-	spamscore=0 adultscore=0
-	mlxscore=0 mlxlogscore=999 malwarescore=0 phishscore=0 bulkscore=0
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 mlxscore=0
+	phishscore=0 bulkscore=0
+	mlxlogscore=999 malwarescore=0 spamscore=0 suspectscore=0 adultscore=0
 	classifier=spam adjust=0 reason=mlx scancount=1
-	engine=8.12.0-2104190000 definitions=main-2105250117
-X-Proofpoint-GUID: hYpaZiZ9CwcjPuJUY5yfKDt28uL8jfIq
-X-Proofpoint-ORIG-GUID: hYpaZiZ9CwcjPuJUY5yfKDt28uL8jfIq
+	engine=8.12.0-2104190000 definitions=main-2105250118
+X-Proofpoint-GUID: pwnjXsAZZJFXtGQ8cXWscZ7ldAVMgRxr
+X-Proofpoint-ORIG-GUID: pwnjXsAZZJFXtGQ8cXWscZ7ldAVMgRxr
 X-Proofpoint-Virus-Version: vendor=nai engine=6200 definitions=9995
 	signatures=668682
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 suspectscore=0
-	mlxscore=0 clxscore=1015
-	malwarescore=0 bulkscore=0 impostorscore=0 phishscore=0 spamscore=0
-	adultscore=0 priorityscore=1501 mlxlogscore=999 lowpriorityscore=0
-	classifier=spam adjust=0 reason=mlx scancount=1
-	engine=8.12.0-2104190000 definitions=main-2105250117
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 impostorscore=0
+	mlxscore=0
+	suspectscore=0 bulkscore=0 adultscore=0 mlxlogscore=999 phishscore=0
+	malwarescore=0 clxscore=1015 lowpriorityscore=0 spamscore=0
+	priorityscore=1501 classifier=spam adjust=0 reason=mlx scancount=1
+	engine=8.12.0-2104190000 definitions=main-2105250118
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -178,10 +178,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 26 May 2021 06:59:53 -0400
-Subject: Re: [dm-devel] [PATCH v4 04/11] dm: Fix dm_accept_partial_bio()
+Subject: Re: [dm-devel] [PATCH v4 09/11] dm: rearrange core declarations
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -195,7 +195,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -207,51 +207,217 @@ Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
 
 On 5/24/21 9:25 PM, Damien Le Moal wrote:
-> Fix dm_accept_partial_bio() to actually check that zone management
-> commands are not passed as explained in the function documentation
-> comment. Also, since a zone append operation cannot be split, add
-> REQ_OP_ZONE_APPEND as a forbidden command.
-> 
-> White lines are added around the group of BUG_ON() calls to make the
-> code more legible.
+> Move the definitions of struct dm_target_io, struct dm_io and of the
+> bits of the flags field of struct mapped_device from dm.c to dm-core.h
+> to make them usable from dm-zone.c.
+> For the same reason, declare dec_pending() in dm-core.h after renaming
+> it to dm_io_dec_pending(). And for symmetry of the function names,
+> introduce the inline helper dm_io_inc_pending() instead of directly
+> using atomic_inc() calls.
 > 
 > Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-> Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 > Reviewed-by: Hannes Reinecke <hare@suse.de>
 > ---
->   drivers/md/dm.c | 9 +++++++--
->   1 file changed, 7 insertions(+), 2 deletions(-)
+>   drivers/md/dm-core.h | 52 ++++++++++++++++++++++++++++++++++++++
+>   drivers/md/dm.c      | 59 ++++++--------------------------------------
+>   2 files changed, 59 insertions(+), 52 deletions(-)
 > 
+> diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
+> index 5953ff2bd260..cfabc1c91f9f 100644
+> --- a/drivers/md/dm-core.h
+> +++ b/drivers/md/dm-core.h
+> @@ -116,6 +116,19 @@ struct mapped_device {
+>   	struct srcu_struct io_barrier;
+>   };
+>   
+> +/*
+> + * Bits for the flags field of struct mapped_device.
+> + */
+> +#define DMF_BLOCK_IO_FOR_SUSPEND 0
+> +#define DMF_SUSPENDED 1
+> +#define DMF_FROZEN 2
+> +#define DMF_FREEING 3
+> +#define DMF_DELETING 4
+> +#define DMF_NOFLUSH_SUSPENDING 5
+> +#define DMF_DEFERRED_REMOVE 6
+> +#define DMF_SUSPENDED_INTERNALLY 7
+> +#define DMF_POST_SUSPENDING 8
+> +
+>   void disable_discard(struct mapped_device *md);
+>   void disable_write_same(struct mapped_device *md);
+>   void disable_write_zeroes(struct mapped_device *md);
+> @@ -173,6 +186,45 @@ struct dm_table {
+>   #endif
+>   };
+>   
+> +/*
+> + * One of these is allocated per clone bio.
+> + */
+> +#define DM_TIO_MAGIC 7282014
+> +struct dm_target_io {
+> +	unsigned int magic;
+> +	struct dm_io *io;
+> +	struct dm_target *ti;
+> +	unsigned int target_bio_nr;
+> +	unsigned int *len_ptr;
+> +	bool inside_dm_io;
+> +	struct bio clone;
+> +};
+> +
+> +/*
+> + * One of these is allocated per original bio.
+> + * It contains the first clone used for that original.
+> + */
+> +#define DM_IO_MAGIC 5191977
+> +struct dm_io {
+> +	unsigned int magic;
+> +	struct mapped_device *md;
+> +	blk_status_t status;
+> +	atomic_t io_count;
+> +	struct bio *orig_bio;
+> +	unsigned long start_time;
+> +	spinlock_t endio_lock;
+> +	struct dm_stats_aux stats_aux;
+> +	/* last member of dm_target_io is 'struct bio' */
+> +	struct dm_target_io tio;
+> +};
+> +
+> +static inline void dm_io_inc_pending(struct dm_io *io)
+> +{
+> +	atomic_inc(&io->io_count);
+> +}
+> +
+> +void dm_io_dec_pending(struct dm_io *io, blk_status_t error);
+> +
+>   static inline struct completion *dm_get_completion_from_kobject(struct kobject *kobj)
+>   {
+>   	return &container_of(kobj, struct dm_kobject_holder, kobj)->completion;
 > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index ca2aedd8ee7d..a9211575bfed 100644
+> index 4426019a89cc..563504163b74 100644
 > --- a/drivers/md/dm.c
 > +++ b/drivers/md/dm.c
-> @@ -1237,8 +1237,9 @@ static int dm_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
+> @@ -74,38 +74,6 @@ struct clone_info {
+>   	unsigned sector_count;
+>   };
+>   
+> -/*
+> - * One of these is allocated per clone bio.
+> - */
+> -#define DM_TIO_MAGIC 7282014
+> -struct dm_target_io {
+> -	unsigned magic;
+> -	struct dm_io *io;
+> -	struct dm_target *ti;
+> -	unsigned target_bio_nr;
+> -	unsigned *len_ptr;
+> -	bool inside_dm_io;
+> -	struct bio clone;
+> -};
+> -
+> -/*
+> - * One of these is allocated per original bio.
+> - * It contains the first clone used for that original.
+> - */
+> -#define DM_IO_MAGIC 5191977
+> -struct dm_io {
+> -	unsigned magic;
+> -	struct mapped_device *md;
+> -	blk_status_t status;
+> -	atomic_t io_count;
+> -	struct bio *orig_bio;
+> -	unsigned long start_time;
+> -	spinlock_t endio_lock;
+> -	struct dm_stats_aux stats_aux;
+> -	/* last member of dm_target_io is 'struct bio' */
+> -	struct dm_target_io tio;
+> -};
+> -
+>   #define DM_TARGET_IO_BIO_OFFSET (offsetof(struct dm_target_io, clone))
+>   #define DM_IO_BIO_OFFSET \
+>   	(offsetof(struct dm_target_io, clone) + offsetof(struct dm_io, tio))
+> @@ -137,19 +105,6 @@ EXPORT_SYMBOL_GPL(dm_bio_get_target_bio_nr);
+>   
+>   #define MINOR_ALLOCED ((void *)-1)
+>   
+> -/*
+> - * Bits for the md->flags field.
+> - */
+> -#define DMF_BLOCK_IO_FOR_SUSPEND 0
+> -#define DMF_SUSPENDED 1
+> -#define DMF_FROZEN 2
+> -#define DMF_FREEING 3
+> -#define DMF_DELETING 4
+> -#define DMF_NOFLUSH_SUSPENDING 5
+> -#define DMF_DEFERRED_REMOVE 6
+> -#define DMF_SUSPENDED_INTERNALLY 7
+> -#define DMF_POST_SUSPENDING 8
+> -
+>   #define DM_NUMA_NODE NUMA_NO_NODE
+>   static int dm_numa_node = DM_NUMA_NODE;
+>   
+> @@ -825,7 +780,7 @@ static int __noflush_suspending(struct mapped_device *md)
+>    * Decrements the number of outstanding ios that a bio has been
+>    * cloned into, completing the original io if necc.
+>    */
+> -static void dec_pending(struct dm_io *io, blk_status_t error)
+> +void dm_io_dec_pending(struct dm_io *io, blk_status_t error)
+>   {
+>   	unsigned long flags;
+>   	blk_status_t io_error;
+> @@ -978,7 +933,7 @@ static void clone_endio(struct bio *bio)
+>   	}
+>   
+>   	free_tio(tio);
+> -	dec_pending(io, error);
+> +	dm_io_dec_pending(io, error);
+>   }
 >   
 >   /*
->    * A target may call dm_accept_partial_bio only from the map routine.  It is
-> - * allowed for all bio types except REQ_PREFLUSH, REQ_OP_ZONE_RESET,
-> - * REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE and REQ_OP_ZONE_FINISH.
-> + * allowed for all bio types except REQ_PREFLUSH, zone management operations
-> + * (REQ_OP_ZONE_RESET, REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE and
-> + * REQ_OP_ZONE_FINISH) and zone append writes.
->    *
->    * dm_accept_partial_bio informs the dm that the target only wants to process
->    * additional n_sectors sectors of the bio and the rest of the data should be
-> @@ -1268,9 +1269,13 @@ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors)
->   {
->   	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
->   	unsigned bi_size = bio->bi_iter.bi_size >> SECTOR_SHIFT;
-> +
->   	BUG_ON(bio->bi_opf & REQ_PREFLUSH);
-> +	BUG_ON(op_is_zone_mgmt(bio_op(bio)));
-> +	BUG_ON(bio_op(bio) == REQ_OP_ZONE_APPEND);
->   	BUG_ON(bi_size > *tio->len_ptr);
->   	BUG_ON(n_sectors > bi_size);
-> +
->   	*tio->len_ptr -= bi_size - n_sectors;
->   	bio->bi_iter.bi_size = n_sectors << SECTOR_SHIFT;
+> @@ -1247,7 +1202,7 @@ static blk_qc_t __map_bio(struct dm_target_io *tio)
+>   	 * anything, the target has assumed ownership of
+>   	 * this io.
+>   	 */
+> -	atomic_inc(&io->io_count);
+> +	dm_io_inc_pending(io);
+>   	sector = clone->bi_iter.bi_sector;
+>   
+>   	if (unlikely(swap_bios_limit(ti, clone))) {
+> @@ -1273,7 +1228,7 @@ static blk_qc_t __map_bio(struct dm_target_io *tio)
+>   			up(&md->swap_bios_semaphore);
+>   		}
+>   		free_tio(tio);
+> -		dec_pending(io, BLK_STS_IOERR);
+> +		dm_io_dec_pending(io, BLK_STS_IOERR);
+>   		break;
+>   	case DM_MAPIO_REQUEUE:
+>   		if (unlikely(swap_bios_limit(ti, clone))) {
+> @@ -1281,7 +1236,7 @@ static blk_qc_t __map_bio(struct dm_target_io *tio)
+>   			up(&md->swap_bios_semaphore);
+>   		}
+>   		free_tio(tio);
+> -		dec_pending(io, BLK_STS_DM_REQUEUE);
+> +		dm_io_dec_pending(io, BLK_STS_DM_REQUEUE);
+>   		break;
+>   	default:
+>   		DMWARN("unimplemented target map return value: %d", r);
+> @@ -1570,7 +1525,7 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
+>   
+>   	if (bio->bi_opf & REQ_PREFLUSH) {
+>   		error = __send_empty_flush(&ci);
+> -		/* dec_pending submits any data associated with flush */
+> +		/* dm_io_dec_pending submits any data associated with flush */
+>   	} else if (op_is_zone_mgmt(bio_op(bio))) {
+>   		ci.bio = bio;
+>   		ci.sector_count = 0;
+> @@ -1611,7 +1566,7 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
+>   	}
+>   
+>   	/* drop the extra reference count */
+> -	dec_pending(ci.io, errno_to_blk_status(error));
+> +	dm_io_dec_pending(ci.io, errno_to_blk_status(error));
+>   	return ret;
 >   }
+>   
 > 
 
 Reviewed-by: Himanshu Madhani <himanshu.madhani@oracle.com>
