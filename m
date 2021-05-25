@@ -7,136 +7,138 @@ X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 56352C2B9F8
-	for <dm-devel@archiver.kernel.org>; Tue, 25 May 2021 06:17:15 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4620AC2B9F8
+	for <dm-devel@archiver.kernel.org>; Tue, 25 May 2021 06:36:16 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id B26E7613F5
-	for <dm-devel@archiver.kernel.org>; Tue, 25 May 2021 06:17:14 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org B26E7613F5
+	by mail.kernel.org (Postfix) with ESMTPS id BE222613F9
+	for <dm-devel@archiver.kernel.org>; Tue, 25 May 2021 06:36:15 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BE222613F9
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-473-5IawIYC5MsaKTfiWndOZyQ-1; Tue, 25 May 2021 02:17:11 -0400
-X-MC-Unique: 5IawIYC5MsaKTfiWndOZyQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-68-fVw5IKgTO86FZpnRe4mUIw-1; Tue, 25 May 2021 02:36:12 -0400
+X-MC-Unique: fVw5IKgTO86FZpnRe4mUIw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C305F1007476;
-	Tue, 25 May 2021 06:17:06 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9403C10023AC;
-	Tue, 25 May 2021 06:17:06 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A54668015F5;
+	Tue, 25 May 2021 06:36:08 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5D579421F;
+	Tue, 25 May 2021 06:36:08 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 117ED1801029;
-	Tue, 25 May 2021 06:17:06 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C032E55340;
+	Tue, 25 May 2021 06:36:07 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 14P6H4x9012603 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 25 May 2021 02:17:05 -0400
+	id 14P6ZInP014810 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 25 May 2021 02:35:19 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id E8CBC2076364; Tue, 25 May 2021 06:17:03 +0000 (UTC)
+	id 363AF200BA92; Tue, 25 May 2021 06:35:18 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E35E9200BA92
-	for <dm-devel@redhat.com>; Tue, 25 May 2021 06:17:00 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 30E922077FAD
+	for <dm-devel@redhat.com>; Tue, 25 May 2021 06:35:15 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AB64680D0E2
-	for <dm-devel@redhat.com>; Tue, 25 May 2021 06:17:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CCE2080D0E0
+	for <dm-devel@redhat.com>; Tue, 25 May 2021 06:35:15 +0000 (UTC)
 Received: from esa1.hgst.iphmx.com (esa1.hgst.iphmx.com [68.232.141.245])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-393-dCBjhst-MjuDxGITKc8n2Q-1; Tue, 25 May 2021 02:16:58 -0400
-X-MC-Unique: dCBjhst-MjuDxGITKc8n2Q-1
-IronPort-SDR: zE8nL6paKzQEyhUR4L/al16TXp8a9PKF23vpvdvhStPzS2o/WA9IHEjwG6L4s6WT4RnjjOU2aI
-	Dtkdg5jpyjSPaOiOnTvaaX7VSDzvJ5ukz0pM+8Lrzzhb1zAa/DEWFYorfs7qLYhrayu4QN9kWE
-	AX04TE8Q+hzoRk2Yrj/kYwJGotaBEG6c/hRAFa6iztmH/NwkDyir1v2+Way9QMZYBxDhSR2eHB
-	jXYuWAigmq9swmEQgqOsVvdQrZJ0lsT9ES4my8f5wrpVw0zH2LJH3pzIWC9NAp8iFGEetncNwW
-	4Wo=
-X-IronPort-AV: E=Sophos;i="5.82,327,1613404800"; d="scan'208";a="280621378"
-Received: from mail-mw2nam12lp2043.outbound.protection.outlook.com (HELO
-	NAM12-MW2-obe.outbound.protection.outlook.com) ([104.47.66.43])
-	by ob1.hgst.iphmx.com with ESMTP; 25 May 2021 14:15:53 +0800
-Received: from BYAPR04MB4965.namprd04.prod.outlook.com (52.135.233.89) by
-	SJ0PR04MB7456.namprd04.prod.outlook.com (20.181.254.203) with Microsoft
-	SMTP
-	Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	15.20.4150.27; Tue, 25 May 2021 06:15:53 +0000
-Received: from BYAPR04MB4965.namprd04.prod.outlook.com
-	([fe80::6873:3d64:8f9f:faf0]) by
-	BYAPR04MB4965.namprd04.prod.outlook.com
-	([fe80::6873:3d64:8f9f:faf0%7]) with mapi id 15.20.4150.027;
-	Tue, 25 May 2021 06:15:53 +0000
-From: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>
-To: Damien Le Moal <Damien.LeMoal@wdc.com>, "dm-devel@redhat.com"
+	us-mta-423-eRUtrjFpNxePie6R0mUl_Q-1; Tue, 25 May 2021 02:35:11 -0400
+X-MC-Unique: eRUtrjFpNxePie6R0mUl_Q-1
+IronPort-SDR: bKs8OJ40rEAcLCjw07xCNfjKop04F5sY1ECR9PtenFH9eGH/lpVlr4Kk6H3VrWpWOcjVjaUl+g
+	EQ42zgVwppGQY9gl9nu2mu+ZMVLZBemOOCNRGkobA5DNFFIifpf5AIOpNt46Y+MxWL78NnJkXm
+	G4CwBPkASJ+sb1a/Eg51cm97u0VHm3v2nlrRRpoM5DdqWA50tTCD0Bq1ekYg7YhiQ798SX/95G
+	wWPU5kL/EOkg2DzOsOWCX28A7mAUu5zlcgmICg2/St2JztjhnC/f5G+nb3uRlewOLvWUb/y1a5
+	cXE=
+X-IronPort-AV: E=Sophos;i="5.82,327,1613404800"; d="scan'208";a="280623360"
+Received: from mail-bn8nam08lp2041.outbound.protection.outlook.com (HELO
+	NAM04-BN8-obe.outbound.protection.outlook.com) ([104.47.74.41])
+	by ob1.hgst.iphmx.com with ESMTP; 25 May 2021 14:35:09 +0800
+Received: from DM6PR04MB7081.namprd04.prod.outlook.com (2603:10b6:5:244::21)
+	by DM6PR04MB4539.namprd04.prod.outlook.com (2603:10b6:5:2c::18) with
+	Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4150.26;
+	Tue, 25 May 2021 06:35:06 +0000
+Received: from DM6PR04MB7081.namprd04.prod.outlook.com
+	([fe80::64f9:51d2:1e04:f806]) by
+	DM6PR04MB7081.namprd04.prod.outlook.com
+	([fe80::64f9:51d2:1e04:f806%9]) with mapi id 15.20.4150.027;
+	Tue, 25 May 2021 06:35:06 +0000
+From: Damien Le Moal <Damien.LeMoal@wdc.com>
+To: Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>, "dm-devel@redhat.com"
 	<dm-devel@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
 	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, Jens Axboe
 	<axboe@kernel.dk>
 Thread-Topic: [PATCH v4 01/11] block: improve handling of all zones reset
 	operation
-Thread-Index: AQHXUQ1F6jb1VNqY+kaEwGILkKYOng==
-Date: Tue, 25 May 2021 06:15:53 +0000
-Message-ID: <BYAPR04MB496571E36CF14B9647FDD21186259@BYAPR04MB4965.namprd04.prod.outlook.com>
+Thread-Index: AQHXUQ1EQNMzdteJWECqsLfWuiJWkA==
+Date: Tue, 25 May 2021 06:35:06 +0000
+Message-ID: <DM6PR04MB708184EFEBB8AE75C49A39CDE7259@DM6PR04MB7081.namprd04.prod.outlook.com>
 References: <20210525022539.119661-1-damien.lemoal@wdc.com>
 	<20210525022539.119661-2-damien.lemoal@wdc.com>
+	<BYAPR04MB496571E36CF14B9647FDD21186259@BYAPR04MB4965.namprd04.prod.outlook.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
-x-originating-ip: [70.175.137.120]
+x-originating-ip: [2400:2411:43c0:6000:9d12:5efd:fc6d:4ecd]
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: f0e4a19a-96b7-4c37-0681-08d91f448ce8
-x-ms-traffictypediagnostic: SJ0PR04MB7456:
+x-ms-office365-filtering-correlation-id: 8661c5b0-0b2a-42cd-f3ae-08d91f473c6e
+x-ms-traffictypediagnostic: DM6PR04MB4539:
 x-ms-exchange-transport-forked: True
-x-microsoft-antispam-prvs: <SJ0PR04MB745669D9E3103C0D836AEF7C86259@SJ0PR04MB7456.namprd04.prod.outlook.com>
+x-microsoft-antispam-prvs: <DM6PR04MB4539F7C838445778CE40BD66E7259@DM6PR04MB4539.namprd04.prod.outlook.com>
 wdcipoutbound: EOP-TRUE
-x-ms-oob-tlc-oobclassifiers: OLM:8273
+x-ms-oob-tlc-oobclassifiers: OLM:8882
 x-ms-exchange-senderadcheck: 1
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: eza9Ygdx0Sv/i7MpKlo2hp233kDPfYKw55D7tyVs8JwpowqQOERKlNlUw9ok3jGD6i9UPbMe/gPjyhIpgZ4kGUKHlHylMZW8kD1CT66hkB4OWHFm+q3ECTZClUtRrLjChcZzjwRz6CqlEZywxvV5Wsv3XpbfZOKuR/yTpiHQivtqPVlTSFoWUh9sVE3L0rzjhEW3Q8z7cM5meg0PTG1bA2j8+Fq6msS+GPCXzTfX3jLab+Bax38syBX6+GTSnr9ddXnPL7RNtx/1ouxv4FsG3vxoYKLnmolyz8V2/3kLVwvxRtDqknva1WD6dRnTb9lm4xFFTyGucEQqudACSzMUY6phLJAVKmqPFmWojxkVJSEgB1kuKeoe88B//gLyADOGY9X4gF04r1CzjRAgw2fgmLzWDNbWAAVsmlm4wKoCTvBjdz6D2wampM4FhC2a68zui0HZGFvqciI70pSgTDfVsE8JvEH5CojXImHgNcgzN0J5RUF4iYoU3dVhSPbaTQpxNqzDNTyHFA5ZUfmGqJ8oqshzYGlpcDXeekTNNaGQ95v48PaDZPUA4Aj1kZGZGHtJ/EA2e/zNmNlx53bN7Jh8zeh646ohDdFqqSSNzyb5Jk4=
+x-microsoft-antispam-message-info: ymaoq9XbALW/Ef4sbfJhKTWPvVs9PTkCrVKJQAab9wB+0OfUMnx+JFwfqiwZBP5tXgBAkI1YGcxUYTyXH9REIgOftJ1MrF73vGelLcBAwqJ7yRaap2CIVXzj9KVtYOP4tgwjvPK8oEsZXS2XKplQsn4ApKHHITbswmG25CzSaoimL+UQz+If5oU54y0oge1hH0giY2ZRCNMP+7ZoiRySmvU++bLyQXOygw9n0pg6RMJUDNANtu/ZeIefBim+3NRBV/2IBNa65GWcmKy5OsYMxs61pIYV7bsICCh1ePoSTN4ldWCD4OSlhHU+RYxPZ6GnUYxAEWRZggnoF3stlrmrQzgzZyVPxo3l1Cv4vN8O+mEcJxz93MrAQJylBdFSYP2gbaM6CU0e++d/Bav/8HAdH7WBodaSW7mdkI7aYONaG47VDpuurtAqUyLfS8uKapYrogECiAXtHVP1YMbkEPdMpbWMdnnmA0SaWpcpvI95IB5AltgiYbx3n0PpUOTEjfjmEq4jYEbeydTMkaB+AyQjoqP0aT7lSGfbEKHmKhSci8krNSK1QBMlJQvKi1uzVFuZ5jXhIdTn0sBJ7EuKwqAETHSjd3BEia/n9E8XKNB7w+E=
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:BYAPR04MB4965.namprd04.prod.outlook.com;
+	IPV:NLI; SFV:NSPM; H:DM6PR04MB7081.namprd04.prod.outlook.com;
 	PTR:; CAT:NONE;
-	SFS:(4636009)(346002)(396003)(39850400004)(136003)(366004)(376002)(66476007)(76116006)(66446008)(66946007)(9686003)(8936002)(64756008)(66556008)(71200400001)(86362001)(186003)(478600001)(110136005)(7696005)(6506007)(52536014)(8676002)(5660300002)(122000001)(83380400001)(38100700002)(2906002)(55016002)(26005)(33656002)(53546011)(316002);
+	SFS:(4636009)(396003)(136003)(376002)(39860400002)(366004)(346002)(83380400001)(76116006)(110136005)(316002)(478600001)(91956017)(38100700002)(2906002)(122000001)(71200400001)(7696005)(6506007)(86362001)(8676002)(52536014)(9686003)(66946007)(66446008)(66556008)(33656002)(66476007)(64756008)(186003)(5660300002)(53546011)(55016002)(8936002);
 	DIR:OUT; SFP:1102
-x-ms-exchange-antispam-messagedata: =?us-ascii?Q?CCi9eMi55+ucK60Xe6tQIjV7D3Bn55zr2W4J7BdyFYInd1KV7A9kPJcieabV?=
-	=?us-ascii?Q?AX5GTmK4Yn4GDxCygV31UKA/h1C5zoXiR3FXK4rB87JnIPM0doTVmxNvUEfG?=
-	=?us-ascii?Q?UlwR2S1/dwd4/eMr+BW82wfmNJG4NG+6/Bws8VULPrz+pYYKDYRH5r950sVI?=
-	=?us-ascii?Q?HyLP759i1jfSknMdVpmPhUdtyxG2O4UdwYovC7k15tHGN2cp3HK5A8BGfGUZ?=
-	=?us-ascii?Q?rS7Lfdvgki/W3YIELguqcoyvH/1/lcMxCOJTrJ2usuClE0E5F0ADE1BjO9no?=
-	=?us-ascii?Q?wVa9AL58WZ+zQQ6qQwqTwdf//TPiAXdlmMmewnJUu6f4duJ2MNQb85XMzj14?=
-	=?us-ascii?Q?DUvfDuLw+nbA41tez+bad/iqYRXJZZKGhKRIqkP+iRLueAM9LF+U1hkrGyqi?=
-	=?us-ascii?Q?BdxQcd7g5egPVwVy8mJ1C0Qr3kTdJI0Kt5Rvb3mGDZ68ysPU4XDMIl/VPKXQ?=
-	=?us-ascii?Q?DrWDWlaeinT7X/KvD5TWwJdxKNBwAePlw7+hbf5rJmF+Bd2pJUFca7gtAUjs?=
-	=?us-ascii?Q?XUGLxl17VCae19NotRgNYXvGkV9xidmvRSThgjJxbmYtfnmooPgjUw7va/fk?=
-	=?us-ascii?Q?u9hmHPP5p2It1cepAs63WWV9uaE7cARXiLMeegjzKoPdUcAycrAnE2xqlUSx?=
-	=?us-ascii?Q?QG7uIe9+tW+ug+rKypWCJIH5lujTZVJx/mD5J6WHvDgUR9qIL6r+6P+n3RiF?=
-	=?us-ascii?Q?0/3nMay9UKBsxumpLkC5zz980gEVAQYBaAdvZ6Ts2IGfTnL3QU0ttUK/lpEt?=
-	=?us-ascii?Q?DDypFSGXF0/u+0/vk6tbfUqKRApCi2aNWNlLgzvTJcWeAD43euMjdYe6FysD?=
-	=?us-ascii?Q?QU3o8jmshlEMs3HVaDHPBvBSUc32JQGhG1AKdDYAYTrXEJST67uU9ZhXcL4o?=
-	=?us-ascii?Q?f4k3f/Vuo9T3lJ1W498kDPeKZPCq9L5YNOEe2RUfT/H2So47ZGYVUCkY3uZa?=
-	=?us-ascii?Q?dn5fDLLoP67QC9u68fM4IBPDeT8bLWSMbRnLeYo/I2UMZ4i2Y+RQYMNpsT1A?=
-	=?us-ascii?Q?bCfIwvVtrnxH8U+YyKYTeejXDxFehWa+GFCsreQbsGCPViGYcr9UYg0Y/I9k?=
-	=?us-ascii?Q?CHXQkIreK714Y2kiiYYKRfUIpepK3FE/jA2sdEfpI2l+9z0FiiKMZwP6FRG0?=
-	=?us-ascii?Q?bfw1qRkmQqCXG9FLmrTbHotO7VUausWCadz215c2INeFB3cdxLvjpFM2dGY4?=
-	=?us-ascii?Q?mRDsOr00gp7EYhgZ9VtkM7xh3iQp7ZNI+jLCM11wgXJy4dVMjtW7p0ejTVb1?=
-	=?us-ascii?Q?ItYHZwmB08tHS05VXyTWLL5QHk1FpH186avgHwJNY9KyQw0KFhqopa0ZZKk7?=
-	=?us-ascii?Q?3jPsBoOY7WJ8duAvCPVeaCm8w52u1HPmeuUn0xken51mAg=3D=3D?=
+x-ms-exchange-antispam-messagedata: =?us-ascii?Q?UCHKxHMuuTYNdv2j13Zs2HGHoiTbu/VYBp3IxL4lXx9kbG7JLSKmWjCNDmQx?=
+	=?us-ascii?Q?nNmXx4EQlMcg/vMdO9pTp6BFiHwYkPy/ffTN/fECGLrahqQuzqY45ldLBkIW?=
+	=?us-ascii?Q?p9Y4lb7b5pPtFDqWEABmCU1QVgIl/AZLGQBwe7iwwMnmU1juTLrvfoQ/5Bf6?=
+	=?us-ascii?Q?nyRPwOKCNF56spEgJ+uAbf0Puvexg+34S8/BxTEtrd7R5OH2luHNgnXqobd/?=
+	=?us-ascii?Q?xJn2YZSA1OlsFyZblcRSW0NhZ177tLRJbWBAbjFBjcC08bE+NF2ZuMEHeVak?=
+	=?us-ascii?Q?XCihnRnPMvpR5fh244uYDlSqOrg3AVDIBpD+//lliJCtS4aIZrjNd9D3Acm8?=
+	=?us-ascii?Q?qAMX9rlsS4WXPOAYgeSjazQEAHj6u6tY1T6bElutPREOXwKb3mf59WDMaYoI?=
+	=?us-ascii?Q?zpEN4xMtwWGuG7Zrxu/Dv4DZshC0T8fiEHvBzL5adcw8Pm+tx3Samn+rdiS1?=
+	=?us-ascii?Q?1wmryBSrpwjyG/QHNnb5cL7XsLU71Xi9FH1GFPjRLVYtUH1St/SdwCAZOoGJ?=
+	=?us-ascii?Q?+mtrIClzujFY6/ojnS4r187+pB4k6FpyJnOI9gnKTL+sjg2XxBqcS3veu1LS?=
+	=?us-ascii?Q?BhdCyvKCeGryIPMN9x5ESYTsWyeYif+pwztA4Ypmsy1Sg7BBzThUQOT834++?=
+	=?us-ascii?Q?3j+Z2WD/9WzKWDpupnzGR/CqR0YH8KKdAWFJKwq8Z9eQ0WWWSJQ50Fi5SIDW?=
+	=?us-ascii?Q?0BNTh2aC5856WR6wZ6DWhlIldD5FIe+Q15G27twV3iWP/pbyyXQ4dzJkG51D?=
+	=?us-ascii?Q?Neww4o5PCjU5xEUUN+sAvlvGWBIsr0XRsVqo/ApuCkPM4j4IZ0IkocPEJM0P?=
+	=?us-ascii?Q?HGpNV+/6kQq8MpljTAUOjElIMueYqUQCVjZ5Ucny/SbGz556FyPfCf60rMVV?=
+	=?us-ascii?Q?Pe90HmBcD+uWEAZ0sBC9yvv7fyRLc65mReYO1KkXN5Si/7zs/6oo1CgZjACr?=
+	=?us-ascii?Q?UrEPChOLUzyxcPLzDq+TwQ2NqDU9hSXewrDyXM3YUHH4+Nd3VHjG5ywwvDdq?=
+	=?us-ascii?Q?G3SrQh7eTVc8PHT4/adiDVXtc/sUcrkNDHnH3EKMytV6BSPMnW98WwBNeR3W?=
+	=?us-ascii?Q?SSdPz1awNmusHfDGgGKJz6US0H794pnulZMuVNe6aBERQMDrVafVChZ4j40A?=
+	=?us-ascii?Q?DP3RUUZwreh8VnUDOQw5HEm5EPH/Hvv7IINhQvsz56XJJho/lqhNGnLB667U?=
+	=?us-ascii?Q?ypk0Nat6IMRKgpjFG3sftSifhiZKDNI2RlICosH4akEj1c31N9SoLu9oxVR7?=
+	=?us-ascii?Q?dYgEc/oirzru0ZrnQzZL1qBHOnGQ98pnBbDJ2RBa1Boe6Gd7DEXu9XwKxEP/?=
+	=?us-ascii?Q?ax+pWSIbwikOD648HPS8bN5SuUm0OGTwKlIqnp/hqnNbboDtqVpVDnH6NQnP?=
+	=?us-ascii?Q?JZVolR5J65nI3lDFm3TDs+5fOquO+u2iX3sg2EXwrnxZbPEawA=3D=3D?=
 MIME-Version: 1.0
 X-OriginatorOrg: wdc.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: BYAPR04MB4965.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: f0e4a19a-96b7-4c37-0681-08d91f448ce8
-X-MS-Exchange-CrossTenant-originalarrivaltime: 25 May 2021 06:15:53.0200 (UTC)
+X-MS-Exchange-CrossTenant-AuthSource: DM6PR04MB7081.namprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 8661c5b0-0b2a-42cd-f3ae-08d91f473c6e
+X-MS-Exchange-CrossTenant-originalarrivaltime: 25 May 2021 06:35:06.6171 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: cu7XPUYRsL2MX8G3JpLimFKVNjIz55bYjJARvXcwwiGVGrneWOp3GmR+8Vd35nTT3sIjMczIegLzdwHfAo20dbxJuySzn+5sKQEpRqSWl9g=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SJ0PR04MB7456
+X-MS-Exchange-CrossTenant-userprincipalname: FaC/WGNkXrW96gJZd8nKpcP8Ks3Lo26c3DNMlch4oC7nLic69Djh02F5FS0P7uzczXnjc31pUYua6TB7JOVwfA==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR04MB4539
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -147,7 +149,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 14P6H4x9012603
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 14P6ZInP014810
 X-loop: dm-devel@redhat.com
 Subject: Re: [dm-devel] [PATCH v4 01/11] block: improve handling of all
  zones reset operation
@@ -164,7 +166,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -173,50 +175,60 @@ Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 5/24/21 7:25 PM, Damien Le Moal wrote:
-> SCSI, ZNS and null_blk zoned devices support resetting all zones using
-> a single command (REQ_OP_ZONE_RESET_ALL), as indicated using the device
-> request queue flag QUEUE_FLAG_ZONE_RESETALL. This flag is not set for
-> device mapper targets creating zoned devices. In this case, a user
-> request for resetting all zones of a device is processed in
-> blkdev_zone_mgmt() by issuing a REQ_OP_ZONE_RESET operation for each
-> zone of the device. This leads to different behaviors of the
-> BLKRESETZONE ioctl() depending on the target device support for the
-> reset all operation. E.g.
->
-> blkzone reset /dev/sdX
->
-> will reset all zones of a SCSI device using a single command that will
-> ignore conventional, read-only or offline zones.
->
-> But a dm-linear device including conventional, read-only or offline
-> zones cannot be reset in the same manner as some of the single zone
-> reset operations issued by blkdev_zone_mgmt() will fail. E.g.:
->
-> blkzone reset /dev/dm-Y
-> blkzone: /dev/dm-0: BLKRESETZONE ioctl failed: Remote I/O error
->
-> To simplify applications and tools development, unify the behavior of
-> the all-zone reset operation by modifying blkdev_zone_mgmt() to not
-> issue a zone reset operation for conventional, read-only and offline
-> zones, thus mimicking what an actual reset-all device command does on a
-> device supporting REQ_OP_ZONE_RESET_ALL. This emulation is done using
-> the new function blkdev_zone_reset_all_emulated(). The zones needing a
-> reset are identified using a bitmap that is initialized using a zone
-> report. Since empty zones do not need a reset, also ignore these zones.
-> The function blkdev_zone_reset_all() is introduced for block devices
-> natively supporting reset all operations. blkdev_zone_mgmt() is modified
-> to call either function to execute an all zone reset request.
->
-> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
-> [hch: split into multiple functions]
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+On 2021/05/25 15:15, Chaitanya Kulkarni wrote:
+> On 5/24/21 7:25 PM, Damien Le Moal wrote:
+>> SCSI, ZNS and null_blk zoned devices support resetting all zones using
+>> a single command (REQ_OP_ZONE_RESET_ALL), as indicated using the device
+>> request queue flag QUEUE_FLAG_ZONE_RESETALL. This flag is not set for
+>> device mapper targets creating zoned devices. In this case, a user
+>> request for resetting all zones of a device is processed in
+>> blkdev_zone_mgmt() by issuing a REQ_OP_ZONE_RESET operation for each
+>> zone of the device. This leads to different behaviors of the
+>> BLKRESETZONE ioctl() depending on the target device support for the
+>> reset all operation. E.g.
+>>
+>> blkzone reset /dev/sdX
+>>
+>> will reset all zones of a SCSI device using a single command that will
+>> ignore conventional, read-only or offline zones.
+>>
+>> But a dm-linear device including conventional, read-only or offline
+>> zones cannot be reset in the same manner as some of the single zone
+>> reset operations issued by blkdev_zone_mgmt() will fail. E.g.:
+>>
+>> blkzone reset /dev/dm-Y
+>> blkzone: /dev/dm-0: BLKRESETZONE ioctl failed: Remote I/O error
+>>
+>> To simplify applications and tools development, unify the behavior of
+>> the all-zone reset operation by modifying blkdev_zone_mgmt() to not
+>> issue a zone reset operation for conventional, read-only and offline
+>> zones, thus mimicking what an actual reset-all device command does on a
+>> device supporting REQ_OP_ZONE_RESET_ALL. This emulation is done using
+>> the new function blkdev_zone_reset_all_emulated(). The zones needing a
+>> reset are identified using a bitmap that is initialized using a zone
+>> report. Since empty zones do not need a reset, also ignore these zones.
+>> The function blkdev_zone_reset_all() is introduced for block devices
+>> natively supporting reset all operations. blkdev_zone_mgmt() is modified
+>> to call either function to execute an all zone reset request.
+>>
+>> Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+>> [hch: split into multiple functions]
+>> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> 
+> Apart from nit mentioned earlier, looks good.
+> 
+> Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
 
-Apart from nit mentioned earlier, looks good.
+Thanks. Will send v5 with a correction of the extra space.
 
-Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
+> 
+> 
+> 
 
 
+-- 
+Damien Le Moal
+Western Digital Research
 
 
 
