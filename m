@@ -2,83 +2,99 @@ Return-Path: <SRS0=56gb=K4=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+X-Spam-Status: No, score=-6.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 19193C4708F
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 08:33:23 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 41FFFC4708F
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 18:33:22 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7FB30613CD
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 08:33:22 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7FB30613CD
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=ionos.com
+	by mail.kernel.org (Postfix) with ESMTPS id C3EE7610C8
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 18:33:21 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C3EE7610C8
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1622658800;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=cSNG6SHCHmztrwsJiDrWdH8twe1YH1mHoZNS6/ini/A=;
+	b=cDzDw9O7A4WnonrVQkeYE8ReoKOXnN/G13Rha7mI2zeZQkDEcHZ0vPWyVMoQBXrF8+gBiZ
+	Cn8KNGGMe8JlKB+b8w8j8bsvfoQHeKx6r4MPsA81v2G+GnohUzQ2/mUqVqO7hAY0BQV6zj
+	ngwyY6VSHtCTxcs/Dt3+myGRkUlZOWQ=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-88-cCPGnWZcN-av_UHWhkc32A-1; Wed, 02 Jun 2021 04:33:16 -0400
-X-MC-Unique: cCPGnWZcN-av_UHWhkc32A-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-191--TepxOWZMJucJkNjd2eXPA-1; Wed, 02 Jun 2021 14:33:17 -0400
+X-MC-Unique: -TepxOWZMJucJkNjd2eXPA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 30313107ACE3;
-	Wed,  2 Jun 2021 08:33:12 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0BEAA19CAB;
-	Wed,  2 Jun 2021 08:33:12 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 784D2107ACCA;
+	Wed,  2 Jun 2021 18:33:11 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CFE7C60C16;
+	Wed,  2 Jun 2021 18:33:09 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A0F378E1A;
-	Wed,  2 Jun 2021 08:33:11 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C21921801264;
+	Wed,  2 Jun 2021 18:33:06 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1527niYB023879 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 2 Jun 2021 03:49:45 -0400
+	id 152IX34I012427 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 2 Jun 2021 14:33:03 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id BCF26205FAB2; Wed,  2 Jun 2021 07:49:44 +0000 (UTC)
+	id 327CE21CAC67; Wed,  2 Jun 2021 18:33:03 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B8399208747D
-	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:49:41 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2E25421CAC66
+	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 18:33:00 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3355690DE32
-	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:49:41 +0000 (UTC)
-Received: from mail-ed1-f41.google.com (mail-ed1-f41.google.com
-	[209.85.208.41]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-297-6YQEzezyOgKJjviBjoBTuQ-1; Wed, 02 Jun 2021 03:49:39 -0400
-X-MC-Unique: 6YQEzezyOgKJjviBjoBTuQ-1
-Received: by mail-ed1-f41.google.com with SMTP id j10so1759219edw.8
-	for <dm-devel@redhat.com>; Wed, 02 Jun 2021 00:49:39 -0700 (PDT)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7765880348D
+	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 18:33:00 +0000 (UTC)
+Received: from mail-qk1-f169.google.com (mail-qk1-f169.google.com
+	[209.85.222.169]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-250-RIqUW9GiNvCZCmAKUgGYkQ-1; Wed, 02 Jun 2021 14:32:58 -0400
+X-MC-Unique: RIqUW9GiNvCZCmAKUgGYkQ-1
+Received: by mail-qk1-f169.google.com with SMTP id 76so3335233qkn.13
+	for <dm-devel@redhat.com>; Wed, 02 Jun 2021 11:32:58 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20161025;
-	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-	:message-id:subject:to:cc;
-	bh=IviQGHXbohDYlY4Kaxm/cxlbY44V3tAurEYksJ8dtbE=;
-	b=ucakAc3uIYnaTvRvMp6UM+M4Wnx+5nXrlXarV7P4GC+ME+OWqmhkTQM+3G/i/MqvEM
-	OdTtnwWEHljz4nxjSGwaT8aBKTOXfyCua7cGiLyRJoUtFrhI9YZAU9dsxqnnBmg2F+av
-	Yv/TFg/F8TkHf5Z5C9zLCE2aQ18qjfAlIHa7IDi3dm40+He2YWomFpfG56Wv36yO/mNZ
-	v56u8CpDLWsUDhRUP6RT30mqSS5lnC2yC1jmtWj/dtmEeCaiO330bVXXchORoWyLj4Qh
-	eZp9DiRixz7jQU/WGCH9Q3nx0+rmJVBYkZZ1AZ9/7GjO1EawVSfCfj48JalBRjFI4lU+
-	nYOQ==
-X-Gm-Message-State: AOAM531Jf9MA1Ydmy1qfIx1TrXqxP8clKBuWyYpwDahO6jLw/tzxmR3U
-	EkkSSua2bqYKO8I0il9UNW3CHRMZMpr+ao7262/+ug==
-X-Google-Smtp-Source: ABdhPJzRCVGimPnGT3qQlEAMsZsY3IxcZZF186UcWgTyI7ay8iWe4IlRIEG5WowCojeDoPju71hCmgBQ+xR7PgbbWL0=
-X-Received: by 2002:aa7:c693:: with SMTP id n19mr33130385edq.35.1622620178044; 
-	Wed, 02 Jun 2021 00:49:38 -0700 (PDT)
+	h=x-gm-message-state:sender:date:from:to:cc:subject:message-id
+	:references:mime-version:content-disposition:in-reply-to;
+	bh=OZfWnyGhrXM/HiypV9I9vq0r6H69jPBHbzJN6dXGJH8=;
+	b=n8pHb4m6FNU14Ge4uH/TPZIsjbNE3211dADXwbZ0leA5lzRypRQPnmmE1wUOdRICgr
+	Co7MwvVSENORI9Wg4YmyHvpPhYb4uJtpkyU0s+LnAH54qEIqQqItE9XVzl9YxMIuJ97v
+	b3YRVicfEicFwpZcoGePYrMSJPqsofCp0NAZkL+SFtl9DKJ08uvbm1yS1RPjPiugS+07
+	gtjFg7Vm+RnRFnjeUSRlt0INY0o1EABNBKgK2S2gdn6OarsQUWEkf0ocUa8uK7e3v7jF
+	tTRLIDsB0GpB15b1gyyDr8oT8XV54AnyObuYS056ZXprEYUE+1uVYSbnD/oAG4viromx
+	Vy7g==
+X-Gm-Message-State: AOAM530p9cCqAMRhQX7keNV3TVEf19l0cmg3tQg1AebI+PCIbw4HWoTy
+	L6Oxs25XXGH24qC9h7RkHnQ=
+X-Google-Smtp-Source: ABdhPJzzM6kheOdfWXSbb1PAabbfizCNSV+LWnIC08jGDEnphrDSjkBmy6+qhDfsG8T7sHT+13Lnrg==
+X-Received: by 2002:ae9:e706:: with SMTP id m6mr29510020qka.74.1622658777897; 
+	Wed, 02 Jun 2021 11:32:57 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+	[68.160.176.52])
+	by smtp.gmail.com with ESMTPSA id y19sm357953qki.15.2021.06.02.11.32.56
+	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+	Wed, 02 Jun 2021 11:32:57 -0700 (PDT)
+Date: Wed, 2 Jun 2021 14:32:55 -0400
+From: Mike Snitzer <snitzer@redhat.com>
+To: Damien Le Moal <Damien.LeMoal@wdc.com>
+Message-ID: <YLfO168QXfAWJ9dn@redhat.com>
+References: <20210525212501.226888-1-damien.lemoal@wdc.com>
+	<DM6PR04MB708146E418BF65FC2F7847E3E73E9@DM6PR04MB7081.namprd04.prod.outlook.com>
 MIME-Version: 1.0
-References: <20210602065345.355274-1-hch@lst.de>
-	<20210602065345.355274-24-hch@lst.de>
-In-Reply-To: <20210602065345.355274-24-hch@lst.de>
-From: Jinpu Wang <jinpu.wang@ionos.com>
-Date: Wed, 2 Jun 2021 09:49:27 +0200
-Message-ID: <CAMGffEn7aCmTOTsuzbSr=DwomFKfizkNhzsZnAONHBq1neW2Og@mail.gmail.com>
-To: Christoph Hellwig <hch@lst.de>
+In-Reply-To: <DM6PR04MB708146E418BF65FC2F7847E3E73E9@DM6PR04MB7081.namprd04.prod.outlook.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -87,33 +103,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Wed, 02 Jun 2021 04:32:53 -0400
-Cc: Justin Sanders <justin@coraid.com>, Vignesh Raghavendra <vigneshr@ti.com>,
-	Mike Snitzer <snitzer@redhat.com>, "Michael S. Tsirkin" <mst@redhat.com>,
-	Jason Wang <jasowang@redhat.com>,
-	virtualization@lists.linux-foundation.org,
-	device-mapper development <dm-devel@redhat.com>,
-	"Md. Haris Iqbal" <haris.iqbal@ionos.com>,
-	Miquel Raynal <miquel.raynal@bootlin.com>,
-	Tim Waugh <tim@cyberelk.net>, linux-s390@vger.kernel.org,
-	Maxim Levitsky <maximlevitsky@gmail.com>,
-	Richard Weinberger <richard@nod.at>,
-	Christian Borntraeger <borntraeger@de.ibm.com>,
-	xen-devel@lists.xenproject.org, Ilya Dryomov <idryomov@gmail.com>,
-	Vasily Gorbik <gor@linux.ibm.com>, Alex Dubov <oakad@yahoo.com>,
-	Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>,
-	Heiko Carstens <hca@linux.ibm.com>, Josef Bacik <josef@toxicpanda.com>,
-	Denis Efremov <efremov@linux.com>, nbd@other.debian.org,
-	linux-block <linux-block@vger.kernel.org>,
-	Ceph Development <ceph-devel@vger.kernel.org>,
-	Jens Axboe <axboe@kernel.dk>, Geoff Levand <geoff@infradead.org>,
-	linux-mmc@vger.kernel.org, linux-mtd@lists.infradead.org,
-	linuxppc-dev@lists.ozlabs.org,
-	=?UTF-8?Q?Roger_Pau_Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: Re: [dm-devel] [PATCH 23/30] rnbd: use blk_mq_alloc_disk and
-	blk_cleanup_disk
+Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+	Jens Axboe <axboe@kernel.dk>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH v5 00/11] dm: Improve zoned block device
+	support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -127,109 +122,65 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Jun 2, 2021 at 8:55 AM Christoph Hellwig <hch@lst.de> wrote:
->
-> Use blk_mq_alloc_disk and blk_cleanup_disk to simplify the gendisk and
-> request_queue allocation.
->
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  drivers/block/rnbd/rnbd-clt.c | 35 ++++++++---------------------------
->  1 file changed, 8 insertions(+), 27 deletions(-)
->
-> diff --git a/drivers/block/rnbd/rnbd-clt.c b/drivers/block/rnbd/rnbd-clt.c
-> index c604a402cd5c..f4fa45d24c0b 100644
-> --- a/drivers/block/rnbd/rnbd-clt.c
-> +++ b/drivers/block/rnbd/rnbd-clt.c
-> @@ -1353,18 +1353,6 @@ static void rnbd_init_mq_hw_queues(struct rnbd_clt_dev *dev)
->         }
->  }
->
-> -static int setup_mq_dev(struct rnbd_clt_dev *dev)
-> -{
-> -       dev->queue = blk_mq_init_queue(&dev->sess->tag_set);
-> -       if (IS_ERR(dev->queue)) {
-> -               rnbd_clt_err(dev, "Initializing multiqueue queue failed, err: %ld\n",
-> -                             PTR_ERR(dev->queue));
-> -               return PTR_ERR(dev->queue);
-> -       }
-> -       rnbd_init_mq_hw_queues(dev);
-> -       return 0;
-> -}
-> -
->  static void setup_request_queue(struct rnbd_clt_dev *dev)
->  {
->         blk_queue_logical_block_size(dev->queue, dev->logical_block_size);
-> @@ -1393,13 +1381,13 @@ static void setup_request_queue(struct rnbd_clt_dev *dev)
->         blk_queue_io_opt(dev->queue, dev->sess->max_io_size);
->         blk_queue_virt_boundary(dev->queue, SZ_4K - 1);
->         blk_queue_write_cache(dev->queue, dev->wc, dev->fua);
-> -       dev->queue->queuedata = dev;
->  }
->
->  static void rnbd_clt_setup_gen_disk(struct rnbd_clt_dev *dev, int idx)
->  {
->         dev->gd->major          = rnbd_client_major;
->         dev->gd->first_minor    = idx << RNBD_PART_BITS;
-> +       dev->gd->minors         = 1 << RNBD_PART_BITS;
->         dev->gd->fops           = &rnbd_client_ops;
->         dev->gd->queue          = dev->queue;
->         dev->gd->private_data   = dev;
-> @@ -1426,24 +1414,18 @@ static void rnbd_clt_setup_gen_disk(struct rnbd_clt_dev *dev, int idx)
->
->  static int rnbd_client_setup_device(struct rnbd_clt_dev *dev)
->  {
-> -       int err, idx = dev->clt_device_id;
-> +       int idx = dev->clt_device_id;
->
->         dev->size = dev->nsectors * dev->logical_block_size;
->
-> -       err = setup_mq_dev(dev);
-> -       if (err)
-> -               return err;
-> +       dev->gd = blk_mq_alloc_disk(&dev->sess->tag_set, dev);
-> +       if (IS_ERR(dev->gd))
-> +               return PTR_ERR(dev->gd);
-> +       dev->queue = dev->gd->queue;
-> +       rnbd_init_mq_hw_queues(dev);
->
->         setup_request_queue(dev);
-> -
-> -       dev->gd = alloc_disk_node(1 << RNBD_PART_BITS,  NUMA_NO_NODE);
-> -       if (!dev->gd) {
-> -               blk_cleanup_queue(dev->queue);
-> -               return -ENOMEM;
-> -       }
-> -
->         rnbd_clt_setup_gen_disk(dev, idx);
-> -
->         return 0;
->  }
->
-> @@ -1650,8 +1632,7 @@ struct rnbd_clt_dev *rnbd_clt_map_device(const char *sessname,
->  static void destroy_gen_disk(struct rnbd_clt_dev *dev)
->  {
->         del_gendisk(dev->gd);
-> -       blk_cleanup_queue(dev->queue);
-> -       put_disk(dev->gd);
-> +       blk_cleanup_disk(dev->gd);
->  }
->
->  static void destroy_sysfs(struct rnbd_clt_dev *dev,
-> --
-> 2.30.2
+On Tue, Jun 01 2021 at  6:57P -0400,
+Damien Le Moal <Damien.LeMoal@wdc.com> wrote:
 
-Looks good to me, thx!
-Reviewed-by: Jack Wang <jinpu.wang@ionos.com>
->
+> On 2021/05/26 6:25, Damien Le Moal wrote:
+> > This series improve device mapper support for zoned block devices and
+> > of targets exposing a zoned device.
+> 
+> Mike, Jens,
+> 
+> Any feedback regarding this series ?
+> 
+> > 
+> > The first patch improve support for user requests to reset all zones of
+> > the target device. With the fix, such operation behave similarly to
+> > physical block devices implementation based on the single zone reset
+> > command with the ALL bit set.
+> > 
+> > The following 2 patches are preparatory block layer patches.
+> > 
+> > Patch 4 and 5 are 2 small fixes to DM core zoned block device support.
+> > 
+> > Patch 6 reorganizes DM core code, moving conditionally defined zoned
+> > block device code into the new dm-zone.c file. This avoids sprinkly DM
+> > with zone related code defined under an #ifdef CONFIG_BLK_DEV_ZONED.
+> > 
+> > Patch 7 improves DM zone report helper functions for target drivers.
+> > 
+> > Patch 8 fixes a potential problem with BIO requeue on zoned target.
+> > 
+> > Finally, patch 9 to 11 implement zone append emulation using regular
+> > writes for target drivers that cannot natively support this BIO type.
+> > The only target currently needing this emulation is dm-crypt. With this
+> > change, a zoned dm-crypt device behaves exactly like a regular zoned
+> > block device, correctly executing user zone append BIOs.
+> > 
+> > This series passes the following tests:
+> > 1) zonefs tests on top of dm-crypt with a zoned nullblk device
+> > 2) zonefs tests on top of dm-crypt+dm-linear with an SMR HDD
+> > 3) btrfs fstests on top of dm-crypt with zoned nullblk devices.
+> > 
+> > Comments are as always welcome.
+
+I've picked up DM patches 4-8 because they didn't depend on the first
+3 block patches.
+
+But I'm fine with picking up 1-3 if Jens provides his Acked-by.
+And then I can pickup the remaining DM patches 9-11.
+
+Thanks,
+Mike
 
 --
 dm-devel mailing list
