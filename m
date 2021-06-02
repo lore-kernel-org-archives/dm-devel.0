@@ -4,61 +4,61 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8EBB2C47083
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 07:38:01 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4E7D3C4708F
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 07:40:57 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 22D1360E0B
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 07:38:01 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 22D1360E0B
+	by mail.kernel.org (Postfix) with ESMTPS id E388D60E0B
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 07:40:56 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E388D60E0B
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-253-2wuutFctPfaADnU-8xwvdw-1; Wed, 02 Jun 2021 03:37:58 -0400
-X-MC-Unique: 2wuutFctPfaADnU-8xwvdw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-552-9kv3sYACMBqlkjGY8ciw-A-1; Wed, 02 Jun 2021 03:40:52 -0400
+X-MC-Unique: 9kv3sYACMBqlkjGY8ciw-A-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 76B9280362A;
-	Wed,  2 Jun 2021 07:37:53 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D7A238049CC;
+	Wed,  2 Jun 2021 07:40:48 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 529C660C4A;
-	Wed,  2 Jun 2021 07:37:53 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AF9CC5C230;
+	Wed,  2 Jun 2021 07:40:48 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DF88A1801265;
-	Wed,  2 Jun 2021 07:37:52 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 22F621801264;
+	Wed,  2 Jun 2021 07:40:48 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1527ZXcc020873 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 2 Jun 2021 03:35:33 -0400
+	id 1527ejSC021633 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 2 Jun 2021 03:40:45 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4C25AF41DA; Wed,  2 Jun 2021 07:35:33 +0000 (UTC)
+	id 3AA2C2087475; Wed,  2 Jun 2021 07:40:45 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 47744F51A2
-	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:35:29 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 35AEE2087472
+	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:40:42 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BF6CC185A79C
-	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:35:29 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 593A380D0E0
+	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:40:42 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-364-btAD7Tx6PrW-1MAnddCMkA-1; Wed, 02 Jun 2021 03:35:25 -0400
-X-MC-Unique: btAD7Tx6PrW-1MAnddCMkA-1
+	us-mta-62-bQZr7NOKNoS6D4fJiT3n3A-1; Wed, 02 Jun 2021 03:40:38 -0400
+X-MC-Unique: bQZr7NOKNoS6D4fJiT3n3A-1
 Received: from shol69.static.otenet.gr ([83.235.170.67] helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1loKlS-0025JJ-Ew; Wed, 02 Jun 2021 06:54:07 +0000
+	id 1loKm6-0025Ys-7i; Wed, 02 Jun 2021 06:54:47 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed,  2 Jun 2021 09:53:18 +0300
-Message-Id: <20210602065345.355274-4-hch@lst.de>
+Date: Wed,  2 Jun 2021 09:53:26 +0300
+Message-Id: <20210602065345.355274-12-hch@lst.de>
 In-Reply-To: <20210602065345.355274-1-hch@lst.de>
 References: <20210602065345.355274-1-hch@lst.de>
 MIME-Version: 1.0
@@ -72,8 +72,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Mimecast-Bulk-Signature: yes
 X-Mimecast-Spam-Signature: yes
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 Cc: Justin Sanders <justin@coraid.com>, Vignesh Raghavendra <vigneshr@ti.com>,
 	Mike Snitzer <snitzer@redhat.com>, "Michael S. Tsirkin" <mst@redhat.com>,
@@ -95,7 +96,7 @@ Cc: Justin Sanders <justin@coraid.com>, Vignesh Raghavendra <vigneshr@ti.com>,
 	Geoff Levand <geoff@infradead.org>, linux-mmc@vger.kernel.org,
 	linux-mtd@lists.infradead.org, linuxppc-dev@lists.ozlabs.org,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 03/30] blk-mq: add the blk_mq_alloc_disk APIs
+Subject: [dm-devel] [PATCH 11/30] swim3: use blk_mq_alloc_disk
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -109,7 +110,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -117,68 +118,76 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Add a new API to allocate a gendisk including the request_queue for use
-with blk-mq based drivers.  This is to avoid boilerplate code in drivers.
+Use the blk_mq_alloc_disk API to simplify the gendisk and request_queue
+allocation.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/blk-mq.c         | 19 +++++++++++++++++++
- include/linux/blk-mq.h | 12 ++++++++++++
- 2 files changed, 31 insertions(+)
+ drivers/block/swim3.c | 33 ++++++++++++++-------------------
+ 1 file changed, 14 insertions(+), 19 deletions(-)
 
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 6112741e1ff9..1e6036e6fd66 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -3137,6 +3137,25 @@ struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *set)
- }
- EXPORT_SYMBOL(blk_mq_init_queue);
+diff --git a/drivers/block/swim3.c b/drivers/block/swim3.c
+index a515d0c1d2cb..965af0a3e95b 100644
+--- a/drivers/block/swim3.c
++++ b/drivers/block/swim3.c
+@@ -1202,30 +1202,27 @@ static int swim3_attach(struct macio_dev *mdev,
+ 			return rc;
+ 	}
  
-+struct gendisk *__blk_mq_alloc_disk(struct blk_mq_tag_set *set, void *queuedata)
-+{
-+	struct request_queue *q;
-+	struct gendisk *disk;
-+
-+	q = blk_mq_init_queue_data(set, queuedata);
-+	if (IS_ERR(q))
-+		return ERR_CAST(q);
-+
-+	disk = __alloc_disk_node(0, set->numa_node);
-+	if (!disk) {
-+		blk_cleanup_queue(q);
-+		return ERR_PTR(-ENOMEM);
-+	}
-+	disk->queue = q;
-+	return disk;
-+}
-+EXPORT_SYMBOL(__blk_mq_alloc_disk);
-+
- /*
-  * Helper for setting up a queue with mq ops, given queue depth, and
-  * the passed in mq ops flags.
-diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
-index 73750b2838d2..f496c6c5b5d2 100644
---- a/include/linux/blk-mq.h
-+++ b/include/linux/blk-mq.h
-@@ -426,6 +426,18 @@ enum {
- 	((policy & ((1 << BLK_MQ_F_ALLOC_POLICY_BITS) - 1)) \
- 		<< BLK_MQ_F_ALLOC_POLICY_START_BIT)
+-	disk = alloc_disk(1);
+-	if (disk == NULL) {
+-		rc = -ENOMEM;
+-		goto out_unregister;
+-	}
+-
+ 	fs = &floppy_states[floppy_count];
+ 	memset(fs, 0, sizeof(*fs));
  
-+#define blk_mq_alloc_disk(set, queuedata)				\
-+({									\
-+	static struct lock_class_key __key;				\
-+	struct gendisk *__disk = __blk_mq_alloc_disk(set, queuedata);	\
-+									\
-+	if (__disk)							\
-+		lockdep_init_map(&__disk->lockdep_map,			\
-+			"(bio completion)", &__key, 0);			\
-+	__disk;								\
-+})
-+struct gendisk *__blk_mq_alloc_disk(struct blk_mq_tag_set *set,
-+		void *queuedata);
- struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *);
- struct request_queue *blk_mq_init_queue_data(struct blk_mq_tag_set *set,
- 		void *queuedata);
+-	disk->queue = blk_mq_init_sq_queue(&fs->tag_set, &swim3_mq_ops, 2,
+-						BLK_MQ_F_SHOULD_MERGE);
+-	if (IS_ERR(disk->queue)) {
+-		rc = PTR_ERR(disk->queue);
+-		disk->queue = NULL;
+-		goto out_put_disk;
++	rc = blk_mq_alloc_sq_tag_set(&fs->tag_set, &swim3_mq_ops, 2,
++			BLK_MQ_F_SHOULD_MERGE);
++	if (rc)
++		goto out_unregister;
++
++	disk = blk_mq_alloc_disk(&fs->tag_set, fs);
++	if (IS_ERR(disk)) {
++		rc = PTR_ERR(disk);
++		goto out_free_tag_set;
+ 	}
+-	disk->queue->queuedata = fs;
+ 
+ 	rc = swim3_add_device(mdev, floppy_count);
+ 	if (rc)
+-		goto out_cleanup_queue;
++		goto out_cleanup_disk;
+ 
+ 	disk->major = FLOPPY_MAJOR;
+ 	disk->first_minor = floppy_count;
++	disk->minors = 1;
+ 	disk->fops = &floppy_fops;
+ 	disk->private_data = fs;
+ 	disk->events = DISK_EVENT_MEDIA_CHANGE;
+@@ -1237,12 +1234,10 @@ static int swim3_attach(struct macio_dev *mdev,
+ 	disks[floppy_count++] = disk;
+ 	return 0;
+ 
+-out_cleanup_queue:
+-	blk_cleanup_queue(disk->queue);
+-	disk->queue = NULL;
++out_cleanup_disk:
++	blk_cleanup_disk(disk);
++out_free_tag_set:
+ 	blk_mq_free_tag_set(&fs->tag_set);
+-out_put_disk:
+-	put_disk(disk);
+ out_unregister:
+ 	if (floppy_count == 0)
+ 		unregister_blkdev(FLOPPY_MAJOR, "fd");
 -- 
 2.30.2
 
