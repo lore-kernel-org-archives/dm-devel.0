@@ -7,59 +7,58 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3DD28C47092
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 07:15:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0A7D4C47083
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 07:16:08 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id CE28C61375
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 07:15:27 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CE28C61375
+	by mail.kernel.org (Postfix) with ESMTPS id 8F02061375
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 07:16:07 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 8F02061375
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-565-p8pdh0QQPtu8Wbdlx0toQw-1; Wed, 02 Jun 2021 03:15:24 -0400
-X-MC-Unique: p8pdh0QQPtu8Wbdlx0toQw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-443-WL3WstuPOxe38MzFrSkciw-1; Wed, 02 Jun 2021 03:16:04 -0400
+X-MC-Unique: WL3WstuPOxe38MzFrSkciw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 36C068186F1;
-	Wed,  2 Jun 2021 07:15:20 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 229648030A0;
+	Wed,  2 Jun 2021 07:15:59 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 10B8860C0F;
-	Wed,  2 Jun 2021 07:15:20 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 046C45D9D3;
+	Wed,  2 Jun 2021 07:15:59 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CCAC7180B651;
-	Wed,  2 Jun 2021 07:15:19 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C5D0B1801264;
+	Wed,  2 Jun 2021 07:15:58 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1527FI6q019282 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 2 Jun 2021 03:15:18 -0400
+	id 1527FuRH019368 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 2 Jun 2021 03:15:56 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id A7F0C112CA38; Wed,  2 Jun 2021 07:15:18 +0000 (UTC)
+	id 634E0112CA3A; Wed,  2 Jun 2021 07:15:56 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A2E2D112CA3C
-	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:15:16 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E279280D0E6
-	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:15:15 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5F4F3112CA39
+	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:15:53 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A4A50196F583
+	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:15:53 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-414-FLo69u3lMf2D9GT3sSi2rQ-1; Wed, 02 Jun 2021 03:15:14 -0400
-X-MC-Unique: FLo69u3lMf2D9GT3sSi2rQ-1
+	us-mta-537-ynDhaObgMrm3FimUjKYweA-1; Wed, 02 Jun 2021 03:15:49 -0400
+X-MC-Unique: ynDhaObgMrm3FimUjKYweA-1
 Received: from shol69.static.otenet.gr ([83.235.170.67] helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1loKlg-0025NX-RE; Wed, 02 Jun 2021 06:54:21 +0000
+	id 1loKln-0025P8-FW; Wed, 02 Jun 2021 06:54:28 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed,  2 Jun 2021 09:53:21 +0300
-Message-Id: <20210602065345.355274-7-hch@lst.de>
+Date: Wed,  2 Jun 2021 09:53:22 +0300
+Message-Id: <20210602065345.355274-8-hch@lst.de>
 In-Reply-To: <20210602065345.355274-1-hch@lst.de>
 References: <20210602065345.355274-1-hch@lst.de>
 MIME-Version: 1.0
@@ -96,7 +95,7 @@ Cc: Justin Sanders <justin@coraid.com>, Vignesh Raghavendra <vigneshr@ti.com>,
 	Geoff Levand <geoff@infradead.org>, linux-mmc@vger.kernel.org,
 	linux-mtd@lists.infradead.org, linuxppc-dev@lists.ozlabs.org,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 06/30] pf: use blk_mq_alloc_disk
+Subject: [dm-devel] [PATCH 07/30] ms_block: use blk_mq_alloc_disk
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -110,7 +109,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -123,59 +122,62 @@ allocation.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/paride/pf.c | 18 +++++++-----------
- 1 file changed, 7 insertions(+), 11 deletions(-)
+ drivers/memstick/core/ms_block.c | 25 ++++++++++---------------
+ 1 file changed, 10 insertions(+), 15 deletions(-)
 
-diff --git a/drivers/block/paride/pf.c b/drivers/block/paride/pf.c
-index bb09f21ce21a..d5b9c88ba76f 100644
---- a/drivers/block/paride/pf.c
-+++ b/drivers/block/paride/pf.c
-@@ -294,20 +294,17 @@ static void __init pf_init_units(void)
- 	for (unit = 0, pf = units; unit < PF_UNITS; unit++, pf++) {
- 		struct gendisk *disk;
+diff --git a/drivers/memstick/core/ms_block.c b/drivers/memstick/core/ms_block.c
+index 0bacf4268f83..dac258d12aca 100644
+--- a/drivers/memstick/core/ms_block.c
++++ b/drivers/memstick/core/ms_block.c
+@@ -2110,21 +2110,17 @@ static int msb_init_disk(struct memstick_dev *card)
+ 	if (msb->disk_id  < 0)
+ 		return msb->disk_id;
  
--		disk = alloc_disk(1);
--		if (!disk)
-+		if (blk_mq_alloc_sq_tag_set(&pf->tag_set, &pf_mq_ops, 1,
-+				BLK_MQ_F_SHOULD_MERGE))
- 			continue;
+-	msb->disk = alloc_disk(0);
+-	if (!msb->disk) {
+-		rc = -ENOMEM;
++	rc = blk_mq_alloc_sq_tag_set(&msb->tag_set, &msb_mq_ops, 2,
++				     BLK_MQ_F_SHOULD_MERGE);
++	if (rc)
+ 		goto out_release_id;
+-	}
  
--		disk->queue = blk_mq_init_sq_queue(&pf->tag_set, &pf_mq_ops,
--							1, BLK_MQ_F_SHOULD_MERGE);
--		if (IS_ERR(disk->queue)) {
--			disk->queue = NULL;
--			put_disk(disk);
-+		disk = blk_mq_alloc_disk(&pf->tag_set, pf);
-+		if (IS_ERR(disk)) {
-+			blk_mq_free_tag_set(&pf->tag_set);
- 			continue;
- 		}
- 
- 		INIT_LIST_HEAD(&pf->rq_list);
--		disk->queue->queuedata = pf;
- 		blk_queue_max_segments(disk->queue, cluster);
- 		blk_queue_bounce_limit(disk->queue, BLK_BOUNCE_HIGH);
- 		pf->disk = disk;
-@@ -318,6 +315,7 @@ static void __init pf_init_units(void)
- 		snprintf(pf->name, PF_NAMELEN, "%s%d", name, unit);
- 		disk->major = major;
- 		disk->first_minor = unit;
-+		disk->minors = 1;
- 		strcpy(disk->disk_name, pf->name);
- 		disk->fops = &pf_fops;
- 		disk->events = DISK_EVENT_MEDIA_CHANGE;
-@@ -766,10 +764,8 @@ static int pf_detect(void)
- 	for (pf = units, unit = 0; unit < PF_UNITS; pf++, unit++) {
- 		if (!pf->disk)
- 			continue;
--		blk_cleanup_queue(pf->disk->queue);
--		pf->disk->queue = NULL;
-+		blk_cleanup_disk(pf->disk);
- 		blk_mq_free_tag_set(&pf->tag_set);
--		put_disk(pf->disk);
+-	msb->queue = blk_mq_init_sq_queue(&msb->tag_set, &msb_mq_ops, 2,
+-						BLK_MQ_F_SHOULD_MERGE);
+-	if (IS_ERR(msb->queue)) {
+-		rc = PTR_ERR(msb->queue);
+-		msb->queue = NULL;
+-		goto out_put_disk;
++	msb->disk = blk_mq_alloc_disk(&msb->tag_set, card);
++	if (IS_ERR(msb->disk)) {
++		rc = PTR_ERR(msb->disk);
++		goto out_free_tag_set;
  	}
- 	pi_unregister_driver(par_drv);
- 	return -1;
+-
+-	msb->queue->queuedata = card;
++	msb->queue = msb->disk->queue;
+ 
+ 	blk_queue_max_hw_sectors(msb->queue, MS_BLOCK_MAX_PAGES);
+ 	blk_queue_max_segments(msb->queue, MS_BLOCK_MAX_SEGS);
+@@ -2135,7 +2131,6 @@ static int msb_init_disk(struct memstick_dev *card)
+ 	sprintf(msb->disk->disk_name, "msblk%d", msb->disk_id);
+ 	msb->disk->fops = &msb_bdops;
+ 	msb->disk->private_data = msb;
+-	msb->disk->queue = msb->queue;
+ 
+ 	capacity = msb->pages_in_block * msb->logical_block_count;
+ 	capacity *= (msb->page_size / 512);
+@@ -2155,8 +2150,8 @@ static int msb_init_disk(struct memstick_dev *card)
+ 	dbg("Disk added");
+ 	return 0;
+ 
+-out_put_disk:
+-	put_disk(msb->disk);
++out_free_tag_set:
++	blk_mq_free_tag_set(&msb->tag_set);
+ out_release_id:
+ 	mutex_lock(&msb_disk_lock);
+ 	idr_remove(&msb_disk_idr, msb->disk_id);
 -- 
 2.30.2
 
