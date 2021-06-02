@@ -2,79 +2,119 @@ Return-Path: <SRS0=6AeK=K5=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6317BC47082
-	for <dm-devel@archiver.kernel.org>; Thu,  3 Jun 2021 06:33:49 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E47EEC47097
+	for <dm-devel@archiver.kernel.org>; Thu,  3 Jun 2021 06:33:51 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 08DAB610CB
-	for <dm-devel@archiver.kernel.org>; Thu,  3 Jun 2021 06:33:41 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 08DAB610CB
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+	by mail.kernel.org (Postfix) with ESMTPS id 60E606140C
+	for <dm-devel@archiver.kernel.org>; Thu,  3 Jun 2021 06:33:36 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 60E606140C
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=stgolabs.net
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-212-G07IV2A0OwSJkMmvsLZFFQ-1; Thu, 03 Jun 2021 02:33:35 -0400
-X-MC-Unique: G07IV2A0OwSJkMmvsLZFFQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-337-JQZaIs5pO_KqMtkCtMY6XQ-1; Thu, 03 Jun 2021 02:33:31 -0400
+X-MC-Unique: JQZaIs5pO_KqMtkCtMY6XQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 83CF0108BD0C;
-	Thu,  3 Jun 2021 06:33:31 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 91159107ACF7;
+	Thu,  3 Jun 2021 06:33:26 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 66047610B0;
-	Thu,  3 Jun 2021 06:33:31 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 769C76A03A;
+	Thu,  3 Jun 2021 06:33:26 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 33504180C69B;
-	Thu,  3 Jun 2021 06:33:31 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 416541813CA9;
+	Thu,  3 Jun 2021 06:33:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 152GlhQY001978 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 2 Jun 2021 12:47:43 -0400
+	id 152JtQuG019988 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 2 Jun 2021 15:55:26 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id B2487208D055; Wed,  2 Jun 2021 16:47:43 +0000 (UTC)
+	id F0C68FA74E; Wed,  2 Jun 2021 19:55:25 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AD571208DD8F
-	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 16:47:40 +0000 (UTC)
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EAEFD103437
+	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 19:55:23 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 628CC10334A4
-	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 16:47:40 +0000 (UTC)
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-282-a7e8u1zPPqiz5exh8pCAVg-1; Wed, 02 Jun 2021 12:47:32 -0400
-X-MC-Unique: a7e8u1zPPqiz5exh8pCAVg-1
-Received: from j217100.upc-j.chello.nl ([24.132.217.100]
-	helo=noisy.programming.kicks-ass.net)
-	by casper.infradead.org with esmtpsa (Exim 4.94 #2 (Red Hat Linux))
-	id 1loU0Z-00BKKZ-9j; Wed, 02 Jun 2021 16:46:22 +0000
-Received: from hirez.programming.kicks-ass.net
-	(hirez.programming.kicks-ass.net [192.168.1.225])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	key-exchange X25519 server-signature RSA-PSS (2048 bits))
-	(Client did not present a certificate)
-	by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id A2E72300091;
-	Wed,  2 Jun 2021 18:46:16 +0200 (CEST)
-Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
-	id 8A73D2016D6DD; Wed,  2 Jun 2021 18:46:16 +0200 (CEST)
-Date: Wed, 2 Jun 2021 18:46:16 +0200
-From: Peter Zijlstra <peterz@infradead.org>
-To: Will Deacon <will@kernel.org>
-Message-ID: <YLe12Ba4CrvhMhFI@hirez.programming.kicks-ass.net>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 50E338007AC
+	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 19:55:23 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) (Using
+	TLS) by relay.mimecast.com with ESMTP id
+	us-mta-372-rLl18fIPNAyvGcGe1z56tg-1; Wed, 02 Jun 2021 15:55:19 -0400
+X-MC-Unique: rLl18fIPNAyvGcGe1z56tg-1
+Received: from imap.suse.de (imap-alt.suse-dmz.suse.de [192.168.254.47])
+	(using TLSv1.2 with cipher ECDHE-ECDSA-AES128-GCM-SHA256 (128/128
+	bits)) (No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id F276A219C3;
+	Wed,  2 Jun 2021 19:55:15 +0000 (UTC)
+Received: from imap3-int (imap-alt.suse-dmz.suse.de [192.168.254.47])
+	by imap.suse.de (Postfix) with ESMTP id CF189118DD;
+	Wed,  2 Jun 2021 19:55:03 +0000 (UTC)
+Received: from director2.suse.de ([192.168.254.72]) by imap3-int with ESMTPSA
+	id 3FtyJhfit2AuEAAALh3uQQ
+	(envelope-from <dave@stgolabs.net>); Wed, 02 Jun 2021 19:55:03 +0000
+Date: Wed, 2 Jun 2021 12:54:58 -0700
+From: Davidlohr Bueso <dave@stgolabs.net>
+To: Peter Zijlstra <peterz@infradead.org>
+Message-ID: <20210602195458.uj3rsci4suz4mufj@offworld>
+Mail-Followup-To: Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Ingo Molnar <mingo@redhat.com>, Juri Lelli <juri.lelli@redhat.com>,
+	Vincent Guittot <vincent.guittot@linaro.org>,
+	Dietmar Eggemann <dietmar.eggemann@arm.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
+	Daniel Bristot de Oliveira <bristot@redhat.com>,
+	Borislav Petkov <bp@alien8.de>, x86@kernel.org,
+	"H. Peter Anvin" <hpa@zytor.com>, Jens Axboe <axboe@kernel.dk>,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
+	dm-devel@redhat.com, "David S. Miller" <davem@davemloft.net>,
+	Jakub Kicinski <kuba@kernel.org>, Felipe Balbi <balbi@kernel.org>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	Alexander Viro <viro@zeniv.linux.org.uk>, Tejun Heo <tj@kernel.org>,
+	Zefan Li <lizefan.x@bytedance.com>,
+	Johannes Weiner <hannes@cmpxchg.org>,
+	Jason Wessel <jason.wessel@windriver.com>,
+	Daniel Thompson <daniel.thompson@linaro.org>,
+	Douglas Anderson <dianders@chromium.org>,
+	Arnaldo Carvalho de Melo <acme@kernel.org>,
+	Mark Rutland <mark.rutland@arm.com>,
+	Alexander Shishkin <alexander.shishkin@linux.intel.com>,
+	Jiri Olsa <jolsa@redhat.com>, Namhyung Kim <namhyung@kernel.org>,
+	"Rafael J. Wysocki" <rjw@rjwysocki.net>,
+	Pavel Machek <pavel@ucw.cz>, Will Deacon <will@kernel.org>,
+	Waiman Long <longman@redhat.com>, Boqun Feng <boqun.feng@gmail.com>,
+	Oleg Nesterov <oleg@redhat.com>,
+	"Paul E. McKenney" <paulmck@kernel.org>,
+	Josh Triplett <josh@joshtriplett.org>,
+	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+	Lai Jiangshan <jiangshanlai@gmail.com>,
+	Joel Fernandes <joel@joelfernandes.org>,
+	John Stultz <john.stultz@linaro.org>,
+	Stephen Boyd <sboyd@kernel.org>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Paolo Bonzini <pbonzini@redhat.com>, linux-kernel@vger.kernel.org,
+	linux-block@vger.kernel.org, netdev@vger.kernel.org,
+	linux-usb@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+	cgroups@vger.kernel.org, kgdb-bugreport@lists.sourceforge.net,
+	linux-perf-users@vger.kernel.org, linux-pm@vger.kernel.org,
+	rcu@vger.kernel.org, linux-mm@kvack.org, kvm@vger.kernel.org
 References: <20210602131225.336600299@infradead.org>
-	<20210602133040.334970485@infradead.org>
-	<20210602145921.GB31179@willie-the-truck>
+	<20210602133040.524487671@infradead.org>
 MIME-Version: 1.0
-In-Reply-To: <20210602145921.GB31179@willie-the-truck>
+In-Reply-To: <20210602133040.524487671@infradead.org>
+User-Agent: NeoMutt/20201120
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -83,8 +123,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Mimecast-Spam-Signature: yes
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Thu, 03 Jun 2021 02:32:49 -0400
 Cc: Juri Lelli <juri.lelli@redhat.com>, Mark Rutland <mark.rutland@arm.com>,
@@ -99,9 +138,9 @@ Cc: Juri Lelli <juri.lelli@redhat.com>, Mark Rutland <mark.rutland@arm.com>,
 	Joel Fernandes <joel@joelfernandes.org>, netdev@vger.kernel.org,
 	Jiri Olsa <jolsa@redhat.com>, Alasdair Kergon <agk@redhat.com>,
 	Daniel Thompson <daniel.thompson@linaro.org>,
-	Davidlohr Bueso <dave@stgolabs.net>,
 	Vincent Guittot <vincent.guittot@linaro.org>,
-	kvm@vger.kernel.org, cgroups@vger.kernel.org, x86@kernel.org,
+	kvm@vger.kernel.org, Will Deacon <will@kernel.org>,
+	cgroups@vger.kernel.org, x86@kernel.org,
 	Ingo Molnar <mingo@redhat.com>, Mel Gorman <mgorman@suse.de>,
 	Jakub Kicinski <kuba@kernel.org>, John Stultz <john.stultz@linaro.org>,
 	"Paul E. McKenney" <paulmck@kernel.org>,
@@ -126,7 +165,7 @@ Cc: Juri Lelli <juri.lelli@redhat.com>, Mark Rutland <mark.rutland@arm.com>,
 	Andrew Morton <akpm@linux-foundation.org>, rcu@vger.kernel.org,
 	Daniel Bristot de Oliveira <bristot@redhat.com>,
 	"David S. Miller" <davem@davemloft.net>
-Subject: Re: [dm-devel] [PATCH 2/6] sched: Introduce task_is_running()
+Subject: Re: [dm-devel] [PATCH 5/6] sched,timer: Use __set_current_state()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -140,53 +179,25 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On Wed, Jun 02, 2021 at 03:59:21PM +0100, Will Deacon wrote:
-> On Wed, Jun 02, 2021 at 03:12:27PM +0200, Peter Zijlstra wrote:
-> > Replace a bunch of 'p->state == TASK_RUNNING' with a new helper:
-> > task_is_running(p).
-> > 
-> > Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-> > ---
-> >  arch/x86/kernel/process.c |    4 ++--
-> >  block/blk-mq.c            |    2 +-
-> >  include/linux/sched.h     |    2 ++
-> >  kernel/locking/lockdep.c  |    2 +-
-> >  kernel/rcu/tree_plugin.h  |    2 +-
-> >  kernel/sched/core.c       |    6 +++---
-> >  kernel/sched/stats.h      |    2 +-
-> >  kernel/signal.c           |    2 +-
-> >  kernel/softirq.c          |    3 +--
-> >  mm/compaction.c           |    2 +-
-> >  10 files changed, 14 insertions(+), 13 deletions(-)
-> > 
-> > --- a/arch/x86/kernel/process.c
-> > +++ b/arch/x86/kernel/process.c
-> > @@ -931,7 +931,7 @@ unsigned long get_wchan(struct task_stru
-> >  	unsigned long start, bottom, top, sp, fp, ip, ret = 0;
-> >  	int count = 0;
-> >  
-> > -	if (p == current || p->state == TASK_RUNNING)
-> > +	if (p == current || task_is_running(p))
-> 
-> Looks like this one in get_wchan() has been cargo-culted across most of
-> arch/ so they'll need fixing up before you rename the struct member.
+On Wed, 02 Jun 2021, Peter Zijlstra wrote:
 
-Yeah, this was x86_64 allmodconfig driven, I've already got a bunch of
-robot mail telling me other archs need help, I'll fix it iup.
+-ENOCHANGELONG
 
-> There's also a weird one in tools/bpf/runqslower/runqslower.bpf.c (!)
+But yeah, I thought we had gotten rid of all these.
 
-I'm tempted to let the bpf people sort their own gunk. This is not an
-ABI. I so don't care breaking every script out there.
+>
+>Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+
+Reviewed-by: Davidlohr Bueso <dbueso@suse.de>
 
 --
 dm-devel mailing list
