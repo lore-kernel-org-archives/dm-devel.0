@@ -7,58 +7,59 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8F135C47092
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 07:07:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 436D7C4708F
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 07:14:15 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 1ECAC61396
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 07:07:48 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 1ECAC61396
+	by mail.kernel.org (Postfix) with ESMTPS id 9C0DB61376
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 07:14:14 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9C0DB61376
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-27-aduyanbcPfCiiaj6doGXUA-1; Wed, 02 Jun 2021 03:07:45 -0400
-X-MC-Unique: aduyanbcPfCiiaj6doGXUA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-143-tfK3_GG6MFKfh61qq4A04w-1; Wed, 02 Jun 2021 03:14:11 -0400
+X-MC-Unique: tfK3_GG6MFKfh61qq4A04w-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AF58D6D581;
-	Wed,  2 Jun 2021 07:07:40 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8ED6D5D9D0;
-	Wed,  2 Jun 2021 07:07:40 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A48048015F5;
+	Wed,  2 Jun 2021 07:14:06 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 78BBA10013D6;
+	Wed,  2 Jun 2021 07:14:06 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5C13E44A5B;
-	Wed,  2 Jun 2021 07:07:40 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EAF2C1801264;
+	Wed,  2 Jun 2021 07:14:05 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15275lu5018368 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 2 Jun 2021 03:05:47 -0400
+	id 1527E3Fj019130 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 2 Jun 2021 03:14:04 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 0C52D112CA38; Wed,  2 Jun 2021 07:05:47 +0000 (UTC)
+	id D960C112CA3A; Wed,  2 Jun 2021 07:14:03 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 080D3112CA34
-	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:05:43 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D4AC3112CA38
+	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:13:58 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4EA33182508B
-	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:05:43 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7E2BA80D0E0
+	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 07:13:58 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-26-WeLmDvzXOKaWuJERpMYcTw-1; Wed, 02 Jun 2021 03:05:41 -0400
-X-MC-Unique: WeLmDvzXOKaWuJERpMYcTw-1
+	us-mta-381-Nwx94wF3Mh26Cy1XlTEldA-1; Wed, 02 Jun 2021 03:13:56 -0400
+X-MC-Unique: Nwx94wF3Mh26Cy1XlTEldA-1
 Received: from shol69.static.otenet.gr ([83.235.170.67] helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1loKlW-0025KS-9M; Wed, 02 Jun 2021 06:54:10 +0000
+	id 1loKly-0025TX-SP; Wed, 02 Jun 2021 06:54:39 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed,  2 Jun 2021 09:53:19 +0300
-Message-Id: <20210602065345.355274-5-hch@lst.de>
+Date: Wed,  2 Jun 2021 09:53:24 +0300
+Message-Id: <20210602065345.355274-10-hch@lst.de>
 In-Reply-To: <20210602065345.355274-1-hch@lst.de>
 References: <20210602065345.355274-1-hch@lst.de>
 MIME-Version: 1.0
@@ -72,6 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Mimecast-Spam-Signature: yes
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 Cc: Justin Sanders <justin@coraid.com>, Vignesh Raghavendra <vigneshr@ti.com>,
@@ -94,7 +96,7 @@ Cc: Justin Sanders <justin@coraid.com>, Vignesh Raghavendra <vigneshr@ti.com>,
 	Geoff Levand <geoff@infradead.org>, linux-mmc@vger.kernel.org,
 	linux-mtd@lists.infradead.org, linuxppc-dev@lists.ozlabs.org,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 04/30] virtio-blk: use blk_mq_alloc_disk
+Subject: [dm-devel] [PATCH 09/30] mtd_blkdevs: use blk_mq_alloc_disk
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -108,7 +110,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -121,81 +123,109 @@ allocation.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/virtio_blk.c | 26 +++++++-------------------
- 1 file changed, 7 insertions(+), 19 deletions(-)
+ drivers/mtd/mtd_blkdevs.c | 48 ++++++++++++++++++---------------------
+ 1 file changed, 22 insertions(+), 26 deletions(-)
 
-diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
-index b9fa3ef5b57c..e4bd3b1fc3c2 100644
---- a/drivers/block/virtio_blk.c
-+++ b/drivers/block/virtio_blk.c
-@@ -749,13 +749,6 @@ static int virtblk_probe(struct virtio_device *vdev)
- 	if (err)
- 		goto out_free_vblk;
+diff --git a/drivers/mtd/mtd_blkdevs.c b/drivers/mtd/mtd_blkdevs.c
+index fb8e12d590a1..5dc4c966ea73 100644
+--- a/drivers/mtd/mtd_blkdevs.c
++++ b/drivers/mtd/mtd_blkdevs.c
+@@ -30,11 +30,9 @@ static void blktrans_dev_release(struct kref *kref)
+ 	struct mtd_blktrans_dev *dev =
+ 		container_of(kref, struct mtd_blktrans_dev, ref);
  
--	/* FIXME: How many partitions?  How long is a piece of string? */
--	vblk->disk = alloc_disk(1 << PART_BITS);
--	if (!vblk->disk) {
--		err = -ENOMEM;
--		goto out_free_vq;
+-	dev->disk->private_data = NULL;
+-	blk_cleanup_queue(dev->rq);
++	blk_cleanup_disk(dev->disk);
+ 	blk_mq_free_tag_set(dev->tag_set);
+ 	kfree(dev->tag_set);
+-	put_disk(dev->disk);
+ 	list_del(&dev->list);
+ 	kfree(dev);
+ }
+@@ -354,7 +352,7 @@ int add_mtd_blktrans_dev(struct mtd_blktrans_dev *new)
+ 	if (new->devnum > (MINORMASK >> tr->part_bits) ||
+ 	    (tr->part_bits && new->devnum >= 27 * 26)) {
+ 		mutex_unlock(&blktrans_ref_mutex);
+-		goto error1;
++		return ret;
+ 	}
+ 
+ 	list_add_tail(&new->list, &tr->devs);
+@@ -366,17 +364,28 @@ int add_mtd_blktrans_dev(struct mtd_blktrans_dev *new)
+ 	if (!tr->writesect)
+ 		new->readonly = 1;
+ 
+-	/* Create gendisk */
+ 	ret = -ENOMEM;
+-	gd = alloc_disk(1 << tr->part_bits);
++	new->tag_set = kzalloc(sizeof(*new->tag_set), GFP_KERNEL);
++	if (!new->tag_set)
++		goto out_list_del;
+ 
+-	if (!gd)
+-		goto error2;
++	ret = blk_mq_alloc_sq_tag_set(new->tag_set, &mtd_mq_ops, 2,
++			BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_BLOCKING);
++	if (ret)
++		goto out_kfree_tag_set;
++
++	/* Create gendisk */
++	gd = blk_mq_alloc_disk(new->tag_set, new);
++	if (IS_ERR(gd)) {
++		ret = PTR_ERR(gd);
++		goto out_free_tag_set;
++	}
+ 
+ 	new->disk = gd;
+ 	gd->private_data = new;
+ 	gd->major = tr->major;
+ 	gd->first_minor = (new->devnum) << tr->part_bits;
++	gd->minors = 1 << tr->part_bits;
+ 	gd->fops = &mtd_block_ops;
+ 
+ 	if (tr->part_bits)
+@@ -398,22 +407,9 @@ int add_mtd_blktrans_dev(struct mtd_blktrans_dev *new)
+ 	spin_lock_init(&new->queue_lock);
+ 	INIT_LIST_HEAD(&new->rq_list);
+ 
+-	new->tag_set = kzalloc(sizeof(*new->tag_set), GFP_KERNEL);
+-	if (!new->tag_set)
+-		goto error3;
+-
+-	new->rq = blk_mq_init_sq_queue(new->tag_set, &mtd_mq_ops, 2,
+-				BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_BLOCKING);
+-	if (IS_ERR(new->rq)) {
+-		ret = PTR_ERR(new->rq);
+-		new->rq = NULL;
+-		goto error4;
 -	}
 -
- 	/* Default queue sizing is to fill the ring. */
- 	if (likely(!virtblk_queue_depth)) {
- 		queue_depth = vblk->vqs[0].vq->num_free;
-@@ -779,21 +772,20 @@ static int virtblk_probe(struct virtio_device *vdev)
+ 	if (tr->flush)
+ 		blk_queue_write_cache(new->rq, true, false);
  
- 	err = blk_mq_alloc_tag_set(&vblk->tag_set);
- 	if (err)
--		goto out_put_disk;
-+		goto out_free_vq;
+-	new->rq->queuedata = new;
+ 	blk_queue_logical_block_size(new->rq, tr->blksize);
  
--	q = blk_mq_init_queue(&vblk->tag_set);
--	if (IS_ERR(q)) {
--		err = -ENOMEM;
-+	vblk->disk = blk_mq_alloc_disk(&vblk->tag_set, vblk);
-+	if (IS_ERR(vblk->disk)) {
-+		err = PTR_ERR(vblk->disk);
- 		goto out_free_tags;
+ 	blk_queue_flag_set(QUEUE_FLAG_NONROT, new->rq);
+@@ -437,13 +433,13 @@ int add_mtd_blktrans_dev(struct mtd_blktrans_dev *new)
+ 		WARN_ON(ret);
  	}
--	vblk->disk->queue = q;
--
--	q->queuedata = vblk;
-+	q = vblk->disk->queue;
- 
- 	virtblk_name_format("vd", index, vblk->disk->disk_name, DISK_NAME_LEN);
- 
- 	vblk->disk->major = major;
- 	vblk->disk->first_minor = index_to_minor(index);
-+	vblk->disk->minors = 1 << PART_BITS;
- 	vblk->disk->private_data = vblk;
- 	vblk->disk->fops = &virtblk_fops;
- 	vblk->disk->flags |= GENHD_FL_EXT_DEVT;
-@@ -892,8 +884,6 @@ static int virtblk_probe(struct virtio_device *vdev)
- 
- out_free_tags:
- 	blk_mq_free_tag_set(&vblk->tag_set);
--out_put_disk:
--	put_disk(vblk->disk);
- out_free_vq:
- 	vdev->config->del_vqs(vdev);
- 	kfree(vblk->vqs);
-@@ -913,8 +903,7 @@ static void virtblk_remove(struct virtio_device *vdev)
- 	flush_work(&vblk->config_work);
- 
- 	del_gendisk(vblk->disk);
--	blk_cleanup_queue(vblk->disk->queue);
--
-+	blk_cleanup_disk(vblk->disk);
- 	blk_mq_free_tag_set(&vblk->tag_set);
- 
- 	mutex_lock(&vblk->vdev_mutex);
-@@ -925,7 +914,6 @@ static void virtblk_remove(struct virtio_device *vdev)
- 	/* Virtqueues are stopped, nothing can use vblk->vdev anymore. */
- 	vblk->vdev = NULL;
- 
--	put_disk(vblk->disk);
- 	vdev->config->del_vqs(vdev);
- 	kfree(vblk->vqs);
+ 	return 0;
+-error4:
++
++out_free_tag_set:
++	blk_mq_free_tag_set(new->tag_set);
++out_kfree_tag_set:
+ 	kfree(new->tag_set);
+-error3:
+-	put_disk(new->disk);
+-error2:
++out_list_del:
+ 	list_del(&new->list);
+-error1:
+ 	return ret;
+ }
  
 -- 
 2.30.2
