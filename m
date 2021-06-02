@@ -4,62 +4,62 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 23D87C4709F
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 06:55:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5D948C47083
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 06:56:05 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id B0BB461359
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 06:55:56 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org B0BB461359
+	by mail.kernel.org (Postfix) with ESMTPS id ED74861359
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Jun 2021 06:56:04 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org ED74861359
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-479-arBeT-3dPnath9OUIYfeGw-1; Wed, 02 Jun 2021 02:55:54 -0400
-X-MC-Unique: arBeT-3dPnath9OUIYfeGw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-417-IfV1L3CCOturBZr3yzn2cQ-1; Wed, 02 Jun 2021 02:56:02 -0400
+X-MC-Unique: IfV1L3CCOturBZr3yzn2cQ-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8E62A180FD66;
-	Wed,  2 Jun 2021 06:55:49 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 36667801B1D;
+	Wed,  2 Jun 2021 06:55:57 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 419475D9D0;
-	Wed,  2 Jun 2021 06:55:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 16F6E60E3A;
+	Wed,  2 Jun 2021 06:55:57 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1227C1801268;
-	Wed,  2 Jun 2021 06:55:49 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DEE421801268;
+	Wed,  2 Jun 2021 06:55:56 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1526tlBP016819 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 2 Jun 2021 02:55:47 -0400
+	id 1526ttZL016852 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 2 Jun 2021 02:55:55 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 9AC04112CA36; Wed,  2 Jun 2021 06:55:47 +0000 (UTC)
+	id 060F21033C7C; Wed,  2 Jun 2021 06:55:55 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 96812112CA34
-	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 06:55:47 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 01AF1112CA38
+	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 06:55:52 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7EA7D80D0E2
-	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 06:55:47 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 41CB7857AA4
+	for <dm-devel@redhat.com>; Wed,  2 Jun 2021 06:55:52 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-318-JC3C95uGNH6ElxZpFCWE4g-1; Wed, 02 Jun 2021 02:55:44 -0400
-X-MC-Unique: JC3C95uGNH6ElxZpFCWE4g-1
+	us-mta-239-LpKSq1lFNTCqrPkNQDYV6A-1; Wed, 02 Jun 2021 02:55:49 -0400
+X-MC-Unique: LpKSq1lFNTCqrPkNQDYV6A-1
 Received: from shol69.static.otenet.gr ([83.235.170.67] helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1loKmo-002647-90; Wed, 02 Jun 2021 06:55:31 +0000
+	id 1loKms-00269K-Qr; Wed, 02 Jun 2021 06:55:35 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed,  2 Jun 2021 09:53:36 +0300
-Message-Id: <20210602065345.355274-22-hch@lst.de>
+Date: Wed,  2 Jun 2021 09:53:37 +0300
+Message-Id: <20210602065345.355274-23-hch@lst.de>
 In-Reply-To: <20210602065345.355274-1-hch@lst.de>
 References: <20210602065345.355274-1-hch@lst.de>
 MIME-Version: 1.0
@@ -95,7 +95,7 @@ Cc: Justin Sanders <justin@coraid.com>, Vignesh Raghavendra <vigneshr@ti.com>,
 	Geoff Levand <geoff@infradead.org>, linux-mmc@vger.kernel.org,
 	linux-mtd@lists.infradead.org, linuxppc-dev@lists.ozlabs.org,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] [PATCH 21/30] pd: use blk_mq_alloc_disk and
+Subject: [dm-devel] [PATCH 22/30] rbd: use blk_mq_alloc_disk and
 	blk_cleanup_disk
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
@@ -110,7 +110,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -123,69 +123,109 @@ request_queue allocation.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/paride/pd.c | 30 ++++++++++++------------------
- 1 file changed, 12 insertions(+), 18 deletions(-)
+ drivers/block/rbd.c | 52 ++++++++++++++++-----------------------------
+ 1 file changed, 18 insertions(+), 34 deletions(-)
 
-diff --git a/drivers/block/paride/pd.c b/drivers/block/paride/pd.c
-index 828a45ffe0e7..3b2b8e872beb 100644
---- a/drivers/block/paride/pd.c
-+++ b/drivers/block/paride/pd.c
-@@ -879,18 +879,6 @@ static void pd_probe_drive(struct pd_unit *disk)
+diff --git a/drivers/block/rbd.c b/drivers/block/rbd.c
+index bbb88eb009e0..531d390902dd 100644
+--- a/drivers/block/rbd.c
++++ b/drivers/block/rbd.c
+@@ -4750,9 +4750,8 @@ static blk_status_t rbd_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 
+ static void rbd_free_disk(struct rbd_device *rbd_dev)
  {
- 	struct gendisk *p;
+-	blk_cleanup_queue(rbd_dev->disk->queue);
++	blk_cleanup_disk(rbd_dev->disk);
+ 	blk_mq_free_tag_set(&rbd_dev->tag_set);
+-	put_disk(rbd_dev->disk);
+ 	rbd_dev->disk = NULL;
+ }
  
--	p = alloc_disk(1 << PD_BITS);
--	if (!p)
--		return;
--
--	strcpy(p->disk_name, disk->name);
--	p->fops = &pd_fops;
--	p->major = major;
--	p->first_minor = (disk - pd) << PD_BITS;
--	p->events = DISK_EVENT_MEDIA_CHANGE;
--	disk->gd = p;
--	p->private_data = disk;
--
- 	memset(&disk->tag_set, 0, sizeof(disk->tag_set));
- 	disk->tag_set.ops = &pd_mq_ops;
- 	disk->tag_set.cmd_size = sizeof(struct pd_req);
-@@ -903,14 +891,21 @@ static void pd_probe_drive(struct pd_unit *disk)
- 	if (blk_mq_alloc_tag_set(&disk->tag_set))
- 		return;
+@@ -4922,22 +4921,6 @@ static int rbd_init_disk(struct rbd_device *rbd_dev)
+ 	    rbd_dev->layout.object_size * rbd_dev->layout.stripe_count;
+ 	int err;
  
--	p->queue = blk_mq_init_queue(&disk->tag_set);
--	if (IS_ERR(p->queue)) {
-+	p = blk_mq_alloc_disk(&disk->tag_set, disk);
-+	if (!p) {
- 		blk_mq_free_tag_set(&disk->tag_set);
--		p->queue = NULL;
- 		return;
+-	/* create gendisk info */
+-	disk = alloc_disk(single_major ?
+-			  (1 << RBD_SINGLE_MAJOR_PART_SHIFT) :
+-			  RBD_MINORS_PER_MAJOR);
+-	if (!disk)
+-		return -ENOMEM;
+-
+-	snprintf(disk->disk_name, sizeof(disk->disk_name), RBD_DRV_NAME "%d",
+-		 rbd_dev->dev_id);
+-	disk->major = rbd_dev->major;
+-	disk->first_minor = rbd_dev->minor;
+-	if (single_major)
+-		disk->flags |= GENHD_FL_EXT_DEVT;
+-	disk->fops = &rbd_bd_ops;
+-	disk->private_data = rbd_dev;
+-
+ 	memset(&rbd_dev->tag_set, 0, sizeof(rbd_dev->tag_set));
+ 	rbd_dev->tag_set.ops = &rbd_mq_ops;
+ 	rbd_dev->tag_set.queue_depth = rbd_dev->opts->queue_depth;
+@@ -4948,13 +4931,26 @@ static int rbd_init_disk(struct rbd_device *rbd_dev)
+ 
+ 	err = blk_mq_alloc_tag_set(&rbd_dev->tag_set);
+ 	if (err)
+-		goto out_disk;
++		return err;
+ 
+-	q = blk_mq_init_queue(&rbd_dev->tag_set);
+-	if (IS_ERR(q)) {
+-		err = PTR_ERR(q);
++	disk = blk_mq_alloc_disk(&rbd_dev->tag_set, rbd_dev);
++	if (IS_ERR(disk)) {
++		err = PTR_ERR(disk);
+ 		goto out_tag_set;
  	}
-+	disk->gd = p;
++	q = disk->queue;
 +
-+	strcpy(p->disk_name, disk->name);
-+	p->fops = &pd_fops;
-+	p->major = major;
-+	p->first_minor = (disk - pd) << PD_BITS;
-+	p->minors = 1 << PD_BITS;
-+	p->events = DISK_EVENT_MEDIA_CHANGE;
-+	p->private_data = disk;
++	snprintf(disk->disk_name, sizeof(disk->disk_name), RBD_DRV_NAME "%d",
++		 rbd_dev->dev_id);
++	disk->major = rbd_dev->major;
++	disk->first_minor = rbd_dev->minor;
++	if (single_major) {
++		disk->minors = (1 << RBD_SINGLE_MAJOR_PART_SHIFT);
++		disk->flags |= GENHD_FL_EXT_DEVT;
++	} else {
++		disk->minors = RBD_MINORS_PER_MAJOR;
++	}
++	disk->fops = &rbd_bd_ops;
  
--	p->queue->queuedata = disk;
- 	blk_queue_max_hw_sectors(p->queue, cluster);
- 	blk_queue_bounce_limit(p->queue, BLK_BOUNCE_HIGH);
+ 	blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
+ 	/* QUEUE_FLAG_ADD_RANDOM is off by default for blk-mq */
+@@ -4976,21 +4972,11 @@ static int rbd_init_disk(struct rbd_device *rbd_dev)
+ 	if (!ceph_test_opt(rbd_dev->rbd_client->client, NOCRC))
+ 		blk_queue_flag_set(QUEUE_FLAG_STABLE_WRITES, q);
  
-@@ -1019,9 +1014,8 @@ static void __exit pd_exit(void)
- 		if (p) {
- 			disk->gd = NULL;
- 			del_gendisk(p);
--			blk_cleanup_queue(p->queue);
- 			blk_mq_free_tag_set(&disk->tag_set);
--			put_disk(p);
-+			blk_cleanup_disk(p);
- 			pi_release(disk->pi);
- 		}
- 	}
+-	/*
+-	 * disk_release() expects a queue ref from add_disk() and will
+-	 * put it.  Hold an extra ref until add_disk() is called.
+-	 */
+-	WARN_ON(!blk_get_queue(q));
+-	disk->queue = q;
+-	q->queuedata = rbd_dev;
+-
+ 	rbd_dev->disk = disk;
+ 
+ 	return 0;
+ out_tag_set:
+ 	blk_mq_free_tag_set(&rbd_dev->tag_set);
+-out_disk:
+-	put_disk(disk);
+ 	return err;
+ }
+ 
+@@ -7088,8 +7074,6 @@ static ssize_t do_rbd_add(struct bus_type *bus,
+ 		goto err_out_image_lock;
+ 
+ 	device_add_disk(&rbd_dev->dev, rbd_dev->disk, NULL);
+-	/* see rbd_init_disk() */
+-	blk_put_queue(rbd_dev->disk->queue);
+ 
+ 	spin_lock(&rbd_dev_list_lock);
+ 	list_add_tail(&rbd_dev->node, &rbd_dev_list);
 -- 
 2.30.2
 
