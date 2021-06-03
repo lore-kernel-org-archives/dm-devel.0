@@ -7,83 +7,77 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 26625C4708F
-	for <dm-devel@archiver.kernel.org>; Fri,  4 Jun 2021 06:27:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DFFA1C47083
+	for <dm-devel@archiver.kernel.org>; Fri,  4 Jun 2021 06:27:52 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id AF7366136E
-	for <dm-devel@archiver.kernel.org>; Fri,  4 Jun 2021 06:27:00 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org AF7366136E
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=fujitsu.com
+	by mail.kernel.org (Postfix) with ESMTPS id 7CE2D6136E
+	for <dm-devel@archiver.kernel.org>; Fri,  4 Jun 2021 06:27:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7CE2D6136E
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linaro.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-42-Ly6W6Rs9PaKzxB03V3w8HA-1; Fri, 04 Jun 2021 02:26:58 -0400
-X-MC-Unique: Ly6W6Rs9PaKzxB03V3w8HA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-68-LNEqFJshONC4iJG9qrwpKw-1; Fri, 04 Jun 2021 02:27:49 -0400
+X-MC-Unique: LNEqFJshONC4iJG9qrwpKw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2660A106BB33;
-	Fri,  4 Jun 2021 06:26:54 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0949C376E;
-	Fri,  4 Jun 2021 06:26:54 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C7183802B78;
+	Fri,  4 Jun 2021 06:27:45 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A79571964B;
+	Fri,  4 Jun 2021 06:27:45 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CF2D944A58;
-	Fri,  4 Jun 2021 06:26:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 779E81800FFC;
+	Fri,  4 Jun 2021 06:27:45 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1541KGM4026818 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 3 Jun 2021 21:20:16 -0400
+	id 153Fbjx2008606 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 3 Jun 2021 11:37:45 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 2968011E5BB; Fri,  4 Jun 2021 01:20:16 +0000 (UTC)
+	id 93EE62102C44; Thu,  3 Jun 2021 15:37:45 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2500111E5CB
-	for <dm-devel@redhat.com>; Fri,  4 Jun 2021 01:20:16 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8F61F20FE6DC
+	for <dm-devel@redhat.com>; Thu,  3 Jun 2021 15:37:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0D780805F44
-	for <dm-devel@redhat.com>; Fri,  4 Jun 2021 01:20:16 +0000 (UTC)
-Received: from heian.cn.fujitsu.com (mail.cn.fujitsu.com [183.91.158.132])
-	by relay.mimecast.com with ESMTP id us-mta-371-CrnSrQysNU2CzVrkgSpltg-3;
-	Thu, 03 Jun 2021 21:20:11 -0400
-X-MC-Unique: CrnSrQysNU2CzVrkgSpltg-3
-IronPort-HdrOrdr: =?us-ascii?q?A9a23=3AciOndaGMdrd53wsKpLqEjceALOsnbusQ8zAX?=
-	=?us-ascii?q?PiFKKSC9Hfb0qynDpp4mPHzP6Qr5OktOpTnoAsDpKk80naQFgrX5Vo3PYOCJgg?=
-	=?us-ascii?q?WVEL0=3D?=
-X-IronPort-AV: E=Sophos;i="5.83,246,1616428800"; d="scan'208";a="109209802"
-Received: from unknown (HELO cn.fujitsu.com) ([10.167.33.5])
-	by heian.cn.fujitsu.com with ESMTP; 04 Jun 2021 09:19:06 +0800
-Received: from G08CNEXMBPEKD04.g08.fujitsu.local (unknown [10.167.33.201])
-	by cn.fujitsu.com (Postfix) with ESMTP id D3F604C36A00;
-	Fri,  4 Jun 2021 09:19:01 +0800 (CST)
-Received: from G08CNEXJMPEKD02.g08.fujitsu.local (10.167.33.202) by
-	G08CNEXMBPEKD04.g08.fujitsu.local (10.167.33.201) with Microsoft SMTP
-	Server (TLS) id 15.0.1497.2; Fri, 4 Jun 2021 09:19:02 +0800
-Received: from G08CNEXCHPEKD07.g08.fujitsu.local (10.167.33.80) by
-	G08CNEXJMPEKD02.g08.fujitsu.local (10.167.33.202) with Microsoft SMTP
-	Server (TLS) id 15.0.1497.2; Fri, 4 Jun 2021 09:18:55 +0800
-Received: from irides.mr.mr.mr (10.167.225.141) by
-	G08CNEXCHPEKD07.g08.fujitsu.local (10.167.33.209) with Microsoft SMTP
-	Server
-	id 15.0.1497.2 via Frontend Transport; Fri, 4 Jun 2021 09:18:54 +0800
-From: Shiyang Ruan <ruansy.fnst@fujitsu.com>
-To: <linux-kernel@vger.kernel.org>, <linux-xfs@vger.kernel.org>,
-	<linux-nvdimm@lists.01.org>, <linux-mm@kvack.org>,
-	<linux-fsdevel@vger.kernel.org>, <dm-devel@redhat.com>
-Date: Fri, 4 Jun 2021 09:18:39 +0800
-Message-ID: <20210604011844.1756145-6-ruansy.fnst@fujitsu.com>
-In-Reply-To: <20210604011844.1756145-1-ruansy.fnst@fujitsu.com>
-References: <20210604011844.1756145-1-ruansy.fnst@fujitsu.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C246D90DE33
+	for <dm-devel@redhat.com>; Thu,  3 Jun 2021 15:37:42 +0000 (UTC)
+Received: from mail-ua1-f41.google.com (mail-ua1-f41.google.com
+	[209.85.222.41]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-186-f8OXfEjkPQW7qqFNXt7_WQ-1; Thu, 03 Jun 2021 11:37:23 -0400
+X-MC-Unique: f8OXfEjkPQW7qqFNXt7_WQ-1
+Received: by mail-ua1-f41.google.com with SMTP id w5so3524282uaq.9
+	for <dm-devel@redhat.com>; Thu, 03 Jun 2021 08:37:23 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc;
+	bh=7DKVf+GiS9951bpd4cfEBh88PiRutTQ//wVEud26id8=;
+	b=jZvhi7kPcCjFmZRERNTPdy8UwpeRKkwGbdk3xgeaJtY98nGCJ+lIlPWmYyPRfNyOOo
+	tLPj/o8+xzKnCBcVliRVJ+Gc000Xi2B7gasWF/AnH8bu3xLxP8kPdlGonfV4EpCvxAOP
+	gO6SsVydDTjkyL4tQzXAxQMufWgDl3leCFMqnhvJMlH1RWu8VfJotPxa/28MgxQ8BDzg
+	zkVGr/AxmnnImreaEW50tnOJBt0fSyRxrScx7pxBZp8hFdkgYGj5vO9cFayApIx0jK8K
+	UG86PA4TKJOpe+fc58hLsvTbICoizHF+gBkquxAOSDccCTldeQyOsmL32jYfviO4MB+e
+	m2Ag==
+X-Gm-Message-State: AOAM533zCyemwBjR0nfd36JD+RufO90cCHjhLeFlBOJfz9WCZFkNUE7Z
+	nxsxsDn9eK1DI+lvGbVAoUzK96tE9vRqfr0mlr5qSg==
+X-Google-Smtp-Source: ABdhPJyc/MDglzj7ZqHuKLnfpO6vVPHNJJJjAhghObYaMjdvGQtxzeGy+jhwPjnJIpGZowWwyMtWi1MuD2fSyYUnfEo=
+X-Received: by 2002:ab0:7c5b:: with SMTP id d27mr407242uaw.15.1622734642855;
+	Thu, 03 Jun 2021 08:37:22 -0700 (PDT)
 MIME-Version: 1.0
-X-yoursite-MailScanner-ID: D3F604C36A00.A0E01
-X-yoursite-MailScanner: Found to be clean
-X-yoursite-MailScanner-From: ruansy.fnst@fujitsu.com
+References: <20210602065345.355274-1-hch@lst.de>
+	<20210602065345.355274-9-hch@lst.de>
+In-Reply-To: <20210602065345.355274-9-hch@lst.de>
+From: Ulf Hansson <ulf.hansson@linaro.org>
+Date: Thu, 3 Jun 2021 17:36:45 +0200
+Message-ID: <CAPDyKFoh6HKx2rHHRXvw--Ou53TR2wLFGrKCDuetigxQ8QbvfQ@mail.gmail.com>
+To: Christoph Hellwig <hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -92,13 +86,31 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Fri, 04 Jun 2021 02:21:36 -0400
-Cc: snitzer@redhat.com, darrick.wong@oracle.com, rgoldwyn@suse.de,
-	david@fromorbit.com, dan.j.williams@intel.com, hch@lst.de, agk@redhat.com
-Subject: [dm-devel] [PATCH v4 05/10] mm,
-	pmem: Implement ->memory_failure() in pmem driver
+Cc: Justin Sanders <justin@coraid.com>, Vignesh Raghavendra <vigneshr@ti.com>,
+	Mike Snitzer <snitzer@redhat.com>, "Michael S. Tsirkin" <mst@redhat.com>,
+	Jason Wang <jasowang@redhat.com>,
+	virtualization@lists.linux-foundation.org, dm-devel@redhat.com,
+	"Md. Haris Iqbal" <haris.iqbal@ionos.com>,
+	Miquel Raynal <miquel.raynal@bootlin.com>,
+	Jack Wang <jinpu.wang@ionos.com>, Tim Waugh <tim@cyberelk.net>,
+	linux-s390@vger.kernel.org, Maxim Levitsky <maximlevitsky@gmail.com>,
+	Richard Weinberger <richard@nod.at>,
+	Christian Borntraeger <borntraeger@de.ibm.com>,
+	xen-devel@lists.xenproject.org, Ilya Dryomov <idryomov@gmail.com>,
+	Vasily Gorbik <gor@linux.ibm.com>, Alex Dubov <oakad@yahoo.com>,
+	Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>,
+	Heiko Carstens <hca@linux.ibm.com>, Josef Bacik <josef@toxicpanda.com>,
+	Denis Efremov <efremov@linux.com>, nbd@other.debian.org,
+	linux-block <linux-block@vger.kernel.org>,
+	ceph-devel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
+	Geoff Levand <geoff@infradead.org>, linux-mmc <linux-mmc@vger.kernel.org>,
+	linux-mtd@lists.infradead.org,
+	linuxppc-dev <linuxppc-dev@lists.ozlabs.org>,
+	=?UTF-8?Q?Roger_Pau_Monn=C3=A9?= <roger.pau@citrix.com>
+Subject: Re: [dm-devel] [PATCH 08/30] mspro: use blk_mq_alloc_disk
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -112,7 +124,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -120,222 +132,83 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Call the ->memory_failure() which is implemented by pmem driver, in
-order to finally notify filesystem to handle the corrupted data.  The
-handler which collects and kills processes are moved into
-mf_dax_kill_procs(), which will be called by filesystem.
+On Wed, 2 Jun 2021 at 08:54, Christoph Hellwig <hch@lst.de> wrote:
+>
+> Use the blk_mq_alloc_disk API to simplify the gendisk and request_queue
+> allocation.
+>
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-Keep the old handler in order to roll back if driver or filesystem
-does not support ->memory_failure()/->corrupted_range().
+Acked-by: Ulf Hansson <ulf.hansson@linaro.org>
 
-Signed-off-by: Shiyang Ruan <ruansy.fnst@fujitsu.com>
----
- block/genhd.c         | 30 ++++++++++++++++++
- drivers/nvdimm/pmem.c | 14 +++++++++
- include/linux/genhd.h |  1 +
- mm/memory-failure.c   | 71 +++++++++++++++++++++++++++----------------
- 4 files changed, 90 insertions(+), 26 deletions(-)
-
-diff --git a/block/genhd.c b/block/genhd.c
-index 9f8cb7beaad1..75834bd057df 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -718,6 +718,36 @@ struct block_device *bdget_disk(struct gendisk *disk, int partno)
- 	return bdev;
- }
- 
-+/**
-+ * bdget_disk_sector - get block device by given sector number
-+ * @disk: gendisk of interest
-+ * @sector: sector number
-+ *
-+ * RETURNS: the found block device where sector locates in
-+ */
-+struct block_device *bdget_disk_sector(struct gendisk *disk, sector_t sector)
-+{
-+	struct block_device *part = NULL, *p;
-+	unsigned long idx;
-+
-+	rcu_read_lock();
-+	xa_for_each(&disk->part_tbl, idx, p) {
-+		if (p->bd_partno == 0)
-+			continue;
-+		if (p->bd_start_sect <= sector &&
-+			sector < p->bd_start_sect + bdev_nr_sectors(p)) {
-+			part = p;
-+			break;
-+		}
-+	}
-+	rcu_read_unlock();
-+	if (!part)
-+		part = disk->part0;
-+
-+	return bdget_disk(disk, part->bd_partno);
-+}
-+EXPORT_SYMBOL(bdget_disk_sector);
-+
- /*
-  * print a full list of all partitions - intended for places where the root
-  * filesystem can't be mounted and thus to give the victim some idea of what
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index ed10a8b66068..98349e7d0a28 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -364,9 +364,23 @@ static void pmem_release_disk(void *__pmem)
- 	put_disk(pmem->disk);
- }
- 
-+static int pmem_pagemap_memory_failure(struct dev_pagemap *pgmap,
-+		unsigned long pfn, int flags)
-+{
-+	struct pmem_device *pdev =
-+			container_of(pgmap, struct pmem_device, pgmap);
-+	loff_t offset = PFN_PHYS(pfn) - pdev->phys_addr - pdev->data_offset;
-+	struct block_device *bdev =
-+			bdget_disk_sector(pdev->disk, offset >> SECTOR_SHIFT);
-+
-+	return dax_corrupted_range(pdev->dax_dev, bdev, offset,
-+				   page_size(pfn_to_page(pfn)), &flags);
-+}
-+
- static const struct dev_pagemap_ops fsdax_pagemap_ops = {
- 	.kill			= pmem_pagemap_kill,
- 	.cleanup		= pmem_pagemap_cleanup,
-+	.memory_failure		= pmem_pagemap_memory_failure,
- };
- 
- static int pmem_attach_disk(struct device *dev,
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 6fc26f7bdf71..2ad70c02c343 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -219,6 +219,7 @@ static inline void add_disk_no_queue_reg(struct gendisk *disk)
- 
- extern void del_gendisk(struct gendisk *gp);
- extern struct block_device *bdget_disk(struct gendisk *disk, int partno);
-+extern struct block_device *bdget_disk_sector(struct gendisk *disk, sector_t sector);
- 
- void set_disk_ro(struct gendisk *disk, bool read_only);
- 
-diff --git a/mm/memory-failure.c b/mm/memory-failure.c
-index 4377e727d478..43017d7f3918 100644
---- a/mm/memory-failure.c
-+++ b/mm/memory-failure.c
-@@ -1247,6 +1247,36 @@ static void unmap_and_kill(struct list_head *to_kill, unsigned long pfn,
- 	kill_procs(to_kill, flags & MF_MUST_KILL, false, pfn, flags);
- }
- 
-+static int mf_generic_kill_procs(unsigned long long pfn, int flags)
-+{
-+	struct page *page = pfn_to_page(pfn);
-+	LIST_HEAD(to_kill);
-+	dax_entry_t cookie;
-+
-+	/*
-+	 * Prevent the inode from being freed while we are interrogating
-+	 * the address_space, typically this would be handled by
-+	 * lock_page(), but dax pages do not use the page lock. This
-+	 * also prevents changes to the mapping of this pfn until
-+	 * poison signaling is complete.
-+	 */
-+	cookie = dax_lock_page(page);
-+	if (!cookie)
-+		return -EBUSY;
-+	/*
-+	 * Unlike System-RAM there is no possibility to swap in a
-+	 * different physical page at a given virtual address, so all
-+	 * userspace consumption of ZONE_DEVICE memory necessitates
-+	 * SIGBUS (i.e. MF_MUST_KILL)
-+	 */
-+	flags |= MF_ACTION_REQUIRED | MF_MUST_KILL;
-+	collect_procs(page, &to_kill, flags & MF_ACTION_REQUIRED);
-+
-+	unmap_and_kill(&to_kill, pfn, page->mapping, page->index, flags);
-+	dax_unlock_page(page, cookie);
-+	return 0;
-+}
-+
- int mf_dax_kill_procs(struct address_space *mapping, pgoff_t index, int flags)
- {
- 	LIST_HEAD(to_kill);
-@@ -1348,9 +1378,7 @@ static int memory_failure_dev_pagemap(unsigned long pfn, int flags,
- 		struct dev_pagemap *pgmap)
- {
- 	struct page *page = pfn_to_page(pfn);
--	LIST_HEAD(to_kill);
- 	int rc = -EBUSY;
--	dax_entry_t cookie;
- 
- 	if (flags & MF_COUNT_INCREASED)
- 		/*
-@@ -1364,20 +1392,9 @@ static int memory_failure_dev_pagemap(unsigned long pfn, int flags,
- 		goto out;
- 	}
- 
--	/*
--	 * Prevent the inode from being freed while we are interrogating
--	 * the address_space, typically this would be handled by
--	 * lock_page(), but dax pages do not use the page lock. This
--	 * also prevents changes to the mapping of this pfn until
--	 * poison signaling is complete.
--	 */
--	cookie = dax_lock_page(page);
--	if (!cookie)
--		goto out;
--
- 	if (hwpoison_filter(page)) {
- 		rc = 0;
--		goto unlock;
-+		goto out;
- 	}
- 
- 	if (pgmap->type == MEMORY_DEVICE_PRIVATE) {
-@@ -1385,7 +1402,7 @@ static int memory_failure_dev_pagemap(unsigned long pfn, int flags,
- 		 * TODO: Handle HMM pages which may need coordination
- 		 * with device-side memory.
- 		 */
--		goto unlock;
-+		goto out;
- 	}
- 
- 	/*
-@@ -1395,19 +1412,21 @@ static int memory_failure_dev_pagemap(unsigned long pfn, int flags,
- 	SetPageHWPoison(page);
- 
- 	/*
--	 * Unlike System-RAM there is no possibility to swap in a
--	 * different physical page at a given virtual address, so all
--	 * userspace consumption of ZONE_DEVICE memory necessitates
--	 * SIGBUS (i.e. MF_MUST_KILL)
-+	 * Call driver's implementation to handle the memory failure,
-+	 * otherwise roll back to generic handler.
- 	 */
--	flags |= MF_ACTION_REQUIRED | MF_MUST_KILL;
--	collect_procs_file(page, page->mapping, page->index, &to_kill,
--			   flags & MF_ACTION_REQUIRED);
-+	if (pgmap->ops->memory_failure) {
-+		rc = pgmap->ops->memory_failure(pgmap, pfn, flags);
-+		/*
-+		 * Roll back to generic handler too if operation is not
-+		 * supported inside the driver/device/filesystem.
-+		 */
-+		if (rc != EOPNOTSUPP)
-+			goto out;
-+	}
-+
-+	rc = mf_generic_kill_procs(pfn, flags);
- 
--	unmap_and_kill(&to_kill, pfn, page->mapping, page->index, flags);
--	rc = 0;
--unlock:
--	dax_unlock_page(page, cookie);
- out:
- 	/* drop pgmap ref acquired in caller */
- 	put_dev_pagemap(pgmap);
--- 
-2.31.1
+Kind regards
+Uffe
 
 
+> ---
+>  drivers/memstick/core/mspro_block.c | 26 +++++++++++---------------
+>  1 file changed, 11 insertions(+), 15 deletions(-)
+>
+> diff --git a/drivers/memstick/core/mspro_block.c b/drivers/memstick/core/mspro_block.c
+> index cf7fe0d58ee7..22778d0e24f5 100644
+> --- a/drivers/memstick/core/mspro_block.c
+> +++ b/drivers/memstick/core/mspro_block.c
+> @@ -1205,21 +1205,17 @@ static int mspro_block_init_disk(struct memstick_dev *card)
+>         if (disk_id < 0)
+>                 return disk_id;
+>
+> -       msb->disk = alloc_disk(1 << MSPRO_BLOCK_PART_SHIFT);
+> -       if (!msb->disk) {
+> -               rc = -ENOMEM;
+> +       rc = blk_mq_alloc_sq_tag_set(&msb->tag_set, &mspro_mq_ops, 2,
+> +                                    BLK_MQ_F_SHOULD_MERGE);
+> +       if (rc)
+>                 goto out_release_id;
+> -       }
+>
+> -       msb->queue = blk_mq_init_sq_queue(&msb->tag_set, &mspro_mq_ops, 2,
+> -                                               BLK_MQ_F_SHOULD_MERGE);
+> -       if (IS_ERR(msb->queue)) {
+> -               rc = PTR_ERR(msb->queue);
+> -               msb->queue = NULL;
+> -               goto out_put_disk;
+> +       msb->disk = blk_mq_alloc_disk(&msb->tag_set, card);
+> +       if (IS_ERR(msb->disk)) {
+> +               rc = PTR_ERR(msb->disk);
+> +               goto out_free_tag_set;
+>         }
+> -
+> -       msb->queue->queuedata = card;
+> +       msb->queue = msb->disk->queue;
+>
+>         blk_queue_max_hw_sectors(msb->queue, MSPRO_BLOCK_MAX_PAGES);
+>         blk_queue_max_segments(msb->queue, MSPRO_BLOCK_MAX_SEGS);
+> @@ -1228,10 +1224,10 @@ static int mspro_block_init_disk(struct memstick_dev *card)
+>
+>         msb->disk->major = major;
+>         msb->disk->first_minor = disk_id << MSPRO_BLOCK_PART_SHIFT;
+> +       msb->disk->minors = 1 << MSPRO_BLOCK_PART_SHIFT;
+>         msb->disk->fops = &ms_block_bdops;
+>         msb->usage_count = 1;
+>         msb->disk->private_data = msb;
+> -       msb->disk->queue = msb->queue;
+>
+>         sprintf(msb->disk->disk_name, "mspblk%d", disk_id);
+>
+> @@ -1247,8 +1243,8 @@ static int mspro_block_init_disk(struct memstick_dev *card)
+>         msb->active = 1;
+>         return 0;
+>
+> -out_put_disk:
+> -       put_disk(msb->disk);
+> +out_free_tag_set:
+> +       blk_mq_free_tag_set(&msb->tag_set);
+>  out_release_id:
+>         mutex_lock(&mspro_block_disk_lock);
+>         idr_remove(&mspro_block_disk_idr, disk_id);
+> --
+> 2.30.2
+>
 
 --
 dm-devel mailing list
