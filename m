@@ -7,80 +7,77 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 64904C4708F
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EC507C47097
 	for <dm-devel@archiver.kernel.org>; Fri,  4 Jun 2021 06:28:06 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id F19DD6136E
-	for <dm-devel@archiver.kernel.org>; Fri,  4 Jun 2021 06:28:05 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org F19DD6136E
+	by mail.kernel.org (Postfix) with ESMTPS id 900F66140B
+	for <dm-devel@archiver.kernel.org>; Fri,  4 Jun 2021 06:28:06 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 900F66140B
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=fujitsu.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-487-L9ahUlD4Ny6jBBKs0aA1CA-1; Fri, 04 Jun 2021 02:28:03 -0400
-X-MC-Unique: L9ahUlD4Ny6jBBKs0aA1CA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-452-Vxk7_-rlOlmRbmNTKr4h4g-1; Fri, 04 Jun 2021 02:28:04 -0400
+X-MC-Unique: Vxk7_-rlOlmRbmNTKr4h4g-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 08EA96D4F0;
-	Fri,  4 Jun 2021 06:27:58 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DC1EC10074FC;
-	Fri,  4 Jun 2021 06:27:57 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 16EB21883527;
+	Fri,  4 Jun 2021 06:28:00 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EDE4A60CC9;
+	Fri,  4 Jun 2021 06:27:59 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AEC94180140D;
-	Fri,  4 Jun 2021 06:27:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C1F4A44A59;
+	Fri,  4 Jun 2021 06:27:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1541KMhj026832 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 3 Jun 2021 21:20:23 -0400
+	id 1541Kn8c026862 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 3 Jun 2021 21:20:49 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id CF24C20951A2; Fri,  4 Jun 2021 01:20:22 +0000 (UTC)
+	id 402BF21144D1; Fri,  4 Jun 2021 01:20:49 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CAF6F20951A0
-	for <dm-devel@redhat.com>; Fri,  4 Jun 2021 01:20:20 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 233BD800C00
-	for <dm-devel@redhat.com>; Fri,  4 Jun 2021 01:20:20 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 368DE2114DD6
+	for <dm-devel@redhat.com>; Fri,  4 Jun 2021 01:20:47 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 08DE6919823
+	for <dm-devel@redhat.com>; Fri,  4 Jun 2021 01:20:47 +0000 (UTC)
 Received: from heian.cn.fujitsu.com (mail.cn.fujitsu.com [183.91.158.132])
-	by relay.mimecast.com with ESMTP id us-mta-538-ldCO46VUOfKF0YDardIM1A-1;
-	Thu, 03 Jun 2021 21:20:18 -0400
-X-MC-Unique: ldCO46VUOfKF0YDardIM1A-1
-IronPort-HdrOrdr: =?us-ascii?q?A9a23=3ASN1Snq5yCRqqVPqEvgPXwCzXdLJyesId70hD?=
-	=?us-ascii?q?6qhwISY6TiX+rbHJoB17726MtN9/YhEdcLy7VJVoBEmskKKdgrNhWotKPjOW21?=
-	=?us-ascii?q?dARbsKheCJrgEIWReOktK1vp0AT0ERMrLN5CBB/KTHCReDYqsd6ejC4Ka1nv3f?=
-	=?us-ascii?q?0nsoaQlrbptr5wB/Bh3zKDwMeCB2QYo+CIGH5tdK4x6peXEsZMy9AXUfG8fZod?=
-	=?us-ascii?q?mjruOdXTc2Qw4g9BKVjS6lrJrzEx2j1B8YVD9VhZcOmFK16zDE2g=3D=3D?=
-X-IronPort-AV: E=Sophos;i="5.83,246,1616428800"; d="scan'208";a="109209814"
+	by relay.mimecast.com with ESMTP id us-mta-339-ceCrmAVxPGqqC4xYPHPzww-1;
+	Thu, 03 Jun 2021 21:20:43 -0400
+X-MC-Unique: ceCrmAVxPGqqC4xYPHPzww-1
+IronPort-HdrOrdr: =?us-ascii?q?A9a23=3AoySG86mbvXdBRFbyJo4BYTZBOT/pDfJJ3DAb?=
+	=?us-ascii?q?v31ZSRFFG/Fw9vrPoB1173LJYVoqMk3I+urgBEDjexzhHPdOiOF7AV7LZniEhI?=
+	=?us-ascii?q?LCFu1fBOXZrQHdJw=3D=3D?=
+X-IronPort-AV: E=Sophos;i="5.83,246,1616428800"; d="scan'208";a="109209833"
 Received: from unknown (HELO cn.fujitsu.com) ([10.167.33.5])
-	by heian.cn.fujitsu.com with ESMTP; 04 Jun 2021 09:19:13 +0800
-Received: from G08CNEXMBPEKD06.g08.fujitsu.local (unknown [10.167.33.206])
-	by cn.fujitsu.com (Postfix) with ESMTP id DCB934C369E0;
-	Fri,  4 Jun 2021 09:19:12 +0800 (CST)
+	by heian.cn.fujitsu.com with ESMTP; 04 Jun 2021 09:19:37 +0800
+Received: from G08CNEXMBPEKD04.g08.fujitsu.local (unknown [10.167.33.201])
+	by cn.fujitsu.com (Postfix) with ESMTP id 0F1214C36A00;
+	Fri,  4 Jun 2021 09:19:35 +0800 (CST)
 Received: from G08CNEXCHPEKD07.g08.fujitsu.local (10.167.33.80) by
-	G08CNEXMBPEKD06.g08.fujitsu.local (10.167.33.206) with Microsoft SMTP
-	Server (TLS) id 15.0.1497.2; Fri, 4 Jun 2021 09:19:09 +0800
+	G08CNEXMBPEKD04.g08.fujitsu.local (10.167.33.201) with Microsoft SMTP
+	Server (TLS) id 15.0.1497.2; Fri, 4 Jun 2021 09:19:35 +0800
 Received: from irides.mr.mr.mr (10.167.225.141) by
 	G08CNEXCHPEKD07.g08.fujitsu.local (10.167.33.209) with Microsoft SMTP
 	Server
-	id 15.0.1497.2 via Frontend Transport; Fri, 4 Jun 2021 09:19:07 +0800
+	id 15.0.1497.2 via Frontend Transport; Fri, 4 Jun 2021 09:19:13 +0800
 From: Shiyang Ruan <ruansy.fnst@fujitsu.com>
 To: <linux-kernel@vger.kernel.org>, <linux-xfs@vger.kernel.org>,
 	<linux-nvdimm@lists.01.org>, <linux-mm@kvack.org>,
 	<linux-fsdevel@vger.kernel.org>, <dm-devel@redhat.com>
-Date: Fri, 4 Jun 2021 09:18:41 +0800
-Message-ID: <20210604011844.1756145-8-ruansy.fnst@fujitsu.com>
+Date: Fri, 4 Jun 2021 09:18:42 +0800
+Message-ID: <20210604011844.1756145-9-ruansy.fnst@fujitsu.com>
 In-Reply-To: <20210604011844.1756145-1-ruansy.fnst@fujitsu.com>
 References: <20210604011844.1756145-1-ruansy.fnst@fujitsu.com>
 MIME-Version: 1.0
-X-yoursite-MailScanner-ID: DCB934C369E0.A20ED
+X-yoursite-MailScanner-ID: 0F1214C36A00.A4EB9
 X-yoursite-MailScanner: Found to be clean
 X-yoursite-MailScanner-From: ruansy.fnst@fujitsu.com
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -91,13 +88,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Fri, 04 Jun 2021 02:21:36 -0400
 Cc: snitzer@redhat.com, darrick.wong@oracle.com, rgoldwyn@suse.de,
 	david@fromorbit.com, dan.j.williams@intel.com, hch@lst.de, agk@redhat.com
-Subject: [dm-devel] [PATCH v4 07/10] dm: Introduce ->rmap() to find bdev
-	offset
+Subject: [dm-devel] [PATCH v4 08/10] md: Implement dax_holder_operations
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -111,7 +107,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -119,88 +115,187 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Pmem device could be a target of mapped device.  In order to find out
-the global location on a mapped device, we introduce this to translate
-offset from target device to mapped device.
+This is the case where the holder represents a mapped device, or a list
+of mapped devices more exactly(because it is possible to create more
+than one mapped device on one pmem device).
 
-Currently, we implement it on linear target, which is easy to do the
-translation.  Other targets will be supported in the future.  However,
-some targets may not support it because of the non-linear mapping.
+Find out which mapped device the offset belongs to, and translate the
+offset from target device to mapped device.  When it is done, call
+dax_corrupted_range() for the holder of this mapped device.
 
 Signed-off-by: Shiyang Ruan <ruansy.fnst@fujitsu.com>
 ---
- drivers/md/dm-linear.c        | 20 ++++++++++++++++++++
- include/linux/device-mapper.h |  5 +++++
- 2 files changed, 25 insertions(+)
+ drivers/md/dm.c | 119 +++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 118 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 92db0f5e7f28..f9f9bc765ba7 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -5,6 +5,7 @@
-  */
- 
- #include "dm.h"
-+#include "dm-core.h"
- #include <linux/module.h>
- #include <linux/init.h>
- #include <linux/blkdev.h>
-@@ -119,6 +120,24 @@ static void linear_status(struct dm_target *ti, status_type_t type,
- 	}
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index ca2aedd8ee7d..606ad74ccf87 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -749,7 +749,11 @@ static void dm_put_live_table_fast(struct mapped_device *md) __releases(RCU)
  }
  
-+static int linear_rmap(struct dm_target *ti, sector_t offset,
-+		       rmap_callout_fn fn, void *data)
-+{
-+	struct linear_c *lc = (struct linear_c *) ti->private;
-+	struct mapped_device *md = ti->table->md;
-+	struct block_device *bdev;
-+	sector_t disk_sect = offset - dm_target_offset(ti, lc->start);
-+	int rc = -ENODEV;
+ static char *_dm_claim_ptr = "I belong to device-mapper";
+-
++static const struct dax_holder_operations dm_dax_holder_ops;
++struct dm_holder {
++	struct list_head list;
++	struct mapped_device *md;
++};
+ /*
+  * Open a table device so we can use it as a map destination.
+  */
+@@ -757,6 +761,8 @@ static int open_table_device(struct table_device *td, dev_t dev,
+ 			     struct mapped_device *md)
+ {
+ 	struct block_device *bdev;
++	struct list_head *holders;
++	struct dm_holder *holder;
+ 
+ 	int r;
+ 
+@@ -774,6 +780,17 @@ static int open_table_device(struct table_device *td, dev_t dev,
+ 
+ 	td->dm_dev.bdev = bdev;
+ 	td->dm_dev.dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
 +
-+	bdev = bdget_disk_sector(md->disk, offset);
-+	if (!bdev)
++	holders = dax_get_holder(td->dm_dev.dax_dev);
++	if (!holders) {
++		holders = kmalloc(sizeof(*holders), GFP_KERNEL);
++		INIT_LIST_HEAD(holders);
++		dax_set_holder(td->dm_dev.dax_dev, holders, &dm_dax_holder_ops);
++	}
++	holder = kmalloc(sizeof(*holder), GFP_KERNEL);
++	holder->md = md;
++	list_add_tail(&holder->list, holders);
++
+ 	return 0;
+ }
+ 
+@@ -782,9 +799,24 @@ static int open_table_device(struct table_device *td, dev_t dev,
+  */
+ static void close_table_device(struct table_device *td, struct mapped_device *md)
+ {
++	struct list_head *holders;
++	struct dm_holder *holder, *n;
++
+ 	if (!td->dm_dev.bdev)
+ 		return;
+ 
++	holders = dax_get_holder(td->dm_dev.dax_dev);
++	if (holders) {
++		list_for_each_entry_safe(holder, n, holders, list) {
++			if (holder->md == md) {
++				list_del(&holder->list);
++				kfree(holder);
++			}
++		}
++		if (list_empty(holders))
++			kfree(holders);
++	}
++
+ 	bd_unlink_disk_holder(td->dm_dev.bdev, dm_disk(md));
+ 	blkdev_put(td->dm_dev.bdev, td->dm_dev.mode | FMODE_EXCL);
+ 	put_dax(td->dm_dev.dax_dev);
+@@ -1235,6 +1267,87 @@ static int dm_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
+ 	return ret;
+ }
+ 
++struct corrupted_hit_info {
++	struct block_device *bdev;
++	sector_t offset;
++};
++
++static int dm_blk_corrupted_hit(struct dm_target *ti, struct dm_dev *dev,
++				sector_t start, sector_t count, void *data)
++{
++	struct corrupted_hit_info *bc = data;
++
++	return bc->bdev == (void *)dev->bdev &&
++			(start <= bc->offset && bc->offset < start + count);
++}
++
++struct corrupted_do_info {
++	size_t length;
++	void *data;
++};
++
++static int dm_blk_corrupted_do(struct dm_target *ti, struct block_device *bdev,
++			       sector_t sector, void *data)
++{
++	struct mapped_device *md = ti->table->md;
++	struct corrupted_do_info *bc = data;
++	struct block_device *md_bdev = bdget_disk_sector(md->disk, sector);
++
++	return dax_corrupted_range(md->dax_dev, md_bdev, to_bytes(sector),
++				   bc->length, bc->data);
++}
++
++static int dm_dax_corrputed_range_one(struct mapped_device *md,
++				      struct block_device *bdev, loff_t offset,
++				      size_t length, void *data)
++{
++	struct dm_table *map;
++	struct dm_target *ti;
++	sector_t sect = to_sector(offset);
++	struct corrupted_hit_info hi = {bdev, sect};
++	struct corrupted_do_info di = {length, data};
++	int srcu_idx, i, rc = -ENODEV;
++
++	map = dm_get_live_table(md, &srcu_idx);
++	if (!map)
 +		return rc;
 +
-+	rc = fn(ti, bdev, disk_sect, data);
-+	bdput(bdev);
++	/*
++	 * find the target device, and then translate the offset of this target
++	 * to the whole mapped device.
++	 */
++	for (i = 0; i < dm_table_get_num_targets(map); i++) {
++		ti = dm_table_get_target(map, i);
++		if (!(ti->type->iterate_devices && ti->type->rmap))
++			continue;
++		if (!ti->type->iterate_devices(ti, dm_blk_corrupted_hit, &hi))
++			continue;
++
++		rc = ti->type->rmap(ti, sect, dm_blk_corrupted_do, &di);
++		break;
++	}
++
++	dm_put_live_table(md, srcu_idx);
 +	return rc;
 +}
 +
- static int linear_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
- {
- 	struct linear_c *lc = (struct linear_c *) ti->private;
-@@ -236,6 +255,7 @@ static struct target_type linear_target = {
- 	.ctr    = linear_ctr,
- 	.dtr    = linear_dtr,
- 	.map    = linear_map,
-+	.rmap   = linear_rmap,
- 	.status = linear_status,
- 	.prepare_ioctl = linear_prepare_ioctl,
- 	.iterate_devices = linear_iterate_devices,
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index ff700fb6ce1d..89a893565407 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -58,6 +58,10 @@ typedef void (*dm_dtr_fn) (struct dm_target *ti);
-  * = 2: The target wants to push back the io
++static int dm_dax_corrputed_range(struct dax_device *dax_dev,
++				  struct block_device *bdev,
++				  loff_t offset, size_t length, void *data)
++{
++	struct dm_holder *holder;
++	struct list_head *holders = dax_get_holder(dax_dev);
++	int rc = -ENODEV;
++
++	list_for_each_entry(holder, holders, list) {
++		rc = dm_dax_corrputed_range_one(holder->md, bdev, offset,
++						length, data);
++		if (rc != -ENODEV)
++			break;
++	}
++	return rc;
++}
++
+ /*
+  * A target may call dm_accept_partial_bio only from the map routine.  It is
+  * allowed for all bio types except REQ_PREFLUSH, REQ_OP_ZONE_RESET,
+@@ -3157,6 +3270,10 @@ static const struct dax_operations dm_dax_ops = {
+ 	.zero_page_range = dm_dax_zero_page_range,
+ };
+ 
++static const struct dax_holder_operations dm_dax_holder_ops = {
++	.corrupted_range = dm_dax_corrputed_range,
++};
++
+ /*
+  * module hooks
   */
- typedef int (*dm_map_fn) (struct dm_target *ti, struct bio *bio);
-+typedef int (*rmap_callout_fn) (struct dm_target *ti, struct block_device *bdev,
-+				sector_t sect, void *data);
-+typedef int (*dm_rmap_fn) (struct dm_target *ti, sector_t offset,
-+			   rmap_callout_fn fn, void *data);
- typedef int (*dm_clone_and_map_request_fn) (struct dm_target *ti,
- 					    struct request *rq,
- 					    union map_info *map_context,
-@@ -184,6 +188,7 @@ struct target_type {
- 	dm_ctr_fn ctr;
- 	dm_dtr_fn dtr;
- 	dm_map_fn map;
-+	dm_rmap_fn rmap;
- 	dm_clone_and_map_request_fn clone_and_map_rq;
- 	dm_release_clone_request_fn release_clone_rq;
- 	dm_endio_fn end_io;
 -- 
 2.31.1
 
