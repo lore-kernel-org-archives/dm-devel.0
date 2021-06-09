@@ -2,78 +2,76 @@ Return-Path: <SRS0=zjfM=LD=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2BB4DC47095
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6BBAEC48BCF
 	for <dm-devel@archiver.kernel.org>; Wed,  9 Jun 2021 06:03:27 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id AE4FF61278
+	by mail.kernel.org (Postfix) with ESMTPS id C357E61354
 	for <dm-devel@archiver.kernel.org>; Wed,  9 Jun 2021 06:03:26 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org AE4FF61278
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C357E61354
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=intel.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-190-JI2PGJP-Ny6ILGR2UyRceg-1; Wed, 09 Jun 2021 02:03:22 -0400
-X-MC-Unique: JI2PGJP-Ny6ILGR2UyRceg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-454-2IPHCwhGPg-GxGv6n36GqA-1; Wed, 09 Jun 2021 02:03:22 -0400
+X-MC-Unique: 2IPHCwhGPg-GxGv6n36GqA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3720D1850609;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0C254100C610;
 	Wed,  9 Jun 2021 06:03:18 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5190310023B5;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 69E8060C04;
 	Wed,  9 Jun 2021 06:03:17 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 92AFA4EBC6;
-	Wed,  9 Jun 2021 06:03:14 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 024074EE7F;
+	Wed,  9 Jun 2021 06:03:15 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1591xSpQ018265 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 8 Jun 2021 21:59:28 -0400
+	id 1591nZ03017116 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 8 Jun 2021 21:49:36 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id B72F32094D3C; Wed,  9 Jun 2021 01:59:28 +0000 (UTC)
+	id B7D202095BB3; Wed,  9 Jun 2021 01:49:35 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B0BE32094D37
-	for <dm-devel@redhat.com>; Wed,  9 Jun 2021 01:59:26 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B298B2094D37
+	for <dm-devel@redhat.com>; Wed,  9 Jun 2021 01:49:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6DE74101A55F
-	for <dm-devel@redhat.com>; Wed,  9 Jun 2021 01:59:26 +0000 (UTC)
-Received: from mga03.intel.com (mga03.intel.com [134.134.136.65]) (Using
-	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-3-e7W9awvHPay38MJVJF6_Vw-1; Tue, 08 Jun 2021 21:59:24 -0400
-X-MC-Unique: e7W9awvHPay38MJVJF6_Vw-1
-IronPort-SDR: l8PgSDw4zuN0iJXWiI61nFZGw+ISoFan87pG3GZdKHuqQ7XesLYLyVEQ9hrwa3LYTIL5OqHTTa
-	wVFuGeVzptZA==
-X-IronPort-AV: E=McAfee;i="6200,9189,10009"; a="205010296"
-X-IronPort-AV: E=Sophos;i="5.83,259,1616482800"; d="scan'208";a="205010296"
-Received: from orsmga001.jf.intel.com ([10.7.209.18])
-	by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
-	08 Jun 2021 18:58:20 -0700
-IronPort-SDR: KYJW5Refe0V9ltnuDGlVJ6TLopiUWwZYULWIqWG34N4OkvARGXzz0Av7vRHCtdujeOQY9X1fyQ
-	6/vheDgG7Nyg==
-X-IronPort-AV: E=Sophos;i="5.83,259,1616482800"; d="scan'208";a="482201138"
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 338DD101A55F
+	for <dm-devel@redhat.com>; Wed,  9 Jun 2021 01:49:31 +0000 (UTC)
+Received: from mga01.intel.com (mga01.intel.com [192.55.52.88]) (Using TLS)
+	by relay.mimecast.com with ESMTP id us-mta-352-jrQ4no8sNXaNQVgficOdUw-1;
+	Tue, 08 Jun 2021 21:49:29 -0400
+X-MC-Unique: jrQ4no8sNXaNQVgficOdUw-1
+IronPort-SDR: HBS53SXipy3ZAvJcJOGEWG1Q+3f6NZC72ijEyXge1Grvs3Hl2EeFEMDAebDjVurfLJ7GVMRUdA
+	ncOGOtY/Zlbg==
+X-IronPort-AV: E=McAfee;i="6200,9189,10009"; a="226347521"
+X-IronPort-AV: E=Sophos;i="5.83,259,1616482800"; d="scan'208";a="226347521"
+Received: from orsmga008.jf.intel.com ([10.7.209.65])
+	by fmsmga101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+	08 Jun 2021 18:48:24 -0700
+IronPort-SDR: SRFfjIkTZkgdiWUkfbuxO/DHCb0ZQrp7YLBvUKhmAbESyYDmfBnXBu/pgXAlW0d/t+PE9XTYIq
+	c7l/dYjK3T5A==
+X-IronPort-AV: E=Sophos;i="5.83,259,1616482800"; d="scan'208";a="448117931"
 Received: from iweiny-desk2.sc.intel.com (HELO localhost) ([10.3.52.147])
-	by orsmga001-auth.jf.intel.com with
-	ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 08 Jun 2021 18:58:19 -0700
-Date: Tue, 8 Jun 2021 18:58:19 -0700
+	by orsmga008-auth.jf.intel.com with
+	ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 08 Jun 2021 18:48:23 -0700
+Date: Tue, 8 Jun 2021 18:48:22 -0700
 From: Ira Weiny <ira.weiny@intel.com>
 To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20210609015819.GU3697498@iweiny-DESK2.sc.intel.com>
+Message-ID: <20210609014822.GT3697498@iweiny-DESK2.sc.intel.com>
 References: <20210608160603.1535935-1-hch@lst.de>
-	<20210608160603.1535935-15-hch@lst.de>
+	<20210608160603.1535935-10-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20210608160603.1535935-15-hch@lst.de>
+In-Reply-To: <20210608160603.1535935-10-hch@lst.de>
 User-Agent: Mutt/1.11.1 (2018-12-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -94,8 +92,7 @@ Cc: Jens Axboe <axboe@kernel.dk>,
 	linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
 	dm-devel@redhat.com, Ilya Dryomov <idryomov@gmail.com>,
 	linuxppc-dev@lists.ozlabs.org, ceph-devel@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH 14/16] block: use memcpy_from_bvec in
-	__blk_queue_bounce
+Subject: Re: [dm-devel] [PATCH 09/16] ps3disk: use memcpy_{from,to}_bvec
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -109,7 +106,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -118,62 +115,30 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Jun 08, 2021 at 06:06:01PM +0200, Christoph Hellwig wrote:
-> Rewrite the actual bounce buffering loop in __blk_queue_bounce to that
-> the memcpy_to_bvec helper can be used to perform the data copies.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  block/bounce.c | 21 +++++++--------------
->  1 file changed, 7 insertions(+), 14 deletions(-)
-> 
-> diff --git a/block/bounce.c b/block/bounce.c
-> index a2fc6326b6c9..b5ad09e07bcf 100644
-> --- a/block/bounce.c
-> +++ b/block/bounce.c
-> @@ -243,24 +243,17 @@ void __blk_queue_bounce(struct request_queue *q, struct bio **bio_orig)
->  	 * because the 'bio' is single-page bvec.
->  	 */
->  	for (i = 0, to = bio->bi_io_vec; i < bio->bi_vcnt; to++, i++) {
-> -		struct page *page = to->bv_page;
-> +		struct page *bounce_page;
+On Tue, Jun 08, 2021 at 06:05:56PM +0200, Christoph Hellwig wrote:
 >  
-> -		if (!PageHighMem(page))
-> +		if (!PageHighMem(to->bv_page))
->  			continue;
->  
-> -		to->bv_page = mempool_alloc(&page_pool, GFP_NOIO);
-> -		inc_zone_page_state(to->bv_page, NR_BOUNCE);
-> +		bounce_page = mempool_alloc(&page_pool, GFP_NOIO);
-> +		inc_zone_page_state(bounce_page, NR_BOUNCE);
->  
-> -		if (rw == WRITE) {
-> -			char *vto, *vfrom;
+>  	rq_for_each_segment(bvec, req, iter) {
+> -		unsigned long flags;
+> -		dev_dbg(&dev->sbd.core, "%s:%u: bio %u: %u sectors from %llu\n",
+> -			__func__, __LINE__, i, bio_sectors(iter.bio),
+> -			iter.bio->bi_iter.bi_sector);
 > -
-> -			flush_dcache_page(page);
-> -
-> -			vto = page_address(to->bv_page) + to->bv_offset;
-> -			vfrom = kmap_atomic(page) + to->bv_offset;
-> -			memcpy(vto, vfrom, to->bv_len);
-> -			kunmap_atomic(vfrom);
-> -		}
-> +		if (rw == WRITE)
-> +			memcpy_from_bvec(page_address(bounce_page), to);
+> -		size = bvec.bv_len;
+> -		buf = bvec_kmap_irq(&bvec, &flags);
+>  		if (gather)
+> -			memcpy(dev->bounce_buf+offset, buf, size);
+> +			memcpy_from_bvec(dev->bounce_buf + offset, &bvec);
+>  		else
+> -			memcpy(buf, dev->bounce_buf+offset, size);
+> -		offset += size;
+> -		flush_kernel_dcache_page(bvec.bv_page);
 
-NIT: the fact that the copy is from 'to' makes my head hurt...  But I don't
-see a good way to change that without declaring unnecessary variables...  :-(
+I'm still not 100% sure that these flushes are needed but the are not no-ops on
+every arch.  Would it be best to preserve them after the memcpy_to/from_bvec()?
 
-The logic seems right.
+Same thing in patch 11 and 14.
 
 Ira
-
-> +		to->bv_page = bounce_page;
->  	}
->  
->  	trace_block_bio_bounce(*bio_orig);
-> -- 
-> 2.30.2
-> 
 
 --
 dm-devel mailing list
