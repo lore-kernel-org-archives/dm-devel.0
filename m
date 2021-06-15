@@ -7,59 +7,59 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C71E4C49EA3
-	for <dm-devel@archiver.kernel.org>; Tue, 15 Jun 2021 13:31:10 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0A9DDC48BE8
+	for <dm-devel@archiver.kernel.org>; Tue, 15 Jun 2021 13:31:17 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 5960061474
-	for <dm-devel@archiver.kernel.org>; Tue, 15 Jun 2021 13:31:10 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5960061474
+	by mail.kernel.org (Postfix) with ESMTPS id 9B4176148E
+	for <dm-devel@archiver.kernel.org>; Tue, 15 Jun 2021 13:31:16 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 9B4176148E
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-528-LnVDes2aOh6Sjr9i3Pc7pQ-1; Tue, 15 Jun 2021 09:31:05 -0400
-X-MC-Unique: LnVDes2aOh6Sjr9i3Pc7pQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-483-2CuxecOHNF-D6qQ8MMjyuQ-1; Tue, 15 Jun 2021 09:31:11 -0400
+X-MC-Unique: 2CuxecOHNF-D6qQ8MMjyuQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C8572101271A;
-	Tue, 15 Jun 2021 13:30:40 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3565619611D1;
+	Tue, 15 Jun 2021 13:30:52 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9C73B100164C;
-	Tue, 15 Jun 2021 13:30:40 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 195F660861;
+	Tue, 15 Jun 2021 13:30:52 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6974446F59;
-	Tue, 15 Jun 2021 13:30:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E0A6546F59;
+	Tue, 15 Jun 2021 13:30:51 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15FDUdvj004935 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 15 Jun 2021 09:30:39 -0400
+	id 15FDUnWv004960 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 15 Jun 2021 09:30:49 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 21E369C054; Tue, 15 Jun 2021 13:30:39 +0000 (UTC)
+	id 93A98208AB80; Tue, 15 Jun 2021 13:30:49 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1C82BE308A
-	for <dm-devel@redhat.com>; Tue, 15 Jun 2021 13:30:36 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8F79F2087A56
+	for <dm-devel@redhat.com>; Tue, 15 Jun 2021 13:30:47 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F0EF010504AC
-	for <dm-devel@redhat.com>; Tue, 15 Jun 2021 13:30:35 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E751690DE3B
+	for <dm-devel@redhat.com>; Tue, 15 Jun 2021 13:30:46 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-39-z8bRmda6MR6wpBLQXR8jeg-1; Tue, 15 Jun 2021 09:30:33 -0400
-X-MC-Unique: z8bRmda6MR6wpBLQXR8jeg-1
+	us-mta-106-Oh0bijC8MqeMviGghqlIMw-1; Tue, 15 Jun 2021 09:30:44 -0400
+X-MC-Unique: Oh0bijC8MqeMviGghqlIMw-1
 Received: from [2001:4bb8:19b:fdce:9045:1e63:20f0:ca9] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1lt982-006oFb-3z; Tue, 15 Jun 2021 13:29:27 +0000
+	id 1lt98X-006oIn-SA; Tue, 15 Jun 2021 13:29:57 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>, Thomas Gleixner <tglx@linutronix.de>
-Date: Tue, 15 Jun 2021 15:24:49 +0200
-Message-Id: <20210615132456.753241-12-hch@lst.de>
+Date: Tue, 15 Jun 2021 15:24:50 +0200
+Message-Id: <20210615132456.753241-13-hch@lst.de>
 In-Reply-To: <20210615132456.753241-1-hch@lst.de>
 References: <20210615132456.753241-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,7 +73,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 Cc: linux-arch@vger.kernel.org, linux-block@vger.kernel.org,
 	Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
@@ -83,7 +83,8 @@ Cc: linux-arch@vger.kernel.org, linux-block@vger.kernel.org,
 	"James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>,
 	dm-devel@redhat.com, Ilya Dryomov <idryomov@gmail.com>,
 	Ira Weiny <ira.weiny@intel.com>, ceph-devel@vger.kernel.org
-Subject: [dm-devel] [PATCH 11/18] ps3disk: use memcpy_{from,to}_bvec
+Subject: [dm-devel] [PATCH 12/18] block: remove bvec_kmap_irq and
+	bvec_kunmap_irq
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -97,7 +98,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -105,47 +106,73 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Use the bvec helpers instead of open coding the copy.
+These two helpers are entirely unused now.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/ps3disk.c | 19 +++----------------
- 1 file changed, 3 insertions(+), 16 deletions(-)
+ include/linux/bio.h | 42 ------------------------------------------
+ 1 file changed, 42 deletions(-)
 
-diff --git a/drivers/block/ps3disk.c b/drivers/block/ps3disk.c
-index f374ea2c67ce..b7d4c3efd7a8 100644
---- a/drivers/block/ps3disk.c
-+++ b/drivers/block/ps3disk.c
-@@ -83,26 +83,13 @@ static void ps3disk_scatter_gather(struct ps3_storage_device *dev,
- 	unsigned int offset = 0;
- 	struct req_iterator iter;
- 	struct bio_vec bvec;
--	unsigned int i = 0;
--	size_t size;
--	void *buf;
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index d2b98efb5cc5..8070f3f77c14 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -5,7 +5,6 @@
+ #ifndef __LINUX_BIO_H
+ #define __LINUX_BIO_H
  
- 	rq_for_each_segment(bvec, req, iter) {
--		unsigned long flags;
--		dev_dbg(&dev->sbd.core, "%s:%u: bio %u: %u sectors from %llu\n",
--			__func__, __LINE__, i, bio_sectors(iter.bio),
--			iter.bio->bi_iter.bi_sector);
+-#include <linux/highmem.h>
+ #include <linux/mempool.h>
+ #include <linux/ioprio.h>
+ /* struct bio, bio_vec and BIO_* flags are defined in blk_types.h */
+@@ -519,47 +518,6 @@ static inline void bio_clone_blkg_association(struct bio *dst,
+ 					      struct bio *src) { }
+ #endif	/* CONFIG_BLK_CGROUP */
+ 
+-#ifdef CONFIG_HIGHMEM
+-/*
+- * remember never ever reenable interrupts between a bvec_kmap_irq and
+- * bvec_kunmap_irq!
+- */
+-static inline char *bvec_kmap_irq(struct bio_vec *bvec, unsigned long *flags)
+-{
+-	unsigned long addr;
 -
--		size = bvec.bv_len;
--		buf = bvec_kmap_irq(&bvec, &flags);
- 		if (gather)
--			memcpy(dev->bounce_buf+offset, buf, size);
-+			memcpy_from_bvec(dev->bounce_buf + offset, &bvec);
- 		else
--			memcpy(buf, dev->bounce_buf+offset, size);
--		offset += size;
--		flush_kernel_dcache_page(bvec.bv_page);
--		bvec_kunmap_irq(buf, &flags);
--		i++;
-+			memcpy_to_bvec(&bvec, dev->bounce_buf + offset);
-+		offset += bvec.bv_len;
- 	}
- }
- 
+-	/*
+-	 * might not be a highmem page, but the preempt/irq count
+-	 * balancing is a lot nicer this way
+-	 */
+-	local_irq_save(*flags);
+-	addr = (unsigned long) kmap_atomic(bvec->bv_page);
+-
+-	BUG_ON(addr & ~PAGE_MASK);
+-
+-	return (char *) addr + bvec->bv_offset;
+-}
+-
+-static inline void bvec_kunmap_irq(char *buffer, unsigned long *flags)
+-{
+-	unsigned long ptr = (unsigned long) buffer & PAGE_MASK;
+-
+-	kunmap_atomic((void *) ptr);
+-	local_irq_restore(*flags);
+-}
+-
+-#else
+-static inline char *bvec_kmap_irq(struct bio_vec *bvec, unsigned long *flags)
+-{
+-	return page_address(bvec->bv_page) + bvec->bv_offset;
+-}
+-
+-static inline void bvec_kunmap_irq(char *buffer, unsigned long *flags)
+-{
+-	*flags = 0;
+-}
+-#endif
+-
+ /*
+  * BIO list management for use by remapping drivers (e.g. DM or MD) and loop.
+  *
 -- 
 2.30.2
 
