@@ -7,74 +7,74 @@ X-Spam-Status: No, score=-17.4 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
 	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0C255C48BDF
-	for <dm-devel@archiver.kernel.org>; Tue, 15 Jun 2021 17:46:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 28131C48BE5
+	for <dm-devel@archiver.kernel.org>; Tue, 15 Jun 2021 17:48:01 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 969A5611CE
-	for <dm-devel@archiver.kernel.org>; Tue, 15 Jun 2021 17:46:07 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 969A5611CE
+	by mail.kernel.org (Postfix) with ESMTPS id BA95161009
+	for <dm-devel@archiver.kernel.org>; Tue, 15 Jun 2021 17:48:00 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BA95161009
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1623779166;
+	s=mimecast20190719; t=1623779279;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=uYEzejil6E0c52wfwyh8yNF/crkdTE2wf7QMHETVHt8=;
-	b=X0K0sdtlqTtOT7zR5sZcZtD3uuUXFEK1VwiiKygX0uWCMAS38ni/JhPQjgFHR5tonlIiW7
-	BoDmD1NpzCOQVbl1aZ8viQrZQ4UHeRkQ0PzmHpE8oEEOQa9DTaCxtpBEhUwFSTm4ix8TGt
-	5vyqKOcH1dvHyk7lmdpRBxljcNQBUJg=
+	bh=9vEYu+liNWbaMDatwgfgiJeLPLIE4C3G8hSZ3y8wwNM=;
+	b=QjBe0x8ud8rQNBYfn2ymCGdzlrL9rzTnhtW/7drmNxj5e8cnfOHYCCgUJJNFlfEWej5hZJ
+	6YVLkgS+T7OwVyyA21L1NebRPoTK0Aql7+miMp3+nv3nRTCeY0TW55KCbX2XVw1+YjwUrl
+	/TumZM/GZbRM6V9q0B5q/wYzr8E7J2w=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-443-fo1Yt_L5NzqvFLGX8bHNnA-1; Tue, 15 Jun 2021 13:46:04 -0400
-X-MC-Unique: fo1Yt_L5NzqvFLGX8bHNnA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-601-6pySQdhzPkWoMjc73DRFVg-1; Tue, 15 Jun 2021 13:47:58 -0400
+X-MC-Unique: 6pySQdhzPkWoMjc73DRFVg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AAFC7101C8AB;
-	Tue, 15 Jun 2021 17:45:59 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2CC3F1002D71;
-	Tue, 15 Jun 2021 17:45:59 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9AF1A101C8AD;
+	Tue, 15 Jun 2021 17:47:53 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4F49F19C66;
+	Tue, 15 Jun 2021 17:47:53 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2B86B1809CAD;
-	Tue, 15 Jun 2021 17:45:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com
-	[10.5.11.16])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 10F414A717;
+	Tue, 15 Jun 2021 17:47:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
+	[10.5.11.22])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15FHjun1000997 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 15 Jun 2021 13:45:56 -0400
+	id 15FHlpSQ001176 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 15 Jun 2021 13:47:51 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6E1705C233; Tue, 15 Jun 2021 17:45:56 +0000 (UTC)
+	id 45E1F100E113; Tue, 15 Jun 2021 17:47:51 +0000 (UTC)
 Received: from file01.intranet.prod.int.rdu2.redhat.com
 	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4EE1A5C1C2;
-	Tue, 15 Jun 2021 17:45:56 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E416F1002D71;
+	Tue, 15 Jun 2021 17:47:47 +0000 (UTC)
 Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
 	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 15FHjtWe000851; Tue, 15 Jun 2021 13:45:55 -0400
+	id 15FHllea000958; Tue, 15 Jun 2021 13:47:47 -0400
 Received: from localhost (mpatocka@localhost)
 	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 15FHjtGX000848; Tue, 15 Jun 2021 13:45:55 -0400
+	ESMTP id 15FHllF3000954; Tue, 15 Jun 2021 13:47:47 -0400
 X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
 	owned process doing -bs
-Date: Tue, 15 Jun 2021 13:45:55 -0400 (EDT)
+Date: Tue, 15 Jun 2021 13:47:47 -0400 (EDT)
 From: Mikulas Patocka <mpatocka@redhat.com>
 X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
 To: Mike Snitzer <msnitzer@redhat.com>
-Message-ID: <alpine.LRH.2.02.2106151312170.29600@file01.intranet.prod.int.rdu2.redhat.com>
+Message-ID: <alpine.LRH.2.02.2106151346100.29600@file01.intranet.prod.int.rdu2.redhat.com>
 User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 X-loop: dm-devel@redhat.com
 Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com,
 	Joe Thornber <thornber@redhat.com>
-Subject: [dm-devel] [PATCH] dm-writecache: fix missing flush to the origin
-	device
+Subject: [dm-devel] [PATCH] dm-writecache: back off if the kcopyd workqueue
+	is blocked
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -88,7 +88,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -96,58 +96,56 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-dm-writecache: fix missing flush to the origin device
-
-The patch d53f1fafec9d086f1c5166436abefdaef30e0363 ("dm writecache: do
-direct write if the cache is full") changed dm-writecache, so that it
-writes directly to the origin device if the cache is full. Unfortunatelly,
-it doesn't forward flush requests to the origin device, so that there is a
-bug where flushes are being ignored.
-
-This patch adds missing flush forwarding.
-
-For PMEM mode, we fix this bug by disabling direct writes to the origin
-device, because it performs better.
+This patch makes dm-writecache wait if the kcopyd workqueue is blocked (it 
+happens when one of the devices is contested). It improves performance of 
+"mkfs.ext2" by approximatelly 20%.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org	# v5.7+
-Fixes: d53f1fafec9d ("dm writecache: do direct write if the cache is full")
 
+Index: linux/drivers/md/dm-kcopyd.c
+===================================================================
+--- linux.orig/drivers/md/dm-kcopyd.c
++++ linux/drivers/md/dm-kcopyd.c
+@@ -888,6 +888,12 @@ void dm_kcopyd_do_callback(void *j, int
+ }
+ EXPORT_SYMBOL(dm_kcopyd_do_callback);
+ 
++void dm_kcopyd_wait_if_busy(struct dm_kcopyd_client *kc)
++{
++	flush_workqueue(kc->kcopyd_wq);
++}
++EXPORT_SYMBOL(dm_kcopyd_wait_if_busy);
++
+ /*
+  * Cancels a kcopyd job, eg. someone might be deactivating a
+  * mirror.
 Index: linux/drivers/md/dm-writecache.c
 ===================================================================
 --- linux.orig/drivers/md/dm-writecache.c
 +++ linux/drivers/md/dm-writecache.c
-@@ -1297,8 +1297,12 @@ static int writecache_map(struct dm_targ
- 			writecache_flush(wc);
- 			if (writecache_has_error(wc))
- 				goto unlock_error;
-+			if (unlikely(wc->cleaner))
-+				goto unlock_remap_origin;
- 			goto unlock_submit;
- 		} else {
-+			if (dm_bio_get_target_bio_nr(bio))
-+				goto unlock_remap_origin;
- 			writecache_offload_bio(wc, bio);
- 			goto unlock_return;
- 		}
-@@ -1377,7 +1381,7 @@ read_next_block:
- 			}
- 			e = writecache_pop_from_freelist(wc, (sector_t)-1);
- 			if (unlikely(!e)) {
--				if (!found_entry) {
-+				if (!WC_MODE_PMEM(wc) && !found_entry) {
- direct_write:
- 					e = writecache_find_entry(wc, bio->bi_iter.bi_sector, WFE_RETURN_FOLLOWING);
- 					if (e) {
-@@ -2479,7 +2483,7 @@ overflow:
- 		goto bad;
- 	}
+@@ -1819,6 +1819,9 @@ static void writecache_writeback(struct
+ 	struct writeback_list wbl;
+ 	unsigned long n_walked;
  
--	ti->num_flush_bios = 1;
-+	ti->num_flush_bios = WC_MODE_PMEM(wc) ? 1 : 2;
- 	ti->flush_supported = true;
- 	ti->num_discard_bios = 1;
++	if (!WC_MODE_PMEM(wc))
++		dm_kcopyd_wait_if_busy(wc->dm_kcopyd);
++
+ 	wc_lock(wc);
+ restart:
+ 	if (writecache_has_error(wc)) {
+Index: linux/include/linux/dm-kcopyd.h
+===================================================================
+--- linux.orig/include/linux/dm-kcopyd.h
++++ linux/include/linux/dm-kcopyd.h
+@@ -81,6 +81,8 @@ void *dm_kcopyd_prepare_callback(struct
+ 				 dm_kcopyd_notify_fn fn, void *context);
+ void dm_kcopyd_do_callback(void *job, int read_err, unsigned long write_err);
  
++void dm_kcopyd_wait_if_busy(struct dm_kcopyd_client *kc);
++
+ void dm_kcopyd_zero(struct dm_kcopyd_client *kc,
+ 		    unsigned num_dests, struct dm_io_region *dests,
+ 		    unsigned flags, dm_kcopyd_notify_fn fn, void *context);
 
 --
 dm-devel mailing list
