@@ -2,76 +2,68 @@ Return-Path: <SRS0=rgwX=LJ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A3242C48BE8
-	for <dm-devel@archiver.kernel.org>; Tue, 15 Jun 2021 10:54:57 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BFC8CC48BDF
+	for <dm-devel@archiver.kernel.org>; Tue, 15 Jun 2021 13:27:13 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 39DF961454
-	for <dm-devel@archiver.kernel.org>; Tue, 15 Jun 2021 10:54:57 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 39DF961454
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id 4181761468
+	for <dm-devel@archiver.kernel.org>; Tue, 15 Jun 2021 13:27:13 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4181761468
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-588-RcfUT4mDMg6TpucLpfUy1g-1; Tue, 15 Jun 2021 06:54:55 -0400
-X-MC-Unique: RcfUT4mDMg6TpucLpfUy1g-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-49-2uM5DSKKOl-a9HhzbeZHJA-1; Tue, 15 Jun 2021 09:27:10 -0400
+X-MC-Unique: 2uM5DSKKOl-a9HhzbeZHJA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B0412100CA8A;
-	Tue, 15 Jun 2021 10:54:49 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6DB065D6DC;
-	Tue, 15 Jun 2021 10:54:48 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 17BB5100C662;
+	Tue, 15 Jun 2021 13:27:04 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3AFB9100238C;
+	Tue, 15 Jun 2021 13:27:03 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BEB6146F82;
-	Tue, 15 Jun 2021 10:54:44 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 43F511809CAD;
+	Tue, 15 Jun 2021 13:27:00 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15FAshJY022079 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 15 Jun 2021 06:54:43 -0400
+	id 15FDQsND004457 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 15 Jun 2021 09:26:55 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 20C19AB3FF; Tue, 15 Jun 2021 10:54:43 +0000 (UTC)
+	id 528092136D73; Tue, 15 Jun 2021 13:26:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1B266AEC93
-	for <dm-devel@redhat.com>; Tue, 15 Jun 2021 10:54:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4E10F2136D79
+	for <dm-devel@redhat.com>; Tue, 15 Jun 2021 13:26:50 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 57AD380B926
-	for <dm-devel@redhat.com>; Tue, 15 Jun 2021 10:54:40 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) (Using
-	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-418-aI-ktoJOOaaCeeqRg--Vpg-1; Tue, 15 Jun 2021 06:54:33 -0400
-X-MC-Unique: aI-ktoJOOaaCeeqRg--Vpg-1
-Received: from imap.suse.de (imap-alt.suse-dmz.suse.de [192.168.254.47])
-	(using TLSv1.2 with cipher ECDHE-ECDSA-AES128-GCM-SHA256 (128/128
-	bits)) (No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 0E6E321916;
-	Tue, 15 Jun 2021 10:54:32 +0000 (UTC)
-Received: from imap3-int (imap-alt.suse-dmz.suse.de [192.168.254.47])
-	by imap.suse.de (Postfix) with ESMTP id A042C118DD;
-	Tue, 15 Jun 2021 10:54:31 +0000 (UTC)
-Received: from director2.suse.de ([192.168.254.72]) by imap3-int with ESMTPSA
-	id 1N34JOeGyGCBMAAALh3uQQ
-	(envelope-from <mwilck@suse.com>); Tue, 15 Jun 2021 10:54:31 +0000
-Message-ID: <44fc94278e0c4b15a611a6887c668f41c262e001.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Mike Snitzer <snitzer@redhat.com>
-Date: Tue, 15 Jun 2021 12:54:31 +0200
-In-Reply-To: <YMdyh62mR/lEifMR@redhat.com>
-References: <20210611202509.5426-1-mwilck@suse.com>
-	<YMdyh62mR/lEifMR@redhat.com>
-User-Agent: Evolution 3.40.1
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C7291857AA4
+	for <dm-devel@redhat.com>; Tue, 15 Jun 2021 13:26:50 +0000 (UTC)
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-236-siveVz2JPV2aPckZ2xQx0A-1; Tue, 15 Jun 2021 09:26:48 -0400
+X-MC-Unique: siveVz2JPV2aPckZ2xQx0A-1
+Received: from [2001:4bb8:19b:fdce:9045:1e63:20f0:ca9] (helo=localhost)
+	by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+	id 1lt94Z-006nvL-Mz; Tue, 15 Jun 2021 13:25:50 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Jens Axboe <axboe@kernel.dk>, Thomas Gleixner <tglx@linutronix.de>
+Date: Tue, 15 Jun 2021 15:24:41 +0200
+Message-Id: <20210615132456.753241-4-hch@lst.de>
+In-Reply-To: <20210615132456.753241-1-hch@lst.de>
+References: <20210615132456.753241-1-hch@lst.de>
 MIME-Version: 1.0
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+	casper.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -80,17 +72,18 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 15FAshJY022079
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: linux-scsi@vger.kernel.org, Daniel Wagner <dwagner@suse.de>, Christoph,
-	linux-block@vger.kernel.org, dm-devel@redhat.com,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	Bart Van Assche <Bart.VanAssche@sandisk.com>,
-	Hellwig <hch@lst.de>, Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH v3 0/2] dm: dm_blk_ioctl(): implement
- failover for SG_IO on dm-multipath
+Cc: linux-arch@vger.kernel.org, linux-block@vger.kernel.org,
+	Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
+	Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>,
+	Mike Snitzer <snitzer@redhat.com>, Geoff Levand <geoff@infradead.org>,
+	linuxppc-dev@lists.ozlabs.org, linux-mips@vger.kernel.org,
+	Dongsheng Yang <dongsheng.yang@easystack.cn>, linux-kernel@vger.kernel.org,
+	"James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>,
+	dm-devel@redhat.com, Ilya Dryomov <idryomov@gmail.com>,
+	Ira Weiny <ira.weiny@intel.com>, ceph-devel@vger.kernel.org
+Subject: [dm-devel] [PATCH 03/18] mm: use kmap_local_page in memzero_page
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -104,109 +97,41 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-Hi Mike,
+No need for kmap_atomic here.
 
-On Mo, 2021-06-14 at 11:15 -0400, Mike Snitzer wrote:
->=20
-> This work offers a proof-of-concept but it needs further refinement
-> for sure.
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
+Reviewed-by: Ira Weiny <ira.weiny@intel.com>
+---
+ include/linux/highmem.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-Thanks for looking into it again. I need some more guidance from your
-part in order to be able to resubmit the set in a form that you
-consider ready for merging.
-
-> The proposed open-coded SCSI code (in patch 2's drivers/md/dm-
-> scsi_ioctl.c)=20
-> is well beyond what I'm willing to take in DM.
-
-I'm not sure what code you're referring to. Is it the processing of the
-bytes of the SCSI result code? If yes, please note that I had changed
-that to open-coded form in response to Bart's review of my v2
-submission. If it's something else, please point it out to me.
-
-To minimize the special-casing for this code path, Hannes suggested to
-use a target-specific unprepare_ioctl() callback to to tell the generic
-dm code whether a given ioctl could be retried.=A0The logic that I've put
-into=A0dm-scsi_ioctl.c could then be moved into the unprepare_ioctl()
-callback of dm-mpath.=A0dm_blk_ioctl() would need to check the callback's
-return value and possibly retry the ioctl. Would hat appeal to you?
-
-> =A0 If this type of
-> functionality is still needed (for kvm's SCSI passthru snafu) then
-> more work is needed to negotiate proper interfaces with the SCSI
-> subsystem (added linux-scsi to cc, odd they weren't engaged on this).
-
-Not cc'ing linux-scsi was my oversight, sorry about that.=A0
-
-But I don't quite understand what interfaces you have in mind. SCSI
-needs to expose the SG_IO interface to dm, which it does; I just needed
-to export sg_io() to get access to the sg_io_hdr fields. The question
-whether a given IO can be retried is decided on the dm (-mpath) layer,
-based on blk_status_t; no additional interface on the SCSI side is
-necessary for that.
-
-> Does it make sense to extend the SCSI device handler interface to add
-> the required enablement? (I think it'd have to if this line of work
-> is
-> to ultimately get upstream).
-
-My current code uses the device handler indirectly for activating paths
-during priority group switching, via the dm-mpath prepare_ioctl()
-method and __pg_init_all_paths(). This is what I intended - to use
-exactly the same logic for SG_IO which is used for regular read/write
-IO on the block device.=A0What additional functionality for the device
-handler do you have in mind?
-
-Regards and thanks,
-Martin
-
->=20
-> Mike
->=20
-> =A0=20
-> > Changes v1->v2:
-> >=20
-> > =A0- applied modifications from Mike Snitzer
-> > =A0- moved SG_IO dependent code to a separate file, no scsi includes
-> > in
-> > =A0=A0 dm.c any more
-> > =A0- made the new code depend on a configuration option=20
-> > =A0- separated out scsi changes, made scsi_result_to_blk_status()
-> > =A0=A0 inline to avoid dependency of dm_mod from scsi_mod (Paolo
-> > Bonzini)
-> >=20
-> > Martin Wilck (2):
-> > =A0 scsi: export __scsi_result_to_blk_status() in scsi_ioctl.c
-> > =A0 dm: add CONFIG_DM_MULTIPATH_SG_IO - failover for SG_IO on dm-
-> > multipath
-> >=20
-> > =A0block/scsi_ioctl.c=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 52 ++++++++++++++-
-> > =A0drivers/md/Kconfig=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 11 ++++
-> > =A0drivers/md/Makefile=A0=A0=A0=A0=A0=A0=A0 |=A0=A0 4 ++
-> > =A0drivers/md/dm-core.h=A0=A0=A0=A0=A0=A0 |=A0=A0 5 ++
-> > =A0drivers/md/dm-rq.h=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 11 ++++
-> > =A0drivers/md/dm-scsi_ioctl.c | 127
-> > +++++++++++++++++++++++++++++++++++++
-> > =A0drivers/md/dm.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 20 +++++-
-> > =A0drivers/scsi/scsi_lib.c=A0=A0=A0 |=A0 29 +--------
-> > =A0include/linux/blkdev.h=A0=A0=A0=A0 |=A0=A0 3 +
-> > =A09 files changed, 229 insertions(+), 33 deletions(-)
-> > =A0create mode 100644 drivers/md/dm-scsi_ioctl.c
-> >=20
-> > --=20
-> > 2.31.1
-> >=20
->=20
-
-
+diff --git a/include/linux/highmem.h b/include/linux/highmem.h
+index d0497c0daf80..d3df0e2db44f 100644
+--- a/include/linux/highmem.h
++++ b/include/linux/highmem.h
+@@ -338,9 +338,9 @@ static inline void memcpy_to_page(struct page *page, size_t offset,
+ 
+ static inline void memzero_page(struct page *page, size_t offset, size_t len)
+ {
+-	char *addr = kmap_atomic(page);
++	char *addr = kmap_local_page(page);
+ 	memset(addr + offset, 0, len);
+-	kunmap_atomic(addr);
++	kunmap_local_dirty(page, addr);
+ }
+ 
+ #endif /* _LINUX_HIGHMEM_H */
+-- 
+2.30.2
 
 --
 dm-devel mailing list
