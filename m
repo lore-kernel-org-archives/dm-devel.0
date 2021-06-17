@@ -2,73 +2,107 @@ Return-Path: <SRS0=ZDE9=LL=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.9 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=unavailable autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1D018C48BE5
-	for <dm-devel@archiver.kernel.org>; Thu, 17 Jun 2021 02:16:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C46F8C2B9F4
+	for <dm-devel@archiver.kernel.org>; Thu, 17 Jun 2021 07:04:47 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id B95C4613DE
-	for <dm-devel@archiver.kernel.org>; Thu, 17 Jun 2021 02:16:11 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org B95C4613DE
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 523A361369
+	for <dm-devel@archiver.kernel.org>; Thu, 17 Jun 2021 07:04:47 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 523A361369
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=intel.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1623896170;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=viCg7pg8jNfBrl4IBPG4Rs7p7JWLnvet7ZgkkKTA5mI=;
-	b=fTu/W13HQEnmuBl/GjpVNzFooxTphQNP+iGvCpFgRwGaegcY6q7kpEHXugtjWai/gNWe3I
-	uGFdAaU9ZjyXVm/E9Kg0y0ABQzxHyl8bXIag1Ykq4mmmrlyUsY6MuQBY5Wa3fgsxY5kx7/
-	jWdnVlbJVKKKRfrr7zJ4HO0juiB3TTs=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-262-9C7zz8T7PHugk5HgTkxL8g-1; Wed, 16 Jun 2021 22:16:08 -0400
-X-MC-Unique: 9C7zz8T7PHugk5HgTkxL8g-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-598-8AzuMcw7N3S5Lwp1UqBCTg-1; Thu, 17 Jun 2021 03:04:44 -0400
+X-MC-Unique: 8AzuMcw7N3S5Lwp1UqBCTg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 77D5DFC9E;
-	Thu, 17 Jun 2021 02:16:03 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CDDA760C05;
-	Thu, 17 Jun 2021 02:16:02 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2E8DB9126F;
+	Thu, 17 Jun 2021 07:04:40 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C58D05D9E2;
+	Thu, 17 Jun 2021 07:04:38 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9068A1809CAD;
-	Thu, 17 Jun 2021 02:15:59 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
-	[10.5.11.12])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6369446F81;
+	Thu, 17 Jun 2021 07:04:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15H2EpmY010038 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 16 Jun 2021 22:14:51 -0400
+	id 15H74XbS031993 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 17 Jun 2021 03:04:34 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 38FB460C4A; Thu, 17 Jun 2021 02:14:51 +0000 (UTC)
-Received: from T590 (ovpn-12-121.pek2.redhat.com [10.72.12.121])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E38F960C05;
-	Thu, 17 Jun 2021 02:14:34 +0000 (UTC)
-Date: Thu, 17 Jun 2021 10:14:30 +0800
-From: Ming Lei <ming.lei@redhat.com>
-To: Mike Snitzer <snitzer@redhat.com>
-Message-ID: <YMqwBtjx7M+uzlg2@T590>
-References: <20210616130533.754248-1-ming.lei@redhat.com>
-	<20210616130533.754248-5-ming.lei@redhat.com>
-	<YMohOUlopTcO1Bzd@redhat.com>
+	id 982C110F05B; Thu, 17 Jun 2021 07:04:33 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 93984113B46
+	for <dm-devel@redhat.com>; Thu, 17 Jun 2021 07:04:28 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8234F1857F1E
+	for <dm-devel@redhat.com>; Thu, 17 Jun 2021 07:04:28 +0000 (UTC)
+Received: from mail-pg1-f170.google.com (mail-pg1-f170.google.com
+	[209.85.215.170]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-31-uOXKVuNiPnOnUpGx39dALA-1; Thu, 17 Jun 2021 03:04:26 -0400
+X-MC-Unique: uOXKVuNiPnOnUpGx39dALA-1
+Received: by mail-pg1-f170.google.com with SMTP id t9so4175275pgn.4
+	for <dm-devel@redhat.com>; Thu, 17 Jun 2021 00:04:25 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc:content-transfer-encoding;
+	bh=LDO+ysM0sZT13J4jvjx62XJsQjzELPOWU0d8eft8zqE=;
+	b=BM1GP+pSLT4woMtssXW3go6ICmDA5RDnk0ioYKofsogiSDYGZYfKF/oZri401tc2io
+	RGTtUDy7BnMiPTxck8MK9Akp2I1mPo21sRGXtCB03DbGQ99xKqQY3skSZ1XM57fbkp72
+	kGKIKNCI08zNTz37c/Ihidjj6OTpmaNY6Q0T/Mo4leeqiFOu2N0bs4yuOf7nth8m1k8u
+	z/GHzrHO0iXydAJzcrl6F3VDL/AdAr9RwsB0vyRURy6cbvFfuk3YSwfWO6++Gw2H6mxS
+	j711Nt7LNTPrLuO+mk6SuAQj/aeRzy59eBtW7l6GWMHfkZqacdFyqy/xcmx0HMRrCLaw
+	GB4Q==
+X-Gm-Message-State: AOAM533xuu5MHpHsLJ+4zQwG6CeuPxrtx//ecSUu2SHbDOo7vgu27bB1
+	i4g0CjRhrbo8CaUGiu4jT6hY+fzpZ49AT/+NW9S7qA==
+X-Google-Smtp-Source: ABdhPJytJXCfpu88GCMpLd2JmLVLvndI0iUm974A4Uf+gWPRlWE3qUqN/z2XXe284KMMKTo0F5nBS9HRMjP/H8ccbSA=
+X-Received: by 2002:a62:768c:0:b029:2ff:2002:d3d0 with SMTP id
+	r134-20020a62768c0000b02902ff2002d3d0mr324838pfc.70.1623913464979;
+	Thu, 17 Jun 2021 00:04:24 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <YMohOUlopTcO1Bzd@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+References: <20210604011844.1756145-1-ruansy.fnst@fujitsu.com>
+	<20210604011844.1756145-4-ruansy.fnst@fujitsu.com>
+	<CAPcyv4h=bUCgFudKTrW09dzi8MWxg7cBC9m68zX1=HY24ftR-A@mail.gmail.com>
+	<OSBPR01MB29203DC17C538F7B1B1C9224F40E9@OSBPR01MB2920.jpnprd01.prod.outlook.com>
+In-Reply-To: <OSBPR01MB29203DC17C538F7B1B1C9224F40E9@OSBPR01MB2920.jpnprd01.prod.outlook.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Date: Thu, 17 Jun 2021 00:04:14 -0700
+Message-ID: <CAPcyv4ihuErfVWHL0F1OExQashutJjBdaLn5X5oPm44OkQ+a_A@mail.gmail.com>
+To: "ruansy.fnst@fujitsu.com" <ruansy.fnst@fujitsu.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 15H74XbS031993
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	dm-devel@redhat.com, Jeffle Xu <jefflexu@linux.alibaba.com>,
-	Christoph Hellwig <hch@lst.de>
-Subject: Re: [dm-devel] [RFC PATCH 4/4] dm: support bio polling
+Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Mike Snitzer <snitzer@redhat.com>,
+	"Darrick J. Wong" <darrick.wong@oracle.com>,
+	Goldwyn Rodrigues <rgoldwyn@suse.de>, david <david@fromorbit.com>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	linux-xfs <linux-xfs@vger.kernel.org>, Linux MM <linux-mm@kvack.org>,
+	device-mapper development <dm-devel@redhat.com>,
+	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+	Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH v4 03/10] fs: Introduce ->corrupted_range()
+	for superblock
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -82,228 +116,85 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Jun 16, 2021 at 12:05:13PM -0400, Mike Snitzer wrote:
-> On Wed, Jun 16 2021 at  9:05P -0400,
-> Ming Lei <ming.lei@redhat.com> wrote:
-> 
-> > Support bio(REQ_POLLED) polling in the following approach:
-> > 
-> > 1) setup one list in instance of 'struct dm_io', adds every 'struct
-> > dm_target_io' instance cloned for current dm bio into this list;
-> > store the list in 1) into bio->bi_bio_drv_data
-> > 
-> > 2) hold one refcnt on io->io_count after submitting this dm bio with
-> > REQ_POLLED
-> > 
-> > 4) implement .poll_bio() callback, and iterate over the list in 1) and
-> > polled on each ->clone of 'dm_target_io' instance; call dec_pending()
-> > if all target ios are done in .poll_bio().
-> > 
-> > 4) enable QUEUE_FLAG_POLL if all underlying queues enable QUEUE_FLAG_POLL,
-> > which is based on Jeffle's previous patch.
-> > 
-> > Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> 
-> Thanks for refreshing this DM bio polling support Ming.
-> 
-> In general I'm really happy to see polling switch over to using bios,
-> nice job Christoph! Are you hoping for all this to land in time for
-> 5.14 merge?
-> 
-> Once Ming responds to my review inlined below, and I Acked-by his
-> set, would you be willing to fold it at the end of your patchset so
-> that I don't need to rebase on block to get these changes in, etc?
-> 
-> Mike
-> 
-> > ---
-> >  drivers/md/dm-table.c | 24 ++++++++++++++++++
-> >  drivers/md/dm.c       | 59 ++++++++++++++++++++++++++++++++++++++++---
-> >  2 files changed, 79 insertions(+), 4 deletions(-)
-> > 
-> > diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> > index ee47a332b462..b14b379442d2 100644
-> > --- a/drivers/md/dm-table.c
-> > +++ b/drivers/md/dm-table.c
-> > @@ -1491,6 +1491,12 @@ struct dm_target *dm_table_find_target(struct dm_table *t, sector_t sector)
-> >  	return &t->targets[(KEYS_PER_NODE * n) + k];
-> >  }
-> >  
-> > +static int device_not_poll_capable(struct dm_target *ti, struct dm_dev *dev,
-> > +				   sector_t start, sector_t len, void *data)
-> > +{
-> > +	return !blk_queue_poll(bdev_get_queue(dev->bdev));
-> > +}
-> > +
-> >  /*
-> >   * type->iterate_devices() should be called when the sanity check needs to
-> >   * iterate and check all underlying data devices. iterate_devices() will
-> > @@ -1541,6 +1547,11 @@ static int count_device(struct dm_target *ti, struct dm_dev *dev,
-> >  	return 0;
-> >  }
-> >  
-> > +static int dm_table_supports_poll(struct dm_table *t)
-> > +{
-> > +	return !dm_table_any_dev_attr(t, device_not_poll_capable, NULL);
-> > +}
-> > +
-> >  /*
-> >   * Check whether a table has no data devices attached using each
-> >   * target's iterate_devices method.
-> > @@ -2078,6 +2089,19 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
-> >  
-> >  	dm_update_keyslot_manager(q, t);
-> >  	blk_queue_update_readahead(q);
-> > +
-> > +	/*
-> > +	 * Check for request-based device is remained to
-> > +	 * dm_mq_init_request_queue()->blk_mq_init_allocated_queue().
-> > +	 * For bio-based device, only set QUEUE_FLAG_POLL when all underlying
-> > +	 * devices supporting polling.
-> > +	 */
-> > +	if (__table_type_bio_based(t->type)) {
-> > +		if (dm_table_supports_poll(t))
-> > +			blk_queue_flag_set(QUEUE_FLAG_POLL, q);
-> > +		else
-> > +			blk_queue_flag_clear(QUEUE_FLAG_POLL, q);
-> > +	}
-> >  }
-> >  
-> >  unsigned int dm_table_get_num_targets(struct dm_table *t)
-> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > index 363f12a285ce..0a0e4a38f435 100644
-> > --- a/drivers/md/dm.c
-> > +++ b/drivers/md/dm.c
-> > @@ -84,6 +84,7 @@ struct dm_target_io {
-> >  	struct dm_target *ti;
-> >  	unsigned target_bio_nr;
-> >  	unsigned *len_ptr;
-> > +	struct list_head list;
-> >  	bool inside_dm_io;
-> >  	struct bio clone;
-> >  };
-> > @@ -99,6 +100,7 @@ struct dm_io {
-> >  	blk_status_t status;
-> >  	atomic_t io_count;
-> >  	struct bio *orig_bio;
-> > +	struct list_head poll_head;
-> >  	unsigned long start_time;
-> >  	spinlock_t endio_lock;
-> >  	struct dm_stats_aux stats_aux;
-> > @@ -655,6 +657,11 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
-> >  	io->md = md;
-> >  	spin_lock_init(&io->endio_lock);
-> >  
-> > +	if (bio->bi_opf & REQ_POLLED) {
-> > +		bio->bi_bio_drv_data = io;
-> > +		INIT_LIST_HEAD(&io->poll_head);
-> > +	}
-> > +
-> >  	start_io_acct(io);
-> >  
-> >  	return io;
-> > @@ -692,6 +699,8 @@ static struct dm_target_io *alloc_tio(struct clone_info *ci, struct dm_target *t
-> >  
-> >  static void free_tio(struct dm_target_io *tio)
-> >  {
-> > +	list_del_init(&tio->list);
-> > +
-> >  	if (tio->inside_dm_io)
-> >  		return;
-> >  	bio_put(&tio->clone);
-> > @@ -936,10 +945,15 @@ static void dec_pending(struct dm_io *io, blk_status_t error)
-> >  		io_error = io->status;
-> >  		bio = io->orig_bio;
-> >  		end_io_acct(io);
-> > +
-> >  		free_io(md, io);
-> >  
-> > -		if (io_error == BLK_STS_DM_REQUEUE)
-> > +		if (io_error == BLK_STS_DM_REQUEUE) {
-> > +			/* not poll any more in case of requeue */
-> > +			if (bio->bi_opf & REQ_POLLED)
-> > +				bio->bi_opf &= ~REQ_POLLED;
-> >  			return;
-> > +		}
-> >  
-> >  		if ((bio->bi_opf & REQ_PREFLUSH) && bio->bi_iter.bi_size) {
-> >  			/*
-> > @@ -1043,7 +1057,9 @@ static void clone_endio(struct bio *bio)
-> >  		up(&md->swap_bios_semaphore);
-> >  	}
-> >  
-> > -	free_tio(tio);
-> > +	/* Any cloned bio submitted as POLLED, free them all after dm_io is done */
-> > +	if (list_empty(&tio->list))
-> > +		free_tio(tio);
-> >  	dec_pending(io, error);
-> >  }
-> >  
-> > @@ -1300,6 +1316,11 @@ static void __map_bio(struct dm_target_io *tio)
-> >  	struct dm_io *io = tio->io;
-> >  	struct dm_target *ti = tio->ti;
-> >  
-> > +	if (clone->bi_opf & REQ_POLLED)
-> > +		list_add_tail(&tio->list, &io->poll_head);
-> > +	else
-> > +		INIT_LIST_HEAD(&tio->list);
-> > +
-> 
-> Why not INIT_LIST_HEAD() at end of alloc_tio()? Shouldn't that be done
-> even if you have this else claue here because you can clear REQ_POLLED
-> on BLK_STS_DM_REQUEUE? (otherwise you're calling list_add_tail on list
-> that wasn't ever INIT_LIST_HEAD).
+On Wed, Jun 16, 2021 at 11:51 PM ruansy.fnst@fujitsu.com
+<ruansy.fnst@fujitsu.com> wrote:
+>
+> > -----Original Message-----
+> > From: Dan Williams <dan.j.williams@intel.com>
+> > Subject: Re: [PATCH v4 03/10] fs: Introduce ->corrupted_range() for superblock
+> >
+> > [ drop old linux-nvdimm@lists.01.org, add nvdimm@lists.linux.dev ]
+> >
+> > On Thu, Jun 3, 2021 at 6:19 PM Shiyang Ruan <ruansy.fnst@fujitsu.com> wrote:
+> > >
+> > > Memory failure occurs in fsdax mode will finally be handled in
+> > > filesystem.  We introduce this interface to find out files or metadata
+> > > affected by the corrupted range, and try to recover the corrupted data
+> > > if possiable.
+> > >
+> > > Signed-off-by: Shiyang Ruan <ruansy.fnst@fujitsu.com>
+> > > ---
+> > >  include/linux/fs.h | 2 ++
+> > >  1 file changed, 2 insertions(+)
+> > >
+> > > diff --git a/include/linux/fs.h b/include/linux/fs.h index
+> > > c3c88fdb9b2a..92af36c4225f 100644
+> > > --- a/include/linux/fs.h
+> > > +++ b/include/linux/fs.h
+> > > @@ -2176,6 +2176,8 @@ struct super_operations {
+> > >                                   struct shrink_control *);
+> > >         long (*free_cached_objects)(struct super_block *,
+> > >                                     struct shrink_control *);
+> > > +       int (*corrupted_range)(struct super_block *sb, struct block_device
+> > *bdev,
+> > > +                              loff_t offset, size_t len, void *data);
+> >
+> > Why does the superblock need a new operation? Wouldn't whatever function is
+> > specified here just be specified to the dax_dev as the
+> > ->notify_failure() holder callback?
+>
+> Because we need to find out which file is effected by the given poison page so that memory-failure code can do collect_procs() and kill_procs() jobs.  And it needs filesystem to use its rmap feature to search the file from a given offset.  So, we need this implemented by the specified filesystem and called by dax_device's holder.
+>
+> This is the call trace I described in cover letter:
+> memory_failure()
+>  * fsdax case
+>  pgmap->ops->memory_failure()      => pmem_pgmap_memory_failure()
+>   dax_device->holder_ops->corrupted_range() =>
+>                                       - fs_dax_corrupted_range()
+>                                       - md_dax_corrupted_range()
+>    sb->s_ops->currupted_range()    => xfs_fs_corrupted_range()  <== **HERE**
+>     xfs_rmap_query_range()
+>      xfs_currupt_helper()
+>       * corrupted on metadata
+>           try to recover data, call xfs_force_shutdown()
+>       * corrupted on file data
+>           try to recover data, call mf_dax_kill_procs()
+>  * normal case
+>  mf_generic_kill_procs()
+>
+> As you can see, this new added operation is an important for the whole progress.
 
-It is fine to add one un-initialized list node via list_add_tail(), just
-the list itself has to be initialized well.
+I don't think you need either fs_dax_corrupted_range() nor
+sb->s_ops->corrupted_range(). In fact that fs_dax_corrupted_range()
+looks broken because the filesystem may not even be mounted on the
+device associated with the error. The holder_data and holder_op should
+be sufficient from communicating the stack of notifications:
 
-> 
-> >  	clone->bi_end_io = clone_endio;
-> >  
-> >  	/*
-> > @@ -1666,8 +1687,9 @@ static void __split_and_process_bio(struct mapped_device *md,
-> >  		}
-> >  	}
-> >  
-> > -	/* drop the extra reference count */
-> > -	dec_pending(ci.io, errno_to_blk_status(error));
-> > +	/* drop the extra reference count for non-POLLED bio */
-> > +	if (!(bio->bi_opf & REQ_POLLED))
-> > +		dec_pending(ci.io, errno_to_blk_status(error));
-> >  }
-> >  
-> >  static void dm_submit_bio(struct bio *bio)
-> > @@ -1707,6 +1729,34 @@ static void dm_submit_bio(struct bio *bio)
-> >  	dm_put_live_table(md, srcu_idx);
-> >  }
-> >  
-> > +static int dm_poll_bio(struct bio *bio, unsigned int flags)
-> > +{
-> > +	struct dm_io *io = bio->bi_bio_drv_data;
-> > +	struct dm_target_io *tio;
-> > +
-> > +	if (!(bio->bi_opf & REQ_POLLED) || !io)
-> > +		return 0;
-> 
-> Should this be a WARN_ON()? Cannot see why this would ever happen
-> other than a bug?  Or is there some race that makes it more likely?
+pgmap->notify_memory_failure() => pmem_pgmap_notify_failure()
+pmem_dax_dev->holder_ops->notify_failure(pmem_dax_dev) =>
+md_dax_notify_failure()
+md_dax_dev->holder_ops->notify_failure() => xfs_notify_failure()
 
-REQ_POLLED can be cleared in case of requeue or blk_queue_split(), however
-the upper layer still keeps polling. And we need to return simply for
-bios which will be completed via IRQ.
+I.e. the entire chain just walks dax_dev holder ops.
 
-
-Thanks,
-Ming
 
 --
 dm-devel mailing list
