@@ -2,82 +2,75 @@ Return-Path: <SRS0=G5ov=LP=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-11.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BFD97C49361
-	for <dm-devel@archiver.kernel.org>; Mon, 21 Jun 2021 07:40:58 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6627DC49EA2
+	for <dm-devel@archiver.kernel.org>; Mon, 21 Jun 2021 08:39:30 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 5A06560FEE
-	for <dm-devel@archiver.kernel.org>; Mon, 21 Jun 2021 07:40:58 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 5A06560FEE
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+	by mail.kernel.org (Postfix) with ESMTPS id E347760C3D
+	for <dm-devel@archiver.kernel.org>; Mon, 21 Jun 2021 08:39:29 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org E347760C3D
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1624264768;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=e6zevQ3Xfkq7e3tGN5fvDkyhw9MFrH9oH9o12YpIHog=;
+	b=DwE8zmhTFaq9DF9p4rSDpKRnnKxQDHpbl2++01mMqdrh/nUUsoMQ0OFAsggnls8awMe9g6
+	OnrTLO8dfbDIO/TbL3MfPXrMJYX3nByjnvFHKRegJzEYkGVqeizbxu/6gfk2a/Hzd4JC8k
+	fEpdzx8SYNJBKUMeQNVXCHMf3s0M098=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-210-13RK5XDTNFCPfUyTTk81_w-1; Mon, 21 Jun 2021 03:40:55 -0400
-X-MC-Unique: 13RK5XDTNFCPfUyTTk81_w-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-105-hVbe_AvoM7WAbVQkVT8LyA-1; Mon, 21 Jun 2021 04:39:27 -0400
+X-MC-Unique: hVbe_AvoM7WAbVQkVT8LyA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E008C804146;
-	Mon, 21 Jun 2021 07:40:50 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 202B91084F5D;
+	Mon, 21 Jun 2021 08:39:22 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B7D2F2C016;
-	Mon, 21 Jun 2021 07:40:50 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 684EF5D703;
+	Mon, 21 Jun 2021 08:39:20 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 52DB01809C99;
-	Mon, 21 Jun 2021 07:40:50 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CD2251809C99;
+	Mon, 21 Jun 2021 08:39:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com
+	[10.5.11.14])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15L7elUd017650 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 21 Jun 2021 03:40:47 -0400
+	id 15L8dFvf022512 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 21 Jun 2021 04:39:15 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id B3CE0216029D; Mon, 21 Jun 2021 07:40:47 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id ABA9C21602A1
-	for <dm-devel@redhat.com>; Mon, 21 Jun 2021 07:40:44 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BDAC8180F6E0
-	for <dm-devel@redhat.com>; Mon, 21 Jun 2021 07:40:44 +0000 (UTC)
-Received: from verein.lst.de (verein.lst.de [213.95.11.211]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-415-5vvw_7SGNaG9WNjuiebswg-1;
-	Mon, 21 Jun 2021 03:37:00 -0400
-X-MC-Unique: 5vvw_7SGNaG9WNjuiebswg-1
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 295EE68BEB; Mon, 21 Jun 2021 09:36:57 +0200 (CEST)
-Date: Mon, 21 Jun 2021 09:36:56 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Ming Lei <ming.lei@redhat.com>
-Message-ID: <20210621073656.GB6896@lst.de>
+	id 6AE3A5D9F0; Mon, 21 Jun 2021 08:39:15 +0000 (UTC)
+Received: from T590 (ovpn-13-237.pek2.redhat.com [10.72.13.237])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 854A35DA2D;
+	Mon, 21 Jun 2021 08:38:59 +0000 (UTC)
+Date: Mon, 21 Jun 2021 16:38:54 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Christoph Hellwig <hch@lst.de>
+Message-ID: <YNBQHq1hwytjvXyR@T590>
 References: <20210617103549.930311-1-ming.lei@redhat.com>
-	<20210617103549.930311-4-ming.lei@redhat.com>
+	<20210617103549.930311-2-ming.lei@redhat.com>
+	<20210621072036.GB6651@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20210617103549.930311-4-ming.lei@redhat.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+In-Reply-To: <20210621072036.GB6651@lst.de>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>,
-	linux-block@vger.kernel.org, dm-devel@redhat.com,
-	Jeffle Xu <jefflexu@linux.alibaba.com>, Christoph Hellwig <hch@lst.de>
-Subject: Re: [dm-devel] [RFC PATCH V2 3/3] dm: support bio polling
+Cc: Jens Axboe <axboe@kernel.dk>,
+	Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>,
+	Mike Snitzer <snitzer@redhat.com>, linux-block@vger.kernel.org,
+	dm-devel@redhat.com, Jeffle Xu <jefflexu@linux.alibaba.com>
+Subject: Re: [dm-devel] [RFC PATCH V2 1/3] block: add helper of
+	blk_queue_poll
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -91,7 +84,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -100,69 +93,24 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Jun 17, 2021 at 06:35:49PM +0800, Ming Lei wrote:
-> +	/*
-> +	 * Only support bio polling for normal IO, and the target io is
-> +	 * exactly inside the dm io instance
-> +	 */
-> +	ci->io->submit_as_polled = !!(ci->bio->bi_opf & REQ_POLLED);
+On Mon, Jun 21, 2021 at 09:20:36AM +0200, Christoph Hellwig wrote:
+> On Thu, Jun 17, 2021 at 06:35:47PM +0800, Ming Lei wrote:
+> > There has been 3 users, and will be more, so add one such helper.
+> > 
+> > Reviewed-by: Chaitanya Kulkarni <chaitanya.kulkarni@wdc.com>
+> > Reviewed-by: Jeffle Xu <jefflexu@linux.alibaba.com>
+> > Reviewed-by: Hannes Reinecke <hare@suse.de>
+> > Signed-off-by: Ming Lei <ming.lei@redhat.com>
+> 
+> I still don't like hiding a simple flag test like this, it just adds
+> another step to grepping what is going on.
 
-Nit: the !! is not needed.
+It is actually one pattern in block layer since there is so many such
+macros of blk_queue_*. And it makes the check line shorter.
 
-> @@ -1608,6 +1625,22 @@ static void init_clone_info(struct clone_info *ci, struct mapped_device *md,
->  	ci->map = map;
->  	ci->io = alloc_io(md, bio);
->  	ci->sector = bio->bi_iter.bi_sector;
-> +
-> +	if (bio->bi_opf & REQ_POLLED) {
-> +		INIT_HLIST_NODE(&ci->io->node);
-> +
-> +		/*
-> +		 * Save .bi_end_io into dm_io, so that we can reuse .bi_end_io
-> +		 * for storing dm_io list
-> +		 */
-> +		if (bio->bi_opf & REQ_SAVED_END_IO) {
-> +			ci->io->saved_bio_end_io = NULL;
 
-So if it already was saved the list gets cleared here?  Can you explain
-this logic a little more?
-
-> +		} else {
-> +			ci->io->saved_bio_end_io = bio->bi_end_io;
-> +			INIT_HLIST_HEAD((struct hlist_head *)&bio->bi_end_io);
-
-I think you want to hide these casts in helpers that clearly document
-why this is safe rather than sprinkling the casts all over the code.
-I also wonder if there is any better way to structur this.
-
-> +static int dm_poll_bio(struct bio *bio, unsigned int flags)
-> +{
-> +	struct dm_io *io;
-> +	void *saved_bi_end_io = NULL;
-> +	struct hlist_head tmp = HLIST_HEAD_INIT;
-> +	struct hlist_head *head = (struct hlist_head *)&bio->bi_end_io;
-> +	struct hlist_node *next;
-> +
-> +	/*
-> +	 * This bio can be submitted from FS as POLLED so that FS may keep
-> +	 * polling even though the flag is cleared by bio splitting or
-> +	 * requeue, so return immediately.
-> +	 */
-> +	if (!(bio->bi_opf & REQ_POLLED))
-> +		return 0;
-
-I can't really parse the comment, can you explain this a little more?
-But if we need this check, shouldn't it move to bio_poll()?
-
-> +	hlist_for_each_entry(io, &tmp, node) {
-> +		if (io->saved_bio_end_io && !saved_bi_end_io) {
-> +			saved_bi_end_io = io->saved_bio_end_io;
-> +			break;
-> +		}
-> +	}
-
-So it seems like you don't use bi_cookie at all.  Why not turn
-bi_cookie into a union to stash the hlist_head and use that?
+Thanks,
+Ming
 
 --
 dm-devel mailing list
