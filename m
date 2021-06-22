@@ -2,90 +2,81 @@ Return-Path: <SRS0=s8Rv=LW=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-15.3 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,SPF_PASS,UNPARSEABLE_RELAY,
+	USER_AGENT_SANE_1 autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 96FC4C49EAB
-	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:52:58 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5DAAAC2B9F4
+	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:53:00 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 29E5861448
-	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:52:58 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 29E5861448
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=fujitsu.com
+	by mail.kernel.org (Postfix) with ESMTPS id EEF2F61C5B
+	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:52:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org EEF2F61C5B
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.alibaba.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-97-7aVGvGr3Nk-xXACK7TMCug-1; Mon, 28 Jun 2021 05:52:55 -0400
-X-MC-Unique: 7aVGvGr3Nk-xXACK7TMCug-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-326-7qiWp1RqMP6ZtMOjAfEB5w-1; Mon, 28 Jun 2021 05:52:57 -0400
+X-MC-Unique: 7qiWp1RqMP6ZtMOjAfEB5w-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 74B0F100C668;
-	Mon, 28 Jun 2021 09:52:50 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 52D5119C46;
-	Mon, 28 Jun 2021 09:52:50 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 563AF804314;
+	Mon, 28 Jun 2021 09:52:52 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3AD5860C9F;
+	Mon, 28 Jun 2021 09:52:52 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1F5EF1809CB2;
-	Mon, 28 Jun 2021 09:52:50 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0FC494EA3A;
+	Mon, 28 Jun 2021 09:52:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15S03G6i027049 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 27 Jun 2021 20:03:16 -0400
+	id 15M7jj0P013293 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 22 Jun 2021 03:45:46 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id A09CA4367F; Mon, 28 Jun 2021 00:03:16 +0000 (UTC)
+	id CF99E2156896; Tue, 22 Jun 2021 07:45:45 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9A5E84367C
-	for <dm-devel@redhat.com>; Mon, 28 Jun 2021 00:03:10 +0000 (UTC)
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CB52F200A6E5
+	for <dm-devel@redhat.com>; Tue, 22 Jun 2021 07:45:43 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 56223802E5E
-	for <dm-devel@redhat.com>; Mon, 28 Jun 2021 00:03:10 +0000 (UTC)
-Received: from heian.cn.fujitsu.com (mail.cn.fujitsu.com [183.91.158.132])
-	by relay.mimecast.com with ESMTP id us-mta-445-vCEk0ZUUOkKU2VFUMHy4dw-1;
-	Sun, 27 Jun 2021 20:03:05 -0400
-X-MC-Unique: vCEk0ZUUOkKU2VFUMHy4dw-1
-IronPort-HdrOrdr: =?us-ascii?q?A9a23=3AWJU4YKyumXfXlyQA26UeKrPwyr1zdoMgy1kn?=
-	=?us-ascii?q?xilNoRw8SK2lfqeV7Y0mPH7P+U4ssR4b6LO90cW7Lk80sKQFhbX5Xo3SOjUO2l?=
-	=?us-ascii?q?HYTr2KhLGKq1aLdkHDH6xmpMBdmsNFaOEYY2IVsS+D2njcLz8/+qj6zImYwffZ?=
-	=?us-ascii?q?02x2TRxnL4Vp7wJCAA6dFUFsLTM2f6YRJd6N4NZdvTq8dTAyZsS/PHMMWO/OvJ?=
-	=?us-ascii?q?nlj5TjCCR2eiIP2U2fiy+y8r7mH1y91hcaaTlGxrAv6izkvmXCl96ej80=3D?=
-X-IronPort-AV: E=Sophos;i="5.83,304,1616428800"; d="scan'208";a="110256332"
-Received: from unknown (HELO cn.fujitsu.com) ([10.167.33.5])
-	by heian.cn.fujitsu.com with ESMTP; 28 Jun 2021 08:03:03 +0800
-Received: from G08CNEXMBPEKD04.g08.fujitsu.local (unknown [10.167.33.201])
-	by cn.fujitsu.com (Postfix) with ESMTP id 3E44C4D0BA6A;
-	Mon, 28 Jun 2021 08:03:01 +0800 (CST)
-Received: from G08CNEXJMPEKD02.g08.fujitsu.local (10.167.33.202) by
-	G08CNEXMBPEKD04.g08.fujitsu.local (10.167.33.201) with Microsoft SMTP
-	Server (TLS) id 15.0.1497.2; Mon, 28 Jun 2021 08:02:57 +0800
-Received: from G08CNEXCHPEKD07.g08.fujitsu.local (10.167.33.80) by
-	G08CNEXJMPEKD02.g08.fujitsu.local (10.167.33.202) with Microsoft SMTP
-	Server (TLS) id 15.0.1497.2; Mon, 28 Jun 2021 08:02:56 +0800
-Received: from irides.mr.mr.mr (10.167.225.141) by
-	G08CNEXCHPEKD07.g08.fujitsu.local (10.167.33.209) with Microsoft SMTP
-	Server
-	id 15.0.1497.2 via Frontend Transport; Mon, 28 Jun 2021 08:02:56 +0800
-From: Shiyang Ruan <ruansy.fnst@fujitsu.com>
-To: <linux-kernel@vger.kernel.org>, <linux-xfs@vger.kernel.org>,
-	<nvdimm@lists.linux.dev>, <linux-mm@kvack.org>,
-	<linux-fsdevel@vger.kernel.org>, <dm-devel@redhat.com>
-Date: Mon, 28 Jun 2021 08:02:11 +0800
-Message-ID: <20210628000218.387833-3-ruansy.fnst@fujitsu.com>
-In-Reply-To: <20210628000218.387833-1-ruansy.fnst@fujitsu.com>
-References: <20210628000218.387833-1-ruansy.fnst@fujitsu.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 063B71064E69
+	for <dm-devel@redhat.com>; Tue, 22 Jun 2021 07:45:43 +0000 (UTC)
+Received: from out30-42.freemail.mail.aliyun.com
+	(out30-42.freemail.mail.aliyun.com [115.124.30.42]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-80-NBrHMRtNMSC1GR0-eBy6RA-1;
+	Tue, 22 Jun 2021 03:45:39 -0400
+X-MC-Unique: NBrHMRtNMSC1GR0-eBy6RA-1
+X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R121e4; CH=green; DM=||false|;
+	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04420;
+	MF=jefflexu@linux.alibaba.com; NM=1; PH=DS; RN=6; SR=0;
+	TI=SMTPD_---0UdIPJS7_1624347934
+Received: from admindeMacBook-Pro-2.local(mailfrom:jefflexu@linux.alibaba.com
+	fp:SMTPD_---0UdIPJS7_1624347934) by smtp.aliyun-inc.com(127.0.0.1);
+	Tue, 22 Jun 2021 15:45:34 +0800
+To: Ming Lei <ming.lei@redhat.com>
+References: <20210617103549.930311-1-ming.lei@redhat.com>
+	<20210617103549.930311-4-ming.lei@redhat.com>
+	<5ba43dac-b960-7c85-3a89-fdae2d1e2f51@linux.alibaba.com>
+	<YMywCX6nLqLiHXyy@T590>
+	<9b42601a-ca54-4748-e592-3720b7994d7b@linux.alibaba.com>
+	<YNCchke/OxQVnSZA@T590>
+	<ba95e8f3-7466-7167-bcfd-49f89ee0b99c@linux.alibaba.com>
+	<YNFOw9Ko8rZh1eyD@T590>
+From: JeffleXu <jefflexu@linux.alibaba.com>
+Message-ID: <4c91af4d-0f6a-65ad-6b6c-3ff55bcee565@linux.alibaba.com>
+Date: Tue, 22 Jun 2021 15:45:34 +0800
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:78.0)
+	Gecko/20100101 Thunderbird/78.11.0
 MIME-Version: 1.0
-X-yoursite-MailScanner-ID: 3E44C4D0BA6A.A2802
-X-yoursite-MailScanner: Found to be clean
-X-yoursite-MailScanner-From: ruansy.fnst@fujitsu.com
+In-Reply-To: <YNFOw9Ko8rZh1eyD@T590>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -94,12 +85,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 28 Jun 2021 05:52:34 -0400
-Cc: snitzer@redhat.com, darrick.wong@oracle.com, rgoldwyn@suse.de,
-	david@fromorbit.com, dan.j.williams@intel.com, hch@lst.de, agk@redhat.com
-Subject: [dm-devel] [PATCH v5 2/9] dax: Introduce holder for dax_device
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+	dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>,
+	Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [dm-devel] [RFC PATCH V2 3/3] dm: support bio polling
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -113,166 +105,160 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-To easily track filesystem from a pmem device, we introduce a holder for
-dax_device structure, and also its operation.  This holder is used to
-remember who is using this dax_device:
- - When it is the backend of a filesystem, the holder will be the
-   superblock of this filesystem.
- - When this pmem device is one of the targets in a mapped device, the
-   holder will be this mapped device.  In this case, the mapped device
-   has its own dax_device and it will follow the first rule.  So that we
-   can finally track to the filesystem we needed.
-
-The holder and holder_ops will be set when filesystem is being mounted,
-or an target device is being activated.
-
-Signed-off-by: Shiyang Ruan <ruansy.fnst@fujitsu.com>
----
- drivers/dax/super.c | 49 +++++++++++++++++++++++++++++++++++++++++++++
- include/linux/dax.h | 17 ++++++++++++++++
- 2 files changed, 66 insertions(+)
-
-diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-index 5fa6ae9dbc8b..22f0aa3f2e13 100644
---- a/drivers/dax/super.c
-+++ b/drivers/dax/super.c
-@@ -222,8 +222,11 @@ struct dax_device {
- 	struct cdev cdev;
- 	const char *host;
- 	void *private;
-+	struct rw_semaphore holder_rwsem;
-+	void *holder_data;
- 	unsigned long flags;
- 	const struct dax_operations *ops;
-+	const struct dax_holder_operations *holder_ops;
- };
-
- static ssize_t write_cache_show(struct device *dev,
-@@ -373,6 +376,24 @@ int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
- }
- EXPORT_SYMBOL_GPL(dax_zero_page_range);
-
-+int dax_holder_notify_failure(struct dax_device *dax_dev, loff_t offset,
-+			      size_t size, void *data)
-+{
-+	int rc = -ENXIO;
-+	if (!dax_dev)
-+		return rc;
-+
-+	if (dax_dev->holder_data) {
-+		rc = dax_dev->holder_ops->notify_failure(dax_dev, offset,
-+							 size, data);
-+		if (rc == -ENODEV)
-+			rc = -ENXIO;
-+	} else
-+		rc = -EOPNOTSUPP;
-+	return rc;
-+}
-+EXPORT_SYMBOL_GPL(dax_holder_notify_failure);
-+
- #ifdef CONFIG_ARCH_HAS_PMEM_API
- void arch_wb_cache_pmem(void *addr, size_t size);
- void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
-@@ -603,6 +624,7 @@ struct dax_device *alloc_dax(void *private, const char *__host,
- 	dax_add_host(dax_dev, host);
- 	dax_dev->ops = ops;
- 	dax_dev->private = private;
-+	init_rwsem(&dax_dev->holder_rwsem);
- 	if (flags & DAXDEV_F_SYNC)
- 		set_dax_synchronous(dax_dev);
-
-@@ -624,6 +646,33 @@ void put_dax(struct dax_device *dax_dev)
- }
- EXPORT_SYMBOL_GPL(put_dax);
-
-+void dax_set_holder(struct dax_device *dax_dev, void *holder,
-+		const struct dax_holder_operations *ops)
-+{
-+	if (!dax_dev)
-+		return;
-+	down_write(&dax_dev->holder_rwsem);
-+	dax_dev->holder_data = holder;
-+	dax_dev->holder_ops = ops;
-+	up_write(&dax_dev->holder_rwsem);
-+}
-+EXPORT_SYMBOL_GPL(dax_set_holder);
-+
-+void *dax_get_holder(struct dax_device *dax_dev)
-+{
-+	void *holder_data;
-+
-+	if (!dax_dev)
-+		return NULL;
-+
-+	down_read(&dax_dev->holder_rwsem);
-+	holder_data = dax_dev->holder_data;
-+	up_read(&dax_dev->holder_rwsem);
-+
-+	return holder_data;
-+}
-+EXPORT_SYMBOL_GPL(dax_get_holder);
-+
- /**
-  * dax_get_by_host() - temporary lookup mechanism for filesystem-dax
-  * @host: alternate name for the device registered by a dax driver
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index b52f084aa643..6f4b5c97ceb0 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -38,10 +38,17 @@ struct dax_operations {
- 	int (*zero_page_range)(struct dax_device *, pgoff_t, size_t);
- };
-
-+struct dax_holder_operations {
-+	int (*notify_failure)(struct dax_device *, loff_t, size_t, void *);
-+};
-+
- extern struct attribute_group dax_attribute_group;
-
- #if IS_ENABLED(CONFIG_DAX)
- struct dax_device *dax_get_by_host(const char *host);
-+void dax_set_holder(struct dax_device *dax_dev, void *holder,
-+		const struct dax_holder_operations *ops);
-+void *dax_get_holder(struct dax_device *dax_dev);
- struct dax_device *alloc_dax(void *private, const char *host,
- 		const struct dax_operations *ops, unsigned long flags);
- void put_dax(struct dax_device *dax_dev);
-@@ -77,6 +84,14 @@ static inline struct dax_device *dax_get_by_host(const char *host)
- {
- 	return NULL;
- }
-+static inline void dax_set_holder(struct dax_device *dax_dev, void *holder,
-+		const struct dax_holder_operations *ops)
-+{
-+}
-+static inline void *dax_get_holder(struct dax_device *dax_dev)
-+{
-+	return NULL;
-+}
- static inline struct dax_device *alloc_dax(void *private, const char *host,
- 		const struct dax_operations *ops, unsigned long flags)
- {
-@@ -226,6 +241,8 @@ size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
- 		size_t bytes, struct iov_iter *i);
- int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
- 			size_t nr_pages);
-+int dax_holder_notify_failure(struct dax_device *dax_dev, loff_t offset,
-+		size_t size, void *data);
- void dax_flush(struct dax_device *dax_dev, void *addr, size_t size);
-
- ssize_t dax_iomap_rw(struct kiocb *iocb, struct iov_iter *iter,
---
-2.32.0
 
 
+On 6/22/21 10:45 AM, Ming Lei wrote:
+> On Tue, Jun 22, 2021 at 10:26:15AM +0800, JeffleXu wrote:
+>>
+>>
+>> On 6/21/21 10:04 PM, Ming Lei wrote:
+>>> On Mon, Jun 21, 2021 at 07:33:34PM +0800, JeffleXu wrote:
+>>>>
+>>>>
+>>>> On 6/18/21 10:39 PM, Ming Lei wrote:
+>>>>> From 47e523b9ee988317369eaadb96826323cd86819e Mon Sep 17 00:00:00 2001
+>>>>> From: Ming Lei <ming.lei@redhat.com>
+>>>>> Date: Wed, 16 Jun 2021 16:13:46 +0800
+>>>>> Subject: [RFC PATCH V3 3/3] dm: support bio polling
+>>>>>
+>>>>> Support bio(REQ_POLLED) polling in the following approach:
+>>>>>
+>>>>> 1) only support io polling on normal READ/WRITE, and other abnormal IOs
+>>>>> still fallback on IRQ mode, so the target io is exactly inside the dm
+>>>>> io.
+>>>>>
+>>>>> 2) hold one refcnt on io->io_count after submitting this dm bio with
+>>>>> REQ_POLLED
+>>>>>
+>>>>> 3) support dm native bio splitting, any dm io instance associated with
+>>>>> current bio will be added into one list which head is bio->bi_end_io
+>>>>> which will be recovered before ending this bio
+>>>>>
+>>>>> 4) implement .poll_bio() callback, call bio_poll() on the single target
+>>>>> bio inside the dm io which is retrieved via bio->bi_bio_drv_data; call
+>>>>> dec_pending() after the target io is done in .poll_bio()
+>>>>>
+>>>>> 4) enable QUEUE_FLAG_POLL if all underlying queues enable QUEUE_FLAG_POLL,
+>>>>> which is based on Jeffle's previous patch.
+>>>>>
+>>>>> Signed-off-by: Ming Lei <ming.lei@redhat.com>
+>>>>> ---
+>>>>> V3:
+>>>>> 	- covers all comments from Jeffle
+>>>>> 	- fix corner cases when polling on abnormal ios
+>>>>>
+>>>> ...
+>>>>
+>>>> One bug and one performance issue, though I haven't investigated deep
+>>>> for both.
+>>>>
+>>>>
+>>>> kernel base: based on Jens' for-next, applying Christoph and Leiming's
+>>>> patchset.
+>>>>
+>>>>
+>>>> 1. One bug when there's DM device stack, e.g., dm-linear upon another
+>>>> dm-linear. Can be reproduced by following steps:
+>>>>
+>>>> ```
+>>>> $ sudo dmsetup create tmpdev --table '0 2097152 linear /dev/nvme0n1 0'
+>>>>
+>>>> $ cat tmp.table
+>>>> 0 2097152 linear /dev/mapper/tmpdev 0
+>>>> 2097152 2097152 linear /dev/nvme0n1 0
+>>>>
+>>>> $ cat tmp.table | dmsetup create testdev
+>>>>
+>>>> $ fio -name=test -ioengine=io_uring -iodepth=128 -numjobs=1 -thread
+>>>> -rw=randread -direct=1 -bs=4k -time_based -runtime=10 -cpus_allowed=6
+>>>> -filename=/dev/mapper/testdev -hipri=1
+>>>> ```
+>>>>
+>>>>
+>>>> BUG: unable to handle page fault for address: ffffffffc01a6208
+>>>> #PF: supervisor write access in kernel mode
+>>>> #PF: error_code(0x0003) - permissions violation
+>>>> PGD 39740c067 P4D 39740c067 PUD 39740e067 PMD 1035db067 PTE 1ddf6f061
+>>>> Oops: 0003 [#1] SMP PTI
+>>>> CPU: 6 PID: 5899 Comm: fio Tainted: G S
+>>>> 5.13.0-0.1.git.81bcdc3.al7.x86_64 #1
+>>>> Hardware name: Inventec     K900G3-10G/B900G3, BIOS A2.20 06/23/2017
+>>>> RIP: 0010:dm_submit_bio+0x171/0x3e0 [dm_mod]
+>>>
+>>> It has been fixed in my local repo:
+>>>
+>>> @@ -1608,6 +1649,7 @@ static void init_clone_info(struct clone_info *ci, struct mapped_device *md,
+>>>         ci->map = map;
+>>>         ci->io = alloc_io(md, bio);
+>>>         ci->sector = bio->bi_iter.bi_sector;
+>>> +       ci->submit_as_polled = false;
+>>>
+>>
+>> It doesn't work in my test environment. Actually the following fix
+>> should be applied.
+>>
+>>
+>> @@ -1390,6 +1403,8 @@ static int clone_bio(struct dm_target_io *tio,
+>> struct bio *bio,
+>>         if (bio_integrity(bio))
+>>                 bio_integrity_trim(clone);
+>>
+>> +       clone->bi_opf &= ~REQ_SAVED_END_IO;
+>> +
+> 
+> This change is good, but it shouldn't fix the panic except for nested
+> device map, I will fold into V3.
+
+The panic I posted exactly happen for nested device map.
+
+>>
+>> The rationale is that, REQ_SAVED_END_IO should be cleared once the bio
+>> *passes through* the device stack layer. Or the cloned bio for next
+>> layer will inherit REQ_SAVED_END_IO flag, in which case
+>> 'cloned_bio->bi_end_io' (actually acts as the hlist head) won't be
+>> initialized in dm_setup_polled_io(), and thus it gets crashed when
+>> trying to insert into this hash list in __split_and_process_bio().
+> 
+> 'cloned_bio' can't reach dm_submit_bio() if it isn't one DM bio.
+> 
+
+'cloned_bio' actually refers to dm_io.tio.clone, i.e., the cloned bio
+used to submit to the device of the next level.
+
+	dm1
+	/\
+     dm2  NVMe1
+     /\
+ NVMe2 NVMe3
+
+For the above example, 'cloned_bio' refers to dm_io.tio.clone, where
+this dm_io is to be submitted to dm2.
+
+
+			  @bi_private
+		split bio ------------------> original bio (for dm1)
+		   ^			       ^
+		   | @orig_bio		       | @orig_bio
+		   |			       |
+		dm_io(for dm2)         	   dm_io(for NVME1)
+		struct dm_target_io tio
+		struct bio clone
+	(...following omitted for NVMe2 and NVMe3)
+
+I mean, for above 'struct bio clone', REQ_SAVED_END_IO shall be cleared.
+
+-- 
+Thanks,
+Jeffle
 
 --
 dm-devel mailing list
