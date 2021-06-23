@@ -7,73 +7,71 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 31AFDC2B9F4
-	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:53:17 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 414CBC2B9F4
+	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:53:19 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id BA6E561C67
-	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:53:09 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org BA6E561C67
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id C46F361C61
+	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:53:03 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C46F361C61
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=cdjrlc.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-273-U0EEQuWvNZqhRuKW5eV8fA-1; Mon, 28 Jun 2021 05:53:06 -0400
-X-MC-Unique: U0EEQuWvNZqhRuKW5eV8fA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-34-7lp3pPMfPbGW6E8uW7zSBw-1; Mon, 28 Jun 2021 05:53:00 -0400
+X-MC-Unique: 7lp3pPMfPbGW6E8uW7zSBw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B7F3980430E;
-	Mon, 28 Jun 2021 09:53:00 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 99D885C232;
-	Mon, 28 Jun 2021 09:53:00 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4FBDC100C677;
+	Mon, 28 Jun 2021 09:52:55 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 372BC60939;
+	Mon, 28 Jun 2021 09:52:55 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6B2881800B9C;
-	Mon, 28 Jun 2021 09:53:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D4FA24EA3B;
+	Mon, 28 Jun 2021 09:52:54 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15S9qoA0009225 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 28 Jun 2021 05:52:50 -0400
+	id 15N8SLwE012017 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 23 Jun 2021 04:28:21 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1D0FA215CDD4; Mon, 28 Jun 2021 09:52:50 +0000 (UTC)
+	id 2473F2068FF2; Wed, 23 Jun 2021 08:28:21 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1796C215CDD3
-	for <dm-devel@redhat.com>; Mon, 28 Jun 2021 09:52:47 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3DD7F8007BB
-	for <dm-devel@redhat.com>; Mon, 28 Jun 2021 09:52:47 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) (Using
-	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-371-N5tudrdBNlucfDWxpQGMWw-1; Mon, 28 Jun 2021 05:52:35 -0400
-X-MC-Unique: N5tudrdBNlucfDWxpQGMWw-1
-Received: from imap.suse.de (imap-alt.suse-dmz.suse.de [192.168.254.47])
-	(using TLSv1.2 with cipher ECDHE-ECDSA-AES128-GCM-SHA256 (128/128
-	bits)) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 4049720250;
-	Mon, 28 Jun 2021 09:52:33 +0000 (UTC)
-Received: from imap3-int (imap-alt.suse-dmz.suse.de [192.168.254.47])
-	by imap.suse.de (Postfix) with ESMTP id 9CEE911906;
-	Mon, 28 Jun 2021 09:52:32 +0000 (UTC)
-Received: from director2.suse.de ([192.168.254.72]) by imap3-int with ESMTPSA
-	id GAeyJOCb2WAqagAALh3uQQ
-	(envelope-from <mwilck@suse.com>); Mon, 28 Jun 2021 09:52:32 +0000
-From: mwilck@suse.com
-To: Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>,
-	Bart Van Assche <Bart.VanAssche@sandisk.com>,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	linux-scsi@vger.kernel.org, dm-devel@redhat.com,
-	Hannes Reinecke <hare@suse.de>
-Date: Mon, 28 Jun 2021 11:52:09 +0200
-Message-Id: <20210628095210.26249-3-mwilck@suse.com>
-In-Reply-To: <20210628095210.26249-1-mwilck@suse.com>
-References: <20210628095210.26249-1-mwilck@suse.com>
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1FA6C2064010
+	for <dm-devel@redhat.com>; Wed, 23 Jun 2021 08:28:18 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A8CFC89B846
+	for <dm-devel@redhat.com>; Wed, 23 Jun 2021 08:28:18 +0000 (UTC)
+Received: from qq.com (smtpbg466.qq.com [59.36.132.42]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-26-qeDp6P9RP46VVW9EfpaYJg-1;
+	Wed, 23 Jun 2021 04:28:14 -0400
+X-MC-Unique: qeDp6P9RP46VVW9EfpaYJg-1
+X-QQ-mid: bizesmtp31t1624436797tolcrdaa
+Received: from localhost.localdomain (unknown [182.148.13.245])
+	by esmtp6.qq.com (ESMTP) with 
+	id ; Wed, 23 Jun 2021 16:25:56 +0800 (CST)
+X-QQ-SSF: 01000000002000309000000A0000000
+X-QQ-FEAT: EE7k6qQxgn5WkcR/sbrXX46dywf/LWEnI8NacT70mktsh5kXbHTXUJYNp+dao
+	JYUFgHuS87Fh/nqJuriZGljdDqpAgoYoDY7Mq293GMYMo4tR5eefDAIc8MfY7SGgtyJcpXf
+	36T2anvtNy+qOLGTOUDL9rseKFS05u70oOcmb+NLkung7ZftsmnlRfIgKTNbJHijyU6SMMg
+	YsASavA08PX5q8vlTaytrdIo4Cos8wSXf5U1QUqGSI9i5qgkDXruRhc4FPMFpfCwTQp86M6
+	M8HLfZqRixgZx9sbNuodDx4jejjUIpY+E5I9UOLB+QViSyJ1OKAU7WsNh7Bl3JKY6RgQ==
+X-QQ-GoodBg: 0
+From: Jinchao Wang <wjc@cdjrlc.com>
+To: agk@redhat.com, snitzer@redhat.com
+Date: Wed, 23 Jun 2021 16:25:49 +0800
+Message-Id: <20210623082549.17187-1-wjc@cdjrlc.com>
 MIME-Version: 1.0
+X-QQ-SENDSIZE: 520
+Feedback-ID: bizesmtp:cdjrlc.com:qybgforeign:qybgforeign6
+X-QQ-Bgrelay: 1
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -82,16 +80,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 15S9qoA0009225
+X-Mimecast-Spam-Signature: yes
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: Daniel Wagner <dwagner@suse.de>, emilne@redhat.com,
-	Martin Wilck <mwilck@suse.com>, linux-block@vger.kernel.org,
-	nkoenig@redhat.com, Paolo Bonzini <pbonzini@redhat.com>,
-	Christoph Hellwig <hch@lst.de>
-Subject: [dm-devel] [PATCH v4 2/3] scsi: scsi_ioctl: add
-	sg_io_to_blk_status()
+X-Mailman-Approved-At: Mon, 28 Jun 2021 05:52:34 -0400
+Cc: dm-devel@redhat.com, wjc@cdjrlc.com, linux-kernel@vger.kernel.org
+Subject: [dm-devel] [PATCH] dm: moved EXPORT_SYMBOL so that it immediately
+	followed its function/variable
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,7 +100,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -113,61 +108,64 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Martin Wilck <mwilck@suse.com>
+change made to resolve following checkpatch message:
+  WARNING: EXPORT_SYMBOL(foo); should immediately follow its
+function/variable
 
-This helper converts the SCSI result in a sg_io_hdr struct to a blk_status_t.
-It will be used in the SG_IO code path for dm-multipath. Putting it into
-scsi_ioctl.c avoids open-coding SCSI specific code in the dm layer.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Jinchao Wang <wjc@cdjrlc.com>
 ---
- block/scsi_ioctl.c     | 20 ++++++++++++++++++++
- include/linux/blkdev.h |  1 +
- 2 files changed, 21 insertions(+)
+ drivers/md/dm-path-selector.c | 3 +--
+ drivers/md/dm-target.c        | 4 ++--
+ 2 files changed, 3 insertions(+), 4 deletions(-)
 
-diff --git a/block/scsi_ioctl.c b/block/scsi_ioctl.c
-index 19b63b64ecbc..f226cac02e88 100644
---- a/block/scsi_ioctl.c
-+++ b/block/scsi_ioctl.c
-@@ -929,6 +929,26 @@ blk_status_t __scsi_result_to_blk_status(int *cmd_result, int result)
+diff --git a/drivers/md/dm-path-selector.c b/drivers/md/dm-path-selector.c
+index fa0ccc585cb4..e2d3d6c7dbb3 100644
+--- a/drivers/md/dm-path-selector.c
++++ b/drivers/md/dm-path-selector.c
+@@ -114,6 +114,7 @@ int dm_register_path_selector(struct path_selector_type *pst)
+ 
+ 	return r;
  }
- EXPORT_SYMBOL(__scsi_result_to_blk_status);
++EXPORT_SYMBOL_GPL(dm_register_path_selector);
  
-+blk_status_t sg_io_to_blk_status(struct sg_io_hdr *hdr)
-+{
-+	int result;
-+	blk_status_t sts;
-+
-+	if (!hdr->info & SG_INFO_CHECK)
-+		return BLK_STS_OK;
-+
-+	result = hdr->status |
-+		(hdr->msg_status << 8) |
-+		(hdr->host_status << 16) |
-+		(hdr->driver_status << 24);
-+
-+	sts = __scsi_result_to_blk_status(&result, result);
-+	hdr->host_status = host_byte(result);
-+
-+	return sts;
-+}
-+EXPORT_SYMBOL(sg_io_to_blk_status);
-+
- static int __init blk_scsi_ioctl_init(void)
+ int dm_unregister_path_selector(struct path_selector_type *pst)
  {
- 	blk_set_cmd_filter_defaults(&blk_default_cmd_filter);
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 48497a77428d..5da03edf125c 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -2022,4 +2022,5 @@ int freeze_bdev(struct block_device *bdev);
- int thaw_bdev(struct block_device *bdev);
+@@ -135,6 +136,4 @@ int dm_unregister_path_selector(struct path_selector_type *pst)
  
- blk_status_t __scsi_result_to_blk_status(int *cmd_result, int result);
-+blk_status_t sg_io_to_blk_status(struct sg_io_hdr *hdr);
- #endif /* _LINUX_BLKDEV_H */
+ 	return 0;
+ }
+-
+-EXPORT_SYMBOL_GPL(dm_register_path_selector);
+ EXPORT_SYMBOL_GPL(dm_unregister_path_selector);
+diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
+index 64dd0b34fcf4..493a263a8826 100644
+--- a/drivers/md/dm-target.c
++++ b/drivers/md/dm-target.c
+@@ -91,6 +91,7 @@ int dm_register_target(struct target_type *tt)
+ 	up_write(&_lock);
+ 	return rv;
+ }
++EXPORT_SYMBOL(dm_register_target);
+ 
+ void dm_unregister_target(struct target_type *tt)
+ {
+@@ -104,6 +105,7 @@ void dm_unregister_target(struct target_type *tt)
+ 
+ 	up_write(&_lock);
+ }
++EXPORT_SYMBOL(dm_unregister_target);
+ 
+ /*
+  * io-err: always fails an io, useful for bringing
+@@ -169,5 +171,3 @@ void dm_target_exit(void)
+ 	dm_unregister_target(&error_target);
+ }
+ 
+-EXPORT_SYMBOL(dm_register_target);
+-EXPORT_SYMBOL(dm_unregister_target);
 -- 
-2.32.0
+2.31.1
+
 
 
 --
