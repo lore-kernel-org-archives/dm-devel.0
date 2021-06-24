@@ -1,69 +1,82 @@
-Return-Path: <SRS0=pEh8=LR=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=hwRu=LS=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-11.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
+	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BBD87C4743C
-	for <dm-devel@archiver.kernel.org>; Wed, 23 Jun 2021 07:42:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1378AC48BDF
+	for <dm-devel@archiver.kernel.org>; Thu, 24 Jun 2021 06:33:41 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 62DE7611AC
-	for <dm-devel@archiver.kernel.org>; Wed, 23 Jun 2021 07:42:33 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 62DE7611AC
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 3BB60613C7
+	for <dm-devel@archiver.kernel.org>; Thu, 24 Jun 2021 06:33:40 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3BB60613C7
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=gondor.apana.org.au
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1624434152;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=yU3Gh06DbY9OqH65n9K4iwlNgu8I949Vu/jUSm5eCzw=;
-	b=Iaanb8YCNzbh0ExIi2rldo5vVA4zATwKT2S9upsdd9b8CweLDWZjnqdPZwDoekc9XE9jey
-	wf8zzfA0K7lHqz7NUEvqXyyOhqcqeDMSHT4grfGRtrE9mxLcmD4LR9Nv74Gc1BeHNahM1r
-	nbruER0r4NcswShgEcsec8OHesPLZ8E=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-590-Ipq06oOGM7mJmjlDIFTJGQ-1; Wed, 23 Jun 2021 03:41:11 -0400
-X-MC-Unique: Ipq06oOGM7mJmjlDIFTJGQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-482-SToeHxRaPL2HNirGwb-Iwg-1; Thu, 24 Jun 2021 02:33:37 -0400
+X-MC-Unique: SToeHxRaPL2HNirGwb-Iwg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CE117804140;
-	Wed, 23 Jun 2021 07:41:06 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 60C6719C66;
-	Wed, 23 Jun 2021 07:41:04 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B241919057A1;
+	Thu, 24 Jun 2021 06:33:32 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 920C460583;
+	Thu, 24 Jun 2021 06:33:30 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 797EE1809C99;
-	Wed, 23 Jun 2021 07:41:00 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8A2E44E9F4;
+	Thu, 24 Jun 2021 06:33:24 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
 	[10.5.11.15])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15N7ewGU008251 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 23 Jun 2021 03:40:58 -0400
+	id 15O6XJ1w011873 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 24 Jun 2021 02:33:19 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 77C0C5D705; Wed, 23 Jun 2021 07:40:58 +0000 (UTC)
-Received: from localhost (ovpn-12-52.pek2.redhat.com [10.72.12.52])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C58375D6D1;
-	Wed, 23 Jun 2021 07:40:46 +0000 (UTC)
-From: Ming Lei <ming.lei@redhat.com>
-To: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>
-Date: Wed, 23 Jun 2021 15:40:29 +0800
-Message-Id: <20210623074032.1484665-1-ming.lei@redhat.com>
+	id 741D55D6D7; Thu, 24 Jun 2021 06:33:19 +0000 (UTC)
+Received: from deadmen.hmeau.com (ovpn-13-118.pek2.redhat.com [10.72.13.118])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C190D5D6A1;
+	Thu, 24 Jun 2021 06:33:14 +0000 (UTC)
+Received: from gondobar.mordor.me.apana.org.au ([192.168.128.4] helo=gondobar)
+	by deadmen.hmeau.com with esmtp (Exim 4.92 #5 (Debian))
+	id 1lwIun-0005DQ-BZ; Thu, 24 Jun 2021 14:32:41 +0800
+Received: from herbert by gondobar with local (Exim 4.92)
+	(envelope-from <herbert@gondor.apana.org.au>)
+	id 1lwIuN-0000Wf-O4; Thu, 24 Jun 2021 14:32:15 +0800
+Date: Thu, 24 Jun 2021 14:32:15 +0800
+From: Herbert Xu <herbert@gondor.apana.org.au>
+To: Ira Weiny <ira.weiny@intel.com>
+Message-ID: <20210624063215.GA31721@gondor.apana.org.au>
+References: <20210615132456.753241-1-hch@lst.de>
+	<20210615132456.753241-2-hch@lst.de>
+	<20210618030157.GA1905674@iweiny-DESK2.sc.intel.com>
+	<20210618033728.GA16787@gondor.apana.org.au>
+	<20210618181258.GC1905674@iweiny-DESK2.sc.intel.com>
 MIME-Version: 1.0
+In-Reply-To: <20210618181258.GC1905674@iweiny-DESK2.sc.intel.com>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 X-loop: dm-devel@redhat.com
-Cc: Ming Lei <ming.lei@redhat.com>, linux-block@vger.kernel.org,
-	dm-devel@redhat.com, Jeffle Xu <jefflexu@linux.alibaba.com>,
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+	Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
+	Mike Snitzer <snitzer@redhat.com>, "David S. Miller" <davem@davemloft.net>,
+	Geoff Levand <geoff@infradead.org>,
+	Christoph Lameter <cl@gentwo.de>, ceph-devel@vger.kernel.org,
+	linux-mips@vger.kernel.org, Dongsheng Yang <dongsheng.yang@easystack.cn>,
+	linux-kernel@vger.kernel.org,
+	"James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>,
+	dm-devel@redhat.com,
+	Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
+	linux-arch@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
+	Ilya Dryomov <idryomov@gmail.com>, linuxppc-dev@lists.ozlabs.org,
 	Christoph Hellwig <hch@lst.de>
-Subject: [dm-devel] [PATCH V3 0/3] block/dm: support bio polling
+Subject: [dm-devel] [PATCH] crypto: scatterwalk - Remove obsolete PageSlab
+	check
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -77,55 +90,55 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hello Guys,
+On Fri, Jun 18, 2021 at 11:12:58AM -0700, Ira Weiny wrote:
+>
+> Interesting!  Thanks!
+> 
+> Digging around a bit more I found:
+> 
+> https://lore.kernel.org/patchwork/patch/439637/
 
-Based on Christoph's bio based polling model[1], implement DM bio polling
-with one very simple approach.
+Nice find.  So we can at least get rid of the PageSlab call from
+the Crypto API.
 
-Patch 1 adds helper of blk_queue_poll().
+---8<---
+As it is now legal to call flush_dcache_page on slab pages we
+no longer need to do the check in the Crypto API.
 
-Patch 2 adds .bio_poll() callback to block_device_operations, so bio
-driver can implement its own logic for io polling.
+Reported-by: Ira Weiny <ira.weiny@intel.com>
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
 
-Patch 3 implements bio polling for device mapper.
-
-
-V3:
-	- patch style change as suggested by Christoph(2/3)
-	- fix kernel panic issue caused by nested dm polling, which is found
-	  & figured out by Jeffle Xu (3/3)
-	- re-organize setup polling code (3/3)
-	- remove RFC
-
-V2:
-	- drop patch to add new fields into bio
-	- support io polling for dm native bio splitting
-	- add comment
-
-Ming Lei (3):
-  block: add helper of blk_queue_poll
-  block: add ->poll_bio to block_device_operations
-  dm: support bio polling
-
- block/blk-core.c         |  18 +++---
- block/blk-sysfs.c        |   4 +-
- block/genhd.c            |   2 +
- drivers/md/dm-table.c    |  24 +++++++
- drivers/md/dm.c          | 131 ++++++++++++++++++++++++++++++++++++++-
- drivers/nvme/host/core.c |   2 +-
- include/linux/blkdev.h   |   2 +
- 7 files changed, 170 insertions(+), 13 deletions(-)
-
+diff --git a/include/crypto/scatterwalk.h b/include/crypto/scatterwalk.h
+index c837d0775474..7af08174a721 100644
+--- a/include/crypto/scatterwalk.h
++++ b/include/crypto/scatterwalk.h
+@@ -81,12 +81,7 @@ static inline void scatterwalk_pagedone(struct scatter_walk *walk, int out,
+ 		struct page *page;
+ 
+ 		page = sg_page(walk->sg) + ((walk->offset - 1) >> PAGE_SHIFT);
+-		/* Test ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE first as
+-		 * PageSlab cannot be optimised away per se due to
+-		 * use of volatile pointer.
+-		 */
+-		if (ARCH_IMPLEMENTS_FLUSH_DCACHE_PAGE && !PageSlab(page))
+-			flush_dcache_page(page);
++		flush_dcache_page(page);
+ 	}
+ 
+ 	if (more && walk->offset >= walk->sg->offset + walk->sg->length)
 -- 
-2.31.1
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
 
 --
 dm-devel mailing list
