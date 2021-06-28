@@ -2,78 +2,83 @@ Return-Path: <SRS0=s8Rv=LW=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DD4CEC2B9F4
-	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:53:34 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C75AC49EA7
+	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:53:35 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7A48C61C5B
-	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:53:34 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7A48C61C5B
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id D297261C5D
+	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:53:03 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org D297261C5D
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=fujitsu.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-207-2vDf0yjJMg-aBHtU1topFw-1; Mon, 28 Jun 2021 05:53:31 -0400
-X-MC-Unique: 2vDf0yjJMg-aBHtU1topFw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-448-noe3ONKyOiWJKWhqtrPcLg-1; Mon, 28 Jun 2021 05:53:01 -0400
+X-MC-Unique: noe3ONKyOiWJKWhqtrPcLg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1B0EF100C661;
-	Mon, 28 Jun 2021 09:53:27 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 97A1780BCAD;
+	Mon, 28 Jun 2021 09:52:56 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E8AD148DD;
-	Mon, 28 Jun 2021 09:53:26 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 56E1810074FD;
+	Mon, 28 Jun 2021 09:52:56 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BB11F1801020;
-	Mon, 28 Jun 2021 09:53:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0328F1809CB3;
+	Mon, 28 Jun 2021 09:52:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15S9qgup009177 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 28 Jun 2021 05:52:42 -0400
+	id 15S03BFh027035 for <dm-devel@listman.util.phx.redhat.com>;
+	Sun, 27 Jun 2021 20:03:11 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 2D68850159; Mon, 28 Jun 2021 09:52:42 +0000 (UTC)
+	id 1BBA41111C6B; Mon, 28 Jun 2021 00:03:11 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2655150157
-	for <dm-devel@redhat.com>; Mon, 28 Jun 2021 09:52:39 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 16E431111C6A
+	for <dm-devel@redhat.com>; Mon, 28 Jun 2021 00:03:07 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BCBDB10AC3A3
-	for <dm-devel@redhat.com>; Mon, 28 Jun 2021 09:52:39 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) (Using
-	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-108-tc1M_6MvNoijRbmDHzpMhw-1; Mon, 28 Jun 2021 05:52:34 -0400
-X-MC-Unique: tc1M_6MvNoijRbmDHzpMhw-1
-Received: from imap.suse.de (imap-alt.suse-dmz.suse.de [192.168.254.47])
-	(using TLSv1.2 with cipher ECDHE-ECDSA-AES128-GCM-SHA256 (128/128
-	bits)) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 92D1F2024F;
-	Mon, 28 Jun 2021 09:52:32 +0000 (UTC)
-Received: from imap3-int (imap-alt.suse-dmz.suse.de [192.168.254.47])
-	by imap.suse.de (Postfix) with ESMTP id 0667311906;
-	Mon, 28 Jun 2021 09:52:31 +0000 (UTC)
-Received: from director2.suse.de ([192.168.254.72]) by imap3-int with ESMTPSA
-	id iLV3O9+b2WAqagAALh3uQQ
-	(envelope-from <mwilck@suse.com>); Mon, 28 Jun 2021 09:52:31 +0000
-From: mwilck@suse.com
-To: Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>,
-	Bart Van Assche <Bart.VanAssche@sandisk.com>,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	linux-scsi@vger.kernel.org, dm-devel@redhat.com,
-	Hannes Reinecke <hare@suse.de>
-Date: Mon, 28 Jun 2021 11:52:08 +0200
-Message-Id: <20210628095210.26249-2-mwilck@suse.com>
-In-Reply-To: <20210628095210.26249-1-mwilck@suse.com>
-References: <20210628095210.26249-1-mwilck@suse.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 884E3800B28
+	for <dm-devel@redhat.com>; Mon, 28 Jun 2021 00:03:07 +0000 (UTC)
+Received: from heian.cn.fujitsu.com (mail.cn.fujitsu.com [183.91.158.132])
+	by relay.mimecast.com with ESMTP id us-mta-526-pllZt0qEPfes1yqrL8efaA-2;
+	Sun, 27 Jun 2021 20:03:03 -0400
+X-MC-Unique: pllZt0qEPfes1yqrL8efaA-2
+IronPort-HdrOrdr: =?us-ascii?q?A9a23=3AV8gBeKG6lsoZXInUpLqEAMeALOsnbusQ8zAX?=
+	=?us-ascii?q?P0AYc3Jom6uj5qSTdZUgpHjJYVkqOE3I9ertBEDiewK4yXcW2/hzAV7KZmCP0w?=
+	=?us-ascii?q?HEEGgI1+rfKlPbdBEWjtQtt5uIbZIOc+HYPBxri9rg+gmkH5IFyNmDyqqhguDT?=
+	=?us-ascii?q?1B5WPHhXQpAl/wFkERyaD0EzYAFHAKAyHJ2a6tECiCGnfR0sH7yGL0hAT+7evM?=
+	=?us-ascii?q?fKiZ6jRRYHAiQs4A6IgSjtyJOSKWn/4isj?=
+X-IronPort-AV: E=Sophos;i="5.83,304,1616428800"; d="scan'208";a="110256323"
+Received: from unknown (HELO cn.fujitsu.com) ([10.167.33.5])
+	by heian.cn.fujitsu.com with ESMTP; 28 Jun 2021 08:02:57 +0800
+Received: from G08CNEXMBPEKD04.g08.fujitsu.local (unknown [10.167.33.201])
+	by cn.fujitsu.com (Postfix) with ESMTP id 28CF14D0BA69;
+	Mon, 28 Jun 2021 08:02:53 +0800 (CST)
+Received: from G08CNEXCHPEKD07.g08.fujitsu.local (10.167.33.80) by
+	G08CNEXMBPEKD04.g08.fujitsu.local (10.167.33.201) with Microsoft SMTP
+	Server (TLS) id 15.0.1497.2; Mon, 28 Jun 2021 08:02:44 +0800
+Received: from irides.mr.mr.mr (10.167.225.141) by
+	G08CNEXCHPEKD07.g08.fujitsu.local (10.167.33.209) with Microsoft SMTP
+	Server
+	id 15.0.1497.2 via Frontend Transport; Mon, 28 Jun 2021 08:02:22 +0800
+From: Shiyang Ruan <ruansy.fnst@fujitsu.com>
+To: <linux-kernel@vger.kernel.org>, <linux-xfs@vger.kernel.org>,
+	<nvdimm@lists.linux.dev>, <linux-mm@kvack.org>,
+	<linux-fsdevel@vger.kernel.org>, <dm-devel@redhat.com>
+Date: Mon, 28 Jun 2021 08:02:09 +0800
+Message-ID: <20210628000218.387833-1-ruansy.fnst@fujitsu.com>
 MIME-Version: 1.0
+X-yoursite-MailScanner-ID: 28CF14D0BA69.A2AEF
+X-yoursite-MailScanner: Found to be clean
+X-yoursite-MailScanner-From: ruansy.fnst@fujitsu.com
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -82,16 +87,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 15S9qgup009177
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: Daniel Wagner <dwagner@suse.de>, emilne@redhat.com,
-	Martin Wilck <mwilck@suse.com>, linux-block@vger.kernel.org,
-	nkoenig@redhat.com, Paolo Bonzini <pbonzini@redhat.com>,
-	Christoph Hellwig <hch@lst.de>
-Subject: [dm-devel] [PATCH v4 1/3] scsi: scsi_ioctl: export
-	__scsi_result_to_blk_status()
+X-Mailman-Approved-At: Mon, 28 Jun 2021 05:52:34 -0400
+Cc: snitzer@redhat.com, darrick.wong@oracle.com, rgoldwyn@suse.de,
+	david@fromorbit.com, dan.j.williams@intel.com, hch@lst.de, agk@redhat.com
+Subject: [dm-devel] [PATCH v5 0/9] fsdax: introduce fs query to support
+	reflink
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,7 +107,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -113,126 +115,93 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Martin Wilck <mwilck@suse.com>
+This patchset is aimed to support shared pages tracking for fsdax.
 
-This makes it possible to use scsi_result_to_blk_status() from
-code that shouldn't depend on scsi_mod (e.g. device mapper).
+Change from V4:
+  - Add nr_pfns for ->memory_failure() to support range based notification
+  - Remove struct bdev in dax_holder_notify_failure()
+  - Add rwsem for dax_holder
+  - Rename functions to (*_)notify_failure()
+  - Remove sb->corrupted_range(), implement holder_ops in filesystem and
+      MD driver instead
+  - Reorganize the patchset, make it easy to review
+  - Rebased to v5.13-rc7
 
-scsi_ioctl.c is selected by CONFIG_BLK_SCSI_REQUEST, which is automatically
-selected by CONFIG_SCSI.
+This patchset moves owner tracking from dax_assocaite_entry() to pmem
+device driver, by introducing an interface ->memory_failure() for struct
+pagemap.  This interface is called by memory_failure() in mm, and
+implemented by pmem device.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- block/scsi_ioctl.c      | 47 +++++++++++++++++++++++++++++++++++++++++
- drivers/scsi/scsi_lib.c | 24 +--------------------
- include/linux/blkdev.h  |  1 +
- 3 files changed, 49 insertions(+), 23 deletions(-)
+Then call holder operations to find the filesystem which the corrupted
+data located in, and call filesystem handler to track files or metadata
+associated with this page.
 
-diff --git a/block/scsi_ioctl.c b/block/scsi_ioctl.c
-index fa6df11b8bdd..19b63b64ecbc 100644
---- a/block/scsi_ioctl.c
-+++ b/block/scsi_ioctl.c
-@@ -882,6 +882,53 @@ void scsi_req_init(struct scsi_request *req)
- }
- EXPORT_SYMBOL(scsi_req_init);
- 
-+/* See set_host_byte() in include/scsi/scsi_cmnd.h */
-+static void __set_host_byte(int *result, char status)
-+{
-+	*result = (*result & 0xff00ffff) | (status << 16);
-+}
-+
-+/**
-+ * __scsi_result_to_blk_status - translate a SCSI result code into blk_status_t
-+ * @cmd:	SCSI command
-+ * @cmd_result: pointer to scsi cmnd result code to be possibly changed
-+ *
-+ * Translate a SCSI result code into a blk_status_t value. May reset the host
-+ * byte of @cmd_result.
-+ */
-+blk_status_t __scsi_result_to_blk_status(int *cmd_result, int result)
-+{
-+	switch (host_byte(result)) {
-+	case DID_OK:
-+		/*
-+		 * Also check the other bytes than the status byte in result
-+		 * to handle the case when a SCSI LLD sets result to
-+		 * DRIVER_SENSE << 24 without setting SAM_STAT_CHECK_CONDITION.
-+		 */
-+		if (scsi_status_is_good(result))
-+			return BLK_STS_OK;
-+		return BLK_STS_IOERR;
-+	case DID_TRANSPORT_FAILFAST:
-+	case DID_TRANSPORT_MARGINAL:
-+		return BLK_STS_TRANSPORT;
-+	case DID_TARGET_FAILURE:
-+		__set_host_byte(cmd_result, DID_OK);
-+		return BLK_STS_TARGET;
-+	case DID_NEXUS_FAILURE:
-+		__set_host_byte(cmd_result, DID_OK);
-+		return BLK_STS_NEXUS;
-+	case DID_ALLOC_FAILURE:
-+		__set_host_byte(cmd_result, DID_OK);
-+		return BLK_STS_NOSPC;
-+	case DID_MEDIUM_ERROR:
-+		__set_host_byte(cmd_result, DID_OK);
-+		return BLK_STS_MEDIUM;
-+	default:
-+		return BLK_STS_IOERR;
-+	}
-+}
-+EXPORT_SYMBOL(__scsi_result_to_blk_status);
-+
- static int __init blk_scsi_ioctl_init(void)
- {
- 	blk_set_cmd_filter_defaults(&blk_default_cmd_filter);
-diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
-index 6b994baf87c2..2c0eca3693af 100644
---- a/drivers/scsi/scsi_lib.c
-+++ b/drivers/scsi/scsi_lib.c
-@@ -589,29 +589,7 @@ static bool scsi_end_request(struct request *req, blk_status_t error,
-  */
- static blk_status_t scsi_result_to_blk_status(struct scsi_cmnd *cmd, int result)
- {
--	switch (host_byte(result)) {
--	case DID_OK:
--		if (scsi_status_is_good(result))
--			return BLK_STS_OK;
--		return BLK_STS_IOERR;
--	case DID_TRANSPORT_FAILFAST:
--	case DID_TRANSPORT_MARGINAL:
--		return BLK_STS_TRANSPORT;
--	case DID_TARGET_FAILURE:
--		set_host_byte(cmd, DID_OK);
--		return BLK_STS_TARGET;
--	case DID_NEXUS_FAILURE:
--		set_host_byte(cmd, DID_OK);
--		return BLK_STS_NEXUS;
--	case DID_ALLOC_FAILURE:
--		set_host_byte(cmd, DID_OK);
--		return BLK_STS_NOSPC;
--	case DID_MEDIUM_ERROR:
--		set_host_byte(cmd, DID_OK);
--		return BLK_STS_MEDIUM;
--	default:
--		return BLK_STS_IOERR;
--	}
-+	return __scsi_result_to_blk_status(&cmd->result, result);
- }
- 
- /* Helper for scsi_io_completion() when "reprep" action required. */
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 1255823b2bc0..48497a77428d 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -2021,4 +2021,5 @@ int fsync_bdev(struct block_device *bdev);
- int freeze_bdev(struct block_device *bdev);
- int thaw_bdev(struct block_device *bdev);
- 
-+blk_status_t __scsi_result_to_blk_status(int *cmd_result, int result);
- #endif /* _LINUX_BLKDEV_H */
--- 
+Finally we are able to try to fix the corrupted data in filesystem and
+do other necessary processing, such as killing processes who are using
+the files affected.
+
+The call trace is like this:
+memory_failure()
+|* fsdax case
+|------------
+|pgmap->ops->memory_failure()      => pmem_pgmap_memory_failure()
+| dax_holder_notify_failure()      =>
+|  dax_device->holder_ops->notify_failure() =>
+|                                     - xfs_dax_notify_failure()
+|                                     - md_dax_notify_failure()
+|  |* xfs_dax_notify_failure()
+|  |--------------------------
+|  |   xfs_rmap_query_range()
+|  |    xfs_currupt_helper()
+|  |    * corrupted on metadata
+|  |       try to recover data, call xfs_force_shutdown()
+|  |    * corrupted on file data
+|  |       try to recover data, call mf_dax_kill_procs()
+|  |* md_dax_notify_failure()
+|  |-------------------------
+|      md_targets->iterate_devices()
+|      md_targets->rmap()          => linear_rmap()
+|       dax_holder_notify_failure()
+|* normal case
+|-------------
+ mf_generic_kill_procs()
+
+The fsdax & reflink support for XFS is not contained in this patchset.
+
+(Rebased on v5.13-rc7)
+==
+
+Shiyang Ruan (9):
+  pagemap: Introduce ->memory_failure()
+  dax: Introduce holder for dax_device
+  mm: factor helpers for memory_failure_dev_pagemap
+  pmem,mm: Implement ->memory_failure in pmem driver
+  mm: Introduce mf_dax_kill_procs() for fsdax case
+  xfs: Implement ->corrupted_range() for XFS
+  dm: Introduce ->rmap() to find bdev offset
+  md: Implement dax_holder_operations
+  fs/dax: Remove useless functions
+
+ block/genhd.c                 |  30 +++++++
+ drivers/dax/super.c           |  49 ++++++++++
+ drivers/md/dm-linear.c        |  20 +++++
+ drivers/md/dm.c               | 126 +++++++++++++++++++++++++-
+ drivers/nvdimm/pmem.c         |  13 +++
+ fs/dax.c                      |  73 ++++-----------
+ fs/xfs/xfs_fsops.c            |   5 ++
+ fs/xfs/xfs_mount.h            |   1 +
+ fs/xfs/xfs_super.c            | 140 +++++++++++++++++++++++++++++
+ include/linux/dax.h           |  27 ++++++
+ include/linux/device-mapper.h |   5 ++
+ include/linux/genhd.h         |   1 +
+ include/linux/memremap.h      |   9 ++
+ include/linux/mm.h            |  10 +++
+ mm/memory-failure.c           | 165 ++++++++++++++++++++++------------
+ 15 files changed, 564 insertions(+), 110 deletions(-)
+
+--
 2.32.0
+
 
 
 --
