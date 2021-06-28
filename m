@@ -7,82 +7,73 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B418C2B9F4
-	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:53:25 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DD4CEC2B9F4
+	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:53:34 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id CCF1C61C6B
-	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:53:09 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CCF1C61C6B
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=fujitsu.com
+	by mail.kernel.org (Postfix) with ESMTPS id 7A48C61C5B
+	for <dm-devel@archiver.kernel.org>; Mon, 28 Jun 2021 09:53:34 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 7A48C61C5B
+Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-12-bgF8lpVwNE2mTwNsLsQLmA-1; Mon, 28 Jun 2021 05:53:07 -0400
-X-MC-Unique: bgF8lpVwNE2mTwNsLsQLmA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-207-2vDf0yjJMg-aBHtU1topFw-1; Mon, 28 Jun 2021 05:53:31 -0400
+X-MC-Unique: 2vDf0yjJMg-aBHtU1topFw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 731941084F55;
-	Mon, 28 Jun 2021 09:53:01 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 44CAA5D6D1;
-	Mon, 28 Jun 2021 09:53:01 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1B0EF100C661;
+	Mon, 28 Jun 2021 09:53:27 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E8AD148DD;
+	Mon, 28 Jun 2021 09:53:26 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AB9F84EA40;
-	Mon, 28 Jun 2021 09:53:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BB11F1801020;
+	Mon, 28 Jun 2021 09:53:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15S03bnP027108 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 27 Jun 2021 20:03:37 -0400
+	id 15S9qgup009177 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 28 Jun 2021 05:52:42 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6952220239E6; Mon, 28 Jun 2021 00:03:37 +0000 (UTC)
+	id 2D68850159; Mon, 28 Jun 2021 09:52:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 650C320239E7
-	for <dm-devel@redhat.com>; Mon, 28 Jun 2021 00:03:35 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2655150157
+	for <dm-devel@redhat.com>; Mon, 28 Jun 2021 09:52:39 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1EDC5800B28
-	for <dm-devel@redhat.com>; Mon, 28 Jun 2021 00:03:35 +0000 (UTC)
-Received: from heian.cn.fujitsu.com (mail.cn.fujitsu.com [183.91.158.132])
-	by relay.mimecast.com with ESMTP id us-mta-438-agXrPXgdPAuU0U6N-nA7nA-1;
-	Sun, 27 Jun 2021 20:03:30 -0400
-X-MC-Unique: agXrPXgdPAuU0U6N-nA7nA-1
-IronPort-HdrOrdr: =?us-ascii?q?A9a23=3A9Se1iaFrOT7Xo9FfpLqEDseALOsnbusQ8zAX?=
-	=?us-ascii?q?P0AYc31om6uj5rmTdZUgpGfJYVkqKRIdcLy7V5VoBEmskaKdgrNhW4tKPjOW2l?=
-	=?us-ascii?q?dARbsKheCJrlHd8m/Fh4lgPMxbE5SWZuefMbEDt7ee3OCnKadd/PC3tLCvmfzF?=
-	=?us-ascii?q?z2pgCSVja6Rb5Q9/DQqBe3cGPjVuNN4oEoaG/Mpbq36FcXQTVM6yAX4IRKztvN?=
-	=?us-ascii?q?vO/aiWHCIuNlo27hWUlzO05PrfGxic5B0XVDRC2vMD3AH+4nfE2pk=3D?=
-X-IronPort-AV: E=Sophos;i="5.83,304,1616428800"; d="scan'208";a="110256401"
-Received: from unknown (HELO cn.fujitsu.com) ([10.167.33.5])
-	by heian.cn.fujitsu.com with ESMTP; 28 Jun 2021 08:03:28 +0800
-Received: from G08CNEXMBPEKD04.g08.fujitsu.local (unknown [10.167.33.201])
-	by cn.fujitsu.com (Postfix) with ESMTP id 11E524D0BA6A;
-	Mon, 28 Jun 2021 08:03:24 +0800 (CST)
-Received: from G08CNEXCHPEKD07.g08.fujitsu.local (10.167.33.80) by
-	G08CNEXMBPEKD04.g08.fujitsu.local (10.167.33.201) with Microsoft SMTP
-	Server (TLS) id 15.0.1497.2; Mon, 28 Jun 2021 08:03:25 +0800
-Received: from irides.mr.mr.mr (10.167.225.141) by
-	G08CNEXCHPEKD07.g08.fujitsu.local (10.167.33.209) with Microsoft SMTP
-	Server
-	id 15.0.1497.2 via Frontend Transport; Mon, 28 Jun 2021 08:03:24 +0800
-From: Shiyang Ruan <ruansy.fnst@fujitsu.com>
-To: <linux-kernel@vger.kernel.org>, <linux-xfs@vger.kernel.org>,
-	<nvdimm@lists.linux.dev>, <linux-mm@kvack.org>,
-	<linux-fsdevel@vger.kernel.org>, <dm-devel@redhat.com>
-Date: Mon, 28 Jun 2021 08:02:18 +0800
-Message-ID: <20210628000218.387833-10-ruansy.fnst@fujitsu.com>
-In-Reply-To: <20210628000218.387833-1-ruansy.fnst@fujitsu.com>
-References: <20210628000218.387833-1-ruansy.fnst@fujitsu.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BCBDB10AC3A3
+	for <dm-devel@redhat.com>; Mon, 28 Jun 2021 09:52:39 +0000 (UTC)
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) (Using
+	TLS) by relay.mimecast.com with ESMTP id
+	us-mta-108-tc1M_6MvNoijRbmDHzpMhw-1; Mon, 28 Jun 2021 05:52:34 -0400
+X-MC-Unique: tc1M_6MvNoijRbmDHzpMhw-1
+Received: from imap.suse.de (imap-alt.suse-dmz.suse.de [192.168.254.47])
+	(using TLSv1.2 with cipher ECDHE-ECDSA-AES128-GCM-SHA256 (128/128
+	bits)) (No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 92D1F2024F;
+	Mon, 28 Jun 2021 09:52:32 +0000 (UTC)
+Received: from imap3-int (imap-alt.suse-dmz.suse.de [192.168.254.47])
+	by imap.suse.de (Postfix) with ESMTP id 0667311906;
+	Mon, 28 Jun 2021 09:52:31 +0000 (UTC)
+Received: from director2.suse.de ([192.168.254.72]) by imap3-int with ESMTPSA
+	id iLV3O9+b2WAqagAALh3uQQ
+	(envelope-from <mwilck@suse.com>); Mon, 28 Jun 2021 09:52:31 +0000
+From: mwilck@suse.com
+To: Mike Snitzer <snitzer@redhat.com>, Alasdair G Kergon <agk@redhat.com>,
+	Bart Van Assche <Bart.VanAssche@sandisk.com>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>,
+	linux-scsi@vger.kernel.org, dm-devel@redhat.com,
+	Hannes Reinecke <hare@suse.de>
+Date: Mon, 28 Jun 2021 11:52:08 +0200
+Message-Id: <20210628095210.26249-2-mwilck@suse.com>
+In-Reply-To: <20210628095210.26249-1-mwilck@suse.com>
+References: <20210628095210.26249-1-mwilck@suse.com>
 MIME-Version: 1.0
-X-yoursite-MailScanner-ID: 11E524D0BA6A.A3DAF
-X-yoursite-MailScanner: Found to be clean
-X-yoursite-MailScanner-From: ruansy.fnst@fujitsu.com
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -91,12 +82,16 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 15S9qgup009177
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Mon, 28 Jun 2021 05:52:34 -0400
-Cc: snitzer@redhat.com, darrick.wong@oracle.com, rgoldwyn@suse.de,
-	david@fromorbit.com, dan.j.williams@intel.com, hch@lst.de, agk@redhat.com
-Subject: [dm-devel] [PATCH v5 9/9] fs/dax: Remove useless functions
+Cc: Daniel Wagner <dwagner@suse.de>, emilne@redhat.com,
+	Martin Wilck <mwilck@suse.com>, linux-block@vger.kernel.org,
+	nkoenig@redhat.com, Paolo Bonzini <pbonzini@redhat.com>,
+	Christoph Hellwig <hch@lst.de>
+Subject: [dm-devel] [PATCH v4 1/3] scsi: scsi_ioctl: export
+	__scsi_result_to_blk_status()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -110,7 +105,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -118,95 +113,126 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Since owner tracking is triggerred by pmem device, these functions are
-useless.  So remove them.
+From: Martin Wilck <mwilck@suse.com>
 
-Signed-off-by: Shiyang Ruan <ruansy.fnst@fujitsu.com>
+This makes it possible to use scsi_result_to_blk_status() from
+code that shouldn't depend on scsi_mod (e.g. device mapper).
+
+scsi_ioctl.c is selected by CONFIG_BLK_SCSI_REQUEST, which is automatically
+selected by CONFIG_SCSI.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- fs/dax.c | 46 ----------------------------------------------
- 1 file changed, 46 deletions(-)
+ block/scsi_ioctl.c      | 47 +++++++++++++++++++++++++++++++++++++++++
+ drivers/scsi/scsi_lib.c | 24 +--------------------
+ include/linux/blkdev.h  |  1 +
+ 3 files changed, 49 insertions(+), 23 deletions(-)
 
-diff --git a/fs/dax.c b/fs/dax.c
-index 7c5d8acd6bc5..cee8e61d1025 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -334,48 +334,6 @@ static unsigned long dax_end_pfn(void *entry)
- 	for (pfn = dax_to_pfn(entry); \
- 			pfn < dax_end_pfn(entry); pfn++)
-
--/*
-- * TODO: for reflink+dax we need a way to associate a single page with
-- * multiple address_space instances at different linear_page_index()
-- * offsets.
-- */
--static void dax_associate_entry(void *entry, struct address_space *mapping,
--		struct vm_area_struct *vma, unsigned long address)
--{
--	unsigned long size = dax_entry_size(entry), pfn, index;
--	int i = 0;
--
--	if (IS_ENABLED(CONFIG_FS_DAX_LIMITED))
--		return;
--
--	index = linear_page_index(vma, address & ~(size - 1));
--	for_each_mapped_pfn(entry, pfn) {
--		struct page *page = pfn_to_page(pfn);
--
--		WARN_ON_ONCE(page->mapping);
--		page->mapping = mapping;
--		page->index = index + i++;
--	}
--}
--
--static void dax_disassociate_entry(void *entry, struct address_space *mapping,
--		bool trunc)
--{
--	unsigned long pfn;
--
--	if (IS_ENABLED(CONFIG_FS_DAX_LIMITED))
--		return;
--
--	for_each_mapped_pfn(entry, pfn) {
--		struct page *page = pfn_to_page(pfn);
--
--		WARN_ON_ONCE(trunc && page_ref_count(page) > 1);
--		WARN_ON_ONCE(page->mapping && page->mapping != mapping);
--		page->mapping = NULL;
--		page->index = 0;
--	}
--}
--
- static struct page *dax_busy_page(void *entry)
+diff --git a/block/scsi_ioctl.c b/block/scsi_ioctl.c
+index fa6df11b8bdd..19b63b64ecbc 100644
+--- a/block/scsi_ioctl.c
++++ b/block/scsi_ioctl.c
+@@ -882,6 +882,53 @@ void scsi_req_init(struct scsi_request *req)
+ }
+ EXPORT_SYMBOL(scsi_req_init);
+ 
++/* See set_host_byte() in include/scsi/scsi_cmnd.h */
++static void __set_host_byte(int *result, char status)
++{
++	*result = (*result & 0xff00ffff) | (status << 16);
++}
++
++/**
++ * __scsi_result_to_blk_status - translate a SCSI result code into blk_status_t
++ * @cmd:	SCSI command
++ * @cmd_result: pointer to scsi cmnd result code to be possibly changed
++ *
++ * Translate a SCSI result code into a blk_status_t value. May reset the host
++ * byte of @cmd_result.
++ */
++blk_status_t __scsi_result_to_blk_status(int *cmd_result, int result)
++{
++	switch (host_byte(result)) {
++	case DID_OK:
++		/*
++		 * Also check the other bytes than the status byte in result
++		 * to handle the case when a SCSI LLD sets result to
++		 * DRIVER_SENSE << 24 without setting SAM_STAT_CHECK_CONDITION.
++		 */
++		if (scsi_status_is_good(result))
++			return BLK_STS_OK;
++		return BLK_STS_IOERR;
++	case DID_TRANSPORT_FAILFAST:
++	case DID_TRANSPORT_MARGINAL:
++		return BLK_STS_TRANSPORT;
++	case DID_TARGET_FAILURE:
++		__set_host_byte(cmd_result, DID_OK);
++		return BLK_STS_TARGET;
++	case DID_NEXUS_FAILURE:
++		__set_host_byte(cmd_result, DID_OK);
++		return BLK_STS_NEXUS;
++	case DID_ALLOC_FAILURE:
++		__set_host_byte(cmd_result, DID_OK);
++		return BLK_STS_NOSPC;
++	case DID_MEDIUM_ERROR:
++		__set_host_byte(cmd_result, DID_OK);
++		return BLK_STS_MEDIUM;
++	default:
++		return BLK_STS_IOERR;
++	}
++}
++EXPORT_SYMBOL(__scsi_result_to_blk_status);
++
+ static int __init blk_scsi_ioctl_init(void)
  {
- 	unsigned long pfn;
-@@ -554,7 +512,6 @@ static void *grab_mapping_entry(struct xa_state *xas,
- 			xas_lock_irq(xas);
- 		}
-
--		dax_disassociate_entry(entry, mapping, false);
- 		xas_store(xas, NULL);	/* undo the PMD join */
- 		dax_wake_entry(xas, entry, WAKE_ALL);
- 		mapping->nrpages -= PG_PMD_NR;
-@@ -691,7 +648,6 @@ static int __dax_invalidate_entry(struct address_space *mapping,
- 	    (xas_get_mark(&xas, PAGECACHE_TAG_DIRTY) ||
- 	     xas_get_mark(&xas, PAGECACHE_TAG_TOWRITE)))
- 		goto out;
--	dax_disassociate_entry(entry, mapping, trunc);
- 	xas_store(&xas, NULL);
- 	mapping->nrpages -= 1UL << dax_entry_order(entry);
- 	ret = 1;
-@@ -785,8 +741,6 @@ static void *dax_insert_entry(struct xa_state *xas,
- 	if (dax_is_zero_entry(entry) || dax_is_empty_entry(entry)) {
- 		void *old;
-
--		dax_disassociate_entry(entry, mapping, false);
--		dax_associate_entry(new_entry, mapping, vmf->vma, vmf->address);
- 		/*
- 		 * Only swap our new entry into the page cache if the current
- 		 * entry is a zero page or an empty entry.  If a normal PTE or
---
+ 	blk_set_cmd_filter_defaults(&blk_default_cmd_filter);
+diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
+index 6b994baf87c2..2c0eca3693af 100644
+--- a/drivers/scsi/scsi_lib.c
++++ b/drivers/scsi/scsi_lib.c
+@@ -589,29 +589,7 @@ static bool scsi_end_request(struct request *req, blk_status_t error,
+  */
+ static blk_status_t scsi_result_to_blk_status(struct scsi_cmnd *cmd, int result)
+ {
+-	switch (host_byte(result)) {
+-	case DID_OK:
+-		if (scsi_status_is_good(result))
+-			return BLK_STS_OK;
+-		return BLK_STS_IOERR;
+-	case DID_TRANSPORT_FAILFAST:
+-	case DID_TRANSPORT_MARGINAL:
+-		return BLK_STS_TRANSPORT;
+-	case DID_TARGET_FAILURE:
+-		set_host_byte(cmd, DID_OK);
+-		return BLK_STS_TARGET;
+-	case DID_NEXUS_FAILURE:
+-		set_host_byte(cmd, DID_OK);
+-		return BLK_STS_NEXUS;
+-	case DID_ALLOC_FAILURE:
+-		set_host_byte(cmd, DID_OK);
+-		return BLK_STS_NOSPC;
+-	case DID_MEDIUM_ERROR:
+-		set_host_byte(cmd, DID_OK);
+-		return BLK_STS_MEDIUM;
+-	default:
+-		return BLK_STS_IOERR;
+-	}
++	return __scsi_result_to_blk_status(&cmd->result, result);
+ }
+ 
+ /* Helper for scsi_io_completion() when "reprep" action required. */
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 1255823b2bc0..48497a77428d 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -2021,4 +2021,5 @@ int fsync_bdev(struct block_device *bdev);
+ int freeze_bdev(struct block_device *bdev);
+ int thaw_bdev(struct block_device *bdev);
+ 
++blk_status_t __scsi_result_to_blk_status(int *cmd_result, int result);
+ #endif /* _LINUX_BLKDEV_H */
+-- 
 2.32.0
-
 
 
 --
