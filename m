@@ -2,68 +2,69 @@ Return-Path: <SRS0=7Rox=LX=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 478A0C11F66
-	for <dm-devel@archiver.kernel.org>; Tue, 29 Jun 2021 11:48:02 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C9A35C11F66
+	for <dm-devel@archiver.kernel.org>; Tue, 29 Jun 2021 12:59:41 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id CFE6161D2A
-	for <dm-devel@archiver.kernel.org>; Tue, 29 Jun 2021 11:48:01 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org CFE6161D2A
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+	by mail.kernel.org (Postfix) with ESMTPS id 35C2A61DBF
+	for <dm-devel@archiver.kernel.org>; Tue, 29 Jun 2021 12:59:41 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 35C2A61DBF
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-599-8KP6XSyNOaaMRuUmR94EjQ-1; Tue, 29 Jun 2021 07:47:58 -0400
-X-MC-Unique: 8KP6XSyNOaaMRuUmR94EjQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-12-7SbLUugIMgexT3I-u9A7dw-1; Tue, 29 Jun 2021 08:59:38 -0400
+X-MC-Unique: 7SbLUugIMgexT3I-u9A7dw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A2FAB18D6A2E;
-	Tue, 29 Jun 2021 11:47:52 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9BD2E5C1D0;
-	Tue, 29 Jun 2021 11:47:51 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9A642804141;
+	Tue, 29 Jun 2021 12:59:33 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B56D210016F8;
+	Tue, 29 Jun 2021 12:59:32 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 72FBC4EA2A;
-	Tue, 29 Jun 2021 11:47:49 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DCB031809C97;
+	Tue, 29 Jun 2021 12:59:29 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15TBlkPc006682 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 29 Jun 2021 07:47:46 -0400
+	id 15TCxJqF012694 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 29 Jun 2021 08:59:20 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 14F5221623B4; Tue, 29 Jun 2021 11:47:46 +0000 (UTC)
+	id A85E0200BFCB; Tue, 29 Jun 2021 12:59:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 10F6E2138CF0
-	for <dm-devel@redhat.com>; Tue, 29 Jun 2021 11:47:43 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A3E1C200BFC6
+	for <dm-devel@redhat.com>; Tue, 29 Jun 2021 12:59:17 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ECE739676EB
-	for <dm-devel@redhat.com>; Tue, 29 Jun 2021 11:47:42 +0000 (UTC)
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-211-EBt7eFnLMl2hwQ2EGChGAA-1; Tue, 29 Jun 2021 07:47:40 -0400
-X-MC-Unique: EBt7eFnLMl2hwQ2EGChGAA-1
-Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red
-	Hat Linux)) id 1lyCCI-0043Q8-DZ; Tue, 29 Jun 2021 11:46:40 +0000
-Date: Tue, 29 Jun 2021 12:46:34 +0100
-From: Matthew Wilcox <willy@infradead.org>
-To: "ruansy.fnst@fujitsu.com" <ruansy.fnst@fujitsu.com>
-Message-ID: <YNsIGid6CwtH/h1Z@casper.infradead.org>
-References: <20210628000218.387833-1-ruansy.fnst@fujitsu.com>
-	<20210628000218.387833-6-ruansy.fnst@fujitsu.com>
-	<YNm3VeeWuI0m4Vcx@casper.infradead.org>
-	<OSBPR01MB292012F7C264076E9AA645C3F4029@OSBPR01MB2920.jpnprd01.prod.outlook.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 511EE802700
+	for <dm-devel@redhat.com>; Tue, 29 Jun 2021 12:59:17 +0000 (UTC)
+Received: from verein.lst.de (verein.lst.de [213.95.11.211]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-341-ECf6t-VuMBOwWj8fVjLRFQ-1;
+	Tue, 29 Jun 2021 08:59:14 -0400
+X-MC-Unique: ECf6t-VuMBOwWj8fVjLRFQ-1
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id 1E8FA67373; Tue, 29 Jun 2021 14:59:10 +0200 (CEST)
+Date: Tue, 29 Jun 2021 14:59:09 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Martin Wilck <mwilck@suse.com>
+Message-ID: <20210629125909.GB14372@lst.de>
+References: <20210628095210.26249-1-mwilck@suse.com>
+	<20210628095210.26249-2-mwilck@suse.com>
+	<20210628095341.GA4105@lst.de>
+	<4fb99309463052355bb8fefe034a320085acab1b.camel@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <OSBPR01MB292012F7C264076E9AA645C3F4029@OSBPR01MB2920.jpnprd01.prod.outlook.com>
+In-Reply-To: <4fb99309463052355bb8fefe034a320085acab1b.camel@suse.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -73,21 +74,18 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 15TCxJqF012694
 X-loop: dm-devel@redhat.com
-Cc: "nvdimm@lists.linux.dev" <nvdimm@lists.linux.dev>,
-	"snitzer@redhat.com" <snitzer@redhat.com>,
-	"darrick.wong@oracle.com" <darrick.wong@oracle.com>,
-	"rgoldwyn@suse.de" <rgoldwyn@suse.de>,
-	"david@fromorbit.com" <david@fromorbit.com>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
-	"linux-mm@kvack.org" <linux-mm@kvack.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-	"dan.j.williams@intel.com" <dan.j.williams@intel.com>,
-	"hch@lst.de" <hch@lst.de>, "agk@redhat.com" <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH v5 5/9] mm: Introduce mf_dax_kill_procs() for
-	fsdax case
+Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org,
+	Daniel Wagner <dwagner@suse.de>, emilne@redhat.com,
+	linux-block@vger.kernel.org, dm-devel@redhat.com,
+	Paolo Bonzini <pbonzini@redhat.com>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>,
+	nkoenig@redhat.com, Bart Van Assche <Bart.VanAssche@sandisk.com>,
+	Christoph Hellwig <hch@lst.de>, Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH v4 1/3] scsi: scsi_ioctl: export
+ __scsi_result_to_blk_status()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -101,33 +99,40 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-On Tue, Jun 29, 2021 at 07:49:24AM +0000, ruansy.fnst@fujitsu.com wrote:
-> > But I think this is unnecessary; why not just pass the PFN into mf_dax_kill_procs?
-> 
-> Because the mf_dax_kill_procs() is called in filesystem recovery function, which is at the end of the RMAP routine.  And the PFN has been translated to disk offset in pmem driver in order to do RMAP search in filesystem.  So, if we have to pass it, every function in this routine needs to add an argument for this PFN.  I was hoping I can avoid passing PFN through the whole stack with the help of this dax_load_pfn().
+On Mon, Jun 28, 2021 at 04:57:33PM +0200, Martin Wilck wrote:
+> Hello Christoph,
+>=20
+> On Mo, 2021-06-28 at 11:53 +0200, Christoph Hellwig wrote:
+> > On Mon, Jun 28, 2021 at 11:52:08AM +0200, mwilck@suse.com=A0wrote:
+> > > From: Martin Wilck <mwilck@suse.com>
+> > >=20
+> > > This makes it possible to use scsi_result_to_blk_status() from
+> > > code that shouldn't depend on scsi_mod (e.g. device mapper).
+> >=20
+> > This really has no business being used outside of low-level SCSI
+> > code.
+>=20
+> And this is where my patch set uses it. Can you recommend a better
+> way how to access this algorithm, without making dm_mod.ko or dm-
+> mpath.ko depend on scsi_mod.ko, and without open-coding it
+> independently in a different code path?
 
-OK, I think you need to create:
+> The sg_io-on-multipath code needs to answer the question "is this a
+> path or a target error?". Therefore it calls blk_path_error(), which
+> requires obtaining a blk_status_t first. But that's not available in
+> the sg_io code path. So how=A0should I deal with this situation?
 
-struct memory_failure {
-	phys_addr_t start;
-	phys_addr_t end;
-	unsigned long flags;
-};
+Not by exporting random crap from the SCSI code.
 
-(a memory failure might not be an entire page, so working in pfns isn't
-the best approach)
-
-Then that can be passed to ->memory_failure() and then deeper to
-->notify_failure(), and finally into xfs_corrupt_helper().
 
 --
 dm-devel mailing list
