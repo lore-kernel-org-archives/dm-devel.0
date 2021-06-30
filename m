@@ -2,74 +2,99 @@ Return-Path: <SRS0=Z7ED=LY=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
+	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1D24CC11F65
-	for <dm-devel@archiver.kernel.org>; Wed, 30 Jun 2021 20:02:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9EF9DC11F66
+	for <dm-devel@archiver.kernel.org>; Wed, 30 Jun 2021 22:12:52 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id A48EF61477
-	for <dm-devel@archiver.kernel.org>; Wed, 30 Jun 2021 20:02:14 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org A48EF61477
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id 0E4DD61477
+	for <dm-devel@archiver.kernel.org>; Wed, 30 Jun 2021 22:12:51 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0E4DD61477
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=acm.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-45-FRDVfAKMOLiMfzz3D1uM0Q-1; Wed, 30 Jun 2021 16:02:11 -0400
-X-MC-Unique: FRDVfAKMOLiMfzz3D1uM0Q-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-479-s7juevxFORK2E4eyGdNE2Q-1; Wed, 30 Jun 2021 18:12:43 -0400
+X-MC-Unique: s7juevxFORK2E4eyGdNE2Q-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8A08D10C1ADC;
-	Wed, 30 Jun 2021 20:02:06 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7B3DF1001281;
-	Wed, 30 Jun 2021 20:02:04 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3B6C418D6A30;
+	Wed, 30 Jun 2021 22:12:38 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4B31A78307;
+	Wed, 30 Jun 2021 22:12:37 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 889D31809C99;
-	Wed, 30 Jun 2021 20:02:01 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E99B54EA2A;
+	Wed, 30 Jun 2021 22:12:33 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15UK1wqw016132 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 30 Jun 2021 16:01:58 -0400
+	id 15UM8Oex025177 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 30 Jun 2021 18:08:24 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 7AADE20285C8; Wed, 30 Jun 2021 20:01:58 +0000 (UTC)
+	id 28CA3202B17B; Wed, 30 Jun 2021 22:08:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 75B3F20285BC
-	for <dm-devel@redhat.com>; Wed, 30 Jun 2021 20:01:55 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 98AAA800B28
-	for <dm-devel@redhat.com>; Wed, 30 Jun 2021 20:01:55 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) (Using
-	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-115-LuyHgA7EO_qPhTRyS7OIHw-1; Wed, 30 Jun 2021 16:01:51 -0400
-X-MC-Unique: LuyHgA7EO_qPhTRyS7OIHw-1
-Received: from imap.suse.de (imap-alt.suse-dmz.suse.de [192.168.254.47])
-	(using TLSv1.2 with cipher ECDHE-ECDSA-AES128-GCM-SHA256 (128/128
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 239BD202B181
+	for <dm-devel@redhat.com>; Wed, 30 Jun 2021 22:08:20 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
 	bits)) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 984DF1FEFA;
-	Wed, 30 Jun 2021 20:01:49 +0000 (UTC)
-Received: from imap3-int (imap-alt.suse-dmz.suse.de [192.168.254.47])
-	by imap.suse.de (Postfix) with ESMTP id 5CDB0118DD;
-	Wed, 30 Jun 2021 20:01:49 +0000 (UTC)
-Received: from director2.suse.de ([192.168.254.72]) by imap3-int with ESMTPSA
-	id 5qt3FK3N3GCmSQAALh3uQQ
-	(envelope-from <mwilck@suse.com>); Wed, 30 Jun 2021 20:01:49 +0000
-From: mwilck@suse.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Wed, 30 Jun 2021 22:01:35 +0200
-Message-Id: <20210630200135.8423-1-mwilck@suse.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9FE4280D08E
+	for <dm-devel@redhat.com>; Wed, 30 Jun 2021 22:08:20 +0000 (UTC)
+Received: from mail-pl1-f169.google.com (mail-pl1-f169.google.com
+	[209.85.214.169]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-519-wtopnwMtO5OftZRxkDHbfA-1; Wed, 30 Jun 2021 18:08:16 -0400
+X-MC-Unique: wtopnwMtO5OftZRxkDHbfA-1
+Received: by mail-pl1-f169.google.com with SMTP id u19so2319917plc.3;
+	Wed, 30 Jun 2021 15:08:15 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+	:user-agent:mime-version:in-reply-to:content-language
+	:content-transfer-encoding;
+	bh=itel9TJ+NQ61h1BnfnOgz6HA8ahL/K/rKSKzUsDI3HM=;
+	b=sdK1O3+NJ8UgXgg++uDgzT0LvcvuxxB9X9LbNdArMoB+j6nk9mz3VHu7g4QywXy7md
+	PZ3efrH8FYNxQkJdB8hkMTxHxYfWon/1vA+MuJ1/faooh33dFI8fIqYd6WHV8HqGcC+r
+	azSZ/AqPrEpBLUj9+OIyrM/zhWTGVu+WvbGgSelYUTo2a3L89XGeYUvm1OC5GKa+9qC5
+	QJFbDM/UsRi4tRrb7pcXxK+VX7hUq4ZvT2CJlB3+mmS2xUlsM1KWkPjGd95ZuerHaPyE
+	xEpJ4XzdTxvr0salFdjy+UR7EV4JW9bVgXwiA4PBAOe7d/mBbmCT+TemSQqvbiVGhs2D
+	yoJw==
+X-Gm-Message-State: AOAM5323A6n/ALkDUmtHrk541/5GcMduSeK29U4bQGI29JkKV+ATUg7B
+	+P5ni5bQ8qM9P6J/sWUplNZRp6+cbaI=
+X-Google-Smtp-Source: ABdhPJzkLCHPYFnnLC8fI4RqIsJPvxZ1rPwxyDzUQpapeaJ9De1uI/RJiqNalFcrBqZceBenrDJPHA==
+X-Received: by 2002:a17:90b:4c4b:: with SMTP id
+	np11mr6453051pjb.125.1625090894303; 
+	Wed, 30 Jun 2021 15:08:14 -0700 (PDT)
+Received: from ?IPv6:2601:647:4000:d7:a64c:e202:83eb:cd?
+	([2601:647:4000:d7:a64c:e202:83eb:cd])
+	by smtp.gmail.com with ESMTPSA id
+	t7sm22433442pfe.201.2021.06.30.15.08.12
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Wed, 30 Jun 2021 15:08:13 -0700 (PDT)
+To: Martin Wilck <mwilck@suse.com>, Mike Snitzer <snitzer@gmail.com>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>
+References: <20210628095210.26249-1-mwilck@suse.com>
+	<20210628095210.26249-2-mwilck@suse.com> <20210628095341.GA4105@lst.de>
+	<4fb99309463052355bb8fefe034a320085acab1b.camel@suse.com>
+	<20210629125909.GB14372@lst.de>
+	<2b5fd35d95668a8cba9151941c058cb8aee3e37c.camel@suse.com>
+	<20210629212316.GA3367857@dhcp-10-100-145-180.wdc.com>
+	<1aa1f875e7a85f9a331e88e4f8482588176bdb3a.camel@suse.com>
+	<YNyVafnX09cOIZPe@redhat.com>
+	<da3039c75c892f7d4031161f7c8719e50de36057.camel@suse.com>
+From: Bart Van Assche <bvanassche@acm.org>
+Message-ID: <1c05c65e-64a2-0584-1888-1f544998365e@acm.org>
+Date: Wed, 30 Jun 2021 15:08:11 -0700
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+	Thunderbird/78.11.0
 MIME-Version: 1.0
+In-Reply-To: <da3039c75c892f7d4031161f7c8719e50de36057.camel@suse.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -78,12 +103,15 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 15UK1wqw016132
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH] libmultipath: use uint64_t for sg_id.lun
+Cc: linux-scsi@vger.kernel.org, Daniel Wagner <dwagner@suse.de>,
+	emilne@redhat.com, linux-block@vger.kernel.org,
+	dm-devel@redhat.com, nkoenig@redhat.com,
+	Paolo Bonzini <pbonzini@redhat.com>, Christoph Hellwig <hch@lst.de>,
+	Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH v4 1/3] scsi: scsi_ioctl: export
+ __scsi_result_to_blk_status()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -97,142 +125,48 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Martin Wilck <mwilck@suse.com>
+On 6/30/21 9:54 AM, Martin Wilck wrote:
+> @Martin, @Bart, do you have a suggestion for me?
 
-SCSI LUNs are 64bit unsigned integers, and have been exposed as such by
-the kernel for years. Storage using the full 8 bytes is fortunately rare.
-Still, we should handle this properly.
+The code in block/scsi_ioctl.c exists in the block layer since until
+recently most of it was used by both the IDE and SCSI code. Now that
+drivers/ide is gone (thanks Christoph!), how about moving block/bsg.c
+and block/scsi_ioctl.c to drivers/scsi/? As far as I can see the BSG
+code is only used by SCSI drivers:
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/discovery.c                 | 10 +++++-----
- libmultipath/print.c                     |  2 +-
- libmultipath/prioritizers/weightedpath.c |  2 +-
- libmultipath/structs.c                   |  2 +-
- libmultipath/structs.h                   |  4 +++-
- 5 files changed, 11 insertions(+), 9 deletions(-)
+$ git grep -nH BLK_DEV_BSG | grep /Kconfig
+block/Kconfig:38:config BLK_DEV_BSG
+block/Kconfig:57:config BLK_DEV_BSGLIB
+block/Kconfig:59:	select BLK_DEV_BSG
+drivers/scsi/Kconfig:231:	select BLK_DEV_BSGLIB
+drivers/scsi/Kconfig:241:	select BLK_DEV_BSGLIB
+drivers/scsi/Kconfig:250:	select BLK_DEV_BSGLIB
+drivers/scsi/libsas/Kconfig:13:	select BLK_DEV_BSGLIB
+drivers/scsi/ufs/Kconfig:150:	select BLK_DEV_BSGLIB
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index bfe2f56..e9f5703 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1427,7 +1427,7 @@ scsi_sysfs_pathinfo (struct path *pp, const struct _vector *hwtable)
- 			attr_path = udev_device_get_sysname(parent);
- 			if (!attr_path)
- 				break;
--			if (sscanf(attr_path, "%i:%i:%i:%i",
-+			if (sscanf(attr_path, "%i:%i:%i:%" SCNu64,
- 				   &pp->sg_id.host_no,
- 				   &pp->sg_id.channel,
- 				   &pp->sg_id.scsi_id,
-@@ -1462,7 +1462,7 @@ scsi_sysfs_pathinfo (struct path *pp, const struct _vector *hwtable)
- 	/*
- 	 * host / bus / target / lun
- 	 */
--	condlog(3, "%s: h:b:t:l = %i:%i:%i:%i",
-+	condlog(3, "%s: h:b:t:l = %i:%i:%i:%" PRIu64,
- 			pp->dev,
- 			pp->sg_id.host_no,
- 			pp->sg_id.channel,
-@@ -1577,7 +1577,7 @@ ccw_sysfs_pathinfo (struct path *pp, const struct _vector *hwtable)
- 		   &pp->sg_id.host_no,
- 		   &pp->sg_id.channel,
- 		   &pp->sg_id.scsi_id) == 3) {
--		condlog(3, "%s: h:b:t:l = %i:%i:%i:%i",
-+		condlog(3, "%s: h:b:t:l = %i:%i:%i:%" PRIu64,
- 			pp->dev,
- 			pp->sg_id.host_no,
- 			pp->sg_id.channel,
-@@ -1636,7 +1636,7 @@ cciss_sysfs_pathinfo (struct path *pp, const struct _vector *hwtable)
- 	 */
- 	pp->sg_id.lun = 0;
- 	pp->sg_id.channel = 0;
--	condlog(3, "%s: h:b:t:l = %i:%i:%i:%i",
-+	condlog(3, "%s: h:b:t:l = %i:%i:%i:%" PRIu64,
- 		pp->dev,
- 		pp->sg_id.host_no,
- 		pp->sg_id.channel,
-@@ -1815,7 +1815,7 @@ scsi_ioctl_pathinfo (struct path * pp, int mask)
- 			attr_path = udev_device_get_sysname(parent);
- 			if (!attr_path)
- 				break;
--			if (sscanf(attr_path, "%i:%i:%i:%i",
-+			if (sscanf(attr_path, "%i:%i:%i:%" SCNu64,
- 				   &pp->sg_id.host_no,
- 				   &pp->sg_id.channel,
- 				   &pp->sg_id.scsi_id,
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 3c69bf4..29ce499 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -392,7 +392,7 @@ snprint_hcil (char * buff, size_t len, const struct path * pp)
- 	if (!pp || pp->sg_id.host_no < 0)
- 		return snprintf(buff, len, "#:#:#:#");
- 
--	return snprintf(buff, len, "%i:%i:%i:%i",
-+	return snprintf(buff, len, "%i:%i:%i:%" PRIu64,
- 			pp->sg_id.host_no,
- 			pp->sg_id.channel,
- 			pp->sg_id.scsi_id,
-diff --git a/libmultipath/prioritizers/weightedpath.c b/libmultipath/prioritizers/weightedpath.c
-index 916970d..650088b 100644
---- a/libmultipath/prioritizers/weightedpath.c
-+++ b/libmultipath/prioritizers/weightedpath.c
-@@ -101,7 +101,7 @@ int prio_path_weight(struct path *pp, char *prio_args)
- 	}
- 
- 	if (!strcmp(regex, HBTL)) {
--		sprintf(path, "%d:%d:%d:%d", pp->sg_id.host_no,
-+		sprintf(path, "%d:%d:%d:%" PRIu64, pp->sg_id.host_no,
- 			pp->sg_id.channel, pp->sg_id.scsi_id, pp->sg_id.lun);
- 	} else if (!strcmp(regex, DEV_NAME)) {
- 		strcpy(path, pp->dev);
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 8751fc2..6e5a103 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -96,7 +96,7 @@ alloc_path (void)
- 		pp->sg_id.host_no = -1;
- 		pp->sg_id.channel = -1;
- 		pp->sg_id.scsi_id = -1;
--		pp->sg_id.lun = -1;
-+		pp->sg_id.lun = SCSI_INVALID_LUN;
- 		pp->sg_id.proto_id = SCSI_PROTOCOL_UNSPEC;
- 		pp->fd = -1;
- 		pp->tpgs = TPGS_UNDEF;
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index c8447e5..c52bcee 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -178,6 +178,8 @@ enum scsi_protocol {
- 	SCSI_PROTOCOL_UNSPEC = 0xf, /* No specific protocol */
- };
- 
-+#define SCSI_INVALID_LUN ~0ULL
-+
- enum no_undef_states {
- 	NU_NO = -1,
- 	NU_UNDEF = 0,
-@@ -258,7 +260,7 @@ struct sg_id {
- 	int host_no;
- 	int channel;
- 	int scsi_id;
--	int lun;
-+	uint64_t lun;
- 	short h_cmd_per_lun;
- 	short d_queue_depth;
- 	enum scsi_protocol proto_id;
--- 
-2.32.0
+The block/scsi_ioctl.c code is used more widely however:
 
+$ git grep -nH BLK_SCSI_REQUEST | grep /Kconfig
+block/Kconfig:32:config BLK_SCSI_REQUEST
+block/Kconfig:41:	select BLK_SCSI_REQUEST
+block/Kconfig:60:	select BLK_SCSI_REQUEST
+drivers/block/Kconfig:77:	select BLK_SCSI_REQUEST
+drivers/block/Kconfig:309:	select BLK_SCSI_REQUEST
+drivers/block/paride/Kconfig:30:	select BLK_SCSI_REQUEST
+drivers/scsi/Kconfig:22:	select BLK_SCSI_REQUEST
+drivers/target/Kconfig:8:	select BLK_SCSI_REQUEST
+fs/nfsd/Kconfig:112:	select BLK_SCSI_REQUEST
+
+Bart.
 
 --
 dm-devel mailing list
