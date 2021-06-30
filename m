@@ -2,100 +2,75 @@ Return-Path: <SRS0=Z7ED=LY=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B9C4DC11F65
-	for <dm-devel@archiver.kernel.org>; Wed, 30 Jun 2021 08:13:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6AE23C11F69
+	for <dm-devel@archiver.kernel.org>; Wed, 30 Jun 2021 08:31:12 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3E25061D06
-	for <dm-devel@archiver.kernel.org>; Wed, 30 Jun 2021 08:13:09 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3E25061D06
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id 140CD61D06
+	for <dm-devel@archiver.kernel.org>; Wed, 30 Jun 2021 08:31:11 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 140CD61D06
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1625041871;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=gawJ1ue7Gnphoq76WXs1GLqJOVRGBJBtHrTl9VLbKfI=;
+	b=Ql2erHGpbPCssj2gs25YyljUwI8Hf0AoWY4jLKmu8d8nv8KXR6Z3/GtJl9LTpoH1OJp9qu
+	QexpJYT4WzQqkK6kI01AeBFa+R/m11E/YRmTVBmbYydXjPy4Vi3qJEdWPbCxEMvKXhd8wc
+	+LWsiGv7l4xo8aaNs+ELr5PYNibKSC0=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-591-rpVKrNr0Okip6eIpA3AaGw-1; Wed, 30 Jun 2021 04:13:06 -0400
-X-MC-Unique: rpVKrNr0Okip6eIpA3AaGw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-109-iHKqSeW2NvCdrdSUCUkgmA-1; Wed, 30 Jun 2021 04:31:09 -0400
+X-MC-Unique: iHKqSeW2NvCdrdSUCUkgmA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0E914C7400;
-	Wed, 30 Jun 2021 08:13:02 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 42D801936B60;
+	Wed, 30 Jun 2021 08:31:04 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D53F35DA61;
-	Wed, 30 Jun 2021 08:13:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8D30960C13;
+	Wed, 30 Jun 2021 08:31:03 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 874A94EA2A;
-	Wed, 30 Jun 2021 08:13:01 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C22B14EA2A;
+	Wed, 30 Jun 2021 08:31:01 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
+	[10.5.11.12])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 15U8CxgS011884 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 30 Jun 2021 04:12:59 -0400
+	id 15U8Uxmc014352 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 30 Jun 2021 04:30:59 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id E70CB205FAA2; Wed, 30 Jun 2021 08:12:58 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E2F3F205FA9F
-	for <dm-devel@redhat.com>; Wed, 30 Jun 2021 08:12:56 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2550A1064FAD
-	for <dm-devel@redhat.com>; Wed, 30 Jun 2021 08:12:56 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) (Using
-	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-258-SoOTafUPOSuGYOOgMT3lww-1; Wed, 30 Jun 2021 04:12:53 -0400
-X-MC-Unique: SoOTafUPOSuGYOOgMT3lww-1
-Received: from imap.suse.de (imap-alt.suse-dmz.suse.de [192.168.254.47])
-	(using TLSv1.2 with cipher ECDHE-ECDSA-AES128-GCM-SHA256 (128/128
-	bits)) (No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 5FF1222177;
-	Wed, 30 Jun 2021 08:12:51 +0000 (UTC)
-Received: from imap3-int (imap-alt.suse-dmz.suse.de [192.168.254.47])
-	by imap.suse.de (Postfix) with ESMTP id DBD6B11906;
-	Wed, 30 Jun 2021 08:12:50 +0000 (UTC)
-Received: from director2.suse.de ([192.168.254.72]) by imap3-int with ESMTPSA
-	id LfFSM4In3GBYNwAALh3uQQ
-	(envelope-from <mwilck@suse.com>); Wed, 30 Jun 2021 08:12:50 +0000
-Message-ID: <1aa1f875e7a85f9a331e88e4f8482588176bdb3a.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Keith Busch <kbusch@kernel.org>
-Date: Wed, 30 Jun 2021 10:12:50 +0200
-In-Reply-To: <20210629212316.GA3367857@dhcp-10-100-145-180.wdc.com>
-References: <20210628095210.26249-1-mwilck@suse.com>
-	<20210628095210.26249-2-mwilck@suse.com> <20210628095341.GA4105@lst.de>
-	<4fb99309463052355bb8fefe034a320085acab1b.camel@suse.com>
-	<20210629125909.GB14372@lst.de>
-	<2b5fd35d95668a8cba9151941c058cb8aee3e37c.camel@suse.com>
-	<20210629212316.GA3367857@dhcp-10-100-145-180.wdc.com>
-User-Agent: Evolution 3.40.2
+	id D9A0260C13; Wed, 30 Jun 2021 08:30:59 +0000 (UTC)
+Received: from T590 (ovpn-13-153.pek2.redhat.com [10.72.13.153])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 98A1160C81;
+	Wed, 30 Jun 2021 08:30:46 +0000 (UTC)
+Date: Wed, 30 Jun 2021 16:30:41 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: JeffleXu <jefflexu@linux.alibaba.com>
+Message-ID: <YNwrsWoC9i+9VsKW@T590>
+References: <20210617103549.930311-1-ming.lei@redhat.com>
+	<20210617103549.930311-4-ming.lei@redhat.com>
+	<5ba43dac-b960-7c85-3a89-fdae2d1e2f51@linux.alibaba.com>
+	<YMywCX6nLqLiHXyy@T590>
+	<9b42601a-ca54-4748-e592-3720b7994d7b@linux.alibaba.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 15U8CxgS011884
+In-Reply-To: <9b42601a-ca54-4748-e592-3720b7994d7b@linux.alibaba.com>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 X-loop: dm-devel@redhat.com
-Cc: Mike Snitzer <snitzer@redhat.com>, linux-scsi@vger.kernel.org,
-	Daniel Wagner <dwagner@suse.de>, emilne@redhat.com,
-	linux-block@vger.kernel.org, dm-devel@redhat.com,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	nkoenig@redhat.com, Bart Van Assche <Bart.VanAssche@sandisk.com>,
-	Christoph Hellwig <hch@lst.de>, Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH v4 1/3] scsi: scsi_ioctl: export
- __scsi_result_to_blk_status()
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+	dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>,
+	Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [dm-devel] [RFC PATCH V2 3/3] dm: support bio polling
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -109,54 +84,127 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On Di, 2021-06-29 at 14:23 -0700, Keith Busch wrote:
-> On Tue, Jun 29, 2021 at 09:23:18PM +0200, Martin Wilck wrote:
-> > On Di, 2021-06-29 at 14:59 +0200, Christoph Hellwig wrote:
-> > > On Mon, Jun 28, 2021 at 04:57:33PM +0200, Martin Wilck wrote:
-> > >=20
-> > > > The sg_io-on-multipath code needs to answer the question "is
-> > > > this a
-> > > > path or a target error?". Therefore it calls blk_path_error(),
-> > > > which
-> > > > requires obtaining a blk_status_t first. But that's not
-> > > > available
-> > > > in
-> > > > the sg_io code path. So how=A0should I deal with this situation?
-> > >=20
-> > > Not by exporting random crap from the SCSI code.
-> >=20
-> > So, you'd prefer inlining scsi_result_to_blk_status()?
->=20
-> I don't think you need to. The only scsi_result_to_blk_status()
-> caller
-> is sg_io_to_blk_status(). That's already in the same file as
-> scsi_result_to_blk_status() so no need to export it. You could even
-> make
-> it static.
-
-Thanks for your suggestion. I'd be lucky if this was true. But the most
-important users of scsi_result_to_blk_status() are in scsi_lib.c
-(scsi_io_completion_action(), scsi_io_completion_nz_result()).
-
-If I move scsi_result_to_blk_status() to vmlinux without exporting it,
-it won't be available in the SCSI core any more, at least not with
-CONFIG_SCSI=3Dm.
-
-Regards,
-Martin
-
-
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gTW9uLCBKdW4gMjEsIDIwMjEgYXQgMDc6MzM6MzRQTSArMDgwMCwgSmVmZmxlWHUgd3JvdGU6
+Cj4gCj4gCj4gT24gNi8xOC8yMSAxMDozOSBQTSwgTWluZyBMZWkgd3JvdGU6Cj4gPiBGcm9tIDQ3
+ZTUyM2I5ZWU5ODgzMTczNjllYWFkYjk2ODI2MzIzY2Q4NjgxOWUgTW9uIFNlcCAxNyAwMDowMDow
+MCAyMDAxCj4gPiBGcm9tOiBNaW5nIExlaSA8bWluZy5sZWlAcmVkaGF0LmNvbT4KPiA+IERhdGU6
+IFdlZCwgMTYgSnVuIDIwMjEgMTY6MTM6NDYgKzA4MDAKPiA+IFN1YmplY3Q6IFtSRkMgUEFUQ0gg
+VjMgMy8zXSBkbTogc3VwcG9ydCBiaW8gcG9sbGluZwo+ID4gCj4gPiBTdXBwb3J0IGJpbyhSRVFf
+UE9MTEVEKSBwb2xsaW5nIGluIHRoZSBmb2xsb3dpbmcgYXBwcm9hY2g6Cj4gPiAKPiA+IDEpIG9u
+bHkgc3VwcG9ydCBpbyBwb2xsaW5nIG9uIG5vcm1hbCBSRUFEL1dSSVRFLCBhbmQgb3RoZXIgYWJu
+b3JtYWwgSU9zCj4gPiBzdGlsbCBmYWxsYmFjayBvbiBJUlEgbW9kZSwgc28gdGhlIHRhcmdldCBp
+byBpcyBleGFjdGx5IGluc2lkZSB0aGUgZG0KPiA+IGlvLgo+ID4gCj4gPiAyKSBob2xkIG9uZSBy
+ZWZjbnQgb24gaW8tPmlvX2NvdW50IGFmdGVyIHN1Ym1pdHRpbmcgdGhpcyBkbSBiaW8gd2l0aAo+
+ID4gUkVRX1BPTExFRAo+ID4gCj4gPiAzKSBzdXBwb3J0IGRtIG5hdGl2ZSBiaW8gc3BsaXR0aW5n
+LCBhbnkgZG0gaW8gaW5zdGFuY2UgYXNzb2NpYXRlZCB3aXRoCj4gPiBjdXJyZW50IGJpbyB3aWxs
+IGJlIGFkZGVkIGludG8gb25lIGxpc3Qgd2hpY2ggaGVhZCBpcyBiaW8tPmJpX2VuZF9pbwo+ID4g
+d2hpY2ggd2lsbCBiZSByZWNvdmVyZWQgYmVmb3JlIGVuZGluZyB0aGlzIGJpbwo+ID4gCj4gPiA0
+KSBpbXBsZW1lbnQgLnBvbGxfYmlvKCkgY2FsbGJhY2ssIGNhbGwgYmlvX3BvbGwoKSBvbiB0aGUg
+c2luZ2xlIHRhcmdldAo+ID4gYmlvIGluc2lkZSB0aGUgZG0gaW8gd2hpY2ggaXMgcmV0cmlldmVk
+IHZpYSBiaW8tPmJpX2Jpb19kcnZfZGF0YTsgY2FsbAo+ID4gZGVjX3BlbmRpbmcoKSBhZnRlciB0
+aGUgdGFyZ2V0IGlvIGlzIGRvbmUgaW4gLnBvbGxfYmlvKCkKPiA+IAo+ID4gNCkgZW5hYmxlIFFV
+RVVFX0ZMQUdfUE9MTCBpZiBhbGwgdW5kZXJseWluZyBxdWV1ZXMgZW5hYmxlIFFVRVVFX0ZMQUdf
+UE9MTCwKPiA+IHdoaWNoIGlzIGJhc2VkIG9uIEplZmZsZSdzIHByZXZpb3VzIHBhdGNoLgo+ID4g
+Cj4gPiBTaWduZWQtb2ZmLWJ5OiBNaW5nIExlaSA8bWluZy5sZWlAcmVkaGF0LmNvbT4KPiA+IC0t
+LQo+ID4gVjM6Cj4gPiAJLSBjb3ZlcnMgYWxsIGNvbW1lbnRzIGZyb20gSmVmZmxlCj4gPiAJLSBm
+aXggY29ybmVyIGNhc2VzIHdoZW4gcG9sbGluZyBvbiBhYm5vcm1hbCBpb3MKPiA+IAo+IC4uLgo+
+IAo+IE9uZSBidWcgYW5kIG9uZSBwZXJmb3JtYW5jZSBpc3N1ZSwgdGhvdWdoIEkgaGF2ZW4ndCBp
+bnZlc3RpZ2F0ZWQgZGVlcAo+IGZvciBib3RoLgo+IAo+IAo+IGtlcm5lbCBiYXNlOiBiYXNlZCBv
+biBKZW5zJyBmb3ItbmV4dCwgYXBwbHlpbmcgQ2hyaXN0b3BoIGFuZCBMZWltaW5nJ3MKPiBwYXRj
+aHNldC4KPiAKPiAKPiAxLiBPbmUgYnVnIHdoZW4gdGhlcmUncyBETSBkZXZpY2Ugc3RhY2ssIGUu
+Zy4sIGRtLWxpbmVhciB1cG9uIGFub3RoZXIKPiBkbS1saW5lYXIuIENhbiBiZSByZXByb2R1Y2Vk
+IGJ5IGZvbGxvd2luZyBzdGVwczoKPiAKPiBgYGAKPiAkIHN1ZG8gZG1zZXR1cCBjcmVhdGUgdG1w
+ZGV2IC0tdGFibGUgJzAgMjA5NzE1MiBsaW5lYXIgL2Rldi9udm1lMG4xIDAnCj4gCj4gJCBjYXQg
+dG1wLnRhYmxlCj4gMCAyMDk3MTUyIGxpbmVhciAvZGV2L21hcHBlci90bXBkZXYgMAo+IDIwOTcx
+NTIgMjA5NzE1MiBsaW5lYXIgL2Rldi9udm1lMG4xIDAKPiAKPiAkIGNhdCB0bXAudGFibGUgfCBk
+bXNldHVwIGNyZWF0ZSB0ZXN0ZGV2Cj4gCj4gJCBmaW8gLW5hbWU9dGVzdCAtaW9lbmdpbmU9aW9f
+dXJpbmcgLWlvZGVwdGg9MTI4IC1udW1qb2JzPTEgLXRocmVhZAo+IC1ydz1yYW5kcmVhZCAtZGly
+ZWN0PTEgLWJzPTRrIC10aW1lX2Jhc2VkIC1ydW50aW1lPTEwIC1jcHVzX2FsbG93ZWQ9Ngo+IC1m
+aWxlbmFtZT0vZGV2L21hcHBlci90ZXN0ZGV2IC1oaXByaT0xCj4gYGBgCj4gCj4gCj4gQlVHOiB1
+bmFibGUgdG8gaGFuZGxlIHBhZ2UgZmF1bHQgZm9yIGFkZHJlc3M6IGZmZmZmZmZmYzAxYTYyMDgK
+PiAjUEY6IHN1cGVydmlzb3Igd3JpdGUgYWNjZXNzIGluIGtlcm5lbCBtb2RlCj4gI1BGOiBlcnJv
+cl9jb2RlKDB4MDAwMykgLSBwZXJtaXNzaW9ucyB2aW9sYXRpb24KPiBQR0QgMzk3NDBjMDY3IFA0
+RCAzOTc0MGMwNjcgUFVEIDM5NzQwZTA2NyBQTUQgMTAzNWRiMDY3IFBURSAxZGRmNmYwNjEKPiBP
+b3BzOiAwMDAzIFsjMV0gU01QIFBUSQo+IENQVTogNiBQSUQ6IDU4OTkgQ29tbTogZmlvIFRhaW50
+ZWQ6IEcgUwo+IDUuMTMuMC0wLjEuZ2l0LjgxYmNkYzMuYWw3Lng4Nl82NCAjMQo+IEhhcmR3YXJl
+IG5hbWU6IEludmVudGVjICAgICBLOTAwRzMtMTBHL0I5MDBHMywgQklPUyBBMi4yMCAwNi8yMy8y
+MDE3Cj4gUklQOiAwMDEwOmRtX3N1Ym1pdF9iaW8rMHgxNzEvMHgzZTAgW2RtX21vZF0KPiBDb2Rl
+OiAwOCA4NSBjMCAwZiA4NCA3OCAwMSAwMCAwMCA4MCA3YyAyNCAyYyAwMCAwZiA4NCBiOCAwMCAw
+MCAwMCA0OCA4Ygo+IDUzIDM4IDQ4IDhiIDQ0IDI0IDE4IDQ4IDg1IGQyIDQ4IDhkIDQ4IDI4IDQ4
+IDg5IDUwIDI4IDc0IDA0IDw0OD4gODkgNGEKPiAwOCA0OCA4OSA0YiAzOCA0OCA4MyBjMyAzOCA0
+OCA4OSA1OCAzMCA0MSBmNyBjNSBmZSBmZiBmZgo+IFJTUDogMDAxODpmZmZmOWU1YzQ1ZTFiOWEw
+IEVGTEFHUzogMDAwMTAyODYKPiBSQVg6IGZmZmY4YWI1OWZkNTAxNDAgUkJYOiBmZmZmOGFiNTlm
+ZDUwMDg4IFJDWDogZmZmZjhhYjU5ZmQ1MDE2OAo+IFJEWDogZmZmZmZmZmZjMDFhNjIwMCBSU0k6
+IDAwMDAwMDAwMDAwNTJmMDggUkRJOiAwMDAwMDAwMDAwMDAwMDAwCj4gUkJQOiBmZmZmOGFiNTlm
+ZDUwMWM4IFIwODogMDAwMDAwMDAwMDAwMDAwMCBSMDk6IDAwMDAwMDAwMDAwMDAwMDAKPiBSMTA6
+IGZmZmY5ZTVjNDVlMWI5NTAgUjExOiAwMDAwMDAwMDAwMDAwMDA3IFIxMjogZmZmZjhhYjRjMmJj
+MjAwMAo+IFIxMzogMDAwMDAwMDAwMDAwMDAwMCBSMTQ6IGZmZmY4YWI0YzJiYzI1NDggUjE1OiBm
+ZmZmOGFiNTlmZDUwMTQwCj4gRlM6ICAwMDAwN2Y1NTVkZTQyNzAwKDAwMDApIEdTOmZmZmY4YWYz
+M2YxODAwMDAoMDAwMCkga25sR1M6MDAwMDAwMDAwMDAwMDAwMAo+IENTOiAgMDAxMCBEUzogMDAw
+MCBFUzogMDAwMCBDUjA6IDAwMDAwMDAwODAwNTAwMzMKPiBDUjI6IGZmZmZmZmZmYzAxYTYyMDgg
+Q1IzOiAwMDAwMDAwMTI0OTkwMDA1IENSNDogMDAwMDAwMDAwMDM3MDZlMAo+IERSMDogMDAwMDAw
+MDAwMDAwMDAwMCBEUjE6IDAwMDAwMDAwMDAwMDAwMDAgRFIyOiAwMDAwMDAwMDAwMDAwMDAwCj4g
+RFIzOiAwMDAwMDAwMDAwMDAwMDAwIERSNjogMDAwMDAwMDBmZmZlMGZmMCBEUjc6IDAwMDAwMDAw
+MDAwMDA0MDAKPiBDYWxsIFRyYWNlOgo+ICBzdWJtaXRfYmlvX25vYWNjdCsweDE0NC8weDNmMAo+
+ICA/IHN1Ym1pdF9iaW8rMHg0Mi8weDEyMAo+ICBzdWJtaXRfYmlvKzB4NDIvMHgxMjAKPiAgYmxr
+ZGV2X2RpcmVjdF9JTysweDQ1NC8weDRiMAo+ICA/IGlvX3Jlc3VibWl0X3ByZXArMHg0MC8weDQw
+Cj4gID8gX19mc25vdGlmeV9wYXJlbnQrMHhmZi8weDM1MAo+ICA/IF9fZnNub3RpZnlfcGFyZW50
+KzB4MTBmLzB4MzUwCj4gID8gZ2VuZXJpY19maWxlX3JlYWRfaXRlcisweDgzLzB4MTUwCj4gIGdl
+bmVyaWNfZmlsZV9yZWFkX2l0ZXIrMHg4My8weDE1MAo+ICBibGtkZXZfcmVhZF9pdGVyKzB4NDEv
+MHg1MAo+ICBpb19yZWFkKzB4ZTkvMHg0MjAKPiAgPyBfX2NvbmRfcmVzY2hlZCsweDE2LzB4NDAK
+PiAgPyBfX2ttYWxsb2Nfbm9kZSsweDE2ZS8weDRlMAo+ICA/IG1lbWNnX2FsbG9jX3BhZ2Vfb2Jq
+X2Nncm91cHMrMHgzMi8weDkwCj4gID8gaW9faXNzdWVfc3FlKzB4N2U4LzB4MTI2MAo+ICBpb19p
+c3N1ZV9zcWUrMHg3ZTgvMHgxMjYwCj4gID8gaW9fc3VibWl0X3NxZXMrMHg0N2IvMHgxNDIwCj4g
+IF9faW9fcXVldWVfc3FlKzB4NTYvMHgzODAKPiAgPyBpb19zdWJtaXRfc3FlcysweDEyMGEvMHgx
+NDIwCj4gIGlvX3N1Ym1pdF9zcWVzKzB4MTIwYS8weDE0MjAKPiAgPyBfX3g2NF9zeXNfaW9fdXJp
+bmdfZW50ZXIrMHgxZDIvMHgzZTAKPiAgX194NjRfc3lzX2lvX3VyaW5nX2VudGVyKzB4MWQyLzB4
+M2UwCj4gID8gZXhpdF90b191c2VyX21vZGVfcHJlcGFyZSsweDRjLzB4MjEwCj4gIGRvX3N5c2Nh
+bGxfNjQrMHgzNi8weDcwCj4gIGVudHJ5X1NZU0NBTExfNjRfYWZ0ZXJfaHdmcmFtZSsweDQ0LzB4
+YWUKPiBSSVA6IDAwMzM6MHg3ZjU1ZDNjYjFiNTkKPiBDb2RlOiAwMCBmMyBjMyA2NiAyZSAwZiAx
+ZiA4NCAwMCAwMCAwMCAwMCAwMCAwZiAxZiA0MCAwMCA0OCA4OSBmOCA0OCA4OQo+IGY3IDQ4IDg5
+IGQ2IDQ4IDg5IGNhIDRkIDg5IGMyIDRkIDg5IGM4IDRjIDhiIDRjIDI0IDA4IDBmIDA1IDw0OD4g
+M2QgMDEKPiBmMCBmZiBmZiA3MyAwMSBjMyA0OCA4YiAwZCBmZiBlMiAyYiAwMCBmNyBkOCA2NCA4
+OSAwMSA0OAo+IFJTUDogMDAyYjowMDAwN2Y1NTVkZTQxYjE4IEVGTEFHUzogMDAwMDAyNDYgT1JJ
+R19SQVg6IDAwMDAwMDAwMDAwMDAxYWEKPiBSQVg6IGZmZmZmZmZmZmZmZmZmZGEgUkJYOiAwMDAw
+MDAwMDAwMDAwMDAxIFJDWDogMDAwMDdmNTVkM2NiMWI1OQo+IFJEWDogMDAwMDAwMDAwMDAwMDAw
+MCBSU0k6IDAwMDAwMDAwMDAwMDAwMDEgUkRJOiAwMDAwMDAwMDAwMDAwMDA1Cj4gUkJQOiAwMDAw
+N2Y1NTdjZTgxMDAwIFIwODogMDAwMDAwMDAwMDAwMDAwMCBSMDk6IDAwMDAwMDAwMDAwMDAwMDAK
+PiBSMTA6IDAwMDAwMDAwMDAwMDAwMDEgUjExOiAwMDAwMDAwMDAwMDAwMjQ2IFIxMjogMDAwMDAw
+MDAwMTI3NjAwMAo+IFIxMzogMDAwMDAwMDAwMDAwMDAwMSBSMTQ6IDAwMDAwMDAwMDAwMDAwMDAg
+UjE1OiAwMDAwMDAwMDAxMmM4MzI4Cj4gCj4gCj4gCj4gCj4gMi4gUGVyZm9ybWFuY2UgSXNzdWUK
+PiAKPiBJIHRlc3QgYm90aCBvbiB4ODYgKHdpdGggb25seSBvbmUgTlZNZSkgYW5kIGFhcmNoNjQg
+KHdpdGggbXVsdGlwbGUgTlZNZXMpLgo+IAo+IFRoZSByZXN1bHQgKElPUFMpIG9uIHg4NiBpcyBh
+cyBleHBlY3RlZDoKPiAKPiBUeXBlIAkgIHxJUlEgICB8IFBvbGxpbmcKPiAtLS0tLS0tLS0gfCAt
+LS0tIHwgLS0tLQo+IGRtLWxpbmVhciB8IDIzOWsgfCAzNTdrCj4gCj4gLSBkbS1saW5lYXIgYnVp
+bHQgdXBvbiBvbmUgTlZNZe+8jGJzPTRrLCBpb3BvbGw9MSwgaW9kZXB0aD0xMjgsCj4gbnVtam9i
+cz0xLCBkaXJlY3QsIHJhbmRyZWFkLCBpb2VuZ2luZT1pb191cmluZwo+IAo+IAo+IAo+IFdoaWxl
+IHRoZSByZXN1bHQgb24gYWFyY2g2NCBpcyBhIGxpdHRsZSBjb25mdXNpbmcuCj4gCj4gVHlwZSAJ
+ICAgICAgfElSUSAgIHwgUG9sbGluZwo+IC0tLS0tLS0tLS0tLS0gfCAtLS0tIHwgLS0tLQo+IGRt
+LWxpbmVhciBbMV0gfCAyMDhrIHwgMjMwawo+IGRtLWxpbmVhciBbMl0gfCA2MzdrIHwgNjkxawo+
+IGRtLXN0cmlwZSAgICAgfCAzMTBrIHwgMzU0awo+IAo+IC0gZG0tbGluZWFyIFsxXSBidWlsdCB1
+cG9uICpvbmUqIE5WTWXvvIxicz00aywgaW9wb2xsPTEsIGlvZGVwdGg9MTI4LAo+ICpudW1qb2Jz
+PTEqLCBkaXJlY3QsIHJhbmRyZWFkLCBpb2VuZ2luZT1pb191cmluZwo+IC0gZG0tbGluZWFyIFsy
+XSBidWlsdCB1cG9uICp0aHJlZSogTlZNZXPvvIxicz00aywgaW9wb2xsPTEsIGlvZGVwdGg9MTI4
+LAo+ICpudW1qb2JzPTMqLCBkaXJlY3QsIHJhbmRyZWFkLCBpb2VuZ2luZT1pb191cmluZwo+IC0g
+ZG0tc3RyaXBlIGJ1aWx0IHVwb24gKnRocmVlKiBOVk1lc++8jGNodW5rX3NpemU9NGssIGJzPTEy
+aywgaW9wb2xsPTEsCj4gaW9kZXB0aD0xMjgsIG51bWpvYnM9MywgZGlyZWN0LCByYW5kcmVhZCwg
+aW9lbmdpbmU9aW9fdXJpbmcKClRvZGF5IEkgZm91bmQgdGhlIGZvbGxvd2luZyBwYXRjaCBtYWtl
+cyBhIGJpZyBkaWZmZXJlbmNlIG9uIGFhcmNoNjQKbnZtZSBpbyBwb2xsaW5nLCBhbmQgeW91IGNh
+biB0cnkgdGhhdCBpbiB5b3VyIHRlc3Q6CgpodHRwczovL2xvcmUua2VybmVsLm9yZy9saW51eC1i
+bG9jay9ZTndmWTZrRXhxSk02NStMQFQ1OTAvVC8jbTkzNGZhYmY1ODhkNzA5MTA5ZmQ5OTA0MGEz
+ZTI2ZDdhOTgzOGRiMWYKaHR0cHM6Ly9sb3JlLmtlcm5lbC5vcmcvbGludXgtYmxvY2svWU53Zlk2
+a0V4cUpNNjUrTEBUNTkwL1QvI200NTA0YjAxZDA2NTY2YjIwODAyMTY2NDA2MjVmYWM1ZmRkMzky
+OWU1CgpCVFcsIG15IHRlc3QgbWFjaGluZSBpcyBhbXBlcmUoMTYwY29yZXMsIGR1YWwgbnVtYSBu
+b2RlcykuCgoKVGhhbmtzLApNaW5nCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
+cmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
+LWRldmVs
 
