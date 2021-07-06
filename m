@@ -3,62 +3,62 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_NONE autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8D666C07E9B
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Jul 2021 11:29:34 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2A714C07E9E
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Jul 2021 11:30:11 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 23B1461DF7
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Jul 2021 11:29:34 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 23B1461DF7
+	by mail.kernel.org (Postfix) with ESMTPS id C438A61FAB
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Jul 2021 11:30:10 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org C438A61FAB
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-367-GiKK16fePaqjKB329mSoiQ-1; Tue, 06 Jul 2021 07:29:31 -0400
-X-MC-Unique: GiKK16fePaqjKB329mSoiQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-510-ULBFPlMTOSG8dMKwCMAV2w-1; Tue, 06 Jul 2021 07:30:07 -0400
+X-MC-Unique: ULBFPlMTOSG8dMKwCMAV2w-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D1545100CA8A;
-	Tue,  6 Jul 2021 11:29:26 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B585360CCC;
-	Tue,  6 Jul 2021 11:29:26 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6AF70CC622;
+	Tue,  6 Jul 2021 11:30:02 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 46B2F5C23A;
+	Tue,  6 Jul 2021 11:30:02 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7B6991809C99;
-	Tue,  6 Jul 2021 11:29:26 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0A6494EA2A;
+	Tue,  6 Jul 2021 11:30:02 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 166BTOcp026846 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 6 Jul 2021 07:29:24 -0400
+	id 166BU0RM026922 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 6 Jul 2021 07:30:00 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 92A5F21449AE; Tue,  6 Jul 2021 11:29:24 +0000 (UTC)
+	id 4675721449AC; Tue,  6 Jul 2021 11:30:00 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8DDD421449AF
-	for <dm-devel@redhat.com>; Tue,  6 Jul 2021 11:29:21 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0DFC910AC3B2
-	for <dm-devel@redhat.com>; Tue,  6 Jul 2021 11:29:21 +0000 (UTC)
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4186321449A9
+	for <dm-devel@redhat.com>; Tue,  6 Jul 2021 11:29:53 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2A86E9676E0
+	for <dm-devel@redhat.com>; Tue,  6 Jul 2021 11:29:53 +0000 (UTC)
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
-	by relay.mimecast.com with ESMTP id us-mta-120-lA8orgMzMi2a1YqJUCc3CA-1;
-	Tue, 06 Jul 2021 07:29:08 -0400
-X-MC-Unique: lA8orgMzMi2a1YqJUCc3CA-1
-Received: by mail.kernel.org (Postfix) with ESMTPSA id B0F4061F1A;
-	Tue,  6 Jul 2021 11:29:06 +0000 (UTC)
+	by relay.mimecast.com with ESMTP id us-mta-227-hvWqzFJTMfetjtvAYPDiOQ-1;
+	Tue, 06 Jul 2021 07:29:51 -0400
+X-MC-Unique: hvWqzFJTMfetjtvAYPDiOQ-1
+Received: by mail.kernel.org (Postfix) with ESMTPSA id DBCF861F67;
+	Tue,  6 Jul 2021 11:29:48 +0000 (UTC)
 From: Sasha Levin <sashal@kernel.org>
 To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Date: Tue,  6 Jul 2021 07:28:27 -0400
-Message-Id: <20210706112848.2066036-15-sashal@kernel.org>
-In-Reply-To: <20210706112848.2066036-1-sashal@kernel.org>
-References: <20210706112848.2066036-1-sashal@kernel.org>
+Date: Tue,  6 Jul 2021 07:29:14 -0400
+Message-Id: <20210706112931.2066397-14-sashal@kernel.org>
+In-Reply-To: <20210706112931.2066397-1-sashal@kernel.org>
+References: <20210706112931.2066397-1-sashal@kernel.org>
 MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
@@ -74,7 +74,7 @@ X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: Sasha Levin <sashal@kernel.org>, Joe Thornber <ejt@redhat.com>,
 	dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Subject: [dm-devel] [PATCH AUTOSEL 4.9 15/35] dm space maps: don't reset
+Subject: [dm-devel] [PATCH AUTOSEL 4.4 14/31] dm space maps: don't reset
 	space map allocation cursor when committing
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
@@ -89,7 +89,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
