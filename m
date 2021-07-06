@@ -3,62 +3,63 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-14.0 required=3.0 tests=BAYES_00,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=ham autolearn_force=no version=3.4.0
+	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E517EC11F7D
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Jul 2021 11:24:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 89E04C11F7F
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Jul 2021 11:25:55 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4620161E47
-	for <dm-devel@archiver.kernel.org>; Tue,  6 Jul 2021 11:24:09 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 4620161E47
+	by mail.kernel.org (Postfix) with ESMTPS id 2E7F161ECB
+	for <dm-devel@archiver.kernel.org>; Tue,  6 Jul 2021 11:25:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2E7F161ECB
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-165-kM63Chb8PTifSmu1x911OQ-1; Tue, 06 Jul 2021 07:24:06 -0400
-X-MC-Unique: kM63Chb8PTifSmu1x911OQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-155-w3fp6OMqObyXnqAoF3i2mg-1; Tue, 06 Jul 2021 07:25:52 -0400
+X-MC-Unique: w3fp6OMqObyXnqAoF3i2mg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A12E81936B8E;
-	Tue,  6 Jul 2021 11:23:30 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7BEF22EB22;
-	Tue,  6 Jul 2021 11:23:30 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BCBB2804147;
+	Tue,  6 Jul 2021 11:25:47 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9FA1160864;
+	Tue,  6 Jul 2021 11:25:47 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4D5F11809CAC;
-	Tue,  6 Jul 2021 11:23:30 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6F4A94EA2A;
+	Tue,  6 Jul 2021 11:25:47 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 166BNMWu026352 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 6 Jul 2021 07:23:22 -0400
+	id 166BPkWV026585 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 6 Jul 2021 07:25:46 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 3A1936E1B6; Tue,  6 Jul 2021 11:23:22 +0000 (UTC)
+	id E00E41134CC7; Tue,  6 Jul 2021 11:25:45 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 34F506E1B4
-	for <dm-devel@redhat.com>; Tue,  6 Jul 2021 11:23:19 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DBB711002941
+	for <dm-devel@redhat.com>; Tue,  6 Jul 2021 11:25:40 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8A8C49676E7
-	for <dm-devel@redhat.com>; Tue,  6 Jul 2021 11:23:19 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C102B8726CA
+	for <dm-devel@redhat.com>; Tue,  6 Jul 2021 11:25:40 +0000 (UTC)
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
-	by relay.mimecast.com with ESMTP id us-mta-522-F1NlvT84OaKQEcPWkOvEMw-1;
-	Tue, 06 Jul 2021 07:23:17 -0400
-X-MC-Unique: F1NlvT84OaKQEcPWkOvEMw-1
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 5316761E19;
-	Tue,  6 Jul 2021 11:23:15 +0000 (UTC)
+	by relay.mimecast.com with ESMTP id us-mta-453-6NLpNxu4NwGKqCIuA7o0Ow-1;
+	Tue, 06 Jul 2021 07:25:38 -0400
+X-MC-Unique: 6NLpNxu4NwGKqCIuA7o0Ow-1
+Received: by mail.kernel.org (Postfix) with ESMTPSA id 8D29E61EA5;
+	Tue,  6 Jul 2021 11:25:36 +0000 (UTC)
 From: Sasha Levin <sashal@kernel.org>
 To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Date: Tue,  6 Jul 2021 07:20:42 -0400
-Message-Id: <20210706112203.2062605-56-sashal@kernel.org>
-In-Reply-To: <20210706112203.2062605-1-sashal@kernel.org>
-References: <20210706112203.2062605-1-sashal@kernel.org>
+Date: Tue,  6 Jul 2021 07:24:15 -0400
+Message-Id: <20210706112502.2064236-27-sashal@kernel.org>
+In-Reply-To: <20210706112502.2064236-1-sashal@kernel.org>
+References: <20210706112502.2064236-1-sashal@kernel.org>
 MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
@@ -70,12 +71,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: Sasha Levin <sashal@kernel.org>, Damien Le Moal <damien.lemoal@wdc.com>,
+Cc: Sasha Levin <sashal@kernel.org>, Joe Thornber <ejt@redhat.com>,
 	dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Subject: [dm-devel] [PATCH AUTOSEL 5.10 056/137] dm: Fix
-	dm_accept_partial_bio() relative to zone management commands
+Subject: [dm-devel] [PATCH AUTOSEL 5.4 27/74] dm space maps: don't reset
+	space map allocation cursor when committing
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -89,7 +90,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -97,54 +98,87 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Damien Le Moal <damien.lemoal@wdc.com>
+From: Joe Thornber <ejt@redhat.com>
 
-[ Upstream commit 6842d264aa5205da338b6dcc6acfa2a6732558f1 ]
+[ Upstream commit 5faafc77f7de69147d1e818026b9a0cbf036a7b2 ]
 
-Fix dm_accept_partial_bio() to actually check that zone management
-commands are not passed as explained in the function documentation
-comment. Also, since a zone append operation cannot be split, add
-REQ_OP_ZONE_APPEND as a forbidden command.
+Current commit code resets the place where the search for free blocks
+will begin back to the start of the metadata device.  There are a couple
+of repercussions to this:
 
-White lines are added around the group of BUG_ON() calls to make the
-code more legible.
+- The first allocation after the commit is likely to take longer than
+  normal as it searches for a free block in an area that is likely to
+  have very few free blocks (if any).
 
-Signed-off-by: Damien Le Moal <damien.lemoal@wdc.com>
+- Any free blocks it finds will have been recently freed.  Reusing them
+  means we have fewer old copies of the metadata to aid recovery from
+  hardware error.
+
+Fix these issues by leaving the cursor alone, only resetting when the
+search hits the end of the metadata device.
+
+Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- drivers/md/dm.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ drivers/md/persistent-data/dm-space-map-disk.c     | 9 ++++++++-
+ drivers/md/persistent-data/dm-space-map-metadata.c | 9 ++++++++-
+ 2 files changed, 16 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 638c04f9e832..19a70f434029 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1230,8 +1230,8 @@ static int dm_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
+diff --git a/drivers/md/persistent-data/dm-space-map-disk.c b/drivers/md/persistent-data/dm-space-map-disk.c
+index bf4c5e2ccb6f..e0acae7a3815 100644
+--- a/drivers/md/persistent-data/dm-space-map-disk.c
++++ b/drivers/md/persistent-data/dm-space-map-disk.c
+@@ -171,6 +171,14 @@ static int sm_disk_new_block(struct dm_space_map *sm, dm_block_t *b)
+ 	 * Any block we allocate has to be free in both the old and current ll.
+ 	 */
+ 	r = sm_ll_find_common_free_block(&smd->old_ll, &smd->ll, smd->begin, smd->ll.nr_blocks, b);
++	if (r == -ENOSPC) {
++		/*
++		 * There's no free block between smd->begin and the end of the metadata device.
++		 * We search before smd->begin in case something has been freed.
++		 */
++		r = sm_ll_find_common_free_block(&smd->old_ll, &smd->ll, 0, smd->begin, b);
++	}
++
+ 	if (r)
+ 		return r;
  
- /*
-  * A target may call dm_accept_partial_bio only from the map routine.  It is
-- * allowed for all bio types except REQ_PREFLUSH, REQ_OP_ZONE_RESET,
-- * REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE and REQ_OP_ZONE_FINISH.
-+ * allowed for all bio types except REQ_PREFLUSH, REQ_OP_ZONE_* zone management
-+ * operations and REQ_OP_ZONE_APPEND (zone append writes).
-  *
-  * dm_accept_partial_bio informs the dm that the target only wants to process
-  * additional n_sectors sectors of the bio and the rest of the data should be
-@@ -1261,9 +1261,13 @@ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors)
- {
- 	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
- 	unsigned bi_size = bio->bi_iter.bi_size >> SECTOR_SHIFT;
+@@ -199,7 +207,6 @@ static int sm_disk_commit(struct dm_space_map *sm)
+ 		return r;
+ 
+ 	memcpy(&smd->old_ll, &smd->ll, sizeof(smd->old_ll));
+-	smd->begin = 0;
+ 	smd->nr_allocated_this_transaction = 0;
+ 
+ 	r = sm_disk_get_nr_free(sm, &nr_free);
+diff --git a/drivers/md/persistent-data/dm-space-map-metadata.c b/drivers/md/persistent-data/dm-space-map-metadata.c
+index 9e3c64ec2026..da439ac85796 100644
+--- a/drivers/md/persistent-data/dm-space-map-metadata.c
++++ b/drivers/md/persistent-data/dm-space-map-metadata.c
+@@ -452,6 +452,14 @@ static int sm_metadata_new_block_(struct dm_space_map *sm, dm_block_t *b)
+ 	 * Any block we allocate has to be free in both the old and current ll.
+ 	 */
+ 	r = sm_ll_find_common_free_block(&smm->old_ll, &smm->ll, smm->begin, smm->ll.nr_blocks, b);
++	if (r == -ENOSPC) {
++		/*
++		 * There's no free block between smm->begin and the end of the metadata device.
++		 * We search before smm->begin in case something has been freed.
++		 */
++		r = sm_ll_find_common_free_block(&smm->old_ll, &smm->ll, 0, smm->begin, b);
++	}
 +
- 	BUG_ON(bio->bi_opf & REQ_PREFLUSH);
-+	BUG_ON(op_is_zone_mgmt(bio_op(bio)));
-+	BUG_ON(bio_op(bio) == REQ_OP_ZONE_APPEND);
- 	BUG_ON(bi_size > *tio->len_ptr);
- 	BUG_ON(n_sectors > bi_size);
-+
- 	*tio->len_ptr -= bi_size - n_sectors;
- 	bio->bi_iter.bi_size = n_sectors << SECTOR_SHIFT;
- }
+ 	if (r)
+ 		return r;
+ 
+@@ -503,7 +511,6 @@ static int sm_metadata_commit(struct dm_space_map *sm)
+ 		return r;
+ 
+ 	memcpy(&smm->old_ll, &smm->ll, sizeof(smm->old_ll));
+-	smm->begin = 0;
+ 	smm->allocated_this_transaction = 0;
+ 
+ 	return 0;
 -- 
 2.30.2
 
