@@ -7,61 +7,60 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 78693C07E9C
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 78667C07E9A
 	for <dm-devel@archiver.kernel.org>; Tue, 13 Jul 2021 00:55:55 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id F110B611F1
+	by mail.kernel.org (Postfix) with ESMTPS id F0F4D6100C
 	for <dm-devel@archiver.kernel.org>; Tue, 13 Jul 2021 00:55:54 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org F110B611F1
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org F0F4D6100C
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-529-7uJEmXvANICD-Xrn4ZK71w-1; Mon, 12 Jul 2021 20:55:52 -0400
-X-MC-Unique: 7uJEmXvANICD-Xrn4ZK71w-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-394-eOQ9IgifPS-aY90IhdNumA-1; Mon, 12 Jul 2021 20:55:52 -0400
+X-MC-Unique: eOQ9IgifPS-aY90IhdNumA-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E52DD100C660;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E205280006E;
 	Tue, 13 Jul 2021 00:55:47 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AFC3310027A5;
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 835E018A50;
 	Tue, 13 Jul 2021 00:55:47 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C98DF4EA2A;
-	Tue, 13 Jul 2021 00:55:44 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 49A821809C99;
+	Tue, 13 Jul 2021 00:55:45 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 16D0tgOT025257 for <dm-devel@listman.util.phx.redhat.com>;
+	id 16D0tgL6025259 for <dm-devel@listman.util.phx.redhat.com>;
 	Mon, 12 Jul 2021 20:55:43 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id D6917218ADFE; Tue, 13 Jul 2021 00:55:42 +0000 (UTC)
+	id D32DF2051AC7; Tue, 13 Jul 2021 00:55:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CD8EE218ADFD
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CD83A2041AB6
 	for <dm-devel@redhat.com>; Tue, 13 Jul 2021 00:55:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 16DEC100DE6B
-	for <dm-devel@redhat.com>; Tue, 13 Jul 2021 00:55:40 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ECAB2185A794
+	for <dm-devel@redhat.com>; Tue, 13 Jul 2021 00:55:39 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-100-AzEMZE3uP4ivXVZzz5eT_A-1;
+	relay.mimecast.com with ESMTP id us-mta-518-ydNg2oYDO7yq5-0WxhA7zg-1;
 	Mon, 12 Jul 2021 20:55:38 -0400
-X-MC-Unique: AzEMZE3uP4ivXVZzz5eT_A-1
+X-MC-Unique: ydNg2oYDO7yq5-0WxhA7zg-1
 Received: from Lenovo-Legion-Ubuntu.lan (c-71-197-163-6.hsd1.wa.comcast.net
 	[71.197.163.6])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 9A5E520B6AEE;
-	Mon, 12 Jul 2021 17:49:12 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 9A5E520B6AEE
+	by linux.microsoft.com (Postfix) with ESMTPSA id 946E020B8016;
+	Mon, 12 Jul 2021 17:49:13 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 946E020B8016
 From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
 To: dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com
-Date: Mon, 12 Jul 2021 17:48:59 -0700
-Message-Id: <20210713004904.8808-3-tusharsu@linux.microsoft.com>
+Date: Mon, 12 Jul 2021 17:49:02 -0700
+Message-Id: <20210713004904.8808-6-tusharsu@linux.microsoft.com>
 In-Reply-To: <20210713004904.8808-1-tusharsu@linux.microsoft.com>
 References: <20210713004904.8808-1-tusharsu@linux.microsoft.com>
 MIME-Version: 1.0
@@ -75,11 +74,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 16D0tgOT025257
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 16D0tgL6025259
 X-loop: dm-devel@redhat.com
 Cc: tusharsu@linux.microsoft.com, nramas@linux.microsoft.com,
 	linux-integrity@vger.kernel.org, zohar@linux.ibm.com
-Subject: [dm-devel] [PATCH 2/7] dm: measure data on device resume
+Subject: [dm-devel] [PATCH 5/7] dm: measure data on device rename
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,7 +92,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -101,204 +100,113 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-A given block device can load a table multiple times, with different
-input parameters, before eventually resuming it.  Further, a device may
-be suspended and then resumed.  The device may never resume after a
-table-load.  Because of the above valid scenarios for a given device,
-it is important to measure and log the device resume event using IMA.
+A given block device is identified by it's name and UUID.  However, both
+these parameters can be renamed.  For an external attestation service to
+correctly attest a given device, it needs to keep track of these rename
+events.
 
-Also, if the table is large, measuring it in clear-text each time the
-device changes state, will unnecessarily increase the size of IMA log.
-Since the table clear-text is already measured during table-load event,
-measuring the hash during resume should be sufficient to validate the
-table contents.
-
-Measure the device parameters, and hash of the active table, when the
-device is resumed.
+Update the device data with the new values for IMA measurements.  Measure
+both old and new device name/UUID parameters in the same IMA measurement
+event, so that the old and the new values can be connected later.
 
 Signed-off-by: Tushar Sugandhi <tusharsu@linux.microsoft.com>
 ---
- drivers/md/dm-ima.c   | 118 ++++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-ima.h   |   2 +
- drivers/md/dm-ioctl.c |   8 ++-
- 3 files changed, 126 insertions(+), 2 deletions(-)
+ drivers/md/dm-ima.c   | 49 +++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-ima.h   |  1 +
+ drivers/md/dm-ioctl.c |  3 +++
+ 3 files changed, 53 insertions(+)
 
 diff --git a/drivers/md/dm-ima.c b/drivers/md/dm-ima.c
-index b752517380c3..1c545717adf4 100644
+index b1e1cf6bb4e7..36f99848825a 100644
 --- a/drivers/md/dm-ima.c
 +++ b/drivers/md/dm-ima.c
-@@ -145,6 +145,27 @@ static void dm_ima_measure_data(const char *event_name, const void *buf, size_t
- 		memalloc_noio_restore(noio_flag);
+@@ -664,12 +664,61 @@ void dm_ima_measure_on_table_clear(struct mapped_device *md, bool new_map)
+ 	kfree(device_table_data);
  }
  
 +/*
-+ * Internal function to allocate and copy current device capacity for IMA measurements.
++ * Measure IMA data on device rename.
 + */
-+
-+static int dm_ima_alloc_and_copy_capacity_str(struct mapped_device *md, char **capacity_str,
-+					      bool noio)
++void dm_ima_measure_on_device_rename(struct mapped_device *md)
 +{
-+	sector_t capacity;
-+
-+	capacity = get_capacity(md->disk);
-+
-+	*capacity_str = dm_ima_alloc(DM_IMA_DEVICE_CAPACITY_BUF_LEN, GFP_KERNEL, noio);
-+	if (!(*capacity_str))
-+		return -ENOMEM;
-+
-+	scnprintf(*capacity_str, DM_IMA_DEVICE_BUF_LEN, "current_device_capacity=%llu;",
-+		  capacity);
-+
-+	return 0;
-+}
-+
- /*
-  * Initialize the dm ima related data structure variables.
-  */
-@@ -336,9 +357,106 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
- 	kfree(target_data_buf);
- }
- 
-+/*
-+ * Measure IMA data on device resume.
-+ */
-+void dm_ima_measure_on_device_resume(struct mapped_device *md, bool swap)
-+{
-+	char *device_table_data, *dev_name = NULL, *dev_uuid = NULL, *capacity_str = NULL;
-+	char active[] = "active_table_hash=";
-+	unsigned int active_len = strlen(active), capacity_len = 0;
-+	unsigned int l = 0;
++	char *old_device_data = NULL, *new_device_data = NULL, *combined_device_data = NULL;
++	char *new_dev_name = NULL, *new_dev_uuid = NULL, *capacity_str = NULL;
 +	bool noio = true;
 +	int r;
 +
-+	device_table_data = dm_ima_alloc(DM_IMA_DEVICE_BUF_LEN, GFP_KERNEL, noio);
-+	if (!device_table_data)
++	if (dm_ima_alloc_and_copy_device_data(md, &new_device_data,
++					      md->ima.active_table.num_targets, noio))
 +		return;
++
++	if (dm_ima_alloc_and_copy_name_uuid(md, &new_dev_name, &new_dev_uuid, noio))
++		goto error;
++
++	combined_device_data = dm_ima_alloc(DM_IMA_DEVICE_BUF_LEN * 2, GFP_KERNEL, noio);
++	if (!combined_device_data)
++		goto error;
 +
 +	r = dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio);
 +	if (r)
 +		goto error;
 +
-+	if (swap) {
-+		if (md->ima.active_table.hash != md->ima.inactive_table.hash)
-+			kfree(md->ima.active_table.hash);
++	old_device_data = md->ima.active_table.device_metadata;
 +
-+		md->ima.active_table.hash = NULL;
-+		md->ima.active_table.hash_len = 0;
++	md->ima.active_table.device_metadata = new_device_data;
++	md->ima.active_table.device_metadata_len = strlen(new_device_data);
 +
-+		if (md->ima.active_table.device_metadata !=
-+		    md->ima.inactive_table.device_metadata)
-+			kfree(md->ima.active_table.device_metadata);
++	scnprintf(combined_device_data, DM_IMA_DEVICE_BUF_LEN * 2, "%snew_name=%s,new_uuid=%s;%s",
++		  old_device_data, new_dev_name, new_dev_uuid, capacity_str);
 +
-+		md->ima.active_table.device_metadata = NULL;
-+		md->ima.active_table.device_metadata_len = 0;
-+		md->ima.active_table.num_targets = 0;
++	dm_ima_measure_data("device_rename", combined_device_data, strlen(combined_device_data),
++			    noio);
 +
-+		if (md->ima.inactive_table.hash) {
-+			md->ima.active_table.hash = md->ima.inactive_table.hash;
-+			md->ima.active_table.hash_len = md->ima.inactive_table.hash_len;
-+			md->ima.inactive_table.hash = NULL;
-+			md->ima.inactive_table.hash_len = 0;
-+		}
++	goto exit;
 +
-+		if (md->ima.inactive_table.device_metadata) {
-+			md->ima.active_table.device_metadata =
-+				md->ima.inactive_table.device_metadata;
-+			md->ima.active_table.device_metadata_len =
-+				md->ima.inactive_table.device_metadata_len;
-+			md->ima.active_table.num_targets = md->ima.inactive_table.num_targets;
-+			md->ima.inactive_table.device_metadata = NULL;
-+			md->ima.inactive_table.device_metadata_len = 0;
-+			md->ima.inactive_table.num_targets = 0;
-+		}
-+	}
-+
-+	if (md->ima.active_table.device_metadata) {
-+		l = md->ima.active_table.device_metadata_len;
-+		memcpy(device_table_data, md->ima.active_table.device_metadata, l);
-+	}
-+
-+	if (md->ima.active_table.hash) {
-+		memcpy(device_table_data + l, active, active_len);
-+		l += active_len;
-+
-+		memcpy(device_table_data + l, md->ima.active_table.hash,
-+		       md->ima.active_table.hash_len);
-+		l += md->ima.active_table.hash_len;
-+
-+		memcpy(device_table_data + l, ";", 1);
-+		l++;
-+	}
-+
-+	if (!l) {
-+		r = dm_ima_alloc_and_copy_name_uuid(md, &dev_name, &dev_uuid, noio);
-+		if (r)
-+			goto error;
-+
-+		scnprintf(device_table_data, DM_IMA_DEVICE_BUF_LEN,
-+			  "name=%s,uuid=%s;device_resume=no_data;",
-+			  dev_name, dev_uuid);
-+		l += strlen(device_table_data);
-+
-+	}
-+
-+	capacity_len = strlen(capacity_str);
-+	memcpy(device_table_data + l, capacity_str, capacity_len);
-+	l += capacity_len;
-+
-+	dm_ima_measure_data("device_resume", device_table_data, l, noio);
-+
-+	kfree(dev_name);
-+	kfree(dev_uuid);
 +error:
++	kfree(new_device_data);
++exit:
 +	kfree(capacity_str);
-+	kfree(device_table_data);
++	kfree(combined_device_data);
++	kfree(old_device_data);
++	kfree(new_dev_name);
++	kfree(new_dev_uuid);
 +}
 +
  #else
  void dm_ima_reset_data(struct mapped_device *md) {}
  void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_flags) {}
-+void dm_ima_measure_on_device_resume(struct mapped_device *md, bool swap) {}
+ void dm_ima_measure_on_device_resume(struct mapped_device *md, bool swap) {}
+ void dm_ima_measure_on_device_remove(struct mapped_device *md, bool remove_all) {}
+ void dm_ima_measure_on_table_clear(struct mapped_device *md, bool new_map) {}
++void dm_ima_measure_on_device_rename(struct mapped_device *md) {}
  #endif
  MODULE_AUTHOR("Tushar Sugandhi <tusharsu@linux.microsoft.com>");
  MODULE_DESCRIPTION("Enables IMA measurements for DM targets");
 diff --git a/drivers/md/dm-ima.h b/drivers/md/dm-ima.h
-index 3c92a2523284..cafdcf5064c7 100644
+index a17ae953dc67..b1cf014d538d 100644
 --- a/drivers/md/dm-ima.h
 +++ b/drivers/md/dm-ima.h
-@@ -15,6 +15,7 @@
- #define DM_IMA_DEVICE_BUF_LEN		1024
- #define DM_IMA_TARGET_METADATA_BUF_LEN	128
- #define DM_IMA_TARGET_DATA_BUF_LEN	2048
-+#define DM_IMA_DEVICE_CAPACITY_BUF_LEN	128
+@@ -51,5 +51,6 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
+ void dm_ima_measure_on_device_resume(struct mapped_device *md, bool swap);
+ void dm_ima_measure_on_device_remove(struct mapped_device *md, bool remove_all);
+ void dm_ima_measure_on_table_clear(struct mapped_device *md, bool new_map);
++void dm_ima_measure_on_device_rename(struct mapped_device *md);
  
- struct dm_ima_device_table_metadata {
- 	/*
-@@ -47,4 +48,5 @@ struct dm_ima_measurements {
- 
- void dm_ima_reset_data(struct mapped_device *md);
- void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_flags);
-+void dm_ima_measure_on_device_resume(struct mapped_device *md, bool swap);
  #endif /*DM_IMA_H*/
 diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index e6e9fe74baf9..11af40f9b9c0 100644
+index b07c19037c7c..e45f6c6ef84a 100644
 --- a/drivers/md/dm-ioctl.c
 +++ b/drivers/md/dm-ioctl.c
-@@ -1160,8 +1160,12 @@ static int do_resume(struct dm_ioctl *param)
+@@ -485,6 +485,9 @@ static struct mapped_device *dm_hash_rename(struct dm_ioctl *param,
+ 		param->flags |= DM_UEVENT_GENERATED_FLAG;
  
- 	if (dm_suspended_md(md)) {
- 		r = dm_resume(md);
--		if (!r && !dm_kobject_uevent(md, KOBJ_CHANGE, param->event_nr))
--			param->flags |= DM_UEVENT_GENERATED_FLAG;
-+		if (!r) {
-+			dm_ima_measure_on_device_resume(md, new_map ? true : false);
+ 	md = hc->md;
 +
-+			if (!dm_kobject_uevent(md, KOBJ_CHANGE, param->event_nr))
-+				param->flags |= DM_UEVENT_GENERATED_FLAG;
-+		}
- 	}
++	dm_ima_measure_on_device_rename(md);
++
+ 	up_write(&_hash_lock);
+ 	kfree(old_name);
  
- 	/*
 -- 
 2.25.1
 
