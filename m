@@ -1,75 +1,80 @@
-Return-Path: <SRS0=CWIS=MG=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=U3zJ=MH=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-10.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,NICE_REPLY_A,
-	SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8E38BC12002
-	for <dm-devel@archiver.kernel.org>; Wed, 14 Jul 2021 20:24:10 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1DF1AC07E96
+	for <dm-devel@archiver.kernel.org>; Thu, 15 Jul 2021 10:54:35 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 0492761370
-	for <dm-devel@archiver.kernel.org>; Wed, 14 Jul 2021 20:24:09 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 0492761370
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
+	by mail.kernel.org (Postfix) with ESMTPS id 977B66128C
+	for <dm-devel@archiver.kernel.org>; Thu, 15 Jul 2021 10:54:34 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 977B66128C
+Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-583-i8Zv-2rnPnqthJ7iegofSw-1; Wed, 14 Jul 2021 16:24:07 -0400
-X-MC-Unique: i8Zv-2rnPnqthJ7iegofSw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-436-wNnNtkJyO8y2WcZDwW6zGg-1; Thu, 15 Jul 2021 06:54:31 -0400
+X-MC-Unique: wNnNtkJyO8y2WcZDwW6zGg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 22A8B1023F4F;
-	Wed, 14 Jul 2021 20:24:00 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AD9D710074F8;
-	Wed, 14 Jul 2021 20:23:59 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 93813100C609;
+	Thu, 15 Jul 2021 10:54:26 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EB34719C66;
+	Thu, 15 Jul 2021 10:54:24 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 28F5A4EA2A;
-	Wed, 14 Jul 2021 20:23:59 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 29BEE1809C99;
+	Thu, 15 Jul 2021 10:54:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 16EKNwJB012693 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 14 Jul 2021 16:23:58 -0400
+	id 16FAqi2w015550 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 15 Jul 2021 06:52:44 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 148302087A20; Wed, 14 Jul 2021 20:23:58 +0000 (UTC)
+	id F19992028693; Thu, 15 Jul 2021 10:52:43 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0D7FC2087A22
-	for <dm-devel@redhat.com>; Wed, 14 Jul 2021 20:23:55 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EC7BC21602AF
+	for <dm-devel@redhat.com>; Thu, 15 Jul 2021 10:52:43 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F2C6B1011629
-	for <dm-devel@redhat.com>; Wed, 14 Jul 2021 20:23:54 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-598-AlRs8OyJPTOQHUsHdyWLhQ-1;
-	Wed, 14 Jul 2021 16:23:50 -0400
-X-MC-Unique: AlRs8OyJPTOQHUsHdyWLhQ-1
-Received: from [10.106.164.77] (unknown [131.107.8.205])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 5D41920B6C14;
-	Wed, 14 Jul 2021 13:23:49 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 5D41920B6C14
-To: dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com,
-	zohar@linux.ibm.com, linux-integrity@vger.kernel.org,
-	nramas@linux.microsoft.com
-References: <20210713004904.8808-1-tusharsu@linux.microsoft.com>
-	<20210713004904.8808-7-tusharsu@linux.microsoft.com>
-	<20210713010604.GA6990@agk-cloud1.hosts.prod.upshift.rdu2.redhat.com>
-From: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-Message-ID: <004ec8ab-1037-481d-35c0-3c06ae70a619@linux.microsoft.com>
-Date: Wed, 14 Jul 2021 13:23:49 -0700
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
-	Thunderbird/78.11.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 142281078466
+	for <dm-devel@redhat.com>; Thu, 15 Jul 2021 10:52:43 +0000 (UTC)
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) (Using
+	TLS) by relay.mimecast.com with ESMTP id
+	us-mta-364-0FNO9UeWNnu8CUvY7w17qQ-1; Thu, 15 Jul 2021 06:52:40 -0400
+X-MC-Unique: 0FNO9UeWNnu8CUvY7w17qQ-1
+Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 804D01FE0C;
+	Thu, 15 Jul 2021 10:52:39 +0000 (UTC)
+Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by imap1.suse-dmz.suse.de (Postfix) with ESMTPS id 4B40213AB7;
+	Thu, 15 Jul 2021 10:52:39 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+	by imap1.suse-dmz.suse.de with ESMTPSA id YGvEEHcT8GDQIAAAGKfGzw
+	(envelope-from <mwilck@suse.com>); Thu, 15 Jul 2021 10:52:39 +0000
+From: mwilck@suse.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Date: Thu, 15 Jul 2021 12:52:22 +0200
+Message-Id: <20210715105223.30463-9-mwilck@suse.com>
+In-Reply-To: <20210715105223.30463-1-mwilck@suse.com>
+References: <20210715105223.30463-1-mwilck@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <20210713010604.GA6990@agk-cloud1.hosts.prod.upshift.rdu2.redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -78,10 +83,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 16FAqi2w015550
 X-loop: dm-devel@redhat.com
-Subject: Re: [dm-devel] [PATCH 6/7] dm: update target specific status
- functions to measure data
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Subject: [dm-devel] [PATCH 8/9] libmultipath: use strbuf in alias.c.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -95,250 +102,349 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
+From: Martin Wilck <mwilck@suse.com>
 
-On 7/12/21 6:06 PM, Alasdair G Kergon wrote:
-> On Mon, Jul 12, 2021 at 05:49:03PM -0700, Tushar Sugandhi wrote:
->> The DM target data measured by IMA subsystem can alternatively
->> be queried from userspace by setting DM_IMA_MEASUREMENT_FLAG with
->> DM_TABLE_STATUS_CMD.
-> I was able to try this out - as 'dmsetup measure' - by applying the quick
-> patch below to the upstream LVM2 tree.
->   
-> Alasdair
+We can avoid some buffer length checks here, too. Also, simplify the
+implementation of format_devname().
 
-Thanks Alasdair for trying this out, and sharing the dmsetup sample code.
+Created a wrapper for the format_devname() test case, to avoid chaning
+the test cases themselves.
 
-Regards,
-Tushar
->
-> diff --git a/libdm/.exported_symbols.DM_1_02_179 b/libdm/.exported_symbols.DM_1_02_179
-> new file mode 100644
-> index 000000000..4ab603b68
-> --- /dev/null
-> +++ b/libdm/.exported_symbols.DM_1_02_179
-> @@ -0,0 +1 @@
-> +dm_task_ima_measurement
-> diff --git a/libdm/dm-tools/dmsetup.c b/libdm/dm-tools/dmsetup.c
-> index a3d1248bc..3e5983fef 100644
-> --- a/libdm/dm-tools/dmsetup.c
-> +++ b/libdm/dm-tools/dmsetup.c
-> @@ -2446,6 +2446,9 @@ static int _status(CMD_ARGS)
->   	if (_switches[NOFLUSH_ARG] && !dm_task_no_flush(dmt))
->   		goto_out;
->   
-> +	if (!dm_task_ima_measurement(dmt))
-> +		goto_out;
-> +
->   	if (!_task_run(dmt))
->   		goto_out;
->   
-> @@ -6262,6 +6265,7 @@ static struct command _dmsetup_commands[] = {
->   	{"stats", "<command> [<options>] [<device>...]", 1, -1, 1, 1, _stats},
->   	{"status", "[<device>...] [--noflush] [--target <target_type>]", 0, -1, 2, 0, _status},
->   	{"table", "[<device>...] [--concise] [--target <target_type>] [--showkeys]", 0, -1, 2, 0, _status},
-> +	{"measure", "[<device>...]", 0, -1, 2, 0, _status},
->   	{"wait", "<device> [<event_nr>] [--noflush]", 0, 2, 0, 0, _wait},
->   	{"mknodes", "[<device>...]", 0, -1, 1, 0, _mknodes},
->   	{"mangle", "[<device>...]", 0, -1, 1, 0, _mangle},
-> diff --git a/libdm/ioctl/libdm-iface.c b/libdm/ioctl/libdm-iface.c
-> index 47f14398c..22cce8e76 100644
-> --- a/libdm/ioctl/libdm-iface.c
-> +++ b/libdm/ioctl/libdm-iface.c
-> @@ -929,6 +929,13 @@ int dm_task_secure_data(struct dm_task *dmt)
->   	return 1;
->   }
->   
-> +int dm_task_ima_measurement(struct dm_task *dmt)
-> +{
-> +	dmt->ima_measurement = 1;
-> +
-> +	return 1;
-> +}
-> +
->   int dm_task_retry_remove(struct dm_task *dmt)
->   {
->   	dmt->retry_remove = 1;
-> @@ -1286,7 +1293,14 @@ static struct dm_ioctl *_flatten(struct dm_task *dmt, unsigned repeat_count)
->   		}
->   		dmi->flags |= DM_UUID_FLAG;
->   	}
-> -
-> +	if (dmt->ima_measurement) {
-> +		if (_dm_version_minor < 45) {
-> +			log_error("WARNING: IMA measurement unsupported by "
-> +				  "kernel.  Aborting operation.");
-> +			goto bad;
-> +		}
-> +		dmi->flags |= DM_IMA_MEASUREMENT_FLAG;
-> +	}
->   	dmi->target_count = count;
->   	dmi->event_nr = dmt->event_nr;
->   
-> @@ -1487,6 +1501,7 @@ static int _create_and_load_v4(struct dm_task *dmt)
->   	task->head = dmt->head;
->   	task->tail = dmt->tail;
->   	task->secure_data = dmt->secure_data;
-> +	task->ima_measurement = dmt->ima_measurement;
->   
->   	r = dm_task_run(task);
->   
-> @@ -1875,7 +1890,7 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
->   	}
->   
->   	log_debug_activation("dm %s %s%s %s%s%s %s%.0d%s%.0d%s"
-> -			     "%s[ %s%s%s%s%s%s%s%s%s] %.0" PRIu64 " %s [%u] (*%u)",
-> +			     "%s[ %s%s%s%s%s%s%s%s%s%s] %.0" PRIu64 " %s [%u] (*%u)",
->   			     _cmd_data_v4[dmt->type].name,
->   			     dmt->new_uuid ? "UUID " : "",
->   			     dmi->name, dmi->uuid, dmt->newname ? " " : "",
-> @@ -1893,6 +1908,7 @@ static struct dm_ioctl *_do_dm_ioctl(struct dm_task *dmt, unsigned command,
->   			     dmt->retry_remove ? "retryremove " : "",
->   			     dmt->deferred_remove ? "deferredremove " : "",
->   			     dmt->secure_data ? "securedata " : "",
-> +			     dmt->ima_measurement ? "ima_measurement " : "",
->   			     dmt->query_inactive_table ? "inactive " : "",
->   			     dmt->enable_checks ? "enablechecks " : "",
->   			     dmt->sector, _sanitise_message(dmt->message),
-> diff --git a/libdm/ioctl/libdm-targets.h b/libdm/ioctl/libdm-targets.h
-> index 294210d2b..022b02c72 100644
-> --- a/libdm/ioctl/libdm-targets.h
-> +++ b/libdm/ioctl/libdm-targets.h
-> @@ -69,6 +69,7 @@ struct dm_task {
->   	int enable_checks;
->   	int expected_errno;
->   	int ioctl_errno;
-> +	int ima_measurement;
->   
->   	int record_timestamp;
->   
-> diff --git a/libdm/libdevmapper.h b/libdm/libdevmapper.h
-> index ac31b59da..e9412da7d 100644
-> --- a/libdm/libdevmapper.h
-> +++ b/libdm/libdevmapper.h
-> @@ -235,6 +235,7 @@ int dm_task_suppress_identical_reload(struct dm_task *dmt);
->   int dm_task_secure_data(struct dm_task *dmt);
->   int dm_task_retry_remove(struct dm_task *dmt);
->   int dm_task_deferred_remove(struct dm_task *dmt);
-> +int dm_task_ima_measurement(struct dm_task *dmt);
->   
->   /*
->    * Record timestamp immediately after the ioctl returns.
-> diff --git a/libdm/libdm-common.c b/libdm/libdm-common.c
-> index 708414676..d123e3ddf 100644
-> --- a/libdm/libdm-common.c
-> +++ b/libdm/libdm-common.c
-> @@ -336,6 +336,7 @@ struct dm_task *dm_task_create(int type)
->   	dmt->new_uuid = 0;
->   	dmt->secure_data = 0;
->   	dmt->record_timestamp = 0;
-> +	dmt->ima_measurement = 0;
->   
->   	return dmt;
->   }
-> diff --git a/libdm/misc/dm-ioctl.h b/libdm/misc/dm-ioctl.h
-> index 55dee2148..2b442ab70 100644
-> --- a/libdm/misc/dm-ioctl.h
-> +++ b/libdm/misc/dm-ioctl.h
-> @@ -1,6 +1,7 @@
-> +/* SPDX-License-Identifier: LGPL-2.0+ WITH Linux-syscall-note */
->   /*
->    * Copyright (C) 2001 - 2003 Sistina Software (UK) Limited.
-> - * Copyright (C) 2004 - 2017 Red Hat, Inc. All rights reserved.
-> + * Copyright (C) 2004 - 2021 Red Hat, Inc. All rights reserved.
->    *
->    * This file is released under the LGPL.
->    */
-> @@ -183,7 +184,7 @@ struct dm_target_spec {
->   struct dm_target_deps {
->   	uint32_t count;	/* Array size */
->   	uint32_t padding;	/* unused */
-> -	uint64_t dev[];		/* out */
-> +	uint64_t dev[0];	/* out */
->   };
->   
->   /*
-> @@ -193,9 +194,23 @@ struct dm_name_list {
->   	uint64_t dev;
->   	uint32_t next;		/* offset to the next record from
->   				   the _start_ of this */
-> -	char name[];
-> +	char name[0];
-> +
-> +	/*
-> +	 * The following members can be accessed by taking a pointer that
-> +	 * points immediately after the terminating zero character in "name"
-> +	 * and aligning this pointer to next 8-byte boundary.
-> +	 * Uuid is present if the flag DM_NAME_LIST_FLAG_HAS_UUID is set.
-> +	 *
-> +	 * uint32_t event_nr;
-> +	 * uint32_t flags;
-> +	 * char uuid[0];
-> +	 */
->   };
->   
-> +#define DM_NAME_LIST_FLAG_HAS_UUID		1
-> +#define DM_NAME_LIST_FLAG_DOESNT_HAVE_UUID	2
-> +
->   /*
->    * Used to retrieve the target versions
->    */
-> @@ -203,7 +218,7 @@ struct dm_target_versions {
->           uint32_t next;
->           uint32_t version[3];
->   
-> -        char name[];
-> +        char name[0];
->   };
->   
->   /*
-> @@ -212,7 +227,7 @@ struct dm_target_versions {
->   struct dm_target_msg {
->   	uint64_t sector;	/* Device sector */
->   
-> -	char message[];
-> +	char message[0];
->   };
->   
->   /*
-> @@ -267,15 +282,15 @@ enum {
->   #define DM_TABLE_STATUS  _IOWR(DM_IOCTL, DM_TABLE_STATUS_CMD, struct dm_ioctl)
->   
->   #define DM_LIST_VERSIONS _IOWR(DM_IOCTL, DM_LIST_VERSIONS_CMD, struct dm_ioctl)
-> +#define DM_GET_TARGET_VERSION _IOWR(DM_IOCTL, DM_GET_TARGET_VERSION_CMD, struct dm_ioctl)
->   
->   #define DM_TARGET_MSG	 _IOWR(DM_IOCTL, DM_TARGET_MSG_CMD, struct dm_ioctl)
->   #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
-> -#define DM_GET_TARGET_VERSION	_IOWR(DM_IOCTL, DM_GET_TARGET_VERSION_CMD, struct dm_ioctl)
->   
->   #define DM_VERSION_MAJOR	4
-> -#define DM_VERSION_MINOR	36
-> +#define DM_VERSION_MINOR	45
->   #define DM_VERSION_PATCHLEVEL	0
-> -#define DM_VERSION_EXTRA	"-ioctl (2017-06-09)"
-> +#define DM_VERSION_EXTRA	"-ioctl (2021-03-22)"
->   
->   /* Status bits */
->   #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
-> @@ -363,4 +378,10 @@ enum {
->    */
->   #define DM_INTERNAL_SUSPEND_FLAG	(1 << 18) /* Out */
->   
-> +/*
-> + * If set, returns in the in buffer passed by UM, the raw table information
-> + * that would be measured by IMA subsystem on device state change.
-> + */
-> +#define DM_IMA_MEASUREMENT_FLAG	(1 << 19) /* In */
-> +
->   #endif				/* _LINUX_DM_IOCTL_H */
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/alias.c | 84 +++++++++++++++++++-------------------------
+ tests/alias.c        | 41 +++++++++++++--------
+ 2 files changed, 63 insertions(+), 62 deletions(-)
+
+diff --git a/libmultipath/alias.c b/libmultipath/alias.c
+index 02bc9d6..ad7e512 100644
+--- a/libmultipath/alias.c
++++ b/libmultipath/alias.c
+@@ -22,7 +22,7 @@
+ #include "util.h"
+ #include "errno.h"
+ #include "devmapper.h"
+-
++#include "strbuf.h"
+ 
+ /*
+  * significant parts of this file were taken from iscsi-bindings.c of the
+@@ -61,31 +61,23 @@ valid_alias(const char *alias)
+ 	return 1;
+ }
+ 
+-
+-static int
+-format_devname(char *name, int id, int len, const char *prefix)
++static int format_devname(struct strbuf *buf, int id)
+ {
+-	int pos;
+-	int prefix_len = strlen(prefix);
++	/*
++	 * We need: 7 chars for 32bit integers, 14 chars for 64bit integers
++	 */
++	char devname[2 * sizeof(int)];
++	int pos = sizeof(devname) - 1, rc;
+ 
+-	if (len <= prefix_len + 1 || id <= 0)
++	if (id <= 0)
+ 		return -1;
+ 
+-	memset(name, 0, len);
+-	strcpy(name, prefix);
+-	name[len - 1] = '\0';
+-	for (pos = len - 2; pos >= prefix_len; pos--) {
+-		id--;
+-		name[pos] = 'a' + id % 26;
+-		if (id < 26)
+-			break;
+-		id /= 26;
+-	}
+-	if (pos < prefix_len)
+-		return -1;
++	devname[pos] = '\0';
++	for (; id >= 1; id /= 26)
++		devname[--pos] = 'a' + --id % 26;
+ 
+-	memmove(name + prefix_len, name + pos, len - pos);
+-	return (prefix_len + len - pos - 1);
++	rc = append_strbuf_str(buf, devname + pos);
++	return rc >= 0 ? rc : -1;
+ }
+ 
+ static int
+@@ -123,11 +115,14 @@ scan_devname(const char *alias, const char *prefix)
+ static int
+ id_already_taken(int id, const char *prefix, const char *map_wwid)
+ {
+-	char alias[LINE_MAX];
++	STRBUF_ON_STACK(buf);
++	const char *alias;
+ 
+-	if (format_devname(alias, id, LINE_MAX, prefix) < 0)
++	if (append_strbuf_str(&buf, prefix) < 0 ||
++	    format_devname(&buf, id) < 0)
+ 		return 0;
+ 
++	alias = get_strbuf_str(&buf);
+ 	if (dm_map_present(alias)) {
+ 		char wwid[WWID_SIZE];
+ 
+@@ -285,10 +280,10 @@ rlookup_binding(FILE *f, char *buff, const char *map_alias)
+ static char *
+ allocate_binding(int fd, const char *wwid, int id, const char *prefix)
+ {
+-	char buf[LINE_MAX];
++	STRBUF_ON_STACK(buf);
+ 	off_t offset;
++	ssize_t len;
+ 	char *alias, *c;
+-	int i;
+ 
+ 	if (id <= 0) {
+ 		condlog(0, "%s: cannot allocate new binding for id %d",
+@@ -296,16 +291,12 @@ allocate_binding(int fd, const char *wwid, int id, const char *prefix)
+ 		return NULL;
+ 	}
+ 
+-	i = format_devname(buf, id, LINE_MAX, prefix);
+-	if (i == -1)
++	if (append_strbuf_str(&buf, prefix) < 0 ||
++	    format_devname(&buf, id) == -1)
+ 		return NULL;
+ 
+-	c = buf + i;
+-	if (snprintf(c, LINE_MAX - i, " %s\n", wwid) >= LINE_MAX - i) {
+-		condlog(1, "%s: line too long for %s\n", __func__, wwid);
++	if (print_strbuf(&buf, " %s\n", wwid) < 0)
+ 		return NULL;
+-	}
+-	buf[LINE_MAX - 1] = '\0';
+ 
+ 	offset = lseek(fd, 0, SEEK_END);
+ 	if (offset < 0){
+@@ -313,24 +304,25 @@ allocate_binding(int fd, const char *wwid, int id, const char *prefix)
+ 			strerror(errno));
+ 		return NULL;
+ 	}
+-	if (write(fd, buf, strlen(buf)) != (ssize_t)strlen(buf)){
++
++	len = get_strbuf_len(&buf);
++	alias = steal_strbuf_str(&buf);
++
++	if (write(fd, alias, len) != len) {
+ 		condlog(0, "Cannot write binding to bindings file : %s",
+ 			strerror(errno));
+ 		/* clear partial write */
+ 		if (ftruncate(fd, offset))
+ 			condlog(0, "Cannot truncate the header : %s",
+ 				strerror(errno));
++		free(alias);
+ 		return NULL;
+ 	}
+-	c = strchr(buf, ' ');
++	c = strchr(alias, ' ');
+ 	if (c)
+ 		*c = '\0';
+ 
+-	condlog(3, "Created new binding [%s] for WWID [%s]", buf, wwid);
+-	alias = strdup(buf);
+-	if (alias == NULL)
+-		condlog(0, "cannot copy new alias from bindings file: out of memory");
+-
++	condlog(3, "Created new binding [%s] for WWID [%s]", alias, wwid);
+ 	return alias;
+ }
+ 
+@@ -560,7 +552,7 @@ static int add_binding(Bindings *bindings, const char *alias, const char *wwid)
+ static int write_bindings_file(const Bindings *bindings, int fd)
+ {
+ 	struct binding *bnd;
+-	char line[LINE_MAX];
++	STRBUF_ON_STACK(line);
+ 	int i;
+ 
+ 	if (write(fd, BINDINGS_FILE_HEADER, sizeof(BINDINGS_FILE_HEADER) - 1)
+@@ -570,16 +562,12 @@ static int write_bindings_file(const Bindings *bindings, int fd)
+ 	vector_foreach_slot(bindings, bnd, i) {
+ 		int len;
+ 
+-		len = snprintf(line, sizeof(line), "%s %s\n",
+-			       bnd->alias, bnd->wwid);
+-
+-		if (len < 0 || (size_t)len >= sizeof(line)) {
+-			condlog(1, "%s: line overflow", __func__);
++		if ((len = print_strbuf(&line, "%s %s\n",
++					bnd->alias, bnd->wwid)) < 0)
+ 			return -1;
+-		}
+-
+-		if (write(fd, line, len) != len)
++		if (write(fd, get_strbuf_str(&line), len) != len)
+ 			return -1;
++		truncate_strbuf(&line, 0);
+ 	}
+ 	return 0;
+ }
+diff --git a/tests/alias.c b/tests/alias.c
+index 7e7c187..3ca6c28 100644
+--- a/tests/alias.c
++++ b/tests/alias.c
+@@ -81,12 +81,25 @@ int __wrap_dm_get_uuid(const char *name, char *uuid, int uuid_len)
+ 	return ret;
+ }
+ 
++/* strbuf wrapper for the old format_devname() */
++static int __format_devname(char *name, int id, size_t len, const char *prefix)
++{
++	STRBUF_ON_STACK(buf);
++
++	if (append_strbuf_str(&buf, prefix) < 0 ||
++	    format_devname(&buf, id) < 0 ||
++	    len <= get_strbuf_len(&buf))
++		return -1;
++	strcpy(name, get_strbuf_str(&buf));
++	return get_strbuf_len(&buf);
++}
++
+ static void fd_mpatha(void **state)
+ {
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = format_devname(buf, 1, sizeof(buf), "FOO");
++	rc = __format_devname(buf, 1, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 4);
+ 	assert_string_equal(buf, "FOOa");
+ }
+@@ -97,7 +110,7 @@ static void fd_mpathz(void **state)
+ 	char buf[5];
+ 	int rc;
+ 
+-	rc = format_devname(buf, 26, sizeof(buf), "FOO");
++	rc = __format_devname(buf, 26, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 4);
+ 	assert_string_equal(buf, "FOOz");
+ }
+@@ -107,7 +120,7 @@ static void fd_mpathaa(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = format_devname(buf, 26 + 1, sizeof(buf), "FOO");
++	rc = __format_devname(buf, 26 + 1, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 5);
+ 	assert_string_equal(buf, "FOOaa");
+ }
+@@ -117,7 +130,7 @@ static void fd_mpathzz(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = format_devname(buf, 26*26 + 26, sizeof(buf), "FOO");
++	rc = __format_devname(buf, 26*26 + 26, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 5);
+ 	assert_string_equal(buf, "FOOzz");
+ }
+@@ -127,7 +140,7 @@ static void fd_mpathaaa(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = format_devname(buf, 26*26 + 27, sizeof(buf), "FOO");
++	rc = __format_devname(buf, 26*26 + 27, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 6);
+ 	assert_string_equal(buf, "FOOaaa");
+ }
+@@ -137,7 +150,7 @@ static void fd_mpathzzz(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = format_devname(buf, 26*26*26 + 26*26 + 26, sizeof(buf), "FOO");
++	rc = __format_devname(buf, 26*26*26 + 26*26 + 26, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 6);
+ 	assert_string_equal(buf, "FOOzzz");
+ }
+@@ -147,7 +160,7 @@ static void fd_mpathaaaa(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = format_devname(buf, 26*26*26 + 26*26 + 27, sizeof(buf), "FOO");
++	rc = __format_devname(buf, 26*26*26 + 26*26 + 27, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 7);
+ 	assert_string_equal(buf, "FOOaaaa");
+ }
+@@ -157,7 +170,7 @@ static void fd_mpathzzzz(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc = format_devname(buf, 26*26*26*26 + 26*26*26 + 26*26 + 26,
++	rc = __format_devname(buf, 26*26*26*26 + 26*26*26 + 26*26 + 26,
+ 			    sizeof(buf), "FOO");
+ 	assert_int_equal(rc, 7);
+ 	assert_string_equal(buf, "FOOzzzz");
+@@ -169,7 +182,7 @@ static void fd_mpath_max(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc  = format_devname(buf, INT_MAX, sizeof(buf), "");
++	rc  = __format_devname(buf, INT_MAX, sizeof(buf), "");
+ 	assert_int_equal(rc, strlen(MPATH_ID_INT_MAX));
+ 	assert_string_equal(buf, MPATH_ID_INT_MAX);
+ }
+@@ -180,7 +193,7 @@ static void fd_mpath_max1(void **state)
+ 	char buf[32];
+ 	int rc;
+ 
+-	rc  = format_devname(buf, INT_MIN, sizeof(buf), "");
++	rc  = __format_devname(buf, INT_MIN, sizeof(buf), "");
+ 	assert_int_equal(rc, -1);
+ }
+ 
+@@ -189,7 +202,7 @@ static void fd_mpath_short(void **state)
+ 	char buf[4];
+ 	int rc;
+ 
+-	rc = format_devname(buf, 1, sizeof(buf), "FOO");
++	rc = __format_devname(buf, 1, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, -1);
+ }
+ 
+@@ -198,7 +211,7 @@ static void fd_mpath_short1(void **state)
+ 	char buf[5];
+ 	int rc;
+ 
+-	rc = format_devname(buf, 27, sizeof(buf), "FOO");
++	rc = __format_devname(buf, 27, sizeof(buf), "FOO");
+ 	assert_int_equal(rc, -1);
+ }
+ 
+@@ -323,7 +336,7 @@ static void sd_fd_many(void **state)
+ 	int rc, i;
+ 
+ 	for (i = 1; i < 5000; i++) {
+-		rc = format_devname(buf, i, sizeof(buf), "MPATH");
++		rc = __format_devname(buf, i, sizeof(buf), "MPATH");
+ 		assert_in_range(rc, 6, 8);
+ 		rc = scan_devname(buf, "MPATH");
+ 		assert_int_equal(rc, i);
+@@ -338,7 +351,7 @@ static void sd_fd_random(void **state)
+ 	srandom(1);
+ 	for (i = 1; i < 1000; i++) {
+ 		n = random() & 0xffff;
+-		rc = format_devname(buf, n, sizeof(buf), "MPATH");
++		rc = __format_devname(buf, n, sizeof(buf), "MPATH");
+ 		assert_in_range(rc, 6, 9);
+ 		rc = scan_devname(buf, "MPATH");
+ 		assert_int_equal(rc, n);
+-- 
+2.32.0
+
 
 --
 dm-devel mailing list
