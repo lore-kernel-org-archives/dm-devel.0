@@ -2,98 +2,83 @@ Return-Path: <SRS0=SJ91=MM=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,HK_RANDOM_FROM,INCLUDES_CR_TRAILER,
-	INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 957FAC07E95
-	for <dm-devel@archiver.kernel.org>; Tue, 20 Jul 2021 07:50:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9A1BDC07E95
+	for <dm-devel@archiver.kernel.org>; Tue, 20 Jul 2021 11:44:27 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 2524B61175
-	for <dm-devel@archiver.kernel.org>; Tue, 20 Jul 2021 07:50:50 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2524B61175
-Authentication-Results: mail.kernel.org; dmarc=fail (p=reject dis=none) header.from=fudan.edu.cn
+	by mail.kernel.org (Postfix) with ESMTPS id 062A46101E
+	for <dm-devel@archiver.kernel.org>; Tue, 20 Jul 2021 11:44:26 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 062A46101E
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1626781465;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=wAX1UKc7GWlUaof7lDF9zLN6DF6J61Rcnjd8zMkhtfM=;
+	b=TyZvF8sXyvxxMBsJk+NRLhaCVUWe10NywHOBF2rylyLwDRbHxu7l3Fm4wcCfWaEJ+Vlesf
+	6WXYTMriuFza9aDQZ9lwcMgELFBGFR273r5eX7f1k3Rb3A/ooZslvsawK+avvPOUQGzlys
+	asESEpd1zQxcoSwnlKJEowjrk/hWCsQ=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-397-KrnJ-BekMYe_xbNZ8Gt5eg-1; Tue, 20 Jul 2021 03:50:46 -0400
-X-MC-Unique: KrnJ-BekMYe_xbNZ8Gt5eg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-379-FjBpP-AqOxisfovKbuydsA-1; Tue, 20 Jul 2021 07:44:24 -0400
+X-MC-Unique: FjBpP-AqOxisfovKbuydsA-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1238CA0CCD;
-	Tue, 20 Jul 2021 07:50:41 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3688678C00;
-	Tue, 20 Jul 2021 07:50:40 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6601981C860;
+	Tue, 20 Jul 2021 11:44:17 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BBC9260BD8;
+	Tue, 20 Jul 2021 11:44:16 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8063E1809C99;
-	Tue, 20 Jul 2021 07:50:36 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B00F14EA29;
+	Tue, 20 Jul 2021 11:44:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
+	[10.5.11.12])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 16J8cwVZ027740 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 19 Jul 2021 04:38:58 -0400
+	id 16KBg0bY022526 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 20 Jul 2021 07:42:00 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6E227111143C; Mon, 19 Jul 2021 08:38:58 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 69D4F1111439
-	for <dm-devel@redhat.com>; Mon, 19 Jul 2021 08:38:55 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7D1D280D09C
-	for <dm-devel@redhat.com>; Mon, 19 Jul 2021 08:38:55 +0000 (UTC)
-Received: from zg8tmty1ljiyny4xntqumjca.icoremail.net
-	(zg8tmty1ljiyny4xntqumjca.icoremail.net [165.227.154.27]) by
-	relay.mimecast.com with ESMTP id us-mta-64-E-S30sJiOJenk8bNV5-MYA-1;
-	Mon, 19 Jul 2021 04:38:51 -0400
-X-MC-Unique: E-S30sJiOJenk8bNV5-MYA-1
-Received: from localhost.localdomain (unknown [10.162.86.133])
-	by app2 (Coremail) with SMTP id XQUFCgCnbGtKOPVgu13pBA--.3229S3;
-	Mon, 19 Jul 2021 16:31:07 +0800 (CST)
-From: Xiyu Yang <xiyuyang19@fudan.edu.cn>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
-	dm-devel@redhat.com, linux-kernel@vger.kernel.org
-Date: Mon, 19 Jul 2021 16:31:02 +0800
-Message-Id: <1626683462-64030-1-git-send-email-xiyuyang19@fudan.edu.cn>
-X-CM-TRANSID: XQUFCgCnbGtKOPVgu13pBA--.3229S3
-X-Coremail-Antispam: 1UD129KBjvJXoW7Wry3tF17ZF18JF47ZFyrZwb_yoW5Jr1kpF
-	4jg39Y9FWrJF17tw4kAay0vF1rAa4qkrWrArWUKw43AFyfWryYva18Kryjqas7JFy7AFWU
-	ZF1j9FZI9a1DAa7anT9S1TB71UUUUUUqnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUvm14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1lnxkEFVAIw20F6cxK64vIFxWle2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xv
-	F2IEw4CE5I8CrVC2j2WlYx0E2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r4j6F
-	4UMcvjeVCFs4IE7xkEbVWUJVW8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I
-	648v4I1lc2xSY4AK6svPMxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI
-	8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AK
-	xVWUAVWUtwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI
-	8IcVCY1x0267AKxVWUJVW8JwCI42IY6xAIw20EY4v20xvaj40_WFyUJVCq3wCI42IY6I8E
-	87Iv67AKxVW8JVWxJwCI42IY6I8E87Iv6xkF7I0E14v26r4UJVWxJrUvcSsGvfC2KfnxnU
-	UI43ZEXa7VUjiF4JUUUUU==
-X-CM-SenderInfo: irzsiiysuqikmy6i3vldqovvfxof0/
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+	id DBE4260CC9; Tue, 20 Jul 2021 11:42:00 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D3C81784C9;
+	Tue, 20 Jul 2021 11:41:58 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
+	id 16KBfwba021967; Tue, 20 Jul 2021 07:41:58 -0400
+Received: from localhost (mpatocka@localhost)
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
+	ESMTP id 16KBfvNm021963; Tue, 20 Jul 2021 07:41:57 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+	owned process doing -bs
+Date: Tue, 20 Jul 2021 07:41:57 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Pintu Agarwal <pintu.ping@gmail.com>
+In-Reply-To: <CAOuPNLhqSpaTm3u4kFsnuZ0PLDKuX8wsxuF=vUJ1TEG0EP+L1g@mail.gmail.com>
+Message-ID: <alpine.LRH.2.02.2107200737510.19984@file01.intranet.prod.int.rdu2.redhat.com>
+References: <CAOuPNLhqSpaTm3u4kFsnuZ0PLDKuX8wsxuF=vUJ1TEG0EP+L1g@mail.gmail.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Tue, 20 Jul 2021 03:50:34 -0400
-Cc: Xin Tan <tanxin.ctf@gmail.com>, yuanxzhang@fudan.edu.cn,
-	Xiyu Yang <xiyuyang19@fudan.edu.cn>
-Subject: [dm-devel] [PATCH] dm io: Convert from atomic_t to refcount_t on
-	io->count
+Cc: snitzer@redhat.com, Kernelnewbies <kernelnewbies@kernelnewbies.org>,
+	open list <linux-kernel@vger.kernel.org>, dm-devel@redhat.com,
+	linux-mtd <linux-mtd@lists.infradead.org>, samitolvanen@google.com,
+	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+	Phillip Lougher <phillip@squashfs.org.uk>, shli@kernel.org, agk@redhat.com
+Subject: Re: [dm-devel] Kernel 4.14: Using dm-verity with squashfs rootfs -
+ mounting issue
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,97 +90,122 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Type: MULTIPART/MIXED;
+	BOUNDARY="185206533-1311100962-1626781318=:19984"
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+--185206533-1311100962-1626781318=:19984
+Content-Type: TEXT/PLAIN; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+
+Hi
+
+Try to set up dm-verity with block size 512 bytes.
+
+I don't know what block size does squashfs use, but if the filesystem 
+block size is smaller than dm-verity block size, it doesn't work.
+
+Mikulas
+
+
+
+On Tue, 20 Jul 2021, Pintu Agarwal wrote:
+
+> Hi,
+> 
+> Our ARM32 Linux embedded system consists of these:
+> * Linux Kernel: 4.14
+> * Processor: Qualcomm Arm32 Cortex-A7
+> * Storage: NAND 512MB
+> * Platform: Simple busybox
+> * Filesystem: UBIFS, Squashfs
+> * Consists of nand raw partitions, squashfs ubi volumes.
+> 
+> My requirement:
+> We wanted to use dm-verity at boot time to check the integrity of
+> squashfs-rootfs before mounting.
+> 
+> Problem:
+> dm-0 is not able to locate and mount the squash fs rootfs block.
+> The same approach is working when emulating with ext4 but fails with squashfs.
+> 
+> Logs:
+> [....]
+> [    0.000000] Kernel command line: [...] verity="96160 12020
+> d7b8a7d0c01b9aec888930841313a81603a50a2a7be44631c4c813197a50d681 0 "
+> rootfstype=squashfs root=/dev/mtdblock34 ubi.mtd=30,0,30 [...]
+> root=/dev/dm-0 dm="system none ro,0 96160 verity 1 /dev/mtdblock34
+> /dev/mtdblock39 4096 4096 12020 8 sha256
+> d7b8a7d0c01b9aec888930841313a81603a50a2a7be44631c4c813197a50d681
+> aee087a5be3b982978c923f566a94613496b417f2af592639bc80d141e34dfe7"
+> [....]
+> [    4.693620] vreg_conn_pa: disa▒[    4.700662] md: Skipping
+> autodetection of RAID arrays. (raid=autodetect will force)
+> [    4.700713] device-mapper: init: attempting early device configuration.
+> [    4.708224] device-mapper: init: adding target '0 96160 verity 1
+> /dev/mtdblock34 /dev/mtdblock39 4096 4096 12020 8 sha256
+> d7b8a7d0c01b9aec888930841313a81603a50a2a7be44631c4c813197a50d681
+> aee087a5be3b982978c923f566a94613496b417f2af592639bc80d141e34dfe7'
+> [    4.714979] device-mapper: verity: sha256 using implementation
+> "sha256-generic"
+> [    4.737808] device-mapper: init: dm-0 is ready
+> [....]
+> [    5.278103] No filesystem could mount root, tried:
+> [    5.278107]  squashfs
+> [    5.280477]
+> [    5.287627] Kernel panic - not syncing: VFS: Unable to mount root
+> fs on unknown-block(253,0)
+> [...]
+> 
+> Not sure, why is it still locating block "253" here which seems like a
+> MAJOR number ?
+> 
+> Working logs on ext4:
+> [....]
+> [    4.529822] v▒[    4.534035] md: Skipping autodetection of RAID
+> arrays. (raid=autodetect will force)
+> [    4.534087] device-mapper: init: attempting early device configuration.
+> [    4.550316] device-mapper: init: adding target '0 384440 verity 1
+> /dev/ubiblock0_0 /dev/ubiblock0_0 4096 4096 48055 48063 sha256
+> a02e0c13afb31e99b999c64aae6f4644c24addbc58db5689902cc5ba0be2d15b
+> aee087a5be3b982978c923f566a94613496b417f2af592639bc80d141e34dfe7 10
+> restart_on_corruption ignore_zero_blocks use_fec_from_device
+> /dev/ubiblock0_0 fec_roots 2 fec_blocks 48443 fec_start 48443'
+> [    4.572215] device-mapper: verity: sha256 using implementation
+> "sha256-generic"
+> [    4.610692] device-mapper: init: dm-0 is ready
+> [    4.720174] EXT4-fs (dm-0): mounted filesystem with ordered data
+> mode. Opts: (null)
+> [    4.720438] VFS: Mounted root (ext4 filesystem) readonly on device 253:0.
+> [    4.737256] devtmpfs: mounted
+> [....]
+> 
+> Questions:
+> a) Is dm-verity supposed to work on squashfs block devices ?
+> b) Are there any known issues with dm-verity on Kernel 4.14 ?
+> c) Are there any patches that we are missing ?
+> 
+> 
+> Thanks,
+> Pintu
+> 
+--185206533-1311100962-1626781318=:19984
 Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-refcount_t type and corresponding API can protect refcounters from
-accidental underflow and overflow and further use-after-free situations.
-
-Signed-off-by: Xiyu Yang <xiyuyang19@fudan.edu.cn>
-Signed-off-by: Xin Tan <tanxin.ctf@gmail.com>
----
- drivers/md/dm-io.c | 13 +++++++------
- 1 file changed, 7 insertions(+), 6 deletions(-)
-
-diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-index 2d3cda0acacb..f296bba86d14 100644
---- a/drivers/md/dm-io.c
-+++ b/drivers/md/dm-io.c
-@@ -5,6 +5,7 @@
-  * This file is released under the GPL.
-  */
- 
-+#include <linux/refcount.h>
- #include "dm-core.h"
- 
- #include <linux/device-mapper.h>
-@@ -32,7 +33,7 @@ struct dm_io_client {
-  */
- struct io {
- 	unsigned long error_bits;
--	atomic_t count;
-+	refcount_t count;
- 	struct dm_io_client *client;
- 	io_notify_fn callback;
- 	void *context;
-@@ -130,7 +131,7 @@ static void dec_count(struct io *io, unsigned int region, blk_status_t error)
- 	if (error)
- 		set_bit(region, &io->error_bits);
- 
--	if (atomic_dec_and_test(&io->count))
-+	if (refcount_dec_and_test(&io->count))
- 		complete_io(io);
- }
- 
-@@ -319,7 +320,7 @@ static void do_region(int op, int op_flags, unsigned region,
- 		special_cmd_max_sectors = q->limits.max_write_same_sectors;
- 	if ((op == REQ_OP_DISCARD || op == REQ_OP_WRITE_ZEROES ||
- 	     op == REQ_OP_WRITE_SAME) && special_cmd_max_sectors == 0) {
--		atomic_inc(&io->count);
-+		refcount_inc(&io->count);
- 		dec_count(io, region, BLK_STS_NOTSUPP);
- 		return;
- 	}
-@@ -382,7 +383,7 @@ static void do_region(int op, int op_flags, unsigned region,
- 			dp->next_page(dp);
- 		}
- 
--		atomic_inc(&io->count);
-+		refcount_inc(&io->count);
- 		submit_bio(bio);
- 	} while (remaining);
- }
-@@ -445,7 +446,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
- 
- 	io = mempool_alloc(&client->pool, GFP_NOIO);
- 	io->error_bits = 0;
--	atomic_set(&io->count, 1); /* see dispatch_io() */
-+	refcount_set(&io->count, 1); /* see dispatch_io() */
- 	io->client = client;
- 	io->callback = sync_io_complete;
- 	io->context = &sio;
-@@ -477,7 +478,7 @@ static int async_io(struct dm_io_client *client, unsigned int num_regions,
- 
- 	io = mempool_alloc(&client->pool, GFP_NOIO);
- 	io->error_bits = 0;
--	atomic_set(&io->count, 1); /* see dispatch_io() */
-+	refcount_set(&io->count, 1); /* see dispatch_io() */
- 	io->client = client;
- 	io->callback = fn;
- 	io->context = context;
--- 
-2.7.4
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+--185206533-1311100962-1626781318=:19984--
 
