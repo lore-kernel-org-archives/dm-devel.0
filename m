@@ -1,112 +1,126 @@
-Return-Path: <SRS0=SJ91=MM=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=+Jjt=MN=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-12.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS autolearn=ham
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7C407C07E95
-	for <dm-devel@archiver.kernel.org>; Tue, 20 Jul 2021 21:30:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2FA01C636C8
+	for <dm-devel@archiver.kernel.org>; Wed, 21 Jul 2021 02:12:46 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 2002560E0B
-	for <dm-devel@archiver.kernel.org>; Tue, 20 Jul 2021 21:30:11 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 2002560E0B
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 95A2961175
+	for <dm-devel@archiver.kernel.org>; Wed, 21 Jul 2021 02:12:45 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 95A2961175
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.ibm.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1626816610;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=OtkENAXqsRWqQZm/okaDVjfNAfmBl15Y4i/NfNT705E=;
-	b=OX/QLaGXm7ZXrcBD2/0mYRAxYhDRKMWqy2ifq5N2QprirgcSS5pcfG4PSamJ49E/BJirmg
-	II4AAlYFY7usMESzgViD9SVczKCWhVNua1S1QGwiyxStxF8w6La91XYHyR7FQapHB2Prju
-	y5tdPqm0f3rqFv1F9UE5yKTpYxEDocY=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-523-V_XTMElYOua2GmlJBIEYyA-1; Tue, 20 Jul 2021 17:28:28 -0400
-X-MC-Unique: V_XTMElYOua2GmlJBIEYyA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-350-TjmPWLl3O6mPcAnjz-FPsw-1; Tue, 20 Jul 2021 22:12:42 -0400
+X-MC-Unique: TjmPWLl3O6mPcAnjz-FPsw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1006D804301;
-	Tue, 20 Jul 2021 21:28:23 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CC6491084F4B;
+	Wed, 21 Jul 2021 02:12:37 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 44C045D9D3;
-	Tue, 20 Jul 2021 21:28:20 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A55C519C59;
+	Wed, 21 Jul 2021 02:12:36 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6E5E34EA2F;
-	Tue, 20 Jul 2021 21:28:16 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EA3084E9F5;
+	Wed, 21 Jul 2021 02:12:33 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 16KLRVHv014512 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 20 Jul 2021 17:27:31 -0400
+	id 16L2CVXJ021889 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 20 Jul 2021 22:12:32 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 2CA73DA696; Tue, 20 Jul 2021 21:27:31 +0000 (UTC)
+	id DF7E32063238; Wed, 21 Jul 2021 02:12:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 274CFC2117
-	for <dm-devel@redhat.com>; Tue, 20 Jul 2021 21:27:28 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 15A6880B71C
-	for <dm-devel@redhat.com>; Tue, 20 Jul 2021 21:27:28 +0000 (UTC)
-Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
-	[209.85.219.71]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-89-4Abc4GF4PN-0R07YXL4wPw-1; Tue, 20 Jul 2021 17:27:26 -0400
-X-MC-Unique: 4Abc4GF4PN-0R07YXL4wPw-1
-Received: by mail-qv1-f71.google.com with SMTP id
-	z1-20020a0cfec10000b02902dbb4e0a8f2so5758452qvs.6
-	for <dm-devel@redhat.com>; Tue, 20 Jul 2021 14:27:26 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-	:mime-version:content-disposition:content-transfer-encoding
-	:in-reply-to;
-	bh=13FGH9IcdsNGls40eCSMkR2G2llimRJCFlJpfj0drAA=;
-	b=lo2D9uvQGvDXEVw7r5qu8xkFkKyKCmenq1YxOsj50+UDAOcNt4L5JslsKCla7oVvyI
-	DvyzinxREHYzIezQNaPtH4f2RIw9MCVyJ4iizVOR1VQm5LTm23Irz8LlNB3a72Mt1b3Q
-	tor27LkehLbswbWf7SbGdAiYx0DEGmS0ljbqLTkdI+gvzfXONVvM2W4b1oxPfl3yC6aj
-	cwoxW+nrNZgtwION6gdhPemi6qyzKZerRGPV3sp7PwH++hdKKIZSaBoEqv4NrtGiErwh
-	qB874uNMIyumOAlYyGcgxqi8tUKcIYPMRouIscdKdHY5snCyjDAdfOEJ8HKq4KA5GDpO
-	YEXQ==
-X-Gm-Message-State: AOAM530KMtfB0Oiw3BiRCFYHBKYzuMHZuBPcUrLnNpoN6ZqcQYyFYavv
-	yPMqS3GHLB/1/xXXDsE1u2vvxgwajQzwsC1pFlwepNgiRXSjvDkMchgucT/d43UXfw6mYP6ToPO
-	lWMnW8YTzf98rGA==
-X-Received: by 2002:a37:aa8f:: with SMTP id
-	t137mr30800503qke.277.1626816446231; 
-	Tue, 20 Jul 2021 14:27:26 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJx5ADkrHKUctkZSNxUAO8CeOCIjalPS9tqXHZEs8CzCNQ9nrPOPek18HNDy4oe1aXRTVECpGQ==
-X-Received: by 2002:a37:aa8f:: with SMTP id
-	t137mr30800488qke.277.1626816445958; 
-	Tue, 20 Jul 2021 14:27:25 -0700 (PDT)
-Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
-	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
-	u19sm2816359qtx.48.2021.07.20.14.27.25
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Tue, 20 Jul 2021 14:27:25 -0700 (PDT)
-Date: Tue, 20 Jul 2021 17:27:24 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Tushar Sugandhi <tusharsu@linux.microsoft.com>
-Message-ID: <YPc/vON2qvwjfvTe@redhat.com>
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DAF6D2063FE5
+	for <dm-devel@redhat.com>; Wed, 21 Jul 2021 02:12:29 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4C0E11857F00
+	for <dm-devel@redhat.com>; Wed, 21 Jul 2021 02:12:29 +0000 (UTC)
+Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com
+	[148.163.158.5]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-360-2iABop76PVG7icqHvzF8OA-1; Tue, 20 Jul 2021 22:12:24 -0400
+X-MC-Unique: 2iABop76PVG7icqHvzF8OA-1
+Received: from pps.filterd (m0098421.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.16.0.43/8.16.0.43) with SMTP id
+	16L24nUv166445; Tue, 20 Jul 2021 22:12:24 -0400
+Received: from pps.reinject (localhost [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com with ESMTP id 39x9qt90wv-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Tue, 20 Jul 2021 22:12:23 -0400
+Received: from m0098421.ppops.net (m0098421.ppops.net [127.0.0.1])
+	by pps.reinject (8.16.0.43/8.16.0.43) with SMTP id 16L24rQo166933;
+	Tue, 20 Jul 2021 22:12:23 -0400
+Received: from ppma04ams.nl.ibm.com (63.31.33a9.ip4.static.sl-reverse.com
+	[169.51.49.99])
+	by mx0a-001b2d01.pphosted.com with ESMTP id 39x9qt90wc-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Tue, 20 Jul 2021 22:12:23 -0400
+Received: from pps.filterd (ppma04ams.nl.ibm.com [127.0.0.1])
+	by ppma04ams.nl.ibm.com (8.16.1.2/8.16.1.2) with SMTP id 16L26nwS030998;
+	Wed, 21 Jul 2021 02:12:21 GMT
+Received: from b06avi18878370.portsmouth.uk.ibm.com
+	(b06avi18878370.portsmouth.uk.ibm.com [9.149.26.194])
+	by ppma04ams.nl.ibm.com with ESMTP id 39upu89m1n-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=NOT); Wed, 21 Jul 2021 02:12:21 +0000
+Received: from d06av24.portsmouth.uk.ibm.com (mk.ibm.com [9.149.105.60])
+	by b06avi18878370.portsmouth.uk.ibm.com (8.14.9/8.14.9/NCO v10.0) with
+	ESMTP id 16L29rnT33292672
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256
+	verify=OK); Wed, 21 Jul 2021 02:09:54 GMT
+Received: from d06av24.portsmouth.uk.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 201A642047;
+	Wed, 21 Jul 2021 02:12:19 +0000 (GMT)
+Received: from d06av24.portsmouth.uk.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 8B2144203F;
+	Wed, 21 Jul 2021 02:12:17 +0000 (GMT)
+Received: from li-f45666cc-3089-11b2-a85c-c57d1a57929f.ibm.com (unknown
+	[9.160.1.44]) by d06av24.portsmouth.uk.ibm.com (Postfix) with ESMTP;
+	Wed, 21 Jul 2021 02:12:17 +0000 (GMT)
+Message-ID: <713d22788b678c612c5b18edfb8cf849af61ace5.camel@linux.ibm.com>
+From: Mimi Zohar <zohar@linux.ibm.com>
+To: Tushar Sugandhi <tusharsu@linux.microsoft.com>, dm-devel@redhat.com,
+	agk@redhat.com, snitzer@redhat.com
+Date: Tue, 20 Jul 2021 22:12:16 -0400
+In-Reply-To: <20210713004904.8808-2-tusharsu@linux.microsoft.com>
 References: <20210713004904.8808-1-tusharsu@linux.microsoft.com>
-MIME-Version: 1.0
-In-Reply-To: <20210713004904.8808-1-tusharsu@linux.microsoft.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+	<20210713004904.8808-2-tusharsu@linux.microsoft.com>
+Mime-Version: 1.0
+X-TM-AS-GCONF: 00
+X-Proofpoint-ORIG-GUID: 79jdo0nO-QNTfHHtwpfqzOtWJRvrHkbh
+X-Proofpoint-GUID: dzlqLIGBHHubEGGg21U5TUE-vA9LHnpt
+X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.391, 18.0.790
+	definitions=2021-07-20_15:2021-07-19,
+	2021-07-20 signatures=0
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+	lowpriorityscore=0 mlxscore=0
+	suspectscore=0 mlxlogscore=999 bulkscore=0 phishscore=0 adultscore=0
+	impostorscore=0 spamscore=0 malwarescore=0 priorityscore=1501
+	clxscore=1011 classifier=spam adjust=0 reason=mlx scancount=1
+	engine=8.12.0-2104190000 definitions=main-2107210010
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: linux-integrity@vger.kernel.org, dm-devel@redhat.com, zohar@linux.ibm.com,
-	agk@redhat.com, nramas@linux.microsoft.com
-Subject: Re: [dm-devel] [PATCH 0/7] device mapper target measurements using
-	IMA
+Cc: nramas@linux.microsoft.com, linux-integrity@vger.kernel.org
+Subject: Re: [dm-devel] [PATCH 1/7] dm: measure data on table load
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -120,71 +134,46 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gTW9uLCBKdWwgMTIgMjAyMSBhdCAgODo0OFAgLTA0MDAsClR1c2hhciBTdWdhbmRoaSA8dHVz
-aGFyc3VAbGludXgubWljcm9zb2Z0LmNvbT4gd3JvdGU6Cgo+IEZvciBhIGdpdmVuIHN5c3RlbSwg
-dmFyaW91cyBleHRlcm5hbCBzZXJ2aWNlcy9pbmZyYXN0cnVjdHVyZSB0b29scwo+IChpbmNsdWRp
-bmcgdGhlIGF0dGVzdGF0aW9uIHNlcnZpY2UpIGludGVyYWN0IHdpdGggaXQgLSBib3RoIGR1cmlu
-ZyB0aGUKPiBzZXR1cCBhbmQgZHVyaW5nIHJlc3Qgb2YgdGhlIHN5c3RlbSBydW4tdGltZS4gIFRo
-ZXkgc2hhcmUgc2Vuc2l0aXZlIGRhdGEKPiBhbmQvb3IgZXhlY3V0ZSBjcml0aWNhbCB3b3JrbG9h
-ZCBvbiB0aGF0IHN5c3RlbS4gIFRoZSBleHRlcm5hbCBzZXJ2aWNlcwo+IG1heSB3YW50IHRvIHZl
-cmlmeSB0aGUgY3VycmVudCBydW4tdGltZSBzdGF0ZSBvZiB0aGUgcmVsZXZhbnQga2VybmVsCj4g
-c3Vic3lzdGVtcyBiZWZvcmUgZnVsbHkgdHJ1c3RpbmcgdGhlIHN5c3RlbSB3aXRoIGJ1c2luZXNz
-LWNyaXRpY2FsCj4gZGF0YS93b3JrbG9hZC4KPiAKPiBEZXZpY2UgbWFwcGVyIGlzIG9uZSBzdWNo
-IGtlcm5lbCBzdWJzeXN0ZW0gdGhhdCBwbGF5cyBhIGNyaXRpY2FsIHJvbGUgb24KPiBhIGdpdmVu
-IHN5c3RlbSBieSBwcm92aWRpbmcgdmFyaW91cyBpbXBvcnRhbnQgZnVuY3Rpb25hbGl0aWVzIHRv
-IHRoZQo+IGJsb2NrIGRldmljZXMgd2l0aCB2YXJpb3VzIHRhcmdldCB0eXBlcyBsaWtlIGNyeXB0
-LCB2ZXJpdHksIGludGVncml0eSAKPiBldGMuICBFYWNoIG9mIHRoZXNlIHRhcmdldCB0eXBlc+KA
-mSBmdW5jdGlvbmFsaXRpZXMgY2FuIGJlIGNvbmZpZ3VyZWQgd2l0aAo+IHZhcmlvdXMgYXR0cmli
-dXRlcy4gIFRoZSBhdHRyaWJ1dGVzIGNob3NlbiB0byBjb25maWd1cmUgdGhlc2UgdGFyZ2V0IHR5
-cGVzCj4gY2FuIHNpZ25pZmljYW50bHkgaW1wYWN0IHRoZSBzZWN1cml0eSBwcm9maWxlIG9mIHRo
-ZSBibG9jayBkZXZpY2UsCj4gYW5kIGluLXR1cm4sIG9mIHRoZSBzeXN0ZW0gaXRzZWxmLiAgRm9y
-IGluc3RhbmNlLCB0aGUgdHlwZSBvZiBlbmNyeXB0aW9uCj4gYWxnb3JpdGhtIGFuZCB0aGUga2V5
-IHNpemUgZGV0ZXJtaW5lcyB0aGUgc3RyZW5ndGggb2YgZW5jcnlwdGlvbiBmb3IgYQo+IGdpdmVu
-IGJsb2NrIGRldmljZS4KPiAKPiBUaGVyZWZvcmUsIHZlcmlmeWluZyB0aGUgY3VycmVudCBzdGF0
-ZSBvZiB2YXJpb3VzIGJsb2NrIGRldmljZXMgYXMgd2VsbAo+IGFzIHRoZWlyIHZhcmlvdXMgdGFy
-Z2V0IGF0dHJpYnV0ZXMgaXMgY3J1Y2lhbCBmb3IgZXh0ZXJuYWwgc2VydmljZXMKPiBiZWZvcmUg
-ZnVsbHkgdHJ1c3RpbmcgdGhlIHN5c3RlbSB3aXRoIGJ1c2luZXNzLWNyaXRpY2FsIGRhdGEvd29y
-a2xvYWQuCj4gCj4gSU1BIHByb3ZpZGVzIHRoZSBuZWNlc3NhcnkgZnVuY3Rpb25hbGl0eSBmb3Ig
-ZGV2aWNlIG1hcHBlciB0byBtZWFzdXJlIHRoZQo+IHN0YXRlIGFuZCBjb25maWd1cmF0aW9uIG9m
-IHZhcmlvdXMgYmxvY2sgZGV2aWNlcyAtCj4gICAtIEJZIGRldmljZSBtYXBwZXIgaXRzZWxmLCBm
-cm9tIHdpdGhpbiB0aGUga2VybmVsLAo+ICAgLSBpbiBhIHRhbXBlciByZXNpc3RhbnQgd2F5LAo+
-ICAgLSBhbmQgcmUtbWVhc3VyZWQgLSB0cmlnZ2VyZWQgb24gc3RhdGUvY29uZmlndXJhdGlvbiBj
-aGFuZ2UuCj4gCj4gVGhpcyBwYXRjaCBzZXJpZXMgdXNlcyB0aGlzIElNQSBmdW5jdGlvbmFsaXR5
-LCBieSBjYWxsaW5nIHRoZSBmdW5jdGlvbgo+IGltYV9tZWFzdXJlX2NyaXRpY2FsX2RhdGEoKSwg
-d2hlbiBhIGJsb2NrIGRldmljZSBzdGF0ZSBpcyBjaGFuZ2VkIChlLmcuCj4gb24gZGV2aWNlIGNy
-ZWF0ZSwgcmVzdW1lLCByZW5hbWUsIHJlbW92ZSBldGMuKSAgSXQgbWVhc3VyZXMgdGhlIGRldmlj
-ZQo+IHN0YXRlIGFuZCBjb25maWd1cmF0aW9uIGFuZCBzdG9yZXMgaXQgaW4gSU1BIGxvZ3MsIHNv
-IHRoYXQgaXQgY2FuIGJlCj4gdXNlZCBieSBleHRlcm5hbCBzZXJ2aWNlcyBmb3IgbWFuYWdpbmcg
-dGhlIHN5c3RlbS4KCkkgbmVlZGVkIHRvIEVYUE9SVF9TWU1CT0xfR1BMKGltYV9tZWFzdXJlX2Ny
-aXRpY2FsX2RhdGEpOyBvdGhlcndpc2UgSQpjb3VsZG4ndCBjb21waWxlLi4gbm90IHN1cmUgYnV0
-IEkgY2FuIG9ubHkgaW1hZ2luZSB5b3UgY29tcGlsZSBETQooYW5kIGFsbCB0YXJnZXRzKSB0byBi
-ZSBidWlsdGluPwoKSW4gYWRkaXRpb24gdG8gZml4aW5nIHRoYXQgKGluIGZpcnN0IHRhYmxlIGxv
-YWQgcGF0Y2gpIEkgY2hhbmdlZAp2YXJpb3VzIHRoaW5ncyBhbG9uZyB0aGUgd2F5IHdoaWxlIEkg
-cmV2aWV3ZWQgZWFjaCBwYXRjaC4KClRoaW5ncyB0aGF0IEkgcmVjYWxsIGFyZToKLSBtb3ZlZCAj
-aWZkZWYgQ09ORklHX0lNQSBmcm9tIGRtLWltYS5jIHRvIGRtLWltYS5oCi0gZml4ZWQgdmFyaW91
-cyB0eXBvcyBhbmQgd2hpdGVzcGFjZQotIGNvbnNpc3RlbnRseSBwcmVwZW5kICIsIiBpbiBTVEFU
-VVNUWVBFX0lNQSdzIERNRU1JVCgpcyBhcyBvcHBvc2VkIHRvCiAgaGF2aW5nIGEgbWl4IG9yIHBy
-ZSBhbmQgcG9zdGZpeCB0aHJvdWdob3V0IHRhcmdldHMKLSBmaXhlZCB3aGF0IHNlZW1lZCBsaWtl
-IG1hbGZvcm1lZCBTVEFUVVNUWVBFX0lNQSBoYW5kbGluZyBmb3IKICBkbS1tdWx0aXBhdGggLS0g
-aXQgd2FzIERNRU1JVCgiOyIpIGZvciBlYWNoIGRtLW1wYXRoJ3MgcGF0aGdyb3VwCi0gYWRkZWQg
-c29tZSBmaWVsZHMgdG8gZG0tbXBhdGgsIHJlbmFtZWQgc29tZSBJTUEgbmFtZXMgaW4gbmFtZT12
-YWx1ZQogIHBhaXJzIHRvIGJlIG1vcmUgY2xlYXIuCgpJJ3ZlIHN0YWdlZCB0aGUgcmVzdWx0IGlu
-IGxpbnV4LW5leHQgdmlhIGxpbnV4LWRtLmdpdCdzIGRtLTUuMTUKYnJhbmNoLCBzZWU6Cmh0dHBz
-Oi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3NjbS9saW51eC9rZXJuZWwvZ2l0L2RldmljZS1tYXBwZXIv
-bGludXgtZG0uZ2l0L2xvZy8/aD1kbS01LjE1CgpJJ3ZlIGNvbXBpbGVkIHRlc3RlZCBib3RoIHdp
-dGggYW5kIHdpdGhvdXQgQ09ORklHX0lNQSBzZXQuICBCdXQKaGF2ZW4ndCBhY3R1YWxseSB0ZXN0
-ZWQgdGhlIGNvZGUuCgpQbGVhc2Ugc2VuZCBhbnkgaW5jcmVtZW50YWwgZml4ZXMgcmVsYXRpdmUg
-dG8gdGhlIGRtLTUuMTUgYnJhbmNoIGFuZApJJ2xsIGdldCB0aGVtIGZvbGRlZCBpbiB3aGVyZSBh
-cHByb3ByaWF0ZS4KClRoYW5rcywKTWlrZQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRl
-dmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5m
-by9kbS1kZXZlbA==
+Hi Tushar, Mike, 
+
+On Mon, 2021-07-12 at 17:48 -0700, Tushar Sugandhi wrote:
+> +struct dm_ima_device_table_metadata {
+> +       /*
+> +        * Contains data specific to the device which is common across
+> +        * all the targets in the table.e.g. name, uuid, major, minor etc.
+> +        * The values are stored in comma separated list of key1=val1,key2=val2; pairs
+> +        * delimited by a semicolon at the end of the list.
+> +        */
+> +       char *device_metadata;
+> +       unsigned int device_metadata_len;
+> +       unsigned int num_targets;
+> +
+> +       /*
+> +        * Contains the sha256 hashs of the IMA measurements of the
+> +        * target attributes key-value pairs from the active/inactive tables.
+> +        */
+
+>From past experience hard coding the hash algorithm is really not a
+good idea.
+
+Mimi
+
+> +       char *hash;
+> +       unsigned int hash_len;
+> +
+> +};
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
