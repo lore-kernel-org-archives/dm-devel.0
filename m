@@ -2,104 +2,80 @@ Return-Path: <SRS0=Fc2L=MO=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.7 required=3.0 tests=BAYES_00,DKIM_ADSP_CUSTOM_MED,
-	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-8.7 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,USER_AGENT_SANE_1 autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B64E3C63793
-	for <dm-devel@archiver.kernel.org>; Thu, 22 Jul 2021 07:23:01 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E8729C4338F
+	for <dm-devel@archiver.kernel.org>; Thu, 22 Jul 2021 21:43:19 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3B2B16127C
-	for <dm-devel@archiver.kernel.org>; Thu, 22 Jul 2021 07:23:01 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.3.2 mail.kernel.org 3B2B16127C
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
-Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=dm-devel-bounces@redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 717EE60EB4
+	for <dm-devel@archiver.kernel.org>; Thu, 22 Jul 2021 21:43:19 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 717EE60EB4
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1626990198;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=n8mw9JKMQIt2vjYc9t7fgPCFDu9A9+JlXNnTyq7j/qQ=;
+	b=IwahBtuVKFWD963YMUgjn/8hvylb/W1l8IX4v5fm7qWVi7XELVKbAy35tJyfvjELbtz9R3
+	gDzSwNGKM4qJRTf2cpA2kd27DvpfF5USh4hfV+0QjZVL+oBGwiQhgUU60rw1XOV+7Xrisi
+	mu7lNl5yfdYyLl5NhHYJDH8EJZsf5l4=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-563-tbuFKtuNPe2Mgf3r8eOaFA-1; Thu, 22 Jul 2021 03:22:55 -0400
-X-MC-Unique: tbuFKtuNPe2Mgf3r8eOaFA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-144-iR3A_pgeNjCVdgkSJiDU_Q-1; Thu, 22 Jul 2021 17:43:16 -0400
+X-MC-Unique: iR3A_pgeNjCVdgkSJiDU_Q-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 49DD310060E8;
-	Thu, 22 Jul 2021 07:22:50 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 609831019650;
+	Thu, 22 Jul 2021 21:43:11 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2980E1970E;
-	Thu, 22 Jul 2021 07:22:50 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0DDF069CBA;
+	Thu, 22 Jul 2021 21:43:09 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7774E4BB7C;
-	Thu, 22 Jul 2021 07:22:49 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DD0004BB7C;
+	Thu, 22 Jul 2021 21:43:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
+	[10.5.11.23])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 16LHTsa1001102 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 21 Jul 2021 13:29:54 -0400
+	id 16MLh26D022200 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 22 Jul 2021 17:43:02 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 44A3320285AD; Wed, 21 Jul 2021 17:29:54 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 40B7D200E57A
-	for <dm-devel@redhat.com>; Wed, 21 Jul 2021 17:29:51 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4F810801E80
-	for <dm-devel@redhat.com>; Wed, 21 Jul 2021 17:29:51 +0000 (UTC)
-Received: from mail-ej1-f42.google.com (mail-ej1-f42.google.com
-	[209.85.218.42]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-283-XpeqFg6UOt21_pPXGr2mXQ-1; Wed, 21 Jul 2021 13:29:47 -0400
-X-MC-Unique: XpeqFg6UOt21_pPXGr2mXQ-1
-Received: by mail-ej1-f42.google.com with SMTP id hr1so4437630ejc.1;
-	Wed, 21 Jul 2021 10:29:46 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-	:message-id:subject:to:cc;
-	bh=XP0iAPTzXCS6/hXN5afn3pCSvhDsfbRfFxq+vdKUGU8=;
-	b=imBVW65Yeo8PpQiDp7qo3H5Xd7piZ7BAVFdQA22nUlkOC9HN+Bx3O1aeLF7hkl9rm2
-	aqZdTyFtLq1kfIdUpvjXRivnFPAtPlP3RfFFCFEO75rOILISYS+XtfAgZb+kT4/yQUc1
-	H7UcG/sd8vFceOkUMEfjA5q4kNAU8cVhbENHFHZpfswkVc6XMWzcndDu6EbPuyAKQG9Q
-	/9QGJ0k/NGJOzzUGeqkFEVl4AWgHeNUKr1cecYzzlqvoZvd9KOpZs1Fc0+F5KFdAY993
-	KSMhX96wl/zzPwj9arpruonmdEoyfBU/wzAQmh2z7Ofzi5MTg5gnImwU2Fjr7jmzqIb4
-	ipbg==
-X-Gm-Message-State: AOAM531PBOm36f+AgXJ6cZSxLidEp7kHlNn8FG4XvBbcIXO9n3wIBTFl
-	fOd9C4GUieS/tIY1d7g86SNmvO3ajF6h/oMKfswvoamWshq3EA==
-X-Google-Smtp-Source: ABdhPJxVd/rBQsk/2obbH5UlqtV4a0WbF0Li9IC6O9OpXl6Zt+WB0yfa2RTbxjYDls2VAOQ7rBIZWAci0SlwjWWDCjc=
-X-Received: by 2002:a17:907:2125:: with SMTP id
-	qo5mr39615957ejb.252.1626888585194; 
-	Wed, 21 Jul 2021 10:29:45 -0700 (PDT)
+	id 8C2B12719E; Thu, 22 Jul 2021 21:43:02 +0000 (UTC)
+Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E612326574;
+	Thu, 22 Jul 2021 21:42:56 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 16MLgsvK020141; 
+	Thu, 22 Jul 2021 16:42:54 -0500
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 16MLgshi020140;
+	Thu, 22 Jul 2021 16:42:54 -0500
+Date: Thu, 22 Jul 2021 16:42:53 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: lixiaokeng <lixiaokeng@huawei.com>
+Message-ID: <20210722214253.GC3087@octiron.msp.redhat.com>
+References: <37767722-8e6c-4176-d234-87134c21cd4c@huawei.com>
 MIME-Version: 1.0
-References: <CAOuPNLhqSpaTm3u4kFsnuZ0PLDKuX8wsxuF=vUJ1TEG0EP+L1g@mail.gmail.com>
-	<alpine.LRH.2.02.2107200737510.19984@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAOuPNLhh_LkLQ8mSA4eoUDLCLzHo5zHXsiQZXUB_-T_F1_v6-g@mail.gmail.com>
-	<alpine.LRH.2.02.2107211300520.10897@file01.intranet.prod.int.rdu2.redhat.com>
-In-Reply-To: <alpine.LRH.2.02.2107211300520.10897@file01.intranet.prod.int.rdu2.redhat.com>
-From: Pintu Agarwal <pintu.ping@gmail.com>
-Date: Wed, 21 Jul 2021 22:59:33 +0530
-Message-ID: <CAOuPNLi-xz_4P+v45CHLx00ztbSwU3_maf4tuuyso5RHyeOytg@mail.gmail.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+In-Reply-To: <37767722-8e6c-4176-d234-87134c21cd4c@huawei.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Thu, 22 Jul 2021 03:22:29 -0400
-Cc: snitzer@redhat.com, Kernelnewbies <kernelnewbies@kernelnewbies.org>,
-	open list <linux-kernel@vger.kernel.org>, dm-devel@redhat.com,
-	linux-mtd <linux-mtd@lists.infradead.org>,
-	Sami Tolvanen <samitolvanen@google.com>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	Phillip Lougher <phillip@squashfs.org.uk>, shli@kernel.org, agk@redhat.com
-Subject: Re: [dm-devel] Kernel 4.14: Using dm-verity with squashfs rootfs -
-	mounting issue
+Cc: linfeilong <linfeilong@huawei.com>,
+	dm-devel mailing list <dm-devel@redhat.com>,
+	Martin Wilck <mwilck@suse.com>,
+	"liuzhiqiang \(I\)" <liuzhiqiang26@huawei.com>
+Subject: Re: [dm-devel] [Question] multipathd.service start failed when
+ /var/run isn't mount
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -113,42 +89,48 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, 21 Jul 2021 at 22:40, Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Thu, Jul 22, 2021 at 10:51:22AM +0800, lixiaokeng wrote:
+> When we enable multipathd.service with systemctl and reboot,
+> multipathd doesn't start and log "failed to create pidfile".
+> 
+> The reason is following:
+> 
+> The RUN is /var/run in multipath-tools. When we start linux, we
+> mount a disk to /var. So if multipathd.service start before mount,
+> it will fail to activate.(If mount firstly, multipathd will start
+> successfully)
+> 
+> The RUN is defined in Makefile.inc:
+> 
+> ifndef RUN
+>         ifeq ($(shell test -L /var/run -o ! -d /var/run && echo 1),1)
+>                 RUN=run
+>         else
+>                 RUN=var/run
+>         endif
+> endif
+> 
+> Can it always be defined as run?
 
-> > >
-> > > Try to set up dm-verity with block size 512 bytes.
-> > >
-> > > I don't know what block size does squashfs use, but if the filesystem
-> > > block size is smaller than dm-verity block size, it doesn't work.
-> > >
-> > Okay thank you so much for this clue,
-> > It seems we are using 65536 as the squashfs block size:
->
-> 65536 is the compression block size - it is unrelated to I/O block size.
->
-> There's a config option SQUASHFS_4K_DEVBLK_SIZE. The documentation says
-> that it uses by default 1K block size and if you enable this option, it
-> uses 4K block size.
->
-Okay it seems this config is set in our case:
-CONFIG_SQUASHFS_4K_DEVBLK_SIZE=y
-So, with this the squashfs and dm-verity block size exactly matches (4K)
+I believe all modern distributions make /var/run a symlink to /run.
+However, if that's the case, then I don't understand why you are running
+into this issue at all, since multipath should be using /run. What
+multipath packages are you using?
 
-> So, try to set it. Or try to reduce dm-verity block size down to 1K.
->
-Okay we are trying this.
-Thank you so much!!
+-Ben
 
-Regards,
-Pintu
+> 
+> Regards,
+> Lixiaokeng
 
 --
 dm-devel mailing list
