@@ -7,59 +7,59 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9299CC4338F
-	for <dm-devel@archiver.kernel.org>; Sun, 25 Jul 2021 05:57:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 57F9AC432BE
+	for <dm-devel@archiver.kernel.org>; Sun, 25 Jul 2021 05:57:13 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id CCC1660F13
-	for <dm-devel@archiver.kernel.org>; Sun, 25 Jul 2021 05:57:10 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org CCC1660F13
+	by mail.kernel.org (Postfix) with ESMTPS id BB64B60F13
+	for <dm-devel@archiver.kernel.org>; Sun, 25 Jul 2021 05:57:12 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org BB64B60F13
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-112-lnuUhJ5UNB2PfqISj_6TfQ-1; Sun, 25 Jul 2021 01:57:07 -0400
-X-MC-Unique: lnuUhJ5UNB2PfqISj_6TfQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-208-L3pOKo8KMROhbmutSJH8DA-1; Sun, 25 Jul 2021 01:57:08 -0400
+X-MC-Unique: L3pOKo8KMROhbmutSJH8DA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 59B888042E2;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id ACB0F190A7A1;
 	Sun, 25 Jul 2021 05:57:03 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 09E3D60C0F;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 399935D6BA;
 	Sun, 25 Jul 2021 05:57:03 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8F7CE180BAB3;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8EA9C180BAB2;
 	Sun, 25 Jul 2021 05:56:59 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 16P5uWiN010413 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 25 Jul 2021 01:56:33 -0400
+	id 16P5utVL010432 for <dm-devel@listman.util.phx.redhat.com>;
+	Sun, 25 Jul 2021 01:56:56 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id E60282166BA3; Sun, 25 Jul 2021 05:56:31 +0000 (UTC)
+	id 6FDB02166BA3; Sun, 25 Jul 2021 05:56:55 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E16EB2166B49
-	for <dm-devel@redhat.com>; Sun, 25 Jul 2021 05:56:28 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6B5AE2166B49
+	for <dm-devel@redhat.com>; Sun, 25 Jul 2021 05:56:51 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6577B80B71D
-	for <dm-devel@redhat.com>; Sun, 25 Jul 2021 05:56:28 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B0DFC802A64
+	for <dm-devel@redhat.com>; Sun, 25 Jul 2021 05:56:51 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-523-nch5GYn-O2ucCNuB766DzQ-1; Sun, 25 Jul 2021 01:56:26 -0400
-X-MC-Unique: nch5GYn-O2ucCNuB766DzQ-1
+	us-mta-378-pY2h1yf7NIeoXGlJh8Ks8w-1; Sun, 25 Jul 2021 01:56:49 -0400
+X-MC-Unique: pY2h1yf7NIeoXGlJh8Ks8w-1
 Received: from [2001:4bb8:184:87c5:a8b3:bdfd:fc9b:6250] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1m7X7A-00Cphh-1i; Sun, 25 Jul 2021 05:56:00 +0000
+	id 1m7X7b-00CpjX-QE; Sun, 25 Jul 2021 05:56:25 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>
-Date: Sun, 25 Jul 2021 07:54:53 +0200
-Message-Id: <20210725055458.29008-4-hch@lst.de>
+Date: Sun, 25 Jul 2021 07:54:54 +0200
+Message-Id: <20210725055458.29008-5-hch@lst.de>
 In-Reply-To: <20210725055458.29008-1-hch@lst.de>
 References: <20210725055458.29008-1-hch@lst.de>
 MIME-Version: 1.0
@@ -76,7 +76,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
-Subject: [dm-devel] [PATCH 3/8] block: look up holders by bdev
+Subject: [dm-devel] [PATCH 4/8] block: support delayed holder registration
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -90,7 +90,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -98,152 +98,174 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Invert they way the holder relations are tracked.  This very
-slightly reduces the memory overhead for partitioned devices.
+device mapper needs to register holders before it is ready to do I/O.
+Currently it does so by registering the disk early, which has all kinds
+of bad side effects.  Support registering holders on an initialized but
+not registered disk instead by delaying the sysfs registration until the
+disk is registered.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/genhd.c             |  3 +++
- block/holder.c            | 18 +++++++++---------
- fs/block_dev.c            |  3 ---
- include/linux/blk_types.h |  3 ---
- include/linux/genhd.h     |  4 +++-
- 5 files changed, 15 insertions(+), 16 deletions(-)
+ block/genhd.c         | 10 +++++++
+ block/holder.c        | 68 ++++++++++++++++++++++++++++++++-----------
+ include/linux/genhd.h |  5 ++++
+ 3 files changed, 66 insertions(+), 17 deletions(-)
 
 diff --git a/block/genhd.c b/block/genhd.c
-index af4d2ab4a633..e2708a4a7a47 100644
+index e2708a4a7a47..e3d93b868ec5 100644
 --- a/block/genhd.c
 +++ b/block/genhd.c
-@@ -1263,6 +1263,9 @@ struct gendisk *__alloc_disk_node(int minors, int node_id)
- 	disk_to_dev(disk)->class = &block_class;
- 	disk_to_dev(disk)->type = &disk_type;
- 	device_initialize(disk_to_dev(disk));
-+#ifdef CONFIG_BLOCK_HOLDER_DEPRECATED
-+	INIT_LIST_HEAD(&disk->slave_bdevs);
-+#endif
- 	return disk;
+@@ -429,6 +429,16 @@ static void register_disk(struct device *parent, struct gendisk *disk,
+ 		kobject_create_and_add("holders", &ddev->kobj);
+ 	disk->slave_dir = kobject_create_and_add("slaves", &ddev->kobj);
  
- out_destroy_part_tbl:
++	/*
++	 * XXX: this is a mess, can't wait for real error handling in add_disk.
++	 * Make sure ->slave_dir is NULL if we failed some of the registration
++	 * so that the cleanup in bd_unlink_disk_holder works properly.
++	 */
++	if (bd_register_pending_holders(disk) < 0) {
++		kobject_put(disk->slave_dir);
++		disk->slave_dir = NULL;
++	}
++
+ 	if (disk->flags & GENHD_FL_HIDDEN)
+ 		return;
+ 
 diff --git a/block/holder.c b/block/holder.c
-index 960654a71342..11e65d99a9fb 100644
+index 11e65d99a9fb..4568cc4f6827 100644
 --- a/block/holder.c
 +++ b/block/holder.c
-@@ -3,7 +3,7 @@
- 
- struct bd_holder_disk {
- 	struct list_head	list;
--	struct gendisk		*disk;
-+	struct block_device	*bdev;
- 	int			refcnt;
- };
- 
-@@ -12,8 +12,8 @@ static struct bd_holder_disk *bd_find_holder_disk(struct block_device *bdev,
- {
- 	struct bd_holder_disk *holder;
- 
--	list_for_each_entry(holder, &bdev->bd_holder_disks, list)
--		if (holder->disk == disk)
-+	list_for_each_entry(holder, &disk->slave_bdevs, list)
-+		if (holder->bdev == bdev)
- 			return holder;
- 	return NULL;
+@@ -28,6 +28,19 @@ static void del_symlink(struct kobject *from, struct kobject *to)
+ 	sysfs_remove_link(from, kobject_name(to));
  }
-@@ -61,7 +61,7 @@ int bd_link_disk_holder(struct block_device *bdev, struct gendisk *disk)
- 	struct bd_holder_disk *holder;
- 	int ret = 0;
  
--	mutex_lock(&bdev->bd_disk->open_mutex);
-+	mutex_lock(&disk->open_mutex);
- 
++static int __link_disk_holder(struct block_device *bdev, struct gendisk *disk)
++{
++	int ret;
++
++	ret = add_symlink(disk->slave_dir, bdev_kobj(bdev));
++	if (ret)
++		return ret;
++	ret = add_symlink(bdev->bd_holder_dir, &disk_to_dev(disk)->kobj);
++	if (ret)
++		del_symlink(disk->slave_dir, bdev_kobj(bdev));
++	return ret;
++}
++
+ /**
+  * bd_link_disk_holder - create symlinks between holding disk and slave bdev
+  * @bdev: the claimed slave bdev
+@@ -66,7 +79,7 @@ int bd_link_disk_holder(struct block_device *bdev, struct gendisk *disk)
  	WARN_ON_ONCE(!bdev->bd_holder);
  
-@@ -82,7 +82,7 @@ int bd_link_disk_holder(struct block_device *bdev, struct gendisk *disk)
- 	}
+ 	/* FIXME: remove the following once add_disk() handles errors */
+-	if (WARN_ON(!disk->slave_dir || !bdev->bd_holder_dir))
++	if (WARN_ON(!bdev->bd_holder_dir))
+ 		goto out_unlock;
  
+ 	holder = bd_find_holder_disk(bdev, disk);
+@@ -84,28 +97,28 @@ int bd_link_disk_holder(struct block_device *bdev, struct gendisk *disk)
  	INIT_LIST_HEAD(&holder->list);
--	holder->disk = disk;
-+	holder->bdev = bdev;
+ 	holder->bdev = bdev;
  	holder->refcnt = 1;
+-
+-	ret = add_symlink(disk->slave_dir, bdev_kobj(bdev));
+-	if (ret)
+-		goto out_free;
+-
+-	ret = add_symlink(bdev->bd_holder_dir, &disk_to_dev(disk)->kobj);
+-	if (ret)
+-		goto out_del;
++	if (disk->slave_dir) {
++		ret = __link_disk_holder(bdev, disk);
++		if (ret) {
++			kfree(holder);
++			goto out_unlock;
++		}
++	}
  
- 	ret = add_symlink(disk->slave_dir, bdev_kobj(bdev));
-@@ -93,7 +93,7 @@ int bd_link_disk_holder(struct block_device *bdev, struct gendisk *disk)
- 	if (ret)
- 		goto out_del;
- 
--	list_add(&holder->list, &bdev->bd_holder_disks);
-+	list_add(&holder->list, &disk->slave_bdevs);
- 	goto out_unlock;
- 
- out_del:
-@@ -101,7 +101,7 @@ int bd_link_disk_holder(struct block_device *bdev, struct gendisk *disk)
- out_free:
- 	kfree(holder);
+ 	list_add(&holder->list, &disk->slave_bdevs);
+-	goto out_unlock;
+-
+-out_del:
+-	del_symlink(disk->slave_dir, bdev_kobj(bdev));
+-out_free:
+-	kfree(holder);
  out_unlock:
--	mutex_unlock(&bdev->bd_disk->open_mutex);
-+	mutex_unlock(&disk->open_mutex);
+ 	mutex_unlock(&disk->open_mutex);
  	return ret;
  }
  EXPORT_SYMBOL_GPL(bd_link_disk_holder);
-@@ -120,7 +120,7 @@ void bd_unlink_disk_holder(struct block_device *bdev, struct gendisk *disk)
- {
- 	struct bd_holder_disk *holder;
  
--	mutex_lock(&bdev->bd_disk->open_mutex);
-+	mutex_lock(&disk->open_mutex);
++static void __unlink_disk_holder(struct block_device *bdev,
++		struct gendisk *disk)
++{
++	del_symlink(disk->slave_dir, bdev_kobj(bdev));
++	del_symlink(bdev->bd_holder_dir, &disk_to_dev(disk)->kobj);
++}
++
+ /**
+  * bd_unlink_disk_holder - destroy symlinks created by bd_link_disk_holder()
+  * @bdev: the calimed slave bdev
+@@ -123,11 +136,32 @@ void bd_unlink_disk_holder(struct block_device *bdev, struct gendisk *disk)
+ 	mutex_lock(&disk->open_mutex);
  	holder = bd_find_holder_disk(bdev, disk);
  	if (!WARN_ON_ONCE(holder == NULL) && !--holder->refcnt) {
- 		del_symlink(disk->slave_dir, bdev_kobj(bdev));
-@@ -128,6 +128,6 @@ void bd_unlink_disk_holder(struct block_device *bdev, struct gendisk *disk)
+-		del_symlink(disk->slave_dir, bdev_kobj(bdev));
+-		del_symlink(bdev->bd_holder_dir, &disk_to_dev(disk)->kobj);
++		if (disk->slave_dir)
++			__unlink_disk_holder(bdev, disk);
  		list_del_init(&holder->list);
  		kfree(holder);
  	}
--	mutex_unlock(&bdev->bd_disk->open_mutex);
-+	mutex_unlock(&disk->open_mutex);
+ 	mutex_unlock(&disk->open_mutex);
  }
  EXPORT_SYMBOL_GPL(bd_unlink_disk_holder);
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 7825d152634e..22646906ddaa 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -900,9 +900,6 @@ struct block_device *bdev_alloc(struct gendisk *disk, u8 partno)
- 	bdev->bd_disk = disk;
- 	bdev->bd_partno = partno;
- 	bdev->bd_inode = inode;
--#ifdef CONFIG_BLOCK_HOLDER_DEPRECATED
--	INIT_LIST_HEAD(&bdev->bd_holder_disks);
--#endif
- 	bdev->bd_stats = alloc_percpu(struct disk_stats);
- 	if (!bdev->bd_stats) {
- 		iput(inode);
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 7a4e139d24ef..e92735655684 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -34,9 +34,6 @@ struct block_device {
- 	void *			bd_holder;
- 	int			bd_holders;
- 	bool			bd_write_holder;
--#ifdef CONFIG_BLOCK_HOLDER_DEPRECATED
--	struct list_head	bd_holder_disks;
--#endif
- 	struct kobject		*bd_holder_dir;
- 	u8			bd_partno;
- 	spinlock_t		bd_size_lock; /* for bd_inode->i_size updates */
++
++int bd_register_pending_holders(struct gendisk *disk)
++{
++	struct bd_holder_disk *holder;
++	int ret;
++
++	mutex_lock(&disk->open_mutex);
++	list_for_each_entry(holder, &disk->slave_bdevs, list) {
++		ret = __link_disk_holder(holder->bdev, disk);
++		if (ret)
++			goto out_undo;
++	}
++	mutex_unlock(&disk->open_mutex);
++	return 0;
++
++out_undo:
++	list_for_each_entry_continue_reverse(holder, &disk->slave_bdevs, list)
++		__unlink_disk_holder(holder->bdev, disk);
++	mutex_unlock(&disk->open_mutex);
++	return ret;
++}
 diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 6831d74f2002..26c8557e2714 100644
+index 26c8557e2714..dd95d53c75fa 100644
 --- a/include/linux/genhd.h
 +++ b/include/linux/genhd.h
-@@ -159,7 +159,9 @@ struct gendisk {
- 	unsigned open_partitions;	/* number of open partitions */
+@@ -321,6 +321,7 @@ long compat_blkdev_ioctl(struct file *, unsigned, unsigned long);
+ #ifdef CONFIG_BLOCK_HOLDER_DEPRECATED
+ int bd_link_disk_holder(struct block_device *bdev, struct gendisk *disk);
+ void bd_unlink_disk_holder(struct block_device *bdev, struct gendisk *disk);
++int bd_register_pending_holders(struct gendisk *disk);
+ #else
+ static inline int bd_link_disk_holder(struct block_device *bdev,
+ 				      struct gendisk *disk)
+@@ -331,6 +332,10 @@ static inline void bd_unlink_disk_holder(struct block_device *bdev,
+ 					 struct gendisk *disk)
+ {
+ }
++static inline int bd_register_pending_holders(struct gendisk *disk)
++{
++	return 0;
++}
+ #endif /* CONFIG_BLOCK_HOLDER_DEPRECATED */
  
- 	struct kobject *slave_dir;
--
-+#ifdef CONFIG_BLOCK_HOLDER_DEPRECATED
-+	struct list_head slave_bdevs;
-+#endif
- 	struct timer_rand_state *random;
- 	atomic_t sync_io;		/* RAID */
- 	struct disk_events *ev;
+ dev_t part_devt(struct gendisk *disk, u8 partno);
 -- 
 2.30.2
 
