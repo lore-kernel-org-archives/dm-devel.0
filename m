@@ -2,108 +2,77 @@ Return-Path: <SRS0=tlLk=MT=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-6.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-5.2 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3776BC4338F
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Jul 2021 16:02:35 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 02342C4338F
+	for <dm-devel@archiver.kernel.org>; Tue, 27 Jul 2021 16:02:51 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id DD7A661B7C
-	for <dm-devel@archiver.kernel.org>; Tue, 27 Jul 2021 16:02:34 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org DD7A661B7C
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 0F15461B7C
+	for <dm-devel@archiver.kernel.org>; Tue, 27 Jul 2021 16:02:49 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 0F15461B7C
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1627401753;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=NSzyzrxojdL+sTtqabVHvRop6/IxP+DarCCIYYb5hms=;
-	b=PfCsoxJSjSLfx4NsJSoehlIrUOxM1bjt6iRf0yxWq+9Xlh6bSdfZYm3OM0kzjrEDeBByNa
-	8083K1+yWwlUQ2dT5I/KhXHfC+y8n60UKOX/BMS6Ilpjd5olCdS0VsG5bIOp5iOgGXroaS
-	FihJqUEAoCSaVl/ELJUfbiX/rWqRn5A=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-533-ioDxcjxTP2KJlfWa_NGVfA-1; Tue, 27 Jul 2021 12:02:32 -0400
-X-MC-Unique: ioDxcjxTP2KJlfWa_NGVfA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-266-ILFAfwJdNdKUMnY7ds3ZeQ-1; Tue, 27 Jul 2021 12:02:44 -0400
+X-MC-Unique: ILFAfwJdNdKUMnY7ds3ZeQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9FFC31008062;
-	Tue, 27 Jul 2021 16:02:25 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AB94810074E1;
-	Tue, 27 Jul 2021 16:02:24 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3BE3F196633E;
+	Tue, 27 Jul 2021 16:02:36 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D18AD189C7;
+	Tue, 27 Jul 2021 16:02:35 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8130C180BAB1;
-	Tue, 27 Jul 2021 16:02:22 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A4C054BB7C;
+	Tue, 27 Jul 2021 16:02:35 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 16RFwsqu009806 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 27 Jul 2021 11:58:55 -0400
+	id 16RG2YQU010283 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 27 Jul 2021 12:02:34 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id D5508203CE5B; Tue, 27 Jul 2021 15:58:54 +0000 (UTC)
+	id 69B1C2037D57; Tue, 27 Jul 2021 16:02:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CF2732044003
-	for <dm-devel@redhat.com>; Tue, 27 Jul 2021 15:58:49 +0000 (UTC)
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 655802044001
+	for <dm-devel@redhat.com>; Tue, 27 Jul 2021 16:02:31 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
 	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C101D80270A
-	for <dm-devel@redhat.com>; Tue, 27 Jul 2021 15:58:49 +0000 (UTC)
-Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
-	[209.85.160.199]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-211-BI86DCVZM060deuKXDQ7Dg-1; Tue, 27 Jul 2021 11:58:48 -0400
-X-MC-Unique: BI86DCVZM060deuKXDQ7Dg-1
-Received: by mail-qt1-f199.google.com with SMTP id
-	h18-20020ac856920000b029025eb726dd9bso6616094qta.8
-	for <dm-devel@redhat.com>; Tue, 27 Jul 2021 08:58:48 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-	:mime-version:content-disposition:in-reply-to;
-	bh=atmE5scVfb2O9aWWLb/VOIw6P8MjSrhPGuB4Ep/3fiI=;
-	b=i/UhPxtAG08Rr2jPmVEUYNPv0IaaVSfMXUAcYhRNRFPd5jceBLRcP05fynKwi5SkHq
-	Qmhal0h0rSGuWzymJ1uZAdTr/6REY1ajgbYtUk/6dDyE/Bt/HjDtHpeYzQv0nbmEUpmd
-	fRNJNlc2nEN0p41Vy+lTIMMtd2H6MmhgicKRTC67wLJ2xuVwRgu734y1LvldF/Nzbms+
-	TGsAkn0YX0SznidCShozNuomaoGRldJMDzpGdrolYWVns8WPt3cSd6pE+3d2N5CiakKl
-	kzVEcbcP0gdE0Vj2xWogyg+5lIsRDqEsfRniDR2XJ19xs7EfcdFDNCs/81pkJogSCg5B
-	Yj2A==
-X-Gm-Message-State: AOAM532uxYUvumM6sf45vyER4rnNKrfFIqEZl9Ep77mpX8T+J93Eg5/b
-	89azw6awRFHXoQxTb4q45ngaamT1jtQHjQAFsHSvyOWhcuOLlS9yPB0NIHbBxfeif7FkQ2Ebyey
-	bPgzcQn7j/Q0mSw==
-X-Received: by 2002:a05:620a:95c:: with SMTP id
-	w28mr23175785qkw.52.1627401527838; 
-	Tue, 27 Jul 2021 08:58:47 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJyOE+4SV5d1eT/qjDo6Wzbvz0u0RtU+A3LUlxu4pNXJTS+HBQn/7czeCezGlN5kKwEkzDmedg==
-X-Received: by 2002:a05:620a:95c:: with SMTP id
-	w28mr23175776qkw.52.1627401527661; 
-	Tue, 27 Jul 2021 08:58:47 -0700 (PDT)
-Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
-	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
-	x28sm1659779qtm.71.2021.07.27.08.58.47
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Tue, 27 Jul 2021 08:58:47 -0700 (PDT)
-Date: Tue, 27 Jul 2021 11:58:46 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <YQAtNkd8T1w/cSLc@redhat.com>
-References: <20210725055458.29008-1-hch@lst.de>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AB80F101A54C
+	for <dm-devel@redhat.com>; Tue, 27 Jul 2021 16:02:31 +0000 (UTC)
+Received: from verein.lst.de (verein.lst.de [213.95.11.211]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-173-wTT6NXZiPaCyWTuigw9Ihg-1;
+	Tue, 27 Jul 2021 12:02:29 -0400
+X-MC-Unique: wTT6NXZiPaCyWTuigw9Ihg-1
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id 6DD8867357; Tue, 27 Jul 2021 18:02:26 +0200 (CEST)
+Date: Tue, 27 Jul 2021 18:02:26 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Mike Snitzer <snitzer@redhat.com>
+Message-ID: <20210727160226.GA17989@lst.de>
+References: <20210725055458.29008-1-hch@lst.de> <YQAtNkd8T1w/cSLc@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <20210725055458.29008-1-hch@lst.de>
+In-Reply-To: <YQAtNkd8T1w/cSLc@redhat.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	dm-devel@redhat.com
+	dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>
 Subject: Re: [dm-devel] use regular gendisk registration in device mapper
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
@@ -118,7 +87,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -127,28 +96,15 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sun, Jul 25 2021 at  1:54P -0400,
-Christoph Hellwig <hch@lst.de> wrote:
-
-> Hi all,
+On Tue, Jul 27, 2021 at 11:58:46AM -0400, Mike Snitzer wrote:
+> > This did not make a different to my testing
+> > using dmsetup and the lvm2 tools.
 > 
-> The device mapper code currently has a somewhat odd gendisk registration
-> scheme where it calls add_disk early, but uses a special flag to skip the
-> "queue registration", which is a major part of add_disk.  This series
-> improves the block layer holder tracking to work on an entirely
-> unregistered disk and thus allows device mapper to use the normal scheme
-> of calling add_disk when it is ready to accept I/O.
-> 
-> Note that this leads to a user visible change - the sysfs attributes on
-> the disk and the dm directory hanging off it are not only visible once
-> the initial table is loaded.
+> I'll try these changes running through the lvm2 testsuite.
 
-s/not/now/
-
-> This did not make a different to my testing
-> using dmsetup and the lvm2 tools.
-
-I'll try these changes running through the lvm2 testsuite.
+Btw, is ther documentation on how to run it somewhere?  I noticed
+tests, old-tests and unit-tests directories, but no obvious way
+to run them.
 
 --
 dm-devel mailing list
