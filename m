@@ -2,78 +2,109 @@ Return-Path: <SRS0=mcEr=MU=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-18.0 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+X-Spam-Status: No, score=-6.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A3D24C4338F
-	for <dm-devel@archiver.kernel.org>; Wed, 28 Jul 2021 15:56:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C3655C432BE
+	for <dm-devel@archiver.kernel.org>; Wed, 28 Jul 2021 16:19:51 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3392D6101C
-	for <dm-devel@archiver.kernel.org>; Wed, 28 Jul 2021 15:56:25 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 3392D6101C
+	by mail.kernel.org (Postfix) with ESMTPS id 4146960F93
+	for <dm-devel@archiver.kernel.org>; Wed, 28 Jul 2021 16:19:51 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 4146960F93
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1627487784;
+	s=mimecast20190719; t=1627489190;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=gexCRrmkB+TljvHd//TNH5MxLBq2hbr/ZESwJPEhKJ8=;
-	b=iS4PBKusy5XYGBHVpttbqrkRlaBxjEj7FrnAikFrRPwZ6ajBypeg1rD1oHKErfwVLXi/18
-	BEM67iJ6lIoSDj0fBl3CkHsen8TrQ85aWobIJy41CGqs29y/Rnvt1uxaBLjJ2oD9j7v/qE
-	N+7txqa7Bls5FBfY0chqwDV7y9fJfB8=
+	bh=LxTjbqeK5PQK4EnsX6Glj6OeiSBxpN5A7duSaLLKKso=;
+	b=Fy0FrRxiTfeXRj9ySsWtkE+r1pS0sPBRgYuFcY/2nb1OmQuKojb9ckn4KaXbeR843ZeiTd
+	TaPTvbisOaKCrY/Hxv5MzHuTWl+TSpPODMrr7pehIaoAeREOw7/MAnCOqAn+tN9zuATSQx
+	FoO4jhYKvh1pUFyc6tSvZFEverhs0rg=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-212-07YX9DeoNB-x6obkVQcZXw-1; Wed, 28 Jul 2021 11:56:22 -0400
-X-MC-Unique: 07YX9DeoNB-x6obkVQcZXw-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-300-4j_8_t0oNAK5kLuyn4rltg-1; Wed, 28 Jul 2021 12:19:48 -0400
+X-MC-Unique: 4j_8_t0oNAK5kLuyn4rltg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 457491006C83;
-	Wed, 28 Jul 2021 15:56:17 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 07038760C4;
+	Wed, 28 Jul 2021 16:19:44 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6050C5C1BB;
-	Wed, 28 Jul 2021 15:56:16 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4BB5D5D9FC;
+	Wed, 28 Jul 2021 16:19:43 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A64264BB7C;
-	Wed, 28 Jul 2021 15:56:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
-	[10.5.11.11])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EAC354BB7C;
+	Wed, 28 Jul 2021 16:19:41 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 16SFsQIc017306 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 28 Jul 2021 11:54:26 -0400
+	id 16SGHsOU020169 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 28 Jul 2021 12:17:54 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 68762136F5; Wed, 28 Jul 2021 15:54:26 +0000 (UTC)
-Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9DD7B60BD9;
-	Wed, 28 Jul 2021 15:54:22 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 16SFsKxw010505; 
-	Wed, 28 Jul 2021 10:54:21 -0500
-Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 16SFsKKP010504;
-	Wed, 28 Jul 2021 10:54:20 -0500
-Date: Wed, 28 Jul 2021 10:54:20 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: mwilck@suse.com
-Message-ID: <20210728155420.GK3087@octiron.msp.redhat.com>
-References: <20210715105223.30463-1-mwilck@suse.com>
-	<20210715105223.30463-4-mwilck@suse.com>
+	id B1CC920285DE; Wed, 28 Jul 2021 16:17:54 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id ACD80202863A
+	for <dm-devel@redhat.com>; Wed, 28 Jul 2021 16:17:52 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E5CAC18812CC
+	for <dm-devel@redhat.com>; Wed, 28 Jul 2021 16:17:51 +0000 (UTC)
+Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
+	[209.85.222.198]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-427-16tQL8FXNSe0RFjiWG8j5g-1; Wed, 28 Jul 2021 12:17:50 -0400
+X-MC-Unique: 16tQL8FXNSe0RFjiWG8j5g-1
+Received: by mail-qk1-f198.google.com with SMTP id
+	13-20020a370e0d0000b02903a5eee61155so1928125qko.9
+	for <dm-devel@redhat.com>; Wed, 28 Jul 2021 09:17:50 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+	:mime-version:content-disposition:in-reply-to;
+	bh=Zr6iO5EfhirdLS6EThCnFQV2o1b+d2YY8eAPyEtxmt4=;
+	b=mxnVxJvsoo0szRY12J8sTzjIY70JjMPzNWdV21aAc6C+EUlTufIb6bAJP9Jr4rrUnN
+	JmErvSFhQYW62yEA5rCul8+0LIzZAgBLveBzw3RStkBIUAow2zHYsru/6nkGkto1vzyf
+	oA6j0r6JK7Bnle+XrOd+gKndZhfjPC81uwnUFRYe2sc2m7I1ZeK12FLyIX+0aZk758Fn
+	45IkqWZ3SvIFAXV9Q87WxaRzaE208iUU9TQL/2VcxMKJOSTgn2Xlk8MkH2wJ1/BjyWMQ
+	BcrbTQZnisr/M4ru4zh63GekJBwI+eozYkQg7bbAorqRO1tzQJGFMbiFLguEaLHWHqVq
+	jySQ==
+X-Gm-Message-State: AOAM530gmlaOon5k0uu99aCn2ePVIvpWT24SiVsnJ0MScz2Y5cMN4klR
+	nwgXqf8xX0hCoSBNxWfoqFfL3t+EHERB4f/k4GyAXTXU/hSFYJ9mUi3oqBKUDtwusFCtKP+g1vg
+	UZc5Hr/bWJVTn8g==
+X-Received: by 2002:ac8:4f14:: with SMTP id b20mr316077qte.236.1627489069715; 
+	Wed, 28 Jul 2021 09:17:49 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwq/FUgQMZBFspmTaanQXJhzUXM+wyidC3InkD7kOm5mOKJeD1mRH+Pq0A4ZiaR+yacRvY5Xg==
+X-Received: by 2002:ac8:4f14:: with SMTP id b20mr316061qte.236.1627489069494; 
+	Wed, 28 Jul 2021 09:17:49 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+	[68.160.176.52])
+	by smtp.gmail.com with ESMTPSA id d4sm141513qty.15.2021.07.28.09.17.48
+	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+	Wed, 28 Jul 2021 09:17:49 -0700 (PDT)
+Date: Wed, 28 Jul 2021 12:17:48 -0400
+From: Mike Snitzer <snitzer@redhat.com>
+To: Milan Broz <gmazyland@gmail.com>
+Message-ID: <YQGDLIbefYvSHJqi@redhat.com>
+References: <20210725055458.29008-1-hch@lst.de> <YQAtNkd8T1w/cSLc@redhat.com>
+	<20210727160226.GA17989@lst.de> <YQAxyjrGJpl7UkNG@redhat.com>
+	<9c719e1d-f8da-f1f3-57a9-3802aa1312d4@gmail.com>
 MIME-Version: 1.0
-In-Reply-To: <20210715105223.30463-4-mwilck@suse.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+In-Reply-To: <9c719e1d-f8da-f1f3-57a9-3802aa1312d4@gmail.com>
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com
-Subject: Re: [dm-devel] [PATCH 3/9] libmultipath: variable-size parameters
- in assemble_map()
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+	dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>
+Subject: Re: [dm-devel] use regular gendisk registration in device mapper
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -87,7 +118,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -96,400 +127,59 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Jul 15, 2021 at 12:52:17PM +0200, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
+On Tue, Jul 27 2021 at  4:38P -0400,
+Milan Broz <gmazyland@gmail.com> wrote:
+
+> On 27/07/2021 18:18, Mike Snitzer wrote:
+> > On Tue, Jul 27 2021 at 12:02P -0400,
+> > Christoph Hellwig <hch@lst.de> wrote:
+> > 
+> >> On Tue, Jul 27, 2021 at 11:58:46AM -0400, Mike Snitzer wrote:
+> >>>> This did not make a different to my testing
+> >>>> using dmsetup and the lvm2 tools.
+> >>>
+> >>> I'll try these changes running through the lvm2 testsuite.
+> >>
+> >> Btw, is ther documentation on how to run it somewhere?  I noticed
+> >> tests, old-tests and unit-tests directories, but no obvious way
+> >> to run them.
+> > 
+> > I haven't tracked how it has changed in a while, but I always run:
+> > make check_local
+> > 
+> > (but to do that you first need to ./configure how your distro does
+> > it... so that all targets are enabled, etc. Then: make).
+> > 
+> > Will revisit this shortly and let you know if my process needed to
+> > change at all due to lvm2 changes.
 > 
-> Instead of using fixed PARAMS_SIZE-sized arrays for parameters, use
-> dynamically allocated memory.
+> BTW it would be also nice to run cryptsetup testsuite as root - we do a lot
+> of DM operations there (and we depend on sysfs on some places).
 > 
-> The library version needs to be bumped, because setup_map() argument
-> list has changed.
-> 
+> You can just run configure, make and then make check.
 
-Looks good. Only minor nits below.
+Once I installed all deps, I got all but one passing with Christoph's changes:
 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/configure.c          | 18 ++++++------
->  libmultipath/configure.h          |  3 +-
->  libmultipath/dmparser.c           | 47 ++++++++++---------------------
->  libmultipath/dmparser.h           |  2 +-
->  libmultipath/libmultipath.version |  5 +++-
->  libmultipath/structs.h            |  1 -
->  libmultipath/util.c               |  5 ++++
->  libmultipath/util.h               |  1 +
->  multipathd/cli_handlers.c         |  4 +--
->  multipathd/main.c                 | 20 +++++++------
->  10 files changed, 50 insertions(+), 56 deletions(-)
-> 
-> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-> index a6ae335..1227864 100644
-> --- a/libmultipath/configure.c
-> +++ b/libmultipath/configure.c
-> @@ -292,8 +292,7 @@ static int wait_for_pending_paths(struct multipath *mpp,
->  	return n_pending;
->  }
->  
-> -int setup_map(struct multipath *mpp, char *params, int params_size,
-> -	      struct vectors *vecs)
-> +int setup_map(struct multipath *mpp, char **params, struct vectors *vecs)
->  {
->  	struct pathgroup * pgp;
->  	struct config *conf;
-> @@ -462,7 +461,7 @@ int setup_map(struct multipath *mpp, char *params, int params_size,
->  	 * transform the mp->pg vector of vectors of paths
->  	 * into a mp->params strings to feed the device-mapper
->  	 */
-> -	if (assemble_map(mpp, params, params_size)) {
-> +	if (assemble_map(mpp, params)) {
->  		condlog(0, "%s: problem assembing map", mpp->alias);
->  		return 1;
->  	}
-> @@ -811,7 +810,7 @@ void select_action (struct multipath *mpp, const struct _vector *curmp,
->  		remove_feature(&mpp_feat, "retain_attached_hw_handler");
->  		remove_feature(&cmpp_feat, "queue_if_no_path");
->  		remove_feature(&cmpp_feat, "retain_attached_hw_handler");
-> -		if (strncmp(mpp_feat, cmpp_feat, PARAMS_SIZE)) {
-> +		if (strcmp(mpp_feat, cmpp_feat)) {
->  			select_reload_action(mpp, "features change");
->  			FREE(cmpp_feat);
->  			FREE(mpp_feat);
-> @@ -1128,14 +1127,14 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
->  	int ret = CP_FAIL;
->  	int k, i, r;
->  	int is_daemon = (cmd == CMD_NONE) ? 1 : 0;
-> -	char params[PARAMS_SIZE];
-> +	char *params __attribute__((cleanup(cleanup_charp))) = NULL;
->  	struct multipath * mpp;
-> -	struct path * pp1;
-> +	struct path * pp1 = NULL;
->  	struct path * pp2;
->  	vector curmp = vecs->mpvec;
->  	vector pathvec = vecs->pathvec;
->  	vector newmp;
-> -	struct config *conf;
-> +	struct config *conf = NULL;
->  	int allow_queueing;
->  	struct bitfield *size_mismatch_seen;
->  
-> @@ -1247,8 +1246,7 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
->  		}
->  		verify_paths(mpp);
->  
-> -		params[0] = '\0';
-> -		if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
-> +		if (setup_map(mpp, &params, vecs)) {
->  			remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
->  			continue;
->  		}
-> @@ -1260,6 +1258,8 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
->  				      force_reload == FORCE_RELOAD_YES ? 1 : 0);
->  
->  		r = domap(mpp, params, is_daemon);
-> +		free(params);
-> +		params = NULL;
->  
->  		if (r == DOMAP_FAIL || r == DOMAP_RETRY) {
->  			condlog(3, "%s: domap (%u) failure "
-> diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-> index 70cf77a..92a5aba 100644
-> --- a/libmultipath/configure.h
-> +++ b/libmultipath/configure.h
-> @@ -47,8 +47,7 @@ enum {
->  
->  struct vectors;
->  
-> -int setup_map (struct multipath * mpp, char * params, int params_size,
-> -	       struct vectors *vecs );
-> +int setup_map (struct multipath * mpp, char **params, struct vectors *vecs);
->  void select_action (struct multipath *mpp, const struct _vector *curmp,
->  		    int force_reload);
->  int domap (struct multipath * mpp, char * params, int is_daemon);
-> diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-> index b306c46..fb09e0a 100644
-> --- a/libmultipath/dmparser.c
-> +++ b/libmultipath/dmparser.c
-> @@ -15,6 +15,7 @@
->  #include "util.h"
->  #include "debug.h"
->  #include "dmparser.h"
-> +#include "strbuf.h"
->  
->  #define WORD_SIZE 64
->  
-> @@ -41,40 +42,21 @@ merge_words(char **dst, const char *word)
->  	return 0;
->  }
->  
-> -#define APPEND(p, end, args...)						\
-> -({									\
-> -	int ret;							\
-> -									\
-> -	ret = snprintf(p, end - p, ##args);				\
-> -	if (ret < 0) {							\
-> -		condlog(0, "%s: conversion error", mp->alias);		\
-> -		goto err;						\
-> -	}								\
-> -	p += ret;							\
-> -	if (p >= end) {							\
-> -		condlog(0, "%s: params too small", mp->alias);		\
-> -		goto err;						\
-> -	}								\
-> -})
-> -
->  /*
->   * Transforms the path group vector into a proper device map string
->   */
-> -int
-> -assemble_map (struct multipath * mp, char * params, int len)
-> +int assemble_map(struct multipath *mp, char **params)
->  {
-> +	static const char no_path_retry[] = "queue_if_no_path";
-> +	static const char retain_hwhandler[] = "retain_attached_hw_handler";
->  	int i, j;
->  	int minio;
->  	int nr_priority_groups, initial_pg_nr;
-> -	char * p;
-> -	const char *const end = params + len;
-> -	char no_path_retry[] = "queue_if_no_path";
-> -	char retain_hwhandler[] = "retain_attached_hw_handler";
+Block_size: 512, Data_size: 256000B, FEC_roots: 9, Corrupted_bytes: 4 [no-superblock][one_device_test]Usage: lt-veritysetup [-?Vv] [-?|--help] [--usage] [-V|--version]
+        [--cancel-deferred] [--check-at-most-once] [--data-block-size=bytes]
+        [--data-blocks=blocks] [--debug] [--deferred] [--fec-device=path]
+        [--fec-offset=bytes] [--fec-roots=bytes] [--format=number]
+        [-h|--hash string] [--hash-block-size=bytes] [--hash-offset=bytes]
+        [--ignore-corruption] [--ignore-zero-blocks] [--no-superblock]
+        [--panic-on-corruption] [--restart-on-corruption]
+        [--root-hash-file=STRING] [--root-hash-signature=STRING]
+        [-s|--salt hex string] [--uuid=STRING] [-v|--verbose]
+        [OPTION...] <action> <action-specific>
+-s=e48da609055204e89ae53b655ca2216dd983cf3cb829f34f63a297d106d53e2d: unknown option
+[N/A, test skipped]
+FEC repair failed
+FAILED backtrace:
+500 ./verity-compat-test
+FAIL: verity-compat-test
 
-Why not use STRBUF_ON_STACK() here?
+Seems like a test bug.
 
-> +	struct strbuf __attribute__((cleanup(reset_strbuf))) buff = STRBUF_INIT;
->  	struct pathgroup * pgp;
->  	struct path * pp;
->  
->  	minio = mp->minio;
-> -	p = params;
->  
->  	nr_priority_groups = VECTOR_SIZE(mp->pg);
->  	initial_pg_nr = (nr_priority_groups ? mp->bestpg : 0);
-> @@ -87,14 +69,15 @@ assemble_map (struct multipath * mp, char * params, int len)
->  	    get_linux_version_code() < KERNEL_VERSION(4, 3, 0))
->  		add_feature(&mp->features, retain_hwhandler);
->  
-> -	/* mp->features must not be NULL */
-> -	APPEND(p, end, "%s %s %i %i", mp->features, mp->hwhandler,
-> -		nr_priority_groups, initial_pg_nr);
-> +	if (print_strbuf(&buff, "%s %s %i %i", mp->features, mp->hwhandler,
-> +			 nr_priority_groups, initial_pg_nr) < 0)
-> +		goto err;
->  
->  	vector_foreach_slot (mp->pg, pgp, i) {
->  		pgp = VECTOR_SLOT(mp->pg, i);
-> -		APPEND(p, end, " %s %i 1", mp->selector,
-> -		       VECTOR_SIZE(pgp->paths));
-> +		if (print_strbuf(&buff, " %s %i 1", mp->selector,
-> +				 VECTOR_SIZE(pgp->paths)) < 0)
-> +			goto err;
->  
->  		vector_foreach_slot (pgp->paths, pp, j) {
->  			int tmp_minio = minio;
-> @@ -106,19 +89,19 @@ assemble_map (struct multipath * mp, char * params, int len)
->  				condlog(0, "dev_t not set for '%s'", pp->dev);
->  				goto err;
->  			}
-> -			APPEND(p, end, " %s %d", pp->dev_t, tmp_minio);
-> +			if (print_strbuf(&buff, " %s %d", pp->dev_t, tmp_minio) < 0)
-> +				goto err;
->  		}
->  	}
->  
-> -	condlog(4, "%s: assembled map [%s]", mp->alias, params);
-> +	*params = steal_strbuf_str(&buff);
-> +	condlog(4, "%s: assembled map [%s]", mp->alias, *params);
->  	return 0;
->  
->  err:
->  	return 1;
->  }
->  
-> -#undef APPEND
-> -
->  /*
->   * Caution callers: If this function encounters yet unkown path devices, it
->   * adds them uninitialized to the mpp.
-> diff --git a/libmultipath/dmparser.h b/libmultipath/dmparser.h
-> index 212fee5..666ae74 100644
-> --- a/libmultipath/dmparser.h
-> +++ b/libmultipath/dmparser.h
-> @@ -1,3 +1,3 @@
-> -int assemble_map (struct multipath *, char *, int);
-> +int assemble_map (struct multipath *, char **);
->  int disassemble_map (const struct _vector *, const char *, struct multipath *);
->  int disassemble_status (const char *, struct multipath *);
-> diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-> index 7567837..6dd52c2 100644
-> --- a/libmultipath/libmultipath.version
-> +++ b/libmultipath/libmultipath.version
-> @@ -31,7 +31,7 @@
->   *   The new version inherits the previous ones.
->   */
->  
-> -LIBMULTIPATH_6.0.0 {
-> +LIBMULTIPATH_7.0.0 {
->  global:
->  	/* symbols referenced by multipath and multipathd */
->  	add_foreign;
-> @@ -267,6 +267,9 @@ global:
->  	/* added in 4.5.0 */
->  	get_vpd_sgio;
->  	trigger_partitions_udev_change;
-> +
-> +	/* added in 7.0.0 */
-> +	cleanup_charp;
->  local:
->  	*;
->  };
-> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index c52bcee..399540e 100644
-> --- a/libmultipath/structs.h
-> +++ b/libmultipath/structs.h
-> @@ -13,7 +13,6 @@
->  #define SERIAL_SIZE		128
->  #define NODE_NAME_SIZE		224
->  #define PATH_STR_SIZE		16
-> -#define PARAMS_SIZE		4096
->  #define FILE_NAME_SIZE		256
->  #define CALLOUT_MAX_SIZE	256
->  #define BLK_DEV_SIZE		33
-> diff --git a/libmultipath/util.c b/libmultipath/util.c
-> index 0e37f3f..e2fafe8 100644
-> --- a/libmultipath/util.c
-> +++ b/libmultipath/util.c
-> @@ -455,3 +455,8 @@ int should_exit(void)
->  {
->  	return 0;
->  }
-> +
-> +void cleanup_charp(char **p)
-> +{
-> +	free(*p);
-> +}
-> diff --git a/libmultipath/util.h b/libmultipath/util.h
-> index e9b48f9..89027f8 100644
-> --- a/libmultipath/util.h
-> +++ b/libmultipath/util.h
-> @@ -123,4 +123,5 @@ static inline void clear_bit_in_bitfield(unsigned int bit, struct bitfield *bf)
->  		___p;		       \
->  	})
->  
-> +void cleanup_charp(char **p);
->  #endif /* _UTIL_H */
-> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-> index d70e1db..bce40b1 100644
-> --- a/multipathd/cli_handlers.c
-> +++ b/multipathd/cli_handlers.c
-> @@ -972,12 +972,12 @@ cli_reload(void *v, char **reply, int *len, void *data)
->  int resize_map(struct multipath *mpp, unsigned long long size,
->  	       struct vectors * vecs)
->  {
-> -	char params[PARAMS_SIZE] = {0};
-> +	char *params __attribute__((cleanup(cleanup_charp))) = NULL;
->  	unsigned long long orig_size = mpp->size;
->  
->  	mpp->size = size;
->  	update_mpp_paths(mpp, vecs->pathvec);
-> -	if (setup_map(mpp, params, PARAMS_SIZE, vecs) != 0) {
-> +	if (setup_map(mpp, &params, vecs) != 0) {
->  		condlog(0, "%s: failed to setup map for resize : %s",
->  			mpp->alias, strerror(errno));
->  		mpp->size = orig_size;
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index bdd629e..f760643 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -489,7 +489,7 @@ static int
->  update_map (struct multipath *mpp, struct vectors *vecs, int new_map)
->  {
->  	int retries = 3;
-> -	char params[PARAMS_SIZE] = {0};
-> +	char *params __attribute__((cleanup(cleanup_charp))) = NULL;
->  
->  retry:
->  	condlog(4, "%s: updating new map", mpp->alias);
-> @@ -502,13 +502,15 @@ retry:
->  	verify_paths(mpp);
->  	mpp->action = ACT_RELOAD;
->  
-> -	if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
-> +	if (setup_map(mpp, &params, vecs)) {
->  		condlog(0, "%s: failed to setup new map in update", mpp->alias);
->  		retries = -1;
->  		goto fail;
->  	}
->  	if (domap(mpp, params, 1) == DOMAP_FAIL && retries-- > 0) {
->  		condlog(0, "%s: map_udate sleep", mpp->alias);
-> +		free(params);
-> +		params = NULL;
->  		sleep(1);
->  		goto retry;
->  	}
-> @@ -1028,7 +1030,7 @@ int
->  ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
->  {
->  	struct multipath * mpp;
-> -	char params[PARAMS_SIZE] = {0};
-> +	char *params __attribute((cleanup(cleanup_charp))) = NULL;
->  	int retries = 3;
->  	int start_waiter = 0;
->  	int ret;
-> @@ -1104,7 +1106,9 @@ rescan:
->  	/*
->  	 * push the map to the device-mapper
->  	 */
-> -	if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
-
-Is there a reason to free params here, instead of just doing it before
-the "goto rescan"?
-
--Ben
-
-> +	free(params);
-> +	params = NULL;
-> +	if (setup_map(mpp, &params, vecs)) {
->  		condlog(0, "%s: failed to setup map for addition of new "
->  			"path %s", mpp->alias, pp->dev);
->  		goto fail_map;
-> @@ -1189,7 +1193,7 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
->  {
->  	struct multipath * mpp;
->  	int i, retval = REMOVE_PATH_SUCCESS;
-> -	char params[PARAMS_SIZE] = {0};
-> +	char *params __attribute__((cleanup(cleanup_charp))) = NULL;
->  
->  	/*
->  	 * avoid referring to the map of an orphaned path
-> @@ -1250,7 +1254,7 @@ ev_remove_path (struct path *pp, struct vectors * vecs, int need_do_map)
->  			 */
->  		}
->  
-> -		if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
-> +		if (setup_map(mpp, &params, vecs)) {
->  			condlog(0, "%s: failed to setup map for"
->  				" removal of path %s", mpp->alias, pp->dev);
->  			goto fail;
-> @@ -1940,7 +1944,7 @@ int update_prio(struct path *pp, int refresh_all)
->  static int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh,
->  		      int is_daemon)
->  {
-> -	char params[PARAMS_SIZE] = {0};
-> +	char *params __attribute__((cleanup(cleanup_charp))) = NULL;
->  	struct path *pp;
->  	int i, r;
->  
-> @@ -1958,7 +1962,7 @@ static int reload_map(struct vectors *vecs, struct multipath *mpp, int refresh,
->  			}
->  		}
->  	}
-> -	if (setup_map(mpp, params, PARAMS_SIZE, vecs)) {
-> +	if (setup_map(mpp, &params, vecs)) {
->  		condlog(0, "%s: failed to setup map", mpp->alias);
->  		return 1;
->  	}
-> -- 
-> 2.32.0
+Mike
 
 --
 dm-devel mailing list
