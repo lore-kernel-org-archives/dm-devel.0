@@ -7,14 +7,14 @@ X-Spam-Status: No, score=-16.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
 	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
 	autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EEFEBC432BE
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ED2D4C4338F
 	for <dm-devel@archiver.kernel.org>; Thu, 29 Jul 2021 21:47:12 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7725960F23
+	by mail.kernel.org (Postfix) with ESMTPS id 737C560F21
 	for <dm-devel@archiver.kernel.org>; Thu, 29 Jul 2021 21:47:12 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 7725960F23
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 737C560F21
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
@@ -25,53 +25,53 @@ DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Ms/jhByRUUvx4VsQ2UbH1uZDqScB/pmeR/yQ8MsxEzU=;
-	b=UEfexoKpPzLr1xJyZs9ofH2eJByDcjHWnNE9TXarlgQUZ05y33aUp9EQGi7C275+9bUgNI
-	HAHmIkhu7s9r2GQa4+8zzCkET1wBD9QboY4GCJPikdB2hI57lfWQD2Fc1veea3yFRF+fwO
-	SnZ89GQgZILq9hE3g5QdPswMBFpdAW8=
+	bh=hReOcWfCk+A9WtRw9HshrB1N8G1U4eMJ4CGkfiGLA80=;
+	b=dU3KQTZxC6mZEfU3eYIcgsILtK0ghx6GSTqIlHTeStLfwpK/YK/L+Jyc5a7R6t9X7u4BAO
+	Etb9ku0QD7n3OOqWr9Yeg719cujmGCsgOQPAs1lTEBSdcVON3crZhteJ1Ms0tO3nJ5YUdV
+	3uhWNBluqj/A6imDTvN44nV3g3oZFic=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-62-F4Z7Q6nQN-aagtnz_Q1WuQ-1; Thu, 29 Jul 2021 17:47:09 -0400
-X-MC-Unique: F4Z7Q6nQN-aagtnz_Q1WuQ-1
+ us-mta-56-2gPRpxs0M-i12LUUdzL2eQ-1; Thu, 29 Jul 2021 17:47:09 -0400
+X-MC-Unique: 2gPRpxs0M-i12LUUdzL2eQ-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6BA8B190B2A0;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 415B980196C;
 	Thu, 29 Jul 2021 21:47:05 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 04C711A26A;
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 112A8453B;
 	Thu, 29 Jul 2021 21:47:05 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 386FA180BAB1;
-	Thu, 29 Jul 2021 21:47:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
-	[10.5.11.23])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 02A114BB7C;
+	Thu, 29 Jul 2021 21:47:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
+	[10.5.11.11])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 16TLkFcZ030914 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 29 Jul 2021 17:46:15 -0400
+	id 16TLkHjC030931 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 29 Jul 2021 17:46:17 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id C2C731A26A; Thu, 29 Jul 2021 21:46:15 +0000 (UTC)
+	id B70B018AD4; Thu, 29 Jul 2021 21:46:17 +0000 (UTC)
 Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AB1E64A66;
-	Thu, 29 Jul 2021 21:46:15 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 50BC37886E;
+	Thu, 29 Jul 2021 21:46:14 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 16TLkELC020038; 
-	Thu, 29 Jul 2021 16:46:14 -0500
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 16TLkCi5020034; 
+	Thu, 29 Jul 2021 16:46:12 -0500
 Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 16TLkDce020037;
-	Thu, 29 Jul 2021 16:46:13 -0500
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 16TLkCuO020033;
+	Thu, 29 Jul 2021 16:46:12 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Thu, 29 Jul 2021 16:46:05 -0500
-Message-Id: <1627595165-19980-6-git-send-email-bmarzins@redhat.com>
+Date: Thu, 29 Jul 2021 16:46:04 -0500
+Message-Id: <1627595165-19980-5-git-send-email-bmarzins@redhat.com>
 In-Reply-To: <1627595165-19980-1-git-send-email-bmarzins@redhat.com>
 References: <1627595165-19980-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 X-loop: dm-devel@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>,
 	Martin Wilck <Martin.Wilck@suse.com>
-Subject: [dm-devel] [PATCH 5/5] libmultipath: deal with dynamic
-	PTHREAD_STACK_MIN
+Subject: [dm-devel] [PATCH 4/5] libmultipath: remove unneeded code in
+	coalesce_paths
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -94,32 +94,82 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Starting in glibc-2.34 (commit 5d98a7da), PTHREAD_STACK_MIN is defined
-as sysconf(_SC_THREAD_STACK_MIN) if _GNU_SOURCE is defined. sysconf()
-returns a long and can, at least in theory, return -1.  This change
-causes compilation to fail in setup_thread_attr() due to a comparision
-with different signedness, since stacksize is a size_t.
+The code at the end of coalesce_paths() removes a multipath device that
+was just created/reloaded, if none of its path devices have pp->dev set.
+This code is very old, and no longer has any actual effect. Multipath
+devices no longer get placed in pathvec without having pp->dev set. Even
+if they could, there's no point in creating/reloading the device and
+then immediately removing it.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/util.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libmultipath/configure.c | 46 ----------------------------------------
+ 1 file changed, 46 deletions(-)
 
-diff --git a/libmultipath/util.c b/libmultipath/util.c
-index e2fafe85..ea858409 100644
---- a/libmultipath/util.c
-+++ b/libmultipath/util.c
-@@ -223,8 +223,8 @@ setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached)
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 0c00bf50..e64eb7bc 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -1060,28 +1060,6 @@ int domap(struct multipath *mpp, char *params, int is_daemon)
+ 	return DOMAP_FAIL;
+ }
  
- 	ret = pthread_attr_init(attr);
- 	assert(ret == 0);
--	if (stacksize < PTHREAD_STACK_MIN)
--		stacksize = PTHREAD_STACK_MIN;
-+	if (PTHREAD_STACK_MIN > 0 && stacksize < (size_t)PTHREAD_STACK_MIN)
-+		stacksize = (size_t)PTHREAD_STACK_MIN;
- 	ret = pthread_attr_setstacksize(attr, stacksize);
- 	assert(ret == 0);
- 	if (detached) {
+-static int
+-deadmap (struct multipath * mpp)
+-{
+-	int i, j;
+-	struct pathgroup * pgp;
+-	struct path * pp;
+-
+-	if (!mpp->pg)
+-		return 1;
+-
+-	vector_foreach_slot (mpp->pg, pgp, i) {
+-		if (!pgp->paths)
+-			continue;
+-
+-		vector_foreach_slot (pgp->paths, pp, j)
+-			if (strlen(pp->dev))
+-				return 0; /* alive */
+-	}
+-
+-	return 1; /* dead */
+-}
+-
+ extern int
+ check_daemon(void)
+ {
+@@ -1318,30 +1296,6 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
+ 				   KEEP_VEC);
+ 		map_processed = true;
+ 	}
+-	/*
+-	 * Flush maps with only dead paths (ie not in sysfs)
+-	 * Keep maps with only failed paths
+-	 */
+-	if (mpvec) {
+-		vector_foreach_slot (newmp, mpp, i) {
+-			char alias[WWID_SIZE];
+-
+-			if (!deadmap(mpp))
+-				continue;
+-
+-			strlcpy(alias, mpp->alias, WWID_SIZE);
+-
+-			vector_del_slot(newmp, i);
+-			i--;
+-			remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
+-
+-			if (dm_flush_map(alias))
+-				condlog(2, "%s: remove failed (dead)",
+-					alias);
+-			else
+-				condlog(2, "%s: remove (dead)", alias);
+-		}
+-	}
+ 	if (map_processed && !is_daemon && (no_daemon || !check_daemon()))
+ 		condlog(2, "multipath devices exist, but multipathd service is not running");
+ 
 -- 
 2.17.2
 
