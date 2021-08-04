@@ -7,59 +7,59 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 09E92C4338F
-	for <dm-devel@archiver.kernel.org>; Wed,  4 Aug 2021 09:48:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2A07EC4338F
+	for <dm-devel@archiver.kernel.org>; Wed,  4 Aug 2021 09:48:17 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 8CD2360FC4
-	for <dm-devel@archiver.kernel.org>; Wed,  4 Aug 2021 09:48:08 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 8CD2360FC4
+	by mail.kernel.org (Postfix) with ESMTPS id C24E960FC4
+	for <dm-devel@archiver.kernel.org>; Wed,  4 Aug 2021 09:48:16 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org C24E960FC4
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-284-E643dcBSMsGl7NIhPZDZhw-1; Wed, 04 Aug 2021 05:48:06 -0400
-X-MC-Unique: E643dcBSMsGl7NIhPZDZhw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-144-2wAO8ShlNCW97vwEZkRkUA-1; Wed, 04 Aug 2021 05:48:13 -0400
+X-MC-Unique: 2wAO8ShlNCW97vwEZkRkUA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DDB011853034;
-	Wed,  4 Aug 2021 09:47:45 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C12AC5D9DC;
-	Wed,  4 Aug 2021 09:47:45 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 546168C60D8;
+	Wed,  4 Aug 2021 09:48:04 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2BDE26A8E4;
+	Wed,  4 Aug 2021 09:48:04 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9943E4BB7C;
-	Wed,  4 Aug 2021 09:47:45 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id F1B9C181A3E9;
+	Wed,  4 Aug 2021 09:48:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1749liM0006367 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 4 Aug 2021 05:47:44 -0400
+	id 1749m27B006392 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 4 Aug 2021 05:48:02 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8C00D112D426; Wed,  4 Aug 2021 09:47:44 +0000 (UTC)
+	id 99E30212420F; Wed,  4 Aug 2021 09:48:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 87707112D42D
-	for <dm-devel@redhat.com>; Wed,  4 Aug 2021 09:47:37 +0000 (UTC)
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 949912124212
+	for <dm-devel@redhat.com>; Wed,  4 Aug 2021 09:47:56 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 343F38CA944
-	for <dm-devel@redhat.com>; Wed,  4 Aug 2021 09:47:37 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 49D02106655D
+	for <dm-devel@redhat.com>; Wed,  4 Aug 2021 09:47:56 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-62-Rm9m00e3PZup3guffgr2Dw-1; Wed, 04 Aug 2021 05:47:35 -0400
-X-MC-Unique: Rm9m00e3PZup3guffgr2Dw-1
+	us-mta-512-Z8W77s2rOvG81BT2K664NA-1; Wed, 04 Aug 2021 05:47:52 -0400
+X-MC-Unique: Z8W77s2rOvG81BT2K664NA-1
 Received: from [2a02:1205:5023:1f80:c068:bd3d:78b3:7d37] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1mBDTo-005eDo-OZ; Wed, 04 Aug 2021 09:46:49 +0000
+	id 1mBDUi-005eJm-Mb; Wed, 04 Aug 2021 09:47:34 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>
-Date: Wed,  4 Aug 2021 11:41:46 +0200
-Message-Id: <20210804094147.459763-8-hch@lst.de>
+Date: Wed,  4 Aug 2021 11:41:47 +0200
+Message-Id: <20210804094147.459763-9-hch@lst.de>
 In-Reply-To: <20210804094147.459763-1-hch@lst.de>
 References: <20210804094147.459763-1-hch@lst.de>
 MIME-Version: 1.0
@@ -73,10 +73,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
-Subject: [dm-devel] [PATCH 7/8] dm: delay registering the gendisk
+Subject: [dm-devel] [PATCH 8/8] block: remove support for delayed queue
+	registrations
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -90,7 +91,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -98,104 +99,118 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-device mapper is currently the only outlier that tries to call
-register_disk after add_disk, leading to fairly inconsistent state
-of these block layer data structures.  Instead change device-mapper
-to just register the gendisk later now that the holder mechanism
-can cope with that.
-
-Note that this introduces a user visible change: the dm kobject is
-now only visible after the initial table has been loaded.
+Now that device mapper has been changed to register the disk once
+it is fully ready all this code is unused.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/md/dm-rq.c |  1 -
- drivers/md/dm.c    | 23 +++++++++++------------
- 2 files changed, 11 insertions(+), 13 deletions(-)
+ block/elevator.c      |  1 -
+ block/genhd.c         | 29 +++++++----------------------
+ include/linux/genhd.h |  6 ------
+ 3 files changed, 7 insertions(+), 29 deletions(-)
 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 0dbd48cbdff9..5b95eea517d1 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -559,7 +559,6 @@ int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
- 	err = blk_mq_init_allocated_queue(md->tag_set, md->queue);
- 	if (err)
- 		goto out_tag_set;
--	elevator_init_mq(md->queue);
- 	return 0;
- 
- out_tag_set:
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index f003bd5b93ce..7981b7287628 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1693,7 +1693,10 @@ static void cleanup_mapped_device(struct mapped_device *md)
- 		spin_lock(&_minor_lock);
- 		md->disk->private_data = NULL;
- 		spin_unlock(&_minor_lock);
--		del_gendisk(md->disk);
-+		if (dm_get_md_type(md) != DM_TYPE_NONE) {
-+			dm_sysfs_exit(md);
-+			del_gendisk(md->disk);
-+		}
- 		dm_queue_destroy_keyslot_manager(md->queue);
- 		blk_cleanup_disk(md->disk);
+diff --git a/block/elevator.c b/block/elevator.c
+index 52ada14cfe45..706d5a64508d 100644
+--- a/block/elevator.c
++++ b/block/elevator.c
+@@ -702,7 +702,6 @@ void elevator_init_mq(struct request_queue *q)
+ 		elevator_put(e);
  	}
-@@ -1788,7 +1791,6 @@ static struct mapped_device *alloc_dev(int minor)
- 			goto bad;
- 	}
+ }
+-EXPORT_SYMBOL_GPL(elevator_init_mq); /* only for dm-rq */
  
--	add_disk_no_queue_reg(md->disk);
- 	format_dev_t(md->name, MKDEV(_major, minor));
+ /*
+  * switch to new_e io scheduler. be careful not to introduce deadlocks -
+diff --git a/block/genhd.c b/block/genhd.c
+index db916f779077..b0b6e0caa389 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -475,20 +475,20 @@ static void register_disk(struct device *parent, struct gendisk *disk,
+ }
  
- 	md->wq = alloc_workqueue("kdmflush", WQ_MEM_RECLAIM, 0);
-@@ -1989,19 +1991,12 @@ static struct dm_table *__unbind(struct mapped_device *md)
+ /**
+- * __device_add_disk - add disk information to kernel list
++ * device_add_disk - add disk information to kernel list
+  * @parent: parent device for the disk
+  * @disk: per-device partitioning information
+  * @groups: Additional per-device sysfs groups
+- * @register_queue: register the queue if set to true
+  *
+  * This function registers the partitioning information in @disk
+  * with the kernel.
+  *
+  * FIXME: error handling
   */
- int dm_create(int minor, struct mapped_device **result)
+-static void __device_add_disk(struct device *parent, struct gendisk *disk,
+-			      const struct attribute_group **groups,
+-			      bool register_queue)
++
++void device_add_disk(struct device *parent, struct gendisk *disk,
++		     const struct attribute_group **groups)
++
  {
--	int r;
- 	struct mapped_device *md;
+ 	int ret;
  
- 	md = alloc_dev(minor);
- 	if (!md)
- 		return -ENXIO;
+@@ -498,8 +498,7 @@ static void __device_add_disk(struct device *parent, struct gendisk *disk,
+ 	 * elevator if one is needed, that is, for devices requesting queue
+ 	 * registration.
+ 	 */
+-	if (register_queue)
+-		elevator_init_mq(disk->queue);
++	elevator_init_mq(disk->queue);
  
--	r = dm_sysfs_init(md);
--	if (r) {
--		free_dev(md);
--		return r;
--	}
+ 	/*
+ 	 * If the driver provides an explicit major number it also must provide
+@@ -553,8 +552,7 @@ static void __device_add_disk(struct device *parent, struct gendisk *disk,
+ 		bdev_add(disk->part0, dev->devt);
+ 	}
+ 	register_disk(parent, disk, groups);
+-	if (register_queue)
+-		blk_register_queue(disk);
++	blk_register_queue(disk);
+ 
+ 	/*
+ 	 * Take an extra ref on queue which will be put on disk_release()
+@@ -568,21 +566,8 @@ static void __device_add_disk(struct device *parent, struct gendisk *disk,
+ 	disk_add_events(disk);
+ 	blk_integrity_add(disk);
+ }
 -
- 	*result = md;
- 	return 0;
+-void device_add_disk(struct device *parent, struct gendisk *disk,
+-		     const struct attribute_group **groups)
+-
+-{
+-	__device_add_disk(parent, disk, groups, true);
+-}
+ EXPORT_SYMBOL(device_add_disk);
+ 
+-void device_add_disk_no_queue_reg(struct device *parent, struct gendisk *disk)
+-{
+-	__device_add_disk(parent, disk, NULL, false);
+-}
+-EXPORT_SYMBOL(device_add_disk_no_queue_reg);
+-
+ /**
+  * del_gendisk - remove the gendisk
+  * @disk: the struct gendisk to remove
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index 80952f038d79..473d93c6ebda 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -219,12 +219,6 @@ static inline void add_disk(struct gendisk *disk)
+ {
+ 	device_add_disk(NULL, disk, NULL);
  }
-@@ -2081,10 +2076,15 @@ int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t)
- 	r = dm_table_set_restrictions(t, md->queue, &limits);
- 	if (r)
- 		return r;
--	md->type = type;
+-extern void device_add_disk_no_queue_reg(struct device *parent, struct gendisk *disk);
+-static inline void add_disk_no_queue_reg(struct gendisk *disk)
+-{
+-	device_add_disk_no_queue_reg(NULL, disk);
+-}
+-
+ extern void del_gendisk(struct gendisk *gp);
  
--	blk_register_queue(md->disk);
-+	add_disk(md->disk);
- 
-+	r = dm_sysfs_init(md);
-+	if (r) {
-+		del_gendisk(md->disk);
-+		return r;
-+	}
-+	md->type = type;
- 	return 0;
- }
- 
-@@ -2190,7 +2190,6 @@ static void __dm_destroy(struct mapped_device *md, bool wait)
- 		DMWARN("%s: Forcibly removing mapped_device still in use! (%d users)",
- 		       dm_device_name(md), atomic_read(&md->holders));
- 
--	dm_sysfs_exit(md);
- 	dm_table_destroy(__unbind(md));
- 	free_dev(md);
- }
+ void set_disk_ro(struct gendisk *disk, bool read_only);
 -- 
 2.30.2
 
