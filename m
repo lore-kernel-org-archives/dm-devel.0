@@ -3,78 +3,76 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,
+	MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
 	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 32063C4338F
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Aug 2021 15:42:38 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B216EC4338F
+	for <dm-devel@archiver.kernel.org>; Wed, 11 Aug 2021 15:42:41 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id AC80860041
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Aug 2021 15:42:36 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org AC80860041
+	by mail.kernel.org (Postfix) with ESMTPS id 4397760FC3
+	for <dm-devel@archiver.kernel.org>; Wed, 11 Aug 2021 15:42:41 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 4397760FC3
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-350-6Cev6ru7NHiE006kGSbaww-1; Wed, 11 Aug 2021 11:42:34 -0400
-X-MC-Unique: 6Cev6ru7NHiE006kGSbaww-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-525-3lGQuXMFOumaKWt5wYytCg-1; Wed, 11 Aug 2021 11:42:38 -0400
+X-MC-Unique: 3lGQuXMFOumaKWt5wYytCg-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A95891966320;
-	Wed, 11 Aug 2021 15:42:29 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8ABAF60BF1;
-	Wed, 11 Aug 2021 15:42:29 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8F239196632E;
+	Wed, 11 Aug 2021 15:42:31 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 726295C23A;
+	Wed, 11 Aug 2021 15:42:31 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 332844A7CA;
-	Wed, 11 Aug 2021 15:42:29 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 49B9D1819AC2;
+	Wed, 11 Aug 2021 15:42:31 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 17BFgEaV010128 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 11 Aug 2021 11:42:14 -0400
+	id 17BFgN0S010153 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 11 Aug 2021 11:42:23 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8E781207ADD2; Wed, 11 Aug 2021 15:42:14 +0000 (UTC)
+	id 67592207ADC2; Wed, 11 Aug 2021 15:42:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8A685207ADE1
-	for <dm-devel@redhat.com>; Wed, 11 Aug 2021 15:42:11 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 62099207ADDA
+	for <dm-devel@redhat.com>; Wed, 11 Aug 2021 15:42:23 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7718C800883
-	for <dm-devel@redhat.com>; Wed, 11 Aug 2021 15:42:11 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 494A9866DFC
+	for <dm-devel@redhat.com>; Wed, 11 Aug 2021 15:42:23 +0000 (UTC)
 Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) (Using
 	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-522-fC6Jaq-ePI2zqdBYqmOUSA-1; Wed, 11 Aug 2021 11:42:07 -0400
-X-MC-Unique: fC6Jaq-ePI2zqdBYqmOUSA-1
+	us-mta-59-Rzj35Gt_PfiPtBCDu9FwKw-1; Wed, 11 Aug 2021 11:42:04 -0400
+X-MC-Unique: Rzj35Gt_PfiPtBCDu9FwKw-1
 Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 60D3320183;
-	Wed, 11 Aug 2021 15:42:05 +0000 (UTC)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id B86AC1FEDA;
+	Wed, 11 Aug 2021 15:42:02 +0000 (UTC)
 Received: from imap1.suse-dmz.suse.de (imap1.suse-dmz.suse.de [192.168.254.73])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by imap1.suse-dmz.suse.de (Postfix) with ESMTPS id 2DE5513969;
-	Wed, 11 Aug 2021 15:42:05 +0000 (UTC)
+	by imap1.suse-dmz.suse.de (Postfix) with ESMTPS id 82C1713969;
+	Wed, 11 Aug 2021 15:42:02 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap1.suse-dmz.suse.de with ESMTPSA id gPZSCc3vE2H/XQAAGKfGzw
-	(envelope-from <mwilck@suse.com>); Wed, 11 Aug 2021 15:42:05 +0000
+	by imap1.suse-dmz.suse.de with ESMTPSA id pVjnHcrvE2H/XQAAGKfGzw
+	(envelope-from <mwilck@suse.com>); Wed, 11 Aug 2021 15:42:02 +0000
 From: mwilck@suse.com
 To: Benjamin Marzinski <bmarzins@redhat.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Wed, 11 Aug 2021 17:41:50 +0200
-Message-Id: <20210811154150.24714-10-mwilck@suse.com>
-In-Reply-To: <20210811154150.24714-1-mwilck@suse.com>
-References: <20210811154150.24714-1-mwilck@suse.com>
+Date: Wed, 11 Aug 2021 17:41:41 +0200
+Message-Id: <20210811154150.24714-1-mwilck@suse.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -86,10 +84,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 17BFgEaV010128
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 17BFgN0S010153
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH v2 9/9] multipathd: use strbuf in cli.c
+Subject: [dm-devel] [PATCH v2 0/9] multipath-tools: use variable-size string
+	buffers
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -103,7 +102,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -113,167 +112,104 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-Here, too, strbuf can be used to simplify code.
+Current libmultipath contains a lot of code writing text to pre-allocated
+string buffers of fixed size while trying to avoid buffer overflows
+or truncation of the output string. This code is, at least in part,
+hard to verify and hard to read, as buffer sizes and positions need to
+be checked after every additon of text. It requires either allocating large
+buffers in advance, or risking to loose data, or re-allocating buffers
+and starting over again.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/cli.c | 94 ++++++++++++++++++------------------------------
- 1 file changed, 34 insertions(+), 60 deletions(-)
+This patch set changes this by switching almost entirely to text buffers
+that are dynamically allocated and grow automatically as text is added.
 
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index bdc9fb1..4d6c37c 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -16,6 +16,7 @@
- #include "mpath_cmd.h"
- #include "cli.h"
- #include "debug.h"
-+#include "strbuf.h"
- 
- static vector keys;
- static vector handlers;
-@@ -354,107 +355,80 @@ alloc_handlers (void)
- }
- 
- static int
--genhelp_sprint_aliases (char * reply, int maxlen, vector keys,
-+genhelp_sprint_aliases (struct strbuf *reply, vector keys,
- 			struct key * refkw)
- {
--	int i, len = 0;
-+	int i;
- 	struct key * kw;
-+	size_t initial_len = get_strbuf_len(reply);
- 
- 	vector_foreach_slot (keys, kw, i) {
--		if (kw->code == refkw->code && kw != refkw) {
--			len += snprintf(reply + len, maxlen - len,
--					"|%s", kw->str);
--			if (len >= maxlen)
--				return len;
--		}
-+		if (kw->code == refkw->code && kw != refkw &&
-+		    print_strbuf(reply, "|%s", kw->str) < 0)
-+			return -1;
- 	}
- 
--	return len;
-+	return get_strbuf_len(reply) - initial_len;
- }
- 
- static int
--do_genhelp(char *reply, int maxlen, const char *cmd, int error) {
--	int len = 0;
-+do_genhelp(struct strbuf *reply, const char *cmd, int error) {
- 	int i, j;
- 	uint64_t fp;
- 	struct handler * h;
- 	struct key * kw;
-+	int rc = 0;
-+	size_t initial_len = get_strbuf_len(reply);
- 
- 	switch(error) {
- 	case ENOMEM:
--		len += snprintf(reply + len, maxlen - len,
--				"%s: Not enough memory\n", cmd);
-+		rc = print_strbuf(reply, "%s: Not enough memory\n", cmd);
- 		break;
- 	case EAGAIN:
--		len += snprintf(reply + len, maxlen - len,
--				"%s: not found\n", cmd);
-+		rc = print_strbuf(reply, "%s: not found\n", cmd);
- 		break;
- 	case EINVAL:
--		len += snprintf(reply + len, maxlen - len,
--				"%s: Missing argument\n", cmd);
-+		rc = print_strbuf(reply, "%s: Missing argument\n", cmd);
- 		break;
- 	}
--	if (len >= maxlen)
--		goto out;
--	len += snprintf(reply + len, maxlen - len, VERSION_STRING);
--	if (len >= maxlen)
--		goto out;
--	len += snprintf(reply + len, maxlen - len, "CLI commands reference:\n");
--	if (len >= maxlen)
--		goto out;
-+	if (rc < 0)
-+		return -1;
-+
-+	if (print_strbuf(reply, VERSION_STRING) < 0 ||
-+	    append_strbuf_str(reply, "CLI commands reference:\n") < 0)
-+		return -1;
- 
- 	vector_foreach_slot (handlers, h, i) {
- 		fp = h->fingerprint;
- 		vector_foreach_slot (keys, kw, j) {
- 			if ((kw->code & fp)) {
- 				fp -= kw->code;
--				len += snprintf(reply + len , maxlen - len,
--						" %s", kw->str);
--				if (len >= maxlen)
--					goto out;
--				len += genhelp_sprint_aliases(reply + len,
--							      maxlen - len,
--							      keys, kw);
--				if (len >= maxlen)
--					goto out;
-+				if (print_strbuf(reply, " %s", kw->str) < 0 ||
-+				    genhelp_sprint_aliases(reply, keys, kw) < 0)
-+					return -1;
- 
- 				if (kw->has_param) {
--					len += snprintf(reply + len,
--							maxlen - len,
--							" $%s", kw->str);
--					if (len >= maxlen)
--						goto out;
-+					if (print_strbuf(reply, " $%s",
-+							 kw->str) < 0)
-+						return -1;
- 				}
- 			}
- 		}
--		len += snprintf(reply + len, maxlen - len, "\n");
--		if (len >= maxlen)
--			goto out;
-+		if (append_strbuf_str(reply, "\n") < 0)
-+			return -1;
- 	}
--out:
--	return len;
-+	return get_strbuf_len(reply) - initial_len;
- }
- 
- 
- static char *
- genhelp_handler (const char *cmd, int error)
- {
--	char * reply;
--	char * p = NULL;
--	int maxlen = INITIAL_REPLY_LEN;
--	int again = 1;
--
--	reply = MALLOC(maxlen);
--
--	while (again) {
--		if (!reply)
--			return NULL;
--		p = reply;
--		p += do_genhelp(reply, maxlen, cmd, error);
--		again = ((p - reply) >= maxlen);
--		REALLOC_REPLY(reply, again, maxlen);
--	}
--	return reply;
-+	STRBUF_ON_STACK(reply);
-+
-+	if (do_genhelp(&reply, cmd, error) == -1)
-+		condlog(0, "genhelp_handler: out of memory");
-+	return steal_strbuf_str(&reply);
- }
- 
- int
+The first patch, which was the initial motivation of the set, doesn't
+need growing buffers, it just overcomes the PARAMS_SIZE limitation by
+copying data from libdm. However if the PARAMS_SIZE limitation was dropped
+when reading from the kernel, it made sense to drop it for constructing
+PARAMS, too. This motivated the implementation of the strbuf API (patch 2),
+and using it in assemble_map (patch 3). The API was then consequently used
+elswhere in libmultipath too, where strings are built up in pieces (patch 4,
+5, 8, 9). These additional changes are huge because of large number of
+affected "snprint_xyz" functions and respective function calls, but most
+of the changes are mechanical and follow always the same overall idea.
+
+Finally, patch 6 and 7 are cleanups which I found necessary while working
+on print.c.
+
+Regression testing: added a test suite for strbuf itself, made sure
+all tests cases (which involve quite a bit of printf_xyz() functions) still
+pass, and compared output of lots of interactive multipathd and multipath
+commands before and after the change.
+
+Note that "multipathd show config" / "multipath -t" will show some minor
+differences in the output, because the current code omits quotes for some
+output value fields. With this patch set, all string values are quoted.
+
+The patch set is available also on my "tip" branch:
+https://github.com/openSUSE/multipath-tools/tree/tip.
+
+Changes wrt v1 (thanks to Ben Marzinski for all):
+
+ - 1/9: added missing pointer dereference
+ - 2/9: fixed buffer size calculation, simplified code in __append_strbuf_str()
+ - 3/9: use STRBUF_ON_STACK() rather than hand-coded __attribute__
+        moved free() statement before goto in ev_add_path().
+ - 4/9: Fixed return value of snprint_uid_attrs()
+ - 5/9: Removed extra '-'
+
+Martin Wilck (9):
+  libmultipath: variable-size parameters in dm_get_map()
+  libmultipath: strbuf: simple api for growing string buffers
+  libmultipath: variable-size parameters in assemble_map()
+  libmultipath: use strbuf in dict.c
+  libmultipath: use strbuf in print.c
+  libmultipath: print.c: fail hard if keywords are not found
+  libmultipath: print.h: move macros to print.c
+  libmultipath: use strbuf in alias.c.
+  multipathd: use strbuf in cli.c
+
+ libmultipath/Makefile                    |    2 +-
+ libmultipath/alias.c                     |   84 +-
+ libmultipath/blacklist.c                 |   13 +-
+ libmultipath/configure.c                 |   18 +-
+ libmultipath/configure.h                 |    3 +-
+ libmultipath/devmapper.c                 |   44 +-
+ libmultipath/devmapper.h                 |    4 +-
+ libmultipath/dict.c                      |  314 ++--
+ libmultipath/dict.h                      |   19 +-
+ libmultipath/discovery.c                 |   13 +-
+ libmultipath/dmparser.c                  |   47 +-
+ libmultipath/dmparser.h                  |    2 +-
+ libmultipath/foreign.c                   |   78 +-
+ libmultipath/foreign.h                   |   13 +-
+ libmultipath/foreign/nvme.c              |  100 +-
+ libmultipath/generic.c                   |   26 +-
+ libmultipath/generic.h                   |   17 +-
+ libmultipath/libmultipath.version        |   21 +-
+ libmultipath/parser.c                    |   50 +-
+ libmultipath/parser.h                    |   17 +-
+ libmultipath/print.c                     | 1839 ++++++++++------------
+ libmultipath/print.h                     |  131 +-
+ libmultipath/prioritizers/weightedpath.c |   71 +-
+ libmultipath/propsel.c                   |  147 +-
+ libmultipath/strbuf.c                    |  207 +++
+ libmultipath/strbuf.h                    |  168 ++
+ libmultipath/structs.h                   |    1 -
+ libmultipath/structs_vec.c               |   11 +-
+ libmultipath/util.c                      |    5 +
+ libmultipath/util.h                      |    1 +
+ multipathd/cli.c                         |   94 +-
+ multipathd/cli_handlers.c                |  349 ++--
+ multipathd/main.c                        |   20 +-
+ tests/Makefile                           |    3 +-
+ tests/alias.c                            |   41 +-
+ tests/strbuf.c                           |  412 +++++
+ 36 files changed, 2313 insertions(+), 2072 deletions(-)
+ create mode 100644 libmultipath/strbuf.c
+ create mode 100644 libmultipath/strbuf.h
+ create mode 100644 tests/strbuf.c
+
 -- 
 2.32.0
 
