@@ -1,96 +1,69 @@
-Return-Path: <SRS0=1CEe=NC=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=gpIH=ND=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-5.3 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=no autolearn_force=no
-	version=3.4.0
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1E40AC4338F
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Aug 2021 16:09:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8084AC4338F
+	for <dm-devel@archiver.kernel.org>; Thu, 12 Aug 2021 00:44:28 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7CD5A60F38
-	for <dm-devel@archiver.kernel.org>; Wed, 11 Aug 2021 16:09:25 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 7CD5A60F38
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=acm.org
+	by mail.kernel.org (Postfix) with ESMTPS id 0074C60FC3
+	for <dm-devel@archiver.kernel.org>; Thu, 12 Aug 2021 00:44:27 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 0074C60FC3
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.dev
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-453-ja6VQ9zwNLSCQizeUNq-pA-1; Wed, 11 Aug 2021 12:09:22 -0400
-X-MC-Unique: ja6VQ9zwNLSCQizeUNq-pA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-325-5e6QCTkvP-mDk4tDNWFqxA-1; Wed, 11 Aug 2021 20:44:25 -0400
+X-MC-Unique: 5e6QCTkvP-mDk4tDNWFqxA-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id ABBBA8C26C0;
-	Wed, 11 Aug 2021 16:09:12 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4030B760C6;
+	Thu, 12 Aug 2021 00:44:19 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 583425D6CF;
-	Wed, 11 Aug 2021 16:09:12 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 75CF8620DE;
+	Thu, 12 Aug 2021 00:44:17 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 961A44BB7C;
-	Wed, 11 Aug 2021 16:09:11 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A3D924BB7C;
+	Thu, 12 Aug 2021 00:44:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 17BG8Imx013815 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 11 Aug 2021 12:08:18 -0400
+	id 17C0iCDP017047 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 11 Aug 2021 20:44:12 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id B3A14207B0C6; Wed, 11 Aug 2021 16:08:18 +0000 (UTC)
+	id 39F0910FAD3; Thu, 12 Aug 2021 00:44:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A857E207B165
-	for <dm-devel@redhat.com>; Wed, 11 Aug 2021 16:08:13 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3537010FAD5
+	for <dm-devel@redhat.com>; Thu, 12 Aug 2021 00:44:09 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BF3CC8556F4
-	for <dm-devel@redhat.com>; Wed, 11 Aug 2021 16:08:13 +0000 (UTC)
-Received: from mail-pj1-f52.google.com (mail-pj1-f52.google.com
-	[209.85.216.52]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-590-evCBBmmbOXKV73HUv4qysg-1; Wed, 11 Aug 2021 12:08:10 -0400
-X-MC-Unique: evCBBmmbOXKV73HUv4qysg-1
-Received: by mail-pj1-f52.google.com with SMTP id
-	w13-20020a17090aea0db029017897a5f7bcso5744177pjy.5; 
-	Wed, 11 Aug 2021 09:08:10 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-	:user-agent:mime-version:in-reply-to:content-language
-	:content-transfer-encoding;
-	bh=P2bD0+aCri1zzmKe0kM8Zk0xtD+ZTNijWsZlAizAD+I=;
-	b=LN1Pra/BZZzZRqbXtNmrM5N1yRN+8d6jJ5/hLMiqFm5IlwrDKq1tkCrckjRIElxZn4
-	zbYaEEUFCIdWAd79lk+Wz+Nouba0H9d0unHcD+T/EBm0TJu/Y+kzg0cSShj3hSN0gP2H
-	+nEBJE77/23LUSQ3O1EtjfTPSianZcH8NcYOS1TCIpyNBvy7UsaFRG4Z1a0pAwwLk/A6
-	ycD6a/jraEznvSCvP2k1TY8lMO+pNoyAguMFV+CVmGiHl84WB4yyCLUwYjWxYJGAyTFi
-	VSOczxqk6vnEHxzXnhfVujSXpevfXwK+dro3qGuvVhMv6UjuvKx6nE3q0V/CGzVyDqmC
-	MvRg==
-X-Gm-Message-State: AOAM532Am3FBNpPYWO3rebO0DjLOs/hG2outQPfHPVM5kHSJyrqijQVY
-	PGRE4qaB12Mrd5ipcmCX29+OC5e3x/8rHDM5
-X-Google-Smtp-Source: ABdhPJyXlW7IIWaKPXm1oAlAkocpySVYaJavUMPo1P3oMORepbOff8aXK17DTUyKMduXBD/7ANti9Q==
-X-Received: by 2002:aa7:8e56:0:b029:3cd:c2ec:6c1c with SMTP id
-	d22-20020aa78e560000b02903cdc2ec6c1cmr9848795pfr.80.1628698089054;
-	Wed, 11 Aug 2021 09:08:09 -0700 (PDT)
-Received: from bvanassche-linux.mtv.corp.google.com
-	([2620:15c:211:1:85f2:bb0e:80b9:d6f6])
-	by smtp.gmail.com with ESMTPSA id
-	h20sm29136546pfn.173.2021.08.11.09.08.07
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Wed, 11 Aug 2021 09:08:08 -0700 (PDT)
-To: mwilck@suse.com, Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>
-References: <20210811154150.24714-1-mwilck@suse.com>
-	<20210811154150.24714-3-mwilck@suse.com>
-From: Bart Van Assche <bvanassche@acm.org>
-Message-ID: <942d3693-959a-556d-35b8-d2bf7c4e55e4@acm.org>
-Date: Wed, 11 Aug 2021 09:08:06 -0700
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
-	Thunderbird/78.12.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 77EC8101A529
+	for <dm-devel@redhat.com>; Thu, 12 Aug 2021 00:44:09 +0000 (UTC)
+Received: from out0.migadu.com (out0.migadu.com [94.23.1.103]) (Using TLS)
+	by relay.mimecast.com with ESMTP id us-mta-572-pMk9Bn-YMOmJX_C-e9qjAA-1;
+	Wed, 11 Aug 2021 20:44:06 -0400
+X-MC-Unique: pMk9Bn-YMOmJX_C-e9qjAA-1
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and
+	include these headers.
+From: Guoqing Jiang <guoqing.jiang@linux.dev>
+To: axboe@kernel.dk, colyli@suse.de, kent.overstreet@gmail.com, agk@redhat.com,
+	snitzer@redhat.com
+References: <20210721025315.1729118-1-guoqing.jiang@linux.dev>
+Message-ID: <318fe9e7-1136-5716-f600-709f1fe321d8@linux.dev>
+Date: Thu, 12 Aug 2021 08:43:54 +0800
 MIME-Version: 1.0
-In-Reply-To: <20210811154150.24714-3-mwilck@suse.com>
+In-Reply-To: <20210721025315.1729118-1-guoqing.jiang@linux.dev>
+X-Migadu-Flow: FLOW_OUT
+X-Migadu-Auth-User: guoqing.jiang@linux.dev
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -99,11 +72,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com
-Subject: Re: [dm-devel] [PATCH v2 2/9] libmultipath: strbuf: simple api for
- growing string buffers
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
+	linux-bcache@vger.kernel.org
+Subject: Re: [dm-devel] [PATCH] block: move some macros to blkdev.h
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -117,7 +90,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -126,19 +99,92 @@ Content-Language: en-US
 Content-Transfer-Encoding: 7bit
 Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 8/11/21 8:41 AM, mwilck@suse.com wrote:
-> Add an API for string buffers that grow in size as text is added.
-> This API will be useful in several places of the multipath-tools code
-> base. Add unit tests for these helpers, too.
+Gentle ping ...
 
-Has it been considered to switch to C++ and use std::string and/or 
-std::ostringstream instead of implementing a string library in C?
-
-Thanks,
-
-Bart.
-
-
+On 7/21/21 10:53 AM, Guoqing Jiang wrote:
+> From: Guoqing Jiang <jiangguoqing@kylinos.cn>
+>
+> Move them (PAGE_SECTORS_SHIFT, PAGE_SECTORS and SECTOR_MASK) to the
+> generic header file to remove redundancy.
+>
+> Signed-off-by: Guoqing Jiang <jiangguoqing@kylinos.cn>
+> ---
+>   drivers/block/brd.c           | 3 ---
+>   drivers/block/null_blk/main.c | 4 ----
+>   drivers/md/bcache/util.h      | 2 --
+>   include/linux/blkdev.h        | 4 ++++
+>   include/linux/device-mapper.h | 1 -
+>   5 files changed, 4 insertions(+), 10 deletions(-)
+>
+> diff --git a/drivers/block/brd.c b/drivers/block/brd.c
+> index 95694113e38e..58ec167aa018 100644
+> --- a/drivers/block/brd.c
+> +++ b/drivers/block/brd.c
+> @@ -27,9 +27,6 @@
+>   
+>   #include <linux/uaccess.h>
+>   
+> -#define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
+> -#define PAGE_SECTORS		(1 << PAGE_SECTORS_SHIFT)
+> -
+>   /*
+>    * Each block ramdisk device has a radix_tree brd_pages of pages that stores
+>    * the pages containing the block device's contents. A brd page's ->index is
+> diff --git a/drivers/block/null_blk/main.c b/drivers/block/null_blk/main.c
+> index d734e9ee1546..f128242d1170 100644
+> --- a/drivers/block/null_blk/main.c
+> +++ b/drivers/block/null_blk/main.c
+> @@ -11,10 +11,6 @@
+>   #include <linux/init.h>
+>   #include "null_blk.h"
+>   
+> -#define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
+> -#define PAGE_SECTORS		(1 << PAGE_SECTORS_SHIFT)
+> -#define SECTOR_MASK		(PAGE_SECTORS - 1)
+> -
+>   #define FREE_BATCH		16
+>   
+>   #define TICKS_PER_SEC		50ULL
+> diff --git a/drivers/md/bcache/util.h b/drivers/md/bcache/util.h
+> index bca4a7c97da7..b64460a76267 100644
+> --- a/drivers/md/bcache/util.h
+> +++ b/drivers/md/bcache/util.h
+> @@ -15,8 +15,6 @@
+>   
+>   #include "closure.h"
+>   
+> -#define PAGE_SECTORS		(PAGE_SIZE / 512)
+> -
+>   struct closure;
+>   
+>   #ifdef CONFIG_BCACHE_DEBUG
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index 3177181c4326..0d0b6967c954 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -941,6 +941,10 @@ static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
+>   #define SECTOR_SIZE (1 << SECTOR_SHIFT)
+>   #endif
+>   
+> +#define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
+> +#define PAGE_SECTORS		(1 << PAGE_SECTORS_SHIFT)
+> +#define SECTOR_MASK		(PAGE_SECTORS - 1)
+> +
+>   /*
+>    * blk_rq_pos()			: the current sector
+>    * blk_rq_bytes()		: bytes left in the entire request
+> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+> index 7457d49acf9a..94f2cd6a8e83 100644
+> --- a/include/linux/device-mapper.h
+> +++ b/include/linux/device-mapper.h
+> @@ -151,7 +151,6 @@ typedef size_t (*dm_dax_copy_iter_fn)(struct dm_target *ti, pgoff_t pgoff,
+>   		void *addr, size_t bytes, struct iov_iter *i);
+>   typedef int (*dm_dax_zero_page_range_fn)(struct dm_target *ti, pgoff_t pgoff,
+>   		size_t nr_pages);
+> -#define PAGE_SECTORS (PAGE_SIZE / 512)
+>   
+>   void dm_error(const char *message);
+>   
 
 --
 dm-devel mailing list
