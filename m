@@ -2,86 +2,85 @@ Return-Path: <SRS0=ouO8=NI=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-10.9 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,UNWANTED_LANGUAGE_BODY,
+	URIBL_BLOCKED autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1F82EC4320A
-	for <dm-devel@archiver.kernel.org>; Tue, 17 Aug 2021 07:26:34 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D4D9BC432BE
+	for <dm-devel@archiver.kernel.org>; Tue, 17 Aug 2021 07:26:37 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id A552160C3E
-	for <dm-devel@archiver.kernel.org>; Tue, 17 Aug 2021 07:26:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org A552160C3E
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=corelight.com
+	by mail.kernel.org (Postfix) with ESMTPS id 32D0160F5C
+	for <dm-devel@archiver.kernel.org>; Tue, 17 Aug 2021 07:26:36 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 32D0160F5C
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=aisec.fraunhofer.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-139-LY2ZMDPlNDqMSsUFALcBYA-1; Tue, 17 Aug 2021 03:26:29 -0400
-X-MC-Unique: LY2ZMDPlNDqMSsUFALcBYA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-380--FZt9JxjNP2VqMJ4n1-JTQ-1; Tue, 17 Aug 2021 03:26:33 -0400
+X-MC-Unique: -FZt9JxjNP2VqMJ4n1-JTQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8D2FF801AEB;
-	Tue, 17 Aug 2021 07:26:24 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7118160871;
-	Tue, 17 Aug 2021 07:26:24 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B9E29802935;
+	Tue, 17 Aug 2021 07:26:26 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 98FA11036D20;
+	Tue, 17 Aug 2021 07:26:26 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1F1464A7C9;
-	Tue, 17 Aug 2021 07:26:24 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5DC70181A2A6;
+	Tue, 17 Aug 2021 07:26:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 17DMfLBa022511 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 13 Aug 2021 18:41:21 -0400
+	id 17EIYlwv016574 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 14 Aug 2021 14:34:47 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1D3B520C1819; Fri, 13 Aug 2021 22:41:21 +0000 (UTC)
+	id 29C492166B14; Sat, 14 Aug 2021 18:34:47 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 18E4C20C17B0
-	for <dm-devel@redhat.com>; Fri, 13 Aug 2021 22:41:18 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 24BAA2167804
+	for <dm-devel@redhat.com>; Sat, 14 Aug 2021 18:34:47 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
 	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8D1C1101A529
-	for <dm-devel@redhat.com>; Fri, 13 Aug 2021 22:41:18 +0000 (UTC)
-Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com
-	[209.85.221.45]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-1-PgZ60OOHMiKnOhcv3R6x_w-1; Fri, 13 Aug 2021 18:41:16 -0400
-X-MC-Unique: PgZ60OOHMiKnOhcv3R6x_w-1
-Received: by mail-wr1-f45.google.com with SMTP id x10so8910315wrt.8
-	for <dm-devel@redhat.com>; Fri, 13 Aug 2021 15:41:16 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
-	:content-transfer-encoding;
-	bh=reYkrPb9IzyQkLq8C5/o3ZHeHUXILqYSBFW9CW/iaEg=;
-	b=EiCopHpQgqisjRy6t+lenKoyj8olPRpLL+aFhUX4hr4c6NFaiWlt/MwjckKlJmDjtM
-	lMXT7JzfcZY4Yr/yO1BUTPqUKCPx3QlTbt0nPZ/vALRB8ErUbw3RGgtN25fdfrmkUPIQ
-	n1WKCygmR55PzumwYCVSTXxz0NMr4ZGUQao+QhkMijL/7/l891cBBSMvRv8NXTLEmzQR
-	w1nOWeg1ma1lqbEgkqS5Stqsdqs8EY+XkqvxgSrzhLCxVp5v5y86XC4WbTJMotXHQH74
-	q9ePW1vZM0uLEHfbQkFocpBnVlzsQHPyckoSPJAFIvgepIxGVJp4wJ7NO/6Sz7t4UOxV
-	oJSA==
-X-Gm-Message-State: AOAM533i7VhLYEfTBohMd+pftrq0ylK9Da9sul8qC5BqNP86HWsW68Pe
-	aoqrfooVF3uES9YNS48K2q1SR/Xv8uLVrq9zL2o/1QC4LYrrR3peJrLdGCgJ6ZaCQ6yfxHQjZN9
-	QBsHJxTpEsDlyW8Q83QPT4kR2yOPDx8GHNoBSebxa+Qa0lihlD13gd4X/vQiHyIvBG5/ZB5Z4v1
-	no
-X-Google-Smtp-Source: ABdhPJzdQ1qMd/+aRlJm0dV1lNAJiSUkcBHUbpqV18ATEIgrSACwRjHZNPq+aB23b2WCAjYZbR7QOg==
-X-Received: by 2002:adf:a3cb:: with SMTP id m11mr5533190wrb.268.1628894475354; 
-	Fri, 13 Aug 2021 15:41:15 -0700 (PDT)
-Received: from localhost.localdomain ([2a02:8108:8440:5da4:6c41:9e8b:2e76:271])
-	by smtp.gmail.com with ESMTPSA id
-	q75sm2863867wme.40.2021.08.13.15.41.14
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Fri, 13 Aug 2021 15:41:14 -0700 (PDT)
-From: Arne Welzel <arne.welzel@corelight.com>
-To: dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com
-Date: Sat, 14 Aug 2021 00:40:38 +0200
-Message-Id: <20210813224038.2055684-1-arne.welzel@corelight.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0DBDD80066D
+	for <dm-devel@redhat.com>; Sat, 14 Aug 2021 18:34:47 +0000 (UTC)
+Received: from mout.kundenserver.de (mout.kundenserver.de [212.227.126.135])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-233-y2hVs1P_MeOPr5BgF4frdw-1; Sat, 14 Aug 2021 14:34:44 -0400
+X-MC-Unique: y2hVs1P_MeOPr5BgF4frdw-1
+Received: from weisslap.aisec.fraunhofer.de ([178.27.102.95]) by
+	mrelayeu.kundenserver.de (mreue010 [212.227.15.167]) with ESMTPSA
+	(Nemesis)
+	id 1M2w0K-1mDrUz3jQa-003NuA; Sat, 14 Aug 2021 20:34:42 +0200
+From: =?UTF-8?q?Michael=20Wei=C3=9F?= <michael.weiss@aisec.fraunhofer.de>
+To: Casey Schaufler <casey@schaufler-ca.com>
+Date: Sat, 14 Aug 2021 20:33:54 +0200
+Message-Id: <20210814183359.4061-3-michael.weiss@aisec.fraunhofer.de>
+In-Reply-To: <20210814183359.4061-1-michael.weiss@aisec.fraunhofer.de>
+References: <20210814183359.4061-1-michael.weiss@aisec.fraunhofer.de>
 MIME-Version: 1.0
+X-Provags-ID: V03:K1:JRxIIEYVu7W68Mlh/36bVLtSpKe0BNTk++rItoE71sb3OJE4Ufu
+	BpFoHbvkB//iZsXEAsC2Co76DE0Q+kNrHge4hduygWjDobaWfbxmwELVaBgfF55PCMHu/Xu
+	Z2OYf1U6JRGFHRZOU/rJiuc5AddQyTU4f1hIFKYnj4x7Dg5vIu0fUd+T5g22lzULGoNN7OA
+	TvyYEd4h2JRHtb+o8C7fQ==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:X5q4v+IdAAc=:GLSSLqkM8rMdNut5VEXjSC
+	EFCqp3ZyUSfNhniV4bY8Ae5uH2LLKaIQqb96xiOyF4bRBgUx1T47x1J6v7ra/5+6AVleC66Wj
+	HxVpofC48uR+6RHe2fh9V9HMTbwFZ/tuP8puKHiyF1Oz9kbD7wNKkl9PVpfjKLX/bMmcwRv1Z
+	qFqtygxA+TRuhxpq6b41INGjIPU5VFbN0g1DYAyzbLcpPIUHZjjcSN0ftJOMLmwsoAwYvYgKB
+	fyd7o8avsSSWg/cxUJ/u5y20CMkhCGBKY3bG8MJgvXetkPdbBrZwLLz1dgsrQWxEnm52lR6VI
+	bzoZb9cY7Yq8xLn+F13bSXf4SsB9RbvXXXGr2lEN+gutdvcBt8zMoPQgC97kLCdgbDmWzFtgJ
+	c5S7gVrA+yU9hnWNnvUU9Mugi6Xue+qJbUeTI2wMWWRybi+FkcYWYodjNeiq6sLxafPARoIQZ
+	LWFiALVNgFudDkpWZrq/m3MZXpaayZ9aSXcH6QtwCbntmC0SMZvzuMRQ+z8KgYLOMVz6ut1Q4
+	sAw4t+gsg1Sxf9rZAlPI8zwICiipi6YJKCSwMp1lzH+ZylqIEMpcd9S5tXPgdXBEBjNbQIGVG
+	28o8e7dtfmzBWcXFsGvrAnHhVee7XBt+SU0FXrIa294UyOsl/trrQszxmFe9SoCsmrz0qPn1y
+	L+POP9fV0dpz9VOH0SydmKDvenhv/NH1aO/te70Ygc6WoS92tE+fP2LzJMRACszxINZ6WKC5x
+	VZc6uJ+4G+TMmU8amePPBj1kCpok3Ede4EnYdqFHc062ngqdQ7Gz3VFrTi6Ty3S9TVXmHZ5DJ
+	A6zRiFN0VD1VmmmwZSK/S1CD/tS3AvfJpdPmAy8I/FxiofYqUMc73FJtEgi0ksWRSYSAzHTh0
+	EhXKyUWaD29BEFm7XU3A==
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -90,13 +89,17 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Tue, 17 Aug 2021 03:26:00 -0400
-Cc: Mikulas Patocka <mpatocka@redhat.com>, DJ Gregor <dj@corelight.com>,
-	linux-kernel@vger.kernel.org
-Subject: [dm-devel] [PATCH v2] dm crypt: Avoid percpu_counter spinlock
-	contention in crypt_page_alloc()
+Cc: =?UTF-8?q?Michael=20Wei=C3=9F?= <michael.weiss@aisec.fraunhofer.de>,
+	Paul Moore <paul@paul-moore.com>,
+	Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org,
+	Eric Paris <eparis@redhat.com>, linux-raid@vger.kernel.org,
+	Song Liu <song@kernel.org>, dm-devel@redhat.com,
+	linux-audit@redhat.com, Alasdair Kergon <agk@redhat.com>
+Subject: [dm-devel] [PATCH v2 2/3] dm integrity: log audit events for
+	dm-integrity target
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -110,139 +113,87 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On systems with many cores using dm-crypt, heavy spinlock contention in
-percpu_counter_compare() can be observed when the page allocation limit
-for a given device is reached or close to be reached. This is due
-to percpu_counter_compare() taking a spinlock to compute an exact
-result on potentially many CPUs at the same time.
-
-Switch to non-exact comparison of allocated and allowed pages by using
-the value returned by percpu_counter_read_positive() to avoid taking
-the percpu_counter spinlock.
-
-This may over/under estimate the actual number of allocated pages by at
-most (batch-1) * num_online_cpus().
-
-Currently, batch is bounded by 32. The system on which this issue was
-first observed has 256 CPUs and 512GB of RAM. With a 4k page size, this
-change may over/under estimate by 31MB. With ~10G (2%) allowed dm-crypt
-allocations, this seems an acceptable error. Certainly preferred over
-running into the spinlock contention.
-
-This behavior was reproduced on an EC2 c5.24xlarge instance with 96 CPUs
-and 192GB RAM as follows, but can be provoked on systems with less CPUs
-as well.
-
- * Disable swap
- * Tune vm settings to promote regular writeback
-     $ echo 50 > /proc/sys/vm/dirty_expire_centisecs
-     $ echo 25 > /proc/sys/vm/dirty_writeback_centisecs
-     $ echo $((128 * 1024 * 1024)) > /proc/sys/vm/dirty_background_bytes
-
- * Create 8 dmcrypt devices based on files on a tmpfs
- * Create and mount an ext4 filesystem on each crypt devices
- * Run stress-ng --hdd 8 within one of above filesystems
-
-Total %system usage collected from sysstat goes to ~35%. Write throughput
-on the underlying loop device is ~2GB/s. perf profiling an individual
-kworker kcryptd thread shows the following profile, indicating spinlock
-contention in percpu_counter_compare():
-
-    99.98%     0.00%  kworker/u193:46  [kernel.kallsyms]  [k] ret_from_fork
-      |
-      --ret_from_fork
-        kthread
-        worker_thread
-        |
-         --99.92%--process_one_work
-            |
-            |--80.52%--kcryptd_crypt
-            |    |
-            |    |--62.58%--mempool_alloc
-            |    |  |
-            |    |   --62.24%--crypt_page_alloc
-            |    |     |
-            |    |      --61.51%--__percpu_counter_compare
-            |    |        |
-            |    |         --61.34%--__percpu_counter_sum
-            |    |           |
-            |    |           |--58.68%--_raw_spin_lock_irqsave
-            |    |           |  |
-            |    |           |   --58.30%--native_queued_spin_lock_slowpath
-            |    |           |
-            |    |            --0.69%--cpumask_next
-            |    |                |
-            |    |                 --0.51%--_find_next_bit
-            |    |
-            |    |--10.61%--crypt_convert
-            |    |          |
-            |    |          |--6.05%--xts_crypt
-            ...
-
-After applying this patch and running the same test, %system usage is
-lowered to ~7% and write throughput on the loop device increases
-to ~2.7GB/s. perf report shows mempool_alloc() as ~8% rather than ~62%
-in the profile and not hitting the percpu_counter() spinlock anymore.
-
-    |--8.15%--mempool_alloc
-    |    |
-    |    |--3.93%--crypt_page_alloc
-    |    |    |
-    |    |     --3.75%--__alloc_pages
-    |    |         |
-    |    |          --3.62%--get_page_from_freelist
-    |    |              |
-    |    |               --3.22%--rmqueue_bulk
-    |    |                   |
-    |    |                    --2.59%--_raw_spin_lock
-    |    |                      |
-    |    |                       --2.57%--native_queued_spin_lock_slowpath
-    |    |
-    |     --3.05%--_raw_spin_lock_irqsave
-    |               |
-    |                --2.49%--native_queued_spin_lock_slowpath
-
-Suggested-by: DJ Gregor <dj@corelight.com>
-Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Arne Welzel <arne.welzel@corelight.com>
----
-
-v2: Change condition from > to >=, update patch description
-
- drivers/md/dm-crypt.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 50f4cbd600d5..8c0c3d1f54bb 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -2661,7 +2661,12 @@ static void *crypt_page_alloc(gfp_t gfp_mask, void *pool_data)
- 	struct crypt_config *cc = pool_data;
- 	struct page *page;
- 
--	if (unlikely(percpu_counter_compare(&cc->n_allocated_pages, dm_crypt_pages_per_client) >= 0) &&
-+	/*
-+	 * Note, percpu_counter_read_positive() may over (and under) estimate
-+	 * the current usage by at most (batch - 1) * num_online_cpus() pages,
-+	 * but avoids potential spinlock contention of an exact result.
-+	 */
-+	if (unlikely(percpu_counter_read_positive(&cc->n_allocated_pages) >= dm_crypt_pages_per_client) &&
- 	    likely(gfp_mask & __GFP_NORETRY))
- 		return NULL;
- 
--- 
-2.20.1
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+ZG0taW50ZWdyaXR5IHNpZ25hbHMgaW50ZWdyaXR5IHZpb2xhdGlvbnMgYnkgcmV0dXJuaW5nIEkv
+TyBlcnJvcnMKdG8gdXNlciBzcGFjZS4gVG8gaWRlbnRpZnkgaW50ZWdyaXR5IHZpb2xhdGlvbnMg
+YnkgYSBjb250cm9sbGluZwppbnN0YW5jZSwgdGhlIGtlcm5lbCBhdWRpdCBzdWJzeXN0ZW0gY2Fu
+IGJlIHVzZWQgdG8gZW1pdCBhdWRpdApldmVudHMgdG8gdXNlciBzcGFjZS4gV2UgdXNlIHRoZSBu
+ZXcgZG0tYXVkaXQgc3VibW9kdWxlIGFsbG93aW5nCnRvIGVtaXQgYXVkaXQgZXZlbnRzIG9uIHJl
+bGV2YW50IEkvTyBlcnJvcnMuCgpUaGUgY29uc3RydWN0aW9uIGFuZCBkZXN0cnVjdGlvbiBvZiBp
+bnRlZ3JpdHkgZGV2aWNlIG1hcHBpbmdzIGFyZQphbHNvIHJlbGV2YW50IGZvciBhdWRpdGluZyBh
+IHN5c3RlbS4gVGh1cywgdGhvc2UgZXZlbnRzIGFyZSBhbHNvCmxvZ2dlZCBhcyBhdWRpdCBldmVu
+dHMuCgpTaWduZWQtb2ZmLWJ5OiBNaWNoYWVsIFdlacOfIDxtaWNoYWVsLndlaXNzQGFpc2VjLmZy
+YXVuaG9mZXIuZGU+Ci0tLQogZHJpdmVycy9tZC9kbS1pbnRlZ3JpdHkuYyB8IDI1ICsrKysrKysr
+KysrKysrKysrKysrKy0tLS0KIDEgZmlsZSBjaGFuZ2VkLCAyMSBpbnNlcnRpb25zKCspLCA0IGRl
+bGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0taW50ZWdyaXR5LmMgYi9kcml2
+ZXJzL21kL2RtLWludGVncml0eS5jCmluZGV4IDIwZjI1MTBkYjFmNi4uZmJiYjRjM2YxNmNiIDEw
+MDY0NAotLS0gYS9kcml2ZXJzL21kL2RtLWludGVncml0eS5jCisrKyBiL2RyaXZlcnMvbWQvZG0t
+aW50ZWdyaXR5LmMKQEAgLTIzLDYgKzIzLDggQEAKICNpbmNsdWRlIDxsaW51eC9hc3luY190eC5o
+PgogI2luY2x1ZGUgPGxpbnV4L2RtLWJ1ZmlvLmg+CiAKKyNpbmNsdWRlICJkbS1hdWRpdC5oIgor
+CiAjZGVmaW5lIERNX01TR19QUkVGSVggImludGVncml0eSIKIAogI2RlZmluZSBERUZBVUxUX0lO
+VEVSTEVBVkVfU0VDVE9SUwkzMjc2OApAQCAtNTM5LDYgKzU0MSw3IEBAIHN0YXRpYyBpbnQgc2Jf
+bWFjKHN0cnVjdCBkbV9pbnRlZ3JpdHlfYyAqaWMsIGJvb2wgd3IpCiAJCX0KIAkJaWYgKG1lbWNt
+cCgoX191OCAqKWljLT5zYiArICgxIDw8IFNFQ1RPUl9TSElGVCkgLSBzaXplLCByZXN1bHQsIHNp
+emUpKSB7CiAJCQlkbV9pbnRlZ3JpdHlfaW9fZXJyb3IoaWMsICJzdXBlcmJsb2NrIG1hYyIsIC1F
+SUxTRVEpOworCQkJZG1fYXVkaXRfbG9nX3RhcmdldChETV9NU0dfUFJFRklYLCAibWFjLXN1cGVy
+YmxvY2siLCBpYy0+dGksIDApOwogCQkJcmV0dXJuIC1FSUxTRVE7CiAJCX0KIAl9CkBAIC04NzYs
+OCArODc5LDEwIEBAIHN0YXRpYyB2b2lkIHJ3X3NlY3Rpb25fbWFjKHN0cnVjdCBkbV9pbnRlZ3Jp
+dHlfYyAqaWMsIHVuc2lnbmVkIHNlY3Rpb24sIGJvb2wgd3IpCiAJCWlmIChsaWtlbHkod3IpKQog
+CQkJbWVtY3B5KCZqcy0+bWFjLCByZXN1bHQgKyAoaiAqIEpPVVJOQUxfTUFDX1BFUl9TRUNUT1Ip
+LCBKT1VSTkFMX01BQ19QRVJfU0VDVE9SKTsKIAkJZWxzZSB7Ci0JCQlpZiAobWVtY21wKCZqcy0+
+bWFjLCByZXN1bHQgKyAoaiAqIEpPVVJOQUxfTUFDX1BFUl9TRUNUT1IpLCBKT1VSTkFMX01BQ19Q
+RVJfU0VDVE9SKSkKKwkJCWlmIChtZW1jbXAoJmpzLT5tYWMsIHJlc3VsdCArIChqICogSk9VUk5B
+TF9NQUNfUEVSX1NFQ1RPUiksIEpPVVJOQUxfTUFDX1BFUl9TRUNUT1IpKSB7CiAJCQkJZG1faW50
+ZWdyaXR5X2lvX2Vycm9yKGljLCAiam91cm5hbCBtYWMiLCAtRUlMU0VRKTsKKwkJCQlkbV9hdWRp
+dF9sb2dfdGFyZ2V0KERNX01TR19QUkVGSVgsICJtYWMtam91cm5hbCIsIGljLT50aSwgMCk7CisJ
+CQl9CiAJCX0KIAl9CiB9CkBAIC0xNzgyLDEwICsxNzg3LDE1IEBAIHN0YXRpYyB2b2lkIGludGVn
+cml0eV9tZXRhZGF0YShzdHJ1Y3Qgd29ya19zdHJ1Y3QgKncpCiAJCQlpZiAodW5saWtlbHkocikp
+IHsKIAkJCQlpZiAociA+IDApIHsKIAkJCQkJY2hhciBiW0JERVZOQU1FX1NJWkVdOwotCQkJCQlE
+TUVSUl9MSU1JVCgiJXM6IENoZWNrc3VtIGZhaWxlZCBhdCBzZWN0b3IgMHglbGx4IiwgYmlvX2Rl
+dm5hbWUoYmlvLCBiKSwKLQkJCQkJCSAgICAoc2VjdG9yIC0gKChyICsgaWMtPnRhZ19zaXplIC0g
+MSkgLyBpYy0+dGFnX3NpemUpKSk7CisJCQkJCXNlY3Rvcl90IHM7CisKKwkJCQkJcyA9IHNlY3Rv
+ciAtICgociArIGljLT50YWdfc2l6ZSAtIDEpIC8gaWMtPnRhZ19zaXplKTsKKwkJCQkJRE1FUlJf
+TElNSVQoIiVzOiBDaGVja3N1bSBmYWlsZWQgYXQgc2VjdG9yIDB4JWxseCIsCisJCQkJCQkgICAg
+YmlvX2Rldm5hbWUoYmlvLCBiKSwgcyk7CiAJCQkJCXIgPSAtRUlMU0VROwogCQkJCQlhdG9taWM2
+NF9pbmMoJmljLT5udW1iZXJfb2ZfbWlzbWF0Y2hlcyk7CisJCQkJCWRtX2F1ZGl0X2xvZ19iaW8o
+RE1fTVNHX1BSRUZJWCwgImludGVncml0eS1jaGVja3N1bSIsCisJCQkJCQkJIGJpbywgcywgMCk7
+CiAJCQkJfQogCQkJCWlmIChsaWtlbHkoY2hlY2tzdW1zICE9IGNoZWNrc3Vtc19vbnN0YWNrKSkK
+IAkJCQkJa2ZyZWUoY2hlY2tzdW1zKTsKQEAgLTE5OTEsNiArMjAwMSw4IEBAIHN0YXRpYyBib29s
+IF9fam91cm5hbF9yZWFkX3dyaXRlKHN0cnVjdCBkbV9pbnRlZ3JpdHlfaW8gKmRpbywgc3RydWN0
+IGJpbyAqYmlvLAogCQkJCQlpZiAodW5saWtlbHkobWVtY21wKGNoZWNrc3Vtc19vbnN0YWNrLCBq
+b3VybmFsX2VudHJ5X3RhZyhpYywgamUpLCBpYy0+dGFnX3NpemUpKSkgewogCQkJCQkJRE1FUlJf
+TElNSVQoIkNoZWNrc3VtIGZhaWxlZCB3aGVuIHJlYWRpbmcgZnJvbSBqb3VybmFsLCBhdCBzZWN0
+b3IgMHglbGx4IiwKIAkJCQkJCQkgICAgbG9naWNhbF9zZWN0b3IpOworCQkJCQkJZG1fYXVkaXRf
+bG9nX2JpbyhETV9NU0dfUFJFRklYLCAiam91cm5hbC1jaGVja3N1bSIsCisJCQkJCQkJCSBiaW8s
+IGxvZ2ljYWxfc2VjdG9yLCAwKTsKIAkJCQkJfQogCQkJCX0KICNlbmRpZgpAQCAtMjUzNCw4ICsy
+NTQ2LDEwIEBAIHN0YXRpYyB2b2lkIGRvX2pvdXJuYWxfd3JpdGUoc3RydWN0IGRtX2ludGVncml0
+eV9jICppYywgdW5zaWduZWQgd3JpdGVfc3RhcnQsCiAKIAkJCQkJaW50ZWdyaXR5X3NlY3Rvcl9j
+aGVja3N1bShpYywgc2VjICsgKChsIC0gaikgPDwgaWMtPnNiLT5sb2cyX3NlY3RvcnNfcGVyX2Js
+b2NrKSwKIAkJCQkJCQkJICAoY2hhciAqKWFjY2Vzc19qb3VybmFsX2RhdGEoaWMsIGksIGwpLCB0
+ZXN0X3RhZyk7Ci0JCQkJCWlmICh1bmxpa2VseShtZW1jbXAodGVzdF90YWcsIGpvdXJuYWxfZW50
+cnlfdGFnKGljLCBqZTIpLCBpYy0+dGFnX3NpemUpKSkKKwkJCQkJaWYgKHVubGlrZWx5KG1lbWNt
+cCh0ZXN0X3RhZywgam91cm5hbF9lbnRyeV90YWcoaWMsIGplMiksIGljLT50YWdfc2l6ZSkpKSB7
+CiAJCQkJCQlkbV9pbnRlZ3JpdHlfaW9fZXJyb3IoaWMsICJ0YWcgbWlzbWF0Y2ggd2hlbiByZXBs
+YXlpbmcgam91cm5hbCIsIC1FSUxTRVEpOworCQkJCQkJZG1fYXVkaXRfbG9nX3RhcmdldChETV9N
+U0dfUFJFRklYLCAiaW50ZWdyaXR5LXJlcGxheS1qb3VybmFsIiwgaWMtPnRpLCAwKTsKKwkJCQkJ
+fQogCQkJCX0KIAogCQkJCWpvdXJuYWxfZW50cnlfc2V0X3VudXNlZChqZTIpOwpAQCAtNDQ5MCw5
+ICs0NTA0LDExIEBAIHN0YXRpYyBpbnQgZG1faW50ZWdyaXR5X2N0cihzdHJ1Y3QgZG1fdGFyZ2V0
+ICp0aSwgdW5zaWduZWQgYXJnYywgY2hhciAqKmFyZ3YpCiAJaWYgKGljLT5kaXNjYXJkKQogCQl0
+aS0+bnVtX2Rpc2NhcmRfYmlvcyA9IDE7CiAKKwlkbV9hdWRpdF9sb2dfdGFyZ2V0KERNX01TR19Q
+UkVGSVgsICJjdHIiLCB0aSwgMSk7CiAJcmV0dXJuIDA7CiAKIGJhZDoKKwlkbV9hdWRpdF9sb2df
+dGFyZ2V0KERNX01TR19QUkVGSVgsICJjdHIiLCB0aSwgMCk7CiAJZG1faW50ZWdyaXR5X2R0cih0
+aSk7CiAJcmV0dXJuIHI7CiB9CkBAIC00NTY2LDYgKzQ1ODIsNyBAQCBzdGF0aWMgdm9pZCBkbV9p
+bnRlZ3JpdHlfZHRyKHN0cnVjdCBkbV90YXJnZXQgKnRpKQogCWZyZWVfYWxnKCZpYy0+am91cm5h
+bF9tYWNfYWxnKTsKIAogCWtmcmVlKGljKTsKKwlkbV9hdWRpdF9sb2dfdGFyZ2V0KERNX01TR19Q
+UkVGSVgsICJkdHIiLCB0aSwgMSk7CiB9CiAKIHN0YXRpYyBzdHJ1Y3QgdGFyZ2V0X3R5cGUgaW50
+ZWdyaXR5X3RhcmdldCA9IHsKLS0gCjIuMjAuMQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRt
+LWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0
+aW5mby9kbS1kZXZlbA==
 
