@@ -2,81 +2,85 @@ Return-Path: <SRS0=iWw/=NJ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-7.2 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,NICE_REPLY_A,SPF_HELO_NONE,
-	SPF_PASS,USER_AGENT_SANE_1 autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-0.7 required=3.0 tests=BAYES_00,DKIM_ADSP_CUSTOM_MED,
+	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4431AC4320A
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 70F74C432BE
 	for <dm-devel@archiver.kernel.org>; Wed, 18 Aug 2021 07:57:03 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 923E26108B
+	by mail.kernel.org (Postfix) with ESMTPS id 032C9610A1
 	for <dm-devel@archiver.kernel.org>; Wed, 18 Aug 2021 07:57:02 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 923E26108B
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=interlog.com
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 032C9610A1
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-429-TacOpjccOFeHIW6A7k8ZjQ-1; Wed, 18 Aug 2021 03:57:00 -0400
-X-MC-Unique: TacOpjccOFeHIW6A7k8ZjQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-494-0JiAfH8POaCGdPfAvkRF4w-1; Wed, 18 Aug 2021 03:57:00 -0400
+X-MC-Unique: 0JiAfH8POaCGdPfAvkRF4w-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 80B391008071;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B1175101C8B9;
 	Wed, 18 Aug 2021 07:56:55 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5B86019D9B;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9408E5D9CA;
 	Wed, 18 Aug 2021 07:56:55 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C30B6181A0F7;
-	Wed, 18 Aug 2021 07:56:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 69CCD181A100;
+	Wed, 18 Aug 2021 07:56:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 17HM2bkx026298 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 17 Aug 2021 18:02:37 -0400
+	id 17HEgvGH007106 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 17 Aug 2021 10:42:57 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4867D100335C; Tue, 17 Aug 2021 22:02:37 +0000 (UTC)
+	id 5D3392141559; Tue, 17 Aug 2021 14:42:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4490E1111C90
-	for <dm-devel@redhat.com>; Tue, 17 Aug 2021 22:02:34 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 52CE5200E490
+	for <dm-devel@redhat.com>; Tue, 17 Aug 2021 14:42:53 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A2592100B8C8
-	for <dm-devel@redhat.com>; Tue, 17 Aug 2021 22:02:34 +0000 (UTC)
-Received: from mail-1.ca.inter.net (mail-1.ca.inter.net [208.85.220.69]) by
-	relay.mimecast.com with ESMTP id us-mta-252-LFwhWNkVP2KJMArPuIRiiw-1;
-	Tue, 17 Aug 2021 18:02:30 -0400
-X-MC-Unique: LFwhWNkVP2KJMArPuIRiiw-1
-Received: from mp-mx11.ca.inter.net (mp-mx11.ca.inter.net [208.85.217.19])
-	by mail-1.ca.inter.net (Postfix) with ESMTP id 8E3912EA3C6;
-	Tue, 17 Aug 2021 17:53:50 -0400 (EDT)
-Received: from mail-1.ca.inter.net ([208.85.220.69])
-	by mp-mx11.ca.inter.net (mp-mx11.ca.inter.net [208.85.217.19])
-	(amavisd-new, port 10024)
-	with ESMTP id OvSH92nd_r9u; Tue, 17 Aug 2021 17:53:49 -0400 (EDT)
-Received: from [192.168.48.23] (host-45-78-207-107.dyn.295.ca [45.78.207.107])
-	(using TLSv1 with cipher DHE-RSA-AES128-SHA (128/128 bits))
-	(No client certificate requested)
-	(Authenticated sender: dgilbert@interlog.com)
-	by mail-1.ca.inter.net (Postfix) with ESMTPSA id DC7C52EA1C8;
-	Tue, 17 Aug 2021 17:53:45 -0400 (EDT)
-To: Mikulas Patocka <mpatocka@redhat.com>, Bart Van Assche <bvanassche@acm.org>
-References: <20210817101423.12367-1-selvakuma.s1@samsung.com>
-	<CGME20210817101758epcas5p1ec353b3838d64654e69488229256d9eb@epcas5p1.samsung.com>
-	<20210817101423.12367-4-selvakuma.s1@samsung.com>
-	<ad3561b9-775d-dd4d-0d92-6343440b1f8f@acm.org>
-	<alpine.LRH.2.02.2108171630120.30363@file01.intranet.prod.int.rdu2.redhat.com>
-From: Douglas Gilbert <dgilbert@interlog.com>
-Message-ID: <bbecc7e7-8bf5-3fe3-6c24-883c79fb7517@interlog.com>
-Date: Tue, 17 Aug 2021 17:53:45 -0400
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
-	Thunderbird/68.10.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4B5341066686
+	for <dm-devel@redhat.com>; Tue, 17 Aug 2021 14:42:53 +0000 (UTC)
+Received: from mail-lf1-f47.google.com (mail-lf1-f47.google.com
+	[209.85.167.47]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-499-xxPovym2OlWq0PuqZkezQQ-1; Tue, 17 Aug 2021 10:42:51 -0400
+X-MC-Unique: xxPovym2OlWq0PuqZkezQQ-1
+Received: by mail-lf1-f47.google.com with SMTP id p38so42015932lfa.0;
+	Tue, 17 Aug 2021 07:42:50 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc;
+	bh=IYqEXJfiN18yCZI6p8+AKI7fLyyfIF/2Rhy4MgWxORs=;
+	b=FmPKSq9GSb5yoCWX+++MXsv+RLmlj4HaO5VAl+QTCkuBTsNP6dxiV6yvmkLytenBN5
+	ItNFvnycLWTWBZFeLpWtzWuqbLVtJk4ogTLwKND5NZz/3gBLWm4UOWrSXhxyLMMG1QR0
+	Q7h+gDE3UNBodXQTjkGhXbz3AZrsuXiXkRpKtKnZgobOfj/BSO8exmr2rAARf9PUbDmc
+	yiwcDcYFJFQfD+JHcZl4O2ArKOK73DlAoqRUw9VqP+4EHSH3p49Dhi7nzAdhfKtjRY/T
+	pj0byyF0XHypxCSCuZUVMzfIHgbQF6ZsHsxtDLNLO5VeC0r9+WpgSIycuCRFbGmWA7Iv
+	xtJg==
+X-Gm-Message-State: AOAM530QMnUowP5Pzuuba5g9ZTc5hwZ/Rdfvl6wxLcfYbp6EZl5HNXc4
+	Y3g1h8e+0atj1HQWE+FUxWi6SkGLRkv+jbRdHnk=
+X-Google-Smtp-Source: ABdhPJzaMq7CWUOoMolITqe/TuYuwS1QvR8N16pqlMH4rqZKY4UMF98ZToXGodeF25valw2giFNpcKQdBw8IOwnP8Gc=
+X-Received: by 2002:ac2:5b9d:: with SMTP id o29mr2734522lfn.26.1629211368980; 
+	Tue, 17 Aug 2021 07:42:48 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <alpine.LRH.2.02.2108171630120.30363@file01.intranet.prod.int.rdu2.redhat.com>
+References: <20210817101423.12367-1-selvakuma.s1@samsung.com>
+	<CGME20210817101753epcas5p4f4257f8edda27e184ecbb273b700ccbc@epcas5p4.samsung.com>
+	<20210817101423.12367-3-selvakuma.s1@samsung.com>
+	<YRu02+RgnZekKSqi@kroah.com>
+In-Reply-To: <YRu02+RgnZekKSqi@kroah.com>
+From: Nitesh Shetty <nitheshshetty@gmail.com>
+Date: Tue, 17 Aug 2021 20:12:37 +0530
+Message-ID: <CAOSviJ3tziyBmeP5Op_NAPhyt5vDprjPLaGH8Fu_rbK8UcQYPA@mail.gmail.com>
+To: Greg KH <gregkh@linuxfoundation.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -85,27 +89,25 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 18 Aug 2021 03:56:53 -0400
-Cc: Mike Snitzer <snitzer@redhat.com>,
-	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-	djwong@kernel.org, linux-nvme@lists.infradead.org,
+Cc: snitzer@redhat.com, djwong@kernel.org, linux-nvme@lists.infradead.org,
 	dm-devel@redhat.com, hch@lst.de, agk@redhat.com,
-	linux-scsi@vger.kernel.org, nitheshshetty@gmail.com,
+	bvanassche@acm.org, linux-scsi@vger.kernel.org,
 	willy@infradead.org, nj.shetty@samsung.com, kch@kernel.org,
 	SelvaKumar S <selvakuma.s1@samsung.com>, selvajove@gmail.com,
-	linux-block@vger.kernel.org, javier.gonz@samsung.com,
-	kbusch@kernel.org, axboe@kernel.dk, damien.lemoal@wdc.com,
-	joshi.k@samsung.com, "Martin K. Petersen" <martin.petersen@oracle.com>,
-	linux-api@vger.kernel.org, johannes.thumshirn@wdc.com,
-	linux-fsdevel@vger.kernel.org, joshiiitr@gmail.com, asml.silence@gmail.com
-Subject: Re: [dm-devel] [PATCH 3/7] block: copy offload support
-	infrastructure
+	linux-block@vger.kernel.org, mpatocka@redhat.com,
+	javier.gonz@samsung.com, kbusch@kernel.org, axboe@kernel.dk,
+	damien.lemoal@wdc.com, joshi.k@samsung.com,
+	martin.petersen@oracle.com, linux-api@vger.kernel.org,
+	johannes.thumshirn@wdc.com, linux-fsdevel@vger.kernel.org,
+	joshiiitr@gmail.com, asml.silence@gmail.com
+Subject: Re: [dm-devel] [PATCH 2/7] block: Introduce queue limits for
+	copy-offload support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
-Reply-To: dgilbert@interlog.com
 List-Id: device-mapper development <dm-devel.redhat.com>
 List-Unsubscribe: <https://listman.redhat.com/mailman/options/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -116,62 +118,33 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-CA
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 2021-08-17 4:41 p.m., Mikulas Patocka wrote:
-> 
-> 
-> On Tue, 17 Aug 2021, Bart Van Assche wrote:
-> 
->> On 8/17/21 3:14 AM, SelvaKumar S wrote:
->>> Introduce REQ_OP_COPY, a no-merge copy offload operation. Create
->>> bio with control information as payload and submit to the device.
->>> Larger copy operation may be divided if necessary by looking at device
->>> limits. REQ_OP_COPY(19) is a write op and takes zone_write_lock when
->>> submitted to zoned device.
->>> Native copy offload is not supported for stacked devices.
->>
->> Using a single operation for copy-offloading instead of separate operations
->> for reading and writing is fundamentally incompatible with the device mapper.
->> I think we need a copy-offloading implementation that is compatible with the
->> device mapper.
-> 
-> I once wrote a copy offload implementation that is compatible with device
-> mapper. The copy operation creates two bios (one for reading and one for
-> writing), passes them independently through device mapper and pairs them
-> at the physical device driver.
-> 
-> It's here: http://people.redhat.com/~mpatocka/patches/kernel/xcopy/current
+On Tue, Aug 17, 2021 at 6:38 PM Greg KH <gregkh@linuxfoundation.org> wrote:
+>
+> On Tue, Aug 17, 2021 at 03:44:18PM +0530, SelvaKumar S wrote:
+> > From: Nitesh Shetty <nj.shetty@samsung.com>
+> >
+> > Add device limits as sysfs entries,
+> >         - copy_offload (READ_WRITE)
+> >         - max_copy_sectors (READ_ONLY)
+> >         - max_copy_ranges_sectors (READ_ONLY)
+> >         - max_copy_nr_ranges (READ_ONLY)
+>
+> You forgot to add Documentation/ABI/ entries for your new sysfs files,
+> so we can't properly review them :(
+>
 
-In my copy solution the read-side and write-side bio pairs share the same 
-storage (i.e. ram) This gets around the need to copy data between the bio_s.
-See:
-    https://sg.danny.cz/sg/sg_v40.html
-in Section 8 on Request sharing. This technique can be efficiently extend to
-source --> destination1,destination2,...      copies.
+Sorry, we will update the documentation in the next version.
 
-Doug Gilbert
-
-> I verified that it works with iSCSI. Would you be interested in continuing
-> this work?
-> 
-> Mikulas
-> 
->> Storing the parameters of the copy operation in the bio payload is
->> incompatible with the current implementation of bio_split().
->>
->> In other words, I think there are fundamental problems with this patch series.
->>
->> Bart.
->>
-> 
+Thanks,
+Nitesh Shetty
 
 --
 dm-devel mailing list
