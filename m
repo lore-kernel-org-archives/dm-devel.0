@@ -2,72 +2,83 @@ Return-Path: <SRS0=Iac5=NL=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-15.2 required=3.0 tests=BAYES_00,
+X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED,USER_AGENT_SANE_1
-	autolearn=ham autolearn_force=no version=3.4.0
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B90E0C432BE
-	for <dm-devel@archiver.kernel.org>; Fri, 20 Aug 2021 15:08:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C2CF1C4338F
+	for <dm-devel@archiver.kernel.org>; Fri, 20 Aug 2021 16:06:55 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 0462F61053
-	for <dm-devel@archiver.kernel.org>; Fri, 20 Aug 2021 15:08:25 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 0462F61053
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+	by mail.kernel.org (Postfix) with ESMTPS id F11FE61214
+	for <dm-devel@archiver.kernel.org>; Fri, 20 Aug 2021 16:06:54 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org F11FE61214
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=intel.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-47-hJ0J9aOYOEWjHMY7dIIZgg-1; Fri, 20 Aug 2021 11:08:23 -0400
-X-MC-Unique: hJ0J9aOYOEWjHMY7dIIZgg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-481-WYhH2wM1N7CqwiEUglvmvw-1; Fri, 20 Aug 2021 12:06:52 -0400
+X-MC-Unique: WYhH2wM1N7CqwiEUglvmvw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C72E6190A7A1;
-	Fri, 20 Aug 2021 15:08:17 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 335E2801AEB;
+	Fri, 20 Aug 2021 16:06:47 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0916D5D741;
-	Fri, 20 Aug 2021 15:08:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B57AD1A26A;
+	Fri, 20 Aug 2021 16:06:46 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A5C781819AC2;
-	Fri, 20 Aug 2021 15:08:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3B96A181A1CE;
+	Fri, 20 Aug 2021 16:06:46 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 17KF8B16027358 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 20 Aug 2021 11:08:12 -0400
+	id 17KG6iuL032306 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 20 Aug 2021 12:06:44 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id CDE371182DD; Fri, 20 Aug 2021 15:08:11 +0000 (UTC)
+	id 847A510547D2; Fri, 20 Aug 2021 16:06:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C2E36116725
-	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 15:08:09 +0000 (UTC)
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7FEB710545CA
+	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 16:06:37 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 249CD80100E
-	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 15:08:09 +0000 (UTC)
-Received: from verein.lst.de (verein.lst.de [213.95.11.211]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-202-x6PrLjuAPOaVIvnEkmMWEA-1;
-	Fri, 20 Aug 2021 11:08:06 -0400
-X-MC-Unique: x6PrLjuAPOaVIvnEkmMWEA-1
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 20D2D6736F; Fri, 20 Aug 2021 17:08:04 +0200 (CEST)
-Date: Fri, 20 Aug 2021 17:08:03 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Guenter Roeck <linux@roeck-us.net>
-Message-ID: <20210820150803.GA490@lst.de>
-References: <20210804094147.459763-1-hch@lst.de>
-	<20210804094147.459763-5-hch@lst.de>
-	<20210814211309.GA616511@roeck-us.net>
-	<20210815070724.GA23276@lst.de>
-	<a8d66952-ee44-d3fa-d699-439415b9abfe@roeck-us.net>
-	<20210816072158.GA27147@lst.de>
-	<20210816141702.GA3449320@roeck-us.net>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 41693805A30
+	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 16:06:37 +0000 (UTC)
+Received: from mail-pf1-f176.google.com (mail-pf1-f176.google.com
+	[209.85.210.176]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-202-HSWsaGS-M0uNKRMBGaSD4g-1; Fri, 20 Aug 2021 12:06:35 -0400
+X-MC-Unique: HSWsaGS-M0uNKRMBGaSD4g-1
+Received: by mail-pf1-f176.google.com with SMTP id t13so8991643pfl.6
+	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 09:06:34 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20161025;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc;
+	bh=SE1PBWc7mAk6yXDwwX3HHPm6R0g9oeMCDvjQB1FSRU4=;
+	b=jgWKAD+C8B93aYPszihy9xrQ8wbzq7B4cNTUr5OtTN8GQbOj1a1gscwreIRP4L2zWL
+	1/LEJ+sgwIwqLY5CSj0nVqRCrL89UsyeRtfPfwL4ImgxF9EUt1caoRw3bib5G+xPOtcn
+	K3ulR8ccwBEi4/u7X8/qTb067PQlJ/DQycTzTf8lW1pnOWid6BU2aEvbCI2fjciLl5MU
+	idqhZA/VHQfI7ff+vwyMLH9Rdc53nBVYHhErwYDjAsW71H3DP1ax9dmLrmaisr0Kr3Um
+	ab/GIKqZVERqb8hgfyRQXmW4fAhJHkQCpGYetEiy5fA3SoSxReaqAx1s0e0q8w/ittS1
+	FfhQ==
+X-Gm-Message-State: AOAM532ugca15W5xR76CrQ/K9sLrljTnmpVpZlcGtTakbg8m6KSKyb5g
+	QfxVVX+hcGZNtgboU6tnsS+2YQveaZBTB9b6LA+tSA==
+X-Google-Smtp-Source: ABdhPJzZwGSABeBQxV85uUQDyE877kBWKar9nuSTal+efpWConcEcwK48D/jgozGf+NtNUk6MXi23elgGDtpJtSZv9s=
+X-Received: by 2002:a05:6a00:16c6:b029:32d:e190:9dd0 with SMTP id
+	l6-20020a056a0016c6b029032de1909dd0mr20235683pfc.70.1629475593581;
+	Fri, 20 Aug 2021 09:06:33 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <20210816141702.GA3449320@roeck-us.net>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+References: <20210730100158.3117319-1-ruansy.fnst@fujitsu.com>
+	<20210730100158.3117319-3-ruansy.fnst@fujitsu.com>
+In-Reply-To: <20210730100158.3117319-3-ruansy.fnst@fujitsu.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Date: Fri, 20 Aug 2021 09:06:22 -0700
+Message-ID: <CAPcyv4gVpK2US=-FhZYccKN-9sVa9WC4k5TD+WNH0bBkjwhE2w@mail.gmail.com>
+To: Shiyang Ruan <ruansy.fnst@fujitsu.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -76,13 +87,17 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	dm-devel@redhat.com, Christoph Hellwig <hch@lst.de>,
-	Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [dm-devel] [PATCH 4/8] block: support delayed holder
- registration
+Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Mike Snitzer <snitzer@redhat.com>,
+	"Darrick J. Wong" <djwong@kernel.org>, david <david@fromorbit.com>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	linux-xfs <linux-xfs@vger.kernel.org>, Linux MM <linux-mm@kvack.org>,
+	device-mapper development <dm-devel@redhat.com>,
+	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+	Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH RESEND v6 2/9] dax: Introduce holder for
+	dax_device
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -96,78 +111,196 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Please try the patch below:
+On Fri, Jul 30, 2021 at 3:02 AM Shiyang Ruan <ruansy.fnst@fujitsu.com> wrote:
+>
+> To easily track filesystem from a pmem device, we introduce a holder for
+> dax_device structure, and also its operation.  This holder is used to
+> remember who is using this dax_device:
+>  - When it is the backend of a filesystem, the holder will be the
+>    superblock of this filesystem.
+>  - When this pmem device is one of the targets in a mapped device, the
+>    holder will be this mapped device.  In this case, the mapped device
+>    has its own dax_device and it will follow the first rule.  So that we
+>    can finally track to the filesystem we needed.
+>
+> The holder and holder_ops will be set when filesystem is being mounted,
+> or an target device is being activated.
+>
+> Signed-off-by: Shiyang Ruan <ruansy.fnst@fujitsu.com>
+> ---
+>  drivers/dax/super.c | 46 +++++++++++++++++++++++++++++++++++++++++++++
+>  include/linux/dax.h | 17 +++++++++++++++++
+>  2 files changed, 63 insertions(+)
+>
+> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+> index 5fa6ae9dbc8b..00c32dfa5665 100644
+> --- a/drivers/dax/super.c
+> +++ b/drivers/dax/super.c
+> @@ -214,6 +214,8 @@ enum dax_device_flags {
+>   * @cdev: optional character interface for "device dax"
+>   * @host: optional name for lookups where the device path is not available
+>   * @private: dax driver private data
+> + * @holder_rwsem: prevent unregistration while holder_ops is in progress
+> + * @holder_data: holder of a dax_device: could be filesystem or mapped device
+>   * @flags: state and boolean properties
+>   */
+>  struct dax_device {
+> @@ -222,8 +224,11 @@ struct dax_device {
+>         struct cdev cdev;
+>         const char *host;
+>         void *private;
+> +       struct rw_semaphore holder_rwsem;
 
----
->From 7609266da56160d211662cd2fbe26570aad11b15 Mon Sep 17 00:00:00 2001
-From: Christoph Hellwig <hch@lst.de>
-Date: Fri, 20 Aug 2021 17:00:11 +0200
-Subject: mtd_blkdevs: don't hold del_mtd_blktrans_dev in
- blktrans_{open,release}
+Given the rarity of notification failures and the infrequency of
+registration events I think it would be ok for this to be a global
+lock rather than per-device. In fact there is already a global dax
+lock, see dax_read_lock(). Let's convert that from srcu to rwsem and
+add a dax_write_lock().
 
-There is nothing that this protects against except for slightly reducing
-the window when new opens can appear just before calling del_gendisk.
+> +       void *holder_data;
+>         unsigned long flags;
+>         const struct dax_operations *ops;
+> +       const struct dax_holder_operations *holder_ops;
+>  };
+>
+>  static ssize_t write_cache_show(struct device *dev,
+> @@ -373,6 +378,25 @@ int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
+>  }
+>  EXPORT_SYMBOL_GPL(dax_zero_page_range);
+>
+> +int dax_holder_notify_failure(struct dax_device *dax_dev, loff_t offset,
+> +                             size_t size, void *data)
+> +{
+> +       int rc;
+> +
+> +       if (!dax_dev)
+> +               return -ENXIO;
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- drivers/mtd/mtd_blkdevs.c | 5 -----
- 1 file changed, 5 deletions(-)
+There also needs to be a dax_dev->alive check, which is only valid to
+be checked under dax_read_lock().
 
-diff --git a/drivers/mtd/mtd_blkdevs.c b/drivers/mtd/mtd_blkdevs.c
-index 44bea3f65060..6b81a1c9ccbe 100644
---- a/drivers/mtd/mtd_blkdevs.c
-+++ b/drivers/mtd/mtd_blkdevs.c
-@@ -207,7 +207,6 @@ static int blktrans_open(struct block_device *bdev, fmode_t mode)
- 	if (!dev)
- 		return -ERESTARTSYS; /* FIXME: busy loop! -arnd*/
- 
--	mutex_lock(&mtd_table_mutex);
- 	mutex_lock(&dev->lock);
- 
- 	if (dev->open)
-@@ -233,7 +232,6 @@ static int blktrans_open(struct block_device *bdev, fmode_t mode)
- unlock:
- 	dev->open++;
- 	mutex_unlock(&dev->lock);
--	mutex_unlock(&mtd_table_mutex);
- 	blktrans_dev_put(dev);
- 	return ret;
- 
-@@ -244,7 +242,6 @@ static int blktrans_open(struct block_device *bdev, fmode_t mode)
- 	module_put(dev->tr->owner);
- 	kref_put(&dev->ref, blktrans_dev_release);
- 	mutex_unlock(&dev->lock);
--	mutex_unlock(&mtd_table_mutex);
- 	blktrans_dev_put(dev);
- 	return ret;
- }
-@@ -256,7 +253,6 @@ static void blktrans_release(struct gendisk *disk, fmode_t mode)
- 	if (!dev)
- 		return;
- 
--	mutex_lock(&mtd_table_mutex);
- 	mutex_lock(&dev->lock);
- 
- 	if (--dev->open)
-@@ -272,7 +268,6 @@ static void blktrans_release(struct gendisk *disk, fmode_t mode)
- 	}
- unlock:
- 	mutex_unlock(&dev->lock);
--	mutex_unlock(&mtd_table_mutex);
- 	blktrans_dev_put(dev);
- }
- 
--- 
-2.30.2
+Who would ever pass NULL to this function?
+
+> +
+> +       if (!dax_dev->holder_data)
+> +               return -EOPNOTSUPP;
+> +
+> +       down_read(&dax_dev->holder_rwsem);
+> +       rc = dax_dev->holder_ops->notify_failure(dax_dev, offset,
+> +                                                        size, data);
+> +       up_read(&dax_dev->holder_rwsem);
+
+
+
+> +       return rc;
+> +}
+> +EXPORT_SYMBOL_GPL(dax_holder_notify_failure);
+> +
+>  #ifdef CONFIG_ARCH_HAS_PMEM_API
+>  void arch_wb_cache_pmem(void *addr, size_t size);
+>  void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
+> @@ -603,6 +627,7 @@ struct dax_device *alloc_dax(void *private, const char *__host,
+>         dax_add_host(dax_dev, host);
+>         dax_dev->ops = ops;
+>         dax_dev->private = private;
+> +       init_rwsem(&dax_dev->holder_rwsem);
+>         if (flags & DAXDEV_F_SYNC)
+>                 set_dax_synchronous(dax_dev);
+>
+> @@ -624,6 +649,27 @@ void put_dax(struct dax_device *dax_dev)
+>  }
+>  EXPORT_SYMBOL_GPL(put_dax);
+>
+> +void dax_set_holder(struct dax_device *dax_dev, void *holder,
+> +               const struct dax_holder_operations *ops)
+> +{
+> +       if (!dax_dev)
+
+Same questions about NULL dax dev and ->alive checking.
+
+> +               return;
+> +       down_write(&dax_dev->holder_rwsem);
+> +       dax_dev->holder_data = holder;
+> +       dax_dev->holder_ops = ops;
+> +       up_write(&dax_dev->holder_rwsem);
+> +}
+> +EXPORT_SYMBOL_GPL(dax_set_holder);
+> +
+> +void *dax_get_holder(struct dax_device *dax_dev)
+> +{
+> +       if (!dax_dev)
+> +               return NULL;
+
+Where is this API used? This result is not valid unless the caller is
+holding the read lock.
+
+> +
+> +       return dax_dev->holder_data;
+> +}
+> +EXPORT_SYMBOL_GPL(dax_get_holder);
+> +
+>  /**
+>   * dax_get_by_host() - temporary lookup mechanism for filesystem-dax
+>   * @host: alternate name for the device registered by a dax driver
+> diff --git a/include/linux/dax.h b/include/linux/dax.h
+> index b52f084aa643..6f4b5c97ceb0 100644
+> --- a/include/linux/dax.h
+> +++ b/include/linux/dax.h
+> @@ -38,10 +38,17 @@ struct dax_operations {
+>         int (*zero_page_range)(struct dax_device *, pgoff_t, size_t);
+>  };
+>
+> +struct dax_holder_operations {
+> +       int (*notify_failure)(struct dax_device *, loff_t, size_t, void *);
+> +};
+> +
+>  extern struct attribute_group dax_attribute_group;
+>
+>  #if IS_ENABLED(CONFIG_DAX)
+>  struct dax_device *dax_get_by_host(const char *host);
+> +void dax_set_holder(struct dax_device *dax_dev, void *holder,
+> +               const struct dax_holder_operations *ops);
+> +void *dax_get_holder(struct dax_device *dax_dev);
+>  struct dax_device *alloc_dax(void *private, const char *host,
+>                 const struct dax_operations *ops, unsigned long flags);
+>  void put_dax(struct dax_device *dax_dev);
+> @@ -77,6 +84,14 @@ static inline struct dax_device *dax_get_by_host(const char *host)
+>  {
+>         return NULL;
+>  }
+> +static inline void dax_set_holder(struct dax_device *dax_dev, void *holder,
+> +               const struct dax_holder_operations *ops)
+> +{
+> +}
+> +static inline void *dax_get_holder(struct dax_device *dax_dev)
+> +{
+> +       return NULL;
+> +}
+>  static inline struct dax_device *alloc_dax(void *private, const char *host,
+>                 const struct dax_operations *ops, unsigned long flags)
+>  {
+> @@ -226,6 +241,8 @@ size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+>                 size_t bytes, struct iov_iter *i);
+>  int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
+>                         size_t nr_pages);
+> +int dax_holder_notify_failure(struct dax_device *dax_dev, loff_t offset,
+> +               size_t size, void *data);
+>  void dax_flush(struct dax_device *dax_dev, void *addr, size_t size);
+>
+>  ssize_t dax_iomap_rw(struct kiocb *iocb, struct iov_iter *iter,
+> --
+> 2.32.0
+>
+>
+>
 
 --
 dm-devel mailing list
