@@ -3,82 +3,82 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
 X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED autolearn=no autolearn_force=no version=3.4.0
+	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
+	autolearn=no autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0457AC4338F
-	for <dm-devel@archiver.kernel.org>; Fri, 20 Aug 2021 16:07:58 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 61231C4338F
+	for <dm-devel@archiver.kernel.org>; Fri, 20 Aug 2021 16:54:38 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 8765561213
-	for <dm-devel@archiver.kernel.org>; Fri, 20 Aug 2021 16:07:57 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 8765561213
+	by mail.kernel.org (Postfix) with ESMTPS id 48AA260F5E
+	for <dm-devel@archiver.kernel.org>; Fri, 20 Aug 2021 16:54:37 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 48AA260F5E
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=intel.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-64-fYVqgkUdNBmjKROFSMz_uA-1; Fri, 20 Aug 2021 12:07:54 -0400
-X-MC-Unique: fYVqgkUdNBmjKROFSMz_uA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-401-OPgm6qX2O9WaZ6DwgvLfOg-1; Fri, 20 Aug 2021 12:54:34 -0400
+X-MC-Unique: OPgm6qX2O9WaZ6DwgvLfOg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E9BD1802936;
-	Fri, 20 Aug 2021 16:07:49 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7C9AF1966320;
+	Fri, 20 Aug 2021 16:54:29 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9806D1B5C0;
-	Fri, 20 Aug 2021 16:07:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DB03E604CC;
+	Fri, 20 Aug 2021 16:54:28 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0BA7D4BB7C;
-	Fri, 20 Aug 2021 16:07:49 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9A9F84BB7C;
+	Fri, 20 Aug 2021 16:54:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 17KG7laI032417 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 20 Aug 2021 12:07:47 -0400
+	id 17KGsPdw003992 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 20 Aug 2021 12:54:25 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8F5FF107286; Fri, 20 Aug 2021 16:07:47 +0000 (UTC)
+	id EE71B216780E; Fri, 20 Aug 2021 16:54:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8AE5F42ADC
-	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 16:07:44 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E71032167814
+	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 16:54:21 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 41F56801005
-	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 16:07:44 +0000 (UTC)
-Received: from mail-pf1-f169.google.com (mail-pf1-f169.google.com
-	[209.85.210.169]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-300-N46eVVZrPLaqFsnn3cfQfg-1; Fri, 20 Aug 2021 12:07:42 -0400
-X-MC-Unique: N46eVVZrPLaqFsnn3cfQfg-1
-Received: by mail-pf1-f169.google.com with SMTP id w68so8991896pfd.0
-	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 09:07:41 -0700 (PDT)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8315318A6541
+	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 16:54:21 +0000 (UTC)
+Received: from mail-pg1-f177.google.com (mail-pg1-f177.google.com
+	[209.85.215.177]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-162-Z7CRrXDqP-2nE5Nme5s12w-1; Fri, 20 Aug 2021 12:54:18 -0400
+X-MC-Unique: Z7CRrXDqP-2nE5Nme5s12w-1
+Received: by mail-pg1-f177.google.com with SMTP id n18so9754528pgm.12
+	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 09:54:18 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20161025;
 	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
 	:message-id:subject:to:cc;
-	bh=epIvCzmEqd8lfEkp+zSX1z8FhC6G4rECGu8AkMD5cjk=;
-	b=g59AF/YHImWYD5JF8wTUqGCH88JXfjh0p290w4tFZELWemfLEhovFkHIi2o7qodOBh
-	WkraZkg6xWcWBZakv98lKhdusjDnr3i2OEkygSgIksPEjcq9I0sdvLqtLmURFrxZuRRY
-	r6kLokoO4zvqQun0b1X5x5THS3NkbSnqrlB9rNsOZsMxv6vT1+85FmQuBwCi1977IMaO
-	Cc6xrY1bKQmlNTJe9eaf0DvtCee8zbb9YnDJdHtVn115r5INm/Xu/zBwH27kHSrgAF6G
-	KtxPjuFlS/VTraR8GSA1SORDaedm4lSgMYTvSErdfNO4JhnIypFkdhTFbDpNLx/qGPc3
-	rPEA==
-X-Gm-Message-State: AOAM530LJ80iOzQ7A5lBhewlzaBJsW6pcA5+/hvcgKHYi6JdLamHaFJm
-	CnSOxjtXkryeOsmcIO4VFWGcHnIQL7p7/tT87xOKUA==
-X-Google-Smtp-Source: ABdhPJxyfy7kK0en0qSo4G5Lluu8ZezasgOhs9PpGIhkynMyXLeeasrkdLx8NF/nNzuMhI/nhpOTrwat9vU59+Lgzvc=
-X-Received: by 2002:a05:6a00:9a4:b0:3e2:f6d0:c926 with SMTP id
-	u36-20020a056a0009a400b003e2f6d0c926mr13253034pfg.31.1629475661105;
-	Fri, 20 Aug 2021 09:07:41 -0700 (PDT)
+	bh=x/jv/65/o/pr3Arrh3DCsUW+kuq3VQXikqXf2iTWhR0=;
+	b=YdHJt3usv7/uu9nUHNZaTXYFNMsD7olE6TC6cHSvBOMfmBPt34Crra3gnSR3GFv7UC
+	MmV6ahPy+YM3LscfN5msXEIZh/m7620Oh6GWOfF7ox5B6RAbaOQf797MapneU0Yv7SMK
+	ROvjW83eLY1oEOiF6UMwOeNwY0EDrR+ztvg5fcNSwuiTYvXZWx64O/wP2qLdcPkdC6NA
+	9E0tXZkhbhQV2BUUhClCe6R0MRn1q05X9QqZ63+oYz2mUWriAiUSQ2S9H1D9OW4143/2
+	J7JBVohNUnTfToVbQriwt4ULkeA6d6RhnQRKkxYvwLmG4VOz2Ft3FpoBrMYF9ne4chjW
+	SWuA==
+X-Gm-Message-State: AOAM532ofEM4Lw9ovgB1foCC8U+O+xYxoKokdDLg32Nh0t3+2A811kvu
+	5QwXT0+6XgZwQ0s08EqcYs4zl0BqPZ21xobfNILifw==
+X-Google-Smtp-Source: ABdhPJxOaSnUuSDnQi5DeVTlIJ2tZRX4+NfWecFNtpOa2DU5Lh7Ot8DcjqxkMAwkp+e/mA/IvF4DoFjucZJd3KA/Wvo=
+X-Received: by 2002:a65:6642:: with SMTP id z2mr7510515pgv.240.1629478457626; 
+	Fri, 20 Aug 2021 09:54:17 -0700 (PDT)
 MIME-Version: 1.0
 References: <20210730100158.3117319-1-ruansy.fnst@fujitsu.com>
-	<20210730100158.3117319-2-ruansy.fnst@fujitsu.com>
-In-Reply-To: <20210730100158.3117319-2-ruansy.fnst@fujitsu.com>
+	<20210730100158.3117319-4-ruansy.fnst@fujitsu.com>
+	<a5580cf5-9fcc-252d-5835-f199469516b0@oracle.com>
+In-Reply-To: <a5580cf5-9fcc-252d-5835-f199469516b0@oracle.com>
 From: Dan Williams <dan.j.williams@intel.com>
-Date: Fri, 20 Aug 2021 09:07:30 -0700
-Message-ID: <CAPcyv4h0p+zD5tsT8HDUpNq_ZDCqo249KsmPLX-U8ia146r2Tg@mail.gmail.com>
-To: Shiyang Ruan <ruansy.fnst@fujitsu.com>
+Date: Fri, 20 Aug 2021 09:54:06 -0700
+Message-ID: <CAPcyv4hQvR+KND8F1zGoX=jBJQ6bXhLtmEAPVb=O7rDwzHniiQ@mail.gmail.com>
+To: Jane Chu <jane.chu@oracle.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -87,17 +87,18 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Mike Snitzer <snitzer@redhat.com>,
 	"Darrick J. Wong" <djwong@kernel.org>, david <david@fromorbit.com>,
 	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	Shiyang Ruan <ruansy.fnst@fujitsu.com>,
 	linux-xfs <linux-xfs@vger.kernel.org>, Linux MM <linux-mm@kvack.org>,
 	device-mapper development <dm-devel@redhat.com>,
 	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
 	Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH RESEND v6 1/9] pagemap: Introduce
-	->memory_failure()
+Subject: Re: [dm-devel] [PATCH RESEND v6 3/9] mm: factor helpers for
+	memory_failure_dev_pagemap
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -111,7 +112,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -119,18 +120,31 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Jul 30, 2021 at 3:02 AM Shiyang Ruan <ruansy.fnst@fujitsu.com> wrote:
+On Thu, Aug 5, 2021 at 6:01 PM Jane Chu <jane.chu@oracle.com> wrote:
 >
-> When memory-failure occurs, we call this function which is implemented
-> by each kind of devices.  For the fsdax case, pmem device driver
-> implements it.  Pmem device driver will find out the filesystem in which
-> the corrupted page located in.  And finally call filesystem handler to
-> deal with this error.
 >
-> The filesystem will try to recover the corrupted data if necessary.
+> On 7/30/2021 3:01 AM, Shiyang Ruan wrote:
+> > -     /*
+> > -      * Prevent the inode from being freed while we are interrogating
+> > -      * the address_space, typically this would be handled by
+> > -      * lock_page(), but dax pages do not use the page lock. This
+> > -      * also prevents changes to the mapping of this pfn until
+> > -      * poison signaling is complete.
+> > -      */
+> > -     cookie = dax_lock_page(page);
+> > -     if (!cookie)
+> > -             goto out;
+> > -
+> >       if (hwpoison_filter(page)) {
+> >               rc = 0;
+> > -             goto unlock;
+> > +             goto out;
+> >       }
+>
+> why isn't dax_lock_page() needed for hwpoison_filter() check?
 
-This patch looks good to me, but I would fold it into the patch that
-first populates ->memory_failure().
+Good catch. hwpoison_filter() is indeed consulting page->mapping->host
+which needs to be synchronized against inode lifetime.
 
 --
 dm-devel mailing list
