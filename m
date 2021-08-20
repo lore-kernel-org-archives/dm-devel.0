@@ -2,102 +2,109 @@ Return-Path: <SRS0=Iac5=NL=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-11.5 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	MAILING_LIST_MULTI,MENTIONS_GIT_HOSTING,SPF_HELO_NONE,SPF_PASS
+	autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 947C9C4338F
-	for <dm-devel@archiver.kernel.org>; Fri, 20 Aug 2021 20:20:38 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A681CC4320A
+	for <dm-devel@archiver.kernel.org>; Fri, 20 Aug 2021 20:20:58 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 2200E60F5E
-	for <dm-devel@archiver.kernel.org>; Fri, 20 Aug 2021 20:20:38 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 2200E60F5E
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=intel.com
+	by mail.kernel.org (Postfix) with ESMTPS id 36E6561175
+	for <dm-devel@archiver.kernel.org>; Fri, 20 Aug 2021 20:20:58 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 36E6561175
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1629490857;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=1nAH2QoHcSHucOurGqP5tI+O3a05vPX/QkgYNo59las=;
+	b=dQcC0CGJ7TbAev739c3yV8kxC2T39edSsiEDqOfZPEEiQFu93E98+XO4BGuUj01IFhA1WC
+	QqMo3xvcNuBZ65x7MDWF5IRvp89deI43P0EFBkXtFOpYaG44nrB96CNTiqwgLM+yMBaxGi
+	ElZXvD9RhLhTp2EEP+a6vo/z4c2ubDc=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-560-wsCS6PYHNeq8ZnVYTEb3Ww-1; Fri, 20 Aug 2021 16:20:35 -0400
-X-MC-Unique: wsCS6PYHNeq8ZnVYTEb3Ww-1
+ us-mta-289-OI-905GxPUOFqX6Zgv117w-1; Fri, 20 Aug 2021 16:20:55 -0400
+X-MC-Unique: OI-905GxPUOFqX6Zgv117w-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 34275801AC5;
-	Fri, 20 Aug 2021 20:20:30 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4EB5F369A;
-	Fri, 20 Aug 2021 20:20:28 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7773B875109;
+	Fri, 20 Aug 2021 20:20:51 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5A61D189BB;
+	Fri, 20 Aug 2021 20:20:51 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5F9634A7C8;
-	Fri, 20 Aug 2021 20:20:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 03040181A0F8;
+	Fri, 20 Aug 2021 20:20:51 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 17KKJTrh019246 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 20 Aug 2021 16:19:29 -0400
+	id 17KKJV4g019261 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 20 Aug 2021 16:19:31 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id EEB8C20A3D50; Fri, 20 Aug 2021 20:19:28 +0000 (UTC)
+	id B5949117DB36; Fri, 20 Aug 2021 20:19:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E663D20A3D53
-	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 20:19:24 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B1018117DB34
+	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 20:19:28 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
 	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AD102805A30
-	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 20:19:24 +0000 (UTC)
-Received: from mail-pl1-f180.google.com (mail-pl1-f180.google.com
-	[209.85.214.180]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-425-x75z2cbmNViwun1L2fBJRg-1; Fri, 20 Aug 2021 16:19:22 -0400
-X-MC-Unique: x75z2cbmNViwun1L2fBJRg-1
-Received: by mail-pl1-f180.google.com with SMTP id c4so6586802plh.7
-	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 13:19:22 -0700 (PDT)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A7200866DF9
+	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 20:19:28 +0000 (UTC)
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+	[209.85.222.199]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-447-D9krZx4fN2e_1lLw68CJ8w-1; Fri, 20 Aug 2021 16:19:27 -0400
+X-MC-Unique: D9krZx4fN2e_1lLw68CJ8w-1
+Received: by mail-qk1-f199.google.com with SMTP id
+	k5-20020a05620a414500b003d5da483eafso4253392qko.22
+	for <dm-devel@redhat.com>; Fri, 20 Aug 2021 13:19:27 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20161025;
-	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-	:message-id:subject:to:cc;
-	bh=BkGBH+Sk2bQQ3B5sfYf3Y77q6TOaLfRpAcPAwL8BdAo=;
-	b=HEUgP8q7P9MPIBpa4542ylxODafzSO+6orr/8K19iRJ2mllIstcl4YnUYkh9fvOZVN
-	BDvcCQWWCsBVOXnEjBmzLs6T5SNuyRgasckQuKEurWr+0mHC3fEh5xe8RFnaJa19T6XY
-	V2YXTlIjXGRF4nwUUwNv5jFTRsxEHXpqPDUMdtS2G0Y9zoYXijmN13iTecWV/Z8MiyXp
-	3FhHl559DtD1/gt/o37iBM/kkRE31WKFyVRz7DHjLViowoXd60Ziaf2mnVVSKM3PgfHi
-	RPymTeETRlOsgerHWcxQYZ2WchpUZxUDbSO1ag8RZWVpTcnfOU8jwgFw9NaOhpgWhk4K
-	42Ww==
-X-Gm-Message-State: AOAM533O3ypsMqqOFV4QadVuVQioWJPIdwanlXcEkWUM2nsu2a99Js0o
-	wHPNE+UOKKwIm3p0EVkifP8DSAlrXg8uhfT76ZEpxQ==
-X-Google-Smtp-Source: ABdhPJzHkxMGpPeA9h8LIot15bFD38zvkcY7p2LLxN6VLnB4hejIZ98f8Ub0InyuHc2GQ/N4yQ3nMHLlOt8cA/d6bXM=
-X-Received: by 2002:a17:902:c10a:b0:12d:97e1:f035 with SMTP id
-	10-20020a170902c10a00b0012d97e1f035mr17854315pli.52.1629490761440;
-	Fri, 20 Aug 2021 13:19:21 -0700 (PDT)
+	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+	:mime-version:content-disposition:in-reply-to;
+	bh=e0xk0PCgbvrI9oL4egy0zV/DTKLD6KkoLQ6vPavMKGE=;
+	b=eDt9OMpDbcrXYlzQnKgg75P8p/E0b2TwNOtnSFooo7xFA9Q/4yagJ2UEvRn9YVf94W
+	S1vvimlCuUHzgQfcnJxvwBnOI9r+7tsyxCJzHr6nxepf/MiuBCV8Q6A3zKmqbv2AjcHH
+	u4A928SdWYs9THAlcv21xC3CMyUjkWe885lNN+THxKcO7UcuxDx5WmFMjlcIzQj41hKa
+	8wi4wMLyx/o0ujV9/ODt1IqtHeSl4cCsLzthFOVtvQauA+XttDwSj7wU1eaflYDEkW8o
+	R53VtTiJ9dWe6J6S7lkh37HvEGhX0YPHEsaBqlR7PkHbYSKSWpIwMmAnvZ7WYGCIjG1R
+	MHEA==
+X-Gm-Message-State: AOAM5318JwN6puJRXqLn4mJGDfnfs9Gn8zgMKmAQJKYfBusw1/h0R7tZ
+	BHKMlq44+kRCRKzVdr0YG1CNPM+OPD90w4ZDBuLOkBv85aYVXZJOJcI7RhjcgjaYpM2aU5Vhuot
+	sOjonzJ7IEZ0PyA==
+X-Received: by 2002:ae9:f701:: with SMTP id s1mr4317130qkg.223.1629490766944; 
+	Fri, 20 Aug 2021 13:19:26 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJyb2iDL3pszKH41Z1jgPp9S39r1QoXK1jvTsWR2PAHnl9VBPP2M+hZZXFZGgTA1ObYjix4Usw==
+X-Received: by 2002:ae9:f701:: with SMTP id s1mr4317111qkg.223.1629490766730; 
+	Fri, 20 Aug 2021 13:19:26 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+	a14sm2768090qtb.57.2021.08.20.13.19.25
+	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+	Fri, 20 Aug 2021 13:19:26 -0700 (PDT)
+Date: Fri, 20 Aug 2021 16:19:25 -0400
+From: Mike Snitzer <snitzer@redhat.com>
+To: Tushar Sugandhi <tusharsu@linux.microsoft.com>
+Message-ID: <YSAOTX+TQwaCUeCn@redhat.com>
+References: <20210813213801.297051-1-tusharsu@linux.microsoft.com>
 MIME-Version: 1.0
-References: <20210730100158.3117319-1-ruansy.fnst@fujitsu.com>
-	<20210730100158.3117319-3-ruansy.fnst@fujitsu.com>
-In-Reply-To: <20210730100158.3117319-3-ruansy.fnst@fujitsu.com>
-From: Dan Williams <dan.j.williams@intel.com>
-Date: Fri, 20 Aug 2021 13:19:10 -0700
-Message-ID: <CAPcyv4gd6O=Aaghn3bnAchc3o06J01SwPCg0KHPQLTTguoxdLw@mail.gmail.com>
-To: Shiyang Ruan <ruansy.fnst@fujitsu.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+In-Reply-To: <20210813213801.297051-1-tusharsu@linux.microsoft.com>
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Mike Snitzer <snitzer@redhat.com>,
-	"Darrick J. Wong" <djwong@kernel.org>, david <david@fromorbit.com>,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-	linux-xfs <linux-xfs@vger.kernel.org>, Linux MM <linux-mm@kvack.org>,
-	device-mapper development <dm-devel@redhat.com>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	Christoph Hellwig <hch@lst.de>, Alasdair Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH RESEND v6 2/9] dax: Introduce holder for
-	dax_device
+Cc: sfr@canb.auug.org.au, zohar@linux.ibm.com, linux-block@vger.kernel.org,
+	nramas@linux.microsoft.com, dm-devel@redhat.com, public@thson.de,
+	linux-integrity@vger.kernel.org, agk@redhat.com
+Subject: Re: [dm-devel] [PATCH 0/6] updates to device mapper target
+	measurement using ima
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -116,187 +123,79 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Jul 30, 2021 at 3:02 AM Shiyang Ruan <ruansy.fnst@fujitsu.com> wrote:
->
-> To easily track filesystem from a pmem device, we introduce a holder for
-> dax_device structure, and also its operation.  This holder is used to
-> remember who is using this dax_device:
->  - When it is the backend of a filesystem, the holder will be the
->    superblock of this filesystem.
->  - When this pmem device is one of the targets in a mapped device, the
->    holder will be this mapped device.  In this case, the mapped device
->    has its own dax_device and it will follow the first rule.  So that we
->    can finally track to the filesystem we needed.
->
-> The holder and holder_ops will be set when filesystem is being mounted,
-> or an target device is being activated.
->
-> Signed-off-by: Shiyang Ruan <ruansy.fnst@fujitsu.com>
-> ---
->  drivers/dax/super.c | 46 +++++++++++++++++++++++++++++++++++++++++++++
->  include/linux/dax.h | 17 +++++++++++++++++
->  2 files changed, 63 insertions(+)
->
-> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-> index 5fa6ae9dbc8b..00c32dfa5665 100644
-> --- a/drivers/dax/super.c
-> +++ b/drivers/dax/super.c
-> @@ -214,6 +214,8 @@ enum dax_device_flags {
->   * @cdev: optional character interface for "device dax"
->   * @host: optional name for lookups where the device path is not available
->   * @private: dax driver private data
-> + * @holder_rwsem: prevent unregistration while holder_ops is in progress
-> + * @holder_data: holder of a dax_device: could be filesystem or mapped device
->   * @flags: state and boolean properties
->   */
->  struct dax_device {
-> @@ -222,8 +224,11 @@ struct dax_device {
->         struct cdev cdev;
->         const char *host;
->         void *private;
-> +       struct rw_semaphore holder_rwsem;
-> +       void *holder_data;
->         unsigned long flags;
->         const struct dax_operations *ops;
-> +       const struct dax_holder_operations *holder_ops;
->  };
->
->  static ssize_t write_cache_show(struct device *dev,
-> @@ -373,6 +378,25 @@ int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
->  }
->  EXPORT_SYMBOL_GPL(dax_zero_page_range);
->
-> +int dax_holder_notify_failure(struct dax_device *dax_dev, loff_t offset,
-> +                             size_t size, void *data)
-I took a look at patch3 and had some questions about the api.
+On Fri, Aug 13 2021 at  5:37P -0400,
+Tushar Sugandhi <tusharsu@linux.microsoft.com> wrote:
 
-Can you add kernel-doc for this api and specifically clarify what is
-@data used for vs dax_dev->holder_data?
+> 
+> There were several improvements suggested for the original device mapper
+> target measurement patch series [1].
+> 
+> Those improvement suggestions include: 
+>  - Prefixing hashes for the DM tables being measured in ima log with the
+>    hash algorithm.
+>  - Adding version information for DM related events being measured in the
+>    ima log.
+>  - Prefixing DM related event names with "dm_".
+>  - Including the verity target attribute - "root_hash_sig_key_desc"
+>    in the ima measurement log.
+> 
+> This series incorporates the above suggestions.
+> 
+> This series also has the following fixes:
+>  - Adding a one-time warning to dmesg during dm_init if
+>    CONFIG_IMA_DISABLE_HTABLE is set to 'n'.
+>  - Updating 'integrity' target to remove the duplicate measurement of
+>    the attribute "mode=%c".
+>  - Indexing various attributes in 'multipath' target, and adding
+>    "nr_priority_groups=%u" attribute to the measurements.
+>  - Fixing 'make htmldocs' warnings in dm-ima.rst.
+>  - Adding missing documentation for the targets - 'cache', 'integrity',
+>    'multipath', and 'snapshot' in dm-ima.rst.
+>  - Updating dm-ima.rst documentation with the grammar for various DM
+>    events and targets in Backus Naur form.
+>  - Updating dm-ima.rst documentation to be consistent with the code
+>    changes described above.
+> 
+> This series is based on top of the following git repo/branch/commit:
+>  Repo: https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git
+>  Branch: dm-5.15
+>  Commit: commit 5a2a33884f0b ("dm crypt: Avoid percpu_counter spinlock contention in crypt_page_alloc()")
+> 
+> 
+> [1] https://patchwork.kernel.org/project/dm-devel/cover/20210713004904.8808-1-tusharsu@linux.microsoft.com/
+> 
+> Tushar Sugandhi (6):
+>   dm ima: prefix dm table hashes in ima log with hash algorithm
+>   dm ima: add version info to dm related events in ima log
+>   dm ima: prefix ima event name related to device mapper with dm_
+>   dm ima: add a warning in dm_init if duplicate ima events are not
+>     measured
+>   dm ima: update dm target attributes for ima measurements
+>   dm ima: update dm documentation for ima measurement support
 
-I also think the holder needs to know whether this failure is being
-signaled synchronously. or asynchronously. In the synchronous case a
-process has consumed poison and action needs to be taken immediately.
-In the asynchronous case the driver stack has encountered failed
-address ranges and is notifying the holder to avoid those ranges, but
-no immediate action needs to be taken to shoot down mappings. For
-example, I would use the synchronous notification when
-memory_failure() is invoked with the "action required" indication, and
-the asynchronous notification when an NVDIMM_REVALIDATE_POISON event
-fires, or the "action optional" memory_failure() case.
+Hi,
 
-In short I think the interface just needs a flags argument.
+I reviewed and staged these changes in dm-5.15 (and for-next) with
+minimal tweaks. Really just some whitespace and a simplification of
+the conditional for the warning in dm_init().
 
+Please make sure that you manually apply Christoph's fix for the issue
+you reported earlier in the week, you were cc'd on the ultimate fix
+which has a different patch header than this patch but on a code level
+it is identical (and only patch that landed on a public mailing list
+due to typo in linux-block email address when hch sent the final fix):
+https://listman.redhat.com/archives/dm-devel/2021-August/msg00154.html
 
-> +{
-> +       int rc;
-> +
-> +       if (!dax_dev)
-> +               return -ENXIO;
-> +
-> +       if (!dax_dev->holder_data)
-> +               return -EOPNOTSUPP;
-> +
-> +       down_read(&dax_dev->holder_rwsem);
-> +       rc = dax_dev->holder_ops->notify_failure(dax_dev, offset,
-> +                                                        size, data);
-> +       up_read(&dax_dev->holder_rwsem);
-> +       return rc;
-> +}
-> +EXPORT_SYMBOL_GPL(dax_holder_notify_failure);
-> +
->  #ifdef CONFIG_ARCH_HAS_PMEM_API
->  void arch_wb_cache_pmem(void *addr, size_t size);
->  void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
-> @@ -603,6 +627,7 @@ struct dax_device *alloc_dax(void *private, const char *__host,
->         dax_add_host(dax_dev, host);
->         dax_dev->ops = ops;
->         dax_dev->private = private;
-> +       init_rwsem(&dax_dev->holder_rwsem);
->         if (flags & DAXDEV_F_SYNC)
->                 set_dax_synchronous(dax_dev);
->
-> @@ -624,6 +649,27 @@ void put_dax(struct dax_device *dax_dev)
->  }
->  EXPORT_SYMBOL_GPL(put_dax);
->
-> +void dax_set_holder(struct dax_device *dax_dev, void *holder,
-> +               const struct dax_holder_operations *ops)
-> +{
-> +       if (!dax_dev)
-> +               return;
-> +       down_write(&dax_dev->holder_rwsem);
-> +       dax_dev->holder_data = holder;
-> +       dax_dev->holder_ops = ops;
-> +       up_write(&dax_dev->holder_rwsem);
-> +}
-> +EXPORT_SYMBOL_GPL(dax_set_holder);
-> +
-> +void *dax_get_holder(struct dax_device *dax_dev)
-> +{
-> +       if (!dax_dev)
-> +               return NULL;
-> +
-> +       return dax_dev->holder_data;
-> +}
-> +EXPORT_SYMBOL_GPL(dax_get_holder);
-> +
->  /**
->   * dax_get_by_host() - temporary lookup mechanism for filesystem-dax
->   * @host: alternate name for the device registered by a dax driver
-> diff --git a/include/linux/dax.h b/include/linux/dax.h
-> index b52f084aa643..6f4b5c97ceb0 100644
-> --- a/include/linux/dax.h
-> +++ b/include/linux/dax.h
-> @@ -38,10 +38,17 @@ struct dax_operations {
->         int (*zero_page_range)(struct dax_device *, pgoff_t, size_t);
->  };
->
-> +struct dax_holder_operations {
-> +       int (*notify_failure)(struct dax_device *, loff_t, size_t, void *);
-> +};
-> +
->  extern struct attribute_group dax_attribute_group;
->
->  #if IS_ENABLED(CONFIG_DAX)
->  struct dax_device *dax_get_by_host(const char *host);
-> +void dax_set_holder(struct dax_device *dax_dev, void *holder,
-> +               const struct dax_holder_operations *ops);
-> +void *dax_get_holder(struct dax_device *dax_dev);
->  struct dax_device *alloc_dax(void *private, const char *host,
->                 const struct dax_operations *ops, unsigned long flags);
->  void put_dax(struct dax_device *dax_dev);
-> @@ -77,6 +84,14 @@ static inline struct dax_device *dax_get_by_host(const char *host)
->  {
->         return NULL;
->  }
-> +static inline void dax_set_holder(struct dax_device *dax_dev, void *holder,
-> +               const struct dax_holder_operations *ops)
-> +{
-> +}
-> +static inline void *dax_get_holder(struct dax_device *dax_dev)
-> +{
-> +       return NULL;
-> +}
->  static inline struct dax_device *alloc_dax(void *private, const char *host,
->                 const struct dax_operations *ops, unsigned long flags)
->  {
-> @@ -226,6 +241,8 @@ size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
->                 size_t bytes, struct iov_iter *i);
->  int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
->                         size_t nr_pages);
-> +int dax_holder_notify_failure(struct dax_device *dax_dev, loff_t offset,
-> +               size_t size, void *data);
->  void dax_flush(struct dax_device *dax_dev, void *addr, size_t size);
->
->  ssize_t dax_iomap_rw(struct kiocb *iocb, struct iov_iter *iter,
-> --
-> 2.32.0
->
->
->
+It is an issue that'll linger in the dm-5.15 because I cannot rebase
+at this late hour even once Jens picks the fix up into the
+linux-block tree.
+
+Thanks,
+Mike
 
 --
 dm-devel mailing list
