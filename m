@@ -7,61 +7,61 @@ X-Spam-Status: No, score=-8.7 required=3.0 tests=BAYES_00,
 	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6B93EC4338F
-	for <dm-devel@archiver.kernel.org>; Tue, 24 Aug 2021 06:29:15 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0C681C4338F
+	for <dm-devel@archiver.kernel.org>; Tue, 24 Aug 2021 06:32:30 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id E92BB61076
-	for <dm-devel@archiver.kernel.org>; Tue, 24 Aug 2021 06:29:14 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org E92BB61076
+	by mail.kernel.org (Postfix) with ESMTPS id A419B610A5
+	for <dm-devel@archiver.kernel.org>; Tue, 24 Aug 2021 06:32:29 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org A419B610A5
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-564-G1i1aYBCP9eK23M8sTQmNQ-1; Tue, 24 Aug 2021 02:29:11 -0400
-X-MC-Unique: G1i1aYBCP9eK23M8sTQmNQ-1
+ us-mta-439-dN-D7zvSPHWHJoTngocnoQ-1; Tue, 24 Aug 2021 02:32:25 -0400
+X-MC-Unique: dN-D7zvSPHWHJoTngocnoQ-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 617EBDC22;
-	Tue, 24 Aug 2021 06:29:07 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AB6EA1082922;
+	Tue, 24 Aug 2021 06:32:20 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 217E360C05;
-	Tue, 24 Aug 2021 06:29:07 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8635460C05;
+	Tue, 24 Aug 2021 06:32:20 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E5173181A0F8;
-	Tue, 24 Aug 2021 06:29:06 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 32C12181A0F9;
+	Tue, 24 Aug 2021 06:32:20 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 17O6T5US028134 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 24 Aug 2021 02:29:05 -0400
+	id 17O6WICg028398 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 24 Aug 2021 02:32:18 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 41458112D432; Tue, 24 Aug 2021 06:29:05 +0000 (UTC)
+	id B0AF4112D432; Tue, 24 Aug 2021 06:32:18 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3CC19112D42F
-	for <dm-devel@redhat.com>; Tue, 24 Aug 2021 06:29:02 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AC61C112D42F
+	for <dm-devel@redhat.com>; Tue, 24 Aug 2021 06:32:15 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
 	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2AC4289C7DD
-	for <dm-devel@redhat.com>; Tue, 24 Aug 2021 06:29:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5FED4185A794
+	for <dm-devel@redhat.com>; Tue, 24 Aug 2021 06:32:15 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-159-f4YM2XPrOpO1I3VRP8FICg-1; Tue, 24 Aug 2021 02:28:57 -0400
-X-MC-Unique: f4YM2XPrOpO1I3VRP8FICg-1
+	us-mta-583-7F8q6_P9P9ercSoIPKL6vQ-1; Tue, 24 Aug 2021 02:32:13 -0400
+X-MC-Unique: 7F8q6_P9P9ercSoIPKL6vQ-1
 Received: from hch by casper.infradead.org with local (Exim 4.94.2 #2 (Red Hat
-	Linux)) id 1mIPsH-00AePY-Vj; Tue, 24 Aug 2021 06:25:57 +0000
-Date: Tue, 24 Aug 2021 07:25:29 +0100
+	Linux)) id 1mIPuf-00AeYz-BN; Tue, 24 Aug 2021 06:28:17 +0000
+Date: Tue, 24 Aug 2021 07:27:57 +0100
 From: Christoph Hellwig <hch@infradead.org>
 To: Luis Chamberlain <mcgrof@kernel.org>
-Message-ID: <YSSQ2Qa5HkDQCF0J@infradead.org>
+Message-ID: <YSSRbRNHXkuA+90K@infradead.org>
 References: <20210823202930.137278-1-mcgrof@kernel.org>
-	<20210823202930.137278-10-mcgrof@kernel.org>
+	<20210823202930.137278-11-mcgrof@kernel.org>
 MIME-Version: 1.0
-In-Reply-To: <20210823202930.137278-10-mcgrof@kernel.org>
+In-Reply-To: <20210823202930.137278-11-mcgrof@kernel.org>
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
 	casper.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -84,7 +84,7 @@ Cc: ulf.hansson@linaro.org, snitzer@redhat.com, linux-nvme@lists.infradead.org,
 	kbusch@kernel.org, swboyd@chromium.org, bvanassche@acm.org,
 	axboe@kernel.dk, martin.petersen@oracle.com,
 	linux-mmc@vger.kernel.org, adrian.hunter@intel.com
-Subject: Re: [dm-devel] [PATCH 09/10] loop: add error handling support for
+Subject: Re: [dm-devel] [PATCH 10/10] nbd: add error handling support for
 	add_disk()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
@@ -108,7 +108,7 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Aug 23, 2021 at 01:29:29PM -0700, Luis Chamberlain wrote:
+On Mon, Aug 23, 2021 at 01:29:30PM -0700, Luis Chamberlain wrote:
 > We never checked for errors on add_disk() as this function
 > returned void. Now that this is fixed, use the shiny new
 > error handling.
@@ -120,9 +120,7 @@ Looks good:
 
 Reviewed-by: Christoph Hellwig <hch@lst.de>
 
-and I think you can drop my signoff.  I added this when I planned
-to send out with the original conversion, but dropped it for simpler
-examples.
+Same comment on the signoff as for the previous one.
 
 --
 dm-devel mailing list
