@@ -2,68 +2,66 @@ Return-Path: <SRS0=2pw0=NT=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-3.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=no autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A11B0C4320A
-	for <dm-devel@archiver.kernel.org>; Sat, 28 Aug 2021 07:35:13 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 59CF7C432BE
+	for <dm-devel@archiver.kernel.org>; Sat, 28 Aug 2021 07:36:53 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3AF79610C7
-	for <dm-devel@archiver.kernel.org>; Sat, 28 Aug 2021 07:35:13 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 3AF79610C7
+	by mail.kernel.org (Postfix) with ESMTPS id C2D33610CC
+	for <dm-devel@archiver.kernel.org>; Sat, 28 Aug 2021 07:36:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org C2D33610CC
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-436-pTydUk4iP82RNSF18SCbCw-1; Sat, 28 Aug 2021 03:35:04 -0400
-X-MC-Unique: pTydUk4iP82RNSF18SCbCw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-153-oF5433N7NDeScK8TQechsw-1; Sat, 28 Aug 2021 03:36:49 -0400
+X-MC-Unique: oF5433N7NDeScK8TQechsw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B91A38042E7;
-	Sat, 28 Aug 2021 07:35:00 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 91EE93CC7;
-	Sat, 28 Aug 2021 07:35:00 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 85C2C801B3D;
+	Sat, 28 Aug 2021 07:36:44 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 169101017E27;
+	Sat, 28 Aug 2021 07:36:44 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DF3B1181A0F1;
-	Sat, 28 Aug 2021 07:34:59 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9177E4BB7C;
+	Sat, 28 Aug 2021 07:36:43 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 17S7Yu86008617 for <dm-devel@listman.util.phx.redhat.com>;
-	Sat, 28 Aug 2021 03:34:56 -0400
+	id 17S7afrZ008734 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 28 Aug 2021 03:36:42 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 072812022EC7; Sat, 28 Aug 2021 07:34:56 +0000 (UTC)
+	id C82632157F21; Sat, 28 Aug 2021 07:36:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0310B2022EC6
-	for <dm-devel@redhat.com>; Sat, 28 Aug 2021 07:34:53 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 73CA7101A52C
-	for <dm-devel@redhat.com>; Sat, 28 Aug 2021 07:34:53 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C2BB52157F20
+	for <dm-devel@redhat.com>; Sat, 28 Aug 2021 07:36:38 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CF39D866DF1
+	for <dm-devel@redhat.com>; Sat, 28 Aug 2021 07:36:38 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-572-_bxfNA4yMTeTUMF3unMbLw-1; Sat, 28 Aug 2021 03:34:51 -0400
-X-MC-Unique: _bxfNA4yMTeTUMF3unMbLw-1
+	us-mta-353-YCIeiTrSN8S4rOPufPAIlQ-1; Sat, 28 Aug 2021 03:36:34 -0400
+X-MC-Unique: YCIeiTrSN8S4rOPufPAIlQ-1
 Received: from hch by casper.infradead.org with local (Exim 4.94.2 #2 (Red Hat
-	Linux)) id 1mJsp1-00FNRa-6I; Sat, 28 Aug 2021 07:32:22 +0000
-Date: Sat, 28 Aug 2021 08:32:11 +0100
+	Linux)) id 1mJsUo-00FMa7-Nt; Sat, 28 Aug 2021 07:11:36 +0000
+Date: Sat, 28 Aug 2021 08:11:18 +0100
 From: Christoph Hellwig <hch@infradead.org>
 To: Luis Chamberlain <mcgrof@kernel.org>
-Message-ID: <YSnme1mfHS/HCguW@infradead.org>
-References: <20210823202930.137278-1-mcgrof@kernel.org>
-	<20210823202930.137278-7-mcgrof@kernel.org>
-	<YSSN+eac2aCFXTAA@infradead.org>
-	<YSkyHINtV/djFEej@bombadil.infradead.org>
+Message-ID: <YSnhlvCsX9RsT6a5@infradead.org>
+References: <20210827190504.3103362-1-mcgrof@kernel.org>
+	<20210827190504.3103362-4-mcgrof@kernel.org>
 MIME-Version: 1.0
-In-Reply-To: <YSkyHINtV/djFEej@bombadil.infradead.org>
+In-Reply-To: <20210827190504.3103362-4-mcgrof@kernel.org>
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
 	casper.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -74,20 +72,19 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 Cc: ulf.hansson@linaro.org, snitzer@redhat.com, linux-nvme@lists.infradead.org,
 	linux-kernel@vger.kernel.org, dm-devel@redhat.com,
 	agk@redhat.com, beanhuo@micron.com, ming.lei@redhat.com,
-	sagi@grimberg.me, linux-scsi@vger.kernel.org,
-	Christoph Hellwig <hch@infradead.org>, jejb@linux.ibm.com,
-	josef@toxicpanda.com, nbd@other.debian.org,
+	sagi@grimberg.me, linux-scsi@vger.kernel.org, hch@infradead.org,
+	jejb@linux.ibm.com, josef@toxicpanda.com, nbd@other.debian.org,
 	linux-block@vger.kernel.org, avri.altman@wdc.com,
 	kbusch@kernel.org, swboyd@chromium.org, bvanassche@acm.org,
 	axboe@kernel.dk, martin.petersen@oracle.com,
 	linux-mmc@vger.kernel.org, adrian.hunter@intel.com
-Subject: Re: [dm-devel] [PATCH 06/10] mmc/core/block: add error handling
- support for add_disk()
+Subject: Re: [dm-devel] [PATCH v2 3/6] nvme: add error handling support for
+	add_disk()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -101,7 +98,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -110,21 +107,9 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Aug 27, 2021 at 11:42:36AM -0700, Luis Chamberlain wrote:
-> > >  	if (area_type == MMC_BLK_DATA_AREA_MAIN)
-> > >  		dev_set_drvdata(&card->dev, md);
-> > > -	device_add_disk(md->parent, md->disk, mmc_disk_attr_groups);
-> > > +	ret = device_add_disk(md->parent, md->disk, mmc_disk_attr_groups);
-> > > +	if (ret)
-> > > +		goto out;
-> > 
-> > This needs to do a blk_cleanup_queue and also te kfree of md.
-> 
-> If mmc_blk_alloc_parts() fails mmc_blk_remove_req() is called which
-> does both for us?
+Looks good,
 
-Yes, but only for the main gendisk, and those parts already added to
-the list which happens after device_add_disk succeeded.
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 
 --
 dm-devel mailing list
