@@ -2,91 +2,81 @@ Return-Path: <SRS0=gIOA=NX=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-0.7 required=3.0 tests=BAYES_00,DKIM_ADSP_CUSTOM_MED,
-	FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,HEADER_FROM_DIFFERENT_DOMAINS,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=no
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.8 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,
+	SPF_PASS autolearn=unavailable autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E57F6C432BE
-	for <dm-devel@archiver.kernel.org>; Wed,  1 Sep 2021 06:59:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1A5A2C432BE
+	for <dm-devel@archiver.kernel.org>; Wed,  1 Sep 2021 06:59:38 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7165761074
-	for <dm-devel@archiver.kernel.org>; Wed,  1 Sep 2021 06:59:15 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 7165761074
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
+	by mail.kernel.org (Postfix) with ESMTPS id 3A8676101A
+	for <dm-devel@archiver.kernel.org>; Wed,  1 Sep 2021 06:59:37 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 3A8676101A
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=aisec.fraunhofer.de
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-461--Xu-MwQzNY2nUPUk1eSz_Q-1; Wed, 01 Sep 2021 02:59:12 -0400
-X-MC-Unique: -Xu-MwQzNY2nUPUk1eSz_Q-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-307-3yrgHsvRNkucUxIUtmSoog-1; Wed, 01 Sep 2021 02:59:32 -0400
+X-MC-Unique: 3yrgHsvRNkucUxIUtmSoog-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BB475801ADA;
-	Wed,  1 Sep 2021 06:59:07 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8D74C107ACCA;
+	Wed,  1 Sep 2021 06:59:28 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D4A3B5DEB8;
-	Wed,  1 Sep 2021 06:59:06 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 664D45C23A;
+	Wed,  1 Sep 2021 06:59:28 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 08D431809C98;
-	Wed,  1 Sep 2021 06:59:04 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3961B18005A2;
+	Wed,  1 Sep 2021 06:59:27 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 17VDJtvK006939 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 31 Aug 2021 09:19:55 -0400
+	id 17VJP1d6008626 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 31 Aug 2021 15:25:01 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 14279214180A; Tue, 31 Aug 2021 13:19:55 +0000 (UTC)
+	id 70379205FA84; Tue, 31 Aug 2021 19:25:01 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0C7A7200ACE1
-	for <dm-devel@redhat.com>; Tue, 31 Aug 2021 13:19:48 +0000 (UTC)
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6C1A9205F3A9
+	for <dm-devel@redhat.com>; Tue, 31 Aug 2021 19:24:58 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D6C9418A01A5
-	for <dm-devel@redhat.com>; Tue, 31 Aug 2021 13:19:48 +0000 (UTC)
-Received: from mail-ed1-f48.google.com (mail-ed1-f48.google.com
-	[209.85.208.48]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-150-G2HL6E8VNwqkbw0EMeZo3Q-1; Tue, 31 Aug 2021 09:19:42 -0400
-X-MC-Unique: G2HL6E8VNwqkbw0EMeZo3Q-1
-Received: by mail-ed1-f48.google.com with SMTP id z19so26729403edi.9;
-	Tue, 31 Aug 2021 06:19:41 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20161025;
-	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-	:message-id:subject:to:cc;
-	bh=sHPtKZe+G6zxzj4XJ8SxB02koJw5U2FZ5BVM7LmQV+E=;
-	b=b+aF8C+gGguGUWUNOOjp54Oe6UiUdgcr4HoYPVJFFkSYii9HaLPiqFU9Dh7JV3dXPM
-	nNG+kZn7QPT1KB528Y1yBFySd9eBEtz/oS+G6GEo4kYUwvS1YScUJNNA8esnF2pqtmPZ
-	5OzMBzsoMGnm2/0i1kCGk+IOZX8mx2irC26akNMaSwV8Cr/ZByOUDy+jIqnhhFYOrUSu
-	kB52bCqdl6Ou4/J4M84w7b/VvY8I2BEZCCuPK6GH4ICOEMyfaraAZ4qetNzKrq9pqOTW
-	X7CdiPQ8R1bzE8fXVDiXKsZhQrYC073dsho9CY0tcQcq3mZj7hw444vElsoGaWhHeHzw
-	4i4A==
-X-Gm-Message-State: AOAM532msjz/KzurLuAJ0XVJdibkBRhLeEXMkCKmw6yMy6f453gPnn47
-	M77b+j2jL70rn60ordVUm4zcFIbM1osLkkBLaMk=
-X-Google-Smtp-Source: ABdhPJwT+pZxjrRI5pwhP4OcAeoy4nNGBgvF439fo+caHd7TPPXqp99zWOeMMGPaHPRArVb7drlTb+9fGGonvNasmbw=
-X-Received: by 2002:a05:6402:5107:: with SMTP id
-	m7mr29849642edd.63.1630415980838; 
-	Tue, 31 Aug 2021 06:19:40 -0700 (PDT)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 80151800141
+	for <dm-devel@redhat.com>; Tue, 31 Aug 2021 19:24:58 +0000 (UTC)
+Received: from mout.kundenserver.de (mout.kundenserver.de [217.72.192.75])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-390-GM0T3dIzPVqOQa5CzW7lrg-1; Tue, 31 Aug 2021 15:24:56 -0400
+X-MC-Unique: GM0T3dIzPVqOQa5CzW7lrg-1
+Received: from weisslap.aisec.fraunhofer.de ([178.27.102.95]) by
+	mrelayeu.kundenserver.de (mreue109 [212.227.15.183]) with ESMTPSA
+	(Nemesis)
+	id 1MVNEv-1mSgSp1aK7-00SKLc; Tue, 31 Aug 2021 21:19:32 +0200
+From: =?UTF-8?q?Michael=20Wei=C3=9F?= <michael.weiss@aisec.fraunhofer.de>
+To: Paul Moore <paul@paul-moore.com>, Casey Schaufler <casey@schaufler-ca.com>
+Date: Tue, 31 Aug 2021 21:18:37 +0200
+Message-Id: <20210831191845.7928-1-michael.weiss@aisec.fraunhofer.de>
 MIME-Version: 1.0
-References: <CAOuPNLhqSpaTm3u4kFsnuZ0PLDKuX8wsxuF=vUJ1TEG0EP+L1g@mail.gmail.com>
-	<alpine.LRH.2.02.2107200737510.19984@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAOuPNLhh_LkLQ8mSA4eoUDLCLzHo5zHXsiQZXUB_-T_F1_v6-g@mail.gmail.com>
-	<alpine.LRH.2.02.2107211300520.10897@file01.intranet.prod.int.rdu2.redhat.com>
-	<CAOuPNLi-xz_4P+v45CHLx00ztbSwU3_maf4tuuyso5RHyeOytg@mail.gmail.com>
-	<CAOuPNLg0m-Q7Vhp4srbQrjXHsxVhOr-K2dvnNqzdR6Dr4kioqA@mail.gmail.com>
-	<20210830185541.715f6a39@windsurf>
-	<CAOuPNLhTidgLNWUbtUgdESYcKcE1C4SOdzKeQVhFGQvEoc0QEg@mail.gmail.com>
-	<20210830211224.76391708@windsurf>
-In-Reply-To: <20210830211224.76391708@windsurf>
-From: Pintu Agarwal <pintu.ping@gmail.com>
-Date: Tue, 31 Aug 2021 18:49:28 +0530
-Message-ID: <CAOuPNLgMd0AThhmSknbmKqp3_P8PFhBGr-jW0Mqjb6K6NchEMg@mail.gmail.com>
-To: Thomas Petazzoni <thomas.petazzoni@bootlin.com>
+X-Provags-ID: V03:K1:bQSyqX7gzsyHfW6ItopsEcogtOFcgqMpcpbkBlqNfgXJTvZcBaA
+	FAUB5KPiu44/uxGyHh3UqcCJ9gQwwuOlq72qahbv0xtBaNqz3wWwP5OmBKpM2YI3a4sGtgW
+	qlcd7EXkHQuTrYOWpqRmLeF05EgDwa/tnkS5AgpSJHKdwWHtVqGzd8e0fl4gw9BERg9wbZ/
+	AucUldHvLz0VlOZoG93jg==
+X-UI-Out-Filterresults: notjunk:1;V03:K0:wve04trtYc4=:Kl2VXMaGb1cY0Dh47A53II
+	k1IuUGMXRIG2uy45V0W+JgJwpR2bcw6FcCdPGpdQRtXl8XCjNGo37Qj1iVla1Rfdm25+ynR9D
+	7kr0pJwa1IHTTAU7bnwNLoHgdg4trcwgYyHgQJlbtL/jIjVeg63h1t2WSaqvVvK2tabCDblXu
+	88VGQMH9Lt29rnB7HZiZVdwBiJORlz4Z2rEnxN2Pas7xuTdGI3T6QPRSBvdtNgC1mSr/Jo00i
+	duR/PB8HEbzcd36x7+8YE8TwhSm9yVyMkYZuMBQehdwdIcRxmaFGcocWzVWtTi2w9KvUyGjng
+	fKBn02RKm6MxsCU0JSCJ17xqyj9gQfwvMvLO+ZoDVxgCEqicRbNH0VatVKPzeIEoYJdVrzA30
+	f8q+twcjJ/wHS5hyBHEDGZctfOvnUNCxW+lXv/0vjIj2JF2i+lnMVWDQOQZ3PFNniSJWoLBs9
+	wWeaCBhA9zm3Oo3bDhIwmeDAw0yhybBqNGuXwDJE5mIsvLVB3WTue/j1zBm+aH1GP+Imj7Ra8
+	2QS0xmdzk+aDkpqIkUj2ZRBVtbgIWO/+UtCZDeMCTFIvJllM6uwqCW0OmcTBj6yt6DRzpq/ZW
+	7bNJ9Ng3R9+S9FalygfmlUoM3bn9a1HpvUjKH5MXOcKjLbR+jUhhe81sXvkmNTrSbQ035kBxw
+	Sat8cgZz2ViCs/2t9ukCadMKZI9aYq77I3dwqn+XX5kz6dr9Dj09Xn+aByn+uAUlsWlL2Zq6S
+	rCs87HvyRPPZGtNUu+1ruvPNoiSARrZUDUFj+d05PHNzTnslMDEYVNrTtkE=
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -95,18 +85,15 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 01 Sep 2021 02:57:42 -0400
-Cc: Sami Tolvanen <samitolvanen@google.com>, snitzer@redhat.com,
-	Kernelnewbies <kernelnewbies@kernelnewbies.org>,
-	open list <linux-kernel@vger.kernel.org>, dm-devel@redhat.com,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	linux-mtd <linux-mtd@lists.infradead.org>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	Phillip Lougher <phillip@squashfs.org.uk>, agk@redhat.com
-Subject: Re: [dm-devel] Kernel 4.14: Using dm-verity with squashfs rootfs -
-	mounting issue
+Cc: =?UTF-8?q?Michael=20Wei=C3=9F?= <michael.weiss@aisec.fraunhofer.de>,
+	Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org,
+	Eric Paris <eparis@redhat.com>, linux-raid@vger.kernel.org,
+	Song Liu <song@kernel.org>, dm-devel@redhat.com,
+	linux-audit@redhat.com, Alasdair Kergon <agk@redhat.com>
+Subject: [dm-devel] [PATCH v3 0/3] dm: audit event logging
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -120,97 +107,119 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-Hi,
-
-On Tue, 31 Aug 2021 at 00:42, Thomas Petazzoni
-<thomas.petazzoni@bootlin.com> wrote:
->
-> Hello,
->
-> On Mon, 30 Aug 2021 23:48:40 +0530
-> Pintu Agarwal <pintu.ping@gmail.com> wrote:
->
-> > ohh that means we already have a working reference.
-> > If possible can you share the details, even 4.19 or higher will be
-> > also a good reference.
-> >
-> > > > Or, another option is to use the new concept from 5.1 kernel that is:
-> > > > dm-mod.create = ?
-> > > How are you doing it today without dm-mod.create ?
-> > I think in 4.14 we don't have dm-mod.create right ?
->
-> No, but you can backport it easily. Back at
-> http://lists.infradead.org/pipermail/openwrt-devel/2019-November/025967.html
-> I provided backports of this feature to OpenWrt, for the 4.14 and 4.19
-> kernels.
->
-Yes, I can backport it to our 4.14 Kernel.
-Can you share the list of patches to be backported to make it work on 4.14 ?
-If it's backported also I need to report to our internal kernel, but
-it might be slightly easier.
-Please share the details.
-
-> > Here is our kernel command line:
-> >
-> > [    0.000000] Kernel command line: ro rootwait
-> > console=ttyMSM0,115200,n8 ....  verity="95384 11923
-> > 16da5e4bbc706e5d90511d2a3dae373b5d878f9aebd522cd614a4faaace6baa3 12026
-> > " rootfstype=squashfs ubi.mtd=40,0,30 ubi.block=0,0 root=/dev/dm-0
-> > .... init=/sbin/init root=/dev/dm-0 dm="rootfs none ro,0 95384 verity
-> > 1 /dev/ubiblock0_0 /dev/mtdblock53 4096 4096 11923 8 sha256
-> > 16da5e4bbc706e5d90511d2a3dae373b5d878f9aebd522cd614a4faaace6baa3
-> > aee087a5be3b982978c923f566a94613496b417f2af592639bc80d141e34dfe7 10
-> > restart_on_corruption ignore_zero_blocks use_fec_from_device
-> > /dev/mtdblock53 fec_roots 2 fec_blocks 12026 fec_start 12026" ...
->
-> I don't see how this can work without the dm-mod.create feature. Are
-> you sure the verity= and dm= kernel arguments exist?
-
-Sorry, I am not a security guy and this was done by someone from the
-security team.
-But, I know that this is already working with ext4.
-The moment we change to squashfs, it does not work.
-
-The only difference with squashfs are:
-=> verity metadata are kept on separate volume
-=> The rootfstype and related stuff are different
-=> verity command line related stuff are almost the same.
-
-Also, you mentioned:
->>> Here, it definitely worked to append the hash tree to the squashfs
->>> image and store them in the same partition.
-Can you share some details about it ?
-How it can be done since squashfs is readonly.
-Do, we need to change some parameters during squashfs image generation ?
-{
-  $(STAGING_DIR_HOST)/bin/mksquashfs4 $(call mkfs_target_dir,$(1)) $@ \
-- -nopad -noappend -root-owned \
-+ -noappend -root-owned \
-}
-
-Also, for the above cmdline, is there any problem with the block size ?
-As @Mikulas said before that the block size could be the issue
-
-Also, for squashfs we are passing like this for root=. Is it fine ?
-rootfstype=squashfs ubi.mtd=40,0,30 ubi.block=0,0 root=/dev/dm-0
-
-I see that dm-0 is already passed elsewhere so do we really need it ?
-I suspect it is not required as a block device.
-
-
-Thanks,
-Pintu
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+ZG0gaW50ZWdyaXR5IGFuZCBhbHNvIHN0YWNrZWQgZG0gY3J5cHQgZGV2aWNlcyB0cmFjayBpbnRl
+Z3JpdHkKdmlvbGF0aW9ucyBpbnRlcm5hbGx5LiBUaHVzLCBpbnRlZ3JpdHkgdmlvbGF0aW9ucyBj
+b3VsZCBiZSBwb2xsZWQKZnJvbSB1c2VyIHNwYWNlLCBlLmcuLCBieSAnaW50ZWdyaXR5c2V0dXAg
+c3RhdHVzJy4KCj5Gcm9tIGFuIGF1ZGl0aW5nIHBlcnNwZWN0aXZlLCB3ZSBvbmx5IGNvdWxkIHNl
+ZSB0aGF0IHRoZXJlIHdlcmUKYSBudW1iZXIgb2YgaW50ZWdyaXR5IHZpb2xhdGlvbnMsIGJ1dCBu
+b3Qgd2hlbiBhbmQgd2hlcmUgdGhlCnZpb2xhdGlvbiBleGFjdGx5IHdhcyB0YWtpbmcgcGxhY2Uu
+IFRoZSBjdXJyZW50IGVycm9yIGxvZyB0bwp0aGUga2VybmVsIHJpbmcgYnVmZmVyLCBjb250YWlu
+cyB0aG9zZSBpbmZvcm1hdGlvbiwgdGltZSBzdGFtcCBhbmQKc2VjdG9yIG9uIGRldmljZS4gSG93
+ZXZlciwgZm9yIGF1ZGl0aW5nIHRoZSBhdWRpdCBzdWJzeXN0ZW0gcHJvdmlkZXMKYSBzZXBhcmF0
+ZSBsb2dnaW5nIG1lY2hhbmlzbSB3aGljaCBtZWV0cyBjZXJ0YWluIGNyaXRlcmlhIGZvciBzZWN1
+cmUKYXVkaXQgbG9nZ2luZy4KCldpdGggdGhpcyBzbWFsbCBzZXJpZXMgd2UgbWFrZSB1c2Ugb2Yg
+dGhlIGtlcm5lbCBhdWRpdCBmcmFtZXdvcmsKYW5kIGV4dGVuZCB0aGUgZG0gZHJpdmVyIHRvIGxv
+ZyBhdWRpdCBldmVudHMgaW4gY2FzZSBvZiBzdWNoCmludGVncml0eSB2aW9sYXRpb25zLiBGdXJ0
+aGVyLCB3ZSBhbHNvIGxvZyBjb25zdHJ1Y3Rpb24gYW5kCmRlc3RydWN0aW9uIG9mIHRoZSBkZXZp
+Y2UgbWFwcGluZ3MuCgpXZSBmb2N1cyBvbiBkbS1pbnRlZ3JpdHkgYW5kIHN0YWNrZWQgZG0tY3J5
+cHQgZGV2aWNlcyBmb3Igbm93LgpIb3dldmVyLCB0aGUgaGVscGVyIGZ1bmN0aW9ucyB0byBsb2cg
+YXVkaXQgbWVzc2FnZXMgc2hvdWxkIGJlCmFwcGxpY2FibGUgdG8gZG0tdmVyaXR5IHRvby4KClRo
+ZSBmaXJzdCBwYXRjaCBpbnRyb2R1Y2UgZ2VuZXJpYyBhdWRpdCB3cmFwcGVyIGZ1bmN0aW9ucy4K
+VGhlIHNlY29uZCBwYXRjaCBtYWtlcyB1c2Ugb2YgdGhlIGF1ZGl0IHdyYXBwZXIgZnVuY3Rpb25z
+IGluIHRoZQpkbS1pbnRlZ3JpdHkuYy4KVGhlIHRoaXJkIHBhdGNoIHVzZXMgdGhlIHdyYXBwZXIg
+ZnVuY3Rpb25zIGluIGRtLWNyeXB0LmMuCgpUaGUgYXVkaXQgbG9ncyBsb29rIGxpa2UgdGhpcyBp
+ZiBleGVjdXRpbmcgdGhlIGZvbGxvd2luZyBzaW1wbGUgdGVzdDoKCiMgZGQgaWY9L2Rldi96ZXJv
+IG9mPXRlc3QuaW1nIGJzPTFNIGNvdW50PTEwMjQKIyBsb3NldHVwIC1mIHRlc3QuaW1nCiMgaW50
+ZWdyaXR5c2V0dXAgLXZEIGZvcm1hdCAtLWludGVncml0eSBzaGEyNTYgLXQgMzIgL2Rldi9sb29w
+MAojIGludGVncml0eXNldHVwIG9wZW4gLUQgL2Rldi9sb29wMCAtLWludGVncml0eSBzaGEyNTYg
+aW50ZWdyaXR5dGVzdAojIGludGVncml0eXNldHVwIHN0YXR1cyBpbnRlZ3JpdHl0ZXN0CiMgaW50
+ZWdyaXR5c2V0dXAgY2xvc2UgaW50ZWdyaXR5dGVzdAojIGludGVncml0eXNldHVwIG9wZW4gLUQg
+L2Rldi9sb29wMCAtLWludGVncml0eSBzaGEyNTYgaW50ZWdyaXR5dGVzdAojIGludGVncml0eXNl
+dHVwIHN0YXR1cyBpbnRlZ3JpdHl0ZXN0CiMgZGQgaWY9L2Rldi91cmFuZG9tIG9mPS9kZXYvbG9v
+cDAgYnM9NTEyIGNvdW50PTEgc2Vlaz0xMDAwMDAKIyBkZCBpZj0vZGV2L21hcHBlci9pbnRlZ3Jp
+dHl0ZXN0IG9mPS9kZXYvbnVsbAoKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQphdWRpdC5sb2cg
+ZnJvbSBhdWRpdGQKCnR5cGU9VU5LTk9XTlsxMzM2XSBtc2c9YXVkaXQoMTYzMDQyNTAzOS4zNjM6
+MTg0KTogbW9kdWxlPWludGVncml0eQpvcD1jdHIgcHBpZD0zODA3IHBpZD0zODE5IGF1aWQ9MTAw
+MCB1aWQ9MCBnaWQ9MCBldWlkPTAgc3VpZD0wIGZzdWlkPTAKZWdpZD0wIHNnaWQ9MCBmc2dpZD0w
+IHR0eT1wdHMyIHNlcz0zIGNvbW09ImludGVncml0eXNldHVwIgpleGU9Ii9zYmluL2ludGVncml0
+eXNldHVwIiBzdWJqPT11bmNvbmZpbmVkIGRldj0yNTQ6MwplcnJvcl9tc2c9J3N1Y2Nlc3MnIHJl
+cz0xCnR5cGU9VU5LTk9XTlsxMzM2XSBtc2c9YXVkaXQoMTYzMDQyNTAzOS40NzE6MTg1KTogbW9k
+dWxlPWludGVncml0eQpvcD1kdHIgcHBpZD0zODA3IHBpZD0zODE5IGF1aWQ9MTAwMCB1aWQ9MCBn
+aWQ9MCBldWlkPTAgc3VpZD0wIGZzdWlkPTAKZWdpZD0wIHNnaWQ9MCBmc2dpZD0wIHR0eT1wdHMy
+IHNlcz0zIGNvbW09ImludGVncml0eXNldHVwIgpleGU9Ii9zYmluL2ludGVncml0eXNldHVwIiBz
+dWJqPT11bmNvbmZpbmVkIGRldj0yNTQ6MwplcnJvcl9tc2c9J3N1Y2Nlc3MnIHJlcz0xCnR5cGU9
+VU5LTk9XTlsxMzM2XSBtc2c9YXVkaXQoMTYzMDQyNTAzOS42MTE6MTg2KTogbW9kdWxlPWludGVn
+cml0eQpvcD1jdHIgcHBpZD0zODA3IHBpZD0zODE5IGF1aWQ9MTAwMCB1aWQ9MCBnaWQ9MCBldWlk
+PTAgc3VpZD0wIGZzdWlkPTAKZWdpZD0wIHNnaWQ9MCBmc2dpZD0wIHR0eT1wdHMyIHNlcz0zIGNv
+bW09ImludGVncml0eXNldHVwIgpleGU9Ii9zYmluL2ludGVncml0eXNldHVwIiBzdWJqPT11bmNv
+bmZpbmVkIGRldj0yNTQ6MwplcnJvcl9tc2c9J3N1Y2Nlc3MnIHJlcz0xCnR5cGU9VU5LTk9XTlsx
+MzM2XSBtc2c9YXVkaXQoMTYzMDQyNTA1NC40NzU6MTg3KTogbW9kdWxlPWludGVncml0eQpvcD1k
+dHIgcHBpZD0zODA3IHBpZD0zODE5IGF1aWQ9MTAwMCB1aWQ9MCBnaWQ9MCBldWlkPTAgc3VpZD0w
+IGZzdWlkPTAKZWdpZD0wIHNnaWQ9MCBmc2dpZD0wIHR0eT1wdHMyIHNlcz0zIGNvbW09ImludGVn
+cml0eXNldHVwIgpleGU9Ii9zYmluL2ludGVncml0eXNldHVwIiBzdWJqPT11bmNvbmZpbmVkIGRl
+dj0yNTQ6MwplcnJvcl9tc2c9J3N1Y2Nlc3MnIHJlcz0xCgp0eXBlPVVOS05PV05bMTMzNl0gbXNn
+PWF1ZGl0KDE2MzA0MjUwNzMuMTcxOjE5MSk6IG1vZHVsZT1pbnRlZ3JpdHkKb3A9Y3RyIHBwaWQ9
+MzgwNyBwaWQ9Mzg4MyBhdWlkPTEwMDAgdWlkPTAgZ2lkPTAgZXVpZD0wIHN1aWQ9MCBmc3VpZD0w
+CmVnaWQ9MCBzZ2lkPTAgZnNnaWQ9MCB0dHk9cHRzMiBzZXM9MyBjb21tPSJpbnRlZ3JpdHlzZXR1
+cCIKZXhlPSIvc2Jpbi9pbnRlZ3JpdHlzZXR1cCIgc3Viaj09dW5jb25maW5lZCBkZXY9MjU0OjMK
+ZXJyb3JfbXNnPSdzdWNjZXNzJyByZXM9MQoKdHlwZT1VTktOT1dOWzEzMzZdIG1zZz1hdWRpdCgx
+NjMwNDI1MDg3LjIzOToxOTIpOiBtb2R1bGU9aW50ZWdyaXR5Cm9wPWR0ciBwcGlkPTM4MDcgcGlk
+PTM5MDIgYXVpZD0xMDAwIHVpZD0wIGdpZD0wIGV1aWQ9MCBzdWlkPTAgZnN1aWQ9MAplZ2lkPTAg
+c2dpZD0wIGZzZ2lkPTAgdHR5PXB0czIgc2VzPTMgY29tbT0iaW50ZWdyaXR5c2V0dXAiCmV4ZT0i
+L3NiaW4vaW50ZWdyaXR5c2V0dXAiIHN1Ymo9PXVuY29uZmluZWQgZGV2PTI1NDozCmVycm9yX21z
+Zz0nc3VjY2VzcycgcmVzPTEKCnR5cGU9VU5LTk9XTlsxMzM2XSBtc2c9YXVkaXQoMTYzMDQyNTA5
+My43NTU6MTkzKTogbW9kdWxlPWludGVncml0eQpvcD1jdHIgcHBpZD0zODA3IHBpZD0zOTA2IGF1
+aWQ9MTAwMCB1aWQ9MCBnaWQ9MCBldWlkPTAgc3VpZD0wIGZzdWlkPTAKZWdpZD0wIHNnaWQ9MCBm
+c2dpZD0wIHR0eT1wdHMyIHNlcz0zIGNvbW09ImludGVncml0eXNldHVwIgpleGU9Ii9zYmluL2lu
+dGVncml0eXNldHVwIiBzdWJqPT11bmNvbmZpbmVkIGRldj0yNTQ6MwplcnJvcl9tc2c9J3N1Y2Nl
+c3MnIHJlcz0xCgp0eXBlPVVOS05PV05bMTMzN10gbXNnPWF1ZGl0KDE2MzA0MjUxMTIuMTE5OjE5
+NCk6IG1vZHVsZT1pbnRlZ3JpdHkKb3A9aW50ZWdyaXR5LWNoZWNrc3VtIGRldj0yNTQ6MyBzZWN0
+b3IgNzc0ODAgcmVzPTAKdHlwZT1VTktOT1dOWzEzMzddIG1zZz1hdWRpdCgxNjMwNDI1MTEyLjEx
+OToxOTUpOiBtb2R1bGU9aW50ZWdyaXR5Cm9wPWludGVncml0eS1jaGVja3N1bSBkZXY9MjU0OjMg
+c2VjdG9yIDc3NDgwIHJlcz0wCnR5cGU9VU5LTk9XTlsxMzM3XSBtc2c9YXVkaXQoMTYzMDQyNTEx
+Mi4xMTk6MTk2KTogbW9kdWxlPWludGVncml0eQpvcD1pbnRlZ3JpdHktY2hlY2tzdW0gZGV2PTI1
+NDozIHNlY3RvciA3NzQ4MCByZXM9MAp0eXBlPVVOS05PV05bMTMzN10gbXNnPWF1ZGl0KDE2MzA0
+MjUxMTIuMTE5OjE5Nyk6IG1vZHVsZT1pbnRlZ3JpdHkKb3A9aW50ZWdyaXR5LWNoZWNrc3VtIGRl
+dj0yNTQ6MyBzZWN0b3IgNzc0ODAgcmVzPTAKdHlwZT1VTktOT1dOWzEzMzddIG1zZz1hdWRpdCgx
+NjMwNDI1MTEyLjExOToxOTgpOiBtb2R1bGU9aW50ZWdyaXR5Cm9wPWludGVncml0eS1jaGVja3N1
+bSBkZXY9MjU0OjMgc2VjdG9yIDc3NDgwIHJlcz0wCnR5cGU9VU5LTk9XTlsxMzM3XSBtc2c9YXVk
+aXQoMTYzMDQyNTExMi4xMTk6MTk5KTogbW9kdWxlPWludGVncml0eQpvcD1pbnRlZ3JpdHktY2hl
+Y2tzdW0gZGV2PTI1NDozIHNlY3RvciA3NzQ4MCByZXM9MAp0eXBlPVVOS05PV05bMTMzN10gbXNn
+PWF1ZGl0KDE2MzA0MjUxMTIuMTE5OjIwMCk6IG1vZHVsZT1pbnRlZ3JpdHkKb3A9aW50ZWdyaXR5
+LWNoZWNrc3VtIGRldj0yNTQ6MyBzZWN0b3IgNzc0ODAgcmVzPTAKdHlwZT1VTktOT1dOWzEzMzdd
+IG1zZz1hdWRpdCgxNjMwNDI1MTEyLjExOToyMDEpOiBtb2R1bGU9aW50ZWdyaXR5Cm9wPWludGVn
+cml0eS1jaGVja3N1bSBkZXY9MjU0OjMgc2VjdG9yIDc3NDgwIHJlcz0wCnR5cGU9VU5LTk9XTlsx
+MzM3XSBtc2c9YXVkaXQoMTYzMDQyNTExMi4xMTk6MjAyKTogbW9kdWxlPWludGVncml0eQpvcD1p
+bnRlZ3JpdHktY2hlY2tzdW0gZGV2PTI1NDozIHNlY3RvciA3NzQ4MCByZXM9MAp0eXBlPVVOS05P
+V05bMTMzN10gbXNnPWF1ZGl0KDE2MzA0MjUxMTIuMTE5OjIwMyk6IG1vZHVsZT1pbnRlZ3JpdHkK
+b3A9aW50ZWdyaXR5LWNoZWNrc3VtIGRldj0yNTQ6MyBzZWN0b3IgNzc0ODAgcmVzPTAKCnYzIENo
+YW5nZXM6Ci0gVXNlIG9mIHR3byBhdWRpdCBldmVudCB0eXBlcyBBVURJVF9ETV9FVkVOVCB1bmQg
+QVVESVRfRE1fQ1RSTAotIEFkZGl0aW9uYWxseSB1c2UgYXVkaXRfbG9nX3Rhc2tfaW5mbyBpbiBj
+YXNlIG9mIEFVRElUX0RNX0NUUkwgbWVzc2FnZXMKLSBQcm92aWRlIGNvbnNpc3RlbnQgZmllbGRz
+IHBlciBtZXNzYWdlIHR5cGUgYXMgc3VnZ2VzdGVkIGJ5IFBhdWwKLSBBZGRlZCBzYW1wbGUgZXZl
+bnRzIHRvIGNvbW1pdCBtZXNzYWdlIG9mIFsxLzNdIGFzIHN1Z2dlc3RlZCBieSBQYXVsCi0gUmVi
+YXNlZCBvbiB2NS4xNAoKCnYyIENoYW5nZXM6Ci0gRml4ZWQgY29tcGlsZSBlcnJvcnMgaWYgQ09O
+RklHX0RNX0FVRElUIGlzIG5vdCBzZXQKLSBGaXhlZCBmb3JtYXR0aW5nIGFuZCB0eXBvcyBhcyBz
+dWdnZXN0ZWQgYnkgQ2FzZXkKCk1pY2hhZWwgV2Vpw58gKDMpOgogIGRtOiBpbnRyb2R1Y2UgYXVk
+aXQgZXZlbnQgbW9kdWxlIGZvciBkZXZpY2UgbWFwcGVyCiAgZG0gaW50ZWdyaXR5OiBsb2cgYXVk
+aXQgZXZlbnRzIGZvciBkbS1pbnRlZ3JpdHkgdGFyZ2V0CiAgZG0gY3J5cHQ6IGxvZyBhZWFkIGlu
+dGVncml0eSB2aW9sYXRpb25zIHRvIGF1ZGl0IHN1YnN5c3RlbQoKIGRyaXZlcnMvbWQvS2NvbmZp
+ZyAgICAgICAgIHwgMTAgKysrKysKIGRyaXZlcnMvbWQvTWFrZWZpbGUgICAgICAgIHwgIDQgKysK
+IGRyaXZlcnMvbWQvZG0tYXVkaXQuYyAgICAgIHwgNzkgKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKysrKysKIGRyaXZlcnMvbWQvZG0tYXVkaXQuaCAgICAgIHwgNjIgKysrKysrKysr
+KysrKysrKysrKysrKysrKysrKysrCiBkcml2ZXJzL21kL2RtLWNyeXB0LmMgICAgICB8IDIyICsr
+KysrKysrKy0tCiBkcml2ZXJzL21kL2RtLWludGVncml0eS5jICB8IDI1ICsrKysrKysrKystLQog
+aW5jbHVkZS91YXBpL2xpbnV4L2F1ZGl0LmggfCAgMiArCiA3IGZpbGVzIGNoYW5nZWQsIDE5NiBp
+bnNlcnRpb25zKCspLCA4IGRlbGV0aW9ucygtKQogY3JlYXRlIG1vZGUgMTAwNjQ0IGRyaXZlcnMv
+bWQvZG0tYXVkaXQuYwogY3JlYXRlIG1vZGUgMTAwNjQ0IGRyaXZlcnMvbWQvZG0tYXVkaXQuaAoK
+LS0gCjIuMjAuMQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20K
+aHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
 
