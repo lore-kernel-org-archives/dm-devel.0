@@ -1,77 +1,155 @@
-Return-Path: <SRS0=Tx5l=NY=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=d4ru=NZ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-16.1 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-8.7 required=3.0 tests=BAYES_00,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,MAILING_LIST_MULTI,
+	SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham autolearn_force=no
+	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 963F4C433EF
-	for <dm-devel@archiver.kernel.org>; Thu,  2 Sep 2021 22:04:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 15722C433EF
+	for <dm-devel@archiver.kernel.org>; Fri,  3 Sep 2021 08:20:46 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4BBFA60724
-	for <dm-devel@archiver.kernel.org>; Thu,  2 Sep 2021 22:04:28 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 4BBFA60724
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
-Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1630620267;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=EdaUOAZ3R6Z9UHEyeZ2EdweiOjhfHlmjsJCb8oy9dBE=;
-	b=e9MlhfiErM1QfviZlSwW4alOdj+Kr7Ld8gviTcv0NYH1jYKnb4r9wnhjve0H68Qi5pDjNZ
-	ys0uvQEcJfhIl5Q+6mgQRBvGyOjCvj+bfQ54sT4GkXRqJVeWZS+kykvTmhyn/FTREzl6CS
-	WX8nsVUlX4P/LpjouPV0Zr+S7LvYwc8=
+	by mail.kernel.org (Postfix) with ESMTPS id 8D612610D2
+	for <dm-devel@archiver.kernel.org>; Fri,  3 Sep 2021 08:20:45 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 8D612610D2
+Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-478-9WqlPL8MOteGA8MjippWRg-1; Thu, 02 Sep 2021 18:04:26 -0400
-X-MC-Unique: 9WqlPL8MOteGA8MjippWRg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-80-vKogOxmzO6esaMipidNUDA-1; Fri, 03 Sep 2021 04:20:40 -0400
+X-MC-Unique: vKogOxmzO6esaMipidNUDA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DADF5107ACE6;
-	Thu,  2 Sep 2021 22:04:20 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 52709824FAA;
+	Fri,  3 Sep 2021 08:20:35 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C18DD60BF1;
-	Thu,  2 Sep 2021 22:04:20 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AB0825C232;
+	Fri,  3 Sep 2021 08:20:33 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 95CA744A5C;
-	Thu,  2 Sep 2021 22:04:20 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
-	[10.5.11.11])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4693244A59;
+	Fri,  3 Sep 2021 08:20:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 182Lw4tm013400 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 2 Sep 2021 17:58:04 -0400
+	id 1838KThD030853 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 3 Sep 2021 04:20:29 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 882E95B826; Thu,  2 Sep 2021 21:58:04 +0000 (UTC)
-Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DBAA1369A;
-	Thu,  2 Sep 2021 21:58:00 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 182LvxXn012315; 
-	Thu, 2 Sep 2021 16:57:59 -0500
-Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 182LvwBC012314;
-	Thu, 2 Sep 2021 16:57:58 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Thu,  2 Sep 2021 16:57:49 -0500
-Message-Id: <1630619869-12251-7-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1630619869-12251-1-git-send-email-bmarzins@redhat.com>
+	id DE1E020357AF; Fri,  3 Sep 2021 08:20:28 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D85B32030BFB
+	for <dm-devel@redhat.com>; Fri,  3 Sep 2021 08:20:24 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DB6A5100B8C0
+	for <dm-devel@redhat.com>; Fri,  3 Sep 2021 08:20:24 +0000 (UTC)
+Received: from de-smtp-delivery-102.mimecast.com
+	(de-smtp-delivery-102.mimecast.com [194.104.111.102]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-141-cVFk5YFxPNe3vTK3mg8auA-1;
+	Fri, 03 Sep 2021 04:20:23 -0400
+X-MC-Unique: cVFk5YFxPNe3vTK3mg8auA-1
+Received: from EUR04-HE1-obe.outbound.protection.outlook.com
+	(mail-he1eur04lp2056.outbound.protection.outlook.com [104.47.13.56])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	de-mta-20-HAs7QfzXO3u3UHFzGLFnFQ-1; Fri, 03 Sep 2021 10:20:21 +0200
+X-MC-Unique: HAs7QfzXO3u3UHFzGLFnFQ-1
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
+	by DB8PR04MB7162.eurprd04.prod.outlook.com (2603:10a6:10:12c::13)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4478.22;
+	Fri, 3 Sep 2021 08:20:19 +0000
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
+	([fe80::5158:3113:295b:d9c1]) by
+	DB8PR04MB6555.eurprd04.prod.outlook.com
+	([fe80::5158:3113:295b:d9c1%5]) with mapi id 15.20.4478.020;
+	Fri, 3 Sep 2021 08:20:19 +0000
+From: Martin Wilck <martin.wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
+	"christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Thread-Topic: [PATCH v2 3/6] multipath: print warning if multipathd is not
+	running.
+Thread-Index: AQHXoEWbIz3Xkwkv9UGBr5LVJPvjyquR+IMA
+Date: Fri, 3 Sep 2021 08:20:18 +0000
+Message-ID: <b84f6831e2e7ecd76e6690fb49a67ccca40153fe.camel@suse.com>
 References: <1630619869-12251-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+	<1630619869-12251-4-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1630619869-12251-4-git-send-email-bmarzins@redhat.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Evolution 3.40.4
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: cd6e3fb5-d6c1-4f01-4af2-08d96eb3aa9f
+x-ms-traffictypediagnostic: DB8PR04MB7162:
+x-microsoft-antispam-prvs: <DB8PR04MB716242582D8BD08F9FF357C4FCCF9@DB8PR04MB7162.eurprd04.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:883
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: FzWNU8Q0NUnDVeWU7o20OCw11HK/IF8sSpPCQCeEgps6LaFY1IJQZ94YqGeMuJyMNZz6qRWWtQZcxFyAivI9UkMvhr3WsOA73DpZ445cf0VB7f146F7p4pzwHtUnzq38NVK69ZElDdWgZ4H6bY/t82ZNMQhburz86yLp29I7ZxBE/HyK7wrLbR9kI6uB/wGEkrfJdmde58F0NTzIoIjPZKrw3YlsbEtH6GhCfU9N22H5HrOdf7PFbzYcAeSJWrGB4bS2ZrXZFIt7s6v9GuAAA/0KIzhkhZTiySShvM1U6yuWt3tEQ6nu8e9q/FExXL4VgC/d5+WYPzc+Mb1LqHQ0NBw/10F+NSDIlyiKmrD/5QQOQffbcNuEAVFEbio5EaLzMIt0yXjGCa97EjrfXZLmL6z3UY8I7nAp9sA/HLLzS6eKeMhvgcWgrEIl1zBZgScjd2T9p/qhMaALhGLBZZgnKsZoFL2nrt0/DEcNSA+IjnZ0O+8W6vdfQR4LGETq8JQ4AjnomprHvPbSmw4fBb3hwyKQxQcj+2AFwornh+602Q6kZnU1u9bTzghzyd+AcI6dTXfykW6zcRgvPYyuHq1WUfNZVP0psqlx5JBf5Mw49t84LiEpTxfxu09J/0cyI8AGukDm0gZmNz4Ka5o004LvWeqtKABY8lz3Ecvc6HQmzcD11RCiqhbV2Sv1PJCC7UJIsQechr0slmfVuTK9yQY3+A==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(366004)(86362001)(38070700005)(558084003)(44832011)(8676002)(2906002)(6512007)(8936002)(4326008)(66476007)(76116006)(508600001)(26005)(186003)(66556008)(66446008)(36756003)(64756008)(83380400001)(110136005)(5660300002)(38100700002)(122000001)(316002)(91956017)(6506007)(71200400001)(66946007)(2616005)(6486002);
+	DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?vfxcqDcD73U6P2gnWrautgDpRIGLM/D8jYxWlV5CKb2DE/U5N//uZC4DI?=
+	=?iso-8859-15?Q?rWdVD9rOysVx/B0rAOF6t0Ffo+y/QaOSaNEnlHiS95bynO5oRbwHASBVw?=
+	=?iso-8859-15?Q?jrPq1U6J2AwKIEiCQ6COdQM51oCs+K8pfoVIS0EDs0RftStUfvhQQ/tFJ?=
+	=?iso-8859-15?Q?ThS6AQ1/eVnw87OcfhE7g7VZxS2Sf6LoAu1XmQUeGSAbI/SgMQ2wPgG1H?=
+	=?iso-8859-15?Q?Aj+i9CyAMjARQapKxfbCe078ccbPBybbIVH8/fNRAGs4jFXutxBn4GSBJ?=
+	=?iso-8859-15?Q?s2f0H0RA0Hd4prV+kynelv0n1zdtY9Lr4xMywFkds4y948SC5dgB/iDsQ?=
+	=?iso-8859-15?Q?Oy0PCTaEuB7SIjCscZ5HiLd1LNP+4MaSBk8In3TnoSkQxv4ZLOGz73w97?=
+	=?iso-8859-15?Q?kMYmy4nDOgaC5NCgYtio5HKnkEEcUHtZh2EJbBv0G99/hMaPhOy2jkDpy?=
+	=?iso-8859-15?Q?A4h4DTdCUq1Yp96eDKrLs2Mw/6JoY5PH3uWZdcRyIc2ANZ0QaF2d/RiVw?=
+	=?iso-8859-15?Q?tiYLJnRv3vqOgrEBnJRg5LygsbxvqujVVGk6jEDQgpOY2x/kquGdlsToA?=
+	=?iso-8859-15?Q?zgPvyvyEHaAi0vfJDgCMZ6X4UF/eOMxweBFm5C1/6kldtqYtwoeyIV9Jb?=
+	=?iso-8859-15?Q?1xUt34VEgpj9QUjsGIJwJnG8i7t8ZNxKiaPeAqzYiQ8n4saMBqwLRriOA?=
+	=?iso-8859-15?Q?SY8sw7nrpqX+CgtOeQvGi/+hCLRLIu/i1yr1pI0K/xY/CRQ1A7KupUS8i?=
+	=?iso-8859-15?Q?1baGZTC3erFjN2G5ORcdgKDe/ohLcpkOFbPuaOYO3C8mjqycpYqgtUc8a?=
+	=?iso-8859-15?Q?dA8fn04kydO4ClR5Z0xgiuverQRULMvIvlhPoH6jIkTv4KrbKZ2o7Y6q+?=
+	=?iso-8859-15?Q?VNWtzLZnhgVUMvK7vDyJARBS//G7zJrllEIbQlu7HyDBd7mdGk4YicCc4?=
+	=?iso-8859-15?Q?cbDj4TxzHIapKeB6blRHXBYzsCUaGx04g1StCuxIMH7Y1X4WDtWRceWY5?=
+	=?iso-8859-15?Q?+dfmK0ntJE0xgJ6v42agHFHbUk2aAXrCBXzaN/R/4xdMFvEEARHL0h+WI?=
+	=?iso-8859-15?Q?C9iimz3nPNvs0GlcpApIAp4kX4p/LY5ecXzSR4LrhqBYyDPH0Vv7W1deN?=
+	=?iso-8859-15?Q?VtABX7k+zbcLCXU4mClRmGktTSbS1Ys2lOKd7lwqlQsjKVUIKaaZF33t4?=
+	=?iso-8859-15?Q?dE/ZMgNkc96sJgFSHUMGHsLGvjRW0q9JTmqJmfm6/a0u4q/4tbreFPSS9?=
+	=?iso-8859-15?Q?P1KBfm+ckVfYzfUnWwB3WnMNZyJokxIspIwgc2qNA6D4AYRw2Mt8QtA/7?=
+	=?iso-8859-15?Q?n16DzshtNi4y1HMexhAR4WyRG7Jz+2M+ZC6ZWBLug4dBjfa6UwJ23Ayew?=
+	=?iso-8859-15?Q?0MtSRUNOn8qWBZxWNuYF3sb1URB0Xt6Jf?=
+x-ms-exchange-transport-forked: True
+MIME-Version: 1.0
+X-OriginatorOrg: suse.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: cd6e3fb5-d6c1-4f01-4af2-08d96eb3aa9f
+X-MS-Exchange-CrossTenant-originalarrivaltime: 03 Sep 2021 08:20:18.9623 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: jDnNjjav9uGFiSCh6kaDeb1zQ8kCkWvvUk430sN6ff3aCdFdjnYtYWZHdOPIYnBeiFAQhZirgyD716GxGqGSkA==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB8PR04MB7162
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1838KThD030853
 X-loop: dm-devel@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>,
-	Martin Wilck <Martin.Wilck@suse.com>
-Subject: [dm-devel] [PATCH v2 6/6] libmultipath: drop unnecessary parameter
-	from remove_map()
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH v2 3/6] multipath: print warning if
+ multipathd is not running.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -83,282 +161,28 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-ID: <C01A95120047E84094DD9DCDC9674DE9@eurprd04.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-When remove_map() is called, if the multipath device is in a mpvec, it
-must be removed from it, because the device will be freed. Now that the
-mpvec is passed as a separate parameter to remove_map(), the purge_vec
-parameter is redundant.  It was only used by coalesce_paths(), since the
-multipath device isn't on any vector when remove_map() is called there.
-Instead, remove_map() can just be called with a NULL mpvec, when there
-is no mpvec to remove the device from.
+On Thu, 2021-09-02 at 16:57 -0500, Benjamin Marzinski wrote:
+> If multipath notices that multipath devices exist or were created, and
+> multipathd is not running, it now prints a warning message, so users
+> are
+> notified of the issue.
+> 
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-remove_map_by_alias() also has a redundant purge_vec parameter.  Since
-it only removes a map if it finds in on vec->mpvec, calling it with
-KEEP_VEC would be a bug, since it would leave a pointer to the freed
-device in the vector.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmpathpersist/mpath_persist.c |  2 +-
- libmultipath/configure.c        | 13 ++++++-------
- libmultipath/structs_vec.c      | 12 ++++++------
- libmultipath/structs_vec.h      | 11 ++---------
- multipath/main.c                |  4 ++--
- multipathd/dmevents.c           |  2 +-
- multipathd/main.c               | 12 ++++++------
- 7 files changed, 24 insertions(+), 32 deletions(-)
-
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index 26710e79..803a2a28 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -410,7 +410,7 @@ get_mpvec (vector curmp, vector pathvec, char * refwwid)
- 		if (update_multipath_table(mpp, pathvec, DI_CHECKER) != DMP_OK ||
- 		    update_mpp_paths(mpp, pathvec)) {
- 			condlog(1, "error parsing map %s", mpp->wwid);
--			remove_map(mpp, pathvec, curmp, PURGE_VEC);
-+			remove_map(mpp, pathvec, curmp);
- 			i--;
- 		} else
- 			extract_hwe_from_path(mpp);
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 3f241c5c..7edb355b 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -1198,7 +1198,7 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
- 
- 		if (!mpp->paths) {
- 			condlog(0, "%s: skip coalesce (no paths)", mpp->alias);
--			remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
-+			remove_map(mpp, vecs->pathvec, NULL);
- 			continue;
- 		}
- 
-@@ -1226,7 +1226,7 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
- 		verify_paths(mpp);
- 
- 		if (setup_map(mpp, &params, vecs)) {
--			remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
-+			remove_map(mpp, vecs->pathvec, NULL);
- 			continue;
- 		}
- 
-@@ -1248,7 +1248,7 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
- 				condlog(2, "%s: %s map",
- 					mpp->alias, (mpp->action == ACT_CREATE)?
- 					"ignoring" : "removing");
--				remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
-+				remove_map(mpp, vecs->pathvec, NULL);
- 				continue;
- 			} else /* if (r == DOMAP_RETRY && !is_daemon) */ {
- 				ret = CP_RETRY;
-@@ -1257,7 +1257,7 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
- 		}
- 		if (r == DOMAP_DRY) {
- 			if (!vector_alloc_slot(newmp)) {
--				remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
-+				remove_map(mpp, vecs->pathvec, NULL);
- 				goto out;
- 			}
- 			vector_set_slot(newmp, mpp);
-@@ -1282,14 +1282,13 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
- 
- 		if (mpp->action != ACT_REJECT) {
- 			if (!vector_alloc_slot(newmp)) {
--				remove_map(mpp, vecs->pathvec, vecs->mpvec, KEEP_VEC);
-+				remove_map(mpp, vecs->pathvec, NULL);
- 				goto out;
- 			}
- 			vector_set_slot(newmp, mpp);
- 		}
- 		else
--			remove_map(mpp, vecs->pathvec, vecs->mpvec,
--				   KEEP_VEC);
-+			remove_map(mpp, vecs->pathvec, NULL);
- 	}
- 	ret = CP_OK;
- out:
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 24d6fd24..85d97ac1 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -334,7 +334,7 @@ void set_path_removed(struct path *pp)
- }
- 
- void
--remove_map(struct multipath *mpp, vector pathvec, vector mpvec, int purge_vec)
-+remove_map(struct multipath *mpp, vector pathvec, vector mpvec)
- {
- 	int i;
- 
-@@ -343,7 +343,7 @@ remove_map(struct multipath *mpp, vector pathvec, vector mpvec, int purge_vec)
- 	 */
- 	orphan_paths(pathvec, mpp, "map removed internally");
- 
--	if (purge_vec &&
-+	if (mpvec &&
- 	    (i = find_slot(mpvec, (void *)mpp)) != -1)
- 		vector_del_slot(mpvec, i);
- 
-@@ -354,12 +354,12 @@ remove_map(struct multipath *mpp, vector pathvec, vector mpvec, int purge_vec)
- }
- 
- void
--remove_map_by_alias(const char *alias, struct vectors * vecs, int purge_vec)
-+remove_map_by_alias(const char *alias, struct vectors * vecs)
- {
- 	struct multipath * mpp = find_mp_by_alias(vecs->mpvec, alias);
- 	if (mpp) {
- 		condlog(2, "%s: removing map by alias", alias);
--		remove_map(mpp, vecs->pathvec, vecs->mpvec, purge_vec);
-+		remove_map(mpp, vecs->pathvec, vecs->mpvec);
- 	}
- }
- 
-@@ -373,7 +373,7 @@ remove_maps(struct vectors * vecs)
- 		return;
- 
- 	vector_foreach_slot (vecs->mpvec, mpp, i) {
--		remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
-+		remove_map(mpp, vecs->pathvec, vecs->mpvec);
- 		i--;
- 	}
- 
-@@ -704,7 +704,7 @@ struct multipath *add_map_with_path(struct vectors *vecs, struct path *pp,
- 	return mpp;
- 
- out:
--	remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
-+	remove_map(mpp, vecs->pathvec, vecs->mpvec);
- 	return NULL;
- }
- 
-diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-index ee2b723b..29ede454 100644
---- a/libmultipath/structs_vec.h
-+++ b/libmultipath/structs_vec.h
-@@ -27,15 +27,8 @@ int update_mpp_paths(struct multipath * mpp, vector pathvec);
- int update_multipath_strings (struct multipath *mpp, vector pathvec);
- void extract_hwe_from_path(struct multipath * mpp);
- 
--enum {
--	KEEP_VEC,
--	PURGE_VEC,
--};
--
--void remove_map (struct multipath *mpp, vector pathvec, vector mpvec,
--		 int purge_vec);
--void remove_map_by_alias(const char *alias, struct vectors * vecs,
--			 int purge_vec);
-+void remove_map (struct multipath *mpp, vector pathvec, vector mpvec);
-+void remove_map_by_alias(const char *alias, struct vectors * vecs);
- void remove_maps (struct vectors * vecs);
- 
- void sync_map_state (struct multipath *);
-diff --git a/multipath/main.c b/multipath/main.c
-index 6c70760f..65ece830 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -191,14 +191,14 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
- 		if (refwwid && strlen(refwwid) &&
- 		    strncmp(mpp->wwid, refwwid, WWID_SIZE)) {
- 			condlog(3, "skip map %s: out of scope", mpp->alias);
--			remove_map(mpp, pathvec, curmp, PURGE_VEC);
-+			remove_map(mpp, pathvec, curmp);
- 			i--;
- 			continue;
- 		}
- 
- 		if (update_multipath_table(mpp, pathvec, flags) != DMP_OK) {
- 			condlog(1, "error parsing map %s", mpp->wwid);
--			remove_map(mpp, pathvec, curmp, PURGE_VEC);
-+			remove_map(mpp, pathvec, curmp);
- 			i--;
- 			continue;
- 		}
-diff --git a/multipathd/dmevents.c b/multipathd/dmevents.c
-index f52f5970..f035ee7f 100644
---- a/multipathd/dmevents.c
-+++ b/multipathd/dmevents.c
-@@ -359,7 +359,7 @@ static int dmevent_loop (void)
- 		pthread_testcancel();
- 		r = 0;
- 		if (curr_dev.action == EVENT_REMOVE)
--			remove_map_by_alias(curr_dev.name, waiter->vecs, PURGE_VEC);
-+			remove_map_by_alias(curr_dev.name, waiter->vecs);
- 		else
- 			r = update_multipath(waiter->vecs, curr_dev.name, 1);
- 		pthread_cleanup_pop(1);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index ae8272e3..3aff241d 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -385,7 +385,7 @@ remove_map_and_stop_waiter(struct multipath *mpp, struct vectors *vecs)
- 	condlog(3, "%s: removing map from internal tables", mpp->alias);
- 	if (!poll_dmevents)
- 		stop_waiter_thread(mpp);
--	remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
-+	remove_map(mpp, vecs->pathvec, vecs->mpvec);
- }
- 
- static void
-@@ -518,7 +518,7 @@ retry:
- fail:
- 	if (new_map && (retries < 0 || wait_for_events(mpp, vecs))) {
- 		condlog(0, "%s: failed to create new map", mpp->alias);
--		remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
-+		remove_map(mpp, vecs->pathvec, vecs->mpvec);
- 		return 1;
- 	}
- 
-@@ -572,7 +572,7 @@ add_map_without_path (struct vectors *vecs, const char *alias)
- 
- 	return mpp;
- out:
--	remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
-+	remove_map(mpp, vecs->pathvec, vecs->mpvec);
- 	return NULL;
- }
- 
-@@ -1162,7 +1162,7 @@ rescan:
- 		goto fail;
- 
- fail_map:
--	remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
-+	remove_map(mpp, vecs->pathvec, vecs->mpvec);
- fail:
- 	orphan_path(pp, "failed to add path");
- 	return 1;
-@@ -1469,7 +1469,7 @@ map_discovery (struct vectors * vecs)
- 
- 	vector_foreach_slot (vecs->mpvec, mpp, i)
- 		if (update_multipath_table(mpp, vecs->pathvec, 0) != DMP_OK) {
--			remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
-+			remove_map(mpp, vecs->pathvec, vecs->mpvec);
- 			i--;
- 		}
- 
-@@ -2706,7 +2706,7 @@ configure (struct vectors * vecs)
- 	 */
- 	vector_foreach_slot(vecs->mpvec, mpp, i) {
- 		if (wait_for_events(mpp, vecs)) {
--			remove_map(mpp, vecs->pathvec, vecs->mpvec, PURGE_VEC);
-+			remove_map(mpp, vecs->pathvec, vecs->mpvec);
- 			i--;
- 			continue;
- 		}
--- 
-2.17.2
 
 --
 dm-devel mailing list
