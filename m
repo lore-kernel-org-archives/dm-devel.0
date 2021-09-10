@@ -7,72 +7,72 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1CF55C433EF
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5F75BC4332F
 	for <dm-devel@archiver.kernel.org>; Fri, 10 Sep 2021 11:43:35 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 8DDC2611C0
+	by mail.kernel.org (Postfix) with ESMTPS id 025BC611C2
 	for <dm-devel@archiver.kernel.org>; Fri, 10 Sep 2021 11:43:34 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 8DDC2611C0
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 025BC611C2
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-358-wZjeu2MRNEaeH6d5NppRuQ-1; Fri, 10 Sep 2021 07:43:32 -0400
-X-MC-Unique: wZjeu2MRNEaeH6d5NppRuQ-1
+ us-mta-116-lj1WXfV6OsaDpwxG1Lrz9Q-1; Fri, 10 Sep 2021 07:43:32 -0400
+X-MC-Unique: lj1WXfV6OsaDpwxG1Lrz9Q-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 61F97802C8F;
-	Fri, 10 Sep 2021 11:43:27 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DA6BA84A5FB;
+	Fri, 10 Sep 2021 11:43:26 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 42F8519C79;
-	Fri, 10 Sep 2021 11:43:27 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BDECE19D9B;
+	Fri, 10 Sep 2021 11:43:26 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1C26A1818480;
-	Fri, 10 Sep 2021 11:43:27 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 96A5018199EE;
+	Fri, 10 Sep 2021 11:43:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 18ABh2Mu010268 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 10 Sep 2021 07:43:02 -0400
+	id 18ABh3ao010315 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 10 Sep 2021 07:43:03 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4531D20807F4; Fri, 10 Sep 2021 11:43:02 +0000 (UTC)
+	id 7B949210C6D4; Fri, 10 Sep 2021 11:43:03 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3FB9A2079761
-	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:43:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 753D5210FE34
+	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:42:53 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 29585800B28
-	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:43:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B685A8007B1
+	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:42:53 +0000 (UTC)
 Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) (Using
 	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-542-yrCWSLSWPKiggCza65gItA-1; Fri, 10 Sep 2021 07:43:00 -0400
-X-MC-Unique: yrCWSLSWPKiggCza65gItA-1
+	us-mta-353-OF9l7RTXOsaO-eu6JAAXRA-1; Fri, 10 Sep 2021 07:42:51 -0400
+X-MC-Unique: OF9l7RTXOsaO-eu6JAAXRA-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id D1CDE22435;
-	Fri, 10 Sep 2021 11:42:58 +0000 (UTC)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 2BDDC22428;
+	Fri, 10 Sep 2021 11:42:50 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 83CC613D34;
-	Fri, 10 Sep 2021 11:42:58 +0000 (UTC)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id D57D613D34;
+	Fri, 10 Sep 2021 11:42:49 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id eEgNHsJEO2GPOAAAMHmgww
-	(envelope-from <mwilck@suse.com>); Fri, 10 Sep 2021 11:42:58 +0000
+	by imap2.suse-dmz.suse.de with ESMTPSA id yLEhMrlEO2GPOAAAMHmgww
+	(envelope-from <mwilck@suse.com>); Fri, 10 Sep 2021 11:42:49 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri, 10 Sep 2021 13:41:09 +0200
-Message-Id: <20210910114120.13665-25-mwilck@suse.com>
+Date: Fri, 10 Sep 2021 13:40:46 +0200
+Message-Id: <20210910114120.13665-2-mwilck@suse.com>
 In-Reply-To: <20210910114120.13665-1-mwilck@suse.com>
 References: <20210910114120.13665-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -84,14 +84,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 18ABh2Mu010268
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 18ABh3ao010315
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, Chongyun Wu <wu.chongyun@h3c.com>,
 	dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH 24/35] multipathd: uxlsnr: use main poll loop for
-	receiving
+Subject: [dm-devel] [PATCH 01/35] libmultipath: add timespeccmp() utility
+	function
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -115,147 +115,59 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-As a first step towards our state machine, avoid the call to
-read_all() via recv_packet_from_client(). handle_client() is now
-invoked twice for the same connection. The first time it reads
-the command length, and later on it reads the command itself
-piece-wise, as sent by the client. This will be just a single
-read in most cases, but not always.
+Add a small utility that will be used in later patches.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/uxlsnr.c | 90 +++++++++++++++++++++++++++++++++++++--------
- 1 file changed, 75 insertions(+), 15 deletions(-)
+ libmultipath/libmultipath.version |  5 +++++
+ libmultipath/time-util.c          | 12 ++++++++++++
+ libmultipath/time-util.h          |  1 +
+ 3 files changed, 18 insertions(+)
 
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 2fb23c8..eff4f7b 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -292,6 +292,8 @@ static void handle_inotify(int fd, struct watch_descriptors *wds)
- 		condlog(1, "Multipath configuration updated.\nReload multipathd for changes to take effect");
- }
- 
-+static const struct timespec ts_zero = { .tv_sec = 0, };
+diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+index eb5b5b5..c98cf7f 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -287,3 +287,8 @@ global:
+ local:
+ 	*;
+ };
 +
- static int parse_cmd (char *cmd, char **reply, int *len, void *data,
- 		      int timeout)
- {
-@@ -394,23 +396,78 @@ static int uxsock_trigger(char *str, char **reply, int *len,
- 	return r;
++LIBMULTIPATH_9.1.0 {
++global:
++	timespeccmp;
++} LIBMULTIPATH_9.0.0;
+diff --git a/libmultipath/time-util.c b/libmultipath/time-util.c
+index 55f366c..2919300 100644
+--- a/libmultipath/time-util.c
++++ b/libmultipath/time-util.c
+@@ -49,3 +49,15 @@ void timespecsub(const struct timespec *a, const struct timespec *b,
+ 	res->tv_nsec = a->tv_nsec - b->tv_nsec;
+ 	normalize_timespec(res);
  }
- 
-+static void set_client_state(struct client *c, int state)
++
++int timespeccmp(const struct timespec *a, const struct timespec *b)
 +{
-+	switch(state)
-+	{
-+	case CLT_RECV:
-+		reset_strbuf(&c->reply);
-+		memset(c->cmd, '\0', sizeof(c->cmd));
-+		c->expires = ts_zero;
-+		/* fallthrough */
-+	case CLT_SEND:
-+		/* reuse these fields for next data transfer */
-+		c->len = c->cmd_len = 0;
-+		break;
-+	default:
-+		break;
-+	}
-+	c->state = state;
++	struct timespec tmp;
++
++	timespecsub(a, b, &tmp);
++	if (tmp.tv_sec > 0)
++		return 1;
++	if (tmp.tv_sec < 0)
++		return -1;
++	return tmp.tv_nsec > 0 ? 1 : (tmp.tv_nsec < 0 ? -1 : 0);
 +}
-+
- static void handle_client(struct client *c, void *trigger_data)
- {
- 	int rlen;
--	char *inbuf, *reply;
-+	char *reply;
-+	ssize_t n;
+diff --git a/libmultipath/time-util.h b/libmultipath/time-util.h
+index b23d328..4a80ebd 100644
+--- a/libmultipath/time-util.h
++++ b/libmultipath/time-util.h
+@@ -10,5 +10,6 @@ void pthread_cond_init_mono(pthread_cond_t *cond);
+ void normalize_timespec(struct timespec *ts);
+ void timespecsub(const struct timespec *a, const struct timespec *b,
+ 		 struct timespec *res);
++int timespeccmp(const struct timespec *a, const struct timespec *b);
  
--	if (recv_packet_from_client(c->fd, &inbuf, uxsock_timeout) != 0) {
--		dead_client(c);
--		return;
-+	switch (c->state) {
-+	case CLT_RECV:
-+		if (c->cmd_len == 0) {
-+			/*
-+			 * We got POLLIN; assume that at least the length can
-+			 * be read immediately.
-+			 */
-+			get_monotonic_time(&c->expires);
-+			c->expires.tv_sec += uxsock_timeout / 1000;
-+			c->expires.tv_nsec += (uxsock_timeout % 1000) * 1000000;
-+			normalize_timespec(&c->expires);
-+			n = mpath_recv_reply_len(c->fd, 0);
-+			if (n == -1) {
-+				condlog(1, "%s: cli[%d]: failed to receive reply len",
-+					__func__, c->fd);
-+				c->error = -ECONNRESET;
-+			} else if (n > _MAX_CMD_LEN) {
-+				condlog(1, "%s: cli[%d]: overlong command (%zd bytes)",
-+					__func__, c->fd, n);
-+				c->error = -ECONNRESET;
-+			} else {
-+				c->cmd_len = n;
-+				condlog(4, "%s: cli[%d]: connected", __func__, c->fd);
-+			}
-+			/* poll for data */
-+			return;
-+		} else if (c->len < c->cmd_len) {
-+			n = recv(c->fd, c->cmd + c->len, c->cmd_len - c->len, 0);
-+			if (n <= 0 && errno != EINTR && errno != EAGAIN) {
-+				condlog(1, "%s: cli[%d]: error in recv: %m",
-+					__func__, c->fd);
-+				c->error = -ECONNRESET;
-+				return;
-+			}
-+			c->len += n;
-+			if (c->len < c->cmd_len)
-+				/* continue polling */
-+				return;
-+			set_client_state(c, CLT_PARSE);
-+		}
-+		break;
-+	default:
-+		break;
- 	}
- 
--	if (!inbuf) {
--		condlog(4, "recv_packet_from_client get null request");
--		return;
--	}
--
--	condlog(4, "cli[%d]: Got request [%s]", c->fd, inbuf);
--	uxsock_trigger(inbuf, &reply, &rlen,
-+	condlog(4, "cli[%d]: Got request [%s]", c->fd, c->cmd);
-+	uxsock_trigger(c->cmd, &reply, &rlen,
- 		       _socket_client_is_root(c->fd),
- 		       trigger_data);
- 
-@@ -418,11 +475,12 @@ static void handle_client(struct client *c, void *trigger_data)
- 		if (send_packet(c->fd, reply) != 0)
- 			dead_client(c);
- 		else
--			condlog(4, "cli[%d]: Reply [%d bytes]", c->fd, rlen);
--		FREE(reply);
--		reply = NULL;
-+			condlog(4, "cli[%d]: Reply [%zu bytes]", c->fd,
-+				get_strbuf_len(&c->reply) + 1);
-+		reset_strbuf(&c->reply);
- 	}
--	FREE(inbuf);
-+
-+	set_client_state(c, CLT_RECV);
- }
- 
- /*
-@@ -553,6 +611,8 @@ void *uxsock_listen(long ux_sock, void *trigger_data)
- 					continue;
- 				}
- 				handle_client(c, trigger_data);
-+				if (c->error == -ECONNRESET)
-+					dead_client(c);
- 			}
- 		}
- 		/* see if we got a non-fatal signal */
+ #endif /* _TIME_UTIL_H_ */
 -- 
 2.33.0
 
