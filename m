@@ -7,72 +7,71 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1455EC433F5
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 728ABC433EF
 	for <dm-devel@archiver.kernel.org>; Fri, 10 Sep 2021 11:43:44 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id A885D61153
+	by mail.kernel.org (Postfix) with ESMTPS id 072D4611C0
 	for <dm-devel@archiver.kernel.org>; Fri, 10 Sep 2021 11:43:43 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org A885D61153
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 072D4611C0
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-320-cmqwZQLIMU6zYKa_ZH4g0g-1; Fri, 10 Sep 2021 07:43:39 -0400
-X-MC-Unique: cmqwZQLIMU6zYKa_ZH4g0g-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-271-DUmUOx4ANWO2ReJewWoLoQ-1; Fri, 10 Sep 2021 07:43:41 -0400
+X-MC-Unique: DUmUOx4ANWO2ReJewWoLoQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 82244362FF;
-	Fri, 10 Sep 2021 11:43:34 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 664656ACE0;
-	Fri, 10 Sep 2021 11:43:34 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A59CD18B3131;
+	Fri, 10 Sep 2021 11:43:36 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8BFC41009962;
+	Fri, 10 Sep 2021 11:43:36 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3D3F14EA40;
-	Fri, 10 Sep 2021 11:43:34 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 63B631832DDA;
+	Fri, 10 Sep 2021 11:43:36 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 18ABh4T4010344 for <dm-devel@listman.util.phx.redhat.com>;
+	id 18ABh5Kt010364 for <dm-devel@listman.util.phx.redhat.com>;
 	Fri, 10 Sep 2021 07:43:05 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id E14D420807F6; Fri, 10 Sep 2021 11:43:04 +0000 (UTC)
+	id 6FADE20BC8F1; Fri, 10 Sep 2021 11:43:05 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DB9F920807F4
-	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:43:04 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6A65420807EA
+	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:43:05 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C58268934E2
-	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:43:04 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) (Using
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 53968101A529
+	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:43:05 +0000 (UTC)
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) (Using
 	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-238-DhgH43aWP0O4Xkal1V38mw-1; Fri, 10 Sep 2021 07:43:03 -0400
-X-MC-Unique: DhgH43aWP0O4Xkal1V38mw-1
+	us-mta-272-9czQbyi1NtG9NESM2cFspA-1; Fri, 10 Sep 2021 07:43:01 -0400
+X-MC-Unique: 9czQbyi1NtG9NESM2cFspA-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id E649022433;
-	Fri, 10 Sep 2021 11:43:01 +0000 (UTC)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 6409F20063;
+	Fri, 10 Sep 2021 11:43:00 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 9A3D513D34;
-	Fri, 10 Sep 2021 11:43:01 +0000 (UTC)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 14F5B13D34;
+	Fri, 10 Sep 2021 11:43:00 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id QOSZI8VEO2GPOAAAMHmgww
-	(envelope-from <mwilck@suse.com>); Fri, 10 Sep 2021 11:43:01 +0000
+	by imap2.suse-dmz.suse.de with ESMTPSA id CP0QA8REO2GPOAAAMHmgww
+	(envelope-from <mwilck@suse.com>); Fri, 10 Sep 2021 11:43:00 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri, 10 Sep 2021 13:41:17 +0200
-Message-Id: <20210910114120.13665-33-mwilck@suse.com>
+Date: Fri, 10 Sep 2021 13:41:13 +0200
+Message-Id: <20210910114120.13665-29-mwilck@suse.com>
 In-Reply-To: <20210910114120.13665-1-mwilck@suse.com>
 References: <20210910114120.13665-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -86,11 +85,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 18ABh4T4010344
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 18ABh5Kt010364
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, Chongyun Wu <wu.chongyun@h3c.com>,
 	dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH 32/35] multipathd: uxlsnr: add timeout handling
+Subject: [dm-devel] [PATCH 28/35] multipathd: uxlsnr: move handler execution
+	to separate function
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -104,7 +104,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -114,124 +114,110 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-Our ppoll() call needs to wake up when a client request times out.
-This logic can be added by determining the first client that's about
-to time out. The logic in handle_client() will then cause a timeout
-reply to be sent to the client. This is more client-friendly
-as the client timing out without receiving a reply.
+Move the actual execution of the handler out of parse_cmd(). For now,
+we do it in uxsock_trigger().
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/uxlsnr.c | 58 +++++++++++++++++++++++++++++++++++++++++----
- 1 file changed, 53 insertions(+), 5 deletions(-)
+ multipathd/uxlsnr.c | 47 ++++++++++++++++++++++++++++-----------------
+ 1 file changed, 29 insertions(+), 18 deletions(-)
 
 diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 4637954..1bf4126 100644
+index 65cb5ca..cfff0ae 100644
 --- a/multipathd/uxlsnr.c
 +++ b/multipathd/uxlsnr.c
-@@ -320,6 +320,35 @@ static void handle_inotify(int fd, struct watch_descriptors *wds)
- }
+@@ -293,11 +293,9 @@ static void handle_inotify(int fd, struct watch_descriptors *wds)
  
  static const struct timespec ts_zero = { .tv_sec = 0, };
-+static const struct timespec ts_max = { .tv_sec = LONG_MAX, .tv_nsec = 999999999 };
-+
-+/* call with clients lock held */
-+static struct timespec *__get_soonest_timeout(struct timespec *ts)
-+{
-+	struct timespec ts_min = ts_max, now;
-+	bool any = false;
-+	struct client *c;
-+
-+	list_for_each_entry(c, &clients, node) {
-+		if (timespeccmp(&c->expires, &ts_zero) != 0 &&
-+		    timespeccmp(&c->expires, &ts_min) < 0) {
-+			ts_min = c->expires;
-+			any = true;
-+		}
-+	}
-+
-+	if (!any)
-+		return NULL;
-+
-+	get_monotonic_time(&now);
-+	timespecsub(&ts_min, &now, ts);
-+	if (timespeccmp(ts, &ts_zero) < 0)
-+		*ts = ts_zero;
-+
-+	condlog(4, "%s: next client expires in %ld.%03lds", __func__,
-+		(long)ts->tv_sec, ts->tv_nsec / 1000000);
-+	return ts;
-+}
  
- /* call with clients lock held */
- static bool __need_lock(void)
-@@ -422,6 +451,24 @@ static void set_client_state(struct client *c, int state)
- 	c->state = state;
- }
- 
-+static void check_timeout(struct client *c)
-+{
-+	struct timespec now;
-+
-+	if (timespeccmp(&c->expires, &ts_zero) == 0)
-+		return;
-+
-+	get_monotonic_time(&now);
-+	if (timespeccmp(&c->expires, &now) > 0)
-+		return;
-+
-+	condlog(2, "%s: cli[%d]: timed out at %ld.%03ld", __func__,
-+		c->fd, (long)c->expires.tv_sec, c->expires.tv_nsec / 1000000);
-+
-+	c->error = -ETIMEDOUT;
-+	set_client_state(c, CLT_SEND);
-+}
-+
- static void handle_client(struct client *c, struct vectors *vecs, short revents)
+-static int parse_cmd (struct client *c, void *data, int timeout)
++static int parse_cmd(struct client *c)
  {
- 	ssize_t n;
-@@ -435,6 +482,8 @@ static void handle_client(struct client *c, struct vectors *vecs, short revents)
- 		return;
+ 	int r;
+-	struct handler * h;
+-	struct timespec tmo;
+ 
+ 	r = get_cmdvec(c->cmd, &c->cmdvec);
+ 
+@@ -308,26 +306,35 @@ static int parse_cmd (struct client *c, void *data, int timeout)
+ 		return 0;
  	}
  
-+	check_timeout(c);
+-	h = find_handler_for_cmdvec(c->cmdvec);
++	c->handler = find_handler_for_cmdvec(c->cmdvec);
+ 
+-	if (!h || !h->fn) {
++	if (!c->handler || !c->handler->fn) {
+ 		genhelp_handler(c->cmd, EINVAL, &c->reply);
+ 		if (get_strbuf_len(&c->reply) == 0)
+ 			r = EINVAL;
+-		goto free_cmdvec;
++		else
++			r = 0;
+ 	}
+ 
+-	/*
+-	 * execute handler
+-	 */
++	return r;
++}
 +
- 	condlog(4, "%s: cli[%d] poll=%x state=%d cmd=\"%s\" repl \"%s\"", __func__,
- 		c->fd, revents, c->state, c->cmd, get_strbuf_str(&c->reply));
- 
-@@ -594,6 +643,7 @@ void *uxsock_listen(long ux_sock, void *trigger_data)
- 	while (1) {
- 		struct client *c, *tmp;
- 		int i, n_pfds, poll_count, num_clients;
-+		struct timespec __timeout, *timeout;
- 
- 		/* setup for a poll */
- 		pthread_mutex_lock(&client_lock);
-@@ -661,10 +711,12 @@ void *uxsock_listen(long ux_sock, void *trigger_data)
-                                 break;
-                 }
-                 n_pfds = i;
-+		timeout = __get_soonest_timeout(&__timeout);
++static int execute_handler(struct client *c, struct vectors *vecs, int timeout)
++{
++	int r;
++	struct timespec tmo;
 +
- 		pthread_cleanup_pop(1);
++	if (!c->handler)
++		return EINVAL;
++
+ 	if (clock_gettime(CLOCK_REALTIME, &tmo) == 0) {
+ 		tmo.tv_sec += timeout;
+ 	} else {
+ 		tmo.tv_sec = 0;
+ 	}
+-	if (h->locked) {
++
++	if (c->handler->locked) {
+ 		int locked = 0;
+-		struct vectors * vecs = (struct vectors *)data;
  
- 		/* most of our life is spent in this call */
--		poll_count = ppoll(polls, n_pfds, NULL, &mask);
-+		poll_count = ppoll(polls, n_pfds, timeout, &mask);
- 
- 		handle_signals(false);
- 		if (poll_count == -1) {
-@@ -679,10 +731,6 @@ void *uxsock_listen(long ux_sock, void *trigger_data)
- 			break;
+ 		pthread_cleanup_push(cleanup_lock, &vecs->lock);
+ 		if (tmo.tv_sec) {
+@@ -339,15 +346,11 @@ static int parse_cmd (struct client *c, void *data, int timeout)
+ 		if (r == 0) {
+ 			locked = 1;
+ 			pthread_testcancel();
+-			r = h->fn(c->cmdvec, &c->reply, data);
++			r = c->handler->fn(c->cmdvec, &c->reply, vecs);
  		}
+ 		pthread_cleanup_pop(locked);
+ 	} else
+-		r = h->fn(c->cmdvec, &c->reply, data);
+-
+-free_cmdvec:
+-	free_keys(c->cmdvec);
+-	c->cmdvec = NULL;
++		r = c->handler->fn(c->cmdvec, &c->reply, vecs);
  
--		if (poll_count == 0) {
--			handle_signals(true);
--			continue;
--		}
- 		if (polls[POLLFD_IDLE].fd != -1 &&
- 		    polls[POLLFD_IDLE].revents & POLLIN)
- 			drain_idle_fd(idle_fd);
+ 	return r;
+ }
+@@ -367,7 +370,15 @@ static int uxsock_trigger(struct client *c, void *trigger_data)
+ 		return r;
+ 	}
+ 
+-	r = parse_cmd(c, vecs, uxsock_timeout / 1000);
++	r = parse_cmd(c);
++
++	if (r == 0 && c->handler)
++		r = execute_handler(c, vecs, uxsock_timeout / 1000);
++
++	if (c->cmdvec) {
++		free_keys(c->cmdvec);
++		c->cmdvec = NULL;
++	}
+ 
+ 	if (r > 0) {
+ 		if (r == ETIMEDOUT)
 -- 
 2.33.0
 
