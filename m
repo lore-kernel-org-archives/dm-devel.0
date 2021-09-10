@@ -7,72 +7,72 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6CDCBC43217
-	for <dm-devel@archiver.kernel.org>; Fri, 10 Sep 2021 11:43:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 40733C433FE
+	for <dm-devel@archiver.kernel.org>; Fri, 10 Sep 2021 11:43:28 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 107CC611C1
-	for <dm-devel@archiver.kernel.org>; Fri, 10 Sep 2021 11:43:26 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 107CC611C1
+	by mail.kernel.org (Postfix) with ESMTPS id CDA97611B0
+	for <dm-devel@archiver.kernel.org>; Fri, 10 Sep 2021 11:43:27 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org CDA97611B0
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-442-Z9aACcXnOGKjpgAg2hECNw-1; Fri, 10 Sep 2021 07:43:24 -0400
-X-MC-Unique: Z9aACcXnOGKjpgAg2hECNw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-204-QIK0H7CbMzWworqp0Qv8kw-1; Fri, 10 Sep 2021 07:43:24 -0400
+X-MC-Unique: QIK0H7CbMzWworqp0Qv8kw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 401FC1006AA5;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E004318B3134;
 	Fri, 10 Sep 2021 11:43:19 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F9CB19D9F;
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C06AC18FD2;
 	Fri, 10 Sep 2021 11:43:19 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EB0BC1805986;
-	Fri, 10 Sep 2021 11:43:18 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 94A9F4EA30;
+	Fri, 10 Sep 2021 11:43:19 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 18ABh0nW010225 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 10 Sep 2021 07:43:00 -0400
+	id 18ABgw0O010175 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 10 Sep 2021 07:42:59 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 400DC63536; Fri, 10 Sep 2021 11:43:00 +0000 (UTC)
+	id C47BF10BFD79; Fri, 10 Sep 2021 11:42:58 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3B6481FA864
-	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:43:00 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BB8CA10BC2B7
+	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:42:56 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 235B8100B8C2
-	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:43:00 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) (Using
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9CBFD187506B
+	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:42:56 +0000 (UTC)
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) (Using
 	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-162-w0C43yZVPWWPvNY6yzVFug-1; Fri, 10 Sep 2021 07:42:57 -0400
-X-MC-Unique: w0C43yZVPWWPvNY6yzVFug-1
+	us-mta-56-duFFDYk2O-mkYSgyUEOS9g-1; Fri, 10 Sep 2021 07:42:52 -0400
+X-MC-Unique: duFFDYk2O-mkYSgyUEOS9g-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 9131A22434;
-	Fri, 10 Sep 2021 11:42:56 +0000 (UTC)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id A503C20061;
+	Fri, 10 Sep 2021 11:42:51 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 3945013D34;
-	Fri, 10 Sep 2021 11:42:56 +0000 (UTC)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 5676013D34;
+	Fri, 10 Sep 2021 11:42:51 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id MDYBDMBEO2GPOAAAMHmgww
-	(envelope-from <mwilck@suse.com>); Fri, 10 Sep 2021 11:42:56 +0000
+	by imap2.suse-dmz.suse.de with ESMTPSA id iJf1ErtEO2GPOAAAMHmgww
+	(envelope-from <mwilck@suse.com>); Fri, 10 Sep 2021 11:42:51 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri, 10 Sep 2021 13:41:03 +0200
-Message-Id: <20210910114120.13665-19-mwilck@suse.com>
+Date: Fri, 10 Sep 2021 13:40:50 +0200
+Message-Id: <20210910114120.13665-6-mwilck@suse.com>
 In-Reply-To: <20210910114120.13665-1-mwilck@suse.com>
 References: <20210910114120.13665-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -84,14 +84,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 18ABh0nW010225
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 18ABgw0O010175
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, Chongyun Wu <wu.chongyun@h3c.com>,
 	dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH 18/35] multipathd: uxlsnr: avoid using fd -1 in
-	ppoll()
+Subject: [dm-devel] [PATCH 05/35] libmultipath: improve cleanup of uevent
+	queues on exit
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,7 +105,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -115,35 +115,133 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-Minor edit: if notifications are off, we set the poll fd to
--1 but still use the POLLIN mask. It looks nicer if to poll
-the correct fd, but reset the event mask to 0 if we're not
-actually interested in it.
+uevents listed on merge_node must be cleaned up, too. uevents
+cancelled while being serviced and temporary queues, likewise.
+The global uevq must be cleaned out in the uevent listener thread,
+because it might have added events after the dispatcher thread
+had already finished.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/uxlsnr.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ libmultipath/uevent.c | 49 ++++++++++++++++++++++++++++++++-----------
+ 1 file changed, 37 insertions(+), 12 deletions(-)
 
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 6506109..98a9f71 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -357,11 +357,11 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 4265904..082e891 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -91,16 +91,25 @@ struct uevent * alloc_uevent (void)
+ 	return uev;
+ }
+ 
++static void uevq_cleanup(struct list_head *tmpq);
++
++static void cleanup_uev(void *arg)
++{
++	struct uevent *uev = arg;
++
++	uevq_cleanup(&uev->merge_node);
++	if (uev->udev)
++		udev_device_unref(uev->udev);
++	FREE(uev);
++}
++
+ static void uevq_cleanup(struct list_head *tmpq)
+ {
+ 	struct uevent *uev, *tmp;
+ 
+ 	list_for_each_entry_safe(uev, tmp, tmpq, node) {
+ 		list_del_init(&uev->node);
+-
+-		if (uev->udev)
+-			udev_device_unref(uev->udev);
+-		FREE(uev);
++		cleanup_uev(uev);
+ 	}
+ }
+ 
+@@ -384,14 +393,10 @@ service_uevq(struct list_head *tmpq)
+ 	list_for_each_entry_safe(uev, tmp, tmpq, node) {
+ 		list_del_init(&uev->node);
+ 
++		pthread_cleanup_push(cleanup_uev, uev);
+ 		if (my_uev_trigger && my_uev_trigger(uev, my_trigger_data))
+ 			condlog(0, "uevent trigger error");
+-
+-		uevq_cleanup(&uev->merge_node);
+-
+-		if (uev->udev)
+-			udev_device_unref(uev->udev);
+-		FREE(uev);
++		pthread_cleanup_pop(1);
+ 	}
+ }
+ 
+@@ -411,6 +416,18 @@ static void monitor_cleanup(void *arg)
+ 	udev_monitor_unref(monitor);
+ }
+ 
++static void cleanup_uevq(void *arg)
++{
++	uevq_cleanup(arg);
++}
++
++static void cleanup_global_uevq(void *arg __attribute__((unused)))
++{
++	pthread_mutex_lock(uevq_lockp);
++	uevq_cleanup(&uevq);
++	pthread_mutex_unlock(uevq_lockp);
++}
++
+ /*
+  * Service the uevent queue.
+  */
+@@ -425,6 +442,7 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent *, void * trigger_data),
+ 	while (1) {
+ 		LIST_HEAD(uevq_tmp);
+ 
++		pthread_cleanup_push(cleanup_mutex, uevq_lockp);
+ 		pthread_mutex_lock(uevq_lockp);
+ 		servicing_uev = 0;
+ 		/*
+@@ -436,14 +454,17 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent *, void * trigger_data),
  		}
+ 		servicing_uev = 1;
+ 		list_splice_init(&uevq, &uevq_tmp);
+-		pthread_mutex_unlock(uevq_lockp);
++		pthread_cleanup_pop(1);
++
+ 		if (!my_uev_trigger)
+ 			break;
++
++		pthread_cleanup_push(cleanup_uevq, &uevq_tmp);
+ 		merge_uevq(&uevq_tmp);
+ 		service_uevq(&uevq_tmp);
++		pthread_cleanup_pop(1);
+ 	}
+ 	condlog(3, "Terminating uev service queue");
+-	uevq_cleanup(&uevq);
+ 	return 0;
+ }
  
- 		reset_watch(notify_fd, &wds, &sequence_nr);
-+		polls[POLLFD_NOTIFY].fd = notify_fd;
- 		if (notify_fd == -1 || (wds.conf_wd == -1 && wds.dir_wd == -1))
--			polls[POLLFD_NOTIFY].fd = -1;
-+			polls[POLLFD_NOTIFY].events = 0;
- 		else
--			polls[POLLFD_NOTIFY].fd = notify_fd;
--		polls[POLLFD_NOTIFY].events = POLLIN;
-+			polls[POLLFD_NOTIFY].events = POLLIN;
+@@ -600,6 +621,8 @@ int uevent_listen(struct udev *udev)
  
- 		/* setup the clients */
- 		i = POLLFDS_BASE;
+ 	events = 0;
+ 	gettimeofday(&start_time, NULL);
++	pthread_cleanup_push(cleanup_global_uevq, NULL);
++	pthread_cleanup_push(cleanup_uevq, &uevlisten_tmp);
+ 	while (1) {
+ 		struct uevent *uev;
+ 		struct udev_device *dev;
+@@ -650,6 +673,8 @@ int uevent_listen(struct udev *udev)
+ 		gettimeofday(&start_time, NULL);
+ 		timeout = 30;
+ 	}
++	pthread_cleanup_pop(1);
++	pthread_cleanup_pop(1);
+ out:
+ 	pthread_cleanup_pop(1);
+ out_udev:
 -- 
 2.33.0
 
