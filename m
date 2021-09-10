@@ -7,71 +7,72 @@ X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
 	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=ham autolearn_force=no
 	version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C282CC433EF
-	for <dm-devel@archiver.kernel.org>; Fri, 10 Sep 2021 11:43:22 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CFB5FC433EF
+	for <dm-devel@archiver.kernel.org>; Fri, 10 Sep 2021 11:43:24 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4EDA3611C0
-	for <dm-devel@archiver.kernel.org>; Fri, 10 Sep 2021 11:43:22 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 4EDA3611C0
+	by mail.kernel.org (Postfix) with ESMTPS id 678A461153
+	for <dm-devel@archiver.kernel.org>; Fri, 10 Sep 2021 11:43:24 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 678A461153
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-587-0swPbvYqNjOqJpi-jQlFNw-1; Fri, 10 Sep 2021 07:43:20 -0400
-X-MC-Unique: 0swPbvYqNjOqJpi-jQlFNw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-43-qCiSc0tbOKOdx8w5tcdJFA-1; Fri, 10 Sep 2021 07:43:21 -0400
+X-MC-Unique: qCiSc0tbOKOdx8w5tcdJFA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A874884A5E3;
-	Fri, 10 Sep 2021 11:43:15 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8A2975D9C6;
-	Fri, 10 Sep 2021 11:43:15 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 78246802C87;
+	Fri, 10 Sep 2021 11:43:17 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5B798188E4;
+	Fri, 10 Sep 2021 11:43:17 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 63D1C1806D00;
-	Fri, 10 Sep 2021 11:43:15 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 272384EA29;
+	Fri, 10 Sep 2021 11:43:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 18ABgwu6010162 for <dm-devel@listman.util.phx.redhat.com>;
+	id 18ABgwbf010161 for <dm-devel@listman.util.phx.redhat.com>;
 	Fri, 10 Sep 2021 07:42:58 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 930871FA848; Fri, 10 Sep 2021 11:42:58 +0000 (UTC)
+	id 70E6720807F0; Fri, 10 Sep 2021 11:42:58 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8EE281FA849
-	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:42:58 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6ACB020BC8F5
+	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:42:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 77FA3800182
-	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:42:58 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) (Using
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 880A88934E0
+	for <dm-devel@redhat.com>; Fri, 10 Sep 2021 11:42:54 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) (Using
 	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-534-h2Ou1qfuN1urtWyvl8wEEA-1; Fri, 10 Sep 2021 07:42:56 -0400
-X-MC-Unique: h2Ou1qfuN1urtWyvl8wEEA-1
+	us-mta-283-6raRnfzGPiSATbI7zC7fIg-1; Fri, 10 Sep 2021 07:42:52 -0400
+X-MC-Unique: 6raRnfzGPiSATbI7zC7fIg-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 67CC82020A;
-	Fri, 10 Sep 2021 11:42:55 +0000 (UTC)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 475D422433;
+	Fri, 10 Sep 2021 11:42:51 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 1BA4313D34;
-	Fri, 10 Sep 2021 11:42:55 +0000 (UTC)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id F11D513D34;
+	Fri, 10 Sep 2021 11:42:50 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id wIOyBL9EO2GPOAAAMHmgww
-	(envelope-from <mwilck@suse.com>); Fri, 10 Sep 2021 11:42:55 +0000
+	by imap2.suse-dmz.suse.de with ESMTPSA id 8O3eOLpEO2GPOAAAMHmgww
+	(envelope-from <mwilck@suse.com>); Fri, 10 Sep 2021 11:42:50 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri, 10 Sep 2021 13:41:00 +0200
-Message-Id: <20210910114120.13665-16-mwilck@suse.com>
+Date: Fri, 10 Sep 2021 13:40:49 +0200
+Message-Id: <20210910114120.13665-5-mwilck@suse.com>
 In-Reply-To: <20210910114120.13665-1-mwilck@suse.com>
 References: <20210910114120.13665-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -83,14 +84,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 18ABgwu6010162
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 18ABgwbf010161
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, Chongyun Wu <wu.chongyun@h3c.com>,
 	dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH 15/35] multipathd: uxlsnr: avoid stalled clients
-	during reconfigure
+Subject: [dm-devel] [PATCH 04/35] libmultipath: print: add __snprint_config()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -104,7 +104,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -114,70 +114,93 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-Since 47cc1d3 ("multipathd: fix client response for socket
-activation"), we hold back clients while reconfigure is running.
-The idea of 47cc1d3 was to fix the behavior during initial
-start up. When multipathd reconfigures itself during runtime,
-and the reconfiguration takes a long time (a minute or more is
-not unusual in big configurations), clients will time out with
-no response ("timeout receiving packet"). Waiting for reconfigure
-to finish breaks our timeout handling.
+exactly like snprint_config(), but takes a struct strbuf * as argument.
 
-Therefore we should only apply the logic of 47cc1d3 during initial
-configuration. In this case, the client that triggered socket
-activation may still encounter a timeout, but there's not much we can
-do about that.
-
-Fixes: 47cc1d3 ("multipathd: fix client response for socket activation")
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipathd/main.c   |  9 +++++++++
- multipathd/uxlsnr.c | 12 ------------
- 2 files changed, 9 insertions(+), 12 deletions(-)
+ libmultipath/libmultipath.version |  5 +++++
+ libmultipath/print.c              | 34 +++++++++++++++++++++----------
+ libmultipath/print.h              |  2 ++
+ 3 files changed, 30 insertions(+), 11 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 6d7c8c9..c6357ef 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1695,6 +1695,15 @@ uxlsnrloop (void * ap)
- 
- 	init_handler_callbacks();
- 	umask(077);
+diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+index 2107c51..b2feee2 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -297,3 +297,8 @@ LIBMULTIPATH_9.2.0 {
+ global:
+ 	set_wakeup_fn;
+ } LIBMULTIPATH_9.1.0;
 +
-+	/*
-+	 * Wait for initial reconfiguration to finish, while
-+	 * hadling signals
-+	 */
-+	while (wait_for_state_change_if(DAEMON_CONFIGURE, 50)
-+	       == DAEMON_CONFIGURE)
-+		handle_signals(false);
++LIBMULTIPATH_9.3.0 {
++global:
++	__snprint_config;
++} LIBMULTIPATH_9.2.0;
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 2fb9f4e..d2ef010 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -1756,24 +1756,36 @@ static int snprint_blacklist_except(const struct config *conf,
+ 	return get_strbuf_len(buff) - initial_len;
+ }
+ 
++int __snprint_config(const struct config *conf, struct strbuf *buff,
++		     const struct _vector *hwtable, const struct _vector *mpvec)
++{
++	int rc;
 +
- 	uxsock_listen(&uxsock_trigger, ux_sock, ap);
++	if ((rc = snprint_defaults(conf, buff)) < 0 ||
++	    (rc = snprint_blacklist(conf, buff)) < 0 ||
++	    (rc = snprint_blacklist_except(conf, buff)) < 0 ||
++	    (rc = snprint_hwtable(conf, buff,
++				  hwtable ? hwtable : conf->hwtable)) < 0 ||
++	    (rc = snprint_overrides(conf, buff, conf->overrides)) < 0)
++		return rc;
++
++	if (VECTOR_SIZE(conf->mptable) > 0 ||
++	    (mpvec != NULL && VECTOR_SIZE(mpvec) > 0))
++		if ((rc = snprint_mptable(conf, buff, mpvec)) < 0)
++			return rc;
++
++	return 0;
++}
++
+ char *snprint_config(const struct config *conf, int *len,
+ 		     const struct _vector *hwtable, const struct _vector *mpvec)
+ {
+ 	STRBUF_ON_STACK(buff);
+ 	char *reply;
+-	int rc;
++	int rc = __snprint_config(conf, &buff, hwtable, mpvec);
  
- out_sock:
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index dbee0d6..20efbd3 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -391,18 +391,6 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
- 			continue;
- 		}
+-	if ((rc = snprint_defaults(conf, &buff)) < 0 ||
+-	    (rc = snprint_blacklist(conf, &buff)) < 0 ||
+-	    (rc = snprint_blacklist_except(conf, &buff)) < 0 ||
+-	    (rc = snprint_hwtable(conf, &buff,
+-				  hwtable ? hwtable : conf->hwtable)) < 0 ||
+-	    (rc = snprint_overrides(conf, &buff, conf->overrides)) < 0)
++	if (rc < 0)
+ 		return NULL;
+-	if (VECTOR_SIZE(conf->mptable) > 0 ||
+-	    (mpvec != NULL && VECTOR_SIZE(mpvec) > 0))
+-		if ((rc = snprint_mptable(conf, &buff, mpvec)) < 0)
+-			return NULL;
  
--		/*
--		 * Client connection. We shouldn't answer while we're
--		 * configuring - nothing may be configured yet.
--		 * But we can't wait forever either, because this thread
--		 * must handle signals. So wait a short while only.
--		 */
--		if (wait_for_state_change_if(DAEMON_CONFIGURE, 10)
--		    == DAEMON_CONFIGURE) {
--			handle_signals(false);
--			continue;
--		}
--
- 		/* see if a client wants to speak to us */
- 		for (i = POLLFDS_BASE; i < n_pfds; i++) {
- 			if (polls[i].revents & POLLIN) {
+ 	if (len)
+ 		*len = get_strbuf_len(&buff);
+diff --git a/libmultipath/print.h b/libmultipath/print.h
+index c6674a5..b149275 100644
+--- a/libmultipath/print.h
++++ b/libmultipath/print.h
+@@ -54,6 +54,8 @@ int _snprint_multipath_topology (const struct gen_multipath *, struct strbuf *,
+ #define snprint_multipath_topology(buf, mpp, v) \
+ 	_snprint_multipath_topology (dm_multipath_to_gen(mpp), buf, v)
+ int snprint_multipath_topology_json(struct strbuf *, const struct vectors *vecs);
++int __snprint_config(const struct config *conf, struct strbuf *buff,
++		     const struct _vector *hwtable, const struct _vector *mpvec);
+ char *snprint_config(const struct config *conf, int *len,
+ 		     const struct _vector *hwtable,
+ 		     const struct _vector *mpvec);
 -- 
 2.33.0
 
