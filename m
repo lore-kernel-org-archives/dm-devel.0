@@ -2,99 +2,80 @@ Return-Path: <SRS0=t70f=OG=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-13.8 required=3.0 tests=BAYES_00,
-	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
-	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
-	autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-17.6 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
+	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
+	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
+	USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C8617C4332F
-	for <dm-devel@archiver.kernel.org>; Thu, 16 Sep 2021 06:50:18 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9669BC433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 16 Sep 2021 06:50:30 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 43B986120D
-	for <dm-devel@archiver.kernel.org>; Thu, 16 Sep 2021 06:50:18 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 43B986120D
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linaro.org
+	by mail.kernel.org (Postfix) with ESMTPS id 31FA061130
+	for <dm-devel@archiver.kernel.org>; Thu, 16 Sep 2021 06:50:30 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 31FA061130
+Authentication-Results: mail.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1631775029;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=/8HElSBlMd/IwaBwyvCuJuUc1GLWR5yBXXRe8gtl0yI=;
+	b=WVX8xOauYOa0MeBxzLkSBwmEgPXtoP+IlmFAWO0rQryoFJt9PRWuhMxzNWtMMOKDYc0z/P
+	U5s/v7hwlMGV94gtl2bAqZp8KgDBlAts5LiP9ZnocRVaK+ZBrNdSgzkeh9W/y0OjmXWhHr
+	NN2rWlElhi4z5awQ0LHq/l8EEzLpMi0=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-173-FnGUDI1eO_2DO_Hj4Eawcw-1; Thu, 16 Sep 2021 02:50:15 -0400
-X-MC-Unique: FnGUDI1eO_2DO_Hj4Eawcw-1
+ us-mta-594-OwPfaRSOOFqI_PF4eoKm5Q-1; Thu, 16 Sep 2021 02:50:28 -0400
+X-MC-Unique: OwPfaRSOOFqI_PF4eoKm5Q-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4D7431800D41;
-	Thu, 16 Sep 2021 06:50:11 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id EC51010023B0;
-	Thu, 16 Sep 2021 06:50:09 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C4E401923761;
+	Thu, 16 Sep 2021 06:50:23 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A8ED110023B0;
+	Thu, 16 Sep 2021 06:50:23 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A707D4EA2F;
-	Thu, 16 Sep 2021 06:50:07 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5B89F180598A;
+	Thu, 16 Sep 2021 06:50:23 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
+	[10.5.11.11])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 18E959Uo018097 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 14 Sep 2021 05:05:10 -0400
+	id 18FMtP9A010991 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 15 Sep 2021 18:55:25 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id C9231201B075; Tue, 14 Sep 2021 09:05:09 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C0581203394F
-	for <dm-devel@redhat.com>; Tue, 14 Sep 2021 09:05:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9702291C7C8
-	for <dm-devel@redhat.com>; Tue, 14 Sep 2021 09:05:01 +0000 (UTC)
-Received: from mail-lj1-f182.google.com (mail-lj1-f182.google.com
-	[209.85.208.182]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-368-TliK8iz0Mlu_u6JBBsOCeg-1; Tue, 14 Sep 2021 05:04:58 -0400
-X-MC-Unique: TliK8iz0Mlu_u6JBBsOCeg-1
-Received: by mail-lj1-f182.google.com with SMTP id w4so22424145ljh.13
-	for <dm-devel@redhat.com>; Tue, 14 Sep 2021 02:04:58 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-	:message-id:subject:to:cc;
-	bh=hJGnWAchz/HDqF7HydjX2fUZvRJTYMKYHvyvKYF6LTA=;
-	b=NwToJBRhdJ6cnmUauE+XYKQIhbFdfMao6u1Ebgz+u2o25FosTdTa9giuU/qmBTRtjO
-	1a0iqKKYaj93n63Jt0N6O8xuLJc0Oiw/7VDfkwyY/bXBFoff8Bdwb/8WjUqeOYtHM4fE
-	c1l94tTlaZtvsImPcufBIoWZ5emxPLQwFizJp9q5Eoc9+FONSfs4UTwQ38MAzqHzKg5b
-	RzBMMsYwaElNfD998aXJMyWv3X1J4ORFREP3VP+JLol9JgymoG1aEN9v1Lxe2NMnxGpt
-	zf1tvUs4IvnpScJBhiUGknYi0IHlutDqCVGAfvM9eDUfWs6g6InNB53gBMxzJ5ySF/F/
-	HR7g==
-X-Gm-Message-State: AOAM532cJeHN23MoZvp4ZxSD4/VM1rMRvny8iMdFQpqIeQeTEaQUoP7D
-	9+/GPpDWRHak30H50x0WhpEjSmECgalItMPdl3M2Yg==
-X-Google-Smtp-Source: ABdhPJxZC/j49j+CcIzIqzNYUN//TpHs73k6VRwmbWS0R4xoDibBWk/HYQNi25ajG7KIqw46sDy4K+S8GNnu6KTzYqE=
-X-Received: by 2002:a2e:960c:: with SMTP id v12mr14672590ljh.300.1631610296769;
-	Tue, 14 Sep 2021 02:04:56 -0700 (PDT)
+	id 54A4F18AD4; Wed, 15 Sep 2021 22:55:25 +0000 (UTC)
+Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B1873604CC;
+	Wed, 15 Sep 2021 22:55:21 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 18FMtJUt006409; 
+	Wed, 15 Sep 2021 17:55:20 -0500
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 18FMtJQB006408;
+	Wed, 15 Sep 2021 17:55:19 -0500
+Date: Wed, 15 Sep 2021 17:55:18 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: mwilck@suse.com
+Message-ID: <20210915225518.GR3087@octiron.msp.redhat.com>
+References: <20210910114120.13665-1-mwilck@suse.com>
+	<20210910114120.13665-7-mwilck@suse.com>
 MIME-Version: 1.0
-References: <20210913013135.102404-1-ebiggers@kernel.org>
-	<20210913013135.102404-5-ebiggers@kernel.org>
-In-Reply-To: <20210913013135.102404-5-ebiggers@kernel.org>
-From: Ulf Hansson <ulf.hansson@linaro.org>
-Date: Tue, 14 Sep 2021 11:04:20 +0200
-Message-ID: <CAPDyKFpvZAQ+5niZkw2tk-q_6w=VAuK=P-OVGjQA7QbJW7OvgQ@mail.gmail.com>
-To: Eric Biggers <ebiggers@kernel.org>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+In-Reply-To: <20210910114120.13665-7-mwilck@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Thu, 16 Sep 2021 02:50:07 -0400
-Cc: linux-block <linux-block@vger.kernel.org>,
-	Satya Tangirala <satyaprateek2357@gmail.com>,
-	dm-devel@redhat.com, linux-mmc <linux-mmc@vger.kernel.org>,
-	linux-scsi <linux-scsi@vger.kernel.org>
-Subject: Re: [dm-devel] [PATCH 4/5] blk-crypto: rename blk_keyslot_manager
-	to blk_crypto_profile
+Cc: lixiaokeng@huawei.com, dm-devel@redhat.com,
+	Chongyun Wu <wu.chongyun@h3c.com>
+Subject: Re: [dm-devel] [PATCH 06/35] multipathd: fix systemd notification
+ when stopping while reloading
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -113,71 +94,49 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, 13 Sept 2021 at 03:35, Eric Biggers <ebiggers@kernel.org> wrote:
->
-> From: Eric Biggers <ebiggers@google.com>
->
-> blk_keyslot_manager is misnamed because it doesn't necessarily manage
-> keyslots.  It actually does several different things:
->
->   - Contains the crypto capabilities of the device.
->
->   - Provides functions to control the inline encryption hardware.
->     Originally these were just for programming/evicting keyslots;
->     however, new functionality (hardware-wrapped keys) will require new
->     functions here which are unrelated to keyslots.  Moreover,
->     device-mapper devices already (ab)use "keyslot_evict" to pass key
->     eviction requests to their underlying devices even though
->     device-mapper devices don't have any keyslots themselves (so it
->     really should be "evict_key", not "keyslot_evict").
->
->   - Sometimes (but not always!) it manages keyslots.  Originally it
->     always did, but device-mapper devices don't have keyslots
->     themselves, so they use a "passthrough keyslot manager" which
->     doesn't actually manage keyslots.  This hack works, but the
->     terminology is unnatural.  Also, some hardware doesn't have keyslots
->     and thus also uses a "passthrough keyslot manager" (support for such
->     hardware is yet to be upstreamed, but it will happen eventually).
->
-> Let's stop having keyslot managers which don't actually manage keyslots.
-> Instead, rename blk_keyslot_manager to blk_crypto_profile.
->
-> This is a fairly big change, since for consistency it also has to update
-> keyslot manager-related function names, variable names, and comments --
-> not just the actual struct name.  However it's still a fairly
-> straightforward change, as it doesn't change any actual functionality.
->
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
+On Fri, Sep 10, 2021 at 01:40:51PM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+> 
+> After sending "RELOADING=1" to systemd, a service must send
+> "READY=1" before "STOPPING=1". Otherwise systemd will be confused
+> and will not regard the service as stopped. Subsequent attempts
+> to start multipathd via socket activation fail until systemd times
+> out the reload operation.
+> 
+> The problem can be reproduced by running "multipathd shutdown"
+> quickly after "multipathd reconfigure".
+> 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  block/blk-crypto-fallback.c        |  60 ++--
->  block/blk-crypto-profile.c         | 518 ++++++++++++++---------------
->  block/blk-crypto.c                 |  25 +-
->  block/blk-integrity.c              |   2 +-
->  drivers/md/dm-core.h               |   2 +-
->  drivers/md/dm-table.c              | 168 +++++-----
->  drivers/md/dm.c                    |   8 +-
->  drivers/mmc/core/crypto.c          |  11 +-
->  drivers/mmc/host/cqhci-crypto.c    |  31 +-
->  drivers/scsi/ufs/ufshcd-crypto.c   |  32 +-
->  drivers/scsi/ufs/ufshcd-crypto.h   |   9 +-
->  drivers/scsi/ufs/ufshcd.c          |   2 +-
->  drivers/scsi/ufs/ufshcd.h          |   4 +-
->  include/linux/blk-crypto-profile.h | 164 +++++----
->  include/linux/blkdev.h             |  18 +-
->  include/linux/device-mapper.h      |   4 +-
->  include/linux/mmc/host.h           |   2 +-
->  17 files changed, 548 insertions(+), 512 deletions(-)
->
-
-Acked-by: Ulf Hansson <ulf.hansson@linaro.org> # For MMC
-
-[...]
-
-Kind regards
-Uffe
+>  multipathd/main.c | 7 +++++--
+>  1 file changed, 5 insertions(+), 2 deletions(-)
+> 
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 3aff241..67160b9 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -210,9 +210,12 @@ static void do_sd_notify(enum daemon_status old_state,
+>  	if (msg && !safe_sprintf(notify_msg, "STATUS=%s", msg))
+>  		sd_notify(0, notify_msg);
+>  
+> -	if (new_state == DAEMON_SHUTDOWN)
+> +	if (new_state == DAEMON_SHUTDOWN) {
+> +		/* Tell systemd that we're not RELOADING any more */
+> +		if (old_state == DAEMON_CONFIGURE && startup_done)
+> +			sd_notify(0, "READY=1");
+>  		sd_notify(0, "STOPPING=1");
+> -	else if (new_state == DAEMON_IDLE && old_state == DAEMON_CONFIGURE) {
+> +	} else if (new_state == DAEMON_IDLE && old_state == DAEMON_CONFIGURE) {
+>  		sd_notify(0, "READY=1");
+>  		startup_done = true;
+>  	} else if (new_state == DAEMON_CONFIGURE && startup_done)
+> -- 
+> 2.33.0
 
 --
 dm-devel mailing list
