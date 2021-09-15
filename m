@@ -2,79 +2,103 @@ Return-Path: <SRS0=IV6L=OF=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.6 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,
-	URIBL_BLOCKED,USER_AGENT_SANE_1 autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-10.7 required=3.0 tests=BAYES_00,
+	DKIM_ADSP_CUSTOM_MED,FREEMAIL_FORGED_FROMDOMAIN,FREEMAIL_FROM,
+	HEADER_FROM_DIFFERENT_DOMAINS,INCLUDES_CR_TRAILER,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS,URIBL_BLOCKED autolearn=ham
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2DB77C433F5
-	for <dm-devel@archiver.kernel.org>; Wed, 15 Sep 2021 22:20:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3D686C433EF
+	for <dm-devel@archiver.kernel.org>; Wed, 15 Sep 2021 22:51:11 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C722A60F13
-	for <dm-devel@archiver.kernel.org>; Wed, 15 Sep 2021 22:20:42 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org C722A60F13
-Authentication-Results: mail.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id B240960FC0
+	for <dm-devel@archiver.kernel.org>; Wed, 15 Sep 2021 22:51:10 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org B240960FC0
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1631744442;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=rS9XQWaN3mDCV2sJmSla0qEUrdHCpdBX6yjryFx8qNs=;
-	b=HLmmEy5k0VHNH9aFZuetdPeseRJMQ5K4zxAaUsaC1PU2d0AyIgzLoxkBP6uppWO400a15A
-	VrO7ybiMTHRPlRm86DhvKQlQamK+eLz/ppxVmGYMmq+gJsze0sr4cyZpuruOwVAkTiE/ni
-	1oXpl8n9LFseJlUq64ujQNcFIl5fO+Y=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-48-vr5QiaQHOim-ypzG9SuqMQ-1; Wed, 15 Sep 2021 18:20:38 -0400
-X-MC-Unique: vr5QiaQHOim-ypzG9SuqMQ-1
+ us-mta-66-sIzYR8VrMsSteEylF5klNA-1; Wed, 15 Sep 2021 18:51:08 -0400
+X-MC-Unique: sIzYR8VrMsSteEylF5klNA-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2332C1808305;
-	Wed, 15 Sep 2021 22:20:34 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E0BE179EDF;
+	Wed, 15 Sep 2021 22:51:03 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B50605C1A1;
-	Wed, 15 Sep 2021 22:20:33 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B6AAF5C1C5;
+	Wed, 15 Sep 2021 22:51:03 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id F39764EA2A;
-	Wed, 15 Sep 2021 22:20:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
-	[10.5.11.11])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1B1294E590;
+	Wed, 15 Sep 2021 22:51:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 18FMKVpf009081 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 15 Sep 2021 18:20:31 -0400
+	id 18FMj1w3010493 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 15 Sep 2021 18:45:01 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1A078604CC; Wed, 15 Sep 2021 22:20:31 +0000 (UTC)
-Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B4F8760583;
-	Wed, 15 Sep 2021 22:20:26 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 18FMKOl3006372; 
-	Wed, 15 Sep 2021 17:20:25 -0500
-Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 18FMKOog006371;
-	Wed, 15 Sep 2021 17:20:24 -0500
-Date: Wed, 15 Sep 2021 17:20:23 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: mwilck@suse.com
-Message-ID: <20210915222023.GQ3087@octiron.msp.redhat.com>
-References: <20210910114120.13665-1-mwilck@suse.com>
-	<20210910114120.13665-6-mwilck@suse.com>
+	id 8FAF5112131F; Wed, 15 Sep 2021 22:45:01 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8A4E21155894
+	for <dm-devel@redhat.com>; Wed, 15 Sep 2021 22:44:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B4B6E91C7CD
+	for <dm-devel@redhat.com>; Wed, 15 Sep 2021 22:44:54 +0000 (UTC)
+Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com
+	[209.85.128.53]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-559-2H-r9DHdN9el5yl8Lma9qg-1; Wed, 15 Sep 2021 18:44:53 -0400
+X-MC-Unique: 2H-r9DHdN9el5yl8Lma9qg-1
+Received: by mail-wm1-f53.google.com with SMTP id
+	b21-20020a1c8015000000b003049690d882so5934842wmd.5; 
+	Wed, 15 Sep 2021 15:44:52 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+	:content-transfer-encoding;
+	bh=0FW51YHlrX8DUNqlzMWabHWJpMOJM9BMo0lsEj1LsVk=;
+	b=flp6mDGwXFMKHvV8RfWinltD31RCKk0O7Cs6I1duEodafdY5CAtAKhUhdUOHwLFOu2
+	TY1+dfbmvbKknMdnPN/T879IJZH1TT0jQydU+z4eH4LuKCfew4Hs1VQH64zWym9rAXiw
+	XEFW8MkZW2Ib9YCBC3cgvMeqWDsEzwXJzW344EXj7xVDL5joHeOaNEbi22olikh9KzcT
+	n1TZ6t/uNOOBVhLoj99avi3lQRk8IWqKrVo9FCDABn38bd5QEu5d4U4DMWOiegUP45ha
+	Sqw8ORBy1Xd6+QBidMXurrjU/OfCQh8saUjrCwr1yvlX2a1rvR1wMSOPfuyQ0OKU/7hn
+	zLEg==
+X-Gm-Message-State: AOAM531CLxRZqYSiHpb5Hr/qUGEXgp2UxfJiIdDOzIRzE2ueYzEtBAOg
+	lLrES85jBZJD+mevNEY/sA==
+X-Google-Smtp-Source: ABdhPJy22jDTIcLZMp/NPgT19vsFNsi+TfaxvQn8Oz/KTOBkvMLIly6yhPKhaw+4SFX+NjtZPaGWXw==
+X-Received: by 2002:a05:600c:1c0f:: with SMTP id
+	j15mr1973043wms.3.1631745891536; 
+	Wed, 15 Sep 2021 15:44:51 -0700 (PDT)
+Received: from localhost (227.red-83-37-137.dynamicip.rima-tde.net.
+	[83.37.137.227])
+	by smtp.gmail.com with ESMTPSA id d8sm1378555wrv.20.2021.09.15.15.44.50
+	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+	Wed, 15 Sep 2021 15:44:50 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Date: Thu, 16 Sep 2021 00:44:49 +0200
+Message-Id: <20210915224449.16365-1-xose.vazquez@gmail.com>
 MIME-Version: 1.0
-In-Reply-To: <20210910114120.13665-6-mwilck@suse.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Patchwork-Bot: notify
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: lixiaokeng@huawei.com, dm-devel@redhat.com,
-	Chongyun Wu <wu.chongyun@h3c.com>
-Subject: Re: [dm-devel] [PATCH 05/35] libmultipath: improve cleanup of
- uevent queues on exit
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>,
+	DM-DEVEL ML <dm-devel@redhat.com>
+Subject: [dm-devel] [PATCH] multipath-tools: minor fixes to multipath.conf.5
+	man page
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,150 +117,53 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Sep 10, 2021 at 01:40:50PM +0200, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
-> 
-> uevents listed on merge_node must be cleaned up, too. uevents
-> cancelled while being serviced and temporary queues, likewise.
-> The global uevq must be cleaned out in the uevent listener thread,
-> because it might have added events after the dispatcher thread
-> had already finished.
-> 
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@redhat.com>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ multipath/multipath.conf.5 | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-There's nothing wrong with this, but for the global list, wouldn't it be
-easier to just wait till after cleanup_child() calls cleanup_threads(),
-and then call cleanup_global_uevq(). That way you know nothing else is
-running.
-
--Ben
-
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/uevent.c | 49 ++++++++++++++++++++++++++++++++-----------
->  1 file changed, 37 insertions(+), 12 deletions(-)
-> 
-> diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-> index 4265904..082e891 100644
-> --- a/libmultipath/uevent.c
-> +++ b/libmultipath/uevent.c
-> @@ -91,16 +91,25 @@ struct uevent * alloc_uevent (void)
->  	return uev;
->  }
->  
-> +static void uevq_cleanup(struct list_head *tmpq);
-> +
-> +static void cleanup_uev(void *arg)
-> +{
-> +	struct uevent *uev = arg;
-> +
-> +	uevq_cleanup(&uev->merge_node);
-> +	if (uev->udev)
-> +		udev_device_unref(uev->udev);
-> +	FREE(uev);
-> +}
-> +
->  static void uevq_cleanup(struct list_head *tmpq)
->  {
->  	struct uevent *uev, *tmp;
->  
->  	list_for_each_entry_safe(uev, tmp, tmpq, node) {
->  		list_del_init(&uev->node);
-> -
-> -		if (uev->udev)
-> -			udev_device_unref(uev->udev);
-> -		FREE(uev);
-> +		cleanup_uev(uev);
->  	}
->  }
->  
-> @@ -384,14 +393,10 @@ service_uevq(struct list_head *tmpq)
->  	list_for_each_entry_safe(uev, tmp, tmpq, node) {
->  		list_del_init(&uev->node);
->  
-> +		pthread_cleanup_push(cleanup_uev, uev);
->  		if (my_uev_trigger && my_uev_trigger(uev, my_trigger_data))
->  			condlog(0, "uevent trigger error");
-> -
-> -		uevq_cleanup(&uev->merge_node);
-> -
-> -		if (uev->udev)
-> -			udev_device_unref(uev->udev);
-> -		FREE(uev);
-> +		pthread_cleanup_pop(1);
->  	}
->  }
->  
-> @@ -411,6 +416,18 @@ static void monitor_cleanup(void *arg)
->  	udev_monitor_unref(monitor);
->  }
->  
-> +static void cleanup_uevq(void *arg)
-> +{
-> +	uevq_cleanup(arg);
-> +}
-> +
-> +static void cleanup_global_uevq(void *arg __attribute__((unused)))
-> +{
-> +	pthread_mutex_lock(uevq_lockp);
-> +	uevq_cleanup(&uevq);
-> +	pthread_mutex_unlock(uevq_lockp);
-> +}
-> +
->  /*
->   * Service the uevent queue.
->   */
-> @@ -425,6 +442,7 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent *, void * trigger_data),
->  	while (1) {
->  		LIST_HEAD(uevq_tmp);
->  
-> +		pthread_cleanup_push(cleanup_mutex, uevq_lockp);
->  		pthread_mutex_lock(uevq_lockp);
->  		servicing_uev = 0;
->  		/*
-> @@ -436,14 +454,17 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent *, void * trigger_data),
->  		}
->  		servicing_uev = 1;
->  		list_splice_init(&uevq, &uevq_tmp);
-> -		pthread_mutex_unlock(uevq_lockp);
-> +		pthread_cleanup_pop(1);
-> +
->  		if (!my_uev_trigger)
->  			break;
-> +
-> +		pthread_cleanup_push(cleanup_uevq, &uevq_tmp);
->  		merge_uevq(&uevq_tmp);
->  		service_uevq(&uevq_tmp);
-> +		pthread_cleanup_pop(1);
->  	}
->  	condlog(3, "Terminating uev service queue");
-> -	uevq_cleanup(&uevq);
->  	return 0;
->  }
->  
-> @@ -600,6 +621,8 @@ int uevent_listen(struct udev *udev)
->  
->  	events = 0;
->  	gettimeofday(&start_time, NULL);
-> +	pthread_cleanup_push(cleanup_global_uevq, NULL);
-> +	pthread_cleanup_push(cleanup_uevq, &uevlisten_tmp);
->  	while (1) {
->  		struct uevent *uev;
->  		struct udev_device *dev;
-> @@ -650,6 +673,8 @@ int uevent_listen(struct udev *udev)
->  		gettimeofday(&start_time, NULL);
->  		timeout = 30;
->  	}
-> +	pthread_cleanup_pop(1);
-> +	pthread_cleanup_pop(1);
->  out:
->  	pthread_cleanup_pop(1);
->  out_udev:
-> -- 
-> 2.33.0
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index 42a15ffd..c74129bd 100644
+--- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -1,9 +1,9 @@
+ .\" ----------------------------------------------------------------------------
+-.\" Update the date below if you make any significant change.
+ .\" Make sure there are no errors with:
+ .\" groff -z -wall -b -e -t multipath/multipath.conf.5
+ .\" man --warnings -E UTF-8 -l -Tutf8 -Z multipath/multipath.conf.5 >/dev/null
+ .\"
++.\" Update the date below if you make any significant change.
+ .\" ----------------------------------------------------------------------------
+ .
+ .TH MULTIPATH.CONF 5 2021-09-08 Linux
+@@ -189,7 +189,7 @@ The default is: \fB<system dependent>\fR
+ .TP
+ .B path_selector
+ The default path selector algorithm to use; they are offered by the
+-kernel multipath target. There are three selector algorithms:
++kernel multipath target:
+ .RS
+ .TP 12
+ .I "round-robin 0"
+@@ -206,7 +206,7 @@ of outstanding I/O to the path.
+ of outstanding I/O to the path and its relative throughput.
+ .TP
+ .I "historical-service-time 0"
+-(Since 5.8 kernel) Choose the path for the next bunch of IOs based on the
++(Since 5.8 kernel) Choose the path for the next bunch of I/O based on the
+ estimation of future service time based on the history of previous I/O submitted
+ to each path.
+ .TP
+-- 
+2.32.0
 
 --
 dm-devel mailing list
