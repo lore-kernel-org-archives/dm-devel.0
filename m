@@ -2,66 +2,76 @@ Return-Path: <SRS0=YvnR=ON=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 X-Spam-Level: 
-X-Spam-Status: No, score=-17.2 required=3.0 tests=BAYES_00,DKIMWL_WL_HIGH,
-	DKIM_SIGNED,DKIM_VALID,DKIM_VALID_AU,HEADER_FROM_DIFFERENT_DOMAINS,
-	INCLUDES_CR_TRAILER,INCLUDES_PATCH,MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS
-	autolearn=ham autolearn_force=no version=3.4.0
+X-Spam-Status: No, score=-9.0 required=3.0 tests=BAYES_00,INCLUDES_PATCH,
+	MAILING_LIST_MULTI,SPF_HELO_NONE,SPF_PASS autolearn=unavailable
+	autolearn_force=no version=3.4.0
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E7009C433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 23 Sep 2021 09:11:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A85B3C433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 23 Sep 2021 18:57:09 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7A62160F39
-	for <dm-devel@archiver.kernel.org>; Thu, 23 Sep 2021 09:11:54 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 7A62160F39
-Authentication-Results: mail.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 2327E610C8
+	for <dm-devel@archiver.kernel.org>; Thu, 23 Sep 2021 18:57:09 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 2327E610C8
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1632388313;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=8YLNWor9k2vgiaOH5qQ67MTvKjJev78ljoG5XnCDpjs=;
-	b=SHhjzvwMqBHsNJELBTVRsGI2QV8gLmw1C3zukC2Sw0c46o9e2DPKxE4qKy0KHoMvzFRU1C
-	g47OALJqsVtUwPz09Mk6ccRsTbVSvqIMih2bsuTsUyV/XmlOln9fwgHHx757D6fM6Ro7y1
-	cSRzA/ZmQrvROnjWhHt4WliJyHlrMFc=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-552-uGwp2WtZNkCyGHRqBkS5vA-1; Thu, 23 Sep 2021 05:11:46 -0400
-X-MC-Unique: uGwp2WtZNkCyGHRqBkS5vA-1
+ us-mta-582-AvK22k05PsqQNWOn68wCOQ-1; Thu, 23 Sep 2021 14:57:06 -0400
+X-MC-Unique: AvK22k05PsqQNWOn68wCOQ-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 47B1410151E3;
-	Thu, 23 Sep 2021 09:11:42 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AEF24362F8;
+	Thu, 23 Sep 2021 18:57:01 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A32D11017E28;
-	Thu, 23 Sep 2021 09:11:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 55F54102482F;
+	Thu, 23 Sep 2021 18:57:00 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 89F994E58F;
-	Thu, 23 Sep 2021 09:11:39 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
-	[10.5.11.11])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A96584E9F5;
+	Thu, 23 Sep 2021 18:56:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 18N9Bbwb030498 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 23 Sep 2021 05:11:37 -0400
+	id 18NIuu5m021947 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 23 Sep 2021 14:56:56 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 80ABB970E1; Thu, 23 Sep 2021 09:11:37 +0000 (UTC)
-Received: from localhost (ovpn-8-34.pek2.redhat.com [10.72.8.34])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A28C3970E5;
-	Thu, 23 Sep 2021 09:11:20 +0000 (UTC)
-From: Ming Lei <ming.lei@redhat.com>
-To: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com
-Date: Thu, 23 Sep 2021 17:11:31 +0800
-Message-Id: <20210923091131.1463013-1-ming.lei@redhat.com>
+	id 0697C208747C; Thu, 23 Sep 2021 18:56:56 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F018E20AE846
+	for <dm-devel@redhat.com>; Thu, 23 Sep 2021 18:56:53 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EFBA1811E81
+	for <dm-devel@redhat.com>; Thu, 23 Sep 2021 18:56:52 +0000 (UTC)
+Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
+	by relay.mimecast.com with ESMTP id us-mta-86-B9MpfvsuMoeadtDDHQtQWA-1; 
+	Thu, 23 Sep 2021 14:56:51 -0400
+X-MC-Unique: B9MpfvsuMoeadtDDHQtQWA-1
+Received: by mail.kernel.org (Postfix) with ESMTPSA id C717961038;
+	Thu, 23 Sep 2021 18:56:49 +0000 (UTC)
+From: Eric Biggers <ebiggers@kernel.org>
+To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>
+Date: Thu, 23 Sep 2021 11:56:25 -0700
+Message-Id: <20210923185629.54823-1-ebiggers@kernel.org>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: Ming Lei <ming.lei@redhat.com>
-Subject: [dm-devel] [PATCH] dm-rq: don't queue request during suspend
+Cc: Satya Tangirala <satyaprateek2357@gmail.com>, dm-devel@redhat.com,
+	linux-mmc@vger.kernel.org, linux-scsi@vger.kernel.org
+Subject: [dm-devel] [PATCH v3 0/4] blk-crypto cleanups
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -83,41 +93,63 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-DM uses blk-mq's quiesce/unquiesce to stop/start device mapper queue.
+This series renames struct blk_keyslot_manager to struct
+blk_crypto_profile, as it is misnamed; it doesn't always manage
+keyslots.  It's much more logical to think of it as the
+"blk-crypto profile" of a device, similar to blk_integrity_profile.
 
-But blk-mq's unquiesce may come from outside events, such as elevator
-switch, updating nr_requests or others, and request may come during
-suspend, so simply ask for blk-mq to requeue it.
+This series also improves the inline-encryption.rst documentation file,
+and cleans up blk-crypto-fallback a bit.
 
-Fixes one kernel panic issue when running updating nr_requests and
-dm-mpath suspend/resume stress test.
+This series applies to v5.15-rc2.
 
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
----
- drivers/md/dm-rq.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+Changed v2 => v3:
+  - Made some minor tweaks to patches 3 and 4, mostly comments and
+    documentation.
+  - Clarified a commit message to mention no change in behavior.
+  - Added a Reviewed-by tag.
 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 5b95eea517d1..a896dea9750e 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -490,6 +490,14 @@ static blk_status_t dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
- 	struct mapped_device *md = tio->md;
- 	struct dm_target *ti = md->immutable_target;
- 
-+	/*
-+	 * blk-mq's unquiesce may come from outside events, such as
-+	 * elevator switch, updating nr_requests or others, and request may
-+	 * come during suspend, so simply ask for blk-mq to requeue it.
-+	 */
-+	if (unlikely(test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags)))
-+		return BLK_STS_RESOURCE;
-+
- 	if (unlikely(!ti)) {
- 		int srcu_idx;
- 		struct dm_table *map = dm_get_live_table(md, &srcu_idx);
+Changed v1 => v2:
+  - Fixed a build error in blk-integrity.c.
+  - Removed a mention of "ksm" from a comment.
+  - Dropped the patch "blk-crypto-fallback: consolidate static variables".
+  - Added Acked-by and Reviewed-by tags.
+
+Eric Biggers (4):
+  blk-crypto-fallback: properly prefix function and struct names
+  blk-crypto: rename keyslot-manager files to blk-crypto-profile
+  blk-crypto: rename blk_keyslot_manager to blk_crypto_profile
+  blk-crypto: update inline encryption documentation
+
+ Documentation/block/inline-encryption.rst | 451 +++++++++--------
+ block/Makefile                            |   2 +-
+ block/blk-crypto-fallback.c               | 118 ++---
+ block/blk-crypto-profile.c                | 564 +++++++++++++++++++++
+ block/blk-crypto.c                        |  29 +-
+ block/blk-integrity.c                     |   4 +-
+ block/keyslot-manager.c                   | 578 ----------------------
+ drivers/md/dm-core.h                      |   4 +-
+ drivers/md/dm-table.c                     | 168 +++----
+ drivers/md/dm.c                           |  10 +-
+ drivers/mmc/core/crypto.c                 |  11 +-
+ drivers/mmc/host/cqhci-crypto.c           |  33 +-
+ drivers/scsi/ufs/ufshcd-crypto.c          |  32 +-
+ drivers/scsi/ufs/ufshcd-crypto.h          |   9 +-
+ drivers/scsi/ufs/ufshcd.c                 |   2 +-
+ drivers/scsi/ufs/ufshcd.h                 |   6 +-
+ include/linux/blk-crypto-profile.h        | 166 +++++++
+ include/linux/blkdev.h                    |  18 +-
+ include/linux/device-mapper.h             |   4 +-
+ include/linux/keyslot-manager.h           | 120 -----
+ include/linux/mmc/host.h                  |   4 +-
+ 21 files changed, 1203 insertions(+), 1130 deletions(-)
+ create mode 100644 block/blk-crypto-profile.c
+ delete mode 100644 block/keyslot-manager.c
+ create mode 100644 include/linux/blk-crypto-profile.h
+ delete mode 100644 include/linux/keyslot-manager.h
+
 -- 
-2.31.1
+2.33.0
 
 --
 dm-devel mailing list
