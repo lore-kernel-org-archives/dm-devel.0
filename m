@@ -2,79 +2,78 @@ Return-Path: <SRS0=D7/d=OS=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5447AC433F5
-	for <dm-devel@archiver.kernel.org>; Tue, 28 Sep 2021 20:16:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EB5EBC433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 28 Sep 2021 20:41:04 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id CA62C6128C
-	for <dm-devel@archiver.kernel.org>; Tue, 28 Sep 2021 20:16:24 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org CA62C6128C
+	by mail.kernel.org (Postfix) with ESMTPS id 368276135F
+	for <dm-devel@archiver.kernel.org>; Tue, 28 Sep 2021 20:41:03 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 368276135F
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-523-Ei5GXH_KP0a4vl-MUlBpGQ-1; Tue, 28 Sep 2021 16:16:22 -0400
-X-MC-Unique: Ei5GXH_KP0a4vl-MUlBpGQ-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-459-k-D1EM40PkWBvarCs07wCA-1; Tue, 28 Sep 2021 16:41:01 -0400
+X-MC-Unique: k-D1EM40PkWBvarCs07wCA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BACFA1006AA2;
-	Tue, 28 Sep 2021 20:16:16 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B1A69801E72;
+	Tue, 28 Sep 2021 20:40:56 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id F0A4860877;
-	Tue, 28 Sep 2021 20:16:15 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6939E5E255;
+	Tue, 28 Sep 2021 20:40:56 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D85281800B9E;
-	Tue, 28 Sep 2021 20:16:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E87381800FE4;
+	Tue, 28 Sep 2021 20:40:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 18SKGCDQ007347 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 28 Sep 2021 16:16:12 -0400
+	id 18SKdnW1008841 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 28 Sep 2021 16:39:49 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id A5DF7114249B; Tue, 28 Sep 2021 20:16:12 +0000 (UTC)
+	id 0132250167; Tue, 28 Sep 2021 20:39:49 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9F4BD1142496
-	for <dm-devel@redhat.com>; Tue, 28 Sep 2021 20:16:01 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EF8A7422DF
+	for <dm-devel@redhat.com>; Tue, 28 Sep 2021 20:39:24 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 72CD8811E7A
-	for <dm-devel@redhat.com>; Tue, 28 Sep 2021 20:16:01 +0000 (UTC)
-Received: from mail-wr1-f46.google.com (mail-wr1-f46.google.com
-	[209.85.221.46]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-587-zxL7t0EkNN62u8NNxGhWaQ-1; Tue, 28 Sep 2021 16:15:59 -0400
-X-MC-Unique: zxL7t0EkNN62u8NNxGhWaQ-1
-Received: by mail-wr1-f46.google.com with SMTP id s21so415256wra.7;
-	Tue, 28 Sep 2021 13:15:59 -0700 (PDT)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 987A5185A7A4
+	for <dm-devel@redhat.com>; Tue, 28 Sep 2021 20:39:24 +0000 (UTC)
+Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com
+	[209.85.221.47]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-266-cZQ8GaoHObaTwlqnfDIfRA-1; Tue, 28 Sep 2021 16:39:20 -0400
+X-MC-Unique: cZQ8GaoHObaTwlqnfDIfRA-1
+Received: by mail-wr1-f47.google.com with SMTP id d6so474580wrc.11;
+	Tue, 28 Sep 2021 13:39:20 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20210112;
 	h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
 	:content-transfer-encoding;
-	bh=yj25AEH6+0qFEDOFYA6qoD1sKL51fQ26dtMIOdUHAQ8=;
-	b=qVBlW7am/6WwZ6kwFprv9bmnm0hkzqYg7FfPUkHGrdct4l1S9hDNg31fS7gl2gHFWK
-	o403ax2bd+lo/JFHcjDR0tneCRd5c5Dcx8wF7heKtUUQ89TcM6nSTZiOmfGEItDAomaK
-	MFHeniffgRpjtqViqo08+yn1etV5Qg7yibyoxRUmZ4Lk/xuP2oIf528jfeJ2O9qzv6b9
-	GPPp8/QmzDBJvsyODHFq0i/xtsBXywKhfUEYxJqYNKj/E0+I4AXN6ZmYmZk6jB0t4MEG
-	egMQ2eWfTqAoh4eWWcoXKemLt3G3XpXxXmDFV/oujxQonMt6NMB3Qsh7LpN7s2L021+H
-	SGuw==
-X-Gm-Message-State: AOAM530R/qKmh8suEWwQCOUlgi+gumZGR2tFSU9QhGcWbmtr66aqrOFD
-	mw/dSqFmrF1oLGWwzAFuSQ==
-X-Google-Smtp-Source: ABdhPJxOnHTexr3ILyvd3XHdwnk6KR7Gy5PmSUPr/TbzUtX6TgMNRLwQIpJEP5pAg8LAryvNJ6SG3w==
-X-Received: by 2002:a05:6000:1561:: with SMTP id
-	1mr2337087wrz.369.1632860158157; 
-	Tue, 28 Sep 2021 13:15:58 -0700 (PDT)
-Received: from localhost ([90.160.137.52]) by smtp.gmail.com with ESMTPSA id
-	189sm4275073wmz.27.2021.09.28.13.15.57
+	bh=ov5ThezqBPHOLksKmvSo4VfeYsu9vzRyR2SAXIqxRZc=;
+	b=25iagbV1Gak73gLPeTv1iO4U16IshL7y8nhGBT8ouAMjektQAhpfSs25VXgAo+ubQ7
+	rESt0wV+PA1KJ9Mb0hyOvBU5sy/6Zwq1Epq3keGWo64UiwnnWBohZ8ppbVNBFoaLTbVz
+	b7R5mAIucGIxiPiwfNHdejL3jQFTsnRNfChVMZDh8irinB+pFhGFWf71YGh3lLjeigSu
+	EAdj18ANOYvXW0/tIMEDn+VjgECS/9yMY2KNOImAmwmDaJ9klVf5t6lSZzJXCMcFO3DZ
+	Sjh8CGcXxvq2kJgkEaK277p+SFs9t9GNA0tfuyMj1c/HNvIpArr357YCHKgrtXt1hQxX
+	dmzQ==
+X-Gm-Message-State: AOAM5319DaOFuPlUGt11J1Lp2qYx+g8FsGZDFpZpQEB7L25P6oTgbOXU
+	+7OcA9XnxygCVg70edUB3d0SH3pU+A==
+X-Google-Smtp-Source: ABdhPJz+zKrzGPhCyMOZ9YiaD0bLwLqpsvuWddS4c+G2Yx2MqpfwFpTlZu8HcR1yuvgQRlNJTsBBmQ==
+X-Received: by 2002:a5d:46ca:: with SMTP id g10mr2430248wrs.269.1632861559259; 
+	Tue, 28 Sep 2021 13:39:19 -0700 (PDT)
+Received: from localhost ([90.160.137.52])
+	by smtp.gmail.com with ESMTPSA id o13sm234464wri.53.2021.09.28.13.39.18
 	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Tue, 28 Sep 2021 13:15:57 -0700 (PDT)
+	Tue, 28 Sep 2021 13:39:18 -0700 (PDT)
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 To: 
-Date: Tue, 28 Sep 2021 22:15:56 +0200
-Message-Id: <20210928201556.24100-1-xose.vazquez@gmail.com>
+Date: Tue, 28 Sep 2021 22:39:17 +0200
+Message-Id: <20210928203917.25237-1-xose.vazquez@gmail.com>
 MIME-Version: 1.0
 X-Patchwork-Bot: notify
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -85,13 +84,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Sean McGinnis <sean_mcginnis@dell.com>, DM-DEVEL ML <dm-devel@redhat.com>,
-	Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH] multipath-tools: make "COMPELNT/Compellent Vol"
-	config work with alua and multibus
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>,
+	DM-DEVEL ML <dm-devel@redhat.com>
+Subject: [dm-devel] [PATCH] multipath-tools: remove Compellent maintainer
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,7 +102,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -113,33 +110,34 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-ALUA is needed by SAS arrays, pag#124:
-https://downloads.dell.com/manuals/all-products/esuprt_solutions_int/esuprt_solutions_int_solutions_resources/general-solution-resources_white-papers2_en-us.pdf
+e-mail was bounced: 550 5.1.1 User Unknown
 
-Cc: Sean McGinnis <sean_mcginnis@dell.com>
 Cc: Martin Wilck <mwilck@suse.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM-DEVEL ML <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/hwtable.c | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 4e8b52ff..7fc5bc04 100644
+index 7fc5bc04..763982cd 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -368,7 +368,8 @@ static struct hwentry default_hw[] = {
- 		 */
- 		.vendor        = "COMPELNT",
- 		.product       = "Compellent Vol",
--		.pgpolicy      = MULTIBUS,
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
+@@ -361,11 +361,7 @@ static struct hwentry default_hw[] = {
+ 		.pgpolicy      = MULTIBUS,
  	},
  	{
+-		/*
+-		 * SC Series, formerly Compellent
+-		 *
+-		 * Maintainer: Sean McGinnis <sean_mcginnis@dell.com>
+-		 */
++		/* SC Series, formerly Compellent */
+ 		.vendor        = "COMPELNT",
+ 		.product       = "Compellent Vol",
+ 		.pgpolicy      = GROUP_BY_PRIO,
 -- 
 2.32.0
 
