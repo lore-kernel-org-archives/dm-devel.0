@@ -1,91 +1,76 @@
-Return-Path: <SRS0=coXp=OR=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=D7/d=OS=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BCA1EC433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 27 Sep 2021 22:29:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B48AFC433F5
+	for <dm-devel@archiver.kernel.org>; Tue, 28 Sep 2021 07:36:41 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 307E360FC0
-	for <dm-devel@archiver.kernel.org>; Mon, 27 Sep 2021 22:29:14 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 307E360FC0
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+	by mail.kernel.org (Postfix) with ESMTPS id 3ECCE611CA
+	for <dm-devel@archiver.kernel.org>; Tue, 28 Sep 2021 07:36:41 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 3ECCE611CA
+Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-257-IHnrv8ggOCaDe7DbKL_D3g-1; Mon, 27 Sep 2021 18:29:11 -0400
-X-MC-Unique: IHnrv8ggOCaDe7DbKL_D3g-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-549-AOo0eyp-MTO0yNRKYJE3Jg-1; Tue, 28 Sep 2021 03:36:38 -0400
+X-MC-Unique: AOo0eyp-MTO0yNRKYJE3Jg-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 711F8801E72;
-	Mon, 27 Sep 2021 22:29:07 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 510EE109B6E1;
-	Mon, 27 Sep 2021 22:29:07 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1D5C9824FA7;
+	Tue, 28 Sep 2021 07:36:33 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DEAFF3AC0;
+	Tue, 28 Sep 2021 07:36:30 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1C3AE4E58F;
-	Mon, 27 Sep 2021 22:29:07 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 30AEA1800B9E;
+	Tue, 28 Sep 2021 07:36:27 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 18RMT5QZ028492 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 27 Sep 2021 18:29:05 -0400
+	id 18S7aPok005991 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 28 Sep 2021 03:36:25 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 95BC2B3007; Mon, 27 Sep 2021 22:29:05 +0000 (UTC)
+	id 0CF45CF62C; Tue, 28 Sep 2021 07:36:25 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9047CB27BD
-	for <dm-devel@redhat.com>; Mon, 27 Sep 2021 22:29:02 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 08474C2122
+	for <dm-devel@redhat.com>; Tue, 28 Sep 2021 07:36:14 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C71898007B1
-	for <dm-devel@redhat.com>; Mon, 27 Sep 2021 22:29:02 +0000 (UTC)
-Received: from mail-il1-f175.google.com (mail-il1-f175.google.com
-	[209.85.166.175]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-452-I8M8kHcwOGGTdc9XqVjDzg-1; Mon, 27 Sep 2021 18:29:01 -0400
-X-MC-Unique: I8M8kHcwOGGTdc9XqVjDzg-1
-Received: by mail-il1-f175.google.com with SMTP id a11so9731348ilk.9
-	for <dm-devel@redhat.com>; Mon, 27 Sep 2021 15:29:00 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:subject:to:cc:references:from:message-id:date
-	:user-agent:mime-version:in-reply-to:content-language
-	:content-transfer-encoding;
-	bh=w9ezsQ1UkQZeC53NkFhy7B+1aNQW9TNDf1kl1c4M4R4=;
-	b=BqdvZc92YR4Yvr0Cr+ZwG9SWFo6F9CH4NAEHl8+vlmU7cmP2+Q2p7anO1K9WduGOZi
-	l4s8zbV9r1ZZL7nE/VcmMEv55tWLkXC2zFDlLyxnAMG+5PiBFDUn98jkq7uJzGy7ZGHa
-	xi0K6SmFkfotL2zkICb2lsaWYxKE6uzX5v8+xxkx6yXhtb5bIndCJ1WTaJfs0wsiFh/Z
-	UXC1mpd8fR9xijXQHl/agCNjveCp2gs49ruPH4df1DHEKe1NjRB/Yn8obEOhoIz7jPOO
-	HJk8foRNamovh84HaFSa30z855sEAlcZK1diu8NMk/SP8/64rGc2SARz51plvJjFTFVV
-	NY0Q==
-X-Gm-Message-State: AOAM5327k70n5gEzislexopqncCpnSNpd7oB8qF150sjYgoi1ZO9WCY2
-	h49xumhXtV35yLqiJZQ5v6g1Aw==
-X-Google-Smtp-Source: ABdhPJz2QpC01URNtiA6TI68tVS50xc5AHbinQF2wOnvWrWvzOWk+mcoidVwrUAWxR5vBmrTJemKng==
-X-Received: by 2002:a05:6e02:661:: with SMTP id
-	l1mr1855976ilt.122.1632781740297; 
-	Mon, 27 Sep 2021 15:29:00 -0700 (PDT)
-Received: from [192.168.1.116] ([66.219.217.159])
-	by smtp.gmail.com with ESMTPSA id
-	z25sm7614559iow.20.2021.09.27.15.28.58
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Mon, 27 Sep 2021 15:28:59 -0700 (PDT)
-To: Luis Chamberlain <mcgrof@kernel.org>, martin.petersen@oracle.com,
-	jejb@linux.ibm.com, kbusch@kernel.org, sagi@grimberg.me,
-	adrian.hunter@intel.com, beanhuo@micron.com, ulf.hansson@linaro.org,
-	avri.altman@wdc.com, swboyd@chromium.org, agk@redhat.com,
-	snitzer@redhat.com, josef@toxicpanda.com
-References: <20210927215958.1062466-1-mcgrof@kernel.org>
-	<20210927215958.1062466-7-mcgrof@kernel.org>
-From: Jens Axboe <axboe@kernel.dk>
-Message-ID: <dc945e14-498b-2cc1-8ef3-8dcaacfb948c@kernel.dk>
-Date: Mon, 27 Sep 2021 16:28:58 -0600
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
-	Thunderbird/68.10.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8D1CD1066683
+	for <dm-devel@redhat.com>; Tue, 28 Sep 2021 07:36:14 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) (Using
+	TLS) by relay.mimecast.com with ESMTP id
+	us-mta-77-Tmb892JeNDqLc5yFS6cAsw-1; Tue, 28 Sep 2021 03:36:05 -0400
+X-MC-Unique: Tmb892JeNDqLc5yFS6cAsw-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 0DECA22290;
+	Tue, 28 Sep 2021 07:36:04 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id C845A13A92;
+	Tue, 28 Sep 2021 07:36:03 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+	by imap2.suse-dmz.suse.de with ESMTPSA id 1yT4LuPFUmESaQAAMHmgww
+	(envelope-from <mwilck@suse.com>); Tue, 28 Sep 2021 07:36:03 +0000
+Message-ID: <5bbb6836abf34887805a48932f77cc0601608d71.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Date: Tue, 28 Sep 2021 09:36:03 +0200
+In-Reply-To: <20210924222736.22853-1-xose.vazquez@gmail.com>
+References: <20210924222736.22853-1-xose.vazquez@gmail.com>
+User-Agent: Evolution 3.40.4
 MIME-Version: 1.0
-In-Reply-To: <20210927215958.1062466-7-mcgrof@kernel.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -96,13 +81,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: linux-block@vger.kernel.org, bvanassche@acm.org, linux-scsi@vger.kernel.org,
-	linux-mmc@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-nvme@lists.infradead.org, ming.lei@redhat.com,
-	hch@infradead.org, dm-devel@redhat.com, nbd@other.debian.org,
-	Christoph Hellwig <hch@lst.de>
-Subject: Re: [dm-devel] [PATCH v4 6/6] nbd: add error handling support for
-	add_disk()
+Cc: DM-DEVEL ML <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH] multipath-tools: make IBM/XIV config work
+ with alua and multibus
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -116,24 +97,31 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 9/27/21 3:59 PM, Luis Chamberlain wrote:
-> We never checked for errors on add_disk() as this function
-> returned void. Now that this is fixed, use the shiny new
-> error handling.
+On Sat, 2021-09-25 at 00:27 +0200, Xose Vazquez Perez wrote:
+> And add recommended pgfailback value.
+> 
+> ALUA is supported since XIV_Gen2 and microcode 10.2.1
+> (All ports across all controllers in single Target Port Group)
+> 
+> https://www.ibm.com/support/pages/ibm-flashsystem%C2%AE-a9000-and-a9000r-hyperswap-solution-deployment-linux%C2%AE-ibm-z-systems%C2%AE
+> https://www.google.com/search?q=%222810XIV%22+%22path_grouping_policy%22+site%3Aibm.com
+> 
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM-DEVEL ML <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
-Applied, thanks.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
--- 
-Jens Axboe
 
 --
 dm-devel mailing list
