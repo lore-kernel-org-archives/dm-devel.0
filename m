@@ -2,137 +2,131 @@ Return-Path: <SRS0=53Ra=OT=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C740BC433F5
-	for <dm-devel@archiver.kernel.org>; Wed, 29 Sep 2021 06:43:18 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0BB71C433EF
+	for <dm-devel@archiver.kernel.org>; Wed, 29 Sep 2021 06:45:53 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 47ECA613A7
-	for <dm-devel@archiver.kernel.org>; Wed, 29 Sep 2021 06:43:18 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 47ECA613A7
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=samsung.com
+	by mail.kernel.org (Postfix) with ESMTPS id 8DD76613A7
+	for <dm-devel@archiver.kernel.org>; Wed, 29 Sep 2021 06:45:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 8DD76613A7
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=wdc.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-530-pa39t2qvNE6fsebRTSzS3Q-1; Wed, 29 Sep 2021 02:43:15 -0400
-X-MC-Unique: pa39t2qvNE6fsebRTSzS3Q-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-253-p3BazIXCOvS_0LiRTcsi_A-1; Wed, 29 Sep 2021 02:45:49 -0400
+X-MC-Unique: p3BazIXCOvS_0LiRTcsi_A-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id EBAB150754;
-	Wed, 29 Sep 2021 06:43:10 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1E218802947;
+	Wed, 29 Sep 2021 06:45:45 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CF79F60583;
-	Wed, 29 Sep 2021 06:43:10 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F177718EDF;
+	Wed, 29 Sep 2021 06:45:44 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5F8264EA38;
-	Wed, 29 Sep 2021 06:43:10 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C02964EA30;
+	Wed, 29 Sep 2021 06:45:44 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 18SJLpSe003196 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 28 Sep 2021 15:21:51 -0400
+	id 18T6jgRi021601 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 29 Sep 2021 02:45:43 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 0B0A2D29CD; Tue, 28 Sep 2021 19:21:51 +0000 (UTC)
+	id CB9D2D7DFB; Wed, 29 Sep 2021 06:45:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0303AD1CF0
-	for <dm-devel@redhat.com>; Tue, 28 Sep 2021 19:21:38 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C49ACD7E13
+	for <dm-devel@redhat.com>; Wed, 29 Sep 2021 06:45:37 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A46A6963E2F
-	for <dm-devel@redhat.com>; Tue, 28 Sep 2021 19:21:38 +0000 (UTC)
-Received: from mailout2.w1.samsung.com (mailout2.w1.samsung.com
-	[210.118.77.12]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-35-ldRjQF0iM7eS9fb9AAR7qw-1; Tue, 28 Sep 2021 15:21:37 -0400
-X-MC-Unique: ldRjQF0iM7eS9fb9AAR7qw-1
-Received: from eucas1p2.samsung.com (unknown [182.198.249.207])
-	by mailout2.w1.samsung.com (KnoxPortal) with ESMTP id
-	20210928191344euoutp02740c203e8398847f2a1b56f0568945d2~pEkQ64VzC1333513335euoutp02s
-	for <dm-devel@redhat.com>; Tue, 28 Sep 2021 19:13:44 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.w1.samsung.com
-	20210928191344euoutp02740c203e8398847f2a1b56f0568945d2~pEkQ64VzC1333513335euoutp02s
-Received: from eusmges3new.samsung.com (unknown [203.254.199.245]) by
-	eucas1p1.samsung.com (KnoxPortal) with ESMTP id
-	20210928191343eucas1p1dcb8f91ba5677eb85814676136da4047~pEkQixJGu3000330003eucas1p1o;
-	Tue, 28 Sep 2021 19:13:43 +0000 (GMT)
-Received: from eucas1p1.samsung.com ( [182.198.249.206]) by
-	eusmges3new.samsung.com (EUCPMTA) with SMTP id 8E.C3.56448.76963516;
-	Tue, 28 Sep 2021 20:13:43 +0100 (BST)
-Received: from eusmtrp2.samsung.com (unknown [182.198.249.139]) by
-	eucas1p2.samsung.com (KnoxPortal) with ESMTPA id
-	20210928191342eucas1p23448dcd51b23495fa67cdc017e77435c~pEkPwDJfn3124431244eucas1p2x;
-	Tue, 28 Sep 2021 19:13:42 +0000 (GMT)
-Received: from eusmgms1.samsung.com (unknown [182.198.249.179]) by
-	eusmtrp2.samsung.com (KnoxPortal) with ESMTP id
-	20210928191342eusmtrp2ad0242704d815a2ddbd01533014f75e2~pEkPvEiSk3183031830eusmtrp2z;
-	Tue, 28 Sep 2021 19:13:42 +0000 (GMT)
-X-AuditID: cbfec7f5-d53ff7000002dc80-10-61536967f9b8
-Received: from eusmtip1.samsung.com ( [203.254.199.221]) by
-	eusmgms1.samsung.com (EUCPMTA) with SMTP id C9.0F.31287.66963516;
-	Tue, 28 Sep 2021 20:13:42 +0100 (BST)
-Received: from CAMSVWEXC02.scsc.local (unknown [106.1.227.72]) by
-	eusmtip1.samsung.com (KnoxPortal) with ESMTPA id
-	20210928191342eusmtip1befbade2ffa71fb4c036d18ada9f7ff7~pEkPhnrVk1922619226eusmtip1V;
-	Tue, 28 Sep 2021 19:13:42 +0000 (GMT)
-Received: from localhost (106.210.248.142) by CAMSVWEXC02.scsc.local
-	(2002:6a01:e348::6a01:e348) with Microsoft SMTP Server (TLS) id
-	15.0.1497.2; Tue, 28 Sep 2021 20:13:41 +0100
-Date: Tue, 28 Sep 2021 21:13:40 +0200
-From: Javier =?utf-8?B?R29uesOhbGV6?= <javier.gonz@samsung.com>
-To: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
-Message-ID: <20210928191340.dcoj7qrclpudtjbo@mpHalley.domain_not_set.invalid>
-MIME-Version: 1.0
-In-Reply-To: <PH0PR04MB74161CD0BD15882BBD8838AB9B529@PH0PR04MB7416.namprd04.prod.outlook.com>
-X-Originating-IP: [106.210.248.142]
-X-ClientProxiedBy: CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347) To
-	CAMSVWEXC02.scsc.local (2002:6a01:e348::6a01:e348)
-X-Brightmail-Tracker: H4sIAAAAAAAAA02SfUxTVxjGOfe2t7fNWi/l68SPLVadFSbOwbaTYZxL0F0HZE6zDzcFm3EH
-	jBZIWybMmIEQ1DI/6BaB2oghwxZKdAGL5dtgZsEW6oCK64ANFQmQWUohKw7LqFc3/3ve5/09
-	Oe+THBIXP+auJDOy1IwySyaXEAJO082Fvs1pGftkr/dMSJFp5AyBzs0s4Ej3+zQHtT86z0X3
-	G5Yw1FatxVCt6RcMPdGMYkjbdQegdlcUqro0zkOlQxYCdUy348hg9WOo7IQTQ326RQLdGHVy
-	kGkRodqHGJrqTN4RSg8MJtBlRY949EBvLt1Qd5KgG3/6jv7hrgHQrb8VEHTF7BxBD9mvYbRn
-	3MWhm8ZO8Wh3h3MZsx2hvQ0v08evl2J7Vnwu2JbKyDO+YZRbth8SpN+8sITnXI7Mc+h/5RWA
-	bokG8ElIxUL9P/McDRCQYsoI4JBvgscOcwCea7v4bPAC2N08xnkeaZvtxdiFYTnS78X+o8pb
-	S7gBSkyZlzeV8QHNoTZA/7CNCGiCehf2X3LhGkCSoVQMXLgcF8jiVCEfnrqhwQJMCLUbWn4+
-	gwUYIZUEqywbA7aQCoY9lQ+eHoFT78CTM8e4AQSnVkGDnwzYfOog7LzlJQI2pNZBQ3kSe/JR
-	eOuqC2O1RgCLJ7ezOh56hicBq0PglPUqj9Wr4VJz1dNWkCoC0F4/iLPD9wAuao2AfSAOnrbL
-	2cB78NqPYzhri+Ddv4LZK0VQ21T+zBbCEyViln4VWo6ZwVmwTvdCL90LvXT/97oI8DoQweSq
-	FGmMKiaLORytkilUuVlp0V9mKxrA8ve0+a3zFmCc8kR3AYwEXQCSuCRU6IvYJxMLU2X53zLK
-	7BRlrpxRdYFVJEcSIWwx16eIqTSZmslkmBxG+XyLkfyVBdjH3B2ze2FF9eGv56Xhqe573OKx
-	O5+u9iWsjQ0qfBhx5fYV6xYtyne9VXnQrQ3uqPA9sYa/FBquaTfWe13m67sOzJT59UA6HBJT
-	8X7xK/GPb2/8s7O7NntvekeUyCpam5hw/3hpUU0rZ/Tvuf3Jm9XNNZMPHJGbykMu+D6TL1k/
-	aUyyD/Z/oQ/Cx18jIr3qo/vBH9KwNUb+mqDEwQ+rd+626R3pVYnumqHquZGRFqd7fiJlmyKu
-	6Z7NKTzv2eXJEa9Qhx0xRZMHTHtEJYYeQZgdG9Ct73VMx3/1EXAMCPssH/CTi/AWaV7m1rqR
-	NzX5itmdeW9nxpoLGwsOna6N2vSGhKNKl22NxJUq2b//psH0DQQAAA==
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFprJKsWRmVeSWpSXmKPExsVy+t/xu7ppmcGJBhtn6lmsvtvPZjHtw09m
-	i1m3X7NY7H03m9Xi8ab/TBZ7Fk1isli5+iiTxd+ue0wWkw5dY7TYe0vbYv6yp+wW3dd3sFns
-	e72X2WL58X9MFhM7rjJZnJv1h83i8L2rLBar/1hYrHzGZPFqf5yDiMflK94eE5vfsXtcPlvq
-	sWlVJ5vH5iX1HpNvLGf02H2zgc1jxqcvbB7Xz2xn8vj49BaLx7aHvewe7/ddBSo7Xe3xeZOc
-	R/uBbqYA/ig9m6L80pJUhYz84hJbpWhDCyM9Q0sLPSMTSz1DY/NYKyNTJX07m5TUnMyy1CJ9
-	uwS9jGPz/jMXrNOqOD/nInsD4wmlLkZODgkBE4k9n84ydTFycQgJLGWUeD71JzNEQkbi05WP
-	7BC2sMSfa11sEEUfGSU2HF3FDOFsZZRYcn4KE0gVi4CqxL87p9lAbDYBe4lLy24BFXFwiAgY
-	S/xcZw1SzyzQyCnRe7gLrF5YwFNix4Z+JpAaXgFfifk71CFmrmeU+HV8NtgVvAKCEidnPmEB
-	sZkFLCRmzj/PCFLPLCAtsfwfB0iYUyBWYv+pz2wgYQkBZYnl030hbq6V+Pz3GeMERuFZSAbN
-	QjJoFsKgBYzMqxhFUkuLc9Nziw31ihNzi0vz0vWS83M3MQLTyLZjPzfvYJz36qPeIUYmDsZD
-	jBIczEoivD/EgxOFeFMSK6tSi/Lji0pzUosPMZoCA2Iis5Rocj4wkeWVxBuaGZgamphZGpha
-	mhkrifNunbsmXkggPbEkNTs1tSC1CKaPiYNTqoFplb6Hv+Sz4I/cIb18BUt+NT7QuS3C9Z3N
-	0Zyl8HzcppTjXjfDlc99vdVmrJ+5Pk01edJ7BwGek3xtos+cHVPncmktS877+fm+wNaJ63hc
-	tcP/Ba32z/u/6euLfetd28tO3ZGR/bdA1G/vWbbWUP3A+eu09jJ4nTJWvvn/xUoNpzCNpu8L
-	GLufyy5o9slcrje5afaqFR/bTisuvL9f+a1t+Pyz1ccP9qWkLAg37Q5YdllD0nN/4tsbk+9N
-	P+6zr8RG5cQNC5WZrQs//wgol0o52bOS7xLrH6ULifM/xG/6Py00qFf0mq2c7cJdUxpkW3ac
-	7vgtrSr9e9p7lpSNuUE7/ofJKj5YbBty/06T5LZOJZbijERDLeai4kQAknxuH6wDAAA=
-X-CMS-MailID: 20210928191342eucas1p23448dcd51b23495fa67cdc017e77435c
-X-Msg-Generator: CA
-X-RootMTR: 20210928191342eucas1p23448dcd51b23495fa67cdc017e77435c
-X-EPHeader: CA
-CMS-TYPE: 201P
-X-CMS-RootMailID: 20210928191342eucas1p23448dcd51b23495fa67cdc017e77435c
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8A1DF811E78
+	for <dm-devel@redhat.com>; Wed, 29 Sep 2021 06:45:37 +0000 (UTC)
+Received: from esa2.hgst.iphmx.com (esa2.hgst.iphmx.com [68.232.143.124])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-562-_YU8z87qP1-8CKufTQSm4w-1; Wed, 29 Sep 2021 02:45:34 -0400
+X-MC-Unique: _YU8z87qP1-8CKufTQSm4w-1
+X-IronPort-AV: E=Sophos;i="5.85,331,1624291200"; d="scan'208";a="285072411"
+Received: from mail-dm3nam07lp2043.outbound.protection.outlook.com (HELO
+	NAM02-DM3-obe.outbound.protection.outlook.com) ([104.47.56.43])
+	by ob1.hgst.iphmx.com with ESMTP; 29 Sep 2021 14:44:26 +0800
+Received: from PH0PR04MB7416.namprd04.prod.outlook.com (2603:10b6:510:12::17)
+	by PH0PR04MB7352.namprd04.prod.outlook.com (2603:10b6:510:1a::19)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4544.15;
+	Wed, 29 Sep 2021 06:44:22 +0000
+Received: from PH0PR04MB7416.namprd04.prod.outlook.com
+	([fe80::5d0d:3d52:2041:885a]) by
+	PH0PR04MB7416.namprd04.prod.outlook.com
+	([fe80::5d0d:3d52:2041:885a%4]) with mapi id 15.20.4566.015;
+	Wed, 29 Sep 2021 06:44:22 +0000
+From: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
+To: =?iso-8859-1?Q?Javier_Gonz=E1lez?= <javier.gonz@samsung.com>
+Thread-Topic: [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy Offload
+Thread-Index: AQHXRfrE+mT6pvaiwEOWn89Dsv4XaA==
+Date: Wed, 29 Sep 2021 06:44:22 +0000
+Message-ID: <PH0PR04MB7416C6D3E446DE6CFFABC5C39BA99@PH0PR04MB7416.namprd04.prod.outlook.com>
 References: <BYAPR04MB49652C4B75E38F3716F3C06386539@BYAPR04MB4965.namprd04.prod.outlook.com>
 	<PH0PR04MB74161CD0BD15882BBD8838AB9B529@PH0PR04MB7416.namprd04.prod.outlook.com>
 	<CGME20210928191342eucas1p23448dcd51b23495fa67cdc017e77435c@eucas1p2.samsung.com>
+	<20210928191340.dcoj7qrclpudtjbo@mpHalley.domain_not_set.invalid>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: bd3482f7-e6a0-4889-afce-08d98314921b
+x-ms-traffictypediagnostic: PH0PR04MB7352:
+x-ms-exchange-transport-forked: True
+x-microsoft-antispam-prvs: <PH0PR04MB735289F97E18FAFC64A65DC69BA99@PH0PR04MB7352.namprd04.prod.outlook.com>
+wdcipoutbound: EOP-TRUE
+x-ms-oob-tlc-oobclassifiers: OLM:10000
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: XgIOrqvE/Cc2h7XPGFM8SHpVE8xFu139tuBEj70o//6OYcjYpSabJJKs8vskNAE8KM+alH5G+pkgQkqASqeCEk6k8a390sg3fCK1rcVULO3Q2XVDs0H8fqXHN+ryvRR8ldKyisJDyxifWIqDlsRUNnx99eJ2yEfAq3ULGBtlZwY/TjySt59+QqsqIAtdJ02c0DwRb5K/QwdnTtefY+uo+/6X1q03qehK9SJvJdZsU61CNUonsDTvQ/8oXuL3Ea1vjPopMs2dGtzjam0ZE4AVAwcB8A4OcCZsZEpsvtK0qJLAn7tIywXmwqOHEXPIEEKmYPz5Ui1GxahG4EKNMQojZiDZxLDM0W/t0p2/GuysaJ9qo6q6kuwb8nIroCC7L2EDzmF1AndjX/SGm4bepsaWIZbPNwfQC031oqTY7Z9dOHV2l88dNTVUULOHZsc/MFS1Nd4kM3LgmY+A/B/HqodBoth78oVgSmE4CwEDonpJOUn+ZClB5a7AOQXQuNhop/U0upBR9xMuaBclwgLkqlZshAwqUypDAd915TSerfN+a5apliuOeWNFDehbMmgWaMTfTOX/sQwl7D+3tV0cwTIlCjl2H2Ayt+Pxx0+h82EuGU1jSOW2hxtr/QToaCEOB58zVg4/RBwoSx0aDHIKlIhDZ7BDRmoH8sPrt6m1Myjd+judsQfqvyAnxx/Wg73DHMwuOWXHfbPSexbR2CMUIO5qXA==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:PH0PR04MB7416.namprd04.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(4636009)(366004)(4326008)(8936002)(91956017)(6506007)(186003)(54906003)(316002)(53546011)(71200400001)(76116006)(8676002)(86362001)(2906002)(5660300002)(66446008)(66476007)(66556008)(64756008)(122000001)(52536014)(508600001)(38100700002)(7416002)(4744005)(7696005)(6916009)(38070700005)(55016002)(33656002)(66946007)(9686003);
+	DIR:OUT; SFP:1102
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-1?Q?3zfCM9fxj5Ip3evj7FIt1xvlD3T2pEczqwvU2iyf+L9FylO8r/PWggLFZ0?=
+	=?iso-8859-1?Q?F3yjxixO5wh3vSPb3OouMhL3Fh0Edugz+4d8VMHtRKSOKqgAXPZ0Z7i0rr?=
+	=?iso-8859-1?Q?odGOU6w0Ytbdj33j1BXFe/1quUANcsWSz7ujo58v0jytCjTSF+Tb8yaFIA?=
+	=?iso-8859-1?Q?lzTXzgDjGiJFnN8c4R0Z5d0HuiKljEbYf/XFw8PaxCTpuKQaH6OYuAQa0R?=
+	=?iso-8859-1?Q?IVWRsk0/HLyB++r9ICf3PX/+ZwDuWaJDtHabfzpybhz0kz2mdmPFziB5HH?=
+	=?iso-8859-1?Q?LmwmySHbaOdYpfwY8P743DhAIz/3lwtWYhA+aTb96CAEe0XhVYdaNoQt/p?=
+	=?iso-8859-1?Q?KkZgTXT7er6RqZiL2DHyG4zY2zlbp49ig/0JTtiXxcAP7pQS4pLOlEijUL?=
+	=?iso-8859-1?Q?BeqoZAuO5RxgCELLxwi0Pb7HHkbwn6fPgrkFTT2Q81YuGWoNTxjmvJkEQC?=
+	=?iso-8859-1?Q?nRwAGjFCrQ+3x3nduKsQHXj5POlWfR8Jl98lp8jIFbouklsHAc8cdefL25?=
+	=?iso-8859-1?Q?5Ao/6rQ+BK8hSVKcMyZrERaAoEM9rXF7JoQi3wFrz8FmESu+ISmckNG95o?=
+	=?iso-8859-1?Q?2vgAH4YIJN0vbWuecb3Ty6qNXKMm53a7QyhoSy9EsjglHvuycrGcOmlj2c?=
+	=?iso-8859-1?Q?65wzj7ycBiYAwzuhUoIj59zvYS6Qu7sLWHpC3Yh3GtxSqT3xxJIxU+voZr?=
+	=?iso-8859-1?Q?0PdqVsM1FTuWWstq8Z+iIIEAgkgqTe0zw/6csCtbfNsNa+CvC9m4j7/JKg?=
+	=?iso-8859-1?Q?guxZhMgR7xMVi8tFnjy6wNMNi6ZggBTDBCimUz1h2ELZPSSqK49fw0mSp1?=
+	=?iso-8859-1?Q?4hfXaSoUp09KlFSkt/5jwF7jaebpMxlIFyFwUkGlEaXvca9NgzCTAhjLUO?=
+	=?iso-8859-1?Q?3ImAL4gx60WVyHGZiOBHklt9Ct+8DTkV/zP0cKWxIOWdRoyve/3x5r2yOk?=
+	=?iso-8859-1?Q?LG9Li4/T8oIO1PvNmYiGgDGGzgSjiRpyUXHnApYvTuvJBrhkmNu2ZSnu+T?=
+	=?iso-8859-1?Q?1irFze/+/bH/gzrYeMdzXR0dMviqisn+5vFm30bLPkGZx3ass2QdH8uJHR?=
+	=?iso-8859-1?Q?bUTbEufDynXIm1uD4FiituW5DXq4mr4JSHTIh2o46zM4brH2XBwV2sIwXm?=
+	=?iso-8859-1?Q?DGejF732H+5gDHzEAKPROT6fqCc40wpGZmn1n2Ouz+3/Vc//d6I69U4jXE?=
+	=?iso-8859-1?Q?8BGIow+748JTMAfkGVrGAhXWL4SF7+66tjPYgj9qsgWH45i8yfeUwGeavN?=
+	=?iso-8859-1?Q?fqji5Y1jKCSLHVMUP5538CWqxrj1dMfiQPUxyBmwi9PHNaKCVe5ju1WkAE?=
+	=?iso-8859-1?Q?sU6P1TUOZK5Fcu7pGrsqvLnKsnu5n5KPCc6bonMr6dwt7z23Hz+7LWy2hz?=
+	=?iso-8859-1?Q?zuVQxcjLeqyw9YwZGJHF8jv1VA1ChDZQc99kGdqTaJB7QFZTVnEWPS/byM?=
+	=?iso-8859-1?Q?lOe5FmOwwbPiS9PCdFAqASlq5tFUdrK01y0sdw=3D=3D?=
+MIME-Version: 1.0
+X-OriginatorOrg: wdc.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: PH0PR04MB7416.namprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: bd3482f7-e6a0-4889-afce-08d98314921b
+X-MS-Exchange-CrossTenant-originalarrivaltime: 29 Sep 2021 06:44:22.1208 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: CqT0HiC8Tmmp0wANKmEU2jWJwK40hwfut+1VBNn7LflXYlh5nf/nixeOh37O2HQuIhmdinODpDDXZniqlDKKohC7zvzUmyl053Qwc0yT928=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH0PR04MB7352
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -142,9 +136,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 18T6jgRi021601
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Wed, 29 Sep 2021 02:41:55 -0400
-Cc: Vincent Fu <vincent.fu@samsung.com>,
+Cc: Nitesh, Fu <vincent.fu@samsung.com>,
 	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
 	"dm-devel@redhat.com" <dm-devel@redhat.com>,
 	Adam Manzanares <a.manzanares@samsung.com>,
@@ -153,7 +148,7 @@ Cc: Vincent Fu <vincent.fu@samsung.com>,
 	"bvanassche@acm.org" <bvanassche@acm.org>,
 	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
 	"hch@lst.de" <hch@lst.de>,
-	"roland@purestorage.com" <roland@purestorage.com>, Nitesh
+	"roland@purestorage.com" <roland@purestorage.com>,
 	Shetty <nj.shetty@samsung.com>, "zach.brown@ni.com" <zach.brown@ni.com>,
 	SelvaKumar S <selvakuma.s1@samsung.com>,
 	Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>,
@@ -162,7 +157,7 @@ Cc: Vincent Fu <vincent.fu@samsung.com>,
 	"kbusch@kernel.org" <kbusch@kernel.org>,
 	"Frederick.Knight@netapp.com" <Frederick.Knight@netapp.com>,
 	"axboe@kernel.dk" <axboe@kernel.dk>, Kanchan Joshi <joshi.k@samsung.com>,
-	"martin.petersen@oracle.com" <martin.petersen@oracle.com>,
+	"martin.petersen@oracle.com" <martin.petersen@oracle.com>, Vincent,
 	"lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>,
 	"rwheeler@redhat.com" <rwheeler@redhat.com>
 Subject: Re: [dm-devel] [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy
@@ -180,143 +175,29 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Language: en-US
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-On 12.05.2021 07:30, Johannes Thumshirn wrote:
->On 11/05/2021 02:15, Chaitanya Kulkarni wrote:
->> Hi,
->>
->> * Background :-
->> -----------------------------------------------------------------------
->>
->> Copy offload is a feature that allows file-systems or storage devices
->> to be instructed to copy files/logical blocks without requiring
->> involvement of the local CPU.
->>
->> With reference to the RISC-V summit keynote [1] single threaded
->> performance is limiting due to Denard scaling and multi-threaded
->> performance is slowing down due Moore's law limitations. With the rise
->> of SNIA Computation Technical Storage Working Group (TWG) [2],
->> offloading computations to the device or over the fabrics is becoming
->> popular as there are several solutions available [2]. One of the common
->> operation which is popular in the kernel and is not merged yet is Copy
->> offload over the fabrics or on to the device.
->>
->> * Problem :-
->> -----------------------------------------------------------------------
->>
->> The original work which is done by Martin is present here [3]. The
->> latest work which is posted by Mikulas [4] is not merged yet. These two
->> approaches are totally different from each other. Several storage
->> vendors discourage mixing copy offload requests with regular READ/WRITE
->> I/O. Also, the fact that the operation fails if a copy request ever
->> needs to be split as it traverses the stack it has the unfortunate
->> side-effect of preventing copy offload from working in pretty much
->> every common deployment configuration out there.
->>
->> * Current state of the work :-
->> -----------------------------------------------------------------------
->>
->> With [3] being hard to handle arbitrary DM/MD stacking without
->> splitting the command in two, one for copying IN and one for copying
->> OUT. Which is then demonstrated by the [4] why [3] it is not a suitable
->> candidate. Also, with [4] there is an unresolved problem with the
->> two-command approach about how to handle changes to the DM layout
->> between an IN and OUT operations.
->>
->> * Why Linux Kernel Storage System needs Copy Offload support now ?
->> -----------------------------------------------------------------------
->>
->> With the rise of the SNIA Computational Storage TWG and solutions [2],
->> existing SCSI XCopy support in the protocol, recent advancement in the
->> Linux Kernel File System for Zoned devices (Zonefs [5]), Peer to Peer
->> DMA support in the Linux Kernel mainly for NVMe devices [7] and
->> eventually NVMe Devices and subsystem (NVMe PCIe/NVMeOF) will benefit
->> from Copy offload operation.
->>
->> With this background we have significant number of use-cases which are
->> strong candidates waiting for outstanding Linux Kernel Block Layer Copy
->> Offload support, so that Linux Kernel Storage subsystem can to address
->> previously mentioned problems [1] and allow efficient offloading of the
->> data related operations. (Such as move/copy etc.)
->>
->> For reference following is the list of the use-cases/candidates waiting
->> for Copy Offload support :-
->>
->> 1. SCSI-attached storage arrays.
->> 2. Stacking drivers supporting XCopy DM/MD.
->> 3. Computational Storage solutions.
->> 7. File systems :- Local, NFS and Zonefs.
->> 4. Block devices :- Distributed, local, and Zoned devices.
->> 5. Peer to Peer DMA support solutions.
->> 6. Potentially NVMe subsystem both NVMe PCIe and NVMeOF.
->>
->> * What we will discuss in the proposed session ?
->> -----------------------------------------------------------------------
->>
->> I'd like to propose a session to go over this topic to understand :-
->>
->> 1. What are the blockers for Copy Offload implementation ?
->> 2. Discussion about having a file system interface.
->> 3. Discussion about having right system call for user-space.
->> 4. What is the right way to move this work forward ?
->> 5. How can we help to contribute and move this work forward ?
->>
->> * Required Participants :-
->> -----------------------------------------------------------------------
->>
->> I'd like to invite file system, block layer, and device drivers
->> developers to:-
->>
->> 1. Share their opinion on the topic.
->> 2. Share their experience and any other issues with [4].
->> 3. Uncover additional details that are missing from this proposal.
->>
->> Required attendees :-
->>
->> Martin K. Petersen
->> Jens Axboe
->> Christoph Hellwig
->> Bart Van Assche
->> Zach Brown
->> Roland Dreier
->> Ric Wheeler
->> Trond Myklebust
->> Mike Snitzer
->> Keith Busch
->> Sagi Grimberg
->> Hannes Reinecke
->> Frederick Knight
->> Mikulas Patocka
->> Keith Busch
->>
->
->I would like to participate in this discussion as well. A generic block layer
->copy API is extremely helpful for filesystem garbage collection and copy operations
->like copy_file_range().
+On 28/09/2021 21:13, Javier Gonz=E1lez wrote:
+> Since we are not going to be able to talk about this at LSF/MM, a few of
+> us thought about holding a dedicated virtual discussion about Copy
+> Offload. I believe we can use Chaitanya's thread as a start. Given the
+> current state of the current patches, I would propose that we focus on
+> the next step to get the minimal patchset that can go upstream so that
+> we can build from there.
+>=20
+> Before we try to find a date and a time that fits most of us, who would
+> be interested in participating?
+
+I'd definitively be interested in participating.
 
 
-Hi all,
-
-Since we are not going to be able to talk about this at LSF/MM, a few of
-us thought about holding a dedicated virtual discussion about Copy
-Offload. I believe we can use Chaitanya's thread as a start. Given the
-current state of the current patches, I would propose that we focus on
-the next step to get the minimal patchset that can go upstream so that
-we can build from there.
-
-Before we try to find a date and a time that fits most of us, who would
-be interested in participating?
-
-Thanks,
-Javier
 
 --
 dm-devel mailing list
