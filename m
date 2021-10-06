@@ -2,104 +2,127 @@ Return-Path: <SRS0=PPuu=O2=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C10BDC433EF
-	for <dm-devel@archiver.kernel.org>; Wed,  6 Oct 2021 14:48:43 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2948CC433EF
+	for <dm-devel@archiver.kernel.org>; Wed,  6 Oct 2021 17:49:07 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 62D05610C9
-	for <dm-devel@archiver.kernel.org>; Wed,  6 Oct 2021 14:48:43 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 62D05610C9
-Authentication-Results: mail.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id 5A1EF610EA
+	for <dm-devel@archiver.kernel.org>; Wed,  6 Oct 2021 17:49:06 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 5A1EF610EA
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=acm.org
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1633531722;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=hzN+0U2+A4asE+wkW8K+LFqO1nqx1wzKblHV4L1+3bg=;
-	b=ekj8PWCJckm5kTVlTVYJvrMafORo9V9j7sVDsozHOkhEpxmcnUSXqs6XhXBIpHLF6s1Wce
-	4o9W4IOGwJdpy0xaUyW5SwWtv73ppXVNSmcQ1DpIYmdP7Zm8f2JXVqfBk0YjeJrf3JoN0x
-	7qoGjuQz+ncwILUlfiF9uO/PiTTEYm0=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-170-cIAD_z4nNGe6Xns6TcRv4w-1; Wed, 06 Oct 2021 10:48:41 -0400
-X-MC-Unique: cIAD_z4nNGe6Xns6TcRv4w-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-473-D9FFRo1uN_Cwjy8QWCB5jQ-1; Wed, 06 Oct 2021 13:49:03 -0400
+X-MC-Unique: D9FFRo1uN_Cwjy8QWCB5jQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D24A9802C91;
-	Wed,  6 Oct 2021 14:48:36 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D8B3B18414A0;
+	Wed,  6 Oct 2021 17:48:58 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 90D5010016FF;
-	Wed,  6 Oct 2021 14:48:36 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6962F9AA2F;
+	Wed,  6 Oct 2021 17:48:57 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 120A4180BAD1;
-	Wed,  6 Oct 2021 14:48:36 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E325E1806D01;
+	Wed,  6 Oct 2021 17:48:53 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 196EhvTN025583 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 6 Oct 2021 10:43:57 -0400
+	id 196HXskB007117 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 6 Oct 2021 13:33:55 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id E5AE12166B40; Wed,  6 Oct 2021 14:43:56 +0000 (UTC)
+	id C11322166B47; Wed,  6 Oct 2021 17:33:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E07FB2166B2F
-	for <dm-devel@redhat.com>; Wed,  6 Oct 2021 14:43:45 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D6E5D811E97
-	for <dm-devel@redhat.com>; Wed,  6 Oct 2021 14:43:45 +0000 (UTC)
-Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
-	[209.85.219.69]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-401-qDX7t5klN3eSEeUeQi796w-1; Wed, 06 Oct 2021 10:43:43 -0400
-X-MC-Unique: qDX7t5klN3eSEeUeQi796w-1
-Received: by mail-qv1-f69.google.com with SMTP id
-	c13-20020a056214224d00b00382f21b95fcso2888377qvc.5
-	for <dm-devel@redhat.com>; Wed, 06 Oct 2021 07:43:43 -0700 (PDT)
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A26222167D65
+	for <dm-devel@redhat.com>; Wed,  6 Oct 2021 17:33:46 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 94E661066564
+	for <dm-devel@redhat.com>; Wed,  6 Oct 2021 17:33:46 +0000 (UTC)
+Received: from mail-pj1-f46.google.com (mail-pj1-f46.google.com
+	[209.85.216.46]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-441-ioCNDYBtNrS89qc-CP4fdg-1; Wed, 06 Oct 2021 13:33:37 -0400
+X-MC-Unique: ioCNDYBtNrS89qc-CP4fdg-1
+Received: by mail-pj1-f46.google.com with SMTP id
+	k23-20020a17090a591700b001976d2db364so2941762pji.2; 
+	Wed, 06 Oct 2021 10:33:36 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20210112;
-	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-	:mime-version:content-disposition:in-reply-to;
-	bh=cZTENCuvw0rDt5LX9xZwoqEqbbTllu7PrFNLcPSq/zo=;
-	b=1TbTrHquApfhdfCfNQSIDFqR9oIV7WPWsJD50DPXNv8nbQaLz8wSwumH5DoaNh/RHV
-	PYbBcKcy4AFC0MRU9RUIpBzJC6N1t9sEp9/TYBQX1lm4xZsqYM+zJdNfgubLK16vcpgG
-	ozm7PYPZCGlYysXsgUkG9LtjjQQayRGABaJjFhAkq/BvnPLembD+K234Y9upnwEF982G
-	HjDgBwOFeZr2C7L8oJRNKgtkxAsUEn3A17WSdALjdZiRQWWGls5HXeh78aD+PeTb5u/t
-	Guo/+p/ZbLIDdIl8atCLRf3AFmpWy8C/7u74dw2yziadb4CnZAKHP8zS3OaTOnCuhEmZ
-	cjMw==
-X-Gm-Message-State: AOAM5336ie5yNXMX4CxkL9ip1Xud1YRlBJONTreaXav4X/woqv0Tzgps
-	9+2OMAdSVTB9bZZF8AhWDieiaftRncuocUWSjUp4UQwrpxyzl1k/vkpjTIIWLTUY8Pydd84WOnb
-	Je/7awDh6pOUicg==
-X-Received: by 2002:a05:622a:549:: with SMTP id
-	m9mr26432406qtx.131.1633531422315; 
-	Wed, 06 Oct 2021 07:43:42 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJz/diaLClqgqyB+WtonYxpEP3/4qWBwzXjSBjvMy6cwUguD3O6zs8+jGx492oMa5QlUkqza6A==
-X-Received: by 2002:a05:622a:549:: with SMTP id
-	m9mr26432387qtx.131.1633531422130; 
-	Wed, 06 Oct 2021 07:43:42 -0700 (PDT)
-Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
-	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
-	f5sm12705618qtp.44.2021.10.06.07.43.41
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Wed, 06 Oct 2021 07:43:41 -0700 (PDT)
-Date: Wed, 6 Oct 2021 10:43:40 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Jiazi Li <jqqlijiazi@gmail.com>
-Message-ID: <YV22HGeK867BHKNP@redhat.com>
-References: <1632916768-22379-1-git-send-email-lijiazi@xiaomi.com>
+	h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+	:user-agent:mime-version:in-reply-to:content-language
+	:content-transfer-encoding;
+	bh=b0udGD6yPXFIVJbeGvfLIzJwm0LmddvqozG4vFBfvTE=;
+	b=GKiV3xQVDu3I7y6atlwgudxp7BUXKfNXNEQzca8HMEgRzUK5IlO49KMWsARJw8MmDW
+	s562o1XyM8Grnt6pn/70s5RRrdfq138WyTkVOq2h1dVvCjNMjaMnCcTlGgUSonrP2DFP
+	hHZDBY7+L6qYMd3hnNd122hBa9WDOVG472MaT5oC9+CYiMZfe/9u9AeMKjX2X21PSrTZ
+	J1oK4VGiYyiIUmMIKMAWYSRsDgDgGqiuZl5H2slRxJMUJBtKC3hDsZmh8dTGLKEP0zi7
+	8vdri7BeVrHDYXJJcBAMMXsqgbiwjE7zkCBCx5oa0PX55zhR8p3Xn/XgUSqR6CD0SAeB
+	nA2A==
+X-Gm-Message-State: AOAM531x8bKpFNTiGTdzf4s4U9NUUWSQulAan8QFnnSy+2ylH2NNYXNc
+	gQrOSceVcCDSqZYD0WR2+5TCKV5Ter0=
+X-Google-Smtp-Source: ABdhPJww5vn0LIX4yaBzMmvw+4zhd9LR+fC9FR6Wt5P5+rHOabghLfn4cJcj1iGMZ4cyBz8ApUN3GQ==
+X-Received: by 2002:a17:902:e801:b0:13f:255:9db5 with SMTP id
+	u1-20020a170902e80100b0013f02559db5mr1022291plg.23.1633541615361;
+	Wed, 06 Oct 2021 10:33:35 -0700 (PDT)
+Received: from bvanassche-linux.mtv.corp.google.com
+	([2620:15c:211:201:6ad6:c36f:fdfb:9e74])
+	by smtp.gmail.com with ESMTPSA id
+	c15sm9368288pfp.39.2021.10.06.10.33.33
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Wed, 06 Oct 2021 10:33:34 -0700 (PDT)
+To: =?UTF-8?Q?Javier_Gonz=c3=a1lez?= <javier.gonz@samsung.com>
+References: <BYAPR04MB49652C4B75E38F3716F3C06386539@BYAPR04MB4965.namprd04.prod.outlook.com>
+	<PH0PR04MB74161CD0BD15882BBD8838AB9B529@PH0PR04MB7416.namprd04.prod.outlook.com>
+	<CGME20210928191342eucas1p23448dcd51b23495fa67cdc017e77435c@eucas1p2.samsung.com>
+	<20210928191340.dcoj7qrclpudtjbo@mpHalley.domain_not_set.invalid>
+	<c2d0dff9-ad6d-c32b-f439-00b7ee955d69@acm.org>
+	<20211006100523.7xrr3qpwtby3bw3a@mpHalley.domain_not_set.invalid>
+From: Bart Van Assche <bvanassche@acm.org>
+Message-ID: <fbe69cc0-36ea-c096-d247-f201bad979f4@acm.org>
+Date: Wed, 6 Oct 2021 10:33:32 -0700
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+	Thunderbird/78.14.0
 MIME-Version: 1.0
-In-Reply-To: <1632916768-22379-1-git-send-email-lijiazi@xiaomi.com>
+In-Reply-To: <20211006100523.7xrr3qpwtby3bw3a@mpHalley.domain_not_set.invalid>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: Jiazi Li <lijiazi@xiaomi.com>, dm-devel@redhat.com,
-	Alasdair Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] dm: fix NULL pointer issue when free bio
+Cc: Vincent Fu <vincent.fu@samsung.com>,
+	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
+	"dm-devel@redhat.com" <dm-devel@redhat.com>,
+	Adam Manzanares <a.manzanares@samsung.com>,
+	"osandov@fb.com" <osandov@fb.com>,
+	"msnitzer@redhat.com" <msnitzer@redhat.com>,
+	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+	"hch@lst.de" <hch@lst.de>,
+	"roland@purestorage.com" <roland@purestorage.com>,
+	Nitesh Shetty <nj.shetty@samsung.com>,
+	"zach.brown@ni.com" <zach.brown@ni.com>,
+	SelvaKumar S <selvakuma.s1@samsung.com>,
+	Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>,
+	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+	"mpatocka@redhat.com" <mpatocka@redhat.com>,
+	"kbusch@kernel.org" <kbusch@kernel.org>,
+	"Frederick.Knight@netapp.com" <Frederick.Knight@netapp.com>,
+	"axboe@kernel.dk" <axboe@kernel.dk>, Kanchan Joshi <joshi.k@samsung.com>,
+	"martin.petersen@oracle.com" <martin.petersen@oracle.com>,
+	Johannes Thumshirn <Johannes.Thumshirn@wdc.com>,
+	"lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>,
+	"rwheeler@redhat.com" <rwheeler@redhat.com>
+Subject: Re: [dm-devel] [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy
+	Offload
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -113,100 +136,26 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-On Wed, Sep 29 2021 at  7:59P -0400,
-Jiazi Li <jqqlijiazi@gmail.com> wrote:
-
-> dm_io_dec_pending call end_io_acct first, will dec md in-flight
-> pending count. If a task is swapping table at same time.
-> task1                             task2
-> do_resume
->  ->do_suspend
->   ->dm_wait_for_completion
->                                   bio_endio
-> 				   ->clone_endio
-> 				    ->dm_io_dec_pending
-> 				     ->end_io_acct
-> 				      ->wakeup task1
->  ->dm_swap_table
->   ->__bind
->    ->__bind_mempools
->     ->bioset_exit
->      ->mempool_exit
->                                      ->free_io
-> mempool->elements is NULL, and lead to following crash:
-> [ 67.330330] Unable to handle kernel NULL pointer dereference at virtual
-> address 0000000000000000
-> ......
-> [ 67.330494] pstate: 80400085 (Nzcv daIf +PAN -UAO)
-> [ 67.330510] pc : mempool_free+0x70/0xa0
-> [ 67.330515] lr : mempool_free+0x4c/0xa0
-> [ 67.330520] sp : ffffff8008013b20
-> [ 67.330524] x29: ffffff8008013b20 x28: 0000000000000004
-> [ 67.330530] x27: ffffffa8c2ff40a0 x26: 00000000ffff1cc8
-> [ 67.330535] x25: 0000000000000000 x24: ffffffdada34c800
-> [ 67.330541] x23: 0000000000000000 x22: ffffffdada34c800
-> [ 67.330547] x21: 00000000ffff1cc8 x20: ffffffd9a1304d80
-> [ 67.330552] x19: ffffffdada34c970 x18: 000000b312625d9c
-> [ 67.330558] x17: 00000000002dcfbf x16: 00000000000006dd
-> [ 67.330563] x15: 000000000093b41e x14: 0000000000000010
-> [ 67.330569] x13: 0000000000007f7a x12: 0000000034155555
-> [ 67.330574] x11: 0000000000000001 x10: 0000000000000001
-> [ 67.330579] x9 : 0000000000000000 x8 : 0000000000000000
-> [ 67.330585] x7 : 0000000000000000 x6 : ffffff80148b5c1a
-> [ 67.330590] x5 : ffffff8008013ae0 x4 : 0000000000000001
-> [ 67.330596] x3 : ffffff80080139c8 x2 : ffffff801083bab8
-> [ 67.330601] x1 : 0000000000000000 x0 : ffffffdada34c970
-> [ 67.330609] Call trace:
-> [ 67.330616] mempool_free+0x70/0xa0
-> [ 67.330627] bio_put+0xf8/0x110
-> [ 67.330638] dec_pending+0x13c/0x230
-> [ 67.330644] clone_endio+0x90/0x180
-> [ 67.330649] bio_endio+0x198/0x1b8
-> [ 67.330655] dec_pending+0x190/0x230
-> [ 67.330660] clone_endio+0x90/0x180
-> [ 67.330665] bio_endio+0x198/0x1b8
-> [ 67.330673] blk_update_request+0x214/0x428
-> [ 67.330683] scsi_end_request+0x2c/0x300
-> [ 67.330688] scsi_io_completion+0xa0/0x710
-> [ 67.330695] scsi_finish_command+0xd8/0x110
-> [ 67.330700] scsi_softirq_done+0x114/0x148
-> [ 67.330708] blk_done_softirq+0x74/0xd0
-> [ 67.330716] __do_softirq+0x18c/0x374
-> [ 67.330724] irq_exit+0xb4/0xb8
-> [ 67.330732] __handle_domain_irq+0x84/0xc0
-> [ 67.330737] gic_handle_irq+0x148/0x1b0
-> [ 67.330744] el1_irq+0xe8/0x190
-> [ 67.330753] lpm_cpuidle_enter+0x4f8/0x538
-> [ 67.330759] cpuidle_enter_state+0x1fc/0x398
-> [ 67.330764] cpuidle_enter+0x18/0x20
-> [ 67.330772] do_idle+0x1b4/0x290
-> [ 67.330778] cpu_startup_entry+0x20/0x28
-> [ 67.330786] secondary_start_kernel+0x160/0x170
-> 
-> Move end_io_acct after free_io to fix this issue.
-> 
-> Signed-off-by: Jiazi Li <lijiazi@xiaomi.com>
-
-Thanks very much for this.  You did a wonderful job analyzing and
-fixing this race.
-
-I've tweaked the header slightly to improve clarity and made one
-whitespace indentation adjustment.  I've now marked this for stable@
-and queued this up.
-
-Mike
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gMTAvNi8yMSAzOjA1IEFNLCBKYXZpZXIgR29uesOhbGV6IHdyb3RlOgo+IEkgYWdyZWUgdGhh
+dCB0aGUgdG9waWMgaXMgY29tcGxleC4gSG93ZXZlciwgd2UgaGF2ZSBub3QgYmVlbiBhYmxlIHRv
+Cj4gZmluZCBhIGNsZWFyIHBhdGggZm9yd2FyZCBpbiB0aGUgbWFpbGluZyBsaXN0LgoKSG1tIC4u
+LiByZWFsbHk/IEF0IGxlYXN0IE1hcnRpbiBQZXRlcnNlbiBhbmQgSSBjb25zaWRlciBkZXZpY2Ug
+bWFwcGVyIApzdXBwb3J0IGVzc2VudGlhbC4gSG93IGFib3V0IHN0YXJ0aW5nIGZyb20gTWlrdWxh
+cycgcGF0Y2ggc2VyaWVzIHRoYXQgCnN1cHBvcnRzIHRoZSBkZXZpY2UgbWFwcGVyPyBTZWUgYWxz
+byAKaHR0cHM6Ly9sb3JlLmtlcm5lbC5vcmcvYWxsL2FscGluZS5MUkguMi4wMi4yMTA4MTcxNjMw
+MTIwLjMwMzYzQGZpbGUwMS5pbnRyYW5ldC5wcm9kLmludC5yZHUyLnJlZGhhdC5jb20vCgo+IFdo
+YXQgZG8geW91IHRoaW5rIGFib3V0IGpvaW5pbmcgdGhlIGNhbGwgdG8gdGFsayB2ZXJ5IHNwZWNp
+ZmljIG5leHQKPiBzdGVwcyB0byBnZXQgYSBwYXRjaHNldCB0aGF0IHdlIGNhbiBzdGFydCByZXZp
+ZXdpbmcgaW4gZGV0YWlsLgoKSSBjYW4gZG8gdGhhdC4KClRoYW5rcywKCkJhcnQuCgotLQpkbS1k
+ZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVk
+aGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
 
