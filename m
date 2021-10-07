@@ -1,103 +1,66 @@
-Return-Path: <SRS0=PPuu=O2=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=bIvj=O3=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EB60CC433EF
-	for <dm-devel@archiver.kernel.org>; Wed,  6 Oct 2021 20:47:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 850ADC433F5
+	for <dm-devel@archiver.kernel.org>; Thu,  7 Oct 2021 07:28:12 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 6988E61131
-	for <dm-devel@archiver.kernel.org>; Wed,  6 Oct 2021 20:47:02 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 6988E61131
+	by mail.kernel.org (Postfix) with ESMTPS id 0C8D2610C8
+	for <dm-devel@archiver.kernel.org>; Thu,  7 Oct 2021 07:28:11 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 0C8D2610C8
 Authentication-Results: mail.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1633553221;
+	s=mimecast20190719; t=1633591691;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=V4GiYm9lxUAJ1O4jPOupxzoc1oh79+FPQ2PS66yzTik=;
-	b=RomjFORVtvWqztVhnRZ0ROlep17N6f9bFgLTatpq3O8kxu9fWlOC0639cm5sLxZfrNO03H
-	8275LjKdGxk2ogQYKi4XeKfab6a+WvIMDSCIONpzoQpsQuEjA78JO/dFfxRavdTmYZHc/7
-	/OgRXIPtbBkwD96KLTubf+j3b7UzqkE=
+	bh=0yXSgBNHO7jKVfdLY3R7Pk2316vPK7wKkF6MS2TS8EE=;
+	b=Wyik1lwYPGDPktssH9P+qEvYfMKz5Fry+dMvqDkzkuQtn2iqJHU0Z32z2QPD61SWSTP1iP
+	fahM+VFuUFHjOI4j30PnecEfl4EvrJc1jUaT/DswS9riJZN8Eq9GlIJJNjhvtakHOkQngm
+	JVC+dU88GDprtQ+RVBjmCaiKUweTBvw=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-517-4ZeLq2K4NgeJfIXY0c5fxQ-1; Wed, 06 Oct 2021 16:46:58 -0400
-X-MC-Unique: 4ZeLq2K4NgeJfIXY0c5fxQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-591-vgz585STOzGp4WOH8AdsKg-1; Thu, 07 Oct 2021 03:28:08 -0400
+X-MC-Unique: vgz585STOzGp4WOH8AdsKg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B4E4D8015C7;
-	Wed,  6 Oct 2021 20:46:53 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 845735D6D5;
-	Wed,  6 Oct 2021 20:46:52 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1C41683DBC4;
+	Thu,  7 Oct 2021 07:28:02 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8DB7A10013D7;
+	Thu,  7 Oct 2021 07:28:00 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D43F84EA29;
-	Wed,  6 Oct 2021 20:46:49 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 54CEF1806D00;
+	Thu,  7 Oct 2021 07:27:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
+	[10.5.11.11])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 196KZ8Mc021828 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 6 Oct 2021 16:35:08 -0400
+	id 197770XD013017 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 7 Oct 2021 03:07:00 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8C6132026D48; Wed,  6 Oct 2021 20:35:08 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 88B892026D46
-	for <dm-devel@redhat.com>; Wed,  6 Oct 2021 20:35:08 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6F4AF899ECF
-	for <dm-devel@redhat.com>; Wed,  6 Oct 2021 20:35:08 +0000 (UTC)
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
-	[209.85.222.198]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-68-IvANykwLNtWBnWqI5X8rLg-1; Wed, 06 Oct 2021 16:35:07 -0400
-X-MC-Unique: IvANykwLNtWBnWqI5X8rLg-1
-Received: by mail-qk1-f198.google.com with SMTP id
-	x25-20020a05620a01f900b0045e1c4567ddso3117579qkn.15
-	for <dm-devel@redhat.com>; Wed, 06 Oct 2021 13:35:07 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-	:mime-version:content-disposition:in-reply-to;
-	bh=ChmUn1Ubxqhc19tcaK+EQSGprE5oT31gGpUJl6/LOWo=;
-	b=GX5lFZHDDEqflx1xb78wz9jWezeo+R/QpDy2Xx+CsI+HGIkcsq7HBIudfRhjt3Wlf/
-	uCcxl/3LV//vuDNn9N8MH/x9+Jd+gjnOZPJcJGm1OmgqjM9Hp4vBudTA5i5nhcPS6fBn
-	1TyWO+N2zIb9bkSP49Id3QPaTWMIRd113yPjB/pShzI8jwdC/KTrMZbRBlkHtzLPlImc
-	uEcEHR7IMytOsqZRDvYJsztMlRV49mUM3ySmx9fMHvKnFSdc8I40qA0f7kxw2rdbpI2J
-	xYiFrmU3c8oOS9JjfpegpxtUg4EIKv+SPx/jVaCJ0WnkokFvRaNPcZywoCr0GrPnAtXK
-	kHHA==
-X-Gm-Message-State: AOAM532OdQ2sKMgWaxAImands7erxtzMYiaJeGBzj+Y9MrXB7atpWa3t
-	YvV7sWo1nycKW0Fr+QImLR4BXIo88mUIRuawwDyaD8xBDwucj86zn91FJe1UkIIVgHS4WEylGVI
-	IZCtR7vXAqKzEWA==
-X-Received: by 2002:a37:951:: with SMTP id 78mr219164qkj.244.1633552506776;
-	Wed, 06 Oct 2021 13:35:06 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJxhq2Shewpm6bK8Iy643sz+CFeNwn4Rclq799e/uBsRVu4SBMSxg4/7i9slmoEHPf3/TnVfAg==
-X-Received: by 2002:a37:951:: with SMTP id 78mr219150qkj.244.1633552506586;
-	Wed, 06 Oct 2021 13:35:06 -0700 (PDT)
-Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
-	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
-	s185sm12175662qke.93.2021.10.06.13.35.06
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Wed, 06 Oct 2021 13:35:06 -0700 (PDT)
-Date: Wed, 6 Oct 2021 16:35:05 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Shuah Khan <skhan@linuxfoundation.org>
-Message-ID: <YV4IecLg56NpzkYx@redhat.com>
-References: <20211004200641.378496-1-skhan@linuxfoundation.org>
+	id 669D460657; Thu,  7 Oct 2021 07:07:00 +0000 (UTC)
+Received: from T590 (ovpn-8-22.pek2.redhat.com [10.72.8.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C74D260583;
+	Thu,  7 Oct 2021 07:06:58 +0000 (UTC)
+Date: Thu, 7 Oct 2021 15:06:53 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Message-ID: <YV6cjZa3Dnnj46Nz@T590>
+References: <20210923091131.1463013-1-ming.lei@redhat.com>
+	<YV2vnlKScVXYvQMo@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <20211004200641.378496-1-skhan@linuxfoundation.org>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+In-Reply-To: <YV2vnlKScVXYvQMo@redhat.com>
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
-Subject: Re: [dm-devel] dm: change dm_get_target_type() to check for module
-	load error
+Cc: dm-devel@redhat.com
+Subject: Re: [dm-devel] dm-rq: don't queue request during suspend
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -111,7 +74,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -120,65 +83,71 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Oct 04 2021 at  4:06P -0400,
-Shuah Khan <skhan@linuxfoundation.org> wrote:
-
-> dm_get_target_type() doesn't check error return from request_module().
-> Change to check for error and return NULL instead of trying to get
-> target type again which would fail.
+On Wed, Oct 06, 2021 at 10:15:58AM -0400, Mike Snitzer wrote:
+> On Thu, Sep 23 2021 at  5:11P -0400,
+> Ming Lei <ming.lei@redhat.com> wrote:
 > 
-> Signed-off-by: Shuah Khan <skhan@linuxfoundation.org>
-> ---
->  drivers/md/dm-target.c | 11 ++++++++---
->  1 file changed, 8 insertions(+), 3 deletions(-)
+> > DM uses blk-mq's quiesce/unquiesce to stop/start device mapper queue.
+> > 
+> > But blk-mq's unquiesce may come from outside events, such as elevator
+> > switch, updating nr_requests or others, and request may come during
+> > suspend, so simply ask for blk-mq to requeue it.
+> > 
+> > Fixes one kernel panic issue when running updating nr_requests and
+> > dm-mpath suspend/resume stress test.
+> > 
+> > Signed-off-by: Ming Lei <ming.lei@redhat.com>
+> > ---
+> >  drivers/md/dm-rq.c | 8 ++++++++
+> >  1 file changed, 8 insertions(+)
+> > 
+> > diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+> > index 5b95eea517d1..a896dea9750e 100644
+> > --- a/drivers/md/dm-rq.c
+> > +++ b/drivers/md/dm-rq.c
+> > @@ -490,6 +490,14 @@ static blk_status_t dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+> >  	struct mapped_device *md = tio->md;
+> >  	struct dm_target *ti = md->immutable_target;
+> >  
+> > +	/*
+> > +	 * blk-mq's unquiesce may come from outside events, such as
+> > +	 * elevator switch, updating nr_requests or others, and request may
+> > +	 * come during suspend, so simply ask for blk-mq to requeue it.
+> > +	 */
+> > +	if (unlikely(test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags)))
+> > +		return BLK_STS_RESOURCE;
+> > +
+> >  	if (unlikely(!ti)) {
+> >  		int srcu_idx;
+> >  		struct dm_table *map = dm_get_live_table(md, &srcu_idx);
+> > -- 
+> > 2.31.1
+> > 
 > 
-> diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
-> index 64dd0b34fcf4..0789e9f91d3a 100644
-> --- a/drivers/md/dm-target.c
-> +++ b/drivers/md/dm-target.c
-> @@ -41,17 +41,22 @@ static struct target_type *get_target_type(const char *name)
->  	return tt;
->  }
->  
-> -static void load_module(const char *name)
-> +static int load_module(const char *name)
->  {
-> -	request_module("dm-%s", name);
-> +	return request_module("dm-%s", name);
->  }
->  
->  struct target_type *dm_get_target_type(const char *name)
->  {
->  	struct target_type *tt = get_target_type(name);
-> +	int ret;
->  
->  	if (!tt) {
-> -		load_module(name);
-> +		ret = load_module(name);
-> +		if (ret < 0) {
-> +			pr_err("Module %s load failed %d\n", name, ret);
-> +			return NULL;
-> +		}
->  		tt = get_target_type(name);
->  	}
->  
-> -- 
-> 2.30.2
+> Hey Ming,
 > 
+> I've marked this for stable@ and queued this up.  BUT this test is
+> racey, could easily be that device gets suspended just after your
+> test.
 
-While I appreciate your intent, the reality is that multiple targets
-may be made available in a given module.  And so loading one dm module
-may bring in access to N targets.  There isn't a rigid 1:1 mapping of
-target modules to names.  And there may not even be a loadable module
-that has the name dm-${name} -- but that doesn't mean the target_type
-won;t have been loaded into DM for it to access.
+Hello Mike,
 
-So all said, your patch is bogus and would break DM and user
-experience:
+I understand the device shouldn't be suspended after the test given
+it is just like the following two tasks running contiguously in the
+test:
 
-Nacked-by: Mike Snitzer <snitzer@redhat.com>
+1) task1
+- suspend device mapper
+- resume device mapper
 
-But thanks for raising your concern.
+2) task2
+- updating nr_requests of the device mapper
+
+BTW, it is reported as RH BZ1891486 in which it is easily reproduced,
+however, seems device suspended isn't observed.
+
+thanks, 
+Ming
 
 --
 dm-devel mailing list
