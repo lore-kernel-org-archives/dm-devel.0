@@ -2,189 +2,82 @@ Return-Path: <SRS0=XhuN=PB=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C98A6C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 07:16:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DF2ABC433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 09:29:05 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 276E960F23
-	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 07:16:01 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 276E960F23
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=oracle.com
+	by mail.kernel.org (Postfix) with ESMTPS id 69B0C610FC
+	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 09:29:05 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 69B0C610FC
+Authentication-Results: mail.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1634117344;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=DPkLrC9wGFaLEnnjRpemzzqd9bSVycpl2dsNQdYi61M=;
+	b=ZAHfE83PqZ7mTpfABKbvhnopLTG8OiMfzVONxOhQDpWgST/kiJIAN+vDKZ6xJllpg9GN2H
+	SxaF8ROhV+wHxMyY4Jn0MDFkBo3c+f99o2Z6+GrHVjhSgtvis56rtKkW+8+WmpPtl+yHZB
+	LVwhqGvnpVWyV8LAwDiaaZyhwqdp3hw=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-555-GVEkXqEHO-2hVo35dEh0JA-1; Wed, 13 Oct 2021 03:15:56 -0400
-X-MC-Unique: GVEkXqEHO-2hVo35dEh0JA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-357-6iBsF0OONNCZ81-3SbBqiw-1; Wed, 13 Oct 2021 05:28:59 -0400
+X-MC-Unique: 6iBsF0OONNCZ81-3SbBqiw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 87D5F18414A0;
-	Wed, 13 Oct 2021 07:15:50 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 927D018125C1;
+	Wed, 13 Oct 2021 09:28:54 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A126F60C5F;
-	Wed, 13 Oct 2021 07:15:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2BFF45D9D5;
+	Wed, 13 Oct 2021 09:28:53 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5CC414E58E;
-	Wed, 13 Oct 2021 07:15:47 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.1])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BA52F4EA2A;
+	Wed, 13 Oct 2021 09:28:50 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
+	[10.5.11.12])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19D7Fjh1000599 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 13 Oct 2021 03:15:45 -0400
+	id 19D9Smf0012537 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 13 Oct 2021 05:28:48 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 2A63440CFD14; Wed, 13 Oct 2021 07:15:45 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2207040CFD11
-	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 07:15:45 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0554F100B8E3
-	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 07:15:45 +0000 (UTC)
-Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
-	[205.220.177.32]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-232-h8alrfECMLeLYVvm8TFXgg-1; Wed, 13 Oct 2021 03:15:41 -0400
-X-MC-Unique: h8alrfECMLeLYVvm8TFXgg-1
-Received: from pps.filterd (m0246632.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id
-	19D6wJUt004221; Wed, 13 Oct 2021 07:15:13 GMT
-Received: from aserp3030.oracle.com (aserp3030.oracle.com [141.146.126.71])
-	by mx0b-00069f02.pphosted.com with ESMTP id 3bnkbu9wxy-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Wed, 13 Oct 2021 07:15:12 +0000
-Received: from pps.filterd (aserp3030.oracle.com [127.0.0.1])
-	by aserp3030.oracle.com (8.16.1.2/8.16.1.2) with SMTP id 19D7AR6U004087;
-	Wed, 13 Oct 2021 07:15:11 GMT
-Received: from nam04-dm6-obe.outbound.protection.outlook.com
-	(mail-dm6nam08lp2046.outbound.protection.outlook.com [104.47.73.46])
-	by aserp3030.oracle.com with ESMTP id 3bkyxt07x7-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Wed, 13 Oct 2021 07:15:11 +0000
-Received: from MN2PR10MB4128.namprd10.prod.outlook.com (2603:10b6:208:1d2::24)
-	by BLAPR10MB4930.namprd10.prod.outlook.com (2603:10b6:208:323::24)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4587.19;
-	Wed, 13 Oct 2021 07:15:09 +0000
-Received: from MN2PR10MB4128.namprd10.prod.outlook.com
-	([fe80::49a5:5188:b83d:b6c9]) by
-	MN2PR10MB4128.namprd10.prod.outlook.com
-	([fe80::49a5:5188:b83d:b6c9%8]) with mapi id 15.20.4587.026;
-	Wed, 13 Oct 2021 07:15:09 +0000
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-References: <20211013051042.1065752-1-hch@lst.de>
-From: Anand Jain <anand.jain@oracle.com>
-Message-ID: <6d96d52b-3a19-8e00-4089-c2483a4cdbcc@oracle.com>
-Date: Wed, 13 Oct 2021 15:14:55 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
-	Thunderbird/78.14.0
-In-Reply-To: <20211013051042.1065752-1-hch@lst.de>
-X-ClientProxiedBy: SG2PR01CA0184.apcprd01.prod.exchangelabs.com
-	(2603:1096:4:189::9) To MN2PR10MB4128.namprd10.prod.outlook.com
-	(2603:10b6:208:1d2::24)
+	id 8808260CC4; Wed, 13 Oct 2021 09:28:48 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4599260C5F;
+	Wed, 13 Oct 2021 09:28:38 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
+	id 19D9Sbjd017349; Wed, 13 Oct 2021 05:28:37 -0400
+Received: from localhost (mpatocka@localhost)
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
+	ESMTP id 19D9SaRe017345; Wed, 13 Oct 2021 05:28:36 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+	owned process doing -bs
+Date: Wed, 13 Oct 2021 05:28:36 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Christoph Hellwig <hch@lst.de>
+In-Reply-To: <alpine.LRH.2.02.2110121516440.21015@file01.intranet.prod.int.rdu2.redhat.com>
+Message-ID: <alpine.LRH.2.02.2110130524220.16882@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2109231539520.27863@file01.intranet.prod.int.rdu2.redhat.com>
+	<20210924155822.GA10064@lst.de>
+	<alpine.LRH.2.02.2110040851130.30719@file01.intranet.prod.int.rdu2.redhat.com>
+	<20211012062049.GB17407@lst.de>
+	<alpine.LRH.2.02.2110121516440.21015@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-Received: from [192.168.10.100] (39.109.140.76) by
-	SG2PR01CA0184.apcprd01.prod.exchangelabs.com
-	(2603:1096:4:189::9) with Microsoft SMTP Server
-	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384)
-	id 15.20.4587.25 via Frontend Transport;
-	Wed, 13 Oct 2021 07:15:01 +0000
-X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: f30bcbbc-36c0-430b-cd55-08d98e19309e
-X-MS-TrafficTypeDiagnostic: BLAPR10MB4930:
-X-Microsoft-Antispam-PRVS: <BLAPR10MB4930DC93C1A403C940038713E5B79@BLAPR10MB4930.namprd10.prod.outlook.com>
-X-MS-Oob-TLC-OOBClassifiers: OLM:7691
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: z+KE6WazsV9XDqG9BT+q2/qU36Z+18zQy2SA9oN2fEr6gb4wMWGKzvLKTfMH6ERK+sZq3IXVRF7Apqz9rovdnQL2fZ6CHqm8KnkG1TuOkZHvMmCTUAarGi7H+JEVnSOcs+p2BOPnyWyZ9Ww1httDD1x0dy+rxhRzu7EQnva0jAzoevBMEiJPMaMYE4kQkoroKa/cJILwmKRm3Qvch9pB2OjGeEhaBvz+t5b4jOqa9UV0+jLlUGW26SOucBiv+pL0R1OSPhvamq3TL3Dp/OLYbRdRrwl90gb4ijk06DZrc2O+v6ol3WU5TWmle9SjpKeQ3GieFENj8pdw6jhN+7nXWU5QoSfrFkZ1gZF2d7kIGxOv2NgWgU3kE2b3ziqgMyGapAH8UfulECqrsxTNlTW7J+/7VbeUyspVgoNE8lss9CzcHdpshjSYlLIqm7d+ygkQum6qnsYgdcV0rJraSLgEfLCoo7I10Fqal2AipI1K6BSA9qHqBlpF7yqAhOMe8ufRpjEm3571SaZyaNDBCHt+nXV7p+Do8neHAG9XQZxAVW/7dI6Zb6TvEGtAv/cA58oL6MSwhj/C/kDb5Qbn3oORzB3N+ZWUn+q9Vzg9Mdeu2IvrOysWi07WJjMQ8H2KEpTEtCzSBgIdkp60edGykQDkzjzJkaT/02jLqMHhgR1L7M+3ezYWQxFkHHXTDBygpkAhWSvHLvwtXgFlyyasN3KG0A==
-X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:MN2PR10MB4128.namprd10.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(366004)(8936002)(16576012)(316002)(7406005)(53546011)(26005)(186003)(83380400001)(6666004)(86362001)(7416002)(6486002)(110136005)(31686004)(66476007)(2906002)(54906003)(44832011)(66946007)(66556008)(4326008)(8676002)(2616005)(31696002)(508600001)(36756003)(956004)(38100700002)(5660300002)(43740500002);
-	DIR:OUT; SFP:1101
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?utf-8?B?SGF6TTB3WUlZaGJjcldma1Jsd1JJUjI1bWdBSHZaVU5NT2lnUURyeTBRdk5X?=
-	=?utf-8?B?SXZ2MGpkQ2U2R2Q5d0hzQmxSL2dnM2ZVb2l3UHczcmZxS1lxaTBwbHNCOUJw?=
-	=?utf-8?B?WVpHQUxpQ212Uk1MUTRuZTlDYmJackx2TmZCSERxZi9nUUxUTE8rRDB6cmlP?=
-	=?utf-8?B?dWJBRDhZYVlXWjhZSjFwaGc1b1FVSE4wbGlnNGlLUWczbWN1ZTZlY0tCVW1w?=
-	=?utf-8?B?Z3RrdVJ1ZGtOWFJjS2dKdHZOQnMxMXM5b2k1U3BTUGZhWURBRmdETHo3aE11?=
-	=?utf-8?B?V3pvcWRhWngwcWdScEtqa3lSM2JTdmRobUJnZXVRZnBqcW1UdzNSNUd4ckxD?=
-	=?utf-8?B?eWNvcmRVSTZMOFJabnhtcGRHVXlvMmxNRXYvL0htZlYvbXhxWCs0TUx3a0tx?=
-	=?utf-8?B?VVZCOW5QTm9SSVBTZ1FiNDNtUUk2aHdmRDRtYWtaYkJWSW9zTDU3R1pwenkw?=
-	=?utf-8?B?WlhEc1FjeklFSEc1NndUemVUOHhObG1WZWVnUXVjM2lzekxLRGVRZC9yQWV4?=
-	=?utf-8?B?R3pENHdJMU9kVmRnckpmeHlDdXRWMFhyU2hnckFhVE9ETGxhMy9Pd0hqVkl4?=
-	=?utf-8?B?bVQ4dHFVY1l4Qmh3SGVteHMyRHp6TXN5VlJvNm12Y1Q2WTh3ZWw2bHlvYXg1?=
-	=?utf-8?B?dlhOcktxSjZ0MzY4dVVaVTlDa08wazBPNm1qaXZNRmdpcXlGSW9ZejlqSHp4?=
-	=?utf-8?B?dDlVTUhjS1pYNDdiSFErTG14V2d5UThPZHNWMnRUZXRaejVKa1NPREk4YTlR?=
-	=?utf-8?B?K2pSU21LYU01STlEazJ2WmJiMTUwSFYwMUN6QXNSWW1FeVBtNGhDR1BhVER3?=
-	=?utf-8?B?aG9Cancxem9tdU5NYzUzUGs0TkovdE9EaXhmdy9vNUFNUDRTTzk4aWlITk05?=
-	=?utf-8?B?TitGaU1XTUtQYjVIcy84dXNoYnpmS21wYVpLVzhvMXlHVlpjQXNKZk43QlRu?=
-	=?utf-8?B?RjdmOUFkZmE0dUQwQUlzSWhwWW5FOGZzKzF5R0IxRldqMkhqZ2lqd1lNQ3lk?=
-	=?utf-8?B?ek1jYVUxaG0zOVAxamU2MlpEMmIwblBSWG8yWFR5UFpRa2NON1VERDRWODhS?=
-	=?utf-8?B?QXk2UEN5YmhmeFR2UmVGQTZONEU4SWJnczVDd2ZrVTRJNE5jWk5uLzlOTDhn?=
-	=?utf-8?B?Yjl6Z1MrakFWdjlIbFprV2o1Sm0xZ3NrMng0aTFjaVM0c1RDS01BQUJkWGFr?=
-	=?utf-8?B?ZEtiT2pvVmNxdVdyK0ZIMmxIOER5MVZhb0lVdnNnZm1CanJoc21MTmZ6UUt5?=
-	=?utf-8?B?VTlMcDRERy9oVnhYWTErY0xMK0U3Uk05UHk3NStGbXlSZTIzaTRnT2NuYjYw?=
-	=?utf-8?B?SWRnTG9ySVdUUXhyU1V5MW8ybXRtY2krdmQ4aUpiL3FPOGhKL29wdE8vQ3p4?=
-	=?utf-8?B?dTZYNVVKNnpFUndVYndhQ0RFWG1zUkdDMkFvZnJ3RThrVWZwVks4UjVPUjRZ?=
-	=?utf-8?B?amhrNWtoTnlnMys2aDRZdmtlaXVUZjliOHlrRC9ETXdrdzBJYjV5N21mMDc4?=
-	=?utf-8?B?QnNYK3dyekFHeTVjRE5sMzc3Q3lRV3ZJZEJOU1dWM0pFdzZPVGt3OW91WE5j?=
-	=?utf-8?B?RWZjTVFid0x3T3BVMkpScGE2MnVWMFVPaDl1NDhnczJjcmY2SStDYVpCdmVI?=
-	=?utf-8?B?VU5lNVB6SXY1N2pOaHVCZnRNdy9NS0hvMFUzZjRyMENkTys5UmRkUGx3MW93?=
-	=?utf-8?B?ZnVLV0FyaFVONEFlMDdLL2o5V1J2RWlGM1I3VHg3alk5TDVlakpkdy9pOVli?=
-	=?utf-8?Q?5+B3IR/RPvIO/H2kakRaigFHgD7Mu7yuNYawBNM?=
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: f30bcbbc-36c0-430b-cd55-08d98e19309e
-X-MS-Exchange-CrossTenant-AuthSource: MN2PR10MB4128.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 13 Oct 2021 07:15:09.4041 (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: ta6Y/rNXjzX1YifmtoWxWokP2JfcRJXm/Xf2OjoeUnj84dXH1Ha2NhQKfH4WmmrDhNt5JaTqidtdNWO+NRVwGw==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BLAPR10MB4930
-X-Proofpoint-Virus-Version: vendor=nai engine=6300 definitions=10135
-	signatures=668683
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 spamscore=0
-	phishscore=0 suspectscore=0
-	mlxlogscore=999 mlxscore=0 bulkscore=0 adultscore=0 malwarescore=0
-	classifier=spam adjust=0 reason=mlx scancount=1
-	engine=8.12.0-2109230001 definitions=main-2110130048
-X-Proofpoint-ORIG-GUID: yJCjeNSJm0gO30MkGIKqHW5dZGGKitrr
-X-Proofpoint-GUID: yJCjeNSJm0gO30MkGIKqHW5dZGGKitrr
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 X-loop: dm-devel@redhat.com
-Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
-	Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org,
-	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
-	Song Liu <song@kernel.org>, dm-devel@redhat.com,
-	target-devel@vger.kernel.org, linux-mtd@lists.infradead.org,
-	reiserfs-devel@vger.kernel.org, drbd-dev@lists.linbit.com,
-	linux-nilfs@vger.kernel.org, linux-scsi@vger.kernel.org,
-	OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
-	linux-ext4@vger.kernel.org, Kees Cook <keescook@chromium.org>,
-	Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>,
-	linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org,
-	David Sterba <dsterba@suse.com>,
-	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
-	Anton Altaparmakov <anton@tuxera.com>,
-	linux-block@vger.kernel.org, linux-nfs@vger.kernel.org,
-	Theodore Ts'o <tytso@mit.edu>,
-	linux-ntfs-dev@lists.sourceforge.net, Jan Kara <jack@suse.com>,
-	linux-fsdevel@vger.kernel.org,
-	Phillip Lougher <phillip@squashfs.org.uk>, ntfs3@lists.linux.dev,
-	linux-btrfs@vger.kernel.org
-Subject: Re: [dm-devel] don't use ->bd_inode to access the block device size
+Cc: Jens Axboe <axboe@kernel.dk>, Ming Lei <ming.lei@redhat.com>,
+	linux-block@vger.kernel.org, dm-devel@redhat.com,
+	Zdenek Kabelac <zkabelac@redhat.com>, linux-fsdevel@vger.kernel.org
+Subject: [dm-devel] [PATCH v4] loop: don't print warnings if the underlying
+ filesystem doesn't support discard
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -198,97 +91,386 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 13/10/2021 13:10, Christoph Hellwig wrote:
-> Hi Jens,
-> 
-> various drivers currently poke directy at the block device inode, which
-> is a bit of a mess.  This series cleans up the places that read the
-> block device size to use the proper helpers.  I have separate patches
-> for many of the other bd_inode uses, but this series is already big
-> enough as-is,
-> 
-> I wondered about adding a helper for looking at the size in byte units
-> to avoid the SECTOR_SHIFT shifts in various places.  But given that
-> I could not come up with a good name and 
+Hi
+
+Here I'm sending version 4 of the patch. It adds #include <linux/falloc.h> 
+to cifs and overlayfs to fix the bugs found out by the kernel test robot.
+
+Mikulas
 
 
-> block devices fundamentally
-> work in sector size granularity I decided against that.
 
-Yes.  However,  POV of its usage outside the block-layer, a wrapper 
-helper is a lot better. No.? If you agree, how about naming it bdev_size()?
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-Thanks, Anand
+The loop driver checks for the fallocate method and if it is present, it 
+assumes that the filesystem can do FALLOC_FL_ZERO_RANGE and 
+FALLOC_FL_PUNCH_HOLE requests. However, some filesystems (such as fat, or 
+tmpfs) have the fallocate method, but lack the capability to do 
+FALLOC_FL_ZERO_RANGE and/or FALLOC_FL_PUNCH_HOLE.
 
-> 
-> Diffstat:
->   block/fops.c                        |    2 +-
->   drivers/block/drbd/drbd_int.h       |    3 +--
->   drivers/md/bcache/super.c           |    2 +-
->   drivers/md/bcache/util.h            |    4 ----
->   drivers/md/bcache/writeback.c       |    2 +-
->   drivers/md/dm-bufio.c               |    2 +-
->   drivers/md/dm-cache-metadata.c      |    2 +-
->   drivers/md/dm-cache-target.c        |    2 +-
->   drivers/md/dm-clone-target.c        |    2 +-
->   drivers/md/dm-dust.c                |    5 ++---
->   drivers/md/dm-ebs-target.c          |    2 +-
->   drivers/md/dm-era-target.c          |    2 +-
->   drivers/md/dm-exception-store.h     |    2 +-
->   drivers/md/dm-flakey.c              |    3 +--
->   drivers/md/dm-integrity.c           |    6 +++---
->   drivers/md/dm-linear.c              |    3 +--
->   drivers/md/dm-log-writes.c          |    4 ++--
->   drivers/md/dm-log.c                 |    2 +-
->   drivers/md/dm-mpath.c               |    2 +-
->   drivers/md/dm-raid.c                |    6 +++---
->   drivers/md/dm-switch.c              |    2 +-
->   drivers/md/dm-table.c               |    3 +--
->   drivers/md/dm-thin-metadata.c       |    2 +-
->   drivers/md/dm-thin.c                |    2 +-
->   drivers/md/dm-verity-target.c       |    3 +--
->   drivers/md/dm-writecache.c          |    2 +-
->   drivers/md/dm-zoned-target.c        |    2 +-
->   drivers/md/md.c                     |   26 +++++++++++---------------
->   drivers/mtd/devices/block2mtd.c     |    5 +++--
->   drivers/nvme/target/io-cmd-bdev.c   |    4 ++--
->   drivers/target/target_core_iblock.c |    5 +++--
->   fs/affs/super.c                     |    2 +-
->   fs/btrfs/dev-replace.c              |    2 +-
->   fs/btrfs/disk-io.c                  |    3 ++-
->   fs/btrfs/ioctl.c                    |    4 ++--
->   fs/btrfs/volumes.c                  |    7 ++++---
->   fs/buffer.c                         |    4 ++--
->   fs/cramfs/inode.c                   |    2 +-
->   fs/ext4/super.c                     |    2 +-
->   fs/fat/inode.c                      |    5 +----
->   fs/hfs/mdb.c                        |    2 +-
->   fs/hfsplus/wrapper.c                |    2 +-
->   fs/jfs/resize.c                     |    5 ++---
->   fs/jfs/super.c                      |    5 ++---
->   fs/nfs/blocklayout/dev.c            |    4 ++--
->   fs/nilfs2/ioctl.c                   |    2 +-
->   fs/nilfs2/super.c                   |    2 +-
->   fs/nilfs2/the_nilfs.c               |    3 ++-
->   fs/ntfs/super.c                     |    8 +++-----
->   fs/ntfs3/super.c                    |    3 +--
->   fs/pstore/blk.c                     |    4 ++--
->   fs/reiserfs/super.c                 |    7 ++-----
->   fs/squashfs/super.c                 |    5 +++--
->   fs/udf/lowlevel.c                   |    5 ++---
->   fs/udf/super.c                      |    9 +++------
->   include/linux/genhd.h               |    6 ++++++
->   56 files changed, 100 insertions(+), 117 deletions(-)
-> 
+This results in syslog warnings "blk_update_request: operation not 
+supported error, dev loop0, sector 0 op 0x9:(WRITE_ZEROES) flags 0x800800 
+phys_seg 0 prio class 0". The error can be reproduced with this command: 
+"truncate -s 1GiB /tmp/file; losetup /dev/loop0 /tmp/file; blkdiscard -z 
+/dev/loop0"
+
+This patch introduces a field "fallocate_supported_flags" in struct 
+file_operations that specifies the flags that are supported by the 
+fallocate methods. The loopback driver will check this field to determine 
+if FALLOC_FL_PUNCH_HOLE or FALLOC_FL_ZERO_RANGE is supported
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+Index: linux-2.6/block/fops.c
+===================================================================
+--- linux-2.6.orig/block/fops.c
++++ linux-2.6/block/fops.c
+@@ -628,6 +628,7 @@ const struct file_operations def_blk_fop
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= iter_file_splice_write,
+ 	.fallocate	= blkdev_fallocate,
++	.fallocate_supported_flags = BLKDEV_FALLOC_FL_SUPPORTED,
+ };
+ 
+ static __init int blkdev_init(void)
+Index: linux-2.6/fs/btrfs/file.c
+===================================================================
+--- linux-2.6.orig/fs/btrfs/file.c
++++ linux-2.6/fs/btrfs/file.c
+@@ -3688,6 +3688,8 @@ const struct file_operations btrfs_file_
+ 	.release	= btrfs_release_file,
+ 	.fsync		= btrfs_sync_file,
+ 	.fallocate	= btrfs_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_KEEP_SIZE |
++		FALLOC_FL_PUNCH_HOLE | FALLOC_FL_ZERO_RANGE,
+ 	.unlocked_ioctl	= btrfs_ioctl,
+ #ifdef CONFIG_COMPAT
+ 	.compat_ioctl	= btrfs_compat_ioctl,
+Index: linux-2.6/fs/ceph/file.c
+===================================================================
+--- linux-2.6.orig/fs/ceph/file.c
++++ linux-2.6/fs/ceph/file.c
+@@ -2492,5 +2492,6 @@ const struct file_operations ceph_file_f
+ 	.unlocked_ioctl = ceph_ioctl,
+ 	.compat_ioctl = compat_ptr_ioctl,
+ 	.fallocate	= ceph_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE,
+ 	.copy_file_range = ceph_copy_file_range,
+ };
+Index: linux-2.6/fs/cifs/cifsfs.c
+===================================================================
+--- linux-2.6.orig/fs/cifs/cifsfs.c
++++ linux-2.6/fs/cifs/cifsfs.c
+@@ -26,6 +26,7 @@
+ #include <linux/random.h>
+ #include <linux/uuid.h>
+ #include <linux/xattr.h>
++#include <linux/falloc.h>
+ #include <net/ipv6.h>
+ #include "cifsfs.h"
+ #include "cifspdu.h"
+@@ -1281,6 +1282,9 @@ const struct file_operations cifs_file_o
+ 	.remap_file_range = cifs_remap_file_range,
+ 	.setlease = cifs_setlease,
+ 	.fallocate = cifs_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_PUNCH_HOLE |
++		FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE |
++		FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_INSERT_RANGE,
+ };
+ 
+ const struct file_operations cifs_file_strict_ops = {
+@@ -1301,6 +1305,9 @@ const struct file_operations cifs_file_s
+ 	.remap_file_range = cifs_remap_file_range,
+ 	.setlease = cifs_setlease,
+ 	.fallocate = cifs_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_PUNCH_HOLE |
++		FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE |
++		FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_INSERT_RANGE,
+ };
+ 
+ const struct file_operations cifs_file_direct_ops = {
+@@ -1321,6 +1328,9 @@ const struct file_operations cifs_file_d
+ 	.llseek = cifs_llseek,
+ 	.setlease = cifs_setlease,
+ 	.fallocate = cifs_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_PUNCH_HOLE |
++		FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE |
++		FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_INSERT_RANGE,
+ };
+ 
+ const struct file_operations cifs_file_nobrl_ops = {
+@@ -1339,6 +1349,9 @@ const struct file_operations cifs_file_n
+ 	.remap_file_range = cifs_remap_file_range,
+ 	.setlease = cifs_setlease,
+ 	.fallocate = cifs_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_PUNCH_HOLE |
++		FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE |
++		FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_INSERT_RANGE,
+ };
+ 
+ const struct file_operations cifs_file_strict_nobrl_ops = {
+@@ -1357,6 +1370,9 @@ const struct file_operations cifs_file_s
+ 	.remap_file_range = cifs_remap_file_range,
+ 	.setlease = cifs_setlease,
+ 	.fallocate = cifs_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_PUNCH_HOLE |
++		FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE |
++		FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_INSERT_RANGE,
+ };
+ 
+ const struct file_operations cifs_file_direct_nobrl_ops = {
+@@ -1375,6 +1391,9 @@ const struct file_operations cifs_file_d
+ 	.llseek = cifs_llseek,
+ 	.setlease = cifs_setlease,
+ 	.fallocate = cifs_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_PUNCH_HOLE |
++		FALLOC_FL_ZERO_RANGE | FALLOC_FL_KEEP_SIZE |
++		FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_INSERT_RANGE,
+ };
+ 
+ const struct file_operations cifs_dir_ops = {
+Index: linux-2.6/fs/ext4/file.c
+===================================================================
+--- linux-2.6.orig/fs/ext4/file.c
++++ linux-2.6/fs/ext4/file.c
+@@ -929,6 +929,9 @@ const struct file_operations ext4_file_o
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= iter_file_splice_write,
+ 	.fallocate	= ext4_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_KEEP_SIZE |
++		FALLOC_FL_PUNCH_HOLE | FALLOC_FL_COLLAPSE_RANGE |
++		FALLOC_FL_ZERO_RANGE | FALLOC_FL_INSERT_RANGE,
+ };
+ 
+ const struct inode_operations ext4_file_inode_operations = {
+Index: linux-2.6/fs/f2fs/file.c
+===================================================================
+--- linux-2.6.orig/fs/f2fs/file.c
++++ linux-2.6/fs/f2fs/file.c
+@@ -4499,6 +4499,9 @@ const struct file_operations f2fs_file_o
+ 	.flush		= f2fs_file_flush,
+ 	.fsync		= f2fs_sync_file,
+ 	.fallocate	= f2fs_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_KEEP_SIZE |
++		FALLOC_FL_PUNCH_HOLE | FALLOC_FL_COLLAPSE_RANGE |
++		FALLOC_FL_ZERO_RANGE | FALLOC_FL_INSERT_RANGE,
+ 	.unlocked_ioctl	= f2fs_ioctl,
+ #ifdef CONFIG_COMPAT
+ 	.compat_ioctl	= f2fs_compat_ioctl,
+Index: linux-2.6/fs/fat/file.c
+===================================================================
+--- linux-2.6.orig/fs/fat/file.c
++++ linux-2.6/fs/fat/file.c
+@@ -211,6 +211,7 @@ const struct file_operations fat_file_op
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= iter_file_splice_write,
+ 	.fallocate	= fat_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_KEEP_SIZE,
+ };
+ 
+ static int fat_cont_expand(struct inode *inode, loff_t size)
+Index: linux-2.6/fs/fuse/file.c
+===================================================================
+--- linux-2.6.orig/fs/fuse/file.c
++++ linux-2.6/fs/fuse/file.c
+@@ -3147,6 +3147,8 @@ static const struct file_operations fuse
+ 	.compat_ioctl	= fuse_file_compat_ioctl,
+ 	.poll		= fuse_file_poll,
+ 	.fallocate	= fuse_file_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_KEEP_SIZE |
++		FALLOC_FL_PUNCH_HOLE | FALLOC_FL_ZERO_RANGE,
+ 	.copy_file_range = fuse_copy_file_range,
+ };
+ 
+Index: linux-2.6/fs/gfs2/file.c
+===================================================================
+--- linux-2.6.orig/fs/gfs2/file.c
++++ linux-2.6/fs/gfs2/file.c
+@@ -1366,6 +1366,7 @@ const struct file_operations gfs2_file_f
+ 	.splice_write	= gfs2_file_splice_write,
+ 	.setlease	= simple_nosetlease,
+ 	.fallocate	= gfs2_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
+ };
+ 
+ const struct file_operations gfs2_dir_fops = {
+Index: linux-2.6/fs/hugetlbfs/inode.c
+===================================================================
+--- linux-2.6.orig/fs/hugetlbfs/inode.c
++++ linux-2.6/fs/hugetlbfs/inode.c
+@@ -1163,6 +1163,7 @@ const struct file_operations hugetlbfs_f
+ 	.get_unmapped_area	= hugetlb_get_unmapped_area,
+ 	.llseek			= default_llseek,
+ 	.fallocate		= hugetlbfs_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE,
+ };
+ 
+ static const struct inode_operations hugetlbfs_dir_inode_operations = {
+Index: linux-2.6/fs/nfs/nfs4file.c
+===================================================================
+--- linux-2.6.orig/fs/nfs/nfs4file.c
++++ linux-2.6/fs/nfs/nfs4file.c
+@@ -457,6 +457,7 @@ const struct file_operations nfs4_file_o
+ 	.copy_file_range = nfs4_copy_file_range,
+ 	.llseek		= nfs4_file_llseek,
+ 	.fallocate	= nfs42_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
+ 	.remap_file_range = nfs42_remap_file_range,
+ #else
+ 	.llseek		= nfs_file_llseek,
+Index: linux-2.6/fs/ntfs3/file.c
+===================================================================
+--- linux-2.6.orig/fs/ntfs3/file.c
++++ linux-2.6/fs/ntfs3/file.c
+@@ -1246,6 +1246,8 @@ const struct file_operations ntfs_file_o
+ 	.fsync		= generic_file_fsync,
+ 	.splice_write	= iter_file_splice_write,
+ 	.fallocate	= ntfs_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_KEEP_SIZE |
++		FALLOC_FL_PUNCH_HOLE | FALLOC_FL_COLLAPSE_RANGE,
+ 	.release	= ntfs_file_release,
+ };
+ // clang-format on
+Index: linux-2.6/fs/ocfs2/file.c
+===================================================================
+--- linux-2.6.orig/fs/ocfs2/file.c
++++ linux-2.6/fs/ocfs2/file.c
+@@ -2746,6 +2746,7 @@ const struct file_operations ocfs2_fops
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= iter_file_splice_write,
+ 	.fallocate	= ocfs2_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE,
+ 	.remap_file_range = ocfs2_remap_file_range,
+ };
+ 
+@@ -2792,6 +2793,7 @@ const struct file_operations ocfs2_fops_
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= iter_file_splice_write,
+ 	.fallocate	= ocfs2_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE,
+ 	.remap_file_range = ocfs2_remap_file_range,
+ };
+ 
+Index: linux-2.6/fs/overlayfs/file.c
+===================================================================
+--- linux-2.6.orig/fs/overlayfs/file.c
++++ linux-2.6/fs/overlayfs/file.c
+@@ -13,6 +13,7 @@
+ #include <linux/security.h>
+ #include <linux/mm.h>
+ #include <linux/fs.h>
++#include <linux/falloc.h>
+ #include "overlayfs.h"
+ 
+ struct ovl_aio_req {
+@@ -658,6 +659,7 @@ const struct file_operations ovl_file_op
+ 	.fsync		= ovl_fsync,
+ 	.mmap		= ovl_mmap,
+ 	.fallocate	= ovl_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_SUPPORTED_MASK,
+ 	.fadvise	= ovl_fadvise,
+ 	.flush		= ovl_flush,
+ 	.splice_read    = generic_file_splice_read,
+Index: linux-2.6/fs/xfs/xfs_file.c
+===================================================================
+--- linux-2.6.orig/fs/xfs/xfs_file.c
++++ linux-2.6/fs/xfs/xfs_file.c
+@@ -1464,6 +1464,7 @@ const struct file_operations xfs_file_op
+ 	.fsync		= xfs_file_fsync,
+ 	.get_unmapped_area = thp_get_unmapped_area,
+ 	.fallocate	= xfs_file_fallocate,
++	.fallocate_supported_flags = XFS_FALLOC_FL_SUPPORTED,
+ 	.fadvise	= xfs_file_fadvise,
+ 	.remap_file_range = xfs_file_remap_range,
+ };
+Index: linux-2.6/include/linux/fs.h
+===================================================================
+--- linux-2.6.orig/include/linux/fs.h
++++ linux-2.6/include/linux/fs.h
+@@ -2098,6 +2098,7 @@ struct file_operations {
+ 	int (*setlease)(struct file *, long, struct file_lock **, void **);
+ 	long (*fallocate)(struct file *file, int mode, loff_t offset,
+ 			  loff_t len);
++	unsigned fallocate_supported_flags;
+ 	void (*show_fdinfo)(struct seq_file *m, struct file *f);
+ #ifndef CONFIG_MMU
+ 	unsigned (*mmap_capabilities)(struct file *);
+Index: linux-2.6/ipc/shm.c
+===================================================================
+--- linux-2.6.orig/ipc/shm.c
++++ linux-2.6/ipc/shm.c
+@@ -44,6 +44,7 @@
+ #include <linux/mount.h>
+ #include <linux/ipc_namespace.h>
+ #include <linux/rhashtable.h>
++#include <linux/falloc.h>
+ 
+ #include <linux/uaccess.h>
+ 
+@@ -558,6 +559,7 @@ static const struct file_operations shm_
+ 	.get_unmapped_area	= shm_get_unmapped_area,
+ 	.llseek		= noop_llseek,
+ 	.fallocate	= shm_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE,
+ };
+ 
+ /*
+@@ -571,6 +573,7 @@ static const struct file_operations shm_
+ 	.get_unmapped_area	= shm_get_unmapped_area,
+ 	.llseek		= noop_llseek,
+ 	.fallocate	= shm_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE,
+ };
+ 
+ bool is_file_shm_hugepages(struct file *file)
+Index: linux-2.6/mm/shmem.c
+===================================================================
+--- linux-2.6.orig/mm/shmem.c
++++ linux-2.6/mm/shmem.c
+@@ -3797,6 +3797,7 @@ static const struct file_operations shme
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= iter_file_splice_write,
+ 	.fallocate	= shmem_fallocate,
++	.fallocate_supported_flags = FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE,
+ #endif
+ };
+ 
+Index: linux-2.6/drivers/block/loop.c
+===================================================================
+--- linux-2.6.orig/drivers/block/loop.c
++++ linux-2.6/drivers/block/loop.c
+@@ -947,7 +947,10 @@ static void loop_config_discard(struct l
+ 	 * encryption is enabled, because it may give an attacker
+ 	 * useful information.
+ 	 */
+-	} else if (!file->f_op->fallocate || lo->lo_encrypt_key_size) {
++	} else if ((file->f_op->fallocate_supported_flags &
++			(FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE)) !=
++			(FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE) ||
++		   lo->lo_encrypt_key_size) {
+ 		max_discard_sectors = 0;
+ 		granularity = 0;
+ 
+@@ -959,7 +962,10 @@ static void loop_config_discard(struct l
+ 	if (max_discard_sectors) {
+ 		q->limits.discard_granularity = granularity;
+ 		blk_queue_max_discard_sectors(q, max_discard_sectors);
+-		blk_queue_max_write_zeroes_sectors(q, max_discard_sectors);
++		if (file->f_op->fallocate_supported_flags & FALLOC_FL_ZERO_RANGE)
++			blk_queue_max_write_zeroes_sectors(q, max_discard_sectors);
++		else
++			blk_queue_max_write_zeroes_sectors(q, 0);
+ 		blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
+ 	} else {
+ 		q->limits.discard_granularity = 0;
 
 --
 dm-devel mailing list
