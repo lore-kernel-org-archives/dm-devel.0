@@ -2,64 +2,63 @@ Return-Path: <SRS0=XhuN=PB=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B1865C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 19:17:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8A26EC433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 19:17:07 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id F0BD560FDA
-	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 19:17:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org F0BD560FDA
+	by mail.kernel.org (Postfix) with ESMTPS id 2115660FDA
+	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 19:17:07 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 2115660FDA
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-412-Dg0jkLCMN3u2eNVcaPdyiQ-1; Wed, 13 Oct 2021 15:17:01 -0400
-X-MC-Unique: Dg0jkLCMN3u2eNVcaPdyiQ-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-392-uqskzFW2PKqYFYzpTs7quA-1; Wed, 13 Oct 2021 15:17:04 -0400
+X-MC-Unique: uqskzFW2PKqYFYzpTs7quA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 230D11019983;
-	Wed, 13 Oct 2021 19:16:57 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D86E1DF8A7;
+	Wed, 13 Oct 2021 19:16:59 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 074E670871;
-	Wed, 13 Oct 2021 19:16:57 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BCDD75F4E2;
+	Wed, 13 Oct 2021 19:16:59 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CFC30180598A;
-	Wed, 13 Oct 2021 19:16:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.2])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8E05C1800FE4;
+	Wed, 13 Oct 2021 19:16:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19DJD0pS018674 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 13 Oct 2021 15:13:00 -0400
+	id 19DJD14Y018700 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 13 Oct 2021 15:13:01 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id B7D4040D1B9F; Wed, 13 Oct 2021 19:13:00 +0000 (UTC)
+	id 2D24B2026D46; Wed, 13 Oct 2021 19:13:01 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B310540D1B9D
-	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 19:13:00 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 93B32811E7A
-	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 19:13:00 +0000 (UTC)
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 281FB2026D5D
+	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 19:12:58 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5321D800B36
+	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 19:12:58 +0000 (UTC)
 Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-425-WTq6RRdNPaqwQlp9ijY-OQ-1;
-	Wed, 13 Oct 2021 15:12:56 -0400
-X-MC-Unique: WTq6RRdNPaqwQlp9ijY-OQ-1
+	relay.mimecast.com with ESMTP id us-mta-465-ccqkjPN8M8y246JyEyjmWg-1;
+	Wed, 13 Oct 2021 15:12:54 -0400
+X-MC-Unique: ccqkjPN8M8y246JyEyjmWg-1
 Received: from
 	linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net
 	(linux.microsoft.com [13.77.154.182])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 76EC320B9CE1;
-	Wed, 13 Oct 2021 12:06:39 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 76EC320B9CE1
+	by linux.microsoft.com (Postfix) with ESMTPSA id 98A7D20B9D0A;
+	Wed, 13 Oct 2021 12:06:40 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 98A7D20B9D0A
 From: deven.desai@linux.microsoft.com
 To: corbet@lwn.net, axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com,
 	ebiggers@kernel.org, tytso@mit.edu, paul@paul-moore.com,
 	eparis@redhat.com, jmorris@namei.org, serge@hallyn.com
-Date: Wed, 13 Oct 2021 12:06:21 -0700
-Message-Id: <1634151995-16266-3-git-send-email-deven.desai@linux.microsoft.com>
+Date: Wed, 13 Oct 2021 12:06:33 -0700
+Message-Id: <1634151995-16266-15-git-send-email-deven.desai@linux.microsoft.com>
 In-Reply-To: <1634151995-16266-1-git-send-email-deven.desai@linux.microsoft.com>
 References: <1634151995-16266-1-git-send-email-deven.desai@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -70,13 +69,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 Cc: linux-security-module@vger.kernel.org, linux-doc@vger.kernel.org,
 	jannh@google.com, linux-fscrypt@vger.kernel.org,
 	linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
 	dm-devel@redhat.com, linux-audit@redhat.com
-Subject: [dm-devel] [RFC PATCH v7 02/16] ipe: add policy parser
+Subject: [dm-devel] [RFC PATCH v7 14/16] scripts: add boot policy generation
+	program
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -91,7 +91,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -101,1916 +101,342 @@ Content-Transfer-Encoding: 7bit
 
 From: Deven Bowers <deven.desai@linux.microsoft.com>
 
-IPE's interpretation of the what the user trusts is accomplished through
-its policy. IPE's design is to not provide support for a single trust
-provider, but to support multiple providers to enable the end-user to
-choose the best one to seek their needs.
-
-This requires the policy to be rather flexible and modular so that
-trust/integrity providers, like fs-verity or dm-verity, can plug
-into the policy with minimal code changes.
+Enables an IPE policy to be enforced from kernel start, enabling access
+control based on trust from kernel startup. This is accomplished by
+transforming an IPE policy indicated by CONFIG_IPE_BOOT_POLICY into a
+c-string literal that is parsed at kernel startup as an unsigned policy.
 
 Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 ---
 
 Relevant changes since v6:
-  * Refactor policy parser to make code cleaner via introducing
-    clearly defined passes, with specific goal states.
-  * Split up patch 03/12 into two parts:
-      1. parser [02/16] (this patch)
-      2. userspace interface [04/16]
+  * Move patch 01/12 to [14/16] of the series
 
 ---
- include/asm-generic/vmlinux.lds.h    |  16 +
- security/ipe/Makefile                |   6 +
- security/ipe/ipe.c                   |  63 ++
- security/ipe/ipe.h                   |   4 +
- security/ipe/ipe_parser.h            |  59 ++
- security/ipe/modules.c               | 109 +++
- security/ipe/modules.h               |  17 +
- security/ipe/modules/ipe_module.h    |  33 +
- security/ipe/parsers.c               | 139 ++++
- security/ipe/parsers/Makefile        |  12 +
- security/ipe/parsers/default.c       | 106 +++
- security/ipe/parsers/policy_header.c | 126 ++++
- security/ipe/policy.c                | 946 +++++++++++++++++++++++++++
- security/ipe/policy.h                |  97 +++
- 14 files changed, 1733 insertions(+)
- create mode 100644 security/ipe/ipe_parser.h
- create mode 100644 security/ipe/modules.c
- create mode 100644 security/ipe/modules.h
- create mode 100644 security/ipe/modules/ipe_module.h
- create mode 100644 security/ipe/parsers.c
- create mode 100644 security/ipe/parsers/Makefile
- create mode 100644 security/ipe/parsers/default.c
- create mode 100644 security/ipe/parsers/policy_header.c
- create mode 100644 security/ipe/policy.c
- create mode 100644 security/ipe/policy.h
+ MAINTAINERS                   |   1 +
+ scripts/Makefile              |   1 +
+ scripts/ipe/Makefile          |   2 +
+ scripts/ipe/polgen/.gitignore |   1 +
+ scripts/ipe/polgen/Makefile   |   6 ++
+ scripts/ipe/polgen/polgen.c   | 145 ++++++++++++++++++++++++++++++++++
+ security/ipe/.gitignore       |   1 +
+ security/ipe/Kconfig          |  10 +++
+ security/ipe/Makefile         |  13 +++
+ security/ipe/ctx.c            |  18 +++++
+ 10 files changed, 198 insertions(+)
+ create mode 100644 scripts/ipe/Makefile
+ create mode 100644 scripts/ipe/polgen/.gitignore
+ create mode 100644 scripts/ipe/polgen/Makefile
+ create mode 100644 scripts/ipe/polgen/polgen.c
+ create mode 100644 security/ipe/.gitignore
 
-diff --git a/include/asm-generic/vmlinux.lds.h b/include/asm-generic/vmlinux.lds.h
-index f2984af2b85b..91abbacbaf8d 100644
---- a/include/asm-generic/vmlinux.lds.h
-+++ b/include/asm-generic/vmlinux.lds.h
-@@ -278,6 +278,20 @@
- #define EARLY_LSM_TABLE()
- #endif
+diff --git a/MAINTAINERS b/MAINTAINERS
+index f1e76f791d47..a84ca781199b 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -9283,6 +9283,7 @@ INTEGRITY POLICY ENFORCEMENT (IPE)
+ M:	Deven Bowers <deven.desai@linux.microsoft.com>
+ M:	Fan Wu <wufan@linux.microsoft.com>
+ S:	Supported
++F:	scripts/ipe/
+ F:	security/ipe/
  
-+#ifdef CONFIG_SECURITY_IPE
-+#define IPE_PARSER_TABLE()	. = ALIGN(8);				\
-+				__start_ipe_parsers = .;		\
-+				KEEP(*(.ipe_parsers))		\
-+				__end_ipe_parsers = .;
-+#define IPE_MODULE_TABLE()	. = ALIGN(8);				\
-+				__start_ipe_modules = .;		\
-+				KEEP(*(.ipe_modules))			\
-+				__end_ipe_modules = .;
-+#else
-+#define IPE_PARSER_TABLE()
-+#define IPE_MODULE_TABLE()
-+#endif
-+
- #define ___OF_TABLE(cfg, name)	_OF_TABLE_##cfg(name)
- #define __OF_TABLE(cfg, name)	___OF_TABLE(cfg, name)
- #define OF_TABLE(cfg, name)	__OF_TABLE(IS_ENABLED(cfg), name)
-@@ -436,6 +450,8 @@
- 		KEEP(*(__tracepoints_ptrs)) /* Tracepoints: pointer array */ \
- 		__stop___tracepoints_ptrs = .;				\
- 		*(__tracepoints_strings)/* Tracepoints: strings */	\
-+		IPE_PARSER_TABLE()					\
-+		IPE_MODULE_TABLE()					\
- 	}								\
- 									\
- 	.rodata1          : AT(ADDR(.rodata1) - LOAD_OFFSET) {		\
-diff --git a/security/ipe/Makefile b/security/ipe/Makefile
-index ba3df729e252..9a97efd8a190 100644
---- a/security/ipe/Makefile
-+++ b/security/ipe/Makefile
-@@ -5,7 +5,13 @@
- # Makefile for building the IPE module as part of the kernel tree.
- #
+ INTEL 810/815 FRAMEBUFFER DRIVER
+diff --git a/scripts/Makefile b/scripts/Makefile
+index 9adb6d247818..a31da6d57a36 100644
+--- a/scripts/Makefile
++++ b/scripts/Makefile
+@@ -41,6 +41,7 @@ targets += module.lds
+ subdir-$(CONFIG_GCC_PLUGINS) += gcc-plugins
+ subdir-$(CONFIG_MODVERSIONS) += genksyms
+ subdir-$(CONFIG_SECURITY_SELINUX) += selinux
++subdir-$(CONFIG_SECURITY_IPE) += ipe
  
-+ccflags-y := -I$(srctree)/security/ipe/modules
-+
- obj-$(CONFIG_SECURITY_IPE) += \
- 	ctx.o \
- 	hooks.o \
- 	ipe.o \
-+	modules.o \
-+	parsers/ \
-+	parsers.o \
-+	policy.o \
-diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
-index d600346702e5..b58b372327a1 100644
---- a/security/ipe/ipe.c
-+++ b/security/ipe/ipe.c
-@@ -6,6 +6,9 @@
- #include "ipe.h"
- #include "ctx.h"
- #include "hooks.h"
-+#include "ipe_parser.h"
-+#include "modules/ipe_module.h"
-+#include "modules.h"
- 
- #include <linux/fs.h>
- #include <linux/sched.h>
-@@ -24,6 +27,58 @@ static struct security_hook_list ipe_hooks[] __lsm_ro_after_init = {
- 	LSM_HOOK_INIT(task_free, ipe_task_free),
- };
- 
-+/**
-+ * load_parsers: Load all the parsers compiled into IPE. This needs
-+ *		 to be called prior to the boot policy being loaded.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * !0 - Error
-+ */
-+static int load_parsers(void)
-+{
-+	int rc = 0;
-+	struct ipe_parser *parser;
-+
-+	for (parser = __start_ipe_parsers; parser < __end_ipe_parsers; ++parser) {
-+		rc = ipe_register_parser(parser);
-+		if (rc) {
-+			pr_err("failed to initialize '%s'", parser->first_token);
-+			return rc;
-+		}
-+
-+		pr_info("initialized parser module '%s'", parser->first_token);
-+	}
-+
-+	return 0;
-+}
-+
-+/**
-+ * load_modules: Load all the modules compiled into IPE. This needs
-+ *		 to be called prior to the boot policy being loaded.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * !0 - Error
-+ */
-+static int load_modules(void)
-+{
-+	int rc = 0;
-+	struct ipe_module *m;
-+
-+	for (m = __start_ipe_modules; m < __end_ipe_modules; ++m) {
-+		rc = ipe_register_module(m);
-+		if (rc) {
-+			pr_err("failed to initialize '%s'", m->name);
-+			return rc;
-+		}
-+
-+		pr_info("initialized module '%s'", m->name);
-+	}
-+
-+	return 0;
-+}
-+
- /**
-  * ipe_init: Entry point of IPE.
-  *
-@@ -41,6 +96,14 @@ static int __init ipe_init(void)
- {
- 	int rc = 0;
- 
-+	rc = load_parsers();
-+	if (rc)
-+		return rc;
-+
-+	rc = load_modules();
-+	if (rc)
-+		return rc;
-+
- 	rc = ipe_init_ctx();
- 	if (rc)
- 		return rc;
-diff --git a/security/ipe/ipe.h b/security/ipe/ipe.h
-index 09c492b8fd03..ad16d2bebfec 100644
---- a/security/ipe/ipe.h
-+++ b/security/ipe/ipe.h
-@@ -9,11 +9,15 @@
- #define pr_fmt(fmt) "IPE " fmt "\n"
- 
- #include "ctx.h"
-+#include "ipe_parser.h"
-+#include "modules/ipe_module.h"
- 
- #include <linux/types.h>
- #include <linux/sched.h>
- #include <linux/lsm_hooks.h>
- 
- extern struct lsm_blob_sizes ipe_blobs;
-+extern struct ipe_parser __start_ipe_parsers[], __end_ipe_parsers[];
-+extern struct ipe_module __start_ipe_modules[], __end_ipe_modules[];
- 
- #endif /* IPE_H */
-diff --git a/security/ipe/ipe_parser.h b/security/ipe/ipe_parser.h
+ # Let clean descend into subdirs
+ subdir-	+= basic dtc gdb kconfig mod
+diff --git a/scripts/ipe/Makefile b/scripts/ipe/Makefile
 new file mode 100644
-index 000000000000..f7c5c11bde44
+index 000000000000..e87553fbb8d6
 --- /dev/null
-+++ b/security/ipe/ipe_parser.h
-@@ -0,0 +1,59 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (C) Microsoft Corporation. All rights reserved.
-+ */
-+#ifndef IPE_PARSER_H
-+#define IPE_PARSER_H
-+
-+#include "policy.h"
-+
-+#include <linux/list.h>
-+#include <linux/types.h>
-+
-+/*
-+ * Struct used to define internal parsers that effect the policy,
-+ * but do not belong as policy modules, as they are not used to make
-+ * decisions in the event loop, and only effect the internal workings
-+ * of IPE.
-+ *
-+ * These structures are used in pass2, and policy deallocation.
-+ */
-+struct ipe_parser {
-+	u8 version;
-+	const char *first_token;
-+
-+	int (*parse)(const struct ipe_policy_line *line,
-+		     struct ipe_parsed_policy *pol);
-+	int (*free)(struct ipe_parsed_policy *pol);
-+	int (*validate)(const struct ipe_parsed_policy *pol);
-+};
-+
-+int ipe_parse_op(const struct ipe_policy_token *tok,
-+		 enum ipe_operation *op);
-+
-+int ipe_parse_action(const struct ipe_policy_token *tok,
-+		     enum ipe_action *action);
-+
-+/*
-+ * Optional struct to make structured parsers easier.
-+ */
-+struct ipe_token_parser {
-+	const char *key;
-+	int (*parse_token)(const struct ipe_policy_token *t,
-+			   struct ipe_parsed_policy *p);
-+};
-+
-+const struct ipe_parser *ipe_lookup_parser(const char *first_token);
-+
-+int ipe_for_each_parser(int (*view)(const struct ipe_parser *parser,
-+				    void *ctx),
-+			void *ctx);
-+
-+int ipe_register_parser(struct ipe_parser *p);
-+
-+#define IPE_PARSER(parser)				\
-+	static struct ipe_parser __ipe_parser_##parser	\
-+		__used __section(".ipe_parsers")	\
-+		__aligned(sizeof(unsigned long))
-+
-+#endif /* IPE_PARSER_MODULE_H */
-diff --git a/security/ipe/modules.c b/security/ipe/modules.c
++++ b/scripts/ipe/Makefile
+@@ -0,0 +1,2 @@
++# SPDX-License-Identifier: GPL-2.0-only
++subdir-y := polgen
+diff --git a/scripts/ipe/polgen/.gitignore b/scripts/ipe/polgen/.gitignore
 new file mode 100644
-index 000000000000..fb100c14cce5
+index 000000000000..80f32f25d200
 --- /dev/null
-+++ b/security/ipe/modules.c
-@@ -0,0 +1,109 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) Microsoft Corporation. All rights reserved.
-+ */
-+
-+#include "ipe.h"
-+#include "modules.h"
-+
-+#include <linux/slab.h>
-+#include <linux/types.h>
-+#include <linux/rbtree.h>
-+
-+static struct rb_root module_root = RB_ROOT;
-+
-+struct module_container {
-+	struct rb_node node;
-+	const struct ipe_module *mod;
-+};
-+
-+/**
-+ * cmp_node: Comparator for a node in the module lookup tree.
-+ * @n: First node to compare
-+ * @nn: Second node to compare
-+ *
-+ * Return:
-+ * <0 - @n's key is lexigraphically before @nn.
-+ * 0 - n's key is identical to @nn
-+ * >0 - n's key is legxigraphically after @nn
-+ */
-+static int cmp_node(struct rb_node *n, const struct rb_node *nn)
-+{
-+	const struct module_container *c1;
-+	const struct module_container *c2;
-+
-+	c1 = container_of(n, struct module_container, node);
-+	c2 = container_of(nn, struct module_container, node);
-+
-+	return strcmp(c1->mod->name, c2->mod->name);
-+}
-+
-+/**
-+ * cmp_key: Comparator to find a module in the tree by key.
-+ * @key: Supplies a pointer to a null-terminated string key
-+ * @n: Node to compare @key against
-+ *
-+ * Return:
-+ * <0 - Desired node is to the left of @n
-+ * 0  - @n is the desired node
-+ * >0 - Desired node is to the right of @n
-+ */
-+static int cmp_key(const void *key, const struct rb_node *n)
-+{
-+	struct module_container *mod;
-+
-+	mod = container_of(n, struct module_container, node);
-+
-+	return strcmp((const char *)key, mod->mod->name);
-+}
-+
-+/**
-+ * ipe_lookup_module: Attempt to find a ipe_pmodule structure by @key.
-+ * @key: The key to look for in the tree.
-+ *
-+ * Return:
-+ * !NULL - OK
-+ * NULL - No property exists under @key
-+ */
-+const struct ipe_module *ipe_lookup_module(const char *key)
-+{
-+	struct rb_node *n;
-+
-+	n = rb_find(key, &module_root, cmp_key);
-+	if (!n)
-+		return NULL;
-+
-+	return container_of(n, struct module_container, node)->mod;
-+}
-+
-+/**
-+ * ipe_register_module: Register a policy module to be used in IPE's policy.
-+ * @m: Module to register.
-+ *
-+ * This function allows parsers (policy constructs that represent integrations
-+ * with other subsystems, to be leveraged in rules) to be leveraged in IPE policy.
-+ * This must be called prior to any policies being loaded.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * !0 - Error
-+ */
-+int ipe_register_module(struct ipe_module *m)
-+{
-+	struct rb_node *n = NULL;
-+	struct module_container *c = NULL;
-+
-+	c = kzalloc(sizeof(*c), GFP_KERNEL);
-+	if (!c)
-+		return -ENOMEM;
-+
-+	c->mod = m;
-+
-+	n = rb_find_add(&c->node, &module_root, cmp_node);
-+	if (n) {
-+		kfree(c);
-+		return -EEXIST;
-+	}
-+
-+	return 0;
-+}
-diff --git a/security/ipe/modules.h b/security/ipe/modules.h
++++ b/scripts/ipe/polgen/.gitignore
+@@ -0,0 +1 @@
++polgen
+diff --git a/scripts/ipe/polgen/Makefile b/scripts/ipe/polgen/Makefile
 new file mode 100644
-index 000000000000..7b897bdd870b
+index 000000000000..066060c22b4a
 --- /dev/null
-+++ b/security/ipe/modules.h
-@@ -0,0 +1,17 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (C) Microsoft Corporation. All rights reserved.
-+ */
-+#ifndef IPE_MODULES_H
-+#define IPE_MODULES_H
-+
-+#include "ipe.h"
-+#include "ipe_module.h"
-+
-+#include <linux/types.h>
-+#include <linux/rbtree.h>
-+
-+const struct ipe_module *ipe_lookup_module(const char *key);
-+int ipe_register_module(struct ipe_module *m);
-+
-+#endif /* IPE_MODULES_H */
-diff --git a/security/ipe/modules/ipe_module.h b/security/ipe/modules/ipe_module.h
-new file mode 100644
-index 000000000000..397a54cbc4db
---- /dev/null
-+++ b/security/ipe/modules/ipe_module.h
-@@ -0,0 +1,33 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (C) Microsoft Corporation. All rights reserved.
-+ */
-+#ifndef IPE_MODULE_H
-+#define IPE_MODULE_H
-+
-+#include <linux/types.h>
-+
-+/**
-+ * ipe_module: definition of an extensible module for IPE properties.
-+ *	       These structures are used to implement 'key=value' pairs
-+ *	       in IPE policy, which will be evaluated on every IPE policy
-+ *	       evaluation.
-+ *
-+ *	       Integrity mechanisms should be define as a module, and modules
-+ *	       should manage their own dependencies via KConfig. @name is both
-+ *	       the key half of the key=value pair in the policy, and the unique
-+ *	       identifier for the module.
-+ */
-+struct ipe_module {
-+	const char			*const name;	/* required */
-+	u16				version;	/* required */
-+	int (*parse)(const char *valstr, void **value);	/* required */
-+	int (*free)(void **value);			/* optional */
-+};
-+
-+#define IPE_MODULE(parser)				\
-+	static struct ipe_module __ipe_module_##parser	\
-+		__used __section(".ipe_modules")	\
-+		__aligned(sizeof(unsigned long))
-+
-+#endif /* IPE_MODULE_H */
-diff --git a/security/ipe/parsers.c b/security/ipe/parsers.c
-new file mode 100644
-index 000000000000..80dc4704ae40
---- /dev/null
-+++ b/security/ipe/parsers.c
-@@ -0,0 +1,139 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) Microsoft Corporation. All rights reserved.
-+ */
-+
-+#include "policy.h"
-+#include "ipe_parser.h"
-+
-+#include <linux/slab.h>
-+#include <linux/types.h>
-+#include <linux/rbtree.h>
-+
-+static struct rb_root ipe_parser_root = RB_ROOT;
-+
-+struct parser_container {
-+	struct rb_node node;
-+	const struct ipe_parser *parser;
-+};
-+
-+/**
-+ * cmp_key: Comparator for the nodes within the parser tree by key
-+ * @key: Supplies a the key to evaluate nodes against
-+ * @n: Supplies a pointer to the node to compare.
-+ *
-+ * Return:
-+ * <0 - @key is to the left of @n
-+ * 0 - @key identifies @n
-+ * >0 - @key is to the right of @n
-+ */
-+static int cmp_key(const void *key, const struct rb_node *n)
-+{
-+	const struct parser_container *node;
-+
-+	node = container_of(n, struct parser_container, node);
-+
-+	return strcmp((const char *)key, node->parser->first_token);
-+}
-+
-+/**
-+ * cmp_node: Comparator for the nodes within the parser tree
-+ * @n: Supplies a pointer to the node to compare
-+ * @nn: Supplies a pointer to the another node to compare.
-+ *
-+ * Return:
-+ * <0 - @n is lexigraphically before @nn
-+ * 0 - @n is identical @nn
-+ * >0 - @n is lexigraphically after @nn
-+ */
-+static int cmp_node(struct rb_node *n, const struct rb_node *nn)
-+{
-+	const struct parser_container *c1;
-+	const struct parser_container *c2;
-+
-+	c1 = container_of(n, struct parser_container, node);
-+	c2 = container_of(nn, struct parser_container, node);
-+
-+	return strcmp(c1->parser->first_token, c2->parser->first_token);
-+}
-+
-+/**
-+ * ipe_lookup_parser: Attempt to find a ipe_property structure by @first_token.
-+ * @first_token: The key to look for in the tree.
-+ *
-+ * Return:
-+ * !NULL - OK
-+ * NULL - No property exists under @key
-+ */
-+const struct ipe_parser *ipe_lookup_parser(const char *first_token)
-+{
-+	struct rb_node *n;
-+
-+	n = rb_find(first_token, &ipe_parser_root, cmp_key);
-+	if (!n)
-+		return NULL;
-+
-+	return container_of(n, struct parser_container, node)->parser;
-+}
-+
-+/**
-+ * ipe_for_each_parser: Iterate over all currently-registered parsers
-+ *			calling @fn on the values, and providing @view @ctx.
-+ * @view: The function to call for each property. This is given the property
-+ *	  structure as the first argument, and @ctx as the second.
-+ * @ctx: caller-specified context that is passed to the function. Can be NULL.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * !0 - Proper errno as returned by @view.
-+ */
-+int ipe_for_each_parser(int (*view)(const struct ipe_parser *parser,
-+				    void *ctx),
-+			void *ctx)
-+{
-+	int rc = 0;
-+	struct rb_node *node;
-+	struct parser_container *val;
-+
-+	for (node = rb_first(&ipe_parser_root); node; node = rb_next(node)) {
-+		val = container_of(node, struct parser_container, node);
-+
-+		rc = view(val->parser, ctx);
-+		if (rc)
-+			return rc;
-+	}
-+
-+	return rc;
-+}
-+
-+/**
-+ * ipe_register_parser: Register a parser to be used in IPE's policy.
-+ * @p: Parser to register.
-+ *
-+ * This function allows parsers (policy constructs that effect IPE's
-+ * internal functionality) to be leveraged in IPE policy. This must
-+ * be called prior to any policies being loaded.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * !0 - Error
-+ */
-+int ipe_register_parser(struct ipe_parser *p)
-+{
-+	struct rb_node *n = NULL;
-+	struct parser_container *c = NULL;
-+
-+	c = kzalloc(sizeof(*c), GFP_KERNEL);
-+	if (!c)
-+		return -ENOMEM;
-+
-+	c->parser = p;
-+
-+	n = rb_find_add(&c->node, &ipe_parser_root, cmp_node);
-+	if (n) {
-+		kfree(c);
-+		return -EEXIST;
-+	}
-+
-+	return 0;
-+}
-diff --git a/security/ipe/parsers/Makefile b/security/ipe/parsers/Makefile
-new file mode 100644
-index 000000000000..1a19a094724f
---- /dev/null
-+++ b/security/ipe/parsers/Makefile
-@@ -0,0 +1,12 @@
++++ b/scripts/ipe/polgen/Makefile
+@@ -0,0 +1,6 @@
 +# SPDX-License-Identifier: GPL-2.0
-+#
-+# Copyright (C) Microsoft Corporation. All rights reserved.
-+#
-+# Makefile for building the IPE module as part of the kernel tree.
-+#
++hostprogs-always-y	:= polgen
++HOST_EXTRACFLAGS += \
++	-I$(srctree)/include \
++	-I$(srctree)/include/uapi \
 +
-+ccflags-y := -I$(srctree)/security/ipe
-+
-+obj-$(CONFIG_SECURITY_IPE) += \
-+	default.o \
-+	policy_header.o \
-diff --git a/security/ipe/parsers/default.c b/security/ipe/parsers/default.c
+diff --git a/scripts/ipe/polgen/polgen.c b/scripts/ipe/polgen/polgen.c
 new file mode 100644
-index 000000000000..30181d2cc4ed
+index 000000000000..73cf13e743f7
 --- /dev/null
-+++ b/security/ipe/parsers/default.c
-@@ -0,0 +1,106 @@
++++ b/scripts/ipe/polgen/polgen.c
+@@ -0,0 +1,145 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (C) Microsoft Corporation. All rights reserved.
 + */
 +
-+#include <linux/slab.h>
-+#include <linux/list.h>
-+#include <linux/errno.h>
-+#include <linux/string.h>
++#include <stdlib.h>
++#include <stddef.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <errno.h>
 +
-+#include "ipe_parser.h"
-+
-+static int set_op_default(enum ipe_operation op, enum ipe_action act,
-+			  struct ipe_parsed_policy *pol)
++static void usage(const char *const name)
 +{
-+	size_t i, remap_len;
-+	const enum ipe_operation *remap;
-+
-+	if (!ipe_is_op_alias(op, &remap, &remap_len)) {
-+		if (pol->rules[op].default_action != ipe_action_max)
-+			return -EBADMSG;
-+
-+		pol->rules[op].default_action = act;
-+		return 0;
-+	}
-+
-+	for (i = 0; i < remap_len; ++i) {
-+		if (pol->rules[remap[i]].default_action != ipe_action_max)
-+			return -EBADMSG;
-+
-+		pol->rules[remap[i]].default_action = act;
-+	}
-+
-+	return 0;
++	printf("Usage: %s OutputFile (PolicyFile)\n", name);
++	exit(EINVAL);
 +}
 +
-+static int parse_default(const struct ipe_policy_line *line,
-+			 struct ipe_parsed_policy *pol)
++static int policy_to_buffer(const char *pathname, char **buffer, size_t *size)
 +{
 +	int rc = 0;
-+	size_t idx = 0;
-+	struct ipe_policy_token *tok = NULL;
-+	enum ipe_operation op = ipe_operation_max;
-+	enum ipe_action act = ipe_action_max;
-+
-+	list_for_each_entry(tok, &line->tokens, next) {
-+		switch (idx) {
-+		case 0:
-+			if (strcmp("DEFAULT", tok->key) || tok->value)
-+				return -EBADMSG;
-+			break;
-+		case 1:
-+			/* schema 1 - operation, followed by action */
-+			rc = ipe_parse_op(tok, &op);
-+			if (!rc) {
-+				++idx;
-+				continue;
-+			}
-+
-+			if (pol->global_default != ipe_action_max)
-+				return -EBADMSG;
-+
-+			/* schema 2 - action */
-+			rc = ipe_parse_action(tok, &pol->global_default);
-+			if (!rc)
-+				return rc;
-+
-+			return -EBADMSG;
-+		case 2:
-+			rc = ipe_parse_action(tok, &act);
-+			if (rc)
-+				return rc;
-+
-+			return set_op_default(op, act, pol);
-+		default:
-+			return -EBADMSG;
-+		}
-+		++idx;
-+	}
-+
-+	/* met no schema */
-+	return -EBADMSG;
-+}
-+
-+static int validate_defaults(const struct ipe_parsed_policy *p)
-+{
-+	size_t i = 0;
-+
-+	if (p->global_default != ipe_action_max)
-+		return 0;
-+
-+	for (i = 0; i < ARRAY_SIZE(p->rules); ++i) {
-+		if (p->rules[i].default_action == ipe_action_max)
-+			return -EBADMSG;
-+	}
-+
-+	return 0;
-+}
-+
-+IPE_PARSER(default_decl) = {
-+	.first_token = "DEFAULT",
-+	.version = 1,
-+	.parse = parse_default,
-+	.free = NULL,
-+	.validate = validate_defaults,
-+};
-diff --git a/security/ipe/parsers/policy_header.c b/security/ipe/parsers/policy_header.c
-new file mode 100644
-index 000000000000..4d3c1a42c915
---- /dev/null
-+++ b/security/ipe/parsers/policy_header.c
-@@ -0,0 +1,126 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) Microsoft Corporation. All rights reserved.
-+ */
-+
-+#include "ipe.h"
-+#include "ipe_parser.h"
-+
-+#include <linux/slab.h>
-+#include <linux/list.h>
-+#include <linux/errno.h>
-+#include <linux/string.h>
-+
-+#include "ipe_parser.h"
-+
-+static int parse_name(const struct ipe_policy_token *t,
-+		      struct ipe_parsed_policy *p)
-+{
-+	if (p->name)
-+		return -EBADMSG;
-+
-+	p->name = kstrdup_const(t->value, GFP_KERNEL);
-+	if (!p->name)
-+		return -ENOMEM;
-+
-+	return 0;
-+}
-+
-+static int parse_ver(const struct ipe_policy_token *t,
-+		     struct ipe_parsed_policy *p)
-+{
-+	int rc = 0;
-+	char *dup = NULL;
-+	char *dup2 = NULL;
-+	char *token = NULL;
-+	size_t sep_count = 0;
-+	u16 *const cv[] = { &p->version.major, &p->version.minor, &p->version.rev };
-+
-+	dup = kstrdup(t->value, GFP_KERNEL);
-+	if (!dup) {
-+		rc = -ENOMEM;
-+		goto err;
-+	}
-+
-+	dup2 = dup;
-+
-+	while ((token = strsep(&dup, ".\n")) != NULL) {
-+		/* prevent overflow */
-+		if (sep_count >= ARRAY_SIZE(cv)) {
-+			rc = -EBADMSG;
-+			goto err;
-+		}
-+
-+		rc = kstrtou16(token, 10, cv[sep_count]);
-+		if (rc)
-+			goto err;
-+
-+		++sep_count;
-+	}
-+
-+	/* prevent underflow */
-+	if (sep_count != ARRAY_SIZE(cv))
-+		rc = -EBADMSG;
-+
-+err:
-+	kfree(dup2);
-+	return rc;
-+}
-+
-+static const struct ipe_token_parser parsers[] = {
-+	{ .key = "policy_name", .parse_token = parse_name },
-+	{ .key = "policy_version", .parse_token = parse_ver },
-+};
-+
-+static int parse_policy_hdr(const struct ipe_policy_line *line,
-+			    struct ipe_parsed_policy *pol)
-+{
-+	int rc = 0;
-+	size_t idx = 0;
-+	struct ipe_policy_token *tok = NULL;
-+	const struct ipe_token_parser *p = NULL;
-+
-+	list_for_each_entry(tok, &line->tokens, next) {
-+		if (!tok->value || idx >= sizeof(parsers)) {
-+			rc = -EBADMSG;
-+			goto err;
-+		}
-+
-+		p = &parsers[idx];
-+
-+		if (strcmp(p->key, tok->key)) {
-+			rc = -EBADMSG;
-+			goto err;
-+		}
-+
-+		rc = p->parse_token(tok, pol);
-+		if (rc)
-+			goto err;
-+
-+		++idx;
-+	}
-+
-+	return 0;
-+
-+err:
-+	return rc;
-+}
-+
-+static int free_policy_hdr(struct ipe_parsed_policy *pol)
-+{
-+	kfree(pol->name);
-+	return 0;
-+}
-+
-+static int validate_policy_hdr(const struct ipe_parsed_policy *p)
-+{
-+	return !p->name ? -EBADMSG : 0;
-+}
-+
-+IPE_PARSER(policy_header) = {
-+	.first_token = "policy_name",
-+	.version = 1,
-+	.parse = parse_policy_hdr,
-+	.free = free_policy_hdr,
-+	.validate = validate_policy_hdr,
-+};
-diff --git a/security/ipe/policy.c b/security/ipe/policy.c
-new file mode 100644
-index 000000000000..9dd60dd34477
---- /dev/null
-+++ b/security/ipe/policy.c
-@@ -0,0 +1,946 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) Microsoft Corporation. All rights reserved.
-+ */
-+
-+#include "ipe.h"
-+#include "policy.h"
-+#include "ipe_parser.h"
-+#include "modules.h"
-+
-+#include <linux/slab.h>
-+#include <linux/list.h>
-+#include <linux/ctype.h>
-+#include <linux/types.h>
-+#include <linux/parser.h>
-+#include <linux/verification.h>
-+
-+#define START_COMMENT	'#'
-+#define KEYVAL_DELIMIT	'='
-+
-+static inline bool is_quote(char ch)
-+{
-+	return ch == '\'' || ch == '\"';
-+}
-+
-+/**
-+ * is_key_char: Determine whether @ch is an acceptable character for a
-+ *		key type
-+ * @ch: Supplies the character to evaluate.
-+ *
-+ * Return:
-+ * true - Character is acceptable.
-+ * false - Character is not acceptable.
-+ */
-+static inline bool is_key_char(char ch)
-+{
-+	return isalnum(ch) || ch == '_';
-+}
-+
-+/**
-+ * is_val_char: Determine whether @ch is an acceptable character for a
-+ *		value type
-+ * @ch: Supplies the character to evaluate.
-+ *
-+ * Return:
-+ * true - Character is acceptable.
-+ * false - Character is not acceptable.
-+ */
-+static inline bool is_val_char(char ch)
-+{
-+	return isgraph(ch) || ch == ' ' || ch == '\t';
-+}
-+
-+/**
-+ * free_parser: Callback to invoke, freeing data allocated by parsers.
-+ * @parser: parser to free data.
-+ * @ctx: ctx object passed to ipe_for_each_parser.
-+ *
-+ * This function is intended to be used with ipe_for_each_parser only.
-+ *
-+ * Return:
-+ * 0 - Always
-+ */
-+static int free_parser(const struct ipe_parser *parser, void *ctx)
-+{
-+	struct ipe_parsed_policy *pol = ctx;
-+
-+	if (parser->free)
-+		parser->free(pol);
-+
-+	return 0;
-+}
-+
-+/**
-+ * free_rule: free an ipe_rule.
-+ * @r: Supplies the rule to free.
-+ *
-+ * This function is safe to call if @r is NULL or ERR_PTR.
-+ */
-+static void free_rule(struct ipe_rule *r)
-+{
-+	struct ipe_policy_mod *p, *t;
-+
-+	if (IS_ERR_OR_NULL(r))
-+		return;
-+
-+	list_for_each_entry_safe(p, t, &r->modules, next) {
-+		if (p->mod->free)
-+			p->mod->free(p->mod_value);
-+
-+		kfree(p);
-+	}
-+
-+	kfree(r);
-+}
-+
-+static void free_parsed_policy(struct ipe_parsed_policy *p)
-+{
-+	size_t i = 0;
-+	struct ipe_rule *pp, *t;
-+
-+	if (IS_ERR_OR_NULL(p))
-+		return;
-+
-+	for (i = 0; i < ARRAY_SIZE(p->rules); ++i)
-+		list_for_each_entry_safe(pp, t, &p->rules[i].rules, next)
-+			free_rule(pp);
-+
-+	(void)ipe_for_each_parser(free_parser, p);
-+	kfree(p);
-+}
-+
-+/**
-+ * free_parsed_line: free a single parsed line of tokens.
-+ * @line: Supplies the line to free.
-+ *
-+ * This function is safe to call if @line is NULL or ERR_PTR.
-+ */
-+static void free_parsed_line(struct ipe_policy_line *line)
-+{
-+	struct ipe_policy_token *p, *t;
-+
-+	if (IS_ERR_OR_NULL(line))
-+		return;
-+
-+	list_for_each_entry_safe(p, t, &line->tokens, next)
-+		kfree(p);
-+}
-+
-+/**
-+ * free_parsed_text: free a 2D list representing a tokenized policy.
-+ * @parsed: Supplies the policy to free.
-+ *
-+ * This function is safe to call if @parsed is NULL or ERR_PTR.
-+ */
-+static void free_parsed_text(struct list_head *parsed)
-+{
-+	struct ipe_policy_line *p, *t;
-+
-+	if (IS_ERR_OR_NULL(parsed))
-+		return;
-+
-+	list_for_each_entry_safe(p, t, parsed, next)
-+		free_parsed_line(p);
-+}
-+
-+/**
-+ * trim_quotes: Edit @str to remove a single instance of a trailing and
-+ *		leading quotes.
-+ * @str: Supplies the string to edit.
-+ *
-+ * If the string is not quoted, @str will be returned. This function is
-+ * safe to call if @str is NULL.
-+ *
-+ * Return:
-+ * !0 - OK
-+ * ERR_PTR(-EBADMSG) - Quote mismatch.
-+ */
-+static char *trim_quotes(char *str)
-+{
-+	char s;
-+	size_t len;
-+
-+	if (!str)
-+		return str;
-+
-+	s = *str;
-+
-+	if (is_quote(s)) {
-+		len = strlen(str) - 1;
-+
-+		if (str[len] != s)
-+			return ERR_PTR(-EBADMSG);
-+
-+		str[len] = '\0';
-+		++str;
-+	}
-+
-+	return str;
-+}
-+
-+/**
-+ * parse_token: Parse a string into a proper token representation.
-+ * @token: Supplies the token string to parse.
-+ *
-+ * @token will be edited destructively. Pass a copy if you wish to retain
-+ * the state of the original.
-+ *
-+ * This function will emit an error to pr_err when a parsing error occurs.
-+ *
-+ * Return:
-+ * !0 - OK
-+ * ERR_PTR(-EBADMSG) - An invalid character was encountered while parsing.
-+ * ERR_PTR(-ENOMEM) - No Memory
-+ */
-+static struct ipe_policy_token *parse_token(char *token)
-+{
-+	size_t i, len = 0;
-+	char *key = token;
-+	char *value = NULL;
-+	struct ipe_policy_token *local = NULL;
-+
-+	len = strlen(token);
-+
-+	for (i = 0; (i < len) && token[i] != KEYVAL_DELIMIT; ++i)
-+		if (!is_key_char(token[i]))
-+			return ERR_PTR(-EBADMSG);
-+
-+	token[i] = '\0';
-+	++i;
-+
-+	/* there is a value */
-+	if (i < len) {
-+		value = trim_quotes(&token[i]);
-+		if (IS_ERR(value))
-+			return ERR_PTR(-EBADMSG);
-+
-+		len = strlen(value);
-+
-+		for (i = 0; i < len; ++i)
-+			if (!is_val_char(value[i]))
-+				return ERR_PTR(-EBADMSG);
-+	}
-+
-+	local = kzalloc(sizeof(*local), GFP_KERNEL);
-+	if (!local)
-+		return ERR_PTR(-ENOMEM);
-+
-+	INIT_LIST_HEAD(&local->next);
-+	local->key = key;
-+	local->value = value;
-+
-+	return local;
-+}
-+
-+/**
-+ * append_token: Parse and append a token into an ipe_policy_line structure.
-+ * @p: Supplies the ipe_policy_line structure to append to.
-+ * @token: Supplies the token to parse and append to.
-+ *
-+ * @token will be edited during the parsing destructively. Pass a copy if you
-+ * wish to retain the original.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * -EBADMSG - Parsing error of @token
-+ */
-+static int append_token(struct ipe_policy_line *p, char *token)
-+{
-+	struct ipe_policy_token *t = NULL;
-+
-+	t = parse_token(token);
-+	if (IS_ERR(t))
-+		return PTR_ERR(t);
-+
-+	list_add_tail(&t->next, &p->tokens);
-+
-+	return 0;
-+}
-+
-+/**
-+ * alloc_line: Allocate an ipe_policy_line structure.
-+ *
-+ * Return:
-+ * !0 - OK
-+ * -EBADMSG - Parsing error of @token
-+ */
-+static struct ipe_policy_line *alloc_line(void)
-+{
-+	struct ipe_policy_line *l = NULL;
-+
-+	l = kzalloc(sizeof(*l), GFP_KERNEL);
-+	if (!l)
-+		return ERR_PTR(-ENOMEM);
-+
-+	INIT_LIST_HEAD(&l->next);
-+	INIT_LIST_HEAD(&l->tokens);
-+
-+	return l;
-+}
-+
-+/**
-+ * insert_token: Append a token to @line.
-+ * @token: Supplies the token to append to @line.
-+ * @line: Supplies a pointer to the ipe_policy_line structure to append to.
-+ *
-+ * If @line is NULL, it will be allocated on behalf of the caller.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * -ENOMEM - No Memory
-+ * -EBADMSG - Parsing error of @token
-+ */
-+static int insert_token(char *token, struct ipe_policy_line **line)
-+{
-+	int rc = 0;
-+	struct ipe_policy_line *local = *line;
-+
-+	if (!local) {
-+		local = alloc_line();
-+		if (IS_ERR(local))
-+			return PTR_ERR(local);
-+
-+		*line = local;
-+	}
-+
-+	rc = append_token(local, token);
-+	if (rc)
-+		return rc;
-+
-+	return 0;
-+}
-+
-+/**
-+ * ipe_tokenize_line: Parse a line of text into a list of token structures.
-+ * @line: Supplies the line to parse.
-+ *
-+ * The final result can be NULL, which represents no tokens were parsed.
-+ *
-+ * Return:
-+ * !0 - OK
-+ * NULL - OK, no tokens were parsed.
-+ * ERR_PTR(-EBADMSG) - Invalid policy syntax
-+ * ERR_PTR(-ENOMEM) - No Memory
-+ */
-+static struct ipe_policy_line *tokenize_line(char *line)
-+{
-+	int rc = 0;
-+	size_t i = 0;
-+	size_t len = 0;
-+	char *tok = NULL;
-+	char quote = '\0';
-+	struct ipe_policy_line *p = NULL;
-+
-+	/* nullterm guaranteed by strsep */
-+	len = strlen(line);
-+
-+	for (i = 0; i < len; ++i) {
-+		if (quote == '\0' && is_quote(line[i])) {
-+			quote = line[i];
-+			continue;
-+		}
-+
-+		if (quote != '\0' && line[i] == quote) {
-+			quote = '\0';
-+			continue;
-+		}
-+
-+		if (quote == '\0' && line[i] == START_COMMENT) {
-+			tok = NULL;
-+			break;
-+		}
-+
-+		if (isgraph(line[i]) && !tok)
-+			tok = &line[i];
-+
-+		if (quote == '\0' && isspace(line[i])) {
-+			line[i] = '\0';
-+
-+			if (!tok)
-+				continue;
-+
-+			rc = insert_token(tok, &p);
-+			if (rc)
-+				goto err;
-+
-+			tok = NULL;
-+		}
-+	}
-+
-+	if (quote != '\0') {
-+		rc = -EBADMSG;
-+		goto err;
-+	}
-+
-+	if (tok) {
-+		rc = insert_token(tok, &p);
-+		if (rc)
-+			goto err;
-+	}
-+
-+	return p;
-+
-+err:
-+	free_parsed_line(p);
-+	return ERR_PTR(rc);
-+}
-+
-+/**
-+ * parse_pass1: parse @policy into a 2D list, representing tokens on each line.
-+ * @policy: Supplies the policy to parse. Must be nullterminated, and is
-+ *	    edited.
-+ *
-+ * In pass1 of the parser, the policy is tokenized. Minor structure checks
-+ * are done (mismatching quotes, invalid characters).
-+ *
-+ * Caller must maintain the lifetime of @policy while the return value is
-+ * alive.
-+ *
-+ * Return:
-+ * !0 - OK
-+ * ERR_PTR(-ENOMEM) - Out of Memory
-+ * ERR_PTR(-EBADMSG) - Parsing Error
-+ */
-+static int parse_pass1(char *policy, struct list_head *tokens)
-+{
-+	int rc = 0;
-+	char *p = NULL;
-+
-+	while ((p = strsep(&policy, "\n\0")) != NULL) {
-+		struct ipe_policy_line *t = NULL;
-+
-+		t = tokenize_line(p);
-+		if (IS_ERR(t)) {
-+			rc = PTR_ERR(t);
-+			goto err_free_parsed;
-+		}
-+
-+		if (!t)
-+			continue;
-+
-+		list_add_tail(&t->next, tokens);
-+	}
-+
-+	return 0;
-+
-+err_free_parsed:
-+	free_parsed_text(tokens);
-+	return rc;
-+}
-+
-+/**
-+ * parse_pass2: Take the 2D list of tokens generated from pass1, and transform
-+ *		it into a partial ipe_policy.
-+ * @parsed: Supplies the list of tokens generated from pass1.
-+ * @p: Policy to manipulate with parsed tokens.
-+ *
-+ * This function is where various declarations and references are parsed into
-+ * policy. All declarations and references required to parse rules should be
-+ * done here as a parser, and then in pass3 these can be utilized.
-+ *
-+ * Return:
-+ * !0 - OK
-+ * -EBADMSG - Syntax Parsing Errors
-+ * -ENOENT - No handler for a token.
-+ * -ENOMEM - Out of memory
-+ */
-+static int parse_pass2(struct list_head *parsed, struct ipe_parsed_policy *pol)
-+{
-+	int rc = 0;
-+	const struct ipe_parser *p = NULL;
-+	struct ipe_policy_line *line = NULL;
-+	const struct ipe_policy_token *token = NULL;
-+
-+	list_for_each_entry(line, parsed, next) {
-+		token = list_first_entry(&line->tokens, struct ipe_policy_token, next);
-+		p = ipe_lookup_parser(token->key);
-+		if (!p)
-+			continue;
-+
-+		rc = p->parse(line, pol);
-+		if (rc)
-+			return rc;
-+
-+		line->consumed = true;
-+	}
-+
-+	return rc;
-+}
-+
-+/**
-+ * ipe_parse_op: parse a token to an operation value.
-+ * @tok: Token to parse
-+ * @op: Operation Parsed.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * -EINVAL - Invalid key or value.
-+ */
-+int ipe_parse_op(const struct ipe_policy_token *tok,
-+		 enum ipe_operation *op)
-+{
-+	substring_t match[MAX_OPT_ARGS] = { 0 };
-+	const match_table_t ops = {
-+		{ ipe_op_alias_max, NULL },
-+	};
-+
-+	if (strcmp(tok->key, "op") || !tok->value)
-+		return -EINVAL;
-+
-+	*op = match_token((char *)tok->value, ops, match);
-+	if ((*op) == (int)ipe_op_alias_max)
-+		return -ENOENT;
-+
-+	return 0;
-+}
-+
-+/**
-+ * ipe_parse_action: parse a token to an operation value.
-+ * @tok: Token to parse
-+ * @action: action parsed.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * -EINVAL - Invalid key or value.
-+ */
-+int ipe_parse_action(const struct ipe_policy_token *tok,
-+		     enum ipe_action *action)
-+{
-+	substring_t match[MAX_OPT_ARGS] = { 0 };
-+	const match_table_t actions = {
-+		{ ipe_action_allow, "ALLOW" },
-+		{ ipe_action_deny, "DENY" },
-+		{ ipe_action_max, NULL },
-+	};
-+
-+	if (strcmp(tok->key, "action") || !tok->value)
-+		return -EINVAL;
-+
-+	*action = match_token((char *)tok->value, actions, match);
-+
-+	if (*action == ipe_action_max)
-+		return -EINVAL;
-+
-+	return 0;
-+}
-+
-+/**
-+ * parse_mod_to_rule: Parse a module token and append the values to the
-+ *		      provided rule.
-+ * @t: Supplies the token to parse.
-+ * @r: Supplies the rule to modify with the result.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * -ENOENT - No such module to handle @t.
-+ * -ENOMEM - No memory.
-+ * Others - Module defined errors.
-+ */
-+static int parse_mod_to_rule(const struct ipe_policy_token *t, struct ipe_rule *r)
-+{
-+	int rc = 0;
-+	struct ipe_policy_mod *p = NULL;
-+	const struct ipe_module *m = NULL;
-+
-+	m = ipe_lookup_module(t->key);
-+	if (IS_ERR_OR_NULL(m)) {
-+		rc = (m) ? PTR_ERR(m) : -ENOENT;
-+		goto err;
-+	}
-+
-+	p = kzalloc(sizeof(*p), GFP_KERNEL);
-+	if (!p) {
-+		rc = -ENOMEM;
-+		goto err;
-+	}
-+	INIT_LIST_HEAD(&p->next);
-+	p->mod = m;
-+
-+	rc = m->parse(t->value, &p->mod_value);
-+	if (rc)
-+		goto err2;
-+
-+	list_add_tail(&p->next, &r->modules);
-+	return 0;
-+err2:
-+	kfree(p);
-+err:
-+	return rc;
-+}
-+
-+/**
-+ * parse_rule: Parse a policy line into an ipe_rule structure.
-+ * @line: Supplies the line to parse.
-+ *
-+ * Return:
-+ * Valid ipe_rule - OK
-+ * ERR_PTR(-ENOMEM) - Out of Memory
-+ * ERR_PTR(-ENOENT) - No such module to handle a token
-+ * ERR_PTR(-EINVAL) - An unacceptable value has been encountered.
-+ * ERR_PTR(...) - Module defined errors.
-+ */
-+static struct ipe_rule *parse_rule(const struct ipe_policy_line *line)
-+{
-+	int rc = 0;
-+	struct ipe_rule *r = NULL;
-+	const struct list_head *node = NULL;
-+
-+	r = kzalloc(sizeof(*r), GFP_KERNEL);
-+	if (!r) {
-+		rc = -ENOMEM;
-+		goto err;
-+	}
-+
-+	INIT_LIST_HEAD(&r->next);
-+	INIT_LIST_HEAD(&r->modules);
-+	r->op = (int)ipe_op_alias_max;
-+	r->action = ipe_action_max;
-+
-+	list_for_each(node, &line->tokens) {
-+		const struct ipe_policy_token *token = NULL;
-+
-+		token = container_of(node, struct ipe_policy_token, next);
-+
-+		if (list_is_first(node, &line->tokens)) {
-+			enum ipe_operation op;
-+
-+			rc = ipe_parse_op(token, &op);
-+			if (rc)
-+				goto err;
-+
-+			r->op = op;
-+			continue;
-+		}
-+
-+		if (list_is_last(node, &line->tokens)) {
-+			enum ipe_action action;
-+
-+			rc = ipe_parse_action(token, &action);
-+			if (rc)
-+				goto err;
-+
-+			r->action = action;
-+			continue;
-+		}
-+
-+		rc = parse_mod_to_rule(token, r);
-+		if (rc)
-+			goto err;
-+	}
-+
-+	if (r->action == ipe_action_max || r->op == (int)ipe_op_alias_max) {
-+		rc = -EBADMSG;
-+		goto err;
-+	}
-+
-+	return r;
-+err:
-+	free_rule(r);
-+	return ERR_PTR(rc);
-+}
-+
-+/**
-+ * parse_pass3: Take the partially parsed list of tokens from pass 1 and the
-+ *		parial policy from pass 2, and finalize the policy.
-+ * @parsed: Supplies the tokens parsed from pass 1.
-+ * @p: Supplies the partial policy from pass 2.
-+ *
-+ * This function finalizes the IPE policy by parsing all rules in the
-+ * policy. This must occur in pass3, as in pass2, references are resolved
-+ * that can be used in pass3.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * !0 - Standard errno
-+ */
-+static int parse_pass3(struct list_head *parsed,
-+		       struct ipe_parsed_policy *p)
-+{
-+	int rc = 0;
-+	size_t i = 0;
-+	size_t remap_len = 0;
-+	struct ipe_rule *rule = NULL;
-+	struct ipe_policy_line *line = NULL;
-+	const enum ipe_operation *remap;
-+
-+	list_for_each_entry(line, parsed, next) {
-+		if (line->consumed)
-+			continue;
-+
-+		rule = parse_rule(line);
-+		if (IS_ERR(rule)) {
-+			rc = PTR_ERR(rule);
-+			goto err;
-+		}
-+
-+		if (ipe_is_op_alias(rule->op, &remap, &remap_len)) {
-+			for (i = 0; i < remap_len; ++i) {
-+				rule->op = remap[i];
-+				list_add_tail(&rule->next, &p->rules[rule->op].rules);
-+				rule = parse_rule(line);
-+			}
-+
-+			free_rule(rule);
-+		} else {
-+			list_add_tail(&rule->next, &p->rules[rule->op].rules);
-+		}
-+
-+		line->consumed = true;
-+	}
-+
-+	return 0;
-+err:
-+	free_rule(rule);
-+	return rc;
-+}
-+
-+/**
-+ * parser_validate: Callback to invoke, validating parsers as necessary
-+ * @parser: parser to call to validate data.
-+ * @ctx: ctx object passed to ipe_for_each_parser.
-+ *
-+ * This function is intended to be used with ipe_for_each_parser only.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * !0 - Validation failed.
-+ */
-+static int parser_validate(const struct ipe_parser *parser, void *ctx)
-+{
-+	int rc = 0;
-+	const struct ipe_parsed_policy *pol = ctx;
-+
-+	if (parser->validate)
-+		rc = parser->validate(pol);
-+
-+	return rc;
-+}
-+
-+/**
-+ * validate_policy: Given a policy structure that was just parsed, validate
-+ *		    that all necessary fields are present, initialized
-+ *		    correctly, and all lines parsed are have been consumed.
-+ * @parsed: Supplies the policy lines that were parsed in pass1.
-+ * @policy: Supplies the fully parsed policy.
-+ *
-+ * A parsed policy can be an invalid state for use (a default was undefined,
-+ * a header was undefined) by just parsing the policy.
-+ *
-+ * Return:
-+ * 0 - OK
-+ * -EBADMSG - Policy is invalid.
-+ */
-+static int validate_policy(const struct list_head *parsed,
-+			   const struct ipe_parsed_policy *p)
-+{
-+	int rc = 0;
-+	const struct ipe_policy_line *line = NULL;
-+
-+	list_for_each_entry(line, parsed, next) {
-+		if (!line->consumed)
-+			return -EBADMSG;
-+	}
-+
-+	rc = ipe_for_each_parser(parser_validate,
-+				 (struct ipe_parsed_policy *)p);
-+
-+	return rc;
-+}
-+
-+/**
-+ * new_parsed_policy: Allocate and initialize a parsed policy to its default
-+ *		      values.
-+ *
-+ * Return:
-+ * !IS_ERR - OK
-+ */
-+static struct ipe_parsed_policy *new_parsed_policy(void)
-+{
-+	size_t i = 0;
-+	struct ipe_parsed_policy *p = NULL;
-+	struct ipe_operation_table *t = NULL;
-+
-+	p = kzalloc(sizeof(*p), GFP_KERNEL);
-+	if (!p)
-+		return ERR_PTR(-ENOMEM);
-+
-+	p->global_default = ipe_action_max;
-+
-+	for (i = 0; i < ARRAY_SIZE(p->rules); ++i) {
-+		t = &p->rules[i];
-+
-+		t->default_action = ipe_action_max;
-+		INIT_LIST_HEAD(&t->rules);
-+	}
-+
-+	return p;
-+}
-+
-+/**
-+ * parse_policy: Given a string, parse the string into an IPE policy
-+ *		     structure.
-+ * @p: partially filled ipe_policy structure to populate with the result.
-+ *
-+ * @p must have text and textlen set.
-+ *
-+ * Return:
-+ * Valid ipe_policy structure - OK
-+ * ERR_PTR(-EBADMSG) - Invalid Policy Syntax (Unrecoverable)
-+ * ERR_PTR(-ENOMEM) - Out of Memory
-+ */
-+static int parse_policy(struct ipe_policy *p)
-+{
-+	int rc = 0;
-+	char *dup = NULL;
-+	LIST_HEAD(parsed);
-+	struct ipe_parsed_policy *pp = NULL;
-+
-+	if (!p->textlen)
-+		return -EBADMSG;
-+
-+	dup = kmemdup_nul(p->text, p->textlen, GFP_KERNEL);
-+	if (!dup)
-+		return -ENOMEM;
-+
-+	pp = new_parsed_policy();
-+	if (IS_ERR(pp)) {
-+		rc = PTR_ERR(pp);
++	FILE *fd;
++	char *lbuf;
++	size_t fsize;
++	size_t read;
++
++	fd = fopen(pathname, "r");
++	if (!fd) {
++		rc = errno;
 +		goto out;
 +	}
 +
-+	rc = parse_pass1(dup, &parsed);
-+	if (rc)
-+		goto err;
++	fseek(fd, 0, SEEK_END);
++	fsize = ftell(fd);
++	rewind(fd);
 +
-+	rc = parse_pass2(&parsed, pp);
-+	if (rc)
-+		goto err;
++	lbuf = malloc(fsize);
++	if (!lbuf) {
++		rc = ENOMEM;
++		goto out_close;
++	}
 +
-+	rc = parse_pass3(&parsed, pp);
-+	if (rc)
-+		goto err;
++	read = fread((void *)lbuf, sizeof(*lbuf), fsize, fd);
++	if (read != fsize) {
++		rc = -1;
++		goto out_free;
++	}
 +
-+	rc = validate_policy(&parsed, pp);
-+	if (rc)
-+		goto err;
++	*buffer = lbuf;
++	*size = fsize;
++	fclose(fd);
 +
-+	p->parsed = pp;
++	return rc;
 +
-+	goto out;
-+err:
-+	free_parsed_policy(pp);
++out_free:
++	free(lbuf);
++out_close:
++	fclose(fd);
 +out:
-+	free_parsed_text(&parsed);
-+	kfree(dup);
-+
 +	return rc;
 +}
 +
-+/**
-+ * ipe_is_op_alias: Determine if @op is an alias for one or more operations
-+ * @op: Supplies the operation to check. Should be either ipe_operation or
-+ *	ipe_op_alias.
-+ * @map: Supplies a pointer to populate with the mapping if @op is an alias
-+ * @size: Supplies the size of @map if @op is an alias.
-+ *
-+ * Return:
-+ * true - @op is an alias
-+ * false - @op is not an alias
-+ */
-+bool ipe_is_op_alias(int op, const enum ipe_operation **map, size_t *size)
-+{
-+	switch (op) {
-+	default:
-+		return false;
-+	}
-+}
-+
-+/**
-+ * ipe_free_policy: Deallocate a given IPE policy.
-+ * @p: Supplies the policy to free.
-+ *
-+ * Safe to call on IS_ERR/NULL.
-+ */
-+void ipe_put_policy(struct ipe_policy *p)
-+{
-+	if (IS_ERR_OR_NULL(p) || !refcount_dec_and_test(&p->refcount))
-+		return;
-+
-+	free_parsed_policy(p->parsed);
-+	if (!p->pkcs7)
-+		kfree(p->text);
-+	kfree(p->pkcs7);
-+	kfree(p);
-+}
-+
-+static int set_pkcs7_data(void *ctx, const void *data, size_t len,
-+			  size_t asn1hdrlen)
-+{
-+	struct ipe_policy *p = ctx;
-+
-+	p->text = (const char *)data;
-+	p->textlen = len;
-+
-+	return 0;
-+}
-+
-+/**
-+ * ipe_new_policy: allocate and parse an ipe_policy structure.
-+ *
-+ * @text: Supplies a pointer to the plain-text policy to parse.
-+ * @textlen: Supplies the length of @text.
-+ * @pkcs7: Supplies a pointer to a pkcs7-signed IPE policy.
-+ * @pkcs7len: Supplies the length of @pkcs7.
-+ *
-+ * @text/@textlen Should be NULL/0 if @pkcs7/@pkcs7len is set.
-+ *
-+ * The result will still need to be associated with a context via
-+ * ipe_add_policy.
-+ *
-+ * Return:
-+ * !IS_ERR - Success
-+ */
-+struct ipe_policy *ipe_new_policy(const char *text, size_t textlen,
-+				  const char *pkcs7, size_t pkcs7len)
++static int write_boot_policy(const char *pathname, const char *buf, size_t size)
 +{
 +	int rc = 0;
-+	struct ipe_policy *new = NULL;
++	FILE *fd;
++	size_t i;
 +
-+	new = kzalloc(sizeof(*new), GFP_KERNEL);
-+	if (!new)
-+		return ERR_PTR(-ENOMEM);
-+
-+	refcount_set(&new->refcount, 1);
-+
-+	if (!text) {
-+		new->pkcs7len = pkcs7len;
-+		new->pkcs7 = kmemdup(pkcs7, pkcs7len, GFP_KERNEL);
-+		if (!new->pkcs7) {
-+			rc = -ENOMEM;
-+			goto err;
-+		}
-+
-+		rc = verify_pkcs7_signature(NULL, 0, new->pkcs7, pkcs7len, NULL,
-+					    VERIFYING_UNSPECIFIED_SIGNATURE,
-+					    set_pkcs7_data, new);
-+		if (rc)
-+			goto err;
-+	} else {
-+		new->textlen = textlen;
-+		new->text = kstrndup(text, textlen, GFP_KERNEL);
-+		if (!new->text) {
-+			rc = -ENOMEM;
-+			goto err;
-+		}
++	fd = fopen(pathname, "w");
++	if (!fd) {
++		rc = errno;
++		goto err;
 +	}
 +
-+	rc = parse_policy(new);
-+	if (rc)
-+		goto err;
++	fprintf(fd, "/* This file is automatically generated.");
++	fprintf(fd, " Do not edit. */\n");
++	fprintf(fd, "#include <stddef.h>\n");
++	fprintf(fd, "\nextern const char *const ipe_boot_policy;\n\n");
++	fprintf(fd, "const char *const ipe_boot_policy =\n");
 +
-+	return new;
++	if (!buf || size == 0) {
++		fprintf(fd, "\tNULL;\n");
++		fclose(fd);
++		return 0;
++	}
++
++	fprintf(fd, "\t\"");
++
++	for (i = 0; i < size; ++i) {
++		switch (buf[i]) {
++		case '"':
++			fprintf(fd, "\\\"");
++			break;
++		case '\'':
++			fprintf(fd, "'");
++			break;
++		case '\n':
++			fprintf(fd, "\\n\"\n\t\"");
++			break;
++		case '\\':
++			fprintf(fd, "\\\\");
++			break;
++		case '\t':
++			fprintf(fd, "\\t");
++			break;
++		case '\?':
++			fprintf(fd, "\\?");
++			break;
++		default:
++			fprintf(fd, "%c", buf[i]);
++		}
++	}
++	fprintf(fd, "\";\n");
++	fclose(fd);
++
++	return 0;
++
 +err:
-+	ipe_put_policy(new);
-+	return ERR_PTR(rc);
++	if (fd)
++		fclose(fd);
++	return rc;
 +}
-diff --git a/security/ipe/policy.h b/security/ipe/policy.h
++
++int main(int argc, const char *const argv[])
++{
++	int rc = 0;
++	size_t len = 0;
++	char *policy = NULL;
++
++	if (argc < 2)
++		usage(argv[0]);
++
++	if (argc > 2) {
++		rc = policy_to_buffer(argv[2], &policy, &len);
++		if (rc != 0)
++			goto cleanup;
++	}
++
++	rc = write_boot_policy(argv[1], policy, len);
++cleanup:
++	if (policy)
++		free(policy);
++	if (rc != 0)
++		perror("An error occurred during policy conversion: ");
++	return rc;
++}
+diff --git a/security/ipe/.gitignore b/security/ipe/.gitignore
 new file mode 100644
-index 000000000000..d78788db238c
+index 000000000000..eca22ad5ed22
 --- /dev/null
-+++ b/security/ipe/policy.h
-@@ -0,0 +1,97 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (C) Microsoft Corporation. All rights reserved.
-+ */
-+#ifndef IPE_POLICY_H
-+#define IPE_POLICY_H
++++ b/security/ipe/.gitignore
+@@ -0,0 +1 @@
++boot-policy.c
+\ No newline at end of file
+diff --git a/security/ipe/Kconfig b/security/ipe/Kconfig
+index fcf82a8152ec..39df680b67a2 100644
+--- a/security/ipe/Kconfig
++++ b/security/ipe/Kconfig
+@@ -20,6 +20,16 @@ menuconfig SECURITY_IPE
+ 
+ if SECURITY_IPE
+ 
++config IPE_BOOT_POLICY
++	string "Integrity policy to apply on system startup"
++	help
++	  This option specifies a filepath to a IPE policy that is compiled
++	  into the kernel. This policy will be enforced until a policy update
++	  is deployed via the $securityfs/ipe/policies/$policy_name/active
++	  interface.
 +
-+#include <linux/list.h>
-+#include <linux/types.h>
-+#include <linux/refcount.h>
++	  If unsure, leave blank.
 +
-+struct ipe_policy_token {
-+	struct list_head next;		/* type: policy_token */
+ choice
+ 	prompt "Hash algorithm used in auditing policies"
+ 	default IPE_AUDIT_HASH_SHA1
+diff --git a/security/ipe/Makefile b/security/ipe/Makefile
+index 1e7b2d7fcd9e..89fec670f954 100644
+--- a/security/ipe/Makefile
++++ b/security/ipe/Makefile
+@@ -7,7 +7,18 @@
+ 
+ ccflags-y := -I$(srctree)/security/ipe/modules
+ 
++quiet_cmd_polgen = IPE_POL $(2)
++      cmd_polgen = scripts/ipe/polgen/polgen security/ipe/boot-policy.c $(2)
 +
-+	const char *key;
-+	const char *value;
-+};
++$(eval $(call config_filename,IPE_BOOT_POLICY))
 +
-+struct ipe_policy_line {
-+	struct list_head next;		/* type: policy_line */
-+	struct list_head tokens;	/* type: policy_token */
++targets += boot-policy.c
 +
-+	bool consumed;
-+};
++$(obj)/boot-policy.c: scripts/ipe/polgen/polgen $(IPE_BOOT_POLICY_FILENAME) FORCE
++	$(call if_changed,polgen,$(IPE_BOOT_POLICY_FILENAME))
 +
-+struct ipe_module;
+ obj-$(CONFIG_SECURITY_IPE) += \
++	boot-policy.o \
+ 	ctx.o \
+ 	eval.o \
+ 	fs.o \
+@@ -21,3 +32,5 @@ obj-$(CONFIG_SECURITY_IPE) += \
+ 	policyfs.o \
+ 
+ obj-$(CONFIG_AUDIT) += audit.o
 +
-+enum ipe_operation {
-+	ipe_operation_max = 0,
-+};
++clean-files := boot-policy.c \
+diff --git a/security/ipe/ctx.c b/security/ipe/ctx.c
+index fc9b8e467bc9..879acf4ceac5 100644
+--- a/security/ipe/ctx.c
++++ b/security/ipe/ctx.c
+@@ -15,6 +15,7 @@
+ #include <linux/spinlock.h>
+ #include <linux/moduleparam.h>
+ 
++extern const char *const ipe_boot_policy;
+ static bool success_audit;
+ static bool enforce = true;
+ 
+@@ -329,6 +330,7 @@ void ipe_put_ctx(struct ipe_context *ctx)
+ int __init ipe_init_ctx(void)
+ {
+ 	int rc = 0;
++	struct ipe_policy *p = NULL;
+ 	struct ipe_context *lns = NULL;
+ 
+ 	lns = create_ctx();
+@@ -342,10 +344,26 @@ int __init ipe_init_ctx(void)
+ 	WRITE_ONCE(lns->enforce, enforce);
+ 	spin_unlock(&lns->lock);
+ 
++	if (ipe_boot_policy) {
++		p = ipe_new_policy(ipe_boot_policy, strlen(ipe_boot_policy),
++				   NULL, 0);
++		if (IS_ERR(p)) {
++			rc = PTR_ERR(lns);
++			goto err;
++		}
 +
-+/*
-+ * Extension to ipe_operation, representing operations
-+ * that are just one or more operations under the hood
-+ */
-+enum ipe_op_alias {
-+	ipe_op_alias_max = ipe_operation_max,
-+};
++		ipe_add_policy(lns, p);
++		rc = ipe_set_active_pol(p);
++		if (!rc)
++			goto err;
++	}
 +
-+enum ipe_action {
-+	ipe_action_allow = 0,
-+	ipe_action_deny,
-+	ipe_action_max,
-+};
-+
-+struct ipe_policy_mod {
-+	const struct ipe_module *mod;
-+	void			*mod_value;
-+
-+	struct list_head next;
-+};
-+
-+struct ipe_rule {
-+	enum ipe_operation op;
-+	enum ipe_action action;
-+
-+	struct list_head modules;
-+
-+	struct list_head next;
-+};
-+
-+struct ipe_operation_table {
-+	struct list_head rules;
-+	enum ipe_action default_action;
-+};
-+
-+struct ipe_parsed_policy {
-+	const char *name;
-+	struct {
-+		u16 major;
-+		u16 minor;
-+		u16 rev;
-+	} version;
-+
-+	enum ipe_action global_default;
-+
-+	struct ipe_operation_table rules[ipe_operation_max];
-+};
-+
-+struct ipe_policy {
-+	const char     *pkcs7;
-+	size_t		pkcs7len;
-+
-+	const char     *text;
-+	size_t		textlen;
-+
-+	struct ipe_parsed_policy *parsed;
-+
-+	refcount_t	refcount;
-+};
-+
-+struct ipe_policy *ipe_new_policy(const char *text, size_t textlen,
-+				  const char *pkcs7, size_t pkcs7len);
-+void ipe_put_policy(struct ipe_policy *pol);
-+bool ipe_is_op_alias(int op, const enum ipe_operation **map, size_t *size);
-+
-+#endif /* IPE_POLICY_H */
+ 	rcu_assign_pointer(*ipe_tsk_ctx(current), lns);
++	ipe_put_policy(p);
+ 
+ 	return 0;
+ err:
++	ipe_put_policy(p);
+ 	ipe_put_ctx(lns);
+ 	return rc;
+ }
 -- 
 2.33.0
 
