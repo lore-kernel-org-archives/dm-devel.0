@@ -2,80 +2,80 @@ Return-Path: <SRS0=XhuN=PB=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BBB58C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 06:29:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D923DC433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 06:31:06 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 380FC60FDC
-	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 06:29:55 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 380FC60FDC
+	by mail.kernel.org (Postfix) with ESMTPS id 5787761027
+	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 06:31:06 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 5787761027
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=chromium.org
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-483-mn_cO2VpOK2OqohbRkgmpA-1; Wed, 13 Oct 2021 02:29:52 -0400
-X-MC-Unique: mn_cO2VpOK2OqohbRkgmpA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-471-6v_F_jbIO6-2-Ccyzgo0mw-1; Wed, 13 Oct 2021 02:31:01 -0400
+X-MC-Unique: 6v_F_jbIO6-2-Ccyzgo0mw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D8C10801AA7;
-	Wed, 13 Oct 2021 06:29:47 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 207211006AA5;
+	Wed, 13 Oct 2021 06:30:57 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 982C510016F4;
-	Wed, 13 Oct 2021 06:29:47 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A829A60CC9;
+	Wed, 13 Oct 2021 06:30:56 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3E70D4EA2A;
-	Wed, 13 Oct 2021 06:29:47 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 78D764EA2F;
+	Wed, 13 Oct 2021 06:30:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19D6Tkje029233 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 13 Oct 2021 02:29:46 -0400
+	id 19D6Usok029323 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 13 Oct 2021 02:30:54 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 5A1752026D5D; Wed, 13 Oct 2021 06:29:46 +0000 (UTC)
+	id 93C7E50150; Wed, 13 Oct 2021 06:30:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 50BE12026D60
-	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 06:29:43 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8E263568F0
+	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 06:30:49 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 73BB9899EC0
-	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 06:29:43 +0000 (UTC)
-Received: from mail-pl1-f173.google.com (mail-pl1-f173.google.com
-	[209.85.214.173]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-183-NtGj3fQVOp-pwHWAdeJq7g-1; Wed, 13 Oct 2021 02:29:41 -0400
-X-MC-Unique: NtGj3fQVOp-pwHWAdeJq7g-1
-Received: by mail-pl1-f173.google.com with SMTP id x4so1115870pln.5
-	for <dm-devel@redhat.com>; Tue, 12 Oct 2021 23:29:41 -0700 (PDT)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3CDAF899EC1
+	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 06:30:49 +0000 (UTC)
+Received: from mail-pf1-f177.google.com (mail-pf1-f177.google.com
+	[209.85.210.177]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-315-IQhQ6zpKN4aCL_3OhR_nwA-1; Wed, 13 Oct 2021 02:30:45 -0400
+X-MC-Unique: IQhQ6zpKN4aCL_3OhR_nwA-1
+Received: by mail-pf1-f177.google.com with SMTP id 187so1536101pfc.10
+	for <dm-devel@redhat.com>; Tue, 12 Oct 2021 23:30:45 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20210112;
 	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
 	:mime-version:content-disposition:in-reply-to;
-	bh=W+Po2ncML0dagir1ZXD2ovXOKvk/W+c/3o5vm+NA9cQ=;
-	b=VvqX2N69PYSsjKgmWCwLR8I9YQoDB43G6oi38w/oyh6P7/L+Itscsls6NhiRTRP8Ld
-	AvDGczASR26XAVJ0pDRud7TE4+IAhzGBZ6DZ4FHlrFlowwHRWRZj0qDYBkxS05UhJU+w
-	lCxOxJhXZALn9rgx1Vt4GpvqI61hDy0f2aJp/Rh80h1tzDqZ4P8yTGIOHCj7K2pVGSOP
-	HY+dQ0II5nhRKVF3u5/9PQqG5Cb+NZBL5La2WhdnitB2VrqnHn/iWcjaht+qhypQiQc1
-	nJgNOX4ti6cO7lsqnQgjrIh7OkGii6T9s0djdRfaUrsduavt7YLFsJcLUtShuvNajfVh
-	dOXQ==
-X-Gm-Message-State: AOAM530lhymb7GtVU5jf6KNaBtIJyRY8TMW8BKK5HLlwsX4Fl0ljvT3A
-	hCKDPx7QDROfO6Uxub4ROstHsQ==
-X-Google-Smtp-Source: ABdhPJwwvDzOMlBdl8uBpL682Y/M/U5HFlms6OXsU9pvWhVrOJHosSbnvoIECvMOshQ6rTYdsLz56g==
-X-Received: by 2002:a17:90b:4b4c:: with SMTP id
-	mi12mr11492173pjb.57.1634106580411; 
-	Tue, 12 Oct 2021 23:29:40 -0700 (PDT)
+	bh=VuQ9K07zKhFVmW27yAURvZgXNg5Kde2VB7A9n6/jcRM=;
+	b=4BkUbbt3QXURCp97IGGjlHZcRThno7h5mEwKMG1Lr7gTpaeKbaGowDuI7a0ZXMfTja
+	kQFtTInB2E0M+Qr1H3pHHtQ30lLU5Q/nL2AY8WDVb9QwLPDmiRU6NA+qvySfH+jGgZll
+	TK5KPJXyYlKU8B+x1ec98uv04WINwV0DEBL2+9fpNTSiZtlaAPAM1OSmA/a70RH/PkKI
+	aiSO9CxpF9PtY3FrUB1Ghe+GGO2XKUBLtiL/x3QJr5DGEhfjpKqbvHA6RLaFi1rtNu+d
+	eTbrg5636GzMF6I5iHCyjFZ66MtG+n89dQYtCOrykRWXk5wUQOsq76oWM2IHHRJR2kXX
+	3Qcw==
+X-Gm-Message-State: AOAM532xCsidWa1r99rDaeXrObAt/jLFG2fSUN0/jx6hrGED7AHtrIQE
+	bmunKja69FRG8l1waZLQ+o2U7w==
+X-Google-Smtp-Source: ABdhPJxi3MilTVqoy9Kf7ydXOCYXbOlyCyon1KO3ew5UZssKOax53PkSESvwHqWMi+XXw8wleT4Yrw==
+X-Received: by 2002:a05:6a00:ccb:b0:44c:eb4b:f24e with SMTP id
+	b11-20020a056a000ccb00b0044ceb4bf24emr25691167pfv.16.1634106644424;
+	Tue, 12 Oct 2021 23:30:44 -0700 (PDT)
 Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
 	by smtp.gmail.com with ESMTPSA id
-	x7sm12999948pfj.28.2021.10.12.23.29.39
+	z10sm12678073pfn.70.2021.10.12.23.30.44
 	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Tue, 12 Oct 2021 23:29:39 -0700 (PDT)
-Date: Tue, 12 Oct 2021 23:29:39 -0700
+	Tue, 12 Oct 2021 23:30:44 -0700 (PDT)
+Date: Tue, 12 Oct 2021 23:30:43 -0700
 From: Kees Cook <keescook@chromium.org>
 To: Christoph Hellwig <hch@lst.de>
-Message-ID: <202110122328.92B4FC41F4@keescook>
+Message-ID: <202110122330.6E549D2@keescook>
 References: <20211013051042.1065752-1-hch@lst.de>
 	<20211013051042.1065752-26-hch@lst.de>
 MIME-Version: 1.0
@@ -88,7 +88,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
 	Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org,
@@ -123,7 +123,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -151,9 +151,10 @@ On Wed, Oct 13, 2021 at 07:10:38AM +0200, Christoph Hellwig wrote:
 > -	blocks_count = sb->s_bdev->bd_inode->i_size >> sb->s_blocksize_bits;
 > +	blocks_count = sb_bdev_nr_blocks(sb);
 
-Is s_blocksize_bits always 9 here? If not, this isn't equivalent.
+Wait, my bad. Yes, this is fine. It's going through two helpers. :)
 
--Kees
+Reviewed-by: Kees Cook <keescook@chromium.org>
+
 
 >  	if (blocks_count && ext4_blocks_count(es) > blocks_count) {
 >  		ext4_msg(sb, KERN_WARNING, "bad geometry: block count %llu "
