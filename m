@@ -2,64 +2,66 @@ Return-Path: <SRS0=XhuN=PB=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 65DE6C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 17:20:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7D1BDC433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 19:15:44 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 031C1610A0
-	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 17:20:29 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 031C1610A0
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
+	by mail.kernel.org (Postfix) with ESMTPS id 0EE04611CB
+	for <dm-devel@archiver.kernel.org>; Wed, 13 Oct 2021 19:15:43 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 0EE04611CB
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-238-ek2ntHfTNhiceR06qjPqCA-1; Wed, 13 Oct 2021 13:20:25 -0400
-X-MC-Unique: ek2ntHfTNhiceR06qjPqCA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-146-QpdsRtDvPeG_5aycbtRzHQ-1; Wed, 13 Oct 2021 15:15:40 -0400
+X-MC-Unique: QpdsRtDvPeG_5aycbtRzHQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7EB9A10A8E01;
-	Wed, 13 Oct 2021 17:20:20 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BD3EE8F519;
+	Wed, 13 Oct 2021 19:15:35 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5CA2219D9B;
-	Wed, 13 Oct 2021 17:20:20 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EE1B110013D7;
+	Wed, 13 Oct 2021 19:15:34 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 29F994EA2A;
-	Wed, 13 Oct 2021 17:20:20 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9D05D4A703;
+	Wed, 13 Oct 2021 19:15:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19DHKIsI009290 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 13 Oct 2021 13:20:18 -0400
+	id 19DJD1N0018699 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 13 Oct 2021 15:13:01 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 7578B10F8E13; Wed, 13 Oct 2021 17:20:18 +0000 (UTC)
+	id 2DDE52026D65; Wed, 13 Oct 2021 19:13:01 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7116710F8E16
-	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 17:20:15 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 282892026D60
+	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 19:12:58 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A211F899EC0
-	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 17:20:15 +0000 (UTC)
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-561-ESo0UqStNNO_r5SoKV88pA-1; Wed, 13 Oct 2021 13:20:07 -0400
-X-MC-Unique: ESo0UqStNNO_r5SoKV88pA-1
-Received: from [2001:4bb8:199:73c5:265:8549:750e:c7f7] (helo=localhost)
-	by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1mahti-007ef2-Dx; Wed, 13 Oct 2021 17:18:59 +0000
-From: Christoph Hellwig <hch@lst.de>
-To: Jens Axboe <axboe@kernel.dk>
-Date: Wed, 13 Oct 2021 19:12:15 +0200
-Message-Id: <20211013171215.1177671-7-hch@lst.de>
-In-Reply-To: <20211013171215.1177671-1-hch@lst.de>
-References: <20211013171215.1177671-1-hch@lst.de>
-MIME-Version: 1.0
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
-	casper.infradead.org. See http://www.infradead.org/rpr.html
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 67B61899EC0
+	for <dm-devel@redhat.com>; Wed, 13 Oct 2021 19:12:58 +0000 (UTC)
+Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
+	relay.mimecast.com with ESMTP id us-mta-589-u5yGOc8-Pn6l5tYRF8LDjQ-1;
+	Wed, 13 Oct 2021 15:12:54 -0400
+X-MC-Unique: u5yGOc8-Pn6l5tYRF8LDjQ-1
+Received: from
+	linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net
+	(linux.microsoft.com [13.77.154.182])
+	by linux.microsoft.com (Postfix) with ESMTPSA id D3D7520B9D01;
+	Wed, 13 Oct 2021 12:06:39 -0700 (PDT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com D3D7520B9D01
+From: deven.desai@linux.microsoft.com
+To: corbet@lwn.net, axboe@kernel.dk, agk@redhat.com, snitzer@redhat.com,
+	ebiggers@kernel.org, tytso@mit.edu, paul@paul-moore.com,
+	eparis@redhat.com, jmorris@namei.org, serge@hallyn.com
+Date: Wed, 13 Oct 2021 12:06:25 -0700
+Message-Id: <1634151995-16266-7-git-send-email-deven.desai@linux.microsoft.com>
+In-Reply-To: <1634151995-16266-1-git-send-email-deven.desai@linux.microsoft.com>
+References: <1634151995-16266-1-git-send-email-deven.desai@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -68,12 +70,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
-	Mike Snitzer <snitzer@redhat.com>
-Subject: [dm-devel] [PATCH 6/6] block: pass the start sector to
-	get_max_io_size
+Cc: linux-security-module@vger.kernel.org, linux-doc@vger.kernel.org,
+	jannh@google.com, linux-fscrypt@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
+	dm-devel@redhat.com, linux-audit@redhat.com
+Subject: [dm-devel] [RFC PATCH v7 06/16] uapi|audit: add trust audit message
+	definitions
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -85,9 +89,10 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -95,42 +100,43 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Pass the start sector instead of the whole bio.
+From: Deven Bowers <deven.desai@linux.microsoft.com>
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
+Introduce new definitions to audit.h centered around trust
+decisions and policy loading and activation, as an extension
+of the mandatory access control fields.
+
+Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
 ---
- block/blk-merge.c | 6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
 
-diff --git a/block/blk-merge.c b/block/blk-merge.c
-index 87ea3e7b8ad28..7498f570aa302 100644
---- a/block/blk-merge.c
-+++ b/block/blk-merge.c
-@@ -174,12 +174,10 @@ static struct bio *blk_bio_write_same_split(struct request_queue *q,
-  * requests that are submitted to a block device if the start of a bio is not
-  * aligned to a physical block boundary.
-  */
--static inline unsigned get_max_io_size(struct request_queue *q,
--				       struct bio *bio)
-+static inline unsigned get_max_io_size(struct request_queue *q, sector_t sector)
- {
- 	unsigned pbs = queue_physical_block_size(q) >> SECTOR_SHIFT;
- 	unsigned lbs = queue_logical_block_size(q) >> SECTOR_SHIFT;
--	sector_t sector = bio->bi_iter.bi_sector;
- 	unsigned start_offset = sector & (pbs - 1);
- 	unsigned sectors = q->limits.max_sectors;
- 	unsigned max_sectors;
-@@ -288,7 +286,7 @@ static struct bio *blk_bio_segment_split(struct request_queue *q,
- 	struct bio_vec bv, bvprv, *bvprvp = NULL;
- 	struct bvec_iter iter;
- 	unsigned nsegs = 0, sectors = 0;
--	const unsigned max_sectors = get_max_io_size(q, bio);
-+	const unsigned max_sectors = get_max_io_size(q, bio->bi_iter.bi_sector);
- 	const unsigned max_segs = queue_max_segments(q);
+Relevant changes since v6:
+  * Change audit records to MAC region (14XX) from
+    Integrity region (18XX), as IPE is an effectively a MAC system
+    around trust versus an extension to the integrity subsystem.
+  * Generalize the #defines to support the class of trust-based
+    Access-Control LSMs.
+
+---
+ include/uapi/linux/audit.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+index daa481729e9b..3a83b3605896 100644
+--- a/include/uapi/linux/audit.h
++++ b/include/uapi/linux/audit.h
+@@ -139,6 +139,10 @@
+ #define AUDIT_MAC_UNLBL_STCDEL	1417	/* NetLabel: del a static label */
+ #define AUDIT_MAC_CALIPSO_ADD	1418	/* NetLabel: add CALIPSO DOI entry */
+ #define AUDIT_MAC_CALIPSO_DEL	1419	/* NetLabel: del CALIPSO DOI entry */
++#define AUDIT_TRUST_RESULT	1420	/* IPE Denial or Grant */
++#define AUDIT_TRUST_POLICY_LOAD 1421	/* IPE Policy Load */
++#define AUDIT_TRUST_POLICY_ACTIVATE 1422	/* IPE Policy Activate */
++#define AUDIT_TRUST_STATUS	1423	/* IPE enforcing,permissive */
  
- 	bio_for_each_bvec(bv, bio, iter) {
+ #define AUDIT_FIRST_KERN_ANOM_MSG   1700
+ #define AUDIT_LAST_KERN_ANOM_MSG    1799
 -- 
-2.30.2
+2.33.0
 
 --
 dm-devel mailing list
