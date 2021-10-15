@@ -2,59 +2,58 @@ Return-Path: <SRS0=TigA=PD=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 23B6CC4332F
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Oct 2021 13:59:52 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E0F35C433EF
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Oct 2021 14:09:31 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 9313361181
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Oct 2021 13:59:51 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 9313361181
+	by mail.kernel.org (Postfix) with ESMTPS id 553D46115C
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Oct 2021 14:09:31 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 553D46115C
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-435-qA8nAVotPO-cMNwmbHqejA-1; Fri, 15 Oct 2021 09:59:48 -0400
-X-MC-Unique: qA8nAVotPO-cMNwmbHqejA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-186-iCSzUE8pM5KePjdwvKr74A-1; Fri, 15 Oct 2021 10:09:28 -0400
+X-MC-Unique: iCSzUE8pM5KePjdwvKr74A-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 43994100C660;
-	Fri, 15 Oct 2021 13:59:44 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 95FAD802575;
+	Fri, 15 Oct 2021 14:09:22 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id F132219739;
-	Fri, 15 Oct 2021 13:59:43 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 73C045D740;
+	Fri, 15 Oct 2021 14:09:22 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9EB1C180598A;
-	Fri, 15 Oct 2021 13:59:43 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1862E180598A;
+	Fri, 15 Oct 2021 14:09:22 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19FDxfqZ026119 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 15 Oct 2021 09:59:41 -0400
+	id 19FE73FF027321 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 15 Oct 2021 10:07:03 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id A150D2166B25; Fri, 15 Oct 2021 13:59:41 +0000 (UTC)
+	id 679692166B40; Fri, 15 Oct 2021 14:07:03 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9B9632166B2F
-	for <dm-devel@redhat.com>; Fri, 15 Oct 2021 13:59:34 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6176B2166B2F
+	for <dm-devel@redhat.com>; Fri, 15 Oct 2021 14:07:00 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 647C7811E7F
-	for <dm-devel@redhat.com>; Fri, 15 Oct 2021 13:59:34 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 769C7800883
+	for <dm-devel@redhat.com>; Fri, 15 Oct 2021 14:07:00 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-7-u5R3zDtGOjiRaHjzXJDztA-1; Fri, 15 Oct 2021 09:59:32 -0400
-X-MC-Unique: u5R3zDtGOjiRaHjzXJDztA-1
+	us-mta-454-hv4vOUBxNHiIPL4enNhyXw-1; Fri, 15 Oct 2021 10:06:40 -0400
+X-MC-Unique: hv4vOUBxNHiIPL4enNhyXw-1
 Received: from [2001:4bb8:199:73c5:ddfe:9587:819b:83b0] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1mbNEW-007CcF-HX; Fri, 15 Oct 2021 13:26:48 +0000
+	id 1mbNEg-007CkK-Qs; Fri, 15 Oct 2021 13:26:59 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Fri, 15 Oct 2021 15:26:14 +0200
-Message-Id: <20211015132643.1621913-2-hch@lst.de>
+Date: Fri, 15 Oct 2021 15:26:18 +0200
+Message-Id: <20211015132643.1621913-6-hch@lst.de>
 In-Reply-To: <20211015132643.1621913-1-hch@lst.de>
 References: <20211015132643.1621913-1-hch@lst.de>
 MIME-Version: 1.0
@@ -89,8 +88,8 @@ Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
 	linux-fsdevel@vger.kernel.org,
 	Phillip Lougher <phillip@squashfs.org.uk>, ntfs3@lists.linux.dev,
 	linux-btrfs@vger.kernel.org
-Subject: [dm-devel] [PATCH 01/30] block: move the SECTOR_SIZE related
-	definitions to blk_types.h
+Subject: [dm-devel] [PATCH 05/30] dm: use bdev_nr_sectors and bdev_nr_bytes
+	instead of open coding them
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -104,7 +103,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -112,71 +111,377 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Ensure these are always available for inlines in the various block layer
-headers.
+Use the proper helpers to read the block device size.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Acked-by: Mike Snitzer <snitzer@redhat.com>
 ---
- include/linux/blk_types.h | 17 +++++++++++++++++
- include/linux/blkdev.h    | 17 -----------------
- 2 files changed, 17 insertions(+), 17 deletions(-)
+ drivers/md/dm-bufio.c           | 2 +-
+ drivers/md/dm-cache-metadata.c  | 2 +-
+ drivers/md/dm-cache-target.c    | 2 +-
+ drivers/md/dm-clone-target.c    | 2 +-
+ drivers/md/dm-dust.c            | 5 ++---
+ drivers/md/dm-ebs-target.c      | 2 +-
+ drivers/md/dm-era-target.c      | 2 +-
+ drivers/md/dm-exception-store.h | 2 +-
+ drivers/md/dm-flakey.c          | 3 +--
+ drivers/md/dm-integrity.c       | 6 +++---
+ drivers/md/dm-linear.c          | 3 +--
+ drivers/md/dm-log-writes.c      | 4 ++--
+ drivers/md/dm-log.c             | 2 +-
+ drivers/md/dm-mpath.c           | 2 +-
+ drivers/md/dm-raid.c            | 6 +++---
+ drivers/md/dm-switch.c          | 2 +-
+ drivers/md/dm-table.c           | 3 +--
+ drivers/md/dm-thin-metadata.c   | 2 +-
+ drivers/md/dm-thin.c            | 2 +-
+ drivers/md/dm-verity-target.c   | 3 +--
+ drivers/md/dm-writecache.c      | 2 +-
+ drivers/md/dm-zoned-target.c    | 2 +-
+ 22 files changed, 28 insertions(+), 33 deletions(-)
 
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 3b967053e9f5a..dc8da0c7fa09b 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -20,6 +20,23 @@ struct cgroup_subsys_state;
- typedef void (bio_end_io_t) (struct bio *);
- struct bio_crypt_ctx;
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index 50f3e673729c3..104ebc1f08dcc 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -1525,7 +1525,7 @@ EXPORT_SYMBOL_GPL(dm_bufio_get_block_size);
  
-+/*
-+ * The basic unit of block I/O is a sector. It is used in a number of contexts
-+ * in Linux (blk, bio, genhd). The size of one sector is 512 = 2**9
-+ * bytes. Variables of type sector_t represent an offset or size that is a
-+ * multiple of 512 bytes. Hence these two constants.
-+ */
-+#ifndef SECTOR_SHIFT
-+#define SECTOR_SHIFT 9
-+#endif
-+#ifndef SECTOR_SIZE
-+#define SECTOR_SIZE (1 << SECTOR_SHIFT)
-+#endif
-+
-+#define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
-+#define PAGE_SECTORS		(1 << PAGE_SECTORS_SHIFT)
-+#define SECTOR_MASK		(PAGE_SECTORS - 1)
-+
- struct block_device {
- 	sector_t		bd_start_sect;
- 	struct disk_stats __percpu *bd_stats;
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 17705c970d7e1..161496d1aced0 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -571,23 +571,6 @@ static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
- 	return bdev->bd_disk->queue;	/* this is never NULL */
+ sector_t dm_bufio_get_device_size(struct dm_bufio_client *c)
+ {
+-	sector_t s = i_size_read(c->bdev->bd_inode) >> SECTOR_SHIFT;
++	sector_t s = bdev_nr_sectors(c->bdev);
+ 	if (s >= c->start)
+ 		s -= c->start;
+ 	else
+diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
+index 89a73204dbf47..2874f222c3138 100644
+--- a/drivers/md/dm-cache-metadata.c
++++ b/drivers/md/dm-cache-metadata.c
+@@ -334,7 +334,7 @@ static int __write_initial_superblock(struct dm_cache_metadata *cmd)
+ 	int r;
+ 	struct dm_block *sblock;
+ 	struct cache_disk_superblock *disk_super;
+-	sector_t bdev_size = i_size_read(cmd->bdev->bd_inode) >> SECTOR_SHIFT;
++	sector_t bdev_size = bdev_nr_sectors(cmd->bdev);
+ 
+ 	/* FIXME: see if we can lose the max sectors limit */
+ 	if (bdev_size > DM_CACHE_METADATA_MAX_SECTORS)
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index bdd500447dea2..447d030036d18 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -1940,7 +1940,7 @@ static void cache_dtr(struct dm_target *ti)
+ 
+ static sector_t get_dev_size(struct dm_dev *dev)
+ {
+-	return i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT;
++	return bdev_nr_sectors(dev->bdev);
  }
  
--/*
-- * The basic unit of block I/O is a sector. It is used in a number of contexts
-- * in Linux (blk, bio, genhd). The size of one sector is 512 = 2**9
-- * bytes. Variables of type sector_t represent an offset or size that is a
-- * multiple of 512 bytes. Hence these two constants.
-- */
--#ifndef SECTOR_SHIFT
--#define SECTOR_SHIFT 9
--#endif
--#ifndef SECTOR_SIZE
--#define SECTOR_SIZE (1 << SECTOR_SHIFT)
--#endif
--
--#define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
--#define PAGE_SECTORS		(1 << PAGE_SECTORS_SHIFT)
--#define SECTOR_MASK		(PAGE_SECTORS - 1)
--
- #ifdef CONFIG_BLK_DEV_ZONED
+ /*----------------------------------------------------------------*/
+diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
+index 84dbe08ad2053..e4bb2fde1b54f 100644
+--- a/drivers/md/dm-clone-target.c
++++ b/drivers/md/dm-clone-target.c
+@@ -1514,7 +1514,7 @@ static void clone_status(struct dm_target *ti, status_type_t type,
  
- /* Helper to convert BLK_ZONE_ZONE_XXX to its string format XXX */
+ static sector_t get_dev_size(struct dm_dev *dev)
+ {
+-	return i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT;
++	return bdev_nr_sectors(dev->bdev);
+ }
+ 
+ /*---------------------------------------------------------------------------*/
+diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
+index 3163e2b1418e7..03672204b0e38 100644
+--- a/drivers/md/dm-dust.c
++++ b/drivers/md/dm-dust.c
+@@ -415,7 +415,7 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 			char *result, unsigned int maxlen)
+ {
+ 	struct dust_device *dd = ti->private;
+-	sector_t size = i_size_read(dd->dev->bdev->bd_inode) >> SECTOR_SHIFT;
++	sector_t size = bdev_nr_sectors(dd->dev->bdev);
+ 	bool invalid_msg = false;
+ 	int r = -EINVAL;
+ 	unsigned long long tmp, block;
+@@ -544,8 +544,7 @@ static int dust_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
+ 	/*
+ 	 * Only pass ioctls through if the device sizes match exactly.
+ 	 */
+-	if (dd->start ||
+-	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
++	if (dd->start || ti->len != bdev_nr_sectors(dev->bdev))
+ 		return 1;
+ 
+ 	return 0;
+diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
+index d25989660a768..7ce5d509b9403 100644
+--- a/drivers/md/dm-ebs-target.c
++++ b/drivers/md/dm-ebs-target.c
+@@ -416,7 +416,7 @@ static int ebs_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
+ 	 * Only pass ioctls through if the device sizes match exactly.
+ 	 */
+ 	*bdev = dev->bdev;
+-	return !!(ec->start || ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT);
++	return !!(ec->start || ti->len != bdev_nr_sectors(dev->bdev));
+ }
+ 
+ static void ebs_io_hints(struct dm_target *ti, struct queue_limits *limits)
+diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
+index 2a78f68741431..1f6bf152b3c74 100644
+--- a/drivers/md/dm-era-target.c
++++ b/drivers/md/dm-era-target.c
+@@ -1681,7 +1681,7 @@ static int era_message(struct dm_target *ti, unsigned argc, char **argv,
+ 
+ static sector_t get_dev_size(struct dm_dev *dev)
+ {
+-	return i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT;
++	return bdev_nr_sectors(dev->bdev);
+ }
+ 
+ static int era_iterate_devices(struct dm_target *ti,
+diff --git a/drivers/md/dm-exception-store.h b/drivers/md/dm-exception-store.h
+index 3f4139ac1f602..b5f20eba36415 100644
+--- a/drivers/md/dm-exception-store.h
++++ b/drivers/md/dm-exception-store.h
+@@ -168,7 +168,7 @@ static inline void dm_consecutive_chunk_count_dec(struct dm_exception *e)
+  */
+ static inline sector_t get_dev_size(struct block_device *bdev)
+ {
+-	return i_size_read(bdev->bd_inode) >> SECTOR_SHIFT;
++	return bdev_nr_sectors(bdev);
+ }
+ 
+ static inline chunk_t sector_to_chunk(struct dm_exception_store *store,
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index 4b94ffe6f2d4f..345229d7e59c1 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -456,8 +456,7 @@ static int flakey_prepare_ioctl(struct dm_target *ti, struct block_device **bdev
+ 	/*
+ 	 * Only pass ioctls through if the device sizes match exactly.
+ 	 */
+-	if (fc->start ||
+-	    ti->len != i_size_read((*bdev)->bd_inode) >> SECTOR_SHIFT)
++	if (fc->start || ti->len != bdev_nr_sectors((*bdev)))
+ 		return 1;
+ 	return 0;
+ }
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index dc03b70f6e65c..d0f788e72abf9 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -4113,11 +4113,11 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		}
+ 	}
+ 
+-	ic->data_device_sectors = i_size_read(ic->dev->bdev->bd_inode) >> SECTOR_SHIFT;
++	ic->data_device_sectors = bdev_nr_sectors(ic->dev->bdev);
+ 	if (!ic->meta_dev)
+ 		ic->meta_device_sectors = ic->data_device_sectors;
+ 	else
+-		ic->meta_device_sectors = i_size_read(ic->meta_dev->bdev->bd_inode) >> SECTOR_SHIFT;
++		ic->meta_device_sectors = bdev_nr_sectors(ic->meta_dev->bdev);
+ 
+ 	if (!journal_sectors) {
+ 		journal_sectors = min((sector_t)DEFAULT_MAX_JOURNAL_SECTORS,
+@@ -4367,7 +4367,7 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	DEBUG_print("	journal_sections %u\n", (unsigned)le32_to_cpu(ic->sb->journal_sections));
+ 	DEBUG_print("	journal_entries %u\n", ic->journal_entries);
+ 	DEBUG_print("	log2_interleave_sectors %d\n", ic->sb->log2_interleave_sectors);
+-	DEBUG_print("	data_device_sectors 0x%llx\n", i_size_read(ic->dev->bdev->bd_inode) >> SECTOR_SHIFT);
++	DEBUG_print("	data_device_sectors 0x%llx\n", bdev_nr_sectors(ic->dev->bdev));
+ 	DEBUG_print("	initial_sectors 0x%x\n", ic->initial_sectors);
+ 	DEBUG_print("	metadata_run 0x%x\n", ic->metadata_run);
+ 	DEBUG_print("	log2_metadata_run %d\n", ic->log2_metadata_run);
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 679b4c0a2eea1..66ba16713f696 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -135,8 +135,7 @@ static int linear_prepare_ioctl(struct dm_target *ti, struct block_device **bdev
+ 	/*
+ 	 * Only pass ioctls through if the device sizes match exactly.
+ 	 */
+-	if (lc->start ||
+-	    ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
++	if (lc->start || ti->len != bdev_nr_sectors(dev->bdev))
+ 		return 1;
+ 	return 0;
+ }
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index d93a4db235124..46de085a96709 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -446,7 +446,7 @@ static int log_super(struct log_writes_c *lc)
+ 
+ static inline sector_t logdev_last_sector(struct log_writes_c *lc)
+ {
+-	return i_size_read(lc->logdev->bdev->bd_inode) >> SECTOR_SHIFT;
++	return bdev_nr_sectors(lc->logdev->bdev);
+ }
+ 
+ static int log_writes_kthread(void *arg)
+@@ -851,7 +851,7 @@ static int log_writes_prepare_ioctl(struct dm_target *ti,
+ 	/*
+ 	 * Only pass ioctls through if the device sizes match exactly.
+ 	 */
+-	if (ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT)
++	if (ti->len != bdev_nr_sectors(dev->bdev))
+ 		return 1;
+ 	return 0;
+ }
+diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+index 1ecf75ef276a4..06f328928a7f5 100644
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -447,7 +447,7 @@ static int create_log_context(struct dm_dirty_log *log, struct dm_target *ti,
+ 				bdev_logical_block_size(lc->header_location.
+ 							    bdev));
+ 
+-		if (buf_size > i_size_read(dev->bdev->bd_inode)) {
++		if (buf_size > bdev_nr_bytes(dev->bdev)) {
+ 			DMWARN("log device %s too small: need %llu bytes",
+ 				dev->name, (unsigned long long)buf_size);
+ 			kfree(lc);
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 694aaca4eea24..5794f5415155d 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -2061,7 +2061,7 @@ static int multipath_prepare_ioctl(struct dm_target *ti,
+ 	/*
+ 	 * Only pass ioctls through if the device sizes match exactly.
+ 	 */
+-	if (!r && ti->len != i_size_read((*bdev)->bd_inode) >> SECTOR_SHIFT)
++	if (!r && ti->len != bdev_nr_sectors((*bdev)))
+ 		return 1;
+ 	return r;
+ }
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index d9ef52159a22b..2b26435a6946e 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -1261,7 +1261,7 @@ static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
+ 			md_rdev_init(jdev);
+ 			jdev->mddev = &rs->md;
+ 			jdev->bdev = rs->journal_dev.dev->bdev;
+-			jdev->sectors = to_sector(i_size_read(jdev->bdev->bd_inode));
++			jdev->sectors = bdev_nr_sectors(jdev->bdev);
+ 			if (jdev->sectors < MIN_RAID456_JOURNAL_SPACE) {
+ 				rs->ti->error = "No space for raid4/5/6 journal";
+ 				return -ENOSPC;
+@@ -1607,7 +1607,7 @@ static int _check_data_dev_sectors(struct raid_set *rs)
+ 
+ 	rdev_for_each(rdev, &rs->md)
+ 		if (!test_bit(Journal, &rdev->flags) && rdev->bdev) {
+-			ds = min(ds, to_sector(i_size_read(rdev->bdev->bd_inode)));
++			ds = min(ds, bdev_nr_sectors(rdev->bdev));
+ 			if (ds < rs->md.dev_sectors) {
+ 				rs->ti->error = "Component device(s) too small";
+ 				return -EINVAL;
+@@ -2662,7 +2662,7 @@ static int rs_adjust_data_offsets(struct raid_set *rs)
+ 	 * Make sure we got a minimum amount of free sectors per device
+ 	 */
+ 	if (rs->data_offset &&
+-	    to_sector(i_size_read(rdev->bdev->bd_inode)) - rs->md.dev_sectors < MIN_FREE_RESHAPE_SPACE) {
++	    bdev_nr_sectors(rdev->bdev) - rs->md.dev_sectors < MIN_FREE_RESHAPE_SPACE) {
+ 		rs->ti->error = data_offset ? "No space for forward reshape" :
+ 					      "No space for backward reshape";
+ 		return -ENOSPC;
+diff --git a/drivers/md/dm-switch.c b/drivers/md/dm-switch.c
+index 028a92ff6d576..534dc2ca8bb06 100644
+--- a/drivers/md/dm-switch.c
++++ b/drivers/md/dm-switch.c
+@@ -529,7 +529,7 @@ static int switch_prepare_ioctl(struct dm_target *ti, struct block_device **bdev
+ 	 * Only pass ioctls through if the device sizes match exactly.
+ 	 */
+ 	if (ti->len + sctx->path_list[path_nr].start !=
+-	    i_size_read((*bdev)->bd_inode) >> SECTOR_SHIFT)
++	    bdev_nr_sectors((*bdev)))
+ 		return 1;
+ 	return 0;
+ }
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 1fa4d5582dca5..d95142102bd25 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -227,8 +227,7 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+ {
+ 	struct queue_limits *limits = data;
+ 	struct block_device *bdev = dev->bdev;
+-	sector_t dev_size =
+-		i_size_read(bdev->bd_inode) >> SECTOR_SHIFT;
++	sector_t dev_size = bdev_nr_sectors(bdev);
+ 	unsigned short logical_block_size_sectors =
+ 		limits->logical_block_size >> SECTOR_SHIFT;
+ 	char b[BDEVNAME_SIZE];
+diff --git a/drivers/md/dm-thin-metadata.c b/drivers/md/dm-thin-metadata.c
+index c88ed14d49e65..1a96a07cbf443 100644
+--- a/drivers/md/dm-thin-metadata.c
++++ b/drivers/md/dm-thin-metadata.c
+@@ -549,7 +549,7 @@ static int __write_initial_superblock(struct dm_pool_metadata *pmd)
+ 	int r;
+ 	struct dm_block *sblock;
+ 	struct thin_disk_superblock *disk_super;
+-	sector_t bdev_size = i_size_read(pmd->bdev->bd_inode) >> SECTOR_SHIFT;
++	sector_t bdev_size = bdev_nr_sectors(pmd->bdev);
+ 
+ 	if (bdev_size > THIN_METADATA_MAX_SECTORS)
+ 		bdev_size = THIN_METADATA_MAX_SECTORS;
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index 4c67b77c23c1b..ec119d2422d5d 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -3212,7 +3212,7 @@ static int metadata_pre_commit_callback(void *context)
+ 
+ static sector_t get_dev_size(struct block_device *bdev)
+ {
+-	return i_size_read(bdev->bd_inode) >> SECTOR_SHIFT;
++	return bdev_nr_sectors(bdev);
+ }
+ 
+ static void warn_if_metadata_device_too_big(struct block_device *bdev)
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index 88e2702b473b0..4651859d4233b 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -825,8 +825,7 @@ static int verity_prepare_ioctl(struct dm_target *ti, struct block_device **bdev
+ 
+ 	*bdev = v->data_dev->bdev;
+ 
+-	if (v->data_start ||
+-	    ti->len != i_size_read(v->data_dev->bdev->bd_inode) >> SECTOR_SHIFT)
++	if (v->data_start || ti->len != bdev_nr_sectors(v->data_dev->bdev))
+ 		return 1;
+ 	return 0;
+ }
+diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+index 18320444fb0a9..017806096b91e 100644
+--- a/drivers/md/dm-writecache.c
++++ b/drivers/md/dm-writecache.c
+@@ -2341,7 +2341,7 @@ static int writecache_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 		ti->error = "Cache data device lookup failed";
+ 		goto bad;
+ 	}
+-	wc->memory_map_size = i_size_read(wc->ssd_dev->bdev->bd_inode);
++	wc->memory_map_size = bdev_nr_bytes(wc->ssd_dev->bdev);
+ 
+ 	/*
+ 	 * Parse the cache block size
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index ae1bc48c0043d..8dc21c09329f2 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -733,7 +733,7 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path,
+ 	dev->dev_idx = idx;
+ 	(void)bdevname(dev->bdev, dev->name);
+ 
+-	dev->capacity = i_size_read(bdev->bd_inode) >> SECTOR_SHIFT;
++	dev->capacity = bdev_nr_sectors(bdev);
+ 	if (ti->begin) {
+ 		ti->error = "Partial mapping is not supported";
+ 		goto err;
 -- 
 2.30.2
 
