@@ -2,59 +2,58 @@ Return-Path: <SRS0=TigA=PD=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DA72DC433F5
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Oct 2021 13:54:47 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 70EE3C433EF
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Oct 2021 13:57:03 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 7A30360F44
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Oct 2021 13:54:47 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 7A30360F44
+	by mail.kernel.org (Postfix) with ESMTPS id 7E91A6054F
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Oct 2021 13:57:02 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 7E91A6054F
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-270-urlnrWg5NXaJ-32uNfeDNw-1; Fri, 15 Oct 2021 09:54:43 -0400
-X-MC-Unique: urlnrWg5NXaJ-32uNfeDNw-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-333-GaPzqoWVNA6dz0RJsCGA6w-1; Fri, 15 Oct 2021 09:57:00 -0400
+X-MC-Unique: GaPzqoWVNA6dz0RJsCGA6w-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D6B5C19253C2;
-	Fri, 15 Oct 2021 13:54:38 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A464A80292B;
+	Fri, 15 Oct 2021 13:56:55 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B8DA05FC13;
-	Fri, 15 Oct 2021 13:54:38 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 861065DF5D;
+	Fri, 15 Oct 2021 13:56:55 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8DBAC4E9F5;
-	Fri, 15 Oct 2021 13:54:38 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 580834EA2A;
+	Fri, 15 Oct 2021 13:56:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19FDrPp2025012 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 15 Oct 2021 09:53:25 -0400
+	id 19FDursO025821 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 15 Oct 2021 09:56:53 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id BE74E11558BA; Fri, 15 Oct 2021 13:53:25 +0000 (UTC)
+	id 8EEA740D1B9D; Fri, 15 Oct 2021 13:56:53 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BA70511558B9
-	for <dm-devel@redhat.com>; Fri, 15 Oct 2021 13:53:23 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0BA4E18A6533
-	for <dm-devel@redhat.com>; Fri, 15 Oct 2021 13:53:23 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8B43040D1B98
+	for <dm-devel@redhat.com>; Fri, 15 Oct 2021 13:56:53 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 72864811E80
+	for <dm-devel@redhat.com>; Fri, 15 Oct 2021 13:56:53 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-132-y_cu8683NsC6qu8eNKHiRQ-1; Fri, 15 Oct 2021 09:53:21 -0400
-X-MC-Unique: y_cu8683NsC6qu8eNKHiRQ-1
+	us-mta-193-7EXgNRHhNxSHEphl6S40Vw-1; Fri, 15 Oct 2021 09:56:52 -0400
+X-MC-Unique: 7EXgNRHhNxSHEphl6S40Vw-1
 Received: from [2001:4bb8:199:73c5:ddfe:9587:819b:83b0] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1mbNF7-007DCF-0g; Fri, 15 Oct 2021 13:27:25 +0000
+	id 1mbNEZ-007Ce6-3w; Fri, 15 Oct 2021 13:26:51 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Fri, 15 Oct 2021 15:26:28 +0200
-Message-Id: <20211015132643.1621913-16-hch@lst.de>
+Date: Fri, 15 Oct 2021 15:26:15 +0200
+Message-Id: <20211015132643.1621913-3-hch@lst.de>
 In-Reply-To: <20211015132643.1621913-1-hch@lst.de>
 References: <20211015132643.1621913-1-hch@lst.de>
 MIME-Version: 1.0
@@ -68,7 +67,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-loop: dm-devel@redhat.com
 Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
 	Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org,
@@ -89,8 +88,7 @@ Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
 	linux-fsdevel@vger.kernel.org,
 	Phillip Lougher <phillip@squashfs.org.uk>, ntfs3@lists.linux.dev,
 	linux-btrfs@vger.kernel.org
-Subject: [dm-devel] [PATCH 15/30] hfs: use bdev_nr_sectors instead of open
-	coding it
+Subject: [dm-devel] [PATCH 02/30] block: add a bdev_nr_bytes helper
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -104,7 +102,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -112,27 +110,34 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Use the proper helper to read the block device size.
+Add a helpe to query the size of a block device in bytes.  This
+will be used to remove open coded access to ->bd_inode.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Kees Cook <keescook@chromium.org>
 ---
- fs/hfs/mdb.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/linux/genhd.h | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/fs/hfs/mdb.c b/fs/hfs/mdb.c
-index cdf0edeeb2781..5beb826524354 100644
---- a/fs/hfs/mdb.c
-+++ b/fs/hfs/mdb.c
-@@ -36,7 +36,7 @@ static int hfs_get_last_session(struct super_block *sb,
+diff --git a/include/linux/genhd.h b/include/linux/genhd.h
+index 082a3e5fd8fa1..f67db3c5a04b3 100644
+--- a/include/linux/genhd.h
++++ b/include/linux/genhd.h
+@@ -235,9 +235,14 @@ static inline sector_t get_start_sect(struct block_device *bdev)
+ 	return bdev->bd_start_sect;
+ }
  
- 	/* default values */
- 	*start = 0;
--	*size = i_size_read(sb->s_bdev->bd_inode) >> 9;
-+	*size = bdev_nr_sectors(sb->s_bdev);
++static inline sector_t bdev_nr_bytes(struct block_device *bdev)
++{
++	return i_size_read(bdev->bd_inode);
++}
++
+ static inline sector_t bdev_nr_sectors(struct block_device *bdev)
+ {
+-	return i_size_read(bdev->bd_inode) >> 9;
++	return bdev_nr_bytes(bdev) >> SECTOR_SHIFT;
+ }
  
- 	if (HFS_SB(sb)->session >= 0) {
- 		struct cdrom_tocentry te;
+ static inline sector_t get_capacity(struct gendisk *disk)
 -- 
 2.30.2
 
