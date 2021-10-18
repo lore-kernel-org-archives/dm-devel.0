@@ -2,58 +2,58 @@ Return-Path: <SRS0=X4js=PG=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5DC4BC4321E
-	for <dm-devel@archiver.kernel.org>; Mon, 18 Oct 2021 10:12:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E1245C4332F
+	for <dm-devel@archiver.kernel.org>; Mon, 18 Oct 2021 10:12:15 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C7F3A60F22
-	for <dm-devel@archiver.kernel.org>; Mon, 18 Oct 2021 10:12:12 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org C7F3A60F22
+	by mail.kernel.org (Postfix) with ESMTPS id 7C12F60F9D
+	for <dm-devel@archiver.kernel.org>; Mon, 18 Oct 2021 10:12:15 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 7C12F60F9D
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-104-MiZKfRSmO0GrtFXMIXHUEg-1; Mon, 18 Oct 2021 06:12:10 -0400
-X-MC-Unique: MiZKfRSmO0GrtFXMIXHUEg-1
+ us-mta-258-uajBavi6Pw2WwjWAeSLUhQ-1; Mon, 18 Oct 2021 06:12:11 -0400
+X-MC-Unique: uajBavi6Pw2WwjWAeSLUhQ-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7E8E99F92B;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E6C371926DA1;
 	Mon, 18 Oct 2021 10:12:06 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5C5EB99BD;
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C32B399C3;
 	Mon, 18 Oct 2021 10:12:06 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2FDC44E9F5;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7F7C0180BAD1;
 	Mon, 18 Oct 2021 10:12:06 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19IABtpJ032271 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 18 Oct 2021 06:11:55 -0400
+	id 19IABsE4032265 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 18 Oct 2021 06:11:54 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 3B24B40CFD0B; Mon, 18 Oct 2021 10:11:55 +0000 (UTC)
+	id 3B6B440CFD0B; Mon, 18 Oct 2021 10:11:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 359D340CFD04
-	for <dm-devel@redhat.com>; Mon, 18 Oct 2021 10:11:55 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 17728899EC0
-	for <dm-devel@redhat.com>; Mon, 18 Oct 2021 10:11:55 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 36D8440CFD04
+	for <dm-devel@redhat.com>; Mon, 18 Oct 2021 10:11:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1F575811E80
+	for <dm-devel@redhat.com>; Mon, 18 Oct 2021 10:11:54 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-558-pAyEvSwSMuKir4KzWYnVyA-1; Mon, 18 Oct 2021 06:11:53 -0400
-X-MC-Unique: pAyEvSwSMuKir4KzWYnVyA-1
+	us-mta-447-6KPZfqPpM7eunHGtDWXfYQ-1; Mon, 18 Oct 2021 06:11:52 -0400
+X-MC-Unique: 6KPZfqPpM7eunHGtDWXfYQ-1
 Received: from [2001:4bb8:199:73c5:c70:4a89:bc61:2] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1mcPcI-00EtzV-J2; Mon, 18 Oct 2021 10:11:39 +0000
+	id 1mcPcT-00Eu4B-82; Mon, 18 Oct 2021 10:11:49 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 18 Oct 2021 12:11:02 +0200
-Message-Id: <20211018101130.1838532-3-hch@lst.de>
+Date: Mon, 18 Oct 2021 12:11:06 +0200
+Message-Id: <20211018101130.1838532-7-hch@lst.de>
 In-Reply-To: <20211018101130.1838532-1-hch@lst.de>
 References: <20211018101130.1838532-1-hch@lst.de>
 MIME-Version: 1.0
@@ -88,7 +88,8 @@ Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
 	linux-fsdevel@vger.kernel.org,
 	Phillip Lougher <phillip@squashfs.org.uk>, ntfs3@lists.linux.dev,
 	linux-btrfs@vger.kernel.org
-Subject: [dm-devel] [PATCH 02/30] block: add a bdev_nr_bytes helper
+Subject: [dm-devel] [PATCH 06/30] md: use bdev_nr_sectors instead of open
+	coding it
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -110,35 +111,108 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Add a helper to query the size of a block device in bytes.  This
-will be used to remove open coded access to ->bd_inode.
+Use the proper helper to read the block device size.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Kees Cook <keescook@chromium.org>
+Acked-by: Song Liu <song@kernel.org>
 ---
- include/linux/genhd.h | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+ drivers/md/md.c | 26 +++++++++++---------------
+ 1 file changed, 11 insertions(+), 15 deletions(-)
 
-diff --git a/include/linux/genhd.h b/include/linux/genhd.h
-index 082a3e5fd8fa1..b560aee1d69f0 100644
---- a/include/linux/genhd.h
-+++ b/include/linux/genhd.h
-@@ -235,9 +235,14 @@ static inline sector_t get_start_sect(struct block_device *bdev)
- 	return bdev->bd_start_sect;
- }
- 
-+static inline loff_t bdev_nr_bytes(struct block_device *bdev)
-+{
-+	return i_size_read(bdev->bd_inode);
-+}
-+
- static inline sector_t bdev_nr_sectors(struct block_device *bdev)
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index ec09083ff0eff..0c75ba047ef60 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -890,8 +890,7 @@ static struct md_personality *find_pers(int level, char *clevel)
+ /* return the offset of the super block in 512byte sectors */
+ static inline sector_t calc_dev_sboffset(struct md_rdev *rdev)
  {
--	return i_size_read(bdev->bd_inode) >> 9;
-+	return bdev_nr_bytes(bdev) >> SECTOR_SHIFT;
+-	sector_t num_sectors = i_size_read(rdev->bdev->bd_inode) / 512;
+-	return MD_NEW_SIZE_SECTORS(num_sectors);
++	return MD_NEW_SIZE_SECTORS(bdev_nr_sectors(rdev->bdev));
  }
  
- static inline sector_t get_capacity(struct gendisk *disk)
+ static int alloc_disk_sb(struct md_rdev *rdev)
+@@ -1633,8 +1632,7 @@ static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_
+ 	 */
+ 	switch(minor_version) {
+ 	case 0:
+-		sb_start = i_size_read(rdev->bdev->bd_inode) >> 9;
+-		sb_start -= 8*2;
++		sb_start = bdev_nr_sectors(rdev->bdev) - 8 * 2;
+ 		sb_start &= ~(sector_t)(4*2-1);
+ 		break;
+ 	case 1:
+@@ -1789,10 +1787,9 @@ static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_
+ 		else
+ 			ret = 0;
+ 	}
+-	if (minor_version) {
+-		sectors = (i_size_read(rdev->bdev->bd_inode) >> 9);
+-		sectors -= rdev->data_offset;
+-	} else
++	if (minor_version)
++		sectors = bdev_nr_sectors(rdev->bdev) - rdev->data_offset;
++	else
+ 		sectors = rdev->sb_start;
+ 	if (sectors < le64_to_cpu(sb->data_size))
+ 		return -EINVAL;
+@@ -2170,8 +2167,7 @@ super_1_rdev_size_change(struct md_rdev *rdev, sector_t num_sectors)
+ 		return 0; /* too confusing */
+ 	if (rdev->sb_start < rdev->data_offset) {
+ 		/* minor versions 1 and 2; superblock before data */
+-		max_sectors = i_size_read(rdev->bdev->bd_inode) >> 9;
+-		max_sectors -= rdev->data_offset;
++		max_sectors = bdev_nr_sectors(rdev->bdev) - rdev->data_offset;
+ 		if (!num_sectors || num_sectors > max_sectors)
+ 			num_sectors = max_sectors;
+ 	} else if (rdev->mddev->bitmap_info.offset) {
+@@ -2180,7 +2176,7 @@ super_1_rdev_size_change(struct md_rdev *rdev, sector_t num_sectors)
+ 	} else {
+ 		/* minor version 0; superblock after data */
+ 		sector_t sb_start, bm_space;
+-		sector_t dev_size = i_size_read(rdev->bdev->bd_inode) >> 9;
++		sector_t dev_size = bdev_nr_sectors(rdev->bdev);
+ 
+ 		/* 8K is for superblock */
+ 		sb_start = dev_size - 8*2;
+@@ -3384,7 +3380,7 @@ rdev_size_store(struct md_rdev *rdev, const char *buf, size_t len)
+ 			if (!sectors)
+ 				return -EBUSY;
+ 		} else if (!sectors)
+-			sectors = (i_size_read(rdev->bdev->bd_inode) >> 9) -
++			sectors = bdev_nr_sectors(rdev->bdev) -
+ 				rdev->data_offset;
+ 		if (!my_mddev->pers->resize)
+ 			/* Cannot change size for RAID0 or Linear etc */
+@@ -3711,7 +3707,7 @@ static struct md_rdev *md_import_device(dev_t newdev, int super_format, int supe
+ 
+ 	kobject_init(&rdev->kobj, &rdev_ktype);
+ 
+-	size = i_size_read(rdev->bdev->bd_inode) >> BLOCK_SIZE_BITS;
++	size = bdev_nr_bytes(rdev->bdev) >> BLOCK_SIZE_BITS;
+ 	if (!size) {
+ 		pr_warn("md: %s has zero or unknown size, marking faulty!\n",
+ 			bdevname(rdev->bdev,b));
+@@ -6882,7 +6878,7 @@ int md_add_new_disk(struct mddev *mddev, struct mdu_disk_info_s *info)
+ 
+ 		if (!mddev->persistent) {
+ 			pr_debug("md: nonpersistent superblock ...\n");
+-			rdev->sb_start = i_size_read(rdev->bdev->bd_inode) / 512;
++			rdev->sb_start = bdev_nr_sectors(rdev->bdev);
+ 		} else
+ 			rdev->sb_start = calc_dev_sboffset(rdev);
+ 		rdev->sectors = rdev->sb_start;
+@@ -6969,7 +6965,7 @@ static int hot_add_disk(struct mddev *mddev, dev_t dev)
+ 	if (mddev->persistent)
+ 		rdev->sb_start = calc_dev_sboffset(rdev);
+ 	else
+-		rdev->sb_start = i_size_read(rdev->bdev->bd_inode) / 512;
++		rdev->sb_start = bdev_nr_sectors(rdev->bdev);
+ 
+ 	rdev->sectors = rdev->sb_start;
+ 
 -- 
 2.30.2
 
