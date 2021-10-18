@@ -2,58 +2,59 @@ Return-Path: <SRS0=X4js=PG=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A2095C433FE
-	for <dm-devel@archiver.kernel.org>; Mon, 18 Oct 2021 10:12:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0BE6DC43217
+	for <dm-devel@archiver.kernel.org>; Mon, 18 Oct 2021 10:12:21 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3B90460F9D
+	by mail.kernel.org (Postfix) with ESMTPS id 98A0460FD8
 	for <dm-devel@archiver.kernel.org>; Mon, 18 Oct 2021 10:12:20 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 3B90460F9D
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 98A0460FD8
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-422-HKc0TWcXMcCY4A2Pokpp1A-1; Mon, 18 Oct 2021 06:12:15 -0400
-X-MC-Unique: HKc0TWcXMcCY4A2Pokpp1A-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-450-e4xkVTmJNJu5Yl2mQyZBHg-1; Mon, 18 Oct 2021 06:12:16 -0400
+X-MC-Unique: e4xkVTmJNJu5Yl2mQyZBHg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6BCBA87951D;
-	Mon, 18 Oct 2021 10:12:11 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4B37B19711;
-	Mon, 18 Oct 2021 10:12:11 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D830F1926DA9;
+	Mon, 18 Oct 2021 10:12:10 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A37C260657;
+	Mon, 18 Oct 2021 10:12:10 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 187734EA2F;
-	Mon, 18 Oct 2021 10:12:11 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 71DC118199EE;
+	Mon, 18 Oct 2021 10:12:09 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19IABvLo032290 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 18 Oct 2021 06:11:57 -0400
+	id 19IAC0KD032309 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 18 Oct 2021 06:12:00 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1AFBE40CFD0B; Mon, 18 Oct 2021 10:11:57 +0000 (UTC)
+	id 0631E40CFD13; Mon, 18 Oct 2021 10:12:00 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1571240CFD04
-	for <dm-devel@redhat.com>; Mon, 18 Oct 2021 10:11:57 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 00F4740CFD11
+	for <dm-devel@redhat.com>; Mon, 18 Oct 2021 10:11:59 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F2245800B28
-	for <dm-devel@redhat.com>; Mon, 18 Oct 2021 10:11:56 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7E336100B8E4
+	for <dm-devel@redhat.com>; Mon, 18 Oct 2021 10:11:59 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-100-sO48PxNEMNmEv98Zw_KQmw-1; Mon, 18 Oct 2021 06:11:55 -0400
-X-MC-Unique: sO48PxNEMNmEv98Zw_KQmw-1
+	us-mta-387-PoGHzmcRNZG40zWm_bYL3g-1; Mon, 18 Oct 2021 06:11:58 -0400
+X-MC-Unique: PoGHzmcRNZG40zWm_bYL3g-1
 Received: from [2001:4bb8:199:73c5:c70:4a89:bc61:2] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1mcPcF-00Etyg-Rf; Mon, 18 Oct 2021 10:11:36 +0000
+	id 1mcPcL-00Eu0X-91; Mon, 18 Oct 2021 10:11:41 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 18 Oct 2021 12:11:01 +0200
-Message-Id: <20211018101130.1838532-2-hch@lst.de>
+Date: Mon, 18 Oct 2021 12:11:03 +0200
+Message-Id: <20211018101130.1838532-4-hch@lst.de>
 In-Reply-To: <20211018101130.1838532-1-hch@lst.de>
 References: <20211018101130.1838532-1-hch@lst.de>
 MIME-Version: 1.0
@@ -70,8 +71,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-loop: dm-devel@redhat.com
 Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
-	Jan Kara <jack@suse.cz>, Mike Snitzer <snitzer@redhat.com>,
-	linux-nvme@lists.infradead.org,
+	Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org,
 	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
 	Song Liu <song@kernel.org>, dm-devel@redhat.com,
 	target-devel@vger.kernel.org, reiserfs-devel@vger.kernel.org,
@@ -90,8 +90,7 @@ Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
 	linux-fsdevel@vger.kernel.org,
 	Phillip Lougher <phillip@squashfs.org.uk>, ntfs3@lists.linux.dev,
 	linux-btrfs@vger.kernel.org
-Subject: [dm-devel] [PATCH 01/30] block: move the SECTOR_SIZE related
-	definitions to blk_types.h
+Subject: [dm-devel] [PATCH 03/30] bcache: remove bdev_sectors
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,7 +104,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -113,74 +112,57 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Ensure these are always available for inlines in the various block layer
-headers.
+Use the equivalent block layer helper instead.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: Jan Kara <jack@suse.cz>
 Reviewed-by: Chaitanya Kulkarni <kch@nvidia.com>
+Acked-by: Coly Li <colyli@suse.de>
 ---
- include/linux/blk_types.h | 17 +++++++++++++++++
- include/linux/blkdev.h    | 17 -----------------
- 2 files changed, 17 insertions(+), 17 deletions(-)
+ drivers/md/bcache/super.c     | 2 +-
+ drivers/md/bcache/util.h      | 4 ----
+ drivers/md/bcache/writeback.c | 2 +-
+ 3 files changed, 2 insertions(+), 6 deletions(-)
 
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 3b967053e9f5a..dc8da0c7fa09b 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -20,6 +20,23 @@ struct cgroup_subsys_state;
- typedef void (bio_end_io_t) (struct bio *);
- struct bio_crypt_ctx;
+diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+index f2874c77ff797..4f89985abe4b7 100644
+--- a/drivers/md/bcache/super.c
++++ b/drivers/md/bcache/super.c
+@@ -1002,7 +1002,7 @@ static void calc_cached_dev_sectors(struct cache_set *c)
+ 	struct cached_dev *dc;
  
-+/*
-+ * The basic unit of block I/O is a sector. It is used in a number of contexts
-+ * in Linux (blk, bio, genhd). The size of one sector is 512 = 2**9
-+ * bytes. Variables of type sector_t represent an offset or size that is a
-+ * multiple of 512 bytes. Hence these two constants.
-+ */
-+#ifndef SECTOR_SHIFT
-+#define SECTOR_SHIFT 9
-+#endif
-+#ifndef SECTOR_SIZE
-+#define SECTOR_SIZE (1 << SECTOR_SHIFT)
-+#endif
-+
-+#define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
-+#define PAGE_SECTORS		(1 << PAGE_SECTORS_SHIFT)
-+#define SECTOR_MASK		(PAGE_SECTORS - 1)
-+
- struct block_device {
- 	sector_t		bd_start_sect;
- 	struct disk_stats __percpu *bd_stats;
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 17705c970d7e1..161496d1aced0 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -571,23 +571,6 @@ static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
- 	return bdev->bd_disk->queue;	/* this is never NULL */
+ 	list_for_each_entry(dc, &c->cached_devs, list)
+-		sectors += bdev_sectors(dc->bdev);
++		sectors += bdev_nr_sectors(dc->bdev);
+ 
+ 	c->cached_dev_sectors = sectors;
  }
+diff --git a/drivers/md/bcache/util.h b/drivers/md/bcache/util.h
+index b64460a762677..a7da7930a7fda 100644
+--- a/drivers/md/bcache/util.h
++++ b/drivers/md/bcache/util.h
+@@ -584,8 +584,4 @@ static inline unsigned int fract_exp_two(unsigned int x,
+ void bch_bio_map(struct bio *bio, void *base);
+ int bch_bio_alloc_pages(struct bio *bio, gfp_t gfp_mask);
  
--/*
-- * The basic unit of block I/O is a sector. It is used in a number of contexts
-- * in Linux (blk, bio, genhd). The size of one sector is 512 = 2**9
-- * bytes. Variables of type sector_t represent an offset or size that is a
-- * multiple of 512 bytes. Hence these two constants.
-- */
--#ifndef SECTOR_SHIFT
--#define SECTOR_SHIFT 9
--#endif
--#ifndef SECTOR_SIZE
--#define SECTOR_SIZE (1 << SECTOR_SHIFT)
--#endif
--
--#define PAGE_SECTORS_SHIFT	(PAGE_SHIFT - SECTOR_SHIFT)
--#define PAGE_SECTORS		(1 << PAGE_SECTORS_SHIFT)
--#define SECTOR_MASK		(PAGE_SECTORS - 1)
--
- #ifdef CONFIG_BLK_DEV_ZONED
+-static inline sector_t bdev_sectors(struct block_device *bdev)
+-{
+-	return bdev->bd_inode->i_size >> 9;
+-}
+ #endif /* _BCACHE_UTIL_H */
+diff --git a/drivers/md/bcache/writeback.c b/drivers/md/bcache/writeback.c
+index 8120da278161e..c7560f66dca88 100644
+--- a/drivers/md/bcache/writeback.c
++++ b/drivers/md/bcache/writeback.c
+@@ -45,7 +45,7 @@ static uint64_t __calc_target_rate(struct cached_dev *dc)
+ 	 * backing volume uses about 2% of the cache for dirty data.
+ 	 */
+ 	uint32_t bdev_share =
+-		div64_u64(bdev_sectors(dc->bdev) << WRITEBACK_SHARE_SHIFT,
++		div64_u64(bdev_nr_sectors(dc->bdev) << WRITEBACK_SHARE_SHIFT,
+ 				c->cached_dev_sectors);
  
- /* Helper to convert BLK_ZONE_ZONE_XXX to its string format XXX */
+ 	uint64_t cache_dirty_target =
 -- 
 2.30.2
 
