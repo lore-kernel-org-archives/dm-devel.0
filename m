@@ -2,61 +2,84 @@ Return-Path: <SRS0=X4js=PG=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ABF82C433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 18 Oct 2021 16:53:12 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6090BC433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 18 Oct 2021 17:16:34 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 428DA61077
-	for <dm-devel@archiver.kernel.org>; Mon, 18 Oct 2021 16:53:12 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 428DA61077
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+	by mail.kernel.org (Postfix) with ESMTPS id 72B896126A
+	for <dm-devel@archiver.kernel.org>; Mon, 18 Oct 2021 17:16:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 72B896126A
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-33-GG4DB38eP1mL2j9NVMgHNg-1; Mon, 18 Oct 2021 12:53:07 -0400
-X-MC-Unique: GG4DB38eP1mL2j9NVMgHNg-1
+ us-mta-268-WTETE76kO1Kk-CV_yshZBQ-1; Mon, 18 Oct 2021 13:16:28 -0400
+X-MC-Unique: WTETE76kO1Kk-CV_yshZBQ-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5504C10A8E00;
-	Mon, 18 Oct 2021 16:53:02 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C07D916A32;
-	Mon, 18 Oct 2021 16:53:00 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F38DD10A8E01;
+	Mon, 18 Oct 2021 17:16:22 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id ADE00108A0;
+	Mon, 18 Oct 2021 17:16:22 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3670D1806D03;
-	Mon, 18 Oct 2021 16:52:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.2])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0EE764E58F;
+	Mon, 18 Oct 2021 17:16:22 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19IGq6ib007954 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 18 Oct 2021 12:52:07 -0400
+	id 19IHGIOG010646 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 18 Oct 2021 13:16:18 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id C5A9C40C1257; Mon, 18 Oct 2021 16:52:06 +0000 (UTC)
+	id 309652026D48; Mon, 18 Oct 2021 17:16:18 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C1FB2400F3E3
-	for <dm-devel@redhat.com>; Mon, 18 Oct 2021 16:52:06 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2BAB42026D46
+	for <dm-devel@redhat.com>; Mon, 18 Oct 2021 17:16:13 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
 	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A90EF811E91
-	for <dm-devel@redhat.com>; Mon, 18 Oct 2021 16:52:06 +0000 (UTC)
-Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
-	by relay.mimecast.com with ESMTP id us-mta-29-9QEu5Jy1NX-Y6twPmdE3tQ-1; 
-	Mon, 18 Oct 2021 12:52:05 -0400
-X-MC-Unique: 9QEu5Jy1NX-Y6twPmdE3tQ-1
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 1030561002;
-	Mon, 18 Oct 2021 16:43:52 +0000 (UTC)
-Date: Mon, 18 Oct 2021 09:43:51 -0700
-From: "Darrick J. Wong" <djwong@kernel.org>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3ED3F8007B1
+	for <dm-devel@redhat.com>; Mon, 18 Oct 2021 17:16:13 +0000 (UTC)
+Received: from mail-io1-f45.google.com (mail-io1-f45.google.com
+	[209.85.166.45]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-435-BhZSEWoMNk-lv_a9Y_z1WA-1; Mon, 18 Oct 2021 13:16:11 -0400
+X-MC-Unique: BhZSEWoMNk-lv_a9Y_z1WA-1
+Received: by mail-io1-f45.google.com with SMTP id i189so17202189ioa.1
+	for <dm-devel@redhat.com>; Mon, 18 Oct 2021 10:16:11 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:subject:to:cc:references:from:message-id:date
+	:user-agent:mime-version:in-reply-to:content-language
+	:content-transfer-encoding;
+	bh=TVetvWb4+B/byEt0HFTw7Li/1VctyD/QgsPHbsid4H8=;
+	b=sXP29E0m2Ic7euf+TvraME0un+71zYwTOG4LVaCAomABkzrbty2xL1MdWz1TpXl9XN
+	udKkTaEDIWt/1Wgniyyf4E1SQd+EATeBWSiL8i/HdSX1CVtXo0nyZ3F7cOW2Q/p59VKw
+	C3Z2Ox8L1Ozg85CThCyjIUnkX52gVGZOO0j9e0HMPhP+7ySR2dh7SMAVVLdG5KTb2DKO
+	gGdgUL7U/Be48WoFuMJ7Z2gBB3xGawOFA2aKjSpMVb+9jVsqRB0tpDAa07SuZbCgJuZC
+	Hau996ebfVRcgTGbl+l+N+HVWyhDZVDXcCTAyeiBpKuLOqFLEmVWpFDoRsMkU3s7bMF3
+	0wzQ==
+X-Gm-Message-State: AOAM532bRQyDckKAdrkK170yLimRZzaCVj2rHhZXmIhky/KVLdKpG7pT
+	kptTDPzsC15HKao1YFCiilUvSg==
+X-Google-Smtp-Source: ABdhPJz+RKspHd19wACUssDbTNQ6NJRkN4g7OdL6jX2ni5qwlHyFbIbt1tgTl8EVs5WghyoBxus9iA==
+X-Received: by 2002:a02:ac8a:: with SMTP id x10mr745552jan.43.1634577370548;
+	Mon, 18 Oct 2021 10:16:10 -0700 (PDT)
+Received: from [192.168.1.30] ([207.135.234.126])
+	by smtp.gmail.com with ESMTPSA id
+	u12sm7081225ioc.33.2021.10.18.10.16.08
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Mon, 18 Oct 2021 10:16:09 -0700 (PDT)
 To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20211018164351.GT24307@magnolia>
-References: <20211018044054.1779424-1-hch@lst.de>
-	<20211018044054.1779424-7-hch@lst.de>
+References: <20211018101130.1838532-1-hch@lst.de>
+From: Jens Axboe <axboe@kernel.dk>
+Message-ID: <4a8c3a39-9cd3-5b2f-6d0f-a16e689755e6@kernel.dk>
+Date: Mon, 18 Oct 2021 11:16:08 -0600
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
+	Thunderbird/68.10.0
 MIME-Version: 1.0
-In-Reply-To: <20211018044054.1779424-7-hch@lst.de>
+In-Reply-To: <20211018101130.1838532-1-hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -65,15 +88,29 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: , nvdimm@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
-	linux-s390@vger.kernel.org, linux-erofs@lists.ozlabs.org,
-	virtualization@lists.linux-foundation.org,
-	linux-xfs@vger.kernel.org, dm-devel@redhat.com,
-	linux-fsdevel@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>,
-	linux-ext4@vger.kernel.org, Ira Weiny <ira.weiny@intel.com>
-Subject: Re: [dm-devel] [PATCH 06/11] xfs: factor out a xfs_setup_dax helper
+Cc: Dave Kleikamp <shaggy@kernel.org>, jfs-discussion@lists.sourceforge.net,
+	Mike Snitzer <snitzer@redhat.com>, linux-nvme@lists.infradead.org,
+	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
+	Song Liu <song@kernel.org>, dm-devel@redhat.com,
+	target-devel@vger.kernel.org, reiserfs-devel@vger.kernel.org,
+	drbd-dev@lists.linbit.com, linux-nilfs@vger.kernel.org,
+	linux-scsi@vger.kernel.org, OGAWA Hirofumi <hirofumi@mail.parknet.co.jp>,
+	linux-ext4@vger.kernel.org, Kees Cook <keescook@chromium.org>,
+	Josef Bacik <josef@toxicpanda.com>, Coly Li <colyli@suse.de>,
+	linux-raid@vger.kernel.org, linux-bcache@vger.kernel.org,
+	David Sterba <dsterba@suse.com>,
+	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
+	Anton Altaparmakov <anton@tuxera.com>,
+	linux-block@vger.kernel.org, linux-nfs@vger.kernel.org,
+	Theodore Ts'o <tytso@mit.edu>,
+	linux-ntfs-dev@lists.sourceforge.net, Jan Kara <jack@suse.com>,
+	linux-fsdevel@vger.kernel.org,
+	Phillip Lougher <phillip@squashfs.org.uk>, ntfs3@lists.linux.dev,
+	linux-btrfs@vger.kernel.org
+Subject: Re: [dm-devel] don't use ->bd_inode to access the block device size
+	v3
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -92,104 +129,30 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Oct 18, 2021 at 06:40:49AM +0200, Christoph Hellwig wrote:
-> Factor out another DAX setup helper to simplify future changes.  Also
-> move the experimental warning after the checks to not clutter the log
-> too much if the setup failed.
+On 10/18/21 4:11 AM, Christoph Hellwig wrote:
+> Hi Jens,
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  fs/xfs/xfs_super.c | 47 +++++++++++++++++++++++++++-------------------
->  1 file changed, 28 insertions(+), 19 deletions(-)
-> 
-> diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
-> index c4e0cd1c1c8ca..d07020a8eb9e3 100644
-> --- a/fs/xfs/xfs_super.c
-> +++ b/fs/xfs/xfs_super.c
-> @@ -339,6 +339,32 @@ xfs_buftarg_is_dax(
->  			bdev_nr_sectors(bt->bt_bdev));
->  }
->  
-> +static int
-> +xfs_setup_dax(
+> various drivers currently poke directy at the block device inode, which
+> is a bit of a mess.  This series cleans up the places that read the
+> block device size to use the proper helpers.  I have separate patches
+> for many of the other bd_inode uses, but this series is already big
+> enough as-is,
 
-/me wonders if this should be named xfs_setup_dax_always, since this
-doesn't handle the dax=inode mode?
+This looks good to me. Followup question, as it's related - I've got a
+hacky patch that caches the inode size in the bdev:
 
-The only reason I bring that up is that Eric reminded me a while ago
-that we don't actually print any kind of EXPERIMENTAL warning for the
-auto-detection behavior.
+https://git.kernel.dk/cgit/linux-block/commit/?h=perf-wip&id=c754951eb7193258c35a574bd1ccccb7c4946ee4
 
-That said, I never liked looking at the nested backwards logic of the
-old code, so:
+so we don't have to dip into the inode itself for the fast path. While
+it's obviously not something being proposed for inclusion right now, is
+there a world in which we can make something like that work?
 
-Reviewed-by: Darrick J. Wong <djwong@kernel.org>
-
---D
-
-> +	struct xfs_mount	*mp)
-> +{
-> +	struct super_block	*sb = mp->m_super;
-> +
-> +	if (!xfs_buftarg_is_dax(sb, mp->m_ddev_targp) &&
-> +	   (!mp->m_rtdev_targp || !xfs_buftarg_is_dax(sb, mp->m_rtdev_targp))) {
-> +		xfs_alert(mp,
-> +			"DAX unsupported by block device. Turning off DAX.");
-> +		goto disable_dax;
-> +	}
-> +
-> +	if (xfs_has_reflink(mp)) {
-> +		xfs_alert(mp, "DAX and reflink cannot be used together!");
-> +		return -EINVAL;
-> +	}
-> +
-> +	xfs_warn(mp, "DAX enabled. Warning: EXPERIMENTAL, use at your own risk");
-> +	return 0;
-> +
-> +disable_dax:
-> +	xfs_mount_set_dax_mode(mp, XFS_DAX_NEVER);
-> +	return 0;
-> +}
-> +
->  STATIC int
->  xfs_blkdev_get(
->  	xfs_mount_t		*mp,
-> @@ -1592,26 +1618,9 @@ xfs_fs_fill_super(
->  		sb->s_flags |= SB_I_VERSION;
->  
->  	if (xfs_has_dax_always(mp)) {
-> -		bool rtdev_is_dax = false, datadev_is_dax;
-> -
-> -		xfs_warn(mp,
-> -		"DAX enabled. Warning: EXPERIMENTAL, use at your own risk");
-> -
-> -		datadev_is_dax = xfs_buftarg_is_dax(sb, mp->m_ddev_targp);
-> -		if (mp->m_rtdev_targp)
-> -			rtdev_is_dax = xfs_buftarg_is_dax(sb,
-> -						mp->m_rtdev_targp);
-> -		if (!rtdev_is_dax && !datadev_is_dax) {
-> -			xfs_alert(mp,
-> -			"DAX unsupported by block device. Turning off DAX.");
-> -			xfs_mount_set_dax_mode(mp, XFS_DAX_NEVER);
-> -		}
-> -		if (xfs_has_reflink(mp)) {
-> -			xfs_alert(mp,
-> -		"DAX and reflink cannot be used together!");
-> -			error = -EINVAL;
-> +		error = xfs_setup_dax(mp);
-> +		if (error)
->  			goto out_filestream_unmount;
-> -		}
->  	}
->  
->  	if (xfs_has_discard(mp)) {
-> -- 
-> 2.30.2
-> 
+-- 
+Jens Axboe
 
 --
 dm-devel mailing list
