@@ -2,63 +2,62 @@ Return-Path: <SRS0=V8Hk=PH=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5DA80C433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 19 Oct 2021 07:28:13 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A2C93C433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 19 Oct 2021 13:51:07 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id ADEDC61378
-	for <dm-devel@archiver.kernel.org>; Tue, 19 Oct 2021 07:28:12 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org ADEDC61378
+	by mail.kernel.org (Postfix) with ESMTPS id 0C78B6137B
+	for <dm-devel@archiver.kernel.org>; Tue, 19 Oct 2021 13:51:06 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 0C78B6137B
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-254-v30h-F8CNcOwyertlQKivQ-1; Tue, 19 Oct 2021 03:28:07 -0400
-X-MC-Unique: v30h-F8CNcOwyertlQKivQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-283-ovxfEi4nPOqrtLGRZisX_Q-1; Tue, 19 Oct 2021 09:51:02 -0400
+X-MC-Unique: ovxfEi4nPOqrtLGRZisX_Q-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 549B28066EF;
-	Tue, 19 Oct 2021 07:28:02 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5C24910027C4;
-	Tue, 19 Oct 2021 07:28:01 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 517E436305;
+	Tue, 19 Oct 2021 13:50:57 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C8FF75DAA5;
+	Tue, 19 Oct 2021 13:50:54 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 149DB1801241;
-	Tue, 19 Oct 2021 07:28:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 256E84EA2A;
+	Tue, 19 Oct 2021 13:50:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19J7Ndu5021548 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 19 Oct 2021 03:23:40 -0400
+	id 19JDomwk027517 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 19 Oct 2021 09:50:50 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 80719100913A; Tue, 19 Oct 2021 07:23:39 +0000 (UTC)
+	id B8F2640CFD10; Tue, 19 Oct 2021 13:50:48 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7ABC9100CA53
-	for <dm-devel@redhat.com>; Tue, 19 Oct 2021 07:23:35 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 54642811E76
-	for <dm-devel@redhat.com>; Tue, 19 Oct 2021 07:23:35 +0000 (UTC)
-Received: from verein.lst.de (verein.lst.de [213.95.11.211]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-425-BivOMHq2NNenB1OObfnigA-1;
-	Tue, 19 Oct 2021 03:23:31 -0400
-X-MC-Unique: BivOMHq2NNenB1OObfnigA-1
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id C6E1568BFE; Tue, 19 Oct 2021 09:23:26 +0200 (CEST)
-Date: Tue, 19 Oct 2021 09:23:26 +0200
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B44C440CFD12
+	for <dm-devel@redhat.com>; Tue, 19 Oct 2021 13:50:48 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 41A5A802A67
+	for <dm-devel@redhat.com>; Tue, 19 Oct 2021 13:50:48 +0000 (UTC)
+Received: from bombadil.infradead.org (bombadil.infradead.org
+	[198.137.202.133]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-313-8OL9GLSEM9GgozMeYCrxFQ-1; Tue, 19 Oct 2021 09:50:46 -0400
+X-MC-Unique: 8OL9GLSEM9GgozMeYCrxFQ-1
+Received: from [2001:4bb8:180:8777:c70:4a89:bc61:2] (helo=localhost)
+	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+	id 1mcpPU-001Sbo-I7; Tue, 19 Oct 2021 13:44:09 +0000
 From: Christoph Hellwig <hch@lst.de>
-To: "Darrick J. Wong" <djwong@kernel.org>
-Message-ID: <20211019072326.GA23171@lst.de>
-References: <20211018044054.1779424-1-hch@lst.de>
-	<20211018044054.1779424-7-hch@lst.de>
-	<20211018164351.GT24307@magnolia>
+To: Mike Snitzer <snitzer@redhat.com>
+Date: Tue, 19 Oct 2021 15:44:02 +0200
+Message-Id: <20211019134406.2501181-1-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20211018164351.GT24307@magnolia>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+	bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -67,17 +66,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-loop: dm-devel@redhat.com
-Cc: , linux-xfs@vger.kernel.org, linux-erofs@lists.ozlabs.org, To-header@lst.de,
-	Mike Snitzer <snitzer@redhat.com>, nvdimm@lists.linux.dev,
-	linux-s390@vger.kernel.org, no@lst.de, on@lst.de,
-	virtualization@lists.linux-foundation.org, "input <"@lst.de,
-	dm-devel@redhat.com, linux-fsdevel@vger.kernel.org,
-	Dan Williams <dan.j.williams@intel.com>,
-	linux-ext4@vger.kernel.org, Ira Weiny <ira.weiny@intel.com>,
-	Christoph Hellwig <hch@lst.de>
-Subject: Re: [dm-devel] [PATCH 06/11] xfs: factor out a xfs_setup_dax helper
+Cc: dm-devel@redhat.com
+Subject: [dm-devel] use bio kmap helpers in device mapper
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -91,35 +83,24 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Oct 18, 2021 at 09:43:51AM -0700, Darrick J. Wong wrote:
-> > --- a/fs/xfs/xfs_super.c
-> > +++ b/fs/xfs/xfs_super.c
-> > @@ -339,6 +339,32 @@ xfs_buftarg_is_dax(
-> >  			bdev_nr_sectors(bt->bt_bdev));
-> >  }
-> >  
-> > +static int
-> > +xfs_setup_dax(
-> 
-> /me wonders if this should be named xfs_setup_dax_always, since this
-> doesn't handle the dax=inode mode?
+Hi Mike,
 
-Sure, why not.
+this series converts device mapper to use the bio kmap
+helpers instead of the direct use of kmap_atomic.
 
-> The only reason I bring that up is that Eric reminded me a while ago
-> that we don't actually print any kind of EXPERIMENTAL warning for the
-> auto-detection behavior.
-
-Yes, I actually noticed that as well when preparing this series.
+Diffstat:
+ dm-integrity.c     |   10 +++++-----
+ dm-log-writes.c    |    6 ++----
+ dm-verity-target.c |    6 +++---
+ 3 files changed, 10 insertions(+), 12 deletions(-)
 
 --
 dm-devel mailing list
