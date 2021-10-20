@@ -2,74 +2,74 @@ Return-Path: <SRS0=0/yZ=PI=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9F3D2C433FE
-	for <dm-devel@archiver.kernel.org>; Wed, 20 Oct 2021 16:04:09 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0386CC433FE
+	for <dm-devel@archiver.kernel.org>; Wed, 20 Oct 2021 18:49:49 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 2A1E661373
-	for <dm-devel@archiver.kernel.org>; Wed, 20 Oct 2021 16:04:09 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 2A1E661373
+	by mail.kernel.org (Postfix) with ESMTPS id 65F6F610D0
+	for <dm-devel@archiver.kernel.org>; Wed, 20 Oct 2021 18:49:48 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 65F6F610D0
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-474-bUL5mZkpMdW9fq4r01oiUQ-1; Wed, 20 Oct 2021 12:04:04 -0400
-X-MC-Unique: bUL5mZkpMdW9fq4r01oiUQ-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-421-k-BXc09sO02-qGxRx4KlAA-1; Wed, 20 Oct 2021 14:49:46 -0400
+X-MC-Unique: k-BXc09sO02-qGxRx4KlAA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2337D814243;
-	Wed, 20 Oct 2021 16:03:58 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7B4CA78B20;
-	Wed, 20 Oct 2021 16:03:57 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 526451800D41;
+	Wed, 20 Oct 2021 18:49:41 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6CF971816A;
+	Wed, 20 Oct 2021 18:49:40 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 704F3181A1D0;
-	Wed, 20 Oct 2021 16:03:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0D4514A703;
+	Wed, 20 Oct 2021 18:49:38 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19KG3dNn014300 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 20 Oct 2021 12:03:39 -0400
+	id 19KIilI2031381 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 20 Oct 2021 14:44:47 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 893F72026D46; Wed, 20 Oct 2021 16:03:39 +0000 (UTC)
+	id 37D7D40CFD11; Wed, 20 Oct 2021 18:44:47 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 827572026D64
-	for <dm-devel@redhat.com>; Wed, 20 Oct 2021 16:03:34 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 32D6640CFD01
+	for <dm-devel@redhat.com>; Wed, 20 Oct 2021 18:44:47 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 450BC8038E3
-	for <dm-devel@redhat.com>; Wed, 20 Oct 2021 16:03:34 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1995380158D
+	for <dm-devel@redhat.com>; Wed, 20 Oct 2021 18:44:47 +0000 (UTC)
 Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) (Using
 	TLS) by relay.mimecast.com with ESMTP id
-	us-mta-1-202r5ehXM6GE7uQsMy5UPA-1; Wed, 20 Oct 2021 12:03:31 -0400
-X-MC-Unique: 202r5ehXM6GE7uQsMy5UPA-1
+	us-mta-450-EcsAqhTAOPO4Xu9SebhVHw-1; Wed, 20 Oct 2021 14:44:45 -0400
+X-MC-Unique: EcsAqhTAOPO4Xu9SebhVHw-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id B89301F770;
-	Wed, 20 Oct 2021 16:03:29 +0000 (UTC)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id F0AEC1FD4B;
+	Wed, 20 Oct 2021 18:44:43 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 68DA913B55;
-	Wed, 20 Oct 2021 16:03:29 +0000 (UTC)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id BBECA13BF1;
+	Wed, 20 Oct 2021 18:44:43 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id CKQeF9E9cGEuSAAAMHmgww
-	(envelope-from <mwilck@suse.com>); Wed, 20 Oct 2021 16:03:29 +0000
-Message-ID: <e0092780a8ce82fe9604609b49cc6e49cc737c25.camel@suse.com>
+	by imap2.suse-dmz.suse.de with ESMTPSA id LHNDK5tjcGH/BgAAMHmgww
+	(envelope-from <mwilck@suse.com>); Wed, 20 Oct 2021 18:44:43 +0000
+Message-ID: <d300f40640858a6c38d37285da2ffc381ce689c3.camel@suse.com>
 From: Martin Wilck <mwilck@suse.com>
-To: chengjike <chengjike.cheng@huawei.com>, dm-devel@redhat.com,
-	christophe.varoqui@opensvc.com, xose.vazquez@gmail.com
-Date: Wed, 20 Oct 2021 18:03:28 +0200
-In-Reply-To: <20211008122449.1328-1-chengjike.cheng@huawei.com>
-References: <20211008122449.1328-1-chengjike.cheng@huawei.com>
+To: "berthiaume, wayne" <Wayne.Berthiaume@dell.com>, Xose Vazquez Perez
+	<xose.vazquez@gmail.com>
+Date: Wed, 20 Oct 2021 20:44:43 +0200
+In-Reply-To: <BY3PR19MB48522AA6EFF15AC8608253ECE2AA9@BY3PR19MB4852.namprd19.prod.outlook.com>
+References: <20210928173121.18081-1-xose.vazquez@gmail.com>
+	<BY3PR19MB48522AA6EFF15AC8608253ECE2AA9@BY3PR19MB4852.namprd19.prod.outlook.com>
 User-Agent: Evolution 3.42.0
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -80,13 +80,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 19KG3dNn014300
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 19KIilI2031381
 X-loop: dm-devel@redhat.com
-Cc: sunao.sun@huawei.com, jiangtao62@huawei.com
-Subject: Re: [dm-devel] [PATCH]multipath-tools: fix "multipath -ll" bug for
- Native NVME Multipath devices
+Cc: DM-DEVEL ML <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH] multipath-tools: make EMC/Invista config
+ work with alua and multibus
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -100,7 +100,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -108,42 +108,24 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="iso-8859-15"
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, 2021-10-08 at 20:24 +0800, chengjike wrote:
-> After "Native NVME Multipath" is configured,
-> the content displayed is incorrect when you run "multipath -ll"
-> command.
-> Each NVME devices have the same path name. For example:
->=20
-> [root@localhost home]# multipath -ll
-> eui.710032e8fb22a86c24a52c1000000db8 [nvme]:nvme1n1 NVMe,Huawei-
-> XSG1,1000001
-> size=3D10485760 features=3D'n/a' hwhandler=3D'ANA' wp=3Drw
-> > -+- policy=3D'n/a' prio=3D50 status=3Doptimized
-> > `- 1:4:1=A0=A0 nvme1c4n1 0:0 n/a=A0=A0 optimized live
-> `-+- policy=3D'n/a' prio=3D50 status=3Doptimized
-> =A0 `- 1:9:1=A0=A0 nvme1c9n1 0:0 n/a=A0=A0 optimized live
-> eui.710032e8fb22a86b24a52c7c00000db7 [nvme]:nvme1n2 NVMe,Huawei-
-> XSG1,1000001
-> size=3D10485760 features=3D'n/a' hwhandler=3D'ANA' wp=3Drw
-> > -+- policy=3D'n/a' prio=3D50 status=3Doptimized
-> > `- 1:4:1=A0=A0 nvme1c4n1 0:0 n/a=A0=A0 optimized live
-> `-+- policy=3D'n/a' prio=3D50 status=3Doptimized
-> =A0 `- 1:9:1=A0=A0 nvme1c9n1 0:0 n/a=A0=A0 optimized live
-> [root@localhost home]#
->=20
-> The logical paths of "nvme1n1" and "nvme1n2" are both "nvme1c4n1" and
-> "nvme1c9n1".
-> So when multipath-tools aggregates disks, use "nvme_ns_head-
-> >instance" for matching.
-> such as ,Use "b" in "nvmeanb" string to match "z" in
-> "nvmexcynz"(a,b,x,y,z can be any number),
-> and if "b" and "z" are the same, they are related.
->=20
-> Signed-off-by: chengjike <chengjike.cheng@huawei.com>
+Wayne,
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+On Thu, 2021-09-30 at 14:32 +0000, berthiaume, wayne wrote:
+> Hi Xose.
+>=20
+> =A0=A0=A0=A0=A0=A0=A0=A0OPM is no longer supported in the Dell VPLEX prod=
+uct. If we
+> at Dell had wished to change the default device stanzas for any of
+> our products they would have been done when the product and/or
+> feature is released. Please remove this patch as well. It is not
+> needed.
 
-Thanks!!
+thanks for the feedback, and thanks for paying attention.=A0
+The patch will be removed. The one for SYMMETRIX, likewise.
+
+
+Regards
+Martin
 
 
 --
