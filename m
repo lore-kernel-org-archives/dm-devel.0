@@ -2,61 +2,61 @@ Return-Path: <SRS0=XsJU=PJ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7A6FAC433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 21 Oct 2021 11:38:34 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F0A50C433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 21 Oct 2021 11:55:35 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 07B396109F
-	for <dm-devel@archiver.kernel.org>; Thu, 21 Oct 2021 11:38:33 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 07B396109F
+	by mail.kernel.org (Postfix) with ESMTPS id 90FE8610CB
+	for <dm-devel@archiver.kernel.org>; Thu, 21 Oct 2021 11:55:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 90FE8610CB
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-346-HRZuQMDFN9-bGy98m6n-DA-1; Thu, 21 Oct 2021 07:38:29 -0400
-X-MC-Unique: HRZuQMDFN9-bGy98m6n-DA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-147-66AIazUnOxijfI_f7Jhc1Q-1; Thu, 21 Oct 2021 07:55:29 -0400
+X-MC-Unique: 66AIazUnOxijfI_f7Jhc1Q-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 98FF9100CC86;
-	Thu, 21 Oct 2021 11:38:25 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D6F9B802B78;
+	Thu, 21 Oct 2021 11:55:24 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 649A117CEE;
-	Thu, 21 Oct 2021 11:38:25 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 60E3419D9F;
+	Thu, 21 Oct 2021 11:55:24 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9CC834E58F;
-	Thu, 21 Oct 2021 11:38:24 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.1])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A1BE24A703;
+	Thu, 21 Oct 2021 11:55:23 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19LBVIR2011969 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 21 Oct 2021 07:31:18 -0400
+	id 19LBtIuf014587 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 21 Oct 2021 07:55:18 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 67D4240CFD11; Thu, 21 Oct 2021 11:31:18 +0000 (UTC)
+	id 84538D1BA8; Thu, 21 Oct 2021 11:55:18 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 630D140CFD08
-	for <dm-devel@redhat.com>; Thu, 21 Oct 2021 11:31:18 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7CCB5D0180
+	for <dm-devel@redhat.com>; Thu, 21 Oct 2021 11:55:15 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4DF998022F4
-	for <dm-devel@redhat.com>; Thu, 21 Oct 2021 11:31:18 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B76FF1066681
+	for <dm-devel@redhat.com>; Thu, 21 Oct 2021 11:55:15 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-517-SU5m9b47OSCpzJ76O-RB0g-1; Thu, 21 Oct 2021 07:31:14 -0400
-X-MC-Unique: SU5m9b47OSCpzJ76O-RB0g-1
+	us-mta-96-S_u4qGobMR2xcVdGwnaRbw-1; Thu, 21 Oct 2021 07:55:14 -0400
+X-MC-Unique: S_u4qGobMR2xcVdGwnaRbw-1
 Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red
-	Hat Linux)) id 1mdWHs-007MQC-E3; Thu, 21 Oct 2021 11:31:08 +0000
-Date: Thu, 21 Oct 2021 04:31:08 -0700
+	Hat Linux)) id 1mdW7H-007KJP-3a; Thu, 21 Oct 2021 11:20:11 +0000
+Date: Thu, 21 Oct 2021 04:20:11 -0700
 From: Christoph Hellwig <hch@infradead.org>
 To: Jane Chu <jane.chu@oracle.com>
-Message-ID: <YXFPfEGjoUaajjL4@infradead.org>
+Message-ID: <YXFM64mFLN8dagrY@infradead.org>
 References: <20211021001059.438843-1-jane.chu@oracle.com>
+	<20211021001059.438843-3-jane.chu@oracle.com>
 MIME-Version: 1.0
-In-Reply-To: <20211021001059.438843-1-jane.chu@oracle.com>
+In-Reply-To: <20211021001059.438843-3-jane.chu@oracle.com>
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
 	bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -67,7 +67,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: nvdimm@lists.linux.dev, dave.jiang@intel.com, snitzer@redhat.com,
 	djwong@kernel.org, david@fromorbit.com,
@@ -76,8 +76,8 @@ Cc: nvdimm@lists.linux.dev, dave.jiang@intel.com, snitzer@redhat.com,
 	vishal.l.verma@intel.com, linux-fsdevel@vger.kernel.org,
 	dan.j.williams@intel.com, ira.weiny@intel.com,
 	linux-xfs@vger.kernel.org, agk@redhat.com
-Subject: Re: [dm-devel] [PATCH 0/6] dax poison recovery with
- RWF_RECOVERY_DATA flag
+Subject: Re: [dm-devel] [PATCH 2/6] dax: prepare dax_direct_access() API
+ with DAXDEV_F_RECOVERY flag
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -91,7 +91,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -100,9 +100,24 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Looking over the series I have serious doubts that overloading the
-slow path clear poison operation over the fast path read/write
-path is such a great idea.
+On Wed, Oct 20, 2021 at 06:10:55PM -0600, Jane Chu wrote:
+> @@ -156,8 +156,8 @@ bool generic_fsdax_supported(struct dax_device *dax_dev,
+>  	}
+>  
+>  	id = dax_read_lock();
+> -	len = dax_direct_access(dax_dev, pgoff, 1, &kaddr, &pfn);
+> -	len2 = dax_direct_access(dax_dev, pgoff_end, 1, &end_kaddr, &end_pfn);
+> +	len = dax_direct_access(dax_dev, pgoff, 1, &kaddr, &pfn, 0);
+> +	len2 = dax_direct_access(dax_dev, pgoff_end, 1, &end_kaddr, &end_pfn, 0);
+
+FYI, I have a series killing this code.  But either way please avoid
+these overly long lines.
+
+>  long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
+> -		void **kaddr, pfn_t *pfn)
+> +		void **kaddr, pfn_t *pfn, unsigned long flags)
+
+API design: I'd usually expect flags before output paramters.
 
 --
 dm-devel mailing list
