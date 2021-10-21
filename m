@@ -2,62 +2,62 @@ Return-Path: <SRS0=XsJU=PJ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 79ED9C433FE
-	for <dm-devel@archiver.kernel.org>; Thu, 21 Oct 2021 11:27:46 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ED49DC433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 21 Oct 2021 11:29:15 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C528E6135A
-	for <dm-devel@archiver.kernel.org>; Thu, 21 Oct 2021 11:27:44 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org C528E6135A
+	by mail.kernel.org (Postfix) with ESMTPS id 0B6E360EFE
+	for <dm-devel@archiver.kernel.org>; Thu, 21 Oct 2021 11:29:13 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 0B6E360EFE
 Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-256-yygPS3e8P12G1qG6Y-j9ow-1; Thu, 21 Oct 2021 07:27:40 -0400
-X-MC-Unique: yygPS3e8P12G1qG6Y-j9ow-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-41-QbwfiUKXNlm6eGnxoZ68mQ-1; Thu, 21 Oct 2021 07:29:09 -0400
+X-MC-Unique: QbwfiUKXNlm6eGnxoZ68mQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 16FB981433E;
-	Thu, 21 Oct 2021 11:27:36 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1D4C3806692;
+	Thu, 21 Oct 2021 11:29:05 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B195760C13;
-	Thu, 21 Oct 2021 11:27:35 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 00B5E69FB9;
+	Thu, 21 Oct 2021 11:29:05 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E721B4E58F;
-	Thu, 21 Oct 2021 11:27:34 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9A0FB4E590;
+	Thu, 21 Oct 2021 11:29:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19LBRXdG011677 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 21 Oct 2021 07:27:33 -0400
+	id 19LBT3gb011818 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 21 Oct 2021 07:29:03 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 9F9CF1007266; Thu, 21 Oct 2021 11:27:33 +0000 (UTC)
+	id F3A4440C1257; Thu, 21 Oct 2021 11:29:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9BCE8100725E
-	for <dm-devel@redhat.com>; Thu, 21 Oct 2021 11:27:30 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EFBA8400F3E3
+	for <dm-devel@redhat.com>; Thu, 21 Oct 2021 11:29:02 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C30038041A1
-	for <dm-devel@redhat.com>; Thu, 21 Oct 2021 11:27:30 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D6FB08022F4
+	for <dm-devel@redhat.com>; Thu, 21 Oct 2021 11:29:02 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-91-4CiJdtacNfirhqxX8_KbuA-1; Thu, 21 Oct 2021 07:27:27 -0400
-X-MC-Unique: 4CiJdtacNfirhqxX8_KbuA-1
+	us-mta-598-Mern50lPPNKvYnyMdlB2gA-1; Thu, 21 Oct 2021 07:28:59 -0400
+X-MC-Unique: Mern50lPPNKvYnyMdlB2gA-1
 Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red
-	Hat Linux)) id 1mdWE8-007LU1-La; Thu, 21 Oct 2021 11:27:16 +0000
-Date: Thu, 21 Oct 2021 04:27:16 -0700
+	Hat Linux)) id 1mdWFe-007Lv7-EG; Thu, 21 Oct 2021 11:28:50 +0000
+Date: Thu, 21 Oct 2021 04:28:50 -0700
 From: Christoph Hellwig <hch@infradead.org>
 To: Jane Chu <jane.chu@oracle.com>
-Message-ID: <YXFOlKWUuwFUJxUZ@infradead.org>
+Message-ID: <YXFO8uCgIDoIqTgC@infradead.org>
 References: <20211021001059.438843-1-jane.chu@oracle.com>
-	<20211021001059.438843-5-jane.chu@oracle.com>
+	<20211021001059.438843-6-jane.chu@oracle.com>
 MIME-Version: 1.0
-In-Reply-To: <20211021001059.438843-5-jane.chu@oracle.com>
+In-Reply-To: <20211021001059.438843-6-jane.chu@oracle.com>
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
 	bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -68,7 +68,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-loop: dm-devel@redhat.com
 Cc: nvdimm@lists.linux.dev, dave.jiang@intel.com, snitzer@redhat.com,
 	djwong@kernel.org, david@fromorbit.com,
@@ -77,8 +77,8 @@ Cc: nvdimm@lists.linux.dev, dave.jiang@intel.com, snitzer@redhat.com,
 	vishal.l.verma@intel.com, linux-fsdevel@vger.kernel.org,
 	dan.j.williams@intel.com, ira.weiny@intel.com,
 	linux-xfs@vger.kernel.org, agk@redhat.com
-Subject: Re: [dm-devel] [PATCH 4/6] dm, dax,
- pmem: prepare dax_copy_to/from_iter() APIs with DAXDEV_F_RECOVERY
+Subject: Re: [dm-devel] [PATCH 5/6] dax,
+ pmem: Add data recovery feature to pmem_copy_to/from_iter()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -92,7 +92,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -101,25 +101,23 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Oct 20, 2021 at 06:10:57PM -0600, Jane Chu wrote:
-> Prepare dax_copy_to/from_iter() APIs with DAXDEV_F_RECOVERY flag
-> such that when the flag is set, the underlying driver implementation
-> of the APIs may deal with potential poison in a given address
-> range and read partial data or write after clearing poison.
+> +	if (flags & DAXDEV_F_RECOVERY) {
+> +		lead_off = (unsigned long)addr & ~PAGE_MASK;
+> +		len = PFN_PHYS(PFN_UP(lead_off + bytes));
+> +		if (is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512, len)) {
+> +			if (lead_off || !(PAGE_ALIGNED(bytes))) {
+> +				dev_warn(dev, "Found poison, but addr(%p) and/or bytes(%#lx) not page aligned\n",
+> +					addr, bytes);
+> +				return (size_t) -EIO;
+> +			}
+> +			pmem_off = PFN_PHYS(pgoff) + pmem->data_offset;
+> +			if (pmem_clear_poison(pmem, pmem_off, bytes) !=
+> +					BLK_STS_OK)
+> +				return (size_t) -EIO;
+> +		}
 
-FYI, I've been wondering for a while if we could just kill off these
-methods entirely.  Basically the driver interaction consists of two
-parts:
-
- a) wether to use the flushcache/mcsafe variants of the generic helpers
- b) actually doing remapping for device mapper
-
-to me it seems like we should handle a) with flags in dax_operations,
-and only have a remap callback for device mapper.  That way we'd avoid
-the indirect calls for the native case, and also avoid tons of
-boilerplate code.  "futher decouple DAX from block devices" series
-already massages the device mapper into a form suitable for such
-callbacks.
+Shouldn't this just go down in a separe ->clear_poison operation
+to make the whole thing a little easier to follow?
 
 --
 dm-devel mailing list
