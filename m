@@ -2,78 +2,78 @@ Return-Path: <SRS0=WDPk=PP=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F1552C433F5
-	for <dm-devel@archiver.kernel.org>; Wed, 27 Oct 2021 20:53:45 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 91E1EC433EF
+	for <dm-devel@archiver.kernel.org>; Wed, 27 Oct 2021 20:54:53 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 75C1A6109F
-	for <dm-devel@archiver.kernel.org>; Wed, 27 Oct 2021 20:53:45 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 75C1A6109F
+	by mail.kernel.org (Postfix) with ESMTPS id 13BBF610C7
+	for <dm-devel@archiver.kernel.org>; Wed, 27 Oct 2021 20:54:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 13BBF610C7
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=intel.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-311-DYu3vOpsPYmnBFjYTg1Vyw-1; Wed, 27 Oct 2021 16:53:42 -0400
-X-MC-Unique: DYu3vOpsPYmnBFjYTg1Vyw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-102-z30ZYJxVNvq6i6C8FgktbA-1; Wed, 27 Oct 2021 16:54:48 -0400
+X-MC-Unique: z30ZYJxVNvq6i6C8FgktbA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 63F31A40C3;
-	Wed, 27 Oct 2021 20:53:38 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5D1E815875A0;
+	Wed, 27 Oct 2021 20:54:44 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D0FA160BF1;
-	Wed, 27 Oct 2021 20:53:37 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4425060936;
+	Wed, 27 Oct 2021 20:54:44 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 32BD61800FDD;
-	Wed, 27 Oct 2021 20:53:37 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0DFA61800FDD;
+	Wed, 27 Oct 2021 20:54:44 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19RKrZGF004214 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 27 Oct 2021 16:53:36 -0400
+	id 19RKsfWx004371 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 27 Oct 2021 16:54:41 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id D91F640D1B9D; Wed, 27 Oct 2021 20:53:35 +0000 (UTC)
+	id 97FAB400F3EC; Wed, 27 Oct 2021 20:54:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D532340C1242
-	for <dm-devel@redhat.com>; Wed, 27 Oct 2021 20:53:35 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 940FF40D1B9D
+	for <dm-devel@redhat.com>; Wed, 27 Oct 2021 20:54:41 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BC9E5805AB5
-	for <dm-devel@redhat.com>; Wed, 27 Oct 2021 20:53:35 +0000 (UTC)
-Received: from mail-pl1-f175.google.com (mail-pl1-f175.google.com
-	[209.85.214.175]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-440-cJBGvazVMGmwlm1a7glt2A-1; Wed, 27 Oct 2021 16:53:34 -0400
-X-MC-Unique: cJBGvazVMGmwlm1a7glt2A-1
-Received: by mail-pl1-f175.google.com with SMTP id z11so2873700plg.8
-	for <dm-devel@redhat.com>; Wed, 27 Oct 2021 13:53:33 -0700 (PDT)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7A2EE811E9B
+	for <dm-devel@redhat.com>; Wed, 27 Oct 2021 20:54:41 +0000 (UTC)
+Received: from mail-pg1-f176.google.com (mail-pg1-f176.google.com
+	[209.85.215.176]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-451-7GOWQ6IhND6jHkm_CoD0Jg-1; Wed, 27 Oct 2021 16:54:37 -0400
+X-MC-Unique: 7GOWQ6IhND6jHkm_CoD0Jg-1
+Received: by mail-pg1-f176.google.com with SMTP id f5so4135065pgc.12
+	for <dm-devel@redhat.com>; Wed, 27 Oct 2021 13:54:37 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20210112;
 	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
 	:message-id:subject:to:cc;
-	bh=JF27tid0jnJ4Lv4ojsqdS1ywAxF2Yh/rXBicw2Nx/Bg=;
-	b=jftEVXYztm5F6o0WhOzMUN2rkzsJLG7kUsIPPO5dUvdu1oSZhtQhFPSUKGGMP/JDDp
-	yhGalE9hhfWQN2WyrFIyk74OOejktkBRR+lixBp2VYsCx7Dz8HzxxoS0E71CGgL8hYj9
-	SbjStiQtAJjNb6n3fc6F0mwHlGR40cP9UR2E4yNsQD0SRDUsimLeiyrvDSmC65y4BpfC
-	XyAY4n7IB7D1K61JOcnwDB3Uc23ioemfNPX6ivCGiPsdU883SGp9IuB/I+97cv/RA1WS
-	wFYrFzdUGhoONKa53nfQhC4kCRRi3VFs6qPcnSdK/0BjkGpCAhR7hBtBvUGYdiNVmVl+
-	V8CA==
-X-Gm-Message-State: AOAM53075dBozw9iUKDipHZytiRfqCvGrm//WvH7yawBmSSNROIOiIdF
-	f7xHgRVfK/p5VQaDkPD+AnDZPh6DtVDOQrxRnv/7/w==
-X-Google-Smtp-Source: ABdhPJzghlFw+zkjpuNy8dyEqDgjwZ/Nb0+yCd5621faImzBOeUtIgX/3CShbYonbAi1vtWBePJ7pkat1hh6sB8QXRU=
-X-Received: by 2002:a17:90b:3b88:: with SMTP id pc8mr3618pjb.93.1635368012904; 
-	Wed, 27 Oct 2021 13:53:32 -0700 (PDT)
+	bh=MW2+yuOLdVC2FiYNaHWFO+PStoIyhupC83aZvNmdg00=;
+	b=ffRgmJBqgCqOkXhxQxbXMmCq8xeIRbo1qNbLm9OQMA+t4+iEba6sFCL/aqqU8VgdC0
+	HM3b+AtN7qlTK6MtjzxgbtSScOYdxx0Xyscj70eyhCuXwTTNkNT5SQyp7uLs6HSrUx7n
+	jOJs8JD0Lj0+WKJumh5Nnd7m+S14164qG4pstZDG0xKiFAOZBpj+URTVofRuWS3ubxX1
+	iBxX2bv6TCIB6yfygJ31eizzZOMfO48/5kCg2eBTyIAEOYOmepzssnINiMrvh7tzFBRv
+	NDVLNaQW9fcHHWs6H83sqKRuOeim342sy9o4FDhVNu/LfoujWvDjHy8t58x6gobjYqUH
+	dxRg==
+X-Gm-Message-State: AOAM532h/kj/62ywMGGcV0ESk4j5X/aayfeM0QbcPli9xzNQIqQauHiD
+	6M2Z9bDh609AHhkGqWom3NDA3Mp1KClX/HRRGEhOZw==
+X-Google-Smtp-Source: ABdhPJxqYRzrssHaaThSAQ3S9v6yHWHIiMadGqtNgSbRxpNG6jDSA2a4I6mJJqbjxV8Pnl8ItfliO9eaeQbTvv574gs=
+X-Received: by 2002:a63:770e:: with SMTP id s14mr43824pgc.377.1635368076533;
+	Wed, 27 Oct 2021 13:54:36 -0700 (PDT)
 MIME-Version: 1.0
 References: <20211018044054.1779424-1-hch@lst.de>
-	<20211018044054.1779424-2-hch@lst.de>
-In-Reply-To: <20211018044054.1779424-2-hch@lst.de>
+	<20211018044054.1779424-3-hch@lst.de>
+In-Reply-To: <20211018044054.1779424-3-hch@lst.de>
 From: Dan Williams <dan.j.williams@intel.com>
-Date: Wed, 27 Oct 2021 13:53:21 -0700
-Message-ID: <CAPcyv4hrEPizMOH-XhCqh=23EJDG=W6VwvQ1pVstfe-Jm-AsiQ@mail.gmail.com>
-To: Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
+Date: Wed, 27 Oct 2021 13:54:25 -0700
+Message-ID: <CAPcyv4jAd5O=keOkvtKzrnqpy21dfH0sJSk7Oo16wYrFfPnk=Q@mail.gmail.com>
+To: Christoph Hellwig <hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -84,15 +84,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-loop: dm-devel@redhat.com
-Cc: Linux NVDIMM <nvdimm@lists.linux.dev>,
+Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Mike Snitzer <snitzer@redhat.com>,
 	linux-s390 <linux-s390@vger.kernel.org>, linux-erofs@lists.ozlabs.org,
 	virtualization@lists.linux-foundation.org,
 	linux-xfs <linux-xfs@vger.kernel.org>,
 	device-mapper development <dm-devel@redhat.com>,
 	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
 	linux-ext4 <linux-ext4@vger.kernel.org>, Ira Weiny <ira.weiny@intel.com>
-Subject: Re: [dm-devel] [PATCH 01/11] dm: make the DAX support dependend on
-	CONFIG_FS_DAX
+Subject: Re: [dm-devel] [PATCH 02/11] dax: remove CONFIG_DAX_DRIVER
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -106,7 +105,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -116,123 +115,70 @@ Content-Transfer-Encoding: 7bit
 
 On Sun, Oct 17, 2021 at 9:41 PM Christoph Hellwig <hch@lst.de> wrote:
 >
-> The device mapper DAX support is all hanging off a block device and thus
-> can't be used with device dax.  Make it depend on CONFIG_FS_DAX instead
-> of CONFIG_DAX_DRIVER.  This also means that bdev_dax_pgoff only needs to
-> be built under CONFIG_FS_DAX now.
+> CONFIG_DAX_DRIVER only selects CONFIG_DAX now, so remove it.
 
-Looks good.
+Looks good, I don't think an s390 ack is needed for this one.
 
-Mike, can I get an ack to take this through nvdimm.git? (you'll likely
-see me repeat this question on subsequent patches in this series).
-
->
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
->  drivers/dax/super.c        | 6 ++----
->  drivers/md/dm-linear.c     | 2 +-
->  drivers/md/dm-log-writes.c | 2 +-
->  drivers/md/dm-stripe.c     | 2 +-
->  drivers/md/dm-writecache.c | 2 +-
->  drivers/md/dm.c            | 2 +-
->  6 files changed, 7 insertions(+), 9 deletions(-)
+>  drivers/dax/Kconfig        | 4 ----
+>  drivers/nvdimm/Kconfig     | 2 +-
+>  drivers/s390/block/Kconfig | 2 +-
+>  fs/fuse/Kconfig            | 2 +-
+>  4 files changed, 3 insertions(+), 7 deletions(-)
 >
-> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-> index b882cf8106ea3..e20d0cef10a18 100644
-> --- a/drivers/dax/super.c
-> +++ b/drivers/dax/super.c
-> @@ -63,7 +63,7 @@ static int dax_host_hash(const char *host)
->         return hashlen_hash(hashlen_string("DAX", host)) % DAX_HASH_SIZE;
->  }
->
-> -#ifdef CONFIG_BLOCK
-> +#if defined(CONFIG_BLOCK) && defined(CONFIG_FS_DAX)
->  #include <linux/blkdev.h>
->
->  int bdev_dax_pgoff(struct block_device *bdev, sector_t sector, size_t size,
-> @@ -80,7 +80,6 @@ int bdev_dax_pgoff(struct block_device *bdev, sector_t sector, size_t size,
->  }
->  EXPORT_SYMBOL(bdev_dax_pgoff);
->
-> -#if IS_ENABLED(CONFIG_FS_DAX)
->  /**
->   * dax_get_by_host() - temporary lookup mechanism for filesystem-dax
->   * @host: alternate name for the device registered by a dax driver
-> @@ -219,8 +218,7 @@ bool dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
->         return ret;
->  }
->  EXPORT_SYMBOL_GPL(dax_supported);
-> -#endif /* CONFIG_FS_DAX */
-> -#endif /* CONFIG_BLOCK */
-> +#endif /* CONFIG_BLOCK && CONFIG_FS_DAX */
->
->  enum dax_device_flags {
->         /* !alive + rcu grace period == no new operations / mappings */
-> diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-> index 679b4c0a2eea1..32fbab11bf90c 100644
-> --- a/drivers/md/dm-linear.c
-> +++ b/drivers/md/dm-linear.c
-> @@ -163,7 +163,7 @@ static int linear_iterate_devices(struct dm_target *ti,
->         return fn(ti, lc->dev, lc->start, ti->len, data);
->  }
->
-> -#if IS_ENABLED(CONFIG_DAX_DRIVER)
-> +#if IS_ENABLED(CONFIG_FS_DAX)
->  static long linear_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
->                 long nr_pages, void **kaddr, pfn_t *pfn)
->  {
-> diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-> index d93a4db235124..6d694526881d0 100644
-> --- a/drivers/md/dm-log-writes.c
-> +++ b/drivers/md/dm-log-writes.c
-> @@ -903,7 +903,7 @@ static void log_writes_io_hints(struct dm_target *ti, struct queue_limits *limit
->         limits->io_min = limits->physical_block_size;
->  }
->
-> -#if IS_ENABLED(CONFIG_DAX_DRIVER)
-> +#if IS_ENABLED(CONFIG_FS_DAX)
->  static int log_dax(struct log_writes_c *lc, sector_t sector, size_t bytes,
->                    struct iov_iter *i)
->  {
-> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-> index 6660b6b53d5bf..f084607220293 100644
-> --- a/drivers/md/dm-stripe.c
-> +++ b/drivers/md/dm-stripe.c
-> @@ -300,7 +300,7 @@ static int stripe_map(struct dm_target *ti, struct bio *bio)
->         return DM_MAPIO_REMAPPED;
->  }
->
-> -#if IS_ENABLED(CONFIG_DAX_DRIVER)
-> +#if IS_ENABLED(CONFIG_FS_DAX)
->  static long stripe_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
->                 long nr_pages, void **kaddr, pfn_t *pfn)
->  {
-> diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> index 18320444fb0a9..4c3a6e33604d3 100644
-> --- a/drivers/md/dm-writecache.c
-> +++ b/drivers/md/dm-writecache.c
-> @@ -38,7 +38,7 @@
->  #define BITMAP_GRANULARITY     PAGE_SIZE
->  #endif
->
-> -#if IS_ENABLED(CONFIG_ARCH_HAS_PMEM_API) && IS_ENABLED(CONFIG_DAX_DRIVER)
-> +#if IS_ENABLED(CONFIG_ARCH_HAS_PMEM_API) && IS_ENABLED(CONFIG_FS_DAX)
->  #define DM_WRITECACHE_HAS_PMEM
->  #endif
->
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 7870e6460633f..79737aee516b1 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1783,7 +1783,7 @@ static struct mapped_device *alloc_dev(int minor)
->         md->disk->private_data = md;
->         sprintf(md->disk->disk_name, "dm-%d", minor);
->
-> -       if (IS_ENABLED(CONFIG_DAX_DRIVER)) {
-> +       if (IS_ENABLED(CONFIG_FS_DAX)) {
->                 md->dax_dev = alloc_dax(md, md->disk->disk_name,
->                                         &dm_dax_ops, 0);
->                 if (IS_ERR(md->dax_dev))
+> diff --git a/drivers/dax/Kconfig b/drivers/dax/Kconfig
+> index d2834c2cfa10d..954ab14ba7778 100644
+> --- a/drivers/dax/Kconfig
+> +++ b/drivers/dax/Kconfig
+> @@ -1,8 +1,4 @@
+>  # SPDX-License-Identifier: GPL-2.0-only
+> -config DAX_DRIVER
+> -       select DAX
+> -       bool
+> -
+>  menuconfig DAX
+>         tristate "DAX: direct access to differentiated memory"
+>         select SRCU
+> diff --git a/drivers/nvdimm/Kconfig b/drivers/nvdimm/Kconfig
+> index b7d1eb38b27d4..347fe7afa5830 100644
+> --- a/drivers/nvdimm/Kconfig
+> +++ b/drivers/nvdimm/Kconfig
+> @@ -22,7 +22,7 @@ if LIBNVDIMM
+>  config BLK_DEV_PMEM
+>         tristate "PMEM: Persistent memory block device support"
+>         default LIBNVDIMM
+> -       select DAX_DRIVER
+> +       select DAX
+>         select ND_BTT if BTT
+>         select ND_PFN if NVDIMM_PFN
+>         help
+> diff --git a/drivers/s390/block/Kconfig b/drivers/s390/block/Kconfig
+> index d0416dbd0cd81..e3710a762abae 100644
+> --- a/drivers/s390/block/Kconfig
+> +++ b/drivers/s390/block/Kconfig
+> @@ -5,7 +5,7 @@ comment "S/390 block device drivers"
+>  config DCSSBLK
+>         def_tristate m
+>         select FS_DAX_LIMITED
+> -       select DAX_DRIVER
+> +       select DAX
+>         prompt "DCSSBLK support"
+>         depends on S390 && BLOCK
+>         help
+> diff --git a/fs/fuse/Kconfig b/fs/fuse/Kconfig
+> index 40ce9a1c12e5d..038ed0b9aaa5d 100644
+> --- a/fs/fuse/Kconfig
+> +++ b/fs/fuse/Kconfig
+> @@ -45,7 +45,7 @@ config FUSE_DAX
+>         select INTERVAL_TREE
+>         depends on VIRTIO_FS
+>         depends on FS_DAX
+> -       depends on DAX_DRIVER
+> +       depends on DAX
+>         help
+>           This allows bypassing guest page cache and allows mapping host page
+>           cache directly in guest address space.
 > --
 > 2.30.2
 >
