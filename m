@@ -2,82 +2,78 @@ Return-Path: <SRS0=WDPk=PP=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4D3FEC433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 27 Oct 2021 08:56:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F0456C433EF
+	for <dm-devel@archiver.kernel.org>; Wed, 27 Oct 2021 09:35:10 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C3BAB610A5
-	for <dm-devel@archiver.kernel.org>; Wed, 27 Oct 2021 08:56:37 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org C3BAB610A5
+	by mail.kernel.org (Postfix) with ESMTPS id 7A5E061056
+	for <dm-devel@archiver.kernel.org>; Wed, 27 Oct 2021 09:35:10 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 7A5E061056
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=huawei.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-382-mJ2u7029N8uwd3aXX0JyBA-1; Wed, 27 Oct 2021 04:56:32 -0400
-X-MC-Unique: mJ2u7029N8uwd3aXX0JyBA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-474-IBLFGmswP6-0rEf4aWDZJg-1; Wed, 27 Oct 2021 05:35:07 -0400
+X-MC-Unique: IBLFGmswP6-0rEf4aWDZJg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CC279806689;
-	Wed, 27 Oct 2021 08:56:27 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4B7381980E;
-	Wed, 27 Oct 2021 08:56:27 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 278F9804B96;
+	Wed, 27 Oct 2021 09:35:03 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9A42219D9D;
+	Wed, 27 Oct 2021 09:35:02 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D7D651800FDD;
-	Wed, 27 Oct 2021 08:56:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.2])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 164964A704;
+	Wed, 27 Oct 2021 09:35:01 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19R8uOMX025327 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 27 Oct 2021 04:56:24 -0400
+	id 19R9YwpP028602 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 27 Oct 2021 05:34:58 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 04E6740D1B9E; Wed, 27 Oct 2021 08:56:24 +0000 (UTC)
+	id 30CE21121315; Wed, 27 Oct 2021 09:34:58 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 00A5A40D1B9D
-	for <dm-devel@redhat.com>; Wed, 27 Oct 2021 08:56:23 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2C8351121314
+	for <dm-devel@redhat.com>; Wed, 27 Oct 2021 09:34:55 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CD61A180F6EE
-	for <dm-devel@redhat.com>; Wed, 27 Oct 2021 08:56:23 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 63112185A79C
+	for <dm-devel@redhat.com>; Wed, 27 Oct 2021 09:34:55 +0000 (UTC)
 Received: from frasgout.his.huawei.com (frasgout.his.huawei.com
 	[185.176.79.56]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-530-UCuwCKxnNjSnL0rUsZ-ygg-1; Wed, 27 Oct 2021 04:56:20 -0400
-X-MC-Unique: UCuwCKxnNjSnL0rUsZ-ygg-1
-Received: from fraeml714-chm.china.huawei.com (unknown [172.18.147.207])
-	by frasgout.his.huawei.com (SkyGuard) with ESMTP id 4HfMsW49s4z67lnr;
-	Wed, 27 Oct 2021 16:53:03 +0800 (CST)
+	us-mta-584-arjwOSeKNLqCzGHwoxOIPA-1; Wed, 27 Oct 2021 05:34:50 -0400
+X-MC-Unique: arjwOSeKNLqCzGHwoxOIPA-1
+Received: from fraeml713-chm.china.huawei.com (unknown [172.18.147.200])
+	by frasgout.his.huawei.com (SkyGuard) with ESMTP id 4HfNht67kzz6GD8D;
+	Wed, 27 Oct 2021 17:30:38 +0800 (CST)
 Received: from fraeml714-chm.china.huawei.com (10.206.15.33) by
-	fraeml714-chm.china.huawei.com (10.206.15.33) with Microsoft SMTP
+	fraeml713-chm.china.huawei.com (10.206.15.32) with Microsoft SMTP
 	Server
 	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
-	15.1.2308.15; Wed, 27 Oct 2021 10:56:17 +0200
+	15.1.2308.15; Wed, 27 Oct 2021 11:34:48 +0200
 Received: from fraeml714-chm.china.huawei.com ([10.206.15.33]) by
 	fraeml714-chm.china.huawei.com ([10.206.15.33]) with mapi id
-	15.01.2308.015; Wed, 27 Oct 2021 10:56:17 +0200
+	15.01.2308.015; Wed, 27 Oct 2021 11:34:48 +0200
 From: Roberto Sassu <roberto.sassu@huawei.com>
-To: Deven Bowers <deven.desai@linux.microsoft.com>, "corbet@lwn.net"
-	<corbet@lwn.net>, "axboe@kernel.dk" <axboe@kernel.dk>, "agk@redhat.com"
-	<agk@redhat.com>, "snitzer@redhat.com" <snitzer@redhat.com>,
-	"ebiggers@kernel.org" <ebiggers@kernel.org>,
-	"tytso@mit.edu" <tytso@mit.edu>,
-	"paul@paul-moore.com" <paul@paul-moore.com>, "eparis@redhat.com"
-	<eparis@redhat.com>, "jmorris@namei.org" <jmorris@namei.org>,
-	"serge@hallyn.com" <serge@hallyn.com>
-Thread-Topic: [RFC PATCH v7 05/16] ipe: add LSM hooks on execution and kernel
-	read
-Thread-Index: AQHXwGWOuRcjToK/XkWwstEqYzOChavjssvQgAHjQYCAAQnVkA==
-Date: Wed, 27 Oct 2021 08:56:17 +0000
-Message-ID: <150763b55a6f48b78e73d91442a9aa7e@huawei.com>
+To: Deven Bowers <deven.desai@linux.microsoft.com>, Eric Biggers
+	<ebiggers@kernel.org>
+Thread-Topic: [RFC PATCH v7 12/16] fsverity|security: add security hooks to
+	fsverity digest and signature
+Thread-Index: AQHXwGWUN6BqcPCg3Uma5jdt5usPz6vRLYAAgAMlHYCAAAy0gIARNsyAgAESBxA=
+Date: Wed, 27 Oct 2021 09:34:48 +0000
+Message-ID: <154208f2a248482e8664903f734cf0b4@huawei.com>
 References: <1634151995-16266-1-git-send-email-deven.desai@linux.microsoft.com>
-	<1634151995-16266-6-git-send-email-deven.desai@linux.microsoft.com>
-	<d4f1875866f649fe9e24915159a71361@huawei.com>
-	<1bc16f72-6793-2383-1874-a98f4e2b2691@linux.microsoft.com>
-In-Reply-To: <1bc16f72-6793-2383-1874-a98f4e2b2691@linux.microsoft.com>
+	<1634151995-16266-13-git-send-email-deven.desai@linux.microsoft.com>
+	<YWcyYBuNppjrVOe2@gmail.com>
+	<9089bdb0-b28a-9fa0-c510-00fa275af621@linux.microsoft.com>
+	<YWngaVdvMyWBlITZ@gmail.com>
+	<f027e3fa-2f70-0cdb-ac7b-255cee68edbb@linux.microsoft.com>
+In-Reply-To: <f027e3fa-2f70-0cdb-ac7b-255cee68edbb@linux.microsoft.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
@@ -92,21 +88,27 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-MIME-Autoconverted: from base64 to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 19R8uOMX025327
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 19R9YwpP028602
 X-loop: dm-devel@redhat.com
-Cc: "linux-security-module@vger.kernel.org"
-	<linux-security-module@vger.kernel.org>,
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>,
+	"linux-security-module@vger.kernel.org"
+	<linux-security-module@vger.kernel.org>, "tytso@mit.edu" <tytso@mit.edu>,
+	"paul@paul-moore.com" <paul@paul-moore.com>,
+	"snitzer@redhat.com" <snitzer@redhat.com>,
+	"corbet@lwn.net" <corbet@lwn.net>, "jannh@google.com" <jannh@google.com>,
 	"linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-	"jannh@google.com" <jannh@google.com>,
-	"linux-fscrypt@vger.kernel.org" <linux-fscrypt@vger.kernel.org>,
+	"jmorris@namei.org" <jmorris@namei.org>,
+	"eparis@redhat.com" <eparis@redhat.com>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
 	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"linux-audit@redhat.com" <linux-audit@redhat.com>
-Subject: Re: [dm-devel] [RFC PATCH v7 05/16] ipe: add LSM hooks on execution
- and kernel read
+	"linux-audit@redhat.com" <linux-audit@redhat.com>,
+	"linux-fscrypt@vger.kernel.org" <linux-fscrypt@vger.kernel.org>,
+	"agk@redhat.com" <agk@redhat.com>, "serge@hallyn.com" <serge@hallyn.com>
+Subject: Re: [dm-devel] [RFC PATCH v7 12/16] fsverity|security: add security
+ hooks to fsverity digest and signature
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -120,394 +122,208 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-> From: Deven Bowers [mailto:deven.desai@linux.microsoft.com]
-> Sent: Tuesday, October 26, 2021 9:04 PM
-> On 10/25/2021 5:22 AM, Roberto Sassu wrote:
-> >> From:deven.desai@linux.microsoft.com
-> >> [mailto:deven.desai@linux.microsoft.com]
-> >> From: Deven Bowers<deven.desai@linux.microsoft.com>
-> >>
-> >> IPE's initial goal is to control both execution and the loading of
-> >> kernel modules based on the system's definition of trust. It
-> >> accomplishes this by plugging into the security hooks for execve,
-> >> mprotect, mmap, kernel_load_data and kernel_read_data.
-> >>
-> >> Signed-off-by: Deven Bowers<deven.desai@linux.microsoft.com>
-> >> ---
-> >>
-> >> Relevant changes since v6:
-> >>    * Split up patch 02/12 into four parts:
-> >>        1. context creation [01/16]
-> >>        2. audit [07/16]
-> >>        3. evaluation loop [03/16]
-> >>        4. access control hooks [05/16] (this patch)
-> >>
-> >> ---
-> >>   security/ipe/hooks.c  | 149
-> ++++++++++++++++++++++++++++++++++++++++++
-> >>   security/ipe/hooks.h  |  23 ++++++-
-> >>   security/ipe/ipe.c    |   5 ++
-> >>   security/ipe/policy.c |  23 +++++++
-> >>   security/ipe/policy.h |  12 +++-
-> >>   5 files changed, 209 insertions(+), 3 deletions(-)
-> >>
-> >> diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
-> >> index ed0c886eaa5a..216242408a80 100644
-> >> --- a/security/ipe/hooks.c
-> >> +++ b/security/ipe/hooks.c
-> >> @@ -6,11 +6,15 @@
-> >>   #include "ipe.h"
-> >>   #include "ctx.h"
-> >>   #include "hooks.h"
-> >> +#include "eval.h"
-> >>
-> >> +#include <linux/fs.h>
-> >>   #include <linux/sched.h>
-> >>   #include <linux/types.h>
-> >>   #include <linux/refcount.h>
-> >>   #include <linux/rcupdate.h>
-> >> +#include <linux/binfmts.h>
-> >> +#include <linux/mman.h>
-> >>
-> >>   /**
-> >>    * ipe_task_alloc: Assign a new context for an associated task structure.
-> >> @@ -56,3 +60,148 @@ void ipe_task_free(struct task_struct *task)
-> >>   	ipe_put_ctx(ctx);
-> >>   	rcu_read_unlock();
-> >>   }
-> >> +
-> >> +/**
-> >> + * ipe_on_exec: LSM hook called when a process is loaded through the exec
-> >> + *		family of system calls.
-> >> + * @bprm: Supplies a pointer to a linux_binprm structure to source the file
-> >> + *	  being evaluated.
-> >> + *
-> >> + * Return:
-> >> + * 0 - OK
-> >> + * !0 - Error
-> >> + */
-> >> +int ipe_on_exec(struct linux_binprm *bprm)
-> >> +{
-> >> +	return ipe_process_event(bprm->file, ipe_operation_exec,
-> >> ipe_hook_exec);
-> >> +}
-> >> +
-> >> +/**
-> >> + * ipe_on_mmap: LSM hook called when a file is loaded through the mmap
-> >> + *		family of system calls.
-> >> + * @f: File being mmap'd. Can be NULL in the case of anonymous memory.
-> >> + * @reqprot: The requested protection on the mmap, passed from
-> usermode.
-> >> + * @prot: The effective protection on the mmap, resolved from reqprot and
-> >> + *	  system configuration.
-> >> + * @flags: Unused.
-> >> + *
-> >> + * Return:
-> >> + * 0 - OK
-> >> + * !0 - Error
-> >> + */
-> >> +int ipe_on_mmap(struct file *f, unsigned long reqprot, unsigned long prot,
-> >> +		unsigned long flags)
-> >> +{
-> >> +	if (prot & PROT_EXEC || reqprot & PROT_EXEC)
-> >> +		return ipe_process_event(f, ipe_operation_exec,
-> >> ipe_hook_mmap);
-> >> +
-> >> +	return 0;
-> >> +}
-> >> +
-> >> +/**
-> >> + * ipe_on_mprotect: LSM hook called when a mmap'd region of memory is
-> >> changing
-> >> + *		    its protections via mprotect.
-> >> + * @vma: Existing virtual memory area created by mmap or similar
-> >> + * @reqprot: The requested protection on the mmap, passed from
-> usermode.
-> >> + * @prot: The effective protection on the mmap, resolved from reqprot and
-> >> + *	  system configuration.
-> >> + *
-> >> + * Return:
-> >> + * 0 - OK
-> >> + * !0 - Error
-> >> + */
-> >> +int ipe_on_mprotect(struct vm_area_struct *vma, unsigned long reqprot,
-> >> +		    unsigned long prot)
-> >> +{
-> >> +	/* Already Executable */
-> >> +	if (vma->vm_flags & VM_EXEC)
-> >> +		return 0;
-> >> +
-> >> +	if (((prot & PROT_EXEC) || reqprot & PROT_EXEC))
-> >> +		return ipe_process_event(vma->vm_file, ipe_operation_exec,
-> >> +					 ipe_hook_mprotect);
-> >> +
-> >> +	return 0;
-> >> +}
-> >> +
-> >> +/**
-> >> + * ipe_on_kernel_read: LSM hook called when a file is being read in from
-> >> + *		       disk.
-> >> + * @file: Supplies a pointer to the file structure being read in from disk
-> >> + * @id: Supplies the enumeration identifying the purpose of the read.
-> >> + * @contents: Unused.
-> >> + *
-> >> + * Return:
-> >> + * 0 - OK
-> >> + * !0 - Error
-> >> + */
-> >> +int ipe_on_kernel_read(struct file *file, enum kernel_read_file_id id,
-> >> +		       bool contents)
-> >> +{
-> >> +	enum ipe_operation op;
-> >> +
-> >> +	switch (id) {
-> >> +	case READING_FIRMWARE:
-> >> +		op = ipe_operation_firmware;
-> >> +		break;
-> >> +	case READING_MODULE:
-> >> +		op = ipe_operation_kernel_module;
-> >> +		break;
-> >> +	case READING_KEXEC_INITRAMFS:
-> >> +		op = ipe_operation_kexec_initramfs;
-> >> +		break;
-> >> +	case READING_KEXEC_IMAGE:
-> >> +		op = ipe_operation_kexec_image;
-> >> +		break;
-> >> +	case READING_POLICY:
-> >> +		op = ipe_operation_ima_policy;
-> >> +		break;
-> >> +	case READING_X509_CERTIFICATE:
-> >> +		op = ipe_operation_ima_x509;
-> >> +		break;
-> >> +	default:
-> >> +		op = ipe_operation_max;
-> > Possible problem here. If someone (like me) adds a new file type
-> > and forgets to add a case, there will be an out of bound access
-> > in evaluate():
-> >
-> >          rules = &pol->parsed->rules[ctx->op];
-> >
-> > due to the static definition of the rules array in the ipe_parsed_policy
-> > structure (array length: ipe_operation_max).
-> 
-> Yeah, that's a problem. I can fix this down in the eval loop by matching
-> the global default and emitting a WARN here.
-
-Ok, will do a test with your new version of the patch set.
-
-Thanks
-
-Roberto
-
-HUAWEI TECHNOLOGIES Duesseldorf GmbH, HRB 56063
-Managing Director: Li Peng, Zhong Ronghua
-
-> > Roberto
-> >
-> > HUAWEI TECHNOLOGIES Duesseldorf GmbH, HRB 56063
-> > Managing Director: Li Peng, Zhong Ronghua
-> >
-> >> +	}
-> >> +
-> >> +	return ipe_process_event(file, op, ipe_hook_kernel_read);
-> >> +}
-> >> +
-> >> +/**
-> >> + * ipe_on_kernel_load_data: LSM hook called when a buffer is being read in
-> >> from
-> >> + *			    disk.
-> >> + * @id: Supplies the enumeration identifying the purpose of the read.
-> >> + * @contents: Unused.
-> >> + *
-> >> + * Return:
-> >> + * 0 - OK
-> >> + * !0 - Error
-> >> + */
-> >> +int ipe_on_kernel_load_data(enum kernel_load_data_id id, bool contents)
-> >> +{
-> >> +	enum ipe_operation op;
-> >> +
-> >> +	switch (id) {
-> >> +	case LOADING_FIRMWARE:
-> >> +		op = ipe_operation_firmware;
-> >> +		break;
-> >> +	case LOADING_MODULE:
-> >> +		op = ipe_operation_kernel_module;
-> >> +		break;
-> >> +	case LOADING_KEXEC_INITRAMFS:
-> >> +		op = ipe_operation_kexec_initramfs;
-> >> +		break;
-> >> +	case LOADING_KEXEC_IMAGE:
-> >> +		op = ipe_operation_kexec_image;
-> >> +		break;
-> >> +	case LOADING_POLICY:
-> >> +		op = ipe_operation_ima_policy;
-> >> +		break;
-> >> +	case LOADING_X509_CERTIFICATE:
-> >> +		op = ipe_operation_ima_x509;
-> >> +		break;
-> >> +	default:
-> >> +		op = ipe_operation_max;
-> >> +	}
-> >> +
-> >> +	return ipe_process_event(NULL, op, ipe_hook_kernel_load);
-> >> +}
-> >> diff --git a/security/ipe/hooks.h b/security/ipe/hooks.h
-> >> index 58ed4a612e26..c99a0b7f45f7 100644
-> >> --- a/security/ipe/hooks.h
-> >> +++ b/security/ipe/hooks.h
-> >> @@ -5,11 +5,19 @@
-> >>   #ifndef IPE_HOOKS_H
-> >>   #define IPE_HOOKS_H
-> >>
-> >> +#include <linux/fs.h>
-> >>   #include <linux/types.h>
-> >>   #include <linux/sched.h>
-> >> +#include <linux/binfmts.h>
-> >> +#include <linux/security.h>
-> >>
-> >>   enum ipe_hook {
-> >> -	ipe_hook_max = 0
-> >> +	ipe_hook_exec = 0,
-> >> +	ipe_hook_mmap,
-> >> +	ipe_hook_mprotect,
-> >> +	ipe_hook_kernel_read,
-> >> +	ipe_hook_kernel_load,
-> >> +	ipe_hook_max
-> >>   };
-> >>
-> >>   int ipe_task_alloc(struct task_struct *task,
-> >> @@ -17,4 +25,17 @@ int ipe_task_alloc(struct task_struct *task,
-> >>
-> >>   void ipe_task_free(struct task_struct *task);
-> >>
-> >> +int ipe_on_exec(struct linux_binprm *bprm);
-> >> +
-> >> +int ipe_on_mmap(struct file *f, unsigned long reqprot, unsigned long prot,
-> >> +		unsigned long flags);
-> >> +
-> >> +int ipe_on_mprotect(struct vm_area_struct *vma, unsigned long reqprot,
-> >> +		    unsigned long prot);
-> >> +
-> >> +int ipe_on_kernel_read(struct file *file, enum kernel_read_file_id id,
-> >> +		       bool contents);
-> >> +
-> >> +int ipe_on_kernel_load_data(enum kernel_load_data_id id, bool contents);
-> >> +
-> >>   #endif /* IPE_HOOKS_H */
-> >> diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
-> >> index b58b372327a1..3f9d43783293 100644
-> >> --- a/security/ipe/ipe.c
-> >> +++ b/security/ipe/ipe.c
-> >> @@ -25,6 +25,11 @@ struct lsm_blob_sizes ipe_blobs __lsm_ro_after_init =
-> {
-> >>   static struct security_hook_list ipe_hooks[] __lsm_ro_after_init = {
-> >>   	LSM_HOOK_INIT(task_alloc, ipe_task_alloc),
-> >>   	LSM_HOOK_INIT(task_free, ipe_task_free),
-> >> +	LSM_HOOK_INIT(bprm_check_security, ipe_on_exec),
-> >> +	LSM_HOOK_INIT(mmap_file, ipe_on_mmap),
-> >> +	LSM_HOOK_INIT(file_mprotect, ipe_on_mprotect),
-> >> +	LSM_HOOK_INIT(kernel_read_file, ipe_on_kernel_read),
-> >> +	LSM_HOOK_INIT(kernel_load_data, ipe_on_kernel_load_data),
-> >>   };
-> >>
-> >>   /**
-> >> diff --git a/security/ipe/policy.c b/security/ipe/policy.c
-> >> index b766824cc08f..048500229365 100644
-> >> --- a/security/ipe/policy.c
-> >> +++ b/security/ipe/policy.c
-> >> @@ -483,6 +483,14 @@ int ipe_parse_op(const struct ipe_policy_token
-> *tok,
-> >>   {
-> >>   	substring_t match[MAX_OPT_ARGS] = { 0 };
-> >>   	const match_table_t ops = {
-> >> +		{ ipe_operation_exec,		 "EXECUTE" },
-> >> +		{ ipe_operation_firmware,	 "FIRMWARE" },
-> >> +		{ ipe_operation_kernel_module,	 "KMODULE" },
-> >> +		{ ipe_operation_kexec_image,	 "KEXEC_IMAGE" },
-> >> +		{ ipe_operation_kexec_initramfs, "KEXEC_INITRAMFS"},
-> >> +		{ ipe_operation_ima_policy,	 "IMA_POLICY" },
-> >> +		{ ipe_operation_ima_x509,	 "IMA_X509_CERT" },
-> >> +		{ ipe_op_alias_kernel_read,	 "KERNEL_READ" },
-> >>   		{ ipe_op_alias_max, NULL },
-> >>   	};
-> >>
-> >> @@ -838,6 +846,15 @@ static int parse_policy(struct ipe_policy *p)
-> >>   	return rc;
-> >>   }
-> >>
-> >> +static const enum ipe_operation alias_kread[] = {
-> >> +	ipe_operation_firmware,
-> >> +	ipe_operation_kernel_module,
-> >> +	ipe_operation_ima_policy,
-> >> +	ipe_operation_ima_x509,
-> >> +	ipe_operation_kexec_image,
-> >> +	ipe_operation_kexec_initramfs,
-> >> +};
-> >> +
-> >>   /**
-> >>    * ipe_is_op_alias: Determine if @op is an alias for one or more operations
-> >>    * @op: Supplies the operation to check. Should be either ipe_operation or
-> >> @@ -852,9 +869,15 @@ static int parse_policy(struct ipe_policy *p)
-> >>   bool ipe_is_op_alias(int op, const enum ipe_operation **map, size_t *size)
-> >>   {
-> >>   	switch (op) {
-> >> +	case ipe_op_alias_kernel_read:
-> >> +		*map = alias_kread;
-> >> +		*size = ARRAY_SIZE(alias_kread);
-> >> +		break;
-> >>   	default:
-> >>   		return false;
-> >>   	}
-> >> +
-> >> +	return true;
-> >>   }
-> >>
-> >>   /**
-> >> diff --git a/security/ipe/policy.h b/security/ipe/policy.h
-> >> index 6818f6405dd0..ca37af46e5af 100644
-> >> --- a/security/ipe/policy.h
-> >> +++ b/security/ipe/policy.h
-> >> @@ -26,7 +26,14 @@ struct ipe_policy_line {
-> >>   struct ipe_module;
-> >>
-> >>   enum ipe_operation {
-> >> -	ipe_operation_max = 0,
-> >> +	ipe_operation_exec = 0,
-> >> +	ipe_operation_firmware,
-> >> +	ipe_operation_kernel_module,
-> >> +	ipe_operation_kexec_image,
-> >> +	ipe_operation_kexec_initramfs,
-> >> +	ipe_operation_ima_policy,
-> >> +	ipe_operation_ima_x509,
-> >> +	ipe_operation_max
-> >>   };
-> >>
-> >>   /*
-> >> @@ -34,7 +41,8 @@ enum ipe_operation {
-> >>    * that are just one or more operations under the hood
-> >>    */
-> >>   enum ipe_op_alias {
-> >> -	ipe_op_alias_max = ipe_operation_max,
-> >> +	ipe_op_alias_kernel_read = ipe_operation_max,
-> >> +	ipe_op_alias_max,
-> >>   };
-> >>
-> >>   enum ipe_action {
-> >> --
-> >> 2.33.0
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+PiBGcm9tOiBEZXZlbiBCb3dlcnMgW21haWx0bzpkZXZlbi5kZXNhaUBsaW51eC5taWNyb3NvZnQu
+Y29tXQo+IFNlbnQ6IFR1ZXNkYXksIE9jdG9iZXIgMjYsIDIwMjEgOTowNCBQTQo+IE9uIDEwLzE1
+LzIwMjEgMToxMSBQTSwgRXJpYyBCaWdnZXJzIHdyb3RlOgo+IAo+ID4gT24gRnJpLCBPY3QgMTUs
+IDIwMjEgYXQgMTI6MjU6NTNQTSAtMDcwMCwgRGV2ZW4gQm93ZXJzIHdyb3RlOgo+ID4+IE9uIDEw
+LzEzLzIwMjEgMTI6MjQgUE0sIEVyaWMgQmlnZ2VycyB3cm90ZToKPiA+Pj4gT24gV2VkLCBPY3Qg
+MTMsIDIwMjEgYXQgMTI6MDY6MzFQTSAtCj4gMDcwMCxkZXZlbi5kZXNhaUBsaW51eC5taWNyb3Nv
+ZnQuY29tICB3cm90ZToKPiA+Pj4+IEZyb206IEZhbiBXdTx3dWZhbkBsaW51eC5taWNyb3NvZnQu
+Y29tPgo+ID4+Pj4KPiA+Pj4+IEFkZCBzZWN1cml0eV9pbm9kZV9zZXRzZWN1cml0eSB0byBmc3Zl
+cml0eSBzaWduYXR1cmUgdmVyaWZpY2F0aW9uLgo+ID4+Pj4gVGhpcyBjYW4gbGV0IExTTXMgc2F2
+ZSB0aGUgc2lnbmF0dXJlIGRhdGEgYW5kIGRpZ2VzdCBoYXNoZXMgcHJvdmlkZWQKPiA+Pj4+IGJ5
+IGZzdmVyaXR5Lgo+ID4+PiBDYW4geW91IGVsYWJvcmF0ZSBvbiB3aHkgTFNNcyBuZWVkIHRoaXMg
+aW5mb3JtYXRpb24/Cj4gPj4gVGhlIHByb3Bvc2VkIExTTSAoSVBFKSBvZiB0aGlzIHNlcmllcyB3
+aWxsIGJlIHRoZSBvbmx5IG9uZSB0byBuZWVkCj4gPj4gdGhpcyBpbmZvcm1hdGlvbiBhdCB0aGXC
+oCBtb21lbnQuIElQReKAmXMgZ29hbCBpcyB0byBoYXZlIHByb3ZpZGUKPiA+PiB0cnVzdC1iYXNl
+ZCBhY2Nlc3MgY29udHJvbC4gVHJ1c3QgYW5kIEludGVncml0eSBhcmUgdGllZCB0b2dldGhlciwK
+PiA+PiBhcyB5b3UgY2Fubm90IHByb3ZlIHRydXN0IHdpdGhvdXQgcHJvdmluZyBpbnRlZ3JpdHku
+Cj4gPiBJIHRoaW5rIHlvdSBtZWFuIGF1dGhlbnRpY2l0eSwgbm90IGludGVncml0eT8KPiBJ4oCZ
+dmUgaGVhcmQgYSBsb3Qgb2YgcGVvcGxlIHVzZSB0aGVzZSB0ZXJtcyBpbiBvdmVybG9hZGVkIHdh
+eXMuCj4gCj4gSWYgd2XigJlyZSB3b3JraW5nIHdpdGggdGhlIGRlZmluaXRpb24gb2YgYXV0aGVu
+dGljaXR5IGJlaW5nCj4g4oCcdGhlIHByb3BlcnR5IHRoYXQgYSByZXNvdXJjZSB3YXMgX2FjdHVh
+bGx5XyBzZW50L2NyZWF0ZWQgYnkgYQo+IHBhcnR54oCdLCBhbmQgaW50ZWdyaXR5IGJlaW5nIOKA
+nHRoZSBwcm9wZXJ0eSB0aGF0IGEgcmVzb3VyY2Ugd2FzIG5vdAo+IG1vZGlmaWVkIGZyb20gYSBw
+b2ludCBvZiB0aW1l4oCdLCB0aGVuIHllcy4gVGhvdWdoIHRoZSBzdGF0ZW1lbnQgaXNu4oCZdAo+
+IGZhbHNlLCB0aG91Z2gsIGJlY2F1c2UgeW914oCZZCBuZWVkIHRvIHByb3ZlIGludGVncml0eSBp
+biB0aGUgcHJvY2VzcyBvZgo+IHByb3ZpbmcgYXV0aGVudGljaXR5Lgo+IAo+IElmIG5vdCwgY291
+bGQgeW91IGNsYXJpZnkgd2hhdCB5b3UgbWVhbiBieSBhdXRoZW50aWNpdHkgYW5kIGludGVncml0
+eSwKPiBzbyB0aGF0IHdlIGNhbiB1c2UgY29uc2lzdGVudCBkZWZpbml0aW9ucz8KPiA+IEFsc28g
+aG93IGRvZXMgdGhpcyBkaWZmZXIgZnJvbSBJTUE/ICBJIGtub3cgdGhhdCBJTUEgZG9lc24ndCBz
+dXBwb3J0IGZzLXZlcml0eQo+ID4gZmlsZSBoYXNoZXMsIGJ1dCB0aGF0IGNvdWxkIGJlIGNoYW5n
+ZWQuICBXaHkgbm90IGV4dGVuZCBJTUEgdG8gY292ZXIgeW91ciB1c2UKPiA+IGNhc2Uocyk/Cj4g
+V2UgbG9va2VkIGF0IGV4dGVuZGluZyBJTUEgdG8gY292ZXIgb3VyIHJlcXVpcmVtZW50cyBleHRl
+bnNpdmVseSB0aGUKPiBwYXN0IHllYXIKPiBiYXNlZCBvbiBmZWVkYmFjayB0aGUgbGFzdCB0aW1l
+IEkgcG9zdGVkIHRoZXNlIHBhdGNoZXMuIFdlIGltcGxlbWVudGVkIGEKPiBwcm90b3R5cGUgdGhh
+dCBoYWQgaGFsZiBvZiBvdXIgcmVxdWlyZW1lbnRzLCBidXQgZm91bmQgaXQgcmVzdWx0ZWQgaW4g
+YQo+IGxhcmdlIGNoYW5nZSBsaXN0IHRoYXQgd291bGQgcmVzdWx0IGluIGEgbGFyZ2UgYW1vdW50
+IG9mIHBhaW4gaW4gcmVzcGVjdAo+IHRvIG1haW50ZW5hbmNlLCBpbiBhZGRpdGlvbiB0byBvdGhl
+ciBtb3JlIGFyY2hpdGVjdHVyYWwgY29uY2VybnMgYWJvdXQgdGhlCj4gaW1wbGVtZW50YXRpb24u
+IFdlIHdlcmVu4oCZdCBjb252aW5jZWQgaXQgd2FzIHRoZSBjb3JyZWN0IGRpcmVjdGlvbiwgZm9y
+IG91cgo+IG5lZWRzLgo+IAo+IFRoZXJlIHdhcyBhIHByZXNlbnRhdGlvbiBkb25lIGF0IExTUyAy
+MDIxIGFyb3VuZCB0aGlzIHByb3RvdHlwZSBkb25lIGJ5IG15Cj4gY29sbGVhZ3VlLCBGYW4sIHdo
+byBhdXRob3JlZCB0aGlzIHBhdGNoIGFuZCBpbXBsZW1lbnRlZCB0aGUgYWZvcmVtZW50aW9uZWQK
+PiBwcm90b3R5cGUuCj4gCj4gSW4gZ2VuZXJhbCwgSU1BIHByb3ZpZGVzIGEgd2hvbGUgc3VpdGUg
+b2YgYW1hemluZyBmdW5jdGlvbmFsaXR5IHdoZW4gaXQKPiBjb21lcyB0byBldmVyeXRoaW5nIGlu
+dGVncml0eSwgYXMgdGhlIGZzLXZlcml0eSBkb2N1bWVudGF0aW9uIHN0YXRlcwo+IGl0c2VsZjoK
+PiAKPiAgICAgSU1BIHNwZWNpZmllcyBhIHN5c3RlbS13aWRlIHBvbGljeSB0aGF0IHNwZWNpZmll
+cyB3aGljaAo+ICAgICBmaWxlcyBhcmUgaGFzaGVkIGFuZCB3aGF0IHRvIGRvIHdpdGggdGhvc2Ug
+aGFzaGVzLCBzdWNoCj4gICAgIGFzIGxvZyB0aGVtLCBhdXRoZW50aWNhdGUgdGhlbSwgb3IgYWRk
+IHRoZW0gdG8gYQo+ICAgICBtZWFzdXJlbWVudCBsaXN0Lgo+IAo+IEluc3RlYWQsIElQRSBwcm92
+aWRlcyBhIGZpbmUtdHVuZWQgd2F5IHRvIF9vbmx5XyBlbmZvcmNlIGFuIGFjY2VzcyBjb250cm9s
+Cj4gcG9saWN5IHRvIHRoZXNlIGZpbGVzIGJhc2VkIG9uIHRoZSBkZWZpbmVkIHRydXN0IHJlcXVp
+cmVtZW50cyBpbiB0aGUgcG9saWN5LAo+IHVuZGVyIHZhcmlvdXMgY29udGV4dHMsICh5b3UgbWln
+aHQgaGF2ZSBkaWZmZXJlbnQgcmVxdWlyZW1lbnRzIGZvciB3aGF0Cj4gZXhlY3V0ZXMgaW4gYSBn
+ZW5lcmFsIHB1cnBvc2UsIHZlcnN1cyBsb2FkYWJsZSBrZXJuZWwgbW9kdWxlcywgZm9yIGV4YW1w
+bGUpLgo+IEl0IHdpbGwgbmV2ZXIgcHJvdmlkZSBib3RoZXIgdG8gbG9nLCBtZWFzdXJlLCBvciBy
+ZXZhbGlkYXRlIHRoZXNlIGhhc2hlcwo+IGJlY2F1c2UKPiB0aGF04oCZcyBub3QgaXRzIHB1cnBv
+c2UuIFRoaXMgaXMgd2h5IGl0IGJlbG9uZ3MgYXQgdGhlIExTTSBsYXllciBpbnN0ZWFkCj4gb2Yg
+dGhlCj4gaW50ZWdyaXR5IHN1YnN5c3RlbSBsYXllciwgYXMgaXQgaXMgcHJvdmlkaW5nIGFjY2Vz
+cyBjb250cm9sIGJhc2VkIG9uIGEKPiBwb2xpY3ksCj4gdmVyc3VzIHByb3ZpZGluZyBkZWVwIGlu
+dGVncmF0aW9ucyB3aXRoIHRoZSBhY3R1YWwgaW50ZWdyaXR5IGNsYWltLgo+IAo+IElQRSBpcyB0
+cnlpbmcgdG8gYmUgYWdub3N0aWMgdG8gaG93IHByZWNpc2VseSDigJx0cnVzdOKAnSBpcyBwcm92
+aWRlZCwgYXMKPiBvcHBvc2VkIHRvIGJlIGRlZXBseSBpbnRlZ3JhdGVkIGludG8gdGhlIG1lY2hh
+bmlzbSB0aGF0IHByb3ZpZGVzCj4g4oCcdHJ1c3TigJ0uCj4gPj4gSVBFIG5lZWRzIHRoZSBkaWdl
+c3QgaW5mb3JtYXRpb24gdG8gYmUgYWJsZSB0byBjb21wYXJlIGEgZGlnZXN0Cj4gPj4gcHJvdmlk
+ZWQgYnkgdGhlIHBvbGljeSBhdXRob3IsIGFnYWluc3QgdGhlIGRpZ2VzdCBjYWxjdWxhdGVkIGJ5
+Cj4gPj4gZnN2ZXJpdHkgdG8gbWFrZSBhIGRlY2lzaW9uIG9uIHdoZXRoZXIgdGhhdCBzcGVjaWZp
+YyBmaWxlLCByZXByZXNlbnRlZAo+ID4+IGJ5IHRoZSBkaWdlc3QgaXMgYXV0aG9yaXplZCBmb3Ig
+dGhlIGFjdGlvbnMgc3BlY2lmaWVkIGluIHRoZSBwb2xpY3kuCj4gPj4KPiA+PiBBIG1vcmUgY29u
+Y3JldGUgZXhhbXBsZSwgaWYgYW4gSVBFIHBvbGljeSBhdXRob3Igd3JpdGVzOgo+ID4+Cj4gPj4g
+IMKgwqDCoCBvcD1FWEVDVVRFIGZzdmVyaXR5X2RpZ2VzdD08SGV4RGlnZXN0ID4gYWN0aW9uPURF
+TlkKPiA+Pgo+ID4+IElQRSB0YWtlcyB0aGUgZGlnZXN0IHByb3ZpZGVkIGJ5IHRoaXMgc2VjdXJp
+dHkgaG9vaywgc3RvcmVzIGl0Cj4gPj4gaW4gSVBFJ3Mgc2VjdXJpdHkgYmxvYiBvbiB0aGUgaW5v
+ZGUuIElmIHRoaXMgZmlsZSBpcyBsYXRlcgo+ID4+IGV4ZWN1dGVkLCBJUEUgY29tcGFyZXMgdGhl
+IGRpZ2VzdCBzdG9yZWQgaW4gdGhlIExTTSBibG9iLAo+ID4+IHByb3ZpZGVkIGJ5IHRoaXMgaG9v
+aywgYWdhaW5zdCA8SGV4RGlnZXN0PiBpbiB0aGUgcG9saWN5LCBpZgo+ID4+IGl0IG1hdGNoZXMs
+IGl0IGRlbmllcyB0aGUgYWNjZXNzLCBwZXJmb3JtaW5nIGEgcmV2b2NhdGlvbgo+ID4+IG9mIHRo
+YXQgZmlsZS4KPiA+IERvIHlvdSBoYXZlIGEgYmV0dGVyIGV4YW1wbGU/ICBUaGlzIG9uZSBpcyBw
+cmV0dHkgdXNlbGVzcyBzaW5jZSBvbmUgY2FuIGdldAo+ID4gYXJvdW5kIGl0IGp1c3QgYnkgZXhl
+Y3V0aW5nIGEgZmlsZSB0aGF0IGRvZXNuJ3QgaGF2ZSBmcy12ZXJpdHkgZW5hYmxlZC4KPiBIZXJl
+4oCZcyBhIG1vcmUgY29tcGxldGUgZXhhbXBsZToKPiAKPiAgICAgcG9saWN5X25hbWU94oCdZnMt
+ZXhlYy1vbmx54oCdIHBvbGljeV92ZXJzaW9uPTAuMC4xCj4gICAgIERFRkFVTFQgYWN0aW9uPUFM
+TE9XCj4gCj4gICAgIERFRkFVTFQgb3A9RVhFQ1VURSBhY3Rpb249REVOWQo+ICAgICBvcD1FWEVD
+VVRFIGZzdmVyaXR5X2RpZ2VzdD08RGlnZXN0PiBhY3Rpb249REVOWQo+ICAgICBvcD1FWEVDVVRF
+IGZzdmVyaXR5X3NpZ25hdHVyZT1UUlVFIGFjdGlvbj1BTExPVwo+IAo+IEV4ZWN1dGlvbiBpcyBw
+cm9oaWJpdGVkIHVubGVzcyBpdCBpcyBhIHNpZ25lZCBmcy12ZXJpdHkgZmlsZTsKPiBIb3dldmVy
+LCBhZnRlciBvbmUgb2YgdGhvc2UgZXhlY3V0YWJsZXMgd2FzIHNpZ25lZCBhbmQgcHVibGlzaGVk
+LAo+IGFuIGV4cGxvaXRhYmxlIHZ1bG5lcmFiaWxpdHkgaW4gc2FpZCBleGVjdXRhYmxlIHdhcyBm
+b3VuZCwgYSBuZXcKPiB2ZXJzaW9uIHdhcyBwdWJsaXNoZWQgd2l0aG91dCB0aGF0IHZ1bG5lcmFi
+aWxpdHkuIFdlIG5lZWQgdG8KPiByZXZva2UgdHJ1c3QgZm9yIHRoYXQgZXhlY3V0YWJsZSBzaW5j
+ZSBpdCBjb3VsZCBiZSB1c2VkIHRvIGV4cGxvaXQKPiB0aGUgc3lzdGVtLCBzbyB0aGUgZmlyc3Qg
+cnVsZSBwcmV2ZW50cyBpdCBmcm9tIG1hdGNoaW5nIHRoZSBzZWNvbmQuCgpXaXRoIERJR0xJTSwg
+cmV2b2NhdGlvbiB3aWxsIGJlIGNvbXBsZXRlbHkgdHJhbnNwYXJlbnQgc2luY2UKZGlnZXN0cyBv
+ZiBmaWxlcyBpbiB0aGUgcGFja2FnZXMgYmVpbmcgcmVtb3ZlZCB3aWxsIGJlIGFsc28gcmVtb3Zl
+ZApmcm9tIHRoZSBrZXJuZWwuIFRoZSBuZXh0IHRpbWUgSVBFIHdpbGwgZXZhbHVhdGUgYW4gb2xk
+IHZlcnNpb24gb2YgdGhlCmZpbGUgKGFzc3VtaW5nIHRoYXQgdGhlcmUgd2FzIGEgY29weSBzb21l
+d2hlcmUpIGl0IHdpbGwgcmVhbGl6ZSB0aGF0CnRoZSBkaWdlc3QgaXMgbm90IGtub3duIGFueW1v
+cmUgYW5kIHdpbGwgZGVueSBhY2Nlc3MuCgpSb2JlcnRvCgpIVUFXRUkgVEVDSE5PTE9HSUVTIER1
+ZXNzZWxkb3JmIEdtYkgsIEhSQiA1NjA2MwpNYW5hZ2luZyBEaXJlY3RvcjogTGkgUGVuZywgWmhv
+bmcgUm9uZ2h1YQoKPiA+PiBUaGlzIGJyaW5ncyBtZSB0byB5b3VyIG5leHQgY29tbWVudDoKPiA+
+Pgo+ID4+PiBUaGUgZGlnZXN0IGlzbid0IG1lYW5pbmdmdWwgd2l0aG91dCBrbm93aW5nIHRoZSBo
+YXNoIGFsZ29yaXRobSBpdCB1c2VzLgo+ID4+IEl0J3MgYXZhaWxhYmxlIGhlcmUsIGJ1dCB5b3Ug
+YXJlbid0IHBhc3NpbmcgaXQgdG8gdGhpcyBmdW5jdGlvbi4KPiA+Pgo+ID4+IFRoZSBkaWdlc3Qg
+aXMgbWVhbmluZ2Z1bCB3aXRob3V0IHRoZSBhbGdvcml0aG0gaW4gdGhpcyBjYXNlLgo+ID4gTm8s
+IGl0J3Mgbm90Lgo+ID4KPiA+IERpZ2VzdHMgYXJlIG1lYW5pbmdsZXNzIHdpdGhvdXQga25vd2lu
+ZyB3aGF0IGFsZ29yaXRobSB0aGV5IHdlcmUgY3JlYXRlZAo+IHdpdGguCj4gPgo+ID4gSWYgeW91
+ciBzZWN1cml0eSBwb2xpY3kgaXMgc29tZXRoaW5nIGxpa2UgIlRydXN0IHRoZSBmaWxlIHdpdGgg
+ZGlnZXN0ICRmb28iIGFuZAo+ID4gbXVsdGlwbGUgaGFzaCBhbGdvcml0aG1zIGFyZSBwb3NzaWJs
+ZSwgdGhlbiB0aGUgYWxvcml0aG0gaW50ZW5kZWQgdG8gYmUgdXNlZAo+ID4gbmVlZHMgdG8gYmUg
+ZXhwbGljaXRseSBzcGVjaWZpZWQuICBPdGhlcndpc2UgYW55IGFsZ29yaXRobSB3aXRoIHRoZSBz
+YW1lIGxlbmd0aAo+ID4gZGlnZXN0IHdpbGwgYmUgYWNjZXB0ZWQuICBUaGF0J3MgYSBmYXRhbCBm
+bGF3IGlmIGFueSBvZiB0aGVzZSBhbGdvcml0aG1zIGlzCj4gPiBjcnlwdG9ncmFwaGljYWxseSBi
+cm9rZW4gb3Igd2FzIG5ldmVyIGludGVuZGVkIHRvIGJlIGEgY3J5cHRvZ3JhcGhpYwo+IGFsZ29y
+aXRobQo+ID4gaW4gdGhlIGZpcnN0IHBsYWNlIChlLmcuLCBhIG5vbi1jcnlwdG9ncmFwaGljIGNo
+ZWNrc3VtKS4KPiA+Cj4gPiBDcnlwdG9zeXN0ZW1zIGFsd2F5cyBuZWVkIHRvIHNwZWNpZnkgdGhl
+IGNyeXB0byBhbGdvcml0aG0ocykgdXNlZDsgdGhlCj4gYWR2ZXJzYXJ5Cj4gPiBtdXN0IG5vdCBi
+ZSBhbGxvd2VkIHRvIGNob29zZSB0aGUgYWxnb3JpdGhtcy4KPiBPb2YuIFlvdeKAmXJlIGNvbXBs
+ZXRlbHkgcmlnaHQuIFRoZSBwYXJ0IEkgd2FzIG1pc3NpbmcgaXMgdGhhdCBhcyB0aW1lCj4gZ29l
+cyBvbiwKPiB0aGUgc2VjdXJlIHN0YXR1cyBvZiB0aGVzZSBjcnlwdG9ncmFwaGljIGFsZ29yaXRo
+bXMgd2lsbCBjaGFuZ2UsIGFuZAo+IHRoZW4gd2XigJlsbAo+IG5lZWQgYSB3YXkgdG8gbWlncmF0
+ZSBiZXR3ZWVuIGFsZ29yaXRobXMuIEFkZGl0aW9uYWxseSwgdG9vbGluZyBhbmQgdGhlCj4gbGlr
+ZSB3aWxsCj4gbGlrZWx5IG5lZWQgYSB3YXkgdG8gaWRlbnRpZnkgdGhpcyBmcm9tIHRoZSBwb2xp
+Y3kgdGV4dCB3aXRob3V0Cj4gY29uc3VsdGluZyBhbnl0aGluZwo+IGVsc2UuIFRoaXMgaXMgYSBt
+YWpvciBvdmVyc2lnaHQgZm9yIGdlbmVyYWwgdXNlLCB0aGUgc3lzdGVtIHRoYXQgdGhpcwo+IHdh
+cyBvcmlnaW5hbGx5Cj4gZGVzaWduZWQgZm9yIG9ubHkgaGFkIHN1cHBvcnQgZm9yIGEgc3Vic2V0
+IG9mIHRoZSBzaGEyLWZhbWlseSAoYWxsCj4gc2VwYXJhdGUgbGVuZ3RocykKPiBzbyBJIGhhZG7i
+gJl0IGV2ZW4gY29uc2lkZXJlZCBpdC4KPiAKPiBJdCdzIHRyaXZpYWwgdG8gY29ycmVjdCBpbiBh
+IG1pbmltYWwgYW1vdW50IG9mIGNvZGUsIG1ha2luZyB0aGUgcG9saWN5Cj4gZXhwcmVzcyB0aGUK
+PiBkaWdlc3QgbGlrZSBzbzoKPiAKPiAgICAgZnN2ZXJpdHlfZGlnZXN0PTxhbGdvPjo8ZGlnZXN0
+Pgo+IAo+IGFuZCBjaGFuZ2UgdGhlIGFyZ3VtZW50IHBhc3NlZCB0byB0aGUgTFNNIGhvb2sgdG8g
+YWNjZXB0IGEgc3RydWN0dXJlCj4gY29udGFpbmluZyB0aGVzZQo+IHR3byBmaWVsZHMuCj4gCj4g
+PiBJJ20gbm90IHN1cmUgaG93IHRoZXNlIHBhdGNoZXMgY2FuIGJlIHRha2VuIHNlcmlvdXNseSB3
+aGVuIHRoZXkncmUgZ2V0dGluZwo+IHRoaXMKPiA+IHNvcnQgb2YgdGhpbmcgd3JvbmcuCj4gVGhh
+dCBzYWlkLCBJLCBwZXJzb25hbGx5LCBob3BlIHRoYXQgYW4gaG9uZXN0IG1pc3Rha2UsIGluIGEg
+c2VyaWVzCj4gc3VibWl0dGVkIGFzCj4gYW4gUkZDIHN1Ym1pdHRlZCBpbiBnb29kIGZhaXRoLCBp
+cyBub3QgYSByZWFzb24gdG8gZGlzY291bnQgYW4gZW50aXJlIHBhdGNoCj4gc2VyaWVzLgo+IAo+
+IEkgaG9wZSB5b3UgY29udGludWUgdG8gcHJvdmlkZSBmZWVkYmFjaywgYXMgaXQgaXMgaW52YWx1
+YWJsZSB0byBtYWtpbmcgdGhpcwo+IHN5c3RlbSBiZXR0ZXIsIGFuZCBtYWtpbmcgbWUsIHBlcnNv
+bmFsbHksIGEgYmV0dGVyIGRldmVsb3Blci4KPiA+Pj4+ICsJCQkJCUZTX1ZFUklUWV9TSUdOQVRV
+UkVfU0VDX05BTUUsCj4gPj4+PiArCQkJCQlzaWduYXR1cmUsIHNpZ19zaXplLCAwKTsKPiA+Pj4g
+VGhpcyBpcyBvbmx5IGZvciBmcy12ZXJpdHkgYnVpbHQtaW4gc2lnbmF0dXJlcyB3aGljaCBhcmVu
+J3QgdGhlIG9ubHkgd2F5IHRvIGRvCj4gPj4+IHNpZ25hdHVyZXMgd2l0aCBmcy12ZXJpdHkuICBB
+cmUgeW91IHN1cmUgdGhpcyBpcyB3aGF0IHlvdSdyZSBsb29raW5nIGZvcj8KPiA+PiBDb3VsZCB5
+b3UgZWxhYm9yYXRlIG9uIHRoZSBvdGhlciBzaWduYXR1cmUgdHlwZXMgdGhhdCBjYW4gYmUgdXNl
+ZAo+ID4+IHdpdGggZnMtdmVyaXR5PyBJ4oCZbSA5OSUgc3VyZSB0aGlzIGlzIHdoYXQgSeKAmW0g
+bG9va2luZyBmb3IgYXMgdGhpcwo+ID4+IGlzIGEgc2lnbmF0dXJlIHZhbGlkYXRlZCBpbiB0aGUg
+a2VybmVsIGFnYWluc3QgdGhlIGZzLXZlcml0eSBrZXlyaW5nCj4gPj4gYXMgcGFydCBvZiB0aGUg
+4oCcZnN2ZXJpdHkgZW5hYmxl4oCdIHV0aWxpdHkuCj4gPj4KPiA+PiBJdCdzIGltcG9ydGFudCB0
+aGF0IHRoZSBzaWduYXR1cmUgaXMgdmFsaWRhdGVkIGluIHRoZSBrZXJuZWwsIGFzCj4gPj4gdXNl
+cnNwYWNlIGlzIGNvbnNpZGVyZWQgdW50cnVzdGVkIHVudGlsIHRoZSBzaWduYXR1cmUgaXMgdmFs
+aWRhdGVkCj4gPj4gZm9yIHRoaXMgY2FzZS4KPiA+Pgo+ID4+PiBDYW4geW91IGVsYWJvcmF0ZSBv
+biB5b3VyIHVzZSBjYXNlIGZvciBmcy12ZXJpdHkgYnVpbHQtaW4gc2lnbmF0dXJlcywKPiA+PiBT
+dXJlLCBzaWduYXR1cmVzLCBsaWtlIGRpZ2VzdHMsIGFsc28gcHJvdmlkZSBhIHdheSB0byBwcm92
+ZSBpbnRlZ3JpdHksCj4gPj4gYW5kIHRoZSB0cnVzdCBjb21wb25lbnQgY29tZXMgZnJvbSB0aGUg
+dmFsaWRhdGlvbiBhZ2FpbnN0IHRoZSBrZXlyaW5nLAo+ID4+IGFzIG9wcG9zZWQgdG8gYSBmaXhl
+ZCB2YWx1ZSBpbiBJUEXigJlzIHBvbGljeS4gVGhlIHVzZSBjYXNlIGZvciBmcy12ZXJpdHkKPiA+
+PiBidWlsdC1pbiBzaWduYXR1cmVzIGlzIHRoYXQgd2UgaGF2ZSBhIHJ3IGV4dDQgZmlsZXN5c3Rl
+bSB0aGF0IGhhcyBzb21lCj4gPj4gZXhlY3V0YWJsZSBmaWxlcywgYW5kIHdlIHdhbnQgdG8gaGF2
+ZSBhIGV4ZWN1dGlvbiBwb2xpY3kgKHRocm91Z2ggSVBFKQo+ID4+IHRoYXQgb25seSBfdHJ1c3Rl
+ZF8gZXhlY3V0YWJsZXMgY2FuIHJ1bi4gUGVyZiBpcyBpbXBvcnRhbnQgaGVyZSwgaGVuY2UKPiA+
+PiBmcy12ZXJpdHkuCj4gPiBNb3N0IHVzZXJzIG9mIGZzLXZlcml0eSBidWlsdC1pbiBzaWduYXR1
+cmVzIGhhdmUgYWN0dWFsbHkgYmVlbiBlbmZvcmNpbmcgdGhlaXIKPiA+IHNlY3VyaXR5IHBvbGlj
+eSBpbiB1c2Vyc3BhY2UsIGJ5IGNoZWNraW5nIHdoZXRoZXIgc3BlY2lmaWMgZmlsZXMgaGF2ZSB0
+aGUKPiA+IGZzLXZlcml0eSBiaXQgc2V0IG9yIG5vdC4gIFN1Y2ggdXNlcnMgY291bGQganVzdCBz
+dG9yZSBhbmQgdmVyaWZ5IHNpZ25hdHVyZXMgaW4KPiA+IHVzZXJzcGFjZSBpbnN0ZWFkLCB3aXRo
+b3V0IGFueSBrZXJuZWwgaW52b2x2ZW1lbnQuICBTbyB0aGF0J3Mgd2hhdCBJJ3ZlIGJlZW4KPiA+
+IHJlY29tbWVuZGluZyAod2l0aCBsaW1pdGVkIHN1Y2Nlc3MsIHVuZm9ydHVuYXRlbHkpLgo+IEkg
+YmVsaWV2ZSB0aGUgZGlmZmVyZW5jZSBpbiBzZWN1cml0eSBtb2RlbHMgY29tZXMgZnJvbSB0aGlz
+IGxpbmUKPiAoZW1waGFzaXMsIG1pbmUpOgo+IAo+ICA+IGJ5IGNoZWNraW5nIHdoZXRoZXIgX3Nw
+ZWNpZmljIGZpbGVzXyBoYXZlIHRoZSBmcy12ZXJpdHkgYml0IHNldCBvciBub3QuCj4gCj4gSVBF
+IHBvbGljeSBpcyB3cml0dGVuIGJ5IGEgc3lzdGVtIGF1dGhvciB3aG8gb3ducyB0aGUgc3lzdGVt
+LCBidXQgbWF5Cj4gbm90IGhhdmUgMTAwJSBjb250cm9sIG92ZXIgYWxsIG9mIHRoZSBhcHBsaWNh
+dGlvbiBjb2RlIHJ1bm5pbmcgb24gdGhlCj4gc3lzdGVtLsKgIEluIHRoZSBjYXNlIG9mIGFwcGxp
+Y2F0aW9ucyB3aGljaCBhcmUgbm90IGF3YXJlIG9mIElQRSwgdGhlIHBvbGljeQo+IGNhbiBzdGls
+bCBlbmZvcmNlIHRoYXQgYWxsIG9mIHRoZSBjb2RlIHJ1bm5pbmcgb24gdGhlIHN5c3RlbSBpcyB0
+cnVzdGVkLgo+IAo+IEFuIGV4YW1wbGUgYXR0YWNrIG9mIHdoYXQgd2UncmUgdHJ5aW5nIHRvIG1p
+dGlnYXRlOsKgIEEgaG9zdGlsZSBhY3Rvcgo+IGNvdWxkIGRvd25sb2FkcyBhIGJpbmFyeSBvZmYg
+dGhlIGludGVybmV0IHdpdGggYWxsIHJlcXVpcmVkCj4gZGVwZW5kZW5jaWVzIGludG8gdG1wZnMg
+YW5kIHJ1bnMgdGhlaXIgbWFsaWNpb3VzIGV4ZWN1dGFibGUuCj4gCj4gV2l0aCB1cyB2YWxpZGF0
+aW5nIHRoaXMgaW5mb3JtYXRpb24gaW4gdGhlIGtlcm5lbCwgZXZlbiBpZiB0aGUgYXR0YWNrZXIK
+PiBkb3dubG9hZGVkIHRoZWlyIG1hbGljaW91cyBleGVjdXRhYmxlIHRvIC90bXAgYW5kIGV4ZWN1
+dGVkIGl0LCBpdCB3b3VsZAo+IHN0aWxsIGZhaWwgdG8gcGFzcyBwb2xpY3kgYW5kIGJlIGRlbmll
+ZCwgYXMgdGhlIGtlcm5lbCBpcyB0aGUgY29tbW9uCj4gZW50cnlwb2ludCBhY3Jvc3MgYWxsIGV4
+ZWN1dGFibGVzLgo+IAo+IE9wZXJhdGlvbmFsbHksIHRoaXMgX2NvdWxkXyBiZSBkb25lIGJ5IGRp
+Z2VzdCwgYnV0IHRoZSBwb2xpY2llcyB3b3VsZAo+IHF1aWNrbHkgYmVjb21lIGdpZ2FudGljIG9u
+IGEgY2FydG9vbmlzaCBwcm9wb3J0aW9uLCBhcyB5b3UnbGwgaGF2ZSB0bwo+IGF1dGhvcml6ZSBl
+dmVyeSBzaW5nbGUgZXhlY3V0YWJsZSBhbmQgZGVwZW5kZW5jeSBieSBkaWdlc3QgLSBhbmQKPiB0
+aGVyZSB3b3VsZCBiZSBhIGNvbXBsaWNhdGVkIHVwZGF0ZSBzdG9yeSBhcyB0aGUgcG9saWN5IHdv
+dWxkIGhhdmUgdG8KPiBiZSB1cGRhdGVkIHRvIG9uYm9hcmQgbmV3IGRpZ2VzdHMuCj4gCj4gQnkg
+dXNpbmcgc2lnbmF0dXJlcywgd2UgY2FuIHByZXZlbnQgdGhlIHBvbGljeSB1cGRhdGUsIGFuZCBr
+ZWVwIHRoZQo+IHBvbGljeSBzaXplIHNtYWxsLgo+IAo+ID4gSWYgeW91IHJlYWxseSBkbyBuZWVk
+IGluLWtlcm5lbCBzaWduYXR1cmUgdmVyaWZpY2F0aW9uLCB0aGVuIHRoYXQgbWF5IGJlIGEKPiA+
+IGxlZ2l0aW1hdGUgdXNlIGNhc2UgZm9yIHRoZSBmcy12ZXJpdHkgYnVpbHQtaW4gc2lnbmF0dXJl
+cywgYWx0aG91Z2ggSSBkbyB3b25kZXIKPiA+IHdoeSB5b3UgYXJlbid0IHVzaW5nIElNQSBhbmQg
+aXRzIHNpZ25hdHVyZSBtZWNoYW5pc20gaW5zdGVhZC4KPiA+Cj4gPiAtIEVyaWMKCi0tCmRtLWRl
+dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRo
+YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
 
