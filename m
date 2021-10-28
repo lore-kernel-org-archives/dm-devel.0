@@ -2,65 +2,79 @@ Return-Path: <SRS0=rauK=PQ=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A9295C433F5
-	for <dm-devel@archiver.kernel.org>; Thu, 28 Oct 2021 00:25:13 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 87973C433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 28 Oct 2021 01:36:40 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 13ABF610C7
-	for <dm-devel@archiver.kernel.org>; Thu, 28 Oct 2021 00:25:12 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 13ABF610C7
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
+	by mail.kernel.org (Postfix) with ESMTPS id 1B014611AF
+	for <dm-devel@archiver.kernel.org>; Thu, 28 Oct 2021 01:36:40 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 1B014611AF
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=intel.com
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-362-8mZyxzxNNt-HNtXTRlU9yw-1; Wed, 27 Oct 2021 20:25:08 -0400
-X-MC-Unique: 8mZyxzxNNt-HNtXTRlU9yw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-161-sEVeLKsHNIml1MD3QPfTUw-1; Wed, 27 Oct 2021 21:36:35 -0400
+X-MC-Unique: sEVeLKsHNIml1MD3QPfTUw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 589AF8026AD;
-	Thu, 28 Oct 2021 00:25:04 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0CC2660BE5;
-	Thu, 28 Oct 2021 00:25:04 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2A342806689;
+	Thu, 28 Oct 2021 01:36:31 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1C742399;
+	Thu, 28 Oct 2021 01:36:30 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 862AD1800FDD;
-	Thu, 28 Oct 2021 00:25:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E4CA24A703;
+	Thu, 28 Oct 2021 01:36:27 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19S0P1wf023111 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 27 Oct 2021 20:25:01 -0400
+	id 19S1aQT4028635 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 27 Oct 2021 21:36:26 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6BD642026D5D; Thu, 28 Oct 2021 00:25:01 +0000 (UTC)
+	id 6467340C1242; Thu, 28 Oct 2021 01:36:26 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 66C1D2026D46
-	for <dm-devel@redhat.com>; Thu, 28 Oct 2021 00:24:58 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3D7761066559
-	for <dm-devel@redhat.com>; Thu, 28 Oct 2021 00:24:58 +0000 (UTC)
-Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
-	by relay.mimecast.com with ESMTP id us-mta-565-2cCbFb_fMMWWy3hIBvdWjg-1;
-	Wed, 27 Oct 2021 20:24:53 -0400
-X-MC-Unique: 2cCbFb_fMMWWy3hIBvdWjg-1
-Received: by mail.kernel.org (Postfix) with ESMTPSA id AF4FB60F9B;
-	Thu, 28 Oct 2021 00:24:51 +0000 (UTC)
-Date: Wed, 27 Oct 2021 17:24:51 -0700
-From: "Darrick J. Wong" <djwong@kernel.org>
-To: Christoph Hellwig <hch@infradead.org>
-Message-ID: <20211028002451.GB2237511@magnolia>
-References: <20211021001059.438843-1-jane.chu@oracle.com>
-	<YXFPfEGjoUaajjL4@infradead.org>
-	<e89a2b17-3f03-a43e-e0b9-5d2693c3b089@oracle.com>
-	<YXJN4s1HC/Y+KKg1@infradead.org>
-	<2102a2e6-c543-2557-28a2-8b0bdc470855@oracle.com>
-	<YXj2lwrxRxHdr4hb@infradead.org>
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 603A040149B4
+	for <dm-devel@redhat.com>; Thu, 28 Oct 2021 01:36:26 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 46978811E7A
+	for <dm-devel@redhat.com>; Thu, 28 Oct 2021 01:36:26 +0000 (UTC)
+Received: from mail-pf1-f181.google.com (mail-pf1-f181.google.com
+	[209.85.210.181]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-419-2c5yLc6ENsq6j4GlR6P_SQ-1; Wed, 27 Oct 2021 21:36:24 -0400
+X-MC-Unique: 2c5yLc6ENsq6j4GlR6P_SQ-1
+Received: by mail-pf1-f181.google.com with SMTP id 187so4420058pfc.10
+	for <dm-devel@redhat.com>; Wed, 27 Oct 2021 18:36:24 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc;
+	bh=h7Igm7cptJn/BPiAKOvXNcYjYvau2fVkwbEBPR40Qac=;
+	b=lfpPLRVAM/dl/VoapepX0K8b1vuCOfuFs0ktAs10ACUwgsTPyDdVqqdNDVLhhNeFh2
+	61PNqnMsaquMvNAZavguWPiv3KAmOJVyfuZSIvGN/gljToHz345PfEpjoWbqEZGZNRrz
+	mWAmJ1jBgeyG513eT4Lkbz0DnlzNMiqRnuFioV0Yf9BlSDnvKcOs4hSB3WB4PyWy1qXK
+	q+UZ5CL/PcEBzW8EhdKFq0Pe7kcm9Z7nkLstCZy1zYGzCjZsgnO0P51OtFvjkOunPZcN
+	enxPzESZE/I///rCZxo1yC92qAefQzGaS/9112taAz5NVAU5Oym/MBtuC5Q2JJ1cJIML
+	vkqg==
+X-Gm-Message-State: AOAM530SVtcV7EAi5EGxcNlOyLx1eoIys6kIfpEA6z49HaWrkBu8ZXCM
+	t4ZR3oqUwaRCZWx3GIcINIaGtzCiGgeW2mNVED5kimh3SOI=
+X-Google-Smtp-Source: ABdhPJyDv7rjKjhKzGrFppXBu1eyKYCO/S0EEDW+vfLySK20rv/agORLXNPU8PUP/nGzDZcfnIyFx3qV7wWhC+ogeBA=
+X-Received: by 2002:a05:6a00:140e:b0:444:b077:51ef with SMTP id
+	l14-20020a056a00140e00b00444b07751efmr1317245pfu.61.1635384983516;
+	Wed, 27 Oct 2021 18:36:23 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <YXj2lwrxRxHdr4hb@infradead.org>
+References: <20211018044054.1779424-1-hch@lst.de>
+	<20211018044054.1779424-10-hch@lst.de>
+In-Reply-To: <20211018044054.1779424-10-hch@lst.de>
+From: Dan Williams <dan.j.williams@intel.com>
+Date: Wed, 27 Oct 2021 18:36:11 -0700
+Message-ID: <CAPcyv4iaUPEo73+KsBdYhM72WqKqJpshL-YU_iWoujk5jNUhmA@mail.gmail.com>
+To: Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -69,25 +83,17 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-loop: dm-devel@redhat.com
-Cc: Jane Chu <jane.chu@oracle.com>,
-	"nvdimm@lists.linux.dev" <nvdimm@lists.linux.dev>,
-	"dave.jiang@intel.com" <dave.jiang@intel.com>,
-	"snitzer@redhat.com" <snitzer@redhat.com>,
-	"vishal.l.verma@intel.com" <vishal.l.verma@intel.com>,
-	"david@fromorbit.com" <david@fromorbit.com>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"willy@infradead.org" <willy@infradead.org>,
-	"linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"vgoyal@redhat.com" <vgoyal@redhat.com>,
-	"linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-	"dan.j.williams@intel.com" <dan.j.williams@intel.com>,
-	"ira.weiny@intel.com" <ira.weiny@intel.com>,
-	"agk@redhat.com" <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH 0/6] dax poison recovery with
- RWF_RECOVERY_DATA flag
+Cc: Linux NVDIMM <nvdimm@lists.linux.dev>,
+	linux-s390 <linux-s390@vger.kernel.org>, linux-erofs@lists.ozlabs.org,
+	virtualization@lists.linux-foundation.org,
+	linux-xfs <linux-xfs@vger.kernel.org>,
+	device-mapper development <dm-devel@redhat.com>,
+	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+	linux-ext4 <linux-ext4@vger.kernel.org>, Ira Weiny <ira.weiny@intel.com>
+Subject: Re: [dm-devel] [PATCH 09/11] dm-log-writes: add a
+	log_writes_dax_pgoff helper
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -101,65 +107,24 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Oct 26, 2021 at 11:49:59PM -0700, Christoph Hellwig wrote:
-> On Fri, Oct 22, 2021 at 08:52:55PM +0000, Jane Chu wrote:
-> > Thanks - I try to be honest.  As far as I can tell, the argument
-> > about the flag is a philosophical argument between two views.
-> > One view assumes design based on perfect hardware, and media error
-> > belongs to the category of brokenness. Another view sees media
-> > error as a build-in hardware component and make design to include
-> > dealing with such errors.
-> 
-> No, I don't think so.  Bit errors do happen in all media, which is
-> why devices are built to handle them.  It is just the Intel-style
-> pmem interface to handle them which is completely broken.  
+On Sun, Oct 17, 2021 at 9:41 PM Christoph Hellwig <hch@lst.de> wrote:
+>
+> Add a helper to perform the entire remapping for DAX accesses.  This
+> helper open codes bdev_dax_pgoff given that the alignment checks have
+> already been done by the submitting file system and don't need to be
+> repeated.
 
-Yeah, I agree, this takes me back to learning how to use DISKEDIT to
-work around a hole punched in a file (with a pen!) in the 1980s...
+Looks good.
 
-...so would you happen to know if anyone's working on solving this
-problem for us by putting the memory controller in charge of dealing
-with media errors?
-
-> > errors in mind from start.  I guess I'm trying to articulate why
-> > it is acceptable to include the RWF_DATA_RECOVERY flag to the
-> > existing RWF_ flags. - this way, pwritev2 remain fast on fast path,
-> > and its slow path (w/ error clearing) is faster than other alternative.
-> > Other alternative being 1 system call to clear the poison, and
-> > another system call to run the fast pwrite for recovery, what
-> > happens if something happened in between?
-> 
-> Well, my point is doing recovery from bit errors is by definition not
-> the fast path.  Which is why I'd rather keep it away from the pmem
-> read/write fast path, which also happens to be the (much more important)
-> non-pmem read/write path.
-
-The trouble is, we really /do/ want to be able to (re)write the failed
-area, and we probably want to try to read whatever we can.  Those are
-reads and writes, not {pre,f}allocation activities.  This is where Dave
-and I arrived at a month ago.
-
-Unless you'd be ok with a second IO path for recovery where we're
-allowed to be slow?  That would probably have the same user interface
-flag, just a different path into the pmem driver.
-
-Ha, how about a int fd2 = recoveryfd(fd); call where you'd get whatever
-speshul options (retry raid mirrors!  scrape the film off the disk if
-you have to!) you want that can take forever, leaving the fast paths
-alone?
-
-(Ok, that wasn't entirely serious...)
-
---D
+Mike, ack?
 
 --
 dm-devel mailing list
