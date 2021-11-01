@@ -1,66 +1,59 @@
-Return-Path: <SRS0=YGrs=PR=redhat.com=dm-devel-bounces@kernel.org>
+Return-Path: <SRS0=tK5J=PU=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 068B2C433EF
-	for <dm-devel@archiver.kernel.org>; Fri, 29 Oct 2021 22:33:04 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8B9E0C433F5
+	for <dm-devel@archiver.kernel.org>; Mon,  1 Nov 2021 02:34:37 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 5464B6103E
-	for <dm-devel@archiver.kernel.org>; Fri, 29 Oct 2021 22:33:03 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 5464B6103E
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=fromorbit.com
+	by mail.kernel.org (Postfix) with ESMTPS id 088FE60F45
+	for <dm-devel@archiver.kernel.org>; Mon,  1 Nov 2021 02:34:35 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 088FE60F45
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: mail.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-161-iD4mwWWANxGKR6xSwCcCNw-1; Fri, 29 Oct 2021 18:32:58 -0400
-X-MC-Unique: iD4mwWWANxGKR6xSwCcCNw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-220-KlXnYe0BPcCpN6hMHFv7Ww-1; Sun, 31 Oct 2021 22:34:31 -0400
+X-MC-Unique: KlXnYe0BPcCpN6hMHFv7Ww-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5639610A8E00;
-	Fri, 29 Oct 2021 22:32:54 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 838B360C13;
-	Fri, 29 Oct 2021 22:32:52 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 84231362FF;
+	Mon,  1 Nov 2021 02:34:26 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C2A2F2B399;
+	Mon,  1 Nov 2021 02:34:23 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3EEE21806D03;
-	Fri, 29 Oct 2021 22:32:50 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 921044A703;
+	Mon,  1 Nov 2021 02:34:19 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 19TMWlqL023295 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 29 Oct 2021 18:32:47 -0400
+	id 1A12YGJN024980 for <dm-devel@listman.util.phx.redhat.com>;
+	Sun, 31 Oct 2021 22:34:17 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 579471121314; Fri, 29 Oct 2021 22:32:47 +0000 (UTC)
+	id EDC6F400F3EC; Mon,  1 Nov 2021 02:34:15 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 524691121315
-	for <dm-devel@redhat.com>; Fri, 29 Oct 2021 22:32:43 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 35FF1800883
-	for <dm-devel@redhat.com>; Fri, 29 Oct 2021 22:32:43 +0000 (UTC)
-Received: from mail109.syd.optusnet.com.au (mail109.syd.optusnet.com.au
-	[211.29.132.80]) by relay.mimecast.com with ESMTP id
-	us-mta-183-atdVRJDqOua3a8x-GqPPRQ-1; Fri, 29 Oct 2021 18:32:38 -0400
-X-MC-Unique: atdVRJDqOua3a8x-GqPPRQ-1
-Received: from dread.disaster.area (pa49-180-20-157.pa.nsw.optusnet.com.au
-	[49.180.20.157])
-	by mail109.syd.optusnet.com.au (Postfix) with ESMTPS id C472FFCC60F;
-	Sat, 30 Oct 2021 09:32:34 +1100 (AEDT)
-Received: from dave by dread.disaster.area with local (Exim 4.92.3)
-	(envelope-from <david@fromorbit.com>)
-	id 1mgaQL-002a5C-Gj; Sat, 30 Oct 2021 09:32:33 +1100
-Date: Sat, 30 Oct 2021 09:32:33 +1100
-From: Dave Chinner <david@fromorbit.com>
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EA169401A972
+	for <dm-devel@redhat.com>; Mon,  1 Nov 2021 02:34:15 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D08A4800C00
+	for <dm-devel@redhat.com>; Mon,  1 Nov 2021 02:34:15 +0000 (UTC)
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-179-uhRo7JgNM3Gyz9yLlla0Nw-1; Sun, 31 Oct 2021 22:34:13 -0400
+X-MC-Unique: uhRo7JgNM3Gyz9yLlla0Nw-1
+Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red
+	Hat Linux)) id 1mhN6c-003SWk-T1; Mon, 01 Nov 2021 02:31:47 +0000
+Date: Mon, 1 Nov 2021 02:31:26 +0000
+From: Matthew Wilcox <willy@infradead.org>
 To: Pavel Begunkov <asml.silence@gmail.com>
-Message-ID: <20211029223233.GB449541@dread.disaster.area>
-References: <20211021001059.438843-1-jane.chu@oracle.com>
-	<YXFPfEGjoUaajjL4@infradead.org>
+Message-ID: <YX9RftrcBNwgyCXc@casper.infradead.org>
+References: <YXFPfEGjoUaajjL4@infradead.org>
 	<e89a2b17-3f03-a43e-e0b9-5d2693c3b089@oracle.com>
 	<YXJN4s1HC/Y+KKg1@infradead.org>
 	<2102a2e6-c543-2557-28a2-8b0bdc470855@oracle.com>
@@ -68,13 +61,10 @@ References: <20211021001059.438843-1-jane.chu@oracle.com>
 	<20211028002451.GB2237511@magnolia>
 	<20211028225955.GA449541@dread.disaster.area>
 	<22255117-52de-4b2d-822e-b4bc50bbc52b@gmail.com>
+	<20211029223233.GB449541@dread.disaster.area>
+	<1a76314d-9b62-82a3-2787-96e6b83720fc@gmail.com>
 MIME-Version: 1.0
-In-Reply-To: <22255117-52de-4b2d-822e-b4bc50bbc52b@gmail.com>
-X-Optus-CM-Score: 0
-X-Optus-CM-Analysis: v=2.4 cv=e9dl9Yl/ c=1 sm=1 tr=0 ts=617c7683
-	a=t5ERiztT/VoIE8AqcczM6g==:117 a=t5ERiztT/VoIE8AqcczM6g==:17
-	a=kj9zAlcOel0A:10 a=8gfv0ekSlNoA:10 a=7-415B0cAAAA:8
-	a=dKw9hyCRfQi49U3FdP0A:9 a=CjuIK1q_8ugA:10 a=biEYGPWJfzWAr4FL6Ov7:22
+In-Reply-To: <1a76314d-9b62-82a3-2787-96e6b83720fc@gmail.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -83,15 +73,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-loop: dm-devel@redhat.com
 Cc: Jane Chu <jane.chu@oracle.com>,
 	"nvdimm@lists.linux.dev" <nvdimm@lists.linux.dev>,
 	"dave.jiang@intel.com" <dave.jiang@intel.com>,
 	"snitzer@redhat.com" <snitzer@redhat.com>,
-	"Darrick J. Wong" <djwong@kernel.org>,
+	"Darrick J. Wong" <djwong@kernel.org>, Dave Chinner <david@fromorbit.com>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"willy@infradead.org" <willy@infradead.org>,
 	Christoph Hellwig <hch@infradead.org>,
 	"dm-devel@redhat.com" <dm-devel@redhat.com>,
 	"vgoyal@redhat.com" <vgoyal@redhat.com>,
@@ -116,7 +105,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -125,121 +114,29 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Oct 29, 2021 at 12:46:14PM +0100, Pavel Begunkov wrote:
-> On 10/28/21 23:59, Dave Chinner wrote:
-> [...]
-> > > > Well, my point is doing recovery from bit errors is by definition not
-> > > > the fast path.  Which is why I'd rather keep it away from the pmem
-> > > > read/write fast path, which also happens to be the (much more important)
-> > > > non-pmem read/write path.
-> > > 
-> > > The trouble is, we really /do/ want to be able to (re)write the failed
-> > > area, and we probably want to try to read whatever we can.  Those are
-> > > reads and writes, not {pre,f}allocation activities.  This is where Dave
-> > > and I arrived at a month ago.
-> > > 
-> > > Unless you'd be ok with a second IO path for recovery where we're
-> > > allowed to be slow?  That would probably have the same user interface
-> > > flag, just a different path into the pmem driver.
-> > 
-> > I just don't see how 4 single line branches to propage RWF_RECOVERY
-> > down to the hardware is in any way an imposition on the fast path.
-> > It's no different for passing RWF_HIPRI down to the hardware *in the
-> > fast path* so that the IO runs the hardware in polling mode because
-> > it's faster for some hardware.
+On Sun, Oct 31, 2021 at 01:19:48PM +0000, Pavel Begunkov wrote:
+> On 10/29/21 23:32, Dave Chinner wrote:
+> > Yup, you just described RWF_HIPRI! Seriously, Pavel, did you read
+> > past this?  I'll quote what I said again, because I've already
+> > addressed this argument to point out how silly it is:
 > 
-> Not particularly about this flag, but it is expensive. Surely looks
-> cheap when it's just one feature, but there are dozens of them with
-> limited applicability, default config kernels are already sluggish
-> when it comes to really fast devices and it's not getting better.
-> Also, pretty often every of them will add a bunch of extra checks
-> to fix something of whatever it would be.
-> 
-> So let's add a bit of pragmatism to the picture, if there is just one
-> user of a feature but it adds overhead for millions of machines that
-> won't ever use it, it's expensive.
+> And you almost got to the initial point in your penult paragraph. A
+> single if for a single flag is not an issue, what is the problem is
+> when there are dozens of them and the overhead for it is not isolated,
+> so the kernel has to jump through dozens of those.
 
-Yup, you just described RWF_HIPRI! Seriously, Pavel, did you read
-past this?  I'll quote what I said again, because I've already
-addressed this argument to point out how silly it is:
+This argument can be used to reject *ANY* new feature.  For example, by
+using your argument, we should have rejected the addition of IOCB_WAITQ
+because it penalises the vast majority of IOs which do not use it.
 
-> > IOWs, saying that we shouldn't implement RWF_RECOVERY because it
-> > adds a handful of branches to the fast path is like saying that we
-> > shouldn't implement RWF_HIPRI because it slows down the fast path
-> > for non-polled IO....
+But we didn't.  Because we see that while it may not be of use to US
+today, it's a generally useful feature for Linux to support.  You say
+yourself that this feature doesn't slow down your use case, so why are
+you spending so much time and energy annoying the people who actually
+want to use it?
 
- RWF_HIPRI functionality represents a *tiny* niche in the wider
-Linux ecosystem, so by your reasoning it is too expensive to
-implement because millions (billions!) of machines don't need or use
-it. Do you now see how silly your argument is?
-
-Seriously, this "optimise the IO fast path at the cost of everything
-else" craziness has gotten out of hand. Nobody in the filesystem or
-application world cares if you can do 10M IOPS per core when all the
-CPU is doing is sitting in a tight loop inside the kernel repeatedly
-overwriting data in the same memory buffers, essentially tossing the
-old away the data without ever accessing it or doing anything with
-it.  Such speed racer games are *completely meaningless* as an
-optimisation goal - it's what we've called "benchmarketing" for a
-couple of decades now.
-
-If all we focus on is bragging rights because "bigger number is
-always better", then we'll end up with iand IO path that looks like
-the awful mess that the fs/direct-io.c turned into. That ended up
-being hyper-optimised for CPU performance right down to single
-instructions and cacheline load orders that the code became
-extremely fragile and completely unmaintainable.
-
-We ended up *reimplementing the direct IO code from scratch* so that
-XFS could build and submit direct IO smarter and faster because it
-simply couldn't be done to the old code.  That's how iomap came
-about, and without *any optimisation at all* iomap was 20-30% faster
-than the old, hyper-optimised fs/direct-io.c code.  IOWs, we always
-knew we could do direct IO faster than fs/direct-io.c, but we
-couldn't make the fs/direct-io.c faster because of the
-hyper-optimisation of the code paths made it impossible to modify
-and maintain.
-
-The current approach of hyper-optimising the IO path for maximum
-per-core IOPS at the expensive of everything else has been proven in
-the past to be exactly the wrong approach to be taking for IO path
-development. Yes, we need to be concerned about performance and work
-to improve it, but we should not be doing that at the cost of
-everything else that the IO stack needs to be able to do.
-
-Fundamentally, optimisation is something we do *after* we provide
-the functionality that is required; using "fast path optimisation"
-as a blunt force implement to prevent new features from being
-implemented is just ...  obnoxious.
-
-> This one doesn't spill yet into paths I care about, but in general
-> it'd be great if we start thinking more about such stuff instead of
-> throwing yet another if into the path, e.g. by shifting the overhead
-> from linear to a constant for cases that don't use it, for instance
-> with callbacks or bit masks.
-
-This is orthogonal to providing data recovery functionality.
-If the claims that flag propagation is too expensive are true, then
-fixing this problem this will also improve RWF_HIPRI performance
-regardless of whether RWF_DATA_RECOVERY exists or not...
-
-IOWs, *if* there is a fast path performance degradation as a result
-of flag propagation, then *go measure it* and show us how much
-impact it has on _real world applications_.  *Show us the numbers*
-and document how much each additional flag propagation actually
-costs so we can talk about whether it is acceptible, mitigation
-strategies and/or alternative implementations.  Flag propagation
-overhead is just not a valid reason for preventing us adding new
-flags to the IO path. Fix the flag propagation overhead if it's a
-problem for you, don't use it as an excuse for preventing people
-from adding new functionality that uses flag propagation...
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+Seriously.  Stop arguing about something you actually don't care about.
+You're just making Linux less fun to work on.
 
 --
 dm-devel mailing list
