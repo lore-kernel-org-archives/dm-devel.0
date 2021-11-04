@@ -2,81 +2,82 @@ Return-Path: <SRS0=ptSP=PX=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3B53AC433EF
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 07:23:07 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E27F8C433FE
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 07:23:08 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id C558C61108
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 07:23:06 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org C558C61108
+	by mail.kernel.org (Postfix) with ESMTPS id 834806112D
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 07:23:08 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 834806112D
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=nvidia.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-538-kboYHZ7qN9yXS2c-FyQYuw-1; Thu, 04 Nov 2021 03:23:01 -0400
-X-MC-Unique: kboYHZ7qN9yXS2c-FyQYuw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-513-UzGPTEYtNA-B6_-eeMpr1Q-1; Thu, 04 Nov 2021 03:23:04 -0400
+X-MC-Unique: UzGPTEYtNA-B6_-eeMpr1Q-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 07B0E875048;
-	Thu,  4 Nov 2021 07:22:57 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 97DE310A8E00;
+	Thu,  4 Nov 2021 07:22:59 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BD2E8772F2;
-	Thu,  4 Nov 2021 07:22:56 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 76BFC6788F;
+	Thu,  4 Nov 2021 07:22:59 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 94CA34A703;
-	Thu,  4 Nov 2021 07:22:56 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 248F84E58E;
+	Thu,  4 Nov 2021 07:22:59 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1A46lT0u005626 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 4 Nov 2021 02:47:29 -0400
+	id 1A46ntUw006389 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 4 Nov 2021 02:49:55 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4C02C40CFD10; Thu,  4 Nov 2021 06:47:29 +0000 (UTC)
+	id AAA1B400DEF8; Thu,  4 Nov 2021 06:49:55 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 44AA640CFD0A
-	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 06:47:29 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A43D540CFD0A
+	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 06:49:55 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 23960185A7A4
-	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 06:47:29 +0000 (UTC)
-Received: from NAM11-CO1-obe.outbound.protection.outlook.com
-	(mail-co1nam11on2080.outbound.protection.outlook.com [40.107.220.80])
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 87D50800B26
+	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 06:49:55 +0000 (UTC)
+Received: from NAM10-BN7-obe.outbound.protection.outlook.com
+	(mail-bn7nam10on2064.outbound.protection.outlook.com [40.107.92.64])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-16-SgU3pPPLOu2kZ3HYMT1_0Q-1; Thu, 04 Nov 2021 02:47:10 -0400
-X-MC-Unique: SgU3pPPLOu2kZ3HYMT1_0Q-1
-Received: from MWHPR14CA0013.namprd14.prod.outlook.com (2603:10b6:300:ae::23)
-	by DM5PR12MB1881.namprd12.prod.outlook.com (2603:10b6:3:10f::10) with
+	us-mta-134-aBLicu2yNA6NTgVJugmnMQ-1; Thu, 04 Nov 2021 02:49:51 -0400
+X-MC-Unique: aBLicu2yNA6NTgVJugmnMQ-1
+Received: from MWHPR07CA0023.namprd07.prod.outlook.com (2603:10b6:300:116::33)
+	by DM6PR12MB3803.namprd12.prod.outlook.com (2603:10b6:5:1ce::20) with
 	Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4669.11;
-	Thu, 4 Nov 2021 06:47:05 +0000
-Received: from CO1NAM11FT008.eop-nam11.prod.protection.outlook.com
-	(2603:10b6:300:ae:cafe::e9) by MWHPR14CA0013.outlook.office365.com
-	(2603:10b6:300:ae::23) with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4669.11 via
-	Frontend Transport; Thu, 4 Nov 2021 06:47:05 +0000
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4649.17;
+	Thu, 4 Nov 2021 06:49:47 +0000
+Received: from CO1NAM11FT028.eop-nam11.prod.protection.outlook.com
+	(2603:10b6:300:116:cafe::1d) by MWHPR07CA0023.outlook.office365.com
+	(2603:10b6:300:116::33) with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4669.10 via
+	Frontend Transport; Thu, 4 Nov 2021 06:49:46 +0000
 X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 216.228.112.34)
 	smtp.mailfrom=nvidia.com; infradead.org; dkim=none (message not signed)
 	header.d=none; infradead.org;
 	dmarc=pass action=none header.from=nvidia.com
 Received: from mail.nvidia.com (216.228.112.34) by
-	CO1NAM11FT008.mail.protection.outlook.com (10.13.175.191) with
+	CO1NAM11FT028.mail.protection.outlook.com (10.13.175.214) with
 	Microsoft SMTP
 	Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id
-	15.20.4669.10 via Frontend Transport; Thu, 4 Nov 2021 06:47:04 +0000
+	15.20.4669.10 via Frontend Transport; Thu, 4 Nov 2021 06:49:46 +0000
 Received: from dev.nvidia.com (172.20.187.5) by HQMAIL107.nvidia.com
 	(172.20.187.13) with Microsoft SMTP Server (TLS) id 15.0.1497.18;
-	Thu, 4 Nov 2021 06:47:00 +0000
+	Thu, 4 Nov 2021 06:49:44 +0000
 From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
 To: <linux-block@vger.kernel.org>, <linux-raid@vger.kernel.org>,
 	<linux-nvme@lists.infradead.org>, <linux-scsi@vger.kernel.org>,
 	<target-devel@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>,
 	<linux-xfs@vger.kernel.org>, <dm-devel@redhat.com>
-Date: Wed, 3 Nov 2021 23:46:27 -0700
-Message-ID: <20211104064634.4481-2-chaitanyak@nvidia.com>
+Date: Wed, 3 Nov 2021 23:46:34 -0700
+Message-ID: <20211104064634.4481-9-chaitanyak@nvidia.com>
 In-Reply-To: <20211104064634.4481-1-chaitanyak@nvidia.com>
 References: <20211104064634.4481-1-chaitanyak@nvidia.com>
 MIME-Version: 1.0
@@ -85,29 +86,29 @@ X-ClientProxiedBy: HQMAIL111.nvidia.com (172.20.187.18) To
 	HQMAIL107.nvidia.com (172.20.187.13)
 X-EOPAttributedMessage: 0
 X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: af4a8b2d-4d89-4c2f-2fcc-08d99f5ee9dd
-X-MS-TrafficTypeDiagnostic: DM5PR12MB1881:
-X-Microsoft-Antispam-PRVS: <DM5PR12MB188143254186350EAF60AF68A38D9@DM5PR12MB1881.namprd12.prod.outlook.com>
-X-MS-Oob-TLC-OOBClassifiers: OLM:6790
+X-MS-Office365-Filtering-Correlation-Id: ee0b9fe1-2d93-4534-1f11-08d99f5f4a15
+X-MS-TrafficTypeDiagnostic: DM6PR12MB3803:
+X-Microsoft-Antispam-PRVS: <DM6PR12MB38038DB4938DBD5E5C75B8FFA38D9@DM6PR12MB3803.namprd12.prod.outlook.com>
+X-MS-Oob-TLC-OOBClassifiers: OLM:4125
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: F7ZwzjHgLOQ7Nu8vxFgbZBFBwBCrSfh3BwRqepbl9hggNZtn8c3KI/PLWTXY+RyDZ1J8yHhJvnSe/9YW1/FW+EKckMsaDOUQDPey1zxcxCH4WFGNPpj6wbyE91FSFW5m9/17EuLkiQ/5W7yTgOvNl9UyJXlEUfx0Z2b5sZK38pOQHAwCiSi8KEJvs/PKD1BcLYVdbZV8+Lda0+cIOuHQKn1PJSkJhqv50KgXstxKRDqEMqIFnVVwKUrnA9mYktl55BJK2DNPPKaWPOg5m7LaklKvRAxa9hQmlYIVmDCllzp7sX+AP5W4LFimNrKm88o9SH3i3K1h2e6FWNQXWeu4Hk3XbR02pEZNA+EeS0++cxDNjn3zs1ld/B13UTIz5pKQud0kE5rOCH4fp/I9ZMXeGegIx57uXPm7hUrpU+Cs9WtnJZ+0cNzNSSRcPFlZQhAZqYz/CtI5IQxwxmoCMI2HSEZaMwgVcUXCipxybkTsdIC8OWGyQ1XT3xPpmM5XkPjxQPwJ35RsRVabB0yHMKh+Fec/nfDIkTPcjNBsD2j4u7qTjy5O46a0hPJ0RMvQy33ZLkL7rtKTUQfi3ZouSQ+YWsdkhhkaTunYfVPVcJrTc234Ejwysthquih8dJ7ZuWZP8m+p4mAQRqehAfBmjMeqfYBjyVGP6S8+XxJiOLneS5TlLnLiTLvk/Jtp6Em37SokjHmHk6xX7xMOUY7fAhYI2L7zuZsAyiRq+MZB9Wo0ExI=
+X-Microsoft-Antispam-Message-Info: UY0SWpGBc1P4YkudM6UA+jyXXf244sHMqUERIe2IhT1uwMo/W79RqC6FOwoZTrBgcVvH5rN8m7cuHzRUA1tqhYCkKloU0TryGBGH55M0DGHV749FyxOnASykpJ470T0w0hr4ghyDk+5CuHKBMhjfX9B43mh4YYaQc9XonJA0p8ucmhd9c6XyDfx3kVw4sJN4mAFkZ65DZthVB7HZPziwCnTaxqXkhsChatibv+nTMUub80fqDgCqUht23Tb/lF6FAOgmnQ3WZq3r/uHuQRBIAQGW4PuhTSSa31eQJ+npp8FTjMBdfrs3EYzMigRYV6nK8EbzakU2oxlJ2RPwkRpAMCrpRONQA1lm2HcLSkSJVwybXeEvU7xkk2F0IYJJqIpHIXcjkp2JFPzKJmtsamsUkcDx+YUilSOuFGGFx4aOcGiZqF2nG6LtLzMtP25dD7LZXUsHmMGrQzGQTfcdJKfY5nCRWbmI4TpqBVCvJ2u069rfUTQ+uoZ7oVT/v/3vybdKt/K/ywdv8ujKi9ODUgXCGz3MVPfztKzIo3u71WAhzqJL1hExqTElAivOkuECDUOQ5fYAoJ2NtKKXThXroYPGV4oSFkkPEpHtu+QA0TKSkw61sddEbxaTzeul5hGjD1bodi81Eau6fKaT3VYPJY4Vm1UuscjWp6ufS9v2RAmTaeL3FytPCD/57dkLe3x4djbcW10MmOLaxlYuoBpoVFhjHxsVTWalIMoH9Yv4zUhcFyA=
 X-Forefront-Antispam-Report: CIP:216.228.112.34; CTRY:US; LANG:en; SCL:1; SRV:;
 	IPV:NLI; SFV:NSPM; H:mail.nvidia.com; PTR:schybrid03.nvidia.com;
 	CAT:NONE;
-	SFS:(4636009)(36840700001)(46966006)(8676002)(6666004)(36860700001)(107886003)(316002)(82310400003)(30864003)(8936002)(7636003)(4326008)(426003)(70586007)(508600001)(1076003)(70206006)(7406005)(83380400001)(2616005)(356005)(16526019)(186003)(36756003)(26005)(336012)(54906003)(110136005)(47076005)(7416002)(5660300002)(2906002)(86362001)(7696005)(2101003);
+	SFS:(4636009)(46966006)(36840700001)(70206006)(82310400003)(6666004)(70586007)(16526019)(86362001)(336012)(186003)(7406005)(36860700001)(36756003)(26005)(7416002)(47076005)(508600001)(83380400001)(1076003)(5660300002)(30864003)(7636003)(2906002)(426003)(107886003)(4326008)(7696005)(8676002)(316002)(110136005)(54906003)(36906005)(2616005)(356005)(8936002)(2101003);
 	DIR:OUT; SFP:1101
 X-OriginatorOrg: Nvidia.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 04 Nov 2021 06:47:04.7755 (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: af4a8b2d-4d89-4c2f-2fcc-08d99f5ee9dd
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 04 Nov 2021 06:49:46.2044 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: ee0b9fe1-2d93-4534-1f11-08d99f5f4a15
 X-MS-Exchange-CrossTenant-Id: 43083d15-7273-40c1-b7db-39efd9ccc17a
 X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=43083d15-7273-40c1-b7db-39efd9ccc17a;
 	Ip=[216.228.112.34]; Helo=[mail.nvidia.com]
-X-MS-Exchange-CrossTenant-AuthSource: CO1NAM11FT008.eop-nam11.prod.protection.outlook.com
+X-MS-Exchange-CrossTenant-AuthSource: CO1NAM11FT028.eop-nam11.prod.protection.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Anonymous
 X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM5PR12MB1881
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR12MB3803
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -118,7 +119,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1A46lT0u005626
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1A46ntUw006389
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Thu, 04 Nov 2021 03:22:43 -0400
 Cc: snitzer@redhat.com, ebiggers@google.com, djwong@kernel.org, clm@fb.com,
@@ -133,7 +134,7 @@ Cc: snitzer@redhat.com, ebiggers@google.com, djwong@kernel.org, clm@fb.com,
 	martin.petersen@oracle.com, song@kernel.org,
 	johannes.thumshirn@wdc.com, jlayton@kernel.org,
 	kbusch@kernel.org, jack@suse.com
-Subject: [dm-devel] [RFC PATCH 1/8] block: add support for REQ_OP_VERIFY
+Subject: [dm-devel] [RFC PATCH 8/8] md: add support for REQ_OP_VERIFY
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -147,7 +148,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -157,642 +158,385 @@ Content-Transfer-Encoding: 7bit
 
 From: Chaitanya Kulkarni <kch@nvidia.com>
 
-This adds a new block layer operation to offload verifying a range of
-LBAs. This support is needed in order to provide file systems and
-fabrics, kernel components to offload LBA verification when it is
-supported by the hardware controller. In case hardware offloading is
-not supported then we provide APIs to emulate the same. The prominent
-example of that is NVMe Verify command. We also provide an emulation of
-the same operation which can be used in case H/W does not support
-verify. This is still useful when block device is remotely attached e.g.
-using NVMeOF.
-
 Signed-off-by: Chaitanya Kulkarni <kch@nvidia.com>
 ---
- Documentation/ABI/testing/sysfs-block |  14 ++
- block/blk-core.c                      |   5 +
- block/blk-lib.c                       | 192 ++++++++++++++++++++++++++
- block/blk-merge.c                     |  19 +++
- block/blk-settings.c                  |  17 +++
- block/blk-sysfs.c                     |   8 ++
- block/blk-zoned.c                     |   1 +
- block/bounce.c                        |   1 +
- block/ioctl.c                         |  35 +++++
- include/linux/bio.h                   |  10 +-
- include/linux/blk_types.h             |   2 +
- include/linux/blkdev.h                |  31 +++++
- include/uapi/linux/fs.h               |   1 +
- 13 files changed, 332 insertions(+), 4 deletions(-)
+ drivers/md/dm-core.h          |  1 +
+ drivers/md/dm-io.c            |  8 ++++++--
+ drivers/md/dm-linear.c        | 11 ++++++++++-
+ drivers/md/dm-mpath.c         |  1 +
+ drivers/md/dm-rq.c            |  3 +++
+ drivers/md/dm-stripe.c        |  1 +
+ drivers/md/dm-table.c         | 36 +++++++++++++++++++++++++++++++++++
+ drivers/md/dm.c               | 31 ++++++++++++++++++++++++++++++
+ drivers/md/md-linear.c        | 10 ++++++++++
+ drivers/md/md-multipath.c     |  1 +
+ drivers/md/md.h               |  7 +++++++
+ drivers/md/raid10.c           |  1 +
+ drivers/md/raid5.c            |  1 +
+ include/linux/device-mapper.h |  6 ++++++
+ 14 files changed, 115 insertions(+), 3 deletions(-)
 
-diff --git a/Documentation/ABI/testing/sysfs-block b/Documentation/ABI/testing/sysfs-block
-index e34cdeeeb9d4..ba97f7a9cbec 100644
---- a/Documentation/ABI/testing/sysfs-block
-+++ b/Documentation/ABI/testing/sysfs-block
-@@ -252,6 +252,20 @@ Description:
- 		write_zeroes_max_bytes is 0, write zeroes is not supported
- 		by the device.
+diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
+index 086d293c2b03..8a07ac9165ec 100644
+--- a/drivers/md/dm-core.h
++++ b/drivers/md/dm-core.h
+@@ -114,6 +114,7 @@ struct mapped_device {
+ void disable_discard(struct mapped_device *md);
+ void disable_write_same(struct mapped_device *md);
+ void disable_write_zeroes(struct mapped_device *md);
++void disable_verify(struct mapped_device *md);
  
-+What:		/sys/block/<disk>/queue/verify_max_bytes
-+Date:		Nov 2021
-+Contact:	Chaitanya Kulkarni <kch@nvidia.com>
-+Description:
-+		Devices that support verify operation in which a single
-+		request can be issued to verify the range of the contiguous
-+		blocks on the storage without any payload in the request.
-+		This can be used to optimize verifying LBAs on the device
-+		without reading by offloading functionality. verify_max_bytes
-+		indicates how many bytes can be written in a single verify
-+		command. If verify_max_bytes is 0, verify operation is not
-+		supported by the device.
-+
-+
- What:		/sys/block/<disk>/queue/zoned
- Date:		September 2016
- Contact:	Damien Le Moal <damien.lemoal@wdc.com>
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 5e752840b41a..62160e729e7d 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -141,6 +141,7 @@ static const char *const blk_op_name[] = {
- 	REQ_OP_NAME(ZONE_APPEND),
- 	REQ_OP_NAME(WRITE_SAME),
- 	REQ_OP_NAME(WRITE_ZEROES),
-+	REQ_OP_NAME(VERIFY),
- 	REQ_OP_NAME(SCSI_IN),
- 	REQ_OP_NAME(SCSI_OUT),
- 	REQ_OP_NAME(DRV_IN),
-@@ -851,6 +852,10 @@ static noinline_for_stack bool submit_bio_checks(struct bio *bio)
- 		if (!q->limits.max_write_same_sectors)
- 			goto not_supported;
- 		break;
-+	case REQ_OP_VERIFY:
-+		if (!q->limits.max_verify_sectors)
-+			goto not_supported;
-+		break;
- 	case REQ_OP_ZONE_APPEND:
- 		status = blk_check_zone_append(q, bio);
- 		if (status != BLK_STS_OK)
-diff --git a/block/blk-lib.c b/block/blk-lib.c
-index 752f9c722062..fdbb765b369e 100644
---- a/block/blk-lib.c
-+++ b/block/blk-lib.c
-@@ -439,3 +439,195 @@ int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
- 	return ret;
- }
- EXPORT_SYMBOL(blkdev_issue_zeroout);
-+
-+/**
-+ * __blkdev_emulate_verify - emulate number of verify operations
-+ * 				asynchronously
-+ * @bdev:	blockdev to issue
-+ * @sector:	start sector
-+ * @nr_sects:	number of sectors to verify
-+ * @gfp_mask:	memory allocation flags (for bio_alloc)
-+ * @biop:	pointer to anchor bio
-+ * @buf:	data buffer to mapped on bio
-+ *
-+ * Description:
-+ *  Verify a block range by emulating REQ_OP_VERIFY, use this when H/W
-+ *  offloading is not supported asynchronously. Caller is responsible to
-+ *  handle anchored bio.
-+ */
-+int __blkdev_emulate_verify(struct block_device *bdev, sector_t sector,
-+		sector_t nr_sects, gfp_t gfp_mask, struct bio **biop, char *buf)
-+{
-+	struct request_queue *q = bdev_get_queue(bdev);
-+	struct bio *bio = *biop;
-+	unsigned int sz;
-+	int bi_size;
-+
-+	if (!q)
-+		return -ENXIO;
-+
-+	if (bdev_read_only(bdev))
-+		return -EPERM;
-+
-+	while (nr_sects != 0) {
-+		bio = blk_next_bio(bio, __blkdev_sectors_to_bio_pages(nr_sects),
-+				gfp_mask);
-+		bio->bi_iter.bi_sector = sector;
-+		bio_set_dev(bio, bdev);
-+		bio_set_op_attrs(bio, REQ_OP_READ, 0);
-+
-+		while (nr_sects != 0) {
-+			bool is_vaddr = is_vmalloc_addr(buf);
-+			struct page *p;
-+
-+			p = is_vaddr ? vmalloc_to_page(buf) : virt_to_page(buf);
-+			sz = min((sector_t) PAGE_SIZE, nr_sects << 9);
-+			bi_size = bio_add_page(bio, p, sz, offset_in_page(buf));
-+			nr_sects -= bi_size >> 9;
-+			sector += bi_size >> 9;
-+			buf += bi_size;
-+
-+			if (bi_size < sz)
-+				break;
-+		}
-+		cond_resched();
-+	}
-+
-+	*biop = bio;
-+	return 0;
-+}
-+EXPORT_SYMBOL(__blkdev_emulate_verify);
-+
-+/**
-+ * blkdev_emulate_verify - emulate number of verify operations synchronously
-+ * @bdev:	blockdev to issue
-+ * @sector:	start sector
-+ * @nr_sects:	number of sectors to verify
-+ * @gfp_mask:	memory allocation flags (for bio_alloc)
-+ *
-+ * Description:
-+ *  Verify a block range by emulating REQ_OP_VERIFY, use this when H/W
-+ *  offloading is not supported synchronously.
-+ */
-+int blkdev_emulate_verify(struct block_device *bdev, sector_t sector,
-+		sector_t nr_sects, gfp_t gfp_mask)
-+{
-+	sector_t min_io_sect = (BIO_MAX_VECS << PAGE_SHIFT) >> 9;
-+	int ret = 0;
-+	char *buf;
-+
-+	/* allows pages in buffer to be == BIO_MAX_VECS */
-+	buf = kzalloc(min_io_sect << 9, GFP_KERNEL);
-+	if (!buf) {
-+		ret = -ENOMEM;
-+		goto out;
-+	}
-+
-+	while (nr_sects > 0) {
-+		sector_t curr_sects = min_t(sector_t, nr_sects, min_io_sect);
-+		struct bio *bio = NULL;
-+
-+		ret = __blkdev_emulate_verify(bdev, sector, curr_sects,
-+				GFP_KERNEL, &bio, buf);
-+
-+		if (!(ret == 0 && bio))
-+			break;
-+
-+		ret = submit_bio_wait(bio);
-+		bio_put(bio);
-+
-+		nr_sects -= curr_sects;
-+		sector += curr_sects;
-+	}
-+out:
-+	kfree(buf);
-+	return ret;
-+}
-+EXPORT_SYMBOL(blkdev_emulate_verify);
-+
-+/**
-+ * __blkdev_issue_verify - generate number of verify operations
-+ * @bdev:	blockdev to issue
-+ * @sector:	start sector
-+ * @nr_sects:	number of sectors to verify
-+ * @gfp_mask:	memory allocation flags (for bio_alloc)
-+ * @biop:	pointer to anchor bio
-+ *
-+ * Description:
-+ *  Verify a block range using hardware offload.
-+ *
-+ * The function will emulate verify operation if no explicit hardware
-+ * offloading for verifying is provided.
-+ */
-+int __blkdev_issue_verify(struct block_device *bdev, sector_t sector,
-+		sector_t nr_sects, gfp_t gfp_mask, struct bio **biop)
-+{
-+	struct request_queue *q = bdev_get_queue(bdev);
-+	unsigned int max_verify_sectors;
-+	struct bio *bio = *biop;
-+
-+	if (!q)
-+		return -ENXIO;
-+
-+	if (bdev_read_only(bdev))
-+		return -EPERM;
-+
-+	max_verify_sectors = bdev_verify_sectors(bdev);
-+
-+	if (max_verify_sectors == 0)
-+		return blkdev_emulate_verify(bdev, sector, nr_sects, gfp_mask);
-+
-+	while (nr_sects) {
-+		bio = blk_next_bio(bio, 0, gfp_mask);
-+		bio->bi_iter.bi_sector = sector;
-+		bio_set_dev(bio, bdev);
-+		bio->bi_opf = REQ_OP_VERIFY;
-+		if (nr_sects > max_verify_sectors) {
-+			bio->bi_iter.bi_size = max_verify_sectors << 9;
-+			nr_sects -= max_verify_sectors;
-+			sector += max_verify_sectors;
-+		} else {
-+			bio->bi_iter.bi_size = nr_sects << 9;
-+			nr_sects = 0;
-+		}
-+		cond_resched();
-+	}
-+
-+	*biop = bio;
-+	return 0;
-+}
-+EXPORT_SYMBOL(__blkdev_issue_verify);
-+
-+/**
-+ * blkdev_issue_verify - verify a block range
-+ * @bdev:	blockdev to verify
-+ * @sector:	start sector
-+ * @nr_sects:	number of sectors to verify
-+ * @gfp_mask:	memory allocation flags (for bio_alloc)
-+ *
-+ * Description:
-+ *  Verify a block range using hardware offload.
-+ */
-+int blkdev_issue_verify(struct block_device *bdev, sector_t sector,
-+		sector_t nr_sects, gfp_t gfp_mask)
-+{
-+	int ret = 0;
-+	sector_t bs_mask;
-+	struct bio *bio = NULL;
-+	struct blk_plug plug;
-+
-+	bs_mask = (bdev_logical_block_size(bdev) >> 9) - 1;
-+	if ((sector | nr_sects) & bs_mask)
-+		return -EINVAL;
-+
-+	blk_start_plug(&plug);
-+	ret = __blkdev_issue_verify(bdev, sector, nr_sects, gfp_mask, &bio);
-+	if (ret == 0 && bio) {
-+		ret = submit_bio_wait(bio);
-+		bio_put(bio);
-+	}
-+	blk_finish_plug(&plug);
-+
-+	return ret;
-+}
-+EXPORT_SYMBOL(blkdev_issue_verify);
-diff --git a/block/blk-merge.c b/block/blk-merge.c
-index ffb4aa0ea68b..c28632cb936b 100644
---- a/block/blk-merge.c
-+++ b/block/blk-merge.c
-@@ -117,6 +117,20 @@ static struct bio *blk_bio_write_zeroes_split(struct request_queue *q,
- 	return bio_split(bio, q->limits.max_write_zeroes_sectors, GFP_NOIO, bs);
- }
- 
-+static struct bio *blk_bio_verify_split(struct request_queue *q,
-+		struct bio *bio, struct bio_set *bs, unsigned *nsegs)
-+{
-+	*nsegs = 0;
-+
-+	if (!q->limits.max_verify_sectors)
-+		return NULL;
-+
-+	if (bio_sectors(bio) <= q->limits.max_verify_sectors)
-+		return NULL;
-+
-+	return bio_split(bio, q->limits.max_verify_sectors, GFP_NOIO, bs);
-+}
-+
- static struct bio *blk_bio_write_same_split(struct request_queue *q,
- 					    struct bio *bio,
- 					    struct bio_set *bs,
-@@ -316,6 +330,10 @@ void __blk_queue_split(struct bio **bio, unsigned int *nr_segs)
- 		split = blk_bio_write_zeroes_split(q, *bio, &q->bio_split,
- 				nr_segs);
- 		break;
-+	case REQ_OP_VERIFY:
-+		split = blk_bio_verify_split(q, *bio, &q->bio_split,
-+				nr_segs);
-+		break;
- 	case REQ_OP_WRITE_SAME:
- 		split = blk_bio_write_same_split(q, *bio, &q->bio_split,
- 				nr_segs);
-@@ -383,6 +401,7 @@ unsigned int blk_recalc_rq_segments(struct request *rq)
- 	case REQ_OP_DISCARD:
- 	case REQ_OP_SECURE_ERASE:
- 	case REQ_OP_WRITE_ZEROES:
-+	case REQ_OP_VERIFY:
- 		return 0;
- 	case REQ_OP_WRITE_SAME:
- 		return 1;
-diff --git a/block/blk-settings.c b/block/blk-settings.c
-index 4c974340f1a9..f34cbd3678b6 100644
---- a/block/blk-settings.c
-+++ b/block/blk-settings.c
-@@ -48,6 +48,7 @@ void blk_set_default_limits(struct queue_limits *lim)
- 	lim->chunk_sectors = 0;
- 	lim->max_write_same_sectors = 0;
- 	lim->max_write_zeroes_sectors = 0;
-+	lim->max_verify_sectors = 0;
- 	lim->max_zone_append_sectors = 0;
- 	lim->max_discard_sectors = 0;
- 	lim->max_hw_discard_sectors = 0;
-@@ -84,6 +85,7 @@ void blk_set_stacking_limits(struct queue_limits *lim)
- 	lim->max_dev_sectors = UINT_MAX;
- 	lim->max_write_same_sectors = UINT_MAX;
- 	lim->max_write_zeroes_sectors = UINT_MAX;
-+	lim->max_verify_sectors = UINT_MAX;
- 	lim->max_zone_append_sectors = UINT_MAX;
- }
- EXPORT_SYMBOL(blk_set_stacking_limits);
-@@ -227,6 +229,19 @@ void blk_queue_max_write_zeroes_sectors(struct request_queue *q,
- }
- EXPORT_SYMBOL(blk_queue_max_write_zeroes_sectors);
- 
-+/**
-+ * blk_queue_max_verify_sectors - set max sectors for a single verify
-+ *
-+ * @q:  the request queue for the device
-+ * @max_verify_sectors: maximum number of sectors to verify per command
-+ **/
-+void blk_queue_max_verify_sectors(struct request_queue *q,
-+		unsigned int max_verify_sectors)
-+{
-+	q->limits.max_verify_sectors = max_verify_sectors;
-+}
-+EXPORT_SYMBOL(blk_queue_max_verify_sectors);
-+
- /**
-  * blk_queue_max_zone_append_sectors - set max sectors for a single zone append
-  * @q:  the request queue for the device
-@@ -514,6 +529,8 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
- 					b->max_write_same_sectors);
- 	t->max_write_zeroes_sectors = min(t->max_write_zeroes_sectors,
- 					b->max_write_zeroes_sectors);
-+	t->max_verify_sectors = min(t->max_verify_sectors,
-+				    b->max_verify_sectors);
- 	t->max_zone_append_sectors = min(t->max_zone_append_sectors,
- 					b->max_zone_append_sectors);
- 	t->bounce_pfn = min_not_zero(t->bounce_pfn, b->bounce_pfn);
-diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-index b513f1683af0..f918c83dd8d4 100644
---- a/block/blk-sysfs.c
-+++ b/block/blk-sysfs.c
-@@ -108,6 +108,12 @@ queue_ra_store(struct request_queue *q, const char *page, size_t count)
- 	return ret;
- }
- 
-+static ssize_t queue_verify_max_show(struct request_queue *q, char *page)
-+{
-+	return sprintf(page, "%llu\n",
-+		(unsigned long long)q->limits.max_verify_sectors << 9);
-+}
-+
- static ssize_t queue_max_sectors_show(struct request_queue *q, char *page)
+ static inline sector_t dm_get_size(struct mapped_device *md)
  {
- 	int max_sectors_kb = queue_max_sectors(q) >> 1;
-@@ -584,6 +590,7 @@ QUEUE_RO_ENTRY(queue_discard_zeroes_data, "discard_zeroes_data");
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index 4312007d2d34..da09d092e2c1 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -317,8 +317,11 @@ static void do_region(int op, int op_flags, unsigned region,
+ 		special_cmd_max_sectors = q->limits.max_write_zeroes_sectors;
+ 	else if (op == REQ_OP_WRITE_SAME)
+ 		special_cmd_max_sectors = q->limits.max_write_same_sectors;
++	else if (op == REQ_OP_VERIFY)
++		special_cmd_max_sectors = q->limits.max_verify_sectors;
+ 	if ((op == REQ_OP_DISCARD || op == REQ_OP_WRITE_ZEROES ||
+-	     op == REQ_OP_WRITE_SAME) && special_cmd_max_sectors == 0) {
++	     op == REQ_OP_VERIFY || op == REQ_OP_WRITE_SAME) &&
++	     special_cmd_max_sectors == 0) {
+ 		atomic_inc(&io->count);
+ 		dec_count(io, region, BLK_STS_NOTSUPP);
+ 		return;
+@@ -335,6 +338,7 @@ static void do_region(int op, int op_flags, unsigned region,
+ 		switch (op) {
+ 		case REQ_OP_DISCARD:
+ 		case REQ_OP_WRITE_ZEROES:
++		case REQ_OP_VERIFY:
+ 			num_bvecs = 0;
+ 			break;
+ 		case REQ_OP_WRITE_SAME:
+@@ -352,7 +356,7 @@ static void do_region(int op, int op_flags, unsigned region,
+ 		bio_set_op_attrs(bio, op, op_flags);
+ 		store_io_and_region_in_bio(bio, io, region);
  
- QUEUE_RO_ENTRY(queue_write_same_max, "write_same_max_bytes");
- QUEUE_RO_ENTRY(queue_write_zeroes_max, "write_zeroes_max_bytes");
-+QUEUE_RO_ENTRY(queue_verify_max, "verify_max_bytes");
- QUEUE_RO_ENTRY(queue_zone_append_max, "zone_append_max_bytes");
+-		if (op == REQ_OP_DISCARD || op == REQ_OP_WRITE_ZEROES) {
++		if (op == REQ_OP_DISCARD || op == REQ_OP_WRITE_ZEROES || op == REQ_OP_VERIFY) {
+ 			num_sectors = min_t(sector_t, special_cmd_max_sectors, remaining);
+ 			bio->bi_iter.bi_size = num_sectors << SECTOR_SHIFT;
+ 			remaining -= num_sectors;
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 00774b5d7668..802c9cb917ae 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -62,6 +62,7 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	ti->num_secure_erase_bios = 1;
+ 	ti->num_write_same_bios = 1;
+ 	ti->num_write_zeroes_bios = 1;
++	ti->num_verify_bios = 1;
+ 	ti->private = lc;
+ 	return 0;
  
- QUEUE_RO_ENTRY(queue_zoned, "zoned");
-@@ -638,6 +645,7 @@ static struct attribute *queue_attrs[] = {
- 	&queue_discard_zeroes_data_entry.attr,
- 	&queue_write_same_max_entry.attr,
- 	&queue_write_zeroes_max_entry.attr,
-+	&queue_verify_max_entry.attr,
- 	&queue_zone_append_max_entry.attr,
- 	&queue_nonrot_entry.attr,
- 	&queue_zoned_entry.attr,
-diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index 7a68b6e4300c..c9c51ee22a49 100644
---- a/block/blk-zoned.c
-+++ b/block/blk-zoned.c
-@@ -73,6 +73,7 @@ bool blk_req_needs_zone_write_lock(struct request *rq)
+@@ -90,9 +91,17 @@ static void linear_map_bio(struct dm_target *ti, struct bio *bio)
+ 	struct linear_c *lc = ti->private;
  
- 	switch (req_op(rq)) {
- 	case REQ_OP_WRITE_ZEROES:
-+	case REQ_OP_VERIFY:
- 	case REQ_OP_WRITE_SAME:
- 	case REQ_OP_WRITE:
- 		return blk_rq_zone_is_seq(rq);
-diff --git a/block/bounce.c b/block/bounce.c
-index fc55314aa426..86cdb900b88f 100644
---- a/block/bounce.c
-+++ b/block/bounce.c
-@@ -259,6 +259,7 @@ static struct bio *bounce_clone_bio(struct bio *bio_src, gfp_t gfp_mask,
- 	case REQ_OP_DISCARD:
- 	case REQ_OP_SECURE_ERASE:
- 	case REQ_OP_WRITE_ZEROES:
-+	case REQ_OP_VERIFY:
- 		break;
- 	case REQ_OP_WRITE_SAME:
- 		bio->bi_io_vec[bio->bi_vcnt++] = bio_src->bi_io_vec[0];
-diff --git a/block/ioctl.c b/block/ioctl.c
-index d61d652078f4..5e1b3c4660bf 100644
---- a/block/ioctl.c
-+++ b/block/ioctl.c
-@@ -168,6 +168,39 @@ static int blk_ioctl_zeroout(struct block_device *bdev, fmode_t mode,
- 			BLKDEV_ZERO_NOUNMAP);
+ 	bio_set_dev(bio, lc->dev->bdev);
+-	if (bio_sectors(bio) || op_is_zone_mgmt(bio_op(bio)))
++	if (bio_sectors(bio) || op_is_zone_mgmt(bio_op(bio))) {
+ 		bio->bi_iter.bi_sector =
+ 			linear_map_sector(ti, bio->bi_iter.bi_sector);
++		if (bio_op(bio) == REQ_OP_VERIFY)
++			printk(KERN_INFO"dmrg:     REQ_OP_VERIFY sector %10llu nr_sectors "
++					"%10u %s %s\n",
++					bio->bi_iter.bi_sector, bio->bi_iter.bi_size >> 9,
++					bio->bi_bdev->bd_disk->disk_name,
++					current->comm);
++
++	}
  }
  
-+static int blk_ioctl_verify(struct block_device *bdev, fmode_t mode,
-+		unsigned long arg)
+ static int linear_map(struct dm_target *ti, struct bio *bio)
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index bced42f082b0..d6eb0d287032 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1255,6 +1255,7 @@ static int multipath_ctr(struct dm_target *ti, unsigned argc, char **argv)
+ 	ti->num_discard_bios = 1;
+ 	ti->num_write_same_bios = 1;
+ 	ti->num_write_zeroes_bios = 1;
++	ti->num_verify_bios = 1;
+ 	if (m->queue_mode == DM_TYPE_BIO_BASED)
+ 		ti->per_io_data_size = multipath_per_bio_data_size();
+ 	else
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 13b4385f4d5a..eaf19f8c9fca 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -224,6 +224,9 @@ static void dm_done(struct request *clone, blk_status_t error, bool mapped)
+ 		else if (req_op(clone) == REQ_OP_WRITE_ZEROES &&
+ 			 !clone->q->limits.max_write_zeroes_sectors)
+ 			disable_write_zeroes(tio->md);
++		else if (req_op(clone) == REQ_OP_VERIFY &&
++			 !clone->q->limits.max_verify_sectors)
++			disable_verify(tio->md);
+ 	}
+ 
+ 	switch (r) {
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index df359d33cda8..199ee57290a2 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -159,6 +159,7 @@ static int stripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	ti->num_secure_erase_bios = stripes;
+ 	ti->num_write_same_bios = stripes;
+ 	ti->num_write_zeroes_bios = stripes;
++	ti->num_verify_bios = stripes;
+ 
+ 	sc->chunk_size = chunk_size;
+ 	if (chunk_size & (chunk_size - 1))
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 4acf2342f7ad..6a55c4c3b77a 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1709,6 +1709,36 @@ static bool dm_table_supports_nowait(struct dm_table *t)
+ 	return true;
+ }
+ 
++static int device_not_verify_capable(struct dm_target *ti, struct dm_dev *dev,
++					   sector_t start, sector_t len, void *data)
 +{
-+	uint64_t range[2];
-+	struct address_space *mapping;
-+	uint64_t start, end, len;
++	struct request_queue *q = bdev_get_queue(dev->bdev);
 +
-+	if (!(mode & FMODE_WRITE))
-+		return -EBADF;
-+
-+	if (copy_from_user(range, (void __user *)arg, sizeof(range)))
-+		return -EFAULT;
-+
-+	start = range[0];
-+	len = range[1];
-+	end = start + len - 1;
-+
-+	if (start & 511)
-+		return -EINVAL;
-+	if (len & 511)
-+		return -EINVAL;
-+	if (end >= (uint64_t)i_size_read(bdev->bd_inode))
-+		return -EINVAL;
-+	if (end < start)
-+		return -EINVAL;
-+
-+	/* Invalidate the page cache, including dirty pages */
-+	mapping = bdev->bd_inode->i_mapping;
-+	truncate_inode_pages_range(mapping, start, end);
-+
-+	return blkdev_issue_verify(bdev, start >> 9, len >> 9, GFP_KERNEL);
++	return q && !q->limits.max_verify_sectors;
 +}
 +
- static int put_ushort(unsigned short __user *argp, unsigned short val)
++static bool dm_table_supports_verify(struct dm_table *t)
++{
++	struct dm_target *ti;
++	unsigned i = 0;
++
++	while (i < dm_table_get_num_targets(t)) {
++		ti = dm_table_get_target(t, i++);
++
++		if (!ti->num_verify_bios)
++			return false;
++
++		if (!ti->type->iterate_devices ||
++		    ti->type->iterate_devices(ti, device_not_verify_capable, NULL))
++			return false;
++
++		printk(KERN_INFO"REQ_OP_VERIFY configured success for %s id %d\n",
++				ti->type->name, i);
++	}
++
++	return true;
++}
++
+ static int device_not_discard_capable(struct dm_target *ti, struct dm_dev *dev,
+ 				      sector_t start, sector_t len, void *data)
  {
- 	return put_user(val, argp);
-@@ -460,6 +493,8 @@ static int blkdev_common_ioctl(struct block_device *bdev, fmode_t mode,
- 				BLKDEV_DISCARD_SECURE);
- 	case BLKZEROOUT:
- 		return blk_ioctl_zeroout(bdev, mode, arg);
-+	case BLKVERIFY:
-+		return blk_ioctl_verify(bdev, mode, arg);
- 	case BLKREPORTZONE:
- 		return blkdev_report_zones_ioctl(bdev, mode, cmd, arg);
- 	case BLKRESETZONE:
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index c74857cf1252..d660c37b7d6c 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -63,7 +63,8 @@ static inline bool bio_has_data(struct bio *bio)
- 	    bio->bi_iter.bi_size &&
- 	    bio_op(bio) != REQ_OP_DISCARD &&
- 	    bio_op(bio) != REQ_OP_SECURE_ERASE &&
--	    bio_op(bio) != REQ_OP_WRITE_ZEROES)
-+	    bio_op(bio) != REQ_OP_WRITE_ZEROES &&
-+	    bio_op(bio) != REQ_OP_VERIFY)
- 		return true;
+@@ -1830,6 +1860,12 @@ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	if (dm_table_supports_secure_erase(t))
+ 		blk_queue_flag_set(QUEUE_FLAG_SECERASE, q);
  
- 	return false;
-@@ -73,8 +74,8 @@ static inline bool bio_no_advance_iter(const struct bio *bio)
- {
- 	return bio_op(bio) == REQ_OP_DISCARD ||
- 	       bio_op(bio) == REQ_OP_SECURE_ERASE ||
--	       bio_op(bio) == REQ_OP_WRITE_SAME ||
--	       bio_op(bio) == REQ_OP_WRITE_ZEROES;
-+	       bio_op(bio) == REQ_OP_WRITE_ZEROES ||
-+	       bio_op(bio) == REQ_OP_VERIFY;
++	if (!dm_table_supports_verify(t)) {
++		blk_queue_flag_clear(QUEUE_FLAG_VERIFY, q);
++		q->limits.max_verify_sectors = 0;
++	} else
++		blk_queue_flag_set(QUEUE_FLAG_VERIFY, q);
++
+ 	if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_WC))) {
+ 		wc = true;
+ 		if (dm_table_supports_flush(t, (1UL << QUEUE_FLAG_FUA)))
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 479ec5bea09e..f70e387ce020 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -969,6 +969,15 @@ void disable_write_zeroes(struct mapped_device *md)
+ 	limits->max_write_zeroes_sectors = 0;
  }
  
- static inline bool bio_mergeable(struct bio *bio)
-@@ -198,7 +199,7 @@ static inline unsigned bio_segments(struct bio *bio)
- 	struct bvec_iter iter;
++void disable_verify(struct mapped_device *md)
++{
++	struct queue_limits *limits = dm_get_queue_limits(md);
++
++	/* device doesn't really support VERIFY, disable it */
++	limits->max_verify_sectors = 0;
++	blk_queue_flag_clear(QUEUE_FLAG_VERIFY, md->queue);
++}
++
+ static void clone_endio(struct bio *bio)
+ {
+ 	blk_status_t error = bio->bi_status;
+@@ -989,6 +998,9 @@ static void clone_endio(struct bio *bio)
+ 		else if (bio_op(bio) == REQ_OP_WRITE_ZEROES &&
+ 			 !q->limits.max_write_zeroes_sectors)
+ 			disable_write_zeroes(md);
++		else if (bio_op(bio) == REQ_OP_VERIFY &&
++			 !q->limits.max_verify_sectors)
++			disable_verify(md);
+ 	}
  
  	/*
--	 * We special case discard/write same/write zeroes, because they
-+	 * We special case discard/write same/write zeroes/verify, because they
- 	 * interpret bi_size differently:
- 	 */
- 
-@@ -206,6 +207,7 @@ static inline unsigned bio_segments(struct bio *bio)
- 	case REQ_OP_DISCARD:
- 	case REQ_OP_SECURE_ERASE:
- 	case REQ_OP_WRITE_ZEROES:
-+	case REQ_OP_VERIFY:
- 		return 0;
- 	case REQ_OP_WRITE_SAME:
- 		return 1;
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 1bc6f6a01070..8877711c4c56 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -366,6 +366,8 @@ enum req_opf {
- 	REQ_OP_SECURE_ERASE	= 5,
- 	/* write the same sector many times */
- 	REQ_OP_WRITE_SAME	= 7,
-+	/* verify the sectors */
-+	REQ_OP_VERIFY		= 8,
- 	/* write the zero filled sector many times */
- 	REQ_OP_WRITE_ZEROES	= 9,
- 	/* Open a zone */
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 0dea268bd61b..99c41d90584b 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -334,6 +334,7 @@ struct queue_limits {
- 	unsigned int		max_hw_discard_sectors;
- 	unsigned int		max_write_same_sectors;
- 	unsigned int		max_write_zeroes_sectors;
-+	unsigned int		max_verify_sectors;
- 	unsigned int		max_zone_append_sectors;
- 	unsigned int		discard_granularity;
- 	unsigned int		discard_alignment;
-@@ -621,6 +622,7 @@ struct request_queue {
- #define QUEUE_FLAG_RQ_ALLOC_TIME 27	/* record rq->alloc_time_ns */
- #define QUEUE_FLAG_HCTX_ACTIVE	28	/* at least one blk-mq hctx is active */
- #define QUEUE_FLAG_NOWAIT       29	/* device supports NOWAIT */
-+#define QUEUE_FLAG_VERIFY	30	/* supports Verify */
- 
- #define QUEUE_FLAG_MQ_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
- 				 (1 << QUEUE_FLAG_SAME_COMP) |		\
-@@ -667,6 +669,7 @@ bool blk_queue_flag_test_and_set(unsigned int flag, struct request_queue *q);
- #define blk_queue_fua(q)	test_bit(QUEUE_FLAG_FUA, &(q)->queue_flags)
- #define blk_queue_registered(q)	test_bit(QUEUE_FLAG_REGISTERED, &(q)->queue_flags)
- #define blk_queue_nowait(q)	test_bit(QUEUE_FLAG_NOWAIT, &(q)->queue_flags)
-+#define blk_queue_verify(q)	test_bit(QUEUE_FLAG_VERIFY, &(q)->queue_flags)
- 
- extern void blk_set_pm_only(struct request_queue *q);
- extern void blk_clear_pm_only(struct request_queue *q);
-@@ -814,6 +817,9 @@ static inline bool rq_mergeable(struct request *rq)
- 	if (req_op(rq) == REQ_OP_WRITE_ZEROES)
- 		return false;
- 
-+	if (req_op(rq) == REQ_OP_VERIFY)
-+		return false;
-+
- 	if (req_op(rq) == REQ_OP_ZONE_APPEND)
- 		return false;
- 
-@@ -1072,6 +1078,9 @@ static inline unsigned int blk_queue_get_max_sectors(struct request_queue *q,
- 	if (unlikely(op == REQ_OP_WRITE_ZEROES))
- 		return q->limits.max_write_zeroes_sectors;
- 
-+	if (unlikely(op == REQ_OP_VERIFY))
-+		return q->limits.max_verify_sectors;
-+
- 	return q->limits.max_sectors;
- }
- 
-@@ -1154,6 +1163,8 @@ extern void blk_queue_max_discard_sectors(struct request_queue *q,
- 		unsigned int max_discard_sectors);
- extern void blk_queue_max_write_same_sectors(struct request_queue *q,
- 		unsigned int max_write_same_sectors);
-+extern void blk_queue_max_verify_sectors(struct request_queue *q,
-+		unsigned int max_verify_sectors);
- extern void blk_queue_max_write_zeroes_sectors(struct request_queue *q,
- 		unsigned int max_write_same_sectors);
- extern void blk_queue_logical_block_size(struct request_queue *, unsigned int);
-@@ -1348,6 +1359,16 @@ extern int __blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
- 		unsigned flags);
- extern int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
- 		sector_t nr_sects, gfp_t gfp_mask, unsigned flags);
-+extern int __blkdev_emulate_verify(struct block_device *bdev, sector_t sector,
-+		sector_t nr_sects, gfp_t gfp_mask, struct bio **biop,
-+		char *buf);
-+extern int blkdev_emulate_verify(struct block_device *bdev, sector_t sector,
-+		sector_t nr_sects, gfp_t gfp_mask);
-+extern int __blkdev_issue_verify(struct block_device *bdev,
-+		sector_t sector, sector_t nr_sects, gfp_t gfp_mask,
-+		struct bio **biop);
-+extern int blkdev_issue_verify(struct block_device *bdev, sector_t sector,
-+		sector_t nr_sects, gfp_t gfp_mask);
- 
- static inline int sb_issue_discard(struct super_block *sb, sector_t block,
- 		sector_t nr_blocks, gfp_t gfp_mask, unsigned long flags)
-@@ -1553,6 +1574,16 @@ static inline unsigned int bdev_write_same(struct block_device *bdev)
+@@ -1455,6 +1467,12 @@ static int __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti,
  	return 0;
  }
  
-+static inline unsigned int bdev_verify_sectors(struct block_device *bdev)
++static unsigned get_num_verify_bios(struct dm_target *ti)
 +{
-+	struct request_queue *q = bdev_get_queue(bdev);
-+
-+	if (q)
-+		return q->limits.max_verify_sectors;
-+
-+	return 0;
++	printk(KERN_INFO"%s %d\n", __func__, __LINE__);
++	return ti->num_verify_bios;
 +}
 +
- static inline unsigned int bdev_write_zeroes_sectors(struct block_device *bdev)
+ static int __send_changing_extent_only(struct clone_info *ci, struct dm_target *ti,
+ 				       unsigned num_bios)
  {
- 	struct request_queue *q = bdev_get_queue(bdev);
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index f44eb0a04afd..5eda16bd2c3d 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -184,6 +184,7 @@ struct fsxattr {
- #define BLKSECDISCARD _IO(0x12,125)
- #define BLKROTATIONAL _IO(0x12,126)
- #define BLKZEROOUT _IO(0x12,127)
-+#define BLKVERIFY _IO(0x12,128)
- /*
-  * A jump here: 130-131 are reserved for zoned block devices
-  * (see uapi/linux/blkzoned.h)
+@@ -1480,15 +1498,25 @@ static int __send_changing_extent_only(struct clone_info *ci, struct dm_target *
+ 	return 0;
+ }
+ 
++static int __send_verify(struct clone_info *ci, struct dm_target *ti)
++{
++	printk(KERN_INFO"%s %d\n", __func__, __LINE__);
++	return __send_changing_extent_only(ci, ti, get_num_verify_bios(ti));
++}
++
+ static bool is_abnormal_io(struct bio *bio)
+ {
+ 	bool r = false;
+ 
++	if (bio_op(bio) == REQ_OP_VERIFY)
++		printk(KERN_INFO"%s %d\n", __func__, __LINE__);
++
+ 	switch (bio_op(bio)) {
+ 	case REQ_OP_DISCARD:
+ 	case REQ_OP_SECURE_ERASE:
+ 	case REQ_OP_WRITE_SAME:
+ 	case REQ_OP_WRITE_ZEROES:
++	case REQ_OP_VERIFY:
+ 		r = true;
+ 		break;
+ 	}
+@@ -1515,6 +1543,9 @@ static bool __process_abnormal_io(struct clone_info *ci, struct dm_target *ti,
+ 	case REQ_OP_WRITE_ZEROES:
+ 		num_bios = ti->num_write_zeroes_bios;
+ 		break;
++	case REQ_OP_VERIFY:
++		num_bios = ti->num_verify_bios;
++		break;
+ 	default:
+ 		return false;
+ 	}
+diff --git a/drivers/md/md-linear.c b/drivers/md/md-linear.c
+index 63ed8329a98d..0d8355658f8f 100644
+--- a/drivers/md/md-linear.c
++++ b/drivers/md/md-linear.c
+@@ -65,6 +65,7 @@ static struct linear_conf *linear_conf(struct mddev *mddev, int raid_disks)
+ 	struct md_rdev *rdev;
+ 	int i, cnt;
+ 	bool discard_supported = false;
++	bool verify_supported = false;
+ 
+ 	conf = kzalloc(struct_size(conf, disks, raid_disks), GFP_KERNEL);
+ 	if (!conf)
+@@ -99,6 +100,8 @@ static struct linear_conf *linear_conf(struct mddev *mddev, int raid_disks)
+ 
+ 		if (blk_queue_discard(bdev_get_queue(rdev->bdev)))
+ 			discard_supported = true;
++		if (blk_queue_verify(bdev_get_queue(rdev->bdev)))
++			verify_supported = true;
+ 	}
+ 	if (cnt != raid_disks) {
+ 		pr_warn("md/linear:%s: not enough drives present. Aborting!\n",
+@@ -111,6 +114,12 @@ static struct linear_conf *linear_conf(struct mddev *mddev, int raid_disks)
+ 	else
+ 		blk_queue_flag_set(QUEUE_FLAG_DISCARD, mddev->queue);
+ 
++	if (!verify_supported)
++		blk_queue_flag_clear(QUEUE_FLAG_VERIFY, mddev->queue);
++	else
++		blk_queue_flag_set(QUEUE_FLAG_VERIFY, mddev->queue);
++
++
+ 	/*
+ 	 * Here we calculate the device offsets.
+ 	 */
+@@ -261,6 +270,7 @@ static bool linear_make_request(struct mddev *mddev, struct bio *bio)
+ 					      bio_sector);
+ 		mddev_check_writesame(mddev, bio);
+ 		mddev_check_write_zeroes(mddev, bio);
++		mddev_check_verify(mddev, bio);
+ 		submit_bio_noacct(bio);
+ 	}
+ 	return true;
+diff --git a/drivers/md/md-multipath.c b/drivers/md/md-multipath.c
+index 776bbe542db5..2856fc80a8a1 100644
+--- a/drivers/md/md-multipath.c
++++ b/drivers/md/md-multipath.c
+@@ -131,6 +131,7 @@ static bool multipath_make_request(struct mddev *mddev, struct bio * bio)
+ 	mp_bh->bio.bi_private = mp_bh;
+ 	mddev_check_writesame(mddev, &mp_bh->bio);
+ 	mddev_check_write_zeroes(mddev, &mp_bh->bio);
++	mddev_check_verify(mddev, &mp_bh->bio);
+ 	submit_bio_noacct(&mp_bh->bio);
+ 	return true;
+ }
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index bcbba1b5ec4a..f40b5a5bc862 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -802,6 +802,13 @@ static inline void mddev_check_write_zeroes(struct mddev *mddev, struct bio *bio
+ 		mddev->queue->limits.max_write_zeroes_sectors = 0;
+ }
+ 
++static inline void mddev_check_verify(struct mddev *mddev, struct bio *bio)
++{
++	if (bio_op(bio) == REQ_OP_VERIFY &&
++	    !bio->bi_bdev->bd_disk->queue->limits.max_verify_sectors)
++		mddev->queue->limits.max_verify_sectors = 0;
++}
++
+ struct mdu_array_info_s;
+ struct mdu_disk_info_s;
+ 
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index e1eefbec15d4..2ba1214bec2e 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -3756,6 +3756,7 @@ static int raid10_run(struct mddev *mddev)
+ 					      mddev->chunk_sectors);
+ 		blk_queue_max_write_same_sectors(mddev->queue, 0);
+ 		blk_queue_max_write_zeroes_sectors(mddev->queue, 0);
++		blk_queue_max_verify_sectors(mddev->queue, 0);
+ 		blk_queue_io_min(mddev->queue, mddev->chunk_sectors << 9);
+ 		raid10_set_io_opt(conf);
+ 	}
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index a348b2adf2a9..d723dfa2a3cb 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -7718,6 +7718,7 @@ static int raid5_run(struct mddev *mddev)
+ 
+ 		blk_queue_max_write_same_sectors(mddev->queue, 0);
+ 		blk_queue_max_write_zeroes_sectors(mddev->queue, 0);
++		blk_queue_max_verify_sectors(mddev->queue, 0);
+ 
+ 		rdev_for_each(rdev, mddev) {
+ 			disk_stack_limits(mddev->gendisk, rdev->bdev,
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 61a66fb8ebb3..761228e234d9 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -302,6 +302,12 @@ struct dm_target {
+ 	 */
+ 	unsigned num_write_zeroes_bios;
+ 
++	/*
++	 * The number of VERIFY bios that will be submitted to the target.
++	 * The bio number can be accessed with dm_bio_get_target_bio_nr.
++	 */
++	unsigned num_verify_bios;
++
+ 	/*
+ 	 * The minimum number of extra bytes allocated in each io for the
+ 	 * target to use.
 -- 
 2.22.1
 
