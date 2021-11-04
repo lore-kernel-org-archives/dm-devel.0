@@ -2,135 +2,137 @@ Return-Path: <SRS0=ptSP=PX=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9EF21C433F5
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 20:34:40 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D36EDC433EF
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 20:34:55 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 261F6611EE
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 20:34:40 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 261F6611EE
+	by mail.kernel.org (Postfix) with ESMTPS id 72D0D6124A
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 20:34:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 72D0D6124A
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-207-cyd_JQabOASDl-VJG1BesQ-1; Thu, 04 Nov 2021 16:34:37 -0400
-X-MC-Unique: cyd_JQabOASDl-VJG1BesQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-587-3IULKyUWNBiOD2FbRgu19w-1; Thu, 04 Nov 2021 16:34:51 -0400
+X-MC-Unique: 3IULKyUWNBiOD2FbRgu19w-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3F65D100C664;
-	Thu,  4 Nov 2021 20:34:33 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CFB4791270;
+	Thu,  4 Nov 2021 20:34:46 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1D66B5DD68;
-	Thu,  4 Nov 2021 20:34:33 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A82A7101E589;
+	Thu,  4 Nov 2021 20:34:46 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9BD141806D03;
-	Thu,  4 Nov 2021 20:34:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5868E1806D04;
+	Thu,  4 Nov 2021 20:34:46 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1A4KYUVX022148 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 4 Nov 2021 16:34:30 -0400
+	id 1A4KYjK5022164 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 4 Nov 2021 16:34:45 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 78D572026D65; Thu,  4 Nov 2021 20:34:30 +0000 (UTC)
+	id 4A8AC2166B25; Thu,  4 Nov 2021 20:34:45 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 725BC2026D64
-	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 20:34:25 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7096B1064FAD
-	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 20:34:25 +0000 (UTC)
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 43CE02166B26
+	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 20:34:38 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 817D6800B26
+	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 20:34:38 +0000 (UTC)
 Received: from de-smtp-delivery-102.mimecast.com
 	(de-smtp-delivery-102.mimecast.com [194.104.109.102]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-593-l_RFYCwFO9Geh9FfX72Vtw-1;
-	Thu, 04 Nov 2021 16:34:24 -0400
-X-MC-Unique: l_RFYCwFO9Geh9FfX72Vtw-1
-Received: from EUR02-AM5-obe.outbound.protection.outlook.com
-	(mail-am5eur02lp2051.outbound.protection.outlook.com [104.47.4.51])
+	relay.mimecast.com with ESMTP id us-mta-74-qKXFIaFqON6n_KFNPlIJ3A-1;
+	Thu, 04 Nov 2021 16:34:36 -0400
+X-MC-Unique: qKXFIaFqON6n_KFNPlIJ3A-1
+Received: from EUR01-VE1-obe.outbound.protection.outlook.com
+	(mail-ve1eur01lp2054.outbound.protection.outlook.com [104.47.1.54])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	de-mta-29-zzg-tNeYMP-f8Oh3KqtNKA-1; Thu, 04 Nov 2021 21:34:22 +0100
-X-MC-Unique: zzg-tNeYMP-f8Oh3KqtNKA-1
+	de-mta-7-vlFBJpfgP5mHX9Ob4aHE4Q-1; Thu, 04 Nov 2021 21:34:34 +0100
+X-MC-Unique: vlFBJpfgP5mHX9Ob4aHE4Q-1
 Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
 	by DB7PR04MB5228.eurprd04.prod.outlook.com (2603:10a6:10:1b::11) with
 	Microsoft SMTP Server (version=TLS1_2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4669.10;
-	Thu, 4 Nov 2021 20:34:20 +0000
+	Thu, 4 Nov 2021 20:34:33 +0000
 Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
 	([fe80::d0d9:a949:8409:bbc7]) by
 	DB8PR04MB6555.eurprd04.prod.outlook.com
 	([fe80::d0d9:a949:8409:bbc7%3]) with mapi id 15.20.4649.019;
-	Thu, 4 Nov 2021 20:34:20 +0000
+	Thu, 4 Nov 2021 20:34:33 +0000
 From: Martin Wilck <martin.wilck@suse.com>
 To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
 	"christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Thread-Topic: [PATCH 6/8] libmultipath: improve checks for set_str
-Thread-Index: AQHXuu1p2RKByrtZakKWNdsnipSlz6v0ANUA
-Date: Thu, 4 Nov 2021 20:34:20 +0000
-Message-ID: <5424c4163d1fee71af3f1126adc2a59d3069b09f.camel@suse.com>
+Thread-Topic: [PATCH 5/8] libmultipath: make set_int take a range for valid
+	values
+Thread-Index: AQHXuu1qiBbr6TjMp0yEmQooqYZ1J6v0AOWA
+Date: Thu, 4 Nov 2021 20:34:33 +0000
+Message-ID: <5a3077f3cf5fd24e25fffd1690ca7afceec7ec46.camel@suse.com>
 References: <1633550663-25571-1-git-send-email-bmarzins@redhat.com>
-	<1633550663-25571-7-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1633550663-25571-7-git-send-email-bmarzins@redhat.com>
+	<1633550663-25571-6-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1633550663-25571-6-git-send-email-bmarzins@redhat.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
 user-agent: Evolution 3.42.0
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: a1429210-09f4-46ca-38ef-08d99fd27b28
+x-ms-office365-filtering-correlation-id: 5a7b14ca-8a69-4b4b-6e6a-08d99fd282f8
 x-ms-traffictypediagnostic: DB7PR04MB5228:
-x-microsoft-antispam-prvs: <DB7PR04MB522894BB67C03F28C96F0BEAFC8D9@DB7PR04MB5228.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:3383
+x-microsoft-antispam-prvs: <DB7PR04MB52289FEF32EE7190BC0E2200FC8D9@DB7PR04MB5228.eurprd04.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:5797
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: g1WjVA61vNmye6lL8LAG6C9Jg+THsTIvK/kQtLzLzKF8KdWiEp41opG8EK4qdCb3kEnTRyRnDMEnVgdgDZ7f/8pEQKmOVI8hf6E5xO6cN8lIAmZRlSgrjFx+Cr+RKz/QOPn02fo9vKDxmK2QMbNLhHxYSlE78/5mmeeTFsrb5P818s1VYmJ26LWDNLLMpNxbDH/DYQ8hlm+yCZ0vw76TKwbD6BqGFn5esjCbT0cAeGkOJW5BhRXgI1LVTVsJ6aQHHEwPJSt2OAT7tivKTmQg9iUpel3PKc5EeWe5zBKphvBIj3qvAMi4c6FtsD8ngS75jzTpCSTsRc44xMQGSyHuHH8VzHzYVA5ACd2VC8r0YgJtuqvMvYukKLJkOUt+WDnn4jdU78ynlBWIDmawHVuzjCk0CMCRzrfN52EMflk7MVrtL+V77jpV0qdYhDujRpCB7528mFiyHPsBj3pCrCOSFAQuATCKykvGJBnQ8DL0aO1At/vx8nxLtKGsmV0U5vS83ZiWVk2oQlDdkkYyukKVdXmfDw6Rg+9wfT50wvkOznOrYVPx/P98VELOjK4YJ7yyTJARF4e+mpAw8CRSBX6tnMKzr50zaLhzG3o2q/DDtQfpdLO/g7Fbe5J2aBBNuNtuFD8KaHPdxCQvN7v1EqwUd6QSD6Gtx/ILZKUKt5lkpNh7EU/JFb/4sZ9/reMZL1gJEZOH60QwGDJXQ8GfhV/MbA==
+x-microsoft-antispam-message-info: zc7rpRdvK/Voug5o6Ep8Wc/r7mNLD+iHE2txtsrfjT6WId5cN/1nFABTwAYgjHBS2k9zEbY1bSiCqhMfDJ+3lr+PZ2xgAPHeuGjnsc7jo6pnKdTkgnzJT9+eLQEpydGlOi7GfpODxnuWB/aWMCfA3lu3gAMF7RRvm+eS0uOfHpAIWlnuS1FReeqFQkTDFklvxy21QXDGzHLP2pa3jwmNoZRU3fLoGA3MbV4g1Fz/Ul2SHRKjyvOMxWMM+78k9dMNcbX6VBlOfbmSFS76Y+SOjf/TQiWXXwgg2ZA62CKur4OzQsK6dW7CYvnbTv4hTtVacqlMGhDzT7zMpZj3sydL1iBKUDU5lJA8ODJiWQ3IaSj4VJNNZFxHgJHb0psGZDbxfuDngB6OI793PHhOcvr5Szjr+3oWdNlkejcYRTMstuV6TkTokU4osBydP62BWuSX4B7X0NXusSg6yiQgEQ1WZklM/WWEk7Lyfqni4q2PTVJWxpeALsY7YWqTOg/JeBsZ0SIdvAyQiY1mD8yyFE9CsS8RLsjshf6iJJ/KGpKwTxJGD9aAnJ9WfAd26azmypCA+81f4KdKa0vy5YV+3rmCD7B2/kBPUjsUKDcmEfHYzNkab3cwgDu3akLN+V31eGqm6N8ScK2Uv5+q/wned2+ANOwDgga3QxqXGdLLtAX0OTY956S7uiS3SeaV3PBm3ccQMYp6+mwN8x5BLvu1KWh6Ag==
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
 	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
 	PTR:; CAT:NONE;
 	SFS:(366004)(5660300002)(6506007)(6486002)(316002)(4326008)(83380400001)(508600001)(66556008)(66476007)(64756008)(66946007)(91956017)(76116006)(6512007)(66446008)(86362001)(8676002)(38100700002)(36756003)(8936002)(122000001)(26005)(2616005)(38070700005)(71200400001)(2906002)(186003)(44832011)(110136005);
 	DIR:OUT; SFP:1101
 x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?ZuvDnAr2/y9rXLdgXA/3EUrJqxxuDEssHwO0rQXsp2JO5tooW3nKhTDCt?=
-	=?iso-8859-15?Q?5ZXhLdyO8YVcKDXHYpZ54TKfhnpsk136LTGq+pi2s9wD9Xv2+n0l7Roix?=
-	=?iso-8859-15?Q?Bp+bvivEaXWVr/xiX7NjxwQI6Nrf69E/oZm6ot4UU+VCl4KnK6RTcfcNC?=
-	=?iso-8859-15?Q?Ep6Oyxsy1MonOBQRLy1yd7Xz60eVDwlEFT9z8dH/vH5nJm7qcuEgtq+sw?=
-	=?iso-8859-15?Q?/kYCsFnhznV2cVBmWLzJqi6fW02Xn8ec3mv5Ter16JrbdjaXGiUvChTmd?=
-	=?iso-8859-15?Q?3Ye6GktCsTBklcI9nIkFZIRBL5uJ3Bh/Ub7SHybDX86sbtU/8F92SC1FC?=
-	=?iso-8859-15?Q?occnZUJXP0wYuqFFrbR4fxSqOhxXWabCF5H1SrCsG70k7fXu0/oas6ktT?=
-	=?iso-8859-15?Q?i2f2ZoIHnv2MJ2LQm/ih4PQikXQ+YlOb+UBi0xeQ7OFgLt5ryZ+gSMrq0?=
-	=?iso-8859-15?Q?vsP0HWYH0BZgMVtIPJSEp5lox6bYsWK4zA+hE1RXfRPu0QS8H1Bvhrlxs?=
-	=?iso-8859-15?Q?ORgotm24Vg5vjJuVts8kVlC7AJ8sIPfnPyJIaQUL4ZZwHJXGdEWImaXHz?=
-	=?iso-8859-15?Q?qLPindEov/8VbGWkCv+2YGjPKgJYOmP0R6TVKVss1RstsOGIEaVrsxMkH?=
-	=?iso-8859-15?Q?DDTDiVqtjcT1RoDsm+qWdMaaZqo/GgPKrQpO+t8PvTlcCblI7T2eyOjWl?=
-	=?iso-8859-15?Q?FnSi8GdlsVpzWI+iD40RezFsu4fro7+on9rjOZRUsqnYSMOMaJfjvq5u3?=
-	=?iso-8859-15?Q?90H9TEpPydOhJyrWKhH5uAWCnzYlWOwhjS9hhq6qb5/begdfOongInvR6?=
-	=?iso-8859-15?Q?OnEGghwG3VfpOoQgAf23Bzr/D3ZOvqAcZKSham9zU2sZ5VY8zm5jqaiK2?=
-	=?iso-8859-15?Q?P14JkW+kBqQkaVs5XFN4XsHgYO+1MB4ffW0j1sMx3CUeoBR8BbJKlSdav?=
-	=?iso-8859-15?Q?c8RgAyhhZS97hZ/XD0Va9FgNbH6iWR5m8aMmJMx9bzM42d32bt1/G1je1?=
-	=?iso-8859-15?Q?H3tjLErrQgUzOOqhvkhMljpufoyVyJUE7YWsHS7Z98ruXa//0/AZ8JnJy?=
-	=?iso-8859-15?Q?wWSzvCmKeXSeSnglXD7R4KZRkqbUadIhcAZ7rPUR+KFKJj2A2cvDQzKwF?=
-	=?iso-8859-15?Q?OMFahJfHL36HC4PcYJF02pu4GUv7Qsbid/5A4FJeHWKLahnzVD3H9ctn1?=
-	=?iso-8859-15?Q?k8SwP5Mx2NwhRNCTHVQKLezOycdPm9IFxY/FAxTQrO7NfW5hMrBMvzwyj?=
-	=?iso-8859-15?Q?KNuhgjwwNjATd2dEqyhDm7/QEEzmgbHyCA/abx+jiELAR/4KGzlPt8x/l?=
-	=?iso-8859-15?Q?rICTCgp5QG8aZgAakUyY8kXLktGBM3KVnbkF7jHNALp8lT7dIvdk0XplA?=
-	=?iso-8859-15?Q?qG7OQAD2ufzoK7k6+5KuStsNLU6lKKRU5YgWqmu1ijtWldgsM1+veBlv0?=
-	=?iso-8859-15?Q?4CH7HoqdI9IRs+UkGwluyomTn8POfOnOEOBk6OD6H65rmJVoNomQXKmnt?=
-	=?iso-8859-15?Q?Ejj2KmY52qI4t0/Gk8tS4oPwlDHyl9mkdiSvVkEgXR5NB+yoIyN4AWFHh?=
-	=?iso-8859-15?Q?DZKSifAZ9uGIpL57I/85r/gZ3TRQ7EvSbgWrRKDUdj5DoxLnmqeaMBruG?=
-	=?iso-8859-15?Q?6uIaSiLWCfq4knSIKWAFmZ7u3XTd/3mjtZtWHj58VVWaqR5sicCezlJeB?=
-	=?iso-8859-15?Q?KNjuWfUOCghZUQ0Z55bMhCb4ez1UGoBALFd1KeoyAjupC68=3D?=
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?BSEUbQBOIUzsgSt0qhjTLilvtVwODB6GY1oyhtCMB9Tc2724pA2Am++58?=
+	=?iso-8859-15?Q?rsqOWhLv1peeEpjG5PcfkR6JLP7+Zn+3Ae7gfbXob7T+hu5qR1KBm+tIa?=
+	=?iso-8859-15?Q?xltKUYLtgdz2ifCd6HYbhQi4Q3wEQvBbuNpoNWrt/v95nZQHaPpuVqWiH?=
+	=?iso-8859-15?Q?kGgpB9r9lAt29/Gazg4ENPnLiTvVb8tm4uFObTSfBZh4lChzhFQ9QWBEP?=
+	=?iso-8859-15?Q?zbYNG1hY6yBBhHM2ImtwAxjVGgvywVpoR19Su4x7o/qEBp6L6mPRtMZP3?=
+	=?iso-8859-15?Q?sDZpZkacYNXFsUGh/QYDl5ZIPKuuOVqRYD0SKqYrm8VV6s2q/1taL3tz2?=
+	=?iso-8859-15?Q?dMcjs96YRwHoirZT4YWXsUhOCzCDKLQtfNkmN4K16ThMC6KBuIkgecO+d?=
+	=?iso-8859-15?Q?xKfW+ekCgxzWnRNYGuvU3az3N8b7zd4lghgoBhGILjSjpJntWeJouNLZz?=
+	=?iso-8859-15?Q?+EGdAh1Qnf3YYHV6ejZNUooVnAsH7I/V2G1HFyQw58/Wd/ldJtbehtPAW?=
+	=?iso-8859-15?Q?mkPa9Fa/PcxI2Xr4za+7p3uI4m3Did86jZm5DHgZEM8c0RcxRocbtQLGD?=
+	=?iso-8859-15?Q?qTV4Y7EBeFiV8LNZUGjUSd6vKfKZh8nD+48E/uoPj1KCkEMbNpK5hKNeN?=
+	=?iso-8859-15?Q?IloxAC5C9XdDpttmdyYCPhrtN5lc8+SB9Y9ozuBLM7dXMTq0/q1U5YnPk?=
+	=?iso-8859-15?Q?+ma9FwpjZFibmef77c7Iej4629R5VGuN9QrLyFOPX77YlTtZPoXzT5/mw?=
+	=?iso-8859-15?Q?UPV3b4M8bTaC82kGo9TBXcLQjVLnUYBKzgqJ1a+czLZCacPJAB42AweEj?=
+	=?iso-8859-15?Q?U0Lh9eC9atPTtWfydJ2761/mcKI9dAJgm+dkcX0nFd+MDE1dXOFxDq8wA?=
+	=?iso-8859-15?Q?cu26oxHeebcRqyvoF2dcoH5eH8YXs4LPrKM4hDsi98GLLvhiA2369kmlb?=
+	=?iso-8859-15?Q?AcJ8K1ZhoVMYq48HufpLRoFMFxGW1CrKOcEGmqaSmFncXe9b2gTB1dYu/?=
+	=?iso-8859-15?Q?x4XJj8qaGU894CK5V9SPK5WuYmf0vEy3DZebznPBFDXglus+QjmS9oRST?=
+	=?iso-8859-15?Q?4iSPySvLJls7SnNavSbVjuiLBUIFz+pqQkPuWZDkgjGS2mnOVPNv93O9r?=
+	=?iso-8859-15?Q?RqEbw7TPmPPLnShe0Z72MJGxHI5Q921tOZ4PFzufIEG87sZru6HWuEevD?=
+	=?iso-8859-15?Q?h8xrUhJwsyFCWB5dNYI70ZtDBJ/soOz09CVawrp1P3WuVJ6b18YE4IFGp?=
+	=?iso-8859-15?Q?M63lhqcFODPu2wnvuC7mljRRwhp4OP/DnIJ1ltKhfjHsCDv0xULoN/V1t?=
+	=?iso-8859-15?Q?hgdYFSidHWBAYAObTNWbf+BQmsxxyxi+jNs0/xPqRcQhRxQy1AMuMEBiA?=
+	=?iso-8859-15?Q?GD2Q6Sp+diGEpcVLmlXoeW0T0w5GjpLHiOP944b2496GXW60Nvy1M9gtT?=
+	=?iso-8859-15?Q?vBs+Tj07QLJMGauhi/S3KSoBh3IbSEzQ3eJ5QZblzNwWxybj/gTTkPAp0?=
+	=?iso-8859-15?Q?b8gId29+khtJT5SOTWpGZKcu4A9GOImqkGG6rzyznhepnmkpOcCzfvnLA?=
+	=?iso-8859-15?Q?RCShEJ1W7XudD0tzj8so5nWBYR48iw/SGwBf3OqklDsQ1pUch0PvMTcjY?=
+	=?iso-8859-15?Q?kBtYzb95wDWbHJB9eJzGq9QxuT1RP3XctZ0hdfRyUrqOQqvEuokhUXsmj?=
+	=?iso-8859-15?Q?AfoKCjRm6bCXKinG6OPbcPE4GqpTxB14dWvCNzjgFdpiZfQ=3D?=
 MIME-Version: 1.0
 X-OriginatorOrg: suse.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: a1429210-09f4-46ca-38ef-08d99fd27b28
-X-MS-Exchange-CrossTenant-originalarrivaltime: 04 Nov 2021 20:34:20.6788 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 5a7b14ca-8a69-4b4b-6e6a-08d99fd282f8
+X-MS-Exchange-CrossTenant-originalarrivaltime: 04 Nov 2021 20:34:33.8114 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: Wt1bXsktqgchZCyfhxctqfyTbIAQrDc3iquPQ47iGSu2AHgdXujnMm+7bknJDFn8YsNG+4EWtdp0PZiQFHSviA==
+X-MS-Exchange-CrossTenant-userprincipalname: +X+vjPu8WUo0ZTHEncS8JJFOjg+MMK5VvNWO8o+6hvScAilaorh+7+JTEFSBeKeZJl6oCLcwR3CDAzGG8gso9A==
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB7PR04MB5228
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -140,12 +142,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1A4KYUVX022148
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1A4KYjK5022164
 X-loop: dm-devel@redhat.com
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Subject: Re: [dm-devel] [PATCH 6/8] libmultipath: improve checks for set_str
+Subject: Re: [dm-devel] [PATCH 5/8] libmultipath: make set_int take a range
+ for valid values
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -159,233 +162,181 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <6CF204625672814294B96C200632F07C@eurprd04.prod.outlook.com>
+Content-ID: <615F82FF4C8C5C499C2BEFC551027493@eurprd04.prod.outlook.com>
 Content-Type: text/plain; charset="iso-8859-15"
 Content-Transfer-Encoding: quoted-printable
 
 On Wed, 2021-10-06 at 15:04 -0500, Benjamin Marzinski wrote:
-> multipath always requires absolute pathnames, so make sure all file
-> and
-> directory names start with a slash.=A0 Also check that the directories
-> exist.=A0 Finally, some strings, like the alias, will be used in paths.
-> These must not contain the slash character '/', since it is a
-> forbidden
-> character in file/directory names. This patch adds seperate handlers
-> for
-> these three cases. If a config line is invalid, these handlers retain
-> the existing config string, if any.
+> If a value outside of the valid range is passed to set_int, it caps
+> the
+> value at appropriate limit, and issues a warning.
 >=20
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Mostly OK, see remarks below. I'm a bit wary that when we start this,
-we might need to do other checks as well. For example, as multipathd is
-running as root, we may want to check that the paths to files it writes
-to (bindings_file etc.) don't contain symlinks and have proper
-permissions... But that'd be another patch.
+One nitpick below.
 
-Regards,
+It's a lot of code changes for just two cases where we have nontrivial
+values for min and max. I guess for uint the count of nontrivial cases
+was zero?
+
+Yet it's an improvement, so I'm going to ack when the nit is fixed.
+
 Martin
 
 
+
 > ---
-> =A0libmultipath/dict.c | 88 +++++++++++++++++++++++++++++++++++++++----
+> =A0libmultipath/dict.c | 121 +++++++++++++++++++++++++++---------------
 > --
-> =A01 file changed, 78 insertions(+), 10 deletions(-)
+> =A01 file changed, 75 insertions(+), 46 deletions(-)
 >=20
 > diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-> index 1758bd26..91333068 100644
+> index eb2c44c0..1758bd26 100644
 > --- a/libmultipath/dict.c
 > +++ b/libmultipath/dict.c
-> @@ -5,6 +5,8 @@
-> =A0 * Copyright (c) 2005 Kiyoshi Ueda, NEC
-> =A0 */
-> =A0#include <sys/types.h>
-> +#include <sys/stat.h>
-> +#include <unistd.h>
-> =A0#include <pwd.h>
-> =A0#include <string.h>
-> =A0#include "checkers.h"
-> @@ -111,6 +113,72 @@ set_str(vector strvec, void *ptr, const char
-> *file, int line_nr)
-> =A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> =A0}
+> ...
+> @@ -298,7 +347,7 @@ declare_def_snprint(checkint, print_int)
+> =A0declare_def_handler(max_checkint, set_uint)
+> =A0declare_def_snprint(max_checkint, print_int)
 > =A0
-> +static int
-> +set_dir(vector strvec, void *ptr, const char *file, int line_nr)
-> +{
-> +=A0=A0=A0=A0=A0=A0=A0char **str_ptr =3D (char **)ptr;
-> +=A0=A0=A0=A0=A0=A0=A0char *old_str =3D *str_ptr;
-> +=A0=A0=A0=A0=A0=A0=A0struct stat sb;
-> +
-> +=A0=A0=A0=A0=A0=A0=A0*str_ptr =3D set_value(strvec);
-> +=A0=A0=A0=A0=A0=A0=A0if (!*str_ptr) {
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0free(old_str);
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
-> +=A0=A0=A0=A0=A0=A0=A0}
-> +=A0=A0=A0=A0=A0=A0=A0if ((*str_ptr)[0] !=3D '/'){
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, %s =
-is not an absolute
-> directory path. Ignoring", file, line_nr, *str_ptr);
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*str_ptr =3D old_str;
-> +=A0=A0=A0=A0=A0=A0=A0} else {
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (stat(*str_ptr, &sb) =3D=
-=3D 0 && S_ISDIR(sb.st_mode))
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0fre=
-e(old_str);
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0else {
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0con=
-dlog(1, "%s line %d, %s is not an existing
-> directory. Ignoring", file, line_nr, *str_ptr);
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*st=
-r_ptr =3D old_str;
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> +=A0=A0=A0=A0=A0=A0=A0}
-> +=A0=A0=A0=A0=A0=A0=A0return 0;
-> +}
-> +
-> +static int
-> +set_path(vector strvec, void *ptr, const char *file, int line_nr)
-> +{
-> +=A0=A0=A0=A0=A0=A0=A0char **str_ptr =3D (char **)ptr;
-> +=A0=A0=A0=A0=A0=A0=A0char *old_str =3D *str_ptr;
-> +
-> +=A0=A0=A0=A0=A0=A0=A0*str_ptr =3D set_value(strvec);
-> +=A0=A0=A0=A0=A0=A0=A0if (!*str_ptr) {
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0free(old_str);
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
-> +=A0=A0=A0=A0=A0=A0=A0}
-> +=A0=A0=A0=A0=A0=A0=A0if ((*str_ptr)[0] !=3D '/'){
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, %s =
-is not an absolute path.
-> Ignoring",
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0fil=
-e, line_nr, *str_ptr);
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*str_ptr =3D old_str;
-> +=A0=A0=A0=A0=A0=A0=A0} else
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0free(old_str);
-> +=A0=A0=A0=A0=A0=A0=A0return 0;
-> +}
+> -declare_def_handler(verbosity, set_int)
+> +declare_def_range_handler(verbosity, 0, 4)
 
-Once you go down this route, you might as well test that the dirname of
-the path is an existing directory.
+You should use MAX_VERBOSITY here.
 
 
-
-> +
-> +static int
-> +set_str_noslash(vector strvec, void *ptr, const char *file, int
-> line_nr)
-> +{
-> +=A0=A0=A0=A0=A0=A0=A0char **str_ptr =3D (char **)ptr;
-> +=A0=A0=A0=A0=A0=A0=A0char *old_str =3D *str_ptr;
-> +
-> +=A0=A0=A0=A0=A0=A0=A0*str_ptr =3D set_value(strvec);
-> +=A0=A0=A0=A0=A0=A0=A0if (!*str_ptr) {
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0free(old_str);
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
-> +=A0=A0=A0=A0=A0=A0=A0}
-> +=A0=A0=A0=A0=A0=A0=A0if (strchr(*str_ptr, '/')) {
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, %s =
-cannot contain a slash.
-> Ignoring",
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0fil=
-e, line_nr, *str_ptr);
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*str_ptr =3D old_str;
-> +=A0=A0=A0=A0=A0=A0=A0} else
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0free(old_str);
-> +=A0=A0=A0=A0=A0=A0=A0return 0;
-> +}
-> +
-> =A0static int
-> =A0set_yes_no(vector strvec, void *ptr, const char *file, int line_nr)
-> =A0{
-> @@ -353,13 +421,13 @@ declare_def_snprint(verbosity, print_int)
+> =A0declare_def_snprint(verbosity, print_int)
+> =A0
 > =A0declare_def_handler(reassign_maps, set_yes_no)
-> =A0declare_def_snprint(reassign_maps, print_yes_no)
+> @@ -473,22 +522,22 @@ declare_ovr_snprint(checker_name, print_str)
+> =A0declare_hw_handler(checker_name, set_str)
+> =A0declare_hw_snprint(checker_name, print_str)
 > =A0
-> -declare_def_handler(multipath_dir, set_str)
-> +declare_def_handler(multipath_dir, set_dir)
-> =A0declare_def_snprint(multipath_dir, print_str)
+> -declare_def_handler(minio, set_int)
+> +declare_def_range_handler(minio, 0, INT_MAX)
+> =A0declare_def_snprint_defint(minio, print_int, DEFAULT_MINIO)
+> -declare_ovr_handler(minio, set_int)
+> +declare_ovr_range_handler(minio, 0, INT_MAX)
+> =A0declare_ovr_snprint(minio, print_nonzero)
+> -declare_hw_handler(minio, set_int)
+> +declare_hw_range_handler(minio, 0, INT_MAX)
+> =A0declare_hw_snprint(minio, print_nonzero)
+> -declare_mp_handler(minio, set_int)
+> +declare_mp_range_handler(minio, 0, INT_MAX)
+> =A0declare_mp_snprint(minio, print_nonzero)
 > =A0
-> =A0static int def_partition_delim_handler(struct config *conf, vector
-> strvec,
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 const char *file, int line_nr)
-> =A0{
-> -=A0=A0=A0=A0=A0=A0=A0int rc =3D set_str(strvec, &conf->partition_delim, =
-file,
-> line_nr);
-> +=A0=A0=A0=A0=A0=A0=A0int rc =3D set_str_noslash(strvec, &conf->partition=
-_delim,
-> file, line_nr);
+> -declare_def_handler(minio_rq, set_int)
+> +declare_def_range_handler(minio_rq, 0, INT_MAX)
+> =A0declare_def_snprint_defint(minio_rq, print_int, DEFAULT_MINIO_RQ)
+> -declare_ovr_handler(minio_rq, set_int)
+> +declare_ovr_range_handler(minio_rq, 0, INT_MAX)
+> =A0declare_ovr_snprint(minio_rq, print_nonzero)
+> -declare_hw_handler(minio_rq, set_int)
+> +declare_hw_range_handler(minio_rq, 0, INT_MAX)
+> =A0declare_hw_snprint(minio_rq, print_nonzero)
+> -declare_mp_handler(minio_rq, set_int)
+> +declare_mp_range_handler(minio_rq, 0, INT_MAX)
+> =A0declare_mp_snprint(minio_rq, print_nonzero)
 > =A0
-> =A0=A0=A0=A0=A0=A0=A0=A0if (rc !=3D 0)
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return rc;
-> @@ -490,11 +558,11 @@ declare_hw_snprint(prio_name, print_str)
-> =A0declare_mp_handler(prio_name, set_str)
-> =A0declare_mp_snprint(prio_name, print_str)
-> =A0
-> -declare_def_handler(alias_prefix, set_str)
-> +declare_def_handler(alias_prefix, set_str_noslash)
-> =A0declare_def_snprint_defstr(alias_prefix, print_str,
-> DEFAULT_ALIAS_PREFIX)
-> -declare_ovr_handler(alias_prefix, set_str)
-> +declare_ovr_handler(alias_prefix, set_str_noslash)
-> =A0declare_ovr_snprint(alias_prefix, print_str)
-> -declare_hw_handler(alias_prefix, set_str)
-> +declare_hw_handler(alias_prefix, set_str_noslash)
-> =A0declare_hw_snprint(alias_prefix, print_str)
-> =A0
-> =A0declare_def_handler(prio_args, set_str)
-> @@ -586,13 +654,13 @@ declare_hw_snprint(user_friendly_names,
-> print_yes_no_undef)
-> =A0declare_mp_handler(user_friendly_names, set_yes_no_undef)
-> =A0declare_mp_snprint(user_friendly_names, print_yes_no_undef)
-> =A0
-> -declare_def_handler(bindings_file, set_str)
-> +declare_def_handler(bindings_file, set_path)
-> =A0declare_def_snprint(bindings_file, print_str)
-> =A0
-> -declare_def_handler(wwids_file, set_str)
-> +declare_def_handler(wwids_file, set_path)
-> =A0declare_def_snprint(wwids_file, print_str)
-> =A0
-> -declare_def_handler(prkeys_file, set_str)
-> +declare_def_handler(prkeys_file, set_path)
-> =A0declare_def_snprint(prkeys_file, print_str)
-> =A0
-> =A0declare_def_handler(retain_hwhandler, set_yes_no_undef)
-> @@ -692,7 +760,7 @@ def_config_dir_handler(struct config *conf,
-> vector strvec, const char *file,
-> =A0=A0=A0=A0=A0=A0=A0=A0/* this is only valid in the main config file */
-> =A0=A0=A0=A0=A0=A0=A0=A0if (conf->processed_main_config)
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> -=A0=A0=A0=A0=A0=A0=A0return set_str(strvec, &conf->config_dir, file, lin=
-e_nr);
-> +=A0=A0=A0=A0=A0=A0=A0return set_path(strvec, &conf->config_dir, file, li=
-ne_nr);
+> =A0declare_def_handler(queue_without_daemon, set_yes_no)
+> @@ -512,7 +561,7 @@ snprint_def_queue_without_daemon(struct config
+> *conf, struct strbuf *buff,
+> =A0=A0=A0=A0=A0=A0=A0=A0return append_strbuf_quoted(buff, qwd);
 > =A0}
-
-Why not set_dir() here?
-
-> =A0declare_def_snprint(config_dir, print_str)
 > =A0
-> @@ -1732,7 +1800,7 @@ multipath_handler(struct config *conf, vector
-> strvec, const char *file,
-> =A0declare_mp_handler(wwid, set_str)
-> =A0declare_mp_snprint(wwid, print_str)
+> -declare_def_handler(checker_timeout, set_int)
+> +declare_def_range_handler(checker_timeout, 0, INT_MAX)
+> =A0declare_def_snprint(checker_timeout, print_nonzero)
 > =A0
-> -declare_mp_handler(alias, set_str)
-> +declare_mp_handler(alias, set_str_noslash)
-> =A0declare_mp_snprint(alias, print_str)
+> =A0declare_def_handler(allow_usb_devices, set_yes_no)
+> @@ -583,13 +632,13 @@ declare_hw_snprint(deferred_remove,
+> print_yes_no_undef)
+> =A0declare_mp_handler(deferred_remove, set_yes_no_undef)
+> =A0declare_mp_snprint(deferred_remove, print_yes_no_undef)
 > =A0
-> =A0/*
+> -declare_def_handler(retrigger_tries, set_int)
+> +declare_def_range_handler(retrigger_tries, 0, INT_MAX)
+> =A0declare_def_snprint(retrigger_tries, print_int)
+> =A0
+> -declare_def_handler(retrigger_delay, set_int)
+> +declare_def_range_handler(retrigger_delay, 0, INT_MAX)
+> =A0declare_def_snprint(retrigger_delay, print_int)
+> =A0
+> -declare_def_handler(uev_wait_timeout, set_int)
+> +declare_def_range_handler(uev_wait_timeout, 0, INT_MAX)
+> =A0declare_def_snprint(uev_wait_timeout, print_int)
+> =A0
+> =A0declare_def_handler(strict_timing, set_yes_no)
+> @@ -616,19 +665,19 @@ static int
+> snprint_def_disable_changed_wwids(struct config *conf,
+> =A0=A0=A0=A0=A0=A0=A0=A0return print_ignored(buff);
+> =A0}
+> =A0
+> -declare_def_handler(remove_retries, set_int)
+> +declare_def_range_handler(remove_retries, 0, INT_MAX)
+> =A0declare_def_snprint(remove_retries, print_int)
+> =A0
+> -declare_def_handler(max_sectors_kb, set_int)
+> +declare_def_range_handler(max_sectors_kb, 0, INT_MAX)
+> =A0declare_def_snprint(max_sectors_kb, print_nonzero)
+> -declare_ovr_handler(max_sectors_kb, set_int)
+> +declare_ovr_range_handler(max_sectors_kb, 0, INT_MAX)
+> =A0declare_ovr_snprint(max_sectors_kb, print_nonzero)
+> -declare_hw_handler(max_sectors_kb, set_int)
+> +declare_hw_range_handler(max_sectors_kb, 0, INT_MAX)
+> =A0declare_hw_snprint(max_sectors_kb, print_nonzero)
+> -declare_mp_handler(max_sectors_kb, set_int)
+> +declare_mp_range_handler(max_sectors_kb, 0, INT_MAX)
+> =A0declare_mp_snprint(max_sectors_kb, print_nonzero)
+> =A0
+> -declare_def_handler(find_multipaths_timeout, set_int)
+> +declare_def_range_handler(find_multipaths_timeout, INT_MIN, INT_MAX)
+> =A0declare_def_snprint_defint(find_multipaths_timeout, print_int,
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0 DEFAULT_FIND_MULTIPATHS_TIMEOUT)
+> =A0
+> @@ -1385,27 +1434,7 @@ declare_ovr_snprint(recheck_wwid,
+> print_yes_no_undef)
+> =A0declare_hw_handler(recheck_wwid, set_yes_no_undef)
+> =A0declare_hw_snprint(recheck_wwid, print_yes_no_undef)
+> =A0
+> -
+> -static int
+> -def_uxsock_timeout_handler(struct config *conf, vector strvec, const
+> char *file,
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0 int line_nr)
+> -{
+> -=A0=A0=A0=A0=A0=A0=A0unsigned int uxsock_timeout;
+> -=A0=A0=A0=A0=A0=A0=A0char *buff;
+> -
+> -=A0=A0=A0=A0=A0=A0=A0buff =3D set_value(strvec);
+> -=A0=A0=A0=A0=A0=A0=A0if (!buff)
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
+> -
+> -=A0=A0=A0=A0=A0=A0=A0if (sscanf(buff, "%u", &uxsock_timeout) =3D=3D 1 &&
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 uxsock_timeout > DEFAULT_REPLY_TIMEOUT)
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0conf->uxsock_timeout =3D ux=
+sock_timeout;
+> -=A0=A0=A0=A0=A0=A0=A0else
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0conf->uxsock_timeout =3D DE=
+FAULT_REPLY_TIMEOUT;
+> -
+> -=A0=A0=A0=A0=A0=A0=A0free(buff);
+> -=A0=A0=A0=A0=A0=A0=A0return 0;
+> -}
+> +declare_def_range_handler(uxsock_timeout, DEFAULT_REPLY_TIMEOUT,
+> INT_MAX)
+> =A0
+> =A0static int
+> =A0hw_vpd_vendor_handler(struct config *conf, vector strvec, const char
+> *file,
 
 
 --
