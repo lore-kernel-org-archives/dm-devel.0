@@ -2,136 +2,135 @@ Return-Path: <SRS0=ptSP=PX=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B2FBFC433F5
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 22:11:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EF115C433EF
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 22:13:11 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 3BDAD61220
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 22:11:00 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 3BDAD61220
+	by mail.kernel.org (Postfix) with ESMTPS id 7D1B461207
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 22:13:11 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 7D1B461207
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-195-FL8kLHt-NNiJYw5MyBkTVw-1; Thu, 04 Nov 2021 18:10:55 -0400
-X-MC-Unique: FL8kLHt-NNiJYw5MyBkTVw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-37-DIniidaLMu6A8RI8R1QBOA-1; Thu, 04 Nov 2021 18:13:05 -0400
+X-MC-Unique: DIniidaLMu6A8RI8R1QBOA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C3F6A8042CF;
-	Thu,  4 Nov 2021 22:10:50 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 295D360BF1;
-	Thu,  4 Nov 2021 22:10:50 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 74FF2101F7A8;
+	Thu,  4 Nov 2021 22:12:59 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2B00E76608;
+	Thu,  4 Nov 2021 22:12:59 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1C41E4A703;
-	Thu,  4 Nov 2021 22:10:49 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id F017B1806D03;
+	Thu,  4 Nov 2021 22:12:47 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1A4MAj9X032093 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 4 Nov 2021 18:10:46 -0400
+	id 1A4MCkU0032199 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 4 Nov 2021 18:12:46 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id D0F66400F3C6; Thu,  4 Nov 2021 22:10:45 +0000 (UTC)
+	id 05EA0400F3EC; Thu,  4 Nov 2021 22:12:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CBB1B401A993
-	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 22:10:45 +0000 (UTC)
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 012CA400F3C6
+	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 22:12:45 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
 	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ACE0A18A01A0
-	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 22:10:45 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D62598007B1
+	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 22:12:45 +0000 (UTC)
 Received: from de-smtp-delivery-102.mimecast.com
-	(de-smtp-delivery-102.mimecast.com [194.104.109.102]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-329-rsjdQW9VNdSRqVl6hp1vxA-1;
-	Thu, 04 Nov 2021 18:10:44 -0400
-X-MC-Unique: rsjdQW9VNdSRqVl6hp1vxA-1
-Received: from EUR04-VI1-obe.outbound.protection.outlook.com
-	(mail-vi1eur04lp2051.outbound.protection.outlook.com [104.47.14.51])
+	(de-smtp-delivery-102.mimecast.com [194.104.111.102]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-557-JnKeXbn7OwayQPmaF1Dwgg-1;
+	Thu, 04 Nov 2021 18:12:44 -0400
+X-MC-Unique: JnKeXbn7OwayQPmaF1Dwgg-1
+Received: from EUR01-VE1-obe.outbound.protection.outlook.com
+	(mail-ve1eur01lp2058.outbound.protection.outlook.com [104.47.1.58])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	de-mta-31-4riXJ7sHOkyBe0VOz-JamA-1; Thu, 04 Nov 2021 23:10:20 +0100
-X-MC-Unique: 4riXJ7sHOkyBe0VOz-JamA-1
+	de-mta-40-fbef-R7kP-OhcZRGGTZMQg-1; Thu, 04 Nov 2021 23:12:42 +0100
+X-MC-Unique: fbef-R7kP-OhcZRGGTZMQg-1
 Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
 	by DB7PR04MB4476.eurprd04.prod.outlook.com (2603:10a6:5:36::25) with
 	Microsoft SMTP Server (version=TLS1_2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4649.15;
-	Thu, 4 Nov 2021 22:10:18 +0000
+	Thu, 4 Nov 2021 22:12:41 +0000
 Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
 	([fe80::d0d9:a949:8409:bbc7]) by
 	DB8PR04MB6555.eurprd04.prod.outlook.com
 	([fe80::d0d9:a949:8409:bbc7%3]) with mapi id 15.20.4649.019;
-	Thu, 4 Nov 2021 22:10:18 +0000
+	Thu, 4 Nov 2021 22:12:41 +0000
 From: Martin Wilck <martin.wilck@suse.com>
 To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
 	"christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Thread-Topic: [PATCH 5/7] multipathd: fully initialize paths added by
-	update_pathvec_from_dm
-Thread-Index: AQHXxebeV4GFGv0wyUqQuLf4uivcTKv0BbIA
-Date: Thu, 4 Nov 2021 22:10:18 +0000
-Message-ID: <2a319ae1e5eba66db17ab6372c95ac81f75a92e2.camel@suse.com>
+Thread-Topic: [PATCH 1/7] multipathd: remove missing paths on startup
+Thread-Index: AQHXxebbcpnEudogYk2u53XTfPmbfav0BlwA
+Date: Thu, 4 Nov 2021 22:12:40 +0000
+Message-ID: <b74a1ce64ba7dbd40b976905389ce14262406393.camel@suse.com>
 References: <1634757322-6015-1-git-send-email-bmarzins@redhat.com>
-	<1634757322-6015-6-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1634757322-6015-6-git-send-email-bmarzins@redhat.com>
+	<1634757322-6015-2-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1634757322-6015-2-git-send-email-bmarzins@redhat.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
 user-agent: Evolution 3.42.0
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: e9e0cbf6-91dd-4e25-e96e-08d99fdfe345
+x-ms-office365-filtering-correlation-id: 4211e36c-7f89-46fa-b382-08d99fe03803
 x-ms-traffictypediagnostic: DB7PR04MB4476:
-x-microsoft-antispam-prvs: <DB7PR04MB447606E2D925A35283640996FC8D9@DB7PR04MB4476.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:1332
+x-microsoft-antispam-prvs: <DB7PR04MB4476EFACD748D1E41CCE5ACAFC8D9@DB7PR04MB4476.eurprd04.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:8273
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: O9XoXSrkoei2+IpXLpRztCTYgZIgiAGWgKJUep+BoI1sLSnw6+L6dSDSqpha1kkQdSBAcw/qqND0ljwU9vgvo7aDTxeQAGZ8JuIOoafyP3Bg/xLbjfrcaawCNwfTGq7dft2Rdf5Y11mApw2sk6naPXpGxzGv316I/LCw6PQAGEndLOXpy3AnR7IO6GKyQTOT9+ocmL/pQaJke42JlxLXyBIaEEZCXV4mtmcFoi9S3XN/ZCbxOjm2ggQqh8jHzhL4IDsmqTJxRsT33d46UfkBdqPbAQuzN/9r4xwGfGJkwJlOfjuB+sqExmOhQ7ueNLSxlm1DkREz7cfDqQLOcf0eDTAiKxokjNrcnt0mVCDc0FkJkXjYp1Z3DEDxCdZYT7BP+kBGkfPmhW68sQVAu+ELoYD5SxBOl28sQS3K8XmLyWR1yytqycjxsDhkJh88rsdpQZKRxQuBhMfDE8LtKbcT6YQ17RsKS26scMnhScedhdifAIp3wOqTFrklr4ITCVshAceaV1TAXbloIWhwAU8Q12bccJmSfx+2Sk0DicemEWTf1rOm4BsbcJaK0b4aMS201a5qFKJtowQyymsKezxOxYtgNr5/U+9fnLB9j0J2z4v7l6x6Uq2esgI2MXRae7pFyd8p+2MCu18Z2rOdiefrE3Yw1gnCjVpJlmtmWY4M7SKl+Xi4sNSlCbMlgU3ti6eSXyw2mgkghxzvHwBeMo/ZHQ==
+x-microsoft-antispam-message-info: qlODzdYpvPEvC5sX9P3o1s9YbZG+CWaJAjt2c80pUd+LhkkLIm0uJuEvRy4SoKOci64/N9pnaeekFYEim7XP/klFLP7DXzMtMl5KkNvlPz3hrwz73F1Z0mY1kdBfLtErdritluMddWFzlzyzBkSHZfeqhDHPYP74+JKl3QVQRX+wiOGX2H/j4qinjvm8cCwg0RLfVLXsztwPD2HxqPCzPX+JTg537OwOB+TKeJofJAEv2J1uLZSrBYwdYq5ZOsmO+1kM+qepVt3qUnqM+Y2WUeLDdd1ArQwzli2+M2XXVQ+fFV3uaIr4zkR0wpFSqYb5yb6YMQbKJ7Qr+rJaYTpKzQHGhsAzE6F/YtDE3zD4z2stQ1gNeEzo+hzxYcHLyMqG1dekCkLu3Ejvv75JeBI/16ANfE0tWMQ4Q7pA+PF6IgzZk4J+v+e/b8HnQOpRfgaJKRCQ0a19IYvfEqkzX7xcphQ52bAIejeU5Ke5xnFh6D+l9akRiI4I98DCR5D1awAhdy4BUh1Id0mp5Adi1LjF7pcugpzOv87d4YX4zkirf+QxaxpGawoOx7Jc3D9OdbJVLUb+dgyaSK8ouG6qjZNFKdqgLvH/tTYwA+A3LT4F8VqilL2sF/tugiLXrzAdh/BkKTW8rycprC7MGinQdMIqkbXpHqL6yCjiiOc546HjMbgBzui2Yf46cLOps9h7xgJ0W4uKTGh3dmlzY5jKlu5obA==
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
 	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
 	PTR:; CAT:NONE;
-	SFS:(366004)(71200400001)(186003)(15650500001)(36756003)(86362001)(26005)(8676002)(508600001)(2616005)(6486002)(6506007)(76116006)(66946007)(91956017)(38070700005)(4326008)(316002)(44832011)(122000001)(4001150100001)(66446008)(2906002)(66556008)(5660300002)(38100700002)(8936002)(66476007)(64756008)(110136005)(6512007)(83380400001);
+	SFS:(366004)(71200400001)(186003)(36756003)(86362001)(26005)(8676002)(508600001)(2616005)(6486002)(6506007)(76116006)(66946007)(91956017)(38070700005)(4326008)(316002)(44832011)(122000001)(4001150100001)(66446008)(2906002)(66556008)(5660300002)(38100700002)(8936002)(66476007)(64756008)(110136005)(6512007)(83380400001);
 	DIR:OUT; SFP:1101
 x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?shBCb72tDxycGuvGrV+6GFJOHmcTCqPyJvrDV/bv+OerRInlSjuVDIawt?=
-	=?iso-8859-15?Q?pf0Ebmup8UQg1yhmENqFRTpRdeAA8DZx8qTQUAhUNtiXioKJ8EcvFYITm?=
-	=?iso-8859-15?Q?xt5/vsLkW/2qhJumVT2DSpniJ4qU4yFIsvCIGM4X3yGv+CHPoORuoW23x?=
-	=?iso-8859-15?Q?xA5mhAW7HXpX0IVXnFUZsEOpqQyIdyVqo1b5aEvgMCTeoU+38V1Yofxtf?=
-	=?iso-8859-15?Q?nT6bhUZyYeXDNGvVUkCFlaD79FFNEavGB77LsOTMH0sUvvwcZrljTUdOM?=
-	=?iso-8859-15?Q?Lh45o42YyV2kZz/4Qk2yNbp7Tnsd9KiOaKkaLOs+h4nUOmPTM8pc62Pxq?=
-	=?iso-8859-15?Q?G5PkgDo1h7hfCzA+oGgl/XP3axGgv50eQp6vOH6NbEWzFnVgsjWNifzp3?=
-	=?iso-8859-15?Q?IyX9iVhgtalJVHVABtUXcUa+o7WQs2CrKYG+UM0Y8YochZU07MicE/RSL?=
-	=?iso-8859-15?Q?/k5Wjxd139BgdGxrhozMhZ/wm6S0ihjClDIY7Zyw0B7iguM+y8Saj6Fh0?=
-	=?iso-8859-15?Q?1shLhS4ROp9+pzEHRYoG/p79gH8VWM73gc14oEoH6ZGo13sc883SikS2C?=
-	=?iso-8859-15?Q?y086E01vKfwueiLFiMRZzzNgcOCQxgy+hmOIPC5cLCX2cHEZsHYV+eadw?=
-	=?iso-8859-15?Q?1VVnWV1I/vbtkaYfsT1Ap4pSZgefwSWHPEwmv/hUY4LJHLl9YYKpOb3DY?=
-	=?iso-8859-15?Q?PFfXTzdfM73PLdkaYoUSybF0nnzQRruekzZRa8nNylzIR7Xf6LtQisXXG?=
-	=?iso-8859-15?Q?4tOOo5KXgRpcmi30TijUwRUjqAYgIpAFhYvJ2dZoWX3/6Vnunk4qgKwpk?=
-	=?iso-8859-15?Q?oCFjf7X6+qprIw5UyqyGfIuCQ8otvfUE/LbTJbX3fsPWl6DkpKSPtAxWM?=
-	=?iso-8859-15?Q?pd1j3CKf2w6lRuoeoMGF6ENbv/AuV1/XM3yNYdT8GOGPMyWgq9mmbNFgx?=
-	=?iso-8859-15?Q?yNGUKR9k/UCmcQc0FL72LQOT0caKUeUWzx9PANAePH647oiGBmhq31lkL?=
-	=?iso-8859-15?Q?LjVz1LcLpOgurwtwObHYnno/PyOxRDgDpqWLUiDi28JW+tM6L7sfyGaSk?=
-	=?iso-8859-15?Q?uLzds1MVn9c7rH9vdOlPhy4IakY6o2vmhclpFM4D5AMZaE11fbpH4RDzz?=
-	=?iso-8859-15?Q?IWfIfAYopSvv7r8NvmcaNT5tNFV0QF9O4JeBEE7zmLozg5A/sMpVYBRSi?=
-	=?iso-8859-15?Q?/oyTT61aobKv7ugGKkXhwy5ZVnFYT27F0uR8fIzyVjRKKsbxzistl2Bke?=
-	=?iso-8859-15?Q?jUG1uIZ57e1Fjv+NTUNB/mlkVlYqrp6tarcO0IvlNRY37Tq10G6s7IrD0?=
-	=?iso-8859-15?Q?M2Sp5ka5Yb+KSwSJ1tQjpJcqeESK53+nQLBfRRz3HgJBhO9iOaSjX1guv?=
-	=?iso-8859-15?Q?8p0pRqK6zDyu+2bWC5RsB3cAZWVwuya+q03nNVzVTYW3ursgqkrTrBE76?=
-	=?iso-8859-15?Q?YG1D4Fistwe6pMREVNckAzkYPYuEcMM60kLighWLQXOiluVrPtM1AImct?=
-	=?iso-8859-15?Q?8PfXBbJ9O7hFDGI9Z+WDlNmkp+8WgmviKI5l62KfHzYwVHsZq8DvJgWL3?=
-	=?iso-8859-15?Q?KpqOpvM1oFGzzzpSzbcUNacIQnRZD/HxjeZ30vMTcObhhnwdPLNeJkL7+?=
-	=?iso-8859-15?Q?HuN65AGxprtXrY/OwJE0X+AkYyxaf8W3SY8aoETF54nwIbPJHCXbk0CPZ?=
-	=?iso-8859-15?Q?GQ3tLwbXv7yDwZ2LagzpYP3S6oUwHsm9ytq5ts94Q9hy6n4=3D?=
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?y7vYIMe9QxLgwQYFIHovNSVbrhuO+NJo1jCpqXRy8Mksx3Eaa7/IggBG5?=
+	=?iso-8859-15?Q?iNxLG4BWhjabtVBWQG9CnjPX3EowxpUL0BNVdcA3dl++RZROb4ViBeG2j?=
+	=?iso-8859-15?Q?WCcmJW27Mg5++/6zptLsw6miJSQt8I4aEFQoVJoBC2HN8hd+v+Zo7pg2a?=
+	=?iso-8859-15?Q?Z4X+ii5Z4CHxWFiSfR0j8aJH0fzdFBVIAxKomB7flGtJAZTlVJ1ja7WA/?=
+	=?iso-8859-15?Q?bywtiClKxhbvqgNBm7pp4JfkCDMWuU5lXmHDjawo18tmU4DSDhhUyF51Y?=
+	=?iso-8859-15?Q?6HTc/yDQgTGjRRjFjOlU/dAk29npPCF9bJZ/B7MEbTEuV+Ccbn3PhEeJb?=
+	=?iso-8859-15?Q?LUKQ87Eow6DUjL+SYpa4TxDmaR8ZbxEeuIwv3UTjQ8mitlpicZhpQjiL2?=
+	=?iso-8859-15?Q?yqmXhXCtaIohYt0O2q9bSscfX6faBPe+DdnGMHwAvtrN5qY6vZLEOKJrS?=
+	=?iso-8859-15?Q?usrecRZb2l3zBXgvgGYQQfQ69hMGTQ+VVfKpWCoRJANzb7r/ZEFY9TcsL?=
+	=?iso-8859-15?Q?w+XhETqVsAG8r7uLlPZ5OTJ104gmDLC2Gyaf0jAsOO0e5f9Bg+GBFbQEC?=
+	=?iso-8859-15?Q?63G9C9lK3VUN/vqZm1t2qRah4L2FYbypG7Hg7UVBis8LCDC52f7LsdkO8?=
+	=?iso-8859-15?Q?QMgiXabXhEy1FkuUqZmBASIoDWuEBz6gqr6WqL9OPHS9Hg3I7T6jCQBKy?=
+	=?iso-8859-15?Q?GGUAfm8dRJC+tnHIwaDIk8cpeBCJogp8eVYWYMB4znSBE+XLHBkjQ7b+u?=
+	=?iso-8859-15?Q?icIjJ10sdwPv2J87ROwSQwRQpAdq9wkUtyWqBOd0qW9kmbHI8AjJAVYop?=
+	=?iso-8859-15?Q?S5RbMeb/Kx1Br45XMeJ+zu1i2WWfK82DHbwuWUxBJ17yJZp/bfvtYAoh3?=
+	=?iso-8859-15?Q?4/+8+pR0xgw2xyn7yw8NzFhD1oYO0anWt+Q3oPblSxdQrUytx3Q7FO/LF?=
+	=?iso-8859-15?Q?C/EY+yT7n4NOLo9W/osVwd9AO8fuUZ/LQ+NlfWt3DeLh9YbO9NVkH/MXF?=
+	=?iso-8859-15?Q?TKI5hPm4uV4eyJZRhS1hPATSFxRoupa2/4ul/cZYdIzSDIOUrPo81xSeF?=
+	=?iso-8859-15?Q?QmKq4nV9vkFJ/S9wavCIY+BKMklPT1qV7xNKH5RP4Uu+lJnMqA14ZowT1?=
+	=?iso-8859-15?Q?oPn3oOBv6IZOVakVp0rHeuDBib0zv8JDzgKNAtLqJ3G0x0aNWu3Gtok8e?=
+	=?iso-8859-15?Q?DYzHU/hSnkf22vUGkTpN2U1Z1g7NiuSnDweLp2kDNbfbmd4L52OwbXdT8?=
+	=?iso-8859-15?Q?nPGDNXTNqqXm1sjjk8WLATvu+OShr7QDAMtHEpMmG4sFvhEaOpC+bo33F?=
+	=?iso-8859-15?Q?j7JXEeVKMs958TCFhT5FmdTy4fDsizWInVng7VLONgwN8rf7bOUg1fCg7?=
+	=?iso-8859-15?Q?UCOQ83q2WXB8CReQ0oqHwcywEj5cSLbIEwt/hf8wB5mX9ibIIGYsjd+Aq?=
+	=?iso-8859-15?Q?wU0UUNwmrPB3eLW57T0H/wsIBF7xnGw5owETcMEg8s9jlFN0sdlr6oGNN?=
+	=?iso-8859-15?Q?FfqsjIoYqlxjoii/mDC9Filhe1T4qTIsxXFDC5vsb0/Gi/fOHjYXqqpdZ?=
+	=?iso-8859-15?Q?O5Ukh8ORd/ClPGvyvOQQc9twrhO/eCC2eEUH60INC6iAPOphWaHRNlQfM?=
+	=?iso-8859-15?Q?+2kZyo5SjLU0OfEf+uIhoY8OG360D/YfOoH417lvGgFHZFXOfG5tOmmdV?=
+	=?iso-8859-15?Q?9nRYyeJ+mCYMPSKPNcVe7IJ1IeLyKzBe9sa8B7T70lDCgOw=3D?=
 MIME-Version: 1.0
 X-OriginatorOrg: suse.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: e9e0cbf6-91dd-4e25-e96e-08d99fdfe345
-X-MS-Exchange-CrossTenant-originalarrivaltime: 04 Nov 2021 22:10:18.8419 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 4211e36c-7f89-46fa-b382-08d99fe03803
+X-MS-Exchange-CrossTenant-originalarrivaltime: 04 Nov 2021 22:12:40.9763 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: qV7SryLSquU96yAyfMvdEs3trr3Q9jRr05rxuVWmeDW2+EC8yU5SJAHO1pW6r9Phaa3UQ7ylzf7hSIw25ZmUgA==
+X-MS-Exchange-CrossTenant-userprincipalname: AIKCygy6tsiV709iLz2K3udBMF8XfMnRbnyL+bv/RKaD/mKAfkP5gUVJ6TGppOU25L/GX7m5ZM1AxmhlOaaZ+Q==
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB7PR04MB4476
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -143,11 +142,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1A4MAj9X032093
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1A4MCkU0032199
 X-loop: dm-devel@redhat.com
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Subject: Re: [dm-devel] [PATCH 5/7] multipathd: fully initialize paths added
- by update_pathvec_from_dm
+Subject: Re: [dm-devel] [PATCH 1/7] multipathd: remove missing paths on
+	startup
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -161,359 +160,103 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <6F937901AF45324F95B9C997AE0414BB@eurprd04.prod.outlook.com>
+Content-ID: <CAB4C09C37A96C44B52679D06AE48807@eurprd04.prod.outlook.com>
 Content-Type: text/plain; charset="iso-8859-15"
 Content-Transfer-Encoding: quoted-printable
 
 On Wed, 2021-10-20 at 14:15 -0500, Benjamin Marzinski wrote:
-> When paths are added by update_pathvec_from_dm(), udev may not have
-> initialized them. This means that it's possible that they are
-> supposed
-> to be blacklisted by udev properties, but weren't.=A0 Also, in order to
-> avoid doing potentially stalling IO, update_pathvec_from_dm() doesn't
-> get all the path information in pathinfo(). These paths end up in the
-> unexpected state of INIT_MISSING_UDEV or INIT_NEW, but with their mpp
-> and wwid set.
+> If a path device was removed from the system while multipathd was not
+> running, multipathd would not remove the path from the multipath
+> table
+> on start-up, or on a weak reconfigure. update_pathvec_from_dm() would
+> return that a reload was necessary, but that information wasn't
+> propigated back to where it could be used to reload the device.
 >=20
-> If udev has already initialized the path, but multipathed wasn't
-> monitoring it, the blacklist checks and wwid determination in
-> update_pathvec_from_dm() will work correctly, so paths added by it
-> are
-> safe, but not completely initialized. The most likely reason why this
-> would happen is if the path was manually removed from multipathd
-> monitoring with "multipathd del path".
-
-Not quite getting this - normally the path would be removed from maps,
-too. Are you referring to the REMOVE_PATH_DELAY case?
-
-
->  The most common time when
-> uninitialized paths would in be part of multipath devices is during
-> boot, after the pivot root, but before the udev coldplug happens.
-> These
-> paths are not necessarily safe. It's possible that
-> /etc/multipath.conf
-> in the initramfs and regular filesystem differ, and they should now
+> Multipath devices now remember if they need to be reloaded, and if
+> so,
+> force_reload is set in select_action().=A0 This means that even when
+> configure is called with FORCE_RELOAD_WEAK, these devices will still
 > be
-> either blacklisted by udev_property, or have a different wwid.
-> However
-> an "add" event should appear for them shortly.
->=20
-> Multipath now has a new state to deal with these devices,
-> INIT_PARTIAL.
-> Devices in this state are treated mostly like INIT_OK devices, but
-> when "multipathd add path" is called or an add/change uevent happens
-> on these devices, multipathd will finish initializing them, and
-> remove
-> them if necessary.
+> reloaded.
 >=20
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Nice. Somehow in my mind the issue always look much more complex.
-I like this, but I want to give it some testing before I finally ack
-it.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-Regards
-Martin
-
-
-
+(I found the subject of this patch somewhat disconcerting, because it
+describes what your patch set is supposed to prevent - mistakenly
+deleting paths. But I understand you meant *completely* missing paths,
+i.e. paths that aren't present in sysfs).
 
 > ---
-> =A0libmultipath/structs.h=A0=A0=A0=A0 |=A0 6 +++++
-> =A0libmultipath/structs_vec.c |=A0 5 ++--
-> =A0multipathd/cli_handlers.c=A0 |=A0 4 ++++
-> =A0multipathd/main.c=A0=A0=A0=A0=A0=A0=A0=A0=A0 | 48 ++++++++++++++++++++=
-++++++++++++++--
-> --
-> =A0multipathd/main.h=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 1 +
-> =A05 files changed, 58 insertions(+), 6 deletions(-)
+> =A0libmultipath/configure.c=A0=A0 | 2 ++
+> =A0libmultipath/devmapper.c=A0=A0 | 2 ++
+> =A0libmultipath/structs.h=A0=A0=A0=A0 | 1 +
+> =A0libmultipath/structs_vec.c | 1 +
+> =A04 files changed, 6 insertions(+)
 >=20
+> diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+> index eb8ec1bd..f1a890af 100644
+> --- a/libmultipath/configure.c
+> +++ b/libmultipath/configure.c
+> @@ -715,6 +715,8 @@ void select_action (struct multipath *mpp, const
+> struct _vector *curmp,
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0cmpp =3D find_mp_by_wwid(curmp, mpp->wwid);
+> =A0=A0=A0=A0=A0=A0=A0=A0cmpp_by_name =3D find_mp_by_alias(curmp, mpp->ali=
+as);
+> +=A0=A0=A0=A0=A0=A0=A0if (mpp->need_reload || (cmpp && cmpp->need_reload)=
+)
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0force_reload =3D 1;
+> =A0
+> =A0=A0=A0=A0=A0=A0=A0=A0if (!cmpp_by_name) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (cmpp) {
+> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+> index c05dc201..3e1a7260 100644
+> --- a/libmultipath/devmapper.c
+> +++ b/libmultipath/devmapper.c
+> @@ -522,6 +522,8 @@ freeout:
+> =A0addout:
+> =A0=A0=A0=A0=A0=A0=A0=A0dm_task_destroy (dmt);
+> =A0
+> +=A0=A0=A0=A0=A0=A0=A0if (r)
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0mpp->need_reload =3D false;
+> =A0=A0=A0=A0=A0=A0=A0=A0return r;
+> =A0}
+> =A0
 > diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index d0b266b7..69409fd4 100644
+> index 399540e7..d0b266b7 100644
 > --- a/libmultipath/structs.h
 > +++ b/libmultipath/structs.h
-> @@ -200,6 +200,12 @@ enum initialized_states {
-> =A0=A0=A0=A0=A0=A0=A0=A0 * mapped by some multipath map because of map re=
-load
-> failure.
-> =A0=A0=A0=A0=A0=A0=A0=A0 */
-> =A0=A0=A0=A0=A0=A0=A0=A0INIT_REMOVED,
-> +=A0=A0=A0=A0=A0=A0=A0/*
-> +=A0=A0=A0=A0=A0=A0=A0 * INIT_PARTIAL: paths added by update_pathvec_from=
-_dm() will
-> not
-> +=A0=A0=A0=A0=A0=A0=A0 * be fully initialized. This will be handled when =
-an add or
-> +=A0=A0=A0=A0=A0=A0=A0 * change uevent is received.
-> +=A0=A0=A0=A0=A0=A0=A0 */
-> +=A0=A0=A0=A0=A0=A0=A0INIT_PARTIAL,
-> =A0};
-> =A0
-> =A0enum prkey_sources {
+> @@ -355,6 +355,7 @@ struct multipath {
+> =A0=A0=A0=A0=A0=A0=A0=A0int retain_hwhandler;
+> =A0=A0=A0=A0=A0=A0=A0=A0int deferred_remove;
+> =A0=A0=A0=A0=A0=A0=A0=A0bool in_recovery;
+> +=A0=A0=A0=A0=A0=A0=A0bool need_reload;
+> =A0=A0=A0=A0=A0=A0=A0=A0int san_path_err_threshold;
+> =A0=A0=A0=A0=A0=A0=A0=A0int san_path_err_forget_rate;
+> =A0=A0=A0=A0=A0=A0=A0=A0int san_path_err_recovery_time;
 > diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-> index fb26437a..1de9175e 100644
+> index 85d97ac1..e52db0c4 100644
 > --- a/libmultipath/structs_vec.c
 > +++ b/libmultipath/structs_vec.c
-> @@ -194,6 +194,7 @@ bool update_pathvec_from_dm(vector pathvec,
+> @@ -237,6 +237,7 @@ bool update_pathvec_from_dm(vector pathvec,
 > struct multipath *mpp,
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(2, "%s: adding new
-> path %s",
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0mpp=
-->alias, pp->dev);
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->initialized =3D
-> INIT_PARTIAL;
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0store_path(pathvec, pp);
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp->tick =3D 1;
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0}
-> @@ -392,12 +393,12 @@ extract_hwe_from_path(struct multipath * mpp)
-> =A0=A0=A0=A0=A0=A0=A0=A0condlog(4, "%s: searching paths for valid hwe", m=
-pp->alias);
-> =A0=A0=A0=A0=A0=A0=A0=A0/* doing this in two passes seems like paranoia t=
-o me */
-> =A0=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot(mpp->paths, pp, i) {
-> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pp->state =3D=3D PATH_U=
-P &&
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pp->state =3D=3D PATH_U=
-P && pp->initialized !=3D
-> INIT_PARTIAL &&
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->initialized=
- !=3D INIT_REMOVED && pp->hwe)
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0g=
-oto done;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0free_pathgroup(pgp, KEEP_=
+PATHS);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0must_reload =3D true;
 > =A0=A0=A0=A0=A0=A0=A0=A0}
-> =A0=A0=A0=A0=A0=A0=A0=A0vector_foreach_slot(mpp->paths, pp, i) {
-> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pp->state !=3D PATH_UP =
-&&
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if ((pp->state !=3D PATH_UP=
- || pp->initialized =3D=3D
-> INIT_PARTIAL) &&
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->initialized=
- !=3D INIT_REMOVED && pp->hwe)
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0g=
-oto done;
-> =A0=A0=A0=A0=A0=A0=A0=A0}
-> diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-> index 58b9916c..8d37431e 100644
-> --- a/multipathd/cli_handlers.c
-> +++ b/multipathd/cli_handlers.c
-> @@ -526,6 +526,10 @@ cli_add_path (void *v, struct strbuf *reply,
-> void *data)
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0r=
-eturn 1;
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> =A0
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pp->initialized =3D=3D =
-INIT_PARTIAL &&
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 finish_path_init(=
-pp, vecs) < 0)
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0ret=
-urn 1;
-> +
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pp->mpp)
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0r=
-eturn 0;
-> =A0=A0=A0=A0=A0=A0=A0=A0} else if (pp) {
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index cc4a4a5d..4b8e2cde 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -976,12 +976,19 @@ check_path_wwid_change(struct path *pp)
-> =A0=A0=A0=A0=A0=A0=A0=A0return false;
+> +=A0=A0=A0=A0=A0=A0=A0mpp->need_reload =3D mpp->need_reload || must_reloa=
+d;
+> =A0=A0=A0=A0=A0=A0=A0=A0return must_reload;
 > =A0}
 > =A0
-> +/*
-> + * uev_add_path can call uev_update_path, and uev_update_path can
-> call
-> + * uev_add_path
-> + */
-> +static int uev_update_path (struct uevent *uev, struct vectors *
-> vecs);
-> +
-> =A0static int
-> =A0uev_add_path (struct uevent *uev, struct vectors * vecs, int
-> need_do_map)
-> =A0{
-> =A0=A0=A0=A0=A0=A0=A0=A0struct path *pp;
-> =A0=A0=A0=A0=A0=A0=A0=A0int ret =3D 0, i;
-> =A0=A0=A0=A0=A0=A0=A0=A0struct config *conf;
-> +=A0=A0=A0=A0=A0=A0=A0bool partial_init =3D false;
-> =A0
-> =A0=A0=A0=A0=A0=A0=A0=A0condlog(3, "%s: add path (uevent)", uev->kernel);
-> =A0=A0=A0=A0=A0=A0=A0=A0if (strstr(uev->kernel, "..") !=3D NULL) {
-> @@ -1000,7 +1007,10 @@ uev_add_path (struct uevent *uev, struct
-> vectors * vecs, int need_do_map)
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0int r;
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0struct multipath *prev_mp=
-p =3D NULL;
-> =A0
-> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pp->initialized =3D=3D =
-INIT_REMOVED) {
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (pp->initialized =3D=3D =
-INIT_PARTIAL) {
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0par=
-tial_init =3D true;
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0got=
-o out;
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0} else if (pp->initialized =
-=3D=3D INIT_REMOVED) {
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c=
-ondlog(3, "%s: re-adding removed path", pp-
-> >dev);
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p=
-p->initialized =3D INIT_NEW;
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p=
-rev_mpp =3D pp->mpp;
-> @@ -1110,6 +1120,8 @@ uev_add_path (struct uevent *uev, struct
-> vectors * vecs, int need_do_map)
-> =A0=A0=A0=A0=A0=A0=A0=A0}
-> =A0out:
-> =A0=A0=A0=A0=A0=A0=A0=A0lock_cleanup_pop(vecs->lock);
-> +=A0=A0=A0=A0=A0=A0=A0if (partial_init)
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return uev_update_path(uev,=
- vecs);
-> =A0=A0=A0=A0=A0=A0=A0=A0return ret;
-> =A0}
-> =A0
-> @@ -1405,6 +1417,25 @@ fail:
-> =A0=A0=A0=A0=A0=A0=A0=A0return REMOVE_PATH_MAP_ERROR;
-> =A0}
-> =A0
-> +int
-> +finish_path_init(struct path *pp, struct vectors * vecs)
-> +{
-> +=A0=A0=A0=A0=A0=A0=A0int r;
-> +=A0=A0=A0=A0=A0=A0=A0struct config *conf;
-> +
-> +=A0=A0=A0=A0=A0=A0=A0conf =3D get_multipath_config();
-> +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_push(put_multipath_config, conf);
-> +=A0=A0=A0=A0=A0=A0=A0r =3D pathinfo(pp, conf, DI_ALL|DI_BLACKLIST);
-> +=A0=A0=A0=A0=A0=A0=A0pthread_cleanup_pop(1);
-> +
-> +=A0=A0=A0=A0=A0=A0=A0if (r =3D=3D PATHINFO_OK)
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> +
-> +=A0=A0=A0=A0=A0=A0=A0condlog(0, "%s: error fully initializing path, remo=
-ving", pp-
-> >dev);
-> +=A0=A0=A0=A0=A0=A0=A0ev_remove_path(pp, vecs, 1);
-> +=A0=A0=A0=A0=A0=A0=A0return -1;
-> +}
-> +
-> =A0static int
-> =A0uev_update_path (struct uevent *uev, struct vectors * vecs)
-> =A0{
-> @@ -1443,7 +1474,7 @@ uev_update_path (struct uevent *uev, struct
-> vectors * vecs)
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* Don't deal with other =
-types of failed
-> initialization
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 * now. check_path will h=
-andle it */
-> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (!strlen(pp->wwid))
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (!strlen(pp->wwid) && pp=
-->initialized !=3D
-> INIT_PARTIAL)
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0g=
-oto out;
-> =A0
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0strcpy(wwid, pp->wwid);
-> @@ -1451,12 +1482,20 @@ uev_update_path (struct uevent *uev, struct
-> vectors * vecs)
-> =A0
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (rc !=3D 0)
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0s=
-trcpy(pp->wwid, wwid);
-> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0else if (strncmp(wwid, pp->=
-wwid, WWID_SIZE) !=3D 0) {
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0else if (strlen(wwid) &&
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 st=
-rncmp(wwid, pp->wwid, WWID_SIZE) !=3D 0) {
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c=
-ondlog(0, "%s: path wwid changed from '%s'
-> to '%s'",
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0uev->kernel, wwid, pp->wwid);
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0e=
-v_remove_path(pp, vecs, 1);
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0n=
-eeds_reinit =3D 1;
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0g=
-oto out;
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0} else if (pp->initialized =
-=3D=3D INIT_PARTIAL) {
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0ude=
-v_device_unref(pp->udev);
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0pp-=
->udev =3D udev_device_ref(uev->udev);
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if =
-(finish_path_init(pp, vecs) < 0) {
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0retval =3D 1;
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0goto out;
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0} else {
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0u=
-dev_device_unref(pp->udev);
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0p=
-p->udev =3D udev_device_ref(uev->udev);
-> @@ -1507,6 +1546,7 @@ out:
-> =A0
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(0, "%s: spurious =
-uevent, path not found",
-> uev->kernel);
-> =A0=A0=A0=A0=A0=A0=A0=A0}
-> +=A0=A0=A0=A0=A0=A0=A0/* pp->initalized must not be INIT_PARTIAL if needs=
-_reinit is
-> set */
-
-Did you mean "cannot" here? At least for the "wwid changed" case this
-is subtle, as it's set to INIT_REMOVED in ev_remove_path().
-
-> =A0=A0=A0=A0=A0=A0=A0=A0if (needs_reinit)
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0retval =3D uev_add_path(u=
-ev, vecs, 1);
-> =A0=A0=A0=A0=A0=A0=A0=A0return retval;
-> @@ -2116,7 +2156,7 @@ check_path (struct vectors * vecs, struct path
-> * pp, unsigned int ticks)
-> =A0=A0=A0=A0=A0=A0=A0=A0int marginal_pathgroups, marginal_changed =3D 0;
-> =A0=A0=A0=A0=A0=A0=A0=A0int ret;
-> =A0
-> -=A0=A0=A0=A0=A0=A0=A0if (((pp->initialized =3D=3D INIT_OK ||
-> +=A0=A0=A0=A0=A0=A0=A0if (((pp->initialized =3D=3D INIT_OK || pp->initial=
-ized =3D=3D
-> INIT_PARTIAL ||
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->initialized =3D=3D INIT_REQUE=
-STED_UDEV) && !pp->mpp) ||
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 pp->initialized =3D=3D INIT_REMOVED)
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> diff --git a/multipathd/main.h b/multipathd/main.h
-> index c8a1ce92..4acd1b8c 100644
-> --- a/multipathd/main.h
-> +++ b/multipathd/main.h
-> @@ -66,4 +66,5 @@ int reload_and_sync_map(struct multipath *mpp,
-> struct vectors *vecs,
-> =A0
-> =A0void handle_path_wwid_change(struct path *pp, struct vectors *vecs);
-> =A0bool check_path_wwid_change(struct path *pp);
-> +int finish_path_init(struct path *pp, struct vectors * vecs);
-> =A0#endif /* MAIN_H */
 
 
 --
