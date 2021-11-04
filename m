@@ -2,91 +2,112 @@ Return-Path: <SRS0=ptSP=PX=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6660EC433F5
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 07:23:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8AF18C433F5
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 07:23:06 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id F298261139
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 07:23:01 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org F298261139
-Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=javigon.com
+	by mail.kernel.org (Postfix) with ESMTPS id 191B86113B
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 07:23:06 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 191B86113B
+Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=nvidia.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-351-jeHsW2O7OKu3nESaxszMQA-1; Thu, 04 Nov 2021 03:22:56 -0400
-X-MC-Unique: jeHsW2O7OKu3nESaxszMQA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-523-9Ka1EKVYMtqI9P4G9oQEAg-1; Thu, 04 Nov 2021 03:23:01 -0400
+X-MC-Unique: 9Ka1EKVYMtqI9P4G9oQEAg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 72D1518125C6;
-	Thu,  4 Nov 2021 07:22:46 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D3AD7802CB6;
+	Thu,  4 Nov 2021 07:22:56 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0379B71775;
-	Thu,  4 Nov 2021 07:22:46 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B61735DF5F;
+	Thu,  4 Nov 2021 07:22:56 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9D3591806D04;
-	Thu,  4 Nov 2021 07:22:44 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.1])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 926EF181A1D1;
+	Thu,  4 Nov 2021 07:22:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1A3JR5ev011693 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 3 Nov 2021 15:27:05 -0400
+	id 1A46nAtf006338 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 4 Nov 2021 02:49:10 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 2D52740CFD10; Wed,  3 Nov 2021 19:27:05 +0000 (UTC)
+	id B10BC40C1252; Thu,  4 Nov 2021 06:49:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2796340CFD07
-	for <dm-devel@redhat.com>; Wed,  3 Nov 2021 19:27:05 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id ABAEF400F3C6
+	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 06:49:10 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
 	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0D6578007B1
-	for <dm-devel@redhat.com>; Wed,  3 Nov 2021 19:27:05 +0000 (UTC)
-Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com
-	[209.85.221.41]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-341-3-bj-R0dNu2aBDk2R2piqA-1; Wed, 03 Nov 2021 15:27:03 -0400
-X-MC-Unique: 3-bj-R0dNu2aBDk2R2piqA-1
-Received: by mail-wr1-f41.google.com with SMTP id d24so5239112wra.0
-	for <dm-devel@redhat.com>; Wed, 03 Nov 2021 12:27:02 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-	:mime-version:content-disposition:content-transfer-encoding
-	:in-reply-to;
-	bh=n9eZm4ZLjJ18S7/RZOpREFC5R9Pnj2s1MfiRIP09vP4=;
-	b=2l4bVHcQuLTXPWgIiDHLTrsuDuljmsdDdL5gzSWa2SPj6i0Tff2yLhSR/lR+4zUu3F
-	v3b1HxZ5+Ic/TehA2nRwLAZvJ2gt4BX0kCh5ZaOJhsdyy95I5tLxtn842OEfxpCUGmzp
-	bf/KUkJwd3ulp1mfy3pb/ahjZ54C1dUaMqqnF7TOGvD9DIkT4mUIHy2P6tv2rmG7kxEp
-	HOvtdsX/Jx1/Y6Ge/LZp9mPoRSjpIooShN8MyNgA1ZE4ijM3ubMXmnMF956lS28u1vNS
-	aE2gKuLVtnXrNhb2Ir+hCHeb5OBp0O3s4x1spBG+2ghDVXOxxqNB01U1A+Q/R2lW+Ovt
-	5jRQ==
-X-Gm-Message-State: AOAM530xQHBmIRtdlc1Y27EWJ6qgnEy9f7rV14LJSVUK6wO54xH3fUA9
-	QLsSACZXKqCYmeSV061FQnk9SA==
-X-Google-Smtp-Source: ABdhPJwm0J2qtE+FE/PUvTFUO5lV8Xw5XsKj4sTwM2pR0jbx5CoUJ/9kjWwlg9/c73FShGDpL5/+Cg==
-X-Received: by 2002:a05:6000:1841:: with SMTP id
-	c1mr24598385wri.425.1635967621989; 
-	Wed, 03 Nov 2021 12:27:01 -0700 (PDT)
-Received: from localhost (5.186.126.13.cgn.fibianet.dk. [5.186.126.13])
-	by smtp.gmail.com with ESMTPSA id 9sm3893755wry.0.2021.11.03.12.27.01
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Wed, 03 Nov 2021 12:27:01 -0700 (PDT)
-Date: Wed, 3 Nov 2021 20:27:00 +0100
-From: Javier =?utf-8?B?R29uesOhbGV6?= <javier@javigon.com>
-To: Chaitanya Kulkarni <chaitanyak@nvidia.com>
-Message-ID: <20211103192700.clqzvvillfnml2nu@mpHalley-2>
-References: <BYAPR04MB49652C4B75E38F3716F3C06386539@BYAPR04MB4965.namprd04.prod.outlook.com>
-	<PH0PR04MB74161CD0BD15882BBD8838AB9B529@PH0PR04MB7416.namprd04.prod.outlook.com>
-	<CGME20210928191342eucas1p23448dcd51b23495fa67cdc017e77435c@eucas1p2.samsung.com>
-	<20210928191340.dcoj7qrclpudtjbo@mpHalley.domain_not_set.invalid>
-	<c2d0dff9-ad6d-c32b-f439-00b7ee955d69@acm.org>
-	<20211006100523.7xrr3qpwtby3bw3a@mpHalley.domain_not_set.invalid>
-	<fbe69cc0-36ea-c096-d247-f201bad979f4@acm.org>
-	<20211008064925.oyjxbmngghr2yovr@mpHalley.local>
-	<2a65e231-11dd-d5cc-c330-90314f6a8eae@nvidia.com>
-	<20211029081447.ativv64dofpqq22m@ArmHalley.local>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8D67D8011AF
+	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 06:49:10 +0000 (UTC)
+Received: from NAM10-BN7-obe.outbound.protection.outlook.com
+	(mail-bn7nam10on2087.outbound.protection.outlook.com [40.107.92.87])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-431-RGZh_wCoPbWj703kLAutKQ-1; Thu, 04 Nov 2021 02:48:39 -0400
+X-MC-Unique: RGZh_wCoPbWj703kLAutKQ-1
+Received: from BN6PR22CA0049.namprd22.prod.outlook.com (2603:10b6:404:ca::11)
+	by CH2PR12MB4922.namprd12.prod.outlook.com (2603:10b6:610:65::22)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4649.14;
+	Thu, 4 Nov 2021 06:48:36 +0000
+Received: from BN8NAM11FT039.eop-nam11.prod.protection.outlook.com
+	(2603:10b6:404:ca:cafe::ec) by BN6PR22CA0049.outlook.office365.com
+	(2603:10b6:404:ca::11) with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4649.15 via
+	Frontend Transport; Thu, 4 Nov 2021 06:48:36 +0000
+X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 216.228.112.34)
+	smtp.mailfrom=nvidia.com; infradead.org; dkim=none (message not signed)
+	header.d=none; infradead.org;
+	dmarc=pass action=none header.from=nvidia.com
+Received: from mail.nvidia.com (216.228.112.34) by
+	BN8NAM11FT039.mail.protection.outlook.com (10.13.177.169) with
+	Microsoft SMTP
+	Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id
+	15.20.4669.10 via Frontend Transport; Thu, 4 Nov 2021 06:48:36 +0000
+Received: from dev.nvidia.com (172.20.187.6) by HQMAIL107.nvidia.com
+	(172.20.187.13) with Microsoft SMTP Server (TLS) id 15.0.1497.18;
+	Thu, 4 Nov 2021 06:48:34 +0000
+From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
+To: <linux-block@vger.kernel.org>, <linux-raid@vger.kernel.org>,
+	<linux-nvme@lists.infradead.org>, <linux-scsi@vger.kernel.org>,
+	<target-devel@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>,
+	<linux-xfs@vger.kernel.org>, <dm-devel@redhat.com>
+Date: Wed, 3 Nov 2021 23:46:31 -0700
+Message-ID: <20211104064634.4481-6-chaitanyak@nvidia.com>
+In-Reply-To: <20211104064634.4481-1-chaitanyak@nvidia.com>
+References: <20211104064634.4481-1-chaitanyak@nvidia.com>
 MIME-Version: 1.0
-In-Reply-To: <20211029081447.ativv64dofpqq22m@ArmHalley.local>
+X-Originating-IP: [172.20.187.6]
+X-ClientProxiedBy: HQMAIL111.nvidia.com (172.20.187.18) To
+	HQMAIL107.nvidia.com (172.20.187.13)
+X-EOPAttributedMessage: 0
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-Correlation-Id: d463c2a0-3cc9-4ef9-715f-08d99f5f205d
+X-MS-TrafficTypeDiagnostic: CH2PR12MB4922:
+X-Microsoft-Antispam-PRVS: <CH2PR12MB49221098D02442DD978C64ECA38D9@CH2PR12MB4922.namprd12.prod.outlook.com>
+X-MS-Oob-TLC-OOBClassifiers: OLM:6108
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0
+X-Microsoft-Antispam-Message-Info: gLwEKNl/4NCZ2aXAcasSAQW/zJDJM2GuhK8L/BvmKkaQA4L+RDYpQZZrg3dCMopLZ9YgDUiqIntp8Jv+unb3obuOoQb0aFNTgEj/DRn40UHsElmL6Vgyasza905kvDkueExaOlyuKX6KKX5x1UD8oSHUHeXQd9N9+QVthtbE+6hdBtwDwXlJGjWo73HU6BD2GtIXXDPz/+BiHsdNGb5daYb7MdyvVNhF2vgVVCLiNY5dojm5ntd/cmijm5Xqh7J7zzuNIr1UjdwgSRw5vS9YiwTXO1CFg5l6fg2HD4KAnMqvNNFwC3Tx/f0II1YG9D2qpsOOnqkDMBVbktrunPlxK07bmHdQrm1EuySCQ/FcwSGY9cNlV4W255mJb+sNkVqGah6rozTO8ttomqDk388bNioAcb4ausqBFrgX8ffV8XV/hgq2Pzpa64VqeNwDDuGMORbB/lGPaJWsaD23L/NG3USaxpJH8Cwz3xBS6dds3ZQq5NUuJtgsfLSkJunSTy70KIrrFPH76GQiW7QocO+mjuFRCKVSWv+8rwvPkNHZoLgcnSqRjuIyBETVxbSIEnjbOgCm7W9ZCELS8LcGGomYbY9FWllovcTtvfXDyO0L5lhtkh+rsWwGAZB5FX+7L5yDr6/RH7KeOgFeS5IvzOMLpUHllH8z0c0V5uGQGD/IGtfJn8BMqTaojKC4Fa54KqbkqmDUI7xhiYXhg7lXGSroFKwm/q9fAFYUVAUnGIkEsJB5D+QPcsc8IrDhjCUC59yy
+X-Forefront-Antispam-Report: CIP:216.228.112.34; CTRY:US; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:mail.nvidia.com; PTR:schybrid03.nvidia.com;
+	CAT:NONE;
+	SFS:(4636009)(46966006)(36840700001)(36860700001)(36756003)(70586007)(336012)(26005)(186003)(5660300002)(82310400003)(7696005)(107886003)(16526019)(2906002)(86362001)(15650500001)(4326008)(70206006)(2616005)(8936002)(316002)(36906005)(7636003)(1076003)(54906003)(110136005)(8676002)(356005)(7416002)(426003)(508600001)(7406005)(6666004)(83380400001)(47076005)(21314003)(2101003);
+	DIR:OUT; SFP:1101
+X-OriginatorOrg: Nvidia.com
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 04 Nov 2021 06:48:36.1661 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: d463c2a0-3cc9-4ef9-715f-08d99f5f205d
+X-MS-Exchange-CrossTenant-Id: 43083d15-7273-40c1-b7db-39efd9ccc17a
+X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=43083d15-7273-40c1-b7db-39efd9ccc17a;
+	Ip=[216.228.112.34]; Helo=[mail.nvidia.com]
+X-MS-Exchange-CrossTenant-AuthSource: BN8NAM11FT039.eop-nam11.prod.protection.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: CH2PR12MB4922
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -95,34 +116,25 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1A46nAtf006338
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Thu, 04 Nov 2021 03:22:43 -0400
-Cc: Vincent Fu <vincent.fu@samsung.com>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	Adam Manzanares <a.manzanares@samsung.com>,
-	"osandov@fb.com" <osandov@fb.com>,
-	"msnitzer@redhat.com" <msnitzer@redhat.com>,
-	Bart Van Assche <bvanassche@acm.org>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	"hch@lst.de" <hch@lst.de>,
-	"roland@purestorage.com" <roland@purestorage.com>,
-	Nitesh Shetty <nj.shetty@samsung.com>,
-	"zach.brown@ni.com" <zach.brown@ni.com>,
-	SelvaKumar S <selvakuma.s1@samsung.com>,
-	Chaitanya Kulkarni <Chaitanya.Kulkarni@wdc.com>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"mpatocka@redhat.com" <mpatocka@redhat.com>,
-	"kbusch@kernel.org" <kbusch@kernel.org>,
-	"Frederick.Knight@netapp.com" <Frederick.Knight@netapp.com>,
-	"axboe@kernel.dk" <axboe@kernel.dk>, Kanchan Joshi <joshi.k@samsung.com>,
-	"martin.petersen@oracle.com" <martin.petersen@oracle.com>,
-	Johannes Thumshirn <Johannes.Thumshirn@wdc.com>,
-	"lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>,
-	"rwheeler@redhat.com" <rwheeler@redhat.com>
-Subject: Re: [dm-devel] [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy
-	Offload
+Cc: snitzer@redhat.com, ebiggers@google.com, djwong@kernel.org, clm@fb.com,
+	adilger.kernel@dilger.ca, osandov@fb.com, agk@redhat.com,
+	javier@javigon.com, sagi@grimberg.me, dongli.zhang@oracle.com,
+	willy@infradead.org, hch@lst.de, danil.kipnis@cloud.ionos.com,
+	idryomov@gmail.com, jinpu.wang@cloud.ionos.com,
+	Chaitanya Kulkarni <kch@nvidia.com>, jejb@linux.ibm.com,
+	josef@toxicpanda.com, ming.lei@redhat.com, dsterba@suse.com,
+	viro@zeniv.linux.org.uk, jefflexu@linux.alibaba.com,
+	bvanassche@acm.org, axboe@kernel.dk, tytso@mit.edu,
+	martin.petersen@oracle.com, song@kernel.org,
+	johannes.thumshirn@wdc.com, jlayton@kernel.org,
+	kbusch@kernel.org, jack@suse.com
+Subject: [dm-devel] [RFC PATCH 5/8] nvmet: add Verify emulation support for
+	bdev-ns
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -136,57 +148,187 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gMjkuMTAuMjAyMSAxMDoxNCwgSmF2aWVyIEdvbnrDoWxleiB3cm90ZToKPk9uIDI5LjEwLjIw
-MjEgMDA6MjEsIENoYWl0YW55YSBLdWxrYXJuaSB3cm90ZToKPj5PbiAxMC83LzIxIDExOjQ5IFBN
-LCBKYXZpZXIgR29uesOhbGV6IHdyb3RlOgo+Pj5FeHRlcm5hbCBlbWFpbDogVXNlIGNhdXRpb24g
-b3BlbmluZyBsaW5rcyBvciBhdHRhY2htZW50cwo+Pj4KPj4+Cj4+Pk9uIDA2LjEwLjIwMjEgMTA6
-MzMsIEJhcnQgVmFuIEFzc2NoZSB3cm90ZToKPj4+Pk9uIDEwLzYvMjEgMzowNSBBTSwgSmF2aWVy
-IEdvbnrDoWxleiB3cm90ZToKPj4+Pj5JIGFncmVlIHRoYXQgdGhlIHRvcGljIGlzIGNvbXBsZXgu
-IEhvd2V2ZXIsIHdlIGhhdmUgbm90IGJlZW4gYWJsZSB0bwo+Pj4+PmZpbmQgYSBjbGVhciBwYXRo
-IGZvcndhcmQgaW4gdGhlIG1haWxpbmcgbGlzdC4KPj4+Pgo+Pj4+SG1tIC4uLiByZWFsbHk/IEF0
-IGxlYXN0IE1hcnRpbiBQZXRlcnNlbiBhbmQgSSBjb25zaWRlciBkZXZpY2UgbWFwcGVyCj4+Pj5z
-dXBwb3J0IGVzc2VudGlhbC4gSG93IGFib3V0IHN0YXJ0aW5nIGZyb20gTWlrdWxhcycgcGF0Y2gg
-c2VyaWVzIHRoYXQKPj4+PnN1cHBvcnRzIHRoZSBkZXZpY2UgbWFwcGVyPyBTZWUgYWxzbwo+Pj4+
-aHR0cHM6Ly9sb3JlLmtlcm5lbC5vcmcvYWxsL2FscGluZS5MUkguMi4wMi4yMTA4MTcxNjMwMTIw
-LjMwMzYzQGZpbGUwMS5pbnRyYW5ldC5wcm9kLmludC5yZHUyLnJlZGhhdC5jb20vCj4+Pj4KPj4K
-Pj5XaGVuIHdlIGFkZCBhIG5ldyBSRVFfT1BfWFhYIHdlIG5lZWQgdG8gbWFrZSBzdXJlIGl0IHdp
-bGwgd29yayB3aXRoCj4+ZGV2aWNlIG1hcHBlciwgc28gSSBhZ3JlZSB3aXRoIEJhcnQgYW5kIE1h
-cnRpbi4KPj4KPj5TdGFydGluZyB3aXRoIE1pa3VsYXMgcGF0Y2hlcyBpcyBhIHJpZ2h0IGRpcmVj
-dGlvbiBhcyBvZiBub3cuLgo+Pgo+Pj4KPj4+VGhhbmtzIGZvciB0aGUgcG9pbnRlcnMuIFdlIGFy
-ZSBsb29raW5nIGludG8gTWlrdWxhcycgcGF0Y2ggLSBJIGFncmVlCj4+PnRoYXQgaXQgaXMgYSBn
-b29kIHN0YXJ0Lgo+Pj4KPj4+Pj5XaGF0IGRvIHlvdSB0aGluayBhYm91dCBqb2luaW5nIHRoZSBj
-YWxsIHRvIHRhbGsgdmVyeSBzcGVjaWZpYyBuZXh0Cj4+Pj4+c3RlcHMgdG8gZ2V0IGEgcGF0Y2hz
-ZXQgdGhhdCB3ZSBjYW4gc3RhcnQgcmV2aWV3aW5nIGluIGRldGFpbC4KPj4+Pgo+Pj4+SSBjYW4g
-ZG8gdGhhdC4KPj4+Cj4+PlRoYW5rcy4gSSB3aWxsIHdhaXQgdW50aWwgQ2hhaXRhbnlhJ3MgcmVw
-bHkgb24gaGlzIHF1ZXN0aW9ucy4gV2Ugd2lsbAo+Pj5zdGFydCBzdWdnZXN0aW5nIHNvbWUgZGF0
-ZXMgdGhlbi4KPj4+Cj4+Cj4+SSB0aGluayBhdCB0aGlzIHBvaW50IHdlIG5lZWQgdG8gYXQgbGVh
-c3QgZGVjaWRlIG9uIGhhdmluZyBhIGZpcnN0IGNhbGwKPj5mb2N1c2VkIG9uIGhvdyB0byBwcm9j
-ZWVkIGZvcndhcmQgd2l0aCBNaWt1bGFzIGFwcHJvYWNoICAuLi4KPj4KPj5KYXZpZXIsIGNhbiB5
-b3UgcGxlYXNlIG9yZ2FuaXplIGEgY2FsbCB3aXRoIHBlb3BsZSB5b3UgbGlzdGVkIGluIHRoaXMK
-Pj50aHJlYWQgZWFybGllciA/Cj4KPkhlcmUgeW91IGhhdmUgYSBEb29nbGUgZm9yIGVuZCBvZiBu
-ZXh0IHdlZWsgYW5kIHRoZSB3ZWVrIGFmdGVyIE9DUC4KPlBsZWFzZSBmaWxsIGl0IG91dCB1bnRp
-bCBXZWRuZXNkYXkuIEkgd2lsbCBzZXQgdXAgYSBjYWxsIHdpdGggdGhlCj5zZWxlY3RlZCBzbG90
-Ogo+Cj4gICAgaHR0cHM6Ly9kb29kbGUuY29tL3BvbGwvcjJjOGR1eTNyOGc4OHY4cT91dG1fc291
-cmNlPXBvbGwmdXRtX21lZGl1bT1saW5rCj4KPlRoYW5rcywKPkphdmllcgoKSSBzZW50IHRoZSBp
-bnZpdGUgZm9yIHRoZSBwZW9wbGUgdGhhdCBzaWduZWQgdXAgaW50byB0aGUgRG9vZGxlLiBUaGUK
-Y2FsbCB3aWxsIHRha2UgcGxhY2Ugb24gTW9uZGF5IE5vdmVtYmVyIDE1dGgsIDE3LjAwLTE5LjAw
-IENFVC4gU2VlIHRoZQpsaXN0IG9mIGN1cnJlbnQgcGFydGljaXBhbnRzIGJlbG93LiBJZiBhbnlv
-bmUgZWxzZSB3YW50cyB0byBwYXJ0aWNpcGF0ZSwKcGxlYXNlIHNlbmQgbWUgYSBub3RlIGFuZCBJ
-IHdpbGwgZXh0ZW5kIHRoZSBpbnZpdGUuCgogICBKb2hhbm5lcy5UaHVtc2hpcm5Ad2RjLmNvbQog
-ICBWaW5jZW50LmZ1QHNhbXN1bmcuY29tCiAgIGEuZGF3bkBzYW1zdW5nLmNvbQogICBhLm1hbnph
-bmFyZXNAc2Ftc3VuZy5jb20KICAgYnZhbmFzc2NoZUBhY20ub3JnCiAgIGhpbWFuc2h1Lm1hZGhh
-bmlAb3JhY2xlLmNvbQogICBqb3NoaS5rQHNhbXN1bmcuY29tCiAgIGtjaEBudmlkaWEuY29tCiAg
-IG1hcnRpbi5wZXRlcnNlbkBvcmFjbGUuY29tCiAgIG5qLnNoZXR0eUBzYW1zdW5nLmNvbQogICBz
-ZWx2YWt1bWEuczFAc2Ftc3VuZwoKSmF2aWVyCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0t
-ZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3Rp
-bmZvL2RtLWRldmVs
+From: Chaitanya Kulkarni <kch@nvidia.com>
+
+Not all devices can support verify requests which can be mapped to
+the controller specific command. This patch adds a way to emulate
+REQ_OP_VERIFY for NVMeOF block device namespace. We add a new
+workqueue to offload the emulation with the help of
+__blkdev_emulate_verify().
+
+Signed-off-by: Chaitanya Kulkarni <kch@nvidia.com>
+---
+ drivers/nvme/target/core.c        | 12 +++++++-
+ drivers/nvme/target/io-cmd-bdev.c | 51 ++++++++++++++++++++++++++-----
+ drivers/nvme/target/nvmet.h       |  3 ++
+ 3 files changed, 57 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/nvme/target/core.c b/drivers/nvme/target/core.c
+index 8ce4d59cc9e7..8a17a6479073 100644
+--- a/drivers/nvme/target/core.c
++++ b/drivers/nvme/target/core.c
+@@ -16,6 +16,7 @@
+ #include "nvmet.h"
+ 
+ struct workqueue_struct *buffered_io_wq;
++struct workqueue_struct *verify_wq;
+ static const struct nvmet_fabrics_ops *nvmet_transports[NVMF_TRTYPE_MAX];
+ static DEFINE_IDA(cntlid_ida);
+ 
+@@ -1546,11 +1547,17 @@ static int __init nvmet_init(void)
+ 
+ 	nvmet_ana_group_enabled[NVMET_DEFAULT_ANA_GRPID] = 1;
+ 
++	verify_wq = alloc_workqueue("nvmet-verify-wq", WQ_MEM_RECLAIM, 0);
++	if (!verify_wq) {
++		error = -ENOMEM;
++		goto out;
++	}
++
+ 	buffered_io_wq = alloc_workqueue("nvmet-buffered-io-wq",
+ 			WQ_MEM_RECLAIM, 0);
+ 	if (!buffered_io_wq) {
+ 		error = -ENOMEM;
+-		goto out;
++		goto out_free_verify_work_queue;
+ 	}
+ 
+ 	error = nvmet_init_discovery();
+@@ -1566,6 +1573,8 @@ static int __init nvmet_init(void)
+ 	nvmet_exit_discovery();
+ out_free_work_queue:
+ 	destroy_workqueue(buffered_io_wq);
++out_free_verify_work_queue:
++	destroy_workqueue(verify_wq);
+ out:
+ 	return error;
+ }
+@@ -1576,6 +1585,7 @@ static void __exit nvmet_exit(void)
+ 	nvmet_exit_discovery();
+ 	ida_destroy(&cntlid_ida);
+ 	destroy_workqueue(buffered_io_wq);
++	destroy_workqueue(verify_wq);
+ 
+ 	BUILD_BUG_ON(sizeof(struct nvmf_disc_rsp_page_entry) != 1024);
+ 	BUILD_BUG_ON(sizeof(struct nvmf_disc_rsp_page_hdr) != 1024);
+diff --git a/drivers/nvme/target/io-cmd-bdev.c b/drivers/nvme/target/io-cmd-bdev.c
+index 5a888cdadfea..80b8e7bfd1ae 100644
+--- a/drivers/nvme/target/io-cmd-bdev.c
++++ b/drivers/nvme/target/io-cmd-bdev.c
+@@ -433,25 +433,60 @@ static void nvmet_bdev_execute_write_zeroes(struct nvmet_req *req)
+ 	}
+ }
+ 
+-static void nvmet_bdev_execute_verify(struct nvmet_req *req)
++static void __nvmet_req_to_verify_sectors(struct nvmet_req *req,
++		sector_t *sects, sector_t *nr_sects)
+ {
+ 	struct nvme_verify_cmd *verify = &req->cmd->verify;
++
++	*sects = le64_to_cpu(verify->slba) << (req->ns->blksize_shift - 9);
++	*nr_sects = (((sector_t)le16_to_cpu(verify->length) + 1) <<
++			(req->ns->blksize_shift - 9));
++}
++
++static void nvmet_bdev_emulate_verify_work(struct work_struct *w)
++{
++	struct nvmet_req *req = container_of(w, struct nvmet_req, b.work);
++	sector_t nr_sector;
++	sector_t sector;
++	int ret = 0;
++
++	__nvmet_req_to_verify_sectors(req, &sector, &nr_sector);
++	if (!nr_sector)
++		goto out;
++
++	ret = blkdev_emulate_verify(req->ns->bdev, sector, nr_sector,
++			GFP_KERNEL);
++out:
++	nvmet_req_complete(req,
++			   blk_to_nvme_status(req, errno_to_blk_status(ret)));
++}
++
++static void nvmet_bdev_submit_emulate_verify(struct nvmet_req *req)
++{
++	INIT_WORK(&req->b.work, nvmet_bdev_emulate_verify_work);
++	queue_work(verify_wq, &req->b.work);
++}
++
++
++static void nvmet_bdev_execute_verify(struct nvmet_req *req)
++{
+ 	struct bio *bio = NULL;
+ 	sector_t nr_sector;
+ 	sector_t sector;
+-	int ret;
++	int ret = 0;
+ 
+ 	if (!nvmet_check_transfer_len(req, 0))
+ 		return;
+ 
++	/* offload emulation */
+ 	if (!bdev_verify_sectors(req->ns->bdev)) {
+-		nvmet_req_complete(req, NVME_SC_INTERNAL | NVME_SC_DNR);
++		nvmet_bdev_submit_emulate_verify(req);
+ 		return;
+ 	}
+ 
+-	sector = le64_to_cpu(verify->slba) << (req->ns->blksize_shift - 9);
+-	nr_sector = (((sector_t)le16_to_cpu(verify->length) + 1) <<
+-			(req->ns->blksize_shift - 9));
++	__nvmet_req_to_verify_sectors(req, &sector, &nr_sector);
++	if (!nr_sector)
++		goto out;
+ 
+ 	ret = __blkdev_issue_verify(req->ns->bdev, sector, nr_sector,
+ 			GFP_KERNEL, &bio);
+@@ -459,9 +494,9 @@ static void nvmet_bdev_execute_verify(struct nvmet_req *req)
+ 		bio->bi_private = req;
+ 		bio->bi_end_io = nvmet_bio_done;
+ 		submit_bio(bio);
+-	} else {
+-		nvmet_req_complete(req, errno_to_nvme_status(req, ret));
+ 	}
++out:
++	nvmet_req_complete(req, errno_to_nvme_status(req, ret));
+ }
+ 
+ u16 nvmet_bdev_parse_io_cmd(struct nvmet_req *req)
+diff --git a/drivers/nvme/target/nvmet.h b/drivers/nvme/target/nvmet.h
+index 8776dd1a0490..7f3f584b1e7b 100644
+--- a/drivers/nvme/target/nvmet.h
++++ b/drivers/nvme/target/nvmet.h
+@@ -323,6 +323,8 @@ struct nvmet_req {
+ 	union {
+ 		struct {
+ 			struct bio      inline_bio;
++			/* XXX: should we take work out of union ? */
++			struct work_struct      work;
+ 		} b;
+ 		struct {
+ 			bool			mpool_alloc;
+@@ -355,6 +357,7 @@ struct nvmet_req {
+ };
+ 
+ extern struct workqueue_struct *buffered_io_wq;
++extern struct workqueue_struct *verify_wq;
+ 
+ static inline void nvmet_set_result(struct nvmet_req *req, u32 result)
+ {
+-- 
+2.22.1
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
