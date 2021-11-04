@@ -2,139 +2,100 @@ Return-Path: <SRS0=mjIs=PY=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CED14C433EF
-	for <dm-devel@archiver.kernel.org>; Fri,  5 Nov 2021 13:18:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 98418C433EF
+	for <dm-devel@archiver.kernel.org>; Fri,  5 Nov 2021 13:18:25 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 4BDE8610FD
-	for <dm-devel@archiver.kernel.org>; Fri,  5 Nov 2021 13:18:22 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 4BDE8610FD
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=nvidia.com
+	by mail.kernel.org (Postfix) with ESMTPS id 2EBB6610FD
+	for <dm-devel@archiver.kernel.org>; Fri,  5 Nov 2021 13:18:25 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 2EBB6610FD
+Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=opensource.wdc.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-509-Vdw1AamwOAq8ix8U8NVhMA-1; Fri, 05 Nov 2021 09:18:18 -0400
-X-MC-Unique: Vdw1AamwOAq8ix8U8NVhMA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-407-DeEb0UXwPd-9w5IMbLi_ug-1; Fri, 05 Nov 2021 09:18:20 -0400
+X-MC-Unique: DeEb0UXwPd-9w5IMbLi_ug-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 74BCB7FE81;
-	Fri,  5 Nov 2021 13:18:13 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 567AB19EF9;
-	Fri,  5 Nov 2021 13:18:13 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3CAAF18A0734;
+	Fri,  5 Nov 2021 13:18:16 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 10ED3100239F;
+	Fri,  5 Nov 2021 13:18:16 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2DC271806D04;
-	Fri,  5 Nov 2021 13:18:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D707B4EA2F;
+	Fri,  5 Nov 2021 13:18:15 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1A49S4VY020254 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 4 Nov 2021 05:28:04 -0400
+	id 1A4CYJt5004325 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 4 Nov 2021 08:34:19 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 7CA8951DC; Thu,  4 Nov 2021 09:28:04 +0000 (UTC)
+	id AA1692166B26; Thu,  4 Nov 2021 12:34:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 33C4851E3
-	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 09:28:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 45290800159
-	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 09:28:01 +0000 (UTC)
-Received: from NAM11-CO1-obe.outbound.protection.outlook.com
-	(mail-co1nam11on2078.outbound.protection.outlook.com [40.107.220.78])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A3F632166B25
+	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 12:34:16 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9F3E8899EC3
+	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 12:34:16 +0000 (UTC)
+Received: from esa3.hgst.iphmx.com (esa3.hgst.iphmx.com [216.71.153.141])
 	(Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-191-TYycK5lpOly2ScebIKVGfA-1; Thu, 04 Nov 2021 05:27:55 -0400
-X-MC-Unique: TYycK5lpOly2ScebIKVGfA-1
-Received: from MW2PR12MB4667.namprd12.prod.outlook.com (2603:10b6:302:12::28)
-	by MW3PR12MB4459.namprd12.prod.outlook.com (2603:10b6:303:56::22)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4649.15;
-	Thu, 4 Nov 2021 09:27:51 +0000
-Received: from MW2PR12MB4667.namprd12.prod.outlook.com
-	([fe80::3db1:105d:2524:524]) by MW2PR12MB4667.namprd12.prod.outlook.com
-	([fe80::3db1:105d:2524:524%7]) with mapi id 15.20.4649.022;
-	Thu, 4 Nov 2021 09:27:51 +0000
-From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
-To: Christoph Hellwig <hch@lst.de>
-Thread-Topic: [RFC PATCH 0/8] block: add support for REQ_OP_VERIFY
-Thread-Index: AQHX0UfJUBDssfv+ckmT1a3v6/33Gavy9LOAgAAlMQA=
-Date: Thu, 4 Nov 2021 09:27:50 +0000
-Message-ID: <661bcadd-a030-4a72-81ae-ef15080f0241@nvidia.com>
-References: <20211104064634.4481-1-chaitanyak@nvidia.com>
-	<20211104071439.GA21927@lst.de>
-In-Reply-To: <20211104071439.GA21927@lst.de>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
-	Thunderbird/91.2.1
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 98bbf12c-4ee1-4f43-124a-08d99f755fba
-x-ms-traffictypediagnostic: MW3PR12MB4459:
-x-microsoft-antispam-prvs: <MW3PR12MB4459BE38997B6B1FA77FBFADA38D9@MW3PR12MB4459.namprd12.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:4941
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: yUuJ3SFWQxyY+DVgIUZjc9qGr9edCBohngI6/o4rEI6BR2MUHYgb1dq3iiGinaoX/kRNpHdn2AmOE8uz0x9bu7vvTRw71w2tv0rYE0L/UvtDSYGxcQcPKYLh6b14mMYD2QBUJqbkaXI0VXOoWHYQmcB1URlZ3FhMoZ2NlucphDBpadRn+LcU05J9DW3FeI1HUZaIlFoxsc+MN4g6KBjylX6dYh5/VJxv/e58otQ7wGWJBlJn42H5yxwxDLwb4LN3p5tny/n5nOMSNYBzk2jf0kIeUhId9JD6xO1vh9siYxSnxcSURHRiq89z8mhXfotJRCtb9QENVxyTxgoipKYTohnjJM8EG5q4ZYZNZNz6XBoWRGObJhqa08ceZjGp31gR7GoP3kC2h4ERIXZCW7Q3VJ2aSi29kc+jGksRS+iuaCqPAmUUQTltFgH0+3UnvhxBDaaFni8blGsx0MWglD61YaqFU4TS/k+rKyRCQJuKBUMd/ODSW3+fKRCRodb/VcSz52Kec/UUyRXnzaNbFHXfrMRw6X4n+P/tTGrR8f8C5A6v+iukzlFLXLB7V+5ihfblhPSmLMcmmIAyUyyD0TDKDgDrCb1fXBuVUpXPluHTU/wTXAq9j4paApcxZgkrj5OOudZL49RHQJAdJu5zbiSupCYYx3g3HplwpOJBzyoz2N3oaZUSfxN9ugJs8r880ZucZxDzakMha0l8PTBaOsL+6KfoHFI6Zh4OoqM0qSKZ3qgu5RbrfMexi/ZDtytExmi+DAQJg24NGvOovfKkNulZ/g==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:MW2PR12MB4667.namprd12.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(4636009)(366004)(54906003)(6512007)(71200400001)(7406005)(2906002)(66946007)(66476007)(38070700005)(186003)(83380400001)(7416002)(5660300002)(66556008)(64756008)(66446008)(91956017)(316002)(508600001)(6486002)(76116006)(8676002)(53546011)(6506007)(31686004)(4326008)(8936002)(122000001)(107886003)(2616005)(31696002)(86362001)(4744005)(36756003)(6916009)(38100700002)(45980500001)(43740500002);
-	DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?utf-8?B?dmJST3dsZU9qekk5OWFZYVRUMDlEUUVic3dzNUdHRkw0dVN6UjBvZlJ1K1FT?=
-	=?utf-8?B?RXo5cU5pYVVSNnBXTGFHWHhyWC9kZjU3N3hyRzNIV3VFTVd3VEY1OHVDdmtt?=
-	=?utf-8?B?YVMrb1hacm9FTjd5WWpDbzdLVnR5U1BSbmw1SjhIV0ZIVVRhaTRLY042RUJy?=
-	=?utf-8?B?M1hYQ0ZZRXI0ak1PWEJ1bWE0WCsxd3dJMkczUFp2aGxpSi9TdDBoTlRkM0FW?=
-	=?utf-8?B?K3gyTWNUdzJrdzRlSTdSTzJOYTRlUGVBSG9LdmloejkrZGNkTXBlaFJ3ODRk?=
-	=?utf-8?B?RVJKU0J6TnVJS2ZvK01BejdUU3QydHNUWkozYjZIQjlINXp5VUR6UTlNeFJN?=
-	=?utf-8?B?QjNLZk11OUIxR05RUXN4d3BlQ3ZOZ0xrR1JQQldiNTVkRHdOc3lrUUFEelg2?=
-	=?utf-8?B?YjRUb3VrN0lxTlFyMHEvWTUxLyswZ0hvQkFGRFl6QlppMTFBajZ2bm9jSUh4?=
-	=?utf-8?B?QkN2cC9NaVJ2STVHWEs3bEZQcmNwU21qeTNxNjd6SEZFK3ZRM2tGa1JDVW10?=
-	=?utf-8?B?UzZFTXY3UmErSFNjNEprdU5nbnZ0YmxETjN0NUw1OFpVZU5yd2lWbFhNN3c1?=
-	=?utf-8?B?TUxSckF4Mi85RlpTbEQ4dVhCcWtVUURLa1RVYmQyNkxJRVBMSXRBV3QwVTgy?=
-	=?utf-8?B?SzM1ZWhPbW5aN0k3enNVSmJiRjUwTEJ0bUZTVGV2NnBmRUJwemlTSzcwR0s0?=
-	=?utf-8?B?RUxpdlQ4UDhzOHBDaVdwS3NKblZLdDZHSCsrWUlXTGx1WGF5a1ZRWXhIcmRQ?=
-	=?utf-8?B?ZCt1dHd3SktkUzUrYlQxbHQycWM3N2Nib0crRUdRb0pxWFFxMFI1VitiWGxC?=
-	=?utf-8?B?Yi85V1F3RlhDdkVxS2JPb01PZXBTV2V2SHpqcDQxQnBydGt5QmkxV0UxUW9i?=
-	=?utf-8?B?R1RyZGRsM2dzTlo3YStZZWQxbm11SC9RMWlVVU9Kd2x4QmJDU2JJMGgrVGZu?=
-	=?utf-8?B?UWRtL0VSeWJQdWdJVDhTRXpSYnJsQ0NRY1VzYkhtbHRWempZdmFIV0gzVlFV?=
-	=?utf-8?B?WjNwNWtyTG9GRVhQRUMwdVdlVG1icVdRUHVRYzNjaGpZZjI2Z3dMa3hXcTJp?=
-	=?utf-8?B?TXhBSmsrMzlmb0gzTEpnZnFqV0dHa0hOUnlDcWFUN3dFazI3RVZiTkVwcERV?=
-	=?utf-8?B?K2xXclhmeloxS2ZWRk9zRld6bHVBcDlSVUdjTjBtZ1NOQ3prVWorYmNycTVI?=
-	=?utf-8?B?RXhlTUFGOUlkK01hUHV3Y04vM21EUFZ3bS9Qbzl5L1QzdWo2d0dnVlFIbjh4?=
-	=?utf-8?B?M1lYclJialBqeFdhbFhMV2IxQ3lyRjJjeHg0MkIzYmtCaDl4YTRMOHcvdHVB?=
-	=?utf-8?B?TTJqU2hSWUIvczIrOFdCUmRENDZYeGZHVGpqWUYrM09LUU1lRTVIVVJHUExr?=
-	=?utf-8?B?NXVlMGF2WHNsZDhJUXIzQjZXVDBqQXhpVWZEYWZSVUpReXNkTjJ1Sktvd2lY?=
-	=?utf-8?B?L0hNNW5ydTR5LzlaV3ZKU2lLTlVyaWhZQ1lYdVRWQjc0akI4TFZnVXd4V2Np?=
-	=?utf-8?B?SkdYN1llV0dLS3dtN1hjRmdlZnZ3cTFrQXpzb0U2dDVqYlc5WG5oWmtXT2c1?=
-	=?utf-8?B?dGhTK0hySmRHZVNVbTNpWDk5K01nMTlGYkloUFFheFNGREVRMllNOFBTbkQ4?=
-	=?utf-8?B?ZzlYSVoyOTM5V2t4Nnp3SEZqWTMrcSt5cUcyN28zT1lDSG1rMHUybjFXREZ6?=
-	=?utf-8?B?M2t4bUFoWTBCamRUVWliR04rZS84K0wyVGdNK2U1QmhiSHIydllPcnZqdEpj?=
-	=?utf-8?B?SWtiR0x2dUxCSVZyMVVVR1N5OXBwbWxLY05zckF4S3FQTjNzOSsyeEdVRHRs?=
-	=?utf-8?B?NkFsOVFxa0RkcTREbnU5VUs5NDJFZVNXMk96MXA0RS9WNVpVZ052dlR5Snl0?=
-	=?utf-8?B?bXM1STR2OEJFajhBalBoSHJUbkVvRjlrTldORDljYVdLc0NaeE00eWZwb0Vy?=
-	=?utf-8?B?NTBod3N0bFZIbnVJV1R0TlZMNWswWkp1RUZjTTM1RDBjUlZTc1V0L1dxL2hF?=
-	=?utf-8?B?Mjc3Slk5czBvOEpDMlJXcHI4TEZNdm5naGplSE5SUjVCdEtuamthRkkramhk?=
-	=?utf-8?B?eVFCdEJRRlJPK21OQzhmUW9oNm5XeTI5Vm1OanVlbWM3c3FlQTMxcytneUYy?=
-	=?utf-8?B?S1RITEozNEg0ZmM3VW9VUjVsTTd2WWVNS0hsM25VSFdsVjRlQmNoVHRmeFZW?=
-	=?utf-8?B?clNZWGw3VnF0WGRKay9nNnBiY2x5ajBYaDVZRnRxMzZjVjBGa2Y1OSt0bEta?=
-	=?utf-8?Q?+/b9t9uwkegYTRi/sGMO5l83UZc6IsmnE8gSXGHbwQ=3D?=
+	us-mta-364-wgvqclfePgqRtbD340bNkA-2; Thu, 04 Nov 2021 08:34:15 -0400
+X-MC-Unique: wgvqclfePgqRtbD340bNkA-2
+X-IronPort-AV: E=Sophos;i="5.87,208,1631548800"; d="scan'208";a="189493701"
+Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com)
+	([199.255.45.14])
+	by ob1.hgst.iphmx.com with ESMTP; 04 Nov 2021 20:33:08 +0800
+IronPort-SDR: dmhnRkl9ubN5OtKbX0+5iWlM17PCgbmqjbdG7uKdPCkpR0o8NxylqHF8pPMhc7upjr2Sf/U3g/
+	w3RnYIrlVag2ZK37JzqkW8Vko0LjVrCmW+B++tonJ870ugIkJYM4O81fC8r6EGoZ88NLWjU7wI
+	ZsJ66djn40YtG8wIqW77Nj0NwOPk4yjrtnRcwXK9ZxwK+PWjNK+67wkKC6GMXa3+8RWjcJVaJ8
+	TEn8yPTvss1BQoc+iOtTZIBO4sdThs1RvkeM6GXpY3ATob+mSydx+2CeRsnqFwv369dtXg7nPT
+	FnUp4tFsdTFufHTKomJhxJg/
+Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
+	by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+	04 Nov 2021 05:08:27 -0700
+IronPort-SDR: K3a7oRnmuf1tN3WAHYy2WqsdLU261ZpacoeEOS0+n/tpLxI5DBowlABX1bVjEWiC52iYJJK+Nk
+	ujLOdFlbDnBSbBo51u8EprmGjcXWRiAdN6H9CN+DNxNFP0Nhq/GYVdM8e7fQw7dv8bRHT00VaC
+	La6Jtcg+bsaSYNR+p6CtoFPTHXWjZHO3+Olvvw3VQg0/NmSsIKiSJiyV0uB3lqYITePDuRFuJG
+	0YLc3tv/mJwa4hu3S2GG6+ZRmRB/hlD3sAkkBitQ00Z8wydIoMeWgvjQRelCY531RMlzYZ0AIs
+	MuE=
+WDCIronportException: Internal
+Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
+	by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+	04 Nov 2021 05:33:09 -0700
+Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+	by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4HlNMm72vhz1RtVx
+	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 05:33:08 -0700 (PDT)
+X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
+Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
+	by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+	(amavisd-new, port 10026)
+	with ESMTP id trtzx6nmejvD for <dm-devel@redhat.com>;
+	Thu,  4 Nov 2021 05:33:07 -0700 (PDT)
+Received: from [10.225.54.48] (unknown [10.225.54.48])
+	by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4HlNMd5TBrz1RtVl;
+	Thu,  4 Nov 2021 05:33:01 -0700 (PDT)
+Message-ID: <bd36ee58-8273-cd0a-295e-0c66b0142bcd@opensource.wdc.com>
+Date: Thu, 4 Nov 2021 21:33:00 +0900
 MIME-Version: 1.0
-X-OriginatorOrg: Nvidia.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: MW2PR12MB4667.namprd12.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 98bbf12c-4ee1-4f43-124a-08d99f755fba
-X-MS-Exchange-CrossTenant-originalarrivaltime: 04 Nov 2021 09:27:51.2077 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 43083d15-7273-40c1-b7db-39efd9ccc17a
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: o8nQ5+lRSp4ubli4CdCcciY7LidSaFe1BKx5lA48eybEv9N7DUFAnuG9xy43f9xKGZ8B9qCvmyvLQrd3IYx9/g==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: MW3PR12MB4459
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0)
+	Gecko/20100101 Thunderbird/91.2.1
+To: Chaitanya Kulkarni <chaitanyak@nvidia.com>, linux-block@vger.kernel.org,
+	linux-raid@vger.kernel.org, linux-nvme@lists.infradead.org,
+	linux-scsi@vger.kernel.org, target-devel@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org,
+	dm-devel@redhat.com
+References: <20211104064634.4481-1-chaitanyak@nvidia.com>
+	<20211104064634.4481-3-chaitanyak@nvidia.com>
+From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Organization: Western Digital
+In-Reply-To: <20211104064634.4481-3-chaitanyak@nvidia.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -143,48 +104,22 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from base64 to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1A49S4VY020254
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Fri, 05 Nov 2021 09:15:20 -0400
-Cc: "snitzer@redhat.com" <snitzer@redhat.com>,
-	"ebiggers@google.com" <ebiggers@google.com>,
-	"djwong@kernel.org" <djwong@kernel.org>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"song@kernel.org" <song@kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"target-devel@vger.kernel.org" <target-devel@vger.kernel.org>,
-	"adilger.kernel@dilger.ca" <adilger.kernel@dilger.ca>,
-	"osandov@fb.com" <osandov@fb.com>, "agk@redhat.com" <agk@redhat.com>,
-	"javier@javigon.com" <javier@javigon.com>,
-	"bvanassche@acm.org" <bvanassche@acm.org>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	"dongli.zhang@oracle.com" <dongli.zhang@oracle.com>,
-	"willy@infradead.org" <willy@infradead.org>,
-	"danil.kipnis@cloud.ionos.com" <danil.kipnis@cloud.ionos.com>,
-	"idryomov@gmail.com" <idryomov@gmail.com>,
-	"jinpu.wang@cloud.ionos.com" <jinpu.wang@cloud.ionos.com>,
-	Chaitanya Kulkarni <chaitanyak@nvidia.com>,
-	"jejb@linux.ibm.com" <jejb@linux.ibm.com>,
-	"josef@toxicpanda.com" <josef@toxicpanda.com>,
-	"ming.lei@redhat.com" <ming.lei@redhat.com>,
-	"linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
-	"dsterba@suse.com" <dsterba@suse.com>,
-	"viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>,
-	"kbusch@kernel.org" <kbusch@kernel.org>,
-	"sagi@grimberg.me" <sagi@grimberg.me>, "axboe@kernel.dk" <axboe@kernel.dk>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"tytso@mit.edu" <tytso@mit.edu>,
-	"martin.petersen@oracle.com" <martin.petersen@oracle.com>,
-	"clm@fb.com" <clm@fb.com>,
-	"johannes.thumshirn@wdc.com" <johannes.thumshirn@wdc.com>,
-	"jlayton@kernel.org" <jlayton@kernel.org>,
-	"linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
-	"jefflexu@linux.alibaba.com" <jefflexu@linux.alibaba.com>,
-	"jack@suse.com" <jack@suse.com>,
-	"linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
-Subject: Re: [dm-devel] [RFC PATCH 0/8] block: add support for REQ_OP_VERIFY
+Cc: snitzer@redhat.com, ebiggers@google.com, djwong@kernel.org, clm@fb.com,
+	adilger.kernel@dilger.ca, osandov@fb.com, agk@redhat.com,
+	javier@javigon.com, sagi@grimberg.me, dongli.zhang@oracle.com,
+	willy@infradead.org, hch@lst.de, danil.kipnis@cloud.ionos.com,
+	idryomov@gmail.com, jinpu.wang@cloud.ionos.com,
+	Chaitanya Kulkarni <kch@nvidia.com>, jejb@linux.ibm.com,
+	josef@toxicpanda.com, ming.lei@redhat.com, dsterba@suse.com,
+	viro@zeniv.linux.org.uk, jefflexu@linux.alibaba.com,
+	bvanassche@acm.org, axboe@kernel.dk, tytso@mit.edu,
+	martin.petersen@oracle.com, song@kernel.org,
+	johannes.thumshirn@wdc.com, jlayton@kernel.org,
+	kbusch@kernel.org, jack@suse.com
+Subject: Re: [dm-devel] [RFC PATCH 2/8] scsi: add REQ_OP_VERIFY support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -198,40 +133,175 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <868F285F0B210D4A90A01CBAF4B97880@namprd12.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 11/4/2021 12:14 AM, Christoph Hellwig wrote:
-> External email: Use caution opening links or attachments
+On 2021/11/04 15:46, Chaitanya Kulkarni wrote:
+> From: Chaitanya Kulkarni <kch@nvidia.com>
 > 
+> Signed-off-by: Chaitanya Kulkarni <kch@nvidia.com>
+> ---
+>  drivers/scsi/sd.c | 52 +++++++++++++++++++++++++++++++++++++++++++++++
+>  drivers/scsi/sd.h |  1 +
+>  2 files changed, 53 insertions(+)
 > 
-> What is the actual use case here?
+> diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+> index a3d2d4bc4a3d..7f2c4eb98cf8 100644
+> --- a/drivers/scsi/sd.c
+> +++ b/drivers/scsi/sd.c
+> @@ -106,6 +106,7 @@ MODULE_ALIAS_SCSI_DEVICE(TYPE_ZBC);
+>  
+>  static void sd_config_discard(struct scsi_disk *, unsigned int);
+>  static void sd_config_write_same(struct scsi_disk *);
+> +static void sd_config_verify(struct scsi_disk *sdkp);
+>  static int  sd_revalidate_disk(struct gendisk *);
+>  static void sd_unlock_native_capacity(struct gendisk *disk);
+>  static int  sd_probe(struct device *);
+> @@ -995,6 +996,41 @@ static blk_status_t sd_setup_write_zeroes_cmnd(struct scsi_cmnd *cmd)
+>  	return sd_setup_write_same10_cmnd(cmd, false);
+>  }
+>  
+> +static void sd_config_verify(struct scsi_disk *sdkp)
+> +{
+> +	struct request_queue *q = sdkp->disk->queue;
+> +
+> +	/* XXX: use same pattern as sd_config_write_same(). */
+> +	blk_queue_max_verify_sectors(q, UINT_MAX >> 9);
+
+VERIFY 10, 12, 16 and 32 commands are optional and may not be implemented by a
+device. So setting this unconditionally is wrong.
+At the very least you must have an "if (sdkp->verify_16)" here, and call
+"blk_queue_max_verify_sectors(q, 0);" if the device does not support verify.
+
+> +}
+> +
+> +static blk_status_t sd_setup_verify_cmnd(struct scsi_cmnd *cmd)
+> +{
+> +       struct request *rq = cmd->request;
+> +       struct scsi_device *sdp = cmd->device;
+> +       struct scsi_disk *sdkp = scsi_disk(rq->rq_disk);
+> +       u64 lba = sectors_to_logical(sdp, blk_rq_pos(rq));
+> +       u32 nr_blocks = sectors_to_logical(sdp, blk_rq_sectors(rq));
+> +
+> +       if (!sdkp->verify_16)
+> +	       return BLK_STS_NOTSUPP;
+
+I think this should be "return BLK_STS_TARGET;"
+
+> +
+> +       cmd->cmd_len = 16;
+> +       cmd->cmnd[0] = VERIFY_16;
+
+And what if the device supports VERIFY 10 or 12 but not VERIFY 16 ?
+
+> +       /* skip veprotect / dpo / bytchk */
+> +       cmd->cmnd[1] = 0;
+> +       put_unaligned_be64(lba, &cmd->cmnd[2]);
+> +       put_unaligned_be32(nr_blocks, &cmd->cmnd[10]);
+> +       cmd->cmnd[14] = 0;
+> +       cmd->cmnd[15] = 0;
+> +
+> +       cmd->allowed = SD_MAX_RETRIES;
+> +       cmd->sc_data_direction = DMA_NONE;
+> +       cmd->transfersize = 0;
+> +
+> +       return BLK_STS_OK;
+> +}
+> +
+>  static void sd_config_write_same(struct scsi_disk *sdkp)
+>  {
+>  	struct request_queue *q = sdkp->disk->queue;
+> @@ -1345,6 +1381,8 @@ static blk_status_t sd_init_command(struct scsi_cmnd *cmd)
+>  		}
+>  	case REQ_OP_WRITE_ZEROES:
+>  		return sd_setup_write_zeroes_cmnd(cmd);
+> +	case REQ_OP_VERIFY:
+> +		return sd_setup_verify_cmnd(cmd);
+>  	case REQ_OP_WRITE_SAME:
+>  		return sd_setup_write_same_cmnd(cmd);
+>  	case REQ_OP_FLUSH:
+> @@ -2029,6 +2067,7 @@ static int sd_done(struct scsi_cmnd *SCpnt)
+>  	switch (req_op(req)) {
+>  	case REQ_OP_DISCARD:
+>  	case REQ_OP_WRITE_ZEROES:
+> +	case REQ_OP_VERIFY:
+>  	case REQ_OP_WRITE_SAME:
+>  	case REQ_OP_ZONE_RESET:
+>  	case REQ_OP_ZONE_RESET_ALL:
+> @@ -3096,6 +3135,17 @@ static void sd_read_write_same(struct scsi_disk *sdkp, unsigned char *buffer)
+>  		sdkp->ws10 = 1;
+>  }
+>  
+> +static void sd_read_verify(struct scsi_disk *sdkp, unsigned char *buffer)
+> +{
+> +       struct scsi_device *sdev = sdkp->device;
+> +
+> +       sd_printk(KERN_INFO, sdkp, "VERIFY16 check.\n");
+
+Remove this message please.
+
+> +       if (scsi_report_opcode(sdev, buffer, SD_BUF_SIZE, VERIFY_16) == 1) {
+> +	       sd_printk(KERN_INFO, sdkp, " VERIFY16 in ON .\n");
+
+And this one too.
+
+> +               sdkp->verify_16 = 1;
+
+Why not checking for VERIFY 10 and 12 if VERIFY 16 is not supported ?
+Also, why don't you call "blk_queue_max_verify_sectors(q, UINT_MAX >> 9);" here
+instead of adding the not so useful sd_config_verify() helper ?
+
+> +       }
+> +}
+> +
+>  static void sd_read_security(struct scsi_disk *sdkp, unsigned char *buffer)
+>  {
+>  	struct scsi_device *sdev = sdkp->device;
+> @@ -3224,6 +3274,7 @@ static int sd_revalidate_disk(struct gendisk *disk)
+>  		sd_read_cache_type(sdkp, buffer);
+>  		sd_read_app_tag_own(sdkp, buffer);
+>  		sd_read_write_same(sdkp, buffer);
+> +		sd_read_verify(sdkp, buffer);
+>  		sd_read_security(sdkp, buffer);
+>  	}
+>  
+> @@ -3265,6 +3316,7 @@ static int sd_revalidate_disk(struct gendisk *disk)
+>  
+>  	set_capacity_and_notify(disk, logical_to_sectors(sdp, sdkp->capacity));
+>  	sd_config_write_same(sdkp);
+> +	sd_config_verify(sdkp);
+>  	kfree(buffer);
+>  
+>  	/*
+> diff --git a/drivers/scsi/sd.h b/drivers/scsi/sd.h
+> index b59136c4125b..94a86bf6dac4 100644
+> --- a/drivers/scsi/sd.h
+> +++ b/drivers/scsi/sd.h
+> @@ -120,6 +120,7 @@ struct scsi_disk {
+>  	unsigned	lbpvpd : 1;
+>  	unsigned	ws10 : 1;
+>  	unsigned	ws16 : 1;
+> +	unsigned        verify_16 : 1;
+
+See right above this line how write same supports the 10 and 16 variants. I
+think you need the same here. And very likely, you also need the 32 version in
+case the device has DIF/DIX (type 2 protection).
+
+>  	unsigned	rc_basis: 2;
+>  	unsigned	zoned: 2;
+>  	unsigned	urswrz : 1;
 > 
 
-One of the immediate use-case is to use this interface with XFS 
-scrubbing infrastructure [1] (by replacing any SCSI calls e.g. sg_io() 
-with BLKVERIFY ioctl() calls corresponding to REQ_OP_VERIFY) and 
-eventually allow and extend other file systems to use it for scrubbing.
 
-[1] man xfs_scrub :-
--x     Read all file data extents to look for disk errors.
-               xfs_scrub will issue O_DIRECT reads to the block device
-               directly.  If the block device is a SCSI disk, it will
-               instead issue READ VERIFY commands directly to the disk.
-               If media errors are found, the error report will include
-               the disk offset, in bytes.  If the media errors affect a
-               file, the report will also include the inode number and
-               file offset, in bytes.  These actions will confirm that
-               all file data blocks can be read from storage.
-
-
+-- 
+Damien Le Moal
+Western Digital Research
 
 --
 dm-devel mailing list
