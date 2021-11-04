@@ -2,70 +2,62 @@ Return-Path: <SRS0=ptSP=PX=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 78EA2C433EF
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 17:15:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 97A04C433F5
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 17:28:15 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 0FDCE60F56
-	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 17:15:49 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 0FDCE60F56
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=linux.microsoft.com
+	by mail.kernel.org (Postfix) with ESMTPS id 3399E610D0
+	for <dm-devel@archiver.kernel.org>; Thu,  4 Nov 2021 17:28:15 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 3399E610D0
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=kernel.org
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-181-8RN90zpyP7mgV1eOJcFJjg-1; Thu, 04 Nov 2021 13:15:45 -0400
-X-MC-Unique: 8RN90zpyP7mgV1eOJcFJjg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-69-MIbhSoBbOfKe4zd0HUnk3w-1; Thu, 04 Nov 2021 13:28:12 -0400
+X-MC-Unique: MIbhSoBbOfKe4zd0HUnk3w-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 030B018125C2;
-	Thu,  4 Nov 2021 17:15:40 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3588C18A8F;
-	Thu,  4 Nov 2021 17:15:39 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id EA50FBD52A;
+	Thu,  4 Nov 2021 17:28:04 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AC63319C79;
+	Thu,  4 Nov 2021 17:28:04 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B49C61801241;
-	Thu,  4 Nov 2021 17:15:37 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 087E34E58F;
+	Thu,  4 Nov 2021 17:28:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1A4HCGQQ003109 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 4 Nov 2021 13:12:16 -0400
+	id 1A4HQ6Ah004209 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 4 Nov 2021 13:26:07 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 9299F51E1; Thu,  4 Nov 2021 17:12:16 +0000 (UTC)
+	id CD44F2166B26; Thu,  4 Nov 2021 17:26:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8CB1A51DC
-	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 17:12:13 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C7BBF2166B25
+	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 17:26:04 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B52738007B1
-	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 17:12:13 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-320-XM6jgzauPUypRKrtov2z4g-1;
-	Thu, 04 Nov 2021 13:12:12 -0400
-X-MC-Unique: XM6jgzauPUypRKrtov2z4g-1
-Received: from [10.137.106.139] (unknown [131.107.159.11])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 5ED1720ABA94;
-	Thu,  4 Nov 2021 10:12:10 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 5ED1720ABA94
-Message-ID: <8d12dcf4-165d-9db6-5a42-591bc8b97c00@linux.microsoft.com>
-Date: Thu, 4 Nov 2021 10:12:09 -0700
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E79728007B1
+	for <dm-devel@redhat.com>; Thu,  4 Nov 2021 17:26:03 +0000 (UTC)
+Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) (Using TLS)
+	by relay.mimecast.com with ESMTP id us-mta-469-nSR1uk1VNAGPqMbG-r8qaA-1;
+	Thu, 04 Nov 2021 13:26:00 -0400
+X-MC-Unique: nSR1uk1VNAGPqMbG-r8qaA-1
+Received: by mail.kernel.org (Postfix) with ESMTPSA id A43CB60EBC;
+	Thu,  4 Nov 2021 17:25:58 +0000 (UTC)
+Date: Thu, 4 Nov 2021 10:25:58 -0700
+From: "Darrick J. Wong" <djwong@kernel.org>
+To: Chaitanya Kulkarni <chaitanyak@nvidia.com>
+Message-ID: <20211104172558.GH2237511@magnolia>
+References: <20211104064634.4481-1-chaitanyak@nvidia.com>
+	<20211104064634.4481-2-chaitanyak@nvidia.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
-	Thunderbird/91.2.1
-To: Roberto Sassu <roberto.sassu@huawei.com>,
-	Eric Biggers <ebiggers@kernel.org>
-References: <1634151995-16266-1-git-send-email-deven.desai@linux.microsoft.com>
-	<1634151995-16266-13-git-send-email-deven.desai@linux.microsoft.com>
-	<YWcyYBuNppjrVOe2@gmail.com>
-	<9089bdb0-b28a-9fa0-c510-00fa275af621@linux.microsoft.com>
-	<0b4c9a91afb441b085ec914118617ee7@huawei.com>
-From: Deven Bowers <deven.desai@linux.microsoft.com>
-In-Reply-To: <0b4c9a91afb441b085ec914118617ee7@huawei.com>
+In-Reply-To: <20211104064634.4481-2-chaitanyak@nvidia.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -74,28 +66,25 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1A4HCGQQ003109
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>,
-	"linux-security-module@vger.kernel.org"
-	<linux-security-module@vger.kernel.org>, "tytso@mit.edu" <tytso@mit.edu>,
-	"paul@paul-moore.com" <paul@paul-moore.com>,
-	"snitzer@redhat.com" <snitzer@redhat.com>,
-	"corbet@lwn.net" <corbet@lwn.net>, "jannh@google.com" <jannh@google.com>,
-	"linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-	"jmorris@namei.org" <jmorris@namei.org>,
-	"eparis@redhat.com" <eparis@redhat.com>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"linux-audit@redhat.com" <linux-audit@redhat.com>,
-	"linux-fscrypt@vger.kernel.org" <linux-fscrypt@vger.kernel.org>,
-	"linux-integrity@vger.kernel.org" <linux-integrity@vger.kernel.org>,
-	"agk@redhat.com" <agk@redhat.com>, "serge@hallyn.com" <serge@hallyn.com>
-Subject: Re: [dm-devel] [RFC PATCH v7 12/16] fsverity|security: add security
- hooks to fsverity digest and signature
+Cc: snitzer@redhat.com, ebiggers@google.com, linux-nvme@lists.infradead.org,
+	song@kernel.org, dm-devel@redhat.com,
+	target-devel@vger.kernel.org, adilger.kernel@dilger.ca,
+	hch@lst.de, agk@redhat.com, javier@javigon.com,
+	bvanassche@acm.org, linux-scsi@vger.kernel.org,
+	dongli.zhang@oracle.com, willy@infradead.org, osandov@fb.com,
+	danil.kipnis@cloud.ionos.com, idryomov@gmail.com,
+	jinpu.wang@cloud.ionos.com, Chaitanya Kulkarni <kch@nvidia.com>,
+	jejb@linux.ibm.com, josef@toxicpanda.com, ming.lei@redhat.com,
+	linux-raid@vger.kernel.org, dsterba@suse.com,
+	viro@zeniv.linux.org.uk, kbusch@kernel.org, sagi@grimberg.me,
+	axboe@kernel.dk, linux-block@vger.kernel.org, tytso@mit.edu,
+	martin.petersen@oracle.com, clm@fb.com,
+	johannes.thumshirn@wdc.com, jlayton@kernel.org,
+	linux-xfs@vger.kernel.org, jefflexu@linux.alibaba.com,
+	jack@suse.com, linux-fsdevel@vger.kernel.org
+Subject: Re: [dm-devel] [RFC PATCH 1/8] block: add support for REQ_OP_VERIFY
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -109,64 +98,275 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-Ck9uIDExLzMvMjAyMSA1OjI4IEFNLCBSb2JlcnRvIFNhc3N1IHdyb3RlOgo+PiBGcm9tOiBEZXZl
-biBCb3dlcnMgW21haWx0bzpkZXZlbi5kZXNhaUBsaW51eC5taWNyb3NvZnQuY29tXQo+PiBTZW50
-OiBGcmlkYXksIE9jdG9iZXIgMTUsIDIwMjEgOToyNiBQTQo+PiBPbiAxMC8xMy8yMDIxIDEyOjI0
-IFBNLCBFcmljIEJpZ2dlcnMgd3JvdGU6Cj4+PiBPbiBXZWQsIE9jdCAxMywgMjAyMSBhdCAxMjow
-NjozMVBNIC0wNzAwLAo+PiBkZXZlbi5kZXNhaUBsaW51eC5taWNyb3NvZnQuY29tIHdyb3RlOgo+
-Pj4+IEZyb206IEZhbiBXdSA8d3VmYW5AbGludXgubWljcm9zb2Z0LmNvbT4KPj4+Pgo+Pj4+IEFk
-ZCBzZWN1cml0eV9pbm9kZV9zZXRzZWN1cml0eSB0byBmc3Zlcml0eSBzaWduYXR1cmUgdmVyaWZp
-Y2F0aW9uLgo+Pj4+IFRoaXMgY2FuIGxldCBMU01zIHNhdmUgdGhlIHNpZ25hdHVyZSBkYXRhIGFu
-ZCBkaWdlc3QgaGFzaGVzIHByb3ZpZGVkCj4+Pj4gYnkgZnN2ZXJpdHkuCj4+PiBDYW4geW91IGVs
-YWJvcmF0ZSBvbiB3aHkgTFNNcyBuZWVkIHRoaXMgaW5mb3JtYXRpb24/Cj4+IFRoZSBwcm9wb3Nl
-ZCBMU00gKElQRSkgb2YgdGhpcyBzZXJpZXMgd2lsbCBiZSB0aGUgb25seSBvbmUgdG8gbmVlZAo+
-PiB0aGlzIGluZm9ybWF0aW9uIGF0IHRoZcKgIG1vbWVudC4gSVBF4oCZcyBnb2FsIGlzIHRvIGhh
-dmUgcHJvdmlkZQo+PiB0cnVzdC1iYXNlZCBhY2Nlc3MgY29udHJvbC4gVHJ1c3QgYW5kIEludGVn
-cml0eSBhcmUgdGllZCB0b2dldGhlciwKPj4gYXMgeW91IGNhbm5vdCBwcm92ZSB0cnVzdCB3aXRo
-b3V0IHByb3ZpbmcgaW50ZWdyaXR5Lgo+IEkgd2FudGVkIHRvIGdvIGJhY2sgb24gdGhpcyBxdWVz
-dGlvbi4KPgo+IEl0IHNlZW1zLCBhdCBsZWFzdCBmb3IgZnN2ZXJpdHksIHRoYXQgeW91IGNvdWxk
-IG9idGFpbiB0aGUKPiByb290IGRpZ2VzdCBhdCBydW4tdGltZSwgd2l0aG91dCBzdG9yaW5nIGl0
-IGluIGEgc2VjdXJpdHkgYmxvYi4KPgo+IEkgdGhvdWdodCBJIHNob3VsZCB1c2UgZnN2ZXJpdHlf
-Z2V0X2luZm8oKSBidXQgdGhlIGZzdmVyaXR5X2luZm8KPiBzdHJ1Y3R1cmUgaXMgbm90IGV4cG9y
-dGVkIChpdCBpcyBkZWZpbmVkIGluIGZzL3Zlcml0eS9mc3Zlcml0eV9wcml2YXRlLmgpLgo+Cj4g
-VGhlbiwgSSBkZWZpbmVkIGEgbmV3IGZ1bmN0aW9uLCBmc3Zlcml0eV9nZXRfZmlsZV9kaWdlc3Qo
-KSB0byBjb3B5Cj4gdGhlIGZpbGVfZGlnZXN0IG1lbWJlciBvZiBmc3Zlcml0eV9pbmZvIHRvIGEg
-YnVmZmVyIGFuZCB0byBwYXNzCj4gdGhlIGFzc29jaWF0ZWQgaGFzaCBhbGdvcml0aG0uCj4KPiBX
-aXRoIHRoYXQsIHRoZSBjb2RlIG9mIGV2YWx1YXRlKCkgZm9yIERJR0xJTSBiZWNvbWVzOgo+Cj4g
-ICAgICAgICAgaW5mbyA9IGZzdmVyaXR5X2dldF9pbmZvKGZpbGVfaW5vZGUoY3R4LT5maWxlKSk7
-Cj4gICAgICAgICAgaWYgKGluZm8pCj4gICAgICAgICAgICAgICAgICByZXQgPSBmc3Zlcml0eV9n
-ZXRfZmlsZV9kaWdlc3QoaW5mbywgYnVmZmVyLCBzaXplb2YoYnVmZmVyKSwgJmFsZ28pOwo+Cj4g
-ICAgICAgICAgaWYgKCFzdHJjbXAoZXhwZWN0LT5kYXRhLCAiZGlnbGltIikgJiYgcmV0ID4gMCkg
-ewo+ICAgICAgICAgICAgICAgICAgcmV0ID0gZGlnbGltX2RpZ2VzdF9nZXRfaW5mbyhidWZmZXIs
-IGFsZ28sIENPTVBBQ1RfRklMRSwgJm1vZGlmaWVycywgJmFjdGlvbnMpOwo+ICAgICAgICAgICAg
-ICAgICAgaWYgKCFyZXQpCj4gICAgICAgICAgICAgICAgICAgICAgICAgIHJldHVybiB0cnVlOwo+
-ICAgICAgICAgIH0KVGhpcyB3b3VsZCB3b3JrIHdpdGggdGhlIGRpZ2VzdCB3aXRoIGEgYml0IG1v
-cmUgY29kZSBpbiBmcy12ZXJpdHkuIEl0CmFsc28gaGFzIGJlbmVmaXRzIGlmIHRoZXJlIGFyZSBv
-dGhlciBjYWxsZXJzIHdobyB3YW50IHRoaXMgaW5mb3JtYXRpb24uCgpJIHdhcyBwbGFubmluZyBv
-biBncm91cGluZyB0aGUgZGlnZXN0IGFuZCBzaWduYXR1cmUgaW50byAKYXB1YmxpY19rZXlfc2ln
-bmF0dXJlCnN0cnVjdHVyZSBpbiB2OCB0byBwYXNzIHRoZSBkaWdlc3QsIGRpZ2VzdCBhbGdvcml0
-aG0sZGlnZXN0IHNpemUsIHNpZ25hdHVyZQphbmQgc2lnbmF0dXJlIHNpemUgKGFzIG9wcG9zZWQg
-dG8gZGVmaW5pbmcgYSBuZXcgc3RydWN0Zm9yIHRoaXMgcHVycG9zZSksCnJlZHVjaW5nIHRoZSBu
-dW1iZXIgb2YgTFNNIGhvb2sgY2FsbHMgZG93biB0byBvbmUgZnVuY3Rpb25pbiBmc3Zlcml0eS4K
-CkkgdGhpbmsgYm90aCBhcHByb2FjaGVzIGhhdmUgbWVyaXQuIGZzdmVyaXR5X2dldF9maWxlX2Rp
-Z2VzdCBpcyBtb3JlIHVzZWZ1bAppZiB0aGVyZSBhcmUgY2FsbGVycyBvdXRzaWRlIG9mIExTTXMg
-dGhhdCB3YW50IHRoaXMgaW5mb3JtYXRpb24uIFRoZSBMU00gCmhvb2sKaXMgY2xlYW5lciBpZiBv
-bmx5IExTTXMgd2FudCB0aGlzIGluZm9ybWF0aW9uLgoKQXQgbGVhc3QsIGF0IHRoZSBtb21lbnQs
-IGl0IHNlZW1zIGxpa2UgaXQncyBvbmx5IElQRSB3aG8gd2FudHMgdGhpcyAKaW5mb3JtYXRpb24s
-CmFuZCBpdCdzIG5vdCBsaWtlIGl0IHdvbid0IGJlIGFibGUgdG8gY2hhbmdlIGxhdGVyIGlmIHRo
-ZSBuZWVkIGFyaXNlcywgCmFzIHRoaXMKaXMgYWxsIGltcGxlbWVudGF0aW9uIGRldGFpbHMgdGhh
-dCB3b3VsZG4ndCBlZmZlY3QgdGhlIGVuZC11c2VyLgoKSSdsbCBkZWZlciB0byBFcmljIC0gaGlz
-IG9waW5pb24gaG9sZHMgdGhlIG1vc3Qgd2VpZ2h0LCBhcyBmc3Zlcml0eSB3b3VsZCBiZQp0aGUg
-bWFpbiBjb2RlIGFmZmVjdGVkIGluIGVpdGhlciBjYXNlLgoKCi0tCmRtLWRldmVsIG1haWxpbmcg
-bGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21haWxt
-YW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Wed, Nov 03, 2021 at 11:46:27PM -0700, Chaitanya Kulkarni wrote:
+> From: Chaitanya Kulkarni <kch@nvidia.com>
+> 
+> This adds a new block layer operation to offload verifying a range of
+> LBAs. This support is needed in order to provide file systems and
+> fabrics, kernel components to offload LBA verification when it is
+> supported by the hardware controller. In case hardware offloading is
+> not supported then we provide APIs to emulate the same. The prominent
+> example of that is NVMe Verify command. We also provide an emulation of
+> the same operation which can be used in case H/W does not support
+> verify. This is still useful when block device is remotely attached e.g.
+> using NVMeOF.
+> 
+> Signed-off-by: Chaitanya Kulkarni <kch@nvidia.com>
+> ---
+>  Documentation/ABI/testing/sysfs-block |  14 ++
+>  block/blk-core.c                      |   5 +
+>  block/blk-lib.c                       | 192 ++++++++++++++++++++++++++
+>  block/blk-merge.c                     |  19 +++
+>  block/blk-settings.c                  |  17 +++
+>  block/blk-sysfs.c                     |   8 ++
+>  block/blk-zoned.c                     |   1 +
+>  block/bounce.c                        |   1 +
+>  block/ioctl.c                         |  35 +++++
+>  include/linux/bio.h                   |  10 +-
+>  include/linux/blk_types.h             |   2 +
+>  include/linux/blkdev.h                |  31 +++++
+>  include/uapi/linux/fs.h               |   1 +
+>  13 files changed, 332 insertions(+), 4 deletions(-)
+> 
+
+(skipping to the ioctl part; I didn't see anything obviously weird in
+the block/ changes)
+
+> diff --git a/block/ioctl.c b/block/ioctl.c
+> index d61d652078f4..5e1b3c4660bf 100644
+> --- a/block/ioctl.c
+> +++ b/block/ioctl.c
+> @@ -168,6 +168,39 @@ static int blk_ioctl_zeroout(struct block_device *bdev, fmode_t mode,
+>  			BLKDEV_ZERO_NOUNMAP);
+>  }
+>  
+> +static int blk_ioctl_verify(struct block_device *bdev, fmode_t mode,
+> +		unsigned long arg)
+> +{
+> +	uint64_t range[2];
+> +	struct address_space *mapping;
+> +	uint64_t start, end, len;
+> +
+> +	if (!(mode & FMODE_WRITE))
+> +		return -EBADF;
+
+Why does the fd have to be opened writable?  Isn't this a read test?
+
+> +
+> +	if (copy_from_user(range, (void __user *)arg, sizeof(range)))
+> +		return -EFAULT;
+> +
+> +	start = range[0];
+> +	len = range[1];
+> +	end = start + len - 1;
+> +
+> +	if (start & 511)
+> +		return -EINVAL;
+> +	if (len & 511)
+> +		return -EINVAL;
+> +	if (end >= (uint64_t)i_size_read(bdev->bd_inode))
+> +		return -EINVAL;
+> +	if (end < start)
+> +		return -EINVAL;
+> +
+> +	/* Invalidate the page cache, including dirty pages */
+> +	mapping = bdev->bd_inode->i_mapping;
+> +	truncate_inode_pages_range(mapping, start, end);
+
+Why do we need to invalidate the page cache to verify media?  Won't that
+cause data loss if those pages were dirty and about to be flushed?
+
+--D
+
+> +
+> +	return blkdev_issue_verify(bdev, start >> 9, len >> 9, GFP_KERNEL);
+> +}
+> +
+>  static int put_ushort(unsigned short __user *argp, unsigned short val)
+>  {
+>  	return put_user(val, argp);
+> @@ -460,6 +493,8 @@ static int blkdev_common_ioctl(struct block_device *bdev, fmode_t mode,
+>  				BLKDEV_DISCARD_SECURE);
+>  	case BLKZEROOUT:
+>  		return blk_ioctl_zeroout(bdev, mode, arg);
+> +	case BLKVERIFY:
+> +		return blk_ioctl_verify(bdev, mode, arg);
+>  	case BLKREPORTZONE:
+>  		return blkdev_report_zones_ioctl(bdev, mode, cmd, arg);
+>  	case BLKRESETZONE:
+> diff --git a/include/linux/bio.h b/include/linux/bio.h
+> index c74857cf1252..d660c37b7d6c 100644
+> --- a/include/linux/bio.h
+> +++ b/include/linux/bio.h
+> @@ -63,7 +63,8 @@ static inline bool bio_has_data(struct bio *bio)
+>  	    bio->bi_iter.bi_size &&
+>  	    bio_op(bio) != REQ_OP_DISCARD &&
+>  	    bio_op(bio) != REQ_OP_SECURE_ERASE &&
+> -	    bio_op(bio) != REQ_OP_WRITE_ZEROES)
+> +	    bio_op(bio) != REQ_OP_WRITE_ZEROES &&
+> +	    bio_op(bio) != REQ_OP_VERIFY)
+>  		return true;
+>  
+>  	return false;
+> @@ -73,8 +74,8 @@ static inline bool bio_no_advance_iter(const struct bio *bio)
+>  {
+>  	return bio_op(bio) == REQ_OP_DISCARD ||
+>  	       bio_op(bio) == REQ_OP_SECURE_ERASE ||
+> -	       bio_op(bio) == REQ_OP_WRITE_SAME ||
+> -	       bio_op(bio) == REQ_OP_WRITE_ZEROES;
+> +	       bio_op(bio) == REQ_OP_WRITE_ZEROES ||
+> +	       bio_op(bio) == REQ_OP_VERIFY;
+>  }
+>  
+>  static inline bool bio_mergeable(struct bio *bio)
+> @@ -198,7 +199,7 @@ static inline unsigned bio_segments(struct bio *bio)
+>  	struct bvec_iter iter;
+>  
+>  	/*
+> -	 * We special case discard/write same/write zeroes, because they
+> +	 * We special case discard/write same/write zeroes/verify, because they
+>  	 * interpret bi_size differently:
+>  	 */
+>  
+> @@ -206,6 +207,7 @@ static inline unsigned bio_segments(struct bio *bio)
+>  	case REQ_OP_DISCARD:
+>  	case REQ_OP_SECURE_ERASE:
+>  	case REQ_OP_WRITE_ZEROES:
+> +	case REQ_OP_VERIFY:
+>  		return 0;
+>  	case REQ_OP_WRITE_SAME:
+>  		return 1;
+> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+> index 1bc6f6a01070..8877711c4c56 100644
+> --- a/include/linux/blk_types.h
+> +++ b/include/linux/blk_types.h
+> @@ -366,6 +366,8 @@ enum req_opf {
+>  	REQ_OP_SECURE_ERASE	= 5,
+>  	/* write the same sector many times */
+>  	REQ_OP_WRITE_SAME	= 7,
+> +	/* verify the sectors */
+> +	REQ_OP_VERIFY		= 8,
+>  	/* write the zero filled sector many times */
+>  	REQ_OP_WRITE_ZEROES	= 9,
+>  	/* Open a zone */
+> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> index 0dea268bd61b..99c41d90584b 100644
+> --- a/include/linux/blkdev.h
+> +++ b/include/linux/blkdev.h
+> @@ -334,6 +334,7 @@ struct queue_limits {
+>  	unsigned int		max_hw_discard_sectors;
+>  	unsigned int		max_write_same_sectors;
+>  	unsigned int		max_write_zeroes_sectors;
+> +	unsigned int		max_verify_sectors;
+>  	unsigned int		max_zone_append_sectors;
+>  	unsigned int		discard_granularity;
+>  	unsigned int		discard_alignment;
+> @@ -621,6 +622,7 @@ struct request_queue {
+>  #define QUEUE_FLAG_RQ_ALLOC_TIME 27	/* record rq->alloc_time_ns */
+>  #define QUEUE_FLAG_HCTX_ACTIVE	28	/* at least one blk-mq hctx is active */
+>  #define QUEUE_FLAG_NOWAIT       29	/* device supports NOWAIT */
+> +#define QUEUE_FLAG_VERIFY	30	/* supports Verify */
+>  
+>  #define QUEUE_FLAG_MQ_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
+>  				 (1 << QUEUE_FLAG_SAME_COMP) |		\
+> @@ -667,6 +669,7 @@ bool blk_queue_flag_test_and_set(unsigned int flag, struct request_queue *q);
+>  #define blk_queue_fua(q)	test_bit(QUEUE_FLAG_FUA, &(q)->queue_flags)
+>  #define blk_queue_registered(q)	test_bit(QUEUE_FLAG_REGISTERED, &(q)->queue_flags)
+>  #define blk_queue_nowait(q)	test_bit(QUEUE_FLAG_NOWAIT, &(q)->queue_flags)
+> +#define blk_queue_verify(q)	test_bit(QUEUE_FLAG_VERIFY, &(q)->queue_flags)
+>  
+>  extern void blk_set_pm_only(struct request_queue *q);
+>  extern void blk_clear_pm_only(struct request_queue *q);
+> @@ -814,6 +817,9 @@ static inline bool rq_mergeable(struct request *rq)
+>  	if (req_op(rq) == REQ_OP_WRITE_ZEROES)
+>  		return false;
+>  
+> +	if (req_op(rq) == REQ_OP_VERIFY)
+> +		return false;
+> +
+>  	if (req_op(rq) == REQ_OP_ZONE_APPEND)
+>  		return false;
+>  
+> @@ -1072,6 +1078,9 @@ static inline unsigned int blk_queue_get_max_sectors(struct request_queue *q,
+>  	if (unlikely(op == REQ_OP_WRITE_ZEROES))
+>  		return q->limits.max_write_zeroes_sectors;
+>  
+> +	if (unlikely(op == REQ_OP_VERIFY))
+> +		return q->limits.max_verify_sectors;
+> +
+>  	return q->limits.max_sectors;
+>  }
+>  
+> @@ -1154,6 +1163,8 @@ extern void blk_queue_max_discard_sectors(struct request_queue *q,
+>  		unsigned int max_discard_sectors);
+>  extern void blk_queue_max_write_same_sectors(struct request_queue *q,
+>  		unsigned int max_write_same_sectors);
+> +extern void blk_queue_max_verify_sectors(struct request_queue *q,
+> +		unsigned int max_verify_sectors);
+>  extern void blk_queue_max_write_zeroes_sectors(struct request_queue *q,
+>  		unsigned int max_write_same_sectors);
+>  extern void blk_queue_logical_block_size(struct request_queue *, unsigned int);
+> @@ -1348,6 +1359,16 @@ extern int __blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
+>  		unsigned flags);
+>  extern int blkdev_issue_zeroout(struct block_device *bdev, sector_t sector,
+>  		sector_t nr_sects, gfp_t gfp_mask, unsigned flags);
+> +extern int __blkdev_emulate_verify(struct block_device *bdev, sector_t sector,
+> +		sector_t nr_sects, gfp_t gfp_mask, struct bio **biop,
+> +		char *buf);
+> +extern int blkdev_emulate_verify(struct block_device *bdev, sector_t sector,
+> +		sector_t nr_sects, gfp_t gfp_mask);
+> +extern int __blkdev_issue_verify(struct block_device *bdev,
+> +		sector_t sector, sector_t nr_sects, gfp_t gfp_mask,
+> +		struct bio **biop);
+> +extern int blkdev_issue_verify(struct block_device *bdev, sector_t sector,
+> +		sector_t nr_sects, gfp_t gfp_mask);
+>  
+>  static inline int sb_issue_discard(struct super_block *sb, sector_t block,
+>  		sector_t nr_blocks, gfp_t gfp_mask, unsigned long flags)
+> @@ -1553,6 +1574,16 @@ static inline unsigned int bdev_write_same(struct block_device *bdev)
+>  	return 0;
+>  }
+>  
+> +static inline unsigned int bdev_verify_sectors(struct block_device *bdev)
+> +{
+> +	struct request_queue *q = bdev_get_queue(bdev);
+> +
+> +	if (q)
+> +		return q->limits.max_verify_sectors;
+> +
+> +	return 0;
+> +}
+> +
+>  static inline unsigned int bdev_write_zeroes_sectors(struct block_device *bdev)
+>  {
+>  	struct request_queue *q = bdev_get_queue(bdev);
+> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+> index f44eb0a04afd..5eda16bd2c3d 100644
+> --- a/include/uapi/linux/fs.h
+> +++ b/include/uapi/linux/fs.h
+> @@ -184,6 +184,7 @@ struct fsxattr {
+>  #define BLKSECDISCARD _IO(0x12,125)
+>  #define BLKROTATIONAL _IO(0x12,126)
+>  #define BLKZEROOUT _IO(0x12,127)
+> +#define BLKVERIFY _IO(0x12,128)
+>  /*
+>   * A jump here: 130-131 are reserved for zoned block devices
+>   * (see uapi/linux/blkzoned.h)
+> -- 
+> 2.22.1
+> 
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
