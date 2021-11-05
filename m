@@ -2,74 +2,152 @@ Return-Path: <SRS0=mjIs=PY=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 68EB3C433EF
-	for <dm-devel@archiver.kernel.org>; Fri,  5 Nov 2021 20:11:05 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2A953C433F5
+	for <dm-devel@archiver.kernel.org>; Fri,  5 Nov 2021 20:13:27 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id DEFF360F45
-	for <dm-devel@archiver.kernel.org>; Fri,  5 Nov 2021 20:11:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org DEFF360F45
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
+	by mail.kernel.org (Postfix) with ESMTPS id B109961076
+	for <dm-devel@archiver.kernel.org>; Fri,  5 Nov 2021 20:13:26 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org B109961076
+Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1636143063;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=mxDl7NNBZ83q+r7SxCMKJ59mOuDmI9l+BR/bbgH1Vpc=;
-	b=DlH5eSS/2tREcAKw5YnCxX1zMPGn/pqZ286MwcBH6JCZ9YP0qINGMuGUsgEJW6X2EdRFFu
-	H19YvsGeNPHrlbsrLw4X95U0PT3ij7hjZZytoDbGzok38Qp8H8gximl/ghskYvPMxqPS0a
-	1lDVxVUQVMFaMCkrA+nrcM51zgrJE3g=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-561-xqxLDM7DP-WNee162YMsPw-1; Fri, 05 Nov 2021 16:11:02 -0400
-X-MC-Unique: xqxLDM7DP-WNee162YMsPw-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-460-B0ZhViFRPpqXMbLoscK-CA-1; Fri, 05 Nov 2021 16:13:22 -0400
+X-MC-Unique: B0ZhViFRPpqXMbLoscK-CA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 950F18066F6;
-	Fri,  5 Nov 2021 20:10:57 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id EA7951006AA3;
+	Fri,  5 Nov 2021 20:13:17 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 165195C25D;
-	Fri,  5 Nov 2021 20:10:57 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A5E4670911;
+	Fri,  5 Nov 2021 20:13:17 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 585641806D03;
-	Fri,  5 Nov 2021 20:10:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com
-	[10.5.11.14])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3BDF81806D04;
+	Fri,  5 Nov 2021 20:13:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1A5KAs3P020461 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 5 Nov 2021 16:10:54 -0400
+	id 1A5KDG0Y020563 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 5 Nov 2021 16:13:16 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id DFA6F5DA60; Fri,  5 Nov 2021 20:10:54 +0000 (UTC)
-Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 97CB85D9DE;
-	Fri,  5 Nov 2021 20:10:41 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1A5KAdNN012504; 
-	Fri, 5 Nov 2021 15:10:39 -0500
-Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1A5KAcud012503;
-	Fri, 5 Nov 2021 15:10:38 -0500
-Date: Fri, 5 Nov 2021 15:10:38 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Message-ID: <20211105201038.GL19591@octiron.msp.redhat.com>
+	id E3F751121315; Fri,  5 Nov 2021 20:13:15 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DE8F41121314
+	for <dm-devel@redhat.com>; Fri,  5 Nov 2021 20:13:13 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 09E3B18E0042
+	for <dm-devel@redhat.com>; Fri,  5 Nov 2021 20:13:13 +0000 (UTC)
+Received: from de-smtp-delivery-102.mimecast.com
+	(de-smtp-delivery-102.mimecast.com [194.104.111.102]) (Using TLS) by
+	relay.mimecast.com with ESMTP id us-mta-153-y3HDN-a-OLKt_Bh1Uj2G9Q-1;
+	Fri, 05 Nov 2021 16:13:09 -0400
+X-MC-Unique: y3HDN-a-OLKt_Bh1Uj2G9Q-1
+Received: from EUR05-AM6-obe.outbound.protection.outlook.com
+	(mail-am6eur05lp2105.outbound.protection.outlook.com [104.47.18.105])
+	(Using TLS) by relay.mimecast.com with ESMTP id
+	de-mta-14-IV2xoGGiO2yZM9W9NSh74g-1; Fri, 05 Nov 2021 21:13:07 +0100
+X-MC-Unique: IV2xoGGiO2yZM9W9NSh74g-1
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
+	by DB9PR04MB8346.eurprd04.prod.outlook.com (2603:10a6:10:24d::10)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4649.13;
+	Fri, 5 Nov 2021 20:13:05 +0000
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
+	([fe80::d0d9:a949:8409:bbc7]) by
+	DB8PR04MB6555.eurprd04.prod.outlook.com
+	([fe80::d0d9:a949:8409:bbc7%3]) with mapi id 15.20.4669.013;
+	Fri, 5 Nov 2021 20:13:05 +0000
+From: Martin Wilck <martin.wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>
+Thread-Topic: [PATCH 6/8] libmultipath: improve checks for set_str
+Thread-Index: AQHXuu1p2RKByrtZakKWNdsnipSlz6v0ANUAgACulACAALR8gIAAKVQA
+Date: Fri, 5 Nov 2021 20:13:05 +0000
+Message-ID: <d02f2f1e145f54a30438d7006c7f615f8e7506d3.camel@suse.com>
 References: <1633550663-25571-1-git-send-email-bmarzins@redhat.com>
-	<1633550663-25571-9-git-send-email-bmarzins@redhat.com>
-	<c93fc9dcca43a0f385b2c172266ab58cfbbb4767.camel@suse.com>
+	<1633550663-25571-7-git-send-email-bmarzins@redhat.com>
+	<5424c4163d1fee71af3f1126adc2a59d3069b09f.camel@suse.com>
+	<05b1d72f805515947ea21b9afd43446de6a2c7d6.camel@suse.com>
+	<20211105174509.GJ19591@octiron.msp.redhat.com>
+In-Reply-To: <20211105174509.GJ19591@octiron.msp.redhat.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Evolution 3.42.0
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: 01b9389a-3ffd-4d76-e1a2-08d9a098ad80
+x-ms-traffictypediagnostic: DB9PR04MB8346:
+x-microsoft-antispam-prvs: <DB9PR04MB834677788D8F075A653C2A58FC8E9@DB9PR04MB8346.eurprd04.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:5797
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: t+x3qf92ClmKxsHJt2L3O1cvTFUGqB/AkS7JLtEzlTlL8PizClDi+3AGddI3wULWXOrgUGaiKOr2nzuDcjzkxY4P0xkkj/RxLwZ/twPPTnRO9gIHBDMwe0b2P2S85fZfObqzGR1CJQSeTerK5cXdgjevNE3V4113MGB66bMyx0m5cCj0aN5WKFMFuf8wK/ehKoreP3rKlEPpZEd+xhqp5NKhWFPVE/KSf8Eq3HGRYEfnQ6lzsvq3Ex7wQpsTm7fIBfm4NPzcrmkjzI0tR/dy2T+w+NVEdCVd3NmonsNXbeiZByBvKcaTzCpVKc1pykSgG3AFQz1N+p+mvgYtDbPvwuvMvGJxXF31ZLrCWsOiE0K5OtZVM25h2D8XHgrZpWj/GGnYwGon6AfSvgrYK3z2r5XaqOTFs6uLqqMW16Ay/88lDHKM1ruLfTwPl3vl7m8Vn6AamGNFHngDiFuSuewTIBfaHikqXzu8kEGzBvduW4A9jjQTuzafcj8sfoSa/Z9sKSq/LUnWtwCd2qQnF3cFAwLaIQQrW04ihTiYiYIQhdCbBNO7ZJiIPjdj5B8+LlwGsQwA1V9CalcQ+iwsEdGpTeys4e0gsE8Wzf6sSjwejBNLIoLDsjQ5FuU7WWQ66l+mCz9XO6D3L6JXxKT6bqNOVgJEWQy21htFPk3TlQob6SnO9oL2nwbFf4aWhWsDN7WFYj8p6pzNddGUz8ANoQnBnQ==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(366004)(8676002)(6506007)(122000001)(38070700005)(6916009)(38100700002)(508600001)(54906003)(8936002)(2616005)(66476007)(2906002)(186003)(66556008)(5660300002)(4326008)(66446008)(316002)(26005)(64756008)(83380400001)(66946007)(36756003)(44832011)(71200400001)(86362001)(6486002)(76116006)(91956017)(6512007);
+	DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?u3SmldpsDjwSi6MRE3Rwz6OTbBHRia/qR/lPssj5wnpmrnYDokzD5Bl0N?=
+	=?iso-8859-15?Q?yrvrmHOC3uzDGEwh01Z5A5hT7A5WRKSivERNtW1GxlDTgT7VBr00lP1zU?=
+	=?iso-8859-15?Q?ZvQa/jwD+egT3tDaTwBFm8e5AJx4iMjJ9vwBwcDgETukG8giFa63F2IAC?=
+	=?iso-8859-15?Q?ENxN85jLBavPE6YhF2aZx9AahlDQvDQ6YxRIzkqRlOOvckvkdi50Kvq/x?=
+	=?iso-8859-15?Q?S01yXG8BOkgjTEOQyDCAvYIBT9dy5bY6dCz3mPCD+NeHp06c3bm3leD4m?=
+	=?iso-8859-15?Q?WT2q0MiJY2Oks1Lz8VwrgRcAtkDHaoeX9hRKeQtkWcFZZWtpjeZDDsYu5?=
+	=?iso-8859-15?Q?Sgl540yHnby0wqMtzgReeZQL33bFDTWz1nqESwpQz7irXsKf/6649iZqO?=
+	=?iso-8859-15?Q?nyQtCKjoaQi+cokD6KuCCtvakwnZeqm6hnH8ETf1Y5rdUTSnWa6CTcpTY?=
+	=?iso-8859-15?Q?TFJHxrAmJ1MUOZgpuNP2foOXUnLjnzIU9yx+P/ppTmJiO8fQxgJ5z2k/3?=
+	=?iso-8859-15?Q?GlzNLs5fti2V/Xsm1LgX+eZwqVRR8egE+l8v7sBZ5k4isJS4BJgJj9al1?=
+	=?iso-8859-15?Q?j3do8D38aKe+gF3hoild1OEZgUYwjT0Fvx4Aip9efZXJyWcxjRzt+LaTg?=
+	=?iso-8859-15?Q?YIyn8VDoiwemZz6Tq59GEaZoKfeCfGbUYfU8XgIy3idC1A8iRxtDLNuVX?=
+	=?iso-8859-15?Q?0CYQrau0qund/kc4xspYrlyhS13Q31O/eMNqSSmdDp1CUsVwZ/Sm67C3x?=
+	=?iso-8859-15?Q?0FXp9vly/P3k+W0s0cWNUXX5bPINbbqUhsc42X3X7W4fDESYuhRZckFj3?=
+	=?iso-8859-15?Q?9qVWKZL5k6IrYCg7qdNhFKPH59YavVOFIrZ3Z1Gf2xWYq4EkT/ln5Q50R?=
+	=?iso-8859-15?Q?Cq/eEo+hFw/Dn+a/BbLSQAYQcboxflOU7m/Sn+EilvJVxdw5ds+78jDTa?=
+	=?iso-8859-15?Q?1NeQiWdKM4IzeNlS4G+ZS0kCsp+6IxoDpZPKqPQaCqmNWAF/w964+arW8?=
+	=?iso-8859-15?Q?o/9Ib0uI7aY8WovlOti2zuzd7Pkuad4mHGSJ1bvtThQJRknrddY2ZzrBu?=
+	=?iso-8859-15?Q?y3fcU8QTEtFiDypHb+ni4uNgNssFsOVJeaNJ66zq09ZEyvI64hOnw74t5?=
+	=?iso-8859-15?Q?AHFVpePp6o7yty3xNgJ8MbGWNl4Zone03WqlnMTDsnklFieSihLVP7eNv?=
+	=?iso-8859-15?Q?LmdF0KBkTaBQSyZ9IoskT/l7wQj24+H4fCa3UNdx0LS6CLqUDVdTVzdy5?=
+	=?iso-8859-15?Q?McZkB/n6Lh4NI6OaQWQI4EgyK+p4E3y9upZJj4kmv5GhOgbWb1cEj+oGM?=
+	=?iso-8859-15?Q?PYM3qr5g0cD1+iP8wmbgZhkHPSXQF218iQ00Yf/cE5Z1ORCUE1Bm7ZfIb?=
+	=?iso-8859-15?Q?TqJ+xz4MpZbLVtL1ZMHp/RC7+vqley4z4Go9ZfLFAxt6zUJDdECoplv+Q?=
+	=?iso-8859-15?Q?L7P/BNDIMCeYU1qzsZ1desmuL3NEICpHaKybmXf36C9UZYRnsqMbVwXsl?=
+	=?iso-8859-15?Q?ofXael0IQTIhgvVQl0vnaWcG3xM1cPQnnrNJpWq+oJRZDgBxItHZUxWOb?=
+	=?iso-8859-15?Q?nfiO6/fBaDV9OL5wF2rFG3CURZb4GtGIAXaDjHXgCY7zRbVUzbXFZQeM7?=
+	=?iso-8859-15?Q?+ww42H9Vf38X/mxooFbMnTLxE3AqRRitm57wOpIFMa6vZKovXqIxvGLAy?=
+	=?iso-8859-15?Q?4lDmcAACRLYM2edfsxwjDcfc4uQzk/BJjoCngUD7wPKwHL8=3D?=
 MIME-Version: 1.0
-In-Reply-To: <c93fc9dcca43a0f385b2c172266ab58cfbbb4767.camel@suse.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-OriginatorOrg: suse.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 01b9389a-3ffd-4d76-e1a2-08d9a098ad80
+X-MS-Exchange-CrossTenant-originalarrivaltime: 05 Nov 2021 20:13:05.4884 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: gAzIRKaaWuAu6DuVKawSdpXadGdZqoMoRperLMV3aRCEwGBXSEQcDhLq54zgGM3Y/q+3vx1L9xw6xlbk4CPvgg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB9PR04MB8346
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1A5KDG0Y020563
 X-loop: dm-devel@redhat.com
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Subject: Re: [dm-devel] [PATCH 8/8] libmultipath: cleanup invalid config
-	handling
+Subject: Re: [dm-devel] [PATCH 6/8] libmultipath: improve checks for set_str
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -83,356 +161,46 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Language: en-US
+Content-ID: <91C0FD4DF091364E90E72356C9738E43@eurprd04.prod.outlook.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Thu, Nov 04, 2021 at 09:11:34PM +0000, Martin Wilck wrote:
-> On Wed, 2021-10-06 at 15:04 -0500, Benjamin Marzinski wrote:
-> > Add error reporting to the remaining config handlers. If the value is
-> > invalid, do not change the existing config option's value.
->=20
-> Like for the previous patch, I'm unsure if this is wise. You rely on a
-> reasonable default being set before the function is called. I suppose
-> that's the case, but I like seeing the "invalid" value substituted
-> right there where the validity is checked. That saves us from searching
-> the code for the default value.
->=20
-> Maybe I overlooked an important rationale for not touching the values
-> in the case of invalid input, please explain.
+On Fri, 2021-11-05 at 12:45 -0500, Benjamin Marzinski wrote:
+> > 
+> > I've changed my mind on this one. The options for directories and
+> > paths
+> > should be turned into buildtime options instead. If we do that, we
+> > don't need this sort of checks any more, except the "noslash" part.
+> 
+> That seems reasonable. I do want to ask around a little bit to see if
+> I
+> can find anyone who is actually setting the directories. The only one
+> I
+> really worry about is "config_dir". I worry that people might do
+> something like stick that on shared storage, to make it possible to
+> change the multipath config on a bunch of machines in one place.
 
-Since these handlers are only called if people put the corresponding
-option in the config files, we had better have sensible defaults if
-they're not called (or if they don't set anything).
+Not impossible, but frankly, that sort of setup would be typical for
+the mid-2000's. Nowadays people would rather use something like ansible
+to distribute the configuration. (*)
 
-I admit that I should take a look for cases were we cap an out-of-range
-value, to see if it would make more sense to treat it as an invalid
-value instead. Also, instead of accepting strings that are simply a
-number, we should convert the string, and the check the actual number.
-But I don't see any harm in simply ignoring the invalid values. It's no
-different than if the user didn't put the invalid line into
-multipath.conf
+For us as distribution maintainers, these arbitrarily configurable
+paths are a nightmare.
 
-Not setting the values on garbage input makes the handlers more general.
-If you have two options that work the same except that they have
-different defaults, then by not explicitly setting the value to the
-default when you have invalid input, one handler can be used for both
-options. set_yes_no() is a good example.  Without my patch, it always
-set the value to something, even if the input was garbage. But the
-default value it set was "no". That had nothing to do with the default
-value of the options that were using it. You could do extra work to make
-sure that it would correctly use the option's default value, but you get
-the same outcome, with simpler code, just by not changing the default if
-you have a garbage value.
+Regards
+Martin
 
-Also, many of the handlers never set the value on invalid input. I'm just
-making that consistent across all of the handlers.
+(In my testing and playing-around routine, I actually rely on the fact
+that it's possible to set a config_dir that doesn't exist. Under normal
+operation, it doesn't - if I want to experiment, I just move something
+there. But I think I could easily live with built-time settings).
 
--Ben
-
-> Cheers,
-> Martin
->=20
-> >  Also print
-> > an error whenever 0 is returned for an invalid value. When the
-> > handler
-> > returns 1, config processing already fails with an error message.
-> >=20
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> > =A0libmultipath/dict.c | 73 +++++++++++++++++++++++++++++++------------
-> > --
-> > =A01 file changed, 51 insertions(+), 22 deletions(-)
-> >=20
-> > diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-> > index e79fcdd7..8c3b5f72 100644
-> > --- a/libmultipath/dict.c
-> > +++ b/libmultipath/dict.c
-> > @@ -199,8 +199,11 @@ set_yes_no(vector strvec, void *ptr, const char
-> > *file, int line_nr)
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (strcmp(buff, "yes") =3D=3D 0 || strcmp(buff=
-, "1") =3D=3D 0)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*int_ptr =3D YN_YES;
-> > -=A0=A0=A0=A0=A0=A0=A0else
-> > +=A0=A0=A0=A0=A0=A0=A0else if (strcmp(buff, "no") =3D=3D 0 || strcmp(bu=
-ff, "0") =3D=3D 0)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*int_ptr =3D YN_NO;
-> > +=A0=A0=A0=A0=A0=A0=A0else
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, i=
-nvalid value for %s:
-> > \"%s\"",
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0f=
-ile, line_nr, (char*)VECTOR_SLOT(strvec, 0),
-> > buff);
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0FREE(buff);
-> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > @@ -221,7 +224,8 @@ set_yes_no_undef(vector strvec, void *ptr, const
-> > char *file, int line_nr)
-> > =A0=A0=A0=A0=A0=A0=A0=A0else if (strcmp(buff, "yes") =3D=3D 0 || strcmp=
-(buff, "1") =3D=3D 0)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*int_ptr =3D YNU_YES;
-> > =A0=A0=A0=A0=A0=A0=A0=A0else
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*int_ptr =3D YNU_UNDEF;
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, i=
-nvalid value for %s:
-> > \"%s\"",
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0f=
-ile, line_nr, (char*)VECTOR_SLOT(strvec, 0),
-> > buff);
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0FREE(buff);
-> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > @@ -471,9 +475,6 @@ def_find_multipaths_handler(struct config *conf,
-> > vector strvec,
-> > =A0=A0=A0=A0=A0=A0=A0=A0char *buff;
-> > =A0=A0=A0=A0=A0=A0=A0=A0int i;
-> > =A0
-> > -=A0=A0=A0=A0=A0=A0=A0if (set_yes_no_undef(strvec, &conf->find_multipat=
-hs, file,
-> > line_nr) =3D=3D 0 && conf->find_multipaths !=3D FIND_MULTIPATHS_UNDEF)
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > -
-> > =A0=A0=A0=A0=A0=A0=A0=A0buff =3D set_value(strvec);
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (!buff)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
-> > @@ -486,9 +487,14 @@ def_find_multipaths_handler(struct config *conf,
-> > vector strvec,
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> > =A0=A0=A0=A0=A0=A0=A0=A0}
-> > =A0
-> > -=A0=A0=A0=A0=A0=A0=A0if (conf->find_multipaths =3D=3D YNU_UNDEF) {
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(0, "illegal value=
- for find_multipaths: %s",
-> > buff);
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0conf->find_multipaths =3D=
- DEFAULT_FIND_MULTIPATHS;
-> > +=A0=A0=A0=A0=A0=A0=A0if (i >=3D __FIND_MULTIPATHS_LAST) {
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (strcmp(buff, "no") =
-=3D=3D 0 || strcmp(buff, "0") =3D=3D
-> > 0)
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c=
-onf->find_multipaths =3D FIND_MULTIPATHS_OFF;
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0else if (strcmp(buff, "ye=
-s") =3D=3D 0 || strcmp(buff,
-> > "1") =3D=3D 0)
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c=
-onf->find_multipaths =3D FIND_MULTIPATHS_ON;
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0else
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c=
-ondlog(1, "%s line %d, invalid value for
-> > find_multipaths: \"%s\"",
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0file, line_nr, buff);
-> > =A0=A0=A0=A0=A0=A0=A0=A0}
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0FREE(buff);
-> > @@ -537,8 +543,10 @@ static int uid_attrs_handler(struct config
-> > *conf, vector strvec,
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (!val)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (parse_uid_attrs(val, conf))
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "error parsing=
- uid_attrs: \"%s\"", val);
-> > -=A0=A0=A0=A0=A0=A0=A0condlog(3, "parsed %d uid_attrs", VECTOR_SIZE(&co=
-nf-
-> > >uid_attrs));
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d,er=
-ror parsing uid_attrs:
-> > \"%s\"", file,
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0l=
-ine_nr, val);
-> > +=A0=A0=A0=A0=A0=A0=A0else
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(4, "parsed %d uid=
-_attrs", VECTOR_SIZE(&conf-
-> > >uid_attrs));
-> > =A0=A0=A0=A0=A0=A0=A0=A0FREE(val);
-> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > =A0}
-> > @@ -766,8 +774,11 @@ def_config_dir_handler(struct config *conf,
-> > vector strvec, const char *file,
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 int =
-line_nr)
-> > =A0{
-> > =A0=A0=A0=A0=A0=A0=A0=A0/* this is only valid in the main config file *=
-/
-> > -=A0=A0=A0=A0=A0=A0=A0if (conf->processed_main_config)
-> > +=A0=A0=A0=A0=A0=A0=A0if (conf->processed_main_config) {
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, c=
-onfig_dir option only valid
-> > in /etc/multipath.conf",
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0f=
-ile, line_nr);
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > +=A0=A0=A0=A0=A0=A0=A0}
-> > =A0=A0=A0=A0=A0=A0=A0=A0return set_path(strvec, &conf->config_dir, file=
-, line_nr);
-> > =A0}
-> > =A0declare_def_snprint(config_dir, print_str)
-> > @@ -825,7 +836,9 @@ set_mode(vector strvec, void *ptr, int *flags,
-> > const char *file, int line_nr)
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (sscanf(buff, "%o", &mode) =3D=3D 1 && mode =
-<=3D 0777) {
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*flags |=3D (1 << ATTR_=
-MODE);
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*mode_ptr =3D mode;
-> > -=A0=A0=A0=A0=A0=A0=A0}
-> > +=A0=A0=A0=A0=A0=A0=A0} else
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, i=
-nvalid value for mode:
-> > \"%s\"",
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0f=
-ile, line_nr, buff);
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0FREE(buff);
-> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > @@ -850,7 +863,9 @@ set_uid(vector strvec, void *ptr, int *flags,
-> > const char *file, int line_nr)
-> > =A0=A0=A0=A0=A0=A0=A0=A0else if (sscanf(buff, "%u", &uid) =3D=3D 1){
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*flags |=3D (1 << ATTR_=
-UID);
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*uid_ptr =3D uid;
-> > -=A0=A0=A0=A0=A0=A0=A0}
-> > +=A0=A0=A0=A0=A0=A0=A0} else
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, i=
-nvalid value for uid:
-> > \"%s\"",
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0f=
-ile, line_nr, buff);
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0FREE(buff);
-> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > @@ -876,7 +891,9 @@ set_gid(vector strvec, void *ptr, int *flags,
-> > const char *file, int line_nr)
-> > =A0=A0=A0=A0=A0=A0=A0=A0else if (sscanf(buff, "%u", &gid) =3D=3D 1){
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*flags |=3D (1 << ATTR_=
-GID);
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*gid_ptr =3D gid;
-> > -=A0=A0=A0=A0=A0=A0=A0}
-> > +=A0=A0=A0=A0=A0=A0=A0} else
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, i=
-nvalid value for gid:
-> > \"%s\"",
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0f=
-ile, line_nr, buff);
-> > =A0=A0=A0=A0=A0=A0=A0=A0FREE(buff);
-> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > =A0}
-> > @@ -978,7 +995,8 @@ set_dev_loss(vector strvec, void *ptr, const char
-> > *file, int line_nr)
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (!strcmp(buff, "infinity"))
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*uint_ptr =3D MAX_DEV_L=
-OSS_TMO;
-> > =A0=A0=A0=A0=A0=A0=A0=A0else if (sscanf(buff, "%u", uint_ptr) !=3D 1)
-> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*uint_ptr =3D DEV_LOSS_TM=
-O_UNSET;
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, i=
-nvalid value for
-> > dev_loss_tmo: \"%s\"",
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0f=
-ile, line_nr, buff);
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0FREE(buff);
-> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > @@ -1012,13 +1030,19 @@ static int
-> > =A0set_pgpolicy(vector strvec, void *ptr, const char *file, int
-> > line_nr)
-> > =A0{
-> > =A0=A0=A0=A0=A0=A0=A0=A0char * buff;
-> > +=A0=A0=A0=A0=A0=A0=A0int policy;
-> > =A0=A0=A0=A0=A0=A0=A0=A0int *int_ptr =3D (int *)ptr;
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0buff =3D set_value(strvec);
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (!buff)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
-> > =A0
-> > -=A0=A0=A0=A0=A0=A0=A0*int_ptr =3D get_pgpolicy_id(buff);
-> > +=A0=A0=A0=A0=A0=A0=A0policy =3D get_pgpolicy_id(buff);
-> > +=A0=A0=A0=A0=A0=A0=A0if (policy !=3D IOPOLICY_UNDEF)
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*int_ptr =3D policy;
-> > +=A0=A0=A0=A0=A0=A0=A0else
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, i=
-nvalid value for
-> > path_grouping_policy: \"%s\"",
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0f=
-ile, line_nr, buff);
-> > =A0=A0=A0=A0=A0=A0=A0=A0FREE(buff);
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > @@ -1131,10 +1155,11 @@ set_rr_weight(vector strvec, void *ptr, const
-> > char *file, int line_nr)
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (!strcmp(buff, "priorities"))
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*int_ptr =3D RR_WEIGHT_=
-PRIO;
-> > -
-> > -=A0=A0=A0=A0=A0=A0=A0if (!strcmp(buff, "uniform"))
-> > +=A0=A0=A0=A0=A0=A0=A0else if (!strcmp(buff, "uniform"))
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0*int_ptr =3D RR_WEIGHT_=
-NONE;
-> > -
-> > +=A0=A0=A0=A0=A0=A0=A0else
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, i=
-nvalid value for rr_weight:
-> > \"%s\"",
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0f=
-ile, line_nr, buff);
-> > =A0=A0=A0=A0=A0=A0=A0=A0FREE(buff);
-> > =A0
-> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > @@ -1270,10 +1295,13 @@ def_log_checker_err_handler(struct config
-> > *conf, vector strvec,
-> > =A0=A0=A0=A0=A0=A0=A0=A0if (!buff)
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return 1;
-> > =A0
-> > -=A0=A0=A0=A0=A0=A0=A0if (strlen(buff) =3D=3D 4 && !strcmp(buff, "once"=
-))
-> > +=A0=A0=A0=A0=A0=A0=A0if (!strcmp(buff, "once"))
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0conf->log_checker_err =
-=3D LOG_CHKR_ERR_ONCE;
-> > -=A0=A0=A0=A0=A0=A0=A0else if (strlen(buff) =3D=3D 6 && !strcmp(buff, "=
-always"))
-> > +=A0=A0=A0=A0=A0=A0=A0else if (!strcmp(buff, "always"))
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0conf->log_checker_err =
-=3D LOG_CHKR_ERR_ALWAYS;
-> > +=A0=A0=A0=A0=A0=A0=A0else
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, i=
-nvalid value for
-> > log_checker_err: \"%s\"",
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0f=
-ile, line_nr, buff);
-> > =A0
->=20
-> We lack a proper DEFAULT for log_checker_err.
->=20
-
-True. Is it really the only one? I thought that there were a number of
-options for which we just relied on the fact that conf is zeroed out
-when it's created, so the 0 value (in this case LOG_CHKR_ERR_ALWAYS) is
-the implicit default.
-=20
-> > =A0=A0=A0=A0=A0=A0=A0=A0free(buff);
-> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
-> > @@ -1534,7 +1562,8 @@ hw_vpd_vendor_handler(struct config *conf,
-> > vector strvec, const char *file,
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0goto out;
-> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0}
-> > =A0=A0=A0=A0=A0=A0=A0=A0}
-> > -=A0=A0=A0=A0=A0=A0=A0hwe->vpd_vendor_id =3D 0;
-> > +=A0=A0=A0=A0=A0=A0=A0condlog(1, "%s line %d, invalid value for vpd_ven=
-dor:
-> > \"%s\"",
-> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0file, line_nr, buff);
-> > =A0out:
-> > =A0=A0=A0=A0=A0=A0=A0=A0FREE(buff);
-> > =A0=A0=A0=A0=A0=A0=A0=A0return 0;
 
 --
 dm-devel mailing list
