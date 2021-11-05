@@ -2,152 +2,72 @@ Return-Path: <SRS0=mjIs=PY=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3CCE1C433EF
-	for <dm-devel@archiver.kernel.org>; Fri,  5 Nov 2021 20:17:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7212CC433F5
+	for <dm-devel@archiver.kernel.org>; Fri,  5 Nov 2021 20:49:44 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id ACC4761076
-	for <dm-devel@archiver.kernel.org>; Fri,  5 Nov 2021 20:17:02 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org ACC4761076
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id 1D19760E94
+	for <dm-devel@archiver.kernel.org>; Fri,  5 Nov 2021 20:49:43 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 1D19760E94
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1636145382;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=COBt/7CJK2G3AhHWQH1ycuKxwVeqrpJxeDMn5nczHn0=;
+	b=bdodjYeQEQu08U2IwSyD4a5r7pP4ENgrx0TFUQ2yISzrDmRx4LxbZytkiLjlifopNXqzvC
+	5U4tCAD+qpxrqOX7FRmOY+pbPNPP0zxAM2QLPY84F5AR/ZFyFmgm2dU/BrsxICcLRhy5ya
+	3H39cyRONQhHES0/kaqg2xgzNcDk00k=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-594-5D4qhkf6MDO-TZEwyoLkYQ-1; Fri, 05 Nov 2021 16:16:58 -0400
-X-MC-Unique: 5D4qhkf6MDO-TZEwyoLkYQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-302-xkBsuPCNP-KUek20Lv3qRg-1; Fri, 05 Nov 2021 16:49:39 -0400
+X-MC-Unique: xkBsuPCNP-KUek20Lv3qRg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 10D6310A8E01;
-	Fri,  5 Nov 2021 20:16:54 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 72E3C80A5CC;
+	Fri,  5 Nov 2021 20:49:35 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 91DCF7944C;
-	Fri,  5 Nov 2021 20:16:53 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0C83CB2A60;
+	Fri,  5 Nov 2021 20:49:35 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 567AD1806D03;
-	Fri,  5 Nov 2021 20:16:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.1])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7DA331806D03;
+	Fri,  5 Nov 2021 20:49:34 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
+	[10.5.11.22])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1A5KGpf3020813 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 5 Nov 2021 16:16:51 -0400
+	id 1A5KnWe1023807 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 5 Nov 2021 16:49:32 -0400
 Received: by smtp.corp.redhat.com (Postfix)
-	id 38AC2400DEF8; Fri,  5 Nov 2021 20:16:51 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 329204010E8A
-	for <dm-devel@redhat.com>; Fri,  5 Nov 2021 20:16:51 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 129DA8007B1
-	for <dm-devel@redhat.com>; Fri,  5 Nov 2021 20:16:51 +0000 (UTC)
-Received: from de-smtp-delivery-102.mimecast.com
-	(de-smtp-delivery-102.mimecast.com [194.104.111.102]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-183-Zrn5gET-Mf2OGWfvSSbRlg-1;
-	Fri, 05 Nov 2021 16:16:48 -0400
-X-MC-Unique: Zrn5gET-Mf2OGWfvSSbRlg-1
-Received: from EUR04-HE1-obe.outbound.protection.outlook.com
-	(mail-he1eur04lp2052.outbound.protection.outlook.com [104.47.13.52])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	de-mta-32-2hMdyA3-NSue15vS8Txa2A-1; Fri, 05 Nov 2021 21:16:46 +0100
-X-MC-Unique: 2hMdyA3-NSue15vS8Txa2A-1
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
-	by DB7PR04MB5067.eurprd04.prod.outlook.com (2603:10a6:10:1a::28) with
-	Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4649.18;
-	Fri, 5 Nov 2021 20:16:44 +0000
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::d0d9:a949:8409:bbc7]) by
-	DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::d0d9:a949:8409:bbc7%3]) with mapi id 15.20.4669.013;
-	Fri, 5 Nov 2021 20:16:44 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>
-Thread-Topic: [PATCH 8/8] libmultipath: cleanup invalid config handling
-Thread-Index: AQHXuu1oU5QnbE7ggkq7MbG1lPGjJav0CzwAgAGBTwCAAAGzgA==
-Date: Fri, 5 Nov 2021 20:16:44 +0000
-Message-ID: <f20eb26f9f0ad2181ba38f047912f0c4490fb08f.camel@suse.com>
-References: <1633550663-25571-1-git-send-email-bmarzins@redhat.com>
-	<1633550663-25571-9-git-send-email-bmarzins@redhat.com>
-	<c93fc9dcca43a0f385b2c172266ab58cfbbb4767.camel@suse.com>
-	<20211105201038.GL19591@octiron.msp.redhat.com>
-In-Reply-To: <20211105201038.GL19591@octiron.msp.redhat.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Evolution 3.42.0
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 8195d7e9-f7fc-4abe-867a-08d9a0992ff7
-x-ms-traffictypediagnostic: DB7PR04MB5067:
-x-microsoft-antispam-prvs: <DB7PR04MB5067F0B1C74D98F1F6C402F1FC8E9@DB7PR04MB5067.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:10000
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: /yAOjPGiXquztm/eXXUpmCHwOo92ZjzVe0IjBvDfEcYh2Lo9XrqGZKslPpDcebkC8teG10hTi1IbG8h3S7U2pjiswGE8snpyNvDZug6qUWvaDT/sgiQexyyAkNBGUYNkHrvaRi4sQ3PkgkL8IlpsTHPSi1W4tK4Cu34hePtFDsYg4Jf8+stsIFfbOeed0tz4W0WOZnvnliPRDITb9EmxZ3jg+ftqJBUKoSoOwuIaKf1tEWZejG2AOF24EjjVN4egNLG6sGoOci99ElegsAh8igzhmS5uVMZ80gHKsar6kFclSDpi/aRf/jklxrzso+JvwTllSMT2Cw1EdvaEAAaea4RHkrBFOAJ+G/t3mGmMKfn9vbB8XLj7MCANX+gGxP/4UGCt3qhW5qwPBC3Ybbp95f09Fre38QxXKNb+d375bgKoTfTAkIXyk0/elB8mr/8pKNyMC2YindCNYCs5CWdYFGJXG44xn9XAX7YqxpN/CYmgKkZd0qvKVo1q1FXQ2hTYTB6TAo2Zy3z1tKWDJe2NV0xvZuBc7ZndEJz4YuGdh2Jyih6bD6g2xYZmIF9fVy70bvFvm6HS1WqhTt203rmG18aNHJfY6IER+4303oZg1yZ7aqcQcYTo24GqfOU0slO+b5p/Ho9SP5Dtz/yX3iSZaVN7rdiFksqKccZhXdeukUR1IPWzs+P8m7K2Ye0pIkHnARs76GHeiL8j5e8Eid0rnQ==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(366004)(54906003)(2906002)(316002)(26005)(4326008)(6916009)(66476007)(6506007)(186003)(76116006)(66556008)(91956017)(66446008)(8936002)(6512007)(86362001)(122000001)(38100700002)(6486002)(83380400001)(66946007)(64756008)(44832011)(36756003)(5660300002)(71200400001)(2616005)(38070700005)(8676002)(508600001);
-	DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?dI3wkk7kjDZbkQviOr1v2XPYml+2th546jeZyWVd/hZvMDbQrP+FYds7A?=
-	=?iso-8859-15?Q?06yt0GRFKb3mQ107lPYyBuxm57bkRYmcfhIYNdxVGOpYjBhZjJMtCPDX0?=
-	=?iso-8859-15?Q?iQJ/OcCxFubYmzOV7OLvxV9CMOWi/6w3jqb2uq4Z+UZDKxg8SVsVQumhw?=
-	=?iso-8859-15?Q?rCY9pBarkd665ZyjpIflppO7V2sZSqcKEdFt9z/344eXyiO1apauPlBNi?=
-	=?iso-8859-15?Q?k0NMOJ+NowgJkVBK8bxlhYuVn2iz8iLaV9u4bE2tnJQwj6YwfwewSH2JI?=
-	=?iso-8859-15?Q?VN1StAbQZ5ApjO0EbYPUg6la+3xHmv/NMg5ajG5oBPRQ2AMn1Ot2549s3?=
-	=?iso-8859-15?Q?Od0H+iFaJ95Pg2qCsEdQ4s63bJdex5OdWeAGZqd1Jz129SIR5L3qkpI2U?=
-	=?iso-8859-15?Q?YHAu9ehofj8uPM0cWhZEyOTC9mJL8iB57WNGjuHwuGyMZRIF52qcQSKD1?=
-	=?iso-8859-15?Q?Bf/Jb/2SGaa/uB3x3MqiwOIV04sWhXJOHm1Xf6eUtAz0TrWC5OEXHTTAu?=
-	=?iso-8859-15?Q?YxiUJDifPoA7GZosoLRfnuieivTSAafTl+D1ChGv09DyA+CmiVE2UGH1g?=
-	=?iso-8859-15?Q?ST3PeaoLX6UZr3pwuP/zXVn2PUjGshbCHilh1tRQSCSNOoBjjLep82mn0?=
-	=?iso-8859-15?Q?VHLHXnjioRraG5QngM5zB33l4VYhAkgjXkNPrtWY8zxydW7D/bMMImPNW?=
-	=?iso-8859-15?Q?vVQn7Z4viJaTUaqw1jPncyOEdWZP7kEWxbTKWBE7In3zS6VvFZxsOiaHz?=
-	=?iso-8859-15?Q?v3m/G7HBUZ0ClrXmUqZgo9l4RtLBxEkCpBTE0hYeqj/P5HkiecQDmOxOq?=
-	=?iso-8859-15?Q?AFtDv58DMqaqvBV5DOSgeJHihefpi/UviDA8HCWBBALMX9wfabmf+GPQ7?=
-	=?iso-8859-15?Q?MvS6iNUOfzMPHeIbDLhIqDLDcvo3IgAU9DMWHVS191r/hNElyltQ5IaSu?=
-	=?iso-8859-15?Q?2lTxX+q5SAhjmTfM3DJUwBgoLKKyVKR0G2UWGdL1/oUovSPFebMs578bb?=
-	=?iso-8859-15?Q?PNytDvezY1geYLaZE/nBtpkgsZ5oLDQAW+tBrOPd2WnEUHmtVhYTvMqLi?=
-	=?iso-8859-15?Q?P+t5FI2Byi8v3FaEZwbBXyyBSIflTsKIROcN1dsy/43MOShvsQCrDiGMg?=
-	=?iso-8859-15?Q?54GNKdV9mpaFhEqPzyft591sWqQ5QqoSLgUj9UA5PwCBE5sFr3pwdMwGV?=
-	=?iso-8859-15?Q?b+YF9rsEnKt+Ko54pCl9kfzQYlAMOyZ7DX+fSdYaWWJCh5NJIVQw8TRuV?=
-	=?iso-8859-15?Q?0BDEavFNHouQ8uKbWNJKszLlmDxUq5DsCmyqRRuL+8feQHn0cjRFc5jkc?=
-	=?iso-8859-15?Q?Vhm88NmHqfOoX4AxpCKvBe8y6iBO30RJPvF7nAV7vrH89wcMbuWt8YINa?=
-	=?iso-8859-15?Q?pkXLtZlQkN4P5qCVTvEv2fZjO3TVUvfh3GupiUejbczdC46A5Ipj0Nsf6?=
-	=?iso-8859-15?Q?akSH6ofMYGnuwfZ9tp8a9deaopfbkYIMxt9f2gRbrYYSxYSwZYN0tyLIq?=
-	=?iso-8859-15?Q?NyNjcxvro/KlwMChWceIoJJBadoc/JG6EL2AKrL+4km8XrHbpI6tasVPJ?=
-	=?iso-8859-15?Q?fikVe/A2/qMH8NxjqqfTYiZV53szSaww8DAPPNHBBWj7I84gZ2JrBJiO8?=
-	=?iso-8859-15?Q?H2JdOjpczax84cViSjRRSGXEEC9EesYr59988kZ0u8l+H0g4kjhLbQgqs?=
-	=?iso-8859-15?Q?xAvjLNWVPnj80f0GRgZcDlNEqtlJ89s/eGEMnepE6fN0g+A=3D?=
+	id B2331101E693; Fri,  5 Nov 2021 20:49:32 +0000 (UTC)
+Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DDD8710016F5;
+	Fri,  5 Nov 2021 20:49:28 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1A5KnQQh012553; 
+	Fri, 5 Nov 2021 15:49:26 -0500
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1A5KnPXV012552;
+	Fri, 5 Nov 2021 15:49:25 -0500
+Date: Fri, 5 Nov 2021 15:49:25 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Message-ID: <20211105204925.GM19591@octiron.msp.redhat.com>
+References: <1634757322-6015-1-git-send-email-bmarzins@redhat.com>
+	<340a1d0da9921f1d7f334395b4986be904a2517e.camel@suse.com>
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 8195d7e9-f7fc-4abe-867a-08d9a0992ff7
-X-MS-Exchange-CrossTenant-originalarrivaltime: 05 Nov 2021 20:16:44.3877 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: L844hXujAlGymYLzb9cGLwQ6m8e+JJ1EpabvfH6bNoO5zgDTZC5NL9OBTLYS6gAmpO7Jf7btqwEws+alyCvjdg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB7PR04MB5067
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1A5KGpf3020813
+In-Reply-To: <340a1d0da9921f1d7f334395b4986be904a2517e.camel@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 X-loop: dm-devel@redhat.com
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Subject: Re: [dm-devel] [PATCH 8/8] libmultipath: cleanup invalid config
-	handling
+Subject: Re: [dm-devel] [PATCH 0/7] multipathd: remove udev settle dependency
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -161,77 +81,146 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-ID: <A8A561576DC17744B387A34C1E981F80@eurprd04.prod.outlook.com>
-Content-Type: text/plain; charset="iso-8859-15"
+Content-Disposition: inline
+Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, 2021-11-05 at 15:10 -0500, Benjamin Marzinski wrote:
-> On Thu, Nov 04, 2021 at 09:11:34PM +0000, Martin Wilck wrote:
-> > On Wed, 2021-10-06 at 15:04 -0500, Benjamin Marzinski wrote:
-> > > Add error reporting to the remaining config handlers. If the
-> > > value is
-> > > invalid, do not change the existing config option's value.
+On Thu, Nov 04, 2021 at 10:00:11PM +0000, Martin Wilck wrote:
+> On Wed, 2021-10-20 at 14:15 -0500, Benjamin Marzinski wrote:
+> > So, it turns out that commit 4ef67017 "libmultipath: add
+> > update_pathvec_from_dm()" already does most of the hard work of making
+> > multipath handle the uninitialized paths that exist during boot, after
+> > the switch root, but before the all the coldplug uevents have been
+> > processed. The only problem is that this code leaves the paths in a
+> > partially initialized state, which doesn't completely get corrected
+> > until
+> > a reconfigure happens.=20
 > >=20
-> > Like for the previous patch, I'm unsure if this is wise. You rely
-> > on a
-> > reasonable default being set before the function is called. I
-> > suppose
-> > that's the case, but I like seeing the "invalid" value substituted
-> > right there where the validity is checked. That saves us from
-> > searching
-> > the code for the default value.
+> > This patchset makes multipath track these partially initailized paths,
+> > and makes sure that they get fully initialized, or removed, as
+> > necessary.
 > >=20
-> > Maybe I overlooked an important rationale for not touching the
-> > values
-> > in the case of invalid input, please explain.
+> > The first patch is a tangentially related bug I found when trying
+> > (unsuccessfully) to recreate multipathd's problem with dropping
+> > uninitialized paths. Multipathd was not removing completely missing
+> > paths from maps that it found while starting up. The solution I chose
+> > was just to make sure that a full reload will happen on these maps,
+> > even
+> > if a weak reconfigure was requested. However, this means that multipath
+> > still completely ignores these missing paths. A side effect of this is
+> > that "multipath -l" does not show these paths, even though they exist
+> > as
+> > part of the multipath table. The full reloads are necessary, to take
+> > care of issues that update_pathvec_from_dm() can run into, but we might
+> > also want to think about marking these missing paths as INIT_REMOVED,
+> > instead of not adding them at all. This would make "multipath -l" still
+> > show them, until they actually get removed from the table.
 >=20
-> Since these handlers are only called if people put the corresponding
-> option in the config files, we had better have sensible defaults if
-> they're not called (or if they don't set anything).
->=20
-> I admit that I should take a look for cases were we cap an out-of-
-> range
-> value, to see if it would make more sense to treat it as an invalid
-> value instead. Also, instead of accepting strings that are simply a
-> number, we should convert the string, and the check the actual
-> number.
-> But I don't see any harm in simply ignoring the invalid values. It's
-> no
-> different than if the user didn't put the invalid line into
-> multipath.conf
->=20
-> Not setting the values on garbage input makes the handlers more
-> general.
-> If you have two options that work the same except that they have
-> different defaults, then by not explicitly setting the value to the
-> default when you have invalid input, one handler can be used for both
-> options. set_yes_no() is a good example.=A0 Without my patch, it always
-> set the value to something, even if the input was garbage. But the
-> default value it set was "no". That had nothing to do with the
-> default
-> value of the options that were using it. You could do extra work to
-> make
-> sure that it would correctly use the option's default value, but you
-> get
-> the same outcome, with simpler code, just by not changing the default
-> if
-> you have a garbage value.
->=20
-> Also, many of the handlers never set the value on invalid input. I'm
-> just
-> making that consistent across all of the handlers.
+> Yes, that might be a good thing. Completely missing paths (not existing
+> in sysfs) in a map represent a dangerous condition; it would be good if
+> multipath -l was able to tell the user about it.
 
-OK, you've convinced me.
+Sure, but I can do that as a separate patch?
+=20
+> >=20
+> > Patch 0005 makes sure to fully initialize the paths when their coldplug
+> > event occurs, but if the path is already fully initialized in udev, but
+> > multipathd finds out about it from update_pathvec_from_dm(), multipath
+> > doesn't do anything to finish initializing the path and moving it to
+> > INIT_OK, besides waiting for a uevent or a reconfigure. This is
+> > probably
+> > fine, since the only way I can see for a path to be in this state is
+> > for
+> > someone to manually remove the path from multipathd monitoring. But if
+> > I'm missing some other way that paths could end up in this state, we
+> > could try proactively finishing the initalization of INIT_PARTIAL paths
+> > that have all their udev information.
+>=20
+> One option would be to try finishing the initialization in the path
+> checker.
 
-Thanks
-Martin
+Yep. Something like that is what I was thinking.  But I'm still trying
+to come up with a way that paths could get into this state without
+someone running something like:
 
+# multipathd del path sda
+# mutipath
+
+And I'm not sure how much code we want to add just to handle something
+contrived like this.
+
+> What about the checker, in general?  Should we take some care that
+> partially initialized paths aren't mistakenly set as failed? I'm not
+> sure if libudev is able to return a proper fd from
+> udev_device_get_devnode() if the device isn't yet initialized in the
+> udev db. Without a proper fd, the checker is doomed to fail. And other
+> failure modes are possible too without proper udev initialization, I
+> suppose?
+>=20
+
+Since this is a case where the device nodes do exist, since they were
+already made into multipath devices, I didn't run into any problems with
+checking INIT_PARTIAL paths.
+
+-Ben
+
+> >=20
+> > I'm also kind of on the fence about patch 0006. There is no reason
+> > why
+> > we have to remove INIT_PARTIAL paths if the multipath device goes
+> > away.
+> > But if a path is in INIT_PARTIAL for long enough that the multipath
+> > device gets removed, then it's likely not a path we want to be
+> > monitoring, and if a uevent occurs, we'll add it back, anyway. Also,
+> > knowing that INIT_PARTIAL paths are always part of multipath devices
+> > does make the code simpler.
+> >=20
+> > I've tested these patches both by rebooting with necessary and
+> > unnecessary multipath devices in the initramfs and multipathd.service
+> > set to make multipathd start up at various points after the switch
+> > root,
+> > and by manually sending remove uevents to unintialize some paths, and
+> > then starting multipathd to test specific combinations of path
+> > states.
+> > But more testing is always welcome.
+>=20
+> I'll try to give this code a test shortly.
+>=20
+> Cheers,
+> Martin
+>=20
+>=20
+> >=20
+> > Benjamin Marzinski (7):
+> > =A0 multipathd: remove missing paths on startup
+> > =A0 libmultipath: skip unneeded steps to get path name
+> > =A0 libmultipath: don't use fallback wwid in update_pathvec_from_dm
+> > =A0 libmultipath: always set INIT_REMOVED in set_path_removed
+> > =A0 multipathd: fully initialize paths added by update_pathvec_from_dm
+> > =A0 multipathd: remove INIT_PARTIAL paths that aren't in a multipath
+> > =A0=A0=A0 device
+> > =A0 multipathd: Remove dependency on systemd-udev-settle.service
+> >=20
+> > =A0libmultipath/configure.c=A0=A0=A0=A0=A0 |=A0 2 ++
+> > =A0libmultipath/devmapper.c=A0=A0=A0=A0=A0 |=A0 2 ++
+> > =A0libmultipath/discovery.c=A0=A0=A0=A0=A0 |=A0 7 ++---
+> > =A0libmultipath/discovery.h=A0=A0=A0=A0=A0 |=A0 2 ++
+> > =A0libmultipath/structs.h=A0=A0=A0=A0=A0=A0=A0 |=A0 7 +++++
+> > =A0libmultipath/structs_vec.c=A0=A0=A0 | 40 ++++++++++++++++-----------=
+--
+> > =A0multipathd/cli_handlers.c=A0=A0=A0=A0 |=A0 4 +++
+> > =A0multipathd/main.c=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 | 48 +++++++++=
++++++++++++++++++++++++-
+> > --
+> > =A0multipathd/main.h=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 |=A0 1 +
+> > =A0multipathd/multipathd.service |=A0 3 +--
+> > =A010 files changed, 90 insertions(+), 26 deletions(-)
+> >=20
 
 --
 dm-devel mailing list
