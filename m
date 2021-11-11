@@ -2,98 +2,74 @@ Return-Path: <SRS0=8dGD=P6=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1ABADC433F5
-	for <dm-devel@archiver.kernel.org>; Thu, 11 Nov 2021 13:08:16 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4B59DC4332F
+	for <dm-devel@archiver.kernel.org>; Thu, 11 Nov 2021 15:36:39 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id A0428611AD
-	for <dm-devel@archiver.kernel.org>; Thu, 11 Nov 2021 13:08:15 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org A0428611AD
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
+	by mail.kernel.org (Postfix) with ESMTPS id F3CB66135E
+	for <dm-devel@archiver.kernel.org>; Thu, 11 Nov 2021 15:36:38 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org F3CB66135E
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1636644998;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=XHf4pmFKMDPniDrimhHC9qne1vci/IZDDL4dNHZOLpY=;
+	b=ZAbc6VGX2AE/kc2xkDBqVKVD+tbPvABH20tQV6zpQCarYJJZXxeAJ72gpKla9P3yeHhCkq
+	TsIZjnt040sJnYul+tv+jIQIKPUYZIU/pWjGjQo4wTgr38JUVLf5fVtz1I+dkOIivkc2+r
+	IOR5ejT1gOWVoyZZmqRmqBuk0jupteM=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-27-e-bUay_vNleUhDJ2ox7Y4w-1; Thu, 11 Nov 2021 08:08:11 -0500
-X-MC-Unique: e-bUay_vNleUhDJ2ox7Y4w-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-454-K1GvMo1ZP_KDv4b6S4NNTQ-1; Thu, 11 Nov 2021 10:36:34 -0500
+X-MC-Unique: K1GvMo1ZP_KDv4b6S4NNTQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BDC25875048;
-	Thu, 11 Nov 2021 13:08:06 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8B16F10151E0;
+	Thu, 11 Nov 2021 15:36:29 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BB42C67843;
-	Thu, 11 Nov 2021 13:08:04 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DF08F19C59;
+	Thu, 11 Nov 2021 15:36:26 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B31275FBDC;
-	Thu, 11 Nov 2021 13:08:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 335514EA2A;
+	Thu, 11 Nov 2021 15:36:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
+	[10.5.11.12])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1ABD7x6W019730 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 11 Nov 2021 08:07:59 -0500
+	id 1ABFaIRC007231 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 11 Nov 2021 10:36:18 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 2863D51E3; Thu, 11 Nov 2021 13:07:59 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2321051E2
-	for <dm-devel@redhat.com>; Thu, 11 Nov 2021 13:07:52 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CEA8D100B8EA
-	for <dm-devel@redhat.com>; Thu, 11 Nov 2021 13:07:52 +0000 (UTC)
-Received: from mail-ed1-f53.google.com (mail-ed1-f53.google.com
-	[209.85.208.53]) (Using TLS) by relay.mimecast.com with ESMTP id
-	us-mta-412-84Sd87rJO3mbC3tgyCrgLw-1; Thu, 11 Nov 2021 08:07:51 -0500
-X-MC-Unique: 84Sd87rJO3mbC3tgyCrgLw-1
-Received: by mail-ed1-f53.google.com with SMTP id z21so23907200edb.5;
-	Thu, 11 Nov 2021 05:07:50 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
-	:content-language:to:cc:references:from:in-reply-to
-	:content-transfer-encoding;
-	bh=lCYPHFIR2zL2WRQMMRw0vit7el+xs1wKp/P2WsZEnvg=;
-	b=Evck/L/CqrrgM9ZMu/ping5SlfuMYht9g7xRtgXuQZF9eYvwFnYHMeWQI1LZVBHO5V
-	O0R8SPG15OVOSqF/ubSxllPN+ZqH4PP0rLHn0Iq1KeqmnETJ5ng22J9uJDHzYoj4t7l4
-	Zdxu1WGl3eMN3Y8a7HI3Ay7QvMdbwngnO18tZXCo/+gT2cGkU46tdS6CILaeGDJEpAAN
-	vHdwGzCxlapvu9ifFZvvRg8iSDXHVBEC1ZdWKSqU6vi/WOxhhfaAA7Dy17VZOkeCtG30
-	/X8CzNc4+Vr+J+OnE3iWb/ZoxSLTb5u+GMGbQGcdg2Ph3Giaw31lBiQyRFNS2HkKalX5
-	4gHw==
-X-Gm-Message-State: AOAM531WSEDeZmj7v8NzkuNLOftyaWXD1U6OEuGUPGVcm+6aYMA66Dll
-	UNKJKhQs/LHhnBJaS9iM8tY=
-X-Google-Smtp-Source: ABdhPJw9LWGjTEFHq48+DHpYzPZ46EM70QzAP0+SXZL1/24AIxBSCIGcKU/qnG4QMjmBmZpUa5/w8A==
-X-Received: by 2002:a05:6402:50ce:: with SMTP id
-	h14mr9677570edb.228.1636636069450; 
-	Thu, 11 Nov 2021 05:07:49 -0800 (PST)
-Received: from [192.168.2.27] (113.151.broadband3.iol.cz. [85.70.151.113])
-	by smtp.gmail.com with ESMTPSA id
-	hq33sm1489439ejc.119.2021.11.11.05.07.48
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Thu, 11 Nov 2021 05:07:48 -0800 (PST)
-Message-ID: <da6989dc-1fab-cbd0-4ea9-1b60ea9de964@gmail.com>
-Date: Thu, 11 Nov 2021 14:07:47 +0100
+	id E215060C17; Thu, 11 Nov 2021 15:36:18 +0000 (UTC)
+Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BE95F60C05;
+	Thu, 11 Nov 2021 15:36:18 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1ABFaFxY024930; 
+	Thu, 11 Nov 2021 09:36:15 -0600
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1ABFaETk024929;
+	Thu, 11 Nov 2021 09:36:14 -0600
+Date: Thu, 11 Nov 2021 09:36:14 -0600
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Message-ID: <20211111153614.GT19591@octiron.msp.redhat.com>
+References: <1636592780-20391-1-git-send-email-bmarzins@redhat.com>
+	<1636592780-20391-8-git-send-email-bmarzins@redhat.com>
+	<71d89b6eb201dd69cf8a6a209fa0fc12b8ebe918.camel@suse.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
-	Thunderbird/91.3.0
-To: Itai Handler <itai.handler@gmail.com>, dm-devel@redhat.com
-References: <CAFpOueRBb9y_Fgb3-c6_eFTKZR9DoAXZmxqqx0UH1Yb2rbV0RQ@mail.gmail.com>
-From: Milan Broz <gmazyland@gmail.com>
-In-Reply-To: <CAFpOueRBb9y_Fgb3-c6_eFTKZR9DoAXZmxqqx0UH1Yb2rbV0RQ@mail.gmail.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+In-Reply-To: <71d89b6eb201dd69cf8a6a209fa0fc12b8ebe918.camel@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 X-loop: dm-devel@redhat.com
-Cc: Mikulas Patocka <mpatocka@redhat.com>, agk@redhat.com, snitzer@redhat.com
-Subject: Re: [dm-devel] [RFC PATCH 1/1] dm crypt: change maximum sector size
- to PAGE_SIZE
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH v2 7/9] libmultipath: deprecate file and
+ directory config options
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -107,96 +83,138 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Disposition: inline
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-On 10/11/2021 18:43, Itai Handler wrote:
-> Maximum sector size of dm-crypt is currently limited to 4096 bytes.
-> 
-> On systems where PAGE_SIZE is larger than 4096 bytes, using larger
-> sectors can be beneficial for performance reasons.
+On Thu, Nov 11, 2021 at 11:44:44AM +0000, Martin Wilck wrote:
+> On Wed, 2021-11-10 at 19:06 -0600, Benjamin Marzinski wrote:
+> > Having multipath able to select pathnames for the files and
+> > directories
+> > it needs causes unnecessary maintainer headaches. Mark these as
+> > deprecated, but still support them for now.
+> >=20
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+>=20
+> I would have preferred to start ignoring these options right away
+> (spitting out warnings). After all, this is upstream, we don't have to=20
+> take care of long-term-support users (distros can keep the old behavior
+> if they want), and experience shows that depreciation warnings are
+> ignored until the deprecated feature is actually removed. But if you
+> prefer doing it this way, fine.
+>=20
+> Let's agree to remove these options soon, i.e. with the official
+> release after the next one (0.8.9, presumably).
 
-The limit to 4096 was set because this is the smallest possible
-page size that all platform supports.
+Sure. Thanks.
 
-If you allow a higher size here, the device cannot be activated on a platform
-with the smaller page size. (Encrypted sector size becomes
-atomic sector size for all upper layers - as you mention below, not
-all fs support bigger sectors.)
+>=20
+> > ---
+> > =A0libmultipath/dict.c=A0=A0=A0=A0=A0=A0=A0 | 40 ++++++++++++++++++++++=
++++++++-------
+> > --
+> > =A0multipath/multipath.conf.5 |=A0 5 +++++
+> > =A02 files changed, 36 insertions(+), 9 deletions(-)
+> >=20
+> > diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+> > index 149d3348..1b4e1106 100644
+> > --- a/libmultipath/dict.c
+> > +++ b/libmultipath/dict.c
+> > @@ -268,6 +268,15 @@ def_ ## option ## _handler (struct config *conf,
+> > vector strvec,=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > =A0=A0=A0=A0=A0=A0=A0=A0return function (strvec, &conf->option, file,
+> > line_nr);=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > =A0}
+> > =A0
+> > +#define declare_def_warn_handler(option,
+> > function)=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0\
+> > +static
+> > int=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > +def_ ## option ## _handler (struct config *conf, vector
+> > strvec,=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0 const char *file, int
+> > line_nr)=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > +{=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0
+> > =A0=A0=A0\
+> > +=A0=A0=A0=A0=A0=A0=A0condlog(2, "%s line %d, \"" #option "\" is deprec=
+ated and
+> > will be disabled in a future release", file,
+> > line_nr);=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > +=A0=A0=A0=A0=A0=A0=A0return function (strvec, &conf->option, file,
+> > line_nr);=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > +}
+> > +
+> > =A0#define declare_def_range_handler(option, minval,
+> > maxval)=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0\
+> > =A0static
+> > int=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > =A0def_ ## option ## _handler (struct config *conf, vector
+> > strvec,=A0=A0=A0=A0=A0=A0=A0=A0 \
+> > @@ -284,6 +293,17 @@ snprint_def_ ## option (struct config *conf,
+> > struct strbuf *buff,=A0=A0\
+> > =A0=A0=A0=A0=A0=A0=A0=A0return function(buff, conf-
+> > >option);=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0\
+> > =A0}
+> > =A0
+> > +#define declare_def_snprint_non_defstr(option, function,
+> > value)=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > +static
+> > int=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > +snprint_def_ ## option (struct config *conf, struct strbuf
+> > *buff,=A0=A0=A0=A0=A0=A0\
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0c=
+onst void
+> > *data)=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > +{=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0
+> > =A0=A0=A0\
+> > +=A0=A0=A0=A0=A0=A0=A0static const char *s =3D
+> > value;=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > +=A0=A0=A0=A0=A0=A0=A0if (!conf->option || strcmp(conf->option, s) =3D=
+=3D
+> > 0)=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return
+> > 0;=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0\
+> > +=A0=A0=A0=A0=A0=A0=A0return function(buff, conf-
+> > >option);=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0\
+> > +}
+>=20
+> I'd actually print the value here, even if it's empty or equal to the
+> default. That would be helpful in the future too, when these options
+> are removed. This way customers can verify the settings multipathd is
+> using by default.
 
-For LUKS, this is not acceptable - the format is portable by definition.
+Sure.
 
-For specific dm-crypt device, I am not sure. I would better kept
-the 4096 page size limit here.
+-Ben
 
-It also depends on crypto API driver here (performance is usually optimized to 4k).
-What cipher and encryption mode did you use for test?
-
-How the number looks for random access? Linear test is usually misleading.
-I expect there will be big performance problem if you write small data chunks,
-writes and encryption will be amplified to full big sectors here...)
-
-(Technical detail: such pat MUST increase dm-crypt minor version.)
-
-Milan
-
-> 
-> This patch changes maximum sector size from 4096 bytes to PAGE_SIZE,
-> and in addition it changes the type of sector_size in
-> struct crypt_config from 'unsigned short int' to 'unsigned int', in
-> order to be able to represent larger values.
-> 
-> On a prototype system which has PAGE_SIZE of 65536 bytes, I saw about
-> x2 performance improvement in sequential read throughput benchmark
-> while using only about half of the CPU usage, after simply increasing
-> sector size from 4096 to 65536 bytes.
-> I used ext4 filesystem for that benchmark, which supports 64KiB
-> sectors.
-> 
-> Note: A small change should be made in cryptsetup in order to add
-> support for sectors larger than 4096 bytes.
-> 
-> Signed-off-by: Itai Handler <itai.handler@gmail.com>
-> ---
->   drivers/md/dm-crypt.c | 6 +++---
->   1 file changed, 3 insertions(+), 3 deletions(-)
-> 
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index 916b7da16de2..78c239443bd5 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -168,7 +168,7 @@ struct crypt_config {
->          } iv_gen_private;
->          u64 iv_offset;
->          unsigned int iv_size;
-> -       unsigned short int sector_size;
-> +       unsigned int sector_size;
->          unsigned char sector_shift;
-> 
->          union {
-> @@ -3115,9 +3115,9 @@ static int crypt_ctr_optional(struct dm_target
-> *ti, unsigned int argc, char **ar
->                          cc->cipher_auth = kstrdup(sval, GFP_KERNEL);
->                          if (!cc->cipher_auth)
->                                  return -ENOMEM;
-> -               } else if (sscanf(opt_string, "sector_size:%hu%c",
-> &cc->sector_size, &dummy) == 1) {
-> +               } else if (sscanf(opt_string, "sector_size:%u%c",
-> &cc->sector_size, &dummy) == 1) {
->                          if (cc->sector_size < (1 << SECTOR_SHIFT) ||
-> -                           cc->sector_size > 4096 ||
-> +                           cc->sector_size > PAGE_SIZE ||
->                              (cc->sector_size & (cc->sector_size - 1))) {
->                                  ti->error = "Invalid feature value for
-> sector_size";
->                                  return -EINVAL;
-> 
+> Regards,
+> Martin
+>=20
+>=20
 
 --
 dm-devel mailing list
