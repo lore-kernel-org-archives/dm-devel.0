@@ -2,137 +2,85 @@ Return-Path: <SRS0=8dGD=P6=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DDF8FC433F5
-	for <dm-devel@archiver.kernel.org>; Thu, 11 Nov 2021 11:57:08 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1ABADC433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 11 Nov 2021 13:08:16 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 66BF96124C
-	for <dm-devel@archiver.kernel.org>; Thu, 11 Nov 2021 11:57:08 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 66BF96124C
-Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
+	by mail.kernel.org (Postfix) with ESMTPS id A0428611AD
+	for <dm-devel@archiver.kernel.org>; Thu, 11 Nov 2021 13:08:15 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org A0428611AD
+Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-584-tA_LkrkiM26gE3c3ZZShKw-1; Thu, 11 Nov 2021 06:57:03 -0500
-X-MC-Unique: tA_LkrkiM26gE3c3ZZShKw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-27-e-bUay_vNleUhDJ2ox7Y4w-1; Thu, 11 Nov 2021 08:08:11 -0500
+X-MC-Unique: e-bUay_vNleUhDJ2ox7Y4w-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E00141023F4D;
-	Thu, 11 Nov 2021 11:56:59 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BFC9019C59;
-	Thu, 11 Nov 2021 11:56:59 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BDC25875048;
+	Thu, 11 Nov 2021 13:08:06 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BB42C67843;
+	Thu, 11 Nov 2021 13:08:04 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 99DB71819AC1;
-	Thu, 11 Nov 2021 11:56:59 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B31275FBDC;
+	Thu, 11 Nov 2021 13:08:00 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1ABBuwBW011457 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 11 Nov 2021 06:56:58 -0500
+	id 1ABD7x6W019730 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 11 Nov 2021 08:07:59 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 9E2402026D5D; Thu, 11 Nov 2021 11:56:58 +0000 (UTC)
+	id 2863D51E3; Thu, 11 Nov 2021 13:07:59 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 98A9B2026D48
-	for <dm-devel@redhat.com>; Thu, 11 Nov 2021 11:56:55 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2321051E2
+	for <dm-devel@redhat.com>; Thu, 11 Nov 2021 13:07:52 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id ADFCC85A5A8
-	for <dm-devel@redhat.com>; Thu, 11 Nov 2021 11:56:55 +0000 (UTC)
-Received: from de-smtp-delivery-102.mimecast.com
-	(de-smtp-delivery-102.mimecast.com [194.104.109.102]) (Using TLS) by
-	relay.mimecast.com with ESMTP id us-mta-479-9zLr11xJNFWNNe-n_ZXmWg-1;
-	Thu, 11 Nov 2021 06:56:54 -0500
-X-MC-Unique: 9zLr11xJNFWNNe-n_ZXmWg-1
-Received: from EUR05-VI1-obe.outbound.protection.outlook.com
-	(mail-vi1eur05lp2171.outbound.protection.outlook.com [104.47.17.171])
-	(Using TLS) by relay.mimecast.com with ESMTP id
-	de-mta-25-Fx3LhXZrMhajeTAMQ76H3g-1; Thu, 11 Nov 2021 12:56:51 +0100
-X-MC-Unique: Fx3LhXZrMhajeTAMQ76H3g-1
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
-	by DB7PR04MB5578.eurprd04.prod.outlook.com (2603:10a6:10:87::26) with
-	Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4669.13;
-	Thu, 11 Nov 2021 11:56:50 +0000
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::d0d9:a949:8409:bbc7]) by
-	DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::d0d9:a949:8409:bbc7%3]) with mapi id 15.20.4669.016;
-	Thu, 11 Nov 2021 11:56:50 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
-	"christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Thread-Topic: [PATCH 7/8] libmultipath: split set_int to enable reuse
-Thread-Index: AQHXuu1mU4ueBiHTrUieST8shQsUFqv+cI+A
-Date: Thu, 11 Nov 2021 11:56:49 +0000
-Message-ID: <f0e8841ff5f36a9f5c5b1d140d69bca11edda36b.camel@suse.com>
-References: <1633550663-25571-1-git-send-email-bmarzins@redhat.com>
-	<1633550663-25571-8-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1633550663-25571-8-git-send-email-bmarzins@redhat.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Evolution 3.42.1
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 18e94a4a-864e-417b-3eed-08d9a50a5858
-x-ms-traffictypediagnostic: DB7PR04MB5578:
-x-microsoft-antispam-prvs: <DB7PR04MB5578920547B03E3CAF24C108FC949@DB7PR04MB5578.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:2803
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: UAEAuDOoAPRq2joDpAQnvBgsYkq+fIX6eaOks5pREW+gaZ6Xg9w3ErvIzBwDAu1MPnoDJ+jnuGNWPI64Q2ksMX05tdOM7tHibIPaV1Udattk/Tf+6a2UyixwpAsGk7ql/E37N4B+C7MTJVxRcEKMxaOJSveMoG+5t6ZaAO2N0MQyMhLtunJRjQsV5kyYufxRU1VuEiQcx1/CkJnrH0sLbPBunbtzRViP7Zs0XbvtX1evvmToaY82ZMcZXh6/WMdhV8+FsY6TmJkeJM6yaEK9SFNGj4E3yhqe4lBmEfvbHHfdzeH4fkKcku5sJC+7+jrC+WBaNKxyaYxwzwfDVejPNsx5IyXWyPrP+Zx/nifyEnZThVIwXQUfEpAUiZzA8BtEw7zWcpbwBq/743zLqYG3nINBJRwz6b/ivEiSgecjuxWuJANRUckdfj7quSd0/k6lK+vCpiQxAft7JNXwh781udHoaUJ1XtKhi6WQhbpsXS15d+istk0kOxzve7sA/pLsjAEC57j+AFbISBMlBB80UpYi4AvS9TlMXXQuy0YJsaziy9zvxFNrcNyBP/rvx8zB8a6uSRfO3XxzWw83lULce60aa37mBaRlyNMQAPKmuGyHmoatafDWmQURxxOEpjsfQ8Gwtm9p/Oh7et4hzYW3qkU4nbqCqLH/j9Em4lK3vCZCqWQtPk0/CeEjx5u7nCdnTXf5NAJfKfoif774gJcmwQ==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(366004)(36756003)(91956017)(26005)(66556008)(6506007)(5660300002)(86362001)(6512007)(8936002)(508600001)(4744005)(2906002)(38100700002)(122000001)(38070700005)(8676002)(66476007)(71200400001)(44832011)(316002)(66446008)(110136005)(4326008)(186003)(64756008)(76116006)(2616005)(6486002)(66946007);
-	DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?2OMdHRZaFCnn3ggnuzY2fNITI6hvKL7Ro0sWAM8+2vScqUtXrgR1HS/uW?=
-	=?iso-8859-15?Q?/25UqLkxgBYsWW0G7QCOHVl+oHtdsY4XLt1qgm095VhImpLQC45PG8EWS?=
-	=?iso-8859-15?Q?zjja4M97hF/IdIyYEvvabAG586yX1mK/rXjhWnjIsdSsp2nY3T32RIltu?=
-	=?iso-8859-15?Q?CfkpBH9WgERXxBmt9DkaObm5F6csqaYPoYp3pwtiVTvJhusmeg/HFP+da?=
-	=?iso-8859-15?Q?70kHwNCQE8AKUoH8fWo+CJdrgRQfaw0sFOwvxKuNQXxwfUgTByTVWtQec?=
-	=?iso-8859-15?Q?vs20jnHst1jCRrgJtsQDnAM6BKrP2mcowI3rQsuPiXeAjSGzmYPTTNX3r?=
-	=?iso-8859-15?Q?4lwmIHpSqb1sd8NnjDDowu4t3ZyZcO73/XdD1edTXCDiX9QJrS9s8JLnL?=
-	=?iso-8859-15?Q?7jEkF8q23fHk4YPjnc+buY+68ur++h4lqeGqDY15qE8DcLmlbn0qGSQs/?=
-	=?iso-8859-15?Q?iPvh+KM6lviPe4JtX/ukPQpz5frFJoa95vi/VmIdQIdNtqOKVNxg9U4Zk?=
-	=?iso-8859-15?Q?Vau2qL0DNGD/KggYvKqNKM5JTMRYaM2o7mQpC/AzS3NOnVZDrFx2vrm4V?=
-	=?iso-8859-15?Q?2wjQr3UFCq2Qjw+O/KMXfhbRoZ4w6zhMg2MTm/RC5i82QqsfpUSaQwYnN?=
-	=?iso-8859-15?Q?WPUX7X5uzTf8+vSgcYDs4aJQUwHisRC8U2mamR0NaY3yLEE22KucmRe7Y?=
-	=?iso-8859-15?Q?uFTTdlhd0VZhVCWlLq9RN7GkDOnLU75ZDdsHD51ymOPnIEXMbpLOw1i1E?=
-	=?iso-8859-15?Q?JlobBKFztN/vkF8S0jZvGuXAuZutWRP3rES4OR5BQrMqJWKJKp0nqOpNL?=
-	=?iso-8859-15?Q?yIqkNvQNzSZOlLV/gUBAI3IfgHqeAtspy9WUAM2ShRcDItIX3KZrXqZSN?=
-	=?iso-8859-15?Q?qyvnPVEYVT3R/G9DH6VetRupV6Y1r0Tphb+7I88OIUbDaJTQRK0vEVubZ?=
-	=?iso-8859-15?Q?t9OonuF1q7lFGQOPddJgGwojsgBIWUTSL590Pqv7igy8QW6qtbHPGfMs6?=
-	=?iso-8859-15?Q?mNJ3+je3+Imm6iGp6vGC4B0vyz9W8D885jVZpgW+Th7Ms0z0ppireOmQN?=
-	=?iso-8859-15?Q?mZZ232ooGLn1TY1JefDzCg+TmyWdnxV9cS2UOy1IpApv79zeMEzl3YVT2?=
-	=?iso-8859-15?Q?GisOg5sfik7sTmLSpihGVwvxHgmrtGCFbD0WCeeT0r8fiqkGNil76cG0W?=
-	=?iso-8859-15?Q?jo4BrraSrdMxNx4N7X2NyyrxLLo3iJdEICGaeTw//GpT3WjPf1OFeZbMZ?=
-	=?iso-8859-15?Q?zVSGprG3ihuozKKkvQTz5mOXflJETAqxKUikIygfs/BseiF3CH+JMlvQq?=
-	=?iso-8859-15?Q?IhlU+Z1MY46tL1pEuFDsxeXZVVHU5YG+fHI4diEF/0hlqE5f0O1kdWMiM?=
-	=?iso-8859-15?Q?iyzq9hGaat/CBRTYpwOOFL3GydAUUg5MjGVByQ5oZgTnW8YArO3Wlso1O?=
-	=?iso-8859-15?Q?f5k++BPSEfC1RgFkFfZ5ZQtzOEse410zIRjXfBEM3muv1C7ae5y/7N/pq?=
-	=?iso-8859-15?Q?FFibGHgfdEDmSsiSu/aCkdZp26YCZHDwYKyiQRPfoKZIdpS3flA8wOrEp?=
-	=?iso-8859-15?Q?yIoPl6ghJMmJX3ekAl/wX+t0fo9mnWLMSAElEzHa1dp3Kcm/M+oMPepPO?=
-	=?iso-8859-15?Q?njQ+awesc7H44vHM91T9nr+I8YW4CvOGP4xPR8ItYtJN7XHnbjofRuqJ/?=
-	=?iso-8859-15?Q?rjhJLTrXjPmFVsLuFpxlDWTn2NNh6YHpWJ7+hKh6xNuR19w=3D?=
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CEA8D100B8EA
+	for <dm-devel@redhat.com>; Thu, 11 Nov 2021 13:07:52 +0000 (UTC)
+Received: from mail-ed1-f53.google.com (mail-ed1-f53.google.com
+	[209.85.208.53]) (Using TLS) by relay.mimecast.com with ESMTP id
+	us-mta-412-84Sd87rJO3mbC3tgyCrgLw-1; Thu, 11 Nov 2021 08:07:51 -0500
+X-MC-Unique: 84Sd87rJO3mbC3tgyCrgLw-1
+Received: by mail-ed1-f53.google.com with SMTP id z21so23907200edb.5;
+	Thu, 11 Nov 2021 05:07:50 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
+	:content-language:to:cc:references:from:in-reply-to
+	:content-transfer-encoding;
+	bh=lCYPHFIR2zL2WRQMMRw0vit7el+xs1wKp/P2WsZEnvg=;
+	b=Evck/L/CqrrgM9ZMu/ping5SlfuMYht9g7xRtgXuQZF9eYvwFnYHMeWQI1LZVBHO5V
+	O0R8SPG15OVOSqF/ubSxllPN+ZqH4PP0rLHn0Iq1KeqmnETJ5ng22J9uJDHzYoj4t7l4
+	Zdxu1WGl3eMN3Y8a7HI3Ay7QvMdbwngnO18tZXCo/+gT2cGkU46tdS6CILaeGDJEpAAN
+	vHdwGzCxlapvu9ifFZvvRg8iSDXHVBEC1ZdWKSqU6vi/WOxhhfaAA7Dy17VZOkeCtG30
+	/X8CzNc4+Vr+J+OnE3iWb/ZoxSLTb5u+GMGbQGcdg2Ph3Giaw31lBiQyRFNS2HkKalX5
+	4gHw==
+X-Gm-Message-State: AOAM531WSEDeZmj7v8NzkuNLOftyaWXD1U6OEuGUPGVcm+6aYMA66Dll
+	UNKJKhQs/LHhnBJaS9iM8tY=
+X-Google-Smtp-Source: ABdhPJw9LWGjTEFHq48+DHpYzPZ46EM70QzAP0+SXZL1/24AIxBSCIGcKU/qnG4QMjmBmZpUa5/w8A==
+X-Received: by 2002:a05:6402:50ce:: with SMTP id
+	h14mr9677570edb.228.1636636069450; 
+	Thu, 11 Nov 2021 05:07:49 -0800 (PST)
+Received: from [192.168.2.27] (113.151.broadband3.iol.cz. [85.70.151.113])
+	by smtp.gmail.com with ESMTPSA id
+	hq33sm1489439ejc.119.2021.11.11.05.07.48
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Thu, 11 Nov 2021 05:07:48 -0800 (PST)
+Message-ID: <da6989dc-1fab-cbd0-4ea9-1b60ea9de964@gmail.com>
+Date: Thu, 11 Nov 2021 14:07:47 +0100
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 18e94a4a-864e-417b-3eed-08d9a50a5858
-X-MS-Exchange-CrossTenant-originalarrivaltime: 11 Nov 2021 11:56:49.9320 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: kN/Iyb1tSoQDLvtSspYwkZ5x4igH8xZ7WwiuhWDylJxEX6EmFYug5kJmKMUPMi9v+I4i2aOPeMbvmC0cOpdZZg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB7PR04MB5578
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+	Thunderbird/91.3.0
+To: Itai Handler <itai.handler@gmail.com>, dm-devel@redhat.com
+References: <CAFpOueRBb9y_Fgb3-c6_eFTKZR9DoAXZmxqqx0UH1Yb2rbV0RQ@mail.gmail.com>
+From: Milan Broz <gmazyland@gmail.com>
+In-Reply-To: <CAFpOueRBb9y_Fgb3-c6_eFTKZR9DoAXZmxqqx0UH1Yb2rbV0RQ@mail.gmail.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -141,13 +89,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1ABBuwBW011457
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Subject: Re: [dm-devel] [PATCH 7/8] libmultipath: split set_int to enable
-	reuse
+Cc: Mikulas Patocka <mpatocka@redhat.com>, agk@redhat.com, snitzer@redhat.com
+Subject: Re: [dm-devel] [RFC PATCH 1/1] dm crypt: change maximum sector size
+ to PAGE_SIZE
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -161,30 +107,96 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <8FDD79167B7F584995612F3CCC9547E1@eurprd04.prod.outlook.com>
-Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On Wed, 2021-10-06 at 15:04 -0500, Benjamin Marzinski wrote:
-> Split the code that does the actual value parsing out of set_int(),
-> into
-> a helper function, do_set_int(), so that it can be used by other
-> handlers. These functions no longer set the config value at all, when
-> they have invalid input.
+On 10/11/2021 18:43, Itai Handler wrote:
+> Maximum sector size of dm-crypt is currently limited to 4096 bytes.
 > 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> On systems where PAGE_SIZE is larger than 4096 bytes, using larger
+> sectors can be beneficial for performance reasons.
 
-After discussion on v2 of this patch:
+The limit to 4096 was set because this is the smallest possible
+page size that all platform supports.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+If you allow a higher size here, the device cannot be activated on a platform
+with the smaller page size. (Encrypted sector size becomes
+atomic sector size for all upper layers - as you mention below, not
+all fs support bigger sectors.)
 
+For LUKS, this is not acceptable - the format is portable by definition.
 
+For specific dm-crypt device, I am not sure. I would better kept
+the 4096 page size limit here.
+
+It also depends on crypto API driver here (performance is usually optimized to 4k).
+What cipher and encryption mode did you use for test?
+
+How the number looks for random access? Linear test is usually misleading.
+I expect there will be big performance problem if you write small data chunks,
+writes and encryption will be amplified to full big sectors here...)
+
+(Technical detail: such pat MUST increase dm-crypt minor version.)
+
+Milan
+
+> 
+> This patch changes maximum sector size from 4096 bytes to PAGE_SIZE,
+> and in addition it changes the type of sector_size in
+> struct crypt_config from 'unsigned short int' to 'unsigned int', in
+> order to be able to represent larger values.
+> 
+> On a prototype system which has PAGE_SIZE of 65536 bytes, I saw about
+> x2 performance improvement in sequential read throughput benchmark
+> while using only about half of the CPU usage, after simply increasing
+> sector size from 4096 to 65536 bytes.
+> I used ext4 filesystem for that benchmark, which supports 64KiB
+> sectors.
+> 
+> Note: A small change should be made in cryptsetup in order to add
+> support for sectors larger than 4096 bytes.
+> 
+> Signed-off-by: Itai Handler <itai.handler@gmail.com>
+> ---
+>   drivers/md/dm-crypt.c | 6 +++---
+>   1 file changed, 3 insertions(+), 3 deletions(-)
+> 
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 916b7da16de2..78c239443bd5 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -168,7 +168,7 @@ struct crypt_config {
+>          } iv_gen_private;
+>          u64 iv_offset;
+>          unsigned int iv_size;
+> -       unsigned short int sector_size;
+> +       unsigned int sector_size;
+>          unsigned char sector_shift;
+> 
+>          union {
+> @@ -3115,9 +3115,9 @@ static int crypt_ctr_optional(struct dm_target
+> *ti, unsigned int argc, char **ar
+>                          cc->cipher_auth = kstrdup(sval, GFP_KERNEL);
+>                          if (!cc->cipher_auth)
+>                                  return -ENOMEM;
+> -               } else if (sscanf(opt_string, "sector_size:%hu%c",
+> &cc->sector_size, &dummy) == 1) {
+> +               } else if (sscanf(opt_string, "sector_size:%u%c",
+> &cc->sector_size, &dummy) == 1) {
+>                          if (cc->sector_size < (1 << SECTOR_SHIFT) ||
+> -                           cc->sector_size > 4096 ||
+> +                           cc->sector_size > PAGE_SIZE ||
+>                              (cc->sector_size & (cc->sector_size - 1))) {
+>                                  ti->error = "Invalid feature value for
+> sector_size";
+>                                  return -EINVAL;
+> 
 
 --
 dm-devel mailing list
