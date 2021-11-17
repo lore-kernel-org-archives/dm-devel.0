@@ -2,70 +2,72 @@ Return-Path: <SRS0=MR+g=QE=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C8EC8C433F5
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Nov 2021 20:34:10 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E0A10C433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Nov 2021 20:34:12 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 723CD6135E
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Nov 2021 20:34:10 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 723CD6135E
+	by mail.kernel.org (Postfix) with ESMTPS id 9319360EFD
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Nov 2021 20:34:12 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 9319360EFD
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1637181249;
+	s=mimecast20190719; t=1637181251;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=qE+EPoa4imxbgdMdWeoi+SVgxTX0v0pT784JFE6d/gY=;
-	b=eCpEL+DzkNb0I75U53owdxQB41md80v7kMhFJ5UtY8SRqfZ+XzZN21UeT8hmzR0R5qyXkA
-	20t2F6ItS7tAAutJlMoq5FI77LBhVbv9BKF+SIernSqbCsoN0k9yVw4v064SL9k6Cbqjeb
-	gc5WUwiUdORJ8jusBXv41mES5RXQi20=
+	bh=n96Qx5p0hQHkZQ9cWVkN5mrKOtOYWOsLkEmXXeDEkEI=;
+	b=OdPPtfh1GNTts0dH0g/sgRPvRfUNQRG9pdNZedfYLlLCfWzpylH3hIWV9b5R6SXfZj/5NE
+	UinnYHgbzDCwBtlwnm/0bA7yrjCiisaZcpLrBI4AVUIUILbZpR3ngAxJzmno4/p7Psu4Vi
+	KI9fwmcvBpHTeE5YEz47qgC1oy1GF3Y=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
- [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-423-MCZYJ9wjMo2GVs10ZB5VAA-1; Wed, 17 Nov 2021 15:34:08 -0500
-X-MC-Unique: MCZYJ9wjMo2GVs10ZB5VAA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-200-kzeepUAvNGeMVadWgvfMvA-1; Wed, 17 Nov 2021 15:34:08 -0500
+X-MC-Unique: kzeepUAvNGeMVadWgvfMvA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AAADE15720;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B0F2318125C0;
 	Wed, 17 Nov 2021 20:34:03 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 90E64179B3;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9159819D9B;
 	Wed, 17 Nov 2021 20:34:03 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6349F1832DD4;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 663491832DD5;
 	Wed, 17 Nov 2021 20:34:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
-	[10.5.11.11])
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
+	[10.5.11.23])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1AHKXmUu018159 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 17 Nov 2021 15:33:49 -0500
+	id 1AHKXiNN018122 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 17 Nov 2021 15:33:44 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id F1409179B3; Wed, 17 Nov 2021 20:33:48 +0000 (UTC)
+	id 3AABE19D9B; Wed, 17 Nov 2021 20:33:44 +0000 (UTC)
 Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 29B97604CC;
-	Wed, 17 Nov 2021 20:33:45 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 64B2D26188;
+	Wed, 17 Nov 2021 20:33:41 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1AHKXhWU004477; 
-	Wed, 17 Nov 2021 14:33:43 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1AHKXdn9004465; 
+	Wed, 17 Nov 2021 14:33:39 -0600
 Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1AHKXhhj004476;
-	Wed, 17 Nov 2021 14:33:43 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1AHKXdGh004464;
+	Wed, 17 Nov 2021 14:33:39 -0600
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Wed, 17 Nov 2021 14:33:37 -0600
-Message-Id: <1637181217-4423-5-git-send-email-bmarzins@redhat.com>
+Date: Wed, 17 Nov 2021 14:33:34 -0600
+Message-Id: <1637181217-4423-2-git-send-email-bmarzins@redhat.com>
 In-Reply-To: <1637181217-4423-1-git-send-email-bmarzins@redhat.com>
 References: <1637181217-4423-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 X-loop: dm-devel@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>,
 	Martin Wilck <Martin.Wilck@suse.com>
-Subject: [dm-devel] [PATCH v2 4/4] multipathd: add "reconfigure all" command.
+Subject: [dm-devel] [PATCH v2 1/4] multipathd: move delayed_reconfig out of
+	struct config
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -80,7 +82,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -88,131 +90,213 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-With this commit, multipathd no longer defaults to full reconfigures for
-the "reconfigure" command and the HUP signal. The default is a weak
-reconfigure. A new command, "reconfigure all", has been added to do
-a full reconfigure.
+delayed_reconfig was inside the config struct, but it wasn't updated
+during an RCU write section, so there's no synchronization on it.
+Instead, pull it out of the config structure, and use the config_lock
+to synchronize it.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/main.c          |  2 +-
- multipathd/cli.c          |  1 +
- multipathd/cli.h          |  2 ++
- multipathd/cli_handlers.c | 10 ++++++++++
- multipathd/main.c         |  2 +-
- multipathd/multipathd.8   | 10 ++++++++--
- 6 files changed, 23 insertions(+), 4 deletions(-)
+ libmpathpersist/libmpathpersist.version | 12 +++----
+ libmultipath/config.h                   |  1 -
+ libmultipath/libmultipath.version       | 22 +++++-------
+ multipathd/main.c                       | 45 ++++++++++++++++---------
+ 4 files changed, 42 insertions(+), 38 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 65ece830..7b9797ec 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -759,7 +759,7 @@ int delegate_to_multipathd(enum mpath_cmds cmd,
- 		return NOT_DELEGATED;
+diff --git a/libmpathpersist/libmpathpersist.version b/libmpathpersist/libmpathpersist.version
+index e0748138..b52b7500 100644
+--- a/libmpathpersist/libmpathpersist.version
++++ b/libmpathpersist/libmpathpersist.version
+@@ -10,7 +10,7 @@
+  *
+  * See libmultipath.version for general policy about version numbers.
+  */
+-LIBMPATHPERSIST_1.0.0 {
++LIBMPATHPERSIST_2.0.0 {
+ global:
  
- 	if (cmd == CMD_CREATE && conf->force_reload == FORCE_RELOAD_YES) {
--		p += snprintf(p, n, "reconfigure");
-+		p += snprintf(p, n, "reconfigure all");
- 	}
- 	else if (cmd == CMD_FLUSH_ONE && dev && dev_type == DEV_DEVMAP) {
- 		p += snprintf(p, n, "del map %s", dev);
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index 414f6608..d9308bdf 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -212,6 +212,7 @@ load_keys (void)
- 	r += add_key(keys, "local", LOCAL, 0);
- 	r += add_key(keys, "setmarginal", SETMARGINAL, 0);
- 	r += add_key(keys, "unsetmarginal", UNSETMARGINAL, 0);
-+	r += add_key(keys, "all", ALL, 0);
+ 	__mpath_persistent_reserve_in;
+@@ -28,11 +28,9 @@ global:
+ 	prout_do_scsi_ioctl;
+ 	update_map_pr;
  
- 
- 	if (r) {
-diff --git a/multipathd/cli.h b/multipathd/cli.h
-index fcb6af00..bba705e8 100644
---- a/multipathd/cli.h
-+++ b/multipathd/cli.h
-@@ -47,6 +47,7 @@ enum {
- 	__LOCAL,			/* 40 */
- 	__SETMARGINAL,
- 	__UNSETMARGINAL,
-+	__ALL,
- };
- 
- #define LIST		(1ULL << __LIST)
-@@ -93,6 +94,7 @@ enum {
- #define LOCAL		(1ULL << __LOCAL)
- #define SETMARGINAL	(1ULL << __SETMARGINAL)
- #define UNSETMARGINAL	(1ULL << __UNSETMARGINAL)
-+#define ALL		(1ULL << __ALL)
- 
- #define INITIAL_REPLY_LEN	1200
- 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index b12a4e7e..58b9916c 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -1012,6 +1012,15 @@ cli_reconfigure(void * v, struct strbuf *reply, void * data)
- {
- 	condlog(2, "reconfigure (operator)");
- 
-+	schedule_reconfigure(false);
-+	return 0;
-+}
+-local: *;
+-};
+-
+-LIBMPATHPERSIST_1.1.0 {
+-global:
++	/* added int 1.1.0 */
+ 	libmpathpersist_init;
+ 	libmpathpersist_exit;
+-} LIBMPATHPERSIST_1.0.0;
 +
-+int
-+cli_reconfigure_all(void * v, struct strbuf *reply, void * data)
-+{
-+	condlog(2, "reconfigure all (operator)");
++local: *;
++};
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 933fe0d1..c73389b5 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -178,7 +178,6 @@ struct config {
+ 	int strict_timing;
+ 	int retrigger_tries;
+ 	int retrigger_delay;
+-	int delayed_reconfig;
+ 	int uev_wait_timeout;
+ 	int skip_kpartx;
+ 	int remove_retries;
+diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+index b2feee2a..6473091d 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -31,7 +31,7 @@
+  *   The new version inherits the previous ones.
+  */
+ 
+-LIBMULTIPATH_9.0.0 {
++LIBMULTIPATH_10.0.0 {
+ global:
+ 	/* symbols referenced by multipath and multipathd */
+ 	add_foreign;
+@@ -284,21 +284,15 @@ global:
+ 	/* added in 8.2.0 */
+ 	check_daemon;
+ 
+-local:
+-	*;
+-};
+-
+-LIBMULTIPATH_9.1.0 {
+-global:
++	/* added in 9.1.0 */
+ 	timespeccmp;
+-} LIBMULTIPATH_9.0.0;
+ 
+-LIBMULTIPATH_9.2.0 {
+-global:
++	/* added in 9.2.0 */
+ 	set_wakeup_fn;
+-} LIBMULTIPATH_9.1.0;
+ 
+-LIBMULTIPATH_9.3.0 {
+-global:
++	/* added in 9.3.0 */
+ 	__snprint_config;
+-} LIBMULTIPATH_9.2.0;
 +
- 	schedule_reconfigure(true);
- 	return 0;
- }
-@@ -1497,6 +1506,7 @@ void init_handler_callbacks(void)
- 	set_handler_callback(DEL+MAPS, cli_del_maps);
- 	set_handler_callback(SWITCH+MAP+GROUP, cli_switch_group);
- 	set_unlocked_handler_callback(RECONFIGURE, cli_reconfigure);
-+	set_unlocked_handler_callback(RECONFIGURE+ALL, cli_reconfigure_all);
- 	set_handler_callback(SUSPEND+MAP, cli_suspend);
- 	set_handler_callback(RESUME+MAP, cli_resume);
- 	set_handler_callback(RESIZE+MAP, cli_resize);
++local:
++	*;
++};
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 5c831e8d..cc4a4a5d 100644
+index 2b416af9..1ead0904 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -2817,7 +2817,7 @@ handle_signals(bool nonfatal)
- 		return;
- 	if (reconfig_sig) {
- 		condlog(2, "reconfigure (signal)");
--		schedule_reconfigure(true);
-+		schedule_reconfigure(false);
+@@ -127,6 +127,8 @@ static int poll_dmevents = 1;
+ #endif
+ /* Don't access this variable without holding config_lock */
+ static volatile enum daemon_status running_state = DAEMON_INIT;
++/* Don't access this variable without holding config_lock */
++static bool __delayed_reconfig;
+ pid_t daemon_pid;
+ static pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
+ static pthread_cond_t config_cond;
+@@ -150,6 +152,23 @@ int should_exit(void)
+ 	return get_running_state() == DAEMON_SHUTDOWN;
+ }
+ 
++static bool get_delayed_reconfig(void)
++{
++	bool val;
++
++	pthread_mutex_lock(&config_lock);
++	val = __delayed_reconfig;
++	pthread_mutex_unlock(&config_lock);
++	return val;
++}
++
++static void set_delayed_reconfig(bool val)
++{
++	pthread_mutex_lock(&config_lock);
++	__delayed_reconfig = val;
++	pthread_mutex_unlock(&config_lock);
++}
++
+ /*
+  * global copy of vecs for use in sig handlers
+  */
+@@ -297,8 +316,10 @@ static void __post_config_state(enum daemon_status state)
+ 			old_state = DAEMON_IDLE;
+ 			state = DAEMON_CONFIGURE;
+ 		}
+-		if (reconfigure_pending && state == DAEMON_CONFIGURE)
++		if (state == DAEMON_CONFIGURE) {
+ 			reconfigure_pending = false;
++			__delayed_reconfig = false;
++		}
+ 		running_state = state;
+ 		pthread_cond_broadcast(&config_cond);
+ 		do_sd_notify(old_state, state);
+@@ -765,7 +786,7 @@ int
+ ev_add_map (char * dev, const char * alias, struct vectors * vecs)
+ {
+ 	struct multipath * mpp;
+-	int delayed_reconfig, reassign_maps;
++	int reassign_maps;
+ 	struct config *conf;
+ 
+ 	if (dm_is_mpath(alias) != 1) {
+@@ -784,12 +805,11 @@ ev_add_map (char * dev, const char * alias, struct vectors * vecs)
+ 				return 1;
+ 		}
+ 		conf = get_multipath_config();
+-		delayed_reconfig = conf->delayed_reconfig;
+ 		reassign_maps = conf->reassign_maps;
+ 		put_multipath_config(conf);
+ 		if (mpp->wait_for_udev) {
+ 			mpp->wait_for_udev = 0;
+-			if (delayed_reconfig &&
++			if (get_delayed_reconfig() &&
+ 			    !need_to_delay_reconfig(vecs)) {
+ 				condlog(2, "reconfigure (delayed)");
+ 				schedule_reconfigure();
+@@ -1791,8 +1811,7 @@ missing_uev_wait_tick(struct vectors *vecs)
+ {
+ 	struct multipath * mpp;
+ 	unsigned int i;
+-	int timed_out = 0, delayed_reconfig;
+-	struct config *conf;
++	int timed_out = 0;
+ 
+ 	vector_foreach_slot (vecs->mpvec, mpp, i) {
+ 		if (mpp->wait_for_udev && --mpp->uev_wait_tick <= 0) {
+@@ -1808,10 +1827,7 @@ missing_uev_wait_tick(struct vectors *vecs)
+ 		}
  	}
- 	if (log_reset_sig) {
- 		condlog(2, "reset log (signal)");
-diff --git a/multipathd/multipathd.8 b/multipathd/multipathd.8
-index 048a838d..e60d7f7f 100644
---- a/multipathd/multipathd.8
-+++ b/multipathd/multipathd.8
-@@ -195,10 +195,16 @@ group index, starting with 1.
- .
- .TP
- .B reconfigure
--Reconfigures the multipaths. This should be triggered automatically after anyi
--hotplug event.
-+Rereads the configuration, and reloads all changed multipath devices. This
-+also happens at startup, when the service is reload, or when a SIGHUP is
-+received.
- .
- .TP
-+.B reconfigure all
-+Rereads the configuration, and reloads all multipath devices regardless of
-+whether or not they have changed. This also happens when \fImultipath -r\fR is
-+run.
-+.TP
- .B suspend map|multipath $map
- Sets map $map into suspend state.
- .
+ 
+-	conf = get_multipath_config();
+-	delayed_reconfig = conf->delayed_reconfig;
+-	put_multipath_config(conf);
+-	if (timed_out && delayed_reconfig &&
++	if (timed_out && get_delayed_reconfig() &&
+ 	    !need_to_delay_reconfig(vecs)) {
+ 		condlog(2, "reconfigure (delayed)");
+ 		schedule_reconfigure();
+@@ -3257,13 +3273,10 @@ child (__attribute__((unused)) void *param)
+ 			pthread_cleanup_push(cleanup_lock, &vecs->lock);
+ 			lock(&vecs->lock);
+ 			pthread_testcancel();
+-			if (!need_to_delay_reconfig(vecs)) {
++			if (!need_to_delay_reconfig(vecs))
+ 				reconfigure(vecs);
+-			} else {
+-				conf = get_multipath_config();
+-				conf->delayed_reconfig = 1;
+-				put_multipath_config(conf);
+-			}
++			else
++				set_delayed_reconfig(true);
+ 			lock_cleanup_pop(vecs->lock);
+ 			post_config_state(DAEMON_IDLE);
+ 		}
 -- 
 2.17.2
 
