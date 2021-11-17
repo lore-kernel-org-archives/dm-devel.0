@@ -2,71 +2,71 @@ Return-Path: <SRS0=MR+g=QE=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B9B13C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Nov 2021 21:21:54 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id CC99DC433EF
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Nov 2021 21:21:56 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 6E766619BB
-	for <dm-devel@archiver.kernel.org>; Wed, 17 Nov 2021 21:21:54 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 6E766619BB
+	by mail.kernel.org (Postfix) with ESMTPS id 85B5861B62
+	for <dm-devel@archiver.kernel.org>; Wed, 17 Nov 2021 21:21:56 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 85B5861B62
 Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=redhat.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1637184113;
+	s=mimecast20190719; t=1637184115;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=0CGVz9sGDbWJrSzPRC+55hnIUxAtjl48m/QTZePfCYI=;
-	b=Ru4YyJStHmXQigiBCQkiSlL1n4cjI/60DUu8fcfMYdyu2Fwn/o/p1zn5nyXq61vEs+BbXD
-	QMfMBWex2kw5GHxg7LpCNrA1Lbu31KptQyRmrCZvJgceZj9H/++hQk91BNqJkibifruOh0
-	CHUhGhTU/8mV+hBqe8ntilw5gqUqxaE=
+	bh=8aYsRqcjdn6/VfhUi18WTVaV33uacr5GDIgK9mFnMIc=;
+	b=eTByVuHrI74bPwkFF3kGZO76v1fhmb6x90JF6z74xLTUh3q6qC9VnfUYEAIpjM+DttcMB8
+	4sh/uidtceCjcD8BBH3QteXbv9vRk6nRzccec7HR1hDlyJdxwkrieZe9ORa9r7UBWeqUQy
+	gNhGW0o1eCyOOC6qmo1RCf1OBiXn4m8=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) (Using TLS) by relay.mimecast.com with ESMTP id
- us-mta-600-JuWkUy56MkqNVEiA3VBTLQ-1; Wed, 17 Nov 2021 16:21:51 -0500
-X-MC-Unique: JuWkUy56MkqNVEiA3VBTLQ-1
+ us-mta-485-dxKUmb9lNsyb-L8hPuSe3Q-1; Wed, 17 Nov 2021 16:21:52 -0500
+X-MC-Unique: dxKUmb9lNsyb-L8hPuSe3Q-1
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3D15415720;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4A03E1006AA1;
 	Wed, 17 Nov 2021 21:21:47 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 224FE5DAA5;
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2EB78ADF9;
 	Wed, 17 Nov 2021 21:21:47 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id F3D961832DD7;
-	Wed, 17 Nov 2021 21:21:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com
-	[10.5.11.16])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 08F1A4E58E;
+	Wed, 17 Nov 2021 21:21:47 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com
+	[10.5.11.14])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1AHLLYS6025260 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 17 Nov 2021 16:21:34 -0500
+	id 1AHLLj12025333 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 17 Nov 2021 16:21:45 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id ECED25C22B; Wed, 17 Nov 2021 21:21:34 +0000 (UTC)
+	id 86D3A17CEE; Wed, 17 Nov 2021 21:21:45 +0000 (UTC)
 Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D7E085C1BB;
-	Wed, 17 Nov 2021 21:21:34 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1D2735D9DE;
+	Wed, 17 Nov 2021 21:21:39 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1AHLLXsu004943; 
-	Wed, 17 Nov 2021 15:21:33 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1AHLLbmi004955; 
+	Wed, 17 Nov 2021 15:21:37 -0600
 Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1AHLLWe0004942;
-	Wed, 17 Nov 2021 15:21:32 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1AHLLbDW004954;
+	Wed, 17 Nov 2021 15:21:37 -0600
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Wed, 17 Nov 2021 15:21:21 -0600
-Message-Id: <1637184084-4882-7-git-send-email-bmarzins@redhat.com>
+Date: Wed, 17 Nov 2021 15:21:24 -0600
+Message-Id: <1637184084-4882-10-git-send-email-bmarzins@redhat.com>
 In-Reply-To: <1637184084-4882-1-git-send-email-bmarzins@redhat.com>
 References: <1637184084-4882-1-git-send-email-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 X-loop: dm-devel@redhat.com
 Cc: device-mapper development <dm-devel@redhat.com>,
 	Martin Wilck <Martin.Wilck@suse.com>
-Subject: [dm-devel] [PATCH v2 6/9] multipathd: retrigger uevent for partial
-	paths
+Subject: [dm-devel] [PATCH v2 9/9] libmultipath: add path wildcard "%I" for
+	init state
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -89,93 +89,69 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-If a partial path appears and is not fully initialized within
-180 seconds, trigger a uevent. If the udev device is not initialized
-trigger an add event. Otherwise, trigger a change event.
+From: Martin Wilck <mwilck@suse.com>
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Enable printing pp->initialized with 'multipathd show paths format "%I"'.
+This is supposed to go on top of Ben's "multipathd: remove udev settle
+dependency" series, to simplify checking multipathd's state.
+
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/libmultipath.version |  2 +-
- libmultipath/structs.h            |  1 +
- libmultipath/structs_vec.c        |  1 +
- multipathd/main.c                 | 20 ++++++++++++++++++++
- 4 files changed, 23 insertions(+), 1 deletion(-)
+ libmultipath/print.c   | 21 +++++++++++++++++++++
+ libmultipath/structs.h |  1 +
+ 2 files changed, 22 insertions(+)
 
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 6473091d..58a7d1be 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -31,7 +31,7 @@
-  *   The new version inherits the previous ones.
-  */
- 
--LIBMULTIPATH_10.0.0 {
-+LIBMULTIPATH_11.0.0 {
- global:
- 	/* symbols referenced by multipath and multipathd */
- 	add_foreign;
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 69409fd4..c21d1eda 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -318,6 +318,7 @@ struct path {
- 	int fd;
- 	int initialized;
- 	int retriggers;
-+	int partial_retrigger_delay;
- 	unsigned int path_failures;
- 	time_t dis_reinstate_time;
- 	int disable_reinstate;
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 1de9175e..9b6407bd 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -195,6 +195,7 @@ bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
- 					condlog(2, "%s: adding new path %s",
- 						mpp->alias, pp->dev);
- 					pp->initialized = INIT_PARTIAL;
-+					pp->partial_retrigger_delay = 180;
- 					store_path(pathvec, pp);
- 					pp->tick = 1;
- 				}
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 8f6be6b9..b0037721 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1948,6 +1948,25 @@ retry_count_tick(vector mpvec)
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index d2ef0104..e61349f9 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -504,6 +504,26 @@ snprint_dm_path_state (struct strbuf *buff, const struct path * pp)
  	}
  }
  
-+static void
-+partial_retrigger_tick(vector pathvec)
++static int snprint_initialized(struct strbuf *buff, const struct path * pp)
 +{
-+	struct path *pp;
-+	unsigned int i;
++	static const char *init_state_name[] = {
++		[INIT_NEW] = "new",
++		[INIT_FAILED] = "failed",
++		[INIT_MISSING_UDEV] = "udev-missing",
++		[INIT_REQUESTED_UDEV] = "udev-requested",
++		[INIT_OK] = "ok",
++		[INIT_REMOVED] = "removed",
++		[INIT_PARTIAL] = "partial",
++	};
++	const char *str;
 +
-+	vector_foreach_slot (pathvec, pp, i) {
-+		if (pp->initialized == INIT_PARTIAL && pp->udev &&
-+		    pp->partial_retrigger_delay > 0 &&
-+		    --pp->partial_retrigger_delay == 0) {
-+			const char *msg = udev_device_get_is_initialized(pp->udev) ?
-+					  "change" : "add";
-+
-+			sysfs_attr_set_value(pp->udev, "uevent", msg,
-+					     strlen(msg));
-+		}
-+	}
++	if (pp->initialized < INIT_NEW || pp->initialized >= __INIT_LAST)
++		str = "undef";
++	else
++		str = init_state_name[pp->initialized];
++	return append_strbuf_str(buff, str);
 +}
 +
- int update_prio(struct path *pp, int refresh_all)
+ static int
+ snprint_vpr (struct strbuf *buff, const struct path * pp)
  {
- 	int oldpriority;
-@@ -2566,6 +2585,7 @@ checkerloop (void *ap)
- 		retry_count_tick(vecs->mpvec);
- 		missing_uev_wait_tick(vecs);
- 		ghost_delay_tick(vecs);
-+		partial_retrigger_tick(vecs->pathvec);
- 		lock_cleanup_pop(vecs->lock);
+@@ -804,6 +824,7 @@ struct path_data pd[] = {
+ 	{'g', "vpd page data", 0, snprint_path_vpd_data},
+ 	{'0', "failures",      0, snprint_path_failures},
+ 	{'P', "protocol",      0, snprint_path_protocol},
++	{'I', "init_st",       0, snprint_initialized},
+ 	{0, NULL, 0 , NULL}
+ };
  
- 		if (count)
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index c21d1eda..c0f8929c 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -206,6 +206,7 @@ enum initialized_states {
+ 	 * change uevent is received.
+ 	 */
+ 	INIT_PARTIAL,
++	__INIT_LAST,
+ };
+ 
+ enum prkey_sources {
 -- 
 2.17.2
 
