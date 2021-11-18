@@ -2,75 +2,74 @@ Return-Path: <SRS0=dXIA=QF=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 08D4CC433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 18 Nov 2021 23:20:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 792E3C433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 18 Nov 2021 23:20:34 +0000 (UTC)
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id 97F3A6141B
-	for <dm-devel@archiver.kernel.org>; Thu, 18 Nov 2021 23:20:29 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 97F3A6141B
+	by mail.kernel.org (Postfix) with ESMTPS id 179FA6141B
+	for <dm-devel@archiver.kernel.org>; Thu, 18 Nov 2021 23:20:34 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 179FA6141B
 Authentication-Results: mail.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-490-jCi4hnEzPx-68zO-dPUjbw-1; Thu, 18 Nov 2021 18:20:24 -0500
-X-MC-Unique: jCi4hnEzPx-68zO-dPUjbw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-564-2Fkay_86Myu1m9tqKdAL0g-1; Thu, 18 Nov 2021 18:20:29 -0500
+X-MC-Unique: 2Fkay_86Myu1m9tqKdAL0g-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B13A780414A;
-	Thu, 18 Nov 2021 23:20:20 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 77E561808327;
+	Thu, 18 Nov 2021 23:20:23 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9AE0C1980E;
-	Thu, 18 Nov 2021 23:20:20 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5BE047944B;
+	Thu, 18 Nov 2021 23:20:23 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7777F180BAD1;
-	Thu, 18 Nov 2021 23:20:20 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 36E801832DF0;
+	Thu, 18 Nov 2021 23:20:23 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1AINE5nW005066 for <dm-devel@listman.util.phx.redhat.com>;
+	id 1AINE5UV005069 for <dm-devel@listman.util.phx.redhat.com>;
 	Thu, 18 Nov 2021 18:14:05 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 52E25218014B; Thu, 18 Nov 2021 23:14:05 +0000 (UTC)
+	id 54340218014C; Thu, 18 Nov 2021 23:14:05 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4D347218013E
-	for <dm-devel@redhat.com>; Thu, 18 Nov 2021 23:14:03 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 52418858EED
-	for <dm-devel@redhat.com>; Thu, 18 Nov 2021 23:14:03 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4D436218013F
+	for <dm-devel@redhat.com>; Thu, 18 Nov 2021 23:14:02 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5FA12106656E
+	for <dm-devel@redhat.com>; Thu, 18 Nov 2021 23:14:02 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-437-_llTsN_pPW-NSBNMrFG8cQ-1; Thu, 18 Nov 2021 18:14:01 -0500
-X-MC-Unique: _llTsN_pPW-NSBNMrFG8cQ-1
+	us-mta-260-vPPmfyFtM6uw43w3jSBoCw-1; Thu, 18 Nov 2021 18:14:00 -0500
+X-MC-Unique: vPPmfyFtM6uw43w3jSBoCw-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id EF24F1FD3A;
-	Thu, 18 Nov 2021 23:13:59 +0000 (UTC)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id E8B992170E;
+	Thu, 18 Nov 2021 23:13:58 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id A592E13AA8;
-	Thu, 18 Nov 2021 23:13:59 +0000 (UTC)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id A1FD813AA8;
+	Thu, 18 Nov 2021 23:13:58 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id 0E8KJjfelmGAQAAAMHmgww
-	(envelope-from <mwilck@suse.com>); Thu, 18 Nov 2021 23:13:59 +0000
+	by imap2.suse-dmz.suse.de with ESMTPSA id Lua6JDbelmGAQAAAMHmgww
+	(envelope-from <mwilck@suse.com>); Thu, 18 Nov 2021 23:13:58 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Fri, 19 Nov 2021 00:13:20 +0100
-Message-Id: <20211118231338.22358-4-mwilck@suse.com>
-In-Reply-To: <20211118231338.22358-1-mwilck@suse.com>
-References: <20211118231338.22358-1-mwilck@suse.com>
+Date: Fri, 19 Nov 2021 00:13:17 +0100
+Message-Id: <20211118231338.22358-1-mwilck@suse.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -82,11 +81,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1AINE5nW005066
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1AINE5UV005069
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH 03/21] multipathd (coverity): terminate uxlsnr
-	when polls allocation fails
+Subject: [dm-devel] [PATCH 00/21] multipath-tools: coverity fixes
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -100,7 +98,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -110,26 +108,64 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-The polls array is dereferenced later on, so even if we are soon
-to be cancelled, we should return immediately here.
+Hi Christophe, hi Ben,
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/uxlsnr.c | 1 +
- 1 file changed, 1 insertion(+)
+I have started a new attempt to fix defects reported by coverity.
+With this set (on top of the previously posted one), and a number
+of false positive classifications, I have been able to bring the
+defect count all the way down to zero.
 
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 6355279..d42cb04 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -607,6 +607,7 @@ void *uxsock_listen(long ux_sock, void *trigger_data)
- 	if (!polls) {
- 		condlog(0, "uxsock: failed to allocate poll fds");
- 		exit_daemon();
-+		return NULL;
- 	}
- 	notify_fd = inotify_init1(IN_NONBLOCK);
- 	if (notify_fd == -1) /* it's fine if notifications fail */
+Most of these patches fix defects reported by coverity. Some
+fix other things that occured to me while working on this.
+
+Regards,
+Martin
+
+Martin Wilck (21):
+  multipath tools: github workflows: add coverity workflow
+  multipathd (coverity): check atexit() return value
+  multipathd (coverity): terminate uxlsnr when polls allocation fails
+  libmultipath: strbuf: add __get_strbuf_buf()
+  libmultipath (coverity): improve input checking in parse_vpd_pg83
+  multipath-tools: add tests for broken VPD page 83
+  libmultipath: use strbuf in parse_vpd_pg83()
+  libmultipath (coverity): fix tainted values in alua_rtpg.c
+  multipath, multipathd: exit if bindings file is broken
+  libmultipath (coverity): silence unchecked return value warning
+  multipath: remove pointless code from getopt processing
+  libmultipath (coverity): set umask before mkstemp
+  multipathd (coverity): simplify set_oom_adj()
+  kpartx: open /dev/loop-control only once
+  kpartx: use opened loop device immediately
+  kpartx: find_unused_loop_device(): add newlines
+  multipathd (coverity): daemonize(): use dup2
+  libmultipath (coverity): avoid sleeping in dm_mapname()
+  libmultipath (coverity): Revert "setup_map: wait for pending path
+    checkers to finish"
+  libmultipath (coverity): check return values in dm_get_multipath()
+  libmultipath: update_pathvec_from_dm: don't force DI_WWID
+
+ .github/workflows/coverity.yaml       |  51 ++++++
+ kpartx/kpartx.c                       |   4 +-
+ kpartx/lopart.c                       | 100 +++++-----
+ kpartx/lopart.h                       |   3 +-
+ libmultipath/alias.c                  |   4 +
+ libmultipath/configure.c              |  63 +------
+ libmultipath/devmapper.c              |  23 +--
+ libmultipath/discovery.c              | 252 ++++++++++++++------------
+ libmultipath/prioritizers/alua_rtpg.c |  13 +-
+ libmultipath/prioritizers/alua_spc3.h |  30 ++-
+ libmultipath/propsel.c                |   2 +-
+ libmultipath/strbuf.c                 |   5 +
+ libmultipath/strbuf.h                 |  14 ++
+ libmultipath/structs_vec.c            |   7 +-
+ multipath/main.c                      |  13 +-
+ multipathd/main.c                     |  91 ++++------
+ multipathd/uxlsnr.c                   |   1 +
+ tests/vpd.c                           | 108 +++++++++++
+ 18 files changed, 456 insertions(+), 328 deletions(-)
+ create mode 100644 .github/workflows/coverity.yaml
+
 -- 
 2.33.1
 
