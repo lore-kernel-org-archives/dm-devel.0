@@ -2,82 +2,66 @@ Return-Path: <SRS0=IN2R=QG=redhat.com=dm-devel-bounces@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from mail.kernel.org (mail.kernel.org [198.145.29.99])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 33049C433F5
-	for <dm-devel@archiver.kernel.org>; Fri, 19 Nov 2021 17:24:00 +0000 (UTC)
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B15CCC433EF
+	for <dm-devel@archiver.kernel.org>; Fri, 19 Nov 2021 18:28:02 +0000 (UTC)
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mail.kernel.org (Postfix) with ESMTPS id BB82F61056
-	for <dm-devel@archiver.kernel.org>; Fri, 19 Nov 2021 17:23:59 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org BB82F61056
-Authentication-Results: mail.kernel.org; dmarc=fail (p=none dis=none) header.from=intel.com
+	by mail.kernel.org (Postfix) with ESMTPS id 9387361B42
+	for <dm-devel@archiver.kernel.org>; Fri, 19 Nov 2021 18:28:01 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.1 mail.kernel.org 9387361B42
+Authentication-Results: mail.kernel.org; dmarc=none (p=none dis=none) header.from=yourcmc.ru
 Authentication-Results: mail.kernel.org; spf=tempfail smtp.mailfrom=redhat.com
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-232-mrFgSaSwMzeURqimX7e7sg-1; Fri, 19 Nov 2021 12:23:55 -0500
-X-MC-Unique: mrFgSaSwMzeURqimX7e7sg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-51-OjdTO5L1PK-UgjwIn8FuPA-1; Fri, 19 Nov 2021 13:27:58 -0500
+X-MC-Unique: OjdTO5L1PK-UgjwIn8FuPA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 18035100D0CF;
-	Fri, 19 Nov 2021 17:23:50 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 873D11DDE9;
+	Fri, 19 Nov 2021 18:27:53 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E349F5F4F6;
-	Fri, 19 Nov 2021 17:23:48 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A9CA160862;
+	Fri, 19 Nov 2021 18:27:52 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5E31D4A704;
-	Fri, 19 Nov 2021 17:23:46 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3F40E4A703;
+	Fri, 19 Nov 2021 18:27:50 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1AJHLTZ8029641 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 19 Nov 2021 12:21:29 -0500
+	id 1AJIRlWd002844 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 19 Nov 2021 13:27:48 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id E02A91121318; Fri, 19 Nov 2021 17:21:28 +0000 (UTC)
+	id 927D81121315; Fri, 19 Nov 2021 18:27:47 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DB2351121319
-	for <dm-devel@redhat.com>; Fri, 19 Nov 2021 17:21:23 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 19A4480A0AC
-	for <dm-devel@redhat.com>; Fri, 19 Nov 2021 17:21:23 +0000 (UTC)
-Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com
-	[209.85.214.174]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-119-iRw_-P0hMVmntBFoztU-Mg-1; Fri, 19 Nov 2021 12:21:21 -0500
-X-MC-Unique: iRw_-P0hMVmntBFoztU-Mg-1
-Received: by mail-pl1-f174.google.com with SMTP id p18so8593180plf.13
-	for <dm-devel@redhat.com>; Fri, 19 Nov 2021 09:21:20 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-	:message-id:subject:to:cc;
-	bh=2U/4HYKnAZR7qNMIeDCg5S//595luEluzFk14uv4gBU=;
-	b=tLs8EEw6PKslABtY+XIK3z5HOnBlVDI6S+eNJChhBxJjjGnPvw/5wjOJQcjAScdmCw
-	Pnbcy4PeOAxyehxEsqnNjbNY63hPRhTeX/gJvG8MBeOmV5sqVJZEoWuxFlao53kBTEmJ
-	il/mBlVwD4C6AeZx4yHY+nH99tC0eTbLaDW5C5O/uvGmfrdRFEoc/Ry0qD2vlsPwZQD+
-	c1I2oHL4B/P/gi1bqWwHGGIE0YwMmSHOuRvg059+EPK4nHe4hXbIbLfgxtsxTcXciBk9
-	gSnvhFU/a0wulndccNNPdIcCBSEPPMzU4pVcbhTlLUrS/koIlxhKuFZ00IqC5KcRrewD
-	E4vw==
-X-Gm-Message-State: AOAM531dQ3J+zJOn0rYdjay8yCtTlN3fJxUsx8wBC1lTfV69B9968KHR
-	E+0lToET34oUVhB0PwjBN06SyiFCw346zYV/6wkex65gZRE=
-X-Google-Smtp-Source: ABdhPJxOTsb7kpZ1mbQBZyHvrw/GjkoPNdlC1Mnmi7QTa5v33P77eZ447VYbGdz8Hsj3aBiYzZhGTejFWOktm98P3BA=
-X-Received: by 2002:a17:90b:1e49:: with SMTP id
-	pi9mr1505670pjb.220.1637342480174; 
-	Fri, 19 Nov 2021 09:21:20 -0800 (PST)
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8DD111121318
+	for <dm-devel@redhat.com>; Fri, 19 Nov 2021 18:27:44 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A12CC10665A0
+	for <dm-devel@redhat.com>; Fri, 19 Nov 2021 18:27:44 +0000 (UTC)
+Received: from yourcmc.ru (yourcmc.ru [195.209.40.11]) by relay.mimecast.com
+	with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-442-J1U4DFiuMJq60MwpGhCHdg-1; Fri, 19 Nov 2021 13:27:41 -0500
+X-MC-Unique: J1U4DFiuMJq60MwpGhCHdg-1
+Received: from yourcmc.ru (localhost [127.0.0.1])
+	by yourcmc.ru (Postfix) with ESMTP id 1610BFE0662
+	for <dm-devel@redhat.com>; Fri, 19 Nov 2021 21:24:43 +0300 (MSK)
+Received: from rainloop.yourcmc.ru (yourcmc.ru [195.209.40.11])
+	by yourcmc.ru (Postfix) with ESMTPSA id 00D60FE0658
+	for <dm-devel@redhat.com>; Fri, 19 Nov 2021 21:24:42 +0300 (MSK)
 MIME-Version: 1.0
-References: <20211109083309.584081-1-hch@lst.de>
-	<20211109083309.584081-2-hch@lst.de>
-	<CAPcyv4ijKTcABMs2tZEuPWo1WDOux+4XWN=DNF5v8SrQRSbfDg@mail.gmail.com>
-	<20211119065645.GB15524@lst.de>
-In-Reply-To: <20211119065645.GB15524@lst.de>
-From: Dan Williams <dan.j.williams@intel.com>
-Date: Fri, 19 Nov 2021 09:21:09 -0800
-Message-ID: <CAPcyv4iFG0n-vdaEi4h5ken6mPrgW6Kz6UXCTRfaHi-c99GBnw@mail.gmail.com>
-To: Christoph Hellwig <hch@lst.de>
+Date: Fri, 19 Nov 2021 18:24:42 +0000
+From: vitalif@yourcmc.ru
+Message-ID: <8b08d35705cd7a03f46209e2a7dad64a@yourcmc.ru>
+To: dm-devel@redhat.com
+X-Virus-Scanned: ClamAV using ClamSMTP
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -88,15 +72,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Mike Snitzer <snitzer@redhat.com>,
-	linux-s390 <linux-s390@vger.kernel.org>, linux-erofs@lists.ozlabs.org,
-	virtualization@lists.linux-foundation.org,
-	linux-xfs <linux-xfs@vger.kernel.org>,
-	device-mapper development <dm-devel@redhat.com>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	linux-ext4 <linux-ext4@vger.kernel.org>, Ira Weiny <ira.weiny@intel.com>
-Subject: Re: [dm-devel] [PATCH 01/29] nvdimm/pmem: move dax_attribute_group
-	from dax to pmem
+Subject: [dm-devel] dm-era over mdadm raid5 loses discard support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -110,48 +86,60 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; boundary="--=_RainLoop_972_723717203.1637346282"
+
+----=_RainLoop_972_723717203.1637346282
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Hi!=0A=0AA dm-era device created over a RAID5 array loses discard support.=
+=0A=0ATest script is attached.=0A=0AIf you run it on SSD you'll see somethi=
+ng like:=0A=0Aloop0 4096=0Aloop1 4096=0Aloop2 4096=0Aloop3 4096=0Amd55 1048=
+576=0Aloop_test_era 0=0A=0AI.e. mdadm device supports discard, but dm-era d=
+evice started over it doesn't.=0A=0AIf you create a dm-era device over a no=
+rmal block device without mdadm RAID5 or even over mdadm RAID1 - it will pr=
+eserve discard support.=0A=0AWhy? How can it be fixed?=0A=0A--=20=0AWith be=
+st regards,=0A  Vitaliy Filippov
+
+----=_RainLoop_972_723717203.1637346282
+Content-Type: application/octet-stream; name="raid5_test.sh"
+Content-Disposition: attachment; filename="raid5_test.sh"
+Content-Transfer-Encoding: base64
+
+IyEvYmluL2Jhc2gKCnNldCAtZQoKbW9kcHJvYmUgZG0tZXJhCmRkIGlmPS9kZXYvemVybyBvZj10
+ZXN0MSBicz0xTSBzZWVrPTEwMDAgY291bnQ9MQpkZCBpZj0vZGV2L3plcm8gb2Y9dGVzdDIgYnM9
+MU0gc2Vlaz0xMDAwIGNvdW50PTEKZGQgaWY9L2Rldi96ZXJvIG9mPXRlc3QzIGJzPTFNIHNlZWs9
+MTAwMCBjb3VudD0xCmRkIGlmPS9kZXYvemVybyBvZj10ZXN0NCBicz0xTSBzZWVrPTEwIGNvdW50
+PTEKbG9zZXR1cCAtLWRpcmVjdC1pbyAvZGV2L2xvb3AwIHRlc3QxCmxvc2V0dXAgLS1kaXJlY3Qt
+aW8gL2Rldi9sb29wMSB0ZXN0Mgpsb3NldHVwIC0tZGlyZWN0LWlvIC9kZXYvbG9vcDIgdGVzdDMK
+bG9zZXR1cCAtLWRpcmVjdC1pbyAvZGV2L2xvb3AzIHRlc3Q0CmVjaG8gbG9vcDAgJChjYXQgL3N5
+cy9ibG9jay9sb29wMC9xdWV1ZS9kaXNjYXJkX2dyYW51bGFyaXR5KQplY2hvIGxvb3AxICQoY2F0
+IC9zeXMvYmxvY2svbG9vcDEvcXVldWUvZGlzY2FyZF9ncmFudWxhcml0eSkKZWNobyBsb29wMiAk
+KGNhdCAvc3lzL2Jsb2NrL2xvb3AyL3F1ZXVlL2Rpc2NhcmRfZ3JhbnVsYXJpdHkpCmVjaG8gbG9v
+cDMgJChjYXQgL3N5cy9ibG9jay9sb29wMy9xdWV1ZS9kaXNjYXJkX2dyYW51bGFyaXR5KQptZGFk
+bSAtQyAtLW1ldGFkYXRhPTAuOSAtLWxldmVsPTUgLS1yYWlkLWRldmljZXM9MyAvZGV2L21kNTUg
+L2Rldi9sb29wMCAvZGV2L2xvb3AxIC9kZXYvbG9vcDIKZWNobyBtZDU1ICQoY2F0IC9zeXMvYmxv
+Y2svbWQ1NS9xdWV1ZS9kaXNjYXJkX2dyYW51bGFyaXR5KQpkbXNldHVwIGNyZWF0ZSBsb29wX3Rl
+c3RfZXJhIC0tdGFibGUgIjAgJChzdWRvIGJsb2NrZGV2IC0tZ2V0c3ogL2Rldi9tZDU1KSBlcmEg
+L2Rldi9sb29wMyAvZGV2L21kNTUgMTAyNCIKZWNobyBsb29wX3Rlc3RfZXJhICQoY2F0IC9zeXMv
+YmxvY2svbG9vcDAvJChyZWFkbGluayAvZGV2L21hcHBlci9sb29wX3Rlc3RfZXJhKS9xdWV1ZS9k
+aXNjYXJkX2dyYW51bGFyaXR5KQpkbXNldHVwIHJlbW92ZSBsb29wX3Rlc3RfZXJhCm1kYWRtIC0t
+c3RvcCAvZGV2L21kNTUKbG9zZXR1cCAtZCAvZGV2L2xvb3AwCmxvc2V0dXAgLWQgL2Rldi9sb29w
+MQpsb3NldHVwIC1kIC9kZXYvbG9vcDIKbG9zZXR1cCAtZCAvZGV2L2xvb3AzCg==
+----=_RainLoop_972_723717203.1637346282
 Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-On Thu, Nov 18, 2021 at 10:56 PM Christoph Hellwig <hch@lst.de> wrote:
->
-> On Wed, Nov 17, 2021 at 09:44:25AM -0800, Dan Williams wrote:
-> > On Tue, Nov 9, 2021 at 12:33 AM Christoph Hellwig <hch@lst.de> wrote:
-> > >
-> > > dax_attribute_group is only used by the pmem driver, and can avoid the
-> > > completely pointless lookup by the disk name if moved there.  This
-> > > leaves just a single caller of dax_get_by_host, so move dax_get_by_host
-> > > into the same ifdef block as that caller.
-> > >
-> > > Signed-off-by: Christoph Hellwig <hch@lst.de>
-> > > Reviewed-by: Dan Williams <dan.j.williams@intel.com>
-> > > Link: https://lore.kernel.org/r/20210922173431.2454024-3-hch@lst.de
-> > > Signed-off-by: Dan Williams <dan.j.williams@intel.com>
-> >
-> > This one already made v5.16-rc1.
->
-> Yes, but 5.16-rc1 did not exist yet when I pointed the series.
->
-> Note that the series also has a conflict against 5.16-rc1 in pmem.c,
-> and buildbot pointed out the file systems need explicit dax.h
-> includes in a few files for some configurations.
->
-> The current branch is here, I just did not bother to repost without
-> any comments:
->
->    http://git.infradead.org/users/hch/misc.git/shortlog/refs/heads/dax-block-cleanup
->
-> no functional changes.
-
-Do you just want to send me a pull request after you add all the acks?
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+----=_RainLoop_972_723717203.1637346282--
 
