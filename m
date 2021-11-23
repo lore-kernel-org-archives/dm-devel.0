@@ -4,73 +4,75 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E4B4BC433F5
-	for <dm-devel@archiver.kernel.org>; Tue, 23 Nov 2021 23:14:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 598EBC433F5
+	for <dm-devel@archiver.kernel.org>; Tue, 23 Nov 2021 23:19:26 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1637709565;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=2Aw2P1LKjRIdkkS3uu3i5NrS+a4MR27D3fdV346RliU=;
+	b=LPZrO1Q4Ur7c3Hx1Y82Pk2dPQszd6LkcezSzZyW67+u5qqJymXfgzgKRJswflRuFPT/8Jr
+	/T6FgZyby1oRNegdWo3QiiMP4sfcDY57TOJzilkCSVAY8GIRBakz/t5Dx7YBxYIsdLH8pw
+	O0Aia3bCq5zrzQw+30Hr+XAFLPPE6jk=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-128-xJlKlbR_NtuS09fA4-ABvg-1; Tue, 23 Nov 2021 18:13:59 -0500
-X-MC-Unique: xJlKlbR_NtuS09fA4-ABvg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-554-SJIZ6MFzM0iZ8O0QRckQOQ-1; Tue, 23 Nov 2021 18:19:21 -0500
+X-MC-Unique: SJIZ6MFzM0iZ8O0QRckQOQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 654A41922023;
-	Tue, 23 Nov 2021 23:13:55 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BAAB88026BB;
+	Tue, 23 Nov 2021 23:19:16 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 22ECF5E274;
-	Tue, 23 Nov 2021 23:13:55 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 973911972E;
+	Tue, 23 Nov 2021 23:19:16 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id F40EA1832E85;
-	Tue, 23 Nov 2021 23:13:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 43BB21832E7F;
+	Tue, 23 Nov 2021 23:19:16 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com
+	[10.5.11.13])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1ANNDq4k027254 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 23 Nov 2021 18:13:52 -0500
+	id 1ANNHWHc027517 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 23 Nov 2021 18:17:32 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B269D51E3; Tue, 23 Nov 2021 23:13:52 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AD3F651E2
-	for <dm-devel@redhat.com>; Tue, 23 Nov 2021 23:13:49 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CA3B2800882
-	for <dm-devel@redhat.com>; Tue, 23 Nov 2021 23:13:49 +0000 (UTC)
-Received: from mail.kernel.org (mail.kernel.org [198.145.29.99]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-570-i4IwGloRNVK0PuGQt6ZXZg-1; Tue, 23 Nov 2021 18:13:44 -0500
-X-MC-Unique: i4IwGloRNVK0PuGQt6ZXZg-1
-Received: by mail.kernel.org (Postfix) with ESMTPSA id 0598E60FC1;
-	Tue, 23 Nov 2021 23:13:43 +0000 (UTC)
-Date: Tue, 23 Nov 2021 15:13:42 -0800
-From: "Darrick J. Wong" <djwong@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20211123231342.GW266024@magnolia>
-References: <20211109083309.584081-1-hch@lst.de>
-	<20211109083309.584081-30-hch@lst.de>
+	id 0AFD44ABA1; Tue, 23 Nov 2021 23:17:32 +0000 (UTC)
+Received: from agk-cloud1.hosts.prod.upshift.rdu2.redhat.com
+	(agk-cloud1.hosts.prod.upshift.rdu2.redhat.com [10.0.13.154])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1BA6660843;
+	Tue, 23 Nov 2021 23:17:15 +0000 (UTC)
+Received: by agk-cloud1.hosts.prod.upshift.rdu2.redhat.com (Postfix,
+	from userid 3883)
+	id 6CF2C424F08E; Tue, 23 Nov 2021 23:15:18 +0000 (GMT)
+Date: Tue, 23 Nov 2021 23:15:18 +0000
+From: Alasdair G Kergon <agk@redhat.com>
+To: Akilesh Kailash <akailash@google.com>
+Message-ID: <20211123231518.GA63964@agk-cloud1.hosts.prod.upshift.rdu2.redhat.com>
+Mail-Followup-To: Akilesh Kailash <akailash@google.com>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Mike Snitzer <msnitzer@redhat.com>,
+	Alasdair Kergon <agk@redhat.com>,
+	Jonathan Brassow <jbrassow@redhat.com>,
+	Heinz Mauelshagen <heinzm@redhat.com>,
+	David Anderson <dvander@google.com>, dm-devel@redhat.com
+References: <alpine.LRH.2.02.2111231421490.24195@file01.intranet.prod.int.rdu2.redhat.com>
+	<CABSDvDJX8tVtGbuxo_Xqo=7GNd66W_FoVk=i6Kssp-6zP5cmmA@mail.gmail.com>
 MIME-Version: 1.0
-In-Reply-To: <20211109083309.584081-30-hch@lst.de>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+In-Reply-To: <CABSDvDJX8tVtGbuxo_Xqo=7GNd66W_FoVk=i6Kssp-6zP5cmmA@mail.gmail.com>
+Organization: Red Hat UK Ltd. Registered in England and Wales, number
+	03798903. Registered Office: Amberley Place, 107-111 Peascod Street,
+	Windsor, Berkshire, SL4 1TE.
+User-Agent: Mutt/1.5.21 (2010-09-15)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 X-loop: dm-devel@redhat.com
-Cc: nvdimm@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
-	linux-s390@vger.kernel.org, linux-erofs@lists.ozlabs.org,
-	virtualization@lists.linux-foundation.org,
-	linux-xfs@vger.kernel.org, dm-devel@redhat.com,
-	linux-fsdevel@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>,
-	linux-ext4@vger.kernel.org, Ira Weiny <ira.weiny@intel.com>
-Subject: Re: [dm-devel] [PATCH 29/29] fsdax: don't require CONFIG_BLOCK
+Cc: Mike Snitzer <msnitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>,
+	dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>,
+	David Anderson <dvander@google.com>, Alasdair Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH] announcing the dm-update target
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -84,7 +86,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -93,46 +95,33 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Nov 09, 2021 at 09:33:09AM +0100, Christoph Hellwig wrote:
-> The file system DAX code now does not require the block code.  So allow
-> building a kernel with fuse DAX but not block layer.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+On Tue, Nov 23, 2021 at 02:27:18PM -0800, Akilesh Kailash wrote:
+> On Tue, Nov 23, 2021 at 1:03 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
+> Older devices do not get new kernel features, only LTS updates. On the
+> other hand, by having
+> it in user-space, we have more control by adding in new features. For
+> ex: On Android S, we
+> introduced the first version of Android COW format. Now in Android T,
+> we plan to support
+> new features by having XOR compression (which saves more space).
 
-Looks good,
-Reviewed-by: Darrick J. Wong <djwong@kernel.org>
+While you are developing this, sure, you're finding new ways that
+make significant space savings and want to roll them out easily
+and the userspace approach helps you to do that.
 
---D
+But the law of diminishing returns will eventually kick in, where you
+have reached a format that provides "good enough" space savings and then
+reducing the runtime performance penalty will become the overriding
+concern and that'll point back to an in-kernel solution.
 
-> ---
->  fs/Kconfig | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> 
-> diff --git a/fs/Kconfig b/fs/Kconfig
-> index 6d608330a096e..7a2b11c0b8036 100644
-> --- a/fs/Kconfig
-> +++ b/fs/Kconfig
-> @@ -42,6 +42,8 @@ source "fs/nilfs2/Kconfig"
->  source "fs/f2fs/Kconfig"
->  source "fs/zonefs/Kconfig"
->  
-> +endif # BLOCK
-> +
->  config FS_DAX
->  	bool "File system based Direct Access (DAX) support"
->  	depends on MMU
-> @@ -89,8 +91,6 @@ config FS_DAX_PMD
->  config FS_DAX_LIMITED
->  	bool
->  
-> -endif # BLOCK
-> -
->  # Posix ACL utility routines
->  #
->  # Note: Posix ACLs can be implemented without these helpers.  Never use
-> -- 
-> 2.30.2
-> 
+So that's the end point I think we are aiming for here.  Combining the
+requirements to find a sweet spot between space saving and performance.
+ 
+By then, the ability still to make a tweak that saves a tiny bit more
+space isn't going to be worth paying an ongoing performance penalty
+for.  (And there could still be some sort of ebpf-style option.)
+
+Alasdair
 
 --
 dm-devel mailing list
