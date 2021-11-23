@@ -4,72 +4,59 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CA724C433F5
-	for <dm-devel@archiver.kernel.org>; Tue, 23 Nov 2021 04:17:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7425CC433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 23 Nov 2021 05:56:42 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-266-JKoXXYUYOsWRJ032KVKn5A-1; Mon, 22 Nov 2021 23:17:35 -0500
-X-MC-Unique: JKoXXYUYOsWRJ032KVKn5A-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-486-3ClzhmQ-N7qKXjMzxtXHvg-1; Tue, 23 Nov 2021 00:56:37 -0500
+X-MC-Unique: 3ClzhmQ-N7qKXjMzxtXHvg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E2B121030C21;
-	Tue, 23 Nov 2021 04:17:30 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 301311030C20;
+	Tue, 23 Nov 2021 05:56:33 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BE71619729;
-	Tue, 23 Nov 2021 04:17:30 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 14C482B0B2;
+	Tue, 23 Nov 2021 05:56:32 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8A7AC4A704;
-	Tue, 23 Nov 2021 04:17:30 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.2])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A32AD4A703;
+	Tue, 23 Nov 2021 05:56:29 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1AN4HToe014251 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 22 Nov 2021 23:17:29 -0500
+	id 1AN5uRCY021354 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 23 Nov 2021 00:56:27 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id E844C4047279; Tue, 23 Nov 2021 04:17:28 +0000 (UTC)
+	id A02E22026D69; Tue, 23 Nov 2021 05:56:27 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E46774047272
-	for <dm-devel@redhat.com>; Tue, 23 Nov 2021 04:17:28 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C9596801E6E
-	for <dm-devel@redhat.com>; Tue, 23 Nov 2021 04:17:28 +0000 (UTC)
-Received: from mail-pf1-f173.google.com (mail-pf1-f173.google.com
-	[209.85.210.173]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-487-VG3kIvhON8-8qTfIowi0rQ-1; Mon, 22 Nov 2021 23:17:26 -0500
-X-MC-Unique: VG3kIvhON8-8qTfIowi0rQ-1
-Received: by mail-pf1-f173.google.com with SMTP id x131so18113894pfc.12
-	for <dm-devel@redhat.com>; Mon, 22 Nov 2021 20:17:26 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
-	:message-id:subject:to:cc;
-	bh=ZQsMyZujMjnowhAwZ2baLD9uO7OCrRs7T2rtVARAjVk=;
-	b=s1/66kRvzw1HI7iUWB9fMbPENFac/kOe1cyTqtve4ujCVZXW1RRfpYbquh6HcdcqpC
-	v+WKriJjLYBJGBVFWlomO7BiH1S2M7rvHaRwLcPYX+Z392hkj/zOEVVYsdAQ4Z6SujUR
-	5c4H5xKEkUDED3gwbsPd6J7B90rIco2Y0R8BxS9XSst4ZtbIdDnm0AI7Or7k3KX1OLFy
-	nOSB5okgrZOh+30ru1zX9q/iWlzBG6CdXQeRFGC1sN+e5I6stZKZdoVXy+rQwRr2ZQ/x
-	4M+i3SrzBxp9uvwnpgxgFISBeynVCXDXi0OuRajSsEab3FBjbISXA2nfRJGoZIRH2NEv
-	Afnw==
-X-Gm-Message-State: AOAM530L5RMmtsjt6LnQhkpCgajofu6wF4GeSdp+tR5TeKc+LJN/Phd2
-	Vxuu3UHKpAHjEkKWaM/nDXdN5fDDX4Mxp+tMf63mrA==
-X-Google-Smtp-Source: ABdhPJyduKiEJGam42hMgnTTV6OAgsDuX6QGWziIbZi1yEyOpgOf+OAOhzM4qFm0U34fEtUNE/R0JNCPUbjj9GmSWQ0=
-X-Received: by 2002:a63:85c6:: with SMTP id u189mr1612542pgd.377.1637641045591;
-	Mon, 22 Nov 2021 20:17:25 -0800 (PST)
-MIME-Version: 1.0
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9BF9A2026D67
+	for <dm-devel@redhat.com>; Tue, 23 Nov 2021 05:56:24 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A44E4811E7A
+	for <dm-devel@redhat.com>; Tue, 23 Nov 2021 05:56:24 +0000 (UTC)
+Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
+	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-175-5OLLa9_zPRaelU_Hqf1KOA-1; Tue, 23 Nov 2021 00:56:20 -0500
+X-MC-Unique: 5OLLa9_zPRaelU_Hqf1KOA-1
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id 97B5168AFE; Tue, 23 Nov 2021 06:56:16 +0100 (CET)
+Date: Tue, 23 Nov 2021 06:56:16 +0100
+From: Christoph Hellwig <hch@lst.de>
+To: Dan Williams <dan.j.williams@intel.com>
+Message-ID: <20211123055616.GA13711@lst.de>
 References: <20211109083309.584081-1-hch@lst.de>
-	<20211109083309.584081-13-hch@lst.de>
-In-Reply-To: <20211109083309.584081-13-hch@lst.de>
-From: Dan Williams <dan.j.williams@intel.com>
-Date: Mon, 22 Nov 2021 20:17:14 -0800
-Message-ID: <CAPcyv4g_ZeZCZwfSvoAXL_xnnM2dTSCgN8atodfr8vfJTbYOXA@mail.gmail.com>
-To: Christoph Hellwig <hch@lst.de>
+	<20211109083309.584081-3-hch@lst.de>
+	<CAPcyv4iPOcD8OsimpSZMnbTEsGZKj-GqSY=cWC0tPvoVs6DE1Q@mail.gmail.com>
+	<20211119065457.GA15524@lst.de>
+	<CAPcyv4iDujo8ZZp=8xNEhB3u6Vyc6nzq_THGiGRON7x3oi9enw@mail.gmail.com>
+MIME-Version: 1.0
+In-Reply-To: <CAPcyv4iDujo8ZZp=8xNEhB3u6Vyc6nzq_THGiGRON7x3oi9enw@mail.gmail.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -78,7 +65,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
 Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Mike Snitzer <snitzer@redhat.com>,
 	linux-s390 <linux-s390@vger.kernel.org>, linux-erofs@lists.ozlabs.org,
@@ -86,9 +73,10 @@ Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Mike Snitzer <snitzer@redhat.com>,
 	linux-xfs <linux-xfs@vger.kernel.org>,
 	device-mapper development <dm-devel@redhat.com>,
 	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	linux-ext4 <linux-ext4@vger.kernel.org>, Ira Weiny <ira.weiny@intel.com>
-Subject: Re: [dm-devel] [PATCH 12/29] fsdax: remove a pointless __force cast
-	in copy_cow_page_dax
+	linux-ext4 <linux-ext4@vger.kernel.org>,
+	Ira Weiny <ira.weiny@intel.com>, Christoph Hellwig <hch@lst.de>
+Subject: Re: [dm-devel] [PATCH 02/29] dm: make the DAX support dependend on
+ CONFIG_FS_DAX
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -102,22 +90,34 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Nov 9, 2021 at 12:34 AM Christoph Hellwig <hch@lst.de> wrote:
->
-> Despite its name copy_user_page expected kernel addresses, which is what
-> we already have.
+On Mon, Nov 22, 2021 at 06:54:09PM -0800, Dan Williams wrote:
+> On Thu, Nov 18, 2021 at 10:55 PM Christoph Hellwig <hch@lst.de> wrote:
+> >
+> > On Wed, Nov 17, 2021 at 09:23:44AM -0800, Dan Williams wrote:
+> > > Applied, fixed the spelling of 'dependent' in the subject and picked
+> > > up Mike's Ack from the previous send:
+> > >
+> > > https://lore.kernel.org/r/YYASBVuorCedsnRL@redhat.com
+> > >
+> > > Christoph, any particular reason you did not pick up the tags from the
+> > > last posting?
+> >
+> > I thought I did, but apparently I've missed some.
+> 
+> I'll reply with the ones I see missing that need carrying over and add
+> my own reviewed-by then you can send me a pull request when ready,
+> deal?
 
-Yup,
-
-Reviewed-by: Dan Williams <dan.j.williams@intel.com>
+Ok.
 
 --
 dm-devel mailing list
