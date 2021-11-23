@@ -4,71 +4,86 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8AE02C433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 23 Nov 2021 15:57:27 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1637683046;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=pCTaFxuKamjIhhYlPkR3WYtsvgYVuDyt+kAKTzYYsvE=;
-	b=L9ruTBgr5m3RXQ6yFKeEtjKV6S9HcV/M/U4djpxK1qyTZUfOSII9BqHacxIWFy7mNWfp6b
-	sug/+sEJF0BFLC504wgePoj64PtQojc5R/Ph+/enPsLXFNVn5ZVI111sud+Vp/EQraW3wC
-	mKuS4WPReDe4yCQinMt4FZKn6Xi4kfM=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D1950C433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 23 Nov 2021 16:43:43 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-247-X-ASOsKKNia5tqb4IAYZWg-1; Tue, 23 Nov 2021 10:57:23 -0500
-X-MC-Unique: X-ASOsKKNia5tqb4IAYZWg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-127-KiU2HcJ3O76fwwRfC8ad_A-1; Tue, 23 Nov 2021 11:43:39 -0500
+X-MC-Unique: KiU2HcJ3O76fwwRfC8ad_A-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 412191B2C984;
-	Tue, 23 Nov 2021 15:57:18 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C03E660CC3;
-	Tue, 23 Nov 2021 15:57:16 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id ED9E810168D8;
+	Tue, 23 Nov 2021 16:43:34 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A64F91017CE3;
+	Tue, 23 Nov 2021 16:43:34 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4A32E1832E7F;
-	Tue, 23 Nov 2021 15:57:14 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
-	[10.5.11.23])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 549F74E58F;
+	Tue, 23 Nov 2021 16:43:34 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1ANFvChS016817 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 23 Nov 2021 10:57:12 -0500
+	id 1ANGhV7U021076 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 23 Nov 2021 11:43:32 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 9AEE4E14A; Tue, 23 Nov 2021 15:57:12 +0000 (UTC)
-Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4C8BC19736;
-	Tue, 23 Nov 2021 15:57:04 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1ANFv2Jk013869; 
-	Tue, 23 Nov 2021 09:57:02 -0600
-Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1ANFv1V1013868;
-	Tue, 23 Nov 2021 09:57:01 -0600
-Date: Tue, 23 Nov 2021 09:57:01 -0600
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Message-ID: <20211123155701.GM19591@octiron.msp.redhat.com>
-References: <1637275667-13436-1-git-send-email-bmarzins@redhat.com>
-	<6444fd097cf43bdfe6b1947f42f270e958310fff.camel@suse.com>
-	<20211122153554.GJ19591@octiron.msp.redhat.com>
-	<7ae474b1273b27a188593b716e5f0dfc1d09cad1.camel@suse.com>
-	<20211122174303.GL19591@octiron.msp.redhat.com>
-	<148fdecf9a05bcd82fa7da26910a82dc94d579df.camel@suse.com>
-	<d4620e9a741d0c5d8565f71c4a20eebb1ca6ebee.camel@suse.com>
+	id C889A404727A; Tue, 23 Nov 2021 16:43:31 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C477D4047272
+	for <dm-devel@redhat.com>; Tue, 23 Nov 2021 16:43:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AACA618A652F
+	for <dm-devel@redhat.com>; Tue, 23 Nov 2021 16:43:31 +0000 (UTC)
+Received: from mail-wr1-f43.google.com (mail-wr1-f43.google.com
+	[209.85.221.43]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-515-yOPQZ5zZMPmWiRl2i9hAhA-1; Tue, 23 Nov 2021 11:43:29 -0500
+X-MC-Unique: yOPQZ5zZMPmWiRl2i9hAhA-1
+Received: by mail-wr1-f43.google.com with SMTP id d24so40092958wra.0
+	for <dm-devel@redhat.com>; Tue, 23 Nov 2021 08:43:29 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc;
+	bh=5neTUk/m2vB9IAM6ngUOM8n9WDJP9MLnMLArs9XbOJw=;
+	b=Oe18Rjf9+CgWVv3V9JHqiDI9gh0rbZxLyaTTh4U8f+YMVwUrjffcXSNrKg4hf3EKZx
+	7UoYTHQ6Eu/IY6qxlrTrJhQHhZkglAEF3UXGyiJBs+9T+zGckKPIJBn+W+Y8FbQN3Jmd
+	cPqfFVsHvUPBmjsMZCJKV8ZBLOThGvvfYkm6ak4CuFp6cNjkNyE5ckvDygM//l+XOdR2
+	UmggVPA3K8WMdF19EsgD/08hq7bLeoVzBIc0wCmGONzaK44fQl7b+mc+0udKhvyxAN3T
+	XehxNF0xbBUp633BypBz2+MGbPwB6Q7sMb1smWFmZsm6yE9SfF7ozUogCoYfHiMsEA7U
+	0Okw==
+X-Gm-Message-State: AOAM533/BHml9IXcAqpIEmpOm8uXRkImFPwUi0NpJa+4Bvr2d+gDHWUH
+	yvvdng787pE7S0RGfYIkTqJakxJyMxd+/zxkWEWrZA==
+X-Google-Smtp-Source: ABdhPJwzTM7lcjHa6kT/XkIFqyUhLvbfIVKMMsj5u/hKr4G+sFpnC60Aiu1g1tWSlFVoSzSbrQwFPZ0Me/zJiV4Yybs=
+X-Received: by 2002:a5d:58fb:: with SMTP id f27mr9217095wrd.10.1637685808489; 
+	Tue, 23 Nov 2021 08:43:28 -0800 (PST)
 MIME-Version: 1.0
-In-Reply-To: <d4620e9a741d0c5d8565f71c4a20eebb1ca6ebee.camel@suse.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+References: <CAOuPNLiXCmH+Ut8kf0DJe2Aonb11RJYeUmYQFsB=oSLbep+MdQ@mail.gmail.com>
+In-Reply-To: <CAOuPNLiXCmH+Ut8kf0DJe2Aonb11RJYeUmYQFsB=oSLbep+MdQ@mail.gmail.com>
+From: Will Drewry <wad@chromium.org>
+Date: Tue, 23 Nov 2021 10:43:15 -0600
+Message-ID: <CAAFS_9G_gQrBBJ2AWpwBWwZK41qiaFhBXy17XDeL7hOBxOvFeQ@mail.gmail.com>
+To: Pintu Agarwal <pintu.ping@gmail.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-loop: dm-devel@redhat.com
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Subject: Re: [dm-devel] [PATCH] multipathd: avoid unnecessary path read-only
-	reloads
+Cc: Kees Cook <keescook@chromium.org>, snitzer@redhat.com,
+	Kernelnewbies <kernelnewbies@kernelnewbies.org>, helen.koike@collabora.com,
+	open list <linux-kernel@vger.kernel.org>, dm-devel@redhat.com,
+	enric.balletbo@collabora.com, agk@redhat.com
+Subject: Re: [dm-devel] dm-verity: How to exactly use the dm-mod.create with
+ verity-metadata append
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -82,141 +97,105 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Tue, Nov 23, 2021 at 11:05:20AM +0000, Martin Wilck wrote:
-> Hi Ben,
->=20
-> some more thoughts about the ro handling.
->=20
-> On Mon, 2021-11-22 at 20:39 +0100, Martin Wilck wrote:
-> > On Mon, 2021-11-22 at 11:43 -0600, Benjamin Marzinski wrote:
-> > > On Mon, Nov 22, 2021 at 04:48:06PM +0000, Martin Wilck wrote:
-> > > > On Mon, 2021-11-22 at 09:35 -0600, Benjamin Marzinski wrote:
-> > > > > On Fri, Nov 19, 2021 at 09:33:39PM +0000, Martin Wilck wrote:
-> > > > > > On Thu, 2021-11-18 at 16:47 -0600, Benjamin Marzinski wrote:
-> > > > > > >=20
-> > > > > > > +static bool
-> > > > > > > +needs_ro_update(struct multipath *mpp, int ro)
-> > > > > > > +{
-> > > > > > > +=A0=A0=A0=A0=A0=A0=A0struct pathgroup * pgp;
-> > > > > > > +=A0=A0=A0=A0=A0=A0=A0struct path * pp;
-> > > > > > > +=A0=A0=A0=A0=A0=A0=A0unsigned int i, j;
-> > > > > > > +=A0=A0=A0=A0=A0=A0=A0struct dm_info *dmi =3D NULL;
-> > > > > > > +
-> > > > > > > +=A0=A0=A0=A0=A0=A0=A0if (!mpp || ro < 0)
-> > > > > > > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0return false;
-> > > > > > > +=A0=A0=A0=A0=A0=A0=A0dm_get_info(mpp->alias, &dmi);
-> > > > > >=20
-> > > > > > Why can't you just use mpp->dmi here?
-> > > > >=20
-> > > > > Since that value is set when the dmi is originally created, I
-> > > > > didn't
-> > > > > want to not reload a map, if we simply haven't updated it yet
-> > > > > to
-> > > > > reflect
-> > > > > a change in the read-only value, like with do with
-> > > > > dm_is_suspended()
-> > > > > or dm_get_deferred_remove(), etc. I could make a
-> > > > > dm_get_read_only()
-> > > > > function and put it libmultipath/devmapper.c like the others,
-> > > > > if
-> > > > > you'd
-> > > > > rather.
-> > > >=20
-> > > > I had expected that this property wouldn't silently change under
-> > > > us.
-> > > > Actually, I do think that we should get an uevent if this
-> > > > happens.
-> > > > Not sure if we process it properly, though.
-> > >=20
-> > > I think we will update the dmi,=A0
->=20
-> This would need to be done on a change uevent for the dm device in
-> ev_add_map(), but AFAICS we don't. ev_add_map() is basically a noop if
-> the map is already known, unless wait_for_udev is 2.
->=20
-> > > but I'm not sure that these uevents
-> > > won't race. The worry was that the device would switch to read-only
-> > > and
-> > > then back too quickly, and we would get this event and still see
-> > > the
-> > > device in read/write because we haven't processed the event which
-> > > would
-> > > update the multipath dmi.
-> >=20
-> > OK. I'm fine with the patch, perhaps explain these subtleties some
-> > more
-> > in the commit message for future reference.
->=20
-> I've never looked into the ro attribute processing closely. I just did.
-> I'm unsure how a race would come to pass, in particular with your patch
-> applied:
->=20
->  1. path change uevent arrives
->  2. ro attribute of path device has changed
->  3. map reload occurs if=20
->     a) map was rw before (thus all paths, too) and the path changed to
-> ro
->     b) map was ro before and all paths have changed to rw
->  4. kernel will call set_disk_ro() depending on the DM_READONLY_FLAG;
->     set_disk_ro() triggers an uevent for the block device if and only
->     if the ro flag changed
->  5. we set mpp->dmi in __setup_multipath().
->=20
-> We hold the vecs lock between 3 and 5, so even if the uevent arrived
-> before setup_multipath() was called, I don't see how it could race.
-> mpp->dmi as derived in 5 should reflect the state correctly.
+On Tue, Nov 23, 2021 at 4:36 AM Pintu Agarwal <pintu.ping@gmail.com> wrote:
+>
+> Hi,
+>
+> For rootfs dm-verity I am trying to pass dm-mod.create from our
+> bootloader but it seems not working for me.
+> So, I need some guidance on the parameters that we pass here.
+> The documentation also does not seem to help much.
+>
+> Kernel: 4.14 (with dm-init patch backported)
+> Target: Arm-32 / NAND / Simple Busybox / Bootloader (edk2)
+> Build: Ubuntu-18.04 / Yocto 2.6
+>
+> Steps I followed:
+> 1) First I am trying to generate the root hash for our rootfs using
+> the veritysetup command:
+> $ ls -l system.img
+> 64172032 ==> IMAGE_SIZE
+> $ veritysetup format system.img dm-init-verity.img
+> UUID:                   eca62b73-b66a-4249-834b-471e83fc382c
+> Hash type:              1
+> Data blocks:            15667
+> Data block size:        4096
+> Hash block size:        4096
+> Hash algorithm:         sha256
+> Salt:
+> 8b66f42c07f576429109cf4e5d12ec072b23d242a9e653ac3423e49647339f5b
+> Root hash:
+> 10d9036f6efdd48dd49f09c8ece016a36a2c4d9a01a1f77f01485c65cf0e78af
+>
+> 2) Then I am trying to append the verity with the system image itself:
+> $ cat dm-init-verity.img >> system.img
+>
+> 3) After that I am trying to pass dm-mod.create parameter like this:
+> dm-mod.create=\"system,,,ro, 0 IMAGE_SIZE/512 verity 1
+> /dev/ubiblock0_0 /dev/ubiblock0_0 4096 4096 DATA_BLOCKS 1 sha256
+> 10d9036f6efdd48dd49f09c8ece016a36a2c4d9a01a1f77f01485c65cf0e78af
+> 8b66f42c07f576429109cf4e5d12ec072b23d242a9e653ac3423e49647339f5b\"
+>
+> 4) The Kernel command line seems to be updated properly:
+> [    0.000000] Kernel command line:.. rootfstype=squashfs
+> ubi.mtd=40,0,30 ubi.block=0,0 root=/dev/ubiblock0_0
+> dm-mod.create="system,,,ro, 0 125336 verity 1 /dev/ubiblock0_0
+> /dev/ubiblock0_0 4096 4096 15667 1 sha256
+> 10d9036f6efdd48dd49f09c8ece016a36a2c4d9a01a1f77f01485c65cf0e78af
+> 8b66f42c07f576429109cf4e5d12ec072b23d242a9e653ac3423e49647339f5b" ....
+>
+> But it does not seem to work as expected.
+> It gives below errors:
+> ....
+> [    4.747708] block ubiblock0_0: created from ubi0:0(system)
+> [    4.752313] device-mapper: init: waiting for all devices to be
+> available before creating mapped devices
+> [    4.752313]
+> [    4.766061] device-mapper: verity: sha256 using implementation
+> "sha256-generic"
+> [    4.776178] device-mapper: ioctl: dm-0 (system) is ready
+> [    4.848886] md: Skipping autodetection of RAID arrays.
+> (raid=autodetect will force)
+> [    4.849288] VFS: Cannot open root device "ubiblock0_0" or
+> unknown-block(252,0): error -16
 
-I admit, I didn't find a definitive race. I was just worried about the
-possibility of the dmi being outdated. While there's always the
-possibility of the multipath device's RO state getting changed outside
-of multipathd (by a multipath call for example), this is not the place
-to deal with that. ev_add_map() would be. After looking at this, I'm
-o.k. with trusting the existing dmi, especially if we are updating it in
-ev_add_map().
-=20
-> What we could do is remember the ro-state of the map in dm_addmap(),
-> e.g. in a mpp->ro field. If map creation with ro=3D0 succeeded, we can be
-> pretty certain that the map is in read-write state. Otherwise we'd
-> fallback to ro=3D1, and remember that state, too. We could verify that
-> state once more against the dmi info in setup_multipath(). By doing
-> that we'd cover the time span between the dm ioctl and retrieving the
-> dmi in setup_multipath(). That would IMHO be more consistent than the
-> current use of the temporary force_readonly flag.
+I'd start with changing your root device to point to the device mapper
+one you've just created.  E.g., root=/dev/dm-0  Then see how it goes
+from there.
 
-So the idea would be to never try reloading read-write when the map is
-marked as RO, until we get a path event updating the RO state? I do
-worry about cases where well fail to reload the map correctly then.
-Imagine that we have a map with mpp->ro=3D1 with one read-only path. The
-read-only path gets removed. If we just assume that the mpp->ro state is
-correct until with get a path_event changing the read-only state, we
-will won't reload read/write here.  The other option would be to check
-the path's RO state every time we reload, or at least whenever we're
-reloading to remove a path. That has the advantage that it doesn't
-produce a dm error message like a failed reload does, but I'm not sure
-if it's any less work. Or am I misunderstanding what you are suggesting
-here?
+> ....
+>
+> I followed almost the same example from dm-init document:
+> "verity":
+>   dm-verity,,4,ro,
+>     0 1638400 verity 1 8:1 8:2 4096 4096 204800 1 sha256
+>     fb1a5a0f00deb908d8b53cb270858975e76cf64105d412ce764225d53b8f3cfd
+>     51934789604d1b92399c52e7cb149d1b3a1b74bbbcb103b2a0aaacbed5c08584
+>
+> But this seems only refer to system and verity on a different blocks.
+> I am not sure what parameter should be changed if my verity metadata
+> is part of system image itself.
+> Also, I don't know how 1638400;204800;1 is calculated here based on image size ?
 
-> I've been wondering whether we should use your logic during map
-> creation, too, and not even try to setup the map with ro=3D0 if we have
-> paths in read-only state.
+It's the range of sectors covered by the device 0 to size_in_sectors:
+  (data_blocks * block_size)/sector_size
+  (15667 * 4096)/512
+  125336
+which you have in your entry already.
 
-If sysfs says one of the paths is read-only, it seems reasonable to skip
-the read/write reload.
+> So, people who have made this working successfully, please share the
+> correct parameter to be used for the same block device.
 
--Ben
-=20
-> Regards
-> Martin
->=20
+hth,
+will
 
 --
 dm-devel mailing list
