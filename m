@@ -4,69 +4,65 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 905C6C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 24 Nov 2021 07:14:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 09B5FC433EF
+	for <dm-devel@archiver.kernel.org>; Wed, 24 Nov 2021 07:22:56 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-265-kmjqrlymNPauWjIJjULLkw-1; Wed, 24 Nov 2021 02:14:48 -0500
-X-MC-Unique: kmjqrlymNPauWjIJjULLkw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-189-_mUUEDRBNr2mdD0_-lp8vw-1; Wed, 24 Nov 2021 02:22:54 -0500
+X-MC-Unique: _mUUEDRBNr2mdD0_-lp8vw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1ADE51DDE5;
-	Wed, 24 Nov 2021 07:14:43 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CEA9860C7F;
-	Wed, 24 Nov 2021 07:14:42 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 51A978042E2;
+	Wed, 24 Nov 2021 07:22:48 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B1A8F2B178;
+	Wed, 24 Nov 2021 07:22:47 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A8D804CA9B;
-	Wed, 24 Nov 2021 07:14:42 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E9DC51809C89;
+	Wed, 24 Nov 2021 07:22:46 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1AO3nh69022200 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 23 Nov 2021 22:49:44 -0500
+	id 1AO7MiVD005275 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 24 Nov 2021 02:22:44 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4EE5040CFD11; Wed, 24 Nov 2021 03:49:43 +0000 (UTC)
+	id 96EBA40CFD11; Wed, 24 Nov 2021 07:22:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 49AC440CFD0E
-	for <dm-devel@redhat.com>; Wed, 24 Nov 2021 03:49:43 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 91E0140149B1
+	for <dm-devel@redhat.com>; Wed, 24 Nov 2021 07:22:44 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2AC8A85A5AA
-	for <dm-devel@redhat.com>; Wed, 24 Nov 2021 03:49:43 +0000 (UTC)
-Received: from out4436.biz.mail.alibaba.com (out4436.biz.mail.alibaba.com
-	[47.88.44.36]) by relay.mimecast.com with ESMTP with STARTTLS
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 595B718162C4
+	for <dm-devel@redhat.com>; Wed, 24 Nov 2021 07:22:44 +0000 (UTC)
+Received: from bombadil.infradead.org (bombadil.infradead.org
+	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-156-b389czpBMzy2IcHH4IDB7g-1; Tue, 23 Nov 2021 22:49:39 -0500
-X-MC-Unique: b389czpBMzy2IcHH4IDB7g-1
-X-Alimail-AntiSpam: AC=PASS; BC=-1|-1; BR=01201311R211e4; CH=green; DM=||false|;
-	DS=||; FP=0|-1|-1|-1|0|-1|-1|-1; HT=e01e04423;
-	MF=hsiangkao@linux.alibaba.com; NM=1; PH=DS; RN=12; SR=0;
-	TI=SMTPD_---0Uy37IrO_1637725454
-Received: from B-P7TQMD6M-0146.local(mailfrom:hsiangkao@linux.alibaba.com
-	fp:SMTPD_---0Uy37IrO_1637725454) by smtp.aliyun-inc.com(127.0.0.1);
-	Wed, 24 Nov 2021 11:44:16 +0800
-Date: Wed, 24 Nov 2021 11:44:14 +0800
-From: Gao Xiang <hsiangkao@linux.alibaba.com>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <YZ21Dk0Ni719o4NR@B-P7TQMD6M-0146.local>
-Mail-Followup-To: Christoph Hellwig <hch@lst.de>,
-	Dan Williams <dan.j.williams@intel.com>,
-	Mike Snitzer <snitzer@redhat.com>, Ira Weiny <ira.weiny@intel.com>,
-	dm-devel@redhat.com, linux-xfs@vger.kernel.org,
-	nvdimm@lists.linux.dev, linux-s390@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org, linux-erofs@lists.ozlabs.org,
-	linux-ext4@vger.kernel.org,
-	virtualization@lists.linux-foundation.org
-References: <20211109083309.584081-1-hch@lst.de>
-	<20211109083309.584081-27-hch@lst.de>
+	us-mta-248-_BOBpMOHNGKbg0CZ_FXHFg-1; Wed, 24 Nov 2021 02:22:42 -0500
+X-MC-Unique: _BOBpMOHNGKbg0CZ_FXHFg-1
+Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red
+	Hat Linux)) id 1mpmc2-0044bY-GE; Wed, 24 Nov 2021 07:22:38 +0000
+Date: Tue, 23 Nov 2021 23:22:38 -0800
+From: "hch@infradead.org" <hch@infradead.org>
+To: Qu Wenruo <quwenruo.btrfs@gmx.com>
+Message-ID: <YZ3oPrgI1GFugzVY@infradead.org>
+References: <YZybvlheyLGAadFF@infradead.org>
+	<79d38fc2-cd2f-2980-2c4e-408078ce6079@gmx.com>
+	<YZyiuFxAeKE/WMrR@infradead.org>
+	<cca20bcb-1674-f99d-d504-b7fc928e227a@gmx.com>
+	<PH0PR04MB74169757F9CF740289B790C49B609@PH0PR04MB7416.namprd04.prod.outlook.com>
+	<YZz6jAVXun8yC/6k@infradead.org>
+	<133792e9-b89b-bc82-04fe-41202c3453a5@gmx.com>
+	<YZ3XH2PWwrIl/XMy@infradead.org>
+	<e3fce9af-429c-a1e3-3f0b-4d90fa061d94@gmx.com>
+	<YZ3jnFWk05058h/J@infradead.org>
 MIME-Version: 1.0
-In-Reply-To: <20211109083309.584081-27-hch@lst.de>
+In-Reply-To: <YZ3jnFWk05058h/J@infradead.org>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+	bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -77,15 +73,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Wed, 24 Nov 2021 02:14:41 -0500
-Cc: nvdimm@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
-	linux-s390@vger.kernel.org, linux-erofs@lists.ozlabs.org,
-	virtualization@lists.linux-foundation.org,
-	linux-xfs@vger.kernel.org, dm-devel@redhat.com,
-	linux-fsdevel@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>,
-	linux-ext4@vger.kernel.org, Ira Weiny <ira.weiny@intel.com>
-Subject: Re: [dm-devel] [PATCH 26/29] fsdax: shift partition offset handling
- into the file systems
+Cc: "hch@infradead.org" <hch@infradead.org>,
+	Johannes Thumshirn <Johannes.Thumshirn@wdc.com>,
+	"dm-devel@redhat.com" <dm-devel@redhat.com>,
+	Linux FS Devel <linux-fsdevel@vger.kernel.org>,
+	"linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
+Subject: Re: [dm-devel] Any bio_clone_slow() implementation which doesn't
+ share bi_io_vec?
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -99,7 +93,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -108,23 +102,17 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Nov 09, 2021 at 09:33:06AM +0100, Christoph Hellwig wrote:
-> Remove the last user of ->bdev in dax.c by requiring the file system to
-> pass in an address that already includes the DAX offset.  As part of the
-> only set ->bdev or ->daxdev when actually required in the ->iomap_begin
-> methods.
+On Tue, Nov 23, 2021 at 11:02:52PM -0800, hch@infradead.org wrote:
+> > Does it mean as long as our splitted bio doesn't exceed zone limit, we
+> > can do the convert without any further problem?
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  fs/dax.c                 |  6 +-----
->  fs/erofs/data.c          | 11 ++++++++--
->  fs/erofs/internal.h      |  1 +
+> You need to look at the limits when splitting.  I have modified
+> blk_bio_segment_split and exported it to deal with that.  Let me split
+> those changes out cleanly and push out a branch.
 
-For erofs part, it looks good to me,
-Reviewed-by: Gao Xiang <hsiangkao@linux.alibaba.com>
+Here:
 
-Thanks,
-Gao Xiang
+http://git.infradead.org/users/hch/block.git/shortlog/refs/heads/zone-append-split
 
 --
 dm-devel mailing list
