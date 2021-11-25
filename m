@@ -1,65 +1,65 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D92E1C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 24 Nov 2021 23:48:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6EDEFC433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 25 Nov 2021 00:40:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1637797735;
+	s=mimecast20190719; t=1637800808;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=NhWF3m4xrKJEKAs+Wa2vVdP0DxzQy1PF/PC61nGEzb0=;
-	b=AL/hsF4f6NFs8A9pz49SrA9UiW9OWjuOWJDJQDpgASBtjKcSVHtDdi8sgo3QcEcDLEb56C
-	O7vU3ll46ReJdmnQFcFKxJHytS3UPlQY11I4zHGU1f1rmSQRGWapRFI0h00brBLB9iJR9h
-	abwyzqcF4MrAXMY8I45hw+9g/1GY1sY=
+	bh=GS/Y+PysiEM7Y76P3lTay8KDjhxqXX1LwKV0LjX01RY=;
+	b=Ll/nxks+7rdqvcSnKmjM0xyTzzce5KYn4eiSXgVJ2rSCBMMCMTnfMcED/GekMmvRWFBtL0
+	Zdkw8tUR6dttUnFHFq0Adzc6gEV48RV9rHy4vmSpoJ8igs9AZEzW2E3r6mMOe8/AV2W9fl
+	1g8ZVWGeAp73BbFUZcporgXQ00iaCF4=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-193-zgacFvUOOAuziTtLTGdVSw-1; Wed, 24 Nov 2021 18:48:52 -0500
-X-MC-Unique: zgacFvUOOAuziTtLTGdVSw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-556-M-af0UVGMyKhKTMlJ7Ttmg-1; Wed, 24 Nov 2021 19:40:04 -0500
+X-MC-Unique: M-af0UVGMyKhKTMlJ7Ttmg-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3E17985B660;
-	Wed, 24 Nov 2021 23:48:47 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0E9C21006AA0;
+	Thu, 25 Nov 2021 00:39:59 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 560D360C05;
-	Wed, 24 Nov 2021 23:48:46 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 080C67945B;
+	Thu, 25 Nov 2021 00:39:55 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 213B51809C89;
-	Wed, 24 Nov 2021 23:48:45 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com
-	[10.5.11.11])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 87E1F1809C8A;
+	Thu, 25 Nov 2021 00:39:50 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
+	[10.5.11.22])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1AONmgaa000670 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 24 Nov 2021 18:48:42 -0500
+	id 1AP0d7gm004684 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 24 Nov 2021 19:39:07 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id C0F7E67840; Wed, 24 Nov 2021 23:48:42 +0000 (UTC)
+	id D98391017E35; Thu, 25 Nov 2021 00:39:07 +0000 (UTC)
 Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4EF156C335;
-	Wed, 24 Nov 2021 23:48:36 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BACBC1017CE5;
+	Thu, 25 Nov 2021 00:39:02 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1AONmUk6023153; 
-	Wed, 24 Nov 2021 17:48:30 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1AP0d06e023459; 
+	Wed, 24 Nov 2021 18:39:01 -0600
 Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1AONmSv8023152;
-	Wed, 24 Nov 2021 17:48:28 -0600
-Date: Wed, 24 Nov 2021 17:48:28 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1AP0cx9j023458;
+	Wed, 24 Nov 2021 18:38:59 -0600
+Date: Wed, 24 Nov 2021 18:38:59 -0600
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: mwilck@suse.com
-Message-ID: <20211124234828.GS19591@octiron.msp.redhat.com>
+Message-ID: <20211125003859.GT19591@octiron.msp.redhat.com>
 References: <20211118225840.19810-1-mwilck@suse.com>
 	<20211118225840.19810-30-mwilck@suse.com>
 MIME-Version: 1.0
 In-Reply-To: <20211118225840.19810-30-mwilck@suse.com>
 User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com,
 	Chongyun Wu <wu.chongyun@h3c.com>
@@ -78,7 +78,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -105,7 +105,9 @@ On Thu, Nov 18, 2021 at 11:58:21PM +0100, mwilck@suse.com wrote:
 > the handler fails to acquire the vecs lock. This will be fixed in the
 > follow-up patch "multipathd: uxlsnr: add idle notification".
 > 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+Actually, one nitpick. See below
+
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
 >  multipathd/uxlsnr.c | 160 ++++++++++++++++++++++++--------------------
@@ -250,6 +252,11 @@ Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > +	condlog(4, "%s: cli[%d] state=%d cmd=\"%s\" repl \"%s\"", __func__,
 > +		c->fd, c->state, c->cmd, get_strbuf_str(&c->reply));
 > +
+
+This switch statement is indented with 8 spaces, instead of a tab
+
+-Ben
+
 > +        switch (c->state) {
 >  	case CLT_RECV:
 >  		if (c->cmd_len == 0) {
