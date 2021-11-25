@@ -1,84 +1,83 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 825ACC433F5
-	for <dm-devel@archiver.kernel.org>; Thu, 25 Nov 2021 09:42:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 153C5C433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 25 Nov 2021 16:29:02 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-33-MjXK8PLFND66awod9reUKQ-1; Thu, 25 Nov 2021 04:41:58 -0500
-X-MC-Unique: MjXK8PLFND66awod9reUKQ-1
+ us-mta-268-DGChH8uFPIKJd4_PTlwLDw-1; Thu, 25 Nov 2021 11:28:58 -0500
+X-MC-Unique: DGChH8uFPIKJd4_PTlwLDw-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 809686408E;
-	Thu, 25 Nov 2021 09:41:53 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1BF7F1010426;
-	Thu, 25 Nov 2021 09:41:51 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id EABBD102CC54;
+	Thu, 25 Nov 2021 16:28:53 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CD719100164A;
+	Thu, 25 Nov 2021 16:28:51 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 6D83C4BB7C;
-	Thu, 25 Nov 2021 09:41:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DA7B21809C8A;
+	Thu, 25 Nov 2021 16:28:48 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1AP9c6oN015043 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 25 Nov 2021 04:38:07 -0500
+	id 1APGSl0a017178 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 25 Nov 2021 11:28:47 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id AF12151EF; Thu, 25 Nov 2021 09:38:06 +0000 (UTC)
+	id E2D4540CFD12; Thu, 25 Nov 2021 16:28:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A8BB351E3
-	for <dm-devel@redhat.com>; Thu, 25 Nov 2021 09:38:00 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C2834185A7B4
-	for <dm-devel@redhat.com>; Thu, 25 Nov 2021 09:38:00 +0000 (UTC)
-Received: from frasgout.his.huawei.com (frasgout.his.huawei.com
-	[185.176.79.56]) by relay.mimecast.com with ESMTP with STARTTLS
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DB813400DFBC
+	for <dm-devel@redhat.com>; Thu, 25 Nov 2021 16:28:46 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BF80180A0B3
+	for <dm-devel@redhat.com>; Thu, 25 Nov 2021 16:28:46 +0000 (UTC)
+Received: from mail-wr1-f42.google.com (mail-wr1-f42.google.com
+	[209.85.221.42]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-45-M7zDVTtSOwGyWxi4tHK6zA-1; Thu, 25 Nov 2021 04:37:54 -0500
-X-MC-Unique: M7zDVTtSOwGyWxi4tHK6zA-1
-Received: from fraeml713-chm.china.huawei.com (unknown [172.18.147.207])
-	by frasgout.his.huawei.com (SkyGuard) with ESMTP id 4J0CTC59hfz67yHr;
-	Thu, 25 Nov 2021 17:37:19 +0800 (CST)
-Received: from fraeml714-chm.china.huawei.com (10.206.15.33) by
-	fraeml713-chm.china.huawei.com (10.206.15.32) with Microsoft SMTP
-	Server
-	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
-	15.1.2308.20; Thu, 25 Nov 2021 10:37:52 +0100
-Received: from fraeml714-chm.china.huawei.com ([10.206.15.33]) by
-	fraeml714-chm.china.huawei.com ([10.206.15.33]) with mapi id
-	15.01.2308.020; Thu, 25 Nov 2021 10:37:52 +0100
-From: Roberto Sassu <roberto.sassu@huawei.com>
-To: "deven.desai@linux.microsoft.com" <deven.desai@linux.microsoft.com>,
-	"corbet@lwn.net" <corbet@lwn.net>, "axboe@kernel.dk" <axboe@kernel.dk>, 
-	"agk@redhat.com" <agk@redhat.com>,
-	"snitzer@redhat.com" <snitzer@redhat.com>,
-	"ebiggers@kernel.org" <ebiggers@kernel.org>,
-	"tytso@mit.edu" <tytso@mit.edu>,
-	"paul@paul-moore.com" <paul@paul-moore.com>, "eparis@redhat.com"
-	<eparis@redhat.com>, "jmorris@namei.org" <jmorris@namei.org>,
-	"serge@hallyn.com" <serge@hallyn.com>
-Thread-Topic: [RFC PATCH v7 11/16] ipe: add support for dm-verity as a trust
-	provider
-Thread-Index: AQHXwGWKgSExirn2CUCoXyZKYCfiOKwUOhXA
-Date: Thu, 25 Nov 2021 09:37:51 +0000
-Message-ID: <721462c3da064d359ca3c83845298ccf@huawei.com>
-References: <1634151995-16266-1-git-send-email-deven.desai@linux.microsoft.com>
-	<1634151995-16266-12-git-send-email-deven.desai@linux.microsoft.com>
-In-Reply-To: <1634151995-16266-12-git-send-email-deven.desai@linux.microsoft.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [10.204.63.33]
+	us-mta-529-fsA-Jk-gNmWMCX-oxU8wFQ-1; Thu, 25 Nov 2021 11:28:43 -0500
+X-MC-Unique: fsA-Jk-gNmWMCX-oxU8wFQ-1
+Received: by mail-wr1-f42.google.com with SMTP id a18so12810984wrn.6;
+	Thu, 25 Nov 2021 08:28:42 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:subject:from:to:cc:references:message-id:date
+	:user-agent:mime-version:in-reply-to:content-transfer-encoding
+	:content-language;
+	bh=lyY8vrpQYTPMmqv9qPyqZTymKet8W1tg+ZPRZv53qdw=;
+	b=pz1hMfRcwPGntXlqK9nabjnTsvsUeh5pzQCa8RBQR1M2t9NuHD8I1CH+Bxnk+UIsb3
+	4w5WJdT2lCM72d6sMyV0s9wHbxysFncKW/Xjc6pP89+Lxjd50gdx6KiDiTEji+2x+Nie
+	e6CRpupmu8FzAqqvjqNxy1EKewJOJyaA/0K2YFywL2D8NoT84kJ2DH/BuQM4mvAE0AhW
+	QQ6yzQjneUjMPUkOR3ABNGuKxoUAir7QiUMeg0rjhdIvoT78RlotoBrzMWl0KMf2ZmSL
+	vZDe3Z9iYmJZKGqLAC6Fyy4js88QXRkjAOuarsF+ywdQJL4kERrqSW+in67/HcJ3tAi6
+	GB7g==
+X-Gm-Message-State: AOAM530i6shXOsVaWESLuRRmeKpV1yGEj+8KKtrV6W7HDEN0KeCw7rwA
+	0WSK+4F/gUtwt9nlxMgg2fEui5ym34OORqWN
+X-Google-Smtp-Source: ABdhPJzItRkYMMhjrbZbAvxUfpVx7I3FJZ/Hq+UTwdc4elgUlDo0UsOWRHzn9zOhkdRXFqiCsQEe9g==
+X-Received: by 2002:adf:e0c7:: with SMTP id m7mr8031855wri.530.1637857720415; 
+	Thu, 25 Nov 2021 08:28:40 -0800 (PST)
+Received: from [10.53.134.167] ([193.169.71.150])
+	by smtp.gmail.com with ESMTPSA id
+	o4sm10112775wmq.31.2021.11.25.08.28.38
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Thu, 25 Nov 2021 08:28:39 -0800 (PST)
+From: Itai Handler <itai.handler@gmail.com>
+To: Milan Broz <gmazyland@gmail.com>, dm-devel@redhat.com
+References: <CAFpOueRBb9y_Fgb3-c6_eFTKZR9DoAXZmxqqx0UH1Yb2rbV0RQ@mail.gmail.com>
+	<da6989dc-1fab-cbd0-4ea9-1b60ea9de964@gmail.com>
+	<c93ae166-faf8-f00f-7e63-b852a224310c@gmail.com>
+Message-ID: <0efdd94f-94f4-1330-fe99-ec395d0c84ff@gmail.com>
+Date: Thu, 25 Nov 2021 18:28:37 +0200
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+	Thunderbird/78.14.0
 MIME-Version: 1.0
-X-CFilter-Loop: Reflected
+In-Reply-To: <c93ae166-faf8-f00f-7e63-b852a224310c@gmail.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -87,23 +86,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1AP9c6oN015043
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-loop: dm-devel@redhat.com
-Cc: "linux-security-module@vger.kernel.org"
-	<linux-security-module@vger.kernel.org>,
-	"linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-	"jannh@google.com" <jannh@google.com>,
-	"linux-fscrypt@vger.kernel.org" <linux-fscrypt@vger.kernel.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"linux-audit@redhat.com" <linux-audit@redhat.com>,
-	"tusharsu@linux.microsoft.com" <tusharsu@linux.microsoft.com>,
-	"linux-integrity@vger.kernel.org" <linux-integrity@vger.kernel.org>
-Subject: Re: [dm-devel] [RFC PATCH v7 11/16] ipe: add support for dm-verity
- as a trust provider
+Cc: Mikulas Patocka <mpatocka@redhat.com>, agk@redhat.com, snitzer@redhat.com
+Subject: Re: [dm-devel] [RFC PATCH 1/1] dm crypt: change maximum sector size
+ to PAGE_SIZE
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -123,440 +110,123 @@ Authentication-Results: relay.mimecast.com;
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-> From: deven.desai@linux.microsoft.com
-> [mailto:deven.desai@linux.microsoft.com]
-> Sent: Wednesday, October 13, 2021 9:07 PM
-> From: Deven Bowers <deven.desai@linux.microsoft.com>
-> 
-> Allows author of IPE policy to indicate trust for a singular dm-verity
-> volume, identified by roothash, through "dmverity_roothash" and all
-> signed dm-verity volumes, through "dmverity_signature".
-> 
-> Signed-off-by: Deven Bowers <deven.desai@linux.microsoft.com>
-> ---
-> 
-> Relevant changes since v6:
->   * Squash patch 08/12, 10/12 to [11/16]
-> 
-> ---
->  security/ipe/eval.c                       |  5 ++
->  security/ipe/eval.h                       | 10 +++
->  security/ipe/hooks.c                      | 48 ++++++++++++++
->  security/ipe/hooks.h                      |  6 ++
->  security/ipe/ipe.c                        |  9 +++
->  security/ipe/ipe.h                        |  3 +
->  security/ipe/modules/Kconfig              | 23 +++++++
->  security/ipe/modules/Makefile             |  2 +
->  security/ipe/modules/dmverity_roothash.c  | 80 +++++++++++++++++++++++
->  security/ipe/modules/dmverity_signature.c | 25 +++++++
->  10 files changed, 211 insertions(+)
->  create mode 100644 security/ipe/modules/dmverity_roothash.c
->  create mode 100644 security/ipe/modules/dmverity_signature.c
-> 
-> diff --git a/security/ipe/eval.c b/security/ipe/eval.c
-> index 361efccebad4..facc05c753f4 100644
-> --- a/security/ipe/eval.c
-> +++ b/security/ipe/eval.c
-> @@ -23,6 +23,7 @@ static struct super_block *pinned_sb;
->  static DEFINE_SPINLOCK(pin_lock);
-> 
->  #define FILE_SUPERBLOCK(f) ((f)->f_path.mnt->mnt_sb)
-> +#define FILE_BLOCK_DEV(f) (FILE_SUPERBLOCK(f)->s_bdev)
-> 
->  /**
->   * pin_sb: pin the underlying superblock of @f, marking it as trusted
-> @@ -95,6 +96,10 @@ static struct ipe_eval_ctx *build_ctx(const struct file *file,
->  	ctx->hook = hook;
->  	ctx->ci_ctx = ipe_current_ctx();
->  	ctx->from_init_sb = from_pinned(file);
-> +	if (file) {
-> +		if (FILE_BLOCK_DEV(file))
-> +			ctx->ipe_bdev = ipe_bdev(FILE_BLOCK_DEV(file));
-> +	}
-> 
->  	return ctx;
->  }
-> diff --git a/security/ipe/eval.h b/security/ipe/eval.h
-> index 42fb7fdf2599..25d2d8d55702 100644
-> --- a/security/ipe/eval.h
-> +++ b/security/ipe/eval.h
-> @@ -13,6 +13,14 @@
->  #include "hooks.h"
->  #include "policy.h"
-> 
-> +struct ipe_bdev {
-> +	const u8       *sigdata;
-> +	size_t		siglen;
-> +
-> +	const u8       *hash;
-> +	size_t		hashlen;
-> +};
-> +
->  struct ipe_eval_ctx {
->  	enum ipe_hook hook;
->  	enum ipe_operation op;
-> @@ -20,6 +28,8 @@ struct ipe_eval_ctx {
->  	const struct file *file;
->  	struct ipe_context *ci_ctx;
-> 
-> +	const struct ipe_bdev *ipe_bdev;
-> +
->  	bool from_init_sb;
->  };
-> 
-> diff --git a/security/ipe/hooks.c b/security/ipe/hooks.c
-> index 2d4a4f0eead0..470fb48e490c 100644
-> --- a/security/ipe/hooks.c
-> +++ b/security/ipe/hooks.c
-> @@ -13,6 +13,7 @@
->  #include <linux/types.h>
->  #include <linux/refcount.h>
->  #include <linux/rcupdate.h>
-> +#include <linux/blk_types.h>
->  #include <linux/binfmts.h>
->  #include <linux/mman.h>
-> 
-> @@ -219,3 +220,50 @@ void ipe_sb_free_security(struct super_block *mnt_sb)
->  {
->  	ipe_invalidate_pinned_sb(mnt_sb);
->  }
-> +
-> +/**
-> + * ipe_bdev_free_security: free nested structures within IPE's LSM blob
-> + *			   in block_devices
-> + * @bdev: Supplies a pointer to a block_device that contains the structure
-> + *	  to free.
-> + */
-> +void ipe_bdev_free_security(struct block_device *bdev)
-> +{
-> +	struct ipe_bdev *blob = ipe_bdev(bdev);
-> +
-> +	kfree(blob->sigdata);
-> +}
-> +
-> +/**
-> + * ipe_bdev_setsecurity: associate some data from the block device layer
-> + *			 with IPE's LSM blob.
-> + * @bdev: Supplies a pointer to a block_device that contains the LSM blob.
-> + * @key: Supplies the string key that uniquely identifies the value.
-> + * @value: Supplies the value to store.
-> + * @len: The length of @value.
-> + */
-> +int ipe_bdev_setsecurity(struct block_device *bdev, const char *key,
-> +			 const void *value, size_t len)
-> +{
-> +	struct ipe_bdev *blob = ipe_bdev(bdev);
-> +
-> +	if (!strcmp(key, DM_VERITY_SIGNATURE_SEC_NAME)) {
-> +		blob->siglen = len;
-> +		blob->sigdata = kmemdup(value, len, GFP_KERNEL);
-> +		if (!blob->sigdata)
-> +			return -ENOMEM;
-> +
-> +		return 0;
-> +	}
-> +
-> +	if (!strcmp(key, DM_VERITY_ROOTHASH_SEC_NAME)) {
-> +		blob->hashlen = len;
-> +		blob->hash = kmemdup(value, len, GFP_KERNEL);
-> +		if (!blob->hash)
-> +			return -ENOMEM;
-> +
-> +		return 0;
-> +	}
-> +
-> +	return -ENOSYS;
-> +}
-> diff --git a/security/ipe/hooks.h b/security/ipe/hooks.h
-> index e7f107ab5620..285f35187188 100644
-> --- a/security/ipe/hooks.h
-> +++ b/security/ipe/hooks.h
-> @@ -10,6 +10,7 @@
->  #include <linux/sched.h>
->  #include <linux/binfmts.h>
->  #include <linux/security.h>
-> +#include <linux/device-mapper.h>
-> 
->  enum ipe_hook {
->  	ipe_hook_exec = 0,
-> @@ -40,4 +41,9 @@ int ipe_on_kernel_load_data(enum kernel_load_data_id
-> id, bool contents);
-> 
->  void ipe_sb_free_security(struct super_block *mnt_sb);
-> 
-> +void ipe_bdev_free_security(struct block_device *bdev);
-> +
-> +int ipe_bdev_setsecurity(struct block_device *bdev, const char *key,
-> +			 const void *value, size_t len);
-> +
->  #endif /* IPE_HOOKS_H */
-> diff --git a/security/ipe/ipe.c b/security/ipe/ipe.c
-> index 1382d50078ec..215936cb4574 100644
-> --- a/security/ipe/ipe.c
-> +++ b/security/ipe/ipe.c
-> @@ -9,6 +9,7 @@
->  #include "ipe_parser.h"
->  #include "modules/ipe_module.h"
->  #include "modules.h"
-> +#include "eval.h"
-> 
->  #include <linux/fs.h>
->  #include <linux/sched.h>
-> @@ -20,8 +21,14 @@
-> 
->  struct lsm_blob_sizes ipe_blobs __lsm_ro_after_init = {
->  	.lbs_task = sizeof(struct ipe_context __rcu *),
-> +	.lbs_bdev = sizeof(struct ipe_bdev),
->  };
-> 
-> +struct ipe_bdev *ipe_bdev(struct block_device *b)
-> +{
-> +	return b->security + ipe_blobs.lbs_bdev;
-> +}
-> +
->  static struct security_hook_list ipe_hooks[] __lsm_ro_after_init = {
->  	LSM_HOOK_INIT(task_alloc, ipe_task_alloc),
->  	LSM_HOOK_INIT(task_free, ipe_task_free),
-> @@ -31,6 +38,8 @@ static struct security_hook_list ipe_hooks[]
-> __lsm_ro_after_init = {
->  	LSM_HOOK_INIT(kernel_read_file, ipe_on_kernel_read),
->  	LSM_HOOK_INIT(kernel_load_data, ipe_on_kernel_load_data),
->  	LSM_HOOK_INIT(sb_free_security, ipe_sb_free_security),
-> +	LSM_HOOK_INIT(bdev_free_security, ipe_bdev_free_security),
-> +	LSM_HOOK_INIT(bdev_setsecurity, ipe_bdev_setsecurity),
->  };
-> 
->  /**
-> diff --git a/security/ipe/ipe.h b/security/ipe/ipe.h
-> index ad16d2bebfec..6b4c7e07f204 100644
-> --- a/security/ipe/ipe.h
-> +++ b/security/ipe/ipe.h
-> @@ -14,10 +14,13 @@
-> 
->  #include <linux/types.h>
->  #include <linux/sched.h>
-> +#include <linux/blk_types.h>
->  #include <linux/lsm_hooks.h>
-> 
->  extern struct lsm_blob_sizes ipe_blobs;
->  extern struct ipe_parser __start_ipe_parsers[], __end_ipe_parsers[];
->  extern struct ipe_module __start_ipe_modules[], __end_ipe_modules[];
-> 
-> +struct ipe_bdev *ipe_bdev(struct block_device *b);
-> +
->  #endif /* IPE_H */
-> diff --git a/security/ipe/modules/Kconfig b/security/ipe/modules/Kconfig
-> index fad96ba534e2..a6ea06cf0737 100644
-> --- a/security/ipe/modules/Kconfig
-> +++ b/security/ipe/modules/Kconfig
-> @@ -16,5 +16,28 @@ config IPE_PROP_BOOT_VERIFIED
-> 
->  	  If unsure, answer N.
-> 
-> +config IPE_PROP_DM_VERITY_SIGNATURE
-> +	bool "Enable support for signed dm-verity volumes"
-> +	depends on DM_VERITY_VERIFY_ROOTHASH_SIG
-> +	default Y
-> +	help
-> +	  This option enables the property 'dmverity_signature' in
-> +	  IPE policy. This property evaluates to TRUE when a file
-> +	  is evaluated against a dm-verity volume that was mounted
-> +	  with a signed root-hash.
-> +
-> +	  If unsure, answer Y.
-> +
-> +config IPE_PROP_DM_VERITY_ROOTHASH
-> +	bool "Enable support for dm-verity volumes"
-> +	depends on DM_VERITY
-> +	default Y
-> +	help
-> +	  This option enables the property 'dmverity_roothash' in
-> +	  IPE policy. This property evaluates to TRUE when a file
-> +	  is evaluated against a dm-verity volume whose root hash
-> +	  matches the supplied value.
-> +
-> +	  If unsure, answer Y.
-> 
->  endmenu
-> diff --git a/security/ipe/modules/Makefile b/security/ipe/modules/Makefile
-> index e0045ec65434..84fadce85193 100644
-> --- a/security/ipe/modules/Makefile
-> +++ b/security/ipe/modules/Makefile
-> @@ -6,3 +6,5 @@
->  #
-> 
->  obj-$(CONFIG_IPE_PROP_BOOT_VERIFIED) += boot_verified.o
-> +obj-$(CONFIG_IPE_PROP_DM_VERITY_SIGNATURE) += dmverity_signature.o
-> +obj-$(CONFIG_IPE_PROP_DM_VERITY_ROOTHASH) += dmverity_roothash.o
-> diff --git a/security/ipe/modules/dmverity_roothash.c
-> b/security/ipe/modules/dmverity_roothash.c
-> new file mode 100644
-> index 000000000000..0f82bec3b842
-> --- /dev/null
-> +++ b/security/ipe/modules/dmverity_roothash.c
-> @@ -0,0 +1,80 @@
-> +// SPDX-License-Identifier: GPL-2.0
-> +/*
-> + * Copyright (C) Microsoft Corporation. All rights reserved.
-> + */
-> +
-> +#include "ipe_module.h"
-> +
-> +#include <linux/fs.h>
-> +#include <linux/types.h>
-> +
-> +struct counted_array {
-> +	size_t	len;
-> +	u8     *data;
-> +};
-> +
-> +static int dvrh_parse(const char *valstr, void **value)
-> +{
-> +	int rv = 0;
-> +	struct counted_array *arr;
-> +
-> +	arr = kzalloc(sizeof(*arr), GFP_KERNEL);
-> +	if (!arr) {
-> +		rv = -ENOMEM;
-> +		goto err;
-> +	}
-> +
-> +	arr->len = (strlen(valstr) / 2);
-> +
-> +	arr->data = kzalloc(arr->len, GFP_KERNEL);
-> +	if (!arr->data) {
-> +		rv = -ENOMEM;
-> +		goto err;
-> +	}
-> +
-> +	rv = hex2bin(arr->data, valstr, arr->len);
-> +	if (rv != 0)
-> +		goto err2;
-> +
-> +	*value = arr;
-> +	return rv;
-> +err2:
-> +	kfree(arr->data);
-> +err:
-> +	kfree(arr);
-> +	return rv;
-> +}
-> +
-> +static bool dvrh_eval(const struct ipe_eval_ctx *ctx, const void *val)
-> +{
-> +	const u8 *src;
-> +	struct counted_array *expect = (struct counted_array *)val;
-> +
-> +	if (!ctx->ipe_bdev)
-> +		return false;
-> +
-> +	if (ctx->ipe_bdev->hashlen != expect->len)
-> +		return false;
-> +
-> +	src = ctx->ipe_bdev->hash;
-> +
-> +	return !memcmp(expect->data, src, expect->len);
-
-Hi Deven
-
-I was curious to see if determining the property at run-time
-could apply also to dm-verity. It seems it could be done
-(I omit some checks, I also keep the expected value in hex
-format):
-
----
-        md = dm_get_md(file_inode(ctx->file)->i_sb->s_dev);
-        table = dm_get_live_table(md, &srcu_idx);
-        num_targets = dm_table_get_num_targets(table);
-
-        for (i = 0; i < num_targets; i++) {
-                struct dm_target *ti = dm_table_get_target(table, i);
-
-                if (strcmp(ti->type->name, "verity"))
-                        continue;
-
-                ti->type->status(ti, STATUSTYPE_IMA, 0, result, sizeof(result));
-        }
-
-        dm_put_live_table(md, srcu_idx);
-        dm_put(md);
-
-        root_digest_ptr = strstr(result, "root_digest=");
-        return !strncmp(expect->data, root_digest_ptr + 12, expect->len);
----
-
-Only dm_table_get_target() is not exported yet, but I guess it could
-be. dm_table_get_num_targets() is exported.
-
-With this code, you would not have to manage security blobs
-outside IPE. Maybe you could add a blob for the super block, so
-that you verify the dm-verity property just once per filesystem.
-
-Roberto
-
-HUAWEI TECHNOLOGIES Duesseldorf GmbH, HRB 56063
-Managing Director: Li Peng, Zhong Ronghua
-
-> +}
-> +
-> +static int dvrh_free(void **val)
-> +{
-> +	struct counted_array *expect = (struct counted_array *)val;
-> +
-> +	kfree(expect->data);
-> +	kfree(expect);
-> +
-> +	return 0;
-> +}
-> +
-> +IPE_MODULE(dvrh) = {
-> +	.name = "dmverity_roothash",
-> +	.version = 1,
-> +	.parse = dvrh_parse,
-> +	.free = dvrh_free,
-> +	.eval = dvrh_eval,
-> +};
-> diff --git a/security/ipe/modules/dmverity_signature.c
-> b/security/ipe/modules/dmverity_signature.c
-> new file mode 100644
-> index 000000000000..08746fcbcb3e
-> --- /dev/null
-> +++ b/security/ipe/modules/dmverity_signature.c
-> @@ -0,0 +1,25 @@
-> +// SPDX-License-Identifier: GPL-2.0
-> +/*
-> + * Copyright (C) Microsoft Corporation. All rights reserved.
-> + */
-> +
-> +#include "ipe_module.h"
-> +
-> +#include <linux/fs.h>
-> +#include <linux/types.h>
-> +
-> +static bool dvv_eval(const struct ipe_eval_ctx *ctx, const void *val)
-> +{
-> +	bool expect = (bool)val;
-> +	bool eval = ctx->ipe_bdev && (!!ctx->ipe_bdev->sigdata);
-> +
-> +	return expect == eval;
-> +}
-> +
-> +IPE_MODULE(dvv) = {
-> +	.name = "dmverity_signature",
-> +	.version = 1,
-> +	.parse = ipe_bool_parse,
-> +	.free = NULL,
-> +	.eval = dvv_eval,
-> +};
-> --
-> 2.33.0
-
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gMTQvMTEvMjAyMSAxMzo1NiwgSXRhaSBIYW5kbGVyIHdyb3RlOgo+IE9uIDExLzExLzIwMjEg
+MTU6MDcsIE1pbGFuIEJyb3ogd3JvdGU6Cj4+IE9uIDEwLzExLzIwMjEgMTg6NDMsIEl0YWkgSGFu
+ZGxlciB3cm90ZToKPj4+IE1heGltdW0gc2VjdG9yIHNpemUgb2YgZG0tY3J5cHQgaXMgY3VycmVu
+dGx5IGxpbWl0ZWQgdG8gNDA5NiBieXRlcy4KPj4+Cj4+PiBPbiBzeXN0ZW1zIHdoZXJlIFBBR0Vf
+U0laRSBpcyBsYXJnZXIgdGhhbiA0MDk2IGJ5dGVzLCB1c2luZyBsYXJnZXIKPj4+IHNlY3RvcnMg
+Y2FuIGJlIGJlbmVmaWNpYWwgZm9yIHBlcmZvcm1hbmNlIHJlYXNvbnMuCj4+Cj4+IFRoZSBsaW1p
+dCB0byA0MDk2IHdhcyBzZXQgYmVjYXVzZSB0aGlzIGlzIHRoZSBzbWFsbGVzdCBwb3NzaWJsZQo+
+PiBwYWdlIHNpemUgdGhhdCBhbGwgcGxhdGZvcm0gc3VwcG9ydHMuCj4+Cj4+IElmIHlvdSBhbGxv
+dyBhIGhpZ2hlciBzaXplIGhlcmUsIHRoZSBkZXZpY2UgY2Fubm90IGJlIGFjdGl2YXRlZCBvbiBh
+IAo+PiBwbGF0Zm9ybQo+PiB3aXRoIHRoZSBzbWFsbGVyIHBhZ2Ugc2l6ZS4gKEVuY3J5cHRlZCBz
+ZWN0b3Igc2l6ZSBiZWNvbWVzCj4+IGF0b21pYyBzZWN0b3Igc2l6ZSBmb3IgYWxsIHVwcGVyIGxh
+eWVycyAtIGFzIHlvdSBtZW50aW9uIGJlbG93LCBub3QKPj4gYWxsIGZzIHN1cHBvcnQgYmlnZ2Vy
+IHNlY3RvcnMuKQo+Pgo+PiBGb3IgTFVLUywgdGhpcyBpcyBub3QgYWNjZXB0YWJsZSAtIHRoZSBm
+b3JtYXQgaXMgcG9ydGFibGUgYnkgZGVmaW5pdGlvbi4KPj4KPj4gRm9yIHNwZWNpZmljIGRtLWNy
+eXB0IGRldmljZSwgSSBhbSBub3Qgc3VyZS4gSSB3b3VsZCBiZXR0ZXIga2VwdAo+PiB0aGUgNDA5
+NiBwYWdlIHNpemUgbGltaXQgaGVyZS4KPgo+IEkgY29uc2lkZXJlZCBvbmx5IHBsYWluIGRtLWNy
+eXB0IHNpbmNlIEkgYW0gdW5mYW1pbGlhciB3aXRoIExVS1MuCj4gRG9lcyBMVUtTIGFzc3VtZSB0
+aGF0IGRtLWNyeXB0IHNlY3RvciBzaXplIGlzIGxpbWl0ZWQgdG8gNEs/Cj4gSWYgc28sIG1heWJl
+IEknbGwgYmUgYWJsZSB0byBhbHNvIHBhdGNoIExVS1MgcmVnYXJkaW5nIHRoaXMgaXNzdWUuCj4K
+Pj4KPj4gSXQgYWxzbyBkZXBlbmRzIG9uIGNyeXB0byBBUEkgZHJpdmVyIGhlcmUgKHBlcmZvcm1h
+bmNlIGlzIHVzdWFsbHkgCj4+IG9wdGltaXplZCB0byA0aykuCj4+IFdoYXQgY2lwaGVyIGFuZCBl
+bmNyeXB0aW9uIG1vZGUgZGlkIHlvdSB1c2UgZm9yIHRlc3Q/Cj4KPiBUaGUgY2lwaGVyIEkgdXNl
+ZCBmb3IgdGhlIHRlc3QgaXMgbm90IHB1YmxpY2x5IGF2YWlsYWJsZSBidXQgSSBjYW4gc2F5IAo+
+IHRoYXQgaXQncyBwZXJmb3JtYW5jZQo+IGlzIG5vdCBvcHRpbWl6ZWQgdG8gNGsgYmxvY2tzLgo+
+IEkgYmVsaWV2ZSB0aGF0IHRoaXMgcmVzdWx0cyBmcm9tIHRoZSBoaWdoIG92ZXJoZWFkIG9mIHNl
+dHRpbmcgdXAgRE1BIAo+IHRyYW5zZmVycy4gKG15Cj4gY2lwaGVyIHVzZXMgRE1BIHRvIHRyYW5z
+ZmVyIGRhdGEgYmV0d2VlbiBtZW1vcnkgYW5kIHByb2dyYW1tYWJsZSBsb2dpYykuCj4gVGhlcmUg
+YXJlIG1hbnkgYWRkaXRpb25hbCBjaXBoZXJzIHRoYXQgdXNlIERNQSBpbiB0aGUgdHJlZSwgYnV0
+IEkgCj4gY2Fubm90IHJ1biBhbnkKPiBiZW5jaG1hcmsgd2l0aCB0aGVtIGF0IHRoZSBtb21lbnQu
+Cj4KPiBJIGhhdmUgcGVyZm9ybWVkIHNvbWUgYWRkaXRpb25hbCBiZW5jaG1hcmtzIHVzaW5nIHRo
+ZSBBUk0gCj4gQ3J5cHRvZ3JhcGhpYyBFeHRlbnNpb25zCj4gQ1BVIGNpcGhlcnMgYW5kIHNhdyB0
+aGF0IGluY3JlYXNpbmcgYmxvY2sgc2l6ZSBiZXlvbmQgNEsgZG9lcyBpbmNyZWFzZSAKPiBwZXJm
+b3JtYW5jZSwKPiBhbGJlaXQgdGhlIHBlcmZvcm1hbmNlIGltcHJvdmVtZW50IGlzbid0IGFzIGxh
+cmdlIGFzIEkndmUgc2VlbiB3aGVuIAo+IHVzaW5nIG15IGNpcGhlci4KPgo+IEZvbGxvd2luZyBh
+cmUgInRjcnlwdCBtb2RlPTYwMCBzZWM9NSBudW1fbWI9NTEyIiByZXN1bHRzIGZvciAKPiB4dHMt
+YWVzLWNlIGRlY3J5cHRpb24KPiAoQVJNIENQVSBDcnlwdG9ncmFwaGljIEV4dGVuc2lvbnMgY2lw
+aGVyKToKPiDCoCB0ZXN0aW5nIHNwZWVkIG9mIG11bHRpYnVmZmVyIHh0cyhhZXMpICh4dHMtYWVz
+LWNlKSBkZWNyeXB0aW9uCj4gwqAgLi4uCj4gwqAgdHJjeXB0OiB0ZXN0IDUgKDI1NiBiaXQga2V5
+LCA0MDk2IGJ5dGUgYmxvY2tzKTogODAxNzkyIG9wZXJhdGlvbnMgaW4gCj4gNSBzZWNvbmRzICgz
+Mjg0MTQwMDMyIGJ5dGVzKQo+IMKgIC4uLgo+IMKgIHRyY3lwdDogdGVzdCA5ICgyNTYgYml0IGtl
+eSwgNjU1MzYgYnl0ZSBibG9ja3MpOiA2MzQ4OCBvcGVyYXRpb25zIGluIAo+IDUgc2Vjb25kcyAo
+NDE2MDc0OTU2OCBieXRlcykKPgo+IFRoYXQgdHJhbnNsYXRlcyB0bzoKPiDCoCA2NTcgTUIvcyBm
+b3IgNEsgYnl0ZSBibG9ja3MuCj4gwqAgODMyIE1CL3MgZm9yIDY0SyBibG9ja3MuCj4KPiBUaGF0
+IG1lYW5zIHRoYXQgdGhlcmUgaXMgYWJvdXQgMjcgcGVyY2VudHMgaW1wcm92ZW1lbnQgd2hlbiAK
+PiB0cmFuc2l0aW9uaW5nIHRvIDY0SyBzZWN0b3JzLAo+IGZvciB0aGUgY2lwaGVyIGFsb25lIChv
+bmx5IHRjcnlwdCBiZW5jaG1hcmspLgo+Cj4gVGhpcyBiZW5jaG1hcmsgaGFkIGJlZW4gcGVyZm9y
+bWVkIG9uIGFuIEFSTSBDb3J0ZXggQTUzIENQVS4KPiAoTm90ZSB0aGF0IGluIGFsbCBvZiBteSBi
+ZW5jaG1hcmtzIFBBR0VfU0laRT02NEspLgo+Cj4+IEhvdyB0aGUgbnVtYmVyIGxvb2tzIGZvciBy
+YW5kb20gYWNjZXNzPyBMaW5lYXIgdGVzdCBpcyB1c3VhbGx5IAo+PiBtaXNsZWFkaW5nLgo+PiBJ
+IGV4cGVjdCB0aGVyZSB3aWxsIGJlIGJpZyBwZXJmb3JtYW5jZSBwcm9ibGVtIGlmIHlvdSB3cml0
+ZSBzbWFsbCAKPj4gZGF0YSBjaHVua3MsCj4+IHdyaXRlcyBhbmQgZW5jcnlwdGlvbiB3aWxsIGJl
+IGFtcGxpZmllZCB0byBmdWxsIGJpZyBzZWN0b3JzIGhlcmUuLi4pCj4gSSB1bmRlcnN0YW5kIHlv
+dXIgY29uY2Vybi4KPiBIb3dldmVyIG15IHBhdGNoIGRvZXMgbm90IGZvcmNlIGFueW9uZSB0byB1
+c2UgbGFyZ2Ugc2VjdG9ycyAtIGl0IG9ubHkgCj4gb3BlbnMgdXAgdGhpcwo+IHBvc3NpYmlsaXR5
+IGZvciB0aG9zZSBpbnRlcmVzdGVkIGluIHRoYXQgb3B0aW9uLgo+IFRoaXMgaXMgc2ltaWxhcmx5
+IHRvIHRoZSBvcHRpb24gdG8gZm9ybWF0IGFuIGV4dDQgZmlsZXN5c3RlbSB3aXRoIDY0SyAKPiBz
+ZWN0b3JzLgo+IEJ5IHRoZSB3YXk6IHdoZW4geW91IGRvIHRoYXQsIHlvdSBnZXQgYSB3YXJuaW5n
+IHNheWluZyB0aGF0IHRoZSAKPiBmaWxlc3lzdGVtCj4gd2lsbCBub3QgYmUgdXNhYmxlIG9uIG1v
+c3Qgc3lzdGVtcy4KPgo+IFNvbWV0aW1lIHVzZXJzIG5lZWQgdG8gc3RvcmUgbW9zdGx5IGxhcmdl
+IGZpbGVzIG9uIGEgZmlsZXN5c3RlbSwgZm9yIAo+IGV4YW1wbGUgZm9yCj4gYmFja3VwIG9yIGZv
+ciB2aWRlbyBmaWxlcy4KPiBJIHRoaW5rIHRoYXQgaW4gdGhlc2UgY2FzZXMgcmFuZG9tIGFjY2Vz
+cyB0aW1lIGlzIG5vdCBzbyBpbXBvcnRhbnQuCj4gU29tZSB1c2VycyBtYXkgYWxzbyBiZSBhYmxl
+IHRvIHJlc2VydmUgYSBkZWRpY2F0ZWQgcGFydGl0aW9uIGZvciAKPiBzdG9yaW5nIHN1Y2gKPiBs
+YXJnZSBmaWxlcy4KPgo+Pgo+PiAoVGVjaG5pY2FsIGRldGFpbDogc3VjaCBwYXQgTVVTVCBpbmNy
+ZWFzZSBkbS1jcnlwdCBtaW5vciB2ZXJzaW9uLikKPiBUaGFua3MgZm9yIHBvaW50aW5nIHRoYXQg
+b3V0LiBJIGJlbGlldmUgdGhhdCBJIGNhbiBwcmVwYXJlIGEgdjIgcGF0Y2ggCj4gdGhhdCB3aWxs
+Cj4gYWRkcmVzcyB0aGF0IGlzc3VlLgo+Pgo+PiBNaWxhbgo+Pgo+Pj4KPj4+IFRoaXMgcGF0Y2gg
+Y2hhbmdlcyBtYXhpbXVtIHNlY3RvciBzaXplIGZyb20gNDA5NiBieXRlcyB0byBQQUdFX1NJWkUs
+Cj4+PiBhbmQgaW4gYWRkaXRpb24gaXQgY2hhbmdlcyB0aGUgdHlwZSBvZiBzZWN0b3Jfc2l6ZSBp
+bgo+Pj4gc3RydWN0IGNyeXB0X2NvbmZpZyBmcm9tICd1bnNpZ25lZCBzaG9ydCBpbnQnIHRvICd1
+bnNpZ25lZCBpbnQnLCBpbgo+Pj4gb3JkZXIgdG8gYmUgYWJsZSB0byByZXByZXNlbnQgbGFyZ2Vy
+IHZhbHVlcy4KPj4+Cj4+PiBPbiBhIHByb3RvdHlwZSBzeXN0ZW0gd2hpY2ggaGFzIFBBR0VfU0la
+RSBvZiA2NTUzNiBieXRlcywgSSBzYXcgYWJvdXQKPj4+IHgyIHBlcmZvcm1hbmNlIGltcHJvdmVt
+ZW50IGluIHNlcXVlbnRpYWwgcmVhZCB0aHJvdWdocHV0IGJlbmNobWFyawo+Pj4gd2hpbGUgdXNp
+bmcgb25seSBhYm91dCBoYWxmIG9mIHRoZSBDUFUgdXNhZ2UsIGFmdGVyIHNpbXBseSBpbmNyZWFz
+aW5nCj4+PiBzZWN0b3Igc2l6ZSBmcm9tIDQwOTYgdG8gNjU1MzYgYnl0ZXMuCj4+PiBJIHVzZWQg
+ZXh0NCBmaWxlc3lzdGVtIGZvciB0aGF0IGJlbmNobWFyaywgd2hpY2ggc3VwcG9ydHMgNjRLaUIK
+Pj4+IHNlY3RvcnMuCj4+Pgo+Pj4gTm90ZTogQSBzbWFsbCBjaGFuZ2Ugc2hvdWxkIGJlIG1hZGUg
+aW4gY3J5cHRzZXR1cCBpbiBvcmRlciB0byBhZGQKPj4+IHN1cHBvcnQgZm9yIHNlY3RvcnMgbGFy
+Z2VyIHRoYW4gNDA5NiBieXRlcy4KPj4+Cj4+PiBTaWduZWQtb2ZmLWJ5OiBJdGFpIEhhbmRsZXIg
+PGl0YWkuaGFuZGxlckBnbWFpbC5jb20+Cj4+PiAtLS0KPj4+IMKgIGRyaXZlcnMvbWQvZG0tY3J5
+cHQuYyB8IDYgKysrLS0tCj4+PiDCoCAxIGZpbGUgY2hhbmdlZCwgMyBpbnNlcnRpb25zKCspLCAz
+IGRlbGV0aW9ucygtKQo+Pj4KPj4+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLWNyeXB0LmMg
+Yi9kcml2ZXJzL21kL2RtLWNyeXB0LmMKPj4+IGluZGV4IDkxNmI3ZGExNmRlMi4uNzhjMjM5NDQz
+YmQ1IDEwMDY0NAo+Pj4gLS0tIGEvZHJpdmVycy9tZC9kbS1jcnlwdC5jCj4+PiArKysgYi9kcml2
+ZXJzL21kL2RtLWNyeXB0LmMKPj4+IEBAIC0xNjgsNyArMTY4LDcgQEAgc3RydWN0IGNyeXB0X2Nv
+bmZpZyB7Cj4+PiDCoMKgwqDCoMKgwqDCoMKgIH0gaXZfZ2VuX3ByaXZhdGU7Cj4+PiDCoMKgwqDC
+oMKgwqDCoMKgIHU2NCBpdl9vZmZzZXQ7Cj4+PiDCoMKgwqDCoMKgwqDCoMKgIHVuc2lnbmVkIGlu
+dCBpdl9zaXplOwo+Pj4gLcKgwqDCoMKgwqDCoCB1bnNpZ25lZCBzaG9ydCBpbnQgc2VjdG9yX3Np
+emU7Cj4+PiArwqDCoMKgwqDCoMKgIHVuc2lnbmVkIGludCBzZWN0b3Jfc2l6ZTsKPj4+IMKgwqDC
+oMKgwqDCoMKgwqAgdW5zaWduZWQgY2hhciBzZWN0b3Jfc2hpZnQ7Cj4+Pgo+Pj4gwqDCoMKgwqDC
+oMKgwqDCoCB1bmlvbiB7Cj4+PiBAQCAtMzExNSw5ICszMTE1LDkgQEAgc3RhdGljIGludCBjcnlw
+dF9jdHJfb3B0aW9uYWwoc3RydWN0IGRtX3RhcmdldAo+Pj4gKnRpLCB1bnNpZ25lZCBpbnQgYXJn
+YywgY2hhciAqKmFyCj4+PiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqAgY2MtPmNpcGhlcl9hdXRoID0ga3N0cmR1cChzdmFsLCBHRlBfS0VSTkVMKTsKPj4+
+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBpZiAoIWNj
+LT5jaXBoZXJfYXV0aCkKPj4+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgcmV0dXJuIC1FTk9NRU07Cj4+PiAtwqDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoCB9IGVsc2UgaWYgKHNzY2FuZihvcHRfc3RyaW5nLCAic2VjdG9y
+X3NpemU6JWh1JWMiLAo+Pj4gJmNjLT5zZWN0b3Jfc2l6ZSwgJmR1bW15KSA9PSAxKSB7Cj4+PiAr
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCB9IGVsc2UgaWYgKHNzY2FuZihvcHRfc3RyaW5n
+LCAic2VjdG9yX3NpemU6JXUlYyIsCj4+PiAmY2MtPnNlY3Rvcl9zaXplLCAmZHVtbXkpID09IDEp
+IHsKPj4+IMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBp
+ZiAoY2MtPnNlY3Rvcl9zaXplIDwgKDEgPDwgU0VDVE9SX1NISUZUKSB8fAo+Pj4gLcKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgY2MtPnNlY3Rvcl9z
+aXplID4gNDA5NiB8fAo+Pj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqAgY2MtPnNlY3Rvcl9zaXplID4gUEFHRV9TSVpFIHx8Cj4+PiDCoMKgwqDC
+oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCAoY2MtPnNl
+Y3Rvcl9zaXplICYgKGNjLT5zZWN0b3Jfc2l6ZSAtIAo+Pj4gMSkpKSB7Cj4+PiDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIHRp
+LT5lcnJvciA9ICJJbnZhbGlkIGZlYXR1cmUgdmFsdWUgZm9yCj4+PiBzZWN0b3Jfc2l6ZSI7Cj4+
+PiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoMKgIHJldHVybiAtRUlOVkFMOwo+Pj4KPj4KPiBJIGFwcHJlY2lhdGUgeW91ciB2YWx1
+YWJsZSBjb21tZW50cy4KPgo+IEl0YWkKPgpNaWxhbiwgY2FuIHlvdSBjb21tZW50IG9uIHRoZSBh
+Ym92ZT8KCkl0YWkKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29t
+Cmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
 
