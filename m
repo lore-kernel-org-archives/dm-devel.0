@@ -1,76 +1,74 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 57576C433EF
-	for <dm-devel@archiver.kernel.org>; Mon, 29 Nov 2021 04:16:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DB91CC4332F
+	for <dm-devel@archiver.kernel.org>; Mon, 29 Nov 2021 06:56:09 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-498-Okbn8c0RMP2gujZiOmC1Og-1; Sun, 28 Nov 2021 23:16:50 -0500
-X-MC-Unique: Okbn8c0RMP2gujZiOmC1Og-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-375-YA2PVY1PNS2GtaxG2Ok1rw-1; Mon, 29 Nov 2021 01:56:05 -0500
+X-MC-Unique: YA2PVY1PNS2GtaxG2Ok1rw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1840D80573B;
-	Mon, 29 Nov 2021 04:16:46 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AC7431006AA2;
+	Mon, 29 Nov 2021 06:56:00 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8C7A460854;
-	Mon, 29 Nov 2021 04:16:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AC1D2100AE22;
+	Mon, 29 Nov 2021 06:55:59 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1EFBA1809C89;
-	Mon, 29 Nov 2021 04:16:36 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DE7AF1809C8A;
+	Mon, 29 Nov 2021 06:55:54 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1AT4GX0P017781 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 28 Nov 2021 23:16:33 -0500
+	id 1AQENLZN018820 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 26 Nov 2021 09:23:22 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 651C5404727A; Mon, 29 Nov 2021 04:16:33 +0000 (UTC)
+	id ABB4F404727A; Fri, 26 Nov 2021 14:23:21 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 60B004047272
-	for <dm-devel@redhat.com>; Mon, 29 Nov 2021 04:16:33 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A808F4047272
+	for <dm-devel@redhat.com>; Fri, 26 Nov 2021 14:23:21 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4719C801212
-	for <dm-devel@redhat.com>; Mon, 29 Nov 2021 04:16:33 +0000 (UTC)
-Received: from szxga01-in.huawei.com (szxga01-in.huawei.com
-	[45.249.212.187]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-519-7Gs8WTyROg2fDHiu9YJ08w-1; Sun, 28 Nov 2021 23:16:30 -0500
-X-MC-Unique: 7Gs8WTyROg2fDHiu9YJ08w-1
-Received: from dggemv711-chm.china.huawei.com (unknown [172.30.72.55])
-	by szxga01-in.huawei.com (SkyGuard) with ESMTP id 4J2X642RSFzZdHn;
-	Mon, 29 Nov 2021 12:13:48 +0800 (CST)
-Received: from kwepemm600010.china.huawei.com (7.193.23.86) by
-	dggemv711-chm.china.huawei.com (10.1.198.66) with Microsoft SMTP Server
-	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
-	15.1.2308.20; Mon, 29 Nov 2021 12:16:26 +0800
-Received: from [10.174.179.176] (10.174.179.176) by
-	kwepemm600010.china.huawei.com (7.193.23.86) with Microsoft SMTP Server
-	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
-	15.1.2308.20; Mon, 29 Nov 2021 12:16:26 +0800
-To: Martin Wilck <mwilck@suse.com>, Christophe Varoqui
-	<christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>,
-	dm-devel mailing list <dm-devel@redhat.com>
-References: <bfa69895-5b9e-5fe6-e5a0-78be2ee93163@huawei.com>
-	<17f1efd1ce3372014ca67fd25c992ea169b7afbe.camel@suse.com>
-From: lixiaokeng <lixiaokeng@huawei.com>
-Message-ID: <1ccdd748-a77e-d52e-0816-6a2204a04010@huawei.com>
-Date: Mon, 29 Nov 2021 12:16:25 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
-	Thunderbird/68.10.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8EAD1185A79C
+	for <dm-devel@redhat.com>; Fri, 26 Nov 2021 14:23:21 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-381--l_-txPFPPe3xlKU_Omi0w-1; Fri, 26 Nov 2021 09:23:19 -0500
+X-MC-Unique: -l_-txPFPPe3xlKU_Omi0w-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 73F3D212BE;
+	Fri, 26 Nov 2021 14:23:18 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 3759213C36;
+	Fri, 26 Nov 2021 14:23:18 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+	by imap2.suse-dmz.suse.de with ESMTPSA id hnOfC9btoGGfTwAAMHmgww
+	(envelope-from <mwilck@suse.com>); Fri, 26 Nov 2021 14:23:18 +0000
+Message-ID: <84682701a0d34ffadc3356a843f8803e458cd8d2.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Date: Fri, 26 Nov 2021 15:23:18 +0100
+In-Reply-To: <20211125010813.GU19591@octiron.msp.redhat.com>
+References: <20211118225840.19810-1-mwilck@suse.com>
+	<20211118225840.19810-31-mwilck@suse.com>
+	<20211125010813.GU19591@octiron.msp.redhat.com>
+User-Agent: Evolution 3.42.1
 MIME-Version: 1.0
-In-Reply-To: <17f1efd1ce3372014ca67fd25c992ea169b7afbe.camel@suse.com>
-X-Originating-IP: [10.174.179.176]
-X-ClientProxiedBy: dggems704-chm.china.huawei.com (10.3.19.181) To
-	kwepemm600010.china.huawei.com (7.193.23.86)
-X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -81,11 +79,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1AT4GX0P017781
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1AQENLZN018820
 X-loop: dm-devel@redhat.com
-Cc: linfeilong <linfeilong@huawei.com>,
-	"liuzhiqiang \(I\)" <liuzhiqiang26@huawei.com>
-Subject: Re: [dm-devel] [PATCH] libmultipath: clear removed path from mpp
+X-Mailman-Approved-At: Mon, 29 Nov 2021 01:55:52 -0500
+Cc: lixiaokeng@huawei.com, dm-devel@redhat.com,
+	Chongyun Wu <wu.chongyun@h3c.com>
+Subject: Re: [dm-devel] [PATCH v2 30/48] multipathd: uxlsnr: add idle
+	notification
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -99,43 +99,74 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-GB
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-CgpPbiAyMDIxLzExLzI5IDc6MTgsIE1hcnRpbiBXaWxjayB3cm90ZToKCj4+IMKgwqDCoMKgwqDC
-oMKgwqAvKgo+PiBAQCAtMzI5LDYgKzMzMSwyMCBAQCB2b2lkIHNldF9wYXRoX3JlbW92ZWQoc3Ry
-dWN0IHBhdGggKnBwKQo+PiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoGNvbmRsb2co
-MCwgIiVzOiBpbnRlcm5hbCBlcnJvcjogbXBwID09IE5VTEwiLCBwcC0KPj4+IGRldik7Cj4+IMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgcmV0dXJuOwo+PiDCoMKgwqDCoMKgwqDCoMKg
-fQo+PiArCj4+ICvCoMKgwqDCoMKgwqDCoC8qCj4+ICvCoMKgwqDCoMKgwqDCoCAqIFRoZSBwYXRo
-IGlzIHJlbW92ZWQsIGNsZWFyIGl0IGZyb20gbXAtPnBhdGhzIGFuZCBtcHAtPnBncy4KPj4gK8Kg
-wqDCoMKgwqDCoMKgICovCj4+ICvCoMKgwqDCoMKgwqDCoGkgPSBmaW5kX3Nsb3QobXBwLT5wYXRo
-cywgcHApOwo+PiArwqDCoMKgwqDCoMKgwqBpZiAoaSAhPSAtMSkKPj4gK8KgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoHZlY3Rvcl9kZWxfc2xvdChtcHAtPnBhdGhzLCBpKTsKPj4gKwo+PiAr
-wqDCoMKgwqDCoMKgwqB2ZWN0b3JfZm9yZWFjaF9zbG90KG1wcC0+cGcsIHBncCwgaikgewo+PiAr
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgaSA9IGZpbmRfc2xvdChwZ3AtPnBhdGhzLCAo
-dm9pZCAqKXBwKTsKPj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoGlmIChpICE9IC0x
-KQo+PiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoHZlY3Rv
-cl9kZWxfc2xvdChwZ3AtPnBhdGhzLCBpKTsKPj4gK8KgwqDCoMKgwqDCoMKgfQo+PiArCj4gCj4g
-Tm8sIHdlIGNhbid0IGRvIHRoaXMuIEl0IHdvdWxkIGludmFsaWRhdGUgYWxsIHRoZSB3b3JrIHdl
-IGRpZCBmb3IKPiBJTklUX1JFTU9WRUQuIEl0J3MgdGhlIHZlcnkgaWRlYSBvZiBJTklUX1JFTU9W
-RUQgdGhhdCB3ZSBkbyBOT1QKPiBpbW1lZGlhdGVseSBjbGVhciB0aGUgcGF0aCBmcm9tIG91ciBk
-YXRhIHN0cnVjdHVyZXMuIFRoZSBtYWluIHByb2JsZW0KPiBpcyB0aGF0IElOSVRfUkVNT1ZFRCBw
-YXRocyBtYXkgc3RpbGwgYmUgcGFydCBvZiB0aGUgbWFwIGluIHRoZSBrZXJuZWwuCj4gVGh1cyB3
-aGVuIHdlIHJlLXJlYWQgdGhlIGtlcm5lbCBzdGF0ZSwgdGhlIHBhdGggd2lsbCBiZSByZS1hZGRl
-ZCB0bwo+IG1wcC0+cGF0aHMuCj4gCj4gV2UgbmVlZCB0byByZXdvcmsgdGhlIGZyZWVfbXVsdGlw
-YXRoKCkgbG9naWMuIEl0IG1pZ2h0IGJlIHN1ZmZpY2llbnQKPiB0byBzaW1wbHkgY2xlYXIgdGhl
-IHJlZmVyZW5jZXMgdG8gdGhlIGRldmljZXMgaW4gbXBwIGJlZm9yZSBjYWxsaW5nCj4gb3JwaGFu
-X3BhdGhzKCkuIENhbiB5b3UgdHJ5IHRoZSBhdHRhY2hlZCBwYXRjaCwgcGxlYXNlPwo+IAoKVGhh
-bmtzIGZvciByZXBsYXkuIFRoZSBhdHRhY2hlZCBwYXRjaCByZXNvbHZlcyB0aGlzIGVycm9yLgoK
-SSBob3BlcyB0aGF0ICJSZXBvcnRlZC1ieTogTGl4aWFva2VuZyA8bGl4aWFva2VuZ0BodWF3ZWk+
-IiBpcyBhZGRlZCB0bwp0aGUgcGF0Y2guIFRoYW5rcyBhZ2Fpbi4KClJlZ2FyZHMsCkxpeGlhb2tl
-bmcKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczov
-L2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+On Wed, 2021-11-24 at 19:08 -0600, Benjamin Marzinski wrote:
+> On Thu, Nov 18, 2021 at 11:58:22PM +0100, mwilck@suse.com=A0wrote:
+> > From: Martin Wilck <mwilck@suse.com>
+> >=20
+> > The previous patches added the state machine and the timeout
+> > handling,
+> > but there was no wakeup mechanism for the uxlsnr for cases where
+> > client connections were waiting for the vecs lock.
+> >=20
+> > This patch uses the previously introduced wakeup mechanism of
+> > struct mutex_lock for this purpose. Processes which unlock the
+> > "global" vecs lock send an event in an eventfd which the uxlsnr
+> > loop is polling for.
+> >=20
+> > As we are now woken up for servicing client handlers that don't
+> > wait for input but for the lock, we need to set up the pollfds
+> > differently, and iterate over all clients when handling events,
+> > not only over the ones that are receiving. The hangup handling
+> > is changed, too. We have to look at every client, even if one has
+> > hung up. Note that I don't take client_lock for the loop in
+> > uxsock_listen(), it's not necessary and will be removed elsewhere
+> > in a follow-up patch.
+> >=20
+> > With this in place, the lock need not be taken in execute_handler()
+> > any more. The uxlsnr only ever calls trylock() on the vecs lock,
+> > avoiding any waiting for other threads to finish.
+> >=20
+> > Signed-off-by: Martin Wilck <mwilck@suse.com>
+> > ---
+> > =A0multipathd/uxlsnr.c | 200 ++++++++++++++++++++++++++++------------
+> > ----
+> > =A01 file changed, 129 insertions(+), 71 deletions(-)
+> >=20
+> > diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+> > index 87134d5..bf9780d 100644
+> > --- a/multipathd/uxlsnr.c
+> > +++ b/multipathd/uxlsnr.c
+>=20
+> Nitpick: This would look clearer to me if, instead of a switch
+> statement, it was just
+>=20
+> if (c->state !=3D CLT_RECV)
+> =A0=A0=A0=A0=A0=A0=A0 continue;
+>=20
+> polls[i].events =3D POLLIN;
+> polls[i].fd =3D c->fd;
+> ...
+
+That's true if you look at this patch in isolation. The reason I use a
+switch statement is that with patch 32, we get another case to treat
+here (CLT_SEND). At that point, the switch is at least on par wrt
+clarity, IMO.
+
+No?
+
+Martin
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
