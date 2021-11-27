@@ -1,68 +1,71 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 97765C433FE
-	for <dm-devel@archiver.kernel.org>; Sat, 27 Nov 2021 15:21:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1BDA0C433F5
+	for <dm-devel@archiver.kernel.org>; Sat, 27 Nov 2021 15:21:06 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-350-nOEQLFSKPLilEM9x8Rgtkw-1; Sat, 27 Nov 2021 10:20:59 -0500
-X-MC-Unique: nOEQLFSKPLilEM9x8Rgtkw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-151-eb_63l5pPhWWZydIKzrFhA-1; Sat, 27 Nov 2021 10:21:03 -0500
+X-MC-Unique: eb_63l5pPhWWZydIKzrFhA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7E74E185302D;
-	Sat, 27 Nov 2021 15:20:55 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8B213801564;
+	Sat, 27 Nov 2021 15:20:57 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 684D560854;
-	Sat, 27 Nov 2021 15:20:55 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6EEFC10013D6;
+	Sat, 27 Nov 2021 15:20:57 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1B2784A714;
-	Sat, 27 Nov 2021 15:20:55 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4A0FF4A71C;
+	Sat, 27 Nov 2021 15:20:57 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1ARFKfhU000660 for <dm-devel@listman.util.phx.redhat.com>;
+	id 1ARFKfjd000662 for <dm-devel@listman.util.phx.redhat.com>;
 	Sat, 27 Nov 2021 10:20:41 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 04D282026D2E; Sat, 27 Nov 2021 15:20:41 +0000 (UTC)
+	id 076A12026D65; Sat, 27 Nov 2021 15:20:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id F1D7B2026D65
-	for <dm-devel@redhat.com>; Sat, 27 Nov 2021 15:20:38 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F1E20811E76
-	for <dm-devel@redhat.com>; Sat, 27 Nov 2021 15:20:37 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 00B912026D7F
+	for <dm-devel@redhat.com>; Sat, 27 Nov 2021 15:20:40 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 40CC1811E80
+	for <dm-devel@redhat.com>; Sat, 27 Nov 2021 15:20:40 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-233-kF03dIWfOeKUXxJiT32Xrg-1; Sat, 27 Nov 2021 10:20:35 -0500
-X-MC-Unique: kF03dIWfOeKUXxJiT32Xrg-1
+	us-mta-437-soNwRix_Nianx5XfA9y1ew-1; Sat, 27 Nov 2021 10:20:36 -0500
+X-MC-Unique: soNwRix_Nianx5XfA9y1ew-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 89E801FCA1;
+	by smtp-out1.suse.de (Postfix) with ESMTPS id CFD4021155;
 	Sat, 27 Nov 2021 15:20:34 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 4ED3813AAD;
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 961B013AAD;
 	Sat, 27 Nov 2021 15:20:34 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id JH8EEcJMomFrFgAAMHmgww
+	by imap2.suse-dmz.suse.de with ESMTPSA id YNqEIsJMomFrFgAAMHmgww
 	(envelope-from <mwilck@suse.com>); Sat, 27 Nov 2021 15:20:34 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Sat, 27 Nov 2021 16:19:55 +0100
-Message-Id: <20211127152006.8035-1-mwilck@suse.com>
+Date: Sat, 27 Nov 2021 16:19:56 +0100
+Message-Id: <20211127152006.8035-2-mwilck@suse.com>
+In-Reply-To: <20211127152006.8035-1-mwilck@suse.com>
+References: <20211127152006.8035-1-mwilck@suse.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -74,11 +77,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1ARFKfhU000660
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1ARFKfjd000662
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH 00/11] multipath-tools: improvements for
-	pretty-printing code
+Subject: [dm-devel] [PATCH 01/11] libmultipath: make multipath_data etc.
+	static
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -92,7 +95,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -102,45 +105,44 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-Hi Christophe, hi Ben,
+These variables are only used in print.c
 
-this series attempts to improve the robustness of the code by making the lookup
-tables used for pretty printing and wildcard hanling static const arrays.
-This requires getting rid of the variable "width" field in these arrays.
-I could have simply split of "width" into a separate global array variable,
-but as the field width are designed to change depending on the data being
-printed, it makes more sense to use local variables for it and pass them to
-the actual table-formatting code.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/print.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-A couple of minor cleanups are done along the way.
-
-As always, feedback welcome
-Martin
-
-Martin Wilck (11):
-  libmultipath: make multipath_data etc. static
-  libmultipath: move path_data etc. to print.c
-  libmultipath: make pd_lookup() etc. return an index
-  libmultipath: use ARRAY_SIZE for iterating over wildcard arrays
-  libmultipath: drop padding code in _snprint_pathgroup()
-  libmultipath: snprint_foreign_topology(): split out lockless variant
-  multipathd: drop unnecessary path layout calls
-  libmultipath: add a cleanup function for unsigned char *
-  libmultipath: make sprint_path_marginal() static
-  libmultipath: introduce width argument for pretty-printing functions
-  libmultipath: change wildcard handler tables to static const
-
- libmultipath/foreign.c            |  72 ++++--
- libmultipath/foreign.h            |  25 ++-
- libmultipath/libmultipath.version |   5 +-
- libmultipath/print.c              | 360 +++++++++++++++++-------------
- libmultipath/print.h              |  60 ++---
- libmultipath/util.c               |   5 +
- libmultipath/util.h               |   1 +
- multipath/main.c                  |   7 +-
- multipathd/cli_handlers.c         |  79 ++++---
- 9 files changed, 360 insertions(+), 254 deletions(-)
-
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index e61349f..938eaad 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -771,7 +771,7 @@ snprint_path_vpd_data(struct strbuf *buff, const struct path * pp)
+ 	return append_strbuf_str(buff, "[undef]");
+ }
+ 
+-struct multipath_data mpd[] = {
++static struct multipath_data mpd[] = {
+ 	{'n', "name",          0, snprint_name},
+ 	{'w', "uuid",          0, snprint_multipath_uuid},
+ 	{'d', "sysfs",         0, snprint_sysfs},
+@@ -799,7 +799,7 @@ struct multipath_data mpd[] = {
+ 	{0, NULL, 0 , NULL}
+ };
+ 
+-struct path_data pd[] = {
++static struct path_data pd[] = {
+ 	{'w', "uuid",          0, snprint_path_uuid},
+ 	{'i', "hcil",          0, snprint_hcil},
+ 	{'d', "dev",           0, snprint_dev},
+@@ -828,7 +828,7 @@ struct path_data pd[] = {
+ 	{0, NULL, 0 , NULL}
+ };
+ 
+-struct pathgroup_data pgd[] = {
++static struct pathgroup_data pgd[] = {
+ 	{'s', "selector",      0, snprint_pg_selector},
+ 	{'p', "pri",           0, snprint_pg_pri},
+ 	{'t', "dm_st",         0, snprint_pg_state},
 -- 
 2.33.1
 
