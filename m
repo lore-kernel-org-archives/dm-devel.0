@@ -4,65 +4,65 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id BC054C433F5
-	for <dm-devel@archiver.kernel.org>; Sat, 27 Nov 2021 15:20:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 52878C433F5
+	for <dm-devel@archiver.kernel.org>; Sat, 27 Nov 2021 15:20:35 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-153-Bl5njKc5MiG_kJTHjl-wMg-1; Sat, 27 Nov 2021 10:20:30 -0500
-X-MC-Unique: Bl5njKc5MiG_kJTHjl-wMg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-349-7AMyN7CTPES9r5pNKiiXEQ-1; Sat, 27 Nov 2021 10:20:30 -0500
+X-MC-Unique: 7AMyN7CTPES9r5pNKiiXEQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CB0211006AA2;
-	Sat, 27 Nov 2021 15:20:25 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A384160C4A;
-	Sat, 27 Nov 2021 15:20:25 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 83C281006AA4;
+	Sat, 27 Nov 2021 15:20:26 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6CA6060854;
+	Sat, 27 Nov 2021 15:20:26 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 816681809CB7;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 81F004CA9B;
 	Sat, 27 Nov 2021 15:20:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.2])
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1ARFJmgf032669 for <dm-devel@listman.util.phx.redhat.com>;
-	Sat, 27 Nov 2021 10:19:48 -0500
+	id 1ARFJoAx032706 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 27 Nov 2021 10:19:50 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 7DF59404727A; Sat, 27 Nov 2021 15:19:48 +0000 (UTC)
+	id 37DC540CFD13; Sat, 27 Nov 2021 15:19:50 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7A1744047272
-	for <dm-devel@redhat.com>; Sat, 27 Nov 2021 15:19:48 +0000 (UTC)
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 32E9740CFD07
+	for <dm-devel@redhat.com>; Sat, 27 Nov 2021 15:19:50 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 63F3E80122B
-	for <dm-devel@redhat.com>; Sat, 27 Nov 2021 15:19:48 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1B8ED80A0AC
+	for <dm-devel@redhat.com>; Sat, 27 Nov 2021 15:19:50 +0000 (UTC)
 Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-308-im3oicqtPkur90ISi8SZvg-1; Sat, 27 Nov 2021 10:19:44 -0500
-X-MC-Unique: im3oicqtPkur90ISi8SZvg-1
+	us-mta-380-SL7W0M6BNYq2PuXBtSLYLA-1; Sat, 27 Nov 2021 10:19:48 -0500
+X-MC-Unique: SL7W0M6BNYq2PuXBtSLYLA-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id B6900212CB;
-	Sat, 27 Nov 2021 15:19:42 +0000 (UTC)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id CFBF62170E;
+	Sat, 27 Nov 2021 15:19:46 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 6A3C413AAD;
-	Sat, 27 Nov 2021 15:19:42 +0000 (UTC)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 823A213AAD;
+	Sat, 27 Nov 2021 15:19:46 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id 8JLOF45MomErFgAAMHmgww
-	(envelope-from <mwilck@suse.com>); Sat, 27 Nov 2021 15:19:42 +0000
+	by imap2.suse-dmz.suse.de with ESMTPSA id sLF2HZJMomErFgAAMHmgww
+	(envelope-from <mwilck@suse.com>); Sat, 27 Nov 2021 15:19:46 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Sat, 27 Nov 2021 16:18:56 +0100
-Message-Id: <20211127151929.7727-4-mwilck@suse.com>
+Date: Sat, 27 Nov 2021 16:19:07 +0100
+Message-Id: <20211127151929.7727-15-mwilck@suse.com>
 In-Reply-To: <20211127151929.7727-1-mwilck@suse.com>
 References: <20211127151929.7727-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -74,14 +74,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1ARFJmgf032669
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1ARFJoAx032706
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, Chongyun Wu <wu.chongyun@h3c.com>,
 	dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH v3 03/35] libmultipath: add optional wakeup
-	functionality to lock.c
+Subject: [dm-devel] [PATCH v3 14/35] multipathd: uxlsnr: avoid stalled
+	clients during reconfigure
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -95,7 +95,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -105,124 +105,71 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-Have struct mutex_lock take an optional wakeup function.
-unlock() is renamed to __unlock() in order to prevent it from
-being called by mistake.
+Since 47cc1d3 ("multipathd: fix client response for socket
+activation"), we hold back clients while reconfigure is running.
+The idea of 47cc1d3 was to fix the behavior during initial
+start up. When multipathd reconfigures itself during runtime,
+and the reconfiguration takes a long time (a minute or more is
+not unusual in big configurations), clients will time out with
+no response ("timeout receiving packet"). Waiting for reconfigure
+to finish breaks our timeout handling.
 
-This changes offsets in "struct vectors", requiring a major
-libmultipath version bump. While the strucure is already changed,
-in order to avoid this in the future, move the lock to the end
-of "struct vectors".
+Therefore we should only apply the logic of 47cc1d3 during initial
+configuration. In this case, the client that triggered socket
+activation may still encounter a timeout, but there's not much we can
+do about that.
 
+Fixes: 47cc1d3 ("multipathd: fix client response for socket activation")
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/libmultipath.version | 13 +++++++------
- libmultipath/lock.c               | 12 +++++++++++-
- libmultipath/lock.h               |  6 +++++-
- libmultipath/structs_vec.h        |  2 +-
- 4 files changed, 24 insertions(+), 9 deletions(-)
+ multipathd/main.c   |  9 +++++++++
+ multipathd/uxlsnr.c | 12 ------------
+ 2 files changed, 9 insertions(+), 12 deletions(-)
 
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index c98cf7f..83aaa83 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -31,7 +31,7 @@
-  *   The new version inherits the previous ones.
-  */
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 3062f3d..309c11e 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1705,6 +1705,15 @@ uxlsnrloop (void * ap)
  
--LIBMULTIPATH_9.0.0 {
-+LIBMULTIPATH_10.0.0 {
- global:
- 	/* symbols referenced by multipath and multipathd */
- 	add_foreign;
-@@ -284,11 +284,12 @@ global:
- 	/* added in 8.2.0 */
- 	check_daemon;
+ 	init_handler_callbacks();
+ 	umask(077);
++
++	/*
++	 * Wait for initial reconfiguration to finish, while
++	 * hadling signals
++	 */
++	while (wait_for_state_change_if(DAEMON_CONFIGURE, 50)
++	       == DAEMON_CONFIGURE)
++		handle_signals(false);
++
+ 	uxsock_listen(&uxsock_trigger, ux_sock, ap);
  
-+	/* added in 9.1.0 */
-+	timespeccmp;
-+
-+	/* added in 10.0.0 */
-+	set_wakeup_fn;
-+
- local:
- 	*;
- };
+ out_sock:
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index 912c35b..400375c 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -390,18 +390,6 @@ void * uxsock_listen(uxsock_trigger_fn uxsock_trigger, long ux_sock,
+ 			continue;
+ 		}
+ 
+-		/*
+-		 * Client connection. We shouldn't answer while we're
+-		 * configuring - nothing may be configured yet.
+-		 * But we can't wait forever either, because this thread
+-		 * must handle signals. So wait a short while only.
+-		 */
+-		if (wait_for_state_change_if(DAEMON_CONFIGURE, 10)
+-		    == DAEMON_CONFIGURE) {
+-			handle_signals(false);
+-			continue;
+-		}
 -
--LIBMULTIPATH_9.1.0 {
--global:
--	timespeccmp;
--} LIBMULTIPATH_9.0.0;
-diff --git a/libmultipath/lock.c b/libmultipath/lock.c
-index 72c70e3..93b48db 100644
---- a/libmultipath/lock.c
-+++ b/libmultipath/lock.c
-@@ -3,6 +3,16 @@
- void cleanup_lock (void * data)
- {
- 	struct mutex_lock *lock = data;
-+	wakeup_fn *fn = lock->wakeup;
- 
--	unlock(lock);
-+	__unlock(lock);
-+	if (fn)
-+		fn();
-+}
-+
-+void set_wakeup_fn(struct mutex_lock *lck, wakeup_fn *fn)
-+{
-+	lock(lck);
-+	lck->wakeup = fn;
-+	__unlock(lck);
- }
-diff --git a/libmultipath/lock.h b/libmultipath/lock.h
-index d99eedb..d7b779e 100644
---- a/libmultipath/lock.h
-+++ b/libmultipath/lock.h
-@@ -3,8 +3,11 @@
- 
- #include <pthread.h>
- 
-+typedef void (wakeup_fn)(void);
-+
- struct mutex_lock {
- 	pthread_mutex_t mutex;
-+	wakeup_fn *wakeup;
- };
- 
- static inline void lock(struct mutex_lock *a)
-@@ -22,7 +25,7 @@ static inline int timedlock(struct mutex_lock *a, struct timespec *tmo)
- 	return pthread_mutex_timedlock(&a->mutex, tmo);
- }
- 
--static inline void unlock(struct mutex_lock *a)
-+static inline void __unlock(struct mutex_lock *a)
- {
- 	pthread_mutex_unlock(&a->mutex);
- }
-@@ -30,5 +33,6 @@ static inline void unlock(struct mutex_lock *a)
- #define lock_cleanup_pop(a) pthread_cleanup_pop(1)
- 
- void cleanup_lock (void * data);
-+void set_wakeup_fn(struct mutex_lock *lock, wakeup_fn *fn);
- 
- #endif /* _LOCK_H */
-diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-index 29ede45..2a0cbd1 100644
---- a/libmultipath/structs_vec.h
-+++ b/libmultipath/structs_vec.h
-@@ -6,9 +6,9 @@
- #include "lock.h"
- 
- struct vectors {
--	struct mutex_lock lock; /* defined in lock.h */
- 	vector pathvec;
- 	vector mpvec;
-+	struct mutex_lock lock; /* defined in lock.h */
- };
- 
- void __set_no_path_retry(struct multipath *mpp, bool check_features);
+ 		/* see if a client wants to speak to us */
+ 		for (i = POLLFDS_BASE; i < n_pfds; i++) {
+ 			if (polls[i].revents & POLLIN) {
 -- 
 2.33.1
 
