@@ -4,52 +4,52 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8C5AAC433EF
-	for <dm-devel@archiver.kernel.org>; Mon, 29 Nov 2021 10:40:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4DBC4C433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 29 Nov 2021 10:40:04 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-537-TxQZCpVyN466g4ZqbILJqA-1; Mon, 29 Nov 2021 05:39:57 -0500
-X-MC-Unique: TxQZCpVyN466g4ZqbILJqA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-21-gELBcyblO7qUKw2_XA8xTg-1; Mon, 29 Nov 2021 05:40:00 -0500
+X-MC-Unique: gELBcyblO7qUKw2_XA8xTg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7EE491006AB7;
-	Mon, 29 Nov 2021 10:39:51 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CEA3783DBFB;
+	Mon, 29 Nov 2021 10:39:55 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6635F79C53;
-	Mon, 29 Nov 2021 10:39:51 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B37C95D9C0;
+	Mon, 29 Nov 2021 10:39:55 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3F47218048A7;
-	Mon, 29 Nov 2021 10:39:51 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8D4171802FE8;
+	Mon, 29 Nov 2021 10:39:55 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1ATAdnqx014395 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 29 Nov 2021 05:39:49 -0500
+	id 1ATAdsNs014409 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 29 Nov 2021 05:39:54 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id A3D8F40CFD13; Mon, 29 Nov 2021 10:39:49 +0000 (UTC)
+	id 174DB4010FF6; Mon, 29 Nov 2021 10:39:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9EF1A40CFD05
-	for <dm-devel@redhat.com>; Mon, 29 Nov 2021 10:39:49 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 832D485A5A8
-	for <dm-devel@redhat.com>; Mon, 29 Nov 2021 10:39:49 +0000 (UTC)
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 12885400DE5B
+	for <dm-devel@redhat.com>; Mon, 29 Nov 2021 10:39:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EC5068032EB
+	for <dm-devel@redhat.com>; Mon, 29 Nov 2021 10:39:53 +0000 (UTC)
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-442-N81noJgRPr2W7gBR9rmthw-1; Mon, 29 Nov 2021 05:39:45 -0500
-X-MC-Unique: N81noJgRPr2W7gBR9rmthw-1
+	us-mta-521-uWERLN8XNaiCi_8SKbU_iQ-1; Mon, 29 Nov 2021 05:39:50 -0500
+X-MC-Unique: uWERLN8XNaiCi_8SKbU_iQ-1
 Received: from [2001:4bb8:184:4a23:724a:c057:c7bf:4643] (helo=localhost)
 	by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1mrdnS-0073J2-IG; Mon, 29 Nov 2021 10:22:07 +0000
+	id 1mrdnv-0073V2-LY; Mon, 29 Nov 2021 10:22:36 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Dan Williams <dan.j.williams@intel.com>
-Date: Mon, 29 Nov 2021 11:21:36 +0100
-Message-Id: <20211129102203.2243509-3-hch@lst.de>
+Date: Mon, 29 Nov 2021 11:21:57 +0100
+Message-Id: <20211129102203.2243509-24-hch@lst.de>
 In-Reply-To: <20211129102203.2243509-1-hch@lst.de>
 References: <20211129102203.2243509-1-hch@lst.de>
 MIME-Version: 1.0
@@ -71,8 +71,8 @@ Cc: nvdimm@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
 	linux-xfs@vger.kernel.org, dm-devel@redhat.com,
 	linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
 	Ira Weiny <ira.weiny@intel.com>
-Subject: [dm-devel] [PATCH 02/29] dm: make the DAX support depend on
-	CONFIG_FS_DAX
+Subject: [dm-devel] [PATCH 23/29] xfs: pass the mapping flags to
+	xfs_bmbt_to_iomap
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -86,7 +86,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -94,118 +94,205 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The device mapper DAX support is all hanging off a block device and thus
-can't be used with device dax.  Make it depend on CONFIG_FS_DAX instead
-of CONFIG_DAX_DRIVER.  This also means that bdev_dax_pgoff only needs to
-be built under CONFIG_FS_DAX now.
+To prepare for looking at the IOMAP_DAX flag in xfs_bmbt_to_iomap pass in
+the input mapping flags to xfs_bmbt_to_iomap.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Mike Snitzer <snitzer@redhat.com>
 ---
- drivers/dax/super.c        | 6 ++----
- drivers/md/dm-linear.c     | 2 +-
- drivers/md/dm-log-writes.c | 2 +-
- drivers/md/dm-stripe.c     | 2 +-
- drivers/md/dm-writecache.c | 2 +-
- drivers/md/dm.c            | 2 +-
- 6 files changed, 7 insertions(+), 9 deletions(-)
+ fs/xfs/libxfs/xfs_bmap.c |  4 ++--
+ fs/xfs/xfs_aops.c        |  2 +-
+ fs/xfs/xfs_iomap.c       | 35 ++++++++++++++++++++---------------
+ fs/xfs/xfs_iomap.h       |  5 +++--
+ fs/xfs/xfs_pnfs.c        |  2 +-
+ 5 files changed, 27 insertions(+), 21 deletions(-)
 
-diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-index b882cf8106ea3..e20d0cef10a18 100644
---- a/drivers/dax/super.c
-+++ b/drivers/dax/super.c
-@@ -63,7 +63,7 @@ static int dax_host_hash(const char *host)
- 	return hashlen_hash(hashlen_string("DAX", host)) % DAX_HASH_SIZE;
- }
+diff --git a/fs/xfs/libxfs/xfs_bmap.c b/fs/xfs/libxfs/xfs_bmap.c
+index 4dccd4d90622d..74198dd82b035 100644
+--- a/fs/xfs/libxfs/xfs_bmap.c
++++ b/fs/xfs/libxfs/xfs_bmap.c
+@@ -4551,7 +4551,7 @@ xfs_bmapi_convert_delalloc(
+ 	 * the extent.  Just return the real extent at this offset.
+ 	 */
+ 	if (!isnullstartblock(bma.got.br_startblock)) {
+-		xfs_bmbt_to_iomap(ip, iomap, &bma.got, flags);
++		xfs_bmbt_to_iomap(ip, iomap, &bma.got, 0, flags);
+ 		*seq = READ_ONCE(ifp->if_seq);
+ 		goto out_trans_cancel;
+ 	}
+@@ -4598,7 +4598,7 @@ xfs_bmapi_convert_delalloc(
+ 	XFS_STATS_INC(mp, xs_xstrat_quick);
  
--#ifdef CONFIG_BLOCK
-+#if defined(CONFIG_BLOCK) && defined(CONFIG_FS_DAX)
- #include <linux/blkdev.h>
+ 	ASSERT(!isnullstartblock(bma.got.br_startblock));
+-	xfs_bmbt_to_iomap(ip, iomap, &bma.got, flags);
++	xfs_bmbt_to_iomap(ip, iomap, &bma.got, 0, flags);
+ 	*seq = READ_ONCE(ifp->if_seq);
  
- int bdev_dax_pgoff(struct block_device *bdev, sector_t sector, size_t size,
-@@ -80,7 +80,6 @@ int bdev_dax_pgoff(struct block_device *bdev, sector_t sector, size_t size,
- }
- EXPORT_SYMBOL(bdev_dax_pgoff);
+ 	if (whichfork == XFS_COW_FORK)
+diff --git a/fs/xfs/xfs_aops.c b/fs/xfs/xfs_aops.c
+index c8c15c3c31471..6ac3449a68ba0 100644
+--- a/fs/xfs/xfs_aops.c
++++ b/fs/xfs/xfs_aops.c
+@@ -359,7 +359,7 @@ xfs_map_blocks(
+ 	    isnullstartblock(imap.br_startblock))
+ 		goto allocate_blocks;
  
--#if IS_ENABLED(CONFIG_FS_DAX)
- /**
-  * dax_get_by_host() - temporary lookup mechanism for filesystem-dax
-  * @host: alternate name for the device registered by a dax driver
-@@ -219,8 +218,7 @@ bool dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
- 	return ret;
- }
- EXPORT_SYMBOL_GPL(dax_supported);
--#endif /* CONFIG_FS_DAX */
--#endif /* CONFIG_BLOCK */
-+#endif /* CONFIG_BLOCK && CONFIG_FS_DAX */
- 
- enum dax_device_flags {
- 	/* !alive + rcu grace period == no new operations / mappings */
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 66ba16713f696..0a260c35aeeed 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -162,7 +162,7 @@ static int linear_iterate_devices(struct dm_target *ti,
- 	return fn(ti, lc->dev, lc->start, ti->len, data);
- }
- 
--#if IS_ENABLED(CONFIG_DAX_DRIVER)
-+#if IS_ENABLED(CONFIG_FS_DAX)
- static long linear_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
- 		long nr_pages, void **kaddr, pfn_t *pfn)
+-	xfs_bmbt_to_iomap(ip, &wpc->iomap, &imap, 0);
++	xfs_bmbt_to_iomap(ip, &wpc->iomap, &imap, 0, 0);
+ 	trace_xfs_map_blocks_found(ip, offset, count, whichfork, &imap);
+ 	return 0;
+ allocate_blocks:
+diff --git a/fs/xfs/xfs_iomap.c b/fs/xfs/xfs_iomap.c
+index 9b7f92c6aef33..d6beb1502f8bc 100644
+--- a/fs/xfs/xfs_iomap.c
++++ b/fs/xfs/xfs_iomap.c
+@@ -53,7 +53,8 @@ xfs_bmbt_to_iomap(
+ 	struct xfs_inode	*ip,
+ 	struct iomap		*iomap,
+ 	struct xfs_bmbt_irec	*imap,
+-	u16			flags)
++	unsigned int		mapping_flags,
++	u16			iomap_flags)
  {
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index 0b3ef977ceeba..3155875d4e5b0 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -901,7 +901,7 @@ static void log_writes_io_hints(struct dm_target *ti, struct queue_limits *limit
- 	limits->io_min = limits->physical_block_size;
+ 	struct xfs_mount	*mp = ip->i_mount;
+ 	struct xfs_buftarg	*target = xfs_inode_buftarg(ip);
+@@ -79,7 +80,7 @@ xfs_bmbt_to_iomap(
+ 	iomap->length = XFS_FSB_TO_B(mp, imap->br_blockcount);
+ 	iomap->bdev = target->bt_bdev;
+ 	iomap->dax_dev = target->bt_daxdev;
+-	iomap->flags = flags;
++	iomap->flags = iomap_flags;
+ 
+ 	if (xfs_ipincount(ip) &&
+ 	    (ip->i_itemp->ili_fsync_fields & ~XFS_ILOG_TIMESTAMP))
+@@ -799,7 +800,7 @@ xfs_direct_write_iomap_begin(
+ 
+ 	xfs_iunlock(ip, lockmode);
+ 	trace_xfs_iomap_found(ip, offset, length, XFS_DATA_FORK, &imap);
+-	return xfs_bmbt_to_iomap(ip, iomap, &imap, iomap_flags);
++	return xfs_bmbt_to_iomap(ip, iomap, &imap, flags, iomap_flags);
+ 
+ allocate_blocks:
+ 	error = -EAGAIN;
+@@ -830,18 +831,19 @@ xfs_direct_write_iomap_begin(
+ 		return error;
+ 
+ 	trace_xfs_iomap_alloc(ip, offset, length, XFS_DATA_FORK, &imap);
+-	return xfs_bmbt_to_iomap(ip, iomap, &imap, iomap_flags | IOMAP_F_NEW);
++	return xfs_bmbt_to_iomap(ip, iomap, &imap, flags,
++				 iomap_flags | IOMAP_F_NEW);
+ 
+ out_found_cow:
+ 	xfs_iunlock(ip, lockmode);
+ 	length = XFS_FSB_TO_B(mp, cmap.br_startoff + cmap.br_blockcount);
+ 	trace_xfs_iomap_found(ip, offset, length - offset, XFS_COW_FORK, &cmap);
+ 	if (imap.br_startblock != HOLESTARTBLOCK) {
+-		error = xfs_bmbt_to_iomap(ip, srcmap, &imap, 0);
++		error = xfs_bmbt_to_iomap(ip, srcmap, &imap, flags, 0);
+ 		if (error)
+ 			return error;
+ 	}
+-	return xfs_bmbt_to_iomap(ip, iomap, &cmap, IOMAP_F_SHARED);
++	return xfs_bmbt_to_iomap(ip, iomap, &cmap, flags, IOMAP_F_SHARED);
+ 
+ out_unlock:
+ 	if (lockmode)
+@@ -1051,23 +1053,24 @@ xfs_buffered_write_iomap_begin(
+ 	 */
+ 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
+ 	trace_xfs_iomap_alloc(ip, offset, count, allocfork, &imap);
+-	return xfs_bmbt_to_iomap(ip, iomap, &imap, IOMAP_F_NEW);
++	return xfs_bmbt_to_iomap(ip, iomap, &imap, flags, IOMAP_F_NEW);
+ 
+ found_imap:
+ 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
+-	return xfs_bmbt_to_iomap(ip, iomap, &imap, 0);
++	return xfs_bmbt_to_iomap(ip, iomap, &imap, flags, 0);
+ 
+ found_cow:
+ 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
+ 	if (imap.br_startoff <= offset_fsb) {
+-		error = xfs_bmbt_to_iomap(ip, srcmap, &imap, 0);
++		error = xfs_bmbt_to_iomap(ip, srcmap, &imap, flags, 0);
+ 		if (error)
+ 			return error;
+-		return xfs_bmbt_to_iomap(ip, iomap, &cmap, IOMAP_F_SHARED);
++		return xfs_bmbt_to_iomap(ip, iomap, &cmap, flags,
++					 IOMAP_F_SHARED);
+ 	}
+ 
+ 	xfs_trim_extent(&cmap, offset_fsb, imap.br_startoff - offset_fsb);
+-	return xfs_bmbt_to_iomap(ip, iomap, &cmap, 0);
++	return xfs_bmbt_to_iomap(ip, iomap, &cmap, flags, 0);
+ 
+ out_unlock:
+ 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
+@@ -1176,7 +1179,8 @@ xfs_read_iomap_begin(
+ 	if (error)
+ 		return error;
+ 	trace_xfs_iomap_found(ip, offset, length, XFS_DATA_FORK, &imap);
+-	return xfs_bmbt_to_iomap(ip, iomap, &imap, shared ? IOMAP_F_SHARED : 0);
++	return xfs_bmbt_to_iomap(ip, iomap, &imap, flags,
++				 shared ? IOMAP_F_SHARED : 0);
  }
  
--#if IS_ENABLED(CONFIG_DAX_DRIVER)
-+#if IS_ENABLED(CONFIG_FS_DAX)
- static int log_dax(struct log_writes_c *lc, sector_t sector, size_t bytes,
- 		   struct iov_iter *i)
- {
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index 6660b6b53d5bf..f084607220293 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -300,7 +300,7 @@ static int stripe_map(struct dm_target *ti, struct bio *bio)
- 	return DM_MAPIO_REMAPPED;
+ const struct iomap_ops xfs_read_iomap_ops = {
+@@ -1235,7 +1239,8 @@ xfs_seek_iomap_begin(
+ 		if (data_fsb < cow_fsb + cmap.br_blockcount)
+ 			end_fsb = min(end_fsb, data_fsb);
+ 		xfs_trim_extent(&cmap, offset_fsb, end_fsb);
+-		error = xfs_bmbt_to_iomap(ip, iomap, &cmap, IOMAP_F_SHARED);
++		error = xfs_bmbt_to_iomap(ip, iomap, &cmap, flags,
++					  IOMAP_F_SHARED);
+ 		/*
+ 		 * This is a COW extent, so we must probe the page cache
+ 		 * because there could be dirty page cache being backed
+@@ -1257,7 +1262,7 @@ xfs_seek_iomap_begin(
+ 	imap.br_state = XFS_EXT_NORM;
+ done:
+ 	xfs_trim_extent(&imap, offset_fsb, end_fsb);
+-	error = xfs_bmbt_to_iomap(ip, iomap, &imap, 0);
++	error = xfs_bmbt_to_iomap(ip, iomap, &imap, flags, 0);
+ out_unlock:
+ 	xfs_iunlock(ip, lockmode);
+ 	return error;
+@@ -1304,7 +1309,7 @@ xfs_xattr_iomap_begin(
+ 	if (error)
+ 		return error;
+ 	ASSERT(nimaps);
+-	return xfs_bmbt_to_iomap(ip, iomap, &imap, 0);
++	return xfs_bmbt_to_iomap(ip, iomap, &imap, flags, 0);
  }
  
--#if IS_ENABLED(CONFIG_DAX_DRIVER)
-+#if IS_ENABLED(CONFIG_FS_DAX)
- static long stripe_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
- 		long nr_pages, void **kaddr, pfn_t *pfn)
- {
-diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-index 4b8991cde223d..4f31591d2d25e 100644
---- a/drivers/md/dm-writecache.c
-+++ b/drivers/md/dm-writecache.c
-@@ -38,7 +38,7 @@
- #define BITMAP_GRANULARITY	PAGE_SIZE
- #endif
+ const struct iomap_ops xfs_xattr_iomap_ops = {
+diff --git a/fs/xfs/xfs_iomap.h b/fs/xfs/xfs_iomap.h
+index f1a281ab9328c..657cc02290f22 100644
+--- a/fs/xfs/xfs_iomap.h
++++ b/fs/xfs/xfs_iomap.h
+@@ -17,8 +17,9 @@ int xfs_iomap_write_unwritten(struct xfs_inode *, xfs_off_t, xfs_off_t, bool);
+ xfs_fileoff_t xfs_iomap_eof_align_last_fsb(struct xfs_inode *ip,
+ 		xfs_fileoff_t end_fsb);
  
--#if IS_ENABLED(CONFIG_ARCH_HAS_PMEM_API) && IS_ENABLED(CONFIG_DAX_DRIVER)
-+#if IS_ENABLED(CONFIG_ARCH_HAS_PMEM_API) && IS_ENABLED(CONFIG_FS_DAX)
- #define DM_WRITECACHE_HAS_PMEM
- #endif
+-int xfs_bmbt_to_iomap(struct xfs_inode *, struct iomap *,
+-		struct xfs_bmbt_irec *, u16);
++int xfs_bmbt_to_iomap(struct xfs_inode *ip, struct iomap *iomap,
++		struct xfs_bmbt_irec *imap, unsigned int mapping_flags,
++		u16 iomap_flags);
  
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index acc84dc1bded5..b93fcc91176e5 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1783,7 +1783,7 @@ static struct mapped_device *alloc_dev(int minor)
- 	md->disk->private_data = md;
- 	sprintf(md->disk->disk_name, "dm-%d", minor);
+ int xfs_zero_range(struct xfs_inode *ip, loff_t pos, loff_t len,
+ 		bool *did_zero);
+diff --git a/fs/xfs/xfs_pnfs.c b/fs/xfs/xfs_pnfs.c
+index 5e1d29d8b2e73..7ce1ea11fc3f3 100644
+--- a/fs/xfs/xfs_pnfs.c
++++ b/fs/xfs/xfs_pnfs.c
+@@ -173,7 +173,7 @@ xfs_fs_map_blocks(
+ 	}
+ 	xfs_iunlock(ip, XFS_IOLOCK_EXCL);
  
--	if (IS_ENABLED(CONFIG_DAX_DRIVER)) {
-+	if (IS_ENABLED(CONFIG_FS_DAX)) {
- 		md->dax_dev = alloc_dax(md, md->disk->disk_name,
- 					&dm_dax_ops, 0);
- 		if (IS_ERR(md->dax_dev)) {
+-	error = xfs_bmbt_to_iomap(ip, iomap, &imap, 0);
++	error = xfs_bmbt_to_iomap(ip, iomap, &imap, 0, 0);
+ 	*device_generation = mp->m_generation;
+ 	return error;
+ out_unlock:
 -- 
 2.30.2
 
