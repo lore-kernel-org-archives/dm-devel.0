@@ -4,71 +4,69 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 163DBC433EF
-	for <dm-devel@archiver.kernel.org>; Mon, 29 Nov 2021 17:00:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6BBC5C433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 29 Nov 2021 19:02:15 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-75-s81JI9H2OLaeenIqVfb2VA-1; Mon, 29 Nov 2021 12:00:27 -0500
-X-MC-Unique: s81JI9H2OLaeenIqVfb2VA-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-487-ok8RGR-YPqeQHo7ph28oMw-1; Mon, 29 Nov 2021 14:02:10 -0500
+X-MC-Unique: ok8RGR-YPqeQHo7ph28oMw-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 71469192D785;
-	Mon, 29 Nov 2021 17:00:22 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 41D905D6BA;
-	Mon, 29 Nov 2021 17:00:22 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 53926100CE8F;
+	Mon, 29 Nov 2021 19:02:03 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9EAFF694DF;
+	Mon, 29 Nov 2021 19:02:02 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0EB914BB7C;
-	Mon, 29 Nov 2021 17:00:21 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D2C4E1809C8A;
+	Mon, 29 Nov 2021 19:02:00 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1ATH0JUb019732 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 29 Nov 2021 12:00:19 -0500
+	id 1ATJ1wPX029123 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 29 Nov 2021 14:01:58 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 0723A2026D7F; Mon, 29 Nov 2021 17:00:19 +0000 (UTC)
+	id 1101A40CFD11; Mon, 29 Nov 2021 19:01:58 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 034342026D69
-	for <dm-devel@redhat.com>; Mon, 29 Nov 2021 17:00:13 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0C40240CFD05
+	for <dm-devel@redhat.com>; Mon, 29 Nov 2021 19:01:58 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C009D106655B
-	for <dm-devel@redhat.com>; Mon, 29 Nov 2021 17:00:13 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E62E385A5A8
+	for <dm-devel@redhat.com>; Mon, 29 Nov 2021 19:01:57 +0000 (UTC)
 Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-152-FUcWPxMSOo2D0gZSXtQMig-1; Mon, 29 Nov 2021 12:00:10 -0500
-X-MC-Unique: FUcWPxMSOo2D0gZSXtQMig-1
+	us-mta-441-qJysffaTMWGYJ7KU1ZG4Ag-1; Mon, 29 Nov 2021 14:01:54 -0500
+X-MC-Unique: qJysffaTMWGYJ7KU1ZG4Ag-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 9BFFF1FD56;
-	Mon, 29 Nov 2021 17:00:08 +0000 (UTC)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id D45441FCA1;
+	Mon, 29 Nov 2021 19:01:52 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 5843A13B7D;
-	Mon, 29 Nov 2021 17:00:08 +0000 (UTC)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 9117A13BB4;
+	Mon, 29 Nov 2021 19:01:52 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id V8mCExgHpWHFUAAAMHmgww
-	(envelope-from <mwilck@suse.com>); Mon, 29 Nov 2021 17:00:08 +0000
-Message-ID: <416482c0d6a6563314126bdf019df97fa516163e.camel@suse.com>
+	by imap2.suse-dmz.suse.de with ESMTPSA id XpkZIaAjpWHXBAAAMHmgww
+	(envelope-from <mwilck@suse.com>); Mon, 29 Nov 2021 19:01:52 +0000
+Message-ID: <325aa9852beba3896ec173496d21f705ee4efaf6.camel@suse.com>
 From: Martin Wilck <mwilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>
-Date: Mon, 29 Nov 2021 18:00:07 +0100
-In-Reply-To: <20211129161904.GA19591@octiron.msp.redhat.com>
+Date: Mon, 29 Nov 2021 20:01:51 +0100
+In-Reply-To: <20211125014310.GW19591@octiron.msp.redhat.com>
 References: <20211118225840.19810-1-mwilck@suse.com>
-	<20211118225840.19810-30-mwilck@suse.com>
-	<20211125003859.GT19591@octiron.msp.redhat.com>
-	<d0d0a5bbcd78083550f0df6c17463f133ca9021e.camel@suse.com>
-	<20211129161904.GA19591@octiron.msp.redhat.com>
+	<20211118225840.19810-33-mwilck@suse.com>
+	<20211125014310.GW19591@octiron.msp.redhat.com>
 User-Agent: Evolution 3.42.1
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -79,14 +77,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1ATH0JUb019732
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1ATJ1wPX029123
 X-loop: dm-devel@redhat.com
 Cc: lixiaokeng@huawei.com, dm-devel@redhat.com,
 	Chongyun Wu <wu.chongyun@h3c.com>
-Subject: Re: [dm-devel] [PATCH v2 29/48] multipathd: uxlsnr: merge
- uxsock_trigger() into state machine
+Subject: Re: [dm-devel] [PATCH v2 32/48] multipathd: uxlsnr: use poll loop
+ for sending, too
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -100,7 +98,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -108,41 +106,36 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="iso-8859-15"
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, 2021-11-29 at 10:19 -0600, Benjamin Marzinski wrote:
-> On Fri, Nov 26, 2021 at 03:34:59PM +0100, Martin Wilck wrote:
+Hello Ben,
+
+On Wed, 2021-11-24 at 19:43 -0600, Benjamin Marzinski wrote:
+> On Thu, Nov 18, 2021 at 11:58:24PM +0100, mwilck@suse.com=A0wrote:
+> > From: Martin Wilck <mwilck@suse.com>
 > >=20
-> > I'm going to fix that, but I assume you're aware that our code is
-> > far
-> > from being consistent in this respect. This holds also for other
-> > patches in this series. Do you want me to re-format all of them?
+> > send_packet() may busy-loop. By polling for POLLOUT, we can
+> > avoid that, even if it's very unlikely in practice.
+> >=20
 >=20
-> Huh? I mean that the line doesn't start with a tab, but instead has 8
-> spaces.=A0 A quick grep through the source code in your queue branch
-> only
-> turns that up in some of the files in the tests directory and in
-> files
-> we've just imported
+> The last time I reviewed this, I mentioned that when we fall through
+> from CLT_WORK to CLT_SEND, the client hasn't checked for a POLLOUT
+> revent, so it's possible to block here. I'm not sure that we care.
+> If not
 >=20
-> # grep -l "^=A0=A0=A0=A0=A0=A0=A0 " `find ./ -name "*.[ch]"`
-> ./libmultipath/nvme/nvme-ioctl.c
-> ./tests/pgpolicy.c
-> ./tests/util.c
-> ./tests/directio.c
-> ./tests/mpathvalid.c
-> ./tests/dmevents.c
-> ./third-party/valgrind/drd.h
-> ./third-party/valgrind/valgrind.h
+> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Right. It must be some change in the way emacs handles indentation,
-then. I'm not aware that I'm doing anything different than before.
-Unfortunately, there are still some space-indented lines in my v3
-submission.
+Unlike the other patches, I did remove your "Reviewed-by:" on this
+patch in the v3 series, because I made a non-trivial change in order
+to fix the issue you mentioned. Now it's the only patch in the v3
+series that doesn't have your Reviewed-by: tag.
 
-I'll prepare a v4, and try to figure out what changed in my
-environment. Sorry.
+Will you review this patch again?=20
 
+If you're fine with the patch, and you have no other objections,
+I'll push the v4 of the series (with the whitespace issues fixed)
+to my "queue2 branch and start preparing a submission for Christophe.
+
+Regards
 Martin
-
 
 
 --
