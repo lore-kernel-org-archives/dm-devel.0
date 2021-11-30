@@ -1,70 +1,64 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8892CC433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 30 Nov 2021 18:55:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D814BC433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 30 Nov 2021 18:59:36 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-290-1Mqn8lyMOW6QexkzQXCBFA-1; Tue, 30 Nov 2021 13:55:39 -0500
-X-MC-Unique: 1Mqn8lyMOW6QexkzQXCBFA-1
+ us-mta-27-CfQvAGwIPAej7WMyUejODQ-1; Tue, 30 Nov 2021 13:59:34 -0500
+X-MC-Unique: CfQvAGwIPAej7WMyUejODQ-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DEF79801B01;
-	Tue, 30 Nov 2021 18:55:34 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DE5AE102CC42;
+	Tue, 30 Nov 2021 18:59:29 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 76E495D6BA;
-	Tue, 30 Nov 2021 18:55:34 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BE7E05D6BA;
+	Tue, 30 Nov 2021 18:59:29 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E6A424BB7C;
-	Tue, 30 Nov 2021 18:55:33 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.10])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 838F74CA93;
+	Tue, 30 Nov 2021 18:59:29 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.7])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1AUItUjX017094 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 30 Nov 2021 13:55:31 -0500
+	id 1AUIxRLg017370 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 30 Nov 2021 13:59:27 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id CEF27401E23; Tue, 30 Nov 2021 18:55:30 +0000 (UTC)
+	id 15BA91458303; Tue, 30 Nov 2021 18:59:27 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CB14F401E31
-	for <dm-devel@redhat.com>; Tue, 30 Nov 2021 18:55:30 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B1B5C101AA73
-	for <dm-devel@redhat.com>; Tue, 30 Nov 2021 18:55:30 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
-	relay.mimecast.com with ESMTP id us-mta-365-hfVXaelTPPSWtnMbksJ5qQ-1;
-	Tue, 30 Nov 2021 13:55:27 -0500
-X-MC-Unique: hfVXaelTPPSWtnMbksJ5qQ-1
-Received: from [10.137.106.139] (unknown [131.107.159.11])
-	by linux.microsoft.com (Postfix) with ESMTPSA id 7526020DEE27;
-	Tue, 30 Nov 2021 10:55:20 -0800 (PST)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 7526020DEE27
-Message-ID: <81d5e825-1ee2-8f6b-cd9d-07b0f8bd36d3@linux.microsoft.com>
-Date: Tue, 30 Nov 2021 10:55:20 -0800
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1141D1458302
+	for <dm-devel@redhat.com>; Tue, 30 Nov 2021 18:59:27 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EA7258001E9
+	for <dm-devel@redhat.com>; Tue, 30 Nov 2021 18:59:26 +0000 (UTC)
+Received: from sin.source.kernel.org (sin.source.kernel.org [145.40.73.55])
+	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-597-5Knrg0cHOla09NANQCyltQ-1; Tue, 30 Nov 2021 13:59:22 -0500
+X-MC-Unique: 5Knrg0cHOla09NANQCyltQ-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by sin.source.kernel.org (Postfix) with ESMTPS id 50945CE1AFA;
+	Tue, 30 Nov 2021 18:59:18 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 70F1EC53FCC;
+	Tue, 30 Nov 2021 18:59:16 +0000 (UTC)
+Date: Tue, 30 Nov 2021 10:59:16 -0800
+From: "Darrick J. Wong" <djwong@kernel.org>
+To: Christoph Hellwig <hch@lst.de>
+Message-ID: <20211130185916.GG8467@magnolia>
+References: <20211129102203.2243509-1-hch@lst.de>
+	<20211129102203.2243509-24-hch@lst.de>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
-	Thunderbird/91.3.2
-To: Roberto Sassu <roberto.sassu@huawei.com>, "corbet@lwn.net"
-	<corbet@lwn.net>,
-	"axboe@kernel.dk" <axboe@kernel.dk>, "agk@redhat.com" <agk@redhat.com>, 
-	"snitzer@redhat.com" <snitzer@redhat.com>,
-	"ebiggers@kernel.org" <ebiggers@kernel.org>,
-	"tytso@mit.edu" <tytso@mit.edu>, "paul@paul-moore.com"
-	<paul@paul-moore.com>, "eparis@redhat.com" <eparis@redhat.com>,
-	"jmorris@namei.org" <jmorris@namei.org>, "serge@hallyn.com"
-	<serge@hallyn.com>
-References: <1634151995-16266-1-git-send-email-deven.desai@linux.microsoft.com>
-	<1634151995-16266-12-git-send-email-deven.desai@linux.microsoft.com>
-	<721462c3da064d359ca3c83845298ccf@huawei.com>
-From: Deven Bowers <deven.desai@linux.microsoft.com>
-In-Reply-To: <721462c3da064d359ca3c83845298ccf@huawei.com>
+In-Reply-To: <20211129102203.2243509-24-hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -73,21 +67,16 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-loop: dm-devel@redhat.com
-Cc: "linux-security-module@vger.kernel.org"
-	<linux-security-module@vger.kernel.org>,
-	"linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-	"jannh@google.com" <jannh@google.com>,
-	"linux-fscrypt@vger.kernel.org" <linux-fscrypt@vger.kernel.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"linux-audit@redhat.com" <linux-audit@redhat.com>,
-	"tusharsu@linux.microsoft.com" <tusharsu@linux.microsoft.com>,
-	"linux-integrity@vger.kernel.org" <linux-integrity@vger.kernel.org>
-Subject: Re: [dm-devel] [RFC PATCH v7 11/16] ipe: add support for dm-verity
- as a trust provider
+Cc: nvdimm@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
+	linux-s390@vger.kernel.org, linux-erofs@lists.ozlabs.org,
+	virtualization@lists.linux-foundation.org,
+	linux-xfs@vger.kernel.org, dm-devel@redhat.com,
+	linux-fsdevel@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>,
+	linux-ext4@vger.kernel.org, Ira Weiny <ira.weiny@intel.com>
+Subject: Re: [dm-devel] [PATCH 23/29] xfs: pass the mapping flags to
+	xfs_bmbt_to_iomap
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -106,202 +95,219 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
+On Mon, Nov 29, 2021 at 11:21:57AM +0100, Christoph Hellwig wrote:
+> To prepare for looking at the IOMAP_DAX flag in xfs_bmbt_to_iomap pass in
+> the input mapping flags to xfs_bmbt_to_iomap.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-On 11/25/2021 1:37 AM, Roberto Sassu wrote:
->> From: deven.desai@linux.microsoft.com
->> [mailto:deven.desai@linux.microsoft.com]
->> Sent: Wednesday, October 13, 2021 9:07 PM
->> From: Deven Bowers <deven.desai@linux.microsoft.com>
+Thanks for changing the argument names to be less confusing,
+Reviewed-by: Darrick J. Wong <djwong@kernel.org>
 
-..snip
+--D
 
->> diff --git a/security/ipe/modules/Makefile b/security/ipe/modules/Makefile
->> index e0045ec65434..84fadce85193 100644
->> --- a/security/ipe/modules/Makefile
->> +++ b/security/ipe/modules/Makefile
->> @@ -6,3 +6,5 @@
->>   #
->>
->>   obj-$(CONFIG_IPE_PROP_BOOT_VERIFIED) += boot_verified.o
->> +obj-$(CONFIG_IPE_PROP_DM_VERITY_SIGNATURE) += dmverity_signature.o
->> +obj-$(CONFIG_IPE_PROP_DM_VERITY_ROOTHASH) += dmverity_roothash.o
->> diff --git a/security/ipe/modules/dmverity_roothash.c
->> b/security/ipe/modules/dmverity_roothash.c
->> new file mode 100644
->> index 000000000000..0f82bec3b842
->> --- /dev/null
->> +++ b/security/ipe/modules/dmverity_roothash.c
->> @@ -0,0 +1,80 @@
->> +// SPDX-License-Identifier: GPL-2.0
->> +/*
->> + * Copyright (C) Microsoft Corporation. All rights reserved.
->> + */
->> +
->> +#include "ipe_module.h"
->> +
->> +#include <linux/fs.h>
->> +#include <linux/types.h>
->> +
->> +struct counted_array {
->> +	size_t	len;
->> +	u8     *data;
->> +};
->> +
->> +static int dvrh_parse(const char *valstr, void **value)
->> +{
->> +	int rv = 0;
->> +	struct counted_array *arr;
->> +
->> +	arr = kzalloc(sizeof(*arr), GFP_KERNEL);
->> +	if (!arr) {
->> +		rv = -ENOMEM;
->> +		goto err;
->> +	}
->> +
->> +	arr->len = (strlen(valstr) / 2);
->> +
->> +	arr->data = kzalloc(arr->len, GFP_KERNEL);
->> +	if (!arr->data) {
->> +		rv = -ENOMEM;
->> +		goto err;
->> +	}
->> +
->> +	rv = hex2bin(arr->data, valstr, arr->len);
->> +	if (rv != 0)
->> +		goto err2;
->> +
->> +	*value = arr;
->> +	return rv;
->> +err2:
->> +	kfree(arr->data);
->> +err:
->> +	kfree(arr);
->> +	return rv;
->> +}
->> +
->> +static bool dvrh_eval(const struct ipe_eval_ctx *ctx, const void *val)
->> +{
->> +	const u8 *src;
->> +	struct counted_array *expect = (struct counted_array *)val;
->> +
->> +	if (!ctx->ipe_bdev)
->> +		return false;
->> +
->> +	if (ctx->ipe_bdev->hashlen != expect->len)
->> +		return false;
->> +
->> +	src = ctx->ipe_bdev->hash;
->> +
->> +	return !memcmp(expect->data, src, expect->len);
-> Hi Deven
->
-> I was curious to see if determining the property at run-time
-> could apply also to dm-verity. It seems it could be done
-> (I omit some checks, I also keep the expected value in hex
-> format):
->
 > ---
->          md = dm_get_md(file_inode(ctx->file)->i_sb->s_dev);
->          table = dm_get_live_table(md, &srcu_idx);
->          num_targets = dm_table_get_num_targets(table);
->
->          for (i = 0; i < num_targets; i++) {
->                  struct dm_target *ti = dm_table_get_target(table, i);
->
->                  if (strcmp(ti->type->name, "verity"))
->                          continue;
->
->                  ti->type->status(ti, STATUSTYPE_IMA, 0, result, sizeof(result));
->          }
->
->          dm_put_live_table(md, srcu_idx);
->          dm_put(md);
->
->          root_digest_ptr = strstr(result, "root_digest=");
->          return !strncmp(expect->data, root_digest_ptr + 12, expect->len);
-> ---
->
-> Only dm_table_get_target() is not exported yet, but I guess it could
-> be. dm_table_get_num_targets() is exported.
-
-I had tried something similar in a very early draft of IPE. The issue
-that comes with this is that when you compile device-mapper as a module
-(CONFIG_BLK_DEV_DM=m) you start to get linking errors with this
-approach.
-
-Obviously, we can fix this in the IPE's module Kconfig by setting the
-dependency to be =y, but it's something to highlight. My general
-preference is to support the =m configuration by using these blobs.
-
-The runtime approach does work with fs-verity, because fs-verity is a
-file-system level feature that cannot be compiled as a module.
-
-> With this code, you would not have to manage security blobs
-> outside IPE. Maybe you could add a blob for the super block, so
-> that you verify the dm-verity property just once per filesystem.
->
-> Roberto
->
-> HUAWEI TECHNOLOGIES Duesseldorf GmbH, HRB 56063
-> Managing Director: Li Peng, Zhong Ronghua
->
->> +}
->> +
->> +static int dvrh_free(void **val)
->> +{
->> +	struct counted_array *expect = (struct counted_array *)val;
->> +
->> +	kfree(expect->data);
->> +	kfree(expect);
->> +
->> +	return 0;
->> +}
->> +
->> +IPE_MODULE(dvrh) = {
->> +	.name = "dmverity_roothash",
->> +	.version = 1,
->> +	.parse = dvrh_parse,
->> +	.free = dvrh_free,
->> +	.eval = dvrh_eval,
->> +};
->> diff --git a/security/ipe/modules/dmverity_signature.c
->> b/security/ipe/modules/dmverity_signature.c
->> new file mode 100644
->> index 000000000000..08746fcbcb3e
->> --- /dev/null
->> +++ b/security/ipe/modules/dmverity_signature.c
->> @@ -0,0 +1,25 @@
->> +// SPDX-License-Identifier: GPL-2.0
->> +/*
->> + * Copyright (C) Microsoft Corporation. All rights reserved.
->> + */
->> +
->> +#include "ipe_module.h"
->> +
->> +#include <linux/fs.h>
->> +#include <linux/types.h>
->> +
->> +static bool dvv_eval(const struct ipe_eval_ctx *ctx, const void *val)
->> +{
->> +	bool expect = (bool)val;
->> +	bool eval = ctx->ipe_bdev && (!!ctx->ipe_bdev->sigdata);
->> +
->> +	return expect == eval;
->> +}
->> +
->> +IPE_MODULE(dvv) = {
->> +	.name = "dmverity_signature",
->> +	.version = 1,
->> +	.parse = ipe_bool_parse,
->> +	.free = NULL,
->> +	.eval = dvv_eval,
->> +};
->> --
->> 2.33.0
+>  fs/xfs/libxfs/xfs_bmap.c |  4 ++--
+>  fs/xfs/xfs_aops.c        |  2 +-
+>  fs/xfs/xfs_iomap.c       | 35 ++++++++++++++++++++---------------
+>  fs/xfs/xfs_iomap.h       |  5 +++--
+>  fs/xfs/xfs_pnfs.c        |  2 +-
+>  5 files changed, 27 insertions(+), 21 deletions(-)
+> 
+> diff --git a/fs/xfs/libxfs/xfs_bmap.c b/fs/xfs/libxfs/xfs_bmap.c
+> index 4dccd4d90622d..74198dd82b035 100644
+> --- a/fs/xfs/libxfs/xfs_bmap.c
+> +++ b/fs/xfs/libxfs/xfs_bmap.c
+> @@ -4551,7 +4551,7 @@ xfs_bmapi_convert_delalloc(
+>  	 * the extent.  Just return the real extent at this offset.
+>  	 */
+>  	if (!isnullstartblock(bma.got.br_startblock)) {
+> -		xfs_bmbt_to_iomap(ip, iomap, &bma.got, flags);
+> +		xfs_bmbt_to_iomap(ip, iomap, &bma.got, 0, flags);
+>  		*seq = READ_ONCE(ifp->if_seq);
+>  		goto out_trans_cancel;
+>  	}
+> @@ -4598,7 +4598,7 @@ xfs_bmapi_convert_delalloc(
+>  	XFS_STATS_INC(mp, xs_xstrat_quick);
+>  
+>  	ASSERT(!isnullstartblock(bma.got.br_startblock));
+> -	xfs_bmbt_to_iomap(ip, iomap, &bma.got, flags);
+> +	xfs_bmbt_to_iomap(ip, iomap, &bma.got, 0, flags);
+>  	*seq = READ_ONCE(ifp->if_seq);
+>  
+>  	if (whichfork == XFS_COW_FORK)
+> diff --git a/fs/xfs/xfs_aops.c b/fs/xfs/xfs_aops.c
+> index c8c15c3c31471..6ac3449a68ba0 100644
+> --- a/fs/xfs/xfs_aops.c
+> +++ b/fs/xfs/xfs_aops.c
+> @@ -359,7 +359,7 @@ xfs_map_blocks(
+>  	    isnullstartblock(imap.br_startblock))
+>  		goto allocate_blocks;
+>  
+> -	xfs_bmbt_to_iomap(ip, &wpc->iomap, &imap, 0);
+> +	xfs_bmbt_to_iomap(ip, &wpc->iomap, &imap, 0, 0);
+>  	trace_xfs_map_blocks_found(ip, offset, count, whichfork, &imap);
+>  	return 0;
+>  allocate_blocks:
+> diff --git a/fs/xfs/xfs_iomap.c b/fs/xfs/xfs_iomap.c
+> index 9b7f92c6aef33..d6beb1502f8bc 100644
+> --- a/fs/xfs/xfs_iomap.c
+> +++ b/fs/xfs/xfs_iomap.c
+> @@ -53,7 +53,8 @@ xfs_bmbt_to_iomap(
+>  	struct xfs_inode	*ip,
+>  	struct iomap		*iomap,
+>  	struct xfs_bmbt_irec	*imap,
+> -	u16			flags)
+> +	unsigned int		mapping_flags,
+> +	u16			iomap_flags)
+>  {
+>  	struct xfs_mount	*mp = ip->i_mount;
+>  	struct xfs_buftarg	*target = xfs_inode_buftarg(ip);
+> @@ -79,7 +80,7 @@ xfs_bmbt_to_iomap(
+>  	iomap->length = XFS_FSB_TO_B(mp, imap->br_blockcount);
+>  	iomap->bdev = target->bt_bdev;
+>  	iomap->dax_dev = target->bt_daxdev;
+> -	iomap->flags = flags;
+> +	iomap->flags = iomap_flags;
+>  
+>  	if (xfs_ipincount(ip) &&
+>  	    (ip->i_itemp->ili_fsync_fields & ~XFS_ILOG_TIMESTAMP))
+> @@ -799,7 +800,7 @@ xfs_direct_write_iomap_begin(
+>  
+>  	xfs_iunlock(ip, lockmode);
+>  	trace_xfs_iomap_found(ip, offset, length, XFS_DATA_FORK, &imap);
+> -	return xfs_bmbt_to_iomap(ip, iomap, &imap, iomap_flags);
+> +	return xfs_bmbt_to_iomap(ip, iomap, &imap, flags, iomap_flags);
+>  
+>  allocate_blocks:
+>  	error = -EAGAIN;
+> @@ -830,18 +831,19 @@ xfs_direct_write_iomap_begin(
+>  		return error;
+>  
+>  	trace_xfs_iomap_alloc(ip, offset, length, XFS_DATA_FORK, &imap);
+> -	return xfs_bmbt_to_iomap(ip, iomap, &imap, iomap_flags | IOMAP_F_NEW);
+> +	return xfs_bmbt_to_iomap(ip, iomap, &imap, flags,
+> +				 iomap_flags | IOMAP_F_NEW);
+>  
+>  out_found_cow:
+>  	xfs_iunlock(ip, lockmode);
+>  	length = XFS_FSB_TO_B(mp, cmap.br_startoff + cmap.br_blockcount);
+>  	trace_xfs_iomap_found(ip, offset, length - offset, XFS_COW_FORK, &cmap);
+>  	if (imap.br_startblock != HOLESTARTBLOCK) {
+> -		error = xfs_bmbt_to_iomap(ip, srcmap, &imap, 0);
+> +		error = xfs_bmbt_to_iomap(ip, srcmap, &imap, flags, 0);
+>  		if (error)
+>  			return error;
+>  	}
+> -	return xfs_bmbt_to_iomap(ip, iomap, &cmap, IOMAP_F_SHARED);
+> +	return xfs_bmbt_to_iomap(ip, iomap, &cmap, flags, IOMAP_F_SHARED);
+>  
+>  out_unlock:
+>  	if (lockmode)
+> @@ -1051,23 +1053,24 @@ xfs_buffered_write_iomap_begin(
+>  	 */
+>  	xfs_iunlock(ip, XFS_ILOCK_EXCL);
+>  	trace_xfs_iomap_alloc(ip, offset, count, allocfork, &imap);
+> -	return xfs_bmbt_to_iomap(ip, iomap, &imap, IOMAP_F_NEW);
+> +	return xfs_bmbt_to_iomap(ip, iomap, &imap, flags, IOMAP_F_NEW);
+>  
+>  found_imap:
+>  	xfs_iunlock(ip, XFS_ILOCK_EXCL);
+> -	return xfs_bmbt_to_iomap(ip, iomap, &imap, 0);
+> +	return xfs_bmbt_to_iomap(ip, iomap, &imap, flags, 0);
+>  
+>  found_cow:
+>  	xfs_iunlock(ip, XFS_ILOCK_EXCL);
+>  	if (imap.br_startoff <= offset_fsb) {
+> -		error = xfs_bmbt_to_iomap(ip, srcmap, &imap, 0);
+> +		error = xfs_bmbt_to_iomap(ip, srcmap, &imap, flags, 0);
+>  		if (error)
+>  			return error;
+> -		return xfs_bmbt_to_iomap(ip, iomap, &cmap, IOMAP_F_SHARED);
+> +		return xfs_bmbt_to_iomap(ip, iomap, &cmap, flags,
+> +					 IOMAP_F_SHARED);
+>  	}
+>  
+>  	xfs_trim_extent(&cmap, offset_fsb, imap.br_startoff - offset_fsb);
+> -	return xfs_bmbt_to_iomap(ip, iomap, &cmap, 0);
+> +	return xfs_bmbt_to_iomap(ip, iomap, &cmap, flags, 0);
+>  
+>  out_unlock:
+>  	xfs_iunlock(ip, XFS_ILOCK_EXCL);
+> @@ -1176,7 +1179,8 @@ xfs_read_iomap_begin(
+>  	if (error)
+>  		return error;
+>  	trace_xfs_iomap_found(ip, offset, length, XFS_DATA_FORK, &imap);
+> -	return xfs_bmbt_to_iomap(ip, iomap, &imap, shared ? IOMAP_F_SHARED : 0);
+> +	return xfs_bmbt_to_iomap(ip, iomap, &imap, flags,
+> +				 shared ? IOMAP_F_SHARED : 0);
+>  }
+>  
+>  const struct iomap_ops xfs_read_iomap_ops = {
+> @@ -1235,7 +1239,8 @@ xfs_seek_iomap_begin(
+>  		if (data_fsb < cow_fsb + cmap.br_blockcount)
+>  			end_fsb = min(end_fsb, data_fsb);
+>  		xfs_trim_extent(&cmap, offset_fsb, end_fsb);
+> -		error = xfs_bmbt_to_iomap(ip, iomap, &cmap, IOMAP_F_SHARED);
+> +		error = xfs_bmbt_to_iomap(ip, iomap, &cmap, flags,
+> +					  IOMAP_F_SHARED);
+>  		/*
+>  		 * This is a COW extent, so we must probe the page cache
+>  		 * because there could be dirty page cache being backed
+> @@ -1257,7 +1262,7 @@ xfs_seek_iomap_begin(
+>  	imap.br_state = XFS_EXT_NORM;
+>  done:
+>  	xfs_trim_extent(&imap, offset_fsb, end_fsb);
+> -	error = xfs_bmbt_to_iomap(ip, iomap, &imap, 0);
+> +	error = xfs_bmbt_to_iomap(ip, iomap, &imap, flags, 0);
+>  out_unlock:
+>  	xfs_iunlock(ip, lockmode);
+>  	return error;
+> @@ -1304,7 +1309,7 @@ xfs_xattr_iomap_begin(
+>  	if (error)
+>  		return error;
+>  	ASSERT(nimaps);
+> -	return xfs_bmbt_to_iomap(ip, iomap, &imap, 0);
+> +	return xfs_bmbt_to_iomap(ip, iomap, &imap, flags, 0);
+>  }
+>  
+>  const struct iomap_ops xfs_xattr_iomap_ops = {
+> diff --git a/fs/xfs/xfs_iomap.h b/fs/xfs/xfs_iomap.h
+> index f1a281ab9328c..657cc02290f22 100644
+> --- a/fs/xfs/xfs_iomap.h
+> +++ b/fs/xfs/xfs_iomap.h
+> @@ -17,8 +17,9 @@ int xfs_iomap_write_unwritten(struct xfs_inode *, xfs_off_t, xfs_off_t, bool);
+>  xfs_fileoff_t xfs_iomap_eof_align_last_fsb(struct xfs_inode *ip,
+>  		xfs_fileoff_t end_fsb);
+>  
+> -int xfs_bmbt_to_iomap(struct xfs_inode *, struct iomap *,
+> -		struct xfs_bmbt_irec *, u16);
+> +int xfs_bmbt_to_iomap(struct xfs_inode *ip, struct iomap *iomap,
+> +		struct xfs_bmbt_irec *imap, unsigned int mapping_flags,
+> +		u16 iomap_flags);
+>  
+>  int xfs_zero_range(struct xfs_inode *ip, loff_t pos, loff_t len,
+>  		bool *did_zero);
+> diff --git a/fs/xfs/xfs_pnfs.c b/fs/xfs/xfs_pnfs.c
+> index 5e1d29d8b2e73..7ce1ea11fc3f3 100644
+> --- a/fs/xfs/xfs_pnfs.c
+> +++ b/fs/xfs/xfs_pnfs.c
+> @@ -173,7 +173,7 @@ xfs_fs_map_blocks(
+>  	}
+>  	xfs_iunlock(ip, XFS_IOLOCK_EXCL);
+>  
+> -	error = xfs_bmbt_to_iomap(ip, iomap, &imap, 0);
+> +	error = xfs_bmbt_to_iomap(ip, iomap, &imap, 0, 0);
+>  	*device_generation = mp->m_generation;
+>  	return error;
+>  out_unlock:
+> -- 
+> 2.30.2
+> 
 
 --
 dm-devel mailing list
