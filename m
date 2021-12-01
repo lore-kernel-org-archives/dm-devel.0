@@ -1,91 +1,69 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 23672C433EF
-	for <dm-devel@archiver.kernel.org>; Wed,  1 Dec 2021 17:07:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B977DC433EF
+	for <dm-devel@archiver.kernel.org>; Wed,  1 Dec 2021 18:36:15 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1638383774;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=bHYzqdEPtUaw04oUMoazW5IiPloYO5RYOZuXX5p1THc=;
+	b=CK9fDH8CaYR9HrlLJi9MaX6UWBVbRluwB6TDAJrley45kcaepRROJPAIOdb+rVzwYM1FG9
+	3+cw+Cm0R/Y9NDx1+/1tioUshuuL57r/zJk8UE/C9kJHriYV2OHoO05LYuu76DTjxrkmjf
+	s+zlqWoUFFitSMrlhuxezKORR34E+/M=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-280-IKX7ssiHNO2vY-b3-TiTpQ-1; Wed, 01 Dec 2021 12:07:53 -0500
-X-MC-Unique: IKX7ssiHNO2vY-b3-TiTpQ-1
+ us-mta-397-JJJKDXwjNj-5KLav6fKZGw-1; Wed, 01 Dec 2021 13:36:13 -0500
+X-MC-Unique: JJJKDXwjNj-5KLav6fKZGw-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BA4471853024;
-	Wed,  1 Dec 2021 17:07:48 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 213F8102CC41;
+	Wed,  1 Dec 2021 18:35:42 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5DB3A10013D6;
-	Wed,  1 Dec 2021 17:07:48 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E482E1000051;
+	Wed,  1 Dec 2021 18:35:38 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E497B4BB7C;
-	Wed,  1 Dec 2021 17:07:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.1])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 847FC4BB7C;
+	Wed,  1 Dec 2021 18:35:33 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com
+	[10.5.11.13])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1B1H7iG7018496 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 1 Dec 2021 12:07:45 -0500
+	id 1B1IZVo1026543 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 1 Dec 2021 13:35:31 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 99BE84010E70; Wed,  1 Dec 2021 17:07:44 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 94B6340CFD0E
-	for <dm-devel@redhat.com>; Wed,  1 Dec 2021 17:07:44 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 776208027FB
-	for <dm-devel@redhat.com>; Wed,  1 Dec 2021 17:07:44 +0000 (UTC)
-Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com
-	[209.85.128.47]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-567-iTfEpq-5NDq_3e3lgsDVIA-1; Wed, 01 Dec 2021 12:07:42 -0500
-X-MC-Unique: iTfEpq-5NDq_3e3lgsDVIA-1
-Received: by mail-wm1-f47.google.com with SMTP id
-	o19-20020a1c7513000000b0033a93202467so1675740wmc.2
-	for <dm-devel@redhat.com>; Wed, 01 Dec 2021 09:07:42 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:from:subject:to:cc:message-id:date:user-agent
-	:mime-version:content-language:content-transfer-encoding;
-	bh=hghqSMgZQ1oL7xflqeizAh1KzCiPuU5U/cSoMYYRaH0=;
-	b=CahpHRZi6Cr0GSmf8E8EdQJfiK0WR+miot7gbtAuz3xtkrAbciQAmMqdbZjbl0Ytmb
-	KIkEStKHviQ41+ZBH8RLvxJa+JjXrgZaosvwfTiGWupbNC0Qp3fvbGrPRXi1R/1NSP9c
-	Kh5IvI8MJ4E1BvFOHQbe1090vaAVK0h81Pqbtw+P5ywpX1xdS3MNprjGBOfk4qF6Trlc
-	1UEAFC4iUbRlOHPVm2zLAk5SeDJ9ds9USiaU8mXmcndddVc3qPYh3TUgnUT9NNGRTzPz
-	h/W9ZpFqsfB/2BhXs48bBbfYjYCc2hxtVInqitrtDnqhiZy6zMZATnIxT6myNcEgtbw9
-	2TZA==
-X-Gm-Message-State: AOAM530ymbB3lZ1hyCKvEdvVXnkBppi6UVz+kt6JWZEDnZb9OLrR/rRk
-	KPgB4boU9LTmDEcNWl3gUhNlDw==
-X-Google-Smtp-Source: ABdhPJzrA3krDiBV7yqSpcHaoHTaCdDhAEmvI1yOAzl1azvACeEEOjzPe77+olPe3uoSULT3AGpjDg==
-X-Received: by 2002:a1c:1b15:: with SMTP id b21mr8573739wmb.174.1638378461141; 
-	Wed, 01 Dec 2021 09:07:41 -0800 (PST)
-Received: from [172.16.10.100] (62.1.222.48.dsl.dyn.forthnet.gr. [62.1.222.48])
-	by smtp.gmail.com with ESMTPSA id l5sm426020wrs.59.2021.12.01.09.07.39
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Wed, 01 Dec 2021 09:07:40 -0800 (PST)
-From: Nikos Tsironis <ntsironis@arrikto.com>
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Message-ID: <1127b165-f886-e3cf-061d-141fa7fb7d97@arrikto.com>
-Date: Wed, 1 Dec 2021 19:07:39 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
-	Thunderbird/78.14.0
+	id EFC6187949; Wed,  1 Dec 2021 18:35:30 +0000 (UTC)
+Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6488F84643;
+	Wed,  1 Dec 2021 18:35:30 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1B1IZS0m006121; 
+	Wed, 1 Dec 2021 12:35:28 -0600
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1B1IZR4Y006120;
+	Wed, 1 Dec 2021 12:35:27 -0600
+Date: Wed, 1 Dec 2021 12:35:27 -0600
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: mwilck@suse.com
+Message-ID: <20211201183527.GP19591@octiron.msp.redhat.com>
+References: <20211201123650.16240-1-mwilck@suse.com>
+	<20211201123650.16240-6-mwilck@suse.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+In-Reply-To: <20211201123650.16240-6-mwilck@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 X-loop: dm-devel@redhat.com
-Cc: ejt@redhat.com, agk@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Subject: [dm-devel] Deadlock when swapping a table with a dm-era target
+Cc: dm-devel@redhat.com
+Subject: Re: [dm-devel] [PATCH v2 05/21] libmultipath (coverity): improve
+ input checking in parse_vpd_pg83
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -104,190 +82,269 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-Hello,
-
-Under certain conditions, swapping a table, that includes a dm-era
-target, with a new table, causes a deadlock.
-
-This happens when a status (STATUSTYPE_INFO) or message IOCTL is blocked
-in the suspended dm-era target.
-
-dm-era executes all metadata operations in a worker thread, which stops
-processing requests when the target is suspended, and resumes again when
-the target is resumed.
-
-So, running 'dmsetup status' or 'dmsetup message' for a suspended dm-era
-device blocks, until the device is resumed.
-
-This seems to be a problem on its own.
-
-If we then load a new table to the device, while the aforementioned
-dmsetup command is blocked in dm-era, and resume the device, we
-deadlock.
-
-The problem is that the 'dmsetup status' and 'dmsetup message' commands
-hold a reference to the live table, i.e., they hold an SRCU read lock on
-md->io_barrier, while they are blocked.
-
-When the device is resumed, the old table is replaced with the new one
-by dm_swap_table(), which ends up calling synchronize_srcu() on
-md->io_barrier.
-
-Since the blocked dmsetup command is holding the SRCU read lock, and the
-old table is never resumed, 'dmsetup resume' blocks too, and we have a
-deadlock.
-
-Steps to reproduce:
-
-1. Create device with dm-era target
-
-    # dmsetup create eradev --table "0 1048576 era /dev/datavg/erameta /dev/datavg/eradata 8192"
-
-2. Suspend the device
-
-    # dmsetup suspend eradev
-
-3. Load new table to device, e.g., to resize the device
-
-    # dmsetup load eradev --table "0 2097152 era /dev/datavg/erameta /dev/datavg/eradata 8192"
-
-4. Device now has LIVE and INACTIVE tables
-
-    # dmsetup info eradev
-    Name:              eradev
-    State:             SUSPENDED
-    Read Ahead:        16384
-    Tables present:    LIVE & INACTIVE
-    Open count:        0
-    Event number:      0
-    Major, minor:      252, 2
-    Number of targets: 1
-
-5. Retrieve the status of the device. This blocks because the device is
-    suspended. Equivalently, any 'dmsetup message' operation would block
-    too. This command holds the SRCU read lock.
-
-    # dmsetup status eradev
-
-6. Resume the device. The resume operation tries to swap the old table
-    with the new one and deadlocks, because it synchronizes SRCU for the
-    old table, while the blocked 'dmsetup status' holds the SRCU read
-    lock. And the old table is never resumed again at this point.
-
-    # dmsetup resume eradev
-
-7. The relevant dmesg logs are:
-
-
-[ 7093.345486] dm-2: detected capacity change from 1048576 to 2097152
-[ 7250.875665] INFO: task dmsetup:1986 blocked for more than 120 seconds.
-[ 7250.875722]       Not tainted 5.16.0-rc2-release+ #16
-[ 7250.875756] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
-[ 7250.875803] task:dmsetup         state:D stack:    0 pid: 1986 ppid:  1313 flags:0x00000000
-[ 7250.875809] Call Trace:
-[ 7250.875812]  <TASK>
-[ 7250.875816]  __schedule+0x330/0x8b0
-[ 7250.875827]  schedule+0x4e/0xc0
-[ 7250.875831]  schedule_timeout+0x20f/0x2e0
-[ 7250.875836]  ? do_set_pte+0xb8/0x120
-[ 7250.875843]  ? prep_new_page+0x91/0xa0
-[ 7250.875847]  wait_for_completion+0x8c/0xf0
-[ 7250.875854]  perform_rpc+0x95/0xb0 [dm_era]
-[ 7250.875862]  in_worker1.constprop.20+0x48/0x70 [dm_era]
-[ 7250.875867]  ? era_iterate_devices+0x30/0x30 [dm_era]
-[ 7250.875872]  ? era_status+0x64/0x1e0 [dm_era]
-[ 7250.875877]  era_status+0x64/0x1e0 [dm_era]
-[ 7250.875882]  ? dm_get_live_or_inactive_table.isra.11+0x20/0x20 [dm_mod]
-[ 7250.875900]  ? __mod_node_page_state+0x82/0xc0
-[ 7250.875909]  retrieve_status+0xbc/0x1e0 [dm_mod]
-[ 7250.875921]  ? dm_get_live_or_inactive_table.isra.11+0x20/0x20 [dm_mod]
-[ 7250.875932]  table_status+0x61/0xa0 [dm_mod]
-[ 7250.875942]  ctl_ioctl+0x1b5/0x4f0 [dm_mod]
-[ 7250.875956]  dm_ctl_ioctl+0xa/0x10 [dm_mod]
-[ 7250.875966]  __x64_sys_ioctl+0x8e/0xd0
-[ 7250.875970]  do_syscall_64+0x3a/0xd0
-[ 7250.875974]  entry_SYSCALL_64_after_hwframe+0x44/0xae
-[ 7250.875980] RIP: 0033:0x7f20b7cd4017
-[ 7250.875984] RSP: 002b:00007ffd443874b8 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
-[ 7250.875988] RAX: ffffffffffffffda RBX: 000055d69d6bd0e0 RCX: 00007f20b7cd4017
-[ 7250.875991] RDX: 000055d69d6bd0e0 RSI: 00000000c138fd0c RDI: 0000000000000003
-[ 7250.875993] RBP: 000000000000001e R08: 00007f20b81df648 R09: 00007ffd44387320
-[ 7250.875996] R10: 00007f20b81deb53 R11: 0000000000000246 R12: 000055d69d6bd110
-[ 7250.875998] R13: 00007f20b81deb53 R14: 000055d69d6bd000 R15: 0000000000000000
-[ 7250.876002]  </TASK>
-[ 7250.876004] INFO: task dmsetup:1987 blocked for more than 120 seconds.
-[ 7250.876046]       Not tainted 5.16.0-rc2-release+ #16
-[ 7250.876083] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
-[ 7250.876129] task:dmsetup         state:D stack:    0 pid: 1987 ppid:  1385 flags:0x00000000
-[ 7250.876134] Call Trace:
-[ 7250.876136]  <TASK>
-[ 7250.876138]  __schedule+0x330/0x8b0
-[ 7250.876142]  schedule+0x4e/0xc0
-[ 7250.876145]  schedule_timeout+0x20f/0x2e0
-[ 7250.876149]  ? __queue_work+0x226/0x420
-[ 7250.876156]  wait_for_completion+0x8c/0xf0
-[ 7250.876160]  __synchronize_srcu.part.19+0x92/0xc0
-[ 7250.876167]  ? __bpf_trace_rcu_stall_warning+0x10/0x10
-[ 7250.876173]  ? dm_swap_table+0x2f4/0x310 [dm_mod]
-[ 7250.876185]  dm_swap_table+0x2f4/0x310 [dm_mod]
-[ 7250.876198]  ? table_load+0x360/0x360 [dm_mod]
-[ 7250.876207]  dev_suspend+0x95/0x250 [dm_mod]
-[ 7250.876217]  ctl_ioctl+0x1b5/0x4f0 [dm_mod]
-[ 7250.876231]  dm_ctl_ioctl+0xa/0x10 [dm_mod]
-[ 7250.876240]  __x64_sys_ioctl+0x8e/0xd0
-[ 7250.876244]  do_syscall_64+0x3a/0xd0
-[ 7250.876247]  entry_SYSCALL_64_after_hwframe+0x44/0xae
-[ 7250.876252] RIP: 0033:0x7f15e9254017
-[ 7250.876254] RSP: 002b:00007ffffdc59458 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
-[ 7250.876257] RAX: ffffffffffffffda RBX: 000055d4d99560e0 RCX: 00007f15e9254017
-[ 7250.876260] RDX: 000055d4d99560e0 RSI: 00000000c138fd06 RDI: 0000000000000003
-[ 7250.876261] RBP: 000000000000000f R08: 00007f15e975f648 R09: 00007ffffdc592c0
-[ 7250.876263] R10: 00007f15e975eb53 R11: 0000000000000246 R12: 000055d4d9956110
-[ 7250.876265] R13: 00007f15e975eb53 R14: 000055d4d9956000 R15: 0000000000000001
-[ 7250.876269]  </TASK>
-
-I was thinking of how to fix this, and I would like your feedback to
-ensure I work on the right direction.
-
-I have thought of the following possible solutions.
-
-1. Have dm-era fail all operations while it's suspended.
-
-    This would work for messages, since they return an error code, but
-    the status operation doesn't return errors.
-
-    Moreover, I think it makes sense for the status operation to work
-    even if the device is suspended, so failing it doesn't seem the right
-    thing to do.
-
-    Maybe it's possible to fix dm-era to bypass the worker thread when
-    suspended, and return a valid status? I haven't checked yet if this
-    is possible.
-
-2. Redesign dm-era to use locks for accessing its metadata, so we don't
-    depend on the worker thread to serialize metadata operations.
-
-    This way we can run all required metadata operations directly from
-    the user thread that runs the dmsetup command.
-
-3. Could DM core handle this situation somehow?
-
-    As far as I can tell, the rest of the targets don't block in status
-    and message operations until the target is resumed. Is this a
-    requirement imposed by DM core, that dm-era violates? I couldn't find
-    any documentation regarding this.
-
-I think the right way to go is the second approach, that is redesign
-dm-era to use locks instead of depending on the worker thread to
-serialize metadata operations, but I would like your input before moving
-on.
-
-Looking forward to your feedback,
-Nikos.
+On Wed, Dec 01, 2021 at 01:36:34PM +0100, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+> 
+> Check offsets and other obvious errors in the VPD83 data.
+> 
+> The original reason to do this was to fix "tained scalar"
+> warnings from coverity. But this doesn't suffice for coverity
+> without using a constant boundary (WWID_SIZE) for "len" in
+> parse_vpd_pg80() and for "vpd_len" in parse_vpd_pg83(), even
+> though the computed boundaries are tighter than the constant
+> ones.
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  libmultipath/discovery.c | 134 +++++++++++++++++++++++++--------------
+>  1 file changed, 88 insertions(+), 46 deletions(-)
+> 
+> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+> index 36ea7b3..977aed9 100644
+> --- a/libmultipath/discovery.c
+> +++ b/libmultipath/discovery.c
+> @@ -36,6 +36,8 @@
+>  #include "print.h"
+>  #include "strbuf.h"
+>  
+> +#define VPD_BUFLEN 4096
+> +
+>  struct vpd_vendor_page vpd_vendor_pages[VPD_VP_ARRAY_SIZE] = {
+>  	[VPD_VP_UNDEF]	= { 0x00, "undef" },
+>  	[VPD_VP_HP3PAR]	= { 0xc0, "hp3par" },
+> @@ -1086,6 +1088,8 @@ parse_vpd_pg80(const unsigned char *in, char *out, size_t out_len)
+>  	if (out_len == 0)
+>  		return 0;
+>  
+> +	if (len > WWID_SIZE)
+> +		len = WWID_SIZE;
+>  	/*
+>  	 * Strip leading and trailing whitespace
+>  	 */
+> @@ -1115,84 +1119,123 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+>  	const unsigned char *d;
+>  	const unsigned char *vpd = NULL;
+>  	size_t len, vpd_len, i;
+> -	int vpd_type, prio = -1, naa_prio;
+> +	int vpd_type, prio = -1;
+> +	int err = -ENODATA;
+> +
+> +	/* Need space at least for one digit */
+> +	if (out_len <= 1)
+> +		return 0;
+>  
+>  	d = in + 4;
+> -	while (d < in + in_len) {
+> +	while (d <= in + in_len - 4) {
+> +		bool invalid = false;
+> +		int new_prio = -1;
+> +
+>  		/* Select 'association: LUN' */
+> -		if ((d[1] & 0x30) != 0) {
+> -			d += d[3] + 4;
+> -			continue;
+> -		}
+> +		if ((d[1] & 0x30) == 0x30) {
+> +			invalid = true;
+> +			goto next_designator;
+> +		} else if ((d[1] & 0x30) != 0x00)
+> +			goto next_designator;
+> +
+>  		switch (d[1] & 0xf) {
+> +			unsigned char good_len;
+>  		case 0x3:
+>  			/* NAA: Prio 5 */
+>  			switch (d[4] >> 4) {
+>  			case 6:
+>  				/* IEEE Registered Extended: Prio 8 */
+> -				naa_prio = 8;
+> +				new_prio = 8;
+> +				good_len = 16;
+>  				break;
+>  			case 5:
+>  				/* IEEE Registered: Prio 7 */
+> -				naa_prio = 7;
+> +				new_prio = 7;
+> +				good_len = 8;
+>  				break;
+>  			case 2:
+>  				/* IEEE Extended: Prio 6 */
+> -				naa_prio = 6;
+> +				new_prio = 6;
+> +				good_len = 8;
+>  				break;
+>  			case 3:
+>  				/* IEEE Locally assigned: Prio 1 */
+> -				naa_prio = 1;
+> +				new_prio = 1;
+> +				good_len = 8;
+>  				break;
+>  			default:
+>  				/* Default: no priority */
+> -				naa_prio = -1;
+> +				good_len = 0xff;
+>  				break;
+>  			}
+> -			if (prio < naa_prio) {
+> -				prio = naa_prio;
+> -				vpd = d;
+> -			}
+> +
+> +			invalid = good_len == 0xff || good_len != d[3];
+>  			break;
+>  		case 0x2:
+>  			/* EUI-64: Prio 4 */
+> -			if (prio < 4) {
+> -				prio = 4;
+> -				vpd = d;
+> -			}
+> +			invalid = (d[3] != 8 && d[3] != 12 && d[3] != 16);
+> +			new_prio = 4;
+>  			break;
+>  		case 0x8:
+>  			/* SCSI Name: Prio 3 */
+> -			if (memcmp(d + 4, "eui.", 4) &&
+> -			    memcmp(d + 4, "naa.", 4) &&
+> -			    memcmp(d + 4, "iqn.", 4))
+> -				break;
+> -			if (prio < 3) {
+> -				prio = 3;
+> -				vpd = d;
+> -			}
+> +			invalid = (d[3] < 4 || (memcmp(d + 4, "eui.", 4) &&
+> +						memcmp(d + 4, "naa.", 4) &&
+> +						memcmp(d + 4, "iqn.", 4)));
+> +			new_prio = 3;
+>  			break;
+>  		case 0x1:
+>  			/* T-10 Vendor ID: Prio 2 */
+> -			if (prio < 2) {
+> -				prio = 2;
+> -				vpd = d;
+> -			}
+> +			invalid = (d[3] < 8);
+> +			new_prio = 2;
+>  			break;
+> +		case 0xa:
+> +			condlog(2, "%s: UUID identifiers not yet supported",
+> +				__func__);
+> +			break;
+> +		default:
+> +			invalid = true;
+> +			break;
+> +		}
+> +
+> +	next_designator:
+> +		if (d + d[3] + 4 - in > (ssize_t)in_len) {
+> +			condlog(2, "%s: device descriptor length overflow: %zd > %zu",
+> +				__func__, d + d[3] + 4 - in, in_len);
+> +			err = -EOVERFLOW;
+> +			break;
+> +		} else if (invalid) {
+> +			condlog(2, "%s: invalid device designator at offset %zd: %02x%02x%02x%02x",
+> +				__func__, d - in, d[0], d[1], d[2], d[3]);
+> +			/*
+> +			 * We checked above that the next offset is within limits.
+> +			 * Proceed, fingers crossed.
+> +			 */
+> +			err = -EINVAL;
+> +		} else if (new_prio > prio) {
+> +			vpd = d;
+> +			prio = new_prio;
+>  		}
+>  		d += d[3] + 4;
+>  	}
+>  
+>  	if (prio <= 0)
+> -		return -ENODATA;
+> -	/* Need space at least for one digit */
+> -	else if (out_len <= 1)
+> -		return 0;
+> +		return err;
+> +
+> +	if (d != in + in_len)
+> +		/* Should this be fatal? (overflow covered above) */
+> +		condlog(2, "%s: warning: last descriptor end %zd != VPD length %zu",
+> +			__func__, d - in, in_len);
+>  
+>  	len = 0;
+>  	vpd_type = vpd[1] & 0xf;
+>  	vpd_len = vpd[3];
+>  	vpd += 4;
+> +	/* untaint vpd_len for coverity */
+> +	if (vpd_len > WWID_SIZE) {
+> +		condlog(1, "%s: suspicious designator length %zu truncated to %u",
+> +			__func__, vpd_len, WWID_SIZE);
+> +		vpd_len = WWID_SIZE;
+> +	}
+>  	if (vpd_type == 0x2 || vpd_type == 0x3) {
+>  		size_t i;
+>  
+> @@ -1206,10 +1249,6 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
+>  		for (i = 0; i < vpd_len; i++)
+>  			len += sprintf(out + len,
+>  				       "%02x", vpd[i]);
+> -	} else if (vpd_type == 0x8 && vpd_len < 4) {
+> -		condlog(1, "%s: VPD length %zu too small for designator type 8",
+> -			__func__, vpd_len);
+> -		return -EINVAL;
+>  	} else if (vpd_type == 0x8) {
+>  		if (!memcmp("eui.", vpd, 4))
+>  			out[0] =  '2';
+> @@ -1316,11 +1355,12 @@ parse_vpd_c0_hp3par(const unsigned char *in, size_t in_len,
+>  static int
+>  get_vpd_sysfs (struct udev_device *parent, int pg, char * str, int maxlen)
+>  {
+> -	int len, buff_len;
+> -	unsigned char buff[4096];
+> +	int len;
+> +	size_t buff_len;
+> +	unsigned char buff[VPD_BUFLEN];
+>  
+> -	memset(buff, 0x0, 4096);
+> -	if (!parent || sysfs_get_vpd(parent, pg, buff, 4096) <= 0) {
+> +	memset(buff, 0x0, VPD_BUFLEN);
+> +	if (!parent || sysfs_get_vpd(parent, pg, buff, VPD_BUFLEN) <= 0) {
+>  		condlog(3, "failed to read sysfs vpd pg%02x", pg);
+>  		return -EINVAL;
+>  	}
+> @@ -1331,8 +1371,10 @@ get_vpd_sysfs (struct udev_device *parent, int pg, char * str, int maxlen)
+>  		return -ENODATA;
+>  	}
+>  	buff_len = get_unaligned_be16(&buff[2]) + 4;
+> -	if (buff_len > 4096)
+> +	if (buff_len > VPD_BUFLEN) {
+>  		condlog(3, "vpd pg%02x page truncated", pg);
+> +		buff_len = VPD_BUFLEN;
+> +	}
+>  
+>  	if (pg == 0x80)
+>  		len = parse_vpd_pg80(buff, str, maxlen);
+> @@ -1376,7 +1418,7 @@ bool
+>  is_vpd_page_supported(int fd, int pg)
+>  {
+>  	int i, len;
+> -	unsigned char buff[4096];
+> +	unsigned char buff[VPD_BUFLEN];
+>  
+>  	len = fetch_vpd_page(fd, 0x00, buff, sizeof(buff));
+>  	if (len < 0)
+> @@ -1392,7 +1434,7 @@ int
+>  get_vpd_sgio (int fd, int pg, int vend_id, char * str, int maxlen)
+>  {
+>  	int len, buff_len;
+> -	unsigned char buff[4096];
+> +	unsigned char buff[VPD_BUFLEN];
+>  
+>  	buff_len = fetch_vpd_page(fd, pg, buff, sizeof(buff));
+>  	if (buff_len < 0)
+> -- 
+> 2.33.1
 
 --
 dm-devel mailing list
