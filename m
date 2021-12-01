@@ -4,66 +4,66 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 59794C433F5
-	for <dm-devel@archiver.kernel.org>; Wed,  1 Dec 2021 18:37:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3E275C433FE
+	for <dm-devel@archiver.kernel.org>; Wed,  1 Dec 2021 18:37:58 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1638383828;
+	s=mimecast20190719; t=1638383877;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=gF4m5YqNBESsLcazIpHMx+QKMhau6DDcLcDR+LyvQIc=;
-	b=QkV1EM0HA6YSTqJClQbn1THYCDzpYMWZEe85vLvEwziQPRPf3nstmYCI3Se0a3uKFPdTcO
-	jgHIblJHZXHATvgd8H3L4OaDJ7CkDQ3tTFncpsVJpK6ImzzrMPN7spJc6/pGE/0Ei0aE4/
-	zSkE86evO0VJLpWkQ5hCIHFU3TfGjhE=
+	bh=6tw3IpKWC/gWG7QVipgN4iVelxYZH4M/2G6Y+SxTh+M=;
+	b=gF92zeYh0q+004qBIttXNWRSg3wVpbbyzXwmeVprrSe5Ojx9oImva690KvOHiNDo7Jsjfd
+	XlS+Jd8yV0KW6ruYG5pnDKnElBmSpC7cUX4bAJvbDn/wDMK73X5pxlLgbYQ0ukVUq7WN6y
+	mJ3aZRX3zFVuWseSvqh21udxSBOApSs=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-514-xTSVeme6OBmkj8gH36MZeg-1; Wed, 01 Dec 2021 13:37:06 -0500
-X-MC-Unique: xTSVeme6OBmkj8gH36MZeg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-34-3vkysrImOwe2gEDzT_acKw-1; Wed, 01 Dec 2021 13:37:53 -0500
+X-MC-Unique: 3vkysrImOwe2gEDzT_acKw-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 910D364083;
-	Wed,  1 Dec 2021 18:37:02 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3ED905F4E1;
-	Wed,  1 Dec 2021 18:37:02 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1B6A21018724;
+	Wed,  1 Dec 2021 18:37:48 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F3FBEADDC;
+	Wed,  1 Dec 2021 18:37:47 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 986C34BB7C;
-	Wed,  1 Dec 2021 18:37:01 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BFBF71809C89;
+	Wed,  1 Dec 2021 18:37:47 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com
 	[10.5.11.13])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1B1Ib0H2026612 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 1 Dec 2021 13:37:00 -0500
+	id 1B1Ibk5v026661 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 1 Dec 2021 13:37:46 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8B9EE6060F; Wed,  1 Dec 2021 18:37:00 +0000 (UTC)
+	id 60A9013AB3; Wed,  1 Dec 2021 18:37:46 +0000 (UTC)
 Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7B6B860843;
-	Wed,  1 Dec 2021 18:36:56 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9CAD0694C1;
+	Wed,  1 Dec 2021 18:37:41 +0000 (UTC)
 Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1B1IasF0006127; 
-	Wed, 1 Dec 2021 12:36:54 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1B1Ibe5v006133; 
+	Wed, 1 Dec 2021 12:37:40 -0600
 Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1B1IasAD006126;
-	Wed, 1 Dec 2021 12:36:54 -0600
-Date: Wed, 1 Dec 2021 12:36:53 -0600
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1B1IbdeI006132;
+	Wed, 1 Dec 2021 12:37:39 -0600
+Date: Wed, 1 Dec 2021 12:37:39 -0600
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: mwilck@suse.com
-Message-ID: <20211201183653.GQ19591@octiron.msp.redhat.com>
+Message-ID: <20211201183739.GR19591@octiron.msp.redhat.com>
 References: <20211201123650.16240-1-mwilck@suse.com>
-	<20211201123650.16240-8-mwilck@suse.com>
+	<20211201123650.16240-7-mwilck@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <20211201123650.16240-8-mwilck@suse.com>
+In-Reply-To: <20211201123650.16240-7-mwilck@suse.com>
 User-Agent: Mutt/1.5.23 (2014-03-12)
 X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com
-Subject: Re: [dm-devel] [PATCH v2 07/21] libmultipath: use strbuf in
-	parse_vpd_pg83()
+Subject: Re: [dm-devel] [PATCH v2 06/21] multipath-tools: add tests for
+ broken VPD page 83
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -77,7 +77,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -86,173 +86,251 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Dec 01, 2021 at 01:36:36PM +0100, mwilck@suse.com wrote:
+On Wed, Dec 01, 2021 at 01:36:35PM +0100, mwilck@suse.com wrote:
 > From: Martin Wilck <mwilck@suse.com>
 > 
-> By using the strbuf API, the code gets more readable, as we need
-> less output size checks.
-> 
-> While at it, avoid a possible crash by passing a NULL pointer
-> to memchr().
+> Add some tests for the consistency checks in the VPD.
 > 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 > ---
->  libmultipath/discovery.c | 111 +++++++++++++++++----------------------
->  1 file changed, 48 insertions(+), 63 deletions(-)
+>  tests/vpd.c | 144 +++++++++++++++++++++++++++++++++++++++++++++++++++-
+>  1 file changed, 143 insertions(+), 1 deletion(-)
 > 
-> diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-> index 977aed9..7d939ae 100644
-> --- a/libmultipath/discovery.c
-> +++ b/libmultipath/discovery.c
-> @@ -1121,6 +1121,7 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
->  	size_t len, vpd_len, i;
->  	int vpd_type, prio = -1;
->  	int err = -ENODATA;
-> +	STRBUF_ON_STACK(buf);
+> diff --git a/tests/vpd.c b/tests/vpd.c
+> index 8e730d3..a7d2092 100644
+> --- a/tests/vpd.c
+> +++ b/tests/vpd.c
+> @@ -9,6 +9,7 @@
+>  #include <stdint.h>
+>  #include <stdlib.h>
+>  #include <unistd.h>
+> +#include <errno.h>
+>  #include <stdarg.h>
+>  #include <stddef.h>
+>  #include <setjmp.h>
+> @@ -291,7 +292,9 @@ static int create_vpd83(unsigned char *buf, size_t bufsiz, const char *id,
+>  	unsigned char *desc;
+>  	int n = 0;
 >  
->  	/* Need space at least for one digit */
->  	if (out_len <= 1)
-> @@ -1239,92 +1240,76 @@ parse_vpd_pg83(const unsigned char *in, size_t in_len,
->  	if (vpd_type == 0x2 || vpd_type == 0x3) {
->  		size_t i;
+> -	memset(buf, 0, bufsiz);
+> +	/* Fill with large number, which will cause length overflow */
+> +	memset(buf, 0xed, bufsiz);
+> +	buf[0] = 0;
+>  	buf[1] = 0x83;
 >  
-> -		len = sprintf(out, "%d", vpd_type);
-> -		if (2 * vpd_len >= out_len - len) {
-> -			condlog(1, "%s: WWID overflow, type %d, %zu/%zu bytes required",
-> -				__func__, vpd_type,
-> -				2 * vpd_len + len + 1, out_len);
-> -			vpd_len = (out_len - len - 1) / 2;
-> -		}
-> +		if ((err = print_strbuf(&buf, "%d", vpd_type)) < 0)
-> +			return err;
->  		for (i = 0; i < vpd_len; i++)
-> -			len += sprintf(out + len,
-> -				       "%02x", vpd[i]);
-> +			if ((err = print_strbuf(&buf, "%02x", vpd[i])) < 0)
-> +				return err;
->  	} else if (vpd_type == 0x8) {
-> +		char type;
-> +
->  		if (!memcmp("eui.", vpd, 4))
-> -			out[0] =  '2';
-> +			type =  '2';
->  		else if (!memcmp("naa.", vpd, 4))
-> -			out[0] = '3';
-> +			type = '3';
->  		else
-> -			out[0] = '8';
-> +			type = '8';
-> +		if ((err = fill_strbuf(&buf, type, 1)) < 0)
-> +			return err;
->  
->  		vpd += 4;
->  		len = vpd_len - 4;
-> -		while (len > 2 && vpd[len - 2] == '\0')
-> -			--len;
-> -		if (len > out_len - 1) {
-> -			condlog(1, "%s: WWID overflow, type 8/%c, %zu/%zu bytes required",
-> -				__func__, out[0], len + 1, out_len);
-> -			len = out_len - 1;
-> +		if ((err = __append_strbuf_str(&buf, (const char *)vpd, len)) < 0)
-> +			return err;
-> +
-> +		/* The input is 0-padded, make sure the length is correct */
-> +		truncate_strbuf(&buf, strlen(get_strbuf_str(&buf)));
-> +		len = get_strbuf_len(&buf);
-> +		if (type != '8') {
-> +			char *buffer = __get_strbuf_buf(&buf);
-> +
-> +			for (i = 0; i < len; ++i)
-> +				buffer[i] = tolower(buffer[i]);
->  		}
->  
-> -		if (out[0] == '8')
-> -			for (i = 0; i < len; ++i)
-> -				out[1 + i] = vpd[i];
-> -		else
-> -			for (i = 0; i < len; ++i)
-> -				out[1 + i] = tolower(vpd[i]);
-> -
-> -		/* designator should be 0-terminated, but let's make sure */
-> -		out[len] = '\0';
-> -
->  	} else if (vpd_type == 0x1) {
->  		const unsigned char *p;
->  		size_t p_len;
->  
-> -		out[0] = '1';
-> -		len = 1;
-> -		while ((p = memchr(vpd, ' ', vpd_len))) {
-> +		if ((err = fill_strbuf(&buf, '1', 1)) < 0)
-> +			return err;
-> +		while (vpd && (p = memchr(vpd, ' ', vpd_len))) {
->  			p_len = p - vpd;
-> -			if (len + p_len > out_len - 1) {
-> -				condlog(1, "%s: WWID overflow, type 1, %zu/%zu bytes required",
-> -					__func__, len + p_len, out_len);
-> -				p_len = out_len - len - 1;
-> -			}
-> -			memcpy(out + len, vpd, p_len);
-> -			len += p_len;
-> -			if (len >= out_len - 1) {
-> -				out[len] = '\0';
-> -				break;
-> -			}
-> -			out[len] = '_';
-> -			len ++;
-> -			if (len >= out_len - 1) {
-> -				out[len] = '\0';
-> -				break;
-> -			}
-> +			if ((err = __append_strbuf_str(&buf, (const char *)vpd,
-> +						       p_len)) < 0)
-> +				return err;
->  			vpd = p;
->  			vpd_len -= p_len;
-> -			while (vpd && *vpd == ' ') {
-> +			while (vpd && vpd_len > 0 && *vpd == ' ') {
->  				vpd++;
->  				vpd_len --;
->  			}
-> +			if (vpd_len > 0 && (err = fill_strbuf(&buf, '_', 1)) < 0)
-> +				return err;
->  		}
-> -		p_len = vpd_len;
-> -		if (p_len > 0 && len < out_len - 1) {
-> -			if (len + p_len > out_len - 1) {
-> -				condlog(1, "%s: WWID overflow, type 1, %zu/%zu bytes required",
-> -					__func__, len + p_len + 1, out_len);
-> -				p_len = out_len - len - 1;
-> -			}
-> -			memcpy(out + len, vpd, p_len);
-> -			len += p_len;
-> -			out[len] = '\0';
-> -		}
-> -		if (len > 1 && out[len - 1] == '_') {
-> -			out[len - 1] = '\0';
-> -			len--;
-> +		if (vpd_len > 0) {
-> +			if ((err = __append_strbuf_str(&buf, (const char *)vpd,
-> +						       vpd_len)) < 0)
-> +				return err;
->  		}
->  	}
-> +
-> +	len = get_strbuf_len(&buf);
-> +	if (len >= out_len) {
-> +		condlog(1, "%s: WWID overflow, type %d, %zu/%zu bytes required",
-> +			__func__, vpd_type, len, out_len);
-> +		if (vpd_type == 2 || vpd_type == 3)
-> +			/* designator must have an even number of characters */
-> +			len = 2 * (out_len / 2) - 1;
-> +		else
-> +			len = out_len - 1;
-> +	}
-> +	strlcpy(out, get_strbuf_str(&buf), len + 1);
->  	return len;
+>  	desc = buf + 4;
+> @@ -500,6 +503,27 @@ static void test_vpd_naa_ ## naa ## _ ## wlen(void **state)             \
+>  			    test_id, vt->wwid);				\
 >  }
 >  
+> +/**
+> + * test_cpd_naa_NAA_badlen_BAD() - test detection of bad length fields
+> + * @NAA:	Network Name Authority (2, 3, 5, 16)
+> + * @BAD:        Value for designator length field
+> + * @ERR:        Expected error code
+> + */
+> +#define make_test_vpd_naa_badlen(NAA, BAD, ERR)			\
+> +static void test_vpd_naa_##NAA##_badlen_##BAD(void **state)	\
+> +{								\
+> +	struct vpdtest *vt = *state;					\
+> +	int n, ret;							\
+> +									\
+> +	n = create_vpd83(vt->vpdbuf, sizeof(vt->vpdbuf), test_id, 3, NAA, 0); \
+> +									\
+> +	vt->vpdbuf[7] = BAD;						\
+> +	will_return(__wrap_ioctl, n);					\
+> +	will_return(__wrap_ioctl, vt->vpdbuf);				\
+> +	ret = get_vpd_sgio(10, 0x83, 0, vt->wwid, 40);			\
+> +	assert_int_equal(-ret, -ERR);					\
+> +}
+> +
+>  /**
+>   * test_vpd_eui_LEN_WLEN() - test code for VPD 83, EUI64
+>   * @LEN:	EUI64 length (8, 12, or 16)
+> @@ -532,6 +556,31 @@ static void test_vpd_eui_ ## len ## _ ## wlen ## _ ## sml(void **state)	\
+>  			    test_id, vt->wwid);				\
+>  }
+>  
+> +/**
+> + * test_cpd_eui_LEN_badlen_BAD() - test detection of bad length fields
+> + * @NAA:	correct length(8, 12, 16)
+> + * @BAD:        value for designator length field
+> + * @ERR:        expected error code
+> + */
+> +#define make_test_vpd_eui_badlen(LEN, BAD, ERR)			\
+> +static void test_vpd_eui_badlen_##LEN##_##BAD(void **state)	\
+> +{								\
+> +	struct vpdtest *vt = *state;					\
+> +	int n, ret;							\
+> +									\
+> +	n = create_vpd83(vt->vpdbuf, sizeof(vt->vpdbuf), test_id, 2, 0, LEN); \
+> +									\
+> +	vt->vpdbuf[7] = BAD;						\
+> +	will_return(__wrap_ioctl, n);					\
+> +	will_return(__wrap_ioctl, vt->vpdbuf);				\
+> +	ret = get_vpd_sgio(10, 0x83, 0, vt->wwid, 40);			\
+> +	assert_int_equal(ret, ERR);					\
+> +	if (ERR >= 0)							\
+> +		assert_correct_wwid("test_vpd_eui_badlen_"#LEN"_"#BAD,	\
+> +			    2 * BAD + 1, ret, '2', 0, true,		\
+> +			    test_id, vt->wwid);				\
+> +}
+> +
+>  /**
+>   * test_vpd80_SIZE_LEN_WLEN() - test code for VPD 80
+>   * @SIZE, @LEN:	see create_vpd80()
+> @@ -621,6 +670,17 @@ make_test_vpd_eui(8, 17, 0);
+>  make_test_vpd_eui(8, 16, 0);
+>  make_test_vpd_eui(8, 10, 0);
+>  
+> +make_test_vpd_eui_badlen(8, 8, 17);
+> +/* Invalid entry, length overflow */
+> +make_test_vpd_eui_badlen(8, 12, -EOVERFLOW);
+> +make_test_vpd_eui_badlen(8, 9, -EOVERFLOW);
+> +/* invalid entry, no length overflow, but no full next entry */
+> +make_test_vpd_eui_badlen(8, 7, -EINVAL);
+> +make_test_vpd_eui_badlen(8, 5, -EINVAL);
+> +/* invalid entry, length of next one readable but too long */
+> +make_test_vpd_eui_badlen(8, 4, -EOVERFLOW);
+> +make_test_vpd_eui_badlen(8, 0, -EOVERFLOW);
+> +
+>  /* 96 bit, WWID size: 26 */
+>  make_test_vpd_eui(12, 32, 0);
+>  make_test_vpd_eui(12, 26, 0);
+> @@ -628,12 +688,38 @@ make_test_vpd_eui(12, 25, 0);
+>  make_test_vpd_eui(12, 20, 0);
+>  make_test_vpd_eui(12, 10, 0);
+>  
+> +make_test_vpd_eui_badlen(12, 12, 25);
+> +make_test_vpd_eui_badlen(12, 16, -EOVERFLOW);
+> +make_test_vpd_eui_badlen(12, 13, -EOVERFLOW);
+> +/* invalid entry, no length overflow, but no full next entry */
+> +make_test_vpd_eui_badlen(12, 11, -EINVAL);
+> +make_test_vpd_eui_badlen(12, 9, -EINVAL);
+> +/* non-fatal - valid 8-byte descriptor */
+> +make_test_vpd_eui_badlen(12, 8, 17);
+> +/* invalid entry, length of next one readable but too long */
+> +make_test_vpd_eui_badlen(12, 7, -EOVERFLOW);
+> +make_test_vpd_eui_badlen(12, 0, -EOVERFLOW);
+> +
+>  /* 128 bit, WWID size: 34 */
+>  make_test_vpd_eui(16, 40, 0);
+>  make_test_vpd_eui(16, 34, 0);
+>  make_test_vpd_eui(16, 33, 0);
+>  make_test_vpd_eui(16, 20, 0);
+>  
+> +make_test_vpd_eui_badlen(16, 16, 33);
+> +make_test_vpd_eui_badlen(16, 17, -EOVERFLOW);
+> +make_test_vpd_eui_badlen(16, 15, -EINVAL);
+> +make_test_vpd_eui_badlen(16, 13, -EINVAL);
+> +/* non-fatal - valid 12-byte descriptor */
+> +make_test_vpd_eui_badlen(16, 12, 25);
+> +/* invalid entry, length of next one readable but too long */
+> +make_test_vpd_eui_badlen(16, 11, -EOVERFLOW);
+> +/* non-fatal - valid 8-byte descriptor */
+> +make_test_vpd_eui_badlen(16, 8, 17);
+> +/* invalid entry, length of next one readable but too long */
+> +make_test_vpd_eui_badlen(16, 7, -EOVERFLOW);
+> +make_test_vpd_eui_badlen(16, 0, -EOVERFLOW);
+> +
+>  /* NAA IEEE registered extended (36), WWID size: 34 */
+>  make_test_vpd_naa(6, 40);
+>  make_test_vpd_naa(6, 34);
+> @@ -641,12 +727,33 @@ make_test_vpd_naa(6, 33);
+>  make_test_vpd_naa(6, 32);
+>  make_test_vpd_naa(6, 20);
+>  
+> +/* NAA IEEE registered extended with bad designator length */
+> +make_test_vpd_naa_badlen(6, 16, 33);
+> +/* offset overflow */
+> +make_test_vpd_naa_badlen(6, 17, -EOVERFLOW);
+> +/* invalid entry, no length overflow, but no full next entry */
+> +make_test_vpd_naa_badlen(6, 15, -EINVAL);
+> +/* invalid entry, length of next one readable but too long */
+> +make_test_vpd_naa_badlen(6, 8, -EOVERFLOW);
+> +make_test_vpd_naa_badlen(6, 0, -EOVERFLOW);
+> +
+>  /* NAA IEEE registered (35), WWID size: 18 */
+>  make_test_vpd_naa(5, 20);
+>  make_test_vpd_naa(5, 18);
+>  make_test_vpd_naa(5, 17);
+>  make_test_vpd_naa(5, 16);
+>  
+> +/* NAA IEEE registered with bad designator length */
+> +make_test_vpd_naa_badlen(5, 8, 17);
+> +/* offset overflow */
+> +make_test_vpd_naa_badlen(5, 16, -EOVERFLOW);
+> +make_test_vpd_naa_badlen(5, 9, -EOVERFLOW);
+> +/* invalid entry, no length overflow, but no full next entry */
+> +make_test_vpd_naa_badlen(5, 7, -EINVAL);
+> +/* invalid entry, length of next one readable but too long */
+> +make_test_vpd_naa_badlen(5, 4, -EOVERFLOW);
+> +make_test_vpd_naa_badlen(5, 0, -EOVERFLOW);
+> +
+>  /* NAA local (33), WWID size: 18 */
+>  make_test_vpd_naa(3, 20);
+>  make_test_vpd_naa(3, 18);
+> @@ -741,24 +848,59 @@ static int test_vpd(void)
+>  		cmocka_unit_test(test_vpd_eui_8_17_0),
+>  		cmocka_unit_test(test_vpd_eui_8_16_0),
+>  		cmocka_unit_test(test_vpd_eui_8_10_0),
+> +		cmocka_unit_test(test_vpd_eui_badlen_8_8),
+> +		cmocka_unit_test(test_vpd_eui_badlen_8_12),
+> +		cmocka_unit_test(test_vpd_eui_badlen_8_9),
+> +		cmocka_unit_test(test_vpd_eui_badlen_8_7),
+> +		cmocka_unit_test(test_vpd_eui_badlen_8_5),
+> +		cmocka_unit_test(test_vpd_eui_badlen_8_4),
+> +		cmocka_unit_test(test_vpd_eui_badlen_8_0),
+>  		cmocka_unit_test(test_vpd_eui_12_32_0),
+>  		cmocka_unit_test(test_vpd_eui_12_26_0),
+>  		cmocka_unit_test(test_vpd_eui_12_25_0),
+>  		cmocka_unit_test(test_vpd_eui_12_20_0),
+>  		cmocka_unit_test(test_vpd_eui_12_10_0),
+> +		cmocka_unit_test(test_vpd_eui_badlen_12_12),
+> +		cmocka_unit_test(test_vpd_eui_badlen_12_16),
+> +		cmocka_unit_test(test_vpd_eui_badlen_12_13),
+> +		cmocka_unit_test(test_vpd_eui_badlen_12_11),
+> +		cmocka_unit_test(test_vpd_eui_badlen_12_9),
+> +		cmocka_unit_test(test_vpd_eui_badlen_12_8),
+> +		cmocka_unit_test(test_vpd_eui_badlen_12_7),
+> +		cmocka_unit_test(test_vpd_eui_badlen_12_0),
+>  		cmocka_unit_test(test_vpd_eui_16_40_0),
+>  		cmocka_unit_test(test_vpd_eui_16_34_0),
+>  		cmocka_unit_test(test_vpd_eui_16_33_0),
+>  		cmocka_unit_test(test_vpd_eui_16_20_0),
+> +		cmocka_unit_test(test_vpd_eui_badlen_16_16),
+> +		cmocka_unit_test(test_vpd_eui_badlen_16_17),
+> +		cmocka_unit_test(test_vpd_eui_badlen_16_15),
+> +		cmocka_unit_test(test_vpd_eui_badlen_16_13),
+> +		cmocka_unit_test(test_vpd_eui_badlen_16_12),
+> +		cmocka_unit_test(test_vpd_eui_badlen_16_11),
+> +		cmocka_unit_test(test_vpd_eui_badlen_16_8),
+> +		cmocka_unit_test(test_vpd_eui_badlen_16_7),
+> +		cmocka_unit_test(test_vpd_eui_badlen_16_0),
+>  		cmocka_unit_test(test_vpd_naa_6_40),
+>  		cmocka_unit_test(test_vpd_naa_6_34),
+>  		cmocka_unit_test(test_vpd_naa_6_33),
+>  		cmocka_unit_test(test_vpd_naa_6_32),
+>  		cmocka_unit_test(test_vpd_naa_6_20),
+> +		cmocka_unit_test(test_vpd_naa_6_badlen_16),
+> +		cmocka_unit_test(test_vpd_naa_6_badlen_15),
+> +		cmocka_unit_test(test_vpd_naa_6_badlen_8),
+> +		cmocka_unit_test(test_vpd_naa_6_badlen_17),
+> +		cmocka_unit_test(test_vpd_naa_6_badlen_0),
+>  		cmocka_unit_test(test_vpd_naa_5_20),
+>  		cmocka_unit_test(test_vpd_naa_5_18),
+>  		cmocka_unit_test(test_vpd_naa_5_17),
+>  		cmocka_unit_test(test_vpd_naa_5_16),
+> +		cmocka_unit_test(test_vpd_naa_5_badlen_8),
+> +		cmocka_unit_test(test_vpd_naa_5_badlen_7),
+> +		cmocka_unit_test(test_vpd_naa_5_badlen_4),
+> +		cmocka_unit_test(test_vpd_naa_5_badlen_16),
+> +		cmocka_unit_test(test_vpd_naa_5_badlen_9),
+> +		cmocka_unit_test(test_vpd_naa_5_badlen_0),
+>  		cmocka_unit_test(test_vpd_naa_3_20),
+>  		cmocka_unit_test(test_vpd_naa_3_18),
+>  		cmocka_unit_test(test_vpd_naa_3_17),
 > -- 
 > 2.33.1
 
