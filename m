@@ -4,66 +4,65 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2BFF3C433FE
-	for <dm-devel@archiver.kernel.org>; Wed,  1 Dec 2021 12:37:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D9207C433F5
+	for <dm-devel@archiver.kernel.org>; Wed,  1 Dec 2021 12:38:00 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-579-oxTzD2cNOhmHo2AKNVmr6A-1; Wed, 01 Dec 2021 07:37:51 -0500
-X-MC-Unique: oxTzD2cNOhmHo2AKNVmr6A-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-351-evazp5CENyWqYjdwVGpJBA-1; Wed, 01 Dec 2021 07:37:56 -0500
+X-MC-Unique: evazp5CENyWqYjdwVGpJBA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0D503874986;
-	Wed,  1 Dec 2021 12:37:47 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id EA46510023AA;
-	Wed,  1 Dec 2021 12:37:46 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 24D4884BA43;
+	Wed,  1 Dec 2021 12:37:52 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0AF3A5DF34;
+	Wed,  1 Dec 2021 12:37:52 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C665718077BC;
-	Wed,  1 Dec 2021 12:37:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.10])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9AF084A707;
+	Wed,  1 Dec 2021 12:37:51 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1B1CbCfF008729 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 1 Dec 2021 07:37:12 -0500
+	id 1B1CbDAU008766 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 1 Dec 2021 07:37:13 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id AC39A401E2F; Wed,  1 Dec 2021 12:37:12 +0000 (UTC)
+	id 685594047279; Wed,  1 Dec 2021 12:37:13 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A7B5F401E44
-	for <dm-devel@redhat.com>; Wed,  1 Dec 2021 12:37:12 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8F3CA8022F4
-	for <dm-devel@redhat.com>; Wed,  1 Dec 2021 12:37:12 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 649394047272
+	for <dm-devel@redhat.com>; Wed,  1 Dec 2021 12:37:13 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4C62E80A0AF
+	for <dm-devel@redhat.com>; Wed,  1 Dec 2021 12:37:13 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-406-Bkq54IWmPnWr3lh3XTJ4Cw-1; Wed, 01 Dec 2021 07:37:10 -0500
-X-MC-Unique: Bkq54IWmPnWr3lh3XTJ4Cw-1
+	us-mta-65-_YBs52mDNBCkc0xFkOWPxg-1; Wed, 01 Dec 2021 07:37:11 -0500
+X-MC-Unique: _YBs52mDNBCkc0xFkOWPxg-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id B3C621FD60;
-	Wed,  1 Dec 2021 12:37:09 +0000 (UTC)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 81D86212BA;
+	Wed,  1 Dec 2021 12:37:10 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 7FDDF13FF5;
-	Wed,  1 Dec 2021 12:37:09 +0000 (UTC)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 4EF0513FF5;
+	Wed,  1 Dec 2021 12:37:10 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id mJ9QHXVsp2GGKAAAMHmgww
-	(envelope-from <mwilck@suse.com>); Wed, 01 Dec 2021 12:37:09 +0000
+	by imap2.suse-dmz.suse.de with ESMTPSA id 0CZ6EXZsp2GGKAAAMHmgww
+	(envelope-from <mwilck@suse.com>); Wed, 01 Dec 2021 12:37:10 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Wed,  1 Dec 2021 13:36:47 +0100
-Message-Id: <20211201123650.16240-19-mwilck@suse.com>
+Date: Wed,  1 Dec 2021 13:36:50 +0100
+Message-Id: <20211201123650.16240-22-mwilck@suse.com>
 In-Reply-To: <20211201123650.16240-1-mwilck@suse.com>
 References: <20211201123650.16240-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -75,13 +74,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1B1CbCfF008729
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1B1CbDAU008766
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH v2 18/21] libmultipath (coverity): avoid sleeping
-	in dm_mapname()
+Subject: [dm-devel] [PATCH v2 21/21] libmultipath: update_pathvec_from_dm:
+	don't force DI_WWID
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -95,7 +94,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -105,60 +104,57 @@ Content-Transfer-Encoding: 7bit
 
 From: Martin Wilck <mwilck@suse.com>
 
-dm_mapname is called while holding the vecs lock, and shouldn't
-sleep. All callers handle a NULL return value.
+For existing paths, we don't need to force setting DI_WWID. It's
+pointless because it would matter only in multipathd, and all
+callers of update_multipath_table() / update_pathvec_from_dm()
+in multipathd call it with flags=0, so this code won't be executed.
+And this makes sense, because the path would either have been
+cleanly initialized via path_discover() or an uevent, or pathinfo()
+would have been called in update_pathvec_from_dm() in an earlier
+invocation.
 
-This code dates back to the initial commit creating multipathd,
-66b457b ("[multipathd]") from 2005. I am pretty certain that the comment
-"device map might not be ready when we get here from uevent trigger"
-doesn't hold any more (if it has ever been true). Perhaps the early
-code acted on "add" events for maps, which would indeed not necessarily
-have been set up. On the actually relevant "change" events, the map
-name has to be set.
+Also remove the misleading comment, and make coverity happy by
+checking the return value of pathinfo().
+
+---
+
+Note: I haven't fully made up my mind whether we should act
+on a pathinfo() failure here. For now, let the log message suffice.
+Because the pathinfo flags are usually clear and pp->udev exists,
+the only possible failure would be filtering by foreign libraries
+or by devnode, which seems highly unlikely if it hasn't happened
+beforehand.
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/devmapper.c | 17 +----------------
- 1 file changed, 1 insertion(+), 16 deletions(-)
+ libmultipath/structs_vec.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index dd293aa..1dc83df 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -1389,7 +1389,6 @@ dm_mapname(int major, int minor)
- 	const char *map;
- 	struct dm_task *dmt;
- 	int r;
--	int loop = MAX_WAIT * LOOPS_PER_SEC;
- 
- 	if (!(dmt = libmp_dm_task_create(DM_DEVICE_STATUS)))
- 		return NULL;
-@@ -1399,23 +1398,9 @@ dm_mapname(int major, int minor)
- 		goto bad;
- 
- 	dm_task_no_open_count(dmt);
--
--	/*
--	 * device map might not be ready when we get here from
--	 * daemon uev_trigger -> uev_add_map
--	 */
--	while (--loop) {
--		r = libmp_dm_task_run(dmt);
--
--		if (r)
--			break;
--
--		usleep(1000 * 1000 / LOOPS_PER_SEC);
--	}
--
-+	r = libmp_dm_task_run(dmt);
- 	if (!r) {
- 		dm_log_error(2, DM_DEVICE_STATUS, dmt);
--		condlog(0, "%i:%i: timeout fetching map name", major, minor);
- 		goto bad;
- 	}
- 
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index df5709a..bfec840 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -149,16 +149,15 @@ bool update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
+ 			 * uninitialized struct path to pgp->paths, with only
+ 			 * pp->dev_t filled in. Thus if pp->udev is set here,
+ 			 * we know that the path is in pathvec already.
+-			 * However, it's possible that the path in pathvec is
+-			 * different from the one the kernel still had in its
+-			 * map.
+ 			 */
+ 			if (pp->udev) {
+ 				if (pathinfo_flags & ~DI_NOIO) {
+ 					conf = get_multipath_config();
+ 					pthread_cleanup_push(put_multipath_config,
+ 							     conf);
+-					pathinfo(pp, conf, pathinfo_flags|DI_WWID);
++					if (pathinfo(pp, conf, pathinfo_flags) != PATHINFO_OK)
++						condlog(2, "%s: pathinfo failed for existing path %s (flags=0x%x)",
++							__func__, pp->dev, pathinfo_flags);
+ 					pthread_cleanup_pop(1);
+ 				}
+ 			} else {
 -- 
 2.33.1
 
