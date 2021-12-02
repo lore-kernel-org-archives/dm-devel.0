@@ -1,82 +1,74 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 403B5C433EF
-	for <dm-devel@archiver.kernel.org>; Thu,  2 Dec 2021 12:42:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E9BB7C433F5
+	for <dm-devel@archiver.kernel.org>; Thu,  2 Dec 2021 14:30:39 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-551-Tcoi4KxwNcaMs9ZgYIdWow-1; Thu, 02 Dec 2021 07:41:55 -0500
-X-MC-Unique: Tcoi4KxwNcaMs9ZgYIdWow-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-596-HQdPgN2vMoSI4IhYi0WC-Q-1; Thu, 02 Dec 2021 09:30:37 -0500
+X-MC-Unique: HQdPgN2vMoSI4IhYi0WC-Q-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 878E8839A45;
-	Thu,  2 Dec 2021 12:41:50 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 743F65F4E9;
-	Thu,  2 Dec 2021 12:41:49 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 90B0C1006AA0;
+	Thu,  2 Dec 2021 14:30:31 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 88E6B5FC22;
+	Thu,  2 Dec 2021 14:30:29 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 774344BB7C;
-	Thu,  2 Dec 2021 12:41:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.8])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 881611806D2B;
+	Thu,  2 Dec 2021 14:30:23 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1B2Cfgo5015467 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 2 Dec 2021 07:41:42 -0500
+	id 1B2EULMZ028722 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 2 Dec 2021 09:30:21 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 00A18C23DB5; Thu,  2 Dec 2021 12:41:42 +0000 (UTC)
+	id 673B540CFD0C; Thu,  2 Dec 2021 14:30:21 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id F05F8C23DB4
-	for <dm-devel@redhat.com>; Thu,  2 Dec 2021 12:41:41 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 61B8D40CFD11
+	for <dm-devel@redhat.com>; Thu,  2 Dec 2021 14:30:21 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D697E80A0B0
-	for <dm-devel@redhat.com>; Thu,  2 Dec 2021 12:41:41 +0000 (UTC)
-Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com
-	[209.85.128.45]) by relay.mimecast.com with ESMTP with STARTTLS
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 469C8858EFE
+	for <dm-devel@redhat.com>; Thu,  2 Dec 2021 14:30:21 +0000 (UTC)
+Received: from szxga02-in.huawei.com (szxga02-in.huawei.com
+	[45.249.212.188]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-326-YFeumWE3MYqghjoCWild1Q-1; Thu, 02 Dec 2021 07:41:38 -0500
-X-MC-Unique: YFeumWE3MYqghjoCWild1Q-1
-Received: by mail-wm1-f45.google.com with SMTP id 133so22930650wme.0;
-	Thu, 02 Dec 2021 04:41:38 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:message-id:date:mime-version:subject
-	:content-language:to:cc:references:from:in-reply-to
-	:content-transfer-encoding;
-	bh=Ml8o+wwwyFHlMctPucoE6N5UNCKVNxWwyUAFeljIl6U=;
-	b=HHQlZrRtdsBk6JP4leM5zmEmsMqUhcGAc9m4wM9QRik+ONq5y4T8rwgZ94hV4EsBDz
-	RxUFMW8QlUJ7Omelib57/hmy2Rj7YpoIHYlHZNHAjX1dW46oJbxvNwUHJjQbWL62nYNB
-	IVkRcp5LzNfxvvmBHefENu6B4kTQJioD0nooHyvxb+NAQJAsiv24/VGPmijlCM76sLlK
-	ZiquV0ODFXvAjfJA2JFCI7FKL6pe8dRDObXZ5HrYlE7GMcxC2j2NngBuErmQaxSz6tFN
-	KbYka1wyIBlSEXV5G/tig+Ykn8LyjF5uJ91sVovBUYsXnDCv14/mlYynuTGFZdm2hcLq
-	EEUg==
-X-Gm-Message-State: AOAM532jbJtEsp0ZNauinJRPoyh3CFk8cpclNiD+ILPcsajUbF8QLElG
-	U+08JJbdwaQT4UixO0T/5Q==
-X-Google-Smtp-Source: ABdhPJzIw0g/OQjQHgpYCL6/RTenPypB1vmehXMHXUnQ/DLSKkCnqYvo1sNr9vR5L3zVCy7pEUgbkw==
-X-Received: by 2002:a05:600c:1548:: with SMTP id
-	f8mr6093545wmg.67.1638448897108; 
-	Thu, 02 Dec 2021 04:41:37 -0800 (PST)
-Received: from localhost (50.red-83-33-156.dynamicip.rima-tde.net.
-	[83.33.156.50])
-	by smtp.gmail.com with ESMTPSA id o4sm3037716wry.80.2021.12.02.04.41.35
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Thu, 02 Dec 2021 04:41:36 -0800 (PST)
-Message-ID: <7514be21-8209-f3ab-2d83-4f8639e53458@gmail.com>
-Date: Thu, 2 Dec 2021 13:41:34 +0100
+	us-mta-353-Vx6IVqZOPoWN-W8IJ3VoAQ-1; Thu, 02 Dec 2021 09:30:16 -0500
+X-MC-Unique: Vx6IVqZOPoWN-W8IJ3VoAQ-1
+Received: from kwepemi100007.china.huawei.com (unknown [172.30.72.53])
+	by szxga02-in.huawei.com (SkyGuard) with ESMTP id 4J4ddG3rDYz91Zv;
+	Thu,  2 Dec 2021 22:29:38 +0800 (CST)
+Received: from kwepemm600010.china.huawei.com (7.193.23.86) by
+	kwepemi100007.china.huawei.com (7.221.188.115) with Microsoft SMTP
+	Server
+	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+	15.1.2308.20; Thu, 2 Dec 2021 22:30:12 +0800
+Received: from [10.174.179.176] (10.174.179.176) by
+	kwepemm600010.china.huawei.com (7.193.23.86) with Microsoft SMTP Server
+	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+	15.1.2308.20; Thu, 2 Dec 2021 22:30:11 +0800
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski
+	<bmarzins@redhat.com>, Martin Wilck <mwilck@suse.com>,
+	dm-devel mailing list <dm-devel@redhat.com>
+From: lixiaokeng <lixiaokeng@huawei.com>
+Message-ID: <c2834c6e-3030-8df4-efd9-fbc50f9b558c@huawei.com>
+Date: Thu, 2 Dec 2021 22:30:10 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101
+	Thunderbird/68.10.0
 MIME-Version: 1.0
-To: Martin Wilck <mwilck@suse.com>, ng-eseries-upstream-maintainers@netapp.com
-References: <20211201223518.3775-1-xose.vazquez@gmail.com>
-	<20211201223518.3775-2-xose.vazquez@gmail.com>
-	<dd47410226f48d3fc3851a10a12cb89854e6ac8c.camel@suse.com>
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-In-Reply-To: <dd47410226f48d3fc3851a10a12cb89854e6ac8c.camel@suse.com>
+X-Originating-IP: [10.174.179.176]
+X-ClientProxiedBy: dggems704-chm.china.huawei.com (10.3.19.181) To
+	kwepemm600010.china.huawei.com (7.193.23.86)
+X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -85,13 +77,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-loop: dm-devel@redhat.com
-Cc: DM-DEVEL ML <dm-devel@redhat.com>, "Schremmer,
-	Steven" <Steve.Schremmer@netapp.com>,
-	NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
-Subject: Re: [dm-devel] [PATCH resend] multipath-tools: delete duplicate
- RDAC maintainer entries
+Cc: linfeilong <linfeilong@huawei.com>,
+	"liuzhiqiang \(I\)" <liuzhiqiang26@huawei.com>
+Subject: [dm-devel] [PATCH] libmultipath: sync before reboot
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,26 +95,47 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-GB
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gMTIvMi8yMSAwODo1NiwgTWFydGluIFdpbGNrIHdyb3RlOgoKPiAKPiBJJ2QgbGlrZSB0byBo
-YXZlIHRoaXMgYWNrZWQgYnkgTmV0YXBwIGJlZm9yZSBtZXJnaW5nIGl0LiBBY3R1YWxseSwgSSdk
-Cj4gcHJlZmVyIHRvIGhhdmUgaXQgYWNrZWQgYnkgRnVqaXRzdSBhbmQgTGVub3ZvLCB0b28sIGJ1
-dCB3ZSBkb24ndCBoYXZlCj4gY29udGFjdCBhZGRyZXNzZXMgZm9yIHRoZW0sIHNvIGJlIGl0Lgo+
-IAo+IE15IOKCrDAuMDI6IEknZCByYXRoZXIgbm90IGhhdmUgdGhpcywgYmVjYXVzZSBpdCdzIG5v
-dCBvYnZpb3VzIHRvCj4gZXZlcnlib2R5IHRoYXQgdGhlc2UgYXJyYXlzIGFyZSBhY3R1YWxseSBO
-ZXRhcHAgc3lzdGVtcyBhbmQgYXJlIHRodXMKPiBtYWludGFpbmVkIG5vdCBieSB0aGVpciB2ZW5k
-b3JzIGJ1dCBOZXRhcHAuCgpUaGVyZSBhcmUgMjUgUkRBQyBhcnJheXMgaW4gaHd0YWJsZSwgb25s
-eSB0d28gb2YgdGhlbSh0aG9zZSBpbmNsdWRlZCBpbgp0aGUgcGF0Y2gpIGFuZCB0aGUgTmV0QXBw
-IG9uZSBoYXZlIGEgIk1haW50YWluZXIiIGVudHJ5LgpBbmQgdGhleSBjYW4gZWFzaWx5IGlkZW50
-aWZpZWQsIC5jaGVja2VyX25hbWUgYW5kIC5wcmlvX25hbWUgYXJlIFJEQUMuCgotLQpkbS1kZXZl
-bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0
-LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
+If reboot within 5s of registering prkey, there will some zero
+be added to /etc/multipath/prkeys. The reason is that cache is
+not flushed to the disk.
+
+Here fsync(fd) to fix it.
+
+Signed-off-by: Lixiaokeng <lixiaokeng@huawei.com>
+Signed-off-by: Jianbing Jiao <jiangjianbiang@huawei.com>
+---
+ libmultipath/util.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/libmultipath/util.c b/libmultipath/util.c
+index ea858409..f7e9c783 100644
+--- a/libmultipath/util.c
++++ b/libmultipath/util.c
+@@ -368,6 +368,11 @@ int safe_write(int fd, const void *buf, size_t count)
+ 		count -= r;
+ 		buf = (const char *)buf + r;
+ 	}
++
++	if (fsync(fd) < 0) {
++		condlog(0, "failed to fsync fd :%d", fd);
++		return -errno;
++	}
+ 	return 0;
+ }
+
+-- 
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
