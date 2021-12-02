@@ -4,67 +4,79 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id EB571C433F5
-	for <dm-devel@archiver.kernel.org>; Thu,  2 Dec 2021 10:53:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 403B5C433EF
+	for <dm-devel@archiver.kernel.org>; Thu,  2 Dec 2021 12:42:00 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-389-j4pTrfwfPD2h_FWANfM6pA-1; Thu, 02 Dec 2021 05:53:36 -0500
-X-MC-Unique: j4pTrfwfPD2h_FWANfM6pA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-551-Tcoi4KxwNcaMs9ZgYIdWow-1; Thu, 02 Dec 2021 07:41:55 -0500
+X-MC-Unique: Tcoi4KxwNcaMs9ZgYIdWow-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E1215192FDA0;
-	Thu,  2 Dec 2021 10:53:30 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 878E8839A45;
+	Thu,  2 Dec 2021 12:41:50 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 972FC60843;
-	Thu,  2 Dec 2021 10:53:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 743F65F4E9;
+	Thu,  2 Dec 2021 12:41:49 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 170FF4BB7C;
-	Thu,  2 Dec 2021 10:53:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.1])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 774344BB7C;
+	Thu,  2 Dec 2021 12:41:46 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.8])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1B2AmVSg006579 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 2 Dec 2021 05:48:31 -0500
+	id 1B2Cfgo5015467 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 2 Dec 2021 07:41:42 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 3A5A840CFD10; Thu,  2 Dec 2021 10:48:31 +0000 (UTC)
+	id 00A18C23DB5; Thu,  2 Dec 2021 12:41:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 35BDE40CFD0C
-	for <dm-devel@redhat.com>; Thu,  2 Dec 2021 10:48:31 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F05F8C23DB4
+	for <dm-devel@redhat.com>; Thu,  2 Dec 2021 12:41:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1C34D811E7A
-	for <dm-devel@redhat.com>; Thu,  2 Dec 2021 10:48:31 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-133-ItZMDMMJMmq-Q6tGhHiLQw-1; Thu, 02 Dec 2021 05:48:27 -0500
-X-MC-Unique: ItZMDMMJMmq-Q6tGhHiLQw-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	key-exchange X25519 server-signature ECDSA (P-521) server-digest
-	SHA512) (No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 7080D212CC;
-	Thu,  2 Dec 2021 10:48:25 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	key-exchange X25519 server-signature ECDSA (P-521) server-digest
-	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 3618013329;
-	Thu,  2 Dec 2021 10:48:25 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id SDMEC3mkqGFjbQAAMHmgww
-	(envelope-from <mwilck@suse.com>); Thu, 02 Dec 2021 10:48:25 +0000
-From: mwilck@suse.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Date: Thu,  2 Dec 2021 11:48:12 +0100
-Message-Id: <20211202104812.27529-1-mwilck@suse.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D697E80A0B0
+	for <dm-devel@redhat.com>; Thu,  2 Dec 2021 12:41:41 +0000 (UTC)
+Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com
+	[209.85.128.45]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-326-YFeumWE3MYqghjoCWild1Q-1; Thu, 02 Dec 2021 07:41:38 -0500
+X-MC-Unique: YFeumWE3MYqghjoCWild1Q-1
+Received: by mail-wm1-f45.google.com with SMTP id 133so22930650wme.0;
+	Thu, 02 Dec 2021 04:41:38 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:message-id:date:mime-version:subject
+	:content-language:to:cc:references:from:in-reply-to
+	:content-transfer-encoding;
+	bh=Ml8o+wwwyFHlMctPucoE6N5UNCKVNxWwyUAFeljIl6U=;
+	b=HHQlZrRtdsBk6JP4leM5zmEmsMqUhcGAc9m4wM9QRik+ONq5y4T8rwgZ94hV4EsBDz
+	RxUFMW8QlUJ7Omelib57/hmy2Rj7YpoIHYlHZNHAjX1dW46oJbxvNwUHJjQbWL62nYNB
+	IVkRcp5LzNfxvvmBHefENu6B4kTQJioD0nooHyvxb+NAQJAsiv24/VGPmijlCM76sLlK
+	ZiquV0ODFXvAjfJA2JFCI7FKL6pe8dRDObXZ5HrYlE7GMcxC2j2NngBuErmQaxSz6tFN
+	KbYka1wyIBlSEXV5G/tig+Ykn8LyjF5uJ91sVovBUYsXnDCv14/mlYynuTGFZdm2hcLq
+	EEUg==
+X-Gm-Message-State: AOAM532jbJtEsp0ZNauinJRPoyh3CFk8cpclNiD+ILPcsajUbF8QLElG
+	U+08JJbdwaQT4UixO0T/5Q==
+X-Google-Smtp-Source: ABdhPJzIw0g/OQjQHgpYCL6/RTenPypB1vmehXMHXUnQ/DLSKkCnqYvo1sNr9vR5L3zVCy7pEUgbkw==
+X-Received: by 2002:a05:600c:1548:: with SMTP id
+	f8mr6093545wmg.67.1638448897108; 
+	Thu, 02 Dec 2021 04:41:37 -0800 (PST)
+Received: from localhost (50.red-83-33-156.dynamicip.rima-tde.net.
+	[83.33.156.50])
+	by smtp.gmail.com with ESMTPSA id o4sm3037716wry.80.2021.12.02.04.41.35
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Thu, 02 Dec 2021 04:41:36 -0800 (PST)
+Message-ID: <7514be21-8209-f3ab-2d83-4f8639e53458@gmail.com>
+Date: Thu, 2 Dec 2021 13:41:34 +0100
 MIME-Version: 1.0
+To: Martin Wilck <mwilck@suse.com>, ng-eseries-upstream-maintainers@netapp.com
+References: <20211201223518.3775-1-xose.vazquez@gmail.com>
+	<20211201223518.3775-2-xose.vazquez@gmail.com>
+	<dd47410226f48d3fc3851a10a12cb89854e6ac8c.camel@suse.com>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <dd47410226f48d3fc3851a10a12cb89854e6ac8c.camel@suse.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -73,13 +85,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1B2AmVSg006579
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH] multipathd.service: add dependency on
-	systemd-udevd-kernel.socket
+Cc: DM-DEVEL ML <dm-devel@redhat.com>, "Schremmer,
+	Steven" <Steve.Schremmer@netapp.com>,
+	NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+Subject: Re: [dm-devel] [PATCH resend] multipath-tools: delete duplicate
+ RDAC maintainer entries
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,55 +105,26 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-GB
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-From: Martin Wilck <mwilck@suse.com>
-
-Since f42d918 ("multipathd: Remove dependency on
-systemd-udev-settle.service"), multipathd has no dependencies on
-udev any more. In reality, multipathd depends quite heavily on udev.
-
-multipathd startup succeeds indeed if udevd isn't running. Connecting to the
-udev monitor netlink socket works, too, and if udevd is started later on,
-multipathd will receive events over this socket. multipathd doesn't connect to
-the udev control socket, but it does attempt to trigger uevents using
-sysfs. For these events to be processed, the udev kernel socket must be
-listening. For that, it's sufficient to depend on systemd-udevd-kernel.socket,
-which will start udevd on demand if it isn't running.
-
-Signed-off-by: Martin Wilck <mwilck@suse.com>
-
----
-Note: I'd like to get this merged into the current upstream PR.
----
- multipathd/multipathd.service | 2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/multipathd/multipathd.service b/multipathd/multipathd.service
-index 87cb534..1919b38 100644
---- a/multipathd/multipathd.service
-+++ b/multipathd/multipathd.service
-@@ -2,6 +2,8 @@
- Description=Device-Mapper Multipath Device Controller
- Before=iscsi.service iscsid.service lvm2-activation-early.service
- Before=local-fs-pre.target blk-availability.service shutdown.target
-+Wants=systemd-udevd-kernel.socket
-+After=systemd-udevd-kernel.socket
- After=multipathd.socket systemd-remount-fs.service
- DefaultDependencies=no
- Conflicts=shutdown.target
--- 
-2.34.0
-
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gMTIvMi8yMSAwODo1NiwgTWFydGluIFdpbGNrIHdyb3RlOgoKPiAKPiBJJ2QgbGlrZSB0byBo
+YXZlIHRoaXMgYWNrZWQgYnkgTmV0YXBwIGJlZm9yZSBtZXJnaW5nIGl0LiBBY3R1YWxseSwgSSdk
+Cj4gcHJlZmVyIHRvIGhhdmUgaXQgYWNrZWQgYnkgRnVqaXRzdSBhbmQgTGVub3ZvLCB0b28sIGJ1
+dCB3ZSBkb24ndCBoYXZlCj4gY29udGFjdCBhZGRyZXNzZXMgZm9yIHRoZW0sIHNvIGJlIGl0Lgo+
+IAo+IE15IOKCrDAuMDI6IEknZCByYXRoZXIgbm90IGhhdmUgdGhpcywgYmVjYXVzZSBpdCdzIG5v
+dCBvYnZpb3VzIHRvCj4gZXZlcnlib2R5IHRoYXQgdGhlc2UgYXJyYXlzIGFyZSBhY3R1YWxseSBO
+ZXRhcHAgc3lzdGVtcyBhbmQgYXJlIHRodXMKPiBtYWludGFpbmVkIG5vdCBieSB0aGVpciB2ZW5k
+b3JzIGJ1dCBOZXRhcHAuCgpUaGVyZSBhcmUgMjUgUkRBQyBhcnJheXMgaW4gaHd0YWJsZSwgb25s
+eSB0d28gb2YgdGhlbSh0aG9zZSBpbmNsdWRlZCBpbgp0aGUgcGF0Y2gpIGFuZCB0aGUgTmV0QXBw
+IG9uZSBoYXZlIGEgIk1haW50YWluZXIiIGVudHJ5LgpBbmQgdGhleSBjYW4gZWFzaWx5IGlkZW50
+aWZpZWQsIC5jaGVja2VyX25hbWUgYW5kIC5wcmlvX25hbWUgYXJlIFJEQUMuCgotLQpkbS1kZXZl
+bCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0
+LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
 
