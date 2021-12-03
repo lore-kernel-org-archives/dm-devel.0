@@ -1,135 +1,134 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [216.205.24.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 659E7C433EF
-	for <dm-devel@archiver.kernel.org>; Fri,  3 Dec 2021 08:01:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A80E9C433EF
+	for <dm-devel@archiver.kernel.org>; Fri,  3 Dec 2021 08:27:50 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-93-ozZ2727pMPqwbphyMdz1EQ-1; Fri, 03 Dec 2021 03:01:26 -0500
-X-MC-Unique: ozZ2727pMPqwbphyMdz1EQ-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-593-kmpKR3ytOlqcvlcn3pdtnQ-1; Fri, 03 Dec 2021 03:27:46 -0500
+X-MC-Unique: kmpKR3ytOlqcvlcn3pdtnQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 815B110144E0;
-	Fri,  3 Dec 2021 08:01:21 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4FA9019D9F;
-	Fri,  3 Dec 2021 08:01:21 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D175A10862AC;
+	Fri,  3 Dec 2021 08:27:41 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5A4FB10246F1;
+	Fri,  3 Dec 2021 08:27:41 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 50B094BB7C;
-	Fri,  3 Dec 2021 08:01:20 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.8])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C9F991809CB8;
+	Fri,  3 Dec 2021 08:27:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1B381IIb024614 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 3 Dec 2021 03:01:18 -0500
+	id 1B38O7NP025888 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 3 Dec 2021 03:24:08 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id A023BC202CD; Fri,  3 Dec 2021 08:01:18 +0000 (UTC)
+	id CBA021121315; Fri,  3 Dec 2021 08:24:07 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9A9D9C202C9
-	for <dm-devel@redhat.com>; Fri,  3 Dec 2021 08:01:18 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 80748811E80
-	for <dm-devel@redhat.com>; Fri,  3 Dec 2021 08:01:18 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C66271121314
+	for <dm-devel@redhat.com>; Fri,  3 Dec 2021 08:24:04 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BAA6F185A79C
+	for <dm-devel@redhat.com>; Fri,  3 Dec 2021 08:24:04 +0000 (UTC)
 Received: from de-smtp-delivery-102.mimecast.com
-	(de-smtp-delivery-102.mimecast.com [194.104.111.102]) by
+	(de-smtp-delivery-102.mimecast.com [194.104.109.102]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-27--OHbyn3YOAaI3f8rDXnWvA-1; Fri, 03 Dec 2021 03:01:17 -0500
-X-MC-Unique: -OHbyn3YOAaI3f8rDXnWvA-1
-Received: from EUR04-VI1-obe.outbound.protection.outlook.com
-	(mail-vi1eur04lp2054.outbound.protection.outlook.com [104.47.14.54]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	us-mta-48-q-oCLgOlMayKUtmubuNBCg-1; Fri, 03 Dec 2021 03:24:01 -0500
+X-MC-Unique: q-oCLgOlMayKUtmubuNBCg-1
+Received: from EUR05-VI1-obe.outbound.protection.outlook.com
+	(mail-vi1eur05lp2170.outbound.protection.outlook.com [104.47.17.170])
+	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	de-mta-8-NolFetiuPLmADUUkZg_ubg-1; Fri, 03 Dec 2021 09:01:14 +0100
-X-MC-Unique: NolFetiuPLmADUUkZg_ubg-1
+	de-mta-39-Wjbb4N1ZOReLrdVdNaJm8Q-1; Fri, 03 Dec 2021 09:23:58 +0100
+X-MC-Unique: Wjbb4N1ZOReLrdVdNaJm8Q-1
 Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
-	by DBBPR04MB6156.eurprd04.prod.outlook.com (2603:10a6:10:cd::13) with
+	by DB3PR0402MB3900.eurprd04.prod.outlook.com (2603:10a6:8:e::14) with
 	Microsoft SMTP Server (version=TLS1_2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4734.23;
-	Fri, 3 Dec 2021 08:01:13 +0000
+	Fri, 3 Dec 2021 08:23:57 +0000
 Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
 	([fe80::11e7:5ef4:4a27:62a9]) by
 	DB8PR04MB6555.eurprd04.prod.outlook.com
 	([fe80::11e7:5ef4:4a27:62a9%5]) with mapi id 15.20.4734.028;
-	Fri, 3 Dec 2021 08:01:11 +0000
+	Fri, 3 Dec 2021 08:23:57 +0000
 From: Martin Wilck <martin.wilck@suse.com>
 To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
 	"christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Thread-Topic: [PATCH 1/3] libmultipath: keep existing dm_info if you fail to
-	get a new one
-Thread-Index: AQHX5+Xqpvh6l62WUkukubzMVUKKvqwgaBEA
-Date: Fri, 3 Dec 2021 08:01:11 +0000
-Message-ID: <156c11a293ba2f59487dbeb7bdd959f49bf6de7d.camel@suse.com>
+Thread-Topic: [PATCH 2/3] multipathd: update dm_info on multipath change events
+Thread-Index: AQHX5+XogJCngVBBoE+0nABy3VZ6FKwgbm4A
+Date: Fri, 3 Dec 2021 08:23:57 +0000
+Message-ID: <b0ad54331f769e2e05e334606517c7048bb47a88.camel@suse.com>
 References: <1638495252-15739-1-git-send-email-bmarzins@redhat.com>
-	<1638495252-15739-2-git-send-email-bmarzins@redhat.com>
-In-Reply-To: <1638495252-15739-2-git-send-email-bmarzins@redhat.com>
+	<1638495252-15739-3-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1638495252-15739-3-git-send-email-bmarzins@redhat.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
 user-agent: Evolution 3.42.1
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: a5f37e5b-fd76-410c-d6bb-08d9b6331206
-x-ms-traffictypediagnostic: DBBPR04MB6156:
-x-microsoft-antispam-prvs: <DBBPR04MB61568B4B6FEA6B544442EC05FC6A9@DBBPR04MB6156.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:10000
+x-ms-office365-filtering-correlation-id: 444b9acf-3e13-4d50-dda3-08d9b6364088
+x-ms-traffictypediagnostic: DB3PR0402MB3900:
+x-microsoft-antispam-prvs: <DB3PR0402MB390094D41572467338173A56FC6A9@DB3PR0402MB3900.eurprd04.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:9508
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: lckZ0bliJuGZH0EHQ5c/TtOI+WU3jZCybcW7DxqbJaTnb7WEDHno0Cvl2Mq1FqCWY5LijDa7XRvHNBk8lHFYLAetY1K/+10/x3TavGnYeWW01bjBLq+h0PlRLOukKc1kZEGUgrPJ3EHxAEf0jijkZHGjGen8m4G8ZYsIZv5prT9dlWmjUESJVsNwfsqbaSz5lAVPq7dqQSlt7YApkBmqJsRgy5xTvyyHvnBZvmJY4WVqS4xSa6GwEprWpA9iQRT/oWIFC5e/PzmiTH+HwrnEENrYtSmXCa7V4XwyXlI55kSJVP6LyvlCR8i0V2OHp1KL2erXlThCr/pm89xIavyfF5sSLljxTrhklVCkB4LVfW9cUu7gikyIrHb/NNe4BKkUbuGsckY3kxDQr4WF7IORJn3frM6HpLBaJfNk+kIyd9g0+mmsvKB5mF1Sguob2bRd1fkEfpx9/yTdSZmquGUFMVoXD3V11vFJHRUynvneO/XQT2UJTVg2GY3dR6ueH6IeewR7vW7ENu7UsISJ8b0cxSepZVy22c4KsPc1+VOBVPlB2C/90iPFxJaUCytsa8V7cvXBQ/RU3OcPRioNFTLYlQvrrnl3QQ5UL/H43M5MG8qU+eShlqW8rNgtGgW+DTy+L2hGSXc3+7uhqaYJCJ/JQewXHgU+e6LKv/QiWCHm1yM34bO0PirwkOYGL3OvZLKL7xHDSKJmgr9U/TC5bFIZUZPHcpstBJke1xYfgS4B3eqnSVyXp6WrFfucKBTHDLg7yMFbYMtS0h7Wu3yk/r62vyua61KTo3x8mpxq8Q2ZIKo=
+x-microsoft-antispam-message-info: LxLKZMt97IRV8tSVC/Mky40vEuIuHPyIauYm8zk1WBZrKI0/XwZQ5UTiNTp3nukyR03H4Wykv4HTSpBGN/DNDYgGzPN2MSkGBAUK91zmUtImPiMO95hQOq1FsZ564UnLbhAzgRK4ZleRdAGSbUTuFuMVjbgva36/fV7CMszYQrfTxsgf0DJgBnyJZFUgqyQ3ccRsdfgNHm7Pl54gr/VfEHbPhaQnGcqf9e32KfOAqCGgqkSwPlBr+CW42odBu6ECUo8dGJlded1S4roHXNu81HcSGjcrO4cASgbLvZl5pmuOQE/l473zN8p03sniLQVDcqCkJxqt914KYk0vZPhVPW02/70PLNA3485UFzwxNsjab1RhiPJzLaVki/0gPnH36nwLyEIn87MTg4mNLv822iXXTuz7fVo6erHfv5HG5PJKCF0GJ3kL0WljuAfitTdoWFa22S71Dp95iP6hQhv6cVUOgg9OgWTypGNqUt+2ec/D2pBEyVfZ7N9LUhVUJs1e53bxKSLbTnwkSyYKeM1WYGRycHS3NhEx4Ku7MVZOSMP6ssjR7YTAQNr4BJDwxgdIREdPq2P2n3WdlUhVIFeJ/7z5Htv17wzn2NJhTuatSLrZtE4aDNzpn9zE5I38I2369Q2/tNqThTEqtpk4gaoLNT+TQRzggL95hexRuj64CdmKU2N01LYXZGYwoqwI0Jd3I/Wre8H7kxBesMuW51NxGw==
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
 	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
 	PTR:; CAT:NONE;
-	SFS:(366004)(4326008)(2906002)(5660300002)(91956017)(36756003)(44832011)(71200400001)(186003)(316002)(76116006)(86362001)(38070700005)(64756008)(6486002)(66446008)(66476007)(66946007)(66556008)(8936002)(8676002)(4744005)(110136005)(2616005)(6512007)(26005)(38100700002)(508600001)(6506007)(122000001)(83380400001)(141363001)(183983002)(141353001);
+	SFS:(366004)(38070700005)(26005)(6486002)(110136005)(71200400001)(122000001)(36756003)(8936002)(6506007)(8676002)(2906002)(38100700002)(44832011)(86362001)(6512007)(316002)(66476007)(66556008)(66446008)(66946007)(64756008)(2616005)(5660300002)(508600001)(83380400001)(15650500001)(4326008)(91956017)(76116006)(186003);
 	DIR:OUT; SFP:1101
 x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?1FaY5oUnRdt3m6EgsJtXBCFf+XarKRBcs2zAaE4RikF8BpMNtXm9pEGSb?=
-	=?iso-8859-15?Q?jvAH2nnNBJ+gsgAK+NKzE98LX5vVKTlrzgwdD9Y1IUtb407KCRvmOHK4u?=
-	=?iso-8859-15?Q?8fAtFo0kPOKjLpObc7QJ4KeIIlwgwutbniyikLuov3z8ZaMrHO3ibyElE?=
-	=?iso-8859-15?Q?B95XHwsXGxqgwokunmw/70HMC+O7ff4JKluVo1MV+KwpWadTs9r8Xn1XK?=
-	=?iso-8859-15?Q?HryV4lY3Rp0MVZgLxHtdnVO/Ns8ripIdYtRtxyTl3g7l8lmhj4hxG3lo7?=
-	=?iso-8859-15?Q?j7QwT2HKDucf4BA9hvb3vqh8pvaaNshJZcFJIdk6tC01YAkGSFdIeg2VL?=
-	=?iso-8859-15?Q?Y0oTNxdQdqYtmJuIbUcSXNj6RDFSLU3nvSnRSOlbWFaEP2cGPuj25cQr+?=
-	=?iso-8859-15?Q?UdHVzFV+pMvX4OvG1QRtfS8IKTWlujpgaO1ImL/Cx/VdmdFtT3v/Z5Eh0?=
-	=?iso-8859-15?Q?ahoTJBBf6muWh0Nhw0XqQyhJP4by+Ki4dVqnw5kbgMEfc0SDv/4otmJT1?=
-	=?iso-8859-15?Q?ZQRtS0kRxJjIZhCzgrFQWMwVXC9CyGZoNRf2lH86mK7Oz8DtIKj9qrhjS?=
-	=?iso-8859-15?Q?KdCopA5fcCt+Izv2ZEQKpMiTtGNABMjNMrfqER/tVwyTGAJrAl4aUOm/A?=
-	=?iso-8859-15?Q?/eb6s9CzJeMCbC19dGT+gY5xUjTlUYJK8Zhx4RGL1rnMPfeR7cQ+oUsMF?=
-	=?iso-8859-15?Q?pIYhmRWJWM2e6WKDmcLStA9fSYKcafgK6nsH0Fv8E9krdRdw2iartdNL5?=
-	=?iso-8859-15?Q?4g7rztOPt5+Q6YjT5l5HHHvtnGghvQ6fIzrVKu7A05YiRamYXniUe57NL?=
-	=?iso-8859-15?Q?ynOJDjTPLP4ovjNlhM3E2ua40wSX0v/CVyKvotDw6XIyZGZj6Dsb4d/7Z?=
-	=?iso-8859-15?Q?dPKNllIZf/mjjWeChPSMQUiD0nH5L5FTVaiqW4m/a49I4k9B/5jBJTDeg?=
-	=?iso-8859-15?Q?eUAZmE2EtNtKmCP872tP2plhCuTO5k5PrGfbes7dPmceynPGObSOEQReQ?=
-	=?iso-8859-15?Q?g7abn0PteXZTle/QG6njM3SAVO3m/Xme0jrXF+LZDzftWKNcX+ZqPpZT1?=
-	=?iso-8859-15?Q?DD/u4dGlrV14W/FSD9rgaA1UKgFlJTSoO+dGV50C6Ow4IvUm/0GJZ3fN+?=
-	=?iso-8859-15?Q?347O2375AkDNxc87yr9ue7hmotGCi+iKDXYU0PWDqTkOrXD/rd/cn5HbF?=
-	=?iso-8859-15?Q?kzQG7WfUleAlLbam3cbI4TS5Gojle+r1hJIGJj/sZOmwT9z9r3wm7hj4W?=
-	=?iso-8859-15?Q?rY71MUbL9Sa5feufZ9YgyQxifKu7X6BipGDaZbZEVscx+vxXpneRbypz6?=
-	=?iso-8859-15?Q?PgjclFckYx053s0LggNLHY4ZfDzUZOUzMC6Aa//Dno3Nvjh/5VVf/JkSM?=
-	=?iso-8859-15?Q?1cbJe/UrTLqDW4V4y2UwZLU5fWM82m/7aeayzFJqo/1fLdIjwRDQm5Puk?=
-	=?iso-8859-15?Q?MBIm5xopE/9Zw/4uoCbHXuMLCXiIpkuiqDy5wwzouHW8YUqKyLdVLsEH9?=
-	=?iso-8859-15?Q?hBivx5RWFHXgiAQvyugwoj6GEt98Ak9Jg8u9IHCKUcDd1MDYwgGhF46JB?=
-	=?iso-8859-15?Q?7qKX2LzymMt+pztmTlylvFAeyxFCybm8dZ4ms05SlrZt4HnzPWPjT+hfj?=
-	=?iso-8859-15?Q?mMM2qhWwewtjkpuKSZt5ZSNI4nDpfD4KcG+wCfWdS6+p3lmTHpYj6RrLa?=
-	=?iso-8859-15?Q?BMvbOLUz2/ALyjg5qbPX8D4Yq15qwSC9JHJVAvF4uIjskp0=3D?=
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?SorrZlrd+CoRJylXSPRLaBhlsDmbtPO8rPDeCnwufn/14b5iuid+MyTLe?=
+	=?iso-8859-15?Q?v4uzjuoz0foP2Qez5zGDwIvobjpTeyt1sNRJBBbf8dAljs5yVsdaI3pN2?=
+	=?iso-8859-15?Q?kEsdJR/TGOd3oLklrAD0pr+Z0SU8ofug1j1w02iOGxhyuKVDW14WP+4Nq?=
+	=?iso-8859-15?Q?GxKXYzt7eTHXOZiQRm3eWtMNMugYELzeWiRQXngF38MZZnPWZgHy5Aohr?=
+	=?iso-8859-15?Q?W3/NjNJD0TZxLJxnP1P59Rm1sptNxLYivOaMx9owpcY0TlSamWGZQ3aML?=
+	=?iso-8859-15?Q?d1RNIrTD8a2890UjM8IusqGrRQM2Fj6Xs23l+FEYftyYJZPv4Z7gZHbv7?=
+	=?iso-8859-15?Q?fzN0B7gosIAWbY0M5LVqjgA6MXPHcJYGg82DGF7hFWFWmanELZHjOGY+o?=
+	=?iso-8859-15?Q?C/SPW7eIpVZwGTQDLgBJLcvU452UoQxqqs/7JR23bsnGsTzLaCsotYOeo?=
+	=?iso-8859-15?Q?RiH58+YhTqockGgMAuf8hw6McHApgkf3i/ZLdkSjUxSYa4V8vqNgaeLCq?=
+	=?iso-8859-15?Q?b8VjkAsA6T6YKonP4MNLUXtD9uXAGd2t0MlE/z+p9EOUsy9NfZkeuDM6h?=
+	=?iso-8859-15?Q?4yASxNybly2sVSpsAqCz5s+5wmwGYScSMW/dWRgkYa/5QOmHITv7c3WS0?=
+	=?iso-8859-15?Q?gvJwmIDyztkBj/04eEsVg+FCzRFTDioZrDsUb5F5nXcUhbTU14v5SoLkn?=
+	=?iso-8859-15?Q?XJJbca7ni/n+OWVmThkWtpt8DOdbjjbyTaZoXw2+msMndeJkS2ZjHnl9M?=
+	=?iso-8859-15?Q?AYOkZvXsfD0oK4MQx9zwKEqQD1hHD7ikEW1OxcbjMzClTr6o7871YBDYn?=
+	=?iso-8859-15?Q?26dITYfoI8aA271lc8YtsW5v7QwgyoOfLMTtIIXpOzA8eBBktf2q/2o50?=
+	=?iso-8859-15?Q?digYX1i/YV57Ab8bw3rlEspkWjePTP3an8yU1gkv+V3cTJCx+P69GC4QW?=
+	=?iso-8859-15?Q?4Q2sRSnBrKmIdtCRrseYei/jBXv66EGTPWZuz+wX2Jni9Ct7n68NeyctY?=
+	=?iso-8859-15?Q?1I0C4vvUw2B6uXqas7mFh2TRTiwr3YlvtDmbx0365+K+VYfbRo9G6T8/A?=
+	=?iso-8859-15?Q?DYBGMTVOLb8CPL+ab35OQAItPxRQkb+rVub9ZUlLW4Cp0o8m0xlogocyX?=
+	=?iso-8859-15?Q?nif65Fg1CkyInKaAjH2qPe+Gxz8+A9KDXsJbJ9H6yibGfczzriy+OZix2?=
+	=?iso-8859-15?Q?+AOqVR+XcqPud/eNxPynv3S6GP7VHryOvcUkHGNgKDzjKPttiYDwJLI6v?=
+	=?iso-8859-15?Q?4PYthdqDhuaLhQYZ0ppyvbwouJRAQgCPPDnvMD8FtvJ7LBR1WtOuYWanm?=
+	=?iso-8859-15?Q?31F9ustN1kqkUqHj7Z1w3yiF3214N7MvJihDZ2G661Cn+vk1GfxLh5B6i?=
+	=?iso-8859-15?Q?QSCrv7Pmh0mz27k6PEG1XfIGWBqSGTghjZNWX9STu+LelHfHG0ZPVEWz3?=
+	=?iso-8859-15?Q?qSU+1U2UJkD1JIQhObmhult/AYxqYuYrqNDlnv1ogYP1CrtpS5F14AR9c?=
+	=?iso-8859-15?Q?eYpt0WGKIPD8iH/MIFm+KGBYi58bIgICajdhhBbRudZTjHUakhYAcwGdY?=
+	=?iso-8859-15?Q?fGXMnIbT/AnmhxkQV8AtflHMH8Q5iS/xhKkkZwtqAjCdC4VYyD7LygQmq?=
+	=?iso-8859-15?Q?FS1HSXzXNuuFLQvHcePyYtmSVuBEkP1bh98fXS5xbBKBPV/+fahc1R9op?=
+	=?iso-8859-15?Q?OvTkm9RBLzm4o8yNJrBijmmEIf5GolyotU+037OLLbXo6Z0=3D?=
 MIME-Version: 1.0
 X-OriginatorOrg: suse.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: a5f37e5b-fd76-410c-d6bb-08d9b6331206
-X-MS-Exchange-CrossTenant-originalarrivaltime: 03 Dec 2021 08:01:11.1261 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 444b9acf-3e13-4d50-dda3-08d9b6364088
+X-MS-Exchange-CrossTenant-originalarrivaltime: 03 Dec 2021 08:23:57.6076 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: C1h+9v972oqr3f1+xO5/vw+PkA//M70vSFKmxTf2jt0PHC5nR4OY19VGSakRwVKOiBgQszu5T/gj23kIVPGb/A==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DBBPR04MB6156
+X-MS-Exchange-CrossTenant-userprincipalname: C0GwzNHkffcMNXT+wlRTAHdV1UsLFzQr8ELD6S+LivUSFKXeApSojf90gg6xMZUL/QJVHMqyr/LybYqLwUFaFw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB3PR0402MB3900
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -138,13 +137,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1B381IIb024614
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1B38O7NP025888
 X-loop: dm-devel@redhat.com
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
-Subject: Re: [dm-devel] [PATCH 1/3] libmultipath: keep existing dm_info if
- you fail to get a new one
+Subject: Re: [dm-devel] [PATCH 2/3] multipathd: update dm_info on multipath
+	change events
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -158,39 +157,60 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <BDC91182D62B9A4FAC7DDC9495AEC61F@eurprd04.prod.outlook.com>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-ID: <A7DCD6962DD66249BF1BFD29F2361FE9@eurprd04.prod.outlook.com>
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
 On Thu, 2021-12-02 at 19:34 -0600, Benjamin Marzinski wrote:
-> There are reasons that dm_get_info() can fail other than the
-> multipath
-> device not existing. If there is an existing dm_info structure and
-> the
-> call fails, don't free it.
-> 
+> When multipathd gets a change event for a multipath device, the dm
+> info
+> may have changed, so update it.
+>=20
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+> =A0multipathd/main.c | 1 +
+> =A01 file changed, 1 insertion(+)
+>=20
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 7a57a798..5cb70575 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -818,6 +818,7 @@ ev_add_map (char * dev, const char * alias,
+> struct vectors * vecs)
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0conf =3D get_multipath_co=
+nfig();
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0reassign_maps =3D conf->r=
+eassign_maps;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0put_multipath_config(conf=
+);
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0dm_get_info(mpp->alias, &mp=
+p->dmi);
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0if (mpp->wait_for_udev) {
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0m=
+pp->wait_for_udev =3D 0;
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0i=
+f (get_delayed_reconfig() &&
 
-This is ok, but I think it'd be better to simply embed the dmi struct
-in struct multipath and thus avoid having allocate and free it
-separately. Either that, or just use a struct dm_info on stack  in
-dm_get_info() and just copy the properties we actually look at, i.e.
-read_only, major, minor, suspended, to respective fields in struct
-multipath. I'd prefer embedding the complete dmi, as it's not that
-large and contains other interesting fields, too (for example, we might
-be able to leverage the event_nr field to avoid duplicate work between
-uevent and dmevent handlers).
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-We would need to be able to figure out if the dmi is valid, but that's
-rather easy, we could simply set major = minor = 0.
+Note for future development: I just realized that dm_get_info() would
+also get called in the dmevent handler. We currently do some duplicate
+work in both handlers.
 
-Regards
+In theory at least, we could look at the event_nr field and see whether
+this event has already been handled by ourselves. If the dmevent
+handler sees that uevent kicked in first, it wouldn't need to do
+anything. The uevent handler would only need to look at properties that
+udev might have added, but wouldn't need to do a full setup_multipath()
+any more.
+
+Regards,
 Martin
 
 
