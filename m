@@ -1,93 +1,62 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C69E2C433F5
-	for <dm-devel@archiver.kernel.org>; Fri,  3 Dec 2021 14:45:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 34D86C433F5
+	for <dm-devel@archiver.kernel.org>; Fri,  3 Dec 2021 16:00:53 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1638547252;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=P8e3uTVpiE//OJoX6TS3K5PAxs18uFUgpY9jqoVRqp0=;
+	b=RPIpfU4pSkHzqT2ooWmnTE4RFEk1wWrZWHeStnbsQlmtGTFxNC5El1oF6gY6pAgDX31Qqg
+	V/XieIZT9/G1Ss6cSXVvlM/Owm5VVy1ttA2LEfIMUT2oj2sNN+6ifQQqPh94W5HApiTuRI
+	l5qNXMr4d1mvzabQxtgE1/gf3qiBYE4=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-480-fNWYo53wNlWuIpyMDXz-gg-1; Fri, 03 Dec 2021 09:45:12 -0500
-X-MC-Unique: fNWYo53wNlWuIpyMDXz-gg-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-441-Yrz5D43sPiiLuA3Aol5Suw-1; Fri, 03 Dec 2021 11:00:47 -0500
+X-MC-Unique: Yrz5D43sPiiLuA3Aol5Suw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D654C80D680;
-	Fri,  3 Dec 2021 14:45:06 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AC5F84ABAD;
-	Fri,  3 Dec 2021 14:45:02 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5D44C2F47;
+	Fri,  3 Dec 2021 16:00:42 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DF8261972D;
+	Fri,  3 Dec 2021 16:00:40 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EB3551809CB8;
-	Fri,  3 Dec 2021 14:44:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.10])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 904B04BB7C;
+	Fri,  3 Dec 2021 16:00:38 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
+	[10.5.11.23])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1B3EghKh028549 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 3 Dec 2021 09:42:43 -0500
+	id 1B3G0brS004212 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 3 Dec 2021 11:00:37 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id EC993401E3D; Fri,  3 Dec 2021 14:42:42 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E90CA401E3C
-	for <dm-devel@redhat.com>; Fri,  3 Dec 2021 14:42:42 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D090D185A7BA
-	for <dm-devel@redhat.com>; Fri,  3 Dec 2021 14:42:42 +0000 (UTC)
-Received: from mail-wr1-f42.google.com (mail-wr1-f42.google.com
-	[209.85.221.42]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-604-Z-sHVetWPE-y-NL2owNXbA-1; Fri, 03 Dec 2021 09:42:41 -0500
-X-MC-Unique: Z-sHVetWPE-y-NL2owNXbA-1
-Received: by mail-wr1-f42.google.com with SMTP id q3so6185968wru.5
-	for <dm-devel@redhat.com>; Fri, 03 Dec 2021 06:42:40 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:subject:to:references:from:message-id:date
-	:user-agent:mime-version:in-reply-to:content-language
-	:content-transfer-encoding;
-	bh=XPywC2L8l2Q9HOtQkaojwKig+azcHTnULwUr6FEeK0I=;
-	b=PISZCYkm0GWgrYyistX7jegeMGDaiKMHTVjhgh+a9QCBgFikE40Ejhfb63H4gIU2Tf
-	gqYMY0V4aMsH2tvBXNfij88kiX16dlcz5QxjX9EYi5EjU7LfXS7aYl2nPrukGl9OOsSL
-	hLZgf2B7JAHLXaC2i+LPHd8b8IxXeAeWWzW17Hn18mFTcpnmThRDxCdr9LMfLdlj9gvN
-	7bVpCFr5A243/VcKXqnhMRPklrfVSRWtP1y7cGk6ZXR+vjOK1pSzT+wr9QAcU911sJ4a
-	9gFogxHvqNvB/qbQKp5IkASiQniOh46JcSDi9pF9BRMN6Gw7wPUtPKUJ3RTQo1qyUQEK
-	RZag==
-X-Gm-Message-State: AOAM5330XTxq3nbgGfv1X+SaAxTKpCZFJX/zNZzT2Rh6GEyT2/fMHTXl
-	4KaeFrRT2Bog1NJS2Gkx8Yolx9H4+jLs5w==
-X-Google-Smtp-Source: ABdhPJzvSug74bBnj+SbUxae1reA8wLeRGC2uq6I8gzRmEUnjc+CUMdOjs79Dv0sNqR/bTo+yS3ofg==
-X-Received: by 2002:adf:82f7:: with SMTP id 110mr22422906wrc.111.1638542559269;
-	Fri, 03 Dec 2021 06:42:39 -0800 (PST)
-Received: from [172.16.10.100] (62.1.222.48.dsl.dyn.forthnet.gr. [62.1.222.48])
-	by smtp.gmail.com with ESMTPSA id
-	138sm5369148wma.17.2021.12.03.06.42.37
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Fri, 03 Dec 2021 06:42:38 -0800 (PST)
-To: Zdenek Kabelac <zkabelac@redhat.com>,
+	id 845761972D; Fri,  3 Dec 2021 16:00:37 +0000 (UTC)
+Received: from [10.40.193.91] (unknown [10.40.193.91])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 284B6196F1;
+	Fri,  3 Dec 2021 16:00:02 +0000 (UTC)
+Message-ID: <7ff5dfca-bebb-4647-212d-3dd3aec678b9@redhat.com>
+Date: Fri, 3 Dec 2021 17:00:01 +0100
+MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+	Firefox/91.0 Thunderbird/91.3.0
+To: Nikos Tsironis <ntsironis@arrikto.com>,
 	"dm-devel@redhat.com" <dm-devel@redhat.com>
 References: <1127b165-f886-e3cf-061d-141fa7fb7d97@arrikto.com>
 	<5ccbac2c-8eb8-3e57-3cb3-8f85038d4e01@redhat.com>
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Message-ID: <1e508a1a-0ba4-0ef2-c660-0c522907ced0@arrikto.com>
-Date: Fri, 3 Dec 2021 16:42:36 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
-	Thunderbird/78.14.0
-MIME-Version: 1.0
-In-Reply-To: <5ccbac2c-8eb8-3e57-3cb3-8f85038d4e01@redhat.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+	<1e508a1a-0ba4-0ef2-c660-0c522907ced0@arrikto.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+In-Reply-To: <1e508a1a-0ba4-0ef2-c660-0c522907ced0@arrikto.com>
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 X-loop: dm-devel@redhat.com
 Subject: Re: [dm-devel] Deadlock when swapping a table with a dm-era target
 X-BeenThere: dm-devel@redhat.com
@@ -103,118 +72,67 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-On 12/2/21 5:41 PM, Zdenek Kabelac wrote:
-> Dne 01. 12. 21 v 18:07 Nikos Tsironis napsal(a):
->> Hello,
->>
->> Under certain conditions, swapping a table, that includes a dm-era
->> target, with a new table, causes a deadlock.
->>
->> This happens when a status (STATUSTYPE_INFO) or message IOCTL is blocked
->> in the suspended dm-era target.
->>
->> dm-era executes all metadata operations in a worker thread, which stops
->> processing requests when the target is suspended, and resumes again when
->> the target is resumed.
->>
->> So, running 'dmsetup status' or 'dmsetup message' for a suspended dm-era
->> device blocks, until the device is resumed.
->>
->> This seems to be a problem on its own.
->>
->> If we then load a new table to the device, while the aforementioned
->> dmsetup command is blocked in dm-era, and resume the device, we
->> deadlock.
->>
->> The problem is that the 'dmsetup status' and 'dmsetup message' commands
->> hold a reference to the live table, i.e., they hold an SRCU read lock on
->> md->io_barrier, while they are blocked.
->>
->> When the device is resumed, the old table is replaced with the new one
->> by dm_swap_table(), which ends up calling synchronize_srcu() on
->> md->io_barrier.
->>
->> Since the blocked dmsetup command is holding the SRCU read lock, and the
->> old table is never resumed, 'dmsetup resume' blocks too, and we have a
->> deadlock.
->>
->> Steps to reproduce:
->>
->> 1. Create device with dm-era target
->>
->>    # dmsetup create eradev --table "0 1048576 era /dev/datavg/erameta /dev/datavg/eradata 8192"
->>
->> 2. Suspend the device
->>
->>    # dmsetup suspend eradev
->>
->> 3. Load new table to device, e.g., to resize the device
->>
->>    # dmsetup load eradev --table "0 2097152 era /dev/datavg/erameta /dev/datavg/eradata 8192"
->>
-> 
-> Your sequence is faulty - you must always preload  new table before suspend.
-> 
-> Suspend&Resume should be absolutely minimal in its timing.
-> 
-> Also nothing should be allocating memory in suspend so that's why suspend has to be used after table line is fully loaded.
-> 
-
-Hi Zdenek,
-
-Thanks for the feedback. There doesn't seem to be any documentation
-mentioning that loading the new table should happen before suspend, so
-thanks a lot for explaining it.
-
-Unfortunately, this isn't what causes the deadlock. The following
-sequence, which loads the table before suspend, also results in a
-deadlock:
-
-1. Create device with dm-era target
-
-    # dmsetup create eradev --table "0 1048576 era /dev/datavg/erameta /dev/datavg/eradata 8192"
-
-2. Load new table to device, e.g., to resize the device
-
-    # dmsetup load eradev --table "0 2097152 era /dev/datavg/erameta /dev/datavg/eradata 8192"
-
-3. Suspend the device
-
-    # dmsetup suspend eradev
-
-4. Retrieve the status of the device. This blocks for the reasons I
-    explained in my previous email.
-
-    # dmsetup status eradev
-
-5. Resume the device. This deadlocks for the reasons I explained in my
-    previous email.
-
-    # dmsetup resume eradev
-
-6. The dmesg logs are the same as the ones I included in my previous
-    email.
-
-I have explained the reasons for the deadlock in my previous email, but
-I would be more than happy to discuss them more.
-
-I would also like your feedback on the solutions I proposed there, so I
-can work on a fix.
-
-Thanks,
-Nikos.
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+RG5lIDAzLiAxMi4gMjEgdiAxNTo0MiBOaWtvcyBUc2lyb25pcyBuYXBzYWwoYSk6Cj4gT24gMTIv
+Mi8yMSA1OjQxIFBNLCBaZGVuZWsgS2FiZWxhYyB3cm90ZToKPj4gRG5lIDAxLiAxMi4gMjEgdiAx
+ODowNyBOaWtvcyBUc2lyb25pcyBuYXBzYWwoYSk6Cj4+PiBIZWxsbywKPj4+Cj4+PiBVbmRlciBj
+ZXJ0YWluIGNvbmRpdGlvbnMsIHN3YXBwaW5nIGEgdGFibGUsIHRoYXQgaW5jbHVkZXMgYSBkbS1l
+cmEKPj4+IHRhcmdldCwgd2l0aCBhIG5ldyB0YWJsZSwgY2F1c2VzIGEgZGVhZGxvY2suCj4+Pgo+
+Pj4gVGhpcyBoYXBwZW5zIHdoZW4gYSBzdGF0dXMgKFNUQVRVU1RZUEVfSU5GTykgb3IgbWVzc2Fn
+ZSBJT0NUTCBpcyBibG9ja2VkCj4+PiBpbiB0aGUgc3VzcGVuZGVkIGRtLWVyYSB0YXJnZXQuCj4+
+Pgo+Pj4gZG0tZXJhIGV4ZWN1dGVzIGFsbCBtZXRhZGF0YSBvcGVyYXRpb25zIGluIGEgd29ya2Vy
+IHRocmVhZCwgd2hpY2ggc3RvcHMKPj4+IHByb2Nlc3NpbmcgcmVxdWVzdHMgd2hlbiB0aGUgdGFy
+Z2V0IGlzIHN1c3BlbmRlZCwgYW5kIHJlc3VtZXMgYWdhaW4gd2hlbgo+Pj4gdGhlIHRhcmdldCBp
+cyByZXN1bWVkLgo+Pj4KPj4+IFNvLCBydW5uaW5nICdkbXNldHVwIHN0YXR1cycgb3IgJ2Rtc2V0
+dXAgbWVzc2FnZScgZm9yIGEgc3VzcGVuZGVkIGRtLWVyYQo+Pj4gZGV2aWNlIGJsb2NrcywgdW50
+aWwgdGhlIGRldmljZSBpcyByZXN1bWVkLgo+Pj4KPiBIaSBaZGVuZWssCj4KPiBUaGFua3MgZm9y
+IHRoZSBmZWVkYmFjay4gVGhlcmUgZG9lc24ndCBzZWVtIHRvIGJlIGFueSBkb2N1bWVudGF0aW9u
+Cj4gbWVudGlvbmluZyB0aGF0IGxvYWRpbmcgdGhlIG5ldyB0YWJsZSBzaG91bGQgaGFwcGVuIGJl
+Zm9yZSBzdXNwZW5kLCBzbwo+IHRoYW5rcyBhIGxvdCBmb3IgZXhwbGFpbmluZyBpdC4KPgo+IFVu
+Zm9ydHVuYXRlbHksIHRoaXMgaXNuJ3Qgd2hhdCBjYXVzZXMgdGhlIGRlYWRsb2NrLiBUaGUgZm9s
+bG93aW5nCj4gc2VxdWVuY2UsIHdoaWNoIGxvYWRzIHRoZSB0YWJsZSBiZWZvcmUgc3VzcGVuZCwg
+YWxzbyByZXN1bHRzIGluIGEKPiBkZWFkbG9jazoKPgo+IDEuIENyZWF0ZSBkZXZpY2Ugd2l0aCBk
+bS1lcmEgdGFyZ2V0Cj4KPiDCoMKgICMgZG1zZXR1cCBjcmVhdGUgZXJhZGV2IC0tdGFibGUgIjAg
+MTA0ODU3NiBlcmEgL2Rldi9kYXRhdmcvZXJhbWV0YSAKPiAvZGV2L2RhdGF2Zy9lcmFkYXRhIDgx
+OTIiCj4KPiAyLiBMb2FkIG5ldyB0YWJsZSB0byBkZXZpY2UsIGUuZy4sIHRvIHJlc2l6ZSB0aGUg
+ZGV2aWNlCj4KPiDCoMKgICMgZG1zZXR1cCBsb2FkIGVyYWRldiAtLXRhYmxlICIwIDIwOTcxNTIg
+ZXJhIC9kZXYvZGF0YXZnL2VyYW1ldGEgCj4gL2Rldi9kYXRhdmcvZXJhZGF0YSA4MTkyIgo+Cj4g
+My4gU3VzcGVuZCB0aGUgZGV2aWNlCj4KPiDCoMKgICMgZG1zZXR1cCBzdXNwZW5kIGVyYWRldgo+
+Cj4gNC4gUmV0cmlldmUgdGhlIHN0YXR1cyBvZiB0aGUgZGV2aWNlLiBUaGlzIGJsb2NrcyBmb3Ig
+dGhlIHJlYXNvbnMgSQo+IMKgwqAgZXhwbGFpbmVkIGluIG15IHByZXZpb3VzIGVtYWlsLgo+Cj4g
+wqDCoCAjIGRtc2V0dXAgc3RhdHVzIGVyYWRldgoKCkhpCgpRdWVyeWluZyAnc3RhdHVzJyB3aGls
+ZSB0aGUgZGV2aWNlIGlzIHN1c3BlbmQgaXMgdGhlIG5leHQgaXNzdWUgeW91IG5lZWQgdG8gCmZp
+eCBpbiB5b3VyIHdvcmtmbG93LgoKTm9ybWFsbHkgJ3N0YXR1cycgb3BlcmF0aW9uIG1heSBuZWVk
+IHRvIGZsdXNoIHF1ZXVlZCBJTyBvcGVyYXRpb25zIHRvIGdldCAKYWNjdXJhdGUgZGF0YS4KClNv
+IHlvdSBzaG91bGQgcXVlcnkgc3RhdGVzIGJlZm9yZSB5b3Ugc3RhcnQgdG8gbWVzcyB3aXRoIHRh
+Ymxlcy4KCklmIHlvdSB3YW50IHRvIGdldCAnc3RhdHVzJyB3aXRob3V0IGZsdXNoaW5nIC0gdXNl
+OsKgwqAgJ2Rtc2V0dXAgc3RhdHVzIC0tbm9mbHVzaCcuCgoKPiA1LiBSZXN1bWUgdGhlIGRldmlj
+ZS4gVGhpcyBkZWFkbG9ja3MgZm9yIHRoZSByZWFzb25zIEkgZXhwbGFpbmVkIGluIG15Cj4gwqDC
+oCBwcmV2aW91cyBlbWFpbC4KPgo+IMKgwqAgIyBkbXNldHVwIHJlc3VtZSBlcmFkZXYKPgo+IDYu
+IFRoZSBkbWVzZyBsb2dzIGFyZSB0aGUgc2FtZSBhcyB0aGUgb25lcyBJIGluY2x1ZGVkIGluIG15
+IHByZXZpb3VzCj4gwqDCoCBlbWFpbC4KPgo+IEkgaGF2ZSBleHBsYWluZWQgdGhlIHJlYXNvbnMg
+Zm9yIHRoZSBkZWFkbG9jayBpbiBteSBwcmV2aW91cyBlbWFpbCwgYnV0Cj4gSSB3b3VsZCBiZSBt
+b3JlIHRoYW4gaGFwcHkgdG8gZGlzY3VzcyB0aGVtIG1vcmUuCj4KClRoZXJlIGlzIG5vIGJ1ZyAt
+IGlmIHlvdXIgb25seSBwcm9ibGVtIGlzICdzdHVjayfCoCBzdGF0dXMgd2hpbGUgeW91IGhhdmUg
+CmRldmljZXMgaW4gc3VzcGVuZGVkIHN0YXRlLgoKWW91IHNob3VsZCBOT1QgYmUgZG9pbmcgYmFz
+aWNhbGx5IGFueXRoaW5nIHdoaWxlIGJlaW5nIHN1c3BlbmQhIQoKaS5lLiBpbWFnaW5lIHlvdSBz
+dXNwZW5kICdzd2FwJyBkZXZpY2UgYW5kIHdoaWxlIHlvdSBhcmUgaW4gc3VzcGVuZWQgc3RhdGUg
+Cmtlcm5lbCBkZWNpZGVzIHRvIHN3YXAgbWVtb3J5IHBhZ2VzIC0gc28geW91IGdldCBpbnN0YW50
+bHkgZnJvemVuIGhlcmUuCgpGb3IgdGhpcyByZWFzb24gbHZtMiB3aGlsZSBkb2luZ8KgICdzdXNw
+ZW5kL3Jlc3VtZScgc2VxdWFuY2UgcHJlYWxsb2NhdGVzIGFsbCAKbWVtb3J5IGluIGZyb250IG9m
+IHRoaXMgb3BlcmF0aW9uIC0gZG9lcyB2ZXJ5IG1pbmltYWwgc2V0IG9mIG9wZXJhdGlvbiBiZXR3
+ZWVuIApzdXNwZW5kL3Jlc3VtZSB0byBtaW5pbWl6ZSBhbHNvIGxhdGVuY2llcyBhbmQgc28gb24u
+CgpDbGVhcmx5IGlmIHlvdSBzdXNwZW5kIGp1c3Qgc29tZSAnc3VwcG9ydGl2ZSfCoCBkaXNrIG9m
+IHlvdXJzIC0geW91IGxpa2VseSBhcmUgCm5vIGluIGRhbmdlciBvZiBibG9ja2luZyB5b3VyIHN3
+YXAgLSBidXQgdGhlICdzdGF0dXMgLS1ub2ZsdXNoJyBsb2dpYyBzdGlsbCAKYXBwbGllcy4KCgpS
+ZWdhcmRzCgpaZGVuZWsKCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0
+LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVs
 
