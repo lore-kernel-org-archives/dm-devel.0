@@ -1,55 +1,82 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 85E52C433EF
-	for <dm-devel@archiver.kernel.org>; Wed,  8 Dec 2021 14:24:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id AC6E2C433F5
+	for <dm-devel@archiver.kernel.org>; Wed,  8 Dec 2021 16:36:25 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1638981384;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:in-reply-to:in-reply-to:
+	 references:references:list-id:list-help:list-unsubscribe:
+	 list-subscribe:list-post; bh=yj0WxSO55+WnZ5Ax/7AvPo5Vdp08URhwHOWcL9jP4tU=;
+	b=SSREDkrvwmOrcti1Ab+GogzkiKCvEcKNCEx1k6bC+vAdsgNH/lGBF7S3nm/AFPYPyvS/fL
+	L3Tu5LD8ZGfVkhAXW2h+x2YaEfjJgVlpLBDwhY4tr7Pf9cunBBZMR/196kEKLCsubK/Jm4
+	p5oOGlupUV63sbGaUXuae/HziktBEfY=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-349-X9nIKEnJPNGrMTZ3JmSXdQ-1; Wed, 08 Dec 2021 09:24:51 -0500
-X-MC-Unique: X9nIKEnJPNGrMTZ3JmSXdQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-60-_045AydDOLOZKo0FjvV2Fw-1; Wed, 08 Dec 2021 11:36:21 -0500
+X-MC-Unique: _045AydDOLOZKo0FjvV2Fw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 927201018721;
-	Wed,  8 Dec 2021 14:24:45 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9FE99100E326;
+	Wed,  8 Dec 2021 16:36:02 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4CC445D740;
-	Wed,  8 Dec 2021 14:24:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A479C2B178;
+	Wed,  8 Dec 2021 16:35:55 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2D5764BB7C;
-	Wed,  8 Dec 2021 14:24:38 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.1])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4EDA64BB7C;
+	Wed,  8 Dec 2021 16:35:45 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1B8EOZnx016907 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 8 Dec 2021 09:24:36 -0500
+	id 1B8GZgrE006772 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 8 Dec 2021 11:35:42 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B5D6440149B2; Wed,  8 Dec 2021 14:24:35 +0000 (UTC)
+	id 4B5BF4047279; Wed,  8 Dec 2021 16:35:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B024D40CFD08
-	for <dm-devel@redhat.com>; Wed,  8 Dec 2021 14:24:35 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 46EE84047272
+	for <dm-devel@redhat.com>; Wed,  8 Dec 2021 16:35:42 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 893E53C11D26
-	for <dm-devel@redhat.com>; Wed,  8 Dec 2021 14:24:35 +0000 (UTC)
-Received: from out0.migadu.com (out0.migadu.com [94.23.1.103]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-291-OAjfXNLHMfekg6oUT1749A-1; Wed, 08 Dec 2021 09:24:33 -0500
-X-MC-Unique: OAjfXNLHMfekg6oUT1749A-1
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and
-	include these headers.
-From: Guoqing Jiang <guoqing.jiang@linux.dev>
-To: Paul Menzel <pmenzel@molgen.mpg.de>, Song Liu <song@kernel.org>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
-	heinzm@redhat.com, jbrassow@redhat.com
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2E83E3C9A01C
+	for <dm-devel@redhat.com>; Wed,  8 Dec 2021 16:35:42 +0000 (UTC)
+Received: from mail-yb1-f199.google.com (mail-yb1-f199.google.com
+	[209.85.219.199]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-408-vRgB6tgbMBm8zJj4vCQVpw-1; Wed, 08 Dec 2021 11:35:40 -0500
+X-MC-Unique: vRgB6tgbMBm8zJj4vCQVpw-1
+Received: by mail-yb1-f199.google.com with SMTP id
+	j204-20020a2523d5000000b005c21574c704so5330495ybj.13
+	for <dm-devel@redhat.com>; Wed, 08 Dec 2021 08:35:40 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc;
+	bh=tfdztpqLpq7mVcQWH5ACSyTsyMy1N13SZdYi9Un4YOA=;
+	b=bCZn4uk8OQqz9JoCnyT/WUfk8b89kOGfylpTVEtDNdGSU9eh4tfaIuwUOMXdjlxUh5
+	8X46H0sVqL0coc0p9GBggfMq1YKV/xis/MVIE5JsUSSi0a6/rWZYzkC48qjGTA3p7B74
+	urodHJYsMmN41JNW/oa/Mr2uuHRk1Jo9+45mbeUbgKTHC4l6yf2kzcKUdi0y8xt52gj+
+	rsQfT9j3om304Y9FzUgI6kjfp0WT5wwZ8Vyg6urccsqpoZnB8WxHeTlkU/Sj/26Cf8ih
+	0raxWB1pVEVrQCVJp+ml443WVzfl/S0UJ/6DU/WI0q0pqbZkTcOSEv0bjEZte6GfPyc4
+	ognQ==
+X-Gm-Message-State: AOAM533l6SKqOTm+NTl8MnpfMDloG5Cyw4XEjawQh+4+mzdjWj0EoTub
+	4WU+t83bpRQY2ZA8johlTTQh8d3AExLNVymP6SxlMUsr2YsydGqcL3f6uGdWS9ktSnqCV87rFze
+	J7rAFo5kBtBKuQtGiCm4NQTG+uZOIMNY=
+X-Received: by 2002:a25:5f11:: with SMTP id t17mr56887053ybb.633.1638981340335;
+	Wed, 08 Dec 2021 08:35:40 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJyzo17yV7rNQCIoIpYtj6fWJPgV6DPYLJtFO+QgG3tdkfydBufIE9HDGIW9M2fZWUkrPfSPMxmnNbK/Cfvqc+o=
+X-Received: by 2002:a25:5f11:: with SMTP id t17mr56887018ybb.633.1638981340050;
+	Wed, 08 Dec 2021 08:35:40 -0800 (PST)
+MIME-Version: 1.0
 References: <1613177399-22024-1-git-send-email-guoqing.jiang@cloud.ionos.com>
 	<36a660ed-b995-839e-ac82-dc4ca25ccb8a@molgen.mpg.de>
 	<CAPhsuW5s6fk3kua=9Z9o3VPCcN1wdUqXybXm9cp4arJW5+oBvQ@mail.gmail.com>
@@ -57,30 +84,21 @@ References: <1613177399-22024-1-git-send-email-guoqing.jiang@cloud.ionos.com>
 	<CAPhsuW4V8JCCKePj11rf3zo4MJTz6TpW6DDeNmcJBfRSoN+NDA@mail.gmail.com>
 	<a3a1fed7-b886-8603-aa20-20d667a837a7@molgen.mpg.de>
 	<3f2ad763-6fcb-a652-7131-9e20135a1405@molgen.mpg.de>
-Message-ID: <abe73176-03ca-9305-2005-677edc6ef158@linux.dev>
-Date: Wed, 8 Dec 2021 22:16:16 +0800
-MIME-Version: 1.0
-In-Reply-To: <3f2ad763-6fcb-a652-7131-9e20135a1405@molgen.mpg.de>
-X-Migadu-Flow: FLOW_OUT
-X-Migadu-Auth-User: linux.dev
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Mimecast-Bulk-Signature: yes
-X-Mimecast-Spam-Signature: bulk
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1B8EOZnx016907
+	<abe73176-03ca-9305-2005-677edc6ef158@linux.dev>
+In-Reply-To: <abe73176-03ca-9305-2005-677edc6ef158@linux.dev>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Date: Wed, 8 Dec 2021 17:35:29 +0100
+Message-ID: <CAM23VxrYRbWEUsCsez2QOQM9oWKxSv432rc9oZCj5zEPmtND0A@mail.gmail.com>
+To: Guoqing Jiang <guoqing.jiang@linux.dev>
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-loop: dm-devel@redhat.com
-Cc: linux-raid <linux-raid@vger.kernel.org>, dm-devel@redhat.com,
-	Donald Buczek <buczek@molgen.mpg.de>, it+raid@molgen.mpg.de
+Cc: Paul Menzel <pmenzel@molgen.mpg.de>, Mike Snitzer <snitzer@redhat.com>,
+	linux-raid <linux-raid@vger.kernel.org>,
+	Song Liu <song@kernel.org>, dm-devel@redhat.com,
+	it+raid@molgen.mpg.de, Donald Buczek <buczek@molgen.mpg.de>,
+	Alasdair Kergon <agk@redhat.com>
 Subject: Re: [dm-devel] [PATCH V2] md: don't unregister sync_thread with
- reconfig_mutex held
+	reconfig_mutex held
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -94,62 +112,252 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Type: multipart/mixed; boundary="===============4595696516237216418=="
 
-CgpPbiAxMi8xLzIxIDE6MjcgQU0sIFBhdWwgTWVuemVsIHdyb3RlOgo+Cj4+Pj4+Pj4gZGlmZiAt
-LWdpdCBhL2RyaXZlcnMvbWQvZG0tcmFpZC5jIGIvZHJpdmVycy9tZC9kbS1yYWlkLmMKPj4+Pj4+
-PiBpbmRleCBjYWIxMmIyLi4wYzRjYmJhIDEwMDY0NAo+Pj4+Pj4+IC0tLSBhL2RyaXZlcnMvbWQv
-ZG0tcmFpZC5jCj4+Pj4+Pj4gKysrIGIvZHJpdmVycy9tZC9kbS1yYWlkLmMKPj4+Pj4+PiBAQCAt
-MzY2OCw3ICszNjY4LDcgQEAgc3RhdGljIGludCByYWlkX21lc3NhZ2Uoc3RydWN0IGRtX3Rhcmdl
-dCAKPj4+Pj4+PiAqdGksIHVuc2lnbmVkIGludCBhcmdjLCBjaGFyICoqYXJndiwKPj4+Pj4+PiDC
-oMKgwqDCoMKgwqDCoCBpZiAoIXN0cmNhc2VjbXAoYXJndlswXSwgImlkbGUiKSB8fCAhc3RyY2Fz
-ZWNtcChhcmd2WzBdLCAKPj4+Pj4+PiAiZnJvemVuIikpIHsKPj4+Pj4+PiDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqAgaWYgKG1kZGV2LT5zeW5jX3RocmVhZCkgewo+Pj4+Pj4+IMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgc2V0X2JpdChNRF9SRUNP
-VkVSWV9JTlRSLCAKPj4+Pj4+PiAmbWRkZXYtPnJlY292ZXJ5KTsKPj4+Pj4+PiAtwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBtZF9yZWFwX3N5bmNfdGhyZWFkKG1kZGV2
-KTsKPj4+Pj4+PiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBtZF9y
-ZWFwX3N5bmNfdGhyZWFkKG1kZGV2LCBmYWxzZSk7Cj4+Pj4+Cj4+Pj4+IEkgdGhpbmsgd2UgY2Fu
-IGFkZCBtZGRldl9sb2NrKCkgYW5kIG1kZGV2X3VubG9jaygpIGhlcmUgYW5kIHRoZW4gCj4+Pj4+
-IHdlIGRvbid0Cj4+Pj4+IG5lZWQgdGhlIGV4dHJhIHBhcmFtZXRlcj8KPj4+Pgo+Pj4+IEkgdGhv
-dWdodCBpdCB0b28sIGJ1dCBJIHdvdWxkIHByZWZlciBnZXQgdGhlIGlucHV0IGZyb20gRE0gcGVv
-cGxlIAo+Pj4+IGZpcnN0Lgo+Pj4+Cj4+Pj4gQCBNaWtlIG9yIEFsYXNkYWlyCj4+Pgo+Pj4gSGkg
-TWlrZSBhbmQgQWxhc2RhaXIsCj4+Pgo+Pj4gQ291bGQgeW91IHBsZWFzZSBjb21tZW50IG9uIHRo
-aXMgb3B0aW9uOiBhZGRpbmcgbWRkZXZfbG9jaygpIGFuZCAKPj4+IG1kZGV2X3VubG9jaygpCj4+
-PiB0byByYWlkX21lc3NhZ2UoKSBhcm91bmQgbWRfcmVhcF9zeW5jX3RocmVhZCgpPwoKQWRkIEhl
-aW56IGFuZCBKb25hdGhhbiwgY291bGQgeW91IGNvbW1lbnQgYWJvdXQgdGhpcz8gVGhhbmtzLgoK
-Pj4KPj4gVGhlIGlzc3VlIGlzIHVuZm9ydHVuYXRlbHkgc3RpbGwgdW5yZXNvbHZlZCAoYXQgbGVh
-c3QgTGludXggNS4xMC44MikuIAo+PiBIb3cgY2FuIHdlIG1vdmUgZm9yd2FyZD8KCklmIGl0IGlz
-IG5vdCBhcHBsaWNhYmxlIHRvIGNoYW5nZSBkbS1yYWlkLCBhbm90aGVyIGFsdGVybmF0aXZlIGNv
-dWxkIGJlIApsaWtlIHRoaXMKCi0tLSBhL2RyaXZlcnMvbWQvbWQuYworKysgYi9kcml2ZXJzL21k
-L21kLmMKQEAgLTk0MDksOCArOTQwOSwxMiBAQCB2b2lkIG1kX3JlYXBfc3luY190aHJlYWQoc3Ry
-dWN0IG1kZXYgKm1kZGV2KQogwqDCoMKgwqDCoMKgwqAgc2VjdG9yX3Qgb2xkX2Rldl9zZWN0b3Jz
-ID0gbWRkZXYtPmRldl9zZWN0b3JzOwogwqDCoMKgwqDCoMKgwqAgYm9vbCBpc19yZXNoYXBlZCA9
-IGZhbHNlOwoKK8KgwqDCoMKgwqDCoCBpZiAobWRkZXZfaXNfbG9ja2VkKG1kZGV2KSkKK8KgwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgbWRkZXZfdW5sb2NrKG1kZGV2KTsKIMKgwqDCoMKgwqDC
-oMKgIC8qIHJlc3luYyBoYXMgZmluaXNoZWQsIGNvbGxlY3QgcmVzdWx0ICovCiDCoMKgwqDCoMKg
-wqDCoCBtZF91bnJlZ2lzdGVyX3RocmVhZCgmbWRkZXYtPnN5bmNfdGhyZWFkKTsKK8KgwqDCoMKg
-wqDCoCBpZiAobWRkZXZfaXNfbG9ja2VkKG1kZGV2KSkKK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqAgbWRkZXZfbG9jayhtZGRldik7CiDCoMKgwqDCoMKgwqDCoCBpZiAoIXRlc3RfYml0KE1E
-X1JFQ09WRVJZX0lOVFIsICZtZGRldi0+cmVjb3ZlcnkpICYmCiDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgICF0ZXN0X2JpdChNRF9SRUNPVkVSWV9SRVFVRVNURUQsICZtZGRldi0+cmVjb3ZlcnkpICYm
-CiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIG1kZGV2LT5kZWdyYWRlZCAhPSBtZGRldi0+cmFpZF9k
-aXNrcykgewpkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9tZC5oIGIvZHJpdmVycy9tZC9tZC5oCmlu
-ZGV4IDUzZWE3YTY5NjFkZS4uOTZhODhiNzY4MWQ2IDEwMDY0NAotLS0gYS9kcml2ZXJzL21kL21k
-LmgKKysrIGIvZHJpdmVycy9tZC9tZC5oCkBAIC01NDksNiArNTQ5LDExIEBAIHN0YXRpYyBpbmxp
-bmUgaW50IG1kZGV2X3RyeWxvY2soc3RydWN0IG1kZGV2ICptZGRldikKIMKgfQogwqBleHRlcm4g
-dm9pZCBtZGRldl91bmxvY2soc3RydWN0IG1kZGV2ICptZGRldik7Cgorc3RhdGljIGlubGluZSBp
-bnQgbWRkZXZfaXNfbG9ja2VkKHN0cnVjdCBtZGRldiAqbWRkZXYpCit7CivCoMKgwqDCoMKgwqAg
-cmV0dXJuIG11dGV4X2lzX2xvY2tlZCgmbWRkZXYtPnJlY29uZmlnX211dGV4KTsKK30KKwoKQlRX
-LCBpdCBpcyBob2xpZGF5IHNlYXNvbizCoCBzbyBwZW9wbGUgYXJlIHByb2JhYmx5IG9uIHZhY2F0
-aW9uLgoKVGhhbmtzLApHdW9xaW5nCgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVs
-QHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9k
-bS1kZXZlbA==
+--===============4595696516237216418==
+Content-Type: multipart/alternative; boundary="0000000000009149d605d2a514c2"
+
+--0000000000009149d605d2a514c2
+Content-Type: text/plain; charset="UTF-8"
+
+NACK, see details below.
+
+On Wed, Dec 8, 2021 at 3:24 PM Guoqing Jiang <guoqing.jiang@linux.dev>
+wrote:
+
+>
+>
+> On 12/1/21 1:27 AM, Paul Menzel wrote:
+> >
+> >>>>>>> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> >>>>>>> index cab12b2..0c4cbba 100644
+> >>>>>>> --- a/drivers/md/dm-raid.c
+> >>>>>>> +++ b/drivers/md/dm-raid.c
+> >>>>>>> @@ -3668,7 +3668,7 @@ static int raid_message(struct dm_target
+> >>>>>>> *ti, unsigned int argc, char **argv,
+> >>>>>>>         if (!strcasecmp(argv[0], "idle") || !strcasecmp(argv[0],
+> >>>>>>> "frozen")) {
+> >>>>>>>                 if (mddev->sync_thread) {
+> >>>>>>>                         set_bit(MD_RECOVERY_INTR,
+> >>>>>>> &mddev->recovery);
+> >>>>>>> -                     md_reap_sync_thread(mddev);
+> >>>>>>> +                     md_reap_sync_thread(mddev, false);
+> >>>>>
+> >>>>> I think we can add mddev_lock() and mddev_unlock() here and then
+> >>>>> we don't
+> >>>>> need the extra parameter?
+> >>>>
+> >>>> I thought it too, but I would prefer get the input from DM people
+> >>>> first.
+> >>>>
+> >>>> @ Mike or Alasdair
+> >>>
+> >>> Hi Mike and Alasdair,
+> >>>
+> >>> Could you please comment on this option: adding mddev_lock() and
+> >>> mddev_unlock()
+> >>> to raid_message() around md_reap_sync_thread()?
+>
+> Add Heinz and Jonathan, could you comment about this? Thanks.
+>
+> >>
+> >> The issue is unfortunately still unresolved (at least Linux 5.10.82).
+> >> How can we move forward?
+>
+> If it is not applicable to change dm-raid, another alternative could be
+> like this
+>
+> --- a/drivers/md/md.c
+> +++ b/drivers/md/md.c
+> @@ -9409,8 +9409,12 @@ void md_reap_sync_thread(struct mdev *mddev)
+>          sector_t old_dev_sectors = mddev->dev_sectors;
+>          bool is_reshaped = false;
+>
+> +       if (mddev_is_locked(mddev))
+> +               mddev_unlock(mddev);
+>          /* resync has finished, collect result */
+>          md_unregister_thread(&mddev->sync_thread);
+> +       if (mddev_is_locked(mddev))
+> +               mddev_lock(mddev);
+>          if (!test_bit(MD_RECOVERY_INTR, &mddev->recovery) &&
+>              !test_bit(MD_RECOVERY_REQUESTED, &mddev->recovery) &&
+>              mddev->degraded != mddev->raid_disks) {
+> diff --git a/drivers/md/md.h b/drivers/md/md.h
+> index 53ea7a6961de..96a88b7681d6 100644
+> --- a/drivers/md/md.h
+> +++ b/drivers/md/md.h
+> @@ -549,6 +549,11 @@ static inline int mddev_trylock(struct mddev *mddev)
+>   }
+>   extern void mddev_unlock(struct mddev *mddev);
+>
+> +static inline int mddev_is_locked(struct mddev *mddev)
+> +{
+> +       return mutex_is_locked(&mddev->reconfig_mutex);
+> +}
+> +
+>
+>
+Patch is bogus relative to the proposed mddev_unlock/mddev_lock logic in
+md.c around the
+md_unregister_thread() as it's failing to lock again if it was holding the
+mutex before as it again
+calls mddev_locked() after having the mutex unlocked just before the
+md_unregister_thread() call.
+
+If that patch to md.c holds up in further analysis, it has to keep the
+mddev_is_locked() result
+and unlock/lock conditionally based on its result.
+
+Thanks,
+Heinz
+
+
+BTW, it is holiday season,  so people are probably on vacation.
+>
+> Thanks,
+> Guoqing
+>
+>
+
+--0000000000009149d605d2a514c2
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div>NACK, see details below.</div><div><br></div><div>On =
+Wed, Dec 8, 2021 at 3:24 PM Guoqing Jiang &lt;<a href=3D"mailto:guoqing.jia=
+ng@linux.dev" target=3D"_blank">guoqing.jiang@linux.dev</a>&gt; wrote:<br><=
+/div><div class=3D"gmail_quote"><blockquote class=3D"gmail_quote" style=3D"=
+margin:0px 0px 0px 0.8ex;border-left:1px solid rgb(204,204,204);padding-lef=
+t:1ex"><br>
+<br>
+On 12/1/21 1:27 AM, Paul Menzel wrote:<br>
+&gt;<br>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; diff --git a/drivers/md/dm-raid.c b/drivers/md=
+/dm-raid.c<br>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; index cab12b2..0c4cbba 100644<br>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; --- a/drivers/md/dm-raid.c<br>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; +++ b/drivers/md/dm-raid.c<br>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; @@ -3668,7 +3668,7 @@ static int raid_message(=
+struct dm_target <br>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; *ti, unsigned int argc, char **argv,<br>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if =
+(!strcasecmp(argv[0], &quot;idle&quot;) || !strcasecmp(argv[0], <br>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; &quot;frozen&quot;)) {<br>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (mddev-&gt;sync_thread) {<=
+br>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 set_bit(MD_RECOVERY_INTR, <br>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; &amp;mddev-&gt;recovery);<br>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ md_reap_sync_thread(mddev);<br>
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ md_reap_sync_thread(mddev, false);<br>
+&gt;&gt;&gt;&gt;&gt;<br>
+&gt;&gt;&gt;&gt;&gt; I think we can add mddev_lock() and mddev_unlock() her=
+e and then <br>
+&gt;&gt;&gt;&gt;&gt; we don&#39;t<br>
+&gt;&gt;&gt;&gt;&gt; need the extra parameter?<br>
+&gt;&gt;&gt;&gt;<br>
+&gt;&gt;&gt;&gt; I thought it too, but I would prefer get the input from DM=
+ people <br>
+&gt;&gt;&gt;&gt; first.<br>
+&gt;&gt;&gt;&gt;<br>
+&gt;&gt;&gt;&gt; @ Mike or Alasdair<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; Hi Mike and Alasdair,<br>
+&gt;&gt;&gt;<br>
+&gt;&gt;&gt; Could you please comment on this option: adding mddev_lock() a=
+nd <br>
+&gt;&gt;&gt; mddev_unlock()<br>
+&gt;&gt;&gt; to raid_message() around md_reap_sync_thread()?<br>
+<br>
+Add Heinz and Jonathan, could you comment about this? Thanks.<br>
+<br>
+&gt;&gt;<br>
+&gt;&gt; The issue is unfortunately still unresolved (at least Linux 5.10.8=
+2). <br>
+&gt;&gt; How can we move forward?<br>
+<br>
+If it is not applicable to change dm-raid, another alternative could be <br=
+>
+like this<br>
+<br>
+--- a/drivers/md/md.c<br>
++++ b/drivers/md/md.c<br>
+@@ -9409,8 +9409,12 @@ void md_reap_sync_thread(struct mdev *mddev)<br>
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 sector_t old_dev_sectors =
+=3D mddev-&gt;dev_sectors;<br>
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 bool is_reshaped =3D false=
+;<br>
+<br>
++=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (mddev_is_locked(mddev))<br>
++=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 mddev_unlock(mddev);<br>
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /* resync has finished, co=
+llect result */<br>
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 md_unregister_thread(&amp;=
+mddev-&gt;sync_thread);<br>
++=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (mddev_is_locked(mddev))<br>
++=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 mddev_lock(mddev);<br>
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (!test_bit(MD_RECOVERY_=
+INTR, &amp;mddev-&gt;recovery) &amp;&amp;<br>
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 !t=
+est_bit(MD_RECOVERY_REQUESTED, &amp;mddev-&gt;recovery) &amp;&amp;<br>
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 md=
+dev-&gt;degraded !=3D mddev-&gt;raid_disks) {<br>
+diff --git a/drivers/md/md.h b/drivers/md/md.h<br>
+index 53ea7a6961de..96a88b7681d6 100644<br>
+--- a/drivers/md/md.h<br>
++++ b/drivers/md/md.h<br>
+@@ -549,6 +549,11 @@ static inline int mddev_trylock(struct mddev *mddev)<b=
+r>
+=C2=A0=C2=A0}<br>
+=C2=A0=C2=A0extern void mddev_unlock(struct mddev *mddev);<br>
+<br>
++static inline int mddev_is_locked(struct mddev *mddev)<br>
++{<br>
++=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return mutex_is_locked(&amp;mddev-&gt=
+;reconfig_mutex);<br>
++}<br>
++<br>
+<br></blockquote><div><br></div><div>Patch is bogus relative to the propose=
+d=C2=A0mddev_unlock/mddev_lock logic in md.c around the<br>md_unregister_th=
+read() as it&#39;s failing to lock again if it was holding the mutex before=
+ as it again<br>calls mddev_locked() after having the mutex unlocked just b=
+efore the md_unregister_thread() call.</div><div><br></div><div>If that pat=
+ch to md.c holds up in further analysis, it has to keep the mddev_is_locked=
+() result<br>and unlock/lock conditionally based on its result.</div><div><=
+br></div><div>Thanks,<br></div><div>Heinz=C2=A0</div><div><br></div><div><b=
+r></div><blockquote class=3D"gmail_quote" style=3D"margin:0px 0px 0px 0.8ex=
+;border-left:1px solid rgb(204,204,204);padding-left:1ex">
+BTW, it is holiday season,=C2=A0 so people are probably on vacation.<br>
+<br>
+Thanks,<br>
+Guoqing<br>
+<br>
+</blockquote></div></div>
+
+--0000000000009149d605d2a514c2--
+
+--===============4595696516237216418==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
+--===============4595696516237216418==--
 
