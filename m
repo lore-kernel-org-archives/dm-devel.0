@@ -1,68 +1,61 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 98863C433F5
-	for <dm-devel@archiver.kernel.org>; Thu,  9 Dec 2021 00:55:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7A058C433F5
+	for <dm-devel@archiver.kernel.org>; Thu,  9 Dec 2021 07:01:55 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-469-p0Nx43EiMY2i5jqHeKGH_A-1; Wed, 08 Dec 2021 19:55:45 -0500
-X-MC-Unique: p0Nx43EiMY2i5jqHeKGH_A-1
+ us-mta-400-Ae9IlAWRNnOjwTBWIvg_zw-1; Thu, 09 Dec 2021 02:01:50 -0500
+X-MC-Unique: Ae9IlAWRNnOjwTBWIvg_zw-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BA93F101F002;
-	Thu,  9 Dec 2021 00:55:40 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1D05C36393;
+	Thu,  9 Dec 2021 07:01:46 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B414745D72;
-	Thu,  9 Dec 2021 00:55:39 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8FAE445D7D;
+	Thu,  9 Dec 2021 07:01:44 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EBAE21809CB8;
-	Thu,  9 Dec 2021 00:55:36 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.2])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8985D1809CB8;
+	Thu,  9 Dec 2021 07:01:41 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.7])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1B90tYVw018669 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 8 Dec 2021 19:55:34 -0500
+	id 1B96xJZX015176 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 9 Dec 2021 01:59:19 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 3C59440D1B9F; Thu,  9 Dec 2021 00:55:34 +0000 (UTC)
+	id 917B214171FE; Thu,  9 Dec 2021 06:59:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 381E640D1B9E
-	for <dm-devel@redhat.com>; Thu,  9 Dec 2021 00:55:34 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1EC8A868912
-	for <dm-devel@redhat.com>; Thu,  9 Dec 2021 00:55:34 +0000 (UTC)
-Received: from out2.migadu.com (out2.migadu.com [188.165.223.204]) by
+	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8CAFE14171FD
+	for <dm-devel@redhat.com>; Thu,  9 Dec 2021 06:59:19 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6E5633C00138
+	for <dm-devel@redhat.com>; Thu,  9 Dec 2021 06:59:19 +0000 (UTC)
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-34-Vcy6cAOZPiCslqiS02ktlA-1; Wed, 08 Dec 2021 19:55:32 -0500
-X-MC-Unique: Vcy6cAOZPiCslqiS02ktlA-1
-To: Heinz Mauelshagen <heinzm@redhat.com>
-References: <1613177399-22024-1-git-send-email-guoqing.jiang@cloud.ionos.com>
-	<36a660ed-b995-839e-ac82-dc4ca25ccb8a@molgen.mpg.de>
-	<CAPhsuW5s6fk3kua=9Z9o3VPCcN1wdUqXybXm9cp4arJW5+oBvQ@mail.gmail.com>
-	<9f28f6e2-e46a-bfed-09d8-2fec941ea881@cloud.ionos.com>
-	<CAPhsuW4V8JCCKePj11rf3zo4MJTz6TpW6DDeNmcJBfRSoN+NDA@mail.gmail.com>
-	<a3a1fed7-b886-8603-aa20-20d667a837a7@molgen.mpg.de>
-	<3f2ad763-6fcb-a652-7131-9e20135a1405@molgen.mpg.de>
-	<abe73176-03ca-9305-2005-677edc6ef158@linux.dev>
-	<CAM23VxrYRbWEUsCsez2QOQM9oWKxSv432rc9oZCj5zEPmtND0A@mail.gmail.com>
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and
-	include these headers.
-From: Guoqing Jiang <guoqing.jiang@linux.dev>
-Message-ID: <4beac38d-8932-9081-23ca-4552311697f0@linux.dev>
-Date: Thu, 9 Dec 2021 08:47:58 +0800
+	us-mta-575-9ccVrSjGMS-Z4SqN5clG8g-1; Thu, 09 Dec 2021 01:59:17 -0500
+X-MC-Unique: 9ccVrSjGMS-Z4SqN5clG8g-1
+Received: from [2001:4bb8:180:a1c8:2d0e:135:af53:41f8] (helo=localhost)
+	by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+	id 1mvD4b-0096hm-Jx; Thu, 09 Dec 2021 06:38:34 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Dan Williams <dan.j.williams@intel.com>,
+	Vishal Verma <vishal.l.verma@intel.com>, Dave Jiang <dave.jiang@intel.com>
+Date: Thu,  9 Dec 2021 07:38:27 +0100
+Message-Id: <20211209063828.18944-5-hch@lst.de>
+In-Reply-To: <20211209063828.18944-1-hch@lst.de>
+References: <20211209063828.18944-1-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <CAM23VxrYRbWEUsCsez2QOQM9oWKxSv432rc9oZCj5zEPmtND0A@mail.gmail.com>
-X-Migadu-Flow: FLOW_OUT
-X-Migadu-Auth-User: linux.dev
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+	casper.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -71,19 +64,20 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Mimecast-Bulk-Signature: yes
-X-Mimecast-Spam-Signature: bulk
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 1B90tYVw018669
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-loop: dm-devel@redhat.com
-Cc: Paul Menzel <pmenzel@molgen.mpg.de>, Mike Snitzer <snitzer@redhat.com>,
-	linux-raid <linux-raid@vger.kernel.org>,
-	Song Liu <song@kernel.org>, dm-devel@redhat.com,
-	it+raid@molgen.mpg.de, Donald Buczek <buczek@molgen.mpg.de>,
+Cc: nvdimm@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
+	Vasily Gorbik <gor@linux.ibm.com>,
+	Miklos Szeredi <miklos@szeredi.hu>, linux-s390@vger.kernel.org,
+	Heiko Carstens <hca@linux.ibm.com>, Matthew Wilcox <willy@infradead.org>,
+	virtualization@lists.linux-foundation.org,
+	Christian Borntraeger <borntraeger@de.ibm.com>,
+	dm-devel@redhat.com, Vivek Goyal <vgoyal@redhat.com>,
+	Stefan Hajnoczi <stefanha@redhat.com>,
+	linux-fsdevel@vger.kernel.org, Ira Weiny <ira.weiny@intel.com>,
 	Alasdair Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH V2] md: don't unregister sync_thread with
- reconfig_mutex held
+Subject: [dm-devel] [PATCH 4/5] dax: remove the copy_from_iter and
+	copy_to_iter methods
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -102,84 +96,552 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-CgpPbiAxMi85LzIxIDEyOjM1IEFNLCBIZWlueiBNYXVlbHNoYWdlbiB3cm90ZToKPiBOQUNLLCBz
-ZWUgZGV0YWlscyBiZWxvdy4KPgo+IE9uIFdlZCwgRGVjIDgsIDIwMjEgYXQgMzoyNCBQTSBHdW9x
-aW5nIEppYW5nIDxndW9xaW5nLmppYW5nQGxpbnV4LmRldiAKPiA8bWFpbHRvOmd1b3Fpbmcuamlh
-bmdAbGludXguZGV2Pj4gd3JvdGU6Cj4KPgo+Cj4gICAgIE9uIDEyLzEvMjEgMToyNyBBTSwgUGF1
-bCBNZW56ZWwgd3JvdGU6Cj4gICAgID4KPiAgICAgPj4+Pj4+PiBkaWZmIC0tZ2l0IGEvZHJpdmVy
-cy9tZC9kbS1yYWlkLmMgYi9kcml2ZXJzL21kL2RtLXJhaWQuYwo+ICAgICA+Pj4+Pj4+IGluZGV4
-IGNhYjEyYjIuLjBjNGNiYmEgMTAwNjQ0Cj4gICAgID4+Pj4+Pj4gLS0tIGEvZHJpdmVycy9tZC9k
-bS1yYWlkLmMKPiAgICAgPj4+Pj4+PiArKysgYi9kcml2ZXJzL21kL2RtLXJhaWQuYwo+ICAgICA+
-Pj4+Pj4+IEBAIC0zNjY4LDcgKzM2NjgsNyBAQCBzdGF0aWMgaW50IHJhaWRfbWVzc2FnZShzdHJ1
-Y3QKPiAgICAgZG1fdGFyZ2V0Cj4gICAgID4+Pj4+Pj4gKnRpLCB1bnNpZ25lZCBpbnQgYXJnYywg
-Y2hhciAqKmFyZ3YsCj4gICAgID4+Pj4+Pj4gwqDCoMKgwqDCoMKgwqAgaWYgKCFzdHJjYXNlY21w
-KGFyZ3ZbMF0sICJpZGxlIikgfHwKPiAgICAgIXN0cmNhc2VjbXAoYXJndlswXSwKPiAgICAgPj4+
-Pj4+PiAiZnJvemVuIikpIHsKPiAgICAgPj4+Pj4+PiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqAgaWYgKG1kZGV2LT5zeW5jX3RocmVhZCkgewo+ICAgICA+Pj4+Pj4+IHNldF9iaXQoTURf
-UkVDT1ZFUllfSU5UUiwKPiAgICAgPj4+Pj4+PiAmbWRkZXYtPnJlY292ZXJ5KTsKPiAgICAgPj4+
-Pj4+PiAtIG1kX3JlYXBfc3luY190aHJlYWQobWRkZXYpOwo+ICAgICA+Pj4+Pj4+ICsgbWRfcmVh
-cF9zeW5jX3RocmVhZChtZGRldiwgZmFsc2UpOwo+ICAgICA+Pj4+Pgo+ICAgICA+Pj4+PiBJIHRo
-aW5rIHdlIGNhbiBhZGQgbWRkZXZfbG9jaygpIGFuZCBtZGRldl91bmxvY2soKSBoZXJlIGFuZAo+
-ICAgICB0aGVuCj4gICAgID4+Pj4+IHdlIGRvbid0Cj4gICAgID4+Pj4+IG5lZWQgdGhlIGV4dHJh
-IHBhcmFtZXRlcj8KPiAgICAgPj4+Pgo+ICAgICA+Pj4+IEkgdGhvdWdodCBpdCB0b28sIGJ1dCBJ
-IHdvdWxkIHByZWZlciBnZXQgdGhlIGlucHV0IGZyb20gRE0KPiAgICAgcGVvcGxlCj4gICAgID4+
-Pj4gZmlyc3QuCj4gICAgID4+Pj4KPiAgICAgPj4+PiBAIE1pa2Ugb3IgQWxhc2RhaXIKPiAgICAg
-Pj4+Cj4gICAgID4+PiBIaSBNaWtlIGFuZCBBbGFzZGFpciwKPiAgICAgPj4+Cj4gICAgID4+PiBD
-b3VsZCB5b3UgcGxlYXNlIGNvbW1lbnQgb24gdGhpcyBvcHRpb246IGFkZGluZyBtZGRldl9sb2Nr
-KCkgYW5kCj4gICAgID4+PiBtZGRldl91bmxvY2soKQo+ICAgICA+Pj4gdG8gcmFpZF9tZXNzYWdl
-KCkgYXJvdW5kIG1kX3JlYXBfc3luY190aHJlYWQoKT8KPgo+ICAgICBBZGQgSGVpbnogYW5kIEpv
-bmF0aGFuLCBjb3VsZCB5b3UgY29tbWVudCBhYm91dCB0aGlzPyBUaGFua3MuCj4KPiAgICAgPj4K
-PiAgICAgPj4gVGhlIGlzc3VlIGlzIHVuZm9ydHVuYXRlbHkgc3RpbGwgdW5yZXNvbHZlZCAoYXQg
-bGVhc3QgTGludXgKPiAgICAgNS4xMC44MikuCj4gICAgID4+IEhvdyBjYW4gd2UgbW92ZSBmb3J3
-YXJkPwo+Cj4gICAgIElmIGl0IGlzIG5vdCBhcHBsaWNhYmxlIHRvIGNoYW5nZSBkbS1yYWlkLCBh
-bm90aGVyIGFsdGVybmF0aXZlCj4gICAgIGNvdWxkIGJlCj4gICAgIGxpa2UgdGhpcwo+Cj4gICAg
-IC0tLSBhL2RyaXZlcnMvbWQvbWQuYwo+ICAgICArKysgYi9kcml2ZXJzL21kL21kLmMKPiAgICAg
-QEAgLTk0MDksOCArOTQwOSwxMiBAQCB2b2lkIG1kX3JlYXBfc3luY190aHJlYWQoc3RydWN0IG1k
-ZXYgKm1kZGV2KQo+ICAgICDCoMKgwqDCoMKgwqDCoMKgIHNlY3Rvcl90IG9sZF9kZXZfc2VjdG9y
-cyA9IG1kZGV2LT5kZXZfc2VjdG9yczsKPiAgICAgwqDCoMKgwqDCoMKgwqDCoCBib29sIGlzX3Jl
-c2hhcGVkID0gZmFsc2U7Cj4KPiAgICAgK8KgwqDCoMKgwqDCoCBpZiAobWRkZXZfaXNfbG9ja2Vk
-KG1kZGV2KSkKPiAgICAgK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgbWRkZXZfdW5sb2Nr
-KG1kZGV2KTsKPiAgICAgwqDCoMKgwqDCoMKgwqDCoCAvKiByZXN5bmMgaGFzIGZpbmlzaGVkLCBj
-b2xsZWN0IHJlc3VsdCAqLwo+ICAgICDCoMKgwqDCoMKgwqDCoMKgIG1kX3VucmVnaXN0ZXJfdGhy
-ZWFkKCZtZGRldi0+c3luY190aHJlYWQpOwo+ICAgICArwqDCoMKgwqDCoMKgIGlmIChtZGRldl9p
-c19sb2NrZWQobWRkZXYpKQo+ICAgICArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBtZGRl
-dl9sb2NrKG1kZGV2KTsKPiAgICAgwqDCoMKgwqDCoMKgwqDCoCBpZiAoIXRlc3RfYml0KE1EX1JF
-Q09WRVJZX0lOVFIsICZtZGRldi0+cmVjb3ZlcnkpICYmCj4gICAgIMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoCAhdGVzdF9iaXQoTURfUkVDT1ZFUllfUkVRVUVTVEVELCAmbWRkZXYtPnJlY292ZXJ5
-KSAmJgo+ICAgICDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgbWRkZXYtPmRlZ3JhZGVkICE9IG1k
-ZGV2LT5yYWlkX2Rpc2tzKSB7Cj4gICAgIGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL21kLmggYi9k
-cml2ZXJzL21kL21kLmgKPiAgICAgaW5kZXggNTNlYTdhNjk2MWRlLi45NmE4OGI3NjgxZDYgMTAw
-NjQ0Cj4gICAgIC0tLSBhL2RyaXZlcnMvbWQvbWQuaAo+ICAgICArKysgYi9kcml2ZXJzL21kL21k
-LmgKPiAgICAgQEAgLTU0OSw2ICs1NDksMTEgQEAgc3RhdGljIGlubGluZSBpbnQgbWRkZXZfdHJ5
-bG9jayhzdHJ1Y3QgbWRkZXYKPiAgICAgKm1kZGV2KQo+ICAgICDCoMKgfQo+ICAgICDCoMKgZXh0
-ZXJuIHZvaWQgbWRkZXZfdW5sb2NrKHN0cnVjdCBtZGRldiAqbWRkZXYpOwo+Cj4gICAgICtzdGF0
-aWMgaW5saW5lIGludCBtZGRldl9pc19sb2NrZWQoc3RydWN0IG1kZGV2ICptZGRldikKPiAgICAg
-K3sKPiAgICAgK8KgwqDCoMKgwqDCoCByZXR1cm4gbXV0ZXhfaXNfbG9ja2VkKCZtZGRldi0+cmVj
-b25maWdfbXV0ZXgpOwo+ICAgICArfQo+ICAgICArCj4KPgo+IFBhdGNoIGlzIGJvZ3VzIHJlbGF0
-aXZlIHRvIHRoZSBwcm9wb3NlZMKgbWRkZXZfdW5sb2NrL21kZGV2X2xvY2sgbG9naWMgCj4gaW4g
-bWQuYyBhcm91bmQgdGhlCj4gbWRfdW5yZWdpc3Rlcl90aHJlYWQoKSBhcyBpdCdzIGZhaWxpbmcg
-dG8gbG9jayBhZ2FpbiBpZiBpdCB3YXMgaG9sZGluZyAKPiB0aGUgbXV0ZXggYmVmb3JlIGFzIGl0
-IGFnYWluCj4gY2FsbHMgbWRkZXZfbG9ja2VkKCkgYWZ0ZXIgaGF2aW5nIHRoZSBtdXRleCB1bmxv
-Y2tlZCBqdXN0IGJlZm9yZSB0aGUgCj4gbWRfdW5yZWdpc3Rlcl90aHJlYWQoKSBjYWxsLgo+Cj4g
-SWYgdGhhdCBwYXRjaCB0byBtZC5jIGhvbGRzIHVwIGluIGZ1cnRoZXIgYW5hbHlzaXMsIGl0IGhh
-cyB0byBrZWVwIHRoZSAKPiBtZGRldl9pc19sb2NrZWQoKSByZXN1bHQKPiBhbmQgdW5sb2NrL2xv
-Y2sgY29uZGl0aW9uYWxseSBiYXNlZCBvbiBpdHMgcmVzdWx0Lgo+CgpZZXMsIHRoYXQgd2FzIG15
-IGludGVudGlvbiB0b28sIHRoYW5rcyBmb3IgcG9pbnRpbmcgaXQgb3V0LgoKQEAgLTk0MDcsMTAg
-Kzk0MDcsMTYgQEAgdm9pZCBtZF9yZWFwX3N5bmNfdGhyZWFkKHN0cnVjdCBtZGRldiAqbWRkZXYp
-CiDCoHsKIMKgwqDCoMKgwqDCoMKgIHN0cnVjdCBtZF9yZGV2ICpyZGV2OwogwqDCoMKgwqDCoMKg
-wqAgc2VjdG9yX3Qgb2xkX2Rldl9zZWN0b3JzID0gbWRkZXYtPmRldl9zZWN0b3JzOwotwqDCoMKg
-wqDCoMKgIGJvb2wgaXNfcmVzaGFwZWQgPSBmYWxzZTsKK8KgwqDCoMKgwqDCoCBib29sIGlzX3Jl
-c2hhcGVkID0gZmFsc2UsIGlzX2xvY2tlZCA9IGZhbHNlOwoKIMKgwqDCoMKgwqDCoMKgIC8qIHJl
-c3luYyBoYXMgZmluaXNoZWQsIGNvbGxlY3QgcmVzdWx0ICovCivCoMKgwqDCoMKgwqAgaWYgKG1k
-ZGV2X2lzX2xvY2tlZChtZGRldikpIHsKK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgaXNf
-bG9ja2VkID0gdHJ1ZTsKK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgbWRkZXZfdW5sb2Nr
-KG1kZGV2KTsKK8KgwqDCoMKgwqDCoCB9CiDCoMKgwqDCoMKgwqDCoCBtZF91bnJlZ2lzdGVyX3Ro
-cmVhZCgmbWRkZXYtPnN5bmNfdGhyZWFkKTsKK8KgwqDCoMKgwqDCoCBpZiAoaXNfbG9ja2VkKQor
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBtZGRldl9sb2NrKG1kZGV2KTsKClRoYW5rcywK
-R3VvcWluZwoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0
-dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+These methods indirect the actual DAX read/write path.  In the end pmem
+uses magic flush and mc safe variants and fuse and dcssblk use plain ones
+while device mapper picks redirects to the underlying device.
+
+Add set_dax_virtual() and set_dax_nomcsafe() APIs for fuse to skip these
+special variants, then use them everywhere as they fall back to the plain
+ones on s390 anyway and remove an indirect call from the read/write path
+as well as a lot of boilerplate code.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ drivers/dax/super.c           | 36 ++++++++++++++--
+ drivers/md/dm-linear.c        | 20 ---------
+ drivers/md/dm-log-writes.c    | 80 -----------------------------------
+ drivers/md/dm-stripe.c        | 20 ---------
+ drivers/md/dm.c               | 50 ----------------------
+ drivers/nvdimm/pmem.c         | 20 ---------
+ drivers/s390/block/dcssblk.c  | 14 ------
+ fs/dax.c                      |  5 ---
+ fs/fuse/virtio_fs.c           | 19 +--------
+ include/linux/dax.h           |  9 ++--
+ include/linux/device-mapper.h |  4 --
+ 11 files changed, 37 insertions(+), 240 deletions(-)
+
+diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+index e81d5ee57390f..ff676a07480c8 100644
+--- a/drivers/dax/super.c
++++ b/drivers/dax/super.c
+@@ -105,6 +105,10 @@ enum dax_device_flags {
+ 	DAXDEV_WRITE_CACHE,
+ 	/* flag to check if device supports synchronous flush */
+ 	DAXDEV_SYNC,
++	/* do not use uncached operations to write data */
++	DAXDEV_CACHED,
++	/* do not use mcsafe operations to read data */
++	DAXDEV_NOMCSAFE,
+ };
+ 
+ /**
+@@ -146,9 +150,15 @@ size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+ 	if (!dax_alive(dax_dev))
+ 		return 0;
+ 
+-	return dax_dev->ops->copy_from_iter(dax_dev, pgoff, addr, bytes, i);
++	/*
++	 * The userspace address for the memory copy has already been validated
++	 * via access_ok() in vfs_write, so use the 'no check' version to bypass
++	 * the HARDENED_USERCOPY overhead.
++	 */
++	if (test_bit(DAXDEV_CACHED, &dax_dev->flags))
++		return _copy_from_iter(addr, bytes, i);
++	return _copy_from_iter_flushcache(addr, bytes, i);
+ }
+-EXPORT_SYMBOL_GPL(dax_copy_from_iter);
+ 
+ size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+ 		size_t bytes, struct iov_iter *i)
+@@ -156,9 +166,15 @@ size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
+ 	if (!dax_alive(dax_dev))
+ 		return 0;
+ 
+-	return dax_dev->ops->copy_to_iter(dax_dev, pgoff, addr, bytes, i);
++	/*
++	 * The userspace address for the memory copy has already been validated
++	 * via access_ok() in vfs_red, so use the 'no check' version to bypass
++	 * the HARDENED_USERCOPY overhead.
++	 */
++	if (test_bit(DAXDEV_NOMCSAFE, &dax_dev->flags))
++		return _copy_to_iter(addr, bytes, i);
++	return _copy_mc_to_iter(addr, bytes, i);
+ }
+-EXPORT_SYMBOL_GPL(dax_copy_to_iter);
+ 
+ int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
+ 			size_t nr_pages)
+@@ -220,6 +236,18 @@ void set_dax_synchronous(struct dax_device *dax_dev)
+ }
+ EXPORT_SYMBOL_GPL(set_dax_synchronous);
+ 
++void set_dax_cached(struct dax_device *dax_dev)
++{
++	set_bit(DAXDEV_CACHED, &dax_dev->flags);
++}
++EXPORT_SYMBOL_GPL(set_dax_cached);
++
++void set_dax_nomcsafe(struct dax_device *dax_dev)
++{
++	set_bit(DAXDEV_NOMCSAFE, &dax_dev->flags);
++}
++EXPORT_SYMBOL_GPL(set_dax_nomcsafe);
++
+ bool dax_alive(struct dax_device *dax_dev)
+ {
+ 	lockdep_assert_held(&dax_srcu);
+diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+index 90de42f6743ac..1b97a11d71517 100644
+--- a/drivers/md/dm-linear.c
++++ b/drivers/md/dm-linear.c
+@@ -180,22 +180,6 @@ static long linear_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
+ 	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
+ }
+ 
+-static size_t linear_dax_copy_from_iter(struct dm_target *ti, pgoff_t pgoff,
+-		void *addr, size_t bytes, struct iov_iter *i)
+-{
+-	struct dax_device *dax_dev = linear_dax_pgoff(ti, &pgoff);
+-
+-	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
+-}
+-
+-static size_t linear_dax_copy_to_iter(struct dm_target *ti, pgoff_t pgoff,
+-		void *addr, size_t bytes, struct iov_iter *i)
+-{
+-	struct dax_device *dax_dev = linear_dax_pgoff(ti, &pgoff);
+-
+-	return dax_copy_to_iter(dax_dev, pgoff, addr, bytes, i);
+-}
+-
+ static int linear_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
+ 				      size_t nr_pages)
+ {
+@@ -206,8 +190,6 @@ static int linear_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
+ 
+ #else
+ #define linear_dax_direct_access NULL
+-#define linear_dax_copy_from_iter NULL
+-#define linear_dax_copy_to_iter NULL
+ #define linear_dax_zero_page_range NULL
+ #endif
+ 
+@@ -225,8 +207,6 @@ static struct target_type linear_target = {
+ 	.prepare_ioctl = linear_prepare_ioctl,
+ 	.iterate_devices = linear_iterate_devices,
+ 	.direct_access = linear_dax_direct_access,
+-	.dax_copy_from_iter = linear_dax_copy_from_iter,
+-	.dax_copy_to_iter = linear_dax_copy_to_iter,
+ 	.dax_zero_page_range = linear_dax_zero_page_range,
+ };
+ 
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index cdb22e7a1d0da..139b09b06eda9 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -902,51 +902,6 @@ static void log_writes_io_hints(struct dm_target *ti, struct queue_limits *limit
+ }
+ 
+ #if IS_ENABLED(CONFIG_FS_DAX)
+-static int log_dax(struct log_writes_c *lc, sector_t sector, size_t bytes,
+-		   struct iov_iter *i)
+-{
+-	struct pending_block *block;
+-
+-	if (!bytes)
+-		return 0;
+-
+-	block = kzalloc(sizeof(struct pending_block), GFP_KERNEL);
+-	if (!block) {
+-		DMERR("Error allocating dax pending block");
+-		return -ENOMEM;
+-	}
+-
+-	block->data = kzalloc(bytes, GFP_KERNEL);
+-	if (!block->data) {
+-		DMERR("Error allocating dax data space");
+-		kfree(block);
+-		return -ENOMEM;
+-	}
+-
+-	/* write data provided via the iterator */
+-	if (!copy_from_iter(block->data, bytes, i)) {
+-		DMERR("Error copying dax data");
+-		kfree(block->data);
+-		kfree(block);
+-		return -EIO;
+-	}
+-
+-	/* rewind the iterator so that the block driver can use it */
+-	iov_iter_revert(i, bytes);
+-
+-	block->datalen = bytes;
+-	block->sector = bio_to_dev_sectors(lc, sector);
+-	block->nr_sectors = ALIGN(bytes, lc->sectorsize) >> lc->sectorshift;
+-
+-	atomic_inc(&lc->pending_blocks);
+-	spin_lock_irq(&lc->blocks_lock);
+-	list_add_tail(&block->list, &lc->unflushed_blocks);
+-	spin_unlock_irq(&lc->blocks_lock);
+-	wake_up_process(lc->log_kthread);
+-
+-	return 0;
+-}
+-
+ static struct dax_device *log_writes_dax_pgoff(struct dm_target *ti,
+ 		pgoff_t *pgoff)
+ {
+@@ -964,37 +919,6 @@ static long log_writes_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
+ 	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
+ }
+ 
+-static size_t log_writes_dax_copy_from_iter(struct dm_target *ti,
+-					    pgoff_t pgoff, void *addr, size_t bytes,
+-					    struct iov_iter *i)
+-{
+-	struct log_writes_c *lc = ti->private;
+-	sector_t sector = pgoff * PAGE_SECTORS;
+-	struct dax_device *dax_dev = log_writes_dax_pgoff(ti, &pgoff);
+-	int err;
+-
+-	/* Don't bother doing anything if logging has been disabled */
+-	if (!lc->logging_enabled)
+-		goto dax_copy;
+-
+-	err = log_dax(lc, sector, bytes, i);
+-	if (err) {
+-		DMWARN("Error %d logging DAX write", err);
+-		return 0;
+-	}
+-dax_copy:
+-	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
+-}
+-
+-static size_t log_writes_dax_copy_to_iter(struct dm_target *ti,
+-					  pgoff_t pgoff, void *addr, size_t bytes,
+-					  struct iov_iter *i)
+-{
+-	struct dax_device *dax_dev = log_writes_dax_pgoff(ti, &pgoff);
+-
+-	return dax_copy_to_iter(dax_dev, pgoff, addr, bytes, i);
+-}
+-
+ static int log_writes_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
+ 					  size_t nr_pages)
+ {
+@@ -1005,8 +929,6 @@ static int log_writes_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
+ 
+ #else
+ #define log_writes_dax_direct_access NULL
+-#define log_writes_dax_copy_from_iter NULL
+-#define log_writes_dax_copy_to_iter NULL
+ #define log_writes_dax_zero_page_range NULL
+ #endif
+ 
+@@ -1024,8 +946,6 @@ static struct target_type log_writes_target = {
+ 	.iterate_devices = log_writes_iterate_devices,
+ 	.io_hints = log_writes_io_hints,
+ 	.direct_access = log_writes_dax_direct_access,
+-	.dax_copy_from_iter = log_writes_dax_copy_from_iter,
+-	.dax_copy_to_iter = log_writes_dax_copy_to_iter,
+ 	.dax_zero_page_range = log_writes_dax_zero_page_range,
+ };
+ 
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index 50dba3f39274c..e566115ec0bb8 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -324,22 +324,6 @@ static long stripe_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
+ 	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
+ }
+ 
+-static size_t stripe_dax_copy_from_iter(struct dm_target *ti, pgoff_t pgoff,
+-		void *addr, size_t bytes, struct iov_iter *i)
+-{
+-	struct dax_device *dax_dev = stripe_dax_pgoff(ti, &pgoff);
+-
+-	return dax_copy_from_iter(dax_dev, pgoff, addr, bytes, i);
+-}
+-
+-static size_t stripe_dax_copy_to_iter(struct dm_target *ti, pgoff_t pgoff,
+-		void *addr, size_t bytes, struct iov_iter *i)
+-{
+-	struct dax_device *dax_dev = stripe_dax_pgoff(ti, &pgoff);
+-
+-	return dax_copy_to_iter(dax_dev, pgoff, addr, bytes, i);
+-}
+-
+ static int stripe_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
+ 				      size_t nr_pages)
+ {
+@@ -350,8 +334,6 @@ static int stripe_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
+ 
+ #else
+ #define stripe_dax_direct_access NULL
+-#define stripe_dax_copy_from_iter NULL
+-#define stripe_dax_copy_to_iter NULL
+ #define stripe_dax_zero_page_range NULL
+ #endif
+ 
+@@ -488,8 +470,6 @@ static struct target_type stripe_target = {
+ 	.iterate_devices = stripe_iterate_devices,
+ 	.io_hints = stripe_io_hints,
+ 	.direct_access = stripe_dax_direct_access,
+-	.dax_copy_from_iter = stripe_dax_copy_from_iter,
+-	.dax_copy_to_iter = stripe_dax_copy_to_iter,
+ 	.dax_zero_page_range = stripe_dax_zero_page_range,
+ };
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index f4b972af10928..1b7e4ec9e2f57 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1027,54 +1027,6 @@ static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
+ 	return ret;
+ }
+ 
+-static size_t dm_dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff,
+-				    void *addr, size_t bytes, struct iov_iter *i)
+-{
+-	struct mapped_device *md = dax_get_private(dax_dev);
+-	sector_t sector = pgoff * PAGE_SECTORS;
+-	struct dm_target *ti;
+-	long ret = 0;
+-	int srcu_idx;
+-
+-	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
+-
+-	if (!ti)
+-		goto out;
+-	if (!ti->type->dax_copy_from_iter) {
+-		ret = copy_from_iter(addr, bytes, i);
+-		goto out;
+-	}
+-	ret = ti->type->dax_copy_from_iter(ti, pgoff, addr, bytes, i);
+- out:
+-	dm_put_live_table(md, srcu_idx);
+-
+-	return ret;
+-}
+-
+-static size_t dm_dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff,
+-		void *addr, size_t bytes, struct iov_iter *i)
+-{
+-	struct mapped_device *md = dax_get_private(dax_dev);
+-	sector_t sector = pgoff * PAGE_SECTORS;
+-	struct dm_target *ti;
+-	long ret = 0;
+-	int srcu_idx;
+-
+-	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
+-
+-	if (!ti)
+-		goto out;
+-	if (!ti->type->dax_copy_to_iter) {
+-		ret = copy_to_iter(addr, bytes, i);
+-		goto out;
+-	}
+-	ret = ti->type->dax_copy_to_iter(ti, pgoff, addr, bytes, i);
+- out:
+-	dm_put_live_table(md, srcu_idx);
+-
+-	return ret;
+-}
+-
+ static int dm_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
+ 				  size_t nr_pages)
+ {
+@@ -3024,8 +2976,6 @@ static const struct block_device_operations dm_rq_blk_dops = {
+ 
+ static const struct dax_operations dm_dax_ops = {
+ 	.direct_access = dm_dax_direct_access,
+-	.copy_from_iter = dm_dax_copy_from_iter,
+-	.copy_to_iter = dm_dax_copy_to_iter,
+ 	.zero_page_range = dm_dax_zero_page_range,
+ };
+ 
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 85b3339286bd8..b08f0642aa257 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -301,28 +301,8 @@ static long pmem_dax_direct_access(struct dax_device *dax_dev,
+ 	return __pmem_direct_access(pmem, pgoff, nr_pages, kaddr, pfn);
+ }
+ 
+-/*
+- * Use the 'no check' versions of _copy_from_iter_flushcache() and
+- * _copy_mc_to_iter() to bypass HARDENED_USERCOPY overhead. Bounds
+- * checking, both file offset and device offset, is handled by
+- * dax_iomap_actor()
+- */
+-static size_t pmem_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff,
+-		void *addr, size_t bytes, struct iov_iter *i)
+-{
+-	return _copy_from_iter_flushcache(addr, bytes, i);
+-}
+-
+-static size_t pmem_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff,
+-		void *addr, size_t bytes, struct iov_iter *i)
+-{
+-	return _copy_mc_to_iter(addr, bytes, i);
+-}
+-
+ static const struct dax_operations pmem_dax_ops = {
+ 	.direct_access = pmem_dax_direct_access,
+-	.copy_from_iter = pmem_copy_from_iter,
+-	.copy_to_iter = pmem_copy_to_iter,
+ 	.zero_page_range = pmem_dax_zero_page_range,
+ };
+ 
+diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
+index 10823debc09bd..d614843caf6cc 100644
+--- a/drivers/s390/block/dcssblk.c
++++ b/drivers/s390/block/dcssblk.c
+@@ -44,18 +44,6 @@ static const struct block_device_operations dcssblk_devops = {
+ 	.release 	= dcssblk_release,
+ };
+ 
+-static size_t dcssblk_dax_copy_from_iter(struct dax_device *dax_dev,
+-		pgoff_t pgoff, void *addr, size_t bytes, struct iov_iter *i)
+-{
+-	return copy_from_iter(addr, bytes, i);
+-}
+-
+-static size_t dcssblk_dax_copy_to_iter(struct dax_device *dax_dev,
+-		pgoff_t pgoff, void *addr, size_t bytes, struct iov_iter *i)
+-{
+-	return copy_to_iter(addr, bytes, i);
+-}
+-
+ static int dcssblk_dax_zero_page_range(struct dax_device *dax_dev,
+ 				       pgoff_t pgoff, size_t nr_pages)
+ {
+@@ -72,8 +60,6 @@ static int dcssblk_dax_zero_page_range(struct dax_device *dax_dev,
+ 
+ static const struct dax_operations dcssblk_dax_ops = {
+ 	.direct_access = dcssblk_dax_direct_access,
+-	.copy_from_iter = dcssblk_dax_copy_from_iter,
+-	.copy_to_iter = dcssblk_dax_copy_to_iter,
+ 	.zero_page_range = dcssblk_dax_zero_page_range,
+ };
+ 
+diff --git a/fs/dax.c b/fs/dax.c
+index e0eecd8e3a8f8..cd03485867a74 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -1260,11 +1260,6 @@ static loff_t dax_iomap_iter(const struct iomap_iter *iomi,
+ 		if (map_len > end - pos)
+ 			map_len = end - pos;
+ 
+-		/*
+-		 * The userspace address for the memory copy has already been
+-		 * validated via access_ok() in either vfs_read() or
+-		 * vfs_write(), depending on which operation we are doing.
+-		 */
+ 		if (iov_iter_rw(iter) == WRITE)
+ 			xfer = dax_copy_from_iter(dax_dev, pgoff, kaddr,
+ 					map_len, iter);
+diff --git a/fs/fuse/virtio_fs.c b/fs/fuse/virtio_fs.c
+index 5c03a0364a9bb..754319ce2a29b 100644
+--- a/fs/fuse/virtio_fs.c
++++ b/fs/fuse/virtio_fs.c
+@@ -753,20 +753,6 @@ static long virtio_fs_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
+ 	return nr_pages > max_nr_pages ? max_nr_pages : nr_pages;
+ }
+ 
+-static size_t virtio_fs_copy_from_iter(struct dax_device *dax_dev,
+-				       pgoff_t pgoff, void *addr,
+-				       size_t bytes, struct iov_iter *i)
+-{
+-	return copy_from_iter(addr, bytes, i);
+-}
+-
+-static size_t virtio_fs_copy_to_iter(struct dax_device *dax_dev,
+-				       pgoff_t pgoff, void *addr,
+-				       size_t bytes, struct iov_iter *i)
+-{
+-	return copy_to_iter(addr, bytes, i);
+-}
+-
+ static int virtio_fs_zero_page_range(struct dax_device *dax_dev,
+ 				     pgoff_t pgoff, size_t nr_pages)
+ {
+@@ -783,8 +769,6 @@ static int virtio_fs_zero_page_range(struct dax_device *dax_dev,
+ 
+ static const struct dax_operations virtio_fs_dax_ops = {
+ 	.direct_access = virtio_fs_direct_access,
+-	.copy_from_iter = virtio_fs_copy_from_iter,
+-	.copy_to_iter = virtio_fs_copy_to_iter,
+ 	.zero_page_range = virtio_fs_zero_page_range,
+ };
+ 
+@@ -853,7 +837,8 @@ static int virtio_fs_setup_dax(struct virtio_device *vdev, struct virtio_fs *fs)
+ 	fs->dax_dev = alloc_dax(fs, &virtio_fs_dax_ops);
+ 	if (IS_ERR(fs->dax_dev))
+ 		return PTR_ERR(fs->dax_dev);
+-
++	set_dax_cached(fs->dax_dev);
++	set_dax_nomcsafe(fs->dax_dev);
+ 	return devm_add_action_or_reset(&vdev->dev, virtio_fs_cleanup_dax,
+ 					fs->dax_dev);
+ }
+diff --git a/include/linux/dax.h b/include/linux/dax.h
+index c04f46478e3b5..d22cbf03d37d2 100644
+--- a/include/linux/dax.h
++++ b/include/linux/dax.h
+@@ -28,12 +28,6 @@ struct dax_operations {
+ 	 */
+ 	bool (*dax_supported)(struct dax_device *, struct block_device *, int,
+ 			sector_t, sector_t);
+-	/* copy_from_iter: required operation for fs-dax direct-i/o */
+-	size_t (*copy_from_iter)(struct dax_device *, pgoff_t, void *, size_t,
+-			struct iov_iter *);
+-	/* copy_to_iter: required operation for fs-dax direct-i/o */
+-	size_t (*copy_to_iter)(struct dax_device *, pgoff_t, void *, size_t,
+-			struct iov_iter *);
+ 	/* zero_page_range: required operation. Zero page range   */
+ 	int (*zero_page_range)(struct dax_device *, pgoff_t, size_t);
+ };
+@@ -95,6 +89,9 @@ static inline bool daxdev_mapping_supported(struct vm_area_struct *vma,
+ }
+ #endif
+ 
++void set_dax_cached(struct dax_device *dax_dev);
++void set_dax_nomcsafe(struct dax_device *dax_dev);
++
+ struct writeback_control;
+ #if defined(CONFIG_BLOCK) && defined(CONFIG_FS_DAX)
+ int dax_add_host(struct dax_device *dax_dev, struct gendisk *disk);
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index a7df155ea49b8..b26fecf6c8e87 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -147,8 +147,6 @@ typedef int (*dm_busy_fn) (struct dm_target *ti);
+  */
+ typedef long (*dm_dax_direct_access_fn) (struct dm_target *ti, pgoff_t pgoff,
+ 		long nr_pages, void **kaddr, pfn_t *pfn);
+-typedef size_t (*dm_dax_copy_iter_fn)(struct dm_target *ti, pgoff_t pgoff,
+-		void *addr, size_t bytes, struct iov_iter *i);
+ typedef int (*dm_dax_zero_page_range_fn)(struct dm_target *ti, pgoff_t pgoff,
+ 		size_t nr_pages);
+ 
+@@ -200,8 +198,6 @@ struct target_type {
+ 	dm_iterate_devices_fn iterate_devices;
+ 	dm_io_hints_fn io_hints;
+ 	dm_dax_direct_access_fn direct_access;
+-	dm_dax_copy_iter_fn dax_copy_from_iter;
+-	dm_dax_copy_iter_fn dax_copy_to_iter;
+ 	dm_dax_zero_page_range_fn dax_zero_page_range;
+ 
+ 	/* For internal device-mapper use. */
+-- 
+2.30.2
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
