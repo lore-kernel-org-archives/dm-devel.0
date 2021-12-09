@@ -4,83 +4,65 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 23B53C433EF
-	for <dm-devel@archiver.kernel.org>; Wed,  8 Dec 2021 20:10:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 98863C433F5
+	for <dm-devel@archiver.kernel.org>; Thu,  9 Dec 2021 00:55:50 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-561-0ilL7cDgM7eFkmnJ9jp9Dg-1; Wed, 08 Dec 2021 15:10:48 -0500
-X-MC-Unique: 0ilL7cDgM7eFkmnJ9jp9Dg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-469-p0Nx43EiMY2i5jqHeKGH_A-1; Wed, 08 Dec 2021 19:55:45 -0500
+X-MC-Unique: p0Nx43EiMY2i5jqHeKGH_A-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 245461006AA9;
-	Wed,  8 Dec 2021 20:10:43 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BA93F101F002;
+	Thu,  9 Dec 2021 00:55:40 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3150218369;
-	Wed,  8 Dec 2021 20:10:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B414745D72;
+	Thu,  9 Dec 2021 00:55:39 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 983AB1809CB8;
-	Wed,  8 Dec 2021 20:10:39 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.10])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EBAE21809CB8;
+	Thu,  9 Dec 2021 00:55:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1B8KAbp5024496 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 8 Dec 2021 15:10:38 -0500
+	id 1B90tYVw018669 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 8 Dec 2021 19:55:34 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id D2656401471; Wed,  8 Dec 2021 20:10:37 +0000 (UTC)
+	id 3C59440D1B9F; Thu,  9 Dec 2021 00:55:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CEBB9401E21
-	for <dm-devel@redhat.com>; Wed,  8 Dec 2021 20:10:37 +0000 (UTC)
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 381E640D1B9E
+	for <dm-devel@redhat.com>; Thu,  9 Dec 2021 00:55:34 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B142285A5AA
-	for <dm-devel@redhat.com>; Wed,  8 Dec 2021 20:10:37 +0000 (UTC)
-Received: from mail-wr1-f54.google.com (mail-wr1-f54.google.com
-	[209.85.221.54]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-94-0J4poJ72MzKBRty8kmOcaw-1; Wed, 08 Dec 2021 15:10:36 -0500
-X-MC-Unique: 0J4poJ72MzKBRty8kmOcaw-1
-Received: by mail-wr1-f54.google.com with SMTP id a9so6041327wrr.8
-	for <dm-devel@redhat.com>; Wed, 08 Dec 2021 12:10:35 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:subject:to:references:from:message-id:date
-	:user-agent:mime-version:in-reply-to:content-language
-	:content-transfer-encoding;
-	bh=W2C8tovnq+LxMP7lEnuzA6dTdYMVQ3i1W+cFrUxPPxU=;
-	b=RH6zWSdR3YuaiwF0Q3OP0o3Jg22qO1mKWTAmFtLA5R6DqJefrL2NT1LoN4Mo2PB7jn
-	v+2VwyWfG7TDSI8r8zzwsSpbHv7+Hr2GMNxpsSLzuXUs9UUaFDQBZ8dCxw+VOwnD1AGP
-	XBQhXurPNSD4b57UySl7fcG/KOPPKxM7vb6PGvOpamjlQ3nVIMtybvNviZQCvQeqFE4f
-	CQLIvB+x8F0BstbnEvB/dqlye1lYcaRUzAmaRkPZXAAQt9Wt1ZfrdwrBXbEj5M7V2IyO
-	93py3kSars8ZosmHXSBddK+PX+AcUuhev3S999Y96Abc4POSV29HEYyD9/lLKvh+xN1T
-	JYkw==
-X-Gm-Message-State: AOAM530eX0b4o0v2HSlSEylR+PmfrhLTVBgXnCIaDnKTsE/4v1uu9YrK
-	MSIG13Yr6nyHlGkHwMijrBpXKm2kiXwPJA==
-X-Google-Smtp-Source: ABdhPJz9mKQh2LlRFpwOlR0qzpUV3r/I2in1LsfMTcj7sHZDKr9GaOTxTPDNNTEEi3pn1uv6zjjEkw==
-X-Received: by 2002:a5d:68c1:: with SMTP id p1mr933977wrw.585.1638994233983;
-	Wed, 08 Dec 2021 12:10:33 -0800 (PST)
-Received: from [172.16.10.100] (130.43.23.167.dsl.dyn.forthnet.gr.
-	[130.43.23.167]) by smtp.gmail.com with ESMTPSA id
-	a10sm6689827wmq.27.2021.12.08.12.10.32
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Wed, 08 Dec 2021 12:10:33 -0800 (PST)
-To: Zdenek Kabelac <zkabelac@redhat.com>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>
-References: <1127b165-f886-e3cf-061d-141fa7fb7d97@arrikto.com>
-	<5ccbac2c-8eb8-3e57-3cb3-8f85038d4e01@redhat.com>
-	<1e508a1a-0ba4-0ef2-c660-0c522907ced0@arrikto.com>
-	<7ff5dfca-bebb-4647-212d-3dd3aec678b9@redhat.com>
-From: Nikos Tsironis <ntsironis@arrikto.com>
-Message-ID: <d8624717-7371-2c98-3eb7-1fe1d9e80595@arrikto.com>
-Date: Wed, 8 Dec 2021 22:10:32 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
-	Thunderbird/78.14.0
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1EC8A868912
+	for <dm-devel@redhat.com>; Thu,  9 Dec 2021 00:55:34 +0000 (UTC)
+Received: from out2.migadu.com (out2.migadu.com [188.165.223.204]) by
+	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-34-Vcy6cAOZPiCslqiS02ktlA-1; Wed, 08 Dec 2021 19:55:32 -0500
+X-MC-Unique: Vcy6cAOZPiCslqiS02ktlA-1
+To: Heinz Mauelshagen <heinzm@redhat.com>
+References: <1613177399-22024-1-git-send-email-guoqing.jiang@cloud.ionos.com>
+	<36a660ed-b995-839e-ac82-dc4ca25ccb8a@molgen.mpg.de>
+	<CAPhsuW5s6fk3kua=9Z9o3VPCcN1wdUqXybXm9cp4arJW5+oBvQ@mail.gmail.com>
+	<9f28f6e2-e46a-bfed-09d8-2fec941ea881@cloud.ionos.com>
+	<CAPhsuW4V8JCCKePj11rf3zo4MJTz6TpW6DDeNmcJBfRSoN+NDA@mail.gmail.com>
+	<a3a1fed7-b886-8603-aa20-20d667a837a7@molgen.mpg.de>
+	<3f2ad763-6fcb-a652-7131-9e20135a1405@molgen.mpg.de>
+	<abe73176-03ca-9305-2005-677edc6ef158@linux.dev>
+	<CAM23VxrYRbWEUsCsez2QOQM9oWKxSv432rc9oZCj5zEPmtND0A@mail.gmail.com>
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and
+	include these headers.
+From: Guoqing Jiang <guoqing.jiang@linux.dev>
+Message-ID: <4beac38d-8932-9081-23ca-4552311697f0@linux.dev>
+Date: Thu, 9 Dec 2021 08:47:58 +0800
 MIME-Version: 1.0
-In-Reply-To: <7ff5dfca-bebb-4647-212d-3dd3aec678b9@redhat.com>
+In-Reply-To: <CAM23VxrYRbWEUsCsez2QOQM9oWKxSv432rc9oZCj5zEPmtND0A@mail.gmail.com>
+X-Migadu-Flow: FLOW_OUT
+X-Migadu-Auth-User: linux.dev
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -89,9 +71,19 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Mimecast-Bulk-Signature: yes
+X-Mimecast-Spam-Signature: bulk
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 1B90tYVw018669
 X-loop: dm-devel@redhat.com
-Subject: Re: [dm-devel] Deadlock when swapping a table with a dm-era target
+Cc: Paul Menzel <pmenzel@molgen.mpg.de>, Mike Snitzer <snitzer@redhat.com>,
+	linux-raid <linux-raid@vger.kernel.org>,
+	Song Liu <song@kernel.org>, dm-devel@redhat.com,
+	it+raid@molgen.mpg.de, Donald Buczek <buczek@molgen.mpg.de>,
+	Alasdair Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH V2] md: don't unregister sync_thread with
+ reconfig_mutex held
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,227 +97,89 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-On 12/3/21 6:00 PM, Zdenek Kabelac wrote:
-> Dne 03. 12. 21 v 15:42 Nikos Tsironis napsal(a):
->> On 12/2/21 5:41 PM, Zdenek Kabelac wrote:
->>> Dne 01. 12. 21 v 18:07 Nikos Tsironis napsal(a):
->>>> Hello,
->>>>
->>>> Under certain conditions, swapping a table, that includes a dm-era
->>>> target, with a new table, causes a deadlock.
->>>>
->>>> This happens when a status (STATUSTYPE_INFO) or message IOCTL is blocked
->>>> in the suspended dm-era target.
->>>>
->>>> dm-era executes all metadata operations in a worker thread, which stops
->>>> processing requests when the target is suspended, and resumes again when
->>>> the target is resumed.
->>>>
->>>> So, running 'dmsetup status' or 'dmsetup message' for a suspended dm-era
->>>> device blocks, until the device is resumed.
->>>>
->> Hi Zdenek,
->>
->> Thanks for the feedback. There doesn't seem to be any documentation
->> mentioning that loading the new table should happen before suspend, so
->> thanks a lot for explaining it.
->>
->> Unfortunately, this isn't what causes the deadlock. The following
->> sequence, which loads the table before suspend, also results in a
->> deadlock:
->>
->> 1. Create device with dm-era target
->>
->>    # dmsetup create eradev --table "0 1048576 era /dev/datavg/erameta /dev/datavg/eradata 8192"
->>
->> 2. Load new table to device, e.g., to resize the device
->>
->>    # dmsetup load eradev --table "0 2097152 era /dev/datavg/erameta /dev/datavg/eradata 8192"
->>
->> 3. Suspend the device
->>
->>    # dmsetup suspend eradev
->>
->> 4. Retrieve the status of the device. This blocks for the reasons I
->>    explained in my previous email.
->>
->>    # dmsetup status eradev
-> 
-> 
-> Hi
-> 
-> Querying 'status' while the device is suspend is the next issue you need to fix in your workflow.
-> 
-
-Hi,
-
-These steps are not my exact workflow. It's just a series of steps to
-easily reproduce the bug.
-
-I am not the one retrieving the status of the suspended device. LVM is.
-LVM, when running commands like 'lvs' and 'vgs', retrieves the status of
-the devices on the system using the DM_TABLE_STATUS ioctl.
-
-LVM indeed uses the DM_NOFLUSH_FLAG, but this doesn't make a difference
-for dm-era, since it doesn't check for this flag.
-
-So, for example, a user or a monitoring daemon running an LVM command,
-like 'vgs', at the "wrong" time triggers the bug:
-
-1. Create device with dm-era target
-
-    # dmsetup create eradev --table "0 1048576 era /dev/datavg/erameta /dev/datavg/eradata 8192"
-
-2. Load new table to device, e.g., to resize the device
-
-    # dmsetup load eradev --table "0 2097152 era /dev/datavg/erameta /dev/datavg/eradata 8192"
-
-3. Suspend the device
-
-    # dmsetup suspend eradev
-
-4. Someone, e.g., a user or a monitoring daemon, runs an LVM command at
-    this point, e.g. 'vgs'.
-
-5. 'vgs' tries to retrieve the status of the dm-era device using the
-    DM_TABLE_STATUS ioctl, and blocks.
-
-6. Resume the device: This deadlocks.
-
-    # dmsetup resume eradev
-
-So, I can't change something in my workflow to prevent the bug. It's a
-race that happens when someone runs an LVM command at the "wrong" time.
-
-I am aware that using an appropriate LVM 'global_filter' can prevent
-this, but:
-
-1. This is just a workaround, not a proper solution.
-2. This is not always an option. Imagine someone running an LVM command
-    in a container, for example. Or, we may not be allowed to change the
-    LVM configuration of the host at all.
-
-> Normally 'status' operation may need to flush queued IO operations to get accurate data.
-> 
-> So you should query states before you start to mess with tables.
-> 
-> If you want to get 'status' without flushing - use:   'dmsetup status --noflush'.
-> 
-
-I am aware of that, and of the '--noflush' flag.
-
-But, note, that:
-
-1. As I have already explained in my previous emails, the reason of the
-    deadlock is not I/O related.
-2. dm-era doesn't check for this flag, so using it doesn't make a
-    difference.
-3. Other targets, e.g., dm-thin and dm-cache, that check for this flag,
-    also check _explicitly_ if the device is suspended, before committing
-    their metadata to get accurate statistics. They don't just rely on
-    the user to use the '--noflush' flag.
-
-That said, fixing 'era_status()' to check for the 'noflush' flag and to
-check if the device is suspended, could be a possible fix, which I have
-already proposed in my first email.
-
-Although, as I have already explained, it's not a simple matter of not
-committing metadata when the 'noflush' flag is used, or the device is
-suspended.
-
-dm-era queues the status operation (as well as all operations that touch
-the metadata) for execution by a worker thread, to avoid using locks for
-accessing the metadata.
-
-When the target is suspended this thread doesn't execute operations, so
-the 'table_status()' call blocks, holding the SRCU read lock of the
-device (md->io_barrier), until the target is resumed.
-
-But, 'table_status()' _never_ unblocks if you resume the device with a
-new table preloaded. Instead, the resume operation ('dm_swap_table()')
-deadlocks waiting for 'table_status()' to drop the SRCU read lock.
-
-This never happens, and the only way to recover is to reboot.
-
-> 
->> 5. Resume the device. This deadlocks for the reasons I explained in my
->>    previous email.
->>
->>    # dmsetup resume eradev
->>
->> 6. The dmesg logs are the same as the ones I included in my previous
->>    email.
->>
->> I have explained the reasons for the deadlock in my previous email, but
->> I would be more than happy to discuss them more.
->>
-> 
-> There is no bug - if your only problem is 'stuck'  status while you have devices in suspended state.
-> 
-
-As I explained previously, my problem is not 'stuck' status while the
-device is suspended.
-
-The issue is that if the suspended dm-era device has a new table
-preloaded, the 'stuck' status results in 'stuck' resume.
-
-And the only way to recover is by rebooting.
-
-> You should NOT be doing basically anything while being suspend!!
-> 
-
-The documentation of the writecache target
-(https://www.kernel.org/doc/html/latest/admin-guide/device-mapper/writecache.html)
-states that the following is the proper sequence for removing the cache
-device:
-
-1. send the "flush_on_suspend" message
-2. load an inactive table with a linear target that maps to the
-    underlying device
-3. suspend the device
-4. ask for status and verify that there are no errors
-5. resume the device, so that it will use the linear target
-6. the cache device is now inactive and it can be deleted
-
-The above sequence, except from step 1 that is not applicable to dm-era,
-is exactly the sequence of steps that triggers the bug for dm-era.
-
-These steps, if run for dm-era, cause a deadlock.
-
-So, although I understand your point about not doing anything with a
-suspended device, it seems that this sequence of steps is not wrong, and
-it is actually recommended by the writecache documentation.
-
-Still, as I mentioned, I am not explicitly running the 'status'
-operation on the suspended dm-era device. It's a race with LVM, which
-runs it implicitly when running commands such as 'vgs' or 'lvs'.
-
-> i.e. imagine you suspend 'swap' device and while you are in suspened state kernel decides to swap memory pages - so you get instantly frozen here.
-> 
-> For this reason lvm2 while doing  'suspend/resume' sequance preallocates all memory in front of this operation - does very minimal set of operation between suspend/resume to minimize also latencies and so on.
-> 
-> Clearly if you suspend just some 'supportive'  disk of yours - you likely are no in danger of blocking your swap - but the 'status --noflush' logic still applies.
-> 
-
-I get what you are describing about a 'swap' device, and I agree
-completely.
-
-But, this is not what happens in the case of dm-era.
-
-Regards,
-Nikos.
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+CgpPbiAxMi85LzIxIDEyOjM1IEFNLCBIZWlueiBNYXVlbHNoYWdlbiB3cm90ZToKPiBOQUNLLCBz
+ZWUgZGV0YWlscyBiZWxvdy4KPgo+IE9uIFdlZCwgRGVjIDgsIDIwMjEgYXQgMzoyNCBQTSBHdW9x
+aW5nIEppYW5nIDxndW9xaW5nLmppYW5nQGxpbnV4LmRldiAKPiA8bWFpbHRvOmd1b3Fpbmcuamlh
+bmdAbGludXguZGV2Pj4gd3JvdGU6Cj4KPgo+Cj4gICAgIE9uIDEyLzEvMjEgMToyNyBBTSwgUGF1
+bCBNZW56ZWwgd3JvdGU6Cj4gICAgID4KPiAgICAgPj4+Pj4+PiBkaWZmIC0tZ2l0IGEvZHJpdmVy
+cy9tZC9kbS1yYWlkLmMgYi9kcml2ZXJzL21kL2RtLXJhaWQuYwo+ICAgICA+Pj4+Pj4+IGluZGV4
+IGNhYjEyYjIuLjBjNGNiYmEgMTAwNjQ0Cj4gICAgID4+Pj4+Pj4gLS0tIGEvZHJpdmVycy9tZC9k
+bS1yYWlkLmMKPiAgICAgPj4+Pj4+PiArKysgYi9kcml2ZXJzL21kL2RtLXJhaWQuYwo+ICAgICA+
+Pj4+Pj4+IEBAIC0zNjY4LDcgKzM2NjgsNyBAQCBzdGF0aWMgaW50IHJhaWRfbWVzc2FnZShzdHJ1
+Y3QKPiAgICAgZG1fdGFyZ2V0Cj4gICAgID4+Pj4+Pj4gKnRpLCB1bnNpZ25lZCBpbnQgYXJnYywg
+Y2hhciAqKmFyZ3YsCj4gICAgID4+Pj4+Pj4gwqDCoMKgwqDCoMKgwqAgaWYgKCFzdHJjYXNlY21w
+KGFyZ3ZbMF0sICJpZGxlIikgfHwKPiAgICAgIXN0cmNhc2VjbXAoYXJndlswXSwKPiAgICAgPj4+
+Pj4+PiAiZnJvemVuIikpIHsKPiAgICAgPj4+Pj4+PiDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqAgaWYgKG1kZGV2LT5zeW5jX3RocmVhZCkgewo+ICAgICA+Pj4+Pj4+IHNldF9iaXQoTURf
+UkVDT1ZFUllfSU5UUiwKPiAgICAgPj4+Pj4+PiAmbWRkZXYtPnJlY292ZXJ5KTsKPiAgICAgPj4+
+Pj4+PiAtIG1kX3JlYXBfc3luY190aHJlYWQobWRkZXYpOwo+ICAgICA+Pj4+Pj4+ICsgbWRfcmVh
+cF9zeW5jX3RocmVhZChtZGRldiwgZmFsc2UpOwo+ICAgICA+Pj4+Pgo+ICAgICA+Pj4+PiBJIHRo
+aW5rIHdlIGNhbiBhZGQgbWRkZXZfbG9jaygpIGFuZCBtZGRldl91bmxvY2soKSBoZXJlIGFuZAo+
+ICAgICB0aGVuCj4gICAgID4+Pj4+IHdlIGRvbid0Cj4gICAgID4+Pj4+IG5lZWQgdGhlIGV4dHJh
+IHBhcmFtZXRlcj8KPiAgICAgPj4+Pgo+ICAgICA+Pj4+IEkgdGhvdWdodCBpdCB0b28sIGJ1dCBJ
+IHdvdWxkIHByZWZlciBnZXQgdGhlIGlucHV0IGZyb20gRE0KPiAgICAgcGVvcGxlCj4gICAgID4+
+Pj4gZmlyc3QuCj4gICAgID4+Pj4KPiAgICAgPj4+PiBAIE1pa2Ugb3IgQWxhc2RhaXIKPiAgICAg
+Pj4+Cj4gICAgID4+PiBIaSBNaWtlIGFuZCBBbGFzZGFpciwKPiAgICAgPj4+Cj4gICAgID4+PiBD
+b3VsZCB5b3UgcGxlYXNlIGNvbW1lbnQgb24gdGhpcyBvcHRpb246IGFkZGluZyBtZGRldl9sb2Nr
+KCkgYW5kCj4gICAgID4+PiBtZGRldl91bmxvY2soKQo+ICAgICA+Pj4gdG8gcmFpZF9tZXNzYWdl
+KCkgYXJvdW5kIG1kX3JlYXBfc3luY190aHJlYWQoKT8KPgo+ICAgICBBZGQgSGVpbnogYW5kIEpv
+bmF0aGFuLCBjb3VsZCB5b3UgY29tbWVudCBhYm91dCB0aGlzPyBUaGFua3MuCj4KPiAgICAgPj4K
+PiAgICAgPj4gVGhlIGlzc3VlIGlzIHVuZm9ydHVuYXRlbHkgc3RpbGwgdW5yZXNvbHZlZCAoYXQg
+bGVhc3QgTGludXgKPiAgICAgNS4xMC44MikuCj4gICAgID4+IEhvdyBjYW4gd2UgbW92ZSBmb3J3
+YXJkPwo+Cj4gICAgIElmIGl0IGlzIG5vdCBhcHBsaWNhYmxlIHRvIGNoYW5nZSBkbS1yYWlkLCBh
+bm90aGVyIGFsdGVybmF0aXZlCj4gICAgIGNvdWxkIGJlCj4gICAgIGxpa2UgdGhpcwo+Cj4gICAg
+IC0tLSBhL2RyaXZlcnMvbWQvbWQuYwo+ICAgICArKysgYi9kcml2ZXJzL21kL21kLmMKPiAgICAg
+QEAgLTk0MDksOCArOTQwOSwxMiBAQCB2b2lkIG1kX3JlYXBfc3luY190aHJlYWQoc3RydWN0IG1k
+ZXYgKm1kZGV2KQo+ICAgICDCoMKgwqDCoMKgwqDCoMKgIHNlY3Rvcl90IG9sZF9kZXZfc2VjdG9y
+cyA9IG1kZGV2LT5kZXZfc2VjdG9yczsKPiAgICAgwqDCoMKgwqDCoMKgwqDCoCBib29sIGlzX3Jl
+c2hhcGVkID0gZmFsc2U7Cj4KPiAgICAgK8KgwqDCoMKgwqDCoCBpZiAobWRkZXZfaXNfbG9ja2Vk
+KG1kZGV2KSkKPiAgICAgK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgbWRkZXZfdW5sb2Nr
+KG1kZGV2KTsKPiAgICAgwqDCoMKgwqDCoMKgwqDCoCAvKiByZXN5bmMgaGFzIGZpbmlzaGVkLCBj
+b2xsZWN0IHJlc3VsdCAqLwo+ICAgICDCoMKgwqDCoMKgwqDCoMKgIG1kX3VucmVnaXN0ZXJfdGhy
+ZWFkKCZtZGRldi0+c3luY190aHJlYWQpOwo+ICAgICArwqDCoMKgwqDCoMKgIGlmIChtZGRldl9p
+c19sb2NrZWQobWRkZXYpKQo+ICAgICArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBtZGRl
+dl9sb2NrKG1kZGV2KTsKPiAgICAgwqDCoMKgwqDCoMKgwqDCoCBpZiAoIXRlc3RfYml0KE1EX1JF
+Q09WRVJZX0lOVFIsICZtZGRldi0+cmVjb3ZlcnkpICYmCj4gICAgIMKgwqDCoMKgwqDCoMKgwqDC
+oMKgwqDCoCAhdGVzdF9iaXQoTURfUkVDT1ZFUllfUkVRVUVTVEVELCAmbWRkZXYtPnJlY292ZXJ5
+KSAmJgo+ICAgICDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgbWRkZXYtPmRlZ3JhZGVkICE9IG1k
+ZGV2LT5yYWlkX2Rpc2tzKSB7Cj4gICAgIGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL21kLmggYi9k
+cml2ZXJzL21kL21kLmgKPiAgICAgaW5kZXggNTNlYTdhNjk2MWRlLi45NmE4OGI3NjgxZDYgMTAw
+NjQ0Cj4gICAgIC0tLSBhL2RyaXZlcnMvbWQvbWQuaAo+ICAgICArKysgYi9kcml2ZXJzL21kL21k
+LmgKPiAgICAgQEAgLTU0OSw2ICs1NDksMTEgQEAgc3RhdGljIGlubGluZSBpbnQgbWRkZXZfdHJ5
+bG9jayhzdHJ1Y3QgbWRkZXYKPiAgICAgKm1kZGV2KQo+ICAgICDCoMKgfQo+ICAgICDCoMKgZXh0
+ZXJuIHZvaWQgbWRkZXZfdW5sb2NrKHN0cnVjdCBtZGRldiAqbWRkZXYpOwo+Cj4gICAgICtzdGF0
+aWMgaW5saW5lIGludCBtZGRldl9pc19sb2NrZWQoc3RydWN0IG1kZGV2ICptZGRldikKPiAgICAg
+K3sKPiAgICAgK8KgwqDCoMKgwqDCoCByZXR1cm4gbXV0ZXhfaXNfbG9ja2VkKCZtZGRldi0+cmVj
+b25maWdfbXV0ZXgpOwo+ICAgICArfQo+ICAgICArCj4KPgo+IFBhdGNoIGlzIGJvZ3VzIHJlbGF0
+aXZlIHRvIHRoZSBwcm9wb3NlZMKgbWRkZXZfdW5sb2NrL21kZGV2X2xvY2sgbG9naWMgCj4gaW4g
+bWQuYyBhcm91bmQgdGhlCj4gbWRfdW5yZWdpc3Rlcl90aHJlYWQoKSBhcyBpdCdzIGZhaWxpbmcg
+dG8gbG9jayBhZ2FpbiBpZiBpdCB3YXMgaG9sZGluZyAKPiB0aGUgbXV0ZXggYmVmb3JlIGFzIGl0
+IGFnYWluCj4gY2FsbHMgbWRkZXZfbG9ja2VkKCkgYWZ0ZXIgaGF2aW5nIHRoZSBtdXRleCB1bmxv
+Y2tlZCBqdXN0IGJlZm9yZSB0aGUgCj4gbWRfdW5yZWdpc3Rlcl90aHJlYWQoKSBjYWxsLgo+Cj4g
+SWYgdGhhdCBwYXRjaCB0byBtZC5jIGhvbGRzIHVwIGluIGZ1cnRoZXIgYW5hbHlzaXMsIGl0IGhh
+cyB0byBrZWVwIHRoZSAKPiBtZGRldl9pc19sb2NrZWQoKSByZXN1bHQKPiBhbmQgdW5sb2NrL2xv
+Y2sgY29uZGl0aW9uYWxseSBiYXNlZCBvbiBpdHMgcmVzdWx0Lgo+CgpZZXMsIHRoYXQgd2FzIG15
+IGludGVudGlvbiB0b28sIHRoYW5rcyBmb3IgcG9pbnRpbmcgaXQgb3V0LgoKQEAgLTk0MDcsMTAg
+Kzk0MDcsMTYgQEAgdm9pZCBtZF9yZWFwX3N5bmNfdGhyZWFkKHN0cnVjdCBtZGRldiAqbWRkZXYp
+CiDCoHsKIMKgwqDCoMKgwqDCoMKgIHN0cnVjdCBtZF9yZGV2ICpyZGV2OwogwqDCoMKgwqDCoMKg
+wqAgc2VjdG9yX3Qgb2xkX2Rldl9zZWN0b3JzID0gbWRkZXYtPmRldl9zZWN0b3JzOwotwqDCoMKg
+wqDCoMKgIGJvb2wgaXNfcmVzaGFwZWQgPSBmYWxzZTsKK8KgwqDCoMKgwqDCoCBib29sIGlzX3Jl
+c2hhcGVkID0gZmFsc2UsIGlzX2xvY2tlZCA9IGZhbHNlOwoKIMKgwqDCoMKgwqDCoMKgIC8qIHJl
+c3luYyBoYXMgZmluaXNoZWQsIGNvbGxlY3QgcmVzdWx0ICovCivCoMKgwqDCoMKgwqAgaWYgKG1k
+ZGV2X2lzX2xvY2tlZChtZGRldikpIHsKK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgaXNf
+bG9ja2VkID0gdHJ1ZTsKK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgbWRkZXZfdW5sb2Nr
+KG1kZGV2KTsKK8KgwqDCoMKgwqDCoCB9CiDCoMKgwqDCoMKgwqDCoCBtZF91bnJlZ2lzdGVyX3Ro
+cmVhZCgmbWRkZXYtPnN5bmNfdGhyZWFkKTsKK8KgwqDCoMKgwqDCoCBpZiAoaXNfbG9ja2VkKQor
+wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBtZGRldl9sb2NrKG1kZGV2KTsKClRoYW5rcywK
+R3VvcWluZwoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0
+dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
 
