@@ -1,73 +1,99 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2EE61C433F5
-	for <dm-devel@archiver.kernel.org>; Fri, 10 Dec 2021 14:17:20 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1639145839;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=6LYvxJrmhGyYlwq2lzAhQ3fezq5quM/D/CFV8PHt9TI=;
-	b=gM0KrgxSfPSfzP/V+KENQGytQrE5DzSZlrj2z2unrdFe88kHO798FIDawndwRI3YVd26EY
-	511dLn8nwasFW9djVgw0GNjSsW0tgCkMoa3XSPfz8vXmeLcCNqFDtTI3JQWlsnpxY9SnmN
-	qll8W8D79vwG4hOjaIMSmKwL37NyQBA=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 18BD1C433FE
+	for <dm-devel@archiver.kernel.org>; Sun, 12 Dec 2021 14:22:56 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-231-61DvkR-4MpK9ToHjgopf9Q-1; Fri, 10 Dec 2021 09:17:15 -0500
-X-MC-Unique: 61DvkR-4MpK9ToHjgopf9Q-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-462-2DPqSN6GN_64gZ28TCOagA-1; Sun, 12 Dec 2021 09:22:54 -0500
+X-MC-Unique: 2DPqSN6GN_64gZ28TCOagA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9CDD9801962;
-	Fri, 10 Dec 2021 14:17:10 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1E95C10016F5;
-	Fri, 10 Dec 2021 14:17:10 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3E2EF2FD1B;
+	Sun, 12 Dec 2021 14:22:49 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DD50A1972E;
+	Sun, 12 Dec 2021 14:22:46 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 714F04BB7C;
-	Fri, 10 Dec 2021 14:17:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
-	[10.5.11.23])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7839D1809CB8;
+	Sun, 12 Dec 2021 14:22:41 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1BAEH7wf004470 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 10 Dec 2021 09:17:07 -0500
+	id 1BCEMa3k029649 for <dm-devel@listman.util.phx.redhat.com>;
+	Sun, 12 Dec 2021 09:22:36 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 22A6B45D9; Fri, 10 Dec 2021 14:17:07 +0000 (UTC)
-Received: from horse.redhat.com (unknown [10.22.17.42])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 12ED719C59;
-	Fri, 10 Dec 2021 14:16:30 +0000 (UTC)
-Received: by horse.redhat.com (Postfix, from userid 10451)
-	id 967302209DD; Fri, 10 Dec 2021 09:16:29 -0500 (EST)
-Date: Fri, 10 Dec 2021 09:16:29 -0500
-From: Vivek Goyal <vgoyal@redhat.com>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <YbNhPXBg7G/ridkV@redhat.com>
-References: <20211209063828.18944-1-hch@lst.de>
-	<20211209063828.18944-5-hch@lst.de>
+	id 331962026D2F; Sun, 12 Dec 2021 14:22:36 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2E6E22026D46
+	for <dm-devel@redhat.com>; Sun, 12 Dec 2021 14:22:33 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4C19B85A5AA
+	for <dm-devel@redhat.com>; Sun, 12 Dec 2021 14:22:33 +0000 (UTC)
+Received: from mail-pg1-f174.google.com (mail-pg1-f174.google.com
+	[209.85.215.174]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-209-z5PpmB3NPqOUjgXFJtJ8qA-1; Sun, 12 Dec 2021 09:22:31 -0500
+X-MC-Unique: z5PpmB3NPqOUjgXFJtJ8qA-1
+Received: by mail-pg1-f174.google.com with SMTP id j11so12283193pgs.2
+	for <dm-devel@redhat.com>; Sun, 12 Dec 2021 06:22:31 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc;
+	bh=DZjYIL5Meh9WPTLeEH+cczxaNrQ4dGhT95FlbuKwOdM=;
+	b=UUcFVxTMGqprTjjqQ+Ddm1Fh1QsuPDo6Z6oKncn+242ZCMB1vxqSuGOUXXNeUel+KN
+	Vh3vfNg7acaFaErW0mGY99T1FjDMhG1iv7N94rfGXUcgK2DhImPr7rPQ0aqSczUrjvVx
+	ngPnBJkBfaCmUye3xZJzQnaSREsajtxKa3A/cDs88QaL/MKWF3uBV5TaC41DYPMwxmRy
+	O2n3Xi0S2VpWvp936ltfPbhu9wm4yqTOUcN03ZSmuI1qaYQGestLPmUm8UqKQhTGPaIF
+	HfY3xbfl3LtDm7VfhMAiozc9KIJibRFbVQXk0m5x2kgb9qz4Nsmr+wGH/gViR2yJW36s
+	8fQQ==
+X-Gm-Message-State: AOAM533HhepWtmKg2HcVPLgGd7Aqp59UGuzm6cGwB4bGquNl0S8md3v2
+	5SH3fjlmIs6TM4qCFaFI0UczzbuZYR5tk7hxwl1OSg==
+X-Google-Smtp-Source: ABdhPJyxbhOi5AL5eM6jiu7484TwbdU5pKz4nFxYJvBebbsi3mSjMdfP5DTSAeCbzo51p2wcGaag8JGjamOTAXCXkd0=
+X-Received: by 2002:a62:7ec4:0:b0:4a3:219b:7008 with SMTP id
+	z187-20020a627ec4000000b004a3219b7008mr28747585pfc.3.1639318950463;
+	Sun, 12 Dec 2021 06:22:30 -0800 (PST)
 MIME-Version: 1.0
-In-Reply-To: <20211209063828.18944-5-hch@lst.de>
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+References: <20211209063828.18944-1-hch@lst.de>
+	<20211209063828.18944-2-hch@lst.de>
+In-Reply-To: <20211209063828.18944-2-hch@lst.de>
+From: Dan Williams <dan.j.williams@intel.com>
+Date: Sun, 12 Dec 2021 06:22:20 -0800
+Message-ID: <CAPcyv4gwfVi389e+cES=E6O13+y36OffZPCe+iZguCT_gpjmZA@mail.gmail.com>
+To: Christoph Hellwig <hch@lst.de>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: nvdimm@lists.linux.dev, linux-s390@vger.kernel.org,
-	Dave Jiang <dave.jiang@intel.com>, Vasily Gorbik <gor@linux.ibm.com>,
-	Mike Snitzer <snitzer@redhat.com>, Miklos Szeredi <miklos@szeredi.hu>,
+Cc: Linux NVDIMM <nvdimm@lists.linux.dev>,
+	linux-s390 <linux-s390@vger.kernel.org>, Dave Jiang <dave.jiang@intel.com>,
+	Vasily Gorbik <gor@linux.ibm.com>, Mike Snitzer <snitzer@redhat.com>,
+	Miklos Szeredi <miklos@szeredi.hu>,
 	Vishal Verma <vishal.l.verma@intel.com>,
 	Heiko Carstens <hca@linux.ibm.com>, Matthew Wilcox <willy@infradead.org>,
 	virtualization@lists.linux-foundation.org,
 	Christian Borntraeger <borntraeger@de.ibm.com>,
-	dm-devel@redhat.com, Stefan Hajnoczi <stefanha@redhat.com>,
-	linux-fsdevel@vger.kernel.org, Dan Williams <dan.j.williams@intel.com>,
+	device-mapper development <dm-devel@redhat.com>,
+	Vivek Goyal <vgoyal@redhat.com>, Stefan Hajnoczi <stefanha@redhat.com>,
+	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
 	Ira Weiny <ira.weiny@intel.com>, Alasdair Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH 4/5] dax: remove the copy_from_iter and
- copy_to_iter methods
+Subject: Re: [dm-devel] [PATCH 1/5] uio: remove copy_from_iter_flushcache()
+	and copy_mc_to_iter()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -81,101 +107,88 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Dec 09, 2021 at 07:38:27AM +0100, Christoph Hellwig wrote:
-> These methods indirect the actual DAX read/write path.  In the end pmem
-> uses magic flush and mc safe variants and fuse and dcssblk use plain ones
-> while device mapper picks redirects to the underlying device.
-> 
-> Add set_dax_virtual() and set_dax_nomcsafe() APIs for fuse to skip these
-> special variants, then use them everywhere as they fall back to the plain
-> ones on s390 anyway and remove an indirect call from the read/write path
-> as well as a lot of boilerplate code.
-> 
+On Wed, Dec 8, 2021 at 10:38 PM Christoph Hellwig <hch@lst.de> wrote:
+>
+> These two wrappers are never used.
+>
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
->  drivers/dax/super.c           | 36 ++++++++++++++--
->  drivers/md/dm-linear.c        | 20 ---------
->  drivers/md/dm-log-writes.c    | 80 -----------------------------------
->  drivers/md/dm-stripe.c        | 20 ---------
->  drivers/md/dm.c               | 50 ----------------------
->  drivers/nvdimm/pmem.c         | 20 ---------
->  drivers/s390/block/dcssblk.c  | 14 ------
->  fs/dax.c                      |  5 ---
->  fs/fuse/virtio_fs.c           | 19 +--------
->  include/linux/dax.h           |  9 ++--
->  include/linux/device-mapper.h |  4 --
->  11 files changed, 37 insertions(+), 240 deletions(-)
-> 
-
-[..]
-> diff --git a/fs/fuse/virtio_fs.c b/fs/fuse/virtio_fs.c
-> index 5c03a0364a9bb..754319ce2a29b 100644
-> --- a/fs/fuse/virtio_fs.c
-> +++ b/fs/fuse/virtio_fs.c
-> @@ -753,20 +753,6 @@ static long virtio_fs_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
->  	return nr_pages > max_nr_pages ? max_nr_pages : nr_pages;
+>  drivers/nvdimm/pmem.c |  4 ++--
+>  include/linux/uio.h   | 20 +-------------------
+>  2 files changed, 3 insertions(+), 21 deletions(-)
+>
+> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+> index 4190c8c46ca88..8294f1c701baa 100644
+> --- a/drivers/nvdimm/pmem.c
+> +++ b/drivers/nvdimm/pmem.c
+> @@ -302,8 +302,8 @@ static long pmem_dax_direct_access(struct dax_device *dax_dev,
 >  }
->  
-> -static size_t virtio_fs_copy_from_iter(struct dax_device *dax_dev,
-> -				       pgoff_t pgoff, void *addr,
-> -				       size_t bytes, struct iov_iter *i)
+>
+>  /*
+> - * Use the 'no check' versions of copy_from_iter_flushcache() and
+> - * copy_mc_to_iter() to bypass HARDENED_USERCOPY overhead. Bounds
+> + * Use the 'no check' versions of _copy_from_iter_flushcache() and
+> + * _copy_mc_to_iter() to bypass HARDENED_USERCOPY overhead. Bounds
+>   * checking, both file offset and device offset, is handled by
+>   * dax_iomap_actor()
+>   */
+
+This comment change does not make sense since it is saying why pmem is
+using the "_" versions. However, I assume this whole comment goes away
+in a later patch.
+
+> diff --git a/include/linux/uio.h b/include/linux/uio.h
+> index 6350354f97e90..494d552c1d663 100644
+> --- a/include/linux/uio.h
+> +++ b/include/linux/uio.h
+> @@ -196,7 +196,7 @@ bool copy_from_iter_full_nocache(void *addr, size_t bytes, struct iov_iter *i)
+>  #ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
+>  /*
+>   * Note, users like pmem that depend on the stricter semantics of
+> - * copy_from_iter_flushcache() than copy_from_iter_nocache() must check for
+> + * _copy_from_iter_flushcache() than _copy_from_iter_nocache() must check for
+>   * IS_ENABLED(CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE) before assuming that the
+>   * destination is flushed from the cache on return.
+>   */
+
+Same here.
+
+> @@ -211,24 +211,6 @@ size_t _copy_mc_to_iter(const void *addr, size_t bytes, struct iov_iter *i);
+>  #define _copy_mc_to_iter _copy_to_iter
+>  #endif
+>
+> -static __always_inline __must_check
+> -size_t copy_from_iter_flushcache(void *addr, size_t bytes, struct iov_iter *i)
 > -{
-> -	return copy_from_iter(addr, bytes, i);
+> -       if (unlikely(!check_copy_size(addr, bytes, false)))
+> -               return 0;
+> -       else
+> -               return _copy_from_iter_flushcache(addr, bytes, i);
 > -}
 > -
-> -static size_t virtio_fs_copy_to_iter(struct dax_device *dax_dev,
-> -				       pgoff_t pgoff, void *addr,
-> -				       size_t bytes, struct iov_iter *i)
+> -static __always_inline __must_check
+> -size_t copy_mc_to_iter(void *addr, size_t bytes, struct iov_iter *i)
 > -{
-> -	return copy_to_iter(addr, bytes, i);
+> -       if (unlikely(!check_copy_size(addr, bytes, true)))
+> -               return 0;
+> -       else
+> -               return _copy_mc_to_iter(addr, bytes, i);
 > -}
 > -
->  static int virtio_fs_zero_page_range(struct dax_device *dax_dev,
->  				     pgoff_t pgoff, size_t nr_pages)
->  {
-> @@ -783,8 +769,6 @@ static int virtio_fs_zero_page_range(struct dax_device *dax_dev,
->  
->  static const struct dax_operations virtio_fs_dax_ops = {
->  	.direct_access = virtio_fs_direct_access,
-> -	.copy_from_iter = virtio_fs_copy_from_iter,
-> -	.copy_to_iter = virtio_fs_copy_to_iter,
->  	.zero_page_range = virtio_fs_zero_page_range,
->  };
->  
-> @@ -853,7 +837,8 @@ static int virtio_fs_setup_dax(struct virtio_device *vdev, struct virtio_fs *fs)
->  	fs->dax_dev = alloc_dax(fs, &virtio_fs_dax_ops);
->  	if (IS_ERR(fs->dax_dev))
->  		return PTR_ERR(fs->dax_dev);
-> -
-> +	set_dax_cached(fs->dax_dev);
-
-Looks good to me from virtiofs point of view.
-
-Reviewed-by: Vivek Goyal <vgoyal@redhat.com>
-
-Going forward, I am wondering should virtiofs use flushcache version as
-well. What if host filesystem is using DAX and mapping persistent memory
-pfn directly into qemu address space. I have never tested that.
-
-Right now we are relying on applications to do fsync/msync on virtiofs
-for data persistence.
-
-> +	set_dax_nomcsafe(fs->dax_dev);
->  	return devm_add_action_or_reset(&vdev->dev, virtio_fs_cleanup_dax,
->  					fs->dax_dev);
->  }
-
-Thanks
-Vivek
+>  size_t iov_iter_zero(size_t bytes, struct iov_iter *);
+>  unsigned long iov_iter_alignment(const struct iov_iter *i);
+>  unsigned long iov_iter_gap_alignment(const struct iov_iter *i);
+> --
+> 2.30.2
+>
 
 --
 dm-devel mailing list
