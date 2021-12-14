@@ -4,76 +4,74 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 673EEC433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 14 Dec 2021 20:34:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D97F1C433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 14 Dec 2021 23:54:43 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1639514039;
+	s=mimecast20190719; t=1639526082;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=c85M3+mUW1GuV9qv4sMgYiSJdBRi3GeOJZXwA1xEe3I=;
-	b=Agc4GD0MklfGi+f8kjr18DQcl7tHgOI23a1NsQib6mDV8u5WEhk+V4pGnm6N1LxGjSzKx4
-	bTiyEEo5EU0SpiYzCBSBP1eyxGjJuAqKKAabgmQ2MfOs1lhhpGmYC13YG77FMtNwMAPhtJ
-	wgJVdLKpwtv3bS+MGqnZy9vsvsOzjuI=
+	bh=236aYA93s8RpWI6JhlCPqu60aedn9qv87P8/O1j4jR0=;
+	b=DSIFQyCljzK3D0XBLY1EJ5QmMe0OokGZtwVO9bpDtARUNadmqkexze+K+lJE/A4ywS31X9
+	MvY1UMzg2wTIC4HL2EcpHk6bS3hyNcuwgbwqaFvmeMUzSZTGeHwK0j5S9sSWi3DQ7nCNO/
+	xpo0W1IREI01MPQMyKMOUAHn49AvGeY=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-664-HD0GZuImPe28KA1IGRZ8bg-1; Tue, 14 Dec 2021 15:33:57 -0500
-X-MC-Unique: HD0GZuImPe28KA1IGRZ8bg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-316-OjG3uq3pMyKB9j4Umhi58w-1; Tue, 14 Dec 2021 18:54:39 -0500
+X-MC-Unique: OjG3uq3pMyKB9j4Umhi58w-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6A6CC81CCB9;
-	Tue, 14 Dec 2021 20:33:53 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 56D59100C661;
+	Tue, 14 Dec 2021 23:54:35 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CD8225F4E1;
-	Tue, 14 Dec 2021 20:33:51 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4835C5BD3B;
+	Tue, 14 Dec 2021 23:54:34 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 91B0A1809CB8;
-	Tue, 14 Dec 2021 20:33:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
-	[10.5.11.23])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BC3671806D2B;
+	Tue, 14 Dec 2021 23:54:30 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
+	[10.5.11.15])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1BEKXE2k014271 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 14 Dec 2021 15:33:14 -0500
+	id 1BENPbTE030355 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 14 Dec 2021 18:25:37 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 07794E2CD; Tue, 14 Dec 2021 20:33:14 +0000 (UTC)
-Received: from horse.redhat.com (unknown [10.22.33.95])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6E3C422DFC;
-	Tue, 14 Dec 2021 20:32:44 +0000 (UTC)
-Received: by horse.redhat.com (Postfix, from userid 10451)
-	id EB1B82233DF; Tue, 14 Dec 2021 15:32:43 -0500 (EST)
-Date: Tue, 14 Dec 2021 15:32:43 -0500
-From: Vivek Goyal <vgoyal@redhat.com>
-To: Dan Williams <dan.j.williams@intel.com>
-Message-ID: <Ybj/azxrUyU4PZEr@redhat.com>
-References: <20211209063828.18944-1-hch@lst.de>
-	<20211209063828.18944-5-hch@lst.de> <YbNhPXBg7G/ridkV@redhat.com>
-	<CAPcyv4g4_yFqDeS+pnAZOxcB=Ua+iArK5mqn0iMG4PX6oL=F_A@mail.gmail.com>
-	<20211213082318.GB21462@lst.de> <YbiosqZoG8e6rDkj@redhat.com>
-	<CAPcyv4hFjKsPrPTB4NtLHiY8gyaELz9+45N1OFj3hz+uJ=9JnA@mail.gmail.com>
+	id 65F425BE36; Tue, 14 Dec 2021 23:25:37 +0000 (UTC)
+Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E7FC25F6B7;
+	Tue, 14 Dec 2021 23:25:30 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1BENPSfG005447; 
+	Tue, 14 Dec 2021 17:25:28 -0600
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1BENPQ10005446;
+	Tue, 14 Dec 2021 17:25:26 -0600
+Date: Tue, 14 Dec 2021 17:25:26 -0600
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Message-ID: <20211214232526.GB19591@octiron.msp.redhat.com>
+References: <20211118225840.19810-1-mwilck@suse.com>
+	<20211118225840.19810-4-mwilck@suse.com>
+	<20211124204118.GP19591@octiron.msp.redhat.com>
+	<52ddff9a6d2b1813d1269a008eb92ee522c3d6ad.camel@suse.com>
+	<20211129192729.GD19591@octiron.msp.redhat.com>
+	<d9260ceb655395864041a5037bac5aab6f722cf0.camel@suse.com>
+	<20211130165251.GK19591@octiron.msp.redhat.com>
+	<c6893070dd0d70420104ed071f7f45a365bd7faf.camel@suse.com>
+	<1e0efe64215f399ca2f248590b48b4ec5024d8ed.camel@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <CAPcyv4hFjKsPrPTB4NtLHiY8gyaELz9+45N1OFj3hz+uJ=9JnA@mail.gmail.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+In-Reply-To: <1e0efe64215f399ca2f248590b48b4ec5024d8ed.camel@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 X-loop: dm-devel@redhat.com
-Cc: Linux NVDIMM <nvdimm@lists.linux.dev>,
-	linux-s390 <linux-s390@vger.kernel.org>, Dave Jiang <dave.jiang@intel.com>,
-	Vasily Gorbik <gor@linux.ibm.com>, Mike Snitzer <snitzer@redhat.com>,
-	Miklos Szeredi <miklos@szeredi.hu>,
-	Vishal Verma <vishal.l.verma@intel.com>,
-	Heiko Carstens <hca@linux.ibm.com>, Matthew Wilcox <willy@infradead.org>,
-	virtualization@lists.linux-foundation.org,
-	Christian Borntraeger <borntraeger@de.ibm.com>,
-	device-mapper development <dm-devel@redhat.com>,
-	Stefan Hajnoczi <stefanha@redhat.com>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	Ira Weiny <ira.weiny@intel.com>, Christoph Hellwig <hch@lst.de>,
-	Alasdair Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH 4/5] dax: remove the copy_from_iter and
- copy_to_iter methods
+Cc: lixiaokeng@huawei.com, dm-devel@redhat.com,
+	Chongyun Wu <wu.chongyun@h3c.com>
+Subject: Re: [dm-devel] [PATCH v2 03/48] libmultipath: add optional wakeup
+ functionality to lock.c
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -87,7 +85,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -96,94 +94,60 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Dec 14, 2021 at 08:41:30AM -0800, Dan Williams wrote:
-> On Tue, Dec 14, 2021 at 6:23 AM Vivek Goyal <vgoyal@redhat.com> wrote:
-> >
-> > On Mon, Dec 13, 2021 at 09:23:18AM +0100, Christoph Hellwig wrote:
-> > > On Sun, Dec 12, 2021 at 06:44:26AM -0800, Dan Williams wrote:
-> > > > On Fri, Dec 10, 2021 at 6:17 AM Vivek Goyal <vgoyal@redhat.com> wrote:
-> > > > > Going forward, I am wondering should virtiofs use flushcache version as
-> > > > > well. What if host filesystem is using DAX and mapping persistent memory
-> > > > > pfn directly into qemu address space. I have never tested that.
-> > > > >
-> > > > > Right now we are relying on applications to do fsync/msync on virtiofs
-> > > > > for data persistence.
-> > > >
-> > > > This sounds like it would need coordination with a paravirtualized
-> > > > driver that can indicate whether the host side is pmem or not, like
-> > > > the virtio_pmem driver. However, if the guest sends any fsync/msync
-> > > > you would still need to go explicitly cache flush any dirty page
-> > > > because you can't necessarily trust that the guest did that already.
-> > >
-> > > Do we?  The application can't really know what backend it is on, so
-> > > it sounds like the current virtiofs implementation doesn't really, does it?
-> >
-> > Agreed that application does not know what backend it is on. So virtiofs
-> > just offers regular posix API where applications have to do fsync/msync
-> > for data persistence. No support for mmap(MAP_SYNC). We don't offer persistent
-> > memory programming model on virtiofs. That's not the expectation. DAX
-> > is used only to bypass guest page cache.
-> >
-> > With this assumption, I think we might not have to use flushcache version
-> > at all even if shared filesystem is on persistent memory on host.
-> >
-> > - We mmap() host files into qemu address space. So any dax store in virtiofs
-> >   should make corresponding pages dirty in page cache on host and when
-> >   and fsync()/msync() comes later, it should flush all the data to PMEM.
-> >
-> > - In case of file extending writes, virtiofs falls back to regular
-> >   FUSE_WRITE path (and not use DAX), and in that case host pmem driver
-> >   should make sure writes are flushed to pmem immediately.
-> >
-> > Are there any other path I am missing. If not, looks like we might not
-> > have to use flushcache version in virtiofs at all as long as we are not
-> > offering guest applications user space flushes and MAP_SYNC support.
-> >
-> > We still might have to use machine check safe variant though as loads
-> > might generate synchronous machine check. What's not clear to me is
-> > that if this MC safe variant should be used only in case of PMEM or
-> > should it be used in case of non-PMEM as well.
+On Wed, Dec 01, 2021 at 01:06:45PM +0100, Martin Wilck wrote:
+> On Tue, 2021-11-30 at 21:28 +0100, Martin Wilck wrote:
+> > On Tue, 2021-11-30 at 10:52 -0600, Benjamin Marzinski wrote:
+> > > On Mon, Nov 29, 2021 at 09:52:49PM +0100, Martin Wilck wrote:
+> > > > I agree. Also, I realize that we've bumped the library version
+> > > > too
+> > > > often in the past. If we add a function, we don't need to bump.
+> > > > Because
+> > > > a program that needs the added function will require e.g.
+> > > > foo@LIBMULTIPATH_10.0.0, and this will fail for a library that
+> > > > doesn't
+> > > > export foo (which is what we want). Likewise for function
+> > > > deletion
+> > > > - a
+> > > > program that calls the deleted function will fail to link with
+> > > > the
+> > > > updated library. OTOH, programs that use this version of the ABI
+> > > > *without* using the functions which are added or removed are
+> > > > unaffected
+> > > > by the addition / removal.
+> > > > 
+> > > > The only case in which the ABI version must be bumped is when we
+> > > > have
+> > > > changed functions or data structures.
+> > > > 
+> > > > Furthermore, I believe now that the habit (which I introduced) to
+> > > > list
+> > > > added functions at the end of the .version files, with comments
+> > > > indicating when they were added, is useless. We should rather
+> > > > keep
+> > > > the
+> > > > .version file ordered alphabetically.
+> > > 
+> > > So we not use the minor version anymore? 
+> > 
+> > Perhaps we'll encounter another use case for it, or we find a flaw in
+> > my reasoning above. I wouldn't remove the digit.
 > 
-> It should be used on any memory address that can throw exception on
-> load, which is any physical address, in paths that can tolerate
-> memcpy() returning an error code, most I/O paths, and can tolerate
-> slower copy performance on older platforms that do not support MC
-> recovery with fast string operations, to date that's only PMEM users.
+> And here's the flaw: While my argument above is valid for ld.so, it's
+> not for package management tools like rpm. Here on openSUSE, we got rpm
+> Requires like "libmultipath.so.0(LIBMULTIPATH_13.0.0)(64bit)". As
+> distributors, we prefer incompatibilities to be detected at
+> installation time rather than at runtime. So, we do need the minor
+> version bumps.
 
-Ok, So basically latest cpus can do fast string operations with MC
-recovery so that using MC safe variant is not a problem.
+So where does this leave us. Are we bumping versions once per merge to
+Christophe's offical branch, and if distributions put out multiple
+releases between these, they are responsible for any version bumps that
+they need.  Or are we bumping versions once per patchset if needed?
 
-Then there is range of cpus which can do MC recovery but do slower
-versions of memcpy and that's where the issue is.
+-Ben
 
-So if we knew that virtiofs dax window is backed by a pmem device
-then we should always use MC safe variant. Even if it means paying
-the price of slow version for the sake of correctness. 
-
-But if we are not using pmem on host, then there is no point in
-using MC safe variant.
-
-IOW.
-
-	if (virtiofs_backed_by_pmem) {
-		use_mc_safe_version
-	else
-		use_non_mc_safe_version
-	}
-
-Now question is, how do we know if virtiofs dax window is backed by
-a pmem or not. I checked virtio_pmem driver and that does not seem
-to communicate anything like that. It just communicates start of the
-range and size of range, nothing else.
-
-I don't have full handle on stack of modules of virtio_pmem, but my guess
-is it probably is using MC safe version always (because it does not
-know anthing about the backing storage).
-
-/me will definitely like to pay penalty of slower memcpy if virtiofs
-device is not backed by a pmem.
-
-Vivek
+> 
+> Martin
 
 --
 dm-devel mailing list
