@@ -4,105 +4,70 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4BA2EC43219
-	for <dm-devel@archiver.kernel.org>; Mon, 13 Dec 2021 22:34:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 527BBC433F5
+	for <dm-devel@archiver.kernel.org>; Tue, 14 Dec 2021 00:54:03 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1639443242;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=IuVAoF5525HLeeXm4C3awCMtdxztqleC3EoVmvxzWWY=;
+	b=eSYUU2tKZvjDr0qBlSCzDE3jfxU6Ttgn/LgjAT6G+4XdssGF0Y7smcXbIA+a9Zc7A4fUKL
+	L7iA68ifsmfzxZ6tFCisCsQKIbeAM45ujLzCnmOrRmWUSzj7QPZ/TlsWb3EgL5oyjDT7xo
+	WDD0x+awDtkWQKrk1rDyqgU9d3QBjT4=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-280-2uKoeixzOVaRdVpfARvnmg-1; Mon, 13 Dec 2021 17:34:05 -0500
-X-MC-Unique: 2uKoeixzOVaRdVpfARvnmg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-356-3pxd0JHuO8qmMGTgFLYyQg-1; Mon, 13 Dec 2021 19:53:58 -0500
+X-MC-Unique: 3pxd0JHuO8qmMGTgFLYyQg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E4612801AAB;
-	Mon, 13 Dec 2021 22:34:00 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BBA801972E;
-	Mon, 13 Dec 2021 22:33:59 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 753931006AA2;
+	Tue, 14 Dec 2021 00:53:54 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8540D45D88;
+	Tue, 14 Dec 2021 00:53:53 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DA4A34BB7C;
-	Mon, 13 Dec 2021 22:33:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3E9D5180B617;
+	Tue, 14 Dec 2021 00:53:51 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
+	[10.5.11.22])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1BDMXs2b027768 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 13 Dec 2021 17:33:54 -0500
+	id 1BE0rnAR007258 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 13 Dec 2021 19:53:49 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 71DD0202E4A3; Mon, 13 Dec 2021 22:33:54 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6AD2C2026D46
-	for <dm-devel@redhat.com>; Mon, 13 Dec 2021 22:33:49 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1DBED8022F1
-	for <dm-devel@redhat.com>; Mon, 13 Dec 2021 22:33:49 +0000 (UTC)
-Received: from mail-pf1-f170.google.com (mail-pf1-f170.google.com
-	[209.85.210.170]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-194-DsIy_eUJP1CWx3TQyrC9dQ-1; Mon, 13 Dec 2021 17:33:42 -0500
-X-MC-Unique: DsIy_eUJP1CWx3TQyrC9dQ-1
-Received: by mail-pf1-f170.google.com with SMTP id r130so16252275pfc.1
-	for <dm-devel@redhat.com>; Mon, 13 Dec 2021 14:33:42 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-	:references:mime-version:content-transfer-encoding;
-	bh=YgyvWs4tutxnDqYTDwetVnj46UWWmfeOWxYILXaAup0=;
-	b=u6p0mpd3TNJcaHneVr4K3N0eSLgz7Xkno8ZAo6TtJMyeqW4K7ayGP7V1h1w652nTmA
-	lhZlMOM4jcZ8w2oleyEeGB/ziqShYEZrxEHAXeZNHz9kBOes4dwVVFVNqE66/OL1EZ5S
-	eahExzn09zQzM0zvCyVfXtkyoeImRV8w67jyO81Kj0ALyVIhq4Z4O1/aT3BcG2Gh5m/m
-	0V/k9B6s+w/w4B8XYKFIEwgV3RAn7G5Bfc37vAY0G/BU25A5IlDFyjvgHLADiAbYYexM
-	kjd3QhhtMIe9R0K3djWfmXMDs8jJI1dvjSgeRrzkBVy2DGo5DtSkbDk806CM2c+eqIHa
-	AvaA==
-X-Gm-Message-State: AOAM533uEFZH7xmD8V1iDXZq6FTmmEJLErxw9+ATlpDFJ2OGFLCTNu96
-	57t74ACR1TYnmhT9WZcc6g4VZu6wtmm1MA==
-X-Google-Smtp-Source: ABdhPJxfs3G9SgBQOpvzNbbUSr07IB+8a2RoV0KOBCY/VV1CteSYlQSlFhfsGXdWAr8ufph1XIWCaA==
-X-Received: by 2002:a63:62c6:: with SMTP id w189mr999201pgb.343.1639434821587; 
-	Mon, 13 Dec 2021 14:33:41 -0800 (PST)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
-	by smtp.gmail.com with ESMTPSA id
-	z14sm14106178pfh.60.2021.12.13.14.33.38
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Mon, 13 Dec 2021 14:33:40 -0800 (PST)
-From: Kees Cook <keescook@chromium.org>
-To: linux-hardening@vger.kernel.org
-Date: Mon, 13 Dec 2021 14:33:25 -0800
-Message-Id: <20211213223331.135412-12-keescook@chromium.org>
-In-Reply-To: <20211213223331.135412-1-keescook@chromium.org>
-References: <20211213223331.135412-1-keescook@chromium.org>
+	id 9E193100E125; Tue, 14 Dec 2021 00:53:49 +0000 (UTC)
+Received: from T590 (ovpn-8-18.pek2.redhat.com [10.72.8.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 91D791007607;
+	Tue, 14 Dec 2021 00:53:31 +0000 (UTC)
+Date: Tue, 14 Dec 2021 08:53:26 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Dexuan Cui <decui@microsoft.com>
+Message-ID: <YbfrBpcV4hasdqQB@T590>
+References: <BYAPR21MB1270C598ED214C0490F47400BF719@BYAPR21MB1270.namprd21.prod.outlook.com>
+	<BYAPR21MB1270DCE17A0FE017AF3272F1BF729@BYAPR21MB1270.namprd21.prod.outlook.com>
+	<b80bfe9a-bece-1f32-3d2a-fb4d94b1fa8c@kernel.dk>
+	<BYAPR21MB1270B5DAD526C42C070ECB9EBF729@BYAPR21MB1270.namprd21.prod.outlook.com>
+	<Yba8nL4x9R6rmTYL@T590>
+	<BYAPR21MB127006555030F7BFA47FDAABBF749@BYAPR21MB1270.namprd21.prod.outlook.com>
+	<Ybb4X00rfsjRgHj7@T590>
+	<BYAPR21MB12706DCD5ED9FC7AB3EE2EEABF759@BYAPR21MB1270.namprd21.prod.outlook.com>
 MIME-Version: 1.0
-X-Developer-Signature: v=1; a=openpgp-sha256; l=1663; h=from:subject;
-	bh=Rw8elaX7lzkqZjVeNdewcjpE1pz4Up9kM2UagQ4QfoI=;
-	b=owEBbQKS/ZANAwAKAYly9N/cbcAmAcsmYgBht8o5l4H+ZB5qLvrKCuFHRRdblpiRo+kyACzvwRjU
-	NJG7MUGJAjMEAAEKAB0WIQSlw/aPIp3WD3I+bhOJcvTf3G3AJgUCYbfKOQAKCRCJcvTf3G3AJqt0D/
-	442RCWEfLc/vdJO62YkZXZbB86UYpqLs4jsfmJVAEkx1bNVEloZiAif7Bt2t0ZojDaapmU1VefQTo7
-	Nw8zpBk0JkOinnr7PMRoZFA+4ML3GD26IoHkkdmlHmazoirzWVZ3a0RWyjcvCzTcP2ui9K5q0alwjD
-	E4lxTnUnuQD12YR4FgxJz5UR5WmfJT5cd4WTsMoxrSunwkZNA+D0OXTMq706Ppu4IEVAZ74udYWRHB
-	dhhLIp1ijQnkGMm9KeGcSo7sOlPRFB5/43T5jOoB9GoEtHQzdbzFxY+0bSP1yXaUBrUOfih2VmW0Qb
-	kalL/o7vrD84bAzd920phPCmSWnpHQlBvDSB7u5XYNp6Zs0EnRYIJV2z+g1o0zceEaNrVbhsjq1Loi
-	Hv+9VoUrujn/5n5FHRvrUPgdnkf+HnvVKxc+8rnXSqdMsJoTXU7yz/doAH2x93ac2mLbiVRxA2rvQo
-	GoFGSJ4zQeFfGlCSKOeQo17UKOZsAA5YF41J8GR54McDg3k3EetgUanJlz04P/YER31qTj7Hu1zClU
-	btgXZRyAgJM0pkdxgfIlUnxeOtXqWGujlwnrUJbdXq+7mI8xxY66kN7E0EHcsVFzCFnUd0jduTxh5S
-	ASm+fSppb3CWwxajeVgI9wPDZj68zHa20Mo3ugrQOBPXoL2jeZidn2EqzDBA==
-X-Developer-Key: i=keescook@chromium.org; a=openpgp;
-	fpr=A5C3F68F229DD60F723E6E138972F4DFDC6DC026
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+In-Reply-To: <BYAPR21MB12706DCD5ED9FC7AB3EE2EEABF759@BYAPR21MB1270.namprd21.prod.outlook.com>
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 X-loop: dm-devel@redhat.com
-Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com,
-	Kees Cook <keescook@chromium.org>,
-	Alasdair Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org
-Subject: [dm-devel] [PATCH 11/17] dm integrity: Use struct_group() to zero
-	struct journal_sector
+Cc: Jens Axboe <axboe@kernel.dk>, Mike Snitzer <snitzer@redhat.com>,
+	Long Li <longli@microsoft.com>,
+	"'linux-kernel@vger.kernel.org'" <linux-kernel@vger.kernel.org>,
+	"Michael Kelley \(LINUX\)" <mikelley@microsoft.com>,
+	"'linux-block@vger.kernel.org'" <linux-block@vger.kernel.org>,
+	dm-devel@redhat.com, 'Christoph Hellwig' <hch@lst.de>
+Subject: Re: [dm-devel] Random high CPU utilization in blk-mq with the none
+	scheduler
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -116,58 +81,96 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-In preparation for FORTIFY_SOURCE performing compile-time and run-time
-field bounds checking for memset(), avoid intentionally writing across
-neighboring fields.
+On Tue, Dec 14, 2021 at 12:31:23AM +0000, Dexuan Cui wrote:
+> > From: Ming Lei <ming.lei@redhat.com>
+> > Sent: Sunday, December 12, 2021 11:38 PM
+> 
+> Ming, thanks so much for the detailed analysis!
+> 
+> > From the log:
+> > 
+> > 1) dm-mpath:
+> > - queue depth: 2048
+> > - busy: 848, and 62 of them are in sw queue, so run queue is often
+> >   caused
+> > - nr_hw_queues: 1
+> > - dm-2 is in use, and dm-1/dm-3 is idle
+> > - dm-2's dispatch busy is 8, that should be the reason why excessive CPU
+> > usage is observed when flushing plug list without commit dc5fc361d891 in
+> > which hctx->dispatch_busy is just bypassed
+> > 
+> > 2) iscsi
+> > - dispatch_busy is 0
+> > - nr_hw_queues: 1
+> > - queue depth: 113
+> > - busy=~33, active_queues is 3, so each LUN/iscsi host is saturated
+> > - 23 active LUNs, 23 * 33 = 759 in-flight commands
+> > 
+> > The high CPU utilization may be caused by:
+> > 
+> > 1) big queue depth of dm mpath, the situation may be improved much if it
+> > is reduced to 1024 or 800. The max allowed inflight commands from iscsi
+> > hosts can be figured out, if dm's queue depth is much more than this number,
+> > the extra commands need to dispatch, and run queue can be scheduled
+> > immediately, so high CPU utilization is caused.
+> 
+> I think you're correct:
+> with dm_mod.dm_mq_queue_depth=256, the max CPU utilization is 8%.
+> with dm_mod.dm_mq_queue_depth=400, the max CPU utilization is 12%. 
+> with dm_mod.dm_mq_queue_depth=800, the max CPU utilization is 88%.
+> 
+> The performance with queue_depth=800 is poor.
+> The performance with queue_depth=400 is good.
+> The performance with queue_depth=256 is also good, and there is only a 
+> small drop comared with the 400 case.
 
-Add struct_group() to mark region of struct journal_sector that should be
-initialized to zero.
+That should be the reason why the issue isn't triggered in case of real
+io scheduler.
 
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@redhat.com
-Signed-off-by: Kees Cook <keescook@chromium.org>
----
- drivers/md/dm-integrity.c | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+So far blk-mq doesn't provide way to adjust tags queue depth
+dynamically.
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 6319deccbe09..163c94ca4e5c 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -121,8 +121,10 @@ struct journal_entry {
- #define JOURNAL_MAC_SIZE		(JOURNAL_MAC_PER_SECTOR * JOURNAL_BLOCK_SECTORS)
- 
- struct journal_sector {
--	__u8 entries[JOURNAL_SECTOR_DATA - JOURNAL_MAC_PER_SECTOR];
--	__u8 mac[JOURNAL_MAC_PER_SECTOR];
-+	struct_group(sectors,
-+		__u8 entries[JOURNAL_SECTOR_DATA - JOURNAL_MAC_PER_SECTOR];
-+		__u8 mac[JOURNAL_MAC_PER_SECTOR];
-+	);
- 	commit_id_t commit_id;
- };
- 
-@@ -2870,7 +2872,8 @@ static void init_journal(struct dm_integrity_c *ic, unsigned start_section,
- 		wraparound_section(ic, &i);
- 		for (j = 0; j < ic->journal_section_sectors; j++) {
- 			struct journal_sector *js = access_journal(ic, i, j);
--			memset(&js->entries, 0, JOURNAL_SECTOR_DATA);
-+			BUILD_BUG_ON(sizeof(js->sectors) != JOURNAL_SECTOR_DATA);
-+			memset(&js->sectors, 0, sizeof(js->sectors));
- 			js->commit_id = dm_integrity_commit_id(ic, i, j, commit_seq);
- 		}
- 		for (j = 0; j < ic->journal_section_entries; j++) {
--- 
-2.30.2
+But not understand reason of default dm_mq_queue_depth(2048), in this
+situation, each LUN can just queue 113/3 requests at most, and 3 LUNs
+are attached to single iscsi host.
+
+Mike, can you share why the default dm_mq_queue_depth is so big? And
+seems it doesn't consider the underlying queue's queue depth. What is
+the biggest dm rq queue depth? which need to saturate all underlying paths?
+
+> 
+> > 2) single hw queue, so contention should be big, which should be avoided
+> > in big machine, nvme-tcp might be better than iscsi here
+> > 
+> > 3) iscsi io latency is a bit big
+> > 
+> > Even CPU utilization is reduced by commit dc5fc361d891, io performance
+> > can't be good too with v5.16-rc, I guess.
+> > 
+> > Thanks,
+> > Ming
+> 
+> Actually the I/O performance of v5.16-rc4 (commit dc5fc361d891 is included)
+> is good -- it's about the same as the case where v5.16-rc4 + reverting
+> dc5fc361d891 + dm_mod.dm_mq_queue_depth=400 (or 256).
+
+The single hw queue may be the root cause of your issue, and there
+is only single run_work, which can be touched by all CPUs(~200) almost, so cache
+ping-pong could be very serious. 
+
+Jens patch may improve it more or less, please test it.
+
+Thanks,
+Ming
 
 --
 dm-devel mailing list
