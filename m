@@ -4,77 +4,78 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8EB53C433F5
-	for <dm-devel@archiver.kernel.org>; Wed, 15 Dec 2021 09:09:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id CA692C433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 15 Dec 2021 15:43:55 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1639583030;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=3usBJHvNr997ywF+HZi2kQrDQNQMz054ydVJ6IRMoqQ=;
+	b=dQYMcc6fwkMh+vulVYj3FK7AYaAoZNsZ4z1KnkvuIS/tqIbZxT1AZWWLbYgz15CMstZ+u+
+	yEUvpShBpBnoBIEzDwS82Aj03mhiDrIx0u2KICiOtOx17FgQkMTfEF+Rc7nxPN95zt50RE
+	AzfYQaQ0PluCtFt7UnODnt8ZCDNvY/0=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-107-5MUQFe1WOJWmDKg5IcX-Tg-1; Wed, 15 Dec 2021 04:09:48 -0500
-X-MC-Unique: 5MUQFe1WOJWmDKg5IcX-Tg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-53-yc0PFR11OZ2EvHweR3iBfw-1; Wed, 15 Dec 2021 10:43:48 -0500
+X-MC-Unique: yc0PFR11OZ2EvHweR3iBfw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AD1BA1934105;
-	Wed, 15 Dec 2021 09:09:43 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CA2D3102C89A;
+	Wed, 15 Dec 2021 15:43:42 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 912A77ED9D;
-	Wed, 15 Dec 2021 09:09:43 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 131E57958B;
+	Wed, 15 Dec 2021 15:43:41 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5D2F54CA93;
-	Wed, 15 Dec 2021 09:09:43 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.9])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EA7AB4BB7C;
+	Wed, 15 Dec 2021 15:43:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com
+	[10.5.11.23])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1BF99LaZ019844 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 15 Dec 2021 04:09:21 -0500
+	id 1BFFhYDJ007103 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 15 Dec 2021 10:43:34 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id E3863492D1F; Wed, 15 Dec 2021 09:09:20 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DEDF5492D18
-	for <dm-devel@redhat.com>; Wed, 15 Dec 2021 09:09:20 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C348D805A2E
-	for <dm-devel@redhat.com>; Wed, 15 Dec 2021 09:09:20 +0000 (UTC)
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-471-o3mihnX-OOGBkLfisSpfrw-1; Wed, 15 Dec 2021 04:09:17 -0500
-X-MC-Unique: o3mihnX-OOGBkLfisSpfrw-1
-Received: from [2001:4bb8:184:5c65:c56:ed89:c020:6100] (helo=localhost)
-	by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1mxPuP-00ETyf-0H; Wed, 15 Dec 2021 08:45:10 +0000
-From: Christoph Hellwig <hch@lst.de>
-To: Dan Williams <dan.j.williams@intel.com>,
-	Vishal Verma <vishal.l.verma@intel.com>, Dave Jiang <dave.jiang@intel.com>
-Date: Wed, 15 Dec 2021 09:45:04 +0100
-Message-Id: <20211215084508.435401-1-hch@lst.de>
+	id 7274A196F4; Wed, 15 Dec 2021 15:43:34 +0000 (UTC)
+Received: from horse.redhat.com (unknown [10.22.16.227])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CCC3E196F1;
+	Wed, 15 Dec 2021 15:43:33 +0000 (UTC)
+Received: by horse.redhat.com (Postfix, from userid 10451)
+	id 194412206B8; Wed, 15 Dec 2021 10:43:33 -0500 (EST)
+Date: Wed, 15 Dec 2021 10:43:33 -0500
+From: Vivek Goyal <vgoyal@redhat.com>
+To: Stefan Hajnoczi <stefanha@redhat.com>
+Message-ID: <YboNJWC3jhX4Vsn7@redhat.com>
+References: <20211209063828.18944-1-hch@lst.de>
+	<20211209063828.18944-5-hch@lst.de> <YbNhPXBg7G/ridkV@redhat.com>
+	<CAPcyv4g4_yFqDeS+pnAZOxcB=Ua+iArK5mqn0iMG4PX6oL=F_A@mail.gmail.com>
+	<20211213082318.GB21462@lst.de> <YbiosqZoG8e6rDkj@redhat.com>
+	<CAPcyv4hFjKsPrPTB4NtLHiY8gyaELz9+45N1OFj3hz+uJ=9JnA@mail.gmail.com>
+	<Ybj/azxrUyU4PZEr@redhat.com>
+	<YbnD2iDmN92Bure9@stefanha-x1.localdomain>
 MIME-Version: 1.0
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
-	casper.infradead.org. See http://www.infradead.org/rpr.html
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+In-Reply-To: <YbnD2iDmN92Bure9@stefanha-x1.localdomain>
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 X-loop: dm-devel@redhat.com
-Cc: nvdimm@lists.linux.dev, Mike Snitzer <snitzer@redhat.com>,
-	Vasily Gorbik <gor@linux.ibm.com>,
-	Miklos Szeredi <miklos@szeredi.hu>, linux-s390@vger.kernel.org,
+Cc: Linux NVDIMM <nvdimm@lists.linux.dev>,
+	linux-s390 <linux-s390@vger.kernel.org>, Dave Jiang <dave.jiang@intel.com>,
+	Vasily Gorbik <gor@linux.ibm.com>, Mike Snitzer <snitzer@redhat.com>,
+	Miklos Szeredi <miklos@szeredi.hu>,
+	Vishal Verma <vishal.l.verma@intel.com>,
 	Heiko Carstens <hca@linux.ibm.com>, Matthew Wilcox <willy@infradead.org>,
 	virtualization@lists.linux-foundation.org,
 	Christian Borntraeger <borntraeger@de.ibm.com>,
-	dm-devel@redhat.com, Vivek Goyal <vgoyal@redhat.com>,
-	Stefan Hajnoczi <stefanha@redhat.com>,
-	linux-fsdevel@vger.kernel.org, Ira Weiny <ira.weiny@intel.com>,
+	device-mapper development <dm-devel@redhat.com>,
+	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+	Dan Williams <dan.j.williams@intel.com>,
+	Ira Weiny <ira.weiny@intel.com>, Christoph Hellwig <hch@lst.de>,
 	Alasdair Kergon <agk@redhat.com>
-Subject: [dm-devel] devirtualize kernel access to DAX v2
+Subject: Re: [dm-devel] [PATCH 4/5] dax: remove the copy_from_iter and
+ copy_to_iter methods
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -88,40 +89,120 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hi Dan,
+On Wed, Dec 15, 2021 at 10:30:50AM +0000, Stefan Hajnoczi wrote:
+> On Tue, Dec 14, 2021 at 03:32:43PM -0500, Vivek Goyal wrote:
+> > On Tue, Dec 14, 2021 at 08:41:30AM -0800, Dan Williams wrote:
+> > > On Tue, Dec 14, 2021 at 6:23 AM Vivek Goyal <vgoyal@redhat.com> wrote:
+> > > >
+> > > > On Mon, Dec 13, 2021 at 09:23:18AM +0100, Christoph Hellwig wrote:
+> > > > > On Sun, Dec 12, 2021 at 06:44:26AM -0800, Dan Williams wrote:
+> > > > > > On Fri, Dec 10, 2021 at 6:17 AM Vivek Goyal <vgoyal@redhat.com> wrote:
+> > > > > > > Going forward, I am wondering should virtiofs use flushcache version as
+> > > > > > > well. What if host filesystem is using DAX and mapping persistent memory
+> > > > > > > pfn directly into qemu address space. I have never tested that.
+> > > > > > >
+> > > > > > > Right now we are relying on applications to do fsync/msync on virtiofs
+> > > > > > > for data persistence.
+> > > > > >
+> > > > > > This sounds like it would need coordination with a paravirtualized
+> > > > > > driver that can indicate whether the host side is pmem or not, like
+> > > > > > the virtio_pmem driver. However, if the guest sends any fsync/msync
+> > > > > > you would still need to go explicitly cache flush any dirty page
+> > > > > > because you can't necessarily trust that the guest did that already.
+> > > > >
+> > > > > Do we?  The application can't really know what backend it is on, so
+> > > > > it sounds like the current virtiofs implementation doesn't really, does it?
+> > > >
+> > > > Agreed that application does not know what backend it is on. So virtiofs
+> > > > just offers regular posix API where applications have to do fsync/msync
+> > > > for data persistence. No support for mmap(MAP_SYNC). We don't offer persistent
+> > > > memory programming model on virtiofs. That's not the expectation. DAX
+> > > > is used only to bypass guest page cache.
+> > > >
+> > > > With this assumption, I think we might not have to use flushcache version
+> > > > at all even if shared filesystem is on persistent memory on host.
+> > > >
+> > > > - We mmap() host files into qemu address space. So any dax store in virtiofs
+> > > >   should make corresponding pages dirty in page cache on host and when
+> > > >   and fsync()/msync() comes later, it should flush all the data to PMEM.
+> > > >
+> > > > - In case of file extending writes, virtiofs falls back to regular
+> > > >   FUSE_WRITE path (and not use DAX), and in that case host pmem driver
+> > > >   should make sure writes are flushed to pmem immediately.
+> > > >
+> > > > Are there any other path I am missing. If not, looks like we might not
+> > > > have to use flushcache version in virtiofs at all as long as we are not
+> > > > offering guest applications user space flushes and MAP_SYNC support.
+> > > >
+> > > > We still might have to use machine check safe variant though as loads
+> > > > might generate synchronous machine check. What's not clear to me is
+> > > > that if this MC safe variant should be used only in case of PMEM or
+> > > > should it be used in case of non-PMEM as well.
+> > > 
+> > > It should be used on any memory address that can throw exception on
+> > > load, which is any physical address, in paths that can tolerate
+> > > memcpy() returning an error code, most I/O paths, and can tolerate
+> > > slower copy performance on older platforms that do not support MC
+> > > recovery with fast string operations, to date that's only PMEM users.
+> > 
+> > Ok, So basically latest cpus can do fast string operations with MC
+> > recovery so that using MC safe variant is not a problem.
+> > 
+> > Then there is range of cpus which can do MC recovery but do slower
+> > versions of memcpy and that's where the issue is.
+> > 
+> > So if we knew that virtiofs dax window is backed by a pmem device
+> > then we should always use MC safe variant. Even if it means paying
+> > the price of slow version for the sake of correctness. 
+> > 
+> > But if we are not using pmem on host, then there is no point in
+> > using MC safe variant.
+> > 
+> > IOW.
+> > 
+> > 	if (virtiofs_backed_by_pmem) {
+> > 		use_mc_safe_version
+> > 	else
+> > 		use_non_mc_safe_version
+> > 	}
+> > 
+> > Now question is, how do we know if virtiofs dax window is backed by
+> > a pmem or not. I checked virtio_pmem driver and that does not seem
+> > to communicate anything like that. It just communicates start of the
+> > range and size of range, nothing else.
+> > 
+> > I don't have full handle on stack of modules of virtio_pmem, but my guess
+> > is it probably is using MC safe version always (because it does not
+> > know anthing about the backing storage).
+> > 
+> > /me will definitely like to pay penalty of slower memcpy if virtiofs
+> > device is not backed by a pmem.
+> 
+> Reads from the page cache handle machine checks (filemap_read() ->
+> raw_copy_to_user()). I think virtiofs should therefore always handle
+> machine checks when reading from the DAX Window.
 
-this series cleans up a few loose end ends and then removes the
-copy_from_iter and copy_to_iter dax_operations methods in favor of
-straight calls.
+IIUC, raw_copy_to_user() does not handle recovery from machine check. For
+example, it can call copy_user_enhanced_fast_string() if cpu supports
+X86_FEATURE_ERMS. But equivalent machine check safe version is
+copy_mc_enhanced_fast_string() instead.
 
-Changes since v1:
- - reword a 'no check' comment
- - clean up the flags for the copy routine variants
- - drop the last patch
+Hence, I don't think reading from page cache is using machine check safe
+variants by default. This copy_mc_to_user() path has to be taken
+explicitly for machine check safe variants. And currently only pmem driver
+seems to take it by calling _copy_mc_to_iter().
 
-Diffstat:
- drivers/dax/bus.c             |    5 ++
- drivers/dax/super.c           |   50 +++++++++++++++++++-------
- drivers/md/dm-linear.c        |   20 ----------
- drivers/md/dm-log-writes.c    |   80 ------------------------------------------
- drivers/md/dm-stripe.c        |   20 ----------
- drivers/md/dm.c               |   54 +---------------------------
- drivers/nvdimm/pmem.c         |   29 ++-------------
- drivers/s390/block/dcssblk.c  |   18 +--------
- fs/dax.c                      |    5 --
- fs/fuse/virtio_fs.c           |   19 ---------
- include/linux/dax.h           |   29 +++------------
- include/linux/device-mapper.h |    4 --
- include/linux/uio.h           |   20 ----------
- 13 files changed, 60 insertions(+), 293 deletions(-)
+Thanks
+Vivek
 
 --
 dm-devel mailing list
