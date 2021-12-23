@@ -4,70 +4,60 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9B9CBC433F5
-	for <dm-devel@archiver.kernel.org>; Tue, 21 Dec 2021 17:42:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 494C6C433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 23 Dec 2021 01:33:01 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1640223180;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=G7O+Xez3r2I8owp6Znq+thjRs4dAp8EG4st8WURarDw=;
+	b=ESjhpbm2t66cax+ubr8jc62/6kOeWMNodOVEU13VUfqHz7SB64p9jO738myj31nX2Zj/QN
+	Tn9ZM1on7mGY34fy6NMlty+2p0gpUTHYCTwu3MWmbhIxJnUDYGxvkMKqX+OvIMB7uWSChn
+	jfIpnFWiON19/qg/r688ALox/csX+2c=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-460-TbIuhHJUOCWsnq1fxawJlA-1; Tue, 21 Dec 2021 12:42:01 -0500
-X-MC-Unique: TbIuhHJUOCWsnq1fxawJlA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-156-343nm3CIMum0XQfVSBj9ZA-1; Wed, 22 Dec 2021 20:32:56 -0500
+X-MC-Unique: 343nm3CIMum0XQfVSBj9ZA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 265238015C6;
-	Tue, 21 Dec 2021 17:41:57 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7064345D99;
-	Tue, 21 Dec 2021 17:41:55 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8CCC6801AAB;
+	Thu, 23 Dec 2021 01:32:52 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 49D7A2377E;
+	Thu, 23 Dec 2021 01:32:50 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9058D1802E2C;
-	Tue, 21 Dec 2021 17:41:52 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.4])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A91FC4BB7C;
+	Thu, 23 Dec 2021 01:32:46 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
+	[10.5.11.22])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 1BLGxWJp022510 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 21 Dec 2021 11:59:33 -0500
+	id 1BN1WitU009265 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 22 Dec 2021 20:32:44 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 77AD92026612; Tue, 21 Dec 2021 16:59:32 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 713EF202660C
-	for <dm-devel@redhat.com>; Tue, 21 Dec 2021 16:59:29 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6DD10101A52D
-	for <dm-devel@redhat.com>; Tue, 21 Dec 2021 16:59:29 +0000 (UTC)
-Received: from bombadil.infradead.org (bombadil.infradead.org
-	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-17-4YsZustEPCeuwp4sdV62eg-1; Tue, 21 Dec 2021 11:59:28 -0500
-X-MC-Unique: 4YsZustEPCeuwp4sdV62eg-1
-Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red
-	Hat Linux)) id 1mzhtT-007Xsf-Lh; Tue, 21 Dec 2021 16:21:39 +0000
-Date: Tue, 21 Dec 2021 08:21:39 -0800
-From: Christoph Hellwig <hch@infradead.org>
-To: Ming Lei <ming.lei@redhat.com>
-Message-ID: <YcH/E4JNag0QYYAa@infradead.org>
-References: <20211221141459.1368176-1-ming.lei@redhat.com>
-MIME-Version: 1.0
-In-Reply-To: <20211221141459.1368176-1-ming.lei@redhat.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
-	bombadil.infradead.org. See http://www.infradead.org/rpr.html
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+	id 2025F104253B; Thu, 23 Dec 2021 01:32:44 +0000 (UTC)
+Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3936C10911B4;
+	Thu, 23 Dec 2021 01:32:38 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 1BN1Walp001718; 
+	Wed, 22 Dec 2021 19:32:36 -0600
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 1BN1WZcl001717;
+	Wed, 22 Dec 2021 19:32:35 -0600
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Date: Wed, 22 Dec 2021 19:32:32 -0600
+Message-Id: <1640223155-1678-1-git-send-email-bmarzins@redhat.com>
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [dm-devel] [PATCH 0/3] blk-mq/dm-rq: support BLK_MQ_F_BLOCKING
-	for dm-rq
+Cc: device-mapper development <dm-devel@redhat.com>,
+	Martin Wilck <Martin.Wilck@suse.com>
+Subject: [dm-devel] [PATCH 0/3] Don't enter recovery move over pending paths
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -79,32 +69,35 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Dec 21, 2021 at 10:14:56PM +0800, Ming Lei wrote:
-> Hello,
-> 
-> dm-rq may be built on blk-mq device which marks BLK_MQ_F_BLOCKING, so
-> dm_mq_queue_rq() may become to sleep current context.
-> 
-> Fixes the issue by allowing dm-rq to set BLK_MQ_F_BLOCKING in case that
-> any underlying queue is marked as BLK_MQ_F_BLOCKING.
-> 
-> DM request queue is allocated before allocating tagset, this way is a
-> bit special, so we need to pre-allocate srcu payload, then use the queue
-> flag of QUEUE_FLAG_BLOCKING for locking dispatch.
+After commit 2e61b8fb, I started seeing multipath devices switching into
+recovery mode briefly on startup.  They come back out shortly, so unless
+no_path_retry is set very low, this won't be an issue, but multipathd
+shouldn't enter recovery mode at all over pending paths.
 
-What is the benefit over just forcing bio-based dm-mpath for these
-devices?
+Benjamin Marzinski (3):
+  libmultipath: fix DI_NOIO pathinfo PATH_PENDING handling
+  libmultipath: simplify out __set_no_path_retry()
+  libmultipath: don't enter recovery mode with pending paths
+
+ libmultipath/discovery.c          |  5 ++++-
+ libmultipath/libmultipath.version |  2 +-
+ libmultipath/structs_vec.c        | 13 ++++++-------
+ libmultipath/structs_vec.h        |  3 +--
+ 4 files changed, 12 insertions(+), 11 deletions(-)
+
+-- 
+2.17.2
 
 --
 dm-devel mailing list
