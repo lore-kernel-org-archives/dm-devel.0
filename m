@@ -4,97 +4,100 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6740BC433F5
-	for <dm-devel@archiver.kernel.org>; Thu,  6 Jan 2022 15:21:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0D7B7C433EF
+	for <dm-devel@archiver.kernel.org>; Thu,  6 Jan 2022 15:41:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1641482465;
+	s=mimecast20190719; t=1641483666;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=yWIYADzXOlZgJCVy1oMKXyhhvB4PNDKivT3qpGjYdTA=;
-	b=aRYlFlI1QBzmdMYu8mjiF6apR0LuTi8palxX53m2Vifd0deutG+BDS0X9mlW3tradWeCkw
-	DHK2yRk693sJ7a659zcUEwvxZq30T93eV0hnB0V99QmLrwcj1CBmjN17inG94kIynU/WtN
-	BPPPNrcTsXP694g73VW2efgeYY5e5Qw=
+	bh=qEZoxfiK3/9jY0zRo3nqEabC0/kcofCNF8facrOaZ2g=;
+	b=OXrJo0/CdjiH6717NYiihnF+4QTuPKsvpIMlE8hVuI2gSTmNMaA5pYF8jsIKssAMKc52s1
+	Uc9gNs5OfqT/C63TfDv0q+jIOlbKGD+ViYfULzpLEJvYazMCRs1/IB7ox3jtiIEs/39jwl
+	nOYJObwx0zGpjRaGLKfrUCZrbi6tiOY=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-332-FrPD06naOVmZQ1UuWOSuUQ-1; Thu, 06 Jan 2022 10:21:01 -0500
-X-MC-Unique: FrPD06naOVmZQ1UuWOSuUQ-1
+ us-mta-590-l9m7k5m8PZe7fh3UWz5AhQ-1; Thu, 06 Jan 2022 10:41:03 -0500
+X-MC-Unique: l9m7k5m8PZe7fh3UWz5AhQ-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 110BC801ADB;
-	Thu,  6 Jan 2022 15:20:58 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C424A75741;
-	Thu,  6 Jan 2022 15:20:57 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7AFEB1800D50;
+	Thu,  6 Jan 2022 15:40:59 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C7BA974EBF;
+	Thu,  6 Jan 2022 15:40:58 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 45CBB4BB7C;
-	Thu,  6 Jan 2022 15:20:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.10])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 574731806D1C;
+	Thu,  6 Jan 2022 15:40:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 206FKt7Q031508 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 6 Jan 2022 10:20:55 -0500
+	id 206FetXD000386 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 6 Jan 2022 10:40:55 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id F1D9246D1F5; Thu,  6 Jan 2022 15:20:54 +0000 (UTC)
+	id 474FF40CFD36; Thu,  6 Jan 2022 15:40:55 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id EE49B46D1F4
-	for <dm-devel@redhat.com>; Thu,  6 Jan 2022 15:20:54 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D1B1A801E95
-	for <dm-devel@redhat.com>; Thu,  6 Jan 2022 15:20:54 +0000 (UTC)
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
-	[209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 421F940CFD33
+	for <dm-devel@redhat.com>; Thu,  6 Jan 2022 15:40:55 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 28E288011A5
+	for <dm-devel@redhat.com>; Thu,  6 Jan 2022 15:40:55 +0000 (UTC)
+Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
+	[209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-561-EQxgmov8NCymEzdK7khehQ-1; Thu, 06 Jan 2022 10:20:53 -0500
-X-MC-Unique: EQxgmov8NCymEzdK7khehQ-1
-Received: by mail-qk1-f197.google.com with SMTP id
-	v13-20020a05620a440d00b00468380f4407so1940090qkp.17
-	for <dm-devel@redhat.com>; Thu, 06 Jan 2022 07:20:53 -0800 (PST)
+	us-mta-260-cvJl0N2WMVWyvDN2qnUEVg-1; Thu, 06 Jan 2022 10:40:53 -0500
+X-MC-Unique: cvJl0N2WMVWyvDN2qnUEVg-1
+Received: by mail-qv1-f70.google.com with SMTP id
+	ge12-20020a05621427cc00b00410de1dc898so2408708qvb.9
+	for <dm-devel@redhat.com>; Thu, 06 Jan 2022 07:40:53 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20210112;
 	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
 	:mime-version:content-disposition:in-reply-to;
-	bh=2YqsIWQ53eG2PDcqAucmDLmwn9f5p0XCph507eireqE=;
-	b=30oF4ji6RoDhCviHhyfet9J42nBsAgj4x8PFpr+tjsnXhYwmq0dYWg81rz/wavgARb
-	tgQIKS7nP28bdYPOATvdFd+V/o9boXtLCDZewHBk8GlZdp8sIngIJGHNOG0T000JgX/w
-	XMlARa8dq5xEtBrYf6jr9qYodkIs6skoxW/fY3mM5Me5h3lEea9akASHCxkZbBxZoCbn
-	Lzfsioz3egqRMgA5eOHbavD3c4+Hw6Sr9rGj9X4V4hRQBb+7ImhDcnec5ayDFVuXcYIw
-	cP8irje5+l1+uwDTxhgTEhPDe/6uPFzwvMF8rHNilDyKvga9ZWtWIz+lvCCsCtFnUl/G
-	Sxeg==
-X-Gm-Message-State: AOAM532TF1Jts6hZ6nW2ikCSCxCjlX9Cwfk+ZGhVjxyWyaXww4BrZ1Mk
-	2QDWeu1DFtIs5R8wM0MJOJLS7MA5D8blJkVSJVRlONOtB+gPDfX3kAwwjM0NSKiFZZEnYPr27Kb
-	zrslAc8Udxm/kgQ==
-X-Received: by 2002:a37:a8c3:: with SMTP id r186mr41125581qke.17.1641482453029;
-	Thu, 06 Jan 2022 07:20:53 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJyFM593HrigTWcxavtgf6tlraL5xApzNd6Y/8YuQALyJTC0/s7sqWNFOjYapn01OHOTMHltcQ==
-X-Received: by 2002:a37:a8c3:: with SMTP id r186mr41125573qke.17.1641482452828;
-	Thu, 06 Jan 2022 07:20:52 -0800 (PST)
+	bh=tkCTbr45iy5PICy3oH+srONgdc+wbihvOVMyc+AgjdQ=;
+	b=0qAMXOZfIR69NabaG30QhE6mRgiK6PkoBTQCNniLWgvD+8l7gFbL5uBsBlg0Uxl/0d
+	nLJobI3hk+1k0Hm7B/Fe1rasJSEQdR1OP5kMFGn/9Eog9Bf/DNNvm20JNskFW3gippEm
+	GAHKEmVHTfHEjtSoCbIuT7WqtGxRiQ4uH0pY7pz2JuhaIIYVNDKk9QB/xB4O9/DheKgy
+	ginEFFWVk0y93gEcKS09eoK7rbIjErRdkwvn+jCBWg4iR6GbQ2AJdVyOth2F5C9whdgi
+	sS5xLdcVkrbZHVwKy1JtOxOW1XaXPVuV0Fe3rwhfQASyYOFQYQFeYbOQLD0IJCrs42Lc
+	EvHA==
+X-Gm-Message-State: AOAM531Qyr5+xwUC0NbOsY/nwO//Oxv98+tKbJ7c34uPGACnNBuozwom
+	oc7y92F3BegyJ9738kD5cJIVKK5zeJNkjqVNqqMuqMXonTzseYGUpgBrhlYtLJfybZxqPcRJT+S
+	WjEy00k4Ph+CStg==
+X-Received: by 2002:a05:620a:2588:: with SMTP id
+	x8mr42205362qko.292.1641483653341; 
+	Thu, 06 Jan 2022 07:40:53 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJysRc1hv4FjhYX+z2oI9RRSophDyzvxsJdTfukvL3cJ65H4Rx1G6pOt0qNkzLCN3ysMpQ+VKw==
+X-Received: by 2002:a05:620a:2588:: with SMTP id
+	x8mr42205346qko.292.1641483653083; 
+	Thu, 06 Jan 2022 07:40:53 -0800 (PST)
 Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
-	[68.160.176.52])
-	by smtp.gmail.com with ESMTPSA id r8sm1561658qkk.91.2022.01.06.07.20.52
+	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+	bk25sm1675861qkb.13.2022.01.06.07.40.52
 	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Thu, 06 Jan 2022 07:20:52 -0800 (PST)
-Date: Thu, 6 Jan 2022 10:20:51 -0500
+	Thu, 06 Jan 2022 07:40:52 -0800 (PST)
+Date: Thu, 6 Jan 2022 10:40:51 -0500
 From: Mike Snitzer <snitzer@redhat.com>
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Message-ID: <YdcI02dcV2aj1x/L@redhat.com>
-References: <20220106100231.3278554-1-gregkh@linuxfoundation.org>
-	<Ydb7xzmOC8VN8miQ@redhat.com> <YdcE+9ppXYnPzijZ@kroah.com>
+To: Ming Lei <ming.lei@redhat.com>, Jens Axboe <axboe@kernel.dk>
+Message-ID: <YdcNgw14kSg+ENVL@redhat.com>
+References: <20211221141459.1368176-1-ming.lei@redhat.com>
+	<20211221141459.1368176-4-ming.lei@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <YdcE+9ppXYnPzijZ@kroah.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+In-Reply-To: <20211221141459.1368176-4-ming.lei@redhat.com>
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org,
-	Alasdair Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] dm sysfs: use default_groups in kobj_type
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
+Subject: Re: [dm-devel] [PATCH 3/3] dm: mark dm queue as blocking if any
+ underlying is blocking
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -117,51 +120,147 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Jan 06 2022 at 10:04P -0500,
-Greg Kroah-Hartman <gregkh@linuxfoundation.org> wrote:
+On Tue, Dec 21 2021 at  9:14P -0500,
+Ming Lei <ming.lei@redhat.com> wrote:
 
-> On Thu, Jan 06, 2022 at 09:25:11AM -0500, Mike Snitzer wrote:
-> > On Thu, Jan 06 2022 at  5:02P -0500,
-> > Greg Kroah-Hartman <gregkh@linuxfoundation.org> wrote:
-> > 
-> > > There are currently 2 ways to create a set of sysfs files for a
-> > > kobj_type, through the default_attrs field, and the default_groups
-> > > field.  Move the dm sysfs code to use default_groups field which has
-> > > been the preferred way since aa30f47cf666 ("kobject: Add support for
-> > > default attribute groups to kobj_type") so that we can soon get rid of
-> > > the obsolete default_attrs field.
-> > > 
-> > > Cc: Alasdair Kergon <agk@redhat.com>
-> > > Cc: Mike Snitzer <snitzer@redhat.com>
-> > > Cc: dm-devel@redhat.com
-> > > Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-> > > ---
-> > >  drivers/md/dm-sysfs.c | 3 ++-
-> > >  1 file changed, 2 insertions(+), 1 deletion(-)
-> > > 
-> > > diff --git a/drivers/md/dm-sysfs.c b/drivers/md/dm-sysfs.c
-> > > index a05fcd50e1b9..e28c92478536 100644
-> > > --- a/drivers/md/dm-sysfs.c
-> > > +++ b/drivers/md/dm-sysfs.c
-> > > @@ -112,6 +112,7 @@ static struct attribute *dm_attrs[] = {
-> > >  	&dm_attr_rq_based_seq_io_merge_deadline.attr,
-> > >  	NULL,
-> > >  };
-> > > +ATTRIBUTE_GROUPS(dm);
-> > 
-> > Bit strange to pass "dm" but then have ATTRIBUTE_GROUPS assume dm_attrs defined.
-> > Feels like it'll invite janitors sending patches, that they never
-> > compile, to remove dm_attrs.
+> dm request based driver doesn't set BLK_MQ_F_BLOCKING, so dm_queue_rq()
+> is supposed to not sleep.
 > 
-> 0-day would instantly catch that :)
+> However, blk_insert_cloned_request() is used by dm_queue_rq() for
+> queuing underlying request, but the underlying queue may be marked as
+> BLK_MQ_F_BLOCKING, so blk_insert_cloned_request() may become to block
+> current context, then rcu warning is triggered.
 > 
-> That's the way the ATTRIBUTE_GROUPS() macro works.  It's tricky, yes,
-> and I don't like it all that much, but couldn't come up with a better
-> way at the time.  It saves lots and lots of boiler-plate code from
-> having to be typed all the time.
+> Fixes the issue by marking dm request based queue as BLK_MQ_F_BLOCKING
+> if any underlying queue is marked as BLK_MQ_F_BLOCKING, meantime we
+> need to allocate srcu beforehand.
+> 
+> Signed-off-by: Ming Lei <ming.lei@redhat.com>
+> ---
+>  drivers/md/dm-rq.c    |  5 ++++-
+>  drivers/md/dm-rq.h    |  3 ++-
+>  drivers/md/dm-table.c | 14 ++++++++++++++
+>  drivers/md/dm.c       |  5 +++--
+>  drivers/md/dm.h       |  1 +
+>  5 files changed, 24 insertions(+), 4 deletions(-)
+> 
+> diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+> index 579ab6183d4d..2297d37c62a9 100644
+> --- a/drivers/md/dm-rq.c
+> +++ b/drivers/md/dm-rq.c
+> @@ -535,7 +535,8 @@ static const struct blk_mq_ops dm_mq_ops = {
+>  	.init_request = dm_mq_init_request,
+>  };
+>  
+> -int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
+> +int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t,
+> +			     bool blocking)
+>  {
+>  	struct dm_target *immutable_tgt;
+>  	int err;
+> @@ -550,6 +551,8 @@ int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
+>  	md->tag_set->flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_STACKING;
+>  	md->tag_set->nr_hw_queues = dm_get_blk_mq_nr_hw_queues();
+>  	md->tag_set->driver_data = md;
+> +	if (blocking)
+> +		md->tag_set->flags |= BLK_MQ_F_BLOCKING;
+>  
+>  	md->tag_set->cmd_size = sizeof(struct dm_rq_target_io);
+>  	immutable_tgt = dm_table_get_immutable_target(t);
 
-OK, thanks for the insight.
+As you can see, dm_table_get_immutable_target(t) is called here ^
 
+Rather than pass 'blocking' in, please just call dm_table_has_blocking_dev(t);
+
+But not a big deal, I can clean that up once this gets committed...
+
+> diff --git a/drivers/md/dm-rq.h b/drivers/md/dm-rq.h
+> index 1eea0da641db..5f3729f277d7 100644
+> --- a/drivers/md/dm-rq.h
+> +++ b/drivers/md/dm-rq.h
+> @@ -30,7 +30,8 @@ struct dm_rq_clone_bio_info {
+>  	struct bio clone;
+>  };
+>  
+> -int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t);
+> +int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t,
+> +			     bool blocking);
+>  void dm_mq_cleanup_mapped_device(struct mapped_device *md);
+>  
+>  void dm_start_queue(struct request_queue *q);
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index aa173f5bdc3d..e4bdd4f757a3 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -1875,6 +1875,20 @@ static bool dm_table_supports_write_zeroes(struct dm_table *t)
+>  	return true;
+>  }
+>  
+> +/* If the device can block inside ->queue_rq */
+> +static int device_is_io_blocking(struct dm_target *ti, struct dm_dev *dev,
+> +			      sector_t start, sector_t len, void *data)
+> +{
+> +	struct request_queue *q = bdev_get_queue(dev->bdev);
+> +
+> +	return blk_queue_blocking(q);
+> +}
+> +
+> +bool dm_table_has_blocking_dev(struct dm_table *t)
+> +{
+> +	return dm_table_any_dev_attr(t, device_is_io_blocking, NULL);
+> +}
+> +
+>  static int device_not_nowait_capable(struct dm_target *ti, struct dm_dev *dev,
+>  				     sector_t start, sector_t len, void *data)
+>  {
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 280918cdcabd..2f72877752dd 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1761,7 +1761,7 @@ static struct mapped_device *alloc_dev(int minor)
+>  	 * established. If request-based table is loaded: blk-mq will
+>  	 * override accordingly.
+>  	 */
+> -	md->disk = blk_alloc_disk(md->numa_node_id);
+> +	md->disk = blk_alloc_disk_srcu(md->numa_node_id);
+>  	if (!md->disk)
+>  		goto bad;
+>  	md->queue = md->disk->queue;
+> @@ -2046,7 +2046,8 @@ int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t)
+>  	switch (type) {
+>  	case DM_TYPE_REQUEST_BASED:
+>  		md->disk->fops = &dm_rq_blk_dops;
+> -		r = dm_mq_init_request_queue(md, t);
+> +		r = dm_mq_init_request_queue(md, t,
+> +				dm_table_has_blocking_dev(t));
+>  		if (r) {
+>  			DMERR("Cannot initialize queue for request-based dm mapped device");
+>  			return r;
+> diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+> index 742d9c80efe1..f7f92b272cce 100644
+> --- a/drivers/md/dm.h
+> +++ b/drivers/md/dm.h
+> @@ -60,6 +60,7 @@ int dm_calculate_queue_limits(struct dm_table *table,
+>  			      struct queue_limits *limits);
+>  int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+>  			      struct queue_limits *limits);
+> +bool dm_table_has_blocking_dev(struct dm_table *t);
+>  struct list_head *dm_table_get_devices(struct dm_table *t);
+>  void dm_table_presuspend_targets(struct dm_table *t);
+>  void dm_table_presuspend_undo_targets(struct dm_table *t);
+> -- 
+> 2.31.1
+> 
+
+Reviewed-by: Mike Snitzer <snitzer@redhat.com>
+
+Late, given holidays we know why, but this patchset is needed for 5.17
+(maybe with added: 'Fixes: 704b914f15fb7 "blk-mq: move srcu from
+blk_mq_hw_ctx to request_queue"' to this 3rd patch?)
+
+Jens, can you please pick this patchset up for 5.17?
+
+Thanks,
 Mike
 
 --
