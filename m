@@ -4,61 +4,106 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 51451C433F5
-	for <dm-devel@archiver.kernel.org>; Thu,  6 Jan 2022 15:52:17 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1641484335;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=xzWyAPPu2QmXrQ4vbYgKelHdG0HsBwSlk1dBgZtJacs=;
-	b=Rvyw+pzOnWkHz5mLKL3HHuK3KlbF35x5FaIOPT/trifJvi4bltg9mRVoWY3Nrbp8b0ZhB4
-	hKm72xZTlbRNMUDcGLkn7FGOjStXvtk1WpAN3PPv3GbFC+Zf+MiXr9IEBNxzDkF3p4XiDc
-	8QcqbVkn3b1UeGGBpxxQG4k+29JBkF4=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 10A3FC433EF
+	for <dm-devel@archiver.kernel.org>; Thu,  6 Jan 2022 16:25:51 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-578-sG2XW2rpPu6-1dIc51jfKA-1; Thu, 06 Jan 2022 10:52:12 -0500
-X-MC-Unique: sG2XW2rpPu6-1dIc51jfKA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-350-TiFv3PSXPSOGUIS6d0yPzw-1; Thu, 06 Jan 2022 11:25:47 -0500
+X-MC-Unique: TiFv3PSXPSOGUIS6d0yPzw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DD8031800D50;
-	Thu,  6 Jan 2022 15:52:07 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3B7738015CD;
+	Thu,  6 Jan 2022 16:25:43 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8160410911BA;
-	Thu,  6 Jan 2022 15:52:07 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0816C838D0;
+	Thu,  6 Jan 2022 16:25:43 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3BFE14BB7C;
-	Thu,  6 Jan 2022 15:52:06 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com
-	[10.5.11.13])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 789744BB7C;
+	Thu,  6 Jan 2022 16:25:42 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 206Fq26j000871 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 6 Jan 2022 10:52:02 -0500
+	id 206GPd82004313 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 6 Jan 2022 11:25:39 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id DDD3885F03; Thu,  6 Jan 2022 15:52:02 +0000 (UTC)
-Received: from T590 (ovpn-8-17.pek2.redhat.com [10.72.8.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3D64685EFE;
-	Thu,  6 Jan 2022 15:51:30 +0000 (UTC)
-Date: Thu, 6 Jan 2022 23:51:25 +0800
-From: Ming Lei <ming.lei@redhat.com>
-To: Mike Snitzer <snitzer@redhat.com>
-Message-ID: <YdcP/fnF5xrBnq+Y@T590>
-References: <20211221141459.1368176-1-ming.lei@redhat.com>
-	<20211221141459.1368176-4-ming.lei@redhat.com>
-	<YdcNgw14kSg+ENVL@redhat.com>
+	id 49F9840F9D69; Thu,  6 Jan 2022 16:25:39 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4393F40F9D68
+	for <dm-devel@redhat.com>; Thu,  6 Jan 2022 16:25:39 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2A50A1064FB0
+	for <dm-devel@redhat.com>; Thu,  6 Jan 2022 16:25:39 +0000 (UTC)
+Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com
+	[209.85.221.45]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-45-tpjQA43zOXSCSV5aCZ_01Q-1; Thu, 06 Jan 2022 11:25:37 -0500
+X-MC-Unique: tpjQA43zOXSCSV5aCZ_01Q-1
+Received: by mail-wr1-f45.google.com with SMTP id l10so5828979wrh.7
+	for <dm-devel@redhat.com>; Thu, 06 Jan 2022 08:25:37 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
+	:content-language:to:cc:references:from:in-reply-to
+	:content-transfer-encoding;
+	bh=FHJg4hW/f88/Sk6mRnWtxmcYfEUH34oJVmaSAFiTGEY=;
+	b=VTdUufavlxQfBpdHQKhIbvKre/8p7L+iYBCKhatu9QfAIoBUvrRtCSQUiydWzOTEe7
+	sifwvVrk4iU9bZTEfD2ds5VALwl5h/Yv5Y6LSpMBSADUoIoz/HAiALXBvv5FWeCUAyVf
+	S1TaJPlh4K9QhZRcNFtl/2Q45Kyia9SJf8nzcwbKUxyObtwgAdLqlXoZReb6lPqrB5Do
+	IV40P+i5N4k03xOAQerNxppQtDqDEAQQwhFIZQMxbfSzv52YAqVN6JBlRVBtHtzv/seI
+	wK0erbkEn+plSM2XB+kghJUlRnPlhKy18e3piC02Yf+abr6vHRJ86/mjHPPTyUwPf8VL
+	eyBg==
+X-Gm-Message-State: AOAM531eLk2w5k9PsGO7O9EGcaC+h+K87h+hTEXErN+vYd++/NhFTsA5
+	dGZ+VjNCBisKftbFTvNY+ig=
+X-Google-Smtp-Source: ABdhPJyImdMn57LWiiLC1zVWGweD/+JciRzkrHvu3/CDh0w1sIxu+Y9qdd/8NBYAS+HgC9+P9N+BsQ==
+X-Received: by 2002:a5d:698c:: with SMTP id g12mr2589709wru.69.1641486336534; 
+	Thu, 06 Jan 2022 08:25:36 -0800 (PST)
+Received: from [172.22.36.87] (redhat-nat.vtp.fi.muni.cz. [78.128.215.6])
+	by smtp.gmail.com with ESMTPSA id u3sm3105044wrs.0.2022.01.06.08.25.34
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Thu, 06 Jan 2022 08:25:35 -0800 (PST)
+Message-ID: <120368dc-e337-9176-936c-4db2a8bf710e@gmail.com>
+Date: Thu, 6 Jan 2022 17:25:34 +0100
 MIME-Version: 1.0
-In-Reply-To: <YdcNgw14kSg+ENVL@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+	Thunderbird/91.4.1
+To: "Bae, Chang Seok" <chang.seok.bae@intel.com>
+References: <20211214005212.20588-1-chang.seok.bae@intel.com>
+	<YbqRseO+TtuGQk5x@sol.localdomain>
+	<4101B942-6327-49A9-BE8B-9E51F0427F50@intel.com>
+	<YdZ5HrOKEffBrQIm@sol.localdomain>
+From: Milan Broz <gmazyland@gmail.com>
+In-Reply-To: <YdZ5HrOKEffBrQIm@sol.localdomain>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	dm-devel@redhat.com
-Subject: Re: [dm-devel] [PATCH 3/3] dm: mark dm queue as blocking if any
- underlying is blocking
+Cc: "Shankar, Ravi V" <ravi.v.shankar@intel.com>,
+	Dave Hansen <dave.hansen@linux.intel.com>,
+	Herbert Xu <herbert@gondor.apana.org.au>,
+	the arch/x86 maintainers <x86@kernel.org>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	Ingo Molnar <mingo@kernel.org>,
+	Eric Biggers <ebiggers@kernel.org>, "Krishnakumar,
+	Lalithambika" <lalithambika.krishnakumar@intel.com>,
+	"dm-devel@redhat.com" <dm-devel@redhat.com>,
+	Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
+	"Lutomirski, Andy" <luto@kernel.org>, "Williams,
+	Dan J" <dan.j.williams@intel.com>, Borislav Petkov <bp@suse.de>,
+	Thomas Gleixner <tglx@linutronix.de>, "Gairuboyina,
+	Charishma1" <charishma1.gairuboyina@intel.com>, "Dwarakanath,
+	Kumar N" <kumar.n.dwarakanath@intel.com>
+Subject: Re: [dm-devel] [PATCH v4 00/13] x86: Support Key Locker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -72,165 +117,51 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On Thu, Jan 06, 2022 at 10:40:51AM -0500, Mike Snitzer wrote:
-> On Tue, Dec 21 2021 at  9:14P -0500,
-> Ming Lei <ming.lei@redhat.com> wrote:
+On 06/01/2022 06:07, Eric Biggers wrote:
+> On Wed, Jan 05, 2022 at 09:55:17PM +0000, Bae, Chang Seok wrote:
+>>>> +-----------+---------------+---------------+
+>>>> | Cipher    |   Encryption  | Decryption    |
+>>>> | (AES-KL)  |    (MiB/s)    | (MiB/s)       |
+>>>> +-----------+---------------+---------------+
+>>>> | AES-CBC   |     505.3     |   2097.8      |
+>>>> | AES-XTS   |     1130      |   696.4       |
+>>>> +-----------+-------------------------------+
+>>>
+>>> Why is AES-XTS decryption so much slower than AES-XTS encryption?  They should
+>>> be about the same.
+>>
+>> Analyzing and understanding this with specific hardware implementation takes
+>> time for us. Will come back and update you when we have anything to share here.
 > 
-> > dm request based driver doesn't set BLK_MQ_F_BLOCKING, so dm_queue_rq()
-> > is supposed to not sleep.
-> > 
-> > However, blk_insert_cloned_request() is used by dm_queue_rq() for
-> > queuing underlying request, but the underlying queue may be marked as
-> > BLK_MQ_F_BLOCKING, so blk_insert_cloned_request() may become to block
-> > current context, then rcu warning is triggered.
-> > 
-> > Fixes the issue by marking dm request based queue as BLK_MQ_F_BLOCKING
-> > if any underlying queue is marked as BLK_MQ_F_BLOCKING, meantime we
-> > need to allocate srcu beforehand.
-> > 
-> > Signed-off-by: Ming Lei <ming.lei@redhat.com>
-> > ---
-> >  drivers/md/dm-rq.c    |  5 ++++-
-> >  drivers/md/dm-rq.h    |  3 ++-
-> >  drivers/md/dm-table.c | 14 ++++++++++++++
-> >  drivers/md/dm.c       |  5 +++--
-> >  drivers/md/dm.h       |  1 +
-> >  5 files changed, 24 insertions(+), 4 deletions(-)
-> > 
-> > diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-> > index 579ab6183d4d..2297d37c62a9 100644
-> > --- a/drivers/md/dm-rq.c
-> > +++ b/drivers/md/dm-rq.c
-> > @@ -535,7 +535,8 @@ static const struct blk_mq_ops dm_mq_ops = {
-> >  	.init_request = dm_mq_init_request,
-> >  };
-> >  
-> > -int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
-> > +int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t,
-> > +			     bool blocking)
-> >  {
-> >  	struct dm_target *immutable_tgt;
-> >  	int err;
-> > @@ -550,6 +551,8 @@ int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
-> >  	md->tag_set->flags = BLK_MQ_F_SHOULD_MERGE | BLK_MQ_F_STACKING;
-> >  	md->tag_set->nr_hw_queues = dm_get_blk_mq_nr_hw_queues();
-> >  	md->tag_set->driver_data = md;
-> > +	if (blocking)
-> > +		md->tag_set->flags |= BLK_MQ_F_BLOCKING;
-> >  
-> >  	md->tag_set->cmd_size = sizeof(struct dm_rq_target_io);
-> >  	immutable_tgt = dm_table_get_immutable_target(t);
-> 
-> As you can see, dm_table_get_immutable_target(t) is called here ^
-> 
-> Rather than pass 'blocking' in, please just call dm_table_has_blocking_dev(t);
-> 
-> But not a big deal, I can clean that up once this gets committed...
-> 
-> > diff --git a/drivers/md/dm-rq.h b/drivers/md/dm-rq.h
-> > index 1eea0da641db..5f3729f277d7 100644
-> > --- a/drivers/md/dm-rq.h
-> > +++ b/drivers/md/dm-rq.h
-> > @@ -30,7 +30,8 @@ struct dm_rq_clone_bio_info {
-> >  	struct bio clone;
-> >  };
-> >  
-> > -int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t);
-> > +int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t,
-> > +			     bool blocking);
-> >  void dm_mq_cleanup_mapped_device(struct mapped_device *md);
-> >  
-> >  void dm_start_queue(struct request_queue *q);
-> > diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> > index aa173f5bdc3d..e4bdd4f757a3 100644
-> > --- a/drivers/md/dm-table.c
-> > +++ b/drivers/md/dm-table.c
-> > @@ -1875,6 +1875,20 @@ static bool dm_table_supports_write_zeroes(struct dm_table *t)
-> >  	return true;
-> >  }
-> >  
-> > +/* If the device can block inside ->queue_rq */
-> > +static int device_is_io_blocking(struct dm_target *ti, struct dm_dev *dev,
-> > +			      sector_t start, sector_t len, void *data)
-> > +{
-> > +	struct request_queue *q = bdev_get_queue(dev->bdev);
-> > +
-> > +	return blk_queue_blocking(q);
-> > +}
-> > +
-> > +bool dm_table_has_blocking_dev(struct dm_table *t)
-> > +{
-> > +	return dm_table_any_dev_attr(t, device_is_io_blocking, NULL);
-> > +}
-> > +
-> >  static int device_not_nowait_capable(struct dm_target *ti, struct dm_dev *dev,
-> >  				     sector_t start, sector_t len, void *data)
-> >  {
-> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > index 280918cdcabd..2f72877752dd 100644
-> > --- a/drivers/md/dm.c
-> > +++ b/drivers/md/dm.c
-> > @@ -1761,7 +1761,7 @@ static struct mapped_device *alloc_dev(int minor)
-> >  	 * established. If request-based table is loaded: blk-mq will
-> >  	 * override accordingly.
-> >  	 */
-> > -	md->disk = blk_alloc_disk(md->numa_node_id);
-> > +	md->disk = blk_alloc_disk_srcu(md->numa_node_id);
-> >  	if (!md->disk)
-> >  		goto bad;
-> >  	md->queue = md->disk->queue;
-> > @@ -2046,7 +2046,8 @@ int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t)
-> >  	switch (type) {
-> >  	case DM_TYPE_REQUEST_BASED:
-> >  		md->disk->fops = &dm_rq_blk_dops;
-> > -		r = dm_mq_init_request_queue(md, t);
-> > +		r = dm_mq_init_request_queue(md, t,
-> > +				dm_table_has_blocking_dev(t));
-> >  		if (r) {
-> >  			DMERR("Cannot initialize queue for request-based dm mapped device");
-> >  			return r;
-> > diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-> > index 742d9c80efe1..f7f92b272cce 100644
-> > --- a/drivers/md/dm.h
-> > +++ b/drivers/md/dm.h
-> > @@ -60,6 +60,7 @@ int dm_calculate_queue_limits(struct dm_table *table,
-> >  			      struct queue_limits *limits);
-> >  int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
-> >  			      struct queue_limits *limits);
-> > +bool dm_table_has_blocking_dev(struct dm_table *t);
-> >  struct list_head *dm_table_get_devices(struct dm_table *t);
-> >  void dm_table_presuspend_targets(struct dm_table *t);
-> >  void dm_table_presuspend_undo_targets(struct dm_table *t);
-> > -- 
-> > 2.31.1
-> > 
-> 
-> Reviewed-by: Mike Snitzer <snitzer@redhat.com>
+> Note that for disk encryption, decryption performance is usually more important
+> than encryption performance.  So your performance results are strange.
 
-Thanks!
+If the test results are from "cryptsetup benchmark", it just run benchmark
+through userspace crypto API (AF_ALG) - no dm-crypt is involved at all.
 
-> 
-> Late, given holidays we know why, but this patchset is needed for 5.17
-> (maybe with added: 'Fixes: 704b914f15fb7 "blk-mq: move srcu from
-> blk_mq_hw_ctx to request_queue"' to this 3rd patch?)
+Proper test with dm-crypt should be run to get some numbers too.
 
-It is one long-term issue, not related with commit 704b914f15fb7. The
-problem is that rcu read lock is held by blk-mq when running dm_queue_rq()
-which calls underlying blocking queue's ->queue_rq() which may sleep
-somewhere.
+(But the test results are really strange... there is no reason
+decryption should be slower for XTS.)
 
+Also you mention that
+> Bare metal disk encryption is the only use case intended by these patches.
+> Userspace usage is not supported because there is no ABI provided to
+> communicate and coordinate wrapping-key restore failures to userspace.
 
-Thanks,
-Ming
+The cryptsetup benchmark is userspace use (just with kernel netlink
+access to kernel crypto). So I am not sure if these number are so important.
+
+Milan
 
 --
 dm-devel mailing list
