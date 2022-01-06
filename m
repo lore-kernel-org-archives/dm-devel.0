@@ -4,80 +4,57 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 10A3FC433EF
-	for <dm-devel@archiver.kernel.org>; Thu,  6 Jan 2022 16:25:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C2FAEC433FE
+	for <dm-devel@archiver.kernel.org>; Thu,  6 Jan 2022 16:44:04 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-350-TiFv3PSXPSOGUIS6d0yPzw-1; Thu, 06 Jan 2022 11:25:47 -0500
-X-MC-Unique: TiFv3PSXPSOGUIS6d0yPzw-1
+ us-mta-354-ylS4ULN-NgiC8B2lG-AJCg-1; Thu, 06 Jan 2022 11:44:02 -0500
+X-MC-Unique: ylS4ULN-NgiC8B2lG-AJCg-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3B7738015CD;
-	Thu,  6 Jan 2022 16:25:43 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0816C838D0;
-	Thu,  6 Jan 2022 16:25:43 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D57F9190A7A0;
+	Thu,  6 Jan 2022 16:43:57 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 56E2C838D0;
+	Thu,  6 Jan 2022 16:43:56 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 789744BB7C;
-	Thu,  6 Jan 2022 16:25:42 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.1])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 049481809CB8;
+	Thu,  6 Jan 2022 16:43:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 206GPd82004313 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 6 Jan 2022 11:25:39 -0500
+	id 206Ghrvq005219 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 6 Jan 2022 11:43:53 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 49F9840F9D69; Thu,  6 Jan 2022 16:25:39 +0000 (UTC)
+	id EE0BE1121334; Thu,  6 Jan 2022 16:43:52 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4393F40F9D68
-	for <dm-devel@redhat.com>; Thu,  6 Jan 2022 16:25:39 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E9D581121314
+	for <dm-devel@redhat.com>; Thu,  6 Jan 2022 16:43:50 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
 	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2A50A1064FB0
-	for <dm-devel@redhat.com>; Thu,  6 Jan 2022 16:25:39 +0000 (UTC)
-Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com
-	[209.85.221.45]) by relay.mimecast.com with ESMTP with STARTTLS
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2048D85A5B9
+	for <dm-devel@redhat.com>; Thu,  6 Jan 2022 16:43:50 +0000 (UTC)
+Received: from mo4-p00-ob.smtp.rzone.de (mo4-p00-ob.smtp.rzone.de
+	[85.215.255.21]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-45-tpjQA43zOXSCSV5aCZ_01Q-1; Thu, 06 Jan 2022 11:25:37 -0500
-X-MC-Unique: tpjQA43zOXSCSV5aCZ_01Q-1
-Received: by mail-wr1-f45.google.com with SMTP id l10so5828979wrh.7
-	for <dm-devel@redhat.com>; Thu, 06 Jan 2022 08:25:37 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
-	:content-language:to:cc:references:from:in-reply-to
-	:content-transfer-encoding;
-	bh=FHJg4hW/f88/Sk6mRnWtxmcYfEUH34oJVmaSAFiTGEY=;
-	b=VTdUufavlxQfBpdHQKhIbvKre/8p7L+iYBCKhatu9QfAIoBUvrRtCSQUiydWzOTEe7
-	sifwvVrk4iU9bZTEfD2ds5VALwl5h/Yv5Y6LSpMBSADUoIoz/HAiALXBvv5FWeCUAyVf
-	S1TaJPlh4K9QhZRcNFtl/2Q45Kyia9SJf8nzcwbKUxyObtwgAdLqlXoZReb6lPqrB5Do
-	IV40P+i5N4k03xOAQerNxppQtDqDEAQQwhFIZQMxbfSzv52YAqVN6JBlRVBtHtzv/seI
-	wK0erbkEn+plSM2XB+kghJUlRnPlhKy18e3piC02Yf+abr6vHRJ86/mjHPPTyUwPf8VL
-	eyBg==
-X-Gm-Message-State: AOAM531eLk2w5k9PsGO7O9EGcaC+h+K87h+hTEXErN+vYd++/NhFTsA5
-	dGZ+VjNCBisKftbFTvNY+ig=
-X-Google-Smtp-Source: ABdhPJyImdMn57LWiiLC1zVWGweD/+JciRzkrHvu3/CDh0w1sIxu+Y9qdd/8NBYAS+HgC9+P9N+BsQ==
-X-Received: by 2002:a5d:698c:: with SMTP id g12mr2589709wru.69.1641486336534; 
-	Thu, 06 Jan 2022 08:25:36 -0800 (PST)
-Received: from [172.22.36.87] (redhat-nat.vtp.fi.muni.cz. [78.128.215.6])
-	by smtp.gmail.com with ESMTPSA id u3sm3105044wrs.0.2022.01.06.08.25.34
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Thu, 06 Jan 2022 08:25:35 -0800 (PST)
-Message-ID: <120368dc-e337-9176-936c-4db2a8bf710e@gmail.com>
-Date: Thu, 6 Jan 2022 17:25:34 +0100
+	us-mta-633-vU5uFGkCOWeaARGepq8v5g-1; Thu, 06 Jan 2022 11:43:47 -0500
+X-MC-Unique: vU5uFGkCOWeaARGepq8v5g-1
+X-RZG-AUTH: ":PHkGeUmrW+uCZmxs998QJRUX30nOwJd7nOD9sw/xoauycprg5uef7cgCEpy7sPc="
+X-RZG-CLASS-ID: mo00
+Received: from USER-PC.fritz.box by smtp.strato.de (RZmta 47.37.4 DYNA|AUTH)
+	with ESMTPSA id u2923ay06Gbe8Gt
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256 bits))
+	(Client did not present a certificate);
+	Thu, 6 Jan 2022 17:37:40 +0100 (CET)
+From: Thore Sommer <public@thson.de>
+To: dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com
+Date: Thu,  6 Jan 2022 17:37:31 +0100
+Message-Id: <20220106163731.165391-1-public@thson.de>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
-	Thunderbird/91.4.1
-To: "Bae, Chang Seok" <chang.seok.bae@intel.com>
-References: <20211214005212.20588-1-chang.seok.bae@intel.com>
-	<YbqRseO+TtuGQk5x@sol.localdomain>
-	<4101B942-6327-49A9-BE8B-9E51F0427F50@intel.com>
-	<YdZ5HrOKEffBrQIm@sol.localdomain>
-From: Milan Broz <gmazyland@gmail.com>
-In-Reply-To: <YdZ5HrOKEffBrQIm@sol.localdomain>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -86,24 +63,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
-Cc: "Shankar, Ravi V" <ravi.v.shankar@intel.com>,
-	Dave Hansen <dave.hansen@linux.intel.com>,
-	Herbert Xu <herbert@gondor.apana.org.au>,
-	the arch/x86 maintainers <x86@kernel.org>,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Eric Biggers <ebiggers@kernel.org>, "Krishnakumar,
-	Lalithambika" <lalithambika.krishnakumar@intel.com>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
-	"Lutomirski, Andy" <luto@kernel.org>, "Williams,
-	Dan J" <dan.j.williams@intel.com>, Borislav Petkov <bp@suse.de>,
-	Thomas Gleixner <tglx@linutronix.de>, "Gairuboyina,
-	Charishma1" <charishma1.gairuboyina@intel.com>, "Dwarakanath,
-	Kumar N" <kumar.n.dwarakanath@intel.com>
-Subject: Re: [dm-devel] [PATCH v4 00/13] x86: Support Key Locker
+Cc: tusharsu@linux.microsoft.com, Thore Sommer <public@thson.de>,
+	linux-doc@vger.kernel.org
+Subject: [dm-devel] [PATCH] dm ima: updates to grammar and some details in
+	documentation
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -122,46 +87,110 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 06/01/2022 06:07, Eric Biggers wrote:
-> On Wed, Jan 05, 2022 at 09:55:17PM +0000, Bae, Chang Seok wrote:
->>>> +-----------+---------------+---------------+
->>>> | Cipher    |   Encryption  | Decryption    |
->>>> | (AES-KL)  |    (MiB/s)    | (MiB/s)       |
->>>> +-----------+---------------+---------------+
->>>> | AES-CBC   |     505.3     |   2097.8      |
->>>> | AES-XTS   |     1130      |   696.4       |
->>>> +-----------+-------------------------------+
->>>
->>> Why is AES-XTS decryption so much slower than AES-XTS encryption?  They should
->>> be about the same.
->>
->> Analyzing and understanding this with specific hardware implementation takes
->> time for us. Will come back and update you when we have anything to share here.
-> 
-> Note that for disk encryption, decryption performance is usually more important
-> than encryption performance.  So your performance results are strange.
+The grammar for the events dm_device_remove, device_resume and
+dm_table_clear did not include the no_data entry when device data
+and hash are missing.
 
-If the test results are from "cryptsetup benchmark", it just run benchmark
-through userspace crypto API (AF_ALG) - no dm-crypt is involved at all.
+For the device uuid or name "=" is also escaped with a "\".
 
-Proper test with dm-crypt should be run to get some numbers too.
+Add a note that dm_table_load might split its target measurements over
+multiple IMA events.
 
-(But the test results are really strange... there is no reason
-decryption should be slower for XTS.)
+Signed-off-by: Thore Sommer <public@thson.de>
+---
+ .../admin-guide/device-mapper/dm-ima.rst      | 26 ++++++++++++++-----
+ 1 file changed, 20 insertions(+), 6 deletions(-)
 
-Also you mention that
-> Bare metal disk encryption is the only use case intended by these patches.
-> Userspace usage is not supported because there is no ABI provided to
-> communicate and coordinate wrapping-key restore failures to userspace.
-
-The cryptsetup benchmark is userspace use (just with kernel netlink
-access to kernel crypto). So I am not sure if these number are so important.
-
-Milan
+diff --git a/Documentation/admin-guide/device-mapper/dm-ima.rst b/Documentation/admin-guide/device-mapper/dm-ima.rst
+index a4aa50a828e0..fb6e4148b426 100644
+--- a/Documentation/admin-guide/device-mapper/dm-ima.rst
++++ b/Documentation/admin-guide/device-mapper/dm-ima.rst
+@@ -100,6 +100,9 @@ When a new table is loaded in a device's inactive table slot,
+ the device information and target specific details from the
+ targets in the table are measured.
+ 
++Note that if there are too many targets to measure at once multiple IMA
++measurements will be generated.
++
+ The IMA measurement log has the following format for 'dm_table_load':
+ 
+ ::
+@@ -118,9 +121,9 @@ The IMA measurement log has the following format for 'dm_table_load':
+  device_minor := "minor=" <N>
+  minor_count := "minor_count=" <N>
+  num_device_targets := "num_targets=" <N>
+- dm-device-name := Name of the device. If it contains special characters like '\', ',', ';',
++ dm-device-name := Name of the device. If it contains special characters like '\', ',', ';',"=",
+                    they are prefixed with '\'.
+- dm-device-uuid := UUID of the device. If it contains special characters like '\', ',', ';',
++ dm-device-uuid := UUID of the device. If it contains special characters like '\', ',', ';',"=",
+                    they are prefixed with '\'.
+ 
+  table_load_data := <target_data>
+@@ -175,8 +178,9 @@ The IMA measurement log has the following format for 'dm_device_resume':
+ ::
+ 
+  EVENT_NAME := "dm_device_resume"
+- EVENT_DATA := <dm_version_str> ";" <device_metadata> ";" <active_table_hash> ";" <current_device_capacity> ";"
++ EVENT_DATA := <dm_version_str> ";" device_data ";" <current_device_capacity> ";"
+ 
++ device_data := <device_metadata> ";" <active_table_hash> | device_resume_no_data
+  dm_version_str := As described in the 'Table load' section above.
+  device_metadata := As described in the 'Table load' section above.
+  active_table_hash := "active_table_hash=" <table_hash_alg> ":" <table_hash>
+@@ -189,6 +193,9 @@ The IMA measurement log has the following format for 'dm_device_resume':
+                events for a given device, the hash is computed combining all the event data
+                i.e. (<dm_version_str> ";" <device_metadata> ";" <table_load_data> ";")
+                across all those events.
++ device_resume_no_data := "device_resume=no_data"
++                           If device metadata and hash for the active table do not exists this value gets measured.
++                           Note: the hash should always exist if the device metadata is present.
+  current_device_capacity := "current_device_capacity=" <N>
+ 
+  For instance, if a linear device is resumed with the following command,
+@@ -213,10 +220,10 @@ The IMA measurement log has the following format for 'dm_device_remove':
+ ::
+ 
+  EVENT_NAME := "dm_device_remove"
+- EVENT_DATA := <dm_version_str> ";" <device_active_metadata> ";" <device_inactive_metadata> ";"
+-               <active_table_hash> "," <inactive_table_hash> "," <remove_all> ";" <current_device_capacity> ";"
++ EVENT_DATA := <dm_version_str> ";" <device_data> <remove_all> ";" <current_device_capacity> ";"
+ 
+  dm_version_str := As described in the 'Table load' section above.
++ device_data := <device_active_metadata> ";" <device_inactive_metadata> ";" <active_table_hash> "," <inactive_table_hash> "," | <device_remove_no_data> ";"
+  device_active_metadata := Device metadata that reflects the currently loaded active table.
+                            The format is same as 'device_metadata' described in the 'Table load' section above.
+  device_inactive_metadata := Device metadata that reflects the inactive table.
+@@ -225,6 +232,9 @@ The IMA measurement log has the following format for 'dm_device_remove':
+                       The format is same as 'active_table_hash' described in the 'Device resume' section above.
+  inactive_table_hash :=  Hash of the inactive table.
+                          The format is same as 'active_table_hash' described in the 'Device resume' section above.
++ device_remove_no_data := "device_remove=no_data"
++                          If device metadata and hash for the active and inactive table do not exists this value gets measured.
++                          Note: the hash should always exist if the device metadata is present.
+  remove_all := "remove_all=" <yes_no>
+  yes_no := "y" | "n"
+  current_device_capacity := "current_device_capacity=" <N>
+@@ -254,9 +264,13 @@ The IMA measurement log has the following format for 'dm_table_clear':
+ ::
+ 
+  EVENT_NAME := "dm_table_clear"
+- EVENT_DATA := <dm_version_str> ";" <device_inactive_metadata> ";" <inactive_table_hash> ";" <current_device_capacity> ";"
++ EVENT_DATA := <dm_version_str> ";" <device_data> ";" <current_device_capacity> ";"
+ 
+  dm_version_str := As described in the 'Table load' section above.
++ device_data := <device_inactive_metadata> ";" <inactive_table_hash> | <table_clear_no_data>
++ table_clear_no_data := "table_clear=no_data"
++                        If device metadata and hash for the inactive table do not exists this value gets measured.
++                        Note: the hash should always exist if the device metadata is present.
+  device_inactive_metadata := Device metadata that was captured during the load time inactive table being cleared.
+                              The format is same as 'device_metadata' described in the 'Table load' section above.
+  inactive_table_hash := Hash of the inactive table being cleared from the device.
+-- 
+2.34.1
 
 --
 dm-devel mailing list
