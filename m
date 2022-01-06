@@ -4,59 +4,147 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 29F4EC433F5
-	for <dm-devel@archiver.kernel.org>; Fri,  7 Jan 2022 03:45:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C0839C433F5
+	for <dm-devel@archiver.kernel.org>; Fri,  7 Jan 2022 06:10:02 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-325-pP20SxtFNGm_ZxE46wJrAQ-1; Thu, 06 Jan 2022 22:45:37 -0500
-X-MC-Unique: pP20SxtFNGm_ZxE46wJrAQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-553-UBoIJ2HSNqy7z6LdQFoduw-1; Fri, 07 Jan 2022 01:09:57 -0500
+X-MC-Unique: UBoIJ2HSNqy7z6LdQFoduw-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E33511006AA3;
-	Fri,  7 Jan 2022 03:45:29 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C7B0A78C2C;
-	Fri,  7 Jan 2022 03:45:28 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6DFD58015CD;
+	Fri,  7 Jan 2022 06:09:52 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AE48312E21;
+	Fri,  7 Jan 2022 06:09:50 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4836C1809CB8;
-	Fri,  7 Jan 2022 03:45:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2D0A14BB7C;
+	Fri,  7 Jan 2022 06:09:48 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 2073jNp1017006 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 6 Jan 2022 22:45:24 -0500
+	id 2066DAoA024452 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 6 Jan 2022 01:13:10 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 91B4053D9; Fri,  7 Jan 2022 03:45:23 +0000 (UTC)
+	id 895E12026990; Thu,  6 Jan 2022 06:13:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8C84153D8
-	for <dm-devel@redhat.com>; Fri,  7 Jan 2022 03:45:20 +0000 (UTC)
+	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 83AA72026D64
+	for <dm-devel@redhat.com>; Thu,  6 Jan 2022 06:13:07 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A647D185A7B2
-	for <dm-devel@redhat.com>; Fri,  7 Jan 2022 03:45:20 +0000 (UTC)
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34]) by
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9243E3C0D1B6
+	for <dm-devel@redhat.com>; Thu,  6 Jan 2022 06:13:07 +0000 (UTC)
+Received: from mga14.intel.com (mga14.intel.com [192.55.52.115]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-601-J0K7sRhNONamJ7DUqLiHUg-1; Thu, 06 Jan 2022 22:44:43 -0500
-X-MC-Unique: J0K7sRhNONamJ7DUqLiHUg-1
-Received: from [2601:1c0:6280:3f0::aa0b]
-	by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1n5fqm-00G16G-Cy; Fri, 07 Jan 2022 03:23:32 +0000
-Message-ID: <788e0bf1-ee36-69f3-03ff-3df3d248dc7a@infradead.org>
-Date: Thu, 6 Jan 2022 19:23:26 -0800
+	us-mta-79-pWrISbPOMO2VIfTs0upLVA-1; Thu, 06 Jan 2022 01:13:05 -0500
+X-MC-Unique: pWrISbPOMO2VIfTs0upLVA-1
+X-IronPort-AV: E=McAfee;i="6200,9189,10217"; a="242805154"
+X-IronPort-AV: E=Sophos;i="5.88,266,1635231600"; d="scan'208";a="242805154"
+Received: from fmsmga002.fm.intel.com ([10.253.24.26])
+	by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+	05 Jan 2022 22:13:04 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.88,266,1635231600"; d="scan'208";a="618229038"
+Received: from orsmsx606.amr.corp.intel.com ([10.22.229.19])
+	by fmsmga002.fm.intel.com with ESMTP; 05 Jan 2022 22:13:03 -0800
+Received: from orsmsx609.amr.corp.intel.com (10.22.229.22) by
+	ORSMSX606.amr.corp.intel.com (10.22.229.19) with Microsoft SMTP Server
+	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+	15.1.2308.20; Wed, 5 Jan 2022 22:13:03 -0800
+Received: from orsedg603.ED.cps.intel.com (10.7.248.4) by
+	orsmsx609.amr.corp.intel.com (10.22.229.22) with Microsoft SMTP Server
+	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+	15.1.2308.20 via Frontend Transport; Wed, 5 Jan 2022 22:13:03 -0800
+Received: from NAM04-BN8-obe.outbound.protection.outlook.com (104.47.74.40) by
+	edgegateway.intel.com (134.134.137.100) with Microsoft SMTP Server
+	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	15.1.2308.20; Wed, 5 Jan 2022 22:13:02 -0800
+Received: from PH0PR11MB4855.namprd11.prod.outlook.com (2603:10b6:510:41::12)
+	by PH0PR11MB5781.namprd11.prod.outlook.com (2603:10b6:510:14a::14)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4867.7;
+	Thu, 6 Jan 2022 06:13:01 +0000
+Received: from PH0PR11MB4855.namprd11.prod.outlook.com
+	([fe80::38cc:22c0:928a:95b7]) by
+	PH0PR11MB4855.namprd11.prod.outlook.com
+	([fe80::38cc:22c0:928a:95b7%9]) with mapi id 15.20.4844.017;
+	Thu, 6 Jan 2022 06:13:00 +0000
+From: "Bae, Chang Seok" <chang.seok.bae@intel.com>
+To: Eric Biggers <ebiggers@kernel.org>
+Thread-Topic: [PATCH v4 00/13] x86: Support Key Locker
+Thread-Index: AQHX8IXgPtLMRzOkzUOX4xWFKhqGg6w0Uf6AgCDKzgCAAHjSAIAAEj0A
+Date: Thu, 6 Jan 2022 06:13:00 +0000
+Message-ID: <B67A9D30-2FC8-4AF7-957F-5A90D889142F@intel.com>
+References: <20211214005212.20588-1-chang.seok.bae@intel.com>
+	<YbqRseO+TtuGQk5x@sol.localdomain>
+	<4101B942-6327-49A9-BE8B-9E51F0427F50@intel.com>
+	<YdZ5HrOKEffBrQIm@sol.localdomain>
+In-Reply-To: <YdZ5HrOKEffBrQIm@sol.localdomain>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: e4d9282a-5a89-491a-f4c3-08d9d0db977d
+x-ms-traffictypediagnostic: PH0PR11MB5781:EE_
+x-ld-processed: 46c98d88-e344-4ed4-8496-4ed7712e255d,ExtAddr,ExtFwd
+x-microsoft-antispam-prvs: <PH0PR11MB57817C75E166E231327DA2BCD84C9@PH0PR11MB5781.namprd11.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:9508
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: nP7qoHWjlcal9yYPNZfMfVbNg2d1W8f4qGITcK3ActdZi5+pQxRv7zcPYziLR2rDllDSHPjnnDzrfsAyeYTf6GfNQO0ypxUjYnRRX8ZItvxmoDpzqWWrHM+9XtTf8hMVS9H0LAN61cvBemqkcq/iaOZIGsrnA1i5kTKTP39d3NJw7j3bGQO6ml6C+5yBq9gmqEpcQZS4NXw8r0jivsaI27U50NLoNPx3SZIKDynjQGiLCZdvhNCnRhcvIhrpeF1Egw1UXENkbm1fheV6zpkZ8O4FF6IULAh4rHwlfBovpq0tqXgfjhOdGhcHrgOMZWJJQOGsfrgqMx3AyrHjhkd4U2u/Qll5ALFYm/Zv8bQ4VhWIDnoq/AzXCPedaSpe7f74t2WLaHrJdSDjfv4Ff4LAQWHBp5yvhu99jQW/PeU3/7OcVcdkvNAZgc8bqEeHpifwVDFOa0GFPdDGeRl0VBLq4eBnJZnm8kJSnxf30IS2PAgy1o/xAMFdkaQx2kgiHuO1tOubnrn8czp7R7fXimIyZ9kFaVydgEkQR7eIF9TwEvwEuXUF1cOiDSeLFBlSlVQEiwHo1zFVVJxKCSzc3eQeHL4iycvENZa6WySRvwhqXaQ4VqQIQg+CTsLdaEn1fqYpCvaVzlOdS0t1ius867J+Sf/ajuDPA94qdSWmtj5iRToN4/sPamMtdt2U0+oFiUPiyQKrBP7h7BwHsrMxULm0PSMBe1I0Bn46Ettn0xAr+OpRaYNXX9LqBP4+egy8BvP+
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:PH0PR11MB4855.namprd11.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(366004)(8936002)(38070700005)(33656002)(8676002)(86362001)(71200400001)(36756003)(6916009)(508600001)(66446008)(5660300002)(2906002)(76116006)(54906003)(66476007)(38100700002)(83380400001)(4744005)(66946007)(26005)(186003)(66556008)(53546011)(6506007)(82960400001)(64756008)(2616005)(6486002)(7416002)(6512007)(316002)(122000001)(4326008)(45980500001);
+	DIR:OUT; SFP:1102
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?ZZ+OvV5mUFkbZ+CvJZ6AyM4L43DO5sLkQs+vArEfrRa5CIBTwFoYO38dHBwi?=
+	=?us-ascii?Q?Vg90scRIx4YT4guTZ/dn2JVUGZgHT+2EYO2KrLdMFh5GiJCka4TzQ34EjH7e?=
+	=?us-ascii?Q?4U/kR2Dhm5DwuvJ0C0BbAU/piPLqpWnYsmB2+c/CMlSBTSD3seYuqdD+FAqx?=
+	=?us-ascii?Q?WlfKCIPqQvx522RWFBzCBCA8mYzBlGA+0V4CfMHtDdis8Jx7DxJL3GR/aMKE?=
+	=?us-ascii?Q?qJiX9Xsitljf9wj5DNmgzRU1WprttSsHtt3kfuugCuqe/OXffHxTbG74Y9wB?=
+	=?us-ascii?Q?KcqpETQva6fKrfU++BcyIGgigXUdnFVV5L8uEqrXOTYvQ5rxt9hm1NpFNxMB?=
+	=?us-ascii?Q?uVETs6bk9Yq0nz+7FjcSuuvCuD6hJpxXCMWnEeoCrDzUqsWYgxL0EOuuyqVd?=
+	=?us-ascii?Q?UWCiPCnC+ThQMw1TdN7oRnjgA8f2mQPLUzx/uC/oFTk0Nc2BnDx8RrHxT4V1?=
+	=?us-ascii?Q?j2zRBfX9SJq6E/ob9G1FAhqx0ZiiMZSljKpRoPNNW5ZjLKBvIFocbZ9z0x3L?=
+	=?us-ascii?Q?rNRzzUudTCrZckJ26KBQeruBPF/USURBGp6zVW9++thyc3dosU6FpUtQpZ8a?=
+	=?us-ascii?Q?2CERuqKodCPNqOabXSxS9FP1DR5Pj32XVGekengl1i9lqY1T2i4z9zFuKmO8?=
+	=?us-ascii?Q?oxo4KGYQvpw9wV3FSn1jV7xWaNZaKUvnnltlgYI1CtvsAYEiwkKs2r6kXlIM?=
+	=?us-ascii?Q?dBTypP10B2YF/wfD4YwbcUsbqjQSRlXQM8z7hFntOtjEqoeczr9qpXVIm0EU?=
+	=?us-ascii?Q?aZZFBym71GOUxkXB8fvwozIJiqeHseQdwQGPKmJAoKwJrSNH8mYQ820itAQF?=
+	=?us-ascii?Q?3oSahMQWmWILf+GwrXX2NPLNCqPyZElXQfDlTdut/vARk0rMkpnnwEzuupeK?=
+	=?us-ascii?Q?287pfgyFaYYrq0HkcHBUo0oQAe936BwEFZMm7LX6njb3Ri7qTuW8T08OVlIC?=
+	=?us-ascii?Q?06bx1l08xurtjOBpXmu/XpDLLi8v0ZG1WlL2UvOM9EaAZpo9pCeKOaeQ9ek3?=
+	=?us-ascii?Q?RnOsd5cQUVK22mR05cpUMs6IQ/O03SBl9YEJPM0GKgHB0DF+ZpFmQYni+gC8?=
+	=?us-ascii?Q?EVU+5J2idQc2OY8meRlI4uqXwhysmLMtmNLg5C9WXS+zZ7M4a+j2v2hH+5LC?=
+	=?us-ascii?Q?y2uWx4/FkorvIzEzneT4fgCqpqNTVDG/3odmJeIcK25mAoaZioV4kwpe02vZ?=
+	=?us-ascii?Q?XqJ5S1XQCEgXRdqfu7DiZbcxXqyHcQAI3E5F46U9xypx+3eBkIfkWrvzz/aH?=
+	=?us-ascii?Q?yWPM5Gn0ZWEWkBAZomgQLwB1Rt/S9J9I3XMvR9nwnSZ9MMp4rfOR82eBD+d4?=
+	=?us-ascii?Q?fl1uFPJfGovvJ5Sf6g0gwQURaeYle6xfM7nxrq8yjtfTrwGXtdnbzGrPvNIq?=
+	=?us-ascii?Q?eKIWseWI6+iq7qi5VXI+u3nMykuers//4/SG3k4TXVC4/fKnRsPZgV2y8dCu?=
+	=?us-ascii?Q?UVA1FJRMwogRadtg/oGfTazeMLkgoY3aNRS9UDRtWPp97EUuT0/7XyYPTkDi?=
+	=?us-ascii?Q?af3pWsaC8C1f03AILgnknyhAV4WSmdBfsPIZCnwBA7WJOTw04WddIPsrrFf9?=
+	=?us-ascii?Q?T/huSffsvvpVUk2o2STEMmnBSEZ37/tOgpeVtU0v9zMKmp6vXzHUzDUomhw0?=
+	=?us-ascii?Q?NhdgFcyzXFBiYp1HANlm+6Jp9829pCzFbCG3DdmBqiPJrtEVu1WR9vMBHOi/?=
+	=?us-ascii?Q?xKz7V2S4IRDlveTBbNeATCrhHqU=3D?=
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
-	Thunderbird/91.4.1
-To: Thore Sommer <public@thson.de>, dm-devel@redhat.com, agk@redhat.com,
-	snitzer@redhat.com
-References: <20220106163731.165391-1-public@thson.de>
-From: Randy Dunlap <rdunlap@infradead.org>
-In-Reply-To: <20220106163731.165391-1-public@thson.de>
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: PH0PR11MB4855.namprd11.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: e4d9282a-5a89-491a-f4c3-08d9d0db977d
+X-MS-Exchange-CrossTenant-originalarrivaltime: 06 Jan 2022 06:13:00.6108 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 46c98d88-e344-4ed4-8496-4ed7712e255d
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: sD1v3mVU+yDiT9v7LQoLQfNKGrsTxX2OQt9x/BBiccz/durOGqfaKqRIK1uY5pjxAIa4wz1U4sfd+e1etThSfvcnAgLxQl+vCRB6CNsNrpc=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH0PR11MB5781
+X-OriginatorOrg: intel.com
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -65,11 +153,25 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 2066DAoA024452
 X-loop: dm-devel@redhat.com
-Cc: tusharsu@linux.microsoft.com, linux-doc@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH] dm ima: updates to grammar and some details
- in documentation
+X-Mailman-Approved-At: Fri, 07 Jan 2022 01:07:52 -0500
+Cc: "Shankar, Ravi V" <ravi.v.shankar@intel.com>,
+	the arch/x86 maintainers <x86@kernel.org>, Herbert
+	Xu <herbert@gondor.apana.org.au>,
+	Dave Hansen <dave.hansen@linux.intel.com>, "Williams,
+	Dan J" <dan.j.williams@intel.com>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "Krishnakumar,
+	Lalithambika" <lalithambika.krishnakumar@intel.com>,
+	"dm-devel@redhat.com" <dm-devel@redhat.com>,
+	Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, "Lutomirski, 
+	Andy" <luto@kernel.org>, Thomas Gleixner <tglx@linutronix.de>,
+	Borislav Petkov <bp@suse.de>, Ingo Molnar <mingo@kernel.org>,
+	"Gairuboyina, Charishma1" <charishma1.gairuboyina@intel.com>,
+	"Dwarakanath, Kumar N" <kumar.n.dwarakanath@intel.com>
+Subject: Re: [dm-devel] [PATCH v4 00/13] x86: Support Key Locker
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -83,136 +185,34 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
+Content-ID: <650678EFAA8AEA4EBF93642644F856B7@namprd11.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Just a few changes below:
-
-On 1/6/22 08:37, Thore Sommer wrote:
-> The grammar for the events dm_device_remove, device_resume and
-> dm_table_clear did not include the no_data entry when device data
-> and hash are missing.
+On Jan 5, 2022, at 21:07, Eric Biggers <ebiggers@kernel.org> wrote:
+> On Wed, Jan 05, 2022 at 09:55:17PM +0000, Bae, Chang Seok wrote:
+>> 
+>> As long as it is factual that the mode was once popular, it can help somebody
+>> who wants to use Key Locker for an old disk image I think.
 > 
-> For the device uuid or name "=" is also escaped with a "\".
+> AES-CBC is/was usually used with ESSIV, in which case the key cannot be fully
+> protected by Key Locker.
 > 
-> Add a note that dm_table_load might split its target measurements over
-> multiple IMA events.
-> 
-> Signed-off-by: Thore Sommer <public@thson.de>
-> ---
->  .../admin-guide/device-mapper/dm-ima.rst      | 26 ++++++++++++++-----
->  1 file changed, 20 insertions(+), 6 deletions(-)
-> 
-> diff --git a/Documentation/admin-guide/device-mapper/dm-ima.rst b/Documentation/admin-guide/device-mapper/dm-ima.rst
-> index a4aa50a828e0..fb6e4148b426 100644
-> --- a/Documentation/admin-guide/device-mapper/dm-ima.rst
-> +++ b/Documentation/admin-guide/device-mapper/dm-ima.rst
-> @@ -100,6 +100,9 @@ When a new table is loaded in a device's inactive table slot,
->  the device information and target specific details from the
->  targets in the table are measured.
->  
-> +Note that if there are too many targets to measure at once multiple IMA
-> +measurements will be generated.
-> +
->  The IMA measurement log has the following format for 'dm_table_load':
->  
->  ::
-> @@ -118,9 +121,9 @@ The IMA measurement log has the following format for 'dm_table_load':
->   device_minor := "minor=" <N>
->   minor_count := "minor_count=" <N>
->   num_device_targets := "num_targets=" <N>
-> - dm-device-name := Name of the device. If it contains special characters like '\', ',', ';',
-> + dm-device-name := Name of the device. If it contains special characters like '\', ',', ';',"=",
+> I'm not sure you should bother to support legacy use cases, especially since it
+> might mislead users into choosing a worse algorithm.
 
-                                                                                           ';', '=',
+Alright, this is not that critical as it will be possible to add this mode
+later when needed.
 
->                     they are prefixed with '\'.
-> - dm-device-uuid := UUID of the device. If it contains special characters like '\', ',', ';',
-> + dm-device-uuid := UUID of the device. If it contains special characters like '\', ',', ';',"=",
+Thanks,
+Chang
 
-                                                                                           ';', '=',
-
->                     they are prefixed with '\'.
->  
->   table_load_data := <target_data>
-> @@ -175,8 +178,9 @@ The IMA measurement log has the following format for 'dm_device_resume':
->  ::
->  
->   EVENT_NAME := "dm_device_resume"
-> - EVENT_DATA := <dm_version_str> ";" <device_metadata> ";" <active_table_hash> ";" <current_device_capacity> ";"
-> + EVENT_DATA := <dm_version_str> ";" device_data ";" <current_device_capacity> ";"
->  
-> + device_data := <device_metadata> ";" <active_table_hash> | device_resume_no_data
->   dm_version_str := As described in the 'Table load' section above.
->   device_metadata := As described in the 'Table load' section above.
->   active_table_hash := "active_table_hash=" <table_hash_alg> ":" <table_hash>
-> @@ -189,6 +193,9 @@ The IMA measurement log has the following format for 'dm_device_resume':
->                 events for a given device, the hash is computed combining all the event data
->                 i.e. (<dm_version_str> ";" <device_metadata> ";" <table_load_data> ";")
->                 across all those events.
-> + device_resume_no_data := "device_resume=no_data"
-> +                           If device metadata and hash for the active table do not exists this value gets measured.
-
-                                                                               do not exist, this value is measured.
-
-> +                           Note: the hash should always exist if the device metadata is present.
->   current_device_capacity := "current_device_capacity=" <N>
->  
->   For instance, if a linear device is resumed with the following command,
-> @@ -213,10 +220,10 @@ The IMA measurement log has the following format for 'dm_device_remove':
->  ::
->  
->   EVENT_NAME := "dm_device_remove"
-> - EVENT_DATA := <dm_version_str> ";" <device_active_metadata> ";" <device_inactive_metadata> ";"
-> -               <active_table_hash> "," <inactive_table_hash> "," <remove_all> ";" <current_device_capacity> ";"
-> + EVENT_DATA := <dm_version_str> ";" <device_data> <remove_all> ";" <current_device_capacity> ";"
->  
->   dm_version_str := As described in the 'Table load' section above.
-> + device_data := <device_active_metadata> ";" <device_inactive_metadata> ";" <active_table_hash> "," <inactive_table_hash> "," | <device_remove_no_data> ";"
->   device_active_metadata := Device metadata that reflects the currently loaded active table.
->                             The format is same as 'device_metadata' described in the 'Table load' section above.
->   device_inactive_metadata := Device metadata that reflects the inactive table.
-> @@ -225,6 +232,9 @@ The IMA measurement log has the following format for 'dm_device_remove':
->                        The format is same as 'active_table_hash' described in the 'Device resume' section above.
->   inactive_table_hash :=  Hash of the inactive table.
->                           The format is same as 'active_table_hash' described in the 'Device resume' section above.
-> + device_remove_no_data := "device_remove=no_data"
-> +                          If device metadata and hash for the active and inactive table do not exists this value gets measured.
-
-                                                                                                  exist, this value is measured.
-
-> +                          Note: the hash should always exist if the device metadata is present.
->   remove_all := "remove_all=" <yes_no>
->   yes_no := "y" | "n"
->   current_device_capacity := "current_device_capacity=" <N>
-> @@ -254,9 +264,13 @@ The IMA measurement log has the following format for 'dm_table_clear':
->  ::
->  
->   EVENT_NAME := "dm_table_clear"
-> - EVENT_DATA := <dm_version_str> ";" <device_inactive_metadata> ";" <inactive_table_hash> ";" <current_device_capacity> ";"
-> + EVENT_DATA := <dm_version_str> ";" <device_data> ";" <current_device_capacity> ";"
->  
->   dm_version_str := As described in the 'Table load' section above.
-> + device_data := <device_inactive_metadata> ";" <inactive_table_hash> | <table_clear_no_data>
-> + table_clear_no_data := "table_clear=no_data"
-> +                        If device metadata and hash for the inactive table do not exists this value gets measured.
-
-                                                                                     exist, this value is measured.
-
-> +                        Note: the hash should always exist if the device metadata is present.
->   device_inactive_metadata := Device metadata that was captured during the load time inactive table being cleared.
->                               The format is same as 'device_metadata' described in the 'Table load' section above.
->   inactive_table_hash := Hash of the inactive table being cleared from the device.
-
-thanks.
--- 
-~Randy
 
 --
 dm-devel mailing list
