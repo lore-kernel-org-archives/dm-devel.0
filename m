@@ -1,81 +1,77 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 09625C433EF
-	for <dm-devel@archiver.kernel.org>; Sun,  9 Jan 2022 09:28:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8D54AC433F5
+	for <dm-devel@archiver.kernel.org>; Sun,  9 Jan 2022 10:29:30 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-249-wq03muCeNW2TxMs0BlCt1g-1; Sun, 09 Jan 2022 04:28:41 -0500
-X-MC-Unique: wq03muCeNW2TxMs0BlCt1g-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-554-hAKP7nY4Nqqih7J-GyekJg-1; Sun, 09 Jan 2022 05:29:26 -0500
+X-MC-Unique: hAKP7nY4Nqqih7J-GyekJg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A7F402F25;
-	Sun,  9 Jan 2022 09:28:36 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 545191059156;
-	Sun,  9 Jan 2022 09:28:35 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C624A1080865;
+	Sun,  9 Jan 2022 10:29:21 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A4B4D7D4B1;
+	Sun,  9 Jan 2022 10:29:20 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5D18E1809CB8;
-	Sun,  9 Jan 2022 09:28:33 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.7])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 45B394BB7C;
+	Sun,  9 Jan 2022 10:29:18 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 2099SVtu026119 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 9 Jan 2022 04:28:32 -0500
+	id 209ATGEr029298 for <dm-devel@listman.util.phx.redhat.com>;
+	Sun, 9 Jan 2022 05:29:16 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id D6A94141DED5; Sun,  9 Jan 2022 09:28:31 +0000 (UTC)
+	id A593840CFD14; Sun,  9 Jan 2022 10:29:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D1CDC141DED4
-	for <dm-devel@redhat.com>; Sun,  9 Jan 2022 09:28:31 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A0AD740CFD04
+	for <dm-devel@redhat.com>; Sun,  9 Jan 2022 10:29:16 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A63612BD19E6
-	for <dm-devel@redhat.com>; Sun,  9 Jan 2022 09:28:31 +0000 (UTC)
-Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com
-	[209.85.128.50]) by relay.mimecast.com with ESMTP with STARTTLS
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 87DA385A5AA
+	for <dm-devel@redhat.com>; Sun,  9 Jan 2022 10:29:16 +0000 (UTC)
+Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com
+	[209.85.221.52]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-240-hdU1zNfDPuOc8oJFXEc-qQ-1; Sun, 09 Jan 2022 04:28:27 -0500
-X-MC-Unique: hdU1zNfDPuOc8oJFXEc-qQ-1
-Received: by mail-wm1-f50.google.com with SMTP id e5so6854984wmq.1;
-	Sun, 09 Jan 2022 01:28:27 -0800 (PST)
+	us-mta-110-eL_m3SRCNvi9C4ENdPyLaw-1; Sun, 09 Jan 2022 05:29:14 -0500
+X-MC-Unique: eL_m3SRCNvi9C4ENdPyLaw-1
+Received: by mail-wr1-f52.google.com with SMTP id k30so3432503wrd.9;
+	Sun, 09 Jan 2022 02:29:14 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20210112;
-	h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-	:references:mime-version:content-transfer-encoding;
-	bh=t1xVF1F1zr4Yth8TJzz2zdxz3a/Aw0CnB3tJIxsb4e4=;
-	b=y/YsX519sPUbUZWpE4ac7sTrlha90nhTu99n+k1zlc2DjS5qZIKaxvHaNc2QpD6TLI
-	bMLM+UuhzyHp9W1Kk6n7H/ivrlQyesoQBn6g8BOfmJf1dsLEQ9U8RYKoNdEv3P5PY6Tp
-	Rtb1k+VJvMzvMUXhpJwXJOFMCqPTNS2B4e7fW0sVZpNpLSw5aiUTnIqsaCQZX9Is4CJt
-	fyGMnSvLQ52yJ2XWqVHkT9o+EwKnATpHvr2huBw/UVFUgfJaC48lViYu25MBQr94bOn/
-	pqYIcBz4248Ea8EK+q9COx4Pez58t9o9kVxnF3EABejpzJxhtg1qgqs2CipGihZXMH7b
-	Skug==
-X-Gm-Message-State: AOAM531BsMiJv91/IrBoF6ZYQf39/0V144Av5NLlJE340YJ6s4Z1xXNz
-	tEMFCWqZQ+LrEzxsyN39eL4=
-X-Google-Smtp-Source: ABdhPJx4dLuiWtaoMCqKiZCjuomlGk9LYoX8rPFruNUa+SQaEj/fRdPay2sceRS7NjgdpJ7LFImSLg==
-X-Received: by 2002:a05:600c:154f:: with SMTP id
-	f15mr17912118wmg.62.1641720506517; 
-	Sun, 09 Jan 2022 01:28:26 -0800 (PST)
+	h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
+	:content-transfer-encoding;
+	bh=+/aqaMpl5AZ7lEfxCYILQlGqDwcVJyIs7fTiVfgYW6w=;
+	b=DKTC19DlpqMHXFuvOJQ1XNH/8+H1hXKVRcdiWCKQgOg1pAizgVAR8BiVNxE42CUuY7
+	hetz1UXWMBw/IP1/rwFk5B3wbzZxP+nOG7LIw3+UNF6+EQIAdDMwFWPQ9XuTe95KH5Ml
+	tqXZ7yJYI837XZuSNZTf8cGHI72O5Xf+j+6Ms92vC4BXCvWN6CWH+WISwgRRzZaRXmVf
+	QawK4DQB0MIQ9DZyQTqLdzWyDc/E01EeBGKTlqDKkjQqsQAUMQR56hTHo1r7/iof1Ovv
+	K0doZxx+RezNwbMdGBJGCexy0tkwnDMXmh6/fiiW0pZ0aLczBfi21zyaOSgThh3Uubmy
+	/k4A==
+X-Gm-Message-State: AOAM531kMT5tfU8/LtBiUP/7wa+r43yfUq+Cog+sriudhKKdQaBb25AT
+	yxtGIEmZfmbNYGnenxq86ms=
+X-Google-Smtp-Source: ABdhPJz65lMktgocn2g5uhZQUXjFuWeqhd5A9dn1Uq/cjXnTebZBbFrZ6BROKloGqX+QeFFTqFA+Jg==
+X-Received: by 2002:adf:eec5:: with SMTP id a5mr3597961wrp.125.1641724153625; 
+	Sun, 09 Jan 2022 02:29:13 -0800 (PST)
 Received: from nz.home (host81-129-87-145.range81-129.btcentralplus.com.
 	[81.129.87.145])
-	by smtp.gmail.com with ESMTPSA id v1sm4332969wru.45.2022.01.09.01.28.25
+	by smtp.gmail.com with ESMTPSA id b1sm4068075wrd.92.2022.01.09.02.29.12
 	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Sun, 09 Jan 2022 01:28:26 -0800 (PST)
+	Sun, 09 Jan 2022 02:29:13 -0800 (PST)
 Received: by nz.home (Postfix, from userid 1000)
-	id AB3B3190747E2; Sun,  9 Jan 2022 09:28:24 +0000 (GMT)
+	id 59B00190CB125; Sun,  9 Jan 2022 10:29:12 +0000 (GMT)
 From: Sergei Trofimovich <slyich@gmail.com>
 To: dm-devel@redhat.com
-Date: Sun,  9 Jan 2022 09:28:14 +0000
-Message-Id: <20220109092814.1861416-2-slyich@gmail.com>
-In-Reply-To: <20220109092814.1861416-1-slyich@gmail.com>
-References: <c7b3fc9ddabf54cb7644b7bdaf7e9076ebbf34bb.camel@suse.com>
-	<20220109092814.1861416-1-slyich@gmail.com>
+Date: Sun,  9 Jan 2022 10:29:05 +0000
+Message-Id: <20220109102908.4102332-1-slyich@gmail.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -85,11 +81,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-loop: dm-devel@redhat.com
 Cc: Sergei Trofimovich <slyich@gmail.com>, Martin Wilck <mwilck@suse.com>
-Subject: [dm-devel] [PATCH v2 2/2] kpartx/devmapper.c: fix unused variable
-	error
+Subject: [dm-devel] [PATCH 1/4] multipath-tools: avoid using GZIP Makefile
+	variable
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -103,7 +99,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -111,47 +107,111 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Without the change the build fails as:
+`gzip` supports (deprecated) `GZIP` environment variable. If it's
+already present Makefile would override it and pass it through causing
+thre breakage:
 
-    devmapper.c:58:69: error: unused parameter 'udev_flags' [-Werror=unused-parameter]
-       58 | int dm_simplecmd(int task, const char *name, int no_flush, uint16_t udev_flags)
-          |                                                            ~~~~~~~~~^~~~~~~~~~
+    $ dev>GZIP=-n make
+    gzip -9 -c mpath_persistent_reserve_in.3 > mpath_persistent_reserve_in.3.gz
+    gzip: -c: option not valid in GZIP environment variable
+    Try `gzip --help' for more information.
 
-The change adds __attribute__((used)) annotation to unused function parameter.
+Fix build by renaming GZIP variable to GZIP_PROG to avoid collision.
 
 CC: Martin Wilck <mwilck@suse.com>
 CC: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Sergei Trofimovich <slyich@gmail.com>
 ---
- kpartx/devmapper.c | 8 +++++++-
- 1 file changed, 7 insertions(+), 1 deletion(-)
+ Makefile.inc             | 2 +-
+ kpartx/Makefile          | 2 +-
+ libmpathpersist/Makefile | 4 ++--
+ mpathpersist/Makefile    | 2 +-
+ multipath/Makefile       | 4 ++--
+ multipathd/Makefile      | 2 +-
+ 6 files changed, 8 insertions(+), 8 deletions(-)
 
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index 511c090f..49ffd310 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -18,6 +18,12 @@
- #define MAX_PREFIX_LEN (_UUID_PREFIX_LEN + 4)
- #define PARAMS_SIZE 1024
+diff --git a/Makefile.inc b/Makefile.inc
+index b340f2ae..59856f24 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -75,7 +75,7 @@ nvmedir		= $(TOPDIR)/libmultipath/nvme
+ includedir	= $(prefix)/usr/include
+ pkgconfdir	= $(usrlibdir)/pkgconfig
  
-+#ifdef LIBDM_API_COOKIE
-+#    define __DM_API_COOKIE_UNUSED__ /* empty */
-+#else
-+#    define __DM_API_COOKIE_UNUSED__ __attribute__((unused))
-+#endif
-+
- int dm_prereq(char * str, uint32_t x, uint32_t y, uint32_t z)
- {
- 	int r = 1;
-@@ -55,7 +61,7 @@ out:
- 	return r;
- }
+-GZIP		= gzip -9 -c
++GZIP_PROG	= gzip -9 -c
+ RM		= rm -f
+ LN		= ln -sf
+ INSTALL_PROGRAM	= install
+diff --git a/kpartx/Makefile b/kpartx/Makefile
+index 2906a984..9be115d6 100644
+--- a/kpartx/Makefile
++++ b/kpartx/Makefile
+@@ -21,7 +21,7 @@ all: $(EXEC)
  
--int dm_simplecmd(int task, const char *name, int no_flush, uint16_t udev_flags)
-+int dm_simplecmd(int task, const char *name, int no_flush, __DM_API_COOKIE_UNUSED__ uint16_t udev_flags)
- {
- 	int r = 0;
- #ifdef LIBDM_API_COOKIE
+ $(EXEC): $(OBJS)
+ 	$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
+-	$(GZIP) $(EXEC).8 > $(EXEC).8.gz
++	$(GZIP_PROG) $(EXEC).8 > $(EXEC).8.gz
+ 
+ install: $(EXEC) $(EXEC).8
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(bindir)
+diff --git a/libmpathpersist/Makefile b/libmpathpersist/Makefile
+index 1e6399d6..ccdc3223 100644
+--- a/libmpathpersist/Makefile
++++ b/libmpathpersist/Makefile
+@@ -33,8 +33,8 @@ $(DEVLIB): $(LIBS)
+ 	$(LN) $(LIBS) $@
+ 
+ man:
+-	$(GZIP) mpath_persistent_reserve_in.3 > mpath_persistent_reserve_in.3.gz
+-	$(GZIP) mpath_persistent_reserve_out.3 > mpath_persistent_reserve_out.3.gz
++	$(GZIP_PROG) mpath_persistent_reserve_in.3 > mpath_persistent_reserve_in.3.gz
++	$(GZIP_PROG) mpath_persistent_reserve_out.3 > mpath_persistent_reserve_out.3.gz
+ 
+ install: all
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(syslibdir)
+diff --git a/mpathpersist/Makefile b/mpathpersist/Makefile
+index 51268010..de66b644 100644
+--- a/mpathpersist/Makefile
++++ b/mpathpersist/Makefile
+@@ -14,7 +14,7 @@ all: $(EXEC)
+ 
+ $(EXEC): $(OBJS)
+ 	$(CC) $(OBJS) -o $(EXEC) $(LDFLAGS) $(CFLAGS) $(LIBDEPS)
+-	$(GZIP) $(EXEC).8 > $(EXEC).8.gz
++	$(GZIP_PROG) $(EXEC).8 > $(EXEC).8.gz
+ 
+ install:
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(bindir)
+diff --git a/multipath/Makefile b/multipath/Makefile
+index 0828a8f7..3f12d75b 100644
+--- a/multipath/Makefile
++++ b/multipath/Makefile
+@@ -16,8 +16,8 @@ all: $(EXEC)
+ 
+ $(EXEC): $(OBJS) $(multipathdir)/libmultipath.so $(mpathcmddir)/libmpathcmd.so
+ 	$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LIBDEPS)
+-	$(GZIP) $(EXEC).8 > $(EXEC).8.gz
+-	$(GZIP) $(EXEC).conf.5 > $(EXEC).conf.5.gz
++	$(GZIP_PROG) $(EXEC).8 > $(EXEC).8.gz
++	$(GZIP_PROG) $(EXEC).conf.5 > $(EXEC).conf.5.gz
+ 
+ install:
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(bindir)
+diff --git a/multipathd/Makefile b/multipathd/Makefile
+index 393b6cbb..64df2214 100644
+--- a/multipathd/Makefile
++++ b/multipathd/Makefile
+@@ -40,7 +40,7 @@ all : $(EXEC)
+ 
+ $(EXEC): $(OBJS) $(multipathdir)/libmultipath.so $(mpathcmddir)/libmpathcmd.so
+ 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(EXEC) $(LIBDEPS)
+-	$(GZIP) $(EXEC).8 > $(EXEC).8.gz
++	$(GZIP_PROG) $(EXEC).8 > $(EXEC).8.gz
+ 
+ cli_handlers.o:	cli_handlers.c
+ 	$(CC) $(CFLAGS) -Wno-unused-parameter -c -o $@ $<
 -- 
 2.34.1
 
