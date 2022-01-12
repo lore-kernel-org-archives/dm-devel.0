@@ -1,61 +1,74 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1660BC433F5
-	for <dm-devel@archiver.kernel.org>; Wed, 12 Jan 2022 17:11:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 78BABC433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 12 Jan 2022 19:12:40 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-390-6X5MgD_rO1S1ZT7zqPGzBw-1; Wed, 12 Jan 2022 12:11:14 -0500
-X-MC-Unique: 6X5MgD_rO1S1ZT7zqPGzBw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-29-HfltLVKeNky1oq9NlSK14A-1; Wed, 12 Jan 2022 14:12:35 -0500
+X-MC-Unique: HfltLVKeNky1oq9NlSK14A-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6E15639385;
-	Wed, 12 Jan 2022 17:11:10 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 93A967FB9E;
-	Wed, 12 Jan 2022 17:11:09 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 03D9B1006AA4;
+	Wed, 12 Jan 2022 19:12:30 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C186810016F7;
+	Wed, 12 Jan 2022 19:12:28 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 431FC4BB7C;
-	Wed, 12 Jan 2022 17:11:08 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.9])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 598CE1809CB8;
+	Wed, 12 Jan 2022 19:12:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.7])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20CH8dbY031363 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 12 Jan 2022 12:08:39 -0500
+	id 20CJCGEI008516 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 12 Jan 2022 14:12:16 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 93AF4492D48; Wed, 12 Jan 2022 17:08:39 +0000 (UTC)
+	id DF5341402400; Wed, 12 Jan 2022 19:12:15 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8FEB9492D47
-	for <dm-devel@redhat.com>; Wed, 12 Jan 2022 17:08:39 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6A75438035D3
-	for <dm-devel@redhat.com>; Wed, 12 Jan 2022 17:08:39 +0000 (UTC)
-Received: from desiato.infradead.org (desiato.infradead.org [90.155.92.199])
-	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-599-rOY_6pqoNWuvMabWYbOC-A-1; Wed, 12 Jan 2022 12:08:35 -0500
-X-MC-Unique: rOY_6pqoNWuvMabWYbOC-A-1
-Received: from [2601:1c0:6280:3f0::aa0b]
-	by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1n7gVi-000pWI-Rq; Wed, 12 Jan 2022 16:30:07 +0000
-Message-ID: <a2fa0ba9-8b93-eb00-9b7f-a5280f304c64@infradead.org>
-Date: Wed, 12 Jan 2022 08:30:02 -0800
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
-	Thunderbird/91.4.1
-To: Thore Sommer <public@thson.de>, dm-devel@redhat.com, agk@redhat.com,
-	snitzer@redhat.com
-References: <20220112144230.1978290-1-public@thson.de>
-From: Randy Dunlap <rdunlap@infradead.org>
-In-Reply-To: <20220112144230.1978290-1-public@thson.de>
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DB016140EBFD
+	for <dm-devel@redhat.com>; Wed, 12 Jan 2022 19:12:15 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C080638035CE
+	for <dm-devel@redhat.com>; Wed, 12 Jan 2022 19:12:15 +0000 (UTC)
+Received: from dfw.source.kernel.org (dfw.source.kernel.org
+	[139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-81-j3lToLLsM0OpjWwIwUu-Kg-1; Wed, 12 Jan 2022 14:12:12 -0500
+X-MC-Unique: j3lToLLsM0OpjWwIwUu-Kg-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by dfw.source.kernel.org (Postfix) with ESMTPS id 03F9861A95;
+	Wed, 12 Jan 2022 19:12:11 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPS id CCF57C36AEA;
+	Wed, 12 Jan 2022 19:12:10 +0000 (UTC)
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org
+	(localhost.localdomain [127.0.0.1])
+	by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP
+	id BB5D8F6078C; Wed, 12 Jan 2022 19:12:10 +0000 (UTC)
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <Yd8AveH8D+Nk2ILp@redhat.com>
+References: <Yd8AveH8D+Nk2ILp@redhat.com>
+X-PR-Tracked-List-Id: <linux-block.vger.kernel.org>
+X-PR-Tracked-Message-Id: <Yd8AveH8D+Nk2ILp@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git
+	tags/for-5.17/dm-changes
+X-PR-Tracked-Commit-Id: eaac0b590a47c717ef36cbfd1c528cd154c965a1
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: 49008f0cc1ef0b86ccfa0d1d99e67741d46bd35b
+Message-Id: <164201473075.2601.9666209549315511909.pr-tracker-bot@kernel.org>
+Date: Wed, 12 Jan 2022 19:12:10 +0000
+To: Mike Snitzer <snitzer@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -64,11 +77,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-loop: dm-devel@redhat.com
-Cc: tusharsu@linux.microsoft.com, linux-doc@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH v2] dm ima: updates to grammar and some
- details in documentation
+Cc: Kees Cook <keescook@chromium.org>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	Joe Thornber <ejt@redhat.com>, linux-block@vger.kernel.org,
+	dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>,
+	Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [dm-devel] [git pull] device mapper changes for 5.17
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -80,62 +96,29 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hi--
+The pull request you sent on Wed, 12 Jan 2022 11:24:29 -0500:
 
-On 1/12/22 06:42, Thore Sommer wrote:
-> The grammar for the events dm_device_remove, device_resume and
-> dm_table_clear did not include the no_data entry when device data
-> and hash are missing.
-> 
-> For the device uuid or name "=" is also escaped with a "\".
-> 
-> Add a note that dm_table_load might split its target measurements over
-> multiple IMA events.
-> 
-> Signed-off-by: Thore Sommer <public@thson.de>
-> ---
-> v2:
-> - include also device name and uuid in grammar for no_data
-> - fixed spelling mistakes
-> 
->  .../admin-guide/device-mapper/dm-ima.rst      | 32 +++++++++++++++----
->  1 file changed, 26 insertions(+), 6 deletions(-)
-> 
-> diff --git a/Documentation/admin-guide/device-mapper/dm-ima.rst b/Documentation/admin-guide/device-mapper/dm-ima.rst
-> index a4aa50a828e0..ef386a71e015 100644
-> --- a/Documentation/admin-guide/device-mapper/dm-ima.rst
-> +++ b/Documentation/admin-guide/device-mapper/dm-ima.rst
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.17/dm-changes
 
-> @@ -118,9 +121,9 @@ The IMA measurement log has the following format for 'dm_table_load':
->   device_minor := "minor=" <N>
->   minor_count := "minor_count=" <N>
->   num_device_targets := "num_targets=" <N>
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/49008f0cc1ef0b86ccfa0d1d99e67741d46bd35b
 
-These 2 changes still need a space before the '=',
-
-> - dm-device-name := Name of the device. If it contains special characters like '\', ',', ';',
-> + dm-device-name := Name of the device. If it contains special characters like '\', ',', ';','=',
->                     they are prefixed with '\'.
-> - dm-device-uuid := UUID of the device. If it contains special characters like '\', ',', ';',
-> + dm-device-uuid := UUID of the device. If it contains special characters like '\', ',', ';','=',
->                     they are prefixed with '\'.
->  
->   table_load_data := <target_data>
-
+Thank you!
 
 -- 
-~Randy
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
 
 --
 dm-devel mailing list
