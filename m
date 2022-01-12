@@ -1,88 +1,66 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CE6E4C433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 13 Jan 2022 01:30:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B8BD0C433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 13 Jan 2022 08:08:49 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-623--scdeqwNM4qPRL-nVs2mwg-1; Wed, 12 Jan 2022 20:30:41 -0500
-X-MC-Unique: -scdeqwNM4qPRL-nVs2mwg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-130-psU4a2kTP025K_OFW1yY8Q-1; Thu, 13 Jan 2022 03:08:47 -0500
+X-MC-Unique: psU4a2kTP025K_OFW1yY8Q-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A6C2081CCB5;
-	Thu, 13 Jan 2022 01:30:35 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 406D01816C;
-	Thu, 13 Jan 2022 01:30:33 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 24CCB1083F61;
+	Thu, 13 Jan 2022 08:08:43 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9E2C3105915F;
+	Thu, 13 Jan 2022 08:08:42 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2E7174BB7C;
-	Thu, 13 Jan 2022 01:30:30 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.8])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 353491809CBF;
+	Thu, 13 Jan 2022 08:08:39 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.7])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20D1UR1a004725 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 12 Jan 2022 20:30:27 -0500
+	id 20CLKf8m016036 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 12 Jan 2022 16:20:41 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8C21AC15E73; Thu, 13 Jan 2022 01:30:27 +0000 (UTC)
+	id 4096E141DC2C; Wed, 12 Jan 2022 21:20:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 87855C15E6F
-	for <dm-devel@redhat.com>; Thu, 13 Jan 2022 01:30:27 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3BE12141DC28
+	for <dm-devel@redhat.com>; Wed, 12 Jan 2022 21:20:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 64BD61C05155
-	for <dm-devel@redhat.com>; Thu, 13 Jan 2022 01:30:27 +0000 (UTC)
-Received: from mout.gmx.net (mout.gmx.net [212.227.15.15]) by
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 221562A59562
+	for <dm-devel@redhat.com>; Wed, 12 Jan 2022 21:20:41 +0000 (UTC)
+Received: from mga14.intel.com (mga14.intel.com [192.55.52.115]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-148-Z3cr-YFeOpucS1Sovn3Aqg-1; Wed, 12 Jan 2022 20:30:25 -0500
-X-MC-Unique: Z3cr-YFeOpucS1Sovn3Aqg-1
-X-UI-Sender-Class: 01bb95c1-4bf8-414a-932a-4f6e2808ef9c
-Received: from [0.0.0.0] ([149.28.201.231]) by mail.gmx.net (mrgmx004
-	[212.227.17.184]) with ESMTPSA (Nemesis) id 1Mel7v-1mX7DG1drR-00algE;
-	Thu, 13 Jan 2022 02:30:24 +0100
-Message-ID: <d8a4ab1f-f6eb-06a3-cdf4-6122a6b3cbf6@gmx.com>
-Date: Thu, 13 Jan 2022 09:30:17 +0800
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
-	Thunderbird/91.4.1
-To: Lukas Straub <lukasstraub2@web.de>
-References: <0535d6c3-dec3-fb49-3707-709e8d26b538@gmx.com>
-	<20220108195259.33e9bdf0@gecko> <20220108202922.6b00de19@gecko>
-	<5ffc44f1-7e82-bc85-fbb1-a4f89711ae8f@gmx.com>
-	<e209bfe191442846f66d790321f2db672edfb8ca.camel@infradead.org>
-	<24998019-960c-0808-78df-72e0d08c904e@gmx.com>
-	<20220112155351.5b670d81@gecko>
-From: Qu Wenruo <quwenruo.btrfs@gmx.com>
-In-Reply-To: <20220112155351.5b670d81@gecko>
-X-Provags-ID: V03:K1:UerDNmPKLlus2Pxmptpvr2B2Iop8EYbu1P0Fdu1O8neE5S59DYe
-	xT6zzMRJR78JmWf1AmmWm9wYMi69yHPHtxpC73LPZ48//FarAODtB0yNZXkqFE9m0LjfdKy
-	nywJDLgHAjmA1H9E6f8wi87Mt1hYOa9s5ibZP3Gx3VMlenhrhYbziZo1LhTg4fEYN1zCuiZ
-	k4Wx9Vy423RxIH9tI9a2Q==
-X-UI-Out-Filterresults: notjunk:1;V03:K0:+n/mTaIWfEM=:RhhlemtXcANIxJfX7X6c26
-	TZ5ZnwlVkKYxGafYznTogLzddIm9XwfAaZRc+ecS04UfvDGLLL8X6C2usQZ4ZHX1YB+mqsn2t
-	UvLkN/v2TwTn7OeS6CK2b0FST5lqWWowJ0htmrZBxcpuo+GumBAJTvwBL6wQXDjrQesjReuM4
-	C8EYUwDxyNqPcX3iFRT1alWdFGxKRxOqrRClFxya/PguqpIOsY4WX/DVbdLLyJ2xAzEMf08AN
-	0wde98XxP22gzx5bi+ySQiasy6I+QG2RN549G74XAYQY1J1wXeO2iRZ7Y78+6o+FqxW/zZj9X
-	1cRlds8fnISxX2ONVxMyAEdP6s5vm1gEGE0dcCMZG57F4ONf7432VsNVbNtGj/s1goHnG9BjD
-	xuWhXf12tcYwx5F7blz/A4kdFhWFhN2oXN7ZW0uYZaPirk5TgNMemF78tqZd4K5hCPbHLFMh/
-	vA4ij/mCGOmFCgRVsOOpsr9KeXBJo9rzx/0+JinDC88+3qXT/746SVv+Jv7JpdI1CPdUPK7pt
-	fUspPLGw3kakqnp841LPxBUB5UZYNlRyPfhkhINbkUYT8LYvVXqpmxPUlkOb789e1YmCE7RBq
-	z7iYfOfb0d+SXRa7owIdlghwfub4i5vyYnljMoR9ojSfqaOhXtRG2212DUzKWf0ZGrFRLzGS0
-	cRbNq76LNw7G73T1A7icIuifxEI4jXuRw9UQuXuQdfWQ1gawCU8Zp32DUION2vA4/AQR/XWfF
-	DXzbAS+p1ohdjh7OmaZKnxn5XsI1bFXVdwPB9W44ZmObNl2dbGWj11LBt6nQRLw2fNVRXG+us
-	Bnx7pJH5GLstX9gI96+XEARquP6d4b0VYoz1F7DNfY7a8blAnuEiRlO8VlHWzAntp9n/RLjxe
-	UpbCxktkfL5enSrkrgE6ZU7LT5SDzCVivCLOPnsXiXjTzLJBrelgMq10c6PeH23FylbjuAiSI
-	Y/nfVfUZpcOYiPhHL8YBObWuz1Tj+/5qQtBQekzRC89OlEB+SkmLECZGvtYLt1Sb5oIlQOJXB
-	ePcA7uOy9iZIM8BUhb3AAYGoqEUbks1WPxL9NZ4YcPXqKsqRrIKa1rJe5OJpoTHobmlE6LEhP
-	KcCUr5mJn94XWc=
+	us-mta-556-njmJwSXJNlWGCcxm3WmqSg-1; Wed, 12 Jan 2022 16:20:39 -0500
+X-MC-Unique: njmJwSXJNlWGCcxm3WmqSg-1
+X-IronPort-AV: E=McAfee;i="6200,9189,10225"; a="244060309"
+X-IronPort-AV: E=Sophos;i="5.88,284,1635231600"; d="scan'208";a="244060309"
+Received: from orsmga008.jf.intel.com ([10.7.209.65])
+	by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+	12 Jan 2022 13:20:38 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.88,284,1635231600"; d="scan'208";a="529378229"
+Received: from chang-linux-3.sc.intel.com ([172.25.66.175])
+	by orsmga008.jf.intel.com with ESMTP; 12 Jan 2022 13:20:38 -0800
+From: "Chang S. Bae" <chang.seok.bae@intel.com>
+To: linux-crypto@vger.kernel.org, dm-devel@redhat.com,
+	herbert@gondor.apana.org.au, ebiggers@kernel.org, ardb@kernel.org,
+	x86@kernel.org, luto@kernel.org, tglx@linutronix.de, bp@suse.de,
+	dave.hansen@linux.intel.com, mingo@kernel.org
+Date: Wed, 12 Jan 2022 13:12:48 -0800
+Message-Id: <20220112211258.21115-3-chang.seok.bae@intel.com>
+In-Reply-To: <20220112211258.21115-1-chang.seok.bae@intel.com>
+References: <20220112211258.21115-1-chang.seok.bae@intel.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -91,15 +69,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 20D1UR1a004725
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-loop: dm-devel@redhat.com
-Cc: Linux FS Devel <linux-fsdevel@vger.kernel.org>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	David Woodhouse <dwmw2@infradead.org>, linux-raid@vger.kernel.org
-Subject: Re: [dm-devel] Proper way to test RAID456?
+X-Mailman-Approved-At: Thu, 13 Jan 2022 03:08:37 -0500
+Cc: ravi.v.shankar@intel.com, chang.seok.bae@intel.com,
+	linux-kernel@vger.kernel.org, kumar.n.dwarakanath@intel.com,
+	dan.j.williams@intel.com, charishma1.gairuboyina@intel.com
+Subject: [dm-devel] [PATCH v5 02/12] x86/cpufeature: Enumerate Key Locker
+	feature
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -111,169 +88,119 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
+Key Locker is a CPU feature to minimize exposure of clear-text key
+material. An encoded form, called 'key handle', is referenced for data
+encryption or decryption instead of accessing the clear text key.
 
+A wrapping key loaded in the CPU's software-inaccessible state is used to
+transform a user key into a key handle.
 
-On 2022/1/13 00:56, Lukas Straub wrote:
-> On Sun, 9 Jan 2022 20:13:36 +0800
-> Qu Wenruo <quwenruo.btrfs@gmx.com> wrote:
->
->> On 2022/1/9 18:04, David Woodhouse wrote:
->>> On Sun, 2022-01-09 at 07:55 +0800, Qu Wenruo wrote:
->>>> On 2022/1/9 04:29, Lukas Straub wrote:
->>>>> But there is a even simpler solution for btrfs: It could just not touch
->>>>> stripes that already contain data.
->>>>
->>>> That would waste a lot of space, if the fs is fragemented.
->>>>
->>>> Or we have to write into data stripes when free space is low.
->>>>
->>>> That's why I'm trying to implement a PPL-like journal for btrfs RAID56.
->>>
->>> PPL writes the P/Q of the unmodified chunks from the stripe, doesn't
->>> it?
->>
->> Did I miss something or the PPL isn't what I thought?
->>
->> I thought PPL either:
->>
->> a) Just write a metadata entry into the journal to indicate a full
->>      stripe (along with its location) is going to be written.
->>
->> b) Write a metadata entry into the journal about a non-full stripe
->>      write, then write the new data and new P/Q into the journal
->>
->> And this is before we start any data/P/Q write.
->>
->> And after related data/P/Q write is finished, remove corresponding
->> metadata and data entry from the journal.
->>
->> Or PPL have even better solution?
->
-> Yes, PPL is a bit better than a journal as you described it (md
-> supports both). Because a journal would need to be replicated to
-> multiple devices (raid1) in the array while the PPL is only written to
-> the drive containing the parity for the particular stripe. And since the
-> parity is distributed across all drives, the PPL overhead is also
-> distributed across all drives. However, PPL only works for raid5 as
-> you'll see.
->
-> PPL works like this:
->
-> Before any data/parity write either:
->
->   a) Just write a metadata entry into the PPL on the parity drive to
->      indicate a full stripe (along with its location) is going to be
->      written.
->
->   b) Write a metadata entry into the PPL on the parity drive about a
->      non-full stripe write, including which data chunks are going to be
->      modified, then write the XOR of chunks not modified by this write in
->      to the PPL.
+It supports Advanced Encryption Standard (AES) cipher algorithm with new
+SIMD instruction set like its predecessor (AES-NI). So a new AES
+implementation will follow in the kernel's crypto library.
 
-This is a little different than I thought, and I guess that's why RAID6
-is not supported.
+Here add it to enumerate the hardware capability, but it will not be
+shown in /proc/cpuinfo as userspace usage is not supported.
 
-My original assumption would be something like this for one RMW
-(X = modified data, | | = unmodified data)
+Make the feature depend on XMM2 as it comes with AES SIMD instructions.
 
-Data 1:    |XXXXXXXXX|   |        |
-Data 2:    |         |   |XXXXXXXX|
-P(1+2):    |XXXXXXXXX|   |XXXXXXXX|
+Add X86_FEATURE_KEYLOCKER to the disabled features mask. It will be
+enabled under a new config option.
 
-In that case, modified Data 1 and 2 will go logged into PPL for the
-corresponding disks.
-Then for P(1+2), only the modified two parts will be logged into the device.
+Signed-off-by: Chang S. Bae <chang.seok.bae@intel.com>
+Reviewed-by: Dan Williams <dan.j.williams@intel.com>
+Cc: x86@kernel.org
+Cc: linux-kernel@vger.kernel.org
+---
+Changes from RFC v2:
+* Do not publish the feature flag to userspace.
+* Update the changelog.
 
-I'm wondering if we go this solution, wouldn't it be able to handle
-RAID6 too?
-Even we lost two disks, the remaining part in the PPL should still be
-enough to recover whatever is lost, as long as the unmodified sectors
-are really unmodified on-disk.
+Changes from RFC v1:
+* Updated the changelog.
+---
+ arch/x86/include/asm/cpufeatures.h          | 1 +
+ arch/x86/include/asm/disabled-features.h    | 8 +++++++-
+ arch/x86/include/uapi/asm/processor-flags.h | 2 ++
+ arch/x86/kernel/cpu/cpuid-deps.c            | 1 +
+ 4 files changed, 11 insertions(+), 1 deletion(-)
 
-Although this would greatly make the PPL management much harder, as
-different devices will have different PPL data usage.
-
-
->
-> To recover a inconsistent array with a lost drive:
->
-> In case a), the stripe consists only of newly written data, so it will
-> be affected by the write-hole (this is the trade-off that PPL makes) so
-> just standard parity recovery.
->
-> In case b), XOR what we wrote to the PPL (the XOR of chunks not
-> modified) with the modified data chunks to get our new (consistent)
-> parity. Then do standard parity recovery. This just works if we lost a
-> unmodified data chunk.
-> If we lost a modified data chunk this is not possible and just do
-> standard parity recovery from the beginning. Again, the newly written
-> data is affected by the write-hole but existing data is not.
-> If we lost the parity drive (containing the PPL) there is no need to
-> recover since all the data chunks are present.
->
-> Of course, this was a simplified explanation, see drivers/md/raid5-ppl.c
-> for details (it has good comments with examples). This also covers the
-> case where a data chunk is only partially modified and the unmodified
-> part of the chunk also needs to be protected (by working on a per-block
-> basis instead of per-chunk).
-
-Thanks for the detailed explanation.
-Qu
-
->
-> The PPL is not possible for raid6 AFAIK, because there it could happen
-> that you loose both a modified data chunk and a unmodified data chunk.
->
-> Regards,
-> Lukas Straub
->
->>>
->>> An alternative in a true file system which can do its own block
->>> allocation is to just calculate the P/Q of the final stripe after it's
->>> been modified, and write those (and) the updated data out to newly-
->>> allocated blocks instead of overwriting the original.
->>
->> This is what Johannes is considering, but for a different purpose.
->> Johannes' idea is to support zoned device. As the physical location a
->> zoned append write will only be known after it's written.
->>
->> So his idea is to maintain another mapping tree for zoned write, so that
->> full stripe update will also happen in that tree.
->>
->> But that idea is still in the future, on the other hand I still prefer
->> some tried-and-true method, as I'm 100% sure there will be new
->> difficulties waiting us for the new mapping tree method.
->>
->> Thanks,
->> Qu
->>
->>>
->>> Then the final step is to free the original data blocks and P/Q.
->>>
->>> This means that your RAID stripes no longer have a fixed topology; you
->>> need metadata to be able to *find* the component data and P/Q chunks...
->>> it ends up being non-trivial, but it has attractive properties if we
->>> can work it out.
->
->
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://listman.redhat.com/mailman/listinfo/dm-devel
-
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index d5b5f2ab87a0..e1964446bbe5 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -361,6 +361,7 @@
+ #define X86_FEATURE_AVX512_VPOPCNTDQ	(16*32+14) /* POPCNT for vectors of DW/QW */
+ #define X86_FEATURE_LA57		(16*32+16) /* 5-level page tables */
+ #define X86_FEATURE_RDPID		(16*32+22) /* RDPID instruction */
++#define X86_FEATURE_KEYLOCKER		(16*32+23) /* "" Key Locker */
+ #define X86_FEATURE_BUS_LOCK_DETECT	(16*32+24) /* Bus Lock detect */
+ #define X86_FEATURE_CLDEMOTE		(16*32+25) /* CLDEMOTE instruction */
+ #define X86_FEATURE_MOVDIRI		(16*32+27) /* MOVDIRI instruction */
+diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
+index 8f28fafa98b3..75e1e87640d4 100644
+--- a/arch/x86/include/asm/disabled-features.h
++++ b/arch/x86/include/asm/disabled-features.h
+@@ -44,6 +44,12 @@
+ # define DISABLE_OSPKE		(1<<(X86_FEATURE_OSPKE & 31))
+ #endif /* CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS */
+ 
++#ifdef CONFIG_X86_KEYLOCKER
++# define DISABLE_KEYLOCKER	0
++#else
++# define DISABLE_KEYLOCKER	(1<<(X86_FEATURE_KEYLOCKER & 31))
++#endif /* CONFIG_X86_KEYLOCKER */
++
+ #ifdef CONFIG_X86_5LEVEL
+ # define DISABLE_LA57	0
+ #else
+@@ -85,7 +91,7 @@
+ #define DISABLED_MASK14	0
+ #define DISABLED_MASK15	0
+ #define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP| \
+-			 DISABLE_ENQCMD)
++			 DISABLE_ENQCMD|DISABLE_KEYLOCKER)
+ #define DISABLED_MASK17	0
+ #define DISABLED_MASK18	0
+ #define DISABLED_MASK19	0
+diff --git a/arch/x86/include/uapi/asm/processor-flags.h b/arch/x86/include/uapi/asm/processor-flags.h
+index bcba3c643e63..b958a95a0908 100644
+--- a/arch/x86/include/uapi/asm/processor-flags.h
++++ b/arch/x86/include/uapi/asm/processor-flags.h
+@@ -124,6 +124,8 @@
+ #define X86_CR4_PCIDE		_BITUL(X86_CR4_PCIDE_BIT)
+ #define X86_CR4_OSXSAVE_BIT	18 /* enable xsave and xrestore */
+ #define X86_CR4_OSXSAVE		_BITUL(X86_CR4_OSXSAVE_BIT)
++#define X86_CR4_KEYLOCKER_BIT	19 /* enable Key Locker */
++#define X86_CR4_KEYLOCKER	_BITUL(X86_CR4_KEYLOCKER_BIT)
+ #define X86_CR4_SMEP_BIT	20 /* enable SMEP support */
+ #define X86_CR4_SMEP		_BITUL(X86_CR4_SMEP_BIT)
+ #define X86_CR4_SMAP_BIT	21 /* enable SMAP support */
+diff --git a/arch/x86/kernel/cpu/cpuid-deps.c b/arch/x86/kernel/cpu/cpuid-deps.c
+index c881bcafba7d..abe7e04b27d9 100644
+--- a/arch/x86/kernel/cpu/cpuid-deps.c
++++ b/arch/x86/kernel/cpu/cpuid-deps.c
+@@ -78,6 +78,7 @@ static const struct cpuid_dep cpuid_deps[] = {
+ 	{ X86_FEATURE_XFD,			X86_FEATURE_XSAVES    },
+ 	{ X86_FEATURE_XFD,			X86_FEATURE_XGETBV1   },
+ 	{ X86_FEATURE_AMX_TILE,			X86_FEATURE_XFD       },
++	{ X86_FEATURE_KEYLOCKER,		X86_FEATURE_XMM2      },
+ 	{}
+ };
+ 
+-- 
+2.17.1
 
 --
 dm-devel mailing list
