@@ -4,52 +4,52 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B8BD0C433F5
-	for <dm-devel@archiver.kernel.org>; Thu, 13 Jan 2022 08:08:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 08FCBC433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 13 Jan 2022 08:08:51 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-130-psU4a2kTP025K_OFW1yY8Q-1; Thu, 13 Jan 2022 03:08:47 -0500
-X-MC-Unique: psU4a2kTP025K_OFW1yY8Q-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-94-CaiQeOFQP7SlwItN8mHpQQ-1; Thu, 13 Jan 2022 03:08:47 -0500
+X-MC-Unique: CaiQeOFQP7SlwItN8mHpQQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 24CCB1083F61;
-	Thu, 13 Jan 2022 08:08:43 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id EF4D51083F60;
+	Thu, 13 Jan 2022 08:08:42 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9E2C3105915F;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9EBD7607CB;
 	Thu, 13 Jan 2022 08:08:42 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 353491809CBF;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3539B1802E2B;
 	Thu, 13 Jan 2022 08:08:39 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.7])
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.9])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20CLKf8m016036 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 12 Jan 2022 16:20:41 -0500
+	id 20CLKflB016042 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 12 Jan 2022 16:20:42 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4096E141DC2C; Wed, 12 Jan 2022 21:20:41 +0000 (UTC)
+	id D3903492D49; Wed, 12 Jan 2022 21:20:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3BE12141DC28
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CF2A5492D47
 	for <dm-devel@redhat.com>; Wed, 12 Jan 2022 21:20:41 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 221562A59562
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B5E041064E69
 	for <dm-devel@redhat.com>; Wed, 12 Jan 2022 21:20:41 +0000 (UTC)
 Received: from mga14.intel.com (mga14.intel.com [192.55.52.115]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-556-njmJwSXJNlWGCcxm3WmqSg-1; Wed, 12 Jan 2022 16:20:39 -0500
-X-MC-Unique: njmJwSXJNlWGCcxm3WmqSg-1
-X-IronPort-AV: E=McAfee;i="6200,9189,10225"; a="244060309"
-X-IronPort-AV: E=Sophos;i="5.88,284,1635231600"; d="scan'208";a="244060309"
+	us-mta-556-tB_a_v6AO7u2AgIT_WPXyw-2; Wed, 12 Jan 2022 16:20:40 -0500
+X-MC-Unique: tB_a_v6AO7u2AgIT_WPXyw-2
+X-IronPort-AV: E=McAfee;i="6200,9189,10225"; a="244060314"
+X-IronPort-AV: E=Sophos;i="5.88,284,1635231600"; d="scan'208";a="244060314"
 Received: from orsmga008.jf.intel.com ([10.7.209.65])
 	by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
-	12 Jan 2022 13:20:38 -0800
+	12 Jan 2022 13:20:39 -0800
 X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.88,284,1635231600"; d="scan'208";a="529378229"
+X-IronPort-AV: E=Sophos;i="5.88,284,1635231600"; d="scan'208";a="529378239"
 Received: from chang-linux-3.sc.intel.com ([172.25.66.175])
 	by orsmga008.jf.intel.com with ESMTP; 12 Jan 2022 13:20:38 -0800
 From: "Chang S. Bae" <chang.seok.bae@intel.com>
@@ -57,8 +57,8 @@ To: linux-crypto@vger.kernel.org, dm-devel@redhat.com,
 	herbert@gondor.apana.org.au, ebiggers@kernel.org, ardb@kernel.org,
 	x86@kernel.org, luto@kernel.org, tglx@linutronix.de, bp@suse.de,
 	dave.hansen@linux.intel.com, mingo@kernel.org
-Date: Wed, 12 Jan 2022 13:12:48 -0800
-Message-Id: <20220112211258.21115-3-chang.seok.bae@intel.com>
+Date: Wed, 12 Jan 2022 13:12:50 -0800
+Message-Id: <20220112211258.21115-5-chang.seok.bae@intel.com>
 In-Reply-To: <20220112211258.21115-1-chang.seok.bae@intel.com>
 References: <20220112211258.21115-1-chang.seok.bae@intel.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -69,14 +69,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Thu, 13 Jan 2022 03:08:37 -0500
 Cc: ravi.v.shankar@intel.com, chang.seok.bae@intel.com,
 	linux-kernel@vger.kernel.org, kumar.n.dwarakanath@intel.com,
 	dan.j.williams@intel.com, charishma1.gairuboyina@intel.com
-Subject: [dm-devel] [PATCH v5 02/12] x86/cpufeature: Enumerate Key Locker
-	feature
+Subject: [dm-devel] [PATCH v5 04/12] x86/asm: Add a wrapper function for the
+	LOADIWKEY instruction
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -91,7 +91,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -99,24 +99,16 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Key Locker is a CPU feature to minimize exposure of clear-text key
-material. An encoded form, called 'key handle', is referenced for data
-encryption or decryption instead of accessing the clear text key.
+Key Locker introduces a CPU-internal wrapping key to encode a user key to a
+key handle. Then a key handle is referenced instead of the plain text key.
 
-A wrapping key loaded in the CPU's software-inaccessible state is used to
-transform a user key into a key handle.
+The new instruction loads an internal wrapping key in the
+software-inaccessible CPU state. It operates only in kernel mode.
 
-It supports Advanced Encryption Standard (AES) cipher algorithm with new
-SIMD instruction set like its predecessor (AES-NI). So a new AES
-implementation will follow in the kernel's crypto library.
+Define struct iwkey to pass the key value.
 
-Here add it to enumerate the hardware capability, but it will not be
-shown in /proc/cpuinfo as userspace usage is not supported.
-
-Make the feature depend on XMM2 as it comes with AES SIMD instructions.
-
-Add X86_FEATURE_KEYLOCKER to the disabled features mask. It will be
-enabled under a new config option.
+The kernel will use this function to load a new key at boot time when the
+feature is enabled.
 
 Signed-off-by: Chang S. Bae <chang.seok.bae@intel.com>
 Reviewed-by: Dan Williams <dan.j.williams@intel.com>
@@ -124,81 +116,100 @@ Cc: x86@kernel.org
 Cc: linux-kernel@vger.kernel.org
 ---
 Changes from RFC v2:
-* Do not publish the feature flag to userspace.
-* Update the changelog.
+* Separate out the code as a new patch.
+* Improve the usability with the new struct as an argument. (Dan
+Williams)
 
-Changes from RFC v1:
-* Updated the changelog.
+Note, Dan wondered if:
+  WARN_ON(!irq_fpu_usable());
+would be appropriate in the load_xmm_iwkey() function.
 ---
- arch/x86/include/asm/cpufeatures.h          | 1 +
- arch/x86/include/asm/disabled-features.h    | 8 +++++++-
- arch/x86/include/uapi/asm/processor-flags.h | 2 ++
- arch/x86/kernel/cpu/cpuid-deps.c            | 1 +
- 4 files changed, 11 insertions(+), 1 deletion(-)
+ arch/x86/include/asm/keylocker.h     | 25 ++++++++++++++++++++++
+ arch/x86/include/asm/special_insns.h | 32 ++++++++++++++++++++++++++++
+ 2 files changed, 57 insertions(+)
+ create mode 100644 arch/x86/include/asm/keylocker.h
 
-diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
-index d5b5f2ab87a0..e1964446bbe5 100644
---- a/arch/x86/include/asm/cpufeatures.h
-+++ b/arch/x86/include/asm/cpufeatures.h
-@@ -361,6 +361,7 @@
- #define X86_FEATURE_AVX512_VPOPCNTDQ	(16*32+14) /* POPCNT for vectors of DW/QW */
- #define X86_FEATURE_LA57		(16*32+16) /* 5-level page tables */
- #define X86_FEATURE_RDPID		(16*32+22) /* RDPID instruction */
-+#define X86_FEATURE_KEYLOCKER		(16*32+23) /* "" Key Locker */
- #define X86_FEATURE_BUS_LOCK_DETECT	(16*32+24) /* Bus Lock detect */
- #define X86_FEATURE_CLDEMOTE		(16*32+25) /* CLDEMOTE instruction */
- #define X86_FEATURE_MOVDIRI		(16*32+27) /* MOVDIRI instruction */
-diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
-index 8f28fafa98b3..75e1e87640d4 100644
---- a/arch/x86/include/asm/disabled-features.h
-+++ b/arch/x86/include/asm/disabled-features.h
-@@ -44,6 +44,12 @@
- # define DISABLE_OSPKE		(1<<(X86_FEATURE_OSPKE & 31))
- #endif /* CONFIG_X86_INTEL_MEMORY_PROTECTION_KEYS */
- 
-+#ifdef CONFIG_X86_KEYLOCKER
-+# define DISABLE_KEYLOCKER	0
-+#else
-+# define DISABLE_KEYLOCKER	(1<<(X86_FEATURE_KEYLOCKER & 31))
-+#endif /* CONFIG_X86_KEYLOCKER */
+diff --git a/arch/x86/include/asm/keylocker.h b/arch/x86/include/asm/keylocker.h
+new file mode 100644
+index 000000000000..df84c83228a1
+--- /dev/null
++++ b/arch/x86/include/asm/keylocker.h
+@@ -0,0 +1,25 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
 +
- #ifdef CONFIG_X86_5LEVEL
- # define DISABLE_LA57	0
- #else
-@@ -85,7 +91,7 @@
- #define DISABLED_MASK14	0
- #define DISABLED_MASK15	0
- #define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP| \
--			 DISABLE_ENQCMD)
-+			 DISABLE_ENQCMD|DISABLE_KEYLOCKER)
- #define DISABLED_MASK17	0
- #define DISABLED_MASK18	0
- #define DISABLED_MASK19	0
-diff --git a/arch/x86/include/uapi/asm/processor-flags.h b/arch/x86/include/uapi/asm/processor-flags.h
-index bcba3c643e63..b958a95a0908 100644
---- a/arch/x86/include/uapi/asm/processor-flags.h
-+++ b/arch/x86/include/uapi/asm/processor-flags.h
-@@ -124,6 +124,8 @@
- #define X86_CR4_PCIDE		_BITUL(X86_CR4_PCIDE_BIT)
- #define X86_CR4_OSXSAVE_BIT	18 /* enable xsave and xrestore */
- #define X86_CR4_OSXSAVE		_BITUL(X86_CR4_OSXSAVE_BIT)
-+#define X86_CR4_KEYLOCKER_BIT	19 /* enable Key Locker */
-+#define X86_CR4_KEYLOCKER	_BITUL(X86_CR4_KEYLOCKER_BIT)
- #define X86_CR4_SMEP_BIT	20 /* enable SMEP support */
- #define X86_CR4_SMEP		_BITUL(X86_CR4_SMEP_BIT)
- #define X86_CR4_SMAP_BIT	21 /* enable SMAP support */
-diff --git a/arch/x86/kernel/cpu/cpuid-deps.c b/arch/x86/kernel/cpu/cpuid-deps.c
-index c881bcafba7d..abe7e04b27d9 100644
---- a/arch/x86/kernel/cpu/cpuid-deps.c
-+++ b/arch/x86/kernel/cpu/cpuid-deps.c
-@@ -78,6 +78,7 @@ static const struct cpuid_dep cpuid_deps[] = {
- 	{ X86_FEATURE_XFD,			X86_FEATURE_XSAVES    },
- 	{ X86_FEATURE_XFD,			X86_FEATURE_XGETBV1   },
- 	{ X86_FEATURE_AMX_TILE,			X86_FEATURE_XFD       },
-+	{ X86_FEATURE_KEYLOCKER,		X86_FEATURE_XMM2      },
- 	{}
- };
++#ifndef _ASM_KEYLOCKER_H
++#define _ASM_KEYLOCKER_H
++
++#ifndef __ASSEMBLY__
++
++#include <asm/fpu/types.h>
++
++/**
++ * struct iwkey - A temporary internal wrapping key storage.
++ * @integrity_key:	A 128-bit key to check that key handles have not
++ *			been tampered with.
++ * @encryption_key:	A 256-bit encryption key used in
++ *			wrapping/unwrapping a clear text key.
++ *
++ * This storage should be flushed immediately after loaded.
++ */
++struct iwkey {
++	struct reg_128_bit integrity_key;
++	struct reg_128_bit encryption_key[2];
++};
++
++#endif /*__ASSEMBLY__ */
++#endif /* _ASM_KEYLOCKER_H */
+diff --git a/arch/x86/include/asm/special_insns.h b/arch/x86/include/asm/special_insns.h
+index 68c257a3de0d..3e50d8396ee1 100644
+--- a/arch/x86/include/asm/special_insns.h
++++ b/arch/x86/include/asm/special_insns.h
+@@ -9,6 +9,7 @@
+ #include <asm/processor-flags.h>
+ #include <linux/irqflags.h>
+ #include <linux/jump_label.h>
++#include <asm/keylocker.h>
  
+ /*
+  * The compiler should not reorder volatile asm statements with respect to each
+@@ -294,6 +295,37 @@ static inline int enqcmds(void __iomem *dst, const void *src)
+ 	return 0;
+ }
+ 
++/**
++ * load_xmm_iwkey - Load a CPU-internal wrapping key
++ * @key:	A struct iwkey pointer.
++ *
++ * Load @key to XMMs then do LOADIWKEY. After this, flush XMM
++ * registers. Caller is responsible for kernel_cpu_begin().
++ */
++static inline void load_xmm_iwkey(struct iwkey *key)
++{
++	struct reg_128_bit zeros = { 0 };
++
++	asm volatile ("movdqu %0, %%xmm0; movdqu %1, %%xmm1; movdqu %2, %%xmm2;"
++		      :: "m"(key->integrity_key), "m"(key->encryption_key[0]),
++			 "m"(key->encryption_key[1]));
++
++	/*
++	 * LOADIWKEY %xmm1,%xmm2
++	 *
++	 * EAX and XMM0 are implicit operands. Load a key value
++	 * from XMM0-2 to a software-invisible CPU state. With zero
++	 * in EAX, CPU does not do hardware randomization and the key
++	 * backup is allowed.
++	 *
++	 * This instruction is supported by binutils >= 2.36.
++	 */
++	asm volatile (".byte 0xf3,0x0f,0x38,0xdc,0xd1" :: "a"(0));
++
++	asm volatile ("movdqu %0, %%xmm0; movdqu %0, %%xmm1; movdqu %0, %%xmm2;"
++		      :: "m"(zeros));
++}
++
+ #endif /* __KERNEL__ */
+ 
+ #endif /* _ASM_X86_SPECIAL_INSNS_H */
 -- 
 2.17.1
 
