@@ -1,58 +1,61 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 958D9C433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 17 Jan 2022 07:59:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3BD3CC433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 17 Jan 2022 08:09:52 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-400-eDtT1pcaNg2YR_19_7I8KA-1; Mon, 17 Jan 2022 02:59:45 -0500
-X-MC-Unique: eDtT1pcaNg2YR_19_7I8KA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-213-CEqMcqbTOhKAZ8bD8Mi_Wg-1; Mon, 17 Jan 2022 03:09:42 -0500
+X-MC-Unique: CEqMcqbTOhKAZ8bD8Mi_Wg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 348EF80D680;
-	Mon, 17 Jan 2022 07:59:41 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6456386A060;
+	Mon, 17 Jan 2022 08:09:38 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B404E105913E;
-	Mon, 17 Jan 2022 07:59:40 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 042827B019;
+	Mon, 17 Jan 2022 08:09:38 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 04C861809CB8;
-	Mon, 17 Jan 2022 07:59:39 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.9])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 666A51809CB8;
+	Mon, 17 Jan 2022 08:09:37 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.7])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20H7xbSB029292 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 17 Jan 2022 02:59:37 -0500
+	id 20H88dnT029737 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 17 Jan 2022 03:08:39 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6FE61492CA7; Mon, 17 Jan 2022 07:59:37 +0000 (UTC)
+	id 0ED2D1400E70; Mon, 17 Jan 2022 08:08:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6BBF2492CA4
-	for <dm-devel@redhat.com>; Mon, 17 Jan 2022 07:59:37 +0000 (UTC)
+	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0A8D21410F36
+	for <dm-devel@redhat.com>; Mon, 17 Jan 2022 08:08:37 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 524B5811E76
-	for <dm-devel@redhat.com>; Mon, 17 Jan 2022 07:59:37 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E389E3C1CD3A
+	for <dm-devel@redhat.com>; Mon, 17 Jan 2022 08:08:36 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-360-w8I38C7sMHC4MMHcIFyRPw-1; Mon, 17 Jan 2022 02:59:35 -0500
-X-MC-Unique: w8I38C7sMHC4MMHcIFyRPw-1
+	us-mta-1-fvi5NzVbNOi9DrdyqyU6Pw-1; Mon, 17 Jan 2022 03:08:34 -0500
+X-MC-Unique: fvi5NzVbNOi9DrdyqyU6Pw-1
 Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red
-	Hat Linux)) id 1n9MnN-00DzFK-Gs; Mon, 17 Jan 2022 07:51:17 +0000
-Date: Sun, 16 Jan 2022 23:51:17 -0800
+	Hat Linux)) id 1n9N44-00E1mQ-8b; Mon, 17 Jan 2022 08:08:32 +0000
+Date: Mon, 17 Jan 2022 00:08:32 -0800
 From: Christoph Hellwig <hch@infradead.org>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Message-ID: <YeUf9dRHky81/bs4@infradead.org>
-References: <1642183128-17875-1-git-send-email-bmarzins@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Message-ID: <YeUkABLBcStfJxNp@infradead.org>
+References: <20211221141459.1368176-1-ming.lei@redhat.com>
+	<YcH/E4JNag0QYYAa@infradead.org> <YcP4FMG9an5ReIiV@T590>
+	<YcuB4K8P2d9WFb83@redhat.com> <Yd1BFpYTBlQSPReW@infradead.org>
+	<Yd2tDWuP+aT3Hxbj@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <1642183128-17875-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <Yd2tDWuP+aT3Hxbj@redhat.com>
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
 	bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -63,12 +66,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-loop: dm-devel@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>,
-	Mike Snitzer <snitzer@redhat.com>, Ming Lei <ming.lei@redhat.com>
-Subject: Re: [dm-devel] [PATCH] dm rq: clear cloned bio ->bi_bdev to fix I/O
- accounting
+Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>,
+	dm-devel@redhat.com, linux-block@vger.kernel.org,
+	Ming Lei <ming.lei@redhat.com>
+Subject: Re: [dm-devel] [PATCH 0/3] blk-mq/dm-rq: support BLK_MQ_F_BLOCKING
+ for dm-rq
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -82,7 +86,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -91,40 +95,20 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-So I actually noticed this during code inspection a while ago, but I
-think we need to use the actual underlying device instead of NULL here
-to keep our block layer gurantees.  See the patch in my queue below.
+On Tue, Jan 11, 2022 at 11:15:09AM -0500, Mike Snitzer wrote:
+> Round and round we go.. Pretty tired of this.
 
----
->From 1e330b8e57fc0d6c6fb07c0ec2915dca5d7a585a Mon Sep 17 00:00:00 2001
-From: Christoph Hellwig <hch@lst.de>
-Date: Thu, 13 Jan 2022 10:53:59 +0100
-Subject: block: assign bi_bdev for cloned bios in blk_rq_prep_clone
+Same here.
 
-The cloned bios for the cloned request in blk_rq_prep_clone currently
-still point to the original bi_bdev.  This is harmless because dm-mpath
-doesn't look at bi_bdev but violates the invariants of always having
-the correct bi_bdev.
+> You are perfectly fine with incrementally compromising request-based
+> DM's ability to evolve as block core does.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- block/blk-mq.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index a6d4780580fcd..b5e35e63adad4 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -2976,6 +2976,7 @@ int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
- 		bio = bio_clone_fast(bio_src, gfp_mask, bs);
- 		if (!bio)
- 			goto free_and_out;
-+		bio->bi_bdev = rq->q->disk->part0;
- 
- 		if (bio_ctr && bio_ctr(bio, bio_src, data))
- 			goto free_and_out;
--- 
-2.30.2
+I would not word it that way, but I think we mean the same thing.  Yes,
+I do not want to add more hooks for a complete oddball that has no
+actual use case.  dm-rq does a good enough job for SCSI and has all
+the infrastucture for it.  We should not more cruft to exteded it to
+use cases for which there is no consesus and which are much better
+covered by alredy existing code in the kernel.
 
 --
 dm-devel mailing list
