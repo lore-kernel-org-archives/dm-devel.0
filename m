@@ -1,70 +1,82 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 75859C433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 17 Jan 2022 16:28:56 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1642436935;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=j0bfcFrwsW2phMAvR+XuIsJApLLhHZSlIHKgwzbDHEg=;
-	b=DtLJjZQtLepNy4mg4DE2W+zk043lVnPLqwfvLog/d0AAgKTDIpFobMp057a7eV4Kl1YoyP
-	AS2cnFtHsFq/gAYpYzWDQdaVqMxn/aapzxEw/kWSp06yCSSNGPn8kiJMze0Czh5LiXYr/p
-	LGOFlWQ/CsOWjVauYCjBOTeLSlG269Y=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2985BC433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 17 Jan 2022 17:02:22 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-442-Za2rwv-WOmKb6HCF8Y5BqA-1; Mon, 17 Jan 2022 11:28:51 -0500
-X-MC-Unique: Za2rwv-WOmKb6HCF8Y5BqA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-29-v-GydIWFNNWL-MOKm9hGXw-1; Mon, 17 Jan 2022 12:02:18 -0500
+X-MC-Unique: v-GydIWFNNWL-MOKm9hGXw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9F87A1015DA2;
-	Mon, 17 Jan 2022 16:28:45 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 433F583DD23;
+	Mon, 17 Jan 2022 17:02:14 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DBA682BCDC;
-	Mon, 17 Jan 2022 16:28:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E5B1B1092002;
+	Mon, 17 Jan 2022 17:02:13 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 464004CA93;
-	Mon, 17 Jan 2022 16:28:38 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
-	[10.5.11.15])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C6DEE4BB7C;
+	Mon, 17 Jan 2022 17:02:12 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.9])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20HGSafv005971 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 17 Jan 2022 11:28:36 -0500
+	id 20HH2AIn012394 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 17 Jan 2022 12:02:10 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 43FAF77CA5; Mon, 17 Jan 2022 16:28:36 +0000 (UTC)
-Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 74E8877C86;
-	Mon, 17 Jan 2022 16:27:39 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 20HGRbkJ021180; 
-	Mon, 17 Jan 2022 10:27:37 -0600
-Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 20HGRZlL021177;
-	Mon, 17 Jan 2022 10:27:35 -0600
-Date: Mon, 17 Jan 2022 10:27:35 -0600
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christoph Hellwig <hch@infradead.org>
-Message-ID: <20220117162735.GH24684@octiron.msp.redhat.com>
-References: <1642183128-17875-1-git-send-email-bmarzins@redhat.com>
-	<YeUf9dRHky81/bs4@infradead.org>
+	id 956A2492CAE; Mon, 17 Jan 2022 17:02:10 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 91041492C3B
+	for <dm-devel@redhat.com>; Mon, 17 Jan 2022 17:02:10 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 757BE811E7A
+	for <dm-devel@redhat.com>; Mon, 17 Jan 2022 17:02:10 +0000 (UTC)
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-47-ka3eAWZ0P-C6lmVrY1Kz_A-1; Mon, 17 Jan 2022 12:02:08 -0500
+X-MC-Unique: ka3eAWZ0P-C6lmVrY1Kz_A-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by ams.source.kernel.org (Postfix) with ESMTPS id EA0FFB81145;
+	Mon, 17 Jan 2022 17:02:06 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id F2512C36AE7;
+	Mon, 17 Jan 2022 17:02:04 +0000 (UTC)
+From: Sasha Levin <sashal@kernel.org>
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Date: Mon, 17 Jan 2022 12:01:00 -0500
+Message-Id: <20220117170127.1471115-17-sashal@kernel.org>
+In-Reply-To: <20220117170127.1471115-1-sashal@kernel.org>
+References: <20220117170127.1471115-1-sashal@kernel.org>
 MIME-Version: 1.0
-In-Reply-To: <YeUf9dRHky81/bs4@infradead.org>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-stable: review
+X-Patchwork-Hint: Ignore
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 20HH2AIn012394
 X-loop: dm-devel@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>,
-	Mike Snitzer <snitzer@redhat.com>, Ming Lei <ming.lei@redhat.com>
-Subject: Re: [dm-devel] [PATCH] dm rq: clear cloned bio ->bi_bdev to fix I/O
- accounting
+Cc: Sasha Levin <sashal@kernel.org>, snitzer@redhat.com, dm-devel@redhat.com,
+	Dan Williams <dan.j.williams@intel.com>,
+	Christoph Hellwig <hch@lst.de>, agk@redhat.com
+Subject: [dm-devel] [PATCH AUTOSEL 5.15 17/44] dm: fix alloc_dax error
+	handling in alloc_dev
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -78,54 +90,49 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sun, Jan 16, 2022 at 11:51:17PM -0800, Christoph Hellwig wrote:
-> So I actually noticed this during code inspection a while ago, but I
-> think we need to use the actual underlying device instead of NULL here
-> to keep our block layer gurantees.  See the patch in my queue below.
+From: Christoph Hellwig <hch@lst.de>
 
-Makes sense.
+[ Upstream commit d751939235b9b7bc4af15f90a3e99288a8b844a7 ]
 
-> ---
-> >From 1e330b8e57fc0d6c6fb07c0ec2915dca5d7a585a Mon Sep 17 00:00:00 2001
-> From: Christoph Hellwig <hch@lst.de>
-> Date: Thu, 13 Jan 2022 10:53:59 +0100
-> Subject: block: assign bi_bdev for cloned bios in blk_rq_prep_clone
-> 
-> The cloned bios for the cloned request in blk_rq_prep_clone currently
-> still point to the original bi_bdev.  This is harmless because dm-mpath
-> doesn't look at bi_bdev but violates the invariants of always having
-> the correct bi_bdev.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  block/blk-mq.c | 1 +
->  1 file changed, 1 insertion(+)
-> 
-> diff --git a/block/blk-mq.c b/block/blk-mq.c
-> index a6d4780580fcd..b5e35e63adad4 100644
-> --- a/block/blk-mq.c
-> +++ b/block/blk-mq.c
-> @@ -2976,6 +2976,7 @@ int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
->  		bio = bio_clone_fast(bio_src, gfp_mask, bs);
->  		if (!bio)
->  			goto free_and_out;
-> +		bio->bi_bdev = rq->q->disk->part0;
->  
->  		if (bio_ctr && bio_ctr(bio, bio_src, data))
->  			goto free_and_out;
-> -- 
-> 2.30.2
+Make sure ->dax_dev is NULL on error so that the cleanup path doesn't
+trip over an ERR_PTR.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Reported-by: Dan Williams <dan.j.williams@intel.com>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Link: https://lore.kernel.org/r/20211129102203.2243509-2-hch@lst.de
+Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
+---
+ drivers/md/dm.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 76d9da49fda75..671bb454f1649 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1794,8 +1794,10 @@ static struct mapped_device *alloc_dev(int minor)
+ 	if (IS_ENABLED(CONFIG_DAX_DRIVER)) {
+ 		md->dax_dev = alloc_dax(md, md->disk->disk_name,
+ 					&dm_dax_ops, 0);
+-		if (IS_ERR(md->dax_dev))
++		if (IS_ERR(md->dax_dev)) {
++			md->dax_dev = NULL;
+ 			goto bad;
++		}
+ 	}
+ 
+ 	format_dev_t(md->name, MKDEV(_major, minor));
+-- 
+2.34.1
+
 
 --
 dm-devel mailing list
