@@ -1,60 +1,59 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 92760C433FE
-	for <dm-devel@archiver.kernel.org>; Tue, 18 Jan 2022 02:49:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 18483C433F5
+	for <dm-devel@archiver.kernel.org>; Tue, 18 Jan 2022 02:49:14 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-623-E3DQ5UONNuefLrj5Eolcww-1; Mon, 17 Jan 2022 21:49:08 -0500
-X-MC-Unique: E3DQ5UONNuefLrj5Eolcww-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-264-XQOThZadPSig8JfG2J0RiQ-1; Mon, 17 Jan 2022 21:49:11 -0500
+X-MC-Unique: XQOThZadPSig8JfG2J0RiQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9BBBA83DD21;
-	Tue, 18 Jan 2022 02:49:03 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7B447E2CF;
-	Tue, 18 Jan 2022 02:49:03 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B42753D9D;
+	Tue, 18 Jan 2022 02:49:06 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5AAAA4D718;
+	Tue, 18 Jan 2022 02:49:06 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3AF8B4BB7C;
-	Tue, 18 Jan 2022 02:49:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.1])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 348521809CB9;
+	Tue, 18 Jan 2022 02:49:06 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20I2n1UB027204 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 17 Jan 2022 21:49:01 -0500
+	id 20I2n41W027223 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 17 Jan 2022 21:49:04 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 7D67F40CFD1D; Tue, 18 Jan 2022 02:49:01 +0000 (UTC)
+	id 969602026D67; Tue, 18 Jan 2022 02:49:04 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 78D9040CFD12
+	(mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 923912026D11
 	for <dm-devel@redhat.com>; Tue, 18 Jan 2022 02:49:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5F95985A5A8
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A0CD21C09ED7
 	for <dm-devel@redhat.com>; Tue, 18 Jan 2022 02:49:01 +0000 (UTC)
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
-	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-456-Bq2KT9Z_NvCIdgfhQthVOg-1; Mon, 17 Jan 2022 21:48:58 -0500
-X-MC-Unique: Bq2KT9Z_NvCIdgfhQthVOg-1
+Received: from dfw.source.kernel.org (dfw.source.kernel.org
+	[139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-463-CRC0hBYoNi2nSQl2SLk3EA-1; Mon, 17 Jan 2022 21:48:58 -0500
+X-MC-Unique: CRC0hBYoNi2nSQl2SLk3EA-1
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by ams.source.kernel.org (Postfix) with ESMTPS id 6CEA8B811CF;
+	by dfw.source.kernel.org (Postfix) with ESMTPS id E1B8C6125B;
 	Tue, 18 Jan 2022 02:48:56 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 589B1C36AF3;
-	Tue, 18 Jan 2022 02:48:54 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9BFCAC36AE3;
+	Tue, 18 Jan 2022 02:48:55 +0000 (UTC)
 From: Sasha Levin <sashal@kernel.org>
 To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Date: Mon, 17 Jan 2022 21:46:53 -0500
-Message-Id: <20220118024701.1952911-52-sashal@kernel.org>
+Date: Mon, 17 Jan 2022 21:46:54 -0500
+Message-Id: <20220118024701.1952911-53-sashal@kernel.org>
 In-Reply-To: <20220118024701.1952911-1-sashal@kernel.org>
 References: <20220118024701.1952911-1-sashal@kernel.org>
 MIME-Version: 1.0
@@ -68,14 +67,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 20I2n1UB027204
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 20I2n41W027223
 X-loop: dm-devel@redhat.com
 Cc: Sasha Levin <sashal@kernel.org>, Joe Thornber <ejt@redhat.com>,
 	dm-devel@redhat.com, agk@redhat.com, Mike Snitzer <snitzer@redhat.com>
-Subject: [dm-devel] [PATCH AUTOSEL 4.19 52/59] dm btree: add a defensive
-	bounds check to insert_at()
+Subject: [dm-devel] [PATCH AUTOSEL 4.19 53/59] dm space map common: add
+	bounds check to sm_ll_lookup_bitmap()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -89,7 +88,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -99,41 +98,33 @@ Content-Transfer-Encoding: 7bit
 
 From: Joe Thornber <ejt@redhat.com>
 
-[ Upstream commit 85bca3c05b6cca31625437eedf2060e846c4bbad ]
+[ Upstream commit cba23ac158db7f3cd48a923d6861bee2eb7a2978 ]
 
-Corrupt metadata could trigger an out of bounds write.
+Corrupted metadata could warrant returning error from sm_ll_lookup_bitmap().
 
 Signed-off-by: Joe Thornber <ejt@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- drivers/md/persistent-data/dm-btree.c | 8 +++++---
- 1 file changed, 5 insertions(+), 3 deletions(-)
+ drivers/md/persistent-data/dm-space-map-common.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/drivers/md/persistent-data/dm-btree.c b/drivers/md/persistent-data/dm-btree.c
-index 8aae0624a2971..6383afb88f319 100644
---- a/drivers/md/persistent-data/dm-btree.c
-+++ b/drivers/md/persistent-data/dm-btree.c
-@@ -83,14 +83,16 @@ void inc_children(struct dm_transaction_manager *tm, struct btree_node *n,
- }
+diff --git a/drivers/md/persistent-data/dm-space-map-common.c b/drivers/md/persistent-data/dm-space-map-common.c
+index a284762e548e1..5115a27196038 100644
+--- a/drivers/md/persistent-data/dm-space-map-common.c
++++ b/drivers/md/persistent-data/dm-space-map-common.c
+@@ -279,6 +279,11 @@ int sm_ll_lookup_bitmap(struct ll_disk *ll, dm_block_t b, uint32_t *result)
+ 	struct disk_index_entry ie_disk;
+ 	struct dm_block *blk;
  
- static int insert_at(size_t value_size, struct btree_node *node, unsigned index,
--		      uint64_t key, void *value)
--		      __dm_written_to_disk(value)
-+		     uint64_t key, void *value)
-+	__dm_written_to_disk(value)
- {
- 	uint32_t nr_entries = le32_to_cpu(node->header.nr_entries);
-+	uint32_t max_entries = le32_to_cpu(node->header.max_entries);
- 	__le64 key_le = cpu_to_le64(key);
- 
- 	if (index > nr_entries ||
--	    index >= le32_to_cpu(node->header.max_entries)) {
-+	    index >= max_entries ||
-+	    nr_entries >= max_entries) {
- 		DMERR("too many entries in btree node for insert");
- 		__dm_unbless_for_disk(value);
- 		return -ENOMEM;
++	if (b >= ll->nr_blocks) {
++		DMERR_LIMIT("metadata block out of bounds");
++		return -EINVAL;
++	}
++
+ 	b = do_div(index, ll->entries_per_block);
+ 	r = ll->load_ie(ll, index, &ie_disk);
+ 	if (r < 0)
 -- 
 2.34.1
 
