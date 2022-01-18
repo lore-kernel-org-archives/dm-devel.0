@@ -4,62 +4,64 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9EF3AC433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 18 Jan 2022 20:02:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 88D6BC433F5
+	for <dm-devel@archiver.kernel.org>; Tue, 18 Jan 2022 20:27:53 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-569-LNfjJTWoMHmWJEmfOQgJRQ-1; Tue, 18 Jan 2022 15:02:41 -0500
-X-MC-Unique: LNfjJTWoMHmWJEmfOQgJRQ-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-139-2STeXfe1MEWlwYuz8zcrlA-1; Tue, 18 Jan 2022 15:27:49 -0500
+X-MC-Unique: 2STeXfe1MEWlwYuz8zcrlA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3C1B01F5AD;
-	Tue, 18 Jan 2022 20:02:36 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DCB0AB18A6;
-	Tue, 18 Jan 2022 20:02:35 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4AF57100B3AE;
+	Tue, 18 Jan 2022 20:27:44 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F36444D70D;
+	Tue, 18 Jan 2022 20:27:43 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4EC241809CB9;
-	Tue, 18 Jan 2022 20:02:35 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.10])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 408624BB7C;
+	Tue, 18 Jan 2022 20:27:43 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.7])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20IK2Xc0023141 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 18 Jan 2022 15:02:33 -0500
+	id 20IKRfbT024446 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 18 Jan 2022 15:27:41 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 2E836401E66; Tue, 18 Jan 2022 20:02:33 +0000 (UTC)
+	id 2310E1402408; Tue, 18 Jan 2022 20:27:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2AD2D401E6A
-	for <dm-devel@redhat.com>; Tue, 18 Jan 2022 20:02:33 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 11721185A79C
-	for <dm-devel@redhat.com>; Tue, 18 Jan 2022 20:02:33 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
-	[139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-378-yZ_Ih3vrNfKmZI2osXg0JQ-1; Tue, 18 Jan 2022 15:02:31 -0500
-X-MC-Unique: yZ_Ih3vrNfKmZI2osXg0JQ-1
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F2911402404
+	for <dm-devel@redhat.com>; Tue, 18 Jan 2022 20:27:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 04D23108C0E2
+	for <dm-devel@redhat.com>; Tue, 18 Jan 2022 20:27:41 +0000 (UTC)
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-673-2RZo2-xZPkKvZil9k-jlCA-1; Tue, 18 Jan 2022 15:27:38 -0500
+X-MC-Unique: 2RZo2-xZPkKvZil9k-jlCA-1
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by dfw.source.kernel.org (Postfix) with ESMTPS id B91536127C;
-	Tue, 18 Jan 2022 20:02:30 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 00F24C340E0;
-	Tue, 18 Jan 2022 20:02:29 +0000 (UTC)
-Date: Tue, 18 Jan 2022 12:02:28 -0800
+	by ams.source.kernel.org (Postfix) with ESMTPS id AE3AEB81772;
+	Tue, 18 Jan 2022 20:27:36 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 42309C340E0;
+	Tue, 18 Jan 2022 20:27:35 +0000 (UTC)
+Date: Tue, 18 Jan 2022 12:27:33 -0800
 From: Eric Biggers <ebiggers@kernel.org>
-To: Israel Rukshin <israelr@nvidia.com>
-Message-ID: <Yecc1BemVbBSjEo+@sol.localdomain>
+To: Christoph Hellwig <hch@infradead.org>
+Message-ID: <Yecitbf4lJtQA69O@sol.localdomain>
 References: <1642097341-6521-1-git-send-email-israelr@nvidia.com>
-	<YeH+Bv9KlceWbm05@sol.localdomain>
-	<ad0f7b35-2f68-ed21-fb14-b6952339a6b8@nvidia.com>
+	<9ef95bbc-4eee-4c00-f199-0daa3cdd03ed@gmail.com>
+	<YeUgNpFeg9LmW4Um@infradead.org>
+	<0461b15e-8ace-5a84-cf9d-504e555b8cab@gmail.com>
+	<2d937f09-e18c-6a95-bc6c-45bf5d1b1a11@nvidia.com>
+	<YebupSYksz2gV8vn@infradead.org>
 MIME-Version: 1.0
-In-Reply-To: <ad0f7b35-2f68-ed21-fb14-b6952339a6b8@nvidia.com>
+In-Reply-To: <YebupSYksz2gV8vn@infradead.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -68,12 +70,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 20IK2Xc0023141
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 20IKRfbT024446
 X-loop: dm-devel@redhat.com
-Cc: Max Gurtovoy <mgurtovoy@nvidia.com>, dm-devel <dm-devel@redhat.com>,
-	Nitzan Carmi <nitzanc@nvidia.com>, oren@nvidia.com
+Cc: Israel Rukshin <israelr@nvidia.com>, Max Gurtovoy <mgurtovoy@nvidia.com>,
+	dm-devel <dm-devel@redhat.com>, Nitzan Carmi <nitzanc@nvidia.com>,
+	Milan Broz <gmazyland@gmail.com>
 Subject: Re: [dm-devel] [RFC PATCH 0/1] Add inline encryption support for
  dm-crypt
 X-BeenThere: dm-devel@redhat.com
@@ -89,7 +92,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -98,127 +101,89 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 
-On Sun, Jan 16, 2022 at 12:15:22PM +0200, Israel Rukshin wrote:
+On Tue, Jan 18, 2022 at 08:45:25AM -0800, Christoph Hellwig wrote:
+> On Mon, Jan 17, 2022 at 04:00:59PM +0200, Israel Rukshin wrote:
+> > DM extension gives us several capabilities:
+> >=20
+> > 1. Use the Linux keyring and other key management tools.
+> >=20
+> > =A0=A0=A0 - I used "keyctl padd user test-key @u < /tmp/wrapped_dek" at=
+ my tests
 >=20
-> Yes, I implemented your inline callbacks at nvme-rdma driver. The driver
-> communicates with
+> Well, and kernel consumer can do that.
 >=20
-> the HW via a general ib_verbs layer, so I had to extend ib_verbs and mlx5=
-_ib
-> drivers. Those
+> > 2. Split a single block device into several DMs. Allow us to use a diff=
+erent
+> > encryption key and encryption mode per DM.
 >=20
-> patches are at internal review and I will send the nvme-rdma patches
-> afterwards.
+> If we allow setting a default key for every block device you can still
+> do that using normal dm-linear.
 >=20
 > >=20
-> > Can you also elaborate on how wrapped keys work in your case?  In parti=
-cular,
-> > are they compatible with the whole design which I've documented in deta=
-il in my
-> > patchset?  That would include implementing the ->import_key, ->generate=
-_key,
-> > ->prepare_key, and ->derive_sw_secret operations.  All the different pa=
-rts are
-> > important.  If something needs to be optional, that's something I can c=
-onsider
-> > incorporating into the design, but it would restrict the use cases.
+> > 3. Replace a key during I/O by using "dmsetup suspend /dev/dm-0" and
+> > "dmsetup=A0 resume /dev/dm-0".
 >=20
-> In my case, the user should create wrapped keys by himself via a user spa=
-ce=A0
-> tool based
+> With a block layer ioctl that also works easily.
 >=20
-> on openssl library. Therefore, the ->import_key, ->generate_key and
-> ->prepare_key are
->=20
-> not necessary at my case. Regarding ->derive_sw_secret, it is not support=
-ed
-> right now by
->=20
-> ConnectX6 DX firmware (we plan to add support for this).=A0 To test fscry=
-pt
-> with wrapped keys,
->=20
-> a temporary WA was added to the ->derive_sw_secret at nvme-rdma driver. T=
-he
-> other callbacks
->=20
-> you mentioned were left empty.
 
-So, what we need to think about is how userspace is expected to actually us=
-e and
-test the hardware-wrapped keys feature.
+A while ago, I had looked into adding an ioctl to set a default key for a b=
+lock
+device.  There were a few things that led me to choose a dm target instead.=
+  I'm
+not sure how many of these are still relevant, but these are what I conside=
+red:
 
-My patchset proposed a design where if a block device declares support for
-hardware-wrapped keys, then the BLKCRYPTOCREATEKEY and BLKCRYPTOPREPAREKEY
-ioctls are available.
+* The block device for a partition doesn't have its own request_queue or
+  queue_limits; those are properties of the disk, not the partition.  But,
+  setting an encryption key may require changes to the queue_limits.  For
+  example, discard_zeroes_data will no longer work, and the logical_block_s=
+ize
+  will need to become the crypto data unit size which may be larger than th=
+e
+  original logical_block_size.
 
-Additionally, a specific hardware-internal key hierarchy and KDF is assumed=
- (due
-to the need to support ->derive_sw_secret).  While userspace doesn't need t=
-o
-know these details to use the feature normally, they *must* be known in ord=
-er to
-test that it's actually working correctly.
+* The block_device for a given partition didn't stay around while no one ha=
+s it
+  opened or mounted.  This may have been addressed by Christoph's changes l=
+ast
+  year that merged block_device and hd_struct, but this used to be an issue=
+.
 
-If we were to support variants of the feature, such as:
+* There was some issue caused by the way the block layer maps partitions to
+  disks; the knowledge of the original block device (and thus the key) was =
+lost
+  at this point.  I'm not sure whether this is still an issue or not.
 
-* Hardware-wrapped keys must be created/prepared in some way other than
-  BLKCRYPTOCREATEKEY and BLKCRYPTOPREPAREKEY.  (Could you elaborate on=20
-  what this way actually is, in your case?)
+* A block device ioctl to set a key would need to handle cases where the bl=
+ock
+  device is already open (fail with EBUSY?), or already has pages cached in=
+ the
+  pagecache (invalidate them?).  A dm target avoids these concerns since a =
+key
+  would only be set up when the disk and block device are originally create=
+d.
 
-* Hardware's key hierarchy or KDF is different, so userspace must do someth=
-ing
-  else when verifying the on-disk ciphertext.
+Finally, there's also the fact that this would really be more than "setting=
+ a
+default key".  To precisely specify the encryption format, you also have to
+specify the algorithm, the key type, and the data unit size.  (Also potenti=
+ally
+more details about IV generation, if blk-crypto ever starts to support more=
+ IV
+generation methods, which I'd like to avoid but it might eventually happen.=
+)
 
-... then we would need to precisely specify these other variants, and defin=
-e a
-way for userspace to discover what it should do.
+These could all be passed in an ioctl, but dm-crypt already has a syntax de=
+fined
+for specifying encryption formats.  So it could make sense to reuse it.
 
-In https://lore.kernel.org/r/20211208013534.136590-1-ebiggers@kernel.org, I=
-'m
-proposing exposing the crypto capabilities of block devices via sysfs.  Tha=
-t
-could lead to a partial solution, e.g. the kernel could provide a file
+Also as Israel indicated, people will want support for Linux keyring keys a=
+s an
+alternative to raw keys.  A new ioctl could support this, though dm-crypt
+already has a defined way to specify such keys.
 
-=09/sys/block/$disk/queue/crypto/wrapped_keys_variant
-
-... which would allow userspace to discover the supported variant of
-hardware-wrapped keys.  I was really hoping that one variant could be
-standardized, but that is one possibility.
-
->=20
-> >=20
-> > Also, will your driver only support wrapped keys, or will it support st=
-andard
-> > keys too?
->=20
-> Our driver will support both modes. The first step is to support the
-> standard keys, because of
-
-Okay, great.  If you're adding inline encryption support to dm-crypt (or to
-dm-inline-crypt or to the block layer, depending on what people decide is t=
-he
-best approach), perhaps you should start with standard keys only, to avoid =
-a
-dependency on the hardware-wrapped keys feature which is still being worked=
- on?
-
->=20
-> the gap I mentioned above. As I understand, ->derive_sw_secret is not nee=
-ded
-> for dm-crypt.
->=20
-> Is that right?
-
-That's correct.  The larger issue is that if you don't support
-->derive_sw_secret, then it's likely that your key hierarchy is different
-(probably you don't have a "hierarchy", but rather just one key), which wou=
-ld
-imply that the feature needs to be tested differently.
-
-As per the above, this could be accounted for in the design by allowing mul=
-tiple
-variants of wrapped keys.  Of course, that would add complexity.
+If all these issues can be solved, then I'd be fine with the block device i=
+octl.
 
 - Eric
 
