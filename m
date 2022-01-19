@@ -4,59 +4,59 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A5AD0C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 19 Jan 2022 05:18:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 472E7C433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 19 Jan 2022 06:11:55 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-117-U_uKTckjMb6g6pa6X-FkWw-1; Wed, 19 Jan 2022 00:18:52 -0500
-X-MC-Unique: U_uKTckjMb6g6pa6X-FkWw-1
+ us-mta-671-szfJ6VbvOPmhqPxe-voOLA-1; Wed, 19 Jan 2022 01:11:50 -0500
+X-MC-Unique: szfJ6VbvOPmhqPxe-voOLA-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 01AFC814246;
-	Wed, 19 Jan 2022 05:18:46 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1EE8578C2A;
-	Wed, 19 Jan 2022 05:18:43 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9F9D91DDED;
+	Wed, 19 Jan 2022 06:11:43 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F9DC78D85;
+	Wed, 19 Jan 2022 06:11:42 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id CFE364BB7C;
-	Wed, 19 Jan 2022 05:18:39 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 20F661809CB8;
+	Wed, 19 Jan 2022 06:11:37 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20J5IZ1q031233 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 19 Jan 2022 00:18:37 -0500
+	id 20J6BYTi003257 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 19 Jan 2022 01:11:34 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 45D3776C4; Wed, 19 Jan 2022 05:18:35 +0000 (UTC)
+	id 344E753D6; Wed, 19 Jan 2022 06:11:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 417F8740A
-	for <dm-devel@redhat.com>; Wed, 19 Jan 2022 05:18:32 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2FC2653C9
+	for <dm-devel@redhat.com>; Wed, 19 Jan 2022 06:11:29 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 35EFD811E76
-	for <dm-devel@redhat.com>; Wed, 19 Jan 2022 05:18:32 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C052E3C11A1B
+	for <dm-devel@redhat.com>; Wed, 19 Jan 2022 06:11:29 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-610-g0wtdouNOUuT2uUDhb62pQ-1; Wed, 19 Jan 2022 00:18:30 -0500
-X-MC-Unique: g0wtdouNOUuT2uUDhb62pQ-1
+	us-mta-400-Jq5odkF9NHywQ5Uce2TWSg-1; Wed, 19 Jan 2022 01:11:26 -0500
+X-MC-Unique: Jq5odkF9NHywQ5Uce2TWSg-1
 Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red
-	Hat Linux)) id 1nA3MZ-003qbP-0c; Wed, 19 Jan 2022 05:18:27 +0000
-Date: Tue, 18 Jan 2022 21:18:26 -0800
+	Hat Linux)) id 1nA3JR-003qOV-IA; Wed, 19 Jan 2022 05:15:13 +0000
+Date: Tue, 18 Jan 2022 21:15:13 -0800
 From: Christoph Hellwig <hch@infradead.org>
 To: Eric Biggers <ebiggers@kernel.org>
-Message-ID: <YeefInTrcsQRZVwY@infradead.org>
+Message-ID: <YeeeYYm54aqsR6U6@infradead.org>
 References: <1642097341-6521-1-git-send-email-israelr@nvidia.com>
 	<9ef95bbc-4eee-4c00-f199-0daa3cdd03ed@gmail.com>
-	<YeH4yhy1FFGooOrR@sol.localdomain>
-	<139878d0-d1bb-02d9-30c2-9334ffb5b3b3@gmail.com>
-	<YecXNYm63BL50hFL@sol.localdomain>
+	<YeUgNpFeg9LmW4Um@infradead.org>
+	<0461b15e-8ace-5a84-cf9d-504e555b8cab@gmail.com>
+	<2d937f09-e18c-6a95-bc6c-45bf5d1b1a11@nvidia.com>
+	<YebupSYksz2gV8vn@infradead.org> <Yecitbf4lJtQA69O@sol.localdomain>
 MIME-Version: 1.0
-In-Reply-To: <YecXNYm63BL50hFL@sol.localdomain>
+In-Reply-To: <Yecitbf4lJtQA69O@sol.localdomain>
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
 	bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -69,9 +69,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: Israel Rukshin <israelr@nvidia.com>, Max Gurtovoy <mgurtovoy@nvidia.com>,
-	dm-devel <dm-devel@redhat.com>, Nitzan Carmi <nitzanc@nvidia.com>,
-	Milan Broz <gmazyland@gmail.com>
+Cc: Max Gurtovoy <mgurtovoy@nvidia.com>, Israel Rukshin <israelr@nvidia.com>,
+	Christoph Hellwig <hch@infradead.org>, dm-devel <dm-devel@redhat.com>,
+	Nitzan Carmi <nitzanc@nvidia.com>, Milan Broz <gmazyland@gmail.com>
 Subject: Re: [dm-devel] [RFC PATCH 0/1] Add inline encryption support for
  dm-crypt
 X-BeenThere: dm-devel@redhat.com
@@ -96,31 +96,57 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Jan 18, 2022 at 11:38:29AM -0800, Eric Biggers wrote:
-> I doubt that people would find Android's dm-default-key to be acceptable, given
-> that it's a layering violation, and a similar approach was rejected in the past
-> (https://lore.kernel.org/dm-devel/20170614234040.4326-1-mhalcrow@google.com/T/#u).
-> dm-default-key's purpose is filesystem metadata encryption; it encrypts all
-> blocks that aren't already part of an encrypted file's contents.  It differs
-> from dm-crypt + fscrypt together (which the upstream kernel already supports) in
-> that file contents aren't encrypted twice; this was a non-negotiable performance
-> requirement.  Obviously, this required a new flag in struct bio to indicate
-> which bios are reading/writing from an encrypted file's contents.  I doubt the
-> block layer people would find that to be acceptable.
+On Tue, Jan 18, 2022 at 12:27:33PM -0800, Eric Biggers wrote:
+> * The block device for a partition doesn't have its own request_queue or
+>   queue_limits; those are properties of the disk, not the partition.  But,
+>   setting an encryption key may require changes to the queue_limits.  For
+>   example, discard_zeroes_data will no longer work, and the logical_block_size
+>   will need to become the crypto data unit size which may be larger than the
+>   original logical_block_size.
 
-Well, it was rejected because it pokes a hole into dm-crypt.  In a
-purely inline crypto world a way to assign a key context if there is
-none before is a little different, especially if it requires a different
-setup than an unconditional encryption for the device.  It would also
-not even require a flag.
+If we need changes to the queue limits we're doing something wrong I
+think, as all these limitation only actually apply to bios that use
+inline encryption and thus should be dynamic decisions.
+
+Note that discard_zeroes_data is gone already, all zeroing must use
+REQ_OP_WRITE_ZEROES.
 
 > 
-> In principle, the filesystem is the right place to implement metadata encryption
-> in this way.  This would also allow the kernel to enforce (via the key
-> hierarchy) that fscrypt keys are never weaker than the metadata encryption key.
+> * The block_device for a given partition didn't stay around while no one has it
+>   opened or mounted.  This may have been addressed by Christoph's changes last
+>   year that merged block_device and hd_struct, but this used to be an issue.
 
-Yes.  Especially in the inline crypto world it would seem just as
-trivial to assign a default key in the file system itself.
+Yes, this is fixed now.
+
+> * There was some issue caused by the way the block layer maps partitions to
+>   disks; the knowledge of the original block device (and thus the key) was lost
+>   at this point.  I'm not sure whether this is still an issue or not.
+
+Also fixed by the block_device/hd_struct merged as the lookup is gone
+entirely now.
+
+> * A block device ioctl to set a key would need to handle cases where the block
+>   device is already open (fail with EBUSY?), or already has pages cached in the
+>   pagecache (invalidate them?).  A dm target avoids these concerns since a key
+>   would only be set up when the disk and block device are originally created.
+
+An ioctl is by definition perfomed on an open file handle, so it will by
+definition be open.  But I don't think that check really is needed to be
+so strict.  We can require the ioctl to be on an FMODE_EXCL file handle
+which is a good sanity check and otherwise you get what you ask for.
+
+> 
+> Finally, there's also the fact that this would really be more than "setting a
+> default key".  To precisely specify the encryption format, you also have to
+> specify the algorithm, the key type, and the data unit size.  (Also potentially
+> more details about IV generation, if blk-crypto ever starts to support more IV
+> generation methods, which I'd like to avoid but it might eventually happen.)
+> 
+> These could all be passed in an ioctl, but dm-crypt already has a syntax defined
+> for specifying encryption formats.  So it could make sense to reuse it.
+
+We could of course find a way to mostly reuse the dm-crypt text based setup
+syntax even on a block device if that helps.
 
 --
 dm-devel mailing list
