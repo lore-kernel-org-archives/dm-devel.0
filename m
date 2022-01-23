@@ -1,60 +1,59 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2F324C433EF
-	for <dm-devel@archiver.kernel.org>; Sun, 23 Jan 2022 16:15:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 356D6C433F5
+	for <dm-devel@archiver.kernel.org>; Sun, 23 Jan 2022 16:24:33 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-13-vq8F-rJKNkW666Qty7zu6Q-1; Sun, 23 Jan 2022 11:15:48 -0500
-X-MC-Unique: vq8F-rJKNkW666Qty7zu6Q-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-126-VqW0mt28OTW7peokt_zHVQ-1; Sun, 23 Jan 2022 11:24:27 -0500
+X-MC-Unique: VqW0mt28OTW7peokt_zHVQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F3DB51006AA6;
-	Sun, 23 Jan 2022 16:15:43 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C7A8875133;
-	Sun, 23 Jan 2022 16:15:43 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id BB9761006AA3;
+	Sun, 23 Jan 2022 16:24:22 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8F9BC10A33C9;
+	Sun, 23 Jan 2022 16:24:21 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8F8221809CB8;
-	Sun, 23 Jan 2022 16:15:43 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.7])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A52EA4BB7C;
+	Sun, 23 Jan 2022 16:24:19 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.9])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20NGDMKf014079 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 23 Jan 2022 11:13:22 -0500
+	id 20NGOHxu015646 for <dm-devel@listman.util.phx.redhat.com>;
+	Sun, 23 Jan 2022 11:24:17 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 303401402403; Sun, 23 Jan 2022 16:13:22 +0000 (UTC)
+	id A4892492CA5; Sun, 23 Jan 2022 16:24:17 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2C3E91402400
-	for <dm-devel@redhat.com>; Sun, 23 Jan 2022 16:13:21 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	(mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A0E78492CA4
+	for <dm-devel@redhat.com>; Sun, 23 Jan 2022 16:24:17 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CD62380A0AF
-	for <dm-devel@redhat.com>; Sun, 23 Jan 2022 16:13:21 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
-	[139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-206-Ijdek-zTOcirivE-G1ISkw-1; Sun, 23 Jan 2022 11:13:17 -0500
-X-MC-Unique: Ijdek-zTOcirivE-G1ISkw-1
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6866F38030B8
+	for <dm-devel@redhat.com>; Sun, 23 Jan 2022 16:24:17 +0000 (UTC)
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-540-_d3zsTPqPKyeCacCS9pHlw-1; Sun, 23 Jan 2022 11:24:13 -0500
+X-MC-Unique: _d3zsTPqPKyeCacCS9pHlw-1
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by dfw.source.kernel.org (Postfix) with ESMTPS id ECE6860F77;
-	Sun, 23 Jan 2022 16:13:16 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id BB6EAC340E2;
-	Sun, 23 Jan 2022 16:13:15 +0000 (UTC)
+	by ams.source.kernel.org (Postfix) with ESMTPS id 15F27B80DBA;
+	Sun, 23 Jan 2022 16:24:12 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 310BAC340E2;
+	Sun, 23 Jan 2022 16:24:10 +0000 (UTC)
 From: Sasha Levin <sashal@kernel.org>
-To: stable-commits@vger.kernel.org, hch@lst.de
-Date: Sun, 23 Jan 2022 11:13:13 -0500
-Message-Id: <20220123161314.2574769-1-sashal@kernel.org>
+To: stable-commits@vger.kernel.org, ejt@redhat.com
+Date: Sun, 23 Jan 2022 11:24:08 -0500
+Message-Id: <20220123162408.2583103-1-sashal@kernel.org>
 MIME-Version: 1.0
 X-Patchwork-Hint: ignore
 X-stable: review
@@ -66,14 +65,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 20NGDMKf014079
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 20NGOHxu015646
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@redhat.com>,
 	Alasdair Kergon <agk@redhat.com>
-Subject: [dm-devel] Patch "dm: fix alloc_dax error handling in alloc_dev"
-	has been added to the 5.10-stable tree
+Subject: [dm-devel] Patch "dm btree: add a defensive bounds check to
+	insert_at()" has been added to the 5.4-stable tree
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -87,7 +86,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -97,53 +96,58 @@ Content-Transfer-Encoding: 7bit
 
 This is a note to let you know that I've just added the patch titled
 
-    dm: fix alloc_dax error handling in alloc_dev
+    dm btree: add a defensive bounds check to insert_at()
 
-to the 5.10-stable tree which can be found at:
+to the 5.4-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
-     dm-fix-alloc_dax-error-handling-in-alloc_dev.patch
-and it can be found in the queue-5.10 subdirectory.
+     dm-btree-add-a-defensive-bounds-check-to-insert_at.patch
+and it can be found in the queue-5.4 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
 please let <stable@vger.kernel.org> know about it.
 
 
 
-commit 3fa2203e31bd62360d4c7214b578d281bc6d49a7
-Author: Christoph Hellwig <hch@lst.de>
-Date:   Mon Nov 29 11:21:35 2021 +0100
+commit 1afd09c16fa958397c3569f1b5e652f279a8bd14
+Author: Joe Thornber <ejt@redhat.com>
+Date:   Fri Dec 10 13:44:13 2021 +0000
 
-    dm: fix alloc_dax error handling in alloc_dev
+    dm btree: add a defensive bounds check to insert_at()
     
-    [ Upstream commit d751939235b9b7bc4af15f90a3e99288a8b844a7 ]
+    [ Upstream commit 85bca3c05b6cca31625437eedf2060e846c4bbad ]
     
-    Make sure ->dax_dev is NULL on error so that the cleanup path doesn't
-    trip over an ERR_PTR.
+    Corrupt metadata could trigger an out of bounds write.
     
-    Reported-by: Dan Williams <dan.j.williams@intel.com>
-    Signed-off-by: Christoph Hellwig <hch@lst.de>
-    Link: https://lore.kernel.org/r/20211129102203.2243509-2-hch@lst.de
-    Signed-off-by: Dan Williams <dan.j.williams@intel.com>
+    Signed-off-by: Joe Thornber <ejt@redhat.com>
+    Signed-off-by: Mike Snitzer <snitzer@redhat.com>
     Signed-off-by: Sasha Levin <sashal@kernel.org>
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 19a70f434029b..6030cba5b0382 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1894,8 +1894,10 @@ static struct mapped_device *alloc_dev(int minor)
- 	if (IS_ENABLED(CONFIG_DAX_DRIVER)) {
- 		md->dax_dev = alloc_dax(md, md->disk->disk_name,
- 					&dm_dax_ops, 0);
--		if (IS_ERR(md->dax_dev))
-+		if (IS_ERR(md->dax_dev)) {
-+			md->dax_dev = NULL;
- 			goto bad;
-+		}
- 	}
+diff --git a/drivers/md/persistent-data/dm-btree.c b/drivers/md/persistent-data/dm-btree.c
+index 8aae0624a2971..6383afb88f319 100644
+--- a/drivers/md/persistent-data/dm-btree.c
++++ b/drivers/md/persistent-data/dm-btree.c
+@@ -83,14 +83,16 @@ void inc_children(struct dm_transaction_manager *tm, struct btree_node *n,
+ }
  
- 	add_disk_no_queue_reg(md->disk);
+ static int insert_at(size_t value_size, struct btree_node *node, unsigned index,
+-		      uint64_t key, void *value)
+-		      __dm_written_to_disk(value)
++		     uint64_t key, void *value)
++	__dm_written_to_disk(value)
+ {
+ 	uint32_t nr_entries = le32_to_cpu(node->header.nr_entries);
++	uint32_t max_entries = le32_to_cpu(node->header.max_entries);
+ 	__le64 key_le = cpu_to_le64(key);
+ 
+ 	if (index > nr_entries ||
+-	    index >= le32_to_cpu(node->header.max_entries)) {
++	    index >= max_entries ||
++	    nr_entries >= max_entries) {
+ 		DMERR("too many entries in btree node for insert");
+ 		__dm_unbless_for_disk(value);
+ 		return -ENOMEM;
 
 
 --
