@@ -1,55 +1,55 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id ECC55C43217
-	for <dm-devel@archiver.kernel.org>; Mon, 24 Jan 2022 09:12:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9C6E1C433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 24 Jan 2022 09:12:04 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-375-1IwRTEJUPeeOrt_bfYh6aw-1; Mon, 24 Jan 2022 04:11:56 -0500
-X-MC-Unique: 1IwRTEJUPeeOrt_bfYh6aw-1
+ us-mta-630-Fy-tac-UOcyw2yHG4dGobQ-1; Mon, 24 Jan 2022 04:12:00 -0500
+X-MC-Unique: Fy-tac-UOcyw2yHG4dGobQ-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id F3D471091DAD;
-	Mon, 24 Jan 2022 09:11:51 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0469B1091DA4;
+	Mon, 24 Jan 2022 09:11:56 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D3786795A1;
-	Mon, 24 Jan 2022 09:11:51 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DA84979590;
+	Mon, 24 Jan 2022 09:11:55 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AE0241802E34;
-	Mon, 24 Jan 2022 09:11:51 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B22F61806D1C;
+	Mon, 24 Jan 2022 09:11:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.7])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20O9BiXe016952 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 24 Jan 2022 04:11:45 -0500
+	id 20O9BrlW016985 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 24 Jan 2022 04:11:53 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id CFACF112132D; Mon, 24 Jan 2022 09:11:44 +0000 (UTC)
+	id 8EB48141DED6; Mon, 24 Jan 2022 09:11:53 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CAD471121331
-	for <dm-devel@redhat.com>; Mon, 24 Jan 2022 09:11:39 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8B1BD141DED4
+	for <dm-devel@redhat.com>; Mon, 24 Jan 2022 09:11:53 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
 	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 078F238030C9
-	for <dm-devel@redhat.com>; Mon, 24 Jan 2022 09:11:39 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7230285A5AA
+	for <dm-devel@redhat.com>; Mon, 24 Jan 2022 09:11:53 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-493-gWwvBoPWOQeuTDEucuyxCQ-1; Mon, 24 Jan 2022 04:11:36 -0500
-X-MC-Unique: gWwvBoPWOQeuTDEucuyxCQ-1
+	us-mta-91-plQ6trl6My22E2qf5NR6lw-1; Mon, 24 Jan 2022 04:11:51 -0500
+X-MC-Unique: plQ6trl6My22E2qf5NR6lw-1
 Received: from [2001:4bb8:184:72a4:a337:a75f:a24e:7e39] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1nBvNo-002k7w-Qx; Mon, 24 Jan 2022 09:11:29 +0000
+	id 1nBvO8-002kKA-Ni; Mon, 24 Jan 2022 09:11:49 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 24 Jan 2022 10:10:55 +0100
-Message-Id: <20220124091107.642561-8-hch@lst.de>
+Date: Mon, 24 Jan 2022 10:11:02 +0100
+Message-Id: <20220124091107.642561-15-hch@lst.de>
 In-Reply-To: <20220124091107.642561-1-hch@lst.de>
 References: <20220124091107.642561-1-hch@lst.de>
 MIME-Version: 1.0
@@ -63,10 +63,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-loop: dm-devel@redhat.com
 Cc: linux-block@vger.kernel.org, linux-nfs@vger.kernel.org,
-	linux-nilfs@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>,
+	linux-nilfs@vger.kernel.org, Chaitanya Kulkarni <kch@nvidia.com>,
+	Mike Snitzer <snitzer@redhat.com>,
 	Philipp Reisner <philipp.reisner@linbit.com>,
 	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
 	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
@@ -77,8 +78,8 @@ Cc: linux-block@vger.kernel.org, linux-nfs@vger.kernel.org,
 	Andrew Morton <akpm@linux-foundation.org>, ntfs3@lists.linux.dev,
 	Jack Wang <jinpu.wang@ionos.com>, Pavel Begunkov <asml.silence@gmail.com>,
 	drbd-dev@lists.linbit.com
-Subject: [dm-devel] [PATCH 07/19] dm-snap: use blkdev_issue_flush instead of
-	open coding it
+Subject: [dm-devel] [PATCH 14/19] block: pass a block_device and opf to
+	blk_next_bio
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -100,74 +101,172 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Use blkdev_issue_flush, which uses an on-stack bio instead of an
-opencoded version with a bio embedded into struct dm_snapshot.
+From: Chaitanya Kulkarni <kch@nvidia.com>
 
+All callers need to set the block_device and operation, so lift that into
+the common code.
+
+Signed-off-by: Chaitanya Kulkarni <kch@nvidia.com>
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm-snap.c | 21 +--------------------
- 1 file changed, 1 insertion(+), 20 deletions(-)
+ block/bio.c               |  6 +++++-
+ block/blk-lib.c           | 19 +++++--------------
+ block/blk-zoned.c         |  9 +++------
+ block/blk.h               |  2 --
+ drivers/nvme/target/zns.c |  6 +++---
+ include/linux/bio.h       |  3 ++-
+ 6 files changed, 18 insertions(+), 27 deletions(-)
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index dcf34c6b05ad3..0d336b5ec5714 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -141,11 +141,6 @@ struct dm_snapshot {
- 	 * for them to be committed.
- 	 */
- 	struct bio_list bios_queued_during_merge;
--
--	/*
--	 * Flush data after merge.
--	 */
--	struct bio flush_bio;
- };
+diff --git a/block/bio.c b/block/bio.c
+index 1536579ed490a..a0166f29a05c3 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -344,10 +344,14 @@ void bio_chain(struct bio *bio, struct bio *parent)
+ }
+ EXPORT_SYMBOL(bio_chain);
  
- /*
-@@ -1127,17 +1122,6 @@ static void snapshot_merge_next_chunks(struct dm_snapshot *s)
- 
- static void error_bios(struct bio *bio);
- 
--static int flush_data(struct dm_snapshot *s)
--{
--	struct bio *flush_bio = &s->flush_bio;
--
--	bio_reset(flush_bio);
--	bio_set_dev(flush_bio, s->origin->bdev);
--	flush_bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
--
--	return submit_bio_wait(flush_bio);
--}
--
- static void merge_callback(int read_err, unsigned long write_err, void *context)
+-struct bio *blk_next_bio(struct bio *bio, unsigned int nr_pages, gfp_t gfp)
++struct bio *blk_next_bio(struct bio *bio, struct block_device *bdev,
++		unsigned int nr_pages, unsigned int opf, gfp_t gfp)
  {
- 	struct dm_snapshot *s = context;
-@@ -1151,7 +1135,7 @@ static void merge_callback(int read_err, unsigned long write_err, void *context)
- 		goto shut;
- 	}
+ 	struct bio *new = bio_alloc(gfp, nr_pages);
  
--	if (flush_data(s) < 0) {
-+	if (blkdev_issue_flush(s->origin->bdev) < 0) {
- 		DMERR("Flush after merge failed: shutting down merge");
- 		goto shut;
- 	}
-@@ -1340,7 +1324,6 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	s->first_merging_chunk = 0;
- 	s->num_merging_chunks = 0;
- 	bio_list_init(&s->bios_queued_during_merge);
--	bio_init(&s->flush_bio, NULL, 0);
++	bio_set_dev(new, bdev);
++	new->bi_opf = opf;
++
+ 	if (bio) {
+ 		bio_chain(bio, new);
+ 		submit_bio(bio);
+diff --git a/block/blk-lib.c b/block/blk-lib.c
+index 9245b300ef73e..1b8ced45e4e55 100644
+--- a/block/blk-lib.c
++++ b/block/blk-lib.c
+@@ -82,11 +82,8 @@ int __blkdev_issue_discard(struct block_device *bdev, sector_t sector,
  
- 	/* Allocate hash table for COW data */
- 	if (init_hash_tables(s)) {
-@@ -1528,8 +1511,6 @@ static void snapshot_dtr(struct dm_target *ti)
+ 		WARN_ON_ONCE((req_sects << 9) > UINT_MAX);
  
- 	dm_exception_store_destroy(s->store);
- 
--	bio_uninit(&s->flush_bio);
+-		bio = blk_next_bio(bio, 0, gfp_mask);
++		bio = blk_next_bio(bio, bdev, 0, op, gfp_mask);
+ 		bio->bi_iter.bi_sector = sector;
+-		bio_set_dev(bio, bdev);
+-		bio_set_op_attrs(bio, op, 0);
 -
- 	dm_put_device(ti, s->cow);
+ 		bio->bi_iter.bi_size = req_sects << 9;
+ 		sector += req_sects;
+ 		nr_sects -= req_sects;
+@@ -176,14 +173,12 @@ static int __blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
+ 	max_write_same_sectors = bio_allowed_max_sectors(q);
  
- 	dm_put_device(ti, s->origin);
+ 	while (nr_sects) {
+-		bio = blk_next_bio(bio, 1, gfp_mask);
++		bio = blk_next_bio(bio, bdev, 1, REQ_OP_WRITE_SAME, gfp_mask);
+ 		bio->bi_iter.bi_sector = sector;
+-		bio_set_dev(bio, bdev);
+ 		bio->bi_vcnt = 1;
+ 		bio->bi_io_vec->bv_page = page;
+ 		bio->bi_io_vec->bv_offset = 0;
+ 		bio->bi_io_vec->bv_len = bdev_logical_block_size(bdev);
+-		bio_set_op_attrs(bio, REQ_OP_WRITE_SAME, 0);
+ 
+ 		if (nr_sects > max_write_same_sectors) {
+ 			bio->bi_iter.bi_size = max_write_same_sectors << 9;
+@@ -252,10 +247,8 @@ static int __blkdev_issue_write_zeroes(struct block_device *bdev,
+ 		return -EOPNOTSUPP;
+ 
+ 	while (nr_sects) {
+-		bio = blk_next_bio(bio, 0, gfp_mask);
++		bio = blk_next_bio(bio, bdev, 0, REQ_OP_WRITE_ZEROES, gfp_mask);
+ 		bio->bi_iter.bi_sector = sector;
+-		bio_set_dev(bio, bdev);
+-		bio->bi_opf = REQ_OP_WRITE_ZEROES;
+ 		if (flags & BLKDEV_ZERO_NOUNMAP)
+ 			bio->bi_opf |= REQ_NOUNMAP;
+ 
+@@ -303,11 +296,9 @@ static int __blkdev_issue_zero_pages(struct block_device *bdev,
+ 		return -EPERM;
+ 
+ 	while (nr_sects != 0) {
+-		bio = blk_next_bio(bio, __blkdev_sectors_to_bio_pages(nr_sects),
+-				   gfp_mask);
++		bio = blk_next_bio(bio, bdev, __blkdev_sectors_to_bio_pages(nr_sects),
++				   REQ_OP_WRITE, gfp_mask);
+ 		bio->bi_iter.bi_sector = sector;
+-		bio_set_dev(bio, bdev);
+-		bio_set_op_attrs(bio, REQ_OP_WRITE, 0);
+ 
+ 		while (nr_sects != 0) {
+ 			sz = min((sector_t) PAGE_SIZE, nr_sects << 9);
+diff --git a/block/blk-zoned.c b/block/blk-zoned.c
+index 774ecc598bee2..5ab755d792c81 100644
+--- a/block/blk-zoned.c
++++ b/block/blk-zoned.c
+@@ -215,9 +215,8 @@ static int blkdev_zone_reset_all_emulated(struct block_device *bdev,
+ 			continue;
+ 		}
+ 
+-		bio = blk_next_bio(bio, 0, gfp_mask);
+-		bio_set_dev(bio, bdev);
+-		bio->bi_opf = REQ_OP_ZONE_RESET | REQ_SYNC;
++		bio = blk_next_bio(bio, bdev, 0, REQ_OP_ZONE_RESET | REQ_SYNC,
++				   gfp_mask);
+ 		bio->bi_iter.bi_sector = sector;
+ 		sector += zone_sectors;
+ 
+@@ -306,9 +305,7 @@ int blkdev_zone_mgmt(struct block_device *bdev, enum req_opf op,
+ 	}
+ 
+ 	while (sector < end_sector) {
+-		bio = blk_next_bio(bio, 0, gfp_mask);
+-		bio_set_dev(bio, bdev);
+-		bio->bi_opf = op | REQ_SYNC;
++		bio = blk_next_bio(bio, bdev, 0, op | REQ_SYNC, gfp_mask);
+ 		bio->bi_iter.bi_sector = sector;
+ 		sector += zone_sectors;
+ 
+diff --git a/block/blk.h b/block/blk.h
+index 8bd43b3ad33d5..6b93de33e8a43 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -406,8 +406,6 @@ extern int blk_iolatency_init(struct request_queue *q);
+ static inline int blk_iolatency_init(struct request_queue *q) { return 0; }
+ #endif
+ 
+-struct bio *blk_next_bio(struct bio *bio, unsigned int nr_pages, gfp_t gfp);
+-
+ #ifdef CONFIG_BLK_DEV_ZONED
+ void blk_queue_free_zone_bitmaps(struct request_queue *q);
+ void blk_queue_clear_zone_settings(struct request_queue *q);
+diff --git a/drivers/nvme/target/zns.c b/drivers/nvme/target/zns.c
+index 46bc30fe85d2b..247de74247fab 100644
+--- a/drivers/nvme/target/zns.c
++++ b/drivers/nvme/target/zns.c
+@@ -412,10 +412,10 @@ static u16 nvmet_bdev_zone_mgmt_emulate_all(struct nvmet_req *req)
+ 
+ 	while (sector < get_capacity(bdev->bd_disk)) {
+ 		if (test_bit(blk_queue_zone_no(q, sector), d.zbitmap)) {
+-			bio = blk_next_bio(bio, 0, GFP_KERNEL);
+-			bio->bi_opf = zsa_req_op(req->cmd->zms.zsa) | REQ_SYNC;
++			bio = blk_next_bio(bio, bdev, 0,
++				zsa_req_op(req->cmd->zms.zsa) | REQ_SYNC,
++				GFP_KERNEL);
+ 			bio->bi_iter.bi_sector = sector;
+-			bio_set_dev(bio, bdev);
+ 			/* This may take a while, so be nice to others */
+ 			cond_resched();
+ 		}
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 117d7f248ac96..edeae54074ede 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -790,6 +790,7 @@ static inline void bio_set_polled(struct bio *bio, struct kiocb *kiocb)
+ 		bio->bi_opf |= REQ_NOWAIT;
+ }
+ 
+-struct bio *blk_next_bio(struct bio *bio, unsigned int nr_pages, gfp_t gfp);
++struct bio *blk_next_bio(struct bio *bio, struct block_device *bdev,
++		unsigned int nr_pages, unsigned int opf, gfp_t gfp);
+ 
+ #endif /* __LINUX_BIO_H */
 -- 
 2.30.2
 
