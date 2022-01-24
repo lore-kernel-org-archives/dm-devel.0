@@ -4,52 +4,52 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 41CD5C4321E
-	for <dm-devel@archiver.kernel.org>; Mon, 24 Jan 2022 09:11:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id AE1BCC4332F
+	for <dm-devel@archiver.kernel.org>; Mon, 24 Jan 2022 09:11:59 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-131-vayXsgZVMcOn9a6dqXjqwA-1; Mon, 24 Jan 2022 04:11:53 -0500
-X-MC-Unique: vayXsgZVMcOn9a6dqXjqwA-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-635-lxtUmo1QMK2vm-H2xhRnmw-1; Mon, 24 Jan 2022 04:11:49 -0500
+X-MC-Unique: lxtUmo1QMK2vm-H2xhRnmw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3A0D58519EC;
-	Mon, 24 Jan 2022 09:11:46 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 9E8561923B86;
+	Mon, 24 Jan 2022 09:11:42 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1C6FD79590;
-	Mon, 24 Jan 2022 09:11:46 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 83D177B9D6;
+	Mon, 24 Jan 2022 09:11:42 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E8D1E1809CBA;
-	Mon, 24 Jan 2022 09:11:45 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.10])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5A5671809CBA;
+	Mon, 24 Jan 2022 09:11:42 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.9])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20O9BeL5016926 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 24 Jan 2022 04:11:41 -0500
+	id 20O9BaaJ016914 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 24 Jan 2022 04:11:36 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id DD8DD401411; Mon, 24 Jan 2022 09:11:40 +0000 (UTC)
+	id E3A3B492CAE; Mon, 24 Jan 2022 09:11:35 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D9DE2401E3E
-	for <dm-devel@redhat.com>; Mon, 24 Jan 2022 09:11:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BB68680B714
-	for <dm-devel@redhat.com>; Mon, 24 Jan 2022 09:11:40 +0000 (UTC)
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DFD9E492CA3
+	for <dm-devel@redhat.com>; Mon, 24 Jan 2022 09:11:35 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C8D81800B29
+	for <dm-devel@redhat.com>; Mon, 24 Jan 2022 09:11:35 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-363-4dmXwCo0NnGkUExNGSAOMg-1; Mon, 24 Jan 2022 04:11:39 -0500
-X-MC-Unique: 4dmXwCo0NnGkUExNGSAOMg-1
+	us-mta-62-Uuwb9IPYPcC74iHlJU8MNw-1; Mon, 24 Jan 2022 04:11:34 -0500
+X-MC-Unique: Uuwb9IPYPcC74iHlJU8MNw-1
 Received: from [2001:4bb8:184:72a4:a337:a75f:a24e:7e39] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1nBvNr-002kA4-JE; Mon, 24 Jan 2022 09:11:32 +0000
+	id 1nBvNm-002k5I-1V; Mon, 24 Jan 2022 09:11:26 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 24 Jan 2022 10:10:56 +0100
-Message-Id: <20220124091107.642561-9-hch@lst.de>
+Date: Mon, 24 Jan 2022 10:10:54 +0100
+Message-Id: <20220124091107.642561-7-hch@lst.de>
 In-Reply-To: <20220124091107.642561-1-hch@lst.de>
 References: <20220124091107.642561-1-hch@lst.de>
 MIME-Version: 1.0
@@ -63,7 +63,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 X-loop: dm-devel@redhat.com
 Cc: linux-block@vger.kernel.org, linux-nfs@vger.kernel.org,
 	linux-nilfs@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>,
@@ -77,8 +77,7 @@ Cc: linux-block@vger.kernel.org, linux-nfs@vger.kernel.org,
 	Andrew Morton <akpm@linux-foundation.org>, ntfs3@lists.linux.dev,
 	Jack Wang <jinpu.wang@ionos.com>, Pavel Begunkov <asml.silence@gmail.com>,
 	drbd-dev@lists.linbit.com
-Subject: [dm-devel] [PATCH 08/19] dm-thin: use blkdev_issue_flush instead of
-	open coding it
+Subject: [dm-devel] [PATCH 06/19] dm-crypt: remove clone_init
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -92,7 +91,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -100,58 +99,71 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Use blkdev_issue_flush, which uses an on-stack bio instead of an
-opencoded version with a bio embedded into struct pool.
+Just open code it next to the bio allocations, which saves a few lines
+of code, prepares for future changes and allows to remove the duplicate
+bi_opf assignment for the bio_clone_fast case in kcryptd_io_read.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm-thin.c | 11 +----------
- 1 file changed, 1 insertion(+), 10 deletions(-)
+ drivers/md/dm-crypt.c | 21 ++++++++-------------
+ 1 file changed, 8 insertions(+), 13 deletions(-)
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 76a9c2e9aeeea..411a3f56ed90c 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -282,8 +282,6 @@ struct pool {
- 	struct dm_bio_prison_cell **cell_sort_array;
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 20abe3486aba1..3c5ecd35d3483 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -234,7 +234,7 @@ static volatile unsigned long dm_crypt_pages_per_client;
+ #define DM_CRYPT_MEMORY_PERCENT			2
+ #define DM_CRYPT_MIN_PAGES_PER_CLIENT		(BIO_MAX_VECS * 16)
  
- 	mempool_t mapping_pool;
--
--	struct bio flush_bio;
- };
+-static void clone_init(struct dm_crypt_io *, struct bio *);
++static void crypt_endio(struct bio *clone);
+ static void kcryptd_queue_crypt(struct dm_crypt_io *io);
+ static struct scatterlist *crypt_get_sg_data(struct crypt_config *cc,
+ 					     struct scatterlist *sg);
+@@ -1673,7 +1673,10 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
+ 		mutex_lock(&cc->bio_alloc_lock);
  
- static void metadata_operation_failed(struct pool *pool, const char *op, int r);
-@@ -2906,7 +2904,6 @@ static void __pool_destroy(struct pool *pool)
- 	if (pool->next_mapping)
- 		mempool_free(pool->next_mapping, &pool->mapping_pool);
- 	mempool_exit(&pool->mapping_pool);
--	bio_uninit(&pool->flush_bio);
- 	dm_deferred_set_destroy(pool->shared_read_ds);
- 	dm_deferred_set_destroy(pool->all_io_ds);
- 	kfree(pool);
-@@ -2987,7 +2984,6 @@ static struct pool *pool_create(struct mapped_device *pool_md,
- 	pool->low_water_triggered = false;
- 	pool->suspended = true;
- 	pool->out_of_data_space = false;
--	bio_init(&pool->flush_bio, NULL, 0);
+ 	clone = bio_alloc_bioset(GFP_NOIO, nr_iovecs, &cc->bs);
+-	clone_init(io, clone);
++	clone->bi_private = io;
++	clone->bi_end_io = crypt_endio;
++	bio_set_dev(clone, cc->dev->bdev);
++	clone->bi_opf = io->base_bio->bi_opf;
  
- 	pool->shared_read_ds = dm_deferred_set_create();
- 	if (!pool->shared_read_ds) {
-@@ -3194,13 +3190,8 @@ static void metadata_low_callback(void *context)
- static int metadata_pre_commit_callback(void *context)
- {
- 	struct pool *pool = context;
--	struct bio *flush_bio = &pool->flush_bio;
--
--	bio_reset(flush_bio);
--	bio_set_dev(flush_bio, pool->data_dev);
--	flush_bio->bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;
+ 	remaining_size = size;
  
--	return submit_bio_wait(flush_bio);
-+	return blkdev_issue_flush(pool->data_dev);
+@@ -1826,16 +1829,6 @@ static void crypt_endio(struct bio *clone)
+ 	crypt_dec_pending(io);
  }
  
- static sector_t get_dev_size(struct block_device *bdev)
+-static void clone_init(struct dm_crypt_io *io, struct bio *clone)
+-{
+-	struct crypt_config *cc = io->cc;
+-
+-	clone->bi_private = io;
+-	clone->bi_end_io  = crypt_endio;
+-	bio_set_dev(clone, cc->dev->bdev);
+-	clone->bi_opf	  = io->base_bio->bi_opf;
+-}
+-
+ static int kcryptd_io_read(struct dm_crypt_io *io, gfp_t gfp)
+ {
+ 	struct crypt_config *cc = io->cc;
+@@ -1850,10 +1843,12 @@ static int kcryptd_io_read(struct dm_crypt_io *io, gfp_t gfp)
+ 	clone = bio_clone_fast(io->base_bio, gfp, &cc->bs);
+ 	if (!clone)
+ 		return 1;
++	clone->bi_private = io;
++	clone->bi_end_io = crypt_endio;
++	bio_set_dev(clone, cc->dev->bdev);
+ 
+ 	crypt_inc_pending(io);
+ 
+-	clone_init(io, clone);
+ 	clone->bi_iter.bi_sector = cc->start + io->sector;
+ 
+ 	if (dm_crypt_integrity_io_alloc(io, clone)) {
 -- 
 2.30.2
 
