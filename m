@@ -1,56 +1,56 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3E228C433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 24 Jan 2022 09:11:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 24B1EC433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 24 Jan 2022 09:11:57 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-622-uMmUikeBPniqma8nk4pxVQ-1; Mon, 24 Jan 2022 04:11:49 -0500
-X-MC-Unique: uMmUikeBPniqma8nk4pxVQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-605-kL7Nkuf5OMeXgS3lPzRA4g-1; Mon, 24 Jan 2022 04:11:52 -0500
+X-MC-Unique: kL7Nkuf5OMeXgS3lPzRA4g-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 62D9164093;
-	Mon, 24 Jan 2022 09:11:44 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 581F2100CCC8;
+	Mon, 24 Jan 2022 09:11:48 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 475DC1059173;
-	Mon, 24 Jan 2022 09:11:44 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3BCBF7314B;
+	Mon, 24 Jan 2022 09:11:48 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1CA6B4A7C8;
-	Mon, 24 Jan 2022 09:11:44 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.9])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 00D824A7CA;
+	Mon, 24 Jan 2022 09:11:48 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20O9BWoB016903 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 24 Jan 2022 04:11:32 -0500
+	id 20O9Bgtk016936 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 24 Jan 2022 04:11:42 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id DD088492CAE; Mon, 24 Jan 2022 09:11:31 +0000 (UTC)
+	id 8824740CFD1E; Mon, 24 Jan 2022 09:11:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D9458492CA3
-	for <dm-devel@redhat.com>; Mon, 24 Jan 2022 09:11:31 +0000 (UTC)
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8416B40CFD0A
+	for <dm-devel@redhat.com>; Mon, 24 Jan 2022 09:11:42 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C13E2101A52D
-	for <dm-devel@redhat.com>; Mon, 24 Jan 2022 09:11:31 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6B5E5857BF7
+	for <dm-devel@redhat.com>; Mon, 24 Jan 2022 09:11:42 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-308-YMfN7casNZ6HMKIWONCxkw-1; Mon, 24 Jan 2022 04:11:26 -0500
-X-MC-Unique: YMfN7casNZ6HMKIWONCxkw-1
+	us-mta-258-Ro9UAG42MwW58peMCDYOhw-1; Mon, 24 Jan 2022 04:11:40 -0500
+X-MC-Unique: Ro9UAG42MwW58peMCDYOhw-1
 Received: from [2001:4bb8:184:72a4:a337:a75f:a24e:7e39] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1nBvNj-002k3M-8B; Mon, 24 Jan 2022 09:11:23 +0000
+	id 1nBvNx-002kCs-4t; Mon, 24 Jan 2022 09:11:37 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 24 Jan 2022 10:10:53 +0100
-Message-Id: <20220124091107.642561-6-hch@lst.de>
+Date: Mon, 24 Jan 2022 10:10:58 +0100
+Message-Id: <20220124091107.642561-11-hch@lst.de>
 In-Reply-To: <20220124091107.642561-1-hch@lst.de>
 References: <20220124091107.642561-1-hch@lst.de>
 MIME-Version: 1.0
@@ -64,10 +64,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-loop: dm-devel@redhat.com
 Cc: linux-block@vger.kernel.org, linux-nfs@vger.kernel.org,
 	linux-nilfs@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>,
+	Jack Wang <jinpu.wang@ionons.com>,
 	Philipp Reisner <philipp.reisner@linbit.com>,
 	Ryusuke Konishi <konishi.ryusuke@gmail.com>,
 	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
@@ -78,8 +79,8 @@ Cc: linux-block@vger.kernel.org, linux-nfs@vger.kernel.org,
 	Andrew Morton <akpm@linux-foundation.org>, ntfs3@lists.linux.dev,
 	Jack Wang <jinpu.wang@ionos.com>, Pavel Begunkov <asml.silence@gmail.com>,
 	drbd-dev@lists.linbit.com
-Subject: [dm-devel] [PATCH 05/19] dm: bio_alloc can't fail if it is allowed
-	to sleep
+Subject: [dm-devel] [PATCH 10/19] rnbd-srv: simplify bio mapping in
+	process_rdma
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,7 +94,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -101,185 +102,148 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Remove handling of NULL returns from sleeping bio_alloc calls given that
-those can't fail.
+The memory mapped in process_rdma is contiguous, so there is no need
+to loop over bio_add_page.  Remove rnbd_bio_map_kern and just open code
+the bio allocation and mapping in the caller.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Jack Wang <jinpu.wang@ionons.com>
+Tested-by: Jack Wang <jinpu.wang@ionos.com>
 ---
- drivers/md/dm-crypt.c          |  5 +----
- drivers/md/dm-log-writes.c     | 18 ------------------
- drivers/md/dm-thin.c           | 25 +++++++++----------------
- drivers/md/dm-zoned-metadata.c | 11 -----------
- drivers/md/dm.c                |  2 --
- 5 files changed, 10 insertions(+), 51 deletions(-)
+ drivers/block/rnbd/rnbd-srv-dev.c | 57 -------------------------------
+ drivers/block/rnbd/rnbd-srv-dev.h |  5 ---
+ drivers/block/rnbd/rnbd-srv.c     | 23 +++++++++----
+ 3 files changed, 16 insertions(+), 69 deletions(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index d4ae31558826a..20abe3486aba1 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1673,9 +1673,6 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
- 		mutex_lock(&cc->bio_alloc_lock);
- 
- 	clone = bio_alloc_bioset(GFP_NOIO, nr_iovecs, &cc->bs);
--	if (!clone)
--		goto out;
--
- 	clone_init(io, clone);
- 
- 	remaining_size = size;
-@@ -1702,7 +1699,7 @@ static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
- 		bio_put(clone);
- 		clone = NULL;
- 	}
--out:
-+
- 	if (unlikely(gfp_mask & __GFP_DIRECT_RECLAIM))
- 		mutex_unlock(&cc->bio_alloc_lock);
- 
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index 139b09b06eda9..25f5e8d2d417b 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -218,10 +218,6 @@ static int write_metadata(struct log_writes_c *lc, void *entry,
- 	size_t ret;
- 
- 	bio = bio_alloc(GFP_KERNEL, 1);
--	if (!bio) {
--		DMERR("Couldn't alloc log bio");
--		goto error;
--	}
- 	bio->bi_iter.bi_size = 0;
- 	bio->bi_iter.bi_sector = sector;
- 	bio_set_dev(bio, lc->logdev->bdev);
-@@ -276,11 +272,6 @@ static int write_inline_data(struct log_writes_c *lc, void *entry,
- 		atomic_inc(&lc->io_blocks);
- 
- 		bio = bio_alloc(GFP_KERNEL, bio_pages);
--		if (!bio) {
--			DMERR("Couldn't alloc inline data bio");
--			goto error;
--		}
--
- 		bio->bi_iter.bi_size = 0;
- 		bio->bi_iter.bi_sector = sector;
- 		bio_set_dev(bio, lc->logdev->bdev);
-@@ -322,7 +313,6 @@ static int write_inline_data(struct log_writes_c *lc, void *entry,
- error_bio:
- 	bio_free_pages(bio);
- 	bio_put(bio);
--error:
- 	put_io_block(lc);
- 	return -1;
+diff --git a/drivers/block/rnbd/rnbd-srv-dev.c b/drivers/block/rnbd/rnbd-srv-dev.c
+index b241a099aeae2..98d3e591a0885 100644
+--- a/drivers/block/rnbd/rnbd-srv-dev.c
++++ b/drivers/block/rnbd/rnbd-srv-dev.c
+@@ -44,60 +44,3 @@ void rnbd_dev_close(struct rnbd_dev *dev)
+ 	blkdev_put(dev->bdev, dev->blk_open_flags);
+ 	kfree(dev);
  }
-@@ -364,10 +354,6 @@ static int log_one_block(struct log_writes_c *lc,
- 
- 	atomic_inc(&lc->io_blocks);
- 	bio = bio_alloc(GFP_KERNEL, bio_max_segs(block->vec_cnt));
--	if (!bio) {
--		DMERR("Couldn't alloc log bio");
--		goto error;
--	}
- 	bio->bi_iter.bi_size = 0;
- 	bio->bi_iter.bi_sector = sector;
- 	bio_set_dev(bio, lc->logdev->bdev);
-@@ -387,10 +373,6 @@ static int log_one_block(struct log_writes_c *lc,
- 			submit_bio(bio);
- 			bio = bio_alloc(GFP_KERNEL,
- 					bio_max_segs(block->vec_cnt - i));
--			if (!bio) {
--				DMERR("Couldn't alloc log bio");
--				goto error;
--			}
- 			bio->bi_iter.bi_size = 0;
- 			bio->bi_iter.bi_sector = sector;
- 			bio_set_dev(bio, lc->logdev->bdev);
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index ec119d2422d5d..76a9c2e9aeeea 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -1180,24 +1180,17 @@ static void process_prepared_discard_passdown_pt1(struct dm_thin_new_mapping *m)
- 	}
- 
- 	discard_parent = bio_alloc(GFP_NOIO, 1);
--	if (!discard_parent) {
--		DMWARN("%s: unable to allocate top level discard bio for passdown. Skipping passdown.",
--		       dm_device_name(tc->pool->pool_md));
--		queue_passdown_pt2(m);
-+	discard_parent->bi_end_io = passdown_endio;
-+	discard_parent->bi_private = m;
- 
--	} else {
--		discard_parent->bi_end_io = passdown_endio;
--		discard_parent->bi_private = m;
 -
--		if (m->maybe_shared)
--			passdown_double_checking_shared_status(m, discard_parent);
--		else {
--			struct discard_op op;
-+	if (m->maybe_shared)
-+		passdown_double_checking_shared_status(m, discard_parent);
-+	else {
-+		struct discard_op op;
- 
--			begin_discard(&op, tc, discard_parent);
--			r = issue_discard(&op, m->data_block, data_end);
--			end_discard(&op, r);
--		}
-+		begin_discard(&op, tc, discard_parent);
-+		r = issue_discard(&op, m->data_block, data_end);
-+		end_discard(&op, r);
- 	}
- }
- 
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index ee4626d085574..5718b83cc7182 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -551,10 +551,6 @@ static struct dmz_mblock *dmz_get_mblock_slow(struct dmz_metadata *zmd,
- 		return ERR_PTR(-ENOMEM);
- 
- 	bio = bio_alloc(GFP_NOIO, 1);
--	if (!bio) {
--		dmz_free_mblock(zmd, mblk);
--		return ERR_PTR(-ENOMEM);
--	}
- 
- 	spin_lock(&zmd->mblk_lock);
- 
-@@ -726,10 +722,6 @@ static int dmz_write_mblock(struct dmz_metadata *zmd, struct dmz_mblock *mblk,
- 		return -EIO;
- 
- 	bio = bio_alloc(GFP_NOIO, 1);
--	if (!bio) {
--		set_bit(DMZ_META_ERROR, &mblk->state);
--		return -ENOMEM;
--	}
- 
- 	set_bit(DMZ_META_WRITING, &mblk->state);
- 
-@@ -760,9 +752,6 @@ static int dmz_rdwr_block(struct dmz_dev *dev, int op,
- 		return -EIO;
- 
- 	bio = bio_alloc(GFP_NOIO, 1);
+-void rnbd_dev_bi_end_io(struct bio *bio)
+-{
+-	struct rnbd_dev_blk_io *io = bio->bi_private;
+-
+-	rnbd_endio(io->priv, blk_status_to_errno(bio->bi_status));
+-	bio_put(bio);
+-}
+-
+-/**
+- *	rnbd_bio_map_kern	-	map kernel address into bio
+- *	@data: pointer to buffer to map
+- *	@bs: bio_set to use.
+- *	@len: length in bytes
+- *	@gfp_mask: allocation flags for bio allocation
+- *
+- *	Map the kernel address into a bio suitable for io to a block
+- *	device. Returns an error pointer in case of error.
+- */
+-struct bio *rnbd_bio_map_kern(void *data, struct bio_set *bs,
+-			      unsigned int len, gfp_t gfp_mask)
+-{
+-	unsigned long kaddr = (unsigned long)data;
+-	unsigned long end = (kaddr + len + PAGE_SIZE - 1) >> PAGE_SHIFT;
+-	unsigned long start = kaddr >> PAGE_SHIFT;
+-	const int nr_pages = end - start;
+-	int offset, i;
+-	struct bio *bio;
+-
+-	bio = bio_alloc_bioset(gfp_mask, nr_pages, bs);
 -	if (!bio)
--		return -ENOMEM;
+-		return ERR_PTR(-ENOMEM);
 -
- 	bio->bi_iter.bi_sector = dmz_blk2sect(block);
- 	bio_set_dev(bio, dev->bdev);
- 	bio_set_op_attrs(bio, op, REQ_SYNC | REQ_META | REQ_PRIO);
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index c0ae8087c6027..81449cbdafa81 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -520,8 +520,6 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
- 	struct bio *clone;
+-	offset = offset_in_page(kaddr);
+-	for (i = 0; i < nr_pages; i++) {
+-		unsigned int bytes = PAGE_SIZE - offset;
+-
+-		if (len <= 0)
+-			break;
+-
+-		if (bytes > len)
+-			bytes = len;
+-
+-		if (bio_add_page(bio, virt_to_page(data), bytes,
+-				    offset) < bytes) {
+-			/* we don't support partial mappings */
+-			bio_put(bio);
+-			return ERR_PTR(-EINVAL);
+-		}
+-
+-		data += bytes;
+-		len -= bytes;
+-		offset = 0;
+-	}
+-
+-	return bio;
+-}
+diff --git a/drivers/block/rnbd/rnbd-srv-dev.h b/drivers/block/rnbd/rnbd-srv-dev.h
+index 0eb23850afb95..1a14ece0be726 100644
+--- a/drivers/block/rnbd/rnbd-srv-dev.h
++++ b/drivers/block/rnbd/rnbd-srv-dev.h
+@@ -41,11 +41,6 @@ void rnbd_dev_close(struct rnbd_dev *dev);
  
- 	clone = bio_alloc_bioset(GFP_NOIO, 0, &md->io_bs);
--	if (!clone)
--		return NULL;
+ void rnbd_endio(void *priv, int error);
  
- 	tio = container_of(clone, struct dm_target_io, clone);
- 	tio->inside_dm_io = true;
+-void rnbd_dev_bi_end_io(struct bio *bio);
+-
+-struct bio *rnbd_bio_map_kern(void *data, struct bio_set *bs,
+-			      unsigned int len, gfp_t gfp_mask);
+-
+ static inline int rnbd_dev_get_max_segs(const struct rnbd_dev *dev)
+ {
+ 	return queue_max_segments(bdev_get_queue(dev->bdev));
+diff --git a/drivers/block/rnbd/rnbd-srv.c b/drivers/block/rnbd/rnbd-srv.c
+index 1ee808fc600cf..6d228af1dcc35 100644
+--- a/drivers/block/rnbd/rnbd-srv.c
++++ b/drivers/block/rnbd/rnbd-srv.c
+@@ -114,6 +114,14 @@ rnbd_get_sess_dev(int dev_id, struct rnbd_srv_session *srv_sess)
+ 	return sess_dev;
+ }
+ 
++static void rnbd_dev_bi_end_io(struct bio *bio)
++{
++	struct rnbd_dev_blk_io *io = bio->bi_private;
++
++	rnbd_endio(io->priv, blk_status_to_errno(bio->bi_status));
++	bio_put(bio);
++}
++
+ static int process_rdma(struct rnbd_srv_session *srv_sess,
+ 			struct rtrs_srv_op *id, void *data, u32 datalen,
+ 			const void *usr, size_t usrlen)
+@@ -144,12 +152,12 @@ static int process_rdma(struct rnbd_srv_session *srv_sess,
+ 	priv->sess_dev = sess_dev;
+ 	priv->id = id;
+ 
+-	/* Generate bio with pages pointing to the rdma buffer */
+-	bio = rnbd_bio_map_kern(data, sess_dev->rnbd_dev->ibd_bio_set, datalen, GFP_KERNEL);
+-	if (IS_ERR(bio)) {
+-		err = PTR_ERR(bio);
+-		rnbd_srv_err(sess_dev, "Failed to generate bio, err: %d\n", err);
+-		goto sess_dev_put;
++	bio = bio_alloc_bioset(GFP_KERNEL, 1, sess_dev->rnbd_dev->ibd_bio_set);
++	if (bio_add_page(bio, virt_to_page(data), datalen,
++			offset_in_page(data)) != datalen) {
++		rnbd_srv_err(sess_dev, "Failed to map data to bio\n");
++		err = -EINVAL;
++		goto bio_put;
+ 	}
+ 
+ 	io = container_of(bio, struct rnbd_dev_blk_io, bio);
+@@ -170,7 +178,8 @@ static int process_rdma(struct rnbd_srv_session *srv_sess,
+ 
+ 	return 0;
+ 
+-sess_dev_put:
++bio_put:
++	bio_put(bio);
+ 	rnbd_put_sess_dev(sess_dev);
+ err:
+ 	kfree(priv);
 -- 
 2.30.2
 
