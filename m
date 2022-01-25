@@ -4,133 +4,71 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 732EFC433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 25 Jan 2022 21:56:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7FAD0C2BA4C
+	for <dm-devel@archiver.kernel.org>; Wed, 26 Jan 2022 04:41:12 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-398-C3y1a51ANCmzKh1df0iJbg-1; Tue, 25 Jan 2022 16:56:35 -0500
-X-MC-Unique: C3y1a51ANCmzKh1df0iJbg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-482-VcA7xCniO5C1rVuVtLCS9w-1; Tue, 25 Jan 2022 23:41:07 -0500
+X-MC-Unique: VcA7xCniO5C1rVuVtLCS9w-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CE8BB92500;
-	Tue, 25 Jan 2022 21:56:30 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 48B451006AA0;
+	Wed, 26 Jan 2022 04:41:01 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 27D1445D9D;
-	Tue, 25 Jan 2022 21:56:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F1C8104FF;
+	Wed, 26 Jan 2022 04:41:00 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 766B51809CB8;
-	Tue, 25 Jan 2022 21:56:24 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2EF911809CB8;
+	Wed, 26 Jan 2022 04:40:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20PLqgoA031489 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 25 Jan 2022 16:52:43 -0500
+	id 20P88K7e028998 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 25 Jan 2022 03:08:20 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id C14E61120AC2; Tue, 25 Jan 2022 21:52:42 +0000 (UTC)
+	id 0C78A2166B4D; Tue, 25 Jan 2022 08:08:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BC8E81120AC3
-	for <dm-devel@redhat.com>; Tue, 25 Jan 2022 21:52:39 +0000 (UTC)
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 078C92166B46
+	for <dm-devel@redhat.com>; Tue, 25 Jan 2022 08:08:13 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B4FC5101A52D
-	for <dm-devel@redhat.com>; Tue, 25 Jan 2022 21:52:39 +0000 (UTC)
-Received: from de-smtp-delivery-102.mimecast.com
-	(de-smtp-delivery-102.mimecast.com [194.104.109.102]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6D5F580B717
+	for <dm-devel@redhat.com>; Tue, 25 Jan 2022 08:08:13 +0000 (UTC)
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-381-a0XFk7DQOfew4RXNEvhoDA-1; Tue, 25 Jan 2022 16:52:38 -0500
-X-MC-Unique: a0XFk7DQOfew4RXNEvhoDA-1
-Received: from EUR04-HE1-obe.outbound.protection.outlook.com
-	(mail-he1eur04lp2053.outbound.protection.outlook.com [104.47.13.53]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	de-mta-37-1MO5IUVgNei0klTQtJ2brQ-1; Tue, 25 Jan 2022 22:52:35 +0100
-X-MC-Unique: 1MO5IUVgNei0klTQtJ2brQ-1
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
-	by AM0PR04MB4884.eurprd04.prod.outlook.com (2603:10a6:208:d0::26)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4909.19;
-	Tue, 25 Jan 2022 21:52:33 +0000
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::11e7:5ef4:4a27:62a9]) by
-	DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::11e7:5ef4:4a27:62a9%6]) with mapi id 15.20.4909.017;
-	Tue, 25 Jan 2022 21:52:33 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
-	"christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
-Thread-Topic: [PATCH v2 0/9] multipathd: remove udev settle dependency
-Thread-Index: AQHX2/kcqYz9XADO80u4JTNgHS2rlQ==
-Date: Tue, 25 Jan 2022 21:52:33 +0000
-Message-ID: <dbe9bc8583d4954add51ec4fad8ed8d718a1dfeb.camel@suse.com>
-References: <1637184084-4882-1-git-send-email-bmarzins@redhat.com>
-	<2d4c46dcaee54eb39e96831c0ee9bf88204cc819.camel@suse.com>
-In-Reply-To: <2d4c46dcaee54eb39e96831c0ee9bf88204cc819.camel@suse.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Evolution 3.42.3
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 87bd621c-8a29-418f-8408-08d9e04cfe15
-x-ms-traffictypediagnostic: AM0PR04MB4884:EE_
-x-ld-processed: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba,ExtFwd
-x-microsoft-antispam-prvs: <AM0PR04MB48840BD0A7EEB1012A3C74FEFC5F9@AM0PR04MB4884.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:9508
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: 23ucJgGvaDKncBgDytbDdqMPXr4OhpyInLwfZAUW/f6v2KiIXdRgOApJfzxXqYDGer/VHZjqoaR6G2FcfcKMsES1U4pQMQtyDy5Epd2Us/QiqKS36R0X+LQyaWoMuQdCvfoE3LHxVkU16gCDu62HDBeYLM4WJyQ8cEy7zeBBPuzRgK/IlLHboeMvpQvPhO1Ik91EneYRcYGCQZ2YSat0wmV7yWvxzYXx/pr3WU0JArQkYL0BSzd0sYzAx4LcrOHQkdQNvdRgwgOWpL43pGJTfQsvK3aj5D2AYQkZRM8fe9MfPFxGx7ZiXBmnCulvAAlYzVyVN36Q7ShbsKdvjMzOJm40TQ8GTIo/HZElBgX/YsOFIZQTXlQT4+pjdidcofDNofVTZVTFba0tQaZc5YkgWFRV24srzOeN/aGKfzAL8EW28z9qnKnrrx9ARcomwt4ds+W83P/frKWnFnJRyTJxMWsI9+RhZMo3x3Kx9TZzbAntGmUj32nxhQGj6tqvg56pfrkVs074pzsQpoKCjpgQ7jfa3OSKwTi7Wf1SkM+aehwLnNk1mtRZwL0sCQEW7bpQmNJELJBRm9ClG4zpZ1q9Q0eixQsEXOhPJ3jlGcVhk112uR5bXAplOri/cICwq9SsIxPVyQqpDaUA5pqQnPf6qRuwfXC7nC8/WaPYcLTIwRqABHqHGVa8GXjLqDuVf5+pGiGms3Z2kXtU9a0Q1nAATA==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(366004)(8936002)(54906003)(316002)(107886003)(110136005)(2616005)(38070700005)(86362001)(186003)(4326008)(44832011)(5660300002)(122000001)(2906002)(6486002)(71200400001)(38100700002)(36756003)(83380400001)(26005)(76116006)(8676002)(66556008)(64756008)(66446008)(66476007)(6512007)(91956017)(66946007)(6506007)(508600001);
-	DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?O38TWKuYWhY6L10uNux4FOBWy+xfQ02RpmAuY31xH4xZ0sxjXn9AT8kUy?=
-	=?iso-8859-15?Q?XTaH3nMDYxs5hC7JvTTUsAaJlPuEMlD5vSyc58Dy6VYghRFJTaxgNMoTa?=
-	=?iso-8859-15?Q?VQlsGQzvJuosKrUflfPHADce2ZRG+/7OnWf84JoRt30QbZx4nayAsWRm8?=
-	=?iso-8859-15?Q?bTEzHpbbjLWKfZrNFkfcBl054t0Sw0BKHheB9ximqp58DDZwZK0ta+GRl?=
-	=?iso-8859-15?Q?/p6HwDGYOCgRtAXa+2AXqJAV78o86lehJcThC8vvuj6B6njZ0MKF2WHuK?=
-	=?iso-8859-15?Q?mzpkvDnpZ4ouNbCf1y/ZFz56KA1XPhqfanzo/+4DuWy1jBcob/9AfzxXY?=
-	=?iso-8859-15?Q?bmR+hxCpYODA1/lfYKVkpthtYGYjNcY3GpzG/8M1yMMlpZVm0pfqiWLMs?=
-	=?iso-8859-15?Q?hnONnmFoo7FxpJ2XY3pCS86MxHnB0gTVNLy3obHZz37ANtI/ws7fIijVS?=
-	=?iso-8859-15?Q?39CIaXBvwXWIycJoMQ4V7W9oinHHrU+VTu+T6HZRaYSX8gGgD+mq+Nv/o?=
-	=?iso-8859-15?Q?8vC+X0kfPb5cgSI3cGzjTBA27dYC7Yj2VKDzHv4AX9rCvPJWiNKT0V+by?=
-	=?iso-8859-15?Q?Oxpiksw044azvQC41PMQ3iUEMREj4j/627DuEa4E0mfVa9X5Wi5MSLjwB?=
-	=?iso-8859-15?Q?lGOih9JvPxdKDp7zgKnsgMsnEyS3GTwZmgFrNNfasaz5OBqPrprxkpLp8?=
-	=?iso-8859-15?Q?gShtiSS7bzHhs/iBlrANYvd7UlrIAoXclqiTAdciNPePYFWcseTaW9HLx?=
-	=?iso-8859-15?Q?355r8S5xZzE6CllpQzkYDYsQZ4wAlagLa/AJ7d+P5Bc7n9yGNdepPooym?=
-	=?iso-8859-15?Q?o1bvPslfSzX7JN6Qb8fgjuqmh7sw6NUrC8OOeyraG6Q5yZochuXk6Cy/6?=
-	=?iso-8859-15?Q?UqTBxkeyp+BsxYIP+qrxbgr4RDMeJoiBptTKzfUgbgIiKmCENbxVCOYBs?=
-	=?iso-8859-15?Q?6onIPxqAo2isrFCTUvnUHAjht+XEfVlLggkYppiX+k9t/uY8zJ59s2/NG?=
-	=?iso-8859-15?Q?gbxU8o0+pHnzYZ4t+K40n8oa6n+Y6E/dcOlHXCpd58Lmh4plNIj/4Dqa1?=
-	=?iso-8859-15?Q?J38G916Qo5dnm3WguRe988ATenF/Cv25SfRysO+d6EXloDEK4QVFd7o8R?=
-	=?iso-8859-15?Q?MTFKBoTUbxSUNAaUx7NLptg9vPGbAtSSWFFRVWFsbF3VMsh4+/9lAsXLi?=
-	=?iso-8859-15?Q?fE35QTbk/awMRg1YfFr8NPQawAqUeyEUKrLAeeL8WCnxQo/gES5g96AL7?=
-	=?iso-8859-15?Q?zzm+g2EQ0tT0DHHx5PmUUMADh+tHfINJEsmfIqd/gQxWqMyaM7A2WcRvL?=
-	=?iso-8859-15?Q?GkDU7LsZNSbtnZMyTOBlBNyb//rauHdAMsh7iHr4Cdz07yZLKmpVSAeMF?=
-	=?iso-8859-15?Q?f6AUmPdiT4s0U8tnvpfBtFuvK8DCFgfIWDMJ9E5inxAwQh2r6hw8ggrfx?=
-	=?iso-8859-15?Q?v13e2WG/YsnnW7VRSsA6YJXo30PPcZKxMAySqRXyy1wm4EZXT6g2V/8xv?=
-	=?iso-8859-15?Q?4z/bfqLm/78Sm8ritUOYYNLf4VQyqgRbJxtPrEEbAkJmRcQeNN2mQVx+N?=
-	=?iso-8859-15?Q?f6yuuXum47/jDR1KeL+jiEHHOPwq3wevpG7qHk4MD4SA6WLTM/Vlj3AFS?=
-	=?iso-8859-15?Q?VjVL9nLRLLaTfqDmH9nXOdBqqbnUuxda4VriZ6MZVD38o0i3LPE6UekqA?=
-	=?iso-8859-15?Q?dTqoyuNKk+l+umiS8OKkRlURVMkqQJYm4KoazSAFizqcF3A=3D?=
+	us-mta-569-HZbkwHkzM-6n3r4hXYIR-w-1; Tue, 25 Jan 2022 03:08:10 -0500
+X-MC-Unique: HZbkwHkzM-6n3r4hXYIR-w-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by ams.source.kernel.org (Postfix) with ESMTPS id B658FB8172B
+	for <dm-devel@redhat.com>; Tue, 25 Jan 2022 08:00:57 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7AA86C340EB
+	for <dm-devel@redhat.com>; Tue, 25 Jan 2022 08:00:56 +0000 (UTC)
+Received: by mail-yb1-f173.google.com with SMTP id g81so59165967ybg.10
+	for <dm-devel@redhat.com>; Tue, 25 Jan 2022 00:00:56 -0800 (PST)
+X-Gm-Message-State: AOAM532APaMo3/MwETlb8p9/a8IdnXhoPqQqbu++QjhG4E6MKWiQx/kv
+	xgD92CATHpPevsVSHOEULHEgKCmKS8gy7O1kB1w=
+X-Google-Smtp-Source: ABdhPJzE0ChTuzHVQV+U/wv6ARwukapx8IFQmD8hO10Utrm5YQG3XSGHnX1S3Gu/DHqdZz0HjBdopf5B3i+qfwg6+kU=
+X-Received: by 2002:a25:bc0e:: with SMTP id i14mr28436551ybh.670.1643097655496;
+	Tue, 25 Jan 2022 00:00:55 -0800 (PST)
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 87bd621c-8a29-418f-8408-08d9e04cfe15
-X-MS-Exchange-CrossTenant-originalarrivaltime: 25 Jan 2022 21:52:33.3475 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: pxN+/yb57Spfho3GwBstYaM6rgNw+sNrY71IQv9jgihQs29l0NwVk/t9L19o8yX+bZMsh1Ki4LuVRGl0Nu6mJQ==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR04MB4884
+References: <747C2684-B570-473E-9146-E8AB53102236@filmlight.ltd.uk>
+	<20220123180058.372f72ce@gecko.fritz.box>
+	<70008df6-ef90-6e8d-8a57-9b30077508e7@molgen.mpg.de>
+	<C5CCA1CE-E120-4BCB-925E-981DBA7A29F4@filmlight.ltd.uk>
+In-Reply-To: <C5CCA1CE-E120-4BCB-925E-981DBA7A29F4@filmlight.ltd.uk>
+From: Song Liu <song@kernel.org>
+Date: Tue, 25 Jan 2022 00:00:44 -0800
+X-Gmail-Original-Message-ID: <CAPhsuW6wc2iPfzb+9DZ130RqNWfOmxJpkA59x58WN1s18Uuahg@mail.gmail.com>
+Message-ID: <CAPhsuW6wc2iPfzb+9DZ130RqNWfOmxJpkA59x58WN1s18Uuahg@mail.gmail.com>
+To: Roger Willcocks <roger@filmlight.ltd.uk>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -139,14 +77,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 20PLqgoA031489
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
-	Hannes Reinecke <hare@suse.com>
-Subject: Re: [dm-devel] [PATCH v2 0/9] multipathd: remove udev settle
-	dependency
+X-Mailman-Approved-At: Tue, 25 Jan 2022 23:35:56 -0500
+Cc: linux-raid <linux-raid@vger.kernel.org>,
+	Paul Menzel <pmenzel@molgen.mpg.de>, dm-devel@redhat.com,
+	Lukas Straub <lukasstraub2@web.de>
+Subject: Re: [dm-devel] Raid0 performance regression
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -160,77 +97,147 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-ID: <F902A68CF36A6A46AE885930A482AED0@eurprd04.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, 2022-01-24 at 12:19 +0100, Martin Wilck wrote:
-> 
-> My late testing has revealed an issue with this patch with explicit
-> ALUA. It's similar to what you solved with the "ghost_delay"
-> parameter
-> in the past.
-> 
-> With this patch, multipathd now starts before SCSI device detection
-> begins, and as soon as multipathd sets up a map, I/O on this map may
-> be
-> started. With arrays supporting Active/optimized and Active/non-
-> optimized states and explicit ALUA, this causes unnecessary path
-> state
-> switching if paths in non-optimized state are detected before
-> optimized
-> ones. I/O will cause scsi_dh_activate() to be called in the kernel,
-> and
-> this will run an STPG, which always uses active/optimized as target
-> state.
-> 
-> With RDDAC, we'll have a similar problem. The other device handlers
-> don't distinguish active and optimal states, AFAICS.
-> 
-> I fear this behavior will not be welcome in some configurations. So
-> far
-> I haven't made up my mind how, and if at all, we can fix it. I
-> suppose
-> something similar to ghost_delay would be possible on the multipath-
-> tools side, but it's not straightforward, because non-optimized paths
-> simply count as PATH_UP in multipathd. Also, the delay should
-> probably
-> be much shorter than for PATH_GHOST. In my testing against a LIO
-> target, it was a matter of milliseconds which path would appear
-> first.
-> 
-> Alternatively, maybe we can consider the way scsi_dh_activate()
-> works?
-> Perhaps it doesn't have to switch from active/non-optimized to
-> active/optimized state? OTOH, there are other situation (explicit
-> path
-> group switch) where we'd want exactly that.
+On Mon, Jan 24, 2022 at 8:49 AM Roger Willcocks <roger@filmlight.ltd.uk> wrote:
+>
+>
+>
+> > On 23 Jan 2022, at 21:34, Paul Menzel <pmenzel@molgen.mpg.de> wrote:
+> >
+> > Dear Roger,
+> >
+> >
+> > Am 23.01.22 um 19:00 schrieb Lukas Straub:
+> >> CC'ing Song Liu (md-raid maintainer) and linux-raid mailing list.
+> >> On Fri, 21 Jan 2022 16:38:03 +0000 Roger Willcocks wrote:
+> >
+> >>> we noticed a thirty percent drop in performance on one of our raid
+> >>> arrays when switching from CentOS 6.5 to 8.4; it uses raid0-like
+> >
+> > For those outside the CentOS universe, what Linux kernel versions are those?
+> >
+>
+> 2.6.32 (and backported changes) and 4.18.0 (sim.)
+>
+> >>> striping to balance (by time) access to a pair of hardware raid-6
+> >>> arrays. The underlying issue is also present in the native raid0
+> >>> driver so herewith the gory details; I'd appreciate your thoughts.
+> >>>
+> >>> --
+> >>>
+> >>> blkdev_direct_IO() calls submit_bio() which calls an outermost
+> >>> generic_make_request() (aka submit_bio_noacct()).
+> >>>
+> >>> md_make_request() calls blk_queue_split() which cuts an incoming
+> >>> request into two parts with the first no larger than get_max_io_size()
+> >>> bytes (which in the case of raid0, is the chunk size):
+> >>>
+> >>>   R -> AB
+> >>>   blk_queue_split() gives the second part 'B' to generic_make_request()
+> >>> to worry about later and returns the first part 'A'.
+> >>>
+> >>> md_make_request() then passes 'A' to a more specific request handler,
+> >>> In this case raid0_make_request().
+> >>>
+> >>> raid0_make_request() cuts its incoming request into two parts at the
+> >>> next chunk boundary:
+> >>>
+> >>> A -> ab
+> >>>
+> >>> it then fixes up the device (chooses a physical device) for 'a', and
+> >>> gives both parts, separately, to generic make request()
+> >>>
+> >>> This is where things go awry, because 'b' is still targetted to the
+> >>> original device (same as 'B'), but 'B' was queued before 'b'. So we
+> >>> end up with:
+> >>>
+> >>>   R -> Bab
+> >>>
+> >>> The outermost generic_make_request() then cuts 'B' at
+> >>> get_max_io_size(), and the process repeats. Ascii art follows:
+> >>>
+> >>>
+> >>>     /---------------------------------------------------/   incoming rq
+> >>>
+> >>>     /--------/--------/--------/--------/--------/------/   max_io_size
+> >>>       |--------|--------|--------|--------|--------|--------|--------| chunks
+> >>>
+> >>> |...=====|---=====|---=====|---=====|---=====|---=====|--......| rq out
+> >>>       a    b  c     d  e     f  g     h  i     j  k     l
+> >>>
+> >>> Actual submission order for two-disk raid0: 'aeilhd' and 'cgkjfb'
+> >>>
+> >>> --
+> >>>
+> >>> There are several potential fixes -
+> >>>
+> >>> simplest is to set raid0 blk_queue_max_hw_sectors() to UINT_MAX
+> >>> instead of chunk_size, so that raid0_make_request() receives the
+> >>> entire transfer length and cuts it up at chunk boundaries;
+> >>>
+> >>> neatest is for raid0_make_request() to recognise that 'b' doesn't
+> >>> cross a chunk boundary so it can be sent directly to the physical
+> >>> device;
+> >>>
+> >>> and correct is for blk_queue_split to requeue 'A' before 'B'.
+> >>>
+> >>> --
+> >>>
+> >>> There's also a second issue - with large raid0 chunk size (256K), the
+> >>> segments submitted to the physical device are at least 128K and
+> >>> trigger the early unplug code in blk_mq_make_request(), so the
+> >>> requests are never merged. There are legitimate reasons for a large
+> >>> chunk size so this seems unhelpful.
+> >>>
+> >>> --
+> >>>
+> >>> As I said, I'd appreciate your thoughts.
+> >
+> > Thank you for the report and the analysis.
+> >
+> > Is the second issue also a regression? If not, I suggest to split it into a separate thread.
+> >
+>
+> Yes this is also a regression, both issues above have to be addressed to recover the
+> original performance.
+>
+> Specifically, an md raid0 array with 256K chunk size interleaving two x 12-disk raid6
+> devices (Adaptec 3154 controller, 50MB files stored contiguously on disk, four threads)
+> can achieve a sequential read rate of 3800 MB/sec with the (very) old 6.5 kernel; this
+> falls to 2500 MB/sec with the relatively newer kernel.
+>
+> This change to raid0.c:
+>
+> -               blk_queue_max_hw_sectors(mddev->queue, mddev->chunk_sectors);
+> +              blk_queue_max_hw_sectors(mddev->queue, UINT_MAX);
 
-In discussion with Hannes, we came to the conclusion:
+I guess this is OK.
 
- - for ALUA, the effect mentioned in my post can be avoided using
-   the kernel parameter "scsi_dh_alua.optimize_stpg=1". Confirmed by
-   testing.
- - even if this parameter is not used, spurious switching between 
-   non-optimized and optimized state is non fatal, and much less
-   resource-intensive on the storage side than switching between active
-   and standby states.
+>
+> improves things somewhat, the sub-chunk requests are now submitted in order but we
+> still only get 2800 MB/sec because no merging takes place; the controller struggles to
+> keep up with the large number of sub-chunk transfers. This additional change to
+> blk-mq.c:
+>
+> -               if (request_count >= BLK_MAX_REQUEST_COUNT || (last &&
+> +               if (request_count >= BLK_MAX_REQUEST_COUNT || (false && last &&
+>                     blk_rq_bytes(last) >= BLK_PLUG_FLUSH_SIZE)) {
+>                         blk_flush_plug_list(plug, false);
 
-So, it's not a big issue, after all...
+We recently did some optimization for BLK_MAX_REQUEST_COUNT ([1] and some
+follow up). We can probably do something similar for BLK_PLUG_FLUSH_SIZE.
 
-> The other alternative would be waiting for udev settle again. I'd
-> really like to avoid that.
+Thanks,
+Song
 
-... and this won't be necessary.
-
-Martin
-
+[1] https://lore.kernel.org/all/20210907230338.227903-1-songliubraving@fb.com/
 
 --
 dm-devel mailing list
