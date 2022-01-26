@@ -1,65 +1,146 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8D8DDC2BA4C
-	for <dm-devel@archiver.kernel.org>; Wed, 26 Jan 2022 15:51:49 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1643212308;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=c2pi7ybYKTDh5OQ2DNtm7+ZN+JCsDLHqLadrwX9vI1U=;
-	b=EXoHpDmvbz0fy8bFoCpt3PWIPDoU28JH0QTMEiQBBsv+YbcH6q9VsTvFo2eGGO8N3t7+70
-	6qulM0CKoKjEK+MJ1b5jghCouorACsrQ9lQHd0xJr5W5s04USVe3p/BrjeNZ+GZqHghLn9
-	UAl3U5GjYH06bl71XrnyQ4WJeZ7Q+uE=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 417FBC28CF5
+	for <dm-devel@archiver.kernel.org>; Wed, 26 Jan 2022 16:30:54 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-83-AsAbRez0MRWW1j9nTbwLug-1; Wed, 26 Jan 2022 10:51:44 -0500
-X-MC-Unique: AsAbRez0MRWW1j9nTbwLug-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-244-iO-VXDg7Pc2rkTEy6tzYTg-1; Wed, 26 Jan 2022 11:30:49 -0500
+X-MC-Unique: iO-VXDg7Pc2rkTEy6tzYTg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3084B51081;
-	Wed, 26 Jan 2022 15:51:40 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DCCD3798BF;
-	Wed, 26 Jan 2022 15:51:38 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A278F1083F62;
+	Wed, 26 Jan 2022 16:30:44 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 42F515E484;
+	Wed, 26 Jan 2022 16:30:44 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D442C18218AF;
-	Wed, 26 Jan 2022 15:51:37 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
-	[10.5.11.12])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id AE6634BB7C;
+	Wed, 26 Jan 2022 16:30:43 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20QFpagP020203 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 26 Jan 2022 10:51:36 -0500
+	id 20QGUf1H024167 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 26 Jan 2022 11:30:41 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 055B27E116; Wed, 26 Jan 2022 15:51:36 +0000 (UTC)
-Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 57D217D498;
-	Wed, 26 Jan 2022 15:51:09 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
-	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 20QFp7ZM011746; 
-	Wed, 26 Jan 2022 09:51:07 -0600
-Received: (from bmarzins@localhost)
-	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 20QFp7I8011743;
-	Wed, 26 Jan 2022 09:51:07 -0600
-Date: Wed, 26 Jan 2022 09:51:06 -0600
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Message-ID: <20220126155106.GL24684@octiron.msp.redhat.com>
+	id 95A0E40CFD04; Wed, 26 Jan 2022 16:30:41 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8EC8440CFD34
+	for <dm-devel@redhat.com>; Wed, 26 Jan 2022 16:30:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7511B2B16862
+	for <dm-devel@redhat.com>; Wed, 26 Jan 2022 16:30:41 +0000 (UTC)
+Received: from de-smtp-delivery-102.mimecast.com
+	(de-smtp-delivery-102.mimecast.com [194.104.111.102]) by
+	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-204-t_4gTG4dNKWwl9Xn33ME5A-1; Wed, 26 Jan 2022 11:30:39 -0500
+X-MC-Unique: t_4gTG4dNKWwl9Xn33ME5A-1
+Received: from EUR02-VE1-obe.outbound.protection.outlook.com
+	(mail-ve1eur02lp2053.outbound.protection.outlook.com [104.47.6.53]) by
+	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	de-mta-40-G58uosqHPGqFFw-4O-h-jA-2; Wed, 26 Jan 2022 17:30:36 +0100
+X-MC-Unique: G58uosqHPGqFFw-4O-h-jA-2
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
+	by AM0PR04MB4691.eurprd04.prod.outlook.com (2603:10a6:208:c1::20)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4930.15;
+	Wed, 26 Jan 2022 16:30:33 +0000
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
+	([fe80::11e7:5ef4:4a27:62a9]) by
+	DB8PR04MB6555.eurprd04.prod.outlook.com
+	([fe80::11e7:5ef4:4a27:62a9%6]) with mapi id 15.20.4909.017;
+	Wed, 26 Jan 2022 16:30:33 +0000
+From: Martin Wilck <martin.wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>
+Thread-Topic: [PATCH v2 0/9] multipathd: remove udev settle dependency
+Thread-Index: AQHX2/kcqYz9XADO80u4JTNgHS2rlax14Ul6gAAK2YA=
+Date: Wed, 26 Jan 2022 16:30:33 +0000
+Message-ID: <500c110d44a5712c7a5cc2280ea8af80fa2ec285.camel@suse.com>
 References: <1637184084-4882-1-git-send-email-bmarzins@redhat.com>
 	<2d4c46dcaee54eb39e96831c0ee9bf88204cc819.camel@suse.com>
+	<20220126155106.GL24684@octiron.msp.redhat.com>
+In-Reply-To: <20220126155106.GL24684@octiron.msp.redhat.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Evolution 3.42.3
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: 5a8784ef-f486-429b-5394-08d9e0e92d22
+x-ms-traffictypediagnostic: AM0PR04MB4691:EE_
+x-ld-processed: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba,ExtFwd
+x-microsoft-antispam-prvs: <AM0PR04MB4691A233D1855677D58DC92FFC209@AM0PR04MB4691.eurprd04.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:7691
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: VQY9ZLxDooBMswCMxFEo+yZ/ZFnnoTICQso5Cm5gEeRDfAWhqAJ4h5YoCs/8cRJywM3W/1ZbZDrfcdds2ZOoHMJiHUNFXusmJr1DYRqaURJpnvrPm/X7R09FJZqGsDSD2han7GQoVdujqFnl+sw+gVlYE8snp1lkLuUcZI/owTuQvCA6lapfR/iqV7FoDR9ym56cRi01IJfIZMAy7VskN/86/RXSrEWkZdC89AXLW2oPyEO73GYoDfNB5BEExjfwIadANY5FaCuxswSyBUTdw4I6IHLFxSshGxH3Svzoe/VigOYQQeaOZ/kb5AjsM8ImrhaP8/rFxuD0Zzw2wtTuHe1M6dXa7I2n2LlPFTC+mJCVD/dEbXk2VFHHhBse0IFkFlroCBPfYqYEX3BJ/uftAfpWooZa/INtrLjXwe1Dbdk8LoD8RBnVKOrk+K4vW9HULzEVZw0zCCORKLm4O2KpCBdEgaFXy1FEYmGEhu3K9vGE/KHBOY0GaoPWNAhaja9a38pVtXELyvFd9/JTO4ADoJn0smT875RcDLhUig1kbk137aSrVoArRHI4/swbOlXAe5MvKb+LJPsOUm23YnLDa3yyB/YJmHBCNN3+tsa8CGiTtRrJ9G+g2gbl8JUWa+pBWPJDuuJvF+qoxdibQFy9t6yoKx/asE3Zp4Fsqt4OINaBaxp6lmqpMCvA31WPF4cK6EtTl2GrVvUFx0GY1xpbcg==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(13230001)(366004)(38070700005)(6506007)(6512007)(54906003)(508600001)(86362001)(6486002)(122000001)(316002)(71200400001)(6916009)(64756008)(66476007)(66946007)(66556008)(2906002)(2616005)(186003)(38100700002)(26005)(8936002)(5660300002)(8676002)(76116006)(4744005)(91956017)(66446008)(36756003)(4326008)(44832011)(20210929001);
+	DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?d9hOdPlqujxzsDYuWULjRTV5f2zVpSCQIxy0Fs1jCJipZqUjaXMNAImX3?=
+	=?iso-8859-15?Q?1DtU6ALuIh6xU74XJMQJxmmZsvan2ZJTSgOk/sPIj3/uN1ZusfRT1oODg?=
+	=?iso-8859-15?Q?BzSMCXr6isgCDfO9V6aELnUiSbCCttrX6afFsRqcserrXy0Ey4JXUBIDJ?=
+	=?iso-8859-15?Q?AOFYpQHyu1XWoXVqUGD3oZuNCf22mLhOavjDBsSSKDdvxzxf/9lCu9k6d?=
+	=?iso-8859-15?Q?nmyFopzSJVc2Z7YkWPrS/8Vjer5vgvEy7L7XZ735DC1VibdmyX7YWxwKq?=
+	=?iso-8859-15?Q?YejMPFITHjRYyCNPAiWNb/tiY3LxRNOrcjkhs0xLHcRLhhFVmH1GBd7qS?=
+	=?iso-8859-15?Q?RrCSX7JS1wYnAJz6ty37DcikYneZUM3ORCi9MxExlNnxOA8PF2AO7SfNp?=
+	=?iso-8859-15?Q?JKWJl6EjHrrfYBiLpET9b+0y0X7tl/MCMp4GtTJ6wrqVoFJeOqTqjCXX8?=
+	=?iso-8859-15?Q?uFjhr32fXOSQU4a63WOyMZD6WRsvnjU1L/sakNvWlsK4+jD53hesSBHz6?=
+	=?iso-8859-15?Q?LShelGjAnne1QQKqsMUHrBcToDgs/yS+AEY8JAFttS+/p++XngOL34cpJ?=
+	=?iso-8859-15?Q?g02fiKXp/uaHtJFSnP9AKcTC05ea+Lx6Oa+Q4tIaJKGYKCs3ZKbcA3bC1?=
+	=?iso-8859-15?Q?GhSCb8wqri1ZRm7+bVn/U54+mV8i+qhu66TZZmf1wFuEYnNqzW68mx9Lu?=
+	=?iso-8859-15?Q?WRmMmA0OSRKW8PcCkOQHTWwP0KIwLPUmK5M1Atl/LzXRoyxtEYUHUOBic?=
+	=?iso-8859-15?Q?s8eF9GjC5kg573Fwq+NBznXFeag/T95KG6mV+QjQ5g8H6mmij2F1PKU9r?=
+	=?iso-8859-15?Q?zruV+Qwui7nxQWxEKsO/azwOnKTSmVZzyuAFZ1bpFopXJq02phk6kuzTa?=
+	=?iso-8859-15?Q?ZRvgLY+zVpz/DlL1yuqF163RwjlnTNcaVK9LaSPsWRBwcn6uvTUnitai8?=
+	=?iso-8859-15?Q?UH4HlRUJ/vJcnStFVs8OYlMp4QhQvVXOmJI0hr01gZnYLZUTQmiw5BhPR?=
+	=?iso-8859-15?Q?s4HrhDEorsXjLZ5Cz5Pgf6rb+PjkJHAp6eax1fw3HxHzH6nMB8i/I+67S?=
+	=?iso-8859-15?Q?Cvd9Se3v4hYXKg1RJaBT8St/jBDJmJw89zWwueXuOjBSn4Xiob1eWpmDo?=
+	=?iso-8859-15?Q?Zvni2Crb56Ha3B3+Jy0mmpVCKftukQSu4ZBSCdNpYrvN1DX/KZlyZnEA5?=
+	=?iso-8859-15?Q?iaOiMDNN5ULYukIOHExHbMyRJZhvxiH574l+6VYh1vcLcFgkP5QWCXWAy?=
+	=?iso-8859-15?Q?HcGTiW5b1VTeAO6YnRM5jSwdQt9RSs5RaqyMQIasa6c8arWSrjq0iIQpW?=
+	=?iso-8859-15?Q?w+iS30FuQE9RtTvQQiqGedQDG6TUCuyJIzr/8N3Mclazo+kah1D46POq7?=
+	=?iso-8859-15?Q?owy4b8RiitmSOq4cL2ot1fZrPt1lwrzP0S551y+eQs03iEZqBOxf7xuO9?=
+	=?iso-8859-15?Q?bvys7M08nyclw/OJ0C78SiNQRDB9D85bpsuK/m0g+Zf+otZoYEGnArXeT?=
+	=?iso-8859-15?Q?KeuhlrMEiU5vXXx4ZXCYVcYOnSx3P6xQrRGIGjsWXibbE+izC/F7nXgrN?=
+	=?iso-8859-15?Q?0rC9/l6YFVDkAN3oamEUfY8mNpEmf7rV8WDlSnW9OfMRaHxmgfPcbugby?=
+	=?iso-8859-15?Q?Be/icy7uTb3Upnwm75cBOI103uGGrWSLSSOpw8jsF4/ALGjQZI8FXzlLD?=
+	=?iso-8859-15?Q?R1V8CFav+kuK9dqCJSxPyJTMz2WMYZ0l4320fkH+pdMT5Sc=3D?=
 MIME-Version: 1.0
-In-Reply-To: <2d4c46dcaee54eb39e96831c0ee9bf88204cc819.camel@suse.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-OriginatorOrg: suse.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 5a8784ef-f486-429b-5394-08d9e0e92d22
+X-MS-Exchange-CrossTenant-originalarrivaltime: 26 Jan 2022 16:30:33.8342 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: Wxmpm22S04FYUdwooxKSuKqL+gT508C2oEP9jF5dWHLt47bof7JoTjklDyTmYgVthS3ROYDN1qaF3SW8Kt2W1Q==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR04MB4691
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 20QGUf1H024167
 X-loop: dm-devel@redhat.com
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
 	Hannes Reinecke <hare@suse.com>
@@ -78,64 +159,33 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
+Content-ID: <7005040262805744AD743E41B03D4E86@eurprd04.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Jan 24, 2022 at 11:19:53AM +0000, Martin Wilck wrote:
-> On Wed, 2021-11-17 at 15:21 -0600, Benjamin Marzinski wrote:
+On Wed, 2022-01-26 at 09:51 -0600, Benjamin Marzinski wrote:
 > 
-> My late testing has revealed an issue with this patch with explicit
-> ALUA. It's similar to what you solved with the "ghost_delay" parameter
-> in the past.
-> 
-> With this patch, multipathd now starts before SCSI device detection
-> begins, and as soon as multipathd sets up a map, I/O on this map may be
-> started. With arrays supporting Active/optimized and Active/non-
-> optimized states and explicit ALUA, this causes unnecessary path state
-> switching if paths in non-optimized state are detected before optimized
-> ones. I/O will cause scsi_dh_activate() to be called in the kernel, and
-> this will run an STPG, which always uses active/optimized as target
-> state.
-> 
-> With RDDAC, we'll have a similar problem. The other device handlers
-> don't distinguish active and optimal states, AFAICS.
+> Just to clarify things, is there a difference between this and the
+> case
+> that has always existed, where multipathd is up and running and a new
+> storage array gets discovered? The active/optimized paths aren't
+> always
+> discovered first.
 
-Just to clarify things, is there a difference between this and the case
-that has always existed, where multipathd is up and running and a new
-storage array gets discovered? The active/optimized paths aren't always
-discovered first.
+No, that's the same thing. Just that now, multipathd is always up
+before the paths show up.
 
--Ben
- 
-> I fear this behavior will not be welcome in some configurations. So far
-> I haven't made up my mind how, and if at all, we can fix it. I suppose
-> something similar to ghost_delay would be possible on the multipath-
-> tools side, but it's not straightforward, because non-optimized paths
-> simply count as PATH_UP in multipathd. Also, the delay should probably
-> be much shorter than for PATH_GHOST. In my testing against a LIO
-> target, it was a matter of milliseconds which path would appear first.
-> 
-> Alternatively, maybe we can consider the way scsi_dh_activate() works?
-> Perhaps it doesn't have to switch from active/non-optimized to
-> active/optimized state? OTOH, there are other situation (explicit path
-> group switch) where we'd want exactly that.
-> 
-> The other alternative would be waiting for udev settle again. I'd
-> really like to avoid that.
-> 
-> Ideas and thoughts highly welcome.
-> 
-> Regards,
-> Martin
-> 
-> 
-> 
+As I said in my other post, I don't think it's a big issue. But it's a
+significant change in how booting with multipath works.
+
+Martin
+
 
 --
 dm-devel mailing list
