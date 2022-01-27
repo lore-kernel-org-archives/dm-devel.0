@@ -1,150 +1,162 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 575A5C433F5
-	for <dm-devel@archiver.kernel.org>; Wed, 26 Jan 2022 21:12:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7CCEDC433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 27 Jan 2022 00:26:40 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-56-NeOH-h1DPROJwGgdx8_Q3Q-1; Wed, 26 Jan 2022 16:12:36 -0500
-X-MC-Unique: NeOH-h1DPROJwGgdx8_Q3Q-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-249-WfPc4UYcNl6yMuKa3U_A_g-1; Wed, 26 Jan 2022 19:26:35 -0500
+X-MC-Unique: WfPc4UYcNl6yMuKa3U_A_g-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 814F01006AA7;
-	Wed, 26 Jan 2022 21:12:31 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5ED0D6AB90;
-	Wed, 26 Jan 2022 21:12:31 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CD4C7839A44;
+	Thu, 27 Jan 2022 00:26:30 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EA5AF5ED5B;
+	Thu, 27 Jan 2022 00:26:28 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 38C154A7CB;
-	Wed, 26 Jan 2022 21:12:31 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.2])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DA9051809CB8;
+	Thu, 27 Jan 2022 00:26:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20QLC8xI026038 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 26 Jan 2022 16:12:08 -0500
+	id 20R0QNlX007240 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 26 Jan 2022 19:26:24 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1C45440885B0; Wed, 26 Jan 2022 21:12:08 +0000 (UTC)
+	id D1A072026604; Thu, 27 Jan 2022 00:26:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1722040885A6
-	for <dm-devel@redhat.com>; Wed, 26 Jan 2022 21:12:08 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CC1B62026609
+	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 00:26:19 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EF65F2B1686D
-	for <dm-devel@redhat.com>; Wed, 26 Jan 2022 21:12:07 +0000 (UTC)
-Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
-	[205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A15E1C03382
+	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 00:26:19 +0000 (UTC)
+Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
+	[205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-628-s0KJgHUSOG-IVVWzGvkbwQ-1; Wed, 26 Jan 2022 16:12:03 -0500
-X-MC-Unique: s0KJgHUSOG-IVVWzGvkbwQ-1
-Received: from pps.filterd (m0246629.ppops.net [127.0.0.1])
+	us-mta-299-c7CjQTb6NuaFMOKZi0-BYg-1; Wed, 26 Jan 2022 19:26:15 -0500
+X-MC-Unique: c7CjQTb6NuaFMOKZi0-BYg-1
+Received: from pps.filterd (m0246632.ppops.net [127.0.0.1])
 	by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id
-	20QKZLjN022453; Wed, 26 Jan 2022 21:11:51 GMT
+	20QKZ7qj017314; Thu, 27 Jan 2022 00:26:00 GMT
 Received: from userp3030.oracle.com (userp3030.oracle.com [156.151.31.80])
-	by mx0b-00069f02.pphosted.com with ESMTP id 3dsxvfq3up-1
+	by mx0b-00069f02.pphosted.com with ESMTP id 3dsy9s7k2t-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Wed, 26 Jan 2022 21:11:51 +0000
+	Thu, 27 Jan 2022 00:25:59 +0000
 Received: from pps.filterd (userp3030.oracle.com [127.0.0.1])
-	by userp3030.oracle.com (8.16.1.2/8.16.1.2) with SMTP id 20QL72LM016259;
-	Wed, 26 Jan 2022 21:11:50 GMT
-Received: from nam12-dm6-obe.outbound.protection.outlook.com
-	(mail-dm6nam12lp2175.outbound.protection.outlook.com [104.47.59.175])
-	by userp3030.oracle.com with ESMTP id 3dr7220axh-1
+	by userp3030.oracle.com (8.16.1.2/8.16.1.2) with SMTP id 20R0H317046880;
+	Thu, 27 Jan 2022 00:25:58 GMT
+Received: from nam12-bn8-obe.outbound.protection.outlook.com
+	(mail-bn8nam12lp2172.outbound.protection.outlook.com [104.47.55.172])
+	by userp3030.oracle.com with ESMTP id 3dr7227whc-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Wed, 26 Jan 2022 21:11:49 +0000
+	Thu, 27 Jan 2022 00:25:58 +0000
 Received: from SJ0PR10MB4429.namprd10.prod.outlook.com (2603:10b6:a03:2d1::14)
-	by BL0PR10MB3044.namprd10.prod.outlook.com (2603:10b6:208:33::22)
+	by SN4PR10MB5605.namprd10.prod.outlook.com (2603:10b6:806:208::13)
 	with Microsoft SMTP Server (version=TLS1_2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4909.8;
-	Wed, 26 Jan 2022 21:11:46 +0000
+	Thu, 27 Jan 2022 00:25:56 +0000
 Received: from SJ0PR10MB4429.namprd10.prod.outlook.com
 	([fe80::d034:a8db:9e32:acde]) by
 	SJ0PR10MB4429.namprd10.prod.outlook.com
 	([fe80::d034:a8db:9e32:acde%4]) with mapi id 15.20.4909.019;
-	Wed, 26 Jan 2022 21:11:46 +0000
+	Thu, 27 Jan 2022 00:25:56 +0000
 From: Jane Chu <jane.chu@oracle.com>
-To: david@fromorbit.com, djwong@kernel.org, dan.j.williams@intel.com,
-	hch@infradead.org, vishal.l.verma@intel.com, dave.jiang@intel.com,
-	agk@redhat.com, snitzer@redhat.com, dm-devel@redhat.com,
-	ira.weiny@intel.com, willy@infradead.org, vgoyal@redhat.com,
-	linux-fsdevel@vger.kernel.org, nvdimm@lists.linux.dev,
-	linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org
-Date: Wed, 26 Jan 2022 14:11:13 -0700
-Message-Id: <20220126211116.860012-5-jane.chu@oracle.com>
-In-Reply-To: <20220126211116.860012-1-jane.chu@oracle.com>
-References: <20220126211116.860012-1-jane.chu@oracle.com>
-X-ClientProxiedBy: SA9PR13CA0112.namprd13.prod.outlook.com
-	(2603:10b6:806:24::27) To SJ0PR10MB4429.namprd10.prod.outlook.com
-	(2603:10b6:a03:2d1::14)
-MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: b14d8967-6e38-4e7a-1ea4-08d9e110760f
-X-MS-TrafficTypeDiagnostic: BL0PR10MB3044:EE_
-X-Microsoft-Antispam-PRVS: <BL0PR10MB304463663C78144BA8655A3AF3209@BL0PR10MB3044.namprd10.prod.outlook.com>
-X-MS-Oob-TLC-OOBClassifiers: OLM:632
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: cP2zX8XRKVq9YpqYL1SpYh6wrMMm8jD4XBEDqsTGs7r6ZtVh1t4CFGOV9/v5SeMy1dEPWPik+6x14/c2ufq6Yy3veXSED1LggavqxZA4fz7LnMV1E2RtCDibHkaDLvkKHmZCbBN7Hdr6HuTGxpNvuB42+xhGuB9rbdvq3WFZ4jZZdagvBGpjSmWIlW34w5hbZUga7A5BnD7b/MJn6JXzOLjAJCBzTYZ+ukFLsGel6XFAonBnoLYudE/jJkszmbz43C9WRldg/bvG2Es3vf3lpH8el5B6WXwndtgvfw4XaRY2kwkbUd8OdKjqQc4QpSgUkKRggp2nri/NE3qjjky6/eHQg3+H5CikAx+2OR7k7kILZFEeUYkA4RR+tcHKFaE461E8Ak272LWj4j1BieUc2EYqSIw+iRjA0fKQ7DOQbN4P4+0vAIPvjN+Vp8da7WzmqVMSPPTFd+xmX6jrJp6szaZzrEK3RBt/845KN40p/TvxdrdgHCfXdQjPwL/znDX3IHLuxdMUiABggE5MamdA3vaOP6c7gWhqyF8vkWBYa/U5Ln3oY7YPFhSw8kym/oZixTipZvvaJWhg3/VlCwJhIEPDgfx06+Sd2mnbx1Zbrcz/RuQhjEq1bbZ9YLg3DPO6xGgb/ZSo/Nn2ExdWGg6q+b9C/O+YHo9XOVGMKkpKGxVCRuEoyV9trRwmop11xf90
-X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+To: Christoph Hellwig <hch@infradead.org>
+Thread-Topic: [PATCH v3 0/7] DAX poison recovery
+Thread-Index: AQHYBx1mMl0+u9/A1ECT4doipsHhkaxruVyAgAEGPwCABTQgAIAEJu+A
+Date: Thu, 27 Jan 2022 00:25:55 +0000
+Message-ID: <eb09688d-2fa1-80c2-61e5-972ff58eadbf@oracle.com>
+References: <20220111185930.2601421-1-jane.chu@oracle.com>
+	<Yekxd1/MboidZo4C@infradead.org>
+	<4e8c454f-ae48-d4a2-27c4-be6ee89fc9b3@oracle.com>
+	<Ye5q7MSypmwdV4iT@infradead.org>
+In-Reply-To: <Ye5q7MSypmwdV4iT@infradead.org>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
+	Thunderbird/91.5.0
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: bcfde5b1-7718-4436-44d5-08d9e12b95b5
+x-ms-traffictypediagnostic: SN4PR10MB5605:EE_
+x-microsoft-antispam-prvs: <SN4PR10MB5605A165BB45CB68BB202B4BF3219@SN4PR10MB5605.namprd10.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:1417
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: pvngJnniqeHTZRQu6d/8PEqHRwhbLeHeoCcDxdALouv9qjGvMXh8EaOsKsRQLQwjKDdazPMvN/ivFpmpLRgFrTE70VsgohceJ492il8ez5jnxpi8Vf7ROpIn5BVPHwibPX9lAjVhxcGBED1FPWIGpeAxtb0+FozHgCjVvKc3cQ7yUmi5TNeVlCIcp4wdgDWptQZWKY3TII9ObggJpXtO/1t4WtCoQNJKigEv3uYtZfi4Wq6qM7qRPxH4ZUu8T++S5eegyiKD18XoRhrbo1PY8JdICLLRikqvU3EsRYxivPnklT/HzNlt8ttxTJSN2jvr/5enEnHi22MSuy4/3z0YdCo8Z9+bp0bj3OYC2M2hD3fnBrQQ1ngB92qwjWDuNTPsadoIhyzxct/WsNqy2hIoKpjzMNbwmQ1tUVOYUBcvUBPq+0zAqApUw6O3T5iP4oz5y7H/dbss5SjQ9hj3EhYvGjYcInJ71ZR8my16Tx3jr3zynUAIO7XMuNaNc069qPbbyKy9C0h64yEP3+7SSatOdxs2rlVkoyreQ0QbBt1gfCMWCNVPhPAgkkK33fCCY/49Uga+dhgdEgtOMecYcCagv9Ine3QI8tv2RFCaqbSr4l8PU4eWa5Dyr9xkfJnKzM7FYFoWniN0fDaGyGkkP6/n/2e0xJ7nUO2yZSBMv0FnLXywKmSD/UvESyfWFIbKbCChWLW2KCzP7MyRHRRJjWxAE9xFv2PRHqWk0SL4CS7BKdnXFRfCw+oGBnaQJU32uDj0z6BgFkPEQstCg6XQCI+1Nw==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
 	IPV:NLI; SFV:NSPM; H:SJ0PR10MB4429.namprd10.prod.outlook.com;
 	PTR:; CAT:NONE;
-	SFS:(366004)(38100700002)(8676002)(36756003)(86362001)(1076003)(52116002)(83380400001)(921005)(7416002)(8936002)(2906002)(6666004)(186003)(508600001)(6486002)(5660300002)(44832011)(6506007)(2616005)(6512007)(66476007)(66946007)(66556008)(316002);
+	SFS:(366004)(6486002)(71200400001)(66946007)(66446008)(122000001)(316002)(31686004)(64756008)(44832011)(6512007)(76116006)(91956017)(26005)(38100700002)(7416002)(54906003)(2906002)(4326008)(83380400001)(38070700005)(8936002)(4744005)(36756003)(31696002)(8676002)(6916009)(186003)(86362001)(508600001)(2616005)(66476007)(66556008)(5660300002)(53546011)(6506007)(43740500002)(45980500001);
 	DIR:OUT; SFP:1101
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?lxX3tarjO0u5quYHpCGSbfaPlQ6gbNKZIn4K4UT021Hxr6p9+FGSHw15ywAn?=
-	=?us-ascii?Q?ukzzMwDOUp4K7kFWyE1ZsO/GHwYo/5gNJtjQadDTNr2D5QYwrdn9/5yXf67X?=
-	=?us-ascii?Q?V3ef4yAAMpnGIoWFKNIZ62kuwWtwJqtUkLOie7BeDlz+J/z8WN1nP30e0iw9?=
-	=?us-ascii?Q?T5PL+YKdfFRoosP5REXL1kwiq4PvjBOUqYCLHYXp6QiBljwMUE5hr50GGfEB?=
-	=?us-ascii?Q?ygnalTAY+D+EUR3uNGpi0VgXAJ+l0edhDHV9zRzbB6co4zVPUd8fRYMFR4CE?=
-	=?us-ascii?Q?1gu8xR/gxFBG/uOvAOjy+i6t372a1U0jEoXYZrLMIV8iC3rPhSSlvJMyEtOl?=
-	=?us-ascii?Q?5xDZUU7XmU3fReoHx9DQHduJ+rXQF3TCp0ars9rvUzWDBwtsNjNdwy7d98E/?=
-	=?us-ascii?Q?m0YJQNF4LDDfE+6Ws14NTFDc9QDq3CKKFCFmjiuu65fR8k1c0nQfFhoTSwU5?=
-	=?us-ascii?Q?XqNWX4fW0rWJedaKP7stPV/+ok9PWVS64scF1n8epnmevbez+KguY77x0fSP?=
-	=?us-ascii?Q?ZwPH9+Sqiv6PCber54/rzOolPNgJhVEI3gRry6CHAYO9GNkdncM9BNJe95s7?=
-	=?us-ascii?Q?DksnvoylYnwQHtcMoiKDRiiIj5cKYjTvvGgZuvd2V/O4c1oAP3+WK8JJmUyh?=
-	=?us-ascii?Q?Qd+HksZGR4jmfCG7JYfHrunEICPB8J9NSYSOKPlpJnYzAAitNinhEj92VdpF?=
-	=?us-ascii?Q?TO+pHdvmsqFTzJSDRg6Jqugo663FuFN+fosaAx0ca5r7wA6wBQ/ZYdYFQTjp?=
-	=?us-ascii?Q?2SYG99nveFHr2nbo/3kSyGYK/9oRaBZNQRIK8aKggZnQl5L9UdbBOMKJQunO?=
-	=?us-ascii?Q?+UOo419Y13bSlR/ROvja0brjALkm1fnAfPwIK0H2Hh1cQ9fYWqaUjRDbLDw9?=
-	=?us-ascii?Q?tcbzTXW0TpP3Q452ZImxCff3JvFDmIPZrMLXQKQgoG4yDa3Ny+PnHgdeKJVD?=
-	=?us-ascii?Q?OUtg5wUYoWTQ1yGTKCj7U67UZ+SRhRL+h0yVRHknJt18Bg1FtAjLirpnyvah?=
-	=?us-ascii?Q?MdadswFeqJwk2MhoCuM4J0uleXfSIs6o3LdhAJGLgGOnQs/daez+KJ+u7GD7?=
-	=?us-ascii?Q?3WbQ9JNuQQC9p7RrZegrG7SfnDXMntCiQp4g+HA9ukSCVgq9miaDn6n3QL/Y?=
-	=?us-ascii?Q?vFTfIF4i2B4I7yZK+zZj2RijIpoOA0cpKwKolpREBZHHnX2A9+5WUqskpci4?=
-	=?us-ascii?Q?bk8mFRF3n8L7Feq7W66M6rFr5fxqLkQB/H5hYlN6ILbTDUS4IJHdVehHEvNX?=
-	=?us-ascii?Q?eH8jUcwk0nRpBt7x7uFjZ97/3MV6k+Jir4tHwR02BzOGU+88USPY9UHnoYkh?=
-	=?us-ascii?Q?BorXHTO0dXHL2BAvYD/aT1D02z80Oyl06wA09evcxDxR6nbXvGg3SkOdqP0J?=
-	=?us-ascii?Q?/hpLg+m1yRjIsMHeqtLG+cKcsxDCo9QmkT27WI9MfjISGhyiWfUkBJC9x4Af?=
-	=?us-ascii?Q?qrMhJd9ZH2/rsPmnpdI0JKklO/cAjJWOIx7tBN/niyuIicV9bM9Ly7bRDVrY?=
-	=?us-ascii?Q?IIs9YJbbgmo9/MH6L4CSgpZA9HfaN3F8ty3dwsIv7y1zzbSHXZHSOeiMI886?=
-	=?us-ascii?Q?JxRkx8bWrJxySA7Jp4Vm+NYPgsAAMVl3pEiwtC87NOaGFdBQzE3pBx1ujgAS?=
-	=?us-ascii?Q?Bu1IpDn4XXUktvSZqpUAhdA7n/6XnolkLzYX8o1C2AvS?=
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?utf-8?B?RXEveW0vejhNVjZiOS9yR2orbnVITmRtTVV3bkpYSVcxYnlRYUE0REJjZnlY?=
+	=?utf-8?B?WkdUMEtUd1JSVDFURGNsM2F1K2NLRHpMRWw1Q0pUcnBrWnM4VFQ3aTFwdW16?=
+	=?utf-8?B?d0RGUTZNam13bnV5ZkNwMTBNb3dXcDFiaDlEUk9nUWlOUnRaazZnam5rMWkz?=
+	=?utf-8?B?MGw1Mm1YZ1pyQ0tzUHh5Zm53N04rT0EvbUhGdEtJOU82K2owOVF6RjR1Ym5r?=
+	=?utf-8?B?aS9qNHQyMnB6UjlybzZiVW5aNVlzL2pkSm9Benlja2VHWW5pYmQxWEJ5QVpm?=
+	=?utf-8?B?Rk9LMGRmenFuWWc5ay9QTEhZSWsvc3lMelRFQ3hhWVhNaUhRT0JUUTZqZ2tI?=
+	=?utf-8?B?TEI1MG5QOW1ua0JDMno3R2RNcE5ycGM1NXBNL284dHY4UlZ3cEc3bGQ2YlJr?=
+	=?utf-8?B?M2EycFlJY011RHRlTmFNc1pwbS9icEVoOVEwOFdoTy9aK1ZwNnNUM1JUU2cw?=
+	=?utf-8?B?NUMvSWVQTjBtZmlBQUovSk1Mb3VBaWFYcHo1MVlDNmNYaEZSeHJLRDREWUhL?=
+	=?utf-8?B?VnMvek1DUE9KVWFIRnZHbWQ0eWFGd2Z2dEdLM3VmemhYM3FCYzFnd29iZHBq?=
+	=?utf-8?B?ZHJRU3VzNlBNaXRZS1ZCNTRPcENCWUQwQUVTdXdOT1NHVFdJdXgwS3ZPcTda?=
+	=?utf-8?B?RldvQ0pSTWtaNGVBVXZQVDZWc3lsVXNpdm1PSGFNWHlxNnd4b1lTU0d2b0RQ?=
+	=?utf-8?B?SXVWTmZUQVFONDdWUVpSeUZIVjlHeHVIbGFJWTlCemVkSWFsdjQ0QlpJWWU1?=
+	=?utf-8?B?NXdvZTZ1ejlwcTB4WE83bWlTNm5NV1U2SUpEMGJ5dkpWZ3VCeTBoaDByOWtH?=
+	=?utf-8?B?ZDVBcmFIN2RmRFJqaWxFNitTZ1ZIMHVrY3d6NVp0Q0xyZVRPc3FpbW9VeVVx?=
+	=?utf-8?B?bHR3b0VyR3phb1F5S1VDS1pDYklPZkZSWi8yOEk5UWlBbUR5UnlCeFhmeWZ2?=
+	=?utf-8?B?SjJ0bStuVFdlWCtqZ3FLRXlkc2k0b0pMV0FzWHhDL1NLTWJKVUkvaHZWVUcy?=
+	=?utf-8?B?cUlNaDhadVl4bVZsb0RvcEdrNWk2SzdBT1h1QkN4ODd1b0t5QzFpVWhacm9Z?=
+	=?utf-8?B?VStUN1gzNXQ1L2xxa2JxdXI4ZDNQb0JBMG56QmlYcjFVbVljRU1DblVZQ3Az?=
+	=?utf-8?B?K2xxL3FxN3FFK3hnOTZqVm4wYk16WVpPbWVqdlZDVEExZ2N0TndBMUJHWEJS?=
+	=?utf-8?B?VHdGQkZGZnZ2c3hmbVNGdjROWWZtMmYyV0FUWUV0bTAyVERtcTMzNmdPcHVh?=
+	=?utf-8?B?ZzNLaEV4STRuR0dPS2swSGU4WGlDeHNydGt2MjViYnp1MkV5ZWpGcXNGbkRo?=
+	=?utf-8?B?cG15UGxkN1VIeEp4allTY1EzRDdJSWljcFhDTzVsK2p5aXg3VHFydXVTc1JN?=
+	=?utf-8?B?OVhyakJpMS9SUERZZVpzRWxNVTRabEVHMk1OcUZsUEczWStOcmh6ZWZqRkU4?=
+	=?utf-8?B?ODlER09JYWFVQVl6WUZ5MnRQZjhjc0dmanhuSksrNlQ1WVBSMFphV0tTdE5v?=
+	=?utf-8?B?RnhuWklHcWpkL0t5dG5pLzIrckcxQ010aDhnbCszVkRybmpzTnNPdmVkbzhu?=
+	=?utf-8?B?U0pHcXFMODU2L2d2azlOdHRTS0REcjdUa3ZmdUZxZ09lVFh0T3dEL2hZUDJG?=
+	=?utf-8?B?MnZwSWJhVC9ZTC92T3lkUCs2Z3dKZE9aUDRBY3FTeGh1NE0vK01meU8yZXc0?=
+	=?utf-8?B?anBuSW5yK3N6Q1c0U2FSVWx6Z25ldU1hMlJqVlU2NmY5dlIyR2NkVjFobkFM?=
+	=?utf-8?B?RnZ0Ymg2dXViWWo5ejY3bzhhT2RhUFBKQXpZS2paWmo0SExxb2F0QkRUOVFx?=
+	=?utf-8?B?TW80dW1IdlorSzRtenczTjNvQytVYUMvUTZYRXVzSDVIUC9NVnNQZ3I1b1h5?=
+	=?utf-8?B?aWRpbFZTOGJzZDRBVlE2OUpuY09qTzNBR05YNGRHU2twV1BLek1ISk4zeXpK?=
+	=?utf-8?B?TkI2OXYzQ2RUZFNBbmJJT3lDZWFMOE9OelVwWFJFL2RPV1psL3ZuKzFjM0ta?=
+	=?utf-8?B?NzhRWCt0T1V1d2tqMnB6ZGZJS29ScXNBZmsyNVU4c2lmK2U2cEZSNkhDL0V2?=
+	=?utf-8?B?VE03bTV5Ly9KRFptVDAyQVAvYlpYb0lHQURlWlpKQlpXaGl2UU93NkszeWdw?=
+	=?utf-8?B?Vy9wQXA0c3BLSWhDbkJMM0hTVkpFQ2crSERrOUJYdjJUR3FaT3BSNFRiOU4v?=
+	=?utf-8?B?ZHc9PQ==?=
+MIME-Version: 1.0
 X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: b14d8967-6e38-4e7a-1ea4-08d9e110760f
-X-MS-Exchange-CrossTenant-AuthSource: SJ0PR10MB4429.namprd10.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 26 Jan 2022 21:11:46.8720 (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: dCzMIPlVDG0OeM/bmCpzvj+qpqBFvAA+W6rMdmgAiWCaYH5pQXXFMR5B35x39VPEWYXUzOzGi3YccnWpTEYYsg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BL0PR10MB3044
+X-MS-Exchange-CrossTenant-AuthSource: SJ0PR10MB4429.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: bcfde5b1-7718-4436-44d5-08d9e12b95b5
+X-MS-Exchange-CrossTenant-originalarrivaltime: 27 Jan 2022 00:25:56.0382 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: 2LcuAIdlHeNX3L6ylCu2tb0TjZe0WTp6v3VtPa0haavtutMFwnhOZbpiHfEiFw/tylFf1/72SXr1/laCbu5EZA==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SN4PR10MB5605
 X-Proofpoint-Virus-Version: vendor=nai engine=6300 definitions=10239
 	signatures=668683
 X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 malwarescore=0
-	mlxlogscore=999
+	mlxlogscore=946
 	adultscore=0 spamscore=0 bulkscore=0 mlxscore=0 phishscore=0
 	suspectscore=0 classifier=spam adjust=0 reason=mlx scancount=1
-	engine=8.12.0-2201110000 definitions=main-2201260122
-X-Proofpoint-GUID: UtpwDzrsMyn7sjlKGB4UXPz_KtZLNZUB
-X-Proofpoint-ORIG-GUID: UtpwDzrsMyn7sjlKGB4UXPz_KtZLNZUB
+	engine=8.12.0-2201110000 definitions=main-2201270000
+X-Proofpoint-GUID: _9Kn0o8E__aAen6zdxizj9bXtfKVpt6o
+X-Proofpoint-ORIG-GUID: _9Kn0o8E__aAen6zdxizj9bXtfKVpt6o
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -153,10 +165,26 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-MIME-Autoconverted: from base64 to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 20R0QNlX007240
 X-loop: dm-devel@redhat.com
-Subject: [dm-devel] [PATCH v4 4/7] dax: add dax_recovery_write to dax_op and
-	dm target type
+Cc: "nvdimm@lists.linux.dev" <nvdimm@lists.linux.dev>,
+	"dave.jiang@intel.com" <dave.jiang@intel.com>,
+	"snitzer@redhat.com" <snitzer@redhat.com>,
+	"djwong@kernel.org" <djwong@kernel.org>,
+	"david@fromorbit.com" <david@fromorbit.com>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"willy@infradead.org" <willy@infradead.org>,
+	"linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
+	"dm-devel@redhat.com" <dm-devel@redhat.com>,
+	"vgoyal@redhat.com" <vgoyal@redhat.com>,
+	"vishal.l.verma@intel.com" <vishal.l.verma@intel.com>,
+	"linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+	"dan.j.williams@intel.com" <dan.j.williams@intel.com>,
+	"ira.weiny@intel.com" <ira.weiny@intel.com>,
+	"agk@redhat.com" <agk@redhat.com>
+Subject: Re: [dm-devel] [PATCH v3 0/7] DAX poison recovery
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -170,300 +198,30 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-ID: <D7ADC38D4B7FFF418AF7B8B42C5651E4@namprd10.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-dax_recovery_write() dax op is only required for DAX device that
-export DAXDEV_RECOVERY indicating its capability to recover from
-poisons.
+On 1/24/2022 1:01 AM, Christoph Hellwig wrote:
+> On Fri, Jan 21, 2022 at 01:33:40AM +0000, Jane Chu wrote:
+>>> What tree is this against? I can't apply it to either 5.16 or Linus'
+>>> current tree.
+>>
+>> It was based on your 'dax-block-cleanup' branch a while back.
+> 
+> Do you have a git tree with your patches included available somewhere?
 
-DM may be nested, if part of the base dax devices forming a DM
-device support dax recovery, the DM device is marked with such
-capability.
+Sorry I don't have a git tree, so I rebased the series to 
+v5.17-rc1-81-g0280e3c58f9, hope that helps.
 
-Signed-off-by: Jane Chu <jane.chu@oracle.com>
----
- drivers/dax/super.c           | 17 +++++++++++++++++
- drivers/md/dm-linear.c        | 12 ++++++++++++
- drivers/md/dm-log-writes.c    | 12 ++++++++++++
- drivers/md/dm-stripe.c        | 13 +++++++++++++
- drivers/md/dm.c               | 27 +++++++++++++++++++++++++++
- drivers/nvdimm/pmem.c         |  7 +++++++
- include/linux/dax.h           | 18 ++++++++++++++++++
- include/linux/device-mapper.h |  9 +++++++++
- 8 files changed, 115 insertions(+)
+-jane
 
-diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-index f4f607d9698b..a136fa6b3e36 100644
---- a/drivers/dax/super.c
-+++ b/drivers/dax/super.c
-@@ -195,6 +195,23 @@ int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
- }
- EXPORT_SYMBOL_GPL(dax_zero_page_range);
- 
-+size_t dax_recovery_write(struct dax_device *dax_dev, pgoff_t pgoff,
-+			void *addr, size_t bytes, struct iov_iter *i)
-+{
-+	if (!dax_recovery_capable(dax_dev) || !dax_dev->ops->recovery_write)
-+		return (size_t)-EOPNOTSUPP;
-+	return dax_dev->ops->recovery_write(dax_dev, pgoff, addr, bytes, i);
-+}
-+EXPORT_SYMBOL_GPL(dax_recovery_write);
-+
-+bool dax_recovery_started(struct dax_device *dax_dev, void **kaddr)
-+{
-+	if (!kaddr || !dax_recovery_capable(dax_dev))
-+		return false;
-+	return test_bit(DAXDEV_RECOVERY, (unsigned long *)kaddr);
-+}
-+EXPORT_SYMBOL_GPL(dax_recovery_started);
-+
- #ifdef CONFIG_ARCH_HAS_PMEM_API
- void arch_wb_cache_pmem(void *addr, size_t size);
- void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 1b97a11d7151..831c565bf024 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -188,9 +188,20 @@ static int linear_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
- 	return dax_zero_page_range(dax_dev, pgoff, nr_pages);
- }
- 
-+static size_t linear_dax_recovery_write(struct dm_target *ti, pgoff_t pgoff,
-+	void *addr, size_t bytes, struct iov_iter *i)
-+{
-+	struct dax_device *dax_dev = linear_dax_pgoff(ti, &pgoff);
-+
-+	if (!dax_recovery_capable(dax_dev))
-+		return (size_t) -EOPNOTSUPP;
-+	return dax_recovery_write(dax_dev, pgoff, addr, bytes, i);
-+};
-+
- #else
- #define linear_dax_direct_access NULL
- #define linear_dax_zero_page_range NULL
-+#define	linear_dax_recovery_write NULL
- #endif
- 
- static struct target_type linear_target = {
-@@ -208,6 +219,7 @@ static struct target_type linear_target = {
- 	.iterate_devices = linear_iterate_devices,
- 	.direct_access = linear_dax_direct_access,
- 	.dax_zero_page_range = linear_dax_zero_page_range,
-+	.dax_recovery_write = linear_dax_recovery_write,
- };
- 
- int __init dm_linear_init(void)
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index 139b09b06eda..22c2d64ef963 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -927,9 +927,20 @@ static int log_writes_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
- 	return dax_zero_page_range(dax_dev, pgoff, nr_pages << PAGE_SHIFT);
- }
- 
-+static size_t log_writes_dax_recovery_write(struct dm_target *ti,
-+	pgoff_t pgoff, void *addr, size_t bytes, struct iov_iter *i)
-+{
-+	struct dax_device *dax_dev = log_writes_dax_pgoff(ti, &pgoff);
-+
-+	if (!dax_recovery_capable(dax_dev))
-+		return (size_t) -EOPNOTSUPP;
-+	return dax_recovery_write(dax_dev, pgoff, addr, bytes, i);
-+}
-+
- #else
- #define log_writes_dax_direct_access NULL
- #define log_writes_dax_zero_page_range NULL
-+#define	log_writes_dax_recovery_write NULL
- #endif
- 
- static struct target_type log_writes_target = {
-@@ -947,6 +958,7 @@ static struct target_type log_writes_target = {
- 	.io_hints = log_writes_io_hints,
- 	.direct_access = log_writes_dax_direct_access,
- 	.dax_zero_page_range = log_writes_dax_zero_page_range,
-+	.dax_recovery_write = log_writes_dax_recovery_write,
- };
- 
- static int __init dm_log_writes_init(void)
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index e566115ec0bb..78c52c8865ef 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -332,9 +332,21 @@ static int stripe_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
- 	return dax_zero_page_range(dax_dev, pgoff, nr_pages);
- }
- 
-+static size_t stripe_dax_recovery_write(struct dm_target *ti, pgoff_t pgoff,
-+		void *addr, size_t bytes, struct iov_iter *i)
-+{
-+	struct dax_device *dax_dev = stripe_dax_pgoff(ti, &pgoff);
-+
-+	if (!dax_recovery_capable(dax_dev))
-+		return (size_t) -EOPNOTSUPP;
-+
-+	return dax_recovery_write(dax_dev, pgoff, addr, bytes, i);
-+}
-+
- #else
- #define stripe_dax_direct_access NULL
- #define stripe_dax_zero_page_range NULL
-+#define	stripe_dax_recovery_write NULL
- #endif
- 
- /*
-@@ -471,6 +483,7 @@ static struct target_type stripe_target = {
- 	.io_hints = stripe_io_hints,
- 	.direct_access = stripe_dax_direct_access,
- 	.dax_zero_page_range = stripe_dax_zero_page_range,
-+	.dax_recovery_write = stripe_dax_recovery_write,
- };
- 
- int __init dm_stripe_init(void)
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index c0ae8087c602..bdc142258ace 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1054,6 +1054,32 @@ static int dm_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
- 	return ret;
- }
- 
-+static size_t dm_dax_recovery_write(struct dax_device *dax_dev, pgoff_t pgoff,
-+		void *addr, size_t bytes, struct iov_iter *i)
-+{
-+	struct mapped_device *md = dax_get_private(dax_dev);
-+	sector_t sector = pgoff * PAGE_SECTORS;
-+	struct dm_target *ti;
-+	long ret = 0;
-+	int srcu_idx;
-+
-+	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
-+
-+	if (!ti)
-+		goto out;
-+
-+	if (!ti->type->dax_recovery_write) {
-+		ret = (size_t)-EOPNOTSUPP;
-+		goto out;
-+	}
-+
-+	ret = ti->type->dax_recovery_write(ti, pgoff, addr, bytes, i);
-+out:
-+	dm_put_live_table(md, srcu_idx);
-+
-+	return ret;
-+}
-+
- /*
-  * A target may call dm_accept_partial_bio only from the map routine.  It is
-  * allowed for all bio types except REQ_PREFLUSH, REQ_OP_ZONE_* zone management
-@@ -2980,6 +3006,7 @@ static const struct block_device_operations dm_rq_blk_dops = {
- static const struct dax_operations dm_dax_ops = {
- 	.direct_access = dm_dax_direct_access,
- 	.zero_page_range = dm_dax_zero_page_range,
-+	.recovery_write = dm_dax_recovery_write,
- };
- 
- /*
-diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index e8823813a8df..638e64681db9 100644
---- a/drivers/nvdimm/pmem.c
-+++ b/drivers/nvdimm/pmem.c
-@@ -301,9 +301,16 @@ static long pmem_dax_direct_access(struct dax_device *dax_dev,
- 	return __pmem_direct_access(pmem, pgoff, nr_pages, kaddr, pfn);
- }
- 
-+static size_t pmem_recovery_write(struct dax_device *dax_dev, pgoff_t pgoff,
-+		void *addr, size_t bytes, struct iov_iter *i)
-+{
-+	return 0;
-+}
-+
- static const struct dax_operations pmem_dax_ops = {
- 	.direct_access = pmem_dax_direct_access,
- 	.zero_page_range = pmem_dax_zero_page_range,
-+	.recovery_write = pmem_recovery_write,
- };
- 
- static ssize_t write_cache_show(struct device *dev,
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index 5449a0a81c83..0b4ce58b2659 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -30,6 +30,9 @@ struct dax_operations {
- 			sector_t, sector_t);
- 	/* zero_page_range: required operation. Zero page range   */
- 	int (*zero_page_range)(struct dax_device *, pgoff_t, size_t);
-+	/* recovery_write: optional operation. */
-+	size_t (*recovery_write)(struct dax_device *, pgoff_t, void *, size_t,
-+				struct iov_iter *);
- };
- 
- #if IS_ENABLED(CONFIG_DAX)
-@@ -138,6 +141,9 @@ struct page *dax_layout_busy_page_range(struct address_space *mapping, loff_t st
- dax_entry_t dax_lock_page(struct page *page);
- void dax_unlock_page(struct page *page, dax_entry_t cookie);
- int dax_prep_recovery(struct dax_device *dax_dev, void **kaddr);
-+bool dax_recovery_started(struct dax_device *dax_dev, void **kaddr);
-+size_t dax_recovery_write(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
-+		size_t bytes, struct iov_iter *i);
- #else
- static inline struct page *dax_layout_busy_page(struct address_space *mapping)
- {
-@@ -170,6 +176,18 @@ static inline int dax_prep_recovery(struct dax_device *dax_dev, void **kaddr)
- {
- 	return -EINVAL;
- }
-+
-+static inline bool dax_recovery_started(struct dax_device *dax_dev,
-+			void **kaddr)
-+{
-+	return false;
-+}
-+
-+static size_t dax_recovery_write(struct dax_device *dax_dev, pgoff_t pgoff,
-+		void *addr, size_t bytes, struct iov_iter *i)
-+{
-+	return 0;
-+}
- #endif
- 
- int dax_zero_range(struct inode *inode, loff_t pos, loff_t len, bool *did_zero,
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index b26fecf6c8e8..4f134ba63d3c 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -150,6 +150,14 @@ typedef long (*dm_dax_direct_access_fn) (struct dm_target *ti, pgoff_t pgoff,
- typedef int (*dm_dax_zero_page_range_fn)(struct dm_target *ti, pgoff_t pgoff,
- 		size_t nr_pages);
- 
-+/*
-+ * Returns:
-+ *   != 0 : number of bytes transferred, or size_t casted negative error code
-+ *   0    : failure
-+ */
-+typedef size_t (*dm_dax_recovery_write_fn)(struct dm_target *ti, pgoff_t pgoff,
-+		void *addr, size_t bytes, struct iov_iter *i);
-+
- void dm_error(const char *message);
- 
- struct dm_dev {
-@@ -199,6 +207,7 @@ struct target_type {
- 	dm_io_hints_fn io_hints;
- 	dm_dax_direct_access_fn direct_access;
- 	dm_dax_zero_page_range_fn dax_zero_page_range;
-+	dm_dax_recovery_write_fn dax_recovery_write;
- 
- 	/* For internal device-mapper use. */
- 	struct list_head list;
--- 
-2.18.4
 
 --
 dm-devel mailing list
