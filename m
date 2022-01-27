@@ -1,57 +1,57 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 39C4DC433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 27 Jan 2022 07:10:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id CFFA7C433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 27 Jan 2022 07:10:18 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-356-1SL0u9MHMQmXxKF4-TmQ0w-1; Thu, 27 Jan 2022 02:10:07 -0500
-X-MC-Unique: 1SL0u9MHMQmXxKF4-TmQ0w-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-187-8ooHXST3OayoIcEmIwePdA-1; Thu, 27 Jan 2022 02:10:14 -0500
+X-MC-Unique: 8ooHXST3OayoIcEmIwePdA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 739DB63AD8;
-	Thu, 27 Jan 2022 07:10:03 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DB07F86A8A0;
+	Thu, 27 Jan 2022 07:10:09 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 523DC5E491;
-	Thu, 27 Jan 2022 07:10:03 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BED737A22F;
+	Thu, 27 Jan 2022 07:10:09 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 265F14CA9B;
-	Thu, 27 Jan 2022 07:10:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.9])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 96F344CA9B;
+	Thu, 27 Jan 2022 07:10:09 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20R794uD002559 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 27 Jan 2022 02:09:04 -0500
+	id 20R7A8QB002680 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 27 Jan 2022 02:10:08 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1A03C492D57; Thu, 27 Jan 2022 07:09:04 +0000 (UTC)
+	id 75C8B40FF69B; Thu, 27 Jan 2022 07:10:08 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 15EB3492D55
-	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 07:09:04 +0000 (UTC)
+	(mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 70FDF40FF690
+	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 07:10:08 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F07F628FBBEA
-	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 07:09:03 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 561721C116A3
+	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 07:10:08 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-272-T3jQIs9NPDa4yYBPwlKtiA-1; Thu, 27 Jan 2022 02:09:02 -0500
-X-MC-Unique: T3jQIs9NPDa4yYBPwlKtiA-1
+	us-mta-653-37Ja7yQnMU-15gqz-97GZg-1; Thu, 27 Jan 2022 02:10:06 -0500
+X-MC-Unique: 37Ja7yQnMU-15gqz-97GZg-1
 Received: from 213-225-10-69.nat.highway.a1.net ([213.225.10.69]
 	helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1nCyNx-00EY2g-RE; Thu, 27 Jan 2022 06:35:58 +0000
+	id 1nCyO8-00EY6v-Ni; Thu, 27 Jan 2022 06:36:09 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Thu, 27 Jan 2022 07:35:34 +0100
-Message-Id: <20220127063546.1314111-3-hch@lst.de>
+Date: Thu, 27 Jan 2022 07:35:37 +0100
+Message-Id: <20220127063546.1314111-6-hch@lst.de>
 In-Reply-To: <20220127063546.1314111-1-hch@lst.de>
 References: <20220127063546.1314111-1-hch@lst.de>
 MIME-Version: 1.0
@@ -65,14 +65,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-loop: dm-devel@redhat.com
 Cc: Mike Snitzer <snitzer@redhat.com>,
 	Philipp Reisner <philipp.reisner@linbit.com>,
 	linux-block@vger.kernel.org, dm-devel@redhat.com,
 	Lars Ellenberg <lars.ellenberg@linbit.com>,
 	Pavel Begunkov <asml.silence@gmail.com>, drbd-dev@lists.linbit.com
-Subject: [dm-devel] [PATCH 02/14] dm: add a clone_to_tio helper
+Subject: [dm-devel] [PATCH 05/14] dm: move cloning the bio into alloc_tio
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -86,7 +86,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -94,113 +94,99 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Add a helper to stop open coding the container_of operations to get
-from the clone bio to the tio structure.
+Move the call to __bio_clone_fast and the assignment of ->len_ptr from
+the callers into alloc_tio to prepare for changes to the bio clone API.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm.c | 34 +++++++++++++++-------------------
- 1 file changed, 15 insertions(+), 19 deletions(-)
+ drivers/md/dm.c | 22 ++++++++++------------
+ 1 file changed, 10 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 09d9b674bd851..692a06156c927 100644
+index b3b60918206b5..f00c0582a2460 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -79,10 +79,14 @@ struct clone_info {
- #define DM_IO_BIO_OFFSET \
- 	(offsetof(struct dm_target_io, clone) + offsetof(struct dm_io, tio))
- 
-+static inline struct dm_target_io *clone_to_tio(struct bio *clone)
-+{
-+	return container_of(clone, struct dm_target_io, clone);
-+}
-+
- void *dm_per_bio_data(struct bio *bio, size_t data_size)
- {
--	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
--	if (!tio->inside_dm_io)
-+	if (!clone_to_tio(bio)->inside_dm_io)
- 		return (char *)bio - DM_TARGET_IO_BIO_OFFSET - data_size;
- 	return (char *)bio - DM_IO_BIO_OFFSET - data_size;
+@@ -545,7 +545,7 @@ static void free_io(struct mapped_device *md, struct dm_io *io)
  }
-@@ -477,10 +481,7 @@ static int dm_blk_ioctl(struct block_device *bdev, fmode_t mode,
  
- u64 dm_start_time_ns_from_clone(struct bio *bio)
+ static struct dm_target_io *alloc_tio(struct clone_info *ci, struct dm_target *ti,
+-				      unsigned target_bio_nr, gfp_t gfp_mask)
++		unsigned target_bio_nr, unsigned *len, gfp_t gfp_mask)
  {
--	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
--	struct dm_io *io = tio->io;
--
--	return jiffies_to_nsecs(io->start_time);
-+	return jiffies_to_nsecs(clone_to_tio(bio)->io->start_time);
- }
- EXPORT_SYMBOL_GPL(dm_start_time_ns_from_clone);
+ 	struct dm_target_io *tio;
  
-@@ -521,7 +522,7 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
- 
- 	clone = bio_alloc_bioset(NULL, 0, 0, GFP_NOIO, &md->io_bs);
- 
--	tio = container_of(clone, struct dm_target_io, clone);
-+	tio = clone_to_tio(clone);
- 	tio->inside_dm_io = true;
- 	tio->io = NULL;
- 
-@@ -557,7 +558,7 @@ static struct dm_target_io *alloc_tio(struct clone_info *ci, struct dm_target *t
- 		if (!clone)
- 			return NULL;
- 
--		tio = container_of(clone, struct dm_target_io, clone);
-+		tio = clone_to_tio(clone);
+@@ -561,11 +561,13 @@ static struct dm_target_io *alloc_tio(struct clone_info *ci, struct dm_target *t
+ 		tio = clone_to_tio(clone);
  		tio->inside_dm_io = false;
  	}
++	__bio_clone_fast(&tio->clone, ci->bio);
  
-@@ -878,7 +879,7 @@ static bool swap_bios_limit(struct dm_target *ti, struct bio *bio)
- static void clone_endio(struct bio *bio)
+ 	tio->magic = DM_TIO_MAGIC;
+ 	tio->io = ci->io;
+ 	tio->ti = ti;
+ 	tio->target_bio_nr = target_bio_nr;
++	tio->len_ptr = len;
+ 
+ 	return tio;
+ }
+@@ -1197,11 +1199,8 @@ static int __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti,
+ 	struct dm_target_io *tio;
+ 	int r;
+ 
+-	tio = alloc_tio(ci, ti, 0, GFP_NOIO);
+-	tio->len_ptr = len;
+-
++	tio = alloc_tio(ci, ti, 0, len, GFP_NOIO);
+ 	clone = &tio->clone;
+-	__bio_clone_fast(clone, bio);
+ 
+ 	r = bio_crypt_clone(clone, bio, GFP_NOIO);
+ 	if (r < 0)
+@@ -1236,7 +1235,8 @@ static int __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti,
+ }
+ 
+ static void alloc_multiple_bios(struct bio_list *blist, struct clone_info *ci,
+-				struct dm_target *ti, unsigned num_bios)
++				struct dm_target *ti, unsigned num_bios,
++				unsigned *len)
  {
- 	blk_status_t error = bio->bi_status;
--	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
-+	struct dm_target_io *tio = clone_to_tio(bio);
- 	struct dm_io *io = tio->io;
- 	struct mapped_device *md = tio->io->md;
- 	dm_endio_fn endio = tio->ti->type->end_io;
-@@ -1084,7 +1085,7 @@ static int dm_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
-  */
- void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors)
- {
--	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
-+	struct dm_target_io *tio = clone_to_tio(bio);
- 	unsigned bi_size = bio->bi_iter.bi_size >> SECTOR_SHIFT;
+ 	struct dm_target_io *tio;
+ 	int try;
+@@ -1245,7 +1245,7 @@ static void alloc_multiple_bios(struct bio_list *blist, struct clone_info *ci,
+ 		return;
  
- 	BUG_ON(bio->bi_opf & REQ_PREFLUSH);
-@@ -1257,10 +1258,8 @@ static void alloc_multiple_bios(struct bio_list *blist, struct clone_info *ci,
- 		if (bio_nr == num_bios)
- 			return;
- 
--		while ((bio = bio_list_pop(blist))) {
--			tio = container_of(bio, struct dm_target_io, clone);
--			free_tio(tio);
--		}
-+		while ((bio = bio_list_pop(blist)))
-+			free_tio(clone_to_tio(bio));
+ 	if (num_bios == 1) {
+-		tio = alloc_tio(ci, ti, 0, GFP_NOIO);
++		tio = alloc_tio(ci, ti, 0, len, GFP_NOIO);
+ 		bio_list_add(blist, &tio->clone);
+ 		return;
  	}
- }
+@@ -1257,7 +1257,8 @@ static void alloc_multiple_bios(struct bio_list *blist, struct clone_info *ci,
+ 		if (try)
+ 			mutex_lock(&ci->io->md->table_devices_lock);
+ 		for (bio_nr = 0; bio_nr < num_bios; bio_nr++) {
+-			tio = alloc_tio(ci, ti, bio_nr, try ? GFP_NOIO : GFP_NOWAIT);
++			tio = alloc_tio(ci, ti, bio_nr, len,
++					try ? GFP_NOIO : GFP_NOWAIT);
+ 			if (!tio)
+ 				break;
  
-@@ -1282,14 +1281,11 @@ static void __send_duplicate_bios(struct clone_info *ci, struct dm_target *ti,
- {
+@@ -1279,14 +1280,11 @@ static void __send_duplicate_bios(struct clone_info *ci, struct dm_target *ti,
  	struct bio_list blist = BIO_EMPTY_LIST;
- 	struct bio *bio;
--	struct dm_target_io *tio;
+ 	struct bio *clone;
  
- 	alloc_multiple_bios(&blist, ci, ti, num_bios);
+-	alloc_multiple_bios(&blist, ci, ti, num_bios);
++	alloc_multiple_bios(&blist, ci, ti, num_bios, len);
  
--	while ((bio = bio_list_pop(&blist))) {
--		tio = container_of(bio, struct dm_target_io, clone);
--		__clone_and_map_simple_bio(ci, tio, len);
--	}
-+	while ((bio = bio_list_pop(&blist)))
-+		__clone_and_map_simple_bio(ci, clone_to_tio(bio), len);
- }
+ 	while ((clone = bio_list_pop(&blist))) {
+ 		struct dm_target_io *tio = clone_to_tio(clone);
  
- static int __send_empty_flush(struct clone_info *ci)
+-		tio->len_ptr = len;
+-
+-		__bio_clone_fast(clone, ci->bio);
+ 		if (len)
+ 			bio_setup_sector(clone, ci->sector, *len);
+ 		__map_bio(tio);
 -- 
 2.30.2
 
