@@ -4,66 +4,72 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5F040C433EF
-	for <dm-devel@archiver.kernel.org>; Mon, 31 Jan 2022 08:31:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2EBB1C433FE
+	for <dm-devel@archiver.kernel.org>; Mon, 31 Jan 2022 08:31:06 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-386-RwMdH-WwP4OkhJc1oVJjvg-1; Mon, 31 Jan 2022 03:31:01 -0500
-X-MC-Unique: RwMdH-WwP4OkhJc1oVJjvg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-92-MgMI9w8JO3aTWZ0PFgdxcQ-1; Mon, 31 Jan 2022 03:31:01 -0500
+X-MC-Unique: MgMI9w8JO3aTWZ0PFgdxcQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 630C91083F60;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 374D7801B0B;
 	Mon, 31 Jan 2022 08:30:57 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E53BF1F42F;
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EB70C60C36;
 	Mon, 31 Jan 2022 08:30:56 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id BD2AA1809CBF;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 90BC94A7C9;
 	Mon, 31 Jan 2022 08:30:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.7])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20TExF3C018508 for <dm-devel@listman.util.phx.redhat.com>;
-	Sat, 29 Jan 2022 09:59:16 -0500
+	id 20RLcMMM015355 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 27 Jan 2022 16:38:22 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id CA9551121325; Sat, 29 Jan 2022 14:59:15 +0000 (UTC)
+	id EACAD141DC5D; Thu, 27 Jan 2022 21:38:21 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C68701121315
-	for <dm-devel@redhat.com>; Sat, 29 Jan 2022 14:59:10 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E7193141DC2C
+	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 21:38:21 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9DC463C01C1E
-	for <dm-devel@redhat.com>; Sat, 29 Jan 2022 14:59:10 +0000 (UTC)
-Received: from h4.fbrelay.privateemail.com (h4.fbrelay.privateemail.com
-	[131.153.2.45]) by relay.mimecast.com with ESMTP with STARTTLS
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CE99F3C021B1
+	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 21:38:21 +0000 (UTC)
+Received: from mail-lf1-f43.google.com (mail-lf1-f43.google.com
+	[209.85.167.43]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-10-0uox-FTON7qNqBMtP9W5qw-1; Sat, 29 Jan 2022 09:59:08 -0500
-X-MC-Unique: 0uox-FTON7qNqBMtP9W5qw-1
-Received: from MTA-15-3.privateemail.com (MTA-15-1.privateemail.com
-	[198.54.118.208])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	key-exchange X25519 server-signature RSA-PSS (2048 bits))
-	(No client certificate requested)
-	by h3.fbrelay.privateemail.com (Postfix) with ESMTPS id 3AB9018000B2;
-	Sat, 29 Jan 2022 09:59:08 -0500 (EST)
-Received: from mta-15.privateemail.com (localhost [127.0.0.1])
-	by mta-15.privateemail.com (Postfix) with ESMTP id 0C82F18000A1;
-	Sat, 29 Jan 2022 09:59:05 -0500 (EST)
-Received: from localhost.localdomain (unknown [10.20.151.152])
-	by mta-15.privateemail.com (Postfix) with ESMTPA id A85C118000BC;
-	Sat, 29 Jan 2022 09:59:03 -0500 (EST)
-From: Jordy Zomer <jordy@jordyzomer.github.io>
-To: linux-kernel@vger.kernel.org
-Date: Sat, 29 Jan 2022 15:58:39 +0100
-Message-Id: <20220129145839.3461330-1-jordy@pwning.systems>
-In-Reply-To: <20220129143722.3460829-1-jordy@pwning.systems>
-References: <20220129143722.3460829-1-jordy@pwning.systems>
+	us-mta-482-E95QyBq8PUu28nhDxxzElQ-1; Thu, 27 Jan 2022 16:38:19 -0500
+X-MC-Unique: E95QyBq8PUu28nhDxxzElQ-1
+Received: by mail-lf1-f43.google.com with SMTP id x23so8022772lfc.0;
+	Thu, 27 Jan 2022 13:38:19 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+	:message-id:subject:to:cc;
+	bh=z+U+izVFukrEKq10kL5qCCsiT3qJmeLAo+mnNrOVCPU=;
+	b=2yKf8ADJeL0y7AgeezVoTpU8wtzroCDXMsf7I6HaeMhfmViVJTZhoboXwLDuXDF38H
+	4w86t6fVJ1cEa4Re0dNe5dSSzPDDIe+ObjzCfDDn5nGRUPfJqojz4Keh6t+XT9UwwcJD
+	oKwcNmf5FgNCq8SHfb4sXjgiNzkazEn0R19nbqEGrYilB4RlSZB1J1YRfebpWiohZNyp
+	Lx5XQamlKNtXInNG2Y09fq+NThCnbRwGGkO3FOJkAKzs7KTv+MEGLigar9FYcge+FBWO
+	iQya3n1XkyEUa78HhILjVLnPvH9Xgvx/qvf0yMBVW/nNH9DH9/5vTIdIrU9OqcnCdY6j
+	qVXA==
+X-Gm-Message-State: AOAM533/LI/mqOrVEVbZ9WWdVWidE8elToMBlG+FWwKifyOZ5RJeUvQC
+	TJAUD8T36lJ6urYmNLKBM0TPr2GBMcsgZ7bu/3Y=
+X-Google-Smtp-Source: ABdhPJxaVoQ4SfBVmSOjFCGrgluhZGplrFWaRNqk5pMVob8JHRQWRWEKNtxwMeMPmpBWjy5SR70YaIdo0zrC/X/8wRA=
+X-Received: by 2002:ac2:58f7:: with SMTP id v23mr4043478lfo.390.1643319497799; 
+	Thu, 27 Jan 2022 13:38:17 -0800 (PST)
 MIME-Version: 1.0
-X-Virus-Scanned: ClamAV using ClamSMTP
+References: <20220124091107.642561-1-hch@lst.de>
+	<20220124091107.642561-3-hch@lst.de>
+In-Reply-To: <20220124091107.642561-3-hch@lst.de>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Fri, 28 Jan 2022 06:38:05 +0900
+Message-ID: <CAKFNMomoLqbbOwg5d6aBHCyGT5v+NF=N2Rm3QwYk8NDXsoJHtA@mail.gmail.com>
+To: Christoph Hellwig <hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -72,14 +78,23 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 20TExF3C018508
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 31 Jan 2022 03:30:51 -0500
-Cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com,
-	Alasdair Kergon <agk@redhat.com>, Jordy Zomer <jordy@jordyzomer.github.io>
-Subject: [dm-devel] [PATCH v2] dm ioct: prevent potential specter v1 gadget
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+	linux-nfs@vger.kernel.org, linux-nilfs <linux-nilfs@vger.kernel.org>,
+	Mike Snitzer <snitzer@redhat.com>,
+	Philipp Reisner <philipp.reisner@linbit.com>,
+	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
+	=?UTF-8?Q?Roger_Pau_Monn=C3=A9?= <roger.pau@citrix.co>,
+	device-mapper development <dm-devel@redhat.com>,
+	"Md . Haris Iqbal" <haris.iqbal@ionos.com>,
+	Lars Ellenberg <lars.ellenberg@linbit.com>,
+	linux-fsdevel@vger.kernel.org, xen-devel@lists.xenproject.org,
+	Andrew Morton <akpm@linux-foundation.org>, ntfs3@lists.linux.dev,
+	Jack Wang <jinpu.wang@ionos.com>, Pavel Begunkov <asml.silence@gmail.com>,
+	drbd-dev@lists.linbit.com
+Subject: Re: [dm-devel] [PATCH 02/19] nilfs2: remove nilfs_alloc_seg_bio
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,7 +108,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -101,41 +116,21 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-It appears like cmd could be a Spectre v1 gadget as it's supplied by a
-user and used as an array index. Prevent the contents
-of kernel memory from being leaked to userspace via speculative
-execution by using array_index_nospec.
+On Mon, Jan 24, 2022 at 6:11 PM Christoph Hellwig <hch@lst.de> wrote:
+>
+> bio_alloc will never fail when it can sleep.  Remove the now simple
+> nilfs_alloc_seg_bio helper and open code it in the only caller.
+>
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>  fs/nilfs2/segbuf.c | 31 ++++---------------------------
+>  1 file changed, 4 insertions(+), 27 deletions(-)
 
-Forgot to add the nospec include, that's the reason for the v2 :)
+Acked-by: Ryusuke Konishi <konishi.ryusuke@gmail.com>
 
-Signed-off-by: Jordy Zomer <jordy@pwning.systems>
----
- drivers/md/dm-ioctl.c | 2 ++
- 1 file changed, 2 insertions(+)
+Thanks!
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 21fe8652b095..901abd6dea41 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -18,6 +18,7 @@
- #include <linux/dm-ioctl.h>
- #include <linux/hdreg.h>
- #include <linux/compat.h>
-+#include <linux/nospec.h>
- 
- #include <linux/uaccess.h>
- #include <linux/ima.h>
-@@ -1788,6 +1789,7 @@ static ioctl_fn lookup_ioctl(unsigned int cmd, int *ioctl_flags)
- 	if (unlikely(cmd >= ARRAY_SIZE(_ioctls)))
- 		return NULL;
- 
-+	cmd = array_index_nospec(cmd, ARRAY_SIZE(_ioctls));
- 	*ioctl_flags = _ioctls[cmd].flags;
- 	return _ioctls[cmd].fn;
- }
--- 
-2.27.0
-
+Ryusuke Konishi
 
 --
 dm-devel mailing list
