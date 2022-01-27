@@ -1,96 +1,98 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C6C4BC433F5
-	for <dm-devel@archiver.kernel.org>; Thu, 27 Jan 2022 17:09:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 507CCC433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 27 Jan 2022 17:11:19 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1643303353;
+	s=mimecast20190719; t=1643303478;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=/HZfiVgy97EL619sL58vpcuyHfpD77KKgc3mBkC/GX4=;
-	b=TBHwtYx4Rc1b7oQCgl/JZ/IsOA5WrbdQHSbf8nHncLtcuNFzHTxBNeunblQYE6jGb1/T1B
-	xmSx5Mtq38Xfqj6JSUbo9x2hZv86CjBqXsWvumtaKT0r3l3VK7dB1+YUgCn6qtAf3K06UP
-	7E4M82M9mxPKDqgp0qqeaGTNeRVxcrQ=
+	bh=xc60YqqJvVwHR1CLrLxkttcuDaMoe4SSeB0tgGpTF48=;
+	b=UZ440mnfz5NhYBa2+ovQflnUrflQvmnIUXozLCViPVIG8SCHwvkZJc7Oze+9IRK6qaJWCe
+	3nQAyPo3YTh88nXGPjLBk2itRH6PQ1QHTxnOshjCxePvTniGcUJzVN+455QrBbNusE8iKR
+	gxNdznzArJACNbuW8aCyoY7YellJJ/U=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-138-lthpDR1QOl6Cin5NUZLowQ-1; Thu, 27 Jan 2022 12:09:09 -0500
-X-MC-Unique: lthpDR1QOl6Cin5NUZLowQ-1
+ us-mta-669-K-nHQibmNxS8m_cdEwSw5w-1; Thu, 27 Jan 2022 12:11:16 -0500
+X-MC-Unique: K-nHQibmNxS8m_cdEwSw5w-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1DC238519E0;
-	Thu, 27 Jan 2022 17:09:05 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 94FB48519E4;
+	Thu, 27 Jan 2022 17:11:11 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 95C5F753E4;
-	Thu, 27 Jan 2022 17:09:04 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7A082753E3;
+	Thu, 27 Jan 2022 17:11:11 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7B43B1806D1D;
-	Thu, 27 Jan 2022 17:09:03 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0DAAE1806D1C;
+	Thu, 27 Jan 2022 17:11:11 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.8])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20RH9068019945 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 27 Jan 2022 12:09:00 -0500
+	id 20RHB9ax020142 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 27 Jan 2022 12:11:09 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 7C582C27FA3; Thu, 27 Jan 2022 17:09:00 +0000 (UTC)
+	id 833A3C27FA3; Thu, 27 Jan 2022 17:11:09 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 78EC5C27FA0
-	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 17:09:00 +0000 (UTC)
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7F91EC27FA0
+	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 17:11:09 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5DAA5185A79C
-	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 17:09:00 +0000 (UTC)
-Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
-	[209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 649C180B716
+	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 17:11:09 +0000 (UTC)
+Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
+	[209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-473-LCA4qQvDP0aG7rGNV18VVw-1; Thu, 27 Jan 2022 12:08:59 -0500
-X-MC-Unique: LCA4qQvDP0aG7rGNV18VVw-1
-Received: by mail-qk1-f200.google.com with SMTP id
-	d11-20020a37680b000000b0047d87e46f4aso2820882qkc.11
-	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 09:08:58 -0800 (PST)
+	us-mta-277-sRmsXwn6Nl-75hN28tJVCw-1; Thu, 27 Jan 2022 12:11:08 -0500
+X-MC-Unique: sRmsXwn6Nl-75hN28tJVCw-1
+Received: by mail-qv1-f70.google.com with SMTP id
+	u15-20020a0cec8f000000b00425d89d8be0so1248168qvo.20
+	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 09:11:07 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20210112;
 	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
 	:mime-version:content-disposition:in-reply-to;
-	bh=kAV23rTMcuty4CJFZ8o8ysOxnvRFj2DI1yB1mT746og=;
-	b=b7BiZM7lFqTcZ6lbTsFFXdQfmrMt6ITt0FHJcLuduX9buf42/YHjFajE6JpwBrG8DX
-	l6OnsFS3xMvxse4Ow1R1dzeLLiZHYa0XzDuQI3wd+qvGcrQWcBa+5B3VN/tELJ56hFhN
-	De+c7NucuLmyrf+kfMBJb+C0N6cPy0PFN6ylGbQvSCKsz7qR8+5+z4NGOKd2KHoKvf0U
-	Cbw+hk8JrRwqDnBjKno3wRe7EVmpfSOR7uNAnE72mSDbyUnQXG6YDnq3JJ8SuFQhN9jo
-	RceY96kGXuI+r63ROiM0XQM+6IKxW89Hql4WjnbiY7mC3gzvheBeqWgMtdmfZim1TcBq
-	J0RA==
-X-Gm-Message-State: AOAM531ifXvDTvlff5YOz0c9kc5Cm1qn8ekRuLFOWeyVXojN6R5MkV0M
-	CWtwK00lUZ94g3LQyYVvze7NaO+0YOWdVKQMKLRcTpa0pfNLhniJHktByoyGUu6BDdZ8i2XUE/h
-	7s2Y460yJ7X7sdg==
-X-Received: by 2002:ac8:44c9:: with SMTP id b9mr3555321qto.524.1643303338469; 
-	Thu, 27 Jan 2022 09:08:58 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJyDu0k2yM0Z7B8jNmnNXJFkDazruS7TZzFMNaHKbWmY0JBs9tIC0IfQuLij5Gmty6LtXXG+Yw==
-X-Received: by 2002:ac8:44c9:: with SMTP id b9mr3555294qto.524.1643303338263; 
-	Thu, 27 Jan 2022 09:08:58 -0800 (PST)
+	bh=hISkPgWXBvxaPJR1A6cjvL239jVaZB/M99kE10NpdT4=;
+	b=L2ShbuabA6kwT01j/JHIYdUH0xAtWLt3+s4+FlBp6PVpDIRbLBitn4CsdGvQjymejA
+	363XTVKKk7oXmFbknyfQ/WbxZQrhYttbN7WIsvzCRbYpllztrg8O8TsUWDkzSTGdvqkc
+	ApaUhO8BUlkCIsKWVbwilYMd3xQqQscoto9Cdiy3FboQq1FWR+lQALSrQFfHOY/sIvGT
+	5YRjVruHJ2o67HDmmPOC5HmcjdPhbis1YQKvV4Qu4UiLhu3qbdTHu3tdNV5Jyy3R0Pqf
+	1LXU1pEn7rxeeg8BSHHY5Zjb9rHMFe0PRdjUorglxOZec0SAWlx5zIsPNCDbURNScwY5
+	98NQ==
+X-Gm-Message-State: AOAM531ApfvIS0f7NTrORg5XCzHIQ5tjrhWACby2Q9rZOEYpRhurw2M3
+	mzEVPT+KpR5NPk4E6NIKspnHqrxux8BGIU0N8CsaQn4awQY2pt1ZUHAtP50ilzP71XMJFluDYXy
+	Nx4Yrqk6tyaYffw==
+X-Received: by 2002:a05:6214:c2a:: with SMTP id
+	a10mr4419663qvd.42.1643303467585; 
+	Thu, 27 Jan 2022 09:11:07 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJwQanMj7Y00ur/yzuLmY8gwfKPDXJeoixdwOU4KzNAVApl7lAtazZ8/rD9LIFjZrTulwd1nlg==
+X-Received: by 2002:a05:6214:c2a:: with SMTP id
+	a10mr4419637qvd.42.1643303467335; 
+	Thu, 27 Jan 2022 09:11:07 -0800 (PST)
 Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
-	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
-	a141sm1694826qkc.73.2022.01.27.09.08.57
+	[68.160.176.52])
+	by smtp.gmail.com with ESMTPSA id h6sm1661870qtx.43.2022.01.27.09.11.06
 	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Thu, 27 Jan 2022 09:08:57 -0800 (PST)
-Date: Thu, 27 Jan 2022 12:08:56 -0500
+	Thu, 27 Jan 2022 09:11:06 -0800 (PST)
+Date: Thu, 27 Jan 2022 12:11:06 -0500
 From: Mike Snitzer <snitzer@redhat.com>
 To: Christoph Hellwig <hch@lst.de>
-Message-ID: <YfLRqCMAhLH8xhDD@redhat.com>
+Message-ID: <YfLSKlF89y3Cbf+S@redhat.com>
 References: <20220124091107.642561-1-hch@lst.de>
-	<20220124091107.642561-6-hch@lst.de>
+	<20220124091107.642561-8-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20220124091107.642561-6-hch@lst.de>
+In-Reply-To: <20220124091107.642561-8-hch@lst.de>
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 X-loop: dm-devel@redhat.com
 Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
@@ -105,8 +107,8 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
 	Andrew Morton <akpm@linux-foundation.org>, ntfs3@lists.linux.dev,
 	Jack Wang <jinpu.wang@ionos.com>, Pavel Begunkov <asml.silence@gmail.com>,
 	drbd-dev@lists.linbit.com
-Subject: Re: [dm-devel] [PATCH 05/19] dm: bio_alloc can't fail if it is
-	allowed to sleep
+Subject: Re: [dm-devel] [PATCH 07/19] dm-snap: use blkdev_issue_flush
+ instead of open coding it
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -132,8 +134,8 @@ Content-Transfer-Encoding: 7bit
 On Mon, Jan 24 2022 at  4:10P -0500,
 Christoph Hellwig <hch@lst.de> wrote:
 
-> Remove handling of NULL returns from sleeping bio_alloc calls given that
-> those can't fail.
+> Use blkdev_issue_flush, which uses an on-stack bio instead of an
+> opencoded version with a bio embedded into struct dm_snapshot.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 
