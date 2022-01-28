@@ -1,95 +1,101 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 95026C433FE
-	for <dm-devel@archiver.kernel.org>; Fri, 28 Jan 2022 15:59:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id CC23BC433F5
+	for <dm-devel@archiver.kernel.org>; Fri, 28 Jan 2022 15:59:08 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1643385546;
+	s=mimecast20190719; t=1643385547;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=XTePsFOZXNA0I68UesCNTtkiU5MPykZnYt8riSdaQLk=;
-	b=iCmQw9xaqz0kh7+rn7uBrmXlbXniKJPPZCiug6WCSTyxX3Njx82hhzt+z1EgIIXqIweeYq
-	BjUW2yC/dFu2jZFd0MF9x2X/ydvpFgeirdFkIBjji+RX4tahcL7JE/zx4yiI7jjtVyUQIg
-	hvOXWOUafIG1puGYMx60DUE7oEn9+3o=
+	bh=+8696gKBUp+NyiW0I/YSrpAsgcKVD3kOOU83Mqn4GjE=;
+	b=WHR3qz2T2Alm3SrvotfTHC64XSaBjuHuHxaqTjnQX7zaOj2IfTX3WOjZwiKNR/9u+J6Scw
+	s1003evMOGuV/ucNY8DQ9O0lFgdZX0UAXyPI4ydBh2RefBZ+qMOyKBUDIylbWhVDyGpwKj
+	5d6CsrXkTSZvhfXCj18Aqecy/yL66kI=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-571-_29N-R3gMAeiYmyFjCU9XA-1; Fri, 28 Jan 2022 10:59:02 -0500
-X-MC-Unique: _29N-R3gMAeiYmyFjCU9XA-1
+ us-mta-630-cDacO2vIOQaeGjkTmHnt1Q-1; Fri, 28 Jan 2022 10:59:01 -0500
+X-MC-Unique: cDacO2vIOQaeGjkTmHnt1Q-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 194578144EA;
-	Fri, 28 Jan 2022 15:58:58 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E48DA10A48A9;
-	Fri, 28 Jan 2022 15:58:57 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E099F189829C;
+	Fri, 28 Jan 2022 15:58:55 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BF51B10A48A6;
+	Fri, 28 Jan 2022 15:58:55 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B24244CA9B;
-	Fri, 28 Jan 2022 15:58:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 921851809CB9;
+	Fri, 28 Jan 2022 15:58:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.9])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20SFwmeL026006 for <dm-devel@listman.util.phx.redhat.com>;
+	id 20SFwmR6026000 for <dm-devel@listman.util.phx.redhat.com>;
 	Fri, 28 Jan 2022 10:58:48 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 761812144B25; Fri, 28 Jan 2022 15:58:48 +0000 (UTC)
+	id 00C5448FB03; Fri, 28 Jan 2022 15:58:48 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7182B2144B24
-	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 15:58:45 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F143D4021B4
+	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 15:58:47 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 40B62108C0E1
-	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 15:58:45 +0000 (UTC)
-Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
-	[209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D831838011EB
+	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 15:58:47 +0000 (UTC)
+Received: from mail-qt1-f197.google.com (mail-qt1-f197.google.com
+	[209.85.160.197]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-2-YkygBcotN3WzwoZivaY7UA-1; Fri, 28 Jan 2022 10:58:44 -0500
-X-MC-Unique: YkygBcotN3WzwoZivaY7UA-1
-Received: by mail-qk1-f199.google.com with SMTP id
-	d11-20020a37680b000000b0047d87e46f4aso5084950qkc.11
-	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 07:58:43 -0800 (PST)
+	us-mta-245-UlbK686jNgWYFJYawaqpGw-1; Fri, 28 Jan 2022 10:58:46 -0500
+X-MC-Unique: UlbK686jNgWYFJYawaqpGw-1
+Received: by mail-qt1-f197.google.com with SMTP id
+	h22-20020ac85696000000b002d258f68e98so4775164qta.22
+	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 07:58:46 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20210112;
-	h=x-gm-message-state:from:to:cc:subject:date:message-id;
-	bh=4mmE2BDklC4kbyMzrXLJtoHLPinScMnYfFrJMWf1e+U=;
-	b=Few5BBUlWG/kKDceGwA+p/n1+tYHvF/30galnR57RbJRynxImOC2su4R80c5SGKU0A
-	osOnSvuO9LRcYhAb+2+2/I7hJESHu49TdZQvJowgtZ7MJ+m7aXYOhpIJNOcY7BOAXdSd
-	yAie+JVdUx1WxmWoaLNIUwFYJajMcvL2PbSmvjL4FbrIkGRFRpUkL5gX/5wRSw9YmsOm
-	hfzQN2LW1mBQkv76IxDBaJ67YoGdCKSNF1rlcQZ/En6hiXMNqlu77Q9ZkcQz1xx/4ZIO
-	ZzzysJwdvUqiUTe8rFgo8M00w0YDgA6LUSTvbxrgQARJb2IdyqP+hPc+MixKSOPg/dqE
-	0jLA==
-X-Gm-Message-State: AOAM532yHvNaAQn3E0fY3WR1ret/+L+OzfoNusUbyyGtkmzRm3v6s3dY
-	3p3xGrl7gMJ0MZLz9SDelEehT4pxXnzIPjP35vz6jRTc9bILkLBS71IraApB1iqeJlrfRNZZ8ek
-	TkEAJNylXMc6RJw==
-X-Received: by 2002:a05:620a:1790:: with SMTP id
-	ay16mr6070285qkb.330.1643385523336; 
-	Fri, 28 Jan 2022 07:58:43 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJx1Sp8T3UlIDPcX8b/jwkTUzeQeOx03Ve8v0cn9k0JmN8doT4Ho3uDIdTRk9+2Xvyywgk7lgA==
-X-Received: by 2002:a05:620a:1790:: with SMTP id
-	ay16mr6070276qkb.330.1643385523160; 
-	Fri, 28 Jan 2022 07:58:43 -0800 (PST)
+	h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+	:references;
+	bh=tQTNouHLD2pqrJUsY0rGuooqQ0qZGduHNcta+zU07XE=;
+	b=L+7mfkg8fG8DwqIoA4RqNG/oweVyIyKG9Dl3u+kT/Rl9DxnO5ZXIhDkwF69009pkqq
+	OaTqGkKXOf98yS61rPiB9R2R68DP8PruY+RKvN/K1FDzjRO4XkAC6xv7d3kcMWjNJP3O
+	igfVkrWbg7eQ031WZ+6RVRm4Yp0l6DXcBV3MFI09GXQE0V5lLAMcD+D62ngkzc9vCJpw
+	XDT03XLS1bmAYx+OxDCVDspBCy1FQx+PXkf8XDixTTDoIcUGm5JF40/nCkhp/kRtKkaL
+	ieopxRBZ4/0p09N2as94ZPhHjToQUZQQiwklf8Rwiq5f8H8H+TEpX8SbubvVTLxJPp2I
+	OU6g==
+X-Gm-Message-State: AOAM531XQFpUayVfMLBONMKjw8LnZGw5GH2sLMAZI/IXhilZ9jt82VM2
+	GE216aYqA2nsqDoNOcIoDv3oOKse1tCmPhffCa7cGmgyy+bqOe0kCJHtdNrG4uLRn5jldmmH79Q
+	Qz+m67owAKC5QAw==
+X-Received: by 2002:a05:622a:1c3:: with SMTP id
+	t3mr6038270qtw.351.1643385525968; 
+	Fri, 28 Jan 2022 07:58:45 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJwNHfNKSXr+1lep/iO1OnUsy2vGC9QMAcEvKoGaf9wMxmW0wA7F9StMPgHCj0D2VwKmmzABRA==
+X-Received: by 2002:a05:622a:1c3:: with SMTP id
+	t3mr6038262qtw.351.1643385525788; 
+	Fri, 28 Jan 2022 07:58:45 -0800 (PST)
 Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
 	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
-	o10sm3457427qtx.33.2022.01.28.07.58.42
+	w20sm3650313qkp.102.2022.01.28.07.58.45
 	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Fri, 28 Jan 2022 07:58:42 -0800 (PST)
+	Fri, 28 Jan 2022 07:58:45 -0800 (PST)
 From: Mike Snitzer <snitzer@redhat.com>
 To: axboe@kernel.dk
-Date: Fri, 28 Jan 2022 10:58:38 -0500
-Message-Id: <20220128155841.39644-1-snitzer@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+Date: Fri, 28 Jan 2022 10:58:40 -0500
+Message-Id: <20220128155841.39644-3-snitzer@redhat.com>
+In-Reply-To: <20220128155841.39644-1-snitzer@redhat.com>
+References: <20220128155841.39644-1-snitzer@redhat.com>
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 X-loop: dm-devel@redhat.com
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, hch@lst.de
-Subject: [dm-devel] [PATCH v4 0/3] block/dm: fix bio-based DM IO accounting
+Subject: [dm-devel] [PATCH v4 2/3] dm: revert partial fix for redundant
+	bio-based IO accounting
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -112,48 +118,49 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-[this v4 is final iteration, should be "ready"...]
+Reverts a1e1cb72d9649 ("dm: fix redundant IO accounting for bios that
+need splitting") because it was too narrow in scope (only addressed
+redundant 'sectors[]' accounting and not ios, nsecs[], etc).
 
-Hi Jens,
+Cc: stable@vger.kernel.org
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm.c | 15 ---------------
+ 1 file changed, 15 deletions(-)
 
-Just over 3 years ago, with commit a1e1cb72d9649 ("dm: fix redundant
-IO accounting for bios that need splitting") I focused too narrowly on
-fixing the reported potential for redundant accounting for IO totals.
-Which, at least mentally for me, papered over how inaccurate all other
-bio-based DM's IO accounting is for bios that get split.
-
-This set fixes things up properly by allowing DM to start IO
-accounting _after_ IO is submitted and a split may have occurred. The
-proper start_time is still established (prior to submission), it is
-passed in to a new bio_start_io_acct_time().  This eliminates the need
-for any DM hack to rewind block core's accounting that was started
-before any potential bio split.
-
-All said: If you'd provide your Acked-by(s) I'm happy to send this set
-to Linus for v5.17-rc (and shepherd the changes into stable@ kernels).
-
-Or you're welcome to pickup this set to send along (I'd obviously
-still do any stable@ backports). NOTE: the 3rd patch references the
-linux-dm.git commit id for the 1st patch.. so that'll require tweaking
-no matter who sends the changes to Linus.
-
-Please advise, thanks.
-Mike
-
-v4: added Christoph's Reviewed-bys. Removed READ_ONCE from patch 3
-v3: fix patch 3 to call bio_start_io_acct_time
-v2: made block changes suggested by Christoph
-
-Mike Snitzer (3):
-  block: add bio_start_io_acct_time() to control start_time
-  dm: revert partial fix for redundant bio-based IO accounting
-  dm: properly fix redundant bio-based IO accounting
-
- block/blk-core.c       | 25 +++++++++++++++++++------
- drivers/md/dm.c        | 20 +++-----------------
- include/linux/blkdev.h |  1 +
- 3 files changed, 23 insertions(+), 23 deletions(-)
-
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index c0ae8087c602..9849114b3c08 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1442,9 +1442,6 @@ static void init_clone_info(struct clone_info *ci, struct mapped_device *md,
+ 	ci->sector = bio->bi_iter.bi_sector;
+ }
+ 
+-#define __dm_part_stat_sub(part, field, subnd)	\
+-	(part_stat_get(part, field) -= (subnd))
+-
+ /*
+  * Entry point to split a bio into clones and submit them to the targets.
+  */
+@@ -1480,18 +1477,6 @@ static void __split_and_process_bio(struct mapped_device *md,
+ 						  GFP_NOIO, &md->queue->bio_split);
+ 			ci.io->orig_bio = b;
+ 
+-			/*
+-			 * Adjust IO stats for each split, otherwise upon queue
+-			 * reentry there will be redundant IO accounting.
+-			 * NOTE: this is a stop-gap fix, a proper fix involves
+-			 * significant refactoring of DM core's bio splitting
+-			 * (by eliminating DM's splitting and just using bio_split)
+-			 */
+-			part_stat_lock();
+-			__dm_part_stat_sub(dm_disk(md)->part0,
+-					   sectors[op_stat_group(bio_op(bio))], ci.sector_count);
+-			part_stat_unlock();
+-
+ 			bio_chain(b, bio);
+ 			trace_block_split(b, bio->bi_iter.bi_sector);
+ 			submit_bio_noacct(bio);
 -- 
 2.15.0
 
