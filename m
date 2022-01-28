@@ -4,93 +4,98 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A5CE5C433EF
-	for <dm-devel@archiver.kernel.org>; Fri, 28 Jan 2022 04:18:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5B216C433F5
+	for <dm-devel@archiver.kernel.org>; Fri, 28 Jan 2022 04:18:11 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1643343489;
+	s=mimecast20190719; t=1643343490;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=bWweYlFg0+LjX0GKecpF/1gpUC3xnFxu3nUGBCt+mnU=;
-	b=DjW3CaJgloTJsr+0RPV1YpDMHR2KSAt4TzOXZfp2JFlWjXabqmnX7vMFd8pZZT1DKscnRP
-	rZBASvUP4oSfyp1Z7Rbzc2nGb+Eeuodl0TQS5TzA7FaDWHoBb9ZSH2RdbpfZpW5s98Yx4i
-	jNnekNBTqqkk7SXvKk7pEFudCUzozwc=
+	bh=LPWr3ykwkO/t93MmEQqErnSDVP8tnNk02jNvCVJlyMY=;
+	b=Z3Ry6TTYRkM2jcYRtvTUwHKJBKLym36QSdAsZsdHpbacOysxmPXl1KF7KGwlJPbBMOqq1/
+	4bGuDuO2qc7Lnfp0St90fLdFCNX2lUJAtfr/69JcqMhvHqNvq3Pj/TmhVogP8HdcXdhUGG
+	6fbmsKwyFtVSJfHN/3T/ZjnXD6AGvr4=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-224-X19lb-xzOcGZnHmPFgh06w-1; Thu, 27 Jan 2022 23:18:05 -0500
-X-MC-Unique: X19lb-xzOcGZnHmPFgh06w-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-62-HfPao5fSPs6aJLypVktE_g-1; Thu, 27 Jan 2022 23:18:06 -0500
+X-MC-Unique: HfPao5fSPs6aJLypVktE_g-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 242021898291;
-	Fri, 28 Jan 2022 04:18:01 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 07037814264;
+	Fri, 28 Jan 2022 04:18:02 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B5A2DE721;
-	Fri, 28 Jan 2022 04:17:59 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E09DC4DC17;
+	Fri, 28 Jan 2022 04:18:01 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 234874CA9B;
-	Fri, 28 Jan 2022 04:17:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.2])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 055944A7C9;
+	Fri, 28 Jan 2022 04:18:01 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.7])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20S4HuV9009716 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 27 Jan 2022 23:17:56 -0500
+	id 20S4HvZu009722 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 27 Jan 2022 23:17:57 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8E69C404727B; Fri, 28 Jan 2022 04:17:56 +0000 (UTC)
+	id 99521141DEE2; Fri, 28 Jan 2022 04:17:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8A4F34047272
-	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 04:17:56 +0000 (UTC)
+	(mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 95B9A141DEE1
+	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 04:17:57 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6FB0B185A794
-	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 04:17:56 +0000 (UTC)
-Received: from mail-qt1-f198.google.com (mail-qt1-f198.google.com
-	[209.85.160.198]) by relay.mimecast.com with ESMTP with STARTTLS
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7A00329AB44F
+	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 04:17:57 +0000 (UTC)
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+	[209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-173-ID_yZZc5MLC8zeXyq_6hoA-1; Thu, 27 Jan 2022 23:17:55 -0500
-X-MC-Unique: ID_yZZc5MLC8zeXyq_6hoA-1
-Received: by mail-qt1-f198.google.com with SMTP id
-	c15-20020ac87dcf000000b002d0a849c0beso3693611qte.16
-	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 20:17:55 -0800 (PST)
+	us-mta-34-qTBJ8PJ3NRCe6-Di-sVZKQ-1; Thu, 27 Jan 2022 23:17:56 -0500
+X-MC-Unique: qTBJ8PJ3NRCe6-Di-sVZKQ-1
+Received: by mail-qk1-f199.google.com with SMTP id
+	l23-20020a37f517000000b0049b8b31c76cso4008132qkk.4
+	for <dm-devel@redhat.com>; Thu, 27 Jan 2022 20:17:56 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20210112;
-	h=x-gm-message-state:from:to:cc:subject:date:message-id;
-	bh=uy/j0iorjzfngas6HgsLamkI2lubo9i9STfyB6Rfz1M=;
-	b=5yinTUlNCieouJwU7N4IaND9AKWCZSTPuO1fw49KHqM+iYaFIoB+xF0YVI9mUFlJ1V
-	zCjc5SVA0xR4lYfX50o1jTwOWBhFX7Y2mu+576SCzz7UlCkFueHa38LMTchNsrrdDNUt
-	6jaG1E4To89b+x2Wrl9lcGDnUiF7IEhq8eqHWEv0q5TBZpTjEyFqb1k99+T11fNgEAI5
-	Vzrj16mSJhGR0Fa5EoRWgt+cFC4/Z7ZPaqBFh3diNpczX6epKfCstJ8gHmOZk9gvwVVC
-	n6PKOKrsA2Irj/Fcdjsc35FiWAFSBE2h+UDrx12p12uYiIx42IHDXCT234LgTY1OTu4Z
-	2EqQ==
-X-Gm-Message-State: AOAM530BL2oQL+4WVBgWHIxaP9TlvV7zwD/nxOt9lSZOP2iRPg447ojM
-	bNA83Zt7VOwgCjOPdw53q9ui+tJEwxY5EP6jThJ/BEOzRtTj5EPfJ1G4RnecdeYN6mXg72BtX5E
-	yxIkk+4doUVL1dQ==
-X-Received: by 2002:a05:620a:2592:: with SMTP id
-	x18mr4773408qko.578.1643343474604; 
-	Thu, 27 Jan 2022 20:17:54 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJyXEdqRD3HFVOXHNPzlLjyGkH9sxVfcjKK9cncI7nKb2QMVaYaptnIK4czeECKsxp2jSGQLqQ==
-X-Received: by 2002:a05:620a:2592:: with SMTP id
-	x18mr4773404qko.578.1643343474405; 
-	Thu, 27 Jan 2022 20:17:54 -0800 (PST)
+	h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
+	:references;
+	bh=LPT/xXbA8dMnjNDPrd3foEhpTUzqW1ZlXYJLQcHQMDc=;
+	b=hTrO937neo47Sjm//gmAe5hMwk3kopalkL+Bpd0V6XY3AGgLjHpfisQ2hLoced2Cb2
+	QlwlOQoE8mLKeffXVen6cwaJRX3HuMXAXWXWxyh95QeoMlYAz70EQrVEvczkpWPWJh9i
+	/6TRz12X3IFFzrN50AV2jlk/3OGT+WFYl/xo+D/vBU9LFBMQ5j58uN4r5nQluKVk5nk/
+	5Yt8/hYg/3b1CrVlXGE0QmmLTZWZ1/Zyls4Y+ki6jeDARRGwpTXyIh4SotJjhJCwKqJ3
+	iymEQKc5izRAZQdRrA1Cy2KwNJAxnuaqpvfUfSLVnvfY2TL7bxHSkxL79l/ElW7UIdSQ
+	ViSw==
+X-Gm-Message-State: AOAM533ZfzpnqCcIZcBHH3hV9G5XFQclsLgMfykgbpb0eLpzYf/SBgoL
+	mEKAjI4j7DLZOyV/mTiDQjxE4EyscpkuDPlJb6daSqWQ7/KWjvJcAr/ufl5T9lRDhwvhKCMTU58
+	LzaO6V6InKj6QMg==
+X-Received: by 2002:a05:622a:2ca:: with SMTP id
+	a10mr2856215qtx.298.1643343475935; 
+	Thu, 27 Jan 2022 20:17:55 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJz5RF7BzncHiFMVWiTMxZmqy6R9FtGtyMp3kV52MUk+7hmiCaTdZrq/spDha5BE/Q8LIfYHBA==
+X-Received: by 2002:a05:622a:2ca:: with SMTP id
+	a10mr2856214qtx.298.1643343475751; 
+	Thu, 27 Jan 2022 20:17:55 -0800 (PST)
 Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
 	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
-	x16sm2599343qko.17.2022.01.27.20.17.53
+	d13sm2318189qtx.35.2022.01.27.20.17.55
 	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Thu, 27 Jan 2022 20:17:54 -0800 (PST)
+	Thu, 27 Jan 2022 20:17:55 -0800 (PST)
 From: Mike Snitzer <snitzer@redhat.com>
 To: axboe@kernel.dk
-Date: Thu, 27 Jan 2022 23:17:50 -0500
-Message-Id: <20220128041753.32195-1-snitzer@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Date: Thu, 27 Jan 2022 23:17:51 -0500
+Message-Id: <20220128041753.32195-2-snitzer@redhat.com>
+In-Reply-To: <20220128041753.32195-1-snitzer@redhat.com>
+References: <20220128041753.32195-1-snitzer@redhat.com>
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-loop: dm-devel@redhat.com
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, hch@lst.de
-Subject: [dm-devel] [PATCH v3 0/3] block/dm: fix bio-based DM IO accounting
+Subject: [dm-devel] [PATCH v3 1/3] block: add bio_start_io_acct_time() to
+	control start_time
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -105,7 +110,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -113,45 +118,88 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hi Jens,
+bio_start_io_acct_time() interface is like bio_start_io_acct() that
+allows start_time to be passed in. This gives drivers the ability to
+defer starting accounting until after IO is issued (but possibily not
+entirely due to bio splitting).
 
-Just over 3 years ago, with commit a1e1cb72d9649 ("dm: fix redundant
-IO accounting for bios that need splitting") I focused too narrowly on
-fixing the reported potential for redundant accounting for IO totals.
-Which, at least mentally for me, papered over how inaccurate all other
-bio-based DM's IO accounting is for bios that get split.
-
-This set fixes things up properly by allowing DM to start IO
-accounting _after_ IO is submitted and a split may have occurred.  The
-proper start_time is still established (prior to submission), it is
-passed in to a new bio_start_io_acct_time().  This eliminates the need
-for any DM hack to rewind block core's accounting that was started
-before any potential bio split.
-
-All said: If you'd provide your Acked-by(s) I'm happy to send this set
-to Linus for v5.17-rc (and shepherd the changes into stable@ kernels).
-
-Or you're welcome to pickup this set to send along (I'd obviously
-still do any stable@ backports). NOTE: the 3rd patch references the
-linux-dm.git commit id for the 1st patch.. so that'll require tweaking
-no matter who sends the changes to Linus.
-
-Please advise, thanks.
-Mike
-
-v3: fix patch 3 to call bio_start_io_acct_time
-v2: made block changes suggested by Christoph
-
-Mike Snitzer (3):
-  block: add bio_start_io_acct_time() to control start_time
-  dm: revert partial fix for redundant bio-based IO accounting
-  dm: properly fix redundant bio-based IO accounting
-
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
  block/blk-core.c       | 25 +++++++++++++++++++------
- drivers/md/dm.c        | 20 +++-----------------
  include/linux/blkdev.h |  1 +
- 3 files changed, 23 insertions(+), 23 deletions(-)
+ 2 files changed, 20 insertions(+), 6 deletions(-)
 
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 97f8bc8d3a79..d93e3bb9a769 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1061,20 +1061,32 @@ void update_io_ticks(struct block_device *part, unsigned long now, bool end)
+ }
+ 
+ static unsigned long __part_start_io_acct(struct block_device *part,
+-					  unsigned int sectors, unsigned int op)
++					  unsigned int sectors, unsigned int op,
++					  unsigned long start_time)
+ {
+ 	const int sgrp = op_stat_group(op);
+-	unsigned long now = READ_ONCE(jiffies);
+ 
+ 	part_stat_lock();
+-	update_io_ticks(part, now, false);
++	update_io_ticks(part, start_time, false);
+ 	part_stat_inc(part, ios[sgrp]);
+ 	part_stat_add(part, sectors[sgrp], sectors);
+ 	part_stat_local_inc(part, in_flight[op_is_write(op)]);
+ 	part_stat_unlock();
+ 
+-	return now;
++	return start_time;
++}
++
++/**
++ * bio_start_io_acct_time - start I/O accounting for bio based drivers
++ * @bio:	bio to start account for
++ * @start_time:	start time that should be passed back to bio_end_io_acct().
++ */
++void bio_start_io_acct_time(struct bio *bio, unsigned long start_time)
++{
++	__part_start_io_acct(bio->bi_bdev, bio_sectors(bio),
++			     bio_op(bio), start_time);
+ }
++EXPORT_SYMBOL_GPL(bio_start_io_acct_time);
+ 
+ /**
+  * bio_start_io_acct - start I/O accounting for bio based drivers
+@@ -1084,14 +1096,15 @@ static unsigned long __part_start_io_acct(struct block_device *part,
+  */
+ unsigned long bio_start_io_acct(struct bio *bio)
+ {
+-	return __part_start_io_acct(bio->bi_bdev, bio_sectors(bio), bio_op(bio));
++	return __part_start_io_acct(bio->bi_bdev, bio_sectors(bio),
++				    bio_op(bio), jiffies);
+ }
+ EXPORT_SYMBOL_GPL(bio_start_io_acct);
+ 
+ unsigned long disk_start_io_acct(struct gendisk *disk, unsigned int sectors,
+ 				 unsigned int op)
+ {
+-	return __part_start_io_acct(disk->part0, sectors, op);
++	return __part_start_io_acct(disk->part0, sectors, op, jiffies);
+ }
+ EXPORT_SYMBOL(disk_start_io_acct);
+ 
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 9c95df26fc26..f35aea98bc35 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1258,6 +1258,7 @@ unsigned long disk_start_io_acct(struct gendisk *disk, unsigned int sectors,
+ void disk_end_io_acct(struct gendisk *disk, unsigned int op,
+ 		unsigned long start_time);
+ 
++void bio_start_io_acct_time(struct bio *bio, unsigned long start_time);
+ unsigned long bio_start_io_acct(struct bio *bio);
+ void bio_end_io_acct_remapped(struct bio *bio, unsigned long start_time,
+ 		struct block_device *orig_bdev);
 -- 
 2.15.0
 
