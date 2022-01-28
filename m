@@ -4,83 +4,75 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5062FC433F5
-	for <dm-devel@archiver.kernel.org>; Fri, 28 Jan 2022 17:47:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id ED0F5C433F5
+	for <dm-devel@archiver.kernel.org>; Fri, 28 Jan 2022 18:47:09 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-518-9juPQ2S3OY26dWeQ1CxMiw-1; Fri, 28 Jan 2022 12:47:33 -0500
-X-MC-Unique: 9juPQ2S3OY26dWeQ1CxMiw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-202-guAB_A1YP_GcUMQmxEHRXA-1; Fri, 28 Jan 2022 13:47:05 -0500
+X-MC-Unique: guAB_A1YP_GcUMQmxEHRXA-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 417C22F26;
-	Fri, 28 Jan 2022 17:47:29 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id CBEF77D5B2;
-	Fri, 28 Jan 2022 17:47:27 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A921B18B9EC3;
+	Fri, 28 Jan 2022 18:47:00 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 85502753F8;
+	Fri, 28 Jan 2022 18:46:58 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 265844BB7C;
-	Fri, 28 Jan 2022 17:47:27 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.2])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 092581809CB8;
+	Fri, 28 Jan 2022 18:46:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.9])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20SHlPcE002585 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 28 Jan 2022 12:47:25 -0500
+	id 20SIkrPf006508 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 28 Jan 2022 13:46:53 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id F3DE140885C2; Fri, 28 Jan 2022 17:47:24 +0000 (UTC)
+	id 5C5584021B8; Fri, 28 Jan 2022 18:46:53 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id EF4AF40885BF
-	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 17:47:24 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D5EE72A5955E
-	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 17:47:24 +0000 (UTC)
-Received: from mail-ej1-f51.google.com (mail-ej1-f51.google.com
-	[209.85.218.51]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-333-SRuvK82YM-2D3R_oemx0pA-1; Fri, 28 Jan 2022 12:47:19 -0500
-X-MC-Unique: SRuvK82YM-2D3R_oemx0pA-1
-Received: by mail-ej1-f51.google.com with SMTP id a8so18361917ejc.8;
-	Fri, 28 Jan 2022 09:47:18 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
-	:content-language:to:cc:references:from:in-reply-to
-	:content-transfer-encoding;
-	bh=ogNJP5EHoLlY/+pzq7MKSl45upWBBZ4YKt4mxMnYq0U=;
-	b=MLkOpDdeDNWvht9kOpxKxdUpZMvPNlJs2rBucEJupGjsfzfhSbbiI0CApU+XLLhQlL
-	OqvBN55bQ4DseaEvdQFU+NpNdiUY9/OUhBOL0fGSqE1RPvTnVpbNnAuNDbhyDBj42I9T
-	xJFsIi9gE/tIVc70mCAo4DfGcjwSqF5nxuRxReWxLwhF33lAOe/HySgy+//Fep5WBqNv
-	G8yHl/ar3YrKAOBMBae2psjoB6mBc9osR4oNyHVP6EH4aIu5y3kl4Wy40Xpd4QABO1UL
-	Yoh03/R3UsJqFfFsGpVVa16dSL385laevvBRxXJdi7T4rvwUDDBqELzeEI4XZcF8bDJM
-	LJFA==
-X-Gm-Message-State: AOAM53314p3Q9FR6TunuHgcVfAskN3xywFWiFspcqlnwGRN/YneS4yoa
-	M55EXDGDYNV+JOAbiYggV8sngf85NBSH7Dt2
-X-Google-Smtp-Source: ABdhPJw9tAhAzrF+/5fMIovmUuxc/oT6iZSLHMfykDK0q9L8d8SLV4ddIzw/BxwFsxKaeGFQNqUe2A==
-X-Received: by 2002:a17:907:7292:: with SMTP id
-	dt18mr7557137ejc.305.1643392037099; 
-	Fri, 28 Jan 2022 09:47:17 -0800 (PST)
-Received: from [192.168.0.99] ([83.148.32.207])
-	by smtp.gmail.com with ESMTPSA id
-	z6sm10323231ejd.96.2022.01.28.09.47.16
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Fri, 28 Jan 2022 09:47:16 -0800 (PST)
-Message-ID: <e85bd660-0c50-df5d-35de-2fd5b16cc47f@gmail.com>
-Date: Fri, 28 Jan 2022 18:47:15 +0100
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
-	Firefox/91.0 Thunderbird/91.4.0
-To: Martin Wilck <mwilck@suse.com>, Zdenek Kabelac <zkabelac@redhat.com>,
-	David Teigland <teigland@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>
+	(mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 58CC048FB03
+	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 18:46:53 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3C93638008CA
+	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 18:46:53 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-522-NejWljMQOZKUHZVQMcKFvA-1; Fri, 28 Jan 2022 13:46:51 -0500
+X-MC-Unique: NejWljMQOZKUHZVQMcKFvA-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 59699212B7;
+	Fri, 28 Jan 2022 18:46:49 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 019F713A92;
+	Fri, 28 Jan 2022 18:46:48 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+	by imap2.suse-dmz.suse.de with ESMTPSA id JDsVOhg69GE1LQAAMHmgww
+	(envelope-from <mwilck@suse.com>); Fri, 28 Jan 2022 18:46:48 +0000
+Message-ID: <0a55dd1393df2c125f8cb443daaeb7d1b7162bcc.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+To: Zdenek Kabelac <zdenek.kabelac@gmail.com>, Zdenek Kabelac
+	<zkabelac@redhat.com>, David Teigland <teigland@redhat.com>, Peter Rajnoha
+	<prajnoha@redhat.com>
+Date: Fri, 28 Jan 2022 19:46:48 +0100
+In-Reply-To: <e85bd660-0c50-df5d-35de-2fd5b16cc47f@gmail.com>
 References: <20220128134229.1783-1-mwilck@suse.com>
 	<10ad6fc0-6c24-c98b-4a02-2140883af72d@gmail.com>
 	<a1f472a89e9825f90a4104bea535086f0cde6b93.camel@suse.com>
 	<d0d0d8f39257bcddf480524f01faae1f15ac2c42.camel@suse.com>
-From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
-In-Reply-To: <d0d0d8f39257bcddf480524f01faae1f15ac2c42.camel@suse.com>
+	<e85bd660-0c50-df5d-35de-2fd5b16cc47f@gmail.com>
+User-Agent: Evolution 3.42.3
+MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -89,7 +81,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 20SIkrPf006508
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Heming Zhao <heming.zhao@suse.com>,
 	Franck Bui <fbui@suse.de>, lvm-devel@redhat.com
@@ -108,54 +102,112 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-Dne 28. 01. 22 v 17:02 Martin Wilck napsal(a):
-> On Fri, 2022-01-28 at 16:57 +0100, Martin Wilck wrote:
->>
->> It's a race condition. It probably happens while multipathd is
->> reloading a map (*), suspending it during the table reload. The
->> device
->> will be resumed a few fractions of a second later (so yes, it's
->> "quick"), but then it's too late
-> 
-> More precisely: The suspend state itself may actually not last longer
-> than a few ms. But once the symlink is bent to point to the wrong
-> device, it will remain so, until the CHANGE event following the device
-> resume is successfully processed by udev, which may happen
-> substantially later. And it's that longer time span which matters for
-> systemd's mount attempt (or LVM device activation, for that matter).
-> 
->
+On Fri, 2022-01-28 at 18:47 +0100, Zdenek Kabelac wrote:
+> Dne 28. 01. 22 v 17:02 Martin Wilck napsal(a):
+> > On Fri, 2022-01-28 at 16:57 +0100, Martin Wilck wrote:
+> > >=20
+> > > It's a race condition. It probably happens while multipathd is
+> > > reloading a map (*), suspending it during the table reload. The
+> > > device
+> > > will be resumed a few fractions of a second later (so yes, it's
+> > > "quick"), but then it's too late
+> >=20
+> > More precisely: The suspend state itself may actually not last
+> > longer
+> > than a few ms. But once the symlink is bent to point to the wrong
+> > device, it will remain so, until the CHANGE event following the
+> > device
+> > resume is successfully processed by udev, which may happen
+> > substantially later. And it's that longer time span which matters
+> > for
+> > systemd's mount attempt (or LVM device activation, for that
+> > matter).
+> >=20
+> >=20
+>=20
+>=20
+> This looks like you are trying to mask-out different synchronization
+> bug.
 
+Please explain. What bug would that be, in what subsystem?=A0It takes=20
+time until a dm-triggered CHANGE event makes its way through the udev
+event queue and completes rules processing. That's perfectly normal.
 
-This looks like you are trying to mask-out different synchronization bug.
+I say the bug is in this udev rule file. The set of properties and
+symlinks of a systemd-managed device must not change when new uevents
+for this device are processed, unless absolutely necessary. The current
+rule violates this principle: If a device that contains a file system
+is suspended, it continues to contain this file system, and the by-uuid
+symlink for the file system should be preserved.
 
-Also it's worth to note - using symlinks is somewhat doomed on its own.
+You can easily test this. Check the set of symlinks for a partition on
+a multipath device, suspend the device, run "udevadm trigger -c add" on
+the device (simulating coldplug), and check the set of symlinks again.
+You'll see that by-uuid or by-label links will be lost and will now
+point to one of the map's paths. These symlinks are crucial for
+mounting file systems. With my patch, the symlinks are preserved.
 
-So you only solve a very minor subcase where you manage to 'hit' your race
-just in a moment where you device is suspend and you actually 'scan' state of 
-device.
+> Also it's worth to note - using symlinks is somewhat doomed on its
+> own.
 
-But what happen - if device would happen to be already resumed ?
-It looks like there is some race in udev rules processing - just somewhere else.
+That's how device identification and activation with udev and systemd
+works. It won't change any time soon. Explain on which grounds you're
+calling it "somewhat doomed".
 
-I think Peter could more enlighten the lvm2 logic - but it seems there is 
-possibly missing similar logic on multipath side in the moment when devices 
-are created ?
+> So you only solve a very minor subcase where you manage to 'hit' your
+> race
+> just in a moment where you device is suspend and you actually 'scan'
+> state of=20
+> device.
 
-There should be no race when switching from ramdisk to rootfs.
+I wouldn't call it "minor" if a system fails to boot. The time window
+when this is possible is indeed small. But it's not zero, and that's
+why this issue occurs.
 
-Regards
+> But what happen - if device would happen to be already resumed ?
 
-Zdenek
+Nothing bad happens. The device is mounted or scanned just fine.
+
+> It looks like there is some race in udev rules processing - just
+> somewhere else.
+
+I've personally had a part in fixing multiple race conditions both
+multipathd and udev.=A0Ben Marzinski and I recently worked on dropping
+the dependency of multipathd.service on udev-settle.service. That
+accellerates booting and is conceptually cleaner than before, but it
+reveals bugs in other parts of the system, like this one.
+
+> I think Peter could more enlighten the lvm2 logic - but it seems
+> there is=20
+> possibly missing similar logic on multipath side in the moment when
+> devices=20
+> are created ?
+
+As long as you don't explain what logic you mean, this is a hard
+question to answer.
+
+> There should be no race when switching from ramdisk to rootfs.
+
+I agree that there *should* not be any. But there is one, and this
+patch fixes it.
+
+I would appreciate if you said what's actually wrong my patch. So far
+you haven't. You just speculated about errors in other parts of the
+system. Are you saying my patch would cause regressions or errors? If
+yes, how would that come to pass, for which devices, and under which
+conditions?
+
+Regards,
+Martin
+
 
 --
 dm-devel mailing list
