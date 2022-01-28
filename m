@@ -1,89 +1,65 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id ED0F5C433F5
-	for <dm-devel@archiver.kernel.org>; Fri, 28 Jan 2022 18:47:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id AF592C433F5
+	for <dm-devel@archiver.kernel.org>; Fri, 28 Jan 2022 21:06:41 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1643404000;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=TW5J62HQB1FCFfXuSBJIRnglZ2BZquC/ddGm9bQUcvc=;
+	b=CsxJTCTei9bW8DFj9gp0EqXSDGfI8SxwutgBWyrKhZwwkhp+yxiMcr3drBbDXrL/N70O8b
+	VK9qxBQYHx/rWlhsNqXts1XoSXamVv3/dJbGNwVeXtdDbpTqfPfQiXI8Aqtt2h9MVSi4Jc
+	LiY3IM5KPSYCqaNp9o0sXDAXiThhhPU=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-202-guAB_A1YP_GcUMQmxEHRXA-1; Fri, 28 Jan 2022 13:47:05 -0500
-X-MC-Unique: guAB_A1YP_GcUMQmxEHRXA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-645-4xWnnWWDPqaQCSEy79e_fw-1; Fri, 28 Jan 2022 16:06:38 -0500
+X-MC-Unique: 4xWnnWWDPqaQCSEy79e_fw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A921B18B9EC3;
-	Fri, 28 Jan 2022 18:47:00 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 85502753F8;
-	Fri, 28 Jan 2022 18:46:58 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C97C31083F64;
+	Fri, 28 Jan 2022 21:06:33 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id ACBE4101E59B;
+	Fri, 28 Jan 2022 21:06:32 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 092581809CB8;
-	Fri, 28 Jan 2022 18:46:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.9])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 204EA4BB7C;
+	Fri, 28 Jan 2022 21:06:30 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
+	[10.5.11.22])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20SIkrPf006508 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 28 Jan 2022 13:46:53 -0500
+	id 20SL6Ooo016133 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 28 Jan 2022 16:06:24 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 5C5584021B8; Fri, 28 Jan 2022 18:46:53 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 58CC048FB03
-	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 18:46:53 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3C93638008CA
-	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 18:46:53 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-522-NejWljMQOZKUHZVQMcKFvA-1; Fri, 28 Jan 2022 13:46:51 -0500
-X-MC-Unique: NejWljMQOZKUHZVQMcKFvA-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	key-exchange X25519 server-signature ECDSA (P-521) server-digest
-	SHA512) (No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 59699212B7;
-	Fri, 28 Jan 2022 18:46:49 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	key-exchange X25519 server-signature ECDSA (P-521) server-digest
-	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 019F713A92;
-	Fri, 28 Jan 2022 18:46:48 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id JDsVOhg69GE1LQAAMHmgww
-	(envelope-from <mwilck@suse.com>); Fri, 28 Jan 2022 18:46:48 +0000
-Message-ID: <0a55dd1393df2c125f8cb443daaeb7d1b7162bcc.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Zdenek Kabelac <zdenek.kabelac@gmail.com>, Zdenek Kabelac
-	<zkabelac@redhat.com>, David Teigland <teigland@redhat.com>, Peter Rajnoha
-	<prajnoha@redhat.com>
-Date: Fri, 28 Jan 2022 19:46:48 +0100
-In-Reply-To: <e85bd660-0c50-df5d-35de-2fd5b16cc47f@gmail.com>
+	id 4C5FF1036B4F; Fri, 28 Jan 2022 21:06:24 +0000 (UTC)
+Received: from [10.40.192.225] (unknown [10.40.192.225])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 85739101E59B;
+	Fri, 28 Jan 2022 21:06:22 +0000 (UTC)
+Message-ID: <aba2f6dd-f4cf-6af4-e2b6-965f5de06cd8@redhat.com>
+Date: Fri, 28 Jan 2022 22:06:21 +0100
+MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+	Firefox/91.0 Thunderbird/91.4.0
+To: Martin Wilck <mwilck@suse.com>, Zdenek Kabelac <zdenek.kabelac@gmail.com>,
+	David Teigland <teigland@redhat.com>, Peter Rajnoha <prajnoha@redhat.com>
 References: <20220128134229.1783-1-mwilck@suse.com>
 	<10ad6fc0-6c24-c98b-4a02-2140883af72d@gmail.com>
 	<a1f472a89e9825f90a4104bea535086f0cde6b93.camel@suse.com>
 	<d0d0d8f39257bcddf480524f01faae1f15ac2c42.camel@suse.com>
 	<e85bd660-0c50-df5d-35de-2fd5b16cc47f@gmail.com>
-User-Agent: Evolution 3.42.3
-MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 20SIkrPf006508
+	<0a55dd1393df2c125f8cb443daaeb7d1b7162bcc.camel@suse.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+In-Reply-To: <0a55dd1393df2c125f8cb443daaeb7d1b7162bcc.camel@suse.com>
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, Heming Zhao <heming.zhao@suse.com>,
 	Franck Bui <fbui@suse.de>, lvm-devel@redhat.com
@@ -102,115 +78,136 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Language: en-US
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-On Fri, 2022-01-28 at 18:47 +0100, Zdenek Kabelac wrote:
-> Dne 28. 01. 22 v 17:02 Martin Wilck napsal(a):
-> > On Fri, 2022-01-28 at 16:57 +0100, Martin Wilck wrote:
-> > >=20
-> > > It's a race condition. It probably happens while multipathd is
-> > > reloading a map (*), suspending it during the table reload. The
-> > > device
-> > > will be resumed a few fractions of a second later (so yes, it's
-> > > "quick"), but then it's too late
-> >=20
-> > More precisely: The suspend state itself may actually not last
-> > longer
-> > than a few ms. But once the symlink is bent to point to the wrong
-> > device, it will remain so, until the CHANGE event following the
-> > device
-> > resume is successfully processed by udev, which may happen
-> > substantially later. And it's that longer time span which matters
-> > for
-> > systemd's mount attempt (or LVM device activation, for that
-> > matter).
-> >=20
-> >=20
->=20
->=20
-> This looks like you are trying to mask-out different synchronization
-> bug.
-
-Please explain. What bug would that be, in what subsystem?=A0It takes=20
-time until a dm-triggered CHANGE event makes its way through the udev
-event queue and completes rules processing. That's perfectly normal.
-
-I say the bug is in this udev rule file. The set of properties and
-symlinks of a systemd-managed device must not change when new uevents
-for this device are processed, unless absolutely necessary. The current
-rule violates this principle: If a device that contains a file system
-is suspended, it continues to contain this file system, and the by-uuid
-symlink for the file system should be preserved.
-
-You can easily test this. Check the set of symlinks for a partition on
-a multipath device, suspend the device, run "udevadm trigger -c add" on
-the device (simulating coldplug), and check the set of symlinks again.
-You'll see that by-uuid or by-label links will be lost and will now
-point to one of the map's paths. These symlinks are crucial for
-mounting file systems. With my patch, the symlinks are preserved.
-
-> Also it's worth to note - using symlinks is somewhat doomed on its
-> own.
-
-That's how device identification and activation with udev and systemd
-works. It won't change any time soon. Explain on which grounds you're
-calling it "somewhat doomed".
-
-> So you only solve a very minor subcase where you manage to 'hit' your
-> race
-> just in a moment where you device is suspend and you actually 'scan'
-> state of=20
-> device.
-
-I wouldn't call it "minor" if a system fails to boot. The time window
-when this is possible is indeed small. But it's not zero, and that's
-why this issue occurs.
-
-> But what happen - if device would happen to be already resumed ?
-
-Nothing bad happens. The device is mounted or scanned just fine.
-
-> It looks like there is some race in udev rules processing - just
-> somewhere else.
-
-I've personally had a part in fixing multiple race conditions both
-multipathd and udev.=A0Ben Marzinski and I recently worked on dropping
-the dependency of multipathd.service on udev-settle.service. That
-accellerates booting and is conceptually cleaner than before, but it
-reveals bugs in other parts of the system, like this one.
-
-> I think Peter could more enlighten the lvm2 logic - but it seems
-> there is=20
-> possibly missing similar logic on multipath side in the moment when
-> devices=20
-> are created ?
-
-As long as you don't explain what logic you mean, this is a hard
-question to answer.
-
-> There should be no race when switching from ramdisk to rootfs.
-
-I agree that there *should* not be any. But there is one, and this
-patch fixes it.
-
-I would appreciate if you said what's actually wrong my patch. So far
-you haven't. You just speculated about errors in other parts of the
-system. Are you saying my patch would cause regressions or errors? If
-yes, how would that come to pass, for which devices, and under which
-conditions?
-
-Regards,
-Martin
-
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+RG5lIDI4LiAwMS4gMjIgdiAxOTo0NiBNYXJ0aW4gV2lsY2sgbmFwc2FsKGEpOgo+IE9uIEZyaSwg
+MjAyMi0wMS0yOCBhdCAxODo0NyArMDEwMCwgWmRlbmVrIEthYmVsYWMgd3JvdGU6Cj4+IERuZSAy
+OC4gMDEuIDIyIHYgMTc6MDIgTWFydGluIFdpbGNrIG5hcHNhbChhKToKPj4+IE9uIEZyaSwgMjAy
+Mi0wMS0yOCBhdCAxNjo1NyArMDEwMCwgTWFydGluIFdpbGNrIHdyb3RlOgo+Pj4+IEl0J3MgYSBy
+YWNlIGNvbmRpdGlvbi4gSXQgcHJvYmFibHkgaGFwcGVucyB3aGlsZSBtdWx0aXBhdGhkIGlzCj4+
+Pj4gcmVsb2FkaW5nIGEgbWFwICgqKSwgc3VzcGVuZGluZyBpdCBkdXJpbmcgdGhlIHRhYmxlIHJl
+bG9hZC4gVGhlCj4+Pj4gZGV2aWNlCj4+Pj4gd2lsbCBiZSByZXN1bWVkIGEgZmV3IGZyYWN0aW9u
+cyBvZiBhIHNlY29uZCBsYXRlciAoc28geWVzLCBpdCdzCj4+Pj4gInF1aWNrIiksIGJ1dCB0aGVu
+IGl0J3MgdG9vIGxhdGUKPj4+IE1vcmUgcHJlY2lzZWx5OiBUaGUgc3VzcGVuZCBzdGF0ZSBpdHNl
+bGYgbWF5IGFjdHVhbGx5IG5vdCBsYXN0Cj4+PiBsb25nZXIKPj4+IHRoYW4gYSBmZXcgbXMuIEJ1
+dCBvbmNlIHRoZSBzeW1saW5rIGlzIGJlbnQgdG8gcG9pbnQgdG8gdGhlIHdyb25nCj4+PiBkZXZp
+Y2UsIGl0IHdpbGwgcmVtYWluIHNvLCB1bnRpbCB0aGUgQ0hBTkdFIGV2ZW50IGZvbGxvd2luZyB0
+aGUKPj4+IGRldmljZQo+Pj4gcmVzdW1lIGlzIHN1Y2Nlc3NmdWxseSBwcm9jZXNzZWQgYnkgdWRl
+diwgd2hpY2ggbWF5IGhhcHBlbgo+Pj4gc3Vic3RhbnRpYWxseSBsYXRlci4gQW5kIGl0J3MgdGhh
+dCBsb25nZXIgdGltZSBzcGFuIHdoaWNoIG1hdHRlcnMKPj4+IGZvcgo+Pj4gc3lzdGVtZCdzIG1v
+dW50IGF0dGVtcHQgKG9yIExWTSBkZXZpY2UgYWN0aXZhdGlvbiwgZm9yIHRoYXQKPj4+IG1hdHRl
+cikuCj4+Pgo+Pj4KPj4KPj4gVGhpcyBsb29rcyBsaWtlIHlvdSBhcmUgdHJ5aW5nIHRvIG1hc2st
+b3V0IGRpZmZlcmVudCBzeW5jaHJvbml6YXRpb24KPj4gYnVnLgo+IFBsZWFzZSBleHBsYWluLiBX
+aGF0IGJ1ZyB3b3VsZCB0aGF0IGJlLCBpbiB3aGF0IHN1YnN5c3RlbT/CoEl0IHRha2VzCj4gdGlt
+ZSB1bnRpbCBhIGRtLXRyaWdnZXJlZCBDSEFOR0UgZXZlbnQgbWFrZXMgaXRzIHdheSB0aHJvdWdo
+IHRoZSB1ZGV2Cj4gZXZlbnQgcXVldWUgYW5kIGNvbXBsZXRlcyBydWxlcyBwcm9jZXNzaW5nLiBU
+aGF0J3MgcGVyZmVjdGx5IG5vcm1hbC4KCgpXZWxsIGl0IGlzIGF0IHRoZSBwb2ludCB3ZSBuZWVk
+IHRvIGtub3cgZXhhY3RseSB3aGljaCBkZXZpY2UgaW4gd2hpY2ggc3RhdGUgCmNhdXNlcyB5b3Ug
+cHJvYmxlbS4gVGhlbiB3ZSBuZWVkIHRvIHNlZSB3aGF0IGlzIHdyb25nIGluIHRoZSB3aG9sZSBw
+cm9jZXNzLgoKQWxsIEknbSBzYXlpbmcgaGVyZSBpcyAtIHRoYXQgdGhlIHByb3Bvc2VkIHBhdGNo
+IGlzIG5vdCBmaXhpbmcgYnVnIC0gYnV0IApyYXRoZXIgbWFza2luZy9taW5pbWl6aW5nIHdpbmRv
+dyBmb3IgZXJyb3IuCgo+IEkgc2F5IHRoZSBidWcgaXMgaW4gdGhpcyB1ZGV2IHJ1bGUgZmlsZS4g
+VGhlIHNldCBvZiBwcm9wZXJ0aWVzIGFuZAo+IHN5bWxpbmtzIG9mIGEgc3lzdGVtZC1tYW5hZ2Vk
+IGRldmljZSBtdXN0IG5vdCBjaGFuZ2Ugd2hlbiBuZXcgdWV2ZW50cwo+IGZvciB0aGlzIGRldmlj
+ZSBhcmUgcHJvY2Vzc2VkLCB1bmxlc3MgYWJzb2x1dGVseSBuZWNlc3NhcnkuIFRoZSBjdXJyZW50
+CgoKVGhlIHF1ZXN0aW9uIGlzIC0gd2hldGhlciB0aGUgZXZlbnQgaXMgbWVhbnQgdG8gYmUgdGhl
+cmUgaWYgdGhlcmUgaXMgbm8gCmNoYW5nZSwgdGhhdCBzaG91bGQgYmUgcmVmbGVjdGVkIGluIHRo
+ZSBzeXN0ZW0uIEl0IHJlYWxseSBnb2VzIHRvICMxIHF1ZXN0aW9uIAphYm91dCBkZXRhaWxlZCBz
+dGF0ZSBvZiBETSB0YWJsZXMgYW5kIHlvdXIgb2JzZXJ2ZWQgYmxvY2tlZCBzeXN0ZW0uwqAgV2l0
+aCBsdm0yIAp3ZSBhcmUgY2FyZWZ1bGwgYWJvdXQgc2VuZGluZyBldmVudHMuCgo+IHJ1bGUgdmlv
+bGF0ZXMgdGhpcyBwcmluY2lwbGU6IElmIGEgZGV2aWNlIHRoYXQgY29udGFpbnMgYSBmaWxlIHN5
+c3RlbQo+IGlzIHN1c3BlbmRlZCwgaXQgY29udGludWVzIHRvIGNvbnRhaW4gdGhpcyBmaWxlIHN5
+c3RlbSwgYW5kIHRoZSBieS11dWlkCj4gc3ltbGluayBmb3IgdGhlIGZpbGUgc3lzdGVtIHNob3Vs
+ZCBiZSBwcmVzZXJ2ZWQuCj4gWW91IGNhbiBlYXNpbHkgdGVzdCB0aGlzLiBDaGVjayB0aGUgc2V0
+IG9mIHN5bWxpbmtzIGZvciBhIHBhcnRpdGlvbiBvbgo+IGEgbXVsdGlwYXRoIGRldmljZSwgc3Vz
+cGVuZCB0aGUgZGV2aWNlLCBydW4gInVkZXZhZG0gdHJpZ2dlciAtYyBhZGQiIG9uCj4gdGhlIGRl
+dmljZSAoc2ltdWxhdGluZyBjb2xkcGx1ZyksIGFuZCBjaGVjayB0aGUgc2V0IG9mIHN5bWxpbmtz
+IGFnYWluLgoKV2hvZXZlciByZWFkcyBzdXNwZW5kZWQgZGV2aWNlIGhhcyB0byB3YWl0IGZvciAn
+cmVzdW1lJyAtIHNvIHRoZSB0ZXN0IGNhc2UgCndoZXJlIHlvdSBzdXNwZW5kIGRldmljZSBmb3Ig
+bG9uZyBwZXJpb2Qgb2YgdGltZSBhbmQgeW91IG9ic2VydmUgb3RoZXIgCnByb2Nlc3NlZCB3YWl0
+aW5nIGZvciBkZXZpY2UgdG8gYmUgcmVzdW1lZCBpcyB3YW50ZWQgYmVoYXZpb3IgLSBpdCdzIG5v
+dCB2YWxpZCAKdG8gaGF2ZcKgIHN1c3BlbmRlZCBkZXZpY2VzIGluIHRoZSBzeXN0ZW0uwqAgWW91
+IGhhdmUgc3RhdGUgJ2JlZm9yZScgc3VzcGVuZMKgIAphbmQgc3RhdGUgYWZ0ZXIgJ3Jlc3VtZScu
+IMKgIFRoZXJlIGlzIG5vIHN0YXRlIGZvciAnc3VzcGVuZGVkJyB0eXBlIG9mIGRldmljZSAKKGFz
+IHRoZSBkZXZpY2UgY291bGQgYmUgcmVzdW1lZCBlaXRoZXIgd2l0aCBleGl0aW5nIHRhYmxlIG9y
+IGEgbmV3IHRhYmxlLgoKU28gYW55IHNpbXVsYXRpb24gcmVsYXlpbmcgb24gc3VzcGVuZGVkIGRl
+dmljZSBpcyBiYXNpY2FsbHkgdGVzdGluZyBpbnZhbGlkIApzdGF0ZSBvZiBzeXN0ZW0uCgpBbmQg
+SSdtIGFzc3VtaW5nIHlvdXIgcHJvYmxlbSBpcyBzb21ldGhpbmcgZWxzZSAtIGFzIEknZCBzYXkg
+eW91IGRvbid0IGxlYWsgCmZvcmdvdHRlbiAnc3VzcGVuZGVkJyBkZXZpY2UgaW4gcmFtZGlzayA/
+CgoKPiBZb3UnbGwgc2VlIHRoYXQgYnktdXVpZCBvciBieS1sYWJlbCBsaW5rcyB3aWxsIGJlIGxv
+c3QgYW5kIHdpbGwgbm93Cj4gcG9pbnQgdG8gb25lIG9mIHRoZSBtYXAncyBwYXRocy4gVGhlc2Ug
+c3ltbGlua3MgYXJlIGNydWNpYWwgZm9yCj4gbW91bnRpbmcgZmlsZSBzeXN0ZW1zLiBXaXRoIG15
+IHBhdGNoLCB0aGUgc3ltbGlua3MgYXJlIHByZXNlcnZlZC4KCgpJJ20gc3RpbGwgbWlzc2luZyB3
+aHkgJ1VVSUQnIHNob3VsZCBiZSBsb3N0ID8KCldoZXJlIHRoZXkgbWlzc2luZyBiZWZvcmUgc3Vz
+cGVuZCA/CgpBcmUgdGhleSBsb3N0IGFmdGVyIHJlc3VtZSA/CgpXaGF0IGlzIGNhdXNpbmcgeW91
+ciBVVUlEIHRvIGJlIGxvc3QgPwoKVG8gY29ubmVjdCB0aGlzIHdpdGggbHZtMiBsb2dpYyAtwqAg
+d2hlbiBsdm0yIGNyZWF0ZXMgb3IgZGVsZXRlcyBkZXZpY2UgLSBpdCAKYWx3YXlzIHdhaXRzIGZv
+ciB1ZGV2IGNvbmZpcm1hdGlvbsKgIChBVE0gdmlhIGNvb2tpZSBzZW1hcGhvcmUpLiBTbyBpLmUu
+IHdlIApjYW4ndCBjcmVhdGUgYSBzaXR1YXRpb24gd2hlcmUgd2Ugd291bGQgYmUgdHJpZ2dlcmlu
+Z8KgICd1ZGV2JyBkaXNrIGNyZWF0aW9uIApldmVudCB0aGF0IHdvdWxkIGJlICdyYWNpbmcnIHdp
+dGjCoCB1ZGV2IGRpc2sgcmVtb3ZhbCBwcm9jZXNzaW5nIC0gc28gdGhlcmUgaXMgCmNsb3NlIHN5
+bmNocm9uaXphdGlvbiB0byBhdm9pZCB0aGVzZSBraW5kIG9mIHJhY2VzIHdoZXJlIHVkZXYgd291
+bGQgYmUgCmFjY2Vzc2luZ8KgIG91ciBMViBkZXZpY2VzIGluIHNvbWXCoCBhc3luYyBwYXJhbGxl
+bCBsb2dpYyBhbmQgcG9zc2libHkgd291bGQgCmhhdmUgJ21vZGlmZWQnIGl0cyBzeW1saW5rIGRh
+dGFiYXNlIHdpdGggc29tZSBvYnNvbGV0ZSBpbmZvLgoKCj4+IEFsc28gaXQncyB3b3J0aCB0byBu
+b3RlIC0gdXNpbmcgc3ltbGlua3MgaXMgc29tZXdoYXQgZG9vbWVkIG9uIGl0cwo+PiBvd24uCj4g
+VGhhdCdzIGhvdyBkZXZpY2UgaWRlbnRpZmljYXRpb24gYW5kIGFjdGl2YXRpb24gd2l0aCB1ZGV2
+IGFuZCBzeXN0ZW1kCj4gd29ya3MuIEl0IHdvbid0IGNoYW5nZSBhbnkgdGltZSBzb29uLiBFeHBs
+YWluIG9uIHdoaWNoIGdyb3VuZHMgeW91J3JlCj4gY2FsbGluZyBpdCAic29tZXdoYXQgZG9vbWVk
+Ii4KCllvdSBjb3VsZCBmaW5kIG15IGRpc2N1c3Npb24gd2l0aCBMZW5uYXJ0wqAgLSBvbmUgb2Yg
+bWFqb3IgZGVzaWduIHByb2JsZW0gb2YgCnN5bWxpbmtzIGlzIGl0IGNhbid0IGhhbmRsZSBkdXBs
+aWNhdGUgZGV2aWNlcyB3aXRoIHNhbWUgSURzLsKgIFNvIGlmIHlvdSBoYXZlIAptdWx0aXBsZSBk
+aXNrcyB3aXRoIHNhbWUgaWRlbnRpZmljYXRpb24gLSBzeW1saW5rcyB3aWxsIGJlIHJhbmRvbWx5
+IHN3aXRjaGluZyAKYmV0d2VlbiB0aGVtIC3CoCBzbyBwbGFpbiBzaW1wbGUgJ2RkwqAgaWY9ZGlz
+a0Egb2Y9ZGlza0InIHJ1aW5zIHN5bWxpbmtzIGluIHlvdXIgCnN5c3RlbS4KCj4+IFNvIHlvdSBv
+bmx5IHNvbHZlIGEgdmVyeSBtaW5vciBzdWJjYXNlIHdoZXJlIHlvdSBtYW5hZ2UgdG8gJ2hpdCcg
+eW91cgo+PiByYWNlCj4+IGp1c3QgaW4gYSBtb21lbnQgd2hlcmUgeW91IGRldmljZSBpcyBzdXNw
+ZW5kIGFuZCB5b3UgYWN0dWFsbHkgJ3NjYW4nCj4+IHN0YXRlIG9mCj4+IGRldmljZS4KPiBJIHdv
+dWxkbid0IGNhbGwgaXQgIm1pbm9yIiBpZiBhIHN5c3RlbSBmYWlscyB0byBib290LiBUaGUgdGlt
+ZSB3aW5kb3cKPiB3aGVuIHRoaXMgaXMgcG9zc2libGUgaXMgaW5kZWVkIHNtYWxsLiBCdXQgaXQn
+cyBub3QgemVybywgYW5kIHRoYXQncwo+IHdoeSB0aGlzIGlzc3VlIG9jY3Vycy4KCgpJJ20gbm90
+IHNheWluZyAnbm9uLWJvb3RpbmcnIHN5c3RlbSBpcyAnbWlub3InIHByb2JsZW0gLSByYXRoZXIg
+SSdtIHNheWluZyAKeW91ciBwcm9wb3NlZCBmaXggaXMgbm90IHRoZSBjb3JyZWN0IGZpeGluZyBm
+b3IgeW91ciBleGlzdGluZyBwcm9ibGVtLgoKPj4gQnV0IHdoYXQgaGFwcGVuIC0gaWYgZGV2aWNl
+IHdvdWxkIGhhcHBlbiB0byBiZSBhbHJlYWR5IHJlc3VtZWQgPwo+IE5vdGhpbmcgYmFkIGhhcHBl
+bnMuIFRoZSBkZXZpY2UgaXMgbW91bnRlZCBvciBzY2FubmVkIGp1c3QgZmluZS4KCgpIb3cgY291
+bGQgeW91IGdldCB3cm9uZyBVVUlEIGZvciBhbHJlYWR5IG1vdW50ZWQgKHNvIGxpa2VseSBhbHNv
+IG9wZW5lZCkgZGV2aWNlPz8KCldoYXQgaXMgaGFwcGVuaW5nIHdpdGggeW91ciBkZXZpY2UgdGhh
+dCBleGlzdGluZyB1ZGV2IHJ1bGUgaXMgZ2VuZXJhdGluZyAKaW5jb3JyZWN0IHN5bWxpbmsgPwoK
+VGhhdCByZWFsbHkgbmVlZHMgY2xvc2UgbG9nIGV2aWRlbmNlIGFib3V0IHN0YXRlcyBvZiB5b3Vy
+IHN5c3RlbS4KCj4+IEl0IGxvb2tzIGxpa2UgdGhlcmUgaXMgc29tZSByYWNlIGluIHVkZXYgcnVs
+ZXMgcHJvY2Vzc2luZyAtIGp1c3QKPj4gc29tZXdoZXJlIGVsc2UuCj4gSSd2ZSBwZXJzb25hbGx5
+IGhhZCBhIHBhcnQgaW4gZml4aW5nIG11bHRpcGxlIHJhY2UgY29uZGl0aW9ucyBib3RoCj4gbXVs
+dGlwYXRoZCBhbmQgdWRldi7CoEJlbiBNYXJ6aW5za2kgYW5kIEkgcmVjZW50bHkgd29ya2VkIG9u
+IGRyb3BwaW5nCj4gdGhlIGRlcGVuZGVuY3kgb2YgbXVsdGlwYXRoZC5zZXJ2aWNlIG9uIHVkZXYt
+c2V0dGxlLnNlcnZpY2UuIFRoYXQKPiBhY2NlbGxlcmF0ZXMgYm9vdGluZyBhbmQgaXMgY29uY2Vw
+dHVhbGx5IGNsZWFuZXIgdGhhbiBiZWZvcmUsIGJ1dCBpdAo+IHJldmVhbHMgYnVncyBpbiBvdGhl
+ciBwYXJ0cyBvZiB0aGUgc3lzdGVtLCBsaWtlIHRoaXMgb25lLgoKQW5kIHdlIG5lZWQgdG8gZmlu
+ZCB0aGUgZml4IGZvciB0aGUgYnVnIC0gbm90IGp1c3QgbWFzayBpdCBvdXQuCgpBcyB0ZWNobmlj
+YWxseSB1ZGV2IGlzIGp1c3Qgb25lIG9mIG1hbnkgcG9zc2libGUgJ3JlYWRlcnMnIG9mIHlvdXIg
+ZGV2aWNlLiBTbyAKd2hpbGUgeW91IHdvdWxkIG1hc2sgYnVnIGZvciB1ZGV2IC0gb3RoZXIgZGV2
+aWNlIHVzZXJzIHdvdWxkIHN0aWxsIGdldCAKbWlzbGVhZGluZyBpbmZvIGFib3V0IHlvdXIgZGV2
+aWNlLgoKCj4gSSB3b3VsZCBhcHByZWNpYXRlIGlmIHlvdSBzYWlkIHdoYXQncyBhY3R1YWxseSB3
+cm9uZyBteSBwYXRjaC4gU28gZmFyCj4geW91IGhhdmVuJ3QuIFlvdSBqdXN0IHNwZWN1bGF0ZWQg
+YWJvdXQgZXJyb3JzIGluIG90aGVyIHBhcnRzIG9mIHRoZQoKCkFzIHNhaWQgdGhlIGF1dG9tYXRp
+Y8KgICdza2lwJ8KgIG9mIHJlYWQgb2Ygc3VzcGVuZCBkZXZpY2UgY2FuJ3QgYmUgdGhlIHJpZ2h0
+IHRoaW5nLgoKU3VzcGVuZCBpcyBwYXJhbGxlbCZpbnZpc2libGUgb3BlcmF0aW9uIGFuZCBhcyBz
+dWNowqAgYW55IHJlYWRlciBvZiBkZXZpY2UgaXMgCm1lYW50IHRvIHdhaXQgdGlsbCBkZXZpY2Ug
+aXMgcmVzdW1lZCBhbmQgZmluaXNoIGl0J3MgcmVhZGluZy4gVGhhdCdzIHRoZSBjb3JlIAppZGVh
+IG9mIHdob2xlIERNIHVzYWdlIC3CoCBhbGwgdXNlcnMgb2YgRE0gZGV2aWNlcyB1c2UgaXQgbGlr
+ZSBub3JtYWwgYmxvY2sgCmRldmljZS7CoCBTbyBpZiB5b3UgbmVlZCB0byBjaGVjayBzdGF0ZSBv
+ZiBETSBkZXZpY2XCoCAoYW5kIHlvdSBhcmUgbm90IGEgRE0gCm1haW50YWluaW5nIHRvb2zCoCBh
+bmQgYmxraWQgdG9vbCBjZXJ0YWlubHkgaXMgbm90IHN1Y2ggdG9vbCnCoCB0aGVuIHRoZXJlIGlz
+IApzb21ldGhpbmcgd3JvbmcgaW4gZGVzaWduwqAgKGFrYSB3ZSBkbyBub3Qgd2FudCB0byBzdXBw
+b3J0ICdza2lwJyBvZiB1ZGV2IHJ1bGVzIAppZiB1c2VyIGlzIHJ1bm5pbmfCoCByYW5kb20gc3Ry
+ZWFtwqAgb2YgJ2Rtc2V0dXAgc3VzcGVuZCAmIGRtc2V0dXAgcmVzdW1lJyBjb21tYW5kcykKCgpS
+ZWdhcmRzCgpaZGVuZWsKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQu
+Y29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
 
