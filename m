@@ -4,129 +4,63 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 88022C433EF
-	for <dm-devel@archiver.kernel.org>; Mon, 31 Jan 2022 08:31:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 846BEC433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 31 Jan 2022 08:31:30 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-92-PlLGRIieM1m4pMW7yuxfLQ-1; Mon, 31 Jan 2022 03:31:01 -0500
-X-MC-Unique: PlLGRIieM1m4pMW7yuxfLQ-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-320-C0qpwPP_PEijv_1shTGYhA-1; Mon, 31 Jan 2022 03:31:20 -0500
+X-MC-Unique: C0qpwPP_PEijv_1shTGYhA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4F22B1F2DA;
-	Mon, 31 Jan 2022 08:30:57 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E613E60C38;
-	Mon, 31 Jan 2022 08:30:56 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6A7531927807;
+	Mon, 31 Jan 2022 08:31:16 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4830F1F2F8;
+	Mon, 31 Jan 2022 08:31:16 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1E4F41802E34;
-	Mon, 31 Jan 2022 08:30:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.7])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1BF034A7CA;
+	Mon, 31 Jan 2022 08:31:16 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20SK91EB011414 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 28 Jan 2022 15:09:01 -0500
+	id 20THdgE4028265 for <dm-devel@listman.util.phx.redhat.com>;
+	Sat, 29 Jan 2022 12:39:43 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 593CE141DEED; Fri, 28 Jan 2022 20:09:01 +0000 (UTC)
+	id 8F82340CFD17; Sat, 29 Jan 2022 17:39:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 54383141DEE5
-	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 20:09:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 332B228F03E2
-	for <dm-devel@redhat.com>; Fri, 28 Jan 2022 20:09:01 +0000 (UTC)
-Received: from mailout2.w2.samsung.com (mailout2.w2.samsung.com
-	[211.189.100.12]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-5-BdXxPh5ZN0uAvUpTDXDoLA-1; Fri, 28 Jan 2022 15:08:59 -0500
-X-MC-Unique: BdXxPh5ZN0uAvUpTDXDoLA-1
-Received: from uscas1p2.samsung.com (unknown [182.198.245.207])
-	by mailout2.w2.samsung.com (KnoxPortal) with ESMTP id
-	20220128195958usoutp02c0e46ba47e68ca09cf1b84efe722349d~Oh5d5bkbw0963609636usoutp02e;
-	Fri, 28 Jan 2022 19:59:58 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.w2.samsung.com
-	20220128195958usoutp02c0e46ba47e68ca09cf1b84efe722349d~Oh5d5bkbw0963609636usoutp02e
-Received: from ussmges3new.samsung.com (u112.gpu85.samsung.co.kr
-	[203.254.195.112]) by uscas1p2.samsung.com (KnoxPortal) with ESMTP id
-	20220128195958uscas1p274d56b7f5a807ecb3d259126017ce3ce~Oh5dupTS50535205352uscas1p2Y;
-	Fri, 28 Jan 2022 19:59:58 +0000 (GMT)
-Received: from uscas1p2.samsung.com ( [182.198.245.207]) by
-	ussmges3new.samsung.com (USCPEMTA) with SMTP id CF.D2.09687.E3B44F16;
-	Fri, 28 Jan 2022 14:59:58 -0500 (EST)
-Received: from ussmgxs3new.samsung.com (u92.gpu85.samsung.co.kr
-	[203.254.195.92]) by uscas1p1.samsung.com (KnoxPortal) with ESMTP id
-	20220128195957uscas1p1ce366917e0e2702ea61957a5221ae739~Oh5dP7WPA0942509425uscas1p1A;
-	Fri, 28 Jan 2022 19:59:57 +0000 (GMT)
-X-AuditID: cbfec370-9c5ff700000025d7-0e-61f44b3e1725
-Received: from SSI-EX4.ssi.samsung.com ( [105.128.2.146]) by
-	ussmgxs3new.samsung.com (USCPEXMTA) with SMTP id FB.F1.09657.D3B44F16;
-	Fri, 28 Jan 2022 14:59:57 -0500 (EST)
-Received: from SSI-EX3.ssi.samsung.com (105.128.2.228) by
-	SSI-EX4.ssi.samsung.com (105.128.2.229) with Microsoft SMTP Server
-	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id
-	15.1.2242.4; Fri, 28 Jan 2022 11:59:47 -0800
-Received: from SSI-EX3.ssi.samsung.com ([fe80::8d80:5816:c578:8c36]) by
-	SSI-EX3.ssi.samsung.com ([fe80::8d80:5816:c578:8c36%3]) with mapi id
-	15.01.2242.008; Fri, 28 Jan 2022 11:59:47 -0800
-From: Adam Manzanares <a.manzanares@samsung.com>
-To: Chaitanya Kulkarni <chaitanyak@nvidia.com>
-Thread-Topic: [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy Offload
-Thread-Index: AQHYE018isCsN3oz40OdcqzMcXhV7qx5YsQA
-Date: Fri, 28 Jan 2022 19:59:47 +0000
-Message-ID: <20220128195956.GA287797@bgt-140510-bm01>
-In-Reply-To: <f0e19ae4-b37a-e9a3-2be7-a5afb334a5c3@nvidia.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [105.128.2.176]
-x-exchange-save: DSA
-MIME-Version: 1.0
-X-CFilter-Loop: Reflected
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Se0xTVxzHd+69vb10K7l0nZzCErJumG248pAt5w9lyFy8g6m4sGxxEdfN
-	O+gGlbTiNhcyNgUVRR4jK9YYBBloQXQ8yqtllseqKPIoBeyGCwNFIAKtAhZZme2tCf99vuf7
-	/Z3f9ySHwkV6MoBSKA+wKqU8RUoKCP2fC71vRcU9kodZ215AVaN5JPp13omjOdM4DxXmFfOR
-	ZcIXGWfP8FDf458wNF67iiFDWSGGLlZ1YWiy8jxAK2PhqLB9CCCjLQQZjNcJVFJxl49ODDeR
-	qG3GiKNKswtDBcesGLqlXSFRxx0rgapWEMo66eSj6T8SoyWMZTCOKTg8y2csPelMre44ydSV
-	/8j8MlIJmNbbmSTz880unCl2PCKZ4ZuNGJN7eJZk7HdtBKMfy+Uzc21WkrlcbyWYuhs/xIt2
-	CzbtY1MUB1lVaNTnguSHphaQ1rn1O2ujHmSC+k05gKIgHQlnmgJzgIAS0RcBPFtWBDiRhcHx
-	gU7wLFRq2smdXwIwW2fBOWEHsM9xlODEVQDzXPVPHR+KpMPgE/PvHhbTMmi1jfDdIZwu8IE1
-	mgaP8SL9AWy6koe5V4jpWFg+GMHlI+ClhRzCzQQdDA1FLcDNQvptuNy97GEfOgrOzpXw3Azo
-	dXCpuxpzM077Q9tEiYch7QfLzhhwjtdBV8sYyfEr8J+lKT7HYliz9IDkZjfAc60OL0fB3u4s
-	750hsKJ0Buc6+MHrpycIblYCTRdGPI+HdIMA/q1v9C7YCpuPrXo5EGqqLd6QDsCixWw+J+oA
-	LF7uw/JBsHZNc+2aJto1TbRrmmjXNDkHeDrgn65Wpyax6o1K9luZWp6qTlcmyb7cn1oLnn7t
-	G66OtCZgs9ll7QCjQDuAFC4VC4trHXKRcJ/8+0Osav9eVXoKq24HgRQh9RdWKK7IRXSS/AD7
-	DcumsapnLkb5BGRikuN73ghnpf9V+w5f2NYlapDglEa5YXQqf3vQ7dbJr4Ot52M/emxxxiVG
-	bm6sdn2RH69q7Dy947JfasZnmo3kzMHi0r3P9atrol9/Qlp3Pd8BbTt8yxNwekhT5UwezEgI
-	zNtiHn9AB+le+xd0+cYyh3wKgvUnHHMRZ4cysjLEL13TRE6tf8doejgQeurD3xZPdYdN58bw
-	Epaz+wXrc9sFhvzJ1JCTZr7t43v37t9/d1Ec88lXzfidoMSp5vmBeaHBvmXPNUlP9MtmxvZ+
-	b0D4rluKT0MpyWbBkXjjUcXo6m6ntlCsl84eQZPkyHvKqxKX0T7BvLotJaa/p2taFhS68JeU
-	UCfLw9/EVWr5/295zJ5JBAAA
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrHKsWRmVeSWpSXmKPExsWS2cA0SdfW+0uiwex2NYvVd/vZLKZ9+Mls
-	8f7gY1aLSf0z2C0uP+Gz2PtuNqvFhR+NTBaPN/1nstizaBKTxcrVR5ksni9fzGjx56GhxaRD
-	1xgt9t7Sttiz9ySLxfxlT9ktuq/vYLPY93ovs8Xy4/+YLCZ2XGWyODfrD5vF4XtXWSxW/7Gw
-	aO35yW7xan+cg6TH5SveHhOb37F7XD5b6rFpVSebx+Yl9R6Tbyxn9Nh9s4HNo+nMUWaPGZ++
-	sHlcP7OdyaO3+R2bx8ent1g8tj3sZfd4v+8qm8f6LVdZPDafrg4QiuKySUnNySxLLdK3S+DK
-	+HxwF2PBEZeKq9u3MTYwbrHpYuTgkBAwkVh40L+LkZNDSGA1o8Tu0/VdjFxA9kdGid87zzBB
-	OAcYJXq2NjKCVLEJGEj8Pr6RGcQWEdCTuHrrBjtIEbPARE6Jt73rmUASwgKeEjs29DOBbBAR
-	8JJYcsUIot5IYu3XLhYQm0VAVWLPlF1gM3kFTCV+nfrFCLFsIqPE6a8/2EESnAJ2Eu/ez2cF
-	sRkFxCS+n1oDNp9ZQFzi1pP5YLaEgIDEkj3nmSFsUYmXj/+xQtiKEve/v2SHsEUk1n1/ywbR
-	qyOxYPcnKNtO4vypVqiZ2hLLFr5mhjhIUOLkzCcsEL2SEgdX3GCZwCg5C8nqWUhGzUIyahaS
-	UbOQjFrAyLqKUby0uDg3vaLYOC+1XK84Mbe4NC9dLzk/dxMjMAme/nc4ZgfjvVsf9Q4xMnEw
-	HmKU4GBWEuGdselTohBvSmJlVWpRfnxRaU5q8SFGaQ4WJXFej9iJ8UIC6YklqdmpqQWpRTBZ
-	Jg5OqQamzbtmbjb/7VsZYqqxfc0LrpMO2/VMntxYx8hXnrmr4OmCeA+Gp1P8HvAU72DtOLdQ
-	7mx9vUhDSMOqDMvFJ9seuuzq+fZk8d3331SnysxYv9drtXHOm3KWh5yaPdqnuuc7n8k7+7HF
-	vMLXamXj2mcn0uTWBXhOl1jyOF16Q8Xn+KxYria7gg3Tv9drfoiyuL/PflrKjd9G0nkL09Pq
-	/FXeTTnaclDD5oj6IdnJrPM7duYXfuX+714fr5jc6fAi5Ps7vw08vEF7ZJQX7jmUPfH+Ko8X
-	gv92+PIonJrkpyb0OTrj+5Uds79JHOUVXsB/tj58S3aC1zxXfS1HgfmrHYTkYp/4X7jYvkwn
-	wo8pR+aiEktxRqKhFnNRcSIAbkztBfEDAAA=
-X-CMS-MailID: 20220128195957uscas1p1ce366917e0e2702ea61957a5221ae739
-CMS-TYPE: 301P
-X-CMS-RootMailID: 20220127071544uscas1p2f70f4d2509f3ebd574b7ed746d3fa551
-References: <CGME20220127071544uscas1p2f70f4d2509f3ebd574b7ed746d3fa551@uscas1p2.samsung.com>
-	<f0e19ae4-b37a-e9a3-2be7-a5afb334a5c3@nvidia.com>
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8ACDB40CFD0A
+	for <dm-devel@redhat.com>; Sat, 29 Jan 2022 17:39:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6E436101A54C
+	for <dm-devel@redhat.com>; Sat, 29 Jan 2022 17:39:42 +0000 (UTC)
+Received: from mga14.intel.com (mga14.intel.com [192.55.52.115]) by
+	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-608-N4KZleiMPUugKiKqR5EHuQ-1; Sat, 29 Jan 2022 12:39:40 -0500
+X-MC-Unique: N4KZleiMPUugKiKqR5EHuQ-1
+X-IronPort-AV: E=McAfee;i="6200,9189,10242"; a="247507158"
+X-IronPort-AV: E=Sophos;i="5.88,327,1635231600"; d="scan'208";a="247507158"
+Received: from orsmga008.jf.intel.com ([10.7.209.65])
+	by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+	29 Jan 2022 09:39:39 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.88,327,1635231600"; d="scan'208";a="536545334"
+Received: from chang-linux-3.sc.intel.com ([172.25.66.175])
+	by orsmga008.jf.intel.com with ESMTP; 29 Jan 2022 09:39:38 -0800
+From: "Chang S. Bae" <chang.seok.bae@intel.com>
+To: linux-crypto@vger.kernel.org, dm-devel@redhat.com,
+	herbert@gondor.apana.org.au, ebiggers@kernel.org, ardb@kernel.org,
+	x86@kernel.org, luto@kernel.org, tglx@linutronix.de, bp@suse.de,
+	dave.hansen@linux.intel.com, mingo@kernel.org
+Date: Sat, 29 Jan 2022 09:31:53 -0800
+Message-Id: <20220129173153.27899-1-chang.seok.bae@intel.com>
+In-Reply-To: <20220112211258.21115-9-chang.seok.bae@intel.com>
+References: <20220112211258.21115-9-chang.seok.bae@intel.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -135,34 +69,15 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 20SK91EB011414
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 31 Jan 2022 03:30:51 -0500
-Cc: "djwong@kernel.org" <djwong@kernel.org>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"clm@fb.com" <clm@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"osandov@fb.com" <osandov@fb.com>,
-	"msnitzer@redhat.com >> msnitzer@redhat.com" <msnitzer@redhat.com>, Bart
-	Van Assche <bvanassche@acm.org>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	Christoph Hellwig <hch@lst.de>,
-	"roland@purestorage.com" <roland@purestorage.com>,
-	"zach.brown@ni.com" <zach.brown@ni.com>,
-	"dsterba@suse.com" <dsterba@suse.com>,
-	"josef@toxicpanda.com" <josef@toxicpanda.com>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"mpatocka@redhat.com" <mpatocka@redhat.com>,
-	"kbus >> Keith Busch" <kbusch@kernel.org>,
-	"Frederick.Knight@netapp.com" <Frederick.Knight@netapp.com>,
-	Jens Axboe <axboe@kernel.dk>, "tytso@mit.edu" <tytso@mit.edu>,
-	"martin.petersen@oracle.com >> Martin K.
-	Petersen" <martin.petersen@oracle.com>, "jack@suse.com" <jack@suse.com>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	"lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
-Subject: Re: [dm-devel] [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy
-	Offload
+Cc: ravi.v.shankar@intel.com, marvin.hsu@intel.com, linux-pm@vger.kernel.org,
+	chang.seok.bae@intel.com, linux-kernel@vger.kernel.org,
+	kumar.n.dwarakanath@intel.com, dan.j.williams@intel.com,
+	charishma1.gairuboyina@intel.com
+Subject: [dm-devel] [PATCH v5-fix 08/12] x86/PM/keylocker: Restore internal
+	wrapping key on resume from ACPI S3/4
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -174,147 +89,304 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-ID: <795CC14C0A3B064B8E80D872868A1CF5@ssi.samsung.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, Jan 27, 2022 at 07:14:13AM +0000, Chaitanya Kulkarni wrote:
-> Hi,
-> 
-> * Background :-
-> -----------------------------------------------------------------------
-> 
-> Copy offload is a feature that allows file-systems or storage devices
-> to be instructed to copy files/logical blocks without requiring
-> involvement of the local CPU.
-> 
-> With reference to the RISC-V summit keynote [1] single threaded
-> performance is limiting due to Denard scaling and multi-threaded
-> performance is slowing down due Moore's law limitations. With the rise
-> of SNIA Computation Technical Storage Working Group (TWG) [2],
-> offloading computations to the device or over the fabrics is becoming
-> popular as there are several solutions available [2]. One of the common
-> operation which is popular in the kernel and is not merged yet is Copy
-> offload over the fabrics or on to the device.
-> 
-> * Problem :-
-> -----------------------------------------------------------------------
-> 
-> The original work which is done by Martin is present here [3]. The
-> latest work which is posted by Mikulas [4] is not merged yet. These two
-> approaches are totally different from each other. Several storage
-> vendors discourage mixing copy offload requests with regular READ/WRITE
-> I/O. Also, the fact that the operation fails if a copy request ever
-> needs to be split as it traverses the stack it has the unfortunate
-> side-effect of preventing copy offload from working in pretty much
-> every common deployment configuration out there.
-> 
-> * Current state of the work :-
-> -----------------------------------------------------------------------
-> 
-> With [3] being hard to handle arbitrary DM/MD stacking without
-> splitting the command in two, one for copying IN and one for copying
-> OUT. Which is then demonstrated by the [4] why [3] it is not a suitable
-> candidate. Also, with [4] there is an unresolved problem with the
-> two-command approach about how to handle changes to the DM layout
-> between an IN and OUT operations.
-> 
-> We have conducted a call with interested people late last year since 
-> lack of LSFMMM and we would like to share the details with broader
-> community members.
+When the system enters the ACPI S3 or S4 sleep states, the internal
+wrapping key is discarded.
 
-Was on that call and I am interested in joining this discussion.
+The primary use case for the feature is bare metal dm-crypt. The key needs
+to be restored properly on wakeup, as dm-crypt does not prompt for the key
+on resume from suspend. Even the prompt it does perform for unlocking
+the volume where the hibernation image is stored, it still expects to reuse
+the key handles within the hibernation image once it is loaded. So it is
+motivated to meet dm-crypt's expectation that the key handles in the
+suspend-image remain valid after resume from an S-state.
 
-> 
-> * Why Linux Kernel Storage System needs Copy Offload support now ?
-> -----------------------------------------------------------------------
-> 
-> With the rise of the SNIA Computational Storage TWG and solutions [2],
-> existing SCSI XCopy support in the protocol, recent advancement in the
-> Linux Kernel File System for Zoned devices (Zonefs [5]), Peer to Peer
-> DMA support in the Linux Kernel mainly for NVMe devices [7] and
-> eventually NVMe Devices and subsystem (NVMe PCIe/NVMeOF) will benefit
-> from Copy offload operation.
-> 
-> With this background we have significant number of use-cases which are
-> strong candidates waiting for outstanding Linux Kernel Block Layer Copy
-> Offload support, so that Linux Kernel Storage subsystem can to address
-> previously mentioned problems [1] and allow efficient offloading of the
-> data related operations. (Such as move/copy etc.)
-> 
-> For reference following is the list of the use-cases/candidates waiting
-> for Copy Offload support :-
-> 
-> 1. SCSI-attached storage arrays.
-> 2. Stacking drivers supporting XCopy DM/MD.
-> 3. Computational Storage solutions.
-> 7. File systems :- Local, NFS and Zonefs.
-> 4. Block devices :- Distributed, local, and Zoned devices.
-> 5. Peer to Peer DMA support solutions.
-> 6. Potentially NVMe subsystem both NVMe PCIe and NVMeOF.
-> 
-> * What we will discuss in the proposed session ?
-> -----------------------------------------------------------------------
-> 
-> I'd like to propose a session to go over this topic to understand :-
-> 
-> 1. What are the blockers for Copy Offload implementation ?
-> 2. Discussion about having a file system interface.
-> 3. Discussion about having right system call for user-space.
-> 4. What is the right way to move this work forward ?
-> 5. How can we help to contribute and move this work forward ?
-> 
-> * Required Participants :-
-> -----------------------------------------------------------------------
-> 
-> I'd like to invite file system, block layer, and device drivers
-> developers to:-
-> 
-> 1. Share their opinion on the topic.
-> 2. Share their experience and any other issues with [4].
-> 3. Uncover additional details that are missing from this proposal.
-> 
-> Required attendees :-
-> 
-> Martin K. Petersen
-> Jens Axboe
-> Christoph Hellwig
-> Bart Van Assche
-> Zach Brown
-> Roland Dreier
-> Ric Wheeler
-> Trond Myklebust
-> Mike Snitzer
-> Keith Busch
-> Sagi Grimberg
-> Hannes Reinecke
-> Frederick Knight
-> Mikulas Patocka
-> Keith Busch
-> 
-> -ck
-> 
-> [1]https://urldefense.com/v3/__https://protect2.fireeye.com/v1/url?k=3933d1bc-66a8e8f3-39325af3-0cc47a30d446-55df181e6aabd8e8&q=1&e=c880f1d4-0275-4c86-ba38-205de0f24f69&u=https*3A*2F*2Fcontent.riscv.org*2Fwp-content*2Fuploads*2F2018*2F12*2FA-New-Golden-Age-for-Computer-Architecture-History-Challenges-and-Opportunities-David-Patterson-.pdf__;JSUlJSUlJSU!!EwVzqGoTKBqv-0DWAJBm!BhtIUewpIpaTRbAVe6VvjiRs-431N4ehiLybkoGuMxLiIvcuYlijJGJWlXVggCI71vV3$ 
-> [2] https://urldefense.com/v3/__https://protect2.fireeye.com/v1/url?k=e9dc0639-b6473f76-e9dd8d76-0cc47a30d446-03d65bc9ad20d215&q=1&e=c880f1d4-0275-4c86-ba38-205de0f24f69&u=https*3A*2F*2Fwww.snia.org*2Fcomputational__;JSUlJQ!!EwVzqGoTKBqv-0DWAJBm!BhtIUewpIpaTRbAVe6VvjiRs-431N4ehiLybkoGuMxLiIvcuYlijJGJWlXVggLInnHhS$ 
-> https://urldefense.com/v3/__https://protect2.fireeye.com/v1/url?k=13eb47ed-4c707ea2-13eacca2-0cc47a30d446-3d06014a33154497&q=1&e=c880f1d4-0275-4c86-ba38-205de0f24f69&u=https*3A*2F*2Fwww.napatech.com*2Fsupport*2Fresources*2Fsolution-descriptions*2Fnapatech-smartnic-solution-for-hardware-offload*2F__;JSUlJSUlJSU!!EwVzqGoTKBqv-0DWAJBm!BhtIUewpIpaTRbAVe6VvjiRs-431N4ehiLybkoGuMxLiIvcuYlijJGJWlXVggJJSlhVh$ 
->        https://urldefense.com/v3/__https://protect2.fireeye.com/v1/url?k=8ba72fbf-d43c16f0-8ba6a4f0-0cc47a30d446-359457fd63a1a13d&q=1&e=c880f1d4-0275-4c86-ba38-205de0f24f69&u=https*3A*2F*2Fwww.eideticom.com*2Fproducts.html__;JSUlJQ!!EwVzqGoTKBqv-0DWAJBm!BhtIUewpIpaTRbAVe6VvjiRs-431N4ehiLybkoGuMxLiIvcuYlijJGJWlXVggGCerEbv$ 
-> https://urldefense.com/v3/__https://protect2.fireeye.com/v1/url?k=75b96fa9-2a2256e6-75b8e4e6-0cc47a30d446-0403b00d6ff1bab8&q=1&e=c880f1d4-0275-4c86-ba38-205de0f24f69&u=https*3A*2F*2Fwww.xilinx.com*2Fapplications*2Fdata-center*2Fcomputational-storage.html__;JSUlJSUl!!EwVzqGoTKBqv-0DWAJBm!BhtIUewpIpaTRbAVe6VvjiRs-431N4ehiLybkoGuMxLiIvcuYlijJGJWlXVggK0Hp6vG$ 
-> [3] git://git.kernel.org/pub/scm/linux/kernel/git/mkp/linux.git xcopy
-> [4] https://urldefense.com/v3/__https://protect2.fireeye.com/v1/url?k=3a49563e-65d26f71-3a48dd71-0cc47a30d446-3cecc3d55115742b&q=1&e=c880f1d4-0275-4c86-ba38-205de0f24f69&u=https*3A*2F*2Fwww.spinics.net*2Flists*2Flinux-block*2Fmsg00599.html__;JSUlJSUl!!EwVzqGoTKBqv-0DWAJBm!BhtIUewpIpaTRbAVe6VvjiRs-431N4ehiLybkoGuMxLiIvcuYlijJGJWlXVggPvo936U$ 
-> [5] https://urldefense.com/v3/__https://protect2.fireeye.com/v1/url?k=910e6991-ce9550de-910fe2de-0cc47a30d446-c412c0c3c4c51c2b&q=1&e=c880f1d4-0275-4c86-ba38-205de0f24f69&u=https*3A*2F*2Flwn.net*2FArticles*2F793585*2F__;JSUlJSUl!!EwVzqGoTKBqv-0DWAJBm!BhtIUewpIpaTRbAVe6VvjiRs-431N4ehiLybkoGuMxLiIvcuYlijJGJWlXVggIprHJMJ$ 
-> [6] https://urldefense.com/v3/__https://protect2.fireeye.com/v1/url?k=0ab886e2-5523bfad-0ab90dad-0cc47a30d446-df0ae4acca6d59f2&q=1&e=c880f1d4-0275-4c86-ba38-205de0f24f69&u=https*3A*2F*2Fnvmexpress.org*2Fnew-nvmetm-specification-defines-zoned-__;JSUlJQ!!EwVzqGoTKBqv-0DWAJBm!BhtIUewpIpaTRbAVe6VvjiRs-431N4ehiLybkoGuMxLiIvcuYlijJGJWlXVggB4MUwfa$ 
-> namespaces-zns-as-go-to-industry-technology/
-> [7] https://urldefense.com/v3/__https://protect2.fireeye.com/v1/url?k=44a1a51b-1b3a9c54-44a02e54-0cc47a30d446-8577b144c92493eb&q=1&e=c880f1d4-0275-4c86-ba38-205de0f24f69&u=https*3A*2F*2Fgithub.com*2Fsbates130272*2Flinux-p2pmem__;JSUlJSU!!EwVzqGoTKBqv-0DWAJBm!BhtIUewpIpaTRbAVe6VvjiRs-431N4ehiLybkoGuMxLiIvcuYlijJGJWlXVggEa99Fso$ 
-> [8] https://urldefense.com/v3/__https://protect2.fireeye.com/v1/url?k=0745845d-58debd12-07440f12-0cc47a30d446-53178030a251a9d8&q=1&e=c880f1d4-0275-4c86-ba38-205de0f24f69&u=https*3A*2F*2Fkernel.dk*2Fio_uring.pdf__;JSUlJQ!!EwVzqGoTKBqv-0DWAJBm!BhtIUewpIpaTRbAVe6VvjiRs-431N4ehiLybkoGuMxLiIvcuYlijJGJWlXVggJUxR2B3$ 
+Key Locker provides a mechanism to back up the internal wrapping key in
+non-volatile storage. The kernel requests a backup right after the key is
+loaded at boot time. It is copied back to each CPU upon wakeup.
 
+While the backup may be maintained in NVM across S5 and G3 "off"
+states it is not architecturally guaranteed, nor is it expected by dm-crypt
+which expects to prompt for the key each time the volume is started.
+
+The entirety of Key Locker needs to be disabled if the backup mechanism is
+not available unless CONFIG_SUSPEND=n, otherwise dm-crypt requires the
+backup to be available.
+
+In the event of a key restore failure the kernel proceeds with an
+initialized IWKey state. This has the effect of invalidating any key
+handles that might be present in a suspend-image. When this happens
+dm-crypt will see I/O errors resulting from error returns from
+crypto_skcipher_{en,de}crypt(). While this will disrupt operations in the
+current boot, data is not at risk and access is restored at the next reboot
+to create new handles relative to the current IWKey.
+
+Manage a feature-specific flag to communicate with the crypto
+implementation. This ensures to stop using the AES instructions upon the
+key restore failure while not turning off the feature.
+
+Signed-off-by: Chang S. Bae <chang.seok.bae@intel.com>
+Reviewed-by: Dan Williams <dan.j.williams@intel.com>
+Acked-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+Cc: x86@kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-pm@vger.kernel.org
+---
+Changes from v5:
+* Fix the valid_kl flag setting when the feature is disabled.
+  (Reported by Marvin Hsu <marvin.hsu@intel.com>)
+
+Changes from v4:
+* Update the changelog and title. (Rafael Wysocki)
+
+Changes from v3:
+* Fix the build issue with !X86_KEYLOCKER. (Eric Biggers)
+
+Changes from RFC v2:
+* Change the backup key failure handling. (Dan Williams)
+
+Changes from RFC v1:
+* Folded the warning message into the if condition check. (Rafael
+Wysocki)
+* Rebased on the changes of the previous patches.
+* Added error code for key restoration failures.
+* Moved the restore helper.
+* Added function descriptions.
+---
+ arch/x86/include/asm/keylocker.h |   4 +
+ arch/x86/kernel/keylocker.c      | 128 ++++++++++++++++++++++++++++++-
+ arch/x86/power/cpu.c             |   2 +
+ 3 files changed, 132 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/include/asm/keylocker.h b/arch/x86/include/asm/keylocker.h
+index 820ac29c06d9..c1d27fb5a1c3 100644
+--- a/arch/x86/include/asm/keylocker.h
++++ b/arch/x86/include/asm/keylocker.h
+@@ -32,9 +32,13 @@ struct iwkey {
+ #ifdef CONFIG_X86_KEYLOCKER
+ void setup_keylocker(struct cpuinfo_x86 *c);
+ void destroy_keylocker_data(void);
++void restore_keylocker(void);
++extern bool valid_keylocker(void);
+ #else
+ #define setup_keylocker(c) do { } while (0)
+ #define destroy_keylocker_data() do { } while (0)
++#define restore_keylocker() do { } while (0)
++static inline bool valid_keylocker(void) { return false; }
+ #endif
+ 
+ #endif /*__ASSEMBLY__ */
+diff --git a/arch/x86/kernel/keylocker.c b/arch/x86/kernel/keylocker.c
+index 87d775a65716..981c1f5517e7 100644
+--- a/arch/x86/kernel/keylocker.c
++++ b/arch/x86/kernel/keylocker.c
+@@ -11,11 +11,26 @@
+ #include <asm/fpu/api.h>
+ #include <asm/keylocker.h>
+ #include <asm/tlbflush.h>
++#include <asm/msr.h>
+ 
+ static __initdata struct keylocker_setup_data {
++	bool initialized;
+ 	struct iwkey key;
+ } kl_setup;
+ 
++/*
++ * This flag is set with IWKey load. When the key restore fails, it is
++ * reset. This restore state is exported to the crypto library, then AES-KL
++ * will not be used there. So, the feature is soft-disabled with this flag.
++ */
++static bool valid_kl;
++
++bool valid_keylocker(void)
++{
++	return valid_kl;
++}
++EXPORT_SYMBOL_GPL(valid_keylocker);
++
+ static void __init generate_keylocker_data(void)
+ {
+ 	get_random_bytes(&kl_setup.key.integrity_key,  sizeof(kl_setup.key.integrity_key));
+@@ -24,7 +39,13 @@ static void __init generate_keylocker_data(void)
+ 
+ void __init destroy_keylocker_data(void)
+ {
++	if (!cpu_feature_enabled(X86_FEATURE_KEYLOCKER) ||
++	    cpu_feature_enabled(X86_FEATURE_HYPERVISOR))
++		return;
++
+ 	memset(&kl_setup.key, KEY_DESTROY, sizeof(kl_setup.key));
++	kl_setup.initialized = true;
++	valid_kl = true;
+ }
+ 
+ static void __init load_keylocker(void)
+@@ -34,6 +55,27 @@ static void __init load_keylocker(void)
+ 	kernel_fpu_end();
+ }
+ 
++/**
++ * copy_keylocker - Copy the internal wrapping key from the backup.
++ *
++ * Request hardware to copy the key in non-volatile storage to the CPU
++ * state.
++ *
++ * Returns:	-EBUSY if the copy fails, 0 if successful.
++ */
++static int copy_keylocker(void)
++{
++	u64 status;
++
++	wrmsrl(MSR_IA32_COPY_IWKEY_TO_LOCAL, 1);
++
++	rdmsrl(MSR_IA32_IWKEY_COPY_STATUS, status);
++	if (status & BIT(0))
++		return 0;
++	else
++		return -EBUSY;
++}
++
+ /**
+  * setup_keylocker - Enable the feature.
+  * @c:		A pointer to struct cpuinfo_x86
+@@ -49,6 +91,7 @@ void __ref setup_keylocker(struct cpuinfo_x86 *c)
+ 
+ 	if (c == &boot_cpu_data) {
+ 		u32 eax, ebx, ecx, edx;
++		bool backup_available;
+ 
+ 		cpuid_count(KEYLOCKER_CPUID, 0, &eax, &ebx, &ecx, &edx);
+ 		/*
+@@ -62,10 +105,49 @@ void __ref setup_keylocker(struct cpuinfo_x86 *c)
+ 			goto disable;
+ 		}
+ 
++		backup_available = !!(ebx & KEYLOCKER_CPUID_EBX_BACKUP);
++		/*
++		 * The internal wrapping key in CPU state is volatile in
++		 * S3/4 states. So ensure the backup capability along with
++		 * S-states.
++		 */
++		if (!backup_available && IS_ENABLED(CONFIG_SUSPEND)) {
++			pr_debug("x86/keylocker: No key backup support with possible S3/4.\n");
++			goto disable;
++		}
++
+ 		generate_keylocker_data();
+-	}
++		load_keylocker();
++
++		/* Backup an internal wrapping key in non-volatile media. */
++		if (backup_available)
++			wrmsrl(MSR_IA32_BACKUP_IWKEY_TO_PLATFORM, 1);
++	} else {
++		int rc;
+ 
+-	load_keylocker();
++		/*
++		 * Load the internal wrapping key directly when available
++		 * in memory, which is only possible at boot-time.
++		 *
++		 * NB: When system wakes up, this path also recovers the
++		 * internal wrapping key.
++		 */
++		if (!kl_setup.initialized) {
++			load_keylocker();
++		} else if (valid_kl) {
++			rc = copy_keylocker();
++			/*
++			 * The boot CPU was successful but the key copy
++			 * fails here. Then, the subsequent feature use
++			 * will have inconsistent keys and failures. So,
++			 * invalidate the feature via the flag.
++			 */
++			if (rc) {
++				valid_kl = false;
++				pr_err_once("x86/keylocker: Invalid copy status (rc: %d).\n", rc);
++			}
++		}
++	}
+ 
+ 	pr_info_once("x86/keylocker: Enabled.\n");
+ 	return;
+@@ -77,3 +159,45 @@ void __ref setup_keylocker(struct cpuinfo_x86 *c)
+ 	/* Make sure the feature disabled for kexec-reboot. */
+ 	cr4_clear_bits(X86_CR4_KEYLOCKER);
+ }
++
++/**
++ * restore_keylocker - Restore the internal wrapping key.
++ *
++ * The boot CPU executes this while other CPUs restore it through the setup
++ * function.
++ */
++void restore_keylocker(void)
++{
++	u64 backup_status;
++	int rc;
++
++	if (!cpu_feature_enabled(X86_FEATURE_KEYLOCKER) || !valid_kl)
++		return;
++
++	/*
++	 * The IA32_IWKEYBACKUP_STATUS MSR contains a bitmap that indicates
++	 * an invalid backup if bit 0 is set and a read (or write) error if
++	 * bit 2 is set.
++	 */
++	rdmsrl(MSR_IA32_IWKEY_BACKUP_STATUS, backup_status);
++	if (backup_status & BIT(0)) {
++		rc = copy_keylocker();
++		if (rc)
++			pr_err("x86/keylocker: Invalid copy state (rc: %d).\n", rc);
++		else
++			return;
++	} else {
++		pr_err("x86/keylocker: The key backup access failed with %s.\n",
++		       (backup_status & BIT(2)) ? "read error" : "invalid status");
++	}
++
++	/*
++	 * Now the backup key is not available. Invalidate the feature via
++	 * the flag to avoid any subsequent use. But keep the feature with
++	 * zero IWKeys instead of disabling it. The current users will see
++	 * key handle integrity failure but that's because of the internal
++	 * key change.
++	 */
++	pr_err("x86/keylocker: Failed to restore internal wrapping key.\n");
++	valid_kl = false;
++}
+diff --git a/arch/x86/power/cpu.c b/arch/x86/power/cpu.c
+index 9f2b251e83c5..1a290f529c73 100644
+--- a/arch/x86/power/cpu.c
++++ b/arch/x86/power/cpu.c
+@@ -25,6 +25,7 @@
+ #include <asm/cpu.h>
+ #include <asm/mmu_context.h>
+ #include <asm/cpu_device_id.h>
++#include <asm/keylocker.h>
+ 
+ #ifdef CONFIG_X86_32
+ __visible unsigned long saved_context_ebx;
+@@ -262,6 +263,7 @@ static void notrace __restore_processor_state(struct saved_context *ctxt)
+ 	mtrr_bp_restore();
+ 	perf_restore_debug_store();
+ 	msr_restore_context(ctxt);
++	restore_keylocker();
+ 
+ 	c = &cpu_data(smp_processor_id());
+ 	if (cpu_has(c, X86_FEATURE_MSR_IA32_FEAT_CTL))
+-- 
+2.17.1
 
 --
 dm-devel mailing list
