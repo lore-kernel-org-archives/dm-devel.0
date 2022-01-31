@@ -4,133 +4,130 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6B2B9C43217
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Feb 2022 06:19:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A98E5C433EF
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Feb 2022 06:19:17 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-301-ta2wnzaZPUalEyk010tqVw-1; Wed, 02 Feb 2022 01:19:11 -0500
-X-MC-Unique: ta2wnzaZPUalEyk010tqVw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-403-cl-TrzhoN_WY484ZYsE8Ew-1; Wed, 02 Feb 2022 01:19:13 -0500
+X-MC-Unique: cl-TrzhoN_WY484ZYsE8Ew-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3FCDB18397B3;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E4574802930;
 	Wed,  2 Feb 2022 06:19:07 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1FEF35DBAA;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C216E5E496;
 	Wed,  2 Feb 2022 06:19:07 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EDC6F4A7C8;
-	Wed,  2 Feb 2022 06:19:06 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.10])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 998E34A7CA;
+	Wed,  2 Feb 2022 06:19:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.7])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21261w3X019942 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 2 Feb 2022 01:01:58 -0500
+	id 20VGL2gk012457 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 31 Jan 2022 11:21:03 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id EB2F6401E59; Wed,  2 Feb 2022 06:01:57 +0000 (UTC)
+	id B8F761454546; Mon, 31 Jan 2022 16:21:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E68C6401E4A
-	for <dm-devel@redhat.com>; Wed,  2 Feb 2022 06:01:57 +0000 (UTC)
+	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B36E01454537
+	for <dm-devel@redhat.com>; Mon, 31 Jan 2022 16:21:02 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A7F131C05AF2
-	for <dm-devel@redhat.com>; Wed,  2 Feb 2022 06:01:57 +0000 (UTC)
-Received: from mailout1.w2.samsung.com (mailout1.w2.samsung.com
-	[211.189.100.11]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-31-a5rWjxA_NZiYi2bOZqwnMA-1; Wed, 02 Feb 2022 01:01:54 -0500
-X-MC-Unique: a5rWjxA_NZiYi2bOZqwnMA-1
-Received: from uscas1p2.samsung.com (unknown [182.198.245.207])
-	by mailout1.w2.samsung.com (KnoxPortal) with ESMTP id
-	20220202060153usoutp01828a9d6888504cd921d9e88bcd3ace57~P4sJiMcHV1845518455usoutp01e;
-	Wed,  2 Feb 2022 06:01:53 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout1.w2.samsung.com
-	20220202060153usoutp01828a9d6888504cd921d9e88bcd3ace57~P4sJiMcHV1845518455usoutp01e
-Received: from ussmges2new.samsung.com (u111.gpu85.samsung.co.kr
-	[203.254.195.111]) by uscas1p2.samsung.com (KnoxPortal) with ESMTP id
-	20220202060153uscas1p274d27045eba66b067a87573c0542e439~P4sJSO1K61178411784uscas1p2W;
-	Wed,  2 Feb 2022 06:01:53 +0000 (GMT)
-Received: from uscas1p1.samsung.com ( [182.198.245.206]) by
-	ussmges2new.samsung.com (USCPEMTA) with SMTP id 35.50.10104.05E1AF16;
-	Wed, 2 Feb 2022 01:01:52 -0500 (EST)
-Received: from ussmgxs3new.samsung.com (u92.gpu85.samsung.co.kr
-	[203.254.195.92]) by uscas1p2.samsung.com (KnoxPortal) with ESMTP id
-	20220202060152uscas1p223157b1d5017fe710820cefd35fac1bb~P4sIkumlW0693906939uscas1p25;
-	Wed,  2 Feb 2022 06:01:52 +0000 (GMT)
-X-AuditID: cbfec36f-2fdff70000002778-e1-61fa1e5068d0
-Received: from SSI-EX4.ssi.samsung.com ( [105.128.2.145]) by
-	ussmgxs3new.samsung.com (USCPEXMTA) with SMTP id 8C.F5.09657.05E1AF16;
-	Wed, 2 Feb 2022 01:01:52 -0500 (EST)
-Received: from SSI-EX3.ssi.samsung.com (105.128.2.228) by
-	SSI-EX4.ssi.samsung.com (105.128.2.229) with Microsoft SMTP Server
-	(version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id
-	15.1.2242.4; Tue, 1 Feb 2022 22:01:14 -0800
-Received: from SSI-EX3.ssi.samsung.com ([fe80::8d80:5816:c578:8c36]) by
-	SSI-EX3.ssi.samsung.com ([fe80::8d80:5816:c578:8c36%3]) with mapi id
-	15.01.2242.008; Tue, 1 Feb 2022 22:01:13 -0800
-From: Adam Manzanares <a.manzanares@samsung.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Thread-Topic: [RFC PATCH 3/3] nvme: add the "debug" host driver
-Thread-Index: AQHYF5o0LMwUDmubDUu2kNRmd7lMHKyAS6yA
-Date: Wed, 2 Feb 2022 06:01:13 +0000
-Message-ID: <20220202060154.GA120951@bgt-140510-bm01>
-In-Reply-To: <alpine.LRH.2.02.2202011333160.22481@file01.intranet.prod.int.rdu2.redhat.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-originating-ip: [105.128.2.176]
-x-exchange-save: DSA
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 96A303C01B88
+	for <dm-devel@redhat.com>; Mon, 31 Jan 2022 16:21:02 +0000 (UTC)
+Received: from EUR04-VI1-obe.outbound.protection.outlook.com
+	(mail-eopbgr80123.outbound.protection.outlook.com [40.107.8.123]) by
+	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-518-9eFGcQL9NgGO7KXmhnZvGA-1; Mon, 31 Jan 2022 11:20:58 -0500
+X-MC-Unique: 9eFGcQL9NgGO7KXmhnZvGA-1
+Received: from DB6PR0802MB2374.eurprd08.prod.outlook.com (2603:10a6:4:8a::21)
+	by AM0PR08MB3058.eurprd08.prod.outlook.com (2603:10a6:208:5a::19)
+	with Microsoft SMTP Server (version=TLS1_2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4930.17;
+	Mon, 31 Jan 2022 16:20:55 +0000
+Received: from DB6PR0802MB2374.eurprd08.prod.outlook.com
+	([fe80::57c:1b85:7b36:55bf]) by
+	DB6PR0802MB2374.eurprd08.prod.outlook.com
+	([fe80::57c:1b85:7b36:55bf%5]) with mapi id 15.20.4930.021;
+	Mon, 31 Jan 2022 16:20:55 +0000
+Message-ID: <315cd58c-7605-ed88-23c4-a9509169231c@virtuozzo.com>
+Date: Mon, 31 Jan 2022 19:20:53 +0300
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+	Thunderbird/91.5.1
+To: agk@redhat.com, snitzer@redhat.com, damien.lemoal@wdc.com,
+	ktkhai@virtuozzo.com, dm-devel@redhat.com
+From: Kirill Tkhai <ktkhai@virtuozzo.com>
+X-ClientProxiedBy: FR0P281CA0062.DEUP281.PROD.OUTLOOK.COM
+	(2603:10a6:d10:49::23) To DB6PR0802MB2374.eurprd08.prod.outlook.com
+	(2603:10a6:4:8a::21)
 MIME-Version: 1.0
-X-CFilter-Loop: Reflected
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Se0xTVxyAc+69vS0VyLUSOLQbum4scQ4GvnK2OaZxiXczcyTLXJQNqXpX
-	G3mYljo0cYJEIgKTAipUYqFb6KA4WVnQ8SijiIBIaVcrWIdbB8ZNpTwES7GFUW5N+O87Od85
-	+X4nh4cLjKSQJ0vPZOTpklQxySeabs6YYxKj5iRxPvNmpB8+R6ILEx4cjXeMcFDJuXIuso2G
-	ojbXJQ6yzOZgaMSwgKFWbQmGavVdGHqk+wGg/D4LhrzOeFRiugtQm2Mdam3rJZCm5iEXFQxe
-	J5HxSRuOdN3zGFKdsWPIrPaSqPOBnUB6L0KnCz1c9Lg9eauQtt3ZSatyXVw6t+pPgrb1K2lD
-	XT5JN/54ki4d0gG65V42SZ+63YXT5VPTJD14+xpGF+W6SHryoYOgm5xFXHrcaCfpq7/aicRV
-	e/lbDjKpsqOM/J2EFP6hdt84ODLnAFn9pTNENqgwgLMgiAepjdDbZ8P8LKBqAVzwCc4C/iKf
-	xmBzpZX7UrqiLQGsdAVAc2ccK00AOPxPA5ddtAOY3/mA47dIKg6+6P4F93MYtRb+UfmU45dw
-	yhcE9QXdi1fxeKuoBFjt+YR1PoRTndqAvx76pgqXkgjqDXjDWEX6OYTaBN2TeUtFQVQSfG41
-	EX4GVDh036pf8nEqAjpGNRhbvRJqL7XiLIfD+WYnyfJr8C/3f4HJwuDP7jGSPRsLh86XBTgB
-	Dve0A5bXwZrqJzjbsBL2VowS7NlI2PHTEOGfC1K/8aFe/X3g0o9g411P4H1F8GK9LSDVAVj2
-	PI/LLhoBLJ+zYMUgWr2sXL2sRL2sRL2sRL2spApw6kCEUqFIkzKK9enMt7EKSZpCmS6NPZCR
-	ZgCLX7xvvjPjOhh0TMaaAMYDJgB5uDgspK3aLRGEHJQcO87IM/bJlamMwgREPEIcEVIja5AI
-	KKkkkznMMEcY+ctdjBckzMYkkWT311ZzvMEsbtIl/y0PnXtz+8aG0N1pqkdT0V+cUVWM/btm
-	enCfTEPMpmTtKJWeanmWufPwZvBCvgucuKim3rcEGzARJcrXqHS9A1k53v7cvE8/KCoqVlNv
-	61wbWoTWAwXvKjY8dcZ8rrkgRS29W+9kBJvEztn+bZdRQypzNfLa6pw941phxA17QqLK1jG+
-	gxubEgVfffal3jUQXHy/TrRpv2WgNG7FZ9Hce/2v/O4WJTMnV285seL1Cd3RmYVw1DXyza2x
-	vbnEdI+ONzxxbH+ZbNueean+vvj4V57wxzfP72a0a79LYgqjPt7eI2qKqUxq9infM1oE1jX1
-	taNTYkJxSBL/Fi5XSP4H3T3wH1EEAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFnrBKsWRmVeSWpSXmKPExsWS2cA0UTdA7leiwfF7Yhar7/azWUz78JPZ
-	4v3Bx6wWk/pnsFtcfsJnsffdbFaLCz8amSweb/rPZLFn0SQmi5WrjzJZPF++mNGi8/QFJos/
-	Dw0tJh26xmix95a2xZ69J1ks5i97ym7RfX0Hm8W+13uZLZYf/8dkMbHjKpPFuVl/2CwO37vK
-	YrH6j4VFa89PdotX++McpDwuX/H2mNj8jt2jecEdFo/LZ0s9Nq3qZPPYvKTeY/KN5Yweu282
-	sHk0nTnK7DHj0xc2j+tntjN59Da/Y/P4+PQWi8e2h73sHu/3XWXzWL/lKkuAcBSXTUpqTmZZ
-	apG+XQJXxv6/7xkLft1irDg7+StLA+PMTYxdjJwcEgImEmsXTQKyuTiEBFYzSvx9vZUVwvnA
-	KNHbdgXK2c8oMWV9IytIC5uAgcTv4xuZQWwRAU2JS3PegBUxC/zllDjwoQXI4eAQFrCTWPjT
-	C6LGXuLT4UVQ9UYSfz/1MIHYLAIqEkf2LWADsXkFTCW+f2xjh1j2iEnizffJLCAJToFoiW8X
-	D4HZjAJiEt9PrQFrZhYQl7j1ZD4TxA8CEkv2nGeGsEUlXj7+xwphK0rc//6SHcIWkVj3/S0b
-	RK+exI2pU6BsO4m7J/YzQtjaEssWvmaGOEhQ4uTMJywQvZISB1fcYJnAKDkLyepZSEbNQjJq
-	FpJRs5CMWsDIuopRvLS4ODe9otg4L7Vcrzgxt7g0L10vOT93EyMwMZ7+dzhmB+O9Wx/1DjEy
-	cTAeYpTgYFYS4d278HuiEG9KYmVValF+fFFpTmrxIUZpDhYlcV6P2InxQgLpiSWp2ampBalF
-	MFkmDk6pBiaun4mpl2Uu7L3ZOWGj8+WT/x+U14j++JOx+eUN1VPJ4VaPL8goFPX9Yb5hv3V3
-	YkUMz7ZJLzoET2g6v1L/XHb90+dVbu8ePKu4rsJnfaGfecOMbTs8/ePYIqfO1pW4bP04cK5d
-	fuvSH3I/dj8zUf613rm5NmvvrWM5cUdm7O0z8t2cfFZSgeHQpuq7l7Zr/hD6VKnV/Kt4UlTW
-	sxkFysvC+xubhW/e+KZiYMqg/yJ6v5R8ebSo3z/D4KhtPA9z0/dnMyt7+O8Na1D62n7h78mS
-	tz1zj1l83G/2/f+/m/PXxl7bG/qnec+qEnOFtx8uaRjk1iYdfVXpbaiSEywf6LSlcOIdva7l
-	lpN4lk3fwzFJiaU4I9FQi7moOBEAwc+yePsDAAA=
-X-CMS-MailID: 20220202060152uscas1p223157b1d5017fe710820cefd35fac1bb
-CMS-TYPE: 301P
-X-CMS-RootMailID: 20220201183359uscas1p2d7e48dc4cafed3df60c304a06f2323cd
-References: <f0e19ae4-b37a-e9a3-2be7-a5afb334a5c3@nvidia.com>
-	<20220201102122.4okwj2gipjbvuyux@mpHalley-2>
-	<alpine.LRH.2.02.2202011327350.22481@file01.intranet.prod.int.rdu2.redhat.com>
-	<CGME20220201183359uscas1p2d7e48dc4cafed3df60c304a06f2323cd@uscas1p2.samsung.com>
-	<alpine.LRH.2.02.2202011333160.22481@file01.intranet.prod.int.rdu2.redhat.com>
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-Correlation-Id: 619b15d5-99f2-47b6-7757-08d9e4d5a853
+X-MS-TrafficTypeDiagnostic: AM0PR08MB3058:EE_
+X-Microsoft-Antispam-PRVS: <AM0PR08MB3058B5BF2B41F5AD6E9182ECCD259@AM0PR08MB3058.eurprd08.prod.outlook.com>
+X-MS-Oob-TLC-OOBClassifiers: OLM:1186
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0
+X-Microsoft-Antispam-Message-Info: brWT4pzt8AcohTmRFVagdEyQCDAT5z2fOagz6ATT+OXVJL8WoiF7ic2bR/v9q5NcisvhxhkReykVUYoxzonKPGVDB/BFmTHXVyOX0Y4UL6vsLRTPsEubVkk4WZGyk0bjAZ9Me0aermf/v8OemSgLXe7qqSLYTcSUhmWpdgnl6GsuQNjkTmNdzRrYR0dNtx8/VHDsbDbAj2SyWhcthdOVNBU8ae6jDVSuXDGAIIt+eMhpGyh8rbPPrv+7PwZ0HPTE4mewMWFNwMDLm92rdPNbVITVsti30P4fPO9eF5OTr8YtF/pSWXNFR+gt70idzURt8ZOtxMFz5ntoOnalyaO3rI9mal/czAvI+iybwPAYD+WmEOKeFd+irOQYyTGlh6Wh8qNfDfhaLP3VyxrTwqCiI6oZazvf/zwgOemqspZy7NwPE/rS73qfhaA5xtCnjfHDR7xIIe7soqSOZlDrcHuV2HQC8l3EI6MTmkfk9akWAvcTWaqdYb2g1R/FKT9vGuxc8CkxzCW84ZVoJdFJ0K5c0noNzkFFG7Bpc2gygcblTbEqieO0JVB6ps3X3uVmCn2KQ6VoHl7KxPHSLrTMyWsyj2YaWrvu75OGYZdlySQ/HaheKVRFrMz6rPho97CXwZSWWiOxSml1z3SpW+H9zgvfyMcU+P+y20/j5lnyaZwC/Wy7AhZp7LkwjlNnfPhar8tFSNn86JVDEsarCb/4q7Lf8yk0sGat/I4LD3xmUWV8I2rcVvTEmBlWDthqwTln1GWnpTCKgZJlylD6ae7PMscbrg==
+X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:DB6PR0802MB2374.eurprd08.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(13230001)(4636009)(366004)(508600001)(86362001)(83380400001)(31696002)(6486002)(31686004)(38100700002)(38350700002)(8676002)(8936002)(36756003)(66556008)(66476007)(66946007)(316002)(52116002)(186003)(5660300002)(26005)(6506007)(2616005)(2906002)(6512007)(45980500001)(43740500002)(20210929001);
+	DIR:OUT; SFP:1102
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?utf-8?B?Z2xic1VITEgvRmwwNFR0VWUraWpsQjV5eFpuV2x2L0o3bi9idDNFR2QxWXls?=
+	=?utf-8?B?NjZnT3Z2aE9wejA3Q0lkSzJUZmE3d25RMkZoU1cyanUycGZ1dWxzUkU0OWRt?=
+	=?utf-8?B?YXNEd1BFZGxmVU12WU0xN3dSZTRPZkdHNHVLU2hGZ0lEVGRJSkpKZnFLd3pJ?=
+	=?utf-8?B?cm5KWXpsNjRTOFNNOEZCd2kzbkxzVEFlaUZSY2hSZ3VCWkdVMUNKL3krNG1x?=
+	=?utf-8?B?bCt4ZFdBZFVFcDUyK1Y5bnl1blJjNGtSaEhZMTdqWXNmN09oTEIvWGpzQkJH?=
+	=?utf-8?B?Sk1nRTQveWdRZkFUQ2M3THg2dkZtak9sY3hPVzFGaVoySEJiN1JGcWNJb2xE?=
+	=?utf-8?B?U01HbFh5WmdOQ3RrVTUzNVExZGJvNWhNYTZxVUE1RHNtVnl3NlVnR1Zkd2l4?=
+	=?utf-8?B?RXd5ZFhtZEdnaUlBaWoxLzhBaXlzaDZrb1NhdG9iaUFzRmg5ZXAxaDBkck9m?=
+	=?utf-8?B?eTBIT2dVanVhUGJqOExMVVZxTUVxVG45NEFjYmVmZHdvWG4yS2NrT0N5TFVE?=
+	=?utf-8?B?cUdQRkY1OFJ4Q01mR1ZyZ0x3WHBjalhPY3dqSUNGUFlTakFpaDBKMVF6R1VH?=
+	=?utf-8?B?R1VqSDB1cWJ1S2FHZm5BZzVPTXFiRGE4WC8vUFdLSVJlRlVhaG5wRW0xM3c2?=
+	=?utf-8?B?Rk1OQ1Ntb0Q1elBDY2d5WXZra0QzZ0lyTlFFeDFHNjVMM0s0Q1o3bTBoRFhs?=
+	=?utf-8?B?ako3eDZ4Vzc5cUd1bERzME1ya05MTGl6TXBkZGtBelJSdHZKekdZQWcxR3BW?=
+	=?utf-8?B?SGFGbmdJdTNaYSs5NTlhMFZxZmZxbElHS3FUOUhwVGZQWUhQMUlicjJaaE5z?=
+	=?utf-8?B?R2ZKTHBvcTJTeittdVFsUlFWaWZTc2MxTWVpVkd2d2o0MmJ2VmxFcjA1Y3lt?=
+	=?utf-8?B?QlVzM0JDTXRyYVJLVnkwSzF4Vml4NUNMaFhVOGtxMkEzOFd3KzFDWURqRDFQ?=
+	=?utf-8?B?M3ZBSm9KZE1HcHo5OU1DM0FQeEY0anpsY0N4UXBCL2Z1VnhXakRlbjVSSEFZ?=
+	=?utf-8?B?T0NPU3lLZDhlU3VuL2NMWkt5MU5reGJPTTJ6MGt2bU1NaGVxUmxCaERnQyta?=
+	=?utf-8?B?cStMRVZyT3lYUEJndnpLVmlLOXRJQ1dQQnRJQnhxc3cwZlZ5MnZvam5LY2Vw?=
+	=?utf-8?B?L2UwdnpuRGp2bFVCc3FSVnZVZnUyc2pncjluYnJDY1NLSHI5VThrN21qWlVS?=
+	=?utf-8?B?cEpwRVZOT0V6WEJIRzk3c3Vyc2JOcVNUUXdwUUFjNU9NNHJzd25XWmFSZG1q?=
+	=?utf-8?B?bGVnUmFrYTA3NUdEWjNmblNzUGdwcTNUYmNnZEE1YmtOajNVZ0tjTG4xRTRv?=
+	=?utf-8?B?UndEU0g1c0lXd2JDcmNCTTI3SmVPVU9zTWQ4cTl0SkdYbXI2WS9iNW1UM0Z5?=
+	=?utf-8?B?bUN6ZnhadkR5TFNnVWJiUE5uL0gvMnQ5YWErQUxSY21rSEN4Zi9PUmpKZkts?=
+	=?utf-8?B?Yy9Nbk9UcFJnZUVKbjFCVVdCbFVRUTdIZGVTWWJpaDNjeUFkREZ2R0puV3ZN?=
+	=?utf-8?B?cEFPL09sWVpWTkVKNkNFelFFaUp6bHNlWjNlUjJmdGMvNExSWE1JNk9lcnpj?=
+	=?utf-8?B?L3JBSDRuN1QxSVk0QzVVclFkdHVneHlBTjVOMnJFTXBuaVhaUGZ4Mk9McFU2?=
+	=?utf-8?B?N015ekR3bGROSnlIcXZpZ3Q1dktRekFnS1I2bENqNlhBN1hwdWZrMnBwMGdU?=
+	=?utf-8?B?NGFzYS9vR2wvbFN6N3FUd1lBVnZ0bzdaRGNnN0tCZzdQanRkdWxxK0NtamI2?=
+	=?utf-8?B?Mm8zaFJFMWlLRzhkaDhiVmlVWmR1bzAyejVHdTMrTExxaWdrODNQSXJXYnNM?=
+	=?utf-8?B?KzQvVjZyWFFZb0dLYnJYZUM5STNOWnJjMmcyMzJHWFZQYnNzK0NoQ1ZYeTdv?=
+	=?utf-8?B?YjVxK1paV1A3SHRRckNOUGRGVkZ3MUQ0K0VWa1Z0U3h3WG9WUi84SjhsdFk2?=
+	=?utf-8?B?WDFKSXBzL1hUU3FWaFR4NCtoUjRPWmt6bk5UVjdmWnRHR3M0NWVoNkYyN25U?=
+	=?utf-8?B?dXNtMmpqOWxicmU0Mlg4Tkc0a1RLbHNIRExCeDUxYkprUU43WDVsYmlRTDgx?=
+	=?utf-8?B?WU9PNnhnRlNna2NpRUFoWUNZMU5IVnZRV09XK2llQnZNT0dsczllcVh3Smtu?=
+	=?utf-8?B?WnorK2NtQWRLYVNyeUphMmprTkxvaWRRMWhOSWVFMkRndkMyeTYrdE1HNjRM?=
+	=?utf-8?Q?GNMXEg4NG0d36Dwor9TNzug=3D?=
+X-OriginatorOrg: virtuozzo.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 619b15d5-99f2-47b6-7757-08d9e4d5a853
+X-MS-Exchange-CrossTenant-AuthSource: DB6PR0802MB2374.eurprd08.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 31 Jan 2022 16:20:55.5188 (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 0bc7f26d-0264-416e-a6fc-8352af79c58f
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: PFvU2j+HKT4NH56fAYSEoakhYDkHg1aQqeL5s08Dna8A0A0G+BKGbU5yxb2VjnkBy6CbQumGe1IUt+aZJjZKaw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR08MB3058
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -139,35 +136,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 21261w3X019942
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Wed, 02 Feb 2022 01:18:44 -0500
-Cc: "djwong@kernel.org" <djwong@kernel.org>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"clm@fb.com" <clm@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"osandov@fb.com" <osandov@fb.com>,
-	=?iso-8859-1?Q?Javier_Gonz=E1lez?= <javier@javigon.com>, Bart
-	Van Assche <bvanassche@acm.org>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	Christoph Hellwig <hch@lst.de>,
-	"roland@purestorage.com" <roland@purestorage.com>,
-	"zach.brown@ni.com" <zach.brown@ni.com>, Chaitanya
-	Kulkarni <chaitanyak@nvidia.com>,
-	"msnitzer@redhat.com >> msnitzer@redhat.com" <msnitzer@redhat.com>,
-	"josef@toxicpanda.com" <josef@toxicpanda.com>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"dsterba@suse.com" <dsterba@suse.com>, "kbus
-	@imap.gmail.com>> Keith Busch" <kbusch@kernel.org>,
-	"Frederick.Knight@netapp.com" <Frederick.Knight@netapp.com>,
-	Jens Axboe <axboe@kernel.dk>, "tytso@mit.edu" <tytso@mit.edu>,
-	Kanchan Joshi <joshi.k@samsung.com>,
-	"martin.petersen@oracle.com >> Martin K.
-	Petersen" <martin.petersen@oracle.com>, "jack@suse.com" <jack@suse.com>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	"lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
-Subject: Re: [dm-devel] [RFC PATCH 3/3] nvme: add the "debug" host driver
+Subject: [dm-devel] dm: Fix use-after-free in dm_cleanup_zoned_dev()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -181,916 +153,145 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <1C941B6A1CEAD64DA35D9C50358485E3@ssi.samsung.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Feb 01, 2022 at 01:33:47PM -0500, Mikulas Patocka wrote:
-> This patch adds a new driver "nvme-debug". It uses memory as a backing
-> store and it is used to test the copy offload functionality.
->
+dm_cleanup_zoned_dev() uses queue, so it must be called before blk_cleanup_disk() starts its killing:
 
-We have looked at something similar to create a null nvme driver to test 
-interfaces poking the nvme driver without using the block layer. Have you 
-considered implementing this in the fabrics code since it is already virtualizng
-a ssd controller? 
+blk_cleanup_disk->blk_cleanup_queue()->kobject_put()->blk_release_queue()->...RCU...->blk_free_queue_rcu()->kmem_cache_free()
 
-BTW I think having the target code be able to implement simple copy without 
-moving data over the fabric would be a great way of showing off the command.
+Otherwise, RCU callback may be executed first, and dm_cleanup_zoned_dev() touches freed memory:
 
+[   85.074005] BUG: KASAN: use-after-free in dm_cleanup_zoned_dev+0x33/0xd0
+[   85.075448] Read of size 8 at addr ffff88805ac6e430 by task dmsetup/681
 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> ---
->  drivers/nvme/host/Kconfig      |   13 
->  drivers/nvme/host/Makefile     |    1 
->  drivers/nvme/host/nvme-debug.c |  838 +++++++++++++++++++++++++++++++++++++++++
->  3 files changed, 852 insertions(+)
-> 
-> Index: linux-2.6/drivers/nvme/host/Kconfig
-> ===================================================================
-> --- linux-2.6.orig/drivers/nvme/host/Kconfig	2022-02-01 18:34:22.000000000 +0100
-> +++ linux-2.6/drivers/nvme/host/Kconfig	2022-02-01 18:34:22.000000000 +0100
-> @@ -83,3 +83,16 @@ config NVME_TCP
->  	  from https://urldefense.com/v3/__https://protect2.fireeye.com/v1/url?k=26ebb71c-79708e5a-26ea3c53-0cc47a3003e8-a628bd4c53dd84d1&q=1&e=9f16193b-4232-4453-9889-7cdf5d653922&u=https*3A*2F*2Fgithub.com*2Flinux-nvme*2Fnvme-cli__;JSUlJSU!!EwVzqGoTKBqv-0DWAJBm!HyJHAJgOq3M4SIOA0HvhX95q50ACkRtsiHWmAQERqjGLQ0pLb_Jru8QcwOQyix0tTVJA$ .
->  
->  	  If unsure, say N.
-> +
-> +config NVME_DEBUG
-> +	tristate "NVM Express debug"
-> +	depends on INET
-> +	depends on BLOCK
-> +	select NVME_CORE
-> +	select NVME_FABRICS
-> +	select CRYPTO
-> +	select CRYPTO_CRC32C
-> +	help
-> +	  This pseudo driver simulates a NVMe adapter.
-> +
-> +	  If unsure, say N.
-> Index: linux-2.6/drivers/nvme/host/Makefile
-> ===================================================================
-> --- linux-2.6.orig/drivers/nvme/host/Makefile	2022-02-01 18:34:22.000000000 +0100
-> +++ linux-2.6/drivers/nvme/host/Makefile	2022-02-01 18:34:22.000000000 +0100
-> @@ -8,6 +8,7 @@ obj-$(CONFIG_NVME_FABRICS)		+= nvme-fabr
->  obj-$(CONFIG_NVME_RDMA)			+= nvme-rdma.o
->  obj-$(CONFIG_NVME_FC)			+= nvme-fc.o
->  obj-$(CONFIG_NVME_TCP)			+= nvme-tcp.o
-> +obj-$(CONFIG_NVME_DEBUG)		+= nvme-debug.o
->  
->  nvme-core-y				:= core.o ioctl.o
->  nvme-core-$(CONFIG_TRACING)		+= trace.o
-> Index: linux-2.6/drivers/nvme/host/nvme-debug.c
-> ===================================================================
-> --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-> +++ linux-2.6/drivers/nvme/host/nvme-debug.c	2022-02-01 18:34:22.000000000 +0100
-> @@ -0,0 +1,838 @@
-> +// SPDX-License-Identifier: GPL-2.0
-> +/*
-> + * NVMe debug
-> + */
-> +
-> +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-> +#include <linux/module.h>
-> +#include <linux/init.h>
-> +#include <linux/slab.h>
-> +#include <linux/err.h>
-> +#include <linux/blk-mq.h>
-> +#include <linux/sort.h>
-> +#include <linux/version.h>
-> +
-> +#include "nvme.h"
-> +#include "fabrics.h"
-> +
-> +static ulong dev_size_mb = 16;
-> +module_param_named(dev_size_mb, dev_size_mb, ulong, S_IRUGO | S_IWUSR);
-> +MODULE_PARM_DESC(dev_size_mb, "size in MiB of the namespace(def=8)");
-> +
-> +static unsigned sector_size = 512;
-> +module_param_named(sector_size, sector_size, uint, S_IRUGO | S_IWUSR);
-> +MODULE_PARM_DESC(sector_size, "logical block size in bytes (def=512)");
-> +
-> +struct nvme_debug_ctrl {
-> +	struct nvme_ctrl ctrl;
-> +	uint32_t reg_cc;
-> +	struct blk_mq_tag_set admin_tag_set;
-> +	struct blk_mq_tag_set io_tag_set;
-> +	struct workqueue_struct *admin_wq;
-> +	struct workqueue_struct *io_wq;
-> +	struct list_head namespaces;
-> +	struct list_head list;
-> +};
-> +
-> +struct nvme_debug_namespace {
-> +	struct list_head list;
-> +	uint32_t nsid;
-> +	unsigned char sector_size_bits;
-> +	size_t n_sectors;
-> +	void *space;
-> +	char uuid[16];
-> +};
-> +
-> +struct nvme_debug_request {
-> +	struct nvme_request req;
-> +	struct nvme_command cmd;
-> +	struct work_struct work;
-> +};
-> +
-> +static LIST_HEAD(nvme_debug_ctrl_list);
-> +static DEFINE_MUTEX(nvme_debug_ctrl_mutex);
-> +
-> +DEFINE_STATIC_PERCPU_RWSEM(nvme_debug_sem);
-> +
-> +static inline struct nvme_debug_ctrl *to_debug_ctrl(struct nvme_ctrl *nctrl)
-> +{
-> +	return container_of(nctrl, struct nvme_debug_ctrl, ctrl);
-> +}
-> +
-> +static struct nvme_debug_namespace *nvme_debug_find_namespace(struct nvme_debug_ctrl *ctrl, unsigned nsid)
-> +{
-> +	struct nvme_debug_namespace *ns;
-> +	list_for_each_entry(ns, &ctrl->namespaces, list) {
-> +		if (ns->nsid == nsid)
-> +			return ns;
-> +	}
-> +	return NULL;
-> +}
-> +
-> +static bool nvme_debug_alloc_namespace(struct nvme_debug_ctrl *ctrl)
-> +{
-> +	struct nvme_debug_namespace *ns;
-> +	unsigned s;
-> +	size_t dsm;
-> +
-> +	ns = kmalloc(sizeof(struct nvme_debug_namespace), GFP_KERNEL);
-> +	if (!ns)
-> +		goto fail0;
-> +
-> +	ns->nsid = 1;
-> +	while (nvme_debug_find_namespace(ctrl, ns->nsid))
-> +		ns->nsid++;
-> +
-> +	s = READ_ONCE(sector_size);
-> +	if (s < 512 || s > PAGE_SIZE || !is_power_of_2(s))
-> +		goto fail1;
-> +	ns->sector_size_bits = __ffs(s);
-> +	dsm = READ_ONCE(dev_size_mb);
-> +	ns->n_sectors = dsm << (20 - ns->sector_size_bits);
-> +	if (ns->n_sectors >> (20 - ns->sector_size_bits) != dsm)
-> +		goto fail1;
-> +
-> +	if (ns->n_sectors << ns->sector_size_bits >> ns->sector_size_bits != ns->n_sectors)
-> +		goto fail1;
-> +
-> +	ns->space = vzalloc(ns->n_sectors << ns->sector_size_bits);
-> +	if (!ns->space)
-> +		goto fail1;
-> +
-> +	generate_random_uuid(ns->uuid);
-> +
-> +	list_add(&ns->list, &ctrl->namespaces);
-> +	return true;
-> +
-> +fail1:
-> +	kfree(ns);
-> +fail0:
-> +	return false;
-> +}
-> +
-> +static void nvme_debug_free_namespace(struct nvme_debug_namespace *ns)
-> +{
-> +	vfree(ns->space);
-> +	list_del(&ns->list);
-> +	kfree(ns);
-> +}
-> +
-> +static int nvme_debug_reg_read32(struct nvme_ctrl *nctrl, u32 off, u32 *val)
-> +{
-> +	struct nvme_debug_ctrl *ctrl = to_debug_ctrl(nctrl);
-> +	switch (off) {
-> +		case NVME_REG_VS: {
-> +			*val = 0x20000;
-> +			break;
-> +		}
-> +		case NVME_REG_CC: {
-> +			*val = ctrl->reg_cc;
-> +			break;
-> +		}
-> +		case NVME_REG_CSTS: {
-> +			*val = 0;
-> +			if (ctrl->reg_cc & NVME_CC_ENABLE)
-> +				*val |= NVME_CSTS_RDY;
-> +			if (ctrl->reg_cc & NVME_CC_SHN_MASK)
-> +				*val |= NVME_CSTS_SHST_CMPLT;
-> +			break;
-> +		}
-> +		default: {
-> +			printk("nvme_debug_reg_read32: %x\n", off);
-> +			return -ENOSYS;
-> +		}
-> +	}
-> +	return 0;
-> +}
-> +
-> +int nvme_debug_reg_read64(struct nvme_ctrl *nctrl, u32 off, u64 *val)
-> +{
-> +	switch (off) {
-> +		case NVME_REG_CAP: {
-> +			*val = (1ULL << 0) | (1ULL << 37);
-> +			break;
-> +		}
-> +		default: {
-> +			printk("nvme_debug_reg_read64: %x\n", off);
-> +			return -ENOSYS;
-> +		}
-> +	}
-> +	return 0;
-> +}
-> +
-> +int nvme_debug_reg_write32(struct nvme_ctrl *nctrl, u32 off, u32 val)
-> +{
-> +	struct nvme_debug_ctrl *ctrl = to_debug_ctrl(nctrl);
-> +	switch (off) {
-> +		case NVME_REG_CC: {
-> +			ctrl->reg_cc = val;
-> +			break;
-> +		}
-> +		default: {
-> +			printk("nvme_debug_reg_write32: %x, %x\n", off, val);
-> +			return -ENOSYS;
-> +		}
-> +	}
-> +	return 0;
-> +}
-> +
-> +static void nvme_debug_submit_async_event(struct nvme_ctrl *nctrl)
-> +{
-> +	printk("nvme_debug_submit_async_event\n");
-> +}
-> +
-> +static void nvme_debug_delete_ctrl(struct nvme_ctrl *nctrl)
-> +{
-> +	nvme_shutdown_ctrl(nctrl);
-> +}
-> +
-> +static void nvme_debug_free_namespaces(struct nvme_debug_ctrl *ctrl)
-> +{
-> +	if (!list_empty(&ctrl->namespaces)) {
-> +		struct nvme_debug_namespace *ns = container_of(ctrl->namespaces.next, struct nvme_debug_namespace, list);
-> +		nvme_debug_free_namespace(ns);
-> +	}
-> +}
-> +
-> +static void nvme_debug_free_ctrl(struct nvme_ctrl *nctrl)
-> +{
-> +	struct nvme_debug_ctrl *ctrl = to_debug_ctrl(nctrl);
-> +
-> +	flush_workqueue(ctrl->admin_wq);
-> +	flush_workqueue(ctrl->io_wq);
-> +
-> +	nvme_debug_free_namespaces(ctrl);
-> +
-> +	if (list_empty(&ctrl->list))
-> +		goto free_ctrl;
-> +
-> +	mutex_lock(&nvme_debug_ctrl_mutex);
-> +	list_del(&ctrl->list);
-> +	mutex_unlock(&nvme_debug_ctrl_mutex);
-> +
-> +	nvmf_free_options(nctrl->opts);
-> +free_ctrl:
-> +	destroy_workqueue(ctrl->admin_wq);
-> +	destroy_workqueue(ctrl->io_wq);
-> +	kfree(ctrl);
-> +}
-> +
-> +static int nvme_debug_get_address(struct nvme_ctrl *nctrl, char *buf, int size)
-> +{
-> +	int len = 0;
-> +	len += snprintf(buf, size, "debug");
-> +	return len;
-> +}
-> +
-> +static void nvme_debug_reset_ctrl_work(struct work_struct *work)
-> +{
-> +	printk("nvme_reset_ctrl_work\n");
-> +}
-> +
-> +static void copy_data_request(struct request *req, void *data, size_t size, bool to_req)
-> +{
-> +	if (req->rq_flags & RQF_SPECIAL_PAYLOAD) {
-> +		void *addr;
-> +		struct bio_vec bv = req->special_vec;
-> +		addr = kmap_atomic(bv.bv_page);
-> +		if (to_req) {
-> +			memcpy(addr + bv.bv_offset, data, bv.bv_len);
-> +			flush_dcache_page(bv.bv_page);
-> +		} else {
-> +			flush_dcache_page(bv.bv_page);
-> +			memcpy(data, addr + bv.bv_offset, bv.bv_len);
-> +		}
-> +		kunmap_atomic(addr);
-> +		data += bv.bv_len;
-> +		size -= bv.bv_len;
-> +	} else {
-> +		struct req_iterator bi;
-> +		struct bio_vec bv;
-> +		rq_for_each_segment(bv, req, bi) {
-> +			void *addr;
-> +			addr = kmap_atomic(bv.bv_page);
-> +			if (to_req) {
-> +				memcpy(addr + bv.bv_offset, data, bv.bv_len);
-> +				flush_dcache_page(bv.bv_page);
-> +			} else {
-> +				flush_dcache_page(bv.bv_page);
-> +				memcpy(data, addr + bv.bv_offset, bv.bv_len);
-> +			}
-> +			kunmap_atomic(addr);
-> +			data += bv.bv_len;
-> +			size -= bv.bv_len;
-> +		}
-> +	}
-> +	if (size)
-> +		printk("size mismatch: %lx\n", (unsigned long)size);
-> +}
-> +
-> +static void nvme_debug_identify_ns(struct nvme_debug_ctrl *ctrl, struct request *req)
-> +{
-> +	struct nvme_id_ns *id;
-> +	struct nvme_debug_namespace *ns;
-> +	struct nvme_debug_request *ndr = blk_mq_rq_to_pdu(req);
-> +
-> +	id = kzalloc(sizeof(struct nvme_id_ns), GFP_NOIO);
-> +	if (!id) {
-> +		blk_mq_end_request(req, BLK_STS_RESOURCE);
-> +		return;
-> +	}
-> +
-> +	ns = nvme_debug_find_namespace(ctrl, le32_to_cpu(ndr->cmd.identify.nsid));
-> +	if (!ns) {
-> +		nvme_req(req)->status = cpu_to_le16(NVME_SC_INVALID_NS);
-> +		goto free_ret;
-> +	}
-> +
-> +	id->nsze = cpu_to_le64(ns->n_sectors);
-> +	id->ncap = id->nsze;
-> +	id->nuse = id->nsze;
-> +	/*id->nlbaf = 0;*/
-> +	id->dlfeat = 0x01;
-> +	id->lbaf[0].ds = ns->sector_size_bits;
-> +
-> +	copy_data_request(req, id, sizeof(struct nvme_id_ns), true);
-> +
-> +free_ret:
-> +	kfree(id);
-> +	blk_mq_end_request(req, BLK_STS_OK);
-> +}
-> +
-> +static void nvme_debug_identify_ctrl(struct nvme_debug_ctrl *ctrl, struct request *req)
-> +{
-> +	struct nvme_debug_namespace *ns;
-> +	struct nvme_id_ctrl *id;
-> +	char ver[9];
-> +	size_t ver_len;
-> +
-> +	id = kzalloc(sizeof(struct nvme_id_ctrl), GFP_NOIO);
-> +	if (!id) {
-> +		blk_mq_end_request(req, BLK_STS_RESOURCE);
-> +		return;
-> +	}
-> +
-> +	id->vid = cpu_to_le16(PCI_VENDOR_ID_REDHAT);
-> +	id->ssvid = cpu_to_le16(PCI_VENDOR_ID_REDHAT);
-> +	memset(id->sn, ' ', sizeof id->sn);
-> +	memset(id->mn, ' ', sizeof id->mn);
-> +	memcpy(id->mn, "nvme-debug", 10);
-> +	snprintf(ver, sizeof ver, "%X", LINUX_VERSION_CODE);
-> +	ver_len = min(strlen(ver), sizeof id->fr);
-> +	memset(id->fr, ' ', sizeof id->fr);
-> +	memcpy(id->fr, ver, ver_len);
-> +	memcpy(id->ieee, "\xe9\xf2\x40", sizeof id->ieee);
-> +	id->ver = cpu_to_le32(0x20000);
-> +	id->kas = cpu_to_le16(100);
-> +	id->sqes = 0x66;
-> +	id->cqes = 0x44;
-> +	id->maxcmd = cpu_to_le16(1);
-> +	mutex_lock(&nvme_debug_ctrl_mutex);
-> +	list_for_each_entry(ns, &ctrl->namespaces, list) {
-> +		if (ns->nsid > le32_to_cpu(id->nn))
-> +			id->nn = cpu_to_le32(ns->nsid);
-> +	}
-> +	mutex_unlock(&nvme_debug_ctrl_mutex);
-> +	id->oncs = cpu_to_le16(NVME_CTRL_ONCS_COPY);
-> +	id->vwc = 0x6;
-> +	id->mnan = cpu_to_le32(0xffffffff);
-> +	strcpy(id->subnqn, "nqn.2021-09.com.redhat:nvme-debug");
-> +	id->ioccsz = cpu_to_le32(4);
-> +	id->iorcsz = cpu_to_le32(1);
-> +
-> +	copy_data_request(req, id, sizeof(struct nvme_id_ctrl), true);
-> +
-> +	kfree(id);
-> +	blk_mq_end_request(req, BLK_STS_OK);
-> +}
-> +
-> +static int cmp_ns(const void *a1, const void *a2)
-> +{
-> +	__u32 v1 = le32_to_cpu(*(__u32 *)a1);
-> +	__u32 v2 = le32_to_cpu(*(__u32 *)a2);
-> +	if (!v1)
-> +		v1 = 0xffffffffU;
-> +	if (!v2)
-> +		v2 = 0xffffffffU;
-> +	if (v1 < v2)
-> +		return -1;
-> +	if (v1 > v2)
-> +		return 1;
-> +	return 0;
-> +}
-> +
-> +static void nvme_debug_identify_active_ns(struct nvme_debug_ctrl *ctrl, struct request *req)
-> +{
-> +	struct nvme_debug_namespace *ns;
-> +	struct nvme_debug_request *ndr = blk_mq_rq_to_pdu(req);
-> +	unsigned size;
-> +	__u32 *id;
-> +	unsigned idp;
-> +
-> +	if (le32_to_cpu(ndr->cmd.identify.nsid) >= 0xFFFFFFFE) {
-> +		nvme_req(req)->status = cpu_to_le16(NVME_SC_INVALID_NS);
-> +		blk_mq_end_request(req, BLK_STS_OK);
-> +		return;
-> +	}
-> +
-> +	mutex_lock(&nvme_debug_ctrl_mutex);
-> +	size = 0;
-> +	list_for_each_entry(ns, &ctrl->namespaces, list) {
-> +		size++;
-> +	}
-> +	size = min(size, 1024U);
-> +
-> +	id = kzalloc(sizeof(__u32) * size, GFP_NOIO);
-> +	if (!id) {
-> +		mutex_unlock(&nvme_debug_ctrl_mutex);
-> +		blk_mq_end_request(req, BLK_STS_RESOURCE);
-> +		return;
-> +	}
-> +
-> +	idp = 0;
-> +	list_for_each_entry(ns, &ctrl->namespaces, list) {
-> +		if (ns->nsid > le32_to_cpu(ndr->cmd.identify.nsid))
-> +			id[idp++] = cpu_to_le32(ns->nsid);
-> +	}
-> +	mutex_unlock(&nvme_debug_ctrl_mutex);
-> +	sort(id, idp, sizeof(__u32), cmp_ns, NULL);
-> +
-> +	copy_data_request(req, id, sizeof(__u32) * 1024, true);
-> +
-> +	kfree(id);
-> +	blk_mq_end_request(req, BLK_STS_OK);
-> +}
-> +
-> +static void nvme_debug_identify_ns_desc_list(struct nvme_debug_ctrl *ctrl, struct request *req)
-> +{
-> +	struct nvme_ns_id_desc *id;
-> +	struct nvme_debug_namespace *ns;
-> +	struct nvme_debug_request *ndr = blk_mq_rq_to_pdu(req);
-> +	id = kzalloc(4096, GFP_NOIO);
-> +	if (!id) {
-> +		blk_mq_end_request(req, BLK_STS_RESOURCE);
-> +		return;
-> +	}
-> +
-> +	ns = nvme_debug_find_namespace(ctrl, le32_to_cpu(ndr->cmd.identify.nsid));
-> +	if (!ns) {
-> +		nvme_req(req)->status = cpu_to_le16(NVME_SC_INVALID_NS);
-> +		goto free_ret;
-> +	}
-> +
-> +	id->nidt = NVME_NIDT_UUID;
-> +	id->nidl = NVME_NIDT_UUID_LEN;
-> +	memcpy((char *)(id + 1), ns->uuid, NVME_NIDT_UUID_LEN);
-> +
-> +	copy_data_request(req, id, 4096, true);
-> +
-> +free_ret:
-> +	kfree(id);
-> +	blk_mq_end_request(req, BLK_STS_OK);
-> +}
-> +
-> +static void nvme_debug_identify_ctrl_cs(struct request *req)
-> +{
-> +	struct nvme_id_ctrl_nvm *id;
-> +	id = kzalloc(sizeof(struct nvme_id_ctrl_nvm), GFP_NOIO);
-> +	if (!id) {
-> +		blk_mq_end_request(req, BLK_STS_RESOURCE);
-> +		return;
-> +	}
-> +
-> +	copy_data_request(req, id, sizeof(struct nvme_id_ctrl_nvm), true);
-> +
-> +	kfree(id);
-> +	blk_mq_end_request(req, BLK_STS_OK);
-> +}
-> +
-> +static void nvme_debug_admin_rq(struct work_struct *w)
-> +{
-> +	struct nvme_debug_request *ndr = container_of(w, struct nvme_debug_request, work);
-> +	struct request *req = (struct request *)ndr - 1;
-> +	struct nvme_debug_ctrl *ctrl = to_debug_ctrl(ndr->req.ctrl);
-> +
-> +	switch (ndr->cmd.common.opcode) {
-> +		case nvme_admin_identify: {
-> +			switch (ndr->cmd.identify.cns) {
-> +				case NVME_ID_CNS_NS: {
-> +					percpu_down_read(&nvme_debug_sem);
-> +					nvme_debug_identify_ns(ctrl, req);
-> +					percpu_up_read(&nvme_debug_sem);
-> +					return;
-> +				};
-> +				case NVME_ID_CNS_CTRL: {
-> +					percpu_down_read(&nvme_debug_sem);
-> +					nvme_debug_identify_ctrl(ctrl, req);
-> +					percpu_up_read(&nvme_debug_sem);
-> +					return;
-> +				}
-> +				case NVME_ID_CNS_NS_ACTIVE_LIST: {
-> +					percpu_down_read(&nvme_debug_sem);
-> +					nvme_debug_identify_active_ns(ctrl, req);
-> +					percpu_up_read(&nvme_debug_sem);
-> +					return;
-> +				}
-> +				case NVME_ID_CNS_NS_DESC_LIST: {
-> +					percpu_down_read(&nvme_debug_sem);
-> +					nvme_debug_identify_ns_desc_list(ctrl, req);
-> +					percpu_up_read(&nvme_debug_sem);
-> +					return;
-> +				}
-> +				case NVME_ID_CNS_CS_CTRL: {
-> +					percpu_down_read(&nvme_debug_sem);
-> +					nvme_debug_identify_ctrl_cs(req);
-> +					percpu_up_read(&nvme_debug_sem);
-> +					return;
-> +				}
-> +				default: {
-> +					printk("nvme_admin_identify: %x\n", ndr->cmd.identify.cns);
-> +					break;
-> +				}
-> +			}
-> +			break;
-> +		}
-> +		default: {
-> +			printk("nvme_debug_admin_rq: %x\n", ndr->cmd.common.opcode);
-> +			break;
-> +		}
-> +	}
-> +	blk_mq_end_request(req, BLK_STS_NOTSUPP);
-> +}
-> +
-> +static void nvme_debug_rw(struct nvme_debug_namespace *ns, struct request *req)
-> +{
-> +	struct nvme_debug_request *ndr = blk_mq_rq_to_pdu(req);
-> +	__u64 lba = cpu_to_le64(ndr->cmd.rw.slba);
-> +	__u64 len = (__u64)cpu_to_le16(ndr->cmd.rw.length) + 1;
-> +	void *addr;
-> +	if (unlikely(lba + len < lba) || unlikely(lba + len > ns->n_sectors)) {
-> +		blk_mq_end_request(req, BLK_STS_NOTSUPP);
-> +		return;
-> +	}
-> +	addr = ns->space + (lba << ns->sector_size_bits);
-> +	copy_data_request(req, addr, len << ns->sector_size_bits, ndr->cmd.rw.opcode == nvme_cmd_read);
-> +	blk_mq_end_request(req, BLK_STS_OK);
-> +}
-> +
-> +static void nvme_debug_copy(struct nvme_debug_namespace *ns, struct request *req)
-> +{
-> +	struct nvme_debug_request *ndr = blk_mq_rq_to_pdu(req);
-> +	__u64 dlba = cpu_to_le64(ndr->cmd.copy.sdlba);
-> +	unsigned n_descs = ndr->cmd.copy.length + 1;
-> +	struct nvme_copy_desc *descs;
-> +	unsigned i, ret;
-> +
-> +	descs = kmalloc(sizeof(struct nvme_copy_desc) * n_descs, GFP_NOIO | __GFP_NORETRY | __GFP_NOWARN);
-> +	if (!descs) {
-> +		blk_mq_end_request(req, BLK_STS_RESOURCE);
-> +		return;
-> +	}
-> +
-> +	copy_data_request(req, descs, sizeof(struct nvme_copy_desc) * n_descs, false);
-> +
-> +	for (i = 0; i < n_descs; i++) {
-> +		struct nvme_copy_desc *desc = &descs[i];
-> +		__u64 slba = cpu_to_le64(desc->slba);
-> +		__u64 len = (__u64)cpu_to_le16(desc->length) + 1;
-> +		void *saddr, *daddr;
-> +
-> +		if (unlikely(slba + len < slba) || unlikely(slba + len > ns->n_sectors) ||
-> +		    unlikely(dlba + len < dlba) || unlikely(dlba + len > ns->n_sectors)) {
-> +			ret = BLK_STS_NOTSUPP;
-> +			goto free_ret;
-> +		}
-> +
-> +		saddr = ns->space + (slba << ns->sector_size_bits);
-> +		daddr = ns->space + (dlba << ns->sector_size_bits);
-> +
-> +		memcpy(daddr, saddr, len << ns->sector_size_bits);
-> +
-> +		dlba += len;
-> +	}
-> +
-> +	ret = BLK_STS_OK;
-> +
-> +free_ret:
-> +	kfree(descs);
-> +
-> +	blk_mq_end_request(req, ret);
-> +}
-> +
-> +static void nvme_debug_io_rq(struct work_struct *w)
-> +{
-> +	struct nvme_debug_request *ndr = container_of(w, struct nvme_debug_request, work);
-> +	struct request *req = (struct request *)ndr - 1;
-> +	struct nvme_debug_ctrl *ctrl = to_debug_ctrl(ndr->req.ctrl);
-> +	__u32 nsid = le32_to_cpu(ndr->cmd.common.nsid);
-> +	struct nvme_debug_namespace *ns;
-> +
-> +	percpu_down_read(&nvme_debug_sem);
-> +	ns = nvme_debug_find_namespace(ctrl, nsid);
-> +	if (unlikely(!ns))
-> +		goto ret_notsupp;
-> +
-> +	switch (ndr->cmd.common.opcode) {
-> +		case nvme_cmd_flush: {
-> +			blk_mq_end_request(req, BLK_STS_OK);
-> +			goto ret;
-> +		}
-> +		case nvme_cmd_read:
-> +		case nvme_cmd_write: {
-> +			nvme_debug_rw(ns, req);
-> +			goto ret;
-> +		}
-> +		case nvme_cmd_copy: {
-> +			nvme_debug_copy(ns, req);
-> +			goto ret;
-> +		}
-> +		default: {
-> +			printk("nvme_debug_io_rq: %x\n", ndr->cmd.common.opcode);
-> +			break;
-> +		}
-> +	}
-> +ret_notsupp:
-> +	blk_mq_end_request(req, BLK_STS_NOTSUPP);
-> +ret:
-> +	percpu_up_read(&nvme_debug_sem);
-> +}
-> +
-> +static blk_status_t nvme_debug_queue_rq(struct blk_mq_hw_ctx *hctx, const struct blk_mq_queue_data *bd)
-> +{
-> +	struct request *req = bd->rq;
-> +	struct nvme_debug_request *ndr = blk_mq_rq_to_pdu(req);
-> +	struct nvme_debug_ctrl *ctrl = to_debug_ctrl(ndr->req.ctrl);
-> +	struct nvme_ns *ns = hctx->queue->queuedata;
-> +	blk_status_t r;
-> +
-> +	r = nvme_setup_cmd(ns, req);
-> +	if (unlikely(r))
-> +		return r;
-> +
-> +	if (!ns) {
-> +		INIT_WORK(&ndr->work, nvme_debug_admin_rq);
-> +		queue_work(ctrl->admin_wq, &ndr->work);
-> +		return BLK_STS_OK;
-> +	} else if (unlikely((req->cmd_flags & REQ_OP_MASK) == REQ_OP_COPY_READ_TOKEN)) {
-> +		blk_mq_end_request(req, BLK_STS_OK);
-> +		return BLK_STS_OK;
-> +	} else {
-> +		INIT_WORK(&ndr->work, nvme_debug_io_rq);
-> +		queue_work(ctrl->io_wq, &ndr->work);
-> +		return BLK_STS_OK;
-> +	}
-> +}
-> +
-> +static int nvme_debug_init_request(struct blk_mq_tag_set *set, struct request *req, unsigned hctx_idx, unsigned numa_node)
-> +{
-> +	struct nvme_debug_ctrl *ctrl = set->driver_data;
-> +	struct nvme_debug_request *ndr = blk_mq_rq_to_pdu(req);
-> +	nvme_req(req)->ctrl = &ctrl->ctrl;
-> +	nvme_req(req)->cmd = &ndr->cmd;
-> +	return 0;
-> +}
-> +
-> +static int nvme_debug_init_hctx(struct blk_mq_hw_ctx *hctx, void *data, unsigned hctx_idx)
-> +{
-> +	struct nvme_debug_ctrl *ctrl = data;
-> +	hctx->driver_data = ctrl;
-> +	return 0;
-> +}
-> +
-> +static const struct blk_mq_ops nvme_debug_mq_ops = {
-> +	.queue_rq = nvme_debug_queue_rq,
-> +	.init_request = nvme_debug_init_request,
-> +	.init_hctx = nvme_debug_init_hctx,
-> +};
-> +
-> +static int nvme_debug_configure_admin_queue(struct nvme_debug_ctrl *ctrl)
-> +{
-> +	int r;
-> +
-> +	memset(&ctrl->admin_tag_set, 0, sizeof(ctrl->admin_tag_set));
-> +	ctrl->admin_tag_set.ops = &nvme_debug_mq_ops;
-> +	ctrl->admin_tag_set.queue_depth = NVME_AQ_MQ_TAG_DEPTH;
-> +	ctrl->admin_tag_set.reserved_tags = NVMF_RESERVED_TAGS;
-> +	ctrl->admin_tag_set.numa_node = ctrl->ctrl.numa_node;
-> +	ctrl->admin_tag_set.cmd_size = sizeof(struct nvme_debug_request);
-> +	ctrl->admin_tag_set.driver_data = ctrl;
-> +	ctrl->admin_tag_set.nr_hw_queues = 1;
-> +	ctrl->admin_tag_set.timeout = NVME_ADMIN_TIMEOUT;
-> +	ctrl->admin_tag_set.flags = BLK_MQ_F_NO_SCHED;
-> +
-> +	r = blk_mq_alloc_tag_set(&ctrl->admin_tag_set);
-> +	if (r)
-> +		goto ret0;
-> +	ctrl->ctrl.admin_tagset = &ctrl->admin_tag_set;
-> +
-> +	ctrl->ctrl.admin_q = blk_mq_init_queue(&ctrl->admin_tag_set);
-> +	if (IS_ERR(ctrl->ctrl.admin_q)) {
-> +		r = PTR_ERR(ctrl->ctrl.admin_q);
-> +		goto ret1;
-> +	}
-> +
-> +	r = nvme_enable_ctrl(&ctrl->ctrl);
-> +	if (r)
-> +		goto ret2;
-> +
-> +	nvme_start_admin_queue(&ctrl->ctrl);
-> +
-> +	r = nvme_init_ctrl_finish(&ctrl->ctrl);
-> +	if (r)
-> +		goto ret3;
-> +
-> +	return 0;
-> +
-> +ret3:
-> +	nvme_stop_admin_queue(&ctrl->ctrl);
-> +	blk_sync_queue(ctrl->ctrl.admin_q);
-> +ret2:
-> +	blk_cleanup_queue(ctrl->ctrl.admin_q);
-> +ret1:
-> +	blk_mq_free_tag_set(&ctrl->admin_tag_set);
-> +ret0:
-> +	return r;
-> +}
-> +
-> +static int nvme_debug_configure_io_queue(struct nvme_debug_ctrl *ctrl)
-> +{
-> +	int r;
-> +
-> +	memset(&ctrl->io_tag_set, 0, sizeof(ctrl->io_tag_set));
-> +	ctrl->io_tag_set.ops = &nvme_debug_mq_ops;
-> +	ctrl->io_tag_set.queue_depth = NVME_AQ_MQ_TAG_DEPTH;
-> +	ctrl->io_tag_set.reserved_tags = NVMF_RESERVED_TAGS;
-> +	ctrl->io_tag_set.numa_node = ctrl->ctrl.numa_node;
-> +	ctrl->io_tag_set.cmd_size = sizeof(struct nvme_debug_request);
-> +	ctrl->io_tag_set.driver_data = ctrl;
-> +	ctrl->io_tag_set.nr_hw_queues = 1;
-> +	ctrl->io_tag_set.timeout = NVME_ADMIN_TIMEOUT;
-> +	ctrl->io_tag_set.flags = BLK_MQ_F_NO_SCHED;
-> +
-> +	r = blk_mq_alloc_tag_set(&ctrl->io_tag_set);
-> +	if (r)
-> +		goto ret0;
-> +	ctrl->ctrl.tagset = &ctrl->io_tag_set;
-> +	return 0;
-> +
-> +ret0:
-> +	return r;
-> +}
-> +
-> +static const struct nvme_ctrl_ops nvme_debug_ctrl_ops = {
-> +	.name = "debug",
-> +	.module = THIS_MODULE,
-> +	.flags = NVME_F_FABRICS,
-> +	.reg_read32 = nvme_debug_reg_read32,
-> +	.reg_read64 = nvme_debug_reg_read64,
-> +	.reg_write32 = nvme_debug_reg_write32,
-> +	.free_ctrl = nvme_debug_free_ctrl,
-> +	.submit_async_event = nvme_debug_submit_async_event,
-> +	.delete_ctrl = nvme_debug_delete_ctrl,
-> +	.get_address = nvme_debug_get_address,
-> +};
-> +
-> +static struct nvme_ctrl *nvme_debug_create_ctrl(struct device *dev,
-> +		struct nvmf_ctrl_options *opts)
-> +{
-> +	int r;
-> +	struct nvme_debug_ctrl *ctrl;
-> +
-> +	ctrl = kzalloc(sizeof(struct nvme_debug_ctrl), GFP_KERNEL);
-> +	if (!ctrl) {
-> +		r = -ENOMEM;
-> +		goto ret0;
-> +	}
-> +
-> +	INIT_LIST_HEAD(&ctrl->list);
-> +	INIT_LIST_HEAD(&ctrl->namespaces);
-> +	ctrl->ctrl.opts = opts;
-> +	ctrl->ctrl.queue_count = 2;
-> +	INIT_WORK(&ctrl->ctrl.reset_work, nvme_debug_reset_ctrl_work);
-> +
-> +	ctrl->admin_wq = alloc_workqueue("nvme-debug-admin", WQ_MEM_RECLAIM | WQ_UNBOUND, 1);
-> +	if (!ctrl->admin_wq)
-> +		goto ret1;
-> +
-> +	ctrl->io_wq = alloc_workqueue("nvme-debug-io", WQ_MEM_RECLAIM, 0);
-> +	if (!ctrl->io_wq)
-> +		goto ret1;
-> +
-> +	if (!nvme_debug_alloc_namespace(ctrl)) {
-> +		r = -ENOMEM;
-> +		goto ret1;
-> +	}
-> +
-> +	r = nvme_init_ctrl(&ctrl->ctrl, dev, &nvme_debug_ctrl_ops, 0);
-> +	if (r)
-> +		goto ret1;
-> +
-> +        if (!nvme_change_ctrl_state(&ctrl->ctrl, NVME_CTRL_CONNECTING))
-> +		goto ret2;
-> +
-> +	r = nvme_debug_configure_admin_queue(ctrl);
-> +	if (r)
-> +		goto ret2;
-> +
-> +	r = nvme_debug_configure_io_queue(ctrl);
-> +	if (r)
-> +		goto ret2;
-> +
-> +        if (!nvme_change_ctrl_state(&ctrl->ctrl, NVME_CTRL_LIVE))
-> +		goto ret2;
-> +
-> +	nvme_start_ctrl(&ctrl->ctrl);
-> +
-> +	mutex_lock(&nvme_debug_ctrl_mutex);
-> +	list_add_tail(&ctrl->list, &nvme_debug_ctrl_list);
-> +	mutex_unlock(&nvme_debug_ctrl_mutex);
-> +
-> +	return &ctrl->ctrl;
-> +
-> +ret2:
-> +	nvme_uninit_ctrl(&ctrl->ctrl);
-> +	nvme_put_ctrl(&ctrl->ctrl);
-> +	return ERR_PTR(r);
-> +ret1:
-> +	nvme_debug_free_namespaces(ctrl);
-> +	if (ctrl->admin_wq)
-> +		destroy_workqueue(ctrl->admin_wq);
-> +	if (ctrl->io_wq)
-> +		destroy_workqueue(ctrl->io_wq);
-> +	kfree(ctrl);
-> +ret0:
-> +	return ERR_PTR(r);
-> +}
-> +
-> +static struct nvmf_transport_ops nvme_debug_transport = {
-> +	.name		= "debug",
-> +	.module		= THIS_MODULE,
-> +	.required_opts	= NVMF_OPT_TRADDR,
-> +	.allowed_opts	= NVMF_OPT_CTRL_LOSS_TMO,
-> +	.create_ctrl	= nvme_debug_create_ctrl,
-> +};
-> +
-> +static int __init nvme_debug_init_module(void)
-> +{
-> +	nvmf_register_transport(&nvme_debug_transport);
-> +	return 0;
-> +}
-> +
-> +static void __exit nvme_debug_cleanup_module(void)
-> +{
-> +	struct nvme_debug_ctrl *ctrl;
-> +
-> +	nvmf_unregister_transport(&nvme_debug_transport);
-> +
-> +	mutex_lock(&nvme_debug_ctrl_mutex);
-> +	list_for_each_entry(ctrl, &nvme_debug_ctrl_list, list) {
-> +		nvme_delete_ctrl(&ctrl->ctrl);
-> +	}
-> +	mutex_unlock(&nvme_debug_ctrl_mutex);
-> +	flush_workqueue(nvme_delete_wq);
-> +}
-> +
-> +module_init(nvme_debug_init_module);
-> +module_exit(nvme_debug_cleanup_module);
-> +
-> +MODULE_LICENSE("GPL v2");
-> 
+[   85.076102] CPU: 4 PID: 681 Comm: dmsetup Not tainted 5.17.0-rc2+ #6
+[   85.076570] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.14.0-2 04/01/2014
+[   85.077150] Call Trace:
+[   85.077332]  <TASK>
+[   85.077478]  dump_stack_lvl+0x57/0x7d
+[   85.077763]  print_address_description.constprop.0+0x1f/0x150
+[   85.078229]  ? dm_cleanup_zoned_dev+0x33/0xd0
+[   85.078579]  kasan_report.cold+0x7f/0x11b
+[   85.078910]  ? dm_cleanup_zoned_dev+0x33/0xd0
+[   85.079219]  dm_cleanup_zoned_dev+0x33/0xd0
+[   85.079499]  __dm_destroy+0x26a/0x400
+[   85.079781]  ? dm_blk_ioctl+0x230/0x230
+[   85.080090]  ? up_write+0xd8/0x270
+[   85.080364]  dev_remove+0x156/0x1d0
+[   85.080639]  ctl_ioctl+0x269/0x530
+[   85.080910]  ? table_clear+0x140/0x140
+[   85.081209]  ? lock_release+0xb2/0x750
+[   85.081518]  ? remove_all+0x40/0x40
+[   85.081796]  ? rcu_read_lock_sched_held+0x12/0x70
+[   85.082166]  ? lock_downgrade+0x3c0/0x3c0
+[   85.082468]  ? rcu_read_lock_sched_held+0x12/0x70
+[   85.082833]  dm_ctl_ioctl+0xa/0x10
+[   85.083094]  __x64_sys_ioctl+0xb9/0xf0
+[   85.083350]  do_syscall_64+0x3b/0x90
+[   85.083595]  entry_SYSCALL_64_after_hwframe+0x44/0xae
+[   85.083955] RIP: 0033:0x7fb6dfa95c27
+[   85.084277] Code: 00 00 00 48 8b 05 69 92 0c 00 64 c7 00 26 00 00 00 48 c7 c0 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 b8 10 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d 39 92 0c 00 f7 d8 64 89 01 48
+[   85.086009] RSP: 002b:00007fff882c6c28 EFLAGS: 00000206 ORIG_RAX: 0000000000000010
+[   85.086914] RAX: ffffffffffffffda RBX: 00007fb6dfb73a8e RCX: 00007fb6dfa95c27
+[   85.087607] RDX: 00007fb6e01d7ca0 RSI: 00000000c138fd04 RDI: 0000000000000003
+[   85.088272] RBP: 00007fff882c6ce0 R08: 00007fb6dfbc3558 R09: 00007fff882c6a90
+[   85.088956] R10: 00007fb6dfbc28a2 R11: 0000000000000206 R12: 00007fb6dfbc28a2
+[   85.089477] R13: 00007fb6dfbc28a2 R14: 00007fb6dfbc28a2 R15: 00007fb6dfbc28a2
+[   85.090038]  </TASK>
 
+[   85.090348] Allocated by task 673:
+[   85.090625]  kasan_save_stack+0x1e/0x40
+[   85.090978]  __kasan_slab_alloc+0x66/0x80
+[   85.091336]  kmem_cache_alloc_node+0x1ca/0x460
+[   85.091742]  blk_alloc_queue+0x33/0x4e0
+[   85.092112]  __blk_alloc_disk+0x1b/0x60
+[   85.092464]  dm_create+0x368/0xa20
+[   85.092764]  dev_create+0xb9/0x170
+[   85.093118]  ctl_ioctl+0x269/0x530
+[   85.093521]  dm_ctl_ioctl+0xa/0x10
+[   85.093921]  __x64_sys_ioctl+0xb9/0xf0
+[   85.094177]  do_syscall_64+0x3b/0x90
+[   85.094420]  entry_SYSCALL_64_after_hwframe+0x44/0xae
+
+[   85.094868] Freed by task 0:
+[   85.095062]  kasan_save_stack+0x1e/0x40
+[   85.095319]  kasan_set_track+0x21/0x30
+[   85.095569]  kasan_set_free_info+0x20/0x30
+[   85.095858]  __kasan_slab_free+0xfb/0x130
+[   85.096141]  slab_free_freelist_hook+0x7d/0x150
+[   85.096502]  kmem_cache_free+0x13c/0x340
+[   85.096778]  rcu_do_batch+0x2d9/0x820
+[   85.097049]  rcu_core+0x3b8/0x570
+[   85.097330]  __do_softirq+0x1c4/0x63d
+
+[   85.097792] Last potentially related work creation:
+[   85.098226]  kasan_save_stack+0x1e/0x40
+[   85.098549]  __kasan_record_aux_stack+0x96/0xa0
+[   85.098951]  call_rcu+0xc4/0x8f0
+[   85.099220]  kobject_put+0xd9/0x270
+[   85.099557]  disk_release+0xee/0x120
+[   85.099864]  device_release+0x59/0xf0
+[   85.100208]  kobject_put+0xd9/0x270
+[   85.100509]  cleanup_mapped_device+0x12b/0x1b0
+[   85.100910]  __dm_destroy+0x26a/0x400
+[   85.101247]  dev_remove+0x156/0x1d0
+[   85.101555]  ctl_ioctl+0x269/0x530
+[   85.101859]  dm_ctl_ioctl+0xa/0x10
+[   85.102198]  __x64_sys_ioctl+0xb9/0xf0
+[   85.102527]  do_syscall_64+0x3b/0x90
+[   85.102811]  entry_SYSCALL_64_after_hwframe+0x44/0xae
+
+[   85.103347] The buggy address belongs to the object at ffff88805ac6e180
+	    which belongs to the cache request_queue of size 2992
+[   85.104338] The buggy address is located 688 bytes inside of
+	    2992-byte region [ffff88805ac6e180, ffff88805ac6ed30)
+[   85.105255] The buggy address belongs to the page:
+[   85.105633] page:000000000837df3c refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x5ac68
+[   85.106363] head:000000000837df3c order:3 compound_mapcount:0 compound_pincount:0
+[   85.106948] flags: 0xfffffc0010200(slab|head|node=0|zone=1|lastcpupid=0x1fffff)
+[   85.107494] raw: 000fffffc0010200 0000000000000000 dead000000000122 ffff888001e58280
+[   85.108091] raw: 0000000000000000 00000000800a000a 00000001ffffffff 0000000000000000
+[   85.108695] page dumped because: kasan: bad access detected
+
+[   85.109257] Memory state around the buggy address:
+[   85.109625]  ffff88805ac6e300: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+[   85.110178]  ffff88805ac6e380: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+[   85.110973] >ffff88805ac6e400: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+[   85.111891]                                      ^
+[   85.112353]  ffff88805ac6e480: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+[   85.113036]  ffff88805ac6e500: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+[   85.113800] ==================================================================
+
+Fixes: bb37d77239af "dm: introduce zone append emulation"
+Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index dcbd6d201619..d472fe5dbc1d 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1607,6 +1607,7 @@ static void cleanup_mapped_device(struct mapped_device *md)
+ 		md->dax_dev = NULL;
+ 	}
+ 
++	dm_cleanup_zoned_dev(md);
+ 	if (md->disk) {
+ 		spin_lock(&_minor_lock);
+ 		md->disk->private_data = NULL;
+@@ -1627,7 +1628,6 @@ static void cleanup_mapped_device(struct mapped_device *md)
+ 	mutex_destroy(&md->swap_bios_lock);
+ 
+ 	dm_mq_cleanup_mapped_device(md);
+-	dm_cleanup_zoned_dev(md);
+ }
+ 
+ /*
 
 --
 dm-devel mailing list
