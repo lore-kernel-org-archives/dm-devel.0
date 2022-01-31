@@ -1,113 +1,69 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0DF5DC433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 31 Jan 2022 13:34:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2D2B9C433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 31 Jan 2022 18:50:23 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1643636061;
+	s=mimecast20190719; t=1643655022;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=pZ2wiBeqAeOiMOpWH86B0Zq7POIE1bZR4yn/uHd1XQA=;
-	b=RHee9UCoXYMGpBHK4FGSfteZulU/RlGA+Pviwnqv0ENeX8GCVULFkfgDTL7oFfcLi6EW1U
-	P4mhc/Naq756RWHi0My/kAbfG4Ev614thhUQKwYmD9lfvDIF727symvu19Ti+2S4kmiF0T
-	Mpo+7qEmQp/JmLo4SoImjvT4d0VpO5I=
+	bh=OAwyPFYsSXnvh6UGxha6h8EG4fzjqPnGF3d9WenRgYM=;
+	b=GGtcAjm07zzFuJs6YJEc7XkZP/H5SCoTk0We2mUF5ifriTY+2wRsmDLdBK32QTwlojS1Ae
+	iLeUMvDbLrrJHnSc8lLsg52TKo9bSRK4YpXws6ipNpiuX5MuUaI/DHk4EIIDHox/cAW5F0
+	Wfu+I2kBgn6AdHIBF8AttvrvFvQ0sIg=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-6-yrv3WSDcPHKJ4JlM9c2apg-1; Mon, 31 Jan 2022 08:34:18 -0500
-X-MC-Unique: yrv3WSDcPHKJ4JlM9c2apg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-93-12jZtIHqOUqymhTVapVgdQ-1; Mon, 31 Jan 2022 13:50:18 -0500
+X-MC-Unique: 12jZtIHqOUqymhTVapVgdQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6899B51081;
-	Mon, 31 Jan 2022 13:34:13 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 17C0E6E20C;
-	Mon, 31 Jan 2022 13:34:12 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 76E5418982BE;
+	Mon, 31 Jan 2022 18:50:10 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1BE2F781B0;
+	Mon, 31 Jan 2022 18:50:07 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 637A61809CBA;
-	Mon, 31 Jan 2022 13:34:10 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.7])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A2BA04BB7C;
+	Mon, 31 Jan 2022 18:50:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
+	[10.5.11.15])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20VDY11b031311 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 31 Jan 2022 08:34:01 -0500
+	id 20VIo1NZ022706 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 31 Jan 2022 13:50:01 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 97B731457F10; Mon, 31 Jan 2022 13:34:01 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 940911457F06
-	for <dm-devel@redhat.com>; Mon, 31 Jan 2022 13:34:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7B6CA1C04B61
-	for <dm-devel@redhat.com>; Mon, 31 Jan 2022 13:34:01 +0000 (UTC)
-Received: from mail-ej1-f70.google.com (mail-ej1-f70.google.com
-	[209.85.218.70]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-460-0GYHVJs5N-CTmawJW1Q4dw-1; Mon, 31 Jan 2022 08:34:00 -0500
-X-MC-Unique: 0GYHVJs5N-CTmawJW1Q4dw-1
-Received: by mail-ej1-f70.google.com with SMTP id
-	v2-20020a1709062f0200b006a5f725efc1so5001571eji.23
-	for <dm-devel@redhat.com>; Mon, 31 Jan 2022 05:33:59 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-	:mime-version:content-disposition:in-reply-to;
-	bh=lmAqJXoRChcuoRl5kg7cE0FDHviec1Uj3NNVNauWVrY=;
-	b=SLizlaja4GiGA/MmwFnkGdTjJlmJ6ZEILknyEaKlJO3fICna+eoHBmFOTY51C86w+B
-	nx+fl34qENgyd2VrT5UeVry3Jeb6coSg90CcvvcObf86Usjrh+7+3OMRMrWoN/hqmylj
-	0IrVO0B9tD4uBpGnkAYCHOrnGix1tVxEpwqfhXZh4zbe54mt01zMFuFuSzukxVh/MzXE
-	rPo8V1Q6qcL+kkc76gkCg+Jhhg6urmtvy82koLhmWdbj5csIrZxxyyWJVBT72yJojMDu
-	iTxKNv6K7+do81oouiIhP2dxDS9MNO62AHcsxBJngNqOcYro/Sd7f9EJKVM+MLiSXmeZ
-	AWCA==
-X-Gm-Message-State: AOAM532mTXL43D/m7YFHL5CqecPHHClLWDZ1j+lQRUO3QpVnrNcINbL4
-	vhK/fg9nn+zXogogwgWH9OwgaGNs/SLJxjeudGNyXr/xLR2TPHCRx5EePPap3BlLK6/T8MUAiEY
-	ma3dmqgy9F1+kq6s=
-X-Received: by 2002:a17:906:5d09:: with SMTP id
-	g9mr16735207ejt.510.1643636038860; 
-	Mon, 31 Jan 2022 05:33:58 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJxjTLOx9B0UmssFSJ5V1GQ7k9RscqHjFw8PkVtpd782zf/zPk0G1UnUzfNCU62IcGeu1/sELA==
-X-Received: by 2002:a17:906:5d09:: with SMTP id
-	g9mr16735195ejt.510.1643636038630; 
-	Mon, 31 Jan 2022 05:33:58 -0800 (PST)
-Received: from alatyr-rpi.brq.redhat.com (nat-pool-brq-t.redhat.com.
-	[213.175.37.10]) by smtp.gmail.com with ESMTPSA id
-	fy40sm13017144ejc.36.2022.01.31.05.33.57
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Mon, 31 Jan 2022 05:33:58 -0800 (PST)
-Date: Mon, 31 Jan 2022 14:33:54 +0100
-From: Peter Rajnoha <prajnoha@redhat.com>
-To: Martin Wilck <mwilck@suse.com>
-Message-ID: <20220131133354.vfomn5gdlgrhue4g@alatyr-rpi.brq.redhat.com>
-References: <20220128134229.1783-1-mwilck@suse.com>
-	<10ad6fc0-6c24-c98b-4a02-2140883af72d@gmail.com>
-	<a1f472a89e9825f90a4104bea535086f0cde6b93.camel@suse.com>
-	<d0d0d8f39257bcddf480524f01faae1f15ac2c42.camel@suse.com>
-	<e85bd660-0c50-df5d-35de-2fd5b16cc47f@gmail.com>
-	<0a55dd1393df2c125f8cb443daaeb7d1b7162bcc.camel@suse.com>
-	<aba2f6dd-f4cf-6af4-e2b6-965f5de06cd8@redhat.com>
-	<92de9eff521e2702e364f7aa3cce6927d9d9c03c.camel@suse.com>
-	<1b20e88f-2714-3c61-73a6-2f34f6a34edc@gmail.com>
-	<712b54a06fa1b13f9ac92a00d7b121979c43d31c.camel@suse.com>
+	id AE84C77457; Mon, 31 Jan 2022 18:50:01 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 83F1D74EBE;
+	Mon, 31 Jan 2022 18:49:49 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
+	id 20VInm13032595; Mon, 31 Jan 2022 13:49:48 -0500
+Received: from localhost (mpatocka@localhost)
+	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
+	ESMTP id 20VInmpt032591; Mon, 31 Jan 2022 13:49:48 -0500
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+	owned process doing -bs
+Date: Mon, 31 Jan 2022 13:49:48 -0500 (EST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>
+Message-ID: <alpine.LRH.2.02.2201311346140.32171@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-In-Reply-To: <712b54a06fa1b13f9ac92a00d7b121979c43d31c.camel@suse.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 X-loop: dm-devel@redhat.com
-Cc: Franck Bui <fbui@suse.de>, lvm-devel@redhat.com, dm-devel@redhat.com,
-	David Teigland <teigland@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>,
-	Zdenek Kabelac <zdenek.kabelac@gmail.com>,
-	Heming Zhao <heming.zhao@suse.com>
-Subject: Re: [dm-devel] [PATCH] udev: create symlinks and watch even in
-	suspended state
+Cc: dm-devel@redhat.com
+Subject: [dm-devel] [PATCH] dm-crypt: introduce a module parameter that
+ makes it possible to limit all bios
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -121,69 +77,93 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sat 29 Jan 2022 21:46, Martin Wilck wrote:
-> On Sat, 2022-01-29 at 21:05 +0100, Zdenek Kabelac wrote:
-> > Dne 29. 01. 22 v 0:21 Martin Wilck napsal(a):
-> > 
-> > > 
-> > > AFAICS my patch eliminates the window for this error entirely.
-> > 
-> > 
-> > Ok now I see that there is already skip for DM_SUSPENDED
-> > and you patch likely only tries to preserve some existing state of
-> > links.
-> > 
-> > I'll need to get in touch with Peter here.
-> > 
-> > I guess the idea behind was to avoid read of device that will be
-> > resumed and 
-> > will automatically get a new event - and suspened device itself
-> > cannot change 
-> 
-> Thank you!
-> 
-> > - but that fact it's been loosing existing state was missed - I'm
-> > wondering 
-> > why this was not seen as problem before.
-> 
-> One reason is that we're now starting multipathd earlier. This has a
-> lot of advantages, but it reveals problems that were hidden behind the
-> "After=systemd-udev-settle.service" dependency of mulltipathd before.
+The patch a666e5c05e7c4aaabb2c5d58117b0946803d03d2 ("dm: fix deadlock when
+swapping to encrypted device") limits the number of in-flight swap bios
+for the dm-crypt target. It avoids a deadlock when swapping to a dm-crypt
+device.
 
-Hi!
+The limit is not applied to non-swap workload because it uses shared
+variables that cause cache line bouncing.
 
-(just discussed this with Zdenek too)
+In some situations it may be desired to apply the limit on all bios, this
+patch adds the file "/sys/module/dm_crypt/parameters/limit_all_bios" that
+enables it. It must be enabled prior to creating a dm-crypt device.
 
-The patch makes sense to me!
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-We added all the DM_UDEV_PRIMARY_SOURCE_FLAG and related for exactly
-such cases where we need to take the existing values already scanned
-in previous event, main use-case being the trigger at boot. We just
-didn't cover the 13-dm-disk.rules with the same logic regarding the
-suspended state to keep the symlinks - I didn't think it would cause
-issues (because, usually, after suspend, we anticipate incoming
-resume where the device is scanned again).
+---
+ drivers/md/dm-crypt.c         |    6 +++++-
+ drivers/md/dm.c               |    6 +++++-
+ include/linux/device-mapper.h |    6 ++++--
+ 3 files changed, 14 insertions(+), 4 deletions(-)
 
-But yes, if temporarily losing the symlink causes issues, your patch
-solves that (Zdenek will push that upstream).
-
-(There's one more situation with checking the suspended state for the
-pvscan we have in 69-dm-lvm...rules, but that's lvm-specific, we'll
-patch that one...)
-
-Thanks!
-
--- 
-Peter
+Index: linux-2.6/include/linux/device-mapper.h
+===================================================================
+--- linux-2.6.orig/include/linux/device-mapper.h	2022-01-24 15:10:45.000000000 +0100
++++ linux-2.6/include/linux/device-mapper.h	2022-01-31 19:19:33.000000000 +0100
+@@ -353,9 +353,11 @@ struct dm_target {
+ 	bool discards_supported:1;
+ 
+ 	/*
+-	 * Set if we need to limit the number of in-flight bios when swapping.
++	 * 0 - don't limit the number of bios
++	 * 1 - limit only swap bios
++	 * 2 - limit all bios
+ 	 */
+-	bool limit_swap_bios:1;
++	unsigned char limit_swap_bios:2;
+ 
+ 	/*
+ 	 * Set if this target implements a a zoned device and needs emulation of
+Index: linux-2.6/drivers/md/dm-crypt.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-crypt.c	2022-01-06 18:54:58.000000000 +0100
++++ linux-2.6/drivers/md/dm-crypt.c	2022-01-31 19:17:58.000000000 +0100
+@@ -241,6 +241,10 @@ static struct scatterlist *crypt_get_sg_
+ 
+ static bool crypt_integrity_aead(struct crypt_config *cc);
+ 
++static bool limit_all_bios = false;
++module_param(limit_all_bios, bool, 0644);
++MODULE_PARM_DESC(limit_all_bios, "True if you want to limit all bios; false if you want to limit only swap bios");
++
+ /*
+  * Use this to access cipher attributes that are independent of the key.
+  */
+@@ -3372,7 +3376,7 @@ static int crypt_ctr(struct dm_target *t
+ 	}
+ 
+ 	ti->num_flush_bios = 1;
+-	ti->limit_swap_bios = true;
++	ti->limit_swap_bios = limit_all_bios ? 2 : 1;
+ 
+ 	dm_audit_log_ctr(DM_MSG_PREFIX, ti, 1);
+ 	return 0;
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c	2022-01-24 15:10:42.000000000 +0100
++++ linux-2.6/drivers/md/dm.c	2022-01-31 19:20:29.000000000 +0100
+@@ -873,7 +873,11 @@ void disable_write_zeroes(struct mapped_
+ 
+ static bool swap_bios_limit(struct dm_target *ti, struct bio *bio)
+ {
+-	return unlikely((bio->bi_opf & REQ_SWAP) != 0) && unlikely(ti->limit_swap_bios);
++	if (likely(!ti->limit_swap_bios))
++		return false;
++	if (likely(ti->limit_swap_bios == 1))
++		return unlikely((bio->bi_opf & REQ_SWAP) != 0);
++	return true;
+ }
+ 
+ static void clone_endio(struct bio *bio)
 
 --
 dm-devel mailing list
