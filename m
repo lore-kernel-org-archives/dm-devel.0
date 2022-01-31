@@ -1,69 +1,114 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2D2B9C433EF
-	for <dm-devel@archiver.kernel.org>; Mon, 31 Jan 2022 18:50:23 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1643655022;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=OAwyPFYsSXnvh6UGxha6h8EG4fzjqPnGF3d9WenRgYM=;
-	b=GGtcAjm07zzFuJs6YJEc7XkZP/H5SCoTk0We2mUF5ifriTY+2wRsmDLdBK32QTwlojS1Ae
-	iLeUMvDbLrrJHnSc8lLsg52TKo9bSRK4YpXws6ipNpiuX5MuUaI/DHk4EIIDHox/cAW5F0
-	Wfu+I2kBgn6AdHIBF8AttvrvFvQ0sIg=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id CAF76C433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 31 Jan 2022 19:05:10 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-93-12jZtIHqOUqymhTVapVgdQ-1; Mon, 31 Jan 2022 13:50:18 -0500
-X-MC-Unique: 12jZtIHqOUqymhTVapVgdQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-126-pVG8DVguMqyYHvN1vYO_2g-1; Mon, 31 Jan 2022 14:05:05 -0500
+X-MC-Unique: pVG8DVguMqyYHvN1vYO_2g-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 76E5418982BE;
-	Mon, 31 Jan 2022 18:50:10 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A3C3A18B613D;
+	Mon, 31 Jan 2022 19:05:00 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1BE2F781B0;
-	Mon, 31 Jan 2022 18:50:07 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5DDFA60854;
+	Mon, 31 Jan 2022 19:05:00 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A2BA04BB7C;
-	Mon, 31 Jan 2022 18:50:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
-	[10.5.11.15])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A3EF14CA93;
+	Mon, 31 Jan 2022 19:04:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 20VIo1NZ022706 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 31 Jan 2022 13:50:01 -0500
+	id 20VJ48JS023403 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 31 Jan 2022 14:04:08 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id AE84C77457; Mon, 31 Jan 2022 18:50:01 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
-	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 83F1D74EBE;
-	Mon, 31 Jan 2022 18:49:49 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 20VInm13032595; Mon, 31 Jan 2022 13:49:48 -0500
-Received: from localhost (mpatocka@localhost)
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 20VInmpt032591; Mon, 31 Jan 2022 13:49:48 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
-	owned process doing -bs
-Date: Mon, 31 Jan 2022 13:49:48 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Mike Snitzer <msnitzer@redhat.com>
-Message-ID: <alpine.LRH.2.02.2201311346140.32171@file01.intranet.prod.int.rdu2.redhat.com>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+	id F373040CFD1D; Mon, 31 Jan 2022 19:04:07 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EED0C40CFD0F
+	for <dm-devel@redhat.com>; Mon, 31 Jan 2022 19:04:07 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D571C1C04B64
+	for <dm-devel@redhat.com>; Mon, 31 Jan 2022 19:04:07 +0000 (UTC)
+Received: from mail-pf1-f177.google.com (mail-pf1-f177.google.com
+	[209.85.210.177]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-370-XUt4GwnMNjqkfhACPUFvNw-1; Mon, 31 Jan 2022 14:04:01 -0500
+X-MC-Unique: XUt4GwnMNjqkfhACPUFvNw-1
+Received: by mail-pf1-f177.google.com with SMTP id v74so13693545pfc.1;
+	Mon, 31 Jan 2022 11:04:00 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
+	:content-language:to:references:from:in-reply-to
+	:content-transfer-encoding;
+	bh=ba+ZTTm9dUGfaeSvRk+qlfqj/OlYP9s6XSq9bd25RTY=;
+	b=npRwyFvxajFzPSUCWOy5Kvx56w5cPz+o+rKXEm0VLxvcVWn+groqIdJkygqqfadOgs
+	yILO+yVL76vwJbTqTdG5YQkl7rx5K8jFSU1UDGAeqPEfRFc/ZUo19gyoBWU+Q+5PT5Zw
+	hmCG28GEetWe/h8tEt1yrXhxVM+L44D725TIzq/Z5u+KY7Nzl9NR5QZZC5rbJlaXYj5g
+	c8p+vf7VGqMn4HW/dP16VjclBQ/qoR7/qtDk1Si1MPgTkVMcgpNJbGXWvbbwqn0+uBzD
+	3KabcHL919k0LEkJ3/jhpjS8lsAMfjM3cNZHsar0zlrOr9jd4bSj6VQ75j7TCbvQZQiM
+	xo1w==
+X-Gm-Message-State: AOAM530/CdSNf+wMR176oNcBYnDg2rt4x1lZ+Vm5PK7KaSCPkKQPI9eH
+	Zk0ULJ5Wdh7hvzasvp37Xhs=
+X-Google-Smtp-Source: ABdhPJzQA22tXEk8X4OPms7oAF0wKkcs2v8eBD4LAyDqrpj0MnwPbwFxejGQ4ckny7zBvb+xVPqt/g==
+X-Received: by 2002:a63:343:: with SMTP id 64mr17733875pgd.463.1643655839828; 
+	Mon, 31 Jan 2022 11:03:59 -0800 (PST)
+Received: from [192.168.51.110] (c-73-241-217-19.hsd1.ca.comcast.net.
+	[73.241.217.19]) by smtp.gmail.com with ESMTPSA id
+	e30sm5686912pge.34.2022.01.31.11.03.57
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Mon, 31 Jan 2022 11:03:58 -0800 (PST)
+Message-ID: <59a907b6-596b-402c-b619-b0f5b6013dff@acm.org>
+Date: Mon, 31 Jan 2022 11:03:55 -0800
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+	Thunderbird/91.5.0
+To: Chaitanya Kulkarni <chaitanyak@nvidia.com>,
+	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+	"dm-devel@redhat.com" <dm-devel@redhat.com>,
+	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
+	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+	Jens Axboe <axboe@kernel.dk>,
+	"msnitzer@redhat.com >> msnitzer@redhat.com" <msnitzer@redhat.com>,
+	"martin.petersen@oracle.com >> Martin K. Petersen"
+	<martin.petersen@oracle.com>, "roland@purestorage.com"
+	<roland@purestorage.com>, "mpatocka@redhat.com" <mpatocka@redhat.com>,
+	Hannes Reinecke <hare@suse.de>, "kbus >> Keith Busch" <kbusch@kernel.org>,
+	Christoph Hellwig <hch@lst.de>,
+	"Frederick.Knight@netapp.com" <Frederick.Knight@netapp.com>,
+	"zach.brown@ni.com" <zach.brown@ni.com>, "osandov@fb.com" <osandov@fb.com>,
+	"lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>,
+	"djwong@kernel.org" <djwong@kernel.org>,
+	"josef@toxicpanda.com" <josef@toxicpanda.com>,
+	"clm@fb.com" <clm@fb.com>, "dsterba@suse.com" <dsterba@suse.com>,
+	"tytso@mit.edu" <tytso@mit.edu>, "jack@suse.com" <jack@suse.com>
+References: <f0e19ae4-b37a-e9a3-2be7-a5afb334a5c3@nvidia.com>
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <f0e19ae4-b37a-e9a3-2be7-a5afb334a5c3@nvidia.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Mimecast-Bulk-Signature: yes
+X-Mimecast-Spam-Signature: bulk
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com
-Subject: [dm-devel] [PATCH] dm-crypt: introduce a module parameter that
- makes it possible to limit all bios
+Subject: Re: [dm-devel] [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy
+	Offload
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -77,93 +122,35 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-The patch a666e5c05e7c4aaabb2c5d58117b0946803d03d2 ("dm: fix deadlock when
-swapping to encrypted device") limits the number of in-flight swap bios
-for the dm-crypt target. It avoids a deadlock when swapping to a dm-crypt
-device.
+On 1/26/22 23:14, Chaitanya Kulkarni wrote:
+> [1]https://content.riscv.org/wp-content/uploads/2018/12/A-New-Golden-Age-for-Computer-Architecture-History-Challenges-and-Opportunities-David-Patterson-.pdf
+> [2] https://www.snia.org/computational
+> https://www.napatech.com/support/resources/solution-descriptions/napatech-smartnic-solution-for-hardware-offload/
+>         https://www.eideticom.com/products.html
+> https://www.xilinx.com/applications/data-center/computational-storage.html
+> [3] git://git.kernel.org/pub/scm/linux/kernel/git/mkp/linux.git xcopy
+> [4] https://www.spinics.net/lists/linux-block/msg00599.html
+> [5] https://lwn.net/Articles/793585/
+> [6] https://nvmexpress.org/new-nvmetm-specification-defines-zoned-
+> namespaces-zns-as-go-to-industry-technology/
+> [7] https://github.com/sbates130272/linux-p2pmem
+> [8] https://kernel.dk/io_uring.pdf
 
-The limit is not applied to non-swap workload because it uses shared
-variables that cause cache line bouncing.
+Please consider adding the following link to the above list:
+https://github.com/bvanassche/linux-kernel-copy-offload
 
-In some situations it may be desired to apply the limit on all bios, this
-patch adds the file "/sys/module/dm_crypt/parameters/limit_all_bios" that
-enables it. It must be enabled prior to creating a dm-crypt device.
+Thanks,
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-crypt.c         |    6 +++++-
- drivers/md/dm.c               |    6 +++++-
- include/linux/device-mapper.h |    6 ++++--
- 3 files changed, 14 insertions(+), 4 deletions(-)
-
-Index: linux-2.6/include/linux/device-mapper.h
-===================================================================
---- linux-2.6.orig/include/linux/device-mapper.h	2022-01-24 15:10:45.000000000 +0100
-+++ linux-2.6/include/linux/device-mapper.h	2022-01-31 19:19:33.000000000 +0100
-@@ -353,9 +353,11 @@ struct dm_target {
- 	bool discards_supported:1;
- 
- 	/*
--	 * Set if we need to limit the number of in-flight bios when swapping.
-+	 * 0 - don't limit the number of bios
-+	 * 1 - limit only swap bios
-+	 * 2 - limit all bios
- 	 */
--	bool limit_swap_bios:1;
-+	unsigned char limit_swap_bios:2;
- 
- 	/*
- 	 * Set if this target implements a a zoned device and needs emulation of
-Index: linux-2.6/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-crypt.c	2022-01-06 18:54:58.000000000 +0100
-+++ linux-2.6/drivers/md/dm-crypt.c	2022-01-31 19:17:58.000000000 +0100
-@@ -241,6 +241,10 @@ static struct scatterlist *crypt_get_sg_
- 
- static bool crypt_integrity_aead(struct crypt_config *cc);
- 
-+static bool limit_all_bios = false;
-+module_param(limit_all_bios, bool, 0644);
-+MODULE_PARM_DESC(limit_all_bios, "True if you want to limit all bios; false if you want to limit only swap bios");
-+
- /*
-  * Use this to access cipher attributes that are independent of the key.
-  */
-@@ -3372,7 +3376,7 @@ static int crypt_ctr(struct dm_target *t
- 	}
- 
- 	ti->num_flush_bios = 1;
--	ti->limit_swap_bios = true;
-+	ti->limit_swap_bios = limit_all_bios ? 2 : 1;
- 
- 	dm_audit_log_ctr(DM_MSG_PREFIX, ti, 1);
- 	return 0;
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c	2022-01-24 15:10:42.000000000 +0100
-+++ linux-2.6/drivers/md/dm.c	2022-01-31 19:20:29.000000000 +0100
-@@ -873,7 +873,11 @@ void disable_write_zeroes(struct mapped_
- 
- static bool swap_bios_limit(struct dm_target *ti, struct bio *bio)
- {
--	return unlikely((bio->bi_opf & REQ_SWAP) != 0) && unlikely(ti->limit_swap_bios);
-+	if (likely(!ti->limit_swap_bios))
-+		return false;
-+	if (likely(ti->limit_swap_bios == 1))
-+		return unlikely((bio->bi_opf & REQ_SWAP) != 0);
-+	return true;
- }
- 
- static void clone_endio(struct bio *bio)
+Bart.
 
 --
 dm-devel mailing list
