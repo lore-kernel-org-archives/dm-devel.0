@@ -1,80 +1,85 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C9015C433EF
-	for <dm-devel@archiver.kernel.org>; Tue,  1 Feb 2022 19:26:20 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1643743579;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=VQpTMemC7sAbBu7TWCx21JTyUulX1qw74xNnFC+OOSs=;
-	b=FnSniwpS/8gJLq/iMRKoTpDYSLo8wCkbQ89VUW2AM9KrTMpJcRNk8lAZ6t82m+XoWNGBwI
-	RS4dmJ3yTRzIT5/96f7ghd7PGUYP/+8bacZsqxGJtIdZBRMtEywAznCVwmptF2C+Vd3t7s
-	M8MEJcPtihe9CCrHvSIfr7td7x/Vh4I=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 70BDBC433F5
+	for <dm-devel@archiver.kernel.org>; Tue,  1 Feb 2022 23:40:46 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-288-cfEwrkOsNRaAvDPfOZ7ksg-1; Tue, 01 Feb 2022 14:26:18 -0500
-X-MC-Unique: cfEwrkOsNRaAvDPfOZ7ksg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-587-VIahFdNrNJeubVa0o8aRIw-1; Tue, 01 Feb 2022 18:40:43 -0500
+X-MC-Unique: VIahFdNrNJeubVa0o8aRIw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 086BF1091DA3;
-	Tue,  1 Feb 2022 19:26:14 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id AF76C1002388;
-	Tue,  1 Feb 2022 19:26:13 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A3A4E1083F60;
+	Tue,  1 Feb 2022 23:40:38 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7DF7D108AF;
+	Tue,  1 Feb 2022 23:40:38 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4774D1809CB9;
-	Tue,  1 Feb 2022 19:26:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
-	[10.5.11.15])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E6E014A7C9;
+	Tue,  1 Feb 2022 23:40:33 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.10])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 211JQCF5007992 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 1 Feb 2022 14:26:12 -0500
+	id 211NeWmt026608 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 1 Feb 2022 18:40:32 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 03D735F4F4; Tue,  1 Feb 2022 19:26:12 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
-	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 73DEA5D6BA;
-	Tue,  1 Feb 2022 19:25:59 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 211JPwaE023932; Tue, 1 Feb 2022 14:25:58 -0500
-Received: from localhost (mpatocka@localhost)
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 211JPwim023928; Tue, 1 Feb 2022 14:25:58 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
-	owned process doing -bs
-Date: Tue, 1 Feb 2022 14:25:58 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <1380d0e4-032d-133b-4ebb-f10d85e39800@acm.org>
-Message-ID: <alpine.LRH.2.02.2202011421320.21843@file01.intranet.prod.int.rdu2.redhat.com>
-References: <f0e19ae4-b37a-e9a3-2be7-a5afb334a5c3@nvidia.com>
-	<20220201102122.4okwj2gipjbvuyux@mpHalley-2>
-	<alpine.LRH.2.02.2202011327350.22481@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.2202011332330.22481@file01.intranet.prod.int.rdu2.redhat.com>
-	<1380d0e4-032d-133b-4ebb-f10d85e39800@acm.org>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+	id 00EC0401E3E; Tue,  1 Feb 2022 23:40:32 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F08FC401476
+	for <dm-devel@redhat.com>; Tue,  1 Feb 2022 23:40:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D3A1A28EE161
+	for <dm-devel@redhat.com>; Tue,  1 Feb 2022 23:40:31 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-669-1pd0DgCTO6esKJ_bSwa2jg-1; Tue, 01 Feb 2022 18:40:30 -0500
+X-MC-Unique: 1pd0DgCTO6esKJ_bSwa2jg-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 32B4D210EF;
+	Tue,  1 Feb 2022 23:40:29 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id E619413B8F;
+	Tue,  1 Feb 2022 23:40:28 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+	by imap2.suse-dmz.suse.de with ESMTPSA id 8Lo3NuzE+WH4dAAAMHmgww
+	(envelope-from <mwilck@suse.com>); Tue, 01 Feb 2022 23:40:28 +0000
+From: mwilck@suse.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Date: Wed,  2 Feb 2022 00:40:19 +0100
+Message-Id: <20220201234024.27675-2-mwilck@suse.com>
+In-Reply-To: <20220201234024.27675-1-mwilck@suse.com>
+References: <20220201234024.27675-1-mwilck@suse.com>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 211NeWmt026608
 X-loop: dm-devel@redhat.com
-Cc: Chaitanya Kulkarni <chaitanyak@nvidia.com>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>
-Subject: Re: [dm-devel] [RFC PATCH 2/3] nvme: add copy offload support
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Subject: [dm-devel] [PATCH 1/6] multipath/Makefile: use $(udevrulesdir)
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -88,7 +93,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -96,31 +101,29 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+From: Martin Wilck <mwilck@suse.com>
 
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ multipath/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-On Tue, 1 Feb 2022, Bart Van Assche wrote:
+diff --git a/multipath/Makefile b/multipath/Makefile
+index 7673553..c690368 100644
+--- a/multipath/Makefile
++++ b/multipath/Makefile
+@@ -22,7 +22,7 @@ install:
+ 	$(INSTALL_PROGRAM) -m 755 $(EXEC) $(DESTDIR)$(bindir)/
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(udevrulesdir)
+ 	$(INSTALL_PROGRAM) -m 644 11-dm-mpath.rules $(DESTDIR)$(udevrulesdir)
+-	$(INSTALL_PROGRAM) -m 644 $(EXEC).rules $(DESTDIR)$(libudevdir)/rules.d/56-multipath.rules
++	$(INSTALL_PROGRAM) -m 644 $(EXEC).rules $(DESTDIR)$(udevrulesdir)/56-multipath.rules
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(man8dir)
+ 	$(INSTALL_PROGRAM) -m 644 $(EXEC).8 $(DESTDIR)$(man8dir)
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(man5dir)
+-- 
+2.34.1
 
-> On 2/1/22 10:33, Mikulas Patocka wrote:
-> > +static inline blk_status_t nvme_setup_read_token(struct nvme_ns *ns, struct
-> > request *req)
-> > +{
-> > +	struct bio *bio = req->bio;
-> > +	struct nvme_copy_token *token =
-> > page_to_virt(bio->bi_io_vec[0].bv_page) + bio->bi_io_vec[0].bv_offset;
-> 
-> Hmm ... shouldn't this function use bvec_kmap_local() instead of
-> page_to_virt()?
-> 
-> Thanks,
-> 
-> Bart.
-
-.bv_page is allocated only in blkdev_issue_copy with alloc_page. So, 
-page_to_virt works.
-
-But you are right that bvec_kmap_local may be nicer.
-
-Mikulas
 
 --
 dm-devel mailing list
