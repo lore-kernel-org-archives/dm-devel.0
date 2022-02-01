@@ -4,69 +4,67 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5D3A7C4332F
-	for <dm-devel@archiver.kernel.org>; Tue,  1 Feb 2022 10:56:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 92986C433EF
+	for <dm-devel@archiver.kernel.org>; Tue,  1 Feb 2022 11:12:06 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-141-x5eITZ7aN6CjeqXQb7zL2g-1; Tue, 01 Feb 2022 05:55:59 -0500
-X-MC-Unique: x5eITZ7aN6CjeqXQb7zL2g-1
+ us-mta-259-tK3eHCJlMfqYZLHYkbtfSw-1; Tue, 01 Feb 2022 06:12:00 -0500
+X-MC-Unique: tK3eHCJlMfqYZLHYkbtfSw-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AB2C31B18BCA;
-	Tue,  1 Feb 2022 10:55:54 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 88F2466E32;
-	Tue,  1 Feb 2022 10:55:54 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B8E7E189DF42;
+	Tue,  1 Feb 2022 11:11:55 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6BEDD66E3A;
+	Tue,  1 Feb 2022 11:11:55 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5CE451809C88;
-	Tue,  1 Feb 2022 10:55:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.8])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id F22174BB7C;
+	Tue,  1 Feb 2022 11:11:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.10])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 211AtqNh027823 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 1 Feb 2022 05:55:52 -0500
+	id 211BBo85029214 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 1 Feb 2022 06:11:50 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 9D010C159F6; Tue,  1 Feb 2022 10:55:52 +0000 (UTC)
+	id A0983401E3D; Tue,  1 Feb 2022 11:11:50 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 99012C0809B
-	for <dm-devel@redhat.com>; Tue,  1 Feb 2022 10:55:52 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9D327401E77
+	for <dm-devel@redhat.com>; Tue,  1 Feb 2022 11:11:50 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 80087803C9F
-	for <dm-devel@redhat.com>; Tue,  1 Feb 2022 10:55:52 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 81FAD85A5AA
+	for <dm-devel@redhat.com>; Tue,  1 Feb 2022 11:11:50 +0000 (UTC)
 Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-260-XQ_4YNNTOGumo9wgKRyVNQ-1; Tue, 01 Feb 2022 05:55:49 -0500
-X-MC-Unique: XQ_4YNNTOGumo9wgKRyVNQ-1
+	us-mta-635-BBcf0_QTPZOFWHuToLd_tw-1; Tue, 01 Feb 2022 06:11:47 -0500
+X-MC-Unique: BBcf0_QTPZOFWHuToLd_tw-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 5FAB41F380;
-	Tue,  1 Feb 2022 10:55:47 +0000 (UTC)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 635C61F383;
+	Tue,  1 Feb 2022 11:11:45 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	key-exchange X25519 server-signature ECDSA (P-521) server-digest
 	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id EACB513D24;
-	Tue,  1 Feb 2022 10:55:46 +0000 (UTC)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 0640413D62;
+	Tue,  1 Feb 2022 11:11:44 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id Ld95NrIR+WHFHgAAMHmgww
-	(envelope-from <mwilck@suse.com>); Tue, 01 Feb 2022 10:55:46 +0000
-Message-ID: <5342a690855f0047efd9eede5499227246e3fb08.camel@suse.com>
+	by imap2.suse-dmz.suse.de with ESMTPSA id +A38OnAV+WF8JwAAMHmgww
+	(envelope-from <mwilck@suse.com>); Tue, 01 Feb 2022 11:11:44 +0000
+Message-ID: <5eda612b861cf911319087c4c5af8bb6815e1928.camel@suse.com>
 From: Martin Wilck <mwilck@suse.com>
-To: Zdenek Kabelac <zdenek.kabelac@gmail.com>, Peter Rajnoha
-	<prajnoha@redhat.com>
-Date: Tue, 01 Feb 2022 11:55:46 +0100
-In-Reply-To: <cc5c503a-c94f-d32f-9f91-e388f36c647c@gmail.com>
-References: <20220128134229.1783-1-mwilck@suse.com>
-	<10ad6fc0-6c24-c98b-4a02-2140883af72d@gmail.com>
-	<a1f472a89e9825f90a4104bea535086f0cde6b93.camel@suse.com>
+To: Peter Rajnoha <prajnoha@redhat.com>
+Date: Tue, 01 Feb 2022 12:11:44 +0100
+In-Reply-To: <20220201105507.rq7rll4qjhxonzu6@alatyr-rpi.brq.redhat.com>
+References: <a1f472a89e9825f90a4104bea535086f0cde6b93.camel@suse.com>
 	<d0d0d8f39257bcddf480524f01faae1f15ac2c42.camel@suse.com>
 	<e85bd660-0c50-df5d-35de-2fd5b16cc47f@gmail.com>
 	<0a55dd1393df2c125f8cb443daaeb7d1b7162bcc.camel@suse.com>
@@ -76,7 +74,7 @@ References: <20220128134229.1783-1-mwilck@suse.com>
 	<712b54a06fa1b13f9ac92a00d7b121979c43d31c.camel@suse.com>
 	<20220131133354.vfomn5gdlgrhue4g@alatyr-rpi.brq.redhat.com>
 	<3f7f5039c4529912970f21fe699ad204dfbe5be3.camel@suse.com>
-	<cc5c503a-c94f-d32f-9f91-e388f36c647c@gmail.com>
+	<20220201105507.rq7rll4qjhxonzu6@alatyr-rpi.brq.redhat.com>
 User-Agent: Evolution 3.42.3
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -87,12 +85,13 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 211AtqNh027823
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 211BBo85029214
 X-loop: dm-devel@redhat.com
 Cc: Franck Bui <fbui@suse.de>, lvm-devel@redhat.com, dm-devel@redhat.com,
 	David Teigland <teigland@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>,
+	Zdenek Kabelac <zdenek.kabelac@gmail.com>,
 	Heming Zhao <heming.zhao@suse.com>
 Subject: Re: [dm-devel] [PATCH] udev: create symlinks and watch even in
 	suspended state
@@ -117,86 +116,79 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="iso-8859-15"
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, 2022-02-01 at 11:11 +0100, Zdenek Kabelac wrote:
-> > >=20
-> > > But yes, if temporarily losing the symlink causes issues, your
-> > > patch
-> > > solves that (Zdenek will push that upstream).
-> >=20
-> > Thank you very much! It occured to me that if we want to solve my
-> > use
-> > case with minimal risk, we could make the the case in which the
-> > symlinks are preserved conditional on ACTION=3D=3D"add" (i.e. true
-> > coldplug
-> > events). Tell me if you'd prefer that, I can re-submit.
+On Tue, 2022-02-01 at 11:55 +0100, Peter Rajnoha wrote:
 >=20
-> The problem is handling of 'suspended' state in udev rules - as I've
-> mentioned=20
-> original no userland tool should mostly care about this.
+> Thing is, we only restore DM_* values in 10-dm.rules, but we need to
+> do
+> the same for blkid values. That would be a patch like this on top of
+> yours:
+
+Right. For those devices I'm mainly concerned about, this is done in
+11-dm-mpath.rules and 11-dm-parts.rules (both part of multipath-tools).
+
+https://github.com/opensvc/multipath-tools/blob/master/multipath/11-dm-mpat=
+h.rules
+https://github.com/opensvc/multipath-tools/blob/master/kpartx/dm-parts.rule=
+s
+
+If you want the same functionality for generic dm devices, you need
+these import statements in the generic code as well.
+
+I should have added the imports right away, I might have been causing
+less confusion. But I thought I'd cause less potential for regressions
+this way, as all the SYMLINK+=3D... rules first test whether the related
+properties are non-empty.
+
 >=20
-> However since there are those things like udev 'trigger' and it would
-> be kind=20
-> of ugly if the 'left-over' suspended device would stop whole system
-> operation
-> it's most likely better ATM to have some kind of support for this.
+> =A0udev/13-dm-disk.rules.in | 14 ++++++++++++--
+> =A01 file changed, 12 insertions(+), 2 deletions(-)
 >=20
-> It's should be noted there is still 'race' risk of system freezing in
-> the case=20
-> the suspend happens just after sysfs test and before actual i.e.
-> 'blkid' use.
+> diff --git a/udev/13-dm-disk.rules.in b/udev/13-dm-disk.rules.in
+> index 5cc08121e..9b1a0b562 100644
+> --- a/udev/13-dm-disk.rules.in
+> +++ b/udev/13-dm-disk.rules.in
+> @@ -17,12 +17,22 @@ ENV{DM_UDEV_DISABLE_DISK_RULES_FLAG}=3D=3D"1",
+> GOTO=3D"dm_end"
+> =A0SYMLINK+=3D"disk/by-id/dm-name-$env{DM_NAME}"
+> =A0ENV{DM_UUID}=3D=3D"?*", SYMLINK+=3D"disk/by-id/dm-uuid-$env{DM_UUID}"
+> =A0
+> -ENV{DM_SUSPENDED}=3D=3D"1", ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}=3D=3D"1",
+> GOTO=3D"dm_link"
+> -ENV{DM_NOSCAN}=3D=3D"1", ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}=3D=3D"1",
+> GOTO=3D"dm_link"
+> +ENV{DM_SUSPENDED}=3D=3D"1", ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}=3D=3D"1",
+> GOTO=3D"dm_blkid_restore"
+> +ENV{DM_NOSCAN}=3D=3D"1", ENV{DM_UDEV_PRIMARY_SOURCE_FLAG}=3D=3D"1",
+> GOTO=3D"dm_blkid_restore"
+> =A0ENV{DM_SUSPENDED}=3D=3D"1", GOTO=3D"dm_end"
+> =A0ENV{DM_NOSCAN}=3D=3D"1", GOTO=3D"dm_watch"
+> =A0
+> =A0(BLKID_RULE)
+> +GOTO=3D"dm_link"
+> +
+> +LABEL=3D"dm_blkid_restore"
+> +IMPORT{db}=3D"ID_FS_USAGE"
+> +IMPORT{db}=3D"ID_FS_UUID_ENC"
+> +IMPORT{db}=3D"ID_FS_LABEL_ENC"
+> +IMPORT{db}=3D"ID_PART_ENTRY_UUID"
+> +IMPORT{db}=3D"ID_PART_ENTRY_SCHEME"
+> +IMPORT{db}=3D"ID_PART_ENTRY_NAME"
+> +IMPORT{db}=3D"ID_PART_GPT_AUTO_ROOT"
 
-Right. Even if blkid was smart enough to check immediately before=20
-doing I/O on the device, there would still be a race window.=20
+This looks ok. The list of variables is a little different in the
+multipath rules files. Anyway, the only properties that matter are
+those for which we're going to create symlinks for.=20
 
-It occured to me that it might be useful if IO on suspended DM devices
-failed with -EAGAIN when opened with a non-blocking file descriptor.
-But I haven't thought it through ... I suppose that would have other
-issues, it would be a breaking change anyway.
+In general, the approach of doing this here is somewhat fragile - when
+udev's blkid changes, the list of determined / required device
+properties might change as well. It'd be optimal to move this logic
+into udev proper, into the generic rules that handle storage device
+naming (60-persistent-storage.rules). Then all we'd need to do in the
+dm rules would be to set a flag telling udev that blkid shouldn't be
+called because it might hang, and perhaps another one to tell that it's
+OK to import the properties from the db instead.
 
-The good thing is that most of the time, the devices are suspended only
-for a short period of time, so blkid will just hang for a few fractions
-of a second. The fact that udev skips calling blkid is only for the
-very rare remaining cases in which the suspend state persists for a
-long time.
-
-> The missed issue to be solve is - that ALL rules have to rely on a
-> single=20
-> suspend check - otherwise we risk 'partial' processing=A0 which is the
-> last=20
-> thing we want to see (aka all or nothing).
-
-Don't we have that already? Isn't that the check that sets the
-DM_SUSPENDED flag?
-
-> Your real problem was not the suspend on its own - which still may
-> happen=20
-> anytime (so i.e. just after the test whether device is suspended),
-> but the bug was related to bad exit path cleaning udev db content in
-> this case=20
-> - which is clear bug.=A0 Next bug is that other rules have to be
-> consistent and=20
-> properly skip its processing if the 1st. rules decides its meant to
-> be skipped.
-
-Part of the consistency problem is that we have a lot of related but
-not equivalent udev variables:
-
-DM_SUSPENDED
-DM_NOSCAN
-DM_UDEV_DISABLE_OTHER_RULES_FLAG
-DM_UDEV_DISABLE_SUBSYSTEM_RULES_FLAG
-DM_UDEV_DISABLE_DISK_RULES_FLAG
-
-and then of course
-
-SYSTEMD_READY
-MPATH_DEVICE_READY
-
-For consumers of these variables (i.e. udev rules from other
-subsystems), it's not always obvious which one they should look at
-(just my =A40.02).
-
-Regards,
+Regards
 Martin
 
 
