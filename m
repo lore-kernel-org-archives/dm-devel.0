@@ -4,159 +4,158 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B6C41C433EF
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Feb 2022 22:03:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 80002C433F5
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Feb 2022 22:13:56 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-391-u_Ko6UV8M4iDp4KprWU8pA-1; Wed, 02 Feb 2022 17:03:46 -0500
-X-MC-Unique: u_Ko6UV8M4iDp4KprWU8pA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-609-zgbbse3ZN4GDqM_ywpR_jQ-1; Wed, 02 Feb 2022 17:13:52 -0500
+X-MC-Unique: zgbbse3ZN4GDqM_ywpR_jQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8DC161923B88;
-	Wed,  2 Feb 2022 22:03:41 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4B5841091DA1;
+	Wed,  2 Feb 2022 22:13:47 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D82D910429D2;
-	Wed,  2 Feb 2022 22:03:40 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 04C359A32B;
+	Wed,  2 Feb 2022 22:13:47 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4C2364BB7C;
-	Wed,  2 Feb 2022 22:03:40 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 12C0B4BB7C;
+	Wed,  2 Feb 2022 22:13:46 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.7])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 212M3crg020977 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 2 Feb 2022 17:03:38 -0500
+	id 212MDhWn022297 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 2 Feb 2022 17:13:43 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 51BC8141DEE1; Wed,  2 Feb 2022 22:03:38 +0000 (UTC)
+	id 317EA1457F16; Wed,  2 Feb 2022 22:13:43 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4CA07141DED7
-	for <dm-devel@redhat.com>; Wed,  2 Feb 2022 22:03:38 +0000 (UTC)
+	(mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2C9101457F13
+	for <dm-devel@redhat.com>; Wed,  2 Feb 2022 22:13:43 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2F9C78027FC
-	for <dm-devel@redhat.com>; Wed,  2 Feb 2022 22:03:38 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0CF64380406A
+	for <dm-devel@redhat.com>; Wed,  2 Feb 2022 22:13:43 +0000 (UTC)
 Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
 	[205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-652-mpqJAjsbN--BU28qkNyv-Q-1; Wed, 02 Feb 2022 17:03:33 -0500
-X-MC-Unique: mpqJAjsbN--BU28qkNyv-Q-1
-Received: from pps.filterd (m0246629.ppops.net [127.0.0.1])
+	us-mta-203-TsHfVs5KNF2MS6SFTu5B_w-1; Wed, 02 Feb 2022 17:13:39 -0500
+X-MC-Unique: TsHfVs5KNF2MS6SFTu5B_w-1
+Received: from pps.filterd (m0246617.ppops.net [127.0.0.1])
 	by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id
-	212Kwl3x009905; Wed, 2 Feb 2022 22:03:16 GMT
+	212KwhWZ023474; Wed, 2 Feb 2022 22:13:31 GMT
 Received: from userp3030.oracle.com (userp3030.oracle.com [156.151.31.80])
-	by mx0b-00069f02.pphosted.com with ESMTP id 3dxjac7d54-1
+	by mx0b-00069f02.pphosted.com with ESMTP id 3dxnk2q386-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Wed, 02 Feb 2022 22:03:16 +0000
+	Wed, 02 Feb 2022 22:13:31 +0000
 Received: from pps.filterd (userp3030.oracle.com [127.0.0.1])
-	by userp3030.oracle.com (8.16.1.2/8.16.1.2) with SMTP id 212M1SWv098035;
-	Wed, 2 Feb 2022 22:03:15 GMT
-Received: from nam12-bn8-obe.outbound.protection.outlook.com
-	(mail-bn8nam12lp2172.outbound.protection.outlook.com [104.47.55.172])
-	by userp3030.oracle.com with ESMTP id 3dvtq3me2u-1
+	by userp3030.oracle.com (8.16.1.2/8.16.1.2) with SMTP id 212MBSEd137607;
+	Wed, 2 Feb 2022 22:13:29 GMT
+Received: from nam12-mw2-obe.outbound.protection.outlook.com
+	(mail-mw2nam12lp2044.outbound.protection.outlook.com [104.47.66.44])
+	by userp3030.oracle.com with ESMTP id 3dvtq3mvmt-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Wed, 02 Feb 2022 22:03:15 +0000
+	Wed, 02 Feb 2022 22:13:29 +0000
 Received: from SJ0PR10MB4429.namprd10.prod.outlook.com (2603:10b6:a03:2d1::14)
-	by CO1PR10MB4689.namprd10.prod.outlook.com (2603:10b6:303:98::19)
-	with Microsoft SMTP Server (version=TLS1_2,
+	by DM6PR10MB2827.namprd10.prod.outlook.com (2603:10b6:5:6e::32) with
+	Microsoft SMTP Server (version=TLS1_2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4951.11;
-	Wed, 2 Feb 2022 22:03:12 +0000
+	Wed, 2 Feb 2022 22:13:26 +0000
 Received: from SJ0PR10MB4429.namprd10.prod.outlook.com
 	([fe80::d034:a8db:9e32:acde]) by
 	SJ0PR10MB4429.namprd10.prod.outlook.com
 	([fe80::d034:a8db:9e32:acde%5]) with mapi id 15.20.4930.022;
-	Wed, 2 Feb 2022 22:03:12 +0000
+	Wed, 2 Feb 2022 22:13:26 +0000
 From: Jane Chu <jane.chu@oracle.com>
 To: Christoph Hellwig <hch@infradead.org>
-Thread-Topic: [PATCH v5 4/7] dax: add dax_recovery_write to dax_op and dm
-	target type
-Thread-Index: AQHYFI6LEOTCAew0QE2MfSX8Pkzm9KyASjoAgACN/wA=
-Date: Wed, 2 Feb 2022 22:03:12 +0000
-Message-ID: <fba7dc7a-ed09-bb1f-4882-da50fc470c20@oracle.com>
+Thread-Topic: [PATCH v5 5/7] pmem: add pmem_recovery_write() dax op
+Thread-Index: AQHYFI6Ncz9/iVrSZU2vUZQLJAd6lqyATK0AgACOaAA=
+Date: Wed, 2 Feb 2022 22:13:26 +0000
+Message-ID: <da884fa0-1cf8-b8d4-ba4b-4a4ebda70355@oracle.com>
 References: <20220128213150.1333552-1-jane.chu@oracle.com>
-	<20220128213150.1333552-5-jane.chu@oracle.com>
-	<YfqIgliJi0GkviXD@infradead.org>
-In-Reply-To: <YfqIgliJi0GkviXD@infradead.org>
+	<20220128213150.1333552-6-jane.chu@oracle.com>
+	<YfqKkEB3gBsiuMZt@infradead.org>
+In-Reply-To: <YfqKkEB3gBsiuMZt@infradead.org>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
 user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
 	Thunderbird/91.5.1
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: b73fedee-d94d-45a2-19ae-08d9e697ce81
-x-ms-traffictypediagnostic: CO1PR10MB4689:EE_
-x-microsoft-antispam-prvs: <CO1PR10MB46899ECBC3CF704FE499F37DF3279@CO1PR10MB4689.namprd10.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:7219
+x-ms-office365-filtering-correlation-id: 468767e2-15d6-40b4-02c3-08d9e6993c57
+x-ms-traffictypediagnostic: DM6PR10MB2827:EE_
+x-microsoft-antispam-prvs: <DM6PR10MB2827D964FF28340A599BD5EBF3279@DM6PR10MB2827.namprd10.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:3276
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: yenOaRAcMzpmCBHushK7uk3nNhPnE44fd6PxSmCy4dwiC1HG4P8ErsnxPMNuUkDHi4Fx9Frt4RR9gg0wj9g6soLb4Tm23Uj53O81ODkqLUgG1KHwfnCPurVqE0jQEIIKVv5JWyTdmSD5jK9lXSboX5hUZWCfgUTlivfV22XpXIDTi9L/qzR9BUg6VDYgn0MbrdollYEbeuWG/AkSSiH3QSzHybas6hKwg0SZElDkbdHpbpM/Fq2u+THcrlcARO4LHS8QZ1WWWL7A9PdxD6K+WuRj2Z3mYm1MiLIbo0f7TFVc3p3m1IpEmjWJ39jgaTatKyBvUTytWgPfOyH0fUqe83jOdNGKsZmHrRvdeiPOJioVRECGWabJGpAkScjnfqF8MYArGMq0bFxHUbfpGw1+UCm9bEdi95po/HpjxGrmlUVyFwxFhgQh0877O7aeT5VA+LsngHEkIf8S5O7iX2w6Tyo2wv1Dpo3kgn42rIiXvvt678H1ppYjVf9vaZ0b8ixlsDM8jVO44lFMGAbwLhCMShHQvYimVFLs1mo2zFvDPfLcyMAdJefnPa2VKTIbBWTIyN0abfdl+8gdkttJiqKCCBPMpIGW4BJ4EC8RoIBkRpJrDRcl8BXqBpWXmUNBPNwv8EhHjMP7Bav59+o3+b+LPMCOSLhJKDLUC7bIB7+fQCwrVPft/otJ83rp6FWTgMQ26/YBd1eO3D+Ykv1hYPfEH8WG7EzxJRf0lmHdru+vAnD/vXaxXg/aJMaL7WM0q3Kz1Cn6OZJ/xrAZEl+4PAlh2g==
+x-microsoft-antispam-message-info: XR3XNRu+uguPyZf7P9P6Ky6dqZ5t5zjp8JimUk+iI5Ukmj0BWf/Otap8q6floYFqpe/BhojVXvjsodKh3VuQxWeEA0PXclBpTiQWVv6BT04ZEbM3ms7k51HySSinalzEmCQrxEsjnVTnqWkfNzcqjBHXii2pCPGIe6yPbYfYD6r2Is2QhxbIex5wsxv9xEs2jC1uLfT1TIkpgxh8kjmgg7ulsFOexRCJJDXV6ijlil9zYkNEI0f8On3QlBDAFIlaO3FNcZApYEsJhYZrPvKnjaxIDMpIjxwcSJ6gYtJtifLVM89INygQbBnGOgQqdtD6BXIpyroC01Xq0G6LD5LJCtEMBDb1iOD+Llz3TpDvDJH1V5JcYrDMZpGPS9siA1kWnB5Hckl/mnN6BGQ4flPdkjtyo2Q9cUgo7cOYuv+Y3UMPL02Fvq+HU+b4/8vec3lllnjYJn6EEpwa1QRvEsQyiJ472/DytG+z1FeICZIzwbqZnKrHBxoNJ2reAWxPxpZ8NSQs5rBajvlcQBhoBpMdfCq8MOcWVxtuBLrJj5JNm8bNzdasb2dB4z2g/8IXjsMIDjB73xqCuYqN2R/gnTaOR4o3DkXWDLViOPsQPtipN6G8ZCQFdBEVbhchOAPO99sd85VGLaYWv4KAuz4XG0GNc1DaQKvN29iS+F1WVKmoKJsol62PrZo2aABVx6eMLJCuCKIRLvVaC7e6O3XpQ3ySmrZ9z/LIwORb+HgYp6dEmCD/3dgyd9sdV4iaq8PN8XHvQDhsZ4XlbvicVuaUYa70bA==
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
 	IPV:NLI; SFV:NSPM; H:SJ0PR10MB4429.namprd10.prod.outlook.com;
 	PTR:; CAT:NONE;
-	SFS:(13230001)(366004)(5660300002)(2616005)(31686004)(54906003)(44832011)(122000001)(186003)(316002)(31696002)(7416002)(26005)(508600001)(6916009)(86362001)(36756003)(8676002)(66476007)(38100700002)(91956017)(4326008)(76116006)(38070700005)(66946007)(66556008)(6512007)(6506007)(64756008)(66446008)(53546011)(71200400001)(6486002)(2906002)(8936002)(45980500001)(43740500002);
+	SFS:(13230001)(366004)(31686004)(83380400001)(6486002)(36756003)(26005)(316002)(38070700005)(122000001)(38100700002)(186003)(6916009)(54906003)(76116006)(66556008)(6506007)(53546011)(2906002)(7416002)(64756008)(86362001)(6512007)(66446008)(31696002)(66476007)(44832011)(5660300002)(4326008)(8676002)(8936002)(66946007)(508600001)(2616005)(71200400001)(91956017)(43740500002)(45980500001);
 	DIR:OUT; SFP:1101
 x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?utf-8?B?Ty8xY0Z3U09hRFFvS0krSWNrby8rWFIzd3pubkhtdDdZdFNvWU9FRjhhdzhj?=
-	=?utf-8?B?dXB6OVNZWGtwTXd4UnFaUDJ1dnBnSTRCY09QWWRlbGRiaFovVUNob0w4ZVhJ?=
-	=?utf-8?B?eFBJNU8rbW9xNFBSVGlsSmRRQ2JZZlBvTUNSZ05WYW1SdUFQZGk5NGhjUmRX?=
-	=?utf-8?B?ZFRLRGg1K2tPazNvK2JEcGNZbkIyRW41aXd1TzNHeVExS1pYaDJxQVYyZkxO?=
-	=?utf-8?B?MFRQMnNCY2EwbytvVUhVcTc1cmZ6dSs2RDJ3SVB4SkE0NmRxYy9DOTVrRktK?=
-	=?utf-8?B?aUxPd21FNkRLOGFOOFlTdGVMN3NqdkxkUzZVK0VGd1RSZVpMTHVFS2tYMTZm?=
-	=?utf-8?B?M0EzM0dmS05FNHN3alNEOVlnNU40ekh1RU9ETGJuQjhuNXVZQ2ovVnJ6Nldw?=
-	=?utf-8?B?Q3VjVHpWZk12Q2lvalB5KytDdEp2bTRGNVhtVkM5VDQ3VDRvSEx1aDBJQkFt?=
-	=?utf-8?B?TzdvQU52bHphdHJrSXFabGZ5ZmZLNzNDLzQrbUpOSkN6WDFkWDJqejVRWFNp?=
-	=?utf-8?B?ajZtcHFkYm1seENob0E3ZkorOUxoMzJXZXNyNW1VZGs2ZkU1M3NBNGdQQXZ0?=
-	=?utf-8?B?bWUyZ05oYllTWW5qc2xBWlRQdnUwZ1hzMkg2NEQvOHcxL2F2dXA2WmlFV0FK?=
-	=?utf-8?B?QXRpelZaWXMwdGIrcmYva1lpb0pNSmFpdDRvTmNidWJTRzFURjNQcXlLZE5m?=
-	=?utf-8?B?VkpZS3pwT2RMd1VNZHVaRHNKRlNmY0xaTDVTdnFkSnRlUVBFTWg5Q0o0UUhl?=
-	=?utf-8?B?NlZpWHBhd1NkTUNCcVhNeGx6cGRLejN4V2NKaCtxWWFLdk1ISjEyb2s4SWo2?=
-	=?utf-8?B?czZvRktxNWppMURuajNidi9obWVnQlNkZnVYQ0pyYkNIdTgvMmdVUWZOSnRW?=
-	=?utf-8?B?UzdXai9Hb0tUUUtYR1ZXKys0Y05wakN6ekk5eDNEaXhDR2IwZkxWeXQya1BM?=
-	=?utf-8?B?NE1KTXlCNjh0Y0hFSHhsUlU4cTRMd2Z4dGVoOHBVNEFHQ3pPRkI4SFpyTlRQ?=
-	=?utf-8?B?UXBFancydEhZZFpVUDl4a0RDcTBFZERPR25oOWNyOEZpL2tydlArRUtIUTZZ?=
-	=?utf-8?B?T284cWFuSmVZbWZYWkwrc0pGQ2E5QlhUVFJWTlEwNFhma1VWMWN3VDhrckp3?=
-	=?utf-8?B?ZEU0ODZYZVVtc0JJQ2dER3JsS1loRTVDeFRHNVNLaG5YVk91Yk9Cemw5cDRI?=
-	=?utf-8?B?TXBvbFlPQ213SDRFQWlNTzk1U25lRXhxUlFwZXRYUzZkckRmOExaWWxWSDNl?=
-	=?utf-8?B?bXp2WFFhMkhVWWI3MHFkWGh2ZXRDc1NvNGZGNlBCWXNiSGJ2enQwdHp2UEh3?=
-	=?utf-8?B?MlNXNk1jOWR2R1NMajc4UXkrUW1QZnhIRmJFRWI1bUxRV3g5dTJHTnRTYksy?=
-	=?utf-8?B?UUNjVlZDQWYzVGZIZkx5Rjg5QndIWjkzUHFaNVBYRmtHUkFadFNham9leGVW?=
-	=?utf-8?B?RGRjajZaVTZIYWh2MVVhYlVUOEgwNUxKaUFyQks1Q0dOZHN5NEdkdEVpeXdB?=
-	=?utf-8?B?Q1pPLy9zbXlmb0VNSDl0dEdrUGFxcEowazlaWXdRcDh2RVhuSm8xNy9IaE5K?=
-	=?utf-8?B?QVU2YW1Dc0ZqOTQxVkdhZGVVMytEVEJmVU9XQUJlcXRvU3JPQzY0UVJQRjBu?=
-	=?utf-8?B?MjU4aUoyTlBYWmo1T2t4UGVPQThrU3FHVm0xWDhUWXVEbTdvUURPd3crYjRY?=
-	=?utf-8?B?SkxnL0hQWGY4UmlqY050TDYwSnRNODM1bkdPV2J6V3luamNDazh3Wm50WDdV?=
-	=?utf-8?B?NFRoZnRlNHdKT0ptbnBBK2dvZExqZ09LU1Ztd3Mvcmd5N1k0c3BQVm1lZitv?=
-	=?utf-8?B?Tk0yUjcrNTdINElrNG1pTUM0OUd6MTlreW04Vmt4OUFIRXNQeFVOdWJJc0hI?=
-	=?utf-8?B?ZlYrNHBTU3AvdWVjVVlORVFzN0N4d2NMUlNiNEFFQllzSXgyamZsNDFwZE5x?=
-	=?utf-8?B?OVlwdklzSGdIckEzRTlSNjlnOGRUR1ZNQW1NSmNtRWFybzdJcnB3TDRqSzhV?=
-	=?utf-8?B?VWt4ajVST0tMNVdEeTI0VkJGNHl0eGN3dSs0dUVOeHhjanhsSFkvZ2FVeTBH?=
-	=?utf-8?B?RUFUc2R5QlMveW10L1UzNU50anVPYWRSK3pGa0ZvRE5kQnZlQ3pLRE1yZ0Z6?=
-	=?utf-8?B?VXRlTHUxWVN5UmlORjd1TzJPMDBxejJWNG04dHJkVURhQ1ZyZ0FlaElPcEt5?=
-	=?utf-8?B?UkE9PQ==?=
+x-ms-exchange-antispam-messagedata-0: =?utf-8?B?QTdyKy9ubS81dVN6cm52Rmk0UU51bWd2ZzNlNU52YmxnMWt2ajNXR1diMXVp?=
+	=?utf-8?B?cENjWVNaWVRTYnZsMytqR0dRdXYwQUN0S0J2eHFxTjUyYi81VU9DaUlpVkhz?=
+	=?utf-8?B?NXRIUzFkVklQYXhJQVREUXM3YmhPczRDZkwwVmlkTU11TmF2enUvRUp2Z0p4?=
+	=?utf-8?B?ck15VlhtTFlEdXR2cVNPWXBJL0dzcVdBNmFhVWxmTi82aStjWmlWenJMUXVU?=
+	=?utf-8?B?dUl6S2tGRktZYklRNFc2MXl4UlBHUVp2UkxueEl4QTNUUWlLK2lNUW8wY1Nu?=
+	=?utf-8?B?aThGeTgyVDgwK0VRazAwZzVqL1ZoMWFES0YyRWxRZHBTQzQ0MU45RURxQlpS?=
+	=?utf-8?B?MDliUzc4Q0ZFeUxDc1pFOW96Y2Z5T3hWOWx3TGRFTEdGbzBXM0RlZ2txM0R6?=
+	=?utf-8?B?dmdONU01N1RSR3FveTB5RjhETy8rak9VYjZsZVJoTklpMHFCSE45N09Wc3NQ?=
+	=?utf-8?B?SGN6cEY2d1NnOGFKMnJYdTl0bFByWUQ0K3JLenBienhwdmt4Sll1NG81THFo?=
+	=?utf-8?B?U3B3Y08rSHd0NVJlOTFNenFRMWxyODcyRm0zaVIxODhHOXRmVVlHU2g5K0U0?=
+	=?utf-8?B?VGxkOHpwTkp5dVRRd2w5SEI4NzBIMzZHamNWdDZqbUpIZnFQdURGUi9iQTI2?=
+	=?utf-8?B?OTdWV0FkdytMTGNaa2tsRk9uNGY4Y3lZSGZMMG41YW40eHRPRkU4V2lPcWhi?=
+	=?utf-8?B?WXR0T0JJNldOTjJaVTVjaGpReldKcTRLU2NBMnpiOGIyQnFsQXRmS0N0aXBW?=
+	=?utf-8?B?ZWtFYXFWSnZYdzgzbWpuNG50eElqSmJZRmsxTzRCR2hzOGVWbGxpUnZiZlIx?=
+	=?utf-8?B?VnJyaVRyUGUxYkxKOEJMRDNyeGJXOVJSWW1meTNybGc1bE9YUkJnV2YzREFy?=
+	=?utf-8?B?OFpOTXVtQnh2MllXK1ZrZWZuYmxJajFCOVY0V3oweGlaNmE0ZndTYitoNEJR?=
+	=?utf-8?B?cmlwaG5aZmFiRldIZndnSTlFVDF1cnRzM0ZKQWw0dWhDNUZnSHVwYzkvckxL?=
+	=?utf-8?B?NkZOVUcvanBkdjh2Vy9TQ256Tk81WVZkdHB3bFZJNG5rVGt4MXZsOUl6UnZs?=
+	=?utf-8?B?V0k2czRTOWxQbU5TOW43VXpvemQ3Y2VkL2xmNnhkNGE1K2tMRjBRWmZrQ0M4?=
+	=?utf-8?B?S2xYdXhNR1NIdDNMWHFVYW5TQXBLMVMyZ2lQNVBMTkVuRm0xdWZheDFJWS90?=
+	=?utf-8?B?Y24yVlhvNnUza2lxdGJ1N2s0NVdGTnVsaWdVSEY0VHZZT1M3S3g4S0RVV0hR?=
+	=?utf-8?B?bk1KUzdBemJqMnlGdHBvZktncmIvSVg0allnR2JCakVvWWkrQjFIZXVldWQ1?=
+	=?utf-8?B?OUxFcTdRcFJ0ZnlLcmUrQWxaWFhldEQvQnhXa0pxVDlPbHRsaW1GZFVScjVU?=
+	=?utf-8?B?enFoU2cwQjkwR2tNL3BpM1hhWk9FY3NwU05zanYrV2hudEtGZzRLemRmVk5a?=
+	=?utf-8?B?NjYxOFlQVHlMUTYzNTFqNXFjdE5rK1U2RG4yQm5CYVdDbUw4YXVTQmdkSDJT?=
+	=?utf-8?B?b0J6M0ZCMmhrU1lYMmM1OVA0dVpwQ2IxMmJYeGpBemdUM3JXQzQyQnphV2Ni?=
+	=?utf-8?B?N1Y1MFpETU9sd1dKNXgrRlFNcDN6c1Z2bHhUVXBrS0NJV3JQdVpvWURaVVhD?=
+	=?utf-8?B?RllXcm13MEcreUUzdk83SFR0UEMyUlRvdXRUMEt4dFA2bzRoNmxub0ljM1VX?=
+	=?utf-8?B?QytHTGtEbWxhZzV3SGQ3cXFQTFEyd2RXVy9Ob2FDTjdpK0Vrc0NFVlR1dXAz?=
+	=?utf-8?B?bEZnYnZYb05vdmZkdDF4ZFpaVjNIc2tBM3M4T3NDQmR0VDZzamVWWWM2c1ps?=
+	=?utf-8?B?TzREaktFUGc4NUN2RFBkenNPbzRkY0RyWGVLNkZ6MnAzeFljcUNjQ3RtWnZs?=
+	=?utf-8?B?ZzBFS3d1em9tbVRzWmw0WkFqaEh1VmthMjVrWloxOHhQM0pNTWx5RXVlSTJu?=
+	=?utf-8?B?NW5NdEp4MWFwSkc4eUFEWWxrb2pRRks0Qlg0VGJEbFl1WGc2RjNwdFFsTWk0?=
+	=?utf-8?B?NytWUnhISmttaTVHWFNYcG1tbjJxbFNWOWVwRk5welJrRFVYbUZRNDd2bnhq?=
+	=?utf-8?B?Y0hOTDFqVEEzaElQaHhVNS84elpiMDNucVFxbjE2bmpDTW9yUzRpUEhpaDY3?=
+	=?utf-8?B?QldzYUVKTWVIVFZxUnR2TnBNZW1Sc0dTWlZGejFLT1laWVJFNWFSS3JiTUFv?=
+	=?utf-8?B?RFE9PQ==?=
 MIME-Version: 1.0
 X-OriginatorOrg: oracle.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: SJ0PR10MB4429.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: b73fedee-d94d-45a2-19ae-08d9e697ce81
-X-MS-Exchange-CrossTenant-originalarrivaltime: 02 Feb 2022 22:03:12.5060 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 468767e2-15d6-40b4-02c3-08d9e6993c57
+X-MS-Exchange-CrossTenant-originalarrivaltime: 02 Feb 2022 22:13:26.5574 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: gdlkKRaFjAN5xOsUchOcq5ReoCQ/aLURaiA3eXJI931B7aPSmtGxr8KchrFf2wRyv4LkNLldEUSI6NOF4BiYaQ==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: CO1PR10MB4689
+X-MS-Exchange-CrossTenant-userprincipalname: kjMKnlg0zNpY6JxkEXi6MUentDir/u8rxygzn/HXvmYE+8bvBrtXBs7B6VqL79sY3ki2+gfyqo1jmWKddu17rw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR10MB2827
 X-Proofpoint-Virus-Version: vendor=nai engine=6300 definitions=10246
 	signatures=673430
 X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 spamscore=0
 	mlxlogscore=999
 	adultscore=0 malwarescore=0 bulkscore=0 suspectscore=0 mlxscore=0
 	phishscore=0 classifier=spam adjust=0 reason=mlx scancount=1
-	engine=8.12.0-2201110000 definitions=main-2202020119
-X-Proofpoint-GUID: ZzgP2TL42LjwBsjlcCysPsqzmLlsPg7H
-X-Proofpoint-ORIG-GUID: ZzgP2TL42LjwBsjlcCysPsqzmLlsPg7H
+	engine=8.12.0-2201110000 definitions=main-2202020120
+X-Proofpoint-GUID: M4NsJd-zr0cg1sk-Zh-okqnNlC-UjksB
+X-Proofpoint-ORIG-GUID: M4NsJd-zr0cg1sk-Zh-okqnNlC-UjksB
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -167,7 +166,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-MIME-Autoconverted: from base64 to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 212M3crg020977
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 212MDhWn022297
 X-loop: dm-devel@redhat.com
 Cc: "nvdimm@lists.linux.dev" <nvdimm@lists.linux.dev>,
 	"dave.jiang@intel.com" <dave.jiang@intel.com>,
@@ -184,8 +183,7 @@ Cc: "nvdimm@lists.linux.dev" <nvdimm@lists.linux.dev>,
 	"dan.j.williams@intel.com" <dan.j.williams@intel.com>,
 	"ira.weiny@intel.com" <ira.weiny@intel.com>,
 	"agk@redhat.com" <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH v5 4/7] dax: add dax_recovery_write to dax_op
- and dm target type
+Subject: Re: [dm-devel] [PATCH v5 5/7] pmem: add pmem_recovery_write() dax op
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -199,65 +197,53 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <6BF30A4EEDAA2548BE48ED01A4208027@namprd10.prod.outlook.com>
+Content-ID: <DD5F84E228DDE4489FFA6E0A4346BDA2@namprd10.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 2/2/2022 5:34 AM, Christoph Hellwig wrote:
-> On Fri, Jan 28, 2022 at 02:31:47PM -0700, Jane Chu wrote:
->> dax_recovery_write() dax op is only required for DAX device that
->> export DAXDEV_RECOVERY indicating its capability to recover from
->> poisons.
->>
->> DM may be nested, if part of the base dax devices forming a DM
->> device support dax recovery, the DM device is marked with such
->> capability.
+On 2/2/2022 5:43 AM, Christoph Hellwig wrote:
+>> @@ -257,10 +263,15 @@ static int pmem_rw_page(struct block_device *bdev, sector_t sector,
+>>   __weak long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
+>>   		long nr_pages, void **kaddr, pfn_t *pfn)
+>>   {
+>> +	bool bad_pmem;
+>> +	bool do_recovery = false;
+>>   	resource_size_t offset = PFN_PHYS(pgoff) + pmem->data_offset;
+>>   
+>> -	if (unlikely(is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512,
+>> -					PFN_PHYS(nr_pages))))
+>> +	bad_pmem = is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512,
+>> +				PFN_PHYS(nr_pages));
+>> +	if (bad_pmem && kaddr)
+>> +		do_recovery = dax_recovery_started(pmem->dax_dev, kaddr);
+>> +	if (bad_pmem && !do_recovery)
+>>   		return -EIO;
 > 
-> I'd fold this into the previous 2 patches as the flag and method
-> are clearly very tightly coupled.
-
-Make sense, will do.
-
+> I find the passing of the recovery flag through the address very
+> cumbersome.  I remember there was some kind of discussion, but this looks
+> pretty ugly.
 > 
->> +static size_t linear_dax_recovery_write(struct dm_target *ti, pgoff_t pgoff,
->> +	void *addr, size_t bytes, struct iov_iter *i)
+> Also no need for the bad_pmem variable:
 > 
-> Function line continuations use two tab indentations or alignment after
-> the opening brace.
+> 	if (is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512, PFN_PHYS(nr_pages)) &&
+> 	    (!kaddr | !dax_recovery_started(pmem->dax_dev, kaddr)))
+> 		return -EIO;
 
 Okay.
 
-> 
->> +{
->> +	struct dax_device *dax_dev = linear_dax_pgoff(ti, &pgoff);
->> +
->> +	if (!dax_recovery_capable(dax_dev))
->> +		return (size_t) -EOPNOTSUPP;
-> 
-> Returning a negativ errno through an unsigned argument looks dangerous.
+>
+> Also:  the !kaddr check could go into dax_recovery_started.  That way
+> even if we stick with the overloading kaddr could also be used just for
+> the flag if needed.
 
-Sorry, should be (ssize_t) there.
-
-> 
->> +	/* recovery_write: optional operation. */
-> 
-> And explanation of what the method is use for might be more useful than
-> mentioning that is is optional.
-
-Will add substance to comments.
-
-> 
->> +	size_t (*recovery_write)(struct dax_device *, pgoff_t, void *, size_t,
->> +				struct iov_iter *);
-> 
-> Spelling out the arguments tends to help readability, but then again
-> none of the existing methods does it.
+The !kaddr check is in dax_recovery_started(), and that reminded me the
+check should be in dax_prep_recovery() too.
 
 Thanks!
 -jane
