@@ -4,52 +4,53 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 740E1C433EF
-	for <dm-devel@archiver.kernel.org>; Wed,  2 Feb 2022 16:02:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2B373C433EF
+	for <dm-devel@archiver.kernel.org>; Wed,  2 Feb 2022 16:03:05 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-639-4O1QUvzXPmStmVbg3LYckQ-1; Wed, 02 Feb 2022 11:02:01 -0500
-X-MC-Unique: 4O1QUvzXPmStmVbg3LYckQ-1
+ us-mta-629-X3OapgmVPdKQIGEiEHMSZg-1; Wed, 02 Feb 2022 11:02:06 -0500
+X-MC-Unique: X3OapgmVPdKQIGEiEHMSZg-1
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CBAA91091DC3;
-	Wed,  2 Feb 2022 16:01:50 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A8C5D23782;
-	Wed,  2 Feb 2022 16:01:50 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8A6198519E2;
+	Wed,  2 Feb 2022 16:01:52 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 67A4C23782;
+	Wed,  2 Feb 2022 16:01:52 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7C6B91806D2C;
-	Wed,  2 Feb 2022 16:01:50 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.9])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 3FDA94A7C8;
+	Wed,  2 Feb 2022 16:01:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 212G1co9018691 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 2 Feb 2022 11:01:38 -0500
+	id 212G1f4x018711 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 2 Feb 2022 11:01:41 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 73A76492D49; Wed,  2 Feb 2022 16:01:38 +0000 (UTC)
+	id 07A7140885B8; Wed,  2 Feb 2022 16:01:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6F9B6492D48
-	for <dm-devel@redhat.com>; Wed,  2 Feb 2022 16:01:38 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 54DC73803905
-	for <dm-devel@redhat.com>; Wed,  2 Feb 2022 16:01:38 +0000 (UTC)
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0354240885B5
+	for <dm-devel@redhat.com>; Wed,  2 Feb 2022 16:01:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DC382803DDA
+	for <dm-devel@redhat.com>; Wed,  2 Feb 2022 16:01:40 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-445-NouHIq5zMQWUaVFRtDdz0w-1; Wed, 02 Feb 2022 11:01:36 -0500
-X-MC-Unique: NouHIq5zMQWUaVFRtDdz0w-1
+	us-mta-473-wjiD_Pm-NRWOu7jL58TpYQ-1; Wed, 02 Feb 2022 11:01:38 -0500
+X-MC-Unique: wjiD_Pm-NRWOu7jL58TpYQ-1
 Received: from [2001:4bb8:191:327d:b3e5:1ccd:eaac:6609] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1nFI4Y-00G84D-AB; Wed, 02 Feb 2022 16:01:30 +0000
+	id 1nFI4d-00G86M-IZ; Wed, 02 Feb 2022 16:01:36 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed,  2 Feb 2022 17:01:03 +0100
-Message-Id: <20220202160109.108149-8-hch@lst.de>
+Date: Wed,  2 Feb 2022 17:01:05 +0100
+Message-Id: <20220202160109.108149-10-hch@lst.de>
 In-Reply-To: <20220202160109.108149-1-hch@lst.de>
 References: <20220202160109.108149-1-hch@lst.de>
 MIME-Version: 1.0
@@ -63,14 +64,15 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-loop: dm-devel@redhat.com
 Cc: Mike Snitzer <snitzer@redhat.com>,
 	Philipp Reisner <philipp.reisner@linbit.com>,
 	linux-block@vger.kernel.org, dm-devel@redhat.com,
 	Lars Ellenberg <lars.ellenberg@linbit.com>,
 	Pavel Begunkov <asml.silence@gmail.com>, drbd-dev@lists.linbit.com
-Subject: [dm-devel] [PATCH 07/13] dm: retun the clone bio from alloc_tio
+Subject: [dm-devel] [PATCH 09/13] dm-cache: remove
+	__remap_to_origin_clear_discard
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -92,150 +94,60 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Return the clone bio embedded into the tio as that is what the callers
-actually want.  Similar for the free side.
+Fold __remap_to_origin_clear_discard into the two callers to prepare
+for bio cloning refactoring.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm.c | 39 +++++++++++++++++++--------------------
- 1 file changed, 19 insertions(+), 20 deletions(-)
+ drivers/md/dm-cache-target.c | 24 ++++++++----------------
+ 1 file changed, 8 insertions(+), 16 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index a43d280e9bc54..c05b6ff1bb957 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -544,7 +544,7 @@ static void free_io(struct mapped_device *md, struct dm_io *io)
- 	bio_put(&io->tio.clone);
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 447d030036d18..1c37fe028e531 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -744,21 +744,14 @@ static void check_if_tick_bio_needed(struct cache *cache, struct bio *bio)
+ 	spin_unlock_irq(&cache->lock);
  }
  
--static struct dm_target_io *alloc_tio(struct clone_info *ci, struct dm_target *ti,
-+static struct bio *alloc_tio(struct clone_info *ci, struct dm_target *ti,
- 		unsigned target_bio_nr, unsigned *len, gfp_t gfp_mask)
+-static void __remap_to_origin_clear_discard(struct cache *cache, struct bio *bio,
+-					    dm_oblock_t oblock, bool bio_has_pbd)
+-{
+-	if (bio_has_pbd)
+-		check_if_tick_bio_needed(cache, bio);
+-	remap_to_origin(cache, bio);
+-	if (bio_data_dir(bio) == WRITE)
+-		clear_discard(cache, oblock_to_dblock(cache, oblock));
+-}
+-
+ static void remap_to_origin_clear_discard(struct cache *cache, struct bio *bio,
+ 					  dm_oblock_t oblock)
  {
- 	struct dm_target_io *tio;
-@@ -569,14 +569,14 @@ static struct dm_target_io *alloc_tio(struct clone_info *ci, struct dm_target *t
- 	tio->target_bio_nr = target_bio_nr;
- 	tio->len_ptr = len;
- 
--	return tio;
-+	return &tio->clone;
+ 	// FIXME: check_if_tick_bio_needed() is called way too much through this interface
+-	__remap_to_origin_clear_discard(cache, bio, oblock, true);
++	check_if_tick_bio_needed(cache, bio);
++	remap_to_origin(cache, bio);
++	if (bio_data_dir(bio) == WRITE)
++		clear_discard(cache, oblock_to_dblock(cache, oblock));
  }
  
--static void free_tio(struct dm_target_io *tio)
-+static void free_tio(struct bio *clone)
- {
--	if (tio->inside_dm_io)
-+	if (clone_to_tio(clone)->inside_dm_io)
- 		return;
--	bio_put(&tio->clone);
-+	bio_put(clone);
- }
+ static void remap_to_cache_dirty(struct cache *cache, struct bio *bio,
+@@ -831,11 +824,10 @@ static void remap_to_origin_and_cache(struct cache *cache, struct bio *bio,
+ 	BUG_ON(!origin_bio);
  
- /*
-@@ -932,7 +932,7 @@ static void clone_endio(struct bio *bio)
- 		up(&md->swap_bios_semaphore);
- 	}
- 
--	free_tio(tio);
-+	free_tio(bio);
- 	dm_io_dec_pending(io, error);
- }
- 
-@@ -1166,7 +1166,7 @@ static void __map_bio(struct bio *clone)
- 			struct mapped_device *md = io->md;
- 			up(&md->swap_bios_semaphore);
- 		}
--		free_tio(tio);
-+		free_tio(clone);
- 		dm_io_dec_pending(io, BLK_STS_IOERR);
- 		break;
- 	case DM_MAPIO_REQUEUE:
-@@ -1174,7 +1174,7 @@ static void __map_bio(struct bio *clone)
- 			struct mapped_device *md = io->md;
- 			up(&md->swap_bios_semaphore);
- 		}
--		free_tio(tio);
-+		free_tio(clone);
- 		dm_io_dec_pending(io, BLK_STS_DM_REQUEUE);
- 		break;
- 	default:
-@@ -1196,17 +1196,17 @@ static int __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti,
- 				    sector_t sector, unsigned *len)
- {
- 	struct bio *bio = ci->bio, *clone;
--	struct dm_target_io *tio;
- 	int r;
- 
--	tio = alloc_tio(ci, ti, 0, len, GFP_NOIO);
--	clone = &tio->clone;
-+	clone = alloc_tio(ci, ti, 0, len, GFP_NOIO);
- 
- 	r = bio_crypt_clone(clone, bio, GFP_NOIO);
- 	if (r < 0)
- 		goto free_tio;
- 
- 	if (bio_integrity(bio)) {
-+		struct dm_target_io *tio = clone_to_tio(clone);
+ 	bio_chain(origin_bio, bio);
+-	/*
+-	 * Passing false to __remap_to_origin_clear_discard() skips
+-	 * all code that might use per_bio_data (since clone doesn't have it)
+-	 */
+-	__remap_to_origin_clear_discard(cache, origin_bio, oblock, false);
 +
- 		if (unlikely(!dm_target_has_integrity(tio->ti->type) &&
- 			     !dm_target_passes_integrity(tio->ti->type))) {
- 			DMWARN("%s: the target %s doesn't support integrity data.",
-@@ -1230,7 +1230,7 @@ static int __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti,
- 	__map_bio(clone);
- 	return 0;
- free_tio:
--	free_tio(tio);
-+	free_tio(clone);
- 	return r;
- }
++	remap_to_origin(cache, origin_bio);
++	if (bio_data_dir(origin_bio) == WRITE)
++		clear_discard(cache, oblock_to_dblock(cache, oblock));
+ 	submit_bio(origin_bio);
  
-@@ -1238,31 +1238,30 @@ static void alloc_multiple_bios(struct bio_list *blist, struct clone_info *ci,
- 				struct dm_target *ti, unsigned num_bios,
- 				unsigned *len)
- {
--	struct dm_target_io *tio;
-+	struct bio *bio;
- 	int try;
- 
- 	if (!num_bios)
- 		return;
- 
- 	if (num_bios == 1) {
--		tio = alloc_tio(ci, ti, 0, len, GFP_NOIO);
--		bio_list_add(blist, &tio->clone);
-+		bio = alloc_tio(ci, ti, 0, len, GFP_NOIO);
-+		bio_list_add(blist, bio);
- 		return;
- 	}
- 
- 	for (try = 0; try < 2; try++) {
- 		int bio_nr;
--		struct bio *bio;
- 
- 		if (try)
- 			mutex_lock(&ci->io->md->table_devices_lock);
- 		for (bio_nr = 0; bio_nr < num_bios; bio_nr++) {
--			tio = alloc_tio(ci, ti, bio_nr, len,
-+			bio = alloc_tio(ci, ti, bio_nr, len,
- 					try ? GFP_NOIO : GFP_NOWAIT);
--			if (!tio)
-+			if (!bio)
- 				break;
- 
--			bio_list_add(blist, &tio->clone);
-+			bio_list_add(blist, bio);
- 		}
- 		if (try)
- 			mutex_unlock(&ci->io->md->table_devices_lock);
-@@ -1270,7 +1269,7 @@ static void alloc_multiple_bios(struct bio_list *blist, struct clone_info *ci,
- 			return;
- 
- 		while ((bio = bio_list_pop(blist)))
--			free_tio(clone_to_tio(bio));
-+			free_tio(bio);
- 	}
- }
- 
+ 	remap_to_cache(cache, bio, cblock);
 -- 
 2.30.2
 
