@@ -1,79 +1,101 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3D748C433F5
-	for <dm-devel@archiver.kernel.org>; Thu,  3 Feb 2022 18:50:22 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1643914221;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=DGQtjlXGxphxoQiNKm0rsLuK3tiOVGJq0hDUkycO5oI=;
-	b=YTRdNi0HSbg+NaZNPXYPw960OVe4JotDSJ39nRnHzeLz2lBmx6vbFksgr6wV94P7Mu9Uxg
-	Jm3YINHoy05lRxeed6ckNoHzJYHpeEctTli1W2aOuf+H93Ks8V7gOPqslpRIAK+3KnfCco
-	oxj/9KPc0f0oTsqIQ2jIBbmjhFNp3ic=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E4E6FC433EF
+	for <dm-devel@archiver.kernel.org>; Thu,  3 Feb 2022 19:55:41 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-450-Jk-6pjFuNKaXJdbghWKisw-1; Thu, 03 Feb 2022 13:50:18 -0500
-X-MC-Unique: Jk-6pjFuNKaXJdbghWKisw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-361-nKgEgtgeMyav6L0-ruvLsQ-1; Thu, 03 Feb 2022 14:55:39 -0500
+X-MC-Unique: nKgEgtgeMyav6L0-ruvLsQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 93DCB39398;
-	Thu,  3 Feb 2022 18:50:13 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7AD347E23C;
-	Thu,  3 Feb 2022 18:50:12 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5C329851A18;
+	Thu,  3 Feb 2022 19:55:33 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A19A9D4BE6;
+	Thu,  3 Feb 2022 19:55:32 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id B48A34CA9B;
-	Thu,  3 Feb 2022 18:50:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com
-	[10.5.11.15])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id E1CDB1809CB8;
+	Thu,  3 Feb 2022 19:55:29 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.9])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 213Io7GQ003831 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 3 Feb 2022 13:50:07 -0500
+	id 213JtRPu009722 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 3 Feb 2022 14:55:27 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 53C614CEDB; Thu,  3 Feb 2022 18:50:07 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
-	(file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1CCAB78A2D;
-	Thu,  3 Feb 2022 18:50:07 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP
-	id 213Io6kR004427; Thu, 3 Feb 2022 13:50:06 -0500
-Received: from localhost (mpatocka@localhost)
-	by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with
-	ESMTP id 213Io6eX004423; Thu, 3 Feb 2022 13:50:06 -0500
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
-	owned process doing -bs
-Date: Thu, 3 Feb 2022 13:50:06 -0500 (EST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <efd2e976-4d2d-178e-890d-9bde1a89c47f@acm.org>
-Message-ID: <alpine.LRH.2.02.2202031310530.28604@file01.intranet.prod.int.rdu2.redhat.com>
+	id 1D8A5492CA8; Thu,  3 Feb 2022 19:55:27 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 19C3A492D54
+	for <dm-devel@redhat.com>; Thu,  3 Feb 2022 19:55:27 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F36CB3C01C25
+	for <dm-devel@redhat.com>; Thu,  3 Feb 2022 19:55:26 +0000 (UTC)
+Received: from bombadil.infradead.org (bombadil.infradead.org
+	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-349-eLNgnjCcM4SFmNCAwRBfvQ-1; Thu, 03 Feb 2022 14:55:24 -0500
+X-MC-Unique: eLNgnjCcM4SFmNCAwRBfvQ-1
+Received: from mcgrof by bombadil.infradead.org with local (Exim 4.94.2 #2
+	(Red Hat Linux)) id 1nFhsB-002b1R-NQ; Thu, 03 Feb 2022 19:34:27 +0000
+Date: Thu, 3 Feb 2022 11:34:27 -0800
+From: Luis Chamberlain <mcgrof@kernel.org>
+To: Christoph Hellwig <hch@lst.de>, Keith Busch <kbusch@kernel.org>
+Message-ID: <YfwuQxS79wl8l/a0@bombadil.infradead.org>
 References: <f0e19ae4-b37a-e9a3-2be7-a5afb334a5c3@nvidia.com>
 	<20220201102122.4okwj2gipjbvuyux@mpHalley-2>
 	<alpine.LRH.2.02.2202011327350.22481@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.2202011331570.22481@file01.intranet.prod.int.rdu2.redhat.com>
-	<efd2e976-4d2d-178e-890d-9bde1a89c47f@acm.org>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+	<CGME20220201183359uscas1p2d7e48dc4cafed3df60c304a06f2323cd@uscas1p2.samsung.com>
+	<alpine.LRH.2.02.2202011333160.22481@file01.intranet.prod.int.rdu2.redhat.com>
+	<20220202060154.GA120951@bgt-140510-bm01>
+	<20220203160633.rdwovqoxlbr3nu5u@garbanzo>
+	<20220203161534.GA15366@lst.de>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+In-Reply-To: <20220203161534.GA15366@lst.de>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 X-loop: dm-devel@redhat.com
-Cc: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	"dm-devel@redhat.com" <dm-devel@redhat.com>,
+Cc: Vincent Fu <vincent.fu@samsung.com>,
+	"djwong@kernel.org" <djwong@kernel.org>,
 	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
-Subject: Re: [dm-devel] [RFC PATCH 1/3] block: add copy offload support
+	"clm@fb.com" <clm@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>,
+	Adam Manzanares <a.manzanares@samsung.com>,
+	"osandov@fb.com" <osandov@fb.com>,
+	Javier =?iso-8859-1?Q?Gonz=E1lez?= <javier@javigon.com>,
+	Bart Van Assche <bvanassche@acm.org>,
+	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+	"roland@purestorage.com" <roland@purestorage.com>,
+	"zach.brown@ni.com" <zach.brown@ni.com>,
+	"dsterba@suse.com" <dsterba@suse.com>,
+	Chaitanya Kulkarni <chaitanyak@nvidia.com>,
+	"msnitzer@redhat.com >> msnitzer@redhat.com" <msnitzer@redhat.com>,
+	"josef@toxicpanda.com" <josef@toxicpanda.com>,
+	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	"kbus @imap.gmail.com>> Keith Busch" <kbusch@kernel.org>,
+	"Frederick.Knight@netapp.com" <Frederick.Knight@netapp.com>,
+	Jens Axboe <axboe@kernel.dk>, "tytso@mit.edu" <tytso@mit.edu>,
+	Kanchan Joshi <joshi.k@samsung.com>,
+	"martin.petersen@oracle.com >> Martin K. Petersen"
+	<martin.petersen@oracle.com>, "jack@suse.com" <jack@suse.com>,
+	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+	"lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
+Subject: Re: [dm-devel] [RFC PATCH 3/3] nvme: add the "debug" host driver
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -87,88 +109,35 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-
-
-On Tue, 1 Feb 2022, Bart Van Assche wrote:
-
-> On 2/1/22 10:32, Mikulas Patocka wrote:
-> >   /**
-> > + * blk_queue_max_copy_sectors - set maximum copy offload sectors for the
-> > queue
-> > + * @q:  the request queue for the device
-> > + * @size:  the maximum copy offload sectors
-> > + */
-> > +void blk_queue_max_copy_sectors(struct request_queue *q, unsigned int size)
-> > +{
-> > +	q->limits.max_copy_sectors = size;
-> > +}
-> > +EXPORT_SYMBOL_GPL(blk_queue_max_copy_sectors);
+On Thu, Feb 03, 2022 at 05:15:34PM +0100, Christoph Hellwig wrote:
+> On Thu, Feb 03, 2022 at 08:06:33AM -0800, Luis Chamberlain wrote:
+> > On Wed, Feb 02, 2022 at 06:01:13AM +0000, Adam Manzanares wrote:
+> > > BTW I think having the target code be able to implement simple copy without 
+> > > moving data over the fabric would be a great way of showing off the command.
+> > 
+> > Do you mean this should be implemented instead as a fabrics backend
+> > instead because fabrics already instantiates and creates a virtual
+> > nvme device? And so this would mean less code?
 > 
-> Please either change the unit of 'size' into bytes or change its type into
-> sector_t.
+> It would be a lot less code.  In fact I don't think we need any new code
+> at all.  Just using nvme-loop on top of null_blk or brd should be all
+> that is needed.
 
-blk_queue_chunk_sectors, blk_queue_max_discard_sectors, 
-blk_queue_max_write_same_sectors, blk_queue_max_write_zeroes_sectors, 
-blk_queue_max_zone_append_sectors also have the unit of sectors and the 
-argument is "unsigned int". Should blk_queue_max_copy_sectors be 
-different?
+Mikulas,
 
-> > +extern int blkdev_issue_copy(struct block_device *bdev1, sector_t sector1,
-> > +		      struct block_device *bdev2, sector_t sector2,
-> > +		      sector_t nr_sects, sector_t *copied, gfp_t gfp_mask);
-> > +
-> 
-> Only supporting copying between contiguous LBA ranges seems restrictive to me.
-> I expect garbage collection by filesystems for UFS devices to perform better
-> if multiple LBA ranges are submitted as a single SCSI XCOPY command.
+That begs the question why add this instead of using null_blk with
+nvme-loop?
 
-NVMe has a possibility to copy multiple source ranges into one destination 
-range. But I think that leveraging this capability would just make the 
-code excessively complex.
-
-> A general comment about the approach: encoding the LBA range information in a
-> bio payload is not compatible with bio splitting. How can the dm driver
-> implement copy offloading without the ability to split copy offload bio's?
-
-I don't expect the copy bios to be split.
-
-One possibility is to just return -EOPNOTSUPP and fall back to explicit 
-copy if the bio crosses dm target boundary (that's what my previous patch 
-for SCSI XCOPY did).
-
-Another possibility is to return the split boundary in the token and retry 
-both bios will smaller length. But this approach would prevent us from 
-submitting the REQ_OP_COPY_WRITE_TOKEN bios asynchronously.
-
-I'm not sure which of these two approaches is better.
-
-> > +int blkdev_issue_copy(struct block_device *bdev1, sector_t sector1,
-> > +		      struct block_device *bdev2, sector_t sector2,
-> > +		      sector_t nr_sects, sector_t *copied, gfp_t gfp_mask)
-> > +{
-> > +	struct page *token;
-> > +	sector_t m;
-> > +	int r = 0;
-> > +	struct completion comp;
-> 
-> Consider using DECLARE_COMPLETION_ONSTACK() instead of a separate declaration
-> and init_completion() call.
-
-OK.
-
-> Thanks,
-> 
-> Bart.
-
-Mikulas
+  Luis
 
 --
 dm-devel mailing list
