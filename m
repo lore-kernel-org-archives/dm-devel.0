@@ -4,82 +4,77 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DE557C433EF
-	for <dm-devel@archiver.kernel.org>; Fri,  4 Feb 2022 14:24:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5EB88C433EF
+	for <dm-devel@archiver.kernel.org>; Fri,  4 Feb 2022 14:43:56 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-25-BOVxiUfpPOeKCRXn8_CqFg-1; Fri, 04 Feb 2022 09:24:09 -0500
-X-MC-Unique: BOVxiUfpPOeKCRXn8_CqFg-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-193-PIfQd34ZP_W-x4mAnFGY_w-1; Fri, 04 Feb 2022 09:43:51 -0500
+X-MC-Unique: PIfQd34ZP_W-x4mAnFGY_w-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5987F1923BB8;
-	Fri,  4 Feb 2022 14:24:02 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6689E1093343;
+	Fri,  4 Feb 2022 14:43:47 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 943687E120;
-	Fri,  4 Feb 2022 14:24:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4D2D622E0A;
+	Fri,  4 Feb 2022 14:43:46 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DF9A54BB7C;
-	Fri,  4 Feb 2022 14:24:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.8])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 004BC4BB7C;
+	Fri,  4 Feb 2022 14:43:43 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.10])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 214ENvd7002352 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 4 Feb 2022 09:23:57 -0500
+	id 214EhfM1003427 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 4 Feb 2022 09:43:41 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id E6C64C23DC6; Fri,  4 Feb 2022 14:23:56 +0000 (UTC)
+	id 471E24292C6; Fri,  4 Feb 2022 14:43:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E2591C23DC3
-	for <dm-devel@redhat.com>; Fri,  4 Feb 2022 14:23:56 +0000 (UTC)
+	(mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 43553401E66
+	for <dm-devel@redhat.com>; Fri,  4 Feb 2022 14:43:41 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C28DA85A5BE
-	for <dm-devel@redhat.com>; Fri,  4 Feb 2022 14:23:56 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-556-SdliFRYsNyKe0svtpVMXGA-1; Fri, 04 Feb 2022 09:23:52 -0500
-X-MC-Unique: SdliFRYsNyKe0svtpVMXGA-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	key-exchange X25519 server-signature ECDSA (P-521) server-digest
-	SHA512) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 07F2D1F38F;
-	Fri,  4 Feb 2022 14:15:03 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	key-exchange X25519 server-signature ECDSA (P-521) server-digest
-	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id B8AFF13AE2;
-	Fri,  4 Feb 2022 14:15:02 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id WXHDLOY0/WFfCQAAMHmgww
-	(envelope-from <hare@suse.de>); Fri, 04 Feb 2022 14:15:02 +0000
-Message-ID: <befa49b3-7606-a3ce-24f7-e184e3df41a3@suse.de>
-Date: Fri, 4 Feb 2022 15:15:02 +0100
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2B63B3802AC5
+	for <dm-devel@redhat.com>; Fri,  4 Feb 2022 14:43:41 +0000 (UTC)
+Received: from mail-pl1-f175.google.com (mail-pl1-f175.google.com
+	[209.85.214.175]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-674-_22Nt1YSMbu6H_mOMl6hbA-1; Fri, 04 Feb 2022 09:43:39 -0500
+X-MC-Unique: _22Nt1YSMbu6H_mOMl6hbA-1
+Received: by mail-pl1-f175.google.com with SMTP id x3so5327044pll.3
+	for <dm-devel@redhat.com>; Fri, 04 Feb 2022 06:43:39 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:from:to:cc:in-reply-to:references:subject
+	:message-id:date:mime-version:content-transfer-encoding;
+	bh=WutBl0QBGx1pfuztZArDy53so35nYoGLBU641tHFA5E=;
+	b=KAM5B76BzH53bXfqMejVx9o/DTdDgvvkiR1V4ebZ0nxY0MVgRDzn9ion1SG4iAC1O9
+	n5QqenjTvGxYeTI6mwf/gyQ1x5Y3RyCvgWirkRUD8QOEWF13aJGXBZeEhWa0abuwBU90
+	iaHfoYQknsP4QUp4swJDtZJTq1WI4Mlyzxc/Eapiffw2V7NedAb1/Tn1Meu99npX+H1t
+	8UJSjS71RsGTRu8/+64G4qGcBwKb5DATp+xB1JZ27TBaZdrKJ1SRj7a1LwMxFOGi16d8
+	+5zT9LCHDY8mW4gf3Lf+OUWplcytljKopCGshSStE5VyKS0XT97Xd5vv+H+AN9cOPPUS
+	lGBA==
+X-Gm-Message-State: AOAM5320tlZJFUrMG6gdRvuGqb4Ch8gKsGbenMzzdjWs0Dzx/W7KU0PZ
+	SSvO4gDhpVa/RkHK/fXGALymaQ==
+X-Google-Smtp-Source: ABdhPJyjdkHc+scNtjJ/hehBMbW1t656mFAyg1ZRbmeSiQlqVZ7Age59IT9W0N6D7yrhQorPc/BDeA==
+X-Received: by 2002:a17:90a:741:: with SMTP id
+	s1mr3528802pje.161.1643985818424; 
+	Fri, 04 Feb 2022 06:43:38 -0800 (PST)
+Received: from [192.168.1.116] ([66.219.217.159])
+	by smtp.gmail.com with ESMTPSA id
+	pf4sm15474779pjb.35.2022.02.04.06.43.37
+	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+	Fri, 04 Feb 2022 06:43:37 -0800 (PST)
+From: Jens Axboe <axboe@kernel.dk>
+To: Christoph Hellwig <hch@lst.de>
+In-Reply-To: <20220202160109.108149-1-hch@lst.de>
+References: <20220202160109.108149-1-hch@lst.de>
+Message-Id: <164398581785.446137.16953674702943074856.b4-ty@kernel.dk>
+Date: Fri, 04 Feb 2022 07:43:37 -0700
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
-	Thunderbird/91.4.0
-To: Chaitanya Kulkarni <chaitanyak@nvidia.com>,
-	=?UTF-8?Q?Javier_Gonz=c3=a1lez?= <javier@javigon.com>
-References: <alpine.LRH.2.02.2202011327350.22481@file01.intranet.prod.int.rdu2.redhat.com>
-	<alpine.LRH.2.02.2202011333160.22481@file01.intranet.prod.int.rdu2.redhat.com>
-	<270f30df-f14c-b9e4-253f-bff047d32ff0@nvidia.com>
-	<20220203153843.szbd4n65ru4fx5hx@garbanzo>
-	<CGME20220203165248uscas1p1f0459e548743e6be26d13d3ed8aa4902@uscas1p1.samsung.com>
-	<20220203165238.GA142129@dhcp-10-100-145-180.wdc.com>
-	<20220203195155.GB249665@bgt-140510-bm01>
-	<863d85e3-9a93-4d8c-cf04-88090eb4cc02@nvidia.com>
-	<2bbed027-b9a1-e5db-3a3d-90c40af49e09@opensource.wdc.com>
-	<9d5d0b50-2936-eac3-12d3-a309389e03bf@nvidia.com>
-	<20220204082445.hczdiy2uhxfi3x2g@ArmHalley.local>
-	<4d5410a5-93c3-d73c-6aeb-2c1c7f940963@nvidia.com>
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <4d5410a5-93c3-d73c-6aeb-2c1c7f940963@nvidia.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -88,35 +83,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 214ENvd7002352
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 X-loop: dm-devel@redhat.com
-Cc: "djwong@kernel.org" <djwong@kernel.org>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"clm@fb.com" <clm@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>,
-	Adam Manzanares <a.manzanares@samsung.com>,
-	"osandov@fb.com" <osandov@fb.com>,
-	"msnitzer@redhat.com >> msnitzer@redhat.com" <msnitzer@redhat.com>,
-	Bart Van Assche <bvanassche@acm.org>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	Damien Le Moal <damien.lemoal@opensource.wdc.com>,
-	Christoph Hellwig <hch@lst.de>,
-	"roland@purestorage.com" <roland@purestorage.com>,
-	"zach.brown@ni.com" <zach.brown@ni.com>,
-	"dsterba@suse.com" <dsterba@suse.com>,
-	"josef@toxicpanda.com" <josef@toxicpanda.com>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, Keith Busch <kbusch@kernel.org>,
-	"Frederick.Knight@netapp.com" <Frederick.Knight@netapp.com>,
-	Jens Axboe <axboe@kernel.dk>, "tytso@mit.edu" <tytso@mit.edu>,
-	Kanchan Joshi <joshi.k@samsung.com>,
-	"martin.petersen@oracle.com >> Martin K. Petersen"
-	<martin.petersen@oracle.com>, Luis Chamberlain <mcgrof@kernel.org>,
-	"jack@suse.com" <jack@suse.com>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	"lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
-Subject: Re: [dm-devel] [RFC PATCH 3/3] nvme: add the "debug" host driver
+Cc: Mike Snitzer <snitzer@redhat.com>,
+	Philipp Reisner <philipp.reisner@linbit.com>,
+	linux-block@vger.kernel.org, dm-devel@redhat.com,
+	Lars Ellenberg <lars.ellenberg@linbit.com>,
+	Pavel Begunkov <asml.silence@gmail.com>, drbd-dev@lists.linbit.com
+Subject: Re: [dm-devel] improve the bio cloning interface v2
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -130,51 +104,60 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gMi80LzIyIDEwOjU4LCBDaGFpdGFueWEgS3Vsa2Fybmkgd3JvdGU6Cj4gT24gMi80LzIyIDEy
-OjI0IEFNLCBKYXZpZXIgR29uesOhbGV6IHdyb3RlOgpbIC4uIF0KPj4gRm9yIGEgc29mdHdhcmUt
-b25seSBzb2x1dGlvbiwgd2UgaGF2ZSBleHBlcmltZW50ZWQgd2l0aCBzb21ldGhpbmcKPj4gc2lt
-aWxhciB0byB0aGUgbnZtZS1kZWJ1ZyBjb2RlIHRoYSBNaWt1bGFzIGlzIHByb3Bvc2luZy4gQWRh
-bSBwb2ludGVkIHRvCj4+IHRoZSBudm1lLWxvb3AgdGFyZ2V0IGFzIGFuIGFsdGVybmF0aXZlIGFu
-ZCB0aGlzIHNlZW1zIHRvIHdvcmsgcHJldHR5Cj4+IG5pY2VseS4gSSBkbyBub3QgYmVsaWV2ZSB0
-aGVyZSBzaG91bGQgYmUgbWFueSBjaGFuZ2VzIHRvIHN1cHBvcnQgY29weQo+PiBvZmZsb2FkIHVz
-aW5nIHRoaXMuCj4+Cj4gCj4gSWYgUUVNVSBpcyBzbyBpbmNvbXBldGVudCB0aGVuIHdlIG5lZWQg
-dG8gYWRkIGV2ZXJ5IGJpZyBmZWF0dXJlIGludG8KPiB0aGUgTlZNZU9GIHRlc3QgdGFyZ2V0IHNv
-IHRoYXQgd2UgY2FuIHRlc3QgaXQgYmV0dGVyID8gaXMgdGhhdCB3aGF0Cj4geW91IGFyZSBwcm9w
-b3NpbmcgPyBzaW5jZSBpZiB3ZSBpbXBsZW1lbnQgb25lIGZlYXR1cmUsIGl0IHdpbGwgYmUKPiBo
-YXJkIHRvIG5hY2sgYW55IG5ldyBmZWF0dXJlcyB0aGF0IHBwbCB3aWxsIGNvbWUgdXAgd2l0aAo+
-IHNhbWUgcmF0aW9uYWxlICJ3aXRoIFFFTVUgYmVpbmcgc2xvdyBhbmQgaGFyZCB0byB0ZXN0IHJh
-Y2UKPiBjb25kaXRpb25zIGV0YyAuLiIKPiAKCkhvdyB3b3VsZCB5b3UgdXNlIHFlbXUgZm9yIGJh
-cmUtbWV0YWwgdGVzdGluZz8KCj4gYW5kIGlmIHRoYXQgaXMgdGhlIGNhc2Ugd2h5IHdlIGRvbid0
-IGhhdmUgWk5TIE5WTWVPRiB0YXJnZXQKPiBtZW1vcnkgYmFja2VkIGVtdWxhdGlvbiA/IElzbid0
-IHRoYXQgYSBiaWdnZXIgYW5kIG1vcmUKPiBjb21wbGljYXRlZCBmZWF0dXJlIHRoYW4gU2ltcGxl
-IENvcHkgd2hlcmUgY29udHJvbGxlciBzdGF0ZXMKPiBhcmUgaW52b2x2ZWQgd2l0aCBBRU5zID8K
-PiAKPiBaTlMga2VybmVsIGNvZGUgdGVzdGluZyBpcyBhbHNvIGRvbmUgb24gUUVNVSwgSSd2ZSBh
-bHNvIGZpeGVkCj4gYnVncyBpbiB0aGUgWk5TIGtlcm5lbCBjb2RlIHdoaWNoIGFyZSBkaXNjb3Zl
-cmVkIG9uIFFFTVUgYW5kIEkndmUgbm90Cj4gc2VlbiBhbnkgaXNzdWVzIHdpdGggdGhhdC4gR2l2
-ZW4gdGhhdCBzaW1wbGUgY29weSBmZWF0dXJlIGlzIHdheSBzbWFsbGVyCj4gdGhhbiBaTlMgaXQg
-d2lsbCBsZXNzIGxpa2VseSB0byBzdWZmZXIgZnJvbSBzbG93bmVzcyBhbmQgZXRjIChsaXN0ZWQK
-PiBhYm92ZSkgaW4gUUVNVS4KPiAKPiBteSBwb2ludCBpcyBpZiB3ZSBhbGxvdyBvbmUsIHdlIHdp
-bGwgYmUgb3BlbmluZyBmbG9vZGdhdGVzIGFuZCB3ZSBuZWVkCj4gdG8gYmUgY2FyZWZ1bCBub3Qg
-dG8gYmxvYXQgdGhlIGNvZGUgdW5sZXNzIGl0IGlzIF9hYnNvbHV0ZWx5Cj4gbmVjZXNzYXJ5XyB3
-aGljaCBJIGRvbid0IHRoaW5rIGl0IGlzIGJhc2VkIG9uIHRoZSBzaW1wbGUgY29weQo+IHNwZWNp
-ZmljYXRpb24uCj4gCgpJIGRvIGhhdmUgYSBzbGlnaHRseSBkaWZmZXJlbnQgdmlldyBvbiB0aGUg
-bnZtZSB0YXJnZXQgY29kZTsgaXQgc2hvdWxkIApwcm92aWRlIHRoZSBuZWNlc3NhcnkgbWVhbnMg
-dG8gdGVzdCB0aGUgbnZtZSBob3N0IGNvZGUuCkFuZCBzaW1wbGUgY29weSBpcyBvbiBvZiB0aGVz
-ZSBmZWF0dXJlcywgZXNwZWNpYWxseSBhcyBpdCB3aWxsIG9wZXJhdGUgCmFzIGFuIGV4cGxvaXRl
-ciBvZiB0aGUgbmV3IGZ1bmN0aW9uYWxpdHkuCgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5u
-ZXMgUmVpbmVja2UJCSAgICAgICAgICAgS2VybmVsIFN0b3JhZ2UgQXJjaGl0ZWN0CmhhcmVAc3Vz
-ZS5kZQkJCSAgICAgICAgICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgU29mdHdhcmUg
-U29sdXRpb25zIEdlcm1hbnkgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkhS
-QiAzNjgwOSAoQUcgTsO8cm5iZXJnKSwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlcgoKCi0tCmRtLWRl
-dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWw=
+On Wed, 2 Feb 2022 17:00:56 +0100, Christoph Hellwig wrote:
+> this series changes the bio cloning interface to match the rest changes
+> to the bio allocation interface and passes the block_device and operation
+> to the cloning helpers.  In addition it renames the cloning helpers to
+> be more descriptive.
+> 
+> To get there it requires a bit of refactoring in the device mapper code.
+> 
+> [...]
+
+Applied, thanks!
+
+[01/13] drbd: set ->bi_bdev in drbd_req_new
+        commit: c347a787e34cba0e5a80a04082dacaf259105605
+[02/13] dm: add a clone_to_tio helper
+        commit: 6c23f0bd7f16d88c774db37b30c5da82811c41be
+[03/13] dm: fold clone_bio into __clone_and_map_data_bio
+        commit: b1bee79237ce0ab43ef7fe66aa6e5c4783165012
+[04/13] dm: fold __send_duplicate_bios into __clone_and_map_simple_bio
+        commit: 8eabf5d0a7bd9226d6cc25402dde67f372aae838
+[05/13] dm: move cloning the bio into alloc_tio
+        commit: dc8e2021da71f6b2d5971f98ee3e528cf30c409c
+[06/13] dm: pass the bio instead of tio to __map_bio
+        commit: 1561b396106d759fdf5f9a71b412e068f74d2cc9
+[07/13] dm: retun the clone bio from alloc_tio
+        commit: 1d1068cecff70cb8e48c7cb0ba27cc3fd906eb31
+[08/13] dm: simplify the single bio fast path in __send_duplicate_bios
+        commit: 891fced644a7529bfd4b1436b2341527ce8f68ad
+[09/13] dm-cache: remove __remap_to_origin_clear_discard
+        commit: 3c4b455ef8acdacd0e5ecd33428d4f32f861637a
+[10/13] block: clone crypto and integrity data in __bio_clone_fast
+        commit: 56b4b5abcdab6daf71c5536fca2772f178590e06
+[11/13] dm: use bio_clone_fast in alloc_io/alloc_tio
+        commit: 92986f6b4c8a2c24d3a36b80140624f80fd93de4
+[12/13] block: initialize the target bio in __bio_clone_fast
+        commit: a0e8de798dd6710a69d69ec57b246a0e34c4a695
+[13/13] block: pass a block_device to bio_clone_fast
+        commit: abfc426d1b2fb2176df59851a64223b58ddae7e7
+
+Best regards,
+-- 
+Jens Axboe
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
