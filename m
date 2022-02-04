@@ -1,66 +1,65 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 83330C43219
-	for <dm-devel@archiver.kernel.org>; Fri,  4 Feb 2022 09:42:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DBC56C433FE
+	for <dm-devel@archiver.kernel.org>; Fri,  4 Feb 2022 09:42:13 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-219-3P3HdRGXOlyX6D9fL2m5Aw-1; Fri, 04 Feb 2022 04:42:08 -0500
-X-MC-Unique: 3P3HdRGXOlyX6D9fL2m5Aw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-538-Zp6z0k1lNjGV_6pAv_l6jA-1; Fri, 04 Feb 2022 04:42:08 -0500
+X-MC-Unique: Zp6z0k1lNjGV_6pAv_l6jA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id CA6F01091DA6;
-	Fri,  4 Feb 2022 09:42:03 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2A59A363A4;
+	Fri,  4 Feb 2022 09:42:04 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A9BA11F2FB;
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A98B57B6EB;
 	Fri,  4 Feb 2022 09:42:03 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 824404A7C9;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8080B4A7C8;
 	Fri,  4 Feb 2022 09:42:03 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.1])
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.9])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21435YsE013702 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 3 Feb 2022 22:05:34 -0500
+	id 21430i27013385 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 3 Feb 2022 22:00:44 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 36E0540F9D77; Fri,  4 Feb 2022 03:05:34 +0000 (UTC)
+	id B263B492D54; Fri,  4 Feb 2022 03:00:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 321EC40F9D6D
-	for <dm-devel@redhat.com>; Fri,  4 Feb 2022 03:05:34 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AD1FF492D4A
+	for <dm-devel@redhat.com>; Fri,  4 Feb 2022 03:00:44 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 13C763806657
-	for <dm-devel@redhat.com>; Fri,  4 Feb 2022 03:05:34 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8F93F85A5BB
+	for <dm-devel@redhat.com>; Fri,  4 Feb 2022 03:00:44 +0000 (UTC)
 Received: from NAM12-BN8-obe.outbound.protection.outlook.com
-	(mail-bn8nam12on2069.outbound.protection.outlook.com [40.107.237.69])
+	(mail-bn8nam12on2083.outbound.protection.outlook.com [40.107.237.83])
 	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-363-zdO8U1j8Op2XlIwbNM3BhQ-1; Thu, 03 Feb 2022 22:05:32 -0500
-X-MC-Unique: zdO8U1j8Op2XlIwbNM3BhQ-1
+	us-mta-642-60X7BFWLNXyg9mP_jNITKQ-1; Thu, 03 Feb 2022 22:00:42 -0500
+X-MC-Unique: 60X7BFWLNXyg9mP_jNITKQ-1
 Received: from MW2PR12MB4667.namprd12.prod.outlook.com (2603:10b6:302:12::28)
 	by MN2PR12MB4423.namprd12.prod.outlook.com (2603:10b6:208:24f::18)
 	with Microsoft SMTP Server (version=TLS1_2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4951.12;
-	Fri, 4 Feb 2022 03:05:30 +0000
+	Fri, 4 Feb 2022 03:00:41 +0000
 Received: from MW2PR12MB4667.namprd12.prod.outlook.com
 	([fe80::846c:d3cd:5a30:c35]) by MW2PR12MB4667.namprd12.prod.outlook.com
 	([fe80::846c:d3cd:5a30:c35%5]) with mapi id 15.20.4951.014;
-	Fri, 4 Feb 2022 03:05:30 +0000
+	Fri, 4 Feb 2022 03:00:40 +0000
 From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
-To: Luis Chamberlain <mcgrof@kernel.org>, Adam Manzanares
-	<a.manzanares@samsung.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
 Thread-Topic: [RFC PATCH 3/3] nvme: add the "debug" host driver
-Thread-Index: AQHYF5pGTuc0vK6aW0WDOYv4vbM4lKx/xVyAgAI7dYCAALgbgA==
-Date: Fri, 4 Feb 2022 03:05:30 +0000
-Message-ID: <242979a2-6a4d-30fe-2aaf-911b576e2cda@nvidia.com>
+Thread-Index: AQHYF5pGTuc0vK6aW0WDOYv4vbM4lKx/xVyAgAI7dYCAAAKFAIAAN5GAgAAXUoCAAGVZgA==
+Date: Fri, 4 Feb 2022 03:00:40 +0000
+Message-ID: <a281a539-6892-d7e2-cff9-57b5f3c22373@nvidia.com>
 References: <f0e19ae4-b37a-e9a3-2be7-a5afb334a5c3@nvidia.com>
 	<20220201102122.4okwj2gipjbvuyux@mpHalley-2>
 	<alpine.LRH.2.02.2202011327350.22481@file01.intranet.prod.int.rdu2.redhat.com>
@@ -68,75 +67,78 @@ References: <f0e19ae4-b37a-e9a3-2be7-a5afb334a5c3@nvidia.com>
 	<alpine.LRH.2.02.2202011333160.22481@file01.intranet.prod.int.rdu2.redhat.com>
 	<20220202060154.GA120951@bgt-140510-bm01>
 	<20220203160633.rdwovqoxlbr3nu5u@garbanzo>
-In-Reply-To: <20220203160633.rdwovqoxlbr3nu5u@garbanzo>
+	<20220203161534.GA15366@lst.de>
+	<YfwuQxS79wl8l/a0@bombadil.infradead.org>
+	<alpine.LRH.2.02.2202031532410.12071@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2202031532410.12071@file01.intranet.prod.int.rdu2.redhat.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
 user-agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
 	Thunderbird/91.3.0
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 7bb1b37d-44d6-469c-6032-08d9e78b33bf
+x-ms-office365-filtering-correlation-id: 2f614316-f7af-40f7-b303-08d9e78a86d6
 x-ms-traffictypediagnostic: MN2PR12MB4423:EE_
-x-microsoft-antispam-prvs: <MN2PR12MB4423F24D51A52898F76E2490A3299@MN2PR12MB4423.namprd12.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:4125
+x-microsoft-antispam-prvs: <MN2PR12MB442307FA39C82A3452A3BE6EA3299@MN2PR12MB4423.namprd12.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:8882
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: XO1aUShBnfmy+kbnIObm6e7VEpOwWBZ1np0uJvAJtsjE0teguDRvxHgSVQMeM70djdK9Qm5TKHQETySEvlPgdCn/w9s9Mbtq88xnbwIIrk5QrLigpiRgVKoXpjjyW0o59JQASvoAyhKVD+XRPBxB/P7qh9Y4C1QIqBVJBbkEklfrSXfzEpnSua9STaXOrWSi1FxQlcHakvueiL3qAFxtoZyp62H2B9GCjC8cbJhqP/ujdTmAoK7KZJxxmn9wOIxtMChj/i+EGkR0LGuah84htvzs2HwHQe/rx7bn3r6TKX8x9StO89AfspPX7zn4BOOO/OacCAD76reOz6Epf0tRoz40msjqSBGgo3B6ANmPI1570Hf6EdrEAsVphUHfCsXOXgznIIf2TUNQw2IyzQGD7h/FuGip6H06ubzRkRN/SY0WrTSYoxFXJ09zHJR2HDtvht+jEDYDBrRwUzUOJF8CYlGHMra4HFmePUN64sM+4P5B/EFEyjzhIu92ao9bbr68GFlJLRDVB9RqHczlrty6LOd0hiQoVjfvwi3jUFfTh/5+09CK1rjENzvbuAk8gUF/q2uLVa0zv/MCzRRYZ8J2eoM3SyBsGOmDGqnrZtikSsCjWnjBL1lIq/8IxbSuD/IhmF2GzwsnTjESqOtEAC091UwenSCrhpjebMZnKZZ/H3VSABJSubQ6+PqF6GEnsqtqWModuFY2hURkOABOw+M7bxNCjJmxiPekMw69yj+2VafCJe1hZUzA0gbqgvouLbxC
+x-microsoft-antispam-message-info: eMI77ym5lVmVvvtJte874ebZqEQys5dbJVoTT+Gh8L0RtoR26KH8sO9pxUnR//2PN7LMeG0L1Xiqjpg0sA/m/3LN0bMdulCSv9BDmoM3BW2Knpbpk49LQiAWYeI7IyXnNonJ0S1LmS6LT1iA5o7WSCIbO1UqEFWgjgvo4YNb45WGlvwuFKP0KlOZwOcV7jeqXNmj41UMzLgqo98wvMjkVtoT0MAtdYLj6j7PbDe6TQm/eansI+qe+rVgmUUZyQIkoSJcsJXOdsfhPLxFXjpIzCq/GqvwkphSdLF8TWRX5AIboWZ342ns2x4p6gOaUdw16Y6HMdFf4oLtZjx+4+OV8dgsxyRKIliyG1UgFYCHrrzdN7iH+RfaWWiFOkTB1u/OfQU4AnKQ1APDLFJge3KlEeoyvRbUgalRXHixfJxf3XGPBc87FMIMeAvLdefeqwrE0+F8aCE695xdxzH4bKcMQ2Q3sWo7ySglSLroK/FQWNUOChxIyjwbP4ZjgdEKRqxL9Glp9qkzfqSCgJk5TKX+LAHJTnJxZO41NjVXKGw00VVSaCPdlHpaJWYpHeUH0OSYjriJLscadSs8ObPXKVmgDjv09HQB/k5G98Z/ZSaIxtX6Pu+JsvVFDwBFi83rGR6oXoRv/fd/XWKQMaEIDUtWrNMqIjaE/B4r2UlyY/TciL7aoPg37zRem5l1MFkZwDWul8POsdSXU6hq8cyXCTZi0iEc5wLGMNEZXINVr6pvpOcyCS2ddziRAGmqLQQgP2wt/kWXVk9+t9W6NbQYmNv/2g==
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
 	IPV:NLI; SFV:NSPM; H:MW2PR12MB4667.namprd12.prod.outlook.com;
 	PTR:; CAT:NONE;
-	SFS:(13230001)(4636009)(366004)(54906003)(7416002)(110136005)(38100700002)(86362001)(122000001)(508600001)(6486002)(5660300002)(31696002)(2906002)(4744005)(38070700005)(76116006)(316002)(91956017)(66946007)(66556008)(66446008)(64756008)(8936002)(8676002)(4326008)(66476007)(186003)(2616005)(53546011)(71200400001)(6506007)(6512007)(31686004)(36756003)(45980500001)(43740500002);
+	SFS:(13230001)(4636009)(366004)(54906003)(7416002)(6916009)(38100700002)(86362001)(122000001)(508600001)(6486002)(5660300002)(31696002)(2906002)(38070700005)(76116006)(316002)(91956017)(66946007)(66556008)(66446008)(64756008)(8936002)(8676002)(4326008)(66476007)(186003)(2616005)(53546011)(71200400001)(6506007)(6512007)(31686004)(36756003)(45980500001)(43740500002);
 	DIR:OUT; SFP:1101
 x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?utf-8?B?WXBnaGFabzNramNPaFAwYkdaSERqUDByMlUwWElEdEFzanJCWHBlRXJNTW9D?=
-	=?utf-8?B?R2lDNm96NEp3d0xzVkVHYThndjJJc1lpUHF0Rm1oU1RldXFuWkRxTzBJeWx2?=
-	=?utf-8?B?ZFdjUXJsbUs5SWRQWXllVE1RZm96dTVNKzFIZTdSNzJQdklWZ2VYWnRXRmhV?=
-	=?utf-8?B?YXd0ZTFERTZGczFHSzEzSlVPdGJHVFQyakthK01ES0tncS9DSnlpNkNWYmtD?=
-	=?utf-8?B?a1RjdjZEOEFyQnNqWVVVSGtsTGUzUXZCMSt2TWFUMzBGdVpIZk8vZmtrVm1r?=
-	=?utf-8?B?ZVhyRTNXNWFMWk1NUzkvQWd0NWZNU2lURlBhbSt6UUFEdHFlT3VKTnM5TVlL?=
-	=?utf-8?B?ODNCSnpmWDlqQ0lWZTUya1FBa2hlN1UrbXNvaTdxNHFkdzZQZllHZ0Y5UnJ3?=
-	=?utf-8?B?RzUvWmxIQUxEYzZBQTJmNWpibldQd1hLS3lETTVka0l2dzJSNTlZd3BPQ29H?=
-	=?utf-8?B?WXd1Wm1GS2JQMEduaXhtanRwY3FPczlCaGYxQUlOZ1N5YlQzZnNWSlVGeEc3?=
-	=?utf-8?B?SlNsZ0JwOVVJdHoveW5ocW1NSWNISnJnbGVtdDU0SnRmT1ZnNVRjWXBuKzVl?=
-	=?utf-8?B?ekNrU213Vko1UFBDbmpleHVrKzVKaCt5RjV4ekZiT2tiVkNyMmNVdkh1OUEx?=
-	=?utf-8?B?OUlBZzZVemNhUDdKQkptMjBqbG1DTUVXRFFhblltRnp0OWNNV3pEQnExZy9l?=
-	=?utf-8?B?a01sOFg4cFBaT2ZWUW0vcUdPb0hFMS9iMDJzamxMLzhGWU5DZGp5UTVpMzZu?=
-	=?utf-8?B?RTl3RjE4dVpKZGVQY0drQlZYdjVyU0ZWRmdjN1VxTlRhR3hrSzQ5U3Q2ZTVh?=
-	=?utf-8?B?a1pubUZlVDQ3SlI0TGgwRHRsSDVyWDJkTEFBeGdTNXZzYk5nU0VjRHJwdUdP?=
-	=?utf-8?B?WkNzcGRqcHdlclRWTCtUVTlIUU5jWllFODZLNWRzZldDc082d2VpSEUzV3BE?=
-	=?utf-8?B?bWgrdWdxVVA0Yzdqa21adlc0Vm9mYkVGM3pCbzNzUGdkWWpBK1N2c2c1Z21Y?=
-	=?utf-8?B?ckxmcFlyL0dldjNHYXpmbDFnd3NHYW1vcXUvT2FIUzVzTktlTkx4RmFGWHo2?=
-	=?utf-8?B?T3Y1R043UzlyWjQ2b1ZRU2Z1SThnVXlxSVo5LytCZG9acUxheFBWNHd0a1dQ?=
-	=?utf-8?B?UlpUMTFabnVrMUNjN3JwSTlMbWRjUURnMUs5dllNclJqSzJnQkhBeXAzWUQx?=
-	=?utf-8?B?NGtGSDlORlJmQXBJS0ltUU1nWW90NTNjTWRaY1B5bW5DWDh2U3JsRTNQcXo3?=
-	=?utf-8?B?ZHcxb2MyaGUwdUVXd3FrVnJGNHFmWElXN0tidE9QaWhnQ3Bxcnd2TWJoYitw?=
-	=?utf-8?B?UGlLbzkrZi8zOExPbFZCRWZVMXIxOXlOekRKSGNWa2Z6dUZwNG5mUHFOU1FC?=
-	=?utf-8?B?VGJlalh0dnk3WG9EVXJDOVFZMjkwbmhVRkJaSU5rWTNSTDZNQndFRERqUTNQ?=
-	=?utf-8?B?R21jcDc5YU0vVFNqZXNNN3ZaZ3FsVndDWWtGV2ZnMjlDVmQ2aGxLUUN2Uysr?=
-	=?utf-8?B?OEkxZW5XV281czV0SHhjMHlyZ2FBNzRIU2lWekZSMVVybXRoNHg3VzRybk1J?=
-	=?utf-8?B?OXF0WGJoUVNWdTJvR05lVXIrbVNoYzJ6KzE4dlM5RlFwQmY3YkZFUnhFcWhV?=
-	=?utf-8?B?cjY3RTYwbG1COXlyR3VFMHQwQUJQOUljTzdrYmdIWTNkcE9jNk00MCtsZnZM?=
-	=?utf-8?B?clF2QVgwVmZZVWtzQzZGamZ0WlEwY2lCcjFrbU9lM1hvYm1WMnM3enhqQWpV?=
-	=?utf-8?B?Zlc0cUtQY3VrNHhJRVJaMTJZOFVZUDU0TXM1R1hHZGM2NUNLYytYWk5XNFNm?=
-	=?utf-8?B?Ris1VlI5WHlWMnNHZnFPNk4vVm9PdXpxR0lyb3JNVHBzUW5HMHRGTk9vd2dS?=
-	=?utf-8?B?eFFOS0tXc0tmOGd6MGoxQ2NQZndkVktUdVIxdURKUGdLOHVtSVZIV1lHdU5j?=
-	=?utf-8?B?Q3FTTVI5WWlDUXl3c0dhUDQwdXZCekxtWHNJV1I0bkJBa3hoVU9jd2lKNkM2?=
-	=?utf-8?B?bE1zSnZVeHRWQ1I2S1E2eVkvcHNDaGR0Wkg5L0s3alJKTHRqd2VpNXRpbHRJ?=
-	=?utf-8?B?RUFtV09qUWFudXZNYzhIclFMb21oQ2NZeEUydnhweWVHZWpVVDZKcGhYS0Ix?=
-	=?utf-8?B?TlN4WnZ4TzhINVR0WHZNLzJrYStLTG0zYkNvcy9TNmZxbjFVOFJOSG8wcmJs?=
-	=?utf-8?B?UW9HUTF6aDZrRnBTcVgvSmJZUzk5UEhpVGlYeG5FUzJBYmFOYzgraUtGN1lJ?=
-	=?utf-8?B?ZVVSY0lOUU9adXZ1UnJ6eUJRZ1hnPT0=?=
+x-ms-exchange-antispam-messagedata-0: =?utf-8?B?cmhaMjFQNHhGUCtvMHROYy9NOTl1Q2xrME10cmxGMWJTU2tEVk10Z0Y0bmh2?=
+	=?utf-8?B?TGs4bEM2MGlCaEwveEpRTGdSTjAyWTVOYkNyOUlrQ3A4SXluaW9XdjN5aFNr?=
+	=?utf-8?B?RmhxVlVPYXJJbWFZdzdUbkpjVDlDNUcyejc0R1NmK3Nnd041QWFBSzgrYUo5?=
+	=?utf-8?B?K1V1TnNteW9qdGxEc0llUmVobitjK01TSDF0ZGJPQmt4ZG5yVkJrMW1wTVFx?=
+	=?utf-8?B?aDdRMWdpUXFtTWh4eDdEWk0vdFppdWkyd1ZPd1RpdnFRV1A3bjUvcHVaSWFt?=
+	=?utf-8?B?Yno3YTQwcEVRNXpQMHdGSStzaWxVeW9VOEM1a2x1QlB5TDRNOGNrdUhWOHF5?=
+	=?utf-8?B?c1Nkb0xQWXdDZWRnQzN0ZTE1SVg0S3JFVFk5RVpROHZsbWxQWTBCNE9STnRn?=
+	=?utf-8?B?ZmZjOHBVUzhyQUhIbmJ6eDJPL1FzM0xJTWdia1djV2kyTVVUeU5FdVZXczNi?=
+	=?utf-8?B?QmFVOTA1Y0hXVmdWSHhtdDI3Z21FeFFDbFN5RTFiWUZtRFF3YUk1ODFMaFpy?=
+	=?utf-8?B?Q0Z0Z3BaOXlUckE5NHcrZVdPQ1ZIbDIvWWZOSkJ3SnZEdDAyckVDc0FRY2hN?=
+	=?utf-8?B?cVN6RTdVcUlXNi9HQkduWFJOU0FlWTczUlJ6L0FoZWVwNmRGNVBPbkw4azRP?=
+	=?utf-8?B?VUZqVHdIRFNkaEd2dGxqUjNHbzdEWDBJY1BBRU4zWkdZWGl6Y0hhalpHbzlZ?=
+	=?utf-8?B?b1AvYnhJdXk5OUM4ZFlLNTkyK3VxNGRVaVJtOEREdlJlKyt0SVNDc2ZwSzZE?=
+	=?utf-8?B?bjNSNWdHMFl4eTN4RWpOQUhTOHMxU01iNG5HaEV0ak9GbVN1ZzNaN2U3dmlp?=
+	=?utf-8?B?RlNUajFJR05sV3JGVjdpdXdYZ2thbDc2TlZVZWUwdGF4SGtnQUlieUdoQjc2?=
+	=?utf-8?B?YUNTMkpEVHRIRWFkK21lN0Y0amtaMGRBZG9MSVlqcC9yWFcwNGFJMjhyNHNN?=
+	=?utf-8?B?UGs0ZlhqUHdNWWRSdUdHZFdibi9JVmE3V2Zsb25GTXZyeGQxWmxIRStWTkor?=
+	=?utf-8?B?T1hnZmZjZFRSVFVJYWtuR2xyRXdpcEZ5R2UrTE1GVzBEVkFFMUtJRi9tNGNk?=
+	=?utf-8?B?WXZnMU9Db012YUsxMWM1UzUwWkFtaUNCVnc4RkdNeWdnb21pNWk3bjZQa0lw?=
+	=?utf-8?B?R0tPdVBWYzFTQml1bTBGVnVZVld1MlczZ1FHanVTMUN4QWFieXQyWm9ESFVW?=
+	=?utf-8?B?MWhZZU9UV0tleGZJa2NXNjg3citSendyL3F5enhUdjJtWkZHN05hWVZsMTA5?=
+	=?utf-8?B?d3JmaE9iUlFFNDBPWjl6UEFPNlFMa0Vua1AvSCtzUDh2RHpPWGhrNlZ3NHB0?=
+	=?utf-8?B?QlBUaG9CNG1Ncm1EejJ2WWtibFBaWUdtSGNqeFhDY0pqTDdDWW5IZXNYTGpE?=
+	=?utf-8?B?VTc5ZHBPNVpMYXVUMkpVdFl1UStjMkVJdWltZ0IxcGVHbmRVcVdoNWhKMFNW?=
+	=?utf-8?B?LzdwOVYvYkZZeERtSG5URzU3MjloVHVPMmV3SjVKU1R4alE1SHlRbXlreHJ2?=
+	=?utf-8?B?dWw0aSs5T3RmM3k5UDZhSjRiUWFqOE5nYmxqajhxRjZLUXpEMkZvN0hxa3hQ?=
+	=?utf-8?B?bkFneWNMU0ZzdnEwWkZSVW1GbXJCVkhnODVycmhpL2J3cUhYZ3VjNXpuaTdD?=
+	=?utf-8?B?azlVYksyZkF4RklHVC85enR3NnlpTUVwcHp4UE1hTUJHSC85b2kvRmtCcnlv?=
+	=?utf-8?B?UytRT0FCT25tSXl0ZUcva0dRRVE3cWMyMGhsS1B0ZndpSGxrZ0VpS2FTRlpD?=
+	=?utf-8?B?UjhVMWVYMFk4dFFJRXRaU0paNTRYTmxHN1VabUFtVDR3VEN3cjErMUFCdjhD?=
+	=?utf-8?B?T2t1Z2RjRnRtc3UzL1M4TzVRK1l1ejJTaTk0djNMUmVLTDhLVHNqUVVKVHVk?=
+	=?utf-8?B?NTE4MFQ2NldLd0JML20va2hvYnpGTFJzNERkcGZ1dm5JaWpmbWIzcXF1dzFn?=
+	=?utf-8?B?SCtMaWthQ3N4dEtULzE0MERPYWpCTVRVWEROMGNWbXFsV09mYTdtcXNDbDRJ?=
+	=?utf-8?B?UnM4S0NmdzFsOFRjYm55Y0pIWXZEZjdGODg3ZjZLMG50VGxWVHlWU1lVSFFj?=
+	=?utf-8?B?UGgxSENXM0hBR2ZpZk5FeFBJS3AwRHJWdEdnQ2FoSUlVMk1ZWTRLOUhLbjdy?=
+	=?utf-8?B?cWNDZVQvZmZTN2NxL3Uwa0x3VXpCYkxDRWlJMk1yRmNRWTB2eFdEalNTMnJq?=
+	=?utf-8?B?NkVlRWdUVmVJTDRqZlZmTjJmeDBCSG5TSDhSTXdYY1hrVXhONERCQkR1R1RQ?=
+	=?utf-8?B?aUhDSFdZVHFFUnNYRGhEZjJ3d2xBPT0=?=
 MIME-Version: 1.0
 X-OriginatorOrg: Nvidia.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: MW2PR12MB4667.namprd12.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 7bb1b37d-44d6-469c-6032-08d9e78b33bf
-X-MS-Exchange-CrossTenant-originalarrivaltime: 04 Feb 2022 03:05:30.3036 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 2f614316-f7af-40f7-b303-08d9e78a86d6
+X-MS-Exchange-CrossTenant-originalarrivaltime: 04 Feb 2022 03:00:40.1950 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: 43083d15-7273-40c1-b7db-39efd9ccc17a
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: WiVQJHldvECS90ngkrURvLtSLk2z5o9FjxiZa9apTNtMy8EUrNm35NbEvLDqqyDDHurznU7NqTKw5xlx/ncSFg==
+X-MS-Exchange-CrossTenant-userprincipalname: U0+FSGbxQAHm4WLzs5DrZHjvnQQaZ1OwOMdeYdvqn9BZynmSRCGvU5MDfbLxjixssci4P1/Py1SzMfW/ehX00A==
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: MN2PR12MB4423
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -146,32 +148,33 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 X-MIME-Autoconverted: from base64 to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 21435YsE013702
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 21430i27013385
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Fri, 04 Feb 2022 04:41:43 -0500
-Cc: Bart, "djwong@kernel.org" <djwong@kernel.org>,
+X-Mailman-Approved-At: Fri, 04 Feb 2022 04:41:42 -0500
+Cc: Vincent Fu <vincent.fu@samsung.com>, Bart,
+	"djwong@kernel.org" <djwong@kernel.org>,
 	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
 	"clm@fb.com" <clm@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"osandov@fb.com" <osandov@fb.com>,
+	Manzanares <a.manzanares@samsung.com>, "osandov@fb.com" <osandov@fb.com>,
 	=?utf-8?B?SmF2aWVyIEdvbnrDoWxleg==?= <javier@javigon.com>,
 	Assche <bvanassche@acm.org>,
 	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
 	Christoph Hellwig <hch@lst.de>,
 	"roland@purestorage.com" <roland@purestorage.com>,
 	"zach.brown@ni.com" <zach.brown@ni.com>,
-	"dsterba@suse.com" <dsterba@suse.com>,
 	"msnitzer@redhat.com >> msnitzer@redhat.com" <msnitzer@redhat.com>,
 	"josef@toxicpanda.com" <josef@toxicpanda.com>,
 	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, "kbus
-	@imap.gmail.com>> Keith Busch" <kbusch@kernel.org>,
+	"dsterba@suse.com" <dsterba@suse.com>, Keith Busch <kbusch@kernel.org>,
 	"Frederick.Knight@netapp.com" <Frederick.Knight@netapp.com>,
 	Jens Axboe <axboe@kernel.dk>, "tytso@mit.edu" <tytso@mit.edu>,
 	Kanchan Joshi <joshi.k@samsung.com>,
 	"martin.petersen@oracle.com >> Martin K.
-	Petersen" <martin.petersen@oracle.com>, "jack@suse.com" <jack@suse.com>,
+	Petersen" <martin.petersen@oracle.com>,
+	Luis Chamberlain <mcgrof@kernel.org>, Adam,
+	"jack@suse.com" <jack@suse.com>,
 	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
 	"lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
 Subject: Re: [dm-devel] [RFC PATCH 3/3] nvme: add the "debug" host driver
@@ -188,30 +191,61 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <3D9FCC340B339844A9F3FDF367AA635E@namprd12.prod.outlook.com>
+Content-ID: <8006ECFE16596F4AB76CA6E1CEB451A2@namprd12.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 2/3/22 08:06, Luis Chamberlain wrote:
-> On Wed, Feb 02, 2022 at 06:01:13AM +0000, Adam Manzanares wrote:
->> BTW I think having the target code be able to implement simple copy without
->> moving data over the fabric would be a great way of showing off the command.
+Mikulas,
+
+On 2/3/22 12:57, Mikulas Patocka wrote:
 > 
-> Do you mean this should be implemented instead as a fabrics backend
-> instead because fabrics already instantiates and creates a virtual
-> nvme device? And so this would mean less code?
 > 
->    Luis
+> On Thu, 3 Feb 2022, Luis Chamberlain wrote:
+> 
+>> On Thu, Feb 03, 2022 at 05:15:34PM +0100, Christoph Hellwig wrote:
+>>> On Thu, Feb 03, 2022 at 08:06:33AM -0800, Luis Chamberlain wrote:
+>>>> On Wed, Feb 02, 2022 at 06:01:13AM +0000, Adam Manzanares wrote:
+>>>>> BTW I think having the target code be able to implement simple copy without
+>>>>> moving data over the fabric would be a great way of showing off the command.
+>>>>
+>>>> Do you mean this should be implemented instead as a fabrics backend
+>>>> instead because fabrics already instantiates and creates a virtual
+>>>> nvme device? And so this would mean less code?
+>>>
+>>> It would be a lot less code.  In fact I don't think we need any new code
+>>> at all.  Just using nvme-loop on top of null_blk or brd should be all
+>>> that is needed.
+>>
+>> Mikulas,
+>>
+>> That begs the question why add this instead of using null_blk with
+>> nvme-loop?
+>>
+>>    Luis
+> 
+> I think that nvme-debug (the patch 3) doesn't have to be added to the
+> kernel.
+> 
+> Nvme-debug was an old student project that was canceled. I used it because
+> it was very easy to add copy offload functionality to it - adding this
+> capability took just one function with 43 lines of code (nvme_debug_copy).
+> 
+> I don't know if someone is interested in continuing the development of
+> nvme-debug. If yes, I can continue the development, if not, we can just
+> drop it.
+> 
+> Mikulas
 > 
 
-This should not be implemented on the fabrics backend at all or even
-in nvme-loop. Use QEMU for testing memory backed features.
+Thanks for explanation seems like we are on the same page, we don't
+want any code such as this that is controller specific in the
+NVMe repo including target.
 
 -ck
 
