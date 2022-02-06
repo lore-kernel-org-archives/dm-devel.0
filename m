@@ -1,162 +1,162 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B4EF6C433F5
-	for <dm-devel@archiver.kernel.org>; Sun,  6 Feb 2022 08:26:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 28458C433EF
+	for <dm-devel@archiver.kernel.org>; Sun,  6 Feb 2022 08:27:55 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-329-8E9QYSxGMiuktBB9SoDHQQ-1; Sun, 06 Feb 2022 03:26:03 -0500
-X-MC-Unique: 8E9QYSxGMiuktBB9SoDHQQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-576-B_-eS29TP06ysyYVjRPd_A-1; Sun, 06 Feb 2022 03:27:50 -0500
+X-MC-Unique: B_-eS29TP06ysyYVjRPd_A-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D4DDB1091DA1;
-	Sun,  6 Feb 2022 08:25:58 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D7E241006AA4;
+	Sun,  6 Feb 2022 08:27:45 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A6B1E4F870;
-	Sun,  6 Feb 2022 08:25:57 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B85AC7A238;
+	Sun,  6 Feb 2022 08:27:45 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DFAED4BB7C;
-	Sun,  6 Feb 2022 08:25:55 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.9])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 82C1A4BB7C;
+	Sun,  6 Feb 2022 08:27:45 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 2168PgKf020174 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 6 Feb 2022 03:25:42 -0500
+	id 2168RhoV020277 for <dm-devel@listman.util.phx.redhat.com>;
+	Sun, 6 Feb 2022 03:27:43 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id B78E7492CA9; Sun,  6 Feb 2022 08:25:42 +0000 (UTC)
+	id 844FF2166B47; Sun,  6 Feb 2022 08:27:43 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B2333492CA8
-	for <dm-devel@redhat.com>; Sun,  6 Feb 2022 08:25:42 +0000 (UTC)
+	(mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7EB4C2166B26
+	for <dm-devel@redhat.com>; Sun,  6 Feb 2022 08:27:40 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 92769811E76
-	for <dm-devel@redhat.com>; Sun,  6 Feb 2022 08:25:42 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 98B721C04B42
+	for <dm-devel@redhat.com>; Sun,  6 Feb 2022 08:27:40 +0000 (UTC)
 Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
 	[205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-231-gkhrvGFLNmec1IZdQh9Meg-1; Sun, 06 Feb 2022 03:25:38 -0500
-X-MC-Unique: gkhrvGFLNmec1IZdQh9Meg-1
-Received: from pps.filterd (m0246627.ppops.net [127.0.0.1])
+	us-mta-8-_nuqhkTJO8irNJ2eFpyrsQ-1; Sun, 06 Feb 2022 03:27:35 -0500
+X-MC-Unique: _nuqhkTJO8irNJ2eFpyrsQ-1
+Received: from pps.filterd (m0246617.ppops.net [127.0.0.1])
 	by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id
-	2164impN009016; Sun, 6 Feb 2022 08:25:24 GMT
-Received: from aserp3030.oracle.com (aserp3030.oracle.com [141.146.126.71])
-	by mx0b-00069f02.pphosted.com with ESMTP id 3e1fu2juc6-1
+	2166FAw4011738; Sun, 6 Feb 2022 08:27:27 GMT
+Received: from userp3030.oracle.com (userp3030.oracle.com [156.151.31.80])
+	by mx0b-00069f02.pphosted.com with ESMTP id 3e1hsu2r71-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Sun, 06 Feb 2022 08:25:24 +0000
-Received: from pps.filterd (aserp3030.oracle.com [127.0.0.1])
-	by aserp3030.oracle.com (8.16.1.2/8.16.1.2) with SMTP id 2168BvYe131684;
-	Sun, 6 Feb 2022 08:25:23 GMT
+	Sun, 06 Feb 2022 08:27:27 +0000
+Received: from pps.filterd (userp3030.oracle.com [127.0.0.1])
+	by userp3030.oracle.com (8.16.1.2/8.16.1.2) with SMTP id 2168BeEL147451;
+	Sun, 6 Feb 2022 08:27:25 GMT
 Received: from nam11-bn8-obe.outbound.protection.outlook.com
-	(mail-bn8nam11lp2173.outbound.protection.outlook.com [104.47.58.173])
-	by aserp3030.oracle.com with ESMTP id 3e1f9bs13w-1
+	(mail-bn8nam11lp2174.outbound.protection.outlook.com [104.47.58.174])
+	by userp3030.oracle.com with ESMTP id 3e1ebv4gjy-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Sun, 06 Feb 2022 08:25:23 +0000
+	Sun, 06 Feb 2022 08:27:25 +0000
 Received: from SJ0PR10MB4429.namprd10.prod.outlook.com (2603:10b6:a03:2d1::14)
 	by SN6PR10MB3023.namprd10.prod.outlook.com (2603:10b6:805:d2::23)
 	with Microsoft SMTP Server (version=TLS1_2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4951.18;
-	Sun, 6 Feb 2022 08:25:20 +0000
+	Sun, 6 Feb 2022 08:27:23 +0000
 Received: from SJ0PR10MB4429.namprd10.prod.outlook.com
 	([fe80::d034:a8db:9e32:acde]) by
 	SJ0PR10MB4429.namprd10.prod.outlook.com
 	([fe80::d034:a8db:9e32:acde%5]) with mapi id 15.20.4951.018;
-	Sun, 6 Feb 2022 08:25:20 +0000
+	Sun, 6 Feb 2022 08:27:23 +0000
 From: Jane Chu <jane.chu@oracle.com>
 To: Dan Williams <dan.j.williams@intel.com>
-Thread-Topic: [PATCH v5 4/7] dax: add dax_recovery_write to dax_op and dm
-	target type
-Thread-Index: AQHYFI6LEOTCAew0QE2MfSX8Pkzm9KyC8McAgANMQoA=
-Date: Sun, 6 Feb 2022 08:25:20 +0000
-Message-ID: <e14423a7-d2c6-06c3-fea2-bed1b1ad14e6@oracle.com>
+Thread-Topic: [PATCH v5 3/7] dm: make dm aware of target's DAXDEV_RECOVERY
+	capability
+Thread-Index: AQHYFI6KS6i0Tra94UqRHjnxZwdTsayC6KCAgANU/YA=
+Date: Sun, 6 Feb 2022 08:27:23 +0000
+Message-ID: <1ae40b1b-9d07-a69c-aed8-e6a6b63b1cc6@oracle.com>
 References: <20220128213150.1333552-1-jane.chu@oracle.com>
-	<20220128213150.1333552-5-jane.chu@oracle.com>
-	<CAPcyv4hFyoHgX9mo=NwOj_FPnfD8zkg_svM1sJZLn41vBm4Z8w@mail.gmail.com>
-In-Reply-To: <CAPcyv4hFyoHgX9mo=NwOj_FPnfD8zkg_svM1sJZLn41vBm4Z8w@mail.gmail.com>
+	<20220128213150.1333552-4-jane.chu@oracle.com>
+	<CAPcyv4jw+meUy-DrLgqn_4kPCF2WAZrMJ8Nan4xCncr7-4Y0hw@mail.gmail.com>
+In-Reply-To: <CAPcyv4jw+meUy-DrLgqn_4kPCF2WAZrMJ8Nan4xCncr7-4Y0hw@mail.gmail.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
 user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
 	Thunderbird/91.5.1
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 3c63dd04-4318-4fd4-01b4-08d9e94a36bd
+x-ms-office365-filtering-correlation-id: a4bd7189-916d-4f78-3c87-08d9e94a8015
 x-ms-traffictypediagnostic: SN6PR10MB3023:EE_
-x-microsoft-antispam-prvs: <SN6PR10MB30239499159150C6AE9B08FEF32B9@SN6PR10MB3023.namprd10.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:9508
+x-microsoft-antispam-prvs: <SN6PR10MB30234C76E263AAA5909016ABF32B9@SN6PR10MB3023.namprd10.prod.outlook.com>
+x-ms-oob-tlc-oobclassifiers: OLM:2043
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: m4kmuZaXP/WHUaWuFEiWgkPi5Un64u3+CwoppLzllBhLW0XikaBCBNP0OaEltqwbunURY2SprG5qQzq8t/PEWLWqfBdiYW9kpmwSExRZWBuZoTQOd1Qyohm0UP8+YDuHQXteMHBXGAhw3CbS5IiY7ovSEYSpcgpLXLE6Rgrp1vzwmWfd0TuctLaqN+96N8nnmKExnlibYRHl93cQ4IWY9CoVmEHxl1kMVUXXiQpYakmkTlT5qkZbfw5xmGRBbbpAYYeG5c9dPXRw+2bBWWtkQgV5R8kn9kQkh2Ab0bOsIHwOeLUBUKQs5D51E7nFwnkv6V0NV6sEY1421H17hdzqgENyXLfXsat2EdbZr+RkXvpZaF2lDPirXF+wHWuJUiDakMMRwQjOB7oGbgrjrnQ8Tkg/JfyupO9cnxRdg9FhimPT+zuTP9fyQCEcFSunoCaqmdf7cDDGZzVrIVIxM1uwbXC/O0eJtWbfGUv5Rs5xz7tx8wlRvLWD1VQHgUYH8uDZxss1Q//MoAnTjHww54os4UkrMDXqhGH3eQb5C1BzXAmjdhdHgdCVn5Jq5h8OXhCHrhfhUxJEh+A5+P6Gy/C40Nai78plYYCIjb1mgiWf1Fov1g9nS89WlFbkoI4WtciH0G5EXMrITirS7LUDMbTS5/6UVWJEBwz9YQidFkfqp2TzFylSGbWGOdDVmhozgYJdDeQVOYFcq5SOlJjkSonCUiUMSvuftTf9Otb7xV2Q4hz5j7gbdi/RKko2I82T3L9g0YmwfBr0uW5b6ua+ukXUzg==
+x-microsoft-antispam-message-info: eceUFfhwXR8OaQOrsJCNqrvDjKgZCTVkZcSCXVv/dZbD7sZ6c5fqEKkovIG3sHb2ZQWYdJVNXRhV0/nrG7JhtwsSROcpPpa0P4HCmZmz8iNeXHjkyIIpvmMRxNg2aY/FR15e/DHPFPn2gRg4Z4OCwou01BqOMqMk0QA3ye/vTPBv2XLk4u/Ao7fHCf5pWbv6vARKYZtccnygZD8ukUPC15X0aybIy8uQJGdDsf4JKkTgyH/T1Yared+L9x3wegzvrMbTiLavuMcIELWZhjmzB+MNPWKG+AU9aWNFWqGgznZL+AcFWPTYWKotjyRXsfQeiu7NWU7INlHWJVGJjkSTRt46o1aG2EAwV5hpdLb2Yj361cFB9tduVQMgk0/wvp47JjgzUZuGSrTaYtSKBdO7DF2cUzvYwWsUxK4LzTkSZQoLjp415VmdDMqrs91zv6/HpegUq/CDPyEA3EZy6R6jv5BsYSk/wr/rQ3qpXyrPaC0Z41JhiYXorxUCWz0/FEjz2+BGjGr1THFtbskzSgUmW+9OJpBrON0t3sH3GurLu4nI1AkTrquHqZ4gvH4SgUUya88QWYcLUtiErjennoJ/u7N5cTnueQaNpvty29AdkrJnq11h5+4+fAY0m+BGllHFHFRvykOxmBmiV1Rz1ZNTd4J+r23OXDyOoCS/uMtardzvvPXJiWCGedGUn3g2IHCrWVQEUcnZhDMhxJMJ7qSAZmE4VwULLaR6PmMlVtNuSPNClRNnzFYlGEYJWDOksNpHTjdh+ykzOwA/fwQ/FHVLXQ==
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
 	IPV:NLI; SFV:NSPM; H:SJ0PR10MB4429.namprd10.prod.outlook.com;
 	PTR:; CAT:NONE;
 	SFS:(13230001)(366004)(71200400001)(86362001)(26005)(2906002)(508600001)(2616005)(54906003)(186003)(316002)(6916009)(38100700002)(5660300002)(38070700005)(122000001)(4326008)(6506007)(8676002)(66476007)(31696002)(64756008)(66446008)(66556008)(76116006)(44832011)(66946007)(8936002)(6512007)(53546011)(7416002)(31686004)(6486002)(36756003)(83380400001)(43740500002)(45980500001);
 	DIR:OUT; SFP:1101
 x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?utf-8?B?UkdUdlpQakpHSWl4RkJBNUVMajZGSk5aeGc4WFNpTXlPUWdNSkdiVnA4Q01E?=
-	=?utf-8?B?L3VkdW50a01FcithRUJpNnZncnk4QURrdmtMczZpZTB6SjlNZEd0bDRjejBM?=
-	=?utf-8?B?amdUbjVnOWFUUkVQa3ZZc0N3ZE9TclFpaVo2djl4cm14bGVGalhhbFdDK2RN?=
-	=?utf-8?B?LzZ0azhaejdrZWpUR0Z5bGJqZkJ1bW92UE12SWxKcjRNQVhSSWF2S21mL0lo?=
-	=?utf-8?B?MUZXNHZwaTNYMVJJNWRQTThVek5Nb0dmZEIxOWxTYTFERjBSWmlYcUVsOWxL?=
-	=?utf-8?B?UzVJbVF3K3Y5TFhZaEdPSGpDMUo1NU9aTDhTRTZtU210K3hkWFRnOGhodXdN?=
-	=?utf-8?B?R3dveUdqdHMwWHNheFNxVllzTXphemVzZWd0RXc0b3B5STRDdmZoTGRWYnRC?=
-	=?utf-8?B?dE4vazNDeG9uS3lzZGozN2V1eXY4UXZXNTBRaVBRQ0FCcXdNcXdkd1JqcWtN?=
-	=?utf-8?B?QU9QYmhrSFRXMDM0dGFPZGxHK0dDeThPYkVKeUgrSmhueDF4aStlamFyb2dF?=
-	=?utf-8?B?V0xPcDNqU1NVTFYwcysvWXJsVFpqNzR1c0VlYWxFZjdBUDNSTEFjTE9kOWFM?=
-	=?utf-8?B?NHFvMUpYUmMzT00wS3hRZkp5YjIwR1RJQVMvRmVoaGpXa3FxeGR4MUtxYnpw?=
-	=?utf-8?B?ekpPK05LT3lMRFJjdzk3WnZvYWdCMXc1MDg4aGd2WTZxWkZXWVB2NEIySGtv?=
-	=?utf-8?B?cHF5VDkxTnhCWDVvVVRpVGsydGNEMWJ6cDdUejJIZHVOek96YUlhOTR0Mkdw?=
-	=?utf-8?B?QnNSdk9BMkZuZEFObDdSQVp2RXpmblQyV3BpdTN4dUhqdFBDaFBvTWd5YnRO?=
-	=?utf-8?B?NGFYU0twakF1Wno1SGRTc3ZvOERQZXJubzhSTjB6V1U3alBnK1R4Y09iNmFE?=
-	=?utf-8?B?OU5FYTNnOFpEY2d2anN6NFIva3I2Z0RUK3NidW9LYXU4WjY5c3JsNVBYVXow?=
-	=?utf-8?B?SVJ2YUc0L3d0QmltVjhsSzVOYW5MK2VpaVdqNDJMazRvdDdHZjVNTlJjQlQw?=
-	=?utf-8?B?NForZUlKRWpVeWRWVGN5aXh4Q3oyVjRvWDRCS2h3dXg5ZTJmVSthZlhualN3?=
-	=?utf-8?B?Vjk4cFVaaXpUeUFVaFBGenV5cTJuUDlwaStWbzJKUWZwby9DWTRadmpuVVRq?=
-	=?utf-8?B?QS9NaGExUldRYU16bWpWd051ZktQa1lOYkREMlh3RHFENGhGUWJCeVRKTklL?=
-	=?utf-8?B?ZTBsSmttTDMwcXZSNk4wbzFLdGRjRXp1MFl6K3dQakV2Uzc5SGJ0WGZjdXRC?=
-	=?utf-8?B?QnRVMGJVUWtDY2RZUGVqNlJMUjhtV3lTaCs0M3FNdFZjOWhpaFg4T2NCTVlQ?=
-	=?utf-8?B?b3RsVnVDQmpKMVlKa25HNmdaWDRuR01DNVI1MnhVVlppSjZQM3R1d2MzRUZh?=
-	=?utf-8?B?dENjTE1ONFZVVldoY1FKNEwxNlh1N28rRitJOGROM0YyUkpPUVlYY3dXc3RH?=
-	=?utf-8?B?blRMeFJuaHpRTm0wNm5JdlArRnA1cmR0Z2k3SEw1MURvQWdVam5RQVlOUFJJ?=
-	=?utf-8?B?YzVaWjlWczROUENDWXpJOTdEa3QzZnpkcVY0bWxBTm9yNUUvSHJaRUM1dzNR?=
-	=?utf-8?B?ZVY1NkFtWFRUN01ROUVKSC9HeTViMHZRN1N1a2MxR3Y5cDhpWVFJa0cyZEFF?=
-	=?utf-8?B?V3JLdXd4WnZCajM5NTZYN203bzZsUk1oZk9aTzRUV01TKzJYOWRYUy9lVHFO?=
-	=?utf-8?B?WDNBWU9xSm52YkIrSC9iLzlkYzBWMDBkU0ZySXhBUVdPdVNudDd5dUl2dFlB?=
-	=?utf-8?B?Q0pSN1ByVk4zSm9vNWtxSm1INkQ2a01iTGhraFc2amphRjBrUEFLZ3Q1N0M2?=
-	=?utf-8?B?VFpnc3RpaGxoVzhLcUJ5VzNmWTIvV1lKZ1Z1ZmNxNGFJckVmTjE0ZTV5QzJX?=
-	=?utf-8?B?REU5bWRpUC9NWmJpRUhvQk1PMWpsM2lzT3Z3cUh5UWRDRVJVMXpUbWJjS1E5?=
-	=?utf-8?B?QnNMSXhIM2p1cWI0YnVPR2xqUGVGQ04rbk8weTdidFNQWEl3aVZyWEVsb3l5?=
-	=?utf-8?B?UmUzczFleWd3SVNlY2tiSUZiSmtpbC9Hd1pwaGtDRGpZRmVtM1lmbzA5b2xI?=
-	=?utf-8?B?WHQxYmVydHQ2QzRVSDQ4Z1F1ZHZJYWpvTUcraUJiWlNiRFRaa25PbnRZdVNK?=
-	=?utf-8?B?Q1RRN3dUMmFXUitqOVI3a0ZucWY1RmNtSzNoa08zNUFhb1dGaTYzcEh3U2w1?=
-	=?utf-8?B?a3c9PQ==?=
+x-ms-exchange-antispam-messagedata-0: =?utf-8?B?ZmJMZWtpK1dSbVIxYmVTZzJ1SG9VcFhKUThtSU1oazhJK1A1WmZZL1R4eHg2?=
+	=?utf-8?B?UmU4YlVEQmpHcVljNUw4aWdHRWRNcmlENXZFYkJEbm5GbkFkVjZSY0VVRGQw?=
+	=?utf-8?B?czFXYjJ2T2ZmZ203bm1kb2JGSHUrdml4TlMrVkEvOE9iUnNkYU53WDhGT3py?=
+	=?utf-8?B?UlFjZ1BuYk9HZnFNa0IzSXptcnppZGw4V2lLWTRCWVo1MEZhMDU4dlMrcTJx?=
+	=?utf-8?B?Tmltd2NxRHU2bmlBTGNLZ3RnQTgzbGdGbjlJNVVpMWJpZ2V2YWduTFhaMU0y?=
+	=?utf-8?B?Z0NBdkNQNmVzaFVzSDhrT0JRcWdaNFlWNmt1MkNtT2RpUjF2V1BINEMrLzg4?=
+	=?utf-8?B?UldhMFVPU3lZM1NDS1ZDZHhSb1UzUkc4bHh4b05pZndRb3hUYnd0WG1vdkJH?=
+	=?utf-8?B?bGR0cC90U1BLMVZNdUttTE5xdjFidFgzaENoekJ2MVFoVGJHR3lKRWZDNmp2?=
+	=?utf-8?B?UVVvRERIUFJpZHU4Ry9kSkNiY2xhUTFGS2VWZElGaFJRK09uWjk0bmN1NjNx?=
+	=?utf-8?B?RFppc2R5VmJNM25KbVVGQnpvVm5JMGZHZk5LTDJYcU91SzBHNDV3VFh6QXg2?=
+	=?utf-8?B?clRybmFxZ0VUdWJoUkxPOHFKTXVZZElHTUE1a2FtM1Ivd2U2NjZzcjgrOTM1?=
+	=?utf-8?B?aVJmay84NG8yMjVJb1pJRlFXVUovL3lJcXFHLzF0aU4rcHZYR0dqMDBpNUNp?=
+	=?utf-8?B?WHJsTG43Y2lBS0Z1bHdaUXBOdmw0OFRmNHZ2QXRhS29qQjBuZ2tVSEk0eXpv?=
+	=?utf-8?B?WUptYXkvQVdNblJYeTVtSG5LclNwOVM2bFJkRzc1R1k3ck1VdGVvdVBXNkdD?=
+	=?utf-8?B?NUJOa0RQck5za2c2MkdXVUhiUEVFVDBFeXg4RGVpSFdOaHNNQkFsazFpc3Ju?=
+	=?utf-8?B?dHBuWE9Zd1NOcmluWGZ1TXEwSXlSZGRkaDV6eUNmNCtRcm5kTFQwZTFqY3pt?=
+	=?utf-8?B?REJCQnJ6Nmd4M2pOcC9zZTd0S2ZkclUwK0VJbE9VN254a3RnY1FPd3U0REVY?=
+	=?utf-8?B?OEo3dG8vNVZOSGNzYWZTdFJJZGVaQUhGMDlUMXZPa0hPZkphV3I2VXM0VmRV?=
+	=?utf-8?B?MWp1VXNCWlYwQVN4SXBkUmZwWm5JN2FnclhVZC9naStISHBGVE9JaHNOdy8y?=
+	=?utf-8?B?WC9RODUzSlNzNExZbHpnR09YcjdUOExad0dhMWVyQ0NOSUpvWkxUY1FvNXV0?=
+	=?utf-8?B?eHVPS2Fkb3p0Y3lWVzNsUmZJdkdqaFhKYU56aHd0VDNKTnRkOVdrWFVPY1h6?=
+	=?utf-8?B?cUVlU0NUd1REaWd1ejA1V0pIbWZjQmQzenVqRkw2M0hVbUptZXJXZDk3aGx3?=
+	=?utf-8?B?aFB5VHFiNFdUUENDOXk4b1FVSVE5bWNVQTBsekRjRy9VendLcXVVcDdldUsz?=
+	=?utf-8?B?Yjg3Ky9kdDlBQzdIMGNkSHF0aEVGSTFoRmpmV0hhTkpzNndNTUJPTEZkcXBj?=
+	=?utf-8?B?Rk83MDYxTmdSMjlWU1hwa2lmbTQvWXpoOHYrd05WemhpNmZ3OWs5S01hQ3RJ?=
+	=?utf-8?B?ODExeDdjN1ZBNnAveHBZbDhSMk96VjkrNG9OUEg3NlBBdGVPcGZvVFNFM3F1?=
+	=?utf-8?B?NGV1emdjYTVSSXI2Qy9IMWE4MCs1UmJlTGtqRDdJU1BHNDhNWmY3blFzMVV1?=
+	=?utf-8?B?UGFUWW9mTGp1bzdOcUttRUdQSmtIWHl6Vmdxa3dBVUlLL2MzdENRaWRmdllK?=
+	=?utf-8?B?L2ZCWExmdWNkUTQ4Z0NnRURQa1M3YVM0Vjl4bGZGUnBobmVtZEFScktLaE5x?=
+	=?utf-8?B?YnpHZmZkcnhEZlNydW14dGU2T1ZWQjN6aFRYaHNtUVpWSk5aTG1OL1Z2bTZr?=
+	=?utf-8?B?b3U0M2g4dzAzQ1EvdmNnbVVPK3R1ZmpZSlI4dncxNmxTbHNYL25yZEQ4L2ty?=
+	=?utf-8?B?NkJ0elMva0I2clN2K3cxSkNoeHdlWFFEQmFCaHBHaXZSbjUzL0VwdTBrMXQ2?=
+	=?utf-8?B?QWtPbmRkQWpjc2FZWnYxdXkwRXgwWkYza2xDZnRnZENyVzlXMWZFc1huM0JC?=
+	=?utf-8?B?Q3hjVzJFTW05MXMzcUp5bU9SeVlKekVHRnZNTVFWQkNzMG9DTmNJQjVjRVRt?=
+	=?utf-8?B?eFZFMW42ZjRVODBKWkRLL2dBdTFpeVNjWVU1SGwrK3RKU0piY2k4MU5LR2ts?=
+	=?utf-8?B?dGM1MnRKWTkzZEhOS3RLWlZFNUVyb3ZZNEh2bTJGVHV4NmZYeGx1ckJQcGJt?=
+	=?utf-8?B?eWc9PQ==?=
 MIME-Version: 1.0
 X-OriginatorOrg: oracle.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: SJ0PR10MB4429.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 3c63dd04-4318-4fd4-01b4-08d9e94a36bd
-X-MS-Exchange-CrossTenant-originalarrivaltime: 06 Feb 2022 08:25:20.3594 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: a4bd7189-916d-4f78-3c87-08d9e94a8015
+X-MS-Exchange-CrossTenant-originalarrivaltime: 06 Feb 2022 08:27:23.4426 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: Nlt7apsf45bNsbHz7v0bYht/2LSiUXv6ymLd0b2dzQsNBmVCPlAfSMzJOUbStzKBh9O5RIfTH5yRgTssTTD0Mw==
+X-MS-Exchange-CrossTenant-userprincipalname: tkm8drB1DxuBUPFqvC2KL8ZG+PmoSPC9hWz5J4WXtW61PSxh1v2wFB6AYmFmj3BCoaip6Ktd9o+7TCuJlWVePQ==
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: SN6PR10MB3023
 X-Proofpoint-Virus-Version: vendor=nai engine=6300 definitions=10249
 	signatures=673430
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 bulkscore=0
-	spamscore=0 adultscore=0
-	mlxlogscore=999 suspectscore=0 mlxscore=0 phishscore=0 malwarescore=0
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 phishscore=0
+	bulkscore=0 suspectscore=0
+	mlxlogscore=999 mlxscore=0 adultscore=0 malwarescore=0 spamscore=0
 	classifier=spam adjust=0 reason=mlx scancount=1
 	engine=8.12.0-2201110000 definitions=main-2202060060
-X-Proofpoint-ORIG-GUID: fhYGJugiiDgstLJsBtpgelt3g_j4zRPr
-X-Proofpoint-GUID: fhYGJugiiDgstLJsBtpgelt3g_j4zRPr
+X-Proofpoint-ORIG-GUID: H1ymnY4MspNDnBKYkGJu9UBwAg65Wz_8
+X-Proofpoint-GUID: H1ymnY4MspNDnBKYkGJu9UBwAg65Wz_8
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -165,9 +165,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-MIME-Autoconverted: from base64 to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 2168PgKf020174
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 2168RhoV020277
 X-loop: dm-devel@redhat.com
 Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Dave Jiang <dave.jiang@intel.com>,
 	Mike Snitzer <snitzer@redhat.com>, "Darrick J. Wong" <djwong@kernel.org>,
@@ -181,8 +181,8 @@ Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Dave Jiang <dave.jiang@intel.com>,
 	linux-fsdevel <linux-fsdevel@vger.kernel.org>, "Weiny,
 	Ira" <ira.weiny@intel.com>,
 	linux-xfs <linux-xfs@vger.kernel.org>, Kergon <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH v5 4/7] dax: add dax_recovery_write to dax_op
- and dm target type
+Subject: Re: [dm-devel] [PATCH v5 3/7] dm: make dm aware of target's
+ DAXDEV_RECOVERY capability
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -196,119 +196,59 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <64B088008BA96342963236BED03D9A0E@namprd10.prod.outlook.com>
+Content-ID: <3AD509C9AFF26F4B84B0D9D1D02F5D57@namprd10.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 2/3/2022 10:03 PM, Dan Williams wrote:
+On 2/3/2022 9:34 PM, Dan Williams wrote:
 > On Fri, Jan 28, 2022 at 1:32 PM Jane Chu <jane.chu@oracle.com> wrote:
 >>
->> dax_recovery_write() dax op is only required for DAX device that
->> export DAXDEV_RECOVERY indicating its capability to recover from
->> poisons.
->>
->> DM may be nested, if part of the base dax devices forming a DM
->> device support dax recovery, the DM device is marked with such
->> capability.
+>> If one of the MD raid participating target dax device supports
+>> DAXDEV_RECOVERY, then it'll be declared on the whole that the
+>> MD device is capable of DAXDEV_RECOVERY.
+>> And only when the recovery process reaches to the target driver,
+>> it becomes deterministic whether a certain dax address range
+>> maybe recovered, or not.
 >>
 >> Signed-off-by: Jane Chu <jane.chu@oracle.com>
-> [..]
->> diff --git a/include/linux/dax.h b/include/linux/dax.h
->> index 2fc776653c6e..1b3d6ebf3e49 100644
->> --- a/include/linux/dax.h
->> +++ b/include/linux/dax.h
->> @@ -30,6 +30,9 @@ struct dax_operations {
->>                          sector_t, sector_t);
->>          /* zero_page_range: required operation. Zero page range   */
->>          int (*zero_page_range)(struct dax_device *, pgoff_t, size_t);
->> +       /* recovery_write: optional operation. */
->> +       size_t (*recovery_write)(struct dax_device *, pgoff_t, void *, size_t,
->> +                               struct iov_iter *);
+>> ---
+>>   drivers/md/dm-table.c | 33 +++++++++++++++++++++++++++++++++
+>>   1 file changed, 33 insertions(+)
+>>
+>> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+>> index e43096cfe9e2..8af8a81b6172 100644
+>> --- a/drivers/md/dm-table.c
+>> +++ b/drivers/md/dm-table.c
+>> @@ -844,6 +844,36 @@ static bool dm_table_supports_dax(struct dm_table *t,
+>>          return true;
+>>   }
+>>
+>> +/* Check whether device is capable of dax poison recovery */
+>> +static int device_poison_recovery_capable(struct dm_target *ti,
+>> +       struct dm_dev *dev, sector_t start, sector_t len, void *data)
+>> +{
+>> +       if (!dev->dax_dev)
+>> +               return false;
+>> +       return dax_recovery_capable(dev->dax_dev);
 > 
-> The removal of the ->copy_{to,from}_iter() operations set the
-> precedent that dax ops should not be needed when the operation can be
-> carried out generically. The only need to call back to the pmem driver
-> is so that it can call nvdimm_clear_poison(). nvdimm_clear_poison() in
-> turn only needs the 'struct device' hosting the pmem and the physical
-> address to be cleared. The physical address is already returned by
-> dax_direct_access(). The device is something that could be added to
-> dax_device, and the pgmap could host the callback that pmem fills in.
-> Something like:
+> Hmm it's not clear to me that dax_recovery_capable is necessary. If a
+> dax_dev does not support recovery it can simply fail the
+> dax_direct_access() call with the DAX_RECOVERY flag set.
 > 
-> 
-> diff --git a/drivers/nvdimm/pfn_devs.c b/drivers/nvdimm/pfn_devs.c
-> index 58eda16f5c53..36486ba4753a 100644
-> --- a/drivers/nvdimm/pfn_devs.c
-> +++ b/drivers/nvdimm/pfn_devs.c
-> @@ -694,6 +694,7 @@ static int __nvdimm_setup_pfn(struct nd_pfn
-> *nd_pfn, struct dev_pagemap *pgmap)
->                  .end = nsio->res.end - end_trunc,
->          };
->          pgmap->nr_range = 1;
-> +       pgmap->owner = &nd_pfn->dev;
->          if (nd_pfn->mode == PFN_MODE_RAM) {
->                  if (offset < reserve)
->                          return -EINVAL;
-> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-> index 58d95242a836..95e1b6326f88 100644
-> --- a/drivers/nvdimm/pmem.c
-> +++ b/drivers/nvdimm/pmem.c
-> @@ -481,6 +481,7 @@ static int pmem_attach_disk(struct device *dev,
->          }
->          set_dax_nocache(dax_dev);
->          set_dax_nomc(dax_dev);
-> +       set_dax_pgmap(dax_dev, &pmem->pgmap);
->          if (is_nvdimm_sync(nd_region))
->                  set_dax_synchronous(dax_dev);
->          rc = dax_add_host(dax_dev, disk);
-> diff --git a/include/linux/memremap.h b/include/linux/memremap.h
-> index 1fafcc38acba..8cb59b5df38b 100644
-> --- a/include/linux/memremap.h
-> +++ b/include/linux/memremap.h
-> @@ -81,6 +81,11 @@ struct dev_pagemap_ops {
-> 
->   #define PGMAP_ALTMAP_VALID     (1 << 0)
-> 
-> +struct dev_pagemap_operations {
-> +       size_t (*recovery_write)(struct dev_pagemap *pgmap, void *, size_t,
-> +                                struct iov_iter *);
-> +};
-> +
->   /**
->    * struct dev_pagemap - metadata for ZONE_DEVICE mappings
->    * @altmap: pre-allocated/reserved memory for vmemmap allocations
-> @@ -111,12 +116,15 @@ struct dev_pagemap {
->          const struct dev_pagemap_ops *ops;
->          void *owner;
->          int nr_range;
-> +       struct dev_pagemap_operations ops;
->          union {
->                  struct range range;
->                  struct range ranges[0];
->          };
->   };
-> 
-> ...then DM does not need to be involved in the recovery path, fs/dax.c
-> just does dax_direct_access(..., DAX_RECOVERY, ...) and then looks up
-> the pgmap to generically coordinate the recovery_write(). The pmem
-> driver would be responsible for setting pgmap->recovery_write() to a
-> function that calls nvdimm_clear_poison().
-> 
-> This arch works for anything that can be described by a pgmap, and
-> supports error clearing, it need not be limited to the pmem block
-> driver.
+> So all DM needs to worry about is passing the new @flags parameter
+> through the stack.
 
-This is an interesting idea, let me give it a try and get back to you.
+Yeah, given your idea about adding the .recovery_write to pgmap_ops, it 
+wouldn't be needed.
 
-Thanks!
+thanks,
 -jane
-
 
 --
 dm-devel mailing list
