@@ -1,68 +1,67 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E808DC433F5
-	for <dm-devel@archiver.kernel.org>; Tue,  8 Feb 2022 22:34:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5172BC433F5
+	for <dm-devel@archiver.kernel.org>; Tue,  8 Feb 2022 22:35:32 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-311-1EmnzHOLMhCFarQ2DmHZfQ-1; Tue, 08 Feb 2022 17:34:42 -0500
-X-MC-Unique: 1EmnzHOLMhCFarQ2DmHZfQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-486-VPjCwaKuOjKhgMXUc_apIg-1; Tue, 08 Feb 2022 17:35:27 -0500
+X-MC-Unique: VPjCwaKuOjKhgMXUc_apIg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6BA9F94EEC;
-	Tue,  8 Feb 2022 22:34:35 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4C1415BC25;
-	Tue,  8 Feb 2022 22:34:35 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C5F6E1932498;
+	Tue,  8 Feb 2022 22:35:22 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A56E1104FF;
+	Tue,  8 Feb 2022 22:35:22 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EAD455B429;
-	Tue,  8 Feb 2022 22:34:34 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.8])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7A11B1802E34;
+	Tue,  8 Feb 2022 22:35:22 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.1])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 217IBtK1028638 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 7 Feb 2022 13:11:55 -0500
+	id 217NR84L021021 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 7 Feb 2022 18:27:08 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id E79B7C0809D; Mon,  7 Feb 2022 18:11:54 +0000 (UTC)
+	id 41DC440CFD1F; Mon,  7 Feb 2022 23:27:08 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E3837C0809C
-	for <dm-devel@redhat.com>; Mon,  7 Feb 2022 18:11:54 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C9BF0800B26
-	for <dm-devel@redhat.com>; Mon,  7 Feb 2022 18:11:54 +0000 (UTC)
-Received: from mga06.intel.com (mga06.intel.com [134.134.136.31]) by
+	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3D76D40CFD0B
+	for <dm-devel@redhat.com>; Mon,  7 Feb 2022 23:27:08 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2348F802A5A
+	for <dm-devel@redhat.com>; Mon,  7 Feb 2022 23:27:08 +0000 (UTC)
+Received: from mga18.intel.com (mga18.intel.com [134.134.136.126]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-596-_jbkaWW_O2WE2aK1t5scKw-1; Mon, 07 Feb 2022 13:11:53 -0500
-X-MC-Unique: _jbkaWW_O2WE2aK1t5scKw-1
-X-IronPort-AV: E=McAfee;i="6200,9189,10250"; a="309519537"
-X-IronPort-AV: E=Sophos;i="5.88,350,1635231600"; d="scan'208";a="309519537"
+	us-mta-91-zl9D2UGBOBy0VXxV4l7dVA-1; Mon, 07 Feb 2022 18:27:04 -0500
+X-MC-Unique: zl9D2UGBOBy0VXxV4l7dVA-1
+X-IronPort-AV: E=McAfee;i="6200,9189,10251"; a="232395908"
+X-IronPort-AV: E=Sophos;i="5.88,351,1635231600"; d="scan'208";a="232395908"
 Received: from orsmga003.jf.intel.com ([10.7.209.27])
-	by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
-	07 Feb 2022 10:11:51 -0800
+	by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+	07 Feb 2022 15:27:03 -0800
 X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="5.88,350,1635231600"; d="scan'208";a="481665736"
+X-IronPort-AV: E=Sophos;i="5.88,351,1635231600"; d="scan'208";a="481746035"
 Received: from lkp-server01.sh.intel.com (HELO 9dd77a123018) ([10.239.97.150])
-	by orsmga003.jf.intel.com with ESMTP; 07 Feb 2022 10:11:47 -0800
+	by orsmga003.jf.intel.com with ESMTP; 07 Feb 2022 15:27:00 -0800
 Received: from kbuild by 9dd77a123018 with local (Exim 4.92)
 	(envelope-from <lkp@intel.com>)
-	id 1nH8UN-0000qN-4m; Mon, 07 Feb 2022 18:11:47 +0000
-Date: Tue, 8 Feb 2022 02:10:49 +0800
+	id 1nHDPP-00015f-CT; Mon, 07 Feb 2022 23:26:59 +0000
+Date: Tue, 8 Feb 2022 07:26:02 +0800
 From: kernel test robot <lkp@intel.com>
 To: Nitesh Shetty <nj.shetty@samsung.com>, mpatocka@redhat.com
-Message-ID: <202202080206.J6kilCeY-lkp@intel.com>
-References: <20220207141348.4235-8-nj.shetty@samsung.com>
+Message-ID: <202202080735.lyaEe5Bq-lkp@intel.com>
+References: <20220207141348.4235-4-nj.shetty@samsung.com>
 MIME-Version: 1.0
-In-Reply-To: <20220207141348.4235-8-nj.shetty@samsung.com>
+In-Reply-To: <20220207141348.4235-4-nj.shetty@samsung.com>
 User-Agent: Mutt/1.10.1 (2018-07-13)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -72,15 +71,15 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-loop: dm-devel@redhat.com
 Cc: axboe@kernel.dk, javier@javigon.com, msnitzer@redhat.com,
 	kbuild-all@lists.01.org, linux-scsi@vger.kernel.org,
-	chaitanyak@nvidia.com, linux-nvme@lists.infradead.org,
-	linux-block@vger.kernel.org, dm-devel@redhat.com,
-	linux-fsdevel@vger.kernel.org
-Subject: Re: [dm-devel] [PATCH v2 07/10] nvmet: add copy command support for
- bdev and file ns
+	llvm@lists.linux.dev, chaitanyak@nvidia.com,
+	linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
+	dm-devel@redhat.com, linux-fsdevel@vger.kernel.org
+Subject: Re: [dm-devel] [PATCH v2 03/10] block: Add copy offload support
+	infrastructure
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -94,7 +93,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -108,91 +107,138 @@ Hi Nitesh,
 Thank you for the patch! Perhaps something to improve:
 
 [auto build test WARNING on axboe-block/for-next]
-[also build test WARNING on linus/master v5.17-rc3 next-20220207]
-[cannot apply to device-mapper-dm/for-next]
+[also build test WARNING on next-20220207]
 [If your patch is applied to the wrong git tree, kindly drop us a note.
 And when submitting patch, we suggest to use '--base' as documented in
 https://git-scm.com/docs/git-format-patch]
 
 url:    https://github.com/0day-ci/linux/commits/Nitesh-Shetty/block-make-bio_map_kern-non-static/20220207-231407
 base:   https://git.kernel.org/pub/scm/linux/kernel/git/axboe/linux-block.git for-next
-config: microblaze-buildonly-randconfig-r003-20220207 (https://download.01.org/0day-ci/archive/20220208/202202080206.J6kilCeY-lkp@intel.com/config)
-compiler: microblaze-linux-gcc (GCC) 11.2.0
+config: hexagon-randconfig-r045-20220207 (https://download.01.org/0day-ci/archive/20220208/202202080735.lyaEe5Bq-lkp@intel.com/config)
+compiler: clang version 15.0.0 (https://github.com/llvm/llvm-project 0d8850ae2cae85d49bea6ae0799fa41c7202c05c)
 reproduce (this is a W=1 build):
         wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
         chmod +x ~/bin/make.cross
-        # https://github.com/0day-ci/linux/commit/6bb6ea64499e1ac27975e79bb2eee89f07861893
+        # https://github.com/0day-ci/linux/commit/12a9801a7301f1a1e2ea355c5a4438dab17894cf
         git remote add linux-review https://github.com/0day-ci/linux
         git fetch --no-tags linux-review Nitesh-Shetty/block-make-bio_map_kern-non-static/20220207-231407
-        git checkout 6bb6ea64499e1ac27975e79bb2eee89f07861893
+        git checkout 12a9801a7301f1a1e2ea355c5a4438dab17894cf
         # save the config file to linux build tree
         mkdir build_dir
-        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-11.2.0 make.cross O=build_dir ARCH=microblaze SHELL=/bin/bash drivers/nvme/target/
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=clang make.cross W=1 O=build_dir ARCH=hexagon SHELL=/bin/bash
 
 If you fix the issue, kindly add following tag as appropriate
 Reported-by: kernel test robot <lkp@intel.com>
 
 All warnings (new ones prefixed by >>):
 
-   In file included from include/linux/byteorder/big_endian.h:5,
-                    from arch/microblaze/include/uapi/asm/byteorder.h:8,
-                    from include/asm-generic/bitops/le.h:6,
-                    from include/asm-generic/bitops.h:35,
-                    from ./arch/microblaze/include/generated/asm/bitops.h:1,
-                    from include/linux/bitops.h:33,
-                    from include/linux/log2.h:12,
-                    from include/asm-generic/div64.h:55,
-                    from ./arch/microblaze/include/generated/asm/div64.h:1,
-                    from include/linux/math.h:5,
-                    from include/linux/math64.h:6,
-                    from include/linux/time.h:6,
-                    from include/linux/stat.h:19,
-                    from include/linux/module.h:13,
-                    from drivers/nvme/target/admin-cmd.c:7:
-   drivers/nvme/target/admin-cmd.c: In function 'nvmet_execute_identify_ns':
->> include/uapi/linux/byteorder/big_endian.h:34:26: warning: conversion from 'unsigned int' to '__le16' {aka 'short unsigned int'} changes value from '524288' to '0' [-Woverflow]
-      34 | #define __cpu_to_le32(x) ((__force __le32)__swab32((x)))
-         |                          ^
-   include/linux/byteorder/generic.h:88:21: note: in expansion of macro '__cpu_to_le32'
-      88 | #define cpu_to_le32 __cpu_to_le32
-         |                     ^~~~~~~~~~~~~
-   drivers/nvme/target/admin-cmd.c:534:29: note: in expansion of macro 'cpu_to_le32'
-     534 |                 id->mssrl = cpu_to_le32(BIO_MAX_VECS << (PAGE_SHIFT - SECTOR_SHIFT));
-         |                             ^~~~~~~~~~~
+>> block/blk-lib.c:185:5: warning: no previous prototype for function 'blk_copy_offload' [-Wmissing-prototypes]
+   int blk_copy_offload(struct block_device *src_bdev, int nr_srcs,
+       ^
+   block/blk-lib.c:185:1: note: declare 'static' if the function is not intended to be used outside of this translation unit
+   int blk_copy_offload(struct block_device *src_bdev, int nr_srcs,
+   ^
+   static 
+   1 warning generated.
 
 
-vim +34 include/uapi/linux/byteorder/big_endian.h
+vim +/blk_copy_offload +185 block/blk-lib.c
 
-5921e6f8809b161 David Howells 2012-10-13  15  
-5921e6f8809b161 David Howells 2012-10-13  16  #define __constant_htonl(x) ((__force __be32)(__u32)(x))
-5921e6f8809b161 David Howells 2012-10-13  17  #define __constant_ntohl(x) ((__force __u32)(__be32)(x))
-5921e6f8809b161 David Howells 2012-10-13  18  #define __constant_htons(x) ((__force __be16)(__u16)(x))
-5921e6f8809b161 David Howells 2012-10-13  19  #define __constant_ntohs(x) ((__force __u16)(__be16)(x))
-5921e6f8809b161 David Howells 2012-10-13  20  #define __constant_cpu_to_le64(x) ((__force __le64)___constant_swab64((x)))
-5921e6f8809b161 David Howells 2012-10-13  21  #define __constant_le64_to_cpu(x) ___constant_swab64((__force __u64)(__le64)(x))
-5921e6f8809b161 David Howells 2012-10-13  22  #define __constant_cpu_to_le32(x) ((__force __le32)___constant_swab32((x)))
-5921e6f8809b161 David Howells 2012-10-13  23  #define __constant_le32_to_cpu(x) ___constant_swab32((__force __u32)(__le32)(x))
-5921e6f8809b161 David Howells 2012-10-13  24  #define __constant_cpu_to_le16(x) ((__force __le16)___constant_swab16((x)))
-5921e6f8809b161 David Howells 2012-10-13  25  #define __constant_le16_to_cpu(x) ___constant_swab16((__force __u16)(__le16)(x))
-5921e6f8809b161 David Howells 2012-10-13  26  #define __constant_cpu_to_be64(x) ((__force __be64)(__u64)(x))
-5921e6f8809b161 David Howells 2012-10-13  27  #define __constant_be64_to_cpu(x) ((__force __u64)(__be64)(x))
-5921e6f8809b161 David Howells 2012-10-13  28  #define __constant_cpu_to_be32(x) ((__force __be32)(__u32)(x))
-5921e6f8809b161 David Howells 2012-10-13  29  #define __constant_be32_to_cpu(x) ((__force __u32)(__be32)(x))
-5921e6f8809b161 David Howells 2012-10-13  30  #define __constant_cpu_to_be16(x) ((__force __be16)(__u16)(x))
-5921e6f8809b161 David Howells 2012-10-13  31  #define __constant_be16_to_cpu(x) ((__force __u16)(__be16)(x))
-5921e6f8809b161 David Howells 2012-10-13  32  #define __cpu_to_le64(x) ((__force __le64)__swab64((x)))
-5921e6f8809b161 David Howells 2012-10-13  33  #define __le64_to_cpu(x) __swab64((__force __u64)(__le64)(x))
-5921e6f8809b161 David Howells 2012-10-13 @34  #define __cpu_to_le32(x) ((__force __le32)__swab32((x)))
-5921e6f8809b161 David Howells 2012-10-13  35  #define __le32_to_cpu(x) __swab32((__force __u32)(__le32)(x))
-5921e6f8809b161 David Howells 2012-10-13  36  #define __cpu_to_le16(x) ((__force __le16)__swab16((x)))
-5921e6f8809b161 David Howells 2012-10-13  37  #define __le16_to_cpu(x) __swab16((__force __u16)(__le16)(x))
-5921e6f8809b161 David Howells 2012-10-13  38  #define __cpu_to_be64(x) ((__force __be64)(__u64)(x))
-5921e6f8809b161 David Howells 2012-10-13  39  #define __be64_to_cpu(x) ((__force __u64)(__be64)(x))
-5921e6f8809b161 David Howells 2012-10-13  40  #define __cpu_to_be32(x) ((__force __be32)(__u32)(x))
-5921e6f8809b161 David Howells 2012-10-13  41  #define __be32_to_cpu(x) ((__force __u32)(__be32)(x))
-5921e6f8809b161 David Howells 2012-10-13  42  #define __cpu_to_be16(x) ((__force __be16)(__u16)(x))
-5921e6f8809b161 David Howells 2012-10-13  43  #define __be16_to_cpu(x) ((__force __u16)(__be16)(x))
-5921e6f8809b161 David Howells 2012-10-13  44  
+   180	
+   181	/*
+   182	 * blk_copy_offload	- Use device's native copy offload feature
+   183	 * Go through user provide payload, prepare new payload based on device's copy offload limits.
+   184	 */
+ > 185	int blk_copy_offload(struct block_device *src_bdev, int nr_srcs,
+   186			struct range_entry *rlist, struct block_device *dst_bdev, gfp_t gfp_mask)
+   187	{
+   188		struct request_queue *sq = bdev_get_queue(src_bdev);
+   189		struct request_queue *dq = bdev_get_queue(dst_bdev);
+   190		struct bio *read_bio, *write_bio;
+   191		struct copy_ctx *ctx;
+   192		struct cio *cio;
+   193		struct page *token;
+   194		sector_t src_blk, copy_len, dst_blk;
+   195		sector_t remaining, max_copy_len = LONG_MAX;
+   196		int ri = 0, ret = 0;
+   197	
+   198		cio = kzalloc(sizeof(struct cio), GFP_KERNEL);
+   199		if (!cio)
+   200			return -ENOMEM;
+   201		atomic_set(&cio->refcount, 0);
+   202		cio->rlist = rlist;
+   203	
+   204		max_copy_len = min3(max_copy_len, (sector_t)sq->limits.max_copy_sectors,
+   205				(sector_t)dq->limits.max_copy_sectors);
+   206		max_copy_len = min3(max_copy_len, (sector_t)sq->limits.max_copy_range_sectors,
+   207				(sector_t)dq->limits.max_copy_range_sectors) << SECTOR_SHIFT;
+   208	
+   209		for (ri = 0; ri < nr_srcs; ri++) {
+   210			cio->rlist[ri].comp_len = rlist[ri].len;
+   211			for (remaining = rlist[ri].len, src_blk = rlist[ri].src, dst_blk = rlist[ri].dst;
+   212				remaining > 0;
+   213				remaining -= copy_len, src_blk += copy_len, dst_blk += copy_len) {
+   214				copy_len = min(remaining, max_copy_len);
+   215	
+   216				token = alloc_page(gfp_mask);
+   217				if (unlikely(!token)) {
+   218					ret = -ENOMEM;
+   219					goto err_token;
+   220				}
+   221	
+   222				read_bio = bio_alloc(src_bdev, 1, REQ_OP_READ | REQ_COPY | REQ_NOMERGE,
+   223						gfp_mask);
+   224				if (!read_bio) {
+   225					ret = -ENOMEM;
+   226					goto err_read_bio;
+   227				}
+   228				read_bio->bi_iter.bi_sector = src_blk >> SECTOR_SHIFT;
+   229				read_bio->bi_iter.bi_size = copy_len;
+   230				__bio_add_page(read_bio, token, PAGE_SIZE, 0);
+   231				ret = submit_bio_wait(read_bio);
+   232				if (ret) {
+   233					bio_put(read_bio);
+   234					goto err_read_bio;
+   235				}
+   236				bio_put(read_bio);
+   237				ctx = kzalloc(sizeof(struct copy_ctx), gfp_mask);
+   238				if (!ctx) {
+   239					ret = -ENOMEM;
+   240					goto err_read_bio;
+   241				}
+   242				ctx->cio = cio;
+   243				ctx->range_idx = ri;
+   244				ctx->start_sec = rlist[ri].src;
+   245	
+   246				write_bio = bio_alloc(dst_bdev, 1, REQ_OP_WRITE | REQ_COPY | REQ_NOMERGE,
+   247						gfp_mask);
+   248				if (!write_bio) {
+   249					ret = -ENOMEM;
+   250					goto err_read_bio;
+   251				}
+   252	
+   253				write_bio->bi_iter.bi_sector = dst_blk >> SECTOR_SHIFT;
+   254				write_bio->bi_iter.bi_size = copy_len;
+   255				__bio_add_page(write_bio, token, PAGE_SIZE, 0);
+   256				write_bio->bi_end_io = bio_copy_end_io;
+   257				write_bio->bi_private = ctx;
+   258				atomic_inc(&cio->refcount);
+   259				submit_bio(write_bio);
+   260			}
+   261		}
+   262	
+   263		/* Wait for completion of all IO's*/
+   264		return cio_await_completion(cio);
+   265	
+   266	err_read_bio:
+   267		__free_page(token);
+   268	err_token:
+   269		rlist[ri].comp_len = min_t(sector_t, rlist[ri].comp_len, (rlist[ri].len - remaining));
+   270	
+   271		cio->io_err = ret;
+   272		return cio_await_completion(cio);
+   273	}
+   274	
 
 ---
 0-DAY CI Kernel Test Service, Intel Corporation
