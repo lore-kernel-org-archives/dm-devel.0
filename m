@@ -4,79 +4,67 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 69056C3527B
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A3E87C3527C
 	for <dm-devel@archiver.kernel.org>; Tue,  8 Feb 2022 22:34:13 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-634-neRAp2D0O5W1m8dPnPfOEw-1; Tue, 08 Feb 2022 17:34:09 -0500
-X-MC-Unique: neRAp2D0O5W1m8dPnPfOEw-1
+ us-mta-52-Dpkf1vnnNaSvAjUV1_qnAQ-1; Tue, 08 Feb 2022 17:34:09 -0500
+X-MC-Unique: Dpkf1vnnNaSvAjUV1_qnAQ-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 96C1C1054FA2;
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id EEDCB1853035;
 	Tue,  8 Feb 2022 22:34:04 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 7461976E3C;
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id CBCB379445;
 	Tue,  8 Feb 2022 22:34:04 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4693C59CAE;
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A2A901832B62;
 	Tue,  8 Feb 2022 22:34:04 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 217F77Tg014746 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 7 Feb 2022 10:07:07 -0500
+	id 217HIZ61025120 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 7 Feb 2022 12:18:35 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 5CCFC2166B4C; Mon,  7 Feb 2022 15:07:07 +0000 (UTC)
+	id 7522B2166B4D; Mon,  7 Feb 2022 17:18:35 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 53F5F2166B5D
-	for <dm-devel@redhat.com>; Mon,  7 Feb 2022 15:07:04 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 703A72166B4C
+	for <dm-devel@redhat.com>; Mon,  7 Feb 2022 17:18:32 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1D03E185A79C
-	for <dm-devel@redhat.com>; Mon,  7 Feb 2022 15:07:04 +0000 (UTC)
-Received: from mail-ej1-f52.google.com (mail-ej1-f52.google.com
-	[209.85.218.52]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-150-OjhLsFRFNqStiCcaynqxRw-1; Mon, 07 Feb 2022 10:07:02 -0500
-X-MC-Unique: OjhLsFRFNqStiCcaynqxRw-1
-Received: by mail-ej1-f52.google.com with SMTP id og43so18937943ejc.0
-	for <dm-devel@redhat.com>; Mon, 07 Feb 2022 07:07:01 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
-	:content-language:to:references:from:in-reply-to
-	:content-transfer-encoding;
-	bh=F3cqhKo/LUB7lGd0QDU+7FObPag4yKIRgYNcM4OrB2Q=;
-	b=JdShME2CYCwAvhfmlXpbPpPIiJ8cJtZH5+Rabl9SlNL6PA/Wq8haNqNenKkm906yJ/
-	PEHV7cUvKRfjPG/hzC+EHi7go269/zVRQhSPOMWdDXNZE7S1CGMQ1U8FQObdhPDmj9bI
-	xEjHbjHb8qT5G8BqDhpU6/7ToJ5Vd7RHXjr2PT2ANJTK6+VqSJ6Xd43sEuzf9M66QJ9N
-	4k0hoB4Aq5LQCPeLRVcyDEEpLmJixh5iP0zVhe5AXe9aKpKTPxb5sACEzDeYFu3Fe3SZ
-	BdWtTpeaPvWQ40maVWg0DyOzaPH7LAlfTjGYo7JQ8vij3lYlmIbN3Sv2i/OSwFFRzGqU
-	N0aQ==
-X-Gm-Message-State: AOAM533IzO1KEXsdgSIefaTC3mNSrzEiSWG2FAjs/DnScO79nENy2bVP
-	kigxSn/21ZiXkkXy7FcxkbZb4yDEB8xkDQ==
-X-Google-Smtp-Source: ABdhPJwuNJNabMe2MZDkjuUvvmf88WMVCS+Q/WS5WxIhcqXkUKIPSKOy8JNTMpdNd7rE91eyxuyZbg==
-X-Received: by 2002:a17:907:9804:: with SMTP id
-	ji4mr124118ejc.716.1644246420695; 
-	Mon, 07 Feb 2022 07:07:00 -0800 (PST)
-Received: from [192.168.0.99] ([83.148.32.207])
-	by smtp.gmail.com with ESMTPSA id
-	ek21sm3144572edb.27.2022.02.07.07.06.59
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Mon, 07 Feb 2022 07:07:00 -0800 (PST)
-Message-ID: <bf9817e2-32ed-f278-42c6-044c061f59f1@gmail.com>
-Date: Mon, 7 Feb 2022 16:06:59 +0100
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D75EB1C05AB5
+	for <dm-devel@redhat.com>; Mon,  7 Feb 2022 17:18:31 +0000 (UTC)
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-607-1v0AtpGHMl2njz6yzNCbSw-1; Mon, 07 Feb 2022 12:18:28 -0500
+X-MC-Unique: 1v0AtpGHMl2njz6yzNCbSw-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id AA3391F37E;
+	Mon,  7 Feb 2022 17:18:26 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 69F5213C61;
+	Mon,  7 Feb 2022 17:18:26 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+	by imap2.suse-dmz.suse.de with ESMTPSA id 0+PjF2JUAWJfHAAAMHmgww
+	(envelope-from <mwilck@suse.com>); Mon, 07 Feb 2022 17:18:26 +0000
+From: mwilck@suse.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Date: Mon,  7 Feb 2022 18:18:19 +0100
+Message-Id: <20220207171819.7091-1-mwilck@suse.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
-	Firefox/91.0 Thunderbird/91.4.0
-To: Aidan Walton <aidan.walton@gmail.com>, dm-devel@redhat.com
-References: <CAPx-8MP6zbPACu-HaYeBO8AqBwqxt4YQarSm6vaZHSApiQWX7Q@mail.gmail.com>
-From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
-In-Reply-To: <CAPx-8MP6zbPACu-HaYeBO8AqBwqxt4YQarSm6vaZHSApiQWX7Q@mail.gmail.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -86,9 +74,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 217HIZ61025120
 X-loop: dm-devel@redhat.com
-Subject: Re: [dm-devel] Can not remove device. No files open,
- no processes attached. Forced to reboot server.
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Subject: [dm-devel] [PATCH] kpartx.rules: skip MD devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -107,70 +97,49 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-Dne 06. 02. 22 v 16:16 Aidan Walton napsal(a):
-> Hi,
-> I've been chasing a problem now for a few weeks. I have a flaky SATA
-> controller that fails unpredictably and upon doing so all drives
-> attached are disconnected by the kernel. I have 2 discs on this
-> controller which are the components of a RAID1 array. mdraid fails the
-> disc (in its strange way) stating that one device is removed and the
-> other is active. Apparently this is the default mdraid approach. Even
-> though both devices are in fact failed. Regardless, the devmapper
-> device which is supporting an LVM logical volume on top of this raid
-> array, remains active. The logical volume is no longer listed by
-> lvdisplay, but dmsetup -c info shows:
-> Name                                Maj Min Stat Open Targ Event  UUID
-> storage.mx.vg2-shared_sun_NAS.lv1   253   2 L--w    1    1      0
-> LVM-Ud9pj6QE4hK1K3xiAFMVCnno3SrXaRyTXJLtTGDOPjBUppJgzr4t0jJowixEOtx7
-> storage.mx.vg1-shared_sun_users.lv1 253   1 L--w    1    1      0
-> LVM-ypcHlbNXu36FLRgU0EcUiXBSIvcOlHEP3MHkBKsBeHf6Q68TIuGA9hd5UfCpvOeo
-> ubuntu_server--vg-ubuntu_server--lv 253   0 L--w    1    1      0
-> LVM-eGBUJxP1vlW3MfNNeC2r5JfQUiKKWZ73t3U3Jji3lggXe8LPrUf0xRE0YyPzSorO
-> 
-> The device in question is 'storage.mx.vg2-shared_sun_NAS.lv1'
-> 
-> As can be seen is displays 'open'
-> 
-> however lsof /dev/mapper/storage.mx.vg2-shared_sun_NAS.lv1
-> <blank>
-> 
-> fuser -m /dev/storage.mx.vg1/shared_sun_users.lv1
-> <blank>
-> 
-> dmsetup status storage.mx.vg2-shared_sun_NAS.lv1
-> 0 976502784 error
-> 
-> dmsetup remove storage.mx.vg2-shared_sun_NAS.lv1
-> device-mapper: remove ioctl on storage.mx.vg2-shared_sun_NAS.lv1
-> failed: Device or resource busy
-> 
-> dmsetup wipe_table storage.mx.vg2-shared_sun_NAS.lv1
-> device-mapper: resume ioctl on storage.mx.vg2-shared_sun_NAS.lv1
-> failed: Invalid argument
-> 
+From: Martin Wilck <mwilck@suse.com>
 
-You can't remove device with open count >0.
-You've already replaced device target type with error - so whoever keeps this 
-device open gets error on all read & writes (and you would probably see it on 
-kernel log)
+With the mdadm metadata format v1.0 (and DDF), the MD superblock is at the end
+of the device, keeping the partition table at the beginning. This may cause
+wrong partition mappings to be created by kpartx on RAID component devices.
 
-Your remaining problem is to figure out who holds devices open in kernel.
+So far I've only seen ugly error messages, but at least in principle it can
+happen that kpartx wins a race with MD, and prevents correct setup of the
+MD device.
 
-fusers shows only user-land apps - but not in-kernel users - so you should 
-probably try to see how you are usinf your devices - who is mounting/using them ?
+Sample error messages:
 
-If your kernel is working correctly - tools like  'lsblk' are typically quite 
-good at exposing your device tree..
+[    4.029490] systemd-udevd[445]: dm-0: '/sbin/kpartx -un -p -part /dev/dm-0'(err) 'device-mapper: reload ioctl on 3600140508dbcf02acb448188d73ec97d-part1  failed: Device or resource busy'
+[    4.075666] kernel: device-mapper: table: 254:1: linear: Device lookup failed
+[    4.075945] kernel: device-mapper: ioctl: error adding target to table
 
-But you would need to expose way more details to give more qualified advice...
+Skip creating partition mappings on MD components.
 
-Regards
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ kpartx/kpartx.rules | 3 +++
+ 1 file changed, 3 insertions(+)
 
-Zdenek
+diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
+index d7527d7..1969dee 100644
+--- a/kpartx/kpartx.rules
++++ b/kpartx/kpartx.rules
+@@ -12,6 +12,9 @@ ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}=="1", GOTO="kpartx_end"
+ # Create dm tables for partitions on multipath devices.
+ ENV{DM_UUID}!="mpath-?*", GOTO="mpath_kpartx_end"
+ 
++# Ignore RAID members
++ENV{ID_FS_TYPE}=="linux_raid_member|isw_raid_member|ddf_raid_member", GOTO="mpath_kpartx_end"
++
+ # DM_SUBSYSTEM_UDEV_FLAG1 is the "skip_kpartx" flag.
+ # For events not generated by libdevmapper, we need to fetch it from db:
+ # - "change" events with DM_ACTIVATION!="1" (e.g. partition table changes)
+-- 
+2.34.1
+
 
 --
 dm-devel mailing list
