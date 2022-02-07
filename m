@@ -4,82 +4,132 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 05CC5C433EF
-	for <dm-devel@archiver.kernel.org>; Tue,  8 Feb 2022 21:31:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A633BC433F5
+	for <dm-devel@archiver.kernel.org>; Tue,  8 Feb 2022 22:33:37 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-670-TSBBkbTROuWHXA-9sGKdBg-1; Tue, 08 Feb 2022 16:31:14 -0500
-X-MC-Unique: TSBBkbTROuWHXA-9sGKdBg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-156-eHmK7NHeOOOq83PpqTNmDA-1; Tue, 08 Feb 2022 17:33:33 -0500
+X-MC-Unique: eHmK7NHeOOOq83PpqTNmDA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 12D5D189DF41;
-	Tue,  8 Feb 2022 21:31:08 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BBAEA6AB9F;
-	Tue,  8 Feb 2022 21:31:06 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 736F91091DB4;
+	Tue,  8 Feb 2022 22:33:28 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 16AFF610F6;
+	Tue,  8 Feb 2022 22:33:27 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8BF5C4BB7C;
-	Tue,  8 Feb 2022 21:31:05 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.5])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 914BB1800654;
+	Tue,  8 Feb 2022 22:33:24 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.9])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 218LUfY7003175 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 8 Feb 2022 16:30:41 -0500
+	id 217EUUoS012634 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 7 Feb 2022 09:30:31 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6403E53DB; Tue,  8 Feb 2022 21:30:41 +0000 (UTC)
+	id B318B492CAE; Mon,  7 Feb 2022 14:30:30 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 5F6DE53DA
-	for <dm-devel@redhat.com>; Tue,  8 Feb 2022 21:30:29 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id AEE0E492CAB
+	for <dm-devel@redhat.com>; Mon,  7 Feb 2022 14:30:30 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D4982185A7A4
-	for <dm-devel@redhat.com>; Tue,  8 Feb 2022 21:30:29 +0000 (UTC)
-Received: from mail-ej1-f51.google.com (mail-ej1-f51.google.com
-	[209.85.218.51]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-424-3oaojmE1OAGtVQw5uz5BwQ-1; Tue, 08 Feb 2022 16:30:28 -0500
-X-MC-Unique: 3oaojmE1OAGtVQw5uz5BwQ-1
-Received: by mail-ej1-f51.google.com with SMTP id k25so1478504ejp.5;
-	Tue, 08 Feb 2022 13:30:27 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
-	:content-language:to:cc:references:from:in-reply-to
-	:content-transfer-encoding;
-	bh=t4B1ZX+gk3XXBYXo4MbrPRSmJlAdBTOlRsRMieGh2K8=;
-	b=Q28tz4ejsCRpaV9S5R/w3L/aPd2vx0I7zF+0hR+jB4ghV59HMmLEhy74j9gy+boGPZ
-	6DiN7yodm0fVcdvWZGG4ElPMdA1AbuYYrEyznRsqAXaorSKKz1HYaUweIinRQauQ4kW6
-	SJaG5CeESeafkYdtwiGZxV4AGnqBqDkgFaRgQuHMkrStY6j1XzTbEwLl66wHL65uI8CI
-	2dTyJXGQgffEibXDakYY2POz6cZovTG0XR9WGOYWc9/DuSj+/uJcwUIN6LFbQWHx51ar
-	Qm8eeGMbJeokM47nmX5fUysqm/p8FQgs6Vim3zGqv3g5P41JzuA1UXb9uC0g85bhoEmD
-	BsTA==
-X-Gm-Message-State: AOAM531aKcx1mhSwNymrQq7ut6eKWcl158AtSkyU71ZT6xHZwe0r3GT9
-	7JX2Z2uGT4rgzEmLggmv8fVN5UkVhghv5kZG
-X-Google-Smtp-Source: ABdhPJwHeARc7by/J/2y8jpAavCM7Xoot4IEuguHV4aBlu/Zwgw0W5weDKU7wantNElR6fHUxZs97A==
-X-Received: by 2002:a17:907:3d92:: with SMTP id
-	he18mr5252979ejc.597.1644355826702; 
-	Tue, 08 Feb 2022 13:30:26 -0800 (PST)
-Received: from [192.168.0.99] ([83.148.32.207])
-	by smtp.gmail.com with ESMTPSA id z4sm5266186ejd.39.2022.02.08.13.30.25
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Tue, 08 Feb 2022 13:30:26 -0800 (PST)
-Message-ID: <fb00c57d-cf11-8632-bcdd-6b52826f212f@gmail.com>
-Date: Tue, 8 Feb 2022 22:30:25 +0100
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8FF6510AF7C1
+	for <dm-devel@redhat.com>; Mon,  7 Feb 2022 14:30:30 +0000 (UTC)
+Received: from mailout2.samsung.com (mailout2.samsung.com [203.254.224.25])
+	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-669-g_aCJMiFMj2IJ6_ztOw5Gw-1; Mon, 07 Feb 2022 09:30:28 -0500
+X-MC-Unique: g_aCJMiFMj2IJ6_ztOw5Gw-1
+Received: from epcas5p4.samsung.com (unknown [182.195.41.42])
+	by mailout2.samsung.com (KnoxPortal) with ESMTP id
+	20220207142320epoutp02cc5b2b0139e4d017e5c71813bfc42297~RhwZQrbp30524805248epoutp02j
+	for <dm-devel@redhat.com>; Mon,  7 Feb 2022 14:23:20 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.samsung.com
+	20220207142320epoutp02cc5b2b0139e4d017e5c71813bfc42297~RhwZQrbp30524805248epoutp02j
+Received: from epsnrtp3.localdomain (unknown [182.195.42.164]) by
+	epcas5p3.samsung.com (KnoxPortal) with ESMTP id
+	20220207142318epcas5p3b1123df79785323b248f178f11e8fe55~RhwXwSDWL2018020180epcas5p3N;
+	Mon,  7 Feb 2022 14:23:18 +0000 (GMT)
+Received: from epsmges5p1new.samsung.com (unknown [182.195.38.174]) by
+	epsnrtp3.localdomain (Postfix) with ESMTP id 4JspJw2XFbz4x9Pt;
+	Mon,  7 Feb 2022 14:23:12 +0000 (GMT)
+Received: from epcas5p3.samsung.com ( [182.195.41.41]) by
+	epsmges5p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	4E.5F.06423.05B21026; Mon,  7 Feb 2022 23:23:12 +0900 (KST)
+Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
+	epcas5p2.samsung.com (KnoxPortal) with ESMTPA id
+	20220207141958epcas5p25f1cd06726217696d13c2dfbea010565~Rhtdfm5sO3248332483epcas5p2p;
+	Mon,  7 Feb 2022 14:19:58 +0000 (GMT)
+Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
+	epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
+	20220207141958epsmtrp1221a394489b65997528cfb37ddda6c9f~RhtdecjlP0764707647epsmtrp1_;
+	Mon,  7 Feb 2022 14:19:58 +0000 (GMT)
+X-AuditID: b6c32a49-b13ff70000001917-62-62012b50a9d0
+Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
+	epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	F5.04.29871.E8A21026; Mon,  7 Feb 2022 23:19:58 +0900 (KST)
+Received: from test-zns.sa.corp.samsungelectronics.net (unknown
+	[107.110.206.5]) by epsmtip1.samsung.com (KnoxPortal) with ESMTPA id
+	20220207141954epsmtip18bd4227bed3f9bd9d383b66dee449b51~RhtZkitwJ0282702827epsmtip1W;
+	Mon,  7 Feb 2022 14:19:54 +0000 (GMT)
+From: Nitesh Shetty <nj.shetty@samsung.com>
+To: mpatocka@redhat.com
+Date: Mon,  7 Feb 2022 19:43:48 +0530
+Message-Id: <20220207141348.4235-11-nj.shetty@samsung.com>
+In-Reply-To: <20220207141348.4235-1-nj.shetty@samsung.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
-	Firefox/91.0 Thunderbird/91.4.0
-To: Demi Marie Obenour <demi@invisiblethingslab.com>,
-	LVM general discussion and development <linux-lvm@redhat.com>,
-	device-mapper development <dm-devel@redhat.com>
-References: <YgK+Avj+VURDqo7j@itl-email>
-	<9a14a7a5-a8a1-a4d6-f9fd-012d3c170f2a@gmail.com>
-	<733f87f3-5ed9-b266-b951-4526f872bad1@invisiblethingslab.com>
-From: Zdenek Kabelac <zdenek.kabelac@gmail.com>
-In-Reply-To: <733f87f3-5ed9-b266-b951-4526f872bad1@invisiblethingslab.com>
+X-Brightmail-Tracker: H4sIAAAAAAAAA01TezBcZxTvd+/u3ZVW5gapj6lks5rpiEdsw/oYtDORzE01HU07ydS0lVvu
+	YKzdzS6JdkIslVS8qXcHbTo1qEfFK8mipBhWY9XbEBZ5kAQh9WgkuuvS5r/f+Z3fOb9zzjcf
+	Hzep4Vnyg6VhjEJKS4TELk7dbRsbex9b8JXjwBSJ1CPLXFQ2nkKgrMV1HC20THNRekoOD/XN
+	7EaN8/lcpF1TYWi6ehND6p/SMVRS1oahB8XXAIrXaDG0oROhts0nBEpvHQSocdQWqRs7Oajw
+	l3s8lDDUQKCmR404Ku54iaG07wYwdCdvg0B1zwtxdPvuAAeVbSD0aK2TQHGJ6zw01/zl+/uo
+	vn5vKi12nkfFFo1xqL4/w6nq0niCuv7zJSpjuBhQt0aiCSqmuw2ncpaeEdRQdz1GJcXOE9TT
+	e6Mcqk6XxKMWmgYIKrmmFPiY+Ya4BzF0AKMQMFJ/WUCwNNBD6P2J31E/Z7GjyF7kilyEAikd
+	yngIvT70sT8eLNFfSig4T0vC9ZQPrVQKD3u6K2ThYYwgSKYM8xAy8gCJ3EnuoKRDleHSQAcp
+	E+YmcnR811kvPBsSVKOb4sgHBBEVPV1YNFiwvAqM+JB0glWDMRwDNiFvAViwhK6CXXq8BGDi
+	+gSPDVYAvBKjAzsV95eu4GyiEcDk6REuG8RhcKqnVp/h8wnSFmo2+YYCM9IcbmjrgEGDkz9w
+	oWp9dsvPlPSAyyrWm0MehLX1NwkDNibdYG1LCY91s4Y/6lq4Bmyk51c2sjisZg/szJ3Zwji5
+	H8bW5m9NBMlRIxitTuQYhoCkF6xPdWH7mMK5jprtnpZwNuUyj9UnALjWPYGxQQ6AsamxBKt6
+	D/aqX2CGRjhpAytvHmZpK5jZVYGxxrth0vMZjOWNYUPBDraGv1YWbbexgIOrqm1MwYX8YoK9
+	Vj+ALyYWualAkPfKQnmvLJT3v3URwEuBBSNXhgYySme5SMpc+O+Z/WWh1WDr+xw60QDGJxcd
+	WgHGB60A8nGhmfFbCZu0iXEA/fU3jELmpwiXMMpW4Ky/eBpuuddfpv9/0jA/kZOro5NYLHZy
+	PSIWCc2NNYFVtAkZSIcxIQwjZxQ7dRjfyDIaK3PSzmqfulcllHz8u4yvTm4fPfeahLSK/MIz
+	e7a8/PvfOkwrnG/M+WosNInHn7kltNzRXXf0PW9k+0ev6tjSX9p5sdm+/eq/j0pTPaZS1jLP
+	9NS8sfRBXEXHQY9vmyUrHz38J+ltuwtW86vmRx6/E3WO+jTabvn1a+Tn4S6TDyNOUyvrvDOV
+	b/IjNAfMJh0K2q1s5i9etutd87ybyX055r45vAccsI4szD25GinMPtt9LLu4y6s94/GoxraQ
+	mC6PuqQ1cTklLymK59o+6Y+qlDadGq8uKBKTMapASxu/5ppI79OekdV5OblRey+uD8cXLH7W
+	lOUwlPHgZJbg/thaCZ2t4t3oFXKUQbToEK5Q0v8CGEaU48cEAAA=
+X-Brightmail-Tracker: H4sIAAAAAAAAA02SfUhTexjH+Z1zdnYcTI7T2C/tWqwMMjLXy/VHZNd/qqMFRcHCoJeVB5dN
+	XZtmL9zr3Lil00xXSL6EZaU5qcy3rXSmq2Gm6WjOrKvB0hy0nNUikpa7zRH034fn8/0+zz8P
+	hQvcRCR1LCuHVWZJ5SKSR3Q8FkWvKY0FR+JNjxahrldeDmqauEiiio9zOJrtneQg/cUrXGSf
+	CkVmTzUH2b4VYGiyxY+hrjo9hhqbrBhyNdwAqGjAhiGfU4ys/hkS6S2jAJlfr0Zd5n4C1da/
+	46LilyYSdbvNOGrom8dQeaEDQ0NVPhJ1fK/F0eM3DgI1+RByf+sn0b8lc1z0/tHBpGjGPrKD
+	Kdd6uIz22jjB2J/nMi2GIpJpvZnPXBprAEznKzXJaAatOHPl8xeSeTloxJgLWg/JfHr3mmA6
+	nBe4zGy3g2RK2wxgd8R+3uY0Vn7sJKtcu+UwT9bmfEsoHMtO3R1+hqnBbKQOhFCQ3gCnP5/H
+	dYBHCehOAN+Pt4GgWAzrfzzBgxwOG+dd3GBIi8FbBV5SByiKpFfDAT8VyETQQuizdYBABqct
+	HDg/9GGhHE4nQm+BhggwQcfAduNDMsB8ehNs723kBg8sh9edvZwAh/ycf/VVEMFjagDVQ7c5
+	wUIY7K+cWliE00uhtr0aLwN01W+q6jd1DWAGsJhVqDLTM1VihTiLzYtTSTNVuVnpcUezM1vA
+	wj/ErjIBo+FjnAVgFLAASOGiCP6SYr9UwE+Tnj7DKrMPKXPlrMoCoihCJOTbdP2HBHS6NIc9
+	zrIKVvnLYlRIpBoryXceSPFQN/4aMX61uu3liQ6NZgpMG+JD8/SVvLKeIn5MjjpMQ5z06tZH
+	fxL/12z+4/atmV3//LBIzPzE5hUbPfmpb8aqm0z3WsnNldRKoXfprr+NL5IlksGteOp36YCk
+	e3T0KX01Qd63l6Dck7Q+zy+oqHa5ClNQxtlllrHd6gJad27t8FSCXSiPcuW2Z9eHuR6eUkzf
+	mS+xb7nsll0+Uvds3dXQndt7tm14m9GTPFBz+LoxJuPPUn+57ETciPC+eaK2T1zXJdl+aVVC
+	89kht3mCWmSzPv2ShHempiU7IofjZa17sNOF2Qll+2po04HmiQdzxZKo8fCSlJkkEaGSScWx
+	uFIl/R8pW8O7fgMAAA==
+X-CMS-MailID: 20220207141958epcas5p25f1cd06726217696d13c2dfbea010565
+X-Msg-Generator: CA
+X-Sendblock-Type: REQ_APPROVE
+CMS-TYPE: 105P
+DLP-Filter: Pass
+X-CFilter-Loop: Reflected
+X-CMS-RootMailID: 20220207141958epcas5p25f1cd06726217696d13c2dfbea010565
+References: <CAOSviJ0HmT9iwdHdNtuZ8vHETCosRMpR33NcYGVWOV0ki3EYgw@mail.gmail.com>
+	<20220207141348.4235-1-nj.shetty@samsung.com>
+	<CGME20220207141958epcas5p25f1cd06726217696d13c2dfbea010565@epcas5p2.samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -88,12 +138,23 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 217EUUoS012634
 X-loop: dm-devel@redhat.com
-Cc: =?UTF-8?B?RnLDqWTDqXJpYyBQaWVycmV0?= <frederic.pierret@qubes-os.org>,
-	=?UTF-8?Q?Marek_Marczykowski-G=c3=b3recki?=
-	<marmarek@invisiblethingslab.com>
-Subject: Re: [dm-devel] Thin pool performance when allocating lots of blocks
+X-Mailman-Approved-At: Tue, 08 Feb 2022 02:51:51 -0500
+Cc: djwong@kernel.org, linux-nvme@lists.infradead.org, clm@fb.com,
+	dm-devel@redhat.com, osandov@fb.com, javier@javigon.com,
+	bvanassche@acm.org, linux-scsi@vger.kernel.org, hch@lst.de,
+	roland@purestorage.com, nj.shetty@samsung.com, zach.brown@ni.com,
+	chaitanyak@nvidia.com, SelvaKumar S <selvakuma.s1@samsung.com>,
+	msnitzer@redhat.com, josef@toxicpanda.com,
+	linux-block@vger.kernel.org, dsterba@suse.com, kbusch@kernel.org,
+	Frederick.Knight@netapp.com, axboe@kernel.dk, tytso@mit.edu,
+	joshi.k@samsung.com, martin.petersen@oracle.com,
+	arnav.dawn@samsung.com, jack@suse.com,
+	linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org
+Subject: [dm-devel] [PATCH v2 10/10] dm kcopyd: use copy offload support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -107,61 +168,142 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-Dne 08. 02. 22 v 22:02 Demi Marie Obenour napsal(a):
-> On 2/8/22 15:37, Zdenek Kabelac wrote:
->> Dne 08. 02. 22 v 20:00 Demi Marie Obenour napsal(a):
->>> Are thin volumes (which start as snapshots of a blank volume) efficient
->>> for building virtual machine images?  Given the nature of this workload
->>> (writing to lots of new, possibly-small files, then copying data from
->>> them to a huge disk image), I expect that this will cause sharing to be
->>> broken many, many times, and the kernel code that breaks sharing appears
->>> to be rather heavyweight.  Furthermore, since zeroing is enabled, this
->>> might cause substantial write amplification.  Turning zeroing off is not
->>> an option for security reasons.
->>>
->>> Is there a way to determine if breaking sharing is the cause of
->>> performance problems?  If it is, are there any better solutions?
->>
->> Hi
->>
->> Usually the smaller the thin chunks size is the smaller the problem gets.
->> With current released version of thin-provisioning minimal chunk size is
->> 64KiB. So you can't use smaller value to further reduce this impact.
->>
->> Note - even if you do a lot of tiny 4KiB writes  - only the 'first' such write
->> into 64K area breaks sharing all following writes to same location no longer
->> have this penalty (also zeroing with 64K is less impactful...)
->>
->> But it's clear thin-provisioning comes with some price - so if it's not good
->> enough from time constrains some other solutions might need to be explored.
->> (i.e. caching, better hw, splitting  FS into multiple partitions with
->> 'read-only sections,....)
-> 
-> Are the code paths that break sharing as heavyweight as I was worried
-> about?  Would a hypothetical dm-thin2 that used dm-bio-prison-v2 be
-> faster?
-> 
+From: SelvaKumar S <selvakuma.s1@samsung.com>
 
-Biggest problem is the size of chunks - the smaller chunk you could use,
-the less amplification you get. On the other hand the amount of metadata 
-handling is increasing. Then there is a lot about parallelization, locking and 
-disk synchronization.
+Introduce copy_jobs to use copy-offload, if supported by underlying devices
+otherwise fall back to existing method.
 
-If you are more interested in this topic, dive into kernel code.
-Also I'd suggest to make some good benchmarking.
+run_copy_jobs() calls block layer copy offload API, if both source and
+destination request queue are same and support copy offload.
+On successful completion, destination regions copied count is made zero,
+failed regions are processed via existing method.
 
-Regards
+Signed-off-by: SelvaKumar S <selvakuma.s1@samsung.com>
+Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
+---
+ drivers/md/dm-kcopyd.c | 57 +++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 51 insertions(+), 6 deletions(-)
 
-Zdenek
+diff --git a/drivers/md/dm-kcopyd.c b/drivers/md/dm-kcopyd.c
+index 37b03ab7e5c9..64f17cc7b069 100644
+--- a/drivers/md/dm-kcopyd.c
++++ b/drivers/md/dm-kcopyd.c
+@@ -74,18 +74,20 @@ struct dm_kcopyd_client {
+ 	atomic_t nr_jobs;
+ 
+ /*
+- * We maintain four lists of jobs:
++ * We maintain five lists of jobs:
+  *
+- * i)   jobs waiting for pages
+- * ii)  jobs that have pages, and are waiting for the io to be issued.
+- * iii) jobs that don't need to do any IO and just run a callback
+- * iv) jobs that have completed.
++ * i)	jobs waiting to try copy offload
++ * ii)   jobs waiting for pages
++ * iii)  jobs that have pages, and are waiting for the io to be issued.
++ * iv) jobs that don't need to do any IO and just run a callback
++ * v) jobs that have completed.
+  *
+- * All four of these are protected by job_lock.
++ * All five of these are protected by job_lock.
+  */
+ 	spinlock_t job_lock;
+ 	struct list_head callback_jobs;
+ 	struct list_head complete_jobs;
++	struct list_head copy_jobs;
+ 	struct list_head io_jobs;
+ 	struct list_head pages_jobs;
+ };
+@@ -579,6 +581,44 @@ static int run_io_job(struct kcopyd_job *job)
+ 	return r;
+ }
+ 
++static int run_copy_job(struct kcopyd_job *job)
++{
++	int r, i, count = 0;
++	unsigned long flags = 0;
++	struct range_entry range;
++
++	struct request_queue *src_q, *dest_q;
++
++	for (i = 0; i < job->num_dests; i++) {
++		range.dst = job->dests[i].sector << SECTOR_SHIFT;
++		range.src = job->source.sector << SECTOR_SHIFT;
++		range.len = job->source.count << SECTOR_SHIFT;
++
++		src_q = bdev_get_queue(job->source.bdev);
++		dest_q = bdev_get_queue(job->dests[i].bdev);
++
++		if (src_q != dest_q && !src_q->limits.copy_offload)
++			break;
++
++		r = blkdev_issue_copy(job->source.bdev, 1, &range,
++			job->dests[i].bdev, GFP_KERNEL, flags);
++		if (r)
++			break;
++
++		job->dests[i].count = 0;
++		count++;
++	}
++
++	if (count == job->num_dests) {
++		push(&job->kc->complete_jobs, job);
++	} else {
++		push(&job->kc->pages_jobs, job);
++		r = 0;
++	}
++
++	return r;
++}
++
+ static int run_pages_job(struct kcopyd_job *job)
+ {
+ 	int r;
+@@ -659,6 +699,7 @@ static void do_work(struct work_struct *work)
+ 	spin_unlock_irq(&kc->job_lock);
+ 
+ 	blk_start_plug(&plug);
++	process_jobs(&kc->copy_jobs, kc, run_copy_job);
+ 	process_jobs(&kc->complete_jobs, kc, run_complete_job);
+ 	process_jobs(&kc->pages_jobs, kc, run_pages_job);
+ 	process_jobs(&kc->io_jobs, kc, run_io_job);
+@@ -676,6 +717,8 @@ static void dispatch_job(struct kcopyd_job *job)
+ 	atomic_inc(&kc->nr_jobs);
+ 	if (unlikely(!job->source.count))
+ 		push(&kc->callback_jobs, job);
++	else if (job->source.bdev->bd_disk == job->dests[0].bdev->bd_disk)
++		push(&kc->copy_jobs, job);
+ 	else if (job->pages == &zero_page_list)
+ 		push(&kc->io_jobs, job);
+ 	else
+@@ -916,6 +959,7 @@ struct dm_kcopyd_client *dm_kcopyd_client_create(struct dm_kcopyd_throttle *thro
+ 	spin_lock_init(&kc->job_lock);
+ 	INIT_LIST_HEAD(&kc->callback_jobs);
+ 	INIT_LIST_HEAD(&kc->complete_jobs);
++	INIT_LIST_HEAD(&kc->copy_jobs);
+ 	INIT_LIST_HEAD(&kc->io_jobs);
+ 	INIT_LIST_HEAD(&kc->pages_jobs);
+ 	kc->throttle = throttle;
+@@ -971,6 +1015,7 @@ void dm_kcopyd_client_destroy(struct dm_kcopyd_client *kc)
+ 
+ 	BUG_ON(!list_empty(&kc->callback_jobs));
+ 	BUG_ON(!list_empty(&kc->complete_jobs));
++	WARN_ON(!list_empty(&kc->copy_jobs));
+ 	BUG_ON(!list_empty(&kc->io_jobs));
+ 	BUG_ON(!list_empty(&kc->pages_jobs));
+ 	destroy_workqueue(kc->kcopyd_wq);
+-- 
+2.30.0-rc0
+
 
 --
 dm-devel mailing list
