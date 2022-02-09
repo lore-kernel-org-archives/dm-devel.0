@@ -1,137 +1,63 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1D895C433F5
-	for <dm-devel@archiver.kernel.org>; Wed,  9 Feb 2022 08:12:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3BC26C433EF
+	for <dm-devel@archiver.kernel.org>; Wed,  9 Feb 2022 08:55:41 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-619-2ScoAHk-M6yJRe93_c35xQ-1; Wed, 09 Feb 2022 03:12:18 -0500
-X-MC-Unique: 2ScoAHk-M6yJRe93_c35xQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-672-ePZ6uRkJM_al8-xZ0t_dcQ-1; Wed, 09 Feb 2022 03:55:38 -0500
+X-MC-Unique: ePZ6uRkJM_al8-xZ0t_dcQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 326401091DA1;
-	Wed,  9 Feb 2022 08:12:14 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D6FB01932480;
+	Wed,  9 Feb 2022 08:55:33 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 11D7966E02;
-	Wed,  9 Feb 2022 08:12:14 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6BD641038ABC;
+	Wed,  9 Feb 2022 08:55:32 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id D36154BB7C;
-	Wed,  9 Feb 2022 08:12:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.7])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 61ADB4BB7C;
+	Wed,  9 Feb 2022 08:55:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 2194cfUQ029258 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 8 Feb 2022 23:38:41 -0500
+	id 2198tS19020235 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 9 Feb 2022 03:55:29 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 66B7B1402401; Wed,  9 Feb 2022 04:38:41 +0000 (UTC)
+	id 983212166B13; Wed,  9 Feb 2022 08:55:28 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 61EC7142B950
-	for <dm-devel@redhat.com>; Wed,  9 Feb 2022 04:38:41 +0000 (UTC)
+	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 938F62166B14
+	for <dm-devel@redhat.com>; Wed,  9 Feb 2022 08:55:25 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 44F1B811E76
-	for <dm-devel@redhat.com>; Wed,  9 Feb 2022 04:38:41 +0000 (UTC)
-Received: from mailout2.samsung.com (mailout2.samsung.com [203.254.224.25])
-	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-458-Dm36gIXzPh-0LCMcs0sTUg-1; Tue, 08 Feb 2022 23:38:39 -0500
-X-MC-Unique: Dm36gIXzPh-0LCMcs0sTUg-1
-Received: from epcas5p3.samsung.com (unknown [182.195.41.41])
-	by mailout2.samsung.com (KnoxPortal) with ESMTP id
-	20220209043836epoutp028cfe702f5824999557bf6203c643b11e~SBEbgooNG1279912799epoutp02C
-	for <dm-devel@redhat.com>; Wed,  9 Feb 2022 04:38:36 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.samsung.com
-	20220209043836epoutp028cfe702f5824999557bf6203c643b11e~SBEbgooNG1279912799epoutp02C
-Received: from epsnrtp3.localdomain (unknown [182.195.42.164]) by
-	epcas5p1.samsung.com (KnoxPortal) with ESMTP id
-	20220209043835epcas5p1ee6c56b765d238a016403d90930d732f~SBEae6L5f0268902689epcas5p1A;
-	Wed,  9 Feb 2022 04:38:35 +0000 (GMT)
-Received: from epsmges5p1new.samsung.com (unknown [182.195.38.177]) by
-	epsnrtp3.localdomain (Postfix) with ESMTP id 4JtnFK477qz4x9Qb;
-	Wed,  9 Feb 2022 04:38:29 +0000 (GMT)
-Received: from epcas5p3.samsung.com ( [182.195.41.41]) by
-	epsmges5p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	34.EC.06423.54543026; Wed,  9 Feb 2022 13:38:29 +0900 (KST)
-Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
-	epcas5p3.samsung.com (KnoxPortal) with ESMTPA id
-	20220208184834epcas5p3a3396d81aeedc6075c2746dba6e5478c~R5BQyfGa20152701527epcas5p3q;
-	Tue,  8 Feb 2022 18:48:34 +0000 (GMT)
-Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
-	epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
-	20220208184834epsmtrp19d1025712f2309762feb9b4e5764c603~R5BQxAddT1266912669epsmtrp1P;
-	Tue,  8 Feb 2022 18:48:34 +0000 (GMT)
-X-AuditID: b6c32a49-b13ff70000001917-d5-6203454590b2
-Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
-	epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	6D.C5.29871.20BB2026; Wed,  9 Feb 2022 03:48:34 +0900 (KST)
-Received: from test-zns (unknown [107.110.206.5]) by epsmtip2.samsung.com
-	(KnoxPortal) with ESMTPA id
-	20220208184829epsmtip27e4be18b4c9e849a698142fcd717cafc~R5BMi6Xwc2722127221epsmtip2F;
-	Tue,  8 Feb 2022 18:48:29 +0000 (GMT)
-Date: Wed, 9 Feb 2022 00:13:35 +0530
-From: Nitesh Shetty <nj.shetty@samsung.com>
-To: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-Message-ID: <20220208184335.GA7698@test-zns>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4DC161066680
+	for <dm-devel@redhat.com>; Wed,  9 Feb 2022 08:55:25 +0000 (UTC)
+Received: from bombadil.infradead.org (bombadil.infradead.org
+	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-492-BAeF9jFjPMO4Dm4qF1ZD8g-1; Wed, 09 Feb 2022 03:55:23 -0500
+X-MC-Unique: BAeF9jFjPMO4Dm4qF1ZD8g-1
+Received: from [2001:4bb8:188:3efc:ea2:7599:7eeb:4b5a] (helo=localhost)
+	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+	id 1nHiL8-00GcAG-EB; Wed, 09 Feb 2022 08:28:39 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: axboe@kernel.dk, martin.petersen@oracle.com, philipp.reisner@linbit.com,
+	lars.ellenberg@linbit.com, target-devel@vger.kernel.org,
+	haris.iqbal@ionos.com, jinpu.wang@ionos.com, manoj@linux.ibm.com,
+	mrochs@linux.ibm.com, ukrishn@linux.ibm.com
+Date: Wed,  9 Feb 2022 09:28:23 +0100
+Message-Id: <20220209082828.2629273-3-hch@lst.de>
+In-Reply-To: <20220209082828.2629273-1-hch@lst.de>
+References: <20220209082828.2629273-1-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <af214223-8bb9-a1ca-6394-9c403c9becef@opensource.wdc.com>
-User-Agent: Mutt/1.9.4 (2018-02-28)
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Te1BUVRzH59x79+5CgjeU6UgaO4ulKOCu7OLBRJpCuoIkptOUldsV7iwE
-	7G776CGTgAuNCMhLHdhmZH0B8YiHDfEWcIB4JhEGynNYTOIhIgYMIAG7VP99f9/z+5zf7/x+
-	c3i4TS3Xjhcs17AqORMqIC2JkruOjs6HDuGnhYtNW1FlzzMOyu1LJNGVqXkcPakd5qCUxDQu
-	Wmj7FUedRmtUNfk9B92bi8LQcPEyhiqvp2Doh9x6DP2ZdQOg2JZ7GFocEqH65QkSpdTdB6jq
-	wW5UWdVEoIzMES6K+6OURNVjVTjKanyBoeTzXRhq1y+SqNQYBdDd/i4C5S4iNDbXRKKY+Hnu
-	W6/Rnb/70sm6SS5dpu/j0jpDL0F3tmnp4pxYkr59M4JO7c4CdEVPJEmfa63H6bTpGZJO0E2S
-	dFnMAId+OvKAoEuGErj0k+ou0t/2ZMiBIJYJZFV8Vh6gCAyWyzwEvsel70glbkKRs8gd7RPw
-	5UwY6yHwOuLv7B0cujIqAf9LJlS7YvkzarVgz8EDKoVWw/KDFGqNh4BVBoYqxUoXNROm1spl
-	LnJWs18kFO6VrCR+FhJkPJ9BKHs8v57JWgKRoM31ArDgQUoMb10cBBeAJc+GqgBw6WoyZgqm
-	AXyYnmoO/gZwObkNrCPZUYVmpArAJN06/wjAZ2Nl+GoWQW2HuQbdCs7jkdRu2LLMW7U3UxI4
-	ER9DrObjlIED05svc1cPNlEfwLqOxbUKVpQTzEyt55j0y7Ap3UisagvKG07MF6/db0s5wJqS
-	xrX2IDVtATPybnJN7XnBuO4m0qQ3wb8afzL7dnA08TuuCYgDcK51wEynAahL0pkJT9hRubTW
-	Nk4FwYGc9032Nni5+UdsVeOUNUxYMGIm3wqWXl3XDjCvwGC+Zgu8Pxtl1jTM1ceYR1SDweLy
-	fpAE7PX/e53+v3L6tRJO0FAxTZrsV2HWC55JOsKC8j0GwMkBW1ilOkzGqiVKkZz96t+VByjC
-	isHaX9p1uBT0DU651AGMB+oA5OGCzVZb45YZG6tA5pszrEohVWlDWXUdkKwsKxm3sw1QrHxG
-	uUYqErsLxW5ubmJ3VzeR4BWrFlkhY0PJGA0bwrJKVrXOYTwLu0js05c22MfOtxMHzyhSksaH
-	hMLn1fXjtyN6R6McfLTkrCf3i5RrhoifUe23d2QanXQ4aXFYG/y2xcbPH75etCOms09yYlIY
-	GXK8x1KUH/1ImR0OY/OPfIgx6We121p87pxokEW/mx99eHt76fAxa/7QRM2lmZmywLNeRrL8
-	sVOEULK/sLpoA8BG7Ccb3Burla46nyvZC9dnRzVhRwe740szw+r794WLAw3Rvd41RU+n2uL1
-	4QVzfRuFUsN7vnrd40i/tOZzF4998gt/rHVHx97TR4fFO/NEp4iP23I+AuO/2ftdKzo1NP0G
-	0vkpBPNZcsicvOQefaur7obqzZ0tRiLgeYOAUAcxol24Ss38AyemZ0TUBAAA
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFmpileLIzCtJLcpLzFFi42LZdlhJXpdpN1OSweMDXBZ7bn5mtVh9t5/N
-	YtqHn8wW7w8+ZrWY1D+D3eL32fPMFpef8FnsfTeb1eLCj0Ymi8eb/jNZ7Fk0icli5eqjTBbP
-	ly9mtOg8fYHJ4s9DQ4uj/9+yWUw6dI3RYu8tbYs9e0+yWMxf9pTdovv6DjaLfa/3MlssP/6P
-	yWJix1Umi3Oz/rBZ7HjSyGhx+N5VFovVfywsXv84yWbR2vOT3UHO4/IVb4+Jze/YPXbOusvu
-	0bzgDovH5bOlHptWdbJ5bF5S7zH5xnJGj903G9g8ms4cZfaY8ekLm0dv8zs2j52t91k9Pj69
-	xeKx7WEvu8f7fVfZAkSjuGxSUnMyy1KL9O0SuDI+3r/AUjDTtuL+4bdsDYzLDLsYOTkkBEwk
-	VjRuYOxi5OIQEtjNKHHr7CE2iISkxLK/R5ghbGGJlf+es0MUPWGUaLy3DqyIRUBFYvWCZqYu
-	Rg4ONgFtidP/OUDCIgKmEm97WllA6pkFFrFKTLi1ixEkISwQJnHo4h8wm1dAR2LZ5KOsEEMP
-	MEnMf3iADSIhKHFy5hMWEJtZQEvixr+XYAuYBaQllv8DW8Ap4Cbx9ucmsONEBZQlDmw7zjSB
-	UXAWku5ZSLpnIXQvYGRexSiZWlCcm55bbFhgmJdarlecmFtcmpeul5yfu4kRnEy0NHcwbl/1
-	Qe8QIxMH4yFGCQ5mJRFeme7/iUK8KYmVValF+fFFpTmpxYcYpTlYlMR5L3SdjBcSSE8sSc1O
-	TS1ILYLJMnFwSjUwLZzdE/fK6uqV/XN+Gskv+6bQEvv2rSafsM8xxf42sXy/dLHHl7/fmq4p
-	P/lxcPbrBycPnI9fdNKzJ6GpeH10zZEKdYvVl79J7P/QY/WFM65yXsbeUhtdu9cVnPk1D592
-	7JDNORPZ3r/qNXfotrV2p3WN0mdYLugX2tm1NC0k53Bvdq3qO86E10IWVRtPXzz6J3GiT0D1
-	Qj0haysRFcVS9tXBxn8PWskY7b34en6i7PyAAw+lZGa9UMzWf/79cF/amYnNqhMirf1uKUe9
-	LZPm9/u6wGZP85bl69Wsw47Hxr+sZphydXrBf5MTU2VdGz4xqsev3isX5JR+e8tR1lTLO/x1
-	r655Jkhd2u1+/eZLJZbijERDLeai4kQAsolVpJUDAAA=
-X-CMS-MailID: 20220208184834epcas5p3a3396d81aeedc6075c2746dba6e5478c
-X-Msg-Generator: CA
-X-Sendblock-Type: REQ_APPROVE
-CMS-TYPE: 105P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20220207141913epcas5p4d41cb549b7cca1ede5c7a66bbd110da0
-References: <CAOSviJ0HmT9iwdHdNtuZ8vHETCosRMpR33NcYGVWOV0ki3EYgw@mail.gmail.com>
-	<20220207141348.4235-1-nj.shetty@samsung.com>
-	<CGME20220207141913epcas5p4d41cb549b7cca1ede5c7a66bbd110da0@epcas5p4.samsung.com>
-	<20220207141348.4235-3-nj.shetty@samsung.com>
-	<af214223-8bb9-a1ca-6394-9c403c9becef@opensource.wdc.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+	bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -140,23 +66,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-X-Mailman-Approved-At: Wed, 09 Feb 2022 03:12:00 -0500
-Cc: djwong@kernel.org, linux-nvme@lists.infradead.org, clm@fb.com,
-	dm-devel@redhat.com, osandov@fb.com, javier@javigon.com,
-	bvanassche@acm.org, linux-scsi@vger.kernel.org,
-	nitheshshetty@gmail.com, hch@lst.de, roland@purestorage.com,
-	dsterba@suse.com, chaitanyak@nvidia.com,
-	SelvaKumar S <selvakuma.s1@samsung.com>, msnitzer@redhat.com,
-	josef@toxicpanda.com, linux-block@vger.kernel.org,
-	mpatocka@redhat.com, kbusch@kernel.org,
-	Frederick.Knight@netapp.com, axboe@kernel.dk, tytso@mit.edu,
-	joshi.k@samsung.com, martin.petersen@oracle.com,
-	arnav.dawn@samsung.com, jack@suse.com,
-	linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org
-Subject: Re: [dm-devel] [PATCH v2 02/10] block: Introduce queue limits for
- copy-offload support
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
+	linux-scsi@vger.kernel.org, drbd-dev@lists.linbit.com
+Subject: [dm-devel] [PATCH 2/7] drbd: drop REQ_OP_WRITE_SAME support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -170,238 +84,380 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed;
-	boundary="----7Im1L.vKorTl163deO4rxYDAHxkziUWsBhtki-3JrW1s26Hg=_5a767_"
-
-------7Im1L.vKorTl163deO4rxYDAHxkziUWsBhtki-3JrW1s26Hg=_5a767_
 Content-Type: text/plain; charset="us-ascii"
-Content-Disposition: inline
-
-On Tue, Feb 08, 2022 at 04:01:23PM +0900, Damien Le Moal wrote:
-> On 2/7/22 23:13, Nitesh Shetty wrote:
-> > Add device limits as sysfs entries,
-> >         - copy_offload (READ_WRITE)
-> >         - max_copy_sectors (READ_ONLY)
->
-> Why read-only ? With the name as you have it, it seems to be the soft
-> control for the max size of copy operations rather than the actual
-> device limit. So it would be better to align to other limits like max
-> sectors/max_hw_sectors and have:
-> 
-> 	max_copy_sectors (RW)
-> 	max_hw_copy_sectors (RO)
->
-
-Idea was to have minimal number of sysfs.
-We will add R/W limits in next series.
-
-> >         - max_copy_ranges_sectors (READ_ONLY)
-> >         - max_copy_nr_ranges (READ_ONLY)
-> 
-> Same for these.
-> 
-> > 
-> > copy_offload(= 0), is disabled by default. This needs to be enabled if
-> > copy-offload needs to be used.
-> 
-> How does this work ? This limit will be present for a DM device AND the
-> underlying devices of the DM target. But "offload" applies only to the
-> underlying devices, not the DM device...
-> 
-> Also, since this is not an underlying device limitation but an on/off
-> switch, this should probably be moved to a request_queue boolean field
-> or flag bit, controlled with sysfs.
-
-copy_offload was used as a flag to switch between emulation/offload in
-block layer.
-Yeah, it makes sense to use request_queue flag for the same, also will
-make dm limit calculations simple. Will add in next series.
-
-> > max_copy_sectors = 0, indicates the device doesn't support native copy.
-> > 
-> > Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
-> > Signed-off-by: SelvaKumar S <selvakuma.s1@samsung.com>
-> > Signed-off-by: Kanchan Joshi <joshi.k@samsung.com>
-> > ---
-> >  block/blk-settings.c   |  4 ++++
-> >  block/blk-sysfs.c      | 51 ++++++++++++++++++++++++++++++++++++++++++
-> >  include/linux/blkdev.h | 12 ++++++++++
-> >  3 files changed, 67 insertions(+)
-> > 
-> > diff --git a/block/blk-settings.c b/block/blk-settings.c
-> > index b880c70e22e4..818454552cf8 100644
-> > --- a/block/blk-settings.c
-> > +++ b/block/blk-settings.c
-> > @@ -57,6 +57,10 @@ void blk_set_default_limits(struct queue_limits *lim)
-> >  	lim->misaligned = 0;
-> >  	lim->zoned = BLK_ZONED_NONE;
-> >  	lim->zone_write_granularity = 0;
-> > +	lim->copy_offload = 0;
-> > +	lim->max_copy_sectors = 0;
-> > +	lim->max_copy_nr_ranges = 0;
-> > +	lim->max_copy_range_sectors = 0;
-> >  }
-> >  EXPORT_SYMBOL(blk_set_default_limits);
-> >  
-> > diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-> > index 9f32882ceb2f..dc68ae6b55c9 100644
-> > --- a/block/blk-sysfs.c
-> > +++ b/block/blk-sysfs.c
-> > @@ -171,6 +171,48 @@ static ssize_t queue_discard_granularity_show(struct request_queue *q, char *pag
-> >  	return queue_var_show(q->limits.discard_granularity, page);
-> >  }
-> >  
-> > +static ssize_t queue_copy_offload_show(struct request_queue *q, char *page)
-> > +{
-> > +	return queue_var_show(q->limits.copy_offload, page);
-> > +}
-> > +
-> > +static ssize_t queue_copy_offload_store(struct request_queue *q,
-> > +				       const char *page, size_t count)
-> > +{
-> > +	unsigned long copy_offload;
-> > +	ssize_t ret = queue_var_store(&copy_offload, page, count);
-> > +
-> > +	if (ret < 0)
-> > +		return ret;
-> > +
-> > +	if (copy_offload && q->limits.max_copy_sectors == 0)
-> > +		return -EINVAL;
-> > +
-> > +	if (copy_offload)
-> > +		q->limits.copy_offload = BLK_COPY_OFFLOAD;
-> > +	else
-> > +		q->limits.copy_offload = 0;
-> > +
-> > +	return ret;
-> > +}
-> > +
-> > +static ssize_t queue_max_copy_sectors_show(struct request_queue *q, char *page)
-> > +{
-> > +	return queue_var_show(q->limits.max_copy_sectors, page);
-> > +}
-> > +
-> > +static ssize_t queue_max_copy_range_sectors_show(struct request_queue *q,
-> > +		char *page)
-> > +{
-> > +	return queue_var_show(q->limits.max_copy_range_sectors, page);
-> > +}
-> > +
-> > +static ssize_t queue_max_copy_nr_ranges_show(struct request_queue *q,
-> > +		char *page)
-> > +{
-> > +	return queue_var_show(q->limits.max_copy_nr_ranges, page);
-> > +}
-> > +
-> >  static ssize_t queue_discard_max_hw_show(struct request_queue *q, char *page)
-> >  {
-> >  
-> > @@ -597,6 +639,11 @@ QUEUE_RO_ENTRY(queue_nr_zones, "nr_zones");
-> >  QUEUE_RO_ENTRY(queue_max_open_zones, "max_open_zones");
-> >  QUEUE_RO_ENTRY(queue_max_active_zones, "max_active_zones");
-> >  
-> > +QUEUE_RW_ENTRY(queue_copy_offload, "copy_offload");
-> > +QUEUE_RO_ENTRY(queue_max_copy_sectors, "max_copy_sectors");
-> > +QUEUE_RO_ENTRY(queue_max_copy_range_sectors, "max_copy_range_sectors");
-> > +QUEUE_RO_ENTRY(queue_max_copy_nr_ranges, "max_copy_nr_ranges");
-> > +
-> >  QUEUE_RW_ENTRY(queue_nomerges, "nomerges");
-> >  QUEUE_RW_ENTRY(queue_rq_affinity, "rq_affinity");
-> >  QUEUE_RW_ENTRY(queue_poll, "io_poll");
-> > @@ -643,6 +690,10 @@ static struct attribute *queue_attrs[] = {
-> >  	&queue_discard_max_entry.attr,
-> >  	&queue_discard_max_hw_entry.attr,
-> >  	&queue_discard_zeroes_data_entry.attr,
-> > +	&queue_copy_offload_entry.attr,
-> > +	&queue_max_copy_sectors_entry.attr,
-> > +	&queue_max_copy_range_sectors_entry.attr,
-> > +	&queue_max_copy_nr_ranges_entry.attr,
-> >  	&queue_write_same_max_entry.attr,
-> >  	&queue_write_zeroes_max_entry.attr,
-> >  	&queue_zone_append_max_entry.attr,
-> > diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> > index efed3820cbf7..f63ae50f1de3 100644
-> > --- a/include/linux/blkdev.h
-> > +++ b/include/linux/blkdev.h
-> > @@ -51,6 +51,12 @@ extern struct class block_class;
-> >  /* Doing classic polling */
-> >  #define BLK_MQ_POLL_CLASSIC -1
-> >  
-> > +/* Define copy offload options */
-> > +enum blk_copy {
-> > +	BLK_COPY_EMULATE = 0,
-> > +	BLK_COPY_OFFLOAD,
-> > +};
-> > +
-> >  /*
-> >   * Maximum number of blkcg policies allowed to be registered concurrently.
-> >   * Defined here to simplify include dependency.
-> > @@ -253,6 +259,10 @@ struct queue_limits {
-> >  	unsigned int		discard_granularity;
-> >  	unsigned int		discard_alignment;
-> >  	unsigned int		zone_write_granularity;
-> > +	unsigned int            copy_offload;
-> > +	unsigned int            max_copy_sectors;
-> > +	unsigned short          max_copy_range_sectors;
-> > +	unsigned short          max_copy_nr_ranges;
-> >  
-> >  	unsigned short		max_segments;
-> >  	unsigned short		max_integrity_segments;
-> > @@ -562,6 +572,7 @@ struct request_queue {
-> >  #define QUEUE_FLAG_RQ_ALLOC_TIME 27	/* record rq->alloc_time_ns */
-> >  #define QUEUE_FLAG_HCTX_ACTIVE	28	/* at least one blk-mq hctx is active */
-> >  #define QUEUE_FLAG_NOWAIT       29	/* device supports NOWAIT */
-> > +#define QUEUE_FLAG_COPY		30	/* supports copy offload */
-> 
-> Then what is the point of max_copy_sectors limit ? You can test support
-> by the device by looking at max_copy_sectors != 0, no ? This flag is
-> duplicated information.
-> I would rather use it for the on/off switch for the copy offload,
-> removing the copy_offload limit.
-> 
-
-Same as above
-
-> >  
-> >  #define QUEUE_FLAG_MQ_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
-> >  				 (1 << QUEUE_FLAG_SAME_COMP) |		\
-> > @@ -585,6 +596,7 @@ bool blk_queue_flag_test_and_set(unsigned int flag, struct request_queue *q);
-> >  #define blk_queue_io_stat(q)	test_bit(QUEUE_FLAG_IO_STAT, &(q)->queue_flags)
-> >  #define blk_queue_add_random(q)	test_bit(QUEUE_FLAG_ADD_RANDOM, &(q)->queue_flags)
-> >  #define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flags)
-> > +#define blk_queue_copy(q)	test_bit(QUEUE_FLAG_COPY, &(q)->queue_flags)
-> >  #define blk_queue_zone_resetall(q)	\
-> >  	test_bit(QUEUE_FLAG_ZONE_RESETALL, &(q)->queue_flags)
-> >  #define blk_queue_secure_erase(q) \
-> 
-> 
-> -- 
-> Damien Le Moal
-> Western Digital Research
-> 
-
---
-Thank you
-Nitesh
-
-------7Im1L.vKorTl163deO4rxYDAHxkziUWsBhtki-3JrW1s26Hg=_5a767_
-Content-Type: text/plain; charset="utf-8"
-
-
-------7Im1L.vKorTl163deO4rxYDAHxkziUWsBhtki-3JrW1s26Hg=_5a767_
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+
+REQ_OP_WRITE_SAME was only ever submitted by the legacy Linux zeroing
+code, which has switched to use REQ_OP_WRITE_ZEROES long ago.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+---
+ drivers/block/drbd/drbd_main.c     | 31 ++-----------
+ drivers/block/drbd/drbd_nl.c       | 72 +-----------------------------
+ drivers/block/drbd/drbd_receiver.c | 47 +++----------------
+ drivers/block/drbd/drbd_req.c      |  1 -
+ drivers/block/drbd/drbd_worker.c   |  5 ---
+ 5 files changed, 13 insertions(+), 143 deletions(-)
+
+diff --git a/drivers/block/drbd/drbd_main.c b/drivers/block/drbd/drbd_main.c
+index 6f450816c4fa6..96881d5babd9e 100644
+--- a/drivers/block/drbd/drbd_main.c
++++ b/drivers/block/drbd/drbd_main.c
+@@ -912,7 +912,7 @@ assign_p_sizes_qlim(struct drbd_device *device, struct p_sizes *p,
+ 		p->qlim->io_min = cpu_to_be32(queue_io_min(q));
+ 		p->qlim->io_opt = cpu_to_be32(queue_io_opt(q));
+ 		p->qlim->discard_enabled = blk_queue_discard(q);
+-		p->qlim->write_same_capable = !!q->limits.max_write_same_sectors;
++		p->qlim->write_same_capable = 0;
+ 	} else {
+ 		q = device->rq_queue;
+ 		p->qlim->physical_block_size = cpu_to_be32(queue_physical_block_size(q));
+@@ -1591,9 +1591,6 @@ static int _drbd_send_bio(struct drbd_peer_device *peer_device, struct bio *bio)
+ 					 ? 0 : MSG_MORE);
+ 		if (err)
+ 			return err;
+-		/* REQ_OP_WRITE_SAME has only one segment */
+-		if (bio_op(bio) == REQ_OP_WRITE_SAME)
+-			break;
+ 	}
+ 	return 0;
+ }
+@@ -1612,9 +1609,6 @@ static int _drbd_send_zc_bio(struct drbd_peer_device *peer_device, struct bio *b
+ 				      bio_iter_last(bvec, iter) ? 0 : MSG_MORE);
+ 		if (err)
+ 			return err;
+-		/* REQ_OP_WRITE_SAME has only one segment */
+-		if (bio_op(bio) == REQ_OP_WRITE_SAME)
+-			break;
+ 	}
+ 	return 0;
+ }
+@@ -1646,7 +1640,6 @@ static u32 bio_flags_to_wire(struct drbd_connection *connection,
+ 		return  (bio->bi_opf & REQ_SYNC ? DP_RW_SYNC : 0) |
+ 			(bio->bi_opf & REQ_FUA ? DP_FUA : 0) |
+ 			(bio->bi_opf & REQ_PREFLUSH ? DP_FLUSH : 0) |
+-			(bio_op(bio) == REQ_OP_WRITE_SAME ? DP_WSAME : 0) |
+ 			(bio_op(bio) == REQ_OP_DISCARD ? DP_DISCARD : 0) |
+ 			(bio_op(bio) == REQ_OP_WRITE_ZEROES ?
+ 			  ((connection->agreed_features & DRBD_FF_WZEROES) ?
+@@ -1665,7 +1658,6 @@ int drbd_send_dblock(struct drbd_peer_device *peer_device, struct drbd_request *
+ 	struct drbd_device *device = peer_device->device;
+ 	struct drbd_socket *sock;
+ 	struct p_data *p;
+-	struct p_wsame *wsame = NULL;
+ 	void *digest_out;
+ 	unsigned int dp_flags = 0;
+ 	int digest_size;
+@@ -1703,29 +1695,14 @@ int drbd_send_dblock(struct drbd_peer_device *peer_device, struct drbd_request *
+ 		err = __send_command(peer_device->connection, device->vnr, sock, cmd, sizeof(*t), NULL, 0);
+ 		goto out;
+ 	}
+-	if (dp_flags & DP_WSAME) {
+-		/* this will only work if DRBD_FF_WSAME is set AND the
+-		 * handshake agreed that all nodes and backend devices are
+-		 * WRITE_SAME capable and agree on logical_block_size */
+-		wsame = (struct p_wsame*)p;
+-		digest_out = wsame + 1;
+-		wsame->size = cpu_to_be32(req->i.size);
+-	} else
+-		digest_out = p + 1;
++	digest_out = p + 1;
+ 
+ 	/* our digest is still only over the payload.
+ 	 * TRIM does not carry any payload. */
+ 	if (digest_size)
+ 		drbd_csum_bio(peer_device->connection->integrity_tfm, req->master_bio, digest_out);
+-	if (wsame) {
+-		err =
+-		    __send_command(peer_device->connection, device->vnr, sock, P_WSAME,
+-				   sizeof(*wsame) + digest_size, NULL,
+-				   bio_iovec(req->master_bio).bv_len);
+-	} else
+-		err =
+-		    __send_command(peer_device->connection, device->vnr, sock, P_DATA,
+-				   sizeof(*p) + digest_size, NULL, req->i.size);
++	err = __send_command(peer_device->connection, device->vnr, sock, P_DATA,
++			     sizeof(*p) + digest_size, NULL, req->i.size);
+ 	if (!err) {
+ 		/* For protocol A, we have to memcpy the payload into
+ 		 * socket buffers, as we may complete right away
+diff --git a/drivers/block/drbd/drbd_nl.c b/drivers/block/drbd/drbd_nl.c
+index 44ccf8b4f4b29..02030c9c4d3b1 100644
+--- a/drivers/block/drbd/drbd_nl.c
++++ b/drivers/block/drbd/drbd_nl.c
+@@ -1265,71 +1265,6 @@ static void fixup_write_zeroes(struct drbd_device *device, struct request_queue
+ 		q->limits.max_write_zeroes_sectors = 0;
+ }
+ 
+-static void decide_on_write_same_support(struct drbd_device *device,
+-			struct request_queue *q,
+-			struct request_queue *b, struct o_qlim *o,
+-			bool disable_write_same)
+-{
+-	struct drbd_peer_device *peer_device = first_peer_device(device);
+-	struct drbd_connection *connection = peer_device->connection;
+-	bool can_do = b ? b->limits.max_write_same_sectors : true;
+-
+-	if (can_do && disable_write_same) {
+-		can_do = false;
+-		drbd_info(peer_device, "WRITE_SAME disabled by config\n");
+-	}
+-
+-	if (can_do && connection->cstate >= C_CONNECTED && !(connection->agreed_features & DRBD_FF_WSAME)) {
+-		can_do = false;
+-		drbd_info(peer_device, "peer does not support WRITE_SAME\n");
+-	}
+-
+-	if (o) {
+-		/* logical block size; queue_logical_block_size(NULL) is 512 */
+-		unsigned int peer_lbs = be32_to_cpu(o->logical_block_size);
+-		unsigned int me_lbs_b = queue_logical_block_size(b);
+-		unsigned int me_lbs = queue_logical_block_size(q);
+-
+-		if (me_lbs_b != me_lbs) {
+-			drbd_warn(device,
+-				"logical block size of local backend does not match (drbd:%u, backend:%u); was this a late attach?\n",
+-				me_lbs, me_lbs_b);
+-			/* rather disable write same than trigger some BUG_ON later in the scsi layer. */
+-			can_do = false;
+-		}
+-		if (me_lbs_b != peer_lbs) {
+-			drbd_warn(peer_device, "logical block sizes do not match (me:%u, peer:%u); this may cause problems.\n",
+-				me_lbs, peer_lbs);
+-			if (can_do) {
+-				drbd_dbg(peer_device, "logical block size mismatch: WRITE_SAME disabled.\n");
+-				can_do = false;
+-			}
+-			me_lbs = max(me_lbs, me_lbs_b);
+-			/* We cannot change the logical block size of an in-use queue.
+-			 * We can only hope that access happens to be properly aligned.
+-			 * If not, the peer will likely produce an IO error, and detach. */
+-			if (peer_lbs > me_lbs) {
+-				if (device->state.role != R_PRIMARY) {
+-					blk_queue_logical_block_size(q, peer_lbs);
+-					drbd_warn(peer_device, "logical block size set to %u\n", peer_lbs);
+-				} else {
+-					drbd_warn(peer_device,
+-						"current Primary must NOT adjust logical block size (%u -> %u); hope for the best.\n",
+-						me_lbs, peer_lbs);
+-				}
+-			}
+-		}
+-		if (can_do && !o->write_same_capable) {
+-			/* If we introduce an open-coded write-same loop on the receiving side,
+-			 * the peer would present itself as "capable". */
+-			drbd_dbg(peer_device, "WRITE_SAME disabled (peer device not capable)\n");
+-			can_do = false;
+-		}
+-	}
+-
+-	blk_queue_max_write_same_sectors(q, can_do ? DRBD_MAX_BBIO_SECTORS : 0);
+-}
+-
+ static void drbd_setup_queue_param(struct drbd_device *device, struct drbd_backing_dev *bdev,
+ 				   unsigned int max_bio_size, struct o_qlim *o)
+ {
+@@ -1339,7 +1274,6 @@ static void drbd_setup_queue_param(struct drbd_device *device, struct drbd_backi
+ 	struct request_queue *b = NULL;
+ 	struct disk_conf *dc;
+ 	bool discard_zeroes_if_aligned = true;
+-	bool disable_write_same = false;
+ 
+ 	if (bdev) {
+ 		b = bdev->backing_bdev->bd_disk->queue;
+@@ -1349,7 +1283,6 @@ static void drbd_setup_queue_param(struct drbd_device *device, struct drbd_backi
+ 		dc = rcu_dereference(device->ldev->disk_conf);
+ 		max_segments = dc->max_bio_bvecs;
+ 		discard_zeroes_if_aligned = dc->discard_zeroes_if_aligned;
+-		disable_write_same = dc->disable_write_same;
+ 		rcu_read_unlock();
+ 
+ 		blk_set_stacking_limits(&q->limits);
+@@ -1360,7 +1293,6 @@ static void drbd_setup_queue_param(struct drbd_device *device, struct drbd_backi
+ 	blk_queue_max_segments(q, max_segments ? max_segments : BLK_MAX_SEGMENTS);
+ 	blk_queue_segment_boundary(q, PAGE_SIZE-1);
+ 	decide_on_discard_support(device, q, b, discard_zeroes_if_aligned);
+-	decide_on_write_same_support(device, q, b, o, disable_write_same);
+ 
+ 	if (b) {
+ 		blk_stack_limits(&q->limits, &b->limits, 0);
+@@ -1666,8 +1598,8 @@ int drbd_adm_disk_opts(struct sk_buff *skb, struct genl_info *info)
+ 	if (write_ordering_changed(old_disk_conf, new_disk_conf))
+ 		drbd_bump_write_ordering(device->resource, NULL, WO_BDEV_FLUSH);
+ 
+-	if (old_disk_conf->discard_zeroes_if_aligned != new_disk_conf->discard_zeroes_if_aligned
+-	||  old_disk_conf->disable_write_same != new_disk_conf->disable_write_same)
++	if (old_disk_conf->discard_zeroes_if_aligned !=
++	    new_disk_conf->discard_zeroes_if_aligned)
+ 		drbd_reconsider_queue_parameters(device, device->ldev, NULL);
+ 
+ 	drbd_md_sync(device);
+diff --git a/drivers/block/drbd/drbd_receiver.c b/drivers/block/drbd/drbd_receiver.c
+index 04e3ec12d8b49..46e2ec0bd2f98 100644
+--- a/drivers/block/drbd/drbd_receiver.c
++++ b/drivers/block/drbd/drbd_receiver.c
+@@ -1604,19 +1604,7 @@ static void drbd_issue_peer_discard_or_zero_out(struct drbd_device *device, stru
+ 	drbd_endio_write_sec_final(peer_req);
+ }
+ 
+-static void drbd_issue_peer_wsame(struct drbd_device *device,
+-				  struct drbd_peer_request *peer_req)
+-{
+-	struct block_device *bdev = device->ldev->backing_bdev;
+-	sector_t s = peer_req->i.sector;
+-	sector_t nr = peer_req->i.size >> 9;
+-	if (blkdev_issue_write_same(bdev, s, nr, GFP_NOIO, peer_req->pages))
+-		peer_req->flags |= EE_WAS_ERROR;
+-	drbd_endio_write_sec_final(peer_req);
+-}
+-
+-
+-/*
++/**
+  * drbd_submit_peer_request()
+  * @device:	DRBD device.
+  * @peer_req:	peer request
+@@ -1651,7 +1639,7 @@ int drbd_submit_peer_request(struct drbd_device *device,
+ 	 * Correctness first, performance later.  Next step is to code an
+ 	 * asynchronous variant of the same.
+ 	 */
+-	if (peer_req->flags & (EE_TRIM|EE_WRITE_SAME|EE_ZEROOUT)) {
++	if (peer_req->flags & (EE_TRIM | EE_ZEROOUT)) {
+ 		/* wait for all pending IO completions, before we start
+ 		 * zeroing things out. */
+ 		conn_wait_active_ee_empty(peer_req->peer_device->connection);
+@@ -1668,10 +1656,7 @@ int drbd_submit_peer_request(struct drbd_device *device,
+ 			spin_unlock_irq(&device->resource->req_lock);
+ 		}
+ 
+-		if (peer_req->flags & (EE_TRIM|EE_ZEROOUT))
+-			drbd_issue_peer_discard_or_zero_out(device, peer_req);
+-		else /* EE_WRITE_SAME */
+-			drbd_issue_peer_wsame(device, peer_req);
++		drbd_issue_peer_discard_or_zero_out(device, peer_req);
+ 		return 0;
+ 	}
+ 
+@@ -1854,7 +1839,6 @@ read_in_block(struct drbd_peer_device *peer_device, u64 id, sector_t sector,
+ 	unsigned long *data;
+ 	struct p_trim *trim = (pi->cmd == P_TRIM) ? pi->data : NULL;
+ 	struct p_trim *zeroes = (pi->cmd == P_ZEROES) ? pi->data : NULL;
+-	struct p_trim *wsame = (pi->cmd == P_WSAME) ? pi->data : NULL;
+ 
+ 	digest_size = 0;
+ 	if (!trim && peer_device->connection->peer_integrity_tfm) {
+@@ -1869,7 +1853,7 @@ read_in_block(struct drbd_peer_device *peer_device, u64 id, sector_t sector,
+ 		data_size -= digest_size;
+ 	}
+ 
+-	/* assume request_size == data_size, but special case trim and wsame. */
++	/* assume request_size == data_size, but special case trim. */
+ 	ds = data_size;
+ 	if (trim) {
+ 		if (!expect(data_size == 0))
+@@ -1879,23 +1863,11 @@ read_in_block(struct drbd_peer_device *peer_device, u64 id, sector_t sector,
+ 		if (!expect(data_size == 0))
+ 			return NULL;
+ 		ds = be32_to_cpu(zeroes->size);
+-	} else if (wsame) {
+-		if (data_size != queue_logical_block_size(device->rq_queue)) {
+-			drbd_err(peer_device, "data size (%u) != drbd logical block size (%u)\n",
+-				data_size, queue_logical_block_size(device->rq_queue));
+-			return NULL;
+-		}
+-		if (data_size != bdev_logical_block_size(device->ldev->backing_bdev)) {
+-			drbd_err(peer_device, "data size (%u) != backend logical block size (%u)\n",
+-				data_size, bdev_logical_block_size(device->ldev->backing_bdev));
+-			return NULL;
+-		}
+-		ds = be32_to_cpu(wsame->size);
+ 	}
+ 
+ 	if (!expect(IS_ALIGNED(ds, 512)))
+ 		return NULL;
+-	if (trim || wsame || zeroes) {
++	if (trim || zeroes) {
+ 		if (!expect(ds <= (DRBD_MAX_BBIO_SECTORS << 9)))
+ 			return NULL;
+ 	} else if (!expect(ds <= DRBD_MAX_BIO_SIZE))
+@@ -1927,8 +1899,6 @@ read_in_block(struct drbd_peer_device *peer_device, u64 id, sector_t sector,
+ 		peer_req->flags |= EE_ZEROOUT;
+ 		return peer_req;
+ 	}
+-	if (wsame)
+-		peer_req->flags |= EE_WRITE_SAME;
+ 
+ 	/* receive payload size bytes into page chain */
+ 	ds = data_size;
+@@ -2427,8 +2397,6 @@ static unsigned long wire_flags_to_bio_op(u32 dpf)
+ 		return REQ_OP_WRITE_ZEROES;
+ 	if (dpf & DP_DISCARD)
+ 		return REQ_OP_DISCARD;
+-	if (dpf & DP_WSAME)
+-		return REQ_OP_WRITE_SAME;
+ 	else
+ 		return REQ_OP_WRITE;
+ }
+@@ -2695,11 +2663,11 @@ static int receive_Data(struct drbd_connection *connection, struct packet_info *
+ 		update_peer_seq(peer_device, peer_seq);
+ 		spin_lock_irq(&device->resource->req_lock);
+ 	}
+-	/* TRIM and WRITE_SAME are processed synchronously,
++	/* TRIM and is processed synchronously,
+ 	 * we wait for all pending requests, respectively wait for
+ 	 * active_ee to become empty in drbd_submit_peer_request();
+ 	 * better not add ourselves here. */
+-	if ((peer_req->flags & (EE_TRIM|EE_WRITE_SAME|EE_ZEROOUT)) == 0)
++	if ((peer_req->flags & (EE_TRIM | EE_ZEROOUT)) == 0)
+ 		list_add_tail(&peer_req->w.list, &device->active_ee);
+ 	spin_unlock_irq(&device->resource->req_lock);
+ 
+@@ -5068,7 +5036,6 @@ static struct data_cmd drbd_cmd_handler[] = {
+ 	[P_TRIM]	    = { 0, sizeof(struct p_trim), receive_Data },
+ 	[P_ZEROES]	    = { 0, sizeof(struct p_trim), receive_Data },
+ 	[P_RS_DEALLOCATED]  = { 0, sizeof(struct p_block_desc), receive_rs_deallocated },
+-	[P_WSAME]	    = { 1, sizeof(struct p_wsame), receive_Data },
+ };
+ 
+ static void drbdd(struct drbd_connection *connection)
+diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
+index c00ae8619519e..d46a3c450af26 100644
+--- a/drivers/block/drbd/drbd_req.c
++++ b/drivers/block/drbd/drbd_req.c
+@@ -36,7 +36,6 @@ static struct drbd_request *drbd_req_new(struct drbd_device *device, struct bio
+ 	req->private_bio->bi_end_io = drbd_request_endio;
+ 
+ 	req->rq_state = (bio_data_dir(bio_src) == WRITE ? RQ_WRITE : 0)
+-		      | (bio_op(bio_src) == REQ_OP_WRITE_SAME ? RQ_WSAME : 0)
+ 		      | (bio_op(bio_src) == REQ_OP_WRITE_ZEROES ? RQ_ZEROES : 0)
+ 		      | (bio_op(bio_src) == REQ_OP_DISCARD ? RQ_UNMAP : 0);
+ 	req->device = device;
+diff --git a/drivers/block/drbd/drbd_worker.c b/drivers/block/drbd/drbd_worker.c
+index a5e04b38006b6..76af6c249df37 100644
+--- a/drivers/block/drbd/drbd_worker.c
++++ b/drivers/block/drbd/drbd_worker.c
+@@ -329,11 +329,6 @@ void drbd_csum_bio(struct crypto_shash *tfm, struct bio *bio, void *digest)
+ 		src = kmap_atomic(bvec.bv_page);
+ 		crypto_shash_update(desc, src + bvec.bv_offset, bvec.bv_len);
+ 		kunmap_atomic(src);
+-
+-		/* REQ_OP_WRITE_SAME has only one segment,
+-		 * checksum the payload only once. */
+-		if (bio_op(bio) == REQ_OP_WRITE_SAME)
+-			break;
+ 	}
+ 	crypto_shash_final(desc, digest);
+ 	shash_desc_zero(desc);
+-- 
+2.30.2
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
-------7Im1L.vKorTl163deO4rxYDAHxkziUWsBhtki-3JrW1s26Hg=_5a767_--
 
