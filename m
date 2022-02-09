@@ -4,55 +4,56 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8594DC433F5
-	for <dm-devel@archiver.kernel.org>; Wed,  9 Feb 2022 09:00:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7EDDAC433EF
+	for <dm-devel@archiver.kernel.org>; Wed,  9 Feb 2022 09:00:14 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-246-ZFx_IGrhPYSlH-2yMIIBtg-1; Wed, 09 Feb 2022 04:00:04 -0500
-X-MC-Unique: ZFx_IGrhPYSlH-2yMIIBtg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-92-0d4x_CKUNj2CZWLsFdHCzg-1; Wed, 09 Feb 2022 04:00:11 -0500
+X-MC-Unique: 0d4x_CKUNj2CZWLsFdHCzg-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7830F83DD53;
-	Wed,  9 Feb 2022 09:00:00 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5E0F919253E1;
+	Wed,  9 Feb 2022 09:00:07 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 23CDC54551;
-	Wed,  9 Feb 2022 09:00:00 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3BCF67AB6E;
+	Wed,  9 Feb 2022 09:00:07 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EFB244BB7C;
-	Wed,  9 Feb 2022 08:59:59 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.2])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 0C6324BB7C;
+	Wed,  9 Feb 2022 09:00:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 2198xv25020640 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 9 Feb 2022 03:59:58 -0500
+	id 219904Xm020685 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 9 Feb 2022 04:00:05 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id C831340885AC; Wed,  9 Feb 2022 08:59:57 +0000 (UTC)
+	id DA7D876CD; Wed,  9 Feb 2022 09:00:04 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C408840885A0
-	for <dm-devel@redhat.com>; Wed,  9 Feb 2022 08:59:57 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A7D2A1C05B0A
-	for <dm-devel@redhat.com>; Wed,  9 Feb 2022 08:59:57 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id D666676CC
+	for <dm-devel@redhat.com>; Wed,  9 Feb 2022 08:59:59 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B9EB11C05B0A
+	for <dm-devel@redhat.com>; Wed,  9 Feb 2022 08:59:59 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-235-mOB55oHHMJKcQ5Ew1tnOHw-1; Wed, 09 Feb 2022 03:59:56 -0500
-X-MC-Unique: mOB55oHHMJKcQ5Ew1tnOHw-1
+	us-mta-516-9veg-F2GMlCmdEvXvYApnw-1; Wed, 09 Feb 2022 03:59:58 -0500
+X-MC-Unique: 9veg-F2GMlCmdEvXvYApnw-1
 Received: from [2001:4bb8:188:3efc:ea2:7599:7eeb:4b5a] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1nHiLM-00GcIQ-VN; Wed, 09 Feb 2022 08:28:54 +0000
+	id 1nHiLC-00GcBy-3d; Wed, 09 Feb 2022 08:28:42 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: axboe@kernel.dk, martin.petersen@oracle.com, philipp.reisner@linbit.com,
 	lars.ellenberg@linbit.com, target-devel@vger.kernel.org,
 	haris.iqbal@ionos.com, jinpu.wang@ionos.com, manoj@linux.ibm.com,
 	mrochs@linux.ibm.com, ukrishn@linux.ibm.com
-Date: Wed,  9 Feb 2022 09:28:27 +0100
-Message-Id: <20220209082828.2629273-7-hch@lst.de>
+Date: Wed,  9 Feb 2022 09:28:24 +0100
+Message-Id: <20220209082828.2629273-4-hch@lst.de>
 In-Reply-To: <20220209082828.2629273-1-hch@lst.de>
 References: <20220209082828.2629273-1-hch@lst.de>
 MIME-Version: 1.0
@@ -66,11 +67,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
 	linux-scsi@vger.kernel.org, drbd-dev@lists.linbit.com
-Subject: [dm-devel] [PATCH 6/7] dm: remove write same support
+Subject: [dm-devel] [PATCH 3/7] rnbd: drop WRITE_SAME support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -84,7 +85,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -92,322 +93,102 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-There are no more end-users of REQ_OP_WRITE_SAME left, so we can start
-deleting it.
+REQ_OP_WRITE_SAME was only ever submitted by the legacy Linux zeroing
+code, which has switched to use REQ_OP_WRITE_ZEROES long before rnbd was
+even merged.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm-core.h          |  1 -
- drivers/md/dm-crypt.c         |  1 -
- drivers/md/dm-ebs-target.c    |  1 -
- drivers/md/dm-io.c            | 22 ++--------------------
- drivers/md/dm-linear.c        |  1 -
- drivers/md/dm-mpath.c         |  1 -
- drivers/md/dm-rq.c            |  3 ---
- drivers/md/dm-stripe.c        |  4 +---
- drivers/md/dm-table.c         | 29 -----------------------------
- drivers/md/dm-zone.c          |  4 ----
- drivers/md/dm.c               | 15 ---------------
- include/linux/device-mapper.h |  6 ------
- 12 files changed, 3 insertions(+), 85 deletions(-)
+ drivers/block/rnbd/rnbd-clt.c   | 7 ++-----
+ drivers/block/rnbd/rnbd-clt.h   | 1 -
+ drivers/block/rnbd/rnbd-proto.h | 6 ------
+ drivers/block/rnbd/rnbd-srv.c   | 3 +--
+ 4 files changed, 3 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
-index 72d18c3fbf1f6..18b26882d25ac 100644
---- a/drivers/md/dm-core.h
-+++ b/drivers/md/dm-core.h
-@@ -140,7 +140,6 @@ struct mapped_device {
- #define DMF_EMULATE_ZONE_APPEND 9
+diff --git a/drivers/block/rnbd/rnbd-clt.c b/drivers/block/rnbd/rnbd-clt.c
+index c08971de369fc..dc192d2738854 100644
+--- a/drivers/block/rnbd/rnbd-clt.c
++++ b/drivers/block/rnbd/rnbd-clt.c
+@@ -82,7 +82,6 @@ static int rnbd_clt_set_dev_attr(struct rnbd_clt_dev *dev,
+ 	dev->nsectors		    = le64_to_cpu(rsp->nsectors);
+ 	dev->logical_block_size	    = le16_to_cpu(rsp->logical_block_size);
+ 	dev->physical_block_size    = le16_to_cpu(rsp->physical_block_size);
+-	dev->max_write_same_sectors = le32_to_cpu(rsp->max_write_same_sectors);
+ 	dev->max_discard_sectors    = le32_to_cpu(rsp->max_discard_sectors);
+ 	dev->discard_granularity    = le32_to_cpu(rsp->discard_granularity);
+ 	dev->discard_alignment	    = le32_to_cpu(rsp->discard_alignment);
+@@ -1359,8 +1358,6 @@ static void setup_request_queue(struct rnbd_clt_dev *dev)
+ 	blk_queue_logical_block_size(dev->queue, dev->logical_block_size);
+ 	blk_queue_physical_block_size(dev->queue, dev->physical_block_size);
+ 	blk_queue_max_hw_sectors(dev->queue, dev->max_hw_sectors);
+-	blk_queue_max_write_same_sectors(dev->queue,
+-					 dev->max_write_same_sectors);
  
- void disable_discard(struct mapped_device *md);
--void disable_write_same(struct mapped_device *md);
- void disable_write_zeroes(struct mapped_device *md);
- 
- static inline sector_t dm_get_size(struct mapped_device *md)
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index a5006cb6ee8ad..e0e846a35947f 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1996,7 +1996,6 @@ static bool kcryptd_crypt_write_inline(struct crypt_config *cc,
- 	 */
- 	switch (bio_op(ctx->bio_in)) {
- 	case REQ_OP_WRITE:
--	case REQ_OP_WRITE_SAME:
- 	case REQ_OP_WRITE_ZEROES:
- 		return true;
- 	default:
-diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
-index 7ce5d509b9403..0221fa63f888f 100644
---- a/drivers/md/dm-ebs-target.c
-+++ b/drivers/md/dm-ebs-target.c
-@@ -335,7 +335,6 @@ static int ebs_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	ti->num_flush_bios = 1;
- 	ti->num_discard_bios = 1;
- 	ti->num_secure_erase_bios = 0;
--	ti->num_write_same_bios = 0;
- 	ti->num_write_zeroes_bios = 0;
- 	return 0;
- bad:
-diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-index 23e038f8dc845..0969aa39655a4 100644
---- a/drivers/md/dm-io.c
-+++ b/drivers/md/dm-io.c
-@@ -304,7 +304,6 @@ static void do_region(int op, int op_flags, unsigned region,
- 	unsigned num_bvecs;
- 	sector_t remaining = where->count;
- 	struct request_queue *q = bdev_get_queue(where->bdev);
--	unsigned short logical_block_size = queue_logical_block_size(q);
- 	sector_t num_sectors;
- 	unsigned int special_cmd_max_sectors;
- 
-@@ -315,10 +314,8 @@ static void do_region(int op, int op_flags, unsigned region,
- 		special_cmd_max_sectors = q->limits.max_discard_sectors;
- 	else if (op == REQ_OP_WRITE_ZEROES)
- 		special_cmd_max_sectors = q->limits.max_write_zeroes_sectors;
--	else if (op == REQ_OP_WRITE_SAME)
--		special_cmd_max_sectors = q->limits.max_write_same_sectors;
--	if ((op == REQ_OP_DISCARD || op == REQ_OP_WRITE_ZEROES ||
--	     op == REQ_OP_WRITE_SAME) && special_cmd_max_sectors == 0) {
-+	if ((op == REQ_OP_DISCARD || op == REQ_OP_WRITE_ZEROES) &&
-+	    special_cmd_max_sectors == 0) {
- 		atomic_inc(&io->count);
- 		dec_count(io, region, BLK_STS_NOTSUPP);
- 		return;
-@@ -337,9 +334,6 @@ static void do_region(int op, int op_flags, unsigned region,
- 		case REQ_OP_WRITE_ZEROES:
- 			num_bvecs = 0;
- 			break;
--		case REQ_OP_WRITE_SAME:
--			num_bvecs = 1;
--			break;
- 		default:
- 			num_bvecs = bio_max_segs(dm_sector_div_up(remaining,
- 						(PAGE_SIZE >> SECTOR_SHIFT)));
-@@ -355,18 +349,6 @@ static void do_region(int op, int op_flags, unsigned region,
- 			num_sectors = min_t(sector_t, special_cmd_max_sectors, remaining);
- 			bio->bi_iter.bi_size = num_sectors << SECTOR_SHIFT;
- 			remaining -= num_sectors;
--		} else if (op == REQ_OP_WRITE_SAME) {
--			/*
--			 * WRITE SAME only uses a single page.
--			 */
--			dp->get_page(dp, &page, &len, &offset);
--			bio_add_page(bio, page, logical_block_size, offset);
--			num_sectors = min_t(sector_t, special_cmd_max_sectors, remaining);
--			bio->bi_iter.bi_size = num_sectors << SECTOR_SHIFT;
--
--			offset = 0;
--			remaining -= num_sectors;
--			dp->next_page(dp);
- 		} else while (remaining) {
- 			/*
- 			 * Try and add as many pages as possible.
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 1b97a11d71517..76b486e4d2be1 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -60,7 +60,6 @@ static int linear_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	ti->num_flush_bios = 1;
- 	ti->num_discard_bios = 1;
- 	ti->num_secure_erase_bios = 1;
--	ti->num_write_same_bios = 1;
- 	ti->num_write_zeroes_bios = 1;
- 	ti->private = lc;
- 	return 0;
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index f4719b65e5e33..9ab971834a535 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1252,7 +1252,6 @@ static int multipath_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 
- 	ti->num_flush_bios = 1;
- 	ti->num_discard_bios = 1;
--	ti->num_write_same_bios = 1;
- 	ti->num_write_zeroes_bios = 1;
- 	if (m->queue_mode == DM_TYPE_BIO_BASED)
- 		ti->per_io_data_size = multipath_per_bio_data_size();
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 579ab6183d4d8..3907950a0ddcc 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -217,9 +217,6 @@ static void dm_done(struct request *clone, blk_status_t error, bool mapped)
- 		if (req_op(clone) == REQ_OP_DISCARD &&
- 		    !clone->q->limits.max_discard_sectors)
- 			disable_discard(tio->md);
--		else if (req_op(clone) == REQ_OP_WRITE_SAME &&
--			 !clone->q->limits.max_write_same_sectors)
--			disable_write_same(tio->md);
- 		else if (req_op(clone) == REQ_OP_WRITE_ZEROES &&
- 			 !clone->q->limits.max_write_zeroes_sectors)
- 			disable_write_zeroes(tio->md);
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index e566115ec0bb8..c81d331d1afe9 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -157,7 +157,6 @@ static int stripe_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	ti->num_flush_bios = stripes;
- 	ti->num_discard_bios = stripes;
- 	ti->num_secure_erase_bios = stripes;
--	ti->num_write_same_bios = stripes;
- 	ti->num_write_zeroes_bios = stripes;
- 
- 	sc->chunk_size = chunk_size;
-@@ -284,8 +283,7 @@ static int stripe_map(struct dm_target *ti, struct bio *bio)
- 	}
- 	if (unlikely(bio_op(bio) == REQ_OP_DISCARD) ||
- 	    unlikely(bio_op(bio) == REQ_OP_SECURE_ERASE) ||
--	    unlikely(bio_op(bio) == REQ_OP_WRITE_ZEROES) ||
--	    unlikely(bio_op(bio) == REQ_OP_WRITE_SAME)) {
-+	    unlikely(bio_op(bio) == REQ_OP_WRITE_ZEROES)) {
- 		target_bio_nr = dm_bio_get_target_bio_nr(bio);
- 		BUG_ON(target_bio_nr >= sc->stripes);
- 		return stripe_map_range(sc, bio, target_bio_nr);
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index e43096cfe9e22..88ab986379342 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1822,33 +1822,6 @@ static int device_is_not_random(struct dm_target *ti, struct dm_dev *dev,
- 	return !blk_queue_add_random(q);
- }
- 
--static int device_not_write_same_capable(struct dm_target *ti, struct dm_dev *dev,
--					 sector_t start, sector_t len, void *data)
--{
--	struct request_queue *q = bdev_get_queue(dev->bdev);
--
--	return !q->limits.max_write_same_sectors;
--}
--
--static bool dm_table_supports_write_same(struct dm_table *t)
--{
--	struct dm_target *ti;
--	unsigned i;
--
--	for (i = 0; i < dm_table_get_num_targets(t); i++) {
--		ti = dm_table_get_target(t, i);
--
--		if (!ti->num_write_same_bios)
--			return false;
--
--		if (!ti->type->iterate_devices ||
--		    ti->type->iterate_devices(ti, device_not_write_same_capable, NULL))
--			return false;
--	}
--
--	return true;
--}
--
- static int device_not_write_zeroes_capable(struct dm_target *ti, struct dm_dev *dev,
- 					   sector_t start, sector_t len, void *data)
- {
-@@ -2027,8 +2000,6 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 	else
- 		blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
- 
--	if (!dm_table_supports_write_same(t))
--		q->limits.max_write_same_sectors = 0;
- 	if (!dm_table_supports_write_zeroes(t))
- 		q->limits.max_write_zeroes_sectors = 0;
- 
-diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-index 6d82a34438c85..c1ca9be4b79e9 100644
---- a/drivers/md/dm-zone.c
-+++ b/drivers/md/dm-zone.c
-@@ -130,7 +130,6 @@ bool dm_is_zone_write(struct mapped_device *md, struct bio *bio)
- 
- 	switch (bio_op(bio)) {
- 	case REQ_OP_WRITE_ZEROES:
--	case REQ_OP_WRITE_SAME:
- 	case REQ_OP_WRITE:
- 		return !op_is_flush(bio->bi_opf) && bio_sectors(bio);
- 	default:
-@@ -390,7 +389,6 @@ static bool dm_zone_map_bio_begin(struct mapped_device *md,
- 	case REQ_OP_ZONE_FINISH:
- 		return true;
- 	case REQ_OP_WRITE_ZEROES:
--	case REQ_OP_WRITE_SAME:
- 	case REQ_OP_WRITE:
- 		/* Writes must be aligned to the zone write pointer */
- 		if ((clone->bi_iter.bi_sector & (zsectors - 1)) != zwp_offset)
-@@ -446,7 +444,6 @@ static blk_status_t dm_zone_map_bio_end(struct mapped_device *md,
- 			   blk_queue_zone_sectors(md->queue));
- 		return BLK_STS_OK;
- 	case REQ_OP_WRITE_ZEROES:
--	case REQ_OP_WRITE_SAME:
- 	case REQ_OP_WRITE:
- 		WRITE_ONCE(md->zwp_offset[zno], zwp_offset + nr_sectors);
- 		return BLK_STS_OK;
-@@ -503,7 +500,6 @@ static bool dm_need_zone_wp_tracking(struct bio *orig_bio)
- 		return false;
- 	switch (bio_op(orig_bio)) {
- 	case REQ_OP_WRITE_ZEROES:
--	case REQ_OP_WRITE_SAME:
- 	case REQ_OP_WRITE:
- 	case REQ_OP_ZONE_RESET:
- 	case REQ_OP_ZONE_FINISH:
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index ab9cc91931f99..028771f77aa04 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -856,14 +856,6 @@ void disable_discard(struct mapped_device *md)
- 	blk_queue_flag_clear(QUEUE_FLAG_DISCARD, md->queue);
- }
- 
--void disable_write_same(struct mapped_device *md)
--{
--	struct queue_limits *limits = dm_get_queue_limits(md);
--
--	/* device doesn't really support WRITE SAME, disable it */
--	limits->max_write_same_sectors = 0;
--}
--
- void disable_write_zeroes(struct mapped_device *md)
- {
- 	struct queue_limits *limits = dm_get_queue_limits(md);
-@@ -890,9 +882,6 @@ static void clone_endio(struct bio *bio)
- 		if (bio_op(bio) == REQ_OP_DISCARD &&
- 		    !q->limits.max_discard_sectors)
- 			disable_discard(md);
--		else if (bio_op(bio) == REQ_OP_WRITE_SAME &&
--			 !q->limits.max_write_same_sectors)
--			disable_write_same(md);
- 		else if (bio_op(bio) == REQ_OP_WRITE_ZEROES &&
- 			 !q->limits.max_write_zeroes_sectors)
- 			disable_write_zeroes(md);
-@@ -1320,7 +1309,6 @@ static bool is_abnormal_io(struct bio *bio)
- 	switch (bio_op(bio)) {
- 	case REQ_OP_DISCARD:
- 	case REQ_OP_SECURE_ERASE:
--	case REQ_OP_WRITE_SAME:
- 	case REQ_OP_WRITE_ZEROES:
- 		r = true;
- 		break;
-@@ -1342,9 +1330,6 @@ static bool __process_abnormal_io(struct clone_info *ci, struct dm_target *ti,
- 	case REQ_OP_SECURE_ERASE:
- 		num_bios = ti->num_secure_erase_bios;
- 		break;
--	case REQ_OP_WRITE_SAME:
--		num_bios = ti->num_write_same_bios;
--		break;
- 	case REQ_OP_WRITE_ZEROES:
- 		num_bios = ti->num_write_zeroes_bios;
- 		break;
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index b26fecf6c8e87..721db99f4f630 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -316,12 +316,6 @@ struct dm_target {
- 	 */
- 	unsigned num_secure_erase_bios;
- 
--	/*
--	 * The number of WRITE SAME bios that will be submitted to the target.
--	 * The bio number can be accessed with dm_bio_get_target_bio_nr.
--	 */
--	unsigned num_write_same_bios;
--
  	/*
- 	 * The number of WRITE ZEROES bios that will be submitted to the target.
- 	 * The bio number can be accessed with dm_bio_get_target_bio_nr.
+ 	 * we don't support discards to "discontiguous" segments
+@@ -1610,10 +1607,10 @@ struct rnbd_clt_dev *rnbd_clt_map_device(const char *sessname,
+ 	}
+ 
+ 	rnbd_clt_info(dev,
+-		       "map_device: Device mapped as %s (nsectors: %zu, logical_block_size: %d, physical_block_size: %d, max_write_same_sectors: %d, max_discard_sectors: %d, discard_granularity: %d, discard_alignment: %d, secure_discard: %d, max_segments: %d, max_hw_sectors: %d, rotational: %d, wc: %d, fua: %d)\n",
++		       "map_device: Device mapped as %s (nsectors: %zu, logical_block_size: %d, physical_block_size: %d, max_discard_sectors: %d, discard_granularity: %d, discard_alignment: %d, secure_discard: %d, max_segments: %d, max_hw_sectors: %d, rotational: %d, wc: %d, fua: %d)\n",
+ 		       dev->gd->disk_name, dev->nsectors,
+ 		       dev->logical_block_size, dev->physical_block_size,
+-		       dev->max_write_same_sectors, dev->max_discard_sectors,
++		       dev->max_discard_sectors,
+ 		       dev->discard_granularity, dev->discard_alignment,
+ 		       dev->secure_discard, dev->max_segments,
+ 		       dev->max_hw_sectors, dev->rotational, dev->wc, dev->fua);
+diff --git a/drivers/block/rnbd/rnbd-clt.h b/drivers/block/rnbd/rnbd-clt.h
+index 0c2cae7f39b9f..6946ba23d62e5 100644
+--- a/drivers/block/rnbd/rnbd-clt.h
++++ b/drivers/block/rnbd/rnbd-clt.h
+@@ -122,7 +122,6 @@ struct rnbd_clt_dev {
+ 	bool			wc;
+ 	bool			fua;
+ 	u32			max_hw_sectors;
+-	u32			max_write_same_sectors;
+ 	u32			max_discard_sectors;
+ 	u32			discard_granularity;
+ 	u32			discard_alignment;
+diff --git a/drivers/block/rnbd/rnbd-proto.h b/drivers/block/rnbd/rnbd-proto.h
+index de5d5a8df81d7..3eb8b34bd1886 100644
+--- a/drivers/block/rnbd/rnbd-proto.h
++++ b/drivers/block/rnbd/rnbd-proto.h
+@@ -249,9 +249,6 @@ static inline u32 rnbd_to_bio_flags(u32 rnbd_opf)
+ 	case RNBD_OP_SECURE_ERASE:
+ 		bio_opf = REQ_OP_SECURE_ERASE;
+ 		break;
+-	case RNBD_OP_WRITE_SAME:
+-		bio_opf = REQ_OP_WRITE_SAME;
+-		break;
+ 	default:
+ 		WARN(1, "Unknown RNBD type: %d (flags %d)\n",
+ 		     rnbd_op(rnbd_opf), rnbd_opf);
+@@ -284,9 +281,6 @@ static inline u32 rq_to_rnbd_flags(struct request *rq)
+ 	case REQ_OP_SECURE_ERASE:
+ 		rnbd_opf = RNBD_OP_SECURE_ERASE;
+ 		break;
+-	case REQ_OP_WRITE_SAME:
+-		rnbd_opf = RNBD_OP_WRITE_SAME;
+-		break;
+ 	case REQ_OP_FLUSH:
+ 		rnbd_opf = RNBD_OP_FLUSH;
+ 		break;
+diff --git a/drivers/block/rnbd/rnbd-srv.c b/drivers/block/rnbd/rnbd-srv.c
+index 132e950685d59..0e6b5687f8321 100644
+--- a/drivers/block/rnbd/rnbd-srv.c
++++ b/drivers/block/rnbd/rnbd-srv.c
+@@ -548,8 +548,7 @@ static void rnbd_srv_fill_msg_open_rsp(struct rnbd_msg_open_rsp *rsp,
+ 		cpu_to_le16(rnbd_dev_get_max_segs(rnbd_dev));
+ 	rsp->max_hw_sectors =
+ 		cpu_to_le32(rnbd_dev_get_max_hw_sects(rnbd_dev));
+-	rsp->max_write_same_sectors =
+-		cpu_to_le32(bdev_write_same(rnbd_dev->bdev));
++	rsp->max_write_same_sectors = 0;
+ 	rsp->max_discard_sectors =
+ 		cpu_to_le32(rnbd_dev_get_max_discard_sects(rnbd_dev));
+ 	rsp->discard_granularity =
 -- 
 2.30.2
 
