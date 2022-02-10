@@ -1,59 +1,68 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D65F7C433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 10 Feb 2022 05:54:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9D167C433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 10 Feb 2022 07:10:11 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-31-SZ5eY8VlOsOxogdwEphEbA-1; Thu, 10 Feb 2022 00:54:27 -0500
-X-MC-Unique: SZ5eY8VlOsOxogdwEphEbA-1
+ us-mta-660-J6TPMO_8MnGAEva3B8BcNQ-1; Thu, 10 Feb 2022 02:10:06 -0500
+X-MC-Unique: J6TPMO_8MnGAEva3B8BcNQ-1
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 82AFD100C660;
-	Thu, 10 Feb 2022 05:54:20 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0AC0D5E27A;
-	Thu, 10 Feb 2022 05:54:20 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 037E2101F003;
+	Thu, 10 Feb 2022 07:10:01 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C2F5E5ED33;
+	Thu, 10 Feb 2022 07:09:58 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 203BC1809CB8;
-	Thu, 10 Feb 2022 05:54:14 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.10])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 383104BB7C;
+	Thu, 10 Feb 2022 07:09:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.6])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21A5pv49021751 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 10 Feb 2022 00:51:57 -0500
+	id 21A79l8Z027920 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 10 Feb 2022 02:09:47 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4EDE3401DBE; Thu, 10 Feb 2022 05:51:57 +0000 (UTC)
+	id 994EE2166B1C; Thu, 10 Feb 2022 07:09:47 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4B404401470
-	for <dm-devel@redhat.com>; Thu, 10 Feb 2022 05:51:57 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 93FF52166B25
+	for <dm-devel@redhat.com>; Thu, 10 Feb 2022 07:09:44 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
 	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 363BF1066681
-	for <dm-devel@redhat.com>; Thu, 10 Feb 2022 05:51:57 +0000 (UTC)
-Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6E64F3C01B91
+	for <dm-devel@redhat.com>; Thu, 10 Feb 2022 07:09:44 +0000 (UTC)
+Received: from mga06.intel.com (mga06.intel.com [134.134.136.31]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-593-Qm1mPZxdMCG-Lk9QVo_gSg-1; Thu, 10 Feb 2022 00:51:55 -0500
-X-MC-Unique: Qm1mPZxdMCG-Lk9QVo_gSg-1
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 6A40F68B05; Thu, 10 Feb 2022 06:51:51 +0100 (CET)
-Date: Thu, 10 Feb 2022 06:51:51 +0100
-From: Christoph Hellwig <hch@lst.de>
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Message-ID: <20220210055151.GA3491@lst.de>
-References: <20220209082828.2629273-1-hch@lst.de>
-	<yq1wni3sz4k.fsf@ca-mkp.ca.oracle.com>
+	us-mta-385-6eG5zDbwPGyTA0yxIfm7Vg-1; Thu, 10 Feb 2022 02:09:40 -0500
+X-MC-Unique: 6eG5zDbwPGyTA0yxIfm7Vg-1
+X-IronPort-AV: E=McAfee;i="6200,9189,10253"; a="310166978"
+X-IronPort-AV: E=Sophos;i="5.88,358,1635231600"; d="scan'208";a="310166978"
+Received: from orsmga003.jf.intel.com ([10.7.209.27])
+	by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+	09 Feb 2022 23:09:38 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.88,358,1635231600"; d="scan'208";a="482643883"
+Received: from lkp-server01.sh.intel.com (HELO d95dc2dabeb1) ([10.239.97.150])
+	by orsmga003.jf.intel.com with ESMTP; 09 Feb 2022 23:09:31 -0800
+Received: from kbuild by d95dc2dabeb1 with local (Exim 4.92)
+	(envelope-from <lkp@intel.com>)
+	id 1nI3a7-0002rA-1q; Thu, 10 Feb 2022 07:09:31 +0000
+Date: Thu, 10 Feb 2022 15:08:52 +0800
+From: kernel test robot <lkp@intel.com>
+To: Nitesh Shetty <nj.shetty@samsung.com>, mpatocka@redhat.com
+Message-ID: <202202101447.DEcXWmHU-lkp@intel.com>
+References: <20220207141348.4235-7-nj.shetty@samsung.com>
 MIME-Version: 1.0
-In-Reply-To: <yq1wni3sz4k.fsf@ca-mkp.ca.oracle.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+In-Reply-To: <20220207141348.4235-7-nj.shetty@samsung.com>
+User-Agent: Mutt/1.10.1 (2018-07-13)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -62,15 +71,21 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 X-loop: dm-devel@redhat.com
-Cc: axboe@kernel.dk, manoj@linux.ibm.com, linux-scsi@vger.kernel.org,
-	philipp.reisner@linbit.com, linux-block@vger.kernel.org,
-	dm-devel@redhat.com, target-devel@vger.kernel.org,
-	haris.iqbal@ionos.com, ukrishn@linux.ibm.com,
-	lars.ellenberg@linbit.com, drbd-dev@lists.linbit.com,
-	jinpu.wang@ionos.com, Christoph Hellwig <hch@lst.de>, mrochs@linux.ibm.com
-Subject: Re: [dm-devel] remove REQ_OP_WRITE_SAME v2
+Cc: djwong@kernel.org, linux-nvme@lists.infradead.org, clm@fb.com,
+	dm-devel@redhat.com, osandov@fb.com, javier@javigon.com,
+	bvanassche@acm.org, linux-scsi@vger.kernel.org, hch@lst.de,
+	roland@purestorage.com, nj.shetty@samsung.com, zach.brown@ni.com,
+	chaitanyak@nvidia.com, SelvaKumar S <selvakuma.s1@samsung.com>,
+	msnitzer@redhat.com, josef@toxicpanda.com,
+	linux-block@vger.kernel.org, dsterba@suse.com, kbusch@kernel.org,
+	tytso@mit.edu, Frederick.Knight@netapp.com, axboe@kernel.dk,
+	kbuild-all@lists.01.org, joshi.k@samsung.com,
+	martin.petersen@oracle.com, arnav.dawn@samsung.com,
+	jack@suse.com, linux-fsdevel@vger.kernel.org,
+	lsf-pc@lists.linux-foundation.org
+Subject: Re: [dm-devel] [PATCH v2 06/10] nvme: add copy support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -93,24 +108,79 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Feb 09, 2022 at 01:00:26PM -0500, Martin K. Petersen wrote:
-> 
-> Christoph,
-> 
-> > Now that we are using REQ_OP_WRITE_ZEROES for all zeroing needs in the
-> > kernel there is very little use left for REQ_OP_WRITE_SAME.  We only
-> > have two callers left, and both just export optional protocol features
-> > to remote systems: DRBD and the target code.
-> 
-> No particular objections from me. I had a half-baked series to do the
-> same thing.
-> 
-> One thing I would like is to either pull this series through SCSI or do
-> the block pieces in a post merge branch because I'm about to post my
-> discard/zeroing rework and that's going to clash with your changes.
+Hi Nitesh,
 
-I'd be fine with taking this through the SCSI tree.  Or we can wait
-another merge window to make your life easier.
+Thank you for the patch! Perhaps something to improve:
+
+[auto build test WARNING on axboe-block/for-next]
+[also build test WARNING on linus/master v5.17-rc3 next-20220209]
+[cannot apply to device-mapper-dm/for-next]
+[If your patch is applied to the wrong git tree, kindly drop us a note.
+And when submitting patch, we suggest to use '--base' as documented in
+https://git-scm.com/docs/git-format-patch]
+
+url:    https://github.com/0day-ci/linux/commits/Nitesh-Shetty/block-make-bio_map_kern-non-static/20220207-231407
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/axboe/linux-block.git for-next
+config: arm64-randconfig-s032-20220207 (https://download.01.org/0day-ci/archive/20220210/202202101447.DEcXWmHU-lkp@intel.com/config)
+compiler: aarch64-linux-gcc (GCC) 11.2.0
+reproduce:
+        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # apt-get install sparse
+        # sparse version: v0.6.4-dirty
+        # https://github.com/0day-ci/linux/commit/22cbc1d3df11aaadd02b27ce5dcb702f9a8f4272
+        git remote add linux-review https://github.com/0day-ci/linux
+        git fetch --no-tags linux-review Nitesh-Shetty/block-make-bio_map_kern-non-static/20220207-231407
+        git checkout 22cbc1d3df11aaadd02b27ce5dcb702f9a8f4272
+        # save the config file to linux build tree
+        mkdir build_dir
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-11.2.0 make.cross C=1 CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__' O=build_dir ARCH=arm64 SHELL=/bin/bash drivers/nvme/host/ drivers/nvme/target/
+
+If you fix the issue, kindly add following tag as appropriate
+Reported-by: kernel test robot <lkp@intel.com>
+
+
+sparse warnings: (new ones prefixed by >>)
+>> drivers/nvme/host/core.c:1793:42: sparse: sparse: cast to restricted __le64
+   drivers/nvme/host/core.c:1793:42: sparse: sparse: cast from restricted __le32
+>> drivers/nvme/host/core.c:1795:48: sparse: sparse: cast to restricted __le32
+>> drivers/nvme/host/core.c:1795:48: sparse: sparse: cast from restricted __le16
+>> drivers/nvme/host/core.c:903:26: sparse: sparse: incorrect type in assignment (different base types) @@     expected restricted __le16 [usertype] dspec @@     got restricted __le32 [usertype] @@
+   drivers/nvme/host/core.c:903:26: sparse:     expected restricted __le16 [usertype] dspec
+   drivers/nvme/host/core.c:903:26: sparse:     got restricted __le32 [usertype]
+
+vim +1793 drivers/nvme/host/core.c
+
+  1774	
+  1775	static void nvme_config_copy(struct gendisk *disk, struct nvme_ns *ns,
+  1776					       struct nvme_id_ns *id)
+  1777	{
+  1778		struct nvme_ctrl *ctrl = ns->ctrl;
+  1779		struct request_queue *queue = disk->queue;
+  1780	
+  1781		if (!(ctrl->oncs & NVME_CTRL_ONCS_COPY)) {
+  1782			queue->limits.copy_offload = 0;
+  1783			queue->limits.max_copy_sectors = 0;
+  1784			queue->limits.max_copy_range_sectors = 0;
+  1785			queue->limits.max_copy_nr_ranges = 0;
+  1786			blk_queue_flag_clear(QUEUE_FLAG_COPY, queue);
+  1787			return;
+  1788		}
+  1789	
+  1790		/* setting copy limits */
+  1791		blk_queue_flag_test_and_set(QUEUE_FLAG_COPY, queue);
+  1792		queue->limits.copy_offload = 0;
+> 1793		queue->limits.max_copy_sectors = le64_to_cpu(id->mcl) *
+  1794			(1 << (ns->lba_shift - 9));
+> 1795		queue->limits.max_copy_range_sectors = le32_to_cpu(id->mssrl) *
+  1796			(1 << (ns->lba_shift - 9));
+  1797		queue->limits.max_copy_nr_ranges = id->msrc + 1;
+  1798	}
+  1799	
+
+---
+0-DAY CI Kernel Test Service, Intel Corporation
+https://lists.01.org/hyperkitty/list/kbuild-all@lists.01.org
 
 --
 dm-devel mailing list
