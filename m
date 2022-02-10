@@ -4,145 +4,66 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9D641C433F5
-	for <dm-devel@archiver.kernel.org>; Thu, 10 Feb 2022 20:26:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DF925C433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 10 Feb 2022 21:02:38 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1644526957;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=LBz7xp9Xg46//lW3zBVBoyFJhPfSoXtem+Lp7Za6suI=;
+	b=NcufdtbluEa38T8GAc16UgLRbp6XsxzsJjRggI4WNFsy0k6rlSDVKzl8dpAFOxI5QPIncl
+	FuCRwen2DrT/sx7XaKxJ+pVR4RNfzyGQi19f50yuQGcWA4nc0OHtHfu0MErsgUeCsMcN+s
+	KnlOWICOs8tDqZCf8IhPGdiV5GSAMRo=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-232-Y3GO9ix3OEK6ODv7MXWAxA-1; Thu, 10 Feb 2022 15:26:45 -0500
-X-MC-Unique: Y3GO9ix3OEK6ODv7MXWAxA-1
+ us-mta-516-K57mSViGOoWrooruWpxmGw-1; Thu, 10 Feb 2022 16:02:34 -0500
+X-MC-Unique: K57mSViGOoWrooruWpxmGw-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 4A9481800D50;
-	Thu, 10 Feb 2022 20:26:41 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id F2EA26AB90;
-	Thu, 10 Feb 2022 20:26:40 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 181BE1091DA0;
+	Thu, 10 Feb 2022 21:02:29 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6A8146ABB0;
+	Thu, 10 Feb 2022 21:02:27 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5BE551809CB9;
-	Thu, 10 Feb 2022 20:26:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.10])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 30FA54BB7C;
+	Thu, 10 Feb 2022 21:02:23 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com
+	[10.5.11.12])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21AKMncS005802 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 10 Feb 2022 15:22:49 -0500
+	id 21AL2LZu007842 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 10 Feb 2022 16:02:21 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id EBA7D401E95; Thu, 10 Feb 2022 20:22:48 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id E6FD1401E9F
-	for <dm-devel@redhat.com>; Thu, 10 Feb 2022 20:22:48 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CC02285A5BC
-	for <dm-devel@redhat.com>; Thu, 10 Feb 2022 20:22:48 +0000 (UTC)
-Received: from de-smtp-delivery-102.mimecast.com
-	(de-smtp-delivery-102.mimecast.com [194.104.111.102]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-554-F7FKPslmPTeUF7asBeqhbA-1; Thu, 10 Feb 2022 15:22:47 -0500
-X-MC-Unique: F7FKPslmPTeUF7asBeqhbA-1
-Received: from EUR01-HE1-obe.outbound.protection.outlook.com
-	(mail-he1eur01lp2055.outbound.protection.outlook.com [104.47.0.55]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	de-mta-2-Aq-0HglJMqOHM5OlUX5dhA-1; Thu, 10 Feb 2022 21:22:44 +0100
-X-MC-Unique: Aq-0HglJMqOHM5OlUX5dhA-1
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
-	by AM6PR0402MB3431.eurprd04.prod.outlook.com (2603:10a6:209:e::10)
-	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4975.12;
-	Thu, 10 Feb 2022 20:22:43 +0000
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::4081:2960:b740:3d47]) by
-	DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::4081:2960:b740:3d47%3]) with mapi id 15.20.4951.019;
-	Thu, 10 Feb 2022 20:22:43 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"muneendra.kumar@broadcom.com" <muneendra.kumar@broadcom.com>
-Thread-Topic: [PATCH v3] multipathd: handle fpin events
-Thread-Index: AQHYHmebN4b6TWOhBUe6OTftFkCXxA==
-Date: Thu, 10 Feb 2022 20:22:43 +0000
-Message-ID: <3b4bbcded95dbd375821cbabff5dbb1f2247f0fe.camel@suse.com>
+	id 557D6879DB; Thu, 10 Feb 2022 21:02:21 +0000 (UTC)
+Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 342F0610A6;
+	Thu, 10 Feb 2022 21:02:18 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 21AL2G5q010121; 
+	Thu, 10 Feb 2022 15:02:16 -0600
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 21AL2FJJ010120;
+	Thu, 10 Feb 2022 15:02:15 -0600
+Date: Thu, 10 Feb 2022 15:02:15 -0600
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Message-ID: <20220210210215.GG24684@octiron.msp.redhat.com>
 References: <20220210032810.714821-1-muneendra.kumar@broadcom.com>
 	<bb2333d75ac49ee865a7c17c8a2c68a3421099f0.camel@suse.com>
-In-Reply-To: <bb2333d75ac49ee865a7c17c8a2c68a3421099f0.camel@suse.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Evolution 3.42.3
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: b973b0ff-0109-43c0-ebd6-08d9ecd31828
-x-ms-traffictypediagnostic: AM6PR0402MB3431:EE_
-x-microsoft-antispam-prvs: <AM6PR0402MB343126F01E3E5216A1C92EA8FC2F9@AM6PR0402MB3431.eurprd04.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:2733
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: TTie3n87HqQxT/a2pEW77UlHR4b4pDD6z+hSZXV+yvgcdiRqn8EPZG4Fd3RsH06DPCHW7Q2yT1jFeCMfMTmLuheg++KuGjh+dYd5Cel5+pUfVPp2kZ2eAA6rLdkehUo4iQFPXejjK9YshLrRvPoeCDBahK5IL+eQGqjHMR4q9fZ6fpr+Hb7etCMjLGXE7KJisi86MQjzmlKPg/ukh3Mtws/Rj8bzw2MNEThos7xEoEG25s5qhd4EAzdbAcJXPPAafYtRAfuKoojyZJl2SX4fWiK9lsEFUVPEVNrjZLaTw2JseB8gR5hA/ys3DrAgiVnGPD0VKdNLSsvH8cMifwa+YmzWHfpHxHizxIBp8YJN8yH0Cotg3M4Qnm1Laf6qR2C6hERv0hJRYD0gmAWrSG9D70lgLaBmqkYU5TBoGoDQJj7KCM2GY1YbUuscPrc2UuJEBOtFunApCz/3bphUPiRGgq7rhYJ3/vSNlqBRX/Bf/sK0S0R9hP7ASK0jT1FpW4bqAUywPiKe49qCKdzIDzzC/78ddw1k57yaQedDzUwg6wuXbo/h3PuhcSFkuRPyq6wcUa4lAKxf/Zig1quMmZHgW1EOFhbrEApg9r2Nsf8zgiCQ1wL0pko7MyAmEAXncQB+VP0OjArn3cihz4Hu3YC4aJJ7auXryymwxbMTFjhcLLIAC95I0JFaFRQ377ohHVNxYNQGOo/ZVGcHPz0BJc062g==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(13230001)(366004)(8936002)(38070700005)(66946007)(6486002)(4326008)(5660300002)(8676002)(66446008)(64756008)(66556008)(66476007)(76116006)(36756003)(508600001)(83380400001)(6512007)(91956017)(2616005)(86362001)(71200400001)(2906002)(558084003)(44832011)(186003)(26005)(110136005)(122000001)(316002)(38100700002)(6506007)(54906003);
-	DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?FbhrfwUDutv0wJ6YVEISamzq4iXLjpHFRiaHPS6lbNCJOAooawwCjG3QV?=
-	=?iso-8859-15?Q?nO6elBXblOYg3H3pBlQP/z2kADk9nLCRyFiJGi8KxXzKs6rsJWbsP7iYP?=
-	=?iso-8859-15?Q?p6V7b0AnHGa5OTlMATHH3wgGTVIsdzlTqfLyQnyF5MQ3g8VZEo6LmMioP?=
-	=?iso-8859-15?Q?K3Y+TV8sl8b7LjtbbFSVS9lDptHGlOf81Fg/MJ6KWhUCsviIqs/yvLEH6?=
-	=?iso-8859-15?Q?TdnpHWQFkxFWLBoSTEXGlDmyZNsJgwGFb4K1F8sw1/tgDzgUmtQtosWwD?=
-	=?iso-8859-15?Q?RoztWjrj6h8o6f1rKRh/ea40A7QFYjDCht7XdkPpu79HmqD6xxG+47cPf?=
-	=?iso-8859-15?Q?mxgdYLWGgRm5rOtQAHcc2gO4uj6CyraEsbV9eP7d8Qv0OGngaSafsBC5A?=
-	=?iso-8859-15?Q?Ht+K0Af46ZlNye4kWAzCN9uwZX4TNWja0sONEikz8MzPsyNLUBKPcMOSH?=
-	=?iso-8859-15?Q?3F+al+tEQNFm+REM3ul8C50A4tPLsdXnyl6nSXFu/bx9p8+YG1aMFUsmc?=
-	=?iso-8859-15?Q?fXeDvzu4Wqz7xQ4lW6ummuGEYceomST5sSGWl5s/5Twdx3oB+oOleXcyC?=
-	=?iso-8859-15?Q?ZIoc8VUbPvFxS+lnVuJdT3318sZrwmIdc2UE8S93xuI46bwf8ZlEakj5Y?=
-	=?iso-8859-15?Q?Q9BuvdzosVunKtvnj9nbeANNCEz42z8Z9PDJ9hn3q4joxjzwzSelvqFSN?=
-	=?iso-8859-15?Q?jZ+xUg5dvI6O/E0PMxaW/PgvEnVYvKjhycfGBVLMEGf+MBqYW3IxHHF/C?=
-	=?iso-8859-15?Q?ZdyS0nLnqaj1mVRBbo3+I0LsbN2HBqzU1lf6g+fhlObQMHNylJhi2JeIZ?=
-	=?iso-8859-15?Q?qfr1/14LuNhmMPrtQic2fILinvDoBn+nzCHXDJ9eA/+x8F7eWcnPbgUqM?=
-	=?iso-8859-15?Q?qVb0iFy0FSZaA/oYZ+GvFRxBXxgLAlaQhu+xmzoEDMoQ0C2te7XeAVYjq?=
-	=?iso-8859-15?Q?xZW64/0slXTLY9QNHZwzAjSCH2Pevugv2aPeuoNHDj9Td9hXroWpHUQce?=
-	=?iso-8859-15?Q?musK1vuj9PQhvYOIoqAMt2MuY2ET3Um+AeKdfA+qBjoS3y8vyFxF34H2B?=
-	=?iso-8859-15?Q?mVFWTGYRFkMAAlxp2WHvnrCxww8aiEqTiVRf97Hdn8lhT+HobCm+U/BP4?=
-	=?iso-8859-15?Q?Yvy1cU5a9ojgmXBStSvRgWLFApcvAO2MPsEtqc8pfoQrroJ8cXYX/cn2Y?=
-	=?iso-8859-15?Q?8suNcm4ktnBbARd8D15B3vGSlYvQGZEqZxA/vYXaGf0bTt47sq49ZOd49?=
-	=?iso-8859-15?Q?qPDaggLEVf+19Fc8Epnjkiu+HVvz/FQAjS7kW3SovZQO/d4KaCW+fXk+s?=
-	=?iso-8859-15?Q?o76YiinBepHkxMacyrmA+Py6Yl/JUbcFgWApNlMfd0jId1jhhQyc1xVPt?=
-	=?iso-8859-15?Q?Vci9NF8sHA8u+hz2pG1/HiCHfwVaSjqKdI8PtJsEFzjFsMXEUW5u0dlqO?=
-	=?iso-8859-15?Q?NNx2yORaKrddogxBBah0QMhRrNsiEddsGRKXZCorVKhExanmIcvnZvONs?=
-	=?iso-8859-15?Q?jcylg93M+frkGS4iyu+rapOXL8GX2/L4dwX6EM8kWoD+IGEPHdiweZdYq?=
-	=?iso-8859-15?Q?oKEiJj8VA1lpJxDAiuOsoZoYElIDSyOnVwpUAzSddn/meHHM4Wbc58zDJ?=
-	=?iso-8859-15?Q?MPhNfsJHqC/2760kI6zjn1pCmok7vrXPricVKHOWIAwFudi7dPBXy+NLF?=
-	=?iso-8859-15?Q?e+L/dpatCJu8uyhqTNSHXKyuIIIemeZCeLaRJCUoI42gt28=3D?=
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: b973b0ff-0109-43c0-ebd6-08d9ecd31828
-X-MS-Exchange-CrossTenant-originalarrivaltime: 10 Feb 2022 20:22:43.6287 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: EHJvF7cYh6Kj21Dlu9C+N6n5zrBErm07atGTNiHBr41/hXjJKQgQoTflx1RmJK6npMaPv3hMRpKwIQMdxnmhLw==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM6PR0402MB3431
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 21AKMncS005802
+In-Reply-To: <bb2333d75ac49ee865a7c17c8a2c68a3421099f0.camel@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 X-loop: dm-devel@redhat.com
-Cc: "mkumar@redhat.com" <mkumar@redhat.com>
+Cc: "muneendra.kumar@broadcom.com" <muneendra.kumar@broadcom.com>,
+	"dm-devel@redhat.com" <dm-devel@redhat.com>,
+	"mkumar@redhat.com" <mkumar@redhat.com>
 Subject: Re: [dm-devel] [PATCH v3] multipathd: handle fpin events
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
@@ -162,21 +83,151 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-ID: <7C1EE9806B340A43861E2A1DF2388119@eurprd04.prod.outlook.com>
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, 2022-02-10 at 18:00 +0100, Martin Wilck wrote:
+On Thu, Feb 10, 2022 at 05:00:09PM +0000, Martin Wilck wrote:
 > Hi Muneendra, 
 > 
-> coverity found some defects in your patch.
+> coverity found some defects in your patch. Please help me review them,
+> see attachment. It's well possible that they're false positives, but
+> please double-check.
+> 
+> Thanks
+> Martin
+> 
 
-I went through them, and found that all were false positives. No need
-to worry. It was good to have a closer look though.
+> Date: Thu, 10 Feb 2022 16:50:12 +0000 (UTC)
+> From: scan-admin@coverity.com
+> To: mwilck@suse.com
+> Subject: New Defects reported by Coverity Scan for mwilck/multipath-tools
+> 
+> Hi,
+> 
+> Please find the latest report on new defect(s) introduced to mwilck/multipath-tools found with Coverity Scan.
+> 
+> 3 new defect(s) introduced to mwilck/multipath-tools found with Coverity Scan.
+> 
+> 
+> New defect(s) Reported-by: Coverity Scan
+> Showing 3 of 3 defect(s)
+> 
+> 
+> ** CID 375096:  Memory - corruptions  (OVERRUN)
+> /multipathd/fpin_handlers.c: 161 in fpin_els_add_li_frame()
+> 
+> 
+> ________________________________________________________________________________________________________
+> *** CID 375096:  Memory - corruptions  (OVERRUN)
+> /multipathd/fpin_handlers.c: 161 in fpin_els_add_li_frame()
+> 155     	pthread_testcancel();
+> 156     	els_mrg = calloc(1, sizeof(struct els_marginal_list));
+> 157     	if (els_mrg != NULL) {
+> 158     		els_mrg->host_num = fc_event->host_no;
+> 159     		els_mrg->event_code = fc_event->event_code;
+> 160     		els_mrg->length = fc_event->event_datalen;
+> >>>     CID 375096:  Memory - corruptions  (OVERRUN)
+> >>>     Overrunning buffer pointed to by "&fc_event->event_data" of 4 bytes by passing it to a function which accesses it at byte offset 2047 using argument "fc_event->event_datalen" (which evaluates to 2048). [Note: The source code implementation of the function has been overridden by a builtin model.]
 
-Martin
+fc_event->event_data is a u32, but that's just because the first 32 bits
+of the event data is the els_cmd, right? The header makes it clear that
+event_data actually does hold event_datalen worth of space
 
+>From /usr/include/scsi/scsi_netlink_fc.h
+-------------------------------------------
+ * Note: if Vendor Unique message, &event_data will be  start of
+ *       vendor unique payload, and the length of the payload is
+ *       per event_datalen
+
+The only thing that looks possibly suspect here to me is in
+fpin_fabric_notification_receiver() which calls fpin_els_add_li_frame()
+
+In fpin_fabric_notification_receiver() we guarantee that we read enough
+for plen to be correct by calling NLMSG_OK(), and we check that plen is
+big enough to hold fc_event before we start using that. After that, we
+just assume fc_event is well formed. However we could check that
+
+offsetof(struct fc_nl_event, event_data) + fc_event->event_data_len <= plen
+
+just to make sure that we really read enough space for all the event
+data.
+
+> 161     		memcpy(els_mrg->payload, &(fc_event->event_data), fc_event->event_datalen);
+> 162     		list_add_tail(&els_mrg->node, &els_marginal_list_head);
+> 163     		pthread_cond_signal(&fpin_li_cond);
+> 164     	} else
+> 165     		ret = -ENOMEM;
+> 166     	pthread_cleanup_pop(1);
+> 
+> ** CID 375095:  Program hangs  (LOCK)
+> /multipathd/fpin_handlers.c: 429 in fpin_els_li_consumer()
+> 
+> 
+> ________________________________________________________________________________________________________
+> *** CID 375095:  Program hangs  (LOCK)
+> /multipathd/fpin_handlers.c: 429 in fpin_els_li_consumer()
+> 423     	rcu_register_thread();
+> 424     	pthread_cleanup_push(fpin_clean_marginal_dev_list, NULL);
+> 425     	INIT_LIST_HEAD(&marginal_list_head);
+> 426     	pthread_cleanup_push(fpin_clean_els_marginal_list,
+> 427     				(void *)&marginal_list_head);
+> 428     	for ( ; ; ) {
+> >>>     CID 375095:  Program hangs  (LOCK)
+> >>>     "pthread_mutex_lock" locks "fpin_li_mutex" while it is locked.
+> 429     		pthread_mutex_lock(&fpin_li_mutex);
+> 430     		pthread_cleanup_push(cleanup_mutex, &fpin_li_mutex);
+> 431     		pthread_testcancel();
+> 432     		while (list_empty(&els_marginal_list_head))
+> 433     			pthread_cond_wait(&fpin_li_cond, &fpin_li_mutex);
+> 434     
+> 
+> ** CID 375094:  Memory - corruptions  (OVERRUN)
+> /multipathd/fpin_handlers.c: 339 in fpin_handle_els_frame()
+
+I can't see how we could double lock fpin_li_mutex here.  This looks to me
+like coverity isn't understanding that the pthread_mutex_pop(1) that we
+must do before we loop is unlocking the mutex.
+
+> 
+> 
+> ________________________________________________________________________________________________________
+> *** CID 375094:  Memory - corruptions  (OVERRUN)
+> /multipathd/fpin_handlers.c: 339 in fpin_handle_els_frame()
+> 333     	struct fc_els_fpin *fpin = (struct fc_els_fpin *)&fc_event->event_data;
+> 334     	struct fc_tlv_desc *tlv;
+> 335     	uint32_t dtag;
+> 336     
+> 337     	els_cmd = (uint32_t)fc_event->event_data;
+> 338     	tlv = (struct fc_tlv_desc *)&fpin->fpin_desc[0];
+> >>>     CID 375094:  Memory - corruptions  (OVERRUN)
+> >>>     "tlv" evaluates to an address that is at byte offset 0 of an array of -4 bytes.
+> 339     	dtag = be32_to_cpu(tlv->desc_tag);
+> 340     	condlog(4, "Got CMD in add as 0x%x fpin_cmd 0x%x dtag 0x%x\n",
+> 341     			els_cmd, fpin->fpin_cmd, dtag);
+> 342     
+> 343     	if ((fc_event->event_code == FCH_EVT_LINK_FPIN) ||
+> 344     			(fc_event->event_code == FCH_EVT_LINKUP) ||
+
+
+Um.. I don't think the array size is really -4 bytes. It's a zero-legth
+array, and that seems to be tripping up coverity. This looks fine,
+assuming a well formed fc_event structure. Otherwise we need some checking
+like
+
+offsetof(struct fc_els_fpin, fpin_desc) + sizeof(struct fc_tlv_desc) <= fc_event->event_data_len
+
+to guarantee that the space actually exists for this.
+
+-Ben
+
+> 
+> 
+> ________________________________________________________________________________________________________
+> To view the defects in Coverity Scan visit, https://u15810271.ct.sendgrid.net/ls/click?upn=HRESupC-2F2Czv4BOaCWWCy7my0P0qcxCbhZ31OYv50yrlXjF1MXVk7PoaBOP4azsLepCe1Mn8gwfBXDBrelSIoRMU8O0U7o5n1FSIQj14Dq4St65JUh9ZnyC-2Fg157qes-2Ft9bX_PKeZaaewXacQHsuZ3T6aIqwwc4cZvX5RuFKlZH-2B-2F-2FW3e6H-2BXHVqahp7aWZNvTEgZriF6MZKau2Bf0lzbvkaTbX4e4aRrLiV588LPwISv-2Baiuvm-2BG4Up9iV7VtAl7qS-2B0T3-2Fqqv361QJbg5iOmqOQvmACpZbC7bxySCtES2vULs1HDMmm0iEnBDbGCNYF1xpA27h3e8fIXqCGYvqwYb-2B3OQ-3D-3D
+> 
+>   To manage Coverity Scan email notifications for "mwilck@suse.com", click https://u15810271.ct.sendgrid.net/ls/click?upn=HRESupC-2F2Czv4BOaCWWCy7my0P0qcxCbhZ31OYv50yped04pjJnmXOsUBtKYNIXxFPY5t1N6AzTJMa-2BnAWi0npABKE4tMGq7bchotHs-2B2MqcQoJY2TJBjK3IaZ-2BUkHe2wCTAqHQyQFhpCFLiEJ5yDOXcRNksjcYeVNM9nq6-2Fe1c-3DJZ6i_PKeZaaewXacQHsuZ3T6aIqwwc4cZvX5RuFKlZH-2B-2F-2FW3e6H-2BXHVqahp7aWZNvTEgZ8ESLNy-2BD7eSZoQJj9Azw80YJzcErYNLrKcxKMYgGbPxYRwvkDgeGxz4WRfn-2B-2BuPaXZTSYImuaAoKoYTe4RaUajUfXcURMKMcXzDOS6kanowCj0jE9AfLqwwWVbaP-2BgeCbRXyI-2FvgEy6HVXWmfdW8qg-3D-3D
+> 
 
 --
 dm-devel mailing list
