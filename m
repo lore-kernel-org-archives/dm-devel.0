@@ -1,60 +1,60 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 82B21C433F5
-	for <dm-devel@archiver.kernel.org>; Fri, 11 Feb 2022 06:13:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8B779C433F5
+	for <dm-devel@archiver.kernel.org>; Fri, 11 Feb 2022 06:13:21 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-570-s0eD_NeCNkqpQJQvgv4Olw-1; Fri, 11 Feb 2022 01:13:08 -0500
-X-MC-Unique: s0eD_NeCNkqpQJQvgv4Olw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-601-CWAuoKzxPamj2QqtyX--CA-1; Fri, 11 Feb 2022 01:13:16 -0500
+X-MC-Unique: CWAuoKzxPamj2QqtyX--CA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 853048144E0;
-	Fri, 11 Feb 2022 06:13:04 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 673EE190A7A3;
+	Fri, 11 Feb 2022 06:13:12 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 299675BC22;
-	Fri, 11 Feb 2022 06:13:04 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 485E455F78;
+	Fri, 11 Feb 2022 06:13:12 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4E61F1806D1C;
-	Fri, 11 Feb 2022 06:13:03 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EFA8E1806D2B;
+	Fri, 11 Feb 2022 06:13:11 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21B2WWr4031626 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 10 Feb 2022 21:32:32 -0500
+	id 21B2XIkO031722 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 10 Feb 2022 21:33:18 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 58CF940885B9; Fri, 11 Feb 2022 02:32:32 +0000 (UTC)
+	id 9825D40885B9; Fri, 11 Feb 2022 02:33:18 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 53C9440885B5
-	for <dm-devel@redhat.com>; Fri, 11 Feb 2022 02:32:32 +0000 (UTC)
+	(mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 936D040885B5
+	for <dm-devel@redhat.com>; Fri, 11 Feb 2022 02:33:18 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3A01C3C01DB0
-	for <dm-devel@redhat.com>; Fri, 11 Feb 2022 02:32:32 +0000 (UTC)
-Received: from APC01-PSA-obe.outbound.protection.outlook.com
-	(mail-psaapc01on2090.outbound.protection.outlook.com [40.107.255.90])
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7761A28EA700
+	for <dm-devel@redhat.com>; Fri, 11 Feb 2022 02:33:18 +0000 (UTC)
+Received: from APC01-SG2-obe.outbound.protection.outlook.com
+	(mail-sgaapc01on2092.outbound.protection.outlook.com [40.107.215.92])
 	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-451-DaCTqaO3P9ayFACnNqjK2g-1; Thu, 10 Feb 2022 21:32:28 -0500
-X-MC-Unique: DaCTqaO3P9ayFACnNqjK2g-1
+	us-mta-353-731ep-J0M6O2YxGbIf8qsA-1; Thu, 10 Feb 2022 21:33:16 -0500
+X-MC-Unique: 731ep-J0M6O2YxGbIf8qsA-1
 Received: from SL2PR06MB3082.apcprd06.prod.outlook.com (2603:1096:100:37::17)
-	by TY2PR06MB2895.apcprd06.prod.outlook.com (2603:1096:404:31::11)
+	by PS1PR0601MB3705.apcprd06.prod.outlook.com (2603:1096:300:80::14)
 	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4951.17;
-	Fri, 11 Feb 2022 02:32:23 +0000
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4951.12;
+	Fri, 11 Feb 2022 02:33:11 +0000
 Received: from SL2PR06MB3082.apcprd06.prod.outlook.com
 	([fe80::80b4:e787:47a9:41bb]) by
 	SL2PR06MB3082.apcprd06.prod.outlook.com
 	([fe80::80b4:e787:47a9:41bb%4]) with mapi id 15.20.4975.014;
-	Fri, 11 Feb 2022 02:32:23 +0000
+	Fri, 11 Feb 2022 02:33:10 +0000
 From: Qing Wang <wangqing@vivo.com>
 To: Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>,
 	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>,
@@ -76,8 +76,8 @@ To: Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>,
 	linux-clk@vger.kernel.org, intel-gfx@lists.freedesktop.org,
 	dri-devel@lists.freedesktop.org, amd-gfx@lists.freedesktop.org,
 	linux-input@vger.kernel.org, linux-media@vger.kernel.org
-Date: Thu, 10 Feb 2022 18:30:31 -0800
-Message-Id: <1644546640-23283-9-git-send-email-wangqing@vivo.com>
+Date: Thu, 10 Feb 2022 18:30:36 -0800
+Message-Id: <1644546640-23283-14-git-send-email-wangqing@vivo.com>
 In-Reply-To: <1644546640-23283-1-git-send-email-wangqing@vivo.com>
 References: <1644546640-23283-1-git-send-email-wangqing@vivo.com>
 X-ClientProxiedBy: HK2PR02CA0178.apcprd02.prod.outlook.com
@@ -85,58 +85,58 @@ X-ClientProxiedBy: HK2PR02CA0178.apcprd02.prod.outlook.com
 	(2603:1096:100:37::17)
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: 5fda17dd-7627-4ed7-980b-08d9ed06bc3f
-X-MS-TrafficTypeDiagnostic: TY2PR06MB2895:EE_
-X-Microsoft-Antispam-PRVS: <TY2PR06MB2895B4FB384B056A69641E17BD309@TY2PR06MB2895.apcprd06.prod.outlook.com>
-X-MS-Oob-TLC-OOBClassifiers: OLM:2201
+X-MS-Office365-Filtering-Correlation-Id: 6ecfda2a-ef55-44e3-464c-08d9ed06d858
+X-MS-TrafficTypeDiagnostic: PS1PR0601MB3705:EE_
+X-Microsoft-Antispam-PRVS: <PS1PR0601MB37053AFD614E2C1FEAFBD6BABD309@PS1PR0601MB3705.apcprd06.prod.outlook.com>
+X-MS-Oob-TLC-OOBClassifiers: OLM:1107
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: vCcORnvvTaCSGSUv6FaIVzz5fCHZQ39cob3rnZpeEfCgUnbOK6Ew3NujI4eQj4E6oemaWr6sQuTR4A+q1KW18wwDu5rbt7uw9pJToWNslEEhlHV0id4DO7YP3t3NBlDMWwk0M2ZXpl8F4Th41pQMyhoDztMo8QFRjQraRlRMbOV0EPCsMIo/NkoKXXpupiBsTyN/P7/T0ytRY5MFfRGEqx0BtqPZP8o9TEXlYDrOkScovmHB85LxDA++EuFd/41ONgLFun5G1fnn9C5CoUVs44dSu3qtyWKjQklGYWE+OM0pZAmru4SjPLBGbCGsnGKWasxK5bUhg1IwDDnOjwEjjUcN1ofLzSbxO1vgAYLb44uYy/nD9V8RwXdNYJdmpIhtPbdXidXC8VFSS+EUh4OnqcOhL+uFVXQml/bWG/IZhOXmFXXbo/qb1EWeE7wfL9yJgXCpiCYqEwBEXPf9GwLRkT6zUQ6pgNH361lC3KflPMABa9Pg5UUyRBNuHEzGTmY7kuDxMFHuSZhHVoOSGeV7o8YpxAoBgYyONdV6B9DroPET5JQ0OqUXM8tmof2wrr4F7B1/x4fg14kMobLWHPQlmjzX0CkpYGPrBQm+PkFHBlWxbjBmoo+vo9NVX5+IiIoUXRtmXTuDXAK0YcRLfElMlyiLA2SUTBIYe736SE2WmKAUzPs3tr+6xT8M9z99sFbvox3OimyVqhj5XsGnb8qfSKKUuyD0aj35hxDZW5fM4bnizguaPFCSoJ7trriVtW0w
+X-Microsoft-Antispam-Message-Info: gET8Awy8O3rfEJ2KEFZxWC/slmqXyDgtNj99XlkJW1GWzk84hR/TRK5gKO+GMjL72JwFI6j44TQUDhyT7fJawFzngVXOjZNW+FCCe3vSeBoo9xJOKgQxhSWjwsNyPnsN5QtAphPEQowiinJNUfJGXO4YlIGTyoyPK47tqB7e1ELN/au+VZg2KiVmmdlujxOKh/svgY0Btkt3E1EU9XAaEB/fDl1iFeRBWsyOehLabAOAzB+QTpaJiwz7tTdFl1zm2hEOus6Fm0fQfZvqk7e0K3FB0ES4SOOasvK/MidWtWFzOusgZm2g8OODEW2qChgbIg2e82TJhCANYnYxOzi8e9bEKklSRDc45QifSPZODJHCPBiccXPEwJBMtlg27FzB4C/7N9kSCGDwpu8iJx+Azt+wOrawMWlEco+uFtBmgGZCXWpereILX4Rc2jc7V2AGuLNNTs+gOjMB0zGeJEI9X4q4Qq2u181f0/uja1Bfc4bWCt2sagAz/YMuFQU0PyrnOEIrjC+Dip5zndrETRa7qjBq9QY0yRNQrCZX/j8PyOMfxzDS+WLZNHCFxbFearaLwLx0F0UZUycs9wkTmVmTzZPKD3zwVN6eFYLH3eo+zHNWxp5IEa8sxVkNxTP5j1EaArvagxtVMxLVnAleAObs8ibPNXRtibSSfBbfbrNrXK+43VI5q+1mUQsllCh8Oyviqwm46moiYKGuo49/PM7F2RgyY1Echn1GhCN32kJi9/4=
 X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
 	IPV:NLI; SFV:NSPM; H:SL2PR06MB3082.apcprd06.prod.outlook.com;
 	PTR:; CAT:NONE;
-	SFS:(13230001)(4636009)(366004)(38100700002)(2906002)(316002)(110136005)(86362001)(6486002)(38350700002)(6506007)(6666004)(26005)(186003)(2616005)(6512007)(5660300002)(8676002)(7406005)(508600001)(36756003)(4326008)(8936002)(83380400001)(107886003)(921005)(52116002)(66556008)(66476007)(7416002)(66946007)(21314003);
+	SFS:(13230001)(4636009)(366004)(186003)(2906002)(7416002)(66946007)(316002)(36756003)(2616005)(107886003)(26005)(921005)(7406005)(110136005)(5660300002)(83380400001)(6486002)(6512007)(6506007)(66556008)(86362001)(6666004)(508600001)(4326008)(52116002)(8676002)(8936002)(66476007)(38100700002)(38350700002)(21314003);
 	DIR:OUT; SFP:1102
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?5RLiO7j5eiRGWiybTSbw3O5WAF60yB9HB5/fjAxP4Yq0I6DWM/DVOs4m4+yO?=
-	=?us-ascii?Q?oWTzpWXkZsIMleQXe1Q9OQbxEO2c3Yk8DzMvc8J78zY0HlCy35rlHbHQCgpx?=
-	=?us-ascii?Q?9XQnRLIWXblEAAvckGpikNanBded8bjlA3FDpRX+jShHcFT2cRyDy8P1Flp+?=
-	=?us-ascii?Q?hNnhCvVNvDN8ootk4WKUe276uSIBohcDJK/nwsUtBFP87fodZC5XYPdEOMZz?=
-	=?us-ascii?Q?5GbV5WZbinCC0i5eDvxowd5t+5fdnjAvfTr+HMu7HH16JPwQDJsryJy/jRLM?=
-	=?us-ascii?Q?D2aoFtXuE2CyURZ9sV2yoo672NKu0B8+C7YldGKfWJptMf2SAVV5a0+D8BvC?=
-	=?us-ascii?Q?8zMypXSeoGxjnvw8Qel/DE2ctYSeeXvY8iNpeTIBZQSuC5zOHmYYBAfJjle4?=
-	=?us-ascii?Q?EBWqsIrT+SJxIh7Tsri34OvuvQ+qo42aALsuCkx3FQbMJf8ZofESmYR6fPI+?=
-	=?us-ascii?Q?ASrPeAuZOebLFsOZL4+OhUUiWlLQPpotil8EWtY+57/kqrhdO0KMq8HRI8Ru?=
-	=?us-ascii?Q?4mZvt92T966UjrKkFRb0/5AZHuF8wa1spXxT+DEUnGVqz8UM21idUGhfY07H?=
-	=?us-ascii?Q?7z9LZ2IhHWWcf6dvU/v0gnYkOg/prTqwapL3ARZtlvbEX7V+0n1oJm8mJDzH?=
-	=?us-ascii?Q?j9oXju/0ax9vMtQFLmT3/vqK3JF1IDXTFWwC1BhaI/EvwubO9Skp4fBZXZVu?=
-	=?us-ascii?Q?EhWhnaWxg03WWv0kg8DW8DU0MhQvhdGDYZA/SqaAvcTOnQGlQD8ajN2sT7Iw?=
-	=?us-ascii?Q?bFPomPh7eWZDHy8IZlxT6/Usc6oYJoWW9Se2V9Btk9ldiDIvmndUjBBdq/v4?=
-	=?us-ascii?Q?v7/BAOqakLZmxMsb3bMDsshP99xGAe4xa4seGrhkwDgGH+ehbVhC4Axu3xqY?=
-	=?us-ascii?Q?2mOSUDJCeIj5248dR3xklP5CDZodjieTaUN7cBZOCJP2AeWsdYgepP0hX4JW?=
-	=?us-ascii?Q?+YaV5iYqo0LOfHhqY3pDFafu1PQZmXj3y7jRb6n3QpNmEKdN6dSc9aUQwNUV?=
-	=?us-ascii?Q?LwY46BcW1X65EfU2TxyPvuinkSSdxZRn49DGM4FwtsS1bhccE3ILMlKT6Vnm?=
-	=?us-ascii?Q?VtM1T4QrGP+KxkJvZ1UnUGUKWu+rkKtVdlmMiHkwLID2K0kMTKOXwh4b5zph?=
-	=?us-ascii?Q?o+XrjKZqC//xVTnH7MCjPV0do1fQEH0BPIdEcNn7hm+ptLW6+JI3bAHfWVSZ?=
-	=?us-ascii?Q?qeGKZLSgJDVo9QwYz4wNMQ5+u8E4xzUrbwzkad4qLwROApJrECCD43rqvS6q?=
-	=?us-ascii?Q?NgzpT3cteNQkYfBMUVidlx3QHcb9Cs6BVbMuzf6hweS0JbJ00jzYXXnRCy8e?=
-	=?us-ascii?Q?msLla6q7vSVTR4FXZ84UHO7RnMrQw4J4jGhtMTBU667TDFJqKa7PxsxYtvhy?=
-	=?us-ascii?Q?B2c163F/H93oCjmCS5ufoL4YMrsn3Ts8KeQ6w1nCbDsiuQ+8H8fKZEr+e9g2?=
-	=?us-ascii?Q?uZ9gWcL4DEEsQz5KJ2QLYKRAj7znDtEeZL9Rhig787sK8XEdTsAZHJxKBwGk?=
-	=?us-ascii?Q?SiNSg03r32GCvAvE8kPmkYxPW7UrgWb/tmXIZaIMPM6yMughmIgO1OQSjVi2?=
-	=?us-ascii?Q?Cr3E+iz+S+VxQ7S18KV68uAywtwOyTpreCAAusTYEIt+N2oOcW2qNL8L0X5j?=
-	=?us-ascii?Q?1gX9kV7UWJmmNJH5WaVJGeI=3D?=
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?anxVmQzQteJnVybznqZkGfIiz7nVC4C/C1I0BoUPZOiTIogrlkXJQfPjamKT?=
+	=?us-ascii?Q?oJ/GBiaYBt42qmKppqJRYlI6K8e8oDSseJKFoNBR04iv6/fm+Lx7GWQvRPd2?=
+	=?us-ascii?Q?oa1twpXDMI4qvuvmPwZAkhoKDxF0B174B/eCGvcrZb7MuG3t4wRSryhy++4e?=
+	=?us-ascii?Q?x1neH6Wqoj90ulCVvy5lZyrMXkQgTs3QUhg3tOd5nh+d/+3M0Ry0g23wvfNp?=
+	=?us-ascii?Q?XjL+GSbFdHDYkdh8FY8WD+0jdtn5kt+zr6DoklFBlihTRmOPDsmAV5lF7ysL?=
+	=?us-ascii?Q?7Ot3qkCxkgN6pm8DFreYAQqEpBVcHa9nG/CgeRF7kuwCG4Qp5zSCWpkvAilj?=
+	=?us-ascii?Q?+BRyPmamsXHVBCD8KgKSCNvrjxsPNqNfqIOuYlhdCcma00ieIvNk0ZZrkVhg?=
+	=?us-ascii?Q?1i6VM7n+qZA599hn/GshE8jQdY3SQ476lJakG6ATJeBo8ph1RCyYfr5vtgx+?=
+	=?us-ascii?Q?DuYyutc5Cl7ZbdkYiK0/YjkgOrS6Q91fRSA9ffUTob6enZ3DAwORawFIBL5t?=
+	=?us-ascii?Q?CEOPBiHPL4rCujB6wstavCGEUdUniEda70+r8aqtK5YaTkpMa3f/VGGjqYhO?=
+	=?us-ascii?Q?RqXiFumiP4zSdqZJULVM5uUUXbVs3ezbCsUaJioSKn0ebUP3bUDyGqPscVKs?=
+	=?us-ascii?Q?6SPTJAgp3JhddiZzHFnHbyYlEKO+tPqeIOtQpu/N+JJP+mSJK2CfocrN5A9C?=
+	=?us-ascii?Q?H7W35Ydlo5Y7iBCSUa+YM5eGX2PovUV/g5+TJbrVyS1O1VS11FZgsI1ooqiN?=
+	=?us-ascii?Q?eY5fqBMZ3IgzHqvBoueLUSCZpUWkoulRF40IN9THC9O2FL4yTz7kJmH6u8DB?=
+	=?us-ascii?Q?p4ueZ8ZPfFfUfaser2NE4V2AvtLieom2/4HHb/esIgPzqSNcHy1SMH6Yqu9T?=
+	=?us-ascii?Q?ij/kDCVsMQa5ahFGZJicU5qFtwtSDpUMyNkPvUbdMMZkzihwrke1FXD0O1CL?=
+	=?us-ascii?Q?LYKOaHRAOc6DGdNZYRTpoNLq047VAMxzRkOHIUUoE5Jq3J9kmtbV+Kk4CVcR?=
+	=?us-ascii?Q?/3gPFKfERJ7n2uREHPAqYxq3sjDcxmdPW44xPZKbTq3uE4N4/Z49lO1lzrOE?=
+	=?us-ascii?Q?v2a8odAA5+otNk+qAlk0ccQsoMkk3BcwFDNFk7QlIT1UoIrbNhOG3VtEm7hl?=
+	=?us-ascii?Q?zI39hCe8/Ebnw4vX6HLRt3KMgLqyCGknQn29QpQgZ/ARx6BCJ19zTEqGeH1F?=
+	=?us-ascii?Q?5ocRmCkZMyI8Ke+F6qMylorIcRz6b7721btXextPwLRRMozloFGWmLc5aIb+?=
+	=?us-ascii?Q?tMEY/1vMG+D9DmH+eZtYThlQbHn4BQKkZma7/miULWcqc63kQT+hLwhUnj7j?=
+	=?us-ascii?Q?v6zcGFy4bbaInAjgb6eoy+3rBMdrA2zJ4VFYdL0zd3z3WxD2sJLfKF35kjEq?=
+	=?us-ascii?Q?7wHXFUNq+jRihuVEe2vuTsqTtBwuCDKQW7XklkcaKQ9CZSWh9mt3h7a/jtOu?=
+	=?us-ascii?Q?Kg3nYMr0455m7f3VUWVteWlS9A0gtaublibFTjEYc3sGv+xoITeJoQ7Uw+Kw?=
+	=?us-ascii?Q?2lWQAREqiQ9wixIO7ywDetYMx7LpB1JoZnJb4gGVHx2QqQPp3bPkXezFKtUq?=
+	=?us-ascii?Q?x8GzjbGPH9PpYHBeIIpgbkb8mAtjfKBVfNE8KrxHotMy2YXr+er6qy9SCFw8?=
+	=?us-ascii?Q?zXNvEoji+nBbytiph8ID4VM=3D?=
 X-OriginatorOrg: vivo.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 5fda17dd-7627-4ed7-980b-08d9ed06bc3f
+X-MS-Exchange-CrossTenant-Network-Message-Id: 6ecfda2a-ef55-44e3-464c-08d9ed06d858
 X-MS-Exchange-CrossTenant-AuthSource: SL2PR06MB3082.apcprd06.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 11 Feb 2022 02:32:23.5381 (UTC)
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 11 Feb 2022 02:33:10.8323 (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 923e42dc-48d5-4cbe-b582-1a797a6412ed
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: Vi3vLXcRyS7gacphLwGgMPrALLyerptZ8f1fPbKHYXREiSfPa/Gb70a2fmKlyVurJ2uQiP6vzh+L4l9Bsyj0ew==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: TY2PR06MB2895
+X-MS-Exchange-CrossTenant-UserPrincipalName: +8mJtO29nBoysTeez6egaCcwz1EVAAOfzUIKKBW62z5C2FaTL3wFUrZi2JsNpYWrBJ5be6JEHEfDI/DMXA3DLw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: PS1PR0601MB3705
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -149,8 +149,8 @@ X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Fri, 11 Feb 2022 01:07:42 -0500
 Cc: Wang Qing <wangqing@vivo.com>
-Subject: [dm-devel] [PATCH V2 10/13] md: use time_is_before_eq_jiffies()
-	instead of jiffies judgment
+Subject: [dm-devel] [PATCH V2 13/13] media: vivid: use
+	time_is_after_jiffies() instead of jiffies judgment
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -164,7 +164,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -179,32 +179,96 @@ for understanding.
 
 Signed-off-by: Wang Qing <wangqing@vivo.com>
 ---
- drivers/md/dm-writecache.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ drivers/media/test-drivers/vivid/vivid-kthread-cap.c   | 3 ++-
+ drivers/media/test-drivers/vivid/vivid-kthread-out.c   | 3 ++-
+ drivers/media/test-drivers/vivid/vivid-kthread-touch.c | 3 ++-
+ drivers/media/test-drivers/vivid/vivid-sdr-cap.c       | 3 ++-
+ 4 files changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-index 5630b47..125bb5d
---- a/drivers/md/dm-writecache.c
-+++ b/drivers/md/dm-writecache.c
-@@ -16,6 +16,7 @@
- #include <linux/pfn_t.h>
- #include <linux/libnvdimm.h>
- #include <linux/delay.h>
+diff --git a/drivers/media/test-drivers/vivid/vivid-kthread-cap.c b/drivers/media/test-drivers/vivid/vivid-kthread-cap.c
+index 6baa046..295f4a3
+--- a/drivers/media/test-drivers/vivid/vivid-kthread-cap.c
++++ b/drivers/media/test-drivers/vivid/vivid-kthread-cap.c
+@@ -18,6 +18,7 @@
+ #include <linux/freezer.h>
+ #include <linux/random.h>
+ #include <linux/v4l2-dv-timings.h>
 +#include <linux/jiffies.h>
- #include "dm-io-tracker.h"
+ #include <asm/div64.h>
+ #include <media/videobuf2-vmalloc.h>
+ #include <media/v4l2-dv-timings.h>
+@@ -893,7 +894,7 @@ static int vivid_thread_vid_cap(void *data)
+ 			next_jiffies_since_start = jiffies_since_start;
  
- #define DM_MSG_PREFIX "writecache"
-@@ -1971,8 +1972,8 @@ static void writecache_writeback(struct work_struct *work)
- 	while (!list_empty(&wc->lru) &&
- 	       (wc->writeback_all ||
- 		wc->freelist_size + wc->writeback_size <= wc->freelist_low_watermark ||
--		(jiffies - container_of(wc->lru.prev, struct wc_entry, lru)->age >=
--		 wc->max_age - wc->max_age / MAX_AGE_DIV))) {
-+		time_is_before_eq_jiffies(container_of(wc->lru.prev, struct wc_entry, lru)->age
-+		  + wc->max_age - wc->max_age / MAX_AGE_DIV)) {
+ 		wait_jiffies = next_jiffies_since_start - jiffies_since_start;
+-		while (jiffies - cur_jiffies < wait_jiffies &&
++		while (time_is_after_jiffies(cur_jiffies + wait_jiffies) &&
+ 		       !kthread_should_stop())
+ 			schedule();
+ 	}
+diff --git a/drivers/media/test-drivers/vivid/vivid-kthread-out.c b/drivers/media/test-drivers/vivid/vivid-kthread-out.c
+index b6d4316..13f737e
+--- a/drivers/media/test-drivers/vivid/vivid-kthread-out.c
++++ b/drivers/media/test-drivers/vivid/vivid-kthread-out.c
+@@ -18,6 +18,7 @@
+ #include <linux/freezer.h>
+ #include <linux/random.h>
+ #include <linux/v4l2-dv-timings.h>
++#include <linux/jiffies.h>
+ #include <asm/div64.h>
+ #include <media/videobuf2-vmalloc.h>
+ #include <media/v4l2-dv-timings.h>
+@@ -234,7 +235,7 @@ static int vivid_thread_vid_out(void *data)
+ 			next_jiffies_since_start = jiffies_since_start;
  
- 		n_walked++;
- 		if (unlikely(n_walked > WRITEBACK_LATENCY) &&
+ 		wait_jiffies = next_jiffies_since_start - jiffies_since_start;
+-		while (jiffies - cur_jiffies < wait_jiffies &&
++		while (time_is_after_jiffies(cur_jiffies + wait_jiffies) &&
+ 		       !kthread_should_stop())
+ 			schedule();
+ 	}
+diff --git a/drivers/media/test-drivers/vivid/vivid-kthread-touch.c b/drivers/media/test-drivers/vivid/vivid-kthread-touch.c
+index f065faae..8828243
+--- a/drivers/media/test-drivers/vivid/vivid-kthread-touch.c
++++ b/drivers/media/test-drivers/vivid/vivid-kthread-touch.c
+@@ -5,6 +5,7 @@
+  */
+ 
+ #include <linux/freezer.h>
++#include <linux/jiffies.h>
+ #include "vivid-core.h"
+ #include "vivid-kthread-touch.h"
+ #include "vivid-touch-cap.h"
+@@ -134,7 +135,7 @@ static int vivid_thread_touch_cap(void *data)
+ 			next_jiffies_since_start = jiffies_since_start;
+ 
+ 		wait_jiffies = next_jiffies_since_start - jiffies_since_start;
+-		while (jiffies - cur_jiffies < wait_jiffies &&
++		while (time_is_after_jiffies(cur_jiffies + wait_jiffies) &&
+ 		       !kthread_should_stop())
+ 			schedule();
+ 	}
+diff --git a/drivers/media/test-drivers/vivid/vivid-sdr-cap.c b/drivers/media/test-drivers/vivid/vivid-sdr-cap.c
+index 59fd508..f82856b
+--- a/drivers/media/test-drivers/vivid/vivid-sdr-cap.c
++++ b/drivers/media/test-drivers/vivid/vivid-sdr-cap.c
+@@ -17,6 +17,7 @@
+ #include <media/v4l2-event.h>
+ #include <media/v4l2-dv-timings.h>
+ #include <linux/fixp-arith.h>
++#include <linux/jiffies.h>
+ 
+ #include "vivid-core.h"
+ #include "vivid-ctrls.h"
+@@ -205,7 +206,7 @@ static int vivid_thread_sdr_cap(void *data)
+ 			next_jiffies_since_start = jiffies_since_start;
+ 
+ 		wait_jiffies = next_jiffies_since_start - jiffies_since_start;
+-		while (jiffies - cur_jiffies < wait_jiffies &&
++		while (time_is_after_jiffies(cur_jiffies + wait_jiffies) &&
+ 		       !kthread_should_stop())
+ 			schedule();
+ 	}
 -- 
 2.7.4
 
