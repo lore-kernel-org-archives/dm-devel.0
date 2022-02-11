@@ -1,97 +1,95 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E573AC433F5
-	for <dm-devel@archiver.kernel.org>; Fri, 11 Feb 2022 21:47:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 786F9C433FE
+	for <dm-devel@archiver.kernel.org>; Fri, 11 Feb 2022 21:47:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1644616024;
+	s=mimecast20190719; t=1644616026;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=ObtuxbtqEPBaFAzuCU7SCxRMzvia7/lnhb+IHjVHqNg=;
-	b=IDncrl4/Ys+PiVWXZyZlSRodtLp5c2lQHyQhxmq2SjUH+p9/hA0Kf6vd/WHkbUi0ZOj5Xk
-	EvegymGNlPN/0xg3rdlnq6kQpX9nw8cJRS7nis0475yS3IT2jxrqhnSkdW8HUzXN99psG8
-	Dsr3D618vChUM5cqzAzJF+arzJdwVTk=
+	bh=OdwLpwJevyhTZpxucMY+7b/tLxfqI54RF1ulCNyRXQU=;
+	b=OBEq5VLvBqKpgibRkvy9NEc3yzLWi6NqZMuCOSzddafS8IsnFB6hczDUE/vc21iuMilZD5
+	S+dq/Q5Nut2Co2h0BQQQRrQoVbAFg8DMWiyufubWzzywtl3eRUMAxj3iFKfepOdEk9DA1Y
+	hb5zH3bjpn+oJ4A4+3suqmLl41jbGXo=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-648-fWXWtgtyN_GM10slYb0LMw-1; Fri, 11 Feb 2022 16:46:18 -0500
-X-MC-Unique: fWXWtgtyN_GM10slYb0LMw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-550-XVsiLV8XNj22BH0_nvgt8Q-1; Fri, 11 Feb 2022 16:47:02 -0500
+X-MC-Unique: XVsiLV8XNj22BH0_nvgt8Q-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5713894DDC;
-	Fri, 11 Feb 2022 21:46:11 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 38FF956F82;
-	Fri, 11 Feb 2022 21:46:11 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A49F410247A7;
+	Fri, 11 Feb 2022 21:46:57 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 878C5F6C7;
+	Fri, 11 Feb 2022 21:46:57 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 121674BB7C;
-	Fri, 11 Feb 2022 21:46:11 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.2])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 62151180B654;
+	Fri, 11 Feb 2022 21:46:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.8])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21BLflhH024841 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 11 Feb 2022 16:41:47 -0500
+	id 21BLf9Z8024687 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 11 Feb 2022 16:41:09 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 02EBD40E80EA; Fri, 11 Feb 2022 21:41:46 +0000 (UTC)
+	id C08E1C2E008; Fri, 11 Feb 2022 21:41:08 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id F2E7240E80E4
-	for <dm-devel@redhat.com>; Fri, 11 Feb 2022 21:41:45 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6985F831558
-	for <dm-devel@redhat.com>; Fri, 11 Feb 2022 21:41:40 +0000 (UTC)
-Received: from mail-oo1-f71.google.com (mail-oo1-f71.google.com
-	[209.85.161.71]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id BCDD8C07F4B
+	for <dm-devel@redhat.com>; Fri, 11 Feb 2022 21:41:08 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6E6D083395A
+	for <dm-devel@redhat.com>; Fri, 11 Feb 2022 21:41:06 +0000 (UTC)
+Received: from mail-ot1-f70.google.com (mail-ot1-f70.google.com
+	[209.85.210.70]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-459-nSGu33QVN6KPPXfzaoXeIQ-1; Fri, 11 Feb 2022 16:41:26 -0500
-X-MC-Unique: nSGu33QVN6KPPXfzaoXeIQ-1
-Received: by mail-oo1-f71.google.com with SMTP id
-	u13-20020a4ab5cd000000b002e021ad5bbcso6315462ooo.17
-	for <dm-devel@redhat.com>; Fri, 11 Feb 2022 13:41:26 -0800 (PST)
+	us-mta-98-JZ5uYkTDPR-vYXKZJWmRwQ-1; Fri, 11 Feb 2022 16:41:04 -0500
+X-MC-Unique: JZ5uYkTDPR-vYXKZJWmRwQ-1
+Received: by mail-ot1-f70.google.com with SMTP id
+	j2-20020a9d7d82000000b005a12a0fb4b0so6043545otn.5
+	for <dm-devel@redhat.com>; Fri, 11 Feb 2022 13:41:04 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20210112;
-	h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
-	:references;
-	bh=zCLaNAewIh7QkuP3rRG3MbVBEGym23cj6pMb7L3QmRw=;
-	b=ULKYmckH4yYUAQtRjhushAfy/3OYiBMKqcSAXL4vjAdJDdboDT6uKT238RpHXYPz/h
-	qtuNCkMYKYPm25a5OKU5LuaXQ8fuCYhZWuWam2vsZWhh9t8Qxz+2w/f+JiGmGmwYnG7t
-	FonbXWaWhxkgUMoulcxDBqywOQkT8QDz6itrEDXf2p0k3qVhuv9BXcEgT9vms6TF2QCI
-	ic6yKjBBMRj4MK7Kz1nCeVZuwAMbY3DXP68PeyeKSAkSu6RXdW/5sU87ZGC1coTAshUR
-	d4nxMXnDVppjJ/1F3IAmOEfVxUxg4PnOKVquT+zJ50SVAX/794pTmTS/FcowQToUKjhf
-	9Z9Q==
-X-Gm-Message-State: AOAM532raYluJPYdwJ1QypLs6gTqsg4vJWm0b2SL3mKKs7XZT7umwuju
-	+2X2fZcnkaTu0n6D0mvvCEgNVL/T/5a2uW11DTJBMjYOdi1xC2DFk3K7t4vGBP1mj7poSc7EANC
-	jtNKqu0tXnGt4zASgibN7cBEdj82UEXyByVSGfiANgyJrDmRnu90vae9J+hQ3vBpByg==
-X-Received: by 2002:a9d:58c8:: with SMTP id s8mr1306860oth.294.1644615685184; 
-	Fri, 11 Feb 2022 13:41:25 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJyzn92w1zkt3XkDgBb0WATQwhT0Cg5dpyyOjGhJ9x8FW+WtRk+rD9rUvvy7aLTh3q+qoANrxw==
-X-Received: by 2002:a9d:58c8:: with SMTP id s8mr1306850oth.294.1644615684909; 
-	Fri, 11 Feb 2022 13:41:24 -0800 (PST)
+	h=x-gm-message-state:from:to:cc:subject:date:message-id;
+	bh=8b2j/hRlmeRKgxQS01vdbuNTDBEr7G47snWX3xyMZr0=;
+	b=SxrlalsZ4OqlYXqNr5+IBnl5wrrmGdU+r7KTbGtHS3aFZeCUltEAaKV8+pUdzzQjss
+	0bUNd3rIRBrZKp99VNBJtJOwXvuz0PGl8Y1DezSbjRn8T0705EkDJmBFZBAHHd9w8v9t
+	pbeeV2jGfeIv4BDK+4Jl4Sy8S6NK4ix+SBrfGnJKtEn77Rwms7wUXkEDgkLPbf6caH/v
+	HB5DAJ5zaigkSyTjunUDJam2USfl3Wg9GS8VCDTxaQNudiw4mNsgskoQn2+bHuWJLkzj
+	8pBsMD+IfY76iT+0LoeqgpIg06NKdVH7ldvA6Vxe+loHyGHFnZfG2aE/I+T9Od0A/N9T
+	GoJA==
+X-Gm-Message-State: AOAM533V9f2f+NcRSmbSlpkYrx1k54Mpp4sOKiV57OuakbCPN4wgKnLp
+	hKU8cANfG6ZKmF9JGnq9Jx2dsEH2ZmaVFqw+cgRjuqwT4UoBZ+pE5/iqnbGv+aaB5K3IMLYwUdZ
+	HrW30mkJ9QkKPD9fDWRL2p7+Bp9uOnUYf0vlSnhQsX35QndH4iOj6urSaoxhQNvq1UA==
+X-Received: by 2002:a05:6808:ece:: with SMTP id
+	q14mr1091263oiv.174.1644615663104; 
+	Fri, 11 Feb 2022 13:41:03 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJzi7P+hhoDWQ7F6Az0Vws24qOdd5k5JsOKRbyjvj6pMufn+nzx1zyZXbHL8fuSV48Uc3NRqJQ==
+X-Received: by 2002:a05:6808:ece:: with SMTP id
+	q14mr1091244oiv.174.1644615662391; 
+	Fri, 11 Feb 2022 13:41:02 -0800 (PST)
 Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
 	[68.160.176.52])
-	by smtp.gmail.com with ESMTPSA id n4sm9481217otq.63.2022.02.11.13.41.24
+	by smtp.gmail.com with ESMTPSA id 1sm9444505oab.16.2022.02.11.13.41.01
 	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Fri, 11 Feb 2022 13:41:24 -0800 (PST)
+	Fri, 11 Feb 2022 13:41:02 -0800 (PST)
 From: Mike Snitzer <snitzer@redhat.com>
 To: dm-devel@redhat.com
-Date: Fri, 11 Feb 2022 16:40:55 -0500
-Message-Id: <20220211214057.40612-13-snitzer@redhat.com>
-In-Reply-To: <20220211214057.40612-1-snitzer@redhat.com>
-References: <20220211214057.40612-1-snitzer@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Date: Fri, 11 Feb 2022 16:40:43 -0500
+Message-Id: <20220211214057.40612-1-snitzer@redhat.com>
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 X-loop: dm-devel@redhat.com
 Cc: linux-block@vger.kernel.org
-Subject: [dm-devel] [PATCH v2 12/14] dm crypt: use dm_submit_bio_remap
+Subject: [dm-devel] [PATCH v2 00/14] dm: improve bio-based IO accounting
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -106,7 +104,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 MIME-Version: 1.0
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -114,59 +112,51 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-crypt.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+Hi,
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index a5006cb6ee8a..337517cb4e90 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1855,7 +1855,7 @@ static int kcryptd_io_read(struct dm_crypt_io *io, gfp_t gfp)
- 		return 1;
- 	}
- 
--	submit_bio_noacct(clone);
-+	dm_submit_bio_remap(io->base_bio, clone);
- 	return 0;
- }
- 
-@@ -1881,7 +1881,7 @@ static void kcryptd_io_write(struct dm_crypt_io *io)
- {
- 	struct bio *clone = io->ctx.bio_out;
- 
--	submit_bio_noacct(clone);
-+	dm_submit_bio_remap(io->base_bio, clone);
- }
- 
- #define crypt_io_from_node(node) rb_entry((node), struct dm_crypt_io, rb_node)
-@@ -1960,7 +1960,7 @@ static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
- 
- 	if ((likely(!async) && test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags)) ||
- 	    test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags)) {
--		submit_bio_noacct(clone);
-+		dm_submit_bio_remap(io->base_bio, clone);
- 		return;
- 	}
- 
-@@ -3363,6 +3363,7 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 
- 	ti->num_flush_bios = 1;
- 	ti->limit_swap_bios = true;
-+	ti->accounts_remapped_io = true;
- 
- 	dm_audit_log_ctr(DM_MSG_PREFIX, ti, 1);
- 	return 0;
-@@ -3626,7 +3627,7 @@ static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 
- static struct target_type crypt_target = {
- 	.name   = "crypt",
--	.version = {1, 23, 0},
-+	.version = {1, 24, 0},
- 	.module = THIS_MODULE,
- 	.ctr    = crypt_ctr,
- 	.dtr    = crypt_dtr,
+All the changes from this patchset are available here:
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-5.18
+
+This work is based on Jens' for-5.18/block
+
+Please see v1's 0th header for context on motivation behind this patchset:
+https://listman.redhat.com/archives/dm-devel/2022-February/msg00193.html
+
+Christoph, I addressed all your feedback from v1 and added the
+Reviewed-by:s you provided. Thanks for your review.
+
+Patch 10 now isolates the block changes like you asked.
+
+All further review of this v2 patchset is welcomed.
+
+Mike
+
+Mike Snitzer (14):
+  dm: rename split functions
+  dm: fold __clone_and_map_data_bio into __split_and_process_bio
+  dm: refactor dm_split_and_process_bio a bit
+  dm: reduce code duplication in __map_bio
+  dm: remove impossible BUG_ON in __send_empty_flush
+  dm: remove unused mapped_device argument from free_tio
+  dm: remove code only needed before submit_bio recursion
+  dm: record old_sector in dm_target_io before calling map function
+  dm: move kicking of suspend queue to dm_io_dec_pending
+  block: add bio_start_io_acct_remapped for the benefit of DM
+  dm: add dm_submit_bio_remap interface
+  dm crypt: use dm_submit_bio_remap
+  dm delay: use dm_submit_bio_remap
+  dm: move duplicate code in callers of alloc_tio into alloc_tio
+
+ block/blk-core.c              |  24 ++---
+ drivers/md/dm-core.h          |   2 +
+ drivers/md/dm-crypt.c         |   9 +-
+ drivers/md/dm-delay.c         |   5 +-
+ drivers/md/dm.c               | 234 ++++++++++++++++++++++--------------------
+ include/linux/blkdev.h        |  16 ++-
+ include/linux/device-mapper.h |   7 ++
+ include/uapi/linux/dm-ioctl.h |   4 +-
+ 8 files changed, 164 insertions(+), 137 deletions(-)
+
 -- 
 2.15.0
 
