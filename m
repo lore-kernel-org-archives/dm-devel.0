@@ -1,101 +1,94 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 534C3C433F5
-	for <dm-devel@archiver.kernel.org>; Thu, 17 Feb 2022 17:51:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 49887C433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 17 Feb 2022 19:06:34 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-35-oe2TumZlPrmk87mpFNFK5w-1; Thu, 17 Feb 2022 12:51:15 -0500
-X-MC-Unique: oe2TumZlPrmk87mpFNFK5w-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-330-NHOHNOtXMN-B7zEjRM84NQ-1; Thu, 17 Feb 2022 14:06:29 -0500
+X-MC-Unique: NHOHNOtXMN-B7zEjRM84NQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id AF6F519253C4;
-	Thu, 17 Feb 2022 17:51:10 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 53DC481424D;
+	Thu, 17 Feb 2022 19:06:24 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BD471798A8;
-	Thu, 17 Feb 2022 17:51:09 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 96E83418E;
+	Thu, 17 Feb 2022 19:06:23 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5731F1806D1C;
-	Thu, 17 Feb 2022 17:51:07 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.9])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 703A71806D1C;
+	Thu, 17 Feb 2022 19:06:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.7])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21HHntuW027223 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 17 Feb 2022 12:49:55 -0500
+	id 21HJ6JV6000785 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 17 Feb 2022 14:06:19 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 2E0F440BB42; Thu, 17 Feb 2022 17:49:55 +0000 (UTC)
+	id 3EF5C1457F07; Thu, 17 Feb 2022 19:06:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2A0C74022F6
-	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 17:49:55 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 11D063C00086
-	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 17:49:55 +0000 (UTC)
-Received: from bombadil.infradead.org (bombadil.infradead.org
-	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3AC591457F04
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 19:06:19 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 210FD3C1EA4B
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 19:06:19 +0000 (UTC)
+Received: from mail-ej1-f46.google.com (mail-ej1-f46.google.com
+	[209.85.218.46]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-272-6pTYMPrpNzq0lZJBczuaNQ-1; Thu, 17 Feb 2022 12:49:53 -0500
-X-MC-Unique: 6pTYMPrpNzq0lZJBczuaNQ-1
-Received: from mcgrof by bombadil.infradead.org with local (Exim 4.94.2 #2
-	(Red Hat Linux)) id 1nKkua-00BdTP-0U; Thu, 17 Feb 2022 17:49:48 +0000
-Date: Thu, 17 Feb 2022 09:49:47 -0800
-From: Luis Chamberlain <mcgrof@kernel.org>
-To: Chaitanya Kulkarni <chaitanyak@nvidia.com>
-Message-ID: <Yg6Ku8XqnTjvNCrC@bombadil.infradead.org>
-References: <20220214080002.18381-1-nj.shetty@samsung.com>
-	<CGME20220214080605epcas5p16868dae515a6355cf9fecf22df4f3c3d@epcas5p1.samsung.com>
-	<20220214080002.18381-3-nj.shetty@samsung.com>
-	<20220217090700.b7n33vbkx5s4qbfq@garbanzo>
-	<f0f9317f-839e-2be2-dec6-c5b94d7022b7@nvidia.com>
+	us-mta-563-LtKUuG8EP0yu8gYdwo5whA-1; Thu, 17 Feb 2022 14:06:15 -0500
+X-MC-Unique: LtKUuG8EP0yu8gYdwo5whA-1
+Received: by mail-ej1-f46.google.com with SMTP id a8so9508156ejc.8
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 11:06:15 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
+	h=message-id:date:mime-version:user-agent:from:subject:to
+	:content-language:cc;
+	bh=mdQgPE+MN4QXHCuZfmZr4u+SAK0aRFpH7cy102uny4s=;
+	b=lovDBq9Erxlw4cKfCvIYc4CcTnSbbCtrpjWaUDMz00ZUyXGIYzIuHQ4ayzSrtFhhxf
+	pBkAnsZLMvhX5hcZA6otjJpEinMLld4xepz5JHofTqS7YDTxeiOCzKiVX18HTgnNnxps
+	BxKY18hJh2xJR5ydT/8TXMjQRtYQyjP06XfoAos/VWFb891aTfKTioo2Px1kab0w7aov
+	c5N+b0Qn8FiIUCzeJ435ZuofpUNdzwHT9IkhdNx3j8M8XjJtyXxmVaQYcvTwxIkUKfrM
+	MalLK6hIWVnDc8eU50+lNwAHVOqc1ESx7MxSMbq5gPckkBkvWcodBjB/XbRqffV1gI1X
+	aaDQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:message-id:date:mime-version:user-agent:from
+	:subject:to:content-language:cc;
+	bh=mdQgPE+MN4QXHCuZfmZr4u+SAK0aRFpH7cy102uny4s=;
+	b=uzDzOVE6Ju7H0nm+VgficTel0B7ucsGrkL+xD98bjEXLad9YVV15JzAGRCNAlrY857
+	/Y5jnqlJyDvoJXwfPHDsjmOIR+FGGohTR3fqXZcUADKq8luDbBBZuC/Co1E1DkGTZmMU
+	iamIdaFXNr8ClistoGNMer7uUpjFzUmAHA9HehsgQctSsEWaY3rNWVOwGAzsL7n3euR5
+	slxESOnBagyW6ULAQWsxuO0HnE/8ePSaw1cnmpklnzNFGNePcbQ94xYGNube5BHyVl5r
+	wNY5H1nlnHADKxs1HoFqxTRwcO+r+Ot3sgLljveUhBRDydXwGsLx1qDPMF0F0TDP49Tr
+	opzQ==
+X-Gm-Message-State: AOAM530zNL4RIY8fTypdNOsiqNJbktAAiQxPoyNaLFXpib+AqIJFjTCR
+	R1HdMEaRlMwGFuf/2DWJenE=
+X-Google-Smtp-Source: ABdhPJz4mZPoxPTj/F/hc3ejJunRwV/8KTjie4cNRFNXc1jNIsyPb+N/OzWVPWfA2zN3SqMau36cQg==
+X-Received: by 2002:a17:907:1384:b0:6cd:5c6a:eec0 with SMTP id
+	vs4-20020a170907138400b006cd5c6aeec0mr3635144ejb.35.1645124774509;
+	Thu, 17 Feb 2022 11:06:14 -0800 (PST)
+Received: from [192.168.2.27] (85-70-151-113.rcd.o2.cz. [85.70.151.113])
+	by smtp.gmail.com with ESMTPSA id j5sm1464417ejs.69.2022.02.17.11.06.13
+	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+	Thu, 17 Feb 2022 11:06:13 -0800 (PST)
+Message-ID: <82c29d3e-7b15-dcb1-8f00-450b6eb336f3@gmail.com>
+Date: Thu, 17 Feb 2022 20:05:53 +0100
 MIME-Version: 1.0
-In-Reply-To: <f0f9317f-839e-2be2-dec6-c5b94d7022b7@nvidia.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+	Thunderbird/91.6.0
+From: Milan Broz <gmazyland@gmail.com>
+To: dm-crypt <dm-crypt@saout.de>
+Content-Language: en-US
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-loop: dm-devel@redhat.com
-Cc: Mike Snitzer <snitzer@redhat.com>, "djwong@kernel.org" <djwong@kernel.org>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"clm@fb.com" <clm@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"osandov@fb.com" <osandov@fb.com>, Alasdair Kergon <agk@redhat.com>,
-	"javier@javigon.com" <javier@javigon.com>,
-	"bvanassche@acm.org" <bvanassche@acm.org>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	"nitheshshetty@gmail.com" <nitheshshetty@gmail.com>,
-	James Smart <james.smart@broadcom.com>,
-	"hch@lst.de" <hch@lst.de>, Nitesh Shetty <nj.shetty@samsung.com>,
-	SelvaKumar S <selvakuma.s1@samsung.com>,
-	"msnitzer@redhat.com" <msnitzer@redhat.com>,
-	"josef@toxicpanda.com" <josef@toxicpanda.com>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"dsterba@suse.com" <dsterba@suse.com>,
-	"kbusch@kernel.org" <kbusch@kernel.org>,
-	"Frederick.Knight@netapp.com" <Frederick.Knight@netapp.com>,
-	Sagi Grimberg <sagi@grimberg.me>, "axboe@kernel.dk" <axboe@kernel.dk>,
-	"tytso@mit.edu" <tytso@mit.edu>,
-	"joshi.k@samsung.com" <joshi.k@samsung.com>,
-	"martin.petersen@oracle.com" <martin.petersen@oracle.com>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"arnav.dawn@samsung.com" <arnav.dawn@samsung.com>,
-	"jack@suse.com" <jack@suse.com>,
-	"linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-	"lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>,
-	Alexander Viro <viro@zeniv.linux.org.uk>
-Subject: Re: [dm-devel] [PATCH v3 02/10] block: Introduce queue limits for
- copy-offload support
+Cc: cryptsetup development <cryptsetup@lists.linux.dev>,
+	device-mapper development <dm-devel@redhat.com>
+Subject: [dm-devel] New cryptsetup development list
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -107,59 +100,91 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Content-Type: multipart/mixed; boundary="===============1002895486828584637=="
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
-Authentication-Results: relay.mimecast.com;
-	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--===============1002895486828584637==
+Content-Language: en-US
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature";
+	boundary="------------C8w92hyBx71fPxVzbGuVcyg7"
+
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--------------C8w92hyBx71fPxVzbGuVcyg7
+Content-Type: multipart/mixed; boundary="------------yqyfB77wE6lLWa2tyPJl8IVR";
+	protected-headers="v1"
+From: Milan Broz <gmazyland@gmail.com>
+To: dm-crypt <dm-crypt@saout.de>
+Cc: device-mapper development <dm-devel@redhat.com>,
+	cryptsetup development <cryptsetup@lists.linux.dev>
+Message-ID: <82c29d3e-7b15-dcb1-8f00-450b6eb336f3@gmail.com>
+Subject: New cryptsetup development list
+
+--------------yqyfB77wE6lLWa2tyPJl8IVR
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: base64
+
+SGVsbG8sDQoNCnRoZXJlIGlzIGEgbmV3IG1haWxpbmcgbGlzdCA8Y3J5cHRzZXR1cEBsaXN0
+cy5saW51eC5kZXY+IGRlZGljYXRlZA0KdG8gY3J5cHRzZXR1cCBkZXZlbG9wbWVudC4NCg0K
+UGxlYXNlIGNvbnNpZGVyIHN1YnNjcmliaW5nIGlmIHlvdSB3YW50IHRvIHJlY2VpdmUgbmV3
+IHJlbGVhc2VzDQphbm5vdW5jZW1lbnRzIGFuZCBwYXJ0aWNpcGF0ZSBpbiBkaXNjdXNzaW9u
+cy4NCg0KVGhlIGxpc3QgaXMgaG9zdGVkIGF0IGtlcm5lbC5vcmcgc3Vic3BhY2UNCmh0dHBz
+Oi8vc3Vic3BhY2Uua2VybmVsLm9yZy9saXN0cy5saW51eC5kZXYuaHRtbA0KDQpZb3UgY2Fu
+IHN1YnNjcmliZSBieSBlbWFpbGluZyA8Y3J5cHRzZXR1cCtzdWJzY3JpYmVAbGlzdHMubGlu
+dXguZGV2Pg0KKFlvdSBjYW4gdXNlIGxpbmtzIGluIFVSTCBhYm92ZS4gRW1wdHkgbWFpbCBt
+ZXNzYWdlIGlzIGVub3VnaC4pDQoNClVuc3Vic2NyaWJlIGJ5IGVtYWlsaW5nIDxjcnlwdHNl
+dHVwK3Vuc3Vic2NyaWJlQGxpc3RzLmxpbnV4LmRldj4uDQoNClBvc3RzIGFyZSBtYWRlIGJ5
+IGVtYWlsaW5nIDxjcnlwdHNldHVwQGxpc3RzLmxpbnV4LmRldj4uDQoNCkZvciBvdGhlciBp
+bmZvcm1hdGlvbiBhbmQgaGVscCBhYm91dCB0aGlzIGxpc3QsIHNlbmQgYSBtZXNzYWdlIHRv
+DQo8Y3J5cHRzZXR1cCtoZWxwQGxpc3RzLmxpbnV4LmRldj4uDQoNClRoZSBsaXN0IGlzIGVu
+dGlyZWx5IG9wZW4uIE5vIG1vZGVyYXRpb24gaXMgaW4gcGxhY2UuDQpGb3IgcHJpdmFjeSBy
+ZWFzb25zLCB0aGUgbGlzdCBvZiBzdWJzY3JpYmVycyBpcyBub3QgYXZhaWxhYmxlIGV2ZW4N
+CnRvIGxpc3Qgb3duZXJzLg0KDQpUaGUgYXJjaGl2ZSBpcyBhdmFpbGFibGUgYXQgaHR0cHM6
+Ly9sb3JlLmtlcm5lbC5vcmcvY3J5cHRzZXR1cC8uDQpPdGhlciBhY2Nlc3MgbGlrZSBOTlRQ
+LCBBdG9tIGZlZWQsIG9yIGdpdC1iYXNlZCBhY2Nlc3MgaXMgYXZhaWxhYmxlDQp0aHJvdWdo
+IGh0dHBzOi8vbG9yZS5rZXJuZWwub3JnLyBzZXJ2aWNlLg0KDQpUaGlzIG1haWxpbmcgbGlz
+dCBzaG91bGQgcmVwbGFjZSB0aGUgZXhpc3RpbmcgZG0tY3J5cHQgbWFpbGluZyBsaXN0Lg0K
+DQpUaGFua3MsDQpNaWxhbg0K
+
+--------------yqyfB77wE6lLWa2tyPJl8IVR--
+
+--------------C8w92hyBx71fPxVzbGuVcyg7
+Content-Type: application/pgp-signature; name="OpenPGP_signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="OpenPGP_signature"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEKikYJD/eRmSNBob52bBXe9k+mPwFAmIOnJgACgkQ2bBXe9k+
+mPyjwhAAmfMKushuUXaKAv1bY2UrlKZRzT/yrfqzvfXt+xt1UYdg/l0t7K5V13Hc
+ZlnhDjnsqhyD8Wkrrz3Ee6SxdZC73h4ig8ZaWGwTMxY07xqg/TyNPp7StFlL6Zfm
+hU4G4fhRw6fzOh6cUCQFjaODMAaiqClgU5jedzSTRqsubwbM5PPqFaMtuO/EMGkH
+coKSwskNbEnasKfxNuXMiOkxQUfalDJkwhKsSOdxsF7ZUUd29QNeDH7tLnErQBYe
+d6sswN1H4lOeTKG/tHjhFaqMILRhnzQT1GKRidGyFus5DCXBeNhP1KXMD5d6Q2qn
+vHRSQ2ATBa2KekWn73ZSU8DjhAjzpz1BJhAvg5v+y/qwQ/q45tXppLzEiI9of2qs
+xcuR8lR+eWvsjQI2q/z1NSBOCvDcBbvivgiS+YzByMf3jSRugW+02eqOM/ZxXQpv
+yLv7bUVKcdTux9pyWzUTzMfNyBf2noXNbtRrNdPgz+TLS2IaF1Ph7tNjzgirQfKd
+N53MZc5P8uDBzqAr82yHlmmIjxmv7B1buLedmzfQQs8jEBM2lPC1c0pT+07TO0DC
+qP+yd1wYSEu3xkxPhPh9ALj7SO1J0uzJeU3M/ujeXhaNAu1NQLo+1hb+uwGixJYh
+Ll2/K2NRVxV1c8BzMSlCvhXM8Oh/W5KIPD5DNW5Phb9T6ZzCVwU=
+=kWVy
+-----END PGP SIGNATURE-----
+
+--------------C8w92hyBx71fPxVzbGuVcyg7--
+
+
+--===============1002895486828584637==
 Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-On Thu, Feb 17, 2022 at 10:16:21AM +0000, Chaitanya Kulkarni wrote:
-> On 2/17/22 1:07 AM, Luis Chamberlain wrote:
-> >> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> >> index efed3820cbf7..792e6d556589 100644
-> >> --- a/include/linux/blkdev.h
-> >> +++ b/include/linux/blkdev.h
-> >> @@ -254,6 +254,13 @@ struct queue_limits {
-> >>   	unsigned int		discard_alignment;
-> >>   	unsigned int		zone_write_granularity;
-> >>   
-> >> +	unsigned long		max_hw_copy_sectors;
-> >> +	unsigned long		max_copy_sectors;
-> >> +	unsigned int		max_hw_copy_range_sectors;
-> >> +	unsigned int		max_copy_range_sectors;
-> >> +	unsigned short		max_hw_copy_nr_ranges;
-> >> +	unsigned short		max_copy_nr_ranges;
-> > 
-> > Before limits start growing more.. I wonder if we should just
-> > stuff hw offload stuff to its own struct within queue_limits.
-> > 
-> > Christoph?
-> > 
-> 
-> Potentially use a pointer to structure and maybe make it configurable,
-
-Did you mean to make queue limits local or for hw offload and make that
-a pointer? If so that seems odd because even for hw copy offload we
-still need the other limits no?
-
-So what I meant was that struct queue_limits seems to be getting large,
-and that hw copy offload seems like an example use case where we should
-probably use a separate struct for it. And while at it, well, start
-adding kdocs for these things, because, there's tons of things which
-could use kdoc love.
-
-> although I'm not sure about the later part, I'll let Christoph decide
-> that.
-
-  Luis
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+--===============1002895486828584637==--
 
