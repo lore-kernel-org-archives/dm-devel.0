@@ -4,136 +4,135 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6D139C433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 17 Feb 2022 13:31:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6827DC433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 17 Feb 2022 13:35:49 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-392-mAmE6NKnMqu0_M5JHbKgQg-1; Thu, 17 Feb 2022 08:31:37 -0500
-X-MC-Unique: mAmE6NKnMqu0_M5JHbKgQg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-176-kygkI5vGPsqr6gXcRFTEUQ-1; Thu, 17 Feb 2022 08:35:44 -0500
+X-MC-Unique: kygkI5vGPsqr6gXcRFTEUQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 189BB814245;
-	Thu, 17 Feb 2022 13:31:33 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B632070D2B;
-	Thu, 17 Feb 2022 13:31:32 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B910A185302C;
+	Thu, 17 Feb 2022 13:35:40 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8427C7C0EB;
+	Thu, 17 Feb 2022 13:35:40 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 24DCD1832DA0;
-	Thu, 17 Feb 2022 13:31:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.2])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1F22D4A700;
+	Thu, 17 Feb 2022 13:35:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.9])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21HAGR3A019757 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 17 Feb 2022 05:16:27 -0500
+	id 21HADRJl019045 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 17 Feb 2022 05:13:28 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 6A8004010A14; Thu, 17 Feb 2022 10:16:27 +0000 (UTC)
+	id BC5B8492D4D; Thu, 17 Feb 2022 10:13:27 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 65717400F3FE
-	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 10:16:27 +0000 (UTC)
+	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B734548FB04
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 10:13:27 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 493F41C05EB9
-	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 10:16:27 +0000 (UTC)
-Received: from NAM12-BN8-obe.outbound.protection.outlook.com
-	(mail-bn8nam12on2069.outbound.protection.outlook.com [40.107.237.69])
-	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 774613C0D1B0
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 10:13:27 +0000 (UTC)
+Received: from EUR05-AM6-obe.outbound.protection.outlook.com
+	(mail-am6eur05on2096.outbound.protection.outlook.com [40.107.22.96]) by
+	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-512-j9r5l-TlOhCN6jUYIluvOg-1; Thu, 17 Feb 2022 05:16:23 -0500
-X-MC-Unique: j9r5l-TlOhCN6jUYIluvOg-1
-Received: from MW2PR12MB4667.namprd12.prod.outlook.com (2603:10b6:302:12::28)
-	by BL0PR12MB4724.namprd12.prod.outlook.com (2603:10b6:208:87::23)
+	us-mta-464-rbBPEoxNOom7InZ4jvM6sQ-1; Thu, 17 Feb 2022 05:13:25 -0500
+X-MC-Unique: rbBPEoxNOom7InZ4jvM6sQ-1
+Received: from DB6PR0802MB2374.eurprd08.prod.outlook.com (2603:10a6:4:8a::21)
+	by VE1PR08MB5853.eurprd08.prod.outlook.com (2603:10a6:800:1a5::24)
 	with Microsoft SMTP Server (version=TLS1_2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4975.15;
-	Thu, 17 Feb 2022 10:16:21 +0000
-Received: from MW2PR12MB4667.namprd12.prod.outlook.com
-	([fe80::846c:d3cd:5a30:c35]) by MW2PR12MB4667.namprd12.prod.outlook.com
-	([fe80::846c:d3cd:5a30:c35%5]) with mapi id 15.20.4975.017;
-	Thu, 17 Feb 2022 10:16:21 +0000
-From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
-To: Luis Chamberlain <mcgrof@kernel.org>, "hch@lst.de" <hch@lst.de>
-Thread-Topic: [PATCH v3 02/10] block: Introduce queue limits for copy-offload
-	support
-Thread-Index: AQHYIX3XHL9e7GOdFkmJOxrEFUhCJ6yXeHUAgAATXwA=
-Date: Thu, 17 Feb 2022 10:16:21 +0000
-Message-ID: <f0f9317f-839e-2be2-dec6-c5b94d7022b7@nvidia.com>
-References: <20220214080002.18381-1-nj.shetty@samsung.com>
-	<CGME20220214080605epcas5p16868dae515a6355cf9fecf22df4f3c3d@epcas5p1.samsung.com>
-	<20220214080002.18381-3-nj.shetty@samsung.com>
-	<20220217090700.b7n33vbkx5s4qbfq@garbanzo>
-In-Reply-To: <20220217090700.b7n33vbkx5s4qbfq@garbanzo>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
-	Thunderbird/78.11.0
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: c1a1b84c-f0d8-4872-61b9-08d9f1fe8b6d
-x-ms-traffictypediagnostic: BL0PR12MB4724:EE_
-x-microsoft-antispam-prvs: <BL0PR12MB4724CEDBE5856A6200C3BE8CA3369@BL0PR12MB4724.namprd12.prod.outlook.com>
-x-ms-oob-tlc-oobclassifiers: OLM:8882
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: 6Z2W2wzGF0dUKXoe8V/PLOCWOIuMlgKpU5gl8Pwl6MCfuWCN8GbKrZhj3+tkHr/NXWl4aXzmuAVFpWTFDdjoA5eHGYMoIT7MoJMNxFjCgmChl2pZ51+6jhLkh9hXtYnklZjcbkdAWYHFMYHJa//bQWwPcDkP0T7gAlBbtEunI9GOOYcsXUjIg0qbqC72gpDyicngffJOqe2FGJeQKbZHT7kas6h3NXGvOQ6at1qTBBXM0fNxgfWjTHJhStuP+VsAgNIHWCT2zx69ARWu3SU0OHnM7A7m5H6vdBZDbLWXyQJTgWp3yOdbrtFwYtFhDwfMH+NBajtQCxQfr7X7lEP6mb3hWHfJXISN1R1e3LsCl1wQ1IU3Yx1TmLIbfGHaPpR0GcrDyHBujf4cbtslcoCCFbVENAg7XvKfNBkuXwtSUnokCT+dUBDGTadlya9n1d/htTcSt1izAI8Emrt1o5qbYDO1opySeDmMSa6nvjqxVNou9oKrHP1JrRBuMPTtUuQq+NrhmJzk8+OU+6vrr9gU1S3InhBQpr3w9YXIeSWOR3om6ivPJ4I/thEPa9GZo8mKIl6dlj8AIs0eVGyyCiZi21WV91zDXf95Xd3EskUtBEdKc1XbwjjKnFTs8DNhvV0QHROpuS6X3JoiiSkmYCLGIjw6SfBrKR7/mAnqTYHhd8Kf/FIuaVcY9x2kl92rMpG5lWdiYTaZxz/izqE9bp29XCaLgV26Jydn/cxStSJ0sODDswZOuSxmsGGzZyBF5J/VcxGUub9Q4wl6X0BexxsDsA==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:MW2PR12MB4667.namprd12.prod.outlook.com;
-	PTR:; CAT:NONE;
-	SFS:(13230001)(4636009)(366004)(71200400001)(7406005)(66946007)(64756008)(66476007)(66446008)(91956017)(86362001)(4326008)(7416002)(6486002)(2906002)(6512007)(8936002)(66556008)(38100700002)(508600001)(8676002)(5660300002)(110136005)(54906003)(122000001)(316002)(76116006)(83380400001)(31686004)(38070700005)(53546011)(2616005)(186003)(36756003)(31696002)(6506007)(45980500001)(43740500002);
-	DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?utf-8?B?VUtEZUh2OGVJdzhZWVVtQVhyNkZuTDFrSldVVlNoWWgzd0YwNzBIZVhZaEhv?=
-	=?utf-8?B?MjdXNFMwU2FTVWtaVGlCb3U0eU96NjRJYjY4cXA1YkR3WUJxYXRxcjBWT3VN?=
-	=?utf-8?B?Y3dlYnU0b2RETngrbkZjK09qeWZCYjJCSVpTRlUzaEVrd3JuLzRrQ0N3YVVQ?=
-	=?utf-8?B?cVgyY01kT2lqQ3V4RXpkSzRBaEl6cnhJWHVUWSsvcTdYRFNKSGxXUTRhVDln?=
-	=?utf-8?B?M3dNeEdPTFFZQXJMMm52UDJrZ1dtQjBlaThQWWdYV0JBSEVkeWtZazVyZnNI?=
-	=?utf-8?B?ZWkyNXR2OTl6aXVKcHdjVlArWEtJNkNudCtHQnAyMGFFdnBRYklrQXdXK2NM?=
-	=?utf-8?B?anpIN3kzNmlKRGljUys5TmlGZTc3V3MyK3I4V01YRDcvYURaYUJFeXVFb2xF?=
-	=?utf-8?B?elMwbkVUR2lia2xOZ3RrczZLcjgva2k3cFpvZmtLcm5oOTlicEFpRWFPKzZP?=
-	=?utf-8?B?RTV3RDRHejhWenlSajR4U0pRUG1OUmhPMW80VTUvNzNFa2RVeUFTMlI4dWRC?=
-	=?utf-8?B?OCsrYXVEVEQ4akZLR3Rlc1A1anZnWFFhL0dLVms4UXBNWkJPbldVbnhVNDMz?=
-	=?utf-8?B?VnYwdytFZnRuQzlQV2FFMzBPRHFkbEZKUXRVaEtjZjZuZGQ0WkNpTHMveWdz?=
-	=?utf-8?B?QmNtWmVIMWVRd3lwSkgyKzE0RnNqNnEzY1BTU3djRlNyRERRQWhXa0pUNjJj?=
-	=?utf-8?B?ak54WTNXUnFVUENVZGh2STRWaDhsT1cwV2NnT1p5WnEzNW9Od2hTT2ZjeERl?=
-	=?utf-8?B?UWVLS0Y1VFRydXI1TDRtMVRSNnI4OStJd1JqK1B6bkFLdXFCeFlxVWJiRU9B?=
-	=?utf-8?B?TG81cllTNndUYkhBdFB6aEkzOGNPUW15MUpJSDJiWHR4K05wdGhCRzgwZHpT?=
-	=?utf-8?B?MUZkUGF1QkFvQm5uT0dPNWhLMkIxa04wSTYrUnJuMngza2syWjRsNHNkT1Vu?=
-	=?utf-8?B?bDZjSHpmbldEeFN3dnNiZnpGS211VDdiK2RjK1JLSWJIeVordEZGNlFrZjVJ?=
-	=?utf-8?B?dlg1NEN5WnFwSExNNXQ4NCsyL0p2MkYyejhVbnZPOVJKOGZZTWMyZ3A5aWp1?=
-	=?utf-8?B?TXhOQ1JBRjRLYU5uTEZrV0laOEVFTVBDdjV5VitsaFEyVmI5SWJnbi90cW5V?=
-	=?utf-8?B?T2dvMS96T0doODlSb1M0MzhvZkdKVDBGZExRUXEybVFQd3JBUXdRa255cmln?=
-	=?utf-8?B?L1Jaa0x0ZXZFcGRVYVYzMHNjOEtVSTF1QnpxTzh4RWI2OFBTSzVsZS9vbUEw?=
-	=?utf-8?B?UzViYkVqWEY4ZjQ0aE16dmliQTFvUmFIZlV1SzAxS2lkeGVlWGlBQTdNZGNh?=
-	=?utf-8?B?OEtoMWFkTi9LbTdmQTdRVC9UNFVIMjZlRllZeUZFNUZ0QW1XYVU3bTNrNUhQ?=
-	=?utf-8?B?QXM2SWJPdTBBTmh1RFR4Q2ZQbnJXVGpoVWpTUVJaTFV6QzhnZ3c2STVPN0RX?=
-	=?utf-8?B?NjVtTlV6RE5HS1c0UytubFhVK2ZjN3JMcW9FdEFHbmRYWExldGdJcnl3QklG?=
-	=?utf-8?B?TGFERDZkR0krMTBFc1dzdkNvYzg0UVp1dit1TWNoRVlEbEJveFUvcVBvWGtp?=
-	=?utf-8?B?SjJYeENUblA1eVVraEVlZ3hPalV2cWxBbUMrOU10Mk9wVktTeUZoL2g0cHZt?=
-	=?utf-8?B?bnZoNm9ubHhGRU53M0VtalZVTEtUeDJpbFExUWFPMlhKRDlXRDdPcVo3RG9Y?=
-	=?utf-8?B?MkJDNm1FbmFURkxDSi9UR0I2QTR4RUFxdXczZGJNeDlHVnRvTHFmYU1BOEd1?=
-	=?utf-8?B?dWlmeXRhVWFGcE5DWkl0VHpIYzl6b0N5Ky9yRnBKUkR5eE54M3pNcVNndEF2?=
-	=?utf-8?B?WEhYam43bTFtazlNL3FzY1ZyeVRZSkxHVEpSOWxEM0FxMDF2UUVUVjIxdEZD?=
-	=?utf-8?B?OVNSV1V2UmI5NVVja1lwNjJKcFJMK0xBOUJyUElqUmNwaHJPNTlqZTZHWFZi?=
-	=?utf-8?B?cWhVU3RWQmk4R0tJd2NrNENrS3pObmo0dUV5K3ltK3V0ZWdzSC8wU2dycklV?=
-	=?utf-8?B?Uk5ldTF6V09wTVVqeTA1S1JKdE8vNGVkdXpIUWN3T3QxZENvL2JFMGFqV1Qx?=
-	=?utf-8?B?QnR2SVRiOWozK1lDc2ZVcnNZSC9hSGxtODE3NmQ2V3ZYNTFzUWEzeXluaU13?=
-	=?utf-8?B?c1RBTUVRQVJkRFBtVytIbFhlVHpvN1AzYjc5c0ZMc0hucHk1ZkJESGZQL3dv?=
-	=?utf-8?Q?/ZP6IG4hSLaoX4cTPLBF5yo2G6c6LkusoAacJHs0f/T/?=
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.4995.16;
+	Thu, 17 Feb 2022 10:13:22 +0000
+Received: from DB6PR0802MB2374.eurprd08.prod.outlook.com
+	([fe80::57c:1b85:7b36:55bf]) by
+	DB6PR0802MB2374.eurprd08.prod.outlook.com
+	([fe80::57c:1b85:7b36:55bf%5]) with mapi id 15.20.4995.017;
+	Thu, 17 Feb 2022 10:13:22 +0000
+References: <c64d2143-284e-7621-440c-971e3405b4d8@virtuozzo.com>
+To: Damien Le Moal <damien.lemoal@opensource.wdc.com>,
+	"agk@redhat.com" <agk@redhat.com>, "snitzer@redhat.com"
+	<snitzer@redhat.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>,
+	linux-kernel@vger.kernel.org
+From: Kirill Tkhai <ktkhai@virtuozzo.com>
+X-Forwarded-Message-Id: <c64d2143-284e-7621-440c-971e3405b4d8@virtuozzo.com>
+Message-ID: <d209a0b1-2514-79a0-257a-22bcb372785a@virtuozzo.com>
+Date: Thu, 17 Feb 2022 13:13:20 +0300
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101
+	Thunderbird/78.14.0
+In-Reply-To: <c64d2143-284e-7621-440c-971e3405b4d8@virtuozzo.com>
+X-ClientProxiedBy: AS8PR07CA0035.eurprd07.prod.outlook.com
+	(2603:10a6:20b:459::27) To DB6PR0802MB2374.eurprd08.prod.outlook.com
+	(2603:10a6:4:8a::21)
 MIME-Version: 1.0
-X-OriginatorOrg: Nvidia.com
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-Correlation-Id: 25a8552c-e3eb-4a32-06e5-08d9f1fe208d
+X-MS-TrafficTypeDiagnostic: VE1PR08MB5853:EE_
+X-Microsoft-Antispam-PRVS: <VE1PR08MB5853B1DA1482E10B82A69509CD369@VE1PR08MB5853.eurprd08.prod.outlook.com>
+X-MS-Oob-TLC-OOBClassifiers: OLM:172
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0
+X-Microsoft-Antispam-Message-Info: i0Kq2n03eHoZk6kTKH7v/ZmWAYTTPyxrCQLJu68hl6BYaeaDy5NVcfJ/5DxV0FGH/mDsmxUWvwPNK1C1aDwQoC6RhoMu+kNSmf2sy5EmHNeKyE4zinbSzoQMvJtsWu/+rh+JM1rHwBV/zg39rq6OnJiBYpiJrOk4dcmzoHtajoPHtn+ivKpaF3FRFeqEzE8p/FDItaD2vbTd2yla/2CUkDPiwogVQ8ZGGJ2s0dWwvkMhwiL0nzePS/Ps/OLO1AcnvIEHpd+b/3assv9DwGkXVoS6R5UQce2+NaMlvqKLmToezhb5otJknSzdmvMt54rtxrcGMkLL+c2kftWNxphBDhX2ePIfQdBlquYNBOG4mN84mDWMdD1FBEArvGCBVd7hDcVzRkZiojBI+JlRlkXj6omNZxQJG2BYwo/TMocNgS/CR3626mGniugCGXPbpbq2+IoC1nPTD1b7fVEvSGEa912YDrU/KzcWF/v5Ejg98my4qUDlCgvlScAw0qjJyKfOyo4bdXsHNVdorMdgILn9FB0Q2nx2dGU+IIYVhM+5B4UwXuCzftTk23CUi28XIkdfFi9H/cBesfRbZmAEgtwIJ60jQUw8egokIWkHOasaG769fhI7g/3WIbE5mTPvsqSk1t9hfX1DsXtqwaDAZWU6xnSUyWPV2OLls9J/ZKsZqR71KaqrRgYLgIpML91SEvasNTQCnwHFvEJrLXnklDd1S1F0RmCK81Gv+sENNWDlOm8d07wcDnL8BBmku7g4yqr3lX315oaug/QNmfWvY7JpKp2Kq/StKjnX8VnNgTO0C1g=
+X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+	IPV:NLI; SFV:NSPM; H:DB6PR0802MB2374.eurprd08.prod.outlook.com;
+	PTR:; CAT:NONE;
+	SFS:(13230001)(4636009)(366004)(2616005)(186003)(26005)(31686004)(52116002)(6512007)(6506007)(508600001)(316002)(110136005)(36756003)(6486002)(8936002)(2906002)(83380400001)(86362001)(66476007)(66556008)(66946007)(8676002)(5660300002)(31696002)(38100700002)(38350700002)(21314003)(45980500001)(43740500002);
+	DIR:OUT; SFP:1102
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?utf-8?B?Z2hlbVM3L1FHdmhFaitJRlhKSmthaVJNMThXWFppZHpEclFCcThSYUptR21r?=
+	=?utf-8?B?WXNJTERuTFBqb0hFYmJ6ZmpReXNibFo4dXNVaENQUVZ6OTkwb0lMZWx5bjlP?=
+	=?utf-8?B?KzczTW4wVFJHRVVFNTZSSTBYejBrOHM4Q3Vrd1BjSXZLSlA1NHdUUldqanpp?=
+	=?utf-8?B?MDRqSVdOSUhJUGNJWEc1V2RIZTBLZmJpQ2M5ZzlvNGJQcEszZC9TKzRlWG1J?=
+	=?utf-8?B?Sm5UY2dDSEVud29zNFg3T2JSK3daRHAzTnkvRTd6UnR6d3dpL2dpQ1BiOS8y?=
+	=?utf-8?B?cVhCODBFVURTbFBZRkRlTW5pTkxGdUZVWk5Ob2hjMEpXVzliN2VaWXpFNWVj?=
+	=?utf-8?B?TUdnMHhXVSs4T1dKZ2xEQkFQZGhoYlMrenQxM21iM3JuUG1LRGt3YWJPM3dT?=
+	=?utf-8?B?VVBaM3hudXBmdjNWdThCV3VNekx2MkNhTzg3Wi9KRnFMUThNM0t5bjFadDNm?=
+	=?utf-8?B?eTRpNS9iUDl0L0thUjNyK2g5UDRyMGdYeEdtSncva1lrejBOd3RNN3d3OVV6?=
+	=?utf-8?B?T1g4Q3QxR28vdWtsNzRTSVAyd1p0NElyd3dMUmMwUm9HQXZoaFR4cjh6ZjUv?=
+	=?utf-8?B?TndQLzdSYm9uOFoxb0RRK1QycnRPK3Ewd09WQURCVjljWVJBZFdsRnc2a3hu?=
+	=?utf-8?B?dWFKd01QWVUzcGk4dGhwckhRUXdtejhhKzJFeWZleS83a2xKQ0J6a21HT2E5?=
+	=?utf-8?B?VE5ua3UzQThvQkEyL2U1WXZacFZpb1hQbjhiVDFkTzBTK3JRZkU3SWNGMnBa?=
+	=?utf-8?B?bHg2a1BpQUh4SUNha0c4cnlKdGIxeEZLQVRHMExLUlRFa2JsemlTdjErWmdU?=
+	=?utf-8?B?K2o4REs0bXEwQm1OTlFDYWp0K2RxM2FiSDFEdDFSOHVzOEZiTnQ3WUdPMnJE?=
+	=?utf-8?B?R2d6TmhwUHAyZmFod3RyQ0dweGhuRVIvSnVBejRudWhBUWFDVlM4SStFdlVQ?=
+	=?utf-8?B?Qyt3UVpCNDQ4ektOMWxGU3BldDl5b0MzK21Eb045M0VRdHBKSFUySExlckhR?=
+	=?utf-8?B?TVBzQy9GWE1BOUthU0doNTVzSSt2ZkwwWGJJSkZyUDFKZVExanZibE1tWWN5?=
+	=?utf-8?B?cGliR2FSVjhoUkUwTS9OYlpQZnVCaUhsOWs3ZnNtK0FMYXR4OGtSWlBicG01?=
+	=?utf-8?B?cWtxRGVkZUlWYmczUHM0OVF5ZGFyWDkrSEQ3Zzd1bmx2aDRBSHpDUW1hS0FB?=
+	=?utf-8?B?UCtXejUrcEdiNWp2WWZjcUh6eDFkdGxTN010SklpUWN6NmlIWnptcTg5blU4?=
+	=?utf-8?B?ZDZ5ZUZPZU9OZDdybW83V3NvVTh1cEFCMVN6Z2FlYWQ0Zi9keFc2MHdWc1g3?=
+	=?utf-8?B?TzVkNlFwTzRZSnJBbUg0UFBoNTc4cTRLRUxRL25qNDBaZE1mKzZVdTRXV2wv?=
+	=?utf-8?B?VnJXcjlZS2MwejJPS1lCUm5JVXdkWEs3NXA4eDZqTVFXMjRZSjNQd3psWHZI?=
+	=?utf-8?B?dWRBVlRTc24wOTVGOU5XK3pLL0xkNHM4RkFwcFIxOTdQWStTRisySXVQOGJt?=
+	=?utf-8?B?czJMTjJSclZBVGViMGJCMzJQbHloVlN6aHQ2OGxKajlEaUFGdFpxTlpKOFpY?=
+	=?utf-8?B?RXJycnZITU1vNzZ2bWxySHUyUjdtVlZ0R1I2ZXB1dU1NajZQNGkwV0lHaUVF?=
+	=?utf-8?B?WDhUZ1llSUFOdGZDZWF0SFR5UENBcFRHalZGa0I2VEMrMjkzTmZTUFhXRytB?=
+	=?utf-8?B?Z0lYblljbVM1VmwyeWNpdjJoZHhLQ3ArdzFqQStKREF1MVRCL2pRa0wzdmJj?=
+	=?utf-8?B?WHhIOTNkbjRncFNJWGE4Z2JKclF0bmpuRmNPa25tUFJYWVdwWXEyci9BZEtC?=
+	=?utf-8?B?bkhiYXV4SjhjWGJTK2Y1NndiZzgxdW9vZlJQN0d2MisxS0dwenhZYkdSYXJr?=
+	=?utf-8?B?dXNRTit5NHhCUG1hOEVhTzNmY2RKanBFTDU5anE0WUpxS3RUdm54MTB0SVhP?=
+	=?utf-8?B?VkMxakRLSktVYUIxVnBMeXY5bDRrbXdldmJZY2RtS20rNGlTcmtsTy9POTd3?=
+	=?utf-8?B?S0J4MXJDYjN1K05ldmlVMUhBV1RNZ0ltWHliU1AyaGFLbTVZZmJJb2FuQ21a?=
+	=?utf-8?B?T2pYdjh0eHpnQlZqTFlOUzdIbnA4eStrWWU5NWUwT1JOMVVzZ0dLWWJ5VVla?=
+	=?utf-8?B?Mmd4RllFc0xRelhFUlByeWtpdGh6ODVhTmNEcXl5ZjI5dGJrbnU2THdqWlU0?=
+	=?utf-8?Q?IywYfD2cH5CnDQMVpPQFFO4=3D?=
+X-OriginatorOrg: virtuozzo.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 25a8552c-e3eb-4a32-06e5-08d9f1fe208d
+X-MS-Exchange-CrossTenant-AuthSource: DB6PR0802MB2374.eurprd08.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: MW2PR12MB4667.namprd12.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: c1a1b84c-f0d8-4872-61b9-08d9f1fe8b6d
-X-MS-Exchange-CrossTenant-originalarrivaltime: 17 Feb 2022 10:16:21.1574 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 43083d15-7273-40c1-b7db-39efd9ccc17a
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: meGMcDWO4GHdInb5gwSpsB1ykzvj2VMwEtrwv7nc1iLYS4BbHuyOOGCx3L2XN+DrhlGRpRe3OhTHYKh1e8op9Q==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BL0PR12MB4724
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 Feb 2022 10:13:22.2236 (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 0bc7f26d-0264-416e-a6fc-8352af79c58f
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: yXFElfsFCMPhhV8NlyvVpzP+3RsNfPBIHJz3mlCWCnyxg95A3QagM2YORiH52dMUCxMvBZCpD+4c5HgSX4Q9Dw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: VE1PR08MB5853
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -142,40 +141,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-X-MIME-Autoconverted: from base64 to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 21HAGR3A019757
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Thu, 17 Feb 2022 08:30:58 -0500
-Cc: Mike Snitzer <snitzer@redhat.com>, "djwong@kernel.org" <djwong@kernel.org>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	"clm@fb.com" <clm@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>,
-	"osandov@fb.com" <osandov@fb.com>, Kergon <agk@redhat.com>,
-	"javier@javigon.com" <javier@javigon.com>,
-	"bvanassche@acm.org" <bvanassche@acm.org>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	"nitheshshetty@gmail.com" <nitheshshetty@gmail.com>,
-	James Smart <james.smart@broadcom.com>, Chaitanya, Alasdair,
-	Nitesh Shetty <nj.shetty@samsung.com>, Kulkarni <chaitanyak@nvidia.com>,
-	SelvaKumar S <selvakuma.s1@samsung.com>,
-	"msnitzer@redhat.com" <msnitzer@redhat.com>,
-	"josef@toxicpanda.com" <josef@toxicpanda.com>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"dsterba@suse.com" <dsterba@suse.com>,
-	"kbusch@kernel.org" <kbusch@kernel.org>,
-	"Frederick.Knight@netapp.com" <Frederick.Knight@netapp.com>,
-	Sagi Grimberg <sagi@grimberg.me>, "axboe@kernel.dk" <axboe@kernel.dk>,
-	"tytso@mit.edu" <tytso@mit.edu>,
-	"martin.petersen@oracle.com" <martin.petersen@oracle.com>,
-	"joshi.k@samsung.com" <joshi.k@samsung.com>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"arnav.dawn@samsung.com" <arnav.dawn@samsung.com>,
-	"jack@suse.com" <jack@suse.com>,
-	"linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-	"lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>,
-	Alexander Viro <viro@zeniv.linux.org.uk>
-Subject: Re: [dm-devel] [PATCH v3 02/10] block: Introduce queue limits for
- copy-offload support
+Subject: [dm-devel] [PATCH RESEND v2] dm: Fix use-after-free in
+	dm_cleanup_zoned_dev()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -189,183 +159,155 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <3C7747923854C747A3CF9C4661B64B1E@namprd12.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 2/17/22 1:07 AM, Luis Chamberlain wrote:
-> The subject says limits for copy-offload...
-> 
-> On Mon, Feb 14, 2022 at 01:29:52PM +0530, Nitesh Shetty wrote:
->> Add device limits as sysfs entries,
->>          - copy_offload (RW)
->>          - copy_max_bytes (RW)
->>          - copy_max_hw_bytes (RO)
->>          - copy_max_range_bytes (RW)
->>          - copy_max_range_hw_bytes (RO)
->>          - copy_max_nr_ranges (RW)
->>          - copy_max_nr_ranges_hw (RO)
-> 
-> Some of these seem like generic... and also I see a few more max_hw ones
-> not listed above...
-> 
->> --- a/block/blk-settings.c
->> +++ b/block/blk-settings.c
->> +/**
->> + * blk_queue_max_copy_sectors - set max sectors for a single copy payload
->> + * @q:  the request queue for the device
->> + * @max_copy_sectors: maximum number of sectors to copy
->> + **/
->> +void blk_queue_max_copy_sectors(struct request_queue *q,
->> +		unsigned int max_copy_sectors)
->> +{
->> +	q->limits.max_hw_copy_sectors = max_copy_sectors;
->> +	q->limits.max_copy_sectors = max_copy_sectors;
->> +}
->> +EXPORT_SYMBOL(blk_queue_max_copy_sectors);
-> 
-> Please use EXPORT_SYMBOL_GPL() for all new things.
-> 
-> Why is this setting both? The documentation does't seem to say.
-> What's the point?
-> 
->> +
->> +/**
->> + * blk_queue_max_copy_range_sectors - set max sectors for a single range, in a copy payload
->> + * @q:  the request queue for the device
->> + * @max_copy_range_sectors: maximum number of sectors to copy in a single range
->> + **/
->> +void blk_queue_max_copy_range_sectors(struct request_queue *q,
->> +		unsigned int max_copy_range_sectors)
->> +{
->> +	q->limits.max_hw_copy_range_sectors = max_copy_range_sectors;
->> +	q->limits.max_copy_range_sectors = max_copy_range_sectors;
->> +}
->> +EXPORT_SYMBOL(blk_queue_max_copy_range_sectors);
-> 
-> Same here.
-> 
->> +/**
->> + * blk_queue_max_copy_nr_ranges - set max number of ranges, in a copy payload
->> + * @q:  the request queue for the device
->> + * @max_copy_nr_ranges: maximum number of ranges
->> + **/
->> +void blk_queue_max_copy_nr_ranges(struct request_queue *q,
->> +		unsigned int max_copy_nr_ranges)
->> +{
->> +	q->limits.max_hw_copy_nr_ranges = max_copy_nr_ranges;
->> +	q->limits.max_copy_nr_ranges = max_copy_nr_ranges;
->> +}
->> +EXPORT_SYMBOL(blk_queue_max_copy_nr_ranges);
-> 
-> Same.
-> 
->> +
->>   /**
->>    * blk_queue_max_write_same_sectors - set max sectors for a single write same
->>    * @q:  the request queue for the device
->> @@ -541,6 +592,14 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
->>   	t->max_segment_size = min_not_zero(t->max_segment_size,
->>   					   b->max_segment_size);
->>   
->> +	t->max_copy_sectors = min(t->max_copy_sectors, b->max_copy_sectors);
->> +	t->max_hw_copy_sectors = min(t->max_hw_copy_sectors, b->max_hw_copy_sectors);
->> +	t->max_copy_range_sectors = min(t->max_copy_range_sectors, b->max_copy_range_sectors);
->> +	t->max_hw_copy_range_sectors = min(t->max_hw_copy_range_sectors,
->> +						b->max_hw_copy_range_sectors);
->> +	t->max_copy_nr_ranges = min(t->max_copy_nr_ranges, b->max_copy_nr_ranges);
->> +	t->max_hw_copy_nr_ranges = min(t->max_hw_copy_nr_ranges, b->max_hw_copy_nr_ranges);
->> +
->>   	t->misaligned |= b->misaligned;
->>   
->>   	alignment = queue_limit_alignment_offset(b, start);
->> diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
->> index 9f32882ceb2f..9ddd07f142d9 100644
->> --- a/block/blk-sysfs.c
->> +++ b/block/blk-sysfs.c
->> @@ -212,6 +212,129 @@ static ssize_t queue_discard_zeroes_data_show(struct request_queue *q, char *pag
->>   	return queue_var_show(0, page);
->>   }
->>   
->> +static ssize_t queue_copy_offload_show(struct request_queue *q, char *page)
->> +{
->> +	return queue_var_show(blk_queue_copy(q), page);
->> +}
->> +
->> +static ssize_t queue_copy_offload_store(struct request_queue *q,
->> +				       const char *page, size_t count)
->> +{
->> +	unsigned long copy_offload;
->> +	ssize_t ret = queue_var_store(&copy_offload, page, count);
->> +
->> +	if (ret < 0)
->> +		return ret;
->> +
->> +	if (copy_offload && !q->limits.max_hw_copy_sectors)
->> +		return -EINVAL;
-> 
-> 
-> If the kernel schedules, copy_offload may still be true and
-> max_hw_copy_sectors may be set to 0. Is that an issue?
-> 
->> +
->> +	if (copy_offload)
->> +		blk_queue_flag_set(QUEUE_FLAG_COPY, q);
->> +	else
->> +		blk_queue_flag_clear(QUEUE_FLAG_COPY, q);
-> 
-> The flag may be set but the queue flag could be set. Is that an issue?
-> 
->> @@ -597,6 +720,14 @@ QUEUE_RO_ENTRY(queue_nr_zones, "nr_zones");
->>   QUEUE_RO_ENTRY(queue_max_open_zones, "max_open_zones");
->>   QUEUE_RO_ENTRY(queue_max_active_zones, "max_active_zones");
->>   
->> +QUEUE_RW_ENTRY(queue_copy_offload, "copy_offload");
->> +QUEUE_RO_ENTRY(queue_copy_max_hw, "copy_max_hw_bytes");
->> +QUEUE_RW_ENTRY(queue_copy_max, "copy_max_bytes");
->> +QUEUE_RO_ENTRY(queue_copy_range_max_hw, "copy_max_range_hw_bytes");
->> +QUEUE_RW_ENTRY(queue_copy_range_max, "copy_max_range_bytes");
->> +QUEUE_RO_ENTRY(queue_copy_nr_ranges_max_hw, "copy_max_nr_ranges_hw");
->> +QUEUE_RW_ENTRY(queue_copy_nr_ranges_max, "copy_max_nr_ranges");
-> 
-> Seems like you need to update Documentation/ABI/stable/sysfs-block.
-> 
->> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
->> index efed3820cbf7..792e6d556589 100644
->> --- a/include/linux/blkdev.h
->> +++ b/include/linux/blkdev.h
->> @@ -254,6 +254,13 @@ struct queue_limits {
->>   	unsigned int		discard_alignment;
->>   	unsigned int		zone_write_granularity;
->>   
->> +	unsigned long		max_hw_copy_sectors;
->> +	unsigned long		max_copy_sectors;
->> +	unsigned int		max_hw_copy_range_sectors;
->> +	unsigned int		max_copy_range_sectors;
->> +	unsigned short		max_hw_copy_nr_ranges;
->> +	unsigned short		max_copy_nr_ranges;
-> 
-> Before limits start growing more.. I wonder if we should just
-> stuff hw offload stuff to its own struct within queue_limits.
-> 
-> Christoph?
-> 
 
-Potentially use a pointer to structure and maybe make it configurable,
-although I'm not sure about the later part, I'll let Christoph decide
-that.
+dm_cleanup_zoned_dev() uses queue, so it must be called
+before blk_cleanup_disk() starts its killing:
 
->    Luis
-> 
+blk_cleanup_disk->blk_cleanup_queue()->kobject_put()->blk_release_queue()->
+->...RCU...->blk_free_queue_rcu()->kmem_cache_free()
 
--ck
+Otherwise, RCU callback may be executed first,
+and dm_cleanup_zoned_dev() touches freed memory:
 
+ BUG: KASAN: use-after-free in dm_cleanup_zoned_dev+0x33/0xd0
+ Read of size 8 at addr ffff88805ac6e430 by task dmsetup/681
+
+ CPU: 4 PID: 681 Comm: dmsetup Not tainted 5.17.0-rc2+ #6
+ Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.14.0-2 04/01/2014
+ Call Trace:
+  <TASK>
+  dump_stack_lvl+0x57/0x7d
+  print_address_description.constprop.0+0x1f/0x150
+  ? dm_cleanup_zoned_dev+0x33/0xd0
+  kasan_report.cold+0x7f/0x11b
+  ? dm_cleanup_zoned_dev+0x33/0xd0
+  dm_cleanup_zoned_dev+0x33/0xd0
+  __dm_destroy+0x26a/0x400
+  ? dm_blk_ioctl+0x230/0x230
+  ? up_write+0xd8/0x270
+  dev_remove+0x156/0x1d0
+  ctl_ioctl+0x269/0x530
+  ? table_clear+0x140/0x140
+  ? lock_release+0xb2/0x750
+  ? remove_all+0x40/0x40
+  ? rcu_read_lock_sched_held+0x12/0x70
+  ? lock_downgrade+0x3c0/0x3c0
+  ? rcu_read_lock_sched_held+0x12/0x70
+  dm_ctl_ioctl+0xa/0x10
+  __x64_sys_ioctl+0xb9/0xf0
+  do_syscall_64+0x3b/0x90
+  entry_SYSCALL_64_after_hwframe+0x44/0xae
+ RIP: 0033:0x7fb6dfa95c27
+ Code: 00 00 00 48 8b 05 69 92 0c 00 64 c7 00 26 00 00 00 48 c7 c0 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 b8 10 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d 39 92 0c 00 f7 d8 64 89 01 48
+ RSP: 002b:00007fff882c6c28 EFLAGS: 00000206 ORIG_RAX: 0000000000000010
+ RAX: ffffffffffffffda RBX: 00007fb6dfb73a8e RCX: 00007fb6dfa95c27
+ RDX: 00007fb6e01d7ca0 RSI: 00000000c138fd04 RDI: 0000000000000003
+ RBP: 00007fff882c6ce0 R08: 00007fb6dfbc3558 R09: 00007fff882c6a90
+ R10: 00007fb6dfbc28a2 R11: 0000000000000206 R12: 00007fb6dfbc28a2
+ R13: 00007fb6dfbc28a2 R14: 00007fb6dfbc28a2 R15: 00007fb6dfbc28a2
+  </TASK>
+
+ Allocated by task 673:
+  kasan_save_stack+0x1e/0x40
+  __kasan_slab_alloc+0x66/0x80
+  kmem_cache_alloc_node+0x1ca/0x460
+  blk_alloc_queue+0x33/0x4e0
+  __blk_alloc_disk+0x1b/0x60
+  dm_create+0x368/0xa20
+  dev_create+0xb9/0x170
+  ctl_ioctl+0x269/0x530
+  dm_ctl_ioctl+0xa/0x10
+  __x64_sys_ioctl+0xb9/0xf0
+  do_syscall_64+0x3b/0x90
+  entry_SYSCALL_64_after_hwframe+0x44/0xae
+
+ Freed by task 0:
+  kasan_save_stack+0x1e/0x40
+  kasan_set_track+0x21/0x30
+  kasan_set_free_info+0x20/0x30
+  __kasan_slab_free+0xfb/0x130
+  slab_free_freelist_hook+0x7d/0x150
+  kmem_cache_free+0x13c/0x340
+  rcu_do_batch+0x2d9/0x820
+  rcu_core+0x3b8/0x570
+  __do_softirq+0x1c4/0x63d
+
+ Last potentially related work creation:
+  kasan_save_stack+0x1e/0x40
+  __kasan_record_aux_stack+0x96/0xa0
+  call_rcu+0xc4/0x8f0
+  kobject_put+0xd9/0x270
+  disk_release+0xee/0x120
+  device_release+0x59/0xf0
+  kobject_put+0xd9/0x270
+  cleanup_mapped_device+0x12b/0x1b0
+  __dm_destroy+0x26a/0x400
+  dev_remove+0x156/0x1d0
+  ctl_ioctl+0x269/0x530
+  dm_ctl_ioctl+0xa/0x10
+  __x64_sys_ioctl+0xb9/0xf0
+  do_syscall_64+0x3b/0x90
+  entry_SYSCALL_64_after_hwframe+0x44/0xae
+
+ The buggy address belongs to the object at ffff88805ac6e180
+  which belongs to the cache request_queue of size 2992
+ The buggy address is located 688 bytes inside of
+  2992-byte region [ffff88805ac6e180, ffff88805ac6ed30)
+ The buggy address belongs to the page:
+ page:000000000837df3c refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x5ac68
+ head:000000000837df3c order:3 compound_mapcount:0 compound_pincount:0
+ flags: 0xfffffc0010200(slab|head|node=0|zone=1|lastcpupid=0x1fffff)
+ raw: 000fffffc0010200 0000000000000000 dead000000000122 ffff888001e58280
+ raw: 0000000000000000 00000000800a000a 00000001ffffffff 0000000000000000
+ page dumped because: kasan: bad access detected
+
+ Memory state around the buggy address:
+  ffff88805ac6e300: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+  ffff88805ac6e380: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+ >ffff88805ac6e400: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+                                      ^
+  ffff88805ac6e480: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+  ffff88805ac6e500: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+ ==================================================================
+
+Fixes: bb37d77239af "dm: introduce zone append emulation"
+Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
+Reviewed-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+---
+v2: Split long commit message line and delete [xxx] time prefix from kernel output.
+
+ drivers/md/dm.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index dcbd6d201619..d472fe5dbc1d 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1607,6 +1607,7 @@ static void cleanup_mapped_device(struct mapped_device *md)
+ 		md->dax_dev = NULL;
+ 	}
+ 
++	dm_cleanup_zoned_dev(md);
+ 	if (md->disk) {
+ 		spin_lock(&_minor_lock);
+ 		md->disk->private_data = NULL;
+@@ -1627,7 +1628,6 @@ static void cleanup_mapped_device(struct mapped_device *md)
+ 	mutex_destroy(&md->swap_bios_lock);
+ 
+ 	dm_mq_cleanup_mapped_device(md);
+-	dm_cleanup_zoned_dev(md);
+ }
+ 
+ /*
 
 --
 dm-devel mailing list
