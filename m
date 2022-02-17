@@ -4,69 +4,136 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B0B98C433EF
-	for <dm-devel@archiver.kernel.org>; Mon, 21 Feb 2022 06:07:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DB64BC433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 21 Feb 2022 06:08:22 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-621-SLa90GnVPfmh7WKbUaj83w-1; Mon, 21 Feb 2022 01:07:47 -0500
-X-MC-Unique: SLa90GnVPfmh7WKbUaj83w-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
+ us-mta-375-T_ka4BEqPdGOeNz-sK6p7g-1; Mon, 21 Feb 2022 01:08:17 -0500
+X-MC-Unique: T_ka4BEqPdGOeNz-sK6p7g-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E7ED8801AA6;
-	Mon, 21 Feb 2022 06:07:42 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 80D081006AA4;
+	Mon, 21 Feb 2022 06:08:13 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C9E91167AA;
-	Mon, 21 Feb 2022 06:07:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 606BE55F4D;
+	Mon, 21 Feb 2022 06:08:13 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A5621180B617;
-	Mon, 21 Feb 2022 06:07:42 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 2D8D61806D1C;
+	Mon, 21 Feb 2022 06:08:13 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.3])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21J52xke005302 for <dm-devel@listman.util.phx.redhat.com>;
-	Sat, 19 Feb 2022 00:03:00 -0500
+	id 21I511pt000334 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 18 Feb 2022 00:01:01 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id C08BA1120AA9; Sat, 19 Feb 2022 05:02:59 +0000 (UTC)
+	id E03781120AB8; Fri, 18 Feb 2022 05:01:00 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id BBC041121319
-	for <dm-devel@redhat.com>; Sat, 19 Feb 2022 05:02:51 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id DAD201120AA9
+	for <dm-devel@redhat.com>; Fri, 18 Feb 2022 05:00:57 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 315938027FB
-	for <dm-devel@redhat.com>; Sat, 19 Feb 2022 05:02:51 +0000 (UTC)
-Received: from mail-qv1-f42.google.com (mail-qv1-f42.google.com
-	[209.85.219.42]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-389-LXmu8qg3Pqm5TwCSMm32JQ-1; Sat, 19 Feb 2022 00:02:49 -0500
-X-MC-Unique: LXmu8qg3Pqm5TwCSMm32JQ-1
-Received: by mail-qv1-f42.google.com with SMTP id n6so18860439qvk.13
-	for <dm-devel@redhat.com>; Fri, 18 Feb 2022 21:02:49 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:mime-version:from:date:message-id:subject:to:cc;
-	bh=BIKVZrckfhtAF9SK+XfuUymxSxixxysTWLjC886EzDM=;
-	b=EmeN/qUbUyhI2g9TRFxOQWD3w1IWdeMQ+FzerDQCLPM310jPDxslQ/r6oAYILrN6kI
-	ow7miLxV5OBCV7CSf0sGFD+G+5xtMdRFIyd5E4SbaEGHcae9GeNHAJZ9kFLYMcBN8KgF
-	ij+upc6XKtGQgm9gEQnmvgCidshyTweIToF+HeIB/RUqWj+obYEnv1cTkGWNV8qHP/gq
-	NMK6nFdJomSzplFXhFrzL1MH4bsbgr6tOVtfQ+aHROokNbR6st72HolHTxRa+LgQ5WZ1
-	QA0vUBaXR9TOqSYZia7qnq9xpOWIH4Q3WBkUulI2qc30TxLkgfIrvA0+XuNzZFozy7he
-	+94w==
-X-Gm-Message-State: AOAM530m5J5Y+Xhgf8xctW1w1Uw1ntJLpwOlzRdNFQbfDr+v+IJWeagr
-	I5oO7D8BSSWCfgCSDCKJ3SoSCOvgMKY5ZNw+Lfs2KuidN/Q8IA==
-X-Google-Smtp-Source: ABdhPJx2/yo/I6eRLYSt0JE+Iaox+MAfJpAuIR8xhZvEIgekFpGtm90LJaK/LqqCoEsSiYHqMiMpn9Fdhd7nb7KM/Y8=
-X-Received: by 2002:a02:5b0a:0:b0:30f:60e4:b9ab with SMTP id
-	g10-20020a025b0a000000b0030f60e4b9abmr7320808jab.189.1645246958795;
-	Fri, 18 Feb 2022 21:02:38 -0800 (PST)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 93D4F811E7A
+	for <dm-devel@redhat.com>; Fri, 18 Feb 2022 05:00:57 +0000 (UTC)
+Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
+	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-510-q8aMQlyGOR6EucAEpcvQ6g-1; Fri, 18 Feb 2022 00:00:54 -0500
+X-MC-Unique: q8aMQlyGOR6EucAEpcvQ6g-1
+Received: from epcas5p1.samsung.com (unknown [182.195.41.39])
+	by mailout3.samsung.com (KnoxPortal) with ESMTP id
+	20220218050052epoutp03d91cfa16b6fa4a5938cf3c95b83c923c~UyLb-sZkN1838918389epoutp03_;
+	Fri, 18 Feb 2022 05:00:52 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com
+	20220218050052epoutp03d91cfa16b6fa4a5938cf3c95b83c923c~UyLb-sZkN1838918389epoutp03_
+Received: from epsnrtp1.localdomain (unknown [182.195.42.162]) by
+	epcas5p1.samsung.com (KnoxPortal) with ESMTP id
+	20220218050051epcas5p1364c8f46134da12ab9f98c6e135615f5~UyLbWQtpz0935609356epcas5p15;
+	Fri, 18 Feb 2022 05:00:51 +0000 (GMT)
+Received: from epsmges5p3new.samsung.com (unknown [182.195.38.176]) by
+	epsnrtp1.localdomain (Postfix) with ESMTP id 4K0KJr1m5Dz4x9Q8;
+	Fri, 18 Feb 2022 05:00:44 +0000 (GMT)
+Received: from epcas5p1.samsung.com ( [182.195.41.39]) by
+	epsmges5p3new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	3C.F7.05590.BF72F026; Fri, 18 Feb 2022 14:00:43 +0900 (KST)
+Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
+	epcas5p1.samsung.com (KnoxPortal) with ESMTPA id
+	20220217130401epcas5p1c671c22f1b3d8ff7c662763f0cdb9bb5~UlIATE4D-3210232102epcas5p1K;
+	Thu, 17 Feb 2022 13:04:01 +0000 (GMT)
+Received: from epsmgms1p2.samsung.com (unknown [182.195.42.42]) by
+	epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
+	20220217130401epsmtrp23758e5a1d5a2620ddbd620ec4d9c6a90~UlIARikU73066630666epsmtrp2C;
+	Thu, 17 Feb 2022 13:04:01 +0000 (GMT)
+X-AuditID: b6c32a4b-739ff700000015d6-59-620f27fb9e31
+Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
+	epsmgms1p2.samsung.com (Symantec Messaging Gateway) with SMTP id
+	9E.BD.08738.1C74E026; Thu, 17 Feb 2022 22:04:01 +0900 (KST)
+Received: from test-zns (unknown [107.110.206.5]) by epsmtip2.samsung.com
+	(KnoxPortal) with ESMTPA id
+	20220217130356epsmtip28c51f7f8d8b35afe7c013782e59c1ca4~UlH7t34aT1085610856epsmtip2R;
+	Thu, 17 Feb 2022 13:03:56 +0000 (GMT)
+Date: Thu, 17 Feb 2022 18:29:01 +0530
+From: Nitesh Shetty <nj.shetty@samsung.com>
+To: Luis Chamberlain <mcgrof@kernel.org>
+Message-ID: <20220217125901.GA3781@test-zns>
 MIME-Version: 1.0
-From: Kyle Sanderson <kyle.leet@gmail.com>
-Date: Fri, 18 Feb 2022 21:02:28 -0800
-Message-ID: <CACsaVZ+mt3CfdXV0_yJh7d50tRcGcRZ12j3n6-hoX2cz3+njsg@mail.gmail.com>
-To: qat-linux@intel.com, giovanni.cabiddu@intel.com
+In-Reply-To: <20220217090700.b7n33vbkx5s4qbfq@garbanzo>
+User-Agent: Mutt/1.9.4 (2018-02-28)
+X-Brightmail-Tracker: H4sIAAAAAAAAA02Te1BTRxTG3ZvkJtAGrwFhhYmmYWxEXglCWCpYx1p7W+wIQ1tHWwevcAsM
+	kGTysK11FEQ6Gh4CFguxYGo7BdHyKlrkJSCY4SUoBUEEoTxkCgKCKChKEwJt//vtN9939uye
+	ORwGr5Ntz4mQqWmljIoS4pbMazedRK4vRasPiRcTeaig8RYDVXTPsNDl3jM4Ojc1z0CTNYMs
+	lHYmg43ah6xQ5cR5Fmqbi8XQYPEihioupmHo0uV6DD3K+Rmg8p+eYOh0UxuGFgYkqH7xMY7S
+	ajsBGu7QYajyvjOqqGxgovayH3F04ddhNkq4V4qjqrFKBsoxvMZQV8owQLd1CzgqHYoF6GZf
+	BxPlj00y0dhcA46+K5oFKD5xno1aXxlY2x3J9j/9Sd3DFpxMjZtgk9d1vWyyta+IScbpHzDJ
+	9hYNWZx3Gid//+U4ebYrB5Dl3TE4eaK5nkFmTD/FyaS4CZx8MnyfSU5WdeABtvsjfcNpKpRW
+	CmhZiDw0QhbmJ/QPCn4v2EsqlrhKfJC3UCCjomk/4c7dAa67IqKMnygUHKaiNEYpgFKphO7b
+	fJVyjZoWhMtVaj8hrQiNUngq3FRUtEojC3OT0ep3JGKxh5fReDAyPLa0i6WYl36dmyuKAQMu
+	WmDBgYQnLGtux7TAksMjygGsKTnBMh+mAUwZHWKbXDxiBsDY+K0riZFzXcumMmOiu5BtPowA
+	mPXi0VKCSWyEj7XFRheHgxPOsGmRY5JtiE2wKiUJMzGDmMVh6u39Jos18Rlsq95okrmEC0w4
+	1coy8xrYkDnENLEF4Q0vzOmXeC3hCKuvGZa6hkSmJXxW1QNMdSCxE/b0K8x9WsO/DSVsM9vD
+	mYlK3OxPAHCu+eFyOAPAuJQ43Ox6F96peIWZCjGIcJiWKTHLfJjemL/csxVMejmEmXUuLM1e
+	YUd4pUC/XGYd7Hweu8wkNLSP4ub/GQdwNruOkQI26P73ON1/1+mWrnCB+vJp3Cw7wJzXHDM6
+	wYIydz1g5YF1tEIVHUarvBRbZPRX/047RB5dDJYWbLN/Kfirf8qtFmAcUAsghyG04U7VcA/x
+	uKHUN0dopTxYqYmiVbXAyzipVIb92hC5cUNl6mCJp4/YUyqVevpskUqEdtzGsEKKR4RRajqS
+	phW0ciWHcSzsYzAHOUMXZLshN8l2MOb5bqtsjy+aHAzrA6n4T3yo+sQHQRcTUA+6Uey4V5v8
+	VpDdVkrcm2+b47tNfooe44ssQjfta5G6p2YSvgenkoOqpCibVfqtI8RffPl+wXgg2Pub93HF
+	gFPwQmHWScK6rqQ/dp6trY7u2CVL/jSR5ydade8pP/7OpZqrJ9UOoyU5zw4fE+h7q2yyk99c
+	nZXhXEsdW1M7uP2uRvuh2vUqNXj3ut/nctLJ/sCemFseuG4wqUCXLg4+u35iqC49u+vtP66c
+	1+0I4H8kEhzt49/oXdUTaKn6QYNxM/OU+yaOWB/4+IM3+NQeN2LmqJ3vCFkYOf590ZjYVshU
+	hVOSzQylivoHaFGXcekEAAA=
+X-Brightmail-Tracker: H4sIAAAAAAAAA02Se0xTdxTH87v39vZSU70Udb9qmFsVMMXhYEzO2Nh8BW9i2EhmjNscWuUO
+	HBRYCwImizw2JwUGQyVSZVQhNmK2hfpYhZa0ddAhryqipYgLQjXa8dxkEAtshS3zv2/O9/M5
+	55/DkJIzglXMobRMXpWmSJXRIuraDdma16w7lh54fbY3EH662UqCqe8PAVwaKKOhcnyGhDHr
+	kAAqyk4LoWd4KZhHzwjAMZ1PwJBhngDT+QoCLl5qIeCxvhZB07kJAoraHQR4B8OhZX6Ehgrb
+	XQTuXi0BZlcomMxtFPQ0nqWh5oJbCMX3jDQ0e8wk6O1zBDjL3Qi6tF4ajMP5CG486KXgR88Y
+	BZ7pNhqONTxD8HXJjBC6Z+2CzWu5njs7Oe1vnTT3XeGokLuuHRBy3Q8aKK5Qd5/iejqzOEN9
+	Ec1drjvKnXDqEdfUl0dzBR0tJHd68k+aKy0cpbkJt4vixpp76fiVH4veSeRTDx3mVRvf3S9K
+	vmstEGYYI3MmS2oEeahRrkF+DGYj8aNKp0CDRIyENSJ8snZSuFhI8YXZX8jFHIAvzj0WLkLD
+	CFssEwsFxQbhEY3hH5thaDYUt88zvvFydj1uLi8lfDzJPqdxQ7WV9DEB7G7ssAT5GDG7ARcf
+	7/738O8Ie+2d9GLhj9uqhilfJlk5ds49IXwuya7G+rmF/X5sFK6Z1i0gK9i12HLNTpQjf+0L
+	tvYFW/u/rUNkPZLyGWplklIdnhGRxmeHqRVKdVZaUtjBdKUBLfyPXG5EpvrxMBsiGGRDmCFl
+	y8XjVvEBiThRkXuEV6XvU2Wl8mobWs1QspfEDk3bPgmbpMjkU3g+g1f91xKM36o84lxK/hNl
+	wrcrX9WnTyXXuY4/fTOFehTctbu0f2f/kuxcictRUOTwblsz9srllCF3wlbviabnsRtGt3UW
+	Sb98pgs5teuWq/HkN+uKq0gzGbFpy9tv1YKl6haeGahcEhP11GNadzS+qvUvSegXtz9ICEne
+	DpaOwIaHgVNXdB1xnzZvvBI7G3A1Zj9Xqv9c53ffHt1yJDImOI79eZnhs9hl328aTAwZeLn+
+	vS0a6UfVhfKuuDvXSzyi1K/WO+h4zp/8xBrlX5YZXIanf90hzK0jm+Jvtr5RfXvPZoPn/IcH
+	D2fuehjdbuH3KM72B72/IsJzT2rL7hsk8qci9v6wFeVEu0Yo57EcGaVOVoTLSZVa8TfrqJgv
+	rgMAAA==
+X-CMS-MailID: 20220217130401epcas5p1c671c22f1b3d8ff7c662763f0cdb9bb5
+X-Msg-Generator: CA
+X-Sendblock-Type: REQ_APPROVE
+CMS-TYPE: 105P
+DLP-Filter: Pass
+X-CFilter-Loop: Reflected
+X-CMS-RootMailID: 20220214080605epcas5p16868dae515a6355cf9fecf22df4f3c3d
+References: <20220214080002.18381-1-nj.shetty@samsung.com>
+	<CGME20220214080605epcas5p16868dae515a6355cf9fecf22df4f3c3d@epcas5p1.samsung.com>
+	<20220214080002.18381-3-nj.shetty@samsung.com>
+	<20220217090700.b7n33vbkx5s4qbfq@garbanzo>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -78,11 +145,23 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-loop: dm-devel@redhat.com
 X-Mailman-Approved-At: Mon, 21 Feb 2022 01:04:54 -0500
-Cc: linux-xfs@vger.kernel.org, dm-devel@redhat.com,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	Linux-Kernal <linux-kernel@vger.kernel.org>, linux-crypto@vger.kernel.org
-Subject: [dm-devel] Intel QAT on A2SDi-8C-HLN4F causes massive data
- corruption with dm-crypt + xfs
+Cc: Mike Snitzer <snitzer@redhat.com>, djwong@kernel.org,
+	linux-nvme@lists.infradead.org, clm@fb.com, dm-devel@redhat.com,
+	Chaitanya Kulkarni <kch@nvidia.com>, osandov@fb.com,
+	Alasdair Kergon <agk@redhat.com>, javier@javigon.com,
+	bvanassche@acm.org, linux-scsi@vger.kernel.org,
+	nitheshshetty@gmail.com, Smart <james.smart@broadcom.com>,
+	hch@lst.de, chaitanyak@nvidia.com,
+	SelvaKumar S <selvakuma.s1@samsung.com>, msnitzer@redhat.com,
+	josef@toxicpanda.com, linux-block@vger.kernel.org,
+	dsterba@suse.com, kbusch@kernel.org, Frederick.Knight@netapp.com,
+	Sagi Grimberg <sagi@grimberg.me>, axboe@kernel.dk, tytso@mit.edu,
+	joshi.k@samsung.com, martin.petersen@oracle.com, James,
+	linux-kernel@vger.kernel.org, arnav.dawn@samsung.com,
+	jack@suse.com, linux-fsdevel@vger.kernel.org,
+	lsf-pc@lists.linux-foundation.org, Alexander Viro <viro@zeniv.linux.org.uk>
+Subject: Re: [dm-devel] [PATCH v3 02/10] block: Introduce queue limits for
+ copy-offload support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -96,289 +175,214 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed;
+	boundary="----8TtN9ZnHmYbjupaEpeShJ04PQlBV3ZvePY_ZWnFgjSBPeLtG=_8e144_"
+
+------8TtN9ZnHmYbjupaEpeShJ04PQlBV3ZvePY_ZWnFgjSBPeLtG=_8e144_
 Content-Type: text/plain; charset="us-ascii"
+Content-Disposition: inline
+
+ Thu, Feb 17, 2022 at 01:07:00AM -0800, Luis Chamberlain wrote:
+> The subject says limits for copy-offload...
+> 
+> On Mon, Feb 14, 2022 at 01:29:52PM +0530, Nitesh Shetty wrote:
+> > Add device limits as sysfs entries,
+> >         - copy_offload (RW)
+> >         - copy_max_bytes (RW)
+> >         - copy_max_hw_bytes (RO)
+> >         - copy_max_range_bytes (RW)
+> >         - copy_max_range_hw_bytes (RO)
+> >         - copy_max_nr_ranges (RW)
+> >         - copy_max_nr_ranges_hw (RO)
+> 
+> Some of these seem like generic... and also I see a few more max_hw ones
+> not listed above...
+>
+queue_limits and sysfs entries are differently named.
+All sysfs entries start with copy_* prefix. Also it makes easy to lookup
+all copy sysfs.
+For queue limits naming, I tried to following existing queue limit
+convention (like discard).
+
+> > --- a/block/blk-settings.c
+> > +++ b/block/blk-settings.c
+> > +/**
+> > + * blk_queue_max_copy_sectors - set max sectors for a single copy payload
+> > + * @q:  the request queue for the device
+> > + * @max_copy_sectors: maximum number of sectors to copy
+> > + **/
+> > +void blk_queue_max_copy_sectors(struct request_queue *q,
+> > +		unsigned int max_copy_sectors)
+> > +{
+> > +	q->limits.max_hw_copy_sectors = max_copy_sectors;
+> > +	q->limits.max_copy_sectors = max_copy_sectors;
+> > +}
+> > +EXPORT_SYMBOL(blk_queue_max_copy_sectors);
+> 
+> Please use EXPORT_SYMBOL_GPL() for all new things.
+> 
+acked.
+
+> Why is this setting both? The documentation does't seem to say.
+> What's the point?
+>
+
+This function is used only by driver, while intializing request queue.
+I will put this as part of description next time.
+
+> > +
+> > +/**
+> > + * blk_queue_max_copy_range_sectors - set max sectors for a single range, in a copy payload
+> > + * @q:  the request queue for the device
+> > + * @max_copy_range_sectors: maximum number of sectors to copy in a single range
+> > + **/
+> > +void blk_queue_max_copy_range_sectors(struct request_queue *q,
+> > +		unsigned int max_copy_range_sectors)
+> > +{
+> > +	q->limits.max_hw_copy_range_sectors = max_copy_range_sectors;
+> > +	q->limits.max_copy_range_sectors = max_copy_range_sectors;
+> > +}
+> > +EXPORT_SYMBOL(blk_queue_max_copy_range_sectors);
+> 
+> Same here.
+> 
+> > +/**
+> > + * blk_queue_max_copy_nr_ranges - set max number of ranges, in a copy payload
+> > + * @q:  the request queue for the device
+> > + * @max_copy_nr_ranges: maximum number of ranges
+> > + **/
+> > +void blk_queue_max_copy_nr_ranges(struct request_queue *q,
+> > +		unsigned int max_copy_nr_ranges)
+> > +{
+> > +	q->limits.max_hw_copy_nr_ranges = max_copy_nr_ranges;
+> > +	q->limits.max_copy_nr_ranges = max_copy_nr_ranges;
+> > +}
+> > +EXPORT_SYMBOL(blk_queue_max_copy_nr_ranges);
+> 
+> Same.
+> 
+> > +
+> >  /**
+> >   * blk_queue_max_write_same_sectors - set max sectors for a single write same
+> >   * @q:  the request queue for the device
+> > @@ -541,6 +592,14 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+> >  	t->max_segment_size = min_not_zero(t->max_segment_size,
+> >  					   b->max_segment_size);
+> >  
+> > +	t->max_copy_sectors = min(t->max_copy_sectors, b->max_copy_sectors);
+> > +	t->max_hw_copy_sectors = min(t->max_hw_copy_sectors, b->max_hw_copy_sectors);
+> > +	t->max_copy_range_sectors = min(t->max_copy_range_sectors, b->max_copy_range_sectors);
+> > +	t->max_hw_copy_range_sectors = min(t->max_hw_copy_range_sectors,
+> > +						b->max_hw_copy_range_sectors);
+> > +	t->max_copy_nr_ranges = min(t->max_copy_nr_ranges, b->max_copy_nr_ranges);
+> > +	t->max_hw_copy_nr_ranges = min(t->max_hw_copy_nr_ranges, b->max_hw_copy_nr_ranges);
+> > +
+> >  	t->misaligned |= b->misaligned;
+> >  
+> >  	alignment = queue_limit_alignment_offset(b, start);
+> > diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+> > index 9f32882ceb2f..9ddd07f142d9 100644
+> > --- a/block/blk-sysfs.c
+> > +++ b/block/blk-sysfs.c
+> > @@ -212,6 +212,129 @@ static ssize_t queue_discard_zeroes_data_show(struct request_queue *q, char *pag
+> >  	return queue_var_show(0, page);
+> >  }
+> >  
+> > +static ssize_t queue_copy_offload_show(struct request_queue *q, char *page)
+> > +{
+> > +	return queue_var_show(blk_queue_copy(q), page);
+> > +}
+> > +
+> > +static ssize_t queue_copy_offload_store(struct request_queue *q,
+> > +				       const char *page, size_t count)
+> > +{
+> > +	unsigned long copy_offload;
+> > +	ssize_t ret = queue_var_store(&copy_offload, page, count);
+> > +
+> > +	if (ret < 0)
+> > +		return ret;
+> > +
+> > +	if (copy_offload && !q->limits.max_hw_copy_sectors)
+> > +		return -EINVAL;
+> 
+> 
+> If the kernel schedules, copy_offload may still be true and
+> max_hw_copy_sectors may be set to 0. Is that an issue?
+>
+
+This check ensures that, we dont enable offload if device doesnt support
+offload. I feel it shouldn't be an issue.
+
+> > +
+> > +	if (copy_offload)
+> > +		blk_queue_flag_set(QUEUE_FLAG_COPY, q);
+> > +	else
+> > +		blk_queue_flag_clear(QUEUE_FLAG_COPY, q);
+> 
+> The flag may be set but the queue flag could be set. Is that an issue?
+> 
+> > @@ -597,6 +720,14 @@ QUEUE_RO_ENTRY(queue_nr_zones, "nr_zones");
+> >  QUEUE_RO_ENTRY(queue_max_open_zones, "max_open_zones");
+> >  QUEUE_RO_ENTRY(queue_max_active_zones, "max_active_zones");
+> >  
+> > +QUEUE_RW_ENTRY(queue_copy_offload, "copy_offload");
+> > +QUEUE_RO_ENTRY(queue_copy_max_hw, "copy_max_hw_bytes");
+> > +QUEUE_RW_ENTRY(queue_copy_max, "copy_max_bytes");
+> > +QUEUE_RO_ENTRY(queue_copy_range_max_hw, "copy_max_range_hw_bytes");
+> > +QUEUE_RW_ENTRY(queue_copy_range_max, "copy_max_range_bytes");
+> > +QUEUE_RO_ENTRY(queue_copy_nr_ranges_max_hw, "copy_max_nr_ranges_hw");
+> > +QUEUE_RW_ENTRY(queue_copy_nr_ranges_max, "copy_max_nr_ranges");
+> 
+> Seems like you need to update Documentation/ABI/stable/sysfs-block.
+>
+
+acked. 
+
+> > diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+> > index efed3820cbf7..792e6d556589 100644
+> > --- a/include/linux/blkdev.h
+> > +++ b/include/linux/blkdev.h
+> > @@ -254,6 +254,13 @@ struct queue_limits {
+> >  	unsigned int		discard_alignment;
+> >  	unsigned int		zone_write_granularity;
+> >  
+> > +	unsigned long		max_hw_copy_sectors;
+> > +	unsigned long		max_copy_sectors;
+> > +	unsigned int		max_hw_copy_range_sectors;
+> > +	unsigned int		max_copy_range_sectors;
+> > +	unsigned short		max_hw_copy_nr_ranges;
+> > +	unsigned short		max_copy_nr_ranges;
+> 
+> Before limits start growing more.. I wonder if we should just
+> stuff hw offload stuff to its own struct within queue_limits.
+> 
+> Christoph?
+> 
+>   Luis
+>
+Yeah, would like to know community opinion on this.
+
+
+-- Nitesh
+
+------8TtN9ZnHmYbjupaEpeShJ04PQlBV3ZvePY_ZWnFgjSBPeLtG=_8e144_
+Content-Type: text/plain; charset="utf-8"
+
+
+------8TtN9ZnHmYbjupaEpeShJ04PQlBV3ZvePY_ZWnFgjSBPeLtG=_8e144_
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-
-A2SDi-8C-HLN4F has IQAT enabled by default, when this device is
-attempted to be used by xfs (through dm-crypt) the entire kernel
-thread stalls forever. Multiple users have hit this over the years
-(through sporadic reporting) - I ended up trying ZFS and encryption
-wasn't an issue there at all because I guess they don't use this
-device. Returning to sanity (xfs), I was able to provision a dm-crypt
-volume no problem on the disk, however when running mkfs.xfs on the
-volume is what triggers the cascading failure (each request kills a
-kthread). Disabling IQAT on the south bridge results in a working
-system, however this is not the default configuration for the
-distribution of choice (Ubuntu 20.04.3 LTS), nor the motherboard. I'm
-convinced this never worked properly based on the lack of popularity
-for kernel encryption (crypto), and the embedded nature that
-SuperMicro has integrated this device in collaboration with intel as
-it looks like the primary usage is through external accelerator cards.
-
-Kernels tried were from RHEL8 over a year ago, and this impacts the
-entirety of the 5.4 series on Ubuntu.
-Please CC me on replies as I'm not subscribed to all lists. CPU is C3758.
-
-  363.495058] INFO: task kworker/u16:0:8 blocked for more than 120 seconds.
-[  363.495114]       Tainted: P           O      5.4.0-100-generic #113-Ubuntu
-[  363.495155] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
-disables this message.
-[  363.495201] kworker/u16:0   D    0     8      2 0x80004000
-[  363.495213] Workqueue: kcryptd/253:0 kcryptd_crypt [dm_crypt]
-[  363.495214] Call Trace:
-[  363.495223]  __schedule+0x2e3/0x740
-[  363.495226]  schedule+0x42/0xb0
-[  363.495228]  schedule_timeout+0x10e/0x160
-[  363.495232]  ? skcipher_encrypt_ablkcipher+0x61/0x70
-[  363.495233]  ? crypto_skcipher_encrypt+0x48/0x60
-[  363.495236]  wait_for_completion+0xb1/0x120
-[  363.495239]  ? wake_up_q+0x70/0x70
-[  363.495242]  crypt_convert+0x144/0x1f0 [dm_crypt]
-[  363.495245]  kcryptd_crypt+0x2b9/0x3b0 [dm_crypt]
-[  363.495249]  process_one_work+0x1eb/0x3b0
-[  363.495251]  worker_thread+0x4d/0x400
-[  363.495254]  kthread+0x104/0x140
-[  363.495256]  ? process_one_work+0x3b0/0x3b0
-[  363.495257]  ? kthread_park+0x90/0x90
-[  363.495260]  ret_from_fork+0x1f/0x40
-[  363.495274] INFO: task kworker/u16:1:123 blocked for more than 120 seconds.
-[  363.495317]       Tainted: P           O      5.4.0-100-generic #113-Ubuntu
-[  363.495364] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
-disables this message.
-[  363.495410] kworker/u16:1   D    0   123      2 0x80004000
-[  363.495415] Workqueue: kcryptd/253:0 kcryptd_crypt [dm_crypt]
-[  363.495416] Call Trace:
-[  363.495419]  __schedule+0x2e3/0x740
-[  363.495422]  schedule+0x42/0xb0
-[  363.495424]  schedule_timeout+0x10e/0x160
-[  363.495426]  ? skcipher_encrypt_ablkcipher+0x61/0x70
-[  363.495427]  ? crypto_skcipher_encrypt+0x48/0x60
-[  363.495430]  wait_for_completion+0xb1/0x120
-[  363.495431]  ? wake_up_q+0x70/0x70
-[  363.495434]  crypt_convert+0x144/0x1f0 [dm_crypt]
-[  363.495437]  kcryptd_crypt+0x2b9/0x3b0 [dm_crypt]
-[  363.495441]  process_one_work+0x1eb/0x3b0
-[  363.495443]  worker_thread+0x4d/0x400
-[  363.495445]  kthread+0x104/0x140
-[  363.495447]  ? process_one_work+0x3b0/0x3b0
-[  363.495449]  ? kthread_park+0x90/0x90
-[  363.495451]  ret_from_fork+0x1f/0x40
-[  363.495457] INFO: task kworker/u16:2:153 blocked for more than 120 seconds.
-[  363.495499]       Tainted: P           O      5.4.0-100-generic #113-Ubuntu
-[  363.495539] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
-disables this message.
-[  363.495584] kworker/u16:2   D    0   153      2 0x80004000
-[  363.495589] Workqueue: kcryptd/253:5 kcryptd_crypt [dm_crypt]
-[  363.495590] Call Trace:
-[  363.495593]  __schedule+0x2e3/0x740
-[  363.495595]  schedule+0x42/0xb0
-[  363.495597]  schedule_timeout+0x10e/0x160
-[  363.495599]  ? skcipher_decrypt_ablkcipher+0x61/0x70
-[  363.495601]  ? crypto_skcipher_decrypt+0x48/0x60
-[  363.495603]  wait_for_completion+0xb1/0x120
-[  363.495605]  ? wake_up_q+0x70/0x70
-[  363.495608]  crypt_convert+0x144/0x1f0 [dm_crypt]
-[  363.495611]  kcryptd_crypt+0xc6/0x3b0 [dm_crypt]
-[  363.495613]  ? __switch_to+0x7f/0x480
-[  363.495615]  ? switch_mm_irqs_off+0x19b/0x500
-[  363.495618]  process_one_work+0x1eb/0x3b0
-[  363.495621]  worker_thread+0x4d/0x400
-[  363.495623]  kthread+0x104/0x140
-[  363.495625]  ? process_one_work+0x3b0/0x3b0
-[  363.495627]  ? kthread_park+0x90/0x90
-[  363.495629]  ret_from_fork+0x1f/0x40
-[  363.495636] INFO: task kworker/u16:5:279 blocked for more than 120 seconds.
-[  363.495677]       Tainted: P           O      5.4.0-100-generic #113-Ubuntu
-[  363.495717] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
-disables this message.
-[  363.495762] kworker/u16:5   D    0   279      2 0x80004000
-[  363.495766] Workqueue: kcryptd/253:0 kcryptd_crypt [dm_crypt]
-[  363.495767] Call Trace:
-[  363.495771]  __schedule+0x2e3/0x740
-[  363.495773]  schedule+0x42/0xb0
-[  363.495775]  schedule_timeout+0x10e/0x160
-[  363.495777]  ? skcipher_encrypt_ablkcipher+0x61/0x70
-[  363.495778]  ? crypto_skcipher_encrypt+0x48/0x60
-[  363.495781]  wait_for_completion+0xb1/0x120
-[  363.495782]  ? wake_up_q+0x70/0x70
-[  363.495785]  crypt_convert+0x144/0x1f0 [dm_crypt]
-[  363.495788]  kcryptd_crypt+0x2b9/0x3b0 [dm_crypt]
-[  363.495791]  process_one_work+0x1eb/0x3b0
-[  363.495794]  worker_thread+0x4d/0x400
-[  363.495796]  kthread+0x104/0x140
-[  363.495798]  ? process_one_work+0x3b0/0x3b0
-[  363.495800]  ? kthread_park+0x90/0x90
-[  363.495802]  ret_from_fork+0x1f/0x40
-[  363.495808] INFO: task kworker/u16:11:299 blocked for more than 120 seconds.
-[  363.495849]       Tainted: P           O      5.4.0-100-generic #113-Ubuntu
-[  363.495890] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
-disables this message.
-[  363.495935] kworker/u16:11  D    0   299      2 0x80004000
-[  363.495939] Workqueue: kcryptd/253:0 kcryptd_crypt [dm_crypt]
-[  363.495940] Call Trace:
-[  363.495943]  __schedule+0x2e3/0x740
-[  363.495946]  schedule+0x42/0xb0
-[  363.495947]  schedule_timeout+0x10e/0x160
-[  363.495949]  ? skcipher_encrypt_ablkcipher+0x61/0x70
-[  363.495951]  ? crypto_skcipher_encrypt+0x48/0x60
-[  363.495953]  wait_for_completion+0xb1/0x120
-[  363.495955]  ? wake_up_q+0x70/0x70
-[  363.495958]  crypt_convert+0x144/0x1f0 [dm_crypt]
-[  363.495961]  kcryptd_crypt+0x2b9/0x3b0 [dm_crypt]
-[  363.495964]  process_one_work+0x1eb/0x3b0
-[  363.495966]  worker_thread+0x4d/0x400
-[  363.495969]  kthread+0x104/0x140
-[  363.495971]  ? process_one_work+0x3b0/0x3b0
-[  363.495972]  ? kthread_park+0x90/0x90
-[  363.495974]  ret_from_fork+0x1f/0x40
-[  363.495977] INFO: task kworker/u16:12:300 blocked for more than 120 seconds.
-[  363.496018]       Tainted: P           O      5.4.0-100-generic #113-Ubuntu
-[  363.496058] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
-disables this message.
-[  363.496108] kworker/u16:12  D    0   300      2 0x80004000
-[  363.496113] Workqueue: kcryptd/253:0 kcryptd_crypt [dm_crypt]
-[  363.496114] Call Trace:
-[  363.496117]  __schedule+0x2e3/0x740
-[  363.496120]  schedule+0x42/0xb0
-[  363.496121]  schedule_timeout+0x10e/0x160
-[  363.496123]  ? skcipher_encrypt_ablkcipher+0x61/0x70
-[  363.496125]  ? crypto_skcipher_encrypt+0x48/0x60
-[  363.496127]  wait_for_completion+0xb1/0x120
-[  363.496129]  ? wake_up_q+0x70/0x70
-[  363.496132]  crypt_convert+0x144/0x1f0 [dm_crypt]
-[  363.496134]  kcryptd_crypt+0x2b9/0x3b0 [dm_crypt]
-[  363.496138]  process_one_work+0x1eb/0x3b0
-[  363.496140]  worker_thread+0x4d/0x400
-[  363.496142]  kthread+0x104/0x140
-[  363.496144]  ? process_one_work+0x3b0/0x3b0
-[  363.496146]  ? kthread_park+0x90/0x90
-[  363.496148]  ret_from_fork+0x1f/0x40
-[  363.496151] INFO: task kworker/u16:13:301 blocked for more than 120 seconds.
-[  363.496193]       Tainted: P           O      5.4.0-100-generic #113-Ubuntu
-[  363.496233] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
-disables this message.
-[  363.496278] kworker/u16:13  D    0   301      2 0x80004000
-[  363.496282] Workqueue: kcryptd/253:0 kcryptd_crypt [dm_crypt]
-[  363.496283] Call Trace:
-[  363.496286]  __schedule+0x2e3/0x740
-[  363.496289]  schedule+0x42/0xb0
-[  363.496290]  schedule_timeout+0x10e/0x160
-[  363.496292]  ? skcipher_encrypt_ablkcipher+0x61/0x70
-[  363.496294]  ? crypto_skcipher_encrypt+0x48/0x60
-[  363.496296]  wait_for_completion+0xb1/0x120
-[  363.496298]  ? wake_up_q+0x70/0x70
-[  363.496301]  crypt_convert+0x144/0x1f0 [dm_crypt]
-[  363.496304]  kcryptd_crypt+0x2b9/0x3b0 [dm_crypt]
-[  363.496307]  process_one_work+0x1eb/0x3b0
-[  363.496310]  worker_thread+0x4d/0x400
-[  363.496312]  kthread+0x104/0x140
-[  363.496314]  ? process_one_work+0x3b0/0x3b0
-[  363.496316]  ? kthread_park+0x90/0x90
-[  363.496317]  ret_from_fork+0x1f/0x40
-[  363.496320] INFO: task kworker/u16:14:302 blocked for more than 120 seconds.
-[  363.496362]       Tainted: P           O      5.4.0-100-generic #113-Ubuntu
-[  363.496402] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
-disables this message.
-[  363.496447] kworker/u16:14  D    0   302      2 0x80004000
-[  363.496451] Workqueue: kcryptd/253:0 kcryptd_crypt [dm_crypt]
-[  363.496452] Call Trace:
-[  363.496455]  __schedule+0x2e3/0x740
-[  363.496458]  schedule+0x42/0xb0
-[  363.496459]  schedule_timeout+0x10e/0x160
-[  363.496461]  ? skcipher_encrypt_ablkcipher+0x61/0x70
-[  363.496463]  ? crypto_skcipher_encrypt+0x48/0x60
-[  363.496465]  wait_for_completion+0xb1/0x120
-[  363.496467]  ? wake_up_q+0x70/0x70
-[  363.496470]  crypt_convert+0x144/0x1f0 [dm_crypt]
-[  363.496473]  kcryptd_crypt+0x2b9/0x3b0 [dm_crypt]
-[  363.496476]  process_one_work+0x1eb/0x3b0
-[  363.496478]  worker_thread+0x4d/0x400
-[  363.496481]  kthread+0x104/0x140
-[  363.496483]  ? process_one_work+0x3b0/0x3b0
-[  363.496484]  ? kthread_park+0x90/0x90
-[  363.496486]  ret_from_fork+0x1f/0x40
-[  363.496489] INFO: task kworker/u16:15:303 blocked for more than 120 seconds.
-[  363.496531]       Tainted: P           O      5.4.0-100-generic #113-Ubuntu
-[  363.496571] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
-disables this message.
-[  363.496616] kworker/u16:15  D    0   303      2 0x80004000
-[  363.496620] Workqueue: kcryptd/253:0 kcryptd_crypt [dm_crypt]
-[  363.496621] Call Trace:
-[  363.496624]  __schedule+0x2e3/0x740
-[  363.496627]  schedule+0x42/0xb0
-[  363.496629]  schedule_timeout+0x10e/0x160
-[  363.496630]  ? skcipher_encrypt_ablkcipher+0x61/0x70
-[  363.496632]  ? crypto_skcipher_encrypt+0x48/0x60
-[  363.496634]  wait_for_completion+0xb1/0x120
-[  363.496636]  ? wake_up_q+0x70/0x70
-[  363.496639]  crypt_convert+0x144/0x1f0 [dm_crypt]
-[  363.496642]  kcryptd_crypt+0x2b9/0x3b0 [dm_crypt]
-[  363.496645]  process_one_work+0x1eb/0x3b0
-[  363.496647]  worker_thread+0x4d/0x400
-[  363.496650]  kthread+0x104/0x140
-[  363.496652]  ? process_one_work+0x3b0/0x3b0
-[  363.496654]  ? kthread_park+0x90/0x90
-[  363.496655]  ret_from_fork+0x1f/0x40
-[  363.496713] INFO: task mergerfs:9760 blocked for more than 120 seconds.
-[  363.496752]       Tainted: P           O      5.4.0-100-generic #113-Ubuntu
-[  363.496793] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs"
-disables this message.
-[  363.496838] mergerfs        D    0  9760      1 0x00000000
-[  363.496840] Call Trace:
-[  363.496843]  __schedule+0x2e3/0x740
-[  363.496846]  schedule+0x42/0xb0
-[  363.496848]  schedule_timeout+0x10e/0x160
-[  363.496851]  ? blk_finish_plug+0x26/0x40
-[  363.496853]  wait_for_completion+0xb1/0x120
-[  363.496855]  ? wake_up_q+0x70/0x70
-[  363.496910]  ? __xfs_buf_submit+0x138/0x260 [xfs]
-[  363.496950]  xfs_buf_iowait+0x26/0xe0 [xfs]
-[  363.496990]  __xfs_buf_submit+0x138/0x260 [xfs]
-[  363.497030]  _xfs_buf_read+0x27/0x30 [xfs]
-[  363.497070]  xfs_buf_read_map+0x132/0x1d0 [xfs]
-[  363.497073]  ? new_slab+0x4a/0x70
-[  363.497117]  xfs_trans_read_buf_map+0xca/0x350 [xfs]
-[  363.497155]  xfs_imap_to_bp+0x66/0xd0 [xfs]
-[  363.497193]  xfs_iread+0x83/0x200 [xfs]
-[  363.497234]  xfs_iget+0x214/0x9e0 [xfs]
-[  363.497270]  ? xfs_da_compname+0x1d/0x30 [xfs]
-[  363.497306]  ? xfs_dir2_sf_lookup+0xd0/0x200 [xfs]
-[  363.497348]  xfs_lookup+0xe2/0x120 [xfs]
-[  363.497390]  xfs_vn_lookup+0x72/0xb0 [xfs]
-[  363.497393]  __lookup_slow+0x92/0x160
-[  363.497395]  lookup_slow+0x3b/0x60
-[  363.497397]  walk_component+0x1da/0x360
-[  363.497399]  ? link_path_walk.part.0+0x2a2/0x550
-[  363.497401]  path_lookupat.isra.0+0x80/0x230
-[  363.497404]  filename_lookup+0xae/0x170
-[  363.497407]  ? __check_object_size+0x13f/0x150
-[  363.497409]  ? strncpy_from_user+0x4c/0x150
-[  363.497412]  user_path_at_empty+0x3a/0x50
-[  363.497414]  vfs_statx+0x7d/0xe0
-[  363.497417]  __do_sys_newlstat+0x3e/0x80
-[  363.497419]  ? vfs_read+0x12e/0x160
-[  363.497420]  ? fput+0x13/0x20
-[  363.497422]  ? ksys_read+0xce/0xe0
-[  363.497424]  __x64_sys_newlstat+0x16/0x20
-[  363.497427]  do_syscall_64+0x57/0x190
-[  363.497429]  entry_SYSCALL_64_after_hwframe+0x44/0xa9
-[  363.497432] RIP: 0033:0x7f7f32c656ea
-[  363.497438] Code: Bad RIP value.
-[  363.497439] RSP: 002b:00007f7f31fea0c8 EFLAGS: 00000246 ORIG_RAX:
-0000000000000006
-[  363.497441] RAX: ffffffffffffffda RBX: 0000560953796248 RCX: 00007f7f32c656ea
-[  363.497442] RDX: 00007f7f31fea110 RSI: 00007f7f31fea110 RDI: 00007f7f31fea100
-[  363.497443] RBP: 00007f7f31fea120 R08: 0000000000000001 R09: 000000000000000a
-[  363.497445] R10: 00007f7f14000b90 R11: 0000000000000246 R12: 00007f7f31fea220
-[  363.497446] R13: 00007f7f14000b90 R14: 00007f7f31fea100 R15: 00007f7f31fea110
+Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
+------8TtN9ZnHmYbjupaEpeShJ04PQlBV3ZvePY_ZWnFgjSBPeLtG=_8e144_--
 
