@@ -4,68 +4,76 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8DBCFC433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 16 Feb 2022 22:15:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7100DC433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 17 Feb 2022 02:40:45 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-644-8QQ7pjbgPHe_Qxoy7hVU5g-1; Wed, 16 Feb 2022 17:15:47 -0500
-X-MC-Unique: 8QQ7pjbgPHe_Qxoy7hVU5g-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-606-6uEiubi8N5uyXVfKp8qw0g-1; Wed, 16 Feb 2022 21:40:40 -0500
+X-MC-Unique: 6uEiubi8N5uyXVfKp8qw0g-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 8C4401091DA1;
-	Wed, 16 Feb 2022 22:15:42 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 184EB814246;
+	Thu, 17 Feb 2022 02:40:36 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 64BD445312;
-	Wed, 16 Feb 2022 22:15:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 848EB101F6CA;
+	Thu, 17 Feb 2022 02:40:34 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 90FB11809CB8;
-	Wed, 16 Feb 2022 22:15:39 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5A3841809CB8;
+	Thu, 17 Feb 2022 02:40:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.4])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21GMFMX2029623 for <dm-devel@listman.util.phx.redhat.com>;
-	Wed, 16 Feb 2022 17:15:22 -0500
+	id 21H2eS3E017944 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 16 Feb 2022 21:40:28 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 0AE1C111F3AF; Wed, 16 Feb 2022 22:15:22 +0000 (UTC)
+	id 9F6F62024CB7; Thu, 17 Feb 2022 02:40:28 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 06D06111F3AC
-	for <dm-devel@redhat.com>; Wed, 16 Feb 2022 22:15:13 +0000 (UTC)
+	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 99BA12024CAE
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 02:40:25 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DAF3510AF626
-	for <dm-devel@redhat.com>; Wed, 16 Feb 2022 22:15:13 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-440-dIwcvBt9OSGhcYg9YBIwBg-1; Wed, 16 Feb 2022 17:15:10 -0500
-X-MC-Unique: dIwcvBt9OSGhcYg9YBIwBg-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	key-exchange X25519 server-signature ECDSA (P-521) server-digest
-	SHA512) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 8EE001FD3C;
-	Wed, 16 Feb 2022 22:09:41 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	key-exchange X25519 server-signature ECDSA (P-521) server-digest
-	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id C32EC13B5C;
-	Wed, 16 Feb 2022 22:09:38 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id xwQ4HyJ2DWKOUQAAMHmgww
-	(envelope-from <neilb@suse.de>); Wed, 16 Feb 2022 22:09:38 +0000
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8EABA3C23385
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 02:40:25 +0000 (UTC)
+Received: from mail-pg1-f180.google.com (mail-pg1-f180.google.com
+	[209.85.215.180]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-272-kA5otZS5OcKDQ-Kuy_8YFA-1; Wed, 16 Feb 2022 21:40:23 -0500
+X-MC-Unique: kA5otZS5OcKDQ-Kuy_8YFA-1
+Received: by mail-pg1-f180.google.com with SMTP id r76so3749504pgr.10
+	for <dm-devel@redhat.com>; Wed, 16 Feb 2022 18:40:23 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:from:to:cc:in-reply-to:references:subject
+	:message-id:date:mime-version:content-transfer-encoding;
+	bh=oODu74s9GE4pl/LcFCnseaYhJWRPo2lHWvLkc0TctgM=;
+	b=1ZYYCuxREFM98LdmbKpEzLYbV8wqp2ZQUfKdZyfVbRw4qsdkf4yMvhaG3d4Z0+6Wcm
+	0ynRCOQTRxI/h2Tye7gEh3ETUqBrfQ26ClmswUmrEjJVS2i4sWPm971Cu94S8YymEdQE
+	s9au0xVtCXKOMDg+V8Y2Fqrh0qbp0bMvI1bQUdvyvUpt4noNXNvoyxyoUQUVrllyDzuD
+	x/9peRtClSxh8WTqYCuyXpKCyC9oM/xopaMU0RdC6a1Qy3ZsjPP6+hn4eY22v3S0Ns2H
+	YVp8n3yv9NgFUVPiLC0lCy91pOMPNUoGa663znNugbcHalAa3lt8s4jVjR6z3xDki+Vl
+	x1HQ==
+X-Gm-Message-State: AOAM533egZSnitZuhq1qhwf5bfYicg0ncXUzNGdXLJagf+pFeS39n0Aq
+	e2BBwGhuLMS+iUEuZaMWTS/olRpKs7FuIQ==
+X-Google-Smtp-Source: ABdhPJzPZybSL83JbFQ7Ko+3wR4VK2ajkjH42fnPCHnO7hdrLt590zqAdba2ygW+GoAliSG2gPoiZw==
+X-Received: by 2002:a63:451e:0:b0:373:6a1d:2ad9 with SMTP id
+	s30-20020a63451e000000b003736a1d2ad9mr797469pga.114.1645065622451;
+	Wed, 16 Feb 2022 18:40:22 -0800 (PST)
+Received: from [192.168.1.100] ([198.8.77.157])
+	by smtp.gmail.com with ESMTPSA id a17sm366645pju.15.2022.02.16.18.40.21
+	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+	Wed, 16 Feb 2022 18:40:22 -0800 (PST)
+From: Jens Axboe <axboe@kernel.dk>
+To: Christoph Hellwig <hch@lst.de>, Mike Snitzer <snitzer@redhat.com>
+In-Reply-To: <20220215100540.3892965-1-hch@lst.de>
+References: <20220215100540.3892965-1-hch@lst.de>
+Message-Id: <164506562143.46255.14806921752720866775.b4-ty@kernel.dk>
+Date: Wed, 16 Feb 2022 19:40:21 -0700
 MIME-Version: 1.0
-From: "NeilBrown" <neilb@suse.de>
-To: mwilck@suse.com
-In-reply-to: <20220216205914.7575-1-mwilck@suse.com>
-References: <20220216205914.7575-1-mwilck@suse.com>
-Date: Thu, 17 Feb 2022 09:09:28 +1100
-Message-id: <164504936873.10228.7361167610237544463@noble.neil.brown.name>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -74,16 +82,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 21GMFMX2029623
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 X-loop: dm-devel@redhat.com
-Cc: Jes Sorensen <jsorensen@fb.com>, Coly Li <colyli@suse.com>,
-	Peter Rajnoha <prajnoha@redhat.com>, lvm-devel@redhat.com,
-	linux-raid@vger.kernel.org, dm-devel@redhat.com,
-	Martin Wilck <mwilck@suse.com>, Heming Zhao <heming.zhao@suse.com>
-Subject: Re: [dm-devel] [PATCH] udev-md-raid-assembly.rules: skip if
- DM_UDEV_DISABLE_OTHER_RULES_FLAG
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com
+Subject: Re: [dm-devel] make the blk-mq stacking interface optional
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -97,7 +99,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -105,50 +107,39 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Thu, 17 Feb 2022, mwilck@suse.com wrote:
-> From: Martin Wilck <mwilck@suse.com>
+On Tue, 15 Feb 2022 11:05:35 +0100, Christoph Hellwig wrote:
+> this series requires an explicit select to use the blk-mq stacking
+> interfaces.  This means they don't get build without dm support, and
+> thus the buildbot should catch abuses like the one we had in the ufs
+> driver more easily.  And while I touched this code I also ended up
+> cleaning up various loose ends.
 > 
-> device-mapper sets the flag DM_UDEV_DISABLE_OTHER_RULES_FLAG to 1 for
-> devices which are unusable. They may be no set up yet, suspended, or
-> otherwise unusable (e.g. multipath maps without usable path). This
-> flag does not necessarily imply SYSTEMD_READY=0 and must therefore
-> be tested separately.
-
-I really don't like this - looks like a hack.  A Kludge.
-
-Can you provide a reference to a detailed discussion that explains why
-SYSTEMD_READY=0 cannot be used?
-
-Thanks,
-NeilBrown
-
-
+> Diffstat:
+>  block/Kconfig          |    3 +++
+>  block/blk-mq.c         |   45 +++++++++------------------------------------
+>  drivers/md/Kconfig     |    1 +
+>  drivers/md/dm-rq.c     |   26 +++++++++-----------------
+>  include/linux/blk-mq.h |    3 +--
+>  5 files changed, 23 insertions(+), 55 deletions(-)
 > 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  udev-md-raid-assembly.rules | 5 +++++
->  1 file changed, 5 insertions(+)
-> 
-> diff --git a/udev-md-raid-assembly.rules b/udev-md-raid-assembly.rules
-> index d668cdd..4568b01 100644
-> --- a/udev-md-raid-assembly.rules
-> +++ b/udev-md-raid-assembly.rules
-> @@ -21,6 +21,11 @@ IMPORT{cmdline}="noiswmd"
->  IMPORT{cmdline}="nodmraid"
->  
->  ENV{nodmraid}=="?*", GOTO="md_inc_end"
-> +
-> +# device mapper sets DM_UDEV_DISABLE_OTHER_RULES_FLAG for devices which
-> +# aren't ready to use
-> +KERNEL=="dm-*", ENV{DM_UDEV_DISABLE_OTHER_RULES_FLAG}=="1", GOTO="md_inc_end"
-> +
->  ENV{ID_FS_TYPE}=="ddf_raid_member", GOTO="md_inc"
->  ENV{noiswmd}=="?*", GOTO="md_inc_end"
->  ENV{ID_FS_TYPE}=="isw_raid_member", ACTION!="change", GOTO="md_inc"
-> -- 
-> 2.35.1
-> 
-> 
+> [...]
+
+Applied, thanks!
+
+[1/5] blk-mq: make the blk-mq stacking code optional
+      (no commit info)
+[2/5] blk-mq: fold blk_cloned_rq_check_limits into blk_insert_cloned_request
+      (no commit info)
+[3/5] blk-mq: remove the request_queue argument to blk_insert_cloned_request
+      (no commit info)
+[4/5] dm: remove useless code from dm_dispatch_clone_request
+      (no commit info)
+[5/5] dm: remove dm_dispatch_clone_request
+      (no commit info)
+
+Best regards,
+-- 
+Jens Axboe
 
 
 --
