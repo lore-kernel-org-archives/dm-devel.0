@@ -1,62 +1,85 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7191EC433F5
-	for <dm-devel@archiver.kernel.org>; Sun, 20 Feb 2022 23:57:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5EE45C433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 21 Feb 2022 06:07:10 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-326-HHY3gbZmP2-mp7WEEIAmtg-1; Sun, 20 Feb 2022 18:57:50 -0500
-X-MC-Unique: HHY3gbZmP2-mp7WEEIAmtg-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
+ us-mta-407-B0UZBE--P5ySyR8uOoJ9UQ-1; Mon, 21 Feb 2022 01:07:05 -0500
+X-MC-Unique: B0UZBE--P5ySyR8uOoJ9UQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D2A87180E465;
-	Sun, 20 Feb 2022 23:57:45 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id B581879C59;
-	Sun, 20 Feb 2022 23:57:43 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3A9D0814246;
+	Mon, 21 Feb 2022 06:07:01 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id E4ED85DBA5;
+	Mon, 21 Feb 2022 06:07:00 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 25EEF4BB7C;
-	Sun, 20 Feb 2022 23:57:36 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.1])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C97F31809CAA;
+	Mon, 21 Feb 2022 06:06:58 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.10])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21KNvXLR018032 for <dm-devel@listman.util.phx.redhat.com>;
-	Sun, 20 Feb 2022 18:57:33 -0500
+	id 21HMCVR7028667 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 17 Feb 2022 17:12:31 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 63C8640F9D6B; Sun, 20 Feb 2022 23:57:33 +0000 (UTC)
+	id 2535B5361F9; Thu, 17 Feb 2022 22:12:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4516A40F9D68
-	for <dm-devel@redhat.com>; Sun, 20 Feb 2022 23:57:33 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2BECE1C05154
-	for <dm-devel@redhat.com>; Sun, 20 Feb 2022 23:57:33 +0000 (UTC)
+	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2176C5361DA
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 22:12:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 09CA4811E81
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 22:12:31 +0000 (UTC)
 Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
 	by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-127-XhyqAU9NOFumoK-ZcDIQKg-1; Sun, 20 Feb 2022 18:57:31 -0500
-X-MC-Unique: XhyqAU9NOFumoK-ZcDIQKg-1
+	us-mta-518-s57KWLYeOt2Z5c14HDnI-Q-1; Thu, 17 Feb 2022 17:12:29 -0500
+X-MC-Unique: s57KWLYeOt2Z5c14HDnI-Q-1
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by ams.source.kernel.org (Postfix) with ESMTPS id 67B28B80E3B;
-	Sun, 20 Feb 2022 23:57:29 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 73313C340F0;
-	Sun, 20 Feb 2022 23:57:26 +0000 (UTC)
-From: Sasha Levin <sashal@kernel.org>
-To: stable-commits@vger.kernel.org, hch@lst.de
-Date: Sun, 20 Feb 2022 18:57:24 -0500
-Message-Id: <20220220235724.73030-1-sashal@kernel.org>
+	by ams.source.kernel.org (Postfix) with ESMTPS id E4ABEB82486;
+	Thu, 17 Feb 2022 22:07:02 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9B94EC340E8;
+	Thu, 17 Feb 2022 22:07:01 +0000 (UTC)
 MIME-Version: 1.0
-X-Patchwork-Hint: ignore
-X-stable: review
+In-Reply-To: <1644890154-64915-3-git-send-email-wangqing@vivo.com>
+References: <1644890154-64915-1-git-send-email-wangqing@vivo.com>
+	<1644890154-64915-3-git-send-email-wangqing@vivo.com>
+From: Stephen Boyd <sboyd@kernel.org>
+To: "Pan, Xinhui" <Xinhui.Pan@amd.com>, Alasdair Kergon <agk@redhat.com>,
+	Alex Deucher <alexander.deucher@amd.com>,
+	Benjamin Tissoires <benjamin.tissoires@redhat.com>,
+	Christian =?utf-8?q?K=C3=B6nig?= <christian.koenig@amd.com>,
+	Daniel Vetter <daniel@ffwll.ch>, David Airlie <airlied@linux.ie>,
+	Dmitry Torokhov <dmitry.torokhov@gmail.com>,
+	Hans Verkuil <hverkuil@xs4all.nl>,
+	Jani Nikula <jani.nikula@linux.intel.com>,
+	Jens Axboe <axboe@kernel.dk>, Jiri Kosina <jikos@kernel.org>,
+	Joonas Lahtinen <joonas.lahtinen@linux.intel.com>,
+	Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>,
+	Mauro Carvalho Chehab <mchehab@kernel.org>,
+	Michael Turquette <mturquette@baylibre.com>,
+	Mike Snitzer <snitzer@redhat.com>, Qing Wang <wangqing@vivo.com>,
+	Rodrigo Vivi <rodrigo.vivi@intel.com>,
+	Roger Pau =?utf-8?q?Monn=C3=A9?= <roger.pau@citrix.com>,
+	Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>,
+	amd-gfx@lists.freedesktop.org, dm-devel@redhat.com,
+	dri-devel@lists.freedesktop.org, intel-gfx@lists.freedesk.top.org,
+	linux-block@vger.kernel.org, linux-clk@vger.kernel.org,
+	linux-input@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-media@vger.kernel.org, xen-devel@lists.xenproject.org
+Date: Thu, 17 Feb 2022 14:06:58 -0800
+User-Agent: alot/0.10
+Message-Id: <20220217220701.9B94EC340E8@smtp.kernel.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -65,22 +88,14 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 21KNvXLR018032
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 21HMCVR7028667
 X-loop: dm-devel@redhat.com
-Cc: Jens Axboe <axboe@kernel.dk>, Juergen Gross <jgross@suse.com>,
-	Alex Elder <elder@kernel.org>, Mike Snitzer <snitzer@redhat.com>,
-	Sage Weil <sage@redhat.com>,
-	Konrad Rzeszutek Wilk <konrad.wilk@oracle.com>,
-	Keith Busch <keith.busch@intel.com>, dm-devel@redhat.com,
-	David Vrabel <david.vrabel@citrix.com>,
-	Ilya Dryomov <idryomov@gmail.com>, Shaohua Li <shli@kernel.org>,
-	Boris Ostrovsky <boris.ostrovsky@oracle.com>,
-	Alasdair Kergon <agk@redhat.com>,
-	=?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
-Subject: [dm-devel] Patch "block: fix surprise removal for drivers calling
-	blk_set_queue_dying" has been added to the 5.15-stable tree
+X-Mailman-Approved-At: Mon, 21 Feb 2022 01:04:54 -0500
+Cc: Wang Qing <wangqing@vivo.com>
+Subject: Re: [dm-devel] [PATCH V3 2/13] clk: mvebu: use
+	time_is_before_eq_jiffies() instead of open coding it
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -94,127 +109,28 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-VGhpcyBpcyBhIG5vdGUgdG8gbGV0IHlvdSBrbm93IHRoYXQgSSd2ZSBqdXN0IGFkZGVkIHRoZSBw
-YXRjaCB0aXRsZWQKCiAgICBibG9jazogZml4IHN1cnByaXNlIHJlbW92YWwgZm9yIGRyaXZlcnMg
-Y2FsbGluZyBibGtfc2V0X3F1ZXVlX2R5aW5nCgp0byB0aGUgNS4xNS1zdGFibGUgdHJlZSB3aGlj
-aCBjYW4gYmUgZm91bmQgYXQ6CiAgICBodHRwOi8vd3d3Lmtlcm5lbC5vcmcvZ2l0Lz9wPWxpbnV4
-L2tlcm5lbC9naXQvc3RhYmxlL3N0YWJsZS1xdWV1ZS5naXQ7YT1zdW1tYXJ5CgpUaGUgZmlsZW5h
-bWUgb2YgdGhlIHBhdGNoIGlzOgogICAgIGJsb2NrLWZpeC1zdXJwcmlzZS1yZW1vdmFsLWZvci1k
-cml2ZXJzLWNhbGxpbmctYmxrX3MucGF0Y2gKYW5kIGl0IGNhbiBiZSBmb3VuZCBpbiB0aGUgcXVl
-dWUtNS4xNSBzdWJkaXJlY3RvcnkuCgpJZiB5b3UsIG9yIGFueW9uZSBlbHNlLCBmZWVscyBpdCBz
-aG91bGQgbm90IGJlIGFkZGVkIHRvIHRoZSBzdGFibGUgdHJlZSwKcGxlYXNlIGxldCA8c3RhYmxl
-QHZnZXIua2VybmVsLm9yZz4ga25vdyBhYm91dCBpdC4KCgoKY29tbWl0IGQyZGEyOTQyZDNhODRm
-NGQ2ZGI3ZTVjZWFlZjIwOTRjZDIzYWEzMDcKQXV0aG9yOiBDaHJpc3RvcGggSGVsbHdpZyA8aGNo
-QGxzdC5kZT4KRGF0ZTogICBUaHUgRmViIDE3IDA4OjUyOjMxIDIwMjIgKzAxMDAKCiAgICBibG9j
-azogZml4IHN1cnByaXNlIHJlbW92YWwgZm9yIGRyaXZlcnMgY2FsbGluZyBibGtfc2V0X3F1ZXVl
-X2R5aW5nCiAgICAKICAgIFsgVXBzdHJlYW0gY29tbWl0IDdhNTQyOGRjYjc5MDI3MDBiODMwZTkx
-MmZlZWU0ZTg0NWRmN2MwMTkgXQogICAgCiAgICBWYXJpb3VzIGJsb2NrIGRyaXZlcnMgY2FsbCBi
-bGtfc2V0X3F1ZXVlX2R5aW5nIHRvIG1hcmsgYSBkaXNrIGFzIGRlYWQgZHVlCiAgICB0byBzdXJw
-cmlzZSByZW1vdmFsIGV2ZW50cywgYnV0IHNpbmNlIGNvbW1pdCA4ZTE0MWY5ZWI4MDMgdGhhdCBk
-b2Vzbid0CiAgICB3b3JrIGdpdmVuIHRoYXQgdGhlIEdEX0RFQUQgZmxhZyBuZWVkcyB0byBiZSBz
-ZXQgdG8gc3RvcCBJL08uCiAgICAKICAgIFJlcGxhY2UgdGhlIGRyaXZlciBjYWxscyB0byBibGtf
-c2V0X3F1ZXVlX2R5aW5nIHdpdGggYSBuZXcgKGFuZCBwcm9wZXJseQogICAgZG9jdW1lbnRlZCkg
-YmxrX21hcmtfZGlza19kZWFkIEFQSSwgYW5kIGZvbGQgYmxrX3NldF9xdWV1ZV9keWluZyBpbnRv
-IHRoZQogICAgb25seSByZW1haW5pbmcgY2FsbGVyLgogICAgCiAgICBGaXhlczogOGUxNDFmOWVi
-ODAzICgiYmxvY2s6IGRyYWluIGZpbGUgc3lzdGVtIEkvTyBvbiBkZWxfZ2VuZGlzayIpCiAgICBS
-ZXBvcnRlZC1ieTogTWFya3VzIEJsw7ZjaGwgPG1hcmt1cy5ibG9lY2hsQGlwZXRyb25pay5jb20+
-CiAgICBTaWduZWQtb2ZmLWJ5OiBDaHJpc3RvcGggSGVsbHdpZyA8aGNoQGxzdC5kZT4KICAgIFJl
-dmlld2VkLWJ5OiBTYWdpIEdyaW1iZXJnIDxzYWdpQGdyaW1iZXJnLm1lPgogICAgTGluazogaHR0
-cHM6Ly9sb3JlLmtlcm5lbC5vcmcvci8yMDIyMDIxNzA3NTIzMS4xMTQwLTEtaGNoQGxzdC5kZQog
-ICAgU2lnbmVkLW9mZi1ieTogSmVucyBBeGJvZSA8YXhib2VAa2VybmVsLmRrPgogICAgU2lnbmVk
-LW9mZi1ieTogU2FzaGEgTGV2aW4gPHNhc2hhbEBrZXJuZWwub3JnPgoKZGlmZiAtLWdpdCBhL2Js
-b2NrL2Jsay1jb3JlLmMgYi9ibG9jay9ibGstY29yZS5jCmluZGV4IGQ0MmEwZjNmZjczNjEuLjQy
-YWMzYTk4NWMyZDcgMTAwNjQ0Ci0tLSBhL2Jsb2NrL2Jsay1jb3JlLmMKKysrIGIvYmxvY2svYmxr
-LWNvcmUuYwpAQCAtMzUwLDEzICszNTAsNiBAQCB2b2lkIGJsa19xdWV1ZV9zdGFydF9kcmFpbihz
-dHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqcSkKIAl3YWtlX3VwX2FsbCgmcS0+bXFfZnJlZXplX3dxKTsK
-IH0KIAotdm9pZCBibGtfc2V0X3F1ZXVlX2R5aW5nKHN0cnVjdCByZXF1ZXN0X3F1ZXVlICpxKQot
-ewotCWJsa19xdWV1ZV9mbGFnX3NldChRVUVVRV9GTEFHX0RZSU5HLCBxKTsKLQlibGtfcXVldWVf
-c3RhcnRfZHJhaW4ocSk7Ci19Ci1FWFBPUlRfU1lNQk9MX0dQTChibGtfc2V0X3F1ZXVlX2R5aW5n
-KTsKLQogLyoqCiAgKiBibGtfY2xlYW51cF9xdWV1ZSAtIHNodXRkb3duIGEgcmVxdWVzdCBxdWV1
-ZQogICogQHE6IHJlcXVlc3QgcXVldWUgdG8gc2h1dGRvd24KQEAgLTM3NCw3ICszNjcsOCBAQCB2
-b2lkIGJsa19jbGVhbnVwX3F1ZXVlKHN0cnVjdCByZXF1ZXN0X3F1ZXVlICpxKQogCVdBUk5fT05f
-T05DRShibGtfcXVldWVfcmVnaXN0ZXJlZChxKSk7CiAKIAkvKiBtYXJrIEBxIERZSU5HLCBubyBu
-ZXcgcmVxdWVzdCBvciBtZXJnZXMgd2lsbCBiZSBhbGxvd2VkIGFmdGVyd2FyZHMgKi8KLQlibGtf
-c2V0X3F1ZXVlX2R5aW5nKHEpOworCWJsa19xdWV1ZV9mbGFnX3NldChRVUVVRV9GTEFHX0RZSU5H
-LCBxKTsKKwlibGtfcXVldWVfc3RhcnRfZHJhaW4ocSk7CiAKIAlibGtfcXVldWVfZmxhZ19zZXQo
-UVVFVUVfRkxBR19OT01FUkdFUywgcSk7CiAJYmxrX3F1ZXVlX2ZsYWdfc2V0KFFVRVVFX0ZMQUdf
-Tk9YTUVSR0VTLCBxKTsKZGlmZiAtLWdpdCBhL2Jsb2NrL2dlbmhkLmMgYi9ibG9jay9nZW5oZC5j
-CmluZGV4IGRlNzg5ZDFhMWUzZDIuLjJkY2VkYmU0ZWYwNDYgMTAwNjQ0Ci0tLSBhL2Jsb2NrL2dl
-bmhkLmMKKysrIGIvYmxvY2svZ2VuaGQuYwpAQCAtNTQ0LDYgKzU0NCwyMCBAQCBpbnQgZGV2aWNl
-X2FkZF9kaXNrKHN0cnVjdCBkZXZpY2UgKnBhcmVudCwgc3RydWN0IGdlbmRpc2sgKmRpc2ssCiB9
-CiBFWFBPUlRfU1lNQk9MKGRldmljZV9hZGRfZGlzayk7CiAKKy8qKgorICogYmxrX21hcmtfZGlz
-a19kZWFkIC0gbWFyayBhIGRpc2sgYXMgZGVhZAorICogQGRpc2s6IGRpc2sgdG8gbWFyayBhcyBk
-ZWFkCisgKgorICogTWFyayBhcyBkaXNrIGFzIGRlYWQgKGUuZy4gc3VycHJpc2UgcmVtb3ZlZCkg
-YW5kIGRvbid0IGFjY2VwdCBhbnkgbmV3IEkvTworICogdG8gdGhpcyBkaXNrLgorICovCit2b2lk
-IGJsa19tYXJrX2Rpc2tfZGVhZChzdHJ1Y3QgZ2VuZGlzayAqZGlzaykKK3sKKwlzZXRfYml0KEdE
-X0RFQUQsICZkaXNrLT5zdGF0ZSk7CisJYmxrX3F1ZXVlX3N0YXJ0X2RyYWluKGRpc2stPnF1ZXVl
-KTsKK30KK0VYUE9SVF9TWU1CT0xfR1BMKGJsa19tYXJrX2Rpc2tfZGVhZCk7CisKIC8qKgogICog
-ZGVsX2dlbmRpc2sgLSByZW1vdmUgdGhlIGdlbmRpc2sKICAqIEBkaXNrOiB0aGUgc3RydWN0IGdl
-bmRpc2sgdG8gcmVtb3ZlCmRpZmYgLS1naXQgYS9kcml2ZXJzL2Jsb2NrL210aXAzMnh4L210aXAz
-Mnh4LmMgYi9kcml2ZXJzL2Jsb2NrL210aXAzMnh4L210aXAzMnh4LmMKaW5kZXggOTAxODU1NzE3
-Y2I1My4uYmE2MWU3Mjc0MWVhYiAxMDA2NDQKLS0tIGEvZHJpdmVycy9ibG9jay9tdGlwMzJ4eC9t
-dGlwMzJ4eC5jCisrKyBiL2RyaXZlcnMvYmxvY2svbXRpcDMyeHgvbXRpcDMyeHguYwpAQCAtNDEx
-Miw3ICs0MTEyLDcgQEAgc3RhdGljIHZvaWQgbXRpcF9wY2lfcmVtb3ZlKHN0cnVjdCBwY2lfZGV2
-ICpwZGV2KQogCQkJIkNvbXBsZXRpb24gd29ya2VycyBzdGlsbCBhY3RpdmUhXG4iKTsKIAl9CiAK
-LQlibGtfc2V0X3F1ZXVlX2R5aW5nKGRkLT5xdWV1ZSk7CisJYmxrX21hcmtfZGlza19kZWFkKGRk
-LT5kaXNrKTsKIAlzZXRfYml0KE1USVBfRERGX1JFTU9WRV9QRU5ESU5HX0JJVCwgJmRkLT5kZF9m
-bGFnKTsKIAogCS8qIENsZWFuIHVwIHRoZSBibG9jayBsYXllci4gKi8KZGlmZiAtLWdpdCBhL2Ry
-aXZlcnMvYmxvY2svcmJkLmMgYi9kcml2ZXJzL2Jsb2NrL3JiZC5jCmluZGV4IGU2NWM5ZDcwNmY2
-ZmIuLmM0YTUyZjMzNjA0ZGMgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvYmxvY2svcmJkLmMKKysrIGIv
-ZHJpdmVycy9ibG9jay9yYmQuYwpAQCAtNzE4Miw3ICs3MTgyLDcgQEAgc3RhdGljIHNzaXplX3Qg
-ZG9fcmJkX3JlbW92ZShzdHJ1Y3QgYnVzX3R5cGUgKmJ1cywKIAkJICogSU8gdG8gY29tcGxldGUv
-ZmFpbC4KIAkJICovCiAJCWJsa19tcV9mcmVlemVfcXVldWUocmJkX2Rldi0+ZGlzay0+cXVldWUp
-OwotCQlibGtfc2V0X3F1ZXVlX2R5aW5nKHJiZF9kZXYtPmRpc2stPnF1ZXVlKTsKKwkJYmxrX21h
-cmtfZGlza19kZWFkKHJiZF9kZXYtPmRpc2spOwogCX0KIAogCWRlbF9nZW5kaXNrKHJiZF9kZXYt
-PmRpc2spOwpkaWZmIC0tZ2l0IGEvZHJpdmVycy9ibG9jay94ZW4tYmxrZnJvbnQuYyBiL2RyaXZl
-cnMvYmxvY2sveGVuLWJsa2Zyb250LmMKaW5kZXggNGRiYjcxMjMwZDZlNy4uM2VmZDM0MTk1OTgz
-MiAxMDA2NDQKLS0tIGEvZHJpdmVycy9ibG9jay94ZW4tYmxrZnJvbnQuYworKysgYi9kcml2ZXJz
-L2Jsb2NrL3hlbi1ibGtmcm9udC5jCkBAIC0yMTI4LDcgKzIxMjgsNyBAQCBzdGF0aWMgdm9pZCBi
-bGtmcm9udF9jbG9zaW5nKHN0cnVjdCBibGtmcm9udF9pbmZvICppbmZvKQogCiAJLyogTm8gbW9y
-ZSBibGtpZl9yZXF1ZXN0KCkuICovCiAJYmxrX21xX3N0b3BfaHdfcXVldWVzKGluZm8tPnJxKTsK
-LQlibGtfc2V0X3F1ZXVlX2R5aW5nKGluZm8tPnJxKTsKKwlibGtfbWFya19kaXNrX2RlYWQoaW5m
-by0+Z2QpOwogCXNldF9jYXBhY2l0eShpbmZvLT5nZCwgMCk7CiAKIAlmb3JfZWFjaF9yaW5mbyhp
-bmZvLCByaW5mbywgaSkgewpkaWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS5jIGIvZHJpdmVycy9t
-ZC9kbS5jCmluZGV4IGI3NWZmNmIyYjk1MjUuLjVmMzM3MDBkMTI0NzMgMTAwNjQ0Ci0tLSBhL2Ry
-aXZlcnMvbWQvZG0uYworKysgYi9kcml2ZXJzL21kL2RtLmMKQEAgLTIxNTYsNyArMjE1Niw3IEBA
-IHN0YXRpYyB2b2lkIF9fZG1fZGVzdHJveShzdHJ1Y3QgbWFwcGVkX2RldmljZSAqbWQsIGJvb2wg
-d2FpdCkKIAlzZXRfYml0KERNRl9GUkVFSU5HLCAmbWQtPmZsYWdzKTsKIAlzcGluX3VubG9jaygm
-X21pbm9yX2xvY2spOwogCi0JYmxrX3NldF9xdWV1ZV9keWluZyhtZC0+cXVldWUpOworCWJsa19t
-YXJrX2Rpc2tfZGVhZChtZC0+ZGlzayk7CiAKIAkvKgogCSAqIFRha2Ugc3VzcGVuZF9sb2NrIHNv
-IHRoYXQgcHJlc3VzcGVuZCBhbmQgcG9zdHN1c3BlbmQgbWV0aG9kcwpkaWZmIC0tZ2l0IGEvZHJp
-dmVycy9udm1lL2hvc3QvY29yZS5jIGIvZHJpdmVycy9udm1lL2hvc3QvY29yZS5jCmluZGV4IGFi
-MTg5Mjg4NmI0NTMuLjczOWZmYmZhZDYyODMgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvbnZtZS9ob3N0
-L2NvcmUuYworKysgYi9kcml2ZXJzL252bWUvaG9zdC9jb3JlLmMKQEAgLTQ0ODQsNyArNDQ4NCw3
-IEBAIHN0YXRpYyB2b2lkIG52bWVfc2V0X3F1ZXVlX2R5aW5nKHN0cnVjdCBudm1lX25zICpucykK
-IAlpZiAodGVzdF9hbmRfc2V0X2JpdChOVk1FX05TX0RFQUQsICZucy0+ZmxhZ3MpKQogCQlyZXR1
-cm47CiAKLQlibGtfc2V0X3F1ZXVlX2R5aW5nKG5zLT5xdWV1ZSk7CisJYmxrX21hcmtfZGlza19k
-ZWFkKG5zLT5kaXNrKTsKIAludm1lX3N0YXJ0X25zX3F1ZXVlKG5zKTsKIAogCXNldF9jYXBhY2l0
-eV9hbmRfbm90aWZ5KG5zLT5kaXNrLCAwKTsKZGlmZiAtLWdpdCBhL2RyaXZlcnMvbnZtZS9ob3N0
-L211bHRpcGF0aC5jIGIvZHJpdmVycy9udm1lL2hvc3QvbXVsdGlwYXRoLmMKaW5kZXggMmY3Njk2
-OTQwOGIyNy4uNzI3NTIwYzM5NzEwOSAxMDA2NDQKLS0tIGEvZHJpdmVycy9udm1lL2hvc3QvbXVs
-dGlwYXRoLmMKKysrIGIvZHJpdmVycy9udm1lL2hvc3QvbXVsdGlwYXRoLmMKQEAgLTc5Miw3ICs3
-OTIsNyBAQCB2b2lkIG52bWVfbXBhdGhfcmVtb3ZlX2Rpc2soc3RydWN0IG52bWVfbnNfaGVhZCAq
-aGVhZCkKIHsKIAlpZiAoIWhlYWQtPmRpc2spCiAJCXJldHVybjsKLQlibGtfc2V0X3F1ZXVlX2R5
-aW5nKGhlYWQtPmRpc2stPnF1ZXVlKTsKKwlibGtfbWFya19kaXNrX2RlYWQoaGVhZC0+ZGlzayk7
-CiAJLyogbWFrZSBzdXJlIGFsbCBwZW5kaW5nIGJpb3MgYXJlIGNsZWFuZWQgdXAgKi8KIAlrYmxv
-Y2tkX3NjaGVkdWxlX3dvcmsoJmhlYWQtPnJlcXVldWVfd29yayk7CiAJZmx1c2hfd29yaygmaGVh
-ZC0+cmVxdWV1ZV93b3JrKTsKZGlmZiAtLWdpdCBhL2luY2x1ZGUvbGludXgvYmxrZGV2LmggYi9p
-bmNsdWRlL2xpbnV4L2Jsa2Rldi5oCmluZGV4IGJlOGU3YTU1ZDgwM2MuLjQxM2MwMTQ4YzBjZTUg
-MTAwNjQ0Ci0tLSBhL2luY2x1ZGUvbGludXgvYmxrZGV2LmgKKysrIGIvaW5jbHVkZS9saW51eC9i
-bGtkZXYuaApAQCAtMTE4NCw3ICsxMTg0LDggQEAgZXh0ZXJuIHZvaWQgYmxrX2R1bXBfcnFfZmxh
-Z3Moc3RydWN0IHJlcXVlc3QgKiwgY2hhciAqKTsKIAogYm9vbCBfX211c3RfY2hlY2sgYmxrX2dl
-dF9xdWV1ZShzdHJ1Y3QgcmVxdWVzdF9xdWV1ZSAqKTsKIGV4dGVybiB2b2lkIGJsa19wdXRfcXVl
-dWUoc3RydWN0IHJlcXVlc3RfcXVldWUgKik7Ci1leHRlcm4gdm9pZCBibGtfc2V0X3F1ZXVlX2R5
-aW5nKHN0cnVjdCByZXF1ZXN0X3F1ZXVlICopOworCit2b2lkIGJsa19tYXJrX2Rpc2tfZGVhZChz
-dHJ1Y3QgZ2VuZGlzayAqZGlzayk7CiAKICNpZmRlZiBDT05GSUdfQkxPQ0sKIC8qCgoKLS0KZG0t
-ZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJl
-ZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbA==
+Quoting Qing Wang (2022-02-14 17:55:39)
+> From: Wang Qing <wangqing@vivo.com>
+> 
+> Use the helper function time_is_{before,after}_jiffies() to improve
+> code readability.
+> 
+> Signed-off-by: Wang Qing <wangqing@vivo.com>
+> ---
+
+Applied to clk-next
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
