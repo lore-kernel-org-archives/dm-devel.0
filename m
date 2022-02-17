@@ -4,78 +4,92 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 90834C433F5
-	for <dm-devel@archiver.kernel.org>; Thu, 17 Feb 2022 09:07:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7F351C433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 17 Feb 2022 10:49:37 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-561-e_1HKvBAMZ6BF-8cj4ZLKQ-1; Thu, 17 Feb 2022 04:07:21 -0500
-X-MC-Unique: e_1HKvBAMZ6BF-8cj4ZLKQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-167-HHFABrcxNaK28p4Nx8BYjA-1; Thu, 17 Feb 2022 05:49:32 -0500
+X-MC-Unique: HHFABrcxNaK28p4Nx8BYjA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3C1EF801AA6;
-	Thu, 17 Feb 2022 09:07:17 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3C2FB4F871;
-	Thu, 17 Feb 2022 09:07:16 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id E837B801ADA;
+	Thu, 17 Feb 2022 10:49:27 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 0B6947B6F4;
+	Thu, 17 Feb 2022 10:49:25 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 00D7D1809CAA;
-	Thu, 17 Feb 2022 09:07:14 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.9])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9F5D24BB7C;
+	Thu, 17 Feb 2022 10:49:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21H977XZ013129 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 17 Feb 2022 04:07:07 -0500
+	id 21HAnJ4n021484 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 17 Feb 2022 05:49:19 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 64C0F492D5B; Thu, 17 Feb 2022 09:07:07 +0000 (UTC)
+	id 14D1F4010A14; Thu, 17 Feb 2022 10:49:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 60741492D4D
-	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 09:07:07 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 46C7E800B21
-	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 09:07:07 +0000 (UTC)
-Received: from mail-pl1-f180.google.com (mail-pl1-f180.google.com
-	[209.85.214.180]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-335--OL-AdVbPAWDqqyByMpLng-1; Thu, 17 Feb 2022 04:07:05 -0500
-X-MC-Unique: -OL-AdVbPAWDqqyByMpLng-1
-Received: by mail-pl1-f180.google.com with SMTP id l9so4170580plg.0;
-	Thu, 17 Feb 2022 01:07:04 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-	:mime-version:content-disposition:in-reply-to;
-	bh=iHftRf/7i/XmxskSM/K/WPxANSIYGKixjpKz8MmDajM=;
-	b=Lxv9YgkwGfMiN+vBciX4QJkIOOpTegRgIVhYC8w1qfzTIrjLbbdlW/glpaScMTiGkS
-	Cxu4+rLhSnj9KkG3TgErqnLB/lflrF9hcNQPaHb1wwGOuQzq2li4Vy1aGrqD8+K+Cyd+
-	YiN9wqdiugXBcrf8x7/zpmOxwHSYuTOqw11nEIzHyd/BIFetZtzuXl5Nmg3zG+B0nDnx
-	/Whaq+JZdSmfEwyd2nB+JQ0L7xKmZUQazFB/VzogeGcR1ii6cp74WbuREngHQtjtfOEW
-	eSmSUOqFD61GX9hHyU8fpX2FqZc8BtAUmcQLwrdLO1AVIyNDGSL5DH8tSqW32UFyUR8q
-	jD0g==
-X-Gm-Message-State: AOAM530a2MtOhr2Fx/rPLmLhCqdbzdMVD/6K3um0ZzC63sSK/tgKuTwn
-	MtYYYr4VTjRaej6wenZVTYs=
-X-Google-Smtp-Source: ABdhPJxA+Rn13F9gCou6v9WFyZVsRSarvAMjLejSWsOqgAvmd/WPGnRZiUrXO0c5nvf+XVq5Joo3eQ==
-X-Received: by 2002:a17:903:1c4:b0:14e:def5:e6bb with SMTP id
-	e4-20020a17090301c400b0014edef5e6bbmr2015834plh.154.1645088823823;
-	Thu, 17 Feb 2022 01:07:03 -0800 (PST)
-Received: from garbanzo (136-24-173-63.cab.webpass.net. [136.24.173.63])
-	by smtp.gmail.com with ESMTPSA id
-	n37sm7970590pgl.48.2022.02.17.01.07.01
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Thu, 17 Feb 2022 01:07:03 -0800 (PST)
-Date: Thu, 17 Feb 2022 01:07:00 -0800
-From: Luis Chamberlain <mcgrof@kernel.org>
-To: Nitesh Shetty <nj.shetty@samsung.com>, hch@lst.de
-Message-ID: <20220217090700.b7n33vbkx5s4qbfq@garbanzo>
-References: <20220214080002.18381-1-nj.shetty@samsung.com>
-	<CGME20220214080605epcas5p16868dae515a6355cf9fecf22df4f3c3d@epcas5p1.samsung.com>
-	<20220214080002.18381-3-nj.shetty@samsung.com>
+	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1020F400F3FE
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 10:49:18 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DB9663C11C7A
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 10:49:18 +0000 (UTC)
+Received: from esa5.hgst.iphmx.com (esa5.hgst.iphmx.com [216.71.153.144]) by
+	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-378-hkihhz1jMJ-x7yEwckTDoQ-3; Thu, 17 Feb 2022 05:49:16 -0500
+X-MC-Unique: hkihhz1jMJ-x7yEwckTDoQ-3
+X-IronPort-AV: E=Sophos;i="5.88,375,1635177600"; d="scan'208";a="193180034"
+Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com)
+	([199.255.45.14])
+	by ob1.hgst.iphmx.com with ESMTP; 17 Feb 2022 18:49:13 +0800
+IronPort-SDR: DQpZ3DjtmgzaLpLDWAxdJdXEq6FBNQCaO+WAqqqW2Hcxmk3xTEOCxXT9l0/mOQyf4A4WAXztKv
+	LRa6Lhg0blo0J0VTq1y+YYaG+XMg8CcEe1Sra3i5Dm2tQ6/tVYaeFDKy35Xqfk5xmM6xrQk1iC
+	x+Ak3KWnLZOTHWjHgDuMqAdeeKfMoK71TnTbxVEtja0IGkjOBnvpnIdLs1qGMWgVhgG2aoK1Ek
+	aQmKlCR1hJNMieBWjZTfbcip2V0yikUBcF4HQ01I0SUUI2cVRANWoE1PVUAtt0rgLjaa3QNknC
+	L9AvRNYoH2nPJVIXb1hUWO9d
+Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
+	by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+	17 Feb 2022 02:22:00 -0800
+IronPort-SDR: bGei9IRKMh+Hszjm/w+QQIk1LX51odvtefJ0loytX8vrWLTqpaE5rBJDGcmdCDsq4q37Us/Mp/
+	yuPzxUnMSvMIWvqI+pGL8jKrXaJQPTs2cktT4A9ExLp0UdGB0JPy/xUwOz9HVJ6fc0O2+1IGKD
+	3IfaQofa73mD4SHjl3PT/odWYmfGmvXAXoaIgGgtenIZBfKJGja1H6RrTEdBCeT3rL0ObKZrmL
+	TxEZ8uGUwbAtgIMttDJkn9Ci8p0ZJuTyxx8UaH/B15+399XQAcczSNbyhSF7RKw2Dhd2w1bkE6
+	Al8=
+WDCIronportException: Internal
+Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
+	by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+	17 Feb 2022 02:49:15 -0800
+Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+	by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4Jzs5Q0fynz1SVp2
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 02:49:14 -0800 (PST)
+X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
+Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
+	by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+	(amavisd-new, port 10026)
+	with ESMTP id 9IpKGLbNrs6O for <dm-devel@redhat.com>;
+	Thu, 17 Feb 2022 02:49:13 -0800 (PST)
+Received: from [10.225.163.77] (unknown [10.225.163.77])
+	by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4Jzs5N4YMtz1Rwrw;
+	Thu, 17 Feb 2022 02:49:12 -0800 (PST)
+Message-ID: <1d287c7e-8aff-beea-1bd6-4b2226f9f3db@opensource.wdc.com>
+Date: Thu, 17 Feb 2022 19:49:11 +0900
 MIME-Version: 1.0
-In-Reply-To: <20220214080002.18381-3-nj.shetty@samsung.com>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+	Thunderbird/91.5.0
+To: Kirill Tkhai <ktkhai@virtuozzo.com>, "agk@redhat.com" <agk@redhat.com>,
+	"snitzer@redhat.com" <snitzer@redhat.com>,
+	"dm-devel@redhat.com" <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+References: <c64d2143-284e-7621-440c-971e3405b4d8@virtuozzo.com>
+	<d209a0b1-2514-79a0-257a-22bcb372785a@virtuozzo.com>
+From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Organization: Western Digital Research
+In-Reply-To: <d209a0b1-2514-79a0-257a-22bcb372785a@virtuozzo.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -84,25 +98,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-loop: dm-devel@redhat.com
-Cc: Mike Snitzer <snitzer@redhat.com>, djwong@kernel.org,
-	linux-nvme@lists.infradead.org, clm@fb.com, dm-devel@redhat.com,
-	Chaitanya Kulkarni <kch@nvidia.com>, osandov@fb.com,
-	Alasdair Kergon <agk@redhat.com>, javier@javigon.com,
-	bvanassche@acm.org, linux-scsi@vger.kernel.org,
-	nitheshshetty@gmail.com, James Smart <james.smart@broadcom.com>,
-	chaitanyak@nvidia.com, SelvaKumar S <selvakuma.s1@samsung.com>,
-	msnitzer@redhat.com, josef@toxicpanda.com,
-	linux-block@vger.kernel.org, dsterba@suse.com, kbusch@kernel.org,
-	Frederick.Knight@netapp.com, Sagi Grimberg <sagi@grimberg.me>,
-	axboe@kernel.dk, tytso@mit.edu, joshi.k@samsung.com,
-	martin.petersen@oracle.com, linux-kernel@vger.kernel.org,
-	arnav.dawn@samsung.com, jack@suse.com,
-	linux-fsdevel@vger.kernel.org, lsf-pc@lists.linux-foundation.org,
-	Alexander Viro <viro@zeniv.linux.org.uk>
-Subject: Re: [dm-devel] [PATCH v3 02/10] block: Introduce queue limits for
- copy-offload support
+Subject: Re: [dm-devel] [PATCH RESEND v2] dm: Fix use-after-free in
+ dm_cleanup_zoned_dev()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -116,172 +115,167 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.16
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The subject says limits for copy-offload...
+On 2/17/22 19:13, Kirill Tkhai wrote:
+> 
+> dm_cleanup_zoned_dev() uses queue, so it must be called
+> before blk_cleanup_disk() starts its killing:
+> 
+> blk_cleanup_disk->blk_cleanup_queue()->kobject_put()->blk_release_queue()->
+> ->...RCU...->blk_free_queue_rcu()->kmem_cache_free()
+> 
+> Otherwise, RCU callback may be executed first,
+> and dm_cleanup_zoned_dev() touches freed memory:
 
-On Mon, Feb 14, 2022 at 01:29:52PM +0530, Nitesh Shetty wrote:
-> Add device limits as sysfs entries,
->         - copy_offload (RW)
->         - copy_max_bytes (RW)
->         - copy_max_hw_bytes (RO)
->         - copy_max_range_bytes (RW)
->         - copy_max_range_hw_bytes (RO)
->         - copy_max_nr_ranges (RW)
->         - copy_max_nr_ranges_hw (RO)
+Mike,
 
-Some of these seem like generic... and also I see a few more max_hw ones
-not listed above...
+Can you queue this please ?
 
-> --- a/block/blk-settings.c
-> +++ b/block/blk-settings.c
-> +/**
-> + * blk_queue_max_copy_sectors - set max sectors for a single copy payload
-> + * @q:  the request queue for the device
-> + * @max_copy_sectors: maximum number of sectors to copy
-> + **/
-> +void blk_queue_max_copy_sectors(struct request_queue *q,
-> +		unsigned int max_copy_sectors)
-> +{
-> +	q->limits.max_hw_copy_sectors = max_copy_sectors;
-> +	q->limits.max_copy_sectors = max_copy_sectors;
-> +}
-> +EXPORT_SYMBOL(blk_queue_max_copy_sectors);
-
-Please use EXPORT_SYMBOL_GPL() for all new things.
-
-Why is this setting both? The documentation does't seem to say.
-What's the point?
-
-> +
-> +/**
-> + * blk_queue_max_copy_range_sectors - set max sectors for a single range, in a copy payload
-> + * @q:  the request queue for the device
-> + * @max_copy_range_sectors: maximum number of sectors to copy in a single range
-> + **/
-> +void blk_queue_max_copy_range_sectors(struct request_queue *q,
-> +		unsigned int max_copy_range_sectors)
-> +{
-> +	q->limits.max_hw_copy_range_sectors = max_copy_range_sectors;
-> +	q->limits.max_copy_range_sectors = max_copy_range_sectors;
-> +}
-> +EXPORT_SYMBOL(blk_queue_max_copy_range_sectors);
-
-Same here.
-
-> +/**
-> + * blk_queue_max_copy_nr_ranges - set max number of ranges, in a copy payload
-> + * @q:  the request queue for the device
-> + * @max_copy_nr_ranges: maximum number of ranges
-> + **/
-> +void blk_queue_max_copy_nr_ranges(struct request_queue *q,
-> +		unsigned int max_copy_nr_ranges)
-> +{
-> +	q->limits.max_hw_copy_nr_ranges = max_copy_nr_ranges;
-> +	q->limits.max_copy_nr_ranges = max_copy_nr_ranges;
-> +}
-> +EXPORT_SYMBOL(blk_queue_max_copy_nr_ranges);
-
-Same.
-
-> +
->  /**
->   * blk_queue_max_write_same_sectors - set max sectors for a single write same
->   * @q:  the request queue for the device
-> @@ -541,6 +592,14 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
->  	t->max_segment_size = min_not_zero(t->max_segment_size,
->  					   b->max_segment_size);
+> 
+>  BUG: KASAN: use-after-free in dm_cleanup_zoned_dev+0x33/0xd0
+>  Read of size 8 at addr ffff88805ac6e430 by task dmsetup/681
+> 
+>  CPU: 4 PID: 681 Comm: dmsetup Not tainted 5.17.0-rc2+ #6
+>  Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.14.0-2 04/01/2014
+>  Call Trace:
+>   <TASK>
+>   dump_stack_lvl+0x57/0x7d
+>   print_address_description.constprop.0+0x1f/0x150
+>   ? dm_cleanup_zoned_dev+0x33/0xd0
+>   kasan_report.cold+0x7f/0x11b
+>   ? dm_cleanup_zoned_dev+0x33/0xd0
+>   dm_cleanup_zoned_dev+0x33/0xd0
+>   __dm_destroy+0x26a/0x400
+>   ? dm_blk_ioctl+0x230/0x230
+>   ? up_write+0xd8/0x270
+>   dev_remove+0x156/0x1d0
+>   ctl_ioctl+0x269/0x530
+>   ? table_clear+0x140/0x140
+>   ? lock_release+0xb2/0x750
+>   ? remove_all+0x40/0x40
+>   ? rcu_read_lock_sched_held+0x12/0x70
+>   ? lock_downgrade+0x3c0/0x3c0
+>   ? rcu_read_lock_sched_held+0x12/0x70
+>   dm_ctl_ioctl+0xa/0x10
+>   __x64_sys_ioctl+0xb9/0xf0
+>   do_syscall_64+0x3b/0x90
+>   entry_SYSCALL_64_after_hwframe+0x44/0xae
+>  RIP: 0033:0x7fb6dfa95c27
+>  Code: 00 00 00 48 8b 05 69 92 0c 00 64 c7 00 26 00 00 00 48 c7 c0 ff ff ff ff c3 66 2e 0f 1f 84 00 00 00 00 00 b8 10 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d 39 92 0c 00 f7 d8 64 89 01 48
+>  RSP: 002b:00007fff882c6c28 EFLAGS: 00000206 ORIG_RAX: 0000000000000010
+>  RAX: ffffffffffffffda RBX: 00007fb6dfb73a8e RCX: 00007fb6dfa95c27
+>  RDX: 00007fb6e01d7ca0 RSI: 00000000c138fd04 RDI: 0000000000000003
+>  RBP: 00007fff882c6ce0 R08: 00007fb6dfbc3558 R09: 00007fff882c6a90
+>  R10: 00007fb6dfbc28a2 R11: 0000000000000206 R12: 00007fb6dfbc28a2
+>  R13: 00007fb6dfbc28a2 R14: 00007fb6dfbc28a2 R15: 00007fb6dfbc28a2
+>   </TASK>
+> 
+>  Allocated by task 673:
+>   kasan_save_stack+0x1e/0x40
+>   __kasan_slab_alloc+0x66/0x80
+>   kmem_cache_alloc_node+0x1ca/0x460
+>   blk_alloc_queue+0x33/0x4e0
+>   __blk_alloc_disk+0x1b/0x60
+>   dm_create+0x368/0xa20
+>   dev_create+0xb9/0x170
+>   ctl_ioctl+0x269/0x530
+>   dm_ctl_ioctl+0xa/0x10
+>   __x64_sys_ioctl+0xb9/0xf0
+>   do_syscall_64+0x3b/0x90
+>   entry_SYSCALL_64_after_hwframe+0x44/0xae
+> 
+>  Freed by task 0:
+>   kasan_save_stack+0x1e/0x40
+>   kasan_set_track+0x21/0x30
+>   kasan_set_free_info+0x20/0x30
+>   __kasan_slab_free+0xfb/0x130
+>   slab_free_freelist_hook+0x7d/0x150
+>   kmem_cache_free+0x13c/0x340
+>   rcu_do_batch+0x2d9/0x820
+>   rcu_core+0x3b8/0x570
+>   __do_softirq+0x1c4/0x63d
+> 
+>  Last potentially related work creation:
+>   kasan_save_stack+0x1e/0x40
+>   __kasan_record_aux_stack+0x96/0xa0
+>   call_rcu+0xc4/0x8f0
+>   kobject_put+0xd9/0x270
+>   disk_release+0xee/0x120
+>   device_release+0x59/0xf0
+>   kobject_put+0xd9/0x270
+>   cleanup_mapped_device+0x12b/0x1b0
+>   __dm_destroy+0x26a/0x400
+>   dev_remove+0x156/0x1d0
+>   ctl_ioctl+0x269/0x530
+>   dm_ctl_ioctl+0xa/0x10
+>   __x64_sys_ioctl+0xb9/0xf0
+>   do_syscall_64+0x3b/0x90
+>   entry_SYSCALL_64_after_hwframe+0x44/0xae
+> 
+>  The buggy address belongs to the object at ffff88805ac6e180
+>   which belongs to the cache request_queue of size 2992
+>  The buggy address is located 688 bytes inside of
+>   2992-byte region [ffff88805ac6e180, ffff88805ac6ed30)
+>  The buggy address belongs to the page:
+>  page:000000000837df3c refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x5ac68
+>  head:000000000837df3c order:3 compound_mapcount:0 compound_pincount:0
+>  flags: 0xfffffc0010200(slab|head|node=0|zone=1|lastcpupid=0x1fffff)
+>  raw: 000fffffc0010200 0000000000000000 dead000000000122 ffff888001e58280
+>  raw: 0000000000000000 00000000800a000a 00000001ffffffff 0000000000000000
+>  page dumped because: kasan: bad access detected
+> 
+>  Memory state around the buggy address:
+>   ffff88805ac6e300: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+>   ffff88805ac6e380: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+>  >ffff88805ac6e400: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+>                                       ^
+>   ffff88805ac6e480: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+>   ffff88805ac6e500: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+>  ==================================================================
+> 
+> Fixes: bb37d77239af "dm: introduce zone append emulation"
+> Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
+> Reviewed-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+> ---
+> v2: Split long commit message line and delete [xxx] time prefix from kernel output.
+> 
+>  drivers/md/dm.c |    2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index dcbd6d201619..d472fe5dbc1d 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1607,6 +1607,7 @@ static void cleanup_mapped_device(struct mapped_device *md)
+>  		md->dax_dev = NULL;
+>  	}
 >  
-> +	t->max_copy_sectors = min(t->max_copy_sectors, b->max_copy_sectors);
-> +	t->max_hw_copy_sectors = min(t->max_hw_copy_sectors, b->max_hw_copy_sectors);
-> +	t->max_copy_range_sectors = min(t->max_copy_range_sectors, b->max_copy_range_sectors);
-> +	t->max_hw_copy_range_sectors = min(t->max_hw_copy_range_sectors,
-> +						b->max_hw_copy_range_sectors);
-> +	t->max_copy_nr_ranges = min(t->max_copy_nr_ranges, b->max_copy_nr_ranges);
-> +	t->max_hw_copy_nr_ranges = min(t->max_hw_copy_nr_ranges, b->max_hw_copy_nr_ranges);
-> +
->  	t->misaligned |= b->misaligned;
+> +	dm_cleanup_zoned_dev(md);
+>  	if (md->disk) {
+>  		spin_lock(&_minor_lock);
+>  		md->disk->private_data = NULL;
+> @@ -1627,7 +1628,6 @@ static void cleanup_mapped_device(struct mapped_device *md)
+>  	mutex_destroy(&md->swap_bios_lock);
 >  
->  	alignment = queue_limit_alignment_offset(b, start);
-> diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
-> index 9f32882ceb2f..9ddd07f142d9 100644
-> --- a/block/blk-sysfs.c
-> +++ b/block/blk-sysfs.c
-> @@ -212,6 +212,129 @@ static ssize_t queue_discard_zeroes_data_show(struct request_queue *q, char *pag
->  	return queue_var_show(0, page);
+>  	dm_mq_cleanup_mapped_device(md);
+> -	dm_cleanup_zoned_dev(md);
 >  }
 >  
-> +static ssize_t queue_copy_offload_show(struct request_queue *q, char *page)
-> +{
-> +	return queue_var_show(blk_queue_copy(q), page);
-> +}
-> +
-> +static ssize_t queue_copy_offload_store(struct request_queue *q,
-> +				       const char *page, size_t count)
-> +{
-> +	unsigned long copy_offload;
-> +	ssize_t ret = queue_var_store(&copy_offload, page, count);
-> +
-> +	if (ret < 0)
-> +		return ret;
-> +
-> +	if (copy_offload && !q->limits.max_hw_copy_sectors)
-> +		return -EINVAL;
+>  /*
+> 
 
 
-If the kernel schedules, copy_offload may still be true and
-max_hw_copy_sectors may be set to 0. Is that an issue?
-
-> +
-> +	if (copy_offload)
-> +		blk_queue_flag_set(QUEUE_FLAG_COPY, q);
-> +	else
-> +		blk_queue_flag_clear(QUEUE_FLAG_COPY, q);
-
-The flag may be set but the queue flag could be set. Is that an issue?
-
-> @@ -597,6 +720,14 @@ QUEUE_RO_ENTRY(queue_nr_zones, "nr_zones");
->  QUEUE_RO_ENTRY(queue_max_open_zones, "max_open_zones");
->  QUEUE_RO_ENTRY(queue_max_active_zones, "max_active_zones");
->  
-> +QUEUE_RW_ENTRY(queue_copy_offload, "copy_offload");
-> +QUEUE_RO_ENTRY(queue_copy_max_hw, "copy_max_hw_bytes");
-> +QUEUE_RW_ENTRY(queue_copy_max, "copy_max_bytes");
-> +QUEUE_RO_ENTRY(queue_copy_range_max_hw, "copy_max_range_hw_bytes");
-> +QUEUE_RW_ENTRY(queue_copy_range_max, "copy_max_range_bytes");
-> +QUEUE_RO_ENTRY(queue_copy_nr_ranges_max_hw, "copy_max_nr_ranges_hw");
-> +QUEUE_RW_ENTRY(queue_copy_nr_ranges_max, "copy_max_nr_ranges");
-
-Seems like you need to update Documentation/ABI/stable/sysfs-block.
-
-> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> index efed3820cbf7..792e6d556589 100644
-> --- a/include/linux/blkdev.h
-> +++ b/include/linux/blkdev.h
-> @@ -254,6 +254,13 @@ struct queue_limits {
->  	unsigned int		discard_alignment;
->  	unsigned int		zone_write_granularity;
->  
-> +	unsigned long		max_hw_copy_sectors;
-> +	unsigned long		max_copy_sectors;
-> +	unsigned int		max_hw_copy_range_sectors;
-> +	unsigned int		max_copy_range_sectors;
-> +	unsigned short		max_hw_copy_nr_ranges;
-> +	unsigned short		max_copy_nr_ranges;
-
-Before limits start growing more.. I wonder if we should just
-stuff hw offload stuff to its own struct within queue_limits.
-
-Christoph?
-
-  Luis
+-- 
+Damien Le Moal
+Western Digital Research
 
 --
 dm-devel mailing list
