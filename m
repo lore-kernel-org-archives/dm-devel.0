@@ -1,62 +1,82 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 29460C433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 17 Feb 2022 06:48:29 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id F2D60C433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 17 Feb 2022 08:37:07 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-16-6N9RhuMGMIOIXlAGmmuqQA-1; Thu, 17 Feb 2022 01:48:24 -0500
-X-MC-Unique: 6N9RhuMGMIOIXlAGmmuqQA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
+ us-mta-47-bugUiSw8OKm6PjCugtCGFA-1; Thu, 17 Feb 2022 03:37:01 -0500
+X-MC-Unique: bugUiSw8OKm6PjCugtCGFA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C1206180FD60;
-	Thu, 17 Feb 2022 06:48:19 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F6026C18B;
-	Thu, 17 Feb 2022 06:48:18 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DDAC01006AA3;
+	Thu, 17 Feb 2022 08:36:52 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id F3ED7105C892;
+	Thu, 17 Feb 2022 08:36:50 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4EAD01809CB8;
-	Thu, 17 Feb 2022 06:48:15 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A76414BB7C;
+	Thu, 17 Feb 2022 08:36:48 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21H6i1l6002739 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 17 Feb 2022 01:44:01 -0500
+	id 21H8ahot011175 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 17 Feb 2022 03:36:43 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 1A3771120AA8; Thu, 17 Feb 2022 06:44:01 +0000 (UTC)
+	id B51E4778A; Thu, 17 Feb 2022 08:36:43 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 1552B112132C
-	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 06:43:56 +0000 (UTC)
+	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B08D8776C
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 08:36:39 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C96473804508
-	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 06:43:56 +0000 (UTC)
-Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-1-CdCWwVsuORyeR_003sORIA-1; Thu, 17 Feb 2022 01:43:53 -0500
-X-MC-Unique: CdCWwVsuORyeR_003sORIA-1
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id AD69868B05; Thu, 17 Feb 2022 07:43:49 +0100 (CET)
-Date: Thu, 17 Feb 2022 07:43:49 +0100
-From: Christoph Hellwig <hch@lst.de>
-To: Jens Axboe <axboe@kernel.dk>
-Message-ID: <20220217064349.GA374@lst.de>
-References: <20220209082828.2629273-1-hch@lst.de>
-	<yq1wni3sz4k.fsf@ca-mkp.ca.oracle.com>
-	<20220210055151.GA3491@lst.de>
-	<2f3f1c98-e013-ee03-2ffb-3a14730b13b9@kernel.dk>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7FEC018A01B3
+	for <dm-devel@redhat.com>; Thu, 17 Feb 2022 08:36:39 +0000 (UTC)
+Received: from mail-pf1-f173.google.com (mail-pf1-f173.google.com
+	[209.85.210.173]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-295-aQQlfGRGP1igsyYjf0uRPA-1; Thu, 17 Feb 2022 03:36:37 -0500
+X-MC-Unique: aQQlfGRGP1igsyYjf0uRPA-1
+Received: by mail-pf1-f173.google.com with SMTP id y11so120274pfa.6;
+	Thu, 17 Feb 2022 00:36:36 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20210112;
+	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+	:mime-version:content-disposition:in-reply-to;
+	bh=c0pu3AOa7Jqr4q26ebNJ4LdMU0x/lC3tR2Tx7zL6lHg=;
+	b=348y5hSI40P+aHygTKF41x+UhLA+OTNzrn2p2ZsR7vHZ9v2z4hlP+3O82VeqHd6iK1
+	mZYBMihGdsg4m0/8gmSVFVUPplLrJaNTEJk0vJeyZax46OQLWOMLAhpG78txh7TPhKuT
+	AfQcv/Zcu0pPm6WB2KB0pIwBf5Gzq+oX1wS0c8bSlp3ZcDOd6Y29q6YeN09IMLW/G62J
+	LUOCFn4co2xwS0YLhrrnIaqjUBvhdieKqwoN/K2BRSefP+8wBJbJXzld67GAFJhBo1rU
+	dwPiZxo2j8EgXeXexP4vsnaJlWlg3l0kg/YeEvr/ua2fPV/zqIuYDY0VkS9XHJ+5r/C8
+	0LAA==
+X-Gm-Message-State: AOAM5316BNtvVpZXqTnnuXK5BjXsz0YQFnrVn5Lm7QnfahjfLPHSztoP
+	BDoEGJOFZO4z0J36ramKAvs=
+X-Google-Smtp-Source: ABdhPJxBt7Z+O4vFbpVhfGNT3TGbLxz1vmlCiZLvikj1oSVLWqBDGQ3nJ/8d9qgUnXxcV37sMxYLVg==
+X-Received: by 2002:a05:6a00:23cd:b0:4e1:7ab2:334c with SMTP id
+	g13-20020a056a0023cd00b004e17ab2334cmr2123595pfc.4.1645086995489;
+	Thu, 17 Feb 2022 00:36:35 -0800 (PST)
+Received: from garbanzo (136-24-173-63.cab.webpass.net. [136.24.173.63])
+	by smtp.gmail.com with ESMTPSA id
+	g1sm44078801pfu.32.2022.02.17.00.36.33
+	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+	Thu, 17 Feb 2022 00:36:34 -0800 (PST)
+Date: Thu, 17 Feb 2022 00:36:31 -0800
+From: Luis Chamberlain <mcgrof@kernel.org>
+To: Nitesh Shetty <nj.shetty@samsung.com>
+Message-ID: <20220217083631.34ii6gqdrknrmufv@garbanzo>
+References: <20220214080002.18381-1-nj.shetty@samsung.com>
+	<CGME20220214080558epcas5p17c1fb3b659b956908ff7215a61bcc0c9@epcas5p1.samsung.com>
+	<20220214080002.18381-2-nj.shetty@samsung.com>
 MIME-Version: 1.0
-In-Reply-To: <2f3f1c98-e013-ee03-2ffb-3a14730b13b9@kernel.dk>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+In-Reply-To: <20220214080002.18381-2-nj.shetty@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -65,16 +85,25 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
-Cc: manoj@linux.ibm.com, linux-scsi@vger.kernel.org,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	philipp.reisner@linbit.com, linux-block@vger.kernel.org,
-	dm-devel@redhat.com, target-devel@vger.kernel.org,
-	haris.iqbal@ionos.com, ukrishn@linux.ibm.com,
-	lars.ellenberg@linbit.com, drbd-dev@lists.linbit.com,
-	jinpu.wang@ionos.com, Christoph Hellwig <hch@lst.de>, mrochs@linux.ibm.com
-Subject: Re: [dm-devel] remove REQ_OP_WRITE_SAME v2
+Cc: Mike Snitzer <snitzer@redhat.com>, djwong@kernel.org,
+	linux-nvme@lists.infradead.org, clm@fb.com, dm-devel@redhat.com,
+	Chaitanya Kulkarni <kch@nvidia.com>, osandov@fb.com,
+	Alasdair Kergon <agk@redhat.com>, javier@javigon.com,
+	bvanassche@acm.org, linux-scsi@vger.kernel.org,
+	nitheshshetty@gmail.com, James Smart <james.smart@broadcom.com>,
+	hch@lst.de, chaitanyak@nvidia.com,
+	SelvaKumar S <selvakuma.s1@samsung.com>, msnitzer@redhat.com,
+	josef@toxicpanda.com, linux-block@vger.kernel.org,
+	dsterba@suse.com, kbusch@kernel.org, Frederick.Knight@netapp.com,
+	Sagi Grimberg <sagi@grimberg.me>, axboe@kernel.dk, tytso@mit.edu,
+	joshi.k@samsung.com, martin.petersen@oracle.com,
+	linux-kernel@vger.kernel.org, arnav.dawn@samsung.com,
+	jack@suse.com, linux-fsdevel@vger.kernel.org,
+	lsf-pc@lists.linux-foundation.org, Alexander Viro <viro@zeniv.linux.org.uk>
+Subject: Re: [dm-devel] [PATCH v3 01/10] block: make bio_map_kern() non
+	static
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -88,7 +117,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -97,17 +126,18 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Feb 16, 2022 at 08:07:56PM -0700, Jens Axboe wrote:
-> Let's just use the SCSI tree - I didn't check if it throws any conflicts
-> right now, so probably something to check upfront...
+On Mon, Feb 14, 2022 at 01:29:51PM +0530, Nitesh Shetty wrote:
+> From: SelvaKumar S <selvakuma.s1@samsung.com>
+> 
+> Make bio_map_kern() non static
+> 
+> Signed-off-by: SelvaKumar S <selvakuma.s1@samsung.com>
+> Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
 
-There is a minor conflict because the __blkdev_issue_write_same
-function removed by this series is affected by the blk_next_bio calling
-convention change in the block tree, but the fixup is trivial.
+This patch makes no sense on its own. I'd just merge it with
+its first user.
 
-Martin: do you want to fix that up when applying, or do you want me
-to resend?  If you have your discard rework ready you can also send
-that now and I'll rebase on top of that.
+  Luis
 
 --
 dm-devel mailing list
