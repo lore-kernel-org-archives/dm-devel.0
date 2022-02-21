@@ -1,101 +1,71 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 90D3AC433EF
-	for <dm-devel@archiver.kernel.org>; Mon, 21 Feb 2022 16:42:57 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1645461776;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=98gHHkxZbr5qDVk1HbCuRAneBerB96Fe3h60fjd+MXI=;
-	b=FX3YCoxybQ+Yr/EFYKED0PWHaCzB/uVAhM6d2Mr6sSCDYXnfgzfJd1D4TsfZfISTnAry4l
-	huX0lV3p9ViKQ1wdfXS57zZ2GZ8PINpeD+R+vS6Rrvt/U0SkiAxrbnzK2yryMpiDLOIRU8
-	lsqaAvmmgvskczDusM2WqLHJR+3LUz8=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DE0E8C433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 21 Feb 2022 17:17:37 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-516-OXsOjL_UNISzn_TPnCT9_Q-1; Mon, 21 Feb 2022 11:42:52 -0500
-X-MC-Unique: OXsOjL_UNISzn_TPnCT9_Q-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-561-mAmJierHOVqIlRFAB9RVrA-1; Mon, 21 Feb 2022 12:17:33 -0500
+X-MC-Unique: mAmJierHOVqIlRFAB9RVrA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 07B681091DA2;
-	Mon, 21 Feb 2022 16:42:48 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D9C5B75521;
-	Mon, 21 Feb 2022 16:42:47 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 7B888814246;
+	Mon, 21 Feb 2022 17:17:28 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 28FE384A3A;
+	Mon, 21 Feb 2022 17:17:28 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 339A41826D01;
-	Mon, 21 Feb 2022 16:42:47 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.2])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 9DD0D4A7C8;
+	Mon, 21 Feb 2022 17:17:27 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.8])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21LGgi0C001499 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 21 Feb 2022 11:42:44 -0500
+	id 21LHHPDA005179 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 21 Feb 2022 12:17:25 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 8735340D2969; Mon, 21 Feb 2022 16:42:44 +0000 (UTC)
+	id 97F44C0809D; Mon, 21 Feb 2022 17:17:25 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8257840D2962
-	for <dm-devel@redhat.com>; Mon, 21 Feb 2022 16:42:44 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 93C63C0809B
+	for <dm-devel@redhat.com>; Mon, 21 Feb 2022 17:17:25 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 694A1800882
-	for <dm-devel@redhat.com>; Mon, 21 Feb 2022 16:42:44 +0000 (UTC)
-Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
-	[209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-593-pGJxdMAKO3egXTWAicZpAA-1; Mon, 21 Feb 2022 11:42:43 -0500
-X-MC-Unique: pGJxdMAKO3egXTWAicZpAA-1
-Received: by mail-qv1-f70.google.com with SMTP id
-	kl13-20020a056214518d00b0042cb237f86bso17848498qvb.0
-	for <dm-devel@redhat.com>; Mon, 21 Feb 2022 08:42:43 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-	:mime-version:content-disposition:in-reply-to;
-	bh=Rc1Qppaw2L0OGmsDB0z5fBH1sQJhXx2jCYeAkzZOEHI=;
-	b=qlpBIFMeH+VjLTLLdXpK7iMvN6A2gL0iVy1TbYkSau2CY+dAoH3go4TWmARVKvX2iv
-	2x00fssYLhW79zxLiYL+EVbU5TfPjaUlRG4SO6YVv1x8y+P3IuvxSjltx4OHwEjj1tbM
-	Nv6gdjil1az8SvAkWTBoqkiZhvWhLGYwGO4qf7GNNS9iCSk2lMnCanWatsbp2Ed7cDS9
-	kqNEFH3FkbgwVSk6It4wKp+yb6jA63qemkpJdGqrzoPz3uGPDn4nEL4I4nrbMiZLOKlG
-	foYw+XBMVVnu0pWS+hgUk7E1RGtcV3u6tUjRoYN4C19XujV3ch5CfmNLdXk0KmS0sbLl
-	qQ0w==
-X-Gm-Message-State: AOAM533AHcPWihtQbQhowtjp+rUd3Wzm09BAVwgdZc6bKoRhQOZumj5j
-	Fls/gabcUdQyxWGcqFuKAj0+qN/N23qvGN3jdMDjdB2RaLjknlGnxpWZ0FBmF+4FD+ZWKeatU5F
-	uRsmrIbLjX8Sipw==
-X-Received: by 2002:a05:622a:58f:b0:2dd:2295:5acf with SMTP id
-	c15-20020a05622a058f00b002dd22955acfmr18372914qtb.305.1645461762621;
-	Mon, 21 Feb 2022 08:42:42 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJwAsKUklrVCG8Ma83vO0ASbNLheb3R+NMhCtDg0fLsUsAIRZ1oRjpkFREGNGzwNARSfR4U+ZA==
-X-Received: by 2002:a05:622a:58f:b0:2dd:2295:5acf with SMTP id
-	c15-20020a05622a058f00b002dd22955acfmr18372896qtb.305.1645461762369;
-	Mon, 21 Feb 2022 08:42:42 -0800 (PST)
-Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
-	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
-	y28sm9873236qkj.73.2022.02.21.08.42.41
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Mon, 21 Feb 2022 08:42:42 -0800 (PST)
-Date: Mon, 21 Feb 2022 11:42:41 -0500
-From: Mike Snitzer <snitzer@redhat.com>
-To: Faqiang Zhu <faqiang.zhu@nxp.com>
-Message-ID: <YhPBAc9tnJ1iuPbM@redhat.com>
-References: <AM9PR04MB811322427E328C435FE9489FED3A9@AM9PR04MB8113.eurprd04.prod.outlook.com>
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7A49885A5BC
+	for <dm-devel@redhat.com>; Mon, 21 Feb 2022 17:17:25 +0000 (UTC)
+Received: from box.fidei.email (box.fidei.email [71.19.144.250]) by
+	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-92-NL_BvjpdO0C9WweykVAv4A-1; Mon, 21 Feb 2022 12:17:23 -0500
+X-MC-Unique: NL_BvjpdO0C9WweykVAv4A-1
+Received: from authenticated-user (box.fidei.email [71.19.144.250])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits))
+	(No client certificate requested)
+	by box.fidei.email (Postfix) with ESMTPSA id A0BA5803AC
+	for <dm-devel@redhat.com>; Mon, 21 Feb 2022 12:10:10 -0500 (EST)
+Message-ID: <535b50f2-45a3-1900-48ad-ba68caa05b92@dorminy.me>
+Date: Mon, 21 Feb 2022 12:10:09 -0500
 MIME-Version: 1.0
-In-Reply-To: <AM9PR04MB811322427E328C435FE9489FED3A9@AM9PR04MB8113.eurprd04.prod.outlook.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+To: dm-devel@redhat.com
+References: <AM9PR04MB811322427E328C435FE9489FED3A9@AM9PR04MB8113.eurprd04.prod.outlook.com>
+	<YhPBAc9tnJ1iuPbM@redhat.com>
+From: Sweet Tea Dorminy <sweettea-kernel@dorminy.me>
+In-Reply-To: <YhPBAc9tnJ1iuPbM@redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+	Definition; Similar Internal Domain=false;
+	Similar Monitored External Domain=false;
+	Custom External Domain=false; Mimecast External Domain=false;
+	Newly Observed Domain=false; Internal User Name=false;
+	Custom Display Name List=false; Reply-to Address Mismatch=false;
+	Targeted Threat Dictionary=false;
+	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 X-loop: dm-devel@redhat.com
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@lst.de" <hch@lst.de>,
-	"agk@redhat.com" <agk@redhat.com>
 Subject: Re: [dm-devel] a potential issue for bow_target after "dm: delay
  registering the gendisk" applied
 X-BeenThere: dm-devel@redhat.com
@@ -111,88 +81,103 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On Mon, Feb 21 2022 at  5:36P -0500,
-Faqiang Zhu <faqiang.zhu@nxp.com> wrote:
 
-> Hi Christoph,
-> 
->  
-> 
-> Recently when I use kernel5.15 with android, an issue related to bow_target
-> is found with below log:
-> 
->  
-> 
-> [    8.935429][    T1] kobject_add_internal failed for bow (error: -2
-> parent: (null))
-> 
->  
-> 
-> The call trace to the preceding log is as below:
-> 
-> dm_ctl_ioctl
-> 
->  -> ctl_ioctl
-> 
->    -> lookup_ioctl    // returns the table_load function pointer
-> 
->       table_load
-> 
->         -> populate_table
-> 
->              -> dm_table_add_target
-> 
->                   -> dm_bow_ctr
-> 
->                        -> kobject_init_and_add
-> 
->                             -> kobject_add_varg
-> 
->                                  -> kobject_add_internal
-> 
->  
-> 
->  
-> 
-> Compared to kernel5.10, then I found it's related to below patch. The
-> gendisk, it's not registered yet, its kobject is not in sysfs, so its child
-> "bow" kobject cannot be added to the kernel.
-> 
-> commit 89f871af1b26d98d983cba7ed0e86effa45ba5f8
-> 
-> Author: Christoph Hellwig  <mailto:hch@lst.de> hch@lst.de
-> 
-> Date:   Wed Aug 4 11:41:46 2021 +0200
-> 
->  
-> 
->     dm: delay registering the gendisk
-> 
->  
-> 
->  
-> 
-> Is this an issue? if it is, is there any patch to fix it? if it is not, then
-> what is the right way to use the bow_target in userspace?
-> 
+On 2/21/22 11:42, Mike Snitzer wrote:
+> On Mon, Feb 21 2022 at  5:36P -0500,
+> Faqiang Zhu <faqiang.zhu@nxp.com> wrote:
+>
+>> Hi Christoph,
+>>
+>>   
+>>
+>> Recently when I use kernel5.15 with android, an issue related to bow_target
+>> is found with below log:
+>>
+>>   
+>>
+>> [    8.935429][    T1] kobject_add_internal failed for bow (error: -2
+>> parent: (null))
+>>
+>>   
+>>
+>> The call trace to the preceding log is as below:
+>>
+>> dm_ctl_ioctl
+>>
+>>   -> ctl_ioctl
+>>
+>>     -> lookup_ioctl    // returns the table_load function pointer
+>>
+>>        table_load
+>>
+>>          -> populate_table
+>>
+>>               -> dm_table_add_target
+>>
+>>                    -> dm_bow_ctr
+>>
+>>                         -> kobject_init_and_add
+>>
+>>                              -> kobject_add_varg
+>>
+>>                                   -> kobject_add_internal
+>>
+>>   
+>>
+>>   
+>>
+>> Compared to kernel5.10, then I found it's related to below patch. The
+>> gendisk, it's not registered yet, its kobject is not in sysfs, so its child
+>> "bow" kobject cannot be added to the kernel.
+>>
+>> commit 89f871af1b26d98d983cba7ed0e86effa45ba5f8
+>>
+>> Author: Christoph Hellwig  <mailto:hch@lst.de> hch@lst.de
+>>
+>> Date:   Wed Aug 4 11:41:46 2021 +0200
+>>
+>>   
+>>
+>>      dm: delay registering the gendisk
+>>
+>>   
+>>
+>>   
+>>
+>> Is this an issue? if it is, is there any patch to fix it? if it is not, then
+>> what is the right way to use the bow_target in userspace?
+>>
+> It is an issue for this out-of-tree dm-bow target.  Likely needs to be
+> fixed by adding a new DM target operation to 'struct target_type' that
+> would get called by DM core at end of dm_setup_md_queue().
 
-It is an issue for this out-of-tree dm-bow target.  Likely needs to be
-fixed by adding a new DM target operation to 'struct target_type' that
-would get called by DM core at end of dm_setup_md_queue().
 
-Or dm-bow discontinues using sysfs for whatever and convert to using
-DM messages (with .message) and exposing associated state via .status
+Might also be able to just move the sysfs initialization to first 
+preresume time, as the out-of-tree module VDO does? 
+https://github.com/dm-vdo/kvdo/commit/27bf63255af9e01736ca657df2fa1a03dcf124b8 
 
-Mike
+
+Sweet Tea
+
+>
+> Or dm-bow discontinues using sysfs for whatever and convert to using
+> DM messages (with .message) and exposing associated state via .status
+>
+> Mike
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://listman.redhat.com/mailman/listinfo/dm-devel
 
 --
 dm-devel mailing list
