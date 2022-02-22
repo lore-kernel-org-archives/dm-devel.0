@@ -1,105 +1,69 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1C7C3C433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 22 Feb 2022 19:16:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3DB06C433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 22 Feb 2022 19:32:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1645557386;
+	s=mimecast20190719; t=1645558327;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=S130lTXhpcXVBZdN+WmE36o1mgymAY3996xp31qzMIY=;
-	b=bnvOI5DGXrWohwe7WYqgrZkq93FtSGin+ZOa6liuf4lMm8TfpynklC9IvBUMPcTbwcrHam
-	SjOHEGSJQR4PebDwG7gj0s0R84bsdhYuyAUlKewF1xvuR7Ayrw3g4I2VTQx0+JsSr56ntq
-	JFzGafKNJyR1DweZoiQ/+dAV+4bPBsc=
+	bh=0dqttwWMFuvVazvW69lkbCDXBtuZzSyhHCV51bgg5Ug=;
+	b=DUCAE2k72hFHo0C3cExi8S/3SsqxmOxhywM470YNXJVThpeKmdhU1HN+AjtDweC2yVdYgi
+	WYPpf4RfLHZCzZoUL8RzgB3xs4jbaDGkGEoj9rkuTMVDQnAUVjqocN+MGLi0LegEftd78/
+	iNGxKquiTslgfxHcRjUbR9FkYfcP7Go=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-573-7RfUGbxVMqCihNDqW-L7Jw-1; Tue, 22 Feb 2022 14:16:24 -0500
-X-MC-Unique: 7RfUGbxVMqCihNDqW-L7Jw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-608-BFADSA8-Owe2ivAI-NO6aw-1; Tue, 22 Feb 2022 14:32:04 -0500
+X-MC-Unique: BFADSA8-Owe2ivAI-NO6aw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C94781091DA2;
-	Tue, 22 Feb 2022 19:16:19 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 74204801AB2;
+	Tue, 22 Feb 2022 19:31:59 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 3CD0160843;
-	Tue, 22 Feb 2022 19:16:19 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 43F9660BD8;
+	Tue, 22 Feb 2022 19:31:58 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id ABFE24ED66;
-	Tue, 22 Feb 2022 19:16:18 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.8])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4C47A4EE45;
+	Tue, 22 Feb 2022 19:31:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com
+	[10.5.11.13])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21MJGH1P028594 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 22 Feb 2022 14:16:17 -0500
+	id 21MJVrMR029421 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 22 Feb 2022 14:31:53 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 4A385C08090; Tue, 22 Feb 2022 19:16:17 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 465B3C08F13
-	for <dm-devel@redhat.com>; Tue, 22 Feb 2022 19:16:17 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2BB1B800B21
-	for <dm-devel@redhat.com>; Tue, 22 Feb 2022 19:16:17 +0000 (UTC)
-Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
-	[209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-97-BlJTk_wzOkqEvwrGxQWxaQ-1; Tue, 22 Feb 2022 14:16:15 -0500
-X-MC-Unique: BlJTk_wzOkqEvwrGxQWxaQ-1
-Received: by mail-qk1-f200.google.com with SMTP id
-	7-20020a05620a048700b00648b76040f6so687729qkr.9
-	for <dm-devel@redhat.com>; Tue, 22 Feb 2022 11:16:15 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:date:from:to:cc:subject:message-id:references
-	:mime-version:content-disposition:in-reply-to;
-	bh=T+GUkN0EwP3DJ0lx9lCnDa6Z8wiaRvOcLwpTDRLmnnU=;
-	b=fRFa0KPwLQjETkFSmOUxIz7R59Nvr4rZH9Hn4YDIv8hmtUBoY+Kq5Fc4HdupOMsOX/
-	w8jTNh/qFX2JmRgulPgWzwRI2s2X6+1SWGJVinIUVuV/HKu9clu4vPuP6JLG5Le4AAKt
-	lBZw0VdPTqb94U4I9HJXQHKB7WkTHyFICwmbB7C5k+JLoUtFrz/SQZJWQBeyKWk76hjf
-	E9sYHhUcKvVw8C+lnO82wlkwfTlcZN0CDs9LR3X7eIVF7MwYDcFAW4bt/O9PELcYz8lC
-	67vL2w0M3N18Sbg+SqzUCAywGfPOILTXiGPLI8HbZVXS4qbt+Ku7G/7sqBrXg+J0IhDG
-	C2yQ==
-X-Gm-Message-State: AOAM532kI5gtsOqtSUrTDuH0PUJNwrzhbXJzY9YNTwJes6Nd149rZCCy
-	rzmt7kQr5YWzUB4mkB/dKYnlEfaafN9ZHg1ijB7+Uy9xxJIcAIFwptLoCgp8FMqLQmUMKibUIpx
-	OvOORyVCaIoZg5Q==
-X-Received: by 2002:a37:8602:0:b0:62c:de8f:ad74 with SMTP id
-	i2-20020a378602000000b0062cde8fad74mr13357244qkd.142.1645557375260;
-	Tue, 22 Feb 2022 11:16:15 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJyoqR48S+c52tioZfwhQpWLjHci5jUdhUMN36vrY1CYw/3YuAqGThC/L/gVEu0PVsn1GFntaQ==
-X-Received: by 2002:a37:8602:0:b0:62c:de8f:ad74 with SMTP id
-	i2-20020a378602000000b0062cde8fad74mr13357235qkd.142.1645557375068;
-	Tue, 22 Feb 2022 11:16:15 -0800 (PST)
-Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
-	[68.160.176.52])
-	by smtp.gmail.com with ESMTPSA id b14sm426205qtk.44.2022.02.22.11.16.14
-	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Tue, 22 Feb 2022 11:16:14 -0800 (PST)
-Date: Tue, 22 Feb 2022 14:16:13 -0500
-From: Mike Snitzer <snitzer@redhat.com>
-To: Christoph Hellwig <hch@infradead.org>
-Message-ID: <YhU2faRZJ4NstJ6L@redhat.com>
-References: <20220125002025.GA21887@agk-cloud1.hosts.prod.upshift.rdu2.redhat.com>
-	<20220126192234.572058-1-bgeffon@google.com>
-	<CADyq12yugY0g2EMYvyrPVn98x3Tp4PR+eVddmmjZpKSYyrrzag@mail.gmail.com>
-	<YfqYTuhGqOl4SneK@infradead.org>
+	id 6B1EB17AD9; Tue, 22 Feb 2022 19:31:53 +0000 (UTC)
+Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 2307C226E8;
+	Tue, 22 Feb 2022 19:31:46 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 21MJVig6008830; 
+	Tue, 22 Feb 2022 13:31:44 -0600
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 21MJVhcN008829;
+	Tue, 22 Feb 2022 13:31:43 -0600
+Date: Tue, 22 Feb 2022 13:31:43 -0600
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Ritika Srivastava <ritika.srivastava@oracle.com>
+Message-ID: <20220222193143.GW24684@octiron.msp.redhat.com>
+References: <1644612108-2445-1-git-send-email-ritika.srivastava@oracle.com>
+	<20220222182732.GV24684@octiron.msp.redhat.com>
+	<89458D66-751C-4FCC-8735-E94645EA9AD8@oracle.com>
 MIME-Version: 1.0
-In-Reply-To: <YfqYTuhGqOl4SneK@infradead.org>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+In-Reply-To: <89458D66-751C-4FCC-8735-E94645EA9AD8@oracle.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com, Brian Geffon <bgeffon@google.com>,
-	Alasdair Kergon <agk@redhat.com>, LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [dm-devel] dm: introduce a DM_ENFORCE_OPEN_COUNT flag.
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Subject: Re: [dm-devel] [PATCH] kpartx: Add -P option for partition scanning
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -113,7 +77,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -122,23 +86,100 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Feb 02 2022 at  9:42P -0500,
-Christoph Hellwig <hch@infradead.org> wrote:
+On Tue, Feb 22, 2022 at 06:59:10PM +0000, Ritika Srivastava wrote:
+> On 2/22/22, 10:28 AM, "Benjamin Marzinski" wrote:
+> 
+>     On Fri, Feb 11, 2022 at 12:41:48PM -0800, Ritika Srivastava wrote:
+>     >> Add -P, partition scanning option to kpartx which would set
+>     >> LO_FLAGS_PARTSCAN flag during loop device creation.
+>     >> This option is same as losetup -P option.
+> 
+>     >I'm confused here. What's the benefit of doing this? Doesn't this create
+>     >partition devices, just like kpartx would?
+> 
+> This enables partition scanning for loop devices created via kpartx.
+> When enabled, LO_FLAGS_PARTSCAN flag will be set during loop creation via kpartx -a.
+> On detach (kpartx -d), any partitions (/dev/loopXpY) would also be removed.
+> It has similar use cases as losetup -P option.
+> 
+> Currently, kpartx does not create partition loop devices (/dev/loopXpY)  via kpartx -a
 
-> Withmy block hat on: nak to this.  No block driver has any business at
-> all rejecting "too many openers".  In fact any opener but the first of
-> a partition is already not counted as an opener, and I plan to complete
-> hide the open count from the device driver.
+And I'm trying to figure out why you want to create /dev/loop0p1 if you
+already have /dev/mapper/loop0p1?  The ability of kpartx to create
+partitioned loop devices predates the existance "kpartx -P". So perhaps
+the better question is, why do you want to run
 
-I agree that this proposal exposes controls to userspace that simply
-shouldn't be meaningful given the arbitrary nature of openers.  And
-preventing openers can result in a race where systemd or some other
-service opens before the intended primary consumer of the device.
+# kpartx -av test.img
 
-Seriously brittle and even if finely tuned to have a suitable value
-for some niche usecase like android: an absolute hack.
+instead of just running
 
-Sorry, not interested in taking this.
+# loasetup -fP test.img
+
+They both get you partition devices, and you don't need both of them.
+Or do you, for some reason I don't understand?
+
+-Ben
+
+> Example:
+> 1. Current behavior: kpartx -a does not create /dev/loop0p1
+> 
+> # kpartx -av test.img
+> add map loop0p1 (252:0): 0 99937 linear /dev/loop0 64
+> 
+> (Notice below: /dev/loop0p1 NOT created)
+> # ls -l /dev/loop0*
+> brw-rw----. 1 root disk  7,   0 Jan 14 20:46 /dev/loop0 
+> 
+> 2. IF -P IS USED to create loop device, /dev/loop0p1 IS created.
+> 
+> # kpartx -av -P test.img
+> add map loop0p1 (252:0): 0 99937 linear /dev/loop0 64
+> 
+> (Notice below: /dev/loop0p1 IS created)
+> # ls -l /dev/loop0*
+> brw-rw----. 1 root disk   7,   0 Jan 14 20:50 /dev/loop0
+> brw-rw----. 1 root disk 259,   0 Jan 14 20:50 /dev/loop0p1
+> 
+> 
+> Similar behavior can also be observed during detach
+> 1. Current Behavior:  kpartx -d does NOT delete partitions
+> 
+> # kpartx -a -v test.img
+> # parted -a none -s /dev/loop0 mkpart primary 64s 100000s
+> 
+> # ls -l /dev/loop0*
+> brw-rw----. 1 root disk   7,   0 Jan 14 20:54 /dev/loop0
+> brw-rw----. 1 root disk 259,   0 Jan 14 20:54 /dev/loop0p1
+> 
+> # kpartx -d test.img
+> loop deleted : /dev/loop0
+> 
+> (Notice: /dev/loop0p1 NOT deleted)
+> # ls -l /dev/loop0*
+> brw-rw----. 1 root disk   7,   0 Jan 14 20:54 /dev/loop0
+> brw-rw----. 1 root disk 259,   0 Jan 14 20:54 /dev/loop0p1
+> 
+> 2. IF -P IS added while creating loop, kpartx -d DOES delete loop0p1
+> 
+> # kpartx -a -v -P test.img
+> # parted -a none -s /dev/loop0 mkpart primary 64s 100000s
+> 
+> # ls -l /dev/loop0*
+> brw-rw----. 1 root disk   7,   0 Jan 14 20:46 /dev/loop0
+> brw-rw----. 1 root disk 259,   0 Jan 14 20:46 /dev/loop0p1
+> 
+> # kpartx -d test.img
+> loop deleted : /dev/loop0
+> 
+> (Notice: /dev/loop0p1 IS deleted)
+> # ls -l /dev/loop0*
+> brw-rw----. 1 root disk  7,   0 Jan 14 20:46 /dev/loop0
+> 
+> Thanks,
+> Ritika
+> 
+> 
+> 
 
 --
 dm-devel mailing list
