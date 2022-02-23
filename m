@@ -4,91 +4,74 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3DEA0C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 23 Feb 2022 03:20:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 065E5C433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 23 Feb 2022 09:48:13 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-50-3ldbEWQAPR2HkTl9s3C4mg-1; Tue, 22 Feb 2022 22:20:09 -0500
-X-MC-Unique: 3ldbEWQAPR2HkTl9s3C4mg-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.phx2.redhat.com [10.5.11.13])
+ us-mta-150-KFD_U33IPxauPg-HZaoAtQ-1; Wed, 23 Feb 2022 04:48:09 -0500
+X-MC-Unique: KFD_U33IPxauPg-HZaoAtQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 002FB1006AA8;
-	Wed, 23 Feb 2022 03:20:05 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 950EA45CB8;
-	Wed, 23 Feb 2022 03:20:04 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id B81EF1006AA5;
+	Wed, 23 Feb 2022 09:48:03 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 40EC776C23;
+	Wed, 23 Feb 2022 09:48:02 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C8AEB4EE76;
-	Wed, 23 Feb 2022 03:20:02 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.3])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A71F01809C98;
+	Wed, 23 Feb 2022 09:47:58 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21N3K0SG008264 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 22 Feb 2022 22:20:00 -0500
+	id 21N9ltOP001476 for <dm-devel@listman.util.phx.redhat.com>;
+	Wed, 23 Feb 2022 04:47:55 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 17B2C112132C; Wed, 23 Feb 2022 03:20:00 +0000 (UTC)
+	id 9090B53B3; Wed, 23 Feb 2022 09:47:55 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
 	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 133FF112131E
-	for <dm-devel@redhat.com>; Wed, 23 Feb 2022 03:19:57 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8C1CE79DC
+	for <dm-devel@redhat.com>; Wed, 23 Feb 2022 09:47:45 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
 	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 110F485A5BC
-	for <dm-devel@redhat.com>; Wed, 23 Feb 2022 03:19:57 +0000 (UTC)
-Received: from esa1.hgst.iphmx.com (esa1.hgst.iphmx.com [68.232.141.245]) by
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0BA9685A5BC
+	for <dm-devel@redhat.com>; Wed, 23 Feb 2022 09:47:45 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-75-Girjh88cOzGGERI7FWuT1A-1; Tue, 22 Feb 2022 22:19:54 -0500
-X-MC-Unique: Girjh88cOzGGERI7FWuT1A-1
-X-IronPort-AV: E=Sophos;i="5.88,390,1635177600"; d="scan'208";a="305627943"
-Received: from uls-op-cesaip01.wdc.com (HELO uls-op-cesaep01.wdc.com)
-	([199.255.45.14])
-	by ob1.hgst.iphmx.com with ESMTP; 23 Feb 2022 11:19:53 +0800
-IronPort-SDR: 0VKV30WhTV4Hue7zZAI8YzFisctb6Cium8ebpO2vE983KMXBZhvnUWMW//bdJB9RmxOJ/Pqbc8
-	rp6x11tJHcWsxxfoX1Jo313Uhnw68GgHwjQ+hfzAm4ixqJZxXIpC7oPIZoCcAX6lWQYv/qc1Qm
-	I9/GF+r2Hcudi2xpHsL2+l+Gco1R3Bg15jjihzsSb/5P8sPgDFcTfqXUCp+RRC6JhJYgGvbCxe
-	zo6CyLR7nw+X+JCMABGSFiPYwwh0W0NxXdQbZMgFXF4SgzPr/hf2ZIAm39JtMDdk4zZ1SyiDZV
-	4yGLpttjn0JhmO/ApoFCxWL9
-Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
-	by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
-	22 Feb 2022 18:52:30 -0800
-IronPort-SDR: 1VLLiaI1ZXpyX4XSKkuhocTZwuVQI8f9LjJTmURqu5AWQXqjTkhijUPqOz8HV2EheuTT4Ps5Mh
-	PP1LSE6wdFiOdqDI7f6fN2c7YMLhZQPEIID5TdnkfWbeMnNGEVn0JFuJ/9Q65hN385T+XZrONl
-	zBE3jGEKdRQ2W/+zg6flQpBhLrov4VoLN4t2chnjSODXHz6pXI6Yz69p871LIrGAVlneUQ0onV
-	xjNk1uRVPe6Dp6DBSN3Dq+K67wxG6fCO2ST5jpzwhMOGQjX3cxZxYj8xbR+b8d60SkMPgckhDm
-	Vf8=
-WDCIronportException: Internal
-Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
-	by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
-	22 Feb 2022 19:19:53 -0800
-Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
-	by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4K3Lr862CWz1SHwl
-	for <dm-devel@redhat.com>; Tue, 22 Feb 2022 19:19:52 -0800 (PST)
-X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
-Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
-	by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
-	(amavisd-new, port 10026)
-	with ESMTP id hiqRkVSxZIZw for <dm-devel@redhat.com>;
-	Tue, 22 Feb 2022 19:19:52 -0800 (PST)
-Received: from [10.225.163.81] (unknown [10.225.163.81])
-	by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4K3Lr73CX1z1Rvlx;
-	Tue, 22 Feb 2022 19:19:51 -0800 (PST)
-Message-ID: <cf99d18e-d8e5-cd41-5541-9d1e1d81adc8@opensource.wdc.com>
-Date: Wed, 23 Feb 2022 12:19:49 +0900
+	us-mta-627-YiK8ZVw1PGGsymn1gdVXkQ-1; Wed, 23 Feb 2022 04:47:41 -0500
+X-MC-Unique: YiK8ZVw1PGGsymn1gdVXkQ-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id E063921110;
+	Wed, 23 Feb 2022 09:47:39 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	key-exchange X25519 server-signature ECDSA (P-521) server-digest
+	SHA512) (No client certificate requested)
+	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 7C1BB13C6E;
+	Wed, 23 Feb 2022 09:47:39 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+	by imap2.suse-dmz.suse.de with ESMTPSA id kAwZHLsCFmK2NAAAMHmgww
+	(envelope-from <mwilck@suse.com>); Wed, 23 Feb 2022 09:47:39 +0000
+Message-ID: <d3aab8f2318f1438a1f0085eddf9713217d52391.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+To: NeilBrown <neilb@suse.de>
+Date: Wed, 23 Feb 2022 10:47:38 +0100
+In-Reply-To: <164557016782.28944.17731814770525408828@noble.neil.brown.name>
+References: <20220216205914.7575-1-mwilck@suse.com>
+	, <164504936873.10228.7361167610237544463@noble.neil.brown.name>
+	, <e8720e3f8734cbad1af34d5e54afc47ba3ef1b8f.camel@suse.com>
+	, <20220217130934.lh2b33255kyx2pax@alatyr-rpi.brq.redhat.com>
+	, <164548656531.8827.3365536065813085321@noble.neil.brown.name>
+	, <4b61ca1eafb35e3fdfbc9bb260dc89d56d181499.camel@suse.com>
+	<164557016782.28944.17731814770525408828@noble.neil.brown.name>
+User-Agent: Evolution 3.42.4
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
-	Thunderbird/91.5.0
-To: Mike Snitzer <snitzer@redhat.com>
-References: <c64d2143-284e-7621-440c-971e3405b4d8@virtuozzo.com>
-	<d209a0b1-2514-79a0-257a-22bcb372785a@virtuozzo.com>
-	<1d287c7e-8aff-beea-1bd6-4b2226f9f3db@opensource.wdc.com>
-	<CAH6w=ayrR0yRCumgjtyB+mt_+33S6PHxBQDcwYVcuQ79ECYd7A@mail.gmail.com>
-From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-Organization: Western Digital Research
-In-Reply-To: <CAH6w=ayrR0yRCumgjtyB+mt_+33S6PHxBQDcwYVcuQ79ECYd7A@mail.gmail.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -97,14 +80,16 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-MIME-Autoconverted: from quoted-printable to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 21N9ltOP001476
 X-loop: dm-devel@redhat.com
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
-	Kirill Tkhai <ktkhai@virtuozzo.com>,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-	"agk@redhat.com" <agk@redhat.com>
-Subject: Re: [dm-devel] [PATCH RESEND v2] dm: Fix use-after-free in
- dm_cleanup_zoned_dev()
+Cc: Jes Sorensen <jsorensen@fb.com>, Coly Li <colyli@suse.com>,
+	Peter Rajnoha <prajnoha@redhat.com>, lvm-devel@redhat.com,
+	linux-raid@vger.kernel.org, dm-devel@redhat.com,
+	Heming Zhao <heming.zhao@suse.com>
+Subject: Re: [dm-devel] [PATCH] udev-md-raid-assembly.rules: skip if
+ DM_UDEV_DISABLE_OTHER_RULES_FLAG
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -118,46 +103,66 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.13
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-On 2/23/22 12:02, Mike Snitzer wrote:
-> On Thu, Feb 17, 2022 at 5:49 AM Damien Le Moal
-> <damien.lemoal@opensource.wdc.com> wrote:
->>
->> On 2/17/22 19:13, Kirill Tkhai wrote:
->>>
->>> dm_cleanup_zoned_dev() uses queue, so it must be called
->>> before blk_cleanup_disk() starts its killing:
->>>
->>> blk_cleanup_disk->blk_cleanup_queue()->kobject_put()->blk_release_queue()->
->>> ->...RCU...->blk_free_queue_rcu()->kmem_cache_free()
->>>
->>> Otherwise, RCU callback may be executed first,
->>> and dm_cleanup_zoned_dev() touches freed memory:
->>
->> Mike,
->>
->> Can you queue this please ?
-> 
-> I queued it earlier today, please see:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.18&id=588b7f5df0cb64f281290c7672470c006abe7160
-> 
-> Thanks,
-> Mike
+Hello Neil,
 
-Thanks !
+On Wed, 2022-02-23 at 09:49 +1100, NeilBrown wrote:
+> >=20
+> > Peter has provided a link to libdevmapper.h in his previous post in
+> > this thread. Is this a request for me to include that link in the
+> > patch
+> > description?
+>=20
+> If libdevmapper.h is the best documentation there is for this
+> variable,
+> then hopefully you can see why it feels to an outsider like a hack.
+>=20
 
+There's also some documentation in the form of comments in the device-
+mapper rules files themselves:
 
--- 
-Damien Le Moal
-Western Digital Research
+https://github.com/lvmteam/lvm2/blob/8dccc2314e2482370bc6e5cf007eb210994abd=
+ef/udev/10-dm.rules.in#L137
+
+In general, 10-dm.rules is one of the most extensively commented rule
+files. I've always found these comments quite helpful.
+
+> It isn't even immediately clear that the text there is talking about
+> environment variables visible in udev.
+> If there is an expectation that tools outside of lvm2 will use these,
+> then they really should be documented properly.=A0 SYSTEMD_READY is
+> documented in "man systemd.device".=A0 How hard would it be to write a
+> "dm-udev" man page which explains all this.
+
+I agree that the documentation could be improved. OTOH, the text in
+systemd.device(5) only explains how systemd itself interprets
+SYSTEMD_READY. It doesn't say a word about how other udev rules are
+supposed to deal with the device. IOW, SYSTEMD_READY is part of an API
+between udev rules and systemd, and not between different udev rule
+sets.
+
+In particular the "don't probe this iff SYSTEMD_READY=3D=3D0" semantics
+that are frequently used in rules files can't be inferred from this
+documentation. It makes sense most of the time, but there are some
+cases where it doesn't. Here, we have a case where probing should be
+skipped, even though SYSTEMD_READY is not 0.
+
+Regards,
+Martin
+
+PS: The big issue remains that there is no "official" API in which udev
+rule sets can transport information between each other. I guess the
+original idea was that every rule set would be self-contained, which
+isn't the case any more. If anyone makes an effort redesign udev, they
+should consider creating such an API somehow.
+
 
 --
 dm-devel mailing list
