@@ -1,108 +1,72 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C30B8C433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 28 Feb 2022 21:13:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2E333C433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 28 Feb 2022 22:44:56 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1646088296;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=CvVV9vJaqW5X751qnyEVPDvpDmBQ93iw0I4+QOuInws=;
+	b=QJiUbkz7LddSa8WczWFTloyp4q8gG0/pVdfBh21X4td6/O2iRpbo9Qfv/0Dh9AMSD82hwy
+	vkj57oZAsoeqjzs7XiHaGbg27EcfIdXsOtV9seFwXZMfqv1HHIFYSHmjjst5BrRR1deOYb
+	xoBWnl0tm3nOulwNh/ItfYN/48snRfE=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-297-jTf5qI0KMaWnNTmxsSA41Q-1; Mon, 28 Feb 2022 16:13:15 -0500
-X-MC-Unique: jTf5qI0KMaWnNTmxsSA41Q-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
+ us-mta-62-e0v8Zc7NNQCx6Q6gjkmMIw-1; Mon, 28 Feb 2022 17:44:52 -0500
+X-MC-Unique: e0v8Zc7NNQCx6Q6gjkmMIw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 5565E5200;
-	Mon, 28 Feb 2022 21:13:11 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id EF89918766D0;
+	Mon, 28 Feb 2022 22:44:46 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id EB95B2C92E;
-	Mon, 28 Feb 2022 21:13:10 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 67D111006861;
+	Mon, 28 Feb 2022 22:44:45 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 5CEBA4ED79;
-	Mon, 28 Feb 2022 21:13:10 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.9])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 1D98946F98;
+	Mon, 28 Feb 2022 22:44:42 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com
+	[10.5.11.22])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 21SLD8hH010794 for <dm-devel@listman.util.phx.redhat.com>;
-	Mon, 28 Feb 2022 16:13:08 -0500
+	id 21SMieGb017979 for <dm-devel@listman.util.phx.redhat.com>;
+	Mon, 28 Feb 2022 17:44:40 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 9B77957ECD9; Mon, 28 Feb 2022 21:13:08 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
-	(mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9748F57ECD4
-	for <dm-devel@redhat.com>; Mon, 28 Feb 2022 21:13:08 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
-	bits)) (No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 78AE73804068
-	for <dm-devel@redhat.com>; Mon, 28 Feb 2022 21:13:08 +0000 (UTC)
-Received: from mail-ej1-f47.google.com (mail-ej1-f47.google.com
-	[209.85.218.47]) by relay.mimecast.com with ESMTP with STARTTLS
-	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-399-H2GpLUn0PFCe2jcC8W03aA-1; Mon, 28 Feb 2022 16:13:06 -0500
-X-MC-Unique: H2GpLUn0PFCe2jcC8W03aA-1
-Received: by mail-ej1-f47.google.com with SMTP id d10so27406134eje.10
-	for <dm-devel@redhat.com>; Mon, 28 Feb 2022 13:13:06 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=1e100.net; s=20210112;
-	h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
-	:content-language:to:cc:references:from:in-reply-to
-	:content-transfer-encoding;
-	bh=YElPQ90MzgZ5t7UF5cUawb5iNATJs1V0tAe3h48q5Ic=;
-	b=V3syZBElvR5oVzHB3Q49cZl6SYqTl2Ggw4YTYSOAkYL+GZY0+BlAWVTbE7NolYd4bz
-	HBLSyqxGcAY89w0r+4Du3OIrO42NsmGswZpTVczh0kXUlTeYavlrTu7ghAyKO4kbGVEX
-	9emejmGiM+6H9rG923EGdQHXpvXDqdXwcbsDKhj9sn4shU9Ugkbeg3JGMCkrGXHUD5ML
-	8IK0utuZrw4l31vV4glssjcBQrlqM/imI8Q8BP+ok0TqC2bTPrg4nBx6xKrkkcWOkjHS
-	srFhDOxrLA6mp5sl5MqyJcSUIIp7TA+kcpwkNIlDd/6EM1wiWwKQHZjoREk6zboWjoAs
-	W44g==
-X-Gm-Message-State: AOAM533dgXFP6yStjAyL22Cm7nz/y304QzGjik1TemNpz/UYsaC39oUw
-	UhnFWjN2AL50qERHFmZiXDY=
-X-Google-Smtp-Source: ABdhPJyoLznZAjc0gfKpSzx7Xn/iaaSpoiD3vjUv9rQSy6YLP//XFpDw0mqFQU2V9Q94Y/3Ca9VsJw==
-X-Received: by 2002:a17:906:6b87:b0:6ce:537b:53bb with SMTP id
-	l7-20020a1709066b8700b006ce537b53bbmr16409243ejr.51.1646082785050;
-	Mon, 28 Feb 2022 13:13:05 -0800 (PST)
-Received: from [192.168.2.27] (85-70-151-113.rcd.o2.cz. [85.70.151.113])
-	by smtp.gmail.com with ESMTPSA id
-	g11-20020a170906538b00b006ae38eb0561sm4677545ejo.195.2022.02.28.13.13.03
-	(version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-	Mon, 28 Feb 2022 13:13:04 -0800 (PST)
-Message-ID: <91fe9f87-54d7-4140-4d1a-eac8e2081a7c@gmail.com>
-Date: Mon, 28 Feb 2022 22:13:02 +0100
+	id A1B161006878; Mon, 28 Feb 2022 22:44:40 +0000 (UTC)
+Received: from octiron.msp.redhat.com (unknown [10.15.80.209])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id A5404100687F;
+	Mon, 28 Feb 2022 22:44:37 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+	by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 21SMiZxY009166; 
+	Mon, 28 Feb 2022 16:44:35 -0600
+Received: (from bmarzins@localhost)
+	by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 21SMiZp5009163;
+	Mon, 28 Feb 2022 16:44:35 -0600
+Date: Mon, 28 Feb 2022 16:44:35 -0600
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Ritika Srivastava <ritika.srivastava@oracle.com>
+Message-ID: <20220228224435.GY24684@octiron.msp.redhat.com>
+References: <1644612108-2445-1-git-send-email-ritika.srivastava@oracle.com>
+	<20220222182732.GV24684@octiron.msp.redhat.com>
+	<89458D66-751C-4FCC-8735-E94645EA9AD8@oracle.com>
+	<20220222193143.GW24684@octiron.msp.redhat.com>
+	<441B1763-CC1E-4283-BA94-F5FF856CE1AB@oracle.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
-	Thunderbird/91.6.1
-To: Linus Torvalds <torvalds@linux-foundation.org>,
-	Kyle Sanderson <kyle.leet@gmail.com>
-References: <CACsaVZ+mt3CfdXV0_yJh7d50tRcGcRZ12j3n6-hoX2cz3+njsg@mail.gmail.com>
-	<20220219210354.GF59715@dread.disaster.area>
-	<CACsaVZ+LZUebtsGuiKhNV_No8fNLTv5kJywFKOigieB1cZcKUw@mail.gmail.com>
-	<YhN76/ONC9qgIKQc@silpixa00400314>
-	<CACsaVZJFane88cXxG_E1VkcMcJm8YVN+GDqQ2+tRYNpCf+m8zA@mail.gmail.com>
-	<CAHk-=whVT2GcwiJM8m-XzgJj8CjytTHi_pmgmOnSpzvGWzZM1A@mail.gmail.com>
-From: Milan Broz <gmazyland@gmail.com>
-In-Reply-To: <CAHk-=whVT2GcwiJM8m-XzgJj8CjytTHi_pmgmOnSpzvGWzZM1A@mail.gmail.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
-	Definition; Similar Internal Domain=false;
-	Similar Monitored External Domain=false;
-	Custom External Domain=false; Mimecast External Domain=false;
-	Newly Observed Domain=false; Internal User Name=false;
-	Custom Display Name List=false; Reply-to Address Mismatch=false;
-	Targeted Threat Dictionary=false;
-	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+In-Reply-To: <441B1763-CC1E-4283-BA94-F5FF856CE1AB@oracle.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 X-loop: dm-devel@redhat.com
-Cc: Giovanni Cabiddu <giovanni.cabiddu@intel.com>,
-	Herbert Xu <herbert@gondor.apana.org.au>,
-	Greg KH <gregkh@linuxfoundation.org>,
-	Dave Chinner <david@fromorbit.com>, qat-linux@intel.com,
-	Linux-Kernal <linux-kernel@vger.kernel.org>,
-	linux-xfs <linux-xfs@vger.kernel.org>,
-	device-mapper development <dm-devel@redhat.com>,
-	Linux Crypto Mailing List <linux-crypto@vger.kernel.org>
-Subject: Re: [dm-devel] Intel QAT on A2SDi-8C-HLN4F causes massive data
- corruption with dm-crypt + xfs
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
+	Martin Wilck <martin.wilck@suse.com>
+Subject: Re: [dm-devel] [PATCH] kpartx: Add -P option for partition scanning
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -116,49 +80,99 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 28/02/2022 20:25, Linus Torvalds wrote:
-> On Mon, Feb 28, 2022 at 12:18 AM Kyle Sanderson <kyle.leet@gmail.com> wrote:
->>
->> Makes sense - this kernel driver has been destroying users for many
->> years. I'm disappointed that this critical bricking failure isn't
->> searchable for others.
+On Tue, Feb 22, 2022 at 10:16:35PM +0000, Ritika Srivastava wrote:
+> Ben,
 > 
-> It does sound like we should just disable that driver entirely until
-> it is fixed.
+> Thank you for reviewing this.
 > 
-> Or at least the configuration that can cause problems, if there is
-> some particular sub-case. Although from a cursory glance and the
-> noises made in this thread, it looks like it's all of the 'qat_aeads'
-> cases (since that uses qat_alg_aead_enc() which can return -EAGAIN),
-> which effectively means that all of the QAT stuff.
+> On 2/22/22, 11:32 AM, "Benjamin Marzinski" wrote:
 > 
-> So presumably CRYPTO_DEV_QAT should just be marked as
+>    > And I'm trying to figure out why you want to create /dev/loop0p1 if you
+>    > already have /dev/mapper/loop0p1?  The ability of kpartx to create
+>    > partitioned loop devices predates the existance "kpartx -P". So perhaps
+>    > the better question is, why do you want to run
 > 
->          depends on BROKEN || COMPILE_TEST
+>    > # kpartx -av test.img
 > 
-> or similar?
+>    > instead of just running
+> 
+>    > # loasetup -fP test.img
+> 
+>    > They both get you partition devices, and you don't need both of them.
+>    > Or do you, for some reason I don't understand?
+> 
+> My previous update may not have been clear regarding the supporting use case behind this patch.
+> It highlighted what the -P option would add to kpartx.
+> 
+> The idea is to avoid having both /dev/loop0p1 and /dev/mapper/loop0p1 and support the following use case - 
+> After detaching via kpartx -d, /dev/loop0p1 is still present which on subsequent kpartx -a operation results in both /dev/loop0p1 and /dev/mapper/loop0p1 being present.
+> 
+> Yes, you are right, workaround could be to use losetup -P the first time around when creating the loop device.
+> Though, having this functionality within kpartx would be nice since kpartx is also used extensively.
 
-Yes, please! Or at least disable it in stable for now.
+So unless I'm missing something, we'd only really want this for removing
+a kpartx device, in the case where somehow you have /dev/loopXpY
+partitions without the LO_FLAGS_PARTSCAN flag set on the disk. That
+seems like it shouldn't happen in the first place.  Obviously, you
+showed that it can with parted.  But I would argue that this is a bug in
+parted.  If parted is creating partitions, it should set
+LO_FLAGS_PARTSCAN so the partition nodes get cleaned up.
 
-During the last years, we had several reports of problems with this driver
-for cryptsetup/LUKS (dm-crypt with qat driver; here it is skcipher, not aead, though).
+I suppose kpartx could check if there are partition devices for the loop
+device, and if so, it could set LO_FLAGS_PARTSCAN before doing the
+remove. But setting it unilaterally would just cause it to create an
+extra set of devices that would only serve to confuse people (and lvm).
 
-The problem with the misunderstanding of the crypto API queue has been known
-to authors for some time, at least since 2020
-see https://lore.kernel.org/dm-devel/20200601160418.171851200@debian-a64.vm/
-and it is apparently not fixed yet.
+Also, the actual partition /dev/loopXpY will always get removed. It's
+just the devnode that stays around, and that won't confuse lvm. This
+isn't that odd for loop devices. The /dev/loopX devnodes will stay
+around once you're done with them, regardless of whether you create the
+loop device will kpartx or losetup.
 
-Thanks you,
-Milan
+
+> 
+> // workaround - losetup -P
+> # kpartx -a -v test.img
+> # ls -l /dev/loop0*
+> brw-rw----. 1 root disk  7,   0 Feb 22 20:05 /dev/loop0
+> 
+> # parted -a none -s /dev/loop0 mkpart primary 64s 100000s
+> # parted -a none -s /dev/loop0 set 1 lvm on
+> # kpartx -d test.img  
+> # ls -l /dev/loop0*
+> brw-rw----. 1 root disk   7,   0 Feb 22 20:05 /dev/loop0
+> brw-rw----. 1 root disk 259,   0 Feb 22 20:05 /dev/loop0p1
+> 
+> # kpartx -av test.img
+> # ls -l /dev/mapper/loop0*
+> lrwxrwxrwx. 1 root root       7 Feb 22 20:53 loop0p1 -> ../dm-2
+> 
+> # pvcreate /dev/mapper/loop0p1
+> # pvscan
+>   WARNING: Not using device /dev/loop0p1 for PV <UUID>.
+>   WARNING: PV <UUID> prefers device /dev/mapper/loop0p1 because device is in dm subsystem.
+
+So this example shows exactly why I don't want both /dev/loopXpY and
+/dev/mapper/loopXpY. Whenever we use your -P option we can run into
+this situation, right?
+
+Martin, do you have any feelings on this.
+
+-Ben
+
+> Thanks,
+> Ritika
+> 
+> 
 
 --
 dm-devel mailing list
