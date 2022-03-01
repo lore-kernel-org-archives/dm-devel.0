@@ -4,55 +4,53 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7511DC433FE
-	for <dm-devel@archiver.kernel.org>; Tue,  1 Mar 2022 09:15:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 524A1C433EF
+	for <dm-devel@archiver.kernel.org>; Tue,  1 Mar 2022 09:23:18 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-185-op5L-B7zOdah8y0GFZa6jw-1; Tue, 01 Mar 2022 04:15:41 -0500
-X-MC-Unique: op5L-B7zOdah8y0GFZa6jw-1
+ us-mta-265-PIbLOONkNLmxpxy-vyz60Q-1; Tue, 01 Mar 2022 04:23:13 -0500
+X-MC-Unique: PIbLOONkNLmxpxy-vyz60Q-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.phx2.redhat.com [10.5.11.16])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 2084A1854E26;
-	Tue,  1 Mar 2022 09:15:37 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9E0BB7B6CC;
-	Tue,  1 Mar 2022 09:15:36 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id D360D1006AA7;
+	Tue,  1 Mar 2022 09:23:08 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 787CB7B6DD;
+	Tue,  1 Mar 2022 09:23:08 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id DAFF01809C98;
-	Tue,  1 Mar 2022 09:15:35 +0000 (UTC)
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id EB7694A701;
+	Tue,  1 Mar 2022 09:23:07 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
 	[10.11.54.9])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 2219FYvV000721 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 1 Mar 2022 04:15:34 -0500
+	id 2219M6es001132 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 1 Mar 2022 04:22:06 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 0492346A386; Tue,  1 Mar 2022 09:15:34 +0000 (UTC)
+	id 9168D46A387; Tue,  1 Mar 2022 09:22:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 005FA46A381
-	for <dm-devel@redhat.com>; Tue,  1 Mar 2022 09:15:33 +0000 (UTC)
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8DD1346A381
+	for <dm-devel@redhat.com>; Tue,  1 Mar 2022 09:22:06 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D84CD3800500
-	for <dm-devel@redhat.com>; Tue,  1 Mar 2022 09:15:33 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 760DC801585
+	for <dm-devel@redhat.com>; Tue,  1 Mar 2022 09:22:06 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-493-HVEbCDnSPS-1uSqMCfKGDA-1; Tue, 01 Mar 2022 04:15:30 -0500
-X-MC-Unique: HVEbCDnSPS-1uSqMCfKGDA-1
+	us-mta-573-ltuyCRePNNuRci5Hrr0nqQ-1; Tue, 01 Mar 2022 04:22:04 -0500
+X-MC-Unique: ltuyCRePNNuRci5Hrr0nqQ-1
 Received: from [2.53.44.23] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1nOy1Y-00FdGB-2b; Tue, 01 Mar 2022 08:38:24 +0000
+	id 1nOy1U-00FdDp-2b; Tue, 01 Mar 2022 08:38:20 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: snitzer@redhat.com
-Date: Tue,  1 Mar 2022 10:38:15 +0200
-Message-Id: <20220301083815.879515-2-hch@lst.de>
-In-Reply-To: <20220301083815.879515-1-hch@lst.de>
-References: <20220301083815.879515-1-hch@lst.de>
+Date: Tue,  1 Mar 2022 10:38:14 +0200
+Message-Id: <20220301083815.879515-1-hch@lst.de>
 MIME-Version: 1.0
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
 	bombadil.infradead.org. See http://www.infradead.org/rpr.html
@@ -67,7 +65,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 X-loop: dm-devel@redhat.com
 Cc: dm-devel@redhat.com, damien.lemoal@opensource.wdc.com
-Subject: [dm-devel] [PATCH 2/2] dm: stop using bdevname
+Subject: [dm-devel] [PATCH 1/2] dm-zoned: remove the ->name field in struct
+	dmz_dev
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -89,250 +88,76 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Just use the %pg format specifier instead.
+Just use the %pg format specifier to print the block device name
+directly.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/md/dm-cache-target.c | 10 ++++------
- drivers/md/dm-clone-target.c | 10 ++++------
- drivers/md/dm-mpath.c        |  6 ++----
- drivers/md/dm-table.c        | 30 ++++++++++++++----------------
- drivers/md/dm-thin.c         |  8 +++-----
- 5 files changed, 27 insertions(+), 37 deletions(-)
+ drivers/md/dm-zoned-metadata.c | 4 ++--
+ drivers/md/dm-zoned-target.c   | 1 -
+ drivers/md/dm-zoned.h          | 9 ++++-----
+ 3 files changed, 6 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 89fdfb49d564e..d46c06f2ffccf 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -2015,7 +2015,6 @@ static int parse_metadata_dev(struct cache_args *ca, struct dm_arg_set *as,
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index e5f1eb27ce2e9..d1ea66114d142 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -1101,8 +1101,8 @@ static int dmz_check_sb(struct dmz_metadata *zmd, struct dmz_sb *dsb,
+  */
+ static int dmz_read_sb(struct dmz_metadata *zmd, struct dmz_sb *sb, int set)
  {
- 	int r;
- 	sector_t metadata_dev_size;
--	char b[BDEVNAME_SIZE];
+-	dmz_zmd_debug(zmd, "read superblock set %d dev %s block %llu",
+-		      set, sb->dev->name, sb->block);
++	dmz_zmd_debug(zmd, "read superblock set %d dev %pg block %llu",
++		      set, sb->dev->bdev, sb->block);
  
- 	if (!at_least_one_arg(as, error))
- 		return -EINVAL;
-@@ -2029,8 +2028,8 @@ static int parse_metadata_dev(struct cache_args *ca, struct dm_arg_set *as,
- 
- 	metadata_dev_size = get_dev_size(ca->metadata_dev);
- 	if (metadata_dev_size > DM_CACHE_METADATA_MAX_SECTORS_WARNING)
--		DMWARN("Metadata device %s is larger than %u sectors: excess space will not be used.",
--		       bdevname(ca->metadata_dev->bdev, b), THIN_METADATA_MAX_SECTORS);
-+		DMWARN("Metadata device %pg is larger than %u sectors: excess space will not be used.",
-+		       ca->metadata_dev->bdev, THIN_METADATA_MAX_SECTORS);
- 
- 	return 0;
- }
-@@ -3345,7 +3344,6 @@ static void disable_passdown_if_not_supported(struct cache *cache)
- 	struct block_device *origin_bdev = cache->origin_dev->bdev;
- 	struct queue_limits *origin_limits = &bdev_get_queue(origin_bdev)->limits;
- 	const char *reason = NULL;
--	char buf[BDEVNAME_SIZE];
- 
- 	if (!cache->features.discard_passdown)
- 		return;
-@@ -3357,8 +3355,8 @@ static void disable_passdown_if_not_supported(struct cache *cache)
- 		reason = "max discard sectors smaller than a block";
- 
- 	if (reason) {
--		DMWARN("Origin device (%s) %s: Disabling discard passdown.",
--		       bdevname(origin_bdev, buf), reason);
-+		DMWARN("Origin device (%pg) %s: Disabling discard passdown.",
-+		       origin_bdev, reason);
- 		cache->features.discard_passdown = false;
+ 	return dmz_rdwr_block(sb->dev, REQ_OP_READ,
+ 			      sb->block, sb->mblk->page);
+diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
+index a3f6d3ef38174..cac295cc8840e 100644
+--- a/drivers/md/dm-zoned-target.c
++++ b/drivers/md/dm-zoned-target.c
+@@ -730,7 +730,6 @@ static int dmz_get_zoned_device(struct dm_target *ti, char *path,
  	}
- }
-diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
-index 4599632d7a84c..128316a73d016 100644
---- a/drivers/md/dm-clone-target.c
-+++ b/drivers/md/dm-clone-target.c
-@@ -1682,7 +1682,6 @@ static int parse_metadata_dev(struct clone *clone, struct dm_arg_set *as, char *
- {
- 	int r;
- 	sector_t metadata_dev_size;
--	char b[BDEVNAME_SIZE];
+ 	dev->bdev = bdev;
+ 	dev->dev_idx = idx;
+-	(void)bdevname(dev->bdev, dev->name);
  
- 	r = dm_get_device(clone->ti, dm_shift_arg(as), FMODE_READ | FMODE_WRITE,
- 			  &clone->metadata_dev);
-@@ -1693,8 +1692,8 @@ static int parse_metadata_dev(struct clone *clone, struct dm_arg_set *as, char *
+ 	dev->capacity = bdev_nr_sectors(bdev);
+ 	if (ti->begin) {
+diff --git a/drivers/md/dm-zoned.h b/drivers/md/dm-zoned.h
+index 22f11440b423b..a02744a0846cc 100644
+--- a/drivers/md/dm-zoned.h
++++ b/drivers/md/dm-zoned.h
+@@ -56,7 +56,6 @@ struct dmz_dev {
+ 	struct dmz_metadata	*metadata;
+ 	struct dmz_reclaim	*reclaim;
  
- 	metadata_dev_size = get_dev_size(clone->metadata_dev);
- 	if (metadata_dev_size > DM_CLONE_METADATA_MAX_SECTORS_WARNING)
--		DMWARN("Metadata device %s is larger than %u sectors: excess space will not be used.",
--		       bdevname(clone->metadata_dev->bdev, b), DM_CLONE_METADATA_MAX_SECTORS);
-+		DMWARN("Metadata device %pg is larger than %u sectors: excess space will not be used.",
-+		       clone->metadata_dev->bdev, DM_CLONE_METADATA_MAX_SECTORS);
+-	char			name[BDEVNAME_SIZE];
+ 	uuid_t			uuid;
  
- 	return 0;
- }
-@@ -2033,7 +2032,6 @@ static void disable_passdown_if_not_supported(struct clone *clone)
- 	struct block_device *dest_dev = clone->dest_dev->bdev;
- 	struct queue_limits *dest_limits = &bdev_get_queue(dest_dev)->limits;
- 	const char *reason = NULL;
--	char buf[BDEVNAME_SIZE];
+ 	sector_t		capacity;
+@@ -176,16 +175,16 @@ enum {
+  * Message functions.
+  */
+ #define dmz_dev_info(dev, format, args...)	\
+-	DMINFO("(%s): " format, (dev)->name, ## args)
++	DMINFO("(%pg): " format, (dev)->bdev, ## args)
  
- 	if (!test_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags))
- 		return;
-@@ -2044,8 +2042,8 @@ static void disable_passdown_if_not_supported(struct clone *clone)
- 		reason = "max discard sectors smaller than a region";
+ #define dmz_dev_err(dev, format, args...)	\
+-	DMERR("(%s): " format, (dev)->name, ## args)
++	DMERR("(%pg): " format, (dev)->bdev, ## args)
  
- 	if (reason) {
--		DMWARN("Destination device (%s) %s: Disabling discard passdown.",
--		       bdevname(dest_dev, buf), reason);
-+		DMWARN("Destination device (%pd) %s: Disabling discard passdown.",
-+		       dest_dev, reason);
- 		clear_bit(DM_CLONE_DISCARD_PASSDOWN, &clone->flags);
- 	}
- }
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index f4719b65e5e33..411403b3ec435 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -899,10 +899,8 @@ static int setup_scsi_dh(struct block_device *bdev, struct multipath *m,
- 	if (m->hw_handler_name) {
- 		r = scsi_dh_attach(q, m->hw_handler_name);
- 		if (r == -EBUSY) {
--			char b[BDEVNAME_SIZE];
--
--			printk(KERN_INFO "dm-mpath: retaining handler on device %s\n",
--			       bdevname(bdev, b));
-+			printk(KERN_INFO "dm-mpath: retaining handler on device %pg\n",
-+			       bdev);
- 			goto retain;
- 		}
- 		if (r < 0) {
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index e43096cfe9e22..f4ed756ab391a 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -230,15 +230,14 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
- 	sector_t dev_size = bdev_nr_sectors(bdev);
- 	unsigned short logical_block_size_sectors =
- 		limits->logical_block_size >> SECTOR_SHIFT;
--	char b[BDEVNAME_SIZE];
+ #define dmz_dev_warn(dev, format, args...)	\
+-	DMWARN("(%s): " format, (dev)->name, ## args)
++	DMWARN("(%pg): " format, (dev)->bdev, ## args)
  
- 	if (!dev_size)
- 		return 0;
+ #define dmz_dev_debug(dev, format, args...)	\
+-	DMDEBUG("(%s): " format, (dev)->name, ## args)
++	DMDEBUG("(%pg): " format, (dev)->bdev, ## args)
  
- 	if ((start >= dev_size) || (start + len > dev_size)) {
--		DMWARN("%s: %s too small for target: "
-+		DMWARN("%s: %pg too small for target: "
- 		       "start=%llu, len=%llu, dev_size=%llu",
--		       dm_device_name(ti->table->md), bdevname(bdev, b),
-+		       dm_device_name(ti->table->md), bdev,
- 		       (unsigned long long)start,
- 		       (unsigned long long)len,
- 		       (unsigned long long)dev_size);
-@@ -253,10 +252,10 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
- 		unsigned int zone_sectors = bdev_zone_sectors(bdev);
- 
- 		if (start & (zone_sectors - 1)) {
--			DMWARN("%s: start=%llu not aligned to h/w zone size %u of %s",
-+			DMWARN("%s: start=%llu not aligned to h/w zone size %u of %pg",
- 			       dm_device_name(ti->table->md),
- 			       (unsigned long long)start,
--			       zone_sectors, bdevname(bdev, b));
-+			       zone_sectors, bdev);
- 			return 1;
- 		}
- 
-@@ -270,10 +269,10 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
- 		 * the sector range.
- 		 */
- 		if (len & (zone_sectors - 1)) {
--			DMWARN("%s: len=%llu not aligned to h/w zone size %u of %s",
-+			DMWARN("%s: len=%llu not aligned to h/w zone size %u of %pg",
- 			       dm_device_name(ti->table->md),
- 			       (unsigned long long)len,
--			       zone_sectors, bdevname(bdev, b));
-+			       zone_sectors, bdev);
- 			return 1;
- 		}
- 	}
-@@ -283,19 +282,19 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
- 
- 	if (start & (logical_block_size_sectors - 1)) {
- 		DMWARN("%s: start=%llu not aligned to h/w "
--		       "logical block size %u of %s",
-+		       "logical block size %u of %pg",
- 		       dm_device_name(ti->table->md),
- 		       (unsigned long long)start,
--		       limits->logical_block_size, bdevname(bdev, b));
-+		       limits->logical_block_size, bdev);
- 		return 1;
- 	}
- 
- 	if (len & (logical_block_size_sectors - 1)) {
- 		DMWARN("%s: len=%llu not aligned to h/w "
--		       "logical block size %u of %s",
-+		       "logical block size %u of %pg",
- 		       dm_device_name(ti->table->md),
- 		       (unsigned long long)len,
--		       limits->logical_block_size, bdevname(bdev, b));
-+		       limits->logical_block_size, bdev);
- 		return 1;
- 	}
- 
-@@ -400,20 +399,19 @@ static int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
- 	struct queue_limits *limits = data;
- 	struct block_device *bdev = dev->bdev;
- 	struct request_queue *q = bdev_get_queue(bdev);
--	char b[BDEVNAME_SIZE];
- 
- 	if (unlikely(!q)) {
--		DMWARN("%s: Cannot set limits for nonexistent device %s",
--		       dm_device_name(ti->table->md), bdevname(bdev, b));
-+		DMWARN("%s: Cannot set limits for nonexistent device %pg",
-+		       dm_device_name(ti->table->md), bdev);
- 		return 0;
- 	}
- 
- 	if (blk_stack_limits(limits, &q->limits,
- 			get_start_sect(bdev) + start) < 0)
--		DMWARN("%s: adding target device %s caused an alignment inconsistency: "
-+		DMWARN("%s: adding target device %pg caused an alignment inconsistency: "
- 		       "physical_block_size=%u, logical_block_size=%u, "
- 		       "alignment_offset=%u, start=%llu",
--		       dm_device_name(ti->table->md), bdevname(bdev, b),
-+		       dm_device_name(ti->table->md), bdev,
- 		       q->limits.physical_block_size,
- 		       q->limits.logical_block_size,
- 		       q->limits.alignment_offset,
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index f4234d615aa1b..d210d1fffc3b4 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -2824,7 +2824,6 @@ static void disable_passdown_if_not_supported(struct pool_c *pt)
- 	struct block_device *data_bdev = pt->data_dev->bdev;
- 	struct queue_limits *data_limits = &bdev_get_queue(data_bdev)->limits;
- 	const char *reason = NULL;
--	char buf[BDEVNAME_SIZE];
- 
- 	if (!pt->adjusted_pf.discard_passdown)
- 		return;
-@@ -2836,7 +2835,7 @@ static void disable_passdown_if_not_supported(struct pool_c *pt)
- 		reason = "max discard sectors smaller than a block";
- 
- 	if (reason) {
--		DMWARN("Data device (%s) %s: Disabling discard passdown.", bdevname(data_bdev, buf), reason);
-+		DMWARN("Data device (%pg) %s: Disabling discard passdown.", data_bdev, reason);
- 		pt->adjusted_pf.discard_passdown = false;
- 	}
- }
-@@ -3201,11 +3200,10 @@ static sector_t get_dev_size(struct block_device *bdev)
- static void warn_if_metadata_device_too_big(struct block_device *bdev)
- {
- 	sector_t metadata_dev_size = get_dev_size(bdev);
--	char buffer[BDEVNAME_SIZE];
- 
- 	if (metadata_dev_size > THIN_METADATA_MAX_SECTORS_WARNING)
--		DMWARN("Metadata device %s is larger than %u sectors: excess space will not be used.",
--		       bdevname(bdev, buffer), THIN_METADATA_MAX_SECTORS);
-+		DMWARN("Metadata device %pg is larger than %u sectors: excess space will not be used.",
-+		       bdev, THIN_METADATA_MAX_SECTORS);
- }
- 
- static sector_t get_metadata_dev_size(struct block_device *bdev)
+ /*
+  * Functions defined in dm-zoned-metadata.c
 -- 
 2.30.2
 
