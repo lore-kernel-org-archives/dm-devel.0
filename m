@@ -4,68 +4,88 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 31F3EC433FE
-	for <dm-devel@archiver.kernel.org>; Tue,  1 Mar 2022 10:35:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 60016C433F5
+	for <dm-devel@archiver.kernel.org>; Tue,  1 Mar 2022 11:01:35 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-14-wUkFG-j7P563NjIk4-Aiww-1; Tue, 01 Mar 2022 05:35:31 -0500
-X-MC-Unique: wUkFG-j7P563NjIk4-Aiww-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.phx2.redhat.com [10.5.11.14])
+ us-mta-462-a0DvvGViO1KAreDZwTATjA-1; Tue, 01 Mar 2022 06:01:30 -0500
+X-MC-Unique: a0DvvGViO1KAreDZwTATjA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A79CD1868335;
-	Tue,  1 Mar 2022 10:35:26 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 3A4AB1091DA2;
+	Tue,  1 Mar 2022 11:01:26 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9EDF4721C4;
-	Tue,  1 Mar 2022 10:35:25 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 195FE8308F;
+	Tue,  1 Mar 2022 11:01:25 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 002AC1809C98;
-	Tue,  1 Mar 2022 10:35:22 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.1])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 09CB51809C98;
+	Tue,  1 Mar 2022 11:01:24 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.8])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 221AZKgv006996 for <dm-devel@listman.util.phx.redhat.com>;
-	Tue, 1 Mar 2022 05:35:20 -0500
+	id 221B1LgU008222 for <dm-devel@listman.util.phx.redhat.com>;
+	Tue, 1 Mar 2022 06:01:21 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id AC38741136EA; Tue,  1 Mar 2022 10:35:20 +0000 (UTC)
+	id 746F8C50943; Tue,  1 Mar 2022 11:01:21 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id A7C9B41136E7
-	for <dm-devel@redhat.com>; Tue,  1 Mar 2022 10:35:20 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+	(mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 70137C50941
+	for <dm-devel@redhat.com>; Tue,  1 Mar 2022 11:01:21 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+	[205.139.110.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8F66B811E76
-	for <dm-devel@redhat.com>; Tue,  1 Mar 2022 10:35:20 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 56FA6801585
+	for <dm-devel@redhat.com>; Tue,  1 Mar 2022 11:01:21 +0000 (UTC)
+Received: from esa5.hgst.iphmx.com (esa5.hgst.iphmx.com [216.71.153.144]) by
 	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-20-dTtRrvQTO6Cu-QraUUuGpw-1; Tue, 01 Mar 2022 05:35:15 -0500
-X-MC-Unique: dTtRrvQTO6Cu-QraUUuGpw-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	key-exchange X25519 server-signature ECDSA (P-521) server-digest
-	SHA512) (No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 887141F37D;
-	Tue,  1 Mar 2022 10:35:14 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	key-exchange X25519 server-signature ECDSA (P-521) server-digest
-	SHA512) (No client certificate requested)
-	by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 797CA13B38;
-	Tue,  1 Mar 2022 10:35:14 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-	by imap2.suse-dmz.suse.de with ESMTPSA id NUFjG+L2HWICfQAAMHmgww
-	(envelope-from <hare@suse.de>); Tue, 01 Mar 2022 10:35:14 +0000
-Message-ID: <968513c0-4836-405c-dca0-22bd8489eaec@suse.de>
-Date: Tue, 1 Mar 2022 11:35:14 +0100
+	us-mta-468-ETXc-IBgNd-_2bEvD6nDXg-1; Tue, 01 Mar 2022 06:01:19 -0500
+X-MC-Unique: ETXc-IBgNd-_2bEvD6nDXg-1
+X-IronPort-AV: E=Sophos;i="5.90,145,1643644800"; d="scan'208";a="194193882"
+Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com)
+	([199.255.45.14])
+	by ob1.hgst.iphmx.com with ESMTP; 01 Mar 2022 19:01:17 +0800
+IronPort-SDR: wIpRh6nYl3UGvdEMBlTKtLh31SH8AkCXb9HZWIDR9+ovXUj4PODdfaoATN2zydt6d03zGWqSwR
+	6uscfBuJ6ZzH12oc4l57ZNo6IQsN3FPKQ+OlUoVmNZdZXKoVPPTsXwDCRtOQsPdXbkU6nVG2KV
+	ZlwVt7dbyQl7/C/GxtIgNK6l1AI4QKpFQdZAL2Kmdk0G8Ba9f+UnUnNSMPwlQQASBOHesvIwR+
+	OERGnedcxUoSuaZ3fD1hI3bS0+q8wc2RzuZMC0RuRjdsDYosXCRzU9ZHoLekoAC6t7hhSpPuAG
+	Rv5hWHTlmhPpRZWjSM427lnH
+Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
+	by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+	01 Mar 2022 02:33:44 -0800
+IronPort-SDR: NU8n43WN6srhfaxx2GZEqrgmR2JHBCMi+l2FV34r+D+gLqcb8xCS+9x1oP/IEKewcGplWd6Iu5
+	9vrcm4sENKSP8K9GJxDQ5xBh0lPi3GKIka0nrzZf9zg5pynv4JSeiOTuCxqfsoq+uC2V5eHzcr
+	B2N4X63H8QYD0wqCRUVCbwv3pu3kRSIs3/fjWD6Sk28HPRI+syBhGFJz7zI07pULdrumN6fp05
+	fddMSUOmqGUj2IHnQCOP796TTkKcoLiGTfAbIp3dVsM+mujozRtH32n21M3Z93l/yXoV5kB4iW
+	ido=
+WDCIronportException: Internal
+Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
+	by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+	01 Mar 2022 03:01:17 -0800
+Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+	by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4K7Dnn1y8rz1SHwl
+	for <dm-devel@redhat.com>; Tue,  1 Mar 2022 03:01:17 -0800 (PST)
+X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
+Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
+	by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+	(amavisd-new, port 10026)
+	with ESMTP id Oj1hR7KByL1c for <dm-devel@redhat.com>;
+	Tue,  1 Mar 2022 03:01:16 -0800 (PST)
+Received: from [10.112.1.94] (c02drav6md6t.wdc.com [10.112.1.94])
+	by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4K7Dnl6r81z1Rvlx;
+	Tue,  1 Mar 2022 03:01:15 -0800 (PST)
+Message-ID: <59d27cf5-e474-d7c5-52fc-d5de515a9f97@opensource.wdc.com>
+Date: Tue, 1 Mar 2022 13:01:13 +0200
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
-	Thunderbird/91.4.0
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0)
+	Gecko/20100101 Thunderbird/91.6.1
 To: Christoph Hellwig <hch@lst.de>, snitzer@redhat.com
 References: <20220301083815.879515-1-hch@lst.de>
-From: Hannes Reinecke <hare@suse.de>
+From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Organization: Western Digital Research
 In-Reply-To: <20220301083815.879515-1-hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
@@ -75,13 +95,11 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 221AZKgv006996
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 X-loop: dm-devel@redhat.com
-Cc: dm-devel@redhat.com, damien.lemoal@opensource.wdc.com
+Cc: dm-devel@redhat.com
 Subject: Re: [dm-devel] [PATCH 1/2] dm-zoned: remove the ->name field in
- struct dmz_dev
+	struct dmz_dev
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -95,27 +113,29 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.14
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.15
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gMy8xLzIyIDA5OjM4LCBDaHJpc3RvcGggSGVsbHdpZyB3cm90ZToKPiBKdXN0IHVzZSB0aGUg
-JXBnIGZvcm1hdCBzcGVjaWZpZXIgdG8gcHJpbnQgdGhlIGJsb2NrIGRldmljZSBuYW1lCj4gZGly
-ZWN0bHkuCj4gCj4gU2lnbmVkLW9mZi1ieTogQ2hyaXN0b3BoIEhlbGx3aWcgPGhjaEBsc3QuZGU+
-Cj4gLS0tCj4gICBkcml2ZXJzL21kL2RtLXpvbmVkLW1ldGFkYXRhLmMgfCA0ICsrLS0KPiAgIGRy
-aXZlcnMvbWQvZG0tem9uZWQtdGFyZ2V0LmMgICB8IDEgLQo+ICAgZHJpdmVycy9tZC9kbS16b25l
-ZC5oICAgICAgICAgIHwgOSArKysrLS0tLS0KPiAgIDMgZmlsZXMgY2hhbmdlZCwgNiBpbnNlcnRp
-b25zKCspLCA4IGRlbGV0aW9ucygtKQo+IApSZXZpZXdlZC1ieTogSGFubmVzIFJlaW5lY2tlIDxo
-YXJlQHN1c2UuZGU+CgpDaGVlcnMsCgpIYW5uZXMKLS0gCkRyLiBIYW5uZXMgUmVpbmVja2UJCSAg
-ICAgICAgICAgS2VybmVsIFN0b3JhZ2UgQXJjaGl0ZWN0CmhhcmVAc3VzZS5kZQkJCSAgICAgICAg
-ICAgICAgICAgICs0OSA5MTEgNzQwNTMgNjg4ClNVU0UgU29mdHdhcmUgU29sdXRpb25zIEdlcm1h
-bnkgR21iSCwgTWF4ZmVsZHN0ci4gNSwgOTA0MDkgTsO8cm5iZXJnCkhSQiAzNjgwOSAoQUcgTsO8
-cm5iZXJnKSwgR0Y6IEZlbGl4IEltZW5kw7ZyZmZlcgoKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlz
-dApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21haWxtYW4v
-bGlzdGluZm8vZG0tZGV2ZWw=
+On 2022/03/01 10:38, Christoph Hellwig wrote:
+> Just use the %pg format specifier to print the block device name
+> directly.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+
+Reviewed-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+
+-- 
+Damien Le Moal
+Western Digital Research
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
