@@ -1,72 +1,81 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 27559C433EF
-	for <dm-devel@archiver.kernel.org>; Thu,  3 Mar 2022 10:57:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3E06BC4332F
+	for <dm-devel@archiver.kernel.org>; Thu,  3 Mar 2022 17:38:52 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-599-HvyEcF3GO06EPibQDU4aZA-1; Thu, 03 Mar 2022 05:57:48 -0500
-X-MC-Unique: HvyEcF3GO06EPibQDU4aZA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-548-Bd1FFi4qPrCagJjsXXBBRw-1; Thu, 03 Mar 2022 12:38:47 -0500
+X-MC-Unique: Bd1FFi4qPrCagJjsXXBBRw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 269B9824FA6;
-	Thu,  3 Mar 2022 10:57:44 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id C1DA151DC;
+	Thu,  3 Mar 2022 17:38:42 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6D1AA76C2D;
-	Thu,  3 Mar 2022 10:57:43 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C7E3F1017E36;
+	Thu,  3 Mar 2022 17:38:41 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 52CCE1809C88;
-	Thu,  3 Mar 2022 10:57:41 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.8])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id C9C071809CB2;
+	Thu,  3 Mar 2022 17:38:33 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 223Avdr7008675 for <dm-devel@listman.util.phx.redhat.com>;
-	Thu, 3 Mar 2022 05:57:39 -0500
+	id 223HcVc3027367 for <dm-devel@listman.util.phx.redhat.com>;
+	Thu, 3 Mar 2022 12:38:31 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 74CB2C27FA7; Thu,  3 Mar 2022 10:57:39 +0000 (UTC)
+	id 9CA7E40D2829; Thu,  3 Mar 2022 17:38:31 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 6FF65C27FA6
-	for <dm-devel@redhat.com>; Thu,  3 Mar 2022 10:57:39 +0000 (UTC)
+	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 9741540D2828
+	for <dm-devel@redhat.com>; Thu,  3 Mar 2022 17:38:31 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 52221185A79C
-	for <dm-devel@redhat.com>; Thu,  3 Mar 2022 10:57:39 +0000 (UTC)
-Received: from de-smtp-delivery-102.mimecast.com
-	(de-smtp-delivery-102.mimecast.com [194.104.111.102]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-434-LPb5Oy5FObaqEAPZnneWYQ-1; Thu, 03 Mar 2022 05:57:37 -0500
-X-MC-Unique: LPb5Oy5FObaqEAPZnneWYQ-1
-Received: from EUR04-HE1-obe.outbound.protection.outlook.com
-	(mail-he1eur04lp2059.outbound.protection.outlook.com [104.47.13.59]) by
-	relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
-	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	de-mta-20-ofK-WgWiPiOVfeKG9U1_oQ-1; Thu, 03 Mar 2022 11:57:35 +0100
-X-MC-Unique: ofK-WgWiPiOVfeKG9U1_oQ-1
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
-	by HE1PR0401MB2604.eurprd04.prod.outlook.com (2603:10a6:3:83::10)
-	with Microsoft SMTP Server (version=TLS1_2,
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7A2BF3C11C7C
+	for <dm-devel@redhat.com>; Thu,  3 Mar 2022 17:38:31 +0000 (UTC)
+Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
+	[205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
+	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+	us-mta-563-KkYrI1gfMb6clNGOhMAE8w-1; Thu, 03 Mar 2022 12:38:27 -0500
+X-MC-Unique: KkYrI1gfMb6clNGOhMAE8w-1
+Received: from pps.filterd (m0246631.ppops.net [127.0.0.1])
+	by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id
+	223HHZ5K009253; Thu, 3 Mar 2022 17:38:27 GMT
+Received: from userp3020.oracle.com (userp3020.oracle.com [156.151.31.79])
+	by mx0b-00069f02.pphosted.com with ESMTP id 3ehbk9g6h1-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Thu, 03 Mar 2022 17:38:26 +0000
+Received: from pps.filterd (userp3020.oracle.com [127.0.0.1])
+	by userp3020.oracle.com (8.16.1.2/8.16.1.2) with SMTP id 223HVjDk133800;
+	Thu, 3 Mar 2022 17:38:25 GMT
+Received: from nam10-bn7-obe.outbound.protection.outlook.com
+	(mail-bn7nam10lp2109.outbound.protection.outlook.com [104.47.70.109])
+	by userp3020.oracle.com with ESMTP id 3efdnt5ew9-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Thu, 03 Mar 2022 17:38:25 +0000
+Received: from SJ0PR10MB4654.namprd10.prod.outlook.com (2603:10b6:a03:2d2::16)
+	by DM6PR10MB3867.namprd10.prod.outlook.com (2603:10b6:5:1fe::29) with
+	Microsoft SMTP Server (version=TLS1_2,
 	cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5038.14;
-	Thu, 3 Mar 2022 10:57:34 +0000
-Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::357f:742:c1c7:8fe6]) by DB8PR04MB6555.eurprd04.prod.outlook.com
-	([fe80::357f:742:c1c7:8fe6%4]) with mapi id 15.20.5017.027;
-	Thu, 3 Mar 2022 10:57:34 +0000
-From: Martin Wilck <martin.wilck@suse.com>
-To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
-	"ritika.srivastava@oracle.com" <ritika.srivastava@oracle.com>
+	Thu, 3 Mar 2022 17:38:22 +0000
+Received: from SJ0PR10MB4654.namprd10.prod.outlook.com
+	([fe80::d811:eb8a:a16e:c46d]) by
+	SJ0PR10MB4654.namprd10.prod.outlook.com
+	([fe80::d811:eb8a:a16e:c46d%6]) with mapi id 15.20.5038.014;
+	Thu, 3 Mar 2022 17:38:22 +0000
+From: Ritika Srivastava <ritika.srivastava@oracle.com>
+To: Martin Wilck <martin.wilck@suse.com>, "bmarzins@redhat.com"
+	<bmarzins@redhat.com>
 Thread-Topic: [dm-devel] [PATCH] kpartx: Add -P option for partition scanning
-Thread-Index: AQHYLu18Ivy+w7tBtUy+DPFJz1H8iw==
-Date: Thu, 3 Mar 2022 10:57:33 +0000
-Message-ID: <455157a88c1087de6cc5c1350e64e1a49eb371b1.camel@suse.com>
+Thread-Index: AQHYLu2ESPewu2jO/UqGwdkSd29s1aytZv0A
+Date: Thu, 3 Mar 2022 17:38:22 +0000
+Message-ID: <AEBD217A-9920-4DBF-A843-7B3866114B51@oracle.com>
 References: <1644612108-2445-1-git-send-email-ritika.srivastava@oracle.com>
 	<20220222182732.GV24684@octiron.msp.redhat.com>
 	<89458D66-751C-4FCC-8735-E94645EA9AD8@oracle.com>
@@ -75,65 +84,84 @@ References: <1644612108-2445-1-git-send-email-ritika.srivastava@oracle.com>
 	<20220228224435.GY24684@octiron.msp.redhat.com>
 	<1C4A63A7-0ABB-4A26-9C4A-4BD4EA192B1A@oracle.com>
 	<20220302183854.GA24684@octiron.msp.redhat.com>
-In-Reply-To: <20220302183854.GA24684@octiron.msp.redhat.com>
-Accept-Language: en-US
+	<455157a88c1087de6cc5c1350e64e1a49eb371b1.camel@suse.com>
+In-Reply-To: <455157a88c1087de6cc5c1350e64e1a49eb371b1.camel@suse.com>
+Accept-Language: en-GB, en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
-user-agent: Evolution 3.42.4
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 2f946865-7e69-4059-f7c6-08d9fd049f14
-x-ms-traffictypediagnostic: HE1PR0401MB2604:EE_
-x-microsoft-antispam-prvs: <HE1PR0401MB2604157051A9373047152154FC049@HE1PR0401MB2604.eurprd04.prod.outlook.com>
+x-ms-office365-filtering-correlation-id: d87632cd-1086-4a33-3280-08d9fd3c9d2f
+x-ms-traffictypediagnostic: DM6PR10MB3867:EE_
+x-microsoft-antispam-prvs: <DM6PR10MB3867CB568C4F28140043A9DA8F049@DM6PR10MB3867.namprd10.prod.outlook.com>
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: 48+Dg2qnxQ6ua/ZFYW7feVM3JpYoLpZMCiiY/9fnr6JBvsJXEmGtpYe/uG5uDuTD1sRyaLLVQ57ghxHggRESavdGZM8KYiTS+e4Hc3pmS8hny+iOqmpx0IPoPVW9Y0S6hL3yDAqJv5kw1IDzPbaJurkPPcejDLWa+PmD64fKwDLSIl0vm9etec973HUCbf2FwGcENkn7fFeYnrdrsZ647m+WPI0vft1Mgkh8cyG9Y4kFDI+QK5Qp8pyFPOwHnj178JtPu8W+j+SRlB+gtoGh91CJJLYYIGACtYyE922jOmy6mZoX54VScz/GMC1WC1feu7Glt9OtZkrdk1jNDUhVubzgouz1Sm4J0dviOa6rnrENRqB+ARIqF5seTyGdma0SKDaCHIcPBleGxP3sNT3XpbXQMdcsi/kZ6H/pP35Tbwn6tL98Ceqxkl+QHlY2/1uBX/pAYdV00dd+YW+4tlE3WQ3C1dQspr+ASAm7nimRPRKKnLdeOMP1MLgxI4I2rOPKyrrUF8SLCQEi7NYWFgtDT5ITn9/upzLps5BvqwQ9WoU9RrN3j3O0LMTmvckuTAkDAEnZ+nReHEk91kF8UMful0OEw2zoMVdr56Y6L1awRas/3RVFFkyYkqlZBDhei+rG1Kg6CUjApqYLjr636Vde7LRKWDTgLKVjk4EU49stAw/yiCqq3Tx4J8/iS7U79BNjZkhMvcz/4JP/3cs0fSzBOQ==
+x-microsoft-antispam-message-info: JEdYM7GW0+c/kY4aR0zMCrnBM/fR2+Raf1STMLzsUbSHvXA/UNjZ3jQzjJPbY6+TUt6N4O7cPNaI/rq8diCcLRBt8yVt3x7q3Ucim/9d6t9//LLiB36nvdKgK8PkxlY+ebYHpj74QQLNmWRgnE2omia36e3XKMSeaaJkoV3NgHWhhHgCZO4WDM/5NqIzc87O6wkXM8t8Eyar7x8T73ta3R086fNlvyx+9fLKXt7qQ4pE14hUSINjRAXStXs5TGJaSDTGBT8dGxglUVFHxyrwAbd/D06lrbDrn9cDwn+CLZb8gvfPWPOfgeKxy0nD1jFP8nbhvDEO6QPGB7x0dyzkAPg12n42uXOqCBwqlsNXxL5ghdgTH/3udDaGNs0bxpreCZD96YyCaFiqiC8oO5HHXdGBru0obwZP4+DsQCscgxt56dfARHD1WQxDo+xVVy/ynRyf09en0BZyGSAYgrzCJBIBYuZ5uCHgUcxLdkZRjljtj4XtLgnUMbJSrclRXXgsNglJY5tCC64bcAiaF4bAX9GdRgMU+A0Qe3vE8Yuxjcrg51OJ+LMIlNHfwJGlNsyJiISXSt/1GxgvLgdUmkWTXhvmo2rA/qN4wo5jm1yvixp1ffyi9I4AhrwbY5DK22lBR14zsbKSXU9I4JqjpF7vRWoS09OykNuvEHii09DjCXvfcnHI35ROW4h1sGyWjfRxT6uZSNgEsCqtMuopcozP2Ebvt7K5ymg/N4xmQ3tgr7lkpXeqtrhZwV3GGmUeQmt1
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
-	IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com;
+	IPV:NLI; SFV:NSPM; H:SJ0PR10MB4654.namprd10.prod.outlook.com;
 	PTR:; CAT:NONE;
-	SFS:(13230001)(366004)(508600001)(26005)(186003)(83380400001)(6486002)(122000001)(38100700002)(44832011)(2616005)(53546011)(36756003)(6506007)(6512007)(64756008)(66446008)(66476007)(66946007)(76116006)(91956017)(66556008)(8676002)(4326008)(5660300002)(8936002)(2906002)(86362001)(316002)(110136005)(38070700005)(71200400001);
+	SFS:(13230001)(366004)(44832011)(110136005)(316002)(86362001)(8936002)(6486002)(36756003)(186003)(33656002)(6506007)(38070700005)(5660300002)(2616005)(122000001)(71200400001)(38100700002)(4326008)(66946007)(76116006)(66446008)(508600001)(64756008)(66476007)(66556008)(8676002)(2906002)(6512007)(53546011)(45980500001);
 	DIR:OUT; SFP:1101
 x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?9bFj2zwPrGQ3etCDEAlJfn+ZNVOQZ6D99o5UkrsemcVcKz7YCFrvk0nsn?=
-	=?iso-8859-15?Q?BIXqXxo1uvbVQPh1aLXFDSt2wXJkVW2U6Nlah0ao+o9184eZoCCsToL3w?=
-	=?iso-8859-15?Q?Dasi3L+ED6Zg8p6kPgRSJddb+FoXYoK3sYVH5OIaYMLneQ1HTv/qzyZqV?=
-	=?iso-8859-15?Q?a203hiwEB+lyR79fTjNwCaakrL0fReDN1H3woFfAEqAuRfT9qvowk2TZA?=
-	=?iso-8859-15?Q?z/E4E/FBTuMdZyJYILtXwfOS0/3ERNx0pGBlP+2AmHzNlKoktJTDh5vrS?=
-	=?iso-8859-15?Q?142ywaSWXVhsU89DGaElvZ8/nl/vk/0ojz/1fwX+4mMF4bTiecKIaPqAp?=
-	=?iso-8859-15?Q?Fy9ApMzUyK5RkntxPERwp7a64Sx29cDAciyKkorYanUsTKh58wWvxASEO?=
-	=?iso-8859-15?Q?vL/VldH0fZWCxgkz6hWDEvuZlgVDqX93kri+nzkBxGR3q4tJYTH19qmAI?=
-	=?iso-8859-15?Q?4NBGVFW8CiRZ/xUVhTyhoCQh6QsIAc5r4M8+b/3j6SJ4km4OeRv3lmi6L?=
-	=?iso-8859-15?Q?BeOSsrYmSX26icDhdb2ud+YeaUsM4kCoWlzIqtq/ZHJDVZBfRyc/AWGEJ?=
-	=?iso-8859-15?Q?G489SucJrJ1KSQn8kICzJAnWCrmFDZyXrPA9V2qP2ejxt7iLsIym+VM2F?=
-	=?iso-8859-15?Q?lNwko0hpb1emDXP/Kp4zuE0+6KCfw2EDjnLUGdjkBXquAOlvz5Xsmyn+c?=
-	=?iso-8859-15?Q?g//HcKgjQpzX0vKM3/8Fc7WJsOLWhPvBIooh/nmyu88dyOpvgsvUUTi29?=
-	=?iso-8859-15?Q?BpIL4iPRmBvt/SGiw7Nu0TFGrKelL1rpG+tEXFiw+eXJJ7BORBlYg6wDo?=
-	=?iso-8859-15?Q?OgI4SCHzHjWQXedxnIxY/akRcBV1yuR7jADxIY0B+ST+rbwaY9LaxX9Q6?=
-	=?iso-8859-15?Q?EUPc2cli5Zx9gFt+XU3AUTxCcfuos8eO/UXA9O9eUNRbNBx8p4PxFf7MK?=
-	=?iso-8859-15?Q?Gv/V9efTYFMSwLKVd+RvK8Jusik+HFfkcCJHSS5q644ooTfGmYqUwM/OC?=
-	=?iso-8859-15?Q?O4AllWKzVq/1XxrLIdu7szy93RhjkQ6VBUTot9WMKGK1MRHEo/0W+qs/A?=
-	=?iso-8859-15?Q?7gfbrduYHNqDc2Wa9fDwNizuLXXFjnV+IGs+6KSXGtj4AxBxQ4J+269BS?=
-	=?iso-8859-15?Q?wAR8bimWXXjdYIx6U85bnNsKd9svljIAAhSGnAwGhbBUkF4yZ9UiYamgY?=
-	=?iso-8859-15?Q?O7hAX/5yn2etKh87ihOOnGgnzbzBGm8UEr3MnPQE/Qw6wHn7dICiaRtgO?=
-	=?iso-8859-15?Q?kZ3eEARnPzlnrGhlRGtARItYJfHU9xfxWslc44L4tdmxniiNbjnLVwUcC?=
-	=?iso-8859-15?Q?oeZJgV8rhepc9eDZVxneaTHUOYFTj27tp2qTQ2imGHqhG7NhU5MuyfJVT?=
-	=?iso-8859-15?Q?yU8F1QdakJ3NU+3IXdLEQ+jGoCPQTvJsPM8KFZUPeqmQweaitmYet/HvA?=
-	=?iso-8859-15?Q?eRvWP4jS2M5agrbtKGGXhS7kHNU9OZx0lAiCdkXTdSM6WeoTzj+R6u4db?=
-	=?iso-8859-15?Q?Y+OsJvPaBUXY1pq/TY7kxsmjMz8mq0I06Rd+iNkjJceg0Dnj5MYQHySjv?=
-	=?iso-8859-15?Q?H1j3vkoxA69ZS4cHu8P2wVTR9tPVMSutpvlA5PgKkazl3nm9jvfi7nGwK?=
-	=?iso-8859-15?Q?8x0AmDSuiQGNEz9Do/ngVO3jTFAPoBJqzjV6W1JsRkwBCi0SgSabbiXtl?=
-	=?iso-8859-15?Q?DuWqnrCFIOp/Az9JDovwr9wfR4Rm+BQRdBes1t0HdybKRlw=3D?=
+x-ms-exchange-antispam-messagedata-0: =?utf-8?B?S2NqaDM3UGxLeVJCcTlmVk9tUnZsMFZQd1cxUjFDZE0vWVNzM3NEREhRSlN1?=
+	=?utf-8?B?L1l5MUR3Tk9JVlROUVo1bVhzTEZnZzhLa2VIV05DU0R3NWtIdkxpTDFrTFlC?=
+	=?utf-8?B?U2lpOVhlc1laZU91V0s1L0pqcnNhL25BUWJhTU90UFUzNUVZa3ZaZVVCQ2Fi?=
+	=?utf-8?B?WmJuSmtTZHJmQTc0eWMrSWRlVXpudDZGcVAvN05KdU5iak5lTGppN1lFbURN?=
+	=?utf-8?B?bDljWjNuZjlLb2JBMWU5eU1KRzNraUdGaDVMcGpmZlFlVXZxampPNmliYUFL?=
+	=?utf-8?B?bE5uZy8rNCtsNkowVWlqZlp6elpneDN0SDlJYXZCais1bzU5K2xCbUlXd0ls?=
+	=?utf-8?B?ZGF1a2FYRnFSUFRVb3pnakh6VlRzNHRBcitXY21sejVxdDBLcFczMzMraGho?=
+	=?utf-8?B?NGxnS0FzN0RHVTV3c1YxeitCakV1LzloN1N2S1R0MzdzUXBxcFplMzFtV3BB?=
+	=?utf-8?B?Wk5lQWZNa1M4d2lNUXh6ZFM1eDBoRTJSMGtEL0FJeUxmbDd3ZFMxTVk3aTJD?=
+	=?utf-8?B?dG5XK2o0aHlFZTU5MFpCWVBIMWJxM3lnd3hTY29Wczg3STkzaE5Nd1lMcjg5?=
+	=?utf-8?B?SENkT1gzbnJicGpSTmJYSjlERmpsM2x0eFRNMXhTMnpVRWZ0dXVXR0owc0pQ?=
+	=?utf-8?B?eVhBcjc2c2lEWjgrMXc2K2Fva2g4dERrNE0zWnRJTW4vZ2ZuSnFFQWZjSXp1?=
+	=?utf-8?B?aHVaYUpyUzdxYUN4YXg0MUs1bXRCcWFaNUFwQ1JYZnVSaWFVa0tNemJud20r?=
+	=?utf-8?B?NzluYk9aVThKUCtVWjIzb2RSdUlOSTM5VmZvMnRCQllyckxZL2U4V2R1UlRW?=
+	=?utf-8?B?b0MvekM5OXhPS1ROdlpCT1Y5MytGQlRKYWEwZ3huTEFvNFpQWVFDdm9aaTZI?=
+	=?utf-8?B?T3BYZTRONG1LSjF5YmQrZmNJUURsV2pXQmlyazAzYXZYNTBmMzRPK0ZnKzcy?=
+	=?utf-8?B?OVlvK2JnVkNRSXFUWUdmTCs2UDAyYU1BdWZJZW5yeHpBSGlHbUFOWkltVEpu?=
+	=?utf-8?B?UFRKeUVOV210MFZ3bDNOY3Yzb3FxMng0OHc1c1RYaEVwc094LzdwdUllbjZz?=
+	=?utf-8?B?TmpCZ1l1eUJ3V1JlRG1YbWlKL29mWFFGSnYwK3QwcGNXdnFNVUFud2pXOTZW?=
+	=?utf-8?B?TEtXTDcvazU1S25TZkZpQWxyZGk2NHhVdkxuMTd0OWJ6NVdrVXJRWHV0OWtC?=
+	=?utf-8?B?TEFRMUZyeTNJTnNpVk5xZzUzZkFIZ0xqLzdRWGFLUVhBaTg0WHZNVGVZUS84?=
+	=?utf-8?B?MUZxUktTWjE0dkdLdEExTktmdW5ya0tzeTBqQXFnUTlTLzEvQ1E5UTkvaXBj?=
+	=?utf-8?B?dVQ2N29QUEhBR0RNMUMrQnNwYldPQ3dpWnIxeUJrVjBrSG9jRGw5cjR0elIz?=
+	=?utf-8?B?SzBWajlSNEVzcENpd1VCZXA5elA2bVQzUERYcDNQK0F0RTFwTWw5UmRONmtG?=
+	=?utf-8?B?ODVuWDFyYnFSZWZidEZnckplK0lPL0ZVRWk2UEpGaWQwaHNSR0V4T2F5SW9v?=
+	=?utf-8?B?Qjl0VytORFlGaWw5bkdGTmJPQVR5dnlSMnJ4S3ZZM2R3b3BMdmZhQjdYd3Jk?=
+	=?utf-8?B?Y0RYbnlWTkM1bklwYzhhcVVqOStrRlpMeGhzSFo4WStPU0dJZUhoR2s3OWRR?=
+	=?utf-8?B?Sjh5L3ZvT2xqMWVtdmdCOEs4MFZXYmVCMjQ0N3ZsamVYcytHTFJvSnBndjZl?=
+	=?utf-8?B?Szlkc001UFpqbDdmREVCZmEyUVhXbjBibjZGRWhTYitrbW1lL1hJVFlWY0tT?=
+	=?utf-8?B?UlJ4YnhibGpWK052bTVvditORENpTXlmTGp5aEppR1hXeXAxejZVUVMvMHFX?=
+	=?utf-8?B?VFFzQWFFNU96bk9zYjVzUHVSMGlLbEI0aVZET2NvUVJLOVo3bGZaeThTUy93?=
+	=?utf-8?B?KzB6alZGRWVnUWFvWU10aUV5cUhkRWJtRWcycDl1d282SHFMdXJTdnVFSTVK?=
+	=?utf-8?B?R3R3OElleFlMa216bVlia285bGJRMUg3RmM5c2owOXRIbUszczNhdkwycVYv?=
+	=?utf-8?B?V3JTdXZycmh2aHFhODFvOElJSkh6MmdjeWVncENvSnlJU2hkV0FnZXJJRFRB?=
+	=?utf-8?B?ZXFKM2F5WTVvODQ2RER3NzBOdk0vVFpaQ0tiMHNXMUpIdlRkYitBUHFkTFJ4?=
+	=?utf-8?B?N01zYllpMm05aTRDUmNzMnBGZ2dFOEJ3b0JaQk12QWhxblRyYmg4R3V3ZW1W?=
+	=?utf-8?B?YTdXeVpkWHJTV3RURmxFTHNHRkdTM1BaRVBoM1NJaDVncFdtakFEL2dpOU9I?=
+	=?utf-8?B?UWtBUGFKRDRhRGNkOHg4OEtpZDMwSTRPMUhqQVk0SWZQWjRrbUEya0lKaTJU?=
+	=?utf-8?Q?jD2CO5eAbPjI8jXBN8?=
 MIME-Version: 1.0
-X-OriginatorOrg: suse.com
+X-OriginatorOrg: oracle.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 2f946865-7e69-4059-f7c6-08d9fd049f14
-X-MS-Exchange-CrossTenant-originalarrivaltime: 03 Mar 2022 10:57:33.9658 (UTC)
+X-MS-Exchange-CrossTenant-AuthSource: SJ0PR10MB4654.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: d87632cd-1086-4a33-3280-08d9fd3c9d2f
+X-MS-Exchange-CrossTenant-originalarrivaltime: 03 Mar 2022 17:38:22.5835 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
+X-MS-Exchange-CrossTenant-id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: 1D7hb9EdMVD8zfGIlxtT6kHTruF6UveyTFLNEL8OXcjc54pWm9X5eRjjC/V/RFT36bPdCEihiRvudWpFgn2W1g==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: HE1PR0401MB2604
+X-MS-Exchange-CrossTenant-userprincipalname: vW3N0Rdp350EDIfABLz0LdIdT8hVj0MJGbg9duZ6kSuBMBbPYOJTb0r5ItWbSmprJBAON9NF9XXzTNyO6xA3Fo+Dt15zOnE/URDssQ5UHRw=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR10MB3867
+X-Proofpoint-Virus-Version: vendor=nai engine=6300 definitions=10275
+	signatures=686983
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 mlxlogscore=999
+	bulkscore=0
+	adultscore=0 phishscore=0 spamscore=0 suspectscore=0 malwarescore=0
+	mlxscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+	engine=8.12.0-2201110000 definitions=main-2203030082
+X-Proofpoint-GUID: NJHzL6_VNYdWp9fd4N4lYntAgwBSlfru
+X-Proofpoint-ORIG-GUID: NJHzL6_VNYdWp9fd4N4lYntAgwBSlfru
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Definition; Similar Internal Domain=false;
 	Similar Monitored External Domain=false;
@@ -142,9 +170,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-X-MIME-Autoconverted: from quoted-printable to 8bit by
-	lists01.pubmisc.prod.ext.phx2.redhat.com id 223Avdr7008675
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-MIME-Autoconverted: from base64 to 8bit by
+	lists01.pubmisc.prod.ext.phx2.redhat.com id 223HcVc3027367
 X-loop: dm-devel@redhat.com
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 Subject: Re: [dm-devel] [PATCH] kpartx: Add -P option for partition scanning
@@ -161,84 +189,40 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <D7F2C0541ABF1F4588E525609A8A95B8@eurprd04.prod.outlook.com>
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-ID: <2DC148E0659C0C4E9302CCBD4E1D19EF@namprd10.prod.outlook.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Wed, 2022-03-02 at 12:38 -0600, Benjamin Marzinski wrote:
-> On Wed, Mar 02, 2022 at 12:07:11AM +0000, Ritika Srivastava wrote:
-> > On 2/28/22, 2:44 PM, "Benjamin Marzinski" wrote:
-> >=20
-> > =A0=A0=A0 > So unless I'm missing something, we'd only really want this
-> > for removing
-> > =A0=A0=A0 > a kpartx device, in the case where somehow you have
-> > /dev/loopXpY
-> > =A0=A0=A0 > partitions without the LO_FLAGS_PARTSCAN flag set on the
-> > disk. That
-> >=20
-> > That's correct. We only want this option so that once PARTSCAN flag
-> > is set,=20
-> > Kpartx -d can delete /dev/loopXpY.
-> >=20
-> > =A0=A0=A0 > seems like it shouldn't happen in the first place.=A0
-> > Obviously, you
-> > =A0=A0=A0 > showed that it can with parted.=A0 But I would argue that t=
-his
-> > is a bug in
-> > =A0=A0=A0 > parted.=A0 If parted is creating partitions, it should set
-> > =A0=A0=A0 > LO_FLAGS_PARTSCAN so the partition nodes get cleaned up.
-> > =A0=A0=A0 > I suppose kpartx could check if there are partition devices
-> > for the loop
-> > =A0=A0=A0 > device, and if so, it could set LO_FLAGS_PARTSCAN before
-> > doing the
-> >=20
-> > Would removing all partition nodes (/dev/loop0pY) on kpartx -d be a
-> > better solution.?
->=20
-> Like I said, if we fix this in multipath, then checking for
-> /dev/loopXpY
-> devnodes, and setting LO_FLAGS_PARTSCAN before deleting the loop
-> device
-> if they are present seems like a better solution.
->=20
-> But again, you can make a pretty good case that when parted creates
-> those partition devices, it should set LO_FLAGS_PARTSCAN so that
-> their
-> devnodes will get cleaned up.
+On 3/3/22, 2:57 AM, "Martin Wilck" wrote:
 
-I guess that would do no harm. But parted, too, is agnostic of how the
-loop device was created, so I wouldn't call it a bug that parted
-currently doesn't set this flag. Arguably, the flag should be set when
-the device is created, using "losetup -P". I find it strange that
-Ritika calls that a "workaround". IMO it's the one and only correct way
-to set up the loop device.
+    > I agree. kpartx is a tool for creating linear dm mappings that behave
+    > roughly like partitions. And it should stay that way. We (made the
+    > mistake to) add convenience functionality to setup loop devices when
+    > kpartx is called with a regular file argument. That doesn't mean that
+    > kpartx is a generic tool for handling loop devices or partition
+    > devices. We should stick to the "do one thing, do it right" philosophy
+    > here.
 
-> Leaving devnodes around doesn't cause lvm issues. But adding loop
-> partitions can cause lvm issues.=A0 This is why I don't like the idea
-> of
-> kpartx creating them.
+    > TBH, he usage "kpartx -av /some/file" just to create the loop device,
+    > if the file has no partition table, looks like an abuse to me. I
+    > wouldn't recommend to rely on that behavior. It might change in the
+    > future.
 
-I agree. kpartx is a tool for creating linear dm mappings that behave
-roughly like partitions. And it should stay that way.=A0We (made the
-mistake to) add convenience functionality to setup loop devices when
-kpartx is called with a regular file argument. That doesn't mean that
-kpartx is a generic tool for handling loop devices or partition
-devices. We should stick to the "do one thing, do it right" philosophy
-here.
+Thank you for clarifying this.
+I was under the impression that since kpartx supports loop device creation,  
+it may as well support partition scanning functionality - just like losetup does.
 
-TBH, he usage "kpartx -av /some/file" just to create the loop device,
-if the file has no partition table, looks like an abuse to me. I
-wouldn't recommend to rely on that behavior. It might change in the
-future.
+Will keep this in mind and be wary about using kpartx -a to create loop device.
+Thank you, Ben and Martin, for your review.
 
-Regards,
-Martin
+Thanks,
+Ritika
 
 
 --
