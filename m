@@ -1,58 +1,56 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0261AC433F5
-	for <dm-devel@archiver.kernel.org>; Fri,  4 Mar 2022 19:16:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3A972C433F5
+	for <dm-devel@archiver.kernel.org>; Fri,  4 Mar 2022 19:17:43 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-646-HdK23F3UO-qOaCqP9gFG5w-1; Fri, 04 Mar 2022 14:16:12 -0500
-X-MC-Unique: HdK23F3UO-qOaCqP9gFG5w-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.11])
+ us-mta-651-2H6tXGrQM62OmSVzEAPJMg-1; Fri, 04 Mar 2022 14:17:40 -0500
+X-MC-Unique: 2H6tXGrQM62OmSVzEAPJMg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.12])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id DB33A801AFE;
-	Fri,  4 Mar 2022 19:16:03 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id A86471006AA6;
+	Fri,  4 Mar 2022 19:17:35 +0000 (UTC)
 Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8F008604CC;
-	Fri,  4 Mar 2022 19:16:03 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 8DC0360BF1;
+	Fri,  4 Mar 2022 19:17:35 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id F209A1809C98;
-	Fri,  4 Mar 2022 19:16:02 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.10])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 68FCF1809C98;
+	Fri,  4 Mar 2022 19:17:35 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.5])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 224JG0pD002169 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 4 Mar 2022 14:16:00 -0500
+	id 224JHXkR002397 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 4 Mar 2022 14:17:33 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id 9C9BD4328D7; Fri,  4 Mar 2022 19:16:00 +0000 (UTC)
+	id BDCDF9E6A; Fri,  4 Mar 2022 19:17:33 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id 990344292D9
-	for <dm-devel@redhat.com>; Fri,  4 Mar 2022 19:16:00 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id B9A5B9E69
+	for <dm-devel@redhat.com>; Fri,  4 Mar 2022 19:17:28 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[205.139.110.120])
+	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7F43B3C01B91
-	for <dm-devel@redhat.com>; Fri,  4 Mar 2022 19:16:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 41D54899EC5
+	for <dm-devel@redhat.com>; Fri,  4 Mar 2022 19:17:28 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-414-kfW7QB1sO321R1K9_Mgkeg-1; Fri, 04 Mar 2022 14:15:52 -0500
-X-MC-Unique: kfW7QB1sO321R1K9_Mgkeg-1
+	us-mta-73-TKt_hY-pPsSRFG6Au6E0Tw-1; Fri, 04 Mar 2022 14:17:26 -0500
+X-MC-Unique: TKt_hY-pPsSRFG6Au6E0Tw-1
 Received: from [2001:4bb8:180:5296:cded:8d4b:ace6:f3c] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1nQCFC-00BV1M-HL; Fri, 04 Mar 2022 18:01:34 +0000
+	id 1nQCEl-00BUgO-51; Fri, 04 Mar 2022 18:01:07 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Fri,  4 Mar 2022 19:01:05 +0100
-Message-Id: <20220304180105.409765-11-hch@lst.de>
-In-Reply-To: <20220304180105.409765-1-hch@lst.de>
-References: <20220304180105.409765-1-hch@lst.de>
+Date: Fri,  4 Mar 2022 19:00:55 +0100
+Message-Id: <20220304180105.409765-1-hch@lst.de>
 MIME-Version: 1.0
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
 	bombadil.infradead.org. See http://www.infradead.org/rpr.html
@@ -64,12 +62,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 X-loop: dm-devel@redhat.com
 Cc: linux-raid@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>,
 	linux-block@vger.kernel.org, Song Liu <song@kernel.org>,
 	dm-devel@redhat.com, linux-ext4@vger.kernel.org
-Subject: [dm-devel] [PATCH 10/10] block: remove bio_devname
+Subject: [dm-devel] remove bio_devname
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -83,7 +81,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.79 on 10.5.11.11
+X-Scanned-By: MIMEDefang 2.79 on 10.5.11.12
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -91,46 +89,23 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-All callers are gone, so remove this wrapper.
+Hi Jens,
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- block/bio.c         | 6 ------
- include/linux/bio.h | 2 --
- 2 files changed, 8 deletions(-)
+this series removes the bio_devname helper and just switches all users
+to use the %pg format string directly.
 
-diff --git a/block/bio.c b/block/bio.c
-index b15f5466ce084..151cace2dbe16 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -807,12 +807,6 @@ int bio_init_clone(struct block_device *bdev, struct bio *bio,
- }
- EXPORT_SYMBOL(bio_init_clone);
- 
--const char *bio_devname(struct bio *bio, char *buf)
--{
--	return bdevname(bio->bi_bdev, buf);
--}
--EXPORT_SYMBOL(bio_devname);
--
- /**
-  * bio_full - check if the bio is full
-  * @bio:	bio to check
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 7523aba4ddf7c..4c21f6e69e182 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -491,8 +491,6 @@ static inline void bio_release_pages(struct bio *bio, bool mark_dirty)
- 		__bio_release_pages(bio, mark_dirty);
- }
- 
--extern const char *bio_devname(struct bio *bio, char *buffer);
--
- #define bio_dev(bio) \
- 	disk_devt((bio)->bi_bdev->bd_disk)
- 
--- 
-2.30.2
+Diffstat
+ block/bio.c               |    6 ------
+ block/blk-core.c          |   25 +++++++------------------
+ drivers/block/pktcdvd.c   |    9 +--------
+ drivers/md/dm-crypt.c     |   10 ++++------
+ drivers/md/dm-integrity.c |    5 ++---
+ drivers/md/md-multipath.c |    9 ++++-----
+ drivers/md/raid1.c        |    5 ++---
+ drivers/md/raid5-ppl.c    |   13 ++++---------
+ fs/ext4/page-io.c         |    5 ++---
+ include/linux/bio.h       |    2 --
+ 10 files changed, 26 insertions(+), 63 deletions(-)
 
 --
 dm-devel mailing list
