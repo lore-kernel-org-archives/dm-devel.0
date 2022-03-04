@@ -4,53 +4,52 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 34B3AC433FE
-	for <dm-devel@archiver.kernel.org>; Fri,  4 Mar 2022 19:36:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 163DCC433EF
+	for <dm-devel@archiver.kernel.org>; Fri,  4 Mar 2022 19:37:39 +0000 (UTC)
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-55-9Ibo-yBMOUuxYxLjLO1mjg-1; Fri, 04 Mar 2022 14:36:31 -0500
-X-MC-Unique: 9Ibo-yBMOUuxYxLjLO1mjg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+ us-mta-219-1s12rPH-NIymkoO9PW1aRw-1; Fri, 04 Mar 2022 14:37:34 -0500
+X-MC-Unique: 1s12rPH-NIymkoO9PW1aRw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.phx2.redhat.com [10.5.11.23])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 6ECEB824FA7;
-	Fri,  4 Mar 2022 19:36:27 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C5FEC1078650;
-	Fri,  4 Mar 2022 19:36:25 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 0EEBA1006AA6;
+	Fri,  4 Mar 2022 19:37:28 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id EBC2D19652;
+	Fri,  4 Mar 2022 19:37:25 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 8531E1809C98;
-	Fri,  4 Mar 2022 19:36:23 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.6])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 7C85646F98;
+	Fri,  4 Mar 2022 19:37:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.9])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 224JaLir003580 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 4 Mar 2022 14:36:22 -0500
+	id 224JbOnR003629 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 4 Mar 2022 14:37:24 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id C75E92166BDD; Fri,  4 Mar 2022 19:36:21 +0000 (UTC)
+	id 50EF5442904; Fri,  4 Mar 2022 19:37:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id C11662166BCC
-	for <dm-devel@redhat.com>; Fri,  4 Mar 2022 19:36:15 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
-	[207.211.31.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 659B482A682
-	for <dm-devel@redhat.com>; Fri,  4 Mar 2022 19:36:15 +0000 (UTC)
+	(mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 4CCF142D3C0
+	for <dm-devel@redhat.com>; Fri,  4 Mar 2022 19:37:24 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+	bits)) (No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 34D2385A5BC
+	for <dm-devel@redhat.com>; Fri,  4 Mar 2022 19:37:24 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
 	[198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-79-VeG-7KQzOAeJU6pR95r1EA-1; Fri, 04 Mar 2022 14:36:13 -0500
-X-MC-Unique: VeG-7KQzOAeJU6pR95r1EA-1
+	us-mta-487-bpAL4UgoMdu1Ot9cjqiaPg-1; Fri, 04 Mar 2022 14:37:22 -0500
+X-MC-Unique: bpAL4UgoMdu1Ot9cjqiaPg-1
 Received: from [2001:4bb8:180:5296:cded:8d4b:ace6:f3c] (helo=localhost)
 	by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-	id 1nQCEq-00BUjX-Jo; Fri, 04 Mar 2022 18:01:13 +0000
+	id 1nQCF1-00BUru-RD; Fri, 04 Mar 2022 18:01:24 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Fri,  4 Mar 2022 19:00:57 +0100
-Message-Id: <20220304180105.409765-3-hch@lst.de>
+Date: Fri,  4 Mar 2022 19:01:01 +0100
+Message-Id: <20220304180105.409765-7-hch@lst.de>
 In-Reply-To: <20220304180105.409765-1-hch@lst.de>
 References: <20220304180105.409765-1-hch@lst.de>
 MIME-Version: 1.0
@@ -64,12 +63,12 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
 	Custom Display Name List=false; Reply-to Address Mismatch=false;
 	Targeted Threat Dictionary=false;
 	Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 X-loop: dm-devel@redhat.com
 Cc: linux-raid@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>,
 	linux-block@vger.kernel.org, Song Liu <song@kernel.org>,
 	dm-devel@redhat.com, linux-ext4@vger.kernel.org
-Subject: [dm-devel] [PATCH 02/10] block: remove handle_bad_sector
+Subject: [dm-devel] [PATCH 06/10] md-multipath: stop using bio_devname
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -83,7 +82,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-X-Scanned-By: MIMEDefang 2.84 on 10.5.11.22
+X-Scanned-By: MIMEDefang 2.84 on 10.5.11.23
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -91,49 +90,43 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Use the %pg format specifier instead of the stack hungry bdevname
-function, and remove handle_bad_sector given that it is not pointless.
+Use the %pg format specifier to save on stack consuption and code size.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/blk-core.c | 17 +++++------------
- 1 file changed, 5 insertions(+), 12 deletions(-)
+ drivers/md/md-multipath.c | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 34e1b7fdb7c89..4d858fc08f8ba 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -540,17 +540,6 @@ bool blk_get_queue(struct request_queue *q)
- }
- EXPORT_SYMBOL(blk_get_queue);
+diff --git a/drivers/md/md-multipath.c b/drivers/md/md-multipath.c
+index c056a7d707b09..bc38a6133cda3 100644
+--- a/drivers/md/md-multipath.c
++++ b/drivers/md/md-multipath.c
+@@ -294,7 +294,6 @@ static void multipathd(struct md_thread *thread)
  
--static void handle_bad_sector(struct bio *bio, sector_t maxsector)
--{
--	char b[BDEVNAME_SIZE];
--
--	pr_info_ratelimited("%s: attempt to access beyond end of device\n"
--			    "%s: rw=%d, want=%llu, limit=%llu\n",
--			    current->comm,
--			    bio_devname(bio, b), bio->bi_opf,
--			    bio_end_sector(bio), maxsector);
--}
--
- #ifdef CONFIG_FAIL_MAKE_REQUEST
+ 	md_check_recovery(mddev);
+ 	for (;;) {
+-		char b[BDEVNAME_SIZE];
+ 		spin_lock_irqsave(&conf->device_lock, flags);
+ 		if (list_empty(head))
+ 			break;
+@@ -306,13 +305,13 @@ static void multipathd(struct md_thread *thread)
+ 		bio->bi_iter.bi_sector = mp_bh->master_bio->bi_iter.bi_sector;
  
- static DECLARE_FAULT_ATTR(fail_make_request);
-@@ -612,7 +601,11 @@ static inline int bio_check_eod(struct bio *bio)
- 	if (nr_sectors && maxsector &&
- 	    (nr_sectors > maxsector ||
- 	     bio->bi_iter.bi_sector > maxsector - nr_sectors)) {
--		handle_bad_sector(bio, maxsector);
-+		pr_info_ratelimited("%s: attempt to access beyond end of device\n"
-+				    "%pg: rw=%d, want=%llu, limit=%llu\n",
-+				    current->comm,
-+				    bio->bi_bdev, bio->bi_opf,
-+				    bio_end_sector(bio), maxsector);
- 		return -EIO;
- 	}
- 	return 0;
+ 		if ((mp_bh->path = multipath_map (conf))<0) {
+-			pr_err("multipath: %s: unrecoverable IO read error for block %llu\n",
+-			       bio_devname(bio, b),
++			pr_err("multipath: %pg: unrecoverable IO read error for block %llu\n",
++			       bio->bi_bdev,
+ 			       (unsigned long long)bio->bi_iter.bi_sector);
+ 			multipath_end_bh_io(mp_bh, BLK_STS_IOERR);
+ 		} else {
+-			pr_err("multipath: %s: redirecting sector %llu to another IO path\n",
+-			       bio_devname(bio, b),
++			pr_err("multipath: %pg: redirecting sector %llu to another IO path\n",
++			       bio->bi_bdev,
+ 			       (unsigned long long)bio->bi_iter.bi_sector);
+ 			*bio = *(mp_bh->master_bio);
+ 			bio->bi_iter.bi_sector +=
 -- 
 2.30.2
 
