@@ -1,102 +1,101 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1BE7CC433EF
-	for <dm-devel@archiver.kernel.org>; Sat,  5 Mar 2022 02:08:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B4A7DC433EF
+	for <dm-devel@archiver.kernel.org>; Sat,  5 Mar 2022 02:08:35 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1646446101;
+	s=mimecast20190719; t=1646446114;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=bwuuxAIyg0g0VfLsElOdsdeRc2AmTzr+j+8sEgVYkiI=;
-	b=SxaRxnQwY98p+NGvUiRivuOqpTYy7R7JKCRiXepiBKVKQpROR31Z7sflby2+4VwfcUTWNg
-	jJ10ShO5781P1HDCz6Dj9k9jD0Q5DMUZavZLcm05RBkwLYa9UxEqJehgSXfVX8C5+HXXOT
-	gTFP8rhe2a0+Rix/9tksxhwiYxh7Poo=
+	bh=Au1GQ4icEn/kXmtgkA94bZdu8DIuhLx3gFkrylGrBIE=;
+	b=UepR5cJoANQsdZuGEn8ZRO/GSln8eNoLszv9U/UgHquix4QzHjXmVz70Gae5yBogr5dM13
+	SSMzTs6q25vhOQDz+NrkixxV45WJoGP3Kjw+WxFRDMlW/BJncMAMUuIcPClR9H9sdrC3zI
+	LrEM6Z21fO1lUU593HNshs3JzIT/q1I=
 Received: from mimecast-mx01.redhat.com (mimecast-mx01.redhat.com
  [209.132.183.4]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-185-i5elujX5P1WcKLTnBgzupg-1; Fri, 04 Mar 2022 21:08:17 -0500
-X-MC-Unique: i5elujX5P1WcKLTnBgzupg-1
+ us-mta-632-hi4ATk9OMxGmvl2LnF0xiQ-1; Fri, 04 Mar 2022 21:08:31 -0500
+X-MC-Unique: hi4ATk9OMxGmvl2LnF0xiQ-1
 Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.phx2.redhat.com [10.5.11.15])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 578731006AA5;
-	Sat,  5 Mar 2022 02:08:13 +0000 (UTC)
-Received: from colo-mx.corp.redhat.com (colo-mx01.intmail.prod.int.phx2.redhat.com [10.5.11.20])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id DA5EA5F4FE;
-	Sat,  5 Mar 2022 02:08:12 +0000 (UTC)
+	by mimecast-mx01.redhat.com (Postfix) with ESMTPS id 1E15C180FD71;
+	Sat,  5 Mar 2022 02:08:27 +0000 (UTC)
+Received: from colo-mx.corp.redhat.com (colo-mx02.intmail.prod.int.phx2.redhat.com [10.5.11.21])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id 041905F4FE;
+	Sat,  5 Mar 2022 02:08:27 +0000 (UTC)
 Received: from lists01.pubmisc.prod.ext.phx2.redhat.com (lists01.pubmisc.prod.ext.phx2.redhat.com [10.5.19.33])
-	by colo-mx.corp.redhat.com (Postfix) with ESMTP id 4AA2A1809C98;
-	Sat,  5 Mar 2022 02:08:12 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
-	[10.11.54.10])
+	by colo-mx.corp.redhat.com (Postfix) with ESMTP id A0A554A701;
+	Sat,  5 Mar 2022 02:08:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+	[10.11.54.2])
 	by lists01.pubmisc.prod.ext.phx2.redhat.com (8.13.8/8.13.8) with ESMTP
-	id 2252896o029093 for <dm-devel@listman.util.phx.redhat.com>;
-	Fri, 4 Mar 2022 21:08:10 -0500
+	id 22528BtK029103 for <dm-devel@listman.util.phx.redhat.com>;
+	Fri, 4 Mar 2022 21:08:12 -0500
 Received: by smtp.corp.redhat.com (Postfix)
-	id D61124328DA; Sat,  5 Mar 2022 02:08:09 +0000 (UTC)
+	id CC6D1400E437; Sat,  5 Mar 2022 02:08:11 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
-	(mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
-	by smtp.corp.redhat.com (Postfix) with ESMTPS id D258F4328C0
-	for <dm-devel@redhat.com>; Sat,  5 Mar 2022 02:08:09 +0000 (UTC)
+	(mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+	by smtp.corp.redhat.com (Postfix) with ESMTPS id C833E404779D
+	for <dm-devel@redhat.com>; Sat,  5 Mar 2022 02:08:11 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
 	[207.211.31.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B95C8811E78
-	for <dm-devel@redhat.com>; Sat,  5 Mar 2022 02:08:09 +0000 (UTC)
-Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
-	[209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6A9143C02184
+	for <dm-devel@redhat.com>; Sat,  5 Mar 2022 02:08:11 +0000 (UTC)
+Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
+	[209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
 	(version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
-	us-mta-391-EYqbpZtaOmCgzwrA3ldXkQ-1; Fri, 04 Mar 2022 21:08:08 -0500
-X-MC-Unique: EYqbpZtaOmCgzwrA3ldXkQ-1
-Received: by mail-qk1-f199.google.com with SMTP id
-	134-20020a37088c000000b0067af418b2f1so143507qki.16
-	for <dm-devel@redhat.com>; Fri, 04 Mar 2022 18:08:08 -0800 (PST)
+	us-mta-451-8JmqS861Nqao7IoAeZbngA-1; Fri, 04 Mar 2022 21:08:10 -0500
+X-MC-Unique: 8JmqS861Nqao7IoAeZbngA-1
+Received: by mail-qv1-f70.google.com with SMTP id
+	p12-20020a0c9a0c000000b0043299cbbd36so8427894qvd.16
+	for <dm-devel@redhat.com>; Fri, 04 Mar 2022 18:08:10 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=1e100.net; s=20210112;
 	h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
 	:references;
-	bh=kVWmWgbDLTD3/ZaHC1HftVSSj9oMx7XhGSZ/C09Jmt4=;
-	b=Uwg9trEuZ+evrhQ3M0s+hLXHSORXpOxWkLudhwEsuI+xievCm3bZyyDXqZcaxagWGE
-	GtSpi4BmLooyfw4ftr0z9ysOTGcHpV9kqGfo3wY0eYlvLKuVJtgSAx9ym7/NDUoQja+s
-	+qeaZWe2hWR1cpKWaJ9TCjRnaZ8ki9uouH9mhAhaS+25t4k0sm5c4gkav5s1ga8CNWOR
-	MB5fp5nPhAfWCRvDdpSNLFCBT85/uIv80GIfbomz5fyxFXoydaHbjcFtIdIFjJ148nJA
-	GFaX80byrUXDGuE0W5k0fLnMioUeVTsymewKnDa0iLIZqjYPe3bUx+u8QQOjE0subbXp
-	MPQQ==
-X-Gm-Message-State: AOAM533hPeF9jfieShLGe0lzoWTp0YwrFM8NAbtlSzSEdrPpwHoS5uFt
-	2nbinuTWdVwpgaXj/oF4hNR5Z07nBUPzWsb/lasw9C6C/kn1r15XWfz856OMUwCrMH9eQO4Wj5V
-	I19Uo2aB466KykQ==
-X-Received: by 2002:a05:622a:246:b0:2de:8d73:dd0f with SMTP id
-	c6-20020a05622a024600b002de8d73dd0fmr1391666qtx.650.1646446088001;
-	Fri, 04 Mar 2022 18:08:08 -0800 (PST)
-X-Google-Smtp-Source: ABdhPJyr2VaGp9pPfltICqCfX6F+ZJRP2Non3wbaYp1PLuwyJwHknB3GBJo2GW5pQUlbApKqmIl1qw==
-X-Received: by 2002:a05:622a:246:b0:2de:8d73:dd0f with SMTP id
-	c6-20020a05622a024600b002de8d73dd0fmr1391652qtx.650.1646446087760;
-	Fri, 04 Mar 2022 18:08:07 -0800 (PST)
+	bh=nuqHrxxiLjKwIKGFIEG11jEi0JDG4ZjL1r2pZPX9y5Y=;
+	b=OhamPFn3spqfoFvFXxH9FPxFrYjsrqYgm2jiscWWj7ZtDRPMvVWTI9dZuIfDIednIe
+	dTn0b4lj83Uxv9M6oejyzPVmYN9FHeZasrow9PJRR269+fIaohw7tGuoy+lheFCEW7kO
+	GswtK7KLGfDJ5Z7iNegWZCQA5YvzYjtNSz3rsTnB29aMsklhVz7VhTv+IRx+N1FY+MKd
+	mzFQx6IhaimLM8mGiswH6/GWfoeOm2kCroacJHRFwpE0NDNGNQFMc7BqG+6b66CP3nyL
+	gb5VDS3HI6KisHoyETI2H5ZysZb4sWLueq3IMiv7X/qj7dFQskm04CNtU+b4wAYEJR4y
+	md2g==
+X-Gm-Message-State: AOAM530znTagltEFdO+0cvYJNxA3ik7QC3IVdbTVlkU64zB4ms3zyn4m
+	aoTr2DoXQdNx3PKM9R/DXKbMAFYDGYKepLL3wHGWfuzTeXChwmWqOMuzfGXl34mDsPG5QwPyhbV
+	3q9dHzpJ2mfZd3Q==
+X-Received: by 2002:a05:6214:240c:b0:42c:728e:8a55 with SMTP id
+	fv12-20020a056214240c00b0042c728e8a55mr1334591qvb.126.1646446089547;
+	Fri, 04 Mar 2022 18:08:09 -0800 (PST)
+X-Google-Smtp-Source: ABdhPJwO1e0sw1ZknZ5fe6MMPLOM04heX1oaX+MTgbCfYym4UffPA19KNQxbK+4EXckALDorTx3VkQ==
+X-Received: by 2002:a05:6214:240c:b0:42c:728e:8a55 with SMTP id
+	fv12-20020a056214240c00b0042c728e8a55mr1334574qvb.126.1646446089233;
+	Fri, 04 Mar 2022 18:08:09 -0800 (PST)
 Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
 	[68.160.176.52]) by smtp.gmail.com with ESMTPSA id
-	f14-20020ac8068e000000b002dd1bc00eadsm4006757qth.93.2022.03.04.18.08.06
+	15-20020ac8570f000000b002e05a1f990dsm260445qtw.65.2022.03.04.18.08.08
 	(version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-	Fri, 04 Mar 2022 18:08:07 -0800 (PST)
+	Fri, 04 Mar 2022 18:08:08 -0800 (PST)
 From: Mike Snitzer <snitzer@redhat.com>
 To: axboe@kernel.dk
-Date: Fri,  4 Mar 2022 21:08:03 -0500
-Message-Id: <20220305020804.54010-2-snitzer@redhat.com>
+Date: Fri,  4 Mar 2022 21:08:04 -0500
+Message-Id: <20220305020804.54010-3-snitzer@redhat.com>
 In-Reply-To: <20220305020804.54010-1-snitzer@redhat.com>
 References: <20220305020804.54010-1-snitzer@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-loop: dm-devel@redhat.com
 Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, hch@lst.de,
 	ming.lei@redhat.com
-Subject: [dm-devel] [PATCH v5 1/2] block: add ->poll_bio to
-	block_device_operations
+Subject: [dm-devel] [PATCH v5 2/2] dm: support bio polling
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.12
 Precedence: junk
@@ -121,90 +120,324 @@ Content-Transfer-Encoding: 7bit
 
 From: Ming Lei <ming.lei@redhat.com>
 
-Prepare for supporting IO polling for bio-based driver.
+Support bio(REQ_POLLED) polling in the following approach:
 
-Add ->poll_bio callback so that bio-based driver can provide their own
-logic for polling bio.
+1) only support io polling on normal READ/WRITE, and other abnormal IOs
+still fallback to IRQ mode, so the target io is exactly inside the dm
+io.
 
-Also fix ->submit_bio_bio typo in comment block above
-__submit_bio_noacct.
+2) hold one refcnt on io->io_count after submitting this dm bio with
+REQ_POLLED
+
+3) support dm native bio splitting, any dm io instance associated with
+current bio will be added into one list which head is bio->bi_end_io
+which will be recovered before ending this bio
+
+4) implement .poll_bio() callback, call bio_poll() on the single target
+bio inside the dm io which is retrieved via bio->bi_bio_drv_data; call
+dm_io_dec_pending() after the target io is done in .poll_bio()
+
+5) enable QUEUE_FLAG_POLL if all underlying queues enable QUEUE_FLAG_POLL,
+which is based on Jeffle's previous patch.
 
 Signed-off-by: Ming Lei <ming.lei@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- block/blk-core.c       | 14 +++++++++-----
- block/genhd.c          |  4 ++++
- include/linux/blkdev.h |  2 ++
- 3 files changed, 15 insertions(+), 5 deletions(-)
+ drivers/md/dm-core.h  |   2 +
+ drivers/md/dm-table.c |  27 +++++++++
+ drivers/md/dm.c       | 150 +++++++++++++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 176 insertions(+), 3 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 94bf37f8e61d..ce08f0aa9dfc 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -708,7 +708,7 @@ static void __submit_bio(struct bio *bio)
-  *
-  * bio_list_on_stack[0] contains bios submitted by the current ->submit_bio.
-  * bio_list_on_stack[1] contains bios that were submitted before the current
-- *	->submit_bio_bio, but that haven't been processed yet.
-+ *	->submit_bio, but that haven't been processed yet.
-  */
- static void __submit_bio_noacct(struct bio *bio)
- {
-@@ -975,7 +975,7 @@ int bio_poll(struct bio *bio, struct io_comp_batch *iob, unsigned int flags)
- {
- 	struct request_queue *q = bdev_get_queue(bio->bi_bdev);
- 	blk_qc_t cookie = READ_ONCE(bio->bi_cookie);
--	int ret;
-+	int ret = 0;
- 
- 	if (cookie == BLK_QC_T_NONE ||
- 	    !test_bit(QUEUE_FLAG_POLL, &q->queue_flags))
-@@ -985,10 +985,14 @@ int bio_poll(struct bio *bio, struct io_comp_batch *iob, unsigned int flags)
- 
- 	if (blk_queue_enter(q, BLK_MQ_REQ_NOWAIT))
- 		return 0;
--	if (WARN_ON_ONCE(!queue_is_mq(q)))
--		ret = 0;	/* not yet implemented, should not happen */
--	else
-+	if (queue_is_mq(q)) {
- 		ret = blk_mq_poll(q, cookie, iob, flags);
-+	} else {
-+		struct gendisk *disk = q->disk;
-+
-+		if (disk && disk->fops->poll_bio)
-+			ret = disk->fops->poll_bio(bio, iob, flags);
-+	}
- 	blk_queue_exit(q);
- 	return ret;
+diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
+index 8078b6c155ef..b3d1429fba83 100644
+--- a/drivers/md/dm-core.h
++++ b/drivers/md/dm-core.h
+@@ -235,6 +235,8 @@ struct dm_io {
+ 	bool start_io_acct:1;
+ 	int was_accounted;
+ 	unsigned long start_time;
++	void *saved_bio_end_io;
++	struct hlist_node node;
+ 	spinlock_t endio_lock;
+ 	struct dm_stats_aux stats_aux;
+ 	/* last member of dm_target_io is 'struct bio' */
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index f4ed756ab391..c0be4f60b427 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1481,6 +1481,14 @@ struct dm_target *dm_table_find_target(struct dm_table *t, sector_t sector)
+ 	return &t->targets[(KEYS_PER_NODE * n) + k];
  }
-diff --git a/block/genhd.c b/block/genhd.c
-index e351fac41bf2..1ed46a6f94f5 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -410,6 +410,10 @@ int __must_check device_add_disk(struct device *parent, struct gendisk *disk,
- 	struct device *ddev = disk_to_dev(disk);
- 	int ret;
  
-+	/* Only makes sense for bio-based to set ->poll_bio */
-+	if (queue_is_mq(disk->queue) && disk->fops->poll_bio)
-+		return -EINVAL;
++static int device_not_poll_capable(struct dm_target *ti, struct dm_dev *dev,
++				   sector_t start, sector_t len, void *data)
++{
++	struct request_queue *q = bdev_get_queue(dev->bdev);
 +
- 	/*
- 	 * The disk queue should now be all set with enough information about
- 	 * the device for the elevator code to pick an adequate default
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index f757f9c2871f..51f1b1ddbed2 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1455,6 +1455,8 @@ enum blk_unique_id {
++	return !test_bit(QUEUE_FLAG_POLL, &q->queue_flags);
++}
++
+ /*
+  * type->iterate_devices() should be called when the sanity check needs to
+  * iterate and check all underlying data devices. iterate_devices() will
+@@ -1531,6 +1539,11 @@ static int count_device(struct dm_target *ti, struct dm_dev *dev,
+ 	return 0;
+ }
  
- struct block_device_operations {
- 	void (*submit_bio)(struct bio *bio);
-+	int (*poll_bio)(struct bio *bio, struct io_comp_batch *iob,
-+			unsigned int flags);
- 	int (*open) (struct block_device *, fmode_t);
- 	void (*release) (struct gendisk *, fmode_t);
- 	int (*rw_page)(struct block_device *, sector_t, struct page *, unsigned int);
++static int dm_table_supports_poll(struct dm_table *t)
++{
++	return !dm_table_any_dev_attr(t, device_not_poll_capable, NULL);
++}
++
+ /*
+  * Check whether a table has no data devices attached using each
+  * target's iterate_devices method.
+@@ -2067,6 +2080,20 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 	dm_update_crypto_profile(q, t);
+ 	disk_update_readahead(t->md->disk);
+ 
++	/*
++	 * Check for request-based device is left to
++	 * dm_mq_init_request_queue()->blk_mq_init_allocated_queue().
++	 *
++	 * For bio-based device, only set QUEUE_FLAG_POLL when all
++	 * underlying devices supporting polling.
++	 */
++	if (__table_type_bio_based(t->type)) {
++		if (dm_table_supports_poll(t))
++			blk_queue_flag_set(QUEUE_FLAG_POLL, q);
++		else
++			blk_queue_flag_clear(QUEUE_FLAG_POLL, q);
++	}
++
+ 	return 0;
+ }
+ 
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 454d39bc7745..c28d453e9930 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -40,6 +40,13 @@
+ #define DM_COOKIE_ENV_VAR_NAME "DM_COOKIE"
+ #define DM_COOKIE_LENGTH 24
+ 
++/*
++ * For REQ_POLLED fs bio, this flag is set if we link mapped underlying
++ * dm_io into one list, and reuse bio->bi_end_io as the list head. Before
++ * ending this fs bio, we will recover its ->bi_end_io callback.
++ */
++#define REQ_DM_POLL_LIST	REQ_DRV
++
+ static const char *_name = DM_NAME;
+ 
+ static unsigned int major = 0;
+@@ -73,6 +80,7 @@ struct clone_info {
+ 	struct dm_io *io;
+ 	sector_t sector;
+ 	unsigned sector_count;
++	bool submit_as_polled;
+ };
+ 
+ #define DM_TARGET_IO_BIO_OFFSET (offsetof(struct dm_target_io, clone))
+@@ -599,6 +607,9 @@ static struct bio *alloc_tio(struct clone_info *ci, struct dm_target *ti,
+ 		if (!clone)
+ 			return NULL;
+ 
++		/* REQ_DM_POLL_LIST shouldn't be inherited */
++		clone->bi_opf &= ~REQ_DM_POLL_LIST;
++
+ 		tio = clone_to_tio(clone);
+ 		tio->inside_dm_io = false;
+ 	}
+@@ -888,8 +899,15 @@ void dm_io_dec_pending(struct dm_io *io, blk_status_t error)
+ 		if (unlikely(wq_has_sleeper(&md->wait)))
+ 			wake_up(&md->wait);
+ 
+-		if (io_error == BLK_STS_DM_REQUEUE)
++		if (io_error == BLK_STS_DM_REQUEUE) {
++			/*
++			 * Upper layer won't help us poll split bio, io->orig_bio
++			 * may only reflect a subset of the pre-split original,
++			 * so clear REQ_POLLED in case of requeue
++			 */
++			bio->bi_opf &= ~REQ_POLLED;
+ 			return;
++		}
+ 
+ 		if (bio_is_flush_with_data(bio)) {
+ 			/*
+@@ -1440,6 +1458,42 @@ static bool __process_abnormal_io(struct clone_info *ci, struct dm_target *ti,
+ 	return true;
+ }
+ 
++/*
++ * Reuse ->bi_end_io as hlist head for storing all dm_io instances
++ * associated with this bio, and this bio's bi_end_io has to be
++ * stored in one of 'dm_io' instance first.
++ */
++static inline struct hlist_head *dm_get_bio_hlist_head(struct bio *bio)
++{
++	WARN_ON_ONCE(!(bio->bi_opf & REQ_DM_POLL_LIST));
++
++	return (struct hlist_head *)&bio->bi_end_io;
++}
++
++static void dm_queue_poll_io(struct bio *bio, struct dm_io *io)
++{
++	if (!(bio->bi_opf & REQ_DM_POLL_LIST)) {
++		bio->bi_opf |= REQ_DM_POLL_LIST;
++		/*
++		 * Save .bi_end_io into dm_io, so that we can reuse
++		 * .bi_end_io for storing dm_io list
++		 */
++		io->saved_bio_end_io = bio->bi_end_io;
++
++		INIT_HLIST_HEAD(dm_get_bio_hlist_head(bio));
++
++		/* tell block layer to poll for completion */
++		bio->bi_cookie = ~BLK_QC_T_NONE;
++	} else {
++		/*
++		 * bio recursed due to split, reuse original poll list
++		 */
++		io->saved_bio_end_io = NULL;
++	}
++
++	hlist_add_head(&io->node, dm_get_bio_hlist_head(bio));
++}
++
+ /*
+  * Select the correct strategy for processing a non-flush bio.
+  */
+@@ -1457,6 +1511,12 @@ static int __split_and_process_bio(struct clone_info *ci)
+ 	if (__process_abnormal_io(ci, ti, &r))
+ 		return r;
+ 
++	/*
++	 * Only support bio polling for normal IO, and the target io is
++	 * exactly inside the dm_io instance (verified in dm_poll_dm_io)
++	 */
++	ci->submit_as_polled = ci->bio->bi_opf & REQ_POLLED;
++
+ 	len = min_t(sector_t, max_io_len(ti, ci->sector), ci->sector_count);
+ 	clone = alloc_tio(ci, ti, 0, &len, GFP_NOIO);
+ 	__map_bio(clone);
+@@ -1473,6 +1533,7 @@ static void init_clone_info(struct clone_info *ci, struct mapped_device *md,
+ 	ci->map = map;
+ 	ci->io = alloc_io(md, bio);
+ 	ci->bio = bio;
++	ci->submit_as_polled = false;
+ 	ci->sector = bio->bi_iter.bi_sector;
+ 	ci->sector_count = bio_sectors(bio);
+ 
+@@ -1522,8 +1583,17 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+ 	if (ci.io->start_io_acct)
+ 		dm_start_io_acct(ci.io, NULL);
+ 
+-	/* drop the extra reference count */
+-	dm_io_dec_pending(ci.io, errno_to_blk_status(error));
++	/*
++	 * Drop the extra reference count for non-POLLED bio, and hold one
++	 * reference for POLLED bio, which will be released in dm_poll_bio
++	 *
++	 * Add every dm_io instance into the hlist_head which is stored in
++	 * bio->bi_end_io, so that dm_poll_bio can poll them all.
++	 */
++	if (error || !ci.submit_as_polled)
++		dm_io_dec_pending(ci.io, errno_to_blk_status(error));
++	else
++		dm_queue_poll_io(bio, ci.io);
+ }
+ 
+ static void dm_submit_bio(struct bio *bio)
+@@ -1558,6 +1628,79 @@ static void dm_submit_bio(struct bio *bio)
+ 	dm_put_live_table(md, srcu_idx);
+ }
+ 
++static bool dm_poll_dm_io(struct dm_io *io, struct io_comp_batch *iob,
++			  unsigned int flags)
++{
++	WARN_ON_ONCE(!io->tio.inside_dm_io);
++
++	/* don't poll if the mapped io is done */
++	if (atomic_read(&io->io_count) > 1)
++		bio_poll(&io->tio.clone, iob, flags);
++
++	/* bio_poll holds the last reference */
++	return atomic_read(&io->io_count) == 1;
++}
++
++static int dm_poll_bio(struct bio *bio, struct io_comp_batch *iob,
++		       unsigned int flags)
++{
++	struct hlist_head *head = dm_get_bio_hlist_head(bio);
++	struct hlist_head tmp = HLIST_HEAD_INIT;
++	void *saved_bio_end_io = NULL;
++	struct hlist_node *next;
++	struct dm_io *io;
++
++	/* Only poll normal bio which was marked as REQ_DM_POLL_LIST */
++	if (!(bio->bi_opf & REQ_DM_POLL_LIST))
++		return 0;
++
++	WARN_ON_ONCE(hlist_empty(head));
++
++	hlist_move_list(head, &tmp);
++
++	hlist_for_each_entry(io, &tmp, node) {
++		if (io->saved_bio_end_io) {
++			saved_bio_end_io = io->saved_bio_end_io;
++			break;
++		}
++	}
++
++	/*
++	 * Restore .bi_end_io before possibly completing dm_io.
++	 *
++	 * bio_poll() is only possible once @bio has been completely
++	 * submitted via submit_bio_noacct()'s depth-first submission.
++	 * So there is no dm_queue_poll_io() race associated with
++	 * clearing REQ_DM_POLL_LIST here.
++	 */
++	WARN_ON_ONCE(!saved_bio_end_io);
++	bio->bi_opf &= ~REQ_DM_POLL_LIST;
++	bio->bi_end_io = saved_bio_end_io;
++
++	hlist_for_each_entry_safe(io, next, &tmp, node) {
++		if (dm_poll_dm_io(io, iob, flags)) {
++			hlist_del_init(&io->node);
++			/*
++			 * clone_endio() has already occurred, so passing
++			 * error as 0 here doesn't override io->status
++			 */
++			dm_io_dec_pending(io, 0);
++		}
++	}
++
++	/* Not done? */
++	if (!hlist_empty(&tmp)) {
++		/* Store saved_bio_end_io in a remaining dm_io */
++		io = hlist_entry(tmp.first, struct dm_io, node);
++		io->saved_bio_end_io = saved_bio_end_io;
++		bio->bi_opf |= REQ_DM_POLL_LIST;
++		/* Reset bio->bi_end_io to dm_io list head */
++		hlist_move_list(&tmp, head);
++		return 0;
++	}
++	return 1;
++}
++
+ /*-----------------------------------------------------------------
+  * An IDR is used to keep track of allocated minor numbers.
+  *---------------------------------------------------------------*/
+@@ -2983,6 +3126,7 @@ static const struct pr_ops dm_pr_ops = {
+ 
+ static const struct block_device_operations dm_blk_dops = {
+ 	.submit_bio = dm_submit_bio,
++	.poll_bio = dm_poll_bio,
+ 	.open = dm_blk_open,
+ 	.release = dm_blk_close,
+ 	.ioctl = dm_blk_ioctl,
 -- 
 2.15.0
 
