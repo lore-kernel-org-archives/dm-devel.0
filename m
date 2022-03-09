@@ -4,66 +4,84 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1F152C433FE
-	for <dm-devel@archiver.kernel.org>; Wed,  9 Mar 2022 09:26:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 46CB6C433EF
+	for <dm-devel@archiver.kernel.org>; Wed,  9 Mar 2022 16:12:04 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-36-W-zQog1rNPmQ9JATcd779g-1; Wed, 09 Mar 2022 04:26:45 -0500
-X-MC-Unique: W-zQog1rNPmQ9JATcd779g-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-592-Em8SiVxYOVGFVJzCiT9iDA-1; Wed, 09 Mar 2022 11:12:01 -0500
+X-MC-Unique: Em8SiVxYOVGFVJzCiT9iDA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 96C4D8027FA;
-	Wed,  9 Mar 2022 09:26:43 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EF48318019EE;
+	Wed,  9 Mar 2022 16:11:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9FE01463EA8;
-	Wed,  9 Mar 2022 09:26:39 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 67343C50941;
+	Wed,  9 Mar 2022 16:11:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 35BCD1932121;
-	Wed,  9 Mar 2022 09:26:39 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 66E8D195355C;
+	Wed,  9 Mar 2022 16:11:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 13353194F4AE
- for <dm-devel@listman.corp.redhat.com>; Wed,  9 Mar 2022 09:26:38 +0000 (UTC)
+ ESMTP id 5FD0D194F4AE
+ for <dm-devel@listman.corp.redhat.com>; Wed,  9 Mar 2022 15:50:00 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E27CC7C0D92; Wed,  9 Mar 2022 09:26:37 +0000 (UTC)
+ id 2A7D8141DC2A; Wed,  9 Mar 2022 15:50:00 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id DE6D97C0DBF
- for <dm-devel@redhat.com>; Wed,  9 Mar 2022 09:26:37 +0000 (UTC)
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 26722141DC28
+ for <dm-devel@redhat.com>; Wed,  9 Mar 2022 15:50:00 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C6DF8381748F
- for <dm-devel@redhat.com>; Wed,  9 Mar 2022 09:26:37 +0000 (UTC)
-Received: from szxga08-in.huawei.com (szxga08-in.huawei.com
- [45.249.212.255]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F28B385A5BC
+ for <dm-devel@redhat.com>; Wed,  9 Mar 2022 15:49:59 +0000 (UTC)
+Received: from mail-ej1-f42.google.com (mail-ej1-f42.google.com
+ [209.85.218.42]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-189-knvAOIAlMy2cw3ejbprHoA-1; Wed, 09 Mar 2022 04:26:35 -0500
-X-MC-Unique: knvAOIAlMy2cw3ejbprHoA-1
-Received: from dggpeml500024.china.huawei.com (unknown [172.30.72.56])
- by szxga08-in.huawei.com (SkyGuard) with ESMTP id 4KD6CC17c5z1GCDL;
- Wed,  9 Mar 2022 17:21:43 +0800 (CST)
-Received: from dggpeml500006.china.huawei.com (7.185.36.76) by
- dggpeml500024.china.huawei.com (7.185.36.10) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2308.21; Wed, 9 Mar 2022 17:26:31 +0800
-Received: from localhost.localdomain (10.175.127.227) by
- dggpeml500006.china.huawei.com (7.185.36.76) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2308.21; Wed, 9 Mar 2022 17:26:31 +0800
-From: Luo Meng <luomeng12@huawei.com>
-To: <agk@redhat.com>, <snitzer@redhat.com>, <dm-devel@redhat.com>
-Date: Wed, 9 Mar 2022 17:41:48 +0800
-Message-ID: <20220309094148.2164043-1-luomeng12@huawei.com>
+ us-mta-600-nQjfPAzEOcC50f-iS5ZJkA-1; Wed, 09 Mar 2022 10:49:58 -0500
+X-MC-Unique: nQjfPAzEOcC50f-iS5ZJkA-1
+Received: by mail-ej1-f42.google.com with SMTP id bg10so6033121ejb.4
+ for <dm-devel@redhat.com>; Wed, 09 Mar 2022 07:49:57 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
+ :content-language:to:cc:references:from:in-reply-to
+ :content-transfer-encoding;
+ bh=xrbpP/Yfwao8lnj7LaSM/uRQpgaSVRznTS0TTH/HjZY=;
+ b=dUPPs2XuWq+pR3oYKMf9iF9zgWpT8FnaNo8yQWmblrIuGIbLpRK6t7UQHuJ2aNWSC/
+ TTrMhtsn9evTBaa4JBrelZeUJJap0CAzDJzz+cjrX7olmVtPOxQ3kaGRVBdEtMoHZoAf
+ GiFa1ROpNzRD5rf86Q9nkuTXhfT6avomtXbA5yHD9e7yUIIt6kUzAWnxcSblWjpca7H9
+ 6kgcKMa0N2iOJXeHnsSbHkU5/iOg/JmoZ7h/yHlqe7kE/gSGF4qzbvHLDE//+WDB7UHD
+ aczGaNKEjPB/w9KslV+26ZSkOSjX+/BgfvcaXX4XT9XJB4rrbS/bWDtqbOBvs5gJvd/C
+ qClQ==
+X-Gm-Message-State: AOAM5322Rhvsuk62V17RASh+1SYNX6wNRYXw+uw876HlE0I99fa3rG4+
+ YPrifz0/YUECbf/4nzXnZwmscw==
+X-Google-Smtp-Source: ABdhPJxZ5pBljQ9c4cS3Z9+taf/t5M3OBOhL/UO8YvG/idZkX4Ez6hrxTSX+wbR+RbFNFZdxzRpO9g==
+X-Received: by 2002:a17:907:7f2a:b0:6d6:df12:7f57 with SMTP id
+ qf42-20020a1709077f2a00b006d6df127f57mr390349ejc.122.1646840996396; 
+ Wed, 09 Mar 2022 07:49:56 -0800 (PST)
+Received: from [172.16.10.50] (213.16.174.189.dsl.dyn.forthnet.gr.
+ [213.16.174.189]) by smtp.gmail.com with ESMTPSA id
+ h8-20020a50ed88000000b004160630c980sm960188edr.62.2022.03.09.07.49.53
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Wed, 09 Mar 2022 07:49:55 -0800 (PST)
+Message-ID: <2015a35a-915c-351f-81cf-bd7dfe4502a1@arrikto.com>
+Date: Wed, 9 Mar 2022 17:49:52 +0200
 MIME-Version: 1.0
-X-Originating-IP: [10.175.127.227]
-X-ClientProxiedBy: dggems706-chm.china.huawei.com (10.3.19.183) To
- dggpeml500006.china.huawei.com (7.185.36.76)
-X-CFilter-Loop: Reflected
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.6.1
+To: Mikulas Patocka <mpatocka@redhat.com>
+References: <f0e19ae4-b37a-e9a3-2be7-a5afb334a5c3@nvidia.com>
+ <012723a9-2e9c-c638-4944-fa560e1b0df0@arrikto.com>
+ <c4124f39-1ee9-8f34-e731-42315fee15f9@nvidia.com>
+ <23895da7-bcec-d092-373a-c3d961ab5c48@arrikto.com>
+ <alpine.LRH.2.02.2203090347500.17712@file01.intranet.prod.int.rdu2.redhat.com>
+From: Nikos Tsironis <ntsironis@arrikto.com>
+In-Reply-To: <alpine.LRH.2.02.2203090347500.17712@file01.intranet.prod.int.rdu2.redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -71,8 +89,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: [dm-devel] [PTACH] dm-mpath: fix UAF in multipath_message()
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: Re: [dm-devel] [LSF/MM/BFP ATTEND] [LSF/MM/BFP TOPIC] Storage: Copy
+ Offload
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -84,152 +103,65 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: luomeng12@huawei.com, yukuai3@huawei.com
+Cc: "djwong@kernel.org" <djwong@kernel.org>,
+ "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
+ "clm@fb.com" <clm@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ "osandov@fb.com" <osandov@fb.com>,
+ "msnitzer@redhat.com >> msnitzer@redhat.com" <msnitzer@redhat.com>,
+ Bart Van Assche <bvanassche@acm.org>,
+ "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+ Christoph Hellwig <hch@lst.de>,
+ "roland@purestorage.com" <roland@purestorage.com>,
+ "zach.brown@ni.com" <zach.brown@ni.com>,
+ Chaitanya Kulkarni <chaitanyak@nvidia.com>,
+ "josef@toxicpanda.com" <josef@toxicpanda.com>,
+ "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+ "dsterba@suse.com" <dsterba@suse.com>,
+ "kbus @imap.gmail.com>> Keith Busch" <kbusch@kernel.org>,
+ "Frederick.Knight@netapp.com" <Frederick.Knight@netapp.com>,
+ Jens Axboe <axboe@kernel.dk>, "tytso@mit.edu" <tytso@mit.edu>,
+ "martin.petersen@oracle.com >> Martin K. Petersen"
+ <martin.petersen@oracle.com>, "jack@suse.com" <jack@suse.com>,
+ linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+ "lsf-pc@lists.linux-foundation.org" <lsf-pc@lists.linux-foundation.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
+Content-Language: en-US
 Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-If dm_get_device() create dd in multipath_message(),
-and then call table_deps() after dm_put_table_device(),
-it will lead to concurrency UAF bugs.
+On 3/9/22 10:51, Mikulas Patocka wrote:
+> 
+> Hi
+> 
+> Note that you must submit kcopyd callbacks from a single thread, otherwise
+> there's a race condition in snapshot.
+> 
 
-One of the concurrency UAF can be shown as below:
+Hi,
 
-         (USE)                        |    (FREE)
-                                      |  target_message
-                                      |    multipath_message
-                                      |      dm_put_device
-                                      |        dm_put_table_device #
-                                      |          kfree(td)  # table_device *td
-ioctl # DM_TABLE_DEPS_CMD             |         ...
-  table_deps                          |         ...
-  dm_get_live_or_inactive_table       |         ...
-    retrieve_dep                      |         ...
-    list_for_each_entry               |         ...
-      deps->dev[count++] =            |         ...
-          huge_encode_dev             |         ...
-          (dd->dm_dev->bdev->bd_dev)  |        list_del(&dd->list)
-                                      |        kfree(dd) # dm_dev_internal
+Thanks for the feedback. Yes, I'm aware of that.
 
-The root cause of UAF bugs is that find_device() failed in
-dm_get_device() and will create dd and refcount set 1, kfree()
-in dm_put_table() is not protected. When td, which there are
-still pointers point to, is released, the concurrency UAF bug
-will happen.
+> The snapshot code doesn't take locks in the copy_callback and it expects
+> that the callbacks are serialized.
+> 
+> Maybe, adding the locks to copy_callback would solve it.
+> 
 
-This patch add a flag to determine whether to create a new dd.
+That's what I did. I used a lock to ensure that kcopyd callbacks are
+serialized for persistent snapshots.
 
-Signed-off-by: Luo Meng <luomeng12@huawei.com>
----
- drivers/md/dm-mpath.c         |  2 +-
- drivers/md/dm-table.c         | 43 +++++++++++++++++++++--------------
- include/linux/device-mapper.h |  2 ++
- 3 files changed, 29 insertions(+), 18 deletions(-)
+For transient snapshots we can lift this limitation, and complete
+pending exceptions out-of-oder and in "parallel", i.e., without
+explicitly serializing kcopyd callbacks. The locks in pending_complete()
+are enough in this case.
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index f4719b65e5e3..1f8b29ed7979 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1999,7 +1999,7 @@ static int multipath_message(struct dm_target *ti, unsigned argc, char **argv,
- 		goto out;
- 	}
- 
--	r = dm_get_device(ti, argv[1], dm_table_get_mode(ti->table), &dev);
-+	r = __dm_get_device(ti, argv[1], dm_table_get_mode(ti->table), &dev, false);
- 	if (r) {
- 		DMWARN("message: error getting device %s",
- 		       argv[1]);
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index e43096cfe9e2..b8fc7e0afb84 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -340,12 +340,8 @@ dev_t dm_get_dev_t(const char *path)
- }
- EXPORT_SYMBOL_GPL(dm_get_dev_t);
- 
--/*
-- * Add a device to the list, or just increment the usage count if
-- * it's already present.
-- */
--int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
--		  struct dm_dev **result)
-+int __dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
-+		    struct dm_dev **result, bool create_dd)
- {
- 	int r;
- 	dev_t dev;
-@@ -369,19 +365,21 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
- 
- 	dd = find_device(&t->devices, dev);
- 	if (!dd) {
--		dd = kmalloc(sizeof(*dd), GFP_KERNEL);
--		if (!dd)
--			return -ENOMEM;
--
--		if ((r = dm_get_table_device(t->md, dev, mode, &dd->dm_dev))) {
--			kfree(dd);
--			return r;
--		}
-+		if (create_dd) {
-+			dd = kmalloc(sizeof(*dd), GFP_KERNEL);
-+			if (!dd)
-+				return -ENOMEM;
- 
--		refcount_set(&dd->count, 1);
--		list_add(&dd->list, &t->devices);
--		goto out;
-+			if ((r = dm_get_table_device(t->md, dev, mode, &dd->dm_dev))) {
-+				kfree(dd);
-+				return r;
-+			}
- 
-+			refcount_set(&dd->count, 1);
-+			list_add(&dd->list, &t->devices);
-+			goto out;
-+		} else
-+			return -ENODEV;
- 	} else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
- 		r = upgrade_mode(dd, mode, t->md);
- 		if (r)
-@@ -392,6 +390,17 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
- 	*result = dd->dm_dev;
- 	return 0;
- }
-+EXPORT_SYMBOL(__dm_get_device);
-+
-+/*
-+ * Add a device to the list, or just increment the usage count if
-+ * it's already present.
-+ */
-+int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
-+		  struct dm_dev **result)
-+{
-+	return __dm_get_device(ti, path, mode, result, true);
-+}
- EXPORT_SYMBOL(dm_get_device);
- 
- static int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index b26fecf6c8e8..a1b44789e3dc 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -168,6 +168,8 @@ dev_t dm_get_dev_t(const char *path);
- int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
- 		  struct dm_dev **result);
- void dm_put_device(struct dm_target *ti, struct dm_dev *d);
-+int __dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
-+		    struct dm_dev **result, bool create_dd);
- 
- /*
-  * Information about a target type
--- 
-2.31.1
+Nikos
 
 --
 dm-devel mailing list
