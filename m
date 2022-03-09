@@ -4,80 +4,81 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4EA2CC433EF
-	for <dm-devel@archiver.kernel.org>; Wed,  9 Mar 2022 01:01:20 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id BA056C433FE
+	for <dm-devel@archiver.kernel.org>; Wed,  9 Mar 2022 01:03:08 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-649-HnAROCfMN6SUHlbwFUSqew-1; Tue, 08 Mar 2022 20:01:15 -0500
-X-MC-Unique: HnAROCfMN6SUHlbwFUSqew-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-349-aPwHI4prP6iffqP_890dkg-1; Tue, 08 Mar 2022 20:03:04 -0500
+X-MC-Unique: aPwHI4prP6iffqP_890dkg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5B5401C05B02;
-	Wed,  9 Mar 2022 01:01:14 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B078E101AA45;
+	Wed,  9 Mar 2022 01:03:02 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6470C4010A15;
-	Wed,  9 Mar 2022 01:01:10 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9DEDD40CFD23;
+	Wed,  9 Mar 2022 01:03:02 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0C429193212B;
-	Wed,  9 Mar 2022 01:01:10 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7D421193212B;
+	Wed,  9 Mar 2022 01:03:02 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4F6AB194F4AE
- for <dm-devel@listman.corp.redhat.com>; Wed,  9 Mar 2022 01:01:09 +0000 (UTC)
+ ESMTP id 990A2194F4AE
+ for <dm-devel@listman.corp.redhat.com>; Wed,  9 Mar 2022 01:03:01 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B9B124010143; Wed,  9 Mar 2022 01:01:08 +0000 (UTC)
+ id 6F5DE2166B13; Wed,  9 Mar 2022 01:03:01 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B559B4010FCD
- for <dm-devel@redhat.com>; Wed,  9 Mar 2022 01:01:08 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0AE59805F7C
- for <dm-devel@redhat.com>; Wed,  9 Mar 2022 01:01:08 +0000 (UTC)
-Received: from mail-pg1-f169.google.com (mail-pg1-f169.google.com
- [209.85.215.169]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 689312166B4F
+ for <dm-devel@redhat.com>; Wed,  9 Mar 2022 01:02:55 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0C4BD811E75
+ for <dm-devel@redhat.com>; Wed,  9 Mar 2022 01:02:55 +0000 (UTC)
+Received: from mail-pg1-f178.google.com (mail-pg1-f178.google.com
+ [209.85.215.178]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-617-SixnJZBWOMqMqyVoF9fZWQ-1; Tue, 08 Mar 2022 20:01:06 -0500
-X-MC-Unique: SixnJZBWOMqMqyVoF9fZWQ-1
-Received: by mail-pg1-f169.google.com with SMTP id e6so623632pgn.2
- for <dm-devel@redhat.com>; Tue, 08 Mar 2022 17:01:06 -0800 (PST)
+ us-mta-5-iPir-oV-PbyFsOHVIV6LAg-1; Tue, 08 Mar 2022 20:02:53 -0500
+X-MC-Unique: iPir-oV-PbyFsOHVIV6LAg-1
+Received: by mail-pg1-f178.google.com with SMTP id o26so604560pgb.8
+ for <dm-devel@redhat.com>; Tue, 08 Mar 2022 17:02:53 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
  :content-language:to:cc:references:from:in-reply-to
  :content-transfer-encoding;
- bh=6ZZxOF1UZdYmWcsF+G4Cy++VZ4bnPtZUo2Vt4FjwtGI=;
- b=xrtfeMM7BVTLKcfK0fgCWG6+1fqwukNY1fX6H8RWMwXML/Ta/D9c6rukJBQ3yRy2yZ
- P/C2dVORJS8VycbbXTP62Wh/s9Fg9J59wcvP+IY/SxlP4pU6CGSY6QlR5Fz8TQqkEusU
- iYtdRpIEkCWkQ8RoX06gxKM0bHwL2rXfuhuoxHQBxqmJZ5aMGC8v1csoBFfuWifPhES9
- KTsT2qukPtiuOFuUHMaWS1fEdmkPQGKbAE17RrscVu0rX7AwV27+75V+UPeFZGYj761n
- kWtwdVVE4+C45CyrsOqxT05hPETWJ2W73EfWMAX8YR2eOSx9g7nAiIjc4UJw/T3bVKzh
- DIiQ==
-X-Gm-Message-State: AOAM531jqgtgz4uhDx1icxQsrTajIbF5fkUhg3wXWf1gwJlyG5ec0VQI
- EK8v9ZKseWY5bEUWKRbrpTh3ng==
-X-Google-Smtp-Source: ABdhPJw8wYMUJ1TT+e5LCWPQcdeiQMTk8yoPMpHmtMfDIfhMY1+qfTodpbwOyZdHUV1wJnmVdVHYuw==
-X-Received: by 2002:a05:6a00:bc8:b0:4f6:ff68:50ba with SMTP id
- x8-20020a056a000bc800b004f6ff6850bamr13433133pfu.69.1646787665250; 
- Tue, 08 Mar 2022 17:01:05 -0800 (PST)
+ bh=lcKnxyTLjpTRP4WN0RiRep/EF/TdUUWhRlsbEAI4NOU=;
+ b=72k7JkAhPwn9O7CuwBUVhSM1CJwu+Q62eLrMV2K/rxIY8FWiE0aQAxTlQxc96QBdb8
+ NZlxHEuytdaIcjNJAngSXSjdftXSLiE3UAJb576bQ9WPxdx1a1kPc4wKfQN+JJlrx3dE
+ XO2I8euRpvc1PbkWE4DmPitZF2AzCPRp7KY7kv0wQVTICzm1TG75ozQ65M8m4+I5xedZ
+ bmhxuVycGa1TANIzIdOg8lGOE2sdEFwGip4g3KkGdji3UXFHe8gsVu01RIU+hU17p0ms
+ q1PqR3EfNu4MH2+1naiNiqkPgfl7ZykdK0nRpA/Vf8u9SzugfnkU0gh5mKYcYpjVJAAj
+ cBzA==
+X-Gm-Message-State: AOAM532xibBTY21UM4G+Ju0y2K9+wDyI9OHtT5FQpYfjNcXWxvr2vUcU
+ AfUdPanfrkJj1o5V65eYDYr+8A==
+X-Google-Smtp-Source: ABdhPJxRlDuJlLr9rJPUjym5d8YWtRwaggHOPGKhzpMxmV4RfaDA8Xf1sz2n2oaCv8NU6Awb4GcEPw==
+X-Received: by 2002:a05:6a00:3102:b0:4f6:b88d:9d45 with SMTP id
+ bi2-20020a056a00310200b004f6b88d9d45mr21291400pfb.86.1646787772371; 
+ Tue, 08 Mar 2022 17:02:52 -0800 (PST)
 Received: from [192.168.1.100] ([198.8.77.157])
  by smtp.gmail.com with ESMTPSA id
- d20-20020a056a0010d400b004f7093700c4sm308968pfu.76.2022.03.08.17.01.04
+ v24-20020a634818000000b0036407db4728sm292925pga.26.2022.03.08.17.02.51
  (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Tue, 08 Mar 2022 17:01:04 -0800 (PST)
-Message-ID: <70895fbc-392d-5ac6-4f7d-4593de5f74bb@kernel.dk>
-Date: Tue, 8 Mar 2022 18:01:03 -0700
+ Tue, 08 Mar 2022 17:02:51 -0800 (PST)
+Message-ID: <eac88ad5-3274-389b-9d18-9b6aa16fcb98@kernel.dk>
+Date: Tue, 8 Mar 2022 18:02:50 -0700
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux aarch64; rv:91.0) Gecko/20100101
  Thunderbird/91.6.1
 To: Mike Snitzer <snitzer@redhat.com>
 References: <20220307185303.71201-1-snitzer@redhat.com>
- <20220307185303.71201-2-snitzer@redhat.com>
+ <20220307185303.71201-3-snitzer@redhat.com>
 From: Jens Axboe <axboe@kernel.dk>
-In-Reply-To: <20220307185303.71201-2-snitzer@redhat.com>
+In-Reply-To: <20220307185303.71201-3-snitzer@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -85,9 +86,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH v6 1/2] block: add ->poll_bio to
- block_device_operations
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH v6 2/2] dm: support bio polling
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,7 +103,7 @@ Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, hch@lst.de,
  ming.lei@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -115,17 +115,36 @@ Content-Transfer-Encoding: 7bit
 On 3/7/22 11:53 AM, Mike Snitzer wrote:
 > From: Ming Lei <ming.lei@redhat.com>
 > 
-> Prepare for supporting IO polling for bio-based driver.
+> Support bio(REQ_POLLED) polling in the following approach:
 > 
-> Add ->poll_bio callback so that bio-based driver can provide their own
-> logic for polling bio.
+> 1) only support io polling on normal READ/WRITE, and other abnormal IOs
+> still fallback to IRQ mode, so the target io is exactly inside the dm
+> io.
 > 
-> Also fix ->submit_bio_bio typo in comment block above
-> __submit_bio_noacct.
+> 2) hold one refcnt on io->io_count after submitting this dm bio with
+> REQ_POLLED
+> 
+> 3) support dm native bio splitting, any dm io instance associated with
+> current bio will be added into one list which head is bio->bi_private
+> which will be recovered before ending this bio
+> 
+> 4) implement .poll_bio() callback, call bio_poll() on the single target
+> bio inside the dm io which is retrieved via bio->bi_bio_drv_data; call
+> dm_io_dec_pending() after the target io is done in .poll_bio()
+> 
+> 5) enable QUEUE_FLAG_POLL if all underlying queues enable QUEUE_FLAG_POLL,
+> which is based on Jeffle's previous patch.
 
-Assuming you want to take this through the dm tree:
+It's not the prettiest thing in the world with the overlay on bi_private,
+but at least it's nicely documented now.
 
-Reviewed-by: Jens Axboe <axboe@kernel.dk>
+I would encourage you to actually test this on fast storage, should make
+a nice difference. I can run this on a gen2 optane, it's 10x the IOPS
+of what it was tested on and should help better highlight where it
+makes a difference.
+
+If either of you would like that, then send me a fool proof recipe for
+what should be setup so I have a poll capable dm device.
 
 -- 
 Jens Axboe
