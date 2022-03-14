@@ -1,75 +1,66 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C0EF3C433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 14 Mar 2022 07:42:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 419EFC433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 14 Mar 2022 11:40:40 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1647258038;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=ut+Pgnif/AXr5pBzp0Ymd84azDaNIdYz51gnwTia66E=;
+	b=Ct80hQM8TYNbAx54FxH8XGPxd77GWICJDR7BE6kSgJ1SqkUI2P6dLB/XcO4mAm54qpBUWX
+	33HgQiVJLsnA08FQ8izy+Xboz/qxxY0wNITDiRyC66R6o/uQAFdwJgq7NU3TnbF3hZUZvu
+	olUvVok3Dc+w4JpI2thy81lfvajzIYg=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-266-wVqIJDepNMGE_5RnFJRGDA-1; Mon, 14 Mar 2022 03:42:34 -0400
-X-MC-Unique: wVqIJDepNMGE_5RnFJRGDA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-439-kIjri8tNMQCuVExWl6wKMg-1; Mon, 14 Mar 2022 07:40:35 -0400
+X-MC-Unique: kIjri8tNMQCuVExWl6wKMg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 78BB0857048;
-	Mon, 14 Mar 2022 07:42:32 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DFF8685A5A8;
+	Mon, 14 Mar 2022 11:40:33 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 18594C531E7;
-	Mon, 14 Mar 2022 07:42:32 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2CC674050C7E;
+	Mon, 14 Mar 2022 11:40:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B43B9194E018;
-	Mon, 14 Mar 2022 07:42:31 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D9C7F195356B;
+	Mon, 14 Mar 2022 11:40:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 89B9E1940341
- for <dm-devel@listman.corp.redhat.com>; Sat, 12 Mar 2022 13:41:01 +0000 (UTC)
+ ESMTP id 04D9C194E018
+ for <dm-devel@listman.corp.redhat.com>; Mon, 14 Mar 2022 11:40:30 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2940B40F9D48; Sat, 12 Mar 2022 13:41:01 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 24E9740F9D46
- for <dm-devel@redhat.com>; Sat, 12 Mar 2022 13:41:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0C4F3811E76
- for <dm-devel@redhat.com>; Sat, 12 Mar 2022 13:41:01 +0000 (UTC)
-Received: from mail3-relais-sop.national.inria.fr
- (mail3-relais-sop.national.inria.fr [192.134.164.104]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-518-fTlAHDYpOBSJQdKagGUDnQ-1; Sat, 12 Mar 2022 08:40:57 -0500
-X-MC-Unique: fTlAHDYpOBSJQdKagGUDnQ-1
-X-IronPort-AV: E=Sophos;i="5.90,175,1643670000"; 
-   d="scan'208";a="8361910"
-Received: from 203.107.68.85.rev.sfr.net (HELO hadrien) ([85.68.107.203])
- by mail3-relais-sop.national.inria.fr with
- ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Mar 2022 14:39:52 +0100
-Date: Sat, 12 Mar 2022 14:39:50 +0100 (CET)
-From: Julia Lawall <julia.lawall@inria.fr>
-X-X-Sender: jll@hadrien
-To: kbuild-all@lists.01.org, linux-kernel@vger.kernel.org, 
- Denis Efremov <efremov@linux.com>, Alasdair Kergon <agk@redhat.com>, 
- Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, 
- linux-kernel@vger.kernel.org
-Message-ID: <alpine.DEB.2.22.394.2203121434460.3202@hadrien>
-User-Agent: Alpine 2.22 (DEB 394 2020-01-19)
+ id DD87666E8C5; Mon, 14 Mar 2022 11:40:29 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D75AB66E8FD;
+ Mon, 14 Mar 2022 11:40:29 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 22EBeTuP025031; Mon, 14 Mar 2022 07:40:29 -0400
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 22EBeT7L025027; Mon, 14 Mar 2022 07:40:29 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Mon, 14 Mar 2022 07:40:29 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>
+Message-ID: <alpine.LRH.2.02.2203140733380.24228@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-X-Mailman-Approved-At: Mon, 14 Mar 2022 07:42:30 +0000
-Subject: [dm-devel] [PATCH] dm raid: fix minmax.cocci warnings
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+Subject: [dm-devel] dm: simplify dm_sumbit_bio_remap interface
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -81,9 +72,10 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -91,40 +83,21 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: kernel test robot <lkp@intel.com>
+Hi
 
-Simplify the code using min.
+The patch b7f8dff09827c96032c34a945ee7757e394b5952 ("dm: simplify 
+dm_sumbit_bio_remap interface") removes the "from_wq" parameter and adds 
+io->map_task and compares it to the "current" pointer.
 
-Generated by: scripts/coccinelle/misc/minmax.cocci
+I think that this is not safe, because the original task that submitted 
+the bio may exit, a new task with the same "current" pointer may be 
+created and the test "if (io->map_task == current)" may spuriously return 
+true.
 
-CC: Denis Efremov <efremov@linux.com>
-Reported-by: kernel test robot <lkp@intel.com>
-Signed-off-by: kernel test robot <lkp@intel.com>
-Signed-off-by: Julia Lawall <julia.lawall@inria.fr>
----
+Or, do you have some reason why do you think that returning true 
+spuriously in this test doesn't matter?
 
-tree:   https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git master
-head:   68453767131a5deec1e8f9ac92a9042f929e585d
-commit: 5f66f73b9ff4dcabd4e2405ba9c32e80e02f9408 coccinelle: misc: add minmax script
-:::::: branch date: 12 hours ago
-:::::: commit date: 11 months ago
-
- drivers/md/dm-raid.c |    3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
-
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3215,7 +3215,8 @@ size_check:
- 			if (r)
- 				goto bad;
-
--			rs_setup_recovery(rs, rs->md.recovery_cp < rs->md.dev_sectors ? rs->md.recovery_cp : rs->md.dev_sectors);
-+			rs_setup_recovery(rs,
-+					  min(rs->md.recovery_cp, rs->md.dev_sectors));
- 		} else {
- 			/* This is no size change or it is shrinking, update size and record in superblocks */
- 			r = rs_set_dev_and_array_sectors(rs, rs->ti->len, false);
-
+Mikulas
 --
 dm-devel mailing list
 dm-devel@redhat.com
