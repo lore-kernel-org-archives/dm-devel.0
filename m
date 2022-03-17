@@ -1,81 +1,73 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6B87DC433FE
-	for <dm-devel@archiver.kernel.org>; Thu, 17 Mar 2022 08:03:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id BE2D2C433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 17 Mar 2022 11:30:03 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-261-i8CM3vplPXK3SiI9fUQr4A-1; Thu, 17 Mar 2022 04:03:54 -0400
-X-MC-Unique: i8CM3vplPXK3SiI9fUQr4A-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-168-7HcronkYPOKn9gFsHaTxWg-1; Thu, 17 Mar 2022 07:30:00 -0400
+X-MC-Unique: 7HcronkYPOKn9gFsHaTxWg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3E54F299E75C;
-	Thu, 17 Mar 2022 08:03:53 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EC31E3C19850;
+	Thu, 17 Mar 2022 11:29:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 29D9A40D296B;
-	Thu, 17 Mar 2022 08:03:53 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 59D12407F761;
+	Thu, 17 Mar 2022 11:29:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id ADC3D193F511;
-	Thu, 17 Mar 2022 08:03:51 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3F77E194036A;
+	Thu, 17 Mar 2022 11:29:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 5FB2A1949761
- for <dm-devel@listman.corp.redhat.com>; Wed, 16 Mar 2022 19:46:22 +0000 (UTC)
+ ESMTP id 56863194035E
+ for <dm-devel@listman.corp.redhat.com>; Thu, 17 Mar 2022 11:29:55 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 3B4EA215688A; Wed, 16 Mar 2022 19:46:22 +0000 (UTC)
+ id 30707200E296; Thu, 17 Mar 2022 11:29:55 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 3632B2156A5A
- for <dm-devel@redhat.com>; Wed, 16 Mar 2022 19:46:19 +0000 (UTC)
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2B628200C0D2
+ for <dm-devel@redhat.com>; Thu, 17 Mar 2022 11:29:46 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2C750802A6A
- for <dm-devel@redhat.com>; Wed, 16 Mar 2022 19:46:19 +0000 (UTC)
-Received: from mail-qt1-f172.google.com (mail-qt1-f172.google.com
- [209.85.160.172]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4065D185A794
+ for <dm-devel@redhat.com>; Thu, 17 Mar 2022 11:29:46 +0000 (UTC)
+Received: from szxga03-in.huawei.com (szxga03-in.huawei.com
+ [45.249.212.189]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-661-Nl75c-BROAqp1duB73m-rg-1; Wed, 16 Mar 2022 15:46:17 -0400
-X-MC-Unique: Nl75c-BROAqp1duB73m-rg-1
-Received: by mail-qt1-f172.google.com with SMTP id n11so2726336qtk.4
- for <dm-devel@redhat.com>; Wed, 16 Mar 2022 12:46:16 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:date:from:to:cc:subject:message-id:references
- :mime-version:content-disposition:in-reply-to;
- bh=E10/RHxqxdnO02yRvPfaNr/v1jdUvJvGTwpcCM2UuCE=;
- b=IzkwL6qXeaEiQK7zKcifQuCk3aPbTPsNTjdQulFmSkknkn3V89wLua6HJ8TFZbNxG2
- 9Xiya1JJ3+fMfxHw5aoa4m4TcdtDKo00JXrspI1PC73I0FhT7JWgxKvbQwvhkDEkFu1B
- UBax2R8MEtJrUqIse/pSAbscnj1GxUsb9QzpQmXk1a+/nkNnDFaPX5eBOh9JOSpDy5AG
- KRzr8JXUP0TceAHXmZa3dsLZuaN/xyRq6RLyFht1HdEkws955SsuWgLRX7DvxU9MkiAc
- jCJWZs1yQX0aNbjpd0gk3LicoXpik2FEdORAzJNXjsOSvekBP3VcMamoi9iXq1ndfPAF
- HEcA==
-X-Gm-Message-State: AOAM532X9z/iH/MlRy0OPn+6nLYGn3wo1+/RSTc+6kwardyH3DsbYdHP
- I2SkQsk7ES05Psn3gBwY+KTNrcqAXjw2HA==
-X-Google-Smtp-Source: ABdhPJzdid00/41lxSbckANfhz3hmgkLiL0sjFGBBL7VjSFouD738FwEvMgn4bxoZSVrvIQ/cKsiQg==
-X-Received: by 2002:a05:622a:490:b0:2e1:cd32:f3da with SMTP id
- p16-20020a05622a049000b002e1cd32f3damr1206863qtx.339.1647459976253; 
- Wed, 16 Mar 2022 12:46:16 -0700 (PDT)
-Received: from localhost (cpe-174-109-172-136.nc.res.rr.com. [174.109.172.136])
- by smtp.gmail.com with ESMTPSA id
- a14-20020a05620a066e00b0067d36cc5b12sm1253247qkh.87.2022.03.16.12.46.15
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Wed, 16 Mar 2022 12:46:15 -0700 (PDT)
-Date: Wed, 16 Mar 2022 15:46:14 -0400
-From: Josef Bacik <josef@toxicpanda.com>
-To: Qu Wenruo <wqu@suse.com>
-Message-ID: <YjI+hkhhTTWMmPkz@localhost.localdomain>
-References: <20211201051756.53742-1-wqu@suse.com>
- <20211201051756.53742-12-wqu@suse.com>
+ us-mta-122-1ANppeeLMpq73zx1YP5nqQ-1; Thu, 17 Mar 2022 07:29:44 -0400
+X-MC-Unique: 1ANppeeLMpq73zx1YP5nqQ-1
+Received: from dggpeml500025.china.huawei.com (unknown [172.30.72.56])
+ by szxga03-in.huawei.com (SkyGuard) with ESMTP id 4KK4Zk21rJz9sbs;
+ Thu, 17 Mar 2022 19:25:50 +0800 (CST)
+Received: from dggpeml500006.china.huawei.com (7.185.36.76) by
+ dggpeml500025.china.huawei.com (7.185.36.35) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2308.21; Thu, 17 Mar 2022 19:29:39 +0800
+Received: from [10.174.176.127] (10.174.176.127) by
+ dggpeml500006.china.huawei.com (7.185.36.76) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2308.21; Thu, 17 Mar 2022 19:29:39 +0800
+To: <agk@redhat.com>, <snitzer@redhat.com>, <dm-devel@redhat.com>
+References: <20220309094148.2164043-1-luomeng12@huawei.com>
+From: luomeng <luomeng12@huawei.com>
+Message-ID: <24d3d805-1a9a-78a5-a767-2c4d20a70a00@huawei.com>
+Date: Thu, 17 Mar 2022 19:29:38 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:68.0) Gecko/20100101
+ Thunderbird/68.8.1
 MIME-Version: 1.0
-In-Reply-To: <20211201051756.53742-12-wqu@suse.com>
+In-Reply-To: <20220309094148.2164043-1-luomeng12@huawei.com>
+X-Originating-IP: [10.174.176.127]
+X-ClientProxiedBy: dggems703-chm.china.huawei.com (10.3.19.180) To
+ dggpeml500006.china.huawei.com (7.185.36.76)
+X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -83,10 +75,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-X-Mailman-Approved-At: Thu, 17 Mar 2022 08:03:49 +0000
-Subject: Re: [dm-devel] [PATCH 11/17] btrfs: make
- dec_and_test_compressed_bio() to be split bio compatible
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+Subject: Re: [dm-devel] [PTACH] dm-mpath: fix UAF in multipath_message()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -98,63 +88,106 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
- linux-btrfs@vger.kernel.org
+Cc: yukuai3@huawei.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="gbk"; Format="flowed"
 
-On Wed, Dec 01, 2021 at 01:17:50PM +0800, Qu Wenruo wrote:
-> For compression read write endio functions, they all rely on
-> dec_and_test_compressed_bio() to determine if they are the last bio.
-> 
-> So here we only need to convert the bio_for_each_segment_all() call into
-> __bio_for_each_segment() so that compression read/write endio functions
-> will handle both split and unsplit bios well.
-> 
-> Signed-off-by: Qu Wenruo <wqu@suse.com>
-> ---
->  fs/btrfs/compression.c | 14 +++++---------
->  1 file changed, 5 insertions(+), 9 deletions(-)
-> 
-> diff --git a/fs/btrfs/compression.c b/fs/btrfs/compression.c
-> index 8668c5190805..8b4b84b59b0c 100644
-> --- a/fs/btrfs/compression.c
-> +++ b/fs/btrfs/compression.c
-> @@ -205,18 +205,14 @@ static int check_compressed_csum(struct btrfs_inode *inode, struct bio *bio,
->  static bool dec_and_test_compressed_bio(struct compressed_bio *cb, struct bio *bio)
->  {
->  	struct btrfs_fs_info *fs_info = btrfs_sb(cb->inode->i_sb);
-> +	struct bio_vec bvec;
-> +	struct bvec_iter iter;
->  	unsigned int bi_size = 0;
->  	bool last_io = false;
-> -	struct bio_vec *bvec;
-> -	struct bvec_iter_all iter_all;
->  
-> -	/*
-> -	 * At endio time, bi_iter.bi_size doesn't represent the real bio size.
-> -	 * Thus here we have to iterate through all segments to grab correct
-> -	 * bio size.
-> -	 */
-> -	bio_for_each_segment_all(bvec, bio, iter_all)
-> -		bi_size += bvec->bv_len;
-> +	ASSERT(btrfs_bio(bio)->iter.bi_size);
-
-We're tripping this assert with generic/476 with -o compress, so I assume
-there's some error condition that isn't being handled properly.  Thanks,
-
-Josef
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+ZnJpZW5kbHkgcGluZy4KCtTaIDIwMjIvMy85IDE3OjQxLCBMdW8gTWVuZyDQtLXAOgo+IElmIGRt
+X2dldF9kZXZpY2UoKSBjcmVhdGUgZGQgaW4gbXVsdGlwYXRoX21lc3NhZ2UoKSwKPiBhbmQgdGhl
+biBjYWxsIHRhYmxlX2RlcHMoKSBhZnRlciBkbV9wdXRfdGFibGVfZGV2aWNlKCksCj4gaXQgd2ls
+bCBsZWFkIHRvIGNvbmN1cnJlbmN5IFVBRiBidWdzLgo+IAo+IE9uZSBvZiB0aGUgY29uY3VycmVu
+Y3kgVUFGIGNhbiBiZSBzaG93biBhcyBiZWxvdzoKPiAKPiAgICAgICAgICAgKFVTRSkgICAgICAg
+ICAgICAgICAgICAgICAgICB8ICAgIChGUkVFKQo+ICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgIHwgIHRhcmdldF9tZXNzYWdlCj4gICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgfCAgICBtdWx0aXBhdGhfbWVzc2FnZQo+ICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgIHwgICAgICBkbV9wdXRfZGV2aWNlCj4gICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgICAgICAgZG1fcHV0X3RhYmxlX2RldmljZSAj
+Cj4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgICAgICAgICBrZnJl
+ZSh0ZCkgICMgdGFibGVfZGV2aWNlICp0ZAo+IGlvY3RsICMgRE1fVEFCTEVfREVQU19DTUQgICAg
+ICAgICAgICAgfCAgICAgICAgIC4uLgo+ICAgIHRhYmxlX2RlcHMgICAgICAgICAgICAgICAgICAg
+ICAgICAgIHwgICAgICAgICAuLi4KPiAgICBkbV9nZXRfbGl2ZV9vcl9pbmFjdGl2ZV90YWJsZSAg
+ICAgICB8ICAgICAgICAgLi4uCj4gICAgICByZXRyaWV2ZV9kZXAgICAgICAgICAgICAgICAgICAg
+ICAgfCAgICAgICAgIC4uLgo+ICAgICAgbGlzdF9mb3JfZWFjaF9lbnRyeSAgICAgICAgICAgICAg
+IHwgICAgICAgICAuLi4KPiAgICAgICAgZGVwcy0+ZGV2W2NvdW50KytdID0gICAgICAgICAgICB8
+ICAgICAgICAgLi4uCj4gICAgICAgICAgICBodWdlX2VuY29kZV9kZXYgICAgICAgICAgICAgfCAg
+ICAgICAgIC4uLgo+ICAgICAgICAgICAgKGRkLT5kbV9kZXYtPmJkZXYtPmJkX2RldikgIHwgICAg
+ICAgIGxpc3RfZGVsKCZkZC0+bGlzdCkKPiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICB8ICAgICAgICBrZnJlZShkZCkgIyBkbV9kZXZfaW50ZXJuYWwKPiAKPiBUaGUgcm9v
+dCBjYXVzZSBvZiBVQUYgYnVncyBpcyB0aGF0IGZpbmRfZGV2aWNlKCkgZmFpbGVkIGluCj4gZG1f
+Z2V0X2RldmljZSgpIGFuZCB3aWxsIGNyZWF0ZSBkZCBhbmQgcmVmY291bnQgc2V0IDEsIGtmcmVl
+KCkKPiBpbiBkbV9wdXRfdGFibGUoKSBpcyBub3QgcHJvdGVjdGVkLiBXaGVuIHRkLCB3aGljaCB0
+aGVyZSBhcmUKPiBzdGlsbCBwb2ludGVycyBwb2ludCB0bywgaXMgcmVsZWFzZWQsIHRoZSBjb25j
+dXJyZW5jeSBVQUYgYnVnCj4gd2lsbCBoYXBwZW4uCj4gCj4gVGhpcyBwYXRjaCBhZGQgYSBmbGFn
+IHRvIGRldGVybWluZSB3aGV0aGVyIHRvIGNyZWF0ZSBhIG5ldyBkZC4KPiAKPiBTaWduZWQtb2Zm
+LWJ5OiBMdW8gTWVuZyA8bHVvbWVuZzEyQGh1YXdlaS5jb20+Cj4gLS0tCj4gICBkcml2ZXJzL21k
+L2RtLW1wYXRoLmMgICAgICAgICB8ICAyICstCj4gICBkcml2ZXJzL21kL2RtLXRhYmxlLmMgICAg
+ICAgICB8IDQzICsrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0tCj4gICBpbmNsdWRl
+L2xpbnV4L2RldmljZS1tYXBwZXIuaCB8ICAyICsrCj4gICAzIGZpbGVzIGNoYW5nZWQsIDI5IGlu
+c2VydGlvbnMoKyksIDE4IGRlbGV0aW9ucygtKQo+IAo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21k
+L2RtLW1wYXRoLmMgYi9kcml2ZXJzL21kL2RtLW1wYXRoLmMKPiBpbmRleCBmNDcxOWI2NWU1ZTMu
+LjFmOGIyOWVkNzk3OSAxMDA2NDQKPiAtLS0gYS9kcml2ZXJzL21kL2RtLW1wYXRoLmMKPiArKysg
+Yi9kcml2ZXJzL21kL2RtLW1wYXRoLmMKPiBAQCAtMTk5OSw3ICsxOTk5LDcgQEAgc3RhdGljIGlu
+dCBtdWx0aXBhdGhfbWVzc2FnZShzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSwgdW5zaWduZWQgYXJnYywg
+Y2hhciAqKmFyZ3YsCj4gICAJCWdvdG8gb3V0Owo+ICAgCX0KPiAgIAo+IC0JciA9IGRtX2dldF9k
+ZXZpY2UodGksIGFyZ3ZbMV0sIGRtX3RhYmxlX2dldF9tb2RlKHRpLT50YWJsZSksICZkZXYpOwo+
+ICsJciA9IF9fZG1fZ2V0X2RldmljZSh0aSwgYXJndlsxXSwgZG1fdGFibGVfZ2V0X21vZGUodGkt
+PnRhYmxlKSwgJmRldiwgZmFsc2UpOwo+ICAgCWlmIChyKSB7Cj4gICAJCURNV0FSTigibWVzc2Fn
+ZTogZXJyb3IgZ2V0dGluZyBkZXZpY2UgJXMiLAo+ICAgCQkgICAgICAgYXJndlsxXSk7Cj4gZGlm
+ZiAtLWdpdCBhL2RyaXZlcnMvbWQvZG0tdGFibGUuYyBiL2RyaXZlcnMvbWQvZG0tdGFibGUuYwo+
+IGluZGV4IGU0MzA5NmNmZTllMi4uYjhmYzdlMGFmYjg0IDEwMDY0NAo+IC0tLSBhL2RyaXZlcnMv
+bWQvZG0tdGFibGUuYwo+ICsrKyBiL2RyaXZlcnMvbWQvZG0tdGFibGUuYwo+IEBAIC0zNDAsMTIg
+KzM0MCw4IEBAIGRldl90IGRtX2dldF9kZXZfdChjb25zdCBjaGFyICpwYXRoKQo+ICAgfQo+ICAg
+RVhQT1JUX1NZTUJPTF9HUEwoZG1fZ2V0X2Rldl90KTsKPiAgIAo+IC0vKgo+IC0gKiBBZGQgYSBk
+ZXZpY2UgdG8gdGhlIGxpc3QsIG9yIGp1c3QgaW5jcmVtZW50IHRoZSB1c2FnZSBjb3VudCBpZgo+
+IC0gKiBpdCdzIGFscmVhZHkgcHJlc2VudC4KPiAtICovCj4gLWludCBkbV9nZXRfZGV2aWNlKHN0
+cnVjdCBkbV90YXJnZXQgKnRpLCBjb25zdCBjaGFyICpwYXRoLCBmbW9kZV90IG1vZGUsCj4gLQkJ
+ICBzdHJ1Y3QgZG1fZGV2ICoqcmVzdWx0KQo+ICtpbnQgX19kbV9nZXRfZGV2aWNlKHN0cnVjdCBk
+bV90YXJnZXQgKnRpLCBjb25zdCBjaGFyICpwYXRoLCBmbW9kZV90IG1vZGUsCj4gKwkJICAgIHN0
+cnVjdCBkbV9kZXYgKipyZXN1bHQsIGJvb2wgY3JlYXRlX2RkKQo+ICAgewo+ICAgCWludCByOwo+
+ICAgCWRldl90IGRldjsKPiBAQCAtMzY5LDE5ICszNjUsMjEgQEAgaW50IGRtX2dldF9kZXZpY2Uo
+c3RydWN0IGRtX3RhcmdldCAqdGksIGNvbnN0IGNoYXIgKnBhdGgsIGZtb2RlX3QgbW9kZSwKPiAg
+IAo+ICAgCWRkID0gZmluZF9kZXZpY2UoJnQtPmRldmljZXMsIGRldik7Cj4gICAJaWYgKCFkZCkg
+ewo+IC0JCWRkID0ga21hbGxvYyhzaXplb2YoKmRkKSwgR0ZQX0tFUk5FTCk7Cj4gLQkJaWYgKCFk
+ZCkKPiAtCQkJcmV0dXJuIC1FTk9NRU07Cj4gLQo+IC0JCWlmICgociA9IGRtX2dldF90YWJsZV9k
+ZXZpY2UodC0+bWQsIGRldiwgbW9kZSwgJmRkLT5kbV9kZXYpKSkgewo+IC0JCQlrZnJlZShkZCk7
+Cj4gLQkJCXJldHVybiByOwo+IC0JCX0KPiArCQlpZiAoY3JlYXRlX2RkKSB7Cj4gKwkJCWRkID0g
+a21hbGxvYyhzaXplb2YoKmRkKSwgR0ZQX0tFUk5FTCk7Cj4gKwkJCWlmICghZGQpCj4gKwkJCQly
+ZXR1cm4gLUVOT01FTTsKPiAgIAo+IC0JCXJlZmNvdW50X3NldCgmZGQtPmNvdW50LCAxKTsKPiAt
+CQlsaXN0X2FkZCgmZGQtPmxpc3QsICZ0LT5kZXZpY2VzKTsKPiAtCQlnb3RvIG91dDsKPiArCQkJ
+aWYgKChyID0gZG1fZ2V0X3RhYmxlX2RldmljZSh0LT5tZCwgZGV2LCBtb2RlLCAmZGQtPmRtX2Rl
+dikpKSB7Cj4gKwkJCQlrZnJlZShkZCk7Cj4gKwkJCQlyZXR1cm4gcjsKPiArCQkJfQo+ICAgCj4g
+KwkJCXJlZmNvdW50X3NldCgmZGQtPmNvdW50LCAxKTsKPiArCQkJbGlzdF9hZGQoJmRkLT5saXN0
+LCAmdC0+ZGV2aWNlcyk7Cj4gKwkJCWdvdG8gb3V0Owo+ICsJCX0gZWxzZQo+ICsJCQlyZXR1cm4g
+LUVOT0RFVjsKPiAgIAl9IGVsc2UgaWYgKGRkLT5kbV9kZXYtPm1vZGUgIT0gKG1vZGUgfCBkZC0+
+ZG1fZGV2LT5tb2RlKSkgewo+ICAgCQlyID0gdXBncmFkZV9tb2RlKGRkLCBtb2RlLCB0LT5tZCk7
+Cj4gICAJCWlmIChyKQo+IEBAIC0zOTIsNiArMzkwLDE3IEBAIGludCBkbV9nZXRfZGV2aWNlKHN0
+cnVjdCBkbV90YXJnZXQgKnRpLCBjb25zdCBjaGFyICpwYXRoLCBmbW9kZV90IG1vZGUsCj4gICAJ
+KnJlc3VsdCA9IGRkLT5kbV9kZXY7Cj4gICAJcmV0dXJuIDA7Cj4gICB9Cj4gK0VYUE9SVF9TWU1C
+T0woX19kbV9nZXRfZGV2aWNlKTsKPiArCj4gKy8qCj4gKyAqIEFkZCBhIGRldmljZSB0byB0aGUg
+bGlzdCwgb3IganVzdCBpbmNyZW1lbnQgdGhlIHVzYWdlIGNvdW50IGlmCj4gKyAqIGl0J3MgYWxy
+ZWFkeSBwcmVzZW50Lgo+ICsgKi8KPiAraW50IGRtX2dldF9kZXZpY2Uoc3RydWN0IGRtX3Rhcmdl
+dCAqdGksIGNvbnN0IGNoYXIgKnBhdGgsIGZtb2RlX3QgbW9kZSwKPiArCQkgIHN0cnVjdCBkbV9k
+ZXYgKipyZXN1bHQpCj4gK3sKPiArCXJldHVybiBfX2RtX2dldF9kZXZpY2UodGksIHBhdGgsIG1v
+ZGUsIHJlc3VsdCwgdHJ1ZSk7Cj4gK30KPiAgIEVYUE9SVF9TWU1CT0woZG1fZ2V0X2RldmljZSk7
+Cj4gICAKPiAgIHN0YXRpYyBpbnQgZG1fc2V0X2RldmljZV9saW1pdHMoc3RydWN0IGRtX3Rhcmdl
+dCAqdGksIHN0cnVjdCBkbV9kZXYgKmRldiwKPiBkaWZmIC0tZ2l0IGEvaW5jbHVkZS9saW51eC9k
+ZXZpY2UtbWFwcGVyLmggYi9pbmNsdWRlL2xpbnV4L2RldmljZS1tYXBwZXIuaAo+IGluZGV4IGIy
+NmZlY2Y2YzhlOC4uYTFiNDQ3ODllM2RjIDEwMDY0NAo+IC0tLSBhL2luY2x1ZGUvbGludXgvZGV2
+aWNlLW1hcHBlci5oCj4gKysrIGIvaW5jbHVkZS9saW51eC9kZXZpY2UtbWFwcGVyLmgKPiBAQCAt
+MTY4LDYgKzE2OCw4IEBAIGRldl90IGRtX2dldF9kZXZfdChjb25zdCBjaGFyICpwYXRoKTsKPiAg
+IGludCBkbV9nZXRfZGV2aWNlKHN0cnVjdCBkbV90YXJnZXQgKnRpLCBjb25zdCBjaGFyICpwYXRo
+LCBmbW9kZV90IG1vZGUsCj4gICAJCSAgc3RydWN0IGRtX2RldiAqKnJlc3VsdCk7Cj4gICB2b2lk
+IGRtX3B1dF9kZXZpY2Uoc3RydWN0IGRtX3RhcmdldCAqdGksIHN0cnVjdCBkbV9kZXYgKmQpOwo+
+ICtpbnQgX19kbV9nZXRfZGV2aWNlKHN0cnVjdCBkbV90YXJnZXQgKnRpLCBjb25zdCBjaGFyICpw
+YXRoLCBmbW9kZV90IG1vZGUsCj4gKwkJICAgIHN0cnVjdCBkbV9kZXYgKipyZXN1bHQsIGJvb2wg
+Y3JlYXRlX2RkKTsKPiAgIAo+ICAgLyoKPiAgICAqIEluZm9ybWF0aW9uIGFib3V0IGEgdGFyZ2V0
+IHR5cGUKPiAKCi0tCmRtLWRldmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0
+dHBzOi8vbGlzdG1hbi5yZWRoYXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
 
