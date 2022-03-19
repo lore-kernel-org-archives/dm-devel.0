@@ -4,70 +4,69 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5760BC433EF
-	for <dm-devel@archiver.kernel.org>; Sat, 19 Mar 2022 07:28:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 678F1C433EF
+	for <dm-devel@archiver.kernel.org>; Sat, 19 Mar 2022 07:34:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-10-fcyRvFyJPgyVhcXy8rq0Tg-1; Sat, 19 Mar 2022 03:28:28 -0400
-X-MC-Unique: fcyRvFyJPgyVhcXy8rq0Tg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-178-q2uY2omKPbGdM0MayHZp3w-1; Sat, 19 Mar 2022 03:34:17 -0400
+X-MC-Unique: q2uY2omKPbGdM0MayHZp3w-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0211118A0160;
-	Sat, 19 Mar 2022 07:28:27 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 154A5185A79C;
+	Sat, 19 Mar 2022 07:34:16 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id CE1AB40CF8F4;
-	Sat, 19 Mar 2022 07:28:25 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B280A401474;
+	Sat, 19 Mar 2022 07:34:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9722A194035B;
-	Sat, 19 Mar 2022 07:28:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 37294194035B;
+	Sat, 19 Mar 2022 07:34:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 1912C1940341
- for <dm-devel@listman.corp.redhat.com>; Sat, 19 Mar 2022 07:28:24 +0000 (UTC)
+ ESMTP id 0E1A91940341
+ for <dm-devel@listman.corp.redhat.com>; Sat, 19 Mar 2022 07:34:12 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id DEF5A76F0; Sat, 19 Mar 2022 07:28:23 +0000 (UTC)
+ id DE38540314C; Sat, 19 Mar 2022 07:34:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D96637AE8
- for <dm-devel@redhat.com>; Sat, 19 Mar 2022 07:28:20 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D94CD401E24
+ for <dm-devel@redhat.com>; Sat, 19 Mar 2022 07:34:12 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BA4A6185A7A4
- for <dm-devel@redhat.com>; Sat, 19 Mar 2022 07:28:20 +0000 (UTC)
-Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
- [205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BA075380350B
+ for <dm-devel@redhat.com>; Sat, 19 Mar 2022 07:34:12 +0000 (UTC)
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
+ [205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-41-4JeT8ahuMiaQg24LlkAPOQ-1; Sat, 19 Mar 2022 03:28:17 -0400
-X-MC-Unique: 4JeT8ahuMiaQg24LlkAPOQ-1
-Received: from pps.filterd (m0246631.ppops.net [127.0.0.1])
- by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 22J1uTjd027608; 
- Sat, 19 Mar 2022 06:29:20 GMT
+ us-mta-624-cXoOImoUMN2yzLmuzyeLfA-1; Sat, 19 Mar 2022 03:34:11 -0400
+X-MC-Unique: cXoOImoUMN2yzLmuzyeLfA-1
+Received: from pps.filterd (m0246629.ppops.net [127.0.0.1])
+ by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 22J3CLUq001925; 
+ Sat, 19 Mar 2022 06:29:29 GMT
 Received: from userp3020.oracle.com (userp3020.oracle.com [156.151.31.79])
- by mx0b-00069f02.pphosted.com with ESMTP id 3ew5y1r5c0-1
+ by mx0b-00069f02.pphosted.com with ESMTP id 3ew72a844w-1
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Sat, 19 Mar 2022 06:29:20 +0000
+ Sat, 19 Mar 2022 06:29:29 +0000
 Received: from pps.filterd (userp3020.oracle.com [127.0.0.1])
- by userp3020.oracle.com (8.16.1.2/8.16.1.2) with SMTP id 22J6M8Ng027457;
- Sat, 19 Mar 2022 06:29:19 GMT
+ by userp3020.oracle.com (8.16.1.2/8.16.1.2) with SMTP id 22J6MkAK028031;
+ Sat, 19 Mar 2022 06:29:27 GMT
 Received: from nam02-dm3-obe.outbound.protection.outlook.com
- (mail-dm3nam07lp2044.outbound.protection.outlook.com [104.47.56.44])
- by userp3020.oracle.com with ESMTP id 3ew8mfrwkm-1
+ (mail-dm3nam07lp2049.outbound.protection.outlook.com [104.47.56.49])
+ by userp3020.oracle.com with ESMTP id 3ew8mfrwm7-1
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Sat, 19 Mar 2022 06:29:18 +0000
+ Sat, 19 Mar 2022 06:29:27 +0000
 Received: from SJ0PR10MB4429.namprd10.prod.outlook.com (2603:10b6:a03:2d1::14)
  by CY4PR10MB1798.namprd10.prod.outlook.com (2603:10b6:903:126::17)
  with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5081.17; Sat, 19 Mar
- 2022 06:29:17 +0000
+ 2022 06:29:25 +0000
 Received: from SJ0PR10MB4429.namprd10.prod.outlook.com
  ([fe80::2092:8e36:64c0:a336]) by SJ0PR10MB4429.namprd10.prod.outlook.com
  ([fe80::2092:8e36:64c0:a336%8]) with mapi id 15.20.5081.019; Sat, 19 Mar 2022
- 06:29:17 +0000
+ 06:29:25 +0000
 From: Jane Chu <jane.chu@oracle.com>
 To: david@fromorbit.com, djwong@kernel.org, dan.j.williams@intel.com,
  hch@infradead.org, vishal.l.verma@intel.com, dave.jiang@intel.com,
@@ -75,8 +74,8 @@ To: david@fromorbit.com, djwong@kernel.org, dan.j.williams@intel.com,
  ira.weiny@intel.com, willy@infradead.org, vgoyal@redhat.com,
  linux-fsdevel@vger.kernel.org, nvdimm@lists.linux.dev,
  linux-kernel@vger.kernel.org, linux-xfs@vger.kernel.org
-Date: Sat, 19 Mar 2022 00:28:30 -0600
-Message-Id: <20220319062833.3136528-4-jane.chu@oracle.com>
+Date: Sat, 19 Mar 2022 00:28:32 -0600
+Message-Id: <20220319062833.3136528-6-jane.chu@oracle.com>
 In-Reply-To: <20220319062833.3136528-1-jane.chu@oracle.com>
 References: <20220319062833.3136528-1-jane.chu@oracle.com>
 X-ClientProxiedBy: BY5PR16CA0025.namprd16.prod.outlook.com
@@ -84,53 +83,52 @@ X-ClientProxiedBy: BY5PR16CA0025.namprd16.prod.outlook.com
  (2603:10b6:a03:2d1::14)
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: cc0170ff-0df4-4825-82da-08da0971cadc
+X-MS-Office365-Filtering-Correlation-Id: ff731b21-4de3-4ac7-3e2e-08da0971d03a
 X-MS-TrafficTypeDiagnostic: CY4PR10MB1798:EE_
-X-Microsoft-Antispam-PRVS: <CY4PR10MB1798CC1C92DC68DEE8AF7544F3149@CY4PR10MB1798.namprd10.prod.outlook.com>
+X-Microsoft-Antispam-PRVS: <CY4PR10MB1798E0E9931C1FC341563E92F3149@CY4PR10MB1798.namprd10.prod.outlook.com>
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: boM44YyIcnKPVPXYOi4Cd3P99cPpPUxid68zP7VdyHHKBmR5Z1yuRfsE+uP0D9uwIDhR/eyHZsjcY600anM+OCG5JQOZnwHZjqrlwuafZjEifDzEWPbT1It2yHirLSbFPGoJYWRuxfhCLJENfhI2ENqxKfQZvon18yQkJsUuxPdDNVhTIKvCn+G5651oS0mZTVw4EEnD2gaT5l5P8I4zJ8MPuw7Mnc0FLMe48opVV00qdWZClLRw2OcFGMxp9q0x/TyxVUbxpyUtL7pT0hkkK9iSaGNcc4LUDGxsMvcnVk46rvVy8e6iCVHWYrCM3SohtWZocoEpI2N0pVsvdJQiTaAS4KCYbmmOk8asYkecUfJbNM7v+baVB8apRv6cbiULxFVK9qaoVDrgFj8vVgc55AdiIe8BaTo18JjoyHCTDOpjyIR6XWuyC7yq3NajVW6Hgj2tBgSMDRiFi6QjQk8NLYc1NTuVvrJSIkDHO7s0ZDMuDDeiQyxbUObcCwq9U6rpQkB1vp9xtM4wjXSlvkU/LLwWB1v6lnqckdboT8MTTjMK3gU7I9GqtE4gWySXzaZSXU35KW1oPCOF88WpfHAEbPzpnarv4fAFggG4UurUIj/uDCoz/HEqbifZfhFhbIo4LzzmdyKiNDW7+sP3C9iy+/8UxO74r2sLWClINmJCSkJZlZ36nRTxCEWKQO0+3qorjQyrzraCEO1/Wjuo/DGD6BqMxJyA1hfcHeJCTylE8NCwP/jqS7mps16RDDSls5IydeYEnVNeglDeXIUbCZ6uqw==
+X-Microsoft-Antispam-Message-Info: paAS/Y84TQ6hkW/JLc+m6KtLnhML5FxwrxxrKRIwkz3s3QD2cH7FUQ34B37y9QA6uowbWeFyWwWyEEHMuo1N8cBcUtN2i1FUwCoj0LFcxBVZA7UQigovBpnAwIX1P+XOwzv01AY/cQ3Li04pGU0fGSdDDKid8+ty1yjwVqi/wrykn0UZRDM/biaKUmCEaDpAfxRMM9/gB6PfOZdeGnCDM8njOuiEj49fhCDscmqCKV8zmtkM8qZaFRInbG7RUEDNxjd4XtGVtxxEdPYgLbIQfp1lfqEn8M0C/nbPCUEZJnjyylsWG927stwqdru6NZbVs3hJrCWUZ6FJdf8JiGjlnFighqMU/UNNrqJgkaQV07jn+T92F+fXgwUj/EHx18ykFPnYAU39NxFSjRpMT4gLvt4UXaKpdffqnXCt+6yLqcHPWx8Vm251c8e4zkLk4iGN9akQOq+gch5iWM9fUyY0ZxjxOYBNkXHqz6+Vc87T3BRwUqtsp42PCTaYgnPvhMfBzNo34tTVstwk1xVMDeo9lLdsXQL7JyFu2xSI4CKqrs79bUrDuxhvGWQUYrijPwWntae4dpsjpbNs2e1N+p9CJcWmnLjrDyvogZ7b15Dex9QmHv9ZSRPUeJzcJG3PcIvpULV1OzIuq5GVHm6MSh0LLdRonCkEukZqvD7df1Hl39WU2U0jM4pMb3yDPb7CFIN0
 X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
  IPV:NLI; SFV:NSPM; H:SJ0PR10MB4429.namprd10.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230001)(366004)(52116002)(6512007)(66476007)(8676002)(83380400001)(66556008)(316002)(6506007)(2906002)(38100700002)(66946007)(508600001)(44832011)(966005)(5660300002)(8936002)(7416002)(36756003)(1076003)(6486002)(86362001)(186003)(2616005)(921005)(6666004);
+ SFS:(13230001)(366004)(52116002)(6512007)(66476007)(8676002)(83380400001)(66556008)(316002)(6506007)(2906002)(38100700002)(66946007)(508600001)(44832011)(5660300002)(8936002)(7416002)(36756003)(1076003)(6486002)(86362001)(186003)(2616005)(921005)(6666004);
  DIR:OUT; SFP:1101
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?d6MmD1lFSZrIGH5rew5M6omIiM927Tu2Sr5Nt3h4u0zTy8MlERFPUZhdp/wF?=
- =?us-ascii?Q?PjczuwW4ctCgySaesAyjA1xVvdpXoCBVD8wFuqD8Ok4EJBEjlJV4uhJ5hbQR?=
- =?us-ascii?Q?gG+2LMOpH7OGgDJuYTsc5y9k4pIxEFES9p2NfZjkj9QwRgTIuRABUMgbtDf1?=
- =?us-ascii?Q?jmqaKFoFRyV9zL5yhLaUezbAEMZLlvdUxvHJ5s5BP0Vq4ipyaM1+eK0NipsO?=
- =?us-ascii?Q?nBu85a26iQ5Ei1fKivmd3vqSSPmOm1QqwaJQ9NM3mBBDr62FofPhdHWolf9j?=
- =?us-ascii?Q?7SVVU5E0J3lKPrzoVmMLt2qT0L2W6cKWgD2BgNh4DpNyN+c7Ot+RWRdAkN1N?=
- =?us-ascii?Q?7ukwXk1ETzYoPh2BfNf+9e3nONIJwu7HQCE+hAo+ln4W6Iiep4lKwQv/YzcL?=
- =?us-ascii?Q?OOGgd7hLztK7xyRh4N8sXZ8yU/EdEdC2C1a5iEr3cI72v4+L24HawSpxwKDv?=
- =?us-ascii?Q?oHGe+v4rNwNF5hGkyZ9dAsLBg+Zp3/VBwknlX8I4KsTG5r3skuZvIl/+WssX?=
- =?us-ascii?Q?JgzkH0RBg8LdGjX6CxZyv22UrLVnDIlIdPIA4RTnWgz6PCeKbvDnZoPdOVjr?=
- =?us-ascii?Q?hn2hvT6+fmxVfwEhKAz1qCfaQhTjTuweUw97p2ltvP1qYF711odEdNPqBvE6?=
- =?us-ascii?Q?EmBM9mqd2PvjARNd8Kbz8re7Ehkdw/jNZ7gCbauiJDgXjDSKmdfMppaRsrFo?=
- =?us-ascii?Q?TuCCk7xV2N7vaJMzXvw8lHXX4FoijMqvHASu8mRn8UTMbQaC1UvSKL+gIgSb?=
- =?us-ascii?Q?Dw2bbd2C6yLW97fNMnpqp69H1Z7P/4wmDdB1ufYqBt5AUH/gdMyUdb6bhQgq?=
- =?us-ascii?Q?+wINbIVLOOva8Uho+pZez0b9vL6dWq6kJ6Vwl8mV+MCSVPn6MzZghJj/V+Cj?=
- =?us-ascii?Q?FoAGflxvYVLvk3WcqFYbtZr/HB2uXzaGTIamcouKcUsc+UMDVMuRqKGOYrdv?=
- =?us-ascii?Q?BFaDTs/ByFxyFZuy7ZxSW0QJP9QMbD3El4YKzL5nneatJ6TKFKZe0ucTMgA4?=
- =?us-ascii?Q?Z5UbS2QHEHWcOrdvhZz1UIrHRZ7dCfgLBPHCe8pNLPB2m+C8ETyYEFYYdlkC?=
- =?us-ascii?Q?qzdeVPf3gDmxzV1N+NO9M7myLLxe4YaD+B3Zsi8FASa3csAaDeDlv8+rt0Du?=
- =?us-ascii?Q?lJZf4tF48czT2Pa6VHo0UzajeItARyonVLgsq4yCTqyN7zaSmPXhrBsoTV2i?=
- =?us-ascii?Q?S4SPVdM4PEzo526Y105mFpXrAYop9Ce47w0iEY7gfCcZdWRnUYsJ3A8c711Q?=
- =?us-ascii?Q?gDHR634RlFmSRYMw2Ac4GhDtdJCutJ09zuJjJ/Tcj6adeydWW7epWIySZU83?=
- =?us-ascii?Q?SSb2bzb2NyIMA6ClgD9BYqeN7VR3o2oEevJBVs7vfpK2yWZC24v9wOLnF/Yk?=
- =?us-ascii?Q?u7hKj4KZIB1VxJI5sL+Z88E8ZAHINC1ZD3jG4eLcV4bL7qr/zdzOLnXlrfhA?=
- =?us-ascii?Q?9HnfcA/VCmmm5SnhEzDg7qBBYnuiPPfjfbwTLC15H7qj7PQ/AR4PBoRKmgw6?=
- =?us-ascii?Q?UY4NTEiNtM3IhP4=3D?=
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?I0R42Bw60kqrRT3eBvL7jFBpeDP5VMw/+WfxZkI36Itr8WvaCnEmNkmXhUUo?=
+ =?us-ascii?Q?roYiwSgXuhxIC0d8QQ0sV9trOLg3mhxjhUQcue6Cv3E98vOeScL0EMkZ3GeZ?=
+ =?us-ascii?Q?HUZ1sw3EPNaQMAcdWaLnj+fEA6AF5rkC813TPrpe+eAZJg8NP7FGgmh2hAv+?=
+ =?us-ascii?Q?1raCjJrKiEhMleyYXVN4k6VsIAmUbhCqynoht8avt7H0InszopkeAwrtiTsB?=
+ =?us-ascii?Q?1shEGkHd5yXGvR2V47fmJNUoH8LSFCELtpuaMrniwyUL4oyrznblSADv+LDy?=
+ =?us-ascii?Q?AA0kEJTzx2AuUZyRp4ztkk/n5zn5gKj1AThp0k5qB2NUvNfZqnveBrGFVNx4?=
+ =?us-ascii?Q?/6kWCGiR4c3bpW7H3RaR6fokAHbG1fK2L9Li1cp0d+/FzfXhUc26S0/bl3iY?=
+ =?us-ascii?Q?w7Am5VVK9INAJCiAEgUZwy4hYF50rsriw9IFWu/qficSNkQcbDwp6P0ANajx?=
+ =?us-ascii?Q?9PvBhcrN78SzBiZ5Pj0nx+q+qn3SGfeZ4ZzNAnG8GkBTOlGUAFCLfMRLHYZ0?=
+ =?us-ascii?Q?WHG2Z/otH3M0UKoFog83Rh+o9433AYcHgiXQ3T+Fbm/Jkx+2RUiUU2DB2wYB?=
+ =?us-ascii?Q?TomDDH0o0v6aZGGQ0q+C/5Nbn/9fXSZe5uh5rnTLCI6zqZtsvR3OQyWNtIHz?=
+ =?us-ascii?Q?sGFItN0PkjuJwX7T6Bl0e86wb223KbVLqBU8t1Vc18rALlRPvqRa2r56NQSP?=
+ =?us-ascii?Q?1dUTOmlDfm+LqdJIsSgjLTFSy8CzE76E8KMh+yF1y9QDky2bj339pKtO3nu0?=
+ =?us-ascii?Q?sDCepHC+9ow86lycjT/j4hzwlZznWigp3SexGAdH0/SJQG3TcbAfc7f1jaQC?=
+ =?us-ascii?Q?Du1jXln8x4hQERTamndjq4mcahCpZ5naKueiZKf/Sko1SadSlLpbPURAeJSB?=
+ =?us-ascii?Q?u3PWsazsWsONF3S6MKTi0EcRGBnVp+iS2Z/R9+lU/M2hpdMPjbzej085wyTn?=
+ =?us-ascii?Q?b8T1EaNitn5EVCKv1egukm65I7ou25uoiZ+t9WqbmZ6mKLhTJs4MmHU9aq+P?=
+ =?us-ascii?Q?9wXxUEja9LJqjpGQq05uy5bms1FfD5FqWUJxbJxDbgpQxEsimS7iD2vq+aPR?=
+ =?us-ascii?Q?1qsnA/Uj1y1H/ns0tdLhOUeDraw5qEPa4ESaraGv8Hy1CVrytVNSMNtBHXaZ?=
+ =?us-ascii?Q?2kT6iKBuvs6K4b9igp9LRwlFDwy13d8AjyUTbcMxTGKgEpF4aNFqWkrt7CyT?=
+ =?us-ascii?Q?YRYtWZATi0dvyipk3cXzdoGlEyRK57wsf5c0g73Z9K1W2tRat3g5ca6AaUoN?=
+ =?us-ascii?Q?QWWeSz/YzENYrf8L07W1rjdJs1sIODTHzNrrfF75sTEyEbHQ8sZCdyneDEBW?=
+ =?us-ascii?Q?2qPNsxktqXIMLoTdYeS37Tped77TlL67OZPdFuBlJhUYvhfb1s8qJoEbZ/fN?=
+ =?us-ascii?Q?6+v84IVy/2jsvVYH6mqCpwl7zYxs5+EeeCmhX7aEcSr8znnFZGpQBHAOrvYp?=
+ =?us-ascii?Q?F2+YU/Vdgffp7j5g52/hJbnS1vaf5v9vS8pBZxAR/eQoMbAyi4d5fQ=3D=3D?=
 X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: cc0170ff-0df4-4825-82da-08da0971cadc
+X-MS-Exchange-CrossTenant-Network-Message-Id: ff731b21-4de3-4ac7-3e2e-08da0971d03a
 X-MS-Exchange-CrossTenant-AuthSource: SJ0PR10MB4429.namprd10.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 19 Mar 2022 06:29:16.9824 (UTC)
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 19 Mar 2022 06:29:25.8278 (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: 3vmMtnUI39iMVlam3Dsvcrp/oXczj6ZCvUl3Ki1TtP/RNFoPgkrNAsgeisW31geMrnXpKR4DM8e9LBWiEeYefg==
+X-MS-Exchange-CrossTenant-UserPrincipalName: B4TH/Ph8H0gSf0ZPbrq1zZQuxEtX6sSIRVssH74hWAnaKpLwvY1nphUmlvTiAabUibZ7L1dU9LDs5fHbwIESew==
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: CY4PR10MB1798
 X-Proofpoint-Virus-Version: vendor=nai engine=6300 definitions=10290
  signatures=694221
@@ -139,8 +137,8 @@ X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 suspectscore=0
  malwarescore=0 mlxlogscore=999 phishscore=0 spamscore=0 mlxscore=0
  classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2202240000
  definitions=main-2203190038
-X-Proofpoint-GUID: rGe-jUCbnLULhNV454fh_8CjQ8bcRNa-
-X-Proofpoint-ORIG-GUID: rGe-jUCbnLULhNV454fh_8CjQ8bcRNa-
+X-Proofpoint-GUID: 4oZ6RGTnhXNXOFF_gMavcjLIr8l2ndsq
+X-Proofpoint-ORIG-GUID: 4oZ6RGTnhXNXOFF_gMavcjLIr8l2ndsq
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -148,9 +146,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-Subject: [dm-devel] [PATCH v6 3/6] mce: fix set_mce_nospec to always unmap
- the whole page
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: [dm-devel] [PATCH v6 5/6] pmem: refactor pmem_clear_poison()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -164,7 +161,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -172,167 +169,135 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Mark poisoned page as not present, and to reverse the 'np' effect,
-restate the _PAGE_PRESENT bit. Please refer to discussions here for
-reason behind the decision.
-https://lore.kernel.org/all/CAPcyv4hrXPb1tASBZUg-GgdVs0OOFKXMXLiHmktg_kFi7YBMyQ@mail.gmail.com/
+Refactor the pmem_clear_poison() in order to share common code
+later.
 
-Now since poisoned page is marked as not-present, in order to
-avoid writing to a 'np' page and trigger kernel Oops, also fix
-pmem_do_write().
-
-Fixes: 284ce4011ba6 ("x86/memory_failure: Introduce {set, clear}_mce_nospec()")
 Signed-off-by: Jane Chu <jane.chu@oracle.com>
 ---
- arch/x86/kernel/cpu/mce/core.c |  6 +++---
- arch/x86/mm/pat/set_memory.c   | 21 +++++++++------------
- drivers/nvdimm/pmem.c          | 31 +++++++------------------------
- include/linux/set_memory.h     |  4 ++--
- 4 files changed, 21 insertions(+), 41 deletions(-)
+ drivers/nvdimm/pmem.c | 81 ++++++++++++++++++++++++++++++-------------
+ 1 file changed, 56 insertions(+), 25 deletions(-)
 
-diff --git a/arch/x86/kernel/cpu/mce/core.c b/arch/x86/kernel/cpu/mce/core.c
-index 5818b837fd4d..8d12739f283d 100644
---- a/arch/x86/kernel/cpu/mce/core.c
-+++ b/arch/x86/kernel/cpu/mce/core.c
-@@ -613,7 +613,7 @@ static int uc_decode_notifier(struct notifier_block *nb, unsigned long val,
- 
- 	pfn = mce->addr >> PAGE_SHIFT;
- 	if (!memory_failure(pfn, 0)) {
--		set_mce_nospec(pfn, whole_page(mce));
-+		set_mce_nospec(pfn);
- 		mce->kflags |= MCE_HANDLED_UC;
- 	}
- 
-@@ -1297,7 +1297,7 @@ static void kill_me_maybe(struct callback_head *cb)
- 
- 	ret = memory_failure(p->mce_addr >> PAGE_SHIFT, flags);
- 	if (!ret) {
--		set_mce_nospec(p->mce_addr >> PAGE_SHIFT, p->mce_whole_page);
-+		set_mce_nospec(p->mce_addr >> PAGE_SHIFT);
- 		sync_core();
- 		return;
- 	}
-@@ -1321,7 +1321,7 @@ static void kill_me_never(struct callback_head *cb)
- 	p->mce_count = 0;
- 	pr_err("Kernel accessed poison in user space at %llx\n", p->mce_addr);
- 	if (!memory_failure(p->mce_addr >> PAGE_SHIFT, 0))
--		set_mce_nospec(p->mce_addr >> PAGE_SHIFT, p->mce_whole_page);
-+		set_mce_nospec(p->mce_addr >> PAGE_SHIFT);
- }
- 
- static void queue_task_work(struct mce *m, char *msg, void (*func)(struct callback_head *))
-diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
-index 9abc6077d768..747614c3dd83 100644
---- a/arch/x86/mm/pat/set_memory.c
-+++ b/arch/x86/mm/pat/set_memory.c
-@@ -1925,14 +1925,14 @@ int set_memory_wb(unsigned long addr, int numpages)
- }
- EXPORT_SYMBOL(set_memory_wb);
- 
-+static int _set_memory_present(unsigned long addr, int numpages)
-+{
-+	return change_page_attr_set(&addr, numpages, __pgprot(_PAGE_PRESENT), 0);
-+}
-+
- #ifdef CONFIG_X86_64
--/*
-- * Prevent speculative access to the page by either unmapping
-- * it (if we do not require access to any part of the page) or
-- * marking it uncacheable (if we want to try to retrieve data
-- * from non-poisoned lines in the page).
-- */
--int set_mce_nospec(unsigned long pfn, bool unmap)
-+/* Prevent speculative access to a page by marking it not-present */
-+int set_mce_nospec(unsigned long pfn)
- {
- 	unsigned long decoy_addr;
- 	int rc;
-@@ -1954,10 +1954,7 @@ int set_mce_nospec(unsigned long pfn, bool unmap)
- 	 */
- 	decoy_addr = (pfn << PAGE_SHIFT) + (PAGE_OFFSET ^ BIT(63));
- 
--	if (unmap)
--		rc = set_memory_np(decoy_addr, 1);
--	else
--		rc = set_memory_uc(decoy_addr, 1);
-+	rc = set_memory_np(decoy_addr, 1);
- 	if (rc)
- 		pr_warn("Could not invalidate pfn=0x%lx from 1:1 map\n", pfn);
- 	return rc;
-@@ -1967,7 +1964,7 @@ EXPORT_SYMBOL(set_mce_nospec);
- /* Restore full speculative operation to the pfn. */
- int clear_mce_nospec(unsigned long pfn)
- {
--	return set_memory_wb((unsigned long) pfn_to_kaddr(pfn), 1);
-+	return _set_memory_present((unsigned long) pfn_to_kaddr(pfn), 1);
- }
- EXPORT_SYMBOL(clear_mce_nospec);
- 
 diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 58d95242a836..30c71a68175b 100644
+index 7cdaa279beca..18f357fbef69 100644
 --- a/drivers/nvdimm/pmem.c
 +++ b/drivers/nvdimm/pmem.c
-@@ -158,36 +158,19 @@ static blk_status_t pmem_do_write(struct pmem_device *pmem,
+@@ -45,10 +45,27 @@ static struct nd_region *to_region(struct pmem_device *pmem)
+ 	return to_nd_region(to_dev(pmem)->parent);
+ }
+ 
+-static void hwpoison_clear(struct pmem_device *pmem,
+-		phys_addr_t phys, unsigned int len)
++static phys_addr_t to_phys(struct pmem_device *pmem, phys_addr_t offset)
+ {
++	return pmem->phys_addr + offset;
++}
++
++static sector_t to_sect(struct pmem_device *pmem, phys_addr_t offset)
++{
++	return (offset - pmem->data_offset) / 512;
++}
++
++static phys_addr_t to_offset(struct pmem_device *pmem, sector_t sector)
++{
++	return sector * 512 + pmem->data_offset;
++}
++
++static void clear_hwpoison(struct pmem_device *pmem, phys_addr_t offset,
++		unsigned int len)
++{
++	phys_addr_t phys = to_phys(pmem, offset);
+ 	unsigned long pfn_start, pfn_end, pfn;
++	unsigned int blks = len / 512;
+ 
+ 	/* only pmem in the linear map supports HWPoison */
+ 	if (is_vmalloc_addr(pmem->virt_addr))
+@@ -67,33 +84,47 @@ static void hwpoison_clear(struct pmem_device *pmem,
+ 		if (test_and_clear_pmem_poison(page))
+ 			clear_mce_nospec(pfn);
+ 	}
++
++	dev_dbg(to_dev(pmem), "%#llx clear %u sector%s\n",
++		(unsigned long long) to_sect(pmem, offset), blks,
++		blks > 1 ? "s" : "");
+ }
+ 
+-static blk_status_t pmem_clear_poison(struct pmem_device *pmem,
+-		phys_addr_t offset, unsigned int len)
++static void clear_bb(struct pmem_device *pmem, sector_t sector, long blks)
+ {
+-	struct device *dev = to_dev(pmem);
+-	sector_t sector;
++	badblocks_clear(&pmem->bb, sector, blks);
++	if (pmem->bb_state)
++		sysfs_notify_dirent(pmem->bb_state);
++}
++
++static blk_status_t __pmem_clear_poison(struct pmem_device *pmem,
++		phys_addr_t offset, unsigned int len,
++		unsigned int *blks)
++{
++	phys_addr_t phys = to_phys(pmem, offset);
+ 	long cleared;
+-	blk_status_t rc = BLK_STS_OK;
+-
+-	sector = (offset - pmem->data_offset) / 512;
+-
+-	cleared = nvdimm_clear_poison(dev, pmem->phys_addr + offset, len);
+-	if (cleared < len)
+-		rc = BLK_STS_IOERR;
+-	if (cleared > 0 && cleared / 512) {
+-		hwpoison_clear(pmem, pmem->phys_addr + offset, cleared);
+-		cleared /= 512;
+-		dev_dbg(dev, "%#llx clear %ld sector%s\n",
+-				(unsigned long long) sector, cleared,
+-				cleared > 1 ? "s" : "");
+-		badblocks_clear(&pmem->bb, sector, cleared);
+-		if (pmem->bb_state)
+-			sysfs_notify_dirent(pmem->bb_state);
+-	}
++	blk_status_t rc;
+ 
++	cleared = nvdimm_clear_poison(to_dev(pmem), phys, len);
++	*blks = cleared / 512;
++	rc = (cleared < len) ? BLK_STS_IOERR : BLK_STS_OK;
++	if (cleared <= 0 || *blks == 0)
++		return rc;
++
++	clear_hwpoison(pmem, offset, cleared);
+ 	arch_invalidate_pmem(pmem->virt_addr + offset, len);
++	return rc;
++}
++
++static blk_status_t pmem_clear_poison(struct pmem_device *pmem,
++		phys_addr_t offset, unsigned int len)
++{
++	unsigned int blks;
++	blk_status_t rc;
++
++	rc = __pmem_clear_poison(pmem, offset, len, &blks);
++	if (blks > 0)
++		clear_bb(pmem, to_sect(pmem, offset), blks);
+ 
+ 	return rc;
+ }
+@@ -143,7 +174,7 @@ static blk_status_t pmem_do_read(struct pmem_device *pmem,
+ 			sector_t sector, unsigned int len)
+ {
+ 	blk_status_t rc;
+-	phys_addr_t pmem_off = sector * 512 + pmem->data_offset;
++	phys_addr_t pmem_off = to_offset(pmem, sector);
+ 	void *pmem_addr = pmem->virt_addr + pmem_off;
+ 
+ 	if (unlikely(is_bad_pmem(&pmem->bb, sector, len)))
+@@ -158,7 +189,7 @@ static blk_status_t pmem_do_write(struct pmem_device *pmem,
  			struct page *page, unsigned int page_off,
  			sector_t sector, unsigned int len)
  {
--	blk_status_t rc = BLK_STS_OK;
--	bool bad_pmem = false;
- 	phys_addr_t pmem_off = sector * 512 + pmem->data_offset;
+-	phys_addr_t pmem_off = sector * 512 + pmem->data_offset;
++	phys_addr_t pmem_off = to_offset(pmem, sector);
  	void *pmem_addr = pmem->virt_addr + pmem_off;
  
--	if (unlikely(is_bad_pmem(&pmem->bb, sector, len)))
--		bad_pmem = true;
-+	if (unlikely(is_bad_pmem(&pmem->bb, sector, len))) {
-+		blk_status_t rc = pmem_clear_poison(pmem, pmem_off, len);
- 
--	/*
--	 * Note that we write the data both before and after
--	 * clearing poison.  The write before clear poison
--	 * handles situations where the latest written data is
--	 * preserved and the clear poison operation simply marks
--	 * the address range as valid without changing the data.
--	 * In this case application software can assume that an
--	 * interrupted write will either return the new good
--	 * data or an error.
--	 *
--	 * However, if pmem_clear_poison() leaves the data in an
--	 * indeterminate state we need to perform the write
--	 * after clear poison.
--	 */
-+		if (rc != BLK_STS_OK)
-+			pr_warn_ratelimited("%s: failed to clear poison\n", __func__);
-+			return rc;
-+	}
- 	flush_dcache_page(page);
- 	write_pmem(pmem_addr, page, page_off, len);
--	if (unlikely(bad_pmem)) {
--		rc = pmem_clear_poison(pmem, pmem_off, len);
--		write_pmem(pmem_addr, page, page_off, len);
--	}
--
--	return rc;
-+	return BLK_STS_OK;
- }
- 
- static void pmem_submit_bio(struct bio *bio)
-diff --git a/include/linux/set_memory.h b/include/linux/set_memory.h
-index d6263d7afb55..cde2d8687a7b 100644
---- a/include/linux/set_memory.h
-+++ b/include/linux/set_memory.h
-@@ -43,10 +43,10 @@ static inline bool can_set_direct_map(void)
- #endif /* CONFIG_ARCH_HAS_SET_DIRECT_MAP */
- 
- #ifdef CONFIG_X86_64
--int set_mce_nospec(unsigned long pfn, bool unmap);
-+int set_mce_nospec(unsigned long pfn);
- int clear_mce_nospec(unsigned long pfn);
- #else
--static inline int set_mce_nospec(unsigned long pfn, bool unmap)
-+static inline int set_mce_nospec(unsigned long pfn)
- {
- 	return 0;
- }
+ 	if (unlikely(is_bad_pmem(&pmem->bb, sector, len))) {
 -- 
 2.18.4
 
