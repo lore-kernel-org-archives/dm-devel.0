@@ -4,70 +4,56 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 96CB0C433F5
-	for <dm-devel@archiver.kernel.org>; Tue, 22 Mar 2022 09:31:04 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B7A25C433F5
+	for <dm-devel@archiver.kernel.org>; Tue, 22 Mar 2022 11:19:06 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-654-P2Dp2ZA2OXu0bU9RDmEl9A-1; Tue, 22 Mar 2022 05:31:00 -0400
-X-MC-Unique: P2Dp2ZA2OXu0bU9RDmEl9A-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-304-FFcTHNC9NSeVeEwdGyswtA-1; Tue, 22 Mar 2022 07:19:02 -0400
+X-MC-Unique: FFcTHNC9NSeVeEwdGyswtA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 791963801EC8;
-	Tue, 22 Mar 2022 09:30:58 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 48BF9185A7A4;
+	Tue, 22 Mar 2022 11:19:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2048B140241B;
-	Tue, 22 Mar 2022 09:30:58 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B978B2166B2D;
+	Tue, 22 Mar 2022 11:18:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9D50F1949762;
-	Tue, 22 Mar 2022 09:30:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4AC7B1949762;
+	Tue, 22 Mar 2022 11:18:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4AFF81947BBC
- for <dm-devel@listman.corp.redhat.com>; Tue, 22 Mar 2022 09:30:56 +0000 (UTC)
+ ESMTP id 2E92E1947BBC
+ for <dm-devel@listman.corp.redhat.com>; Tue, 22 Mar 2022 11:18:56 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id CC73C140241B; Tue, 22 Mar 2022 09:30:55 +0000 (UTC)
+ id F0BE94B8D4D; Tue, 22 Mar 2022 11:18:55 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C7A7E141DEF9
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 09:30:55 +0000 (UTC)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id ED384401E88
+ for <dm-devel@redhat.com>; Tue, 22 Mar 2022 11:18:55 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AF11F3C1EA41
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 09:30:55 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D7A40811E75
+ for <dm-devel@redhat.com>; Tue, 22 Mar 2022 11:18:55 +0000 (UTC)
+Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-380-taCw3vzhMdWs36McGyx3yw-1; Tue, 22 Mar 2022 05:30:52 -0400
-X-MC-Unique: taCw3vzhMdWs36McGyx3yw-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 93D9E1F390;
- Tue, 22 Mar 2022 09:30:50 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 5CCCB12FC5;
- Tue, 22 Mar 2022 09:30:50 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id Gde1FEqXOWIrDQAAMHmgww
- (envelope-from <mwilck@suse.com>); Tue, 22 Mar 2022 09:30:50 +0000
-Message-ID: <e86df86dc511e0092e15da399e2e713561fb13c9.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Date: Tue, 22 Mar 2022 10:30:49 +0100
-In-Reply-To: <CAPt1nt4Ug=Z0mn1TUzmKevYqm3Uqy-sGXBc9rQRdZUgHFi3i9g@mail.gmail.com>
-References: <20220318223339.4226-1-mwilck@suse.com>
- <20220318223339.4226-12-mwilck@suse.com>
- <CAPt1nt4Ug=Z0mn1TUzmKevYqm3Uqy-sGXBc9rQRdZUgHFi3i9g@mail.gmail.com>
-User-Agent: Evolution 3.42.4
+ us-mta-502-tRRyeSbhMxWKGA_koVyAVA-1; Tue, 22 Mar 2022 07:18:51 -0400
+X-MC-Unique: tRRyeSbhMxWKGA_koVyAVA-1
+Received: by verein.lst.de (Postfix, from userid 2407)
+ id 5189868AFE; Tue, 22 Mar 2022 12:18:48 +0100 (CET)
+Date: Tue, 22 Mar 2022 12:18:48 +0100
+From: Christoph Hellwig <hch@lst.de>
+To: John Garry <john.garry@huawei.com>
+Message-ID: <20220322111848.GA29270@lst.de>
+References: <1647945585-197349-1-git-send-email-john.garry@huawei.com>
+ <1647945585-197349-2-git-send-email-john.garry@huawei.com>
 MIME-Version: 1.0
+In-Reply-To: <1647945585-197349-2-git-send-email-john.garry@huawei.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -75,9 +61,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH v2 11/11] multipathd: remove unhelpful
- startup / shutdown messages
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: Re: [dm-devel] [PATCH 01/11] blk-mq: Add blk_mq_init_queue_ops()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -89,68 +74,31 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Guozhonghua <guozh88@chinatelecom.cn>
+Cc: axboe@kernel.dk, bvanassche@acm.org, martin.petersen@oracle.com,
+ chenxiang66@hisilicon.com, damien.lemoal@opensource.wdc.com,
+ linux-kernel@vger.kernel.org, hch@lst.de, linux-block@vger.kernel.org,
+ linux-ide@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org,
+ ming.lei@redhat.com, jejb@linux.ibm.com, beanhuo@micron.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Mon, 2022-03-21 at 19:43 -0500, Benjamin Marzinski wrote:
-> On Fri, Mar 18, 2022 at 5:33 PM <mwilck@suse.com> wrote:
-> >=20
-> > From: Martin Wilck <mwilck@suse.com>
-> >=20
-> > These messages are noisy in the system log without being actually
-> > helpful.
->=20
-> I've actually found the "start up" and "shut down" messages useful a
-> number of times, for tracking when multipathd starts up and shuts
-> down.=A0
+On Tue, Mar 22, 2022 at 06:39:35PM +0800, John Garry wrote:
+> Add an API to allocate a request queue which accepts a custom set of
+> blk_mq_ops for that request queue.
+> 
+> The reason which we may want custom ops is for queuing requests which we
+> don't want to go through the normal queuing path.
 
-Makes sense ;-)
-
-Currently we see the following messages for multipathd startup and
-shutdown:
-
-Mar 11 09:30:00 bremer systemd[1]: Starting Device-Mapper Multipath Device =
-Controller.
-Mar 11 09:30:01 bremer multipathd[363]: --------start up--------
-Mar 11 09:30:01 bremer systemd[1]: Started Device-Mapper Multipath Device C=
-ontroller.
-Mar 11 09:30:01 bremer multipathd[363]: read /etc/multipath.conf
-Mar 11 09:30:01 bremer multipathd[363]: path checkers start up
-...
-Mar 11 09:30:52 bremer systemd[1]: Stopping Device-Mapper Multipath Device =
-Controller...
-Mar 11 09:30:52 bremer multipathd[363]: exit (signal)
-Mar 11 09:30:52 bremer multipathd[363]: --------shut down-------
-Mar 11 09:30:52 bremer systemd[1]: Stopped Device-Mapper Multipath Device C=
-ontroller.
-
-To my taste, this is too much. Of course, not everyone is using
-systemd. Without systemd and with the part of my patch you acked, we'd
-be down from 9 to 3 messages. IMO either the "exit" message or the
-"shut down" message could be hidden at -v2. I suppose we could decrease
-the verbosity level of handle_signals() to -v3 instead. Would you agree
-with that?
-
-> Since people generally run multipathd constantly, they rarely
-> appear more than a couple of times per boot. I would prefer if they
-> could stay.=A0 I'm fine with removing the others.
-
-Ok, fine with me. Do you insist on the "--------", too? It's mainly
-that which bothers me. If you look at the typical boot messages of
-contemporary Linux servers, no other daemon uses this strong emphasis
-for an informational message. The informational value would be higher
-if we printed a detailed version number including HEAD commit ID, like
-other daemons do.
-
-Martin
+Eww.  I really do not think we should do separate ops per queue, as that
+is going to get us into a deep mess eventually.
 
 --
 dm-devel mailing list
