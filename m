@@ -4,93 +4,92 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B54FAC433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 22 Mar 2022 00:35:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E6BB7C433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 22 Mar 2022 00:36:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1647909319;
+	s=mimecast20190719; t=1647909370;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=cNxOvUm2ptO6gkqNTW2F+73A+capsrCxPLeW5aJqfMU=;
-	b=UiQvyeRP/lp5HvNfQaiqC9WAqmVlF6S2PN/zrTnMlbMcRk5aJoWHF1JR1M30Qx0aL3cy95
-	/mf74bnuAyz4GM8nml/n7oSMwpd02HxEzkGV9rynkG8+aYqfeSOl/gK8WVfekM4LBm2yKS
-	s5VfQsmLuaxHZK44LLgbpH2GsQ6li+w=
+	bh=Ozyv0XhURgD7VzYEelodYGgioZMMWQFACsMv6Ui/K5Q=;
+	b=b74UB67vrDxrZs499vyru1LeiK1SjT4YnQpx1srDUCJH7bi+G528XSFX1zqKnGCJs+725+
+	14InbP1AcZSPXsrOuDN9B/W6bwYH8QyeNFp3BqZ9fd5c6bS+8PCCMSoyvz5dJxdAvHOLPH
+	zKjor/tixDInDcreJUIv2SN0Cy+iwE0=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-100-W1OhRzzeP3a4MhpQhaoaOg-1; Mon, 21 Mar 2022 20:35:16 -0400
-X-MC-Unique: W1OhRzzeP3a4MhpQhaoaOg-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-260-Fz3uVwGhPk-f4pNWTipIrw-1; Mon, 21 Mar 2022 20:36:06 -0400
+X-MC-Unique: Fz3uVwGhPk-f4pNWTipIrw-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 28737100DE70;
-	Tue, 22 Mar 2022 00:35:14 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7E5B1811E76;
+	Tue, 22 Mar 2022 00:36:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 145F54B8D4D;
-	Tue, 22 Mar 2022 00:35:14 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 6C5C946A0D4;
+	Tue, 22 Mar 2022 00:36:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D3D041947BBE;
-	Tue, 22 Mar 2022 00:35:13 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 390BF1947BBE;
+	Tue, 22 Mar 2022 00:36:04 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
  [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id B7F051947BBC
- for <dm-devel@listman.corp.redhat.com>; Tue, 22 Mar 2022 00:35:12 +0000 (UTC)
+ ESMTP id B9BBB1947BBC
+ for <dm-devel@listman.corp.redhat.com>; Tue, 22 Mar 2022 00:36:02 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 974FDC26E9A; Tue, 22 Mar 2022 00:35:12 +0000 (UTC)
+ id A695CC26E9A; Tue, 22 Mar 2022 00:36:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 93888C07F5B
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 00:35:12 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7911628035E2
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 00:35:12 +0000 (UTC)
-Received: from mail-lf1-f69.google.com (mail-lf1-f69.google.com
- [209.85.167.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A2AECC26EA1
+ for <dm-devel@redhat.com>; Tue, 22 Mar 2022 00:36:02 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8712185A5BE
+ for <dm-devel@redhat.com>; Tue, 22 Mar 2022 00:36:02 +0000 (UTC)
+Received: from mail-lj1-f197.google.com (mail-lj1-f197.google.com
+ [209.85.208.197]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-391-S1e9z4kgNCGSIJ43rooVww-1; Mon, 21 Mar 2022 20:35:11 -0400
-X-MC-Unique: S1e9z4kgNCGSIJ43rooVww-1
-Received: by mail-lf1-f69.google.com with SMTP id
- w25-20020a05651234d900b0044023ac3f64so4146459lfr.0
- for <dm-devel@redhat.com>; Mon, 21 Mar 2022 17:35:10 -0700 (PDT)
+ us-mta-249-k6tAHwyAM5eu_lH5enHeqw-1; Mon, 21 Mar 2022 20:36:01 -0400
+X-MC-Unique: k6tAHwyAM5eu_lH5enHeqw-1
+Received: by mail-lj1-f197.google.com with SMTP id
+ e3-20020a2e9303000000b00249765c005cso3201912ljh.17
+ for <dm-devel@redhat.com>; Mon, 21 Mar 2022 17:36:01 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:mime-version:references:in-reply-to:from:date
  :message-id:subject:to:cc;
- bh=XJHjgsmc93savAddWWJt8mgNWCXQXW/lglxYL/+GsZQ=;
- b=lWEkkaBiqOT15vyRbBcrPWFVnGmq5TAS3eHvw0x9eWYeOaMIbjO+AskSMWgwcxiFmw
- eJ7ktp9LLeZx4B1uxbQmdGe+4dhiEtlW1r936o9fcFfXsN/+1SfU/4Dd1ckGsF1PIrpR
- JAQGMOO0QAjprOL7NLh5zc2Mv7knj7DoYgHa9nDLw8bIXoxH4d8brvRf2P8gzv+VQnqP
- puXmua2R3Y4XAOR/4VSD6j7wwZQjtJ0A2EmcbQAppPj/4eIBQXXdsGcHS2p9DmMoSF63
- Y1DTGWILdjwp6cjfRIiF+0XSb9yYZILZqEd7uU4T0Jtg3T51avJzYxwd38XPF1U0BSpP
- iC6Q==
-X-Gm-Message-State: AOAM532eS/1SkhZK71KUKMUM4AyKcjto1teoCH2pXfjTGwVwOKa3QFen
- YChiICXNJop4srOstbtZl+J9L6fr6AHhgSA3Jck1pcgBLhhMusaVDgzO14Q5ONVkh3WG9XrrN1H
- 5KDGnWpUZNq1UjVlli/gTSXfnNHHO5T8=
-X-Received: by 2002:a05:651c:311:b0:23f:d9fc:9e89 with SMTP id
- a17-20020a05651c031100b0023fd9fc9e89mr17016395ljp.136.1647909309286; 
- Mon, 21 Mar 2022 17:35:09 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJwRS2hMrxbpguaGT9VL1/UOX0l60p+a1uabg08kHp057j67oNZydprbv2s+jus96b10LbkNQW+d1kYZDaiDSoM=
-X-Received: by 2002:a05:651c:311:b0:23f:d9fc:9e89 with SMTP id
- a17-20020a05651c031100b0023fd9fc9e89mr17016388ljp.136.1647909309126; Mon, 21
- Mar 2022 17:35:09 -0700 (PDT)
+ bh=aG+/w5jPulTPWmJx4HYSeLKqHOGmQjsyRIJAx+OfEMM=;
+ b=XsyOsv3I8J7LTM3zSzUMPCJqgaHGTnxV/+/rWlI7yPq09B864ugI8ATKvThv8QORvK
+ HYsg9bzpKVxZtNN6m2OkKyrmc0Ph6F3yzLnGE72CwYtjeWipebxr294RWzg8iBNvC3Jy
+ 9fazLd3Jg3q2yzlgIpmiMOJv+7eMcvv/Qqsv8lPP9kyIJuZ39dYbpakxsYhA65AjBljX
+ +jaFolpjJwj/X2lSIjI7SlTnD4PlOAZy3ZIg1giQyYnSmtcl/EO5TaziMuzDsmFZGhJd
+ fu4io5F2LNl8ylzlPDhA5ons0hcGAFpIZM6nAw9zeBabluXuI3Mt4dXiKeQ1P7XrfONO
+ wBvQ==
+X-Gm-Message-State: AOAM533QlMxsq5j2Dhs3gynrkA0Gl+Z6RMEWOLOr7J4Jfd/o64hf8h7F
+ drvGJbdvvhGKxuHz5bMx5p9NlkJ3BjZ8qTW0U/8S43IX0aYO1690C86OEdi7HDFSsapYZxlX/pH
+ mgul2mDWenWvTQuqjr8kD1TdVMvYem7I=
+X-Received: by 2002:a05:6512:3f0a:b0:44a:e3f:2862 with SMTP id
+ y10-20020a0565123f0a00b0044a0e3f2862mr11703326lfa.397.1647909359811; 
+ Mon, 21 Mar 2022 17:35:59 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJxuMXSBByM2P100Pgs/4YGi+41nlKMl9IkaYmOxtg5+vnKTs0BVcsarFe3DHUVwZoFeeIAdYzHAs97m2d1JUqI=
+X-Received: by 2002:a05:6512:3f0a:b0:44a:e3f:2862 with SMTP id
+ y10-20020a0565123f0a00b0044a0e3f2862mr11703316lfa.397.1647909359666; Mon, 21
+ Mar 2022 17:35:59 -0700 (PDT)
 MIME-Version: 1.0
 References: <20220318223339.4226-1-mwilck@suse.com>
- <20220318223339.4226-9-mwilck@suse.com>
-In-Reply-To: <20220318223339.4226-9-mwilck@suse.com>
+ <20220318223339.4226-10-mwilck@suse.com>
+In-Reply-To: <20220318223339.4226-10-mwilck@suse.com>
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Date: Mon, 21 Mar 2022 19:34:58 -0500
-Message-ID: <CAPt1nt7=WCGuGuwD8ue0_FSZ7VwSi_OUKgu0OvY5t6XbY8my8Q@mail.gmail.com>
+Date: Mon, 21 Mar 2022 19:35:48 -0500
+Message-ID: <CAPt1nt4y15sr9jEagLt14wHEb-WVYuZ4w9KzgHdOnEu5um_5Qw@mail.gmail.com>
 To: mwilck@suse.com
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH v2 08/11] libmultipath: warn only once about
- deprecated options
+Subject: Re: [dm-devel] [PATCH v2 09/11] multipathd: improve logging of
+ reconfigure()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -105,7 +104,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com, Guozhonghua <guozh88@chinatelecom.cn>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -117,53 +116,37 @@ On Fri, Mar 18, 2022 at 5:33 PM <mwilck@suse.com> wrote:
 >
 > From: Martin Wilck <mwilck@suse.com>
 >
+> Print a message when reconfigure() actually starts doing something,
+> and when a reconfigure() call is delayed.
+>
 > Signed-off-by: Martin Wilck <mwilck@suse.com>
 
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
 > ---
->  libmultipath/dict.c | 15 ++++++++++++---
->  1 file changed, 12 insertions(+), 3 deletions(-)
+>  multipathd/main.c | 2 ++
+>  1 file changed, 2 insertions(+)
 >
-> diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-> index 2af9764..26cbe78 100644
-> --- a/libmultipath/dict.c
-> +++ b/libmultipath/dict.c
-> @@ -279,7 +279,11 @@ static int                                                         \
->  def_ ## option ## _handler (struct config *conf, vector strvec,                \
->                             const char *file, int line_nr)              \
->  {                                                                      \
-> -       condlog(2, "%s line %d, \"" #option "\" is deprecated and will be disabled in a future release", file, line_nr);                                \
-> +       static bool warned;                                             \
-> +       if (!warned) {                                                  \
-> +               condlog(2, "%s line %d, \"" #option "\" is deprecated and will be disabled in a future release", file, line_nr); \
-> +               warned = true;                                          \
-> +       }                                                               \
->         return function (strvec, &conf->option, file, line_nr);         \
->  }
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 4721cd8..e841ba8 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -2840,6 +2840,7 @@ reconfigure (struct vectors *vecs, enum force_reload_types reload_type)
+>         if (verbosity)
+>                 libmp_verbosity = verbosity;
+>         setlogmask(LOG_UPTO(libmp_verbosity + 3));
+> +       condlog(2, "%s: setting up paths and maps", __func__);
 >
-> @@ -829,14 +833,19 @@ static int
->  def_config_dir_handler(struct config *conf, vector strvec, const char *file,
->                        int line_nr)
->  {
-> +       static bool warned;
-> +
->         /* this is only valid in the main config file */
->         if (conf->processed_main_config) {
->                 condlog(1, "%s line %d, config_dir option only valid in /etc/multipath.conf",
->                         file, line_nr);
->                 return 0;
->         }
-> -       condlog(2, "%s line %d, \"config_dir\" is deprecated and will be disabled in a future release",
-> -               file, line_nr);
-> +       if (!warned) {
-> +               condlog(2, "%s line %d, \"config_dir\" is deprecated and will be disabled in a future release",
-> +                       file, line_nr);
-> +               warned = true;
-> +       }
->         return set_path(strvec, &conf->config_dir, file, line_nr);
->  }
->  declare_def_snprint(config_dir, print_str)
+>         /*
+>          * free old map and path vectors ... they use old conf state
+> @@ -3419,6 +3420,7 @@ child (__attribute__((unused)) void *param)
+>                         pthread_mutex_lock(&config_lock);
+>                         __delayed_reconfig = true;
+>                         pthread_mutex_unlock(&config_lock);
+> +                       condlog(3, "delaying reconfigure()");
+>                 }
+>                 lock_cleanup_pop(vecs->lock);
+>                 if (!rc)
 > --
 > 2.35.1
 >
