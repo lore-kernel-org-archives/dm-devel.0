@@ -1,85 +1,96 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C6E04C433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 22 Mar 2022 16:38:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 72C15C433F5
+	for <dm-devel@archiver.kernel.org>; Tue, 22 Mar 2022 19:49:42 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1647978581;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=5uiA1blzfIhe1XAa79x3REGTr0H5hxSwmyHYELjOzX4=;
+	b=c+odmNMfbjv9CYecQ9vP/E7oG0+EIifZTvWN2PodjNLPhbFMh3cU7We52pczNV4k+8FRq0
+	ABynuw7Podw5A4GDIwDNcxRmXa2FLrDifsiU0+AK7I59MXTHOTssQxJrcwrByZbIjZXEIV
+	orLvWQ9F4nbewCfHnBoZfOK2tG+hlyw=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-648-uuiU_CUlMlKdBPDE2vb2hA-1; Tue, 22 Mar 2022 12:38:05 -0400
-X-MC-Unique: uuiU_CUlMlKdBPDE2vb2hA-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-29-PoV50vs0MjyawYW0nSvQOg-1; Tue, 22 Mar 2022 15:49:39 -0400
+X-MC-Unique: PoV50vs0MjyawYW0nSvQOg-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5C549101485E;
-	Tue, 22 Mar 2022 16:38:03 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 01389802C16;
+	Tue, 22 Mar 2022 19:49:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8B0B154DD94;
-	Tue, 22 Mar 2022 16:38:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id DF7F940D2822;
+	Tue, 22 Mar 2022 19:49:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C27B11949762;
-	Tue, 22 Mar 2022 16:38:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 342F11940358;
+	Tue, 22 Mar 2022 19:49:37 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 4A9481947BBC
- for <dm-devel@listman.corp.redhat.com>; Tue, 22 Mar 2022 16:37:59 +0000 (UTC)
+ ESMTP id 74A321949762
+ for <dm-devel@listman.corp.redhat.com>; Tue, 22 Mar 2022 19:49:34 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 052EA401E86; Tue, 22 Mar 2022 16:37:59 +0000 (UTC)
+ id 57C6A1121330; Tue, 22 Mar 2022 19:49:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 01772401E9F
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 16:37:58 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 539F8112132C
+ for <dm-devel@redhat.com>; Tue, 22 Mar 2022 19:49:31 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DC16E3C11A00
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 16:37:58 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-386-45fKVljuNveKxtbaXDDZZw-1; Tue, 22 Mar 2022 12:37:57 -0400
-X-MC-Unique: 45fKVljuNveKxtbaXDDZZw-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 111711F388;
- Tue, 22 Mar 2022 16:37:56 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id C5F5B13419;
- Tue, 22 Mar 2022 16:37:55 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id W/0TLmP7OWI3bwAAMHmgww
- (envelope-from <mwilck@suse.com>); Tue, 22 Mar 2022 16:37:55 +0000
-Message-ID: <2191d252133c55350f06137cdfdd7f885ce99b99.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Date: Tue, 22 Mar 2022 17:37:55 +0100
-In-Reply-To: <CAPt1nt6_zuhjhKRCXisoRPOcwRZbeMG516AQ9g+6c4mCvWmWPw@mail.gmail.com>
-References: <20220318223339.4226-1-mwilck@suse.com>
- <20220318223339.4226-7-mwilck@suse.com>
- <CAPt1nt4LU_pHJA2m9zWjPhn2i=WOaVnzgiKY+V5za=u2a6StUQ@mail.gmail.com>
- <e1064847c02559b157238ec104aa75b3568fd4f6.camel@suse.com>
- <CAPt1nt6_zuhjhKRCXisoRPOcwRZbeMG516AQ9g+6c4mCvWmWPw@mail.gmail.com>
-User-Agent: Evolution 3.42.4
-MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
-Subject: Re: [dm-devel] [PATCH v2 06/11] libmultipath: add callback for
- remove_map()
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 02AB7866DF4
+ for <dm-devel@redhat.com>; Tue, 22 Mar 2022 19:49:31 +0000 (UTC)
+Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
+ [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-465-V5Tn3HrzPQWLDeJYis566w-1; Tue, 22 Mar 2022 15:49:29 -0400
+X-MC-Unique: V5Tn3HrzPQWLDeJYis566w-1
+Received: by mail-qv1-f71.google.com with SMTP id
+ o1-20020a0c9001000000b00440e415a3a2so12213432qvo.13
+ for <dm-devel@redhat.com>; Tue, 22 Mar 2022 12:49:29 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:sender:from:to:cc:subject:date:message-id;
+ bh=Ra70WqR4k9WaEnGzMfMHq7N8Yl2YrFMOg3wm/QlzybE=;
+ b=PhPfRrj1VTj2izlg6WA0nbZRbed8cqHmcIBCkm/CwwUQgXtZmYIbZcmZebdCIOWmLu
+ pYlS9ZdXHT/WzoGoYNiaeh2cnFmxG5akSSUda2UC+pM4igjXRzhe0nFGBo9hZuMD23N0
+ 7Tgy+eizxZ07do+wqsqzsXGYZj7DaCR+v+RXyHqon8vmx8SsrpZ+z5cjG/hA/5Zo8H/L
+ qKGsyhRVdvRtJCfXbjZeN9mMWL+gThYqm++6cqbmdTKA/kw82sFSwQVgvW1WNcckngMJ
+ 4w3dzMeoeHkVWoIrgGZL7qCcGIXjZZBE46Xlc+aouptVGeoE862w/aNLc5dylGVwAtjo
+ 6BxA==
+X-Gm-Message-State: AOAM532KZ385fCK7y9CVx2SJIUdrKPPZUCJDNZMfHglkhBrBPIozBrKD
+ /BKoAVh7NFdgeUpEzJjKFTr1my0H8l8ej744sfolaa5RDG6XuuotZN9C/gYaSkBB9ETB3Bni9E8
+ JO5MtZHt25ZTqSA==
+X-Received: by 2002:ac8:5c45:0:b0:2e1:9144:2849 with SMTP id
+ j5-20020ac85c45000000b002e191442849mr21355798qtj.510.1647978568659; 
+ Tue, 22 Mar 2022 12:49:28 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJwuAUFri4nvEvVZF2RbL13ATvmIkasPUTw6SWWeNMQNB5h7Rc+g8WP6K964HYpvWyTYncWNsg==
+X-Received: by 2002:ac8:5c45:0:b0:2e1:9144:2849 with SMTP id
+ j5-20020ac85c45000000b002e191442849mr21355785qtj.510.1647978568427; 
+ Tue, 22 Mar 2022 12:49:28 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+ [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+ x20-20020ac85f14000000b002e1ee1c56c3sm13518520qta.76.2022.03.22.12.49.27
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Tue, 22 Mar 2022 12:49:28 -0700 (PDT)
+From: Mike Snitzer <snitzer@redhat.com>
+X-Google-Original-From: Mike Snitzer <snitzer@kernel.org>
+To: axboe@kernel.dk
+Date: Tue, 22 Mar 2022 15:49:24 -0400
+Message-Id: <20220322194927.42778-1-snitzer@kernel.org>
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+Subject: [dm-devel] [PATCH 0/3] block/dm: use BIOSET_PERCPU_CACHE from
+ bio_alloc_clone
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,10 +102,12 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Guozhonghua <guozh88@chinatelecom.cn>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, hch@lst.de,
+ ming.lei@redhat.com
+MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -102,37 +115,37 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, 2022-03-22 at 09:59 -0500, Benjamin Marzinski wrote:
-> 
-> So all of the exported symbols from libmultipath are weak? Good to
-> know.
+Hi Jens,
 
-No, "weak" has a special meaning. For dynamic linking, it's default
-behavior to resolve symbols by name and use the first definition
-encountered. This means that a symbol in a shared library will always
-be overridden by a symbol of the same name in the main executable.
+I ran with your suggestion and DM now sees a ~7% improvement in hipri
+bio polling with io_uring (using dm-linear on null_blk, IOPS went from
+900K to 966K).
 
-"When resolving symbolic references, the dynamic linker examines the
-symbol tables with a breadth-first search. That is, it first looks at
-the symbol table of the executable program itself, then at the symbol
-tables of the DT_NEEDED entries (in order), then at the second level
-DT_NEEDED entries, and so on." ([1], III, p. 2-12). The "weak"
-attribute only matters during static linking ([1], III, p. 1-5). See
-also the description of LD_DYNAMIC_WEAK in ld.so(8) [2].
+I'd appreciate it if you could pick up the first patch for 5.19.
+I'll rebase dm's 5.19 branch on block once it lands.
 
-I didn't understand this clearly before. And the documentation, in
-particular the explanation of the "weak" attribute in the gcc docs, is
-misleading, because it doesn't explain the difference between static
-and dynamic linking [3].
+(FYI, this series builds on linux-dm.git's "dm-5.18" branch, and the
+commits in this series are available in linux-dm.git's "dm-5.19"
+branch).
 
-Regards
-Martin
+Thanks,
+Mike
 
-[1] https://refspecs.linuxfoundation.org/elf/elf.pdf
-[2] https://man7.org/linux/man-pages/man8/ld.so.8.html
+Mike Snitzer (3):
+  block: allow BIOSET_PERCPU_CACHE use from bio_alloc_clone
+  dm: enable BIOSET_PERCPU_CACHE for dm_io bioset
+  dm: conditionally enable BIOSET_PERCPU_CACHE for bio-based dm_io bioset
 
-[3] https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes
+ block/bio.c           | 56 ++++++++++++++++++++++++++++++++-------------------
+ block/blk.h           |  7 -------
+ drivers/md/dm-table.c | 11 +++++++---
+ drivers/md/dm.c       | 10 ++++-----
+ drivers/md/dm.h       |  4 ++--
+ include/linux/bio.h   |  7 +++++++
+ 6 files changed, 57 insertions(+), 38 deletions(-)
 
+-- 
+2.15.0
 
 --
 dm-devel mailing list
