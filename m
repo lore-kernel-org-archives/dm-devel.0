@@ -1,65 +1,66 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D0FF9C433F5
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 27EBFC43217
 	for <dm-devel@archiver.kernel.org>; Thu, 24 Mar 2022 15:34:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-511-ZUegDGRfNCOw3DSYEYo0kw-1; Thu, 24 Mar 2022 11:34:48 -0400
-X-MC-Unique: ZUegDGRfNCOw3DSYEYo0kw-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-438-bs7pbaSsNECKJWcoFp_W0A-1; Thu, 24 Mar 2022 11:34:53 -0400
+X-MC-Unique: bs7pbaSsNECKJWcoFp_W0A-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BB87C3C02B80;
-	Thu, 24 Mar 2022 15:34:46 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BE2E33804526;
+	Thu, 24 Mar 2022 15:34:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A7A4A492D46;
-	Thu, 24 Mar 2022 15:34:46 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A9F6E401475;
+	Thu, 24 Mar 2022 15:34:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C2C20194036E;
-	Thu, 24 Mar 2022 15:34:45 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1F97F194036B;
+	Thu, 24 Mar 2022 15:34:49 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
  [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 218641947BBC
- for <dm-devel@listman.corp.redhat.com>; Tue, 22 Mar 2022 11:06:17 +0000 (UTC)
+ ESMTP id A3E241947BBC
+ for <dm-devel@listman.corp.redhat.com>; Tue, 22 Mar 2022 11:01:20 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E466A40D2823; Tue, 22 Mar 2022 11:06:16 +0000 (UTC)
+ id 74C744010A35; Tue, 22 Mar 2022 11:01:20 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id DFB2240D2822
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 11:06:16 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 961DB185A794
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 11:06:16 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 70EE340C1257
+ for <dm-devel@redhat.com>; Tue, 22 Mar 2022 11:01:20 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1FAC53C01C17
+ for <dm-devel@redhat.com>; Tue, 22 Mar 2022 11:01:20 +0000 (UTC)
 Received: from frasgout.his.huawei.com (frasgout.his.huawei.com
  [185.176.79.56]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-407-VjaoODyxPJeO0W_188yCjw-1; Tue, 22 Mar 2022 07:06:15 -0400
-X-MC-Unique: VjaoODyxPJeO0W_188yCjw-1
-Received: from fraeml701-chm.china.huawei.com (unknown [172.18.147.207])
- by frasgout.his.huawei.com (SkyGuard) with ESMTP id 4KN7R337J0z6800j;
- Tue, 22 Mar 2022 18:44:47 +0800 (CST)
+ us-mta-493-p__SlHuJO_KUWmTzc6rWvw-1; Tue, 22 Mar 2022 07:01:18 -0400
+X-MC-Unique: p__SlHuJO_KUWmTzc6rWvw-1
+Received: from fraeml703-chm.china.huawei.com (unknown [172.18.147.207])
+ by frasgout.his.huawei.com (SkyGuard) with ESMTP id 4KN7Pd2v2vz684m2;
+ Tue, 22 Mar 2022 18:43:33 +0800 (CST)
 Received: from lhreml724-chm.china.huawei.com (10.201.108.75) by
- fraeml701-chm.china.huawei.com (10.206.15.50) with Microsoft SMTP Server
+ fraeml703-chm.china.huawei.com (10.206.15.52) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id
- 15.1.2375.24; Tue, 22 Mar 2022 11:45:51 +0100
+ 15.1.2375.24; Tue, 22 Mar 2022 11:45:43 +0100
 Received: from localhost.localdomain (10.69.192.58) by
  lhreml724-chm.china.huawei.com (10.201.108.75) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2308.21; Tue, 22 Mar 2022 10:45:47 +0000
+ 15.1.2308.21; Tue, 22 Mar 2022 10:45:39 +0000
 From: John Garry <john.garry@huawei.com>
 To: <axboe@kernel.dk>, <damien.lemoal@opensource.wdc.com>,
  <bvanassche@acm.org>, <jejb@linux.ibm.com>, <martin.petersen@oracle.com>,
  <hch@lst.de>, <ming.lei@redhat.com>, <hare@suse.de>
-Date: Tue, 22 Mar 2022 18:39:37 +0800
-Message-ID: <1647945585-197349-4-git-send-email-john.garry@huawei.com>
+Date: Tue, 22 Mar 2022 18:39:35 +0800
+Message-ID: <1647945585-197349-2-git-send-email-john.garry@huawei.com>
 In-Reply-To: <1647945585-197349-1-git-send-email-john.garry@huawei.com>
 References: <1647945585-197349-1-git-send-email-john.garry@huawei.com>
 MIME-Version: 1.0
@@ -75,9 +76,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-X-Mailman-Approved-At: Thu, 24 Mar 2022 15:34:42 +0000
-Subject: [dm-devel] [PATCH 03/11] libata: Send internal commands through the
- block layer
+X-Mailman-Approved-At: Thu, 24 Mar 2022 15:34:41 +0000
+Subject: [dm-devel] [PATCH 01/11] blk-mq: Add blk_mq_init_queue_ops()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -95,7 +95,7 @@ Cc: linux-scsi@vger.kernel.org, chenxiang66@hisilicon.com,
  beanhuo@micron.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -103,206 +103,120 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-When SCSI HBA device drivers are required to process an ATA internal
-command they still need a tag for the IO. This often requires the driver
-to set aside a set of tags for these sorts of IOs and manage the tags
-themselves.
+Add an API to allocate a request queue which accepts a custom set of
+blk_mq_ops for that request queue.
 
-If we associate a SCSI command (and request) with an ATA internal command
-then the tag is already provided, so introduce the change to send ATA
-internal commands through the block layer with a set of custom blk-mq ops.
-
-note: I think that the timeout handling needs to be fixed up.
+The reason which we may want custom ops is for queuing requests which we
+don't want to go through the normal queuing path.
 
 Signed-off-by: John Garry <john.garry@huawei.com>
 ---
- drivers/ata/libata-core.c | 121 ++++++++++++++++++++++++++++----------
- 1 file changed, 89 insertions(+), 32 deletions(-)
+ block/blk-mq.c         | 23 +++++++++++++++++------
+ drivers/md/dm-rq.c     |  2 +-
+ include/linux/blk-mq.h |  5 ++++-
+ 3 files changed, 22 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/ata/libata-core.c b/drivers/ata/libata-core.c
-index 67f88027680a..9db0428d0511 100644
---- a/drivers/ata/libata-core.c
-+++ b/drivers/ata/libata-core.c
-@@ -1438,6 +1438,59 @@ static void ata_qc_complete_internal(struct ata_queued_cmd *qc)
- 	complete(waiting);
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index f3bf3358a3bb..8ea3447339ca 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -3858,7 +3858,7 @@ void blk_mq_release(struct request_queue *q)
  }
  
-+struct ata_internal_sg_data {
-+	struct completion wait;
-+
-+	unsigned int preempted_tag;
-+	u32 preempted_sactive;
-+	u64 preempted_qc_active;
-+	int preempted_nr_active_links;
-+};
-+
-+static blk_status_t ata_exec_internal_sg_queue_rq(struct blk_mq_hw_ctx *hctx,
-+		const struct blk_mq_queue_data *bd)
-+{
-+	struct request *rq = bd->rq;
-+	struct scsi_cmnd *scmd = blk_mq_rq_to_pdu(rq);
-+	struct ata_queued_cmd *qc = (struct ata_queued_cmd *)scmd->host_scribble;
-+	struct ata_internal_sg_data *data;
-+	struct ata_device *dev = qc->dev;
-+	struct ata_port *ap = qc->ap;
-+	struct ata_link *link = dev->link;
-+	unsigned long flags;
-+
-+	data = container_of(qc->private_data, struct ata_internal_sg_data, wait);
-+
-+	blk_mq_start_request(bd->rq);
-+
-+	spin_lock_irqsave(ap->lock, flags);
-+
-+	/* no internal command while frozen */
-+	if (ap->pflags & ATA_PFLAG_FROZEN) {
-+		spin_unlock_irqrestore(ap->lock, flags);
-+		return BLK_STS_TARGET;
-+	}
-+
-+	data->preempted_tag = link->active_tag;
-+	data->preempted_sactive = link->sactive;
-+	data->preempted_qc_active = ap->qc_active;
-+	data->preempted_nr_active_links = ap->nr_active_links;
-+	link->active_tag = ATA_TAG_POISON;
-+	link->sactive = 0;
-+	ap->qc_active = 0;
-+	ap->nr_active_links = 0;
-+
-+	ata_qc_issue(qc);
-+
-+	spin_unlock_irqrestore(ap->lock, flags);
-+
-+	return BLK_STS_OK;
-+}
-+
-+static const struct blk_mq_ops ata_exec_internal_sg_mq_ops = {
-+	.queue_rq	= ata_exec_internal_sg_queue_rq,
-+};
-+
- /**
-  *	ata_exec_internal_sg - execute libata internal command
-  *	@dev: Device to which the command is sent
-@@ -1467,45 +1520,46 @@ unsigned ata_exec_internal_sg(struct ata_device *dev,
+ static struct request_queue *blk_mq_init_queue_data(struct blk_mq_tag_set *set,
+-		void *queuedata)
++		void *queuedata, const struct blk_mq_ops *ops)
  {
- 	struct ata_link *link = dev->link;
- 	struct ata_port *ap = link->ap;
-+	struct Scsi_Host *scsi_host = ap->scsi_host;
-+	struct request_queue *request_queue;
- 	u8 command = tf->command;
--	int auto_timeout = 0;
- 	struct ata_queued_cmd *qc;
--	unsigned int preempted_tag;
--	u32 preempted_sactive;
--	u64 preempted_qc_active;
--	int preempted_nr_active_links;
--	DECLARE_COMPLETION_ONSTACK(wait);
--	unsigned long flags;
-+	struct scsi_cmnd *scmd;
- 	unsigned int err_mask;
--	int rc;
-+	unsigned long flags;
-+	struct request *rq;
-+	int rc, auto_timeout = 0;
-+	struct ata_internal_sg_data data = {
-+		.wait = COMPLETION_INITIALIZER_ONSTACK(data.wait),
-+	};
-+	unsigned int op;
- 
--	spin_lock_irqsave(ap->lock, flags);
-+	op = (dma_dir == DMA_TO_DEVICE) ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN;
- 
--	/* no internal command while frozen */
--	if (ap->pflags & ATA_PFLAG_FROZEN) {
--		spin_unlock_irqrestore(ap->lock, flags);
--		return AC_ERR_SYSTEM;
-+	request_queue = blk_mq_init_queue_ops(&scsi_host->tag_set,
-+					      &ata_exec_internal_sg_mq_ops);
-+	if (!request_queue)
-+		return AC_ERR_OTHER;
-+
-+	rq = scsi_alloc_request(request_queue, op, 0);
-+	if (IS_ERR(rq)) {
-+		err_mask = AC_ERR_OTHER;
-+		goto out;
+ 	struct request_queue *q;
+ 	int ret;
+@@ -3867,27 +3867,35 @@ static struct request_queue *blk_mq_init_queue_data(struct blk_mq_tag_set *set,
+ 	if (!q)
+ 		return ERR_PTR(-ENOMEM);
+ 	q->queuedata = queuedata;
+-	ret = blk_mq_init_allocated_queue(set, q);
++	ret = blk_mq_init_allocated_queue(set, q, ops);
+ 	if (ret) {
+ 		blk_cleanup_queue(q);
+ 		return ERR_PTR(ret);
  	}
- 
-+	scmd = blk_mq_rq_to_pdu(rq);
-+	scmd->submitter = SUBMITTED_BY_SCSI_CUSTOM_OPS;
 +
- 	/* initialize internal qc */
- 	qc = __ata_qc_from_tag(ap, ATA_TAG_INTERNAL);
- 
- 	qc->tag = ATA_TAG_INTERNAL;
- 	qc->hw_tag = 0;
--	qc->scsicmd = NULL;
-+	qc->scsicmd = scmd;
- 	qc->ap = ap;
- 	qc->dev = dev;
- 	ata_qc_reinit(qc);
- 
--	preempted_tag = link->active_tag;
--	preempted_sactive = link->sactive;
--	preempted_qc_active = ap->qc_active;
--	preempted_nr_active_links = ap->nr_active_links;
--	link->active_tag = ATA_TAG_POISON;
--	link->sactive = 0;
--	ap->qc_active = 0;
--	ap->nr_active_links = 0;
--
- 	/* prepare & issue qc */
- 	qc->tf = *tf;
- 	if (cdb)
-@@ -1529,12 +1583,11 @@ unsigned ata_exec_internal_sg(struct ata_device *dev,
- 		qc->nbytes = buflen;
- 	}
- 
--	qc->private_data = &wait;
-+	qc->private_data = &data.wait;
- 	qc->complete_fn = ata_qc_complete_internal;
- 
--	ata_qc_issue(qc);
--
--	spin_unlock_irqrestore(ap->lock, flags);
-+	scmd->host_scribble = (unsigned char *)qc;
-+	blk_execute_rq_nowait(rq, true, NULL);
- 
- 	if (!timeout) {
- 		if (ata_probe_timeout)
-@@ -1548,7 +1601,7 @@ unsigned ata_exec_internal_sg(struct ata_device *dev,
- 	if (ap->ops->error_handler)
- 		ata_eh_release(ap);
- 
--	rc = wait_for_completion_timeout(&wait, msecs_to_jiffies(timeout));
-+	rc = wait_for_completion_timeout(&data.wait, msecs_to_jiffies(timeout));
- 
- 	if (ap->ops->error_handler)
- 		ata_eh_acquire(ap);
-@@ -1603,16 +1656,20 @@ unsigned ata_exec_internal_sg(struct ata_device *dev,
- 	err_mask = qc->err_mask;
- 
- 	ata_qc_free(qc);
--	link->active_tag = preempted_tag;
--	link->sactive = preempted_sactive;
--	ap->qc_active = preempted_qc_active;
--	ap->nr_active_links = preempted_nr_active_links;
-+	link->active_tag = data.preempted_tag;
-+	link->sactive = data.preempted_sactive;
-+	ap->qc_active = data.preempted_qc_active;
-+	ap->nr_active_links = data.preempted_nr_active_links;
- 
- 	spin_unlock_irqrestore(ap->lock, flags);
- 
- 	if ((err_mask & AC_ERR_TIMEOUT) && auto_timeout)
- 		ata_internal_cmd_timed_out(dev, command);
- 
-+	__blk_mq_end_request(rq, BLK_STS_OK);
-+
-+out:
-+	blk_cleanup_queue(request_queue);
- 	return err_mask;
+ 	return q;
  }
  
+ struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *set)
+ {
+-	return blk_mq_init_queue_data(set, NULL);
++	return blk_mq_init_queue_data(set, NULL, NULL);
+ }
+ EXPORT_SYMBOL(blk_mq_init_queue);
+ 
++struct request_queue *blk_mq_init_queue_ops(struct blk_mq_tag_set *set,
++					    const struct blk_mq_ops *custom_ops)
++{
++	return blk_mq_init_queue_data(set, NULL, custom_ops);
++}
++EXPORT_SYMBOL(blk_mq_init_queue_ops);
++
+ struct gendisk *__blk_mq_alloc_disk(struct blk_mq_tag_set *set, void *queuedata,
+ 		struct lock_class_key *lkclass)
+ {
+ 	struct request_queue *q;
+ 	struct gendisk *disk;
+ 
+-	q = blk_mq_init_queue_data(set, queuedata);
++	q = blk_mq_init_queue_data(set, queuedata, NULL);
+ 	if (IS_ERR(q))
+ 		return ERR_CAST(q);
+ 
+@@ -4010,13 +4018,16 @@ static void blk_mq_realloc_hw_ctxs(struct blk_mq_tag_set *set,
+ }
+ 
+ int blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
+-		struct request_queue *q)
++		struct request_queue *q, const struct blk_mq_ops *custom_ops)
+ {
+ 	WARN_ON_ONCE(blk_queue_has_srcu(q) !=
+ 			!!(set->flags & BLK_MQ_F_BLOCKING));
+ 
+ 	/* mark the queue as mq asap */
+-	q->mq_ops = set->ops;
++	if (custom_ops)
++		q->mq_ops = custom_ops;
++	else
++		q->mq_ops = set->ops;
+ 
+ 	q->poll_cb = blk_stat_alloc_callback(blk_mq_poll_stats_fn,
+ 					     blk_mq_poll_stats_bkt,
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 3907950a0ddc..9d93f72a3eec 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -560,7 +560,7 @@ int dm_mq_init_request_queue(struct mapped_device *md, struct dm_table *t)
+ 	if (err)
+ 		goto out_kfree_tag_set;
+ 
+-	err = blk_mq_init_allocated_queue(md->tag_set, md->queue);
++	err = blk_mq_init_allocated_queue(md->tag_set, md->queue, NULL);
+ 	if (err)
+ 		goto out_tag_set;
+ 	return 0;
+diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
+index d319ffa59354..e12d17c86c52 100644
+--- a/include/linux/blk-mq.h
++++ b/include/linux/blk-mq.h
+@@ -688,8 +688,11 @@ struct gendisk *__blk_mq_alloc_disk(struct blk_mq_tag_set *set, void *queuedata,
+ 	__blk_mq_alloc_disk(set, queuedata, &__key);			\
+ })
+ struct request_queue *blk_mq_init_queue(struct blk_mq_tag_set *);
++struct request_queue *blk_mq_init_queue_ops(struct blk_mq_tag_set *,
++		const struct blk_mq_ops *custom_ops);
++
+ int blk_mq_init_allocated_queue(struct blk_mq_tag_set *set,
+-		struct request_queue *q);
++		struct request_queue *q, const struct blk_mq_ops *custom_ops);
+ void blk_mq_unregister_dev(struct device *, struct request_queue *);
+ 
+ int blk_mq_alloc_tag_set(struct blk_mq_tag_set *set);
 -- 
 2.26.2
 
