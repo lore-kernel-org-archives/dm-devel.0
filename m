@@ -1,70 +1,75 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D5DA1C4167B
-	for <dm-devel@archiver.kernel.org>; Thu, 24 Mar 2022 15:34:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B4430C433FE
+	for <dm-devel@archiver.kernel.org>; Thu, 24 Mar 2022 15:34:59 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-217-nt_0tA9BMYmBZadIjuxMzg-1; Thu, 24 Mar 2022 11:34:49 -0400
-X-MC-Unique: nt_0tA9BMYmBZadIjuxMzg-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-390-psRoC2ZIO1C9l80oDbvICw-1; Thu, 24 Mar 2022 11:34:54 -0400
+X-MC-Unique: psRoC2ZIO1C9l80oDbvICw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 685243804513;
-	Thu, 24 Mar 2022 15:34:47 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0AFAD3804522;
+	Thu, 24 Mar 2022 15:34:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 55A07401476;
-	Thu, 24 Mar 2022 15:34:47 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id AD3FAC15D7B;
+	Thu, 24 Mar 2022 15:34:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 03F7A194034F;
-	Thu, 24 Mar 2022 15:34:46 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 124601940368;
+	Thu, 24 Mar 2022 15:34:49 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
  [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D268F1947BBC
- for <dm-devel@listman.corp.redhat.com>; Tue, 22 Mar 2022 11:06:20 +0000 (UTC)
+ ESMTP id 548471947BBC
+ for <dm-devel@listman.corp.redhat.com>; Tue, 22 Mar 2022 12:30:51 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B235D54EC61; Tue, 22 Mar 2022 11:06:20 +0000 (UTC)
+ id 3BCBB441983; Tue, 22 Mar 2022 12:30:51 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id AE41F4B6959
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 11:06:20 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5774A899EC2
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 11:06:20 +0000 (UTC)
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 371CE43E901
+ for <dm-devel@redhat.com>; Tue, 22 Mar 2022 12:30:51 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1E40480159B
+ for <dm-devel@redhat.com>; Tue, 22 Mar 2022 12:30:51 +0000 (UTC)
 Received: from frasgout.his.huawei.com (frasgout.his.huawei.com
  [185.176.79.56]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-153-DSDnnvpyODqRgi3Mc0GXow-1; Tue, 22 Mar 2022 07:06:18 -0400
-X-MC-Unique: DSDnnvpyODqRgi3Mc0GXow-1
-Received: from fraeml740-chm.china.huawei.com (unknown [172.18.147.206])
- by frasgout.his.huawei.com (SkyGuard) with ESMTP id 4KN7QJ0GhKz67Xmk;
- Tue, 22 Mar 2022 18:44:08 +0800 (CST)
+ us-mta-185-YKNCKZrpP_GLCTpS4Hay5w-1; Tue, 22 Mar 2022 08:30:47 -0400
+X-MC-Unique: YKNCKZrpP_GLCTpS4Hay5w-1
+Received: from fraeml704-chm.china.huawei.com (unknown [172.18.147.207])
+ by frasgout.his.huawei.com (SkyGuard) with ESMTP id 4KN9kp4dxgz6H6rn;
+ Tue, 22 Mar 2022 20:28:34 +0800 (CST)
 Received: from lhreml724-chm.china.huawei.com (10.201.108.75) by
- fraeml740-chm.china.huawei.com (10.206.15.221) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2375.24; Tue, 22 Mar 2022 11:46:18 +0100
-Received: from localhost.localdomain (10.69.192.58) by
- lhreml724-chm.china.huawei.com (10.201.108.75) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2308.21; Tue, 22 Mar 2022 10:46:14 +0000
-From: John Garry <john.garry@huawei.com>
-To: <axboe@kernel.dk>, <damien.lemoal@opensource.wdc.com>,
- <bvanassche@acm.org>, <jejb@linux.ibm.com>, <martin.petersen@oracle.com>,
- <hch@lst.de>, <ming.lei@redhat.com>, <hare@suse.de>
-Date: Tue, 22 Mar 2022 18:39:44 +0800
-Message-ID: <1647945585-197349-11-git-send-email-john.garry@huawei.com>
-In-Reply-To: <1647945585-197349-1-git-send-email-john.garry@huawei.com>
-References: <1647945585-197349-1-git-send-email-john.garry@huawei.com>
+ fraeml704-chm.china.huawei.com (10.206.15.53) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256_P256) id
+ 15.1.2375.24; Tue, 22 Mar 2022 13:30:44 +0100
+Received: from [10.47.85.68] (10.47.85.68) by lhreml724-chm.china.huawei.com
+ (10.201.108.75) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id 15.1.2308.21; Tue, 22 Mar
+ 2022 12:30:44 +0000
+Message-ID: <a5e42012-c1fc-082e-e636-594abc07dd70@huawei.com>
+Date: Tue, 22 Mar 2022 12:30:42 +0000
 MIME-Version: 1.0
-X-Originating-IP: [10.69.192.58]
-X-ClientProxiedBy: dggems702-chm.china.huawei.com (10.3.19.179) To
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
+ Thunderbird/91.6.1
+To: Hannes Reinecke <hare@suse.de>, Christoph Hellwig <hch@lst.de>
+References: <1647945585-197349-1-git-send-email-john.garry@huawei.com>
+ <1647945585-197349-2-git-send-email-john.garry@huawei.com>
+ <20220322111848.GA29270@lst.de>
+ <cacc3f7b-c8be-0f72-1c52-562c15b468a4@huawei.com>
+ <b5df2ef1-2d6d-340e-e4b4-09132dc0516b@suse.de>
+From: John Garry <john.garry@huawei.com>
+In-Reply-To: <b5df2ef1-2d6d-340e-e4b4-09132dc0516b@suse.de>
+X-Originating-IP: [10.47.85.68]
+X-ClientProxiedBy: lhreml730-chm.china.huawei.com (10.201.108.81) To
  lhreml724-chm.china.huawei.com (10.201.108.75)
 X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -76,7 +81,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 X-Mailman-Approved-At: Thu, 24 Mar 2022 15:34:42 +0000
-Subject: [dm-devel] [PATCH 10/11] scsi: libsas: Add sas_task_to_hwq()
+Subject: Re: [dm-devel] [PATCH 01/11] blk-mq: Add blk_mq_init_queue_ops()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -88,133 +93,52 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-scsi@vger.kernel.org, chenxiang66@hisilicon.com,
- John Garry <john.garry@huawei.com>, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com,
- beanhuo@micron.com
+Cc: axboe@kernel.dk, bvanassche@acm.org, martin.petersen@oracle.com,
+ chenxiang66@hisilicon.com, damien.lemoal@opensource.wdc.com,
+ linux-kernel@vger.kernel.org, ming.lei@redhat.com, linux-block@vger.kernel.org,
+ linux-ide@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org,
+ jejb@linux.ibm.com, beanhuo@micron.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-Add a function to get the hw queue index from a sas_task.
-
-Signed-off-by: John Garry <john.garry@huawei.com>
----
- drivers/scsi/hisi_sas/hisi_sas_main.c | 20 ++------------------
- drivers/scsi/libsas/sas_scsi_host.c   |  9 ++++++++-
- include/scsi/libsas.h                 |  2 +-
- 3 files changed, 11 insertions(+), 20 deletions(-)
-
-diff --git a/drivers/scsi/hisi_sas/hisi_sas_main.c b/drivers/scsi/hisi_sas/hisi_sas_main.c
-index f6b64c789335..b3e03c229cb5 100644
---- a/drivers/scsi/hisi_sas/hisi_sas_main.c
-+++ b/drivers/scsi/hisi_sas/hisi_sas_main.c
-@@ -461,7 +461,6 @@ static int hisi_sas_queue_command(struct sas_task *task, gfp_t gfp_flags)
- 	struct asd_sas_port *sas_port = device->port;
- 	struct hisi_sas_device *sas_dev = device->lldd_dev;
- 	bool internal_abort = sas_is_internal_abort(task);
--	struct scsi_cmnd *scmd = NULL;
- 	struct hisi_sas_dq *dq = NULL;
- 	struct hisi_sas_port *port;
- 	struct hisi_hba *hisi_hba;
-@@ -486,6 +485,8 @@ static int hisi_sas_queue_command(struct sas_task *task, gfp_t gfp_flags)
- 	hisi_hba = dev_to_hisi_hba(device);
- 	dev = hisi_hba->dev;
- 
-+	dq = &hisi_hba->dq[sas_task_to_hwq(task)];
-+
- 	switch (task->task_proto) {
- 	case SAS_PROTOCOL_SSP:
- 	case SAS_PROTOCOL_SMP:
-@@ -520,22 +521,6 @@ static int hisi_sas_queue_command(struct sas_task *task, gfp_t gfp_flags)
- 				return -ECOMM;
- 		}
- 
--		scmd = task->uldd_task;
--
--		if (scmd) {
--			unsigned int dq_index;
--			u32 blk_tag;
--
--			blk_tag = blk_mq_unique_tag(scsi_cmd_to_rq(scmd));
--			dq_index = blk_mq_unique_tag_to_hwq(blk_tag);
--			dq = &hisi_hba->dq[dq_index];
--		} else {
--			struct Scsi_Host *shost = hisi_hba->shost;
--			struct blk_mq_queue_map *qmap = &shost->tag_set.map[HCTX_TYPE_DEFAULT];
--			int queue = qmap->mq_map[raw_smp_processor_id()];
--
--			dq = &hisi_hba->dq[queue];
--		}
- 		break;
- 	case SAS_PROTOCOL_INTERNAL_ABORT:
- 		if (!hisi_hba->hw->prep_abort)
-@@ -550,7 +535,6 @@ static int hisi_sas_queue_command(struct sas_task *task, gfp_t gfp_flags)
- 			return -EINVAL;
- 
- 		port = to_hisi_sas_port(sas_port);
--		dq = &hisi_hba->dq[task->abort_task.qid];
- 		break;
- 	default:
- 		dev_err(hisi_hba->dev, "task prep: unknown/unsupported proto (0x%x)\n",
-diff --git a/drivers/scsi/libsas/sas_scsi_host.c b/drivers/scsi/libsas/sas_scsi_host.c
-index 425904fa4cc7..b808b23e265e 100644
---- a/drivers/scsi/libsas/sas_scsi_host.c
-+++ b/drivers/scsi/libsas/sas_scsi_host.c
-@@ -986,7 +986,6 @@ static int sas_execute_internal_abort(struct domain_device *device,
- 
- 		task->abort_task.tag = tag;
- 		task->abort_task.type = type;
--		task->abort_task.qid = qid;
- 
- 		rq = scsi_alloc_request_hwq(request_queue, REQ_OP_DRV_IN, BLK_MQ_REQ_NOWAIT, qid);
- 		if (!rq) {
-@@ -1079,6 +1078,14 @@ unsigned int sas_task_to_unique_tag(struct sas_task *task)
- }
- EXPORT_SYMBOL_GPL(sas_task_to_unique_tag);
- 
-+unsigned int sas_task_to_hwq(struct sas_task *task)
-+{
-+	u32 unique = sas_task_to_rq_unique_tag(task);
-+
-+	return blk_mq_unique_tag_to_hwq(unique);
-+}
-+EXPORT_SYMBOL_GPL(sas_task_to_hwq);
-+
- int sas_execute_tmf(struct domain_device *device, void *parameter,
- 		    int para_len, int force_phy_id,
- 		    struct sas_tmf_task *tmf)
-diff --git a/include/scsi/libsas.h b/include/scsi/libsas.h
-index 3d9ef4c2c889..368c45016af0 100644
---- a/include/scsi/libsas.h
-+++ b/include/scsi/libsas.h
-@@ -565,7 +565,6 @@ enum sas_internal_abort {
- 
- struct sas_internal_abort_task {
- 	enum sas_internal_abort type;
--	unsigned int qid;
- 	u16 tag;
- };
- 
-@@ -626,6 +625,7 @@ struct sas_task {
- };
- 
- unsigned int sas_task_to_unique_tag(struct sas_task *task);
-+unsigned int sas_task_to_hwq(struct sas_task *task);
- 
- struct sas_task_slow {
- 	/* standard/extra infrastructure for slow path commands (SMP and
--- 
-2.26.2
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gMjIvMDMvMjAyMiAxMjoxNiwgSGFubmVzIFJlaW5lY2tlIHdyb3RlOgo+IE9uIDMvMjIvMjIg
+MTI6MzMsIEpvaG4gR2Fycnkgd3JvdGU6Cj4+IE9uIDIyLzAzLzIwMjIgMTE6MTgsIENocmlzdG9w
+aCBIZWxsd2lnIHdyb3RlOgo+Pj4gT24gVHVlLCBNYXIgMjIsIDIwMjIgYXQgMDY6Mzk6MzVQTSAr
+MDgwMCwgSm9obiBHYXJyeSB3cm90ZToKPj4+PiBBZGQgYW4gQVBJIHRvIGFsbG9jYXRlIGEgcmVx
+dWVzdCBxdWV1ZSB3aGljaCBhY2NlcHRzIGEgY3VzdG9tIHNldCBvZgo+Pj4+IGJsa19tcV9vcHMg
+Zm9yIHRoYXQgcmVxdWVzdCBxdWV1ZS4KPj4+Pgo+Pj4+IFRoZSByZWFzb24gd2hpY2ggd2UgbWF5
+IHdhbnQgY3VzdG9tIG9wcyBpcyBmb3IgcXVldWluZyByZXF1ZXN0cyAKPj4+PiB3aGljaCB3ZQo+
+Pj4+IGRvbid0IHdhbnQgdG8gZ28gdGhyb3VnaCB0aGUgbm9ybWFsIHF1ZXVpbmcgcGF0aC4KPj4+
+Cj4+PiBFd3cuwqAgSSByZWFsbHkgZG8gbm90IHRoaW5rIHdlIHNob3VsZCBkbyBzZXBhcmF0ZSBv
+cHMgcGVyIHF1ZXVlLCBhcyB0aGF0Cj4+PiBpcyBnb2luZyB0byBnZXQgdXMgaW50byBhIGRlZXAg
+bWVzcyBldmVudHVhbGx5Lgo+Pj4KPj4KPj4gWWVhaC4uLiBzbyBmYXIgKGhlcmUpIGl0IHdvcmtz
+IG91dCBxdWl0ZSBuaWNlbHksIGFzIHdlIGRvbid0IG5lZWQgdG8gCj4+IGNoYW5nZSB0aGUgU0NT
+SSBibGsgbXEgb3BzIG5vciBhbGxvY2F0ZSBhIHNjc2lfZGV2aWNlIC0gZXZlcnl0aGluZyBpcyAK
+Pj4ganVzdCBzZXBhcmF0ZS4KPj4KPj4gVGhlIG90aGVyIG1ldGhvZCBtZW50aW9uZWQgcHJldmlv
+dXNseSB3YXMgdG8gYWRkIHRoZSByZXF1ZXN0IAo+PiAicmVzZXJ2ZWQiIGZsYWcgYW5kIGFkZCBu
+ZXcgcGF0aHMgaW4gc2NzaV9xdWV1ZV9ycSgpIGV0IGFsIHRvIGhhbmRsZSAKPj4gdGhpcywgYnV0
+IHRoYXQgZ2V0cyBtZXNzeS4KPj4KPj4gQW55IG90aGVyIGlkZWFzIC4uLj8KPj4KPiAKPiBBcyBv
+dXRsaW5lZCBpbiB0aGUgb3RoZXIgbWFpbCwgSSB0aGluayBtaWdodCBiZSB1c2VmdWwgaXMgdG8g
+aGF2ZSBhIAo+IF90aGlyZF8gdHlwZSBvZiByZXF1ZXN0cyAoaW4gYWRkaXRpb24gdG8gdGhlIG5v
+cm1hbCBhbmQgdGhlIHJlc2VydmVkIG9uZXMpLgo+IFRoYXQgb25lIHdvdWxkIGJlIGFsbG9jYXRl
+ZCBmcm9tIHRoZSBub3JtYWwgSS9PIHBvb2wgKGFuZCBoZW5jZSBjb3VsZCAKPiBmYWlsIGlmIHRo
+ZSBwb29sIGlzIGV4aGF1c3RlZCksIGJ1dCB3b3VsZCBiZSBhYmxlIHRvIGNhcnJ5IGEgZGlmZmVy
+ZW50IAo+IHBheWxvYWQgKHR5cGUpIHRoYW4gdGhlIG5vcm1hbCByZXF1ZXN0cy4KCkFzIG1lbnRp
+b25lZCBpbiB0aGUgY292ZXIgbGV0dGVyIHJlc3BvbnNlLCBpdCBqdXN0IHNlZW1zIGJlc3QgdG8g
+a2VlcCAKdGhlIG5vcm1hbCBzY3NpX2NtbmQgcGF5bG9hZCBidXQgaGF2ZSBvdGhlciBtZWFucyB0
+byBhZGQgb24gdGhlIGludGVybmFsIApjb21tYW5kIGRhdGEsIGxpa2UgdXNpbmcgaG9zdF9zY3Jp
+YmJsZSBvciBzY3NpX2NtbmQgcHJpdiBkYXRhLgoKPiBBbmQgd2UgY291bGQgaGF2ZSBhIHNlcGFy
+YXRlIHF1ZXVlX3JxIGZvciB0aGVzZSByZXF1ZXN0cywgYXMgd2UgY2FuIAo+IGRpZmZlcmVudGlh
+dGUgdGhlbSBpbiB0aGUgYmxvY2sgbGF5ZXIuCgpJIGRvbid0IGtub3csIGxldCBtZSB0aGluayBh
+Ym91dCBpdC4gTWF5YmUgd2UgY291bGQgYWRkIGFuICJpbnRlcm5hbCIgCmJsayBmbGFnLCB3aGlj
+aCB1c2VzIGEgc2VwYXJhdGUgImludGVybmFsIiBxdWV1ZV9ycSBjYWxsYmFjay4KClRoYW5rcywK
+Sm9obgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6
+Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
 
