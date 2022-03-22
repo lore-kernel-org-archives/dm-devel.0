@@ -4,85 +4,152 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 33CADC433FE
-	for <dm-devel@archiver.kernel.org>; Tue, 22 Mar 2022 21:44:32 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id EAC60C433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 22 Mar 2022 22:19:55 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-563-aWqDi9hyPp2XX60Syvmk8g-1; Tue, 22 Mar 2022 17:44:27 -0400
-X-MC-Unique: aWqDi9hyPp2XX60Syvmk8g-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-377-kif2KhG-O5qEJ53NOVyXzg-1; Tue, 22 Mar 2022 18:19:51 -0400
+X-MC-Unique: kif2KhG-O5qEJ53NOVyXzg-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B86F3804181;
-	Tue, 22 Mar 2022 21:44:25 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A4AA3804502;
+	Tue, 22 Mar 2022 22:19:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0F5411400C2F;
-	Tue, 22 Mar 2022 21:44:24 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D1D7540317E;
+	Tue, 22 Mar 2022 22:19:48 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 96DCA1940340;
-	Tue, 22 Mar 2022 21:44:23 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5B8141940340;
+	Tue, 22 Mar 2022 22:19:47 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0CA0C1949762
- for <dm-devel@listman.corp.redhat.com>; Tue, 22 Mar 2022 21:44:23 +0000 (UTC)
+ ESMTP id B396A1949762
+ for <dm-devel@listman.corp.redhat.com>; Tue, 22 Mar 2022 22:19:46 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id DF0F540D2820; Tue, 22 Mar 2022 21:44:22 +0000 (UTC)
+ id 5DC221121333; Tue, 22 Mar 2022 22:19:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D9FEC400E43D
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 21:44:22 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 583E31121331
+ for <dm-devel@redhat.com>; Tue, 22 Mar 2022 22:19:40 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C2285185A79C
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 21:44:22 +0000 (UTC)
-Received: from gateway30.websitewelcome.com (gateway30.websitewelcome.com
- [192.185.147.85]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 94710811E7A
+ for <dm-devel@redhat.com>; Tue, 22 Mar 2022 22:19:40 +0000 (UTC)
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
+ [205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-98-rqwqUxkJODa-az8PQAD4LA-1; Tue, 22 Mar 2022 17:44:21 -0400
-X-MC-Unique: rqwqUxkJODa-az8PQAD4LA-1
-Received: from cm14.websitewelcome.com (cm14.websitewelcome.com [100.42.49.7])
- by gateway30.websitewelcome.com (Postfix) with ESMTP id 0861E2C438
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 16:19:18 -0500 (CDT)
-Received: from 162-215-252-75.unifiedlayer.com ([208.91.199.152])
- by cmsmtp with SMTP
- id WluPnBlx2HnotWluPnFAiC; Tue, 22 Mar 2022 16:19:18 -0500
-X-Authority-Reason: nr=8
-Received: from 108-223-40-66.lightspeed.sntcca.sbcglobal.net
- ([108.223.40.66]:57612 helo=localhost)
- by bh-25.webhostbox.net with esmtpsa (TLS1.2) tls
- TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 (Exim 4.94.2)
- (envelope-from <linux@roeck-us.net>)
- id 1nWluO-000g4u-OE; Tue, 22 Mar 2022 21:19:16 +0000
-Date: Tue, 22 Mar 2022 14:19:15 -0700
-From: Guenter Roeck <linux@roeck-us.net>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20220322211915.GA2413063@roeck-us.net>
-References: <20220124091107.642561-1-hch@lst.de>
- <20220124091107.642561-2-hch@lst.de>
+ us-mta-370-zbVIdHTDOg6h2D6P97Y4sw-1; Tue, 22 Mar 2022 18:19:36 -0400
+X-MC-Unique: zbVIdHTDOg6h2D6P97Y4sw-1
+Received: from pps.filterd (m0246627.ppops.net [127.0.0.1])
+ by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 22MKxaMD012125; 
+ Tue, 22 Mar 2022 22:19:26 GMT
+Received: from userp3030.oracle.com (userp3030.oracle.com [156.151.31.80] (may
+ be forged)) by mx0b-00069f02.pphosted.com with ESMTP id 3ew5s0qxj4-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+ Tue, 22 Mar 2022 22:19:26 +0000
+Received: from pps.filterd (userp3030.oracle.com [127.0.0.1])
+ by userp3030.oracle.com (8.16.1.2/8.16.1.2) with SMTP id 22MMCDxH068420;
+ Tue, 22 Mar 2022 22:19:25 GMT
+Received: from nam11-bn8-obe.outbound.protection.outlook.com
+ (mail-bn8nam11lp2175.outbound.protection.outlook.com [104.47.58.175])
+ by userp3030.oracle.com with ESMTP id 3ew49r84pe-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+ Tue, 22 Mar 2022 22:19:25 +0000
+Received: from SJ0PR10MB4429.namprd10.prod.outlook.com (2603:10b6:a03:2d1::14)
+ by DM6PR10MB2970.namprd10.prod.outlook.com (2603:10b6:5:64::22) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5081.16; Tue, 22 Mar
+ 2022 22:19:23 +0000
+Received: from SJ0PR10MB4429.namprd10.prod.outlook.com
+ ([fe80::2092:8e36:64c0:a336]) by SJ0PR10MB4429.namprd10.prod.outlook.com
+ ([fe80::2092:8e36:64c0:a336%7]) with mapi id 15.20.5102.016; Tue, 22 Mar 2022
+ 22:19:23 +0000
+From: Jane Chu <jane.chu@oracle.com>
+To: Christoph Hellwig <hch@infradead.org>
+Thread-Topic: [PATCH v6 2/6] x86/mce: relocate set{clear}_mce_nospec()
+ functions
+Thread-Index: AQHYO1ql070j1sj5n0uvCqd0wwFVgKzLGuoAgADkIwA=
+Date: Tue, 22 Mar 2022 22:19:23 +0000
+Message-ID: <24879c61-2ca9-491d-d308-ece8e697db30@oracle.com>
+References: <20220319062833.3136528-1-jane.chu@oracle.com>
+ <20220319062833.3136528-3-jane.chu@oracle.com>
+ <YjmMCjDuakvTzRRc@infradead.org>
+In-Reply-To: <YjmMCjDuakvTzRRc@infradead.org>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
+ Thunderbird/91.7.0
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: e0ac9513-06ea-4879-c1bf-08da0c5204ad
+x-ms-traffictypediagnostic: DM6PR10MB2970:EE_
+x-microsoft-antispam-prvs: <DM6PR10MB297022902A26862389CB3E09F3179@DM6PR10MB2970.namprd10.prod.outlook.com>
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: jJpLJwrusjXJVUCffw9AhBFLfOzhBtZS3mBVJMkyr8dipav5tuEHqLo8vMdnwUWQfQ/QnrbJ+dlKWR46krZyedCRtY9JV/G8q4CB1ewyTleceztSplJ4InwFHT2RLF5kbTmzVP2RF5Cw9ro1MyxhHWcq01yssIA4NDUnikdMVEJo+bDzj9VXpqvCQTfGAQPSPXFexZTFHXHdzlCUbaa6l3X1Z1jPCFmr0QsuDKhfhbtzKC0KfRzCQ3upNNXHACj/KQZ2sIYT5tyCG3YRoRgMsDbs32NPGSqPLqV6Txu+kGFbtFT3tte3mAFkowRqRjsilN6qZcXyUaQuMez8McphUvvjyli9Vexn3urXvRClCTVV2m71rzsI5CTjTiUEYOnRsy33KP5Q1ez21sFse6Ne6AIjefku8ZGpinrcx7rE4ziMqvnvezFmJbKr3KDAvJ/J6NBTbOFdHHBGpYRN4FsvL1xFLmvnAEqHQr4/wlMvEMW/TebDDOCqBq0bQQ33deoeHxAPMJrXQxUn/nT6tT1vtOKAgYzGy5ylKADF/UsagxvHe+6WbY6s77I3PrJG/thpaiwCf4I2IGnzwFVGuD22ORyVVPf/e5SqWD7lLKo0CP0f+gRu09nOHxrzMSi+hk+DFhIgxN6sWXsImJHWAEPwO5iYG/3VshQh+YtN2fOUWoJEPCMYAXoVpNn/PaX27ypteEncNkSeV5PwH8dZ9AvZdErklCu6sAhjs+nOPgunDx4OVltYFsgGjmhyGQKK6hgU7dD713FmP6d9m/+xAoSrQg==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:SJ0PR10MB4429.namprd10.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230001)(366004)(71200400001)(6512007)(44832011)(83380400001)(66446008)(64756008)(66946007)(8676002)(66556008)(66476007)(4326008)(76116006)(53546011)(122000001)(6486002)(6506007)(508600001)(2906002)(316002)(31686004)(2616005)(38070700005)(186003)(26005)(8936002)(54906003)(6916009)(5660300002)(38100700002)(4744005)(31696002)(36756003)(86362001)(7416002)(43740500002)(45980500001);
+ DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?utf-8?B?S3dnYUxvbjJvUVdSb2dEZUxSVFBRSjg0cjFKcTVYUXNlNThXUGZxSWpiNWpl?=
+ =?utf-8?B?Vlp1ellzQTl1V2JxNUh5YzlpM0NhbVNmbzZsVFlNK3JnSG5wa1QvLzFQa09K?=
+ =?utf-8?B?dzZEb2FUTklmdkYvOGlBczBuQXZybmVjRW5tOUhUeGc1cXpmNGN4dkRZcmJN?=
+ =?utf-8?B?SzhoV0c2amovcThoSXYvZTBwTUJvd2ZxN0N6bUdVZkZTWUhVMVlVSEZzQXNP?=
+ =?utf-8?B?M3ZsQUtZaEs0Qzd6dmVDUlQySllnK1NaNHlzK1picmdvL2hMdVhoZTJ1SytP?=
+ =?utf-8?B?QU9iOTVuUi8zNmowU2NJRHZMT25tcm9jYnBlVDlieFRleGt3MVNVcXdQMTND?=
+ =?utf-8?B?QkRLMVkzUlpIZjVwcTYrb0M1N1VXSWsxM2I1K3lsM3phT2VBVlE4ZUVkRkpJ?=
+ =?utf-8?B?OWZqSHMza2t1ejV4YTRqTHk5Q0dOUmZrSG1OWnRjNjFHZUxUbkdRU1BwVXda?=
+ =?utf-8?B?N0xVRVpqUW02a3JCMzhDUmZNS2MwbEU4a3B4dDBmVjlObThmRjJJaUdIWS9j?=
+ =?utf-8?B?YXNoZUdwN1NHcnpySUVsRjF3WW5aY1dqS2hFR1hDd0RQd0dEWjhmWGJJK2pF?=
+ =?utf-8?B?YXVCaHIybEFNc1BDamFxdklWUkFNb01rbXVraDNRSWFEeHNaQ09NVm5FNUs5?=
+ =?utf-8?B?VEFBckp3OXQ1SWY0bE8vMDBWdDAwQWdtbDBXMmN2SkxWVWdNOFVnaVhJckxu?=
+ =?utf-8?B?dlp0YUlIdC94SUdrMlBjVXVaTy9FWXFBcU93OFI4KzVFNW9ESXVxYVdXeFRJ?=
+ =?utf-8?B?RC90aUZjM3owc3k0MCtoNkFPK3kvMzYrQ0ZQbnZpRmhkajZiVTIyYWdsL0pU?=
+ =?utf-8?B?dWlsT1U1b3RMTWtuNERMcWJsMTBmVTQ5eldXc2lNYkNLZXFXd2I1VkFPdlI5?=
+ =?utf-8?B?UmR4VUJjMnFjMG9qc3JTS1dIeDlNclJ0ZmdsQUowL0pxY3lZMlZqRmVOenNm?=
+ =?utf-8?B?OXZySGcwMTE1akRIUlcwdm9uSjNIQU9TMzE2aVk5RVFLNm1vZzRGdE9DMXVm?=
+ =?utf-8?B?TEg3R0ExRDcrOUpLQU5oZlVUU2xYNUJxNXF1eElkZ0dmRzBrNDNlbzAxUWpr?=
+ =?utf-8?B?ZHd2emJQWmtaVGsrRVV3QjBYUW1mYnJEM0tUdUlOV3hMWFR1SFV3MVdqWS9m?=
+ =?utf-8?B?UVJqek1qOFo3SXZMNVJuUnFvUGJ4WlBLNThjSFNyVkVidU1uQU92dGV3dEZj?=
+ =?utf-8?B?Z1BlYUJpQVJQZUh2Z1g2NGZGOWVLMWwvUUlBeTczS2ZvQkhNTVdoaE9rWlRs?=
+ =?utf-8?B?SlByeWhsTDJXWWxWVGc3NHhESHZkUmpZT1JyRVFxam1oZmk5Wk9abVZiWHVN?=
+ =?utf-8?B?cWRUSWwxaXVxVkNwdm94UndoMkQ5c0h4UkZ2YWh0cEtldVZmeEUveFZhUDlo?=
+ =?utf-8?B?dmlwMFdVem1YdUZPREluTWgwRXEyYXNDc0I0RDYwYVZsQjhKaWFVSjI5N0xS?=
+ =?utf-8?B?RXhrQU4vc3c5RGNBUVNHdWJxNlVlZk5MeUxoREhHalhOZDRlZ2k4UEJVL1Ex?=
+ =?utf-8?B?WEg5ZGZSKzRra0dVd2JFYnZheTNVajlYbTRNM0tadk1heHNmRFF3S3lhS0Fw?=
+ =?utf-8?B?akJDMkYwU0FzQW93dE43KzcwUDlCaTNvaCtZdkZURTg5YXdBci9RK0xjRTBL?=
+ =?utf-8?B?VGpDanJsbnpGdnpxblNLZU1aclF0ZkJZWGlrckdGemxCQUFkTlhqNWFDYU00?=
+ =?utf-8?B?SDlhSi8vNlkwUkNQcXh5ODNoZ2Q1WHE1NVdwNnFreFZESGpjQjNnbnRmNndY?=
+ =?utf-8?B?NnpKSWxSRzg0UGZ1TDU3a0xoRXA5V0tFVDJOV0gyR3UxRzk1cHRNMzNTcDYy?=
+ =?utf-8?B?aXJDcVlFT05EOEEyeTVmM2dXL2FVWkwzbHhoaG5veGNXbk9OMjFCNW1ycGFX?=
+ =?utf-8?B?MVRXM0JySytuSDB0eStaK2Q2WXBSNmdPaEMrcHdWQjJ2bkI2RHBRemtDZ2lI?=
+ =?utf-8?Q?1NGTxqslPKRE4z8D12qYwdcjCxjrLdMT?=
 MIME-Version: 1.0
-In-Reply-To: <20220124091107.642561-2-hch@lst.de>
-X-AntiAbuse: This header was added to track abuse,
- please include it with any abuse report
-X-AntiAbuse: Primary Hostname - bh-25.webhostbox.net
-X-AntiAbuse: Original Domain - redhat.com
-X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
-X-AntiAbuse: Sender Address Domain - roeck-us.net
-X-BWhitelist: no
-X-Source-IP: 108.223.40.66
-X-Source-L: No
-X-Exim-ID: 1nWluO-000g4u-OE
-X-Source: 
-X-Source-Args: 
-X-Source-Dir: 
-X-Source-Sender: 108-223-40-66.lightspeed.sntcca.sbcglobal.net (localhost)
- [108.223.40.66]:57612
-X-Source-Auth: guenter@roeck-us.net
-X-Email-Count: 10
-X-Source-Cap: cm9lY2s7YWN0aXZzdG07YmgtMjUud2ViaG9zdGJveC5uZXQ=
-X-Local-Domain: yes
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: SJ0PR10MB4429.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: e0ac9513-06ea-4879-c1bf-08da0c5204ad
+X-MS-Exchange-CrossTenant-originalarrivaltime: 22 Mar 2022 22:19:23.0913 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: fk1Kx61/u3Mf/RpByLp8zojoJiDx2nYCb24z50mrbAs7rp8JlqAeqTJOEjfJwqBJfFVPLQJeaztP2yxu6w9/Tw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR10MB2970
+X-Proofpoint-Virus-Version: vendor=nai engine=6300 definitions=10294
+ signatures=694350
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 adultscore=0
+ malwarescore=0 mlxscore=0
+ bulkscore=0 phishscore=0 spamscore=0 mlxlogscore=851 suspectscore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2202240000
+ definitions=main-2203220112
+X-Proofpoint-GUID: b9i48SWmYCjRP21DO05xMn5nHZr3rWod
+X-Proofpoint-ORIG-GUID: b9i48SWmYCjRP21DO05xMn5nHZr3rWod
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -90,8 +157,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH 01/19] fs: remove mpage_alloc
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH v6 2/6] x86/mce: relocate
+ set{clear}_mce_nospec() functions
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,118 +171,54 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>,
- Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
- linux-nfs@vger.kernel.org, linux-nilfs@vger.kernel.org,
- Andrew Morton <akpm@linux-foundation.org>, Mike Snitzer <snitzer@redhat.com>,
- Philipp Reisner <philipp.reisner@linbit.com>,
- Pavel Begunkov <asml.silence@gmail.com>, linux-block@vger.kernel.org,
- Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.co>, dm-devel@redhat.com,
- "Md . Haris Iqbal " <haris.iqbal@ionos.com>, linux-fsdevel@vger.kernel.org,
- xen-devel@lists.xenproject.org, Lars Ellenberg <lars.ellenberg@linbit.com>,
- ntfs3@lists.linux.dev, Jack Wang <jinpu.wang@ionos.com>,
- Ryusuke Konishi <konishi.ryusuke@gmail.com>, drbd-dev@lists.linbit.com
+Cc: "nvdimm@lists.linux.dev" <nvdimm@lists.linux.dev>,
+ "dave.jiang@intel.com" <dave.jiang@intel.com>,
+ "snitzer@redhat.com" <snitzer@redhat.com>,
+ "djwong@kernel.org" <djwong@kernel.org>,
+ "david@fromorbit.com" <david@fromorbit.com>,
+ "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+ "willy@infradead.org" <willy@infradead.org>,
+ "linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
+ "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ "vgoyal@redhat.com" <vgoyal@redhat.com>,
+ "vishal.l.verma@intel.com" <vishal.l.verma@intel.com>,
+ "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+ "dan.j.williams@intel.com" <dan.j.williams@intel.com>,
+ "ira.weiny@intel.com" <ira.weiny@intel.com>, "agk@redhat.com" <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
+Content-ID: <43B9F707AFBDBC4D99FE4370CD727EA7@namprd10.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Jan 24, 2022 at 10:10:49AM +0100, Christoph Hellwig wrote:
-> open code mpage_alloc in it's two callers and simplify the results
-> because of the context:
+On 3/22/2022 1:42 AM, Christoph Hellwig wrote:
+>> +EXPORT_SYMBOL(set_mce_nospec);
 > 
->  - __mpage_writepage always passes GFP_NOFS and can thus always sleep and
->     will never get a NULL return from bio_alloc at all.
->  - do_mpage_readpage can only get a non-sleeping context for readahead
->    which never sets PF_MEMALLOC and thus doesn't need the retry loop
->    either.
+> No need for this export at all.
+
+Indeed, my bad, will remove it.
+
 > 
-> Both cases will never have __GFP_HIGH set.
+>> +
+>> +/* Restore full speculative operation to the pfn. */
+>> +int clear_mce_nospec(unsigned long pfn)
+>> +{
+>> +	return set_memory_wb((unsigned long) pfn_to_kaddr(pfn), 1);
+>> +}
+>> +EXPORT_SYMBOL(clear_mce_nospec);
 > 
+> And this should be EXPORT_SYMBOL_GPL.
 
-With this patch in the tree, I get:
+Yes.
 
-[    1.198134] Unexpected gfp: 0x2 (__GFP_HIGHMEM). Fixing up to gfp: 0x1192888 (GFP_NOWAIT|__GFP_FS|__GFP_NOWARN|__GFP_NORETRY|__GFP_NOMEMALLOC|__GFP_HARDWALL|__GFP_MOVABLE|__GFP_SKIP_KASAN_POISON). Fix your code!
-[    1.198783] CPU: 0 PID: 1 Comm: init Not tainted 5.17.0-01402-g8565d64430f8 #1
-[    1.199165] Stack : 0000000000000042 0000000000000000 0000000000000008 dae882cc7dea7ec4
-[    1.199563]         a8000000014f0c00 0000000000000000 a80000000146b2c8 ffffffff80d3a920
-[    1.199750]         a80000000146b0e0 0000000000000001 0000000000000000 0000000000000000
-[    1.199936]         000000000003087f 0000000000000000 ffffffff806d9f54 0000000000000000
-[    1.200121]         a80000000146b16f ffffffff80da0000 0000000000000001 000000000119288a
-[    1.200306]         ffffffff80da0000 ffffffffffffffff 000000000119288a 000000000119288a
-[    1.200491]         a800000001416f00 0000000000000000 ffffffff80774d30 ffffffffa0042718
-[    1.200676]         ffffffff80ec2158 a800000001468000 a80000000146b2c0 0000000000000000
-[    1.200861]         ffffffff80b55730 0000000000000000 a80000000146b3f8 ffffffff80d3a920
-[    1.201046]         0000000000000001 000000000119288a ffffffff80108fa0 dae882cc7dea7ec4
-[    1.201236]         ...
-[    1.201548] Call Trace:
-[    1.201622] [<ffffffff80108fa0>] show_stack+0x38/0x118
-[    1.201960] [<ffffffff80b55730>] dump_stack_lvl+0x50/0x6c
-[    1.202105] [<ffffffff80b4d8a4>] kmalloc_fix_flags+0x60/0x88
-[    1.202249] [<ffffffff802b40f8>] new_slab+0x2d8/0x320
-[    1.202375] [<ffffffff802b6844>] ___slab_alloc.constprop.0+0x33c/0x5e8
-[    1.202528] [<ffffffff802b6b24>] __slab_alloc.constprop.0+0x34/0x50
-[    1.202675] [<ffffffff802b72b8>] kmem_cache_alloc+0x320/0x368
-[    1.202811] [<ffffffff805e2a68>] bvec_alloc+0x78/0x128
-[    1.202936] [<ffffffff805e2fac>] bio_alloc_bioset+0x194/0x340
-[    1.203073] [<ffffffff80325bd8>] do_mpage_readpage+0x540/0x6e0
-[    1.203213] [<ffffffff80325e38>] mpage_readahead+0xc0/0x198
-[    1.203346] [<ffffffff802583a8>] read_pages+0xc0/0x2e0
-[    1.203472] [<ffffffff802589a4>] page_cache_ra_unbounded+0x1cc/0x290
-[    1.203622] [<ffffffff8024e2fc>] filemap_fault+0x4f4/0x7e8
-[    1.203753] [<ffffffff80282b2c>] __do_fault+0x44/0x190
-[    1.203878] [<ffffffff80288e0c>] __handle_mm_fault+0x7e4/0xcd0
-[    1.204015] [<ffffffff80289408>] handle_mm_fault+0x110/0x258
-[    1.204149] [<ffffffff801220e0>] do_page_fault+0x110/0x4f0
-[    1.204278] [<ffffffff801288d8>] tlb_do_page_fault_1+0x108/0x110
-[    1.204421] [<ffffffff8035eddc>] padzero+0x64/0x98
-[    1.204538] [<ffffffff80360618>] load_elf_binary+0x1808/0x18d0
-[    1.204677] [<ffffffff802d9f40>] bprm_execve+0x240/0x5a8
-[    1.204806] [<ffffffff802db49c>] kernel_execve+0x144/0x200
-[    1.204937] [<ffffffff80b4a658>] try_to_run_init_process+0x18/0x58
-[    1.205085] [<ffffffff80b5ecc0>] kernel_init+0xb4/0x10c
-[    1.205220] [<ffffffff80102558>] ret_from_kernel_thread+0x14/0x1c
-
-with some qemu emulations. Bisect log is attached.
-
-I can not easily revert the patch since an attempt to do so causes
-conflicts, so I can not test upstream without this patch.
-
-Guenter
-
----
-# bad: [8565d64430f8278bea38dab0a3ab60b4e11c71e4] Merge tag 'bounds-fixes-v5.18-rc1' of git://git.kernel.org/pub/scm/linux/kernel/git/kees/linux
-# good: [f443e374ae131c168a065ea1748feac6b2e76613] Linux 5.17
-git bisect start 'HEAD' 'v5.17'
-# good: [5628b8de1228436d47491c662dc521bc138a3d43] Merge tag 'random-5.18-rc1-for-linus' of git://git.kernel.org/pub/scm/linux/kernel/git/crng/random
-git bisect good 5628b8de1228436d47491c662dc521bc138a3d43
-# bad: [69d1dea852b54eecd8ad2ec92a7fd371e9aec4bd] Merge tag 'for-5.18/drivers-2022-03-18' of git://git.kernel.dk/linux-block
-git bisect bad 69d1dea852b54eecd8ad2ec92a7fd371e9aec4bd
-# good: [b080cee72ef355669cbc52ff55dc513d37433600] Merge tag 'for-5.18/io_uring-statx-2022-03-18' of git://git.kernel.dk/linux-block
-git bisect good b080cee72ef355669cbc52ff55dc513d37433600
-# bad: [22027a9811349de28f81e13e20e83299099acd3a] nvmet: replace ida_simple[get|remove] with the simler ida_[alloc|free]
-git bisect bad 22027a9811349de28f81e13e20e83299099acd3a
-# bad: [672fdcf0e7de3b1e39416ac85abf178f023271f1] block: partition include/linux/blk-cgroup.h
-git bisect bad 672fdcf0e7de3b1e39416ac85abf178f023271f1
-# bad: [b42c1fc3d55e077d36718ad9800d89100b2aff81] block: fix the kerneldoc for bio_end_io_acct
-git bisect bad b42c1fc3d55e077d36718ad9800d89100b2aff81
-# bad: [4b1dc86d1857f1007865cab759f2285280692eee] drbd: bio_alloc can't fail if it is allow to sleep
-git bisect bad 4b1dc86d1857f1007865cab759f2285280692eee
-# bad: [f0d911927b3c7cf5f9edb5941d0287144a602d0d] nilfs2: remove nilfs_alloc_seg_bio
-git bisect bad f0d911927b3c7cf5f9edb5941d0287144a602d0d
-# good: [e7243285c0fc87054990fcde630583586ff8ed5f] block: move blk_drop_partitions to blk.h
-git bisect good e7243285c0fc87054990fcde630583586ff8ed5f
-# bad: [d5f68a42da7a4516e7503c281a54a58727f07dc3] fs: remove mpage_alloc
-git bisect bad d5f68a42da7a4516e7503c281a54a58727f07dc3
-# good: [322cbb50de711814c42fb088f6d31901502c711a] block: remove genhd.h
-git bisect good 322cbb50de711814c42fb088f6d31901502c711a
-# first bad commit: [d5f68a42da7a4516e7503c281a54a58727f07dc3] fs: remove mpage_alloc
+Thanks!
+-jane
 
 --
 dm-devel mailing list
