@@ -1,166 +1,96 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C3B55C433F5
-	for <dm-devel@archiver.kernel.org>; Wed, 23 Mar 2022 18:43:54 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id EE119C433EF
+	for <dm-devel@archiver.kernel.org>; Wed, 23 Mar 2022 19:45:37 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1648064736;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=bGVOfQxPLAj6faJTL8ZT1uWsS1Z+Oja+0y9i0fdjZuY=;
+	b=TIhc4aiElsSdBksPxhaxaYzVxpYds1bOw36BsqtO4G/+R10BPwEGtZp6A2xuf5DrvXA9C8
+	nqZJ0rwzN2hFDw7SvidKFsjl9INBeXMeKOI+TbSwCRoyD5ezeUOq72ET+IZc62683eo/+U
+	rKhNRbrJaE3tLuwLIyybM0uUCdZIzCA=
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-175-Myt4J1wLM4K6MzOyRGR2eQ-1; Wed, 23 Mar 2022 14:43:52 -0400
-X-MC-Unique: Myt4J1wLM4K6MzOyRGR2eQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-562-omwy5SLLNZmp0TrZgBvt6Q-1; Wed, 23 Mar 2022 15:45:33 -0400
+X-MC-Unique: omwy5SLLNZmp0TrZgBvt6Q-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4A65F185A7BA;
-	Wed, 23 Mar 2022 18:43:50 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2D522299E74C;
+	Wed, 23 Mar 2022 19:45:31 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BEA84140262B;
-	Wed, 23 Mar 2022 18:43:48 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0E79CC26E92;
+	Wed, 23 Mar 2022 19:45:30 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7BFF71940347;
-	Wed, 23 Mar 2022 18:43:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 857391940347;
+	Wed, 23 Mar 2022 19:45:29 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 75AD11949763
- for <dm-devel@listman.corp.redhat.com>; Wed, 23 Mar 2022 18:43:46 +0000 (UTC)
+ ESMTP id 62E611949763
+ for <dm-devel@listman.corp.redhat.com>; Wed, 23 Mar 2022 19:45:28 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 343FB2166B4C; Wed, 23 Mar 2022 18:43:46 +0000 (UTC)
+ id 536AFC27D99; Wed, 23 Mar 2022 19:45:28 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E6E0A2166B4F
- for <dm-devel@redhat.com>; Wed, 23 Mar 2022 18:43:35 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 4FB03C27D86
+ for <dm-devel@redhat.com>; Wed, 23 Mar 2022 19:45:28 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 82A7F85A5A8
- for <dm-devel@redhat.com>; Wed, 23 Mar 2022 18:43:35 +0000 (UTC)
-Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
- [205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 34D2C185A79C
+ for <dm-devel@redhat.com>; Wed, 23 Mar 2022 19:45:28 +0000 (UTC)
+Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
+ [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-304-_H6bNwEgNi6W16NLV5mvTw-1; Wed, 23 Mar 2022 14:43:33 -0400
-X-MC-Unique: _H6bNwEgNi6W16NLV5mvTw-1
-Received: from pps.filterd (m0246631.ppops.net [127.0.0.1])
- by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 22NHr6uR004114; 
- Wed, 23 Mar 2022 18:43:10 GMT
-Received: from aserp3020.oracle.com (aserp3020.oracle.com [141.146.126.70])
- by mx0b-00069f02.pphosted.com with ESMTP id 3ew5y22f98-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Wed, 23 Mar 2022 18:43:10 +0000
-Received: from pps.filterd (aserp3020.oracle.com [127.0.0.1])
- by aserp3020.oracle.com (8.16.1.2/8.16.1.2) with SMTP id 22NIf7R5183175;
- Wed, 23 Mar 2022 18:43:09 GMT
-Received: from nam11-bn8-obe.outbound.protection.outlook.com
- (mail-bn8nam11lp2169.outbound.protection.outlook.com [104.47.58.169])
- by aserp3020.oracle.com with ESMTP id 3ew701pw79-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Wed, 23 Mar 2022 18:43:09 +0000
-Received: from SJ0PR10MB4429.namprd10.prod.outlook.com (2603:10b6:a03:2d1::14)
- by DM5PR10MB1481.namprd10.prod.outlook.com (2603:10b6:3:9::19) with
- Microsoft
- SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.5081.18; Wed, 23 Mar 2022 18:43:07 +0000
-Received: from SJ0PR10MB4429.namprd10.prod.outlook.com
- ([fe80::2092:8e36:64c0:a336]) by SJ0PR10MB4429.namprd10.prod.outlook.com
- ([fe80::2092:8e36:64c0:a336%7]) with mapi id 15.20.5102.017; Wed, 23 Mar 2022
- 18:43:06 +0000
-From: Jane Chu <jane.chu@oracle.com>
-To: Christoph Hellwig <hch@infradead.org>
-Thread-Topic: [PATCH v6 4/6] dax: add DAX_RECOVERY flag and .recovery_write
- dev_pgmap_ops
-Thread-Index: AQHYO1qr0XYuk2dPyEaDqgStF1AJhKzLIC0AgADrq4CAAG/9AIAA2SAA
-Date: Wed, 23 Mar 2022 18:43:06 +0000
-Message-ID: <2897ca93-690b-72ed-751d-d0b457d3fbec@oracle.com>
-References: <20220319062833.3136528-1-jane.chu@oracle.com>
- <20220319062833.3136528-5-jane.chu@oracle.com>
- <YjmQdJdOWUr2IYIP@infradead.org>
- <3dabd58b-70f2-12af-419f-a7dfc07fbb1c@oracle.com>
- <Yjq0FspfsLrN/mrx@infradead.org>
-In-Reply-To: <Yjq0FspfsLrN/mrx@infradead.org>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
- Thunderbird/91.7.0
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 36aa46f6-0b6a-4e2a-7fca-08da0cfcf8a8
-x-ms-traffictypediagnostic: DM5PR10MB1481:EE_
-x-microsoft-antispam-prvs: <DM5PR10MB148194C88B87C00180A081F0F3189@DM5PR10MB1481.namprd10.prod.outlook.com>
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: umPTFNbuJbnAF6x6VwU92Glutd9+hBRfwsapvHjCilYkk8cBrD8EV82YTyxsLmx9gZXV69UAUQWPicuB9mDB2NP3vvDouk2kr6kC5OMnfsgvdQ5KSZw8+aAaKIBCiKMVdwtyk4EU04dXlhb/+owELjA54W9i1ckcZ73WES7RkS995aYSTrMF0OPEXnx03+1ZzSpPWCUT5TP/ZGoD+AWifd9ZRVGvgTJKJkc4G9JMFJGjzJWEisar+oUvUx1PY3pDaSuucIthrqsdPs+9v3VP8e+RbasJ8/TY6ahfjI0A383H8Do30M9K3ERt8Od4eJnMwvc/vEga2oP4LBaCKxg8QZXMCIFaQ6to2Sx6YURB6njTZsTgn51LEuqrIzvJPMovDhrrZwd44kTnHHLJZA1SBKRfjyGWS98oWWNB9FuJq1GFOHySPITAQfTMzME1IWgT1WSDt95vxCuWpCds0eSdT52+lGqhKwlC5164p+6i+QkEXTHpDWtdFQVXmWFD4DqvNkJUVdtKuybD+LSC1CIUJ2hVpWIcJoRd/0ubFlJSuOMEb/+/yT/AVL2JNzav/EZlT4uCgMlDGD+Zn43cipjUXa6iha1l3QU4FZfVjsFfHMMgZtf1Body23Qp188wx0ML0PaP8VlLH3JOSmv9frBMBopd7T3rtMNEznwsltj+MYKAEBE/deAfkKxuOiOisgaymQyIhoBG57YE6izVXwi26bG5k69nhgXi0KRtBR+jS8olmYY9/OuFybU4blXiQMRzTUyXd/bd8WRNAOiY03R3dveKsSO+hul+qLJTBxdl2tYvJ2O9820D3iJ5PglQgKHNk5nxgsPqq9jei7yMW+nKm3DJWZmjWVj5hPdS26/qtaRYEg+RHOAwJuKPrQ2pOm1H
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:SJ0PR10MB4429.namprd10.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230001)(366004)(4326008)(8676002)(66476007)(66556008)(66946007)(86362001)(76116006)(66446008)(64756008)(36756003)(2616005)(508600001)(71200400001)(5660300002)(966005)(6486002)(6916009)(53546011)(316002)(31686004)(6512007)(6506007)(54906003)(186003)(26005)(83380400001)(8936002)(31696002)(7416002)(44832011)(2906002)(38070700005)(122000001)(38100700002)(142923001)(43740500002)(45980500001);
- DIR:OUT; SFP:1101
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?utf-8?B?a0wveG1PS3A0MnBESFJUTEpkWUwvWlZqU1ZPZ0RraHUwdmloc3FESjlMQkZW?=
- =?utf-8?B?NXpUTEt1MWxFVy9icTFmb1A4OXBUb2c0UEZSbjJPdmlBZHZDUUhuaVJsRHpN?=
- =?utf-8?B?TWtvVUFaMldLS3VrTGQrZE5lMG1OQ0NYaVZFRkNHOEF3NENoRlZiaEltVm5a?=
- =?utf-8?B?djU5RUMyd1RhZUpmaGVEQjFDVkJXNnlxY0UxSVAwWmJyc2wyOEZDMHAwQ0h0?=
- =?utf-8?B?SnlCMkNkQnRCaHY0L1Z4em8yZWQvNXpUYmlsOTdsNERlNVFyeVkveDF6enJz?=
- =?utf-8?B?UUIrS1FhV2pBQmY2b09lWmlpdzdJVzV3OXJuTEVrdHRUZUZla3FwODVGOXgv?=
- =?utf-8?B?aHgrdXU1M0hNamNKd2loYmxibkU2dVlvM0Uyb1RuQTB6VzFWMnpyVHpZUGlW?=
- =?utf-8?B?cnIvekNNbkNIZUMxNk8yWEd0RitLZXI0aGFUMjFUVGoxcHNucm5kZWVCVE1k?=
- =?utf-8?B?ODlnMnFuaDlJeGNaa0swaWJMRkVUNFlZczVLZEpCUjF1cmI1d0xTb2NtSUpy?=
- =?utf-8?B?RXhsbjhDOUViZmFJejJXT1NTcExFbWgzdDBKYzFHTFltMTNOekg2YkxoL1dT?=
- =?utf-8?B?eFdJWjN1ZnZYcWVnOE9CamNoWkNENzBEWmR5L2N4YkFuWnpRaXQ4M0ZRUG1X?=
- =?utf-8?B?Y05xQ3k1UmdLa3A1R3hqRTB0di9kSlN0c3dEMmM4aWh2SUpaZUhIMWkvbFNt?=
- =?utf-8?B?MFRFN1VWYWJIblpxODVEODJ4Vk1ucTBNclZLNWUxWDRnTjVHQ1A1cFdXV3NG?=
- =?utf-8?B?em9lNERwK0dvN0hjM0FlSXRsM2lSODE5TFFubjhWZ2NYMis0NWVCYi8vRXZK?=
- =?utf-8?B?bU9qV21JM0xISGhQWENJSi92ZGRZUERrNGpPY2NoeU1OdGhjVERPakVTUDJL?=
- =?utf-8?B?TElxN0RmV2RmbmZqcHVxa045U3F1ZFdqa2FYTndKTmJ5aHpaTThrb2hlVVdy?=
- =?utf-8?B?WTU3N1psbEVFWTRaeTJrUm03bmlOZDJaL01YTU13cWpOVU0yNVg2bVRhRUsz?=
- =?utf-8?B?THVZVWRoVndsMmhSdUdwVEpWRHB6SzJNN2FnbS8wTllGelQxODZFTnBqQkJL?=
- =?utf-8?B?LzVQRDlXSW9FeStFeWtjSmFpUjJuWmdERytqcVZEeWNVVXZTcFNEWDRtTUdi?=
- =?utf-8?B?SU1LZ3dlbnFkdDJINFVIUzlaZlRCZnFHRzN6QVU3TFV2Yjh5cDg3eGgyck44?=
- =?utf-8?B?SFBvTkJ3RFAvUUNtMlpTU3k0OWQ3KzNQemRQU3NvejFsSFhEbWJnMDczeEpv?=
- =?utf-8?B?RTFOWmJ2VVM4QTZWU1d4QVRxTzRFVElkM0twdFpHbmVSejlHNm5FTllQd1Nw?=
- =?utf-8?B?eFNBUmhtN1NLNnEvSW9kaElkZURlWWxRZjhBU0d4VFV1cUo3blA0Nmt1WUdR?=
- =?utf-8?B?Q0VLMEEzcTkreDg5eXV5UFZDa1FsUjlERmRsUXNJMWJYYlg0bEwwMzkxcHZJ?=
- =?utf-8?B?RnY4QXl1d1JjVXJaYXc4SHI3NWNmU0VnblcvQ0c0WlE3aDVkOVMvWFZxb0tk?=
- =?utf-8?B?T21WY0crY1hqMEFNUWRSNGdBczNCdnhMSG9MNm5uVjVWMkFwQ1VvRkVLQ2F1?=
- =?utf-8?B?VytBb3JQNXlGblRiaGphTkYwczZ0dWNxSUIyWkcrb0Rtb1lQZUM3bEljczlr?=
- =?utf-8?B?VEMyUlF5eFhoTmFaaXU3ZysrWEI3WUhPZWdaV1AxWE15ZFZtMC96YXJBUUJK?=
- =?utf-8?B?UGRrNWRVSFVaREJYWTRtTnpiYklQcStKQWU1cGZyNlV2dzhIajQwc2EraGI3?=
- =?utf-8?B?WFEwMC9FRzZlRkpSSmJvNDdWTnpMQ3g4elQza1Foa3hmaVI2M1lkTXVneitL?=
- =?utf-8?B?TmZzcGVUSHlQOFdEWFVJYmQvYkd3ZG9VclVRY0I5a29hTTZydFllbTlJZFpO?=
- =?utf-8?B?aGdRQmM1UkpXa1lUSUhqTFU4OGI4ODlEYk1yYVJwSXhwTHBvYVVvRDB0Q1ZF?=
- =?utf-8?Q?SL5iwCOhvt8=3D?=
-MIME-Version: 1.0
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: SJ0PR10MB4429.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 36aa46f6-0b6a-4e2a-7fca-08da0cfcf8a8
-X-MS-Exchange-CrossTenant-originalarrivaltime: 23 Mar 2022 18:43:06.8337 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: WbV7RVNpjvzgtfeN5wjBsAcKsVRRWgtvT90qu9gVIW+/E3+LCU/MXCo3FJxw+xgiury301q7KLlRplEWYgfFDw==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM5PR10MB1481
-X-Proofpoint-Virus-Version: vendor=nai engine=6300 definitions=10295
- signatures=694973
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 adultscore=0
- spamscore=0 malwarescore=0
- suspectscore=0 mlxlogscore=878 bulkscore=0 phishscore=0 mlxscore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2202240000
- definitions=main-2203230098
-X-Proofpoint-GUID: hjjHGXr6HSA6N0p88bNGHy3fW6sykkEX
-X-Proofpoint-ORIG-GUID: hjjHGXr6HSA6N0p88bNGHy3fW6sykkEX
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-Subject: Re: [dm-devel] [PATCH v6 4/6] dax: add DAX_RECOVERY flag and
- .recovery_write dev_pgmap_ops
+ us-mta-193-TphXfXMkOEedxd-vP4RzhQ-1; Wed, 23 Mar 2022 15:45:26 -0400
+X-MC-Unique: TphXfXMkOEedxd-vP4RzhQ-1
+Received: by mail-qk1-f197.google.com with SMTP id
+ 207-20020a3706d8000000b0067b322bef9eso1697870qkg.3
+ for <dm-devel@redhat.com>; Wed, 23 Mar 2022 12:45:26 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:sender:from:to:cc:subject:date:message-id;
+ bh=lSw1myUul/JfBJxzMKk7S5towi4LjKVp/1Za72ezB54=;
+ b=T0XF+Lj6yyb1vaAOeB/BR3rcTSVTuNNkreOWXpYvbBGAxyIF0VdQlxZDcRAXYifnJB
+ tEbXjysA5R7hQsaTM51rDJMnE3AjU/W5QY0t2DSr8fn64/KlVmxoWH3J5BnKIBwyHPKb
+ yd4wYSKwX8zRjk+OxOLVTUGyIJkM7d2Gx4k47EaDaLxCEN+IZzh/DNGvEr14hbUCis24
+ ESKXLDP9PicgnPo3nWc9O2sgrKI7WXUkpQDlw4jzIMlSMkF9QleE9Rer2qZ8ApkHxeym
+ 83E7+RpUI2+kYW68UqZ/r0+3qEPSsSSM64zyqNeo8svs59A2HPy3uxuudjk169Qd3jqE
+ VXVQ==
+X-Gm-Message-State: AOAM532HkHtZLy14fm09+ZzhX0swgIW9Ks4ssadUc2ufQb8U0OJ9eyrg
+ nhDB2VD2slS9NMREMiy/nFL9GNREDAJBnW4OfOm3DmWc+jWGMIslFW5Hw9Z0fuVJTZPlNJ1u5A9
+ +h/3V83CSV41egQ==
+X-Received: by 2002:a05:620a:4442:b0:67d:b94a:8c6a with SMTP id
+ w2-20020a05620a444200b0067db94a8c6amr1061908qkp.569.1648064725984; 
+ Wed, 23 Mar 2022 12:45:25 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJx47UcAziqxaHCmQSZ1SIf9p3IFNqdEceNYCt1DNIo6G+Q2WNX/DpF1yfSQSseo4kE6sbUbPQ==
+X-Received: by 2002:a05:620a:4442:b0:67d:b94a:8c6a with SMTP id
+ w2-20020a05620a444200b0067db94a8c6amr1061900qkp.569.1648064725765; 
+ Wed, 23 Mar 2022 12:45:25 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+ [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+ r11-20020ae9d60b000000b0067e5308d664sm545584qkk.92.2022.03.23.12.45.25
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 23 Mar 2022 12:45:25 -0700 (PDT)
+From: Mike Snitzer <snitzer@redhat.com>
+X-Google-Original-From: Mike Snitzer <snitzer@kernel.org>
+To: axboe@kernel.dk
+Date: Wed, 23 Mar 2022 15:45:20 -0400
+Message-Id: <20220323194524.5900-1-snitzer@kernel.org>
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: [dm-devel] [PATCH v2 0/4] block/dm: use BIOSET_PERCPU_CACHE from
+ bio_alloc_bioset
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -172,100 +102,57 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "nvdimm@lists.linux.dev" <nvdimm@lists.linux.dev>,
- "dave.jiang@intel.com" <dave.jiang@intel.com>,
- "snitzer@redhat.com" <snitzer@redhat.com>,
- "djwong@kernel.org" <djwong@kernel.org>,
- "david@fromorbit.com" <david@fromorbit.com>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- "willy@infradead.org" <willy@infradead.org>,
- "linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>,
- "vgoyal@redhat.com" <vgoyal@redhat.com>,
- "vishal.l.verma@intel.com" <vishal.l.verma@intel.com>,
- "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
- "dan.j.williams@intel.com" <dan.j.williams@intel.com>,
- "ira.weiny@intel.com" <ira.weiny@intel.com>, "agk@redhat.com" <agk@redhat.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, hch@lst.de,
+ ming.lei@redhat.com
+MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-ID: <73969C9FD7DAC94F8ED6B7FBD409F573@namprd10.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 3/22/2022 10:45 PM, Christoph Hellwig wrote:
-> On Tue, Mar 22, 2022 at 11:05:09PM +0000, Jane Chu wrote:
->>> This DAX_RECOVERY doesn't actually seem to be used anywhere here or
->>> in the subsequent patches.  Did I miss something?
->>
->> dax_iomap_iter() uses the flag in the same patch,
->> +               if ((map_len == -EIO) && (iov_iter_rw(iter) == WRITE)) {
->> +                       flags |= DAX_RECOVERY;
->> +                       map_len = dax_direct_access(dax_dev, pgoff, nrpg,
->> +                                               flags, &kaddr, NULL);
-> 
-> Yes, it passes it on to dax_direct_access, and dax_direct_access passes
-> it onto ->direct_access.  But nothing in this series actually checks
-> for it as far as I can tell.
+Hi Jens,
 
-The flag is checked here, again, I'll spell out the flag rather than 
-using it as a boolean.
+I ran with your suggestion and DM now sees a ~7% improvement in hipri
+bio polling with io_uring (using dm-linear on null_blk, IOPS went from
+900K to 966K).
 
-  __weak long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn)
-+		long nr_pages, int flags, void **kaddr, pfn_t *pfn)
-  {
-  	resource_size_t offset = PFN_PHYS(pgoff) + pmem->data_offset;
+Christoph,
 
--	if (unlikely(is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512,
-+	if (!flags && unlikely(is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512,
-  					PFN_PHYS(nr_pages))))
-  		return -EIO;
+I tried to address your review of the previous set. Patch 1 and 2 can
+obviously be folded but I left them split out for review purposes.
+Feel free to see if these changes are meaningful for nvme's use.
+Happy for either you to take on iterating on these block changes
+further or you letting me know what changes you'd like made.
 
-> 
->>>> Also introduce a new dev_pagemap_ops .recovery_write function.
->>>> The function is applicable to FSDAX device only. The device
->>>> page backend driver provides .recovery_write function if the
->>>> device has underlying mechanism to clear the uncorrectable
->>>> errors on the fly.
->>>
->>> Why is this not in struct dax_operations?
->>
->> Per Dan's comments to the v5 series, adding .recovery_write to
->> dax_operations causes a number of trivial dm targets changes.
->> Dan suggested that adding .recovery_write to pagemap_ops could
->> cut short the logistics of figuring out whether the driver backing
->> up a page is indeed capable of clearing poison. Please see
->> https://lkml.org/lkml/2022/2/4/31
-> 
-> But at least in this series there is  1:1 association between the
-> pgmap and the dax_device so that scheme won't work.   It would
-> have to lookup the pgmap based on the return physical address from
-> dax_direct_access.  Which sounds more complicated than just adding
-> the (annoying) boilerplate code to DM.
-> 
+Thanks,
+Mike
 
-Yes, good point!  Let me look into this.
+v2: add REQ_ALLOC_CACHE and move use of bio_alloc_percpu_cache to
+    bio_alloc_bioset
 
->> include/linux/memremap.h doesn't know struct iov_iter which is defined
->> in include/linux/uio.h,  would you prefer to adding include/linux/uio.h
->> to include/linux/memremap.h ?
-> 
-> As it is not derefences just adding a
-> 
-> struct iov_iter;
-> 
-> line to memremap.h below the includes should be all that is needed.
+Mike Snitzer (4):
+  block: allow BIOSET_PERCPU_CACHE use from bio_alloc_clone
+  block: allow BIOSET_PERCPU_CACHE use from bio_alloc_bioset
+  dm: enable BIOSET_PERCPU_CACHE for dm_io bioset
+  dm: conditionally enable BIOSET_PERCPU_CACHE for bio-based dm_io bioset
 
-Sure, will do.
+ block/bio.c               | 67 +++++++++++++++++++++++++++++++----------------
+ block/blk.h               |  7 -----
+ drivers/md/dm-table.c     | 11 +++++---
+ drivers/md/dm.c           | 10 +++----
+ drivers/md/dm.h           |  4 +--
+ include/linux/bio.h       |  9 +++++++
+ include/linux/blk_types.h |  4 ++-
+ 7 files changed, 71 insertions(+), 41 deletions(-)
 
-Thanks!
--jane
+-- 
+2.15.0
+
 --
 dm-devel mailing list
 dm-devel@redhat.com
