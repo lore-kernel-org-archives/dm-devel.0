@@ -4,56 +4,57 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8DF9BC433F5
-	for <dm-devel@archiver.kernel.org>; Wed, 23 Mar 2022 06:43:04 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 07A0FC433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 23 Mar 2022 06:47:11 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-70-OqEgAEUpNtubHxLfQOaK6Q-1; Wed, 23 Mar 2022 02:42:59 -0400
-X-MC-Unique: OqEgAEUpNtubHxLfQOaK6Q-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-638-xScKAUy_PjavG_RDO4LMLg-1; Wed, 23 Mar 2022 02:47:09 -0400
+X-MC-Unique: xScKAUy_PjavG_RDO4LMLg-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8D2D883395E;
-	Wed, 23 Mar 2022 06:42:57 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A44D528EA6F8;
+	Wed, 23 Mar 2022 06:47:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 387BA4B8D43;
-	Wed, 23 Mar 2022 06:42:57 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 928A4442CD2;
+	Wed, 23 Mar 2022 06:47:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AC4801940340;
-	Wed, 23 Mar 2022 06:42:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3671D1940340;
+	Wed, 23 Mar 2022 06:47:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6DEC21949762
- for <dm-devel@listman.corp.redhat.com>; Wed, 23 Mar 2022 06:42:55 +0000 (UTC)
+ ESMTP id E752B1949762
+ for <dm-devel@listman.corp.redhat.com>; Wed, 23 Mar 2022 06:47:05 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2D37B54DD9A; Wed, 23 Mar 2022 06:42:55 +0000 (UTC)
+ id D7E1D1410DD5; Wed, 23 Mar 2022 06:47:05 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 294284C36D9
- for <dm-devel@redhat.com>; Wed, 23 Mar 2022 06:42:55 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D44361400E6F
+ for <dm-devel@redhat.com>; Wed, 23 Mar 2022 06:47:05 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 109BA801E67
- for <dm-devel@redhat.com>; Wed, 23 Mar 2022 06:42:55 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C02943C02B83
+ for <dm-devel@redhat.com>; Wed, 23 Mar 2022 06:47:05 +0000 (UTC)
 Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-184-qGXn_gQqNsWCrrZqP1FL5Q-1; Wed, 23 Mar 2022 02:42:53 -0400
-X-MC-Unique: qGXn_gQqNsWCrrZqP1FL5Q-1
+ us-mta-522-Dxf0eEoQN9CzC8Gdyi96NA-1; Wed, 23 Mar 2022 02:46:58 -0400
+X-MC-Unique: Dxf0eEoQN9CzC8Gdyi96NA-1
 Received: by verein.lst.de (Postfix, from userid 2407)
- id 8DA2C68AFE; Wed, 23 Mar 2022 07:42:48 +0100 (CET)
-Date: Wed, 23 Mar 2022 07:42:48 +0100
+ id 043A868B05; Wed, 23 Mar 2022 07:46:55 +0100 (CET)
+Date: Wed, 23 Mar 2022 07:46:54 +0100
 From: Christoph Hellwig <hch@lst.de>
-To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
-Message-ID: <20220323064248.GA24874@lst.de>
-References: <20220124091107.642561-1-hch@lst.de>
- <20220124091107.642561-2-hch@lst.de> <20220322211915.GA2413063@roeck-us.net>
- <CAKFNMonRd5QQMzLoH3T=M=C=2Q_j9d86EYzZeY4DU2HQAE3E8w@mail.gmail.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Message-ID: <20220323064654.GB24874@lst.de>
+References: <20220322194927.42778-1-snitzer@kernel.org>
+ <20220322194927.42778-2-snitzer@kernel.org> <20220322195414.GA8650@lst.de>
+ <Yjouh9C7MaVrTnLh@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <CAKFNMonRd5QQMzLoH3T=M=C=2Q_j9d86EYzZeY4DU2HQAE3E8w@mail.gmail.com>
+In-Reply-To: <Yjouh9C7MaVrTnLh@redhat.com>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -62,8 +63,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: Re: [dm-devel] [PATCH 01/19] fs: remove mpage_alloc
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: Re: [dm-devel] [PATCH 1/3] block: allow BIOSET_PERCPU_CACHE use
+ from bio_alloc_clone
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -75,22 +77,11 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>,
- Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
- linux-nfs@vger.kernel.org, linux-nilfs <linux-nilfs@vger.kernel.org>,
- Andrew Morton <akpm@linux-foundation.org>, Mike Snitzer <snitzer@redhat.com>,
- Philipp Reisner <philipp.reisner@linbit.com>,
- Pavel Begunkov <asml.silence@gmail.com>, linux-block@vger.kernel.org,
- Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.co>,
- device-mapper development <dm-devel@redhat.com>,
- "Md . Haris Iqbal" <haris.iqbal@ionos.com>, linux-fsdevel@vger.kernel.org,
- xen-devel@lists.xenproject.org, Lars Ellenberg <lars.ellenberg@linbit.com>,
- ntfs3@lists.linux.dev, Jack Wang <jinpu.wang@ionos.com>,
- Christoph Hellwig <hch@lst.de>, Guenter Roeck <linux@roeck-us.net>,
- drbd-dev@lists.linbit.com
+Cc: axboe@kernel.dk, linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Christoph Hellwig <hch@lst.de>, ming.lei@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -99,38 +90,34 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Mar 23, 2022 at 06:38:22AM +0900, Ryusuke Konishi wrote:
-> This looks because the mask of GFP_KERNEL is removed along with
-> the removal of mpage_alloc().
+On Tue, Mar 22, 2022 at 04:16:07PM -0400, Mike Snitzer wrote:
+> I did initially think it worthwhile to push the use of
+> bio_alloc_percpu_cache() down to bio_alloc_bioset() rather than
+> bio_alloc_clone() -- but I started slower with more targetted change
+> for DM's needs.
+
+Note that the nvme io_uring passthrough patches also want a non-kiocb
+cached alloc version.  That code isn't quite ready yet but shows we'll
+need something there as well.
+
+> And yeah, since there isn't a REQ_ flag equivalent for IOCB_ALLOC_CACHE
+> (other than just allowing all REQ_POLLED access) there isn't a
+> meaningful way to limit access to the bioset's percpu cache.
 > 
+> Curious: how do bio_alloc_kiocb() callers know when it appropriate to
+> set IOCB_ALLOC_CACHE or not?  Seems io_uring is only one and it
+> unilaterally does:
+> kiocb->ki_flags |= IOCB_HIPRI | IOCB_ALLOC_CACHE;
 
-> The default value of the gfp flag is set to GFP_HIGHUSER_MOVABLE by
-> inode_init_always().
-> So, __GFP_HIGHMEM hits the gfp warning at bio_alloc() that
-> do_mpage_readpage() calls.
+Yes, an uring deals with making sure they are freed in the same place.
 
-Yeah.  Let's try this to match the iomap code:
+> So like IOCB_HIPRI maps to REQ_POLL, should IOCB_ALLOC_CACHE map to
+> REQ_ALLOC_CACHE? Or better name?
 
-diff --git a/fs/mpage.c b/fs/mpage.c
-index 9ed1e58e8d70b..d465883edf719 100644
---- a/fs/mpage.c
-+++ b/fs/mpage.c
-@@ -148,13 +148,11 @@ static struct bio *do_mpage_readpage(struct mpage_readpage_args *args)
- 	int op = REQ_OP_READ;
- 	unsigned nblocks;
- 	unsigned relative_block;
--	gfp_t gfp;
-+	gfp_t gfp = mapping_gfp_constraint(page->mapping, GFP_KERNEL);
- 
- 	if (args->is_readahead) {
- 		op |= REQ_RAHEAD;
--		gfp = readahead_gfp_mask(page->mapping);
--	} else {
--		gfp = mapping_gfp_constraint(page->mapping, GFP_KERNEL);
-+		gfp |= __GFP_NORETRY | __GFP_NOWARN;
- 	}
- 
- 	if (page_has_buffers(page))
+The name sounds good fine, and I just it would be best done by
+lifting BIO_PERCPU_CACHE to the REQ_ namespace and ensure it is
+cleared by the bio allocator if the percpu cache isn't actually
+used.
 
 --
 dm-devel mailing list
