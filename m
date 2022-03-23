@@ -4,70 +4,77 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 75582C433FE
-	for <dm-devel@archiver.kernel.org>; Thu, 24 Mar 2022 15:35:09 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 33D20C433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 24 Mar 2022 15:35:12 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-54-bcWbFuiFNCOSlEzYZg7whQ-1; Thu, 24 Mar 2022 11:35:05 -0400
-X-MC-Unique: bcWbFuiFNCOSlEzYZg7whQ-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-146--a146_WnOJaQWzWDP07EJg-1; Thu, 24 Mar 2022 11:35:06 -0400
+X-MC-Unique: -a146_WnOJaQWzWDP07EJg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8C8F9380451B;
-	Thu, 24 Mar 2022 15:34:56 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B08E110665AE;
+	Thu, 24 Mar 2022 15:34:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 7756240F165;
-	Thu, 24 Mar 2022 15:34:56 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 94F7DC26EA0;
+	Thu, 24 Mar 2022 15:34:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 01D4F1940367;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9E1421940364;
 	Thu, 24 Mar 2022 15:34:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C11551947BBC
- for <dm-devel@listman.corp.redhat.com>; Tue, 22 Mar 2022 11:06:16 +0000 (UTC)
+ ESMTP id F15871940347
+ for <dm-devel@listman.corp.redhat.com>; Wed, 23 Mar 2022 09:29:40 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B39E8145455F; Tue, 22 Mar 2022 11:06:16 +0000 (UTC)
+ id 8A7C640D2824; Wed, 23 Mar 2022 09:29:40 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id AFA4A1454557
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 11:06:16 +0000 (UTC)
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 864EC40D2823
+ for <dm-devel@redhat.com>; Wed, 23 Mar 2022 09:29:40 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 97102811E83
- for <dm-devel@redhat.com>; Tue, 22 Mar 2022 11:06:16 +0000 (UTC)
-Received: from frasgout.his.huawei.com (frasgout.his.huawei.com
- [185.176.79.56]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 66884101AA42
+ for <dm-devel@redhat.com>; Wed, 23 Mar 2022 09:29:40 +0000 (UTC)
+Received: from mail-yw1-f172.google.com (mail-yw1-f172.google.com
+ [209.85.128.172]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-30-qyvcDfg3Nba_nKW8HLvTFg-1; Tue, 22 Mar 2022 07:06:15 -0400
-X-MC-Unique: qyvcDfg3Nba_nKW8HLvTFg-1
-Received: from fraeml742-chm.china.huawei.com (unknown [172.18.147.200])
- by frasgout.his.huawei.com (SkyGuard) with ESMTP id 4KN7RL1hjGz67PTQ;
- Tue, 22 Mar 2022 18:45:02 +0800 (CST)
-Received: from lhreml724-chm.china.huawei.com (10.201.108.75) by
- fraeml742-chm.china.huawei.com (10.206.15.223) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2375.24; Tue, 22 Mar 2022 11:46:06 +0100
-Received: from localhost.localdomain (10.69.192.58) by
- lhreml724-chm.china.huawei.com (10.201.108.75) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2308.21; Tue, 22 Mar 2022 10:46:02 +0000
-From: John Garry <john.garry@huawei.com>
-To: <axboe@kernel.dk>, <damien.lemoal@opensource.wdc.com>,
- <bvanassche@acm.org>, <jejb@linux.ibm.com>, <martin.petersen@oracle.com>,
- <hch@lst.de>, <ming.lei@redhat.com>, <hare@suse.de>
-Date: Tue, 22 Mar 2022 18:39:41 +0800
-Message-ID: <1647945585-197349-8-git-send-email-john.garry@huawei.com>
-In-Reply-To: <1647945585-197349-1-git-send-email-john.garry@huawei.com>
-References: <1647945585-197349-1-git-send-email-john.garry@huawei.com>
+ us-mta-237-w3tDjGKAMLeyBNf7gYK7GQ-1; Wed, 23 Mar 2022 05:29:35 -0400
+X-MC-Unique: w3tDjGKAMLeyBNf7gYK7GQ-1
+Received: by mail-yw1-f172.google.com with SMTP id
+ 00721157ae682-2e5e31c34bfso9897337b3.10; 
+ Wed, 23 Mar 2022 02:29:35 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+ :message-id:subject:to:cc;
+ bh=RTdntLwWP7UcoqdxIbtO2gBEwkCYFZ/lgUjrNqmrzxY=;
+ b=DNV0ooTA7N0R26y3vqIreGlEh1owXCSWe0Cf03ANIV11D07IRJD9C4ScnezsZVt9Ch
+ NHHu6AzKRoZYGbgIOgiDrRCjo6WtWDXCZz4uV7ZzuZ8mrdy22rRBwMoxCVuFOOpZAX5H
+ bQC7jnhUGBuq/D4+4BtnSgOLrqlJFW2KR7baj/QTac+s34ppqZhAeQQ0eaWWQ9mfU767
+ ynqiYJv4W27jwviqBDWns4KqFCV4lNLMZoJauWnwlQ2PngKOvcvV1DVOz7PWqL9X4j6E
+ NRKdY1whuReX4WDI/GzhdAajgcolYdV2NPXqXuOlN7K8obRUyftlwVrAYpiC1QEyr52s
+ +WSw==
+X-Gm-Message-State: AOAM532pQVRLimnu7T0AvO8dZVvWov+oMnBTJjuVE5mbCAzKdGnfbfHW
+ LML4F1UAvL4ieqWDH4pm3NBy74uR1yx63BoZKeE=
+X-Google-Smtp-Source: ABdhPJxsStnlEm2/XrSzPGOBMOTw5PlnKDFjWTj/c9kKouVbhUo8itraPrOCZBSFmdgor+QYZSqQ1SYIOcVDz/aGNlE=
+X-Received: by 2002:a0d:c284:0:b0:2dc:37ec:f02c with SMTP id
+ e126-20020a0dc284000000b002dc37ecf02cmr33701891ywd.503.1648027774854; Wed, 23
+ Mar 2022 02:29:34 -0700 (PDT)
 MIME-Version: 1.0
-X-Originating-IP: [10.69.192.58]
-X-ClientProxiedBy: dggems702-chm.china.huawei.com (10.3.19.179) To
- lhreml724-chm.china.huawei.com (10.201.108.75)
-X-CFilter-Loop: Reflected
+References: <20220124091107.642561-1-hch@lst.de>
+ <20220124091107.642561-2-hch@lst.de>
+ <20220322211915.GA2413063@roeck-us.net>
+ <CAKFNMonRd5QQMzLoH3T=M=C=2Q_j9d86EYzZeY4DU2HQAE3E8w@mail.gmail.com>
+ <20220323064248.GA24874@lst.de>
+In-Reply-To: <20220323064248.GA24874@lst.de>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Wed, 23 Mar 2022 18:29:23 +0900
+Message-ID: <CAKFNMonANUN7_99oVBOq=iCJpt6jQs3qhu1ez5SwMm2g7sZUyw@mail.gmail.com>
+To: Christoph Hellwig <hch@lst.de>, Guenter Roeck <linux@roeck-us.net>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -75,10 +82,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-X-Mailman-Approved-At: Thu, 24 Mar 2022 15:34:41 +0000
-Subject: [dm-devel] [PATCH 07/11] scsi: libsas: Send internal abort commands
- through the block layer
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Mailman-Approved-At: Thu, 24 Mar 2022 15:34:43 +0000
+Subject: Re: [dm-devel] [PATCH 01/19] fs: remove mpage_alloc
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -90,13 +96,21 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-scsi@vger.kernel.org, chenxiang66@hisilicon.com,
- John Garry <john.garry@huawei.com>, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com,
- beanhuo@micron.com
+Cc: Jens Axboe <axboe@kernel.dk>,
+ Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
+ linux-nfs@vger.kernel.org, linux-nilfs <linux-nilfs@vger.kernel.org>,
+ Mike Snitzer <snitzer@redhat.com>,
+ Philipp Reisner <philipp.reisner@linbit.com>,
+ Pavel Begunkov <asml.silence@gmail.com>, linux-block@vger.kernel.org,
+ =?UTF-8?Q?Roger_Pau_Monn=C3=A9?= <roger.pau@citrix.co>,
+ device-mapper development <dm-devel@redhat.com>,
+ "Md . Haris Iqbal" <haris.iqbal@ionos.com>, linux-fsdevel@vger.kernel.org,
+ xen-devel@lists.xenproject.org, Lars Ellenberg <lars.ellenberg@linbit.com>,
+ ntfs3@lists.linux.dev, Jack Wang <jinpu.wang@ionos.com>,
+ Andrew Morton <akpm@linux-foundation.org>, drbd-dev@lists.linbit.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -104,126 +118,45 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Like what we did for SMP commands, send internal abort commands through
-the block layer.
+On Wed, Mar 23, 2022 at 3:42 PM Christoph Hellwig <hch@lst.de> wrote:
+>
+> On Wed, Mar 23, 2022 at 06:38:22AM +0900, Ryusuke Konishi wrote:
+> > This looks because the mask of GFP_KERNEL is removed along with
+> > the removal of mpage_alloc().
+> >
+>
+> > The default value of the gfp flag is set to GFP_HIGHUSER_MOVABLE by
+> > inode_init_always().
+> > So, __GFP_HIGHMEM hits the gfp warning at bio_alloc() that
+> > do_mpage_readpage() calls.
+>
+> Yeah.  Let's try this to match the iomap code:
+>
+> diff --git a/fs/mpage.c b/fs/mpage.c
+> index 9ed1e58e8d70b..d465883edf719 100644
+> --- a/fs/mpage.c
+> +++ b/fs/mpage.c
+> @@ -148,13 +148,11 @@ static struct bio *do_mpage_readpage(struct mpage_readpage_args *args)
+>         int op = REQ_OP_READ;
+>         unsigned nblocks;
+>         unsigned relative_block;
+> -       gfp_t gfp;
+> +       gfp_t gfp = mapping_gfp_constraint(page->mapping, GFP_KERNEL);
+>
+>         if (args->is_readahead) {
+>                 op |= REQ_RAHEAD;
+> -               gfp = readahead_gfp_mask(page->mapping);
+> -       } else {
+> -               gfp = mapping_gfp_constraint(page->mapping, GFP_KERNEL);
+> +               gfp |= __GFP_NORETRY | __GFP_NOWARN;
+>         }
+>
+>         if (page_has_buffers(page))
 
-At this point no code in libsas relies on the sas_slow_task.timer;
-unfortunately we can't delete it as some LLDDs (pm8001) still rely on it -
-let's try to remove them in future.
+I did not test for iomap, but this patch has fixed the same regression on the
+latest mainline at least for ext2, exfat, vfat and nilfs2.  Thanks!
 
-But we can delete the legacy timeout handler, sas_task_internal_timedout().
-
-Signed-off-by: John Garry <john.garry@huawei.com>
----
- drivers/scsi/libsas/sas_scsi_host.c | 59 +++++++++++++++--------------
- 1 file changed, 31 insertions(+), 28 deletions(-)
-
-diff --git a/drivers/scsi/libsas/sas_scsi_host.c b/drivers/scsi/libsas/sas_scsi_host.c
-index 04c6298d1340..f139977098c2 100644
---- a/drivers/scsi/libsas/sas_scsi_host.c
-+++ b/drivers/scsi/libsas/sas_scsi_host.c
-@@ -899,24 +899,6 @@ void sas_task_internal_done(struct sas_task *task)
- 	complete(&task->slow_task->completion);
- }
- 
--void sas_task_internal_timedout(struct timer_list *t)
--{
--	struct sas_task_slow *slow = from_timer(slow, t, timer);
--	struct sas_task *task = slow->task;
--	bool is_completed = true;
--	unsigned long flags;
--
--	spin_lock_irqsave(&task->task_state_lock, flags);
--	if (!(task->task_state_flags & SAS_TASK_STATE_DONE)) {
--		task->task_state_flags |= SAS_TASK_STATE_ABORTED;
--		is_completed = false;
--	}
--	spin_unlock_irqrestore(&task->task_state_lock, flags);
--
--	if (!is_completed)
--		complete(&task->slow_task->completion);
--}
--
- #define TASK_TIMEOUT			(20 * HZ)
- #define TASK_RETRY			3
- 
-@@ -979,35 +961,52 @@ static int sas_execute_internal_abort(struct domain_device *device,
- {
- 	struct sas_ha_struct *ha = device->port->ha;
- 	struct sas_internal *i = to_sas_internal(ha->core.shost->transportt);
-+	struct Scsi_Host *shost = ha->core.shost;
- 	struct sas_task *task = NULL;
- 	int res, retry;
-+	struct request_queue *request_queue;
-+	struct request *rq;
-+
-+	request_queue = sas_alloc_request_queue(shost);
-+	if (IS_ERR(request_queue))
-+		return PTR_ERR(request_queue);
- 
- 	for (retry = 0; retry < TASK_RETRY; retry++) {
-+		struct scsi_cmnd *scmd;
-+
- 		task = sas_alloc_slow_task(GFP_KERNEL);
--		if (!task)
--			return -ENOMEM;
-+		if (!task) {
-+			res = -ENOMEM;
-+			break;
-+		}
- 
- 		task->dev = device;
- 		task->task_proto = SAS_PROTOCOL_INTERNAL_ABORT;
- 		task->task_done = sas_task_internal_done;
--		task->slow_task->timer.function = sas_task_internal_timedout;
--		task->slow_task->timer.expires = jiffies + TASK_TIMEOUT;
--		add_timer(&task->slow_task->timer);
- 
- 		task->abort_task.tag = tag;
- 		task->abort_task.type = type;
- 		task->abort_task.qid = qid;
- 
--		res = i->dft->lldd_execute_task(task, GFP_KERNEL);
--		if (res) {
--			del_timer_sync(&task->slow_task->timer);
--			pr_err("Executing internal abort failed %016llx (%d)\n",
--			       SAS_ADDR(device->sas_addr), res);
-+		rq = scsi_alloc_request_hwq(request_queue, REQ_OP_DRV_IN, BLK_MQ_REQ_NOWAIT, qid);
-+		if (!rq) {
-+			res = PTR_ERR(rq);
- 			break;
- 		}
- 
-+		scmd = blk_mq_rq_to_pdu(rq);
-+		scmd->submitter = SUBMITTED_BY_SCSI_CUSTOM_OPS;
-+		ASSIGN_SAS_TASK(scmd, task);
-+
-+		task->uldd_task = scmd;
-+
-+		rq->timeout = TASK_TIMEOUT;
-+
-+		blk_execute_rq_nowait(rq, true, NULL);
-+
- 		wait_for_completion(&task->slow_task->completion);
- 		res = TMF_RESP_FUNC_FAILED;
-+		__blk_mq_end_request(rq, BLK_STS_OK);
- 
- 		/* Even if the internal abort timed out, return direct. */
- 		if (task->task_state_flags & SAS_TASK_STATE_ABORTED) {
-@@ -1042,7 +1041,11 @@ static int sas_execute_internal_abort(struct domain_device *device,
- 		task = NULL;
- 	}
- 	BUG_ON(retry == TASK_RETRY && task != NULL);
-+
- 	sas_free_task(task);
-+
-+	blk_cleanup_queue(request_queue);
-+
- 	return res;
- }
- 
--- 
-2.26.2
+Ryusuke Konishi
 
 --
 dm-devel mailing list
