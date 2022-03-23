@@ -4,60 +4,57 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 70D0EC433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 23 Mar 2022 06:08:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8DF9BC433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 23 Mar 2022 06:43:04 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-472-ZaG_ysGsO7SuBTzJOmpDUQ-1; Wed, 23 Mar 2022 02:08:39 -0400
-X-MC-Unique: ZaG_ysGsO7SuBTzJOmpDUQ-1
+ us-mta-70-OqEgAEUpNtubHxLfQOaK6Q-1; Wed, 23 Mar 2022 02:42:59 -0400
+X-MC-Unique: OqEgAEUpNtubHxLfQOaK6Q-1
 Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 79A01185A7A4;
-	Wed, 23 Mar 2022 06:08:37 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8D2D883395E;
+	Wed, 23 Mar 2022 06:42:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EB0414B8D43;
-	Wed, 23 Mar 2022 06:08:34 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 387BA4B8D43;
+	Wed, 23 Mar 2022 06:42:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8B9231940340;
-	Wed, 23 Mar 2022 06:08:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AC4801940340;
+	Wed, 23 Mar 2022 06:42:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 9CF361949762
- for <dm-devel@listman.corp.redhat.com>; Wed, 23 Mar 2022 06:08:31 +0000 (UTC)
+ ESMTP id 6DEC21949762
+ for <dm-devel@listman.corp.redhat.com>; Wed, 23 Mar 2022 06:42:55 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2301D40D2823; Wed, 23 Mar 2022 06:08:31 +0000 (UTC)
+ id 2D37B54DD9A; Wed, 23 Mar 2022 06:42:55 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1ECBE40D2820
- for <dm-devel@redhat.com>; Wed, 23 Mar 2022 06:08:30 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 294284C36D9
+ for <dm-devel@redhat.com>; Wed, 23 Mar 2022 06:42:55 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D19373C01B80
- for <dm-devel@redhat.com>; Wed, 23 Mar 2022 06:08:30 +0000 (UTC)
-Received: from bombadil.infradead.org (bombadil.infradead.org
- [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-511-Vrp3m0PLNNCX5el9SOxB2A-1; Wed, 23 Mar 2022 02:08:27 -0400
-X-MC-Unique: Vrp3m0PLNNCX5el9SOxB2A-1
-Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red
- Hat Linux)) id 1nWtok-00CoLR-Fp; Wed, 23 Mar 2022 05:45:58 +0000
-Date: Tue, 22 Mar 2022 22:45:58 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Jane Chu <jane.chu@oracle.com>
-Message-ID: <Yjq0FspfsLrN/mrx@infradead.org>
-References: <20220319062833.3136528-1-jane.chu@oracle.com>
- <20220319062833.3136528-5-jane.chu@oracle.com>
- <YjmQdJdOWUr2IYIP@infradead.org>
- <3dabd58b-70f2-12af-419f-a7dfc07fbb1c@oracle.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 109BA801E67
+ for <dm-devel@redhat.com>; Wed, 23 Mar 2022 06:42:55 +0000 (UTC)
+Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-184-qGXn_gQqNsWCrrZqP1FL5Q-1; Wed, 23 Mar 2022 02:42:53 -0400
+X-MC-Unique: qGXn_gQqNsWCrrZqP1FL5Q-1
+Received: by verein.lst.de (Postfix, from userid 2407)
+ id 8DA2C68AFE; Wed, 23 Mar 2022 07:42:48 +0100 (CET)
+Date: Wed, 23 Mar 2022 07:42:48 +0100
+From: Christoph Hellwig <hch@lst.de>
+To: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Message-ID: <20220323064248.GA24874@lst.de>
+References: <20220124091107.642561-1-hch@lst.de>
+ <20220124091107.642561-2-hch@lst.de> <20220322211915.GA2413063@roeck-us.net>
+ <CAKFNMonRd5QQMzLoH3T=M=C=2Q_j9d86EYzZeY4DU2HQAE3E8w@mail.gmail.com>
 MIME-Version: 1.0
-In-Reply-To: <3dabd58b-70f2-12af-419f-a7dfc07fbb1c@oracle.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
- bombadil.infradead.org. See http://www.infradead.org/rpr.html
+In-Reply-To: <CAKFNMonRd5QQMzLoH3T=M=C=2Q_j9d86EYzZeY4DU2HQAE3E8w@mail.gmail.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -65,9 +62,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH v6 4/6] dax: add DAX_RECOVERY flag and
- .recovery_write dev_pgmap_ops
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+Subject: Re: [dm-devel] [PATCH 01/19] fs: remove mpage_alloc
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -79,22 +75,19 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "nvdimm@lists.linux.dev" <nvdimm@lists.linux.dev>,
- "dave.jiang@intel.com" <dave.jiang@intel.com>,
- "snitzer@redhat.com" <snitzer@redhat.com>,
- "djwong@kernel.org" <djwong@kernel.org>,
- "david@fromorbit.com" <david@fromorbit.com>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- "willy@infradead.org" <willy@infradead.org>,
- Christoph Hellwig <hch@infradead.org>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>,
- "vgoyal@redhat.com" <vgoyal@redhat.com>,
- "vishal.l.verma@intel.com" <vishal.l.verma@intel.com>,
- "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
- "dan.j.williams@intel.com" <dan.j.williams@intel.com>,
- "ira.weiny@intel.com" <ira.weiny@intel.com>,
- "linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
- "agk@redhat.com" <agk@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>,
+ Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
+ linux-nfs@vger.kernel.org, linux-nilfs <linux-nilfs@vger.kernel.org>,
+ Andrew Morton <akpm@linux-foundation.org>, Mike Snitzer <snitzer@redhat.com>,
+ Philipp Reisner <philipp.reisner@linbit.com>,
+ Pavel Begunkov <asml.silence@gmail.com>, linux-block@vger.kernel.org,
+ Roger Pau =?iso-8859-1?Q?Monn=E9?= <roger.pau@citrix.co>,
+ device-mapper development <dm-devel@redhat.com>,
+ "Md . Haris Iqbal" <haris.iqbal@ionos.com>, linux-fsdevel@vger.kernel.org,
+ xen-devel@lists.xenproject.org, Lars Ellenberg <lars.ellenberg@linbit.com>,
+ ntfs3@lists.linux.dev, Jack Wang <jinpu.wang@ionos.com>,
+ Christoph Hellwig <hch@lst.de>, Guenter Roeck <linux@roeck-us.net>,
+ drbd-dev@lists.linbit.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
@@ -106,50 +99,38 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Mar 22, 2022 at 11:05:09PM +0000, Jane Chu wrote:
-> > This DAX_RECOVERY doesn't actually seem to be used anywhere here or
-> > in the subsequent patches.  Did I miss something?
+On Wed, Mar 23, 2022 at 06:38:22AM +0900, Ryusuke Konishi wrote:
+> This looks because the mask of GFP_KERNEL is removed along with
+> the removal of mpage_alloc().
 > 
-> dax_iomap_iter() uses the flag in the same patch,
-> +               if ((map_len == -EIO) && (iov_iter_rw(iter) == WRITE)) {
-> +                       flags |= DAX_RECOVERY;
-> +                       map_len = dax_direct_access(dax_dev, pgoff, nrpg,
-> +                                               flags, &kaddr, NULL);
 
-Yes, it passes it on to dax_direct_access, and dax_direct_access passes
-it onto ->direct_access.  But nothing in this series actually checks
-for it as far as I can tell.
+> The default value of the gfp flag is set to GFP_HIGHUSER_MOVABLE by
+> inode_init_always().
+> So, __GFP_HIGHMEM hits the gfp warning at bio_alloc() that
+> do_mpage_readpage() calls.
 
-> >> Also introduce a new dev_pagemap_ops .recovery_write function.
-> >> The function is applicable to FSDAX device only. The device
-> >> page backend driver provides .recovery_write function if the
-> >> device has underlying mechanism to clear the uncorrectable
-> >> errors on the fly.
-> > 
-> > Why is this not in struct dax_operations?
-> 
-> Per Dan's comments to the v5 series, adding .recovery_write to
-> dax_operations causes a number of trivial dm targets changes.
-> Dan suggested that adding .recovery_write to pagemap_ops could
-> cut short the logistics of figuring out whether the driver backing
-> up a page is indeed capable of clearing poison. Please see
-> https://lkml.org/lkml/2022/2/4/31
+Yeah.  Let's try this to match the iomap code:
 
-But at least in this series there is  1:1 association between the
-pgmap and the dax_device so that scheme won't work.   It would
-have to lookup the pgmap based on the return physical address from
-dax_direct_access.  Which sounds more complicated than just adding
-the (annoying) boilerplate code to DM.
-
-> include/linux/memremap.h doesn't know struct iov_iter which is defined 
-> in include/linux/uio.h,  would you prefer to adding include/linux/uio.h 
-> to include/linux/memremap.h ?
-
-As it is not derefences just adding a
-
-struct iov_iter;
-
-line to memremap.h below the includes should be all that is needed.
+diff --git a/fs/mpage.c b/fs/mpage.c
+index 9ed1e58e8d70b..d465883edf719 100644
+--- a/fs/mpage.c
++++ b/fs/mpage.c
+@@ -148,13 +148,11 @@ static struct bio *do_mpage_readpage(struct mpage_readpage_args *args)
+ 	int op = REQ_OP_READ;
+ 	unsigned nblocks;
+ 	unsigned relative_block;
+-	gfp_t gfp;
++	gfp_t gfp = mapping_gfp_constraint(page->mapping, GFP_KERNEL);
+ 
+ 	if (args->is_readahead) {
+ 		op |= REQ_RAHEAD;
+-		gfp = readahead_gfp_mask(page->mapping);
+-	} else {
+-		gfp = mapping_gfp_constraint(page->mapping, GFP_KERNEL);
++		gfp |= __GFP_NORETRY | __GFP_NOWARN;
+ 	}
+ 
+ 	if (page_has_buffers(page))
 
 --
 dm-devel mailing list
