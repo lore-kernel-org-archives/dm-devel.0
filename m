@@ -4,63 +4,90 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id C3C36C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 23 Mar 2022 23:21:45 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1648077704;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=BNPczhkFDQUY552+aRYlz2ofdTdHtm5/4Xa3OKi9YAc=;
-	b=Pw4j99NY2nob71nrwJsbNJrvR+G/0tLIvT8lzLynouVLf1WtNGKlaanb0MiyvGNrDqEAfw
-	oVbvmnfxHslnzYAZiICPIh9x4ev8NkuI9RuXogTgCVzXb7FMMBdTSxIcCxr08aGxVqfoaB
-	d9StJiicpxe+QWaFaWEVyravdMuZOV0=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DA20EC433EF
+	for <dm-devel@archiver.kernel.org>; Thu, 24 Mar 2022 00:35:29 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-468-bCzAF1mUPOaYHF_ThSK9IQ-1; Wed, 23 Mar 2022 19:21:43 -0400
-X-MC-Unique: bCzAF1mUPOaYHF_ThSK9IQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-528-FeVJTSFTMaSBFtYpl0cZHg-1; Wed, 23 Mar 2022 20:35:25 -0400
+X-MC-Unique: FeVJTSFTMaSBFtYpl0cZHg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5AC551C01508;
-	Wed, 23 Mar 2022 23:21:41 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 619143803915;
+	Thu, 24 Mar 2022 00:35:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0887540D1B9A;
-	Wed, 23 Mar 2022 23:21:41 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 05F13141DEC7;
+	Thu, 24 Mar 2022 00:35:22 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9B1F21940347;
-	Wed, 23 Mar 2022 23:21:40 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 51199194034B;
+	Thu, 24 Mar 2022 00:35:20 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A907D1949763
- for <dm-devel@listman.corp.redhat.com>; Wed, 23 Mar 2022 23:10:25 +0000 (UTC)
+ ESMTP id 4AB701940347
+ for <dm-devel@listman.corp.redhat.com>; Thu, 24 Mar 2022 00:25:11 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 763C25805BF; Wed, 23 Mar 2022 23:10:25 +0000 (UTC)
-Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 5C00C5805BC;
- Wed, 23 Mar 2022 23:10:25 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 22NNAOwI020640;
- Wed, 23 Mar 2022 18:10:24 -0500
-Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 22NNANbE020639;
- Wed, 23 Mar 2022 18:10:23 -0500
-Date: Wed, 23 Mar 2022 18:10:23 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Uday Shankar <ushankar@purestorage.com>
-Message-ID: <20220323231023.GL24684@octiron.msp.redhat.com>
-References: <20220309200325.2490463-1-ushankar@purestorage.com>
+ id 16568C28106; Thu, 24 Mar 2022 00:25:11 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 11A79C28103
+ for <dm-devel@redhat.com>; Thu, 24 Mar 2022 00:25:11 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C75C13C01C3C
+ for <dm-devel@redhat.com>; Thu, 24 Mar 2022 00:25:10 +0000 (UTC)
+Received: from mail-pf1-f170.google.com (mail-pf1-f170.google.com
+ [209.85.210.170]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-479-UR-jJ1LPPueiwC7BY3zkOA-1; Wed, 23 Mar 2022 20:25:08 -0400
+X-MC-Unique: UR-jJ1LPPueiwC7BY3zkOA-1
+Received: by mail-pf1-f170.google.com with SMTP id p8so2696953pfh.8
+ for <dm-devel@redhat.com>; Wed, 23 Mar 2022 17:25:08 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
+ :content-language:to:cc:references:from:in-reply-to
+ :content-transfer-encoding;
+ bh=DLXwEQVoWDDsKhgb9WrIVEN4Frk4SugcJXU3mLlQoa8=;
+ b=7zt4abPLLTXR3MkW/CGtDktIQ7HP5OqyqkJkcb7V5GP2r1st2/+L9vtRKF09xk/PWw
+ xBilI5yEExovjT4SdA/ZdQyEVnPLSnv3u58HiO3NnTh2dsWTWXR5/GfPSty523w3C6uU
+ YwbhyCh6/Npun31TKsk1au+h/JcROuYNuMlI/KmKI7mEC1PmW3jd7LTT13iM/FNMYtA/
+ UZQUNKypsf3gHXUUSM9x+0cntJ+II9vEPxZQRRCgJd9MbZVWq6p/rCPyjFOoHum5Vzqz
+ k+1dL9+RIFh8nWIrZQWPl1uOPn6K9kXhqH6PVKD/KNsoroUWi1T/iyDf9YjRWyI57gia
+ kAQA==
+X-Gm-Message-State: AOAM532fJhhdq3h/lD22F9iOCo3vUPkUunl+jfu8GeTGLEpo7d1JOXbf
+ 45epSkVC76odBYJrlilJAgfgBrzqdwHZeJ/8
+X-Google-Smtp-Source: ABdhPJxpUJvas/aHL0BqsaaE+UmpRki4f4WUW7prIIy8r1Nmg/onImt86e4hrZ6A4wbAnPuHrWxKyw==
+X-Received: by 2002:a63:4e26:0:b0:386:1839:3bde with SMTP id
+ c38-20020a634e26000000b0038618393bdemr1928819pgb.603.1648081507485; 
+ Wed, 23 Mar 2022 17:25:07 -0700 (PDT)
+Received: from [192.168.1.100] ([198.8.77.157])
+ by smtp.gmail.com with ESMTPSA id
+ ep2-20020a17090ae64200b001c6a7c22aedsm730331pjb.37.2022.03.23.17.25.06
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Wed, 23 Mar 2022 17:25:07 -0700 (PDT)
+Message-ID: <30acea65-293a-7049-2dad-9e81e025ce61@kernel.dk>
+Date: Wed, 23 Mar 2022 18:25:06 -0600
 MIME-Version: 1.0
-In-Reply-To: <20220309200325.2490463-1-ushankar@purestorage.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: Re: [dm-devel] [PATCH] multipath-tools: update mpp->force_readonly
- in ev_add_path
+User-Agent: Mozilla/5.0 (X11; Linux aarch64; rv:91.0) Gecko/20100101
+ Thunderbird/91.7.0
+To: Mike Snitzer <snitzer@redhat.com>
+References: <20220323194524.5900-1-snitzer@kernel.org>
+From: Jens Axboe <axboe@kernel.dk>
+In-Reply-To: <20220323194524.5900-1-snitzer@kernel.org>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH v2 0/4] block/dm: use BIOSET_PERCPU_CACHE
+ from bio_alloc_bioset
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -72,158 +99,40 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com, hch@lst.de,
+ ming.lei@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Mar 09, 2022 at 01:03:26PM -0700, Uday Shankar wrote:
-> When NVMe disks are added to the system, no uevent containing the
-> DISK_RO property is generated. As a result, dm-* nodes backed by
-> readonly NVMe disks will not have their RO state set properly. The
-> result looks like this:
+On 3/23/22 1:45 PM, Mike Snitzer wrote:
+> Hi Jens,
 > 
-> $ multipath -l
-> eui.00c92c091fd6564424a9376600011bd1 dm-3 NVME,Pure Storage FlashArray
-> size=1.0T features='0' hwhandler='0' wp=rw
-> |-+- policy='service-time 0' prio=0 status=active
-> | `- 0:2:2:72657 nvme0n2 259:4 active undef running
-> `-+- policy='service-time 0' prio=0 status=enabled
->   `- 1:0:2:72657 nvme1n2 259:1 active undef running
-> $ cat /sys/block/dm-3/ro
-> 0
-> $ cat /sys/block/nvme*n2/ro
-> 1
-> 1
+> I ran with your suggestion and DM now sees a ~7% improvement in hipri
+> bio polling with io_uring (using dm-linear on null_blk, IOPS went from
+> 900K to 966K).
 > 
-> This is not a problem for SCSI disks, since the kernel will emit change
-> uevents containing the DISK_RO property when the disk is added to the
-> system. See the following thread for my initial attempt to fix this
-> issue at the kernel level:
-> https://lore.kernel.org/linux-block/Yib8GqCA5e3SQYty@infradead.org/T/#t
+> Christoph,
 > 
-> Fix the issue by picking up the path ro state from sysfs in ev_add_path,
-> setting the mpp->force_readonly accordingly, and changing
-> dm_addmap_create to be aware of mpp->force_readonly.
-> 
-> Signed-off-by: Uday Shankar <ushankar@purestorage.com>
+> I tried to address your review of the previous set. Patch 1 and 2 can
+> obviously be folded but I left them split out for review purposes.
+> Feel free to see if these changes are meaningful for nvme's use.
+> Happy for either you to take on iterating on these block changes
+> further or you letting me know what changes you'd like made.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Ran the usual peak testing, and it's good for about a 20% improvement
+for me. 5.6M -> 6.6M IOPS on a single core, dm-linear.
 
-> ---
->  libmultipath/devmapper.c |  2 +-
->  multipathd/main.c        | 50 ++++++++++++++++++++++------------------
->  2 files changed, 29 insertions(+), 23 deletions(-)
-> 
-> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> index 2507f77f..9819e29b 100644
-> --- a/libmultipath/devmapper.c
-> +++ b/libmultipath/devmapper.c
-> @@ -540,7 +540,7 @@ int dm_addmap_create (struct multipath *mpp, char * params)
->  	int ro;
->  	uint16_t udev_flags = build_udev_flags(mpp, 0);
->  
-> -	for (ro = 0; ro <= 1; ro++) {
-> +	for (ro = mpp->force_readonly ? 1 : 0; ro <= 1; ro++) {
->  		int err;
->  
->  		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, ro,
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index f2c0b280..a67865df 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -1130,6 +1130,28 @@ out:
->  	return ret;
->  }
->  
-> +static int
-> +sysfs_get_ro (struct path *pp)
-> +{
-> +	int ro;
-> +	char buff[3]; /* Either "0\n\0" or "1\n\0" */
-> +
-> +	if (!pp->udev)
-> +		return -1;
-> +
-> +	if (sysfs_attr_get_value(pp->udev, "ro", buff, sizeof(buff)) <= 0) {
-> +		condlog(3, "%s: Cannot read ro attribute in sysfs", pp->dev);
-> +		return -1;
-> +	}
-> +
-> +	if (sscanf(buff, "%d\n", &ro) != 1 || ro < 0 || ro > 1) {
-> +		condlog(3, "%s: Cannot parse ro attribute", pp->dev);
-> +		return -1;
-> +	}
-> +
-> +	return ro;
-> +}
-> +
->  /*
->   * returns:
->   * 0: added
-> @@ -1143,6 +1165,7 @@ ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
->  	int retries = 3;
->  	int start_waiter = 0;
->  	int ret;
-> +	int ro;
->  
->  	/*
->  	 * need path UID to go any further
-> @@ -1207,6 +1230,11 @@ rescan:
->  	/* persistent reservation check*/
->  	mpath_pr_event_handle(pp);
->  
-> +	/* ro check - if new path is ro, force map to be ro as well */
-> +	ro = sysfs_get_ro(pp);
-> +	if (ro == 1)
-> +		mpp->force_readonly = 1;
-> +
->  	if (!need_do_map)
->  		return 0;
->  
-> @@ -1446,28 +1474,6 @@ finish_path_init(struct path *pp, struct vectors * vecs)
->  	return -1;
->  }
->  
-> -static int
-> -sysfs_get_ro (struct path *pp)
-> -{
-> -	int ro;
-> -	char buff[3]; /* Either "0\n\0" or "1\n\0" */
-> -
-> -	if (!pp->udev)
-> -		return -1;
-> -
-> -	if (sysfs_attr_get_value(pp->udev, "ro", buff, sizeof(buff)) <= 0) {
-> -		condlog(3, "%s: Cannot read ro attribute in sysfs", pp->dev);
-> -		return -1;
-> -	}
-> -
-> -	if (sscanf(buff, "%d\n", &ro) != 1 || ro < 0 || ro > 1) {
-> -		condlog(3, "%s: Cannot parse ro attribute", pp->dev);
-> -		return -1;
-> -	}
-> -
-> -	return ro;
-> -}
-> -
->  static bool
->  needs_ro_update(struct multipath *mpp, int ro)
->  {
-> -- 
-> 2.25.1
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://listman.redhat.com/mailman/listinfo/dm-devel
+-- 
+Jens Axboe
+
 --
 dm-devel mailing list
 dm-devel@redhat.com
