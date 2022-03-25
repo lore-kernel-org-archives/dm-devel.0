@@ -1,72 +1,74 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8F364C433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 24 Mar 2022 21:19:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A5029C433F5
+	for <dm-devel@archiver.kernel.org>; Fri, 25 Mar 2022 02:55:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-550-b802UrsTMdKVrlo3HZ3aaw-1; Thu, 24 Mar 2022 17:19:46 -0400
-X-MC-Unique: b802UrsTMdKVrlo3HZ3aaw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-665-sn5Ki7FUM7yZtu5KG6F4cQ-1; Thu, 24 Mar 2022 22:55:15 -0400
+X-MC-Unique: sn5Ki7FUM7yZtu5KG6F4cQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C6F2C804183;
-	Thu, 24 Mar 2022 21:19:44 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D331385A5BE;
+	Fri, 25 Mar 2022 02:55:10 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B2D49400F73B;
-	Thu, 24 Mar 2022 21:19:44 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0783A1410DD5;
+	Fri, 25 Mar 2022 02:55:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 60C9F194034B;
-	Thu, 24 Mar 2022 21:19:44 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4D5FE194034B;
+	Fri, 25 Mar 2022 02:55:06 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3AE971940341
- for <dm-devel@listman.corp.redhat.com>; Thu, 24 Mar 2022 21:19:38 +0000 (UTC)
+ ESMTP id 29D071940341
+ for <dm-devel@listman.corp.redhat.com>; Fri, 25 Mar 2022 02:55:05 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0AC9C1454559; Thu, 24 Mar 2022 21:19:38 +0000 (UTC)
+ id EBE95401E91; Fri, 25 Mar 2022 02:55:04 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 071661454539
- for <dm-devel@redhat.com>; Thu, 24 Mar 2022 21:19:38 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E0F42185A79C
- for <dm-devel@redhat.com>; Thu, 24 Mar 2022 21:19:37 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E7E95401E8C
+ for <dm-devel@redhat.com>; Fri, 25 Mar 2022 02:55:04 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CF5DB1011607
+ for <dm-devel@redhat.com>; Fri, 25 Mar 2022 02:55:04 +0000 (UTC)
+Received: from sin.source.kernel.org (sin.source.kernel.org [145.40.73.55])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-241-2cSeLWFcNfWQ5j-njXsw3Q-1; Thu, 24 Mar 2022 17:19:36 -0400
-X-MC-Unique: 2cSeLWFcNfWQ5j-njXsw3Q-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ us-mta-16-wtxoXZCYMQ-QOIssBVkKNg-1; Thu, 24 Mar 2022 22:55:01 -0400
+X-MC-Unique: wtxoXZCYMQ-QOIssBVkKNg-1
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id F161C1F745;
- Thu, 24 Mar 2022 21:19:34 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id B1FE112FF7;
- Thu, 24 Mar 2022 21:19:34 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id MIF/KWbgPGLBJwAAMHmgww
- (envelope-from <mwilck@suse.com>); Thu, 24 Mar 2022 21:19:34 +0000
-From: mwilck@suse.com
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
- Benjamin Marzinski <bmarzins@redhat.com>,
- Guozhonghua <guozh88@chinatelecom.cn>
-Date: Thu, 24 Mar 2022 22:19:26 +0100
-Message-Id: <20220324211927.7152-2-mwilck@suse.com>
-In-Reply-To: <20220324211927.7152-1-mwilck@suse.com>
-References: <20220324211927.7152-1-mwilck@suse.com>
-MIME-Version: 1.0
+ by sin.source.kernel.org (Postfix) with ESMTPS id D5E3BCE28B1;
+ Fri, 25 Mar 2022 02:47:11 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPS id 4CF1DC340EC;
+ Fri, 25 Mar 2022 02:47:10 +0000 (UTC)
+Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org
+ (localhost.localdomain [127.0.0.1])
+ by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id
+ 3A303E6D44B; Fri, 25 Mar 2022 02:47:10 +0000 (UTC)
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <YjuFWbp0vdh/7c5A@redhat.com>
+References: <YjuFWbp0vdh/7c5A@redhat.com>
+X-PR-Tracked-List-Id: device-mapper development <dm-devel.redhat.com>
+X-PR-Tracked-Message-Id: <YjuFWbp0vdh/7c5A@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git
+ tags/for-5.18/dm-changes
+X-PR-Tracked-Commit-Id: 4d7bca13dd9a5033174b0735056c5658cb893e76
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: b1f8ccdaae0310332d16f65bf0f622f9d4ae2391
+Message-Id: <164817643023.17034.838620470975420781.pr-tracker-bot@kernel.org>
+Date: Fri, 25 Mar 2022 02:47:10 +0000
+To: Mike Snitzer <snitzer@redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -74,9 +76,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-Subject: [dm-devel] [PATCH v3 11/12] multipathd: make startup / shutdown
- messages less noisy
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: Re: [dm-devel] [git pull] device mapper changes for 5.18
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -88,10 +89,19 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
+Cc: Aashish Sharma <shraash@google.com>, linux-block@vger.kernel.org,
+ Jordy Zomer <jordy@jordyzomer.github.io>, Tom Rix <trix@redhat.com>,
+ Barry Song <21cnbao@gmail.com>, Christoph Hellwig <hch@lst.de>,
+ Ming Lei <ming.lei@redhat.com>, Wang Qing <wangqing@vivo.com>,
+ dm-devel@redhat.com, Kirill Tkhai <ktkhai@virtuozzo.com>,
+ Alasdair G Kergon <agk@redhat.com>,
+ Linus Torvalds <torvalds@linux-foundation.org>,
+ Zhiqiang Liu <liuzhiqiang26@huawei.com>,
+ Colin Ian King <colin.i.king@gmail.com>, Thore Sommer <public@thson.de>
+MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -99,58 +109,18 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-From: Martin Wilck <mwilck@suse.com>
+The pull request you sent on Wed, 23 Mar 2022 16:38:49 -0400:
 
-These messages are noisy in the system log without being actually helpful.
-Print the version number on startup.
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.18/dm-changes
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipathd/main.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/b1f8ccdaae0310332d16f65bf0f622f9d4ae2391
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 9ef3197..aee0953 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -37,6 +37,7 @@
- /*
-  * libmultipath
-  */
-+#include "version.h"
- #include "parser.h"
- #include "vector.h"
- #include "config.h"
-@@ -2566,7 +2567,6 @@ checkerloop (void *ap)
- 	rcu_register_thread();
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 	vecs = (struct vectors *)ap;
--	condlog(2, "path checkers start up");
- 
- 	/* Tweak start time for initial path check */
- 	get_monotonic_time(&last_time);
-@@ -3247,8 +3247,8 @@ child (__attribute__((unused)) void *param)
- 
- 	post_config_state(DAEMON_START);
- 
--	condlog(2, "--------start up--------");
--	condlog(2, "read " DEFAULT_CONFIGFILE);
-+	condlog(2, "multipathd v%d.%d.%d: start up", MULTIPATH_VERSION(VERSION_CODE));
-+	condlog(3, "read " DEFAULT_CONFIGFILE);
- 
- 	if (verbosity)
- 		libmp_verbosity = verbosity;
-@@ -3441,7 +3441,7 @@ child (__attribute__((unused)) void *param)
- 
- 	exit_code = 0;
- failed:
--	condlog(2, "--------shut down-------");
-+	condlog(2, "multipathd: shut down");
- 	/* All cleanup is done in the cleanup_child() exit handler */
- 	return sd_notify_exit(exit_code);
- }
+Thank you!
+
 -- 
-2.35.1
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
 
 --
 dm-devel mailing list
