@@ -4,82 +4,63 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A104AC433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 28 Mar 2022 06:44:06 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 592FFC433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 28 Mar 2022 16:34:42 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1648485281;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=fmZrZ7CQCXFr0BmVSmfDTxydu84IdchiNsacRyGFDLk=;
+	b=PHXybm2tEa+JSOEiB2vOnVbRDChPffwOJCVqR67w+nXH8xvAMk/8YjfZ9Wfhh/1wQHNZ/8
+	1E63dwlcRV6U8IwcFZdlsKdoawbU7H/XNCZHn7Ea71g/sonSEZzgRbrfMaHL4hT/NXp7da
+	IiHyWFbjPhK6JDleG0/tptBo8zc7r/E=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-395-4t-BZQJhOtyTlZrxPwG_eQ-1; Mon, 28 Mar 2022 02:44:01 -0400
-X-MC-Unique: 4t-BZQJhOtyTlZrxPwG_eQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-117-IlZ_UzH-Og6GN55wZjFYQQ-1; Mon, 28 Mar 2022 12:34:37 -0400
+X-MC-Unique: IlZ_UzH-Og6GN55wZjFYQQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3CC441C05ABD;
-	Mon, 28 Mar 2022 06:44:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A2FF480159B;
+	Mon, 28 Mar 2022 16:34:35 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D899140CF8FA;
-	Mon, 28 Mar 2022 06:43:57 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EBB8D7AD8;
+	Mon, 28 Mar 2022 16:34:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3217C19451F3;
-	Mon, 28 Mar 2022 06:43:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B26CC1947BBF;
+	Mon, 28 Mar 2022 16:34:32 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 15E9C19451EF
- for <dm-devel@listman.corp.redhat.com>; Sun, 27 Mar 2022 05:37:53 +0000 (UTC)
+ ESMTP id CA9131947BBE
+ for <dm-devel@listman.corp.redhat.com>; Mon, 28 Mar 2022 16:34:31 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C325FC080AF; Sun, 27 Mar 2022 05:37:53 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id BF19AC08F11
- for <dm-devel@redhat.com>; Sun, 27 Mar 2022 05:37:53 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A639D811E75
- for <dm-devel@redhat.com>; Sun, 27 Mar 2022 05:37:53 +0000 (UTC)
-Received: from mail-pg1-f173.google.com (mail-pg1-f173.google.com
- [209.85.215.173]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-434-xfOK74nYNOKU2FPhZ9_4Fw-1; Sun, 27 Mar 2022 01:37:50 -0400
-X-MC-Unique: xfOK74nYNOKU2FPhZ9_4Fw-1
-Received: by mail-pg1-f173.google.com with SMTP id c2so9741244pga.10;
- Sat, 26 Mar 2022 22:37:49 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:from:to:cc:subject:date:message-id;
- bh=YdydescwhQudHUcMwcRf7BOVetd8YMQuuJ2ndUf+Dc0=;
- b=E1zlFzi5743scneggFZdmRIC/C8K0SsiMXsYA+SJL34MY0/fD7xmcrlHTTJdaLpflw
- luwpczoyToGLgWBQdwDMTM0dKNCYyvrl0pVll8zEqjXyOaj5QwF7TUoWqsFPlVptG1dz
- TZ4ksUXyhl2RGXngP/5zDi5sG3h3s9HNq/YXCVWcq/S4UgcJAwVZlI1Za3A/unmgJIpn
- kC1FowABi8e+V0/U8jbgjZpDAfH6jMdtMH4fwHVC/3/VhRUvLYTvWptESt0VPQFcw68i
- Q9DjuR7m66Y5NTpARFb9RCowNB9oipy3Eb9Ku4sv52BwOcPaUzgyIADJZt7H28U7tepd
- jZlw==
-X-Gm-Message-State: AOAM530mdh8DlIecXDkL7tMulSFphba6vGZDwZTYvS7ZDKCVQojgbt3S
- 72Fg6YK8oVUfcNVuY9h7e3/W32YMnm+nrw==
-X-Google-Smtp-Source: ABdhPJyubYND3HSZH+Hz7/ildaeL/ooFKUO4nknydTh1SQSem3kX+BM8Ua6O0vUakkfuejmn6Jxa8w==
-X-Received: by 2002:a63:2004:0:b0:375:ed63:ab4c with SMTP id
- g4-20020a632004000000b00375ed63ab4cmr5706231pgg.255.1648359468193; 
- Sat, 26 Mar 2022 22:37:48 -0700 (PDT)
-Received: from localhost.localdomain ([115.220.243.108])
- by smtp.googlemail.com with ESMTPSA id
- j14-20020a056a00174e00b004fb100a1b51sm7645394pfc.94.2022.03.26.22.37.46
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Sat, 26 Mar 2022 22:37:47 -0700 (PDT)
-From: Xiaomeng Tong <xiam0nd.tong@gmail.com>
-To: agk@redhat.com
-Date: Sun, 27 Mar 2022 13:37:42 +0800
-Message-Id: <20220327053742.2942-1-xiam0nd.tong@gmail.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-X-Mailman-Approved-At: Mon, 28 Mar 2022 06:43:55 +0000
-Subject: [dm-devel] [PATCH] md: fix missing check on list iterator
+ id B969E4010A35; Mon, 28 Mar 2022 16:34:31 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B30BA40149B2;
+ Mon, 28 Mar 2022 16:34:31 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 22SGYVnQ011593; Mon, 28 Mar 2022 12:34:31 -0400
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 22SGYVvZ011589; Mon, 28 Mar 2022 12:34:31 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Mon, 28 Mar 2022 12:34:31 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>
+Message-ID: <alpine.LRH.2.02.2203281232060.11240@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
+MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Subject: [dm-devel] [PATCH] dm: fix race condition on Alpha
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,13 +72,10 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: stable@vger.kernel.org, dm-devel@redhat.com,
- Xiaomeng Tong <xiam0nd.tong@gmail.com>, linux-kernel@vger.kernel.org,
- snitzer@redhat.com
-MIME-Version: 1.0
+Cc: dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -105,49 +83,60 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The bug is here:
-    bypass_pg(m, pg, bypassed);
+Early alpha processors cannot write a single byte or short; they read 8
+bytes, modify the value in registers and write back 8 bytes.
 
-The list iterator 'pg' will point to a bogus position containing
-HEAD if the list is empty or no element is found. This case must
-be checked before any use of the iterator, otherwise it will lead
-to a invalid memory access.
+This could cause race condition in the structure dm_io - if the fields
+flags and io_count are modified simultaneously.
 
-To fix this bug, run bypass_pg(m, pg, bypassed); and return 0
-when found, otherwise return -EINVAL.
+Fix this bug by using 32-bit flags if we are on Alpha and if we are
+compiling for a processor that doesn't have the byte-word-extension.
 
-Cc: stable@vger.kernel.org
-Fixes: ^1da177e4c3f4 ("Linux-2.6.12-rc2")
-Signed-off-by: Xiaomeng Tong <xiam0nd.tong@gmail.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Fixes: bd4a6dd241ae ("dm: reduce size of dm_io and dm_target_io structs")
+
 ---
- drivers/md/dm-mpath.c | 9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
+ drivers/md/dm-core.h      |    4 ++--
+ include/linux/blk_types.h |    2 ++
+ 2 files changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index f4719b65e5e3..6ba8f1133564 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -1496,12 +1496,13 @@ static int bypass_pg_num(struct multipath *m, const char *pgstr, bool bypassed)
- 	}
- 
- 	list_for_each_entry(pg, &m->priority_groups, list) {
--		if (!--pgnum)
--			break;
-+		if (!--pgnum) {
-+			bypass_pg(m, pg, bypassed);
-+			return 0;
-+		}
- 	}
- 
--	bypass_pg(m, pg, bypassed);
--	return 0;
-+	return -EINVAL;
- }
- 
- /*
--- 
-2.17.1
-
+Index: linux-2.6/include/linux/blk_types.h
+===================================================================
+--- linux-2.6.orig/include/linux/blk_types.h	2022-03-28 18:11:15.000000000 +0200
++++ linux-2.6/include/linux/blk_types.h	2022-03-28 18:20:23.000000000 +0200
+@@ -85,8 +85,10 @@ struct block_device {
+  */
+ #if defined(CONFIG_ALPHA) && !defined(__alpha_bwx__)
+ typedef u32 __bitwise blk_status_t;
++typedef u32 blk_short_t;
+ #else
+ typedef u8 __bitwise blk_status_t;
++typedef u16 blk_short_t;
+ #endif
+ #define	BLK_STS_OK 0
+ #define BLK_STS_NOTSUPP		((__force blk_status_t)1)
+Index: linux-2.6/drivers/md/dm-core.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-core.h	2022-03-28 18:11:11.000000000 +0200
++++ linux-2.6/drivers/md/dm-core.h	2022-03-28 18:21:34.000000000 +0200
+@@ -210,7 +210,7 @@ struct dm_table {
+ #define DM_TIO_MAGIC 28714
+ struct dm_target_io {
+ 	unsigned short magic;
+-	unsigned short flags;
++	blk_short_t flags;
+ 	unsigned int target_bio_nr;
+ 	struct dm_io *io;
+ 	struct dm_target *ti;
+@@ -244,7 +244,7 @@ static inline void dm_tio_set_flag(struc
+ #define DM_IO_MAGIC 19577
+ struct dm_io {
+ 	unsigned short magic;
+-	unsigned short flags;
++	blk_short_t flags;
+ 	atomic_t io_count;
+ 	struct mapped_device *md;
+ 	struct bio *orig_bio;
 --
 dm-devel mailing list
 dm-devel@redhat.com
