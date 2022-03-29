@@ -1,83 +1,85 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4C4ACC433F5
-	for <dm-devel@archiver.kernel.org>; Wed, 30 Mar 2022 06:09:26 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 54EF6C433FE
+	for <dm-devel@archiver.kernel.org>; Wed, 30 Mar 2022 06:09:27 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-312-MiuSBCw7NCu6sDEIJfHtsw-1; Wed, 30 Mar 2022 02:09:21 -0400
-X-MC-Unique: MiuSBCw7NCu6sDEIJfHtsw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-303-KnXWptkiNU2ZHeupxSWQRA-1; Wed, 30 Mar 2022 02:09:23 -0400
+X-MC-Unique: KnXWptkiNU2ZHeupxSWQRA-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8D1F83804514;
-	Wed, 30 Mar 2022 06:09:18 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8CA9C8F11C2;
+	Wed, 30 Mar 2022 06:09:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id DBF6E7AC3;
-	Wed, 30 Mar 2022 06:09:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 03DF85690E2;
+	Wed, 30 Mar 2022 06:09:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C51641949761;
-	Wed, 30 Mar 2022 06:08:50 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 08AF31940348;
+	Wed, 30 Mar 2022 06:08:51 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 94AF91940342
- for <dm-devel@listman.corp.redhat.com>; Tue, 29 Mar 2022 15:15:07 +0000 (UTC)
+ ESMTP id B7F561940342
+ for <dm-devel@listman.corp.redhat.com>; Tue, 29 Mar 2022 15:24:24 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4C163C15E74; Tue, 29 Mar 2022 15:15:07 +0000 (UTC)
+ id 93B1B40D2822; Tue, 29 Mar 2022 15:24:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 48166C15E71
- for <dm-devel@redhat.com>; Tue, 29 Mar 2022 15:15:07 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8E5F040D1B9B
+ for <dm-devel@redhat.com>; Tue, 29 Mar 2022 15:24:24 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0EA77899ECB
- for <dm-devel@redhat.com>; Tue, 29 Mar 2022 15:15:07 +0000 (UTC)
-Received: from mail-lf1-f50.google.com (mail-lf1-f50.google.com
- [209.85.167.50]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 30260811E80
+ for <dm-devel@redhat.com>; Tue, 29 Mar 2022 15:24:24 +0000 (UTC)
+Received: from mail-lf1-f53.google.com (mail-lf1-f53.google.com
+ [209.85.167.53]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-669-1axPJWaROnKyfmZov1tc-Q-1; Tue, 29 Mar 2022 11:15:01 -0400
-X-MC-Unique: 1axPJWaROnKyfmZov1tc-Q-1
-Received: by mail-lf1-f50.google.com with SMTP id h7so30863096lfl.2
- for <dm-devel@redhat.com>; Tue, 29 Mar 2022 08:14:58 -0700 (PDT)
+ us-mta-663-30wT8P4jPba4XEcSPZJcwA-1; Tue, 29 Mar 2022 11:24:20 -0400
+X-MC-Unique: 30wT8P4jPba4XEcSPZJcwA-1
+Received: by mail-lf1-f53.google.com with SMTP id k21so30903573lfe.4
+ for <dm-devel@redhat.com>; Tue, 29 Mar 2022 08:24:19 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
  :content-language:to:cc:references:from:in-reply-to
  :content-transfer-encoding;
- bh=TCWrlmneGOD7IIFil77Bp2XL5E/ZrBLzGSn/OUyCQN0=;
- b=w52c/RkoGC9g/IOQm5TavghUrn1jM6zo+4eQCTtIFyBKCXuOsdEjKfWCJz79Dm5ZuT
- jisPFQJoad6aydvxBxLFHQsT0aKfSqmcpFRyuM4Ogyp/oh8TiGklNJjJFwY8kid+b23s
- eVwr+IoK0DdohAll3X+f7vz8g9tnuYeJrFtHOFG5EhL6SjVNnLFNCLtmwcK1vJGBW6fB
- Ww+tHWaBEjRGNbh28RR0EOev6yhGTjfWySSgOrLiZWrqx1Qp+Dgz6P7gGLtAOBQYXFiX
- C7AotqEjZ1H6RDvC+y07Y5sW9vYlS7+fGSMoUfLQNY1B0LWBKCEe2ea737mRoQaCdWPL
- +4eA==
-X-Gm-Message-State: AOAM5325FSWJg3alVmNb5OfcVEeQIOlWxeVkfQtjjqPTRCnoxPyLI+Sj
- fgkMvtRAnpdse/m48/7bXXSCvg==
-X-Google-Smtp-Source: ABdhPJxWSF7zpEgBOOCeivx+pQN3jDM+rv6d44kgAKyIFW8havUT3LmsKKoQ3S9eXl9h7KTZgf/AwQ==
-X-Received: by 2002:a05:6512:128f:b0:44a:2b70:91e3 with SMTP id
- u15-20020a056512128f00b0044a2b7091e3mr3211444lfs.160.1648566896888; 
- Tue, 29 Mar 2022 08:14:56 -0700 (PDT)
+ bh=7p35TWvl6IRR76g48gZ/FV3yHCrma4H2n4XIVQjHGbU=;
+ b=pwxoz/gZSGF84wrTgpp7M966KXFdxPzZAq3q8RS2+ljo+3PzjGUvEQWkU2fjqNcZNS
+ 1/UnbCX9BPt8rhf6hZGsCzRUaOsIbQsn1ybd+kkx02SDXlWFHvRvPv/+FfF9zIGECE3e
+ XwgwJ+ClwQitpzl6NwD6WebEGfUWf35iUFbkL9Oxw4zXi8ToxLPm44gkeE2zBHbysJNo
+ odMTnD78tE3hZOgfQU2nYsaWxyfH6eqXfZAE4swALONQbMiOv+MJcWf5SJCDIDWGHSA7
+ /K0nthXIMSIV7j4qE9WMnrbkMTn6Jcji+40S2ww2igMEH1BrYqyEPjFFbAtll7zDiGS8
+ 2eXQ==
+X-Gm-Message-State: AOAM5314aC0rszwCMQt9NSs6flvu6UPMpCXdpMRWYFRGogJeF7RQXlrn
+ ffbzC84Ua/lHXZlAE9708e5iAg==
+X-Google-Smtp-Source: ABdhPJxrgrgQ8/lRgdnygDMTeGxvGw9V2TWV8TndcAF6ht0JArKuArXclzzTgpLQB5WvXqaVSaNUrg==
+X-Received: by 2002:a05:6512:39c1:b0:448:3d37:2cf0 with SMTP id
+ k1-20020a05651239c100b004483d372cf0mr3128325lfu.273.1648567458347; 
+ Tue, 29 Mar 2022 08:24:18 -0700 (PDT)
 Received: from [192.168.0.120] ([2.92.192.13])
  by smtp.gmail.com with ESMTPSA id
- y24-20020a199158000000b0044a76a4808esm1462330lfj.22.2022.03.29.08.14.55
+ p8-20020a2ea408000000b00247e5087157sm2037603ljn.101.2022.03.29.08.24.17
  (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Tue, 29 Mar 2022 08:14:56 -0700 (PDT)
-Message-ID: <ccd18622-9c38-2252-27d8-25bb8538ac26@openvz.org>
-Date: Tue, 29 Mar 2022 18:14:55 +0300
+ Tue, 29 Mar 2022 08:24:18 -0700 (PDT)
+Message-ID: <241b972d-5f78-6282-4f67-131a2566d479@openvz.org>
+Date: Tue, 29 Mar 2022 18:24:17 +0300
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
  Thunderbird/91.7.0
 To: Christoph Hellwig <hch@infradead.org>
 References: <164846619932.251310.3668540533992131988.stgit@pro>
- <YkME5ZS2CpXuNmN6@infradead.org>
+ <164846631540.251310.2398727490395218229.stgit@pro>
+ <YkMK1cmWyEJGoMB+@infradead.org>
 From: Kirill Tkhai <kirill.tkhai@openvz.org>
-In-Reply-To: <YkME5ZS2CpXuNmN6@infradead.org>
+In-Reply-To: <YkMK1cmWyEJGoMB+@infradead.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -85,10 +87,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-Mailman-Approved-At: Wed, 30 Mar 2022 06:08:49 +0000
-Subject: Re: [dm-devel] [PATCH 0/4] dm: Introduce dm-qcow2 driver to attach
- QCOW2 files as block device
+Subject: Re: [dm-devel] [PATCH 3/4] dm-qcow2: Introduce driver to create
+ block devices over QCOW2 files
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -100,11 +102,12 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: snitzer@redhat.com, linux-kernel@vger.kernel.org, song@kernel.org,
- dm-devel@redhat.com, agk@redhat.com, khorenko@virtuozzo.com
+Cc: axboe@kernel.dk, snitzer@redhat.com, linux-kernel@vger.kernel.org,
+ linux-block@vger.kernel.org, song@kernel.org, dm-devel@redhat.com,
+ agk@redhat.com, khorenko@virtuozzo.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -113,93 +116,23 @@ Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 29.03.2022 16:08, Christoph Hellwig wrote:
-> On Mon, Mar 28, 2022 at 02:18:16PM +0300, Kirill Tkhai wrote:
->> This patchset adds a new driver allowing to attach QCOW2 files
->> as block devices. Its idea is to implement in kernel only that
->> features, which affect runtime IO performance (IO requests
->> processing functionality).
+On 29.03.2022 16:34, Christoph Hellwig wrote:
+> On Mon, Mar 28, 2022 at 02:18:35PM +0300, Kirill Tkhai wrote:
+>> The driver is request based, since this allows to use blk-mq
+>> merging of request. Driver splits requests itself, and every
+>> request (i.e., qio) after splitting fits a single cluster.
+>> (In some cases it is worth to create bigger splits, and this
+>> is a subject of further optimizations).
 > 
-> From a quick looks it seems to be like this should be a block driver
-> just like the loop driver and not use device mapper.  Why would
-> you use device mapper to basically reimplement a fancy loop driver
-> to start with?
+> Nak, please don't do that.  If you want finer grained processing use
+> a bio based driver, not a request based one.  This is just getting us
+> into tons of problems.
 
-This is a driver for containers and virtual machines. One of basic features
-for them is migration and backups. There are several drives for that, which
-are already implemented in device-mapper. For example, dm-era and dm-snap.
-Instead of implementing such the functionality in QCOW2 driver once again,
-the sane behavior is to use already implemented drivers. The module-approach
-is better for support and errors eliminating just because of less code.
+Could you explain what you mean? Why shouldn't I use generic bio merging
+code, but implementing my own merging? Which problems you point?
 
-1)A device-mapper based driver does not require migration and backup devices
-  are built in a stack for the whole device lifetime:
-
-  a)Normal work, almost 100% of time: there is only /dev/mapper/qcow2_dev.
-  b)Migration: /dev/mapper/qcow2_dev is reloaded with a migration device,
-    which points to new qcow2_dev.real:
-
-    /dev/mapper/qcow2_dev          [migration driver]
-      /dev/mapper/qcow2_dev.real   [dm-qcow2 driver]
-    
-   After migration is completed, we reload /dev/mapper/qcow2_dev back
-   to use dm-qcow2 driver. So, there is no excess dm layers during normal work.
-
-2)In case of the driver is not a device-mapper based, it's necessary to have
-  the stack built for the whole device lifetime, since it's impossible to reload
-  bare block driver with dm-based driver on demand:
-
-    /dev/mapper/qcow2_dev          [migration driver]
-       /dev/qcow2_dev.real         [bare qcow2 driver]
-
-  So, we would have excess dm layer during whole device lifetime.
-
-Our performance tests show, that a single dm layer may cause up to 10% performance
-decrease on NVME, so the reason is to eliminate such the fall. Also, the general
-reasoning say that excess layer is a wrong way.
-
-Other reason is previous experience of implementing file-backed block drivers.
-We had ploop driver before. Ploop format is much simpler that QCOW2 format, but
-there are about 17K strings, while dm-qcow2 driver took about 6K strings.
-Device mapper allows to avoid writing a lot of code, the only thing you need
-is to implement proper .ctr and .dtr functions, while the rest of configuration
-actions are done by simple device-mapper reload.
-
->> The maintenance operations are
->> synchronously processed in userspace, while device is suspended.
->>
->> Userspace is allowed to do only that operations, which never
->> modifies virtual disk's data. It is only allowed to modify
->> QCOW2 file metadata providing that disk's data. The examples
->> of allowed operations is snapshot creation and resize.
-> 
-> And this sounds like a pretty fragile design.  It basically requires
-> both userspace and the kernel driver to access metadata on disk, which
-> sounds rather dangerous.
-
-I don't think so. Device-mapper already allows to replace a device driver with
-another driver. Nobody blames dm-linear, that it may be reloaded to point wrong
-partition, while it can. Nobody blames loop, that someone in userspace may corrupt
-its blocks, and filesystem on that device will become broken.
-
-The thing is kernel and userspace never access the file at the same time.
-It case of maintenance actions may be called in userspace, they must be, since
-this reduces the kernel code.
- 
->> This example shows the way of device-mapper infrastructure
->> allows to implement drivers following the idea of
->> kernel/userspace components demarcation. Thus, the driver
->> uses advantages of device-mapper instead of implementing
->> its own suspend/resume engine.
-> 
-> What do you need more than a queue freeze?
-
-Theoretically, I can, in case of this flushes all pending requests. But this
-will increase driver code significantly, since there won't be possible to use
-reload mechanism, and there are other problems like problems with performance
-like I wrote above. So, this approach look significantly worse.
-
-Kirill
+Generic blk-mq is well tested and lots of people work on its performance.
+It's not obvious reason I should better implement own realization.
 
 --
 dm-devel mailing list
