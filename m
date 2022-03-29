@@ -1,71 +1,67 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0710CC433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 29 Mar 2022 13:34:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7EA42C433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 29 Mar 2022 20:34:29 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1648586068;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=tR9KQGWHWKlzPH7CmRh5EZARbT3uw0/BXKAWbbJ+4tw=;
+	b=NryltmiPyuaRHqb1FxGwE4sY75ph5g5V7Rp6cMtvE0G7zv+gCioq4GwXiV8pT/p4XNkHB0
+	X7iSU1+s0TgZ5b/vKAps8QoM4T/1Chh/d3fdtFBmShSzLfC+YSxGCi5zL4OjjJtWNFomph
+	5QcOis8QWbhMyAgw52EmkmCvNe8Ve7U=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-299-8CdfKn2wNYS-Y2h1SsUqXA-1; Tue, 29 Mar 2022 09:34:22 -0400
-X-MC-Unique: 8CdfKn2wNYS-Y2h1SsUqXA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-658-goZR0zNePFG-lcQTIavYiQ-1; Tue, 29 Mar 2022 16:34:24 -0400
+X-MC-Unique: goZR0zNePFG-lcQTIavYiQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CA3A01C0690F;
-	Tue, 29 Mar 2022 13:34:19 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4ED9428EC10B;
+	Tue, 29 Mar 2022 20:34:22 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B84961400C2D;
-	Tue, 29 Mar 2022 13:34:19 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4CE2B400E554;
+	Tue, 29 Mar 2022 20:34:19 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7C84E1940345;
-	Tue, 29 Mar 2022 13:34:19 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DE0DC1940345;
+	Tue, 29 Mar 2022 20:34:18 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8DD5C1940342
- for <dm-devel@listman.corp.redhat.com>; Tue, 29 Mar 2022 13:34:18 +0000 (UTC)
+ ESMTP id 5328E1940342
+ for <dm-devel@listman.corp.redhat.com>; Tue, 29 Mar 2022 20:34:17 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6353A54C6C6; Tue, 29 Mar 2022 13:34:18 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 5F0AC54C6C3
- for <dm-devel@redhat.com>; Tue, 29 Mar 2022 13:34:18 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4514D80281D
- for <dm-devel@redhat.com>; Tue, 29 Mar 2022 13:34:18 +0000 (UTC)
-Received: from bombadil.infradead.org (bombadil.infradead.org
- [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-615-PfYpg0_4PWuPpm-IxLccqA-1; Tue, 29 Mar 2022 09:34:16 -0400
-X-MC-Unique: PfYpg0_4PWuPpm-IxLccqA-1
-Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red
- Hat Linux)) id 1nZBzB-00CNM3-8O; Tue, 29 Mar 2022 13:34:13 +0000
-Date: Tue, 29 Mar 2022 06:34:13 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Kirill Tkhai <kirill.tkhai@openvz.org>
-Message-ID: <YkMK1cmWyEJGoMB+@infradead.org>
-References: <164846619932.251310.3668540533992131988.stgit@pro>
- <164846631540.251310.2398727490395218229.stgit@pro>
+ id 2D70B400E11D; Tue, 29 Mar 2022 20:34:17 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1B2514010A3D;
+ Tue, 29 Mar 2022 20:34:17 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 22TKYFQ5026948;
+ Tue, 29 Mar 2022 15:34:15 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 22TKYECT026947;
+ Tue, 29 Mar 2022 15:34:14 -0500
+Date: Tue, 29 Mar 2022 15:34:14 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: mwilck@suse.com
+Message-ID: <20220329203414.GO24684@octiron.msp.redhat.com>
+References: <20220324211927.7152-1-mwilck@suse.com>
+ <20220324211927.7152-2-mwilck@suse.com>
 MIME-Version: 1.0
-In-Reply-To: <164846631540.251310.2398727490395218229.stgit@pro>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
- bombadil.infradead.org. See http://www.infradead.org/rpr.html
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: Re: [dm-devel] [PATCH 3/4] dm-qcow2: Introduce driver to create
- block devices over QCOW2 files
+In-Reply-To: <20220324211927.7152-2-mwilck@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Subject: Re: [dm-devel] [PATCH v3 11/12] multipathd: make startup / shutdown
+ messages less noisy
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -77,12 +73,10 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, snitzer@redhat.com, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, song@kernel.org, dm-devel@redhat.com,
- agk@redhat.com, khorenko@virtuozzo.com
+Cc: dm-devel@redhat.com, Guozhonghua <guozh88@chinatelecom.cn>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -91,17 +85,62 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Mar 28, 2022 at 02:18:35PM +0300, Kirill Tkhai wrote:
-> The driver is request based, since this allows to use blk-mq
-> merging of request. Driver splits requests itself, and every
-> request (i.e., qio) after splitting fits a single cluster.
-> (In some cases it is worth to create bigger splits, and this
-> is a subject of further optimizations).
+On Thu, Mar 24, 2022 at 10:19:26PM +0100, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
+> 
+> These messages are noisy in the system log without being actually helpful.
+> Print the version number on startup.
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
 
-Nak, please don't do that.  If you want finer grained processing use
-a bio based driver, not a request based one.  This is just getting us
-into tons of problems.
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
+> ---
+>  multipathd/main.c | 8 ++++----
+>  1 file changed, 4 insertions(+), 4 deletions(-)
+> 
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 9ef3197..aee0953 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -37,6 +37,7 @@
+>  /*
+>   * libmultipath
+>   */
+> +#include "version.h"
+>  #include "parser.h"
+>  #include "vector.h"
+>  #include "config.h"
+> @@ -2566,7 +2567,6 @@ checkerloop (void *ap)
+>  	rcu_register_thread();
+>  	mlockall(MCL_CURRENT | MCL_FUTURE);
+>  	vecs = (struct vectors *)ap;
+> -	condlog(2, "path checkers start up");
+>  
+>  	/* Tweak start time for initial path check */
+>  	get_monotonic_time(&last_time);
+> @@ -3247,8 +3247,8 @@ child (__attribute__((unused)) void *param)
+>  
+>  	post_config_state(DAEMON_START);
+>  
+> -	condlog(2, "--------start up--------");
+> -	condlog(2, "read " DEFAULT_CONFIGFILE);
+> +	condlog(2, "multipathd v%d.%d.%d: start up", MULTIPATH_VERSION(VERSION_CODE));
+> +	condlog(3, "read " DEFAULT_CONFIGFILE);
+>  
+>  	if (verbosity)
+>  		libmp_verbosity = verbosity;
+> @@ -3441,7 +3441,7 @@ child (__attribute__((unused)) void *param)
+>  
+>  	exit_code = 0;
+>  failed:
+> -	condlog(2, "--------shut down-------");
+> +	condlog(2, "multipathd: shut down");
+>  	/* All cleanup is done in the cleanup_child() exit handler */
+>  	return sd_notify_exit(exit_code);
+>  }
+> -- 
+> 2.35.1
 --
 dm-devel mailing list
 dm-devel@redhat.com
