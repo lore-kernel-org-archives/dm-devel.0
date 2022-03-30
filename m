@@ -4,65 +4,65 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 228F3C43217
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 12BF4C433F5
 	for <dm-devel@archiver.kernel.org>; Wed, 30 Mar 2022 22:15:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-27-50UY9WSWPDKZzRyc5Cj74w-1; Wed, 30 Mar 2022 18:15:37 -0400
-X-MC-Unique: 50UY9WSWPDKZzRyc5Cj74w-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-495-W-Hshh8cOyGU9AX0jzHvXQ-1; Wed, 30 Mar 2022 18:15:40 -0400
+X-MC-Unique: W-Hshh8cOyGU9AX0jzHvXQ-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8B2F62803585;
-	Wed, 30 Mar 2022 22:15:33 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 218D038008C7;
+	Wed, 30 Mar 2022 22:15:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 793F15929CA;
-	Wed, 30 Mar 2022 22:15:33 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0EBF6401E39;
+	Wed, 30 Mar 2022 22:15:37 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0F9E51947BBC;
-	Wed, 30 Mar 2022 22:15:33 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DF49119466DF;
+	Wed, 30 Mar 2022 22:15:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 44ED41949761
- for <dm-devel@listman.corp.redhat.com>; Wed, 30 Mar 2022 22:15:31 +0000 (UTC)
+ ESMTP id 2286019451F3
+ for <dm-devel@listman.corp.redhat.com>; Wed, 30 Mar 2022 22:15:35 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 182A5400E554; Wed, 30 Mar 2022 22:15:31 +0000 (UTC)
+ id 12F5B112131E; Wed, 30 Mar 2022 22:15:35 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 13C5E40CF8F8
- for <dm-devel@redhat.com>; Wed, 30 Mar 2022 22:15:31 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EF9BB2803582
- for <dm-devel@redhat.com>; Wed, 30 Mar 2022 22:15:30 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 0E1EE1121314
+ for <dm-devel@redhat.com>; Wed, 30 Mar 2022 22:15:28 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D074E38008A3
+ for <dm-devel@redhat.com>; Wed, 30 Mar 2022 22:15:28 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-543-FxHyYW2DO8Wi3KeZw5WV4w-1; Wed, 30 Mar 2022 18:15:29 -0400
-X-MC-Unique: FxHyYW2DO8Wi3KeZw5WV4w-1
+ us-mta-544-ynzI_BOsOkud2KlpAI-rUg-1; Wed, 30 Mar 2022 18:15:25 -0400
+X-MC-Unique: ynzI_BOsOkud2KlpAI-rUg-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 11E7C1F872;
- Wed, 30 Mar 2022 22:15:28 +0000 (UTC)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id DB480218F8;
+ Wed, 30 Mar 2022 22:15:23 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id C63C413AF3;
- Wed, 30 Mar 2022 22:15:27 +0000 (UTC)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 9A82513B1E;
+ Wed, 30 Mar 2022 22:15:23 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id GCBdLn/WRGL8JgAAMHmgww
- (envelope-from <mwilck@suse.com>); Wed, 30 Mar 2022 22:15:27 +0000
+ by imap2.suse-dmz.suse.de with ESMTPSA id 2OiiI3vWRGL8JgAAMHmgww
+ (envelope-from <mwilck@suse.com>); Wed, 30 Mar 2022 22:15:23 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
  Benjamin Marzinski <bmarzins@redhat.com>
-Date: Thu, 31 Mar 2022 00:15:10 +0200
-Message-Id: <20220330221510.22578-15-mwilck@suse.com>
+Date: Thu, 31 Mar 2022 00:14:57 +0200
+Message-Id: <20220330221510.22578-2-mwilck@suse.com>
 In-Reply-To: <20220330221510.22578-1-mwilck@suse.com>
 References: <20220330221510.22578-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -73,9 +73,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-Subject: [dm-devel] [PATCH 14/14] libmultipath: uevent: add debug messages
- for event queue
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+Subject: [dm-devel] [PATCH 01/14] multipathd: allow adding git rev as
+ version suffix
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -90,100 +90,75 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, tang.junhui@zte.com.cn
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="===============1662097792085644397=="
+Content-Type: multipart/mixed; boundary="===============9181348639222347870=="
 
---===============1662097792085644397==
+--===============9181348639222347870==
 Content-Transfer-Encoding: quoted-printable
 Content-Type: application/octet-stream; x-default=true
 
 From: Martin Wilck <mwilck@suse.com>
 
-For debugging, it's useful to be able to track the event queue
-in detail. Enable this at verbosity level 4.
+Use the make variable EXTRAVERSION to hold a version suffix,
+and print it on multipathd startup. By default, EXTRAVERSION is
+the 7-digit git rev in the format "-g1234567" if git is available,
+and empty otherwise. Build systems can pass in alternative
+EXTRAVERSION strings as they prefer.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/uevent.c | 37 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 37 insertions(+)
+ Makefile.inc      | 3 ++-
+ multipathd/main.c | 3 ++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index a5c2f3c..c276314 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -51,6 +51,7 @@
- #include "config.h"
- #include "blacklist.h"
- #include "devmapper.h"
-+#include "strbuf.h"
+diff --git a/Makefile.inc b/Makefile.inc
+index d24da43..120f671 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -13,6 +13,7 @@
+ # SCSI_DH_MODULES_PRELOAD :=3D scsi_dh_alua scsi_dh_rdac
+ SCSI_DH_MODULES_PRELOAD :=3D
 =20
- typedef int (uev_trigger)(struct uevent *, void * trigger_data);
++EXTRAVERSION :=3D $(shell rev=3D$$(git rev-parse --short=3D7 HEAD 2>/dev/n=
+ull); echo $${rev:+-g$$rev})
 =20
-@@ -426,6 +427,40 @@ static void merge_uevq(struct uevent_filter_state *st)
- =09=09=09uevent_merge(later, st);
- }
+ PKGCONFIG=09?=3D pkg-config
 =20
-+static void print_uev(struct strbuf *buf, struct uevent *uev)
-+{
-+=09print_strbuf(buf, "\"%s %s\"", uev->action, uev->kernel);
-+=09if (!list_empty(&uev->merge_node)) {
-+=09=09struct uevent *u;
-+
-+=09=09append_strbuf_str(buf, "[");
-+=09=09list_for_each_entry(u, &uev->merge_node, node)
-+=09=09=09print_strbuf(buf, "\"%s %s \"", u->action, u->kernel);
-+=09=09append_strbuf_str(buf, "]");
-+=09}
-+=09append_strbuf_str(buf, " ");
-+}
-+
-+static void print_uevq(const char *msg, struct list_head *uevq)
-+{
-+=09struct uevent *uev;
-+=09int i =3D 0;
-+=09STRBUF_ON_STACK(buf);
-+
-+=09if (4 > MAX_VERBOSITY || 4 > libmp_verbosity)
-+=09=09return;
-+
-+=09if (list_empty(uevq))
-+=09=09append_strbuf_str(&buf, "*empty*");
-+=09else
-+=09=09list_for_each_entry(uev, uevq, node) {
-+=09=09=09print_strbuf(&buf, "%d:", i++);
-+=09=09=09print_uev(&buf, uev);
-+=09=09}
-+
-+=09condlog(4, "uevent queue (%s): %s", msg, steal_strbuf_str(&buf));
-+}
-+
- static void
- service_uevq(struct list_head *tmpq)
- {
-@@ -520,11 +555,13 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent =
-*, void * trigger_data),
+@@ -126,7 +127,7 @@ WARNFLAGS=09:=3D -Werror -Wall -Wextra -Wformat=3D2 $(W=
+FORMATOVERFLOW) -Werror=3Dimplici
+ CPPFLAGS=09:=3D -Wp,-D_FORTIFY_SOURCE=3D2
+ CFLAGS=09=09:=3D --std=3Dgnu99 $(CFLAGS) $(OPTFLAGS) $(WARNFLAGS) -pipe \
+ =09=09   -DBIN_DIR=3D\"$(bindir)\" -DLIB_STRING=3D\"${LIB}\" -DRUN_DIR=3D\=
+"${RUN}\" \
+-=09=09   -MMD -MP
++=09=09   -DEXTRAVERSION=3D\"$(EXTRAVERSION)\" -MMD -MP
+ BIN_CFLAGS=09=3D -fPIE -DPIE
+ LIB_CFLAGS=09=3D -fPIC
+ SHARED_FLAGS=09=3D -shared
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 1406251..3a31154 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -3247,7 +3247,8 @@ child (__attribute__((unused)) void *param)
 =20
- =09=09reset_filter_state(&filter_state);
- =09=09pthread_cleanup_push(put_multipath_config, filter_state.conf);
-+=09=09print_uevq("append", &filter_state.uevq);
- =09=09filter_state.conf =3D get_multipath_config();
- =09=09merge_uevq(&filter_state);
- =09=09pthread_cleanup_pop(1);
- =09=09log_filter_state(&filter_state);
+ =09post_config_state(DAEMON_START);
 =20
-+=09=09print_uevq("merge", &filter_state.uevq);
- =09=09service_uevq(&filter_state.uevq);
- =09}
- =09pthread_cleanup_pop(1);
+-=09condlog(2, "multipathd v%d.%d.%d: start up", MULTIPATH_VERSION(VERSION_=
+CODE));
++=09condlog(2, "multipathd v%d.%d.%d%s: start up",
++=09=09MULTIPATH_VERSION(VERSION_CODE), EXTRAVERSION);
+ =09condlog(3, "read " DEFAULT_CONFIGFILE);
+=20
+ =09if (verbosity)
 --=20
 2.35.1
 
 
---===============1662097792085644397==
+--===============9181348639222347870==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -194,5 +169,5 @@ dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
 
---===============1662097792085644397==--
+--===============9181348639222347870==--
 
