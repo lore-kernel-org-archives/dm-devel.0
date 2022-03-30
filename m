@@ -4,65 +4,65 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0689EC433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 30 Mar 2022 22:15:39 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id AD74CC4332F
+	for <dm-devel@archiver.kernel.org>; Wed, 30 Mar 2022 22:15:40 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-299-6ZKZ7_x0Mxa_NC4MIRmRJw-1; Wed, 30 Mar 2022 18:15:36 -0400
-X-MC-Unique: 6ZKZ7_x0Mxa_NC4MIRmRJw-1
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
+ us-mta-85-FbmHEGT7Mcu6atR_RB92dw-1; Wed, 30 Mar 2022 18:15:34 -0400
+X-MC-Unique: FbmHEGT7Mcu6atR_RB92dw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 357731C07846;
-	Wed, 30 Mar 2022 22:15:35 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 93D0780418B;
+	Wed, 30 Mar 2022 22:15:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 20AC72166B4D;
-	Wed, 30 Mar 2022 22:15:35 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 3A12140CFD07;
+	Wed, 30 Mar 2022 22:15:32 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A15331947BBC;
-	Wed, 30 Mar 2022 22:15:34 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 81ED9194034E;
+	Wed, 30 Mar 2022 22:15:31 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0B18319466DF
- for <dm-devel@listman.corp.redhat.com>; Wed, 30 Mar 2022 22:15:33 +0000 (UTC)
+ ESMTP id 634E119466DF
+ for <dm-devel@listman.corp.redhat.com>; Wed, 30 Mar 2022 22:15:30 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E3BE62026D6A; Wed, 30 Mar 2022 22:15:32 +0000 (UTC)
+ id 447701400C30; Wed, 30 Mar 2022 22:15:30 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id DF3252026D6B
- for <dm-devel@redhat.com>; Wed, 30 Mar 2022 22:15:28 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5DFA038008AF
- for <dm-devel@redhat.com>; Wed, 30 Mar 2022 22:15:28 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 404FF1410F3B
+ for <dm-devel@redhat.com>; Wed, 30 Mar 2022 22:15:30 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0C7E51C0782D
+ for <dm-devel@redhat.com>; Wed, 30 Mar 2022 22:15:30 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-609-N_t8MkjXO8GP7qBPcbVvfw-1; Wed, 30 Mar 2022 18:15:26 -0400
-X-MC-Unique: N_t8MkjXO8GP7qBPcbVvfw-1
+ us-mta-646-piIUMQ4WPd2oA2naYUVFCA-1; Wed, 30 Mar 2022 18:15:26 -0400
+X-MC-Unique: piIUMQ4WPd2oA2naYUVFCA-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 76D891F86E;
+ by smtp-out1.suse.de (Postfix) with ESMTPS id 28B03218FD;
  Wed, 30 Mar 2022 22:15:25 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 372A213AF3;
- Wed, 30 Mar 2022 22:15:25 +0000 (UTC)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id DD1B013AF3;
+ Wed, 30 Mar 2022 22:15:24 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id 8BNGC33WRGL8JgAAMHmgww
- (envelope-from <mwilck@suse.com>); Wed, 30 Mar 2022 22:15:25 +0000
+ by imap2.suse-dmz.suse.de with ESMTPSA id iEUNNHzWRGL8JgAAMHmgww
+ (envelope-from <mwilck@suse.com>); Wed, 30 Mar 2022 22:15:24 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
  Benjamin Marzinski <bmarzins@redhat.com>
-Date: Thu, 31 Mar 2022 00:15:02 +0200
-Message-Id: <20220330221510.22578-7-mwilck@suse.com>
+Date: Thu, 31 Mar 2022 00:15:01 +0200
+Message-Id: <20220330221510.22578-6-mwilck@suse.com>
 In-Reply-To: <20220330221510.22578-1-mwilck@suse.com>
 References: <20220330221510.22578-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -73,9 +73,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-Subject: [dm-devel] [PATCH 06/14] multipathd: reconfigure: disallow changing
- uid_attrs
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: [dm-devel] [PATCH 05/14] libmultipath: uevent_dispatch(): only
+ filter/merge new uevents
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -90,127 +90,236 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>, tang.junhui@zte.com.cn
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="===============4735785370397585856=="
+Content-Type: multipart/mixed; boundary="===============9145111521972047728=="
 
---===============4735785370397585856==
+--===============9145111521972047728==
 Content-Transfer-Encoding: quoted-printable
 Content-Type: application/octet-stream; x-default=true
 
 From: Martin Wilck <mwilck@suse.com>
 
-uevent merging by WWID relies on the uid_attrs config option. As we
-drop struct config between calls to uevent_merge(), we must be sure
-that the WWID is not changed in reconfigure().
+When uevq_work is non-empty and we append a list of new events,
+we don't need to check the entire list for filterable and mergeable
+uevents. uevq_work had been filtered and merged already. So we just
+need to check the newly appended events. These must of course be
+checked for merges with earlier events, too.
+
+We must deal with some special cases here, like previously merged
+uevents being filtered later.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/multipath.conf.5 |  2 ++
- multipathd/main.c          | 53 +++++++++++++++++++++++++++++++-------
- 2 files changed, 46 insertions(+), 9 deletions(-)
+ libmultipath/list.h   | 24 ++++++++++++++
+ libmultipath/uevent.c | 77 +++++++++++++++++++++++++++++++++----------
+ 2 files changed, 83 insertions(+), 18 deletions(-)
 
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 605b46e..a9cd776 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -264,6 +264,8 @@ If this option is configured and matches the device
- node name of a device, it overrides any other configured  methods for
- determining the WWID for this device.
- .PP
-+This option cannot be changed during runtime with the multipathd \fBreconf=
-igure\fR command.
-+.PP
- The default is: \fB<unset>\fR. To enable uevent merging, set it e.g. to
- \(dqsd:ID_SERIAL dasd:ID_UID nvme:ID_WWN\(dq.
- .RE
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 13b1948..f514b32 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -2835,11 +2835,52 @@ void rcu_free_config(struct rcu_head *head)
- =09free_config(conf);
+diff --git a/libmultipath/list.h b/libmultipath/list.h
+index ddea99f..248f72b 100644
+--- a/libmultipath/list.h
++++ b/libmultipath/list.h
+@@ -363,6 +363,30 @@ static inline struct list_head *list_pop(struct list_h=
+ead *head)
+ =09     &pos->member !=3D (head);                                    \
+ =09     pos =3D n, n =3D list_entry(n->member.prev, typeof(*n), member))
+=20
++/**
++ * list_for_some_entry - iterate list from the given begin node to the giv=
+en end node
++ * @pos:=09the type * to use as a loop counter.
++ * @from:=09the begin node of the iteration.
++ * @to:=09=09the end node of the iteration.
++ * @member:=09the name of the list_struct within the struct.
++ */
++#define list_for_some_entry(pos, from, to, member)                      \
++=09for (pos =3D list_entry((from)->next, typeof(*pos), member);      \
++=09     &pos->member !=3D (to);                                      \
++=09     pos =3D list_entry(pos->member.next, typeof(*pos), member))
++
++/**
++ * list_for_some_entry_reverse - iterate backwards list from the given beg=
+in node to the given end node
++ * @pos:=09the type * to use as a loop counter.
++ * @from:=09the begin node of the iteration.
++ * @to:=09=09the end node of the iteration.
++ * @member:=09the name of the list_struct within the struct.
++ */
++#define list_for_some_entry_reverse(pos, from, to, member)=09=09\
++=09for (pos =3D list_entry((from)->prev, typeof(*pos), member);      \
++=09     &pos->member !=3D (to);                                      \
++=09     pos =3D list_entry(pos->member.prev, typeof(*pos), member))
++
+ /**
+  * list_for_some_entry_safe - iterate list from the given begin node to th=
+e given end node safe against removal of list entry
+  * @pos:=09the type * to use as a loop counter.
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 602eccb..2779703 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -306,17 +306,49 @@ uevent_can_merge(struct uevent *earlier, struct ueven=
+t *later)
+ =09return false;
  }
 =20
-+static bool reconfigure_check_uid_attrs(const struct _vector *old_attrs,
-+=09=09=09=09=09const struct _vector *new_attrs)
++static void uevent_delete_from_list(struct uevent *to_delete,
++=09=09=09=09    struct uevent **previous,
++=09=09=09=09    struct list_head **old_tail)
 +{
-+=09int i;
-+=09char *old;
++=09/*
++=09 * "old_tail" is the list_head before the last list element to which
++=09 * the caller iterates (the list anchor if the caller iterates over
++=09 * the entire list). If this element is removed (which can't happen
++=09 * for the anchor), "old_tail" must be moved. It can happen that
++=09 * "old_tail" ends up pointing at the anchor.
++=09 */
++=09if (*old_tail =3D=3D &to_delete->node)
++=09=09*old_tail =3D to_delete->node.prev;
 +
-+=09if (VECTOR_SIZE(old_attrs) !=3D VECTOR_SIZE(new_attrs))
-+=09=09return true;
++=09list_del_init(&to_delete->node);
 +
-+=09vector_foreach_slot(old_attrs, old, i) {
-+=09=09char *new =3D VECTOR_SLOT(new_attrs, i);
++=09/*
++=09 * The "to_delete" uevent has been merged with other uevents
++=09 * previously. Re-insert them into the list, at the point we're
++=09 * currently at. This must be done after the list_del_init() above,
++=09 * otherwise previous->next would still point to to_delete.
++=09 */
++=09if (!list_empty(&to_delete->merge_node)) {
++=09=09struct uevent *last =3D list_entry(to_delete->merge_node.prev,
++=09=09=09=09=09=09 typeof(*last), node);
 +
-+=09=09if (strcmp(old, new))
-+=09=09=09return true;
++=09=09list_splice(&to_delete->merge_node, &(*previous)->node);
++=09=09*previous =3D last;
 +=09}
++=09if (to_delete->udev)
++=09=09udev_device_unref(to_delete->udev);
 +
-+=09return false;
++=09free(to_delete);
 +}
 +
-+static void reconfigure_check(struct config *old, struct config *new)
-+{
-+=09int old_marginal_pathgroups;
-+
-+=09old_marginal_pathgroups =3D old->marginal_pathgroups;
-+=09if ((old_marginal_pathgroups =3D=3D MARGINAL_PATHGROUP_FPIN) !=3D
-+=09    (new->marginal_pathgroups =3D=3D MARGINAL_PATHGROUP_FPIN)) {
-+=09=09condlog(1, "multipathd must be restarted to turn %s fpin marginal pa=
-ths",
-+=09=09=09(old_marginal_pathgroups =3D=3D MARGINAL_PATHGROUP_FPIN)?
-+=09=09=09"off" : "on");
-+=09=09new->marginal_pathgroups =3D old_marginal_pathgroups;
-+=09}
-+
-+=09if (reconfigure_check_uid_attrs(&old->uid_attrs, &new->uid_attrs)) {
-+=09=09struct _vector v =3D new->uid_attrs;
-+
-+=09=09condlog(1, "multipathd must be restarted to change uid_attrs, keepin=
-g old values");
-+=09=09new->uid_attrs =3D old->uid_attrs;
-+=09=09vector_reset(&v);
-+=09=09old->uid_attrs =3D v;
-+=09}
-+}
-+
- static int
- reconfigure (struct vectors *vecs, enum force_reload_types reload_type)
+ static void
+-uevent_prepare(struct list_head *tmpq)
++uevent_prepare(struct list_head *tmpq, struct list_head **stop)
  {
- =09struct config * old, *conf;
--=09int old_marginal_pathgroups;
+ =09struct uevent *uev, *tmp;
 =20
- =09conf =3D load_config(DEFAULT_CONFIGFILE);
- =09if (!conf)
-@@ -2870,14 +2911,8 @@ reconfigure (struct vectors *vecs, enum force_reload=
-_types reload_type)
- =09uxsock_timeout =3D conf->uxsock_timeout;
+-=09list_for_each_entry_reverse_safe(uev, tmp, tmpq, node) {
++=09list_for_some_entry_reverse_safe(uev, tmp, tmpq, *stop, node) {
+ =09=09if (uevent_can_discard(uev)) {
+-=09=09=09list_del_init(&uev->node);
+-=09=09=09if (uev->udev)
+-=09=09=09=09udev_device_unref(uev->udev);
+-=09=09=09free(uev);
++=09=09=09uevent_delete_from_list(uev, &tmp, stop);
+ =09=09=09continue;
+ =09=09}
 =20
- =09old =3D rcu_dereference(multipath_conf);
--=09old_marginal_pathgroups =3D old->marginal_pathgroups;
--=09if ((old_marginal_pathgroups =3D=3D MARGINAL_PATHGROUP_FPIN) !=3D
--=09    (conf->marginal_pathgroups =3D=3D MARGINAL_PATHGROUP_FPIN)) {
--=09=09condlog(1, "multipathd must be restarted to turn %s fpin marginal pa=
-ths",
--=09=09=09(old_marginal_pathgroups =3D=3D MARGINAL_PATHGROUP_FPIN)?
--=09=09=09"off" : "on");
--=09=09conf->marginal_pathgroups =3D old_marginal_pathgroups;
--=09}
-+=09reconfigure_check(old, conf);
+@@ -327,7 +359,7 @@ uevent_prepare(struct list_head *tmpq)
+ }
+=20
+ static void
+-uevent_filter(struct uevent *later, struct list_head *tmpq)
++uevent_filter(struct uevent *later, struct list_head *tmpq, struct list_he=
+ad **stop)
+ {
+ =09struct uevent *earlier, *tmp;
+=20
+@@ -341,16 +373,13 @@ uevent_filter(struct uevent *later, struct list_head =
+*tmpq)
+ =09=09=09=09earlier->kernel, earlier->action,
+ =09=09=09=09later->kernel, later->action);
+=20
+-=09=09=09list_del_init(&earlier->node);
+-=09=09=09if (earlier->udev)
+-=09=09=09=09udev_device_unref(earlier->udev);
+-=09=09=09free(earlier);
++=09=09=09uevent_delete_from_list(earlier, &tmp, stop);
+ =09=09}
+ =09}
+ }
+=20
+ static void
+-uevent_merge(struct uevent *later, struct list_head *tmpq)
++uevent_merge(struct uevent *later, struct list_head *tmpq, struct list_hea=
+d **stop)
+ {
+ =09struct uevent *earlier, *tmp;
+=20
+@@ -365,6 +394,10 @@ uevent_merge(struct uevent *later, struct list_head *t=
+mpq)
+ =09=09=09=09earlier->action, earlier->kernel, earlier->wwid,
+ =09=09=09=09later->action, later->kernel, later->wwid);
+=20
++=09=09=09/* See comment in uevent_delete_from_list() */
++=09=09=09if (&earlier->node =3D=3D *stop)
++=09=09=09=09*stop =3D earlier->node.prev;
 +
- =09conf->sequence_nr =3D old->sequence_nr + 1;
- =09rcu_assign_pointer(multipath_conf, conf);
- =09call_rcu(&old->rcu, rcu_free_config);
+ =09=09=09list_move(&earlier->node, &later->merge_node);
+ =09=09=09list_splice_init(&earlier->merge_node,
+ =09=09=09=09=09 &later->merge_node);
+@@ -373,15 +406,15 @@ uevent_merge(struct uevent *later, struct list_head *=
+tmpq)
+ }
+=20
+ static void
+-merge_uevq(struct list_head *tmpq)
++merge_uevq(struct list_head *tmpq, struct list_head *stop)
+ {
+ =09struct uevent *later;
+=20
+-=09uevent_prepare(tmpq);
+-=09list_for_each_entry_reverse(later, tmpq, node) {
+-=09=09uevent_filter(later, tmpq);
++=09uevent_prepare(tmpq, &stop);
++=09list_for_some_entry_reverse(later, tmpq, stop, node) {
++=09=09uevent_filter(later, tmpq, &stop);
+ =09=09if(uevent_need_merge())
+-=09=09=09uevent_merge(later, tmpq);
++=09=09=09uevent_merge(later, tmpq, &stop);
+ =09}
+ }
+=20
+@@ -442,6 +475,7 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent *,=
+ void * trigger_data),
+=20
+ =09pthread_cleanup_push(cleanup_uevq, &uevq_work);
+ =09while (1) {
++=09=09struct list_head *stop;
+=20
+ =09=09pthread_cleanup_push(cleanup_mutex, uevq_lockp);
+ =09=09pthread_mutex_lock(uevq_lockp);
+@@ -452,13 +486,20 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent =
+*, void * trigger_data),
+ =09=09=09pthread_cond_wait(uev_condp, uevq_lockp);
+=20
+ =09=09servicing_uev =3D 1;
++=09=09/*
++=09=09 * "stop" is the list element towards which merge_uevq()
++=09=09 * will iterate: the last element of uevq_work before
++=09=09 * appending new uevents. If uveq_is empty, uevq_work.prev
++=09=09 * equals &uevq_work, which is what we need.
++=09=09 */
++=09=09stop =3D uevq_work.prev;
+ =09=09list_splice_tail_init(&uevq, &uevq_work);
+ =09=09pthread_cleanup_pop(1);
+=20
+ =09=09if (!my_uev_trigger)
+ =09=09=09break;
+=20
+-=09=09merge_uevq(&uevq_work);
++=09=09merge_uevq(&uevq_work, stop);
+ =09=09service_uevq(&uevq_work);
+ =09}
+ =09pthread_cleanup_pop(1);
 --=20
 2.35.1
 
 
---===============4735785370397585856==
+--===============9145111521972047728==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -221,5 +330,5 @@ dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
 
---===============4735785370397585856==--
+--===============9145111521972047728==--
 
