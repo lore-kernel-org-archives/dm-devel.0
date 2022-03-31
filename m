@@ -4,78 +4,67 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0FF4CC433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 31 Mar 2022 11:03:39 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A585CC433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 31 Mar 2022 16:22:11 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1648743730;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=wOxf1iarpQ5Lp6P7Lv11/YgBXecKGFYD29fQexC6+XU=;
+	b=Gzf8F/FxSECY+mayjumvOJSoHn3o6NMIglLhJu82eyHqGQ8DZk2T11HafzkLFdZc1Kzn5X
+	qcbJQ2kKslSSQfQ3IYtpQuzT0VnZHnyoUAqNvBYkylyC7qpVMqpZxS3TsiUpFJ6ekoy7Up
+	NrSjnADxBN2BRDnz/XchOXWa6H3CGCw=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-85-BbeaSyfLM9mLs26M1j8BCA-1; Thu, 31 Mar 2022 07:03:37 -0400
-X-MC-Unique: BbeaSyfLM9mLs26M1j8BCA-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-27-7C3bN3mkO96W6hmJOsAQEw-1; Thu, 31 Mar 2022 12:22:09 -0400
+X-MC-Unique: 7C3bN3mkO96W6hmJOsAQEw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B8DBB1C05B1E;
-	Thu, 31 Mar 2022 11:03:35 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0A89C100BAAF;
+	Thu, 31 Mar 2022 16:22:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A35FD401E71;
-	Thu, 31 Mar 2022 11:03:25 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id A5302C4C7A1;
+	Thu, 31 Mar 2022 16:22:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6667C1947BBC;
-	Thu, 31 Mar 2022 11:03:24 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6A7301947BBB;
+	Thu, 31 Mar 2022 16:22:04 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 73A241947BBB
- for <dm-devel@listman.corp.redhat.com>; Thu, 31 Mar 2022 11:03:23 +0000 (UTC)
+ ESMTP id 21B0519451F3
+ for <dm-devel@listman.corp.redhat.com>; Thu, 31 Mar 2022 16:22:02 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4FDDD2166B4C; Thu, 31 Mar 2022 11:03:23 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4A0592166BA9
- for <dm-devel@redhat.com>; Thu, 31 Mar 2022 11:03:17 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 18A33800B28
- for <dm-devel@redhat.com>; Thu, 31 Mar 2022 11:03:07 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-244-NBvACQ-9O1WRnZKisxHCIQ-1; Thu, 31 Mar 2022 07:03:04 -0400
-X-MC-Unique: NBvACQ-9O1WRnZKisxHCIQ-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by smtp-out1.suse.de (Postfix) with ESMTPS id 3B80621A96;
- Thu, 31 Mar 2022 11:02:55 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 03410133D4;
- Thu, 31 Mar 2022 11:02:54 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id pBFPOl6KRWKKagAAMHmgww
- (envelope-from <mwilck@suse.com>); Thu, 31 Mar 2022 11:02:54 +0000
-Message-ID: <636faa5a57cca0b51d12d5e50968124d5b187280.camel@suse.com>
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Date: Thu, 31 Mar 2022 13:02:54 +0200
-In-Reply-To: <20220330194941.28470-1-xose.vazquez@gmail.com>
-References: <20220330194941.28470-1-xose.vazquez@gmail.com>
-User-Agent: Evolution 3.44.0
+ id C3A771417201; Thu, 31 Mar 2022 16:22:02 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id BB8461400C2B;
+ Thu, 31 Mar 2022 16:22:02 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 22VGM2bK023131; Thu, 31 Mar 2022 12:22:02 -0400
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 22VGM26H023127; Thu, 31 Mar 2022 12:22:02 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Thu, 31 Mar 2022 12:22:02 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+In-Reply-To: <CAH6w=ayZoHOnN5Pj=BVbFhi5OweCy8bX3u6nKtL3PJoyLtQUHA@mail.gmail.com>
+Message-ID: <alpine.LRH.2.02.2203311207540.22503@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2203301424570.11614@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAH6w=ayZoHOnN5Pj=BVbFhi5OweCy8bX3u6nKtL3PJoyLtQUHA@mail.gmail.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-Subject: Re: [dm-devel] [PATCH RFC] multipath-tools: update "Generic NVMe"
- options in hwtable
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: Re: [dm-devel] oops s dm-integrity (fwd)
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -87,65 +76,121 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: DM-DEVEL ML <dm-devel@redhat.com>
+Cc: Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com,
+ Milan Broz <gmazyland@gmail.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="iso-8859-15"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Wed, 2022-03-30 at 21:49 +0200, Xose Vazquez Perez wrote:
-> Removed values were default.
 
-This is wrong for uid_attribute. You can see it when you run "make
-test", which fails with your patch. It's also wrong for
-retain_hwhandler, but that entry should indeed be removed, because
-keeping it there is misleading at best. hwhandlers have no meaning for
-NVMe, and retain_hwhandler is enforced to be true an all kernels since
-4.3.
 
-Regards,
-Martin
+On Thu, 31 Mar 2022, Mike Snitzer wrote:
 
-> Check ANA, else fall back to CONST(multibus).
->=20
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEVEL ML <dm-devel@redhat.com>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
-> =A0libmultipath/hwtable.c | 6 +++---
-> =A01 file changed, 3 insertions(+), 3 deletions(-)
->=20
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index 0e1c0a41..81dca0d5 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -88,9 +88,9 @@ static struct hwentry default_hw[] =3D {
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* Generic NVMe */
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.vendor=A0=A0=A0=A0=A0=A0=
-=A0 =3D "NVME",
-> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.product=A0=A0=A0=A0=A0=
-=A0 =3D ".*",
-> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.uid_attribute =3D DEFAULT_=
-NVME_UID_ATTRIBUTE,
-> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.checker_name=A0 =3D NONE,
-> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.retain_hwhandler =3D RETAI=
-N_HWHANDLER_OFF,
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.pgpolicy=A0=A0=A0=A0=A0 =
-=3D GROUP_BY_PRIO,
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.pgfailback=A0=A0=A0 =3D -F=
-AILBACK_IMMEDIATE,
-> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.no_path_retry =3D NO_PATH_=
-RETRY_QUEUE,
-> =A0=A0=A0=A0=A0=A0=A0=A0},
-> =A0=A0=A0=A0=A0=A0=A0=A0/*
-> =A0=A0=A0=A0=A0=A0=A0=A0 * Apple
+> Not seen it, looks like Milan is running cryotsetup 'make check' in a
+> KVM guest on a 5.17-rc7 kernel.
+> 
+> I tested dm-5.18 like crazy with cryptsetup's testsuite.  It was based
+> on 5.17-rc2 (and a ton of block changes).
+> 
+> Have you been able to reproduce on final 5.17 (or even same kernel as Milan)?
+
+I've tried cryptsetup "make check" on the current 5.18 (with slab 
+debugging enabled) and got these stacktraces. There's clearly some memory 
+corruption going on. I'll continue to investigate it.
+
+Mikulas
+
+[13668.733488] Hardware name: QEMU KVM Virtual Machine, BIOS 0.0.0 02/06/2015
+[13668.735277] Call trace:
+[13668.735951]  dump_backtrace.part.0+0xb8/0xcc
+[13668.737085]  show_stack+0x14/0x30
+[13668.737973]  dump_stack_lvl+0x64/0x7c
+[13668.738978]  dump_stack+0x14/0x2c
+[13668.739868]  print_trailer+0x14c/0x15c
+[13668.740811]  check_bytes_and_report+0xf4/0x140
+[13668.741903]  check_object+0x1a4/0x274
+[13668.742815]  free_debug_processing+0x188/0x38c
+[13668.743904]  __slab_free+0x27c/0x434
+[13668.744788]  kfree+0x23c/0x27c
+[13668.745554]  kvfree+0x34/0x40
+[13668.746355]  dm_integrity_dtr+0x88/0x35c [dm_integrity]
+[13668.747795]  dm_table_destroy+0x54/0x11c [dm_mod]
+[13668.749130]  __dm_destroy+0x154/0x29c [dm_mod]
+[13668.750383]  dm_destroy+0x10/0x20 [dm_mod]
+[13668.751553]  dev_remove+0xf4/0x150 [dm_mod]
+[13668.752733]  ctl_ioctl+0x244/0x660 [dm_mod]
+[13668.753897]  dm_ctl_ioctl+0xc/0x20 [dm_mod]
+[13668.755060]  __arm64_sys_ioctl+0xac/0xd0
+[13668.756156]  el0_svc_common.constprop.0+0x5c/0x134
+[13668.757449]  do_el0_svc+0x1c/0x2c
+[13668.758340]  el0_svc+0x14/0x50
+[13668.759187]  el0t_64_sync_handler+0x9c/0x120
+[13668.760356]  el0t_64_sync+0x148/0x14c
+
+[13639.738726] Call trace:
+[13639.741794]  __switch_to+0xe8/0x140
+[13639.744081]  dstopt_offload+0xba560/0x10c330
+[13639.746941]  print_trailer+0xd0/0x15c
+[13639.750017]  check_bytes_and_report+0xf4/0x140
+[13639.752944]  check_object+0x1a4/0x274
+[13639.756056]  free_debug_processing+0x188/0x38c
+[13639.758998]  __slab_free+0x27c/0x434
+[13639.762141]  kfree+0x23c/0x27c
+[13639.765058]  kvfree+0x34/0x40
+[13639.767840]  dm_integrity_dtr+0x88/0x35c [dm_integrity]
+[13639.770597]  dm_table_destroy+0x54/0x11c [dm_mod]
+[13639.773937]  __dm_destroy+0x154/0x29c [dm_mod]
+[13639.777147]  dm_destroy+0x10/0x20 [dm_mod]
+[13639.780271]  dev_remove+0xf4/0x150 [dm_mod]
+[13639.783318]  ctl_ioctl+0x244/0x660 [dm_mod]
+[13639.786384]  dm_ctl_ioctl+0xc/0x20 [dm_mod]
+[13639.789452]  __arm64_sys_ioctl+0xac/0xd0
+[13639.792516]  el0_svc_common.constprop.0+0x5c/0x134
+[13639.795510]  do_el0_svc+0x1c/0x2c
+[13639.798741]  el0_svc+0x14/0x50
+[13639.801591]  el0t_64_sync_handler+0x9c/0x120
+[13639.804378]  el0t_64_sync+0x148/0x14c
+
+[13618.686535] =============================================================================
+[13618.687921] BUG kmalloc-128k (Not tainted): Right Redzone overwritten
+[13618.688984] -----------------------------------------------------------------------------
+[13618.688984] 
+[13618.690531] 0xfffffc00ccec0000-0xfffffc00ccec0007 @offset=262144. First byte 0x26 instead of 0xcc
+[13618.691980] Allocated in 0xf3e51e7b9f122643 age=86 cpu=3 pid=23374
+[13618.693031]  0xfffffe00a470735c
+[13618.693581]  __kmalloc+0x280/0x290
+[13618.694162]  kvmalloc_node+0x54/0xd0
+[13618.694780]  dm_integrity_ctr+0xfcc/0x14cc [dm_integrity]
+[13618.695731]  dm_table_add_target+0x11c/0x30c [dm_mod]
+[13618.696815]  table_load+0x11c/0x354 [dm_mod]
+[13618.697726]  ctl_ioctl+0x244/0x660 [dm_mod]
+[13618.698619]  dm_ctl_ioctl+0xc/0x20 [dm_mod]
+[13618.699485]  __arm64_sys_ioctl+0xac/0xd0
+[13618.700279]  el0_svc_common.constprop.0+0x5c/0x134
+[13618.701259]  do_el0_svc+0x1c/0x2c
+[13618.701943]  el0_svc+0x14/0x50
+[13618.702561]  el0t_64_sync_handler+0x9c/0x120
+[13618.703411]  el0t_64_sync+0x148/0x14c
+[13618.704149] Freed in kvfree+0x34/0x40 age=99 cpu=2 pid=23359
+[13618.705316]  kfree+0x23c/0x27c
+[13618.705954]  kvfree+0x34/0x40
+[13618.706567]  dm_integrity_dtr+0x88/0x35c [dm_integrity]
+[13618.707606]  dm_table_destroy+0x54/0x11c [dm_mod]
+[13618.708627]  __dm_destroy+0x154/0x29c [dm_mod]
+[13618.709596]  dm_destroy+0x10/0x20 [dm_mod]
+[13618.710458]  dev_remove+0xf4/0x150 [dm_mod]
+[13618.711343]  ctl_ioctl+0x244/0x660 [dm_mod]
+[13618.712227]  dm_ctl_ioctl+0xc/0x20 [dm_mod]
+[13618.713097]  __arm64_sys_ioctl+0xac/0xd0
+[13618.713916]  el0_svc_common.constprop.0+0x5c/0x134
+[13618.714884]  do_el0_svc+0x1c/0x2c
+[13618.715572]  el0_svc+0x14/0x50
 
 --
 dm-devel mailing list
