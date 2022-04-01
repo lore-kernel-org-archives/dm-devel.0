@@ -4,73 +4,77 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E93F1C433F5
-	for <dm-devel@archiver.kernel.org>; Fri,  1 Apr 2022 14:48:55 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8EA72C433EF
+	for <dm-devel@archiver.kernel.org>; Fri,  1 Apr 2022 19:28:04 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-357-hIrINEOJMOay9hkd_PFKXQ-1; Fri, 01 Apr 2022 10:48:53 -0400
-X-MC-Unique: hIrINEOJMOay9hkd_PFKXQ-1
+ us-mta-48-UlmFUCSGO7ayv7Uf7lL3Vw-1; Fri, 01 Apr 2022 15:27:29 -0400
+X-MC-Unique: UlmFUCSGO7ayv7Uf7lL3Vw-1
 Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C0ED02805522;
-	Fri,  1 Apr 2022 14:48:51 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 79CC218812C9;
+	Fri,  1 Apr 2022 19:27:20 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id AE06E63B22D;
-	Fri,  1 Apr 2022 14:48:51 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1DC215E53FA;
+	Fri,  1 Apr 2022 19:27:10 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5EB5D1947BBF;
-	Fri,  1 Apr 2022 14:48:51 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D01B81949761;
+	Fri,  1 Apr 2022 19:27:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 9FEE91947BBE
- for <dm-devel@listman.corp.redhat.com>; Fri,  1 Apr 2022 14:48:50 +0000 (UTC)
+ ESMTP id C069A1947BBE
+ for <dm-devel@listman.corp.redhat.com>; Fri,  1 Apr 2022 19:27:06 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 93622141512B; Fri,  1 Apr 2022 14:48:50 +0000 (UTC)
+ id 9C11240E58B4; Fri,  1 Apr 2022 19:27:05 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8F973141512A
- for <dm-devel@redhat.com>; Fri,  1 Apr 2022 14:48:50 +0000 (UTC)
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 97FC440E58A4
+ for <dm-devel@redhat.com>; Fri,  1 Apr 2022 19:27:05 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 75D68811E7A
- for <dm-devel@redhat.com>; Fri,  1 Apr 2022 14:48:50 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 961B929AB3E5
+ for <dm-devel@redhat.com>; Fri,  1 Apr 2022 19:27:04 +0000 (UTC)
+Received: from mail-qv1-f47.google.com (mail-qv1-f47.google.com
+ [209.85.219.47]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-513-kB7YzwCwOJaCd3oUR04k6g-1; Fri, 01 Apr 2022 10:48:47 -0400
-X-MC-Unique: kB7YzwCwOJaCd3oUR04k6g-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 205BA60A3C;
- Fri,  1 Apr 2022 14:48:46 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 68BC9C340F2;
- Fri,  1 Apr 2022 14:48:44 +0000 (UTC)
-From: Sasha Levin <sashal@kernel.org>
-To: linux-kernel@vger.kernel.org,
-	stable@vger.kernel.org
-Date: Fri,  1 Apr 2022 10:48:18 -0400
-Message-Id: <20220401144827.1955845-7-sashal@kernel.org>
-In-Reply-To: <20220401144827.1955845-1-sashal@kernel.org>
-References: <20220401144827.1955845-1-sashal@kernel.org>
+ us-mta-572-vSPj3W5uP6W7E0GQOg_12w-1; Fri, 01 Apr 2022 15:27:02 -0400
+X-MC-Unique: vSPj3W5uP6W7E0GQOg_12w-1
+Received: by mail-qv1-f47.google.com with SMTP id a5so2798469qvx.1
+ for <dm-devel@redhat.com>; Fri, 01 Apr 2022 12:27:02 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:date:from:to:cc:subject:message-id:mime-version
+ :content-disposition;
+ bh=nvFo57OWxTfF6xwdTmogwqLgyZ3UA+Mu9A7SNgh8l+A=;
+ b=Z1Xp26powTdCCQ+iHhwVg6aBGhHicRq48eGmqSk2I6RSkZajSHlCB7fnu3nINXmyeD
+ xKcZh3NCtEtc2+IJqZDj1Jp1/I+uwfQqPzKZyn1J/vtMQpEt+58DewZWdua1o8DIqaSA
+ ZfNna9QRSZXcsPcSnpW7xKWLE6yVEXX62UqVeNW6ZZUMttHlh83HxxfG3HkXjKdhkWN2
+ N46+QRaaXwnqfpw/KncHFAy1a9JDTrnKPH5Q0HlPXt06E1Ate8vPepZaAZDSkhzhRY5Y
+ VD/05pPLz5ZT4Z7PVMyPialGW48ge/UZ9MmlTThQyjYuSpBwpE0DhVsk867woKOD0ffa
+ kEew==
+X-Gm-Message-State: AOAM532ytEljLeu29pYeuYdKegfQ/rVvcBEM4ipEO7Bb8Qw9flDqycib
+ B3KDDKWQCNU5xIlITpirVA87Xms7dJWCWS4=
+X-Google-Smtp-Source: ABdhPJz7IojtZWqKLAmzeellR8Hr0SP+8z17HN70PVGT0MGDxgLjPsXgmnzE3U9TIQxU971k8XygPA==
+X-Received: by 2002:ad4:5ba7:0:b0:441:75bc:d7a6 with SMTP id
+ 7-20020ad45ba7000000b0044175bcd7a6mr37912669qvq.123.1648841221729; 
+ Fri, 01 Apr 2022 12:27:01 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+ [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+ s31-20020a05622a1a9f00b002e1df010316sm2387410qtc.80.2022.04.01.12.27.01
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Fri, 01 Apr 2022 12:27:01 -0700 (PDT)
+Date: Fri, 1 Apr 2022 15:27:00 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <YkdSBEf1PpU9w2qs@redhat.com>
 MIME-Version: 1.0
-X-stable: review
-X-Patchwork-Hint: Ignore
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-Subject: [dm-devel] [PATCH AUTOSEL 4.9 07/16] dm ioctl: prevent potential
- spectre v1 gadget
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+Subject: [dm-devel] [git pull] device mapper fixes for 5.18-rc1
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -82,9 +86,9 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Sasha Levin <sashal@kernel.org>, Jordy Zomer <jordy@jordyzomer.github.io>,
- Mike Snitzer <snitzer@redhat.com>, snitzer@kernel.org, dm-devel@redhat.com,
- Jordy Zomer <jordy@pwning.systems>, agk@redhat.com
+Cc: linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>,
+ Ming Lei <ming.lei@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
@@ -92,63 +96,57 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="===============7550328880969800842=="
-
---===============7550328880969800842==
-Content-Transfer-Encoding: quoted-printable
-Content-Type: application/octet-stream; x-default=true
-
-From: Jordy Zomer <jordy@jordyzomer.github.io>
-
-[ Upstream commit cd9c88da171a62c4b0f1c70e50c75845969fbc18 ]
-
-It appears like cmd could be a Spectre v1 gadget as it's supplied by a
-user and used as an array index. Prevent the contents of kernel memory
-from being leaked to userspace via speculative execution by using
-array_index_nospec.
-
-Signed-off-by: Jordy Zomer <jordy@pwning.systems>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
----
- drivers/md/dm-ioctl.c | 2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index eb2659a12310..70245782e7f6 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -16,6 +16,7 @@
- #include <linux/dm-ioctl.h>
- #include <linux/hdreg.h>
- #include <linux/compat.h>
-+#include <linux/nospec.h>
-=20
- #include <asm/uaccess.h>
-=20
-@@ -1642,6 +1643,7 @@ static ioctl_fn lookup_ioctl(unsigned int cmd, int *i=
-octl_flags)
- =09if (unlikely(cmd >=3D ARRAY_SIZE(_ioctls)))
- =09=09return NULL;
-=20
-+=09cmd =3D array_index_nospec(cmd, ARRAY_SIZE(_ioctls));
- =09*ioctl_flags =3D _ioctls[cmd].flags;
- =09return _ioctls[cmd].fn;
- }
---=20
-2.34.1
-
-
---===============7550328880969800842==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+Hi Linus,
+
+The following changes since commit 3f7282139fe1594be464b90141d56738e7a0ea8a:
+
+  Merge tag 'for-5.18/64bit-pi-2022-03-25' of git://git.kernel.dk/linux-block (2022-03-26 12:01:35 -0700)
+
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.18/dm-fixes
+
+for you to fetch changes up to 5291984004edfcc7510024e52eaed044573b79c7:
+
+  dm: fix bio polling to handle possibile BLK_STS_AGAIN (2022-04-01 13:23:12 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+- Fix DM integrity shrink crash due to journal entry not being marked
+  unused.
+
+- Fix DM bio polling to handle possibility that underlying device(s)
+  return BLK_STS_AGAIN during submission.
+
+- Fix dm_io and dm_target_io flags race condition on Alpha.
+
+- Add some pr_err debugging to help debug cases when DM ioctl
+  structure is corrupted.
+
+----------------------------------------------------------------
+Mikulas Patocka (3):
+      dm ioctl: log an error if the ioctl structure is corrupted
+      dm integrity: set journal entry unused when shrinking device
+      dm: fix dm_io and dm_target_io flags race condition on Alpha
+
+Ming Lei (1):
+      dm: fix bio polling to handle possibile BLK_STS_AGAIN
+
+ drivers/md/dm-core.h      |  4 ++--
+ drivers/md/dm-integrity.c |  6 ++++--
+ drivers/md/dm-ioctl.c     | 15 ++++++++++++---
+ drivers/md/dm.c           | 20 +++++++++++++-------
+ include/linux/blk_types.h |  2 ++
+ 5 files changed, 33 insertions(+), 14 deletions(-)
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
-
---===============7550328880969800842==--
 
