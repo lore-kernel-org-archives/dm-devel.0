@@ -4,84 +4,58 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 188FCC433F5
-	for <dm-devel@archiver.kernel.org>; Thu, 31 Mar 2022 21:22:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A9E30C433EF
+	for <dm-devel@archiver.kernel.org>; Fri,  1 Apr 2022 04:57:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-377-y0uF9OD8Pcy0z6YLJny7PQ-1; Thu, 31 Mar 2022 17:22:29 -0400
-X-MC-Unique: y0uF9OD8Pcy0z6YLJny7PQ-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-59-9B6hTgo-MsupbXhHSd1cEw-1; Fri, 01 Apr 2022 00:57:42 -0400
+X-MC-Unique: 9B6hTgo-MsupbXhHSd1cEw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2FF68185A7A4;
-	Thu, 31 Mar 2022 21:22:27 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E809583395E;
+	Fri,  1 Apr 2022 04:57:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 82C241121314;
-	Thu, 31 Mar 2022 21:22:25 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0D23840885A1;
+	Fri,  1 Apr 2022 04:57:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1D6041947BBB;
-	Thu, 31 Mar 2022 21:22:25 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 455091947BBE;
+	Fri,  1 Apr 2022 04:57:35 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id B058719451F3
- for <dm-devel@listman.corp.redhat.com>; Thu, 31 Mar 2022 21:22:23 +0000 (UTC)
+ ESMTP id D68021947BBC
+ for <dm-devel@listman.corp.redhat.com>; Fri,  1 Apr 2022 04:57:33 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 92569400E11D; Thu, 31 Mar 2022 21:22:23 +0000 (UTC)
+ id A558D778A; Fri,  1 Apr 2022 04:57:33 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8E0A7400E42D
- for <dm-devel@redhat.com>; Thu, 31 Mar 2022 21:22:23 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 76A4A1010360
- for <dm-devel@redhat.com>; Thu, 31 Mar 2022 21:22:23 +0000 (UTC)
-Received: from mail-pg1-f176.google.com (mail-pg1-f176.google.com
- [209.85.215.176]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-656-l-j-613pMP6IlqrfRwLb9w-1; Thu, 31 Mar 2022 17:22:18 -0400
-X-MC-Unique: l-j-613pMP6IlqrfRwLb9w-1
-Received: by mail-pg1-f176.google.com with SMTP id k14so819776pga.0
- for <dm-devel@redhat.com>; Thu, 31 Mar 2022 14:22:18 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
- :content-language:to:cc:references:from:in-reply-to
- :content-transfer-encoding;
- bh=x3SePf6cYyzJ/sV6xHzMCnP/4ErKQDoUNlfoUc3FU/o=;
- b=GWuFww6ZpuM/mUfpvhjHVlgjobgOeD1038n6+1ck32FTZkk87dKwp3Xfk3UyvHr0RX
- XLlLQlvnDhFbQTyIRKlIfXSMxm4WSap1AUJjy8a7JdYms/E32tHLnhxGbPVydwqrdc9V
- C3CrQ9mvrrI2UizhDSvpfJol/y+JBVNrIAR+BWW6e9qzkI7LTI3ojs0nQ6LOM5msxKkx
- qxDES4jLTPJZa/acWHSeRDpBLcnKuacKpnZn2uSbRne/sfu1h6HB4f+3F4bzUCTF0yrE
- JOXnRtEwc16LxeV8DBS+3yEfmY9seMIizZeoQ84b/HtdmBzHiGuNOkFaY4Q384J/bN6x
- u6Gw==
-X-Gm-Message-State: AOAM5301/GN3utRLCgm/t0h5cYY42Hy3CmXDuKJKvQKFFw0yBwxHv/+n
- Q34Ma6TiH4MCSJGR9Y4QP6GucZM8oT2CDQ94
-X-Google-Smtp-Source: ABdhPJwYnU9r41ORdf19G02EFb5yhsyLJV8xzLTtxC7Sx8NiXMpF/1DkwJ2vuON7bztWgA+FZZylpQ==
-X-Received: by 2002:a05:6a00:328f:b0:4fa:95b5:e1ff with SMTP id
- ck15-20020a056a00328f00b004fa95b5e1ffmr7412958pfb.60.1648761737704; 
- Thu, 31 Mar 2022 14:22:17 -0700 (PDT)
-Received: from ?IPV6:2600:380:772e:9a93:98d9:fd90:ab06:5943?
- ([2600:380:772e:9a93:98d9:fd90:ab06:5943])
- by smtp.gmail.com with ESMTPSA id
- j7-20020a056a00130700b004b9f7cd94a4sm410220pfu.56.2022.03.31.14.22.15
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Thu, 31 Mar 2022 14:22:17 -0700 (PDT)
-Message-ID: <1eb268c5-3420-0263-3f0c-7d3982f8f512@kernel.dk>
-Date: Thu, 31 Mar 2022 15:22:14 -0600
-MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux aarch64; rv:91.0) Gecko/20100101
- Thunderbird/91.7.0
-To: Marek Szyprowski <m.szyprowski@samsung.com>, Christoph Hellwig <hch@lst.de>
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A18E07774
+ for <dm-devel@redhat.com>; Fri,  1 Apr 2022 04:57:30 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9E5803820543
+ for <dm-devel@redhat.com>; Fri,  1 Apr 2022 04:57:30 +0000 (UTC)
+Received: from verein.lst.de (verein.lst.de [213.95.11.211]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-113-oXkM1QB1MDuabSUzqNbFRg-1; Fri, 01 Apr 2022 00:57:17 -0400
+X-MC-Unique: oXkM1QB1MDuabSUzqNbFRg-1
+Received: by verein.lst.de (Postfix, from userid 2407)
+ id D5FF268AFE; Fri,  1 Apr 2022 06:57:13 +0200 (CEST)
+Date: Fri, 1 Apr 2022 06:57:13 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Marek Szyprowski <m.szyprowski@samsung.com>
+Message-ID: <20220401045713.GA9057@lst.de>
 References: <20220308061551.737853-1-hch@lst.de>
  <20220308061551.737853-5-hch@lst.de>
  <CGME20220331211804eucas1p28da21f2dfd57aa490abffb8f87417f42@eucas1p2.samsung.com>
  <6696cc6a-3e3f-035e-5b8c-05ea361383f3@samsung.com>
-From: Jens Axboe <axboe@kernel.dk>
+MIME-Version: 1.0
 In-Reply-To: <6696cc6a-3e3f-035e-5b8c-05ea361383f3@samsung.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -89,7 +63,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 Subject: Re: [dm-devel] [PATCH 4/5] block: turn bio_kmalloc into a simple
  kmalloc wrapper
 X-BeenThere: dm-devel@redhat.com
@@ -103,46 +77,93 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org,
+Cc: Jens Axboe <axboe@kernel.dk>, linux-raid@vger.kernel.org,
  Mike Snitzer <snitzer@redhat.com>,
  "Martin K. Petersen" <martin.petersen@oracle.com>,
  linux-kernel@vger.kernel.org, Josef Bacik <josef@toxicpanda.com>,
  Coly Li <colyli@suse.de>, linux-block@vger.kernel.org,
  Song Liu <song@kernel.org>, dm-devel@redhat.com, target-devel@vger.kernel.org,
  David Sterba <dsterba@suse.com>, Phillip Lougher <phillip@squashfs.org.uk>,
+ linux-bcache@vger.kernel.org, Christoph Hellwig <hch@lst.de>,
  linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 3/31/22 3:18 PM, Marek Szyprowski wrote:
+On Thu, Mar 31, 2022 at 11:18:03PM +0200, Marek Szyprowski wrote:
 > Hi Christoph,
 > 
 > On 08.03.2022 07:15, Christoph Hellwig wrote:
->> Remove the magic autofree semantics and require the callers to explicitly
->> call bio_init to initialize the bio.
->>
->> This allows bio_free to catch accidental bio_put calls on bio_init()ed
->> bios as well.
->>
->> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> > Remove the magic autofree semantics and require the callers to explicitly
+> > call bio_init to initialize the bio.
+> >
+> > This allows bio_free to catch accidental bio_put calls on bio_init()ed
+> > bios as well.
+> >
+> > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > 
 > This patch, which landed in today's next-20220331 as commit 57c47b42f454 
 > ("block: turn bio_kmalloc into a simple kmalloc wrapper"), breaks badly 
 > all my test systems, which use squashfs initrd:
 
-The series has been reverted on the block side, so next linux-next should
-be fine again. We'll try again for 5.19.
+In addition to the revert, this is the patch I had already queued up:
 
--- 
-Jens Axboe
+diff --git a/fs/squashfs/block.c b/fs/squashfs/block.c
+index 930eb530fa622..fed99bb3df3be 100644
+--- a/fs/squashfs/block.c
++++ b/fs/squashfs/block.c
+@@ -72,6 +72,13 @@ static int copy_bio_to_actor(struct bio *bio,
+ 	return copied_bytes;
+ }
+ 
++static void squashfs_bio_free(struct bio *bio)
++{
++	bio_free_pages(bio);
++	bio_uninit(bio);
++	kfree(bio);
++}
++
+ static int squashfs_bio_read(struct super_block *sb, u64 index, int length,
+ 			     struct bio **biop, int *block_offset)
+ {
+@@ -118,9 +125,7 @@ static int squashfs_bio_read(struct super_block *sb, u64 index, int length,
+ 	return 0;
+ 
+ out_free_bio:
+-	bio_free_pages(bio);
+-	bio_uninit(bio);
+-	kfree(bio);
++	squashfs_bio_free(bio);
+ 	return error;
+ }
+ 
+@@ -183,8 +188,7 @@ int squashfs_read_data(struct super_block *sb, u64 index, int length,
+ 			data = bvec_virt(bvec);
+ 			length |= data[0] << 8;
+ 		}
+-		bio_free_pages(bio);
+-		bio_put(bio);
++		squashfs_bio_free(bio);
+ 
+ 		compressed = SQUASHFS_COMPRESSED(length);
+ 		length = SQUASHFS_COMPRESSED_SIZE(length);
+@@ -217,8 +221,7 @@ int squashfs_read_data(struct super_block *sb, u64 index, int length,
+ 	}
+ 
+ out_free_bio:
+-	bio_free_pages(bio);
+-	bio_put(bio);
++	squashfs_bio_free(bio);
+ out:
+ 	if (res < 0) {
+ 		ERROR("Failed to read block 0x%llx: %d\n", index, res);
 
 --
 dm-devel mailing list
