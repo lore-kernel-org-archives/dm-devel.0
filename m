@@ -4,85 +4,69 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id EC3C3C433EF
-	for <dm-devel@archiver.kernel.org>; Sat,  2 Apr 2022 23:19:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 05AF9C433EF
+	for <dm-devel@archiver.kernel.org>; Sun,  3 Apr 2022 18:38:34 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1649011113;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=KHqCtM62+ITv5Ep8JTGAvcSyUmrANOxg5HrpC2S1H1Q=;
+	b=JYIOwdh3rcD23ZourlcM9c3NAr8lU7AjhlsxOsCD+PH/cN5/hikH09N46U5FmaJkV1GQZ1
+	NDeKxRipCbUtNAFAYYJDMULtie/CSK8c60iGy2CBTLThoVTgxo+aQiufnn/5aF3d3aCFn/
+	184ln4IaQhkkjZ9lI9FcKoiZJXWOHsk=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-634-LzgpzykLP5W2_0c1y7amLg-1; Sat, 02 Apr 2022 19:19:21 -0400
-X-MC-Unique: LzgpzykLP5W2_0c1y7amLg-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-346-_Ein59kCM7mxAaDdLhj9RQ-1; Sun, 03 Apr 2022 14:38:30 -0400
+X-MC-Unique: _Ein59kCM7mxAaDdLhj9RQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8988C801585;
-	Sat,  2 Apr 2022 23:19:12 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4F1E585A5A8;
+	Sun,  3 Apr 2022 18:38:28 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E4ACD553373;
-	Sat,  2 Apr 2022 23:19:03 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id DCD9A145D85A;
+	Sun,  3 Apr 2022 18:38:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 362631940360;
-	Sat,  2 Apr 2022 23:19:01 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9F5461940363;
+	Sun,  3 Apr 2022 18:38:23 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
  [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 628B7194035F
- for <dm-devel@listman.corp.redhat.com>; Sat,  2 Apr 2022 23:19:00 +0000 (UTC)
+ ESMTP id D36C51940362
+ for <dm-devel@listman.corp.redhat.com>; Sun,  3 Apr 2022 18:38:22 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0DB6B553373; Sat,  2 Apr 2022 23:19:00 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 09DCB553361
- for <dm-devel@redhat.com>; Sat,  2 Apr 2022 23:18:59 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 72F5B185A794
- for <dm-devel@redhat.com>; Sat,  2 Apr 2022 23:18:59 +0000 (UTC)
-Received: from mail-ed1-f42.google.com (mail-ed1-f42.google.com
- [209.85.208.42]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-163-Dg4heMEVOYmJJeiP6BhsBA-1; Sat, 02 Apr 2022 19:18:57 -0400
-X-MC-Unique: Dg4heMEVOYmJJeiP6BhsBA-1
-Received: by mail-ed1-f42.google.com with SMTP id g22so6996717edz.2;
- Sat, 02 Apr 2022 16:18:57 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:from:to:cc:subject:date:message-id:mime-version
- :content-transfer-encoding;
- bh=fiV+0Q7yn6sZPLu9M76dM7vwkVMJdJIT2fEBTxfOMME=;
- b=DCWhbq1Otyiv7ju9Ybwhn9Fjzl0d2M+JjTIW/gxQpatXhqxD6KhObLqkHNcsc9VPBL
- tXsh28UzmnHtlbM8QE/OhnIdceYDbvQKK5j3lUuZMEDHGe6iQNIkm/BXyMlNcMRG/EgW
- cNYy0UW09DXZRBxnMfv6edFC1cILKvmfHDssJ5eOewbURBgVQH/VMsVt0/KMDW38Ukmr
- uRGf581b1dC5oYiY4mxD5RPu7AnpP52ZsxpiuP/DOn43q+z48F8l3ARz4uFUGuUBq/XR
- x0TyVF7VWfmHEbeWTiA5+K67jpR2VhV1xYJHBGlxUWqTP4fZM5B2NYz1yDxpKN/8X+EY
- oMww==
-X-Gm-Message-State: AOAM531gQIcHatNXo7eiRyfBciAwAkNCy+8YSfSqbWsGpeMSsxP05pYM
- WWyWKNnTu6Kbnve3HPTLLA==
-X-Google-Smtp-Source: ABdhPJxDNmQA8GnL5cwzMgUI7SaB97P8AwnKDAVqUxdteCDeluG3wlIlB6mL+uqtTD4DK8LiQW2L8w==
-X-Received: by 2002:a05:6402:40ce:b0:41a:6817:5b07 with SMTP id
- z14-20020a05640240ce00b0041a68175b07mr26754245edb.7.1648941536366; 
- Sat, 02 Apr 2022 16:18:56 -0700 (PDT)
-Received: from localhost (173.red-81-39-136.dynamicip.rima-tde.net.
- [81.39.136.173]) by smtp.gmail.com with ESMTPSA id
- x4-20020a170906b08400b006e493cb583esm2584285ejy.47.2022.04.02.16.18.55
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Sat, 02 Apr 2022 16:18:55 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Date: Sun,  3 Apr 2022 01:18:54 +0200
-Message-Id: <20220402231854.36956-1-xose.vazquez@gmail.com>
+ id 98116463E0E; Sun,  3 Apr 2022 18:38:22 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8E9CB463E0A;
+ Sun,  3 Apr 2022 18:38:22 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 233IcM7s028955; Sun, 3 Apr 2022 14:38:22 -0400
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 233IcMRT028951; Sun, 3 Apr 2022 14:38:22 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Sun, 3 Apr 2022 14:38:22 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2203311207540.22503@file01.intranet.prod.int.rdu2.redhat.com>
+Message-ID: <alpine.LRH.2.02.2204031437430.28888@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2203301424570.11614@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAH6w=ayZoHOnN5Pj=BVbFhi5OweCy8bX3u6nKtL3PJoyLtQUHA@mail.gmail.com>
+ <alpine.LRH.2.02.2203311207540.22503@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
-Subject: [dm-devel] [PATCH] multipath-tools: remove duplicate headers
+Subject: [dm-devel] [PATCH] dm-integrity: fix memory corruption when
+ tag_size is less than the actual digest size
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -94,11 +78,11 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Martin Wilck <mwilck@suse.com>,
- DM-DEVEL ML <dm-devel@redhat.com>
+Cc: Ondrej Kozina <okozina@redhat.com>, dm-devel@redhat.com,
+ Milan Broz <gmazyland@gmail.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -106,29 +90,48 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@redhat.com>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/foreign/nvme.c | 1 -
- 1 file changed, 1 deletion(-)
+It is possible to set up dm-integrity in such a way that the "tag_size"
+parameter is less than the actual digest size. In this situation, a part
+of the digest beyond tag_size is ignored.
 
-diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
-index 838e1164..52ca56d8 100644
---- a/libmultipath/foreign/nvme.c
-+++ b/libmultipath/foreign/nvme.c
-@@ -23,7 +23,6 @@
- #include <stdlib.h>
- #include <string.h>
- #include <stdbool.h>
--#include <libudev.h>
- #include <pthread.h>
- #include <limits.h>
- #include <dirent.h>
--- 
-2.35.1
+In this case, dm-integrity would write beyond the end of the
+ic->recalc_tags array and corrupt memory. The corruption happened in
+integrity_recalc->integrity_sector_checksum->crypto_shash_final.
+
+This patch fixes the corruption.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org	# v4.19+
+
+---
+ drivers/md/dm-integrity.c |    7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2022-04-02 14:17:13.000000000 +0200
++++ linux-2.6/drivers/md/dm-integrity.c	2022-04-02 14:43:06.000000000 +0200
+@@ -4399,6 +4399,7 @@ try_smaller_buffer:
+ 	}
+ 
+ 	if (ic->internal_hash) {
++		size_t recalc_tags_size;
+ 		ic->recalc_wq = alloc_workqueue("dm-integrity-recalc", WQ_MEM_RECLAIM, 1);
+ 		if (!ic->recalc_wq ) {
+ 			ti->error = "Cannot allocate workqueue";
+@@ -4412,8 +4413,10 @@ try_smaller_buffer:
+ 			r = -ENOMEM;
+ 			goto bad;
+ 		}
+-		ic->recalc_tags = kvmalloc_array(RECALC_SECTORS >> ic->sb->log2_sectors_per_block,
+-						 ic->tag_size, GFP_KERNEL);
++		recalc_tags_size = (RECALC_SECTORS >> ic->sb->log2_sectors_per_block) * ic->tag_size;
++		if (crypto_shash_digestsize(ic->internal_hash) > ic->tag_size)
++			recalc_tags_size += crypto_shash_digestsize(ic->internal_hash) - ic->tag_size;
++		ic->recalc_tags = kvmalloc(recalc_tags_size, GFP_KERNEL);
+ 		if (!ic->recalc_tags) {
+ 			ti->error = "Cannot allocate tags for recalculating";
+ 			r = -ENOMEM;
 
 --
 dm-devel mailing list
