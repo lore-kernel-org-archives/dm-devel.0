@@ -1,68 +1,68 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A1029C433EF
-	for <dm-devel@archiver.kernel.org>; Mon,  4 Apr 2022 17:05:49 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 95196C433F5
+	for <dm-devel@archiver.kernel.org>; Mon,  4 Apr 2022 17:05:50 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-222-zgEMkdqNOGmhjIGD7LQjVA-1; Mon, 04 Apr 2022 13:05:44 -0400
-X-MC-Unique: zgEMkdqNOGmhjIGD7LQjVA-1
+ us-mta-575-Sfj3AOMnPD6z8xx_l5LKZQ-1; Mon, 04 Apr 2022 13:05:47 -0400
+X-MC-Unique: Sfj3AOMnPD6z8xx_l5LKZQ-1
 Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AB5EF85A5BC;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4B22028035A0;
 	Mon,  4 Apr 2022 17:05:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 961BC1454559;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 36C2D1402681;
 	Mon,  4 Apr 2022 17:05:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 86F37193F6EA;
-	Mon,  4 Apr 2022 17:05:36 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 94E84194037D;
+	Mon,  4 Apr 2022 17:05:35 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
  [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id F2D111940368
- for <dm-devel@listman.corp.redhat.com>; Mon,  4 Apr 2022 17:05:32 +0000 (UTC)
+ ESMTP id F2AE91940367
+ for <dm-devel@listman.corp.redhat.com>; Mon,  4 Apr 2022 17:05:33 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2D063C27DBE; Mon,  4 Apr 2022 17:05:32 +0000 (UTC)
+ id 60E2FC27E86; Mon,  4 Apr 2022 17:05:33 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 288C0C27E85
- for <dm-devel@redhat.com>; Mon,  4 Apr 2022 17:05:32 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0E468280359D
- for <dm-devel@redhat.com>; Mon,  4 Apr 2022 17:05:32 +0000 (UTC)
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 5CFC9C27E85
+ for <dm-devel@redhat.com>; Mon,  4 Apr 2022 17:05:33 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4619A3C14106
+ for <dm-devel@redhat.com>; Mon,  4 Apr 2022 17:05:33 +0000 (UTC)
 Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-65-yzmi2DZzON6DOryWMhYmHQ-1; Mon, 04 Apr 2022 13:05:30 -0400
-X-MC-Unique: yzmi2DZzON6DOryWMhYmHQ-1
+ us-mta-308-i6FQmeS0PiC55oN_UOTA1g-1; Mon, 04 Apr 2022 13:05:31 -0400
+X-MC-Unique: i6FQmeS0PiC55oN_UOTA1g-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out1.suse.de (Postfix) with ESMTPS id 2D805210E4;
- Mon,  4 Apr 2022 17:05:29 +0000 (UTC)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id 5D0A0210FC;
+ Mon,  4 Apr 2022 17:05:30 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id DB5AA12FC5;
- Mon,  4 Apr 2022 17:05:28 +0000 (UTC)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 24BFA12FC5;
+ Mon,  4 Apr 2022 17:05:30 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id wEReM1glS2LICAAAMHmgww
- (envelope-from <mwilck@suse.com>); Mon, 04 Apr 2022 17:05:28 +0000
+ by imap2.suse-dmz.suse.de with ESMTPSA id wDncBlolS2LICAAAMHmgww
+ (envelope-from <mwilck@suse.com>); Mon, 04 Apr 2022 17:05:30 +0000
 From: mwilck@suse.com
 To: Benjamin Marzinski <bmarzins@redhat.com>,
  Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Mon,  4 Apr 2022 19:04:44 +0200
-Message-Id: <20220404170457.16021-3-mwilck@suse.com>
+Date: Mon,  4 Apr 2022 19:04:48 +0200
+Message-Id: <20220404170457.16021-7-mwilck@suse.com>
 In-Reply-To: <20220404170457.16021-1-mwilck@suse.com>
 References: <20220404170457.16021-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -74,8 +74,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: [dm-devel] [PATCH v2 02/15] multipathd: don't switch to DAEMON_IDLE
- during startup
+Subject: [dm-devel] [PATCH v2 06/15] libmultipath: microoptimize uevent
+ filtering and merging
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -95,47 +95,106 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="===============8983790926178095105=="
+Content-Type: multipart/mixed; boundary="===============4480887060416045363=="
 
---===============8983790926178095105==
+--===============4480887060416045363==
 Content-Transfer-Encoding: quoted-printable
 Content-Type: application/octet-stream; x-default=true
 
 From: Martin Wilck <mwilck@suse.com>
 
-By switching to DAEMON_IDLE early during startup, we may signal
-systemd READY=3D1 prematurely. Don't do this.
+Simplify and microoptimize the filtering and merging tests.
+E.g. do the WWID comparison last.
 
-Fixes: c95a739 ("multipathd: avoid sending "READY=3D1" to systemd on early =
-shutdown")
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ libmultipath/uevent.c | 30 ++++++++++++++----------------
+ 1 file changed, 14 insertions(+), 16 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 3a31154..13b1948 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -3307,11 +3307,10 @@ child (__attribute__((unused)) void *param)
- =09pthread_cleanup_push(config_cleanup, NULL);
- =09pthread_mutex_lock(&config_lock);
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index 66acd6c..d39f388 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -220,6 +220,10 @@ static bool
+ uevent_can_filter(struct uevent *earlier, struct uevent *later)
+ {
 =20
--=09__post_config_state(DAEMON_IDLE);
- =09rc =3D pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs);
- =09if (!rc) {
- =09=09/* Wait for uxlsnr startup */
--=09=09while (running_state =3D=3D DAEMON_IDLE)
-+=09=09while (running_state =3D=3D DAEMON_START)
- =09=09=09pthread_cond_wait(&config_cond, &config_lock);
- =09=09state =3D running_state;
- =09}
++=09if (!strncmp(later->kernel, "dm-", 3) ||
++=09    strcmp(earlier->kernel, later->kernel))
++=09=09return false;
++
+ =09/*
+ =09 * filter earlier uvents if path has removed later. Eg:
+ =09 * "add path1 |chang path1 |add path2 |remove path1"
+@@ -227,11 +231,8 @@ uevent_can_filter(struct uevent *earlier, struct ueven=
+t *later)
+ =09 * "add path2 |remove path1"
+ =09 * uevents "add path1" and "chang path1" are filtered out
+ =09 */
+-=09if (!strcmp(earlier->kernel, later->kernel) &&
+-=09=09!strcmp(later->action, "remove") &&
+-=09=09strncmp(later->kernel, "dm-", 3)) {
++=09if (!strcmp(later->action, "remove"))
+ =09=09return true;
+-=09}
+=20
+ =09/*
+ =09 * filter change uvents if add uevents exist. Eg:
+@@ -240,12 +241,9 @@ uevent_can_filter(struct uevent *earlier, struct ueven=
+t *later)
+ =09 * "add path1 |add path2"
+ =09 * uevent "chang path1" is filtered out
+ =09 */
+-=09if (!strcmp(earlier->kernel, later->kernel) &&
+-=09=09!strcmp(earlier->action, "change") &&
+-=09=09!strcmp(later->action, "add") &&
+-=09=09strncmp(later->kernel, "dm-", 3)) {
++=09if (!strcmp(earlier->action, "change") &&
++=09    !strcmp(later->action, "add"))
+ =09=09return true;
+-=09}
+=20
+ =09return false;
+ }
+@@ -278,10 +276,10 @@ merge_need_stop(struct uevent *earlier, struct uevent=
+ *later)
+ =09 * with the same wwid and different action
+ =09 * it would be better to stop merging.
+ =09 */
+-=09if (!strcmp(earlier->wwid, later->wwid) &&
+-=09    strcmp(earlier->action, later->action) &&
++=09if (strcmp(earlier->action, later->action) &&
+ =09    strcmp(earlier->action, "change") &&
+-=09    strcmp(later->action, "change"))
++=09    strcmp(later->action, "change") &&
++=09    !strcmp(earlier->wwid, later->wwid))
+ =09=09return true;
+=20
+ =09return false;
+@@ -296,12 +294,12 @@ uevent_can_merge(struct uevent *earlier, struct ueven=
+t *later)
+ =09 * and actions are addition or deletion
+ =09 */
+ =09if (earlier->wwid && later->wwid &&
+-=09    !strcmp(earlier->wwid, later->wwid) &&
++=09    strncmp(earlier->kernel, "dm-", 3) &&
+ =09    !strcmp(earlier->action, later->action) &&
+-=09    strncmp(earlier->action, "change", 6) &&
+-=09    strncmp(earlier->kernel, "dm-", 3)) {
++=09    (!strcmp(earlier->action, "add") ||
++=09     !strcmp(earlier->action, "remove")) &&
++=09    !strcmp(earlier->wwid, later->wwid))
+ =09=09return true;
+-=09}
+=20
+ =09return false;
+ }
 --=20
 2.35.1
 
 
---===============8983790926178095105==
+--===============4480887060416045363==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -146,5 +205,5 @@ dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
 
---===============8983790926178095105==--
+--===============4480887060416045363==--
 
