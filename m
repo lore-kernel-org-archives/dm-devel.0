@@ -4,65 +4,65 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 24CF3C433FE
-	for <dm-devel@archiver.kernel.org>; Mon,  4 Apr 2022 17:05:43 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A1029C433EF
+	for <dm-devel@archiver.kernel.org>; Mon,  4 Apr 2022 17:05:49 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-114-f6BVZ_fmNaK_jsEuQd-cFw-1; Mon, 04 Apr 2022 13:05:41 -0400
-X-MC-Unique: f6BVZ_fmNaK_jsEuQd-cFw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-222-zgEMkdqNOGmhjIGD7LQjVA-1; Mon, 04 Apr 2022 13:05:44 -0400
+X-MC-Unique: zgEMkdqNOGmhjIGD7LQjVA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CB44B1C05EB6;
-	Mon,  4 Apr 2022 17:05:38 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AB5EF85A5BC;
+	Mon,  4 Apr 2022 17:05:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B8FA040D2962;
-	Mon,  4 Apr 2022 17:05:38 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 961BC1454559;
+	Mon,  4 Apr 2022 17:05:39 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 526821940372;
-	Mon,  4 Apr 2022 17:05:35 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 86F37193F6EA;
+	Mon,  4 Apr 2022 17:05:36 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id EFFD819451EF
+ ESMTP id F2D111940368
  for <dm-devel@listman.corp.redhat.com>; Mon,  4 Apr 2022 17:05:32 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id BCD77140241F; Mon,  4 Apr 2022 17:05:32 +0000 (UTC)
+ id 2D063C27DBE; Mon,  4 Apr 2022 17:05:32 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B8418140265E
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 288C0C27E85
  for <dm-devel@redhat.com>; Mon,  4 Apr 2022 17:05:32 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A04B63C14100
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0E468280359D
  for <dm-devel@redhat.com>; Mon,  4 Apr 2022 17:05:32 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-114-XzLrg7MGOmWNBwsT0iofrw-1; Mon, 04 Apr 2022 13:05:30 -0400
-X-MC-Unique: XzLrg7MGOmWNBwsT0iofrw-1
+ us-mta-65-yzmi2DZzON6DOryWMhYmHQ-1; Mon, 04 Apr 2022 13:05:30 -0400
+X-MC-Unique: yzmi2DZzON6DOryWMhYmHQ-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 6A8101F38A;
+ by smtp-out1.suse.de (Postfix) with ESMTPS id 2D805210E4;
  Mon,  4 Apr 2022 17:05:29 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 2FEC513A89;
- Mon,  4 Apr 2022 17:05:29 +0000 (UTC)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id DB5AA12FC5;
+ Mon,  4 Apr 2022 17:05:28 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id SLWPCVklS2LICAAAMHmgww
- (envelope-from <mwilck@suse.com>); Mon, 04 Apr 2022 17:05:29 +0000
+ by imap2.suse-dmz.suse.de with ESMTPSA id wEReM1glS2LICAAAMHmgww
+ (envelope-from <mwilck@suse.com>); Mon, 04 Apr 2022 17:05:28 +0000
 From: mwilck@suse.com
 To: Benjamin Marzinski <bmarzins@redhat.com>,
  Christophe Varoqui <christophe.varoqui@opensvc.com>
-Date: Mon,  4 Apr 2022 19:04:45 +0200
-Message-Id: <20220404170457.16021-4-mwilck@suse.com>
+Date: Mon,  4 Apr 2022 19:04:44 +0200
+Message-Id: <20220404170457.16021-3-mwilck@suse.com>
 In-Reply-To: <20220404170457.16021-1-mwilck@suse.com>
 References: <20220404170457.16021-1-mwilck@suse.com>
 MIME-Version: 1.0
@@ -73,9 +73,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-Subject: [dm-devel] [PATCH v2 03/15] uevent_dispatch(): use while in wait
- loop
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: [dm-devel] [PATCH v2 02/15] multipathd: don't switch to DAEMON_IDLE
+ during startup
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -90,57 +90,52 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="===============4704175042126733609=="
+Content-Type: multipart/mixed; boundary="===============8983790926178095105=="
 
---===============4704175042126733609==
+--===============8983790926178095105==
 Content-Transfer-Encoding: quoted-printable
 Content-Type: application/octet-stream; x-default=true
 
 From: Martin Wilck <mwilck@suse.com>
 
-Callers of pthread_cond_wait() should generally use a while loop
-to test the condition. Also, remove the misleading comment.
-Condition variables aren't unreliable, they're just not strictly
-tied to the condition tested.
+By switching to DAEMON_IDLE early during startup, we may signal
+systemd READY=3D1 prematurely. Don't do this.
 
+Fixes: c95a739 ("multipathd: avoid sending "READY=3D1" to systemd on early =
+shutdown")
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/uevent.c | 9 +++------
- 1 file changed, 3 insertions(+), 6 deletions(-)
+ multipathd/main.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index 29e2557..fe60ae3 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -443,13 +443,10 @@ int uevent_dispatch(int (*uev_trigger)(struct uevent =
-*, void * trigger_data),
- =09=09pthread_cleanup_push(cleanup_mutex, uevq_lockp);
- =09=09pthread_mutex_lock(uevq_lockp);
- =09=09servicing_uev =3D 0;
--=09=09/*
--=09=09 * Condition signals are unreliable,
--=09=09 * so make sure we only wait if we have to.
--=09=09 */
--=09=09if (list_empty(&uevq)) {
-+
-+=09=09while (list_empty(&uevq))
- =09=09=09pthread_cond_wait(uev_condp, uevq_lockp);
--=09=09}
-+
- =09=09servicing_uev =3D 1;
- =09=09list_splice_init(&uevq, &uevq_tmp);
- =09=09pthread_cleanup_pop(1);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 3a31154..13b1948 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -3307,11 +3307,10 @@ child (__attribute__((unused)) void *param)
+ =09pthread_cleanup_push(config_cleanup, NULL);
+ =09pthread_mutex_lock(&config_lock);
+=20
+-=09__post_config_state(DAEMON_IDLE);
+ =09rc =3D pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs);
+ =09if (!rc) {
+ =09=09/* Wait for uxlsnr startup */
+-=09=09while (running_state =3D=3D DAEMON_IDLE)
++=09=09while (running_state =3D=3D DAEMON_START)
+ =09=09=09pthread_cond_wait(&config_cond, &config_lock);
+ =09=09state =3D running_state;
+ =09}
 --=20
 2.35.1
 
 
---===============4704175042126733609==
+--===============8983790926178095105==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -151,5 +146,5 @@ dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
 
---===============4704175042126733609==--
+--===============8983790926178095105==--
 
