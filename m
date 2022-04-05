@@ -1,115 +1,83 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 74FC1C433EF
-	for <dm-devel@archiver.kernel.org>; Tue,  5 Apr 2022 08:18:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 92AC7C433F5
+	for <dm-devel@archiver.kernel.org>; Tue,  5 Apr 2022 15:50:53 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-203-XF6bl1pjN7GmKbsHJUXzVg-1; Tue, 05 Apr 2022 04:18:40 -0400
-X-MC-Unique: XF6bl1pjN7GmKbsHJUXzVg-1
+ us-mta-92-u9u_AgHRNcKAloy7HnDpQQ-1; Tue, 05 Apr 2022 11:50:51 -0400
+X-MC-Unique: u9u_AgHRNcKAloy7HnDpQQ-1
 Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B8DDA80281D;
-	Tue,  5 Apr 2022 08:18:38 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3B72D811E75;
+	Tue,  5 Apr 2022 15:50:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 11FE6417EDA;
-	Tue,  5 Apr 2022 08:18:35 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D1BE842B94A;
+	Tue,  5 Apr 2022 15:50:45 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B79E71940367;
-	Tue,  5 Apr 2022 08:18:34 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 899B21940369;
+	Tue,  5 Apr 2022 15:50:45 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C57D319451EF
- for <dm-devel@listman.corp.redhat.com>; Mon,  4 Apr 2022 11:34:57 +0000 (UTC)
+ ESMTP id C2E161947BBD
+ for <dm-devel@listman.corp.redhat.com>; Tue,  5 Apr 2022 15:50:43 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 9347E5AB64; Mon,  4 Apr 2022 11:34:57 +0000 (UTC)
+ id 8F943C54181; Tue,  5 Apr 2022 15:50:43 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8EAF25AB78
- for <dm-devel@redhat.com>; Mon,  4 Apr 2022 11:34:50 +0000 (UTC)
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8B4A5C54180
+ for <dm-devel@redhat.com>; Tue,  5 Apr 2022 15:50:43 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 68ACC3C14CC3
- for <dm-devel@redhat.com>; Mon,  4 Apr 2022 11:34:50 +0000 (UTC)
-Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com
- [148.163.156.1]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 72D3F899EC1
+ for <dm-devel@redhat.com>; Tue,  5 Apr 2022 15:50:43 +0000 (UTC)
+Received: from mail-qt1-f175.google.com (mail-qt1-f175.google.com
+ [209.85.160.175]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-215-GD_DnuUPOF2DS6W7pJiFHg-1; Mon, 04 Apr 2022 07:34:46 -0400
-X-MC-Unique: GD_DnuUPOF2DS6W7pJiFHg-1
-Received: from pps.filterd (m0098399.ppops.net [127.0.0.1])
- by mx0a-001b2d01.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 2348pcFO031931; 
- Mon, 4 Apr 2022 11:34:45 GMT
-Received: from pps.reinject (localhost [127.0.0.1])
- by mx0a-001b2d01.pphosted.com with ESMTP id 3f702q0u1k-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
- Mon, 04 Apr 2022 11:34:45 +0000
-Received: from m0098399.ppops.net (m0098399.ppops.net [127.0.0.1])
- by pps.reinject (8.16.0.43/8.16.0.43) with SMTP id 234AUtcF009897;
- Mon, 4 Apr 2022 11:34:44 GMT
-Received: from ppma01fra.de.ibm.com (46.49.7a9f.ip4.static.sl-reverse.com
- [159.122.73.70])
- by mx0a-001b2d01.pphosted.com with ESMTP id 3f702q0u0n-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
- Mon, 04 Apr 2022 11:34:44 +0000
-Received: from pps.filterd (ppma01fra.de.ibm.com [127.0.0.1])
- by ppma01fra.de.ibm.com (8.16.1.2/8.16.1.2) with SMTP id 234BXSdM032193;
- Mon, 4 Apr 2022 11:34:42 GMT
-Received: from b06cxnps4076.portsmouth.uk.ibm.com
- (d06relay13.portsmouth.uk.ibm.com [9.149.109.198])
- by ppma01fra.de.ibm.com with ESMTP id 3f6e48twy2-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
- Mon, 04 Apr 2022 11:34:42 +0000
-Received: from d06av25.portsmouth.uk.ibm.com (d06av25.portsmouth.uk.ibm.com
- [9.149.105.61])
- by b06cxnps4076.portsmouth.uk.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id
- 234BYdcC49545564
- (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Mon, 4 Apr 2022 11:34:39 GMT
-Received: from d06av25.portsmouth.uk.ibm.com (unknown [127.0.0.1])
- by IMSVA (Postfix) with ESMTP id B032A11C054;
- Mon,  4 Apr 2022 11:34:39 +0000 (GMT)
-Received: from d06av25.portsmouth.uk.ibm.com (unknown [127.0.0.1])
- by IMSVA (Postfix) with ESMTP id 82D2611C050;
- Mon,  4 Apr 2022 11:34:37 +0000 (GMT)
-Received: from smtpclient.apple (unknown [9.79.181.230])
- by d06av25.portsmouth.uk.ibm.com (Postfix) with ESMTP;
- Mon,  4 Apr 2022 11:34:37 +0000 (GMT)
-From: Sachin Sant <sachinp@linux.ibm.com>
-Mime-Version: 1.0 (Mac OS X Mail 15.0 \(3693.60.0.1.1\))
-Message-Id: <A3B628C9-A20B-4621-BC8C-C79B270297E1@linux.ibm.com>
-Date: Mon, 4 Apr 2022 17:04:35 +0530
-To: linux-block@vger.kernel.org, snitzer@redhat.com
-X-TM-AS-GCONF: 00
-X-Proofpoint-GUID: Wabk7nk-BwsMUl-hG8tDGH8QUqhUIzLJ
-X-Proofpoint-ORIG-GUID: KWJLFJkh8frgZPjeJ58DYsCi1rCJ43tZ
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.205,Aquarius:18.0.850,Hydra:6.0.425,FMLib:17.11.64.514
- definitions=2022-04-04_03,2022-03-31_01,2022-02-23_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- impostorscore=0 spamscore=0
- malwarescore=0 mlxscore=0 mlxlogscore=934 bulkscore=0 adultscore=0
- priorityscore=1501 lowpriorityscore=0 clxscore=1011 phishscore=0
- suspectscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.12.0-2202240000 definitions=main-2204040065
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-X-Mailman-Approved-At: Tue, 05 Apr 2022 08:18:34 +0000
-Subject: [dm-devel] [powerpc]Kernel crash while running xfstests
- (generic/250) [next-20220404]
+ us-mta-290-qAJf9WrjMD-tIgUf0l6y8g-1; Tue, 05 Apr 2022 11:50:42 -0400
+X-MC-Unique: qAJf9WrjMD-tIgUf0l6y8g-1
+Received: by mail-qt1-f175.google.com with SMTP id j21so11798374qta.0
+ for <dm-devel@redhat.com>; Tue, 05 Apr 2022 08:50:41 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+ :mime-version:content-disposition:in-reply-to;
+ bh=v+fdSoVNNjnUGmCkMRGF7bz1AtuvXBZQ7NRsX5hjdRI=;
+ b=Iie1XNJxpqMOPHGnbjsMyq70PgoV3R2uMCUCeA1wwTTXPuzJtvbryHgu/NXvZ+Nw4e
+ skM2cQgAvoHet0Ok9qHjOPjrqeeKFt6glM9FlTD5pL8ZkUUeKA0YPywjMxS+MnuVeUFB
+ 3ggsj3b8tEuEDpjmTICqP3PqNLSHUyamZ2UAQI9eD/NNbbNeRe6+mMYEXpKeAQ+X+RqX
+ /iQsOxT0PxukQJP/5oDI1w22ZbOfZbQWilTAGMjSM3LZcPfrqTzK4IYwUKjQufuYxeVR
+ YJ2W/Sy3zkRlnWip4T3j6kagiv8QoqwHaGq4WH0vcKbHpXwxpWVjl/pI0INcevgFoJMB
+ CzOA==
+X-Gm-Message-State: AOAM530VALQiU7y7xRE7kEEAQ+flk0W4r1oLTc0YXSQ7PAyumBR965Ft
+ 3KvQt7uP7GB61JuuiRqRsgBiC1Q=
+X-Google-Smtp-Source: ABdhPJzKzm30OD+0rRZKNl7Nej0zc6frKnnX46QEawCBiKw/KCb8ayvLrIXfjw+ycf+lOxvjqpd0gA==
+X-Received: by 2002:ac8:5b50:0:b0:2eb:8756:d7c1 with SMTP id
+ n16-20020ac85b50000000b002eb8756d7c1mr3615358qtw.378.1649173841365; 
+ Tue, 05 Apr 2022 08:50:41 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+ [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+ de8-20020a05620a370800b0067ec34c9f27sm8282351qkb.129.2022.04.05.08.50.40
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Tue, 05 Apr 2022 08:50:40 -0700 (PDT)
+Date: Tue, 5 Apr 2022 11:50:39 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Michael Trimarchi <michael@amarulasolutions.com>
+Message-ID: <YkxlTyMFNNdBqFRd@redhat.com>
+References: <20220401220705.82077-1-michael@amarulasolutions.com>
+MIME-Version: 1.0
+In-Reply-To: <20220401220705.82077-1-michael@amarulasolutions.com>
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: Re: [dm-devel] [RFC PATCH] md: dm-init: Wait devices if it's not
+ find on first adpet
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -121,8 +89,8 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, riteshh@linux.ibm.com, linuxppc-dev@lists.ozlabs.org,
- open list <linux-kernel@vger.kernel.org>
+Cc: Fabio Aiuto <fabio.aiuto@amarulasolutions.com>, dm-devel@redhat.com,
+ linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
@@ -130,96 +98,146 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-V2hpbGUgcnVubmluZyB4ZnN0ZXN0cyhleHQ0IG9yIFhGUyBhcyBmcykgb24gYSBQb3dlcjEwIExQ
-QVIgYm9vdGVkIHdpdGggdG9kYXnigJlzCm5leHQgKDUuMTguMC1yYzEtbmV4dC0yMDIyMDQwNCkg
-Zm9sbG93aW5nIGNyYXNoIGlzIHNlZW4uIAoKWyAgIDUxLjI2MDIwOV0gWEZTIChkbS0wKTogVW5t
-b3VudGluZyBGaWxlc3lzdGVtClsgICA1MS4yNjI5NDldIFhGUyAoZG0tMCk6IE1vdW50aW5nIFY1
-IEZpbGVzeXN0ZW0KWyAgIDUxLjI3MDUyNF0gWEZTIChkbS0wKTogRW5kaW5nIGNsZWFuIG1vdW50
-ClsgICA1MS4yNzI2NDFdIHhmcyBmaWxlc3lzdGVtIGJlaW5nIG1vdW50ZWQgYXQgL21udC9zY3Jh
-dGNoIHN1cHBvcnRzIHRpbWVzdGFtcHMgdW50aWwgMjAzOCAoMHg3ZmZmZmZmZikKWyAgIDUxLjM3
-NzUwNV0gWEZTIChkbS0wKTogVW5tb3VudGluZyBGaWxlc3lzdGVtClsgICA1MS4zOTc1ODRdIEJV
-RzogVW5hYmxlIHRvIGhhbmRsZSBrZXJuZWwgZGF0YSBhY2Nlc3MgYXQgMHg1ZGVhZGJlZWYwMDAw
-MTIyClsgICA1MS4zOTc1OTFdIEZhdWx0aW5nIGluc3RydWN0aW9uIGFkZHJlc3M6IDB4YzAwMDAw
-MDAwMDE1NjFiYwpbICAgNTEuMzk3NTk1XSBPb3BzOiBLZXJuZWwgYWNjZXNzIG9mIGJhZCBhcmVh
-LCBzaWc6IDExIFsjMV0KWyAgIDUxLjM5NzU5OF0gTEUgUEFHRV9TSVpFPTY0SyBNTVU9UmFkaXgg
-U01QIE5SX0NQVVM9MjA0OCBOVU1BIHBTZXJpZXMKWyAgIDUxLjM5NzYwMl0gTW9kdWxlcyBsaW5r
-ZWQgaW46IHhmcyBkbV9tb2QgaXBfc2V0IHJma2lsbCBuZl90YWJsZXMgYm9uZGluZyBsaWJjcmMz
-MmMgbmZuZXRsaW5rIHN1bnJwYyBwc2VyaWVzX3JuZyB4dHMgdm14X2NyeXB0byB1aW9fcGRydl9n
-ZW5pcnEgdWlvIHNjaF9mcV9jb2RlbCBleHQ0IG1iY2FjaGUgamJkMiBzZF9tb2QgdDEwX3BpIGNy
-YzY0X3JvY2tzb2Z0IGNyYzY0IHNnIGlibXZzY3NpIGlibXZldGggc2NzaV90cmFuc3BvcnRfc3Jw
-IGZ1c2UKWyAgIDUxLjM5NzYyNl0gQ1BVOiAzIFBJRDogMzQ0OCBDb21tOiBkbXNldHVwIE5vdCB0
-YWludGVkIDUuMTguMC1yYzEtbmV4dC0yMDIyMDQwNCAjMTYKWyAgIDUxLjM5NzYzMF0gTklQOiAg
-YzAwMDAwMDAwMDE1NjFiYyBMUjogYzAwMDAwMDAwMDE1NjBlOCBDVFI6IGMwMDAwMDAwMDA2NzJl
-ZjAKWyAgIDUxLjM5NzYzM10gUkVHUzogYzAwMDAwMDA5NWM5YjYxMCBUUkFQOiAwMzgwICAgTm90
-IHRhaW50ZWQgICg1LjE4LjAtcmMxLW5leHQtMjAyMjA0MDQpClsgICA1MS4zOTc2MzZdIE1TUjog
-IDgwMDAwMDAwMDI4MGIwMzMgPFNGLFZFQyxWU1gsRUUsRlAsTUUsSVIsRFIsUkksTEU+ICBDUjog
-MjQwMjQ4MjQgIFhFUjogMDAwMDAwMDAKWyAgIDUxLjM5NzY0Nl0gQ0ZBUjogYzAwMDAwMDAwMDE1
-NjBmMCBJUlFNQVNLOiAwIApbICAgNTEuMzk3NjQ2XSBHUFIwMDogYzAwMDAwMDAwMDE1NjBlOCBj
-MDAwMDAwMDk1YzliOGIwIGMwMDAwMDAwMDJhMDM4MDAgMDAwMDAwMDAwMDAwMDAwMCAKWyAgIDUx
-LjM5NzY0Nl0gR1BSMDQ6IGMwMDAwMDAwMTdhMWFiNzggMDAwMDAwMDAwMDAwMDAwMCBjMDAwMDAw
-MDJjYWI2YWMwIGMwMDAwMDAwOTNlNzM5MDAgClsgICA1MS4zOTc2NDZdIEdQUjA4OiBjMDAwMDAw
-MDkzZTczOTAwIDVkZWFkYmVlZjAwMDAxMDAgNWRlYWRiZWVmMDAwMDEyMiBjMDA4MDAwMDAxYjVh
-NGU4IApbICAgNTEuMzk3NjQ2XSBHUFIxMjogYzAwMDAwMDAwMDY3MmVmMCBjMDAwMDAwYWJmZmY4
-ZTgwIDAwMDAwMDAxM2RiZDBiNjAgMDAwMDdmZmY4NDllOWRhOCAKWyAgIDUxLjM5NzY0Nl0gR1BS
-MTY6IDAwMDA3ZmZmODQ5ZTlkYTggMDAwMDdmZmY4NDllOWRhOCAwMDAwN2ZmZjg0YTIzNjcwIDAw
-MDAwMDAwMDAwMDAwMDAgClsgICA1MS4zOTc2NDZdIEdQUjIwOiAwMDAwN2ZmZjg0OWYzMzg4IDAw
-MDA3ZmZmODRhMjIwNDAgMDAwMDAwMDEzZGJkMGI5MCAwMDAwMDAwMDAwMDAwMTMxIApbICAgNTEu
-Mzk3NjQ2XSBHUFIyNDogYzAwMDAwMDAwMjU0ZDc2OCBmZmZmZmZmZmZmZmYwMDAwIGMwMDAwMDAw
-MDI1NGQ3MzAgYzAwMDAwMDAyNzY2OGUwMCAKWyAgIDUxLjM5NzY0Nl0gR1BSMjg6IGMwMDAwMDAw
-MDI5YjAxNzAgYzAwMDAwMDAxN2ExYWI3OCAwMDAwMDAwMDAwMDAwMDE3IDAwMDAwMDAwMDAwMDAw
-MDAgClsgICA1MS4zOTc2ODRdIE5JUCBbYzAwMDAwMDAwMDE1NjFiY10gX19jcHVocF9zdGF0ZV9y
-ZW1vdmVfaW5zdGFuY2UrMHgxOWMvMHgyYzAKWyAgIDUxLjM5NzY5Ml0gTFIgW2MwMDAwMDAwMDAx
-NTYwZThdIF9fY3B1aHBfc3RhdGVfcmVtb3ZlX2luc3RhbmNlKzB4YzgvMHgyYzAKWyAgIDUxLjM5
-NzY5N10gQ2FsbCBUcmFjZToKWyAgIDUxLjM5NzY5OF0gW2MwMDAwMDAwOTVjOWI4YjBdIFtjMDAw
-MDAwMDAwMTU2MGU4XSBfX2NwdWhwX3N0YXRlX3JlbW92ZV9pbnN0YW5jZSsweGM4LzB4MmMwICh1
-bnJlbGlhYmxlKQpbICAgNTEuMzk3NzA1XSBbYzAwMDAwMDA5NWM5YjkyMF0gW2MwMDAwMDAwMDA2
-NzJmNGNdIGJpb3NldF9leGl0KzB4NWMvMHgyODAKWyAgIDUxLjM5NzcwOV0gW2MwMDAwMDAwOTVj
-OWI5YzBdIFtjMDA4MDAwMDAxYjQzM2Y0XSBjbGVhbnVwX21hcHBlZF9kZXZpY2UrMHg0Yy8weDFh
-MCBbZG1fbW9kXQpbICAgNTEuMzk3NzIxXSBbYzAwMDAwMDA5NWM5YmEwMF0gW2MwMDgwMDAwMDFi
-NDM2ZjBdIF9fZG1fZGVzdHJveSsweDFhOC8weDM2MCBbZG1fbW9kXQpbICAgNTEuMzk3NzMwXSBb
-YzAwMDAwMDA5NWM5YmFhMF0gW2MwMDgwMDAwMDFiNTBlOTBdIGRldl9yZW1vdmUrMHgxYTgvMHgy
-ODAgW2RtX21vZF0KWyAgIDUxLjM5Nzc0MF0gW2MwMDAwMDAwOTVjOWJiMzBdIFtjMDA4MDAwMDAx
-YjUxMTVjXSBjdGxfaW9jdGwrMHgxZjQvMHg3YzAgW2RtX21vZF0KWyAgIDUxLjM5Nzc1MF0gW2Mw
-MDAwMDAwOTVjOWJkNDBdIFtjMDA4MDAwMDAxYjUxNzQ4XSBkbV9jdGxfaW9jdGwrMHgyMC8weDQw
-IFtkbV9tb2RdClsgICA1MS4zOTc3NTldIFtjMDAwMDAwMDk1YzliZDYwXSBbYzAwMDAwMDAwMDRi
-MWY2OF0gc3lzX2lvY3RsKzB4ZjgvMHgxNTAKWyAgIDUxLjM5Nzc2M10gW2MwMDAwMDAwOTVjOWJk
-YjBdIFtjMDAwMDAwMDAwMDMzNzNjXSBzeXN0ZW1fY2FsbF9leGNlcHRpb24rMHgxOGMvMHgzOTAK
-WyAgIDUxLjM5Nzc2N10gW2MwMDAwMDAwOTVjOWJlMTBdIFtjMDAwMDAwMDAwMDBjNjRjXSBzeXN0
-ZW1fY2FsbF9jb21tb24rMHhlYy8weDI3MApbICAgNTEuMzk3NzcyXSAtLS0gaW50ZXJydXB0OiBj
-MDAgYXQgMHg3ZmZmODQzMjkyMTAKWyAgIDUxLjM5Nzc3Nl0gTklQOiAgMDAwMDdmZmY4NDMyOTIx
-MCBMUjogMDAwMDdmZmY4NDllNjgyNCBDVFI6IDAwMDAwMDAwMDAwMDAwMDAKWyAgIDUxLjM5Nzc4
-MF0gUkVHUzogYzAwMDAwMDA5NWM5YmU4MCBUUkFQOiAwYzAwICAgTm90IHRhaW50ZWQgICg1LjE4
-LjAtcmMxLW5leHQtMjAyMjA0MDQpClsgICA1MS4zOTc3ODVdIE1TUjogIDgwMDAwMDAwMDI4MGYw
-MzMgPFNGLFZFQyxWU1gsRUUsUFIsRlAsTUUsSVIsRFIsUkksTEU+ICBDUjogMjQwMDQ0ODQgIFhF
-UjogMDAwMDAwMDAKWyAgIDUxLjM5Nzc5NV0gSVJRTUFTSzogMCAKWyAgIDUxLjM5Nzc5NV0gR1BS
-MDA6IDAwMDAwMDAwMDAwMDAwMzYgMDAwMDdmZmZmZGI0MzAzMCAwMDAwN2ZmZjg0NDA3MzAwIDAw
-MDAwMDAwMDAwMDAwMDMgClsgICA1MS4zOTc3OTVdIEdQUjA0OiAwMDAwMDAwMGMxMzhmZDA0IDAw
-MDAwMDAxM2RiZDBiNjAgMDAwMDAwMDAwMDAwMDAwNCAwMDAwN2ZmZjg0OWYzZjk4IApbICAgNTEu
-Mzk3Nzk1XSBHUFIwODogMDAwMDAwMDAwMDAwMDAwMyAwMDAwMDAwMDAwMDAwMDAwIDAwMDAwMDAw
-MDAwMDAwMDAgMDAwMDAwMDAwMDAwMDAwMCAKWyAgIDUxLjM5Nzc5NV0gR1BSMTI6IDAwMDAwMDAw
-MDAwMDAwMDAgMDAwMDdmZmY4NGFjZmE4MCAwMDAwMDAwMTNkYmQwYjYwIDAwMDA3ZmZmODQ5ZTlk
-YTggClsgICA1MS4zOTc3OTVdIEdQUjE2OiAwMDAwN2ZmZjg0OWU5ZGE4IDAwMDA3ZmZmODQ5ZTlk
-YTggMDAwMDdmZmY4NGEyMzY3MCAwMDAwMDAwMDAwMDAwMDAwIApbICAgNTEuMzk3Nzk1XSBHUFIy
-MDogMDAwMDdmZmY4NDlmMzM4OCAwMDAwN2ZmZjg0YTIyMDQwIDAwMDAwMDAxM2RiZDBiOTAgMDAw
-MDAwMDEzZGJkMDJlMCAKWyAgIDUxLjM5Nzc5NV0gR1BSMjQ6IDAwMDA3ZmZmODQ5ZTlkYTggMDAw
-MDdmZmY4NDllOWRhOCAwMDAwN2ZmZjg0OWU5ZGE4IDAwMDA3ZmZmODQ5ZTlkYTggClsgICA1MS4z
-OTc3OTVdIEdQUjI4OiAwMDAwMDAwMDAwMDAwMDAxIDAwMDA3ZmZmODQ5ZTlkYTggMDAwMDAwMDAw
-MDAwMDAwMCAwMDAwN2ZmZjg0OWU5ZGE4IApbICAgNTEuMzk3ODI5XSBOSVAgWzAwMDA3ZmZmODQz
-MjkyMTBdIDB4N2ZmZjg0MzI5MjEwClsgICA1MS4zOTc4MzFdIExSIFswMDAwN2ZmZjg0OWU2ODI0
-XSAweDdmZmY4NDllNjgyNApbICAgNTEuMzk3ODM0XSAtLS0gaW50ZXJydXB0OiBjMDAKWyAgIDUx
-LjM5NzgzNV0gSW5zdHJ1Y3Rpb24gZHVtcDoKWyAgIDUxLjM5NzgzOF0gNjAwMDAwMDAgN2Y2OWRi
-NzggN2Y4M2UwNDAgN2M3ZjA3YjQgN2JlYTFmMjQgNDE5Y2ZmYjQgZWFlMTAwMjggZWIyMTAwMzgg
-ClsgICA1MS4zOTc4NDRdIGViNjEwMDQ4IGU5M2QwMDAwIGU5NWQwMDA4IDJmYTkwMDAwIDxmOTJh
-MDAwMD4gNDE5ZTAwMDggZjk0OTAwMDggM2Q0MDVkZWEgClsgICA1MS4zOTc4NTBdIC0tLVsgZW5k
-IHRyYWNlIDAwMDAwMDAwMDAwMDAwMDAgXS0tLQpbICAgNTEuNDAwMTMzXSAKWyAgIDUyLjQwMDEz
-Nl0gS2VybmVsIHBhbmljIC0gbm90IHN5bmNpbmc6IEZhdGFsIGV4Y2VwdGlvbgoKVGhpcyBwcm9i
-bGVtIHdhcyBwb3NzaWJseSBpbnRyb2R1Y2VkIHdpdGggNS4xNy4wLW5leHQtMjAyMjAzMzAuIApH
-aXQgYmlzZWN0IGxlYWRzIG1lIHRvIGZvbGxvd2luZyBwYXRjaApjb21taXQgMWQxNTg4MTRkYjhl
-N2IzY2JjYTBmMmM4ZDkyNDJmYmVjNGZiYzU3ZQogICAgZG06IGNvbmRpdGlvbmFsbHkgZW5hYmxl
-IEJJT1NFVF9QRVJDUFVfQ0FDSEUgZm9yIGRtX2lvIGJpb3NldAoKLVNhY2hpbgoKLS0KZG0tZGV2
-ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhh
-dC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
+On Fri, Apr 01 2022 at  6:07P -0400,
+Michael Trimarchi <michael@amarulasolutions.com> wrote:
+
+> The device driver can be deferrable and can be a race during
+> the dm-init early. We need to wait all the probe are really finished
+> in a loop as is done in do_mounts. This is was tested on kernel 5.4
+> but code seems was not changed since that time
+> 
+> 003: imx8mq-usb-phy 381f0040.usb-phy: 381f0040.usb-phy supply vbus not found, using dummy regulator
+> 003: imx8mq-usb-phy 382f0040.usb-phy: 382f0040.usb-phy supply vbus not found, using dummy regulator
+> 003: imx-cpufreq-dt imx-cpufreq-dt: cpu speed grade 5 mkt segment 0 supported-hw 0x20 0x1
+> 003: caam-dma caam-dma: caam dma support with 2 job rings
+> 000: hctosys: unable to open rtc device (rtc0)
+> 000: device-mapper: init: waiting for all devices to be available before creating mapped devices
+> 002: device-mapper: table: 254:0: verity: Data device lookup failed
+> 002: device-mapper: ioctl: error adding target to table
+> 002: crng init done
+> 003: of_cfs_init
+> 003: of_cfs_init: OK
+> 003: Waiting for root device /dev/dm-0...
+> 001: mmc2: new HS400 Enhanced strobe MMC card at address 0001
+> 001: mmcblk2: mmc2:0001 IB2916 14.6 GiB
+> 001: mmcblk2boot0: mmc2:0001 IB2916 partition 1 4.00 MiB
+> 001: mmcblk2boot1: mmc2:0001 IB2916 partition 2 4.00 MiB
+> 001: mmcblk2rpmb: mmc2:0001 IB2916 partition 3 4.00 MiB, chardev (249:0)
+> 001:  mmcblk2: p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11
+> 001: VSD_3V3: disabling
+> 
+> with the patch
+> 
+> 003: device-mapper: init: waiting for all devices to be available before creating mapped devices
+> 
+> 000: device-mapper: table: 254:0: verity: Data device lookup failed
+> 000: device-mapper: ioctl: error adding target to table
+> 002: crng init done
+> 003: device-mapper: init: waiting for all devices to be available before creating mapped devices
+> 003: device-mapper: table: 254:0: verity: Data device lookup failed
+> 003: device-mapper: ioctl: error adding target to table
+> 003: device-mapper: init: waiting for all devices to be available before creating mapped devices
+> 000: device-mapper: table: 254:0: verity: Data device lookup failed
+> 000: device-mapper: ioctl: error adding target to table
+> 002: device-mapper: init: waiting for all devices to be available before creating mapped devices
+> 002: device-mapper: table: 254:0: verity: Data device lookup failed
+> 002: device-mapper: ioctl: error adding target to table
+> 000: device-mapper: init: waiting for all devices to be available before creating mapped devices
+> 000: device-mapper: table: 254:0: verity: Data device lookup failed
+> 000: device-mapper: ioctl: error adding target to table
+> 003: mmc2: new HS400 Enhanced strobe MMC card at address 0001
+> 003: mmcblk2: mmc2:0001 DG4016 14.7 GiB
+> 003: mmcblk2boot0: mmc2:0001 DG4016 partition 1 4.00 MiB
+> 003: mmcblk2boot1: mmc2:0001 DG4016 partition 2 4.00 MiB
+> 003: mmcblk2rpmb: mmc2:0001 DG4016 partition 3 4.00 MiB, chardev (249:0)
+> 003:  mmcblk2: p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11
+> 002: device-mapper: init: waiting for all devices to be available before creating mapped devices
+> 003: device-mapper: verity: sha256 using implementation "sha256-caam"
+> 000: device-mapper: ioctl: dm-0 (rootfs) is ready
+> 
+> Signed-off-by: Michael Trimarchi <michael@amarulasolutions.com>
+> ---
+>  drivers/md/dm-init.c | 15 ++++++++++++++-
+>  1 file changed, 14 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
+> index b0c45c6ebe0b..d3b754036484 100644
+> --- a/drivers/md/dm-init.c
+> +++ b/drivers/md/dm-init.c
+> @@ -7,7 +7,9 @@
+>   * This file is released under the GPLv2.
+>   */
+>  
+> +#include <linux/async.h>
+>  #include <linux/ctype.h>
+> +#include <linux/delay.h>
+>  #include <linux/device.h>
+>  #include <linux/device-mapper.h>
+>  #include <linux/init.h>
+> @@ -267,6 +269,7 @@ static int __init dm_init_init(void)
+>  	LIST_HEAD(devices);
+>  	char *str;
+>  	int r;
+> +	bool fail = false;
+>  
+>  	if (!create)
+>  		return 0;
+> @@ -275,6 +278,7 @@ static int __init dm_init_init(void)
+>  		DMERR("Argument is too big. Limit is %d", DM_MAX_STR_SIZE);
+>  		return -EINVAL;
+>  	}
+> +retry:
+>  	str = kstrndup(create, DM_MAX_STR_SIZE, GFP_KERNEL);
+>  	if (!str)
+>  		return -ENOMEM;
+> @@ -288,12 +292,21 @@ static int __init dm_init_init(void)
+>  
+>  	list_for_each_entry(dev, &devices, list) {
+>  		if (dm_early_create(&dev->dmi, dev->table,
+> -				    dev->target_args_array))
+> +				    dev->target_args_array)) {
+> +			fail = true;
+>  			break;
+> +		}
+>  	}
+> +
+>  out:
+>  	kfree(str);
+>  	dm_setup_cleanup(&devices);
+> +	if (fail) {
+> +		msleep(5);
+> +		fail = false;
+> +		goto retry;
+> +	}
+> +
+>  	return r;
+>  }
+>  
+> -- 
+> 2.25.1
+> 
+
+I'm cannot take this as proposed.
+
+If you're going to do something like this, the retries need to be
+bounded. And retry should only be possible for select cases
+(e.g. "verity: Data device lookup failed", which is emitted due to
+dm_get_device failure with a return -ENODEV).
+
+So please narrow this as much as possible (by only allowing retry if
+-ENODEV) and bound the retries to a finite amount.. 5? 10? 20? *shrug*
+
+And please take care to use variable names that are more appropriate
+("fail" is not one of them when you're writing retry code)
+
+Mike
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
