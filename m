@@ -4,135 +4,80 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 83AAFC433EF
-	for <dm-devel@archiver.kernel.org>; Wed,  6 Apr 2022 09:58:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 35099C433F5
+	for <dm-devel@archiver.kernel.org>; Wed,  6 Apr 2022 16:52:26 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-437-v9YKgzKtPNuIL5m4GY67Fw-1; Wed, 06 Apr 2022 05:58:54 -0400
-X-MC-Unique: v9YKgzKtPNuIL5m4GY67Fw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-343-ZgneFvwKOOSz4YBThmQirA-1; Wed, 06 Apr 2022 12:52:23 -0400
+X-MC-Unique: ZgneFvwKOOSz4YBThmQirA-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 530FB811E80;
-	Wed,  6 Apr 2022 09:58:52 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C8BE2100BAA7;
+	Wed,  6 Apr 2022 16:52:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3A229C27E84;
-	Wed,  6 Apr 2022 09:58:52 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D26E340ED53;
+	Wed,  6 Apr 2022 16:52:18 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E5168194036B;
-	Wed,  6 Apr 2022 09:58:51 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 90B07194034B;
+	Wed,  6 Apr 2022 16:52:18 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 06C69194036B
- for <dm-devel@listman.corp.redhat.com>; Wed,  6 Apr 2022 09:58:51 +0000 (UTC)
+ ESMTP id 5E7DE1949762
+ for <dm-devel@listman.corp.redhat.com>; Wed,  6 Apr 2022 16:52:17 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E9FDA1415129; Wed,  6 Apr 2022 09:58:50 +0000 (UTC)
+ id 313FE48FB17; Wed,  6 Apr 2022 16:52:17 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E577A141512A
- for <dm-devel@redhat.com>; Wed,  6 Apr 2022 09:58:50 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AC64E38035B2
- for <dm-devel@redhat.com>; Wed,  6 Apr 2022 09:58:50 +0000 (UTC)
-Received: from esa5.hgst.iphmx.com (esa5.hgst.iphmx.com [216.71.153.144]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-277-EiWjH492NMKMpWuQ6Qfu3g-1; Wed, 06 Apr 2022 05:58:49 -0400
-X-MC-Unique: EiWjH492NMKMpWuQ6Qfu3g-1
-X-IronPort-AV: E=Sophos;i="5.90,239,1643644800"; d="scan'208";a="197229643"
-Received: from mail-mw2nam12lp2042.outbound.protection.outlook.com (HELO
- NAM12-MW2-obe.outbound.protection.outlook.com) ([104.47.66.42])
- by ob1.hgst.iphmx.com with ESMTP; 06 Apr 2022 17:58:45 +0800
-Received: from PH0PR04MB7416.namprd04.prod.outlook.com (2603:10b6:510:12::17)
- by DM6PR04MB6607.namprd04.prod.outlook.com (2603:10b6:5:209::10) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5144.21; Wed, 6 Apr
- 2022 09:58:44 +0000
-Received: from PH0PR04MB7416.namprd04.prod.outlook.com
- ([fe80::a898:5c75:3097:52c2]) by PH0PR04MB7416.namprd04.prod.outlook.com
- ([fe80::a898:5c75:3097:52c2%3]) with mapi id 15.20.5144.022; Wed, 6 Apr 2022
- 09:58:44 +0000
-From: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-Thread-Topic: [PATCH 14/27] block: add a bdev_max_zone_append_sectors helper
-Thread-Index: AQHYSZgY1jr1xIM/YUq07NGHawfBLw==
-Date: Wed, 6 Apr 2022 09:58:44 +0000
-Message-ID: <PH0PR04MB74161D2CCC5AD43AF09264799BE79@PH0PR04MB7416.namprd04.prod.outlook.com>
-References: <20220406060516.409838-1-hch@lst.de>
- <20220406060516.409838-15-hch@lst.de>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 2f6a7f3a-4bbd-4cc2-85a2-08da17b40972
-x-ms-traffictypediagnostic: DM6PR04MB6607:EE_
-x-microsoft-antispam-prvs: <DM6PR04MB660754EAC2F7575A81C46B4A9BE79@DM6PR04MB6607.namprd04.prod.outlook.com>
-wdcipoutbound: EOP-TRUE
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: Pf+KzgmagSIS5atE7qUNGRr1myBVVGSwEKyeGnwHdGjwF8GKBkvoIHDqMGnWFjO7XVa7Cmit9VnU9OIYztUkoZ6Oaqq+m+DiWH3/Dcl/UxK+P88E3f1isC2vpAnDpZpqgSoxQyKuSo19P3TzE/8glOLI6z0BLxqJa3LBIp+eJLbka+iU9uRCJGcYyq2EzzvF+GSwaV6/rfbL34RfHGjSRx0zwHlAe3Kbe4uou4XPkMqQqujVK+FspM3sA99WzgIx4Zcg+5oQR1jIyR4eA4XENp/K0m69Xx8aQEVd4C4NwBIAYB3DJbFAzY/xwFTEh8jZCLaKfZtso51HpFNskLoQWcTVyjcyZmpcj72RYBDj8bY8b+y0gW5f99u30BEwD03iXMk539DztkZxuC2HzN3BPR9e7KwNaRwwncQjXFedlJ7i/0TsMz5nf+dZ1/3hTsc6CrDt4p9WXnzuh263wo3xd8b6MW4eTv1TtLR3IzWdMRJG6cBeGO9RPQAMiItBrNypFxmRFeU4T1cp36pirzbw2w/ywCTEUkYc9uazSWAmIkbs2ELSVlHFGtwIR9gzIB7PlEGWJvLVp2CUKQFt3mcwlEIarIZ+6NjuqDOsMS6YGKX7bI/K6LKHavdoNguno7hvxdITrai2aC+YdO67pyr3n4smmpegwjXfnaI0Pmp9jFcUJll/tJASQJQReuEZSzAgzPzXDpY2hiiRf4a5gE9HNg==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:PH0PR04MB7416.namprd04.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230001)(4636009)(366004)(4270600006)(9686003)(508600001)(186003)(6506007)(7696005)(2906002)(7416002)(5660300002)(55016003)(8936002)(54906003)(19618925003)(316002)(71200400001)(110136005)(66946007)(52536014)(91956017)(66476007)(66556008)(4326008)(8676002)(64756008)(66446008)(76116006)(122000001)(86362001)(558084003)(38100700002)(82960400001)(33656002)(38070700005);
- DIR:OUT; SFP:1102
-x-ms-exchange-antispam-messagedata-chunkcount: 2
-x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?FnQ2cDOI1Y8dqfwBZ9O49we2ex33sga4MDlqyPsi59CHLjzinNdqahxJKb+7?=
- =?us-ascii?Q?nLvA4glwLQWN5EGlwq9Vu5N+6RAHp5zPzMSHYKAI+ROqS5ObV22YE1uWhKPU?=
- =?us-ascii?Q?t/Slc0Vx6la1V2Ehl/8AFvAWHw7Kk3JevtOLqRNrLr0w3euyxPc4I6O7fPTQ?=
- =?us-ascii?Q?wLfN+Opb6mKJvfOq9BzXaoPuzM535gJJgXGiZQqr6/qzazXpx3T737nbJ/fT?=
- =?us-ascii?Q?5AYtInAAQcaVRXLBBJ6GN9tSCFD9aXABykDN429p4xlLfpuoDafHP6Jt5DbB?=
- =?us-ascii?Q?Iydzn9jRd0E0RXYdxFp2csxTMSqFiUWkGWouJQyBb2zUZOXn7G6VB6J4KuZp?=
- =?us-ascii?Q?fgPATSu1EoTsQYfHXonfg+YKrx8NlCxiY/WvDPDFylow6ArLN9X0TnmQSu+/?=
- =?us-ascii?Q?95IkUf/R+6oTU/6z37jGwKNh1BGImR8Z7zNd/uM1kkUQPDt6xtfwy79ITE6l?=
- =?us-ascii?Q?Q9xvZjwe1VhuWGzbavCQQVHCFV7hHqZE4hFqaAuJ/8loV7GxSt384nH03jh6?=
- =?us-ascii?Q?9hvUXSFWyQok4WycdVBAq2Pne6x63Kd/dzPArvViOJMCNXPPzMfEK2zH+VNk?=
- =?us-ascii?Q?3w+JAGP9eY7icR0QYXZpvCQn8jI2n5T3gvnfOW20uZaiR/w7EP9NAVWC238p?=
- =?us-ascii?Q?YyBdPiC0Py8H4BU3o6Exn/i3teu+O1s1FRXY9XsoYqSfv67wXY2BgOSNYQbS?=
- =?us-ascii?Q?A5HFhEpzP7fd8WRvXw6jIXWJduai4VwRFzBDYyAROlXlWkq4K5uZrnKpDVri?=
- =?us-ascii?Q?Lt5+iS19PHx7Rg1R4wXdhMzRCIjeeZd6PFaYSh3xZnuu+5Y/9ohSG9i7K502?=
- =?us-ascii?Q?1a/bzUyzkQNxTw1tQYH5EyiyC91aNMcH4nxXhtJ0Wedzj7mvIGc92lxOt5nE?=
- =?us-ascii?Q?JXxVC1uDiYmPEFzx4Y7D/dReZPhWqdc/jJdKt2W1YymXQazllgQwdagCnVsb?=
- =?us-ascii?Q?womFEzuPHfgISWVwI5IydynP4xWEHyHSeic/OWVf2vvnSOGfChy1xgRteWK8?=
- =?us-ascii?Q?O6lHklcYNZMBh105u3WOxpHTEenIZDxy4CJyZmOxjyHRyQ4/hAEahlgNd5T0?=
- =?us-ascii?Q?IIYsp55Li1hGb6kle+7E42lhFheoGmLSgVlPzJ2wViUr5JkB3zXPshZNHdCK?=
- =?us-ascii?Q?Drnr9ry+2eR2o1K0g1sZTYgaa453J2FLPb9EsxMmvl+A368fmvtLSJc6/GHO?=
- =?us-ascii?Q?kvIPug1OZFdbVSPQJnxaWdWK/ZgXRpNAH8KH2/la8sZCkHzfpGIcxpeAnxvp?=
- =?us-ascii?Q?Fu1KO8wFnzRvdlhTkpS+//xvC//Yvj9IUA7H47sdMX0MyyQstXAAASDIKQzq?=
- =?us-ascii?Q?4itpwg8G4I0h6hT1UWz/LYa9haG+XO08rx/HcQSRBLKhwhVFQQ/8TK7uDzGe?=
- =?us-ascii?Q?UrBw7s5v4mnnSjnPPV0U3E8GhTQO8/rq7n7rEAF9/BOb/A895TI4AENRfP2H?=
- =?us-ascii?Q?p0lPtXAfbYI2WYitkaAvMjep+iCpB8qGIW0MlNI4ahmo4gxlHF5/DOEVAML3?=
- =?us-ascii?Q?BsIhXDlHoRVG0p5dRxMkYVIPTIGR3tyHD8mDdRoSdVHc4PDkENOpi0vFrLjM?=
- =?us-ascii?Q?EsYFTB8/yWBXoKQrEy5lf4EqcvGyrksY/i+ncEk0C/qi0ucMo5O259xy4P5n?=
- =?us-ascii?Q?3OstWIQojxiCGjB3QzJ3ozRjmyPwY1cmzijUV+XzsMpKKikC4jRprDn5XJ3B?=
- =?us-ascii?Q?Z+ROJZpHXnIZCV41bUfdPSJQIk3jFqaSY3c3C5xSCmsfRuvM5N+mx+Qv0l5x?=
- =?us-ascii?Q?vgoI5NvxJ4DIaRE4F1vbqPEUlylYZ3nOFgGkB+69touDu3OoVoMGP2adpG05?=
-x-ms-exchange-antispam-messagedata-1: pB0amHYuRq2xU5J1OT0zoHwBXpZuYFgg+OQ=
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2D7844021AD
+ for <dm-devel@redhat.com>; Wed,  6 Apr 2022 16:52:17 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1644B2805221
+ for <dm-devel@redhat.com>; Wed,  6 Apr 2022 16:52:17 +0000 (UTC)
+Received: from mail-qt1-f173.google.com (mail-qt1-f173.google.com
+ [209.85.160.173]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-20-vY37iJwINQqmp9DkIQW8oQ-1; Wed, 06 Apr 2022 12:52:13 -0400
+X-MC-Unique: vY37iJwINQqmp9DkIQW8oQ-1
+Received: by mail-qt1-f173.google.com with SMTP id j21so5433653qta.0
+ for <dm-devel@redhat.com>; Wed, 06 Apr 2022 09:52:12 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+ :mime-version:content-disposition:in-reply-to;
+ bh=0UyyMFvWOCB2BNkoIAffwKLA75E1qzGUQJVZnjoP6F8=;
+ b=XrsWY5yhPwd618SktsWTRkwAomNKkUQIPOtts6OAGy/rqXYnOHIcKTfbpcoGAdfOe6
+ piDd/OL/zM7v83f5o+tlkrzB69pFX6V0jndZNsFYb9PZXdcCOet8quwdRsk0hHL9wZM/
+ QOjO/ckir4GtmfAyRRbUC21gyMP+BspdKFfxIm16+7UWphArRPrLSfds+rA6mW/196py
+ hxvZvQb8MdCHV0nlzvdBmPpY1ZaxeN2LujyrqBi6WCnF8+d/0ItbeSbfFpsY+tLmE4Df
+ Lxoz50pZdnyYr+HJmnRFgpWsf7OVstohgK4n7jzjK2KA4B+vNyw1rphRdmUXJlW8q5vV
+ SiSg==
+X-Gm-Message-State: AOAM532LexxNLF1hGA89imeBD4CZDZVfWjvlsjWCdcJRIvMpzkLEegrP
+ 6ZJA9rzUKE/2Aybepb+zVpJIYddHi9Edkdo=
+X-Google-Smtp-Source: ABdhPJxeGr9pRX+lQAkLZarPV0vNTSLVDiqNubmN+iUnTP6n78OWHiePsV1tyro38o409L4WN4X5aQ==
+X-Received: by 2002:ac8:5a4f:0:b0:2e1:a7be:2d13 with SMTP id
+ o15-20020ac85a4f000000b002e1a7be2d13mr8247436qta.598.1649263932461; 
+ Wed, 06 Apr 2022 09:52:12 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+ [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+ k13-20020a05622a03cd00b002e21621c243sm14231183qtx.39.2022.04.06.09.52.11
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 06 Apr 2022 09:52:12 -0700 (PDT)
+Date: Wed, 6 Apr 2022 12:52:11 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Ming Lei <ming.lei@redhat.com>
+Message-ID: <Yk3FO6r59nTrDuiS@redhat.com>
+References: <20220403114532.180945-1-ming.lei@redhat.com>
+ <YksiEk+G5QuPG6o8@redhat.com> <Ykz2aF3VgyyVG46m@T590>
 MIME-Version: 1.0
-X-OriginatorOrg: wdc.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: PH0PR04MB7416.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 2f6a7f3a-4bbd-4cc2-85a2-08da17b40972
-X-MS-Exchange-CrossTenant-originalarrivaltime: 06 Apr 2022 09:58:44.4524 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: cIO2gZbnUPowYwL5/+TFbMlM0mfXcWCM9eVRDLVDk37wzbnptzItElefyoFDRl92/LtkQZrZmaM/CVn+ZNQbb4SjElNyDclRC+u7dyWjvW8=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR04MB6607
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH 14/27] block: add a
- bdev_max_zone_append_sectors helper
+In-Reply-To: <Ykz2aF3VgyyVG46m@T590>
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+Subject: Re: [dm-devel] [RFC PATCH] io_uring: reissue in case -EAGAIN is
+ returned after io issue returns
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -144,50 +89,231 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "jfs-discussion@lists.sourceforge.net"
- <jfs-discussion@lists.sourceforge.net>,
- "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
- "virtualization@lists.linux-foundation.org"
- <virtualization@lists.linux-foundation.org>,
- "linux-mm@kvack.org" <linux-mm@kvack.org>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>,
- "target-devel@vger.kernel.org" <target-devel@vger.kernel.org>,
- "linux-mtd@lists.infradead.org" <linux-mtd@lists.infradead.org>,
- "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>,
- "linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>,
- "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>,
- "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
- "cluster-devel@redhat.com" <cluster-devel@redhat.com>,
- "xen-devel@lists.xenproject.org" <xen-devel@lists.xenproject.org>,
- "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>,
- "linux-um@lists.infradead.org" <linux-um@lists.infradead.org>,
- "nbd@other.debian.org" <nbd@other.debian.org>,
- "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
- "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>,
- "ceph-devel@vger.kernel.org" <ceph-devel@vger.kernel.org>,
- "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
- "linux-mmc@vger.kernel.org" <linux-mmc@vger.kernel.org>,
- "linux-f2fs-devel@lists.sourceforge.net"
- <linux-f2fs-devel@lists.sourceforge.net>,
- "linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
- "ocfs2-devel@oss.oracle.com" <ocfs2-devel@oss.oracle.com>,
- "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
- "ntfs3@lists.linux.dev" <ntfs3@lists.linux.dev>,
- "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
+Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com, io-uring@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Looks good,
-Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+On Tue, Apr 05 2022 at 10:09P -0400,
+Ming Lei <ming.lei@redhat.com> wrote:
 
+> On Mon, Apr 04, 2022 at 12:51:30PM -0400, Mike Snitzer wrote:
+> > On Sun, Apr 03 2022 at  7:45P -0400,
+> > Ming Lei <ming.lei@redhat.com> wrote:
+> > 
+> > > -EAGAIN still may return after io issue returns, and REQ_F_REISSUE is
+> > > set in io_complete_rw_iopoll(), but the req never gets chance to be handled.
+> > > io_iopoll_check doesn't handle this situation, and io hang can be caused.
+> > > 
+> > > Current dm io polling may return -EAGAIN after bio submission is
+> > > returned, also blk-throttle might trigger this situation too.
+> > > 
+> > > Cc: Mike Snitzer <snitzer@kernel.org>
+> > > Signed-off-by: Ming Lei <ming.lei@redhat.com>
+> > 
+> > I first reverted commit 5291984004ed ("dm: fix bio polling to handle
+> > possibile BLK_STS_AGAIN") then applied this patch and verified this
+> > fixes the DM bio polling hangs.  Nice work!
+> > 
+> > But interestingly with this fio test (against dm-linear ontop of
+> > null_blk with queue_mode=2 submit_queues=8 poll_queues=2 bs=4096 gb=16):
+> > 
+> > fio --bs=4096 --ioengine=io_uring --fixedbufs --registerfiles --hipri=1 \
+> > --iodepth=16 --iodepth_batch_submit=16 --iodepth_batch_complete_min=16 \
+> > --filename=/dev/mapper/linear --direct=1 --runtime=20 --numjobs=16 \
+> > --rw=randread --name=test --group_reporting --norandommap
+> 
+> 16jobs in io_uring/aio test is overkill.
+
+Sure, it is.. I was just exhausting driver resources.. could fiddle
+with it so that it exhausts quickly with even a single thread.
+
+Besides the point really.
+
+> > I get 3186k IOPS with your patch to have io_uring retry (and commit
+> > 5291984004ed reverted), but 4305k IOPS if leave commit 5291984004ed
+> > applied (and DM resorts to retrying any -EAGAIN _without_ polling).
+> 
+> IMO, commit 5291984004ed shouldn't be reverted, which is reasonable to
+> retry on underlying IO for dm.
+
+Right, I wasn't saying commit 5291984004ed should be reverted.  But I
+was testing to see if your patch covered the case commit 5291984004ed
+handles.
+
+Note that the DM retry isn't in terms of polling though, polling gets
+disabled when the bio is requeued to DM.
+
+> This patch is for making io_uring more reliable, since the current
+> io_uring code only handles -EAGAIN from submission code path, and
+> -EAGAIN/REISSUE isn't handled if it is returned during ->poll(),
+> then the io hang is caused.
+> 
+> Jens, what do you think of this patch? Does io_uring need to handle
+> -EAGAIN in this case?
+> 
+> > 
+> > Jens rightly pointed out to me that polling tests that exhaust tags
+> > are bogus anyway (because such unbounded IO defeats the point of
+> > polling).  Jens also thinks my result, with commit 5291984004ed
+> > applied, is somehow bogus and not to be trusted ;)  He is very likely
+> > correct, and the failing likely in the null_blk driver -- I'm
+> > skeptical of that driver given it cannot pass fio verify testing
+> > (e.g. --do_verify=1 --verify=crc32c --verify_async=1) with or without
+> > polling.
+> 
+> Because it is null block...
+
+Ha, yes.. very good point. I was expecting null_blk capability (read
+back written data) that it was never intended to provide. Sorry ;)
+
+> > 
+> > Review comments inlined below.
+> > 
+> > > ---
+> > >  fs/io-wq.h    |  13 +++++
+> > >  fs/io_uring.c | 128 ++++++++++++++++++++++++++++----------------------
+> > >  2 files changed, 86 insertions(+), 55 deletions(-)
+> > > 
+> > > diff --git a/fs/io-wq.h b/fs/io-wq.h
+> > > index dbecd27656c7..4ca4863664fb 100644
+> > > --- a/fs/io-wq.h
+> > > +++ b/fs/io-wq.h
+> > > @@ -96,6 +96,19 @@ static inline void wq_list_add_head(struct io_wq_work_node *node,
+> > >  	WRITE_ONCE(list->first, node);
+> > >  }
+> > >  
+> > > +static inline void wq_list_remove(struct io_wq_work_list *list,
+> > > +				  struct io_wq_work_node *prev,
+> > > +				  struct io_wq_work_node *node)
+> > > +{
+> > > +	if (!prev)
+> > > +		WRITE_ONCE(list->first, node->next);
+> > > +	else
+> > > +		prev->next = node->next;
+> > > +
+> > > +	if (node == list->last)
+> > > +		list->last = prev;
+> > > +}
+> > > +
+> > >  static inline void wq_list_cut(struct io_wq_work_list *list,
+> > >  			       struct io_wq_work_node *last,
+> > >  			       struct io_wq_work_node *prev)
+> > > diff --git a/fs/io_uring.c b/fs/io_uring.c
+> > > index 59e54a6854b7..6db5514e10ca 100644
+> > > --- a/fs/io_uring.c
+> > > +++ b/fs/io_uring.c
+> > > @@ -2759,6 +2759,65 @@ static inline bool io_run_task_work(void)
+> > >  	return false;
+> > >  }
+> > >  
+> > > +#ifdef CONFIG_BLOCK
+> > > +static bool io_resubmit_prep(struct io_kiocb *req)
+> > > +{
+> > > +	struct io_async_rw *rw = req->async_data;
+> > > +
+> > > +	if (!req_has_async_data(req))
+> > > +		return !io_req_prep_async(req);
+> > > +	iov_iter_restore(&rw->s.iter, &rw->s.iter_state);
+> > > +	return true;
+> > > +}
+> > > +
+> > > +static bool io_rw_should_reissue(struct io_kiocb *req)
+> > > +{
+> > > +	umode_t mode = file_inode(req->file)->i_mode;
+> > > +	struct io_ring_ctx *ctx = req->ctx;
+> > > +
+> > > +	if (!S_ISBLK(mode) && !S_ISREG(mode))
+> > > +		return false;
+> > > +	if ((req->flags & REQ_F_NOWAIT) || (io_wq_current_is_worker() &&
+> > > +	    !(ctx->flags & IORING_SETUP_IOPOLL)))
+> > > +		return false;
+> > > +	/*
+> > > +	 * If ref is dying, we might be running poll reap from the exit work.
+> > > +	 * Don't attempt to reissue from that path, just let it fail with
+> > > +	 * -EAGAIN.
+> > > +	 */
+> > > +	if (percpu_ref_is_dying(&ctx->refs))
+> > > +		return false;
+> > > +	/*
+> > > +	 * Play it safe and assume not safe to re-import and reissue if we're
+> > > +	 * not in the original thread group (or in task context).
+> > > +	 */
+> > > +	if (!same_thread_group(req->task, current) || !in_task())
+> > > +		return false;
+> > > +	return true;
+> > > +}
+> > > +#else
+> > > +static bool io_resubmit_prep(struct io_kiocb *req)
+> > > +{
+> > > +	return false;
+> > > +}
+> > > +static bool io_rw_should_reissue(struct io_kiocb *req)
+> > > +{
+> > > +	return false;
+> > > +}
+> > > +#endif
+> > > +
+> > > +static void do_io_reissue(struct io_kiocb *req, int ret)
+> > > +{
+> > > +	if (req->flags & REQ_F_REISSUE) {
+> > > +		req->flags &= ~REQ_F_REISSUE;
+> > > +		if (io_resubmit_prep(req))
+> > > +			io_req_task_queue_reissue(req);
+> > > +		else
+> > > +			io_req_task_queue_fail(req, ret);
+> > > +	}
+> > > +}
+> > 
+> > Minor nit but: I'd leave caller to check for REQ_F_REISSUE.
+> > 
+> > > +
+> > > +
+> > >  static int io_do_iopoll(struct io_ring_ctx *ctx, bool force_nonspin)
+> > >  {
+> > >  	struct io_wq_work_node *pos, *start, *prev;
+> > > @@ -2786,6 +2845,13 @@ static int io_do_iopoll(struct io_ring_ctx *ctx, bool force_nonspin)
+> > >  		if (READ_ONCE(req->iopoll_completed))
+> > >  			break;
+> > >  
+> > > +		/*
+> > > +		 * Once REISSUE flag is set, the req has been done, and we
+> > > +		 * have to retry
+> > > +		 */
+> > > +		if (req->flags & REQ_F_REISSUE)
+> > > +			break;
+> > > +
+> > >  		ret = kiocb->ki_filp->f_op->iopoll(kiocb, &iob, poll_flags);
+> > >  		if (unlikely(ret < 0))
+> > >  			return ret;
+> > > @@ -2807,6 +2873,12 @@ static int io_do_iopoll(struct io_ring_ctx *ctx, bool force_nonspin)
+> > >  	wq_list_for_each_resume(pos, prev) {
+> > >  		struct io_kiocb *req = container_of(pos, struct io_kiocb, comp_list);
+> > >  
+> > > +		if (req->flags & REQ_F_REISSUE) {
+> > > +			wq_list_remove(&ctx->iopoll_list, prev, pos);
+> > > +			do_io_reissue(req, -EIO);
+> > > +			break;
+> > > +		}
+> > > +
+> > 
+> > That way you'll avoid redundant checks for REQ_F_REISSUE here.
+> 
+> Another do_io_reissue() needn't to remove req from ->iopoll_list, that
+> is why the check is done here.
+
+All do_io_reissue callers would need to first check for REQ_F_REISSUE,
+but my point (purely about avoiding redundant checks) is moot if this
+patch isn't safe.
+
+Mike
 
 --
 dm-devel mailing list
