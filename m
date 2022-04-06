@@ -4,78 +4,72 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 41A8CC433EF
-	for <dm-devel@archiver.kernel.org>; Mon, 11 Apr 2022 06:19:33 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8B739C433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 11 Apr 2022 06:19:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-633-1E-rVY_kP7emV8H6Q79oGg-1; Mon, 11 Apr 2022 02:19:29 -0400
-X-MC-Unique: 1E-rVY_kP7emV8H6Q79oGg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-627-ZRKTT4eFP2iItci9QSrymA-1; Mon, 11 Apr 2022 02:19:32 -0400
+X-MC-Unique: ZRKTT4eFP2iItci9QSrymA-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AFB2280418D;
-	Mon, 11 Apr 2022 06:19:26 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E5B7885A5BE;
+	Mon, 11 Apr 2022 06:19:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9B38D40CF8FA;
-	Mon, 11 Apr 2022 06:19:26 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D1485432022;
+	Mon, 11 Apr 2022 06:19:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AEADB193F6D9;
-	Mon, 11 Apr 2022 06:19:24 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 75098193F50F;
+	Mon, 11 Apr 2022 06:19:23 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 354E21947BBE
- for <dm-devel@listman.corp.redhat.com>; Thu,  7 Apr 2022 15:30:44 +0000 (UTC)
+ ESMTP id 48C611949763
+ for <dm-devel@listman.corp.redhat.com>; Wed,  6 Apr 2022 17:28:35 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2365AC27EA8; Thu,  7 Apr 2022 15:30:44 +0000 (UTC)
+ id 299BE2027EB4; Wed,  6 Apr 2022 17:28:35 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F424C27E81
- for <dm-devel@redhat.com>; Thu,  7 Apr 2022 15:30:44 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 05EBC801E95
- for <dm-devel@redhat.com>; Thu,  7 Apr 2022 15:30:44 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-619-uBlnpBCNO5ul1XR81JLivQ-1; Thu, 07 Apr 2022 11:30:38 -0400
-X-MC-Unique: uBlnpBCNO5ul1XR81JLivQ-1
-Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
- by smtp-out2.suse.de (Postfix) with ESMTP id E56341F85A;
- Thu,  7 Apr 2022 15:30:36 +0000 (UTC)
-Received: from ds.suse.cz (ds.suse.cz [10.100.12.205])
- by relay2.suse.de (Postfix) with ESMTP id AE7A3A3B94;
- Thu,  7 Apr 2022 15:30:36 +0000 (UTC)
-Received: by ds.suse.cz (Postfix, from userid 10065)
- id 5C928DA80E; Thu,  7 Apr 2022 17:26:34 +0200 (CEST)
-Date: Thu, 7 Apr 2022 17:26:34 +0200
-From: David Sterba <dsterba@suse.cz>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20220407152634.GL15609@twin.jikos.cz>
-Mail-Followup-To: dsterba@suse.cz, Christoph Hellwig <hch@lst.de>,
- Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com,
- linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- linux-um@lists.infradead.org, linux-block@vger.kernel.org,
- drbd-dev@lists.linbit.com, nbd@other.debian.org,
- ceph-devel@vger.kernel.org,
- virtualization@lists.linux-foundation.org,
- xen-devel@lists.xenproject.org, linux-bcache@vger.kernel.org,
- linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org,
- linux-mtd@lists.infradead.org, linux-nvme@lists.infradead.org,
- linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org,
- target-devel@vger.kernel.org, linux-btrfs@vger.kernel.org,
- linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net,
- cluster-devel@redhat.com, jfs-discussion@lists.sourceforge.net,
- linux-nilfs@vger.kernel.org, ntfs3@lists.linux.dev,
- ocfs2-devel@oss.oracle.com, linux-mm@kvack.org
-References: <20220406060516.409838-1-hch@lst.de>
- <20220406060516.409838-25-hch@lst.de>
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2560C2026614
+ for <dm-devel@redhat.com>; Wed,  6 Apr 2022 17:28:32 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2C6A438008A8
+ for <dm-devel@redhat.com>; Wed,  6 Apr 2022 17:28:32 +0000 (UTC)
+Received: from mail-lf1-f53.google.com (mail-lf1-f53.google.com
+ [209.85.167.53]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-164-sx-QHAscOmW0tlvyZ46h4A-1; Wed, 06 Apr 2022 13:28:30 -0400
+X-MC-Unique: sx-QHAscOmW0tlvyZ46h4A-1
+Received: by mail-lf1-f53.google.com with SMTP id y32so5295905lfa.6;
+ Wed, 06 Apr 2022 10:28:29 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+ :message-id:subject:to:cc;
+ bh=WJLYFFwKJzu0AzBejzceyC93Fh4AhvIk3A/MNZXzKIU=;
+ b=lauQf50QRqgGzSTUPbal207oEU2VY0BTsSXqvEq9HByfGGESDMtuzrfWU8zK7chAAx
+ lx084Ydi1WMXDS/KZ1oUuiL7/6Itz+1MUh0EIzle6Pe1JCIq1r5BU9W30vh8h6U9ovFe
+ nPNkDn4hjbne3Ikm/zDo5dwh+gjAFoe4zR6JZ5rCV9ohgMN+nSsbzmaOIDMgnLPpHA19
+ t/mX4hr6G41t92nF3qn+dvtnBQS+tMsLeCuqyDUpCNzp2pCISMcX+Vog/SLnkxMro8/W
+ wRzGxoxN1eeA7bN1ts63CMDtVRvshuu1r9EDIYv7hdMdykQ2LdBEXssQgrU2cjhu24EA
+ yHug==
+X-Gm-Message-State: AOAM531C9mab1nqOh3HydwW7+xux9sV+pdWuHDfw8+rf7twowm4ii45u
+ O43rHjYGWVcTnXLEulVRKsT1/wqGyMli6PXOhQ4=
+X-Google-Smtp-Source: ABdhPJxvT7YhfWN8QbCVz4oydCsKwT/zbXQ5089WXaSZlqzdjbFflulVc086iBmKtewP4KtbC66vp+jW8qrWjcRFTmg=
+X-Received: by 2002:ac2:5f4d:0:b0:43e:da3e:4529 with SMTP id
+ 13-20020ac25f4d000000b0043eda3e4529mr6768924lfz.627.1649266108188; Wed, 06
+ Apr 2022 10:28:28 -0700 (PDT)
 MIME-Version: 1.0
-In-Reply-To: <20220406060516.409838-25-hch@lst.de>
-User-Agent: Mutt/1.5.23.1-rc1 (2014-03-12)
+References: <20220406060516.409838-1-hch@lst.de>
+ <20220406060516.409838-24-hch@lst.de>
+In-Reply-To: <20220406060516.409838-24-hch@lst.de>
+From: Ryusuke Konishi <konishi.ryusuke@gmail.com>
+Date: Thu, 7 Apr 2022 02:28:15 +0900
+Message-ID: <CAKFNMokGOma3pvHdEsnsjuKgW+jpYX9zx8fWwJWyeKuCpKz-YQ@mail.gmail.com>
+To: Christoph Hellwig <hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -83,9 +77,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-X-Mailman-Approved-At: Mon, 11 Apr 2022 06:19:20 +0000
-Subject: Re: [dm-devel] [PATCH 24/27] block: add a bdev_discard_granularity
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Mailman-Approved-At: Mon, 11 Apr 2022 06:19:21 +0000
+Subject: Re: [dm-devel] [PATCH 23/27] block: add a bdev_max_discard_sectors
  helper
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -98,15 +92,14 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Reply-To: dsterba@suse.cz
 Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org,
- virtualization@lists.linux-foundation.org, linux-mm@kvack.org,
- dm-devel@redhat.com, target-devel@vger.kernel.org,
+ virtualization@lists.linux-foundation.org, Linux MM <linux-mm@kvack.org>,
+ device-mapper development <dm-devel@redhat.com>, target-devel@vger.kernel.org,
  linux-mtd@lists.infradead.org, drbd-dev@lists.linbit.com,
- linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org,
- linux-scsi@vger.kernel.org, cluster-devel@redhat.com,
- xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org,
- linux-um@lists.infradead.org, nbd@other.debian.org,
+ linux-s390@vger.kernel.org, linux-nilfs <linux-nilfs@vger.kernel.org>,
+ Andreas Gruenbacher <agruenba@redhat.com>, linux-scsi@vger.kernel.org,
+ cluster-devel@redhat.com, xen-devel@lists.xenproject.org,
+ linux-ext4@vger.kernel.org, linux-um@lists.infradead.org, nbd@other.debian.org,
  linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
  ceph-devel@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
  linux-raid@vger.kernel.org, linux-mmc@vger.kernel.org,
@@ -115,32 +108,52 @@ Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org,
  ntfs3@lists.linux.dev, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Apr 06, 2022 at 08:05:13AM +0200, Christoph Hellwig wrote:
-> Abstract away implementation details from file systems by providing a
-> block_device based helper to retreive the discard granularity.
-> 
+On Wed, Apr 6, 2022 at 11:05 PM Christoph Hellwig <hch@lst.de> wrote:
+>
+> Add a helper to query the number of sectors support per each discard bio
+> based on the block device and use this helper to stop various places from
+> poking into the request_queue to see if discard is supported and if so how
+> much.  This mirrors what is done e.g. for write zeroes as well.
+>
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
->  block/blk-lib.c                     |  5 ++---
->  drivers/block/drbd/drbd_nl.c        |  9 +++++----
->  drivers/block/drbd/drbd_receiver.c  |  3 +--
->  drivers/block/loop.c                |  2 +-
->  drivers/target/target_core_device.c |  3 +--
+...
+> diff --git a/drivers/target/target_core_device.c b/drivers/target/target_core_device.c
+> index 16e775bcf4a7c..7d510e4231713 100644
+> --- a/drivers/target/target_core_device.c
+> +++ b/drivers/target/target_core_device.c
+> @@ -829,9 +829,7 @@ struct se_device *target_alloc_device(struct se_hba *hba, const char *name)
+>  }
+>
+>  /*
+> - * Check if the underlying struct block_device request_queue supports
+> - * the QUEUE_FLAG_DISCARD bit for UNMAP/WRITE_SAME in SCSI + TRIM
+> - * in ATA and we need to set TPE=1
 
-For
+> + * Check if the underlying struct block_device request_queue supports disard.
+>   */
 
->  fs/btrfs/ioctl.c                    | 12 ++++--------
+Here was a typo:
 
-Acked-by: David Sterba <dsterba@suse.com>
+ s/disard/discard/
+
+On Thu, Apr 7, 2022 at 12:19 AM Andreas Gruenbacher <agruenba@redhat.com> wrote:
+> If I'm misreading things, could you please document that
+> bdev_max_discard_sectors() != 0 implies that discard is supported?
+
+I got the same impression.   Checking the discard support with
+bdev_max_discard_sectors() != 0 seems a bit unclear than before.
+
+Thanks,
+Ryusuke Konishi
 
 --
 dm-devel mailing list
