@@ -4,53 +4,54 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 78D4EC433FE
-	for <dm-devel@archiver.kernel.org>; Wed,  6 Apr 2022 06:07:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 49DD4C433FE
+	for <dm-devel@archiver.kernel.org>; Wed,  6 Apr 2022 06:07:37 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-449-z0_rxb6BMV6GZMVyFLyvGw-1; Wed, 06 Apr 2022 02:07:27 -0400
-X-MC-Unique: z0_rxb6BMV6GZMVyFLyvGw-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-479-mi7SjnDNPeGOdP7892X2vg-1; Wed, 06 Apr 2022 02:07:33 -0400
+X-MC-Unique: mi7SjnDNPeGOdP7892X2vg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 98229811E78;
-	Wed,  6 Apr 2022 06:07:15 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2717E899ED9;
+	Wed,  6 Apr 2022 06:06:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 83C9B7B47;
-	Wed,  6 Apr 2022 06:07:05 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id AC20EC26E9C;
+	Wed,  6 Apr 2022 06:06:48 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8EE95194036C;
-	Wed,  6 Apr 2022 06:06:56 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1CEB7193F506;
+	Wed,  6 Apr 2022 06:06:44 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 23278194036B
- for <dm-devel@listman.corp.redhat.com>; Wed,  6 Apr 2022 06:06:55 +0000 (UTC)
+ ESMTP id D5EDD19451F3
+ for <dm-devel@listman.corp.redhat.com>; Wed,  6 Apr 2022 06:06:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id F2846404728A; Wed,  6 Apr 2022 06:06:54 +0000 (UTC)
+ id 289D11415125; Wed,  6 Apr 2022 06:06:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id EE9D440470ED
- for <dm-devel@redhat.com>; Wed,  6 Apr 2022 06:06:54 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 24B3F1415122
+ for <dm-devel@redhat.com>; Wed,  6 Apr 2022 06:06:42 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 95DA51C07834
- for <dm-devel@redhat.com>; Wed,  6 Apr 2022 06:06:44 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5AD73803524
+ for <dm-devel@redhat.com>; Wed,  6 Apr 2022 06:06:39 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-516-1zZ7iYtGPxmE8TLABHhnjw-1; Wed, 06 Apr 2022 02:06:40 -0400
-X-MC-Unique: 1zZ7iYtGPxmE8TLABHhnjw-1
+ us-mta-602-asaqHWCFPXGSwUXjl-LYhA-1; Wed, 06 Apr 2022 02:06:35 -0400
+X-MC-Unique: asaqHWCFPXGSwUXjl-LYhA-1
 Received: from 213-225-3-188.nat.highway.a1.net ([213.225.3.188]
  helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
- id 1nbyoO-003vfZ-P9; Wed, 06 Apr 2022 06:06:37 +0000
+ id 1nbyoG-003vYE-MZ; Wed, 06 Apr 2022 06:06:29 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed,  6 Apr 2022 08:05:09 +0200
-Message-Id: <20220406060516.409838-21-hch@lst.de>
+Date: Wed,  6 Apr 2022 08:05:07 +0200
+Message-Id: <20220406060516.409838-19-hch@lst.de>
 In-Reply-To: <20220406060516.409838-1-hch@lst.de>
 References: <20220406060516.409838-1-hch@lst.de>
 MIME-Version: 1.0
@@ -63,9 +64,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: [dm-devel] [PATCH 20/27] block: use bdev_discard_alignment in
- part_discard_alignment_show
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: [dm-devel] [PATCH 18/27] block: move bdev_alignment_offset and
+ queue_limit_alignment_offset out of line
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -93,7 +94,7 @@ Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org,
  linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -101,30 +102,84 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Use the bdev based alignment helper instead of open coding it.
+No need to inline these fairly larger helpers.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- block/partitions/core.c | 6 +-----
- 1 file changed, 1 insertion(+), 5 deletions(-)
+ block/blk-settings.c   | 23 +++++++++++++++++++++++
+ include/linux/blkdev.h | 21 +--------------------
+ 2 files changed, 24 insertions(+), 20 deletions(-)
 
-diff --git a/block/partitions/core.c b/block/partitions/core.c
-index 240b3fff521e4..70dec1c78521d 100644
---- a/block/partitions/core.c
-+++ b/block/partitions/core.c
-@@ -206,11 +206,7 @@ static ssize_t part_alignment_offset_show(struct device *dev,
- static ssize_t part_discard_alignment_show(struct device *dev,
- 					   struct device_attribute *attr, char *buf)
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index b83df3d2eebca..94410a13c0dee 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -468,6 +468,16 @@ void blk_queue_io_opt(struct request_queue *q, unsigned int opt)
+ }
+ EXPORT_SYMBOL(blk_queue_io_opt);
+ 
++static int queue_limit_alignment_offset(struct queue_limits *lim,
++		sector_t sector)
++{
++	unsigned int granularity = max(lim->physical_block_size, lim->io_min);
++	unsigned int alignment = sector_div(sector, granularity >> SECTOR_SHIFT)
++		<< SECTOR_SHIFT;
++
++	return (granularity + lim->alignment_offset - alignment) % granularity;
++}
++
+ static unsigned int blk_round_down_sectors(unsigned int sectors, unsigned int lbs)
  {
--	struct block_device *bdev = dev_to_bdev(dev);
--
--	return sprintf(buf, "%u\n",
--		queue_limit_discard_alignment(&bdev_get_queue(bdev)->limits,
--				bdev->bd_start_sect));
-+	return sprintf(buf, "%u\n", bdev_discard_alignment(dev_to_bdev(dev)));
+ 	sectors = round_down(sectors, lbs >> SECTOR_SHIFT);
+@@ -901,3 +911,16 @@ void blk_queue_set_zoned(struct gendisk *disk, enum blk_zoned_model model)
+ 	}
+ }
+ EXPORT_SYMBOL_GPL(blk_queue_set_zoned);
++
++int bdev_alignment_offset(struct block_device *bdev)
++{
++	struct request_queue *q = bdev_get_queue(bdev);
++
++	if (q->limits.misaligned)
++		return -1;
++	if (bdev_is_partition(bdev))
++		return queue_limit_alignment_offset(&q->limits,
++				bdev->bd_start_sect);
++	return q->limits.alignment_offset;
++}
++EXPORT_SYMBOL_GPL(bdev_alignment_offset);
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index d5346e72e3645..0a1795ac26275 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1251,26 +1251,7 @@ bdev_zone_write_granularity(struct block_device *bdev)
+ 	return queue_zone_write_granularity(bdev_get_queue(bdev));
  }
  
- static DEVICE_ATTR(partition, 0444, part_partition_show, NULL);
+-static inline int queue_limit_alignment_offset(struct queue_limits *lim, sector_t sector)
+-{
+-	unsigned int granularity = max(lim->physical_block_size, lim->io_min);
+-	unsigned int alignment = sector_div(sector, granularity >> SECTOR_SHIFT)
+-		<< SECTOR_SHIFT;
+-
+-	return (granularity + lim->alignment_offset - alignment) % granularity;
+-}
+-
+-static inline int bdev_alignment_offset(struct block_device *bdev)
+-{
+-	struct request_queue *q = bdev_get_queue(bdev);
+-
+-	if (q->limits.misaligned)
+-		return -1;
+-	if (bdev_is_partition(bdev))
+-		return queue_limit_alignment_offset(&q->limits,
+-				bdev->bd_start_sect);
+-	return q->limits.alignment_offset;
+-}
++int bdev_alignment_offset(struct block_device *bdev);
+ 
+ static inline int queue_discard_alignment(const struct request_queue *q)
+ {
 -- 
 2.30.2
 
