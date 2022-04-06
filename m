@@ -4,53 +4,54 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 88285C433EF
-	for <dm-devel@archiver.kernel.org>; Wed,  6 Apr 2022 06:06:08 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B20D6C433FE
+	for <dm-devel@archiver.kernel.org>; Wed,  6 Apr 2022 06:06:09 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-504-RoXWqSg1MZ-5Sxb3XpYKoA-1; Wed, 06 Apr 2022 02:06:04 -0400
-X-MC-Unique: RoXWqSg1MZ-5Sxb3XpYKoA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-474-XVbCSbW-OteOm8TVmsqr1Q-1; Wed, 06 Apr 2022 02:06:04 -0400
+X-MC-Unique: XVbCSbW-OteOm8TVmsqr1Q-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9F2F42800942;
-	Wed,  6 Apr 2022 06:06:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 08077899ED0;
+	Wed,  6 Apr 2022 06:06:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8B54740C1241;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id E95834066C93;
 	Wed,  6 Apr 2022 06:06:02 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 14C141947BBB;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 424B5193F6EA;
 	Wed,  6 Apr 2022 06:06:02 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
  [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id B10CD19451F3
+ ESMTP id B198A1947BBB
  for <dm-devel@listman.corp.redhat.com>; Wed,  6 Apr 2022 06:06:01 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 98A482024CB9; Wed,  6 Apr 2022 06:06:01 +0000 (UTC)
+ id 98CF62024CBC; Wed,  6 Apr 2022 06:06:01 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 946E62024CAE
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 947572024CB6
  for <dm-devel@redhat.com>; Wed,  6 Apr 2022 06:05:55 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6379B3C11A16
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 65913805F46
  for <dm-devel@redhat.com>; Wed,  6 Apr 2022 06:05:55 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-146-uyn3dkkTOkCIqSg_PC2WWw-1; Wed, 06 Apr 2022 02:05:46 -0400
-X-MC-Unique: uyn3dkkTOkCIqSg_PC2WWw-1
+ us-mta-663--g1r9zZAM3WZ5D3KhT6DbA-1; Wed, 06 Apr 2022 02:05:53 -0400
+X-MC-Unique: -g1r9zZAM3WZ5D3KhT6DbA-1
 Received: from 213-225-3-188.nat.highway.a1.net ([213.225.3.188]
  helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
- id 1nbynX-003uuj-EB; Wed, 06 Apr 2022 06:05:44 +0000
+ id 1nbyne-003v04-Nu; Wed, 06 Apr 2022 06:05:51 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed,  6 Apr 2022 08:04:55 +0200
-Message-Id: <20220406060516.409838-7-hch@lst.de>
+Date: Wed,  6 Apr 2022 08:04:57 +0200
+Message-Id: <20220406060516.409838-9-hch@lst.de>
 In-Reply-To: <20220406060516.409838-1-hch@lst.de>
 References: <20220406060516.409838-1-hch@lst.de>
 MIME-Version: 1.0
@@ -64,7 +65,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-Subject: [dm-devel] [PATCH 06/27] drbd: cleanup decide_on_discard_support
+Subject: [dm-devel] [PATCH 08/27] ntfs3: use bdev_logical_block_size instead
+ of open coding it
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -92,7 +94,7 @@ Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org,
  linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -100,116 +102,24 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Sanitize the calling conventions and use a goto label to cleanup the
-code flow.
-
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/drbd/drbd_nl.c | 68 +++++++++++++++++++-----------------
- 1 file changed, 35 insertions(+), 33 deletions(-)
+ fs/ntfs3/super.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/block/drbd/drbd_nl.c b/drivers/block/drbd/drbd_nl.c
-index 02030c9c4d3b1..40bb0b356a6d6 100644
---- a/drivers/block/drbd/drbd_nl.c
-+++ b/drivers/block/drbd/drbd_nl.c
-@@ -1204,38 +1204,42 @@ static unsigned int drbd_max_discard_sectors(struct drbd_connection *connection)
- }
- 
- static void decide_on_discard_support(struct drbd_device *device,
--			struct request_queue *q,
--			struct request_queue *b,
--			bool discard_zeroes_if_aligned)
-+		struct drbd_backing_dev *bdev)
- {
--	/* q = drbd device queue (device->rq_queue)
--	 * b = backing device queue (device->ldev->backing_bdev->bd_disk->queue),
--	 *     or NULL if diskless
--	 */
--	struct drbd_connection *connection = first_peer_device(device)->connection;
--	bool can_do = b ? blk_queue_discard(b) : true;
--
--	if (can_do && connection->cstate >= C_CONNECTED && !(connection->agreed_features & DRBD_FF_TRIM)) {
--		can_do = false;
--		drbd_info(connection, "peer DRBD too old, does not support TRIM: disabling discards\n");
--	}
--	if (can_do) {
--		/* We don't care for the granularity, really.
--		 * Stacking limits below should fix it for the local
--		 * device.  Whether or not it is a suitable granularity
--		 * on the remote device is not our problem, really. If
--		 * you care, you need to use devices with similar
--		 * topology on all peers. */
--		blk_queue_discard_granularity(q, 512);
--		q->limits.max_discard_sectors = drbd_max_discard_sectors(connection);
--		blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
--		q->limits.max_write_zeroes_sectors = drbd_max_discard_sectors(connection);
--	} else {
--		blk_queue_flag_clear(QUEUE_FLAG_DISCARD, q);
--		blk_queue_discard_granularity(q, 0);
--		q->limits.max_discard_sectors = 0;
--		q->limits.max_write_zeroes_sectors = 0;
-+	struct drbd_connection *connection =
-+		first_peer_device(device)->connection;
-+	struct request_queue *q = device->rq_queue;
-+
-+	if (bdev && !blk_queue_discard(bdev->backing_bdev->bd_disk->queue))
-+		goto not_supported;
-+
-+	if (connection->cstate >= C_CONNECTED &&
-+	    !(connection->agreed_features & DRBD_FF_TRIM)) {
-+		drbd_info(connection,
-+			"peer DRBD too old, does not support TRIM: disabling discards\n");
-+		goto not_supported;
+diff --git a/fs/ntfs3/super.c b/fs/ntfs3/super.c
+index 278dcf5024102..cd30e81abbce0 100644
+--- a/fs/ntfs3/super.c
++++ b/fs/ntfs3/super.c
+@@ -920,7 +920,7 @@ static int ntfs_fill_super(struct super_block *sb, struct fs_context *fc)
  	}
-+
-+	/*
-+	 * We don't care for the granularity, really.
-+	 *
-+	 * Stacking limits below should fix it for the local device.  Whether or
-+	 * not it is a suitable granularity on the remote device is not our
-+	 * problem, really. If you care, you need to use devices with similar
-+	 * topology on all peers.
-+	 */
-+	blk_queue_discard_granularity(q, 512);
-+	q->limits.max_discard_sectors = drbd_max_discard_sectors(connection);
-+	blk_queue_flag_set(QUEUE_FLAG_DISCARD, q);
-+	q->limits.max_write_zeroes_sectors =
-+		drbd_max_discard_sectors(connection);
-+	return;
-+
-+not_supported:
-+	blk_queue_flag_clear(QUEUE_FLAG_DISCARD, q);
-+	blk_queue_discard_granularity(q, 0);
-+	q->limits.max_discard_sectors = 0;
-+	q->limits.max_write_zeroes_sectors = 0;
- }
  
- static void fixup_discard_if_not_supported(struct request_queue *q)
-@@ -1273,7 +1277,6 @@ static void drbd_setup_queue_param(struct drbd_device *device, struct drbd_backi
- 	unsigned int max_segments = 0;
- 	struct request_queue *b = NULL;
- 	struct disk_conf *dc;
--	bool discard_zeroes_if_aligned = true;
- 
- 	if (bdev) {
- 		b = bdev->backing_bdev->bd_disk->queue;
-@@ -1282,7 +1285,6 @@ static void drbd_setup_queue_param(struct drbd_device *device, struct drbd_backi
- 		rcu_read_lock();
- 		dc = rcu_dereference(device->ldev->disk_conf);
- 		max_segments = dc->max_bio_bvecs;
--		discard_zeroes_if_aligned = dc->discard_zeroes_if_aligned;
- 		rcu_read_unlock();
- 
- 		blk_set_stacking_limits(&q->limits);
-@@ -1292,7 +1294,7 @@ static void drbd_setup_queue_param(struct drbd_device *device, struct drbd_backi
- 	/* This is the workaround for "bio would need to, but cannot, be split" */
- 	blk_queue_max_segments(q, max_segments ? max_segments : BLK_MAX_SEGMENTS);
- 	blk_queue_segment_boundary(q, PAGE_SIZE-1);
--	decide_on_discard_support(device, q, b, discard_zeroes_if_aligned);
-+	decide_on_discard_support(device, bdev);
- 
- 	if (b) {
- 		blk_stack_limits(&q->limits, &b->limits, 0);
+ 	/* Parse boot. */
+-	err = ntfs_init_from_boot(sb, rq ? queue_logical_block_size(rq) : 512,
++	err = ntfs_init_from_boot(sb, bdev_logical_block_size(bdev),
+ 				  bdev_nr_bytes(bdev));
+ 	if (err)
+ 		goto out;
 -- 
 2.30.2
 
