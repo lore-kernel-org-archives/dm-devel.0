@@ -4,54 +4,53 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 146B1C433FE
-	for <dm-devel@archiver.kernel.org>; Wed,  6 Apr 2022 06:05:48 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C1E58C433EF
+	for <dm-devel@archiver.kernel.org>; Wed,  6 Apr 2022 06:05:54 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-262-7RGotN_PM42Znx_Ca0H77g-1; Wed, 06 Apr 2022 02:05:44 -0400
-X-MC-Unique: 7RGotN_PM42Znx_Ca0H77g-1
+ us-mta-104-F70qA7sxPGO-ITQGrpBBRw-1; Wed, 06 Apr 2022 02:05:50 -0400
+X-MC-Unique: F70qA7sxPGO-ITQGrpBBRw-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C46D73C0D1BC;
-	Wed,  6 Apr 2022 06:05:42 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0E9D3100BAA9;
+	Wed,  6 Apr 2022 06:05:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B424340470CC;
-	Wed,  6 Apr 2022 06:05:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EF6F940470CC;
+	Wed,  6 Apr 2022 06:05:48 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 745C2193F6E9;
-	Wed,  6 Apr 2022 06:05:42 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B99BD1947BBB;
+	Wed,  6 Apr 2022 06:05:48 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id BDD3219451F3
- for <dm-devel@listman.corp.redhat.com>; Wed,  6 Apr 2022 06:05:41 +0000 (UTC)
+ ESMTP id 1485719451F3
+ for <dm-devel@listman.corp.redhat.com>; Wed,  6 Apr 2022 06:05:47 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id AFEAA2026E03; Wed,  6 Apr 2022 06:05:41 +0000 (UTC)
+ id EA082492CAF; Wed,  6 Apr 2022 06:05:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id ABCA12026D64
- for <dm-devel@redhat.com>; Wed,  6 Apr 2022 06:05:32 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 90AD92800940
- for <dm-devel@redhat.com>; Wed,  6 Apr 2022 06:05:32 +0000 (UTC)
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E65E4492CA7
+ for <dm-devel@redhat.com>; Wed,  6 Apr 2022 06:05:46 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CD4231C0782D
+ for <dm-devel@redhat.com>; Wed,  6 Apr 2022 06:05:46 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-593-oOXukZWqORm-B8La8RarZA-1; Wed, 06 Apr 2022 02:05:30 -0400
-X-MC-Unique: oOXukZWqORm-B8La8RarZA-1
+ us-mta-259-6E7x6wBJNHe2NNT_K7zKEw-1; Wed, 06 Apr 2022 02:05:42 -0400
+X-MC-Unique: 6E7x6wBJNHe2NNT_K7zKEw-1
 Received: from 213-225-3-188.nat.highway.a1.net ([213.225.3.188]
  helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
- id 1nbynH-003umG-Rn; Wed, 06 Apr 2022 06:05:28 +0000
+ id 1nbynT-003usA-Kd; Wed, 06 Apr 2022 06:05:40 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Wed,  6 Apr 2022 08:04:51 +0200
-Message-Id: <20220406060516.409838-3-hch@lst.de>
+Date: Wed,  6 Apr 2022 08:04:54 +0200
+Message-Id: <20220406060516.409838-6-hch@lst.de>
 In-Reply-To: <20220406060516.409838-1-hch@lst.de>
 References: <20220406060516.409838-1-hch@lst.de>
 MIME-Version: 1.0
@@ -64,9 +63,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-Subject: [dm-devel] [PATCH 02/27] target: pass a block_device to
- target_configure_unmap_from_queue
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+Subject: [dm-devel] [PATCH 05/27] drbd: use bdev based limit helpers in
+ drbd_send_sizes
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -102,96 +101,50 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The target code is a consumer of the block layer and should generally
-work on struct block_device.
+Use the bdev based limits helpers where they exist.
 
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/target/target_core_device.c  | 5 +++--
- drivers/target/target_core_file.c    | 7 ++++---
- drivers/target/target_core_iblock.c  | 2 +-
- include/target/target_core_backend.h | 4 ++--
- 4 files changed, 10 insertions(+), 8 deletions(-)
+ drivers/block/drbd/drbd_main.c | 15 ++++++++-------
+ 1 file changed, 8 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/target/target_core_device.c b/drivers/target/target_core_device.c
-index fa866acef5bb2..3a1ec705cd80b 100644
---- a/drivers/target/target_core_device.c
-+++ b/drivers/target/target_core_device.c
-@@ -834,9 +834,10 @@ struct se_device *target_alloc_device(struct se_hba *hba, const char *name)
-  * in ATA and we need to set TPE=1
-  */
- bool target_configure_unmap_from_queue(struct se_dev_attrib *attrib,
--				       struct request_queue *q)
-+				       struct block_device *bdev)
- {
--	int block_size = queue_logical_block_size(q);
-+	struct request_queue *q = bdev_get_queue(bdev);
-+	int block_size = bdev_logical_block_size(bdev);
+diff --git a/drivers/block/drbd/drbd_main.c b/drivers/block/drbd/drbd_main.c
+index 74b1b2424efff..d20d84ee7a88e 100644
+--- a/drivers/block/drbd/drbd_main.c
++++ b/drivers/block/drbd/drbd_main.c
+@@ -924,7 +924,9 @@ int drbd_send_sizes(struct drbd_peer_device *peer_device, int trigger_reply, enu
  
- 	if (!blk_queue_discard(q))
- 		return false;
-diff --git a/drivers/target/target_core_file.c b/drivers/target/target_core_file.c
-index 8190b840065f3..8d191fdc33217 100644
---- a/drivers/target/target_core_file.c
-+++ b/drivers/target/target_core_file.c
-@@ -134,10 +134,11 @@ static int fd_configure_device(struct se_device *dev)
- 	 */
- 	inode = file->f_mapping->host;
- 	if (S_ISBLK(inode->i_mode)) {
--		struct request_queue *q = bdev_get_queue(I_BDEV(inode));
-+		struct block_device *bdev = I_BDEV(inode);
+ 	memset(p, 0, packet_size);
+ 	if (get_ldev_if_state(device, D_NEGOTIATING)) {
+-		struct request_queue *q = bdev_get_queue(device->ldev->backing_bdev);
++		struct block_device *bdev = device->ldev->backing_bdev;
 +		struct request_queue *q = bdev_get_queue(bdev);
- 		unsigned long long dev_size;
- 
--		fd_dev->fd_block_size = bdev_logical_block_size(I_BDEV(inode));
-+		fd_dev->fd_block_size = bdev_logical_block_size(bdev);
- 		/*
- 		 * Determine the number of bytes from i_size_read() minus
- 		 * one (1) logical sector from underlying struct block_device
-@@ -150,7 +151,7 @@ static int fd_configure_device(struct se_device *dev)
- 			dev_size, div_u64(dev_size, fd_dev->fd_block_size),
- 			fd_dev->fd_block_size);
- 
--		if (target_configure_unmap_from_queue(&dev->dev_attrib, q))
-+		if (target_configure_unmap_from_queue(&dev->dev_attrib, bdev))
- 			pr_debug("IFILE: BLOCK Discard support available,"
- 				 " disabled by default\n");
- 		/*
-diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
-index 87ede165ddba4..b886ce1770bfd 100644
---- a/drivers/target/target_core_iblock.c
-+++ b/drivers/target/target_core_iblock.c
-@@ -119,7 +119,7 @@ static int iblock_configure_device(struct se_device *dev)
- 	dev->dev_attrib.hw_max_sectors = queue_max_hw_sectors(q);
- 	dev->dev_attrib.hw_queue_depth = q->nr_requests;
- 
--	if (target_configure_unmap_from_queue(&dev->dev_attrib, q))
-+	if (target_configure_unmap_from_queue(&dev->dev_attrib, bd))
- 		pr_debug("IBLOCK: BLOCK Discard support available,"
- 			 " disabled by default\n");
- 
-diff --git a/include/target/target_core_backend.h b/include/target/target_core_backend.h
-index 675f3a1fe6139..773963a1e0b53 100644
---- a/include/target/target_core_backend.h
-+++ b/include/target/target_core_backend.h
-@@ -14,7 +14,7 @@
- #define TRANSPORT_FLAG_PASSTHROUGH_ALUA		0x2
- #define TRANSPORT_FLAG_PASSTHROUGH_PGR          0x4
- 
--struct request_queue;
-+struct block_device;
- struct scatterlist;
- 
- struct target_backend_ops {
-@@ -117,7 +117,7 @@ sense_reason_t passthrough_parse_cdb(struct se_cmd *cmd,
- bool target_sense_desc_format(struct se_device *dev);
- sector_t target_to_linux_sector(struct se_device *dev, sector_t lb);
- bool target_configure_unmap_from_queue(struct se_dev_attrib *attrib,
--				       struct request_queue *q);
-+				       struct block_device *bdev);
- 
- static inline bool target_dev_configured(struct se_device *se_dev)
- {
++
+ 		d_size = drbd_get_max_capacity(device->ldev);
+ 		rcu_read_lock();
+ 		u_size = rcu_dereference(device->ldev->disk_conf)->disk_size;
+@@ -933,16 +935,15 @@ int drbd_send_sizes(struct drbd_peer_device *peer_device, int trigger_reply, enu
+ 		max_bio_size = queue_max_hw_sectors(q) << 9;
+ 		max_bio_size = min(max_bio_size, DRBD_MAX_BIO_SIZE);
+ 		p->qlim->physical_block_size =
+-			cpu_to_be32(queue_physical_block_size(q));
++			cpu_to_be32(bdev_physical_block_size(bdev));
+ 		p->qlim->logical_block_size =
+-			cpu_to_be32(queue_logical_block_size(q));
++			cpu_to_be32(bdev_logical_block_size(bdev));
+ 		p->qlim->alignment_offset =
+ 			cpu_to_be32(queue_alignment_offset(q));
+-		p->qlim->io_min = cpu_to_be32(queue_io_min(q));
+-		p->qlim->io_opt = cpu_to_be32(queue_io_opt(q));
++		p->qlim->io_min = cpu_to_be32(bdev_io_min(bdev));
++		p->qlim->io_opt = cpu_to_be32(bdev_io_opt(bdev));
+ 		p->qlim->discard_enabled = blk_queue_discard(q);
+-		p->qlim->write_same_capable =
+-			!!q->limits.max_write_same_sectors;
++		p->qlim->write_same_capable = 0;
+ 		put_ldev(device);
+ 	} else {
+ 		struct request_queue *q = device->rq_queue;
 -- 
 2.30.2
 
