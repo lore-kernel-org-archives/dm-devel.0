@@ -4,58 +4,57 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4C4E2C4167B
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 41A8CC433EF
 	for <dm-devel@archiver.kernel.org>; Mon, 11 Apr 2022 06:19:33 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-639-bRSzUehPMTWN01iCgvse9Q-1; Mon, 11 Apr 2022 02:19:29 -0400
-X-MC-Unique: bRSzUehPMTWN01iCgvse9Q-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-633-1E-rVY_kP7emV8H6Q79oGg-1; Mon, 11 Apr 2022 02:19:29 -0400
+X-MC-Unique: 1E-rVY_kP7emV8H6Q79oGg-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8A856833969;
-	Mon, 11 Apr 2022 06:19:27 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AFB2280418D;
+	Mon, 11 Apr 2022 06:19:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 748E94029A0;
-	Mon, 11 Apr 2022 06:19:27 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9B38D40CF8FA;
+	Mon, 11 Apr 2022 06:19:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EDFFF194E00C;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AEADB193F6D9;
 	Mon, 11 Apr 2022 06:19:24 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id DE6E01947BBE
- for <dm-devel@listman.corp.redhat.com>; Thu,  7 Apr 2022 15:31:10 +0000 (UTC)
+ ESMTP id 354E21947BBE
+ for <dm-devel@listman.corp.redhat.com>; Thu,  7 Apr 2022 15:30:44 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B60962167D60; Thu,  7 Apr 2022 15:31:10 +0000 (UTC)
+ id 2365AC27EA8; Thu,  7 Apr 2022 15:30:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id A88ED2166BA2
- for <dm-devel@redhat.com>; Thu,  7 Apr 2022 15:31:02 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3D9DF100BAA9
- for <dm-devel@redhat.com>; Thu,  7 Apr 2022 15:31:02 +0000 (UTC)
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1F424C27E81
+ for <dm-devel@redhat.com>; Thu,  7 Apr 2022 15:30:44 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 05EBC801E95
+ for <dm-devel@redhat.com>; Thu,  7 Apr 2022 15:30:44 +0000 (UTC)
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-602-JcIl2QtmMSSjHFwSUlzSuQ-1; Thu, 07 Apr 2022 11:31:00 -0400
-X-MC-Unique: JcIl2QtmMSSjHFwSUlzSuQ-1
+ us-mta-619-uBlnpBCNO5ul1XR81JLivQ-1; Thu, 07 Apr 2022 11:30:38 -0400
+X-MC-Unique: uBlnpBCNO5ul1XR81JLivQ-1
 Received: from relay2.suse.de (relay2.suse.de [149.44.160.134])
- by smtp-out1.suse.de (Postfix) with ESMTP id 34AC9215FE;
- Thu,  7 Apr 2022 15:30:59 +0000 (UTC)
+ by smtp-out2.suse.de (Postfix) with ESMTP id E56341F85A;
+ Thu,  7 Apr 2022 15:30:36 +0000 (UTC)
 Received: from ds.suse.cz (ds.suse.cz [10.100.12.205])
- by relay2.suse.de (Postfix) with ESMTP id 19364A3B83;
- Thu,  7 Apr 2022 15:30:59 +0000 (UTC)
+ by relay2.suse.de (Postfix) with ESMTP id AE7A3A3B94;
+ Thu,  7 Apr 2022 15:30:36 +0000 (UTC)
 Received: by ds.suse.cz (Postfix, from userid 10065)
- id A6C86DA80E; Thu,  7 Apr 2022 17:26:56 +0200 (CEST)
-Date: Thu, 7 Apr 2022 17:26:56 +0200
+ id 5C928DA80E; Thu,  7 Apr 2022 17:26:34 +0200 (CEST)
+Date: Thu, 7 Apr 2022 17:26:34 +0200
 From: David Sterba <dsterba@suse.cz>
 To: Christoph Hellwig <hch@lst.de>
-Message-ID: <20220407152656.GM15609@twin.jikos.cz>
+Message-ID: <20220407152634.GL15609@twin.jikos.cz>
 Mail-Followup-To: dsterba@suse.cz, Christoph Hellwig <hch@lst.de>,
  Jens Axboe <axboe@kernel.dk>, dm-devel@redhat.com,
  linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
@@ -73,9 +72,9 @@ Mail-Followup-To: dsterba@suse.cz, Christoph Hellwig <hch@lst.de>,
  linux-nilfs@vger.kernel.org, ntfs3@lists.linux.dev,
  ocfs2-devel@oss.oracle.com, linux-mm@kvack.org
 References: <20220406060516.409838-1-hch@lst.de>
- <20220406060516.409838-27-hch@lst.de>
+ <20220406060516.409838-25-hch@lst.de>
 MIME-Version: 1.0
-In-Reply-To: <20220406060516.409838-27-hch@lst.de>
+In-Reply-To: <20220406060516.409838-25-hch@lst.de>
 User-Agent: Mutt/1.5.23.1-rc1 (2014-03-12)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -84,10 +83,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 X-Mailman-Approved-At: Mon, 11 Apr 2022 06:19:20 +0000
-Subject: Re: [dm-devel] [PATCH 26/27] block: uncouple REQ_OP_SECURE_ERASE
- from REQ_OP_DISCARD
+Subject: Re: [dm-devel] [PATCH 24/27] block: add a bdev_discard_granularity
+ helper
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -116,7 +115,7 @@ Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org,
  ntfs3@lists.linux.dev, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -125,38 +124,21 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Apr 06, 2022 at 08:05:15AM +0200, Christoph Hellwig wrote:
-> Secure erase is a very different operation from discard in that it is
-> a data integrity operation vs hint.  Fully split the limits and helper
-> infrastructure to make the separation more clear.
+On Wed, Apr 06, 2022 at 08:05:13AM +0200, Christoph Hellwig wrote:
+> Abstract away implementation details from file systems by providing a
+> block_device based helper to retreive the discard granularity.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
->  block/blk-core.c                    |  2 +-
->  block/blk-lib.c                     | 64 ++++++++++++++++++++---------
->  block/blk-mq-debugfs.c              |  1 -
->  block/blk-settings.c                | 16 +++++++-
->  block/fops.c                        |  2 +-
->  block/ioctl.c                       | 43 +++++++++++++++----
->  drivers/block/drbd/drbd_receiver.c  |  5 ++-
->  drivers/block/rnbd/rnbd-clt.c       |  4 +-
->  drivers/block/rnbd/rnbd-srv-dev.h   |  2 +-
->  drivers/block/xen-blkback/blkback.c | 15 +++----
->  drivers/block/xen-blkback/xenbus.c  |  5 +--
->  drivers/block/xen-blkfront.c        |  5 ++-
->  drivers/md/bcache/alloc.c           |  2 +-
->  drivers/md/dm-table.c               |  8 ++--
->  drivers/md/dm-thin.c                |  4 +-
->  drivers/md/md.c                     |  2 +-
->  drivers/md/raid5-cache.c            |  6 +--
->  drivers/mmc/core/queue.c            |  2 +-
->  drivers/nvme/target/io-cmd-bdev.c   |  2 +-
->  drivers/target/target_core_file.c   |  2 +-
->  drivers/target/target_core_iblock.c |  2 +-
+>  block/blk-lib.c                     |  5 ++---
+>  drivers/block/drbd/drbd_nl.c        |  9 +++++----
+>  drivers/block/drbd/drbd_receiver.c  |  3 +--
+>  drivers/block/loop.c                |  2 +-
+>  drivers/target/target_core_device.c |  3 +--
 
 For
 
->  fs/btrfs/extent-tree.c              |  4 +-
+>  fs/btrfs/ioctl.c                    | 12 ++++--------
 
 Acked-by: David Sterba <dsterba@suse.com>
 
