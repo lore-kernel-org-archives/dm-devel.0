@@ -1,58 +1,71 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3F725C433F5
-	for <dm-devel@archiver.kernel.org>; Fri,  8 Apr 2022 17:13:52 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1649438031;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=67Knx1vnsJNQxwwpY+q0AxzAxjcO4XuMZU4Itu/m2Mw=;
-	b=gTLqwrhOTxR5ddt+WFi7yuZyu9DpVS80Huib5Gvse5gvVqhmxECb7/7Ij202UEp6QW85EK
-	meKfT+sMYhMai8Q1bIp+A+OCGJtcO3L8nNk6EOYWkjLEPMRYgKfnCsfqwWqAUNUXsPgnhd
-	xSNHbWX565bqx1HhQWHtyOFWkFmSKZU=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 16F1FC43219
+	for <dm-devel@archiver.kernel.org>; Sat,  9 Apr 2022 04:52:02 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-624-ZZN7xozhOcWYpUSQGURULw-1; Fri, 08 Apr 2022 13:13:48 -0400
-X-MC-Unique: ZZN7xozhOcWYpUSQGURULw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-9-0Led4R_uMA601HNGVoNJAw-1; Sat, 09 Apr 2022 00:51:59 -0400
+X-MC-Unique: 0Led4R_uMA601HNGVoNJAw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 60CC1282B7EB;
-	Fri,  8 Apr 2022 17:13:46 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 35987802803;
+	Sat,  9 Apr 2022 04:51:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 4FCC91121314;
-	Fri,  8 Apr 2022 17:13:46 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 76F95C44CC0;
+	Sat,  9 Apr 2022 04:51:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0ED421940344;
-	Fri,  8 Apr 2022 17:13:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id ED0F81940349;
+	Sat,  9 Apr 2022 04:51:54 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 68ACD1940341
- for <dm-devel@listman.corp.redhat.com>; Fri,  8 Apr 2022 17:13:44 +0000 (UTC)
+ ESMTP id A06741940341
+ for <dm-devel@listman.corp.redhat.com>; Sat,  9 Apr 2022 04:51:53 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 59052C33AE8; Fri,  8 Apr 2022 17:13:44 +0000 (UTC)
-Received: from localhost (ovpn-8-29.pek2.redhat.com [10.72.8.29])
- by smtp.corp.redhat.com (Postfix) with ESMTP id 87116C30C0A;
- Fri,  8 Apr 2022 17:13:43 +0000 (UTC)
-From: Ming Lei <ming.lei@redhat.com>
-To: Mike Snitzer <snitzer@redhat.com>
-Date: Sat,  9 Apr 2022 01:12:54 +0800
-Message-Id: <20220408171254.935171-4-ming.lei@redhat.com>
-In-Reply-To: <20220408171254.935171-1-ming.lei@redhat.com>
-References: <20220408171254.935171-1-ming.lei@redhat.com>
+ id 7E2A143E38D; Sat,  9 Apr 2022 04:51:53 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7A2B943E38A
+ for <dm-devel@redhat.com>; Sat,  9 Apr 2022 04:51:53 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6204B800882
+ for <dm-devel@redhat.com>; Sat,  9 Apr 2022 04:51:53 +0000 (UTC)
+Received: from bombadil.infradead.org (bombadil.infradead.org
+ [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-78-kMA37c-bMKa7z7ciH8Hbig-1; Sat, 09 Apr 2022 00:51:51 -0400
+X-MC-Unique: kMA37c-bMKa7z7ciH8Hbig-1
+Received: from 213-147-167-116.nat.highway.webapn.at ([213.147.167.116]
+ helo=localhost)
+ by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+ id 1nd34X-00217H-QX; Sat, 09 Apr 2022 04:51:42 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Jens Axboe <axboe@kernel.dk>
+Date: Sat,  9 Apr 2022 06:50:32 +0200
+Message-Id: <20220409045043.23593-17-hch@lst.de>
+In-Reply-To: <20220409045043.23593-1-hch@lst.de>
+References: <20220409045043.23593-1-hch@lst.de>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: [dm-devel] [PATCH 3/3] dm: put all polled io into one single list
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+ bombadil.infradead.org. See http://www.infradead.org/rpr.html
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+Subject: [dm-devel] [PATCH 16/27] block: use bdev_alignment_offset in
+ part_alignment_offset_show
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -64,10 +77,23 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, Ming Lei <ming.lei@redhat.com>
+Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org,
+ virtualization@lists.linux-foundation.org, linux-mm@kvack.org,
+ dm-devel@redhat.com, target-devel@vger.kernel.org,
+ linux-mtd@lists.infradead.org, drbd-dev@lists.linbit.com,
+ linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org,
+ linux-scsi@vger.kernel.org, cluster-devel@redhat.com,
+ xen-devel@lists.xenproject.org, linux-ext4@vger.kernel.org,
+ linux-um@lists.infradead.org, nbd@other.debian.org,
+ linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
+ ceph-devel@vger.kernel.org, linux-raid@vger.kernel.org,
+ "Martin K . Petersen" <martin.petersen@oracle.com>, linux-mmc@vger.kernel.org,
+ linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
+ ocfs2-devel@oss.oracle.com, linux-fsdevel@vger.kernel.org,
+ ntfs3@lists.linux.dev, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -75,146 +101,36 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-If bio_split() isn't involved, it is a bit overkill to link dm_io into hlist,
-given there is only single dm_io in the list, so convert to single list
-for holding all dm_io instances associated with this bio.
+Replace the open coded offset calculation with the proper helper.
+This is an ABI change in that the -1 for a misaligned partition is
+properly propagated, which can be considered a bug fix and matches
+what is done on the whole device.
 
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
 ---
- drivers/md/dm-core.h |  2 +-
- drivers/md/dm.c      | 46 +++++++++++++++++++++++---------------------
- 2 files changed, 25 insertions(+), 23 deletions(-)
+ block/partitions/core.c | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
-index 13136bd47cb3..e28f7d54d2b7 100644
---- a/drivers/md/dm-core.h
-+++ b/drivers/md/dm-core.h
-@@ -252,7 +252,7 @@ struct dm_io {
- 	spinlock_t lock;
- 	unsigned long start_time;
- 	void *data;
--	struct hlist_node node;
-+	struct dm_io *next;
- 	struct task_struct *map_task;
- 	struct dm_stats_aux stats_aux;
- 	/* last member of dm_target_io is 'struct bio' */
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 528559ca2f91..84cb73462fcd 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1486,7 +1486,7 @@ static bool __process_abnormal_io(struct clone_info *ci, struct dm_target *ti,
- }
- 
- /*
-- * Reuse ->bi_private as hlist head for storing all dm_io instances
-+ * Reuse ->bi_private as dm_io list head for storing all dm_io instances
-  * associated with this bio, and this bio's bi_private needs to be
-  * stored in dm_io->data before the reuse.
-  *
-@@ -1494,14 +1494,14 @@ static bool __process_abnormal_io(struct clone_info *ci, struct dm_target *ti,
-  * touch it after splitting. Meantime it won't be changed by anyone after
-  * bio is submitted. So this reuse is safe.
-  */
--static inline struct hlist_head *dm_get_bio_hlist_head(struct bio *bio)
-+static inline struct dm_io **dm_poll_list_head(struct bio *bio)
+diff --git a/block/partitions/core.c b/block/partitions/core.c
+index 2ef8dfa1e5c85..240b3fff521e4 100644
+--- a/block/partitions/core.c
++++ b/block/partitions/core.c
+@@ -200,11 +200,7 @@ static ssize_t part_ro_show(struct device *dev,
+ static ssize_t part_alignment_offset_show(struct device *dev,
+ 					  struct device_attribute *attr, char *buf)
  {
--	return (struct hlist_head *)&bio->bi_private;
-+	return (struct dm_io **)&bio->bi_private;
- }
- 
- static void dm_queue_poll_io(struct bio *bio, struct dm_io *io)
- {
--	struct hlist_head *head = dm_get_bio_hlist_head(bio);
-+	struct dm_io **head = dm_poll_list_head(bio);
- 
- 	if (!(bio->bi_opf & REQ_DM_POLL_LIST)) {
- 		bio->bi_opf |= REQ_DM_POLL_LIST;
-@@ -1511,19 +1511,20 @@ static void dm_queue_poll_io(struct bio *bio, struct dm_io *io)
- 		 */
- 		io->data = bio->bi_private;
- 
--		INIT_HLIST_HEAD(head);
+-	struct block_device *bdev = dev_to_bdev(dev);
 -
- 		/* tell block layer to poll for completion */
- 		bio->bi_cookie = ~BLK_QC_T_NONE;
-+
-+		io->next = NULL;
- 	} else {
- 		/*
- 		 * bio recursed due to split, reuse original poll list,
- 		 * and save bio->bi_private too.
- 		 */
--		io->data = hlist_entry(head->first, struct dm_io, node)->data;
-+		io->data = (*head)->data;
-+		io->next = *head;
- 	}
- 
--	hlist_add_head(&io->node, head);
-+	*head = io;
+-	return sprintf(buf, "%u\n",
+-		queue_limit_alignment_offset(&bdev_get_queue(bdev)->limits,
+-				bdev->bd_start_sect));
++	return sprintf(buf, "%u\n", bdev_alignment_offset(dev_to_bdev(dev)));
  }
  
- /*
-@@ -1677,18 +1678,16 @@ static bool dm_poll_dm_io(struct dm_io *io, struct io_comp_batch *iob,
- static int dm_poll_bio(struct bio *bio, struct io_comp_batch *iob,
- 		       unsigned int flags)
- {
--	struct hlist_head *head = dm_get_bio_hlist_head(bio);
--	struct hlist_head tmp = HLIST_HEAD_INIT;
--	struct hlist_node *next;
--	struct dm_io *io;
-+	struct dm_io **head = dm_poll_list_head(bio);
-+	struct dm_io *list = *head;
-+	struct dm_io *tmp = NULL;
-+	struct dm_io *curr, *next;
- 
- 	/* Only poll normal bio which was marked as REQ_DM_POLL_LIST */
- 	if (!(bio->bi_opf & REQ_DM_POLL_LIST))
- 		return 0;
- 
--	WARN_ON_ONCE(hlist_empty(head));
--
--	hlist_move_list(head, &tmp);
-+	WARN_ON_ONCE(!list);
- 
- 	/*
- 	 * Restore .bi_private before possibly completing dm_io.
-@@ -1699,24 +1698,27 @@ static int dm_poll_bio(struct bio *bio, struct io_comp_batch *iob,
- 	 * clearing REQ_DM_POLL_LIST here.
- 	 */
- 	bio->bi_opf &= ~REQ_DM_POLL_LIST;
--	bio->bi_private = hlist_entry(tmp.first, struct dm_io, node)->data;
-+	bio->bi_private = list->data;
- 
--	hlist_for_each_entry_safe(io, next, &tmp, node) {
--		if (dm_poll_dm_io(io, iob, flags)) {
--			hlist_del_init(&io->node);
-+	for (curr = list, next = curr->next; curr; curr = next, next =
-+			curr ? curr->next : NULL) {
-+		if (dm_poll_dm_io(curr, iob, flags)) {
- 			/*
- 			 * clone_endio() has already occurred, so passing
- 			 * error as 0 here doesn't override io->status
- 			 */
--			dm_io_dec_pending(io, 0);
-+			dm_io_dec_pending(curr, 0);
-+		} else {
-+			curr->next = tmp;
-+			tmp = curr;
- 		}
- 	}
- 
- 	/* Not done? */
--	if (!hlist_empty(&tmp)) {
-+	if (tmp) {
- 		bio->bi_opf |= REQ_DM_POLL_LIST;
- 		/* Reset bio->bi_private to dm_io list head */
--		hlist_move_list(&tmp, head);
-+		*head = tmp;
- 		return 0;
- 	}
- 	return 1;
+ static ssize_t part_discard_alignment_show(struct device *dev,
 -- 
-2.31.1
+2.30.2
 
 --
 dm-devel mailing list
