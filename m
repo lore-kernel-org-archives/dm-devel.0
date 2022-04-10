@@ -1,61 +1,61 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 08609C433EF
-	for <dm-devel@archiver.kernel.org>; Sun, 10 Apr 2022 02:20:30 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7EA09C433F5
+	for <dm-devel@archiver.kernel.org>; Sun, 10 Apr 2022 02:28:16 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-122-7U_TWbI-OvmenFULsc7TWQ-1; Sat, 09 Apr 2022 22:20:26 -0400
-X-MC-Unique: 7U_TWbI-OvmenFULsc7TWQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-257-0qwSsL3FPGmlVKnDwP2CpA-1; Sat, 09 Apr 2022 22:28:13 -0400
+X-MC-Unique: 0qwSsL3FPGmlVKnDwP2CpA-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D7CCC380452F;
-	Sun, 10 Apr 2022 02:20:24 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 205AD101AA42;
+	Sun, 10 Apr 2022 02:28:12 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C4883407E1C2;
-	Sun, 10 Apr 2022 02:20:24 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C10CE2166B40;
+	Sun, 10 Apr 2022 02:28:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 758B219451F1;
-	Sun, 10 Apr 2022 02:20:24 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 95E5119451F0;
+	Sun, 10 Apr 2022 02:28:11 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E544919451F2
- for <dm-devel@listman.corp.redhat.com>; Sun, 10 Apr 2022 02:20:22 +0000 (UTC)
+ ESMTP id 08EBB19451F0
+ for <dm-devel@listman.corp.redhat.com>; Sun, 10 Apr 2022 02:28:11 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id C657D111F3DD; Sun, 10 Apr 2022 02:20:22 +0000 (UTC)
+ id DAA94492D4B; Sun, 10 Apr 2022 02:28:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C1B25111F3DB
- for <dm-devel@redhat.com>; Sun, 10 Apr 2022 02:20:19 +0000 (UTC)
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D68D6492D49
+ for <dm-devel@redhat.com>; Sun, 10 Apr 2022 02:28:10 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C749780346E
- for <dm-devel@redhat.com>; Sun, 10 Apr 2022 02:20:19 +0000 (UTC)
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-404-yk56vvJjNqS7yPTJ_J6nMg-1; Sat, 09 Apr 2022 22:20:17 -0400
-X-MC-Unique: yk56vvJjNqS7yPTJ_J6nMg-1
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BEBA38038E3
+ for <dm-devel@redhat.com>; Sun, 10 Apr 2022 02:28:10 +0000 (UTC)
+Received: from dfw.source.kernel.org (dfw.source.kernel.org
+ [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-542-d-Mqbb-mOCaDVz6njc_oYw-1; Sat, 09 Apr 2022 22:28:08 -0400
+X-MC-Unique: d-Mqbb-mOCaDVz6njc_oYw-1
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by ams.source.kernel.org (Postfix) with ESMTPS id 0FAE1B80B28;
- Sun, 10 Apr 2022 02:20:16 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 13C11C385A0;
- Sun, 10 Apr 2022 02:20:13 +0000 (UTC)
+ by dfw.source.kernel.org (Postfix) with ESMTPS id 98DED60E93;
+ Sun, 10 Apr 2022 02:28:07 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4E93BC385A0;
+ Sun, 10 Apr 2022 02:28:06 +0000 (UTC)
 From: Sasha Levin <sashal@kernel.org>
 To: stable-commits@vger.kernel.org,
 	jordy@jordyzomer.github.io
-Date: Sat,  9 Apr 2022 22:20:12 -0400
-Message-Id: <20220410022012.108017-1-sashal@kernel.org>
+Date: Sat,  9 Apr 2022 22:28:04 -0400
+Message-Id: <20220410022804.113695-1-sashal@kernel.org>
 MIME-Version: 1.0
 X-Patchwork-Hint: ignore
 X-stable: review
@@ -66,9 +66,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 Subject: [dm-devel] Patch "dm ioctl: prevent potential spectre v1 gadget"
- has been added to the 5.16-stable tree
+ has been added to the 5.15-stable tree
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -84,7 +84,7 @@ Cc: dm-devel@redhat.com, Shaohua Li <shli@kernel.org>,
  Mike Snitzer <snitzer@redhat.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -96,19 +96,19 @@ This is a note to let you know that I've just added the patch titled
 
     dm ioctl: prevent potential spectre v1 gadget
 
-to the 5.16-stable tree which can be found at:
+to the 5.15-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
      dm-ioctl-prevent-potential-spectre-v1-gadget.patch
-and it can be found in the queue-5.16 subdirectory.
+and it can be found in the queue-5.15 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
 please let <stable@vger.kernel.org> know about it.
 
 
 
-commit 04a04aac23a88010685beb74645b8f0770334cd4
+commit bd582f0724018b9569c0114c42d83d678ab801cb
 Author: Jordy Zomer <jordy@jordyzomer.github.io>
 Date:   Sat Jan 29 15:58:39 2022 +0100
 
