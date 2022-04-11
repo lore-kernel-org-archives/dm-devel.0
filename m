@@ -1,78 +1,61 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AD29CC433EF
-	for <dm-devel@archiver.kernel.org>; Mon, 11 Apr 2022 23:56:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8C6E6C433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 11 Apr 2022 23:58:32 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-539-SjJVVIhNO3uVj3S280EIPg-1; Mon, 11 Apr 2022 19:56:15 -0400
-X-MC-Unique: SjJVVIhNO3uVj3S280EIPg-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-490-VpLpJfDoOResQbt_VwwPVw-1; Mon, 11 Apr 2022 19:58:28 -0400
+X-MC-Unique: VpLpJfDoOResQbt_VwwPVw-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DDA9785A5BE;
-	Mon, 11 Apr 2022 23:56:13 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 547A6185A79C;
+	Mon, 11 Apr 2022 23:58:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8641A40CF915;
-	Mon, 11 Apr 2022 23:56:13 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 41F90403375;
+	Mon, 11 Apr 2022 23:58:26 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 33CF11949762;
-	Mon, 11 Apr 2022 23:56:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CD7E51949762;
+	Mon, 11 Apr 2022 23:58:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A697C1949762
- for <dm-devel@listman.corp.redhat.com>; Mon, 11 Apr 2022 23:56:11 +0000 (UTC)
+ ESMTP id D85E11949762
+ for <dm-devel@listman.corp.redhat.com>; Mon, 11 Apr 2022 23:58:24 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7F093C44B1A; Mon, 11 Apr 2022 23:56:11 +0000 (UTC)
+ id B5B6E407E1C2; Mon, 11 Apr 2022 23:58:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7AD9AC15D40
- for <dm-devel@redhat.com>; Mon, 11 Apr 2022 23:56:11 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5A51C1C02321
- for <dm-devel@redhat.com>; Mon, 11 Apr 2022 23:56:11 +0000 (UTC)
-Received: from mail-pl1-f172.google.com (mail-pl1-f172.google.com
- [209.85.214.172]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B1A93407F78B
+ for <dm-devel@redhat.com>; Mon, 11 Apr 2022 23:58:24 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 99BC085A5BE
+ for <dm-devel@redhat.com>; Mon, 11 Apr 2022 23:58:24 +0000 (UTC)
+Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk
+ [46.235.227.227]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-201-Mv2b0l47M3GDxPl7-VAIVQ-1; Mon, 11 Apr 2022 19:56:10 -0400
-X-MC-Unique: Mv2b0l47M3GDxPl7-VAIVQ-1
-Received: by mail-pl1-f172.google.com with SMTP id f10so15236925plr.6
- for <dm-devel@redhat.com>; Mon, 11 Apr 2022 16:56:09 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:mime-version:references:in-reply-to:from:date
- :message-id:subject:to:cc;
- bh=u4J7Bf/GotxjJfY4hYTghw/TTioM2LYvPTAkJWjY17E=;
- b=VoVo+ti3KIMCDO8K54dx1rbM3ODcncsUkDJCGJaRoAIaN05xVP3EqNpy25PxbogjQc
- ch3elKKRXx33CpkierD2fwzDxAQ8WKqxAapCqJGCuFhosEaWeY8bkJJ7dXoKoh7Vq5Ft
- ctZIXqStIk45WhSWvJKpSpsyJ6oipGcyK/QHXjpFefb6wATWHwEufZTjXJY2B0OspCB7
- gPWomOr6hzzBlIeU+gXv1apaZ7W1bAUlLPJS+ThsuTF2GuDw0AgRwHUI/txUzV8ihlwg
- Y1k7aqcAaP53xAmRMJMqSDFAns2MwoonfHNUF+QHr3CBIjXi2V1GFekl3W9VkjiSdTft
- oDjg==
-X-Gm-Message-State: AOAM5320LfnPEyaaJhtXcOEoahv6LDahq3CBSMLiO+cCW+DDaikhf4kv
- Qu3NMIKGPqosns8oL9Md5v6RzC2F0bOlL4jhTMPlLw==
-X-Google-Smtp-Source: ABdhPJwz526LJSdeFPj6/c7PsF49maypY+wjW8NyQ8pIICoB0k38/TF9Lk5dkB3kd2++yFgVX8lzKCKbNtcxf9v/5dw=
-X-Received: by 2002:a17:902:7296:b0:14b:4bc6:e81 with SMTP id
- d22-20020a170902729600b0014b4bc60e81mr34383349pll.132.1649721368525; Mon, 11
- Apr 2022 16:56:08 -0700 (PDT)
+ us-mta-482-mVsMpnqUNkaXAUaC6SX73Q-1; Mon, 11 Apr 2022 19:58:22 -0400
+X-MC-Unique: mVsMpnqUNkaXAUaC6SX73Q-1
+Received: from [127.0.0.1] (localhost [127.0.0.1])
+ (Authenticated sender: krisman) with ESMTPSA id 847731F43D1B
+From: Gabriel Krisman Bertazi <krisman@collabora.com>
+To: Khazhismel Kumykov <khazhy@google.com>
+Organization: Collabora
+References: <20220411220335.1235363-1-khazhy@google.com>
+Date: Mon, 11 Apr 2022 19:48:53 -0400
+In-Reply-To: <20220411220335.1235363-1-khazhy@google.com> (Khazhismel
+ Kumykov's message of "Mon, 11 Apr 2022 15:03:35 -0700")
+Message-ID: <87wnfvxjtm.fsf@collabora.com>
+User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.2 (gnu/linux)
 MIME-Version: 1.0
-References: <20220405194747.2386619-1-jane.chu@oracle.com>
- <20220405194747.2386619-5-jane.chu@oracle.com>
- <Yk0i/pODntZ7lbDo@infradead.org>
- <196d51a3-b3cc-02ae-0d7d-ee6fbb4d50e4@oracle.com>
- <Yk52415cnFa39qil@infradead.org>
-In-Reply-To: <Yk52415cnFa39qil@infradead.org>
-From: Dan Williams <dan.j.williams@intel.com>
-Date: Mon, 11 Apr 2022 16:55:58 -0700
-Message-ID: <CAPcyv4gfF4AhxD_vqCS9CTRraj8GAMDYQ7Zb411+FvxhF4ccOw@mail.gmail.com>
-To: Christoph Hellwig <hch@infradead.org>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -80,9 +63,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH v7 4/6] dax: add DAX_RECOVERY flag and
- .recovery_write dev_pgmap_ops
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+Subject: Re: [dm-devel] [PATCH] dm mpath: fixup sched_clock() usage in
+ historical selector
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -94,23 +77,11 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jane Chu <jane.chu@oracle.com>,
- "nvdimm@lists.linux.dev" <nvdimm@lists.linux.dev>,
- "dave.jiang@intel.com" <dave.jiang@intel.com>,
- "snitzer@redhat.com" <snitzer@redhat.com>,
- "djwong@kernel.org" <djwong@kernel.org>, "x86@kernel.org" <x86@kernel.org>,
- "david@fromorbit.com" <david@fromorbit.com>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- "willy@infradead.org" <willy@infradead.org>,
- "linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>,
- "vgoyal@redhat.com" <vgoyal@redhat.com>,
- "vishal.l.verma@intel.com" <vishal.l.verma@intel.com>,
- "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
- "ira.weiny@intel.com" <ira.weiny@intel.com>, "agk@redhat.com" <agk@redhat.com>
+Cc: dm-devel@redhat.com, Mike Snitzer <snitzer@kernel.org>,
+ linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -118,36 +89,71 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Apr 6, 2022 at 10:31 PM Christoph Hellwig <hch@infradead.org> wrote:
+Khazhismel Kumykov <khazhy@google.com> writes:
+
+> mixing sched_clock() and ktime_get_ns() will give bad results, don't do
+> it
 >
-> On Wed, Apr 06, 2022 at 05:32:31PM +0000, Jane Chu wrote:
-> > Yes, I believe Dan was motivated by avoiding the dm dance as a result of
-> > adding .recovery_write to dax_operations.
-> >
-> > I understand your point about .recovery_write is device specific and
-> > thus not something appropriate for device agnostic ops.
-> >
-> > I can see 2 options so far -
-> >
-> > 1)  add .recovery_write to dax_operations and do the dm dance to hunt
-> > down to the base device that actually provides the recovery action
+> Fixes: 2613eab11996 ("dm mpath: add Historical Service Time Path Selector")
+> Signed-off-by: Khazhismel Kumykov <khazhy@google.com>
+
+Looks good.
+
+Reviewed-by: Gabriel Krisman Bertazi <krisman@collabora.com>
+
+
+> ---
+>  drivers/md/dm-ps-historical-service-time.c | 11 +++++------
+>  1 file changed, 5 insertions(+), 6 deletions(-)
 >
-> That would be my preference.  But I'll wait for Dan to chime in.
+> diff --git a/drivers/md/dm-ps-historical-service-time.c b/drivers/md/dm-ps-historical-service-time.c
+> index 875bca30a0dd..82f2a06153dc 100644
+> --- a/drivers/md/dm-ps-historical-service-time.c
+> +++ b/drivers/md/dm-ps-historical-service-time.c
+> @@ -27,7 +27,6 @@
+>  #include <linux/blkdev.h>
+>  #include <linux/slab.h>
+>  #include <linux/module.h>
+> -#include <linux/sched/clock.h>
+>  
+>  
+>  #define DM_MSG_PREFIX	"multipath historical-service-time"
+> @@ -433,7 +432,7 @@ static struct dm_path *hst_select_path(struct path_selector *ps,
+>  {
+>  	struct selector *s = ps->context;
+>  	struct path_info *pi = NULL, *best = NULL;
+> -	u64 time_now = sched_clock();
+> +	u64 time_now = ktime_get_ns();
+>  	struct dm_path *ret = NULL;
+>  	unsigned long flags;
+>  
+> @@ -474,7 +473,7 @@ static int hst_start_io(struct path_selector *ps, struct dm_path *path,
+>  
+>  static u64 path_service_time(struct path_info *pi, u64 start_time)
+>  {
+> -	u64 sched_now = ktime_get_ns();
+> +	u64 now = ktime_get_ns();
+>  
+>  	/* if a previous disk request has finished after this IO was
+>  	 * sent to the hardware, pretend the submission happened
+> @@ -483,11 +482,11 @@ static u64 path_service_time(struct path_info *pi, u64 start_time)
+>  	if (time_after64(pi->last_finish, start_time))
+>  		start_time = pi->last_finish;
+>  
+> -	pi->last_finish = sched_now;
+> -	if (time_before64(sched_now, start_time))
+> +	pi->last_finish = now;
+> +	if (time_before64(now, start_time))
+>  		return 0;
+>  
+> -	return sched_now - start_time;
+> +	return now - start_time;
+>  }
+>  
+>  static int hst_end_io(struct path_selector *ps, struct dm_path *path,
 
-Yeah, so the motivation was avoiding plumbing recovery through stacked
-lookups when the recovery is specific to a pfn and the provider of
-that pfn, but I also see it from Christoph's perspective that the only
-agent that cares about recovery is the fsdax I/O path. Certainly
-having ->dax_direct_access() take a DAX_RECOVERY flag and the op
-itself go through the pgmap is a confusing split that I did not
-anticipate when I made the suggestion. Since that flag must be there,
-then the ->recovery_write() should also stay relative to a dax device.
-
-Apologies for the thrash Jane.
-
-One ask though, please separate plumbing the new flag argument to
-->dax_direct_access() and plumbing the new operation into preparation
-patches before filling them in with the new goodness.
+-- 
+Gabriel Krisman Bertazi
 
 --
 dm-devel mailing list
