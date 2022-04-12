@@ -4,84 +4,65 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8BBDFC433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 12 Apr 2022 00:08:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5B9D8C433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 12 Apr 2022 00:09:26 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1649722165;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=sJRWmWcIbHhWUoJw3RN+oct19gTGFu3gCTDcV1wDxOQ=;
+	b=fNHGFiz6swsrcGoKtJOcb9+3zhpdezhKEdb5GTZe6YKHegikGFvd7eMdq0sau2A/L1DiXS
+	M7eUI4Q/afsJPsNtneKSnxgiIbmJE+aV4OkWFRAFVmQReMrjoXEV72fQAufEump/2IHt4U
+	56MyS0ZXE8nXqlCKFYa2fk8L6+DE8O0=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-539-aB05dabhMPCCVGtQGZUsdw-1; Mon, 11 Apr 2022 20:08:41 -0400
-X-MC-Unique: aB05dabhMPCCVGtQGZUsdw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-251-HGK59Iz8MBKXetkjGLBpjA-1; Mon, 11 Apr 2022 20:09:22 -0400
+X-MC-Unique: HGK59Iz8MBKXetkjGLBpjA-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A1E54801005;
-	Tue, 12 Apr 2022 00:08:39 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6EA22811E81;
+	Tue, 12 Apr 2022 00:09:20 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 535331454543;
-	Tue, 12 Apr 2022 00:08:39 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5B82B111E410;
+	Tue, 12 Apr 2022 00:09:20 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 09E9B1949762;
-	Tue, 12 Apr 2022 00:08:39 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id F30211949762;
+	Tue, 12 Apr 2022 00:09:19 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8309B1947BBF
- for <dm-devel@listman.corp.redhat.com>; Tue, 12 Apr 2022 00:08:37 +0000 (UTC)
+ ESMTP id E56081947BBF
+ for <dm-devel@listman.corp.redhat.com>; Tue, 12 Apr 2022 00:09:18 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7099340F4943; Tue, 12 Apr 2022 00:08:37 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 6C55540F4941
- for <dm-devel@redhat.com>; Tue, 12 Apr 2022 00:08:37 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 49BFD2A59546
- for <dm-devel@redhat.com>; Tue, 12 Apr 2022 00:08:37 +0000 (UTC)
-Received: from mail-pj1-f45.google.com (mail-pj1-f45.google.com
- [209.85.216.45]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-457-KsfLbQ3xNqKjgidVzZhmuA-1; Mon, 11 Apr 2022 20:08:33 -0400
-X-MC-Unique: KsfLbQ3xNqKjgidVzZhmuA-1
-Received: by mail-pj1-f45.google.com with SMTP id
- mp16-20020a17090b191000b001cb5efbcab6so896064pjb.4
- for <dm-devel@redhat.com>; Mon, 11 Apr 2022 17:08:33 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:mime-version:references:in-reply-to:from:date
- :message-id:subject:to:cc;
- bh=2wEkt+Fl5QHii5v8XtDT8LMRWz6S8eR3qRxTt2Sw5V4=;
- b=fJrYXeNNiQ28BpMpCIXP5TwJmGjedF9QNbtKHpRewlSy5ltLa0hViOcOVcl1++k8j3
- JhBEsJ6N+BQuAQnHMLb3rgmCzY1RIArtgwysfex/D0mbFnYeq51dYn93TIpcv1+mdjVh
- aVsmZMoBlaiF/Yb8f6rGdCkZ9aeY66BbbojSr7kttcUlj5JADwkqqOu2RuHe3QnDf3lB
- APceXo7hHSOBlrz1W5wIqooxu4SoBxXIq0OqF3dWZCNHk1JsWiUAL4n5yE6H7vF0JxQU
- shu6bepAnouQ3iosGKzR5KCLyZkn59UjiHfi4p7Sm8bwNIKs8wCPTi589uFSCVKcjWoR
- 0aaw==
-X-Gm-Message-State: AOAM532i3hEi81qVs3+fMu5OAfNm6GPJmE04r0BLJkCnUdhWvGBk6n14
- +v/YZwZrXj1Z6jOoJLkeRKfp2XJPZNue7zW/u8nSPg==
-X-Google-Smtp-Source: ABdhPJwiqEMeg1D9j4J0Y+o8ZfMSN8ekDMHy7Zw5j+2VdEX4b8YSMIxWQgkLUtHS84yYy4GAXTgkQnH5MT/1f7wCXo8=
-X-Received: by 2002:a17:903:32c5:b0:156:b466:c8ed with SMTP id
- i5-20020a17090332c500b00156b466c8edmr34561265plr.34.1649722112368; Mon, 11
- Apr 2022 17:08:32 -0700 (PDT)
+ id B8B3B40147F; Tue, 12 Apr 2022 00:09:18 +0000 (UTC)
+Received: from T590 (ovpn-8-19.pek2.redhat.com [10.72.8.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 9181C54ACB9;
+ Tue, 12 Apr 2022 00:09:14 +0000 (UTC)
+Date: Tue, 12 Apr 2022 08:09:08 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Message-ID: <YlTDJMxutPBszCg7@T590>
+References: <8b9078c2-7884-a5b5-5aa9-ad284b4068ef@opensource.wdc.com>
+ <YlN4BC2qbGODxbVz@T590>
+ <95d8a8ed-27f8-0d88-a543-16910dca83e3@opensource.wdc.com>
+ <YlN+plgvwZQdPBGj@T590>
+ <7ccf1709-8aec-18c3-1d09-fe03b4a57017@opensource.wdc.com>
+ <6b617a59-1591-8323-9de8-b39247eb328f@opensource.wdc.com>
+ <YlPZ7vSZGMZBaRDv@T590>
+ <54279bbe-6e8b-2c0a-90fc-825b89863b3f@opensource.wdc.com>
+ <YlQ4na/HwBSm5C3U@T590>
+ <869a7210-a0f0-4aae-3e90-cdfe30a72434@opensource.wdc.com>
 MIME-Version: 1.0
-References: <20220405194747.2386619-1-jane.chu@oracle.com>
- <20220405194747.2386619-5-jane.chu@oracle.com>
-In-Reply-To: <20220405194747.2386619-5-jane.chu@oracle.com>
-From: Dan Williams <dan.j.williams@intel.com>
-Date: Mon, 11 Apr 2022 17:08:21 -0700
-Message-ID: <CAPcyv4ij8VxaeosTsRFgUTnSpRRaxWnxWK6xvUJrhmT-7ae+-Q@mail.gmail.com>
-To: Jane Chu <jane.chu@oracle.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH v7 4/6] dax: add DAX_RECOVERY flag and
- .recovery_write dev_pgmap_ops
+In-Reply-To: <869a7210-a0f0-4aae-3e90-cdfe30a72434@opensource.wdc.com>
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+Subject: Re: [dm-devel] [PATCH 1/3] dm: don't grab target io reference in
+ dm_zone_map_bio
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -93,307 +74,161 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Dave Jiang <dave.jiang@intel.com>,
- Mike Snitzer <snitzer@redhat.com>, "Darrick J. Wong" <djwong@kernel.org>,
- X86 ML <x86@kernel.org>, david <david@fromorbit.com>,
- Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
- Matthew Wilcox <willy@infradead.org>, Christoph Hellwig <hch@infradead.org>,
- device-mapper development <dm-devel@redhat.com>,
- Vivek Goyal <vgoyal@redhat.com>, Vishal L Verma <vishal.l.verma@intel.com>,
- linux-fsdevel <linux-fsdevel@vger.kernel.org>, "Weiny,
- Ira" <ira.weiny@intel.com>, linux-xfs <linux-xfs@vger.kernel.org>,
- Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, Damien Le Moal <damien.lemoal@wdc.com>,
+ Mike Snitzer <snitzer@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Apr 5, 2022 at 12:48 PM Jane Chu <jane.chu@oracle.com> wrote:
->
-> Introduce DAX_RECOVERY flag to dax_direct_access(). The flag is
-> not set by default in dax_direct_access() such that the helper
-> does not translate a pmem range to kernel virtual address if the
-> range contains uncorrectable errors.  When the flag is set,
-> the helper ignores the UEs and return kernel virtual adderss so
-> that the caller may get on with data recovery via write.
->
-> Also introduce a new dev_pagemap_ops .recovery_write function.
-> The function is applicable to FSDAX device only. The device
-> page backend driver provides .recovery_write function if the
-> device has underlying mechanism to clear the uncorrectable
-> errors on the fly.
->
-> Signed-off-by: Jane Chu <jane.chu@oracle.com>
-> ---
->  drivers/dax/super.c             | 17 ++++++++--
->  drivers/md/dm-linear.c          |  4 +--
->  drivers/md/dm-log-writes.c      |  5 +--
->  drivers/md/dm-stripe.c          |  4 +--
->  drivers/md/dm-target.c          |  2 +-
->  drivers/md/dm-writecache.c      |  5 +--
->  drivers/md/dm.c                 |  5 +--
->  drivers/nvdimm/pmem.c           | 57 +++++++++++++++++++++++++++------
->  drivers/nvdimm/pmem.h           |  2 +-
->  drivers/s390/block/dcssblk.c    |  4 +--
->  fs/dax.c                        | 24 ++++++++++----
->  fs/fuse/dax.c                   |  4 +--
->  include/linux/dax.h             | 11 +++++--
->  include/linux/device-mapper.h   |  2 +-
->  include/linux/memremap.h        |  7 ++++
->  tools/testing/nvdimm/pmem-dax.c |  2 +-
->  16 files changed, 116 insertions(+), 39 deletions(-)
->
-> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-> index 0211e6f7b47a..8252858cd25a 100644
-> --- a/drivers/dax/super.c
-> +++ b/drivers/dax/super.c
-> @@ -13,6 +13,7 @@
->  #include <linux/uio.h>
->  #include <linux/dax.h>
->  #include <linux/fs.h>
-> +#include <linux/memremap.h>
->  #include "dax-private.h"
->
->  /**
-> @@ -117,6 +118,7 @@ enum dax_device_flags {
->   * @dax_dev: a dax_device instance representing the logical memory range
->   * @pgoff: offset in pages from the start of the device to translate
->   * @nr_pages: number of consecutive pages caller can handle relative to @pfn
-> + * @flags: by default 0, set to DAX_RECOVERY to kick start dax recovery
->   * @kaddr: output parameter that returns a virtual address mapping of pfn
->   * @pfn: output parameter that returns an absolute pfn translation of @pgoff
->   *
-> @@ -124,7 +126,7 @@ enum dax_device_flags {
->   * pages accessible at the device relative @pgoff.
->   */
->  long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
-> -               void **kaddr, pfn_t *pfn)
-> +               int flags, void **kaddr, pfn_t *pfn)
->  {
->         long avail;
->
-> @@ -137,7 +139,7 @@ long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
->         if (nr_pages < 0)
->                 return -EINVAL;
->
-> -       avail = dax_dev->ops->direct_access(dax_dev, pgoff, nr_pages,
-> +       avail = dax_dev->ops->direct_access(dax_dev, pgoff, nr_pages, flags,
->                         kaddr, pfn);
->         if (!avail)
->                 return -ERANGE;
-> @@ -194,6 +196,17 @@ int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
->  }
->  EXPORT_SYMBOL_GPL(dax_zero_page_range);
->
-> +size_t dax_recovery_write(struct dax_device *dax_dev, pgoff_t pgoff,
-> +               pfn_t pfn, void *addr, size_t bytes, struct iov_iter *iter)
-> +{
-> +       struct dev_pagemap *pgmap = get_dev_pagemap(pfn_t_to_pfn(pfn), NULL);
-> +
-> +       if (!pgmap || !pgmap->ops || !pgmap->ops->recovery_write)
-> +               return 0;
-> +       return pgmap->ops->recovery_write(pgmap, pgoff, addr, bytes, iter);
-> +}
-> +EXPORT_SYMBOL_GPL(dax_recovery_write);
-> +
->  #ifdef CONFIG_ARCH_HAS_PMEM_API
->  void arch_wb_cache_pmem(void *addr, size_t size);
->  void dax_flush(struct dax_device *dax_dev, void *addr, size_t size)
-> diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-> index 76b486e4d2be..9e6d8bdf3b2a 100644
-> --- a/drivers/md/dm-linear.c
-> +++ b/drivers/md/dm-linear.c
-> @@ -172,11 +172,11 @@ static struct dax_device *linear_dax_pgoff(struct dm_target *ti, pgoff_t *pgoff)
->  }
->
->  static long linear_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
-> -               long nr_pages, void **kaddr, pfn_t *pfn)
-> +               long nr_pages, int flags, void **kaddr, pfn_t *pfn)
->  {
->         struct dax_device *dax_dev = linear_dax_pgoff(ti, &pgoff);
->
-> -       return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
-> +       return dax_direct_access(dax_dev, pgoff, nr_pages, flags, kaddr, pfn);
->  }
->
->  static int linear_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
-> diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-> index c9d036d6bb2e..e23f062ade5f 100644
-> --- a/drivers/md/dm-log-writes.c
-> +++ b/drivers/md/dm-log-writes.c
-> @@ -889,11 +889,12 @@ static struct dax_device *log_writes_dax_pgoff(struct dm_target *ti,
->  }
->
->  static long log_writes_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
-> -                                        long nr_pages, void **kaddr, pfn_t *pfn)
-> +                                        long nr_pages, int flags,
-> +                                        void **kaddr, pfn_t *pfn)
->  {
->         struct dax_device *dax_dev = log_writes_dax_pgoff(ti, &pgoff);
->
-> -       return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
-> +       return dax_direct_access(dax_dev, pgoff, nr_pages, flags, kaddr, pfn);
->  }
->
->  static int log_writes_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
-> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-> index c81d331d1afe..b89339c78702 100644
-> --- a/drivers/md/dm-stripe.c
-> +++ b/drivers/md/dm-stripe.c
-> @@ -315,11 +315,11 @@ static struct dax_device *stripe_dax_pgoff(struct dm_target *ti, pgoff_t *pgoff)
->  }
->
->  static long stripe_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
-> -               long nr_pages, void **kaddr, pfn_t *pfn)
-> +               long nr_pages, int flags, void **kaddr, pfn_t *pfn)
->  {
->         struct dax_device *dax_dev = stripe_dax_pgoff(ti, &pgoff);
->
-> -       return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
-> +       return dax_direct_access(dax_dev, pgoff, nr_pages, flags, kaddr, pfn);
->  }
->
->  static int stripe_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
-> diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
-> index 64dd0b34fcf4..24b1e5628f3a 100644
-> --- a/drivers/md/dm-target.c
-> +++ b/drivers/md/dm-target.c
-> @@ -142,7 +142,7 @@ static void io_err_release_clone_rq(struct request *clone,
->  }
->
->  static long io_err_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
-> -               long nr_pages, void **kaddr, pfn_t *pfn)
-> +               long nr_pages, int flags, void **kaddr, pfn_t *pfn)
->  {
->         return -EIO;
->  }
-> diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> index 5630b470ba42..180ca8fa383e 100644
-> --- a/drivers/md/dm-writecache.c
-> +++ b/drivers/md/dm-writecache.c
-> @@ -286,7 +286,8 @@ static int persistent_memory_claim(struct dm_writecache *wc)
->
->         id = dax_read_lock();
->
-> -       da = dax_direct_access(wc->ssd_dev->dax_dev, offset, p, &wc->memory_map, &pfn);
-> +       da = dax_direct_access(wc->ssd_dev->dax_dev, offset, p, 0,
-> +                       &wc->memory_map, &pfn);
->         if (da < 0) {
->                 wc->memory_map = NULL;
->                 r = da;
-> @@ -309,7 +310,7 @@ static int persistent_memory_claim(struct dm_writecache *wc)
->                 do {
->                         long daa;
->                         daa = dax_direct_access(wc->ssd_dev->dax_dev, offset + i, p - i,
-> -                                               NULL, &pfn);
-> +                                               0, NULL, &pfn);
->                         if (daa <= 0) {
->                                 r = daa ? daa : -EINVAL;
->                                 goto err3;
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index ad2e0bbeb559..a8c697bb6603 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1087,7 +1087,8 @@ static struct dm_target *dm_dax_get_live_target(struct mapped_device *md,
->  }
->
->  static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
-> -                                long nr_pages, void **kaddr, pfn_t *pfn)
-> +                                long nr_pages, int flags, void **kaddr,
-> +                                pfn_t *pfn)
->  {
->         struct mapped_device *md = dax_get_private(dax_dev);
->         sector_t sector = pgoff * PAGE_SECTORS;
-> @@ -1105,7 +1106,7 @@ static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
->         if (len < 1)
->                 goto out;
->         nr_pages = min(len, nr_pages);
-> -       ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
-> +       ret = ti->type->direct_access(ti, pgoff, nr_pages, flags, kaddr, pfn);
->
->   out:
->         dm_put_live_table(md, srcu_idx);
-> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-> index 30c71a68175b..0400c5a7ba39 100644
-> --- a/drivers/nvdimm/pmem.c
-> +++ b/drivers/nvdimm/pmem.c
-> @@ -238,12 +238,23 @@ static int pmem_rw_page(struct block_device *bdev, sector_t sector,
->
->  /* see "strong" declaration in tools/testing/nvdimm/pmem-dax.c */
->  __weak long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
-> -               long nr_pages, void **kaddr, pfn_t *pfn)
-> +               long nr_pages, int flags, void **kaddr, pfn_t *pfn)
->  {
->         resource_size_t offset = PFN_PHYS(pgoff) + pmem->data_offset;
-> +       sector_t sector = PFN_PHYS(pgoff) >> SECTOR_SHIFT;
-> +       unsigned int num = PFN_PHYS(nr_pages) >> SECTOR_SHIFT;
-> +       struct badblocks *bb = &pmem->bb;
-> +       sector_t first_bad;
-> +       int num_bad;
-> +       bool bad_in_range;
-> +       long actual_nr;
-> +
-> +       if (!bb->count)
-> +               bad_in_range = false;
-> +       else
-> +               bad_in_range = !!badblocks_check(bb, sector, num, &first_bad, &num_bad);
+On Tue, Apr 12, 2022 at 08:33:04AM +0900, Damien Le Moal wrote:
+> On 4/11/22 23:18, Ming Lei wrote:
+> >>>> This fixes the issue:
+> >>>>
+> >>>> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> >>>> index 3c5fad7c4ee6..3dd6735450c5 100644
+> >>>> --- a/drivers/md/dm.c
+> >>>> +++ b/drivers/md/dm.c
+> >>>> @@ -581,7 +581,7 @@ static struct dm_io *alloc_io(struct mapped_device
+> >>>> *md, struct bio *bio)
+> >>>>         io->status = 0;
+> >>>>         atomic_set(&io->io_count, 1);
+> >>>>         this_cpu_inc(*md->pending_io);
+> >>>> -       io->orig_bio = NULL;
+> >>>> +       io->orig_bio = bio;
+> >>>>         io->md = md;
+> >>>>         io->map_task = current;
+> >>>>         spin_lock_init(&io->lock);
+> >>>>
+> >>>> Otherwise, the dm-zone.c code sees a NULL orig_bio.
+> >>>> However, this change may be messing up the bio accounting. Need to check that.
+> >>>
+> >>> Looks it is one recent regression since:
+> >>>
+> >>> commit 0fbb4d93b38b ("dm: add dm_submit_bio_remap interface")
+> >>
+> >> Yep, saw that. Problem is, I really do not understand that change setting
+> >> io->orig_bio *after* __map_bio() is called. It seems that the accounting
+> >> is done on each fragment of the orig_bio instead of once for the entire
+> >> BIO... So my "fix" above seems wrong. Apart from passing along orig_bio as
+> >> an argument to  __map_bio() from __split_and_process_bio(), I do not think
+> >> my change is correct. Thoughts ?
+> > 
+> > Frankly speaking, both changing ->orig_bio after split and setting ->orig_bio
+> > after ->map() looks ugly & tricky, and the following change should avoid the
+> > issue, meantime simplify dm accounting a bit:
+> > 
+> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> > index 3c5fad7c4ee6..f1fe83113608 100644
+> > --- a/drivers/md/dm.c
+> > +++ b/drivers/md/dm.c
+> > @@ -581,7 +581,7 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
+> >  	io->status = 0;
+> >  	atomic_set(&io->io_count, 1);
+> >  	this_cpu_inc(*md->pending_io);
+> > -	io->orig_bio = NULL;
+> > +	io->orig_bio = bio;
+> >  	io->md = md;
+> >  	io->map_task = current;
+> >  	spin_lock_init(&io->lock);
+> > @@ -1223,19 +1223,11 @@ void dm_submit_bio_remap(struct bio *clone, struct bio *tgt_clone)
+> >  	 * Account io->origin_bio to DM dev on behalf of target
+> >  	 * that took ownership of IO with DM_MAPIO_SUBMITTED.
+> >  	 */
+> > -	if (io->map_task == current) {
+> > +	if (io->map_task == current)
+> >  		/* Still in target's map function */
+> >  		dm_io_set_flag(io, DM_IO_START_ACCT);
+> > -	} else {
+> > -		/*
+> > -		 * Called by another thread, managed by DM target,
+> > -		 * wait for dm_split_and_process_bio() to store
+> > -		 * io->orig_bio
+> > -		 */
+> > -		while (unlikely(!smp_load_acquire(&io->orig_bio)))
+> > -			msleep(1);
+> > +	else
+> 
+> Curly brackets around the else here.
+> 
+> >  		dm_start_io_acct(io, clone);
+> > -	}
+> >  
+> >  	__dm_submit_bio_remap(tgt_clone, disk_devt(io->md->disk),
+> >  			      tio->old_sector);
+> > @@ -1562,7 +1554,7 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+> >  				     struct dm_table *map, struct bio *bio)
+> >  {
+> >  	struct clone_info ci;
+> > -	struct bio *orig_bio = NULL;
+> > +	struct bio *new_bio = NULL;
+> >  	int error = 0;
+> >  
+> >  	init_clone_info(&ci, md, map, bio);
+> > @@ -1578,22 +1570,14 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+> >  	if (error || !ci.sector_count)
+> >  		goto out;
+> >  
+> > -	/*
+> > -	 * Remainder must be passed to submit_bio_noacct() so it gets handled
+> > -	 * *after* bios already submitted have been completely processed.
+> > -	 * We take a clone of the original to store in ci.io->orig_bio to be
+> > -	 * used by dm_end_io_acct() and for dm_io_complete() to use for
+> > -	 * completion handling.
+> > -	 */
+> 
+> This comment should remain with some adjustment.
 
-Why all this change...
+Fine, just felt the approach is very straightforward.
 
->
-> -       if (unlikely(is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512,
-> -                                       PFN_PHYS(nr_pages))))
+> 
+> > -	orig_bio = bio_split(bio, bio_sectors(bio) - ci.sector_count,
+> > -			     GFP_NOIO, &md->queue->bio_split);
+> > -	bio_chain(orig_bio, bio);
+> > -	trace_block_split(orig_bio, bio->bi_iter.bi_sector);
+> > -	submit_bio_noacct(bio);
+> > +	new_bio = bio_alloc_clone(bio->bi_bdev, bio, GFP_NOIO,
+> > +			&md->queue->bio_split);
+> 
+> Why not keep using bio_split() ?
 
-...instead of adding "&& !(flags & DAX_RECOVERY)" to this statement?
+With bio_split(), 'bio' actually tracks the remainder, and the returned
+'orig_bio' tracks the part for current target io, so ->orig_bio has to
+be updated in this way.
 
-> +       if (bad_in_range && !(flags & DAX_RECOVERY))
->                 return -EIO;
->
->         if (kaddr)
-> @@ -251,13 +262,26 @@ __weak long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
->         if (pfn)
->                 *pfn = phys_to_pfn_t(pmem->phys_addr + offset, pmem->pfn_flags);
->
-> +       if (!bad_in_range) {
-> +               /*
-> +                * If badblock is present but not in the range, limit known good range
-> +                * to the requested range.
-> +                */
-> +               if (bb->count)
-> +                       return nr_pages;
-> +               return PHYS_PFN(pmem->size - pmem->pfn_pad - offset);
-> +       }
-> +
->         /*
-> -        * If badblocks are present, limit known good range to the
-> -        * requested range.
-> +        * In case poison is found in the given range and DAX_RECOVERY flag is set,
-> +        * recovery stride is set to kernel page size because the underlying driver and
-> +        * firmware clear poison functions don't appear to handle large chunk (such as
-> +        * 2MiB) reliably.
->          */
-> -       if (unlikely(pmem->bb.count))
-> -               return nr_pages;
-> -       return PHYS_PFN(pmem->size - pmem->pfn_pad - offset);
-> +       actual_nr = PHYS_PFN(PAGE_ALIGN((first_bad - sector) << SECTOR_SHIFT));
-> +       dev_dbg(pmem->bb.dev, "start sector(%llu), nr_pages(%ld), first_bad(%llu), actual_nr(%ld)\n",
-> +                       sector, nr_pages, first_bad, actual_nr);
-> +       return (actual_nr == 0) ? 1 : actual_nr;
+With bio_alloc_clone() and bio_trim(), ->orig_bio needn't to be
+changed, and assigning it in alloc_io() works perfectly.
 
-Similar feedback as above that this is more change than I would expect.
+> 
+> > +	bio_trim(new_bio, bio_sectors(bio) - ci.sector_count, ci.sector_count);
+> > +	bio_trim(bio, 0, bio_sectors(bio) - ci.sector_count);
+> > +	bio_chain(new_bio, bio);
+> > +	trace_block_split(new_bio, new_bio->bi_iter.bi_sector);
+> > +	submit_bio_noacct(new_bio);
+> >  out:
+> > -	if (!orig_bio)
+> > -		orig_bio = bio;
+> > -	smp_store_release(&ci.io->orig_bio, orig_bio);
+> >  	if (dm_io_flagged(ci.io, DM_IO_START_ACCT))
+> >  		dm_start_io_acct(ci.io, NULL);
+> 
+> I tested this and it works. Need to check the accounting though.
+> And I agree this is a lot cleaner :)
 
-I think just adding...
+BTW, the cloned bio for split is just for accounting purpose, if
+->bi_iter.bi_sector & ->bi_iter.bi_size can be stored in 'struct dm_io',
+the cloned bio can be avoided, but code may become not readable as
+before.
 
-if (flags & DAX_RECOVERY)
-   return 1;
 
-...before the typical return path is enough.
-
+Thanks,
+Ming
 --
 dm-devel mailing list
 dm-devel@redhat.com
