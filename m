@@ -1,68 +1,101 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0D3C4C433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 12 Apr 2022 22:01:38 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1649800897;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=zsBjfNfakJErkKCpWL5qVu3lkRx2B6lJkG+OLBjMZrM=;
-	b=XD9vGnhNi09j9JI3slFpDSCN7GXd7+PhVk+8tVY+6e8B8McWi6We3Mf4dIcCIVYfcJXqiR
-	TyicLeMxHDh/CG0RBeZ8KhkIusauiH89J0wOXU2ZNtwGwETSDWRwIkDuiUcmIStwyFpMlI
-	9gcnwcjwVVG5I/QYSSzEGmu0gr4N/qo=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6C2FAC433F5
+	for <dm-devel@archiver.kernel.org>; Tue, 12 Apr 2022 22:38:47 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-208-F27DPyM5NMeeW9kihoVP0Q-1; Tue, 12 Apr 2022 18:01:34 -0400
-X-MC-Unique: F27DPyM5NMeeW9kihoVP0Q-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-369-ctF1-x-iPM-PQVHELrl0nw-1; Tue, 12 Apr 2022 18:38:43 -0400
+X-MC-Unique: ctF1-x-iPM-PQVHELrl0nw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 88B2A1C05EBE;
-	Tue, 12 Apr 2022 22:01:32 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7A2D8802803;
+	Tue, 12 Apr 2022 22:38:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 41835C27EA6;
-	Tue, 12 Apr 2022 22:01:29 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1DFB9404D8F4;
+	Tue, 12 Apr 2022 22:38:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7C0201949763;
-	Tue, 12 Apr 2022 22:01:28 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D553A1949763;
+	Tue, 12 Apr 2022 22:38:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 9DE0E1947BBE
- for <dm-devel@listman.corp.redhat.com>; Tue, 12 Apr 2022 22:01:27 +0000 (UTC)
+ ESMTP id C04D81947BBE
+ for <dm-devel@listman.corp.redhat.com>; Tue, 12 Apr 2022 22:38:39 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 8E07CC27EA6; Tue, 12 Apr 2022 22:01:27 +0000 (UTC)
-Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 75009C27EA0;
- Tue, 12 Apr 2022 22:01:27 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 23CM1Q2d017173;
- Tue, 12 Apr 2022 17:01:26 -0500
-Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 23CM1PwK017172;
- Tue, 12 Apr 2022 17:01:25 -0500
-Date: Tue, 12 Apr 2022 17:01:25 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Message-ID: <20220412220125.GH24684@octiron.msp.redhat.com>
-References: <1649728799-11790-1-git-send-email-bmarzins@redhat.com>
- <95a66d760a1ad8ac943de611ebb3e61d5a41afdb.camel@suse.com>
- <20220412184728.GF24684@octiron.msp.redhat.com>
- <92f53b4d9679a2d958643fe3cc72a09bda4c73fb.camel@suse.com>
+ id ABC9C2167D63; Tue, 12 Apr 2022 22:38:39 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A5B1F2166B1B
+ for <dm-devel@redhat.com>; Tue, 12 Apr 2022 22:38:36 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8CF38101A52C
+ for <dm-devel@redhat.com>; Tue, 12 Apr 2022 22:38:36 +0000 (UTC)
+Received: from esa4.hgst.iphmx.com (esa4.hgst.iphmx.com [216.71.154.42]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-644-wQyYTXMaNzGqntnmemo7RQ-1; Tue, 12 Apr 2022 18:38:34 -0400
+X-MC-Unique: wQyYTXMaNzGqntnmemo7RQ-1
+X-IronPort-AV: E=Sophos;i="5.90,254,1643644800"; d="scan'208";a="196635188"
+Received: from h199-255-45-15.hgst.com (HELO uls-op-cesaep02.wdc.com)
+ ([199.255.45.15])
+ by ob1.hgst.iphmx.com with ESMTP; 13 Apr 2022 06:38:32 +0800
+IronPort-SDR: IsJTTNBtWRZN/a9gGFWZ/0kYGX+QfJw4qVUUtNsnaVTr97M8PVCiYaJIzg9FOEl06jyy5L1Iw6
+ t/P7sSWTLF5JreJPg3JKmSJAOqhRpRbW5P/UWCsfSH+f4u9VqPWIeOUW/zhIeF5xem7EHsnxR7
+ inxoTwwSLPke4HjWTju+Pgp98DoMu5t9olXI00a3qIx11m4rbvZOeIA23IXlCU0Kj04ElY732U
+ H9AZctPc/G96YFQw9VpdKnwILuntR5cX0DwIoLD4qMSwF05kwlj2uLCW/lEX+BotAJuqO4TTS8
+ GxGf/osYyy13JN678pLuNWON
+Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
+ by uls-op-cesaep02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 12 Apr 2022 15:09:00 -0700
+IronPort-SDR: JSLyzlkxvtqxoAXEEFcYJY03DprX1YLr8oXopJMAFxnqWoLbhH1rP1NStjFERWelcEerO9n5ui
+ qwJePGc/qF71Mf+YoNMO+t0Mn8to4gd/0uuCYiUar4wO+WJEvBLNXqPBEkYoT9ixfsdJUsuBTK
+ FtCmvC/eSkWYtCJ6Nn+zAdnRL/2vi+OEH8Zs4JGmXjmCekBlGUsxzIEHCfGYue59JjEkoxMvFQ
+ 2R9uVEXIfQZh9bmhblyF6///ioZb5WW5NSHYgAFcIgfD91y3mjMhxemKgQDqU9OjuPXlK0wsn+
+ gqo=
+WDCIronportException: Internal
+Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
+ by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 12 Apr 2022 15:38:33 -0700
+Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4KdLGw4SmHz1SHwl
+ for <dm-devel@redhat.com>; Tue, 12 Apr 2022 15:38:32 -0700 (PDT)
+X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
+Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
+ by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
+ port 10026) with ESMTP id JchVVfwlkusE for <dm-devel@redhat.com>;
+ Tue, 12 Apr 2022 15:38:31 -0700 (PDT)
+Received: from [10.225.163.9] (unknown [10.225.163.9])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4KdLGv0chFz1Rvlx;
+ Tue, 12 Apr 2022 15:38:30 -0700 (PDT)
+Message-ID: <c4c83c0f-a4fc-2b37-180f-ccb272085fca@opensource.wdc.com>
+Date: Wed, 13 Apr 2022 07:38:29 +0900
 MIME-Version: 1.0
-In-Reply-To: <92f53b4d9679a2d958643fe3cc72a09bda4c73fb.camel@suse.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH 0/9] Add protocol specific config subsection
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.7.0
+To: Mike Snitzer <snitzer@redhat.com>, Ming Lei <ming.lei@redhat.com>
+References: <20220412085616.1409626-1-ming.lei@redhat.com>
+ <20220412085616.1409626-6-ming.lei@redhat.com> <YlXmmB6IO7usz2c1@redhat.com>
+From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Organization: Western Digital Research
+In-Reply-To: <YlXmmB6IO7usz2c1@redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH 5/8] dm: always setup ->orig_bio in alloc_io
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -74,188 +107,77 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+ dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-On Tue, Apr 12, 2022 at 08:47:38PM +0000, Martin Wilck wrote:
-> On Tue, 2022-04-12 at 13:47 -0500, Benjamin Marzinski wrote:
-> > On Tue, Apr 12, 2022 at 10:31:50AM +0000, Martin Wilck wrote:
-> > >=20
-> > I agree that setting fast_io_fail_tmo to different values based on
-> > both
-> > array and protocol is usually overkill.
->=20
-> If we doubt that there is a serious use case for this level of
-> differentiation, I think we shouldn't implement it. Doing that would
-> violate the KISS principle.
->=20
-> > >=20
-> > > What about adding simply adding "protocols" as a new top section in
-> > > the
-> > > conf file, and have the per-protocol settings override built-in
-> > > hwtable
-> > > settings for any array, but not explicit storage-device settings in
-> > > the
-> > > conf file?
-> >=20
-> > I'm not really enamored with the idea of only working on the built-in
-> > hwtable.
-> > I feel like the people that want to tune things based on the
-> > protocol are the same sort of people that want tune things per array.
->=20
-> Hm, maybe we are misunderstanding each other. Let me give an example
-> what I meant. We've got dev_loss =3D inifinity for ONTAP in the builtin
-> hwtable. My idea would be that users could override this in the
-> protocols section for all devices using a certain protocol:
->=20
-> protocols {
->     protocol {
->     =09type scsi:fcp
-> =09dev_loss_tmo 120
->     }
-> }
->=20
-> This would take precedence over the built-in hwtable, but not over an
-> explicit config file entry:
->=20
-> devices {
->     device {
->         vendor NETAPP
->         product LUN
->         # With the dev_loss_tmo line below, RDAC would use 300 for
->         # every protocol. Without it, it would use 120 for FC and
->         # "infinity"=A0for other protocols.
->         dev_loss_tmo 300
->     }
-> }     =20
->=20
-> Admittedly, the problem on the implementation side is that we don't
-> distinguish between built-in hwentries and those from explicit
-> configuration. Changing this would be considerable effort; perhaps more
-> effort than what you did in your patch set. I haven't thought it
-> through.
->=20
-> > More importantly, we don't have anything else in multipath that only
-> > applies to some of the device config entries. That change seems more
-> > confusing to me than adding a new subsection.
->=20
-> The main change would be to differentiate between built-in and user-
-> configured hardware properties. I hope most users would be able to
-> understand the concept.
->=20
-> >  The protocol subsection is
-> > visually part of the device config it is modifying. A separate
-> > protocol
-> > section that only modified some of the device configs
-> >  seems less
-> > obvious. Plus we don't have a good way to code that.=A0 Also, what
-> > happens
-> > to merged configs, where some of the timeouts came from a builtin
-> > config, and some came from the user config.
->=20
-> To clarify once more: this is what I meant, built-in configs would be
-> overridden, user configs wouldn't be. This is different from
-> "defaults", as "defaults" don't override hardware-specific built-ins.
+On 4/13/22 05:52, Mike Snitzer wrote:
+> On Tue, Apr 12 2022 at  4:56P -0400,
+> Ming Lei <ming.lei@redhat.com> wrote:
+> 
+>> The current DM codes setup ->orig_bio after __map_bio() returns,
+>> and not only cause kernel panic for dm zone, but also a bit ugly
+>> and tricky, especially the waiting until ->orig_bio is set in
+>> dm_submit_bio_remap().
+>>
+>> The reason is that one new bio is cloned from original FS bio to
+>> represent the mapped part, which just serves io accounting.
+>>
+>> Now we have switched to bdev based io accounting interface, and we
+>> can retrieve sectors/bio_op from both the real original bio and the
+>> added fields of .sector_offset & .sectors easily, so the new cloned
+>> bio isn't necessary any more.
+>>
+>> Not only fixes dm-zone's kernel panic, but also cleans up dm io
+>> accounting & split a bit.
+> 
+> You're conflating quite a few things here.  DM zone really has no
+> business accessing io->orig_bio (dm-zone.c can just as easily inspect
+> the tio->clone, because it hasn't been remapped yet it reflects the
+> io->origin_bio, so there is no need to look at io->orig_bio) -- but
+> yes I clearly broke things during the 5.18 merge and it needs fixing
+> ASAP.
 
-But what do you call a device config that is the result of merging (via
-merge_hwe()) a built-in and a non-built-in config.  Do we really want to
-track that some of the values of this merged config need to check the
-protocol section, and some don't? We could remove merging identical
-configs, but that simply makes it harder for users to figure out how
-their device will be configured from the configuration output.
+Problem is that we need to look at the BIO op in submission AND completion
+path to handle zone append requests. So looking at the clone on submission
+is OK since its op is still the original one. But on the completion path,
+the clone may now be a regular write emulating a zone append op. And
+looking at the clone only does not allow detecting that zone append.
 
-I understand your idea. I'd just rather that it worked on all the device
-configs, instead of only the built-in ones. I think overriding only the
-built-in configs is needlessly complicated, both from a coding and from
-an explaining point of view.
+We could have the orig_bio op saved in dm_io to avoid completely looking
+at the orig_bio for detecting zone append.
 
-> > =A0 If you are really agains the subsection idea,
-> >  I would rather have the protocol section override
-> > all the device configs. Users would need to be o.k. with picking a
-> > protocol for which all their arrays have the same timeout values. But
-> > again, that should be the common case.
->=20
-> The question is whether a "protocol" entry should override device
-> settings, or vice versa (as in my hypothetical ONTAP example above). We
-> seem to agree that that device subsection would implement a level of
-> complexity that hardly any user needs. If this is the case, we'd just
-> need to determine the precedence between "devices" and "protocols"
-> sections. If we determine that "protocols" should always take
-> precedence, we might as well allow it under "overrides" only. We'd need
-> no "protocols" section in that case, and no differentiation between
-> built-in and user-configured hwentries.
+> 
+> But I'm (ab)using io->orig_bio assignment to indicate to completion
+> that it may proceed.  See these dm-5.19 commits to see it imposed even
+> further:
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.19&id=311a8e6650601a79079000466db77386c5ec2abb
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.19&id=56219ebb5f5c84785aa821f755d545eae41bdb1a
+> 
+> And then leveraged here:
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.19&id=4aa7a368370c2a172d5a0b8927c6332c4b6a3514
+> 
+> Could be all these dm-5.19 changes suck.. but I do know dm-zone.c is
+> too tightly coupled to DM core.  So I'll focus on that first, fix
+> 5.18, and then circle back to "what's next?".
+> 
+> Mike
+> 
 
-That seems reasonable.
 
-> > > [1]: wrt dev_loss_tmo, I tend to think that the best value must be
-> > > found based on neither protocol nor array, but data center staff.
-> >=20
-> > I do agree that fast_io_fail_tmo and eh_deadline make more sense than
-> > dev_loss_tmo (especially since FC/iSCSI setups seem the most common,
-> > and
-> > iSCSI doesn't support dev_loss_tmo), but since the section is there,
-> > and
-> > dev_loss_tmo is a per-path timeout setting, I put it in.
-> > ...
->=20
-> I'm fine with treating dev_loss_tmo as a protocol/path property.
->=20
-> > > [2]: I strongly dislike "overrides", in general. I wonder what we
-> > > need
-> > > it for, except for quick experiments where people are too lazy to
-> > > add
-> > > explicit settings for devices and/or multipaths.
-> >=20
-> > The biggest reason is that some of the builtin device configs do
-> > things
-> > like set no_path_retry to "queue".=A0
->=20
-> You don't need to use "overrides" for that:
->=20
-> devices {
->         device {
->                 vendor .*
->                 product .*
->                 no_path_retry 75
->         }
-> }
-> You can follow up with more device entries that define exceptions for
-> the general rule above. Am I missing something?
->=20
-> AFAICT the only thing you can do with "overrides" but not with the
-> trick above is override actual hardware-specific user configs, and I
-> have a hard time figuring out why someone would work out detailed
-> device-specific configs just to override them again with a big hammer.
+-- 
+Damien Le Moal
+Western Digital Research
 
-Fair enough. I added the overrides section before you made paths have a
-vector of device configs. Back then, there was no way to have a device
-config that would work like your above example.  My original idea was to
-be able to have a special device section like this:
-
-device {
-        all_devs yes
-=09no_path_retry 75
-}
-
-that would get merged with all the device sections. The overrides
-section was the compromise after my original idea was NAKed. We probably
-could deprecate the overrides section now that we have a vector of
-device configs. But then we shouldn't go putting the protocol stuff
-there.=20
-
--Ben
-
-> Regards,
-> Martin
 --
 dm-devel mailing list
 dm-devel@redhat.com
