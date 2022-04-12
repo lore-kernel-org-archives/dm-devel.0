@@ -4,73 +4,71 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id EEC4AC433EF
-	for <dm-devel@archiver.kernel.org>; Tue, 12 Apr 2022 04:27:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B974AC433F5
+	for <dm-devel@archiver.kernel.org>; Tue, 12 Apr 2022 04:58:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-658-h0WHK9oiNKyF0kEqnI0M0g-1; Tue, 12 Apr 2022 00:26:56 -0400
-X-MC-Unique: h0WHK9oiNKyF0kEqnI0M0g-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-262-Amt-0hAlP6q2-sVJuyZFTg-1; Tue, 12 Apr 2022 00:58:02 -0400
+X-MC-Unique: Amt-0hAlP6q2-sVJuyZFTg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 605EE3C02B60;
-	Tue, 12 Apr 2022 04:26:54 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B5A3F38041D3;
+	Tue, 12 Apr 2022 04:58:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A2A08C28106;
-	Tue, 12 Apr 2022 04:26:52 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 607B3111E403;
+	Tue, 12 Apr 2022 04:58:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 675F51949762;
-	Tue, 12 Apr 2022 04:26:52 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 22D311949762;
+	Tue, 12 Apr 2022 04:58:00 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id ACA9F1947BBF
- for <dm-devel@listman.corp.redhat.com>; Tue, 12 Apr 2022 04:26:51 +0000 (UTC)
+ ESMTP id 21B941947BBF
+ for <dm-devel@listman.corp.redhat.com>; Tue, 12 Apr 2022 04:57:58 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7C1344029A6; Tue, 12 Apr 2022 04:26:51 +0000 (UTC)
+ id 0FA16C44B17; Tue, 12 Apr 2022 04:57:58 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 784404029B6
- for <dm-devel@redhat.com>; Tue, 12 Apr 2022 04:26:51 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 0BF5CC28106
+ for <dm-devel@redhat.com>; Tue, 12 Apr 2022 04:57:58 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5E5A9185A7A4
- for <dm-devel@redhat.com>; Tue, 12 Apr 2022 04:26:51 +0000 (UTC)
-Received: from mail-pj1-f47.google.com (mail-pj1-f47.google.com
- [209.85.216.47]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E7FB0811E7A
+ for <dm-devel@redhat.com>; Tue, 12 Apr 2022 04:57:57 +0000 (UTC)
+Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com
+ [209.85.214.174]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-651--dM-ZrEuOZis6ELFHLMVyA-1; Tue, 12 Apr 2022 00:26:47 -0400
-X-MC-Unique: -dM-ZrEuOZis6ELFHLMVyA-1
-Received: by mail-pj1-f47.google.com with SMTP id
- a16-20020a17090a6d9000b001c7d6c1bb13so1533102pjk.4
- for <dm-devel@redhat.com>; Mon, 11 Apr 2022 21:26:47 -0700 (PDT)
+ us-mta-522-MgkrSirlPjKKL4sQ03mQIQ-1; Tue, 12 Apr 2022 00:57:48 -0400
+X-MC-Unique: MgkrSirlPjKKL4sQ03mQIQ-1
+Received: by mail-pl1-f174.google.com with SMTP id t12so3390537pll.7
+ for <dm-devel@redhat.com>; Mon, 11 Apr 2022 21:57:48 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:mime-version:references:in-reply-to:from:date
  :message-id:subject:to:cc;
- bh=UCrOTwn1Apaa4uQLVmk5UD3cOc527xiwJT4PNuBWV0U=;
- b=EwJPitinXhNdwC8XfLG+KklxuHfJUF/NMr6lDSfj9CgG+7U4Tm9LzvsytYvC10ODpK
- CY7LHyfnEVtQpRdkWQaDOtFVdS9MJFMRLUPhXI7rb6m0AHSkg00X35hjXmDZgzscOfug
- sB2K8j0wU+Ld5c5sDuQOswKv1s8ceYlh1rmO0sezjW/RDwYHZURmbzMi2x17F8Gp8W+2
- 3fugtV5/CPSTVd9jZIABJTLPh9DCEbuKsC2vFCGSLn4K5ZYEAVvWMF2WfxhAqwGL3tmZ
- e2va1lMtgClzGq0a0gQyS2HZ9vWhmPu05QftHIPYSwabyanJxTkVbqXKE+aGfG7dKXMb
- GaSQ==
-X-Gm-Message-State: AOAM530T73etoQyvAp0+VCsbq0khSSqpZ+XuioYqNP5vJ+NL9LOqdFAE
- 978DEoOSkJSrTnVsQqauzgeqAxRIRGj52LIABfUH9g==
-X-Google-Smtp-Source: ABdhPJykgObq290XUnROGzq2QfTK7LzFthT5iMS5THy+7CybmACgJItes+F9wWuzrX+7pufyRJ0OO61OHh/NWBRaQSs=
-X-Received: by 2002:a17:90b:1804:b0:1cb:82e3:5cd0 with SMTP id
- lw4-20020a17090b180400b001cb82e35cd0mr2859224pjb.8.1649737606512; Mon, 11 Apr
- 2022 21:26:46 -0700 (PDT)
+ bh=8TleCaBIhpvoj6MzJmrMyC3ucMSm6WO1y+eL8xleJY4=;
+ b=cz1/7Xb4xA6Q2sVzvjKNQdBN5eKYMDDbZuwMci1mmjotAeLegP2kGbTdZGQsv0vDOJ
+ tA165jzFlsZ/QpkPBTNvUAyKUicgZNdreOhPYnSn7Ki2KpSDyLKzYKnkIwsEzFlbijZX
+ CqwD4kxLe9IVhF0iH9yToD65Ol2jYdgqRWTEQNKPtovaK7Hr/TWV6yF9eAXF0A6723ph
+ 9vqELXX8croB3UhV6CGGwO9dbfI0lpD/9ImJ/O4jht60fXHaz8kYtP5Zu/QJG9styRmX
+ oJuTZZTj4LDeK1Z+cdUQc9geK9slHb9Tp/OudnFzZNh1WlhoWNIhMvZ3f/jrRPMPn+72
+ ZHnQ==
+X-Gm-Message-State: AOAM532rb2SO0SeeD3PjnJcMR94Dhu/XuAV+Js8hrsTEeB4edQ9snz9k
+ pC2HMk5C2u1NaCxi4Mp2EXMyg5IMjMLO6mg3p3FPdQ==
+X-Google-Smtp-Source: ABdhPJxBATyoJAyblOakoZzlFS+GtSy3AbBTLdouj+8YmPDRCb1cpkksbCSmeWKkXDHtWwI5LR7XG/b+KrOX8AklXlQ=
+X-Received: by 2002:a17:902:eb92:b0:158:4cc9:698e with SMTP id
+ q18-20020a170902eb9200b001584cc9698emr12430897plg.147.1649739467468; Mon, 11
+ Apr 2022 21:57:47 -0700 (PDT)
 MIME-Version: 1.0
 References: <20220405194747.2386619-1-jane.chu@oracle.com>
- <20220405194747.2386619-6-jane.chu@oracle.com>
-In-Reply-To: <20220405194747.2386619-6-jane.chu@oracle.com>
+ <20220405194747.2386619-5-jane.chu@oracle.com>
+In-Reply-To: <20220405194747.2386619-5-jane.chu@oracle.com>
 From: Dan Williams <dan.j.williams@intel.com>
-Date: Mon, 11 Apr 2022 21:26:35 -0700
-Message-ID: <CAPcyv4h4NGa7_mTrrY0EqXdGny5p9JtQZx+CVBcHxX6_ZuO9pg@mail.gmail.com>
+Date: Mon, 11 Apr 2022 21:57:36 -0700
+Message-ID: <CAPcyv4jpOss6hzPgM913v_QsZ+PB6Jzo1WV=YdUvnKZiwtfjiA@mail.gmail.com>
 To: Jane Chu <jane.chu@oracle.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -79,8 +77,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: Re: [dm-devel] [PATCH v7 5/6] pmem: refactor pmem_clear_poison()
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH v7 4/6] dax: add DAX_RECOVERY flag and
+ .recovery_write dev_pgmap_ops
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -104,7 +103,7 @@ Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Dave Jiang <dave.jiang@intel.com>,
  Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -114,160 +113,44 @@ Content-Transfer-Encoding: 7bit
 
 On Tue, Apr 5, 2022 at 12:48 PM Jane Chu <jane.chu@oracle.com> wrote:
 >
-> Refactor the pmem_clear_poison() in order to share common code
-> later.
->
+> Introduce DAX_RECOVERY flag to dax_direct_access(). The flag is
+> not set by default in dax_direct_access() such that the helper
+> does not translate a pmem range to kernel virtual address if the
+> range contains uncorrectable errors.  When the flag is set,
+> the helper ignores the UEs and return kernel virtual adderss so
+> that the caller may get on with data recovery via write.
 
-I would just add a note here about why, i.e. to factor out the common
-shared code between the typical write path and the recovery write
-path.
+It strikes me that there is likely never going to be any other flags
+to dax_direct_access() and what this option really is an access type.
+I also find code changes like this error prone to read:
 
-> Signed-off-by: Jane Chu <jane.chu@oracle.com>
-> ---
->  drivers/nvdimm/pmem.c | 78 ++++++++++++++++++++++++++++---------------
->  1 file changed, 52 insertions(+), 26 deletions(-)
->
-> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-> index 0400c5a7ba39..56596be70400 100644
-> --- a/drivers/nvdimm/pmem.c
-> +++ b/drivers/nvdimm/pmem.c
-> @@ -45,10 +45,27 @@ static struct nd_region *to_region(struct pmem_device *pmem)
->         return to_nd_region(to_dev(pmem)->parent);
->  }
->
-> -static void hwpoison_clear(struct pmem_device *pmem,
-> -               phys_addr_t phys, unsigned int len)
-> +static phys_addr_t to_phys(struct pmem_device *pmem, phys_addr_t offset)
->  {
-> +       return (pmem->phys_addr + offset);
+ -       rc = dax_direct_access(iter->iomap.dax_dev, pgoff, 1, &kaddr, NULL);
+ +       rc = dax_direct_access(iter->iomap.dax_dev, pgoff, 1, 0, &kaddr, NULL);
 
-Christoph already mentioned dropping the unnecessary parenthesis.
+...i.e. without looking at the prototype, which option is the nr_pages
+and which is the flags?
 
-> +}
-> +
-> +static sector_t to_sect(struct pmem_device *pmem, phys_addr_t offset)
-> +{
-> +       return (offset - pmem->data_offset) >> SECTOR_SHIFT;
-> +}
-> +
-> +static phys_addr_t to_offset(struct pmem_device *pmem, sector_t sector)
-> +{
-> +       return ((sector << SECTOR_SHIFT) + pmem->data_offset);
-> +}
-> +
-> +static void pmem_clear_hwpoison(struct pmem_device *pmem, phys_addr_t offset,
-> +               unsigned int len)
+So how about change 'int flags' to 'enum dax_access_mode mode' where
+dax_access_mode is:
 
-Perhaps now is a good time to rename this to something else like
-pmem_clear_mce_nospec()? Just to make it more distinct from
-pmem_clear_poison(). While "hwpoison" is the page flag name
-pmem_clear_poison() is the function that's actually clearing the
-poison in hardware ("hw") and the new pmem_clear_mce_nospec() is
-toggling the page back into service.
+/**
+ * enum dax_access_mode - operational mode for dax_direct_access()
+ * @DAX_ACCESS: nominal access, fail / trim access on encountering poison
+ * @DAX_RECOVERY_WRITE: ignore poison and provide a pointer suitable
+for use with dax_recovery_write()
+ */
+enum dax_access_mode {
+    DAX_ACCESS,
+    DAX_RECOVERY_WRITE,
+};
 
-> +{
-> +       phys_addr_t phys = to_phys(pmem, offset);
->         unsigned long pfn_start, pfn_end, pfn;
-> +       unsigned int blks = len >> SECTOR_SHIFT;
->
->         /* only pmem in the linear map supports HWPoison */
->         if (is_vmalloc_addr(pmem->virt_addr))
-> @@ -67,35 +84,44 @@ static void hwpoison_clear(struct pmem_device *pmem,
->                 if (test_and_clear_pmem_poison(page))
->                         clear_mce_nospec(pfn);
->         }
-> +
-> +       dev_dbg(to_dev(pmem), "%#llx clear %u sector%s\n",
-> +               (unsigned long long) to_sect(pmem, offset), blks,
-> +               blks > 1 ? "s" : "");
+Then the conversions look like this:
 
-In anticipation of better tracing support and the fact that this is no
-longer called from pmem_clear_poison() let's drop it for now.
+ -       rc = dax_direct_access(iter->iomap.dax_dev, pgoff, 1, &kaddr, NULL);
+ +       rc = dax_direct_access(iter->iomap.dax_dev, pgoff, 1,
+DAX_ACCESS, &kaddr, NULL);
 
->  }
->
-> -static blk_status_t pmem_clear_poison(struct pmem_device *pmem,
-> +static void pmem_clear_bb(struct pmem_device *pmem, sector_t sector, long blks)
-> +{
-> +       if (blks == 0)
-> +               return;
-> +       badblocks_clear(&pmem->bb, sector, blks);
-> +       if (pmem->bb_state)
-> +               sysfs_notify_dirent(pmem->bb_state);
-> +}
-> +
-> +static long __pmem_clear_poison(struct pmem_device *pmem,
->                 phys_addr_t offset, unsigned int len)
->  {
-> -       struct device *dev = to_dev(pmem);
-> -       sector_t sector;
-> -       long cleared;
-> -       blk_status_t rc = BLK_STS_OK;
-> -
-> -       sector = (offset - pmem->data_offset) / 512;
-> -
-> -       cleared = nvdimm_clear_poison(dev, pmem->phys_addr + offset, len);
-> -       if (cleared < len)
-> -               rc = BLK_STS_IOERR;
-> -       if (cleared > 0 && cleared / 512) {
-> -               hwpoison_clear(pmem, pmem->phys_addr + offset, cleared);
-> -               cleared /= 512;
-> -               dev_dbg(dev, "%#llx clear %ld sector%s\n",
-> -                               (unsigned long long) sector, cleared,
-> -                               cleared > 1 ? "s" : "");
-> -               badblocks_clear(&pmem->bb, sector, cleared);
-> -               if (pmem->bb_state)
-> -                       sysfs_notify_dirent(pmem->bb_state);
-> +       phys_addr_t phys = to_phys(pmem, offset);
-> +       long cleared = nvdimm_clear_poison(to_dev(pmem), phys, len);
-> +
-> +       if (cleared > 0) {
-> +               pmem_clear_hwpoison(pmem, offset, cleared);
-> +               arch_invalidate_pmem(pmem->virt_addr + offset, len);
->         }
-> +       return cleared;
-> +}
->
-> -       arch_invalidate_pmem(pmem->virt_addr + offset, len);
-> +static blk_status_t pmem_clear_poison(struct pmem_device *pmem,
-> +               phys_addr_t offset, unsigned int len)
-> +{
-> +       long cleared = __pmem_clear_poison(pmem, offset, len);
->
-> -       return rc;
-> +       if (cleared < 0)
-> +               return BLK_STS_IOERR;
-> +
-> +       pmem_clear_bb(pmem, to_sect(pmem, offset), cleared >> SECTOR_SHIFT);
-> +       return (cleared < len) ? BLK_STS_IOERR : BLK_STS_OK;
-
-I prefer "if / else" syntax instead of a ternary conditional.
-
->  }
->
->  static void write_pmem(void *pmem_addr, struct page *page,
-> @@ -143,7 +169,7 @@ static blk_status_t pmem_do_read(struct pmem_device *pmem,
->                         sector_t sector, unsigned int len)
->  {
->         blk_status_t rc;
-> -       phys_addr_t pmem_off = sector * 512 + pmem->data_offset;
-> +       phys_addr_t pmem_off = to_offset(pmem, sector);
->         void *pmem_addr = pmem->virt_addr + pmem_off;
->
->         if (unlikely(is_bad_pmem(&pmem->bb, sector, len)))
-> @@ -158,7 +184,7 @@ static blk_status_t pmem_do_write(struct pmem_device *pmem,
->                         struct page *page, unsigned int page_off,
->                         sector_t sector, unsigned int len)
->  {
-> -       phys_addr_t pmem_off = sector * 512 + pmem->data_offset;
-> +       phys_addr_t pmem_off = to_offset(pmem, sector);
->         void *pmem_addr = pmem->virt_addr + pmem_off;
->
->         if (unlikely(is_bad_pmem(&pmem->bb, sector, len))) {
-
-With those small fixups you can add:
-
-Reviewed-by: Dan Williams <dan.j.williams@intel.com>
+...and there's less chance of confusion with the @nr_pages argument.
 
 --
 dm-devel mailing list
