@@ -1,83 +1,83 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3E47DC433F5
-	for <dm-devel@archiver.kernel.org>; Tue, 12 Apr 2022 23:32:04 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id BD3B1C433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 13 Apr 2022 00:00:46 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-223-M_D9kpUsP2aweJ1uQoG1bA-1; Tue, 12 Apr 2022 19:32:00 -0400
-X-MC-Unique: M_D9kpUsP2aweJ1uQoG1bA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-646-ggM4qMnnPDWOvVt36y87QA-1; Tue, 12 Apr 2022 20:00:42 -0400
+X-MC-Unique: ggM4qMnnPDWOvVt36y87QA-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D15341C068D9;
-	Tue, 12 Apr 2022 23:31:58 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B214F802803;
+	Wed, 13 Apr 2022 00:00:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 7F553404D2CA;
-	Tue, 12 Apr 2022 23:31:56 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5C115432021;
+	Wed, 13 Apr 2022 00:00:40 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 910221949763;
-	Tue, 12 Apr 2022 23:31:54 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0F52F1949763;
+	Wed, 13 Apr 2022 00:00:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 81B4E1947BBE
- for <dm-devel@listman.corp.redhat.com>; Tue, 12 Apr 2022 23:31:53 +0000 (UTC)
+ ESMTP id 97F921947BBE
+ for <dm-devel@listman.corp.redhat.com>; Wed, 13 Apr 2022 00:00:39 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5C7EB401E12; Tue, 12 Apr 2022 23:31:53 +0000 (UTC)
+ id 848724047780; Wed, 13 Apr 2022 00:00:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 57AF354ACA5
- for <dm-devel@redhat.com>; Tue, 12 Apr 2022 23:31:53 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 804D2404776B
+ for <dm-devel@redhat.com>; Wed, 13 Apr 2022 00:00:39 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3BAF9800882
- for <dm-devel@redhat.com>; Tue, 12 Apr 2022 23:31:53 +0000 (UTC)
-Received: from esa6.hgst.iphmx.com (esa6.hgst.iphmx.com [216.71.154.45]) by
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6424E866DF4
+ for <dm-devel@redhat.com>; Wed, 13 Apr 2022 00:00:39 +0000 (UTC)
+Received: from esa5.hgst.iphmx.com (esa5.hgst.iphmx.com [216.71.153.144]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-34-88OSq3OKNYG0VO1rg6MQBg-1; Tue, 12 Apr 2022 19:31:49 -0400
-X-MC-Unique: 88OSq3OKNYG0VO1rg6MQBg-1
-X-IronPort-AV: E=Sophos;i="5.90,254,1643644800"; 
- d="sh'?scan'208";a="198671900"
-Received: from uls-op-cesaip02.wdc.com (HELO uls-op-cesaep02.wdc.com)
+ us-mta-570-2trVxtwKP4y_dI8km7_SYg-1; Tue, 12 Apr 2022 20:00:37 -0400
+X-MC-Unique: 2trVxtwKP4y_dI8km7_SYg-1
+X-IronPort-AV: E=Sophos;i="5.90,254,1643644800"; d="scan'208";a="197774540"
+Received: from h199-255-45-15.hgst.com (HELO uls-op-cesaep02.wdc.com)
  ([199.255.45.15])
- by ob1.hgst.iphmx.com with ESMTP; 13 Apr 2022 07:31:49 +0800
-IronPort-SDR: y8YpzmIZF0BV/jXt90l5Wv7j/KtrmSUuVxw2mmCHkPOzrSTmt+L63ftyhqyIszlpvYSgmCb9kR
- /Wwt9ggVDW/aHLmdpBZm0gDimvclgiNuXaQ5M437646ZXnoH7bgjbeLGvpezDBsR7iZ/+A6gUs
- OjQ3jUrSWOho1gc5HNvbbJIOPng5Gz0JrQlj0Vmsphmx1nxEDiGP1/eGOcyrhKQVHYEW3g3gsk
- oVei9UgGtq4E26mD7Qpfrw/UyyiYAjZu2o7x2XqTvI5G1x6U8HBv2Ahz3dzsMAhQv6yFp9/wwY
- W8JOCxQNSVzjNwR1MpX7c3+b
+ by ob1.hgst.iphmx.com with ESMTP; 13 Apr 2022 08:00:29 +0800
+IronPort-SDR: m1Q50vebpc+JmIAc7OUq1aNPul82OGhJmabtx5D9L0FEdiA05uD4nFBgJkVVFStchbNeMuPTD6
+ LBqFvHSRDvEYE7tNO7Z5a2uKwwjbWaZQcirlgnIEUSf3hsw26hO8NgzvL9JODCF5cBSUJE/Zm6
+ 8K1ebgqXPLShlTdctZ7uMsY+p8X/08DO+F0JhbeGBf7qHM9t883Qcouv1l4rQNXju4mjy3tt1J
+ 3/AdzzNRl36ldXS8mqS+twGgVdV6NiOiVD8tH43s2XVGavpqFx5ViikFV7tkrrwyIOmpvRDvA2
+ l0H25kJOrxA3JKsc/lkLLdDz
 Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
  by uls-op-cesaep02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 12 Apr 2022 16:02:16 -0700
-IronPort-SDR: FhCqt+lUfcwHPa53Vq4l4vNewm9QWbRnWJw8uHCdN19OBJhXmA6ZnUPXJieMIZMm8Cy4BqKKdH
- NtlBxV6KFfSmbsiJA3Uqc05xvFw+mTh6QqnVpVSaJSi6tXEOpJFd4qlv/ZBwopro1mU/e84kzo
- BVQH9FMslYXxiHqfEsH6++fuZPiHfMylYvqZAF7ub83mmEgcrhYUBx0HddBY3QhwNCFr5qukc+
- dZtWQjEAtTwrIf+HsH9smxWaYo+iuPb/9HzFk7HV1MapMkzbRd/RvYllD9u5A6crd5SjzSW5Xy
- 9/o=
+ 12 Apr 2022 16:30:57 -0700
+IronPort-SDR: xbM41a29T0aFz6eDYobA6+EJgBtQFLB55b9owgeF463AZ5DDChTXahIJW6BTtge2XG3ns1EKuz
+ gN/TfCh/bVitiHqN0PkYy4jK56u42QqBCRJB9RIOG//KjfxIx+VfmT/JVoDLPrn2W36tXMSJQE
+ pBVVM75/FPhFQv6sM8UBIqQAVjmUvp2+VSMpBfqWkQtLx6Y6OJQTQfF2TycCeIP5BXABX5cUUn
+ rjUj3XWVbP/BbDZxtAqhbq3jEDbv3pbs0G/a/0zIDIhdiCRxr8Ih199ACYDBuzgxdUSd4FVqKn
+ lI0=
 WDCIronportException: Internal
 Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
  by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 12 Apr 2022 16:31:48 -0700
+ 12 Apr 2022 17:00:31 -0700
 Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
- by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4KdMSN0kTHz1Rwrw
- for <dm-devel@redhat.com>; Tue, 12 Apr 2022 16:31:48 -0700 (PDT)
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4KdN5T5pxLz1SVp1
+ for <dm-devel@redhat.com>; Tue, 12 Apr 2022 17:00:29 -0700 (PDT)
 X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
 Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
  by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
- port 10026) with ESMTP id Ce6HBNmSZf3s for <dm-devel@redhat.com>;
- Tue, 12 Apr 2022 16:31:47 -0700 (PDT)
+ port 10026) with ESMTP id BiJk7N5P1Gbz for <dm-devel@redhat.com>;
+ Tue, 12 Apr 2022 17:00:28 -0700 (PDT)
 Received: from [10.225.163.9] (unknown [10.225.163.9])
- by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4KdMSL1G1mz1Rvlx;
- Tue, 12 Apr 2022 16:31:45 -0700 (PDT)
-Message-ID: <44a6c5cd-d9ca-e238-4574-73d9140a0d8d@opensource.wdc.com>
-Date: Wed, 13 Apr 2022 08:31:44 +0900
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4KdN5R53wzz1Rvlx;
+ Tue, 12 Apr 2022 17:00:27 -0700 (PDT)
+Message-ID: <34597cd1-cb19-c5de-8c44-b8c5a0a07cf7@opensource.wdc.com>
+Date: Wed, 13 Apr 2022 09:00:26 +0900
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
  Thunderbird/91.7.0
@@ -96,7 +96,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Subject: Re: [dm-devel] [PATCH 5/8] dm: always setup ->orig_bio in alloc_io
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -113,17 +113,13 @@ Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
  dm-devel@redhat.com, Ming Lei <ming.lei@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="------------egsgRdPfyYMP0pfbru57ULgc"
 Content-Language: en-US
-
-This is a multi-part message in MIME format.
---------------egsgRdPfyYMP0pfbru57ULgc
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
 On 4/13/22 08:00, Mike Snitzer wrote:
@@ -168,26 +164,15 @@ On 4/13/22 08:00, Mike Snitzer wrote:
 > 
 > Can you please try the following patch?
 
-OK. Will do right away.
+This works. I tested with a zoned nullblk + dm-crypt, forcing the zone
+append emulation code to be used. I ran zonefs tests on top of that with
+no issues. I will run btrfs tests too later today to exercise things a
+little more.
 
 > 
 > Really sorry for breaking dm-zone.c; please teach this man how to test
 > the basics of all things dm-zoned (is there a testsuite in the tools
 > or something?).
-
-We have an internal test suite to check all things related to zone. We run
-that weekly on all RC releases. We did not catch the problem earlier as we
-do not run against for-next trees in previous cycles. We could add such
-runs :)
-
-We would be happy to contribute stuff for testing. Ideally, integrating
-that into blktest, with a new DM group, would be nice. That was discussed
-in past LSF. Maybe a topic again for this year ? Beside zone stuff, I am
-sure we can add more DM tests (I am sure you do also have a test suite ?).
-
-For quick tests, I generally use a zoned nullblk device. I am attaching 2
-scripts which allow creating and deleting nullblk devices easily.
-
 > 
 > Thanks,
 > Mike
@@ -362,95 +347,9 @@ scripts which allow creating and deleting nullblk devices easily.
 -- 
 Damien Le Moal
 Western Digital Research
---------------egsgRdPfyYMP0pfbru57ULgc
-Content-Type: application/x-shellscript; name="nullblk-create.sh"
-Content-Disposition: attachment; filename="nullblk-create.sh"
-Content-Transfer-Encoding: base64
-
-IyEvYmluL2Jhc2gKCnNjcmlwdGRpcj0iJChjZCAiJChkaXJuYW1lICIkMCIpIiAmJiBwd2QpIgoK
-ZnVuY3Rpb24gdXNhZ2UoKQp7CgllY2hvICJVc2FnZTogJChiYXNlbmFtZSAkMCkgW29wdGlvbnNd
-IgoJZWNobyAiT3B0aW9uczoiCgllY2hvICIgICAgLWggfCAtLWhlbHAgICAgICA6IERpc3BsYXkg
-dGhpcyBoZWxwIG1lc3NhZ2UgYW5kIGV4aXQiCgllY2hvICIgICAgLXYgICAgICAgICAgICAgICA6
-IEJlIHZlcmJvc2UgKGRpc3BsYXkgZmluYWwgY29uZmlnKSIKCWVjaG8gIiAgICAtY2FwIDxzaXpl
-IChHQik+IDogc2V0IGRldmljZSBjYXBhY2l0eSAoZGVmYXVsdDogOCkiCgllY2hvICIgICAgICAg
-ICAgICAgICAgICAgICAgIEZvciB6b25lZCBkZXZpY2VzLCBjYXBhY2l0eSBpcyBkZXRlcm1pbmVk
-IgoJZWNobyAiICAgICAgICAgICAgICAgICAgICAgICB3aXRoIHpvbmUgc2l6ZSBhbmQgdG90YWwg
-bnVtYmVyIG9mIHpvbmVzIgoJZWNobyAiICAgIC1icyA8c2l6ZSAoQik+ICAgOiBzZXQgc2VjdG9y
-IHNpemUgKGRlZmF1bHQ6IDUxMikiCgllY2hvICIgICAgLW0gICAgICAgICAgICAgICA6IGVuYWJs
-ZSBtZW1vcnkgYmFja2luZyAoZGVmYXVsdDogZmFsc2UpIgoJZWNobyAiICAgIC16ICAgICAgICAg
-ICAgICAgOiBjcmVhdGUgYSB6b25lZCBkZXZpY2UgKGRlZmF1bHQ6IGZhbHNlKSIKCWVjaG8gIiAg
-ICAtcW0gPG1vZGU+ICAgICAgIDogc2V0IHF1ZXVlIG1vZGUgKGRlZmF1bHQ6IDIpIgoJZWNobyAi
-ICAgICAgICAgICAgICAgICAgICAgICAwPWJpbywgMT1ycSwgMj1tdWx0aXF1ZXVlIgoJZWNobyAi
-ICAgIC1zcSA8bnVtPiAgICAgICAgOiBzZXQgbnVtYmVyIG9mIHN1Ym1pc3Npb24gcXVldWVzIgoJ
-ZWNobyAiICAgICAgICAgICAgICAgICAgICAgICAoZGVmYXVsdDogbnByb2MpIgoJZWNobyAiICAg
-IC1xZCA8ZGVwdGg+ICAgICAgOiBzZXQgcXVldWUgZGVwdGggKGRlZmF1bHQ6IDY0KSIKCWVjaG8g
-IiAgICAtaW0gPG1vZGU+ICAgICAgIDogc2V0IElSUSBtb2RlIChkZWZhdWx0OiAwKSIKCWVjaG8g
-IiAgICAgICAgICAgICAgICAgICAgICAgMD1ub25lLCAxPXNvZnRpcnEsIDI9dGltZXIiCgllY2hv
-ICIgICAgLWMgPG5zZWNzPiAgICAgICA6IHNldCBjb21wbGV0aW9uIHRpbWUgZm9yIHRpbWVyIGNv
-bXBsZXRpb24iCgllY2hvICIgICAgICAgICAgICAgICAgICAgICAgIChkZWZhdWx0OiAxMDAwMCBu
-cykiCgllY2hvICJPcHRpb25zIGZvciB6b25lZCBkZXZpY2VzOiIKCWVjaG8gIiAgICAtenMgPHNp
-emUgKE1CKT4gIDogc2V0IHpvbmUgc2l6ZSAoZGVmYXVsdDogOCBNQikiCgllY2hvICIgICAgLXpj
-IDxzaXplIChNQik+ICA6IHNldCB6b25lIGNhcGFjaXR5IChkZWZhdWx0OiB6b25lIHNpemUpIgoJ
-ZWNobyAiICAgIC16bmMgPG51bT4gICAgICAgOiBzZXQgbnVtYmVyIG9mIGNvbnYgem9uZXMgKGRl
-ZmF1bHQ6IDApIgoJZWNobyAiICAgIC16bnMgPG51bT4gICAgICAgOiBzZXQgbnVtYmVyIG9mIHN3
-ciB6b25lcyAoZGVmYXVsdDogOCkiCgllY2hvICIgICAgLXpyICAgICAgICAgICAgICA6IGFkZCBh
-IHNtYWxsZXIgcnVudCBzd3Igem9uZSAoZGVmYXVsdDogbm9uZSkiCgllY2hvICIgICAgLXptbyA8
-bnVtPiAgICAgICA6IHNldCBtYXggb3BlbiB6b25lcyAoZGVmYXVsdDogbm8gbGltaXQpIgoJZWNo
-byAiICAgIC16bWEgPG51bT4gICAgICAgOiBzZXQgbWF4IGFjdGl2ZSB6b25lcyAoZGVmYXVsdDog
-bm8gbGltaXQpIgoKCWV4aXQgMAp9CgpmdW5jdGlvbiBnZXRfbnVsbGJfaWQoKQp7Cglsb2NhbCBu
-aWQ9MAoKCXdoaWxlIFsgMSBdOyBkbwoJCWlmIFsgISAtYiAiL2Rldi9udWxsYiR7bmlkfSIgXTsg
-dGhlbgoJCQlicmVhawoJCWZpCgkJbmlkPSQoKCBuaWQgKyAxICkpCglkb25lCgoJZWNobyAiJG5p
-ZCIKfQoKIyBTZXQgY29uZmlnIGRlZmF1bHRzCmNhcD04CmJzPTUxMgptPTAKcW09MgpzcT0kKG5w
-cm9jKQpxZD02NAppbT0wCmM9MTAwMDAKCno9MAp6cz04CnpjPTAKem5jPTAKem5zPTgKenI9MAp6
-bW89MAp6bWE9MAoKdj0wCgojIFBhcnNlIGNvbW1hbmQgbGluZQp3aGlsZSBbWyAkIyAtZ3QgMCBd
-XTsgZG8KCWNhc2UgIiQxIiBpbgoJIi1oIiB8ICItLWhlbHAiKQoJCXVzYWdlICIkMCIgOzsKCSIt
-diIpCgkJdj0xIDs7CgkiLWNhcCIpCgkJc2hpZnQ7IGNhcD0kMSA7OwoJIi1icyIpCgkJc2hpZnQ7
-IGJzPSQxIDs7CgkiLW0iKQoJCW09MSA7OwoJIi1xbSIpCgkJc2hpZnQ7IHFtPSQxIDs7CgkiLXNx
-IikKCQlzaGlmdDsgc3E9JDEgOzsKCSItcWQiKQoJCXNoaWZ0OyBxZD0kMSA7OwoJIi1pbSIpCgkJ
-c2hpZnQ7IGltPSQxIDs7CgkiLWMiKQoJCXNoaWZ0OyBjPSQxIDs7CgkiLXoiKQoJCXo9MSA7OwoJ
-Ii16cyIpCgkJc2hpZnQ7IHpzPSQxIDs7CgkiLXpjIikKCQlzaGlmdDsgemM9JDEgOzsKCSItem5j
-IikKCQlzaGlmdDsgem5jPSQxIDs7CgkiLXpucyIpCgkJc2hpZnQ7IHpucz0kMSA7OwoJIi16ciIp
-CgkJenI9MSA7OwoJIi16bW8iKQoJCXNoaWZ0OyB6bW89JDEgOzsKCSItem1hIikKCQlzaGlmdDsg
-em1hPSQxIDs7CgkqKQoJCWVjaG8gIkludmFsaWQgb3B0aW9uIFwiJDFcIiAodXNlIC1oIG9wdGlv
-biBmb3IgaGVscCkiCgkJZXhpdCAxIDs7Cgllc2FjCgoJc2hpZnQKZG9uZQoKIyBDYWxjdWxhdGUg
-em9uZWQgZGV2aWNlIGNhcGFjaXR5CmlmIFsgJHogPT0gMSBdOyB0aGVuCgljYXA9JCgoIHpzICog
-KHpuYyArIHpucykgKSkKCWlmIFsgJHpyID09IDEgXTsgdGhlbgoJCWNhcD0kKCggZ2IgKyB6bnMg
-LSAxICkpCglmaQplbHNlCgljYXA9JCgoIGNhcCAqIDEwMjQgKSkKZmkKCiMgQ3JlYXRlIGRldmlj
-ZSBjb25maWcKbW9kcHJvYmUgbnVsbF9ibGsgbnJfZGV2aWNlcz0wIHx8IHJldHVybiAkPwpuaWQ9
-JChnZXRfbnVsbGJfaWQpCmRldj0iL3N5cy9rZXJuZWwvY29uZmlnL251bGxiL251bGxiJHtuaWR9
-Igpta2RpciAiJHtkZXZ9IgoKZWNobyAkY2FwID4gIiR7ZGV2fSIvc2l6ZQplY2hvICRicyA+ICIk
-e2Rldn0iL2Jsb2Nrc2l6ZQplY2hvICRtID4gIiR7ZGV2fSIvbWVtb3J5X2JhY2tlZAplY2hvICRx
-bSA+ICIke2Rldn0iL3F1ZXVlX21vZGUKZWNobyAkc3EgPiAiJHtkZXZ9Ii9zdWJtaXRfcXVldWVz
-CmVjaG8gJHFkID4gIiR7ZGV2fSIvaHdfcXVldWVfZGVwdGgKZWNobyAkaW0gPiAiJHtkZXZ9Ii9p
-cnFtb2RlCmlmIFsgJGltID09IDIgXTsgdGhlbgoJZWNobyAkYyA+ICIke2Rldn0iL2NvbXBsZXRp
-b25fbnNlYwpmaQoKZWNobyAkeiA+ICIke2Rldn0iL3pvbmVkCmlmIFsgJHogPT0gMSBdOyB0aGVu
-CgllY2hvICR6cyA+ICIke2Rldn0iL3pvbmVfc2l6ZQoJZWNobyAkemMgPiAiJHtkZXZ9Ii96b25l
-X2NhcGFjaXR5CgllY2hvICR6bmMgPiAiJHtkZXZ9Ii96b25lX25yX2NvbnYKCWVjaG8gJHptbyA+
-ICIke2Rldn0iL3pvbmVfbWF4X29wZW4KCWVjaG8gJHptYSA+ICIke2Rldn0iL3pvbmVfbWF4X2Fj
-dGl2ZQpmaQoKIyBFbmFibGUgZGV2aWNlCmVjaG8gMSA+ICIke2Rldn0iL3Bvd2VyCmVjaG8gIkNy
-ZWF0ZWQgL2Rldi9udWxsYiR7bmlkfSIKCmlmIFsgJHYgPT0gMSBdOyB0aGVuCgllY2hvICJEZXZp
-Y2UgY29uZmlndXJhdGlvbjoiCglncmVwIC1yIC4gJHtkZXZ9CmZpCg==
---------------egsgRdPfyYMP0pfbru57ULgc
-Content-Type: application/x-shellscript; name="nullblk-destroy.sh"
-Content-Disposition: attachment; filename="nullblk-destroy.sh"
-Content-Transfer-Encoding: base64
-
-IyEvYmluL2Jhc2gKCmlmIFsgJCMgIT0gMSBdOyB0aGVuCgllY2hvICJVc2FnZTogJChiYXNlbmFt
-ZSAkMCkgPG51bGxiIElEPiIKCWV4aXQgMQpmaQoKbmlkPSQxCgppZiBbICEgLWIgIi9kZXYvbnVs
-bGIkbmlkIiBdOyB0aGVuCgllY2hvICIvZGV2L251bGxiJG5pZDogTm8gc3VjaCBkZXZpY2UiCgll
-eGl0IDEKZmkKCmVjaG8gMCA+IC9zeXMva2VybmVsL2NvbmZpZy9udWxsYi9udWxsYiRuaWQvcG93
-ZXIKcm1kaXIgL3N5cy9rZXJuZWwvY29uZmlnL251bGxiL251bGxiJG5pZAoKZWNobyAiRGVzdHJv
-eWVkIC9kZXYvbnVsbGIkbmlkIgoK
---------------egsgRdPfyYMP0pfbru57ULgc
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
-
---------------egsgRdPfyYMP0pfbru57ULgc--
 
