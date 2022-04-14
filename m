@@ -1,69 +1,71 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A43A7C4167B
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Apr 2022 13:18:31 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2E61FC433FE
+	for <dm-devel@archiver.kernel.org>; Thu, 14 Apr 2022 13:18:35 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-49-cqWrSuJSPpeVjs1zzQXBwA-1; Thu, 14 Apr 2022 09:18:27 -0400
-X-MC-Unique: cqWrSuJSPpeVjs1zzQXBwA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-156-b0CiskZLNv-euXBjCJYZ9w-1; Thu, 14 Apr 2022 09:18:30 -0400
+X-MC-Unique: b0CiskZLNv-euXBjCJYZ9w-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2E29B296A621;
-	Thu, 14 Apr 2022 13:18:25 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 70318803CB8;
+	Thu, 14 Apr 2022 13:18:28 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1CDBF14583C1;
-	Thu, 14 Apr 2022 13:18:25 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 5E8D0C28109;
+	Thu, 14 Apr 2022 13:18:28 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9A7D61940345;
-	Thu, 14 Apr 2022 13:18:24 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id ECFAA1940344;
+	Thu, 14 Apr 2022 13:18:27 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 68145194034F
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Apr 2022 13:18:23 +0000 (UTC)
+ ESMTP id 12C5F19451F2
+ for <dm-devel@listman.corp.redhat.com>; Thu, 14 Apr 2022 13:18:27 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 1053A401E75; Thu, 14 Apr 2022 13:18:23 +0000 (UTC)
+ id 0313C2024CDB; Thu, 14 Apr 2022 13:18:27 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0CEB8416148
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id F116E200C0EC
  for <dm-devel@redhat.com>; Thu, 14 Apr 2022 13:18:23 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E8EF338149B0
- for <dm-devel@redhat.com>; Thu, 14 Apr 2022 13:18:22 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 97FA81014A66
+ for <dm-devel@redhat.com>; Thu, 14 Apr 2022 13:18:23 +0000 (UTC)
 Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-664-3pSvJ3e9OIGEqYyJvBhNww-1; Thu, 14 Apr 2022 09:18:18 -0400
-X-MC-Unique: 3pSvJ3e9OIGEqYyJvBhNww-1
+ us-mta-13-t3-hccPlNHiFYLvZlCZvRA-1; Thu, 14 Apr 2022 09:18:20 -0400
+X-MC-Unique: t3-hccPlNHiFYLvZlCZvRA-1
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 7B8DA1F746;
- Thu, 14 Apr 2022 13:18:17 +0000 (UTC)
+ by smtp-out2.suse.de (Postfix) with ESMTPS id 792D11F749;
+ Thu, 14 Apr 2022 13:18:18 +0000 (UTC)
 Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
  (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
  key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 4D97C132C0;
- Thu, 14 Apr 2022 13:18:17 +0000 (UTC)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 4A0C2132C0;
+ Thu, 14 Apr 2022 13:18:18 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id EdQnERkfWGKcQQAAMHmgww
- (envelope-from <mwilck@suse.com>); Thu, 14 Apr 2022 13:18:17 +0000
+ by imap2.suse-dmz.suse.de with ESMTPSA id CNaEEBofWGKcQQAAMHmgww
+ (envelope-from <mwilck@suse.com>); Thu, 14 Apr 2022 13:18:18 +0000
 From: mwilck@suse.com
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
  Benjamin Marzinski <bmarzins@redhat.com>
-Date: Thu, 14 Apr 2022 15:18:04 +0200
-Message-Id: <20220414131811.2551-1-mwilck@suse.com>
+Date: Thu, 14 Apr 2022 15:18:08 +0200
+Message-Id: <20220414131811.2551-5-mwilck@suse.com>
+In-Reply-To: <20220414131811.2551-1-mwilck@suse.com>
+References: <20220414131811.2551-1-mwilck@suse.com>
 MIME-Version: 1.0
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -72,8 +74,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
-Subject: [dm-devel] [PATCH 0/7] multipath-tools: remove deprecated options
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+Subject: [dm-devel] [PATCH 4/7] libmultipath: print error message for
+ pg_timeout
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -88,74 +91,60 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="===============3907742191751218126=="
+Content-Type: multipart/mixed; boundary="===============5240964217966694086=="
 
---===============3907742191751218126==
+--===============5240964217966694086==
 Content-Transfer-Encoding: quoted-printable
 Content-Type: application/octet-stream; x-default=true
 
 From: Martin Wilck <mwilck@suse.com>
 
-As discussed earlier [1], multipath_dir and config_dir are deprecated
-and are now removed. They are replaced by compile-time options.
-This patch set also removes the long-deprecated getuid_callout option.
+pg_timeout has been deprecated for a long time. Use the same approach
+as for config_dir to warn about its use.
 
-Regards
-Martin
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ libmultipath/dict.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-[1] https://listman.redhat.com/archives/dm-devel/2021-November/048346.html
-
-PS: I haven't yet figured out the reason for the late problems with
-my emails on dm-devel. So far I'm just hoping they'll get through this
-time.
-
-Martin Wilck (7):
-  libmultipath: add declare_deprecated_handler() helper
-  multipath-tools: make multipath_dir a compiled-in option
-  multipath-tools: make config_dir a compiled-in option
-  libmultipath: print error message for pg_timeout
-  libmultipath: remove support for long-deprecated options
-  multipath-tools: stop supporting getuid_callout
-  libmultipath.version: bump version
-
- Makefile.inc                      |   6 +-
- README.md                         |   6 +
- libmultipath/Makefile             |   2 +-
- libmultipath/callout.c            | 221 ------------------------------
- libmultipath/callout.h            |   7 -
- libmultipath/checkers.c           |  20 +--
- libmultipath/checkers.h           |   4 +-
- libmultipath/config.c             |  31 +----
- libmultipath/config.h             |   5 -
- libmultipath/defaults.h           |   2 -
- libmultipath/dict.c               | 104 ++++----------
- libmultipath/discovery.c          |  22 +--
- libmultipath/foreign.c            |  11 +-
- libmultipath/foreign.h            |   2 +-
- libmultipath/libmultipath.version |   2 +-
- libmultipath/prio.c               |  19 +--
- libmultipath/prio.h               |   6 +-
- libmultipath/propsel.c            |  39 ++----
- libmultipath/structs.c            |   1 -
- libmultipath/structs.h            |   1 -
- multipath/main.c                  |   6 +-
- multipath/multipath.conf.5        |  40 +-----
- multipathd/main.c                 |   6 +-
- multipathd/uxlsnr.c               |  27 +---
- 24 files changed, 106 insertions(+), 484 deletions(-)
- delete mode 100644 libmultipath/callout.c
- delete mode 100644 libmultipath/callout.h
-
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 91a0580..0cef9a7 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -847,6 +847,7 @@ declare_def_snprint_defstr(enable_foreign, print_str,
+ =09=09=09   DEFAULT_ENABLE_FOREIGN)
+=20
+ declare_deprecated_handler(config_dir)
++declare_deprecated_handler(pg_timeout)
+=20
+ #define declare_def_attr_handler(option, function)=09=09=09\
+ static int=09=09=09=09=09=09=09=09\
+@@ -2023,7 +2024,7 @@ init_keywords(vector keywords)
+ =09install_keyword("queue_without_daemon", &def_queue_without_daemon_handl=
+er, &snprint_def_queue_without_daemon);
+ =09install_keyword("checker_timeout", &def_checker_timeout_handler, &snpri=
+nt_def_checker_timeout);
+ =09install_keyword("allow_usb_devices", &def_allow_usb_devices_handler, &s=
+nprint_def_allow_usb_devices);
+-=09install_keyword("pg_timeout", &deprecated_handler, &snprint_deprecated)=
+;
++=09install_keyword("pg_timeout", &deprecated_pg_timeout_handler, &snprint_=
+deprecated);
+ =09install_keyword("flush_on_last_del", &def_flush_on_last_del_handler, &s=
+nprint_def_flush_on_last_del);
+ =09install_keyword("user_friendly_names", &def_user_friendly_names_handler=
+, &snprint_def_user_friendly_names);
+ =09install_keyword("mode", &def_mode_handler, &snprint_def_mode);
 --=20
 2.35.1
 
 
---===============3907742191751218126==
+--===============5240964217966694086==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -166,5 +155,5 @@ dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
 
---===============3907742191751218126==--
+--===============5240964217966694086==--
 
