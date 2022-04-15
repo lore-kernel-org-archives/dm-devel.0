@@ -1,92 +1,59 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 22843C433F5
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Apr 2022 05:09:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 520A0C433EF
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Apr 2022 05:26:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-517-XOc0fvcnMWGsn5VuJBBPRQ-1; Fri, 15 Apr 2022 01:09:55 -0400
-X-MC-Unique: XOc0fvcnMWGsn5VuJBBPRQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-54-Q8YVC0okO3OLyQ3dU_fjxw-1; Fri, 15 Apr 2022 01:26:09 -0400
+X-MC-Unique: Q8YVC0okO3OLyQ3dU_fjxw-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7BD67833960;
-	Fri, 15 Apr 2022 05:09:53 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 32F46811E80;
+	Fri, 15 Apr 2022 05:26:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 691584021D9;
-	Fri, 15 Apr 2022 05:09:53 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CD38A2167D68;
+	Fri, 15 Apr 2022 05:26:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0E677194034A;
-	Fri, 15 Apr 2022 05:09:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9CB2E194034A;
+	Fri, 15 Apr 2022 05:26:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id DE89119451EC
- for <dm-devel@listman.corp.redhat.com>; Fri, 15 Apr 2022 05:09:51 +0000 (UTC)
+ ESMTP id 9BF1F19451EC
+ for <dm-devel@listman.corp.redhat.com>; Fri, 15 Apr 2022 05:26:06 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id CF0AE145B96E; Fri, 15 Apr 2022 05:09:51 +0000 (UTC)
+ id 35D5E404D2FC; Fri, 15 Apr 2022 05:26:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id CAFB5145830E
- for <dm-devel@redhat.com>; Fri, 15 Apr 2022 05:09:51 +0000 (UTC)
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 31E48404D2F5
+ for <dm-devel@redhat.com>; Fri, 15 Apr 2022 05:26:06 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8DFCF1C04B5D
- for <dm-devel@redhat.com>; Fri, 15 Apr 2022 05:09:51 +0000 (UTC)
-Received: from esa6.hgst.iphmx.com (esa6.hgst.iphmx.com [216.71.154.45]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-656-KRkAXGHKORyplnaAZZVOTg-1; Fri, 15 Apr 2022 01:09:49 -0400
-X-MC-Unique: KRkAXGHKORyplnaAZZVOTg-1
-X-IronPort-AV: E=Sophos;i="5.90,261,1643644800"; d="scan'208";a="198866633"
-Received: from uls-op-cesaip01.wdc.com (HELO uls-op-cesaep01.wdc.com)
- ([199.255.45.14])
- by ob1.hgst.iphmx.com with ESMTP; 15 Apr 2022 13:09:49 +0800
-IronPort-SDR: UQaXf0kOoJqQPXZjb2VSytXDmYU6E+x+cn685gqyzoOY1B3b7A+z/1iTpzJDOfsgm3tjurS9tO
- aIj6u8EAdOvMkpQWHxu1mNNvXiO6RF/U/UdTjh8ToN0Y8zfG+ajpeziBC0rFMvz88caR956tyh
- Bf7iPNiuJ57Jh2gkzGAt4goBF4oKrCoxyvj7qEz9mR655k5tyYZnx+0jUpSnYHJKVaKv8QQ1Je
- vJZ/jUi4RZlGla1mCjfg8mJF0CsRc3BP/RCSerfLE9dTy/xGsmimn2VOKabkBG+FVecqrtXDdx
- mljdsEd+dgfcRw/tgxSuKs1o
-Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
- by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 14 Apr 2022 21:41:00 -0700
-IronPort-SDR: Jcd05X5mSzid5YuPMJvlmivNZzM8/ZwcW6DWnFe73Eb17t7syaiyunvNZCik3oY1Q+IUSPoQE2
- sY/yguvvdKulIipTUt4bp+6Av8bjGt4+9I9tAz2COgRGnAL98wH2GgLy7cwdK6R6y/89nZujk4
- aP88/DltiogT6MpK9v/34wHg6pYE1l2a8X+Iie3iqqPHOROeMiCFn1ydBHHxwZBrX1JtopkTGx
- iq26BSdmBmbz/vjpMGD7LNOXyEqmb4FcshJq8VDorgbAaN9oyaV51GznxE9jtB4uinelfiDZu4
- rY0=
-WDCIronportException: Internal
-Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
- by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 14 Apr 2022 22:09:49 -0700
-Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
- by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4KfksS1wC3z1SVp4
- for <dm-devel@redhat.com>; Thu, 14 Apr 2022 22:09:48 -0700 (PDT)
-X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
-Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
- by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
- port 10026) with ESMTP id DiK7ytJhahzN for <dm-devel@redhat.com>;
- Thu, 14 Apr 2022 22:09:47 -0700 (PDT)
-Received: from [10.225.163.9] (unknown [10.225.163.9])
- by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4KfksM3c9Fz1Rvlx;
- Thu, 14 Apr 2022 22:09:43 -0700 (PDT)
-Message-ID: <62ebc311-e5ef-cea5-5236-0c83d1a3eb64@opensource.wdc.com>
-Date: Fri, 15 Apr 2022 14:09:42 +0900
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 186DD80159B
+ for <dm-devel@redhat.com>; Fri, 15 Apr 2022 05:26:06 +0000 (UTC)
+Received: from bombadil.infradead.org (bombadil.infradead.org
+ [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-57-KXy_m5j4NTux80EVGxu-UQ-1; Fri, 15 Apr 2022 01:26:04 -0400
+X-MC-Unique: KXy_m5j4NTux80EVGxu-UQ-1
+Received: from [2a02:1205:504b:4280:f5dd:42a4:896c:d877] (helo=localhost)
+ by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+ id 1nfDxI-008OmY-4r; Fri, 15 Apr 2022 04:53:12 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Jens Axboe <axboe@kernel.dk>
+Date: Fri, 15 Apr 2022 06:52:31 +0200
+Message-Id: <20220415045258.199825-1-hch@lst.de>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.7.0
-To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-References: <20220415045258.199825-1-hch@lst.de>
- <20220415045258.199825-11-hch@lst.de>
-From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-Organization: Western Digital Research
-In-Reply-To: <20220415045258.199825-11-hch@lst.de>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
+ bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -94,8 +61,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH 10/27] mm: use bdev_is_zoned in claim_swapfile
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Subject: [dm-devel] use block_device based APIs in block layer consumers v3
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -123,44 +90,128 @@ Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org,
  linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 4/15/22 13:52, Christoph Hellwig wrote:
-> Use the bdev based helper instead of poking into the queue.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  mm/swapfile.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/mm/swapfile.c b/mm/swapfile.c
-> index 63c61f8b26118..4c7537162af5e 100644
-> --- a/mm/swapfile.c
-> +++ b/mm/swapfile.c
-> @@ -2761,7 +2761,7 @@ static int claim_swapfile(struct swap_info_struct *p, struct inode *inode)
->  		 * write only restriction.  Hence zoned block devices are not
->  		 * suitable for swapping.  Disallow them here.
->  		 */
-> -		if (blk_queue_is_zoned(p->bdev->bd_disk->queue))
-> +		if (bdev_is_zoned(p->bdev))
->  			return -EINVAL;
->  		p->flags |= SWP_BLKDEV;
->  	} else if (S_ISREG(inode->i_mode)) {
+Hi Jens,
 
-Looks good.
+this series cleanups up the block layer API so that APIs consumed
+by file systems are (almost) only struct block_devic based, so that
+file systems don't have to poke into block layer internals like the
+request_queue.
 
-Reviewed-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+I also found a bunch of existing bugs related to partition offsets
+and discard so these are fixed while going along.
 
--- 
-Damien Le Moal
-Western Digital Research
+Changes since v2:
+ - fix an inverted check in btrfs
+ - set max_discard_sectors to 0 in all places where the flag was
+   previously cleared
+ - fix a few sligtly incorrect collected Acks
+
+Changes since v1:
+ - fix a bisection hazard
+ - minor spelling fixes
+ - reorder hunks between two patches to make the changes more obvious
+ - reorder a patch to be earlier in the series to ease backporting
+
+
+Diffstat:
+ arch/um/drivers/ubd_kern.c           |    2 
+ block/blk-core.c                     |    4 -
+ block/blk-lib.c                      |  124 ++++++++++++++++++++---------------
+ block/blk-mq-debugfs.c               |    2 
+ block/blk-settings.c                 |   74 ++++++++++++++++++++
+ block/blk.h                          |   14 ---
+ block/fops.c                         |    2 
+ block/genhd.c                        |    4 -
+ block/ioctl.c                        |   48 ++++++++++---
+ block/partitions/core.c              |   12 ---
+ drivers/block/drbd/drbd_main.c       |   51 ++++++--------
+ drivers/block/drbd/drbd_nl.c         |   94 +++++++++++---------------
+ drivers/block/drbd/drbd_receiver.c   |   13 +--
+ drivers/block/loop.c                 |   15 +---
+ drivers/block/nbd.c                  |    5 -
+ drivers/block/null_blk/main.c        |    1 
+ drivers/block/rbd.c                  |    1 
+ drivers/block/rnbd/rnbd-clt.c        |    6 -
+ drivers/block/rnbd/rnbd-srv-dev.h    |    8 --
+ drivers/block/rnbd/rnbd-srv.c        |    5 -
+ drivers/block/virtio_blk.c           |    2 
+ drivers/block/xen-blkback/blkback.c  |   15 ++--
+ drivers/block/xen-blkback/xenbus.c   |    9 --
+ drivers/block/xen-blkfront.c         |    8 +-
+ drivers/block/zram/zram_drv.c        |    1 
+ drivers/md/bcache/alloc.c            |    2 
+ drivers/md/bcache/request.c          |    4 -
+ drivers/md/bcache/super.c            |    3 
+ drivers/md/bcache/sysfs.c            |    2 
+ drivers/md/dm-cache-target.c         |    9 --
+ drivers/md/dm-clone-target.c         |    9 --
+ drivers/md/dm-io.c                   |    2 
+ drivers/md/dm-log-writes.c           |    3 
+ drivers/md/dm-raid.c                 |    9 --
+ drivers/md/dm-table.c                |   25 +------
+ drivers/md/dm-thin.c                 |   15 ----
+ drivers/md/dm.c                      |    3 
+ drivers/md/md-linear.c               |   11 ---
+ drivers/md/md.c                      |    5 -
+ drivers/md/raid0.c                   |    7 -
+ drivers/md/raid1.c                   |   18 -----
+ drivers/md/raid10.c                  |   20 -----
+ drivers/md/raid5-cache.c             |    8 +-
+ drivers/md/raid5.c                   |   14 +--
+ drivers/mmc/core/queue.c             |    3 
+ drivers/mtd/mtd_blkdevs.c            |    1 
+ drivers/nvme/host/core.c             |    4 -
+ drivers/nvme/target/io-cmd-bdev.c    |    2 
+ drivers/nvme/target/zns.c            |    3 
+ drivers/s390/block/dasd_fba.c        |    1 
+ drivers/scsi/sd.c                    |    2 
+ drivers/target/target_core_device.c  |   20 ++---
+ drivers/target/target_core_file.c    |   10 +-
+ drivers/target/target_core_iblock.c  |   17 +---
+ fs/btrfs/disk-io.c                   |    3 
+ fs/btrfs/extent-tree.c               |    8 +-
+ fs/btrfs/ioctl.c                     |   12 +--
+ fs/btrfs/volumes.c                   |    4 -
+ fs/btrfs/zoned.c                     |    3 
+ fs/direct-io.c                       |   32 +--------
+ fs/exfat/file.c                      |    5 -
+ fs/exfat/super.c                     |   10 --
+ fs/ext4/ioctl.c                      |   10 --
+ fs/ext4/mballoc.c                    |   10 +-
+ fs/ext4/super.c                      |   10 --
+ fs/f2fs/f2fs.h                       |    3 
+ fs/f2fs/file.c                       |   19 ++---
+ fs/f2fs/segment.c                    |    8 --
+ fs/fat/file.c                        |    5 -
+ fs/fat/inode.c                       |   10 --
+ fs/gfs2/rgrp.c                       |    7 -
+ fs/iomap/direct-io.c                 |    3 
+ fs/jbd2/journal.c                    |    9 --
+ fs/jfs/ioctl.c                       |    5 -
+ fs/jfs/super.c                       |    8 --
+ fs/nilfs2/ioctl.c                    |    6 -
+ fs/nilfs2/sufile.c                   |    4 -
+ fs/nilfs2/the_nilfs.c                |    4 -
+ fs/ntfs3/file.c                      |    6 -
+ fs/ntfs3/super.c                     |   10 +-
+ fs/ocfs2/ioctl.c                     |    5 -
+ fs/super.c                           |    2 
+ fs/xfs/xfs_discard.c                 |    8 +-
+ fs/xfs/xfs_log_cil.c                 |    2 
+ fs/xfs/xfs_super.c                   |   12 +--
+ fs/zonefs/super.c                    |    3 
+ include/linux/blkdev.h               |  112 +++++++++++--------------------
+ include/target/target_core_backend.h |    4 -
+ mm/swapfile.c                        |   31 ++------
+ 89 files changed, 494 insertions(+), 651 deletions(-)
 
 --
 dm-devel mailing list
