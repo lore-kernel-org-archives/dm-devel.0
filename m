@@ -1,102 +1,63 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B362EC433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 14 Apr 2022 23:57:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6E3F7C433F5
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Apr 2022 00:15:17 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1649981716;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=1XbRCbDuDokDkZNq4ml1AIrGcRUDf8l55aUtoafF/JI=;
+	b=BC6RsSZ5EK0GGYXOYT7VtffiygGvgRq85PSr6YR8zx8ZC7Q2FjCbBd0Yo9IYo2QhbFue9U
+	8RSVuusH6edFIoQM45PrdCf443fh1Tc9o4YHOn3/Bf3MpoISJl9AQIULstE3NYB/1pxNLJ
+	IMTl3vZ52oeeL2fbudd840oaJN/xiTE=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-367-1B9kySHNM1awCbZAyCD04A-1; Thu, 14 Apr 2022 19:57:53 -0400
-X-MC-Unique: 1B9kySHNM1awCbZAyCD04A-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-360-XzoO4bmnOKe1BWfzajP83A-1; Thu, 14 Apr 2022 20:15:10 -0400
+X-MC-Unique: XzoO4bmnOKe1BWfzajP83A-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B192A185A794;
-	Thu, 14 Apr 2022 23:57:51 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4EB4185A5BC;
+	Fri, 15 Apr 2022 00:15:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D9BED43E8E7;
-	Thu, 14 Apr 2022 23:57:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EFE60C15E73;
+	Fri, 15 Apr 2022 00:15:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AC881194034A;
-	Thu, 14 Apr 2022 23:57:49 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 494F6194034A;
+	Fri, 15 Apr 2022 00:15:05 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8CBB6194034A
- for <dm-devel@listman.corp.redhat.com>; Thu, 14 Apr 2022 23:57:48 +0000 (UTC)
+ ESMTP id EEF5219452D2
+ for <dm-devel@listman.corp.redhat.com>; Fri, 15 Apr 2022 00:15:03 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 32ECA40D017A; Thu, 14 Apr 2022 23:57:48 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2EAE940D0179
- for <dm-devel@redhat.com>; Thu, 14 Apr 2022 23:57:48 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 151F5101AA42
- for <dm-devel@redhat.com>; Thu, 14 Apr 2022 23:57:48 +0000 (UTC)
-Received: from esa6.hgst.iphmx.com (esa6.hgst.iphmx.com [216.71.154.45]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-265--nyEIlowPf6hVotggHK_2w-1; Thu, 14 Apr 2022 19:57:46 -0400
-X-MC-Unique: -nyEIlowPf6hVotggHK_2w-1
-X-IronPort-AV: E=Sophos;i="5.90,261,1643644800"; d="scan'208";a="198851143"
-Received: from uls-op-cesaip02.wdc.com (HELO uls-op-cesaep02.wdc.com)
- ([199.255.45.15])
- by ob1.hgst.iphmx.com with ESMTP; 15 Apr 2022 07:57:46 +0800
-IronPort-SDR: yvHzJ6SF0PI19TscwxI2MU447rwYN//wKK1bs6gpjqa1q8PyvxZy2NHOzEETIN5EGN/sIo4wPv
- pJgJVoW5p9v0igpXQl8HQJqppqWKgs/iqL9o1kS2DhByk5Qebp4wVfy/NuURdNzl2aqerfoPG8
- 1nvkZgNwMpcqDTyO9pklg0gvBkBuXMoSJunGz8TGTX1e+xhtNPTjvQBwVTjZo7pgyhXzeRa5Jj
- JnhaMTpCGlO8lk3iEXhauBS9MPul6pWOIdqO//MfN9w1b6yVZ9qtbBMi1Nai930yB/rFy+T21j
- jsQA6oOpYzkyUSEa/v7xiqqB
-Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
- by uls-op-cesaep02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 14 Apr 2022 16:28:09 -0700
-IronPort-SDR: I0fUFCd9eP0eTAYYEJUNOtorGwxhLMdO+KystiWsdwJfBcYtyyWK7tLxuSSRRojlK+Z81uP6BR
- AHm9hppTwrCJS1/CYCQeU0ED4b1zpvvY3XPjwDZqyw4fYkp7hW6L702ySXkxcg0hqCXfaj7E9g
- E8QNIHHLGzulGrYRGVAcMytNhAqiJXj0GqyAivxjBSoAYA+pQkjwx3m/WUOusYXDBQWDle4qTR
- ggqRDBCJclCJAWw2d7KVE2BOfDgx1xLMVkX83xcB8fBcgzyaQ8RYLElLDewthhUsdffWfsPkeR
- k5Q=
-WDCIronportException: Internal
-Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
- by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 14 Apr 2022 16:57:45 -0700
-Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
- by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4KfbxN5m17z1SHwl
- for <dm-devel@redhat.com>; Thu, 14 Apr 2022 16:57:44 -0700 (PDT)
-X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
-Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
- by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
- port 10026) with ESMTP id B9Z6H-AagFUC for <dm-devel@redhat.com>;
- Thu, 14 Apr 2022 16:57:44 -0700 (PDT)
-Received: from [10.225.163.9] (unknown [10.225.163.9])
- by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4KfbxM4XBmz1Rvlx;
- Thu, 14 Apr 2022 16:57:43 -0700 (PDT)
-Message-ID: <335390c8-8ea5-1e77-f5c3-a5d19b274eba@opensource.wdc.com>
-Date: Fri, 15 Apr 2022 08:57:42 +0900
+ id 92E81111D3C8; Fri, 15 Apr 2022 00:15:03 +0000 (UTC)
+Received: from T590 (ovpn-8-19.pek2.redhat.com [10.72.8.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id F0502111D3D2;
+ Fri, 15 Apr 2022 00:14:44 +0000 (UTC)
+Date: Fri, 15 Apr 2022 08:14:40 +0800
+From: Ming Lei <ming.lei@redhat.com>
+To: Mike Snitzer <snitzer@redhat.com>
+Message-ID: <Yli48LmLi7dEngLn@T590>
+References: <20220412085616.1409626-6-ming.lei@redhat.com>
+ <YlXmmB6IO7usz2c1@redhat.com> <YlYt2rzM0NBPARVp@T590>
+ <YlZp3+VrP930VjIQ@redhat.com> <YlbBf0mJa/BPHSSq@T590>
+ <YlcPXslr6Y7cHOSU@redhat.com> <Yldsqh2YsclXYl3s@T590>
+ <YleGKbZiHeBIJidI@redhat.com> <YlebwjTKH2MU9tCD@T590>
+ <Ylhdvac5SY85r+1R@redhat.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.7.0
-To: Mike Snitzer <snitzer@kernel.org>,
- Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-References: <20220414083436.pweunapygdtuzwaf@shindev>
- <YlhL878nAVPkNK1n@redhat.com> <YlhQKj0iLM8mT+WK@redhat.com>
-From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-Organization: Western Digital Research
-In-Reply-To: <YlhQKj0iLM8mT+WK@redhat.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-Subject: Re: [dm-devel] [bug report] BUG for REQ_OP_WRITE_ZEROES to dm-zoned
+In-Reply-To: <Ylhdvac5SY85r+1R@redhat.com>
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH 5/8] dm: always setup ->orig_bio in alloc_io
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,59 +69,107 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
- Damien Le Moal <Damien.LeMoal@wdc.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+ dm-devel@redhat.com, Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 4/15/22 01:47, Mike Snitzer wrote:
-> On Thu, Apr 14 2022 at 12:29P -0400,
-> Mike Snitzer <snitzer@kernel.org> wrote:
->  
->> Thanks for the report, I've staged a fix here (btw, your change above
->> needs to be paired with the 2nd hunk of my fix otherwise you won't get
->> the bio split you desire):
->>
->> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.18&id=3dfb6f5e95f26215ca08d348ca2ddb5ea6ea2349
->>
->> I'll be sending this to Linus later today or tomorrow.
+On Thu, Apr 14, 2022 at 01:45:33PM -0400, Mike Snitzer wrote:
+> On Wed, Apr 13 2022 at 11:57P -0400,
+> Ming Lei <ming.lei@redhat.com> wrote:
 > 
-> FYI, I revised that commit with further cleanup to not pass
-> 'unsigned *len' to alloc_multiple_bios(), this commit is what will be
-> sent upstream soon:
+> > On Wed, Apr 13, 2022 at 10:25:45PM -0400, Mike Snitzer wrote:
+> > > On Wed, Apr 13 2022 at  8:36P -0400,
+> > > Ming Lei <ming.lei@redhat.com> wrote:
+> > > 
+> > > > On Wed, Apr 13, 2022 at 01:58:54PM -0400, Mike Snitzer wrote:
+> > > > > 
+> > > > > The bigger issue with this patch is that you've caused
+> > > > > dm_submit_bio_remap() to go back to accounting the entire original bio
+> > > > > before any split occurs.  That is a problem because you'll end up
+> > > > > accounting that bio for every split, so in split heavy workloads the
+> > > > > IO accounting won't reflect when the IO is actually issued and we'll
+> > > > > regress back to having very inaccurate and incorrect IO accounting for
+> > > > > dm_submit_bio_remap() heavy targets (e.g. dm-crypt).
+> > > > 
+> > > > Good catch, but we know the length of mapped part in original bio before
+> > > > calling __map_bio(), so io->sectors/io->offset_sector can be setup here,
+> > > > something like the following delta change should address it:
+> > > > 
+> > > > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> > > > index db23efd6bbf6..06b554f3104b 100644
+> > > > --- a/drivers/md/dm.c
+> > > > +++ b/drivers/md/dm.c
+> > > > @@ -1558,6 +1558,13 @@ static int __split_and_process_bio(struct clone_info *ci)
+> > > >  
+> > > >  	len = min_t(sector_t, max_io_len(ti, ci->sector), ci->sector_count);
+> > > >  	clone = alloc_tio(ci, ti, 0, &len, GFP_NOIO);
+> > > > +
+> > > > +	if (ci->sector_count > len) {
+> > > > +		/* setup the mapped part for accounting */
+> > > > +		dm_io_set_flag(ci->io, DM_IO_SPLITTED);
+> > > > +		ci->io->sectors = len;
+> > > > +		ci->io->sector_offset = bio_end_sector(ci->bio) - ci->sector;
+> > > > +	}
+> > > >  	__map_bio(clone);
+> > > >  
+> > > >  	ci->sector += len;
+> > > > @@ -1603,11 +1610,6 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+> > > >  	if (error || !ci.sector_count)
+> > > >  		goto out;
+> > > >  
+> > > > -	/* setup the mapped part for accounting */
+> > > > -	dm_io_set_flag(ci.io, DM_IO_SPLITTED);
+> > > > -	ci.io->sectors = bio_sectors(bio) - ci.sector_count;
+> > > > -	ci.io->sector_offset = bio_end_sector(bio) - bio->bi_iter.bi_sector;
+> > > > -
+> > > >  	bio_trim(bio, ci.io->sectors, ci.sector_count);
+> > > >  	trace_block_split(bio, bio->bi_iter.bi_sector);
+> > > >  	bio_inc_remaining(bio);
+> > > > 
+> > > > -- 
+> > > > Ming
+> > > > 
+> > > 
+> > > Unfortunately we do need splitting after __map_bio() because a dm
+> > > target's ->map can use dm_accept_partial_bio() to further reduce a
+> > > bio's mapped part.
+> > > 
+> > > But I think dm_accept_partial_bio() could be trained to update
+> > > tio->io->sectors?
+> > 
+> > ->orig_bio is just for serving io accounting, but ->orig_bio isn't
+> > passed to dm_accept_partial_bio(), and not gets updated after
+> > dm_accept_partial_bio() is called.
+> > 
+> > If that is one issue, it must be one existed issue in dm io accounting
+> > since ->orig_bio isn't updated when dm_accept_partial_bio() is called.
 > 
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.18&id=c2228f993c7592783b0a2bf7d169b17dfa4cbe2a
-
-Looks good to me.
-
-Nit: there is a typo in the commit message:
-
-dm_accept_paertial_bio() -> dm_accept_partial_bio()
-
-Feel free to add:
-
-Reviewed-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-
+> Recall that ->orig_bio is updated after the bio_split() at the bottom of
+> dm_split_and_process_bio().
 > 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://listman.redhat.com/mailman/listinfo/dm-devel
-> 
+> That bio_split() is based on ci->sector_count, which is reduced as a
+> side-effect of dm_accept_partial_bio() reducing tio->len_ptr.  It is
+> pretty circuitous so I can absolutely understand why you didn't
+> immediately appreciate the interface.  The block comment above
+> dm_accept_partial_bio() does a pretty comprehensive job of explaining.
+
+Go it now, thanks for the explanation.
+
+As you mentioned, it can be addressed in dm_accept_partial_bio()
+by updating ti->io->sectors.
 
 
--- 
-Damien Le Moal
-Western Digital Research
-
+Thanks,
+Ming
 --
 dm-devel mailing list
 dm-devel@redhat.com
