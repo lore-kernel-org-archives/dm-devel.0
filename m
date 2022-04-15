@@ -4,58 +4,67 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A9828C433F5
-	for <dm-devel@archiver.kernel.org>; Fri, 15 Apr 2022 06:13:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2DDA3C433F5
+	for <dm-devel@archiver.kernel.org>; Fri, 15 Apr 2022 08:42:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-489-K8_631VBOhS2Yg6evH1Gpw-1; Fri, 15 Apr 2022 02:13:20 -0400
-X-MC-Unique: K8_631VBOhS2Yg6evH1Gpw-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-217-T1W9zzPIOg2dyfDTXAuPxw-1; Fri, 15 Apr 2022 04:42:21 -0400
+X-MC-Unique: T1W9zzPIOg2dyfDTXAuPxw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 23CD580159B;
-	Fri, 15 Apr 2022 06:13:18 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4E6291875068;
+	Fri, 15 Apr 2022 08:42:19 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id C6788401DE6;
-	Fri, 15 Apr 2022 06:13:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7A749145B968;
+	Fri, 15 Apr 2022 08:42:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 93103194034A;
-	Fri, 15 Apr 2022 06:13:17 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0F41E194034A;
+	Fri, 15 Apr 2022 08:42:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E100619451EC
- for <dm-devel@listman.corp.redhat.com>; Fri, 15 Apr 2022 06:13:16 +0000 (UTC)
+ ESMTP id 1966C19451EC
+ for <dm-devel@listman.corp.redhat.com>; Fri, 15 Apr 2022 08:42:15 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A4B9F401DE6; Fri, 15 Apr 2022 06:13:16 +0000 (UTC)
+ id EB1C6463ECA; Fri, 15 Apr 2022 08:42:14 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id A0FD958044A
- for <dm-devel@redhat.com>; Fri, 15 Apr 2022 06:13:16 +0000 (UTC)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E720D43485D
+ for <dm-devel@redhat.com>; Fri, 15 Apr 2022 08:42:14 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8896F3803511
- for <dm-devel@redhat.com>; Fri, 15 Apr 2022 06:13:16 +0000 (UTC)
-Received: from bombadil.infradead.org (bombadil.infradead.org
- [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CD6EF811E84
+ for <dm-devel@redhat.com>; Fri, 15 Apr 2022 08:42:14 +0000 (UTC)
+Received: from szxga08-in.huawei.com (szxga08-in.huawei.com
+ [45.249.212.255]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-16-hhiaE71OOPS60unLT1YMSw-1; Fri, 15 Apr 2022 02:13:14 -0400
-X-MC-Unique: hhiaE71OOPS60unLT1YMSw-1
-Received: from [2a02:1205:504b:4280:f5dd:42a4:896c:d877] (helo=localhost)
- by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
- id 1nfDxv-008PIQ-ME; Fri, 15 Apr 2022 04:53:52 +0000
-From: Christoph Hellwig <hch@lst.de>
-To: Jens Axboe <axboe@kernel.dk>
-Date: Fri, 15 Apr 2022 06:52:46 +0200
-Message-Id: <20220415045258.199825-16-hch@lst.de>
-In-Reply-To: <20220415045258.199825-1-hch@lst.de>
-References: <20220415045258.199825-1-hch@lst.de>
+ us-mta-355-Ty20pM9iM6Sx6tyGYamPWg-1; Fri, 15 Apr 2022 04:42:09 -0400
+X-MC-Unique: Ty20pM9iM6Sx6tyGYamPWg-1
+Received: from dggpeml500024.china.huawei.com (unknown [172.30.72.57])
+ by szxga08-in.huawei.com (SkyGuard) with ESMTP id 4KfqYg4k7zz1HC38;
+ Fri, 15 Apr 2022 16:41:27 +0800 (CST)
+Received: from dggpeml500006.china.huawei.com (7.185.36.76) by
+ dggpeml500024.china.huawei.com (7.185.36.10) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2375.24; Fri, 15 Apr 2022 16:42:05 +0800
+Received: from localhost.localdomain (10.175.127.227) by
+ dggpeml500006.china.huawei.com (7.185.36.76) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2375.24; Fri, 15 Apr 2022 16:42:05 +0800
+From: Luo Meng <luomeng12@huawei.com>
+To: <agk@redhat.com>, <snitzer@redhat.com>, <dm-devel@redhat.com>,
+ <ejt@redhat.com>
+Date: Fri, 15 Apr 2022 16:56:31 +0800
+Message-ID: <20220415085631.3613813-1-luomeng12@huawei.com>
 MIME-Version: 1.0
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
- bombadil.infradead.org. See http://www.infradead.org/rpr.html
+X-Originating-IP: [10.175.127.227]
+X-ClientProxiedBy: dggems706-chm.china.huawei.com (10.3.19.183) To
+ dggpeml500006.china.huawei.com (7.185.36.76)
+X-CFilter-Loop: Reflected
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -63,9 +72,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: [dm-devel] [PATCH 15/27] block: add a bdev_max_zone_append_sectors
- helper
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: [dm-devel] dm mpath: fix UAF in multipath_message()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -77,24 +85,10 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: jfs-discussion@lists.sourceforge.net, linux-nvme@lists.infradead.org,
- virtualization@lists.linux-foundation.org, linux-mm@kvack.org,
- dm-devel@redhat.com, target-devel@vger.kernel.org,
- linux-mtd@lists.infradead.org, drbd-dev@lists.linbit.com,
- linux-s390@vger.kernel.org, linux-nilfs@vger.kernel.org,
- linux-scsi@vger.kernel.org, Damien Le Moal <damien.lemoal@opensource.wdc.com>,
- cluster-devel@redhat.com, xen-devel@lists.xenproject.org,
- linux-ext4@vger.kernel.org, linux-um@lists.infradead.org, nbd@other.debian.org,
- linux-block@vger.kernel.org, linux-bcache@vger.kernel.org,
- ceph-devel@vger.kernel.org, linux-raid@vger.kernel.org,
- "Martin K . Petersen" <martin.petersen@oracle.com>,
- Johannes Thumshirn <johannes.thumshirn@wdc.com>, linux-mmc@vger.kernel.org,
- linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
- ocfs2-devel@oss.oracle.com, linux-fsdevel@vger.kernel.org,
- ntfs3@lists.linux.dev, linux-btrfs@vger.kernel.org
+Cc: luomeng12@huawei.com, yukuai3@huawei.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -102,72 +96,142 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Add a helper to check the max supported sectors for zone append based on
-the block_device instead of having to poke into the block layer internal
-request_queue.
+If dm_get_device() create dd in multipath_message(),
+and then call table_deps() after dm_put_table_device(),
+it will lead to concurrency UAF bugs.
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Acked-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
-Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+One of the concurrency UAF can be shown as below:
+
+         (USE)                        |    (FREE)
+                                      |  target_message
+                                      |    multipath_message
+                                      |      dm_put_device
+                                      |        dm_put_table_device #
+                                      |          kfree(td)  # table_device *td
+ioctl # DM_TABLE_DEPS_CMD             |         ...
+  table_deps                          |         ...
+  dm_get_live_or_inactive_table       |         ...
+    retrieve_dep                      |         ...
+    list_for_each_entry               |         ...
+      deps->dev[count++] =            |         ...
+          huge_encode_dev             |         ...
+          (dd->dm_dev->bdev->bd_dev)  |        list_del(&dd->list)
+                                      |        kfree(dd) # dm_dev_internal
+
+The root cause of UAF bugs is that find_device() failed in
+dm_get_device() and will create dd and refcount set 1, kfree()
+in dm_put_table() is not protected. When td, which there are
+still pointers point to, is released, the concurrency UAF bug
+will happen.
+
+This patch add a flag to determine whether to create a new dd.
+
+Fixes: 8215d6ec5fee(dm table: remove unused dm_get_device range parameters)
+Signed-off-by: Luo Meng <luomeng12@huawei.com>
 ---
- drivers/nvme/target/zns.c | 3 +--
- fs/zonefs/super.c         | 3 +--
- include/linux/blkdev.h    | 6 ++++++
- 3 files changed, 8 insertions(+), 4 deletions(-)
+ drivers/md/dm-mpath.c         |  2 +-
+ drivers/md/dm-table.c         | 43 +++++++++++++++++++++--------------
+ include/linux/device-mapper.h |  2 ++
+ 3 files changed, 29 insertions(+), 18 deletions(-)
 
-diff --git a/drivers/nvme/target/zns.c b/drivers/nvme/target/zns.c
-index e34718b095504..82b61acf7a72b 100644
---- a/drivers/nvme/target/zns.c
-+++ b/drivers/nvme/target/zns.c
-@@ -34,8 +34,7 @@ static int validate_conv_zones_cb(struct blk_zone *z,
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 6ed9d2731254..ad63d729ff81 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1995,7 +1995,7 @@ static int multipath_message(struct dm_target *ti, unsigned argc, char **argv,
+ 		goto out;
+ 	}
  
- bool nvmet_bdev_zns_enable(struct nvmet_ns *ns)
- {
--	struct request_queue *q = ns->bdev->bd_disk->queue;
--	u8 zasl = nvmet_zasl(queue_max_zone_append_sectors(q));
-+	u8 zasl = nvmet_zasl(bdev_max_zone_append_sectors(ns->bdev));
- 	struct gendisk *bd_disk = ns->bdev->bd_disk;
- 	int ret;
- 
-diff --git a/fs/zonefs/super.c b/fs/zonefs/super.c
-index 3614c7834007d..7a63807b736c4 100644
---- a/fs/zonefs/super.c
-+++ b/fs/zonefs/super.c
-@@ -678,13 +678,12 @@ static ssize_t zonefs_file_dio_append(struct kiocb *iocb, struct iov_iter *from)
- 	struct inode *inode = file_inode(iocb->ki_filp);
- 	struct zonefs_inode_info *zi = ZONEFS_I(inode);
- 	struct block_device *bdev = inode->i_sb->s_bdev;
--	unsigned int max;
-+	unsigned int max = bdev_max_zone_append_sectors(bdev);
- 	struct bio *bio;
- 	ssize_t size;
- 	int nr_pages;
- 	ssize_t ret;
- 
--	max = queue_max_zone_append_sectors(bdev_get_queue(bdev));
- 	max = ALIGN_DOWN(max << SECTOR_SHIFT, inode->i_sb->s_blocksize);
- 	iov_iter_truncate(from, max);
- 
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index a433798c3343e..f8c50b77543eb 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1188,6 +1188,12 @@ static inline unsigned int queue_max_zone_append_sectors(const struct request_qu
- 	return min(l->max_zone_append_sectors, l->max_sectors);
+-	r = dm_get_device(ti, argv[1], dm_table_get_mode(ti->table), &dev);
++	r = __dm_get_device(ti, argv[1], dm_table_get_mode(ti->table), &dev, false);
+ 	if (r) {
+ 		DMWARN("message: error getting device %s",
+ 		       argv[1]);
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 03541cfc2317..9dbc0ba37ae6 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -339,12 +339,8 @@ dev_t dm_get_dev_t(const char *path)
  }
+ EXPORT_SYMBOL_GPL(dm_get_dev_t);
  
-+static inline unsigned int
-+bdev_max_zone_append_sectors(struct block_device *bdev)
-+{
-+	return queue_max_zone_append_sectors(bdev_get_queue(bdev));
-+}
-+
- static inline unsigned queue_logical_block_size(const struct request_queue *q)
+-/*
+- * Add a device to the list, or just increment the usage count if
+- * it's already present.
+- */
+-int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+-		  struct dm_dev **result)
++int __dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
++		    struct dm_dev **result, bool create_dd)
  {
- 	int retval = 512;
+ 	int r;
+ 	dev_t dev;
+@@ -368,19 +364,21 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 
+ 	dd = find_device(&t->devices, dev);
+ 	if (!dd) {
+-		dd = kmalloc(sizeof(*dd), GFP_KERNEL);
+-		if (!dd)
+-			return -ENOMEM;
+-
+-		if ((r = dm_get_table_device(t->md, dev, mode, &dd->dm_dev))) {
+-			kfree(dd);
+-			return r;
+-		}
++		if (create_dd) {
++			dd = kmalloc(sizeof(*dd), GFP_KERNEL);
++			if (!dd)
++				return -ENOMEM;
+ 
+-		refcount_set(&dd->count, 1);
+-		list_add(&dd->list, &t->devices);
+-		goto out;
++			if ((r = dm_get_table_device(t->md, dev, mode, &dd->dm_dev))) {
++				kfree(dd);
++				return r;
++			}
+ 
++			refcount_set(&dd->count, 1);
++			list_add(&dd->list, &t->devices);
++			goto out;
++		} else
++			return -ENODEV;
+ 	} else if (dd->dm_dev->mode != (mode | dd->dm_dev->mode)) {
+ 		r = upgrade_mode(dd, mode, t->md);
+ 		if (r)
+@@ -391,6 +389,17 @@ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 	*result = dd->dm_dev;
+ 	return 0;
+ }
++EXPORT_SYMBOL(__dm_get_device);
++
++/*
++ * Add a device to the list, or just increment the usage count if
++ * it's already present.
++ */
++int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
++		  struct dm_dev **result)
++{
++	return __dm_get_device(ti, path, mode, result, true);
++}
+ EXPORT_SYMBOL(dm_get_device);
+ 
+ static int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index c2a3758c4aaa..6ea542e18048 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -168,6 +168,8 @@ dev_t dm_get_dev_t(const char *path);
+ int dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
+ 		  struct dm_dev **result);
+ void dm_put_device(struct dm_target *ti, struct dm_dev *d);
++int __dm_get_device(struct dm_target *ti, const char *path, fmode_t mode,
++		    struct dm_dev **result, bool create_dd);
+ 
+ /*
+  * Information about a target type
 -- 
-2.30.2
+2.31.1
 
 --
 dm-devel mailing list
