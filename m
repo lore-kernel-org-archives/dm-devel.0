@@ -1,136 +1,136 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CFA46C4321E
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id ED2BFC4167B
 	for <dm-devel@archiver.kernel.org>; Tue, 19 Apr 2022 06:10:49 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-116-pkzboJP2MgOoNuUBd3ydIA-1; Tue, 19 Apr 2022 02:10:44 -0400
-X-MC-Unique: pkzboJP2MgOoNuUBd3ydIA-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-341-VcS6IiJkN8CeMvOvleRBjA-1; Tue, 19 Apr 2022 02:10:45 -0400
+X-MC-Unique: VcS6IiJkN8CeMvOvleRBjA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A5DFD94902D;
-	Tue, 19 Apr 2022 06:10:38 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 236993811F47;
+	Tue, 19 Apr 2022 06:10:42 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9074C40FF41A;
-	Tue, 19 Apr 2022 06:10:38 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0EDE0145F94D;
+	Tue, 19 Apr 2022 06:10:42 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 48574194EB98;
-	Tue, 19 Apr 2022 06:10:32 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 93D671940347;
+	Tue, 19 Apr 2022 06:10:37 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 414F31947BBB
- for <dm-devel@listman.corp.redhat.com>; Mon, 18 Apr 2022 21:21:49 +0000 (UTC)
+ ESMTP id 3CEA219451EC
+ for <dm-devel@listman.corp.redhat.com>; Fri, 15 Apr 2022 05:40:19 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 3186A454D6E; Mon, 18 Apr 2022 21:21:49 +0000 (UTC)
+ id 19DBE404D2FC; Fri, 15 Apr 2022 05:40:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2C1A5454D6D
- for <dm-devel@redhat.com>; Mon, 18 Apr 2022 21:21:49 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1023D811E75
- for <dm-devel@redhat.com>; Mon, 18 Apr 2022 21:21:49 +0000 (UTC)
-Received: from NAM11-BN8-obe.outbound.protection.outlook.com
- (mail-bn8nam11on2086.outbound.protection.outlook.com [40.107.236.86]) by
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1534F404E4B5
+ for <dm-devel@redhat.com>; Fri, 15 Apr 2022 05:40:19 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EC2F51C05AEA
+ for <dm-devel@redhat.com>; Fri, 15 Apr 2022 05:40:18 +0000 (UTC)
+Received: from NAM10-DM6-obe.outbound.protection.outlook.com
+ (mail-dm6nam10on2086.outbound.protection.outlook.com [40.107.93.86]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-310-vIPKWtc2POek50hEpJzqrg-1; Mon, 18 Apr 2022 17:21:47 -0400
-X-MC-Unique: vIPKWtc2POek50hEpJzqrg-1
+ us-mta-447-ScNabr6FPSqw5fEwJ6HleA-2; Fri, 15 Apr 2022 01:39:35 -0400
+X-MC-Unique: ScNabr6FPSqw5fEwJ6HleA-2
 Received: from MW2PR12MB4667.namprd12.prod.outlook.com (2603:10b6:302:12::28)
- by DM4PR12MB5101.namprd12.prod.outlook.com (2603:10b6:5:390::10) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5164.20; Mon, 18 Apr
- 2022 21:21:45 +0000
+ by CY4PR12MB1815.namprd12.prod.outlook.com (2603:10b6:903:122::21)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5144.29; Fri, 15 Apr
+ 2022 05:39:32 +0000
 Received: from MW2PR12MB4667.namprd12.prod.outlook.com
  ([fe80::a90b:9df2:370c:e76b]) by MW2PR12MB4667.namprd12.prod.outlook.com
- ([fe80::a90b:9df2:370c:e76b%3]) with mapi id 15.20.5164.025; Mon, 18 Apr 2022
- 21:21:44 +0000
+ ([fe80::a90b:9df2:370c:e76b%3]) with mapi id 15.20.5144.030; Fri, 15 Apr 2022
+ 05:39:32 +0000
 From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
 To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
-Thread-Topic: [PATCH 08/11] loop: remove a spurious clear of discard_alignment
-Thread-Index: AQHYUuBa8QWBZz9aDUOa5Tmj7psG5qz2LtoA
-Date: Mon, 18 Apr 2022 21:21:44 +0000
-Message-ID: <a60f5fc2-fad3-3e82-00b2-46126c7844ed@nvidia.com>
-References: <20220418045314.360785-1-hch@lst.de>
- <20220418045314.360785-9-hch@lst.de>
-In-Reply-To: <20220418045314.360785-9-hch@lst.de>
+Thread-Topic: [PATCH 03/27] target: fix discard alignment on partitions
+Thread-Index: AQHYUITFeHwvXEjzw06+32xoV+0XX6zwdVMA
+Date: Fri, 15 Apr 2022 05:39:32 +0000
+Message-ID: <883810d2-c170-388d-a031-63a9792fef5e@nvidia.com>
+References: <20220415045258.199825-1-hch@lst.de>
+ <20220415045258.199825-4-hch@lst.de>
+In-Reply-To: <20220415045258.199825-4-hch@lst.de>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
 user-agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
  Thunderbird/91.7.0
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 29c292e8-3de4-4b82-65bd-08da21817097
-x-ms-traffictypediagnostic: DM4PR12MB5101:EE_
-x-microsoft-antispam-prvs: <DM4PR12MB5101905494492F3B3B1789BBA3F39@DM4PR12MB5101.namprd12.prod.outlook.com>
+x-ms-office365-filtering-correlation-id: f75ff33f-773e-4acc-6d5a-08da1ea25175
+x-ms-traffictypediagnostic: CY4PR12MB1815:EE_
+x-microsoft-antispam-prvs: <CY4PR12MB1815B6BBB70B3A16BD279E14A3EE9@CY4PR12MB1815.namprd12.prod.outlook.com>
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: VTdOHMLOgj5nGlVqc9NJF8HcI54YZvuZgAg95udf3adOomd+wnZvnFAnda6i9vsfcSdwvXzHOCeeqxWt9aMlrMjRWF7Xv9ySzuXME4VPhTN6b7ns2yrqA075agaZdGinqKpCILKu86+pqIbpUNB7ihfkTGMgUI44TM4j8mL5K+wRdRnDOux1aCIyo85Wi24KeN8TisGUyr2oIbkV7/Lg+6ZyC/+btl7c36JMnsxIoHus4s5Yj3TIe51AJhZxWcFEv5Wj+I7IkVe2aWIIFQ6gssIKIt46n0J0ldMlDfh6Y+MFdRUEZ8tppl2ALPOjxZvB99il+VWZ5X4bLWTWl6JwR0Gty6B5Bfm/6c2/uDwv7PD3USn3AXdA2X8HK5mb5ibCpFELSYp1vTg5bBr8XnpgAClHXDU66lJrPlW1e84y4+nf0j3eHfsO3i7DYZT7tulSMSyiTJSBPkV9mCKI2W93bwqfY5s7gNZ2RdO2/4Qg7mNhPkiqdJdFo7Yeotx1Yz7emda/qftdc6e8vNGM5VUFW43ZFvdL3NsiG6P8Uwra5wmEkVFYZz4Bc6PRf568LaAMP3B23aCWHIB7AxBI2Nmm90JPG3Pv94gJxiMzjH+o+oECMD0A/cdho5FbbDmKZz1VGs1WIQuwUCqcIk1syuc8uQj9uZ0XiZoXSS7IH3MsjfaGsnWX4U/Njp053kRrHzoG7aKMPQ9OClMuvLfpWMh0gLOw9Z04aQgHxVy9ekz0n+4gnIxtkwrlMl0Xl7Ap0YqtO9luyWBM5+K1Ke+FJuKVBA==
+x-microsoft-antispam-message-info: ct2OLeRIuik4P+2DUeO5AU8gZqPN6uyQIUnOB8Te+jtyDQNy6aUS+2wsUCMu8u05rWrtf0DIc95cYzd/uLaKTLCrJxxQtZnGGKhUTdcGX6GSWCuCwxkxGsNEG+qJSr9MwUJ7XV9Zvf4FJqe7DdIfzabcBJWl0widLMYk4wFdipWIDEgBVwlNKStVB4Pxswixw3xwANpWRJg7bFt0bQFSjiUuJkSR7z0bjIDhBvb4MU32HFtiyMZF6OWyg8DId41GzQeNxLyflykrZEg7zoRuIKYYiICmpgkAzJFBYYgV5mxIh0ODt8HLe8voQYI34dMRJ2q1zzDO9N6AvHzhbTWTMdsKs4T3CR07noro0Q+qb1WlHpYDdG9DvL2DCoCaarkL1zCHAUJkxEAyMDkzxdV7YkDlSMmau8i/g2y9w9JUbyO4YMAn8IbGR+TdxlqOSApiqh5rCevCWXCyj8q6unx+vib0nG0MK7JxHb7cag3lx4NrOlh++otAdbNAgAhRpzSgd6zLuYF5yoCgnE5OXtwW2xmmSbbIl4IfBfZxZ62Uz72R7UeZkrvDAbKwM+q8p0QzWNVE7+Tj5+OAiwUQj9ZN21aoKS/qM0isH1HffCwIA7CF4XxbqGl9FtgJ3gBe0gt6S6dX/NceavBgo1VeL9RfL1LcflQn3Q3aQvl4LqXD+sV+VQ99i4CuOr/ZuVcFtZnN8LvB0jGsL2I6mgWwy/cIGsBz+W3FIUOiMubueCem4c0OQc3RUQ5rHinqZ5V6IZeWEMz+VO6hBed+QWX+vJJ+Xw==
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
  IPV:NLI; SFV:NSPM; H:MW2PR12MB4667.namprd12.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230001)(4636009)(366004)(38070700005)(122000001)(38100700002)(5660300002)(4326008)(6486002)(186003)(2616005)(54906003)(110136005)(508600001)(6512007)(71200400001)(6506007)(7416002)(66556008)(66476007)(64756008)(8676002)(76116006)(8936002)(66446008)(53546011)(66946007)(316002)(91956017)(31686004)(558084003)(86362001)(2906002)(36756003)(31696002)(45980500001)(43740500002);
+ SFS:(13230001)(4636009)(366004)(7416002)(8936002)(2906002)(91956017)(7406005)(5660300002)(4326008)(66556008)(83380400001)(86362001)(31686004)(508600001)(4744005)(38070700005)(6512007)(2616005)(186003)(53546011)(6506007)(36756003)(66946007)(66476007)(54906003)(110136005)(71200400001)(76116006)(6486002)(38100700002)(64756008)(66446008)(122000001)(8676002)(31696002)(316002)(43740500002)(45980500001);
  DIR:OUT; SFP:1101
 x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?utf-8?B?UE45SDBjVlIraVRQaFkxSXBFV3dQaGFhdzNpYXhoeFp5Q2QyZzBTR2dEUm5E?=
- =?utf-8?B?WEs4NXVhT1orNTZheFBQcytBanZXTjN4ZS9Tdk5oNERRbnNXQlNuV1BjSHNU?=
- =?utf-8?B?NC9jTmZKalpaRVRMN0MreC9qVFRLY0JCMytKTzNhVzRoeVRGMjF1c1Q5VTVJ?=
- =?utf-8?B?UURCZWZMQ1Y2eXc4WGJPczFLRW1zWHlGdlU5WU1UK1pwdzcwMjQrOENTM1E2?=
- =?utf-8?B?bU11TnVVakFOc0pvRHBqQ2JTb3FBK1B6Q2FWaGVIRlkwVmRKNGIwY1V1N2ph?=
- =?utf-8?B?RXFjR2N6YW9UbUdYTkNSNm5tYVBwdWR6MWNPWlBDVVdPQ3UvdmdsSVFHOXl5?=
- =?utf-8?B?TGl3VktDNFdWRG9SU2xUKzV2Rm9KWUFBdzdZbldDOGlncFhzbnRYdWNJQmow?=
- =?utf-8?B?aFdFTGQ1cjhvUS92NmN1RmlDSE1kdWV0YktBZ2dkS2J5U1dteW5GTW9PSzNO?=
- =?utf-8?B?UW5JZlFqSjVPREtQTWdScHZKaytXckxnejFHNUYxOXozUWdqNW9ibkFBUS9u?=
- =?utf-8?B?TXFORU1kUDkyVWpZNElQUnoxSi9XTEFQNnJEellVSXcybnNCT2FWWVNMeHJU?=
- =?utf-8?B?MXcvZXlTT0krUmlhVVFkQ2Q4OGVrYjk4cjhsVm9Ibm1xTjdMdGdoVWcwbTJE?=
- =?utf-8?B?bHFtYXVXeHp0cW41eWI2VTVBQkFjcmJWZGJQbGZKeDdQRnNyRjVaVlB2NWk2?=
- =?utf-8?B?MnVFSm03V1dnUXNsTm5ubWEvUjRnb0F2cDhXemFkaEtnYzJibHh0d3RFSHV1?=
- =?utf-8?B?RmlqdnRRWWpFVEVBNUZNWjFmODFLNkVmWE01akFmUklpTzNhMjBIWXVIZDF1?=
- =?utf-8?B?Q2pGTjlibERiNkpkeTNQYW14RVVGaWJISU5CdUNWTW5icXU0cG0xQVJ3TkN1?=
- =?utf-8?B?cGQ5VWhzTnNZSmtIblFyVVJuaEp5cGRpeXlTNU5oMmRRdVNBdVQrVlFWNEdY?=
- =?utf-8?B?ZlF2ZUtYTUVwRjRuN3RPVkxCY0ZIUURkdlJGRUkzdnByMGJoRDcveGcxbUFL?=
- =?utf-8?B?T05ZY3M4bktoNXlIdGkxZXk5VVM1STJrZHMyTDF4VnQ1UXE1bVc2V1Z6djcr?=
- =?utf-8?B?VFp6cW94RmhFZzRUdXNGdDkyVWlRRUhPR1JZUnNJSEdndHpHSk1lZ2ErVHl1?=
- =?utf-8?B?SS9LbzRjVlJCQm9IMk4rWXZkbFIzUnlZVUVWdXFHUFdLekUxeHg3aUVJcE5p?=
- =?utf-8?B?ejJKdDhVOTU3S20rNy9FOG14N2pCc3FDNDQvVk5YamhkMmt3RkYxMlJQaWRL?=
- =?utf-8?B?NWJnRHJKYStzam1OTTBxUFErdjdyTkl2QjF3Nk1sL3FFVFJRS2RVeGVLL1hy?=
- =?utf-8?B?NWtMcEVPUURwMk5aeHJCZ0d1U0xOQWFxRWYzL1VDZ0p1enAraGwyeG9LOUo3?=
- =?utf-8?B?Vm5senFER2FTUmttTGdXOEhqL2pwK0RvTS90UVpOK09xMzFGcHhtODhHYUtz?=
- =?utf-8?B?aEhCcXBqVUxMWmZmNEcrYzI0emJLN1hjbmlyL2pDOUtBSldyMDFWNVh2elpi?=
- =?utf-8?B?NHJqTE5vRmYzVmswQVYvNFI2QkxyRUw3V3ZzN2Z0QjRHRkZnSGJ4UG45SlpB?=
- =?utf-8?B?TmNiNnpYVVkzczlQWGE4bkF0UzNnZHFtMFkzTjg3d1grVWdBb1pweHZ1TWpl?=
- =?utf-8?B?WEljWGlNUHFFZ2paUmR0WFY2RVRFKzZOTTRkblltL04xNVZ5b1R4NmVMN2t5?=
- =?utf-8?B?ZDJQYk9iQ0tGOHFnUXdNWXNxTlRZTEtzOVN0MktwUTBUd01oREFlSURkQWVK?=
- =?utf-8?B?R3h1SUYvNmN6U2tadGU0U1dKRiszczhLYnhhSXNXcXFHL29HcVRpRGVBczNH?=
- =?utf-8?B?Rko5aVBIblhEdlB4TGJRay9PbkkwWVNXNi9vdnYzWkkwY0lKQWk2bjd6N0JO?=
- =?utf-8?B?VGR0NkxSUjJHeHo0ZU5lRkt2N0dHVVdocXgwaytlVlo0Qmp4dlB4Ym0waGhL?=
- =?utf-8?B?MWtVQTlyWDd5SkUyR0E1c0d4QnIxMWxYbUUvOUVFWjk4Sy9hTlJIbkJ5a3FC?=
- =?utf-8?B?N3hvYzRUMlJ5M2oyRzRnYVcvTzc2a0dqRnhKUXVTY2FDL3NMcnZ6Q1BkWlpU?=
- =?utf-8?B?VEE0OGpEdDlBN3RKMEFWR3JiUFJQMnAySTMvbHBSbFBRcXU3aTVXdXlleHhI?=
- =?utf-8?B?Vm80bmE2RGsyN0d1WnZ3VThXRlVoVG9vS0lLbWJjK08vRE1JUHhvbklUcU1C?=
- =?utf-8?B?TnlBMXJBSzlBeGtoTjdwUnVmaXlQMFZIMDIvR2ZzN3ZXRVhIT0hpZkk3L21n?=
- =?utf-8?B?bnZzZWlTUUtvVVFTSUg2d1BYTjVXM0s5R3JkQXMrcDA5bllLS3FpdWlYdmNX?=
- =?utf-8?B?cFFLRmdGSkxHd0ZRY2tPdHdKdk1aVEs4TDE5S2x3L25EMzZrUnFKOGR6ZTRi?=
- =?utf-8?Q?PQoUgCYR9P1+D+Oo=3D?=
+x-ms-exchange-antispam-messagedata-0: =?utf-8?B?c0tlN1NsN3ExRHNGOTQ4NWpMd08vcEpCWVpOcnFEZTR0TFJXY29qR1V0a2JY?=
+ =?utf-8?B?WG5DZWtKRC84VCtLd2xrUnIycjlveWFGbTNuRGY0Tjhqd0Nxc0JrVFZNRGpB?=
+ =?utf-8?B?ZnplU09JdGt0elc4dUlocWNGQnZqZGJnVEljUlN2SjZDL0tvMjRDdGJ5V05i?=
+ =?utf-8?B?MmVNdHRCZWRNVEduYmxqREl2Y29zdTg0d2NlYW5NQU9ZemYwRDJWMVBwY0xQ?=
+ =?utf-8?B?Tk5lUXdJd2dCVlBZczlVNWY2S2o0cVB3ZEdBbDhzeFA2a3lrR1czWHEyUGZD?=
+ =?utf-8?B?blBCN0N0QjFpQVlyOGNuNVhFMmh1OXROOUhNTHNGRmE0bDFUeUdxZUJNRWJB?=
+ =?utf-8?B?ajdyUHN0aGNuVHlCdTE1cEZhVmVjam1KbGlLbnZwaW5HWGlySUVnY283cHhw?=
+ =?utf-8?B?VUNTclhzYTVBNVRpeFNRNWI4RnFUYW1HM21IZCt1anJTTVRoR2xpZHo3TXBW?=
+ =?utf-8?B?cWN0YjgwcjZTMGlnSFJlbEowZUNITEhGN3NNV2YyRUh1OHFQbUZ4N2hhcnYy?=
+ =?utf-8?B?SDZBaUx2MWdwZ0kzME12bi9hczJKUkpobDhJNC9WbnJKelhRbytKYWNpQW0v?=
+ =?utf-8?B?Q2hJQ1dSdnVnT1lEOGFHd0FGSE5RQ2UyRFErcEk3WHJTanlRZWRtUDhVcE95?=
+ =?utf-8?B?QzRwV1VLYkl4ZEpYSExkTmRla0gzb3UwK1RsbEtpNVFLdDJPNlVxNXF0K1VS?=
+ =?utf-8?B?d2o5d1FxOTh2M05JY3ZyQ0ExQU52LzVLVlROcG4xUUtJWkVQL2cyaWtvekcx?=
+ =?utf-8?B?aCtpNy8zZnBvcnpyR1NMSUZyUEJzNVBoeGtydWpnNCtzWUgvTnZQSjdQK1lL?=
+ =?utf-8?B?bGtzWHBoYm5SM0pmQ3RJY1JDbmkrTElnZXFOWVNRVmlEOTR2N2FmTFBydVJO?=
+ =?utf-8?B?eGY0T1l5Vk9sRU9wcWI0ZDEralBTOUs2RkpXTlhmOUluWXJmVnVJaGxuV3pm?=
+ =?utf-8?B?dkh0bElzTTBvc290WGp6WXFxdDZic0Y1N3c3ckQ2Rm10bUlwY1dNMUxnQmNh?=
+ =?utf-8?B?bXozSVlGTXkrb1AybTN5aGwxU0hWNUNGd3B4V05LcjcrMmlHNFN1NTRkRU9h?=
+ =?utf-8?B?eDR4aFppVVVqVXk0cGdDNVJvUjh3Qjc3OXJIeUpHL2lNWWtURVpUWEpkN1Ni?=
+ =?utf-8?B?bTVmWVBkWm0xamF5L0I1U3l4NkJqZUN4eE1zUWk2YlN5QmZwNklHR1diSHE0?=
+ =?utf-8?B?TE5yZTVibENkcFdNeE8vZlgyS0NrWlY0WnVsNDBTMEZrWHdpY1NaUFpBby9E?=
+ =?utf-8?B?UEJicGxvQm5uMWROTlZ6dWlLaDkzTUp1L0p6ZWUyOTZnT1REUkVxZyswK0xw?=
+ =?utf-8?B?cU5UREIvSkxhQUtyZW1FT2pTaU5iWEhoamRscUE0Slg4NzNJQzlGUVAyYWVn?=
+ =?utf-8?B?V1NOZHNUOVJFVTRRQTlNcDdGYVljY01mcStrV3lJMCtPWkVqNC92dzIya0tQ?=
+ =?utf-8?B?eG8vamViOWdrRkF3eU5kVFViR3FZT1F5azdnZnBJUk1tUWp4QlF4NDBPN3Z2?=
+ =?utf-8?B?ZDNXdlEzN1djbDErUlF3YnlCZWdoVjJaMVRRWi9LRFY1bzN5dE5mZjBjaHZo?=
+ =?utf-8?B?M3lZakZkdk1DUk5lUmhOYUp0aEJ1WUZReVViY2kxaStQOVhFaWpIZFRGQjd1?=
+ =?utf-8?B?Qm9SVklaYXM3QVNNUlVIZHVIVVBpUnpXaUxwdVdHL20xYUdOdkxYSzd1K3FW?=
+ =?utf-8?B?Qi9SL0lTd3NXUldmOXkvNllsejgwbFJWMkNpVUQ0WDdCYm02ZDhOMjlTWG9R?=
+ =?utf-8?B?ODJPa2d2S1d3L1RIMkQzaTlkd1R0VnA0NzhtUWNWYW5NTll2ZThYbDZ0U2Jz?=
+ =?utf-8?B?b3o0MllMNDkxaVN2NTVYNnloRUl1V1NqV3YyNGdpdzRWdGhNMzdFZWNkbGlH?=
+ =?utf-8?B?eEJBcU9USU9jV1cyd29DZnYzLy9sZ2Vham5aRWRnWVF0S096Nmg0UmlHVW1y?=
+ =?utf-8?B?ckozbFFpWm8zSUVzR3RBRGl5S0hMbEsvcFRVNEdnVEhiSzB6RnpDYUFrVVBO?=
+ =?utf-8?B?dlY0bkNrRWZYVElwS3JHZ0ZqK3ZjUThiUmtpQXBHamwzajBCb2FRZDBCWWxo?=
+ =?utf-8?B?R1BrR29Ua3FDZmQvb3c0cmwyOWIwVFBVVW9VSTl4RzdDUUNWOGpiSWYvMHR6?=
+ =?utf-8?B?SGxGdStidzNBK2l2WE5meldvK0ZtTFJxN00xeU1OeUgzM1gxY00wdmpxb2Zm?=
+ =?utf-8?B?cWJFbGlkZ3dOZlp3QXpadGFKSkRkc2I4NTlwMXBYRDF4RWtoS0NNZVFUZi9W?=
+ =?utf-8?B?dkI2N2ZVOFBNT1o1UFdjV3ZEOTNRVkU1ZUdwUWxDbDFuNThzM1ZJY0FwZ2M3?=
+ =?utf-8?B?OHJGcVZHOXRtdkJiZmNOMjRXQW5ZNjFuQTJKM0I1eS9hNVRKMjZSTUlmbnli?=
+ =?utf-8?Q?mwLvyuXNtT2dnZQ8=3D?=
 MIME-Version: 1.0
 X-OriginatorOrg: Nvidia.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: MW2PR12MB4667.namprd12.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 29c292e8-3de4-4b82-65bd-08da21817097
-X-MS-Exchange-CrossTenant-originalarrivaltime: 18 Apr 2022 21:21:44.8408 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: f75ff33f-773e-4acc-6d5a-08da1ea25175
+X-MS-Exchange-CrossTenant-originalarrivaltime: 15 Apr 2022 05:39:32.4969 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: 43083d15-7273-40c1-b7db-39efd9ccc17a
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: XFN+DIrHwXW4dMMfM+xmFlg+tyVkcF7I1h6/S9n/Q2biCyaj6At7SnFy02ZzrCvM3Xc6fVux9dDTKsDMn+vhYg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM4PR12MB5101
+X-MS-Exchange-CrossTenant-userprincipalname: ODsOQS1Mue5lFCyrdhicFWU5WLi2FcJdfWJh4a+Hin5SswAuBJNfxrqbBcEL8rN3XrCR3LTTvxXQb4HjN73Pmw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: CY4PR12MB1815
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -138,10 +138,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 X-Mailman-Approved-At: Tue, 19 Apr 2022 06:10:27 +0000
-Subject: Re: [dm-devel] [PATCH 08/11] loop: remove a spurious clear of
- discard_alignment
+Subject: Re: [dm-devel] [PATCH 03/27] target: fix discard alignment on
+ partitions
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -153,50 +153,65 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jan Hoeppner <hoeppner@linux.ibm.com>, "Michael S.
- Tsirkin" <mst@redhat.com>, Jason Wang <jasowang@redhat.com>,
+Cc: "jfs-discussion@lists.sourceforge.net"
+ <jfs-discussion@lists.sourceforge.net>,
  "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
  "virtualization@lists.linux-foundation.org"
- <virtualization@lists.linux-foundation.org>, Song Liu <song@kernel.org>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>, "Md. Haris
- Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>,
+ <virtualization@lists.linux-foundation.org>,
+ "linux-mm@kvack.org" <linux-mm@kvack.org>,
+ "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ "target-devel@vger.kernel.org" <target-devel@vger.kernel.org>,
+ "linux-mtd@lists.infradead.org" <linux-mtd@lists.infradead.org>,
+ "drbd-dev@lists.linbit.com" <drbd-dev@lists.linbit.com>,
  "linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>,
- Richard Weinberger <richard@nod.at>,
+ "linux-nilfs@vger.kernel.org" <linux-nilfs@vger.kernel.org>,
+ "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+ "cluster-devel@redhat.com" <cluster-devel@redhat.com>,
  "xen-devel@lists.xenproject.org" <xen-devel@lists.xenproject.org>,
+ "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>,
  "linux-um@lists.infradead.org" <linux-um@lists.infradead.org>,
- Mike Snitzer <snitzer@kernel.org>, Josef Bacik <josef@toxicpanda.com>,
  "nbd@other.debian.org" <nbd@other.debian.org>,
  "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
- Stefan Haberland <sth@linux.ibm.com>,
- "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "Martin K.
- Petersen" <martin.petersen@oracle.com>,
- Johannes Berg <johannes@sipsolutions.net>,
- =?utf-8?B?Um9nZXIgUGF1IE1vbm7DqQ==?= <roger.pau@citrix.com>
+ "linux-bcache@vger.kernel.org" <linux-bcache@vger.kernel.org>,
+ "ceph-devel@vger.kernel.org" <ceph-devel@vger.kernel.org>,
+ "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>,
+ "Martin K . Petersen" <martin.petersen@oracle.com>,
+ "linux-mmc@vger.kernel.org" <linux-mmc@vger.kernel.org>,
+ "linux-f2fs-devel@lists.sourceforge.net"
+ <linux-f2fs-devel@lists.sourceforge.net>,
+ "linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
+ "ocfs2-devel@oss.oracle.com" <ocfs2-devel@oss.oracle.com>,
+ "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+ "ntfs3@lists.linux.dev" <ntfs3@lists.linux.dev>,
+ "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <41D9387E299FEA4DBE85A4EDA24D0FFB@namprd12.prod.outlook.com>
+Content-ID: <308F8700311C87409575E1C200FD2EC0@namprd12.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 4/17/22 21:53, Christoph Hellwig wrote:
-> The loop driver never sets a discard_alignment, so it also doens't need
-
-s/doens't/doesn't/
-
-> to clear it to zero.
+On 4/14/22 21:52, Christoph Hellwig wrote:
+> Use the proper bdev_discard_alignment helper that accounts for partition
+> offsets.
 > 
+> Fixes: c66ac9db8d4a ("[SCSI] target: Add LIO target core v4.0.0-rc6")
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
+> Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
+> ---
+
+Helper does handle the case for of partition.
+
+Looks good.
 
 Reviewed-by: Chaitanya Kulkarni <kch@nvidia.com>
 
 -ck
-
 
 --
 dm-devel mailing list
