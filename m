@@ -1,62 +1,89 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 18FE9C433F5
-	for <dm-devel@archiver.kernel.org>; Sun, 17 Apr 2022 02:22:59 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1650162178;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=wqiakUCPwIkFSwwlt19Y/8FiiRUAztwhvaTIEW4dyc4=;
-	b=HmLxyVA8UJ2jRbWERZq9RDw3I9UoNZo7ijpwhqUAXdpqqM7gZG0yD6q4mi+ZPKOh2/mvZJ
-	HohxY+DJfRH+V56FtHDYnF7Xcih3YaZRJFd0Acyjm178wkN3eh1X8D7XcHeqFfu0761fZo
-	09zEjxWlaGplgLExqkbhKGusmKhFCPU=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 652A6C433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 18 Apr 2022 01:33:00 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-132-A3EOmcjvMBSor4TxxUPnag-1; Sat, 16 Apr 2022 22:22:55 -0400
-X-MC-Unique: A3EOmcjvMBSor4TxxUPnag-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-31-qUhsMa9BPpy04Y1tleNMKw-1; Sun, 17 Apr 2022 21:32:57 -0400
+X-MC-Unique: qUhsMa9BPpy04Y1tleNMKw-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DC7041C04B74;
-	Sun, 17 Apr 2022 02:22:53 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BA83080B710;
+	Mon, 18 Apr 2022 01:32:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 87F61111C4A1;
-	Sun, 17 Apr 2022 02:22:53 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 81DD7400F24;
+	Mon, 18 Apr 2022 01:32:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5524D19451F1;
-	Sun, 17 Apr 2022 02:22:53 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2DBD019451F1;
+	Mon, 18 Apr 2022 01:32:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 9BA3619466DF
- for <dm-devel@listman.corp.redhat.com>; Sun, 17 Apr 2022 02:22:51 +0000 (UTC)
+ ESMTP id 9570A19466DF
+ for <dm-devel@listman.corp.redhat.com>; Mon, 18 Apr 2022 01:32:51 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6B2CF111C4A0; Sun, 17 Apr 2022 02:22:51 +0000 (UTC)
-Received: from T590 (ovpn-8-20.pek2.redhat.com [10.72.8.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E86A6111DD0D;
- Sun, 17 Apr 2022 02:22:33 +0000 (UTC)
-Date: Sun, 17 Apr 2022 10:22:28 +0800
-From: Ming Lei <ming.lei@redhat.com>
-To: Mike Snitzer <snitzer@redhat.com>
-Message-ID: <Ylt55PHHu6XShdfA@T590>
-References: <YlYt2rzM0NBPARVp@T590> <YlZp3+VrP930VjIQ@redhat.com>
- <YlbBf0mJa/BPHSSq@T590> <YlcPXslr6Y7cHOSU@redhat.com>
- <Yldsqh2YsclXYl3s@T590> <YleGKbZiHeBIJidI@redhat.com>
- <YlebwjTKH2MU9tCD@T590> <Ylhdvac5SY85r+1R@redhat.com>
- <Yli48LmLi7dEngLn@T590> <Ylneb0NWsCab0HqI@redhat.com>
+ id 7FD7D401E9C; Mon, 18 Apr 2022 01:32:51 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7BFF0400F24
+ for <dm-devel@redhat.com>; Mon, 18 Apr 2022 01:32:51 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 61B9680159B
+ for <dm-devel@redhat.com>; Mon, 18 Apr 2022 01:32:51 +0000 (UTC)
+Received: from mail-pj1-f47.google.com (mail-pj1-f47.google.com
+ [209.85.216.47]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-371-uFrLqqcpOeWWvbfq27y8ZA-1; Sun, 17 Apr 2022 21:32:49 -0400
+X-MC-Unique: uFrLqqcpOeWWvbfq27y8ZA-1
+Received: by mail-pj1-f47.google.com with SMTP id
+ z6-20020a17090a398600b001cb9fca3210so12794350pjb.1
+ for <dm-devel@redhat.com>; Sun, 17 Apr 2022 18:32:49 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:from:to:cc:in-reply-to:references:subject
+ :message-id:date:mime-version:content-transfer-encoding;
+ bh=KJfLbwgngO3OiGtIZhQTnGZUpV/6KTf4a6VxaVn0jHA=;
+ b=EepCAWy6fBD/doFkatbsHNf4aY8qLEym9OA9FoCJdRtK7CYbVjpMcEIkQsIoA6ixOz
+ 6jEyDQb2mMhQR2v6CKU5oXhizRkHiQSXCJSBfgXBL3JqF3/UaijQjW9z2aAN9WNumu8r
+ 4/hjTmH5LxAfUPZWMc0c8s3yZ6wHoWeKxEtJIX3KVhiZuZLXtJdnvdge08FwWU4Edi30
+ ZUzXsYNedyI+xQpAyYbgX5TvhUBvyfETZwcUd+xhpYc2sXlFRDcE5VssmHzfmZMCmUeT
+ nmWQP1CMPnPTH55FYRVPgHgZvX5eOfwMzXG2zqlOIpVinBd66YeEePIx+mUF7zxBs9Bq
+ 0AvQ==
+X-Gm-Message-State: AOAM533g00HoZ5/bbPqja3vDbraQWi/QDumL8XqCJNmTjzHx1cPVWkP0
+ f6ZyliedrXbz2Wyjni3S1nwuCA==
+X-Google-Smtp-Source: ABdhPJxH3Tcv8urG8TWDL99aaKBrMqsxLK1RCMCg75RZRVpxh7Td568gOGSDadX3DzyNp9aRqA2iCg==
+X-Received: by 2002:a17:903:2406:b0:158:f6f0:6c44 with SMTP id
+ e6-20020a170903240600b00158f6f06c44mr4676524plo.88.1650245568439; 
+ Sun, 17 Apr 2022 18:32:48 -0700 (PDT)
+Received: from [127.0.1.1] ([198.8.77.157]) by smtp.gmail.com with ESMTPSA id
+ g15-20020a63be4f000000b0039934531e95sm10726611pgo.18.2022.04.17.18.32.44
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Sun, 17 Apr 2022 18:32:47 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: Christoph Hellwig <hch@lst.de>
+In-Reply-To: <20220406061228.410163-1-hch@lst.de>
+References: <20220406061228.410163-1-hch@lst.de>
+Message-Id: <165024556441.258485.6980891929042026868.b4-ty@kernel.dk>
+Date: Sun, 17 Apr 2022 19:32:44 -0600
 MIME-Version: 1.0
-In-Reply-To: <Ylneb0NWsCab0HqI@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-Subject: Re: [dm-devel] [PATCH 5/8] dm: always setup ->orig_bio in alloc_io
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: Re: [dm-devel] cleanup bio_kmalloc v3
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -68,125 +95,54 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
- dm-devel@redhat.com, Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Cc: linux-bcache@vger.kernel.org, linux-raid@vger.kernel.org,
+ snitzer@redhat.com, martin.petersen@oracle.com, linux-kernel@vger.kernel.org,
+ josef@toxicpanda.com, colyli@suse.de, linux-block@vger.kernel.org,
+ song@kernel.org, dm-devel@redhat.com, target-devel@vger.kernel.org,
+ dsterba@suse.com, phillip@squashfs.org.uk, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Apr 15, 2022 at 05:06:55PM -0400, Mike Snitzer wrote:
-> On Thu, Apr 14 2022 at  8:14P -0400,
-> Ming Lei <ming.lei@redhat.com> wrote:
+On Wed, 6 Apr 2022 08:12:23 +0200, Christoph Hellwig wrote:
+> this series finishes off the bio allocation interface cleanups by dealing
+> with the weirdest member of the famility.  bio_kmalloc combines a kmalloc
+> for the bio and bio_vecs with a hidden bio_init call and magic cleanup
+> semantics.
 > 
-> > On Thu, Apr 14, 2022 at 01:45:33PM -0400, Mike Snitzer wrote:
-> > > On Wed, Apr 13 2022 at 11:57P -0400,
-> > > Ming Lei <ming.lei@redhat.com> wrote:
-> > > 
-> > > > On Wed, Apr 13, 2022 at 10:25:45PM -0400, Mike Snitzer wrote:
-> > > > > On Wed, Apr 13 2022 at  8:36P -0400,
-> > > > > Ming Lei <ming.lei@redhat.com> wrote:
-> > > > > 
-> > > > > > On Wed, Apr 13, 2022 at 01:58:54PM -0400, Mike Snitzer wrote:
-> > > > > > > 
-> > > > > > > The bigger issue with this patch is that you've caused
-> > > > > > > dm_submit_bio_remap() to go back to accounting the entire original bio
-> > > > > > > before any split occurs.  That is a problem because you'll end up
-> > > > > > > accounting that bio for every split, so in split heavy workloads the
-> > > > > > > IO accounting won't reflect when the IO is actually issued and we'll
-> > > > > > > regress back to having very inaccurate and incorrect IO accounting for
-> > > > > > > dm_submit_bio_remap() heavy targets (e.g. dm-crypt).
-> > > > > > 
-> > > > > > Good catch, but we know the length of mapped part in original bio before
-> > > > > > calling __map_bio(), so io->sectors/io->offset_sector can be setup here,
-> > > > > > something like the following delta change should address it:
-> > > > > > 
-> > > > > > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > > > > > index db23efd6bbf6..06b554f3104b 100644
-> > > > > > --- a/drivers/md/dm.c
-> > > > > > +++ b/drivers/md/dm.c
-> > > > > > @@ -1558,6 +1558,13 @@ static int __split_and_process_bio(struct clone_info *ci)
-> > > > > >  
-> > > > > >  	len = min_t(sector_t, max_io_len(ti, ci->sector), ci->sector_count);
-> > > > > >  	clone = alloc_tio(ci, ti, 0, &len, GFP_NOIO);
-> > > > > > +
-> > > > > > +	if (ci->sector_count > len) {
-> > > > > > +		/* setup the mapped part for accounting */
-> > > > > > +		dm_io_set_flag(ci->io, DM_IO_SPLITTED);
-> > > > > > +		ci->io->sectors = len;
-> > > > > > +		ci->io->sector_offset = bio_end_sector(ci->bio) - ci->sector;
-> > > > > > +	}
-> > > > > >  	__map_bio(clone);
-> > > > > >  
-> > > > > >  	ci->sector += len;
-> > > > > > @@ -1603,11 +1610,6 @@ static void dm_split_and_process_bio(struct mapped_device *md,
-> > > > > >  	if (error || !ci.sector_count)
-> > > > > >  		goto out;
-> > > > > >  
-> > > > > > -	/* setup the mapped part for accounting */
-> > > > > > -	dm_io_set_flag(ci.io, DM_IO_SPLITTED);
-> > > > > > -	ci.io->sectors = bio_sectors(bio) - ci.sector_count;
-> > > > > > -	ci.io->sector_offset = bio_end_sector(bio) - bio->bi_iter.bi_sector;
-> > > > > > -
-> > > > > >  	bio_trim(bio, ci.io->sectors, ci.sector_count);
-> > > > > >  	trace_block_split(bio, bio->bi_iter.bi_sector);
-> > > > > >  	bio_inc_remaining(bio);
-> > > > > > 
-> > > > > > -- 
-> > > > > > Ming
-> > > > > > 
-> > > > > 
-> > > > > Unfortunately we do need splitting after __map_bio() because a dm
-> > > > > target's ->map can use dm_accept_partial_bio() to further reduce a
-> > > > > bio's mapped part.
-> > > > > 
-> > > > > But I think dm_accept_partial_bio() could be trained to update
-> > > > > tio->io->sectors?
-> > > > 
-> > > > ->orig_bio is just for serving io accounting, but ->orig_bio isn't
-> > > > passed to dm_accept_partial_bio(), and not gets updated after
-> > > > dm_accept_partial_bio() is called.
-> > > > 
-> > > > If that is one issue, it must be one existed issue in dm io accounting
-> > > > since ->orig_bio isn't updated when dm_accept_partial_bio() is called.
-> > > 
-> > > Recall that ->orig_bio is updated after the bio_split() at the bottom of
-> > > dm_split_and_process_bio().
-> > > 
-> > > That bio_split() is based on ci->sector_count, which is reduced as a
-> > > side-effect of dm_accept_partial_bio() reducing tio->len_ptr.  It is
-> > > pretty circuitous so I can absolutely understand why you didn't
-> > > immediately appreciate the interface.  The block comment above
-> > > dm_accept_partial_bio() does a pretty comprehensive job of explaining.
-> > 
-> > Go it now, thanks for the explanation.
-> > 
-> > As you mentioned, it can be addressed in dm_accept_partial_bio()
-> > by updating ti->io->sectors.
+> This series moves a few callers away from bio_kmalloc and then turns
+> bio_kmalloc into a simple wrapper for a slab allocation of a bio and the
+> inline biovecs.  The callers need to manually call bio_init instead with
+> all that entails and the magic that turns bio_put into a kfree goes away
+> as well, allowing for a proper debug check in bio_put that catches
+> accidental use on a bio_init()ed bio.
 > 
-> Yes, I rebased your patchset ontop of dm-5.19 and fixed up your
-> splitting like we discussed.  I'll be rebasing ontop of v5.18-rc3 once
-> it is released but please have a look at this 'dm-5.19-v2' branch:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-5.19-v2
-> 
-> And this commit in particular:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.19-v2&id=fe5a99da8b0d0518342f5cdb522a06b0f123ca09
-> 
-> Once I've verified with you that it looks OK I'll fold it into your
-> commit (at the same time I rebase on v5.18-rc3 early next week).
+> [...]
 
-Hi Mike,
+Applied, thanks!
 
-Your delta change looks good, thanks for fixing it!
+[1/5] btrfs: simplify ->flush_bio handling
+      commit: f9e69aa9ccd7e51c47b147e45e03987ea0ef9aa3
+[2/5] squashfs: always use bio_kmalloc in squashfs_bio_read
+      commit: 46a2d4ccc49903923506685a8368ca88312bbdc9
+[3/5] target/pscsi: remove pscsi_get_bio
+      commit: 7655db80932d95f501a0811544d9520ec720e38d
+[4/5] block: turn bio_kmalloc into a simple kmalloc wrapper
+      commit: 066ff571011d8416e903d3d4f1f41e0b5eb91e1d
+[5/5] pktcdvd: stop using bio_reset
+      commit: 852ad96cb03621f7995764b4b31cbff9801d8bcd
 
-Thanks,
-Ming
+Best regards,
+-- 
+Jens Axboe
+
+
 --
 dm-devel mailing list
 dm-devel@redhat.com
