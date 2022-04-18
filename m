@@ -4,80 +4,79 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1D559C433EF
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 435C4C433F5
 	for <dm-devel@archiver.kernel.org>; Mon, 18 Apr 2022 02:28:09 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-547-YjIMjPWEMT-6M3CjZWokNg-1; Sun, 17 Apr 2022 22:28:03 -0400
-X-MC-Unique: YjIMjPWEMT-6M3CjZWokNg-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-561-5HZ-ioyoNPCrFr2MWpoL5Q-1; Sun, 17 Apr 2022 22:28:05 -0400
+X-MC-Unique: 5HZ-ioyoNPCrFr2MWpoL5Q-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E3B7F1014A6D;
-	Mon, 18 Apr 2022 02:28:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C07A51857F08;
+	Mon, 18 Apr 2022 02:28:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D265657477D;
-	Mon, 18 Apr 2022 02:28:00 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id AB9111121315;
+	Mon, 18 Apr 2022 02:28:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A61E719451F1;
-	Mon, 18 Apr 2022 02:28:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5446E19451F1;
+	Mon, 18 Apr 2022 02:28:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0A51719466DF
- for <dm-devel@listman.corp.redhat.com>; Mon, 18 Apr 2022 02:27:58 +0000 (UTC)
+ ESMTP id E8FF519466DF
+ for <dm-devel@listman.corp.redhat.com>; Mon, 18 Apr 2022 02:28:01 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id F0BBD574776; Mon, 18 Apr 2022 02:27:57 +0000 (UTC)
+ id DAB1B145D47D; Mon, 18 Apr 2022 02:28:01 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id ECF77574775
- for <dm-devel@redhat.com>; Mon, 18 Apr 2022 02:27:57 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D72291014A6F
- for <dm-devel@redhat.com>; Mon, 18 Apr 2022 02:27:57 +0000 (UTC)
-Received: from mail-qk1-f172.google.com (mail-qk1-f172.google.com
- [209.85.222.172]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D71CC145D47B
+ for <dm-devel@redhat.com>; Mon, 18 Apr 2022 02:28:01 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BC225802803
+ for <dm-devel@redhat.com>; Mon, 18 Apr 2022 02:28:01 +0000 (UTC)
+Received: from mail-qt1-f178.google.com (mail-qt1-f178.google.com
+ [209.85.160.178]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-212-u9LG-nU0MnCx8fGXNzgP2Q-1; Sun, 17 Apr 2022 22:27:56 -0400
-X-MC-Unique: u9LG-nU0MnCx8fGXNzgP2Q-1
-Received: by mail-qk1-f172.google.com with SMTP id d198so7196680qkc.12
- for <dm-devel@redhat.com>; Sun, 17 Apr 2022 19:27:56 -0700 (PDT)
+ us-mta-231-hV06rONaN7iA13SsThHp2A-1; Sun, 17 Apr 2022 22:28:00 -0400
+X-MC-Unique: hV06rONaN7iA13SsThHp2A-1
+Received: by mail-qt1-f178.google.com with SMTP id d14so1360658qtw.5
+ for <dm-devel@redhat.com>; Sun, 17 Apr 2022 19:28:00 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
  :references;
- bh=ycfqOeRaTb3bLWOxIoubDkkyJ63DjHYGauSTfNs4G0I=;
- b=ZrQGeMFJ9tqJylOJ7ZF4dYfaKPF5nffGUXm1qQp9DLN4lPq6Qif/1kjzLdLUrkzcQp
- y4gMkQzuOkVCDR6iMJbHxRzifslcvSKmWR1R7Qntpkkd4nCQE/HR1Ys3JxVBS5abZSQo
- DN7lDzqkZhrZYYdovFK5/g0V1QlV8IYWcELLItKFanXrc1HB056BY3ZqToteYLHm3l6l
- AEranevGCxgh32zOcld9K7Ec5wJ7YcvF8R+pJWjeqORw+GHRmYJ0VmhBoKKL8YSKTzYT
- 1hywzaxl3evfJYcLvfEuCa/YYOE29SWB5XndQrjkihztnNPetyeZuB2YRwNBPzeeV6b9
- LDkg==
-X-Gm-Message-State: AOAM533dnmYQMO9w8eBTUcQfiSzBZ+qOg8JWq0c1nrby6z8hOU6uMHJn
- LEJyly0aoQymPAW8g9aYtkjeLDp5an4QH1rZmkcIqB5Z+FX2yvZ0EFKSSdr02Ov4VssLtqNs3EU
- pAzBL6Wo7fZOdI/Nv9PK6sEYao4MmNjvHz8zb86lK/Vj0pfnPCpcLTjGS1omATkRqBj8=
-X-Google-Smtp-Source: ABdhPJxSXwiXt32Hon3Bm3hE5+bmc5ABMxTlqMBhRdcpOnMapqXzTZlRDHRfbDOAkN3FhzouO8xu4w==
-X-Received: by 2002:a05:620a:290f:b0:67b:3212:d529 with SMTP id
- m15-20020a05620a290f00b0067b3212d529mr5472895qkp.4.1650248875760; 
- Sun, 17 Apr 2022 19:27:55 -0700 (PDT)
+ bh=+Nx4ePs90HaNMR2AWjcB56EOnrA02o23cKPmk6rDsqs=;
+ b=eXxdhII1vpASYBRMqfTspvSdJJjgBGACu0P4dd5QGoPlIGlhS/HKVjkzJa6N31nINv
+ y1UsWBQxSnc1B1qN9OK/l93tVs517hQn9IvC7ZTylrbq0CjpliECfbxTOCb4Qfws87iv
+ Y0D3JH21ahBv+LaNqNfY1dTHAvA2oiW6Vuz68chQnOsl9W1EiytRkbZ58/87Nt2YE8SG
+ oax2dadY+dXAjdCIrW7bGu4zd9X/ISquC34ljGiqUD4Q2HF24BA63T1Bhf1EKV+kc8m8
+ zSrxzi6ZT8/HWG2j3EAhlyVwrYGry/exMVUTelvnGV9vXlo5HLQsyYKp/tbDjPuGHyx0
+ 4DyA==
+X-Gm-Message-State: AOAM530WiXdtxLS4wwXInt6BHCx16VQsenek2cP+ZKGL4yUPrtts2joJ
+ 8xloOkjvptwuS0VBPsaADVK2xQHK4hs2g9XF4xwDubGi97wlMu2COqDqmzPT/5VUhWV6P8BYV6M
+ podnQT6mrW8z7B173IYYSKY6f+HD/y9X7BcWJtkW2AL5doAl/OaTkU82dXrtTDLl694Q=
+X-Google-Smtp-Source: ABdhPJxIX9+HTN89noLwoxnOHP2HscVMnA76O+2ghEBR9ltaWJypyN6I80GBlibKH6k/FHBVzlNtxw==
+X-Received: by 2002:ac8:7d51:0:b0:2e1:c757:6d25 with SMTP id
+ h17-20020ac87d51000000b002e1c7576d25mr5953474qtb.301.1650248879362; 
+ Sun, 17 Apr 2022 19:27:59 -0700 (PDT)
 Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
  [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
- e13-20020ac85dcd000000b002eb9458498esm6924520qtx.95.2022.04.17.19.27.55
+ 128-20020a370486000000b0069e9d72b45fsm1020529qke.13.2022.04.17.19.27.58
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Sun, 17 Apr 2022 19:27:55 -0700 (PDT)
+ Sun, 17 Apr 2022 19:27:59 -0700 (PDT)
 From: Mike Snitzer <snitzer@kernel.org>
 To: dm-devel@redhat.com
-Date: Sun, 17 Apr 2022 22:27:29 -0400
-Message-Id: <20220418022733.56168-18-snitzer@kernel.org>
+Date: Sun, 17 Apr 2022 22:27:32 -0400
+Message-Id: <20220418022733.56168-21-snitzer@kernel.org>
 In-Reply-To: <20220418022733.56168-1-snitzer@kernel.org>
 References: <20220418022733.56168-1-snitzer@kernel.org>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: [dm-devel] [dm-5.19 PATCH 17/21] dm: don't grab target io reference
- in dm_zone_map_bio
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: [dm-devel] [dm-5.19 PATCH 20/21] dm: simplify bio-based IO
+ accounting further
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -93,118 +92,155 @@ Cc: axboe@kernel.dk, hch@lst.de, ming.lei@redhat.com
 MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="===============3795221526207435507=="
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
---===============3795221526207435507==
-Content-Type: application/octet-stream; x-default=true
+Now that io splitting is recorded prior to, or during, ->map IO
+accounting can happen immediately rather than defer until after
+bio splitting in dm_split_and_process_bio().
 
-From: Ming Lei <ming.lei@redhat.com>
+Remove the DM_IO_START_ACCT flag and also remove dm_io's map_task
+member because there is no longer any need to wait for splitting to
+occur before accounting.
 
-dm_zone_map_bio() is only called from __map_bio in which the io's
-reference is grabbed already, and the reference won't be released
-until the bio is submitted, so not necessary to do it dm_zone_map_bio
-any more.
+Also move dm_io struct's 'flags' member to consolidate struct holes.
 
-Reviewed-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-Tested-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
 Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm-core.h |  7 -------
- drivers/md/dm-zone.c | 10 ----------
- drivers/md/dm.c      |  7 ++++++-
- 3 files changed, 6 insertions(+), 18 deletions(-)
+ drivers/md/dm-core.h |  6 +-----
+ drivers/md/dm.c      | 34 +++++-----------------------------
+ 2 files changed, 6 insertions(+), 34 deletions(-)
 
 diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
-index 37ddedf61249..d2d188c9b632 100644
+index f3cfc7affd12..d21648a923ea 100644
 --- a/drivers/md/dm-core.h
 +++ b/drivers/md/dm-core.h
-@@ -296,13 +296,6 @@ static inline void dm_io_set_flag(struct dm_io *io, unsigned int bit)
- 	io->flags |= (1U << bit);
- }
- 
--static inline void dm_io_inc_pending(struct dm_io *io)
--{
--	atomic_inc(&io->io_count);
--}
+@@ -255,15 +255,12 @@ static inline bool dm_tio_is_normal(struct dm_target_io *tio)
+ #define DM_IO_MAGIC 19577
+ struct dm_io {
+ 	unsigned short magic;
 -
--void dm_io_dec_pending(struct dm_io *io, blk_status_t error);
++	blk_short_t flags;
+ 	spinlock_t lock;
+ 	unsigned long start_time;
+ 	void *data;
+ 	struct dm_io *next;
+-	struct task_struct *map_task;
+ 	struct dm_stats_aux stats_aux;
 -
- static inline struct completion *dm_get_completion_from_kobject(struct kobject *kobj)
- {
- 	return &container_of(kobj, struct dm_kobject_holder, kobj)->completion;
-diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-index 57daa86c19cf..3e7b1fe1580b 100644
---- a/drivers/md/dm-zone.c
-+++ b/drivers/md/dm-zone.c
-@@ -550,13 +550,6 @@ int dm_zone_map_bio(struct dm_target_io *tio)
- 		return DM_MAPIO_KILL;
- 	}
- 
--	/*
--	 * The target map function may issue and complete the IO quickly.
--	 * Take an extra reference on the IO to make sure it does disappear
--	 * until we run dm_zone_map_bio_end().
--	 */
--	dm_io_inc_pending(io);
--
- 	/* Let the target do its work */
- 	r = ti->type->map(ti, clone);
- 	switch (r) {
-@@ -587,9 +580,6 @@ int dm_zone_map_bio(struct dm_target_io *tio)
- 		break;
- 	}
- 
--	/* Drop the extra reference on the IO */
--	dm_io_dec_pending(io, sts);
--
- 	if (sts != BLK_STS_OK)
- 		return DM_MAPIO_KILL;
- 
+-	blk_short_t flags;
+ 	blk_status_t status;
+ 	atomic_t io_count;
+ 	struct mapped_device *md;
+@@ -281,7 +278,6 @@ struct dm_io {
+  * dm_io flags
+  */
+ enum {
+-	DM_IO_START_ACCT,
+ 	DM_IO_ACCOUNTED,
+ 	DM_IO_WAS_SPLIT
+ };
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 860d2aaffd2a..e4ccd0cce8f3 100644
+index c5a79712de1d..3b87d151ef88 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -955,6 +955,11 @@ static void dm_io_complete(struct dm_io *io)
- 	}
+@@ -596,7 +596,6 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
+ 	this_cpu_inc(*md->pending_io);
+ 	io->orig_bio = bio;
+ 	io->md = md;
+-	io->map_task = current;
+ 	spin_lock_init(&io->lock);
+ 	io->start_time = jiffies;
+ 	io->flags = 0;
+@@ -1242,13 +1241,6 @@ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors)
  }
+ EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
  
-+static void dm_io_inc_pending(struct dm_io *io)
-+{
-+	atomic_inc(&io->io_count);
-+}
-+
+-static inline void __dm_submit_bio_remap(struct bio *clone,
+-					 dev_t dev, sector_t old_sector)
+-{
+-	trace_block_bio_remap(clone, dev, old_sector);
+-	submit_bio_noacct(clone);
+-}
+-
  /*
-  * Decrements the number of outstanding ios that a bio has been
-  * cloned into, completing the original io if necc.
-@@ -978,7 +983,7 @@ static void dm_io_set_error(struct dm_io *io, blk_status_t error)
- 	spin_unlock_irqrestore(&io->lock, flags);
- }
+  * @clone: clone bio that DM core passed to target's .map function
+  * @tgt_clone: clone of @clone bio that target needs submitted
+@@ -1263,8 +1255,6 @@ void dm_submit_bio_remap(struct bio *clone, struct bio *tgt_clone)
+ 	struct dm_target_io *tio = clone_to_tio(clone);
+ 	struct dm_io *io = tio->io;
  
--void dm_io_dec_pending(struct dm_io *io, blk_status_t error)
-+static void dm_io_dec_pending(struct dm_io *io, blk_status_t error)
- {
- 	if (unlikely(error))
- 		dm_io_set_error(io, error);
+-	WARN_ON_ONCE(!tio->ti->accounts_remapped_io);
+-
+ 	/* establish bio that will get submitted */
+ 	if (!tgt_clone)
+ 		tgt_clone = clone;
+@@ -1273,15 +1263,11 @@ void dm_submit_bio_remap(struct bio *clone, struct bio *tgt_clone)
+ 	 * Account io->origin_bio to DM dev on behalf of target
+ 	 * that took ownership of IO with DM_MAPIO_SUBMITTED.
+ 	 */
+-	if (io->map_task == current) {
+-		/* Still in target's map function */
+-		dm_io_set_flag(io, DM_IO_START_ACCT);
+-	} else {
+-		dm_start_io_acct(io, clone);
+-	}
++	dm_start_io_acct(io, clone);
+ 
+-	__dm_submit_bio_remap(tgt_clone, disk_devt(io->md->disk),
++	trace_block_bio_remap(tgt_clone, disk_devt(io->md->disk),
+ 			      tio->old_sector);
++	submit_bio_noacct(tgt_clone);
+ }
+ EXPORT_SYMBOL_GPL(dm_submit_bio_remap);
+ 
+@@ -1341,16 +1327,10 @@ static void __map_bio(struct bio *clone)
+ 	case DM_MAPIO_SUBMITTED:
+ 		/* target has assumed ownership of this io */
+ 		if (!ti->accounts_remapped_io)
+-			dm_io_set_flag(io, DM_IO_START_ACCT);
++			dm_start_io_acct(io, clone);
+ 		break;
+ 	case DM_MAPIO_REMAPPED:
+-		/*
+-		 * the bio has been remapped so dispatch it, but defer
+-		 * dm_start_io_acct() until after possible bio_split().
+-		 */
+-		__dm_submit_bio_remap(clone, disk_devt(md->disk),
+-				      tio->old_sector);
+-		dm_io_set_flag(io, DM_IO_START_ACCT);
++		dm_submit_bio_remap(clone, NULL);
+ 		break;
+ 	case DM_MAPIO_KILL:
+ 	case DM_MAPIO_REQUEUE:
+@@ -1668,7 +1648,6 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+ 	}
+ 
+ 	error = __split_and_process_bio(&ci);
+-	io->map_task = NULL;
+ 	if (error || !ci.sector_count)
+ 		goto out;
+ 	/*
+@@ -1680,9 +1659,6 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+ 	bio_inc_remaining(bio);
+ 	submit_bio_noacct(bio);
+ out:
+-	if (dm_io_flagged(io, DM_IO_START_ACCT))
+-		dm_start_io_acct(io, NULL);
+-
+ 	/*
+ 	 * Drop the extra reference count for non-POLLED bio, and hold one
+ 	 * reference for POLLED bio, which will be released in dm_poll_bio
 -- 
 2.15.0
-
-
---===============3795221526207435507==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
-
---===============3795221526207435507==--
 
