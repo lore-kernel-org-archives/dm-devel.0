@@ -4,88 +4,89 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 550BEC433FE
-	for <dm-devel@archiver.kernel.org>; Mon, 18 Apr 2022 08:03:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 77631C433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 18 Apr 2022 08:04:30 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-152-EL758NDBNOGaHUBeEOoYDw-1; Mon, 18 Apr 2022 04:03:51 -0400
-X-MC-Unique: EL758NDBNOGaHUBeEOoYDw-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-550-HZJvkNFCM_q3QP5qWpt8CQ-1; Mon, 18 Apr 2022 04:04:25 -0400
+X-MC-Unique: HZJvkNFCM_q3QP5qWpt8CQ-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6696A1014A62;
-	Mon, 18 Apr 2022 08:03:49 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C3ED91857F07;
+	Mon, 18 Apr 2022 08:04:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 5410C575A5A;
-	Mon, 18 Apr 2022 08:03:49 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id B1AD840D2827;
+	Mon, 18 Apr 2022 08:04:23 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EBB491947BBC;
-	Mon, 18 Apr 2022 08:03:48 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 522641947BBC;
+	Mon, 18 Apr 2022 08:04:23 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
  [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A0D271947BBB
- for <dm-devel@listman.corp.redhat.com>; Mon, 18 Apr 2022 08:03:47 +0000 (UTC)
+ ESMTP id 2E63B1947BBB
+ for <dm-devel@listman.corp.redhat.com>; Mon, 18 Apr 2022 08:04:21 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7CD2257C929; Mon, 18 Apr 2022 08:03:47 +0000 (UTC)
+ id C4FED57C932; Mon, 18 Apr 2022 08:04:21 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 78A1D57C91F
- for <dm-devel@redhat.com>; Mon, 18 Apr 2022 08:03:47 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5F6B71014A61
- for <dm-devel@redhat.com>; Mon, 18 Apr 2022 08:03:47 +0000 (UTC)
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C0C6E57C929
+ for <dm-devel@redhat.com>; Mon, 18 Apr 2022 08:04:21 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A96FF833964
+ for <dm-devel@redhat.com>; Mon, 18 Apr 2022 08:04:21 +0000 (UTC)
 Received: from esa3.hgst.iphmx.com (esa3.hgst.iphmx.com [216.71.153.141]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-509-hulfIi8ePHyWqh2oafmwCA-1; Mon, 18 Apr 2022 04:03:45 -0400
-X-MC-Unique: hulfIi8ePHyWqh2oafmwCA-1
-X-IronPort-AV: E=Sophos;i="5.90,269,1643644800"; d="scan'208";a="203014631"
-Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com)
- ([199.255.45.14])
- by ob1.hgst.iphmx.com with ESMTP; 18 Apr 2022 16:03:43 +0800
-IronPort-SDR: pghIC6TXwWkUldSsT5H6QPVfjdOogHQWlXP97Aw41XqE4+DppddtuawxrTRtFURaWvNrQTjA+Z
- pWnGtJ3EGhsRru14pF3PHw5Ol5rdN6uNpHwHylcVX5Q+XM3nJPCXu6mHLMTzrRiLsWISnqFCle
- tmEjzHaNtr/JLatS8aB30zAja66nEow94oa54EQpgYFUNl3vg4XaAfht9rLQYJPrOpVOunk64L
- fQRSftlDFM4pjjXlhsrrctt0op5v5U0nyqx3a37N4AxYpMpNJrupPO4fVtRgoicrVP1K11UbAS
- WOrxDRukTuZCJ59K8VlCAYSS
+ us-mta-412-h7jgWfYDMWCj_QDTYGuJDw-2; Mon, 18 Apr 2022 04:04:20 -0400
+X-MC-Unique: h7jgWfYDMWCj_QDTYGuJDw-2
+X-IronPort-AV: E=Sophos;i="5.90,269,1643644800"; d="scan'208";a="203014700"
+Received: from h199-255-45-15.hgst.com (HELO uls-op-cesaep02.wdc.com)
+ ([199.255.45.15])
+ by ob1.hgst.iphmx.com with ESMTP; 18 Apr 2022 16:04:17 +0800
+IronPort-SDR: dO3DdyTeGpOJfrXNE+oS0lq/Y8kP1bUaCm67GfoVy1UF5G6Tw4HeRwtqImKoyWYaxqIN1Eikyv
+ f4AH9HR9RX9le4z1VIx8h1JZJAe0PHj5+Le2EBJtPa5W3T5dFcykoI7nlwW2lEymlxo0rAYqxE
+ 1EOBZMUz++MyQoi5/lx8OymuFgdnzFiikRGNtrrLlN3OwU2qSrtVcQKhRm4czsckgxkJNaq68L
+ /yXIWvwJHLm//Emk5wRKLlnv8PQQQCuLqi89TzJmSi1+EM5NNr4aFLgAMNGNo7mneHKKjqW/5A
+ ACpWqHJq9cRjG0j+D4Z7lnaY
 Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
- by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 18 Apr 2022 00:34:50 -0700
-IronPort-SDR: 7vAwIyqpYVi+mTHTEdp/jdN5FpM5/jrIYUjkgw3UylofLSnNhDGA8r0kwR6MWNjm4nWztmtUrq
- 37G3OD1blryx3NhAfDS5H3SOSGe0U1TQvNd0A8wmV+rXpoIl84Falyh/eDMXmXdzhspZ1wxohR
- IUhDxpPTQ78zASEfDa5dlO9SGLbI+N7EcnpFPU7rLssU9RKnm3H9hbhplAS5jJcTXL1O4p/+MT
- ki8KQ85lKh/e1ShdNJvWFQSHUA8rxRixGb9FsXJiHiPP1EzuKhCzIAGFB/KLDU3aB17FkVR5eu
- hx0=
+ by uls-op-cesaep02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 18 Apr 2022 00:34:38 -0700
+IronPort-SDR: a1c/wAqv1y+2irgfACvZQhNMAC4m+iXMKvniOH2q4tRj9YfXjckxJnh61L3TeSLhixnXGILRcI
+ P4MBOMi164b1YEo5Ps8jDE0TnuK3OCywd2cMpDAspKLd4eFjJKG5Higz4BEHFeOxdm2YVKZtgE
+ 349+6JY/OUDflK1TQAuqMTyIifxeReiFjtPfAcfo1MF6VQ4Nvad7DChCI3uJlwKh3gQr90PulJ
+ p5e8LevRFvR9VwhqwqTgjCk8TvJMQAc0c+NMW4+k2U/f5Qzg7gX72/N1oiz0xJl9wPlCeBtLKp
+ 4/8=
 WDCIronportException: Internal
 Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
  by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 18 Apr 2022 01:03:44 -0700
+ 18 Apr 2022 01:04:18 -0700
 Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
- by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4KhfZl2rXWz1Rwrw
- for <dm-devel@redhat.com>; Mon, 18 Apr 2022 01:03:43 -0700 (PDT)
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4KhfbP1SZqz1SVnx
+ for <dm-devel@redhat.com>; Mon, 18 Apr 2022 01:04:17 -0700 (PDT)
 X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
 Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
  by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
- port 10026) with ESMTP id HOW2jwW8mRQH for <dm-devel@redhat.com>;
- Mon, 18 Apr 2022 01:03:42 -0700 (PDT)
+ port 10026) with ESMTP id IvdJxoQsA0YL for <dm-devel@redhat.com>;
+ Mon, 18 Apr 2022 01:04:16 -0700 (PDT)
 Received: from [10.225.163.14] (unknown [10.225.163.14])
- by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4KhfZg2dWsz1Rvlx;
- Mon, 18 Apr 2022 01:03:39 -0700 (PDT)
-Message-ID: <034efb57-9e1d-41ed-1855-e2b057b03ea7@opensource.wdc.com>
-Date: Mon, 18 Apr 2022 17:03:38 +0900
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4KhfbJ6g7Wz1Rwrw;
+ Mon, 18 Apr 2022 01:04:12 -0700 (PDT)
+Message-ID: <18032025-f1aa-2daa-d012-8996590ada6a@opensource.wdc.com>
+Date: Mon, 18 Apr 2022 17:04:11 +0900
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
  Thunderbird/91.8.0
 To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
 References: <20220418045314.360785-1-hch@lst.de>
- <20220418045314.360785-12-hch@lst.de>
+ <20220418045314.360785-9-hch@lst.de>
 From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 Organization: Western Digital Research
-In-Reply-To: <20220418045314.360785-12-hch@lst.de>
+In-Reply-To: <20220418045314.360785-9-hch@lst.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -94,7 +95,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: Re: [dm-devel] [PATCH 11/11] xen-blkback: use bdev_discard_alignment
+Subject: Re: [dm-devel] [PATCH 08/11] loop: remove a spurious clear of
+ discard_alignment
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -121,7 +123,7 @@ Cc: Jan Hoeppner <hoeppner@linux.ibm.com>,
  =?UTF-8?Q?Roger_Pau_Monn=c3=a9?= <roger.pau@citrix.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -131,38 +133,26 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
 On 4/18/22 13:53, Christoph Hellwig wrote:
-> Use bdev_discard_alignment to calculate the correct discard alignment
-> offset even for partitions instead of just looking at the queue limit.
-> 
-> Also switch to use bdev_discard_granularity to get rid of the last direct
-> queue reference in xen_blkbk_discard.
+> The loop driver never sets a discard_alignment, so it also doens't need
+> to clear it to zero.
 > 
 > Signed-off-by: Christoph Hellwig <hch@lst.de>
 > ---
->  drivers/block/xen-blkback/xenbus.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+>  drivers/block/loop.c | 1 -
+>  1 file changed, 1 deletion(-)
 > 
-> diff --git a/drivers/block/xen-blkback/xenbus.c b/drivers/block/xen-blkback/xenbus.c
-> index b21bffc9c50bc..04c90cb8955f6 100644
-> --- a/drivers/block/xen-blkback/xenbus.c
-> +++ b/drivers/block/xen-blkback/xenbus.c
-> @@ -583,14 +583,14 @@ static void xen_blkbk_discard(struct xenbus_transaction xbt, struct backend_info
->  	if (bdev_max_discard_sectors(bdev)) {
->  		err = xenbus_printf(xbt, dev->nodename,
->  			"discard-granularity", "%u",
-> -			q->limits.discard_granularity);
-> +			bdev_discard_granularity(bdev));
->  		if (err) {
->  			dev_warn(&dev->dev, "writing discard-granularity (%d)", err);
->  			return;
->  		}
->  		err = xenbus_printf(xbt, dev->nodename,
->  			"discard-alignment", "%u",
-> -			q->limits.discard_alignment);
-> +			bdev_discard_alignment(bdev));
->  		if (err) {
->  			dev_warn(&dev->dev, "writing discard-alignment (%d)", err);
->  			return;
+> diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+> index 976cf987b3920..61b642b966a08 100644
+> --- a/drivers/block/loop.c
+> +++ b/drivers/block/loop.c
+> @@ -789,7 +789,6 @@ static void loop_config_discard(struct loop_device *lo)
+>  		blk_queue_max_discard_sectors(q, 0);
+>  		blk_queue_max_write_zeroes_sectors(q, 0);
+>  	}
+> -	q->limits.discard_alignment = 0;
+>  }
+>  
+>  struct loop_worker {
 
 Reviewed-by: Damien Le Moal <damien.lemoal@opensource.wdc.com>
 
