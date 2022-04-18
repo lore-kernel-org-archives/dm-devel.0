@@ -4,53 +4,53 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AB643C433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 18 Apr 2022 05:24:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 047EDC433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 18 Apr 2022 05:24:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-360-ZdJiKpkzPIS7aTu3dzNXOA-1; Mon, 18 Apr 2022 01:24:14 -0400
-X-MC-Unique: ZdJiKpkzPIS7aTu3dzNXOA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-372-lSyQjE2PNUuybMTfcdfBuQ-1; Mon, 18 Apr 2022 01:24:19 -0400
+X-MC-Unique: lSyQjE2PNUuybMTfcdfBuQ-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 441FF80B71C;
-	Mon, 18 Apr 2022 05:24:12 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E5D05811E75;
+	Mon, 18 Apr 2022 05:24:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 30FF320239EB;
-	Mon, 18 Apr 2022 05:24:12 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D358140FD35A;
+	Mon, 18 Apr 2022 05:24:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D9CC819451F3;
-	Mon, 18 Apr 2022 05:24:11 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7CF311947BBB;
+	Mon, 18 Apr 2022 05:24:17 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
  [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2A31419451F1
- for <dm-devel@listman.corp.redhat.com>; Mon, 18 Apr 2022 05:24:11 +0000 (UTC)
+ ESMTP id F3B0819451F1
+ for <dm-devel@listman.corp.redhat.com>; Mon, 18 Apr 2022 05:24:15 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 070B1C5094A; Mon, 18 Apr 2022 05:24:11 +0000 (UTC)
+ id C6947C5094A; Mon, 18 Apr 2022 05:24:15 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 02C43C4C7DA
- for <dm-devel@redhat.com>; Mon, 18 Apr 2022 05:24:10 +0000 (UTC)
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C2740C50944
+ for <dm-devel@redhat.com>; Mon, 18 Apr 2022 05:24:15 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DD157101AA47
- for <dm-devel@redhat.com>; Mon, 18 Apr 2022 05:24:10 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A97CA802803
+ for <dm-devel@redhat.com>; Mon, 18 Apr 2022 05:24:15 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-663-giinHK0NNMixXr549QRKuQ-1; Mon, 18 Apr 2022 01:24:06 -0400
-X-MC-Unique: giinHK0NNMixXr549QRKuQ-1
+ us-mta-457-VGW2JxvqMp6jq1m44GXQPw-1; Mon, 18 Apr 2022 01:24:12 -0400
+X-MC-Unique: VGW2JxvqMp6jq1m44GXQPw-1
 Received: from [2a02:1205:504b:4280:f5dd:42a4:896c:d877] (helo=localhost)
  by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
- id 1ngJOW-00FYuM-S5; Mon, 18 Apr 2022 04:53:49 +0000
+ id 1ngJOC-00FYj8-0H; Mon, 18 Apr 2022 04:53:28 +0000
 From: Christoph Hellwig <hch@lst.de>
 To: Jens Axboe <axboe@kernel.dk>
-Date: Mon, 18 Apr 2022 06:53:14 +0200
-Message-Id: <20220418045314.360785-12-hch@lst.de>
+Date: Mon, 18 Apr 2022 06:53:07 +0200
+Message-Id: <20220418045314.360785-5-hch@lst.de>
 In-Reply-To: <20220418045314.360785-1-hch@lst.de>
 References: <20220418045314.360785-1-hch@lst.de>
 MIME-Version: 1.0
@@ -64,7 +64,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: [dm-devel] [PATCH 11/11] xen-blkback: use bdev_discard_alignment
+Subject: [dm-devel] [PATCH 04/11] virtio_blk: fix the discard_granularity
+ and discard_alignment queue limits
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,7 +92,7 @@ Cc: Jan Hoeppner <hoeppner@linux.ibm.com>,
  =?UTF-8?q?Roger=20Pau=20Monn=C3=A9?= <roger.pau@citrix.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -99,38 +100,47 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Use bdev_discard_alignment to calculate the correct discard alignment
-offset even for partitions instead of just looking at the queue limit.
+The discard_alignment queue limit is named a bit misleading means the
+offset into the block device at which the discard granularity starts.
 
-Also switch to use bdev_discard_granularity to get rid of the last direct
-queue reference in xen_blkbk_discard.
+On the other hand the discard_sector_alignment from the virtio 1.1 looks
+similar to what Linux uses as discard granularity (even if not very well
+described):
 
+  "discard_sector_alignment can be used by OS when splitting a request
+   based on alignment. "
+
+And at least qemu does set it to the discard granularity.
+
+So stop setting the discard_alignment and use the virtio
+discard_sector_alignment to set the discard granularity.
+
+Fixes: 1f23816b8eb8 ("virtio_blk: add discard and write zeroes support")
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 ---
- drivers/block/xen-blkback/xenbus.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/block/virtio_blk.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/block/xen-blkback/xenbus.c b/drivers/block/xen-blkback/xenbus.c
-index b21bffc9c50bc..04c90cb8955f6 100644
---- a/drivers/block/xen-blkback/xenbus.c
-+++ b/drivers/block/xen-blkback/xenbus.c
-@@ -583,14 +583,14 @@ static void xen_blkbk_discard(struct xenbus_transaction xbt, struct backend_info
- 	if (bdev_max_discard_sectors(bdev)) {
- 		err = xenbus_printf(xbt, dev->nodename,
- 			"discard-granularity", "%u",
--			q->limits.discard_granularity);
-+			bdev_discard_granularity(bdev));
- 		if (err) {
- 			dev_warn(&dev->dev, "writing discard-granularity (%d)", err);
- 			return;
- 		}
- 		err = xenbus_printf(xbt, dev->nodename,
- 			"discard-alignment", "%u",
--			q->limits.discard_alignment);
-+			bdev_discard_alignment(bdev));
- 		if (err) {
- 			dev_warn(&dev->dev, "writing discard-alignment (%d)", err);
- 			return;
+diff --git a/drivers/block/virtio_blk.c b/drivers/block/virtio_blk.c
+index 6ccf15253dee1..d624cc8eddc3c 100644
+--- a/drivers/block/virtio_blk.c
++++ b/drivers/block/virtio_blk.c
+@@ -867,11 +867,12 @@ static int virtblk_probe(struct virtio_device *vdev)
+ 		blk_queue_io_opt(q, blk_size * opt_io_size);
+ 
+ 	if (virtio_has_feature(vdev, VIRTIO_BLK_F_DISCARD)) {
+-		q->limits.discard_granularity = blk_size;
+-
+ 		virtio_cread(vdev, struct virtio_blk_config,
+ 			     discard_sector_alignment, &v);
+-		q->limits.discard_alignment = v ? v << SECTOR_SHIFT : 0;
++		if (v)
++			q->limits.discard_granularity = v << SECTOR_SHIFT;
++		else
++			q->limits.discard_granularity = blk_size;
+ 
+ 		virtio_cread(vdev, struct virtio_blk_config,
+ 			     max_discard_sectors, &v);
 -- 
 2.30.2
 
