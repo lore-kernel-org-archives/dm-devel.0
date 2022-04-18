@@ -1,82 +1,99 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 10D82C433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 18 Apr 2022 02:28:14 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 364A6C433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 18 Apr 2022 03:01:13 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-86-9OD87Lw2PZaLZBOgY_X_dQ-1; Sun, 17 Apr 2022 22:28:10 -0400
-X-MC-Unique: 9OD87Lw2PZaLZBOgY_X_dQ-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-425-dCJrJJmsPym8odBZw-6GHA-1; Sun, 17 Apr 2022 23:01:08 -0400
+X-MC-Unique: dCJrJJmsPym8odBZw-6GHA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 010B680B71C;
-	Mon, 18 Apr 2022 02:27:59 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 09E451C068C4;
+	Mon, 18 Apr 2022 03:01:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id E0E34434845;
-	Mon, 18 Apr 2022 02:27:58 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 652B8145BA54;
+	Mon, 18 Apr 2022 03:01:05 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 74ABC19451F1;
-	Mon, 18 Apr 2022 02:27:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 380BC19451F3;
+	Mon, 18 Apr 2022 03:01:05 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id BBA911949762
- for <dm-devel@listman.corp.redhat.com>; Mon, 18 Apr 2022 02:27:56 +0000 (UTC)
+ ESMTP id 8EF6E19451F3
+ for <dm-devel@listman.corp.redhat.com>; Mon, 18 Apr 2022 03:01:04 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 98DAC41617F; Mon, 18 Apr 2022 02:27:56 +0000 (UTC)
+ id 8205D2166B1A; Mon, 18 Apr 2022 03:01:04 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 94524401E9A
- for <dm-devel@redhat.com>; Mon, 18 Apr 2022 02:27:56 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7ABBF1C06905
- for <dm-devel@redhat.com>; Mon, 18 Apr 2022 02:27:56 +0000 (UTC)
-Received: from mail-qk1-f173.google.com (mail-qk1-f173.google.com
- [209.85.222.173]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-10-ZK4xqVFFMM2_ms0IVAlZjA-3; Sun, 17 Apr 2022 22:27:55 -0400
-X-MC-Unique: ZK4xqVFFMM2_ms0IVAlZjA-3
-Received: by mail-qk1-f173.google.com with SMTP id e128so8240604qkd.7
- for <dm-devel@redhat.com>; Sun, 17 Apr 2022 19:27:55 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
- :references;
- bh=XXZQXoeBtKpzh741x+P5yKAZ2XSNaCFR9P7XFMxzGVc=;
- b=BcK+I8VYi0jpjYhahXJ0VLaz1B8vQEYDvacz0rGNpX+D63nt93m67k5qiCUWfvegaO
- 56iqLaErDPYx9jIciCUeHNyRBHGTdGX6/Tqq9uIvAm/vU0kkeSL2wiygx1w3dixVrbgh
- 2Bx+GAs1un0AvoX97UnNIh9eIply1vIw5HY3hNOLwCk7cjPtW1BD+n8I0yLq0rV/Mbwu
- B0dNG495xmelk3vThsloimatXn3U/1FzF/s/xI0vkSAmg9ZFVQkhxUe1DDIrtjWhc4s1
- m8cJgAsmgBftun6o67k4oWkezMHGBw2S2xpf0Z3qz/9mhMlh4vRzR6PZAf/vAhZH7qLq
- Zw1Q==
-X-Gm-Message-State: AOAM530SfhQKZ6b+hjHqOkDREuS7f3A30Hb/x0k0i0FnGQz4RqNJcR5i
- P9RjJ/IOKx+ssrL70RjuTsg3tQ6s2zdshz1ueA02fciDupcQPJPNcospEHashUSdoXCZrVD4JwK
- b89X3b6BTHPMfLbbrri0/96OqA1Zbll1tT2LQwKyJLUnhyD4jkuwXxZWkLsXrEq43bzw=
-X-Google-Smtp-Source: ABdhPJyVKctO1KN7DOy+BXXAefVB6VNGJfsZ+vtfNYZWHeiNc9Bvl+1yoMFwj4zhpr4OITwVzFs0cw==
-X-Received: by 2002:a37:a8d0:0:b0:69c:f9f1:d1bd with SMTP id
- r199-20020a37a8d0000000b0069cf9f1d1bdmr5486109qke.373.1650248874473; 
- Sun, 17 Apr 2022 19:27:54 -0700 (PDT)
-Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
- [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
- q8-20020a05622a04c800b002e06d7c1eabsm7009634qtx.16.2022.04.17.19.27.54
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Sun, 17 Apr 2022 19:27:54 -0700 (PDT)
-From: Mike Snitzer <snitzer@kernel.org>
-To: dm-devel@redhat.com
-Date: Sun, 17 Apr 2022 22:27:28 -0400
-Message-Id: <20220418022733.56168-17-snitzer@kernel.org>
-In-Reply-To: <20220418022733.56168-1-snitzer@kernel.org>
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 7D1082166B26
+ for <dm-devel@redhat.com>; Mon, 18 Apr 2022 03:01:00 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 97AE529AB3ED
+ for <dm-devel@redhat.com>; Mon, 18 Apr 2022 03:01:00 +0000 (UTC)
+Received: from esa1.hgst.iphmx.com (esa1.hgst.iphmx.com [68.232.141.245]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-583-OhE7F9w0MTOyUNq3Dwci0Q-2; Sun, 17 Apr 2022 23:00:59 -0400
+X-MC-Unique: OhE7F9w0MTOyUNq3Dwci0Q-2
+X-IronPort-AV: E=Sophos;i="5.90,267,1643644800"; d="scan'208";a="310099194"
+Received: from uls-op-cesaip02.wdc.com (HELO uls-op-cesaep02.wdc.com)
+ ([199.255.45.15])
+ by ob1.hgst.iphmx.com with ESMTP; 18 Apr 2022 11:00:56 +0800
+IronPort-SDR: DVNvXUepcoG36JOv82PZVldpdflqzSfxZ10AiGqjKqIDhWs5zVISn/wFdTS5uJPHiD/8VZSB4b
+ 5nrAyzO99flt8gRDl/s01VdXyptAU4whUTokCEN4fzEguDkrmhwnQpZgm2xhQFhO8kTipF/xcz
+ vTQTssEJ9wuhJGVdFxBxRjchSRwP5l2l3NR4ebLSPTI/yso0l5CIRSBvTikL+XiYfdjT1q6sdz
+ yCOs79MYg1c+3Bo5s1L/2rBJ3sAYVi8vsY/Vw0sJdQ3iTULAWYSstIHFtU9KuaiGrGXT+Ex6Is
+ 0hPJYjnE5zC7TwS+7Nt4Xpf/
+Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
+ by uls-op-cesaep02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 17 Apr 2022 19:31:17 -0700
+IronPort-SDR: K9C5NZAIK048tXI8LFFkSX3dwVItY+aqcwY1ocs3AWZqCcPR9NhDdwO6LQcKNpJ+Qr5qPc6qNZ
+ mCG0RLDI0NfOozEL0i1S8Z/0vJbRW1LYp0zCICtIMRAc/HAKo/Yah/T+qOn5r8lISmkFEAuDhP
+ Ej1CpCYKhMAot6MNnCoP4dxZA/t4sG/e3NUv5Xz4ItGBnxZKjMswPzsf9M0vd9EyApaUv4tzT6
+ 8VT3b3XCDrHm+8G+UFDqAeDw0A33aQXYGVTEp9mqqny1JKOLk/Pi5J4Z+EMCqiycBPfgU0gRSB
+ aMs=
+WDCIronportException: Internal
+Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
+ by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 17 Apr 2022 20:00:57 -0700
+Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4KhWsM6ZYfz1SVny
+ for <dm-devel@redhat.com>; Sun, 17 Apr 2022 20:00:55 -0700 (PDT)
+X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
+Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
+ by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
+ port 10026) with ESMTP id ZIjJvPSqPAtu for <dm-devel@redhat.com>;
+ Sun, 17 Apr 2022 20:00:55 -0700 (PDT)
+Received: from [10.225.163.14] (unknown [10.225.163.14])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4KhWsL3LHnz1Rvlx;
+ Sun, 17 Apr 2022 20:00:54 -0700 (PDT)
+Message-ID: <378611be-45ea-6085-7848-83380642c81a@opensource.wdc.com>
+Date: Mon, 18 Apr 2022 12:00:53 +0900
+MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.8.0
+To: Mike Snitzer <snitzer@kernel.org>, dm-devel@redhat.com
 References: <20220418022733.56168-1-snitzer@kernel.org>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
-Subject: [dm-devel] [dm-5.19 PATCH 16/21] dm: improve bio splitting and
- associated IO accounting
+From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Organization: Western Digital Research
+In-Reply-To: <20220418022733.56168-1-snitzer@kernel.org>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+Subject: Re: [dm-devel] [dm-5.19 PATCH 00/21] dm: changes staged for 5.19
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -89,247 +106,35 @@ List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
 Cc: axboe@kernel.dk, hch@lst.de, ming.lei@redhat.com
-MIME-Version: 1.0
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="===============2633377252142291015=="
-
---===============2633377252142291015==
-Content-Type: application/octet-stream; x-default=true
-
-From: Ming Lei <ming.lei@redhat.com>
-
-The current DM code (ab)uses late assignment of dm_io->orig_bio (after
-__map_bio() returns and any bio splitting is complete) to indicate the
-FS bio has been processed and can be accounted. This results in
-awkward waiting until ->orig_bio is set in dm_submit_bio_remap().
-
-Also the bio splitting was implemented using bio_split()+bio_chain()
--- a well-worn pattern but it requires bio cloning purely for the
-benefit of more natural IO accounting.  The bio_split() result was
-stored in ->orig_bio to represent the mapped part of the original FS
-bio.
-
-DM has switched to the bdev based IO accounting interface.  DM's IO
-accounting can be implemented in terms of the original FS bio (now
-stored early in ->orig_bio) via access to its sectors/bio_op. And
-if/when splitting is needed, set a new DM_IO_WAS_SPLIT flag and use
-new dm_io fields of .sector_offset & .sectors to allow IO accounting
-for split bios _without_ needing to clone a new bio to store in
-->orig_bio.
-
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
-Co-developed-by: Mike Snitzer <snitzer@kernel.org>
-Signed-off-by: Mike Snitzer <snitzer@kernel.org>
----
- drivers/md/dm-core.h |  8 +++++-
- drivers/md/dm.c      | 75 ++++++++++++++++++++++++++++++++++++----------------
- 2 files changed, 59 insertions(+), 24 deletions(-)
-
-diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
-index 8ba99eaa0872..37ddedf61249 100644
---- a/drivers/md/dm-core.h
-+++ b/drivers/md/dm-core.h
-@@ -267,7 +267,12 @@ struct dm_io {
- 	blk_status_t status;
- 	atomic_t io_count;
- 	struct mapped_device *md;
-+
-+	/* The three fields represent mapped part of original bio */
- 	struct bio *orig_bio;
-+	unsigned int sector_offset; /* offset to end of orig_bio */
-+	unsigned int sectors;
-+
- 	/* last member of dm_target_io is 'struct bio' */
- 	struct dm_target_io tio;
- };
-@@ -277,7 +282,8 @@ struct dm_io {
-  */
- enum {
- 	DM_IO_START_ACCT,
--	DM_IO_ACCOUNTED
-+	DM_IO_ACCOUNTED,
-+	DM_IO_WAS_SPLIT
- };
- 
- static inline bool dm_io_flagged(struct dm_io *io, unsigned int bit)
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index cb41384cd814..860d2aaffd2a 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -516,8 +516,10 @@ static void dm_io_acct(struct dm_io *io, bool end)
- 	 */
- 	if (bio_is_flush_with_data(bio))
- 		sectors = 0;
--	else
-+	else if (likely(!(dm_io_flagged(io, DM_IO_WAS_SPLIT))))
- 		sectors = bio_sectors(bio);
-+	else
-+		sectors = io->sectors;
- 
- 	if (!end)
- 		bdev_start_io_acct(bio->bi_bdev, sectors, bio_op(bio),
-@@ -526,10 +528,18 @@ static void dm_io_acct(struct dm_io *io, bool end)
- 		bdev_end_io_acct(bio->bi_bdev, bio_op(bio), start_time);
- 
- 	if (static_branch_unlikely(&stats_enabled) &&
--	    unlikely(dm_stats_used(&md->stats)))
-+	    unlikely(dm_stats_used(&md->stats))) {
-+		sector_t sector;
-+
-+		if (likely(!dm_io_flagged(io, DM_IO_WAS_SPLIT)))
-+			sector = bio->bi_iter.bi_sector;
-+		else
-+			sector = bio_end_sector(bio) - io->sector_offset;
-+
- 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
--				    bio->bi_iter.bi_sector, sectors,
-+				    sector, sectors,
- 				    end, start_time, stats_aux);
-+	}
- }
- 
- static void __dm_start_io_acct(struct dm_io *io)
-@@ -582,7 +592,7 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
- 	io->status = BLK_STS_OK;
- 	atomic_set(&io->io_count, 1);
- 	this_cpu_inc(*md->pending_io);
--	io->orig_bio = NULL;
-+	io->orig_bio = bio;
- 	io->md = md;
- 	io->map_task = current;
- 	spin_lock_init(&io->lock);
-@@ -1220,6 +1230,13 @@ void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors)
- 
- 	*tio->len_ptr -= bio_sectors - n_sectors;
- 	bio->bi_iter.bi_size = n_sectors << SECTOR_SHIFT;
-+
-+	/*
-+	 * __split_and_process_bio() may have already saved mapped part
-+	 * for accounting but it is being reduced so update accordingly.
-+	 */
-+	dm_io_set_flag(tio->io, DM_IO_WAS_SPLIT);
-+	tio->io->sectors = n_sectors;
- }
- EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
- 
-@@ -1258,13 +1275,6 @@ void dm_submit_bio_remap(struct bio *clone, struct bio *tgt_clone)
- 		/* Still in target's map function */
- 		dm_io_set_flag(io, DM_IO_START_ACCT);
- 	} else {
--		/*
--		 * Called by another thread, managed by DM target,
--		 * wait for dm_split_and_process_bio() to store
--		 * io->orig_bio
--		 */
--		while (unlikely(!smp_load_acquire(&io->orig_bio)))
--			msleep(1);
- 		dm_start_io_acct(io, clone);
- 	}
- 
-@@ -1358,6 +1368,31 @@ static void __map_bio(struct bio *clone)
- 	}
- }
- 
-+static void setup_split_accounting(struct clone_info *ci, unsigned len)
-+{
-+	struct dm_io *io = ci->io;
-+
-+	if (ci->sector_count > len) {
-+		/*
-+		 * Split needed, save the mapped part for accounting.
-+		 * NOTE: dm_accept_partial_bio() will update accordingly.
-+		 */
-+		dm_io_set_flag(io, DM_IO_WAS_SPLIT);
-+		io->sectors = len;
-+	}
-+
-+	if (static_branch_unlikely(&stats_enabled) &&
-+	    unlikely(dm_stats_used(&io->md->stats))) {
-+		/*
-+		 * Save bi_sector in terms of its offset from end of
-+		 * original bio, only needed for DM-stats' benefit.
-+		 * - saved regardless of whether split needed so that
-+		 *   dm_accept_partial_bio() doesn't need to.
-+		 */
-+		io->sector_offset = bio_end_sector(ci->bio) - ci->sector;
-+	}
-+}
-+
- static void alloc_multiple_bios(struct bio_list *blist, struct clone_info *ci,
- 				struct dm_target *ti, unsigned num_bios)
- {
-@@ -1397,6 +1432,8 @@ static void __send_duplicate_bios(struct clone_info *ci, struct dm_target *ti,
- 	case 0:
- 		break;
- 	case 1:
-+		if (len)
-+			setup_split_accounting(ci, *len);
- 		clone = alloc_tio(ci, ti, 0, len, GFP_NOIO);
- 		__map_bio(clone);
- 		break;
-@@ -1560,6 +1597,7 @@ static blk_status_t __split_and_process_bio(struct clone_info *ci)
- 	ci->submit_as_polled = ci->bio->bi_opf & REQ_POLLED;
- 
- 	len = min_t(sector_t, max_io_len(ti, ci->sector), ci->sector_count);
-+	setup_split_accounting(ci, len);
- 	clone = alloc_tio(ci, ti, 0, &len, GFP_NOIO);
- 	__map_bio(clone);
- 
-@@ -1593,7 +1631,6 @@ static void dm_split_and_process_bio(struct mapped_device *md,
- {
- 	struct clone_info ci;
- 	struct dm_io *io;
--	struct bio *orig_bio = NULL;
- 	blk_status_t error = BLK_STS_OK;
- 
- 	init_clone_info(&ci, md, map, bio);
-@@ -1609,23 +1646,15 @@ static void dm_split_and_process_bio(struct mapped_device *md,
- 	io->map_task = NULL;
- 	if (error || !ci.sector_count)
- 		goto out;
--
- 	/*
- 	 * Remainder must be passed to submit_bio_noacct() so it gets handled
- 	 * *after* bios already submitted have been completely processed.
--	 * We take a clone of the original to store in io->orig_bio to be
--	 * used by dm_end_io_acct() and for dm_io_complete() to use for
--	 * completion handling.
- 	 */
--	orig_bio = bio_split(bio, bio_sectors(bio) - ci.sector_count,
--			     GFP_NOIO, &md->queue->bio_split);
--	bio_chain(orig_bio, bio);
--	trace_block_split(orig_bio, bio->bi_iter.bi_sector);
-+	bio_trim(bio, io->sectors, ci.sector_count);
-+	trace_block_split(bio, bio->bi_iter.bi_sector);
-+	bio_inc_remaining(bio);
- 	submit_bio_noacct(bio);
- out:
--	if (!orig_bio)
--		orig_bio = bio;
--	smp_store_release(&io->orig_bio, orig_bio);
- 	if (dm_io_flagged(io, DM_IO_START_ACCT))
- 		dm_start_io_acct(io, NULL);
- 
--- 
-2.15.0
-
-
---===============2633377252142291015==
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+
+On 4/18/22 11:27, Mike Snitzer wrote:
+> Hi,
+> 
+> This patchset reflects what I've staged in linux-dm.git's "dm-5.19"
+> branch (also staged in "for-next" for linux-next):
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=dm-5.19
+> 
+> It build's on jens/for-5.19/block branch (which is based on v5.18-rc3)
+
+Mike, thanks for posting. We will run this on zoned stuff to check.
+Note that patches 13 to 20 are empty...
+
+-- 
+Damien Le Moal
+Western Digital Research
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
-
---===============2633377252142291015==--
 
