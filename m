@@ -1,76 +1,69 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 28E67C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 20 Apr 2022 06:26:56 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id B3A7FC433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 20 Apr 2022 06:47:00 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-578-CZ18WWhdMTyG5T5wYoaA9g-1; Wed, 20 Apr 2022 02:26:51 -0400
-X-MC-Unique: CZ18WWhdMTyG5T5wYoaA9g-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-445-ywJLJLTLOQ2LCtNA56fMMQ-1; Wed, 20 Apr 2022 02:46:56 -0400
+X-MC-Unique: ywJLJLTLOQ2LCtNA56fMMQ-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E46F38002BF;
-	Wed, 20 Apr 2022 06:26:49 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 91928299E749;
+	Wed, 20 Apr 2022 06:46:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3C024145B963;
-	Wed, 20 Apr 2022 06:26:48 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 448B643211E;
+	Wed, 20 Apr 2022 06:46:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 04B0C1947BBF;
-	Wed, 20 Apr 2022 06:26:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D949019451F2;
+	Wed, 20 Apr 2022 06:46:53 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 1EFCB19451F2
- for <dm-devel@listman.corp.redhat.com>; Wed, 20 Apr 2022 06:26:46 +0000 (UTC)
+ ESMTP id 3E6DA1947BBE
+ for <dm-devel@listman.corp.redhat.com>; Tue, 19 Apr 2022 10:33:06 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 01411145B96C; Wed, 20 Apr 2022 06:26:46 +0000 (UTC)
+ id 2067D40FF720; Tue, 19 Apr 2022 10:33:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id F1A2C145B963
- for <dm-devel@redhat.com>; Wed, 20 Apr 2022 06:26:45 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1C5B440FF71F
+ for <dm-devel@redhat.com>; Tue, 19 Apr 2022 10:33:06 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D123238041CE
- for <dm-devel@redhat.com>; Wed, 20 Apr 2022 06:26:45 +0000 (UTC)
-Received: from mail-pl1-f169.google.com (mail-pl1-f169.google.com
- [209.85.214.169]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-18-QmBY3-gEMMyoV97rtEJvZQ-1; Wed, 20 Apr 2022 02:26:43 -0400
-X-MC-Unique: QmBY3-gEMMyoV97rtEJvZQ-1
-Received: by mail-pl1-f169.google.com with SMTP id j8so910031pll.11
- for <dm-devel@redhat.com>; Tue, 19 Apr 2022 23:26:43 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:mime-version:references:in-reply-to:from:date
- :message-id:subject:to:cc;
- bh=i/B+07Pdy/i99xOuJm1AhASljd/y0M0ZEBVCIGcpJEk=;
- b=wdwiIUiSVEcHlbZNXTQjdlqceqJLsGFmY18hNQeGiuErwOEtCkogBdabQXL+55K6o/
- Emtz/lx+CAhm/Cqcay3vn+gYOwiOmsNAzgTqqnq6vaRcqu1Ef1S0d1xkogfMs2UVthAU
- tr8zkQIqvGpegDdKwztHQvoAZBiYaaAlVBMLfwU1hwErxTL5f1w+hakS1D783woDzd1H
- lvN7UIefGkRtR/Qn5t41JNXWoMF/UIl9ha3EDw8RX2PO0//TzuCTWDiHb1kUXGDdzxJW
- WugNekFIOybnf0j/EPCf0oQI81wx9Mf3SZaD4tFnLH+rdHrguxI8T0j8L7oCoBOVZel9
- 9yVA==
-X-Gm-Message-State: AOAM530G8sGKaZxxh7uOuj2+nQzR5VnbD2szWMqyrP0odz+DZSsHKnag
- wHGXSbSvhAfVWfvqOAznPjQ6QAPOgzaXX6epzMBgLA==
-X-Google-Smtp-Source: ABdhPJxixqBz/WgugT7SEaDoh37n3VChx++gr3ojEoEsdleLCNUq06QhC6jeLOdiLDQ4Vb1/+A5HVkXtu9FHqLKx4aA=
-X-Received: by 2002:a17:90b:4c84:b0:1d2:cadc:4e4d with SMTP id
- my4-20020a17090b4c8400b001d2cadc4e4dmr2676295pjb.8.1650436002497; Tue, 19 Apr
- 2022 23:26:42 -0700 (PDT)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 04CB83811A30
+ for <dm-devel@redhat.com>; Tue, 19 Apr 2022 10:33:06 +0000 (UTC)
+Received: from mga07.intel.com (mga07.intel.com [134.134.136.100]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-352-rf4icdSENCW0hG6vTzHieQ-1; Tue, 19 Apr 2022 06:33:04 -0400
+X-MC-Unique: rf4icdSENCW0hG6vTzHieQ-1
+X-IronPort-AV: E=McAfee;i="6400,9594,10321"; a="326631385"
+X-IronPort-AV: E=Sophos;i="5.90,272,1643702400"; d="scan'208";a="326631385"
+Received: from orsmga006.jf.intel.com ([10.7.209.51])
+ by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 19 Apr 2022 03:32:00 -0700
+X-IronPort-AV: E=Sophos;i="5.90,272,1643702400"; d="scan'208";a="529259623"
+Received: from silpixa00400314.ir.intel.com (HELO silpixa00400314)
+ ([10.237.222.76])
+ by orsmga006-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 19 Apr 2022 03:31:58 -0700
+Date: Tue, 19 Apr 2022 11:31:50 +0100
+From: Giovanni Cabiddu <giovanni.cabiddu@intel.com>
+To: Eric Biggers <ebiggers@kernel.org>
+Message-ID: <Yl6PlqyucVLCzwF5@silpixa00400314>
+References: <20220410194707.9746-1-giovanni.cabiddu@intel.com>
+ <20220410194707.9746-2-giovanni.cabiddu@intel.com>
+ <YlRnVBYl1eJ+zvM5@gmail.com>
 MIME-Version: 1.0
-References: <20220420020435.90326-1-jane.chu@oracle.com>
- <20220420020435.90326-8-jane.chu@oracle.com>
-In-Reply-To: <20220420020435.90326-8-jane.chu@oracle.com>
-From: Dan Williams <dan.j.williams@intel.com>
-Date: Tue, 19 Apr 2022 23:26:31 -0700
-Message-ID: <CAPcyv4gs2rEs71c6Lmtk1La2g3POhzBrppLvM0pkGxx+QZ3SbA@mail.gmail.com>
-To: Jane Chu <jane.chu@oracle.com>
+In-Reply-To: <YlRnVBYl1eJ+zvM5@gmail.com>
+Organization: Intel Research and Development Ireland Ltd - Co. Reg. #308263 -
+ Collinstown Industrial Park, Leixlip, County Kildare - Ireland
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,8 +71,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH v8 7/7] pmem: implement pmem_recovery_write()
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Mailman-Approved-At: Wed, 20 Apr 2022 06:46:52 +0000
+Subject: Re: [dm-devel] [PATCH v3 1/3] crypto: qat - use pre-allocated
+ buffers in datapath
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -91,170 +86,51 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Dave Jiang <dave.jiang@intel.com>,
- Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>,
- "Darrick J. Wong" <djwong@kernel.org>, X86 ML <x86@kernel.org>,
- david <david@fromorbit.com>,
- Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
- Matthew Wilcox <willy@infradead.org>, Christoph Hellwig <hch@infradead.org>,
- Dave Hansen <dave.hansen@intel.com>,
- device-mapper development <dm-devel@redhat.com>,
- Borislav Petkov <bp@alien8.de>, Vivek Goyal <vgoyal@redhat.com>,
- Andy Lutomirski <luto@kernel.org>, Vishal L Verma <vishal.l.verma@intel.com>,
- linux-fsdevel <linux-fsdevel@vger.kernel.org>, "Weiny,
- Ira" <ira.weiny@intel.com>, Alasdair Kergon <agk@redhat.com>
+Cc: Marco Chiappero <marco.chiappero@intel.com>, herbert@gondor.apana.org.au,
+ qat-linux@intel.com, stable@vger.kernel.org, dm-devel@redhat.com,
+ Mikulas Patocka <mpatocka@redhat.com>, linux-crypto@vger.kernel.org,
+ Wojciech Ziemba <wojciech.ziemba@intel.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Tue, Apr 19, 2022 at 7:06 PM Jane Chu <jane.chu@oracle.com> wrote:
->
-> The recovery write thread started out as a normal pwrite thread and
-> when the filesystem was told about potential media error in the
-> range, filesystem turns the normal pwrite to a dax_recovery_write.
->
-> The recovery write consists of clearing media poison, clearing page
-> HWPoison bit, reenable page-wide read-write permission, flush the
-> caches and finally write.  A competing pread thread will be held
-> off during the recovery process since data read back might not be
-> valid, and this is achieved by clearing the badblock records after
-> the recovery write is complete. Competing recovery write threads
-> are serialized by pmem device level .recovery_lock.
->
-> Signed-off-by: Jane Chu <jane.chu@oracle.com>
-> ---
->  drivers/nvdimm/pmem.c | 56 ++++++++++++++++++++++++++++++++++++++++++-
->  drivers/nvdimm/pmem.h |  1 +
->  2 files changed, 56 insertions(+), 1 deletion(-)
->
-> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-> index c3772304d417..134f8909eb65 100644
-> --- a/drivers/nvdimm/pmem.c
-> +++ b/drivers/nvdimm/pmem.c
-> @@ -332,10 +332,63 @@ static long pmem_dax_direct_access(struct dax_device *dax_dev,
->         return __pmem_direct_access(pmem, pgoff, nr_pages, mode, kaddr, pfn);
->  }
->
-> +/*
-> + * The recovery write thread started out as a normal pwrite thread and
-> + * when the filesystem was told about potential media error in the
-> + * range, filesystem turns the normal pwrite to a dax_recovery_write.
-> + *
-> + * The recovery write consists of clearing media poison, clearing page
-> + * HWPoison bit, reenable page-wide read-write permission, flush the
-> + * caches and finally write.  A competing pread thread will be held
-> + * off during the recovery process since data read back might not be
-> + * valid, and this is achieved by clearing the badblock records after
-> + * the recovery write is complete. Competing recovery write threads
-> + * are serialized by pmem device level .recovery_lock.
-> + */
->  static size_t pmem_recovery_write(struct dax_device *dax_dev, pgoff_t pgoff,
->                 void *addr, size_t bytes, struct iov_iter *i)
->  {
-> -       return 0;
-> +       struct pmem_device *pmem = dax_get_private(dax_dev);
-> +       size_t olen, len, off;
-> +       phys_addr_t pmem_off;
-> +       struct device *dev = pmem->bb.dev;
-> +       long cleared;
-> +
-> +       off = offset_in_page(addr);
-> +       len = PFN_PHYS(PFN_UP(off + bytes));
-> +       if (!is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) >> SECTOR_SHIFT, len))
-> +               return _copy_from_iter_flushcache(addr, bytes, i);
-> +
-> +       /*
-> +        * Not page-aligned range cannot be recovered. This should not
-> +        * happen unless something else went wrong.
-> +        */
-> +       if (off || !PAGE_ALIGNED(bytes)) {
-> +               dev_warn(dev, "Found poison, but addr(%p) or bytes(%#lx) not page aligned\n",
-> +                       addr, bytes);
+Belated response on this - I was out last week.
 
-If this warn stays:
+On Mon, Apr 11, 2022 at 05:37:24PM +0000, Eric Biggers wrote:
+> On Sun, Apr 10, 2022 at 08:47:05PM +0100, Giovanni Cabiddu wrote:
+> > If requests exceed 4 entries buffers, memory is allocated dynamically.
+> > 
+> > In addition, remove the CRYPTO_ALG_ALLOCATES_MEMORY flag from both aead
+> > and skcipher alg structures.
+> > 
+> 
+> There is nothing that says that algorithms can ignore
+> !CRYPTO_ALG_ALLOCATES_MEMORY if there are too many scatterlist entries.  See the
+> comment above the definition of CRYPTO_ALG_ALLOCATES_MEMORY.
+From the conversation in [1], I assumed that a cap on the number of
+pre-allocated entries in the scatterlists was already agreed.
 
-s/dev_warn/dev_warn_ratelimited/
+> If you need to introduce this constraint, then you will need to audit the users
+> of !CRYPTO_ALG_ALLOCATES_MEMORY to verify that none of them are issuing requests
+> that violate this constraint, then add this to the documentation comment for
+> CRYPTO_ALG_ALLOCATES_MEMORY.
+Makes sense. I see that the only users of !CRYPTO_ALG_ALLOCATES_MEMORY
+are dm-crypt and dm-integrity but I haven't done an audit on those yet
+to understand if they use more than 4 entries.
 
-The kernel prints hashed addresses for %p, so I'm not sure printing
-@addr is useful or @bytes because there is nothing actionable that can
-be done with that information in the log. @pgoff is probably the only
-variable worth printing (after converting to bytes or sectors) as that
-might be able to be reverse mapped back to the impacted data.
+Regards,
 
-> +               return 0;
-> +       }
-> +
-> +       mutex_lock(&pmem->recovery_lock);
-> +       pmem_off = PFN_PHYS(pgoff) + pmem->data_offset;
-> +       cleared = __pmem_clear_poison(pmem, pmem_off, len);
-> +       if (cleared > 0 && cleared < len) {
-> +               dev_warn(dev, "poison cleared only %ld out of %lu bytes\n",
-> +                       cleared, len);
+[1] https://lore.kernel.org/linux-crypto/20200722072932.GA27544@gondor.apana.org.au/
 
-This looks like dev_dbg() to me, or at minimum the same
-dev_warn_ratelimited() print as the one above to just indicate a write
-to the device at the given offset failed.
-
-> +               mutex_unlock(&pmem->recovery_lock);
-> +               return 0;
-> +       }
-> +       if (cleared < 0) {
-> +               dev_warn(dev, "poison clear failed: %ld\n", cleared);
-
-Same feedback here, these should probably all map to the identical
-error exit ratelimited print.
-
-> +               mutex_unlock(&pmem->recovery_lock);
-
-It occurs to me that all callers of this are arriving through the
-fsdax iomap ops and all of these callers take an exclusive lock to
-prevent simultaneous access to the inode. If recovery_write() is only
-used through that path then this lock is redundant. Simultaneous reads
-are protected by the fact that the badblocks are cleared last. I think
-this can wait to add the lock when / if a non-fsdax access path
-arrives for dax_recovery_write(), and even then it should probably
-enforce the single writer exclusion guarantee of the fsdax path.
-
-> +               return 0;
-> +       }
-> +
-> +       olen = _copy_from_iter_flushcache(addr, bytes, i);
-> +       pmem_clear_bb(pmem, to_sect(pmem, pmem_off), cleared >> SECTOR_SHIFT);
-> +
-> +       mutex_unlock(&pmem->recovery_lock);
-> +       return olen;
->  }
->
->  static const struct dax_operations pmem_dax_ops = {
-> @@ -525,6 +578,7 @@ static int pmem_attach_disk(struct device *dev,
->         if (rc)
->                 goto out_cleanup_dax;
->         dax_write_cache(dax_dev, nvdimm_has_cache(nd_region));
-> +       mutex_init(&pmem->recovery_lock);
->         pmem->dax_dev = dax_dev;
->
->         rc = device_add_disk(dev, disk, pmem_attribute_groups);
-> diff --git a/drivers/nvdimm/pmem.h b/drivers/nvdimm/pmem.h
-> index 392b0b38acb9..91e40f5e3c0e 100644
-> --- a/drivers/nvdimm/pmem.h
-> +++ b/drivers/nvdimm/pmem.h
-> @@ -27,6 +27,7 @@ struct pmem_device {
->         struct dax_device       *dax_dev;
->         struct gendisk          *disk;
->         struct dev_pagemap      pgmap;
-> +       struct mutex            recovery_lock;
->  };
->
->  long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
-> --
-> 2.18.4
->
+-- 
+Giovanni
 
 --
 dm-devel mailing list
