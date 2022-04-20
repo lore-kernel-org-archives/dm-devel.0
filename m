@@ -4,59 +4,161 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4A02AC433F5
-	for <dm-devel@archiver.kernel.org>; Wed, 20 Apr 2022 07:30:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id BCEB2C433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 20 Apr 2022 17:02:03 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-152-z--aVZweMJiRfYEPDRvlEg-1; Wed, 20 Apr 2022 03:30:44 -0400
-X-MC-Unique: z--aVZweMJiRfYEPDRvlEg-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-398--U7Ist2hMsywm-Tw2Wh-8g-1; Wed, 20 Apr 2022 13:01:59 -0400
+X-MC-Unique: -U7Ist2hMsywm-Tw2Wh-8g-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C5F8D2999B5E;
-	Wed, 20 Apr 2022 07:30:42 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1B70F29AB3FA;
+	Wed, 20 Apr 2022 17:01:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id B103B572345;
-	Wed, 20 Apr 2022 07:30:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D94512166B44;
+	Wed, 20 Apr 2022 17:01:54 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 990D019451F2;
-	Wed, 20 Apr 2022 07:30:42 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 928C11949763;
+	Wed, 20 Apr 2022 17:01:54 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 72CFD19452D2
- for <dm-devel@listman.corp.redhat.com>; Wed, 20 Apr 2022 07:30:41 +0000 (UTC)
+ ESMTP id A90F919451EC
+ for <dm-devel@listman.corp.redhat.com>; Wed, 20 Apr 2022 17:01:53 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 51A62407F760; Wed, 20 Apr 2022 07:30:41 +0000 (UTC)
+ id 98D60572335; Wed, 20 Apr 2022 17:01:53 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 4CE2240CFD0E
- for <dm-devel@redhat.com>; Wed, 20 Apr 2022 07:30:41 +0000 (UTC)
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 93CD2572332
+ for <dm-devel@redhat.com>; Wed, 20 Apr 2022 17:01:53 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2E7251C07829
- for <dm-devel@redhat.com>; Wed, 20 Apr 2022 07:30:41 +0000 (UTC)
-Received: from bombadil.infradead.org (bombadil.infradead.org
- [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 746EC900763
+ for <dm-devel@redhat.com>; Wed, 20 Apr 2022 17:01:53 +0000 (UTC)
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
+ [205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-171-ZVBbMdAHM5S28sRI7E8UJg-1; Wed, 20 Apr 2022 03:30:39 -0400
-X-MC-Unique: ZVBbMdAHM5S28sRI7E8UJg-1
-Received: from [2001:4bb8:191:364b:4299:55c7:4b14:f042] (helo=localhost)
- by bombadil.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
- id 1nh483-007can-UT; Wed, 20 Apr 2022 06:47:56 +0000
-From: Christoph Hellwig <hch@lst.de>
-To: Jens Axboe <axboe@kernel.dk>,
-	Eric Biggers <ebiggers@google.com>
-Date: Wed, 20 Apr 2022 08:47:45 +0200
-Message-Id: <20220420064745.1119823-3-hch@lst.de>
-In-Reply-To: <20220420064745.1119823-1-hch@lst.de>
-References: <20220420064745.1119823-1-hch@lst.de>
+ us-mta-341-lxgRz57ROhanOBCVMMMYJA-1; Wed, 20 Apr 2022 13:01:47 -0400
+X-MC-Unique: lxgRz57ROhanOBCVMMMYJA-1
+Received: from pps.filterd (m0246629.ppops.net [127.0.0.1])
+ by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 23KFGbnC024754; 
+ Wed, 20 Apr 2022 17:01:19 GMT
+Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com
+ (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
+ by mx0b-00069f02.pphosted.com with ESMTP id 3ffnp9hfd5-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+ Wed, 20 Apr 2022 17:01:19 +0000
+Received: from pps.filterd
+ (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+ by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.16.1.2/8.16.1.2)
+ with SMTP id 23KH0iDA001476; Wed, 20 Apr 2022 17:01:18 GMT
+Received: from nam12-mw2-obe.outbound.protection.outlook.com
+ (mail-mw2nam12lp2048.outbound.protection.outlook.com [104.47.66.48])
+ by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com with ESMTP id
+ 3ffm87thmq-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+ Wed, 20 Apr 2022 17:01:18 +0000
+Received: from SJ0PR10MB4429.namprd10.prod.outlook.com (2603:10b6:a03:2d1::14)
+ by DM5PR10MB1449.namprd10.prod.outlook.com (2603:10b6:3:11::11) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5164.20; Wed, 20 Apr
+ 2022 17:01:15 +0000
+Received: from SJ0PR10MB4429.namprd10.prod.outlook.com
+ ([fe80::1c44:15ca:b5c2:603e]) by SJ0PR10MB4429.namprd10.prod.outlook.com
+ ([fe80::1c44:15ca:b5c2:603e%8]) with mapi id 15.20.5164.025; Wed, 20 Apr 2022
+ 17:01:15 +0000
+From: Jane Chu <jane.chu@oracle.com>
+To: Dan Williams <dan.j.williams@intel.com>
+Thread-Topic: [PATCH v8 7/7] pmem: implement pmem_recovery_write()
+Thread-Index: AQHYVFsWAZKeTRs39kii18Q/afzGwqz4Vm+AgACxWIA=
+Date: Wed, 20 Apr 2022 17:01:15 +0000
+Message-ID: <d48f9641-30e3-f459-2376-386c28a69026@oracle.com>
+References: <20220420020435.90326-1-jane.chu@oracle.com>
+ <20220420020435.90326-8-jane.chu@oracle.com>
+ <CAPcyv4gs2rEs71c6Lmtk1La2g3POhzBrppLvM0pkGxx+QZ3SbA@mail.gmail.com>
+In-Reply-To: <CAPcyv4gs2rEs71c6Lmtk1La2g3POhzBrppLvM0pkGxx+QZ3SbA@mail.gmail.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
+ Thunderbird/91.7.0
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: 4b46f31b-33cc-40ed-b6e6-08da22ef61c0
+x-ms-traffictypediagnostic: DM5PR10MB1449:EE_
+x-microsoft-antispam-prvs: <DM5PR10MB14492279C619ECD4DCCCDD57F3F59@DM5PR10MB1449.namprd10.prod.outlook.com>
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: wXLUefivyfvapuo1wDpmghojRrKZ+80hxgolOAzeACGG/ip9s7CDRTeMCkjc1XgSc3fl2QYG4OLU7X1GJIUGjKR2UEMySRFVJIuzH2dwIwveXIzMCcYWYM6cqFXrokKXsDBVWDG5qq60P3kPfG27145j4GYXfHcq/ga8QA0UE68AkNgAxUqfwZN8yE7xKWcrAp41dRi2SAQRWrR/jGtKI6N2OAD1JKKkID/NgJVlfmKdTyc9xMEKbrRnHawDc8QGrw6SVilXpVAi03uJLeajr+bAicZAG2MUWjbg2LdFcOErJLiHDNdT+ED3vgeH9qoA5hQl0rFWHIPRsb3KvQRpfIwvOzA5CpyAvUp5ii4I786zZ1Hfsc8kouhe5mxElH1vHgEgy+VjqrL0F/5/Mj8iFJNLDuH6TDxpmUyDXhgC0B5usa1LJwGeDRZlpoYjNciZP/Jk8lwz1eHAShD0ecSSTcwSwMlbs3bzOKFuMj5EJcYRzkb4av0Vs1Zr4Klcivuk2NVw77BxFTUdU6+G10GaeeSVxRKe5fjPyJaLXRbs2y4r/6zCa22EySI28a1q3qtSrCEJ0qRha6rrJgYPBDzZjW7D4BYblJeedOoxNFR9wC3r5/+JiSVYAXGEC6leTOL5esGWOc0xrE537QK/KyQGLJQOeXBf+K2Up10BZ+EFgU2TWUfWP/tun2OCqcF4ivvQfwoAKOoJNSmqZ8TVKK39ZQ4u+Cc+KDjovUvNq0qeSfjK0T+hMLoasZ732SpLK9iVjO7UrnPD3Ewqcul1PkrgZA==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:SJ0PR10MB4429.namprd10.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230001)(366004)(2906002)(8936002)(8676002)(26005)(66556008)(6512007)(6486002)(508600001)(71200400001)(6506007)(7416002)(44832011)(5660300002)(31686004)(53546011)(38070700005)(4326008)(83380400001)(54906003)(66946007)(86362001)(2616005)(38100700002)(76116006)(66446008)(122000001)(64756008)(66476007)(186003)(36756003)(6916009)(31696002)(316002)(43740500002)(45980500001);
+ DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?utf-8?B?WDZaTmRrYUZNNmNvODhrT25sTUdiR3kyZ1hwTmVkZ3hEeTEwRWovRVV5VHJw?=
+ =?utf-8?B?cjhWUWtablVvT1pYVDBlWW8xckV5by92Vk1BMWZyMlZJMzI5dnF5TkNwSUts?=
+ =?utf-8?B?VUROMHZvUmsxdXFTM3VJQnFQMHFXQzR3eEhJazhDK3plSWlXRnRyYU9tZC91?=
+ =?utf-8?B?SThlRW95Znk5WXFBTlU3Q2lERjNlcHhxTklucXBmUHZ5eDU3S21IaXg1amtD?=
+ =?utf-8?B?TTIzVVFYY3ZCeDdMMGVWYUdSYWQ3d2dWWjlxNXlIbS9Qa0NqLzhIVFN0RjM2?=
+ =?utf-8?B?NXM5WURtdzI5YitaY0JtcWx2WDBRa0VBRDd2RTVSeXBESkcvQmtManF0UGl3?=
+ =?utf-8?B?REJGRE1Cd2VVQkd2cHlKV09FOERuUWpJV3ZGcW5XdUpqWWNSRmR3UVRYRjZV?=
+ =?utf-8?B?L3JvYy8xZHBGSVE4MkczN09uSXQ1M01zaDlHY05ZaUE3Yy94eW5xWFhoQTV6?=
+ =?utf-8?B?ak9mY3Y1WERLRnExNXFyMEdDdllZSjAzTTZsWGl3VEZpM2lGL2FOcVlGcHBn?=
+ =?utf-8?B?dUlqNkxaQ2N4REdDQXJkVngwcFN6Vnp6ZlJFOVZvR1dXYjIzVXlFNGgreDBW?=
+ =?utf-8?B?L0Z4M2FYbE1UQnBrR3R4alFDVU5pZG9JV21BT25UdFhLdVNYalc4OHdVRU9p?=
+ =?utf-8?B?Y1REOGd0cmkyVGtWUUZacG9ha0JlYmhMY3FSVW9LTk9GL2oxY0pvZmVGMWls?=
+ =?utf-8?B?cHNiOWIvUzFIL1IrRHhwUnQ3ZlZOT0o2aGFVc2d6RDl5cGN3Q2hQQWJEVmlS?=
+ =?utf-8?B?V1B6TjFrK2s4SkFOOW5zZEZBcDVwWjlNelZYOVpCQlc5bmxDdWdaZkV6S21S?=
+ =?utf-8?B?ODJEZ0Rnbm9hc05XSFZjVzdmWk5OWTZNK3pWUTZTdzR2SDJjNFBuUm1rQVNB?=
+ =?utf-8?B?aHNMTVVyMHo4NC8zYS9SVEZXd056dlJhODhMcElPYlJsTU1qRG9FYUg2Qmlv?=
+ =?utf-8?B?SWdRZEhaSXEwdTFRUnl4VHgrZ3VVV1VPaU0xRDI2a1dKeWdWQXN2SXQ0YkhT?=
+ =?utf-8?B?eHRpckUyWDhocHYyUnNNaEgzQmNqbmh0K3lzajltaWxsYmRFZFA5aVFjVDFR?=
+ =?utf-8?B?WlkrMDZWQUZDeCtlMG5Manl1THJScWNheW1mcERma2NiLzU4T2FoTlVEYjFh?=
+ =?utf-8?B?eW9lODJycWphQnNWOG8yb3drKzZwMXlNOXBTMXI4cmRvS09YdG5laXhSSFZ0?=
+ =?utf-8?B?TXU0eVFXM3ZOd0t0a2tWdzVkci9IdElpU1Y5cHdta2dRdzhBU0pZUkpFZWg1?=
+ =?utf-8?B?Rm84eEk5cFRWL1Y5cW9VbGxpRWIyNy9iWThHM2hQZDFqWXp3TGU2TlpEdlJY?=
+ =?utf-8?B?QW1xMlh2NkgxU3RWNzg5dmZIRTZveCtmSFMweUljYlM2Y1Z5TkJXY1lwaEg5?=
+ =?utf-8?B?SkxPVDBXN09aK2dlZUJqb3l2N1RCa1RjSWlSUzVGYXhrTXQxSGN6a29RRzJo?=
+ =?utf-8?B?MUJZTThtMUtzMjRialVGTGtaVHdpZ1FIczZtMnFoZWh0Q3NJR2FreEdLUEVk?=
+ =?utf-8?B?YXEwK28xWGhMUGVENWxZRXNUWm1kTXdVRFREaEQ3QktaOTU4aUFLek8yS0Nn?=
+ =?utf-8?B?LzNta0h3UnJHUDBNZHlESUdzcjlJUGZ6RjloeUdIbUFFdkF0Snd5UkRxZ01K?=
+ =?utf-8?B?VENwUHNuc1M4SkNxcFMzQlpoL1grOEYreGYyVHJqQ3p6bWNRdXFyeEJwaGIr?=
+ =?utf-8?B?eWF5TWRxMyszYzkvQ2Q0STlQRUpjcktEVDNWSWtFQVZhZUs2bDhpMXllYVJJ?=
+ =?utf-8?B?ZTlkOUsvckxENlpxT0txck9wQ0FHOXQ1cnBYZjNnWFdaUkREbWhJVGFlNDcr?=
+ =?utf-8?B?MHdWRTBPNUJVU2FWZ2Z0aVA3ZDhHM0MrbkE3S2JjRHI0M3ZuMDVYSnRkSmFj?=
+ =?utf-8?B?NG9KaEVIUmJyQmJCdzg4b0hVVDdaaFVZVm1yQ081VldXQkFSUnBwUmVmR2xU?=
+ =?utf-8?B?TmM1OUZnWmJvTXlJMWE1QWJYZ2Z2d0dYSkVEUEV5TTk2SGt5cG1oOE5mcEkr?=
+ =?utf-8?B?RmU5Z212UTBVaForajhXRjFHMUEyV29vRnRYVXJNWldobnV2MmNJSGJDaFQ4?=
+ =?utf-8?B?eWkwTUpoM01OMlFpKytMaTJQeEZZaEpwb1NablY1cDlTOU8xV2Z3WHl2MFQw?=
+ =?utf-8?B?OGgvZisxaDJHZU1vaVAwQW1uZlhObk54cGlFM1RQME9RSWVHcEdWdFhBRG9R?=
+ =?utf-8?B?d3NyNVdpZVNEVnN5SGROeWNkU3BkSk1jYkF4Wk5vL1dPcDFkV3dYVlFrcTZn?=
+ =?utf-8?B?cmU1aUN5V0hoRGZWK2xFa25TU1NBV3N6YThWRGFIRFNwMllWbmNIMHozNVhH?=
+ =?utf-8?Q?LGvsBK6B/r6LgTqHX2?=
 MIME-Version: 1.0
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
- bombadil.infradead.org. See http://www.infradead.org/rpr.html
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: SJ0PR10MB4429.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 4b46f31b-33cc-40ed-b6e6-08da22ef61c0
+X-MS-Exchange-CrossTenant-originalarrivaltime: 20 Apr 2022 17:01:15.7956 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: RmZDuNl7dHpknNpLPiGuHzTORROm03UgKZxn9kBSEOEz0H0gY2TsVc7O0obSQYOsOmN4tZ5PC8WElwK2qPqHvA==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM5PR10MB1449
+X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.486, 18.0.858
+ definitions=2022-04-20_05:2022-04-20,
+ 2022-04-20 signatures=0
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 phishscore=0
+ bulkscore=0 suspectscore=0
+ malwarescore=0 mlxlogscore=999 adultscore=0 mlxscore=0 spamscore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2202240000
+ definitions=main-2204200101
+X-Proofpoint-ORIG-GUID: axAxM4DSqQ34Hu1wgtw90YIdC7Etb7CI
+X-Proofpoint-GUID: axAxM4DSqQ34Hu1wgtw90YIdC7Etb7CI
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -64,11 +166,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Mimecast-Bulk-Signature: yes
-X-Mimecast-Spam-Signature: bulk
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-Subject: [dm-devel] [PATCH 2/2] blk-crypto: fix the blk_crypto_profile
- liftime
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: Re: [dm-devel] [PATCH v8 7/7] pmem: implement pmem_recovery_write()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -80,707 +179,199 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Ulf Hansson <ulf.hansson@linaro.org>, linux-scsi@vger.kernel.org,
- linux-mmc@vger.kernel.org, Mike Snitzer <snitzer@kernel.org>,
- Adrian Hunter <adrian.hunter@intel.com>,
- Ritesh Harjani <riteshh@codeaurora.org>, linux-block@vger.kernel.org,
- Avri Altman <avri.altman@wdc.com>, dm-devel@redhat.com,
- Alim Akhtar <alim.akhtar@samsung.com>, Asutosh Das <asutoshd@codeaurora.org>
+Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Dave Jiang <dave.jiang@intel.com>,
+ Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>,
+ "Darrick J.
+ Wong" <djwong@kernel.org>, X86 ML <x86@kernel.org>, david <david@fromorbit.com>,
+ Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+ Matthew Wilcox <willy@infradead.org>, Christoph Hellwig <hch@infradead.org>,
+ Dave Hansen <dave.hansen@intel.com>,
+ device-mapper development <dm-devel@redhat.com>,
+ Borislav Petkov <bp@alien8.de>, Vivek Goyal <vgoyal@redhat.com>,
+ Andy Lutomirski <luto@kernel.org>, Vishal L Verma <vishal.l.verma@intel.com>,
+ linux-fsdevel <linux-fsdevel@vger.kernel.org>, "Weiny,
+ Ira" <ira.weiny@intel.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-ID: <1C3675DD9B85124BB65409D954E2533D@namprd10.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Once the blk_crypto_profile is exposed in sysfs it needs to stay alive
-as long as sysfs accesses are possibly pending.  Ensure that by removing
-the blk_crypto_kobj wrapper and just embedding the kobject into the
-actual blk_crypto_profile.  This requires the blk_crypto_profile
-structure to be dynamically allocated, which in turn requires a private
-data pointer for driver use.
+On 4/19/2022 11:26 PM, Dan Williams wrote:
+> On Tue, Apr 19, 2022 at 7:06 PM Jane Chu <jane.chu@oracle.com> wrote:
+>>
+>> The recovery write thread started out as a normal pwrite thread and
+>> when the filesystem was told about potential media error in the
+>> range, filesystem turns the normal pwrite to a dax_recovery_write.
+>>
+>> The recovery write consists of clearing media poison, clearing page
+>> HWPoison bit, reenable page-wide read-write permission, flush the
+>> caches and finally write.  A competing pread thread will be held
+>> off during the recovery process since data read back might not be
+>> valid, and this is achieved by clearing the badblock records after
+>> the recovery write is complete. Competing recovery write threads
+>> are serialized by pmem device level .recovery_lock.
+>>
+>> Signed-off-by: Jane Chu <jane.chu@oracle.com>
+>> ---
+>>   drivers/nvdimm/pmem.c | 56 ++++++++++++++++++++++++++++++++++++++++++-
+>>   drivers/nvdimm/pmem.h |  1 +
+>>   2 files changed, 56 insertions(+), 1 deletion(-)
+>>
+>> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+>> index c3772304d417..134f8909eb65 100644
+>> --- a/drivers/nvdimm/pmem.c
+>> +++ b/drivers/nvdimm/pmem.c
+>> @@ -332,10 +332,63 @@ static long pmem_dax_direct_access(struct dax_device *dax_dev,
+>>          return __pmem_direct_access(pmem, pgoff, nr_pages, mode, kaddr, pfn);
+>>   }
+>>
+>> +/*
+>> + * The recovery write thread started out as a normal pwrite thread and
+>> + * when the filesystem was told about potential media error in the
+>> + * range, filesystem turns the normal pwrite to a dax_recovery_write.
+>> + *
+>> + * The recovery write consists of clearing media poison, clearing page
+>> + * HWPoison bit, reenable page-wide read-write permission, flush the
+>> + * caches and finally write.  A competing pread thread will be held
+>> + * off during the recovery process since data read back might not be
+>> + * valid, and this is achieved by clearing the badblock records after
+>> + * the recovery write is complete. Competing recovery write threads
+>> + * are serialized by pmem device level .recovery_lock.
+>> + */
+>>   static size_t pmem_recovery_write(struct dax_device *dax_dev, pgoff_t pgoff,
+>>                  void *addr, size_t bytes, struct iov_iter *i)
+>>   {
+>> -       return 0;
+>> +       struct pmem_device *pmem = dax_get_private(dax_dev);
+>> +       size_t olen, len, off;
+>> +       phys_addr_t pmem_off;
+>> +       struct device *dev = pmem->bb.dev;
+>> +       long cleared;
+>> +
+>> +       off = offset_in_page(addr);
+>> +       len = PFN_PHYS(PFN_UP(off + bytes));
+>> +       if (!is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) >> SECTOR_SHIFT, len))
+>> +               return _copy_from_iter_flushcache(addr, bytes, i);
+>> +
+>> +       /*
+>> +        * Not page-aligned range cannot be recovered. This should not
+>> +        * happen unless something else went wrong.
+>> +        */
+>> +       if (off || !PAGE_ALIGNED(bytes)) {
+>> +               dev_warn(dev, "Found poison, but addr(%p) or bytes(%#lx) not page aligned\n",
+>> +                       addr, bytes);
+> 
+> If this warn stays:
+> 
+> s/dev_warn/dev_warn_ratelimited/
+> 
+> The kernel prints hashed addresses for %p, so I'm not sure printing
+> @addr is useful or @bytes because there is nothing actionable that can
+> be done with that information in the log. @pgoff is probably the only
+> variable worth printing (after converting to bytes or sectors) as that
+> might be able to be reverse mapped back to the impacted data.
 
-Fixes: 20f01f163203 ("blk-crypto: show crypto capabilities in sysfs")
-Signed-off-by: Christoph Hellwig <hch@lst.de>
----
- Documentation/block/inline-encryption.rst |  10 +-
- block/blk-crypto-fallback.c               |  20 +--
- block/blk-crypto-profile.c                | 143 ++++++++++------------
- drivers/md/dm-table.c                     |  28 +----
- drivers/mmc/core/crypto.c                 |   4 +-
- drivers/mmc/host/cqhci-crypto.c           |  16 ++-
- drivers/scsi/ufs/ufshcd-crypto.c          |  31 ++---
- drivers/scsi/ufs/ufshcd.h                 |   2 +-
- include/linux/blk-crypto-profile.h        |  19 +--
- include/linux/blkdev.h                    |   1 -
- include/linux/mmc/host.h                  |   2 +-
- 11 files changed, 123 insertions(+), 153 deletions(-)
+The intention with printing @addr and @bytes is to show the 
+mis-alignment. In the past when UC- was set on poisoned dax page, 
+returning less than a page being written would cause dax_iomap_iter to 
+produce next iteration with @addr and @bytes not-page-aligned.  Although 
+UC- doesn't apply here, I thought it might still be worth while to watch 
+for similar scenario.  Also that's why @pgoff isn't helpful.
 
-diff --git a/Documentation/block/inline-encryption.rst b/Documentation/block/inline-encryption.rst
-index 4d151fbe20583..0d740b0f9faf3 100644
---- a/Documentation/block/inline-encryption.rst
-+++ b/Documentation/block/inline-encryption.rst
-@@ -230,8 +230,8 @@ API presented to device drivers
- 
- A device driver that wants to support inline encryption must set up a
- blk_crypto_profile in the request_queue of its device.  To do this, it first
--must call ``blk_crypto_profile_init()`` (or its resource-managed variant
--``devm_blk_crypto_profile_init()``), providing the number of keyslots.
-+must call ``blk_crypto_profile_alloc()`` (or its resource-managed variant
-+``devm_blk_crypto_profile_alloc()``), providing the number of keyslots.
- 
- Next, it must advertise its crypto capabilities by setting fields in the
- blk_crypto_profile, e.g. ``modes_supported`` and ``max_dun_bytes_supported``.
-@@ -259,9 +259,9 @@ If there are situations where the inline encryption hardware loses the contents
- of its keyslots, e.g. device resets, the driver must handle reprogramming the
- keyslots.  To do this, the driver may call ``blk_crypto_reprogram_all_keys()``.
- 
--Finally, if the driver used ``blk_crypto_profile_init()`` instead of
--``devm_blk_crypto_profile_init()``, then it is responsible for calling
--``blk_crypto_profile_destroy()`` when the crypto profile is no longer needed.
-+Finally, if the driver used ``blk_crypto_profile_alloc()`` instead of
-+``devm_blk_crypto_profile_alloc()``, then it is responsible for calling
-+``blk_crypto_profile_put()`` when the crypto profile is no longer needed.
- 
- Layered Devices
- ===============
-diff --git a/block/blk-crypto-fallback.c b/block/blk-crypto-fallback.c
-index 5d1aa5b1d30a1..729974028e448 100644
---- a/block/blk-crypto-fallback.c
-+++ b/block/blk-crypto-fallback.c
-@@ -78,7 +78,7 @@ static struct blk_crypto_fallback_keyslot {
- 	struct crypto_skcipher *tfms[BLK_ENCRYPTION_MODE_MAX];
- } *blk_crypto_keyslots;
- 
--static struct blk_crypto_profile blk_crypto_fallback_profile;
-+static struct blk_crypto_profile *blk_crypto_fallback_profile;
- static struct workqueue_struct *blk_crypto_wq;
- static mempool_t *blk_crypto_bounce_page_pool;
- static struct bio_set crypto_bio_split;
-@@ -293,7 +293,7 @@ static bool blk_crypto_fallback_encrypt_bio(struct bio **bio_ptr)
- 	 * Get a blk-crypto-fallback keyslot that contains a crypto_skcipher for
- 	 * this bio's algorithm and key.
- 	 */
--	blk_st = blk_crypto_get_keyslot(&blk_crypto_fallback_profile,
-+	blk_st = blk_crypto_get_keyslot(blk_crypto_fallback_profile,
- 					bc->bc_key, &slot);
- 	if (blk_st != BLK_STS_OK) {
- 		src_bio->bi_status = blk_st;
-@@ -396,7 +396,7 @@ static void blk_crypto_fallback_decrypt_bio(struct work_struct *work)
- 	 * Get a blk-crypto-fallback keyslot that contains a crypto_skcipher for
- 	 * this bio's algorithm and key.
- 	 */
--	blk_st = blk_crypto_get_keyslot(&blk_crypto_fallback_profile,
-+	blk_st = blk_crypto_get_keyslot(blk_crypto_fallback_profile,
- 					bc->bc_key, &slot);
- 	if (blk_st != BLK_STS_OK) {
- 		bio->bi_status = blk_st;
-@@ -500,7 +500,7 @@ bool blk_crypto_fallback_bio_prep(struct bio **bio_ptr)
- 		return false;
- 	}
- 
--	if (!__blk_crypto_cfg_supported(&blk_crypto_fallback_profile,
-+	if (!__blk_crypto_cfg_supported(blk_crypto_fallback_profile,
- 					&bc->bc_key->crypto_cfg)) {
- 		bio->bi_status = BLK_STS_NOTSUPP;
- 		return false;
-@@ -527,7 +527,7 @@ bool blk_crypto_fallback_bio_prep(struct bio **bio_ptr)
- 
- int blk_crypto_fallback_evict_key(const struct blk_crypto_key *key)
- {
--	return __blk_crypto_evict_key(&blk_crypto_fallback_profile, key);
-+	return __blk_crypto_evict_key(blk_crypto_fallback_profile, key);
- }
- 
- static bool blk_crypto_fallback_inited;
-@@ -535,7 +535,7 @@ static int blk_crypto_fallback_init(void)
- {
- 	int i;
- 	int err;
--	struct blk_crypto_profile *profile = &blk_crypto_fallback_profile;
-+	struct blk_crypto_profile *profile;
- 
- 	if (blk_crypto_fallback_inited)
- 		return 0;
-@@ -546,10 +546,10 @@ static int blk_crypto_fallback_init(void)
- 	if (err)
- 		goto out;
- 
--	err = blk_crypto_profile_init(profile, blk_crypto_num_keyslots);
--	if (err)
--		goto fail_free_bioset;
- 	err = -ENOMEM;
-+	profile = blk_crypto_profile_alloc(blk_crypto_num_keyslots);
-+	if (!profile)
-+		goto fail_free_bioset;
- 
- 	profile->ll_ops = blk_crypto_fallback_ll_ops;
- 	profile->max_dun_bytes_supported = BLK_CRYPTO_MAX_IV_SIZE;
-@@ -598,7 +598,7 @@ static int blk_crypto_fallback_init(void)
- fail_free_wq:
- 	destroy_workqueue(blk_crypto_wq);
- fail_destroy_profile:
--	blk_crypto_profile_destroy(profile);
-+	blk_crypto_profile_put(profile);
- fail_free_bioset:
- 	bioset_exit(&crypto_bio_split);
- out:
-diff --git a/block/blk-crypto-profile.c b/block/blk-crypto-profile.c
-index 4f444323cb491..e4e14322d2f2e 100644
---- a/block/blk-crypto-profile.c
-+++ b/block/blk-crypto-profile.c
-@@ -42,11 +42,6 @@ struct blk_crypto_keyslot {
- 	struct blk_crypto_profile *profile;
- };
- 
--struct blk_crypto_kobj {
--	struct kobject kobj;
--	struct blk_crypto_profile *profile;
--};
--
- struct blk_crypto_attr {
- 	struct attribute attr;
- 	ssize_t (*show)(struct blk_crypto_profile *profile,
-@@ -55,7 +50,7 @@ struct blk_crypto_attr {
- 
- static struct blk_crypto_profile *kobj_to_crypto_profile(struct kobject *kobj)
- {
--	return container_of(kobj, struct blk_crypto_kobj, kobj)->profile;
-+	return container_of(kobj, struct blk_crypto_profile, kobj);
- }
- 
- static struct blk_crypto_attr *attr_to_crypto_attr(struct attribute *attr)
-@@ -145,7 +140,14 @@ static const struct sysfs_ops blk_crypto_attr_ops = {
- 
- static void blk_crypto_release(struct kobject *kobj)
- {
--	kfree(container_of(kobj, struct blk_crypto_kobj, kobj));
-+	struct blk_crypto_profile *profile =
-+		container_of(kobj, struct blk_crypto_profile, kobj);
-+
-+	kvfree(profile->slot_hashtable);
-+	kvfree_sensitive(profile->slots,
-+			 sizeof(profile->slots[0]) * profile->num_slots);
-+	memzero_explicit(profile, sizeof(*profile));
-+	kfree(profile);
- }
- 
- static struct kobj_type blk_crypto_ktype = {
-@@ -160,30 +162,20 @@ static struct kobj_type blk_crypto_ktype = {
-  */
- int blk_crypto_sysfs_register(struct request_queue *q)
- {
--	struct blk_crypto_kobj *obj;
- 	int err;
- 
- 	if (!q->crypto_profile)
- 		return 0;
- 
--	obj = kzalloc(sizeof(*obj), GFP_KERNEL);
--	if (!obj)
--		return -ENOMEM;
--	obj->profile = q->crypto_profile;
--
--	err = kobject_init_and_add(&obj->kobj, &blk_crypto_ktype, &q->kobj,
--				   "crypto");
--	if (err) {
--		kobject_put(&obj->kobj);
--		return err;
--	}
--	q->crypto_kobject = &obj->kobj;
--	return 0;
-+	err = kobject_add(&q->crypto_profile->kobj, &q->kobj, "crypto");
-+	if (err)
-+		kobject_put(&q->crypto_profile->kobj);
-+	return err;
- }
- 
- void blk_crypto_sysfs_unregister(struct request_queue *q)
- {
--	kobject_put(q->crypto_kobject);
-+	kobject_del(&q->crypto_profile->kobj);
- }
- 
- static inline void blk_crypto_hw_enter(struct blk_crypto_profile *profile)
-@@ -205,30 +197,13 @@ static inline void blk_crypto_hw_exit(struct blk_crypto_profile *profile)
- 		pm_runtime_put_sync(profile->dev);
- }
- 
--/**
-- * blk_crypto_profile_init() - Initialize a blk_crypto_profile
-- * @profile: the blk_crypto_profile to initialize
-- * @num_slots: the number of keyslots
-- *
-- * Storage drivers must call this when starting to set up a blk_crypto_profile,
-- * before filling in additional fields.
-- *
-- * Return: 0 on success, or else a negative error code.
-- */
--int blk_crypto_profile_init(struct blk_crypto_profile *profile,
--			    unsigned int num_slots)
-+/* Initialize keyslot management data. */
-+static int blk_crypto_profile_init_slots(struct blk_crypto_profile *profile,
-+		unsigned int num_slots)
- {
-+	unsigned int slot_hashtable_size;
- 	unsigned int slot;
- 	unsigned int i;
--	unsigned int slot_hashtable_size;
--
--	memset(profile, 0, sizeof(*profile));
--	init_rwsem(&profile->lock);
--
--	if (num_slots == 0)
--		return 0;
--
--	/* Initialize keyslot management data. */
- 
- 	profile->slots = kvcalloc(num_slots, sizeof(profile->slots[0]),
- 				  GFP_KERNEL);
-@@ -261,48 +236,75 @@ int blk_crypto_profile_init(struct blk_crypto_profile *profile,
- 		kvmalloc_array(slot_hashtable_size,
- 			       sizeof(profile->slot_hashtable[0]), GFP_KERNEL);
- 	if (!profile->slot_hashtable)
--		goto err_destroy;
-+		return -ENOMEM;
- 	for (i = 0; i < slot_hashtable_size; i++)
- 		INIT_HLIST_HEAD(&profile->slot_hashtable[i]);
--
- 	return 0;
-+}
-+
-+/**
-+ * blk_crypto_profile_alloc() - Allocate a blk_crypto_profile
-+ * @num_slots: the number of keyslots
-+ *
-+ * Storage drivers must call this when starting to set up a blk_crypto_profile,
-+ * before filling in additional fields.
-+ *
-+ * Return: pointer to the profile on success, or ele %NULL.
-+ */
-+struct blk_crypto_profile *blk_crypto_profile_alloc(unsigned int num_slots)
-+{
-+	struct blk_crypto_profile *profile;
- 
--err_destroy:
--	blk_crypto_profile_destroy(profile);
--	return -ENOMEM;
-+	profile = kzalloc(sizeof(*profile), GFP_KERNEL);
-+	if (!profile)
-+		return NULL;
-+	kobject_init(&profile->kobj, &blk_crypto_ktype);
-+	init_rwsem(&profile->lock);
-+	if (num_slots && blk_crypto_profile_init_slots(profile, num_slots)) {
-+		blk_crypto_profile_put(profile);
-+		return NULL;
-+	}
-+
-+	return profile;
- }
--EXPORT_SYMBOL_GPL(blk_crypto_profile_init);
-+EXPORT_SYMBOL_GPL(blk_crypto_profile_alloc);
- 
--static void blk_crypto_profile_destroy_callback(void *profile)
-+void blk_crypto_profile_put(struct blk_crypto_profile *profile)
- {
--	blk_crypto_profile_destroy(profile);
-+	if (profile)
-+		kobject_put(&profile->kobj);
-+}
-+EXPORT_SYMBOL_GPL(blk_crypto_profile_put);
-+
-+static void blk_crypto_profile_put_callback(void *profile)
-+{
-+	blk_crypto_profile_put(profile);
- }
- 
- /**
-- * devm_blk_crypto_profile_init() - Resource-managed blk_crypto_profile_init()
-+ * devm_blk_crypto_profile_alloc() - Resource-managed blk_crypto_profile_alloc()
-  * @dev: the device which owns the blk_crypto_profile
-- * @profile: the blk_crypto_profile to initialize
-  * @num_slots: the number of keyslots
-  *
-- * Like blk_crypto_profile_init(), but causes blk_crypto_profile_destroy() to be
-+ * Like blk_crypto_profile_alloc(), but causes blk_crypto_profile_put() to be
-  * called automatically on driver detach.
-  *
-- * Return: 0 on success, or else a negative error code.
-+ * Return: profile on success, or else %NULL.
-  */
--int devm_blk_crypto_profile_init(struct device *dev,
--				 struct blk_crypto_profile *profile,
-+struct blk_crypto_profile *devm_blk_crypto_profile_alloc(struct device *dev,
- 				 unsigned int num_slots)
- {
--	int err = blk_crypto_profile_init(profile, num_slots);
--
--	if (err)
--		return err;
-+	struct blk_crypto_profile *profile;
- 
--	return devm_add_action_or_reset(dev,
--					blk_crypto_profile_destroy_callback,
--					profile);
-+	profile = blk_crypto_profile_alloc(num_slots);
-+	if (!profile)
-+		return NULL;
-+	if (devm_add_action_or_reset(dev, blk_crypto_profile_put_callback,
-+			profile))
-+		return NULL;
-+	return profile;
- }
--EXPORT_SYMBOL_GPL(devm_blk_crypto_profile_init);
-+EXPORT_SYMBOL_GPL(devm_blk_crypto_profile_alloc);
- 
- static inline struct hlist_head *
- blk_crypto_hash_bucket_for_key(struct blk_crypto_profile *profile,
-@@ -585,17 +587,6 @@ void blk_crypto_reprogram_all_keys(struct blk_crypto_profile *profile)
- }
- EXPORT_SYMBOL_GPL(blk_crypto_reprogram_all_keys);
- 
--void blk_crypto_profile_destroy(struct blk_crypto_profile *profile)
--{
--	if (!profile)
--		return;
--	kvfree(profile->slot_hashtable);
--	kvfree_sensitive(profile->slots,
--			 sizeof(profile->slots[0]) * profile->num_slots);
--	memzero_explicit(profile, sizeof(*profile));
--}
--EXPORT_SYMBOL_GPL(blk_crypto_profile_destroy);
--
- bool blk_crypto_register(struct blk_crypto_profile *profile,
- 			 struct request_queue *q)
- {
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index e7d42f6335a2a..0d40f9e9eefbc 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1185,11 +1185,6 @@ static int dm_table_register_integrity(struct dm_table *t)
- 
- #ifdef CONFIG_BLK_INLINE_ENCRYPTION
- 
--struct dm_crypto_profile {
--	struct blk_crypto_profile profile;
--	struct mapped_device *md;
--};
--
- struct dm_keyslot_evict_args {
- 	const struct blk_crypto_key *key;
- 	int err;
-@@ -1215,8 +1210,7 @@ static int dm_keyslot_evict_callback(struct dm_target *ti, struct dm_dev *dev,
- static int dm_keyslot_evict(struct blk_crypto_profile *profile,
- 			    const struct blk_crypto_key *key, unsigned int slot)
- {
--	struct mapped_device *md =
--		container_of(profile, struct dm_crypto_profile, profile)->md;
-+	struct mapped_device *md = profile->private;
- 	struct dm_keyslot_evict_args args = { key };
- 	struct dm_table *t;
- 	int srcu_idx;
-@@ -1250,15 +1244,7 @@ device_intersect_crypto_capabilities(struct dm_target *ti, struct dm_dev *dev,
- 
- void dm_destroy_crypto_profile(struct blk_crypto_profile *profile)
- {
--	struct dm_crypto_profile *dmcp = container_of(profile,
--						      struct dm_crypto_profile,
--						      profile);
--
--	if (!profile)
--		return;
--
--	blk_crypto_profile_destroy(profile);
--	kfree(dmcp);
-+	blk_crypto_profile_put(profile);
- }
- 
- static void dm_table_destroy_crypto_profile(struct dm_table *t)
-@@ -1278,19 +1264,15 @@ static void dm_table_destroy_crypto_profile(struct dm_table *t)
-  */
- static int dm_table_construct_crypto_profile(struct dm_table *t)
- {
--	struct dm_crypto_profile *dmcp;
- 	struct blk_crypto_profile *profile;
- 	struct dm_target *ti;
- 	unsigned int i;
- 	bool empty_profile = true;
- 
--	dmcp = kmalloc(sizeof(*dmcp), GFP_KERNEL);
--	if (!dmcp)
-+	profile = blk_crypto_profile_alloc(0);
-+	if (!profile)
- 		return -ENOMEM;
--	dmcp->md = t->md;
--
--	profile = &dmcp->profile;
--	blk_crypto_profile_init(profile, 0);
-+	profile->private = t->md;
- 	profile->ll_ops.keyslot_evict = dm_keyslot_evict;
- 	profile->max_dun_bytes_supported = UINT_MAX;
- 	memset(profile->modes_supported, 0xFF,
-diff --git a/drivers/mmc/core/crypto.c b/drivers/mmc/core/crypto.c
-index fec4fbf16a5b6..df3c002526cc7 100644
---- a/drivers/mmc/core/crypto.c
-+++ b/drivers/mmc/core/crypto.c
-@@ -16,13 +16,13 @@ void mmc_crypto_set_initial_state(struct mmc_host *host)
- {
- 	/* Reset might clear all keys, so reprogram all the keys. */
- 	if (host->caps2 & MMC_CAP2_CRYPTO)
--		blk_crypto_reprogram_all_keys(&host->crypto_profile);
-+		blk_crypto_reprogram_all_keys(host->crypto_profile);
- }
- 
- void mmc_crypto_setup_queue(struct request_queue *q, struct mmc_host *host)
- {
- 	if (host->caps2 & MMC_CAP2_CRYPTO)
--		blk_crypto_register(&host->crypto_profile, q);
-+		blk_crypto_register(host->crypto_profile, q);
- }
- EXPORT_SYMBOL_GPL(mmc_crypto_setup_queue);
- 
-diff --git a/drivers/mmc/host/cqhci-crypto.c b/drivers/mmc/host/cqhci-crypto.c
-index d5f4b6972f63e..6b1c111e9e4b2 100644
---- a/drivers/mmc/host/cqhci-crypto.c
-+++ b/drivers/mmc/host/cqhci-crypto.c
-@@ -25,8 +25,7 @@ static const struct cqhci_crypto_alg_entry {
- static inline struct cqhci_host *
- cqhci_host_from_crypto_profile(struct blk_crypto_profile *profile)
- {
--	struct mmc_host *mmc =
--		container_of(profile, struct mmc_host, crypto_profile);
-+	struct mmc_host *mmc = profile->private;
- 
- 	return mmc->cqe_private;
- }
-@@ -169,7 +168,7 @@ int cqhci_crypto_init(struct cqhci_host *cq_host)
- {
- 	struct mmc_host *mmc = cq_host->mmc;
- 	struct device *dev = mmc_dev(mmc);
--	struct blk_crypto_profile *profile = &mmc->crypto_profile;
-+	struct blk_crypto_profile *profile;
- 	unsigned int num_keyslots;
- 	unsigned int cap_idx;
- 	enum blk_crypto_mode_num blk_mode_num;
-@@ -180,6 +179,7 @@ int cqhci_crypto_init(struct cqhci_host *cq_host)
- 	    !(cqhci_readl(cq_host, CQHCI_CAP) & CQHCI_CAP_CS))
- 		goto out;
- 
-+	err = -ENOMEM;
- 	cq_host->crypto_capabilities.reg_val =
- 			cpu_to_le32(cqhci_readl(cq_host, CQHCI_CCAP));
- 
-@@ -189,10 +189,8 @@ int cqhci_crypto_init(struct cqhci_host *cq_host)
- 	cq_host->crypto_cap_array =
- 		devm_kcalloc(dev, cq_host->crypto_capabilities.num_crypto_cap,
- 			     sizeof(cq_host->crypto_cap_array[0]), GFP_KERNEL);
--	if (!cq_host->crypto_cap_array) {
--		err = -ENOMEM;
-+	if (!cq_host->crypto_cap_array)
- 		goto out;
--	}
- 
- 	/*
- 	 * CCAP.CFGC is off by one, so the actual number of crypto
-@@ -200,10 +198,10 @@ int cqhci_crypto_init(struct cqhci_host *cq_host)
- 	 */
- 	num_keyslots = cq_host->crypto_capabilities.config_count + 1;
- 
--	err = devm_blk_crypto_profile_init(dev, profile, num_keyslots);
--	if (err)
-+	profile = devm_blk_crypto_profile_alloc(dev, num_keyslots);
-+	if (!profile)
- 		goto out;
--
-+	profile->private = mmc;
- 	profile->ll_ops = cqhci_crypto_ops;
- 	profile->dev = dev;
- 
-diff --git a/drivers/scsi/ufs/ufshcd-crypto.c b/drivers/scsi/ufs/ufshcd-crypto.c
-index 67402baf6faee..b48ff6046bdc8 100644
---- a/drivers/scsi/ufs/ufshcd-crypto.c
-+++ b/drivers/scsi/ufs/ufshcd-crypto.c
-@@ -52,8 +52,7 @@ static int ufshcd_crypto_keyslot_program(struct blk_crypto_profile *profile,
- 					 const struct blk_crypto_key *key,
- 					 unsigned int slot)
- {
--	struct ufs_hba *hba =
--		container_of(profile, struct ufs_hba, crypto_profile);
-+	struct ufs_hba *hba = profile->private;
- 	const union ufs_crypto_cap_entry *ccap_array = hba->crypto_cap_array;
- 	const struct ufs_crypto_alg_entry *alg =
- 			&ufs_crypto_algs[key->crypto_cfg.crypto_mode];
-@@ -110,10 +109,7 @@ static int ufshcd_crypto_keyslot_evict(struct blk_crypto_profile *profile,
- 				       const struct blk_crypto_key *key,
- 				       unsigned int slot)
- {
--	struct ufs_hba *hba =
--		container_of(profile, struct ufs_hba, crypto_profile);
--
--	return ufshcd_clear_keyslot(hba, slot);
-+	return ufshcd_clear_keyslot(profile->private, slot);
- }
- 
- bool ufshcd_crypto_enable(struct ufs_hba *hba)
-@@ -122,7 +118,7 @@ bool ufshcd_crypto_enable(struct ufs_hba *hba)
- 		return false;
- 
- 	/* Reset might clear all keys, so reprogram all the keys. */
--	blk_crypto_reprogram_all_keys(&hba->crypto_profile);
-+	blk_crypto_reprogram_all_keys(hba->crypto_profile);
- 	return true;
- }
- 
-@@ -168,6 +164,7 @@ int ufshcd_hba_init_crypto_capabilities(struct ufs_hba *hba)
- 	    !(hba->caps & UFSHCD_CAP_CRYPTO))
- 		goto out;
- 
-+	err = -ENOMEM;
- 	hba->crypto_capabilities.reg_val =
- 			cpu_to_le32(ufshcd_readl(hba, REG_UFS_CCAP));
- 	hba->crypto_cfg_register =
-@@ -175,22 +172,20 @@ int ufshcd_hba_init_crypto_capabilities(struct ufs_hba *hba)
- 	hba->crypto_cap_array =
- 		devm_kcalloc(hba->dev, hba->crypto_capabilities.num_crypto_cap,
- 			     sizeof(hba->crypto_cap_array[0]), GFP_KERNEL);
--	if (!hba->crypto_cap_array) {
--		err = -ENOMEM;
-+	if (!hba->crypto_cap_array)
- 		goto out;
--	}
- 
- 	/* The actual number of configurations supported is (CFGC+1) */
--	err = devm_blk_crypto_profile_init(
--			hba->dev, &hba->crypto_profile,
-+	hba->crypto_profile = devm_blk_crypto_profile_alloc(hba->dev,
- 			hba->crypto_capabilities.config_count + 1);
--	if (err)
-+	if (!hba->crypto_profile)
- 		goto out;
- 
--	hba->crypto_profile.ll_ops = ufshcd_crypto_ops;
-+	hba->crypto_profile->private = hba;
-+	hba->crypto_profile->ll_ops = ufshcd_crypto_ops;
- 	/* UFS only supports 8 bytes for any DUN */
--	hba->crypto_profile.max_dun_bytes_supported = 8;
--	hba->crypto_profile.dev = hba->dev;
-+	hba->crypto_profile->max_dun_bytes_supported = 8;
-+	hba->crypto_profile->dev = hba->dev;
- 
- 	/*
- 	 * Cache all the UFS crypto capabilities and advertise the supported
-@@ -205,7 +200,7 @@ int ufshcd_hba_init_crypto_capabilities(struct ufs_hba *hba)
- 		blk_mode_num = ufshcd_find_blk_crypto_mode(
- 						hba->crypto_cap_array[cap_idx]);
- 		if (blk_mode_num != BLK_ENCRYPTION_MODE_INVALID)
--			hba->crypto_profile.modes_supported[blk_mode_num] |=
-+			hba->crypto_profile->modes_supported[blk_mode_num] |=
- 				hba->crypto_cap_array[cap_idx].sdus_mask * 512;
- 	}
- 
-@@ -236,5 +231,5 @@ void ufshcd_init_crypto(struct ufs_hba *hba)
- void ufshcd_crypto_register(struct ufs_hba *hba, struct request_queue *q)
- {
- 	if (hba->caps & UFSHCD_CAP_CRYPTO)
--		blk_crypto_register(&hba->crypto_profile, q);
-+		blk_crypto_register(hba->crypto_profile, q);
- }
-diff --git a/drivers/scsi/ufs/ufshcd.h b/drivers/scsi/ufs/ufshcd.h
-index 94f545be183aa..94edbe3721890 100644
---- a/drivers/scsi/ufs/ufshcd.h
-+++ b/drivers/scsi/ufs/ufshcd.h
-@@ -930,7 +930,7 @@ struct ufs_hba {
- 	union ufs_crypto_capabilities crypto_capabilities;
- 	union ufs_crypto_cap_entry *crypto_cap_array;
- 	u32 crypto_cfg_register;
--	struct blk_crypto_profile crypto_profile;
-+	struct blk_crypto_profile *crypto_profile;
- #endif
- #ifdef CONFIG_DEBUG_FS
- 	struct dentry *debugfs_root;
-diff --git a/include/linux/blk-crypto-profile.h b/include/linux/blk-crypto-profile.h
-index bbab65bd54288..07745a4675f25 100644
---- a/include/linux/blk-crypto-profile.h
-+++ b/include/linux/blk-crypto-profile.h
-@@ -8,6 +8,7 @@
- 
- #include <linux/bio.h>
- #include <linux/blk-crypto.h>
-+#include <linux/kobject.h>
- 
- struct blk_crypto_profile;
- 
-@@ -100,6 +101,11 @@ struct blk_crypto_profile {
- 	 */
- 	struct device *dev;
- 
-+	/**
-+	 * @private: Optional private data for driver use.
-+	 */
-+	void *private;
-+
- 	/* private: The following fields shouldn't be accessed by drivers. */
- 
- 	/* Number of keyslots, or 0 if not applicable */
-@@ -127,14 +133,13 @@ struct blk_crypto_profile {
- 
- 	/* Per-keyslot data */
- 	struct blk_crypto_keyslot *slots;
--};
- 
--int blk_crypto_profile_init(struct blk_crypto_profile *profile,
--			    unsigned int num_slots);
-+	struct kobject kobj;
-+};
- 
--int devm_blk_crypto_profile_init(struct device *dev,
--				 struct blk_crypto_profile *profile,
--				 unsigned int num_slots);
-+struct blk_crypto_profile *blk_crypto_profile_alloc(unsigned int num_slots);
-+struct blk_crypto_profile *devm_blk_crypto_profile_alloc(struct device *dev,
-+		unsigned int num_slots);
- 
- unsigned int blk_crypto_keyslot_index(struct blk_crypto_keyslot *slot);
- 
-@@ -152,7 +157,7 @@ int __blk_crypto_evict_key(struct blk_crypto_profile *profile,
- 
- void blk_crypto_reprogram_all_keys(struct blk_crypto_profile *profile);
- 
--void blk_crypto_profile_destroy(struct blk_crypto_profile *profile);
-+void blk_crypto_profile_put(struct blk_crypto_profile *profile);
- 
- void blk_crypto_intersect_capabilities(struct blk_crypto_profile *parent,
- 				       const struct blk_crypto_profile *child);
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 34724b15813b7..390e3c4ad64b6 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -413,7 +413,6 @@ struct request_queue {
- 
- #ifdef CONFIG_BLK_INLINE_ENCRYPTION
- 	struct blk_crypto_profile *crypto_profile;
--	struct kobject *crypto_kobject;
- #endif
- 
- 	unsigned int		rq_timeout;
-diff --git a/include/linux/mmc/host.h b/include/linux/mmc/host.h
-index 7afb57cab00b7..8d6069503c0dc 100644
---- a/include/linux/mmc/host.h
-+++ b/include/linux/mmc/host.h
-@@ -495,7 +495,7 @@ struct mmc_host {
- 
- 	/* Inline encryption support */
- #ifdef CONFIG_MMC_CRYPTO
--	struct blk_crypto_profile crypto_profile;
-+	struct blk_crypto_profile *crypto_profile;
- #endif
- 
- 	/* Host Software Queue support */
--- 
-2.30.2
+How about s/dev_warn/dev_dbg/ ?
+
+> 
+>> +               return 0;
+>> +       }
+>> +
+>> +       mutex_lock(&pmem->recovery_lock);
+>> +       pmem_off = PFN_PHYS(pgoff) + pmem->data_offset;
+>> +       cleared = __pmem_clear_poison(pmem, pmem_off, len);
+>> +       if (cleared > 0 && cleared < len) {
+>> +               dev_warn(dev, "poison cleared only %ld out of %lu bytes\n",
+>> +                       cleared, len);
+> 
+> This looks like dev_dbg() to me, or at minimum the same
+> dev_warn_ratelimited() print as the one above to just indicate a write
+> to the device at the given offset failed.
+
+Will s/dev_warn/dev_dbg/
+
+> 
+>> +               mutex_unlock(&pmem->recovery_lock);
+>> +               return 0;
+>> +       }
+>> +       if (cleared < 0) {
+>> +               dev_warn(dev, "poison clear failed: %ld\n", cleared);
+> 
+> Same feedback here, these should probably all map to the identical
+> error exit ratelimited print.
+
+Will s/dev_warn/dev_dbg/
+
+> 
+>> +               mutex_unlock(&pmem->recovery_lock);
+> 
+> It occurs to me that all callers of this are arriving through the
+> fsdax iomap ops and all of these callers take an exclusive lock to
+> prevent simultaneous access to the inode. If recovery_write() is only
+> used through that path then this lock is redundant. Simultaneous reads
+> are protected by the fact that the badblocks are cleared last. I think
+> this can wait to add the lock when / if a non-fsdax access path
+> arrives for dax_recovery_write(), and even then it should probably
+> enforce the single writer exclusion guarantee of the fsdax path.
+> 
+
+Indeed, the caller dax_iomap_rw has already held the writer lock.
+
+Will remove .recovery_lock for now.
+
+BTW, how are the other patches look to you?
+
+Thanks!
+-jane
+
+>> +               return 0;
+>> +       }
+>> +
+>> +       olen = _copy_from_iter_flushcache(addr, bytes, i);
+>> +       pmem_clear_bb(pmem, to_sect(pmem, pmem_off), cleared >> SECTOR_SHIFT);
+>> +
+>> +       mutex_unlock(&pmem->recovery_lock);
+>> +       return olen;
+>>   }
+>>
+>>   static const struct dax_operations pmem_dax_ops = {
+>> @@ -525,6 +578,7 @@ static int pmem_attach_disk(struct device *dev,
+>>          if (rc)
+>>                  goto out_cleanup_dax;
+>>          dax_write_cache(dax_dev, nvdimm_has_cache(nd_region));
+>> +       mutex_init(&pmem->recovery_lock);
+>>          pmem->dax_dev = dax_dev;
+>>
+>>          rc = device_add_disk(dev, disk, pmem_attribute_groups);
+>> diff --git a/drivers/nvdimm/pmem.h b/drivers/nvdimm/pmem.h
+>> index 392b0b38acb9..91e40f5e3c0e 100644
+>> --- a/drivers/nvdimm/pmem.h
+>> +++ b/drivers/nvdimm/pmem.h
+>> @@ -27,6 +27,7 @@ struct pmem_device {
+>>          struct dax_device       *dax_dev;
+>>          struct gendisk          *disk;
+>>          struct dev_pagemap      pgmap;
+>> +       struct mutex            recovery_lock;
+>>   };
+>>
+>>   long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
+>> --
+>> 2.18.4
+>>
 
 --
 dm-devel mailing list
