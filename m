@@ -4,73 +4,126 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B9489C433F5
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DA314C4332F
 	for <dm-devel@archiver.kernel.org>; Thu, 21 Apr 2022 05:51:53 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-526-6dBWfJkZNMSbt1KeIY3yxg-1; Thu, 21 Apr 2022 01:51:49 -0400
-X-MC-Unique: 6dBWfJkZNMSbt1KeIY3yxg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-662-Us35hHutMv2SQip_4AABbA-1; Thu, 21 Apr 2022 01:51:49 -0400
+X-MC-Unique: Us35hHutMv2SQip_4AABbA-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B8AA81C0BF32;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B90443811F32;
 	Thu, 21 Apr 2022 05:51:47 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 57ACFC27EAB;
-	Thu, 21 Apr 2022 05:51:47 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9AD268145;
+	Thu, 21 Apr 2022 05:51:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EF5141940347;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 141E21940355;
 	Thu, 21 Apr 2022 05:51:45 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8BDF219452D2
- for <dm-devel@listman.corp.redhat.com>; Wed, 20 Apr 2022 09:50:00 +0000 (UTC)
+ ESMTP id 206541949763
+ for <dm-devel@listman.corp.redhat.com>; Thu, 21 Apr 2022 04:07:33 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 690F4404E4C2; Wed, 20 Apr 2022 09:50:00 +0000 (UTC)
+ id E33AF145BEE2; Thu, 21 Apr 2022 04:07:32 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 649F1404E4CC
- for <dm-devel@redhat.com>; Wed, 20 Apr 2022 09:50:00 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2526A296A60B
- for <dm-devel@redhat.com>; Wed, 20 Apr 2022 09:50:00 +0000 (UTC)
-Received: from mail-lf1-f48.google.com (mail-lf1-f48.google.com
- [209.85.167.48]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-436-QxuTF9dcNCW7KKlfbrfg9A-1; Wed, 20 Apr 2022 05:49:58 -0400
-X-MC-Unique: QxuTF9dcNCW7KKlfbrfg9A-1
-Received: by mail-lf1-f48.google.com with SMTP id bu29so1938146lfb.0
- for <dm-devel@redhat.com>; Wed, 20 Apr 2022 02:49:57 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:mime-version:references:in-reply-to:from:date
- :message-id:subject:to:cc;
- bh=RCepIumJTc+Ol2eklYTZsUMqeV3qtoqi7hyo83V4aqk=;
- b=u1m3IRV4GBhd7HG4qEXvPkZuRCOhCdbk5M1B9NNvcsRwwRGzIgm/HfpsO/ZOEwCsxV
- eXA3BNeIeVenI/769bxsz02HBEE+uLfOkX4IsPEAHlc9PcncU0SHDXHo7R/nMkklhR+p
- qlBzH6pAZWb6+togrbCt9T3tykGgVa/gzRJ+bNJ1ZcuFKtaUbXOyoBTBLCU/m96OUbdG
- rxNovTEr+Icb5JN9g3u49o/cZYwnzJoAXdBVn7wUn7H9lrNK3yCqM/WQlsF3Cdr/E3fg
- 1PPIUrN19E0eE0GYUHB6OFC5J79pOKDAVxpyWfA2nhYTp5qqKYaoW1FzkpJqGWMWZbOo
- lH3Q==
-X-Gm-Message-State: AOAM531Nxj/1Rb/EAX6tU/ksrGd8GvcgiVro9KAxsiity8liXX2NrsSY
- xSdxgIyJTJO4Q6oiHW5kqHyuuOPJdgfjj4PVkMmomA==
-X-Google-Smtp-Source: ABdhPJwVV/2KkUbhjzlgqod62B3EQXJYwKQmE2jLEZwKYtYuapSWZYEHFGlbMpPNdskzDs5iCQd4yP9BBM5RVRPjs4I=
-X-Received: by 2002:a05:651c:988:b0:24a:c21f:7057 with SMTP id
- b8-20020a05651c098800b0024ac21f7057mr13144998ljq.16.1650448196128; Wed, 20
- Apr 2022 02:49:56 -0700 (PDT)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id DE6A6145BEE1
+ for <dm-devel@redhat.com>; Thu, 21 Apr 2022 04:07:32 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BF677811E7A
+ for <dm-devel@redhat.com>; Thu, 21 Apr 2022 04:07:32 +0000 (UTC)
+Received: from esa1.hgst.iphmx.com (esa1.hgst.iphmx.com [68.232.141.245]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-513-dtNJrCdvONuXGaSPBO4IIA-1; Thu, 21 Apr 2022 00:07:30 -0400
+X-MC-Unique: dtNJrCdvONuXGaSPBO4IIA-1
+X-IronPort-AV: E=Sophos;i="5.90,277,1643644800"; d="scan'208";a="310402285"
+Received: from mail-dm6nam11lp2172.outbound.protection.outlook.com (HELO
+ NAM11-DM6-obe.outbound.protection.outlook.com) ([104.47.57.172])
+ by ob1.hgst.iphmx.com with ESMTP; 21 Apr 2022 12:06:23 +0800
+Received: from DM8PR04MB8037.namprd04.prod.outlook.com (2603:10b6:8:f::6) by
+ BY5PR04MB6882.namprd04.prod.outlook.com (2603:10b6:a03:21b::19) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5186.13; Thu, 21 Apr
+ 2022 04:06:23 +0000
+Received: from DM8PR04MB8037.namprd04.prod.outlook.com
+ ([fe80::2839:2ab4:7871:416e]) by DM8PR04MB8037.namprd04.prod.outlook.com
+ ([fe80::2839:2ab4:7871:416e%8]) with mapi id 15.20.5164.026; Thu, 21 Apr 2022
+ 04:06:22 +0000
+From: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+To: Mike Snitzer <snitzer@kernel.org>
+Thread-Topic: [dm-devel] [dm-5.19 PATCH 21/21] dm: improve abnormal bio
+ processing
+Thread-Index: AQHYVTUouywRdzXcRE6qCxCXV+LQEw==
+Date: Thu, 21 Apr 2022 04:06:22 +0000
+Message-ID: <20220421040620.zbocicrqa76n4zqm@shindev>
+References: <20220418022733.56168-1-snitzer@kernel.org>
+ <20220418022733.56168-22-snitzer@kernel.org>
+In-Reply-To: <20220418022733.56168-22-snitzer@kernel.org>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: 38d1fa43-293c-4783-ab5a-08da234c4c20
+x-ms-traffictypediagnostic: BY5PR04MB6882:EE_
+x-microsoft-antispam-prvs: <BY5PR04MB6882F3D78811D10BADFDAAD3EDF49@BY5PR04MB6882.namprd04.prod.outlook.com>
+wdcipoutbound: EOP-TRUE
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: CImjnbaUOL4VIauUwF3BIBZPTWARDnnTHpJQQ8wM5Eapdl0dB+j5dXweq8Fi0rKpIkemQF5kRX3NlItLsA0pHzaf/VqcsZthsUzs5c8aVw1aqTYMDfz/pW3KEpkbIrsJCmSEJORkDeyg00PIQ53yV0cPcbQa7lGtjw4hbUt9lhVHjGUNTcdS/A2xu9qhPaO1+nJW3MYaI226d4ZAXuN9tci555iNs8GMfNh4RbKMECkNvM0mbvX1dyJrwBCjJk1VQgCBPVmaAHRhePA/ba2eUrVOaEkNuS+PWleFJHHiGR1AUuM2iiflTh3/LKEUvCkJgI4mhPMjjcX8tQZqut1K55LgtnBxtBXInkuYLSXwxlVACCe5YIWuB5GJjuW8Ilzqc5fSD4+R8IB283dir0iSMXa76iGpwBnq3GiEWUTvNtKLvUmpJzKl1U4EU67Zn/alfDYTD0j7blmEPOrfeho3uK7O/17hOoP6bpfrrYmMNYOqcBveax0+0mHHOhmZW11ZOkIkHgWC1foI38vZR/kLTjtNtqffXe7N8pXvEjjrHpvsYo8QwP3tiFdSg/eo3r8JoOLmlsOli+Dzh4sxoqbvKGsY8YBgd0Q7lrwHtK4+Z3DqgHN04tl1FG0cQ5ZMBBDLWqfWkCsCBMEHNBa5485PgcwclXDtHHAUhbYzG1LEHkkbY4MPd9+CdIxNWL4v1ArhHyirKP+KzITk7L+/uPGlfpGdftLD/ccoTjw9ZATroMoab5kREmlOIlyqZUBj6OnNRR/6Z6msGfDekhkOWNFlbStj8mxxrCiY+bS/w+K+UZo=
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:DM8PR04MB8037.namprd04.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230001)(4636009)(7916004)(366004)(186003)(76116006)(2906002)(33716001)(8676002)(6916009)(54906003)(26005)(38070700005)(8936002)(4326008)(66476007)(66556008)(66446008)(66946007)(83380400001)(91956017)(64756008)(122000001)(508600001)(45080400002)(6506007)(5660300002)(82960400001)(38100700002)(86362001)(6486002)(966005)(44832011)(1076003)(6512007)(9686003)(316002)(71200400001);
+ DIR:OUT; SFP:1102
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?ZtJtJDnNo2UwoNAimMKi54WDJIRq4O28JRCTG+SWBze+nZIcfiqwtfdtwKqd?=
+ =?us-ascii?Q?3IPMwlDSi3VVtbiHNFgyT4lMttWp6Q6PCz8ftys+rBHtzF354C5Qo/ANW55v?=
+ =?us-ascii?Q?W1tsJCuQaNyVnb8AWB6zMPUsiGG2YXZnQF4QFp6U7XllNrad9qlfkKbDUBRj?=
+ =?us-ascii?Q?W4Ri3YP2tfZTwrUynyKrcEJIQGG5t2Q+K0pOAR3pRuBBGzyKTwYcun35BXJ1?=
+ =?us-ascii?Q?hEUmcCusszvprR4HAdztNgpFxtG6wW7XCuJlZTt4X/mHmDe/Z/Q8boNO6YKc?=
+ =?us-ascii?Q?IjWBtigj2oYeX46vxAwL13Q5HiAukPFXyPLFMKlHJntRy4X6BLKQTS9MicPs?=
+ =?us-ascii?Q?2Uvc0vAYyx2Iqfc9XRrHLfIrBUIcA2lK1dp+T0gW4MmwWmY+H6lD6FqSe1te?=
+ =?us-ascii?Q?NWzwQfy3p6cjbSaRZypllla+gvqgSTYzOvCvjVe5RL+6Hhl1y6rbpzM+TgC4?=
+ =?us-ascii?Q?zOZmNpHL1ARjf47AYkiPYvGtdC/5e1aZhuxxvij9EfNcQ6ICNY8Ycx1eofi2?=
+ =?us-ascii?Q?dtxlPy1Bu1ObOlrNHsGJ/jLvOiKMlWZsSMSDh+aCbNMoKdnVAJxsQOxob2gp?=
+ =?us-ascii?Q?pL3OpXf5etvPuhZfXU31+E2LIys+QF50M8u0N/fqXOWztvRF8fygcIqZsZDi?=
+ =?us-ascii?Q?UjvjCzJ0vfn6Kc8cgjnswLhYsci8ri0ulxoOszyQyy1XTqjIXK52dSlgJynh?=
+ =?us-ascii?Q?Ov77sH5VCecmHimKmR5Ob6iEUGcuWDAPvfZ5twTEGBV29Ayrn+ot415RvACs?=
+ =?us-ascii?Q?UNXaooCWHiDtRLrs3+DsZZ5rwNQ48mWQtCCS3PtySChc0bfT0blSTyqJynmr?=
+ =?us-ascii?Q?XDhJbc0XmLHdyV+XKCPWkHhv6zi0ge/E4SP+OApwe5KDsLbnK62JgCx/8dsP?=
+ =?us-ascii?Q?vMLI5nv7QILEjy53OluO07YHBzBWscegK0PVNcQTA87NIzMHn32Veauzkuvl?=
+ =?us-ascii?Q?rfgLuwMIs6OOf6Q90FGChK3fZ5DXHXEIo2r4PwmFyToDEnXvLtCUnp9kV9mr?=
+ =?us-ascii?Q?GiC/Cwe2T1BjL7lHfV++jPmw8Wqjf6uHNfp/fuUodapyspJL2VLBmsPn6NZe?=
+ =?us-ascii?Q?7Pmpvmc5zHVKKbNj5kv0O7zc+LcTs5KX9CaoEOs566TCCVJvYpYJoNeJucKd?=
+ =?us-ascii?Q?eIkNpEBefAR/W3JFPSXWerfakVJuddbJjUd+RFz3b9IjixmkhwX6zX3FMFLB?=
+ =?us-ascii?Q?LYvNJIc/ktRxC+fP06Z2tWKrYqgZkJUnTSEiHNnPPVHjm7l8Aa7FSvOtDfil?=
+ =?us-ascii?Q?Schs/bcjO2qfDSfwxoHTn0TPP/hBHZDzIwF46Ef6Hbzaa/uEZWd9g5ufLiyX?=
+ =?us-ascii?Q?kCvooDhyYUGNwdu9USh7ehxkb4CjK18kUCM1mKUHiMUILyJiz0aQVBAN061D?=
+ =?us-ascii?Q?L0m2FY4v55yyMmhrzyAdfkW57QutHq9K9NiiJFwnm9pdhGf2REmhlThoKxIV?=
+ =?us-ascii?Q?FCyIcM4zLrpNKhHY8/EnLT50M+4x+u0giz5RaQdym2EjNS71M+0GamT3eTBj?=
+ =?us-ascii?Q?fgfGRqr5Z2TZhPIHDIl0BgiAOPIR2IPKF8mhW3qo8zPSrVZ+OyOL7PQiOrSG?=
+ =?us-ascii?Q?CCR9wYSYEbM7Uep+4pc1TWdFhdBSNqjmrakw7QvHwIrSkbGtY4o3ksUlEgEt?=
+ =?us-ascii?Q?y3eHvfKeQtOlhTxWD3/rVoJ4EGwitdCcHL89ZlWQniACllE+Ym+MeiPps4qm?=
+ =?us-ascii?Q?RtXOIlYy5p3i7VRgqmISwyLaCeJA8tVUwcp7wBaul29Ok8MHW+NrRIDpd00o?=
+ =?us-ascii?Q?5VRo9JGsEtOI9cZsghwy1SXXQAaf9DS7Fnf9LjtGkWjGGshCaM1O?=
 MIME-Version: 1.0
-References: <20220420064745.1119823-1-hch@lst.de>
- <20220420064745.1119823-3-hch@lst.de>
-In-Reply-To: <20220420064745.1119823-3-hch@lst.de>
-From: Ulf Hansson <ulf.hansson@linaro.org>
-Date: Wed, 20 Apr 2022 11:49:19 +0200
-Message-ID: <CAPDyKFogfRSePBJ21yP2n3tD6_H8g6EDRz19-bL_T_1BmcqD+g@mail.gmail.com>
-To: Christoph Hellwig <hch@lst.de>
+X-OriginatorOrg: wdc.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DM8PR04MB8037.namprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 38d1fa43-293c-4783-ab5a-08da234c4c20
+X-MS-Exchange-CrossTenant-originalarrivaltime: 21 Apr 2022 04:06:22.6948 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: lvLw7pE5bULdxtv1mDI8iS+Lr6gEZtlkXdwN5ek8pjeQxdnFduSKxzdToHNiYO7JS5UUUDQTIPorQCG9jvMhi+jpwbIPaAVustUAMpDmaqo=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BY5PR04MB6882
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,12 +131,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Mimecast-Bulk-Signature: yes
-X-Mimecast-Spam-Signature: bulk
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 X-Mailman-Approved-At: Thu, 21 Apr 2022 05:51:43 +0000
-Subject: Re: [dm-devel] [PATCH 2/2] blk-crypto: fix the blk_crypto_profile
- liftime
+Subject: Re: [dm-devel] [dm-5.19 PATCH 21/21] dm: improve abnormal bio
+ processing
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -95,726 +146,201 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Ritesh Harjani <riteshh@codeaurora.org>,
- linux-scsi@vger.kernel.org, Eric Biggers <ebiggers@google.com>,
- linux-mmc@vger.kernel.org, Mike Snitzer <snitzer@kernel.org>,
- Adrian Hunter <adrian.hunter@intel.com>, linux-block@vger.kernel.org,
- Avri Altman <avri.altman@wdc.com>, dm-devel@redhat.com,
- Alim Akhtar <alim.akhtar@samsung.com>, Asutosh Das <asutoshd@codeaurora.org>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, Damien Le Moal <Damien.LeMoal@wdc.com>,
+ "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@lst.de" <hch@lst.de>,
+ "ming.lei@redhat.com" <ming.lei@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-ID: <2547DCBBEE7D8F4F9BEFF4B77CD88095@namprd04.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, 20 Apr 2022 at 08:48, Christoph Hellwig <hch@lst.de> wrote:
->
-> Once the blk_crypto_profile is exposed in sysfs it needs to stay alive
-> as long as sysfs accesses are possibly pending.  Ensure that by removing
-> the blk_crypto_kobj wrapper and just embedding the kobject into the
-> actual blk_crypto_profile.  This requires the blk_crypto_profile
-> structure to be dynamically allocated, which in turn requires a private
-> data pointer for driver use.
->
-> Fixes: 20f01f163203 ("blk-crypto: show crypto capabilities in sysfs")
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-
-I am not surprised that you seem to have found lifecycle issues, as
-it's a rather complex path of how to deal with the resources
-correctly. Just for mmc internally, we have three layers of code that
-gets involved.
-
-That said, I think the code in the $subject patch looks good to me,
-but I have to admit that it's not a full in-depth review - and I
-haven't done any tests.
-
-Nevertheless, feel free to add:
-Reviewed-by: Ulf Hansson <ulf.hansson@linaro.org>
-
-Kind regards
-Uffe
-
+On Apr 17, 2022 / 22:27, Mike Snitzer wrote:
+> Read/write/flush are the most common operations, optimize switch in
+> is_abnormal_io() for those cases. Follows same pattern established in
+> block perf-wip commit ("block: optimise blk_may_split for normal rw")
+> 
+> Also, push is_abnormal_io() check and blk_queue_split() down from
+> dm_submit_bio() to dm_split_and_process_bio() and set new
+> 'is_abnormal_io' flag in clone_info. Optimize __split_and_process_bio
+> and __process_abnormal_io by leveraging ci.is_abnormal_io flag.
+> 
+> Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 > ---
->  Documentation/block/inline-encryption.rst |  10 +-
->  block/blk-crypto-fallback.c               |  20 +--
->  block/blk-crypto-profile.c                | 143 ++++++++++------------
->  drivers/md/dm-table.c                     |  28 +----
->  drivers/mmc/core/crypto.c                 |   4 +-
->  drivers/mmc/host/cqhci-crypto.c           |  16 ++-
->  drivers/scsi/ufs/ufshcd-crypto.c          |  31 ++---
->  drivers/scsi/ufs/ufshcd.h                 |   2 +-
->  include/linux/blk-crypto-profile.h        |  19 +--
->  include/linux/blkdev.h                    |   1 -
->  include/linux/mmc/host.h                  |   2 +-
->  11 files changed, 123 insertions(+), 153 deletions(-)
->
-> diff --git a/Documentation/block/inline-encryption.rst b/Documentation/block/inline-encryption.rst
-> index 4d151fbe20583..0d740b0f9faf3 100644
-> --- a/Documentation/block/inline-encryption.rst
-> +++ b/Documentation/block/inline-encryption.rst
-> @@ -230,8 +230,8 @@ API presented to device drivers
->
->  A device driver that wants to support inline encryption must set up a
->  blk_crypto_profile in the request_queue of its device.  To do this, it first
-> -must call ``blk_crypto_profile_init()`` (or its resource-managed variant
-> -``devm_blk_crypto_profile_init()``), providing the number of keyslots.
-> +must call ``blk_crypto_profile_alloc()`` (or its resource-managed variant
-> +``devm_blk_crypto_profile_alloc()``), providing the number of keyslots.
->
->  Next, it must advertise its crypto capabilities by setting fields in the
->  blk_crypto_profile, e.g. ``modes_supported`` and ``max_dun_bytes_supported``.
-> @@ -259,9 +259,9 @@ If there are situations where the inline encryption hardware loses the contents
->  of its keyslots, e.g. device resets, the driver must handle reprogramming the
->  keyslots.  To do this, the driver may call ``blk_crypto_reprogram_all_keys()``.
->
-> -Finally, if the driver used ``blk_crypto_profile_init()`` instead of
-> -``devm_blk_crypto_profile_init()``, then it is responsible for calling
-> -``blk_crypto_profile_destroy()`` when the crypto profile is no longer needed.
-> +Finally, if the driver used ``blk_crypto_profile_alloc()`` instead of
-> +``devm_blk_crypto_profile_alloc()``, then it is responsible for calling
-> +``blk_crypto_profile_put()`` when the crypto profile is no longer needed.
->
->  Layered Devices
->  ===============
-> diff --git a/block/blk-crypto-fallback.c b/block/blk-crypto-fallback.c
-> index 5d1aa5b1d30a1..729974028e448 100644
-> --- a/block/blk-crypto-fallback.c
-> +++ b/block/blk-crypto-fallback.c
-> @@ -78,7 +78,7 @@ static struct blk_crypto_fallback_keyslot {
->         struct crypto_skcipher *tfms[BLK_ENCRYPTION_MODE_MAX];
->  } *blk_crypto_keyslots;
->
-> -static struct blk_crypto_profile blk_crypto_fallback_profile;
-> +static struct blk_crypto_profile *blk_crypto_fallback_profile;
->  static struct workqueue_struct *blk_crypto_wq;
->  static mempool_t *blk_crypto_bounce_page_pool;
->  static struct bio_set crypto_bio_split;
-> @@ -293,7 +293,7 @@ static bool blk_crypto_fallback_encrypt_bio(struct bio **bio_ptr)
->          * Get a blk-crypto-fallback keyslot that contains a crypto_skcipher for
->          * this bio's algorithm and key.
->          */
-> -       blk_st = blk_crypto_get_keyslot(&blk_crypto_fallback_profile,
-> +       blk_st = blk_crypto_get_keyslot(blk_crypto_fallback_profile,
->                                         bc->bc_key, &slot);
->         if (blk_st != BLK_STS_OK) {
->                 src_bio->bi_status = blk_st;
-> @@ -396,7 +396,7 @@ static void blk_crypto_fallback_decrypt_bio(struct work_struct *work)
->          * Get a blk-crypto-fallback keyslot that contains a crypto_skcipher for
->          * this bio's algorithm and key.
->          */
-> -       blk_st = blk_crypto_get_keyslot(&blk_crypto_fallback_profile,
-> +       blk_st = blk_crypto_get_keyslot(blk_crypto_fallback_profile,
->                                         bc->bc_key, &slot);
->         if (blk_st != BLK_STS_OK) {
->                 bio->bi_status = blk_st;
-> @@ -500,7 +500,7 @@ bool blk_crypto_fallback_bio_prep(struct bio **bio_ptr)
->                 return false;
->         }
->
-> -       if (!__blk_crypto_cfg_supported(&blk_crypto_fallback_profile,
-> +       if (!__blk_crypto_cfg_supported(blk_crypto_fallback_profile,
->                                         &bc->bc_key->crypto_cfg)) {
->                 bio->bi_status = BLK_STS_NOTSUPP;
->                 return false;
-> @@ -527,7 +527,7 @@ bool blk_crypto_fallback_bio_prep(struct bio **bio_ptr)
->
->  int blk_crypto_fallback_evict_key(const struct blk_crypto_key *key)
->  {
-> -       return __blk_crypto_evict_key(&blk_crypto_fallback_profile, key);
-> +       return __blk_crypto_evict_key(blk_crypto_fallback_profile, key);
->  }
->
->  static bool blk_crypto_fallback_inited;
-> @@ -535,7 +535,7 @@ static int blk_crypto_fallback_init(void)
->  {
->         int i;
->         int err;
-> -       struct blk_crypto_profile *profile = &blk_crypto_fallback_profile;
-> +       struct blk_crypto_profile *profile;
->
->         if (blk_crypto_fallback_inited)
->                 return 0;
-> @@ -546,10 +546,10 @@ static int blk_crypto_fallback_init(void)
->         if (err)
->                 goto out;
->
-> -       err = blk_crypto_profile_init(profile, blk_crypto_num_keyslots);
-> -       if (err)
-> -               goto fail_free_bioset;
->         err = -ENOMEM;
-> +       profile = blk_crypto_profile_alloc(blk_crypto_num_keyslots);
-> +       if (!profile)
-> +               goto fail_free_bioset;
->
->         profile->ll_ops = blk_crypto_fallback_ll_ops;
->         profile->max_dun_bytes_supported = BLK_CRYPTO_MAX_IV_SIZE;
-> @@ -598,7 +598,7 @@ static int blk_crypto_fallback_init(void)
->  fail_free_wq:
->         destroy_workqueue(blk_crypto_wq);
->  fail_destroy_profile:
-> -       blk_crypto_profile_destroy(profile);
-> +       blk_crypto_profile_put(profile);
->  fail_free_bioset:
->         bioset_exit(&crypto_bio_split);
+>  drivers/md/dm.c | 60 +++++++++++++++++++++++++++++----------------------------
+>  1 file changed, 31 insertions(+), 29 deletions(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 3b87d151ef88..b9c30dfe0f2a 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -84,7 +84,8 @@ struct clone_info {
+>  	struct dm_io *io;
+>  	sector_t sector;
+
+(snip)
+
+>  	ci->sector = bio->bi_iter.bi_sector;
+>  	ci->sector_count = bio_sectors(bio);
+> @@ -1645,6 +1647,13 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+>  		__send_empty_flush(&ci);
+>  		/* dm_io_complete submits any data associated with flush */
+>  		goto out;
+> +	} else if (unlikely(is_abnormal_io(bio))) {
+> +		/*
+> +		 * Use blk_queue_split() for abnormal IO (e.g. discard, etc)
+> +		 * otherwise associated queue_limits won't be imposed.
+> +		 */
+> +		blk_queue_split(&bio);
+> +		ci.is_abnormal_io = true;
+>  	}
+>  
+>  	error = __split_and_process_bio(&ci);
+
+Hi Mike,
+
+The hunk above triggered a WARNING [1] which is observed at mkfs.xfs for dm-
+zoned devices. With the hunk, the blk_queue_split(&bio) for abnormal I/O is
+called after init_clone_info(). I think it made the cloned bio different from
+the split bio. I suggest to move the "if (unlikely(is_abnormal_io(bio)))" block
+at the beginning of dm_split_and_process_bio(), so that blk_queue_split() is
+called before init_clone_info(). I created a patch for such change [2], and
+confirmed the WARNING goes away.
+
+> @@ -1698,13 +1707,6 @@ static void dm_submit_bio(struct bio *bio)
+>  		goto out;
+>  	}
+>  
+> -	/*
+> -	 * Use blk_queue_split() for abnormal IO (e.g. discard, writesame, etc)
+> -	 * otherwise associated queue_limits won't be imposed.
+> -	 */
+> -	if (unlikely(is_abnormal_io(bio)))
+> -		blk_queue_split(&bio);
+> -
+>  	dm_split_and_process_bio(md, map, bio);
 >  out:
-> diff --git a/block/blk-crypto-profile.c b/block/blk-crypto-profile.c
-> index 4f444323cb491..e4e14322d2f2e 100644
-> --- a/block/blk-crypto-profile.c
-> +++ b/block/blk-crypto-profile.c
-> @@ -42,11 +42,6 @@ struct blk_crypto_keyslot {
->         struct blk_crypto_profile *profile;
->  };
->
-> -struct blk_crypto_kobj {
-> -       struct kobject kobj;
-> -       struct blk_crypto_profile *profile;
-> -};
-> -
->  struct blk_crypto_attr {
->         struct attribute attr;
->         ssize_t (*show)(struct blk_crypto_profile *profile,
-> @@ -55,7 +50,7 @@ struct blk_crypto_attr {
->
->  static struct blk_crypto_profile *kobj_to_crypto_profile(struct kobject *kobj)
->  {
-> -       return container_of(kobj, struct blk_crypto_kobj, kobj)->profile;
-> +       return container_of(kobj, struct blk_crypto_profile, kobj);
->  }
->
->  static struct blk_crypto_attr *attr_to_crypto_attr(struct attribute *attr)
-> @@ -145,7 +140,14 @@ static const struct sysfs_ops blk_crypto_attr_ops = {
->
->  static void blk_crypto_release(struct kobject *kobj)
->  {
-> -       kfree(container_of(kobj, struct blk_crypto_kobj, kobj));
-> +       struct blk_crypto_profile *profile =
-> +               container_of(kobj, struct blk_crypto_profile, kobj);
-> +
-> +       kvfree(profile->slot_hashtable);
-> +       kvfree_sensitive(profile->slots,
-> +                        sizeof(profile->slots[0]) * profile->num_slots);
-> +       memzero_explicit(profile, sizeof(*profile));
-> +       kfree(profile);
->  }
->
->  static struct kobj_type blk_crypto_ktype = {
-> @@ -160,30 +162,20 @@ static struct kobj_type blk_crypto_ktype = {
->   */
->  int blk_crypto_sysfs_register(struct request_queue *q)
->  {
-> -       struct blk_crypto_kobj *obj;
->         int err;
->
->         if (!q->crypto_profile)
->                 return 0;
->
-> -       obj = kzalloc(sizeof(*obj), GFP_KERNEL);
-> -       if (!obj)
-> -               return -ENOMEM;
-> -       obj->profile = q->crypto_profile;
-> -
-> -       err = kobject_init_and_add(&obj->kobj, &blk_crypto_ktype, &q->kobj,
-> -                                  "crypto");
-> -       if (err) {
-> -               kobject_put(&obj->kobj);
-> -               return err;
-> -       }
-> -       q->crypto_kobject = &obj->kobj;
-> -       return 0;
-> +       err = kobject_add(&q->crypto_profile->kobj, &q->kobj, "crypto");
-> +       if (err)
-> +               kobject_put(&q->crypto_profile->kobj);
-> +       return err;
->  }
->
->  void blk_crypto_sysfs_unregister(struct request_queue *q)
->  {
-> -       kobject_put(q->crypto_kobject);
-> +       kobject_del(&q->crypto_profile->kobj);
->  }
->
->  static inline void blk_crypto_hw_enter(struct blk_crypto_profile *profile)
-> @@ -205,30 +197,13 @@ static inline void blk_crypto_hw_exit(struct blk_crypto_profile *profile)
->                 pm_runtime_put_sync(profile->dev);
->  }
->
-> -/**
-> - * blk_crypto_profile_init() - Initialize a blk_crypto_profile
-> - * @profile: the blk_crypto_profile to initialize
-> - * @num_slots: the number of keyslots
-> - *
-> - * Storage drivers must call this when starting to set up a blk_crypto_profile,
-> - * before filling in additional fields.
-> - *
-> - * Return: 0 on success, or else a negative error code.
-> - */
-> -int blk_crypto_profile_init(struct blk_crypto_profile *profile,
-> -                           unsigned int num_slots)
-> +/* Initialize keyslot management data. */
-> +static int blk_crypto_profile_init_slots(struct blk_crypto_profile *profile,
-> +               unsigned int num_slots)
->  {
-> +       unsigned int slot_hashtable_size;
->         unsigned int slot;
->         unsigned int i;
-> -       unsigned int slot_hashtable_size;
-> -
-> -       memset(profile, 0, sizeof(*profile));
-> -       init_rwsem(&profile->lock);
-> -
-> -       if (num_slots == 0)
-> -               return 0;
-> -
-> -       /* Initialize keyslot management data. */
->
->         profile->slots = kvcalloc(num_slots, sizeof(profile->slots[0]),
->                                   GFP_KERNEL);
-> @@ -261,48 +236,75 @@ int blk_crypto_profile_init(struct blk_crypto_profile *profile,
->                 kvmalloc_array(slot_hashtable_size,
->                                sizeof(profile->slot_hashtable[0]), GFP_KERNEL);
->         if (!profile->slot_hashtable)
-> -               goto err_destroy;
-> +               return -ENOMEM;
->         for (i = 0; i < slot_hashtable_size; i++)
->                 INIT_HLIST_HEAD(&profile->slot_hashtable[i]);
-> -
->         return 0;
-> +}
-> +
-> +/**
-> + * blk_crypto_profile_alloc() - Allocate a blk_crypto_profile
-> + * @num_slots: the number of keyslots
-> + *
-> + * Storage drivers must call this when starting to set up a blk_crypto_profile,
-> + * before filling in additional fields.
-> + *
-> + * Return: pointer to the profile on success, or ele %NULL.
-> + */
-> +struct blk_crypto_profile *blk_crypto_profile_alloc(unsigned int num_slots)
-> +{
-> +       struct blk_crypto_profile *profile;
->
-> -err_destroy:
-> -       blk_crypto_profile_destroy(profile);
-> -       return -ENOMEM;
-> +       profile = kzalloc(sizeof(*profile), GFP_KERNEL);
-> +       if (!profile)
-> +               return NULL;
-> +       kobject_init(&profile->kobj, &blk_crypto_ktype);
-> +       init_rwsem(&profile->lock);
-> +       if (num_slots && blk_crypto_profile_init_slots(profile, num_slots)) {
-> +               blk_crypto_profile_put(profile);
-> +               return NULL;
-> +       }
-> +
-> +       return profile;
->  }
-> -EXPORT_SYMBOL_GPL(blk_crypto_profile_init);
-> +EXPORT_SYMBOL_GPL(blk_crypto_profile_alloc);
->
-> -static void blk_crypto_profile_destroy_callback(void *profile)
-> +void blk_crypto_profile_put(struct blk_crypto_profile *profile)
->  {
-> -       blk_crypto_profile_destroy(profile);
-> +       if (profile)
-> +               kobject_put(&profile->kobj);
-> +}
-> +EXPORT_SYMBOL_GPL(blk_crypto_profile_put);
-> +
-> +static void blk_crypto_profile_put_callback(void *profile)
-> +{
-> +       blk_crypto_profile_put(profile);
->  }
->
->  /**
-> - * devm_blk_crypto_profile_init() - Resource-managed blk_crypto_profile_init()
-> + * devm_blk_crypto_profile_alloc() - Resource-managed blk_crypto_profile_alloc()
->   * @dev: the device which owns the blk_crypto_profile
-> - * @profile: the blk_crypto_profile to initialize
->   * @num_slots: the number of keyslots
->   *
-> - * Like blk_crypto_profile_init(), but causes blk_crypto_profile_destroy() to be
-> + * Like blk_crypto_profile_alloc(), but causes blk_crypto_profile_put() to be
->   * called automatically on driver detach.
->   *
-> - * Return: 0 on success, or else a negative error code.
-> + * Return: profile on success, or else %NULL.
->   */
-> -int devm_blk_crypto_profile_init(struct device *dev,
-> -                                struct blk_crypto_profile *profile,
-> +struct blk_crypto_profile *devm_blk_crypto_profile_alloc(struct device *dev,
->                                  unsigned int num_slots)
->  {
-> -       int err = blk_crypto_profile_init(profile, num_slots);
-> -
-> -       if (err)
-> -               return err;
-> +       struct blk_crypto_profile *profile;
->
-> -       return devm_add_action_or_reset(dev,
-> -                                       blk_crypto_profile_destroy_callback,
-> -                                       profile);
-> +       profile = blk_crypto_profile_alloc(num_slots);
-> +       if (!profile)
-> +               return NULL;
-> +       if (devm_add_action_or_reset(dev, blk_crypto_profile_put_callback,
-> +                       profile))
-> +               return NULL;
-> +       return profile;
->  }
-> -EXPORT_SYMBOL_GPL(devm_blk_crypto_profile_init);
-> +EXPORT_SYMBOL_GPL(devm_blk_crypto_profile_alloc);
->
->  static inline struct hlist_head *
->  blk_crypto_hash_bucket_for_key(struct blk_crypto_profile *profile,
-> @@ -585,17 +587,6 @@ void blk_crypto_reprogram_all_keys(struct blk_crypto_profile *profile)
->  }
->  EXPORT_SYMBOL_GPL(blk_crypto_reprogram_all_keys);
->
-> -void blk_crypto_profile_destroy(struct blk_crypto_profile *profile)
-> -{
-> -       if (!profile)
-> -               return;
-> -       kvfree(profile->slot_hashtable);
-> -       kvfree_sensitive(profile->slots,
-> -                        sizeof(profile->slots[0]) * profile->num_slots);
-> -       memzero_explicit(profile, sizeof(*profile));
-> -}
-> -EXPORT_SYMBOL_GPL(blk_crypto_profile_destroy);
-> -
->  bool blk_crypto_register(struct blk_crypto_profile *profile,
->                          struct request_queue *q)
->  {
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index e7d42f6335a2a..0d40f9e9eefbc 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -1185,11 +1185,6 @@ static int dm_table_register_integrity(struct dm_table *t)
->
->  #ifdef CONFIG_BLK_INLINE_ENCRYPTION
->
-> -struct dm_crypto_profile {
-> -       struct blk_crypto_profile profile;
-> -       struct mapped_device *md;
-> -};
-> -
->  struct dm_keyslot_evict_args {
->         const struct blk_crypto_key *key;
->         int err;
-> @@ -1215,8 +1210,7 @@ static int dm_keyslot_evict_callback(struct dm_target *ti, struct dm_dev *dev,
->  static int dm_keyslot_evict(struct blk_crypto_profile *profile,
->                             const struct blk_crypto_key *key, unsigned int slot)
->  {
-> -       struct mapped_device *md =
-> -               container_of(profile, struct dm_crypto_profile, profile)->md;
-> +       struct mapped_device *md = profile->private;
->         struct dm_keyslot_evict_args args = { key };
->         struct dm_table *t;
->         int srcu_idx;
-> @@ -1250,15 +1244,7 @@ device_intersect_crypto_capabilities(struct dm_target *ti, struct dm_dev *dev,
->
->  void dm_destroy_crypto_profile(struct blk_crypto_profile *profile)
->  {
-> -       struct dm_crypto_profile *dmcp = container_of(profile,
-> -                                                     struct dm_crypto_profile,
-> -                                                     profile);
-> -
-> -       if (!profile)
-> -               return;
-> -
-> -       blk_crypto_profile_destroy(profile);
-> -       kfree(dmcp);
-> +       blk_crypto_profile_put(profile);
->  }
->
->  static void dm_table_destroy_crypto_profile(struct dm_table *t)
-> @@ -1278,19 +1264,15 @@ static void dm_table_destroy_crypto_profile(struct dm_table *t)
->   */
->  static int dm_table_construct_crypto_profile(struct dm_table *t)
->  {
-> -       struct dm_crypto_profile *dmcp;
->         struct blk_crypto_profile *profile;
->         struct dm_target *ti;
->         unsigned int i;
->         bool empty_profile = true;
->
-> -       dmcp = kmalloc(sizeof(*dmcp), GFP_KERNEL);
-> -       if (!dmcp)
-> +       profile = blk_crypto_profile_alloc(0);
-> +       if (!profile)
->                 return -ENOMEM;
-> -       dmcp->md = t->md;
-> -
-> -       profile = &dmcp->profile;
-> -       blk_crypto_profile_init(profile, 0);
-> +       profile->private = t->md;
->         profile->ll_ops.keyslot_evict = dm_keyslot_evict;
->         profile->max_dun_bytes_supported = UINT_MAX;
->         memset(profile->modes_supported, 0xFF,
-> diff --git a/drivers/mmc/core/crypto.c b/drivers/mmc/core/crypto.c
-> index fec4fbf16a5b6..df3c002526cc7 100644
-> --- a/drivers/mmc/core/crypto.c
-> +++ b/drivers/mmc/core/crypto.c
-> @@ -16,13 +16,13 @@ void mmc_crypto_set_initial_state(struct mmc_host *host)
->  {
->         /* Reset might clear all keys, so reprogram all the keys. */
->         if (host->caps2 & MMC_CAP2_CRYPTO)
-> -               blk_crypto_reprogram_all_keys(&host->crypto_profile);
-> +               blk_crypto_reprogram_all_keys(host->crypto_profile);
->  }
->
->  void mmc_crypto_setup_queue(struct request_queue *q, struct mmc_host *host)
->  {
->         if (host->caps2 & MMC_CAP2_CRYPTO)
-> -               blk_crypto_register(&host->crypto_profile, q);
-> +               blk_crypto_register(host->crypto_profile, q);
->  }
->  EXPORT_SYMBOL_GPL(mmc_crypto_setup_queue);
->
-> diff --git a/drivers/mmc/host/cqhci-crypto.c b/drivers/mmc/host/cqhci-crypto.c
-> index d5f4b6972f63e..6b1c111e9e4b2 100644
-> --- a/drivers/mmc/host/cqhci-crypto.c
-> +++ b/drivers/mmc/host/cqhci-crypto.c
-> @@ -25,8 +25,7 @@ static const struct cqhci_crypto_alg_entry {
->  static inline struct cqhci_host *
->  cqhci_host_from_crypto_profile(struct blk_crypto_profile *profile)
->  {
-> -       struct mmc_host *mmc =
-> -               container_of(profile, struct mmc_host, crypto_profile);
-> +       struct mmc_host *mmc = profile->private;
->
->         return mmc->cqe_private;
->  }
-> @@ -169,7 +168,7 @@ int cqhci_crypto_init(struct cqhci_host *cq_host)
->  {
->         struct mmc_host *mmc = cq_host->mmc;
->         struct device *dev = mmc_dev(mmc);
-> -       struct blk_crypto_profile *profile = &mmc->crypto_profile;
-> +       struct blk_crypto_profile *profile;
->         unsigned int num_keyslots;
->         unsigned int cap_idx;
->         enum blk_crypto_mode_num blk_mode_num;
-> @@ -180,6 +179,7 @@ int cqhci_crypto_init(struct cqhci_host *cq_host)
->             !(cqhci_readl(cq_host, CQHCI_CAP) & CQHCI_CAP_CS))
->                 goto out;
->
-> +       err = -ENOMEM;
->         cq_host->crypto_capabilities.reg_val =
->                         cpu_to_le32(cqhci_readl(cq_host, CQHCI_CCAP));
->
-> @@ -189,10 +189,8 @@ int cqhci_crypto_init(struct cqhci_host *cq_host)
->         cq_host->crypto_cap_array =
->                 devm_kcalloc(dev, cq_host->crypto_capabilities.num_crypto_cap,
->                              sizeof(cq_host->crypto_cap_array[0]), GFP_KERNEL);
-> -       if (!cq_host->crypto_cap_array) {
-> -               err = -ENOMEM;
-> +       if (!cq_host->crypto_cap_array)
->                 goto out;
-> -       }
->
->         /*
->          * CCAP.CFGC is off by one, so the actual number of crypto
-> @@ -200,10 +198,10 @@ int cqhci_crypto_init(struct cqhci_host *cq_host)
->          */
->         num_keyslots = cq_host->crypto_capabilities.config_count + 1;
->
-> -       err = devm_blk_crypto_profile_init(dev, profile, num_keyslots);
-> -       if (err)
-> +       profile = devm_blk_crypto_profile_alloc(dev, num_keyslots);
-> +       if (!profile)
->                 goto out;
-> -
-> +       profile->private = mmc;
->         profile->ll_ops = cqhci_crypto_ops;
->         profile->dev = dev;
->
-> diff --git a/drivers/scsi/ufs/ufshcd-crypto.c b/drivers/scsi/ufs/ufshcd-crypto.c
-> index 67402baf6faee..b48ff6046bdc8 100644
-> --- a/drivers/scsi/ufs/ufshcd-crypto.c
-> +++ b/drivers/scsi/ufs/ufshcd-crypto.c
-> @@ -52,8 +52,7 @@ static int ufshcd_crypto_keyslot_program(struct blk_crypto_profile *profile,
->                                          const struct blk_crypto_key *key,
->                                          unsigned int slot)
->  {
-> -       struct ufs_hba *hba =
-> -               container_of(profile, struct ufs_hba, crypto_profile);
-> +       struct ufs_hba *hba = profile->private;
->         const union ufs_crypto_cap_entry *ccap_array = hba->crypto_cap_array;
->         const struct ufs_crypto_alg_entry *alg =
->                         &ufs_crypto_algs[key->crypto_cfg.crypto_mode];
-> @@ -110,10 +109,7 @@ static int ufshcd_crypto_keyslot_evict(struct blk_crypto_profile *profile,
->                                        const struct blk_crypto_key *key,
->                                        unsigned int slot)
->  {
-> -       struct ufs_hba *hba =
-> -               container_of(profile, struct ufs_hba, crypto_profile);
-> -
-> -       return ufshcd_clear_keyslot(hba, slot);
-> +       return ufshcd_clear_keyslot(profile->private, slot);
->  }
->
->  bool ufshcd_crypto_enable(struct ufs_hba *hba)
-> @@ -122,7 +118,7 @@ bool ufshcd_crypto_enable(struct ufs_hba *hba)
->                 return false;
->
->         /* Reset might clear all keys, so reprogram all the keys. */
-> -       blk_crypto_reprogram_all_keys(&hba->crypto_profile);
-> +       blk_crypto_reprogram_all_keys(hba->crypto_profile);
->         return true;
->  }
->
-> @@ -168,6 +164,7 @@ int ufshcd_hba_init_crypto_capabilities(struct ufs_hba *hba)
->             !(hba->caps & UFSHCD_CAP_CRYPTO))
->                 goto out;
->
-> +       err = -ENOMEM;
->         hba->crypto_capabilities.reg_val =
->                         cpu_to_le32(ufshcd_readl(hba, REG_UFS_CCAP));
->         hba->crypto_cfg_register =
-> @@ -175,22 +172,20 @@ int ufshcd_hba_init_crypto_capabilities(struct ufs_hba *hba)
->         hba->crypto_cap_array =
->                 devm_kcalloc(hba->dev, hba->crypto_capabilities.num_crypto_cap,
->                              sizeof(hba->crypto_cap_array[0]), GFP_KERNEL);
-> -       if (!hba->crypto_cap_array) {
-> -               err = -ENOMEM;
-> +       if (!hba->crypto_cap_array)
->                 goto out;
-> -       }
->
->         /* The actual number of configurations supported is (CFGC+1) */
-> -       err = devm_blk_crypto_profile_init(
-> -                       hba->dev, &hba->crypto_profile,
-> +       hba->crypto_profile = devm_blk_crypto_profile_alloc(hba->dev,
->                         hba->crypto_capabilities.config_count + 1);
-> -       if (err)
-> +       if (!hba->crypto_profile)
->                 goto out;
->
-> -       hba->crypto_profile.ll_ops = ufshcd_crypto_ops;
-> +       hba->crypto_profile->private = hba;
-> +       hba->crypto_profile->ll_ops = ufshcd_crypto_ops;
->         /* UFS only supports 8 bytes for any DUN */
-> -       hba->crypto_profile.max_dun_bytes_supported = 8;
-> -       hba->crypto_profile.dev = hba->dev;
-> +       hba->crypto_profile->max_dun_bytes_supported = 8;
-> +       hba->crypto_profile->dev = hba->dev;
->
->         /*
->          * Cache all the UFS crypto capabilities and advertise the supported
-> @@ -205,7 +200,7 @@ int ufshcd_hba_init_crypto_capabilities(struct ufs_hba *hba)
->                 blk_mode_num = ufshcd_find_blk_crypto_mode(
->                                                 hba->crypto_cap_array[cap_idx]);
->                 if (blk_mode_num != BLK_ENCRYPTION_MODE_INVALID)
-> -                       hba->crypto_profile.modes_supported[blk_mode_num] |=
-> +                       hba->crypto_profile->modes_supported[blk_mode_num] |=
->                                 hba->crypto_cap_array[cap_idx].sdus_mask * 512;
->         }
->
-> @@ -236,5 +231,5 @@ void ufshcd_init_crypto(struct ufs_hba *hba)
->  void ufshcd_crypto_register(struct ufs_hba *hba, struct request_queue *q)
->  {
->         if (hba->caps & UFSHCD_CAP_CRYPTO)
-> -               blk_crypto_register(&hba->crypto_profile, q);
-> +               blk_crypto_register(hba->crypto_profile, q);
->  }
-> diff --git a/drivers/scsi/ufs/ufshcd.h b/drivers/scsi/ufs/ufshcd.h
-> index 94f545be183aa..94edbe3721890 100644
-> --- a/drivers/scsi/ufs/ufshcd.h
-> +++ b/drivers/scsi/ufs/ufshcd.h
-> @@ -930,7 +930,7 @@ struct ufs_hba {
->         union ufs_crypto_capabilities crypto_capabilities;
->         union ufs_crypto_cap_entry *crypto_cap_array;
->         u32 crypto_cfg_register;
-> -       struct blk_crypto_profile crypto_profile;
-> +       struct blk_crypto_profile *crypto_profile;
->  #endif
->  #ifdef CONFIG_DEBUG_FS
->         struct dentry *debugfs_root;
-> diff --git a/include/linux/blk-crypto-profile.h b/include/linux/blk-crypto-profile.h
-> index bbab65bd54288..07745a4675f25 100644
-> --- a/include/linux/blk-crypto-profile.h
-> +++ b/include/linux/blk-crypto-profile.h
-> @@ -8,6 +8,7 @@
->
->  #include <linux/bio.h>
->  #include <linux/blk-crypto.h>
-> +#include <linux/kobject.h>
->
->  struct blk_crypto_profile;
->
-> @@ -100,6 +101,11 @@ struct blk_crypto_profile {
->          */
->         struct device *dev;
->
-> +       /**
-> +        * @private: Optional private data for driver use.
-> +        */
-> +       void *private;
-> +
->         /* private: The following fields shouldn't be accessed by drivers. */
->
->         /* Number of keyslots, or 0 if not applicable */
-> @@ -127,14 +133,13 @@ struct blk_crypto_profile {
->
->         /* Per-keyslot data */
->         struct blk_crypto_keyslot *slots;
-> -};
->
-> -int blk_crypto_profile_init(struct blk_crypto_profile *profile,
-> -                           unsigned int num_slots);
-> +       struct kobject kobj;
-> +};
->
-> -int devm_blk_crypto_profile_init(struct device *dev,
-> -                                struct blk_crypto_profile *profile,
-> -                                unsigned int num_slots);
-> +struct blk_crypto_profile *blk_crypto_profile_alloc(unsigned int num_slots);
-> +struct blk_crypto_profile *devm_blk_crypto_profile_alloc(struct device *dev,
-> +               unsigned int num_slots);
->
->  unsigned int blk_crypto_keyslot_index(struct blk_crypto_keyslot *slot);
->
-> @@ -152,7 +157,7 @@ int __blk_crypto_evict_key(struct blk_crypto_profile *profile,
->
->  void blk_crypto_reprogram_all_keys(struct blk_crypto_profile *profile);
->
-> -void blk_crypto_profile_destroy(struct blk_crypto_profile *profile);
-> +void blk_crypto_profile_put(struct blk_crypto_profile *profile);
->
->  void blk_crypto_intersect_capabilities(struct blk_crypto_profile *parent,
->                                        const struct blk_crypto_profile *child);
-> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> index 34724b15813b7..390e3c4ad64b6 100644
-> --- a/include/linux/blkdev.h
-> +++ b/include/linux/blkdev.h
-> @@ -413,7 +413,6 @@ struct request_queue {
->
->  #ifdef CONFIG_BLK_INLINE_ENCRYPTION
->         struct blk_crypto_profile *crypto_profile;
-> -       struct kobject *crypto_kobject;
->  #endif
->
->         unsigned int            rq_timeout;
-> diff --git a/include/linux/mmc/host.h b/include/linux/mmc/host.h
-> index 7afb57cab00b7..8d6069503c0dc 100644
-> --- a/include/linux/mmc/host.h
-> +++ b/include/linux/mmc/host.h
-> @@ -495,7 +495,7 @@ struct mmc_host {
->
->         /* Inline encryption support */
->  #ifdef CONFIG_MMC_CRYPTO
-> -       struct blk_crypto_profile crypto_profile;
-> +       struct blk_crypto_profile *crypto_profile;
->  #endif
->
->         /* Host Software Queue support */
+>  	dm_put_live_table_bio(md, srcu_idx, bio);
+> -- 
+> 2.15.0
+> 
 > --
-> 2.30.2
->
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://listman.redhat.com/mailman/listinfo/dm-devel
+> 
+
+[1]
+
+WARNING: CPU: 3 PID: 79434 at block/bio.c:1629 bio_trim+0x10a/0x150
+Modules linked in: dm_zoned null_blk f2fs crc32_generic dm_flakey iscsi_target_mod tcm_loop target_core_pscsi target_core_file target_core_iblock xt_CHECKSUM xt_MASQUERADE xt_conntrack ipt_REJECT nf_nat_tftp nf_conntrack_tftp bridge stp llc nft_objref nf_conntrack_netbios_ns nf_conntrack_broadcast nft_fib_inet nft_fib_ipv4 nft_fib_ipv6 nft_fib nft_reject_inet nf_reject_ipv4 nf_reject_ipv6 nft_reject nft_ct nft_chain_nat nf_tables ebtable_nat ebtable_broute ip6table_nat ip6table_mangle ip6table_raw ip6table_security iptable_nat nf_nat nf_conntrack nf_defrag_ipv6 nf_defrag_ipv4 iptable_mangle iptable_raw rfkill iptable_security ip_set target_core_user nfnetlink target_core_mod ebtable_filter ebtables ip6table_filter ip6_tables iptable_filter qrtr sunrpc intel_rapl_msr intel_rapl_common x86_pkg_temp_thermal intel_powerclamp coretemp kvm_intel at24 iTCO_wdt intel_pmc_bxt iTCO_vendor_support btrfs kvm irqbypass rapl raid6_pq intel_cstate zstd_compress joydev
+ intel_uncore i2c_i801 pcspkr i2c_smbus intel_pch_thermal lpc_ich ses enclosure ie31200_edac video zram ip_tables crct10dif_pclmul crc32_pclmul crc32c_intel ast ghash_clmulni_intel drm_vram_helper drm_kms_helper drm_ttm_helper ttm igb drm mpt3sas e1000e dca i2c_algo_bit raid_class scsi_transport_sas fuse [last unloaded: zonefs]
+CPU: 3 PID: 79434 Comm: mkfs.xfs Kdump: loaded Not tainted 5.18.0-rc3+ #2
+Hardware name: Supermicro X10SLL-F/X10SLL-F, BIOS 3.0 04/24/2015
+RIP: 0010:bio_trim+0x10a/0x150
+Code: 8d 7c 24 68 48 89 fa 48 c1 ea 03 80 3c 02 00 75 58 49 83 7c 24 68 00 74 13 48 83 c4 10 4c 89 e7 5d 41 5c 41 5d e9 f6 aa 0f 00 <0f> 0b 48 83 c4 10 5d 41 5c 41 5d c3 4c 89 ef 48 89 54 24 08 48 89
+RSP: 0018:ffff8881977d7928 EFLAGS: 00010206
+RAX: 0000000008000000 RBX: ffff88852b000000 RCX: 0000000000040000
+RDX: 00000000003c0000 RSI: 0000000000040000 RDI: ffff8883215a3d00
+RBP: 0000000000400000 R08: 0000000000000001 R09: ffff8881124b9057
+R10: ffffed102249720a R11: 0000000000000001 R12: ffff8883215a3d00
+R13: ffff8883215a3d28 R14: ffff8881124b9098 R15: ffff8881124b9054
+FS:  00007ff3a993dbc0(0000) GS:ffff8886ecf80000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000055a1bf241900 CR3: 0000000177074002 CR4: 00000000001706e0
+Call Trace:
+ <TASK>
+ dm_submit_bio+0x5fa/0x13b0
+ ? dm_dax_direct_access+0x1c0/0x1c0
+ ? lock_release+0x3a7/0x6c0
+ ? lock_downgrade+0x6a0/0x6a0
+ __submit_bio+0x1c2/0x2c0
+ ? __bio_queue_enter+0x570/0x570
+ submit_bio_noacct_nocheck+0x2f7/0x810
+ ? should_fail_request+0x70/0x70
+ ? rcu_read_lock_sched_held+0x3f/0x70
+ ? __lock_acquire+0x1591/0x5030
+ submit_bio+0x10a/0x270
+ ? submit_bio_noacct+0x15c0/0x15c0
+ submit_bio_wait+0xf2/0x1d0
+ ? submit_bio_wait_endio+0x40/0x40
+ ? lock_release+0x6c0/0x6c0
+ blkdev_issue_discard+0xb5/0x110
+ ? __blkdev_issue_discard+0x590/0x590
+ ? truncate_bdev_range+0x15d/0x240
+ blkdev_common_ioctl+0x853/0x1670
+ ? blkdev_bszset+0x160/0x160
+ ? __ia32_sys_readlinkat+0x87/0xf0
+ ? __ia32_compat_sys_newlstat+0x70/0x70
+ ? count_memcg_events.constprop.0+0x44/0x50
+ blkdev_ioctl+0x23b/0x690
+ ? blkdev_common_ioctl+0x1670/0x1670
+ ? security_file_ioctl+0x50/0x90
+ __x64_sys_ioctl+0x127/0x190
+ do_syscall_64+0x3b/0x90
+ entry_SYSCALL_64_after_hwframe+0x44/0xae
+RIP: 0033:0x7ff3a970731b
+Code: ff ff ff 85 c0 79 9b 49 c7 c4 ff ff ff ff 5b 5d 4c 89 e0 41 5c c3 66 0f 1f 84 00 00 00 00 00 f3 0f 1e fa b8 10 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d dd 2a 0f 00 f7 d8 64 89 01 48
+RSP: 002b:00007ffd79c8db68 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
+RAX: ffffffffffffffda RBX: 00000000e8000000 RCX: 00007ff3a970731b
+RDX: 00007ffd79c8db80 RSI: 0000000000001277 RDI: 0000000000000004
+RBP: 0000000000000004 R08: 0000000000000000 R09: 00007ffd79c8d997
+R10: 0000000000000000 R11: 0000000000000246 R12: 00007ffd79c8db80
+R13: 0000000000000001 R14: 0000000000000000 R15: 0000000080000000
+ </TASK>
+irq event stamp: 10213
+hardirqs last  enabled at (10223): [<ffffffffaa36e02e>] __up_console_sem+0x5e/0x70
+hardirqs last disabled at (10232): [<ffffffffaa36e013>] __up_console_sem+0x43/0x70
+softirqs last  enabled at (10190): [<ffffffffaa1faf06>] __irq_exit_rcu+0x1c6/0x260
+softirqs last disabled at (10185): [<ffffffffaa1faf06>] __irq_exit_rcu+0x1c6/0x260
+---[ end trace 0000000000000000 ]---
+
+[2]
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 7e3b5bdcf520..50382c98d7b3 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1639,6 +1639,15 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+ 	struct dm_io *io;
+ 	blk_status_t error = BLK_STS_OK;
+ 
++	if (unlikely(is_abnormal_io(bio))) {
++		/*
++		 * Use blk_queue_split() for abnormal IO (e.g. discard, etc)
++		 * otherwise associated queue_limits won't be imposed.
++		 */
++		blk_queue_split(&bio);
++		ci.is_abnormal_io = true;
++	}
++
+ 	init_clone_info(&ci, md, map, bio);
+ 	io = ci.io;
+ 
+@@ -1646,13 +1655,6 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+ 		__send_empty_flush(&ci);
+ 		/* dm_io_complete submits any data associated with flush */
+ 		goto out;
+-	} else if (unlikely(is_abnormal_io(bio))) {
+-		/*
+-		 * Use blk_queue_split() for abnormal IO (e.g. discard, etc)
+-		 * otherwise associated queue_limits won't be imposed.
+-		 */
+-		blk_queue_split(&bio);
+-		ci.is_abnormal_io = true;
+ 	}
+ 
+ 	error = __split_and_process_bio(&ci);
+
+-- 
+Best Regards,
+Shin'ichiro Kawasaki
 
 --
 dm-devel mailing list
