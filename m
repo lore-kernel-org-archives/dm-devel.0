@@ -4,160 +4,160 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 197E6C433EF
-	for <dm-devel@archiver.kernel.org>; Fri, 22 Apr 2022 04:15:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2C9FAC433EF
+	for <dm-devel@archiver.kernel.org>; Fri, 22 Apr 2022 04:16:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-86-q7yUxoraOVyYUNrm1gsObQ-1; Fri, 22 Apr 2022 00:15:48 -0400
-X-MC-Unique: q7yUxoraOVyYUNrm1gsObQ-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-464-HAHeRpdlNI6RaC6bWTa2MQ-1; Fri, 22 Apr 2022 00:16:10 -0400
+X-MC-Unique: HAHeRpdlNI6RaC6bWTa2MQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DB2C686B8A0;
-	Fri, 22 Apr 2022 04:15:46 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EC80386B8A0;
+	Fri, 22 Apr 2022 04:16:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 8285340EC000;
-	Fri, 22 Apr 2022 04:15:46 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id D79CE2024CAE;
+	Fri, 22 Apr 2022 04:16:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 359431940350;
-	Fri, 22 Apr 2022 04:15:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A5A411940350;
+	Fri, 22 Apr 2022 04:16:08 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C6B33194034C
- for <dm-devel@listman.corp.redhat.com>; Fri, 22 Apr 2022 04:15:45 +0000 (UTC)
+ ESMTP id 810BA1940350
+ for <dm-devel@listman.corp.redhat.com>; Fri, 22 Apr 2022 04:16:07 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A36FC5671CC; Fri, 22 Apr 2022 04:15:45 +0000 (UTC)
+ id 51A08C27EB0; Fri, 22 Apr 2022 04:16:07 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 9DBF8551195
- for <dm-devel@redhat.com>; Fri, 22 Apr 2022 04:15:45 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6D5C729AA2FD
- for <dm-devel@redhat.com>; Fri, 22 Apr 2022 04:15:45 +0000 (UTC)
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 4C383C28131
+ for <dm-devel@redhat.com>; Fri, 22 Apr 2022 04:16:07 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2953C1E17FE3
+ for <dm-devel@redhat.com>; Fri, 22 Apr 2022 04:16:07 +0000 (UTC)
 Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
  [205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-355-4ObWIHtDPv2C2vxCz73qIg-1; Fri, 22 Apr 2022 00:15:40 -0400
-X-MC-Unique: 4ObWIHtDPv2C2vxCz73qIg-1
-Received: from pps.filterd (m0246632.ppops.net [127.0.0.1])
- by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 23LLnrAP014729; 
- Fri, 22 Apr 2022 04:15:23 GMT
-Received: from phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com
- (phxpaimrmta01.appoci.oracle.com [138.1.114.2])
- by mx0b-00069f02.pphosted.com with ESMTP id 3ffndtnqav-1
+ us-mta-207-T7BHn11RMx2z8PXAoEeTGw-1; Fri, 22 Apr 2022 00:16:03 -0400
+X-MC-Unique: T7BHn11RMx2z8PXAoEeTGw-1
+Received: from pps.filterd (m0246630.ppops.net [127.0.0.1])
+ by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 23M3wfrH019412; 
+ Fri, 22 Apr 2022 04:15:44 GMT
+Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com
+ (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
+ by mx0b-00069f02.pphosted.com with ESMTP id 3ffm7cwbuv-1
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 22 Apr 2022 04:15:23 +0000
+ Fri, 22 Apr 2022 04:15:43 +0000
 Received: from pps.filterd
- (phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
- by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (8.16.1.2/8.16.1.2)
- with SMTP id 23M46Jf4007863; Fri, 22 Apr 2022 04:15:22 GMT
-Received: from nam12-dm6-obe.outbound.protection.outlook.com
- (mail-dm6nam12lp2174.outbound.protection.outlook.com [104.47.59.174])
- by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com with ESMTP id
- 3ffm8d5f61-1
+ (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+ by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.16.1.2/8.16.1.2)
+ with SMTP id 23M46mc4028448; Fri, 22 Apr 2022 04:15:42 GMT
+Received: from nam10-dm6-obe.outbound.protection.outlook.com
+ (mail-dm6nam10lp2107.outbound.protection.outlook.com [104.47.58.107])
+ by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com with ESMTP id
+ 3fk3av5umy-1
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 22 Apr 2022 04:15:22 +0000
+ Fri, 22 Apr 2022 04:15:42 +0000
 Received: from SJ0PR10MB4429.namprd10.prod.outlook.com (2603:10b6:a03:2d1::14)
  by BYAPR10MB3349.namprd10.prod.outlook.com (2603:10b6:a03:155::19)
  with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5186.15; Fri, 22 Apr
- 2022 04:15:20 +0000
+ 2022 04:15:39 +0000
 Received: from SJ0PR10MB4429.namprd10.prod.outlook.com
  ([fe80::1c44:15ca:b5c2:603e]) by SJ0PR10MB4429.namprd10.prod.outlook.com
  ([fe80::1c44:15ca:b5c2:603e%8]) with mapi id 15.20.5164.025; Fri, 22 Apr 2022
- 04:15:20 +0000
+ 04:15:39 +0000
 From: Jane Chu <jane.chu@oracle.com>
-To: Christoph Hellwig <hch@infradead.org>
+To: Dan Williams <dan.j.williams@intel.com>
 Thread-Topic: [PATCH v8 4/7] dax: introduce DAX_RECOVERY_WRITE dax access mode
-Thread-Index: AQHYVFsQsaUDJAWZ/UKYy6bMSO9seaz58VqAgAFlF4A=
-Date: Fri, 22 Apr 2022 04:15:19 +0000
-Message-ID: <7736b8b0-4265-4291-c699-e4a9cf1825c5@oracle.com>
+Thread-Index: AQHYVFsQsaUDJAWZ/UKYy6bMSO9seaz6xSCAgACRaYA=
+Date: Fri, 22 Apr 2022 04:15:39 +0000
+Message-ID: <d56480c4-9ede-7340-6e66-c8dca114754d@oracle.com>
 References: <20220420020435.90326-1-jane.chu@oracle.com>
- <20220420020435.90326-5-jane.chu@oracle.com> <YmEAS5hi7Os9Lgcq@infradead.org>
-In-Reply-To: <YmEAS5hi7Os9Lgcq@infradead.org>
+ <20220420020435.90326-5-jane.chu@oracle.com>
+ <CAPcyv4jBUE9BTOrqVsFcBUZxzMx6ygax5FihrrccG2sET56Gjg@mail.gmail.com>
+In-Reply-To: <CAPcyv4jBUE9BTOrqVsFcBUZxzMx6ygax5FihrrccG2sET56Gjg@mail.gmail.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
 user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
  Thunderbird/91.7.0
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: c54d90fb-c310-4531-9d9a-08da2416b6c4
+x-ms-office365-filtering-correlation-id: 8dca5088-667f-4c84-bf43-08da2416c282
 x-ms-traffictypediagnostic: BYAPR10MB3349:EE_
-x-microsoft-antispam-prvs: <BYAPR10MB3349E8EB33A5ED57E70F039BF3F79@BYAPR10MB3349.namprd10.prod.outlook.com>
+x-microsoft-antispam-prvs: <BYAPR10MB3349E8044BDB75C764FD8C9BF3F79@BYAPR10MB3349.namprd10.prod.outlook.com>
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: aQRkqj7cKlVIMST3L3PpbqFyD7JLRbjfEdyZPTVgvR/vlm4JGQq3czDfrLAKS8xgp3gErrxcZz41ltI5xNMPT73tg7/nfyerhPO2OnypSXQMIeDXNlnVLPX+zHImF9+mSglth2bbtbLSyD106FmXvnDCEKMFoe77tIifNOvoX7WzalD5WHFq2EzBfbZx7IZhkIfg4DkNhA57H1RGbui5rO5TVHDn7Xsq53xPSZCSaM2Lu7PAfbRlYQMKTJfnfAM3wjV3x7y8TshFLDBrYFh+GSRQQOYCVeX0Q5qMnQ1cEwpj8ru2cW/BJM4wSCng8wa6d1ZfSJIhB2m1ReQDx3jjMFgXkmHtr3Bf/JrAE19CNnkCLL+4tEUctosMbobdwBwXbXnoF34k8zR98OfMx9y1spXd+HtPkIVMIDtfIJ0tHvprCfTxOgzNVmomJDtDI7UZRdkZfQI7Dp52VNcfKgkFQI7ncC+/pDoiVbGjzajWoKE5kRr3F+XMWq7NwA/3RfGdycc1mik3Y0So/TvmuHrlXv6csemgul7sjQeWKL01xSnc1nHp5jXuCXw9iJ6IEVhG09zZQEg3qOcRucVEqcgSXOXrrQu19iuvTiQydZsvgzZjYizPoeluuJeAYHkeoXPBuo0Dr/bRsi5i1lFfm1sGxTnBWIuU0i122veSTFBd3G/ZjINu0uEiTqDos9kh4jIhTD86LXbOLwpXfb0aD/8p1yeaOqPRqrAcOXInGQ2uZWF4rB5HFiTUj1JbnECrhb6v0RxYqhh2BrCNVxxnVfdoWA==
+x-microsoft-antispam-message-info: VVF1y0qSRBVsNUks91DLstKSmUBg0DtQDH1hCV/oe6hDouWowBShOQTsS/cn8X+jt1uuIeisWoPfTQDGc1gPP1IwRDxvdQPCHMNFKbkd0vWBcHfcMXVVqrPVykvsimqWYN1+zddpmoIUdy0VKNANmhd2UQ5zHwcNPl4i0xIwvBK/E0eVbPduzBg55cScjwNEpLVfSvHSsA1OgBOliE/ehRpjf4FwHwG+tOZdGTz0kRLJyq9dqWPRraHrIcWTI8EBUSJ/g9in/hlAMif8QLpzG9w1u5r2ozoCHrjq8kWYQmmUZrHv37dhdR+P5U+evgnbjHxYvPT+i/T8TvYi5m4rFd3ch0Hm/LUF/yNoESpIwCrY+jMc/Jg2qQDsMZlTztSW899Pmem8IgeDCSZ+Oz28tqa+ivMsecwwIPUCBtmbmL7IYCzWSLbkWIII6s+n5SEFHF+8ZOLV0+kXrxlIeSXMRuDbxemcLqaCFS8+8ccwW+XnJdMlFniGfpJUbV7jbSMkrBq4XOXIPcZuMiU7N2tL4YiJffHNoQ5R/iYr0RZOEur7QSM9jRqQy0twFJDs3qQUZ82M2W9KgjU34eSZLOzW1s/1hyPJhHX2XmmerNpIRzyjFv7JN4jo1sRnHlfboXXTYGeiHwiVVngDkw8pd31pq34ZfSSPVqdsE+xVHLA0FzcNLF5zCTZ0x60lGbpivNsV8aVFl+8OGhc/ay4fBA5e1mLIZ6iIiPAyjZjE/wDYpW2w16ornxw67d/UByAkaV80qkOl7YnhxYSZFC/uT4LxdA==
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
  IPV:NLI; SFV:NSPM; H:SJ0PR10MB4429.namprd10.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230001)(366004)(76116006)(83380400001)(64756008)(66446008)(8936002)(186003)(66476007)(8676002)(66946007)(4326008)(31686004)(6512007)(122000001)(7416002)(53546011)(86362001)(26005)(2616005)(31696002)(5660300002)(54906003)(6486002)(44832011)(66556008)(38070700005)(6916009)(71200400001)(316002)(508600001)(4744005)(2906002)(6506007)(38100700002)(36756003)(43740500002)(45980500001);
+ SFS:(13230001)(366004)(76116006)(83380400001)(64756008)(66446008)(8936002)(186003)(66476007)(8676002)(66946007)(4326008)(31686004)(6512007)(122000001)(7416002)(53546011)(86362001)(26005)(2616005)(31696002)(5660300002)(54906003)(6486002)(44832011)(66556008)(38070700005)(6916009)(71200400001)(316002)(508600001)(2906002)(6506007)(38100700002)(36756003)(43740500002)(45980500001);
  DIR:OUT; SFP:1101
 x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?utf-8?B?QjRQODE2bFVQVEZvaVB1NTl5VkZVa1psUU05cHpWQVMxa1JFSTVXZkltamZy?=
- =?utf-8?B?c2pTTW5OQTFNcWNDcjhJYnZqWWdaZ3FPNEpGZE5iOXhCTE5DejIzcUZPcFQy?=
- =?utf-8?B?amVaT0dDMWRHRmZZMDZmNlk3dzM0WjQ0V0xBcDI5NzA0WEtudW42K3hOWHlW?=
- =?utf-8?B?UzdkcW4rUW5UR084MUdSZ3paSWJCYWhjeTdrcDM4QWZucENMOXIrL1g5VkdT?=
- =?utf-8?B?aVp4dEtzKytFRmY0d1djZmx2cUpMWGJobWVCUmhBeEUzR3JXTE5mOExkUTFi?=
- =?utf-8?B?TGRzZGlEUzEyakdZb1REOGpHdnVCWmorRXh4azlhcWI0eklhRHN4VWx4SmR0?=
- =?utf-8?B?V09CQTJBK1RyNS81cXZ6MXN0ZVdhU0NxMnF1VnRpMjdwYUpsd2dyRE95Vkdj?=
- =?utf-8?B?WmlCY2tBMjZ6NXhrSVBka2tBNHEvamFxTEptYVlCNjZkTWlUVE5UM3JZa2gr?=
- =?utf-8?B?eEZrakF1dm9DdUUrSWVwUC9JcHcva0VTU0dvZUFKdkVrZGltNVplT0FNeWp1?=
- =?utf-8?B?WVV4N3dJTE13NUpzeWoramhOelVKSFp3eVQvWmF5TWhRc2kyOXVtS3ZiUU1j?=
- =?utf-8?B?S2hCS25weU5GTW1tMUdkcTRYZTNYdHFrS2Raa1FPZVB4clpwbTc3QnVWcWhG?=
- =?utf-8?B?c1JVazc3MmJBUGQ2TlVTbjF0QnlpUlVzVE1VclZ6M2tTMC94SG5JMDRBdlpY?=
- =?utf-8?B?N1M4Z3JjOGFSalY0dEJDVXRiYXFxWUdIR1lRK05nMFk1MjNBMUMxRlRVV2xi?=
- =?utf-8?B?bFh2Y3R0Ly9jY256SXMyM1NrVW45V3R6S1pDZGE4bk9jK0kxTWxwdHd0d0dk?=
- =?utf-8?B?OFlYbm5nZjdNSHgrbHhabXl4SlJObVNJZ3QyZGNXWVF1MFVFckxmdTB3YUhL?=
- =?utf-8?B?dGVGRXllOEZWM3QzcjJ0eElmSCt5UEw3RmNFK3Q3NCtQMjRoMVNZY1k5eGZW?=
- =?utf-8?B?SGZCVGRYdXkwYlNIc2JHUDRHYUdLZkczR0NzY3hHVVkzT1d6bmhkNUFSS2JX?=
- =?utf-8?B?b1hZMFBFd0pPbHhZV1BNak94dTRhVi9wMDVvaC9wMjlMeURBL2dib2M4b01C?=
- =?utf-8?B?bWJnMTdNSkFMWDBEUnpRbzhKMmtJbEcyNjcxSE0rWkZpOGE1cXBFNFVXYjFj?=
- =?utf-8?B?NkZJelIySFczYmY1bW9DU1lsbU9wVVFRTzJJUWJESEhEQzBwN1luYk95Tmpn?=
- =?utf-8?B?c0cxYlA1dVNTN0ZTbi9xWjVMUUY0bVc1OUloLzNuNVl3MG9lSFZYZklhdFMr?=
- =?utf-8?B?RFdHRHRpTGVUWXVYb0ZSV1o1b2Q1a1pha0hibDVjeVJFMEl3MEd2WGhCT1pM?=
- =?utf-8?B?c1p0TjdaOUlUUXpzRENLbytQSlVMbkc4cUcrZHR3UUkvaDg0ZHNpQzU3ZGRh?=
- =?utf-8?B?UWl5VkJYeVRIeFcydUtBZFhDV1ZPNVcwZzZwWFVvUnp2T2p2UmVyMllhbXZH?=
- =?utf-8?B?OU9OVHRKemdtU1BTYytnWWpsbVRabGljYTJ1QnpHemVDbnJib2NNdm9acVpS?=
- =?utf-8?B?VklnSjBTandDNEQxR1I0Z3RaNTlPN2QxUmR4ci81aldUNnFwQnFxblRHZENF?=
- =?utf-8?B?NEFyVzZXbXM4bkt6RDJncDZKenBHcHczM2FvSjBIYjFBSFlOODQ3dzZnSnIx?=
- =?utf-8?B?VER3ZkJjM05qZ1diLzNIN2lQQ3JBMHQza2VDWVd1UnhwTHhjd1pPblR1Vkhu?=
- =?utf-8?B?cnh6VDBJK3VScXduTUsyaVgrT2JocTBpbTA2bURzM01yUlNMMEp0V1ZxVWIr?=
- =?utf-8?B?L0I5WjllK2FQT0dOUUN0Mld1bk00aDMvUVA4ZXNjSStuM2tGbEZJekVSd1NQ?=
- =?utf-8?B?UFFGZ2c3MGRwZHlyT1hLRkV1ek9FUVkxbGUzTUtCMmRsZUxlSzhoTlUxeUU0?=
- =?utf-8?B?MGJGRVBPRE41M3UyRlhLVlNjdEkvdUpVN0d0RnhKNTh0MVlzZG4zUjNMZ21o?=
- =?utf-8?B?VzJWenFiK0FncXM1REdhZUFSUFhtL0FDVmEwT0YvN1EvazVvSHBZVm9jU2h6?=
- =?utf-8?B?M04rTGFXakdZVzhBQmlabmJITm5LR1huK3NUb2FwTmRZSnRCSndGUnV0emtt?=
- =?utf-8?B?TkhnRFRJZG50U0srMTlKSTN0TEhrSCszaEdRQXdMbUw1bGtjZkRManNYT3Ey?=
- =?utf-8?B?aTBRdWhZQ0cvejBGM1lkL1Q0dVFKMVo1dW1LV2FUb1dIbysyU0dWZkdyVEh6?=
- =?utf-8?B?Z2NLQ3RkZkRJejlxam16bk9JVmkvRmFuTjJtWVRIaUNFNmZ4T3RqTnpQUDFU?=
- =?utf-8?B?ZnV4Ujltc252SHFtMTlqbmFLa3BISjZIcU5pQWEwMi9kOWVicysxbnJwa0hW?=
- =?utf-8?Q?d/wErfMWsN8IRx8J9J?=
+x-ms-exchange-antispam-messagedata-0: =?utf-8?B?dVRSZVJVTEc4emFGd3R4NnFYWWRWbldwdmtHYkR0N2p4VW1Ocit2NkJHRFM5?=
+ =?utf-8?B?alEyY3pkOHJJTy9XNHZyay9wWTZxRGlMM2krcDk2UzhDdkN2MzhoMXh2eERX?=
+ =?utf-8?B?Y0VqdkdxV1NHQ08xS1FWdmRTSmx2WGIrc2pkQWtBYzNaTVg5Z1JuSHpHRzdW?=
+ =?utf-8?B?bmREZmxneVhpVlp0a1pUYjNCemtRdGZRNXJDN3dQc21CcGhXWWVScmltTlMv?=
+ =?utf-8?B?WTNteC9adElFUHY0TnJwT2FzUm1wck4yVE5zYWhTN1B5Q2dvTVF6VXh5ODNt?=
+ =?utf-8?B?TmQwUm14U0MxeVlpcThCcnFpRGMrdTVLeXd6TFRSaVJEcGZqdG9lU05OQ3V2?=
+ =?utf-8?B?ejB5dU5MUTJTQ0s1YVc0YUZRQWxBZzRpVWk5ck95Rk9qVkNTUDFxL0RiSTNI?=
+ =?utf-8?B?ZGE2OXFoNGFJNFM0eWxVUFBWTzFNaHdLVEZaM09HeFhkbDJhei8wZFhhVjVt?=
+ =?utf-8?B?aVN0ZitYQ3FXU0E4VWJWaHJhN1ZtN2pLU2xZaXNvMG5CZ3daTlFSeXhlUm54?=
+ =?utf-8?B?QTBYSDZRZmcwa2FJTDdNWDVsc3VzU3BKdThDdVU0bFhpUTFTK0xaaXZqVU1Y?=
+ =?utf-8?B?b3A1VnVCRXdkcFRUZmNmQXZyTzZXSjZmQVFzT3haZzM5THNwY0hNeG1WV1ND?=
+ =?utf-8?B?S1ZOZWluU2RtL0w4d1k3OTgxamRkYW10OHk1aEhRQmYxdGpwMktFWUZybHAv?=
+ =?utf-8?B?K0NmMGhlRFdNQmFhVUtQQXRsZVl2bXMvVmF2N3NrcEZNOVlHY2Z5SE1pUzNa?=
+ =?utf-8?B?N3FlRkYzaHhqOUxTU1dtU3FSUUNld25neVVRUHNrSjkxZjB3Z3BOSTJ3blhh?=
+ =?utf-8?B?YnRLR2ZkMU5nTElpeXA5aC9uaWJrc2cyV3g0eXpSdU9KdGwwdXdPTWE1NU95?=
+ =?utf-8?B?MWtkaGg4dGJ5a3NXVkRkYldYT05PY0NSOVNiZHRnOUgxVzN1WUd0R3VadHRV?=
+ =?utf-8?B?eURvblV5UjRJNC9IbThUQ3dhRzk3TENjZGFTKzdLNlVPdkpGdG81NlI0TmJN?=
+ =?utf-8?B?cWh6V0pQTmo3Wk9QazBzNzZXU2dnb0JXVkNNVFJ4SVNBREJVanFFd3pvajIy?=
+ =?utf-8?B?RWZ2c1Y1YnJWZGJ6U2hCQjVScEtLVUJlV0xJQ1FidFIrMDkzQ1FQMTVUWDA3?=
+ =?utf-8?B?TjArVUZYVnNteXZReXRtd2wxeVEvaG1PdVlVYXVxbnJTbWNyd0UxRHlhTzNq?=
+ =?utf-8?B?YWZJRElqY2EvVWk1Q0JCS3EyUXQybFUzUjhKWWJuamhGZUM4Q29FN2NScnk1?=
+ =?utf-8?B?MnE4Ui9XcGNPdXdSc0RCMU56eTJQRVA4eXhlRFB4MFdobENSc0taYTdLczha?=
+ =?utf-8?B?OXU2K3RaeUdScFBHOTBxZ2h1aW9YcC9xUk9CTnZmOHNSdVVFNVdKeG92aXUx?=
+ =?utf-8?B?eTBhZlE2dHNoUVhuTkpUYlhCZEl6aXZIekcyZjZRa1VkTFF2ZEJZVGJhZTBQ?=
+ =?utf-8?B?WHdVL1BpZnNLMzhjL2xqUFUxNklyM242TlhpRktKdXRRMjNXZC9Bd3dHWUV4?=
+ =?utf-8?B?ZzhkWFJwNkpJcUcxR1YyZnVybkwwUWF3WjFQUVJDMXJvQjI5aFRCZTRiaDFv?=
+ =?utf-8?B?YWFpS3F6RHVyUkxGUUlQWUh3R0NpUzE3ak9hY1VTaG9PT1NKejZJOGdEYlVD?=
+ =?utf-8?B?SC9VMVlKM3o2UGZnQ0trRXBiTUFYK3FNUEJqVEQvNGdnVCtNamhnR2pVSzhM?=
+ =?utf-8?B?UTl2TDB4ckVobzBoTDFzVkpweXQrVlpuMmlNeExBV2REWmJ4Z1B6NGNuV3N1?=
+ =?utf-8?B?aGdzbGdxZ0xwdFhIbld0Y25Wbnh3ZzNZbHU3UE5GdjVQUTVoeGlpK0NsVktj?=
+ =?utf-8?B?WXZ5bXZ2L2JPNEdPcllCcC9sUGt0RFZDSkllYjNxWDNOc1N2OE9FMjdlUzdD?=
+ =?utf-8?B?bHdSN2J6OVNiZ1A0ZEtJYnpGNXh5d0VIbjQ0K25rd1J0ZkZHV2tmMDBETUp1?=
+ =?utf-8?B?K0xGdURZZkxRVVRtYTZiclBkNmY5czBQM21GM2ZkcWFaQVA5Wlo2c0c3T3Ix?=
+ =?utf-8?B?Vk9OdGhOYUNIUkNXN0VXb2NpVDZSVldVenJQTE5UaTFYOUc5Y0VheksvWm0w?=
+ =?utf-8?B?eDFUbTI3U2dnN2YxaHY3QnBoV3BrWjRka3g4c3lsSm9rbnRyVnoxN0VGL2Y3?=
+ =?utf-8?B?eEFSYWdQdWRBRnhQRTJTUGt6VTl1WVJ4MklqVW5Db3lzM1ZpaksvMXhIWUFs?=
+ =?utf-8?B?L2dOMVRUTjFxbG1VOUt3Y09Jbk40SXBTUkhlQ2Y2UXptSTNhZ29oZEtnUW9U?=
+ =?utf-8?B?UG8reDgwWktXakRqRFpmbG9EMTAzYzJwbjZFeFF5bXU0bk9JN2hiUDlxeElR?=
+ =?utf-8?Q?wqYj6GXk2x9jzTNaF0?=
 MIME-Version: 1.0
 X-OriginatorOrg: oracle.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: SJ0PR10MB4429.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: c54d90fb-c310-4531-9d9a-08da2416b6c4
-X-MS-Exchange-CrossTenant-originalarrivaltime: 22 Apr 2022 04:15:19.9940 (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 8dca5088-667f-4c84-bf43-08da2416c282
+X-MS-Exchange-CrossTenant-originalarrivaltime: 22 Apr 2022 04:15:39.6481 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: gZJAwyk70Ey3CsG7hnXWLY/mcJW2qwb+/uZ0FCT9z40n7vvqbVdHbiT3RcKB3HoBftHoMLvigA/owgvyWRZYGA==
+X-MS-Exchange-CrossTenant-userprincipalname: oYf0igP++zW13QRz/+IPhowgRgIe0bHTdoudCEMU8tfP2EADN48TeNGjQzRId0mZKnQ8zPGE3LtFLvowOVBjwA==
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR10MB3349
 X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.486, 18.0.858
  definitions=2022-04-22_01:2022-04-21,
  2022-04-22 signatures=0
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 phishscore=0
- adultscore=0
- malwarescore=0 mlxlogscore=999 suspectscore=0 spamscore=0 bulkscore=0
- mlxscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 spamscore=0
+ suspectscore=0
+ malwarescore=0 mlxscore=0 mlxlogscore=999 adultscore=0 bulkscore=0
+ phishscore=0 classifier=spam adjust=0 reason=mlx scancount=1
  engine=8.12.0-2202240000 definitions=main-2204220015
-X-Proofpoint-ORIG-GUID: ZKUbVh6m9tygZcpOGXuE8R1w6sha6g1Z
-X-Proofpoint-GUID: ZKUbVh6m9tygZcpOGXuE8R1w6sha6g1Z
+X-Proofpoint-GUID: aqP9wGl6gv4U-B4l_yFX2WUyE8Yo8b0U
+X-Proofpoint-ORIG-GUID: aqP9wGl6gv4U-B4l_yFX2WUyE8Yo8b0U
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -165,7 +165,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Subject: Re: [dm-devel] [PATCH v8 4/7] dax: introduce DAX_RECOVERY_WRITE dax
  access mode
 X-BeenThere: dm-devel@redhat.com
@@ -179,53 +179,282 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "nvdimm@lists.linux.dev" <nvdimm@lists.linux.dev>,
- "dave.jiang@intel.com" <dave.jiang@intel.com>,
- "snitzer@redhat.com" <snitzer@redhat.com>,
- "peterz@infradead.org" <peterz@infradead.org>,
- "djwong@kernel.org" <djwong@kernel.org>, "x86@kernel.org" <x86@kernel.org>,
- "david@fromorbit.com" <david@fromorbit.com>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- "willy@infradead.org" <willy@infradead.org>,
- "dave.hansen@intel.com" <dave.hansen@intel.com>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>, "bp@alien8.de" <bp@alien8.de>,
- "vgoyal@redhat.com" <vgoyal@redhat.com>, "luto@kernel.org" <luto@kernel.org>,
- "vishal.l.verma@intel.com" <vishal.l.verma@intel.com>,
- "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
- "dan.j.williams@intel.com" <dan.j.williams@intel.com>,
- "ira.weiny@intel.com" <ira.weiny@intel.com>, "agk@redhat.com" <agk@redhat.com>
+Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Dave Jiang <dave.jiang@intel.com>,
+ Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>,
+ "Darrick J.
+ Wong" <djwong@kernel.org>, X86 ML <x86@kernel.org>, david <david@fromorbit.com>,
+ Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+ Matthew Wilcox <willy@infradead.org>, Christoph Hellwig <hch@infradead.org>,
+ Dave Hansen <dave.hansen@intel.com>,
+ device-mapper development <dm-devel@redhat.com>,
+ Borislav Petkov <bp@alien8.de>, Vivek Goyal <vgoyal@redhat.com>,
+ Andy Lutomirski <luto@kernel.org>, Vishal L Verma <vishal.l.verma@intel.com>,
+ linux-fsdevel <linux-fsdevel@vger.kernel.org>, "Weiny,
+ Ira" <ira.weiny@intel.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <085B955EE9A45C46B1EA12D53A0C6059@namprd10.prod.outlook.com>
+Content-ID: <CD8B9897F7532648B8DA52F81DF787CC@namprd10.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 4/20/2022 11:57 PM, Christoph Hellwig wrote:
->> +	if (bb->count &&
->> +		badblocks_check(bb, sector, num, &first_bad, &num_bad)) {
+On 4/21/2022 12:35 PM, Dan Williams wrote:
+> On Tue, Apr 19, 2022 at 7:05 PM Jane Chu <jane.chu@oracle.com> wrote:
+>>
+>> Up till now, dax_direct_access() is used implicitly for normal
+>> access, but for the purpose of recovery write, dax range with
+>> poison is requested.  To make the interface clear, introduce
+>>          enum dax_access_mode {
+>>                  DAX_ACCESS,
+>>                  DAX_RECOVERY_WRITE,
+>>          }
+>> where DAX_ACCESS is used for normal dax access, and
+>> DAX_RECOVERY_WRITE is used for dax recovery write.
+>>
+>> Suggested-by: Dan Williams <dan.j.williams@intel.com>
+>> Signed-off-by: Jane Chu <jane.chu@oracle.com>
+>> ---
+>>   drivers/dax/super.c             |  5 ++--
+>>   drivers/md/dm-linear.c          |  5 ++--
+>>   drivers/md/dm-log-writes.c      |  5 ++--
+>>   drivers/md/dm-stripe.c          |  5 ++--
+>>   drivers/md/dm-target.c          |  4 ++-
+>>   drivers/md/dm-writecache.c      |  7 +++---
+>>   drivers/md/dm.c                 |  5 ++--
+>>   drivers/nvdimm/pmem.c           | 44 +++++++++++++++++++++++++--------
+>>   drivers/nvdimm/pmem.h           |  5 +++-
+>>   drivers/s390/block/dcssblk.c    |  9 ++++---
+>>   fs/dax.c                        |  9 ++++---
+>>   fs/fuse/dax.c                   |  4 +--
+>>   include/linux/dax.h             |  9 +++++--
+>>   include/linux/device-mapper.h   |  4 ++-
+>>   tools/testing/nvdimm/pmem-dax.c |  3 ++-
+>>   15 files changed, 85 insertions(+), 38 deletions(-)
+>>
+>> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
+>> index 0211e6f7b47a..5405eb553430 100644
+>> --- a/drivers/dax/super.c
+>> +++ b/drivers/dax/super.c
+>> @@ -117,6 +117,7 @@ enum dax_device_flags {
+>>    * @dax_dev: a dax_device instance representing the logical memory range
+>>    * @pgoff: offset in pages from the start of the device to translate
+>>    * @nr_pages: number of consecutive pages caller can handle relative to @pfn
+>> + * @mode: indicator on normal access or recovery write
+>>    * @kaddr: output parameter that returns a virtual address mapping of pfn
+>>    * @pfn: output parameter that returns an absolute pfn translation of @pgoff
+>>    *
+>> @@ -124,7 +125,7 @@ enum dax_device_flags {
+>>    * pages accessible at the device relative @pgoff.
+>>    */
+>>   long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
+>> -               void **kaddr, pfn_t *pfn)
+>> +               enum dax_access_mode mode, void **kaddr, pfn_t *pfn)
+>>   {
+>>          long avail;
+>>
+>> @@ -138,7 +139,7 @@ long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
+>>                  return -EINVAL;
+>>
+>>          avail = dax_dev->ops->direct_access(dax_dev, pgoff, nr_pages,
+>> -                       kaddr, pfn);
+>> +                       mode, kaddr, pfn);
+>>          if (!avail)
+>>                  return -ERANGE;
+>>          return min(avail, nr_pages);
+>> diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
+>> index 76b486e4d2be..13e263299c9c 100644
+>> --- a/drivers/md/dm-linear.c
+>> +++ b/drivers/md/dm-linear.c
+>> @@ -172,11 +172,12 @@ static struct dax_device *linear_dax_pgoff(struct dm_target *ti, pgoff_t *pgoff)
+>>   }
+>>
+>>   static long linear_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
+>> -               long nr_pages, void **kaddr, pfn_t *pfn)
+>> +               long nr_pages, enum dax_access_mode mode, void **kaddr,
+>> +               pfn_t *pfn)
+>>   {
+>>          struct dax_device *dax_dev = linear_dax_pgoff(ti, &pgoff);
+>>
+>> -       return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
+>> +       return dax_direct_access(dax_dev, pgoff, nr_pages, mode, kaddr, pfn);
+>>   }
+>>
+>>   static int linear_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
+>> diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+>> index c9d036d6bb2e..06bdbed65eb1 100644
+>> --- a/drivers/md/dm-log-writes.c
+>> +++ b/drivers/md/dm-log-writes.c
+>> @@ -889,11 +889,12 @@ static struct dax_device *log_writes_dax_pgoff(struct dm_target *ti,
+>>   }
+>>
+>>   static long log_writes_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
+>> -                                        long nr_pages, void **kaddr, pfn_t *pfn)
+>> +               long nr_pages, enum dax_access_mode mode, void **kaddr,
+>> +               pfn_t *pfn)
+>>   {
+>>          struct dax_device *dax_dev = log_writes_dax_pgoff(ti, &pgoff);
+>>
+>> -       return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
+>> +       return dax_direct_access(dax_dev, pgoff, nr_pages, mode, kaddr, pfn);
+>>   }
+>>
+>>   static int log_writes_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
+>> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+>> index c81d331d1afe..77d72900e997 100644
+>> --- a/drivers/md/dm-stripe.c
+>> +++ b/drivers/md/dm-stripe.c
+>> @@ -315,11 +315,12 @@ static struct dax_device *stripe_dax_pgoff(struct dm_target *ti, pgoff_t *pgoff)
+>>   }
+>>
+>>   static long stripe_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
+>> -               long nr_pages, void **kaddr, pfn_t *pfn)
+>> +               long nr_pages, enum dax_access_mode mode, void **kaddr,
+>> +               pfn_t *pfn)
+>>   {
+>>          struct dax_device *dax_dev = stripe_dax_pgoff(ti, &pgoff);
+>>
+>> -       return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
+>> +       return dax_direct_access(dax_dev, pgoff, nr_pages, mode, kaddr, pfn);
+>>   }
+>>
+>>   static int stripe_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
+>> diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
+>> index 64dd0b34fcf4..8cd5184e62f0 100644
+>> --- a/drivers/md/dm-target.c
+>> +++ b/drivers/md/dm-target.c
+>> @@ -10,6 +10,7 @@
+>>   #include <linux/init.h>
+>>   #include <linux/kmod.h>
+>>   #include <linux/bio.h>
+>> +#include <linux/dax.h>
+>>
+>>   #define DM_MSG_PREFIX "target"
+>>
+>> @@ -142,7 +143,8 @@ static void io_err_release_clone_rq(struct request *clone,
+>>   }
+>>
+>>   static long io_err_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
+>> -               long nr_pages, void **kaddr, pfn_t *pfn)
+>> +               long nr_pages, enum dax_access_mode mode, void **kaddr,
+>> +               pfn_t *pfn)
+>>   {
+>>          return -EIO;
+>>   }
+>> diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
+>> index 5630b470ba42..d74c5a7a0ab4 100644
+>> --- a/drivers/md/dm-writecache.c
+>> +++ b/drivers/md/dm-writecache.c
+>> @@ -286,7 +286,8 @@ static int persistent_memory_claim(struct dm_writecache *wc)
+>>
+>>          id = dax_read_lock();
+>>
+>> -       da = dax_direct_access(wc->ssd_dev->dax_dev, offset, p, &wc->memory_map, &pfn);
+>> +       da = dax_direct_access(wc->ssd_dev->dax_dev, offset, p, DAX_ACCESS,
+>> +                       &wc->memory_map, &pfn);
+>>          if (da < 0) {
+>>                  wc->memory_map = NULL;
+>>                  r = da;
+>> @@ -308,8 +309,8 @@ static int persistent_memory_claim(struct dm_writecache *wc)
+>>                  i = 0;
+>>                  do {
+>>                          long daa;
+>> -                       daa = dax_direct_access(wc->ssd_dev->dax_dev, offset + i, p - i,
+>> -                                               NULL, &pfn);
+>> +                       daa = dax_direct_access(wc->ssd_dev->dax_dev, offset + i,
+>> +                                       p - i, DAX_ACCESS, NULL, &pfn);
+>>                          if (daa <= 0) {
+>>                                  r = daa ? daa : -EINVAL;
+>>                                  goto err3;
+>> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+>> index 3c5fad7c4ee6..8258676a352f 100644
+>> --- a/drivers/md/dm.c
+>> +++ b/drivers/md/dm.c
+>> @@ -1093,7 +1093,8 @@ static struct dm_target *dm_dax_get_live_target(struct mapped_device *md,
+>>   }
+>>
+>>   static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
+>> -                                long nr_pages, void **kaddr, pfn_t *pfn)
+>> +               long nr_pages, enum dax_access_mode mode, void **kaddr,
+>> +               pfn_t *pfn)
+>>   {
+>>          struct mapped_device *md = dax_get_private(dax_dev);
+>>          sector_t sector = pgoff * PAGE_SECTORS;
+>> @@ -1111,7 +1112,7 @@ static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
+>>          if (len < 1)
+>>                  goto out;
+>>          nr_pages = min(len, nr_pages);
+>> -       ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
+>> +       ret = ti->type->direct_access(ti, pgoff, nr_pages, mode, kaddr, pfn);
+>>
+>>    out:
+>>          dm_put_live_table(md, srcu_idx);
+>> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+>> index 4aa17132a557..c77b7cf19639 100644
+>> --- a/drivers/nvdimm/pmem.c
+>> +++ b/drivers/nvdimm/pmem.c
+>> @@ -239,24 +239,47 @@ static int pmem_rw_page(struct block_device *bdev, sector_t sector,
+>>
+>>   /* see "strong" declaration in tools/testing/nvdimm/pmem-dax.c */
+>>   __weak long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
+>> -               long nr_pages, void **kaddr, pfn_t *pfn)
+>> +               long nr_pages, enum dax_access_mode mode, void **kaddr,
+>> +               pfn_t *pfn)
+>>   {
+>>          resource_size_t offset = PFN_PHYS(pgoff) + pmem->data_offset;
+>> -
+>> -       if (unlikely(is_bad_pmem(&pmem->bb, PFN_PHYS(pgoff) / 512,
+>> -                                       PFN_PHYS(nr_pages))))
+>> -               return -EIO;
+>> +       sector_t sector = PFN_PHYS(pgoff) >> SECTOR_SHIFT;
+>> +       unsigned int num = PFN_PHYS(nr_pages) >> SECTOR_SHIFT;
+>> +       struct badblocks *bb = &pmem->bb;
+>> +       sector_t first_bad;
+>> +       int num_bad;
+>>
+>>          if (kaddr)
+>>                  *kaddr = pmem->virt_addr + offset;
+>>          if (pfn)
+>>                  *pfn = phys_to_pfn_t(pmem->phys_addr + offset, pmem->pfn_flags);
+>>
+>> +       if (bb->count &&
+>> +               badblocks_check(bb, sector, num, &first_bad, &num_bad)) {
+>> +               long actual_nr;
+>> +
+>> +               if (mode != DAX_RECOVERY_WRITE)
+>> +                       return -EIO;
+>> +
+>> +               /*
+>> +                * Set the recovery stride is set to kernel page size because
+>> +                * the underlying driver and firmware clear poison functions
+>> +                * don't appear to handle large chunk(such as 2MiB) reliably.
+>> +                */
+>> +               actual_nr = PHYS_PFN(
+>> +                       PAGE_ALIGN((first_bad - sector) << SECTOR_SHIFT));
+>> +               dev_dbg(pmem->bb.dev, "start sector(%llu), nr_pages(%ld), first_bad(%llu), actual_nr(%ld)\n",
+>> +                               sector, nr_pages, first_bad, actual_nr);
+>> +               if (actual_nr)
+>> +                       return actual_nr;
+>> +               return 1;
+>> +       }
+>> +
 > 
-> Weird alignment here, continuing lines for conditionals are aligned
-> either after the opening brace:
-> 
-> 	if (bb->count &&
-> 	    badblocks_check(bb, sector, num, &first_bad, &num_bad)) {
-> 
-> or with double tabs.  I tend to prefer the version I posted above.
-> 
-> The being said, shouldn't this change even be in this patch and not just
-> added once we add actual recovery support?
+> Similar feedback as Christoph, lets keep this patch just to the simple
+> task of plumbing the @mode argument to dax_direct_access() and save
+> the logic changes for DAX_RECOVERY_WRITE to a later patch. The idea
+> being that in general you want to limit the blast radius of
+> regressions so that it simplifies reverts if necessary. If these logic
+> changes have a regression then reverting this patch also undoes all
+> the other innocent boilerplate plumbing.
 
-Right, will move the recovery_write related  changes to next patch.
+Got it, will do.
 
 thanks!
 -jane
-
 --
 dm-devel mailing list
 dm-devel@redhat.com
