@@ -4,99 +4,156 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5B4B6C433F5
-	for <dm-devel@archiver.kernel.org>; Fri, 22 Apr 2022 13:27:05 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1650634024;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=gq79QY4m6tjPUPzqkSwT7a6XxZ70afoYslsp7bHXd4o=;
-	b=H+jGKYdg1THsKdxJYyP9RCh8BFtBatzz/zGOuUjK7GrlBPpu8LBa9hrK/5jV9IkmiZlVCs
-	TkaNWT7KJO+szMr3AHLA2dlR4xkKsEe7+GmEY5ZMSjkKY7jkSbc7E/fZHUPrymT1Q0gmhO
-	VJj+ng9w2eeMTZLkPAA6RIKAFEvpNSw=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0C8D2C433F5
+	for <dm-devel@archiver.kernel.org>; Fri, 22 Apr 2022 22:46:33 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-131-7BeV2iG-PW6ZapsD5qU5ng-1; Fri, 22 Apr 2022 09:27:00 -0400
-X-MC-Unique: 7BeV2iG-PW6ZapsD5qU5ng-1
+ us-mta-661-taHiQJEvODucYN5Z3mMt1A-1; Fri, 22 Apr 2022 18:46:29 -0400
+X-MC-Unique: taHiQJEvODucYN5Z3mMt1A-1
 Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7C126101AA4D;
-	Fri, 22 Apr 2022 13:26:58 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1E7F629AA2FA;
+	Fri, 22 Apr 2022 22:46:28 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2B71654FBB3;
-	Fri, 22 Apr 2022 13:26:58 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id DCDBB568638;
+	Fri, 22 Apr 2022 22:46:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 534F21940352;
-	Fri, 22 Apr 2022 13:26:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 83D821940352;
+	Fri, 22 Apr 2022 22:46:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 919BC1940351
- for <dm-devel@listman.corp.redhat.com>; Fri, 22 Apr 2022 13:26:55 +0000 (UTC)
+ ESMTP id 70DBD1940351
+ for <dm-devel@listman.corp.redhat.com>; Fri, 22 Apr 2022 22:46:23 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7FD6EC2813E; Fri, 22 Apr 2022 13:26:55 +0000 (UTC)
+ id 5C968145BF03; Fri, 22 Apr 2022 22:46:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7BE6BC08087
- for <dm-devel@redhat.com>; Fri, 22 Apr 2022 13:26:55 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 57D2C145BEF9
+ for <dm-devel@redhat.com>; Fri, 22 Apr 2022 22:46:23 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5EC751E10B49
- for <dm-devel@redhat.com>; Fri, 22 Apr 2022 13:26:55 +0000 (UTC)
-Received: from mail-qk1-f197.google.com (mail-qk1-f197.google.com
- [209.85.222.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 388B6185A7A4
+ for <dm-devel@redhat.com>; Fri, 22 Apr 2022 22:46:23 +0000 (UTC)
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
+ [205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-444-YFGQzuQsOKWNrhvr_yIR3w-1; Fri, 22 Apr 2022 09:26:54 -0400
-X-MC-Unique: YFGQzuQsOKWNrhvr_yIR3w-1
-Received: by mail-qk1-f197.google.com with SMTP id
- j24-20020a37ef18000000b0069eafae30b1so5400545qkk.8
- for <dm-devel@redhat.com>; Fri, 22 Apr 2022 06:26:54 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:date:from:to:cc:subject:message-id:references
- :mime-version:content-disposition:in-reply-to;
- bh=gNjMEQLvsWkXkbjeTFfikz24pQY1u9EkyxC2iRo/qHo=;
- b=tcaZeN2GzTP6KrF62HVt+BLKwwEzYSL+sHwIu01Z+0QTrnK9W40WU6t2a8hptC4rm9
- 7msu+yadoaMXmCFV9S8i/j+zV/GjSqalDhnoLgKQS/INY8R7QQA61qbQT6xYb1JNmuiB
- Vi56opbRuY3BmxT23NKZV9gfvrxTVeJz+gU+kW+tY/13rMNWswAwYoq+dHqnFpe40AlK
- 8LVVU3ad0IxacB6CRXiB4CaFaLt14Bz3Du3aTUZqifyAQ62Hqaz3KmtffHdn+qWx/1JW
- jO/LJwpNTVdOarMsar7AbNdqWf4MENVy2Xt74PLy6DUCn2BOrX2xfMBBjY0rEtqpLjLY
- +CPw==
-X-Gm-Message-State: AOAM533HOYJcCTFgwnbNQKhIDTZ6e5F31sKBVMhbWi/QjzoBx4xh/w/d
- LZ7R+qjJr6dsbXQQK8xn4odNPnNt7C5rAVtnQXozB/PdRS9KYrZfaGyW28tjHpXHU+aDckvqbUc
- /0+ckCMo+Jq8K7w==
-X-Received: by 2002:a37:62cf:0:b0:69c:a334:f5ce with SMTP id
- w198-20020a3762cf000000b0069ca334f5cemr2629329qkb.783.1650634013175; 
- Fri, 22 Apr 2022 06:26:53 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJymT5llGvlHheU8hzXEE4vPU2S35LVf6IJ5vTGm29+BgB5MzQR/ADlHjwTdbXcwlR75R+FjSQ==
-X-Received: by 2002:a37:62cf:0:b0:69c:a334:f5ce with SMTP id
- w198-20020a3762cf000000b0069ca334f5cemr2629304qkb.783.1650634012857; 
- Fri, 22 Apr 2022 06:26:52 -0700 (PDT)
-Received: from localhost (200.sub-174-192-15.myvzw.com. [174.192.15.200])
- by smtp.gmail.com with ESMTPSA id
- 12-20020a37080c000000b0069ea5b5e1d2sm908490qki.83.2022.04.22.06.26.51
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Fri, 22 Apr 2022 06:26:52 -0700 (PDT)
-Date: Fri, 22 Apr 2022 09:26:50 -0400
-From: Mike Snitzer <snitzer@redhat.com>
-To: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-Message-ID: <YmKtGu1M2uOh29MG@redhat.com>
-References: <20220418022733.56168-1-snitzer@kernel.org>
- <20220418022733.56168-22-snitzer@kernel.org>
- <20220421040620.zbocicrqa76n4zqm@shindev>
- <YmKqATrOXNpoBBQd@redhat.com>
+ us-mta-197-tH10g5q6NXqDwKmJfxu4bA-1; Fri, 22 Apr 2022 18:46:21 -0400
+X-MC-Unique: tH10g5q6NXqDwKmJfxu4bA-1
+Received: from pps.filterd (m0246617.ppops.net [127.0.0.1])
+ by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 23MKtDxV012431; 
+ Fri, 22 Apr 2022 22:45:45 GMT
+Received: from iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com
+ (iadpaimrmta03.appoci.oracle.com [130.35.103.27])
+ by mx0b-00069f02.pphosted.com with ESMTP id 3ffpbvg737-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+ Fri, 22 Apr 2022 22:45:45 +0000
+Received: from pps.filterd
+ (iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
+ by iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com (8.16.1.2/8.16.1.2)
+ with SMTP id 23MMew5N005357; Fri, 22 Apr 2022 22:45:43 GMT
+Received: from nam11-dm6-obe.outbound.protection.outlook.com
+ (mail-dm6nam11lp2174.outbound.protection.outlook.com [104.47.57.174])
+ by iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com with ESMTP id
+ 3ffm8bpsqj-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+ Fri, 22 Apr 2022 22:45:43 +0000
+Received: from SJ0PR10MB4429.namprd10.prod.outlook.com (2603:10b6:a03:2d1::14)
+ by BYAPR10MB2550.namprd10.prod.outlook.com (2603:10b6:a02:b1::21)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5186.14; Fri, 22 Apr
+ 2022 22:45:41 +0000
+Received: from SJ0PR10MB4429.namprd10.prod.outlook.com
+ ([fe80::1c44:15ca:b5c2:603e]) by SJ0PR10MB4429.namprd10.prod.outlook.com
+ ([fe80::1c44:15ca:b5c2:603e%8]) with mapi id 15.20.5186.015; Fri, 22 Apr 2022
+ 22:45:40 +0000
+From: Jane Chu <jane.chu@oracle.com>
+To: dan.j.williams@intel.com, bp@alien8.de, hch@infradead.org,
+ dave.hansen@intel.com, peterz@infradead.org, luto@kernel.org,
+ david@fromorbit.com, djwong@kernel.org, linux-fsdevel@vger.kernel.org,
+ nvdimm@lists.linux.dev, linux-kernel@vger.kernel.org, x86@kernel.org
+Date: Fri, 22 Apr 2022 16:45:01 -0600
+Message-Id: <20220422224508.440670-1-jane.chu@oracle.com>
+X-ClientProxiedBy: SN1PR12CA0057.namprd12.prod.outlook.com
+ (2603:10b6:802:20::28) To SJ0PR10MB4429.namprd10.prod.outlook.com
+ (2603:10b6:a03:2d1::14)
 MIME-Version: 1.0
-In-Reply-To: <YmKqATrOXNpoBBQd@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: Re: [dm-devel] [dm-5.19 PATCH 21/21] dm: improve abnormal bio
- processing
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-Correlation-Id: 27e4aa33-ae59-453b-dace-08da24b1d3c1
+X-MS-TrafficTypeDiagnostic: BYAPR10MB2550:EE_
+X-Microsoft-Antispam-PRVS: <BYAPR10MB255013373936BF157BF8B3ACF3F79@BYAPR10MB2550.namprd10.prod.outlook.com>
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0
+X-Microsoft-Antispam-Message-Info: SERBtAAEN0Jt6qRouQmGqEWSdesnOk40BG07zKmTuLHuZLNW+jYJL2sYThbD8MjTvfgKsBNGIGm1UusM/V3QcGKKqvZkoSa5YhR1CqUI8Xw6KtbsJN0mJ0tjiLUsGM8gz1uaROoLYl3pxeAt0lcka1sul5M+l35nOyIAmFnCO+zqT9MS4LAbpceb+I5XmT0i4jHupxOHoWjD4ZF0kMA69ueNjBxaiQXRcH9nfHMS45e7Gen6HO/7YOj+L1nvIysaesQ5wfZWBC7V01r+i/Amlnqonle5Ew6BLBNtUsX8HekuneFTv9YBzEuzLGRjqAhkFnOfjLkUmhl9bR7O+hF/jBqlCxz6hCg0qLiciR4atdV/ZO7K9wGFsGYExNEUkff9PDU5sW4O6xP2hplZxX6L1iORSMTCkjjQivQ/gTYiEEEf+Wb/LT4rouuGmc6UYWtQEQ76A065dt+mCEhu79JDTLWsJDPnxBu/Fs1cVWyLWw+sNo2Fgh5hIpyRrD0KHxpufMC1jd8AQVIKfNLv+6CI8TIGPzVECb0VQvdSQVyUP8SwUDs/vO7Mz06DCNHqkg5IUKPCStq0K0uW4WOyH248gMTabzlVlgRcaEhaYIqqYFx3guLCgp6q9C2PDaYHuXXMv4VTY3PGxGuCpaYTMNF/BVr9Aj4UNyUNlEYL0eACmea4ZPI/KtroRyJdv4AbxFx0rorqwr96Yc14RuSjPRCp3pbajtSA8eCeno4UqbDnEV/HuZdRCG1qVhL3Nf8Naz2G95d1FQbqYYJoh5L3SxKhTwQo/Tz68dvLd2arP25PMU0WqM+dPoOkwayrGZqzJTel
+X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:SJ0PR10MB4429.namprd10.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230001)(366004)(6506007)(6666004)(6486002)(8936002)(508600001)(966005)(52116002)(83380400001)(36756003)(316002)(66556008)(66476007)(2906002)(8676002)(4326008)(66946007)(38100700002)(2616005)(86362001)(5660300002)(44832011)(186003)(6512007)(1076003)(7416002)(921005);
+ DIR:OUT; SFP:1101
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?dZs/qAOqS83+Y1Fq9hlRjFOD+smVlDQEK+uGoqvZW++rG6xaPuw+I8hjciI/?=
+ =?us-ascii?Q?dloDo3HucxhTUfOTxL5q3U5OItd7pfOQ7kFww6Te02BCnIFArvJedBqoFjEW?=
+ =?us-ascii?Q?ZfxKq5io/PoJaYXrdyZF22kAaJVlDAdl8l97fY43hn41zplDiToQUz6v+fu8?=
+ =?us-ascii?Q?16ilQXZtVyCgIeSZqXe7d3usVza16U28y1LPM+/H9bG/vZTL4IH58IarGZlc?=
+ =?us-ascii?Q?fRl4a5GGayfTMvnKaWyZcIQdtozjbWldoia3Oz5vOoNa0P0kB/VxuDUhAlbF?=
+ =?us-ascii?Q?jMgtlL0CHtaRy4SDCySqH6Fy/w2biqcAgEkVYDgOkzE3W0yw+gtDhS7AUd8d?=
+ =?us-ascii?Q?6CI2LYjmFZSaMLmBhBsUB0zyUDuzkU03iww1n7Y08lDswVQI4OyTqhtLg9B5?=
+ =?us-ascii?Q?h1vfrDl2jyzLCUAD9AmUxZiP2kcAgyCzsQeAgRgqPBIyAH4qIGPoDJ6qwrQN?=
+ =?us-ascii?Q?9ZuEGdkGZWaFdNYs65U66HH1K2M3EPVkqrkw6NKX1t9kjz55tdVyXjyvZP0V?=
+ =?us-ascii?Q?KcqLLOqduQlcUeEKtBaqzHSJxV9g7x7Af8OLcoTKkOzbIi6IhHknWyE37gIu?=
+ =?us-ascii?Q?JmVcgyNaWmrUoR+sN3VQD7N5blRri8FbtkPyxwsSuO0hOmLZYO+kdDvW/9VE?=
+ =?us-ascii?Q?LApbwDKoDqwbfKgEx1hTc1+p3kMy7zaG8cnnCkWtOa03y8D/VFxaPpo1mpZJ?=
+ =?us-ascii?Q?J+sNdl/pVG9mGNhZCSPACDvkgQaOeUBWYK2bfPBVExx/adq0yU8eWJdZQmlU?=
+ =?us-ascii?Q?fk/GfaymN2yFBf0AvM+H5kfTbrHOBzkN8+f75mVJmWOJKMdV9qikxQ3r2oZ5?=
+ =?us-ascii?Q?MWsFz+p1yziCGdQwd4uScBJvmKRJboaC0IFuM0oHIl7RbOecVehwLmkasrnc?=
+ =?us-ascii?Q?t1fHeZ8UNwR/4pXMEiUipDnbYyWPIuBQfe65jzbEfxj5QwWfasYI5MDitIGe?=
+ =?us-ascii?Q?4rm1iF3d0+BdyzT1AeARTgiF0YsSp63qAmGVwAyApxW+Hm6ejT6acsSxuTTr?=
+ =?us-ascii?Q?SXHneAxN7wHl2nfy/NOsUc55nkq3Ff9x8Zw7WMifvwEDh4YOdSk3Pjw/qGNA?=
+ =?us-ascii?Q?rInRB5qecD6bRdT+YS5vQ5Lvuhx1aSjdW1T8Uqp6zvkwtIcUTn9ZEoSc6nLc?=
+ =?us-ascii?Q?3Q4I7HbqkFqwaXLC4gCOW3WBH3RwgQTpGRtbVvB5jQPoeeOAjZwRIyh8m08J?=
+ =?us-ascii?Q?7Pt7Np2q+K7QDoQaYWXl/nK+OveuEMYGBju1qK+VgoHvelUDTsam0G6QRA0a?=
+ =?us-ascii?Q?x4krJMkHRWKV3omRT5SRjKNWptpeqZxcNMGc2x5ryJv1fn0djCyiTr41EQpU?=
+ =?us-ascii?Q?OyEyvQLZorZQNU5TyE2XfeDHTHJnzpKp7suAW7zPh2FwYzpSbY10zu5Fnyxl?=
+ =?us-ascii?Q?AC3K61TJYv8xx0d8J35g/FDkhZgn+cyDTFBAKd+DFdirU4Ocj0OWNe1A/Upk?=
+ =?us-ascii?Q?iVNXKYSplEiwbAMNzJre+f4jpQosqDfVkARfELsXPs7kHORKRbppg/A2Mgd+?=
+ =?us-ascii?Q?aWPTxv6rYfwuRd6wkMStmwkSZqzelVBs+aa4eusk4r+I6XPhzh4s3fHA9qdy?=
+ =?us-ascii?Q?1WKxOmxoF307ErgjGvuKLwUZQNaSZe+GretSoOb2gG2SJzBgVBgQ6b19HPed?=
+ =?us-ascii?Q?77JQ80OsBWSAZxhq5ZF9h+0tovQbil7b+RsJ47+oeq7BFRNx6uXE7kWc6Si2?=
+ =?us-ascii?Q?KsjuEUChlvBxNOHT3VC3EsHQ1A35XfiIFPjwK6BZ3Y9kfR4h9Qgw+x3ng2Cm?=
+ =?us-ascii?Q?pwtxq27dBVGcKTOVy9I2/CqIA7QyrOU=3D?=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 27e4aa33-ae59-453b-dace-08da24b1d3c1
+X-MS-Exchange-CrossTenant-AuthSource: SJ0PR10MB4429.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 22 Apr 2022 22:45:40.8729 (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: YHA4t/aIpYQv6+9fISCZfKVv0GsYVagM8zb0W3VMo63F9Qdw4k0almiMY4YzepBQhKdmDC13NrqNDrlFXFRnMg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR10MB2550
+X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.486, 18.0.858
+ definitions=2022-04-22_07:2022-04-22,
+ 2022-04-22 signatures=0
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 malwarescore=0
+ bulkscore=0
+ suspectscore=0 mlxscore=0 spamscore=0 mlxlogscore=999 phishscore=0
+ adultscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2202240000 definitions=main-2204220095
+X-Proofpoint-GUID: 6pfItZVj7vlRtlTTV5h4Vn-bZJdgb_0c
+X-Proofpoint-ORIG-GUID: 6pfItZVj7vlRtlTTV5h4Vn-bZJdgb_0c
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: [dm-devel] [PATCH v9 0/7] DAX poison recovery
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -108,9 +165,9 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, Damien Le Moal <Damien.LeMoal@wdc.com>,
- Mike Snitzer <snitzer@kernel.org>, "ming.lei@redhat.com" <ming.lei@redhat.com>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@lst.de" <hch@lst.de>
+Cc: dave.jiang@intel.com, snitzer@redhat.com, vishal.l.verma@intel.com,
+ willy@infradead.org, dm-devel@redhat.com, vgoyal@redhat.com,
+ ira.weiny@intel.com, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
@@ -118,257 +175,110 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Apr 22 2022 at  9:13P -0400,
-Mike Snitzer <snitzer@redhat.com> wrote:
+In this series, dax recovery code path is independent of that of
+normal write. Competing dax recovery threads are serialized,
+racing read threads are guaranteed not overlapping with the
+recovery process.
 
-> On Thu, Apr 21 2022 at 12:06P -0400,
-> Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com> wrote:
-> 
-> > On Apr 17, 2022 / 22:27, Mike Snitzer wrote:
-> > > Read/write/flush are the most common operations, optimize switch in
-> > > is_abnormal_io() for those cases. Follows same pattern established in
-> > > block perf-wip commit ("block: optimise blk_may_split for normal rw")
-> > > 
-> > > Also, push is_abnormal_io() check and blk_queue_split() down from
-> > > dm_submit_bio() to dm_split_and_process_bio() and set new
-> > > 'is_abnormal_io' flag in clone_info. Optimize __split_and_process_bio
-> > > and __process_abnormal_io by leveraging ci.is_abnormal_io flag.
-> > > 
-> > > Signed-off-by: Mike Snitzer <snitzer@kernel.org>
-> > > ---
-> > >  drivers/md/dm.c | 60 +++++++++++++++++++++++++++++----------------------------
-> > >  1 file changed, 31 insertions(+), 29 deletions(-)
-> > > 
-> > > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > > index 3b87d151ef88..b9c30dfe0f2a 100644
-> > > --- a/drivers/md/dm.c
-> > > +++ b/drivers/md/dm.c
-> > > @@ -84,7 +84,8 @@ struct clone_info {
-> > >  	struct dm_io *io;
-> > >  	sector_t sector;
-> > 
-> > (snip)
-> > 
-> > >  	ci->sector = bio->bi_iter.bi_sector;
-> > >  	ci->sector_count = bio_sectors(bio);
-> > > @@ -1645,6 +1647,13 @@ static void dm_split_and_process_bio(struct mapped_device *md,
-> > >  		__send_empty_flush(&ci);
-> > >  		/* dm_io_complete submits any data associated with flush */
-> > >  		goto out;
-> > > +	} else if (unlikely(is_abnormal_io(bio))) {
-> > > +		/*
-> > > +		 * Use blk_queue_split() for abnormal IO (e.g. discard, etc)
-> > > +		 * otherwise associated queue_limits won't be imposed.
-> > > +		 */
-> > > +		blk_queue_split(&bio);
-> > > +		ci.is_abnormal_io = true;
-> > >  	}
-> > >  
-> > >  	error = __split_and_process_bio(&ci);
-> > 
-> > Hi Mike,
-> > 
-> > The hunk above triggered a WARNING [1] which is observed at mkfs.xfs for dm-
-> > zoned devices. With the hunk, the blk_queue_split(&bio) for abnormal I/O is
-> > called after init_clone_info(). I think it made the cloned bio different from
-> > the split bio. I suggest to move the "if (unlikely(is_abnormal_io(bio)))" block
-> > at the beginning of dm_split_and_process_bio(), so that blk_queue_split() is
-> > called before init_clone_info(). I created a patch for such change [2], and
-> > confirmed the WARNING goes away.
-> > 
-> > > @@ -1698,13 +1707,6 @@ static void dm_submit_bio(struct bio *bio)
-> > >  		goto out;
-> > >  	}
-> > >  
-> > > -	/*
-> > > -	 * Use blk_queue_split() for abnormal IO (e.g. discard, writesame, etc)
-> > > -	 * otherwise associated queue_limits won't be imposed.
-> > > -	 */
-> > > -	if (unlikely(is_abnormal_io(bio)))
-> > > -		blk_queue_split(&bio);
-> > > -
-> > >  	dm_split_and_process_bio(md, map, bio);
-> > >  out:
-> > >  	dm_put_live_table_bio(md, srcu_idx, bio);
-> > > -- 
-> > > 2.15.0
-> > > 
-> > > --
-> > > dm-devel mailing list
-> > > dm-devel@redhat.com
-> > > https://listman.redhat.com/mailman/listinfo/dm-devel
-> > > 
-> > 
-> > [1]
-> > 
-> > WARNING: CPU: 3 PID: 79434 at block/bio.c:1629 bio_trim+0x10a/0x150
-> > Modules linked in: dm_zoned null_blk f2fs crc32_generic dm_flakey iscsi_target_mod tcm_loop target_core_pscsi target_core_file target_core_iblock xt_CHECKSUM xt_MASQUERADE xt_conntrack ipt_REJECT nf_nat_tftp nf_conntrack_tftp bridge stp llc nft_objref nf_conntrack_netbios_ns nf_conntrack_broadcast nft_fib_inet nft_fib_ipv4 nft_fib_ipv6 nft_fib nft_reject_inet nf_reject_ipv4 nf_reject_ipv6 nft_reject nft_ct nft_chain_nat nf_tables ebtable_nat ebtable_broute ip6table_nat ip6table_mangle ip6table_raw ip6table_security iptable_nat nf_nat nf_conntrack nf_defrag_ipv6 nf_defrag_ipv4 iptable_mangle iptable_raw rfkill iptable_security ip_set target_core_user nfnetlink target_core_mod ebtable_filter ebtables ip6table_filter ip6_tables iptable_filter qrtr sunrpc intel_rapl_msr intel_rapl_common x86_pkg_temp_thermal intel_powerclamp coretemp kvm_intel at24 iTCO_wdt intel_pmc_bxt iTCO_vendor_support btrfs kvm irqbypass rapl raid6_pq intel_cstate zstd_compress joydev
-> >  intel_uncore i2c_i801 pcspkr i2c_smbus intel_pch_thermal lpc_ich ses enclosure ie31200_edac video zram ip_tables crct10dif_pclmul crc32_pclmul crc32c_intel ast ghash_clmulni_intel drm_vram_helper drm_kms_helper drm_ttm_helper ttm igb drm mpt3sas e1000e dca i2c_algo_bit raid_class scsi_transport_sas fuse [last unloaded: zonefs]
-> > CPU: 3 PID: 79434 Comm: mkfs.xfs Kdump: loaded Not tainted 5.18.0-rc3+ #2
-> > Hardware name: Supermicro X10SLL-F/X10SLL-F, BIOS 3.0 04/24/2015
-> > RIP: 0010:bio_trim+0x10a/0x150
-> > Code: 8d 7c 24 68 48 89 fa 48 c1 ea 03 80 3c 02 00 75 58 49 83 7c 24 68 00 74 13 48 83 c4 10 4c 89 e7 5d 41 5c 41 5d e9 f6 aa 0f 00 <0f> 0b 48 83 c4 10 5d 41 5c 41 5d c3 4c 89 ef 48 89 54 24 08 48 89
-> > RSP: 0018:ffff8881977d7928 EFLAGS: 00010206
-> > RAX: 0000000008000000 RBX: ffff88852b000000 RCX: 0000000000040000
-> > RDX: 00000000003c0000 RSI: 0000000000040000 RDI: ffff8883215a3d00
-> > RBP: 0000000000400000 R08: 0000000000000001 R09: ffff8881124b9057
-> > R10: ffffed102249720a R11: 0000000000000001 R12: ffff8883215a3d00
-> > R13: ffff8883215a3d28 R14: ffff8881124b9098 R15: ffff8881124b9054
-> > FS:  00007ff3a993dbc0(0000) GS:ffff8886ecf80000(0000) knlGS:0000000000000000
-> > CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-> > CR2: 000055a1bf241900 CR3: 0000000177074002 CR4: 00000000001706e0
-> > Call Trace:
-> >  <TASK>
-> >  dm_submit_bio+0x5fa/0x13b0
-> >  ? dm_dax_direct_access+0x1c0/0x1c0
-> >  ? lock_release+0x3a7/0x6c0
-> >  ? lock_downgrade+0x6a0/0x6a0
-> >  __submit_bio+0x1c2/0x2c0
-> >  ? __bio_queue_enter+0x570/0x570
-> >  submit_bio_noacct_nocheck+0x2f7/0x810
-> >  ? should_fail_request+0x70/0x70
-> >  ? rcu_read_lock_sched_held+0x3f/0x70
-> >  ? __lock_acquire+0x1591/0x5030
-> >  submit_bio+0x10a/0x270
-> >  ? submit_bio_noacct+0x15c0/0x15c0
-> >  submit_bio_wait+0xf2/0x1d0
-> >  ? submit_bio_wait_endio+0x40/0x40
-> >  ? lock_release+0x6c0/0x6c0
-> >  blkdev_issue_discard+0xb5/0x110
-> >  ? __blkdev_issue_discard+0x590/0x590
-> >  ? truncate_bdev_range+0x15d/0x240
-> >  blkdev_common_ioctl+0x853/0x1670
-> >  ? blkdev_bszset+0x160/0x160
-> >  ? __ia32_sys_readlinkat+0x87/0xf0
-> >  ? __ia32_compat_sys_newlstat+0x70/0x70
-> >  ? count_memcg_events.constprop.0+0x44/0x50
-> >  blkdev_ioctl+0x23b/0x690
-> >  ? blkdev_common_ioctl+0x1670/0x1670
-> >  ? security_file_ioctl+0x50/0x90
-> >  __x64_sys_ioctl+0x127/0x190
-> >  do_syscall_64+0x3b/0x90
-> >  entry_SYSCALL_64_after_hwframe+0x44/0xae
-> > RIP: 0033:0x7ff3a970731b
-> > Code: ff ff ff 85 c0 79 9b 49 c7 c4 ff ff ff ff 5b 5d 4c 89 e0 41 5c c3 66 0f 1f 84 00 00 00 00 00 f3 0f 1e fa b8 10 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d dd 2a 0f 00 f7 d8 64 89 01 48
-> > RSP: 002b:00007ffd79c8db68 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
-> > RAX: ffffffffffffffda RBX: 00000000e8000000 RCX: 00007ff3a970731b
-> > RDX: 00007ffd79c8db80 RSI: 0000000000001277 RDI: 0000000000000004
-> > RBP: 0000000000000004 R08: 0000000000000000 R09: 00007ffd79c8d997
-> > R10: 0000000000000000 R11: 0000000000000246 R12: 00007ffd79c8db80
-> > R13: 0000000000000001 R14: 0000000000000000 R15: 0000000080000000
-> >  </TASK>
-> > irq event stamp: 10213
-> > hardirqs last  enabled at (10223): [<ffffffffaa36e02e>] __up_console_sem+0x5e/0x70
-> > hardirqs last disabled at (10232): [<ffffffffaa36e013>] __up_console_sem+0x43/0x70
-> > softirqs last  enabled at (10190): [<ffffffffaa1faf06>] __irq_exit_rcu+0x1c6/0x260
-> > softirqs last disabled at (10185): [<ffffffffaa1faf06>] __irq_exit_rcu+0x1c6/0x260
-> > ---[ end trace 0000000000000000 ]---
-> > 
-> > [2]
-> > 
-> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> > index 7e3b5bdcf520..50382c98d7b3 100644
-> > --- a/drivers/md/dm.c
-> > +++ b/drivers/md/dm.c
-> > @@ -1639,6 +1639,15 @@ static void dm_split_and_process_bio(struct mapped_device *md,
-> >  	struct dm_io *io;
-> >  	blk_status_t error = BLK_STS_OK;
-> >  
-> > +	if (unlikely(is_abnormal_io(bio))) {
-> > +		/*
-> > +		 * Use blk_queue_split() for abnormal IO (e.g. discard, etc)
-> > +		 * otherwise associated queue_limits won't be imposed.
-> > +		 */
-> > +		blk_queue_split(&bio);
-> > +		ci.is_abnormal_io = true;
-> > +	}
-> > +
-> >  	init_clone_info(&ci, md, map, bio);
-> >  	io = ci.io;
-> >  
-> > @@ -1646,13 +1655,6 @@ static void dm_split_and_process_bio(struct mapped_device *md,
-> >  		__send_empty_flush(&ci);
-> >  		/* dm_io_complete submits any data associated with flush */
-> >  		goto out;
-> > -	} else if (unlikely(is_abnormal_io(bio))) {
-> > -		/*
-> > -		 * Use blk_queue_split() for abnormal IO (e.g. discard, etc)
-> > -		 * otherwise associated queue_limits won't be imposed.
-> > -		 */
-> > -		blk_queue_split(&bio);
-> > -		ci.is_abnormal_io = true;
-> >  	}
-> >  
-> >  	error = __split_and_process_bio(&ci);
-> > 
-> > -- 
-> > Best Regards,
-> > Shin'ichiro Kawasaki
-> > 
-> 
-> Thanks for your report, I'll sort it out but your patch doesn't seem right.
-> 
-> init_clone_info() will reset ci.is_abnormal_io so the bio won't be
-> processed properly.
+In this phase, the recovery granularity is page, future patch
+will explore recovery in finer granularity.
 
-FYI, I will be pushing a rebased commit with the following patch folded in:
+Changelog:
+v8 -> v9:
+- collect R-Bs from Christoph and Dan
+- move the actual DAX_RECOVERY_WRITE part of the work out of the
+  dax access mode plumbing patch and into the next patch that
+  introduces .recovery_write
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 7e3b5bdcf520..9650ba2075b8 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1613,12 +1613,12 @@ static blk_status_t __split_and_process_bio(struct clone_info *ci)
- }
+v7 -> v8:
+  - add a patch to teach the nfit driver to rely on mce->misc for poison
+    granularity, suggested by Dan
+  - add set_memory_present() helper to be invoked by set_mce_nospec() for
+    better readibility, suggested by Dan
+  - folded a trivial fix to comments in patch 2/NN, suggested by Boris,
+    and more commit message comments from Boris
+  - mode .recovery_write to dax_operation as dev_pagemap_ops is meant for
+    device agnostic operations, suggested by Christoph
+  - replace DAX_RECOVERY flag with enum dax_access_mode suggested by Dan
+  - re-organized __pmem_direct_access as provided by Christoph
+  - split [PATCH v7 4/6] into two patches: one introduces
+    DAX_RECOVERY_WRITE, and the other introduces .recovery_write operation
 
- static void init_clone_info(struct clone_info *ci, struct mapped_device *md,
--			    struct dm_table *map, struct bio *bio)
-+			    struct dm_table *map, struct bio *bio, bool is_abnormal)
- {
-	ci->map = map;
-	ci->io = alloc_io(md, bio);
-	ci->bio = bio;
--	ci->is_abnormal_io = false;
-+	ci->is_abnormal_io = is_abnormal;
-	ci->submit_as_polled = false;
-	ci->sector = bio->bi_iter.bi_sector;
-	ci->sector_count = bio_sectors(bio);
-@@ -1638,21 +1638,24 @@ static void dm_split_and_process_bio(struct mapped_device *md,
-	struct clone_info ci;
-	struct dm_io *io;
-	blk_status_t error = BLK_STS_OK;
-+	bool is_abnormal;
+v6 -> v7:
+ . incorporated comments from Christoph, and picked up a reviewed-by
+ . add x86@kernel.org per Boris
+ . discovered pmem firmware doesn't reliably handle a request to clear
+   poison over a large range (such as 2M), hence worked around the
+   the feature by limiting the size of the requested range to kernel
+   page size.
 
--	init_clone_info(&ci, md, map, bio);
-+	is_abnormal = is_abnormal_io(bio);
-+	if (unlikely(is_abnormal)) {
-+		/*
-+		 * Use blk_queue_split() for abnormal IO (e.g. discard, etc)
-+		 * otherwise associated queue_limits won't be imposed.
-+		 */
-+		blk_queue_split(&bio);
-+	}
-+
-+	init_clone_info(&ci, md, map, bio, is_abnormal);
-	io = ci.io;
+v5->v6:
+  . per Christoph, move set{clear}_mce_nospec() inline functions out
+    of include/linux/set_memory.h and into arch/x86/mm/pat/set_memory.c
+    file, so that no need to export _set_memory_present().
+  . per Christoph, ratelimit warning message in pmem_do_write()
+  . per both Christoph and Dan, switch back to adding a flag to
+    dax_direct_access() instead of embedding the flag in kvaddr
+  . suggestions from Christoph for improving code structure and
+    readability
+  . per Dan, add .recovery_write to dev_pagemap.ops instead of adding
+    it to dax_operations, such that, the DM layer doesn't need to be
+    involved explicitly in dax recoovery write
+  . per Dan, is_bad_pmem() takes a seqlock, so no need to place it
+    under recovery_lock.
+  Many thanks for both reviewers!
 
-	if (bio->bi_opf & REQ_PREFLUSH) {
-		__send_empty_flush(&ci);
-		/* dm_io_complete submits any data associated with flush */
-		goto out;
--	} else if (unlikely(is_abnormal_io(bio))) {
--		/*
--		 * Use blk_queue_split() for abnormal IO (e.g. discard, etc)
--		 * otherwise associated queue_limits won't be imposed.
--		 */
--		blk_queue_split(&bio);
--		ci.is_abnormal_io = true;
-	}
+v4->v5:
+  Fixed build errors reported by kernel test robot
 
-	error = __split_and_process_bio(&ci);
+v3->v4:
+  Rebased to v5.17-rc1-81-g0280e3c58f92
+
+References:
+v4 https://lore.kernel.org/lkml/20220126211116.860012-1-jane.chu@oracle.com/T/
+v3 https://lkml.org/lkml/2022/1/11/900
+v2 https://lore.kernel.org/all/20211106011638.2613039-1-jane.chu@oracle.com/
+Disussions about marking poisoned page as 'np'
+https://lore.kernel.org/all/CAPcyv4hrXPb1tASBZUg-GgdVs0OOFKXMXLiHmktg_kFi7YBMyQ@mail.gmail.com/
+
+Jane Chu (7):
+  acpi/nfit: rely on mce->misc to determine poison granularity
+  x86/mce: relocate set{clear}_mce_nospec() functions
+  mce: fix set_mce_nospec to always unmap the whole page
+  dax: introduce DAX_RECOVERY_WRITE dax access mode
+  dax: add .recovery_write dax_operation
+  pmem: refactor pmem_clear_poison()
+  pmem: implement pmem_recovery_write()
+
+ arch/x86/include/asm/set_memory.h |  52 --------
+ arch/x86/kernel/cpu/mce/core.c    |   6 +-
+ arch/x86/mm/pat/set_memory.c      |  48 ++++++-
+ drivers/acpi/nfit/mce.c           |   4 +-
+ drivers/dax/super.c               |  14 ++-
+ drivers/md/dm-linear.c            |  15 ++-
+ drivers/md/dm-log-writes.c        |  15 ++-
+ drivers/md/dm-stripe.c            |  15 ++-
+ drivers/md/dm-target.c            |   4 +-
+ drivers/md/dm-writecache.c        |   7 +-
+ drivers/md/dm.c                   |  25 +++-
+ drivers/nvdimm/pmem.c             | 203 +++++++++++++++++++++---------
+ drivers/nvdimm/pmem.h             |   5 +-
+ drivers/s390/block/dcssblk.c      |   9 +-
+ fs/dax.c                          |  22 +++-
+ fs/fuse/dax.c                     |   4 +-
+ include/linux/dax.h               |  22 +++-
+ include/linux/device-mapper.h     |  13 +-
+ include/linux/set_memory.h        |  10 +-
+ tools/testing/nvdimm/pmem-dax.c   |   3 +-
+ 20 files changed, 346 insertions(+), 150 deletions(-)
+
+
+base-commit: 028192fea1de083f4f12bfb1eb7c4d7beb5c8ecd
+-- 
+2.18.4
 
 --
 dm-devel mailing list
