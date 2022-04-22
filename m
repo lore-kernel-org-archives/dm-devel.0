@@ -4,72 +4,98 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DD525C433EF
-	for <dm-devel@archiver.kernel.org>; Fri, 22 Apr 2022 06:36:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id D7992C433EF
+	for <dm-devel@archiver.kernel.org>; Fri, 22 Apr 2022 13:13:52 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1650633231;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=H4ingJYNDwFhbOUuvqlFBaXLSk9TncB9blrHxsWHa4E=;
+	b=VSMVHKBhvwl3aiwfQLl+DSeZGQjHKRlDunLyIc5VlYlYXdlSUGqsuilBJbFqLr34r3if31
+	OAasfKoN0mEhGZKbga30MnKmvCgyr8WBdTnWC3c5VolrfKh8vcZp3PPur0riFCr5MK4dt9
+	PmQo2M4uzFZbFTGEn33tLdq3jxW9KoI=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-557-lDRH7vr3Mju6i8pDqmAdVw-1; Fri, 22 Apr 2022 02:35:24 -0400
-X-MC-Unique: lDRH7vr3Mju6i8pDqmAdVw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-553-faSYf3PdNIOK1Qilr2JwgA-1; Fri, 22 Apr 2022 09:13:48 -0400
+X-MC-Unique: faSYf3PdNIOK1Qilr2JwgA-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3096983396F;
-	Fri, 22 Apr 2022 06:35:23 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C4626811E76;
+	Fri, 22 Apr 2022 13:13:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 50098145BA51;
-	Fri, 22 Apr 2022 06:35:21 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0BECA40885A1;
+	Fri, 22 Apr 2022 13:13:45 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E71A51940350;
-	Fri, 22 Apr 2022 06:35:20 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CA6751940352;
+	Fri, 22 Apr 2022 13:13:44 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7C350194034C
- for <dm-devel@listman.corp.redhat.com>; Fri, 22 Apr 2022 06:35:20 +0000 (UTC)
+ ESMTP id 50FAA1940351
+ for <dm-devel@listman.corp.redhat.com>; Fri, 22 Apr 2022 13:13:44 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5C6B440D2820; Fri, 22 Apr 2022 06:35:20 +0000 (UTC)
+ id 3363CC27EBD; Fri, 22 Apr 2022 13:13:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 5499040C128B
- for <dm-devel@redhat.com>; Fri, 22 Apr 2022 06:35:20 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2EA45C28107
+ for <dm-devel@redhat.com>; Fri, 22 Apr 2022 13:13:44 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3C4221014A6C
- for <dm-devel@redhat.com>; Fri, 22 Apr 2022 06:35:20 +0000 (UTC)
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-210-sKipsRVYORqEjVf7Rs2w8Q-1; Fri, 22 Apr 2022 02:34:38 -0400
-X-MC-Unique: sKipsRVYORqEjVf7Rs2w8Q-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by ams.source.kernel.org (Postfix) with ESMTPS id 74582B82A89;
- Fri, 22 Apr 2022 06:27:21 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D3B3FC385A4;
- Fri, 22 Apr 2022 06:27:19 +0000 (UTC)
-Date: Thu, 21 Apr 2022 23:27:18 -0700
-From: Eric Biggers <ebiggers@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Message-ID: <YmJKxsqV5k+vKA+h@sol.localdomain>
-References: <20220420064745.1119823-1-hch@lst.de>
- <20220420064745.1119823-3-hch@lst.de>
- <YmBiAQ/IZbFhRc6o@sol.localdomain> <20220421142535.GA21025@lst.de>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 152BF1C0514C
+ for <dm-devel@redhat.com>; Fri, 22 Apr 2022 13:13:43 +0000 (UTC)
+Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
+ [209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-230-PBLt22XYOf25RolKEwt0Wg-1; Fri, 22 Apr 2022 09:13:42 -0400
+X-MC-Unique: PBLt22XYOf25RolKEwt0Wg-1
+Received: by mail-qv1-f70.google.com with SMTP id
+ kd13-20020a056214400d00b0044c066d97dbso4773172qvb.22
+ for <dm-devel@redhat.com>; Fri, 22 Apr 2022 06:13:42 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+ :mime-version:content-disposition:in-reply-to;
+ bh=2ymWTV/FdcyPsCH9VgDxmwbg3MDXoQ6i+EBWfdWIiiA=;
+ b=lrYzBRx0CWIlMY8fMADcCK0wqIIJBOf/KEslznHaITClN6TaugIu0wjHUekJie87zf
+ qjOWRybeLfsrI+CiUZDbl6NS34pWGEgHRhSEYcqeo0zGc0FEFCuHrgyWVopck8lpqTF2
+ lR2SGZV4L+z40gW+nUirSgurOAF04nvnnqObEW72CAdtewDhltwtqpe08wxYMq+vVOZZ
+ u6GjEg/nxozyaIpSUvMpbl3aLzfT5ldSHk5DpfS2YjQYurF0OkLgF72nao2t980m6Txs
+ iHLOOt3srTW4YN+VfXRTDe+I0ByFwL68Q/NWeVASw6HJxji8+AO1cc11mmSp/WCheCNO
+ Vtng==
+X-Gm-Message-State: AOAM530XX2PFzA7JEgjgg5OKLAV2gQICTWX8ejueW0NI9DoYC6Tx48BT
+ KJNYWcrDFyUa9B3FkaevKbECLcgPX7FfHMJDtWosXtijCbq66YKdGyIxEBWOw16w0PgwCMcivTB
+ HGcnq5UkfCWEpVg==
+X-Received: by 2002:a05:6214:2308:b0:432:e69f:5d71 with SMTP id
+ gc8-20020a056214230800b00432e69f5d71mr3465872qvb.19.1650633220264; 
+ Fri, 22 Apr 2022 06:13:40 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJyX5NST2c+uSzBIQrCznAb67jPQ9qOZ6HNq1mO4rPGExr9oQ9lIJIWMG4UE76CePYatWvQ5Lg==
+X-Received: by 2002:a05:6214:2308:b0:432:e69f:5d71 with SMTP id
+ gc8-20020a056214230800b00432e69f5d71mr3465834qvb.19.1650633219885; 
+ Fri, 22 Apr 2022 06:13:39 -0700 (PDT)
+Received: from localhost (200.sub-174-192-15.myvzw.com. [174.192.15.200])
+ by smtp.gmail.com with ESMTPSA id
+ j188-20020a3755c5000000b0067d1c76a09fsm945063qkb.74.2022.04.22.06.13.39
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Fri, 22 Apr 2022 06:13:39 -0700 (PDT)
+Date: Fri, 22 Apr 2022 09:13:37 -0400
+From: Mike Snitzer <snitzer@redhat.com>
+To: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Message-ID: <YmKqATrOXNpoBBQd@redhat.com>
+References: <20220418022733.56168-1-snitzer@kernel.org>
+ <20220418022733.56168-22-snitzer@kernel.org>
+ <20220421040620.zbocicrqa76n4zqm@shindev>
 MIME-Version: 1.0
-In-Reply-To: <20220421142535.GA21025@lst.de>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH 2/2] blk-crypto: fix the blk_crypto_profile
- liftime
+In-Reply-To: <20220421040620.zbocicrqa76n4zqm@shindev>
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: Re: [dm-devel] [dm-5.19 PATCH 21/21] dm: improve abnormal bio
+ processing
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -81,98 +107,214 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, Ulf Hansson <ulf.hansson@linaro.org>,
- linux-scsi@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
- Mike Snitzer <snitzer@kernel.org>, Adrian Hunter <adrian.hunter@intel.com>,
- Ritesh Harjani <riteshh@codeaurora.org>, linux-block@vger.kernel.org,
- Avri Altman <avri.altman@wdc.com>, dm-devel@redhat.com,
- Alim Akhtar <alim.akhtar@samsung.com>, linux-mmc@vger.kernel.org,
- Asutosh Das <asutoshd@codeaurora.org>
+Cc: "axboe@kernel.dk" <axboe@kernel.dk>, Damien Le Moal <Damien.LeMoal@wdc.com>,
+ Mike Snitzer <snitzer@kernel.org>, "ming.lei@redhat.com" <ming.lei@redhat.com>,
+ "dm-devel@redhat.com" <dm-devel@redhat.com>, "hch@lst.de" <hch@lst.de>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Disposition: inline
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gVGh1LCBBcHIgMjEsIDIwMjIgYXQgMDQ6MjU6MzVQTSArMDIwMCwgQ2hyaXN0b3BoIEhlbGx3
-aWcgd3JvdGU6Cj4gT24gV2VkLCBBcHIgMjAsIDIwMjIgYXQgMTI6NDE6NTNQTSAtMDcwMCwgRXJp
-YyBCaWdnZXJzIHdyb3RlOgo+ID4gQ2FuIHlvdSBlbGFib3JhdGUgb24gd2hhdCB5b3UgdGhpbmsg
-dGhlIGFjdHVhbCBwcm9ibGVtIGlzIGhlcmU/ICBUaGUgbGlmZXRpbWUgb2YKPiA+IHRoZSBibGtf
-Y3J5cHRvX3Byb2ZpbGUgbWF0Y2hlcyB0aGF0IG9mIHRoZSBob3N0IGNvbnRyb2xsZXIga29iamVj
-dCwgYW5kIEkKPiA+IHRob3VnaHQgdGhhdCBpdCBpcyBub3QgZGVzdHJveWVkIHVudGlsIGFmdGVy
-IGhpZ2hlci1sZXZlbCBvYmplY3RzIHN1Y2ggYXMKPiA+IGdlbmRpc2tzIGFuZCByZXF1ZXN0X3F1
-ZXVlcyBhcmUgZGVzdHJveWVkLgo+IAo+IEkgZG9uJ3QgdGhpbmsgYWxsIGRyaXZlciBhdXRob3Jz
-IGFncmVlIHdpdGggdGhhdCBhc3N1bXB0aW9uIChhbmQgaXQgaXNuJ3QKPiBkb2N1bWVudGVkIGFu
-eXdoZXJlKS4gCj4gCj4gVGhlIG1vc3QgdHJpdmlhbCBjYXNlIGlzIGRldmljZSBtYXBwZXIsIHdo
-ZXJlIHRoZSBjcnlwdG8gcHJvZtGWbGUgaXMgZnJlZWQKPiBiZWZvcmUgcHV0dGluZyB0aGUgZ2Vu
-ZGlzayByZWZlcmVuY2UgYWNxdWlyZWQgYnkgYmxrX2FsbG9jX2Rpc2suICBTbwo+IGFueW9uZSB3
-aG8gb3BlbmVkIHRoZSBzeXNmcyBmaWxlIGF0IHNvbWUgcG9pbnQgYmVmb3JlIHRoZSBkZWxldGUg
-Y2FuCj4gc3RpbGwgaGF2ZSBpdCBvcGVuIGFuZCB0cml2aWFsbCBhY2Nlc3MgZnJlZWQgbWVtb3J5
-IHdoZW4gdGhlbiBkb2luZwo+IGEgcmVhZCBvbiBpdCBhZnRlciB0aGUgZG0gdGFibGUgaXMgZnJl
-ZWQuCj4gCj4gRm9yIFVGUyB0aGluZ3Mgc2VlbSB0byB3b3JrIG91dCBvayBiZWNhdXNlIHRoZSB1
-ZnNfaGJhIGlzIHBhcnQgb2YKPiB0aGUgU2NzaV9Ib3N0LCB3aGljaCBpcyB0aGUgcGFyZW50IGRl
-dmljZSBvZiB0aGUgZ2VuZGlzay4KCkkgdHJpZWQgdG8gcmVwcm9kdWNlIGEgdXNlLWFmdGVyLWZy
-ZWUgaW4gdGhlIGRldmljZS1tYXBwZXIgY2FzZSwgYW5kIGl0IGRvZXNuJ3QKc2VlbSB0byBiZSBw
-b3NzaWJsZS4gIFdoYXQgYWN0dWFsbHkgaGFwcGVucyBpcyB0aGF0IGJlZm9yZSBmcmVlaW5nIHRo
-ZSBjcnlwdG8KcHJvZmlsZSwgY2xlYW51cF9tYXBwZWRfZGV2aWNlKCkgY2FsbHMgZGVsX2dlbmRp
-c2soKSwgd2hpY2ggZGVsZXRlcyB0aGUgZGlzawprb2JqZWN0IGFuZCBldmVyeXRoaW5nIHVuZGVy
-bmVhdGggaXQuICBUaGF0IG5vdCBvbmx5IGRlbGV0ZXMgdGhlIGNvcnJlc3BvbmRpbmcKc3lzZnMg
-aGllcmFyY2h5LCBidXQgYWxzbyAiZGVhY3RpdmF0ZXMiIGl0IHN1Y2ggdGhhdCBldmVuIGlmIGEg
-ZmlsZSBkZXNjcmlwdG9yCmlzIG9wZW4gdG8gb25lIG9mIHRoZSBmaWxlcywgYXR0ZW1wdHMgdG8g
-cmVhZCBmcm9tIGl0IGZhaWwgd2l0aCBFTk9ERVYuICAgKEl0CmFsc28gd2FpdHMgZm9yIGFueSBv
-bmdvaW5nIHJlYWRzIHRvIGNvbXBsZXRlLikKClRoZSByZWZlcmVuY2UgdG8gdGhlIGRpc2sga29i
-amVjdCBpcyBpbmRlZWQgcmVsZWFzZWQgYWZ0ZXIgdGhlIGNyeXB0byBwcm9maWxlIGlzCmZyZWVk
-LCBidXQgdGhhdCBkb2Vzbid0IG1hdHRlciBhcyBmYXIgYXMgc3lzZnMgaXMgY29uY2VybmVkLgoK
-SXQgZG9lc24ndCBhcHBlYXIgdGhhdCBjb25jdXJyZW50IEkvTyBjYW4gYmUgYSBwcm9ibGVtIGVp
-dGhlciwgYXMgdGhlCmRldmljZS1tYXBwZXIgc3Vic3lzdGVtIGRvZXNuJ3QgYWxsb3cgZGV2aWNl
-cyB0byBiZSBkZWxldGVkIHdoaWxlIHRoZXkgYXJlIG9wZW4uCgpJdCdzIHByb2JhYmx5IHN0aWxs
-IHdvcnRoIGZsaXBwaW5nIHRoZSBvcmRlciBvZgpkbV9xdWV1ZV9kZXN0cm95X2NyeXB0b19wcm9m
-aWxlKCkgYW5kIGJsa19jbGVhbnVwX2Rpc2soKSBhbnl3YXkgc28gdGhhdCBpdCdzCmxlc3MgZnJh
-Z2lsZSBhbmQgbW9yZSBzaW1pbGFyIHRvIHRoZSByZWFsIGRldmljZSBkcml2ZXJzLCB0aG91Z2gu
-Cgo+ID4gU2ltaWxhciBhc3N1bXB0aW9ucyBhcmUgbWFkZSBieSB0aGUKPiA+IHF1ZXVlIGtvYmpl
-Y3QsIHdoaWNoIGFzc3VtZXMgaXQgaXMgc2FmZSB0byBhY2Nlc3MgdGhlIGdlbmRpc2ssIGFuZCBi
-eSB0aGUKPiA+IGluZGVwZW5kZW50X2FjY2Vzc19yYW5nZXMga29iamVjdCB3aGljaCBhc3N1bWVz
-IGl0IGlzIHNhZmUgdG8gYWNjZXNzIHRoZSBxdWV1ZS4KPiAKPiBZZXMsIGV2ZXJ5IHF1ZXVlLyBv
-YmplY3QgdGhhdCByZWZlcmVuY2VzIHRoZSBnZW5kaXNrIGhhcyBhIHByb2JsZW0gSSB0aGluay4K
-PiBJJ3ZlIGJlZW4gd2FkaW5nIHRocm91Z2ggdGhpcyBjb2RlIGFuZCB0cnlpbmcgdG8gZml4IGl0
-LCB3aGljaCBtYWRlIG1lCj4gbm90aWNlIHRoaXMgY29kZS4KCkJhc2VkIG9uIGhvdyBzeXNmcyB3
-b3JrcyBhYm92ZSwgd2l0aCB0aGUgZW50aXJlIGhpZXJhcmNoeSBiZWluZyBkZWFjdGl2YXRlZCBi
-eQpkZWxfZ2VuZGlzaygpLCBJJ20gbm90IHN1cmUgdGhpcyBpcyByZWFsbHkgYSBwcm9ibGVtIGVp
-dGhlci4KCj4gPiBJbiBhbnkgY2FzZSwgdGhpcyBwcm9wb3NhbCBpcyBub3QgY29ycmVjdCBzaW5j
-ZSBpdCBpcyBhc3N1bWluZyB0aGF0IGVhY2gKPiA+IGJsa19jcnlwdG9fcHJvZmlsZSBpcyByZWZl
-cmVuY2VkIGJ5IG9ubHkgb25lIHJlcXVlc3RfcXVldWUsIHdoaWNoIGlzIG5vdAo+ID4gbmVjZXNz
-YXJpbHkgdGhlIGNhc2Ugc2luY2UgYSBob3N0IGNvbnRyb2xsZXIgY2FuIGhhdmUgbXVsdGlwbGUg
-ZGlza3MuCj4gPiBUaGUgc2FtZSBrb2JqZWN0IGNhbid0IGJlIGFkZGVkIHRvIG11bHRpcGxlIHBs
-YWNlcyBpbiB0aGUgaGllcmFyY2h5Lgo+IAo+IEluZGVlZC4KPiAKPiA+IElmIHdlIGRpZCBuZWVk
-IHRvIGRvIHNvbWV0aGluZyBkaWZmZXJlbnRseSBoZXJlLCBJIHRoaW5rIHdlJ2QgZWl0aGVyIG5l
-ZWQgdG8gcHV0Cj4gPiB0aGUgYmxrX2NyeXB0b19wcm9maWxlIGtvYmplY3QgdW5kZXIgdGhlIGhv
-c3QgY29udHJvbGxlciBvbmUgYW5kIGxpbmsgdG8gaXQgZnJvbQo+ID4gdGhlIHF1ZXVlIGRpcmVj
-dG9yaWVzICh3aGljaCBJIG1lbnRpb25lZCBpbiBjb21taXQgMjBmMDFmMTYzMjAzIGFzIGFuCj4g
-PiBhbHRlcm5hdGl2ZSBjb25zaWRlcmVkKSwgb3IgZHVwbGljYXRlIHRoZSBjcnlwdG8gY2FwYWJp
-bGl0aWVzIGluIGVhY2gKPiA+IHJlcXVlc3RfcXVldWUgYW5kIG9ubHkgc2hhcmUgdGhlIGFjdHVh
-bCBrZXlzbG90IG1hbmFnZW1lbnQgZGF0YSBzdHJ1Y3R1cmVzLgo+IAo+IERvIHdlIGV2ZW4gbmVl
-ZCB0aGUgbGluayBpbnN0ZWFkIG9mIGxldHRpbmcgdGhlIHVzZXIgd2FsayBkb3duIHRoZQo+IGRp
-cmVjdG9yeSBoaWVyYWNoeT8gIEJ1dCB5ZXMsIGhhdmluZyB0aGUgc3lzZnMgYXR0cmlidXRlcyBv
-biB0aGUKPiBhY3R1YWwgb2JqZWN0IGlzIGEgbXVjaCBiZXR0ZXIgaWRlYS4KClRoZSBkaXJlY3Rv
-cmllcyB3b3VsZCBiZSBpbiBkaWZmZXJlbnQgcGxhY2VzIGZvciBkaWZmZXJlbnQga2luZCBvZiBk
-ZXZpY2VzIChkbSwKdWZzLCBtbWMsIGV0Yy4pLiAgSSB0aGluayB3ZSByZWFsbHkgZG8gbmVlZCB0
-aGUgY3J5cHRvIHByb3BlcnRpZXMgaW4gdGhlIHF1ZXVlCmRpcmVjdG9yeSwgb3RoZXJ3aXNlIGl0
-IHdvdWxkIGJlIGEgcGFpbiBmb3IgdXNlcnNwYWNlIHRvIGFjdHVhbGx5IHVzZSB0aGVtLiAgKEl0
-CmNvdWxkIGFsc28gYmUgdGhlIGRpc2sgZGlyZWN0b3J5LCBidXQgdGhlIHF1ZXVlIGRpcmVjdG9y
-eSBpcyB3aGF0IEkgY2hvc2Ugc2luY2UKdGhhdCdzIHdoZXJlIG1vc3Qgb2YgdGhlIG90aGVyIGdl
-bmVyaWMgYmxvY2sgcHJvcGVydGllcyByZWxhdGVkIHRvIEkvTyBhcmUuKQoKSWYgd2UgZGlkIGFk
-ZCB0aGUgcHJvcGVydGllcyB0byB0aGUgZGV2aWNlIGRpcmVjdG9yaWVzIChkbSwgdWZzLCBtbWMs
-IGV0Yy4pIHRvbywKd2UnZCBhbHNvIGhhdmUgdG8gc3VwcG9ydCB0aGVtIHRoZXJlIGZvcmV2ZXIg
-aW4gY2FzZSBzb21lb25lIHN0YXJ0ZWQgdXNpbmcgdGhlbQood2hpY2ggd291bGQgYmUgdW5jb21t
-b24gc2luY2UgdGhleSB3b3VsZCBiZSBhIHBhaW4gdG8gdXNlLCBidXQgc29tZW9uZSB3aWxsIGRv
-Cml0IGFueXdheSksIHNvIHdlIHNob3VsZCBiZSBjYXJlZnVsIGFib3V0IHRoYXQuICBJIHRoaW5r
-IGdlbmVyaWMgYmxvY2sgbGF5ZXIKYXR0cmlidXRlcyBhcmUgcmVhbGx5IHRoZSByaWdodCB3YXkg
-dG8gZ28gaGVyZS4KCi0gRXJpYwoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJl
-ZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1k
-ZXZlbAo=
+On Thu, Apr 21 2022 at 12:06P -0400,
+Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com> wrote:
+
+> On Apr 17, 2022 / 22:27, Mike Snitzer wrote:
+> > Read/write/flush are the most common operations, optimize switch in
+> > is_abnormal_io() for those cases. Follows same pattern established in
+> > block perf-wip commit ("block: optimise blk_may_split for normal rw")
+> > 
+> > Also, push is_abnormal_io() check and blk_queue_split() down from
+> > dm_submit_bio() to dm_split_and_process_bio() and set new
+> > 'is_abnormal_io' flag in clone_info. Optimize __split_and_process_bio
+> > and __process_abnormal_io by leveraging ci.is_abnormal_io flag.
+> > 
+> > Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+> > ---
+> >  drivers/md/dm.c | 60 +++++++++++++++++++++++++++++----------------------------
+> >  1 file changed, 31 insertions(+), 29 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> > index 3b87d151ef88..b9c30dfe0f2a 100644
+> > --- a/drivers/md/dm.c
+> > +++ b/drivers/md/dm.c
+> > @@ -84,7 +84,8 @@ struct clone_info {
+> >  	struct dm_io *io;
+> >  	sector_t sector;
+> 
+> (snip)
+> 
+> >  	ci->sector = bio->bi_iter.bi_sector;
+> >  	ci->sector_count = bio_sectors(bio);
+> > @@ -1645,6 +1647,13 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+> >  		__send_empty_flush(&ci);
+> >  		/* dm_io_complete submits any data associated with flush */
+> >  		goto out;
+> > +	} else if (unlikely(is_abnormal_io(bio))) {
+> > +		/*
+> > +		 * Use blk_queue_split() for abnormal IO (e.g. discard, etc)
+> > +		 * otherwise associated queue_limits won't be imposed.
+> > +		 */
+> > +		blk_queue_split(&bio);
+> > +		ci.is_abnormal_io = true;
+> >  	}
+> >  
+> >  	error = __split_and_process_bio(&ci);
+> 
+> Hi Mike,
+> 
+> The hunk above triggered a WARNING [1] which is observed at mkfs.xfs for dm-
+> zoned devices. With the hunk, the blk_queue_split(&bio) for abnormal I/O is
+> called after init_clone_info(). I think it made the cloned bio different from
+> the split bio. I suggest to move the "if (unlikely(is_abnormal_io(bio)))" block
+> at the beginning of dm_split_and_process_bio(), so that blk_queue_split() is
+> called before init_clone_info(). I created a patch for such change [2], and
+> confirmed the WARNING goes away.
+> 
+> > @@ -1698,13 +1707,6 @@ static void dm_submit_bio(struct bio *bio)
+> >  		goto out;
+> >  	}
+> >  
+> > -	/*
+> > -	 * Use blk_queue_split() for abnormal IO (e.g. discard, writesame, etc)
+> > -	 * otherwise associated queue_limits won't be imposed.
+> > -	 */
+> > -	if (unlikely(is_abnormal_io(bio)))
+> > -		blk_queue_split(&bio);
+> > -
+> >  	dm_split_and_process_bio(md, map, bio);
+> >  out:
+> >  	dm_put_live_table_bio(md, srcu_idx, bio);
+> > -- 
+> > 2.15.0
+> > 
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://listman.redhat.com/mailman/listinfo/dm-devel
+> > 
+> 
+> [1]
+> 
+> WARNING: CPU: 3 PID: 79434 at block/bio.c:1629 bio_trim+0x10a/0x150
+> Modules linked in: dm_zoned null_blk f2fs crc32_generic dm_flakey iscsi_target_mod tcm_loop target_core_pscsi target_core_file target_core_iblock xt_CHECKSUM xt_MASQUERADE xt_conntrack ipt_REJECT nf_nat_tftp nf_conntrack_tftp bridge stp llc nft_objref nf_conntrack_netbios_ns nf_conntrack_broadcast nft_fib_inet nft_fib_ipv4 nft_fib_ipv6 nft_fib nft_reject_inet nf_reject_ipv4 nf_reject_ipv6 nft_reject nft_ct nft_chain_nat nf_tables ebtable_nat ebtable_broute ip6table_nat ip6table_mangle ip6table_raw ip6table_security iptable_nat nf_nat nf_conntrack nf_defrag_ipv6 nf_defrag_ipv4 iptable_mangle iptable_raw rfkill iptable_security ip_set target_core_user nfnetlink target_core_mod ebtable_filter ebtables ip6table_filter ip6_tables iptable_filter qrtr sunrpc intel_rapl_msr intel_rapl_common x86_pkg_temp_thermal intel_powerclamp coretemp kvm_intel at24 iTCO_wdt intel_pmc_bxt iTCO_vendor_support btrfs kvm irqbypass rapl raid6_pq intel_cstate zstd_compress joydev
+>  intel_uncore i2c_i801 pcspkr i2c_smbus intel_pch_thermal lpc_ich ses enclosure ie31200_edac video zram ip_tables crct10dif_pclmul crc32_pclmul crc32c_intel ast ghash_clmulni_intel drm_vram_helper drm_kms_helper drm_ttm_helper ttm igb drm mpt3sas e1000e dca i2c_algo_bit raid_class scsi_transport_sas fuse [last unloaded: zonefs]
+> CPU: 3 PID: 79434 Comm: mkfs.xfs Kdump: loaded Not tainted 5.18.0-rc3+ #2
+> Hardware name: Supermicro X10SLL-F/X10SLL-F, BIOS 3.0 04/24/2015
+> RIP: 0010:bio_trim+0x10a/0x150
+> Code: 8d 7c 24 68 48 89 fa 48 c1 ea 03 80 3c 02 00 75 58 49 83 7c 24 68 00 74 13 48 83 c4 10 4c 89 e7 5d 41 5c 41 5d e9 f6 aa 0f 00 <0f> 0b 48 83 c4 10 5d 41 5c 41 5d c3 4c 89 ef 48 89 54 24 08 48 89
+> RSP: 0018:ffff8881977d7928 EFLAGS: 00010206
+> RAX: 0000000008000000 RBX: ffff88852b000000 RCX: 0000000000040000
+> RDX: 00000000003c0000 RSI: 0000000000040000 RDI: ffff8883215a3d00
+> RBP: 0000000000400000 R08: 0000000000000001 R09: ffff8881124b9057
+> R10: ffffed102249720a R11: 0000000000000001 R12: ffff8883215a3d00
+> R13: ffff8883215a3d28 R14: ffff8881124b9098 R15: ffff8881124b9054
+> FS:  00007ff3a993dbc0(0000) GS:ffff8886ecf80000(0000) knlGS:0000000000000000
+> CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+> CR2: 000055a1bf241900 CR3: 0000000177074002 CR4: 00000000001706e0
+> Call Trace:
+>  <TASK>
+>  dm_submit_bio+0x5fa/0x13b0
+>  ? dm_dax_direct_access+0x1c0/0x1c0
+>  ? lock_release+0x3a7/0x6c0
+>  ? lock_downgrade+0x6a0/0x6a0
+>  __submit_bio+0x1c2/0x2c0
+>  ? __bio_queue_enter+0x570/0x570
+>  submit_bio_noacct_nocheck+0x2f7/0x810
+>  ? should_fail_request+0x70/0x70
+>  ? rcu_read_lock_sched_held+0x3f/0x70
+>  ? __lock_acquire+0x1591/0x5030
+>  submit_bio+0x10a/0x270
+>  ? submit_bio_noacct+0x15c0/0x15c0
+>  submit_bio_wait+0xf2/0x1d0
+>  ? submit_bio_wait_endio+0x40/0x40
+>  ? lock_release+0x6c0/0x6c0
+>  blkdev_issue_discard+0xb5/0x110
+>  ? __blkdev_issue_discard+0x590/0x590
+>  ? truncate_bdev_range+0x15d/0x240
+>  blkdev_common_ioctl+0x853/0x1670
+>  ? blkdev_bszset+0x160/0x160
+>  ? __ia32_sys_readlinkat+0x87/0xf0
+>  ? __ia32_compat_sys_newlstat+0x70/0x70
+>  ? count_memcg_events.constprop.0+0x44/0x50
+>  blkdev_ioctl+0x23b/0x690
+>  ? blkdev_common_ioctl+0x1670/0x1670
+>  ? security_file_ioctl+0x50/0x90
+>  __x64_sys_ioctl+0x127/0x190
+>  do_syscall_64+0x3b/0x90
+>  entry_SYSCALL_64_after_hwframe+0x44/0xae
+> RIP: 0033:0x7ff3a970731b
+> Code: ff ff ff 85 c0 79 9b 49 c7 c4 ff ff ff ff 5b 5d 4c 89 e0 41 5c c3 66 0f 1f 84 00 00 00 00 00 f3 0f 1e fa b8 10 00 00 00 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 8b 0d dd 2a 0f 00 f7 d8 64 89 01 48
+> RSP: 002b:00007ffd79c8db68 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
+> RAX: ffffffffffffffda RBX: 00000000e8000000 RCX: 00007ff3a970731b
+> RDX: 00007ffd79c8db80 RSI: 0000000000001277 RDI: 0000000000000004
+> RBP: 0000000000000004 R08: 0000000000000000 R09: 00007ffd79c8d997
+> R10: 0000000000000000 R11: 0000000000000246 R12: 00007ffd79c8db80
+> R13: 0000000000000001 R14: 0000000000000000 R15: 0000000080000000
+>  </TASK>
+> irq event stamp: 10213
+> hardirqs last  enabled at (10223): [<ffffffffaa36e02e>] __up_console_sem+0x5e/0x70
+> hardirqs last disabled at (10232): [<ffffffffaa36e013>] __up_console_sem+0x43/0x70
+> softirqs last  enabled at (10190): [<ffffffffaa1faf06>] __irq_exit_rcu+0x1c6/0x260
+> softirqs last disabled at (10185): [<ffffffffaa1faf06>] __irq_exit_rcu+0x1c6/0x260
+> ---[ end trace 0000000000000000 ]---
+> 
+> [2]
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 7e3b5bdcf520..50382c98d7b3 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1639,6 +1639,15 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+>  	struct dm_io *io;
+>  	blk_status_t error = BLK_STS_OK;
+>  
+> +	if (unlikely(is_abnormal_io(bio))) {
+> +		/*
+> +		 * Use blk_queue_split() for abnormal IO (e.g. discard, etc)
+> +		 * otherwise associated queue_limits won't be imposed.
+> +		 */
+> +		blk_queue_split(&bio);
+> +		ci.is_abnormal_io = true;
+> +	}
+> +
+>  	init_clone_info(&ci, md, map, bio);
+>  	io = ci.io;
+>  
+> @@ -1646,13 +1655,6 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+>  		__send_empty_flush(&ci);
+>  		/* dm_io_complete submits any data associated with flush */
+>  		goto out;
+> -	} else if (unlikely(is_abnormal_io(bio))) {
+> -		/*
+> -		 * Use blk_queue_split() for abnormal IO (e.g. discard, etc)
+> -		 * otherwise associated queue_limits won't be imposed.
+> -		 */
+> -		blk_queue_split(&bio);
+> -		ci.is_abnormal_io = true;
+>  	}
+>  
+>  	error = __split_and_process_bio(&ci);
+> 
+> -- 
+> Best Regards,
+> Shin'ichiro Kawasaki
+> 
+
+Thanks for your report, I'll sort it out but your patch doesn't seem right.
+
+init_clone_info() will reset ci.is_abnormal_io so the bio won't be
+processed properly.
+
+Mike
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
