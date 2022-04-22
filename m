@@ -1,83 +1,82 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D56E6C433F5
-	for <dm-devel@archiver.kernel.org>; Fri, 22 Apr 2022 22:46:46 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8BD28C433EF
+	for <dm-devel@archiver.kernel.org>; Fri, 22 Apr 2022 22:46:48 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-270-YO6_cuJXP7GE6frgiDaUFw-1; Fri, 22 Apr 2022 18:46:44 -0400
-X-MC-Unique: YO6_cuJXP7GE6frgiDaUFw-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-613-bhbIFcmPO7qb00aVjysnYw-1; Fri, 22 Apr 2022 18:46:46 -0400
+X-MC-Unique: bhbIFcmPO7qb00aVjysnYw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BB493811E75;
-	Fri, 22 Apr 2022 22:46:42 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8F0171C05AB6;
+	Fri, 22 Apr 2022 22:46:44 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A1858568651;
-	Fri, 22 Apr 2022 22:46:42 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7BADC40D0178;
+	Fri, 22 Apr 2022 22:46:44 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3F5751940352;
-	Fri, 22 Apr 2022 22:46:42 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3F44C1940352;
+	Fri, 22 Apr 2022 22:46:44 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id C03EC1940351
- for <dm-devel@listman.corp.redhat.com>; Fri, 22 Apr 2022 22:46:40 +0000 (UTC)
+ ESMTP id 9C92E1940351
+ for <dm-devel@listman.corp.redhat.com>; Fri, 22 Apr 2022 22:46:41 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 852CA41636F; Fri, 22 Apr 2022 22:46:40 +0000 (UTC)
+ id 6701140D0179; Fri, 22 Apr 2022 22:46:41 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 7FFCE41617F
- for <dm-devel@redhat.com>; Fri, 22 Apr 2022 22:46:40 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 61EBE40D0178
+ for <dm-devel@redhat.com>; Fri, 22 Apr 2022 22:46:41 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 61BB33834C0C
- for <dm-devel@redhat.com>; Fri, 22 Apr 2022 22:46:40 +0000 (UTC)
-Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
- [205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 46170800B28
+ for <dm-devel@redhat.com>; Fri, 22 Apr 2022 22:46:41 +0000 (UTC)
+Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
+ [205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-636-olUwFUp4Mr6S38t_T0dnzA-1; Fri, 22 Apr 2022 18:46:34 -0400
-X-MC-Unique: olUwFUp4Mr6S38t_T0dnzA-1
-Received: from pps.filterd (m0246627.ppops.net [127.0.0.1])
- by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 23MIYhRW019753; 
- Fri, 22 Apr 2022 22:46:15 GMT
-Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com
- (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
- by mx0b-00069f02.pphosted.com with ESMTP id 3ffmd1fx92-1
+ us-mta-12-cdTc5N-HPfisbvJ1WWaNKQ-1; Fri, 22 Apr 2022 18:46:39 -0400
+X-MC-Unique: cdTc5N-HPfisbvJ1WWaNKQ-1
+Received: from pps.filterd (m0246631.ppops.net [127.0.0.1])
+ by mx0b-00069f02.pphosted.com (8.16.1.2/8.16.1.2) with SMTP id 23MKCxRk009531; 
+ Fri, 22 Apr 2022 22:46:24 GMT
+Received: from phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com
+ (phxpaimrmta03.appoci.oracle.com [138.1.37.129])
+ by mx0b-00069f02.pphosted.com with ESMTP id 3ffmk2yvfk-1
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 22 Apr 2022 22:46:15 +0000
+ Fri, 22 Apr 2022 22:46:23 +0000
 Received: from pps.filterd
- (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
- by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.16.1.2/8.16.1.2)
- with SMTP id 23MMeovn007264; Fri, 22 Apr 2022 22:46:14 GMT
+ (phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+ by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (8.16.1.2/8.16.1.2)
+ with SMTP id 23MMg0fU008607; Fri, 22 Apr 2022 22:46:23 GMT
 Received: from nam11-dm6-obe.outbound.protection.outlook.com
- (mail-dm6nam11lp2170.outbound.protection.outlook.com [104.47.57.170])
- by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com with ESMTP id
- 3fk3awf5sd-1
+ (mail-dm6nam11lp2177.outbound.protection.outlook.com [104.47.57.177])
+ by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com with ESMTP id
+ 3ffm8e9nby-1
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 22 Apr 2022 22:46:14 +0000
+ Fri, 22 Apr 2022 22:46:22 +0000
 Received: from SJ0PR10MB4429.namprd10.prod.outlook.com (2603:10b6:a03:2d1::14)
  by BYAPR10MB2550.namprd10.prod.outlook.com (2603:10b6:a02:b1::21)
  with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5186.14; Fri, 22 Apr
- 2022 22:46:11 +0000
+ 2022 22:46:20 +0000
 Received: from SJ0PR10MB4429.namprd10.prod.outlook.com
  ([fe80::1c44:15ca:b5c2:603e]) by SJ0PR10MB4429.namprd10.prod.outlook.com
  ([fe80::1c44:15ca:b5c2:603e%8]) with mapi id 15.20.5186.015; Fri, 22 Apr 2022
- 22:46:11 +0000
+ 22:46:20 +0000
 From: Jane Chu <jane.chu@oracle.com>
 To: dan.j.williams@intel.com, bp@alien8.de, hch@infradead.org,
  dave.hansen@intel.com, peterz@infradead.org, luto@kernel.org,
  david@fromorbit.com, djwong@kernel.org, linux-fsdevel@vger.kernel.org,
  nvdimm@lists.linux.dev, linux-kernel@vger.kernel.org, x86@kernel.org
-Date: Fri, 22 Apr 2022 16:45:05 -0600
-Message-Id: <20220422224508.440670-5-jane.chu@oracle.com>
+Date: Fri, 22 Apr 2022 16:45:07 -0600
+Message-Id: <20220422224508.440670-7-jane.chu@oracle.com>
 In-Reply-To: <20220422224508.440670-1-jane.chu@oracle.com>
 References: <20220422224508.440670-1-jane.chu@oracle.com>
 X-ClientProxiedBy: SN1PR12CA0057.namprd12.prod.outlook.com
@@ -85,68 +84,68 @@ X-ClientProxiedBy: SN1PR12CA0057.namprd12.prod.outlook.com
  (2603:10b6:a03:2d1::14)
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: f7b6010d-abe5-4e8d-0673-08da24b1e645
+X-MS-Office365-Filtering-Correlation-Id: 69c9a4c8-6450-44ec-1462-08da24b1eb58
 X-MS-TrafficTypeDiagnostic: BYAPR10MB2550:EE_
-X-Microsoft-Antispam-PRVS: <BYAPR10MB2550F5F5ADA9E62FEBB4487FF3F79@BYAPR10MB2550.namprd10.prod.outlook.com>
+X-Microsoft-Antispam-PRVS: <BYAPR10MB2550432949E7B64B765942B2F3F79@BYAPR10MB2550.namprd10.prod.outlook.com>
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: M94V3gNL2iescFr8lokSDHrzUJOung8HjMMp4QWlm9H9crLv2KuTOBgPFlCq7QMhTt1UKNcJyO8P4Ww/3KZI6ikPdzC4/gjGXLGkh8frYwUOpBz+io17FIh2lcsUFvGcEInsrbyt3S0zdnBQWcQZDjUzUMtDZZtSG5h4RZ/wxztzPNLWZK9ewD+ZD9tI31/uc2WSJBnyQw7QltyACCc6nZkEXcVeL7S0HnHMiBaprWQgIWL84aiZgdkiM7RJIRvvqdAu9nYjvkAas4wCF38/XxI0IB0wtYlro4UF6P1LwMDEK8V9r4C2l6UetOdpRJ171QdU6GePXG3QRP9beWt3+nfmRkVg4rmc+d1xzWxmFnyefGKNEiX9i50PY7zfyGpOUlTRAWMt7peeR7tLIfXwjXnRK+P2xwEXEopscM3Cli9k7Qw4TCwYCPk/Xi/GHiQULwI5KCNR4klAEkGYJUNy1PNpup1uE58IfCpoku1xOpWwSlYZSGn04AAmG4rUYfw0YlRQX7KR7MyQI1VeDonDSjeZl1b4BdTxBJOv79Pvua5QnRCDOWn5yKQRRMw1IOeIVZ08zjp4rvzFvgFujsv/TCULhNLgLQjsDzHw9CHmdSg3rQ9j4bFIoY6JG6GXirQqxLwftN8aCiGIV4JGaI9InjXNaVtkgjExh0LbSVQ7xQ9TzZ1Ng19ecJLr7z/saFVt
+X-Microsoft-Antispam-Message-Info: iRfdYfj2xRTdl+0P4S12zNC15GON3VjK3AAyS6cZ2IH1/1oRQdRKLNhEtXisO6EB9lHU1EniKuAM/lXfH51LZ2QaXUf5QopSeqNjbI0FAU+APbXZjOyzSafAIaIgOLG0qU+FZWjIxRXsVo7NEZN5rKgaNzi+pXZ1g7Em+zrFW2oB2ZqPv5C2DnvwTsHAXVToEuc+QMjHTOIUqyEH2GQPPYFZKzycd1hQxjVivKSOKiB3f3ZZwiG+4HDStL71oRJjwVz4vGXsDk5NB+y+bGrQFg29HSK5oxB5HFT87RbqIo6nQw23s0sgtEqmJWYZcQ3jQk9MOhE7vWqdDbyd3j1Kd0TCx0KjNuOBjN4zjPITjertTWiiQJIVzQTFzJW8CLZ4ElXy3mK8O08OAsYtKl0XvIm3ojJ9j4yj0tFgekGXBo18h3JCHIReEwl+unV3FYxmOvBFzK0ghwJ+0ABh7IXvCwpRvE0LUxaReAimLLjhXA20dh02jzOhjQw0oFljeXQhuZwPJgi+6j8T0noh0uHyNzLgjHZ2ER8LU1HGtcbqHmZxR652nmmsJygtJnNfA75+2+nDdkLiYBNwWS6wD1ReKHtIu/XDE1+PW4RQgWYVkOMkbtbJWYIRKSkwHz82QRgVb2CLd/KXCXlCXr7XLmR9oU6Yw7Q9dsh9+52WJIeJLdmM3XHZRKOMpcR5A0J5TcdP
 X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
  IPV:NLI; SFV:NSPM; H:SJ0PR10MB4429.namprd10.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230001)(366004)(6506007)(6666004)(6486002)(8936002)(508600001)(52116002)(83380400001)(36756003)(316002)(66556008)(66476007)(2906002)(8676002)(4326008)(66946007)(38100700002)(2616005)(86362001)(5660300002)(30864003)(44832011)(186003)(6512007)(1076003)(7416002)(921005);
+ SFS:(13230001)(366004)(6506007)(6666004)(6486002)(8936002)(508600001)(52116002)(83380400001)(36756003)(316002)(66556008)(66476007)(2906002)(8676002)(4326008)(66946007)(38100700002)(2616005)(86362001)(5660300002)(44832011)(186003)(6512007)(1076003)(7416002)(921005);
  DIR:OUT; SFP:1101
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?u7X3gEZNfk9YdGvgoL74bnv7XosT6gQgzmc5jGBbjwUJvO37rI+JBGLAupwT?=
- =?us-ascii?Q?Yl9K6pQN6JEc+t49Z/lhfb0r3MrVaOnvb/l2dOdiGSqkO6GMm+iOaUkZMeMR?=
- =?us-ascii?Q?JP8D9+SWRL1BL60uvdH56wD2d3hGBgF0UOfNzO0IW6gS0Fdhiq3QvlAbZWeg?=
- =?us-ascii?Q?tZ4foYmaey6udJ3iRF8d+m2TkDNyYM+6Ue6l/lysBOtdLIp0+4eNB9q4M4fJ?=
- =?us-ascii?Q?rrfX8ZQFLvCVqMCq5uexTL2GQx0Rls1EO/WWmz9UZtNOhw5sTGTOE1xtsxpl?=
- =?us-ascii?Q?nYGBeliCx+xsf9yL+mlAi0xya0Pj46wSBcnpdmQcOx63eATAf0Ap1wL5A3eQ?=
- =?us-ascii?Q?CseP8/Zj6hyHLYARKHv2jePBALcYJp8TI7LtND/c5FIuX1nY0/l3uTYzPYCW?=
- =?us-ascii?Q?2XhXHabvV9Un6uBB7l9PS+jxk0x/DRo5SfAeI7aWR8UPuDKWZNNevrLm6uVe?=
- =?us-ascii?Q?rWm5445U+yWt9b2L7Nn9agBuWU41F+O6Yz2UHjLbG5b/UMOGG13mpJDjWtE/?=
- =?us-ascii?Q?2+RnAq3Oh7YruDM4j2jpGZUmqlwgYaiRx4JehbcEWdjs4n/t+r8jMZuBaIAF?=
- =?us-ascii?Q?SGTlEbqfEY/Kzyp1fLS+lncAvqPxFUaAmY67/rXwKjcEtgJPOTdiD8+wYm5F?=
- =?us-ascii?Q?DYIeldKt4siCyHzKNCg/yDTYQylzjFi97IaRq3/5YTD5fWNKcCGBYYToIJZ9?=
- =?us-ascii?Q?B36aI+S1epxPydELxR13+gDvXAcAEYHErrVDUeRSh5/9Z/zc6XcY7/2C1gSz?=
- =?us-ascii?Q?wTw78thRYA7mIXQkNCe3nt9xeU2+aef8Z9ag01J0ei3+MkxnuUJ0XpSbuLuU?=
- =?us-ascii?Q?l40AT/fKOHe0wS4hKwSGgmT0ApTueocwE1YGugEfXXwCa8PBupL7iKvh0mEg?=
- =?us-ascii?Q?7oOEDIji6oQqh6/CtocWPGi+pm2FMgOD515pRQ7BEK6fsAsbcDQPsuzwJ52q?=
- =?us-ascii?Q?QbgAMrQ3ALYM/FasW4S71pOUWDR76Go8nX1rjYjZQEcGLuKbm1/Zy+OwoDj+?=
- =?us-ascii?Q?6RcUREFsiLJz7cG091LWKu+AVA+I2AMlL+D7hsdi7X0QOoCbDk0k2j7DMlgE?=
- =?us-ascii?Q?g+giYIhOAxWXomSH1ePYaVj+akUw6iq7CXKx3Akc6YXTanurBSRoFDyjWdQ+?=
- =?us-ascii?Q?CX3gJcmshI26/vPGJue/jOMQFv975io2Vrx1GkQv21WjWoUt6ofDO+May7sP?=
- =?us-ascii?Q?k2ah0g0ME0/78IjF4xyujL5ntdkBNShvMMqzvYwr4H2V2L/7kuWrAqmNiRQ2?=
- =?us-ascii?Q?fFEsxU8hfw3homx0ROfLenNpNM6Ecn9JgZMQzYfsPnpUXz2te0lKJYTFryxB?=
- =?us-ascii?Q?VxLJ74480qgkkVX/+FeFXS1CHOaSWFxbxz+3+whV3+qtYit9ADnUPtsl6zlb?=
- =?us-ascii?Q?r5uzL6FKnz73/VQOs8FqSN+KNVu5V6zoh4HpVFeeGLc9fisCgpJo400ibbJ2?=
- =?us-ascii?Q?oNYl1UnJPR7lF574Z8y4+dlfgiCHtWzIgEWONqhaJrC5Eb70ryUnbYlbwKDs?=
- =?us-ascii?Q?jpJPjun0ttn+WDFzSmvyL6UiO3kta0K1iVfQHz2Fnzpdl0iWgcoFh2cDNzUY?=
- =?us-ascii?Q?eHUk0Fy5MzBNSMMNddputYxTANW0p6pcUSM53j6DE8UrU1g8argFsPXfPbqT?=
- =?us-ascii?Q?VY9CkP8/dSOv5MwFYbLnk6Pjt3Fp9Xrbfz2gUwr/SZSHA0uHDRr18XoHfcdG?=
- =?us-ascii?Q?mi+dWB3QfsWmHmnz3u6u0M1bDU2Ua6CEOccdYbvWikGR1ne0p/SKXdBYar3Q?=
- =?us-ascii?Q?VhJx8WU6lY4TD84geyjsDQFxQbFHoQ8=3D?=
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?A6gJWyor6kSPBn7cT2M5kU0w9eHXoSTMWdAg+FYu+44RuimmwxKVV7BglxP+?=
+ =?us-ascii?Q?DqksY5OLTcZWkoNNLwO5ub/arecoQfNGxOLjbL8Z78wSAg9c+tl2eDGFMj/7?=
+ =?us-ascii?Q?dE44yup4qCVMzFBUAk2rR+tHVif44IezDhanVw1aPHzFUjpZlfTFJNsBkB0U?=
+ =?us-ascii?Q?OnT9m3r5MMXtp9k3FVcAvbVVehnPXk7AcuI+B8W2Dq5Ch0k1cgt/LmHQrdXq?=
+ =?us-ascii?Q?YSEyxX6yAC3ttOyKTNEM4MIL6tqo5D5Y+Xh/MkHAZaTbjZ+LBz62vCgD3OEv?=
+ =?us-ascii?Q?v7H4zqEOdcqNXF0Z+FNeJAtAEIbfHUe4vs2Os1qO09buHPhoYR3wzBx+sJpm?=
+ =?us-ascii?Q?eVnJhxB3Qx/zadpmIDKH6reMz1WJDO1sTRAk35vtG+Urllcw2Vve91uC0BMJ?=
+ =?us-ascii?Q?NkZJE44pWFmQVd+/Sc6wc5KE/VGdh1myoiTMIJAU8DFu1qW15/9tBlwHrrk0?=
+ =?us-ascii?Q?wtzDIR8KEhadVidH2E1AQ9haUzpAZVNs9Wug0+5tQRjkTr7eMt4PCJGXERzW?=
+ =?us-ascii?Q?PBQskBh/1sRdsy5noZBUBVcBvD7jCkeZwXnHHOezRBn+gkJMyHjzFwNrzvp1?=
+ =?us-ascii?Q?F9ND1U7ybhtgwzmi3D0C09kuNrooPZ+BZ4mgrBEXQHJLQXWlTLMtJReTnFO8?=
+ =?us-ascii?Q?ZV5xOGPANAzuYJ2zV8cY8OfD2jEBsMT8mL8UZW6RzpNc0hB86n+9xV+xHqV1?=
+ =?us-ascii?Q?Ap15vdD3L7wt1alA1946G3BtJ5yKPAL9vQ3aJGOOkA9LiivpwopybJnxiq+1?=
+ =?us-ascii?Q?roZMPVb+H2T9tXJO2dHWKOK9LTevPa4uZ9oMhQHtf4Itc/wZaemLZ5pZOjXO?=
+ =?us-ascii?Q?+h3D6xI2f1mEL8BjznCOscnxCdmGcDlXuX/QEAFpqskAQr/I8SGSTxmMn10f?=
+ =?us-ascii?Q?UYQ8I849dL7bgRCje4mJKO9yDlOpZSgMMNwF7lar9NftYtWXivfeCspj0PKW?=
+ =?us-ascii?Q?pU1y++VJZw4LYP6YJ04EqaRIcZcsOwgCk50hIyP5cf5J26zMzVPkRSd88/Pf?=
+ =?us-ascii?Q?Mch2x46XS6rR+xU5om0legREeQUT6HZB9ti7L92PUAYwEcFlscGwoOwdgRk8?=
+ =?us-ascii?Q?c8eUH3BLc/JNoV9FE+T+j/OR/RZNg26iY3myiN9pNlfKd0fuNPQ+fQCXElax?=
+ =?us-ascii?Q?UlkdUobjVGyPZtEvx3wf9ofsGKpaia5btubZQNe+SoNLvHNT9ceV9B0nETTb?=
+ =?us-ascii?Q?B+xBPgQ5KPSUdlYwUCibJtFtZfi+chu8rJleirYr71D82esEGMS1v4GwyWpk?=
+ =?us-ascii?Q?3b0jyPlP1mC3vMvdGx37Xit2dGCKSaym5+CNMrg5JIeQioUkdltMR+2xHbWA?=
+ =?us-ascii?Q?1ieqyWr+kcb74VdHFj/sHotfvQnN4iwLmEgBM2YBd2qe9Pe2NvEEtoEy26Iv?=
+ =?us-ascii?Q?YAN4viQlHFPMagf6xB9lgaOROKT8TKEKB6fqGy9K8XArCsiJ7WYzF7kfjbE9?=
+ =?us-ascii?Q?cYEuX59DtgsAm4QyN9AgVuniFWaqyZduQYpX+1gcz1motCriKmKTnOZJC7iw?=
+ =?us-ascii?Q?LF5t7+lhHYIL7aJ9e6XcDIo1J6bJ47mrQpeFHmfqx2viqE209wNGCx9pAOYV?=
+ =?us-ascii?Q?VFPivQxqbAKllLWiDF0fLmTcHDOebLZwxqa/ZPHros3scbVRTu2JCym+933s?=
+ =?us-ascii?Q?9Sq6GHVRwUHT4ty7DrLWaE/f35EKTU19OTWDW92/UCu7Kqp0iRR9tabMc0yL?=
+ =?us-ascii?Q?YKU6X8szUtqubognnMizpcZn1R4eRDSYAfLG71gPEfZWM232mCLoXtv3vHGp?=
+ =?us-ascii?Q?GVoskvs5eesA+QoOcTAYbFOd7sxOMJI=3D?=
 X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: f7b6010d-abe5-4e8d-0673-08da24b1e645
+X-MS-Exchange-CrossTenant-Network-Message-Id: 69c9a4c8-6450-44ec-1462-08da24b1eb58
 X-MS-Exchange-CrossTenant-AuthSource: SJ0PR10MB4429.namprd10.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 22 Apr 2022 22:46:11.8534 (UTC)
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 22 Apr 2022 22:46:20.3982 (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: lRxzdE8Qjetb9e3SiCpKotSQkfbn7CJN0a6w7eu3GjKCHssUsPpSDictK5YJo81eCkVAtjtSlVUjD4YbjNGqWg==
+X-MS-Exchange-CrossTenant-UserPrincipalName: wLLzXUWY7uu8I5YjPFe7TLVb6c5RuyGr/ccfrGr0lI2tfPt70mgqHRtMrqT1nLYV5IgG7T+LXeElXgtKDnFMhw==
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR10MB2550
 X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.486, 18.0.858
  definitions=2022-04-22_07:2022-04-22,
  2022-04-22 signatures=0
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 spamscore=0
- suspectscore=0
- malwarescore=0 mlxscore=0 mlxlogscore=999 adultscore=0 bulkscore=0
- phishscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.12.0-2202240000 definitions=main-2204220095
-X-Proofpoint-ORIG-GUID: dfRJQj5Op81y4lX6p8x7wGY5IhQEyAlt
-X-Proofpoint-GUID: dfRJQj5Op81y4lX6p8x7wGY5IhQEyAlt
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 mlxscore=0
+ phishscore=0 malwarescore=0
+ suspectscore=0 spamscore=0 mlxlogscore=999 adultscore=0 bulkscore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2202240000
+ definitions=main-2204220095
+X-Proofpoint-GUID: zT3EP53qVeuwS7X29LISdzp6MV5I4y-H
+X-Proofpoint-ORIG-GUID: zT3EP53qVeuwS7X29LISdzp6MV5I4y-H
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -154,9 +153,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
-Subject: [dm-devel] [PATCH v9 4/7] dax: introduce DAX_RECOVERY_WRITE dax
- access mode
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+Subject: [dm-devel] [PATCH v9 6/7] pmem: refactor pmem_clear_poison()
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -173,7 +171,7 @@ Cc: dave.jiang@intel.com, snitzer@redhat.com, vishal.l.verma@intel.com,
  ira.weiny@intel.com, agk@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -181,405 +179,129 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Up till now, dax_direct_access() is used implicitly for normal
-access, but for the purpose of recovery write, dax range with
-poison is requested.  To make the interface clear, introduce
-	enum dax_access_mode {
-		DAX_ACCESS,
-		DAX_RECOVERY_WRITE,
-	}
-where DAX_ACCESS is used for normal dax access, and
-DAX_RECOVERY_WRITE is used for dax recovery write.
+Refactor the pmem_clear_poison() function such that the common
+shared code between the typical write path and the recovery write
+path is factored out.
 
-Suggested-by: Dan Williams <dan.j.williams@intel.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Dan Williams <dan.j.williams@intel.com>
 Signed-off-by: Jane Chu <jane.chu@oracle.com>
 ---
- drivers/dax/super.c             | 5 +++--
- drivers/md/dm-linear.c          | 5 +++--
- drivers/md/dm-log-writes.c      | 5 +++--
- drivers/md/dm-stripe.c          | 5 +++--
- drivers/md/dm-target.c          | 4 +++-
- drivers/md/dm-writecache.c      | 7 ++++---
- drivers/md/dm.c                 | 5 +++--
- drivers/nvdimm/pmem.c           | 8 +++++---
- drivers/nvdimm/pmem.h           | 5 ++++-
- drivers/s390/block/dcssblk.c    | 9 ++++++---
- fs/dax.c                        | 9 +++++----
- fs/fuse/dax.c                   | 4 ++--
- include/linux/dax.h             | 9 +++++++--
- include/linux/device-mapper.h   | 4 +++-
- tools/testing/nvdimm/pmem-dax.c | 3 ++-
- 15 files changed, 56 insertions(+), 31 deletions(-)
+ drivers/nvdimm/pmem.c | 73 ++++++++++++++++++++++++++++---------------
+ 1 file changed, 48 insertions(+), 25 deletions(-)
 
-diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-index 0211e6f7b47a..5405eb553430 100644
---- a/drivers/dax/super.c
-+++ b/drivers/dax/super.c
-@@ -117,6 +117,7 @@ enum dax_device_flags {
-  * @dax_dev: a dax_device instance representing the logical memory range
-  * @pgoff: offset in pages from the start of the device to translate
-  * @nr_pages: number of consecutive pages caller can handle relative to @pfn
-+ * @mode: indicator on normal access or recovery write
-  * @kaddr: output parameter that returns a virtual address mapping of pfn
-  * @pfn: output parameter that returns an absolute pfn translation of @pgoff
-  *
-@@ -124,7 +125,7 @@ enum dax_device_flags {
-  * pages accessible at the device relative @pgoff.
-  */
- long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
--		void **kaddr, pfn_t *pfn)
-+		enum dax_access_mode mode, void **kaddr, pfn_t *pfn)
- {
- 	long avail;
- 
-@@ -138,7 +139,7 @@ long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
- 		return -EINVAL;
- 
- 	avail = dax_dev->ops->direct_access(dax_dev, pgoff, nr_pages,
--			kaddr, pfn);
-+			mode, kaddr, pfn);
- 	if (!avail)
- 		return -ERANGE;
- 	return min(avail, nr_pages);
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 76b486e4d2be..13e263299c9c 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -172,11 +172,12 @@ static struct dax_device *linear_dax_pgoff(struct dm_target *ti, pgoff_t *pgoff)
- }
- 
- static long linear_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn)
-+		long nr_pages, enum dax_access_mode mode, void **kaddr,
-+		pfn_t *pfn)
- {
- 	struct dax_device *dax_dev = linear_dax_pgoff(ti, &pgoff);
- 
--	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
-+	return dax_direct_access(dax_dev, pgoff, nr_pages, mode, kaddr, pfn);
- }
- 
- static int linear_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index c9d036d6bb2e..06bdbed65eb1 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -889,11 +889,12 @@ static struct dax_device *log_writes_dax_pgoff(struct dm_target *ti,
- }
- 
- static long log_writes_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
--					 long nr_pages, void **kaddr, pfn_t *pfn)
-+		long nr_pages, enum dax_access_mode mode, void **kaddr,
-+		pfn_t *pfn)
- {
- 	struct dax_device *dax_dev = log_writes_dax_pgoff(ti, &pgoff);
- 
--	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
-+	return dax_direct_access(dax_dev, pgoff, nr_pages, mode, kaddr, pfn);
- }
- 
- static int log_writes_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index c81d331d1afe..77d72900e997 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -315,11 +315,12 @@ static struct dax_device *stripe_dax_pgoff(struct dm_target *ti, pgoff_t *pgoff)
- }
- 
- static long stripe_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn)
-+		long nr_pages, enum dax_access_mode mode, void **kaddr,
-+		pfn_t *pfn)
- {
- 	struct dax_device *dax_dev = stripe_dax_pgoff(ti, &pgoff);
- 
--	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
-+	return dax_direct_access(dax_dev, pgoff, nr_pages, mode, kaddr, pfn);
- }
- 
- static int stripe_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
-diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
-index 64dd0b34fcf4..8cd5184e62f0 100644
---- a/drivers/md/dm-target.c
-+++ b/drivers/md/dm-target.c
-@@ -10,6 +10,7 @@
- #include <linux/init.h>
- #include <linux/kmod.h>
- #include <linux/bio.h>
-+#include <linux/dax.h>
- 
- #define DM_MSG_PREFIX "target"
- 
-@@ -142,7 +143,8 @@ static void io_err_release_clone_rq(struct request *clone,
- }
- 
- static long io_err_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn)
-+		long nr_pages, enum dax_access_mode mode, void **kaddr,
-+		pfn_t *pfn)
- {
- 	return -EIO;
- }
-diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-index 5630b470ba42..d74c5a7a0ab4 100644
---- a/drivers/md/dm-writecache.c
-+++ b/drivers/md/dm-writecache.c
-@@ -286,7 +286,8 @@ static int persistent_memory_claim(struct dm_writecache *wc)
- 
- 	id = dax_read_lock();
- 
--	da = dax_direct_access(wc->ssd_dev->dax_dev, offset, p, &wc->memory_map, &pfn);
-+	da = dax_direct_access(wc->ssd_dev->dax_dev, offset, p, DAX_ACCESS,
-+			&wc->memory_map, &pfn);
- 	if (da < 0) {
- 		wc->memory_map = NULL;
- 		r = da;
-@@ -308,8 +309,8 @@ static int persistent_memory_claim(struct dm_writecache *wc)
- 		i = 0;
- 		do {
- 			long daa;
--			daa = dax_direct_access(wc->ssd_dev->dax_dev, offset + i, p - i,
--						NULL, &pfn);
-+			daa = dax_direct_access(wc->ssd_dev->dax_dev, offset + i,
-+					p - i, DAX_ACCESS, NULL, &pfn);
- 			if (daa <= 0) {
- 				r = daa ? daa : -EINVAL;
- 				goto err3;
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 3c5fad7c4ee6..8258676a352f 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1093,7 +1093,8 @@ static struct dm_target *dm_dax_get_live_target(struct mapped_device *md,
- }
- 
- static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
--				 long nr_pages, void **kaddr, pfn_t *pfn)
-+		long nr_pages, enum dax_access_mode mode, void **kaddr,
-+		pfn_t *pfn)
- {
- 	struct mapped_device *md = dax_get_private(dax_dev);
- 	sector_t sector = pgoff * PAGE_SECTORS;
-@@ -1111,7 +1112,7 @@ static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
- 	if (len < 1)
- 		goto out;
- 	nr_pages = min(len, nr_pages);
--	ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
-+	ret = ti->type->direct_access(ti, pgoff, nr_pages, mode, kaddr, pfn);
- 
-  out:
- 	dm_put_live_table(md, srcu_idx);
 diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-index 4aa17132a557..47f34c50f944 100644
+index e5e288135af7..0961625dfa05 100644
 --- a/drivers/nvdimm/pmem.c
 +++ b/drivers/nvdimm/pmem.c
-@@ -239,7 +239,8 @@ static int pmem_rw_page(struct block_device *bdev, sector_t sector,
- 
- /* see "strong" declaration in tools/testing/nvdimm/pmem-dax.c */
- __weak long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn)
-+		long nr_pages, enum dax_access_mode mode, void **kaddr,
-+		pfn_t *pfn)
- {
- 	resource_size_t offset = PFN_PHYS(pgoff) + pmem->data_offset;
- 
-@@ -278,11 +279,12 @@ static int pmem_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
+@@ -45,9 +45,25 @@ static struct nd_region *to_region(struct pmem_device *pmem)
+ 	return to_nd_region(to_dev(pmem)->parent);
  }
  
- static long pmem_dax_direct_access(struct dax_device *dax_dev,
--		pgoff_t pgoff, long nr_pages, void **kaddr, pfn_t *pfn)
-+		pgoff_t pgoff, long nr_pages, enum dax_access_mode mode,
-+		void **kaddr, pfn_t *pfn)
+-static void hwpoison_clear(struct pmem_device *pmem,
+-		phys_addr_t phys, unsigned int len)
++static phys_addr_t to_phys(struct pmem_device *pmem, phys_addr_t offset)
  {
- 	struct pmem_device *pmem = dax_get_private(dax_dev);
++	return pmem->phys_addr + offset;
++}
++
++static sector_t to_sect(struct pmem_device *pmem, phys_addr_t offset)
++{
++	return (offset - pmem->data_offset) >> SECTOR_SHIFT;
++}
++
++static phys_addr_t to_offset(struct pmem_device *pmem, sector_t sector)
++{
++	return (sector << SECTOR_SHIFT) + pmem->data_offset;
++}
++
++static void pmem_mkpage_present(struct pmem_device *pmem, phys_addr_t offset,
++		unsigned int len)
++{
++	phys_addr_t phys = to_phys(pmem, offset);
+ 	unsigned long pfn_start, pfn_end, pfn;
  
--	return __pmem_direct_access(pmem, pgoff, nr_pages, kaddr, pfn);
-+	return __pmem_direct_access(pmem, pgoff, nr_pages, mode, kaddr, pfn);
+ 	/* only pmem in the linear map supports HWPoison */
+@@ -69,33 +85,40 @@ static void hwpoison_clear(struct pmem_device *pmem,
+ 	}
  }
  
- static const struct dax_operations pmem_dax_ops = {
-diff --git a/drivers/nvdimm/pmem.h b/drivers/nvdimm/pmem.h
-index 1f51a2361429..392b0b38acb9 100644
---- a/drivers/nvdimm/pmem.h
-+++ b/drivers/nvdimm/pmem.h
-@@ -8,6 +8,8 @@
- #include <linux/pfn_t.h>
- #include <linux/fs.h>
- 
-+enum dax_access_mode;
-+
- /* this definition is in it's own header for tools/testing/nvdimm to consume */
- struct pmem_device {
- 	/* One contiguous memory region per device */
-@@ -28,7 +30,8 @@ struct pmem_device {
- };
- 
- long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn);
-+		long nr_pages, enum dax_access_mode mode, void **kaddr,
-+		pfn_t *pfn);
- 
- #ifdef CONFIG_MEMORY_FAILURE
- static inline bool test_and_clear_pmem_poison(struct page *page)
-diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
-index d614843caf6c..8d0d0eaa3059 100644
---- a/drivers/s390/block/dcssblk.c
-+++ b/drivers/s390/block/dcssblk.c
-@@ -32,7 +32,8 @@ static int dcssblk_open(struct block_device *bdev, fmode_t mode);
- static void dcssblk_release(struct gendisk *disk, fmode_t mode);
- static void dcssblk_submit_bio(struct bio *bio);
- static long dcssblk_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn);
-+		long nr_pages, enum dax_access_mode mode, void **kaddr,
-+		pfn_t *pfn);
- 
- static char dcssblk_segments[DCSSBLK_PARM_LEN] = "\0";
- 
-@@ -50,7 +51,8 @@ static int dcssblk_dax_zero_page_range(struct dax_device *dax_dev,
- 	long rc;
- 	void *kaddr;
- 
--	rc = dax_direct_access(dax_dev, pgoff, nr_pages, &kaddr, NULL);
-+	rc = dax_direct_access(dax_dev, pgoff, nr_pages, DAX_ACCESS,
-+			&kaddr, NULL);
- 	if (rc < 0)
- 		return rc;
- 	memset(kaddr, 0, nr_pages << PAGE_SHIFT);
-@@ -927,7 +929,8 @@ __dcssblk_direct_access(struct dcssblk_dev_info *dev_info, pgoff_t pgoff,
- 
- static long
- dcssblk_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn)
-+		long nr_pages, enum dax_access_mode mode, void **kaddr,
-+		pfn_t *pfn)
+-static blk_status_t pmem_clear_poison(struct pmem_device *pmem,
+-		phys_addr_t offset, unsigned int len)
++static void pmem_clear_bb(struct pmem_device *pmem, sector_t sector, long blks)
  {
- 	struct dcssblk_dev_info *dev_info = dax_get_private(dax_dev);
+-	struct device *dev = to_dev(pmem);
+-	sector_t sector;
+-	long cleared;
+-	blk_status_t rc = BLK_STS_OK;
++	if (blks == 0)
++		return;
++	badblocks_clear(&pmem->bb, sector, blks);
++	if (pmem->bb_state)
++		sysfs_notify_dirent(pmem->bb_state);
++}
  
-diff --git a/fs/dax.c b/fs/dax.c
-index 67a08a32fccb..ef3103107104 100644
---- a/fs/dax.c
-+++ b/fs/dax.c
-@@ -721,7 +721,8 @@ static int copy_cow_page_dax(struct vm_fault *vmf, const struct iomap_iter *iter
- 	int id;
+-	sector = (offset - pmem->data_offset) / 512;
++static long __pmem_clear_poison(struct pmem_device *pmem,
++		phys_addr_t offset, unsigned int len)
++{
++	phys_addr_t phys = to_phys(pmem, offset);
++	long cleared = nvdimm_clear_poison(to_dev(pmem), phys, len);
  
- 	id = dax_read_lock();
--	rc = dax_direct_access(iter->iomap.dax_dev, pgoff, 1, &kaddr, NULL);
-+	rc = dax_direct_access(iter->iomap.dax_dev, pgoff, 1, DAX_ACCESS,
-+				&kaddr, NULL);
- 	if (rc < 0) {
- 		dax_read_unlock(id);
- 		return rc;
-@@ -1013,7 +1014,7 @@ static int dax_iomap_pfn(const struct iomap *iomap, loff_t pos, size_t size,
+-	cleared = nvdimm_clear_poison(dev, pmem->phys_addr + offset, len);
+-	if (cleared < len)
+-		rc = BLK_STS_IOERR;
+-	if (cleared > 0 && cleared / 512) {
+-		hwpoison_clear(pmem, pmem->phys_addr + offset, cleared);
+-		cleared /= 512;
+-		dev_dbg(dev, "%#llx clear %ld sector%s\n",
+-				(unsigned long long) sector, cleared,
+-				cleared > 1 ? "s" : "");
+-		badblocks_clear(&pmem->bb, sector, cleared);
+-		if (pmem->bb_state)
+-			sysfs_notify_dirent(pmem->bb_state);
++	if (cleared > 0) {
++		pmem_mkpage_present(pmem, offset, cleared);
++		arch_invalidate_pmem(pmem->virt_addr + offset, len);
+ 	}
++	return cleared;
++}
  
- 	id = dax_read_lock();
- 	length = dax_direct_access(iomap->dax_dev, pgoff, PHYS_PFN(size),
--				   NULL, pfnp);
-+				   DAX_ACCESS, NULL, pfnp);
- 	if (length < 0) {
- 		rc = length;
- 		goto out;
-@@ -1122,7 +1123,7 @@ static int dax_memzero(struct dax_device *dax_dev, pgoff_t pgoff,
- 	void *kaddr;
- 	long ret;
+-	arch_invalidate_pmem(pmem->virt_addr + offset, len);
++static blk_status_t pmem_clear_poison(struct pmem_device *pmem,
++		phys_addr_t offset, unsigned int len)
++{
++	long cleared = __pmem_clear_poison(pmem, offset, len);
  
--	ret = dax_direct_access(dax_dev, pgoff, 1, &kaddr, NULL);
-+	ret = dax_direct_access(dax_dev, pgoff, 1, DAX_ACCESS, &kaddr, NULL);
- 	if (ret > 0) {
- 		memset(kaddr + offset, 0, size);
- 		dax_flush(dax_dev, kaddr + offset, size);
-@@ -1247,7 +1248,7 @@ static loff_t dax_iomap_iter(const struct iomap_iter *iomi,
- 		}
- 
- 		map_len = dax_direct_access(dax_dev, pgoff, PHYS_PFN(size),
--				&kaddr, NULL);
-+				DAX_ACCESS, &kaddr, NULL);
- 		if (map_len < 0) {
- 			ret = map_len;
- 			break;
-diff --git a/fs/fuse/dax.c b/fs/fuse/dax.c
-index d7d3a7f06862..10eb50cbf398 100644
---- a/fs/fuse/dax.c
-+++ b/fs/fuse/dax.c
-@@ -1241,8 +1241,8 @@ static int fuse_dax_mem_range_init(struct fuse_conn_dax *fcd)
- 	INIT_DELAYED_WORK(&fcd->free_work, fuse_dax_free_mem_worker);
- 
- 	id = dax_read_lock();
--	nr_pages = dax_direct_access(fcd->dev, 0, PHYS_PFN(dax_size), NULL,
--				     NULL);
-+	nr_pages = dax_direct_access(fcd->dev, 0, PHYS_PFN(dax_size),
-+			DAX_ACCESS, NULL, NULL);
- 	dax_read_unlock(id);
- 	if (nr_pages < 0) {
- 		pr_debug("dax_direct_access() returned %ld\n", nr_pages);
-diff --git a/include/linux/dax.h b/include/linux/dax.h
-index 9fc5f99a0ae2..3f1339bce3c0 100644
---- a/include/linux/dax.h
-+++ b/include/linux/dax.h
-@@ -14,6 +14,11 @@ struct iomap_ops;
- struct iomap_iter;
- struct iomap;
- 
-+enum dax_access_mode {
-+	DAX_ACCESS,
-+	DAX_RECOVERY_WRITE,
-+};
+-	return rc;
++	if (cleared < 0)
++		return BLK_STS_IOERR;
 +
- struct dax_operations {
- 	/*
- 	 * direct_access: translate a device-relative
-@@ -21,7 +26,7 @@ struct dax_operations {
- 	 * number of pages available for DAX at that pfn.
- 	 */
- 	long (*direct_access)(struct dax_device *, pgoff_t, long,
--			void **, pfn_t *);
-+			enum dax_access_mode, void **, pfn_t *);
- 	/*
- 	 * Validate whether this device is usable as an fsdax backing
- 	 * device.
-@@ -178,7 +183,7 @@ static inline void dax_read_unlock(int id)
- bool dax_alive(struct dax_device *dax_dev);
- void *dax_get_private(struct dax_device *dax_dev);
- long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
--		void **kaddr, pfn_t *pfn);
-+		enum dax_access_mode mode, void **kaddr, pfn_t *pfn);
- size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
- 		size_t bytes, struct iov_iter *i);
- size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index c2a3758c4aaa..acdedda0d12b 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -20,6 +20,7 @@ struct dm_table;
- struct dm_report_zones_args;
- struct mapped_device;
- struct bio_vec;
-+enum dax_access_mode;
++	pmem_clear_bb(pmem, to_sect(pmem, offset), cleared >> SECTOR_SHIFT);
++	if (cleared < len)
++		return BLK_STS_IOERR;
++	return BLK_STS_OK;
+ }
  
- /*
-  * Type of table, mapped_device's mempool and request_queue
-@@ -146,7 +147,8 @@ typedef int (*dm_busy_fn) (struct dm_target *ti);
-  * >= 0 : the number of bytes accessible at the address
-  */
- typedef long (*dm_dax_direct_access_fn) (struct dm_target *ti, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn);
-+		long nr_pages, enum dax_access_mode node, void **kaddr,
-+		pfn_t *pfn);
- typedef int (*dm_dax_zero_page_range_fn)(struct dm_target *ti, pgoff_t pgoff,
- 		size_t nr_pages);
- 
-diff --git a/tools/testing/nvdimm/pmem-dax.c b/tools/testing/nvdimm/pmem-dax.c
-index af19c85558e7..dcc328eba811 100644
---- a/tools/testing/nvdimm/pmem-dax.c
-+++ b/tools/testing/nvdimm/pmem-dax.c
-@@ -8,7 +8,8 @@
- #include <nd.h>
- 
- long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
--		long nr_pages, void **kaddr, pfn_t *pfn)
-+		long nr_pages, enum dax_access_mode mode, void **kaddr,
-+		pfn_t *pfn)
+ static void write_pmem(void *pmem_addr, struct page *page,
+@@ -143,7 +166,7 @@ static blk_status_t pmem_do_read(struct pmem_device *pmem,
+ 			sector_t sector, unsigned int len)
  {
- 	resource_size_t offset = PFN_PHYS(pgoff) + pmem->data_offset;
+ 	blk_status_t rc;
+-	phys_addr_t pmem_off = sector * 512 + pmem->data_offset;
++	phys_addr_t pmem_off = to_offset(pmem, sector);
+ 	void *pmem_addr = pmem->virt_addr + pmem_off;
  
+ 	if (unlikely(is_bad_pmem(&pmem->bb, sector, len)))
+@@ -158,7 +181,7 @@ static blk_status_t pmem_do_write(struct pmem_device *pmem,
+ 			struct page *page, unsigned int page_off,
+ 			sector_t sector, unsigned int len)
+ {
+-	phys_addr_t pmem_off = sector * 512 + pmem->data_offset;
++	phys_addr_t pmem_off = to_offset(pmem, sector);
+ 	void *pmem_addr = pmem->virt_addr + pmem_off;
+ 
+ 	if (unlikely(is_bad_pmem(&pmem->bb, sector, len))) {
 -- 
 2.18.4
 
