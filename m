@@ -4,153 +4,68 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 134B5C433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 25 Apr 2022 11:57:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A433BC433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 25 Apr 2022 12:07:56 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1650888475;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=n9JtRCiP/vJcfLMuM6xYqXtdheM7wTG+JNhNyxJ1nlI=;
+	b=TbHAD5Gbw239duLnqOvAw3X7phRVbv4yjSR9hNcmkbj1ceGNjvgWevUnc9Q/RdJKbY3xxn
+	ifkUPdoM6bEU8E3QAC1Vd5TJJ+q7LgOYp59TjaLqp/8TPtE0+7v04Jlp8CyGio7rAJ8RfE
+	XAQXmmXheMAQ55/QB0kLGZIIgy1PYRg=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-653-IC4IhmnkMXGGat1KOUV5lQ-1; Mon, 25 Apr 2022 07:57:17 -0400
-X-MC-Unique: IC4IhmnkMXGGat1KOUV5lQ-1
+ us-mta-17-JiwmpOkNN7S2OfL_OnBHWA-1; Mon, 25 Apr 2022 08:07:54 -0400
+X-MC-Unique: JiwmpOkNN7S2OfL_OnBHWA-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CD4B8899ED5;
-	Mon, 25 Apr 2022 11:57:12 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1A1B9805F46;
+	Mon, 25 Apr 2022 12:07:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EBAB840CF91E;
-	Mon, 25 Apr 2022 11:57:11 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id F2CB440CF910;
+	Mon, 25 Apr 2022 12:07:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E2B0B1947BBF;
-	Mon, 25 Apr 2022 11:57:09 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9DF481947BBF;
+	Mon, 25 Apr 2022 12:07:50 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 807B81947BBE
- for <dm-devel@listman.corp.redhat.com>; Mon, 25 Apr 2022 11:57:08 +0000 (UTC)
+ ESMTP id 920571947BBE
+ for <dm-devel@listman.corp.redhat.com>; Mon, 25 Apr 2022 12:07:49 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 34BE94679EF; Mon, 25 Apr 2022 11:57:08 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2F5624679FC
- for <dm-devel@redhat.com>; Mon, 25 Apr 2022 11:57:08 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0C8121014A62
- for <dm-devel@redhat.com>; Mon, 25 Apr 2022 11:57:08 +0000 (UTC)
-Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
- [205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-271-PxI6-lFbOBetv0qrH-YIUA-1; Mon, 25 Apr 2022 07:57:06 -0400
-X-MC-Unique: PxI6-lFbOBetv0qrH-YIUA-1
-Received: from pps.filterd (m0246631.ppops.net [127.0.0.1])
- by mx0b-00069f02.pphosted.com (8.17.1.5/8.17.1.5) with ESMTP id 23P9Oapr031660;
- Mon, 25 Apr 2022 11:57:02 GMT
-Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com
- (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
- by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3fmb5ju02f-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Mon, 25 Apr 2022 11:57:02 +0000
-Received: from pps.filterd
- (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
- by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.16.1.2/8.16.1.2)
- with SMTP id 23PBsvdP004747; Mon, 25 Apr 2022 11:57:01 GMT
-Received: from nam10-mw2-obe.outbound.protection.outlook.com
- (mail-mw2nam10lp2106.outbound.protection.outlook.com [104.47.55.106])
- by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com with ESMTP id
- 3fm7w268kc-1
- (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Mon, 25 Apr 2022 11:57:01 +0000
-Received: from MWHPR1001MB2365.namprd10.prod.outlook.com
- (2603:10b6:301:2d::28) by BN0PR10MB5126.namprd10.prod.outlook.com
- (2603:10b6:408:129::8) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5186.13; Mon, 25 Apr
- 2022 11:56:59 +0000
-Received: from MWHPR1001MB2365.namprd10.prod.outlook.com
- ([fe80::b5d5:7b39:ca2d:1b87]) by MWHPR1001MB2365.namprd10.prod.outlook.com
- ([fe80::b5d5:7b39:ca2d:1b87%5]) with mapi id 15.20.5164.025; Mon, 25 Apr 2022
- 11:56:59 +0000
-Date: Mon, 25 Apr 2022 14:56:48 +0300
-From: Dan Carpenter <dan.carpenter@oracle.com>
-To: Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
-Message-ID: <YmaMgPr8bM/0PFUi@kili>
-X-ClientProxiedBy: ZR0P278CA0090.CHEP278.PROD.OUTLOOK.COM
- (2603:10a6:910:22::23) To MWHPR1001MB2365.namprd10.prod.outlook.com
- (2603:10b6:301:2d::28)
+ id 7F5B8463E03; Mon, 25 Apr 2022 12:07:49 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 71B5340316B;
+ Mon, 25 Apr 2022 12:07:49 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 23PC7nql030551; Mon, 25 Apr 2022 08:07:49 -0400
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 23PC7mR5030546; Mon, 25 Apr 2022 08:07:49 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Mon, 25 Apr 2022 08:07:48 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+In-Reply-To: <CAHk-=wh+Z+OKH3jRttWGHbWSQq2wVMtdnA=ntDiadZu=VxAC7w@mail.gmail.com>
+Message-ID: <alpine.LRH.2.02.2204250723120.26714@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2204241648270.17244@file01.intranet.prod.int.rdu2.redhat.com>
+ <CAHk-=wh+Z+OKH3jRttWGHbWSQq2wVMtdnA=ntDiadZu=VxAC7w@mail.gmail.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: 0bf822e7-7b71-42d7-61af-08da26b2b3ee
-X-MS-TrafficTypeDiagnostic: BN0PR10MB5126:EE_
-X-Microsoft-Antispam-PRVS: <BN0PR10MB51265CB6EBE8FDE54D7F6CF18EF89@BN0PR10MB5126.namprd10.prod.outlook.com>
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: 9uf7c9gWcht337zbdr5ZpNqP8Ri0MlPTSmny1SZRoyp95AkQpZ7LCEWqzwwh3QVgtW8octZBxZk1qGFpylT7HZH+hLhhEPlkG05I0BPx/joWcnOaIAzJWSP4817D9OMv3cHqeHBvoqdUOE5AEB2PCucWWQSMF9HCAwfhwhNtsfr9D3yX6B2jLtLl3RZqRr5aPTt0LURYnFpIQVIFfP2EHW6xhuArhp3hSTLB5qW5YIdhCXIFZmds1sXe2Ykp2DqjblOwCcxYsXw1sO6K36IiUEgBv55wX9DgR85sIRgT5EQ9dSmMelNOVSwHHCWuwdLpgwpTNrIPjR+J27mk5IU4/h+zw34Ez3CTDDECGBLTDf1LHGHvYl905JTrsCY9qpj04tBS8nNUo/s3YJBkwB7rasbGHM5eQ0Jy3DO7cdSj7w2TEsJhwCVQnZczOjgLPyGKgnFgYFRZPeCHLG4yRfUduo99MM+TSF0CB866d31dA+HRroH9V7zmr6wmuHASFBjefbI/t9hjq6zchMIqKXLUv3cCOfFf7jQfgfOBsWX/aOppKuE+kx+0mx278qGCPAiHhCOA1+T9N/Sr2AIF5IAxfxVfUxy0fhXlmWjIvWBZFu4PA1kQjVTtW/poLbISg75f3ofhBl3V3ZReP+wYwCPIvzOr12sZdibAyaICzgb9ZXZSSyBUNdUeRG6ELM8NZqgL81lLrMC6Dy2tvQNOujjkTA==
-X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:MWHPR1001MB2365.namprd10.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230001)(7916004)(366004)(86362001)(66556008)(44832011)(66946007)(316002)(4326008)(8676002)(52116002)(5660300002)(8936002)(186003)(83380400001)(26005)(6486002)(508600001)(6506007)(9686003)(6666004)(6512007)(4744005)(66476007)(54906003)(110136005)(38100700002)(33716001)(38350700002)(2906002);
- DIR:OUT; SFP:1101
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?IlBpg61Q0vvMk9rz8LJmgFaC1iKwRlzI1w5CCHO9hOakSF2MMduOzNYCXPz6?=
- =?us-ascii?Q?rSIrXlSBxuPK4zz5jbfrOQgZNY6dUoLda/b/M4c4CTzCPL3pjdDY3nRUnGUA?=
- =?us-ascii?Q?J9Nl9UGqQEPdW0t46Ow8AgLKMm8Q4Fz66z+z2WnmqMeKP4wAGJ1RKPihUKkD?=
- =?us-ascii?Q?3h4XiLuS796Nz4sbvew3ayTgf6nP8ciMN0PT7mBw4pWjw3p9wc627OZMYg4G?=
- =?us-ascii?Q?bsthwQaYk4krsGk1rdZ2M1QUTWWPMO/HTxk7nWSYoYlfBoB/8jMFTBOb47Oi?=
- =?us-ascii?Q?vElnWKBUmNE6/5NSlaXYieGay/yIzMAYsI/kmrh4QQKMjrT08oShQrXd2drn?=
- =?us-ascii?Q?8mcRO8pmbiLXiC875McVZilhIczTa6KRnvBa7A8Vph1gKxgOfGHm3jilcHHy?=
- =?us-ascii?Q?00qrX/LXMrENUCoIcGoPbhQ+ekciF+Ycq2Gx4Pv+8ziAYesY+MoJGNWTWnYV?=
- =?us-ascii?Q?AYDLmlaP1OuAq/c0aIgrfyQiWAemRHJmY5tz8k0Os/ykAjEdGuqOPX7bW/XV?=
- =?us-ascii?Q?ra59eMiB+vh9vQ3q0iKsg4uiGLZtLsxGH+OmXL/2ecFH0PlTHOyPOfG+i1eB?=
- =?us-ascii?Q?6ngUrFn5BRDTACxhpVXC6NnFtLUbKZshUpqA7k8arDvJNwBzFpyP0QYOv4oH?=
- =?us-ascii?Q?w79YoFlVuOqxXGddaj0bkvnI2E9UPfuKSDxwz6n+AR53JfYF/kjcggCwOSkC?=
- =?us-ascii?Q?/UPBiIekPFvn98BSZ8dGc+boj0X2ASp5D5cPAU8YqLm5qoKO1z7T+xnL4+2H?=
- =?us-ascii?Q?ls8YrK0XngnfI9Htx7whPE751cQqL1339LeNQKDVPzwwi2QNgd6ooLIb7DaR?=
- =?us-ascii?Q?/ClaOT9yWkiYH+kEelP0CcUCaI8xmptuRIS3LlVJCiozPtgA5qCwWM3aDH6M?=
- =?us-ascii?Q?vQJoMnjw9G5rzyd87xQJ2APsRGenoN2kovNAvmNS/fpc14E48TAVrS29gN5H?=
- =?us-ascii?Q?KQuNyVv0JfViMa9nR0PZU5UyC4S6mjFifWX6LE6QQo3PUTCxl0Hb1rAWuYb4?=
- =?us-ascii?Q?/5UNCgxpvxn67iHbQVv8UCujZpqFA3QBgUQ57VOZGbfkaoZRetNPb8spsQO9?=
- =?us-ascii?Q?TbWxSnaXmdk/6BngvDCy3Hbsp9NNxFn/4j50yZJQnhf13IP9wRNCPyJGwVCx?=
- =?us-ascii?Q?+65hhCEybGUNNyVIjedgrHKmAJ3vtZ58G1/5iNKLwSwn6qG8xwFNVRfpCp7l?=
- =?us-ascii?Q?8Q000P13HK/9issf77ydH4ol7tnY4q+dXUuVqcx3mMgKSZnVaXWsdV2jRXQF?=
- =?us-ascii?Q?6u+D6ros3ER83ylKw2scOrgHcGZ57q49RV7dBf5lXhAj5f7XPkMWOlD3vi/G?=
- =?us-ascii?Q?1FWhrlwL6pu2H5mO5oDaCpHSCptZ+oRbSVscmXm9JF2wCCLgHQbyjjXVdfI1?=
- =?us-ascii?Q?1/rz/3fKjJT0r7m1nma/3/UrdgX3v7WyU8uBN7tRaAkGEH7b4jKThSskUDdI?=
- =?us-ascii?Q?deopPcqxWWvIAyR83BPmVW0GzQHDawsnl/9OwIvEOj2JyrkTxc7AefpPjU7t?=
- =?us-ascii?Q?obwp06W5SjWUKjh0w2w8AuP37eL6X5xA6TZG7JQ8JYTdct7Ak/Tc3Gbu6c/8?=
- =?us-ascii?Q?FCzb/dwNJjYm8Kf+TrbhbuDSaZS/04WI3K/PWEzriwVxjS9JIsvf9BQbgkxi?=
- =?us-ascii?Q?Bp6ugl15d5X9rb4t3DsQj1MzL3G724rf77RCKudMODKLvQtxUt3oMK70mzMV?=
- =?us-ascii?Q?hvLxgk9vV/+ohkKuiZXcQ2eLI+WRYMORGYK+aYKbZrnZhGhKwfKo3Ii41sd0?=
- =?us-ascii?Q?q06fDbRF/NFRi31fml2x3GoW4aZFQso=3D?=
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 0bf822e7-7b71-42d7-61af-08da26b2b3ee
-X-MS-Exchange-CrossTenant-AuthSource: MWHPR1001MB2365.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 25 Apr 2022 11:56:59.2062 (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: YQvGKRwXdiOCkqtxjOfeKrV0P/H4CrHv6ZCIoF09gcBmWRrFhinSy00qYzn7WmFhJvJ3Uw+nEsPmERmnlYg+dcyE8ONk0JMlVgSAYelk7VE=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BN0PR10MB5126
-X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.486, 18.0.858
- definitions=2022-04-25_06:2022-04-25,
- 2022-04-25 signatures=0
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 adultscore=0
- suspectscore=0
- malwarescore=0 mlxlogscore=999 phishscore=0 mlxscore=0 spamscore=0
- bulkscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.12.0-2202240000 definitions=main-2204250053
-X-Proofpoint-GUID: j62BFL0wDx7z03HWVNXn3rKjlSXUIoqp
-X-Proofpoint-ORIG-GUID: j62BFL0wDx7z03HWVNXn3rKjlSXUIoqp
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: [dm-devel] [PATCH] dm integrity: fix error code in
- dm_integrity_ctr()
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: [dm-devel] [PATCH v2] hex2bin: make the function hex_to_bin
+ constant-time
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -162,9 +77,13 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: kernel-janitors@vger.kernel.org, dm-devel@redhat.com,
- Mike Snitzer <snitzer@kernel.org>, Milan Broz <gmazyland@gmail.com>,
- linux-kernel@vger.kernel.org
+Cc: Andy Shevchenko <andy@kernel.org>, Mike Snitzer <msnitzer@redhat.com>,
+ Herbert Xu <herbert@gondor.apana.org.au>,
+ Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+ Mimi Zohar <zohar@linux.ibm.com>, Milan Broz <gmazyland@gmail.com>,
+ device-mapper development <dm-devel@redhat.com>,
+ Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
+ "David S. Miller" <davem@davemloft.net>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
@@ -172,39 +91,157 @@ Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The "r" variable shadows an earlier "r" that has function scope.  It
-means that we accidentally return success instead of an error code.
-Smatch has a warning for this:
 
-	drivers/md/dm-integrity.c:4503 dm_integrity_ctr()
-	warn: missing error code 'r'
 
-Fixes: 7eada909bfd7 ("dm: add integrity target")
-Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
+On Sun, 24 Apr 2022, Linus Torvalds wrote:
+
+> On Sun, Apr 24, 2022 at 1:54 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
+> >
+> > + *
+> > + * Explanation of the logic:
+> > + * (ch - '9' - 1) is negative if ch <= '9'
+> > + * ('0' - 1 - ch) is negative if ch >= '0'
+> 
+> True, but...
+> 
+> Please, just to make me happier, make the sign of 'ch' be something
+> very explicit. Right now that code uses 'char ch', which could be
+> signed or unsigned.
+
+OK, I fixed it, here I'm sending the second version.
+
+> Finally, for the same reason - please don't use ">> 8".  Because I do
+> not believe that bit 8 is well-defined in your arithmetic. The *sign*
+
+We are subtracting values that are in the 0 ... 255 range. So, the result 
+will be in the -255 ... 255 range. So, the bits 8 to 31 of the result are 
+equivalent.
+
+> bit will be, but I'm not convinced bit 8 is.
+> 
+> So use ">> 31" or similar.
+
+We can pick any number between 8 and 28. 31 won't work because the C 
+standard doesn't specify that the right shift keeps the sign bit.
+
+To make it standard-compliant, I added a cast that casts the int value to 
+unsigned. We have an unsigned value with bits 8 to 31 equivalent. When we 
+shift it 8 bits to the right, we have either 0 or 0xffffff - and this 
+value is suitable for masking.
+
+> Also, I do worry that this is *exactly* the kind of trick that a
+> compiler could easily turn back into a conditional. Usually compilers
+> tend to go the other way (ie turn conditionals into arithmetic if
+> possible), but..
+
+Some old version that I tried used "(ch - '0' + 1) * ((unsigned)(ch - '0') 
+<= 9)" - it worked with gcc, but clang was too smart and turned it into a 
+cmov when compiling for i686 and to a conditional branch when compiling 
+for i586.
+
+Another version used "-(c - '0' + 1) * (((unsigned)(c - '0') >= 10) - 1)" 
+- it almost worked, except that clang still turned it into a conditional 
+jump on sparc32 and powerpc32.
+
+So, I came up with this version that avoids comparison operators at all 
+and tested it with gcc and clang on all architectures that I could try.
+
+Mikulas
+
+>                     Linus
+> 
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+The function hex2bin is used to load cryptographic keys into device mapper
+targets dm-crypt and dm-integrity. It should take constant time
+independent on the processed data, so that concurrently running
+unprivileged code can't infer any information about the keys via
+microarchitectural convert channels.
+
+This patch changes the function hex_to_bin so that it contains no branches
+and no memory accesses.
+
+Note that this shouldn't cause performance degradation because the size of
+the new function is the same as the size of the old function (on x86-64) -
+and the new function causes no branch misprediction penalties.
+
+I compile-tested this function with gcc on aarch64 alpha arm hppa hppa64
+i386 ia64 m68k mips32 mips64 powerpc powerpc64 riscv sh4 s390x sparc32
+sparc64 x86_64 and with clang on aarch64 arm hexagon i386 mips32 mips64
+powerpc powerpc64 s390x sparc32 sparc64 x86_64 to verify that there are no
+branches in the generated code.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+
 ---
- drivers/md/dm-integrity.c | 2 --
- 1 file changed, 2 deletions(-)
+ include/linux/kernel.h |    2 +-
+ lib/hexdump.c          |   32 +++++++++++++++++++++++++-------
+ 2 files changed, 26 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 36ae30b73a6e..3d5a0ce123c9 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -4494,8 +4494,6 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	}
+Index: linux-2.6/lib/hexdump.c
+===================================================================
+--- linux-2.6.orig/lib/hexdump.c	2022-04-24 18:51:20.000000000 +0200
++++ linux-2.6/lib/hexdump.c	2022-04-25 13:15:26.000000000 +0200
+@@ -22,15 +22,33 @@ EXPORT_SYMBOL(hex_asc_upper);
+  *
+  * hex_to_bin() converts one hex digit to its actual value or -1 in case of bad
+  * input.
++ *
++ * This function is used to load cryptographic keys, so it is coded in such a
++ * way that there are no conditions or memory accesses that depend on data.
++ *
++ * Explanation of the logic:
++ * (ch - '9' - 1) is negative if ch <= '9'
++ * ('0' - 1 - ch) is negative if ch >= '0'
++ * we "and" these two values, so the result is negative if ch is in the range
++ *	'0' ... '9'
++ * we are only interested in the sign, so we do a shift ">> 8"; note that right
++ *	shift of a negative value is implementation-defined, so we cast the
++ *	value to (unsigned) before the shift --- we have 0xffffff if ch is in
++ *	the range '0' ... '9', 0 otherwise
++ * we "and" this value with (ch - '0' + 1) --- we have a value 1 ... 10 if ch is
++ *	in the range '0' ... '9', 0 otherwise
++ * we add this value to -1 --- we have a value 0 ... 9 if ch is in the range '0'
++ *	... '9', -1 otherwise
++ * the next line is similar to the previous one, but we need to decode both
++ *	uppercase and lowercase letters, so we use (ch & 0xdf), which converts
++ *	lowercase to uppercase
+  */
+-int hex_to_bin(char ch)
++int hex_to_bin(unsigned char ch)
+ {
+-	if ((ch >= '0') && (ch <= '9'))
+-		return ch - '0';
+-	ch = tolower(ch);
+-	if ((ch >= 'a') && (ch <= 'f'))
+-		return ch - 'a' + 10;
+-	return -1;
++	unsigned char cu = ch & 0xdf;
++	return -1 +
++		((ch - '0' +  1) & (unsigned)((ch - '9' - 1) & ('0' - 1 - ch)) >> 8) +
++		((cu - 'A' + 11) & (unsigned)((cu - 'F' - 1) & ('A' - 1 - cu)) >> 8);
+ }
+ EXPORT_SYMBOL(hex_to_bin);
  
- 	if (should_write_sb) {
--		int r;
--
- 		init_journal(ic, 0, ic->journal_sections, 0);
- 		r = dm_integrity_failed(ic);
- 		if (unlikely(r)) {
--- 
-2.35.1
-
+Index: linux-2.6/include/linux/kernel.h
+===================================================================
+--- linux-2.6.orig/include/linux/kernel.h	2022-04-21 17:31:39.000000000 +0200
++++ linux-2.6/include/linux/kernel.h	2022-04-25 07:33:43.000000000 +0200
+@@ -285,7 +285,7 @@ static inline char *hex_byte_pack_upper(
+ 	return buf;
+ }
+ 
+-extern int hex_to_bin(char ch);
++extern int hex_to_bin(unsigned char ch);
+ extern int __must_check hex2bin(u8 *dst, const char *src, size_t count);
+ extern char *bin2hex(char *dst, const void *src, size_t count);
+ 
 --
 dm-devel mailing list
 dm-devel@redhat.com
