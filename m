@@ -1,74 +1,98 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3A402C433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 25 Apr 2022 13:33:50 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1650893629;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=3Swr/FrQ4bJv6cQbHCSqm6ifZgXG2MD1XY+AIm+2upk=;
-	b=hchzojmeppsDgVTaqyYW2mLB2GjoQWUsphFztX3lFMR42VjmpSMCmOvaA94jxM7zIzpVPR
-	EiHBJZ4V8taZIAsdidLamc1w2z9pNfQ6LVYaZmrlXDpHEod0yn2LNfZN8uqulFw8uujQBa
-	M1cvifeqJsFQsw10lan3B1kQhrldst0=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4FCC5C433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 25 Apr 2022 17:54:24 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-340-Ax1fgyMFO2uyzDSgOs5pbQ-1; Mon, 25 Apr 2022 09:33:46 -0400
-X-MC-Unique: Ax1fgyMFO2uyzDSgOs5pbQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-175-qJh3gwreOUiQ3RXzQJrrxQ-1; Mon, 25 Apr 2022 13:54:20 -0400
+X-MC-Unique: qJh3gwreOUiQ3RXzQJrrxQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3B3FA803CB8;
-	Mon, 25 Apr 2022 13:33:44 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D4D488517CF;
+	Mon, 25 Apr 2022 17:54:17 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0F1E61468F22;
-	Mon, 25 Apr 2022 13:33:40 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2002CC53BA8;
+	Mon, 25 Apr 2022 17:54:11 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 568451947BBF;
-	Mon, 25 Apr 2022 13:33:39 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id F090519451F2;
+	Mon, 25 Apr 2022 17:54:07 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
  [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 7FCF41947BBE
- for <dm-devel@listman.corp.redhat.com>; Mon, 25 Apr 2022 13:33:38 +0000 (UTC)
+ ESMTP id 855D119452D2
+ for <dm-devel@listman.corp.redhat.com>; Mon, 25 Apr 2022 17:54:06 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 4F36854C75F; Mon, 25 Apr 2022 13:33:38 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com
- (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 07E0654C75A;
- Mon, 25 Apr 2022 13:33:38 +0000 (UTC)
-Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 23PDXbKt006460; Mon, 25 Apr 2022 09:33:37 -0400
-Received: from localhost (mpatocka@localhost)
- by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 23PDXaJZ006456; Mon, 25 Apr 2022 09:33:37 -0400
-X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
- owned process doing -bs
-Date: Mon, 25 Apr 2022 09:33:36 -0400 (EDT)
-From: Mikulas Patocka <mpatocka@redhat.com>
-X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
-To: David Laight <David.Laight@ACULAB.COM>
-In-Reply-To: <e8de034196df450cb352fa60a570acca@AcuMS.aculab.com>
-Message-ID: <alpine.LRH.2.02.2204250912350.5163@file01.intranet.prod.int.rdu2.redhat.com>
+ id 034A2552D1A; Mon, 25 Apr 2022 17:54:05 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id F3BF4552D15
+ for <dm-devel@redhat.com>; Mon, 25 Apr 2022 17:54:03 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BBF032999B22
+ for <dm-devel@redhat.com>; Mon, 25 Apr 2022 17:53:51 +0000 (UTC)
+Received: from mail-lf1-f51.google.com (mail-lf1-f51.google.com
+ [209.85.167.51]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-400-4WzDKdUCOKKO3sEzwGEAYQ-1; Mon, 25 Apr 2022 13:53:41 -0400
+X-MC-Unique: 4WzDKdUCOKKO3sEzwGEAYQ-1
+Received: by mail-lf1-f51.google.com with SMTP id y32so27573042lfa.6
+ for <dm-devel@redhat.com>; Mon, 25 Apr 2022 10:53:41 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+ :message-id:subject:to:cc;
+ bh=/LM5ApeDrM+ZiQkhPKo2nD8z3VPb3CiZfRSSBlkwszA=;
+ b=tpt09E7qr91QrBcgjUfS2ABUfPfg5aIJ4lzcyxd7CA9++8IHhNfcYwADqbSf0Rx3D0
+ IfjF1T1RuF04I6zOo973AzTMdt39hoOxk5n1o2I2L6WspT9HvnOCcdWtoKAITmJG9M85
+ XF8dSzAj2ZaZTzoKusxcZ9RxiO70NCLY2GXEkLD3c4u0TURqBsnR4KQ+KPstMxjIdIc2
+ I0Lt2xFTueqTQKV7IIzUzwu6lmSxeUksMUKvwZdDK2PKdBm7797vJKmtVGTLObAton66
+ mooMicxBDfGXKog138Yak9rc4mhBAbiv+Q0LssgEz2QYSSJjZk8BzVWyWFT7P4GHxmSI
+ v9Bg==
+X-Gm-Message-State: AOAM532rZ8xPZe2biED5iMQjr9eo0yp3zIj0BOVR8tLjEO1LJZmHnw0y
+ IIDQMp47kwnSZCwkLN9KX29qWL82ko4j0ejd4O8=
+X-Google-Smtp-Source: ABdhPJzAWjwJM5/S9c8+JcMC0NYQjuV9XWzcVaIlpCQWyRRIF3xHX9cvBzXj2fu8VBqxLCv7nivkpg==
+X-Received: by 2002:a05:6512:322a:b0:472:7d2:1114 with SMTP id
+ f10-20020a056512322a00b0047207d21114mr4102756lfe.105.1650909220015; 
+ Mon, 25 Apr 2022 10:53:40 -0700 (PDT)
+Received: from mail-lf1-f54.google.com (mail-lf1-f54.google.com.
+ [209.85.167.54]) by smtp.gmail.com with ESMTPSA id
+ q15-20020a196e4f000000b0047205c5409esm545780lfk.147.2022.04.25.10.53.39
+ for <dm-devel@redhat.com>
+ (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+ Mon, 25 Apr 2022 10:53:39 -0700 (PDT)
+Received: by mail-lf1-f54.google.com with SMTP id p12so22022353lfs.5
+ for <dm-devel@redhat.com>; Mon, 25 Apr 2022 10:53:39 -0700 (PDT)
+X-Received: by 2002:a05:6512:1193:b0:471:af88:2d74 with SMTP id
+ g19-20020a056512119300b00471af882d74mr13719233lfr.531.1650909219017; Mon, 25
+ Apr 2022 10:53:39 -0700 (PDT)
+MIME-Version: 1.0
 References: <alpine.LRH.2.02.2204241648270.17244@file01.intranet.prod.int.rdu2.redhat.com>
  <CAHk-=wh+Z+OKH3jRttWGHbWSQq2wVMtdnA=ntDiadZu=VxAC7w@mail.gmail.com>
- <CAHk-=wibmkFz6dybsdpW_3kUnV20FhJazerWDcbm7yCp_Xv+CA@mail.gmail.com>
- <789f0463ce974e90a93f4dbf8c471156@AcuMS.aculab.com>
- <alpine.LRH.2.02.2204250701410.10912@file01.intranet.prod.int.rdu2.redhat.com>
- <e8de034196df450cb352fa60a570acca@AcuMS.aculab.com>
-User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
-MIME-Version: 1.0
+ <alpine.LRH.2.02.2204250723120.26714@file01.intranet.prod.int.rdu2.redhat.com>
+In-Reply-To: <alpine.LRH.2.02.2204250723120.26714@file01.intranet.prod.int.rdu2.redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Date: Mon, 25 Apr 2022 10:53:22 -0700
+X-Gmail-Original-Message-ID: <CAHk-=wjhP7EdVkj9V2aWbUtPbC=rNxvJ1R1Bs45jFz4KT3xg-Q@mail.gmail.com>
+Message-ID: <CAHk-=wjhP7EdVkj9V2aWbUtPbC=rNxvJ1R1Bs45jFz4KT3xg-Q@mail.gmail.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: Re: [dm-devel] [PATCH] hex2bin: make the function hex_to_bin
+Subject: Re: [dm-devel] [PATCH v2] hex2bin: make the function hex_to_bin
  constant-time
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -87,11 +111,10 @@ Cc: Andy Shevchenko <andy@kernel.org>, Mike Snitzer <msnitzer@redhat.com>,
  Mimi Zohar <zohar@linux.ibm.com>, Milan Broz <gmazyland@gmail.com>,
  device-mapper development <dm-devel@redhat.com>,
  Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
- 'Linus Torvalds' <torvalds@linux-foundation.org>,
  "David S. Miller" <davem@davemloft.net>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -99,87 +122,45 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+On Mon, Apr 25, 2022 at 5:07 AM Mikulas Patocka <mpatocka@redhat.com> wrote:
+>
+> We are subtracting values that are in the 0 ... 255 range.
 
+Well, except that's not what the original patch did.
 
-On Mon, 25 Apr 2022, David Laight wrote:
+It was subtracting values that were in the -128 ... 255 range (where
+the exact range depended on the sign of 'char').
 
-> From: Mikulas Patocka
-> > Sent: 25 April 2022 12:04
-> > 
-> > On Mon, 25 Apr 2022, David Laight wrote:
-> > 
-> > > From: Linus Torvalds
-> > > > Sent: 24 April 2022 22:42
-> > > >
-> > > > On Sun, Apr 24, 2022 at 2:37 PM Linus Torvalds
-> > > > <torvalds@linux-foundation.org> wrote:
-> > > > >
-> > > > > Finally, for the same reason - please don't use ">> 8".  Because I do
-> > > > > not believe that bit 8 is well-defined in your arithmetic. The *sign*
-> > > > > bit will be, but I'm not convinced bit 8 is.
-> > > >
-> > > > Hmm.. I think it's ok. It can indeed overflow in 'char' and change the
-> > > > sign in bit #7, but I suspect bit #8 is always fine.
-> > > >
-> > > > Still, If you want to just extend the sign bit, ">> 31" _is_ the
-> > > > obvious thing to use (yeah, yeah, properly "sizeof(int)*8-1" or
-> > > > whatever, you get my drift).
-> > >
-> > > Except that right shifts of signed values are UB.
-> > > In particular it has always been valid to do an unsigned
-> > > shift right on a 2's compliment negative number.
-> > >
-> > > 	David
-> > 
-> > Yes. All the standard versions (C89, C99, C11, C2X) say that right shift
-> > of a negative value is implementation-defined.
-> > 
-> > So, we should cast it to "unsigned" before shifting it.
-> 
-> Except that the intent appears to be to replicate the sign bit.
-> 
-> If it is 'implementation defined' (rather than suddenly being UB)
+But yeah, I think bit8 was always safe. Probably. Particularly as the
+possible ranges across different architectures is bigger than the
+range within one _particular_ architecture (so you'll never see "255 -
+-128" even when the sign wasn't defined ;)
 
-The standard says "If E1 has a signed type and a negative value, the 
-resulting value is implementation-defined."
+> > Also, I do worry that this is *exactly* the kind of trick that a
+> > compiler could easily turn back into a conditional. Usually compilers
+> > tend to go the other way (ie turn conditionals into arithmetic if
+> > possible), but..
+>
+> Some old version that I tried used "(ch - '0' + 1) * ((unsigned)(ch - '0')
+> <= 9)" - it worked with gcc, but clang was too smart and turned it into a
+> cmov when compiling for i686 and to a conditional branch when compiling
+> for i586.
+>
+> Another version used "-(c - '0' + 1) * (((unsigned)(c - '0') >= 10) - 1)"
+> - it almost worked, except that clang still turned it into a conditional
+> jump on sparc32 and powerpc32.
+>
+> So, I came up with this version that avoids comparison operators at all
+> and tested it with gcc and clang on all architectures that I could try.
 
-So, it's not undefined behavior.
+Yeah, the thing about those compiler heuristics is that they are often
+based on almost arbitrary patterns that just happen to be what
+somebody has found in some benchmark.
 
-> it might be that the linux kernel requires sign propagating
-> right shifts of negative values.
+Hopefully nobody ever uses something like this as a benchmark.
 
-It may be that some code in the Linux kernel already assumes that right 
-shifts keep the sign. It's hard to say if such code exists.
+             Linus
 
-BTW. ubsan warns about left shift of negative values, but it doesn't warn 
-about right shift of negative values.
-
-> This is typically what happens on 2's compliment systems.
-> But not all small cpu have the required shift instruction.
-> OTOH all the ones bit enough to run Linux probably do.
-> (And gcc doesn't support '1's compliment' or 'sign overpunch' cpus.)
-> 
-> The problem is that the compiler writers seem to be entering
-> a mindset where they are optimising code based on UB behaviour.
-> So given:
-> void foo(int x)
-> {
-> 	if (x >> 1 < 0)
-> 		return;
-> 	do_something();
-> }
-> they decide the test is UB, so can always be assumed to be true
-> and thus do_something() is compiled away.
-> 
-> 	David
-
-If it's implementation-defined (rather than undefined), the compiler 
-shouldn't do such optimization.
-
-The linux kernel uses "-fno-strict-overflow" which disables some of these 
-UB optimizations.
-
-Mikulas
 --
 dm-devel mailing list
 dm-devel@redhat.com
