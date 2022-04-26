@@ -4,79 +4,132 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8AF45C433FE
-	for <dm-devel@archiver.kernel.org>; Wed, 27 Apr 2022 12:15:24 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E67C4C433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 27 Apr 2022 12:15:29 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-372-ctA84d_DOoqTpFpdfuuZGA-1; Wed, 27 Apr 2022 08:15:19 -0400
-X-MC-Unique: ctA84d_DOoqTpFpdfuuZGA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-554-08Uq1CAsM9SKE2Zx3sBnqw-1; Wed, 27 Apr 2022 08:15:26 -0400
+X-MC-Unique: 08Uq1CAsM9SKE2Zx3sBnqw-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 54525833970;
-	Wed, 27 Apr 2022 12:15:17 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4EFFE29AA2ED;
+	Wed, 27 Apr 2022 12:15:18 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 3E109111D7BE;
-	Wed, 27 Apr 2022 12:15:17 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 38CCF40CFD05;
+	Wed, 27 Apr 2022 12:15:18 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EEFBC194704E;
-	Wed, 27 Apr 2022 12:15:16 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E55F81947046;
+	Wed, 27 Apr 2022 12:15:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 9896C19451F0
- for <dm-devel@listman.corp.redhat.com>; Tue, 26 Apr 2022 21:31:23 +0000 (UTC)
+ ESMTP id 884281947BBE
+ for <dm-devel@listman.corp.redhat.com>; Tue, 26 Apr 2022 12:24:36 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 6AB5E40D0161; Tue, 26 Apr 2022 21:31:23 +0000 (UTC)
+ id 3A46A463E05; Tue, 26 Apr 2022 12:24:36 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 65BD040D0160
- for <dm-devel@redhat.com>; Tue, 26 Apr 2022 21:31:23 +0000 (UTC)
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 35D4B463E15
+ for <dm-devel@redhat.com>; Tue, 26 Apr 2022 12:24:36 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id DFF33280859E
- for <dm-devel@redhat.com>; Tue, 26 Apr 2022 21:31:22 +0000 (UTC)
-Received: from mail-pf1-f176.google.com (mail-pf1-f176.google.com
- [209.85.210.176]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-264-KVJMPCFkNui3NVI1atd2yA-1; Tue, 26 Apr 2022 17:31:20 -0400
-X-MC-Unique: KVJMPCFkNui3NVI1atd2yA-1
-Received: by mail-pf1-f176.google.com with SMTP id j17so19115447pfi.9
- for <dm-devel@redhat.com>; Tue, 26 Apr 2022 14:31:20 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
- :references:mime-version:content-transfer-encoding;
- bh=yNE83scqZXxcJEDYMgDTyuvR1Ggrx94+lQMxMZ/IowU=;
- b=IHFU5NGpfe8oPtHnriNkDbBZYu4F6IMpgqENG4VzAGoNiY6K8lgio58MDeMQ9uK3D0
- jyKmbL+IDl1prGMWAyM5a9VfqQD+H7s46iAsThmdMZfFd75OcfMY7OWk+Cnw4vHgsS/T
- 4uGD/ArgLpHuBwBL6wzOfJ3DN7t4+H/luPCiSJX7RSfGhFEDopD6LA3dFxpblDsY93w/
- 7D+GbTOu/cFjuMoJyqVkaEzT+zVMBMhbc+Of31JBIe+DAnQozKj2lK/TRMXxNlWTQtr9
- zE1gOE/Vbab1LOMZsH1HD8yYs563qNT0RDheoogHHkebarY1vYI25JTyX1MCzr9BwJ+n
- JExQ==
-X-Gm-Message-State: AOAM530iXftO8zU8++Jipv/y+6bvNVc+4RjaOq/AFXo7u0DECe7eBkw3
- uptbFwNpS8EzfG66e0eaE9xaAA==
-X-Google-Smtp-Source: ABdhPJyMQWm4GBBd8xOq6MlO1DMwKqAq9qQ61DtlsZ0/uc1Wn8+/SKp/8D2U8jV/KOG4uEk/ZjmK/w==
-X-Received: by 2002:a05:6a00:174a:b0:50d:44ca:4b with SMTP id
- j10-20020a056a00174a00b0050d44ca004bmr10662538pfc.0.1651008679684; 
- Tue, 26 Apr 2022 14:31:19 -0700 (PDT)
-Received: from localhost ([2620:15c:202:201:eb63:4211:eb5d:f6b])
- by smtp.gmail.com with UTF8SMTPSA id
- pb15-20020a17090b3c0f00b001cd4989ff4esm3587166pjb.21.2022.04.26.14.31.18
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Tue, 26 Apr 2022 14:31:19 -0700 (PDT)
-From: Matthias Kaehlcke <mka@chromium.org>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Kees Cook <keescook@chromium.org>, James Morris <jmorris@namei.org>,
- "Serge E . Hallyn" <serge@hallyn.com>
-Date: Tue, 26 Apr 2022 14:31:09 -0700
-Message-Id: <20220426143059.v2.2.I01c67af41d2f6525c6d023101671d7339a9bc8b5@changeid>
-In-Reply-To: <20220426213110.3572568-1-mka@chromium.org>
-References: <20220426213110.3572568-1-mka@chromium.org>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8332980352D
+ for <dm-devel@redhat.com>; Tue, 26 Apr 2022 12:24:30 +0000 (UTC)
+Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-626-ENLr62UOPyS1NS2IT_S9SQ-1; Tue, 26 Apr 2022 08:24:28 -0400
+X-MC-Unique: ENLr62UOPyS1NS2IT_S9SQ-1
+Received: from epcas5p3.samsung.com (unknown [182.195.41.41])
+ by mailout3.samsung.com (KnoxPortal) with ESMTP id
+ 20220426121454epoutp03822085a2a850d758d8c4358a8dba87fc~pcUhynVE31888718887epoutp035;
+ Tue, 26 Apr 2022 12:14:54 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com
+ 20220426121454epoutp03822085a2a850d758d8c4358a8dba87fc~pcUhynVE31888718887epoutp035
+Received: from epsnrtp4.localdomain (unknown [182.195.42.165]) by
+ epcas5p2.samsung.com (KnoxPortal) with ESMTP id
+ 20220426121453epcas5p2d52c6695014c9969d7b79bfaab7aef46~pcUhW689V3067830678epcas5p20;
+ Tue, 26 Apr 2022 12:14:53 +0000 (GMT)
+Received: from epsmges5p2new.samsung.com (unknown [182.195.38.178]) by
+ epsnrtp4.localdomain (Postfix) with ESMTP id 4Kngmp1FwZz4x9Pw; Tue, 26 Apr
+ 2022 12:14:50 +0000 (GMT)
+Received: from epcas5p2.samsung.com ( [182.195.41.40]) by
+ epsmges5p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
+ 56.3F.09827.A32E7626; Tue, 26 Apr 2022 21:14:50 +0900 (KST)
+Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
+ epcas5p4.samsung.com (KnoxPortal) with ESMTPA id
+ 20220426101910epcas5p4fd64f83c6da9bbd891107d158a2743b5~pave0_0R70865008650epcas5p4F;
+ Tue, 26 Apr 2022 10:19:10 +0000 (GMT)
+Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
+ epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
+ 20220426101910epsmtrp148b5805b8c074921e462188833d374ad~paveyax752263822638epsmtrp1R;
+ Tue, 26 Apr 2022 10:19:10 +0000 (GMT)
+X-AuditID: b6c32a4a-b51ff70000002663-ec-6267e23a98e5
+Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
+ epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+ 22.49.08853.E17C7626; Tue, 26 Apr 2022 19:19:10 +0900 (KST)
+Received: from test-zns.sa.corp.samsungelectronics.net (unknown
+ [107.110.206.5]) by epsmtip1.samsung.com (KnoxPortal) with ESMTPA id
+ 20220426101903epsmtip1ddd1407d9c85bbbf445ca97418c7cbaf~pavYpuX6P0426404264epsmtip1k;
+ Tue, 26 Apr 2022 10:19:03 +0000 (GMT)
+From: Nitesh Shetty <nj.shetty@samsung.com>
+To: 
+Date: Tue, 26 Apr 2022 15:42:29 +0530
+Message-Id: <20220426101241.30100-2-nj.shetty@samsung.com>
+In-Reply-To: <20220426101241.30100-1-nj.shetty@samsung.com>
 MIME-Version: 1.0
+X-Brightmail-Tracker: H4sIAAAAAAAAA01Te1BUZRTvu/fu3YUJu4CMn5TDusUMSjyWFvxAsAapbkHF4Awmg8ICt8UB
+ dtd9RGIjIODwkHcwuigvTRQYQAwFYakgIhYJneUhGCCCOcC4qKhovGK5UP73O79zfr/znfPN
+ 4eEWg1xr3mGpilFIxdEC0pS41r7DzsHjviTMea6PQLW633HUMjTHQVUj2SQqfPwKR7O/TnBQ
+ XvZpLlro6cWRfnIT0hqKOOjWy0QMTdSvYGjolyYMtZTnYehyVQeGHlacB6i57AmGFseFqGPl
+ EYnGnw0TKK9tAKAH/RoMaYftUYu2i0D6G2dJVHLxARdlDDaSqHVGi6OKzmUM/alZJFFu51UO
+ apxMBOjaQgmO2kf7CVQzM0ugP4bfRimnXnFR71In5yNbWt/nS2vGekg6N8nApZs0I1y6d/QK
+ Qet71HR9ZRpJX70QT+ffqQB081ACSZ+42YHTp58+I+nMJANJN6WMcegnD4YJera1n/TfEhTl
+ GcmIIxgFn5GGyyIOSyVeAt99IXtDXN2chQ5Cd7RLwJeKYxgvgY+fv8Mnh6NXtyngfyuOVq9S
+ /mKlUuC0x1MhU6sYfqRMqfISMPKIaLlI7qgUxyjVUomjlFF5CJ2dXVxXC0OjIjtby0n5SNx3
+ Kb9lkAmgTpIOTHiQEsHZhy/JdGDKs6CaAVzUFRJs8BTAEn0yxgYvALz48xi+IfnL0LAu0QKY
+ ZDi3HqRgcDD7n1U9j0dS9rB7hWcUbKYIeHl+fs0Wpwp4cCCtGBgTllQA7J+5u+ZKULawt6GF
+ Y8RmlAfMm76JG30g5QSzx8yNtAm1G/7YYcDYEnPYdWaSMGKcsoFJDUW40R9SWaaw+1I+wWp9
+ YFlVMPtoSzjd+ROXxdZwKvvkOo6F10+WYqw2GcB0nY5gEx/C2y1LmNEHp3bA2htOLL0NFuhq
+ MLbvJpi5MImxvBlsLN7A78Lq2lKSxVvhwHziOqZhadk5nN1VFoD3FmtADuBrXptH89o8mv9b
+ lwK8Emxl5MoYCaN0lbtImdj/fjlcFlMP1i5s5+eNYPzeY8c2gPFAG4A8XLDZrMD2mzALswjx
+ 0ThGIQtRqKMZZRtwXd13Lm5tFS5bPVGpKkQocncWubm5idw/cBMKtph1S+rEFpRErGKiGEbO
+ KDZ0GM/EOgE7VvEso330voAKH7j0XK1f+jvZvDhVeCTzetGTo/EZrtMg9fwBxXCvMHdqe+BK
+ mtZdLbqwu/h43Z5QYJsT7Hhon5053r5/P8+9p7Gfk9BgG6B/Y7kyvKn69sSoffDUmdlytW3s
+ 1+8ULu77OM2XX3G39axvofAL4Vsq+s6IU9vTfFPvXYKAgYISG9AVqHKXXjF86Rmk0/RderNQ
+ 5LX3mJ/8VnrkEW5dXU1cYHV8NXoY4OLTf9/GzzI15VZoysH3CXPmUV5mUMV7STNWTVrZZ4Mn
+ ppa+fz6+fHCXN7/mxYHCOf/S7TnlLf6fhtllxfrQkuNAl1QT0Nw08VUl91DoNqvOH/q8BYQy
+ UizciSuU4n8B5/fKD+oEAAA=
+X-Brightmail-Tracker: H4sIAAAAAAAAA02Sf1CTdQDG7/313cvuZi8T5Qt0FLujBM/BOv74Bh1h59Xb1ZK78Ai70qEv
+ w5ON3cYAxQglrkJqMU+loTd1CA0sZYhtjC1F5kT55c0ZYEDIODFoCGpAA6lJ3fnfc8/nc89f
+ D00Iq6hIeo+ygFMrZXkiwCcvXRVFb4p2y7MTfUeE6PyNawRqH3xEoaZhHUDHHi4SaObKOIX0
+ uhoeCvT0EcjjW4Mc/loK9S8cxNG4ZQVHg5dtOGo/o8eRucmFo/sNJgzZT8/iaGlMglwrfwI0
+ 9niIRPqOOxia8Bpw5BjaiNodXSTytJ0AyFg/wUOHf7UC5JxyEKjB/RRHvYYlgKrdLRSy+g5i
+ 6FLASKCrI14S/TQ1Q6LrQ1GoomqRh/qW3VRaLOu5/R5rGO0BbHW5n8faDMM8tm+kmWQ9PVrW
+ 0vg1YFvqPmePDDRgrH2wDLCHul0EWzP3GLDflPsBa6sYpdjZiSGSnXF6QXr4dv4bu7m8PYWc
+ OiF1Jz/X7TwDVMP7iys6D4My7IK8EguhIZMEf/O3gkqMTwsZOwb1FhuxCiJg/XLnf3ktND+9
+ z1uVynG4MG+gKjGaBsxGeHOFDjphDAnN8/Nk0CGYX2jomg6AIFjLpMN6Vx0ZzCQTC/ta26lg
+ FjDJUP9HNxHcgUwC1I2GBusQJgWedfnxYC38VxkIFK/aobDre9+zFYJ5CZa31hLfYYzhOWR4
+ Dp3C8EYsglNpFHKFRqKSKLkisUam0GiVcvGufIUFe3aY+Dgr9nPjQ3EHhtNYBwZpQhQmOBqb
+ ky0U7Jbt28+p83eotXmcpgOLoklRuKC/smuHkJHLCri9HKfi1P9TnA6JLMOTpNkuvNC+7tab
+ L1h2TeZoYs52WQXJueu1VmlKhqnhqM60rzfhQNXs3bsxJYmvK0ubX+2PKKoq5SflSzPFF+3c
+ ayDnxLQ7RbE5NOneUrRI9cHxzC/XFM05H105NHlq+q0X3w83jWyovbc3LP5yjdS0pS3qVmaW
+ mXfj062f2Z2+tMQn3t7bWWHn5qjxDZ+sz9Bayj78qyX1wEAy/47xQTH4uyRz5cL1Be27FdcG
+ lkt422zd0q9eNoOsZn1c5+astBF9ncP7dqrxHW/n77rQ7TGL5xq1Tcb6L+gMCRZXqKw+eX7L
+ pGP84kdtYvhDYN23x6bGnsyXaiP9nn7oeVDwY/orypsfi0hNrkwST6g1sn8AmlHhSZ8DAAA=
+X-CMS-MailID: 20220426101910epcas5p4fd64f83c6da9bbd891107d158a2743b5
+X-Msg-Generator: CA
+X-Sendblock-Type: REQ_APPROVE
+CMS-TYPE: 105P
+DLP-Filter: Pass
+X-CFilter-Loop: Reflected
+X-CMS-RootMailID: 20220426101910epcas5p4fd64f83c6da9bbd891107d158a2743b5
+References: <20220426101241.30100-1-nj.shetty@samsung.com>
+ <CGME20220426101910epcas5p4fd64f83c6da9bbd891107d158a2743b5@epcas5p4.samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -84,10 +137,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 X-Mailman-Approved-At: Wed, 27 Apr 2022 12:14:17 +0000
-Subject: [dm-devel] [PATCH v2 2/3] LoadPin: Enable loading from trusted
- dm-verity devices
+Subject: [dm-devel] [PATCH v4 01/10] block: Introduce queue limits for
+ copy-offload support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -99,13 +152,26 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org,
- Douglas Anderson <dianders@chromium.org>, linux-raid@vger.kernel.org,
- Song Liu <song@kernel.org>, linux-security-module@vger.kernel.org,
- Matthias Kaehlcke <mka@chromium.org>
+Cc: djwong@kernel.org, linux-nvme@lists.infradead.org, clm@fb.com,
+ dm-devel@redhat.com, osandov@fb.com, Alasdair Kergon <agk@redhat.com>,
+ Naohiro Aota <naohiro.aota@wdc.com>, msnitzer@redhat.com, bvanassche@acm.org,
+ linux-scsi@vger.kernel.org, gost.dev@samsung.com, nitheshshetty@gmail.com,
+ James Smart <james.smart@broadcom.com>, hch@lst.de,
+ Nitesh Shetty <nj.shetty@samsung.com>, chaitanyak@nvidia.com,
+ Chaitanya Kulkarni <kch@nvidia.com>, Mike Snitzer <snitzer@kernel.org>,
+ josef@toxicpanda.com, linux-block@vger.kernel.org, dsterba@suse.com,
+ kbusch@kernel.org, Frederick.Knight@netapp.com,
+ Sagi Grimberg <sagi@grimberg.me>, axboe@kernel.dk,
+ Johannes Thumshirn <jth@kernel.org>, tytso@mit.edu,
+ Kanchan Joshi <joshi.k@samsung.com>, martin.petersen@oracle.com,
+ linux-kernel@vger.kernel.org, Arnav Dawn <arnav.dawn@samsung.com>,
+ jack@suse.com, linux-fsdevel@vger.kernel.org,
+ lsf-pc@lists.linux-foundation.org,
+ Damien Le Moal <damien.lemoal@opensource.wdc.com>,
+ Alexander Viro <viro@zeniv.linux.org.uk>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -113,342 +179,427 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Extend LoadPin to allow loading of kernel files from trusted
-dm-verity [1] devices.
+Add device limits as sysfs entries,
+        - copy_offload (RW)
+        - copy_max_bytes (RW)
+        - copy_max_hw_bytes (RO)
+        - copy_max_range_bytes (RW)
+        - copy_max_range_hw_bytes (RO)
+        - copy_max_nr_ranges (RW)
+        - copy_max_nr_ranges_hw (RO)
 
-This change adds the concept of trusted verity devices to
-LoadPin. Userspace can use the new systl file
-'loadpin/trusted_verity_root_digests_path' to provide
-LoadPin with the path of a file with a list of root digests
-from dm-verity devices that LoadPin should consider as
-trusted. This file must be located on the pinned root.
+Above limits help to split the copy payload in block layer.
+copy_offload, used for setting copy offload(1) or emulation(0).
+copy_max_bytes: maximum total length of copy in single payload.
+copy_max_range_bytes: maximum length in a single entry.
+copy_max_nr_ranges: maximum number of entries in a payload.
+copy_max_*_hw_*: Reflects the device supported maximum limits.
 
-When a kernel file is read LoadPin first checks
-(as usual) whether the file is located on the pinned root,
-if so the file can be loaded. Otherwise, if the verity
-extension is enabled, LoadPin determines whether the
-file is located on a verity backed device and whether
-the root digest of that device is in the list of trusted
-digests. The file can be loaded if the verity device has
-a trusted root digest.
-
-The path of the file with the trusted root digests can
-only be written once, which is typically done at boot time.
-
-Background:
-
-As of now LoadPin restricts loading of kernel files to a single
-pinned filesystem, typically the rootfs. This works for many
-systems, however it can result in a bloated rootfs (and OTA
-updates) on platforms where multiple boards with different
-hardware configurations use the same rootfs image. Especially
-when 'optional' files are large it may be preferable to
-download/install them only when they are actually needed by a
-given board. Chrome OS uses Downloadable Content (DLC) [2] to
-deploy certain 'packages' at runtime. As an example a DLC
-package could contain firmware for a peripheral that is not
-present on all boards. DLCs use dm-verity to verify the
-integrity of the DLC content.
-
-[1] https://www.kernel.org/doc/html/latest/admin-guide/device-mapper/verity.html
-[2] https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/dlcservice/docs/developer.md
-
-Signed-off-by: Matthias Kaehlcke <mka@chromium.org>
+Signed-off-by: Nitesh Shetty <nj.shetty@samsung.com>
+Signed-off-by: Kanchan Joshi <joshi.k@samsung.com>
+Signed-off-by: Arnav Dawn <arnav.dawn@samsung.com>
 ---
-I'm still doubting what would be the best way to configure
-the list of trusted digests. The approach in v2 of writing
-a path through sysctl is flexible, but it also feels a bit
-odd. I did some experiments with passing a file descriptor
-through sysctl, but it's also odd and has its own issues.
-Passing the list through a kernel parameter seems hacky.
-A Kconfig string would work, but can be have issues when
-the same config is used for different platforms, where
-some may have trusted digests and others not.
+ Documentation/ABI/stable/sysfs-block |  83 ++++++++++++++++
+ block/blk-settings.c                 |  59 ++++++++++++
+ block/blk-sysfs.c                    | 138 +++++++++++++++++++++++++++
+ include/linux/blkdev.h               |  13 +++
+ 4 files changed, 293 insertions(+)
 
-Changes in v2:
-- userspace now passes the path of the file with the verity digests
-  via systcl, instead of the digests themselves
-- renamed sysctl file to 'trusted_verity_root_digests_path'
-- have CONFIG_SECURITY_LOADPIN_VERITY depend on CONFIG_SYSCTL
-- updated Kconfig doc
-- updated commit message
-
- security/loadpin/Kconfig   |  16 +++
- security/loadpin/loadpin.c | 200 ++++++++++++++++++++++++++++++++++++-
- 2 files changed, 215 insertions(+), 1 deletion(-)
-
-diff --git a/security/loadpin/Kconfig b/security/loadpin/Kconfig
-index 91be65dec2ab..20681dc4b8a5 100644
---- a/security/loadpin/Kconfig
-+++ b/security/loadpin/Kconfig
-@@ -18,3 +18,19 @@ config SECURITY_LOADPIN_ENFORCE
- 	  If selected, LoadPin will enforce pinning at boot. If not
- 	  selected, it can be enabled at boot with the kernel parameter
- 	  "loadpin.enforce=1".
-+
-+config SECURITY_LOADPIN_VERITY
-+	bool "Allow reading files from certain other filesystems that use dm-verity"
-+	depends on DM_VERITY=y && SYSCTL
-+	help
-+	  If selected LoadPin can allow reading files from filesystems
-+	  that use dm-verity. LoadPin maintains a list of verity root
-+	  digests it considers trusted. A verity backed filesystem is
-+	  considered trusted if its root digest is found in the list
-+	  of trusted digests.
-+
-+	  Userspace can populate the list of trusted digests by writing
-+	  the path of a file with the digests to the syctl file
-+	  'trusted_verity_root_digests_path'. The file must be located
-+	  on the pinned root and contain a comma separated list of
-+	  digests.
-diff --git a/security/loadpin/loadpin.c b/security/loadpin/loadpin.c
-index b12f7d986b1e..db10b7ff6efd 100644
---- a/security/loadpin/loadpin.c
-+++ b/security/loadpin/loadpin.c
-@@ -18,6 +18,8 @@
- #include <linux/path.h>
- #include <linux/sched.h>	/* current */
- #include <linux/string_helpers.h>
-+#include <linux/device-mapper.h>
-+#include <linux/dm-verity-loadpin.h>
+diff --git a/Documentation/ABI/stable/sysfs-block b/Documentation/ABI/stable/sysfs-block
+index e8797cd09aff..65e64b5a0105 100644
+--- a/Documentation/ABI/stable/sysfs-block
++++ b/Documentation/ABI/stable/sysfs-block
+@@ -155,6 +155,89 @@ Description:
+ 		last zone of the device which may be smaller.
  
- static void report_load(const char *origin, struct file *file, char *operation)
- {
-@@ -43,6 +45,10 @@ static char *exclude_read_files[READING_MAX_ID];
- static int ignore_read_file_id[READING_MAX_ID] __ro_after_init;
- static struct super_block *pinned_root;
- static DEFINE_SPINLOCK(pinned_root_spinlock);
-+#ifdef CONFIG_SECURITY_LOADPIN_VERITY
-+static LIST_HEAD(trusted_verity_root_digests);
-+static const char *verity_digests_path;
-+#endif
  
- #ifdef CONFIG_SYSCTL
- 
-@@ -65,6 +71,176 @@ static struct ctl_table loadpin_sysctl_table[] = {
- 	{ }
- };
- 
-+#ifdef CONFIG_SECURITY_LOADPIN_VERITY
++What:		/sys/block/<disk>/queue/copy_offload
++Date:		April 2022
++Contact:	linux-block@vger.kernel.org
++Description:
++		[RW] When read, this file shows whether offloading copy to
++		device is enabled (1) or disabled (0). Writing '0' to this
++		file will disable offloading copies for this device.
++		Writing any '1' value will enable this feature.
 +
-+static int loadpin_read_file(struct file *file, enum kernel_read_file_id id,
-+			     bool contents);
 +
-+static int read_trusted_verity_root_digests(struct file *file)
++What:		/sys/block/<disk>/queue/copy_max_bytes
++Date:		April 2022
++Contact:	linux-block@vger.kernel.org
++Description:
++		[RW] While 'copy_max_hw_bytes' is the hardware limit for the
++		device, 'copy_max_bytes' setting is the software limit.
++		Setting this value lower will make Linux issue smaller size
++		copies.
++
++
++What:		/sys/block/<disk>/queue/copy_max_hw_bytes
++Date:		April 2022
++Contact:	linux-block@vger.kernel.org
++Description:
++		[RO] Devices that support offloading copy functionality may have
++		internal limits on the number of bytes that can be offloaded
++		in a single operation. The `copy_max_hw_bytes`
++		parameter is set by the device driver to the maximum number of
++		bytes that can be copied in a single operation. Copy
++		requests issued to the device must not exceed this limit.
++		A value of 0 means that the device does not
++		support copy offload.
++
++
++What:		/sys/block/<disk>/queue/copy_max_nr_ranges
++Date:		April 2022
++Contact:	linux-block@vger.kernel.org
++Description:
++		[RW] While 'copy_max_nr_ranges_hw' is the hardware limit for the
++		device, 'copy_max_nr_ranges' setting is the software limit.
++
++
++What:		/sys/block/<disk>/queue/copy_max_nr_ranges_hw
++Date:		April 2022
++Contact:	linux-block@vger.kernel.org
++Description:
++		[RO] Devices that support offloading copy functionality may have
++		internal limits on the number of ranges in single copy operation
++		that can be offloaded in a single operation.
++		A range is tuple of source, destination and length of data
++		to be copied. The `copy_max_nr_ranges_hw` parameter is set by
++		the device driver to the maximum number of ranges that can be
++		copied in a single operation. Copy requests issued to the device
++		must not exceed this limit. A value of 0 means that the device
++		does not support copy offload.
++
++
++What:		/sys/block/<disk>/queue/copy_max_range_bytes
++Date:		April 2022
++Contact:	linux-block@vger.kernel.org
++Description:
++		[RW] While 'copy_max_range_hw_bytes' is the hardware limit for
++		the device, 'copy_max_range_bytes' setting is the software
++		limit.
++
++
++What:		/sys/block/<disk>/queue/copy_max_range_hw_bytes
++Date:		April 2022
++Contact:	linux-block@vger.kernel.org
++Description:
++		[RO] Devices that support offloading copy functionality may have
++		internal limits on the size of data, that can be copied in a
++		single range within a single copy operation.
++		A range is tuple of source, destination and length of data to be
++		copied. The `copy_max_range_hw_bytes` parameter is set by the
++		device driver to set the maximum length in bytes of a range
++		that can be copied in an operation.
++		Copy requests issued to the device must not exceed this limit.
++		Sum of sizes of all ranges in a single opeartion should not
++		exceed 'copy_max_hw_bytes'. A value of 0 means that the device
++		does not support copy offload.
++
++
+ What:		/sys/block/<disk>/queue/crypto/
+ Date:		February 2022
+ Contact:	linux-block@vger.kernel.org
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index 6ccceb421ed2..70167aee3bf7 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -57,6 +57,12 @@ void blk_set_default_limits(struct queue_limits *lim)
+ 	lim->misaligned = 0;
+ 	lim->zoned = BLK_ZONED_NONE;
+ 	lim->zone_write_granularity = 0;
++	lim->max_hw_copy_sectors = 0;
++	lim->max_copy_sectors = 0;
++	lim->max_hw_copy_nr_ranges = 0;
++	lim->max_copy_nr_ranges = 0;
++	lim->max_hw_copy_range_sectors = 0;
++	lim->max_copy_range_sectors = 0;
+ }
+ EXPORT_SYMBOL(blk_set_default_limits);
+ 
+@@ -81,6 +87,12 @@ void blk_set_stacking_limits(struct queue_limits *lim)
+ 	lim->max_dev_sectors = UINT_MAX;
+ 	lim->max_write_zeroes_sectors = UINT_MAX;
+ 	lim->max_zone_append_sectors = UINT_MAX;
++	lim->max_hw_copy_sectors = ULONG_MAX;
++	lim->max_copy_sectors = ULONG_MAX;
++	lim->max_hw_copy_range_sectors = UINT_MAX;
++	lim->max_copy_range_sectors = UINT_MAX;
++	lim->max_hw_copy_nr_ranges = USHRT_MAX;
++	lim->max_copy_nr_ranges = USHRT_MAX;
+ }
+ EXPORT_SYMBOL(blk_set_stacking_limits);
+ 
+@@ -177,6 +189,45 @@ void blk_queue_max_discard_sectors(struct request_queue *q,
+ }
+ EXPORT_SYMBOL(blk_queue_max_discard_sectors);
+ 
++/**
++ * blk_queue_max_copy_sectors - set max sectors for a single copy payload
++ * @q:  the request queue for the device
++ * @max_copy_sectors: maximum number of sectors to copy
++ **/
++void blk_queue_max_copy_sectors(struct request_queue *q,
++		unsigned int max_copy_sectors)
 +{
-+	void *data;
-+	char *p, *d;
-+	int err, rc;
-+
-+	data = kzalloc(SZ_4K, GFP_KERNEL);
-+	if (!data)
-+		return -ENOMEM;
-+
-+	rc = kernel_read_file(file, 0, &data, SZ_4K - 1, NULL, READING_POLICY);
-+	if (rc < 0)
-+		return rc;
-+
-+	((char *)data)[rc] = '\0';
-+
-+	p = strim(data);
-+	while ((d = strsep(&p, ",")) != NULL) {
-+		int len = strlen(d);
-+		struct trusted_root_digest *trd;
-+
-+		if (len % 2) {
-+			err = -EPROTO;
-+			goto free_mem;
-+		}
-+
-+		len /= 2;
-+
-+		trd = kzalloc(sizeof(*trd), GFP_KERNEL);
-+		if (!trd) {
-+			err = -ENOMEM;
-+			goto free_mem;
-+		}
-+
-+		trd->data = kzalloc(len, GFP_KERNEL);
-+		if (!trd->data) {
-+			kfree(trd);
-+			err = -ENOMEM;
-+			goto free_mem;
-+		}
-+
-+		if (hex2bin(trd->data, d, len)) {
-+			kfree(trd);
-+			err = -EPROTO;
-+			goto free_mem;
-+		}
-+
-+		list_add_tail(&trd->node, &trusted_verity_root_digests);
-+
-+		trd->len = len;
-+	}
-+
-+	kfree(data);
-+
-+	return 0;
-+
-+free_mem:
-+	kfree(data);
-+
-+	{
-+		struct trusted_root_digest *trd, *tmp;
-+
-+		list_for_each_entry_safe(trd, tmp, &trusted_verity_root_digests, node) {
-+			kfree(trd->data);
-+			list_del(&trd->node);
-+			kfree(trd);
-+		}
-+	}
-+
-+	return err;
++	q->limits.max_hw_copy_sectors = max_copy_sectors;
++	q->limits.max_copy_sectors = max_copy_sectors;
 +}
++EXPORT_SYMBOL_GPL(blk_queue_max_copy_sectors);
 +
-+static int proc_verity_digests(struct ctl_table *table, int write,
-+			       void *buffer, size_t *lenp, loff_t *ppos)
++/**
++ * blk_queue_max_copy_range_sectors - set max sectors for a single range, in a copy payload
++ * @q:  the request queue for the device
++ * @max_copy_range_sectors: maximum number of sectors to copy in a single range
++ **/
++void blk_queue_max_copy_range_sectors(struct request_queue *q,
++		unsigned int max_copy_range_sectors)
 +{
-+	struct ctl_table tbl = *table;
-+
-+	if (write) {
-+		int rc;
-+		char *digests_path;
-+		struct file *file;
-+
-+		if (*ppos)
-+			return -EINVAL;
-+
-+		if (verity_digests_path != NULL)
-+			return -EPERM;
-+
-+		digests_path = kzalloc(tbl.maxlen, GFP_KERNEL);
-+		if (!digests_path)
-+			return -ENOMEM;
-+
-+		tbl.data = digests_path;
-+
-+		rc = proc_dostring(&tbl, write, buffer, lenp, ppos);
-+		if (rc) {
-+			kfree(digests_path);
-+			return rc;
-+		}
-+
-+		/* only absolute paths are allowed */
-+		if (digests_path[0] != '/') {
-+			kfree(digests_path);
-+			return -EINVAL;
-+		}
-+
-+		file = filp_open(digests_path, O_RDONLY, 0);
-+		if (IS_ERR(file)) {
-+			int err = PTR_ERR(file);
-+
-+			if (err == -ENOENT) {
-+				kfree(digests_path);
-+				return -EINVAL;
-+			}
-+
-+			return err;
-+		}
-+
-+		/* verify the root digests stem from a trusted file system */
-+		if (loadpin_read_file(file, READING_POLICY, true)) {
-+			fput(file);
-+			kfree(digests_path);
-+			return -EPERM;
-+		}
-+
-+		rc = read_trusted_verity_root_digests(file);
-+		fput(file);
-+		if (rc) {
-+			kfree(digests_path);
-+			return rc;
-+		}
-+
-+		verity_digests_path = digests_path;
-+	} else {
-+		if (verity_digests_path) {
-+			tbl.data = kzalloc(strlen(verity_digests_path) + 1, GFP_KERNEL);
-+			strcpy(tbl.data, verity_digests_path);
-+		} else {
-+			tbl.data = kzalloc(1, GFP_KERNEL);
-+		}
-+
-+		proc_dostring(&tbl, write, buffer, lenp, ppos);
-+		kfree(tbl.data);
-+	}
-+
-+	return 0;
++	q->limits.max_hw_copy_range_sectors = max_copy_range_sectors;
++	q->limits.max_copy_range_sectors = max_copy_range_sectors;
 +}
++EXPORT_SYMBOL_GPL(blk_queue_max_copy_range_sectors);
 +
-+static struct ctl_table loadpin_sysctl_table_verity_digests[] = {
-+	{
-+		.procname       = "trusted_verity_root_digests_path",
-+		.maxlen         = SZ_256,
-+		.mode           = 0644,
-+		.proc_handler   = proc_verity_digests,
-+	},
++/**
++ * blk_queue_max_copy_nr_ranges - set max number of ranges, in a copy payload
++ * @q:  the request queue for the device
++ * @max_copy_nr_ranges: maximum number of ranges
++ **/
++void blk_queue_max_copy_nr_ranges(struct request_queue *q,
++		unsigned int max_copy_nr_ranges)
++{
++	q->limits.max_hw_copy_nr_ranges = max_copy_nr_ranges;
++	q->limits.max_copy_nr_ranges = max_copy_nr_ranges;
++}
++EXPORT_SYMBOL_GPL(blk_queue_max_copy_nr_ranges);
 +
-+	{ }
-+};
+ /**
+  * blk_queue_max_secure_erase_sectors - set max sectors for a secure erase
+  * @q:  the request queue for the device
+@@ -572,6 +623,14 @@ int blk_stack_limits(struct queue_limits *t, struct queue_limits *b,
+ 	t->max_segment_size = min_not_zero(t->max_segment_size,
+ 					   b->max_segment_size);
+ 
++	t->max_copy_sectors = min(t->max_copy_sectors, b->max_copy_sectors);
++	t->max_hw_copy_sectors = min(t->max_hw_copy_sectors, b->max_hw_copy_sectors);
++	t->max_copy_range_sectors = min(t->max_copy_range_sectors, b->max_copy_range_sectors);
++	t->max_hw_copy_range_sectors = min(t->max_hw_copy_range_sectors,
++						b->max_hw_copy_range_sectors);
++	t->max_copy_nr_ranges = min(t->max_copy_nr_ranges, b->max_copy_nr_ranges);
++	t->max_hw_copy_nr_ranges = min(t->max_hw_copy_nr_ranges, b->max_hw_copy_nr_ranges);
 +
-+#else
-+
-+static struct ctl_table loadpin_sysctl_table_verity_digests[] = {};
-+
-+#endif /* CONFIG_SECURITY_LOADPIN_VERITY */
-+
- /*
-  * This must be called after early kernel init, since then the rootdev
-  * is available.
-@@ -118,6 +294,20 @@ static void loadpin_sb_free_security(struct super_block *mnt_sb)
- 	}
+ 	t->misaligned |= b->misaligned;
+ 
+ 	alignment = queue_limit_alignment_offset(b, start);
+diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+index 88bd41d4cb59..bae987c10f7f 100644
+--- a/block/blk-sysfs.c
++++ b/block/blk-sysfs.c
+@@ -212,6 +212,129 @@ static ssize_t queue_discard_zeroes_data_show(struct request_queue *q, char *pag
+ 	return queue_var_show(0, page);
  }
  
-+static bool loadpin_is_fs_trusted(struct super_block *sb)
++static ssize_t queue_copy_offload_show(struct request_queue *q, char *page)
 +{
-+	struct mapped_device *md = dm_get_md(sb->s_bdev->bd_dev);
-+	bool trusted;
-+
-+	if (!md)
-+		return false;
-+
-+	trusted = dm_verity_loadpin_is_md_trusted(md);
-+	dm_put(md);
-+
-+	return trusted;
++	return queue_var_show(blk_queue_copy(q), page);
 +}
 +
- static int loadpin_read_file(struct file *file, enum kernel_read_file_id id,
- 			     bool contents)
++static ssize_t queue_copy_offload_store(struct request_queue *q,
++				       const char *page, size_t count)
++{
++	unsigned long copy_offload;
++	ssize_t ret = queue_var_store(&copy_offload, page, count);
++
++	if (ret < 0)
++		return ret;
++
++	if (copy_offload && !q->limits.max_hw_copy_sectors)
++		return -EINVAL;
++
++	if (copy_offload)
++		blk_queue_flag_set(QUEUE_FLAG_COPY, q);
++	else
++		blk_queue_flag_clear(QUEUE_FLAG_COPY, q);
++
++	return ret;
++}
++
++static ssize_t queue_copy_max_hw_show(struct request_queue *q, char *page)
++{
++	return sprintf(page, "%llu\n",
++		(unsigned long long)q->limits.max_hw_copy_sectors << 9);
++}
++
++static ssize_t queue_copy_max_show(struct request_queue *q, char *page)
++{
++	return sprintf(page, "%llu\n",
++		(unsigned long long)q->limits.max_copy_sectors << 9);
++}
++
++static ssize_t queue_copy_max_store(struct request_queue *q,
++				       const char *page, size_t count)
++{
++	unsigned long max_copy;
++	ssize_t ret = queue_var_store(&max_copy, page, count);
++
++	if (ret < 0)
++		return ret;
++
++	if (max_copy & (queue_logical_block_size(q) - 1))
++		return -EINVAL;
++
++	max_copy >>= 9;
++	if (max_copy > q->limits.max_hw_copy_sectors)
++		max_copy = q->limits.max_hw_copy_sectors;
++
++	q->limits.max_copy_sectors = max_copy;
++	return ret;
++}
++
++static ssize_t queue_copy_range_max_hw_show(struct request_queue *q, char *page)
++{
++	return sprintf(page, "%llu\n",
++		(unsigned long long)q->limits.max_hw_copy_range_sectors << 9);
++}
++
++static ssize_t queue_copy_range_max_show(struct request_queue *q,
++		char *page)
++{
++	return sprintf(page, "%llu\n",
++		(unsigned long long)q->limits.max_copy_range_sectors << 9);
++}
++
++static ssize_t queue_copy_range_max_store(struct request_queue *q,
++				       const char *page, size_t count)
++{
++	unsigned long max_copy;
++	ssize_t ret = queue_var_store(&max_copy, page, count);
++
++	if (ret < 0)
++		return ret;
++
++	if (max_copy & (queue_logical_block_size(q) - 1))
++		return -EINVAL;
++
++	max_copy >>= 9;
++	if (max_copy > UINT_MAX)
++		return -EINVAL;
++
++	if (max_copy > q->limits.max_hw_copy_range_sectors)
++		max_copy = q->limits.max_hw_copy_range_sectors;
++
++	q->limits.max_copy_range_sectors = max_copy;
++	return ret;
++}
++
++static ssize_t queue_copy_nr_ranges_max_hw_show(struct request_queue *q, char *page)
++{
++	return queue_var_show(q->limits.max_hw_copy_nr_ranges, page);
++}
++
++static ssize_t queue_copy_nr_ranges_max_show(struct request_queue *q,
++		char *page)
++{
++	return queue_var_show(q->limits.max_copy_nr_ranges, page);
++}
++
++static ssize_t queue_copy_nr_ranges_max_store(struct request_queue *q,
++				       const char *page, size_t count)
++{
++	unsigned long max_nr;
++	ssize_t ret = queue_var_store(&max_nr, page, count);
++
++	if (ret < 0)
++		return ret;
++
++	if (max_nr > USHRT_MAX)
++		return -EINVAL;
++
++	if (max_nr > q->limits.max_hw_copy_nr_ranges)
++		max_nr = q->limits.max_hw_copy_nr_ranges;
++
++	q->limits.max_copy_nr_ranges = max_nr;
++	return ret;
++}
++
+ static ssize_t queue_write_same_max_show(struct request_queue *q, char *page)
  {
-@@ -174,7 +364,8 @@ static int loadpin_read_file(struct file *file, enum kernel_read_file_id id,
- 		spin_unlock(&pinned_root_spinlock);
- 	}
+ 	return queue_var_show(0, page);
+@@ -596,6 +719,14 @@ QUEUE_RO_ENTRY(queue_nr_zones, "nr_zones");
+ QUEUE_RO_ENTRY(queue_max_open_zones, "max_open_zones");
+ QUEUE_RO_ENTRY(queue_max_active_zones, "max_active_zones");
  
--	if (IS_ERR_OR_NULL(pinned_root) || load_root != pinned_root) {
-+	if (IS_ERR_OR_NULL(pinned_root) ||
-+	    ((load_root != pinned_root) && !loadpin_is_fs_trusted(load_root))) {
- 		if (unlikely(!enforce)) {
- 			report_load(origin, file, "pinning-ignored");
- 			return 0;
-@@ -240,6 +431,13 @@ static int __init loadpin_init(void)
- 		enforce ? "" : "not ");
- 	parse_exclude();
- 	security_add_hooks(loadpin_hooks, ARRAY_SIZE(loadpin_hooks), "loadpin");
++QUEUE_RW_ENTRY(queue_copy_offload, "copy_offload");
++QUEUE_RO_ENTRY(queue_copy_max_hw, "copy_max_hw_bytes");
++QUEUE_RW_ENTRY(queue_copy_max, "copy_max_bytes");
++QUEUE_RO_ENTRY(queue_copy_range_max_hw, "copy_max_range_hw_bytes");
++QUEUE_RW_ENTRY(queue_copy_range_max, "copy_max_range_bytes");
++QUEUE_RO_ENTRY(queue_copy_nr_ranges_max_hw, "copy_max_nr_ranges_hw");
++QUEUE_RW_ENTRY(queue_copy_nr_ranges_max, "copy_max_nr_ranges");
 +
-+	if (IS_ENABLED(CONFIG_SECURITY_LOADPIN_VERITY)) {
-+		if (!register_sysctl_paths(loadpin_sysctl_path,
-+					   loadpin_sysctl_table_verity_digests))
-+			pr_notice("sysctl registration failed!\n");
-+	}
-+
- 	return 0;
- }
+ QUEUE_RW_ENTRY(queue_nomerges, "nomerges");
+ QUEUE_RW_ENTRY(queue_rq_affinity, "rq_affinity");
+ QUEUE_RW_ENTRY(queue_poll, "io_poll");
+@@ -642,6 +773,13 @@ static struct attribute *queue_attrs[] = {
+ 	&queue_discard_max_entry.attr,
+ 	&queue_discard_max_hw_entry.attr,
+ 	&queue_discard_zeroes_data_entry.attr,
++	&queue_copy_offload_entry.attr,
++	&queue_copy_max_hw_entry.attr,
++	&queue_copy_max_entry.attr,
++	&queue_copy_range_max_hw_entry.attr,
++	&queue_copy_range_max_entry.attr,
++	&queue_copy_nr_ranges_max_hw_entry.attr,
++	&queue_copy_nr_ranges_max_entry.attr,
+ 	&queue_write_same_max_entry.attr,
+ 	&queue_write_zeroes_max_entry.attr,
+ 	&queue_zone_append_max_entry.attr,
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 1b24c1fb3bb1..3596fd37fae7 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -270,6 +270,13 @@ struct queue_limits {
+ 	unsigned int		discard_alignment;
+ 	unsigned int		zone_write_granularity;
  
++	unsigned long		max_hw_copy_sectors;
++	unsigned long		max_copy_sectors;
++	unsigned int		max_hw_copy_range_sectors;
++	unsigned int		max_copy_range_sectors;
++	unsigned short		max_hw_copy_nr_ranges;
++	unsigned short		max_copy_nr_ranges;
++
+ 	unsigned short		max_segments;
+ 	unsigned short		max_integrity_segments;
+ 	unsigned short		max_discard_segments;
+@@ -574,6 +581,7 @@ struct request_queue {
+ #define QUEUE_FLAG_RQ_ALLOC_TIME 27	/* record rq->alloc_time_ns */
+ #define QUEUE_FLAG_HCTX_ACTIVE	28	/* at least one blk-mq hctx is active */
+ #define QUEUE_FLAG_NOWAIT       29	/* device supports NOWAIT */
++#define QUEUE_FLAG_COPY		30	/* supports copy offload */
+ 
+ #define QUEUE_FLAG_MQ_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
+ 				 (1 << QUEUE_FLAG_SAME_COMP) |		\
+@@ -596,6 +604,7 @@ bool blk_queue_flag_test_and_set(unsigned int flag, struct request_queue *q);
+ 	test_bit(QUEUE_FLAG_STABLE_WRITES, &(q)->queue_flags)
+ #define blk_queue_io_stat(q)	test_bit(QUEUE_FLAG_IO_STAT, &(q)->queue_flags)
+ #define blk_queue_add_random(q)	test_bit(QUEUE_FLAG_ADD_RANDOM, &(q)->queue_flags)
++#define blk_queue_copy(q)	test_bit(QUEUE_FLAG_COPY, &(q)->queue_flags)
+ #define blk_queue_zone_resetall(q)	\
+ 	test_bit(QUEUE_FLAG_ZONE_RESETALL, &(q)->queue_flags)
+ #define blk_queue_dax(q)	test_bit(QUEUE_FLAG_DAX, &(q)->queue_flags)
+@@ -960,6 +969,10 @@ extern void blk_queue_chunk_sectors(struct request_queue *, unsigned int);
+ extern void blk_queue_max_segments(struct request_queue *, unsigned short);
+ extern void blk_queue_max_discard_segments(struct request_queue *,
+ 		unsigned short);
++extern void blk_queue_max_copy_sectors(struct request_queue *q, unsigned int max_copy_sectors);
++extern void blk_queue_max_copy_range_sectors(struct request_queue *q,
++		unsigned int max_copy_range_sectors);
++extern void blk_queue_max_copy_nr_ranges(struct request_queue *q, unsigned int max_copy_nr_ranges);
+ void blk_queue_max_secure_erase_sectors(struct request_queue *q,
+ 		unsigned int max_sectors);
+ extern void blk_queue_max_segment_size(struct request_queue *, unsigned int);
 -- 
-2.36.0.rc2.479.g8af0fa9b8e-goog
+2.35.1.500.gb896f729e2
 
 --
 dm-devel mailing list
