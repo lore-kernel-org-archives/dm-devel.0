@@ -1,132 +1,130 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id DB4FCC433EF
-	for <dm-devel@archiver.kernel.org>; Fri, 29 Apr 2022 08:24:08 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C45B0C433FE
+	for <dm-devel@archiver.kernel.org>; Fri, 29 Apr 2022 08:24:09 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-336-fF8zHUClO5WhKnL1rwi55A-1; Fri, 29 Apr 2022 04:23:54 -0400
-X-MC-Unique: fF8zHUClO5WhKnL1rwi55A-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-583-m589p04sMFWEwrMuZ3IgyQ-1; Fri, 29 Apr 2022 04:23:48 -0400
+X-MC-Unique: m589p04sMFWEwrMuZ3IgyQ-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7E8421881438;
-	Fri, 29 Apr 2022 08:23:50 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0FECE2811832;
+	Fri, 29 Apr 2022 08:23:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 6AC93463E09;
-	Fri, 29 Apr 2022 08:23:50 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EF73254B068;
+	Fri, 29 Apr 2022 08:23:45 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3F9F4194707A;
-	Fri, 29 Apr 2022 08:23:49 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2E8781947068;
+	Fri, 29 Apr 2022 08:23:43 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 45B561947046
- for <dm-devel@listman.corp.redhat.com>; Thu, 28 Apr 2022 08:19:17 +0000 (UTC)
+ ESMTP id 563A61947041
+ for <dm-devel@listman.corp.redhat.com>; Wed, 27 Apr 2022 14:31:16 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 12DDA2166B1A; Thu, 28 Apr 2022 08:19:17 +0000 (UTC)
+ id 37B8D14682CD; Wed, 27 Apr 2022 14:31:16 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0D27B2166B4D
- for <dm-devel@redhat.com>; Thu, 28 Apr 2022 08:19:06 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1CE9E833976
- for <dm-devel@redhat.com>; Thu, 28 Apr 2022 08:19:06 +0000 (UTC)
-Received: from mailout4.samsung.com (mailout4.samsung.com [203.254.224.34])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 336E214682DB
+ for <dm-devel@redhat.com>; Wed, 27 Apr 2022 14:31:16 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 13601801E80
+ for <dm-devel@redhat.com>; Wed, 27 Apr 2022 14:31:16 +0000 (UTC)
+Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
  by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-330-QD4Nwp7oPfyQkKxK3AsEhQ-1; Thu, 28 Apr 2022 04:19:03 -0400
-X-MC-Unique: QD4Nwp7oPfyQkKxK3AsEhQ-1
-Received: from epcas5p1.samsung.com (unknown [182.195.41.39])
- by mailout4.samsung.com (KnoxPortal) with ESMTP id
- 20220428081900epoutp04dcba2c4fcb3c0194b26511fc0d4d14f9~qAZI8iR6o2900829008epoutp04M
- for <dm-devel@redhat.com>; Thu, 28 Apr 2022 08:19:00 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout4.samsung.com
- 20220428081900epoutp04dcba2c4fcb3c0194b26511fc0d4d14f9~qAZI8iR6o2900829008epoutp04M
-Received: from epsnrtp1.localdomain (unknown [182.195.42.162]) by
- epcas5p1.samsung.com (KnoxPortal) with ESMTP id
- 20220428081859epcas5p19880ba6dfa6389f18098ac62ca74e360~qAZIA-u-l0467704677epcas5p1x;
- Thu, 28 Apr 2022 08:18:59 +0000 (GMT)
-Received: from epsmges5p2new.samsung.com (unknown [182.195.38.177]) by
- epsnrtp1.localdomain (Postfix) with ESMTP id 4KppRg2W7Dz4x9QB; Thu, 28 Apr
- 2022 08:18:55 +0000 (GMT)
-Received: from epcas5p3.samsung.com ( [182.195.41.41]) by
- epsmges5p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
- E2.07.09827.EED4A626; Thu, 28 Apr 2022 17:18:54 +0900 (KST)
+ us-mta-639-lbXf5w6MMCSWRtoWOM0rtA-1; Wed, 27 Apr 2022 10:31:13 -0400
+X-MC-Unique: lbXf5w6MMCSWRtoWOM0rtA-1
+Received: from epcas5p2.samsung.com (unknown [182.195.41.40])
+ by mailout3.samsung.com (KnoxPortal) with ESMTP id
+ 20220427143110epoutp0386d5d5bdafd9ef0d71bd8c31c48a655d~px0y9clDF1047910479epoutp03G
+ for <dm-devel@redhat.com>; Wed, 27 Apr 2022 14:31:10 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com
+ 20220427143110epoutp0386d5d5bdafd9ef0d71bd8c31c48a655d~px0y9clDF1047910479epoutp03G
+Received: from epsnrtp2.localdomain (unknown [182.195.42.163]) by
+ epcas5p4.samsung.com (KnoxPortal) with ESMTP id
+ 20220427143110epcas5p40c88d0aed948bf707494648074071e87~px0yta3Zx2356823568epcas5p4v;
+ Wed, 27 Apr 2022 14:31:10 +0000 (GMT)
+Received: from epsmges5p1new.samsung.com (unknown [182.195.38.183]) by
+ epsnrtp2.localdomain (Postfix) with ESMTP id 4KpLlZ5wJ5z4x9Pt; Wed, 27 Apr
+ 2022 14:31:06 +0000 (GMT)
+Received: from epcas5p4.samsung.com ( [182.195.41.42]) by
+ epsmges5p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+ 05.DD.10063.9A359626; Wed, 27 Apr 2022 23:31:05 +0900 (KST)
 Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
- epcas5p2.samsung.com (KnoxPortal) with ESMTPA id
- 20220428075435epcas5p285a70634102f71440a283361657f4d9b~qAD0bnrr92164321643epcas5p2Q;
- Thu, 28 Apr 2022 07:54:35 +0000 (GMT)
-Received: from epsmgms1p2.samsung.com (unknown [182.195.42.42]) by
+ epcas5p3.samsung.com (KnoxPortal) with ESMTPA id
+ 20220427130824epcas5p38594effe1d648be050ff00284e115014~pwshxFhMl2087820878epcas5p35;
+ Wed, 27 Apr 2022 13:08:24 +0000 (GMT)
+Received: from epsmgms1p1new.samsung.com (unknown [182.195.42.41]) by
  epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
- 20220428075435epsmtrp1a9ee8d4d92953b0ff2d7f9b7559998a2~qAD0asRh-1575615756epsmtrp1S;
- Thu, 28 Apr 2022 07:54:35 +0000 (GMT)
-X-AuditID: b6c32a4a-b3bff70000002663-dd-626a4deee6d4
-Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
- epsmgms1p2.samsung.com (Symantec Messaging Gateway) with SMTP id
- A6.BF.08924.B384A626; Thu, 28 Apr 2022 16:54:35 +0900 (KST)
-Received: from test-zns (unknown [107.110.206.5]) by epsmtip1.samsung.com
+ 20220427130824epsmtrp14e26381493d2df92a583d1f425e97e0c~pwshwRhe_3201832018epsmtrp1G;
+ Wed, 27 Apr 2022 13:08:24 +0000 (GMT)
+X-AuditID: b6c32a49-4b5ff7000000274f-c5-626953a9862a
+Received: from epsmtip2.samsung.com ( [182.195.34.31]) by
+ epsmgms1p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+ D8.A4.08853.84049626; Wed, 27 Apr 2022 22:08:24 +0900 (KST)
+Received: from test-zns (unknown [107.110.206.5]) by epsmtip2.samsung.com
  (KnoxPortal) with ESMTPA id
- 20220428075434epsmtip13f509946fb1170bf6e1ff8e4df1f4948~qADzDll5X1873018730epsmtip1z;
- Thu, 28 Apr 2022 07:54:34 +0000 (GMT)
-Date: Thu, 28 Apr 2022 13:19:26 +0530
+ 20220427130823epsmtip2faace445336901ad6bad32c4c8c06a3d~pwsghFvIJ1516015160epsmtip2s;
+ Wed, 27 Apr 2022 13:08:23 +0000 (GMT)
+Date: Wed, 27 Apr 2022 18:33:15 +0530
 From: Nitesh Shetty <nj.shetty@samsung.com>
 To: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-Message-ID: <20220428074926.GG9558@test-zns>
+Message-ID: <20220427130315.GB9558@test-zns>
 MIME-Version: 1.0
-In-Reply-To: <c285f0da-ab1d-2b24-e5a4-21193ef93155@opensource.wdc.com>
+In-Reply-To: <513edc25-1c73-6c85-9a50-0e267a106ec0@opensource.wdc.com>
 User-Agent: Mutt/1.9.4 (2018-02-28)
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFlrBJsWRmVeSWpSXmKPExsWy7bCmpu5736wkgz+5Fr/Pnme22PtuNqvF
- 3lvaFnv2nmSxuLxrDpvF/GVP2S26r+9gs9jxpJHRgcNj56y77B6bl9R77Gy9z+rxft9VNo/P
- m+QCWKOybTJSE1NSixRS85LzUzLz0m2VvIPjneNNzQwMdQ0tLcyVFPISc1NtlVx8AnTdMnOA
- DlFSKEvMKQUKBSQWFyvp29kU5ZeWpCpk5BeX2CqlFqTkFJgU6BUn5haX5qXr5aWWWBkaGBiZ
- AhUmZGfcv7eFtaCfu+Lm7busDYztnF2MnBwSAiYSXe+2sYLYQgK7GSXmLI3uYuQCsj8xSsx/
- 8IIVwvnMKHF8/Uk2mI75d6ayQyR2MUqcOz0XquoZo0TT/HnsIFUsAqoSD6Z2MXYxcnCwCWhL
- nP7PARIWETCVeNvTygJSzyxwhlGi/f0usHphATOJ1Z2tYBt4BXQkFs/fzQ5hC0qcnPmEBcTm
- FHCTmL3xG5gtKqAscWDbcSaIiyZySMyYmwqyS0LARaL5dTREWFji1fEt7BC2lMTL/jYou1xi
- e9sCJpAbJARaGCW6Tp1igUjYS1zc8xdsJrNAhsTsb2uhPpaVmHpqHVScT6L39xOovbwSO+bB
- 2MoSa9YvgKqXlLj2vRHK9pDY+XElNIBWMkm8PH2IfQKj/Cwkv81Csm8W0A/MApoS63fpQ4Tl
- JZq3zmaGCEtLLP/HgaRiASPbKkbJ1ILi3PTUYtMCo7zUcnjcJ+fnbmIEJ1ktrx2MDx980DvE
- yMTBeIhRgoNZSYT3y+6MJCHelMTKqtSi/Pii0pzU4kOMpsBom8gsJZqcD0zzeSXxhiaWBiZm
- ZmYmlsZmhkrivKfTNyQKCaQnlqRmp6YWpBbB9DFxcEo1MHmYxBi3KS/r+5xXoHh/5e5/mpOK
- OLaz1QUJJm5LlWV+dGCy2qfIDR1bPTv4Cv8o7cuz5K+7k+o17+LTf7WP9Hb0x/PP1u849K1e
- 9ECS25U/X77MfXHhdDCf6CKtxUE1cj17vjAr/U6ZkKPatTBKKu23yc1t05J0TR/EblD+sWFx
- 0DPf6Q7i++QYDghltRZyCmdZbpQ0mbLf//CW7BVyO3Mj78a3hghMUJNqNAp1337257kTdWFK
- F5WF48I+LnzLVaHz1Wvq/N+HWwX5lVy6/OQDdXwTmyQOHOF9+P5ORO+1sxMfmJVUr1snvTy8
- Kfb+1bVvxTqdU/dcnR/13vrQ+u4M04X3O3s98v0vTXLvVmIpzkg01GIuKk4EAG3bN+s7BAAA
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFvrOLMWRmVeSWpSXmKPExsWy7bCSnK61R1aSQcdnPYvfZ88zW+x9N5vV
- Yu8tbYs9e0+yWFzeNYfNYv6yp+wW3dd3sFnseNLI6MDhsXPWXXaPzUvqPXa23mf1eL/vKpvH
- 501yAaxRXDYpqTmZZalF+nYJXBkrtjkWbOSo2PbVroHxKFsXIyeHhICJxPw7U9m7GLk4hAR2
- MEp8aTrHApGQlFj29wgzhC0ssfLfc6iiJ4wSs+6vBetmEVCVeDC1i7GLkYODTUBb4vR/DpCw
- iICpxNueVhaQemaBM4wS7e93sYMkhAXMJFZ3toL18groSCyevxtq6Eomiff7V7JDJAQlTs58
- AnYFs4C6xJ95l5hBFjALSEss/8cBEZaXaN46G+w4TgE3idkbv4GViwooSxzYdpxpAqPQLCST
- ZiGZNAth0iwkkxYwsqxilEwtKM5Nzy02LDDKSy3XK07MLS7NS9dLzs/dxAiOGy2tHYx7Vn3Q
- O8TIxMF4iFGCg1lJhPfL7owkId6UxMqq1KL8+KLSnNTiQ4zSHCxK4rwXuk7GCwmkJ5akZqem
- FqQWwWSZODilGphmNkSeu+/Zy/AzdJGv3sPXJ3sNLl4t7nK+dN/kX+8ctbV/eb6LrRTa9s+k
- YDWbSN7z4NI5On1n5fnNvWRuVogfPnn2Q/QKI/2ZvLOWpR5raFxyxPrm3G/zt/3jSAwIVNEV
- vlGj9r15qkzKnZTAabfNrOunnG56dvDkm55ZLamR00U/P9HWbLHer/0vbFnmhkXlsVeflx5I
- PvfhVElgVdO7F6tL4/72aE+82pMt+Icv6rLBBfXuw+1eMw7u+cD1b3uQ34IF52+4Sfkp/Ulg
- 1VRZN3Ghe9+N0/Z2JkkWB4s/O9acPB8mtemFG6OJ8TmFi3pr5/kn6pxVuj8j33YeF+MJ4zdn
- HZjXyDM/fquzxWWKEktxRqKhFnNRcSIAWXgw9goDAAA=
-X-CMS-MailID: 20220428075435epcas5p285a70634102f71440a283361657f4d9b
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFlrAJsWRmVeSWpSXmKPExsWy7bCmlu7K4Mwkg83dbBa/z55nttj7bjar
+ xd5b2hZ79p5ksbi8aw6bxfxlT9ktuq/vYLPY8aSR0YHDY+esu+wem5fUe+xsvc/q8X7fVTaP
+ z5vkAlijsm0yUhNTUosUUvOS81My89JtlbyD453jTc0MDHUNLS3MlRTyEnNTbZVcfAJ03TJz
+ gC5RUihLzCkFCgUkFhcr6dvZFOWXlqQqZOQXl9gqpRak5BSYFOgVJ+YWl+al6+WlllgZGhgY
+ mQIVJmRnbOndwFrwUrBiw71fjA2MLXxdjJwcEgImEkv3zWDtYuTiEBLYzSjRvXYulPOJUeLs
+ wd9sEM43RomWxYcYYVpWX5sKVbWXUaK1+zhU1TNGieM7vrGDVLEIqEr0LF8AlODgYBPQljj9
+ nwMkLCJgKvG2p5UFpJ5Z4AyjRPv7XWD1wgLOEv0XbzOD2LwCOhJ7D2xlg7AFJU7OfMICYnMK
+ uElMPbaRCcQWFVCWOLDtOBPIIAmBVg6J91P2sUOc5yKx/Np3NghbWOLV8S1QcSmJl/1tUHa5
+ xPa2BVDNLYwSXadOsUAk7CUu7vkLtoFZIEPiZP8TqEGyElNPrYOK80n0/n7CBBHnldgxD8ZW
+ llizfgFUvaTEte+NULaHxJ9fkLATEvjNKHFuecQERvlZSJ6bhWQdhK0jsWD3JyCbA8iWllj+
+ jwPC1JRYv0t/ASPrKkbJ1ILi3PTUYtMCw7zUcniUJ+fnbmIEJ1Utzx2Mdx980DvEyMTBeIhR
+ goNZSYT3y+6MJCHelMTKqtSi/Pii0pzU4kOMpsDImsgsJZqcD0zreSXxhiaWBiZmZmYmlsZm
+ hkrivKfTNyQKCaQnlqRmp6YWpBbB9DFxcEo1MDHuZMtnCveS5dyplbLtQ6yT1cyrqp+jNV78
+ td50UtihS2znQbNss6ct9y5WSj7h4r/YvvP4l4mq586arxDgNPK0nbt2++XpMSyzTzCcP7bl
+ 5Ga9AMnSCYdmflilkdHO6ZLZYi2mdeBXw/qNYccOMUeXMonf3vhNMHH187VXs/esU5gVdm+R
+ QH7+vZSl3Et/rs9sdvogqivX0XT8L7/GDZcT0a5aIZtfbT5d3nVm9QtZWSuWxw7PjrLxsXB6
+ ZAepV1oo5Jr3P3lwnr2ghq1ZxsBld7Y03/5b/IwP31969ER6+s043U+n6j5ylorx68Wd7luj
+ tu5F4JUE58n38kyZ060niWXO15t/W6h4z12VDCWW4oxEQy3mouJEAIGbFNYzBAAA
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFnrALMWRmVeSWpSXmKPExsWy7bCSvK6HQ2aSwaIl0ha/z55nttj7bjar
+ xd5b2hZ79p5ksbi8aw6bxfxlT9ktuq/vYLPY8aSR0YHDY+esu+wem5fUe+xsvc/q8X7fVTaP
+ z5vkAlijuGxSUnMyy1KL9O0SuDKaL3IXrOSv2LThL2MD413uLkZODgkBE4nV16aydjFycQgJ
+ 7GaUeHP7DSNEQlJi2d8jzBC2sMTKf8/ZIYqeMEo03poDlmARUJXoWb6ArYuRg4NNQFvi9H8O
+ kLCIgKnE255WFpB6ZoEzjBLt73exgySEBZwl+i/eBuvlFdCR2HtgKxvE0N+MEkveTmaFSAhK
+ nJz5hAXEZhbQkrjx7yUTyAJmAWmJ5f/AFnAKuElMPbaRCcQWFVCWOLDtONMERsFZSLpnIeme
+ hdC9gJF5FaNkakFxbnpusWGBYV5quV5xYm5xaV66XnJ+7iZGcCRoae5g3L7qg94hRiYOxkOM
+ EhzMSiK8X3ZnJAnxpiRWVqUW5ccXleakFh9ilOZgURLnvdB1Ml5IID2xJDU7NbUgtQgmy8TB
+ KdXAdHDXNQfr76ea8g6xxHUXtj65+s76sFXCrNy02EbZflWt4s8m8WmWhQxPPdznWvr0qJo5
+ Zdl8rf1zY1c1R/y1JZ82m/OuXpJrPi9hS23woU4/0/Lo1nXzLrLdWXPw+pSD+Rk7bu3XYXDP
+ P6ZzU9qc1UTn5oMFWsuZp9vy5K7NW5w8V/286MKagv+9svKreO4v+lszVWWhb+8WvuP+G3Ym
+ nG8q/h5b8l38wV/NvALj/cZTT3quXejR71hYe6g79UiOzdrSezVVklPsvNUmu2qEVNfYPZ/y
+ ovWVfEzu76ojTfskD5v4KDZznLvU9rdpsWa19anSOSXHvrBI9QcbR2+MCWdc7zc5J/o8m5/l
+ pjQlluKMREMt5qLiRACj4ob+8wIAAA==
+X-CMS-MailID: 20220427130824epcas5p38594effe1d648be050ff00284e115014
 X-Msg-Generator: CA
 X-Sendblock-Type: REQ_APPROVE
 CMS-TYPE: 105P
 DLP-Filter: Pass
 X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20220426101804epcas5p4a0a325d3ce89e868e4924bbdeeba6d15
-References: <CGME20220426101804epcas5p4a0a325d3ce89e868e4924bbdeeba6d15@epcas5p4.samsung.com>
- <20220426101241.30100-1-nj.shetty@samsung.com>
- <6a85e8c8-d9d1-f192-f10d-09052703c99a@opensource.wdc.com>
- <20220427124951.GA9558@test-zns>
- <c285f0da-ab1d-2b24-e5a4-21193ef93155@opensource.wdc.com>
+X-CMS-RootMailID: 20220426101938epcas5p291690dd1f0e931cd9f8139daaf3f9296
+References: <20220426101241.30100-1-nj.shetty@samsung.com>
+ <CGME20220426101938epcas5p291690dd1f0e931cd9f8139daaf3f9296@epcas5p2.samsung.com>
+ <20220426101241.30100-4-nj.shetty@samsung.com>
+ <513edc25-1c73-6c85-9a50-0e267a106ec0@opensource.wdc.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -134,9 +132,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-X-Mailman-Approved-At: Fri, 29 Apr 2022 08:23:41 +0000
-Subject: Re: [dm-devel] [PATCH v4 00/10] Add Copy offload support
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Mailman-Approved-At: Fri, 29 Apr 2022 08:23:40 +0000
+Subject: Re: [dm-devel] [PATCH v4 03/10] block: Introduce a new ioctl for
+ copy
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -154,58 +153,77 @@ Cc: linux-scsi@vger.kernel.org, nitheshshetty@gmail.com,
  linux-fsdevel@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Type: multipart/mixed;
- boundary="----MMcOyA4CJjQRgHhn55zXOrpiM0Dxers-aGNKdRjWa9MqQ0PV=_1cb6b_"
+ boundary="----s9reHD3dvq.Swzu4OgS99nNlXP7CLa0djtt04wdzZepsPVyA=_17950_"
 
-------MMcOyA4CJjQRgHhn55zXOrpiM0Dxers-aGNKdRjWa9MqQ0PV=_1cb6b_
-Content-Type: text/plain; charset="utf-8"
+------s9reHD3dvq.Swzu4OgS99nNlXP7CLa0djtt04wdzZepsPVyA=_17950_
+Content-Type: text/plain; charset="us-ascii"
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
 
-On Thu, Apr 28, 2022 at 07:05:32AM +0900, Damien Le Moal wrote:
-> On 4/27/22 21:49, Nitesh Shetty wrote:
-> > O Wed, Apr 27, 2022 at 11:19:48AM +0900, Damien Le Moal wrote:
-> >> On 4/26/22 19:12, Nitesh Shetty wrote:
-> >>> The patch series covers the points discussed in November 2021 virtual=
- call
-> >>> [LSF/MM/BFP TOPIC] Storage: Copy Offload[0].
-> >>> We have covered the Initial agreed requirements in this patchset.
-> >>> Patchset borrows Mikulas's token based approach for 2 bdev
-> >>> implementation.
-> >>>
-> >>> Overall series supports =E2=80=93
-> >>>
-> >>> 1. Driver
-> >>> - NVMe Copy command (single NS), including support in nvme-target (fo=
-r
-> >>>     block and file backend)
-> >>
-> >> It would also be nice to have copy offload emulation in null_blk for t=
-esting.
-> >>
-> >=20
-> > We can plan this in next phase of copy support, once this series settle=
-s down.
->=20
-> So how can people test your series ? Not a lot of drives out there with
-> copy support.
+O Wed, Apr 27, 2022 at 11:48:57AM +0900, Damien Le Moal wrote:
+> On 4/26/22 19:12, Nitesh Shetty wrote:
+> > Add new BLKCOPY ioctl that offloads copying of one or more sources ranges
+> > to one or more destination in a device. COPY ioctl accepts a 'copy_range'
+> > structure that contains no of range, a reserved field , followed by an
+> > array of ranges. Each source range is represented by 'range_entry' that
+> > contains source start offset, destination start offset and length of
+> > source ranges (in bytes)
+> > 
+> > MAX_COPY_NR_RANGE, limits the number of entries for the IOCTL and
+> > MAX_COPY_TOTAL_LENGTH limits the total copy length, IOCTL can handle.
+> > 
+> > Example code, to issue BLKCOPY:
+> > /* Sample example to copy three entries with [dest,src,len],
+> > * [32768, 0, 4096] [36864, 4096, 4096] [40960,8192,4096] on same device */
+> > 
+> > int main(void)
+> > {
+> > 	int i, ret, fd;
+> > 	unsigned long src = 0, dst = 32768, len = 4096;
+> > 	struct copy_range *cr;
+> > 	cr = (struct copy_range *)malloc(sizeof(*cr)+
+> > 					(sizeof(struct range_entry)*3));
+> > 	cr->nr_range = 3;
+> > 	cr->reserved = 0;
+> > 	for (i = 0; i< cr->nr_range; i++, src += len, dst += len) {
+> > 		cr->range_list[i].dst = dst;
+> > 		cr->range_list[i].src = src;
+> > 		cr->range_list[i].len = len;
+> > 		cr->range_list[i].comp_len = 0;
+> > 	}
+> > 	fd = open("/dev/nvme0n1", O_RDWR);
+> > 	if (fd < 0) return 1;
+> > 	ret = ioctl(fd, BLKCOPY, cr);
+> > 	if (ret != 0)
+> > 	       printf("copy failed, ret= %d\n", ret);
+> > 	for (i=0; i< cr->nr_range; i++)
+> > 		if (cr->range_list[i].len != cr->range_list[i].comp_len)
+> > 			printf("Partial copy for entry %d: requested %llu, completed %llu\n",
+> > 								i, cr->range_list[i].len,
+> > 								cr->range_list[i].comp_len);
+> > 	close(fd);
+> > 	free(cr);
+> > 	return ret;
+> > }
+> 
+> Nice to have a code example. But please format it correctly.
 >
 
-Yeah not many drives at present, Qemu can be used to test NVMe copy.
+acked
 
 --
 Nitesh Shetty
 
-------MMcOyA4CJjQRgHhn55zXOrpiM0Dxers-aGNKdRjWa9MqQ0PV=_1cb6b_
+------s9reHD3dvq.Swzu4OgS99nNlXP7CLa0djtt04wdzZepsPVyA=_17950_
 Content-Type: text/plain; charset="utf-8"
 
 
-------MMcOyA4CJjQRgHhn55zXOrpiM0Dxers-aGNKdRjWa9MqQ0PV=_1cb6b_
+------s9reHD3dvq.Swzu4OgS99nNlXP7CLa0djtt04wdzZepsPVyA=_17950_
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
@@ -216,5 +234,5 @@ dm-devel mailing list
 dm-devel@redhat.com
 https://listman.redhat.com/mailman/listinfo/dm-devel
 
-------MMcOyA4CJjQRgHhn55zXOrpiM0Dxers-aGNKdRjWa9MqQ0PV=_1cb6b_--
+------s9reHD3dvq.Swzu4OgS99nNlXP7CLa0djtt04wdzZepsPVyA=_17950_--
 
