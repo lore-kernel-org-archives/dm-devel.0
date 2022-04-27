@@ -1,60 +1,94 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6A874C433F5
-	for <dm-devel@archiver.kernel.org>; Wed, 27 Apr 2022 16:57:36 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C8BB2C433EF
+	for <dm-devel@archiver.kernel.org>; Wed, 27 Apr 2022 21:56:23 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-130-nK4XQUPMOPa7WGAjd_Ax1Q-1; Wed, 27 Apr 2022 12:57:33 -0400
-X-MC-Unique: nK4XQUPMOPa7WGAjd_Ax1Q-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-663-cFEB_Sf5P3mzGlmFthyfFA-1; Wed, 27 Apr 2022 17:56:19 -0400
+X-MC-Unique: cFEB_Sf5P3mzGlmFthyfFA-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A1812185A79C;
-	Wed, 27 Apr 2022 16:57:31 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 18F8D1C0514C;
+	Wed, 27 Apr 2022 21:56:18 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 24147407E1C0;
-	Wed, 27 Apr 2022 16:57:30 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2A09BC27DB5;
+	Wed, 27 Apr 2022 21:56:16 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CE7BC1947042;
-	Wed, 27 Apr 2022 16:57:29 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BFE1F1947046;
+	Wed, 27 Apr 2022 21:56:15 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
  [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 735821947041
- for <dm-devel@listman.corp.redhat.com>; Wed, 27 Apr 2022 16:57:28 +0000 (UTC)
+ ESMTP id 1A90E1947041
+ for <dm-devel@listman.corp.redhat.com>; Wed, 27 Apr 2022 21:56:15 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 42236C28137; Wed, 27 Apr 2022 16:57:28 +0000 (UTC)
+ id D1059C2813B; Wed, 27 Apr 2022 21:56:14 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 3E178C28135
- for <dm-devel@redhat.com>; Wed, 27 Apr 2022 16:57:28 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id CCEEDC27DB5
+ for <dm-devel@redhat.com>; Wed, 27 Apr 2022 21:56:14 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0D86B3C02B6B
- for <dm-devel@redhat.com>; Wed, 27 Apr 2022 16:57:28 +0000 (UTC)
-Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk
- [46.235.227.227]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-591-rfaC8-ZSM-yNcZ2FdbN1Fg-1; Wed, 27 Apr 2022 12:57:26 -0400
-X-MC-Unique: rfaC8-ZSM-yNcZ2FdbN1Fg-1
-Received: from localhost (unknown [IPv6:2a00:5f00:102:0:8862:e6ff:fea2:2548])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- (Authenticated sender: krisman)
- by bhuna.collabora.co.uk (Postfix) with ESMTPSA id 1DB6E1F44B6F;
- Wed, 27 Apr 2022 17:57:24 +0100 (BST)
-From: Gabriel Krisman Bertazi <krisman@collabora.com>
-To: snitzer@redhat.com
-Date: Wed, 27 Apr 2022 12:57:10 -0400
-Message-Id: <20220427165710.225808-1-krisman@collabora.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9FEBC3C01D92
+ for <dm-devel@redhat.com>; Wed, 27 Apr 2022 21:56:14 +0000 (UTC)
+Received: from esa2.hgst.iphmx.com (esa2.hgst.iphmx.com [68.232.143.124]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-594-EMAhBfBENLq0KsGVftkDbw-1; Wed, 27 Apr 2022 17:56:12 -0400
+X-MC-Unique: EMAhBfBENLq0KsGVftkDbw-1
+X-IronPort-AV: E=Sophos;i="5.90,294,1643644800"; d="scan'208";a="303207063"
+Received: from uls-op-cesaip01.wdc.com (HELO uls-op-cesaep01.wdc.com)
+ ([199.255.45.14])
+ by ob1.hgst.iphmx.com with ESMTP; 28 Apr 2022 05:56:10 +0800
+IronPort-SDR: OIyxKnY6UBO/5M+IlQ05EtWTyOrHW+nzsN2dQfnIzjSFZ9e39nfssi7aIW9oS5h0jD6FyKbauw
+ LCEyTmFfXHaPM0yAPpA+ubB8sHhkBDf9I6ziiAKJj4uv8DPHeZbrk194PZ6YgmxTlNvHdZ8r+z
+ +/5dI/NuiCWkSPtnP7WyTVaEFB6EOBpYAP+DDIRahG/1aoQ6G77XfphNzVZI4eqRczTO/QPcmt
+ D6C0U0lmb6Bo6/wLOuUIBdxx+PAodVAXCgyxa9N+nSHWRotsRWDgeugyrKDgCs5gBu75xgQZJ3
+ Oqw+Zc6krGlPsyjyqqSamVlk
+Received: from uls-op-cesaip01.wdc.com ([10.248.3.36])
+ by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 27 Apr 2022 14:27:03 -0700
+IronPort-SDR: +5YlOyD1i51AoUJEI4mjbpJR7o2IOUQMJb0u7H9vWLs0tOVIoiD6zIR6D/hkFE7eXZeQfePEFB
+ TywWfVjKcS/JpbVTefjw+96bgcwONWTkuUsopsAesRIoJXZqnE4Q9DKMPHDnozSBrXgU1wJMuZ
+ 6Go950maHi5K7S7ZgaTH9dTd3grGRpWh7W2VJjJqqJvc+civd2wROqfgtJ9mOPKHRN9htOu8SO
+ YHHQU4Pi1nD0nfzrZSzdi0xsz63sjBSpxEsxH+1xO69VHWHo9DIURpGohajQoW9QtJEquDNb+t
+ mm0=
+WDCIronportException: Internal
+Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
+ by uls-op-cesaip01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 27 Apr 2022 14:56:12 -0700
+Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4KpXd64dWXz1Rvlx
+ for <dm-devel@redhat.com>; Wed, 27 Apr 2022 14:56:10 -0700 (PDT)
+X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
+Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
+ by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
+ port 10026) with ESMTP id hbHw3A-H_OhJ for <dm-devel@redhat.com>;
+ Wed, 27 Apr 2022 14:56:09 -0700 (PDT)
+Received: from [10.225.163.27] (unknown [10.225.163.27])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4KpXd44RlGz1Rvlc;
+ Wed, 27 Apr 2022 14:56:08 -0700 (PDT)
+Message-ID: <3f80a126-e52a-955b-aca4-14218d26faf5@opensource.wdc.com>
+Date: Thu, 28 Apr 2022 06:56:07 +0900
 MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.8.0
+To: Nitesh Shetty <nj.shetty@samsung.com>
+References: <CGME20220426101804epcas5p4a0a325d3ce89e868e4924bbdeeba6d15@epcas5p4.samsung.com>
+ <20220426101241.30100-1-nj.shetty@samsung.com>
+ <c02f67e1-2f76-7e52-8478-78e28b96b6a1@opensource.wdc.com>
+ <20220427153826.GE9558@test-zns>
+From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Organization: Western Digital Research
+In-Reply-To: <20220427153826.GE9558@test-zns>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -63,8 +97,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: [dm-devel] [PATCH] dm: dm-mpath: Provide high-resolution timer to
- HST with bio-mpath
+Subject: Re: [dm-devel] [PATCH v4 00/10] Add Copy offload support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -76,163 +109,55 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, kernel@collabora.com,
- Gabriel Krisman Bertazi <krisman@collabora.com>, khazhy@google.com
+Cc: linux-scsi@vger.kernel.org, nitheshshetty@gmail.com,
+ linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
+ linux-fsdevel@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-The precision loss of reading IO start_time with jiffies_to_nsecs
-instead of using a high resolution timer degrades HST path prediction
-for BIO-based mpath on high load workloads.
-
-Below, I show the utilization percentage of a 10 disk multipath with
-asymmetrical disk access cost, while being exercised by a randwrite FIO
-benchmark with high submission queue depth (depth=64).  It is possible
-to see that the HST path selection degrades heavily for high-iops in
-BIO-mpath, underutilizing the slower paths way beyond expected.  This
-seems to be caused by the start_time truncation, which makes some IO to
-seem much slower than they actually is.  In this scenario ST outperforms
-HST for bio-mpath, but not for mq-mpath, which already uses ktime_get_ns().
-
-The third column shows utilization with this patch applied.  It is easy
-to see that now HST prediction is much closer to the ideal distribution
-(calculated considering the real cost of each path).
-
-|     |   ST | HST (orig) | HST(ktime) | Best |
-| sdd | 0.17 |       0.20 |       0.17 | 0.18 |
-| sde | 0.17 |       0.20 |       0.17 | 0.18 |
-| sdf | 0.17 |       0.20 |       0.17 | 0.18 |
-| sdg | 0.06 |       0.00 |       0.06 | 0.04 |
-| sdh | 0.03 |       0.00 |       0.03 | 0.02 |
-| sdi | 0.03 |       0.00 |       0.03 | 0.02 |
-| sdj | 0.02 |       0.00 |       0.01 | 0.01 |
-| sdk | 0.02 |       0.00 |       0.01 | 0.01 |
-| sdl | 0.17 |       0.20 |       0.17 | 0.18 |
-| sdm | 0.17 |       0.20 |       0.17 | 0.18 |
-
-This issue was originally discussed [1] when we first merged HST, and
-this patch was left as a low hanging fruit to be solved later.  I don't
-think anyone is using HST with BIO mpath, but it'd be neat to get it
-sorted out.
-
-Regarding the implementation, as suggested by Mike in that mail thread,
-in order to avoid the overhead of ktime_get_ns for other selectors, this
-patch adds a flag for the selector code to request the high-resolution
-timer.
-
-I tested this using the same benchmark used in the original HST submission.
-
-Full test and benchmark scripts are available here:
-
-  https://people.collabora.com/~krisman/HST-BIO-MPATH/
-
-[1] https://lore.kernel.org/lkml/85tv0am9de.fsf@collabora.com/T/
-
-Signed-off-by: Gabriel Krisman Bertazi <krisman@collabora.com>
-Acked-by: Gabriel Krisman Bertazi <krisman@collabora.com>
----
- drivers/md/dm-mpath.c                      | 16 ++++++++++++++--
- drivers/md/dm-path-selector.h              | 13 +++++++++++++
- drivers/md/dm-ps-historical-service-time.c |  1 +
- 3 files changed, 28 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index f4719b65e5e3..c58cfcd87d04 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -105,6 +105,7 @@ struct multipath {
- struct dm_mpath_io {
- 	struct pgpath *pgpath;
- 	size_t nr_bytes;
-+	u64 start_time_ns;
- };
- 
- typedef int (*action_fn) (struct pgpath *pgpath);
-@@ -647,6 +648,11 @@ static int __multipath_map_bio(struct multipath *m, struct bio *bio,
- 
- 	mpio->pgpath = pgpath;
- 
-+	if (pgpath->pg->ps.type->flags & PS_NEED_HR_TIMER_FL)
-+		mpio->start_time_ns = ktime_get_ns();
-+	else
-+		mpio->start_time_ns = 0;
-+
- 	bio->bi_status = 0;
- 	bio_set_dev(bio, pgpath->path.dev->bdev);
- 	bio->bi_opf |= REQ_FAILFAST_TRANSPORT;
-@@ -1715,9 +1721,15 @@ static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
- 	if (pgpath) {
- 		struct path_selector *ps = &pgpath->pg->ps;
- 
--		if (ps->type->end_io)
-+		if (ps->type->end_io) {
-+			u64 st_time = mpio->start_time_ns;
-+
-+			if (!st_time)
-+				st_time = dm_start_time_ns_from_clone(clone);
-+
- 			ps->type->end_io(ps, &pgpath->path, mpio->nr_bytes,
--					 dm_start_time_ns_from_clone(clone));
-+					 st_time);
-+		}
- 	}
- 
- 	return r;
-diff --git a/drivers/md/dm-path-selector.h b/drivers/md/dm-path-selector.h
-index c47bc0e20275..46710f364286 100644
---- a/drivers/md/dm-path-selector.h
-+++ b/drivers/md/dm-path-selector.h
-@@ -26,6 +26,18 @@ struct path_selector {
- 	void *context;
- };
- 
-+/* If a path selector uses this flag, a more precise timer
-+ * (ktime_get_ns) is used to account for IO start time in BIO-based
-+ * mpath.  This improves performance of some path selectors (i.e. HST),
-+ * in exchange of a slightly higher overhead when submiting the
-+ * BIO. The extra cost is usually offset by improved path selection for
-+ * some benchmarks.
-+ *
-+ * This has no effect for request-based mpath, since it already uses a
-+ * higher precision timer by default.
-+ */
-+#define PS_NEED_HR_TIMER_FL 0x1
-+
- /* Information about a path selector type */
- struct path_selector_type {
- 	char *name;
-@@ -33,6 +45,7 @@ struct path_selector_type {
- 
- 	unsigned int table_args;
- 	unsigned int info_args;
-+	unsigned int flags;
- 
- 	/*
- 	 * Constructs a path selector object, takes custom arguments
-diff --git a/drivers/md/dm-ps-historical-service-time.c b/drivers/md/dm-ps-historical-service-time.c
-index 82f2a06153dc..d2233cc4ea97 100644
---- a/drivers/md/dm-ps-historical-service-time.c
-+++ b/drivers/md/dm-ps-historical-service-time.c
-@@ -523,6 +523,7 @@ static int hst_end_io(struct path_selector *ps, struct dm_path *path,
- static struct path_selector_type hst_ps = {
- 	.name		= "historical-service-time",
- 	.module		= THIS_MODULE,
-+	.flags		= PS_NEED_HR_TIMER_FL,
- 	.table_args	= 1,
- 	.info_args	= 3,
- 	.create		= hst_create,
--- 
-2.35.1
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gNC8yOC8yMiAwMDozOCwgTml0ZXNoIFNoZXR0eSB3cm90ZToKPiBPbiBXZWQsIEFwciAyNywg
+MjAyMiBhdCAxMDo0NjozMkFNICswOTAwLCBEYW1pZW4gTGUgTW9hbCB3cm90ZToKPj4gT24gNC8y
+Ni8yMiAxOToxMiwgTml0ZXNoIFNoZXR0eSB3cm90ZToKPj4+IFRoZSBwYXRjaCBzZXJpZXMgY292
+ZXJzIHRoZSBwb2ludHMgZGlzY3Vzc2VkIGluIE5vdmVtYmVyIDIwMjEgdmlydHVhbCBjYWxsCj4+
+PiBbTFNGL01NL0JGUCBUT1BJQ10gU3RvcmFnZTogQ29weSBPZmZsb2FkWzBdLgo+Pj4gV2UgaGF2
+ZSBjb3ZlcmVkIHRoZSBJbml0aWFsIGFncmVlZCByZXF1aXJlbWVudHMgaW4gdGhpcyBwYXRjaHNl
+dC4KPj4+IFBhdGNoc2V0IGJvcnJvd3MgTWlrdWxhcydzIHRva2VuIGJhc2VkIGFwcHJvYWNoIGZv
+ciAyIGJkZXYKPj4+IGltcGxlbWVudGF0aW9uLgo+Pj4KPj4+IE92ZXJhbGwgc2VyaWVzIHN1cHBv
+cnRzIOKAkwo+Pj4KPj4+IDEuIERyaXZlcgo+Pj4gLSBOVk1lIENvcHkgY29tbWFuZCAoc2luZ2xl
+IE5TKSwgaW5jbHVkaW5nIHN1cHBvcnQgaW4gbnZtZS10YXJnZXQgKGZvcgo+Pj4gICAgIGJsb2Nr
+IGFuZCBmaWxlIGJhY2tlbmQpCj4+Pgo+Pj4gMi4gQmxvY2sgbGF5ZXIKPj4+IC0gQmxvY2stZ2Vu
+ZXJpYyBjb3B5IChSRVFfQ09QWSBmbGFnKSwgd2l0aCBpbnRlcmZhY2UgYWNjb21tb2RhdGluZwo+
+Pj4gICAgIHR3byBibG9jay1kZXZzLCBhbmQgbXVsdGktc291cmNlL2Rlc3RpbmF0aW9uIGludGVy
+ZmFjZQo+Pj4gLSBFbXVsYXRpb24sIHdoZW4gb2ZmbG9hZCBpcyBuYXRpdmVseSBhYnNlbnQKPj4+
+IC0gZG0tbGluZWFyIHN1cHBvcnQgKGZvciBjYXNlcyBub3QgcmVxdWlyaW5nIHNwbGl0KQo+Pj4K
+Pj4+IDMuIFVzZXItaW50ZXJmYWNlCj4+PiAtIG5ldyBpb2N0bAo+Pj4gLSBjb3B5X2ZpbGVfcmFu
+Z2UgZm9yIHpvbmVmcwo+Pj4KPj4+IDQuIEluLWtlcm5lbCB1c2VyCj4+PiAtIGRtLWtjb3B5ZAo+
+Pj4gLSBjb3B5X2ZpbGVfcmFuZ2UgaW4gem9uZWZzCj4+Pgo+Pj4gRm9yIHpvbmVmcyBjb3B5X2Zp
+bGVfcmFuZ2UgLSBTZWVtcyB3ZSBjYW5ub3QgbGV2ZWFyZ2UgZnN0ZXN0IGhlcmUuIExpbWl0ZWQK
+Pj4+IHRlc3RpbmcgaXMgZG9uZSBhdCB0aGlzIHBvaW50IHVzaW5nIGEgY3VzdG9tIGFwcGxpY2F0
+aW9uIGZvciB1bml0IHRlc3RpbmcuCj4+Cj4+IGh0dHBzOi8vcHJvdGVjdDIuZmlyZWV5ZS5jb20v
+djEvdXJsP2s9YjE0YmY4ZTEtZDAzNjEwOTktYjE0YTczYWUtNzRmZTQ4NWZmZmIxLTliZDliYmIy
+NjlhZjE4ZjkmcT0xJmU9Yjk3MTRjMjktZWEyMi00ZmE1LThhMmEtZWViNDJjYTRiZGMxJnU9aHR0
+cHMlM0ElMkYlMkZnaXRodWIuY29tJTJGd2VzdGVybmRpZ2l0YWxjb3Jwb3JhdGlvbiUyRnpvbmVm
+cy10b29scwo+Pgo+PiAuL2NvbmZpZ3VyZSAtLXdpdGgtdGVzdHMKPj4gbWFrZQo+PiBzdWRvIG1h
+a2UgaW5zdGFsbAo+Pgo+PiBUaGVuIHJ1biB0ZXN0cy96b25lZnMtdGVzdHMuc2gKPj4KPj4gQWRk
+aW5nIHRlc3QgY2FzZSBpcyBzaW1wbGUuIEp1c3QgYWRkIHNjcmlwdCBmaWxlcyB1bmRlciB0ZXN0
+cy9zY3JpcHRzCj4+Cj4+IEkganVzdCByZWFsaXplZCB0aGF0IHRoZSBSRUFETUUgZmlsZSBvZiB0
+aGlzIHByb2plY3QgaXMgbm90IGRvY3VtZW50aW5nCj4+IHRoaXMuIEkgd2lsbCB1cGRhdGUgaXQu
+Cj4+Cj4gCj4gVGhhbmsgeW91LiBXZSB3aWxsIHRyeSB0byB1c2UgdGhpcy4KPiBBbnkgcGxhbnMg
+dG8gaW50ZWdyYXRlIHRoaXMgdGVzdHN1aXRlIHdpdGggZnN0ZXN0cyh4ZnN0ZXN0KSA/CgpOby4g
+SXQgaXMgbm90IGEgZ29vZCBmaXQgc2luY2Ugem9uZWZzIGNhbm5vdCBwYXNzIG1vc3Qgb2YgdGhl
+IGdlbmVyaWMgdGVzdApjYXNlcy4KCj4gCj4gLS0KPiBOaXRlc2ggU2hldHR5Cj4gCj4gCgoKLS0g
+CkRhbWllbiBMZSBNb2FsCldlc3Rlcm4gRGlnaXRhbCBSZXNlYXJjaAoKLS0KZG0tZGV2ZWwgbWFp
+bGluZyBsaXN0CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20v
+bWFpbG1hbi9saXN0aW5mby9kbS1kZXZlbAo=
 
