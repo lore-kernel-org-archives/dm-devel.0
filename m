@@ -1,66 +1,90 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 02DDBC433EF
-	for <dm-devel@archiver.kernel.org>; Sat, 30 Apr 2022 02:31:20 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1651285879;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=p1DQJ184EinYjcuPMuVRkoRFuQWo1K/ZArd21Fp8Zb8=;
-	b=GaVi5JDKJeMA0Qm7YVb2ewSKIoKpdZXmpO0DH9o3ytow1v5A8GXQBYYfcJQ1MdE3BGLI+A
-	3lrhE6ti7Sfu/s0Wvq3g5jxXjFnzVUwZuHP1QG3JoH5kl2A8F0DCLii6R222Fqoq3aC5i7
-	dnkAuAkt1xoxL+3p/5/+1tqBfXAIryE=
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id AD362C433EF
+	for <dm-devel@archiver.kernel.org>; Sun,  1 May 2022 06:22:13 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-41-FJHRE6c0NIW2Oeit3lGkDA-1; Fri, 29 Apr 2022 22:31:16 -0400
-X-MC-Unique: FJHRE6c0NIW2Oeit3lGkDA-1
+ us-mta-342-UpnF9HuzOJu1neHKviko9Q-1; Sun, 01 May 2022 02:22:09 -0400
+X-MC-Unique: UpnF9HuzOJu1neHKviko9Q-1
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D9E7C185A7A4;
-	Sat, 30 Apr 2022 02:31:14 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 624CF8002B2;
+	Sun,  1 May 2022 06:22:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BE38F40CF8F4;
-	Sat, 30 Apr 2022 02:31:12 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 55B5740CFD01;
+	Sun,  1 May 2022 06:22:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7173F1947057;
-	Sat, 30 Apr 2022 02:31:12 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DF7A3194705E;
+	Sun,  1 May 2022 06:22:03 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.4])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id ADD851947050
- for <dm-devel@listman.corp.redhat.com>; Sat, 30 Apr 2022 02:31:10 +0000 (UTC)
+ ESMTP id 84DB1194705D
+ for <dm-devel@listman.corp.redhat.com>; Sun,  1 May 2022 06:22:02 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id A0897C44AE9; Sat, 30 Apr 2022 02:31:10 +0000 (UTC)
-Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 081CAC44AE1;
- Sat, 30 Apr 2022 02:31:09 +0000 (UTC)
-Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
- by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 23U2V8kK030784;
- Fri, 29 Apr 2022 21:31:09 -0500
-Received: (from bmarzins@localhost)
- by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 23U2V8VQ030783;
- Fri, 29 Apr 2022 21:31:08 -0500
-Date: Fri, 29 Apr 2022 21:31:08 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Brian Bunker <brian@purestorage.com>
-Message-ID: <20220430023108.GQ24684@octiron.msp.redhat.com>
-References: <CAHZQxyLeK6L_wtGr=YN6AYPq1CucozjpTPHf194jxUiH=RyzOg@mail.gmail.com>
+ id 6AB2C2024CB9; Sun,  1 May 2022 06:22:02 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6628B200B664
+ for <dm-devel@redhat.com>; Sun,  1 May 2022 06:21:58 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 849A9801210
+ for <dm-devel@redhat.com>; Sun,  1 May 2022 06:21:58 +0000 (UTC)
+Received: from mail-pj1-f52.google.com (mail-pj1-f52.google.com
+ [209.85.216.52]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-288-ZyjFNJW_Oke1efJPHIJ9eA-1; Sun, 01 May 2022 02:21:57 -0400
+X-MC-Unique: ZyjFNJW_Oke1efJPHIJ9eA-1
+Received: by mail-pj1-f52.google.com with SMTP id o69so9003762pjo.3
+ for <dm-devel@redhat.com>; Sat, 30 Apr 2022 23:21:56 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+ :mime-version:content-disposition:in-reply-to;
+ bh=SKTKYlNwPBswI7KvwVvUGgGSktP9nkI84ndIRwt7nQ0=;
+ b=lNH5Vl88utaJ+M+orkxJ5+92K0Zh4EDsmah8gZgUISVaxAZT8CnvlotWWc94f/ZYcp
+ c/0vIMZnhs91VUZpdhvJXJIhhuk84YsLnLIjkneJbs5UeW35SRa+yThz77uZhm/IMtHQ
+ 7Uuqpo/lz8qa/OX9PmfjMvrXEhoCWrLH2Gh0R0AEayrS8e1l2AGBGhjvx2yeqSrGB6ut
+ XjHLiqNb6gbNYh6xsCJAf8DJQXEgMJ7oTQUxRnI59O5XCkJbVebly1fH1p89PAkKC8bK
+ chVXw+ctfFMbC+0HFvZDWjK1fvqHlKC4UUFAr0EKpLMr1TzYHWmeNsivw2/KdpFwjtoR
+ pDbw==
+X-Gm-Message-State: AOAM530aRdck4ncSmMfiplYmpRwGAr7M5DwrZunN35T+1T1m5pYSfHjf
+ sttj+CLkLp7turZfq/K4bhtvdQ==
+X-Google-Smtp-Source: ABdhPJz+jfrVtgiEdIHSI8aK+wUVMyDTcGdWEOLCrg/rORW+7ZJJmVsK5AsizYEC9lrxUsWwCp9rcg==
+X-Received: by 2002:a17:902:f684:b0:15e:8c4a:c54b with SMTP id
+ l4-20020a170902f68400b0015e8c4ac54bmr6278847plg.21.1651386115938; 
+ Sat, 30 Apr 2022 23:21:55 -0700 (PDT)
+Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
+ by smtp.gmail.com with ESMTPSA id
+ c12-20020a65618c000000b003c14af5061asm9085007pgv.50.2022.04.30.23.21.55
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Sat, 30 Apr 2022 23:21:55 -0700 (PDT)
+Date: Sat, 30 Apr 2022 23:21:54 -0700
+From: Kees Cook <keescook@chromium.org>
+To: Matthias Kaehlcke <mka@chromium.org>
+Message-ID: <202204302316.AF04961@keescook>
+References: <20220426213110.3572568-1-mka@chromium.org>
+ <20220426143059.v2.2.I01c67af41d2f6525c6d023101671d7339a9bc8b5@changeid>
 MIME-Version: 1.0
-In-Reply-To: <CAHZQxyLeK6L_wtGr=YN6AYPq1CucozjpTPHf194jxUiH=RyzOg@mail.gmail.com>
-User-Agent: Mutt/1.5.23 (2014-03-12)
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH] multipath-tools: prevent a kernel upgrade
- leading to all paths lost
+In-Reply-To: <20220426143059.v2.2.I01c67af41d2f6525c6d023101671d7339a9bc8b5@changeid>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+Subject: Re: [dm-devel] [PATCH v2 2/3] LoadPin: Enable loading from trusted
+ dm-verity devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -72,7 +96,11 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: Douglas Anderson <dianders@chromium.org>, dm-devel@redhat.com,
+ Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
+ James Morris <jmorris@namei.org>, linux-raid@vger.kernel.org,
+ Song Liu <song@kernel.org>, linux-security-module@vger.kernel.org,
+ Alasdair Kergon <agk@redhat.com>, "Serge E . Hallyn" <serge@hallyn.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
@@ -84,131 +112,32 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, Apr 18, 2022 at 02:54:15PM -0700, Brian Bunker wrote:
-> With the kernel commit 268940b80fa4096397fd0a28e6ad807e64120215, the
-> handling of ALUA state transitioning state changed. It used to be that
-> paths which returned with ALUA transitioning state would not result in
-> those paths being failed. With this patch, that state returned will
-> result in the path being failed. The result of this will result in all
-> paths down events when a configuration has the no_path_retry set to 0.
-> Before this kernel change that same configuration would not reach all
-> paths down.
-> 
-> If the kernel is not changed back to the previous behavior, the
-> multipath-tools have to protect against this condition or
-> configurations which were working correctly prior to the kernel change
-> will lead to an unexpected failure.
+On Tue, Apr 26, 2022 at 02:31:09PM -0700, Matthias Kaehlcke wrote:
+> I'm still doubting what would be the best way to configure
+> the list of trusted digests. The approach in v2 of writing
+> a path through sysctl is flexible, but it also feels a bit
+> odd. I did some experiments with passing a file descriptor
+> through sysctl, but it's also odd and has its own issues.
+> Passing the list through a kernel parameter seems hacky.
+> A Kconfig string would work, but can be have issues when
+> the same config is used for different platforms, where
+> some may have trusted digests and others not.
 
-Unless I'm missing something, this patch isn't going to be helpful. It
-doesn't configure the multipath device to queue IOs before the failure.
-When the kernel runs out of paths, it will see that the mutltipath
-device has no paths and isn't set to queue, and it will fail the IOs.
-After the paths come back up again, multipath will enable queueing in
-update_queue_mode_add_path().  But it's too late by then. The IOs will
-have already been failed.
+I prefer the idea of passing an fd, since that can just use LoadPin
+itself to verify the origin of the fd.
 
-Another issue is that the patch is doing scsi specific work in code
-meant for general block devices. Finally, It's seems pointless to set
-the device to queue when all the paths go away and the turn off queueing
-when the paths come back. no_path_retry doesn't do anything when there
-are paths, so if it's necessary to set when the paths are gone, it won't
-hurt anything to be set when the paths are present. I understand that
-you only want to do this for devices in the ALUA transtitioning state,
-but the only why to make this actually help is if multipathd enables
-queueing before the device ever gets into that state. 
+I also agree, though, that it's weird as a sysctl. Possible thoughts:
 
-The only really safe thing to do would be to set no_path_retry to
-something other than 0 or NO_PATH_RETRY_QUEUE. This can already be done
-in the configuration files. But I agree that failing in IOs because the
-device is transitioning seems wrong in the first place, and fixing this
-in the kernel makes sense.
- 
-> See the kernel discussions here:
-> https://marc.info/?l=linux-scsi&m=162636826305740&w=2
-> https://marc.info/?l=linux-scsi&m=164987222322261&w=2
-> 
-> Signed-off-by: brian@purestorage.com
-> Reviewed-by: sconnor@purestorage.com
-> ___
-> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-> index d94f93a0..0af7e598 100644
-> --- a/libmultipath/structs.h
-> +++ b/libmultipath/structs.h
-> @@ -370,6 +370,7 @@ struct multipath {
->         int failback_tick;
-> 
->         int no_path_retry; /* number of retries after all paths are down */
-> +       int no_path_retry_configured; /* value in config */
->         int retry_tick;    /* remaining times for retries */
->         int disable_queueing;
->         int minio;
-> diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-> index 6c23df86..3db4e6f7 100644
-> --- a/libmultipath/structs_vec.c
-> +++ b/libmultipath/structs_vec.c
-> @@ -780,8 +780,15 @@ void update_queue_mode_add_path(struct multipath *mpp)
->  {
->         int active = count_active_paths(mpp);
-> 
-> -       if (active > 0)
-> +       if (active > 0) {
->                 leave_recovery_mode(mpp);
-> +               if (mpp->no_path_retry != mpp->no_path_retry_configured) {
-> +                       condlog(2, "%s: return no path retry to %d
-> from %d", mpp->alias,
-> +                       mpp->no_path_retry_configured, mpp->no_path_retry);
-> +                       mpp->no_path_retry = mpp->no_path_retry_configured;
-> +               }
-> +       }
-> +
->         condlog(2, "%s: remaining active paths: %d", mpp->alias, active);
->  }
-> 
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index f2c0b280..92841d13 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -524,7 +524,7 @@ int update_multipath (struct vectors *vecs, char
-> *mapname, int reset)
->         struct multipath *mpp;
->         struct pathgroup  *pgp;
->         struct path *pp;
-> -       int i, j;
-> +       int i, j, tpg;
-> 
->         mpp = find_mp_by_alias(vecs->mpvec, mapname);
-> 
-> @@ -553,6 +553,15 @@ int update_multipath (struct vectors *vecs, char
-> *mapname, int reset)
->                                 checkint = conf->checkint;
->                                 put_multipath_config(conf);
->                                 condlog(2, "%s: mark as failed", pp->dev);
-> +                               tpg = get_target_port_group(pp, DEF_TIMEOUT);
-> +                               if ((tpg >= 0) &&
-> +                                   (mpp->no_path_retry == 0) &&
-> +                                   (get_asymmetric_access_state(pp,
-> tpg, DEF_TIMEOUT) == AAS_TRANSITIONING)) {
-> +                                       mpp->no_path_retry_configured
-> = mpp->no_path_retry;
-> +                                       mpp->no_path_retry = (60 / checkint);
-> +                                       condlog(2, "%s: changed %s no
-> path retry to %d", pp->dev, mpp->alias,
-> +                                               (60 / checkint));
-> +                               }
->                                 mpp->stat_path_failures++;
->                                 pp->state = PATH_DOWN;
->                                 if (oldstate == PATH_UP ||
-> ___
-> 
-> -- 
-> Brian Bunker
-> PURE Storage, Inc.
-> brian@purestorage.com
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://listman.redhat.com/mailman/listinfo/dm-devel
+- make it a new ioctl on /dev/mapper/control (seems reasonable given
+  that it's specifically about dm devices).
+- have LoadPin grow a securityfs node, maybe something like
+  /sys/kernel/security/loadpin/dm-verify and do the ioctl there (seems
+  reasonable given that it's specifically about LoadPin, but is perhaps
+  more overhead to built the securityfs).
+
+-- 
+Kees Cook
+
 --
 dm-devel mailing list
 dm-devel@redhat.com
