@@ -4,100 +4,63 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9F095C433F5
-	for <dm-devel@archiver.kernel.org>; Mon,  2 May 2022 12:55:13 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 23997C433EF
+	for <dm-devel@archiver.kernel.org>; Mon,  2 May 2022 16:01:57 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1651507316;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=walsre37l9aYu2hk00N6KzSQ2ETYmCAjmfPnOFbkiwA=;
+	b=fSX8ThzbHWiKHv6d0xwYfE8t1EavNn9Ntul0ZMgph/mkms8kdTpqaY6c8Inbsp1abciyFw
+	P/EOhQz4Z5X2qDPsUgItLmIpBh7NQsxVoKIVhKQRlopLeqSb5rHvo5MrIAeSx9dFe6a9HE
+	O3++XeZgigGgblFJy8RX0aEl3/NQ8wQ=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-35-YfLlt_e_OWKEzhrWVqnHgw-1; Mon, 02 May 2022 08:55:08 -0400
-X-MC-Unique: YfLlt_e_OWKEzhrWVqnHgw-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-611-b-tbLCexNs6SyDC8Gm0ffw-1; Mon, 02 May 2022 12:01:53 -0400
+X-MC-Unique: b-tbLCexNs6SyDC8Gm0ffw-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 13AFB83396D;
-	Mon,  2 May 2022 12:55:07 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2357141636D;
-	Mon,  2 May 2022 12:55:06 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CADD118E5280;
+	Mon,  2 May 2022 16:01:51 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id E103754B091;
+	Mon,  2 May 2022 16:01:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D2753194705F;
-	Mon,  2 May 2022 12:55:05 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8E0CE194705F;
+	Mon,  2 May 2022 16:01:49 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 1E209194705F
- for <dm-devel@listman.corp.redhat.com>; Mon,  2 May 2022 12:55:05 +0000 (UTC)
+ ESMTP id 26930194705F
+ for <dm-devel@listman.corp.redhat.com>; Mon,  2 May 2022 16:01:48 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id EEC881121339; Mon,  2 May 2022 12:55:04 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E9D1C111CB81
- for <dm-devel@redhat.com>; Mon,  2 May 2022 12:55:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C7DF811E80
- for <dm-devel@redhat.com>; Mon,  2 May 2022 12:55:01 +0000 (UTC)
-Received: from esa1.hgst.iphmx.com (esa1.hgst.iphmx.com [68.232.141.245]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-107-yWrSItCJM7S2Wjtp2kv2_Q-1; Mon, 02 May 2022 08:55:00 -0400
-X-MC-Unique: yWrSItCJM7S2Wjtp2kv2_Q-1
-X-IronPort-AV: E=Sophos;i="5.91,192,1647273600"; d="scan'208";a="311307272"
-Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com)
- ([199.255.45.14])
- by ob1.hgst.iphmx.com with ESMTP; 02 May 2022 20:54:58 +0800
-IronPort-SDR: KGw9tuP2XbTHWhGyCDvoMK0cswBqYbIBDy1y0iUx4Xo5Nq2SyGBxq2ISy4m0yahwNXWGnsgdPw
- ppWy0NYEzgFVa0ng85UinN3636NhUvvZl/Uv8WEQ/MIk0s5udQfgh7IzMu31fxeIUw/7rrOIkC
- hmuKxGJGiuf4+QHJZ4y3vZeKT9b139i3RPWwwkKhhCpTmxtviMVWKHsOmkW7FXW7UMY1/MLkx/
- RFA21EQOubm2/UpLEU3ZsXfegC9NDnGcZxTaGhaGsnvX4B0oxgqgsl6M6MI9ES6mYFem3wF8u/
- 9JrmEZwk67UsmEx6F5ZJOqwT
-Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
- by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 02 May 2022 05:25:44 -0700
-IronPort-SDR: yMjJettRbffxAcP7A9aFv3f923kn+1nlK/EElOlzKe+Ngj4uWcpfX+U0idGBcQ9sD4d1LMzRny
- BXzFOOdqKROuIZUvWjnwjkrx0fmuStlpGt+tyfyE+SZFcS7EAB7GqHK9QkWQv9W1RWBPJzCafH
- /2sMv9azA0hVbcU3kEdmvRxqBwPJglvO3dBcKI2wTAtX+AFYC24RPlshwvunr8TTB5MqjXv89N
- imAUxO7Z5QELGMUP4qVWbKm1/11cuiNsrApC0jycMBYfC/oSrmIUvP0MHdrm2ISfydYWF1eP/h
- MUA=
-WDCIronportException: Internal
-Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
- by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 02 May 2022 05:54:59 -0700
-Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
- by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4KsNNL1Lfbz1SVnx
- for <dm-devel@redhat.com>; Mon,  2 May 2022 05:54:58 -0700 (PDT)
-X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
-Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
- by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
- port 10026) with ESMTP id bKndW2usBH8N for <dm-devel@redhat.com>;
- Mon,  2 May 2022 05:54:57 -0700 (PDT)
-Received: from [10.225.81.200] (hq6rw33.ad.shared [10.225.81.200])
- by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4KsNNJ5Mpmz1Rvlc;
- Mon,  2 May 2022 05:54:56 -0700 (PDT)
-Message-ID: <46e95412-9a79-51f8-3d52-caed4875d41f@opensource.wdc.com>
-Date: Mon, 2 May 2022 21:54:55 +0900
+ id 02A2C40CF8F6; Mon,  2 May 2022 16:01:48 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 731F9400E88F;
+ Mon,  2 May 2022 16:01:43 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 242G1gcg014570;
+ Mon, 2 May 2022 11:01:42 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 242G1fAT014569;
+ Mon, 2 May 2022 11:01:41 -0500
+Date: Mon, 2 May 2022 11:01:40 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Message-ID: <20220502160140.GR24684@octiron.msp.redhat.com>
+References: <1651270144-29953-1-git-send-email-bmarzins@redhat.com>
+ <dc486bce737a9784543af9d910cb4f4ea15e5260.camel@suse.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0)
- Gecko/20100101 Thunderbird/91.8.1
-To: Dave Chinner <david@fromorbit.com>, Nitesh Shetty <nj.shetty@samsung.com>
-References: <CGME20220426101804epcas5p4a0a325d3ce89e868e4924bbdeeba6d15@epcas5p4.samsung.com>
- <20220426101241.30100-1-nj.shetty@samsung.com>
- <6a85e8c8-d9d1-f192-f10d-09052703c99a@opensource.wdc.com>
- <20220427124951.GA9558@test-zns>
- <20220502040951.GC1360180@dread.disaster.area>
-From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-Organization: Western Digital Research
-In-Reply-To: <20220502040951.GC1360180@dread.disaster.area>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-Subject: Re: [dm-devel] [PATCH v4 00/10] Add Copy offload support
+In-Reply-To: <dc486bce737a9784543af9d910cb4f4ea15e5260.camel@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+Subject: Re: [dm-devel] [PATCH] update HPE MSA builtin config
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -109,47 +72,74 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-scsi@vger.kernel.org, nitheshshetty@gmail.com,
- linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com,
- linux-fsdevel@vger.kernel.org
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ "Jon.Paul@hpe.com" <Jon.Paul@hpe.com>,
+ "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Disposition: inline
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-T24gMjAyMi8wNS8wMiAxMzowOSwgRGF2ZSBDaGlubmVyIHdyb3RlOgo+IE9uIFdlZCwgQXByIDI3
-LCAyMDIyIGF0IDA2OjE5OjUxUE0gKzA1MzAsIE5pdGVzaCBTaGV0dHkgd3JvdGU6Cj4+IE8gV2Vk
-LCBBcHIgMjcsIDIwMjIgYXQgMTE6MTk6NDhBTSArMDkwMCwgRGFtaWVuIExlIE1vYWwgd3JvdGU6
-Cj4+PiBPbiA0LzI2LzIyIDE5OjEyLCBOaXRlc2ggU2hldHR5IHdyb3RlOgo+Pj4+IFRoZSBwYXRj
-aCBzZXJpZXMgY292ZXJzIHRoZSBwb2ludHMgZGlzY3Vzc2VkIGluIE5vdmVtYmVyIDIwMjEgdmly
-dHVhbCBjYWxsCj4+Pj4gW0xTRi9NTS9CRlAgVE9QSUNdIFN0b3JhZ2U6IENvcHkgT2ZmbG9hZFsw
-XS4KPj4+PiBXZSBoYXZlIGNvdmVyZWQgdGhlIEluaXRpYWwgYWdyZWVkIHJlcXVpcmVtZW50cyBp
-biB0aGlzIHBhdGNoc2V0Lgo+Pj4+IFBhdGNoc2V0IGJvcnJvd3MgTWlrdWxhcydzIHRva2VuIGJh
-c2VkIGFwcHJvYWNoIGZvciAyIGJkZXYKPj4+PiBpbXBsZW1lbnRhdGlvbi4KPj4+Pgo+Pj4+IE92
-ZXJhbGwgc2VyaWVzIHN1cHBvcnRzIOKAkwo+Pj4+Cj4+Pj4gMS4gRHJpdmVyCj4+Pj4gLSBOVk1l
-IENvcHkgY29tbWFuZCAoc2luZ2xlIE5TKSwgaW5jbHVkaW5nIHN1cHBvcnQgaW4gbnZtZS10YXJn
-ZXQgKGZvcgo+Pj4+ICAgICBibG9jayBhbmQgZmlsZSBiYWNrZW5kKQo+Pj4KPj4+IEl0IHdvdWxk
-IGFsc28gYmUgbmljZSB0byBoYXZlIGNvcHkgb2ZmbG9hZCBlbXVsYXRpb24gaW4gbnVsbF9ibGsg
-Zm9yIHRlc3RpbmcuCj4+Pgo+Pgo+PiBXZSBjYW4gcGxhbiB0aGlzIGluIG5leHQgcGhhc2Ugb2Yg
-Y29weSBzdXBwb3J0LCBvbmNlIHRoaXMgc2VyaWVzIHNldHRsZXMgZG93bi4KPiAKPiBXaHkgbm90
-IGp1c3QgaG9vayB0aGUgbG9vcGJhY2sgZHJpdmVyIHVwIHRvIGNvcHlfZmlsZV9yYW5nZSgpIHNv
-Cj4gdGhhdCB0aGUgYmFja2VuZCBmaWxlc3lzdGVtIGNhbiBqdXN0IHJlZmxpbmsgY29weSB0aGUg
-cmFuZ2VzIGJlaW5nCj4gcGFzc2VkPyBUaGF0IHdvdWxkIGVuYWJsZSB0ZXN0aW5nIG9uIGJ0cmZz
-LCBYRlMgYW5kIE5GU3Y0LjIgaG9zdGVkCj4gaW1hZ2UgZmlsZXMgd2l0aG91dCBuZWVkaW5nIGFu
-eSBzcGVjaWFsIGJsb2NrIGRldmljZSBzZXR1cCBhdCBhbGwuLi4KClRoYXQgaXMgYSB2ZXJ5IGdv
-b2QgaWRlYSAhIEJ1dCB0aGF0IHdpbGwgY292ZXIgb25seSB0aGUgbm9uLXpvbmVkIGNhc2UuIEZv
-ciBjb3B5Cm9mZmxvYWQgb24gem9uZWQgZGV2aWNlcywgYWRkaW5nIHN1cHBvcnQgaW4gbnVsbF9i
-bGsgaXMgcHJvYmFibHkgdGhlIHNpbXBsZXN0CnRoaW5nIHRvIGRvLgoKPiAKPiBpLmUuIEkgdGhp
-bmsgeW91J3JlIGRvaW5nIHRoaXMgY29tcGVsdGVseSBiYWNrd2FyZHMgYnkgdHJ5aW5nIHRvCj4g
-dGFyZ2V0IG5vbi1leGlzdGVudCBoYXJkd2FyZSBmaXJzdC4uLi4KPiAKPiBDaGVlcnMsCj4gCj4g
-RGF2ZS4KCgotLSAKRGFtaWVuIExlIE1vYWwKV2VzdGVybiBEaWdpdGFsIFJlc2VhcmNoCgotLQpk
-bS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4u
-cmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRldmVsCg==
+On Mon, May 02, 2022 at 10:31:36AM +0000, Martin Wilck wrote:
+> On Fri, 2022-04-29 at 17:09 -0500, Benjamin Marzinski wrote:
+> > Make the config better align to MSA 4th, 5th and 6th Generation
+> > systems.
+> >=20
+> > Suggested-by: Jon Paul <Jon.Paul@hpe.com>
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> > =A0libmultipath/hwtable.c | 4 ++--
+> > =A01 file changed, 2 insertions(+), 2 deletions(-)
+> >=20
+> > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> > index 0e1c0a41..0f0795c3 100644
+> > --- a/libmultipath/hwtable.c
+> > +++ b/libmultipath/hwtable.c
+> > @@ -182,8 +182,8 @@ static struct hwentry default_hw[] =3D {
+> > =A0=A0=A0=A0=A0=A0=A0=A0},
+> > =A0=A0=A0=A0=A0=A0=A0=A0{
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* MSA 1040, 1050, 1060=
+, 2040, 2050 and 2060 families
+> > */
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.vendor=A0=A0=A0=A0=A0=A0=
+=A0 =3D "HP",
+> > -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.product=A0=A0=A0=A0=A0=
+=A0 =3D "MSA [12]0[456]0 SA[NS]",
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.vendor=A0=A0=A0=A0=A0=A0=
+=A0 =3D "(HP|HPE)",
+>=20
+> This changes nothing unless you use "^(HP|HPE)$", as our regex matching
+> is by substring.
+
+Fair enough. I'm just passing along the config I got. I'm not sure if
+they what it to be more immediately obvious to people looking at the
+configs that this applies to their device (which could have a vendor
+string of "HPE"). I'll leave it to HP to decide what, if anything, they
+want to change here.
+
+-Ben=20
+=20
+> Regards,
+> Martin
+>=20
+>=20
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.product=A0=A0=A0=A0=A0=
+=A0 =3D "MSA [12]0[456]0
+> > (SAN|SAS|FC|iSCSI)",
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.pgpolicy=A0=A0=A0=A0=
+=A0 =3D GROUP_BY_PRIO,
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.pgfailback=A0=A0=A0 =
+=3D -FAILBACK_IMMEDIATE,
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.no_path_retry =3D 18,
+>=20
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
