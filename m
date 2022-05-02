@@ -1,133 +1,72 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id E93E5C433F5
-	for <dm-devel@archiver.kernel.org>; Mon,  2 May 2022 22:07:23 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0B0BBC433F5
+	for <dm-devel@archiver.kernel.org>; Mon,  2 May 2022 23:20:59 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-274-gukXRAsxNJOwGXGj4h3PjA-1; Mon, 02 May 2022 18:07:21 -0400
-X-MC-Unique: gukXRAsxNJOwGXGj4h3PjA-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-119-9IYsQvbzNJmBI0lKnLAIVg-1; Mon, 02 May 2022 19:20:57 -0400
+X-MC-Unique: 9IYsQvbzNJmBI0lKnLAIVg-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 23F0F85A5A8;
-	Mon,  2 May 2022 22:07:19 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D00943801490;
+	Mon,  2 May 2022 23:20:53 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2431BC27EB2;
-	Mon,  2 May 2022 22:07:18 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 43C6F554EE8;
+	Mon,  2 May 2022 23:20:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DFD9B1947049;
-	Mon,  2 May 2022 22:07:17 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 068031947049;
+	Mon,  2 May 2022 23:20:52 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 2EC511947042
- for <dm-devel@listman.corp.redhat.com>; Mon,  2 May 2022 22:07:17 +0000 (UTC)
+ ESMTP id 26C561947042
+ for <dm-devel@listman.corp.redhat.com>; Mon,  2 May 2022 23:20:50 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D71BC151F5FD; Mon,  2 May 2022 22:07:16 +0000 (UTC)
+ id 152A5111E3FF; Mon,  2 May 2022 23:20:50 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D23691505944
- for <dm-devel@redhat.com>; Mon,  2 May 2022 22:07:16 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 0FCF2111E3FA
+ for <dm-devel@redhat.com>; Mon,  2 May 2022 23:20:43 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B6F4780159B
- for <dm-devel@redhat.com>; Mon,  2 May 2022 22:07:16 +0000 (UTC)
-Received: from esa3.hgst.iphmx.com (esa3.hgst.iphmx.com [216.71.153.141]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-134-UgbZYnieNf2axOkAHvDZ0Q-1; Mon, 02 May 2022 18:07:15 -0400
-X-MC-Unique: UgbZYnieNf2axOkAHvDZ0Q-1
-X-IronPort-AV: E=Sophos;i="5.91,193,1647273600"; d="scan'208";a="204240683"
-Received: from mail-dm6nam11lp2177.outbound.protection.outlook.com (HELO
- NAM11-DM6-obe.outbound.protection.outlook.com) ([104.47.57.177])
- by ob1.hgst.iphmx.com with ESMTP; 03 May 2022 06:07:11 +0800
-Received: from PH0PR04MB7416.namprd04.prod.outlook.com (2603:10b6:510:12::17)
- by SN6PR04MB5181.namprd04.prod.outlook.com (2603:10b6:805:f7::12)
- with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5186.15; Mon, 2 May
- 2022 22:07:10 +0000
-Received: from PH0PR04MB7416.namprd04.prod.outlook.com
- ([fe80::6cfd:b252:c66e:9e12]) by PH0PR04MB7416.namprd04.prod.outlook.com
- ([fe80::6cfd:b252:c66e:9e12%3]) with mapi id 15.20.5206.024; Mon, 2 May 2022
- 22:07:10 +0000
-From: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
-To: Pankaj Raghav <p.raghav@samsung.com>, "jaegeuk@kernel.org"
- <jaegeuk@kernel.org>, "axboe@kernel.dk" <axboe@kernel.dk>,
- "snitzer@kernel.org" <snitzer@kernel.org>, "hch@lst.de" <hch@lst.de>,
- "mcgrof@kernel.org" <mcgrof@kernel.org>, Naohiro Aota <Naohiro.Aota@wdc.com>, 
- "sagi@grimberg.me" <sagi@grimberg.me>, "damien.lemoal@opensource.wdc.com"
- <damien.lemoal@opensource.wdc.com>, "dsterba@suse.com" <dsterba@suse.com>
-Thread-Topic: [PATCH 00/16] support non power of 2 zoned devices
-Thread-Index: AQHYWlBbVAcTcxyrHkCrWR4NhJ2aaA==
-Date: Mon, 2 May 2022 22:07:09 +0000
-Message-ID: <PH0PR04MB74167FC8BA634A3DA09586489BC19@PH0PR04MB7416.namprd04.prod.outlook.com>
-References: <CGME20220427160256eucas1p2db2b58792ffc93026d870c260767da14@eucas1p2.samsung.com>
- <20220427160255.300418-1-p.raghav@samsung.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 737a42a1-6be8-4ddc-e1f5-08da2c881a90
-x-ms-traffictypediagnostic: SN6PR04MB5181:EE_
-x-microsoft-antispam-prvs: <SN6PR04MB51816E48C7920B640CBD56BA9BC19@SN6PR04MB5181.namprd04.prod.outlook.com>
-wdcipoutbound: EOP-TRUE
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: Kqd/h6p7qnADrAZ0vPTmp/tqhmWk3UMQKEFF0+hJzb98kgf35QW8bLHflCtDtmag3Om5qn6cXZfM/J/c7ucCBM0ubkLj/OxrJ4ymQ+OTRC2PtC7r7bc10NdXwmGN5aUN6Kt4qDuJV+6tFtZqiMjeiMwBbknXdm3Hx+S2IY75lJ7CiYDxEaq+yi8LYbTq7u05zyFqsZlh0qiWfCwp9EOU/zRS7VL3fkpzakifMHF6fRbRJUisM3vUQj2SjGt34mW5bb4+QlHQhsiz9LB6V3lIfdbvUZHFb9YkQxYCq4OTq8UnsAh/oq2xIpB1T6aHU+CE3aGXgDaxDagbqQr95SOJLwTnZH6ofmNXZB+DQ3NG2P3C2q3kW9osl3xk3aS2mYl/E26H9xHVtZx/e1PxlADY3BNjlKLsXyuH53O3hqatvwKzh3v98h2tdpTSENUX5gTu9YnTQ2pj4qRo8r3/Z68TAVp60ko0q+qJfKW3rZoXmBo2YM0f+Koa2o587XdAzRKrzv+Hrmwhp3NtNCJ6B30QiwPYMuutpurvoCOojQ2FbYW1/5zMqADUZGIUdHsir510h54VX7XLZXykdKJPVyLfV+Q1DmmQ27hEwbOC6Eg3sGlHyiR3NKNtSyhh7TBWyBtd/kTSK4rEcnxHMQ/yIFkzb8qylt9kq7aSAVORqb4h05iBnAP3uimjyZIEB2rzw4/abec2otGlstG5LyQFpTbx5ItzEa1w2ycIEQUhWfFbEh0Zdu36FOvxC+B5+WDkQya3svFZ2d/q3Ild8/YpSpb5Gx/1p4u3qNWreqEsACx5Oa6vkaXtvOM59K2HBAqBDUV+
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:PH0PR04MB7416.namprd04.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230001)(4636009)(366004)(110136005)(86362001)(8676002)(4326008)(33656002)(66556008)(508600001)(66946007)(76116006)(66446008)(66476007)(966005)(55016003)(64756008)(71200400001)(54906003)(316002)(38070700005)(38100700002)(2906002)(83380400001)(186003)(7416002)(8936002)(5660300002)(921005)(9686003)(6506007)(7696005)(26005)(122000001)(52536014)(53546011)(82960400001);
- DIR:OUT; SFP:1102
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?iso-8859-1?Q?P6ofxjqdMTFATnV/5tCxB+leHjJbejMM+tFIMKgLJfyLd33uD0ZROxfmzM?=
- =?iso-8859-1?Q?bU11gSHxNkUCgkW1bG1IZcXHStFR5UNomn51aBeQTEmsG8MzeLgwxFCRso?=
- =?iso-8859-1?Q?mGMdLRsWC2YhkLUJgqNKuAzy/Dp4Zq/32Te9z2MH9ohQntXSEPrGctU/53?=
- =?iso-8859-1?Q?OKgmFCweNwiIpRrUw/uSH4SOvNIZ4vvbR2vTXwYvF7XVTm2My+5OgYOJhp?=
- =?iso-8859-1?Q?mUUGODEGXH91CVW4jQYttQ/Soue4ncP4stS6+ftqIcfdgN+6HHjlg4BFK1?=
- =?iso-8859-1?Q?nO5ExMdAIA88aeI2z0sV0+k4GGK/TlmPVNSd5G+nIu3i0uy5vGLk5a6VK6?=
- =?iso-8859-1?Q?2yMsYVlqCvH4GSWyJhwotwfNwlfzv5JaAIUV/eOWq6ZtdEUOmDlnKajXE2?=
- =?iso-8859-1?Q?AnKmZWLzmIDMgwTxLWzQXNZtW3Vs3TeKFKqSjdg5UVpUA7XAyo8KsyvS2d?=
- =?iso-8859-1?Q?bjfTQpdCheuAK3jPRG0UO9UY4S0KROvdev//xMAIVzvWSgubDgUoXXb7uw?=
- =?iso-8859-1?Q?qcufuB1+G2kXUozBN4qpsS6HS6+/Szef1sWEvfjZtJZL4FBqR8t5aAVuM/?=
- =?iso-8859-1?Q?2fiOUSApYsENbZ4OVann5Ih+koMjkyczdvpqlNn0AGYGwmKobNyxvlSauk?=
- =?iso-8859-1?Q?tLJJvyJYn7gpTM94mou5MK5gAqYRRW8War4ZcrEj83KlaqtNb8asIGIZ2v?=
- =?iso-8859-1?Q?qyJhF/SUJ06+r0Vcpc+LgpGtDqysMBZkROy/WlKlxPRKVtZ4EkSC05kb+j?=
- =?iso-8859-1?Q?5RX9kocnheUpZG7o+kA1BtYiF5L6fBZntPBSbRxtz4hLkg1dG3clMiPIgg?=
- =?iso-8859-1?Q?qdOm0frLxyDTuUAQf2npsgHO4FJykAD2F15eyczm8OqgQHilJCwF3GSRW6?=
- =?iso-8859-1?Q?mEQ30Ig6ug4drcyqeuj88ys5HRcxHqbxuDw3zV0Ou1yEJ4J5KfbXFQM0ki?=
- =?iso-8859-1?Q?MqsZH6+/u60C8+ol+UiagA4tKn5Mnoe5f7bss/153jEU4Og+b9k6gN20vx?=
- =?iso-8859-1?Q?FKRBfTaFHvuKqfB4r4RXRyhCeoEWlxThuVTmGPNauZ34ibZn3ezPFwBo5T?=
- =?iso-8859-1?Q?ipkqS2DwVlE5xk+8TagFipMVGHLNU8qsEi57wlxZlliFx1fBpWsnBL7TL6?=
- =?iso-8859-1?Q?o8WONe35+/H/IzidR9zFCVSRugEHBvuOXk9xg4VxWWW1ZzqZ2ROJiud9yl?=
- =?iso-8859-1?Q?MtQrPcWTv80YgQDuYofPVap5xCUKyCqD+vt+oipXJMXFsskNj6FYhwHyBm?=
- =?iso-8859-1?Q?GjvMWPi3jLwrl5dcr20g7/vap3c7z4HhKriu0GFETw9d7lh2/OC1X5H+fi?=
- =?iso-8859-1?Q?+kBm7F4gifcCHCxAYJCfpJVNK8Bbgr0bNldWJXD2DX/iAvnFMmxzi1G8qR?=
- =?iso-8859-1?Q?TxAekoWB148BPQOBeRySZyl0zNXeoOGVLf+2ej5Z2pFoFgCYxUpSrgochd?=
- =?iso-8859-1?Q?TtKwTx/ermFrGJfQo+1xCVVnjv/iitwvX7jl4cJ81ezNJJsK5A85q/Yx2H?=
- =?iso-8859-1?Q?/zbNsa6lkRUTVNJB4n8rJUmNNvl5XsBYwMkpzXXybtSMbUQ6kI+ZiKGwF+?=
- =?iso-8859-1?Q?yKqTKny4tAls78Or5YNqyyeiCWtj37f+P8RJ9KLcTk/hm8Vg80ZEvXdrqh?=
- =?iso-8859-1?Q?Y07uI+3ZbszSMGFZD/aUM7oCM7OiKq/itLfKRyx8lWkudzKz7Q5pNoR1s8?=
- =?iso-8859-1?Q?XZcL3swH9jP0WNKQf1KSWHZZ/08Ama1Lu167dfSvDnb6Bwt40y+P5LTg6D?=
- =?iso-8859-1?Q?YM4F6DRUXyH9/VkSg9/vIG2+7HbNWxtgnYhRiAPlYif7nsYCuKbq8NZ7lS?=
- =?iso-8859-1?Q?ybKrrTsc5zXcuCrfBWbPCW0LGiXuOuY=3D?=
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 32D62833962
+ for <dm-devel@redhat.com>; Mon,  2 May 2022 23:20:43 +0000 (UTC)
+Received: from mail104.syd.optusnet.com.au (mail104.syd.optusnet.com.au
+ [211.29.132.246]) by relay.mimecast.com with ESMTP id
+ us-mta-357-rCtUOt5GOUq6SUe-Jfbmfg-1; Mon, 02 May 2022 19:20:40 -0400
+X-MC-Unique: rCtUOt5GOUq6SUe-Jfbmfg-1
+Received: from dread.disaster.area (pa49-181-2-147.pa.nsw.optusnet.com.au
+ [49.181.2.147])
+ by mail104.syd.optusnet.com.au (Postfix) with ESMTPS id 71A01534701;
+ Tue,  3 May 2022 09:20:38 +1000 (AEST)
+Received: from dave by dread.disaster.area with local (Exim 4.92.3)
+ (envelope-from <david@fromorbit.com>)
+ id 1nlfLH-007IoG-TM; Tue, 03 May 2022 09:20:35 +1000
+Date: Tue, 3 May 2022 09:20:35 +1000
+From: Dave Chinner <david@fromorbit.com>
+To: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Message-ID: <20220502232035.GE1360180@dread.disaster.area>
+References: <CGME20220426101804epcas5p4a0a325d3ce89e868e4924bbdeeba6d15@epcas5p4.samsung.com>
+ <20220426101241.30100-1-nj.shetty@samsung.com>
+ <6a85e8c8-d9d1-f192-f10d-09052703c99a@opensource.wdc.com>
+ <20220427124951.GA9558@test-zns>
+ <20220502040951.GC1360180@dread.disaster.area>
+ <46e95412-9a79-51f8-3d52-caed4875d41f@opensource.wdc.com>
 MIME-Version: 1.0
-X-OriginatorOrg: wdc.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: PH0PR04MB7416.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 737a42a1-6be8-4ddc-e1f5-08da2c881a90
-X-MS-Exchange-CrossTenant-originalarrivaltime: 02 May 2022 22:07:09.8911 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: pXSrpwmMcyRTXNrz68EpBiuYw5Pa+tQrKzFBtB/vEuBvZU0/1YCUZGY85gPHrGWwgqhO24XrDnLv9PFZCzRHRd43nlRi4zPyiSYm28446/s=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SN6PR04MB5181
+In-Reply-To: <46e95412-9a79-51f8-3d52-caed4875d41f@opensource.wdc.com>
+X-Optus-CM-Score: 0
+X-Optus-CM-Analysis: v=2.4 cv=e9dl9Yl/ c=1 sm=1 tr=0 ts=62706747
+ a=ivVLWpVy4j68lT4lJFbQgw==:117 a=ivVLWpVy4j68lT4lJFbQgw==:17
+ a=IkcTkHD0fZMA:10 a=oZkIemNP1mAA:10 a=7-415B0cAAAA:8
+ a=kuBEN3JhnRn9nEiEWMwA:9 a=QEXdDO2ut3YA:10 a=biEYGPWJfzWAr4FL6Ov7:22
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -135,8 +74,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH 00/16] support non power of 2 zoned devices
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH v4 00/10] Add Copy offload support
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -148,79 +87,133 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "jiangbo.365@bytedance.com" <jiangbo.365@bytedance.com>,
- "kch@nvidia.com" <kch@nvidia.com>, "bvanassche@acm.org" <bvanassche@acm.org>,
- =?iso-8859-1?Q?Matias_Bj=F8rling?= <Matias.Bjorling@wdc.com>,
- "gost.dev@samsung.com" <gost.dev@samsung.com>,
- "chao@kernel.org" <chao@kernel.org>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
- "linux-f2fs-devel@lists.sourceforge.net"
- <linux-f2fs-devel@lists.sourceforge.net>,
- "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
- "clm@fb.com" <clm@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>,
- "agk@redhat.com" <agk@redhat.com>,
- "jonathan.derrick@linux.dev" <jonathan.derrick@linux.dev>,
- "kbusch@kernel.org" <kbusch@kernel.org>,
- "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
- "josef@toxicpanda.com" <josef@toxicpanda.com>,
- "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
+Cc: linux-scsi@vger.kernel.org, nitheshshetty@gmail.com,
+ linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
+ linux-fsdevel@vger.kernel.org, Nitesh Shetty <nj.shetty@samsung.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 
-On 27/04/2022 09:03, Pankaj Raghav wrote:
-> - Background and Motivation:
-> 
-> The zone storage implementation in Linux, introduced since v4.10, first
-> targetted SMR drives which have a power of 2 (po2) zone size alignment
-> requirement. The po2 zone size was further imposed implicitly by the
-> block layer's blk_queue_chunk_sectors(), used to prevent IO merging
-> across chunks beyond the specified size, since v3.16 through commit
-> 762380ad9322 ("block: add notion of a chunk size for request merging").
-> But this same general block layer po2 requirement for blk_queue_chunk_sectors()
-> was removed on v5.10 through commit 07d098e6bbad ("block: allow 'chunk_sectors'
-> to be non-power-of-2"). NAND, which is the media used in newer zoned storage
-> devices, does not naturally align to po2, and so the po2 requirement
-> does not make sense for those type of zone storage devices.
-> 
-> Removing the po2 requirement from zone storage should therefore be possible
-> now provided that no userspace regression and no performance regressions are
-> introduced. Stop-gap patches have been already merged into f2fs-tools to
-> proactively not allow npo2 zone sizes until proper support is added [0].
-> Additional kernel stop-gap patches are provided in this series for dm-zoned.
-> Support for npo2 zonefs and btrfs support is addressed in this series.
-> 
-> There was an effort previously [1] to add support to non po2 devices via
-> device level emulation but that was rejected with a final conclusion
-> to add support for non po2 zoned device in the complete stack[2].
-
-Hey Pankaj,
-
-One thing I'm concerned with this patches is, once we have npo2 zones (or to be precise 
-not fs_info->sectorsize aligned zones) we have to check on every allocation if we still 
-have at least have fs_info->sectorsize bytes left in a zone. If not we need to 
-explicitly finish the zone, otherwise we'll run out of max active zones. 
-
-This is a problem for zoned btrfs at the moment already but it'll be even worse
-with npo2, because we're never implicitly finishing zones.
-
-See also 
-https://lore.kernel.org/linux-btrfs/42758829d8696a471a27f7aaeab5468f60b1565d.1651157034.git.naohiro.aota@wdc.com
-
-Thanks,
-	Johannes
-
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+T24gTW9uLCBNYXkgMDIsIDIwMjIgYXQgMDk6NTQ6NTVQTSArMDkwMCwgRGFtaWVuIExlIE1vYWwg
+d3JvdGU6Cj4gT24gMjAyMi8wNS8wMiAxMzowOSwgRGF2ZSBDaGlubmVyIHdyb3RlOgo+ID4gT24g
+V2VkLCBBcHIgMjcsIDIwMjIgYXQgMDY6MTk6NTFQTSArMDUzMCwgTml0ZXNoIFNoZXR0eSB3cm90
+ZToKPiA+PiBPIFdlZCwgQXByIDI3LCAyMDIyIGF0IDExOjE5OjQ4QU0gKzA5MDAsIERhbWllbiBM
+ZSBNb2FsIHdyb3RlOgo+ID4+PiBPbiA0LzI2LzIyIDE5OjEyLCBOaXRlc2ggU2hldHR5IHdyb3Rl
+Ogo+ID4+Pj4gVGhlIHBhdGNoIHNlcmllcyBjb3ZlcnMgdGhlIHBvaW50cyBkaXNjdXNzZWQgaW4g
+Tm92ZW1iZXIgMjAyMSB2aXJ0dWFsIGNhbGwKPiA+Pj4+IFtMU0YvTU0vQkZQIFRPUElDXSBTdG9y
+YWdlOiBDb3B5IE9mZmxvYWRbMF0uCj4gPj4+PiBXZSBoYXZlIGNvdmVyZWQgdGhlIEluaXRpYWwg
+YWdyZWVkIHJlcXVpcmVtZW50cyBpbiB0aGlzIHBhdGNoc2V0Lgo+ID4+Pj4gUGF0Y2hzZXQgYm9y
+cm93cyBNaWt1bGFzJ3MgdG9rZW4gYmFzZWQgYXBwcm9hY2ggZm9yIDIgYmRldgo+ID4+Pj4gaW1w
+bGVtZW50YXRpb24uCj4gPj4+Pgo+ID4+Pj4gT3ZlcmFsbCBzZXJpZXMgc3VwcG9ydHMg4oCTCj4g
+Pj4+Pgo+ID4+Pj4gMS4gRHJpdmVyCj4gPj4+PiAtIE5WTWUgQ29weSBjb21tYW5kIChzaW5nbGUg
+TlMpLCBpbmNsdWRpbmcgc3VwcG9ydCBpbiBudm1lLXRhcmdldCAoZm9yCj4gPj4+PiAgICAgYmxv
+Y2sgYW5kIGZpbGUgYmFja2VuZCkKPiA+Pj4KPiA+Pj4gSXQgd291bGQgYWxzbyBiZSBuaWNlIHRv
+IGhhdmUgY29weSBvZmZsb2FkIGVtdWxhdGlvbiBpbiBudWxsX2JsayBmb3IgdGVzdGluZy4KPiA+
+Pj4KPiA+Pgo+ID4+IFdlIGNhbiBwbGFuIHRoaXMgaW4gbmV4dCBwaGFzZSBvZiBjb3B5IHN1cHBv
+cnQsIG9uY2UgdGhpcyBzZXJpZXMgc2V0dGxlcyBkb3duLgo+ID4gCj4gPiBXaHkgbm90IGp1c3Qg
+aG9vayB0aGUgbG9vcGJhY2sgZHJpdmVyIHVwIHRvIGNvcHlfZmlsZV9yYW5nZSgpIHNvCj4gPiB0
+aGF0IHRoZSBiYWNrZW5kIGZpbGVzeXN0ZW0gY2FuIGp1c3QgcmVmbGluayBjb3B5IHRoZSByYW5n
+ZXMgYmVpbmcKPiA+IHBhc3NlZD8gVGhhdCB3b3VsZCBlbmFibGUgdGVzdGluZyBvbiBidHJmcywg
+WEZTIGFuZCBORlN2NC4yIGhvc3RlZAo+ID4gaW1hZ2UgZmlsZXMgd2l0aG91dCBuZWVkaW5nIGFu
+eSBzcGVjaWFsIGJsb2NrIGRldmljZSBzZXR1cCBhdCBhbGwuLi4KPiAKPiBUaGF0IGlzIGEgdmVy
+eSBnb29kIGlkZWEgISBCdXQgdGhhdCB3aWxsIGNvdmVyIG9ubHkgdGhlIG5vbi16b25lZCBjYXNl
+LiBGb3IgY29weQo+IG9mZmxvYWQgb24gem9uZWQgZGV2aWNlcywgYWRkaW5nIHN1cHBvcnQgaW4g
+bnVsbF9ibGsgaXMgcHJvYmFibHkgdGhlIHNpbXBsZXN0Cj4gdGhpbmcgdG8gZG8uCgpTdXJlLCBi
+dXQgdGhhdCdzIGEgem9uZSBkZXZpY2UgaW1wbGVtZW50YXRpb24gaXNzdWUsIG5vdCBhICJob3cg
+ZG8KYXBwbGljYXRpb25zIHVzZSB0aGlzIG9mZmxvYWQiIGlzc3VlLgoKaS5lLiB6b25lZnMgc3Vw
+cG9ydCBpcyBub3QgbmVjZXNzYXJ5IHRvIHRlc3QgdGhlIGJpby9ibG9jayBsYXllcgppbnRlcmZh
+Y2VzIGF0IGFsbC4gQWxsIHdlIG5lZWQgaXMgYSBibG9jayBkZXZpY2UgdGhhdCBjYW4gZGVjb2Rl
+IHRoZQpiaW8tZW5jb2RlZCBvZmZsb2FkIHBhY2tldCBhbmQgZXhlY3V0ZSBpdCB0byBkbyBmdWxs
+IGJsb2NrIGxheWVyCnRlc3RpbmcuIFdlIGNhbiBidWlsZCBkbSBkZXZpY2VzIG9uIHRvcCBvZiBs
+b29wIGRldmljZXMsIGV0Yywgc28gd2UKY2FuIHRlc3QgdGhhdCB0aGUgb2ZsbG9hZCBzdXBwb3J0
+IGlzIHBsdW1iZWQsIHNsaWNlZCwgZGljZWQsIGFuZApyZWd1cmdpdGF0ZWQgY29ycmVjdGx5IHRo
+YXQgd2F5LiBXZSBkb24ndCBuZWVkIGFjdHVhbCBsb3cgbGV2ZWwKZGV2aWNlIGRyaXZlcnMgdG8g
+dGVzdCB0aGlzLgoKQW5kLCB1bmxpa2UgdGhlIG51bGxibGsgZGV2aWNlLCB1c2luZyB0aGUgbG9v
+cGJhY2sgZGV2aWNlIHcvCmNvcHlfZmlsZV9yYW5nZSgpIHdpbGwgYWxzbyBhbGxvdyBkYXRhIGlu
+dGVncml0eSB0ZXN0aW5nIGlmIGEKZ2VuZXJpYyBjb3B5X2ZpbGVfcmFuZ2UoKSBvZmZsb2FkIGlt
+cGxlbWVudGF0aW9uIGlzIGFkZGVkLiBUaGF0IGlzLAp3ZSB0ZXN0IGEgbm9uLXJlZmxpbmsgY2Fw
+YWJsZSBmaWxlc3lzdGVtIG9uIHRoZSBsb29wIGRldmljZSB3aXRoIHRoZQppbWFnZSBmaWxlIGhv
+c3RlZCBvbiBhIHJlZmxpbmstY2FwYWJsZSBmaWxlc3lzdGVtLiBUaGUgdXBwZXIKZmlsZXN5c3Rl
+bSBjb3B5IHRoZW4gZ2V0cyBvZmZsb2FkZWQgdG8gcmVmbGlua3MgaW4gdGhlIGxvd2VyCmZpbGVz
+eXN0ZW0uIFdlIGFscmVhZHkgaGF2ZSBjb3B5X2ZpbGVfcmFuZ2UoKSBzdXBwb3J0IGluIGZzeCwg
+c28gYWxsCnRoZSBkYXRhIGludGVncml0eSBmc3ggdGVzdHMgaW4gZnN0ZXN0cyB3aWxsIGV4ZXJj
+aXNlIHRoaXMgb2ZmbG9hZApwYXRoIGFuZCBmaW5kIGFsbCB0aGUgZGF0YSBjb3JydXB0aW9ucyB0
+aGUgaW5pdGlhbCBibG9jayBsYXllciBidWdzCmV4cG9zZS4uLgoKRnVydGhlciwgZnNzdHJlc3Mg
+YWxzbyBoYXMgY29weV9maWxlX3JhbmdlKCkgc3VwcG9ydCwgYW5kIHNvIGFsbCB0aGUKZnN0ZXN0
+cyB0aGF0IGdlbmVyYXRlIHN0cmVzcyB0ZXN0cyBvciB1c2UgZnN0cmVzcyBhcyBsb2FkIGZvcgpm
+YWlsdXJlIHRlc3Rpbmcgd2lsbCBhbHNvIGV4ZXJjaXNlIGl0LgoKSW5kZWVkLCB0aGlzIHRoZW4g
+Z2l2ZXMgdXMgZmluZS1ncmFpbmVkIGVycm9yIGluamVjdGlvbiBjYXBhYmlsaXR5CndpdGhpbiBm
+c3Rlc3RzIHZpYSBkZXZpY2VzIGxpa2UgZG0tZmxha2V5LiBXaGF0IGhhcHBlbnMgd2hlbgpkbS1m
+bGFrZXkga2lsbHMgdGhlIGRldmljZSBJTyBtaWQtb2ZmbG9hZD8gRG9lcyBldmVyeXRoaW5nIHJl
+Y292ZXIKY29ycmVjdGx5PyBEbyB3ZSBlbmQgdXAgd2l0aCBkYXRhIGNvcnJ1cHRpb24/IEFyZSBw
+YXJ0aWFsIG9mZmxvYWQKY29tcGxldGlvbnMgd2hlbiBlcnJvcnMgb2NjdXIgc2lnbmFsbGVkIGNv
+cnJlY3RseT8gSXMgdGhlcmUgLWFueS0KdGVzdCBjb3ZlcmFnZSAob3IgZXZlbiBjYXBhYmlsaXR5
+IGZvciB0ZXN0aW5nKSBvZiB1c2VyIGRyaXZlbiBjb3B5Cm9mZmxvYWQgZmFpbHVyZSBzaXR1YXRp
+b25zIGxpa2UgdGhpcyBpbiBhbnkgb2YgdGhlIG90aGVyIHRlc3QKc3VpdGVzPwoKSSBtZWFuLCBv
+bmNlIHRoZSBsb29wIGRldmljZSBoYXMgY2ZyIG9mZmxvYWQsIHdlIGNhbiB1c2UgZG0tZmxha2V5
+CnRvIGtpbGwgSU8gaW4gdGhlIGltYWdlIGZpbGUgb3IgZXZlbiBkbyBhIGZvcmNlIHNodXRkb3du
+IG9mIHRoZQppbWFnZSBob3N0IGZpbGVzeXN0ZW0uIEhlbmNlIHdlIGNhbiBhY3R1YWxseSB0cmFz
+aCB0aGUgY29weSBvZmZsb2FkCm9wZXJhdGlvbiBpbiBtaWQtZmxpZ2h0LCBub3QganVzdCBlcnJv
+ciBpdCBvdXQgb24gZnVsbCBjb21wbGV0aW9uLgpUaGlzIGlzIHRyaXZpYWwgdG8gZG8gd2l0aCB0
+aGUgZnN0ZXN0cyBpbmZyYXN0cnVjdHVyZSAtIGl0IGp1c3QKcmVsaWVzIG9uIGhhdmluZyBnZW5l
+cmljIGNvcHlfZmlsZV9yYW5nZSgpIGJsb2NrIG9mZmxvYWQgc3VwcG9ydCBhbmQKYSBsb29wYmFj
+ayBkZXZpY2Ugb2ZmbG9hZCBvZiBoYXJkd2FyZSBjb3B5IGJpb3MgYmFjayB0bwpjb3B5X2ZpbGVf
+cmFuZ2UoKS4uLi4KClRoaXMgaXMgd2hhdCBJIG1lYW4gYWJvdXQgY29weSBvZmZsb2FkIGJlaW5n
+IGRlc2lnbmVkIHRoZSB3cm9uZyB3YXkuCldlIGhhdmUgdGhlIGhpZ2ggbGV2ZWwgaG9va3MgbmVl
+ZGVkIHRvIGltcGxlbWVudCBpdCByaWdodCB0aG91Z2ggdGhlCmZpbGVzeXN0ZW1zIGFuZCBibG9j
+ayBsYXllciB3aXRob3V0IGFueSBzcGVjaWZpYyBoYXJkd2FyZSBzdXBwb3J0LAphbmQgd2UgY2Fu
+IHRlc3QgdGhlIHdob2xlIHN0YWNrIHdpdGhvdXQgbmVlZGluZyBzcGVjaWZpYyBoYXJkd2FyZQpz
+dXBwb3J0LiBXZSBhbHJlYWR5IGhhdmUgZmlsZXN5c3RlbSBsZXZlbCBjb3B5IG9mZmxvYWQgYWNj
+ZWxlcmF0aW9uLApzbyB0aGUgbGFzdCB0aGluZyB3ZSB3YW50IHRvIHNlZSBpcyBhIGJsb2NrIGxh
+eWVyIG9mZmxvYWQKaW1wbGVtZW50YXRpb24gdGhhdCBpcyBpbmNvbXBhdGlibGUgd2l0aCB0aGUg
+c2VtYW50aWNzIHdlJ3ZlIGFscmVhZHkKZXhwb3NlZCB0byB1c2Vyc3BhY2UgZm9yIGNvcHkgb2Zm
+bG9hZHMuCgpBcyBJIHNhaWQ6Cgo+ID4gaS5lLiBJIHRoaW5rIHlvdSdyZSBkb2luZyB0aGlzIGNv
+bXBlbHRlbHkgYmFja3dhcmRzIGJ5IHRyeWluZyB0bwo+ID4gdGFyZ2V0IG5vbi1leGlzdGVudCBo
+YXJkd2FyZSBmaXJzdC4uLi4KClJhdGhlciB0aGFuIHRpZSB0aGUgYmxvY2sgbGF5ZXIgb2ZmbG9h
+ZCBmdW5jdGlvbi9pbXBsZW1lbnRhdGlvbiB0bwp0aGUgc3BlY2lmaWMgcXVpcmtzIG9mIGEgc3Bl
+Y2lmaWMgdGFyZ2V0IGhhcmR3YXJlLCB3ZSBzaG91bGQgYmUKYWRkaW5nIGdlbmVyaWMgc3VwcG9y
+dCBpbiB0aGUgYmxvY2sgbGF5ZXIgZm9yIHRoZSBjb3B5IG9mZmxvYWQKc2VtYW50aWNzIHdlJ3Zl
+IGFscmVhZHkgZXhwb3NlZCB0byB1c2Vyc3BhY2UuIFdlIGFscmVhZHkgaGF2ZSB0ZXN0CmNvdmVy
+YWdlIGFuZCBpbmZyYXN0cnVjdHVyZSBmb3IgdGhpcyBpbnRlcmZhY2UgYW5kIGlzIGFscmVhZHkg
+aW4gdXNlCmJ5IGFwcGxpY2F0aW9ucy4KClRyYW5zcGFyZW50IGhhcmR3YXJlIGFjY2VsZXJhdGlv
+biBvZiBkYXRhIGNvcGllcyB3aGVuIHRoZSBoYXJkd2FyZQpzdXBwb3J0cyBpdCBpcyBleGFjdGx5
+IHdoZXJlIGNvcHkgb2ZmbG9hZHMgYXJlIHVzZWZ1bCAtIGltcGxlbWVudGluZwpzdXBwb3J0IGJh
+c2VkIGFyb3VuZCBoYXJkd2FyZSBtYWRlIG9mIHVub2J0YWluaXVtIGFuZCB0aGVuIGFkZGluZwpo
+aWdoIGxldmVsIHVzZXIgZmFjaW5nIEFQSSBzdXBwb3J0IGFzIGFuIGFmdGVydGhvdWdodCBpcyBw
+dXR0aW5nIHRoZQpjYXJ0IGJlZm9yZSB0aGUgaG9yc2UuIFdlIG5lZWQgdG8gbWFrZSBzdXJlIHRo
+ZSBoaWdoIGxldmVsCmZ1bmN0aW9uYWxpdHkgaXMgcm9idXN0IGFuZCBoYW5kbGVzIGVycm9ycyBj
+b3JyZWN0bHkgYmVmb3JlIHdlIGV2ZW4Kd29ycnkgYWJvdXQgd2hhdCBxdWlya3MgdGhlIGhhcmR3
+YXJlIG1pZ2h0IGJyaW5nIHRvIHRoZSB0YWJsZS4KCkJ1aWxkIGEgcmVmZXJlbmNlIG1vZGVsIGZp
+cnN0IHdpdGggdGhlIGxvb3AgZGV2aWNlIGFuZApjb3B5LWZpbGUtcmFuZ2UsIHRlc3QgaXQsIHZh
+bGlkYXRlIGl0LCBtYWtlIHN1cmUgaXQgYWxsIHdvcmtzLiBUaGVuCmhvb2sgdXAgdGhlIGhhcmR3
+YXJlLCBhbmQgZml4IGFsbCB0aGUgaGFyZHdhcmUgYnVncyB0aGF0IGFyZSBleHBvc2VkCmJlZm9y
+ZSB0aGUgaGFyZHdhcmUgaXMgcmVsZWFzZWQgdG8gdGhlIGdlbmVyYWwgcHVibGljLi4uLgoKV2h5
+IGhhdmVuJ3Qgd2UgbGVhcm50IHRoaXMgbGVzc29uIHlldCBmcm9tIGFsbCB0aGUgcHJvYmxlbXMg
+d2UndmUKaGFkIHdpdGgsIHNheSwgYnJva2VuIGRpc2NhcmQvdHJpbSwgemVyb2luZywgZXJhc2Us
+IGV0YyBpbiBoYXJkd2FyZQppbXBsZW1lbnRhdGlvbnMsIGluY29tcGF0aWJsZSBoYXJkd2FyZSBw
+cm90b2NvbCBpbXBsZW1lbnRhdGlvbnMgb2YKZXF1aXZhbGVudCBmdW5jdGlvbmFsaXR5LCBldGM/
+IGkuZS4gV2UgaGF2ZW4ndCBkZWZpbmVkIHRoZSBPUwpyZXF1aXJlZCBiZWhhdmlvdXIgdGhhdCBo
+YXJkd2FyZSBtdXN0IHN1cHBvcnQgYW5kIGluc3RlYWQganVzdCB0cmllZAp0byBtYWtlIHdoYXRl
+dmVyIGhhcyBjb21lIGZyb20gdGhlIGhhcmR3YXJlIHZlbmRvcidzCiJzdGFuZGFyaXNhdGlvbiIg
+cHJvY2VzcyB3b3JrIG9rPwoKSW4gdGhpcyBjYXNlLCB3ZSBhbHJlYWR5IGhhdmUgYSBmdW5jdGlv
+bmluZyBtb2RlbCwgc3lzY2FsbHMgYW5kIHVzZXIKYXBwbGljYXRpb25zIG1ha2luZyB1c2Ugb2Yg
+Y29weSBvZmZsb2FkcyBhdCB0aGUgT1MgbGV2ZWwuIE5vdyB3ZQpuZWVkIHRvIGltcGxlbWVudCB0
+aG9zZSBleGFjdCBzZW1hbnRpY3MgYXQgdGhlIGJsb2NrIGxheWVyIHRvIGJ1aWxkCmEgdmFsaWRh
+dGVkIHJlZmVyZW5jZSBtb2RlbCBmb3IgdGhlIGJsb2NrIGxheWVyIG9mZmxvYWQgYmVoYXZpb3Vy
+CnRoYXQgaGFyZHdhcmUgbXVzdCBjb21wbHkgd2l0aC4gVGhlbiBoYXJkd2FyZSBvZmZsb2FkcyBp
+biBhY3R1YWwKaGFyZHdhcmUgY2FuIGJlIGNvbXBhcmVkIGFuZCB2YWxpZGF0ZWQgYWdhaW5zdCB0
+aGUgcmVmZXJlbmNlIG1vZGVsCmJlaGF2aW91ciwgYW5kIGFueSBoYXJkd2FyZSB0aGF0IGRvZXNu
+J3QgbWF0Y2ggY2FuIGJlCnF1aXJrZWQvYmxhY2tsaXN0ZWQgdW50aWwgdGhlIG1hbnVmYWN0dXJl
+ciBmaXhlcyB0aGVpciBmaXJtd2FyZS4uLgoKQ2hlZXJzLAoKRGF2ZS4KLS0gCkRhdmUgQ2hpbm5l
+cgpkYXZpZEBmcm9tb3JiaXQuY29tCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxA
+cmVkaGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2Rt
+LWRldmVsCg==
 
