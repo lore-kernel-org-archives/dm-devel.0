@@ -4,131 +4,131 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 719C2C4332F
-	for <dm-devel@archiver.kernel.org>; Mon,  2 May 2022 07:34:37 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0FDDAC433EF
+	for <dm-devel@archiver.kernel.org>; Mon,  2 May 2022 10:31:52 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-308-FLnUrSoJNhaSKuP-jKhw-w-1; Mon, 02 May 2022 03:34:33 -0400
-X-MC-Unique: FLnUrSoJNhaSKuP-jKhw-w-1
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
+ us-mta-534-J8KRt14aM0m_oWV6HTB21Q-1; Mon, 02 May 2022 06:31:47 -0400
+X-MC-Unique: J8KRt14aM0m_oWV6HTB21Q-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 79A501C05152;
-	Mon,  2 May 2022 07:34:31 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 27C2A800882;
+	Mon,  2 May 2022 10:31:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BF6A8428F0D;
-	Mon,  2 May 2022 07:34:30 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7BDAAC27E89;
+	Mon,  2 May 2022 10:31:44 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DDFB71947074;
-	Mon,  2 May 2022 07:34:28 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 1EA1E194705E;
+	Mon,  2 May 2022 10:31:44 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A79DD194704B
- for <dm-devel@listman.corp.redhat.com>; Fri, 29 Apr 2022 17:22:18 +0000 (UTC)
+ ESMTP id 63596194704A
+ for <dm-devel@listman.corp.redhat.com>; Mon,  2 May 2022 10:31:42 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 33C9E40FF707; Fri, 29 Apr 2022 17:22:18 +0000 (UTC)
+ id 38778C27EAE; Mon,  2 May 2022 10:31:42 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2F09740FF706
- for <dm-devel@redhat.com>; Fri, 29 Apr 2022 17:22:17 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 32BF3C202D1
+ for <dm-devel@redhat.com>; Mon,  2 May 2022 10:31:42 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CA4663C02197
- for <dm-devel@redhat.com>; Fri, 29 Apr 2022 17:22:17 +0000 (UTC)
-Received: from mailout2.w2.samsung.com (mailout2.w2.samsung.com
- [211.189.100.12]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-93-qKmTchDXOPGb97PIQxRQLw-1; Fri, 29 Apr 2022 13:22:16 -0400
-X-MC-Unique: qKmTchDXOPGb97PIQxRQLw-1
-Received: from uscas1p1.samsung.com (unknown [182.198.245.206])
- by mailout2.w2.samsung.com (KnoxPortal) with ESMTP id
- 20220429171638usoutp02eb11944212bbad4d6c61b377f484439f~qbX1sF-kC2806928069usoutp02K;
- Fri, 29 Apr 2022 17:16:38 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.w2.samsung.com
- 20220429171638usoutp02eb11944212bbad4d6c61b377f484439f~qbX1sF-kC2806928069usoutp02K
-Received: from ussmges2new.samsung.com (u111.gpu85.samsung.co.kr
- [203.254.195.111]) by uscas1p1.samsung.com (KnoxPortal) with ESMTP id
- 20220429171638uscas1p131c2d50f50206b6e406bc36481e59170~qbX1f9CZE2081520815uscas1p1x;
- Fri, 29 Apr 2022 17:16:38 +0000 (GMT)
-Received: from uscas1p2.samsung.com ( [182.198.245.207]) by
- ussmges2new.samsung.com (USCPEMTA) with SMTP id EA.10.09642.67D1C626; Fri,
- 29 Apr 2022 13:16:38 -0400 (EDT)
-Received: from ussmgxs2new.samsung.com (u91.gpu85.samsung.co.kr
- [203.254.195.91]) by uscas1p2.samsung.com (KnoxPortal) with ESMTP id
- 20220429171638uscas1p23b334cc35b918428c7c3938fb1df6ef2~qbX06f9RV3222232222uscas1p2u;
- Fri, 29 Apr 2022 17:16:38 +0000 (GMT)
-X-AuditID: cbfec36f-c15ff700000025aa-e6-626c1d76f171
-Received: from SSI-EX4.ssi.samsung.com ( [105.128.2.145]) by
- ussmgxs2new.samsung.com (USCPEXMTA) with SMTP id C4.43.09672.57D1C626; Fri,
- 29 Apr 2022 13:16:37 -0400 (EDT)
-Received: from SSI-EX3.ssi.samsung.com (105.128.2.228) by
- SSI-EX4.ssi.samsung.com (105.128.2.229) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id
- 15.1.2375.7; Fri, 29 Apr 2022 10:16:36 -0700
-Received: from SSI-EX3.ssi.samsung.com ([105.128.5.228]) by
- SSI-EX3.ssi.samsung.com ([105.128.5.228]) with mapi id 15.01.2375.007; Fri,
- 29 Apr 2022 10:16:36 -0700
-From: Adam Manzanares <a.manzanares@samsung.com>
-To: Pankaj Raghav <p.raghav@samsung.com>
-Thread-Topic: [PATCH 01/16] block: make blkdev_nr_zones and
- blk_queue_zone_no generic for npo2 zsze
-Thread-Index: AQHYWlBSHPfSzcQATUGVFhddlprDmK0HmneA
-Date: Fri, 29 Apr 2022 17:16:36 +0000
-Message-ID: <20220429171628.GA174938@bgt-140510-bm01>
-In-Reply-To: <20220427160255.300418-2-p.raghav@samsung.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 12DDD3C025D1
+ for <dm-devel@redhat.com>; Mon,  2 May 2022 10:31:42 +0000 (UTC)
+Received: from de-smtp-delivery-102.mimecast.com
+ (de-smtp-delivery-102.mimecast.com [194.104.111.102]) by relay.mimecast.com
+ with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-284-l4qCjo7KME6lAh_ckV8PPA-1; Mon, 02 May 2022 06:31:40 -0400
+X-MC-Unique: l4qCjo7KME6lAh_ckV8PPA-1
+Received: from EUR01-VE1-obe.outbound.protection.outlook.com
+ (mail-ve1eur01lp2052.outbound.protection.outlook.com [104.47.1.52]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ de-mta-10-Kp3Rg456MrSwqlb7FclgyQ-1; Mon, 02 May 2022 12:31:38 +0200
+X-MC-Unique: Kp3Rg456MrSwqlb7FclgyQ-1
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
+ by AM0PR04MB6452.eurprd04.prod.outlook.com (2603:10a6:208:16d::21)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5206.13; Mon, 2 May
+ 2022 10:31:36 +0000
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
+ ([fe80::21aa:a826:f438:827f]) by DB8PR04MB6555.eurprd04.prod.outlook.com
+ ([fe80::21aa:a826:f438:827f%7]) with mapi id 15.20.5206.012; Mon, 2 May 2022
+ 10:31:36 +0000
+From: Martin Wilck <martin.wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>,
+ "christophe.varoqui@opensvc.com" <christophe.varoqui@opensvc.com>
+Thread-Topic: [PATCH] update HPE MSA builtin config
+Thread-Index: AQHYXBXF8ZWLcvy5HUadA+386xOhQK0LZ2yA
+Date: Mon, 2 May 2022 10:31:36 +0000
+Message-ID: <dc486bce737a9784543af9d910cb4f4ea15e5260.camel@suse.com>
+References: <1651270144-29953-1-git-send-email-bmarzins@redhat.com>
+In-Reply-To: <1651270144-29953-1-git-send-email-bmarzins@redhat.com>
 Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
-x-originating-ip: [105.128.2.176]
+user-agent: Evolution 3.44.0
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: ba2f3655-942d-4b99-9db9-08da2c26ef74
+x-ms-traffictypediagnostic: AM0PR04MB6452:EE_
+x-microsoft-antispam-prvs: <AM0PR04MB6452DE654F09C00E1A2B89A4FCC19@AM0PR04MB6452.eurprd04.prod.outlook.com>
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: M9u0A8n656XFDJKJpNn6J/DVEeXUoJLLCUUBB1mMG45x2A1iD8+kUI9TXpp7r15vKCAmsiG8l/EqGid15ojKiFEXupNutrdJr9OZEhyl14wf3WXGqSvmMU7XpKTFdaonpSjYf3SAU/ps1CRuDDEZCZAlXI1/e/JnCpiyAQYS5igcqC/6JwVUkmQvgR46nZWoJoDDqke8psZU6h1he+QanpEsbEHg+vj9mj5qWWsUR/m6YQNPHy9TaO74VKAVHLGOaGZ0q+PCiVes80ZigyBKyRiXIasFSzhSC4+xPggF4uvZF0FVo84Qs33TWSnYpySrk4FsWeZC43YEurOU4teAsnKnrGSz+quFOGL4p0agbj8zaaVX0D0BUXsFEYJkXbtupVd6+obAhhAAdwMjxkrH9NS9eLzPWu4XmtKhuEg7nA5mzJ0vgPh2zFhgm3K9ywnT9G9TMReiEp/M3cqllItcUi9PCPVIQiTCP8iPGxdlUyMqC1POkSLE3CsDAhh03bOUXynJTVbZZzPZpu9bUaflh+tTFlIJQ86tevC9QGdJBW3H99u3EdMxF08HCpbbRH9cLMP9YPVR218ohW1Bqt0tow61RRdwteG1XbknxwZec7cQRETafic5bBLqu7LOyeo7jlEw3etvcxKlPmGHKwbeE1XbFP1vWxHbWbGf1FwKmmJVJU/0391EZ+X9TGawACEaJRGG1/l6GXdTum4TFk6Bqw==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230001)(366004)(4744005)(6512007)(44832011)(316002)(5660300002)(71200400001)(26005)(86362001)(2616005)(54906003)(110136005)(508600001)(6506007)(38100700002)(38070700005)(8936002)(6486002)(4326008)(36756003)(122000001)(186003)(83380400001)(66446008)(66476007)(91956017)(8676002)(66946007)(66556008)(2906002)(76116006)(64756008);
+ DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?8cfe3cvRDR6GruAy9f7680c9ClUYruGLmKyp/AWhzO0MKFuLmSPY/LP+v?=
+ =?iso-8859-15?Q?7bqwpCj6pQ/5GkS7T8TaF39L/44TzynK3TAFSP0QCC7gS3THmvinzj7xC?=
+ =?iso-8859-15?Q?p6zLV+46/4BRqoPLxxAPm/XMnUGTfHfA0ZWKU/qXWGbFo3ugG4aBTA+dn?=
+ =?iso-8859-15?Q?cGaLVjJVBaRc2mvX7wuwh0kryVxGJKdv2wYkwGEoxZvgeUyqWgIhYGg8k?=
+ =?iso-8859-15?Q?cgfAhztQyEmNttliwikxI3aEkEwwPRzOauhDXb0ZrtsQ628SjgiDf4Vbq?=
+ =?iso-8859-15?Q?+LoyxrSPP8Y2BclMUkdsXH78jJPHhOMYm/pOyc35NTyJArJt6NFLLks2O?=
+ =?iso-8859-15?Q?N+SwG6IurWZnVVzs6YPDil1BSZLiI/Gli3Sk5G3c1jGeexla1h+KvVMrq?=
+ =?iso-8859-15?Q?Bwz1N1I9C3ULJIaQCmG0C/uqKpJ1/DT5corKt44VbXpG46yijWEnHFtHr?=
+ =?iso-8859-15?Q?ImyMbqfcYfJ+7FyL4yM22FTX2l7/C5MPASbp8VBJZr7OlpmdyIqOwjDE8?=
+ =?iso-8859-15?Q?3oaqXqwG4nxl1GxZf0UUqm5CDS7b+7RRejgEQWeKIvc5maNiBcPlL2/wU?=
+ =?iso-8859-15?Q?LqNl39Ls7fy4Rc1xZ3QDmBkbzKmKQy+dVZuuQLyQioF62uppMZIAWjNyL?=
+ =?iso-8859-15?Q?qhQ8yrhur6h+vLomY7FiaDNby2OGWzrEPR9k97BAggG6fox5Shq+IMVmo?=
+ =?iso-8859-15?Q?0LFibMXdwTZUO09sjHeIxJsC89GA5taGuAo3v8Lh2hJJzzwtT0qmfU0oO?=
+ =?iso-8859-15?Q?YF4ToDm4iN9IdPGAMhmXPyV9S3to3mwsTZlmD8+ekQRA4RsN9cS2VT7EU?=
+ =?iso-8859-15?Q?wydAECwF4kvWqzdkbbju+idL9fy7Gaa6+7CL+9s3yXO5q72tBqZ0OKbrq?=
+ =?iso-8859-15?Q?ijdGruzKY9ztnOqMWzzikmg7PsmByWp0g/gHZ/kVZEQ3hPKtnX+T+C35H?=
+ =?iso-8859-15?Q?T7D3Y199T8s7BZ15hv88mP7Eil+5+ZRmD/mxCdo7bxq2K3gOc0q9SSpiF?=
+ =?iso-8859-15?Q?vNxdyhr9kbsqbcGs85KzI3wyCKZWFxAoNl3VHcT5/cktvvBOGs2/WP2Qo?=
+ =?iso-8859-15?Q?/cLRnsqCAsuVKS2DZAXDfCvQNJqnIPV2NkoeGPR6VFNDTPu/BaHe8Gg58?=
+ =?iso-8859-15?Q?kDV6j4n7+CI0i0b3GVPsYgYlPuMfuYVjrNg8otilfl50SwINuW731rlo3?=
+ =?iso-8859-15?Q?ebvwK1Y9Wn9gyOAJxQSFgajyCQDDiMgKE2jCHHV2JW1hR2VQwYUz+ZYsA?=
+ =?iso-8859-15?Q?NNgdgVKCzP8GOAiiiU5R72Tia55lnyYF5RuE9dHpcxbq3YO5luyzvqZgH?=
+ =?iso-8859-15?Q?TuHxQg+EgE65BJTH/QtyjuO0K09jYCY2wUliH+HvvF5iI6ITm6QHnEJAe?=
+ =?iso-8859-15?Q?+OdF7j4pcLzUNfHbzJTGGeXCKQCuIwqbAn1QIhy3s1MPEW9n2z6vTJia9?=
+ =?iso-8859-15?Q?uH77yKCI8y+09Y/Tq1ZcEWlcwgDPJQnCIW5Jlu+Fm5Etnq2B7gElH997a?=
+ =?iso-8859-15?Q?X+cJIDsy42Wi2QCBfwKOsc3BxWJWd5r3bg3EJEfji6x/uhaUocqMWe63g?=
+ =?iso-8859-15?Q?2QJO3lBupeUuc1XxYPqXEXq3RRErQUNFLBkaazfi/19sf9jXHPoVP3twT?=
+ =?iso-8859-15?Q?svHFCrhJgOTtlwPu5eEYDamUK65xvS81mQODm5fP4DrRiENK3iEvmUAwx?=
+ =?iso-8859-15?Q?agkEDlURrouafebmdCgBy7CmsnCXzePx/ZkzqPwkvZgGRhIUTaoT1r+Lq?=
+ =?iso-8859-15?Q?6iz4tobdBVcOC5YNQW1q+NpAFZ4odnOJv16COc2q/KHHlxFM/xXp0CtKk?=
+ =?iso-8859-15?Q?0rxVIxgKWUPtYHXYhc/BetlV/HRhK2/rH4IAc9Z4LokcBnu4hT8PIlS1g?=
+ =?iso-8859-15?Q?f6yo=3D?=
 MIME-Version: 1.0
-X-CFilter-Loop: Reflected
-X-Brightmail-Tracker: H4sIAAAAAAAAA02Sf0xTVxTHd997fX3tQB6VwR2oG43OORkDAuRmKmEBwzNG47YMM8RplceP
- WChpgU3mYhWRUTVUHIRVGFA6EOuGwLJosbqV8dOxThHQDjSV1miQioBKi5BZXk363/fc8/me
- 8z3JpXCRiQymsnLyWHmORComhcTv3c/MHxaslO6LqH4Uilr6u3GkHysjUeWUE0fXKwYwVF5W
- xUfzA2YcGR1neejfuSMYatZ3YcjWosHRyT+mCLSguvvq7ZgVRy+tkajcNAyQfUiDIaNlPbo5
- fo6PbmqT0BVjH4EGDdUkqm2085H6+DMc3VbbATrd085Dv048IVCvJSQ+hBm8tZVZ7L1AMqeL
- HHzGfLeVYAYH8pm286UkU6+swJl23WGmo24GYzruKEnmVJGDZC4X3+MxT64OkUzLb0MEo25v
- 5TEzbat2+KcIN6ax0qwCVv5R3F5hZm2Nk5/bLPpmsqucrwQlfiogoCAdDQf0TqACQkpENwOo
- vP+IzxXFGDyp/R57TbmOzGFc4xcA60qbPJanAFb94/IUjQA2O2dJt4WkI+B8Tyvu1gH0+/DB
- rfalUTitehOOVUSrAEUtp9OgpfcTDmFhQ9Mgj9NR0G69SLg1Qa+B3ZXFS1ZfOga2W48uMQJ6
- A1woa1hiAB0IX/Rf8IwPghZbrSe1P9SevYJzOhAuGqwkp0PhvRfuM918GKzrmCY5HQeNRZWe
- 9/WwsX4C5/b6w74fbQTnfRv+ee424b4X0q1C+EP9IJ9rJEKbXulZEAIXxhoxDioBcEp9lccV
- agBHJ50eagNcLB3mq8FqjVdyjVcqjVcqjVcqjVeqOsA7D4LyFYrsDFYRlcN+Ha6QZCvyczLC
- 98uy28Crb359sVN2CYxYnoabAEYBE4AULg7wne3I3CfyTZMcLGTlsj3yfCmrMIEQihAH+TZm
- XZSI6AxJHnuAZXNZ+esuRgmCldg7175a2x9k+bYpbe1DY/fRKLMzPsOanezwebAiJHJseouh
- f/lOw8tVbHBn0870UZcu2Qc7tSyxYapAl5qw29dYvT+084uJmKTRA+JgvzX/9fbJNpOOxwtv
- /Nw0xzuo3Xhms0rq0l6e/ZKtiR0ZdhpG7IcT1tU93qXbliAmQ/Wp2ufH2mIjojVzsQJR3vx4
- ceSy+98VplREFH7OWzF66T1JybVdYXk1PeqZpIdnJidyWbPuRHpvVfwJvy2H2vbeSd3tSP4p
- ZdN2157qGJmN1xGWvM0YNxsYsOkGWv1WxnMQ5Zfz8Thf2ZX+t+6z1MTj44K/ZNPrPt0hP1R6
- Y2T+XR/9SqewX0woMiWRH+ByheR/joyx41UEAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA02SfUxTVxiHPffe3nvpZFw7Z88E2WRbhmMi9SM52VD0D9x1ZgaTLdtkEYvc
- ALOAttSBZFmhQKVu6UdCJ50EEMJAmBUKuI0ysaN8SGoJX8Fua9NQTJgbqIxgUcgo1yX973nP
- +z6/95zk0LjIK9hKZ+fmc/JcqSyGFBLZKsywU7lNlp6gdexDljv9OGr5U0ci08MAjoYrnRgy
- 6i5T6KnThaOeue8FaORJMYaaWxwY8lvMOPqm9yGBVrSetbNSH46e+STIaJ8EaGbCjKEedxwa
- nW6i0OjV95GtZ4hAY79cIVFN4wyF9OWLOJrSzwBkGLAK0PUH8wQadEcejGTHxo+yq4OtJGtQ
- z1Gsy9NGsGNOJdt+rYJk61SVOGtt+Jrtrl3A2O57KpL9Vj1Hsj+XeQXs/K8TJGvpmCBYvbVN
- wC60R6dsOiFMzOBk2ec5+a4Dp4RZNdUB6myzqOAfh5FSAU2EFoTRkNkLl4ufYFogpEVMC4Ar
- kzcEfPEIwIXHI4AvGgHUqH8kgwrJJMCnA214kDczsfD+uHVdx5mLL8DFQMOaQdMvMRnQPXiI
- n+Gg6QcT4Hk3nPHdIIJMMG/CflMZFuRwZh+0+kqeb74FYHmFmwo2wpj34Iqufl0AzBa4dKd1
- XcAZMXT7azD+DQxssLlwnl+Gs9OrAp63Q+/SLMXPvwNrux+TPB+APWrT8/M42Fj3AOcvsQkO
- VfkJ3n0F3m6aIvQAmkPWmUOizCFR5pAoc0hULRBcA2KlQpGTWaDYnct9Ga+Q5iiUuZnxp/Ny
- 2sHaHxxe/S31J/C7+1G8HWA0sANI4zGbw//tzkoXhWdICy9w8rw0uVLGKewgkiZixOGzJwxp
- IiZTms+d4biznPz/LkaHbVVh0hc7dF7dpa64122f9CX8MW4anSx5tXSvcJs67t1T8JDNvvNk
- ctcXlX07quskUrFBGr3xmMx1ZMj3kb+13tnq8xxZ1nfozxn/Kjg8PGXLwizTH+6qIZfuVUdd
- vzW3/9IZbXJib3ItITuWPnb36tBoQdX+tD1FgLgtGo+qdFT8fTm1r9PYNRD4rOnThNi6CGo1
- +/TJZcPIFkm5zbnRVXwxdrv74w1LRZaIwjz/cSP1bEPKG2FVnZ78196KKvHcTDVqnCWaaUkR
- U3b/4OeJdSDpcOYH4vikZvUOdWepTv7VHk2XLynFSx5fZO42wiiPQKgJRM+f/27Ze+Fc/c3e
- QoetP4ZQZEklb+NyhfQ/zjd7GvIDAAA=
-X-CMS-MailID: 20220429171638uscas1p23b334cc35b918428c7c3938fb1df6ef2
-CMS-TYPE: 301P
-X-CMS-RootMailID: 20220427160257eucas1p21fb58d0129376a135fdf0b9c2fe88895
-References: <20220427160255.300418-1-p.raghav@samsung.com>
- <CGME20220427160257eucas1p21fb58d0129376a135fdf0b9c2fe88895@eucas1p2.samsung.com>
- <20220427160255.300418-2-p.raghav@samsung.com>
+X-OriginatorOrg: suse.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: ba2f3655-942d-4b99-9db9-08da2c26ef74
+X-MS-Exchange-CrossTenant-originalarrivaltime: 02 May 2022 10:31:36.3498 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: aa3XRR1o9gGm80Rr5I7iPQoo9ToPValVJ3rnDsEmS4JR3mh6+zUkVSC1sQ26ny2GxRE3rvm4HdFEM/cMUn0a9w==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AM0PR04MB6452
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -136,10 +136,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-X-Mailman-Approved-At: Mon, 02 May 2022 07:34:27 +0000
-Subject: Re: [dm-devel] [PATCH 01/16] block: make blkdev_nr_zones and
- blk_queue_zone_no generic for npo2 zsze
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: Re: [dm-devel] [PATCH] update HPE MSA builtin config
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -151,110 +149,64 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "jiangbo.365@bytedance.com" <jiangbo.365@bytedance.com>,
- "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
- "clm@fb.com" <clm@fb.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>,
- "hch@lst.de" <hch@lst.de>, "agk@redhat.com" <agk@redhat.com>,
- "naohiro.aota@wdc.com" <naohiro.aota@wdc.com>,
- "sagi@grimberg.me" <sagi@grimberg.me>,
- "gost.dev@samsung.com" <gost.dev@samsung.com>,
- "damien.lemoal@opensource.wdc.com" <damien.lemoal@opensource.wdc.com>,
- "jonathan.derrick@linux.dev" <jonathan.derrick@linux.dev>,
- "kch@nvidia.com" <kch@nvidia.com>, "chao@kernel.org" <chao@kernel.org>,
- "snitzer@kernel.org" <snitzer@kernel.org>,
- "josef@toxicpanda.com" <josef@toxicpanda.com>,
- "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
- "dsterba@suse.com" <dsterba@suse.com>, "kbusch@kernel.org" <kbusch@kernel.org>,
- "jaegeuk@kernel.org" <jaegeuk@kernel.org>,
- "matias.bjorling@wdc.com" <matias.bjorling@wdc.com>,
- "bvanassche@acm.org" <bvanassche@acm.org>, "axboe@kernel.dk" <axboe@kernel.dk>,
- "johannes.thumshirn@wdc.com" <johannes.thumshirn@wdc.com>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- "linux-f2fs-devel@lists.sourceforge.net"
- <linux-f2fs-devel@lists.sourceforge.net>,
- "mcgrof@kernel.org" <mcgrof@kernel.org>,
- "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
- "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ "Jon.Paul@hpe.com" <Jon.Paul@hpe.com>,
+ "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <7E6427266D2D7F4C8C5CD9B93D12C2A5@ssi.samsung.com>
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-ID: <2E0E5D76D3DB5F4BB544ECFD197CE0D8@eurprd04.prod.outlook.com>
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-On Wed, Apr 27, 2022 at 06:02:40PM +0200, Pankaj Raghav wrote:
-> Adapt blkdev_nr_zones and blk_queue_zone_no function so that it can
-> also work for non-power-of-2 zone sizes.
-> 
-> As the existing deployments of zoned devices had power-of-2
-> assumption, power-of-2 optimized calculation is kept for those devices.
-> 
-> There are no direct hot paths modified and the changes just
-> introduce one new branch per call.
-> 
-> Reviewed-by: Luis Chamberlain <mcgrof@kernel.org>
-> Signed-off-by: Pankaj Raghav <p.raghav@samsung.com>
+On Fri, 2022-04-29 at 17:09 -0500, Benjamin Marzinski wrote:
+> Make the config better align to MSA 4th, 5th and 6th Generation
+> systems.
+>=20
+> Suggested-by: Jon Paul <Jon.Paul@hpe.com>
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  block/blk-zoned.c      | 8 +++++++-
->  include/linux/blkdev.h | 8 +++++++-
->  2 files changed, 14 insertions(+), 2 deletions(-)
-> 
-> diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-> index 38cd840d8838..1dff4a8bd51d 100644
-> --- a/block/blk-zoned.c
-> +++ b/block/blk-zoned.c
-> @@ -117,10 +117,16 @@ EXPORT_SYMBOL_GPL(__blk_req_zone_write_unlock);
->  unsigned int blkdev_nr_zones(struct gendisk *disk)
->  {
->  	sector_t zone_sectors = blk_queue_zone_sectors(disk->queue);
-> +	sector_t capacity = get_capacity(disk);
->  
->  	if (!blk_queue_is_zoned(disk->queue))
->  		return 0;
-> -	return (get_capacity(disk) + zone_sectors - 1) >> ilog2(zone_sectors);
-> +
-> +	if (is_power_of_2(zone_sectors))
-> +		return (capacity + zone_sectors - 1) >>
-> +		       ilog2(zone_sectors);
-> +
-> +	return div64_u64(capacity + zone_sectors - 1, zone_sectors);
->  }
->  EXPORT_SYMBOL_GPL(blkdev_nr_zones);
->  
-> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> index 60d016138997..c4e4c7071b7b 100644
-> --- a/include/linux/blkdev.h
-> +++ b/include/linux/blkdev.h
-> @@ -665,9 +665,15 @@ static inline unsigned int blk_queue_nr_zones(struct request_queue *q)
->  static inline unsigned int blk_queue_zone_no(struct request_queue *q,
->  					     sector_t sector)
->  {
-> +	sector_t zone_sectors = blk_queue_zone_sectors(q);
-> +
->  	if (!blk_queue_is_zoned(q))
->  		return 0;
-> -	return sector >> ilog2(q->limits.chunk_sectors);
-> +
-> +	if (is_power_of_2(zone_sectors))
-> +		return sector >> ilog2(zone_sectors);
-> +
-> +	return div64_u64(sector, zone_sectors);
->  }
->  
->  static inline bool blk_queue_zone_is_seq(struct request_queue *q,
-> -- 
-> 2.25.1
->
+> =A0libmultipath/hwtable.c | 4 ++--
+> =A01 file changed, 2 insertions(+), 2 deletions(-)
+>=20
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 0e1c0a41..0f0795c3 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -182,8 +182,8 @@ static struct hwentry default_hw[] =3D {
+> =A0=A0=A0=A0=A0=A0=A0=A0},
+> =A0=A0=A0=A0=A0=A0=A0=A0{
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0/* MSA 1040, 1050, 1060, =
+2040, 2050 and 2060 families
+> */
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.vendor=A0=A0=A0=A0=A0=A0=
+=A0 =3D "HP",
+> -=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.product=A0=A0=A0=A0=A0=A0 =
+=3D "MSA [12]0[456]0 SA[NS]",
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.vendor=A0=A0=A0=A0=A0=A0=
+=A0 =3D "(HP|HPE)",
+
+This changes nothing unless you use "^(HP|HPE)$", as our regex matching
+is by substring.
+
+Regards,
+Martin
 
 
-Looks good.
+> +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.product=A0=A0=A0=A0=A0=A0 =
+=3D "MSA [12]0[456]0
+> (SAN|SAS|FC|iSCSI)",
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.pgpolicy=A0=A0=A0=A0=A0 =
+=3D GROUP_BY_PRIO,
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.pgfailback=A0=A0=A0 =3D =
+-FAILBACK_IMMEDIATE,
+> =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0.no_path_retry =3D 18,
 
-Reviewed by: Adam Manzanares <a.manzanares@samsung.com>
 
 --
 dm-devel mailing list
