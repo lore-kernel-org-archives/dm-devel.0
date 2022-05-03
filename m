@@ -1,66 +1,66 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CDFD4C433F5
-	for <dm-devel@archiver.kernel.org>; Tue,  3 May 2022 20:39:05 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5B05CC433F5
+	for <dm-devel@archiver.kernel.org>; Tue,  3 May 2022 20:40:05 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1651610344;
+	s=mimecast20190719; t=1651610404;
 	h=from:from:sender:sender:reply-to:subject:subject:date:date:
 	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
 	 content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
 	 list-unsubscribe:list-subscribe:list-post;
-	bh=Vf4I7TRiw4pBKxsTmm1iKMCuv6x9FIA4IMVSeKVII2k=;
-	b=NhVn419EdRa1JTkrYgxzprajPpRRyArTbFL6d3xEyA0HoQj/clOS+x8OqLAi0elROcsGyW
-	ZWABvsiioXHNvy/FN/pVTxZ8qjTRtd7rn2fHaeYBagbLzbwD451qzyFoD1eADfyAY+fS2Y
-	7xWeA3vv8BPjn4Ur3UU5bpIBPUgU6AE=
+	bh=9ukgPq2sEICqSgNvVBO89sTCBtniqFUiCU2zfUEZPQQ=;
+	b=ZhOWTiXnm+kzfF0Oh4GEUf49u8t5/4h2fbPEYT0xMY9pOLrimTbczd6l52+areRjJ29yRd
+	1SVOP/rS6/t7rW7IjDweCJrzk98c7ZWUBfv02W83wEdz0Xyupvy0NLV1m0bDDcuAECtDYZ
+	HGzATe0cOGVUOoFVuK28gfqUvLOaB4E=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-401-63ucntwBOHm_sJjaU39gig-1; Tue, 03 May 2022 16:39:03 -0400
-X-MC-Unique: 63ucntwBOHm_sJjaU39gig-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-664-ImdjopnlMBKQ7SQEZTEdpQ-1; Tue, 03 May 2022 16:40:01 -0400
+X-MC-Unique: ImdjopnlMBKQ7SQEZTEdpQ-1
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EE3361DC2431;
-	Tue,  3 May 2022 20:39:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 62D1786B8B9;
+	Tue,  3 May 2022 20:39:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D856AC159B3;
-	Tue,  3 May 2022 20:39:00 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 13EF4401474;
+	Tue,  3 May 2022 20:39:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7E5511947049;
-	Tue,  3 May 2022 20:39:00 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BC0271947049;
+	Tue,  3 May 2022 20:39:57 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8C0DC1947043
- for <dm-devel@listman.corp.redhat.com>; Tue,  3 May 2022 20:38:59 +0000 (UTC)
+ ESMTP id 050DE1947043
+ for <dm-devel@listman.corp.redhat.com>; Tue,  3 May 2022 20:39:56 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7D67B40D282C; Tue,  3 May 2022 20:38:59 +0000 (UTC)
+ id C6B20C28102; Tue,  3 May 2022 20:39:55 +0000 (UTC)
 Received: from file01.intranet.prod.int.rdu2.redhat.com
  (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 74A5240D2820;
- Tue,  3 May 2022 20:38:59 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B5AE4C28100;
+ Tue,  3 May 2022 20:39:55 +0000 (UTC)
 Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
  by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
- 243KcxtZ011767; Tue, 3 May 2022 16:38:59 -0400
+ 243KdtX0011812; Tue, 3 May 2022 16:39:55 -0400
 Received: from localhost (mpatocka@localhost)
  by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
- id 243Kcxur011764; Tue, 3 May 2022 16:38:59 -0400
+ id 243KdtjD011808; Tue, 3 May 2022 16:39:55 -0400
 X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
  owned process doing -bs
-Date: Tue, 3 May 2022 16:38:59 -0400 (EDT)
+Date: Tue, 3 May 2022 16:39:55 -0400 (EDT)
 From: Mikulas Patocka <mpatocka@redhat.com>
 X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
 To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Message-ID: <alpine.LRH.2.02.2205031638110.11434@file01.intranet.prod.int.rdu2.redhat.com>
+Message-ID: <alpine.LRH.2.02.2205031639140.11434@file01.intranet.prod.int.rdu2.redhat.com>
 User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: [dm-devel] [PATCH v4.14] dm: fix mempool NULL pointer race when
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: [dm-devel] [PATCH v4.19] dm: fix mempool NULL pointer race when
  completing IO
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -77,7 +77,7 @@ Cc: Mike Snitzer <msnitzer@redhat.com>, dm-devel@redhat.com,
  stable@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -86,7 +86,7 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
 This is backport of the patch d208b89401e0 ("dm: fix mempool NULL pointer
-race when completing IO") for the kernel 4.14.
+race when completing IO") for the kernel 4.19.
 
 The bugs fixed by this patch can cause random crashing when reloading dm
 table, so it is eligible for stable backport.
@@ -100,9 +100,9 @@ Reviewed-by: Mike Snitzer <snitzer@kernel.org>
 
 Index: linux-stable/drivers/md/dm.c
 ===================================================================
---- linux-stable.orig/drivers/md/dm.c	2022-04-30 19:14:50.000000000 +0200
-+++ linux-stable/drivers/md/dm.c	2022-04-30 19:16:28.000000000 +0200
-@@ -528,20 +528,19 @@ static void start_io_acct(struct dm_io *
+--- linux-stable.orig/drivers/md/dm.c	2022-04-30 20:13:27.000000000 +0200
++++ linux-stable/drivers/md/dm.c	2022-04-30 20:13:55.000000000 +0200
+@@ -631,21 +631,20 @@ static void start_io_acct(struct dm_io *
  				    false, 0, &io->stats_aux);
  }
  
@@ -111,14 +111,15 @@ Index: linux-stable/drivers/md/dm.c
 +			unsigned long start_time, struct dm_stats_aux *stats_aux)
  {
 -	struct mapped_device *md = io->md;
--	struct bio *bio = io->bio;
+-	struct bio *bio = io->orig_bio;
 -	unsigned long duration = jiffies - io->start_time;
 +	unsigned long duration = jiffies - start_time;
  	int pending;
  	int rw = bio_data_dir(bio);
  
--	generic_end_io_acct(md->queue, rw, &dm_disk(md)->part0, io->start_time);
-+	generic_end_io_acct(md->queue, rw, &dm_disk(md)->part0, start_time);
+ 	generic_end_io_acct(md->queue, bio_op(bio), &dm_disk(md)->part0,
+-			    io->start_time);
++			    start_time);
  
  	if (unlikely(dm_stats_used(&md->stats)))
  		dm_stats_account_io(&md->stats, bio_data_dir(bio),
@@ -128,7 +129,7 @@ Index: linux-stable/drivers/md/dm.c
  
  	/*
  	 * After this is decremented the bio must not be touched if it is
-@@ -775,6 +774,8 @@ static void dec_pending(struct dm_io *io
+@@ -872,6 +871,8 @@ static void dec_pending(struct dm_io *io
  	blk_status_t io_error;
  	struct bio *bio;
  	struct mapped_device *md = io->md;
@@ -137,10 +138,10 @@ Index: linux-stable/drivers/md/dm.c
  
  	/* Push-back supersedes any I/O errors */
  	if (unlikely(error)) {
-@@ -801,8 +802,10 @@ static void dec_pending(struct dm_io *io
+@@ -898,8 +899,10 @@ static void dec_pending(struct dm_io *io
  
  		io_error = io->status;
- 		bio = io->bio;
+ 		bio = io->orig_bio;
 -		end_io_acct(io);
 +		start_time = io->start_time;
 +		stats_aux = io->stats_aux;
