@@ -1,87 +1,80 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3238DC433F5
-	for <dm-devel@archiver.kernel.org>; Tue,  3 May 2022 16:38:21 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id A0BB1C433FE
+	for <dm-devel@archiver.kernel.org>; Tue,  3 May 2022 16:39:22 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-26-HfawJFnrNCCONndRu5dNxA-1; Tue, 03 May 2022 12:38:19 -0400
-X-MC-Unique: HfawJFnrNCCONndRu5dNxA-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-113-0KnZOUbIPyuDhaFUyLEEQA-1; Tue, 03 May 2022 12:39:16 -0400
+X-MC-Unique: 0KnZOUbIPyuDhaFUyLEEQA-1
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 26A8A1DC2437;
-	Tue,  3 May 2022 16:38:17 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4F3DD29AA3BA;
+	Tue,  3 May 2022 16:39:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id AC0751121320;
-	Tue,  3 May 2022 16:38:14 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 3CBAD465170;
+	Tue,  3 May 2022 16:39:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5DEB91947049;
-	Tue,  3 May 2022 16:38:14 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C02001947049;
+	Tue,  3 May 2022 16:39:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id E3E321947043
- for <dm-devel@listman.corp.redhat.com>; Tue,  3 May 2022 16:38:12 +0000 (UTC)
+ ESMTP id 07CE61947043
+ for <dm-devel@listman.corp.redhat.com>; Tue,  3 May 2022 16:39:14 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D4D67111E411; Tue,  3 May 2022 16:38:12 +0000 (UTC)
+ id EC602465173; Tue,  3 May 2022 16:39:13 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id CFA701121320
- for <dm-devel@redhat.com>; Tue,  3 May 2022 16:38:09 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E88DE46516A
+ for <dm-devel@redhat.com>; Tue,  3 May 2022 16:39:13 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 30A1F811E80
- for <dm-devel@redhat.com>; Tue,  3 May 2022 16:38:09 +0000 (UTC)
-Received: from mail-pf1-f178.google.com (mail-pf1-f178.google.com
- [209.85.210.178]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B85B93806737
+ for <dm-devel@redhat.com>; Tue,  3 May 2022 16:39:13 +0000 (UTC)
+Received: from mail-pj1-f41.google.com (mail-pj1-f41.google.com
+ [209.85.216.41]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-36-cp7efYOwPfOBRmLtbDDoLQ-1; Tue, 03 May 2022 12:38:03 -0400
-X-MC-Unique: cp7efYOwPfOBRmLtbDDoLQ-1
-Received: by mail-pf1-f178.google.com with SMTP id j6so15139883pfe.13;
- Tue, 03 May 2022 09:38:03 -0700 (PDT)
+ us-mta-618-qMT3d9k1OEe6ezh3ys-sfw-1; Tue, 03 May 2022 12:39:11 -0400
+X-MC-Unique: qMT3d9k1OEe6ezh3ys-sfw-1
+Received: by mail-pj1-f41.google.com with SMTP id
+ iq2-20020a17090afb4200b001d93cf33ae9so2739781pjb.5
+ for <dm-devel@redhat.com>; Tue, 03 May 2022 09:39:11 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
- h=x-gm-message-state:message-id:date:mime-version:user-agent:subject
- :content-language:to:cc:references:from:in-reply-to
- :content-transfer-encoding;
- bh=lyBgny2owanKpSK297XC+SuygGQevv1e+zn1E24si/Y=;
- b=AT6NmF5XN+xLdxE4g66PYS7AvbRUYR+aoKtEs7kJFMYfzholDBKmy61QvFsTdSVtXZ
- HshlXGEDsBHiK0XNBNrElo1KeRg9HOG9p2LVDoK17jxrcTzLC5WnLGCjI9SKdxXrikQX
- yg8etxJ2pA74kCchVAEyjQhvu44+kOcd3VyKzQ3Lp1lPH5Qm7si7XJqvafDb6RW2HBmJ
- pr2bIR55T1aW5kI10tgC5Xpbec3tAIKbeYoAO/gdGep1p1V324KyBA1upMkMOMypzcEq
- i8UFVsq8u0+LlBar81NySwVXn+HEP0rerHh3eW4BZE8rh4888r9b4kWn8ov3vfhKSDXG
- shjg==
-X-Gm-Message-State: AOAM531u04r1yDy9SJu0Phic5eD5OGoxSLSDDNUH+G9/4o1UGtuxPXw6
- NI0nS0Iohmyxiy0ybuZ50EI=
-X-Google-Smtp-Source: ABdhPJzonovBzoV4fwi9NXoKhV1eYPIxcI7yjfJw6mLDHLxG6LjY81SsAeWrZCq7zhToKZSiSL9kvA==
-X-Received: by 2002:a63:5020:0:b0:39e:5d26:4316 with SMTP id
- e32-20020a635020000000b0039e5d264316mr14532146pgb.294.1651595882292; 
- Tue, 03 May 2022 09:38:02 -0700 (PDT)
-Received: from [10.10.69.251] ([8.34.116.185])
- by smtp.gmail.com with ESMTPSA id
- u17-20020a170903125100b0015e8d4eb27bsm6564629plh.197.2022.05.03.09.37.59
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Tue, 03 May 2022 09:38:01 -0700 (PDT)
-Message-ID: <3a178153-62c0-e298-ccb0-0edfd41b7ee2@acm.org>
-Date: Tue, 3 May 2022 09:37:57 -0700
+ h=x-gm-message-state:from:to:cc:in-reply-to:references:subject
+ :message-id:date:mime-version:content-transfer-encoding;
+ bh=s39mE0kiqCYA7ZYSMO88r6nrLoSeKkE/K4dp3BvGwGs=;
+ b=L+CZ27eAFck6l/PiroYtplRv5NmNtY0df9SOTRFfzceIBpTMqGbB0jShLQ4TwCqjwD
+ r/3BzgukdAWaxbgmlaq7SeojnjfwswG+9g8VmX5Bcc+Mqs5FWEFoSAQvMF9MFmnwcQZ5
+ PftbwcY86DzHgruVvZnWmdPbLvV1tJk+8QGHwkXa1VqdVtFiIEUexh/inN8H2Qy+CIYJ
+ IF59QMdcqBBw3kT7fDaWmOf5giBt9xLFbXBWLcSaT5XzYpp3eVzxBq4xRRzwZ0vKZCKQ
+ GZ+aYSOzjc0QQpgrJkyDXPQ6/dNXepbYlMLv1yyJDwkqd89TzV5g1d2D3fTDmCcAvdq5
+ 57cA==
+X-Gm-Message-State: AOAM533Uo7b7uCs5HuiMG+GSpWJmvx1F43X/qrogx5W13SxbRjqPUCVf
+ w0zBKQbfdpn3k3tGMh5WFpfHUg==
+X-Google-Smtp-Source: ABdhPJynf+YKk08yAhS/p4BXstboFDeyZsD4FTBMM24xr+KLv+BRsvUdLzF1UAPk9hKAVzsu2Q8whQ==
+X-Received: by 2002:a17:90a:9901:b0:1cb:aa19:5eee with SMTP id
+ b1-20020a17090a990100b001cbaa195eeemr5645991pjp.158.1651595950265; 
+ Tue, 03 May 2022 09:39:10 -0700 (PDT)
+Received: from [127.0.1.1] ([8.34.116.185]) by smtp.gmail.com with ESMTPSA id
+ m9-20020a17090a858900b001d9b7fa9562sm1559200pjn.28.2022.05.03.09.39.07
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Tue, 03 May 2022 09:39:09 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: Christoph Hellwig <hch@lst.de>
+In-Reply-To: <20220418045314.360785-1-hch@lst.de>
+References: <20220418045314.360785-1-hch@lst.de>
+Message-Id: <165159594780.2557.1712299203175316151.b4-ty@kernel.dk>
+Date: Tue, 03 May 2022 10:39:07 -0600
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.7.0
-To: Pankaj Raghav <p.raghav@samsung.com>, jaegeuk@kernel.org,
- axboe@kernel.dk, snitzer@kernel.org, hch@lst.de, mcgrof@kernel.org,
- naohiro.aota@wdc.com, sagi@grimberg.me, damien.lemoal@opensource.wdc.com,
- dsterba@suse.com, johannes.thumshirn@wdc.com
-References: <20220427160255.300418-1-p.raghav@samsung.com>
- <CGME20220427160257eucas1p21fb58d0129376a135fdf0b9c2fe88895@eucas1p2.samsung.com>
- <20220427160255.300418-2-p.raghav@samsung.com>
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20220427160255.300418-2-p.raghav@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -89,9 +82,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-Subject: Re: [dm-devel] [PATCH 01/16] block: make blkdev_nr_zones and
- blk_queue_zone_no generic for npo2 zsze
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+Subject: Re: [dm-devel] fix and cleanup discard_alignment handling
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,90 +95,75 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: jiangbo.365@bytedance.com, kch@nvidia.com, matias.bjorling@wdc.com,
- gost.dev@samsung.com, chao@kernel.org, linux-kernel@vger.kernel.org,
- linux-nvme@lists.infradead.org, linux-f2fs-devel@lists.sourceforge.net,
- linux-block@vger.kernel.org, clm@fb.com, dm-devel@redhat.com, agk@redhat.com,
- jonathan.derrick@linux.dev, kbusch@kernel.org, linux-fsdevel@vger.kernel.org,
- josef@toxicpanda.com, linux-btrfs@vger.kernel.org
+Cc: hoeppner@linux.ibm.com, mst@redhat.com, jasowang@redhat.com,
+ linux-nvme@lists.infradead.org, virtualization@lists.linux-foundation.org,
+ song@kernel.org, dm-devel@redhat.com, haris.iqbal@ionos.com,
+ jinpu.wang@ionos.com, linux-s390@vger.kernel.org, richard@nod.at,
+ xen-devel@lists.xenproject.org, linux-um@lists.infradead.org,
+ snitzer@kernel.org, josef@toxicpanda.com, nbd@other.debian.org,
+ linux-raid@vger.kernel.org, sth@linux.ibm.com, linux-block@vger.kernel.org,
+ martin.petersen@oracle.com, johannes@sipsolutions.net, roger.pau@citrix.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 4/27/22 09:02, Pankaj Raghav wrote:
-> Adapt blkdev_nr_zones and blk_queue_zone_no function so that it can
-> also work for non-power-of-2 zone sizes.
+On Mon, 18 Apr 2022 06:53:03 +0200, Christoph Hellwig wrote:
+> the somewhat confusing name of the discard_alignment queue limit, that
+> really is an offset for the discard granularity mislead a lot of driver
+> authors to set it to an incorrect value.  This series tries to fix up
+> all these cases.
 > 
-> As the existing deployments of zoned devices had power-of-2
-> assumption, power-of-2 optimized calculation is kept for those devices.
+> Diffstat:
+>  arch/um/drivers/ubd_kern.c         |    1 -
+>  drivers/block/loop.c               |    1 -
+>  drivers/block/nbd.c                |    3 ---
+>  drivers/block/null_blk/main.c      |    1 -
+>  drivers/block/rnbd/rnbd-srv-dev.h  |    2 +-
+>  drivers/block/virtio_blk.c         |    7 ++++---
+>  drivers/block/xen-blkback/xenbus.c |    4 ++--
+>  drivers/md/dm-zoned-target.c       |    2 +-
+>  drivers/md/raid5.c                 |    1 -
+>  drivers/nvme/host/core.c           |    1 -
+>  drivers/s390/block/dasd_fba.c      |    1 -
+>  11 files changed, 8 insertions(+), 16 deletions(-)
 > 
-> There are no direct hot paths modified and the changes just
-> introduce one new branch per call.
-> 
-> Reviewed-by: Luis Chamberlain <mcgrof@kernel.org>
-> Signed-off-by: Pankaj Raghav <p.raghav@samsung.com>
-> ---
->   block/blk-zoned.c      | 8 +++++++-
->   include/linux/blkdev.h | 8 +++++++-
->   2 files changed, 14 insertions(+), 2 deletions(-)
-> 
-> diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-> index 38cd840d8838..1dff4a8bd51d 100644
-> --- a/block/blk-zoned.c
-> +++ b/block/blk-zoned.c
-> @@ -117,10 +117,16 @@ EXPORT_SYMBOL_GPL(__blk_req_zone_write_unlock);
->   unsigned int blkdev_nr_zones(struct gendisk *disk)
->   {
->   	sector_t zone_sectors = blk_queue_zone_sectors(disk->queue);
-> +	sector_t capacity = get_capacity(disk);
->   
->   	if (!blk_queue_is_zoned(disk->queue))
->   		return 0;
-> -	return (get_capacity(disk) + zone_sectors - 1) >> ilog2(zone_sectors);
-> +
-> +	if (is_power_of_2(zone_sectors))
-> +		return (capacity + zone_sectors - 1) >>
-> +		       ilog2(zone_sectors);
-> +
-> +	return div64_u64(capacity + zone_sectors - 1, zone_sectors);
->   }
->   EXPORT_SYMBOL_GPL(blkdev_nr_zones);
+> [...]
 
-Does anyone need support for more than 4 billion sectors per zone? If 
-not, do_div() should be sufficient.
+Applied, thanks!
 
-> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-> index 60d016138997..c4e4c7071b7b 100644
-> --- a/include/linux/blkdev.h
-> +++ b/include/linux/blkdev.h
-> @@ -665,9 +665,15 @@ static inline unsigned int blk_queue_nr_zones(struct request_queue *q)
->   static inline unsigned int blk_queue_zone_no(struct request_queue *q,
->   					     sector_t sector)
->   {
-> +	sector_t zone_sectors = blk_queue_zone_sectors(q);
-> +
->   	if (!blk_queue_is_zoned(q))
->   		return 0;
-> -	return sector >> ilog2(q->limits.chunk_sectors);
-> +
-> +	if (is_power_of_2(zone_sectors))
-> +		return sector >> ilog2(zone_sectors);
-> +
-> +	return div64_u64(sector, zone_sectors);
->   }
+[01/11] ubd: don't set the discard_alignment queue limit
+        commit: 07c6e92a8478770a7302f7dde72f03a5465901bd
+[02/11] nbd: don't set the discard_alignment queue limit
+        commit: 4a04d517c56e0616c6f69afc226ee2691e543712
+[03/11] null_blk: don't set the discard_alignment queue limit
+        commit: fb749a87f4536d2fa86ea135ae4eff1072903438
+[04/11] virtio_blk: fix the discard_granularity and discard_alignment queue limits
+        commit: 62952cc5bccd89b76d710de1d0b43244af0f2903
+[05/11] dm-zoned: don't set the discard_alignment queue limit
+        commit: 44d583702f4429763c558624fac763650a1f05bf
+[06/11] raid5: don't set the discard_alignment queue limit
+        commit: 3d50d368c92ade2f98a3d0d28b842a57c35284e9
+[07/11] dasd: don't set the discard_alignment queue limit
+        commit: c3f765299632727fa5ea5a0acf118665227a4f1a
+[08/11] loop: remove a spurious clear of discard_alignment
+        commit: 4418bfd8fb9602d9cd8747c3ad52fdbaa02e2ffd
+[09/11] nvme: remove a spurious clear of discard_alignment
+        commit: 4e7f0ece41e1be8f876f320a0972a715daec0a50
+[10/11] rnbd-srv: use bdev_discard_alignment
+        commit: 18292faa89d2bff3bdd33ab9c065f45fb6710e47
+[11/11] xen-blkback: use bdev_discard_alignment
+        commit: c899b23533866910c90ef4386b501af50270d320
 
-Same comment here.
+Best regards,
+-- 
+Jens Axboe
 
-Thanks,
-
-Bart.
 
 --
 dm-devel mailing list
