@@ -1,82 +1,135 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 876FBC433EF
-	for <dm-devel@archiver.kernel.org>; Tue,  3 May 2022 07:12:06 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 23E61C433EF
+	for <dm-devel@archiver.kernel.org>; Tue,  3 May 2022 07:13:28 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-539-VtGR1IEHPm28qAmjyGWn2A-1; Tue, 03 May 2022 03:12:02 -0400
-X-MC-Unique: VtGR1IEHPm28qAmjyGWn2A-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-622-F853GjruN6SvDyx5e6O3Gg-1; Tue, 03 May 2022 03:13:24 -0400
+X-MC-Unique: F853GjruN6SvDyx5e6O3Gg-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BEE0F86B8AB;
-	Tue,  3 May 2022 07:11:59 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 01FB4416385;
-	Tue,  3 May 2022 07:11:58 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CF60229AA2F3;
+	Tue,  3 May 2022 07:13:22 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id BCF997AE4;
+	Tue,  3 May 2022 07:13:22 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id AE19F1947042;
-	Tue,  3 May 2022 07:11:57 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E32521947042;
+	Tue,  3 May 2022 07:13:18 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 1DF3A1947042
- for <dm-devel@listman.corp.redhat.com>; Mon,  2 May 2022 22:45:04 +0000 (UTC)
+ ESMTP id 9D8F61947041
+ for <dm-devel@listman.corp.redhat.com>; Tue,  3 May 2022 07:13:17 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 0884E40D282C; Mon,  2 May 2022 22:45:04 +0000 (UTC)
+ id 31069416385; Tue,  3 May 2022 07:13:17 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 03BF340D2820
- for <dm-devel@redhat.com>; Mon,  2 May 2022 22:45:03 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2C1FB415F5F
+ for <dm-devel@redhat.com>; Tue,  3 May 2022 07:13:17 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
  bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 54E05800186
- for <dm-devel@redhat.com>; Mon,  2 May 2022 22:45:03 +0000 (UTC)
-Received: from mail-pj1-f54.google.com (mail-pj1-f54.google.com
- [209.85.216.54]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-19-npJgTVM7NUWy36xcDyEggQ-1; Mon, 02 May 2022 18:44:59 -0400
-X-MC-Unique: npJgTVM7NUWy36xcDyEggQ-1
-Received: by mail-pj1-f54.google.com with SMTP id
- cq17-20020a17090af99100b001dc0386cd8fso571885pjb.5
- for <dm-devel@redhat.com>; Mon, 02 May 2022 15:44:58 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:date:from:to:cc:subject:message-id:references
- :mime-version:content-disposition:in-reply-to;
- bh=9Pev6TadqoPCvCslhpANrkqa0tRzANTdzEtaxAf0Hbw=;
- b=pAvz8bfFfFVdHeduvrtOCAU/RIsHcRorfpAQLlvqINOoJ1bQiR5MbaICQMU3XUpH8d
- ZLlADs5BeRtH/grPsNi8GnuKGdEyI+WH6ZStGGYxlfkAKHm++rRPUrW4WAH+gll+kJjR
- TepC39SEIdexrEXZN1IgDbycZS1YhB3MyIMozrNuzrt3KK/Y/IgtSRzrO33DNr0OBVZs
- 5PSNfa9Yu2UrakofPYYauoGSog+XUA9ZFyXn3ZLQXm7+Eux7SctheIbFsGuYcNUsmyIy
- gg24tVxr+t4eDss6hWBibJj9JkH+apr/LX75dBI3VxD/IDOP8OSPCdylA2MnG82fORoc
- 6ZZQ==
-X-Gm-Message-State: AOAM531p1bBID+ZLxgGJiPvkkywwAOjK9yXz7s2lf7nGbqGTTAHiviCz
- 9b2cAysaT6AvyJ8dEN8ZbUEjhg==
-X-Google-Smtp-Source: ABdhPJxhVHtiibpNcHj8mIUaI5q3jvfhB3UxBy63zLm72g4zQPjmd26WW0fmoc9EkpEka6ka3qUucw==
-X-Received: by 2002:a17:902:d4c2:b0:15e:abd0:926f with SMTP id
- o2-20020a170902d4c200b0015eabd0926fmr4925055plg.129.1651531497972; 
- Mon, 02 May 2022 15:44:57 -0700 (PDT)
-Received: from localhost ([2620:15c:202:201:1e1a:955c:a9ca:e550])
- by smtp.gmail.com with UTF8SMTPSA id
- f3-20020a17090a654300b001d26c7d5aacsm218470pjs.13.2022.05.02.15.44.56
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Mon, 02 May 2022 15:44:57 -0700 (PDT)
-Date: Mon, 2 May 2022 15:44:56 -0700
-From: Matthias Kaehlcke <mka@chromium.org>
-To: Kees Cook <keescook@chromium.org>
-Message-ID: <YnBe6K72iKSDSqk9@google.com>
-References: <20220426213110.3572568-1-mka@chromium.org>
- <20220426143059.v2.2.I01c67af41d2f6525c6d023101671d7339a9bc8b5@changeid>
- <202204302316.AF04961@keescook>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 117BA802819
+ for <dm-devel@redhat.com>; Tue,  3 May 2022 07:13:17 +0000 (UTC)
+Received: from de-smtp-delivery-102.mimecast.com
+ (de-smtp-delivery-102.mimecast.com [194.104.109.102]) by relay.mimecast.com
+ with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-631-wi2mZn3kPBSk7ypJGTg6aA-1; Tue, 03 May 2022 03:13:15 -0400
+X-MC-Unique: wi2mZn3kPBSk7ypJGTg6aA-1
+Received: from EUR02-VE1-obe.outbound.protection.outlook.com
+ (mail-ve1eur02lp2056.outbound.protection.outlook.com [104.47.6.56]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ de-mta-17-ZW6U5gShMlm2Y7jKhjPVeA-1; Tue, 03 May 2022 09:13:13 +0200
+X-MC-Unique: ZW6U5gShMlm2Y7jKhjPVeA-1
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com (2603:10a6:10:103::20)
+ by DB8PR04MB6923.eurprd04.prod.outlook.com (2603:10a6:10:114::23)
+ with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5206.24; Tue, 3 May
+ 2022 07:13:12 +0000
+Received: from DB8PR04MB6555.eurprd04.prod.outlook.com
+ ([fe80::21aa:a826:f438:827f]) by DB8PR04MB6555.eurprd04.prod.outlook.com
+ ([fe80::21aa:a826:f438:827f%7]) with mapi id 15.20.5206.024; Tue, 3 May 2022
+ 07:13:12 +0000
+From: Martin Wilck <martin.wilck@suse.com>
+To: "bmarzins@redhat.com" <bmarzins@redhat.com>
+Thread-Topic: [dm-devel] [PATCH] update HPE MSA builtin config
+Thread-Index: AQHYXBXF8ZWLcvy5HUadA+386xOhQK0Lw7vOgABLGgCAALN9gA==
+Date: Tue, 3 May 2022 07:13:11 +0000
+Message-ID: <a66b0ccd977339af9da5f46f084c1ff279b9e706.camel@suse.com>
+References: <1651270144-29953-1-git-send-email-bmarzins@redhat.com>
+ <dc486bce737a9784543af9d910cb4f4ea15e5260.camel@suse.com>
+ <20220502160140.GR24684@octiron.msp.redhat.com>
+ <20220502203046.GT24684@octiron.msp.redhat.com>
+In-Reply-To: <20220502203046.GT24684@octiron.msp.redhat.com>
+Accept-Language: en-US
+X-MS-Has-Attach: 
+X-MS-TNEF-Correlator: 
+user-agent: Evolution 3.44.0
+x-ms-publictraffictype: Email
+x-ms-office365-filtering-correlation-id: 6f3ea915-2db3-4fea-97bc-08da2cd46243
+x-ms-traffictypediagnostic: DB8PR04MB6923:EE_
+x-microsoft-antispam-prvs: <DB8PR04MB69238EB59288CC367EC523AFFCC09@DB8PR04MB6923.eurprd04.prod.outlook.com>
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam: BCL:0
+x-microsoft-antispam-message-info: USBvzhtJMO0QKXKuON2RPaCDI1fk/dThqbHE+IDV0hIfEJUDuhX6b8BsRWH7sbZk+iHtjezO2iOyA1ijNhRrM8J6jm4OCJoGaWK2pSBWd1OUq8ZeeNpy7NwAsEQt5/fAbLnC7az4sT5UQcwx+pqV7Kq9LWR0jsGXcZhqNFdO7lBfHlmXREF2Pd7ml7v7+FzczbOkbx6mNdevILNDmt0MvznAKMO1dFKocsohHr3/a7K+ExhuUgUP53Mid7nyPz+TJjYU02Se5GYWunRzjCI/G1MqDgZQ9yvuAJHbb9w8RrJSIxpZy2qO5md8SRQZNMfqLi5KbdNYW6ESGWvs3fKkT8MlVgSN4pzrQ4T3Oz21g7GCjzR2k1HK+seUQw4xNIPfNdD7GBC35CIXulR0uNQ2cBQo0L8lmK2iJaq/9NRTmbLhMxPyC+4mucsdWkO1AgKgKKFzFZYr1EauRSF4yNYWE0Useo+TCzqNCgdniEgm3+9837m0s/qWooSXMhSfuGwAxQO9xZkii5lTqPj7g6PmTdrfiK4LHQB80aLeRD6zp0qi73XoKsJZhwEdOzUBtxqlbq5A6SBMg/RrcfausJTZV24fkt2J0WL1BPodC/U4tCUwKoySMwW/ncO+no05Bj9F3IrLr7qonTpJkDkA4uHj/m/mxOZqcJ1W44tCG9/Yo7mQVHw11ggI2At5iSPei9Ggu3c/JBqPOr1pulJDsvYS8Q==
+x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:DB8PR04MB6555.eurprd04.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230001)(366004)(4326008)(86362001)(66556008)(76116006)(83380400001)(8676002)(66446008)(64756008)(66946007)(66476007)(186003)(2616005)(71200400001)(2906002)(5660300002)(6486002)(508600001)(558084003)(6506007)(316002)(8936002)(38100700002)(54906003)(122000001)(38070700005)(6916009)(6512007)(26005)(36756003)(91956017)(44832011);
+ DIR:OUT; SFP:1101
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0: =?iso-8859-15?Q?z3JndJPMqN3PbdoWb2Zf2ZjU/X91y9n3QOYpTXw5Ud4uev19Da1ZJH0fn?=
+ =?iso-8859-15?Q?DjNhOBds57FUGbrgGI/7CWU5ATF80gJqhfT/zCf58o4M5ppg3CcpqO6aA?=
+ =?iso-8859-15?Q?CapGxxJMnVQzOCrvg7lPVEl0wMkfp0vvOXxinIV/ZF87c3Z/+7I2xr+Y/?=
+ =?iso-8859-15?Q?lOma2xWA8IMgc/aB6jCuticOp/kabyKhIOnW8qdCGZ6rJ6GUbt/2zDLSf?=
+ =?iso-8859-15?Q?BjkRKN0Rrm9z18F84DSxVH408DKhyfIHbej/aDLwOu3F26LE6BOGZzzSy?=
+ =?iso-8859-15?Q?UmNJoefsVL6WyU/qFgCxXjmvY/sKTjiTCTnPjvYuwBBqaMvfqnw3YLppF?=
+ =?iso-8859-15?Q?g5OOliLjkVpXd2sdn0pd76HXYNayGxneTPx189xhwpptfs4nN2MEhtq33?=
+ =?iso-8859-15?Q?qZR+0GPEGh59sglXuC1Y/NryIM30uVgK5psZFqUVSKLg/hATR+cowbVFy?=
+ =?iso-8859-15?Q?la1Fcr/ZduA/gckt0LorpM2z8VJei9mprcuVZkzPYXv9Ps/kjI9VxUNeO?=
+ =?iso-8859-15?Q?XBmR1zAGPSed0XFs7GPPIIqkNldGST8JRvd71CrqITo6TeC+L7ktHgbZh?=
+ =?iso-8859-15?Q?///zoVYOEscuJ3pUFRd6cj0hKrUNNQuZSk6jBx7PkA83qTIXn6RDKxgmI?=
+ =?iso-8859-15?Q?xFl706eBrSCTdjvdzDz40YaudcmP4R2RN4C7V6I7C9MFOf/SurSTaXrHn?=
+ =?iso-8859-15?Q?0UMIxZXBKBrb67QqhRwt9FuPqZM9Gx1NwaUH3BQSIjOn0l8JCT7qwo2p/?=
+ =?iso-8859-15?Q?T/gJbh5xvGUv03aMg/cW+tgWiiDwT1Fs7LOqazWDDu2teOXG7fqLgX5nv?=
+ =?iso-8859-15?Q?NkJshT/3iEUOshEY4xLswYnaJFqXNG3ktOvOYtawWxR5Xm5fBGNIFigzW?=
+ =?iso-8859-15?Q?ErfnmjNoSxdRJ6Se/FipE6M5Dr2O64p7hvst+qjkKC5x6anRDz33lC4nP?=
+ =?iso-8859-15?Q?SjPTxh09wWwhH4z4b2TgwYlwD4RhekZGx6x72sU3eYHDQFMC8Uj3i9lE5?=
+ =?iso-8859-15?Q?5pigK0AdXia6fWP9bBE2zsJfmGk5tm+9/utr3AYWGdU5i7nDsHThbPOAX?=
+ =?iso-8859-15?Q?t+P5xPpbdJqNEvpaILGmi9zs2Vjt+QiGGHslxCwrdp+xRfDUucGRktP0j?=
+ =?iso-8859-15?Q?yAzycN71INoS2XinF9VttNty+eZOisEm8J1a7y2jXFZqDmV9lwJjSjdlQ?=
+ =?iso-8859-15?Q?s44qbDG6fHqa042ZEWJKhlsGJBGRy7GuRWYMSWqgrWyRCAUDLYn++fgAa?=
+ =?iso-8859-15?Q?SMhmqlsFW1Vv/7+eWo6kNz1koLGi1rN0rHNqDwwIll0qj4vY1OCba2w/W?=
+ =?iso-8859-15?Q?Dg2daiKgU+mfNg+Bhna0Li3D7tPIZaC1jFfpbCjU+Dy3CU1TUSozMyt1W?=
+ =?iso-8859-15?Q?CvbdcSpSinraAN4P1aHcycpsXZB4zkClZo85PPCj3ZTCAi/cMsdmOcm9t?=
+ =?iso-8859-15?Q?uekzjiLml38wVWwWW8tErwe+e4sPUkIsQ1kBczGPCjoBZX6R65+SAd5hU?=
+ =?iso-8859-15?Q?PThrJ7hhGjsR8Xc3cqZDRrofWUnvfuSKVVVEnTDJ5J2Hqkw8REEI1nLxC?=
+ =?iso-8859-15?Q?Vd9/MsSKaH/wEAO89nKS961y/LW3doifl4rRaCz+xOXFwkmcwVX3FeXCQ?=
+ =?iso-8859-15?Q?6E+98pfTKax46ReU4J0SSgYpoX06sE2n9Jdp8U1D7vgmuAkpvDPvGk0kR?=
+ =?iso-8859-15?Q?2mPdlSKieerrHPR9ocE/4V8xi2pdrDTBFipCNIq2+Q901fl60Ck57GRzr?=
+ =?iso-8859-15?Q?skxJ/iKOVl39IGOwVnmCiDkKEb0aQ11Thz80+UC6PN/V+UgR8y0ugEmkD?=
+ =?iso-8859-15?Q?uL2gaxuhI6P6xqjBlzoSzryKDWAWJySkiZ2JcTsn+PLY15Ok1NujKEhVD?=
+ =?iso-8859-15?Q?POOI=3D?=
 MIME-Version: 1.0
-In-Reply-To: <202204302316.AF04961@keescook>
+X-OriginatorOrg: suse.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: DB8PR04MB6555.eurprd04.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 6f3ea915-2db3-4fea-97bc-08da2cd46243
+X-MS-Exchange-CrossTenant-originalarrivaltime: 03 May 2022 07:13:11.9163 (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: f7a17af6-1c5c-4a36-aa8b-f5be247aa4ba
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: yg04A1gga0GAMP/youLS7LcKHkLst6hs9BDb4wL1MykbLXK8mDzlCXjfshmNWOh5KgErwPwJVILsG53CJCla5w==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DB8PR04MB6923
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -84,10 +137,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-X-Mailman-Approved-At: Tue, 03 May 2022 07:11:56 +0000
-Subject: Re: [dm-devel] [PATCH v2 2/3] LoadPin: Enable loading from trusted
- dm-verity devices
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: Re: [dm-devel] [PATCH] update HPE MSA builtin config
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -99,58 +150,29 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Douglas Anderson <dianders@chromium.org>, dm-devel@redhat.com,
- Mike Snitzer <snitzer@kernel.org>, linux-kernel@vger.kernel.org,
- James Morris <jmorris@namei.org>, linux-raid@vger.kernel.org,
- Song Liu <song@kernel.org>, linux-security-module@vger.kernel.org,
- Alasdair Kergon <agk@redhat.com>, "Serge E . Hallyn" <serge@hallyn.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ "Jon.Paul@hpe.com" <Jon.Paul@hpe.com>,
+ "xose.vazquez@gmail.com" <xose.vazquez@gmail.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
+Content-ID: <D9B3D1F03BC70E47A1D2C50B5A6FA1B8@eurprd04.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Sat, Apr 30, 2022 at 11:21:54PM -0700, Kees Cook wrote:
-> On Tue, Apr 26, 2022 at 02:31:09PM -0700, Matthias Kaehlcke wrote:
-> > I'm still doubting what would be the best way to configure
-> > the list of trusted digests. The approach in v2 of writing
-> > a path through sysctl is flexible, but it also feels a bit
-> > odd. I did some experiments with passing a file descriptor
-> > through sysctl, but it's also odd and has its own issues.
-> > Passing the list through a kernel parameter seems hacky.
-> > A Kconfig string would work, but can be have issues when
-> > the same config is used for different platforms, where
-> > some may have trusted digests and others not.
+On Mon, 2022-05-02 at 15:30 -0500, Benjamin Marzinski wrote:
 > 
-> I prefer the idea of passing an fd, since that can just use LoadPin
-> itself to verify the origin of the fd.
-> 
-> I also agree, though, that it's weird as a sysctl. Possible thoughts:
-> 
-> - make it a new ioctl on /dev/mapper/control (seems reasonable given
->   that it's specifically about dm devices).
-> - have LoadPin grow a securityfs node, maybe something like
->   /sys/kernel/security/loadpin/dm-verify and do the ioctl there (seems
->   reasonable given that it's specifically about LoadPin, but is perhaps
->   more overhead to built the securityfs).
+> Do you have a strong feeling on this? Otherwise, I'm fine with the
+> config as they gave it to me.
 
-Thanks for your feedback!
+Ok. No strong feelings.
 
-Agreed that an ioctl is preferable over a sysctl interface. I wasn't aware
-of securityfs and prefer it over a /dev/mapper/control ioctl. Ultimately
-the list of digests is meaningful to LoadPin, not (directly) to the device
-mapper / verity. I'm not sure how well this feature of integrating LoadPin
-with verity will be by the verity maintainers in the first place, it's
-probably best to limit the LoadPin specific stuff in verity to a minimum.
-I experimented a bit with the securityfs option, building it doesn't seem
-too much of an overhead. If loadpin.c ends up too cluttered with the
-verity and securityfs stuff I could try to outsource some of it to (a)
-dedicated file(s).
+Martin
 
 --
 dm-devel mailing list
