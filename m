@@ -4,90 +4,90 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 899B2C433EF
-	for <dm-devel@archiver.kernel.org>; Wed,  4 May 2022 20:10:32 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id C7974C433F5
+	for <dm-devel@archiver.kernel.org>; Wed,  4 May 2022 20:26:37 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-175-ikASE5_tN8W3N2SaHqwbTw-1; Wed, 04 May 2022 16:10:28 -0400
-X-MC-Unique: ikASE5_tN8W3N2SaHqwbTw-1
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
+ us-mta-575-hFiwQIoyPmWmZZPRNESPFQ-1; Wed, 04 May 2022 16:26:33 -0400
+X-MC-Unique: hFiwQIoyPmWmZZPRNESPFQ-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 958D3803524;
-	Wed,  4 May 2022 20:10:26 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A3D421C06903;
+	Wed,  4 May 2022 20:26:31 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 38D67111DCF2;
-	Wed,  4 May 2022 20:10:26 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id E5014C28101;
+	Wed,  4 May 2022 20:26:30 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0E07A1947047;
-	Wed,  4 May 2022 20:10:26 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 913621947046;
+	Wed,  4 May 2022 20:26:30 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8E8051947043
- for <dm-devel@listman.corp.redhat.com>; Wed,  4 May 2022 20:10:24 +0000 (UTC)
+ ESMTP id 485DD1947043
+ for <dm-devel@listman.corp.redhat.com>; Wed,  4 May 2022 20:26:29 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 65F9940E7F12; Wed,  4 May 2022 20:10:24 +0000 (UTC)
+ id F0D1354ED0F; Wed,  4 May 2022 20:26:28 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 615B740E7F06
- for <dm-devel@redhat.com>; Wed,  4 May 2022 20:10:24 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 463321C05EA6
- for <dm-devel@redhat.com>; Wed,  4 May 2022 20:10:24 +0000 (UTC)
-Received: from mail-lj1-f172.google.com (mail-lj1-f172.google.com
- [209.85.208.172]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id ED0D354ECFF
+ for <dm-devel@redhat.com>; Wed,  4 May 2022 20:26:28 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D0A3B3810D20
+ for <dm-devel@redhat.com>; Wed,  4 May 2022 20:26:28 +0000 (UTC)
+Received: from mail-lf1-f42.google.com (mail-lf1-f42.google.com
+ [209.85.167.42]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-161-q_SBMhIEOdqxkUWkfcJlSQ-1; Wed, 04 May 2022 16:10:22 -0400
-X-MC-Unique: q_SBMhIEOdqxkUWkfcJlSQ-1
-Received: by mail-lj1-f172.google.com with SMTP id v4so3061620ljd.10
- for <dm-devel@redhat.com>; Wed, 04 May 2022 13:10:22 -0700 (PDT)
+ us-mta-130-OwxpWsWHPwK8_-JweppWag-1; Wed, 04 May 2022 16:26:26 -0400
+X-MC-Unique: OwxpWsWHPwK8_-JweppWag-1
+Received: by mail-lf1-f42.google.com with SMTP id w1so4278103lfa.4
+ for <dm-devel@redhat.com>; Wed, 04 May 2022 13:26:26 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:mime-version:references:in-reply-to:from:date
  :message-id:subject:to:cc;
- bh=O0/hKmkvb5BoU0+UFK3i+vBfCGj7h/+eV5+6M1+ExZM=;
- b=SJfOi0M7S/aYI1OiJZq/r4x5FsF9PqIfZwo7nBokmyin4jXfw8Qm33gn2XisIWcFo+
- oqFg7IbJOHRkHbTrHbj2jHY4VCgurvJNIbMiTfsHNuM4z463CTYfEwswjL3/eHvVukz8
- w94K7h1lfou45gzzE+k2a3R6GaIHVKGMCBkNSPFFtnhVjavP1Ug+ZnXaL+BjyNuUQ6gJ
- 2Ic0GZ1HfTlx7uUriFvGu/PepUJwU3J79g7rkguPC/pzaaNcCkleFsIsHhbR2wUj7nek
- B2+FpcsPPqiNtwG4+7xwKrWuOlVv84bzTUHAEK1P26miO87SYbw49rb5DokMhaNDQpCq
- 7oGQ==
-X-Gm-Message-State: AOAM532nFsLId+yL1OSZNvaW9KcICDnQ4IpMR3N1d7BvoHBygNbttRYl
- uv7d5XOjK0sYI7lE+HHTxHD54U4SihyK5ZrySeA=
-X-Google-Smtp-Source: ABdhPJzVS+1VzuWKkf1nZ/JwBm6ndGlVCE7dInB0IhZ95JHqBxnhZtXH/3J/2r2IKvxmUgFue8kClQ==
-X-Received: by 2002:a2e:9197:0:b0:24f:2a75:f026 with SMTP id
- f23-20020a2e9197000000b0024f2a75f026mr13875371ljg.289.1651695020837; 
- Wed, 04 May 2022 13:10:20 -0700 (PDT)
-Received: from mail-lj1-f180.google.com (mail-lj1-f180.google.com.
- [209.85.208.180]) by smtp.gmail.com with ESMTPSA id
- t9-20020a2e8e69000000b0024f3d1dae9esm1766484ljk.38.2022.05.04.13.10.20
+ bh=mmrVv14fPgXxwEi6qY3BXXY+CxBqDRKooA9FDuaSqV8=;
+ b=euMApSK+cM0A311rfKKqLh4Li38//QKlankejmRTIGxuSya/AYfl2vA6Ecf/HHwBM7
+ fkm4tgrqO7LwcY22OjRaE6n39zrJbJ/Rg/t8zc5QPQKDoMw3ydos5aWVTV+fZQ3l+DjH
+ Z2tVV9Ne7t06Tmx78h3EAb6+IGYSix6Pla8wrBnO4IUkMiP0nE0fxyFb34//EMjpe8AA
+ 0XmGodYWi1tntIbEKVDdKFJ3/HDwvm+A5jTGhAIKSezsc2qTRLRxL5BWyoyC1z2/YUJ7
+ eUbeN/934TwJe+KD/E3SmL2XQIKzoiJPFo5hTtQJZAC4kRMpvrqVgWCiIy2UvtNm6R+u
+ 68rA==
+X-Gm-Message-State: AOAM532raHupI7pIuloDoSIcgJN0YUFp0H+jmiKNjlafh2N+56Yqxtxd
+ vCKMTVQ8pyg2HS9QKQW9lb6tAXMZnaZ+A6r5P5U=
+X-Google-Smtp-Source: ABdhPJy880qHaboZQmHLrL/t+DRYO2YB1TDvu+ZDALPI0ZaHis0d6cGhjNPzKrZB7AqTayi0jIdKfw==
+X-Received: by 2002:ac2:4a85:0:b0:472:1f8a:ae24 with SMTP id
+ l5-20020ac24a85000000b004721f8aae24mr15085038lfp.370.1651695984670; 
+ Wed, 04 May 2022 13:26:24 -0700 (PDT)
+Received: from mail-lf1-f47.google.com (mail-lf1-f47.google.com.
+ [209.85.167.47]) by smtp.gmail.com with ESMTPSA id
+ y17-20020ac24211000000b0047255d211bcsm291415lfh.235.2022.05.04.13.26.22
  for <dm-devel@redhat.com>
  (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Wed, 04 May 2022 13:10:20 -0700 (PDT)
-Received: by mail-lj1-f180.google.com with SMTP id m23so3106019ljc.0
- for <dm-devel@redhat.com>; Wed, 04 May 2022 13:10:20 -0700 (PDT)
-X-Received: by 2002:a2e:914d:0:b0:24f:6374:3eba with SMTP id
- q13-20020a2e914d000000b0024f63743ebamr10017408ljg.506.1651695019712; Wed, 04
- May 2022 13:10:19 -0700 (PDT)
+ Wed, 04 May 2022 13:26:23 -0700 (PDT)
+Received: by mail-lf1-f47.google.com with SMTP id y32so4269272lfa.6
+ for <dm-devel@redhat.com>; Wed, 04 May 2022 13:26:22 -0700 (PDT)
+X-Received: by 2002:a05:6512:3c93:b0:44b:4ba:c334 with SMTP id
+ h19-20020a0565123c9300b0044b04bac334mr15722106lfv.27.1651695982340; Wed, 04
+ May 2022 13:26:22 -0700 (PDT)
 MIME-Version: 1.0
-References: <alpine.LRH.2.02.2204241648270.17244@file01.intranet.prod.int.rdu2.redhat.com>
- <CAHk-=wh+Z+OKH3jRttWGHbWSQq2wVMtdnA=ntDiadZu=VxAC7w@mail.gmail.com>
- <alpine.LRH.2.02.2204250723120.26714@file01.intranet.prod.int.rdu2.redhat.com>
+References: <alpine.LRH.2.02.2204250723120.26714@file01.intranet.prod.int.rdu2.redhat.com>
  <YnI7hE4cIfjsdKSF@antec> <YnJI4Ru0AlUgrr9C@zx2c4.com>
  <YnJOCbLtdATzC+jn@zx2c4.com>
  <YnJQXr3igEMTqY3+@smile.fi.intel.com> <YnJSQ3jJyvhmIstD@zx2c4.com>
  <CAHk-=wgb_eBdjM_mzEvXfRG2EhrSK5MHNGyAj7=4vxvN4U9Rug@mail.gmail.com>
  <CAHmME9q_-nfGxp8_VCqaritm4N8v8g67AzRjXs9du846JhhpoQ@mail.gmail.com>
- <CAAfxs77yaLvWx9KnkDZX7E1eDm9N-NVJn5n8=mCK9BU-cSob=A@mail.gmail.com>
-In-Reply-To: <CAAfxs77yaLvWx9KnkDZX7E1eDm9N-NVJn5n8=mCK9BU-cSob=A@mail.gmail.com>
+ <CAHk-=wiaj8SMSQTWAx2cUFqzRWRqBspO5YV=qA8M+QOC2vDorw@mail.gmail.com>
+ <CAHk-=witNAEG7rRsbxD0-4mxhtijRT8fwSc3QCi5HN1sR=0YcA@mail.gmail.com>
+ <YnLeH7kBImX5XLNn@antec>
+In-Reply-To: <YnLeH7kBImX5XLNn@antec>
 From: Linus Torvalds <torvalds@linux-foundation.org>
-Date: Wed, 4 May 2022 13:10:03 -0700
-X-Gmail-Original-Message-ID: <CAHk-=wjLRo-6PbhbvMUDojbMo=L+2jc5VpCYTyF-LGxZPhUngA@mail.gmail.com>
-Message-ID: <CAHk-=wjLRo-6PbhbvMUDojbMo=L+2jc5VpCYTyF-LGxZPhUngA@mail.gmail.com>
+Date: Wed, 4 May 2022 13:26:05 -0700
+X-Gmail-Original-Message-ID: <CAHk-=wj5UXrsLz3GzYWLaU1b=_dRQWqj1ZC-buf6MHmLrJF_Og@mail.gmail.com>
+Message-ID: <CAHk-=wj5UXrsLz3GzYWLaU1b=_dRQWqj1ZC-buf6MHmLrJF_Og@mail.gmail.com>
 To: Stafford Horne <shorne@gmail.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
@@ -96,7 +96,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
 Subject: Re: [dm-devel] [PATCH v2] hex2bin: make the function hex_to_bin
  constant-time
 X-BeenThere: dm-devel@redhat.com
@@ -122,7 +122,7 @@ Cc: Andy Shevchenko <andy@kernel.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>,
  Herbert Xu <herbert@gondor.apana.org.au>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -130,30 +130,28 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, May 4, 2022 at 12:58 PM Stafford Horne <shorne@gmail.com> wrote:
+On Wed, May 4, 2022 at 1:12 PM Stafford Horne <shorne@gmail.com> wrote:
 >
-> I have uploaded a diff I created here:
->   https://gist.github.com/54334556f2907104cd12374872a0597c
->
-> It shows the same output.
+> Which version of Fedora?
 
-In hex_to_bin itself it seems to only be a difference due to some
-register allocation (r19 and r3 switched around).
+F35 here.
 
-But then it gets inlined into hex2bin and there changes there seem to
-be about instruction and basic block scheduling, so it's a lot harder
-to see what's going on.
+But looking further, it's not dnsmasq either. Yes, dnsmasq is built
+with no-i18n, but as mentioned IDN2 does seem to be enabled, so I
+think it's just "no i18n messages".
 
-And a lot of constant changes, which honestly look just like code code
-moved around by 16 bytes and offsets changed due to that.
+It seems to be the upstream dns server.
 
-So I doubt it's hex_to_bin() that is causing problems, I think it's
-purely code movement. Which explains why adding a nop or a fake printk
-fixes things.
+Using 8.8.8.8 explicitly makes it work for me, and that obviously
+bypasses not just the local dns cache, but also the next dns server
+hop.
 
-Some alignment assumption that got broken?
+Could be anywhere. Xfinity, Nest WiFi, or the cable router. They all
+are doing their own dns thing.
 
-               Linus
+Probably my cable box, since it's likely the oldest thing in the chain.
+
+                Linus
 
 --
 dm-devel mailing list
