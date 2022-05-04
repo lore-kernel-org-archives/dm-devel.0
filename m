@@ -4,60 +4,59 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-74.mimecast.com (us-smtp-delivery-74.mimecast.com [170.10.133.74])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id ABF77C433FE
-	for <dm-devel@archiver.kernel.org>; Thu,  5 May 2022 07:13:23 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 48AAEC4167E
+	for <dm-devel@archiver.kernel.org>; Thu,  5 May 2022 07:13:24 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-116-AxjGHKfaNPeZ-2BtekO4LA-1; Thu, 05 May 2022 03:13:19 -0400
-X-MC-Unique: AxjGHKfaNPeZ-2BtekO4LA-1
+ us-mta-240-8n-fiYnpO4eISVECDZyw3A-1; Thu, 05 May 2022 03:13:20 -0400
+X-MC-Unique: 8n-fiYnpO4eISVECDZyw3A-1
 Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1420038041DA;
-	Thu,  5 May 2022 07:13:16 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 76311833972;
+	Thu,  5 May 2022 07:13:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id F3A21463EC0;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 62D3E463EC0;
 	Thu,  5 May 2022 07:13:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 3BCD01947BB2;
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 039BB1947BA6;
 	Thu,  5 May 2022 07:13:13 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D59171947040
- for <dm-devel@listman.corp.redhat.com>; Wed,  4 May 2022 09:57:45 +0000 (UTC)
+ ESMTP id 49B961947040
+ for <dm-devel@listman.corp.redhat.com>; Wed,  4 May 2022 09:50:03 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id AFAB89E89; Wed,  4 May 2022 09:57:45 +0000 (UTC)
+ id DB96940CFD33; Wed,  4 May 2022 09:50:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id AAF359E8E
- for <dm-devel@redhat.com>; Wed,  4 May 2022 09:57:39 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D732F40CFD32
+ for <dm-devel@redhat.com>; Wed,  4 May 2022 09:50:02 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id BCE06185A7A4
- for <dm-devel@redhat.com>; Wed,  4 May 2022 09:57:39 +0000 (UTC)
-Received: from dfw.source.kernel.org (dfw.source.kernel.org
- [139.178.84.217]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-628-ZJMTbsidNWuvaIdEM2BSyA-1; Wed, 04 May 2022 05:57:36 -0400
-X-MC-Unique: ZJMTbsidNWuvaIdEM2BSyA-1
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C02E4904866
+ for <dm-devel@redhat.com>; Wed,  4 May 2022 09:50:02 +0000 (UTC)
+Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-394-QqvSnBzzMgS5NtZMRaKvFA-1; Wed, 04 May 2022 05:50:01 -0400
+X-MC-Unique: QqvSnBzzMgS5NtZMRaKvFA-1
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by dfw.source.kernel.org (Postfix) with ESMTPS id 2AE6561A5A;
- Wed,  4 May 2022 09:57:35 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5F749C385A5;
- Wed,  4 May 2022 09:57:33 +0000 (UTC)
-Received: by mail.zx2c4.com (ZX2C4 Mail Server) with ESMTPSA id ebcdca06
+ by ams.source.kernel.org (Postfix) with ESMTPS id 9F1D6B8232B;
+ Wed,  4 May 2022 09:44:44 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 08298C385A4;
+ Wed,  4 May 2022 09:44:41 +0000 (UTC)
+Received: by mail.zx2c4.com (ZX2C4 Mail Server) with ESMTPSA id 0e40ddb6
  (TLSv1.3:AEAD-AES256-GCM-SHA384:256:NO); 
- Wed, 4 May 2022 09:57:31 +0000 (UTC)
-Date: Wed, 4 May 2022 11:57:29 +0200
+ Wed, 4 May 2022 09:44:40 +0000 (UTC)
+Date: Wed, 4 May 2022 11:44:37 +0200
 From: "Jason A. Donenfeld" <Jason@zx2c4.com>
 To: Stafford Horne <shorne@gmail.com>
-Message-ID: <YnJOCbLtdATzC+jn@zx2c4.com>
+Message-ID: <YnJLBfONnbqZlv6j@zx2c4.com>
 References: <alpine.LRH.2.02.2204241648270.17244@file01.intranet.prod.int.rdu2.redhat.com>
  <CAHk-=wh+Z+OKH3jRttWGHbWSQq2wVMtdnA=ntDiadZu=VxAC7w@mail.gmail.com>
  <alpine.LRH.2.02.2204250723120.26714@file01.intranet.prod.int.rdu2.redhat.com>
@@ -71,7 +70,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 X-Mailman-Approved-At: Thu, 05 May 2022 07:13:10 +0000
 Subject: Re: [dm-devel] [PATCH v2] hex2bin: make the function hex_to_bin
  constant-time
@@ -107,25 +106,11 @@ Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
 On Wed, May 04, 2022 at 11:42:27AM +0200, Jason A. Donenfeld wrote:
-> So more likely is that this patch just helps unmask a real issue
-> elsewhere -- linker, compiler, or register restoration after preemption.
-> I don't think there's anything to do with regards to the patch of this
-> thread, as it's clearly fine. 
-
-The problem even goes away if I just add a nop...
-
-diff --git a/lib/hexdump.c b/lib/hexdump.c
-index 06833d404398..ace74f9b3d5a 100644
---- a/lib/hexdump.c
-+++ b/lib/hexdump.c
-@@ -46,6 +46,7 @@ EXPORT_SYMBOL(hex_asc_upper);
- int hex_to_bin(unsigned char ch)
- {
- 	unsigned char cu = ch & 0xdf;
-+	__asm__("l.nop 0");
- 	return -1 +
- 		((ch - '0' +  1) & (unsigned)((ch - '9' - 1) & ('0' - 1 - ch)) >> 8) +
- 		((cu - 'A' + 11) & (unsigned)((cu - 'F' - 1) & ('A' - 1 - cu)) >> 8);
+> (which might be semantically better anyway) and then
+> let the function itself do the sign change (see below).
+ 
+Actually, probably worse, not better. Didn't realize cu was being used
+after the masking.
 
 --
 dm-devel mailing list
