@@ -1,71 +1,66 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9CD8CC433EF
-	for <dm-devel@archiver.kernel.org>; Mon,  9 May 2022 20:34:10 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 07953C433EF
+	for <dm-devel@archiver.kernel.org>; Mon,  9 May 2022 21:16:02 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1652130961;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=uUxOT7HJ9vwk7v18VOiwDypM9WzbR0fEymJuSWcGo9c=;
+	b=O8HpDDbwig6pertC4rMh3t180wIIUzIG4lKqYRHGQnKyc5POyc5Xc/Tv82V3CzmlgEfTv3
+	6L8gD/JSHBL7lmgPUdUtr+pySAaTJ+2g/JJuzN1xV1Po2qZ5a20TsmCu+SW4eLympR2SB6
+	F1TjXhOaTPMxxgywyJXjiJ98XbC9HTc=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-635-VIJMxyBLMQW0Xw6ZXE_iHg-1; Mon, 09 May 2022 16:34:06 -0400
-X-MC-Unique: VIJMxyBLMQW0Xw6ZXE_iHg-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-524-d715oaTsNcyXZOaJdIyoLA-1; Mon, 09 May 2022 17:16:00 -0400
+X-MC-Unique: d715oaTsNcyXZOaJdIyoLA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CCCFE3810D24;
-	Mon,  9 May 2022 20:34:04 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5929985A5BE;
+	Mon,  9 May 2022 21:15:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 1AA47401E9C;
-	Mon,  9 May 2022 20:34:03 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0AC2F151F5C7;
+	Mon,  9 May 2022 21:15:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id CB3011947052;
-	Mon,  9 May 2022 20:34:02 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B25FD1947052;
+	Mon,  9 May 2022 21:15:56 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D55161947051
- for <dm-devel@listman.corp.redhat.com>; Mon,  9 May 2022 20:34:01 +0000 (UTC)
+ ESMTP id 7A4E91947051
+ for <dm-devel@listman.corp.redhat.com>; Mon,  9 May 2022 21:15:55 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id BE1A82166B4F; Mon,  9 May 2022 20:34:01 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id BA3C32166B4B
- for <dm-devel@redhat.com>; Mon,  9 May 2022 20:33:54 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CE7D829AB409
- for <dm-devel@redhat.com>; Mon,  9 May 2022 20:33:54 +0000 (UTC)
-Received: from bhuna.collabora.co.uk (bhuna.collabora.co.uk
- [46.235.227.227]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-609-qFB8PSoTMV6Vud2GZjq67A-1; Mon, 09 May 2022 16:33:51 -0400
-X-MC-Unique: qFB8PSoTMV6Vud2GZjq67A-1
-Received: from [127.0.0.1] (localhost [127.0.0.1])
- (Authenticated sender: krisman) with ESMTPSA id 7465D1F440DE
-From: Gabriel Krisman Bertazi <krisman@collabora.com>
-To: Mike Snitzer <snitzer@redhat.com>
-In-Reply-To: <Ynlv6lyV1OgZe6h5@redhat.com> (Mike Snitzer's message of "Mon, 9
- May 2022 15:47:54 -0400")
-Organization: Collabora
-References: <20220427165710.225808-1-krisman@collabora.com>
- <Ynlv6lyV1OgZe6h5@redhat.com>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.2 (gnu/linux)
-Date: Mon, 09 May 2022 16:33:46 -0400
-Message-ID: <875ymela39.fsf@collabora.com>
+ id 557B655085A; Mon,  9 May 2022 21:15:55 +0000 (UTC)
+Received: from octiron.msp.redhat.com (octiron.msp.redhat.com [10.15.80.209])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 40D07550857;
+ Mon,  9 May 2022 21:15:55 +0000 (UTC)
+Received: from octiron.msp.redhat.com (localhost.localdomain [127.0.0.1])
+ by octiron.msp.redhat.com (8.14.9/8.14.9) with ESMTP id 249LFrg6021269;
+ Mon, 9 May 2022 16:15:53 -0500
+Received: (from bmarzins@localhost)
+ by octiron.msp.redhat.com (8.14.9/8.14.9/Submit) id 249LFr4r021268;
+ Mon, 9 May 2022 16:15:53 -0500
+Date: Mon, 9 May 2022 16:15:52 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: mwilck@suse.com
+Message-ID: <20220509211552.GA5254@octiron.msp.redhat.com>
+References: <20220509152127.7257-1-mwilck@suse.com>
 MIME-Version: 1.0
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-Subject: Re: [dm-devel] dm: dm-mpath: Provide high-resolution timer to HST
- with bio-mpath
+In-Reply-To: <20220509152127.7257-1-mwilck@suse.com>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+Subject: Re: [dm-devel] [PATCH] multipath-tools: Makefile.inc: add test for
+ -D_FORTIFY_SOURCE=3
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -77,32 +72,78 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: dm-devel@redhat.com, kernel@collabora.com, khazhy@google.com
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com,
+ Martin =?utf-8?B?TGnFoWth?= <mliska@suse.cz>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Mike Snitzer <snitzer@redhat.com> writes:
+On Mon, May 09, 2022 at 05:21:27PM +0200, mwilck@suse.com wrote:
+> From: Martin Wilck <mwilck@suse.com>
 
-> Overall your code was OK, but I nudged it a bit further to be
-> inkeeping with how 'features' flags have been implemented elsewhere
-> (e.g. dm_target_type's features) -- by using a healer to test the
-> flag, etc.
->
-> I also tweaked some other small implementation details.  Please see:
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=dm-5.19&id=c06dfd124d46df9c482fbd1319b5fe19bcb1a110
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-looks good to me.  thanks for the fixups.
-
--- 
-Gabriel Krisman Bertazi
-
+> 
+> 6186645 ("Fix possibility to redefine -D_FORTIFY_SOURCE macro.")
+> does not work as-is, because OPTFLAGS can't be used to override CPPFLAGS.
+> Instead, add a test for support of -D_FORTIFY_SOURCE=3, and use it
+> automatically if supported. The test uses similar logic as e.g.
+> https://sourceware.org/git/?p=elfutils.git;a=commit;h=29859f2e79ef3c650ee9712cae990c6a7f787a7d
+> 
+> This test works in environments with glibc 2.33 or newer. On older distributions,
+> -D_FORTIFY_SOURCE=3 does not cause an error, and will thus be used. In this
+> case, it has the same effect as -D_FORTIFY_SOURCE=2. On alpine Linux (musl
+> libc), -D_FORTIFY_SOURCE=3 generates an error.
+> 
+> Fixes: 6186645 ("Fix possibility to redefine -D_FORTIFY_SOURCE macro.")
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  Makefile.inc | 16 +++++++++++++++-
+>  1 file changed, 15 insertions(+), 1 deletion(-)
+> 
+> diff --git a/Makefile.inc b/Makefile.inc
+> index cef7a06..b915c06 100644
+> --- a/Makefile.inc
+> +++ b/Makefile.inc
+> @@ -117,6 +117,20 @@ TEST_CC_OPTION = $(shell \
+>  		echo "$(2)"; \
+>  	fi)
+>  
+> +# "make" on some distros will fail on explicit '#' or '\#' in the program text below
+> +__HASH__ := \#
+> +# Check if _DFORTIFY_SOURCE=3 is supported.
+> +# On some distros (e.g. Debian Buster) it will be falsely reported as supported
+> +# but it doesn't seem to make a difference wrt the compilation result.
+> +FORTIFY_OPT := $(shell \
+> +	if /bin/echo -e '$(__HASH__)include <string.h>\nint main(void) { return 0; }' | \
+> +		$(CC) -o /dev/null -c -O2 -Werror -D_FORTIFY_SOURCE=3 -xc - 2>/dev/null; \
+> +	then \
+> +		echo "-D_FORTIFY_SOURCE=3"; \
+> +	else \
+> +		echo "-D_FORTIFY_SOURCE=2"; \
+> +	fi)
+> +
+>  STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
+>  ERROR_DISCARDED_QUALIFIERS := $(call TEST_CC_OPTION,-Werror=discarded-qualifiers,)
+>  WNOCLOBBERED := $(call TEST_CC_OPTION,-Wno-clobbered -Wno-error=clobbered,)
+> @@ -126,7 +140,7 @@ OPTFLAGS	:= -O2 -g $(STACKPROT) --param=ssp-buffer-size=4
+>  WARNFLAGS	:= -Werror -Wall -Wextra -Wformat=2 $(WFORMATOVERFLOW) -Werror=implicit-int \
+>  		  -Werror=implicit-function-declaration -Werror=format-security \
+>  		  $(WNOCLOBBERED) -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS)
+> -CPPFLAGS	:= -D_FORTIFY_SOURCE=2
+> +CPPFLAGS	:= $(FORTIFY_OPT)
+>  CFLAGS		:= --std=gnu99 $(CFLAGS) $(OPTFLAGS) $(WARNFLAGS) -pipe \
+>  		   -DBIN_DIR=\"$(bindir)\" -DMULTIPATH_DIR=\"$(plugindir)\" -DRUN_DIR=\"${RUN}\" \
+>  		   -DCONFIG_DIR=\"$(configdir)\" -DEXTRAVERSION=\"$(EXTRAVERSION)\" -MMD -MP
+> -- 
+> 2.36.0
 --
 dm-devel mailing list
 dm-devel@redhat.com
