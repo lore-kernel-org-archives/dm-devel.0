@@ -1,87 +1,67 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A1D26C43219
-	for <dm-devel@archiver.kernel.org>; Mon,  9 May 2022 07:53:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id DA35AC433F5
+	for <dm-devel@archiver.kernel.org>; Mon,  9 May 2022 09:16:13 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-457-R604Ft_XM1ykpIHh4zMHgg-1; Mon, 09 May 2022 03:53:32 -0400
-X-MC-Unique: R604Ft_XM1ykpIHh4zMHgg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-544-6YnZRhPIMkCIFkVYPZL92Q-1; Mon, 09 May 2022 05:16:09 -0400
+X-MC-Unique: 6YnZRhPIMkCIFkVYPZL92Q-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 30B2D38149CA;
-	Mon,  9 May 2022 07:53:30 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A3A1E29AB3F8;
+	Mon,  9 May 2022 09:16:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 19B561415628;
-	Mon,  9 May 2022 07:53:30 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0DF60C27E80;
+	Mon,  9 May 2022 09:16:06 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E45201947062;
-	Mon,  9 May 2022 07:53:28 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
- [10.11.54.6])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DC9431947052;
+	Mon,  9 May 2022 09:16:05 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 92812194704E
- for <dm-devel@listman.corp.redhat.com>; Sun,  8 May 2022 00:37:40 +0000 (UTC)
+ ESMTP id ED6DF19466DF
+ for <dm-devel@listman.corp.redhat.com>; Mon,  9 May 2022 09:16:04 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 7D7B32166B48; Sun,  8 May 2022 00:37:40 +0000 (UTC)
+ id B93F7C27DB5; Mon,  9 May 2022 09:16:04 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 78E322166B2F
- for <dm-devel@redhat.com>; Sun,  8 May 2022 00:37:36 +0000 (UTC)
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id B5479C15D7E
+ for <dm-devel@redhat.com>; Mon,  9 May 2022 09:16:04 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4CF9A811E75
- for <dm-devel@redhat.com>; Sun,  8 May 2022 00:37:35 +0000 (UTC)
-Received: from mail-pl1-f170.google.com (mail-pl1-f170.google.com
- [209.85.214.170]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A1EF185A7A4
+ for <dm-devel@redhat.com>; Mon,  9 May 2022 09:16:04 +0000 (UTC)
+Received: from mo4-p01-ob.smtp.rzone.de (mo4-p01-ob.smtp.rzone.de
+ [85.215.255.53]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-517-wpwuMW5jNa-IAiNpO_YHQw-1; Sat, 07 May 2022 20:37:30 -0400
-X-MC-Unique: wpwuMW5jNa-IAiNpO_YHQw-1
-Received: by mail-pl1-f170.google.com with SMTP id d22so10780223plr.9;
- Sat, 07 May 2022 17:37:29 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:date:from:to:cc:subject:message-id:references
- :mime-version:content-disposition:in-reply-to;
- bh=arUH2MRVxEf8vhAeq3i8+iP+btufOwV/ehc3jq4WcgU=;
- b=Xj1biJQGpyM10rQW6td/T1D4VkE2yQtswOp4CQxuJFSF9L6ILINYNPg//U5QNYZ1EP
- O743A61CF1+D1jmQ2UvMQ2iSocA+wieZED70iQnFtQ2gi+c5WEW6yIwvzPtbZA47kjSG
- SaYy/mtRDGnlyKEw0iqTwXiuOCyaSpFuzUpugE3SM9Iojl7Ocp97OkWzIUhI27qni0gz
- Cqe+Y5VE07A5vm7g13A9Zh9Ru1wba01nFuxysAlaSdvHDFPYiSQrH8AUaEkNK/jDC3f+
- ElAfOUXcUyHkVsodXulxOJcoKGohGcRwkfmNF2mPUwXLR+OtDdtcroga0JioLAGJVI/F
- gN4Q==
-X-Gm-Message-State: AOAM532ihs1xI28LfuK/wcMLX1M1ddTyt/Sn8TCwIFGGtTbOub1GwX9e
- G8AfFtHU9yBc2T35kvc82S0=
-X-Google-Smtp-Source: ABdhPJwLlAmDIofQb7jE/g+VMSVHar3owskWZ/EMG0HUf496uiLDgk4O2m3XYmugmFA8Z827riK8VA==
-X-Received: by 2002:a17:902:f68d:b0:15e:bd3c:43da with SMTP id
- l13-20020a170902f68d00b0015ebd3c43damr9894794plg.164.1651970248880; 
- Sat, 07 May 2022 17:37:28 -0700 (PDT)
-Received: from localhost ([2409:10:24a0:4700:e8ad:216a:2a9d:6d0c])
- by smtp.gmail.com with ESMTPSA id
- a7-20020a1709027e4700b0015e8d4eb222sm3341599pln.108.2022.05.07.17.37.27
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Sat, 07 May 2022 17:37:27 -0700 (PDT)
-Date: Sun, 8 May 2022 09:37:26 +0900
-From: Stafford Horne <shorne@gmail.com>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Message-ID: <YncQxl1shpH5TpbK@antec>
-References: <YnI7hE4cIfjsdKSF@antec> <YnJI4Ru0AlUgrr9C@zx2c4.com>
- <YnJOCbLtdATzC+jn@zx2c4.com> <YnJQXr3igEMTqY3+@smile.fi.intel.com>
- <YnJSQ3jJyvhmIstD@zx2c4.com>
- <CAHk-=wgb_eBdjM_mzEvXfRG2EhrSK5MHNGyAj7=4vxvN4U9Rug@mail.gmail.com>
- <CAHmME9q_-nfGxp8_VCqaritm4N8v8g67AzRjXs9du846JhhpoQ@mail.gmail.com>
- <CAAfxs77yaLvWx9KnkDZX7E1eDm9N-NVJn5n8=mCK9BU-cSob=A@mail.gmail.com>
- <CAHk-=wjLRo-6PbhbvMUDojbMo=L+2jc5VpCYTyF-LGxZPhUngA@mail.gmail.com>
- <YnLkYjOF2vEOdjOo@antec>
+ us-mta-172-7ABhTasiN0u1xYRb6XDL0Q-1; Mon, 09 May 2022 05:16:03 -0400
+X-MC-Unique: 7ABhTasiN0u1xYRb6XDL0Q-1
+X-RZG-AUTH: ":PHkGeUmrW+uCZmxs998QJRUX30nOwJd7j/79t2yVxcUdnYNcUb5wZPHWwAJ3XYfSj54="
+X-RZG-CLASS-ID: mo00
+Received: from [192.168.178.22] by smtp.strato.de (RZmta 47.42.2 DYNA|AUTH)
+ with ESMTPSA id Y03eaey499CHTay
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256 bits))
+ (Client did not present a certificate);
+ Mon, 9 May 2022 11:12:17 +0200 (CEST)
+Message-ID: <8f8d7334-0812-7489-44a7-34c2bf0c9973@thson.de>
+Date: Mon, 9 May 2022 11:12:16 +0200
 MIME-Version: 1.0
-In-Reply-To: <YnLkYjOF2vEOdjOo@antec>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.9.0
+To: Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
+ dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com
+References: <20220106203436.281629-1-public@thson.de>
+ <9fefc681-c8dd-0312-2d6b-ffe3fec05dcf@linux.microsoft.com>
+From: Thore Sommer <public@thson.de>
+In-Reply-To: <9fefc681-c8dd-0312-2d6b-ffe3fec05dcf@linux.microsoft.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -89,10 +69,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
-X-Mailman-Approved-At: Mon, 09 May 2022 07:53:25 +0000
-Subject: Re: [dm-devel] [PATCH v2] hex2bin: make the function hex_to_bin
- constant-time
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: Re: [dm-devel] [RFC PATCH 0/3] dm ima: allow targets to remeasure
+ their state
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -104,100 +83,69 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Andy Shevchenko <andy@kernel.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>,
- Mike Snitzer <msnitzer@redhat.com>,
- Andy Shevchenko <andriy.shevchenko@intel.com>,
- Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
- Mimi Zohar <zohar@linux.ibm.com>, Milan Broz <gmazyland@gmail.com>,
- device-mapper development <dm-devel@redhat.com>,
- Mikulas Patocka <mpatocka@redhat.com>,
- Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
- "David S. Miller" <davem@davemloft.net>,
- Herbert Xu <herbert@gondor.apana.org.au>
+Cc: tusharsu@linux.microsoft.com, linux-integrity@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Language: en-US
+Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
 
-On Thu, May 05, 2022 at 05:38:58AM +0900, Stafford Horne wrote:
-> On Wed, May 04, 2022 at 01:10:03PM -0700, Linus Torvalds wrote:
-> > On Wed, May 4, 2022 at 12:58 PM Stafford Horne <shorne@gmail.com> wrote:
-> > >
-> > > I have uploaded a diff I created here:
-> > >   https://gist.github.com/54334556f2907104cd12374872a0597c
-> > >
-> > > It shows the same output.
-> > 
-> > In hex_to_bin itself it seems to only be a difference due to some
-> > register allocation (r19 and r3 switched around).
-> > 
-> > But then it gets inlined into hex2bin and there changes there seem to
-> > be about instruction and basic block scheduling, so it's a lot harder
-> > to see what's going on.
-> > 
-> > And a lot of constant changes, which honestly look just like code code
-> > moved around by 16 bytes and offsets changed due to that.
-> > 
-> > So I doubt it's hex_to_bin() that is causing problems, I think it's
-> > purely code movement. Which explains why adding a nop or a fake printk
-> > fixes things.
-> > 
-> > Some alignment assumption that got broken?
-> 
-> This is what it looks like to me too.  I will have to do a deep dive on what is
-> going on with this particular build combination as I can't figure out what it is
-> off the top of my head.
-> 
-> This test is using a gcc 11 compiler, I tried with my gcc 12 toolchain and the
-> issue cannot be reproduced.
-> 
->   - musl gcc 11 - https://musl.cc/or1k-linux-musl-cross.tgz
->   - openrisc gcc 12 - https://github.com/openrisc/or1k-gcc/releases/tag/or1k-12.0.1-20220210-20220304
-> 
-> But again the difference between the two compiler outputs is a lot of register
-> allocation and offsets changes.  Its not easy to see anything that stands out.
-> I checked the change log for the openrisc specific changes from gcc 11 to gcc
-> 12.  Nothing seems to stand out, mcount profiler fix for PIC, a new large binary
-> link flag.
-
-Hello,
-
-Just an update on this.  The issue so far has been traced to the alignment of
-the crypto multiplication function fe_mul_impl in lib/crypto/curve25519-fiat32.c.
-
-This patch e5be15767e7e ("hex2bin: make the function hex_to_bin constant-time")
-allowed for the alignment to be just right to cause the failure.  Without
-this patch and forcing the alignment we can reproduce the issue.  So though the
-bisect is correct, this patch is not the root cause of the issue.
-
-Using some l.nop sliding techniques and some strategically placed .align
-statements I have been able to reproduce the issue on:
-
-  - gcc 11 and gcc 12
-  - preempt and non-preempt kernels
-
-I have not been able to reproduce this on my FPGA, so far only QEMU.  My
-hunch now is that since the fe_mul_impl function contains some rather long basic
-blocks it appears that timer interrupts that interrupt qemu mid basic block
-execution somehow is causing this.  The hypothesis is it may be basic block
-resuming behavior in qemu that causes incosistent behavior.
-
-It will take a bit more time to trace this.  Since I maintain OpenRISC QEMU the
-issue is on me.
-
-Again, It's safe to say that patch e5be15767e7e ("hex2bin: make the function
-hex_to_bin constant-time") is not an issue.
-
--Stafford
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://listman.redhat.com/mailman/listinfo/dm-devel
+SGkgTGFrc2htaSwKCnRoYW5rIHlvdSBmb3IgdGFraW5nIGEgY2xvc2VyIGxvb2sgYXQgdGhpcyBw
+YXRjaCBzZXQuCgpPbiAwNi4wNS4yMiAyMjoxNiwgTGFrc2htaSBSYW1hc3VicmFtYW5pYW4gd3Jv
+dGU6Cj4gSGkgVGhvcmUsCj4gCj4gT24gMS82LzIwMjIgMTI6MzQgUE0sIFRob3JlIFNvbW1lciB3
+cm90ZToKPj4gVGhlIGN1cnJlbnQgRE0gSU1BIGV2ZW50cyBkbyBub3QgY292ZXIgdGhlIGNhc2Ug
+d2hlcmUgYSBkZXZpY2UgY2hhbmdlcwo+PiB0aGVpciBhdHRyaWJ1dGVzIHRvIGluZGljYXRlIGEg
+c3RhdGUgY2hhbmdlLiAKPiBJdCB3b3VsZCBiZSBnb29kIHRvIHN0YXRlIGhlcmUgd2hhdCBpc3N1
+ZShzKSBhcmUgY2F1c2VkLCBpZiBhbnksIG9yIHdoYXQgCj4gZGF0YVxldmVudCB3ZSBtaWdodCBi
+ZSBtaXNzaW5nIGFzIGEgcmVzdWx0IG9mIG5vdCBtZWFzdXJpbmcgdGhlIGRldmljZSAKPiBhdHRy
+aWJ1dGUgY2hhbmdlcy4gQW5kLCB0aGVuIHN0YXRlIHRoZSBiZW5lZml0cyBvZiB0aGUgY2hhbmdl
+cyB5b3UgaGF2ZSAKPiBpbXBsZW1lbnRlZCBpbiB0aGlzIHBhdGNoIHNlcmllcy4KClRoZSBleGlz
+dGluZyBiZWhhdmlvciBvbmx5IG1lYXN1cmVzIHRoZSB0YWJsZSBjb250ZW50IG9uIHRhcmdldC9k
+ZXZpY2UgCmNyZWF0aW9uLiBUaGlzIGlzIGZpbmUgZm9yIHRhcmdldHMgd2hlcmUgdGhlIHRhYmxl
+IGNvbnRlbnQgbmV2ZXIgCmNoYW5nZXMsIGJ1dCBzb21lIHRhcmdldHMgbGlrZSB2ZXJpdHksIG11
+bHRpcGF0aCBhbmQgcmFpZCBhbHNvIHVzZSB0aGUgCnRhYmxlIHRvIGluZGljYXRlIHN0YXRlIGNo
+YW5nZXMuIFRob3NlIHN0YXRlIGNoYW5nZXMgYXJlIGN1cnJlbnRseSBub3QgCm1lYXN1cmVkIHZp
+YSB0aGUgZGV2aWNlIG1hcHBlciBJTUEgaW50ZWdyYXRpb24uCgpNZWFzdXJpbmcgdGhlIHN0YXRl
+IGNoYW5nZXMgZm9yIHZlcml0eSB0aGlzIGlzIGVzcGVjaWFsbHkgaW1wb3J0YW50IApiZWNhdXNl
+IGFmdGVyIHRoZSBpbml0aWFsIGNyZWF0aW9uIHRoZSB0YXJnZXQgaXMgbmV2ZXIgY29ycnVwdGVk
+IGFuZCAKb25seSBtYXJrZWQgYXMgc3VjaCB3aGVuIGEgY29ycnVwdGVkIGJsb2NrIHJlYWQuIFdl
+IHdhbnQgdG8gbWVhc3VyZSB0aGF0IApjaGFuZ2UgdG8gcmVtb3RlbHkgYXR0ZXN0IHRoYXQgdGhl
+IGNvcnJlY3QgZmlsZSBzeXN0ZW0gaXMgdXNlZCBhbmQgbm90IAp0YW1wZXJlZCB3aXRoLiBEb2lu
+ZyB0aGF0IGlzIG5vdCBwb3NzaWJsZSB3aXRoIHRoZSBjdXJyZW50IGZlYXR1cmVzIGluIAp0aGUg
+a2VybmVsLgoKPiBUaGlzIGFkZHMgYSBuZXcgZXZlbnQKPj4gKGRtX3RhcmdldF91cGRhdGUpIHdo
+aWNoIGFsbG93cyB0YXJnZXRzIHRvIHJlbWVhc3VyZSB0aGVpciB0YWJsZSBlbnRyaWVzLgo+PiBU
+aGUgZXZlbnQgaW5jbHVkZXMgdGhlIGRtIHZlcnNpb24sIGRldmljZSBtZXRhZGF0YSBhbmQgdGhl
+IHRhcmdldCBkYXRhLgo+Pgo+PiBDdXJyZW50bHkgb25seSB2ZXJpdHkgc3VwcG9ydHMgdGhpcyBl
+dmVudCB0byBlbnN1cmUgdGhhdCBkZXZpY2UgCj4+IGNvcnJ1cHRpb24KPj4gY2FuIGJlIGRldGVj
+dGVkIHVzaW5nIElNQSB3aGljaCBpcyB1c2VmdWwgZm9yIHJlbW90ZSBhdHRlc3RhdGlvbi4KPiBV
+c2luZyB0aGUgdGVybSAiY3VycmVudGx5IiBpbiB0aGlzIGNvbnRleHQgc2VlbXMgdG8gaW5kaWNh
+dGUgdGhhdCB0aGlzIAo+IGlzIHRoZSBjdXJyZW50IHN0YXRlIChleGlzdGluZyBiZWhhdmlvcikg
+aW4gdGhlIExpbnV4IGtlcm5lbCAKPiBpbXBsZW1lbnRhdGlvbi4gWW91IGNvdWxkIGluc3RlYWQg
+cmV3b3JkIGl0IHRvIGluZGljYXRlIHRoYXQgeW91ciAKPiBwcm9wb3NlZCBtZWFzdXJlbWVudCBj
+aGFuZ2UgaXMgdXNlZCBieSB2ZXJpdHkgdG8gYWRkIHN1cHBvcnQgZm9yIAo+IGRldGVjdGluZyBk
+ZXZpY2UgY29ycnVwdGlvbi4KClllcyAiY3VycmVudGx5IiBpcyBjb25mdXNpbmcgaGVyZSwgSSB3
+aWxsIGNoYW5nZSBpdCBpbiB2Mi4KClJlZ2FyZHMsClRob3JlCgoKPiAKPj4KPj4gVGhlIGN1cnJl
+bnQgaW1wbGVtZW50YXRpb24gZG9lcyBub3QgdXBkYXRlIHRoZSBhY3RpdmUgdGFibGUgaGFzaCBi
+ZWNhdXNlCj4+IGl0IHdvdWxkIHJlcXVpcmUgdG8gcmVoYXNoIHRoZSBlbnRpcmUgdGFibGUgb24g
+ZXZlcnkgdGFyZ2V0IGNoYW5nZS4KPiBTaW1pbGFyIHRvIHRoZSBhYm92ZSBjb21tZW50IC0gY291
+bGQgYmUgcmV3b3JkZWQgdG8gaW5kaWNhdGUgdGhpcyBpcyB0aGUgCj4gcHJvcG9zZWQgY2hhbmdl
+IGFuZCBub3QgdGhlIGV4aXN0aW5nIGJlaGF2aW9yLgo+IAo+IHRoYW5rcywKPiAgwqAtbGFrc2ht
+aQo+IAo+Pgo+PiBUaG9yZSBTb21tZXIgKDMpOgo+PiDCoMKgIGRtIGltYTogYWxsb3cgdGFyZ2V0
+cyB0byByZW1lYXN1cmUgdGhlaXIgdGFibGUgZW50cnkKPj4gwqDCoCBkbSB2ZXJpdHk6IGFkZCBz
+dXBwb3J0IGZvciBJTUEgdGFyZ2V0IHVwZGF0ZSBldmVudAo+PiDCoMKgIGRtIGltYTogYWRkIGRv
+Y3VtZW50YXRpb24gdGFyZ2V0IHVwZGF0ZSBldmVudAo+Pgo+PiDCoCAuLi4vYWRtaW4tZ3VpZGUv
+ZGV2aWNlLW1hcHBlci9kbS1pbWEucnN0wqDCoMKgwqDCoCB8IDMzICsrKysrKysrCj4+IMKgIGRy
+aXZlcnMvbWQvZG0taW1hLmPCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgIHwgNzYgKysrKysrKysrKysrKysrKysrKwo+PiDCoCBkcml2ZXJzL21kL2Rt
+LWltYS5owqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDC
+oCB8wqAgMiArCj4+IMKgIGRyaXZlcnMvbWQvZG0tdmVyaXR5LXRhcmdldC5jwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqAgfMKgIDYgKysKPj4gwqAgNCBmaWxlcyBjaGFuZ2VkLCAxMTcg
+aW5zZXJ0aW9ucygrKQo+PgoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0CmRtLWRldmVsQHJlZGhh
+dC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9saXN0aW5mby9kbS1kZXZl
+bAo=
 
