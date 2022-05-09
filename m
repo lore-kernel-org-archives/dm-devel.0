@@ -1,142 +1,96 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5661CC433EF
-	for <dm-devel@archiver.kernel.org>; Mon,  9 May 2022 11:09:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2CB64C4332F
+	for <dm-devel@archiver.kernel.org>; Mon,  9 May 2022 11:32:32 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-389--r0UTa7mN6KjKwKojDtMzQ-1; Mon, 09 May 2022 07:06:58 -0400
-X-MC-Unique: -r0UTa7mN6KjKwKojDtMzQ-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-232-bVSaQVKCOVSbmhrhxEKa-Q-1; Mon, 09 May 2022 07:32:27 -0400
+X-MC-Unique: bVSaQVKCOVSbmhrhxEKa-Q-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B86621C0896E;
-	Mon,  9 May 2022 11:06:31 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F07D729AB3F3;
+	Mon,  9 May 2022 11:32:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id A388740CFD0C;
-	Mon,  9 May 2022 11:06:31 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 8FDCF2166B49;
+	Mon,  9 May 2022 11:32:25 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6DFEE1947054;
-	Mon,  9 May 2022 11:06:31 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 768F21947054;
+	Mon,  9 May 2022 11:32:25 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 5A4B41947052
- for <dm-devel@listman.corp.redhat.com>; Mon,  9 May 2022 11:06:30 +0000 (UTC)
+ ESMTP id F0B261947054
+ for <dm-devel@listman.corp.redhat.com>; Mon,  9 May 2022 11:32:23 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 270941468D67; Mon,  9 May 2022 11:06:30 +0000 (UTC)
+ id DC9C12167D64; Mon,  9 May 2022 11:32:23 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 228C31468D66
- for <dm-devel@redhat.com>; Mon,  9 May 2022 11:06:30 +0000 (UTC)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D60D62166B4E
+ for <dm-devel@redhat.com>; Mon,  9 May 2022 11:32:12 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0B4D229AB3E2
- for <dm-devel@redhat.com>; Mon,  9 May 2022 11:06:30 +0000 (UTC)
-Received: from mailout1.w1.samsung.com (mailout1.w1.samsung.com
- [210.118.77.11]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-663-u-FSjlUXNWuhtePW7QHlnw-1; Mon, 09 May 2022 07:06:27 -0400
-X-MC-Unique: u-FSjlUXNWuhtePW7QHlnw-1
-Received: from eucas1p2.samsung.com (unknown [182.198.249.207])
- by mailout1.w1.samsung.com (KnoxPortal) with ESMTP id
- 20220509110626euoutp0132d2ee0e164724156beaf06404c85552~taxdV2iJR0065300653euoutp01W
- for <dm-devel@redhat.com>; Mon,  9 May 2022 11:06:26 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout1.w1.samsung.com
- 20220509110626euoutp0132d2ee0e164724156beaf06404c85552~taxdV2iJR0065300653euoutp01W
-Received: from eusmges3new.samsung.com (unknown [203.254.199.245]) by
- eucas1p1.samsung.com (KnoxPortal) with ESMTP id
- 20220509110625eucas1p1f964acbddfe7891b98f63e6ff7fc0b07~taxcm_e4G1538615386eucas1p14;
- Mon,  9 May 2022 11:06:25 +0000 (GMT)
-Received: from eucas1p2.samsung.com ( [182.198.249.207]) by
- eusmges3new.samsung.com (EUCPMTA) with SMTP id 5B.E0.10260.1B5F8726; Mon,  9
- May 2022 12:06:25 +0100 (BST)
-Received: from eusmtrp2.samsung.com (unknown [182.198.249.139]) by
- eucas1p2.samsung.com (KnoxPortal) with ESMTPA id
- 20220509110625eucas1p243f900c817606c7e5c9b2118694bd775~taxcKNU2F0280002800eucas1p2u;
- Mon,  9 May 2022 11:06:25 +0000 (GMT)
-Received: from eusmgms1.samsung.com (unknown [182.198.249.179]) by
- eusmtrp2.samsung.com (KnoxPortal) with ESMTP id
- 20220509110624eusmtrp2ddefeac67b6ec0e261a9a0128a1eb6bb~taxcI4G4X1743917439eusmtrp2B;
- Mon,  9 May 2022 11:06:24 +0000 (GMT)
-X-AuditID: cbfec7f5-bf3ff70000002814-95-6278f5b1cb1e
-Received: from eusmtip1.samsung.com ( [203.254.199.221]) by
- eusmgms1.samsung.com (EUCPMTA) with SMTP id 46.B3.09522.0B5F8726; Mon,  9
- May 2022 12:06:24 +0100 (BST)
-Received: from CAMSVWEXC01.scsc.local (unknown [106.1.227.71]) by
- eusmtip1.samsung.com (KnoxPortal) with ESMTPA id
- 20220509110624eusmtip15754ef24a5e25ae9d009ed4324ccbd42~taxb8LugR1905219052eusmtip1Z;
- Mon,  9 May 2022 11:06:24 +0000 (GMT)
-Received: from [106.110.32.130] (106.110.32.130) by CAMSVWEXC01.scsc.local
- (2002:6a01:e347::6a01:e347) with Microsoft SMTP Server (TLS) id 15.0.1497.2;
- Mon, 9 May 2022 12:06:23 +0100
-Message-ID: <aef68bcf-4924-8004-3320-325e05ca9b20@samsung.com>
-Date: Mon, 9 May 2022 13:06:18 +0200
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 87FB4811E80
+ for <dm-devel@redhat.com>; Mon,  9 May 2022 11:32:12 +0000 (UTC)
+Received: from esa6.hgst.iphmx.com (esa6.hgst.iphmx.com [216.71.154.45]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-656-tH8PntoAPxq6UsLd2lg0tA-1; Mon, 09 May 2022 07:32:09 -0400
+X-MC-Unique: tH8PntoAPxq6UsLd2lg0tA-1
+X-IronPort-AV: E=Sophos;i="5.91,211,1647273600"; d="scan'208";a="200733499"
+Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com)
+ ([199.255.45.14])
+ by ob1.hgst.iphmx.com with ESMTP; 09 May 2022 19:32:08 +0800
+IronPort-SDR: To72NAfVFnnS8wc4Lw9JEPMtsXviKNDvQE398wu3rHB9sw4+69EFVogZWgLoZ6/I2W5jVpvaO5
+ qx77PGYrsWHrVL53kJuShKNFhjf4QQbLESuZalklzvkKln9jUdQ0unIjjYbSU/6+18oJp+M+Xv
+ 4cPkFUfaYUmM57OQXhjbGSFh7Ut3HkNV0i8oMGiL1DKyRzgMEhWlY+A3N15QLd30HZ5uiRxES6
+ IUVcp4NA9yIVfgZu4UynenyFDtG6k6v2wHJNESI/NeY7tBr6N21izyK73myOAtPVNLFuFVeaeW
+ aYoXHz8TjqOul2E57XpZsJVn
+Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
+ by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 09 May 2022 04:02:12 -0700
+IronPort-SDR: 0i8RCepjf/YbMe95+lDLBlh6+mLq1GP+2iCGLhn2FaDRl6rh6DU+1XMBGJfRD43KmvXvxz65Hg
+ eWCrGBIhbo8mrhQHe5J4f0RviZdWRKqUmgxFDM825hh3DCUnB/3TkIRh8xie4UabysBo+hHnLJ
+ tj4rwivRqLlAAUuxcTCbUeJjB9/WBpzLOh4kziObxMg2IjJai9w+/JYj/4+Y16DwvOLTp0Ofgk
+ 2mhU7rkjvi8YNSj8q6uGDC/YMpsvPXH44ESxTOzn+4E90i42U5nxPwqXvTjc5eHH+T+SoWor2S
+ xeI=
+WDCIronportException: Internal
+Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
+ by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
+ 09 May 2022 04:32:07 -0700
+Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4KxfCT6yS2z1Rwrw
+ for <dm-devel@redhat.com>; Mon,  9 May 2022 04:32:05 -0700 (PDT)
+X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
+Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
+ by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
+ port 10026) with ESMTP id xDH_4frK9Tdt for <dm-devel@redhat.com>;
+ Mon,  9 May 2022 04:32:04 -0700 (PDT)
+Received: from [192.168.10.49] (unknown [10.225.164.111])
+ by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4KxfCM384lz1Rvlc;
+ Mon,  9 May 2022 04:31:59 -0700 (PDT)
+Message-ID: <9eb00b42-ca5b-c94e-319d-a0e102b99f02@opensource.wdc.com>
+Date: Mon, 9 May 2022 20:31:57 +0900
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.8.1
-To: Damien Le Moal <damien.lemoal@opensource.wdc.com>, <jaegeuk@kernel.org>,
- <hare@suse.de>, <dsterba@suse.com>, <axboe@kernel.dk>, <hch@lst.de>,
- <snitzer@kernel.org>
-From: Pankaj Raghav <p.raghav@samsung.com>
-In-Reply-To: <39a80347-af70-8af0-024a-52f92e27a14a@opensource.wdc.com>
-X-Originating-IP: [106.110.32.130]
-X-ClientProxiedBy: CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347) To
- CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347)
-X-Brightmail-Tracker: H4sIAAAAAAAAA02SfUxTVxjGc+693N4Wkduq6RkQzTpnnNuYOown05G5LcsdfsQYMXNqoMBN
- ISvFtYA4wywUDKKD0ijTwoI4lALdClQpMKhblaIIK4zBWBWFjSZdFYTxIaYoo7248N/v/Xje
- 87xvDoWL6skQKkmRyioVUrmEFBAN9meOt+umM+I23sqGyNRhx9F8i51ENYOFJCoef4YjXeEF
- HvJ2OXDUOlYSgLpnszDUclmHoaqaNgyNmPQ4OvvzOIGqcoZxNDe8CQ1POQmks/UD5OrTY6jV
- +Sb67W8DD7W03iFQb3MpicquunhIe2oaRwNaF0BF7eYA9OOjJwS67Qz9IJTp/X0n8+K2kWSK
- NGM8xvGgjmB6u9KY+urTJFOuPo8z5oqTzE9/qknmG80YyTTlPgxgnlj7SMZ0rY9gzHdPMFpz
- XQAzWb96r/BzwfYEVp6UzirfiYwVJD613cSPugIz+q3ZmBo85OcDPgXpCHi+S4v5WEQbAByc
- T88HggWeAjC7yQK4YBLA0jNT2EvFhe4zi4VKALutbeT/XdZfhgkuaAbwltfilwTRkdBknCN8
- TNBrYc5oMcnlhfDOxRF/fhX9GSzWd/rzK+go+MdMpV+L02LoHCnDfENX0tUAGh95/c/h9JUA
- WNtoXahQFElvgFmneT4Bn/4ETv36D8mJ34C5Fi+P4zXQMlqK+9ohLYElveHcOpnwB3snj2O3
- AHrzAjn+GDrb/iU5XgE97dcWe8LgfFPZ4ilOQNeAF/fZgXQOgIVNJpKbvw0WdMo53AGtV1dz
- uBwOjAo5M8uhruFbXAte1y85hH7Jwvol/vVL/F8CRDUQs2mqZBmrelfBHgtXSZNVaQpZeHxK
- cj1Y+NZ3X7RPNwKDZyLcBjAK2ACkcMnKoBsFGXGioATp8a9YZUqMMk3OqmwglCIk4qD4pFqp
- iJZJU9kvWPYoq3xZxSh+iBp776D96+uK5uM0Ey5mD8WEWgZmgo3ijl3OvwTrK2XP712UJ5zK
- rAiOkD9/i/Ekkq6SAgE/unTblcRXXvuI3NxSfq5KZhq6d7nj5JqzZGxVvm7C3pDnJg7X3p/V
- l2yNFhob8O9Q5Pgez6rvH18KKRE1ut0VT+tHJvaODRllxdbk7Kj1yCDK6lvWrz5goGZ25l7v
- HnJmKmL3JQTPlYYZzXOdj29GHQpbZzhitMXHfRqbZDZbRMdqjuxHeV/ucEfv2j7ZHNGTMnn/
- /YYtu/cNxm19IE+NfjU9h5cyLMw9uLlI07N24+79e9zQk3/Y0RMYo1n2YU9jRbBpi7S8Td/k
- 0NyYlRCqROmmDbhSJf0POI01VEUEAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA02SfUxTVxiHc3pvbwuzei0wTsCoa7Ylc7ZQpN3pBoy4BS/iEhKzubhsWOCu
- kLUU+uGYY1lBREGZtImIRXCArshXpSWofE3bDWQEQcvHhGglo7pBKOAU11FxlGYJ/z3nPef8
- 3uecvGyM+yczjJ2ZpaFVWVI5jwjEB1b67vOvPMtNjZy8I0bm33ox9LKrl0CN908TqHzBgyHD
- 6QoWWh4cwlC3u5KJhv/JZ6CuWgMDXW78lYGmzUYMnbqxgKPLhVMY8k4J0dTTCRwZbGMAuUaN
- DNQ98Ta6+0c9C3V19+PI0XGeQBd+crFQWdEzDP1e5gJI32dlopbZeRzdmgiPD6ccI0nUyq0m
- gtIfdbOooQetOOUY1FKWhmKCqtGdwSjrxe+pzns6gio96iao68ecTGq+Z5SgzG2jOGUd+JYq
- s7Yyqb8tW5M3HxTEqJRaDb09Q6nWxPI+E6IogVCCBFHREoFw1zufvxsl4kXExaTT8szDtCoi
- 7pAg47nNjmW7Xskd6ylg6IAzoAQEsCEZDSuGT4ISEMjmkpcA1JW+YPg3tsAnI4ssPwdB71gJ
- 4WMuuQhgnYfn5w4AR0ZEPuaQcdDc5MV9jJOvw8K5csJf3wz7z02v1UPIT+HDzkGmj4PIvXB8
- ybTWCyND4cT0BYZPIphsALBpdpnwLTCyjgnvVLpZfr1/ASy4Ob7qymYT5A6YX7xmF0AmwKe3
- /yL8SW/BY1eXWX7eBq/Oncd8xyHJg5UOgf8x38EZZycoAyHGdX7GdR7GdUnGdUk/ArwBBNNa
- tUKmUAsFaqlCrc2SCdKUCgtYHbn2Xo/1GqieWRTYAIMNbACyMV4w5+cfclO5nHTpN0dolTJF
- pZXTahsQrX6SHgsLSVOuzmyWJkUojhQJo8WSSJFEvIsXyknMPiHlkjKphv6KprNp1f/3GOyA
- MB2jNSf+4KEvlvaMGVpKWe/rHUW2TlPS9sOS5BqXvXlTeOLGgbyqXI/pzef7Y/N/kdXzF1bq
- 7Eytg3/DXl2c6lraP9N4r8J0KtawGPrgoqV2st84uxfzvHritQ+R4WT72Z7WHE6BqTpBP7+b
- L9l3/Uhec9Uo+YjsU8V8MPlxoHd8wfF14XH3w/aitNkqaYdXvpPzZdFOo2ROzX3jQJBTI2sT
- iZP4zZE55tq03R309BV5cvt7ETbFk3qtqlExZGm6+WifNvb2prDHL3Mqjl8bSK87N84s3zB1
- 90C0kQRnX8QnMjeCYWdtuGJb29YtKTW2DS0Jez6y45f0j/NkmcDxiYbNw9UZUuEOTKWW/gf+
- NzBQ+wMAAA==
-X-CMS-MailID: 20220509110625eucas1p243f900c817606c7e5c9b2118694bd775
-X-Msg-Generator: CA
-X-RootMTR: 20220506081116eucas1p2cce67bbf30f4c9c4e6854965be41b098
-X-EPHeader: CA
-CMS-TYPE: 201P
-X-CMS-RootMailID: 20220506081116eucas1p2cce67bbf30f4c9c4e6854965be41b098
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0)
+ Gecko/20100101 Thunderbird/91.9.0
+To: Pankaj Raghav <p.raghav@samsung.com>, jaegeuk@kernel.org, hare@suse.de,
+ dsterba@suse.com, axboe@kernel.dk, hch@lst.de, snitzer@kernel.org
 References: <20220506081105.29134-1-p.raghav@samsung.com>
  <CGME20220506081116eucas1p2cce67bbf30f4c9c4e6854965be41b098@eucas1p2.samsung.com>
  <20220506081105.29134-11-p.raghav@samsung.com>
  <39a80347-af70-8af0-024a-52f92e27a14a@opensource.wdc.com>
+ <aef68bcf-4924-8004-3320-325e05ca9b20@samsung.com>
+From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
+Organization: Western Digital Research
+In-Reply-To: <aef68bcf-4924-8004-3320-325e05ca9b20@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -144,7 +98,7 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 Subject: Re: [dm-devel] [PATCH v3 10/11] null_blk: allow non power of 2
  zoned devices
 X-BeenThere: dm-devel@redhat.com
@@ -170,7 +124,7 @@ Cc: Naohiro Aota <naohiro.aota@wdc.com>, linux-block@vger.kernel.org,
  matias.bjorling@wdc.com, Sagi Grimberg <sagi@grimberg.me>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -179,46 +133,60 @@ Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+On 2022/05/09 20:06, Pankaj Raghav wrote:
+> 
+>>> diff --git a/drivers/block/null_blk/main.c b/drivers/block/null_blk/main.c
+>>> index 5cb4c92cd..ed9a58201 100644
+>>> --- a/drivers/block/null_blk/main.c
+>>> +++ b/drivers/block/null_blk/main.c
+>>> @@ -1929,9 +1929,8 @@ static int null_validate_conf(struct nullb_device *dev)
+>>>  	if (dev->queue_mode == NULL_Q_BIO)
+>>>  		dev->mbps = 0;
+>>>  
+>>> -	if (dev->zoned &&
+>>> -	    (!dev->zone_size || !is_power_of_2(dev->zone_size))) {
+>>> -		pr_err("zone_size must be power-of-two\n");
+>>> +	if (dev->zoned && !dev->zone_size) {
+>>> +		pr_err("zone_size must not be zero\n");
+>>
+>> May be a simpler phrasing would be better:
+>>
+>> pr_err("Invalid zero zone size\n");
+>>
+> Ack. I will change this in the next rev.
+>>>  		return -EINVAL;
+>>>  	}
+>>>  
+>>> diff --git a/drivers/block/null_blk/zoned.c b/drivers/block/null_blk/zoned.c
+>>> index dae54dd1a..00c34e65e 100644
+>>> --- a/drivers/block/null_blk/zoned.c
+>>> +++ b/drivers/block/null_blk/zoned.c
+>>> @@ -13,7 +13,10 @@ static inline sector_t mb_to_sects(unsigned long mb)
+>>>  
+>>>  static inline unsigned int null_zone_no(struct nullb_device *dev, sector_t sect)
+>>>  {
+>>> -	return sect >> ilog2(dev->zone_size_sects);
+>>> +	if (is_power_of_2(dev->zone_size_sects))
+>>> +		return sect >> ilog2(dev->zone_size_sects);
+>>
+>> As a separate patch, I think we should really have ilog2(dev->zone_size_sects)
+>> as a dev field to avoid doing this ilog2 for every call..
+>>
+> I don't think that is possible because `zone_size_sects` can also be non
+> po2.
 
->> diff --git a/drivers/block/null_blk/main.c b/drivers/block/null_blk/main.c
->> index 5cb4c92cd..ed9a58201 100644
->> --- a/drivers/block/null_blk/main.c
->> +++ b/drivers/block/null_blk/main.c
->> @@ -1929,9 +1929,8 @@ static int null_validate_conf(struct nullb_device *dev)
->>  	if (dev->queue_mode == NULL_Q_BIO)
->>  		dev->mbps = 0;
->>  
->> -	if (dev->zoned &&
->> -	    (!dev->zone_size || !is_power_of_2(dev->zone_size))) {
->> -		pr_err("zone_size must be power-of-two\n");
->> +	if (dev->zoned && !dev->zone_size) {
->> +		pr_err("zone_size must not be zero\n");
-> 
-> May be a simpler phrasing would be better:
-> 
-> pr_err("Invalid zero zone size\n");
-> 
-Ack. I will change this in the next rev.
->>  		return -EINVAL;
->>  	}
->>  
->> diff --git a/drivers/block/null_blk/zoned.c b/drivers/block/null_blk/zoned.c
->> index dae54dd1a..00c34e65e 100644
->> --- a/drivers/block/null_blk/zoned.c
->> +++ b/drivers/block/null_blk/zoned.c
->> @@ -13,7 +13,10 @@ static inline sector_t mb_to_sects(unsigned long mb)
->>  
->>  static inline unsigned int null_zone_no(struct nullb_device *dev, sector_t sect)
->>  {
->> -	return sect >> ilog2(dev->zone_size_sects);
->> +	if (is_power_of_2(dev->zone_size_sects))
->> +		return sect >> ilog2(dev->zone_size_sects);
-> 
-> As a separate patch, I think we should really have ilog2(dev->zone_size_sects)
-> as a dev field to avoid doing this ilog2 for every call..
-> 
-I don't think that is possible because `zone_size_sects` can also be non
-po2.
+But when it is we can optimize that. All we need is add a "zone_size_sect_shift"
+field that is initialized when zone_size_sects is set when the device is
+created. Then, you can have code like:
+
+	if (dev->zone_size_sect_shift))
+		return sect >> dev->zone_size_sect_shift;
+
+Which avoids both is_power_of_2() and ilog2() calls for every IO.
+
+-- 
+Damien Le Moal
+Western Digital Research
 
 --
 dm-devel mailing list
