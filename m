@@ -1,67 +1,148 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 709F7C433EF
-	for <dm-devel@archiver.kernel.org>; Mon,  9 May 2022 09:55:26 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 92086C433FE
+	for <dm-devel@archiver.kernel.org>; Mon,  9 May 2022 11:02:48 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-261-BqeQSyapOcyR8Nt6ipAZNA-1; Mon, 09 May 2022 05:55:21 -0400
-X-MC-Unique: BqeQSyapOcyR8Nt6ipAZNA-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-314-4GOtECJhNNusAHJcAK1epw-1; Mon, 09 May 2022 07:02:43 -0400
+X-MC-Unique: 4GOtECJhNNusAHJcAK1epw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 462D21C00ACE;
-	Mon,  9 May 2022 09:55:20 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D8665811E76;
+	Mon,  9 May 2022 11:02:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D5D46463DEA;
-	Mon,  9 May 2022 09:55:19 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4D9CD4010E4D;
+	Mon,  9 May 2022 11:02:36 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 9FBFD1947052;
-	Mon,  9 May 2022 09:55:19 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E85051947054;
+	Mon,  9 May 2022 11:02:35 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 126BF19466DF
- for <dm-devel@listman.corp.redhat.com>; Mon,  9 May 2022 09:55:18 +0000 (UTC)
+ ESMTP id B3CCC1947052
+ for <dm-devel@listman.corp.redhat.com>; Mon,  9 May 2022 11:02:34 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B557EC15E73; Mon,  9 May 2022 09:55:18 +0000 (UTC)
+ id 673E543210F; Mon,  9 May 2022 11:02:34 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id B0FE9C07F51
- for <dm-devel@redhat.com>; Mon,  9 May 2022 09:55:18 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 61319432103
+ for <dm-devel@redhat.com>; Mon,  9 May 2022 11:02:34 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
  bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 67B1629AB3EA
- for <dm-devel@redhat.com>; Mon,  9 May 2022 09:55:18 +0000 (UTC)
-Received: from mo4-p01-ob.smtp.rzone.de (mo4-p01-ob.smtp.rzone.de
- [81.169.146.164]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 453672932483
+ for <dm-devel@redhat.com>; Mon,  9 May 2022 11:02:34 +0000 (UTC)
+Received: from mailout2.w1.samsung.com (mailout2.w1.samsung.com
+ [210.118.77.12]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-281-ZFv3fDOYPWyMJInfUa3hfw-1; Mon, 09 May 2022 05:55:16 -0400
-X-MC-Unique: ZFv3fDOYPWyMJInfUa3hfw-1
-X-RZG-AUTH: ":PHkGeUmrW+uCZmxs998QJRUX30nOwJd7j/79t2yVxcUdnYNcUb5wZPHWwAJ3XYfSj54="
-X-RZG-CLASS-ID: mo00
-Received: from [192.168.178.22] by smtp.strato.de (RZmta 47.42.2 DYNA|AUTH)
- with ESMTPSA id Y03eaey499tATxF
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256 bits))
- (Client did not present a certificate);
- Mon, 9 May 2022 11:55:10 +0200 (CEST)
-Message-ID: <00030b50-d888-1562-e33c-24f7ee38cd99@thson.de>
-Date: Mon, 9 May 2022 11:55:09 +0200
+ us-mta-339-SfWaAqzJMMexFG_bGVxXcA-1; Mon, 09 May 2022 07:02:32 -0400
+X-MC-Unique: SfWaAqzJMMexFG_bGVxXcA-1
+Received: from eucas1p1.samsung.com (unknown [182.198.249.206])
+ by mailout2.w1.samsung.com (KnoxPortal) with ESMTP id
+ 20220509110231euoutp02abf1f8748003ec08803b7b6d0f607912~tauChOJ7t2654126541euoutp02-
+ for <dm-devel@redhat.com>; Mon,  9 May 2022 11:02:31 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.w1.samsung.com
+ 20220509110231euoutp02abf1f8748003ec08803b7b6d0f607912~tauChOJ7t2654126541euoutp02-
+Received: from eusmges3new.samsung.com (unknown [203.254.199.245]) by
+ eucas1p2.samsung.com (KnoxPortal) with ESMTP id
+ 20220509110230eucas1p2bc1a54ccf4681a1cab65ccec40854f50~tauB8kytl1526915269eucas1p2W;
+ Mon,  9 May 2022 11:02:30 +0000 (GMT)
+Received: from eucas1p2.samsung.com ( [182.198.249.207]) by
+ eusmges3new.samsung.com (EUCPMTA) with SMTP id BE.10.10260.6C4F8726; Mon,  9
+ May 2022 12:02:30 +0100 (BST)
+Received: from eusmtrp1.samsung.com (unknown [182.198.249.138]) by
+ eucas1p1.samsung.com (KnoxPortal) with ESMTPA id
+ 20220509110230eucas1p13e606c51930d58a88555e9c10ddc0095~tauBZ0unJ0402604026eucas1p17;
+ Mon,  9 May 2022 11:02:30 +0000 (GMT)
+Received: from eusmgms2.samsung.com (unknown [182.198.249.180]) by
+ eusmtrp1.samsung.com (KnoxPortal) with ESMTP id
+ 20220509110230eusmtrp11af182cc213b7913b637d177288f7a8a~tauBYoRRA2398323983eusmtrp1z;
+ Mon,  9 May 2022 11:02:30 +0000 (GMT)
+X-AuditID: cbfec7f5-bddff70000002814-98-6278f4c6cd7d
+Received: from eusmtip1.samsung.com ( [203.254.199.221]) by
+ eusmgms2.samsung.com (EUCPMTA) with SMTP id 1A.4A.09404.5C4F8726; Mon,  9
+ May 2022 12:02:30 +0100 (BST)
+Received: from CAMSVWEXC01.scsc.local (unknown [106.1.227.71]) by
+ eusmtip1.samsung.com (KnoxPortal) with ESMTPA id
+ 20220509110229eusmtip154a297efbad58824866a49dc0219bcbb~tauBMVgfz1376713767eusmtip1-;
+ Mon,  9 May 2022 11:02:29 +0000 (GMT)
+Received: from [106.110.32.130] (106.110.32.130) by CAMSVWEXC01.scsc.local
+ (2002:6a01:e347::6a01:e347) with Microsoft SMTP Server (TLS) id 15.0.1497.2;
+ Mon, 9 May 2022 12:02:28 +0100
+Message-ID: <c712f0d9-c7f8-172d-8bba-ca6d639bd7c0@samsung.com>
+Date: Mon, 9 May 2022 13:02:23 +0200
 MIME-Version: 1.0
 User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.9.0
-To: Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
- dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com
-References: <20220106203436.281629-1-public@thson.de>
- <20220106203436.281629-2-public@thson.de>
- <796b7d69-6000-d4bf-d29b-f1fdfec6e332@linux.microsoft.com>
-From: Thore Sommer <public@thson.de>
-In-Reply-To: <796b7d69-6000-d4bf-d29b-f1fdfec6e332@linux.microsoft.com>
+ Thunderbird/91.8.1
+To: <dsterba@suse.cz>, <jaegeuk@kernel.org>, <hare@suse.de>,
+ <dsterba@suse.com>, <axboe@kernel.dk>, <hch@lst.de>,
+ <damien.lemoal@opensource.wdc.com>, <snitzer@kernel.org>, Chris Mason
+ <clm@fb.com>, Josef Bacik <josef@toxicpanda.com>, <bvanassche@acm.org>,
+ <linux-fsdevel@vger.kernel.org>, <matias.bjorling@wdc.com>, Jens Axboe
+ <axboe@fb.com>, <gost.dev@samsung.com>, <jonathan.derrick@linux.dev>,
+ <jiangbo.365@bytedance.com>, <linux-nvme@lists.infradead.org>,
+ <dm-devel@redhat.com>, Naohiro Aota <naohiro.aota@wdc.com>,
+ <linux-kernel@vger.kernel.org>, Johannes Thumshirn <jth@kernel.org>, "Sagi
+ Grimberg" <sagi@grimberg.me>, Alasdair Kergon <agk@redhat.com>,
+ <linux-block@vger.kernel.org>, Chaitanya Kulkarni <kch@nvidia.com>, "Keith
+ Busch" <kbusch@kernel.org>, <linux-btrfs@vger.kernel.org>
+From: Pankaj Raghav <p.raghav@samsung.com>
+In-Reply-To: <20220506100054.GZ18596@suse.cz>
+X-Originating-IP: [106.110.32.130]
+X-ClientProxiedBy: CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347) To
+ CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347)
+X-Brightmail-Tracker: H4sIAAAAAAAAA01SfUxTVxzN7Xt9fXS2PIqGK7CQVVGp4Wtj5C4jZANlL9M/TAzJdHFbkRcg
+ lootMAZzlKFuIqO0CrqKA/kYlI/yObCUyuy0CNSxyWCsKoMAGcOJ6IqUwGCUhwn/nXvO+f3u
+ OTeXxERNhDeZJE9lFHKpTEzw8Xbr4kCg1ZERF9K7ugM19lkxtNplJVDdIzWBiucWMaRVX+Gh
+ pXsDGDLPXuWiX5w5HFSxtICjrnItB+nr7nDQZKMOQ/k/zuFIf2YcQ8vjoWjcYceR1jIM0NSQ
+ joPM9r3o/kQND3WZe3E02FlCoNLvp3io8Nw8hjQ9rVxkePwUR3ftPu/40IO/HaBX7tYTtCZ3
+ lkcPjDbj9OC9NLql9jxBX1cVYXRrZTZt+kNF0N/kzhK08eyfXPrpzSGCbmwbwmlb2W0e3dqf
+ RRe2NnMPiY7yI+IZWVI6owiO/ISfOHyxnZMy7Z5xf95IqEDTljxAkpAKg8UmrzzgRoqoGgBv
+ mw7nAf4adgDYOqLG2cO/AP78zAReDuht4SxfDWDVl80YO71mmq4LZoVOAC8VGAiXIKAiYUdR
+ 9boJp3ZCU7MesLwH7P12EnfhbdQHsFhnW/d7UlGwcPSrdYxRXtA+WcpxLd1KNRBworue50pB
+ UBKYc57n8rhRgXCix7nhD4BnO5Z4LPaDHU9KMDa0GF4dDHLRkDoNG6w2nmslpIb4cKzsGo8V
+ 9kGHdXUDe8KZnrYN7Av7L+bjLM6CUyNLGDt8BkC1sZFgL3gbFthkrOddONo5z2VpIRx54sHG
+ EUJt++WNOAL49TlRIdip2/QQuk2FdZvK6DaVKQN4LfBi0pTJCYzyDTnzaZBSmqxMkycEHT+Z
+ 3ALWPnX/Ss/8DVAz8yzIAjgksABIYuKtgu6CjDiRIF76WSajOPmxIk3GKC3Ah8TFXoLjSU1S
+ EZUgTWVOMEwKo3ipckg3bxUntjPQua+9suJ9o8fy7MHKNw0hGTNfNK647X19LMLTmZN+qkn+
+ alqk4724OXdHwLbdVZ3+RfuDB7cbnZ7cajIsn/x8j9Gv31+uLXFvS7rmd/1ovYw7Fhsvs/+X
+ u/81SUBVgi1st/lWbNCCUBtdduTYFsPl3pXttb4Xok+I/4nCUjQNwo+iZQ9M4ELeYvCOW/CA
+ RGARMznx3jHZiY+UHlkfdv/6sHzMOuDve6cl6xXDcLrxhwc1wgVl+KFjmbumIzw0Haee75E8
+ PK0PqDWXhP+kualKPQxivlOXymOk9sy/Z0L7XvQ9l9zoann8+3KFueCvK28RUnF538GxqDB9
+ SMiLbG93Ma5MlIZKMIVS+j9fHR+FQwQAAA==
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrLKsWRmVeSWpSXmKPExsVy+t/xu7rHvlQkGfSsZbRYf+oYs8X/PcfY
+ LFbf7WezmPbhJ7PFpP4Z7Ba/z55nttj7bjarxYUfjUwWi39/Z7HYs2gSk8XK1UeZLJ6sn8Vs
+ 0XPgA4vFypaHzBZ/HhpaPPxyi8Vi0qFrjBZPr85isth7S9vi0uMV7BZ79p5ksbi8aw6bxfxl
+ T9ktJrR9ZbaYeHwzq8W61+9ZLE7cknaQ9rh8xdvj34k1bB4Tm9+xe5y/t5HF4/LZUo9NqzrZ
+ PBY2TGX22Lyk3mP3zQY2j97md2weO1vvs3q833eVzWP9lqssHmcWHGH32Hy62mPC5o2sAUJR
+ ejZF+aUlqQoZ+cUltkrRhhZGeoaWFnpGJpZ6hsbmsVZGpkr6djYpqTmZZalF+nYJehnXJm9j
+ KnjBX3Hp6062BsYNPF2MHBwSAiYSK8+YdTFycQgJLGWUaD13mrWLkRMoLiPx6cpHdghbWOLP
+ tS42iKKPjBJPu6ayQji7GCU+z77JDFLFK2AnsX3qcjCbRUBFYvfGlYwQcUGJkzOfsIDYogIR
+ Eg92nwXbICzgJDHhXjsbiM0sIC5x68l8JpChIgJr2SQe71/DDrFhA6PEjmXTGEFuZRPQkmjs
+ BDuJU0BX4vHxH1DNmhKt23+zQ9jyEtvfzmGGeE1JYvZlPYgPaiVe3d/NOIFRZBaSk2YhWT0L
+ yaRZSCYtYGRZxSiSWlqcm55bbKRXnJhbXJqXrpecn7uJEZjOth37uWUH48pXH/UOMTJxMB5i
+ lOBgVhLh3d9XkSTEm5JYWZValB9fVJqTWnyI0RQYLhOZpUST84EJNa8k3tDMwNTQxMzSwNTS
+ zFhJnNezoCNRSCA9sSQ1OzW1ILUIpo+Jg1OqgUnytc+ZJTIRTpWOMzxXHFJzrH6i9rUxoGv/
+ HRnttxeEa+zOiTtf2DZt6Xtrf0fZJ1v5dhabvV96ftvl1W/SpIpFGmNkbIR6FjyevGrKLfFU
+ Mfu5PX49a0ptmfuDtH9s/eVZeDvovERPtdOqF07vE8W0twuw/pi+ONmE7c3KmglNXjo7zpmF
+ b07VvaHy+NMXxy7+85/KTi9ePWdFRmOk9/XksBeTwx9H6E98aiJV+oGbvyot+9/M2NLf4eo+
+ /jLe05bk2F7fwcLFdP8p6+qZAm9UPfYLv7+44F9FH3/lfMkXt3dYHnzoFsVyQOO26/e95w8Y
+ zO+NZGr9pCXZkfJQ4ezy68+5BY8xGWb2vg080qbEUpyRaKjFXFScCADdeNjb8AMAAA==
+X-CMS-MailID: 20220509110230eucas1p13e606c51930d58a88555e9c10ddc0095
+X-Msg-Generator: CA
+X-RootMTR: 20220506081106eucas1p181e83ef352eb8bfb1752bee0cf84020f
+X-EPHeader: CA
+CMS-TYPE: 201P
+X-CMS-RootMailID: 20220506081106eucas1p181e83ef352eb8bfb1752bee0cf84020f
+References: <CGME20220506081106eucas1p181e83ef352eb8bfb1752bee0cf84020f@eucas1p1.samsung.com>
+ <20220506081105.29134-1-p.raghav@samsung.com>
+ <20220506100054.GZ18596@suse.cz>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -69,9 +150,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: Re: [dm-devel] [RFC PATCH 1/3] dm ima: allow targets to remeasure
- their table entry
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+Subject: Re: [dm-devel] [PATCH v3 00/11] support non power of 2 zoned devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -83,136 +163,61 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: tusharsu@linux.microsoft.com, linux-integrity@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-SGkgTGFrc2htaSwKCk9uIDA2LjA1LjIyIDIyOjI1LCBMYWtzaG1pIFJhbWFzdWJyYW1hbmlhbiB3
-cm90ZToKPiBIaSBUaG9yZSwKPiAKPiBPbiAxLzYvMjAyMiAxMjozNCBQTSwgVGhvcmUgU29tbWVy
-IHdyb3RlOgo+PiBBIG5ldyBETSBldmVudCBkbV90YXJnZXRfdXBkYXRlIGlzIGludHJvZHVjZWQg
-Zm9yIHRhcmdldHMgdG8gcmVtZWFzdXJlCj4+IHRoZWlyIHRhYmxlIGVudHJ5LiBUaGlzIGlzIGlu
-dGVuZGVkIGZvciB0YXJnZXRzIHRoYXQgaW5kaWNhdGUgc2VjdXJpdHkKPj4gcmVsZXZhbnQgZXZl
-bnRzIGJ5IHVwZGF0aW5nIG9uZSBvZiB0aGVpciB0YWJsZSBlbnRyaWVzIChlLmcuIHZlcml0eSBm
-b3IKPj4gY29ycnVwdGlvbikuCj4gSW4gdGhlIHBhdGNoIGRlc2NyaXB0aW9uIHBsZWFzZSBzdGF0
-ZSB0aGUgZXhpc3RpbmcgcHJvYmxlbSAob3IsIAo+IGxpbWl0YXRpb24gaW4gdGhlIGV4aXN0aW5n
-IGltcGxlbWVudGF0aW9uKSBhbmQgdGhlbiBkZXNjcmliZSBob3cgdGhlIAo+IHByb3Bvc2VkIGNo
-YW5nZSBhZGRyZXNzZXMgdGhlIGlzc3VlLgoKRm9yIHYyIEkgd2lsbCBhZGQgdGhlIHByb2JsZW0g
-ZGVzY3JpcHRpb24gZnJvbSB0aGUgY292ZXIgbGV0dGVyIGFsc28gdG8gCnRoaXMgcGF0Y2ggZGVz
-Y3JpcHRpb24uCgo+IAo+Pgo+PiBJbiB0aGUgZXZlbnQgdGhlIGRtIHZlcnNpb24sIGRldmljZSBt
-ZXRhZGF0YSBhbmQgdGFyZ2V0IGRhdGEgZ2V0cwo+PiBtZWFzdXJlZC4KPj4KPj4gVGhpcyBkb2Vz
-IG5vdCB1cGRhdGUgdGhlIGhhc2ggb2YgdGhlIGFjdGl2ZSB0YWJsZSBiZWNhdXNlIGl0IHdvdWxk
-IAo+PiByZXF1aXJlCj4+IHRvIHJlaGFzaCB0aGUgd2hvbGUgdGFibGUgd2l0aCBhbGwgdGhlIG90
-aGVyIHRhcmdldHMgZW50cmllcy4KPj4KPj4gU2lnbmVkLW9mZi1ieTogVGhvcmUgU29tbWVyIDxw
-dWJsaWNAdGhzb24uZGU+Cj4+IC0tLQo+PiDCoCBkcml2ZXJzL21kL2RtLWltYS5jIHwgNzYgKysr
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrCj4+IMKgIGRyaXZlcnMv
-bWQvZG0taW1hLmggfMKgIDIgKysKPj4gwqAgMiBmaWxlcyBjaGFuZ2VkLCA3OCBpbnNlcnRpb25z
-KCspCj4+Cj4+IGRpZmYgLS1naXQgYS9kcml2ZXJzL21kL2RtLWltYS5jIGIvZHJpdmVycy9tZC9k
-bS1pbWEuYwo+PiBpbmRleCA5NTc5OTk5OThkNzAuLjNiMWJiOTcyNjNkOSAxMDA2NDQKPj4gLS0t
-IGEvZHJpdmVycy9tZC9kbS1pbWEuYwo+PiArKysgYi9kcml2ZXJzL21kL2RtLWltYS5jCj4+IEBA
-IC03NTAsMyArNzUwLDc5IEBAIHZvaWQgZG1faW1hX21lYXN1cmVfb25fZGV2aWNlX3JlbmFtZShz
-dHJ1Y3QgCj4+IG1hcHBlZF9kZXZpY2UgKm1kKQo+PiDCoMKgwqDCoMKgIGtmcmVlKG5ld19kZXZf
-bmFtZSk7Cj4+IMKgwqDCoMKgwqAga2ZyZWUobmV3X2Rldl91dWlkKTsKPj4gwqAgfQo+PiArCj4+
-ICsvKgo+PiArICogR2l2ZSB0aGUgb3B0aW9uIGZvciB0YXJnZXRzIHRvIHJlbWVhc3VyZSBvbiBz
-dGF0ZSBjaGFuZ2UuCj4+ICsgKi8KPj4gK3ZvaWQgZG1faW1hX21lYXN1cmVfb25fdGFyZ2V0X3Vw
-ZGF0ZShzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSkKPj4gK3sKPj4gK8KgwqDCoCBjaGFyICppbWFfYnVm
-ID0gTlVMTCwgKnRhcmdldF9tZXRhZGF0YV9idWYgPSBOVUxMLCAKPj4gKnRhcmdldF9kYXRhX2J1
-ZiA9IE5VTEw7Cj4+ICvCoMKgwqAgc3RydWN0IGRtX3RhcmdldCAqdGkyOwo+PiArwqDCoMKgIHNp
-emVfdCB0YXJnZXRfbWV0YWRhdGFfYnVmX2xlbiwgdGFyZ2V0X2RhdGFfYnVmX2xlbjsKPj4gK8Kg
-wqDCoCB1bnNpZ25lZCBpbnQgbnVtX3RhcmdldHMsIHRhcmdldF9pbmRleDsKPj4gK8KgwqDCoCBz
-dHJ1Y3QgZG1fdGFibGUgKnRhYmxlID0gdGktPnRhYmxlOwo+PiArwqDCoMKgIHN0cnVjdCBtYXBw
-ZWRfZGV2aWNlICptZCA9IHRhYmxlLT5tZDsKPj4gK8KgwqDCoCBib29sIGZvdW5kID0gZmFsc2U7
-Cj4+ICvCoMKgwqAgYm9vbCBub2lvID0gdHJ1ZTsKPj4gK8KgwqDCoCBpbnQgbCA9IDA7Cj4+ICsK
-PiBJbml0aWFsaXppbmcgImltYV9idWYiIHRvIE5VTEwgaXMgbm90IG5lY2Vzc2FyeSBzaW5jZSB0
-aGUgc3RhdGVtZW50IAo+IGJlbG93IGluaXRpYWxpemVzIGl0LgpZZXMsIEkgd2lsbCByZW1vdmUg
-dGhhdC4KCj4gCj4+ICvCoMKgwqAgaW1hX2J1ZiA9IGRtX2ltYV9hbGxvYyhETV9JTUFfTUVBU1VS
-RU1FTlRfQlVGX0xFTiwgR0ZQX0tFUk5FTCwgCj4+IG5vaW8pOwo+PiArwqDCoMKgIGlmICghaW1h
-X2J1ZikKPj4gK8KgwqDCoMKgwqDCoMKgIHJldHVybjsKPj4gKwo+PiArwqDCoMKgIHRhcmdldF9t
-ZXRhZGF0YV9idWYgPSAKPj4gZG1faW1hX2FsbG9jKERNX0lNQV9UQVJHRVRfTUVUQURBVEFfQlVG
-X0xFTiwgR0ZQX0tFUk5FTCwgbm9pbyk7Cj4+ICvCoMKgwqAgaWYgKCF0YXJnZXRfbWV0YWRhdGFf
-YnVmKQo+PiArwqDCoMKgwqDCoMKgwqAgZ290byBleGl0Owo+PiArCj4+ICvCoMKgwqAgdGFyZ2V0
-X2RhdGFfYnVmID0gZG1faW1hX2FsbG9jKERNX0lNQV9UQVJHRVRfREFUQV9CVUZfTEVOLCAKPj4g
-R0ZQX0tFUk5FTCwgbm9pbyk7Cj4+ICvCoMKgwqAgaWYgKCF0YXJnZXRfZGF0YV9idWYpCj4+ICvC
-oMKgwqDCoMKgwqDCoCBnb3RvIGV4aXQ7Cj4+ICsKPj4gK8KgwqDCoCAvKgo+PiArwqDCoMKgwqAg
-KiBHZXQgdGhlIGluZGV4IG9mIHRoZSB0YXJnZXQgaW4gdGhlIHRhYmxlLgo+PiArwqDCoMKgwqAg
-Ki8KPj4gK8KgwqDCoCBudW1fdGFyZ2V0cyA9IGRtX3RhYmxlX2dldF9udW1fdGFyZ2V0cyh0YWJs
-ZSk7Cj4+ICvCoMKgwqAgZm9yICh0YXJnZXRfaW5kZXggPSAwOyB0YXJnZXRfaW5kZXggPCBudW1f
-dGFyZ2V0czsgdGFyZ2V0X2luZGV4KyspIHsKPj4gK8KgwqDCoMKgwqDCoMKgIHRpMiA9IGRtX3Rh
-YmxlX2dldF90YXJnZXQodGFibGUsIHRhcmdldF9pbmRleCk7Cj4+ICvCoMKgwqDCoMKgwqDCoCBp
-ZiAoIXRpKQo+PiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBnb3RvIGV4aXQ7Cj4gVGhpcyBjaGVj
-ayBmb3IgInRpIiBjYW4gYmUgZG9uZSBvbiBmdW5jdGlvbiBlbnRyeSB0byBhdm9pZCBtZW1vcnkg
-Cj4gYWxsb2NhdGlvbnMgYW5kIGNhbGxzIHRvIGRtX3RhYmxlX2dldF9udW1fdGFyZ2V0cygpLCAK
-PiBkbV90YWJsZV9nZXRfdGFyZ2V0KCkgd2hlbiAidGkiIGlzIE5VTEwuCgpJIGFjdHVhbGx5IHdh
-bnRlZCB0byBjaGVjayBmb3IgdGkyLCBidXQgSSB0aGluayB0aGlzIGVudGlyZSBsb29wIGNhbiBi
-ZSAKc2ltcGxpZmllZCB0bzoKCiAgICAgbnVtX3RhcmdldHMgPSBkbV90YWJsZV9nZXRfbnVtX3Rh
-cmdldHModGFibGUpOwogICAgIGZvciAodGFyZ2V0X2luZGV4ID0gMDsgdGFyZ2V0X2luZGV4IDwg
-bnVtX3RhcmdldHM7IHRhcmdldF9pbmRleCsrKSB7CiAgICAgICAgIHRpMiA9IGRtX3RhYmxlX2dl
-dF90YXJnZXQodGFibGUsIHRhcmdldF9pbmRleCk7CiAgICAgICAgIGlmICh0aSA9PSB0aTIpCiAg
-ICAgICAgICAgICBicmVhazsKICAgICB9CiAgICAgaWYgKHRhcmdldF9pbmRleCA9PSBudW1fdGFy
-Z2V0cykKICAgICAgICAgZ290byBleGl0OwoKVGhpcyBzaG91bGQgd29yayBhbmQgYmVjYXVzZSB3
-ZSBpdGVyYXRlIG92ZXIgYWxsIHRhcmdldHMgYW5kIGlmIHdlIAppdGVyYXRlZCBvdmVyIGFsbCBh
-bmQgZGlkIG5vdCBmaW5kIGEgbWF0Y2ggdGhlbiB3ZSBza2lwIHRoZSBtZWFzdXJpbmcuCkkgZG8g
-bm90IGtub3cgaWYgY2hlY2tpbmcgaWYgInRpIiBpcyBOVUxMIGlzIHJlcXVpcmVkIGJlY2F1c2Ug
-aXQgc2hvdWxkIApuZXZlciBiZSBOVUxMIGluIG15IHVuZGVyc3RhbmRpbmcuCgo+IAo+PiArwqDC
-oMKgwqDCoMKgwqAgaWYgKHRpID09IHRpMikgewo+PiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBm
-b3VuZCA9IHRydWU7Cj4+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGJyZWFrOwo+PiArwqDCoMKg
-wqDCoMKgwqAgfQo+PiArwqDCoMKgIH0KPj4gK8KgwqDCoCBpZiAoIWZvdW5kKQo+PiArwqDCoMKg
-wqDCoMKgwqAgZ290byBleGl0Owo+PiArCj4+ICvCoMKgwqAgc2NucHJpbnRmKHRhcmdldF9tZXRh
-ZGF0YV9idWYsIERNX0lNQV9UQVJHRVRfTUVUQURBVEFfQlVGX0xFTiwKPj4gK8KgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgICJ0YXJnZXRfaW5kZXg9JWQsdGFyZ2V0X2JlZ2luPSVsbHUsdGFyZ2V0
-X2xlbj0lbGx1LCIsCj4+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCB0YXJnZXRfaW5kZXgs
-IHRpLT5iZWdpbiwgdGktPmxlbik7Cj4gQ2hlY2sgcmV0dXJuIHN0YXR1cyBvZiAic2NucHJpbnRm
-KCkiIGFuZCBoYW5kbGUgYW55IGVycm9yLgoKVGhlIG90aGVyIGNvZGUgaW4gZG0taW1hLmMgYWxz
-byBkb2VzIG5vdCBjaGVjayBmb3IgZXJyb3JzICJzY25wcmludGYoKSIuCkRvIHlvdSBoYXZlIGFu
-IGV4YW1wbGUgb24gaG93IHRvIGhhbmRsZSAic2NucHJpbnRmKCkiIGVycm9ycz8KClJlZ2FyZHMs
-ClRob3JlCgoKPiAKPiB0aGFua3MsCj4gIMKgLWxha3NobWkKPiAKPj4gK8KgwqDCoCB0YXJnZXRf
-bWV0YWRhdGFfYnVmX2xlbiA9IHN0cmxlbih0YXJnZXRfbWV0YWRhdGFfYnVmKTsKPj4gKwo+PiAr
-wqDCoMKgIGlmICh0aS0+dHlwZS0+c3RhdHVzKQo+PiArwqDCoMKgwqDCoMKgwqAgdGktPnR5cGUt
-PnN0YXR1cyh0aSwgU1RBVFVTVFlQRV9JTUEsIFNUQVRVU1RZUEVfSU1BLCAKPj4gdGFyZ2V0X2Rh
-dGFfYnVmLAo+PiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgRE1fSU1B
-X1RBUkdFVF9EQVRBX0JVRl9MRU4pOwo+PiArwqDCoMKgIGVsc2UKPj4gK8KgwqDCoMKgwqDCoMKg
-IHRhcmdldF9kYXRhX2J1ZlswXSA9ICdcMCc7Cj4+ICvCoMKgwqAgdGFyZ2V0X2RhdGFfYnVmX2xl
-biA9IHN0cmxlbih0YXJnZXRfZGF0YV9idWYpOwo+PiArCj4+ICvCoMKgwqAgbWVtY3B5KGltYV9i
-dWYgKyBsLCBETV9JTUFfVkVSU0lPTl9TVFIsIG1kLT5pbWEuZG1fdmVyc2lvbl9zdHJfbGVuKTsK
-Pj4gK8KgwqDCoCBsICs9IG1kLT5pbWEuZG1fdmVyc2lvbl9zdHJfbGVuOwo+PiArCj4+ICvCoMKg
-wqAgbWVtY3B5KGltYV9idWYgKyBsLCBtZC0+aW1hLmFjdGl2ZV90YWJsZS5kZXZpY2VfbWV0YWRh
-dGEsCj4+ICvCoMKgwqDCoMKgwqDCoMKgwqDCoCBtZC0+aW1hLmFjdGl2ZV90YWJsZS5kZXZpY2Vf
-bWV0YWRhdGFfbGVuKTsKPj4gK8KgwqDCoCBsICs9IG1kLT5pbWEuYWN0aXZlX3RhYmxlLmRldmlj
-ZV9tZXRhZGF0YV9sZW47Cj4+ICsKPj4gK8KgwqDCoCBtZW1jcHkoaW1hX2J1ZiArIGwsIHRhcmdl
-dF9tZXRhZGF0YV9idWYsIHRhcmdldF9tZXRhZGF0YV9idWZfbGVuKTsKPj4gK8KgwqDCoCBsICs9
-IHRhcmdldF9tZXRhZGF0YV9idWZfbGVuOwo+PiArCj4+ICvCoMKgwqAgbWVtY3B5KGltYV9idWYg
-KyBsLCB0YXJnZXRfZGF0YV9idWYsIHRhcmdldF9kYXRhX2J1Zl9sZW4pOwo+PiArCj4+ICvCoMKg
-wqAgZG1faW1hX21lYXN1cmVfZGF0YSgiZG1fdGFyZ2V0X3VwZGF0ZSIsIGltYV9idWYsIHN0cmxl
-bihpbWFfYnVmKSwgCj4+IG5vaW8pOwo+PiArCj4+ICtleGl0Ogo+PiArwqDCoMKgIGtmcmVlKGlt
-YV9idWYpOwo+PiArwqDCoMKgIGtmcmVlKHRhcmdldF9kYXRhX2J1Zik7Cj4+ICvCoMKgwqAga2Zy
-ZWUodGFyZ2V0X21ldGFkYXRhX2J1Zik7Cj4+ICt9Cj4+ICtFWFBPUlRfU1lNQk9MX0dQTChkbV9p
-bWFfbWVhc3VyZV9vbl90YXJnZXRfdXBkYXRlKTsKPj4gZGlmZiAtLWdpdCBhL2RyaXZlcnMvbWQv
-ZG0taW1hLmggYi9kcml2ZXJzL21kL2RtLWltYS5oCj4+IGluZGV4IGI4YzNiNjE0NjcwYi4uMjgx
-YThiNjVmOGE5IDEwMDY0NAo+PiAtLS0gYS9kcml2ZXJzL21kL2RtLWltYS5oCj4+ICsrKyBiL2Ry
-aXZlcnMvbWQvZG0taW1hLmgKPj4gQEAgLTYzLDYgKzYzLDcgQEAgdm9pZCBkbV9pbWFfbWVhc3Vy
-ZV9vbl9kZXZpY2VfcmVzdW1lKHN0cnVjdCAKPj4gbWFwcGVkX2RldmljZSAqbWQsIGJvb2wgc3dh
-cCk7Cj4+IMKgIHZvaWQgZG1faW1hX21lYXN1cmVfb25fZGV2aWNlX3JlbW92ZShzdHJ1Y3QgbWFw
-cGVkX2RldmljZSAqbWQsIGJvb2wgCj4+IHJlbW92ZV9hbGwpOwo+PiDCoCB2b2lkIGRtX2ltYV9t
-ZWFzdXJlX29uX3RhYmxlX2NsZWFyKHN0cnVjdCBtYXBwZWRfZGV2aWNlICptZCwgYm9vbCAKPj4g
-bmV3X21hcCk7Cj4+IMKgIHZvaWQgZG1faW1hX21lYXN1cmVfb25fZGV2aWNlX3JlbmFtZShzdHJ1
-Y3QgbWFwcGVkX2RldmljZSAqbWQpOwo+PiArdm9pZCBkbV9pbWFfbWVhc3VyZV9vbl90YXJnZXRf
-dXBkYXRlKHN0cnVjdCBkbV90YXJnZXQgKnRpKTsKPj4gwqAgI2Vsc2UKPj4gQEAgLTcyLDYgKzcz
-LDcgQEAgc3RhdGljIGlubGluZSB2b2lkIAo+PiBkbV9pbWFfbWVhc3VyZV9vbl9kZXZpY2VfcmVz
-dW1lKHN0cnVjdCBtYXBwZWRfZGV2aWNlICptZCwgYm9vCj4+IMKgIHN0YXRpYyBpbmxpbmUgdm9p
-ZCBkbV9pbWFfbWVhc3VyZV9vbl9kZXZpY2VfcmVtb3ZlKHN0cnVjdCAKPj4gbWFwcGVkX2Rldmlj
-ZSAqbWQsIGJvb2wgcmVtb3ZlX2FsbCkge30KPj4gwqAgc3RhdGljIGlubGluZSB2b2lkIGRtX2lt
-YV9tZWFzdXJlX29uX3RhYmxlX2NsZWFyKHN0cnVjdCAKPj4gbWFwcGVkX2RldmljZSAqbWQsIGJv
-b2wgbmV3X21hcCkge30KPj4gwqAgc3RhdGljIGlubGluZSB2b2lkIGRtX2ltYV9tZWFzdXJlX29u
-X2RldmljZV9yZW5hbWUoc3RydWN0IAo+PiBtYXBwZWRfZGV2aWNlICptZCkge30KPj4gK3N0YXRp
-YyBpbmxpbmUgdm9pZCBkbV9pbWFfbWVhc3VyZV9vbl90YXJnZXRfdXBkYXRlKHN0cnVjdCBkbV90
-YXJnZXQgCj4+ICp0aSkge30KPj4gwqAgI2VuZGlmIC8qIENPTkZJR19JTUEgKi8KCi0tCmRtLWRl
-dmVsIG1haWxpbmcgbGlzdApkbS1kZXZlbEByZWRoYXQuY29tCmh0dHBzOi8vbGlzdG1hbi5yZWRo
-YXQuY29tL21haWxtYW4vbGlzdGluZm8vZG0tZGV2ZWwK
+On 2022-05-06 12:00, David Sterba wrote:
+>>   The current approach for npo2 devices is to place the superblock mirror
+>>   zones near   512GB and 4TB that is **aligned to the zone size**.
+> 
+> I don't like that, the offsets have been chosen so the values are fixed
+> and also future proof in case the zone size increases significantly. The
+> natural alignment of the pow2 zones makes it fairly trivial.
+> 
+> If I understand correctly what you suggest, it would mean that if zone
+> is eg. 5G and starts at 510G then the superblock should start at 510G,
+> right? And with another device that has 7G zone size the nearest
+> multiple is 511G. And so on.
+> 
+> That makes it all less predictable, depending on the physical device
+> constraints that are affecting the logical data structures of the
+> filesystem. We tried to avoid that with pow2, the only thing that
+> depends on the device is that the range from the super block offsets is
+> always 2 zones.
+> 
+> I really want to keep the offsets for all zoned devices the same and
+> adapt the code that's handling the writes. This is possible with the
+> non-pow2 too, the first write is set to the expected offset, leaving the
+> beginning of the zone unused.
+> 
+I agree. Having a known place for superblocks is important for recovery
+tools. We were thinking along the lines of what you have suggested. I
+will add this support in the next revision.
+>>   This
+>>   is of no issue for normal operation as we keep track where the superblock
+>>   mirror are placed but this can cause an issue with recovery tools for
+>>   zoned devices as they expect mirror superblock to be in 512GB and 4TB.
+> 
+> Yeah the tools need to be updated, btrfs-progs and suite of blk* in
+> util-linux.
+> 
+>>   Note that ATM, recovery tools such as `btrfs check` does not work for
+>>   image dumps for zoned devices even for po2 zone sizes.
+> 
+> I thought this worked, but if you find something that does not please
+> report that to Johannes or Naohiro.
+Ok. Thanks.
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
