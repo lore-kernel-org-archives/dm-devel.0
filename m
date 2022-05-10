@@ -4,61 +4,68 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id AB7EDC433F5
-	for <dm-devel@archiver.kernel.org>; Tue, 10 May 2022 06:07:26 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 13200C433F5
+	for <dm-devel@archiver.kernel.org>; Tue, 10 May 2022 09:36:10 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-214-uzIfuAx2PFGLdkOlBcQxlw-1; Tue, 10 May 2022 02:07:22 -0400
-X-MC-Unique: uzIfuAx2PFGLdkOlBcQxlw-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-44-bzkmf70QMrmYu_lUc50Zfw-1; Tue, 10 May 2022 05:36:06 -0400
+X-MC-Unique: bzkmf70QMrmYu_lUc50Zfw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B89EC811E76;
-	Tue, 10 May 2022 06:07:20 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id EEC7F3C138C7;
+	Tue, 10 May 2022 09:36:04 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EE8A5C27EB8;
-	Tue, 10 May 2022 06:07:18 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 23417403D164;
+	Tue, 10 May 2022 09:36:03 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E0EB81947062;
-	Tue, 10 May 2022 06:07:16 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D950C1947055;
+	Tue, 10 May 2022 09:36:02 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 84F9E1947051
- for <dm-devel@listman.corp.redhat.com>; Mon,  9 May 2022 17:07:26 +0000 (UTC)
+ ESMTP id AD8071947052
+ for <dm-devel@listman.corp.redhat.com>; Tue, 10 May 2022 09:36:01 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id DB9C0200BCD8; Mon,  9 May 2022 17:07:25 +0000 (UTC)
+ id 8EA09C28101; Tue, 10 May 2022 09:36:01 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D6FFB2024CB7
- for <dm-devel@redhat.com>; Mon,  9 May 2022 17:07:17 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 517AC811E80
- for <dm-devel@redhat.com>; Mon,  9 May 2022 17:07:17 +0000 (UTC)
-Received: from linux.microsoft.com (linux.microsoft.com [13.77.154.182]) by
- relay.mimecast.com with ESMTP id us-mta-417-0G9t1GrFMbCHJMLGA3fH4Q-1; Mon,
- 09 May 2022 13:07:15 -0400
-X-MC-Unique: 0G9t1GrFMbCHJMLGA3fH4Q-1
-Received: from [10.137.112.111] (unknown [131.107.147.111])
- by linux.microsoft.com (Postfix) with ESMTPSA id 7402420EC5B6;
- Mon,  9 May 2022 10:07:14 -0700 (PDT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 linux.microsoft.com 7402420EC5B6
-Message-ID: <3090f056-8f06-fcb5-6ab8-501d8438bc0b@linux.microsoft.com>
-Date: Mon, 9 May 2022 10:07:14 -0700
+ (mimecast04.extmail.prod.ext.rdu2.redhat.com [10.11.55.20])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8B02AC28100
+ for <dm-devel@redhat.com>; Tue, 10 May 2022 09:36:01 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 725521010362
+ for <dm-devel@redhat.com>; Tue, 10 May 2022 09:36:01 +0000 (UTC)
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.220.28]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-557-iODw5-K7N8WM0cMZk291mw-1; Tue, 10 May 2022 05:36:00 -0400
+X-MC-Unique: iODw5-K7N8WM0cMZk291mw-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by smtp-out1.suse.de (Postfix) with ESMTPS id 9A35B21BB5;
+ Tue, 10 May 2022 09:35:58 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 633B613AA5;
+ Tue, 10 May 2022 09:35:58 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+ by imap2.suse-dmz.suse.de with ESMTPSA id IcxnFv4xemIANQAAMHmgww
+ (envelope-from <mwilck@suse.com>); Tue, 10 May 2022 09:35:58 +0000
+From: mwilck@suse.com
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>,
+ =?UTF-8?q?Martin=20Li=C5=A1ka?= <mliska@suse.cz>
+Date: Tue, 10 May 2022 11:35:37 +0200
+Message-Id: <20220510093538.25199-1-mwilck@suse.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
- Thunderbird/91.9.0
-To: Thore Sommer <public@thson.de>, dm-devel@redhat.com, agk@redhat.com,
- snitzer@redhat.com
-References: <20220106203436.281629-1-public@thson.de>
- <20220106203436.281629-2-public@thson.de>
- <796b7d69-6000-d4bf-d29b-f1fdfec6e332@linux.microsoft.com>
- <00030b50-d888-1562-e33c-24f7ee38cd99@thson.de>
-From: Lakshmi Ramasubramanian <nramas@linux.microsoft.com>
-In-Reply-To: <00030b50-d888-1562-e33c-24f7ee38cd99@thson.de>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -66,10 +73,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-X-Mailman-Approved-At: Tue, 10 May 2022 06:07:16 +0000
-Subject: Re: [dm-devel] [RFC PATCH 1/3] dm ima: allow targets to remeasure
- their table entry
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: [dm-devel] [PATCH 1/2] multipath-tools: move CPPFLAGS before CFLAGS
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -81,155 +86,109 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: tusharsu@linux.microsoft.com, linux-integrity@vger.kernel.org
+Cc: dm-devel@redhat.com, Martin Wilck <mwilck@suse.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-CgpPbiA1LzkvMjAyMiAyOjU1IEFNLCBUaG9yZSBTb21tZXIgd3JvdGU6Cj4gSGkgTGFrc2htaSwK
-PiAKPiBPbiAwNi4wNS4yMiAyMjoyNSwgTGFrc2htaSBSYW1hc3VicmFtYW5pYW4gd3JvdGU6Cj4+
-IEhpIFRob3JlLAo+Pgo+PiBPbiAxLzYvMjAyMiAxMjozNCBQTSwgVGhvcmUgU29tbWVyIHdyb3Rl
-Ogo+Pj4gQSBuZXcgRE0gZXZlbnQgZG1fdGFyZ2V0X3VwZGF0ZSBpcyBpbnRyb2R1Y2VkIGZvciB0
-YXJnZXRzIHRvIHJlbWVhc3VyZQo+Pj4gdGhlaXIgdGFibGUgZW50cnkuIFRoaXMgaXMgaW50ZW5k
-ZWQgZm9yIHRhcmdldHMgdGhhdCBpbmRpY2F0ZSBzZWN1cml0eQo+Pj4gcmVsZXZhbnQgZXZlbnRz
-IGJ5IHVwZGF0aW5nIG9uZSBvZiB0aGVpciB0YWJsZSBlbnRyaWVzIChlLmcuIHZlcml0eSBmb3IK
-Pj4+IGNvcnJ1cHRpb24pLgo+PiBJbiB0aGUgcGF0Y2ggZGVzY3JpcHRpb24gcGxlYXNlIHN0YXRl
-IHRoZSBleGlzdGluZyBwcm9ibGVtIChvciwgCj4+IGxpbWl0YXRpb24gaW4gdGhlIGV4aXN0aW5n
-IGltcGxlbWVudGF0aW9uKSBhbmQgdGhlbiBkZXNjcmliZSBob3cgdGhlIAo+PiBwcm9wb3NlZCBj
-aGFuZ2UgYWRkcmVzc2VzIHRoZSBpc3N1ZS4KPiAKPiBGb3IgdjIgSSB3aWxsIGFkZCB0aGUgcHJv
-YmxlbSBkZXNjcmlwdGlvbiBmcm9tIHRoZSBjb3ZlciBsZXR0ZXIgYWxzbyB0byAKPiB0aGlzIHBh
-dGNoIGRlc2NyaXB0aW9uLgpTb3VuZHMgZ29vZCBUaG9yZS4KCllvdSBtYXkga25vdyB0aGlzIGFs
-cmVhZHkgLSB3aGVuIHRoZSBwYXRjaCBpcyBtZXJnZWQsIGRlc2NyaXB0aW9uIGluIHRoZSAKY292
-ZXIgbGV0dGVyIGlzIG5vdCBpbmNsdWRlZC4gT25seSB0aGUgaW5mb3JtYXRpb24gaW4gdGhlIHBh
-dGNoIApkZXNjcmlwdGlvbiBpcyBpbmNsdWRlZCBpbiB0aGUgZ2l0IGhpc3RvcnkuIFNvIHBsZWFz
-ZSBkZXNjcmliZSB0aGUgCnByb2JsZW0gYW5kIGhvdyBpdCBpcyBhZGRyZXNzZWQgaW4gdGhlIHBh
-dGNoIGRlc2NyaXB0aW9uIGZvciBlYWNoIHBhdGNoLgoKPiAKPj4KPj4+Cj4+PiBJbiB0aGUgZXZl
-bnQgdGhlIGRtIHZlcnNpb24sIGRldmljZSBtZXRhZGF0YSBhbmQgdGFyZ2V0IGRhdGEgZ2V0cwo+
-Pj4gbWVhc3VyZWQuCj4+Pgo+Pj4gVGhpcyBkb2VzIG5vdCB1cGRhdGUgdGhlIGhhc2ggb2YgdGhl
-IGFjdGl2ZSB0YWJsZSBiZWNhdXNlIGl0IHdvdWxkIAo+Pj4gcmVxdWlyZQo+Pj4gdG8gcmVoYXNo
-IHRoZSB3aG9sZSB0YWJsZSB3aXRoIGFsbCB0aGUgb3RoZXIgdGFyZ2V0cyBlbnRyaWVzLgo+Pj4K
-Pj4+IFNpZ25lZC1vZmYtYnk6IFRob3JlIFNvbW1lciA8cHVibGljQHRoc29uLmRlPgo+Pj4gLS0t
-Cj4+PiDCoCBkcml2ZXJzL21kL2RtLWltYS5jIHwgNzYgKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysrKysrCj4+PiDCoCBkcml2ZXJzL21kL2RtLWltYS5oIHzCoCAyICsr
-Cj4+PiDCoCAyIGZpbGVzIGNoYW5nZWQsIDc4IGluc2VydGlvbnMoKykKPj4+Cj4+PiBkaWZmIC0t
-Z2l0IGEvZHJpdmVycy9tZC9kbS1pbWEuYyBiL2RyaXZlcnMvbWQvZG0taW1hLmMKPj4+IGluZGV4
-IDk1Nzk5OTk5OGQ3MC4uM2IxYmI5NzI2M2Q5IDEwMDY0NAo+Pj4gLS0tIGEvZHJpdmVycy9tZC9k
-bS1pbWEuYwo+Pj4gKysrIGIvZHJpdmVycy9tZC9kbS1pbWEuYwo+Pj4gQEAgLTc1MCwzICs3NTAs
-NzkgQEAgdm9pZCBkbV9pbWFfbWVhc3VyZV9vbl9kZXZpY2VfcmVuYW1lKHN0cnVjdCAKPj4+IG1h
-cHBlZF9kZXZpY2UgKm1kKQo+Pj4gwqDCoMKgwqDCoCBrZnJlZShuZXdfZGV2X25hbWUpOwo+Pj4g
-wqDCoMKgwqDCoCBrZnJlZShuZXdfZGV2X3V1aWQpOwo+Pj4gwqAgfQo+Pj4gKwo+Pj4gKy8qCj4+
-PiArICogR2l2ZSB0aGUgb3B0aW9uIGZvciB0YXJnZXRzIHRvIHJlbWVhc3VyZSBvbiBzdGF0ZSBj
-aGFuZ2UuCj4+PiArICovCj4+PiArdm9pZCBkbV9pbWFfbWVhc3VyZV9vbl90YXJnZXRfdXBkYXRl
-KHN0cnVjdCBkbV90YXJnZXQgKnRpKQo+Pj4gK3sKPj4+ICvCoMKgwqAgY2hhciAqaW1hX2J1ZiA9
-IE5VTEwsICp0YXJnZXRfbWV0YWRhdGFfYnVmID0gTlVMTCwgCj4+PiAqdGFyZ2V0X2RhdGFfYnVm
-ID0gTlVMTDsKPj4+ICvCoMKgwqAgc3RydWN0IGRtX3RhcmdldCAqdGkyOwo+Pj4gK8KgwqDCoCBz
-aXplX3QgdGFyZ2V0X21ldGFkYXRhX2J1Zl9sZW4sIHRhcmdldF9kYXRhX2J1Zl9sZW47Cj4+PiAr
-wqDCoMKgIHVuc2lnbmVkIGludCBudW1fdGFyZ2V0cywgdGFyZ2V0X2luZGV4Owo+Pj4gK8KgwqDC
-oCBzdHJ1Y3QgZG1fdGFibGUgKnRhYmxlID0gdGktPnRhYmxlOwo+Pj4gK8KgwqDCoCBzdHJ1Y3Qg
-bWFwcGVkX2RldmljZSAqbWQgPSB0YWJsZS0+bWQ7Cj4+PiArwqDCoMKgIGJvb2wgZm91bmQgPSBm
-YWxzZTsKPj4+ICvCoMKgwqAgYm9vbCBub2lvID0gdHJ1ZTsKPj4+ICvCoMKgwqAgaW50IGwgPSAw
-Owo+Pj4gKwo+PiBJbml0aWFsaXppbmcgImltYV9idWYiIHRvIE5VTEwgaXMgbm90IG5lY2Vzc2Fy
-eSBzaW5jZSB0aGUgc3RhdGVtZW50IAo+PiBiZWxvdyBpbml0aWFsaXplcyBpdC4KPiBZZXMsIEkg
-d2lsbCByZW1vdmUgdGhhdC4KPiAKPj4KPj4+ICvCoMKgwqAgaW1hX2J1ZiA9IGRtX2ltYV9hbGxv
-YyhETV9JTUFfTUVBU1VSRU1FTlRfQlVGX0xFTiwgR0ZQX0tFUk5FTCwgCj4+PiBub2lvKTsKPj4+
-ICvCoMKgwqAgaWYgKCFpbWFfYnVmKQo+Pj4gK8KgwqDCoMKgwqDCoMKgIHJldHVybjsKPj4+ICsK
-Pj4+ICvCoMKgwqAgdGFyZ2V0X21ldGFkYXRhX2J1ZiA9IAo+Pj4gZG1faW1hX2FsbG9jKERNX0lN
-QV9UQVJHRVRfTUVUQURBVEFfQlVGX0xFTiwgR0ZQX0tFUk5FTCwgbm9pbyk7Cj4+PiArwqDCoMKg
-IGlmICghdGFyZ2V0X21ldGFkYXRhX2J1ZikKPj4+ICvCoMKgwqDCoMKgwqDCoCBnb3RvIGV4aXQ7
-Cj4+PiArCj4+PiArwqDCoMKgIHRhcmdldF9kYXRhX2J1ZiA9IGRtX2ltYV9hbGxvYyhETV9JTUFf
-VEFSR0VUX0RBVEFfQlVGX0xFTiwgCj4+PiBHRlBfS0VSTkVMLCBub2lvKTsKPj4+ICvCoMKgwqAg
-aWYgKCF0YXJnZXRfZGF0YV9idWYpCj4+PiArwqDCoMKgwqDCoMKgwqAgZ290byBleGl0Owo+Pj4g
-Kwo+Pj4gK8KgwqDCoCAvKgo+Pj4gK8KgwqDCoMKgICogR2V0IHRoZSBpbmRleCBvZiB0aGUgdGFy
-Z2V0IGluIHRoZSB0YWJsZS4KPj4+ICvCoMKgwqDCoCAqLwo+Pj4gK8KgwqDCoCBudW1fdGFyZ2V0
-cyA9IGRtX3RhYmxlX2dldF9udW1fdGFyZ2V0cyh0YWJsZSk7Cj4+PiArwqDCoMKgIGZvciAodGFy
-Z2V0X2luZGV4ID0gMDsgdGFyZ2V0X2luZGV4IDwgbnVtX3RhcmdldHM7IAo+Pj4gdGFyZ2V0X2lu
-ZGV4KyspIHsKPj4+ICvCoMKgwqDCoMKgwqDCoCB0aTIgPSBkbV90YWJsZV9nZXRfdGFyZ2V0KHRh
-YmxlLCB0YXJnZXRfaW5kZXgpOwo+Pj4gK8KgwqDCoMKgwqDCoMKgIGlmICghdGkpCj4+PiArwqDC
-oMKgwqDCoMKgwqDCoMKgwqDCoCBnb3RvIGV4aXQ7Cj4+IFRoaXMgY2hlY2sgZm9yICJ0aSIgY2Fu
-IGJlIGRvbmUgb24gZnVuY3Rpb24gZW50cnkgdG8gYXZvaWQgbWVtb3J5IAo+PiBhbGxvY2F0aW9u
-cyBhbmQgY2FsbHMgdG8gZG1fdGFibGVfZ2V0X251bV90YXJnZXRzKCksIAo+PiBkbV90YWJsZV9n
-ZXRfdGFyZ2V0KCkgd2hlbiAidGkiIGlzIE5VTEwuCj4gCj4gSSBhY3R1YWxseSB3YW50ZWQgdG8g
-Y2hlY2sgZm9yIHRpMiwgYnV0IEkgdGhpbmsgdGhpcyBlbnRpcmUgbG9vcCBjYW4gYmUgCj4gc2lt
-cGxpZmllZCB0bzoKPiAKPiAgwqDCoMKgIG51bV90YXJnZXRzID0gZG1fdGFibGVfZ2V0X251bV90
-YXJnZXRzKHRhYmxlKTsKPiAgwqDCoMKgIGZvciAodGFyZ2V0X2luZGV4ID0gMDsgdGFyZ2V0X2lu
-ZGV4IDwgbnVtX3RhcmdldHM7IHRhcmdldF9pbmRleCsrKSB7Cj4gIMKgwqDCoMKgwqDCoMKgIHRp
-MiA9IGRtX3RhYmxlX2dldF90YXJnZXQodGFibGUsIHRhcmdldF9pbmRleCk7Cj4gIMKgwqDCoMKg
-wqDCoMKgIGlmICh0aSA9PSB0aTIpCj4gIMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgYnJlYWs7Cj4g
-IMKgwqDCoCB9Cj4gIMKgwqDCoCBpZiAodGFyZ2V0X2luZGV4ID09IG51bV90YXJnZXRzKQo+ICDC
-oMKgwqDCoMKgwqDCoCBnb3RvIGV4aXQ7Cj4gCj4gVGhpcyBzaG91bGQgd29yayBhbmQgYmVjYXVz
-ZSB3ZSBpdGVyYXRlIG92ZXIgYWxsIHRhcmdldHMgYW5kIGlmIHdlIAo+IGl0ZXJhdGVkIG92ZXIg
-YWxsIGFuZCBkaWQgbm90IGZpbmQgYSBtYXRjaCB0aGVuIHdlIHNraXAgdGhlIG1lYXN1cmluZy4K
-PiBJIGRvIG5vdCBrbm93IGlmIGNoZWNraW5nIGlmICJ0aSIgaXMgTlVMTCBpcyByZXF1aXJlZCBi
-ZWNhdXNlIGl0IHNob3VsZCAKPiBuZXZlciBiZSBOVUxMIGluIG15IHVuZGVyc3RhbmRpbmcuClNv
-dW5kcyBnb29kLgoKPiAKPj4KPj4+ICvCoMKgwqDCoMKgwqDCoCBpZiAodGkgPT0gdGkyKSB7Cj4+
-PiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoCBmb3VuZCA9IHRydWU7Cj4+PiArwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoCBicmVhazsKPj4+ICvCoMKgwqDCoMKgwqDCoCB9Cj4+PiArwqDCoMKgIH0KPj4+
-ICvCoMKgwqAgaWYgKCFmb3VuZCkKPj4+ICvCoMKgwqDCoMKgwqDCoCBnb3RvIGV4aXQ7Cj4+PiAr
-Cj4+PiArwqDCoMKgIHNjbnByaW50Zih0YXJnZXRfbWV0YWRhdGFfYnVmLCBETV9JTUFfVEFSR0VU
-X01FVEFEQVRBX0JVRl9MRU4sCj4+PiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgInRhcmdl
-dF9pbmRleD0lZCx0YXJnZXRfYmVnaW49JWxsdSx0YXJnZXRfbGVuPSVsbHUsIiwKPj4+ICvCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoCB0YXJnZXRfaW5kZXgsIHRpLT5iZWdpbiwgdGktPmxlbik7
-Cj4+IENoZWNrIHJldHVybiBzdGF0dXMgb2YgInNjbnByaW50ZigpIiBhbmQgaGFuZGxlIGFueSBl
-cnJvci4KPiAKPiBUaGUgb3RoZXIgY29kZSBpbiBkbS1pbWEuYyBhbHNvIGRvZXMgbm90IGNoZWNr
-IGZvciBlcnJvcnMgInNjbnByaW50ZigpIi4KPiBEbyB5b3UgaGF2ZSBhbiBleGFtcGxlIG9uIGhv
-dyB0byBoYW5kbGUgInNjbnByaW50ZigpIiBlcnJvcnM/CnNjbnByaW50ZiByZXR1cm5zIHRoZSBu
-dW1iZXIgb2YgY2hhcmFjdGVycyB3cml0dGVuIGludG8gdGhlIGJ1ZmZlciBub3QgCmluY2x1ZGlu
-ZyB0aGUgdHJhaWxpbmcgJ1wwJy4gSW5zdGVhZCBvZiBjYWxsaW5nIHN0cmxlbiBvbiAKdGFyZ2V0
-X21ldGFkYXRhX2J1ZiwgdGhlIHJldHVybiB2YWx1ZSBvZiBzY25wcmludGYgY2FuIGJlIHVzZWQu
-CgpzY25wcmludGYodGFyZ2V0X21ldGFkYXRhX2J1ZiwgRE1fSU1BX1RBUkdFVF9NRVRBREFUQV9C
-VUZfTEVOLAkJCSAKInRhcmdldF9pbmRleD0lZCx0YXJnZXRfYmVnaW49JWxsdSx0YXJnZXRfbGVu
-PSVsbHUsIiwKCQkgIHRhcmdldF9pbmRleCwgdGktPmJlZ2luLCB0aS0+bGVuKTsKCnRhcmdldF9t
-ZXRhZGF0YV9idWZfbGVuID0gc3RybGVuKHRhcmdldF9tZXRhZGF0YV9idWYpOwoKICAtbGFrc2ht
-aQoKPiAKPiBSZWdhcmRzLAo+IFRob3JlCj4gCj4gCj4+Cj4+IHRoYW5rcywKPj4gwqDCoC1sYWtz
-aG1pCj4+Cj4+PiArwqDCoMKgIHRhcmdldF9tZXRhZGF0YV9idWZfbGVuID0gc3RybGVuKHRhcmdl
-dF9tZXRhZGF0YV9idWYpOwo+Pj4gKwo+Pj4gK8KgwqDCoCBpZiAodGktPnR5cGUtPnN0YXR1cykK
-Pj4+ICvCoMKgwqDCoMKgwqDCoCB0aS0+dHlwZS0+c3RhdHVzKHRpLCBTVEFUVVNUWVBFX0lNQSwg
-U1RBVFVTVFlQRV9JTUEsIAo+Pj4gdGFyZ2V0X2RhdGFfYnVmLAo+Pj4gK8KgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIERNX0lNQV9UQVJHRVRfREFUQV9CVUZfTEVOKTsKPj4+
-ICvCoMKgwqAgZWxzZQo+Pj4gK8KgwqDCoMKgwqDCoMKgIHRhcmdldF9kYXRhX2J1ZlswXSA9ICdc
-MCc7Cj4+PiArwqDCoMKgIHRhcmdldF9kYXRhX2J1Zl9sZW4gPSBzdHJsZW4odGFyZ2V0X2RhdGFf
-YnVmKTsKPj4+ICsKPj4+ICvCoMKgwqAgbWVtY3B5KGltYV9idWYgKyBsLCBETV9JTUFfVkVSU0lP
-Tl9TVFIsIAo+Pj4gbWQtPmltYS5kbV92ZXJzaW9uX3N0cl9sZW4pOwo+Pj4gK8KgwqDCoCBsICs9
-IG1kLT5pbWEuZG1fdmVyc2lvbl9zdHJfbGVuOwo+Pj4gKwo+Pj4gK8KgwqDCoCBtZW1jcHkoaW1h
-X2J1ZiArIGwsIG1kLT5pbWEuYWN0aXZlX3RhYmxlLmRldmljZV9tZXRhZGF0YSwKPj4+ICvCoMKg
-wqDCoMKgwqDCoMKgwqDCoCBtZC0+aW1hLmFjdGl2ZV90YWJsZS5kZXZpY2VfbWV0YWRhdGFfbGVu
-KTsKPj4+ICvCoMKgwqAgbCArPSBtZC0+aW1hLmFjdGl2ZV90YWJsZS5kZXZpY2VfbWV0YWRhdGFf
-bGVuOwo+Pj4gKwo+Pj4gK8KgwqDCoCBtZW1jcHkoaW1hX2J1ZiArIGwsIHRhcmdldF9tZXRhZGF0
-YV9idWYsIHRhcmdldF9tZXRhZGF0YV9idWZfbGVuKTsKPj4+ICvCoMKgwqAgbCArPSB0YXJnZXRf
-bWV0YWRhdGFfYnVmX2xlbjsKPj4+ICsKPj4+ICvCoMKgwqAgbWVtY3B5KGltYV9idWYgKyBsLCB0
-YXJnZXRfZGF0YV9idWYsIHRhcmdldF9kYXRhX2J1Zl9sZW4pOwo+Pj4gKwo+Pj4gK8KgwqDCoCBk
-bV9pbWFfbWVhc3VyZV9kYXRhKCJkbV90YXJnZXRfdXBkYXRlIiwgaW1hX2J1ZiwgCj4+PiBzdHJs
-ZW4oaW1hX2J1ZiksIG5vaW8pOwo+Pj4gKwo+Pj4gK2V4aXQ6Cj4+PiArwqDCoMKgIGtmcmVlKGlt
-YV9idWYpOwo+Pj4gK8KgwqDCoCBrZnJlZSh0YXJnZXRfZGF0YV9idWYpOwo+Pj4gK8KgwqDCoCBr
-ZnJlZSh0YXJnZXRfbWV0YWRhdGFfYnVmKTsKPj4+ICt9Cj4+PiArRVhQT1JUX1NZTUJPTF9HUEwo
-ZG1faW1hX21lYXN1cmVfb25fdGFyZ2V0X3VwZGF0ZSk7Cj4+PiBkaWZmIC0tZ2l0IGEvZHJpdmVy
-cy9tZC9kbS1pbWEuaCBiL2RyaXZlcnMvbWQvZG0taW1hLmgKPj4+IGluZGV4IGI4YzNiNjE0Njcw
-Yi4uMjgxYThiNjVmOGE5IDEwMDY0NAo+Pj4gLS0tIGEvZHJpdmVycy9tZC9kbS1pbWEuaAo+Pj4g
-KysrIGIvZHJpdmVycy9tZC9kbS1pbWEuaAo+Pj4gQEAgLTYzLDYgKzYzLDcgQEAgdm9pZCBkbV9p
-bWFfbWVhc3VyZV9vbl9kZXZpY2VfcmVzdW1lKHN0cnVjdCAKPj4+IG1hcHBlZF9kZXZpY2UgKm1k
-LCBib29sIHN3YXApOwo+Pj4gwqAgdm9pZCBkbV9pbWFfbWVhc3VyZV9vbl9kZXZpY2VfcmVtb3Zl
-KHN0cnVjdCBtYXBwZWRfZGV2aWNlICptZCwgYm9vbCAKPj4+IHJlbW92ZV9hbGwpOwo+Pj4gwqAg
-dm9pZCBkbV9pbWFfbWVhc3VyZV9vbl90YWJsZV9jbGVhcihzdHJ1Y3QgbWFwcGVkX2RldmljZSAq
-bWQsIGJvb2wgCj4+PiBuZXdfbWFwKTsKPj4+IMKgIHZvaWQgZG1faW1hX21lYXN1cmVfb25fZGV2
-aWNlX3JlbmFtZShzdHJ1Y3QgbWFwcGVkX2RldmljZSAqbWQpOwo+Pj4gK3ZvaWQgZG1faW1hX21l
-YXN1cmVfb25fdGFyZ2V0X3VwZGF0ZShzdHJ1Y3QgZG1fdGFyZ2V0ICp0aSk7Cj4+PiDCoCAjZWxz
-ZQo+Pj4gQEAgLTcyLDYgKzczLDcgQEAgc3RhdGljIGlubGluZSB2b2lkIAo+Pj4gZG1faW1hX21l
-YXN1cmVfb25fZGV2aWNlX3Jlc3VtZShzdHJ1Y3QgbWFwcGVkX2RldmljZSAqbWQsIGJvbwo+Pj4g
-wqAgc3RhdGljIGlubGluZSB2b2lkIGRtX2ltYV9tZWFzdXJlX29uX2RldmljZV9yZW1vdmUoc3Ry
-dWN0IAo+Pj4gbWFwcGVkX2RldmljZSAqbWQsIGJvb2wgcmVtb3ZlX2FsbCkge30KPj4+IMKgIHN0
-YXRpYyBpbmxpbmUgdm9pZCBkbV9pbWFfbWVhc3VyZV9vbl90YWJsZV9jbGVhcihzdHJ1Y3QgCj4+
-PiBtYXBwZWRfZGV2aWNlICptZCwgYm9vbCBuZXdfbWFwKSB7fQo+Pj4gwqAgc3RhdGljIGlubGlu
-ZSB2b2lkIGRtX2ltYV9tZWFzdXJlX29uX2RldmljZV9yZW5hbWUoc3RydWN0IAo+Pj4gbWFwcGVk
-X2RldmljZSAqbWQpIHt9Cj4+PiArc3RhdGljIGlubGluZSB2b2lkIGRtX2ltYV9tZWFzdXJlX29u
-X3RhcmdldF91cGRhdGUoc3RydWN0IGRtX3RhcmdldCAKPj4+ICp0aSkge30KPj4+IMKgICNlbmRp
-ZiAvKiBDT05GSUdfSU1BICovCgotLQpkbS1kZXZlbCBtYWlsaW5nIGxpc3QKZG0tZGV2ZWxAcmVk
-aGF0LmNvbQpodHRwczovL2xpc3RtYW4ucmVkaGF0LmNvbS9tYWlsbWFuL2xpc3RpbmZvL2RtLWRl
-dmVsCg==
+From: Martin Wilck <mwilck@suse.com>
+
+Distributions may want to override -D_FORTIFY_SOURCE in the generic
+OPTFLAGS variable. That requires that the autodected setting is
+evaluated before OPTFLAGS on the compiler command line.
+This way, distributions can use OPTFLAGS="-U_FORTIFY_SOURCE
+-D_FORTIFY_SOURCE=3 ..." without causing compilation errors.
+(Note that the "-U" is required).
+
+Move CPPFLAGS before CFLAGS in the compiler command line. Moreover, make sure
+CPPFLAGS is referenced in all compilation steps.
+
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ Makefile.inc          | 2 +-
+ libmultipath/Makefile | 6 +++---
+ multipathd/Makefile   | 2 +-
+ tests/Makefile        | 2 +-
+ 4 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/Makefile.inc b/Makefile.inc
+index b915c06..7422666 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -191,7 +191,7 @@ check_var = $(shell \
+ 
+ %.o:	%.c
+ 	@echo building $@ because of $?
+-	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
++	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+ 
+ %.abi:  %.so.0
+ 	abidw $< >$@
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index a56dd1e..2fc3f3b 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -70,12 +70,12 @@ OBJS := $(OBJS-O) $(OBJS-U)
+ all:	$(DEVLIB)
+ 
+ nvme-lib.o: nvme-lib.c nvme-ioctl.c nvme-ioctl.h
+-	$(CC) $(CFLAGS) -Wno-unused-function -c -o $@ $<
++	$(CC) $(CPPFLAGS) $(CFLAGS) -Wno-unused-function -c -o $@ $<
+ 
+ # there are lots of "unused parameters" in dict.c
+ # because not all handler / snprint methods need all parameters
+ dict.o:	dict.c
+-	$(CC) $(CFLAGS) -Wno-unused-parameter -c -o $@ $<
++	$(CC) $(CPPFLAGS) $(CFLAGS) -Wno-unused-parameter -c -o $@ $<
+ 
+ make_static = $(shell sed '/^static/!s/^\([a-z]\{1,\} \)/static \1/' <$1 >$2)
+ 
+@@ -112,7 +112,7 @@ abi:    $(LIBS:%.so.$(SONAME)=%-nv.abi)
+ # This rule is invoked from tests/Makefile, overriding configdir and plugindir
+ %-test.o: %.c
+ 	@echo building $@ because of $?
+-	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
++	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+ 
+ test-lib:	../tests/$(LIBS)
+ 
+diff --git a/multipathd/Makefile b/multipathd/Makefile
+index 9a49144..1449080 100644
+--- a/multipathd/Makefile
++++ b/multipathd/Makefile
+@@ -52,7 +52,7 @@ $(EXEC): $(OBJS) $(multipathdir)/libmultipath.so $(mpathcmddir)/libmpathcmd.so
+ 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(EXEC) $(LIBDEPS)
+ 
+ cli_handlers.o:	cli_handlers.c
+-	$(CC) $(CFLAGS) -Wno-unused-parameter -c -o $@ $<
++	$(CC) $(CPPFLAGS) $(CFLAGS) -Wno-unused-parameter -c -o $@ $<
+ 
+ install:
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(bindir)
+diff --git a/tests/Makefile b/tests/Makefile
+index 0b39c30..a069e37 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -72,7 +72,7 @@ endif
+ strbuf-test_OBJDEPS := ../libmultipath/strbuf.o
+ 
+ %.o: %.c
+-	$(CC) $(CFLAGS) $($*-test_FLAGS) -c -o $@ $<
++	$(CC) $(CPPFLAGS) $(CFLAGS) $($*-test_FLAGS) -c -o $@ $<
+ 
+ lib/libchecktur.so:
+ 	mkdir -p lib
+-- 
+2.36.0
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
