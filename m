@@ -1,76 +1,73 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 20D11C433F5
-	for <dm-devel@archiver.kernel.org>; Wed, 11 May 2022 03:56:45 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 646F3C433F5
+	for <dm-devel@archiver.kernel.org>; Wed, 11 May 2022 08:11:32 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-653-kSRcnQjdPFqcA859J0Zx1Q-1; Tue, 10 May 2022 23:56:41 -0400
-X-MC-Unique: kSRcnQjdPFqcA859J0Zx1Q-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-230-coikcxgvOQGCnc56gb9UbA-1; Wed, 11 May 2022 04:11:29 -0400
+X-MC-Unique: coikcxgvOQGCnc56gb9UbA-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1688D185A794;
-	Wed, 11 May 2022 03:56:40 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 329941544F58;
-	Wed, 11 May 2022 03:56:37 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C04B3804068;
+	Wed, 11 May 2022 08:11:27 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 80FEF40CF8E8;
+	Wed, 11 May 2022 08:11:24 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id DBA4F1947078;
-	Wed, 11 May 2022 03:56:36 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D0FEE193F6F4;
+	Wed, 11 May 2022 08:11:21 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id AE9B81947077
- for <dm-devel@listman.corp.redhat.com>; Wed, 11 May 2022 03:56:35 +0000 (UTC)
+ ESMTP id B5D92194704C
+ for <dm-devel@listman.corp.redhat.com>; Tue, 10 May 2022 07:00:03 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 8F4E55676D9; Wed, 11 May 2022 03:56:35 +0000 (UTC)
+ id C28C4145BA7B; Tue, 10 May 2022 07:00:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8B5235676D7
- for <dm-devel@redhat.com>; Wed, 11 May 2022 03:56:34 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8F5B71C01B22
- for <dm-devel@redhat.com>; Wed, 11 May 2022 03:56:34 +0000 (UTC)
-Received: from mail-pl1-f180.google.com (mail-pl1-f180.google.com
- [209.85.214.180]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-473-hvOxyfGzOiiehwSDmUULSg-1; Tue, 10 May 2022 23:56:33 -0400
-X-MC-Unique: hvOxyfGzOiiehwSDmUULSg-1
-Received: by mail-pl1-f180.google.com with SMTP id q4so654754plr.11
- for <dm-devel@redhat.com>; Tue, 10 May 2022 20:56:32 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:mime-version:references:in-reply-to:from:date
- :message-id:subject:to:cc;
- bh=elq3ZqCelpCSxkkjk1LXdyA6w9hgB+SCHXKMgxWGx/U=;
- b=LeCFFnnKuMnNj52XvbrH+SGiDbpoXHDAEAOLncpnR2qnHvDdgBNxijJKEqOTPwoZjk
- RLTEW7YqfemORnQwd4Ivu+K7nBueidD9ORyNsTMCUK783OqKINEb4D+h7QegLv+nMI9k
- ztK1jM3zSCIfjoxEhcYuyzDZiPnpQsuizo1YppflE8aSlh7yt+WYvR/l4HrpTEB15z+8
- 94RU2dYpE0MBnDpbNQAGnMYwl5ogdkijNi28aemERyq3/aZVHPTUmjA7fZLlL20igaPI
- l9jlN9rL9t3bJxaVHlpy1xLt/MMdzNbyweN0RsZLTnto+K/lzfYJoWUUlzu8rHDgK1GS
- 7RzA==
-X-Gm-Message-State: AOAM531AAJQBfcRhnCbPDpZ3TqEnqVsOlibjCaSAoeZzM7FUwwMf/CZk
- uPvII+wWDSxFALiGeaocJNLp5ZoTUHawJCC8PBH5Wg==
-X-Google-Smtp-Source: ABdhPJw5n1KJcz8j1FP3c7A6fBBMc1hcuPZsn2gE31BtaT8knvxsmvrFDZQnLCp0J+6DmYbEonpCWUJBRb2zAP6Umfo=
-X-Received: by 2002:a17:902:da8b:b0:15e:c0e8:d846 with SMTP id
- j11-20020a170902da8b00b0015ec0e8d846mr23539490plx.34.1652241391912; Tue, 10
- May 2022 20:56:31 -0700 (PDT)
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id BEAB6145BA4B
+ for <dm-devel@redhat.com>; Tue, 10 May 2022 07:00:02 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A71A98015BA
+ for <dm-devel@redhat.com>; Tue, 10 May 2022 07:00:02 +0000 (UTC)
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-224-IgdyuoFgNQ6bNk6V-M61zg-1; Tue, 10 May 2022 03:00:00 -0400
+X-MC-Unique: IgdyuoFgNQ6bNk6V-M61zg-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by smtp-out2.suse.de (Postfix) with ESMTPS id 6B60D1FA14;
+ Tue, 10 May 2022 06:59:59 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 496AB13AA5;
+ Tue, 10 May 2022 06:59:59 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+ by imap2.suse-dmz.suse.de with ESMTPSA id qU7jD28NemK5aQAAMHmgww
+ (envelope-from <mliska@suse.cz>); Tue, 10 May 2022 06:59:59 +0000
+Message-ID: <038dee02-deb8-b848-6a82-718b3f484b61@suse.cz>
+Date: Tue, 10 May 2022 08:59:58 +0200
 MIME-Version: 1.0
-References: <20220422224508.440670-1-jane.chu@oracle.com>
- <20220422224508.440670-4-jane.chu@oracle.com>
- <CAPcyv4i7xi=5O=HSeBEzvoLvsmBB_GdEncbasMmYKf3vATNy0A@mail.gmail.com>
-In-Reply-To: <CAPcyv4i7xi=5O=HSeBEzvoLvsmBB_GdEncbasMmYKf3vATNy0A@mail.gmail.com>
-From: Dan Williams <dan.j.williams@intel.com>
-Date: Tue, 10 May 2022 20:56:21 -0700
-Message-ID: <CAPcyv4id8AbTFpO7ED_DAPren=eJQHwcdY8Mjx18LhW+u4MdNQ@mail.gmail.com>
-To: Jane Chu <jane.chu@oracle.com>, Borislav Petkov <bp@alien8.de>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.9.0
+To: Benjamin Marzinski <bmarzins@redhat.com>, mwilck@suse.com
+References: <20220509152127.7257-1-mwilck@suse.com>
+ <20220509211552.GA5254@octiron.msp.redhat.com>
+From: =?UTF-8?Q?Martin_Li=c5=a1ka?= <mliska@suse.cz>
+In-Reply-To: <20220509211552.GA5254@octiron.msp.redhat.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,9 +75,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: Re: [dm-devel] [PATCH v9 3/7] mce: fix set_mce_nospec to always
- unmap the whole page
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Mailman-Approved-At: Wed, 11 May 2022 08:11:20 +0000
+Subject: Re: [dm-devel] [PATCH] multipath-tools: Makefile.inc: add test for
+ -D_FORTIFY_SOURCE=3
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -92,68 +90,82 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, "Luck, Tony" <tony.luck@intel.com>,
- Dave Jiang <dave.jiang@intel.com>, Mike Snitzer <snitzer@redhat.com>,
- Peter Zijlstra <peterz@infradead.org>, "Darrick J. Wong" <djwong@kernel.org>,
- Jue Wang <juew@google.com>, X86 ML <x86@kernel.org>,
- david <david@fromorbit.com>,
- Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
- Matthew Wilcox <willy@infradead.org>, Christoph Hellwig <hch@infradead.org>,
- Dave Hansen <dave.hansen@intel.com>,
- device-mapper development <dm-devel@redhat.com>,
- Vivek Goyal <vgoyal@redhat.com>, Andy Lutomirski <luto@kernel.org>,
- Vishal L Verma <vishal.l.verma@intel.com>,
- linux-fsdevel <linux-fsdevel@vger.kernel.org>, "Weiny,
- Ira" <ira.weiny@intel.com>, Alasdair Kergon <agk@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Apr 22, 2022 at 4:25 PM Dan Williams <dan.j.williams@intel.com> wrote:
->
-> [ Add Tony as the originator of the whole_page() logic and Jue who
-> reported the issue that lead to 17fae1294ad9 x86/{mce,mm}: Unmap the
-> entire page if the whole page is affected and poisoned ]
->
->
-> On Fri, Apr 22, 2022 at 3:46 PM Jane Chu <jane.chu@oracle.com> wrote:
-> >
-> > The set_memory_uc() approach doesn't work well in all cases.
-> > As Dan pointed out when "The VMM unmapped the bad page from
-> > guest physical space and passed the machine check to the guest."
-> > "The guest gets virtual #MC on an access to that page. When
-> > the guest tries to do set_memory_uc() and instructs cpa_flush()
-> > to do clean caches that results in taking another fault / exception
-> > perhaps because the VMM unmapped the page from the guest."
-> >
-> > Since the driver has special knowledge to handle NP or UC,
-> > mark the poisoned page with NP and let driver handle it when
-> > it comes down to repair.
-> >
-> > Please refer to discussions here for more details.
-> > https://lore.kernel.org/all/CAPcyv4hrXPb1tASBZUg-GgdVs0OOFKXMXLiHmktg_kFi7YBMyQ@mail.gmail.com/
-> >
-> > Now since poisoned page is marked as not-present, in order to
-> > avoid writing to a not-present page and trigger kernel Oops,
-> > also fix pmem_do_write().
-> >
-> > Fixes: 284ce4011ba6 ("x86/memory_failure: Introduce {set, clear}_mce_nospec()")
-> > Reviewed-by: Christoph Hellwig <hch@lst.de>
-> > Reviewed-by: Dan Williams <dan.j.williams@intel.com>
-> > Signed-off-by: Jane Chu <jane.chu@oracle.com>
+On 5/9/22 23:15, Benjamin Marzinski wrote:
+> On Mon, May 09, 2022 at 05:21:27PM +0200, mwilck@suse.com wrote:
+>> From: Martin Wilck <mwilck@suse.com>
 
-Boris,
+Reviewed-by: Martin Liska <mliska@suse.cz>
 
-This is the last patch in this set that needs an x86 maintainer ack.
-Since you have been involved in the history for most of this, mind
-giving it an ack so I can pull it in for v5.19? Let me know if you
-want a resend.
+> 
+> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> 
+>>
+>> 6186645 ("Fix possibility to redefine -D_FORTIFY_SOURCE macro.")
+>> does not work as-is, because OPTFLAGS can't be used to override CPPFLAGS.
+>> Instead, add a test for support of -D_FORTIFY_SOURCE=3, and use it
+>> automatically if supported. The test uses similar logic as e.g.
+>> https://sourceware.org/git/?p=elfutils.git;a=commit;h=29859f2e79ef3c650ee9712cae990c6a7f787a7d
+>>
+>> This test works in environments with glibc 2.33 or newer. On older distributions,
+>> -D_FORTIFY_SOURCE=3 does not cause an error, and will thus be used. In this
+>> case, it has the same effect as -D_FORTIFY_SOURCE=2. On alpine Linux (musl
+>> libc), -D_FORTIFY_SOURCE=3 generates an error.
+>>
+>> Fixes: 6186645 ("Fix possibility to redefine -D_FORTIFY_SOURCE macro.")
+>> Signed-off-by: Martin Wilck <mwilck@suse.com>
+>> ---
+>>  Makefile.inc | 16 +++++++++++++++-
+>>  1 file changed, 15 insertions(+), 1 deletion(-)
+>>
+>> diff --git a/Makefile.inc b/Makefile.inc
+>> index cef7a06..b915c06 100644
+>> --- a/Makefile.inc
+>> +++ b/Makefile.inc
+>> @@ -117,6 +117,20 @@ TEST_CC_OPTION = $(shell \
+>>  		echo "$(2)"; \
+>>  	fi)
+>>  
+>> +# "make" on some distros will fail on explicit '#' or '\#' in the program text below
+>> +__HASH__ := \#
+>> +# Check if _DFORTIFY_SOURCE=3 is supported.
+>> +# On some distros (e.g. Debian Buster) it will be falsely reported as supported
+>> +# but it doesn't seem to make a difference wrt the compilation result.
+>> +FORTIFY_OPT := $(shell \
+>> +	if /bin/echo -e '$(__HASH__)include <string.h>\nint main(void) { return 0; }' | \
+>> +		$(CC) -o /dev/null -c -O2 -Werror -D_FORTIFY_SOURCE=3 -xc - 2>/dev/null; \
+>> +	then \
+>> +		echo "-D_FORTIFY_SOURCE=3"; \
+>> +	else \
+>> +		echo "-D_FORTIFY_SOURCE=2"; \
+>> +	fi)
+>> +
+>>  STACKPROT := $(call TEST_CC_OPTION,-fstack-protector-strong,-fstack-protector)
+>>  ERROR_DISCARDED_QUALIFIERS := $(call TEST_CC_OPTION,-Werror=discarded-qualifiers,)
+>>  WNOCLOBBERED := $(call TEST_CC_OPTION,-Wno-clobbered -Wno-error=clobbered,)
+>> @@ -126,7 +140,7 @@ OPTFLAGS	:= -O2 -g $(STACKPROT) --param=ssp-buffer-size=4
+>>  WARNFLAGS	:= -Werror -Wall -Wextra -Wformat=2 $(WFORMATOVERFLOW) -Werror=implicit-int \
+>>  		  -Werror=implicit-function-declaration -Werror=format-security \
+>>  		  $(WNOCLOBBERED) -Werror=cast-qual $(ERROR_DISCARDED_QUALIFIERS)
+>> -CPPFLAGS	:= -D_FORTIFY_SOURCE=2
+>> +CPPFLAGS	:= $(FORTIFY_OPT)
+>>  CFLAGS		:= --std=gnu99 $(CFLAGS) $(OPTFLAGS) $(WARNFLAGS) -pipe \
+>>  		   -DBIN_DIR=\"$(bindir)\" -DMULTIPATH_DIR=\"$(plugindir)\" -DRUN_DIR=\"${RUN}\" \
+>>  		   -DCONFIG_DIR=\"$(configdir)\" -DEXTRAVERSION=\"$(EXTRAVERSION)\" -MMD -MP
+>> -- 
+>> 2.36.0
+> 
 
 --
 dm-devel mailing list
