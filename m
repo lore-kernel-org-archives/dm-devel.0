@@ -1,83 +1,86 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 14149C433EF
-	for <dm-devel@archiver.kernel.org>; Wed, 11 May 2022 20:55:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 7E922C433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 12 May 2022 05:54:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-414-sCwzEXEEODWmdBSG4dVRcw-1; Wed, 11 May 2022 16:55:44 -0400
-X-MC-Unique: sCwzEXEEODWmdBSG4dVRcw-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-75-SYEzj_4hO9iGUqFEp_m8Dw-1; Thu, 12 May 2022 01:54:40 -0400
+X-MC-Unique: SYEzj_4hO9iGUqFEp_m8Dw-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 50723811E80;
-	Wed, 11 May 2022 20:55:41 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AB5551011637;
+	Thu, 12 May 2022 05:54:38 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 781A9400E86A;
-	Wed, 11 May 2022 20:55:39 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9CD1315341C3;
+	Thu, 12 May 2022 05:54:35 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2C631194707A;
-	Wed, 11 May 2022 20:55:39 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4C9741947B87;
+	Thu, 12 May 2022 05:54:35 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0556E194975B
- for <dm-devel@listman.corp.redhat.com>; Wed, 11 May 2022 20:55:37 +0000 (UTC)
+ ESMTP id 7C18B1947B84
+ for <dm-devel@listman.corp.redhat.com>; Wed, 11 May 2022 12:17:46 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D64E0552AAA; Wed, 11 May 2022 20:55:37 +0000 (UTC)
+ id 42AB7400E43D; Wed, 11 May 2022 12:17:46 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id D1E2E552AB2
- for <dm-devel@redhat.com>; Wed, 11 May 2022 20:55:37 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B5E161C00AC1
- for <dm-devel@redhat.com>; Wed, 11 May 2022 20:55:37 +0000 (UTC)
-Received: from mail-pj1-f50.google.com (mail-pj1-f50.google.com
- [209.85.216.50]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 3ED8D40C1421
+ for <dm-devel@redhat.com>; Wed, 11 May 2022 12:17:46 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 26F6D3C1902F
+ for <dm-devel@redhat.com>; Wed, 11 May 2022 12:17:46 +0000 (UTC)
+Received: from mail-pj1-f41.google.com (mail-pj1-f41.google.com
+ [209.85.216.41]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-454-ybb2b3jDM6eZfw4r8sslBQ-1; Wed, 11 May 2022 16:55:01 -0400
-X-MC-Unique: ybb2b3jDM6eZfw4r8sslBQ-1
-Received: by mail-pj1-f50.google.com with SMTP id
- cq17-20020a17090af99100b001dc0386cd8fso3093894pjb.5
- for <dm-devel@redhat.com>; Wed, 11 May 2022 13:55:00 -0700 (PDT)
+ us-mta-665-MtcdC64FNHSZMU00Nm5p3w-1; Wed, 11 May 2022 08:17:42 -0400
+X-MC-Unique: MtcdC64FNHSZMU00Nm5p3w-1
+Received: by mail-pj1-f41.google.com with SMTP id
+ t11-20020a17090ad50b00b001d95bf21996so4782022pju.2; 
+ Wed, 11 May 2022 05:17:42 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:date:from:to:cc:subject:message-id:references
  :mime-version:content-disposition:in-reply-to;
- bh=E+tE8jOYitJVRGmHjUOL7gxMXV553nM3OymWffscmCw=;
- b=zgZydhdE1NWX9MF+ywybJ9SgJJQvn9kesy1Lp6EISn4qYaNgz4kkF234fucklefcMZ
- p8v5rnqISN2PerZq55kkoZIvcgcch5XPJXqevXsWITLcgAkaQLv+8JhiRqV4pwOzky25
- wgsyvWvrSA2FycncDD0dXPZcMw4HvIcPywUo5IhIGQzxX3yNVLSPNDoYRhLYEwZZZ28K
- 7CzIF51227+mwEqi4BIFP8Cou9/Ff6P+5g40TkNUgLBr/u0bbkwLehofnG9Jc9t1AaCN
- Osgs3eIMsUcuv8Q2cL8DsgCvPP+5cFnt79D0ZfNikDvNPQmmmhxKSHIQt7KXav5+gqmW
- kM1Q==
-X-Gm-Message-State: AOAM530wJsxnb4F31qIY1fnSVOgYme+qmUG4t16WfmlVFykD49xxSUPb
- Xo6mrXmUmxR66VZJ5HTQ7TGVBA==
-X-Google-Smtp-Source: ABdhPJz1UXitekjbAHFYJrRunpwcE5/JCPpxSDxXqhs9z0YoBcIwPzSqhAxn+C5vDu35395T7aExgQ==
-X-Received: by 2002:a17:90b:610:b0:1d9:4008:cfee with SMTP id
- gb16-20020a17090b061000b001d94008cfeemr7313092pjb.71.1652302499794; 
- Wed, 11 May 2022 13:54:59 -0700 (PDT)
-Received: from localhost ([2620:15c:11a:202:c586:bf93:e960:73b4])
- by smtp.gmail.com with UTF8SMTPSA id
- y24-20020a63de58000000b003c14af50643sm277201pgi.91.2022.05.11.13.54.58
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Wed, 11 May 2022 13:54:59 -0700 (PDT)
-Date: Wed, 11 May 2022 13:54:57 -0700
-From: Matthias Kaehlcke <mka@chromium.org>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Kees Cook <keescook@chromium.org>, James Morris <jmorris@namei.org>,
- "Serge E . Hallyn" <serge@hallyn.com>
-Message-ID: <YnwioaRiVmYevo8i@google.com>
-References: <20220504195419.1143099-1-mka@chromium.org>
- <20220504125404.v3.1.I3e928575a23481121e73286874c4c2bdb403355d@changeid>
+ bh=6jloxkDrIBx1FQXB3WO3Zmzcd3Q83JGcMWSxebzbF80=;
+ b=m2jjfujv+aPalWMSxR24EI9FklzZJFSYyrVNQdKgn+jUXxs8mT1i+TIACpVHy2mF/5
+ eVfJobyJY9bvaJbIcrWRy6AlbfFr17e2U5Q1E12YQsTYMyse+vUbUf+B0n+vPjCHNCNQ
+ PsE+UTYxvKsIrraVnhGSA9hAmWkU8XCsPB7I9MBS2/G9uXQXa0UYLhxkuaBPsqn5J8fm
+ HlFrQaV7BbPY1YoSzxomz2lvuC7xOabwbrDFxdngxsv/5WIeAtUU2sxHyLVakr1o6WrP
+ W6i92T+9CDhMe++xNvtMy+iXvLhImdghqno24KDfVM5TuCVZWYXJbFFJx/4+HzJbhUAQ
+ QCLw==
+X-Gm-Message-State: AOAM531q4WzVd7FHASYvbonMEbOLYHe3Ww0R7fdwxo+ct+5FkJVW9KCU
+ al7PBTn9isPBU/hAWJtPVb0=
+X-Google-Smtp-Source: ABdhPJxPUIzteam2t9wDpHP6nr06rCewsN5+gC9SkiHTFRp8pdZVPv3cYpJfFGaF/VpS85E2BKIFXA==
+X-Received: by 2002:a17:902:9349:b0:158:a6f7:e280 with SMTP id
+ g9-20020a170902934900b00158a6f7e280mr24853463plp.155.1652271461237; 
+ Wed, 11 May 2022 05:17:41 -0700 (PDT)
+Received: from localhost ([2409:10:24a0:4700:e8ad:216a:2a9d:6d0c])
+ by smtp.gmail.com with ESMTPSA id
+ v24-20020a170902e8d800b0015e8d4eb272sm1676730plg.188.2022.05.11.05.17.39
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 11 May 2022 05:17:40 -0700 (PDT)
+Date: Wed, 11 May 2022 21:17:38 +0900
+From: Stafford Horne <shorne@gmail.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <YnupYin9knBu6c91@antec>
+References: <YnJI4Ru0AlUgrr9C@zx2c4.com> <YnJOCbLtdATzC+jn@zx2c4.com>
+ <YnJQXr3igEMTqY3+@smile.fi.intel.com> <YnJSQ3jJyvhmIstD@zx2c4.com>
+ <CAHk-=wgb_eBdjM_mzEvXfRG2EhrSK5MHNGyAj7=4vxvN4U9Rug@mail.gmail.com>
+ <CAHmME9q_-nfGxp8_VCqaritm4N8v8g67AzRjXs9du846JhhpoQ@mail.gmail.com>
+ <CAAfxs77yaLvWx9KnkDZX7E1eDm9N-NVJn5n8=mCK9BU-cSob=A@mail.gmail.com>
+ <CAHk-=wjLRo-6PbhbvMUDojbMo=L+2jc5VpCYTyF-LGxZPhUngA@mail.gmail.com>
+ <YnLkYjOF2vEOdjOo@antec> <YncQxl1shpH5TpbK@antec>
 MIME-Version: 1.0
-In-Reply-To: <20220504125404.v3.1.I3e928575a23481121e73286874c4c2bdb403355d@changeid>
+In-Reply-To: <YncQxl1shpH5TpbK@antec>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -85,8 +88,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: Re: [dm-devel] [PATCH v3 1/3] dm: Add verity helpers for LoadPin
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Mailman-Approved-At: Thu, 12 May 2022 05:54:34 +0000
+Subject: Re: [dm-devel] [PATCH v2] hex2bin: make the function hex_to_bin
+ constant-time
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -98,12 +103,19 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Douglas Anderson <dianders@chromium.org>,
- linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-raid@vger.kernel.org, Song Liu <song@kernel.org>, dm-devel@redhat.com
+Cc: Andy Shevchenko <andy@kernel.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>,
+ Mike Snitzer <msnitzer@redhat.com>,
+ Andy Shevchenko <andriy.shevchenko@intel.com>,
+ Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+ Mimi Zohar <zohar@linux.ibm.com>, Milan Broz <gmazyland@gmail.com>,
+ device-mapper development <dm-devel@redhat.com>,
+ Mikulas Patocka <mpatocka@redhat.com>,
+ Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
+ "David S. Miller" <davem@davemloft.net>,
+ Herbert Xu <herbert@gondor.apana.org.au>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -112,250 +124,88 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Alasdar/Mike, I'd be interested in your take on adding these functions
-to verity/DM, to get an idea whether this series has a path forward to
-landing upstream.
+On Sun, May 08, 2022 at 09:37:26AM +0900, Stafford Horne wrote:
+> On Thu, May 05, 2022 at 05:38:58AM +0900, Stafford Horne wrote:
+> > On Wed, May 04, 2022 at 01:10:03PM -0700, Linus Torvalds wrote:
+> > > On Wed, May 4, 2022 at 12:58 PM Stafford Horne <shorne@gmail.com> wrote:
+> > > >
+> > > > I have uploaded a diff I created here:
+> > > >   https://gist.github.com/54334556f2907104cd12374872a0597c
+> > > >
+> > > > It shows the same output.
+> > > 
+> > > In hex_to_bin itself it seems to only be a difference due to some
+> > > register allocation (r19 and r3 switched around).
+> > > 
+> > > But then it gets inlined into hex2bin and there changes there seem to
+> > > be about instruction and basic block scheduling, so it's a lot harder
+> > > to see what's going on.
+> > > 
+> > > And a lot of constant changes, which honestly look just like code code
+> > > moved around by 16 bytes and offsets changed due to that.
+> > > 
+> > > So I doubt it's hex_to_bin() that is causing problems, I think it's
+> > > purely code movement. Which explains why adding a nop or a fake printk
+> > > fixes things.
+> > > 
+> > > Some alignment assumption that got broken?
+> > 
+> > This is what it looks like to me too.  I will have to do a deep dive on what is
+> > going on with this particular build combination as I can't figure out what it is
+> > off the top of my head.
+> > 
+> > This test is using a gcc 11 compiler, I tried with my gcc 12 toolchain and the
+> > issue cannot be reproduced.
+> > 
+> >   - musl gcc 11 - https://musl.cc/or1k-linux-musl-cross.tgz
+> >   - openrisc gcc 12 - https://github.com/openrisc/or1k-gcc/releases/tag/or1k-12.0.1-20220210-20220304
+> > 
+> > But again the difference between the two compiler outputs is a lot of register
+> > allocation and offsets changes.  Its not easy to see anything that stands out.
+> > I checked the change log for the openrisc specific changes from gcc 11 to gcc
+> > 12.  Nothing seems to stand out, mcount profiler fix for PIC, a new large binary
+> > link flag.
+> 
+> Hello,
+> 
+> Just an update on this.  The issue so far has been traced to the alignment of
+> the crypto multiplication function fe_mul_impl in lib/crypto/curve25519-fiat32.c.
+> 
+> This patch e5be15767e7e ("hex2bin: make the function hex_to_bin constant-time")
+> allowed for the alignment to be just right to cause the failure.  Without
+> this patch and forcing the alignment we can reproduce the issue.  So though the
+> bisect is correct, this patch is not the root cause of the issue.
+> 
+> Using some l.nop sliding techniques and some strategically placed .align
+> statements I have been able to reproduce the issue on:
+> 
+>   - gcc 11 and gcc 12
+>   - preempt and non-preempt kernels
+> 
+> I have not been able to reproduce this on my FPGA, so far only QEMU.  My
+> hunch now is that since the fe_mul_impl function contains some rather long basic
+> blocks it appears that timer interrupts that interrupt qemu mid basic block
+> execution somehow is causing this.  The hypothesis is it may be basic block
+> resuming behavior in qemu that causes incosistent behavior.
+> 
+> It will take a bit more time to trace this.  Since I maintain OpenRISC QEMU the
+> issue is on me.
+> 
+> Again, It's safe to say that patch e5be15767e7e ("hex2bin: make the function
+> hex_to_bin constant-time") is not an issue.
 
-Thanks
+This issue has been fixed.  I sent a patch to QEMU for it:
 
-Matthias
+ - https://lore.kernel.org/qemu-devel/20220511120541.2242797-1-shorne@gmail.com/T/#u
 
-On Wed, May 04, 2022 at 12:54:17PM -0700, Matthias Kaehlcke wrote:
-> LoadPin limits loading of kernel modules, firmware and certain
-> other files to a 'pinned' file system (typically a read-only
-> rootfs). To provide more flexibility LoadPin is being extended
-> to also allow loading these files from trusted dm-verity
-> devices. For that purpose LoadPin can be provided with a list
-> of verity root digests that it should consider as trusted.
-> 
-> Add a bunch of helpers to allow LoadPin to check whether a DM
-> device is a trusted verity device. The new functions broadly
-> fall in two categories: those that need access to verity
-> internals (like the root digest), and the 'glue' between
-> LoadPin and verity. The new file dm-verity-loadpin.c contains
-> the glue functions.
-> 
-> Signed-off-by: Matthias Kaehlcke <mka@chromium.org>
-> ---
-> 
-> Changes in v3:
-> - none
-> 
-> Changes in v2:
-> - none
-> 
->  drivers/md/Makefile               |  6 +++
->  drivers/md/dm-verity-loadpin.c    | 80 +++++++++++++++++++++++++++++++
->  drivers/md/dm-verity-target.c     | 33 +++++++++++++
->  drivers/md/dm-verity.h            |  4 ++
->  include/linux/dm-verity-loadpin.h | 27 +++++++++++
->  5 files changed, 150 insertions(+)
->  create mode 100644 drivers/md/dm-verity-loadpin.c
->  create mode 100644 include/linux/dm-verity-loadpin.h
-> 
-> diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-> index 0454b0885b01..e12cd004d375 100644
-> --- a/drivers/md/Makefile
-> +++ b/drivers/md/Makefile
-> @@ -100,6 +100,12 @@ ifeq ($(CONFIG_IMA),y)
->  dm-mod-objs			+= dm-ima.o
->  endif
->  
-> +ifeq ($(CONFIG_DM_VERITY),y)
-> +ifeq ($(CONFIG_SECURITY_LOADPIN),y)
-> +dm-mod-objs			+= dm-verity-loadpin.o
-> +endif
-> +endif
-> +
->  ifeq ($(CONFIG_DM_VERITY_FEC),y)
->  dm-verity-objs			+= dm-verity-fec.o
->  endif
-> diff --git a/drivers/md/dm-verity-loadpin.c b/drivers/md/dm-verity-loadpin.c
-> new file mode 100644
-> index 000000000000..972ca93a2231
-> --- /dev/null
-> +++ b/drivers/md/dm-verity-loadpin.c
-> @@ -0,0 +1,80 @@
-> +// SPDX-License-Identifier: GPL-2.0-only
-> +
-> +#include <linux/list.h>
-> +#include <linux/kernel.h>
-> +#include <linux/dm-verity-loadpin.h>
-> +
-> +#include "dm.h"
-> +#include "dm-verity.h"
-> +
-> +static struct list_head *trusted_root_digests;
-> +
-> +/*
-> + * Sets the root digests of verity devices which LoadPin considers as trusted.
-> + *
-> + * This function must only be called once.
-> + */
-> +void dm_verity_loadpin_set_trusted_root_digests(struct list_head *digests)
-> +{
-> +	if (!trusted_root_digests)
-> +		trusted_root_digests = digests;
-> +	else
-> +		pr_warn("verity root digests trusted by LoadPin are already set!!!\n");
-> +}
-> +
-> +static bool is_trusted_verity_target(struct dm_target *ti)
-> +{
-> +	u8 *root_digest;
-> +	unsigned int digest_size;
-> +	struct trusted_root_digest *trd;
-> +	bool trusted = false;
-> +
-> +	if (!dm_is_verity_target(ti))
-> +		return false;
-> +
-> +	if (dm_verity_get_root_digest(ti, &root_digest, &digest_size))
-> +		return false;
-> +
-> +	list_for_each_entry(trd, trusted_root_digests, node) {
-> +		if ((trd->len == digest_size) &&
-> +		    !memcmp(trd->data, root_digest, digest_size)) {
-> +			trusted = true;
-> +			break;
-> +		}
-> +	}
-> +
-> +	kfree(root_digest);
-> +
-> +	return trusted;
-> +}
-> +
-> +/*
-> + * Determines whether a mapped device is a verity device that is trusted
-> + * by LoadPin.
-> + */
-> +bool dm_verity_loadpin_is_md_trusted(struct mapped_device *md)
-> +{
-> +	int srcu_idx;
-> +	struct dm_table *table;
-> +	unsigned int num_targets;
-> +	bool trusted = false;
-> +	int i;
-> +
-> +	if (!trusted_root_digests || list_empty(trusted_root_digests))
-> +		return false;
-> +
-> +	table = dm_get_live_table(md, &srcu_idx);
-> +	num_targets = dm_table_get_num_targets(table);
-> +	for (i = 0; i < num_targets; i++) {
-> +		struct dm_target *ti = dm_table_get_target(table, i);
-> +
-> +		if (is_trusted_verity_target(ti)) {
-> +			trusted = true;
-> +			break;
-> +		}
-> +	}
-> +
-> +	dm_put_live_table(md, srcu_idx);
-> +
-> +	return trusted;
-> +}
-> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> index 80133aae0db3..6f07b849fcb2 100644
-> --- a/drivers/md/dm-verity-target.c
-> +++ b/drivers/md/dm-verity-target.c
-> @@ -19,6 +19,7 @@
->  #include <linux/module.h>
->  #include <linux/reboot.h>
->  #include <linux/scatterlist.h>
-> +#include <linux/string.h>
->  
->  #define DM_MSG_PREFIX			"verity"
->  
-> @@ -1310,6 +1311,38 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
->  	return r;
->  }
->  
-> +/*
-> + * Check whether a DM target is a verity target.
-> + */
-> +bool dm_is_verity_target(struct dm_target *ti)
-> +{
-> +	return ti->type->module == THIS_MODULE;
-> +}
-> +EXPORT_SYMBOL_GPL(dm_is_verity_target);
-> +
-> +/*
-> + * Get the root digest of a verity target.
-> + *
-> + * Returns a copy of the root digest, the caller is responsible for
-> + * freeing the memory of the digest.
-> + */
-> +int dm_verity_get_root_digest(struct dm_target *ti, u8 **root_digest, unsigned int *digest_size)
-> +{
-> +	struct dm_verity *v = ti->private;
-> +
-> +	if (!dm_is_verity_target(ti))
-> +		return -EINVAL;
-> +
-> +	*root_digest = kmemdup(v->root_digest, v->digest_size, GFP_KERNEL);
-> +	if (*root_digest == NULL)
-> +		return -ENOMEM;
-> +
-> +	*digest_size = v->digest_size;
-> +
-> +	return 0;
-> +}
-> +EXPORT_SYMBOL_GPL(dm_verity_get_root_digest);
-> +
->  static struct target_type verity_target = {
->  	.name		= "verity",
->  	.version	= {1, 8, 0},
-> diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-> index 4e769d13473a..c832cc3e3d24 100644
-> --- a/drivers/md/dm-verity.h
-> +++ b/drivers/md/dm-verity.h
-> @@ -129,4 +129,8 @@ extern int verity_hash(struct dm_verity *v, struct ahash_request *req,
->  extern int verity_hash_for_block(struct dm_verity *v, struct dm_verity_io *io,
->  				 sector_t block, u8 *digest, bool *is_zero);
->  
-> +extern bool dm_is_verity_target(struct dm_target *ti);
-> +extern int dm_verity_get_root_digest(struct dm_target *ti, u8 **root_digest,
-> +				     unsigned int *digest_size);
-> +
->  #endif /* DM_VERITY_H */
-> diff --git a/include/linux/dm-verity-loadpin.h b/include/linux/dm-verity-loadpin.h
-> new file mode 100644
-> index 000000000000..12a86911d05a
-> --- /dev/null
-> +++ b/include/linux/dm-verity-loadpin.h
-> @@ -0,0 +1,27 @@
-> +/* SPDX-License-Identifier: GPL-2.0 */
-> +
-> +#ifndef __LINUX_DM_VERITY_LOADPIN_H
-> +#define __LINUX_DM_VERITY_LOADPIN_H
-> +
-> +#include <linux/list.h>
-> +
-> +struct mapped_device;
-> +
-> +struct trusted_root_digest {
-> +	u8 *data;
-> +	unsigned int len;
-> +	struct list_head node;
-> +};
-> +
-> +#if IS_ENABLED(CONFIG_SECURITY_LOADPIN) && IS_BUILTIN(CONFIG_DM_VERITY)
-> +void dm_verity_loadpin_set_trusted_root_digests(struct list_head *digests);
-> +bool dm_verity_loadpin_is_md_trusted(struct mapped_device *md);
-> +#else
-> +static inline void dm_verity_loadpin_set_trusted_root_digests(struct list_head *digests) {}
-> +static inline bool dm_verity_loadpin_is_md_trusted(struct mapped_device *md)
-> +{
-> +	return false;
-> +}
-> +#endif
-> +
-> +#endif /* __LINUX_DM_LOADPIN_H */
-> -- 
-> 2.36.0.464.gb9c8b46e94-goog
-> 
+The issue was a bug in the OpenRISC emulation in QEMU which was triggered when
+receiving a TICK TIMER interrupt, in a delay slot, on a page boundary.
+
+The fix was simple enough, but investigation took quite some work.
+
+Thanks,
+
+-Stafford
 
 --
 dm-devel mailing list
