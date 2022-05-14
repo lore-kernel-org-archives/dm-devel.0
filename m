@@ -1,77 +1,77 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 74D2CC433EF
-	for <dm-devel@archiver.kernel.org>; Sat, 14 May 2022 23:02:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 433B9C433EF
+	for <dm-devel@archiver.kernel.org>; Sat, 14 May 2022 23:02:14 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-612-5iOOSIHWPd2ExTGbLn0MaQ-1; Sat, 14 May 2022 19:02:07 -0400
-X-MC-Unique: 5iOOSIHWPd2ExTGbLn0MaQ-1
+ us-mta-169-F0u7FeSNM2KujxcVmXJjzg-1; Sat, 14 May 2022 19:02:10 -0400
+X-MC-Unique: F0u7FeSNM2KujxcVmXJjzg-1
 Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7678C801210;
-	Sat, 14 May 2022 23:02:05 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 47F5D80418B;
+	Sat, 14 May 2022 23:02:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id D54BF40D2820;
-	Sat, 14 May 2022 23:02:02 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 34B3240D2824;
+	Sat, 14 May 2022 23:02:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 8ED87194704E;
-	Sat, 14 May 2022 23:02:02 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E453B194704E;
+	Sat, 14 May 2022 23:02:07 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 72CF41947040
- for <dm-devel@listman.corp.redhat.com>; Sat, 14 May 2022 23:02:01 +0000 (UTC)
+ ESMTP id C484A194F4BB
+ for <dm-devel@listman.corp.redhat.com>; Sat, 14 May 2022 23:02:02 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 3ED0540D2822; Sat, 14 May 2022 23:02:01 +0000 (UTC)
+ id 9100CC27E89; Sat, 14 May 2022 23:02:02 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 3A19340D2820
- for <dm-devel@redhat.com>; Sat, 14 May 2022 23:02:01 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0F91D1C04B76
- for <dm-devel@redhat.com>; Sat, 14 May 2022 23:02:01 +0000 (UTC)
-Received: from mail-wr1-f44.google.com (mail-wr1-f44.google.com
- [209.85.221.44]) by relay.mimecast.com with ESMTP with STARTTLS
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 8CF0AC27E84
+ for <dm-devel@redhat.com>; Sat, 14 May 2022 23:02:02 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 714251C04B76
+ for <dm-devel@redhat.com>; Sat, 14 May 2022 23:02:02 +0000 (UTC)
+Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com
+ [209.85.128.54]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-25-A5_DD01UP_evIX3SOvTxlA-1; Sat, 14 May 2022 19:01:59 -0400
-X-MC-Unique: A5_DD01UP_evIX3SOvTxlA-1
-Received: by mail-wr1-f44.google.com with SMTP id i5so15900423wrc.13;
- Sat, 14 May 2022 16:01:58 -0700 (PDT)
+ us-mta-371-f6QaEU4xPsC8P4zK3uqW8g-1; Sat, 14 May 2022 19:02:00 -0400
+X-MC-Unique: f6QaEU4xPsC8P4zK3uqW8g-1
+Received: by mail-wm1-f54.google.com with SMTP id
+ 125-20020a1c1983000000b003941f354c62so6711471wmz.0; 
+ Sat, 14 May 2022 16:02:00 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
  :references:mime-version:content-transfer-encoding;
- bh=kJAc/DrKegqabgbDL6r4SdFBXYULb2nqHrbnunioEnc=;
- b=69D+lrXmbg8XyFp4TkrnB4rq4Bgpktu8bx+tqfO7T1/XWX2wtGqq7Si+jHzKmRXsJ6
- 9dzRkyw3ytZL1NPCT8Pd3+JPXRrUqGN5xmIotCTb01V7hiXZh0UV6e2KdVTotL9AupO1
- moLNjNCCnvdpFPcShc7IRV7WjQ03KpYP4sN4D8J4fwwVc0vq9yxp6aiBPoNDuftuPAw7
- oaeeG5Q6p0toGMcc2Q2Ys49GeLir3CYzupR4eBts9vtKrBk02v2RZTjP7mTFPDl4S8y4
- GLFUjcn3nPbpe1JaILp9QjL958Lb5CxhcCcN+8fc1D2hhvwdxHPZ3mzNPDrolBCUpBnO
- dORw==
-X-Gm-Message-State: AOAM531iuwUY0G9gWQU1gG5pXW6vvHHqxaIu82ehQ6+vbvn5fkqYnuih
- USV7WoueeVIXit+JbZC0UA==
-X-Google-Smtp-Source: ABdhPJyhbRv0XzdxF4V6ngWibeDS4V7I80FBckP/EL8Qf/0mqxlfRRtFUgogq1234Z2dXJu69UsJyw==
-X-Received: by 2002:a05:6000:1f91:b0:20c:54e5:fbbb with SMTP id
- bw17-20020a0560001f9100b0020c54e5fbbbmr8874445wrb.557.1652569317832; 
- Sat, 14 May 2022 16:01:57 -0700 (PDT)
+ bh=50HLvFUsOZHhEbZkYrg8AB8i5w9C3aCBM8jg/jTVO84=;
+ b=PkSetYZ2b61dz2KgbFnfBzqk4ukKrTj9hyl9r0LXYrJmwuOpbOmrwCzO380nQmM3G6
+ tEBvipStZP4MZmOD/dCieYJjZXlL6e/DZvB1E8rb9Q43ja5fM1bBTlRYLZmx98dJpVgY
+ /j4n4PpWQMHohqUKMAAEY9H77zRzluN7LdvG+/wWHGy0O6Pu8ph/tbXSs6/5qiKRJMxC
+ 0TTUrqHQP/fyZvL49a8a9s3oXimqo9hMaQoMX9aa/9vJpM6IRnwl+OJ++Mva7qtvc7kO
+ Tz4x9fSTsaaXyIREKmEabyjaoDRiTG0GrjWqJzQakk9YB9XTHJTZ2hb2RmEzTw5BhPwc
+ fCMw==
+X-Gm-Message-State: AOAM531+I8f/nZYnKf9Mxg5PnNV5Fmehf200gZ0lt3uV/rhp286SgbWL
+ 1kJwEw2pmvkV/s76oh0zU5WxTwcZlX/3
+X-Google-Smtp-Source: ABdhPJwkhMlqxbEZ3aeBF2MaoZRsurdMMFIHu1LN7OzP5GRK+9AlHD2UN7R1ILq3geDCPGgQQc5lCg==
+X-Received: by 2002:a05:600c:240a:b0:394:18b:d722 with SMTP id
+ 10-20020a05600c240a00b00394018bd722mr21392787wmp.177.1652569319063; 
+ Sat, 14 May 2022 16:01:59 -0700 (PDT)
 Received: from localhost (50.red-81-44-142.dynamicip.rima-tde.net.
  [81.44.142.50]) by smtp.gmail.com with ESMTPSA id
- w5-20020adfe045000000b0020c5253d8f5sm5694423wrh.65.2022.05.14.16.01.57
+ m32-20020a05600c3b2000b003942a244ed2sm8422173wms.23.2022.05.14.16.01.58
  (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Sat, 14 May 2022 16:01:57 -0700 (PDT)
+ Sat, 14 May 2022 16:01:58 -0700 (PDT)
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 To: 
-Date: Sun, 15 May 2022 01:01:40 +0200
-Message-Id: <20220514230148.139675-2-xose.vazquez@gmail.com>
+Date: Sun, 15 May 2022 01:01:41 +0200
+Message-Id: <20220514230148.139675-3-xose.vazquez@gmail.com>
 In-Reply-To: <20220514230148.139675-1-xose.vazquez@gmail.com>
 References: <20220514230148.139675-1-xose.vazquez@gmail.com>
 MIME-Version: 1.0
@@ -83,8 +83,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: [dm-devel] [PATCH 1/9] multipath-tools: fix misspellings
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: [dm-devel] [PATCH 2/9] multipath-tools: add HPE Alletra 9000 NVMe
+ to hardware table
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -109,84 +110,37 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
+Info from (page 53, website sometimes is broken):
+https://support.hpe.com/hpesc/public/docDisplay?docLocale=en_US&docId=a00115289en_us or
+https://support.hpe.com/hpesc/public/docDisplay?docId=sd00001334en_us&page=GUID-551FCC2F-D8EA-405B-B9DC-2E66C2AE8608.html
+
 Cc: Martin Wilck <mwilck@suse.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM-DEVEL ML <dm-devel@redhat.com>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- README.md                       | 2 +-
- libmultipath/checkers/rdac.c    | 2 +-
- libmultipath/prioritizers/iet.c | 2 +-
- multipath/multipath.conf.5      | 2 +-
- tests/directio.c                | 2 +-
- 5 files changed, 5 insertions(+), 5 deletions(-)
+ libmultipath/hwtable.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/README.md b/README.md
-index d67888d9..f06f8cea 100644
---- a/README.md
-+++ b/README.md
-@@ -80,7 +80,7 @@ The following variables can be passed to the `make` command line:
- 	The default is `/etc/multipath/conf.d`.
-  * `ENABLE_LIBDMMP=0`: disable building libdmmp
-  * `ENABLE_DMEVENTS_POLL=0`: disable support for the device-mapper event
--   polling API. For use with pre-5.0 kernels that don't supprt dmevent polling
-+   polling API. For use with pre-5.0 kernels that don't support dmevent polling
-    (but even if you don't use this option, multipath-tools will work with
-    these kernels).
-  * `SCSI_DH_MODULES_PRELOAD="(list)"`: specify a space-separated list of SCSI
-diff --git a/libmultipath/checkers/rdac.c b/libmultipath/checkers/rdac.c
-index d924a9f7..f7aaa30a 100644
---- a/libmultipath/checkers/rdac.c
-+++ b/libmultipath/checkers/rdac.c
-@@ -96,7 +96,7 @@ int libcheck_init (struct checker * c)
- 		goto out;
- 	}
- 
--	/* get the changeble values */
-+	/* get the changeable values */
- 	cmd[2] = 0xA + (CHANGEABLE_PAGE_CODE_VALUES << 6);
- 	io_hdr.dxferp = &changeable;
- 	memset(&changeable, 0, sizeof(struct control_mode_page));
-diff --git a/libmultipath/prioritizers/iet.c b/libmultipath/prioritizers/iet.c
-index e98773cf..167a46b0 100644
---- a/libmultipath/prioritizers/iet.c
-+++ b/libmultipath/prioritizers/iet.c
-@@ -31,7 +31,7 @@
- // name: find_regex
- // @param string: string you want to search into
- // @param regex: the pattern used
--// @return result: string finded in string with regex, "none" if none
-+// @return result: string found in string with regex, "none" if none
- char *find_regex(char * string, char * regex)
- {
- 	int err;
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index fe838e38..d57c810b 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -1759,7 +1759,7 @@ The protocol string of the path device. The possible values are \fIscsi:fcp\fR,
- \fIscsi:spi\fR, \fIscsi:ssa\fR, \fIscsi:sbp\fR, \fIscsi:srp\fR,
- \fIscsi:iscsi\fR, \fIscsi:sas\fR, \fIscsi:adt\fR, \fIscsi:ata\fR,
- \fIscsi:unspec\fR, \fIccw\fR, \fIcciss\fR, \fInvme\fR, and \fIundef\fR. This is
--\fBnot\fR a regular expression. the path device protcol string must match
-+\fBnot\fR a regular expression. the path device protocol string must match
- exactly. The protocol that a path is using can be viewed by running
- \fBmultipathd show paths format "%d %P"\fR
- .LP
-diff --git a/tests/directio.c b/tests/directio.c
-index 9f7d3883..20ccc47a 100644
---- a/tests/directio.c
-+++ b/tests/directio.c
-@@ -693,7 +693,7 @@ static void test_check_state_blksize(void **state)
- 	do_libcheck_reset(1);
- }
- 
--/* test async checkers pending and getting resovled by another checker
-+/* test async checkers pending and getting resolved by another checker
-  * as well as the loops for getting multiple events */
- static void test_check_state_async(void **state)
- {
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 0f0795c3..b6ff1107 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -119,6 +119,13 @@ static struct hwentry default_hw[] = {
+ 		.dev_loss      = MAX_DEV_LOSS_TMO,
+ 		.vpd_vendor_id = VPD_VP_HP3PAR,
+ 	},
++	{
++		/* Alletra 9000 NVMe */
++		.vendor        = "NVME",
++		.product       = "HPE Alletra",
++		.pgpolicy      = MULTIBUS,
++		.no_path_retry = NO_PATH_RETRY_QUEUE,
++	},
+ 	{
+ 		/* RA8000 / ESA12000 */
+ 		.vendor        = "DEC",
 -- 
 2.36.1
 
