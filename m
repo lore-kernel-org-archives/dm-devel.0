@@ -1,91 +1,69 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id BDA8DC433F5
-	for <dm-devel@archiver.kernel.org>; Sun, 15 May 2022 13:16:44 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2893BC433EF
+	for <dm-devel@archiver.kernel.org>; Sun, 15 May 2022 21:06:48 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1652648808;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=15iAATIRVIk75i+/+00zveziDb+cMBLLi0LLqMyuUWs=;
+	b=XjXcFXdDLUKXT0VtJ/0pwuZWI+t7SPux4RqmhOSjosj0rjEE17ELVTyCkxBDFEnZlKdpVZ
+	zALZORcyEIcLfSj3j6U32Tdcp5VveEiAKNgpnnYaGoIEjTAsGnbPEgJZhxuvKeRi4c8lHM
+	Eq4C+kXvLoqHEpWlx7sUiRCL6KnuMJA=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-474-5qKM8qMDPeG4AUqevlN_Fg-1; Sun, 15 May 2022 09:16:40 -0400
-X-MC-Unique: 5qKM8qMDPeG4AUqevlN_Fg-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-439-NAMY_bARM-KmfN8ifXfMEA-1; Sun, 15 May 2022 17:06:46 -0400
+X-MC-Unique: NAMY_bARM-KmfN8ifXfMEA-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8060B1C05AE5;
-	Sun, 15 May 2022 13:16:38 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 32409463DFD;
-	Sun, 15 May 2022 13:16:38 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 466B43C0D182;
+	Sun, 15 May 2022 21:06:45 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 4D06540CF91F;
+	Sun, 15 May 2022 21:06:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D998719451F0;
-	Sun, 15 May 2022 13:16:37 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id EF1A91947059;
+	Sun, 15 May 2022 21:06:42 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id F2AB9194705B
- for <dm-devel@listman.corp.redhat.com>; Sun, 15 May 2022 13:16:36 +0000 (UTC)
+ ESMTP id 199AD194704D
+ for <dm-devel@listman.corp.redhat.com>; Sun, 15 May 2022 21:06:41 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id E4E2C1544F37; Sun, 15 May 2022 13:16:36 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id E0C3C1544F36
- for <dm-devel@redhat.com>; Sun, 15 May 2022 13:16:36 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C91923C021A4
- for <dm-devel@redhat.com>; Sun, 15 May 2022 13:16:36 +0000 (UTC)
-Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com
- [209.85.221.45]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-625-LbR_UVhoMoWhizcuuczPHQ-1; Sun, 15 May 2022 09:16:35 -0400
-X-MC-Unique: LbR_UVhoMoWhizcuuczPHQ-1
-Received: by mail-wr1-f45.google.com with SMTP id f2so10243814wrc.0;
- Sun, 15 May 2022 06:16:34 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:message-id:date:mime-version:subject
- :content-language:to:cc:references:from:in-reply-to
- :content-transfer-encoding;
- bh=a2QT4yj58XGQFBLftNQSpTn2wUgKZTfUn1XsrTzwetM=;
- b=EVyIMIaNr+FobTJh0Tfotdh4hhkod89gaqpHMJiGNhw/c0R1uO6qI/ZgCd5ibwtqFE
- Kc9x0y6caEO0asIYeONONi7j/xyUYewdughy/mSJLiFhI1dMas3ses5VFziyaL8KZ1XF
- L1KFdlcrrjTwgqSseHr+xzGZJCS7ZRbEpJu2iwoS33eCc58Uz9coFUH2R7YyV6miEtuF
- 2DfZLIH0oGaHsKkVWVADCYXRC+oHZlsTKBbh8kkFbr2TY3V3N2IkHW//N3qbWXTo3Fu7
- hKmOwkIWa0oOEFA/CcqXPqyCnUR8ptTzcKK+bgg5BrzumWDBCXT/LOyija6OigxT4//J
- FJCw==
-X-Gm-Message-State: AOAM533froM4OsX5xiYLsDKtNPxsisjk+bSPfR4aRKmQ31UtIqKtplFQ
- +GE3kjy/1w4ekA4zxSGA6bWwzmM31JZA
-X-Google-Smtp-Source: ABdhPJwa3CGZGcbLnpY2FMw+KOyDlMQOxnaFH5EEvMELzTXYnWkX6BIkhzyXTq0B6YsQYSlgLVMW6Q==
-X-Received: by 2002:a5d:5249:0:b0:20c:fdae:75d5 with SMTP id
- k9-20020a5d5249000000b0020cfdae75d5mr5389383wrc.305.1652620593569; 
- Sun, 15 May 2022 06:16:33 -0700 (PDT)
-Received: from localhost (50.red-81-44-142.dynamicip.rima-tde.net.
- [81.44.142.50]) by smtp.gmail.com with ESMTPSA id
- x13-20020a7bc20d000000b0039429bfebebsm12029345wmi.3.2022.05.15.06.16.32
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Sun, 15 May 2022 06:16:33 -0700 (PDT)
-Message-ID: <d26e9d04-1f28-b784-16da-0fc0cd6e57e7@gmail.com>
-Date: Sun, 15 May 2022 15:16:32 +0200
+ id DB9B240D2973; Sun, 15 May 2022 21:06:41 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com
+ (file01.intranet.prod.int.rdu2.redhat.com [10.11.5.7])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C7A8D40D296C;
+ Sun, 15 May 2022 21:06:41 +0000 (UTC)
+Received: from file01.intranet.prod.int.rdu2.redhat.com (localhost [127.0.0.1])
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4) with ESMTP id
+ 24FL6fiV016750; Sun, 15 May 2022 17:06:41 -0400
+Received: from localhost (mpatocka@localhost)
+ by file01.intranet.prod.int.rdu2.redhat.com (8.14.4/8.14.4/Submit) with ESMTP
+ id 24FL6fpq016746; Sun, 15 May 2022 17:06:41 -0400
+X-Authentication-Warning: file01.intranet.prod.int.rdu2.redhat.com: mpatocka
+ owned process doing -bs
+Date: Sun, 15 May 2022 17:06:41 -0400 (EDT)
+From: Mikulas Patocka <mpatocka@redhat.com>
+X-X-Sender: mpatocka@file01.intranet.prod.int.rdu2.redhat.com
+To: Mike Snitzer <msnitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, 
+ Zdenek Kabelac <zkabelac@redhat.com>, Song Liu <song@kernel.org>,
+ Bruno Goncalves <bgoncalv@redhat.com>
+Message-ID: <alpine.LRH.2.02.2205151635090.15212@file01.intranet.prod.int.rdu2.redhat.com>
+User-Agent: Alpine 2.02 (LRH 1266 2009-07-14)
 MIME-Version: 1.0
-To: Martin Wilck <mwilck@suse.com>
-References: <20220330194941.28470-1-xose.vazquez@gmail.com>
- <636faa5a57cca0b51d12d5e50968124d5b187280.camel@suse.com>
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-In-Reply-To: <636faa5a57cca0b51d12d5e50968124d5b187280.camel@suse.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH RFC] multipath-tools: update "Generic NVMe"
- options in hwtable
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Subject: [dm-devel] [PATCH] dm-raid: fix address sanitizer warning in
+ raid_status
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -97,61 +75,75 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
- DM-DEVEL ML <dm-devel@redhat.com>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 
-T24gMy8zMS8yMiAxMzowMiwgTWFydGluIFdpbGNrIHdyb3RlOgo+IE9uIFdlZCwgMjAyMi0wMy0z
-MCBhdCAyMTo0OSArMDIwMCwgWG9zZSBWYXpxdWV6IFBlcmV6IHdyb3RlOgo+PiBSZW1vdmVkIHZh
-bHVlcyB3ZXJlIGRlZmF1bHQuCj4gCj4gVGhpcyBpcyB3cm9uZyBmb3IgdWlkX2F0dHJpYnV0ZS4g
-WW91IGNhbiBzZWUgaXQgd2hlbiB5b3UgcnVuICJtYWtlCj4gdGVzdCIsIHdoaWNoIGZhaWxzIHdp
-dGggeW91ciBwYXRjaC4gSXQncyBhbHNvIHdyb25nIGZvcgo+IHJldGFpbl9od2hhbmRsZXIsIGJ1
-dCB0aGF0IGVudHJ5IHNob3VsZCBpbmRlZWQgYmUgcmVtb3ZlZCwgYmVjYXVzZQo+IGtlZXBpbmcg
-aXQgdGhlcmUgaXMgbWlzbGVhZGluZyBhdCBiZXN0LiBod2hhbmRsZXJzIGhhdmUgbm8gbWVhbmlu
-ZyBmb3IKPiBOVk1lLCBhbmQgcmV0YWluX2h3aGFuZGxlciBpcyBlbmZvcmNlZCB0byBiZSB0cnVl
-IGFuIGFsbCBrZXJuZWxzIHNpbmNlCj4gNC4zLgo+IAo+IFJlZ2FyZHMsCj4gTWFydGluCj4gCj4+
-IENoZWNrIEFOQSwgZWxzZSBmYWxsIGJhY2sgdG8gQ09OU1QobXVsdGlidXMpLgo+Pgo+PiBDYzog
-TWFydGluIFdpbGNrIDxtd2lsY2tAc3VzZS5jb20+Cj4+IENjOiBCZW5qYW1pbiBNYXJ6aW5za2kg
-PGJtYXJ6aW5zQHJlZGhhdC5jb20+Cj4+IENjOiBDaHJpc3RvcGhlIFZhcm9xdWkgPGNocmlzdG9w
-aGUudmFyb3F1aUBvcGVuc3ZjLmNvbT4KPj4gQ2M6IERNLURFVkVMIE1MIDxkbS1kZXZlbEByZWRo
-YXQuY29tPgo+PiBTaWduZWQtb2ZmLWJ5OiBYb3NlIFZhenF1ZXogUGVyZXogPHhvc2UudmF6cXVl
-ekBnbWFpbC5jb20+Cj4+IC0tLQo+PiAgwqBsaWJtdWx0aXBhdGgvaHd0YWJsZS5jIHwgNiArKyst
-LS0KPj4gIMKgMSBmaWxlIGNoYW5nZWQsIDMgaW5zZXJ0aW9ucygrKSwgMyBkZWxldGlvbnMoLSkK
-Pj4KPj4gZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9od3RhYmxlLmMgYi9saWJtdWx0aXBhdGgv
-aHd0YWJsZS5jCj4+IGluZGV4IDBlMWMwYTQxLi44MWRjYTBkNSAxMDA2NDQKPj4gLS0tIGEvbGli
-bXVsdGlwYXRoL2h3dGFibGUuYwo+PiArKysgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCj4+IEBA
-IC04OCw5ICs4OCw5IEBAIHN0YXRpYyBzdHJ1Y3QgaHdlbnRyeSBkZWZhdWx0X2h3W10gPSB7Cj4+
-ICDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoC8qIEdlbmVyaWMgTlZNZSAqLwo+PiAg
-wqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAudmVuZG9ywqDCoMKgwqDCoMKgwqAgPSAi
-TlZNRSIsCj4+ICDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoC5wcm9kdWN0wqDCoMKg
-wqDCoMKgID0gIi4qIiwKPj4gLcKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoC51aWRfYXR0
-cmlidXRlID0gREVGQVVMVF9OVk1FX1VJRF9BVFRSSUJVVEUsCj4+IC3CoMKgwqDCoMKgwqDCoMKg
-wqDCoMKgwqDCoMKgwqAuY2hlY2tlcl9uYW1lwqAgPSBOT05FLAo+PiAtwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgwqDCoMKgLnJldGFpbl9od2hhbmRsZXIgPSBSRVRBSU5fSFdIQU5ETEVSX09GRiwK
-Pj4gK8KgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoC5wZ3BvbGljecKgwqDCoMKgwqAgPSBH
-Uk9VUF9CWV9QUklPLAo+PiArwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgLnBnZmFpbGJh
-Y2vCoMKgwqAgPSAtRkFJTEJBQ0tfSU1NRURJQVRFLAo+PiArwqDCoMKgwqDCoMKgwqDCoMKgwqDC
-oMKgwqDCoMKgLm5vX3BhdGhfcmV0cnkgPSBOT19QQVRIX1JFVFJZX1FVRVVFLAo+PiAgwqDCoMKg
-wqDCoMKgwqDCoH0sCj4+ICDCoMKgwqDCoMKgwqDCoMKgLyoKPj4gIMKgwqDCoMKgwqDCoMKgwqAg
-KiBBcHBsZQo+IAoKYXMgb2YgdGhpcyBwYXRjaCwgd2hhdCBlbHNlIGRvIHlvdSB3YW50IHRvIGFk
-ZC9yZW1vdmUgPwoKZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9od3RhYmxlLmMgYi9saWJtdWx0
-aXBhdGgvaHd0YWJsZS5jCmluZGV4IDQ3ZWE1ZDNkLi4yZjc1MGFkYiAxMDA2NDQKLS0tIGEvbGli
-bXVsdGlwYXRoL2h3dGFibGUuYworKysgYi9saWJtdWx0aXBhdGgvaHd0YWJsZS5jCkBAIC04Niwx
-MSArODYsMTAgQEAgc3RhdGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9IHsKICAJICov
-CiAgCXsKICAJCS8qIEdlbmVyaWMgTlZNZSAqLwotCQkudmVuZG9yICAgICAgICA9ICJOVk1FIiwK
-KwkJLnZlbmRvciAgICAgICAgPSAiTlZNW2VFXSIsCiAgCQkucHJvZHVjdCAgICAgICA9ICIuKiIs
-CiAgCQkudWlkX2F0dHJpYnV0ZSA9IERFRkFVTFRfTlZNRV9VSURfQVRUUklCVVRFLAogIAkJLmNo
-ZWNrZXJfbmFtZSAgPSBOT05FLAotCQkucmV0YWluX2h3aGFuZGxlciA9IFJFVEFJTl9IV0hBTkRM
-RVJfT0ZGLAogIAl9LAogIAkvKgogIAkgKiBBcHBsZQoKLS0KZG0tZGV2ZWwgbWFpbGluZyBsaXN0
-CmRtLWRldmVsQHJlZGhhdC5jb20KaHR0cHM6Ly9saXN0bWFuLnJlZGhhdC5jb20vbWFpbG1hbi9s
-aXN0aW5mby9kbS1kZXZlbAo=
+There is this warning when using a kernel with the address sanitizer and
+running this testsuite:
+https://gitlab.com/cki-project/kernel-tests/-/tree/main/storage/swraid/scsi_raid
+
+==================================================================
+BUG: KASAN: slab-out-of-bounds in raid_status+0x1747/0x2820 [dm_raid]
+Read of size 4 at addr ffff888079d2c7e8 by task lvcreate/13319
+CPU: 0 PID: 13319 Comm: lvcreate Not tainted 5.18.0-0.rc3.20220421gitb253435746d9a4a.30.eln117.x86_64 #1
+Hardware name: Red Hat KVM, BIOS 0.5.1 01/01/2011
+Call Trace:
+ <TASK>
+ dump_stack_lvl+0x6a/0x9c
+ print_address_description.constprop.0+0x1f/0x1e0
+ print_report.cold+0x55/0x244
+ kasan_report+0xc9/0x100
+ raid_status+0x1747/0x2820 [dm_raid]
+ dm_ima_measure_on_table_load+0x4b8/0xca0 [dm_mod]
+ table_load+0x35c/0x630 [dm_mod]
+ ctl_ioctl+0x411/0x630 [dm_mod]
+ dm_ctl_ioctl+0xa/0x10 [dm_mod]
+ __x64_sys_ioctl+0x12a/0x1a0
+ do_syscall_64+0x5b/0x80
+
+The warning is caused by reading conf->max_nr_stripes in raid_status. The
+code in raid_status reads mddev->private, casts it to struct r5conf and
+reads the entry max_nr_stripes.
+
+However, if we have different raid type than 4/5/6, mddev->private doesn't
+point to struct r5conf; it may point to struct r0conf, struct r1conf,
+struct r10conf or struct mpconf. If we cast a pointer to one of these
+structs to struct r5conf, we will be reading invalid memory and KASAN
+warns about it.
+
+This patch fixes the bug by reading struct r5conf only if raid type is 4,
+5 or 6.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+
+---
+ drivers/md/dm-raid.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-2.6/drivers/md/dm-raid.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-raid.c	2022-05-15 22:08:59.000000000 +0200
++++ linux-2.6/drivers/md/dm-raid.c	2022-05-15 22:08:59.000000000 +0200
+@@ -3512,7 +3512,7 @@ static void raid_status(struct dm_target
+ {
+ 	struct raid_set *rs = ti->private;
+ 	struct mddev *mddev = &rs->md;
+-	struct r5conf *conf = mddev->private;
++	struct r5conf *conf = rs_is_raid456(rs) ? mddev->private : NULL;
+ 	int i, max_nr_stripes = conf ? conf->max_nr_stripes : 0;
+ 	unsigned long recovery;
+ 	unsigned int raid_param_cnt = 1; /* at least 1 for chunksize */
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://listman.redhat.com/mailman/listinfo/dm-devel
 
