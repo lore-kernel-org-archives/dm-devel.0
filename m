@@ -4,73 +4,78 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1B70DC433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 16 May 2022 20:30:53 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0C8B9C433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 16 May 2022 22:02:57 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-437-MJY0qfYbPSWb01e7SqAPnw-1; Mon, 16 May 2022 16:30:50 -0400
-X-MC-Unique: MJY0qfYbPSWb01e7SqAPnw-1
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
+ us-mta-517-_FikipgWM8iV19HTHC-BaA-1; Mon, 16 May 2022 18:02:53 -0400
+X-MC-Unique: _FikipgWM8iV19HTHC-BaA-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 29F4D899EC2;
-	Mon, 16 May 2022 20:30:49 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 02F6D85A5BE;
+	Mon, 16 May 2022 22:02:52 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 7C32C40D1B98;
-	Mon, 16 May 2022 20:30:47 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id BB663154D8CF;
+	Mon, 16 May 2022 22:02:50 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 227C41947059;
-	Mon, 16 May 2022 20:30:47 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
- [10.11.54.2])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6FE0D1947059;
+	Mon, 16 May 2022 22:02:50 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.7])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id DB4081947055
- for <dm-devel@listman.corp.redhat.com>; Mon, 16 May 2022 20:30:45 +0000 (UTC)
+ ESMTP id D70611947055
+ for <dm-devel@listman.corp.redhat.com>; Mon, 16 May 2022 22:02:48 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id ABCE140D1B99; Mon, 16 May 2022 20:30:45 +0000 (UTC)
+ id 96B8D154D8D8; Mon, 16 May 2022 22:02:48 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id A79F240D1B98
- for <dm-devel@redhat.com>; Mon, 16 May 2022 20:30:45 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 92CC0154D8CF
+ for <dm-devel@redhat.com>; Mon, 16 May 2022 22:02:48 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 78C561C0F685
+ for <dm-devel@redhat.com>; Mon, 16 May 2022 22:02:48 +0000 (UTC)
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-167-1dmQyOm1NPWmnV9nfFS5nQ-1; Mon, 16 May 2022 18:02:46 -0400
+X-MC-Unique: 1dmQyOm1NPWmnV9nfFS5nQ-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8E34238349A9
- for <dm-devel@redhat.com>; Mon, 16 May 2022 20:30:45 +0000 (UTC)
-Received: from mail-pf1-f169.google.com (mail-pf1-f169.google.com
- [209.85.210.169]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-6-ETCZhqaOPkaKkaaUmx7exA-1; Mon, 16 May 2022 16:30:43 -0400
-X-MC-Unique: ETCZhqaOPkaKkaaUmx7exA-1
-Received: by mail-pf1-f169.google.com with SMTP id x52so15018779pfu.11
- for <dm-devel@redhat.com>; Mon, 16 May 2022 13:30:43 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:mime-version:references:in-reply-to:from:date
- :message-id:subject:to:cc;
- bh=3ACVB3Y0E0YBB7tPTLWC9kOdJEJz9VBk49uvnZGm168=;
- b=oXSQPLIhBF3maf/P4kqQAcH3JeMgwge4Ni3GvnRx6odHyeb5i+RexJooapzkfOBYSF
- KXAObTpEVSTmgRTgaBvoHwZlgW32VAF2ltYndJ3L5gmIVuNFlTDp0RWipBTOHyXG+1GK
- r4t/TlUN5ix9+BeYko4RSBX4asBa8C3+T16OIMRwZMmlekMI8QnNdItrn64a+C98vUoP
- F68TvxkRc3el1ijH33MrYEGH1j14hNANVHMrlVyiKH6L2Q0Vja/+iRadpXN8oI4opqDg
- A16S3vsdUy2th3a6PAc5WzrPLZncfi5joyjxFFxxwA1/ixWyD1vbxQMsTFEZskE+ucGD
- qBaw==
-X-Gm-Message-State: AOAM532gCs5fZgW4GYr/d353r3FJGONv4B7pMxlVmbkwV1/MMhdw9VoC
- uTvu52yavykDMJqdyZmk8Bmg7HJ48EtBzs271p8C8w==
-X-Google-Smtp-Source: ABdhPJxNfgFTQfSkBwC0NJUOFm4ZykQQ/RD3rs42AoQjvgd05emu3aDGtrxluv0uzUNgQwYGRoYx/NUiZsqjsEDg+7c=
-X-Received: by 2002:a62:a105:0:b0:50d:c97b:3084 with SMTP id
- b5-20020a62a105000000b0050dc97b3084mr18768863pff.61.1652733042575; Mon, 16
- May 2022 13:30:42 -0700 (PDT)
+ by smtp-out2.suse.de (Postfix) with ESMTPS id 795551F939;
+ Mon, 16 May 2022 22:02:45 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 102A313ADC;
+ Mon, 16 May 2022 22:02:45 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+ by imap2.suse-dmz.suse.de with ESMTPSA id w1/AAgXKgmLnQAAAMHmgww
+ (envelope-from <dsterba@suse.cz>); Mon, 16 May 2022 22:02:45 +0000
+Date: Mon, 16 May 2022 23:58:26 +0200
+From: David Sterba <dsterba@suse.cz>
+To: Pankaj Raghav <p.raghav@samsung.com>
+Message-ID: <20220516215826.GZ18596@twin.jikos.cz>
+Mail-Followup-To: dsterba@suse.cz, Pankaj Raghav <p.raghav@samsung.com>,
+ axboe@kernel.dk, damien.lemoal@opensource.wdc.com,
+ pankydev8@gmail.com, dsterba@suse.com, hch@lst.de,
+ linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org,
+ linux-btrfs@vger.kernel.org, jiangbo.365@bytedance.com,
+ linux-block@vger.kernel.org, gost.dev@samsung.com,
+ linux-kernel@vger.kernel.org, dm-devel@redhat.com,
+ Luis Chamberlain <mcgrof@kernel.org>
+References: <20220516165416.171196-1-p.raghav@samsung.com>
+ <CGME20220516165425eucas1p29fcd11d7051d9d3a9a9efc17cd3b6999@eucas1p2.samsung.com>
+ <20220516165416.171196-6-p.raghav@samsung.com>
 MIME-Version: 1.0
-References: <20220422224508.440670-1-jane.chu@oracle.com>
- <20220422224508.440670-3-jane.chu@oracle.com>
-In-Reply-To: <20220422224508.440670-3-jane.chu@oracle.com>
-From: Dan Williams <dan.j.williams@intel.com>
-Date: Mon, 16 May 2022 13:30:31 -0700
-Message-ID: <CAPcyv4g02C5LnDxqDG0_U51+v05fQa966LnrvvdadN2Eqf7eKA@mail.gmail.com>
-To: Jane Chu <jane.chu@oracle.com>
+In-Reply-To: <20220516165416.171196-6-p.raghav@samsung.com>
+User-Agent: Mutt/1.5.23.1-rc1 (2014-03-12)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -78,9 +83,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
-Subject: Re: [dm-devel] [PATCH v9 2/7] x86/mce: relocate
- set{clear}_mce_nospec() functions
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+Subject: Re: [dm-devel] [PATCH v4 05/13] btrfs: zoned: Cache superblock
+ location in btrfs_zoned_device_info
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -92,190 +97,61 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Dave Jiang <dave.jiang@intel.com>,
- Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>,
- "Darrick J. Wong" <djwong@kernel.org>, X86 ML <x86@kernel.org>,
- david <david@fromorbit.com>,
- Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
- Matthew Wilcox <willy@infradead.org>, Christoph Hellwig <hch@infradead.org>,
- Dave Hansen <dave.hansen@intel.com>,
- device-mapper development <dm-devel@redhat.com>,
- Borislav Petkov <bp@alien8.de>, Vivek Goyal <vgoyal@redhat.com>,
- Andy Lutomirski <luto@kernel.org>, Vishal L Verma <vishal.l.verma@intel.com>,
- linux-fsdevel <linux-fsdevel@vger.kernel.org>, "Weiny,
- Ira" <ira.weiny@intel.com>, Alasdair Kergon <agk@redhat.com>
+Reply-To: dsterba@suse.cz
+Cc: axboe@kernel.dk, pankydev8@gmail.com, gost.dev@samsung.com,
+ damien.lemoal@opensource.wdc.com, jiangbo.365@bytedance.com,
+ linux-nvme@lists.infradead.org, linux-kernel@vger.kernel.org,
+ linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ dm-devel@redhat.com, Luis Chamberlain <mcgrof@kernel.org>, dsterba@suse.com,
+ hch@lst.de, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, Apr 22, 2022 at 3:46 PM Jane Chu <jane.chu@oracle.com> wrote:
->
-> Relocate the twin mce functions to arch/x86/mm/pat/set_memory.c
-> file where they belong.
->
-> While at it, fixup a function name in a comment.
->
-> Reviewed-by: Christoph Hellwig <hch@lst.de>
-> Reviewed-by: Dan Williams <dan.j.williams@intel.com>
-> Signed-off-by: Jane Chu <jane.chu@oracle.com>
+On Mon, May 16, 2022 at 06:54:08PM +0200, Pankaj Raghav wrote:
+> Instead of calculating the superblock location every time, cache the
+> superblock zone location in btrfs_zoned_device_info struct and use it to
+> locate the zone index.
+> 
+> The functions such as btrfs_sb_log_location_bdev() and
+> btrfs_reset_sb_log_zones() which work directly on block_device shall
+> continue to use the sb_zone_number because btrfs_zoned_device_info
+> struct might not have been initialized at that point.
+> 
+> This patch will enable non power-of-2 zoned devices to not perform
+> division to lookup superblock and its mirror location.
+> 
+> Reviewed-by: Luis Chamberlain <mcgrof@kernel.org>
+> Signed-off-by: Pankaj Raghav <p.raghav@samsung.com>
 > ---
->  arch/x86/include/asm/set_memory.h | 52 -------------------------------
->  arch/x86/mm/pat/set_memory.c      | 49 ++++++++++++++++++++++++++++-
->  include/linux/set_memory.h        |  8 ++---
->  3 files changed, 52 insertions(+), 57 deletions(-)
->
-> diff --git a/arch/x86/include/asm/set_memory.h b/arch/x86/include/asm/set_memory.h
-> index 78ca53512486..b45c4d27fd46 100644
-> --- a/arch/x86/include/asm/set_memory.h
-> +++ b/arch/x86/include/asm/set_memory.h
-> @@ -86,56 +86,4 @@ bool kernel_page_present(struct page *page);
->
->  extern int kernel_set_to_readonly;
->
-> -#ifdef CONFIG_X86_64
-> -/*
-> - * Prevent speculative access to the page by either unmapping
-> - * it (if we do not require access to any part of the page) or
-> - * marking it uncacheable (if we want to try to retrieve data
-> - * from non-poisoned lines in the page).
-> - */
-> -static inline int set_mce_nospec(unsigned long pfn, bool unmap)
-> -{
-> -       unsigned long decoy_addr;
-> -       int rc;
-> -
-> -       /* SGX pages are not in the 1:1 map */
-> -       if (arch_is_platform_page(pfn << PAGE_SHIFT))
-> -               return 0;
-> -       /*
-> -        * We would like to just call:
-> -        *      set_memory_XX((unsigned long)pfn_to_kaddr(pfn), 1);
-> -        * but doing that would radically increase the odds of a
-> -        * speculative access to the poison page because we'd have
-> -        * the virtual address of the kernel 1:1 mapping sitting
-> -        * around in registers.
-> -        * Instead we get tricky.  We create a non-canonical address
-> -        * that looks just like the one we want, but has bit 63 flipped.
-> -        * This relies on set_memory_XX() properly sanitizing any __pa()
-> -        * results with __PHYSICAL_MASK or PTE_PFN_MASK.
-> -        */
-> -       decoy_addr = (pfn << PAGE_SHIFT) + (PAGE_OFFSET ^ BIT(63));
-> -
-> -       if (unmap)
-> -               rc = set_memory_np(decoy_addr, 1);
-> -       else
-> -               rc = set_memory_uc(decoy_addr, 1);
-> -       if (rc)
-> -               pr_warn("Could not invalidate pfn=0x%lx from 1:1 map\n", pfn);
-> -       return rc;
-> -}
-> -#define set_mce_nospec set_mce_nospec
-> -
-> -/* Restore full speculative operation to the pfn. */
-> -static inline int clear_mce_nospec(unsigned long pfn)
-> -{
-> -       return set_memory_wb((unsigned long) pfn_to_kaddr(pfn), 1);
-> -}
-> -#define clear_mce_nospec clear_mce_nospec
-> -#else
-> -/*
-> - * Few people would run a 32-bit kernel on a machine that supports
-> - * recoverable errors because they have too much memory to boot 32-bit.
-> - */
-> -#endif
-> -
->  #endif /* _ASM_X86_SET_MEMORY_H */
-> diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
-> index abf5ed76e4b7..978cf5bd2ab6 100644
-> --- a/arch/x86/mm/pat/set_memory.c
-> +++ b/arch/x86/mm/pat/set_memory.c
-> @@ -1816,7 +1816,7 @@ static inline int cpa_clear_pages_array(struct page **pages, int numpages,
->  }
->
->  /*
-> - * _set_memory_prot is an internal helper for callers that have been passed
-> + * __set_memory_prot is an internal helper for callers that have been passed
->   * a pgprot_t value from upper layers and a reservation has already been taken.
->   * If you want to set the pgprot to a specific page protocol, use the
->   * set_memory_xx() functions.
-> @@ -1925,6 +1925,53 @@ int set_memory_wb(unsigned long addr, int numpages)
->  }
->  EXPORT_SYMBOL(set_memory_wb);
->
-> +/*
-> + * Prevent speculative access to the page by either unmapping
-> + * it (if we do not require access to any part of the page) or
-> + * marking it uncacheable (if we want to try to retrieve data
-> + * from non-poisoned lines in the page).
-> + */
-> +int set_mce_nospec(unsigned long pfn, bool unmap)
-> +{
-> +       unsigned long decoy_addr;
-> +       int rc;
-> +
-> +       if (!IS_ENABLED(CONFIG_64BIT))
-> +               return 0;
-> +
-> +       /* SGX pages are not in the 1:1 map */
-> +       if (arch_is_platform_page(pfn << PAGE_SHIFT))
-> +               return 0;
-> +       /*
-> +        * We would like to just call:
-> +        *      set_memory_XX((unsigned long)pfn_to_kaddr(pfn), 1);
-> +        * but doing that would radically increase the odds of a
-> +        * speculative access to the poison page because we'd have
-> +        * the virtual address of the kernel 1:1 mapping sitting
-> +        * around in registers.
-> +        * Instead we get tricky.  We create a non-canonical address
-> +        * that looks just like the one we want, but has bit 63 flipped.
-> +        * This relies on set_memory_XX() properly sanitizing any __pa()
-> +        * results with __PHYSICAL_MASK or PTE_PFN_MASK.
-> +        */
-> +       decoy_addr = (pfn << PAGE_SHIFT) + (PAGE_OFFSET ^ BIT(63));
-> +
-> +       if (unmap)
-> +               rc = set_memory_np(decoy_addr, 1);
-> +       else
-> +               rc = set_memory_uc(decoy_addr, 1);
-> +       if (rc)
-> +               pr_warn("Could not invalidate pfn=0x%lx from 1:1 map\n", pfn);
-> +       return rc;
-> +}
-> +
-> +/* Restore full speculative operation to the pfn. */
-> +int clear_mce_nospec(unsigned long pfn)
-> +{
-> +       return set_memory_wb((unsigned long) pfn_to_kaddr(pfn), 1);
-> +}
-> +EXPORT_SYMBOL_GPL(clear_mce_nospec);
-> +
->  int set_memory_x(unsigned long addr, int numpages)
->  {
->         if (!(__supported_pte_mask & _PAGE_NX))
-> diff --git a/include/linux/set_memory.h b/include/linux/set_memory.h
-> index f36be5166c19..683a6c3f7179 100644
-> --- a/include/linux/set_memory.h
-> +++ b/include/linux/set_memory.h
-> @@ -42,14 +42,14 @@ static inline bool can_set_direct_map(void)
->  #endif
->  #endif /* CONFIG_ARCH_HAS_SET_DIRECT_MAP */
->
-> -#ifndef set_mce_nospec
-> +#ifdef CONFIG_X86_64
+>  fs/btrfs/zoned.c | 13 +++++++++----
+>  fs/btrfs/zoned.h |  1 +
+>  2 files changed, 10 insertions(+), 4 deletions(-)
+> 
+> diff --git a/fs/btrfs/zoned.c b/fs/btrfs/zoned.c
+> index 06f22c021..e8c7cebb2 100644
+> --- a/fs/btrfs/zoned.c
+> +++ b/fs/btrfs/zoned.c
+> @@ -511,6 +511,11 @@ int btrfs_get_dev_zone_info(struct btrfs_device *device, bool populate_cache)
+>  			   max_active_zones - nactive);
+>  	}
+>  
+> +	/* Cache the sb zone number */
+> +	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; ++i) {
+> +		zone_info->sb_zone_location[i] =
+> +			sb_zone_number(zone_info->zone_size_shift, i);
+> +	}
 
-Jane,
-
-I just noticed that this makes set_mce_nospec() and clear_mce_nospec()
-x86_64-only. If / when more architectures add support for these
-helpers they will need to go back to the "#ifndef $symbol" scheme to
-allow asm/set_memory.h to indicate the availability of the arch-local
-helper.
+I don't think we need to cache the value right now, it's not in any hot
+path and call to bdev_zone_no is relatively cheap (only dereferencing a
+few pointers, all in-memory values).
 
 --
 dm-devel mailing list
