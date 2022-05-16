@@ -1,135 +1,76 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0AA25C433EF
-	for <dm-devel@archiver.kernel.org>; Mon, 16 May 2022 19:05:50 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 1B70DC433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 16 May 2022 20:30:53 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-638-LFFfD6PfPWCH7NhqPnihWg-1; Mon, 16 May 2022 15:05:48 -0400
-X-MC-Unique: LFFfD6PfPWCH7NhqPnihWg-1
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
+ us-mta-437-MJY0qfYbPSWb01e7SqAPnw-1; Mon, 16 May 2022 16:30:50 -0400
+X-MC-Unique: MJY0qfYbPSWb01e7SqAPnw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 976D2811E76;
-	Mon, 16 May 2022 19:05:46 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 29F4D899EC2;
+	Mon, 16 May 2022 20:30:49 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 45B3EC15D67;
-	Mon, 16 May 2022 19:05:46 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 7C32C40D1B98;
+	Mon, 16 May 2022 20:30:47 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0EBDB1947059;
-	Mon, 16 May 2022 19:05:46 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
- [10.11.54.3])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 227C41947059;
+	Mon, 16 May 2022 20:30:47 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 197961947055
- for <dm-devel@listman.corp.redhat.com>; Mon, 16 May 2022 19:05:44 +0000 (UTC)
+ ESMTP id DB4081947055
+ for <dm-devel@listman.corp.redhat.com>; Mon, 16 May 2022 20:30:45 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 015371121315; Mon, 16 May 2022 19:05:44 +0000 (UTC)
+ id ABCE140D1B99; Mon, 16 May 2022 20:30:45 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id F05701121314
- for <dm-devel@redhat.com>; Mon, 16 May 2022 19:05:40 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A79F240D1B98
+ for <dm-devel@redhat.com>; Mon, 16 May 2022 20:30:45 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C3203804522
- for <dm-devel@redhat.com>; Mon, 16 May 2022 19:05:40 +0000 (UTC)
-Received: from mailout2.w1.samsung.com (mailout2.w1.samsung.com
- [210.118.77.12]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8E34238349A9
+ for <dm-devel@redhat.com>; Mon, 16 May 2022 20:30:45 +0000 (UTC)
+Received: from mail-pf1-f169.google.com (mail-pf1-f169.google.com
+ [209.85.210.169]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-374-8dVp0gJUMEOpt4kYx_EtrA-1; Mon, 16 May 2022 15:05:38 -0400
-X-MC-Unique: 8dVp0gJUMEOpt4kYx_EtrA-1
-Received: from eucas1p1.samsung.com (unknown [182.198.249.206])
- by mailout2.w1.samsung.com (KnoxPortal) with ESMTP id
- 20220516190537euoutp020d8bf5a412c99c1f6dc9302d5c4e2b9c~vq013g8sZ1645916459euoutp02N
- for <dm-devel@redhat.com>; Mon, 16 May 2022 19:05:37 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.w1.samsung.com
- 20220516190537euoutp020d8bf5a412c99c1f6dc9302d5c4e2b9c~vq013g8sZ1645916459euoutp02N
-Received: from eusmges3new.samsung.com (unknown [203.254.199.245]) by
- eucas1p1.samsung.com (KnoxPortal) with ESMTP id
- 20220516190537eucas1p1827e4dc46edb0e9fd4eef7e9067f07a0~vq01ienVy2497024970eucas1p1I;
- Mon, 16 May 2022 19:05:37 +0000 (GMT)
-Received: from eucas1p2.samsung.com ( [182.198.249.207]) by
- eusmges3new.samsung.com (EUCPMTA) with SMTP id 07.CC.10260.080A2826; Mon, 16
- May 2022 20:05:37 +0100 (BST)
-Received: from eusmtrp1.samsung.com (unknown [182.198.249.138]) by
- eucas1p2.samsung.com (KnoxPortal) with ESMTPA id
- 20220516190536eucas1p2ee3b60a2f6bc708919b76d35e69562a2~vq00_9hJ02269122691eucas1p28;
- Mon, 16 May 2022 19:05:36 +0000 (GMT)
-Received: from eusmgms2.samsung.com (unknown [182.198.249.180]) by
- eusmtrp1.samsung.com (KnoxPortal) with ESMTP id
- 20220516190536eusmtrp14da1d7baf4a6dcff2f764c9908a67164~vq00_HXpd1633216332eusmtrp1D;
- Mon, 16 May 2022 19:05:36 +0000 (GMT)
-X-AuditID: cbfec7f5-bddff70000002814-8b-6282a080c59a
-Received: from eusmtip2.samsung.com ( [203.254.199.222]) by
- eusmgms2.samsung.com (EUCPMTA) with SMTP id D6.23.09404.080A2826; Mon, 16
- May 2022 20:05:36 +0100 (BST)
-Received: from CAMSVWEXC01.scsc.local (unknown [106.1.227.71]) by
- eusmtip2.samsung.com (KnoxPortal) with ESMTPA id
- 20220516190536eusmtip2c5868c94ebcb947cde3c0db117dc5408~vq00zV-qZ2254722547eusmtip23;
- Mon, 16 May 2022 19:05:36 +0000 (GMT)
-Received: from [192.168.8.130] (106.210.248.7) by CAMSVWEXC01.scsc.local
- (2002:6a01:e347::6a01:e347) with Microsoft SMTP Server (TLS) id 15.0.1497.2;
- Mon, 16 May 2022 20:05:34 +0100
-Message-ID: <b9a02707-8628-b7de-487b-a93697e8a2cb@samsung.com>
-Date: Mon, 16 May 2022 21:05:32 +0200
+ us-mta-6-ETCZhqaOPkaKkaaUmx7exA-1; Mon, 16 May 2022 16:30:43 -0400
+X-MC-Unique: ETCZhqaOPkaKkaaUmx7exA-1
+Received: by mail-pf1-f169.google.com with SMTP id x52so15018779pfu.11
+ for <dm-devel@redhat.com>; Mon, 16 May 2022 13:30:43 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:mime-version:references:in-reply-to:from:date
+ :message-id:subject:to:cc;
+ bh=3ACVB3Y0E0YBB7tPTLWC9kOdJEJz9VBk49uvnZGm168=;
+ b=oXSQPLIhBF3maf/P4kqQAcH3JeMgwge4Ni3GvnRx6odHyeb5i+RexJooapzkfOBYSF
+ KXAObTpEVSTmgRTgaBvoHwZlgW32VAF2ltYndJ3L5gmIVuNFlTDp0RWipBTOHyXG+1GK
+ r4t/TlUN5ix9+BeYko4RSBX4asBa8C3+T16OIMRwZMmlekMI8QnNdItrn64a+C98vUoP
+ F68TvxkRc3el1ijH33MrYEGH1j14hNANVHMrlVyiKH6L2Q0Vja/+iRadpXN8oI4opqDg
+ A16S3vsdUy2th3a6PAc5WzrPLZncfi5joyjxFFxxwA1/ixWyD1vbxQMsTFEZskE+ucGD
+ qBaw==
+X-Gm-Message-State: AOAM532gCs5fZgW4GYr/d353r3FJGONv4B7pMxlVmbkwV1/MMhdw9VoC
+ uTvu52yavykDMJqdyZmk8Bmg7HJ48EtBzs271p8C8w==
+X-Google-Smtp-Source: ABdhPJxNfgFTQfSkBwC0NJUOFm4ZykQQ/RD3rs42AoQjvgd05emu3aDGtrxluv0uzUNgQwYGRoYx/NUiZsqjsEDg+7c=
+X-Received: by 2002:a62:a105:0:b0:50d:c97b:3084 with SMTP id
+ b5-20020a62a105000000b0050dc97b3084mr18768863pff.61.1652733042575; Mon, 16
+ May 2022 13:30:42 -0700 (PDT)
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.8.1
-To: <damien.lemoal@opensource.wdc.com>
-From: Pankaj Raghav <p.raghav@samsung.com>
-In-Reply-To: <20220516165416.171196-3-p.raghav@samsung.com>
-X-Originating-IP: [106.210.248.7]
-X-ClientProxiedBy: CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347) To
- CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347)
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrEKsWRmVeSWpSXmKPExsWy7djP87qNC5qSDGa2MlmsvtvPZvH77Hlm
- i73vZrNaXPjRyGSxcvVRJoueAx9YLPbe0ra49HgFu8WevSdZLC7vmsNmMX/ZU3aLGxOeMlqs
- ufmUxYHX49+JNWweO2fdZfe4fLbUY9OqTjaPzUvqPXbfbAAKt95n9Xi/7yqbx/otV1k8Pm+S
- C+CK4rJJSc3JLEst0rdL4MrY/uA0Y8EfuYrDCzYxNjAuk+hi5OSQEDCReLf0HUsXIxeHkMAK
- RomN/X+YIJwvjBLvry1ih3A+M0r0nO1khmlZsf8xmC0ksJxRYv4qUbii6Y/2sEI4Oxklml98
- ZwGp4hWwk/i2aQcriM0ioCqxedZ9Roi4oMTJmU/AakQFIiSmzTrDBmILC8RLfGlezw5iMwuI
- S9x6Mh/oJg4OEQE1iQ8L60DmMwu8ZpKYPGUXM0icTUBLorETrJxTwFri8opGRohWTYnW7b+h
- xshLbH87B+oBRYmbK3+xQdi1EmuPnWGHsC9xSpw4AQ0XF4krFyZA1QhLvDq+BapGRuL05B4W
- CLta4umN38wg90gItDBK9O9czwZyjwTQEX1nciBqHCXmnbnHBBHmk7jxVhDiHD6JSdumM09g
- VJ2FFBCzkDw8C8kHs5B8sICRZRWjeGppcW56arFxXmq5XnFibnFpXrpecn7uJkZgsjv97/jX
- HYwrXn3UO8TIxMF4iFGCg1lJhNegoiFJiDclsbIqtSg/vqg0J7X4EKM0B4uSOG9y5oZEIYH0
- xJLU7NTUgtQimCwTB6dUA5OSlPKnTTOmG6u0zZw9ddGzfB2e8i7tSrXzm89WCX/ZKlM4/czF
- DQy1pzcXmO6qa5Y88Z5/z4zy2OyluySyrwm7P/bimaI94WCpw2UNSZeYZHEFSxO/hPu9p5pv
- G4enOooleXd1LOg0mbaR5WWbtUmQy4LPlX4uC++rL33ReuHrvpiiNYxvXTIX/J74XF+E5bUF
- y9rogK0ur/cITJujILV3tczx7G9nlz3+tIrj2NKSNdb7c7bvNr/Sb39mAufEG6FM/tpFy+sb
- Kxm7ujYeuPHwnqdO49fY1N+9xoLPald3zp6kepFpc7rPkX99rk87g6dsn7tot3+gJ/PbuhBZ
- 9V1fyg99df8WLNqUMSN84yQlluKMREMt5qLiRACLt3n95QMAAA==
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFupkleLIzCtJLcpLzFFi42I5/e/4Pd2GBU1JBs/uSVmsvtvPZvH77Hlm
- i73vZrNaXPjRyGSxcvVRJoueAx9YLPbe0ra49HgFu8WevSdZLC7vmsNmMX/ZU3aLGxOeMlqs
- ufmUxYHX49+JNWweO2fdZfe4fLbUY9OqTjaPzUvqPXbfbAAKt95n9Xi/7yqbx/otV1k8Pm+S
- C+CK0rMpyi8tSVXIyC8usVWKNrQw0jO0tNAzMrHUMzQ2j7UyMlXSt7NJSc3JLEst0rdL0MvY
- /uA0Y8EfuYrDCzYxNjAuk+hi5OSQEDCRWLH/MXMXIxeHkMBSRomN7VOYIBIyEp+ufGSHsIUl
- /lzrYoMo+sgosWHxPSYIZyejxI1bD5hBqngF7CS+bdrBCmKzCKhKbJ51nxEiLihxcuYTFhBb
- VCBC4sHus2A1wgLxEl+a14NtYBYQl7j1ZD7QUA4OEQE1iQ8L60DmMwu8ZpKYPGUX1Hn7GSV2
- rG8FK2IT0JJo7ATr5RSwlri8opERYo6mROv231Az5SW2v53DDPGBosTNlb/YIOxaiVf3dzNO
- YBSdheS8WUjOmIVk1CwkoxYwsqxiFEktLc5Nzy020itOzC0uzUvXS87P3cQITBPbjv3csoNx
- 5auPeocYmTgYDzFKcDArifAaVDQkCfGmJFZWpRblxxeV5qQWH2I0BYbRRGYp0eR8YKLKK4k3
- NDMwNTQxszQwtTQzVhLn9SzoSBQSSE8sSc1OTS1ILYLpY+LglGpgyjnx9+gPLaZLM8zrQ/ax
- ywQENiyIvd067VKoaNRld+uMnRfds571ndjPYP5p1/n6gsak2YKp12Nefj55tSQz8MXbvYvb
- Hs9dWOCx9Ox398nPJZd+PnKlSC9L4+zrOf5MfvdnJU16+jhK6jvjk0uTTspMXDNh59z/JyWi
- /QsuOeWn2p92ZuKcrdXLcPl4RGHYnYO+yzac7SqOXGhw6O3OXnY+yYRfv+Yoa9rVRXpbbCi2
- EFn8Sa1MJeL9lfM7Uv6tPLjo3/cLedtcTjc33BZ5YrV6MVdASiWfxf5p8rovZUzvLn2SvJy5
- 8O1C5m06P86/O1pwcaPlRGOxtSUF8Rtr9d3nB15NnHb4aej6yFM/Ym8psRRnJBpqMRcVJwIA
- 66Cj/pwDAAA=
-X-CMS-MailID: 20220516190536eucas1p2ee3b60a2f6bc708919b76d35e69562a2
-X-Msg-Generator: CA
-X-RootMTR: 20220516165421eucas1p2515446ac290987bdb9af24ffb835b287
-X-EPHeader: CA
-CMS-TYPE: 201P
-X-CMS-RootMailID: 20220516165421eucas1p2515446ac290987bdb9af24ffb835b287
-References: <20220516165416.171196-1-p.raghav@samsung.com>
- <CGME20220516165421eucas1p2515446ac290987bdb9af24ffb835b287@eucas1p2.samsung.com>
- <20220516165416.171196-3-p.raghav@samsung.com>
+References: <20220422224508.440670-1-jane.chu@oracle.com>
+ <20220422224508.440670-3-jane.chu@oracle.com>
+In-Reply-To: <20220422224508.440670-3-jane.chu@oracle.com>
+From: Dan Williams <dan.j.williams@intel.com>
+Date: Mon, 16 May 2022 13:30:31 -0700
+Message-ID: <CAPcyv4g02C5LnDxqDG0_U51+v05fQa966LnrvvdadN2Eqf7eKA@mail.gmail.com>
+To: Jane Chu <jane.chu@oracle.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -137,10 +78,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Mimecast-Spam-Signature: yes
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
-Subject: Re: [dm-devel] [PATCH v4 02/13] block: allow blk-zoned devices to
- have non-power-of-2 zone size
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Subject: Re: [dm-devel] [PATCH v9 2/7] x86/mce: relocate
+ set{clear}_mce_nospec() functions
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -152,138 +92,190 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, pankydev8@gmail.com, gost.dev@samsung.com,
- jiangbo.365@bytedance.com, linux-nvme@lists.infradead.org,
- linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dsterba@suse.com,
- dm-devel@redhat.com, Luis Chamberlain <mcgrof@kernel.org>,
- linux-fsdevel@vger.kernel.org, hch@lst.de, linux-btrfs@vger.kernel.org
+Cc: Linux NVDIMM <nvdimm@lists.linux.dev>, Dave Jiang <dave.jiang@intel.com>,
+ Mike Snitzer <snitzer@redhat.com>, Peter Zijlstra <peterz@infradead.org>,
+ "Darrick J. Wong" <djwong@kernel.org>, X86 ML <x86@kernel.org>,
+ david <david@fromorbit.com>,
+ Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+ Matthew Wilcox <willy@infradead.org>, Christoph Hellwig <hch@infradead.org>,
+ Dave Hansen <dave.hansen@intel.com>,
+ device-mapper development <dm-devel@redhat.com>,
+ Borislav Petkov <bp@alien8.de>, Vivek Goyal <vgoyal@redhat.com>,
+ Andy Lutomirski <luto@kernel.org>, Vishal L Verma <vishal.l.verma@intel.com>,
+ linux-fsdevel <linux-fsdevel@vger.kernel.org>, "Weiny,
+ Ira" <ira.weiny@intel.com>, Alasdair Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-Hi Damien,
-I copied your comments from the previous thread to avoid confusion.
+On Fri, Apr 22, 2022 at 3:46 PM Jane Chu <jane.chu@oracle.com> wrote:
+>
+> Relocate the twin mce functions to arch/x86/mm/pat/set_memory.c
+> file where they belong.
+>
+> While at it, fixup a function name in a comment.
+>
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> Reviewed-by: Dan Williams <dan.j.williams@intel.com>
+> Signed-off-by: Jane Chu <jane.chu@oracle.com>
+> ---
+>  arch/x86/include/asm/set_memory.h | 52 -------------------------------
+>  arch/x86/mm/pat/set_memory.c      | 49 ++++++++++++++++++++++++++++-
+>  include/linux/set_memory.h        |  8 ++---
+>  3 files changed, 52 insertions(+), 57 deletions(-)
+>
+> diff --git a/arch/x86/include/asm/set_memory.h b/arch/x86/include/asm/set_memory.h
+> index 78ca53512486..b45c4d27fd46 100644
+> --- a/arch/x86/include/asm/set_memory.h
+> +++ b/arch/x86/include/asm/set_memory.h
+> @@ -86,56 +86,4 @@ bool kernel_page_present(struct page *page);
+>
+>  extern int kernel_set_to_readonly;
+>
+> -#ifdef CONFIG_X86_64
+> -/*
+> - * Prevent speculative access to the page by either unmapping
+> - * it (if we do not require access to any part of the page) or
+> - * marking it uncacheable (if we want to try to retrieve data
+> - * from non-poisoned lines in the page).
+> - */
+> -static inline int set_mce_nospec(unsigned long pfn, bool unmap)
+> -{
+> -       unsigned long decoy_addr;
+> -       int rc;
+> -
+> -       /* SGX pages are not in the 1:1 map */
+> -       if (arch_is_platform_page(pfn << PAGE_SHIFT))
+> -               return 0;
+> -       /*
+> -        * We would like to just call:
+> -        *      set_memory_XX((unsigned long)pfn_to_kaddr(pfn), 1);
+> -        * but doing that would radically increase the odds of a
+> -        * speculative access to the poison page because we'd have
+> -        * the virtual address of the kernel 1:1 mapping sitting
+> -        * around in registers.
+> -        * Instead we get tricky.  We create a non-canonical address
+> -        * that looks just like the one we want, but has bit 63 flipped.
+> -        * This relies on set_memory_XX() properly sanitizing any __pa()
+> -        * results with __PHYSICAL_MASK or PTE_PFN_MASK.
+> -        */
+> -       decoy_addr = (pfn << PAGE_SHIFT) + (PAGE_OFFSET ^ BIT(63));
+> -
+> -       if (unmap)
+> -               rc = set_memory_np(decoy_addr, 1);
+> -       else
+> -               rc = set_memory_uc(decoy_addr, 1);
+> -       if (rc)
+> -               pr_warn("Could not invalidate pfn=0x%lx from 1:1 map\n", pfn);
+> -       return rc;
+> -}
+> -#define set_mce_nospec set_mce_nospec
+> -
+> -/* Restore full speculative operation to the pfn. */
+> -static inline int clear_mce_nospec(unsigned long pfn)
+> -{
+> -       return set_memory_wb((unsigned long) pfn_to_kaddr(pfn), 1);
+> -}
+> -#define clear_mce_nospec clear_mce_nospec
+> -#else
+> -/*
+> - * Few people would run a 32-bit kernel on a machine that supports
+> - * recoverable errors because they have too much memory to boot 32-bit.
+> - */
+> -#endif
+> -
+>  #endif /* _ASM_X86_SET_MEMORY_H */
+> diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
+> index abf5ed76e4b7..978cf5bd2ab6 100644
+> --- a/arch/x86/mm/pat/set_memory.c
+> +++ b/arch/x86/mm/pat/set_memory.c
+> @@ -1816,7 +1816,7 @@ static inline int cpa_clear_pages_array(struct page **pages, int numpages,
+>  }
+>
+>  /*
+> - * _set_memory_prot is an internal helper for callers that have been passed
+> + * __set_memory_prot is an internal helper for callers that have been passed
+>   * a pgprot_t value from upper layers and a reservation has already been taken.
+>   * If you want to set the pgprot to a specific page protocol, use the
+>   * set_memory_xx() functions.
+> @@ -1925,6 +1925,53 @@ int set_memory_wb(unsigned long addr, int numpages)
+>  }
+>  EXPORT_SYMBOL(set_memory_wb);
+>
+> +/*
+> + * Prevent speculative access to the page by either unmapping
+> + * it (if we do not require access to any part of the page) or
+> + * marking it uncacheable (if we want to try to retrieve data
+> + * from non-poisoned lines in the page).
+> + */
+> +int set_mce_nospec(unsigned long pfn, bool unmap)
+> +{
+> +       unsigned long decoy_addr;
+> +       int rc;
+> +
+> +       if (!IS_ENABLED(CONFIG_64BIT))
+> +               return 0;
+> +
+> +       /* SGX pages are not in the 1:1 map */
+> +       if (arch_is_platform_page(pfn << PAGE_SHIFT))
+> +               return 0;
+> +       /*
+> +        * We would like to just call:
+> +        *      set_memory_XX((unsigned long)pfn_to_kaddr(pfn), 1);
+> +        * but doing that would radically increase the odds of a
+> +        * speculative access to the poison page because we'd have
+> +        * the virtual address of the kernel 1:1 mapping sitting
+> +        * around in registers.
+> +        * Instead we get tricky.  We create a non-canonical address
+> +        * that looks just like the one we want, but has bit 63 flipped.
+> +        * This relies on set_memory_XX() properly sanitizing any __pa()
+> +        * results with __PHYSICAL_MASK or PTE_PFN_MASK.
+> +        */
+> +       decoy_addr = (pfn << PAGE_SHIFT) + (PAGE_OFFSET ^ BIT(63));
+> +
+> +       if (unmap)
+> +               rc = set_memory_np(decoy_addr, 1);
+> +       else
+> +               rc = set_memory_uc(decoy_addr, 1);
+> +       if (rc)
+> +               pr_warn("Could not invalidate pfn=0x%lx from 1:1 map\n", pfn);
+> +       return rc;
+> +}
+> +
+> +/* Restore full speculative operation to the pfn. */
+> +int clear_mce_nospec(unsigned long pfn)
+> +{
+> +       return set_memory_wb((unsigned long) pfn_to_kaddr(pfn), 1);
+> +}
+> +EXPORT_SYMBOL_GPL(clear_mce_nospec);
+> +
+>  int set_memory_x(unsigned long addr, int numpages)
+>  {
+>         if (!(__supported_pte_mask & _PAGE_NX))
+> diff --git a/include/linux/set_memory.h b/include/linux/set_memory.h
+> index f36be5166c19..683a6c3f7179 100644
+> --- a/include/linux/set_memory.h
+> +++ b/include/linux/set_memory.h
+> @@ -42,14 +42,14 @@ static inline bool can_set_direct_map(void)
+>  #endif
+>  #endif /* CONFIG_ARCH_HAS_SET_DIRECT_MAP */
+>
+> -#ifndef set_mce_nospec
+> +#ifdef CONFIG_X86_64
 
+Jane,
 
-On 2022-05-16 16:00, Damien Le Moal wrote:
-> On 2022/05/16 15:39, Pankaj Raghav wrote:
->> Checking if a given sector is aligned to a zone is a common
->> operation that is performed for zoned devices. Add
->> blk_queue_is_zone_start helper to check for this instead of opencoding it
->> everywhere.
->>
->> Convert the calculations on zone size to be generic instead of relying on
->> power_of_2 based logic in the block layer using the helpers wherever
->> possible.
->>
->> @@ -490,14 +490,29 @@ static int blk_revalidate_zone_cb(struct blk_zone *zone, unsigned int idx,
->>  	 * smaller last zone.
->>  	 */
->>  	if (zone->start == 0) {
->> -		if (zone->len == 0 || !is_power_of_2(zone->len)) {
->> -			pr_warn("%s: Invalid zoned device with non power of two zone size (%llu)\n",
->> -				disk->disk_name, zone->len);
->> +		if (zone->len == 0) {
->> +			pr_warn("%s: Invalid zone size",
->> +				disk->disk_name);
->
-> This fits on one line, no ?
->
-Yeah. I don't know why my formatter decided to do that. I will fix it. Thanks.
->> +			return -ENODEV;
->> +		}
->> +
->> +		/*
->> +		 * Don't allow zoned device with non power_of_2 zone size with
->> +		 * zone capacity less than zone size.
->> +		 */
->> +		if (!is_power_of_2(zone->len) &&
->> +		    zone->capacity < zone->len) {
->> +			pr_warn("%s: Invalid zoned size with non power of 2 zone size and zone capacity < zone size",
->> +				disk->disk_name);
->
-> Very long... What about:
->
-> pr_warn("%s: Invalid zone capacity for non power of 2 zone size",
-> 	disk->disk_name);
->
-This looks better. I will fix it up!
->>  			return -ENODEV;
->>  		}
->>
->>  		args->zone_sectors = zone->len;
->> -		args->nr_zones = (capacity + zone->len - 1) >> ilog2(zone->len);
->> +		/*
->> +		 * Division is used to calculate nr_zones for both power_of_2
->> +		 * and non power_of_2 zone sizes as it is not in the hot path.
->> +		 */
->
-> This comment is not very useful.
->
-
-I also saw you mentioning the comment was not useful in nvme code for
-a similar scenario. Hannes brought up a point about making it
-explicit when we are not using any special path for power of 2 zone sizes as in
-most cases we do branching if the zone size is power of 2 to avoid division.
-
->> +		args->nr_zones = div64_u64(capacity + zone->len - 1, zone->len);
->>  	} else if (zone->start + args->zone_sectors < capacity) {
->>  		if (zone->len != args->zone_sectors) {
->>  			pr_warn("%s: Invalid zoned device with non constant zone size\n",
->> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
->> index 22fe512ee..32d7bd7b1 100644
->> --- a/include/linux/blkdev.h
->> +++ b/include/linux/blkdev.h
->> @@ -686,6 +686,22 @@ static inline unsigned int blk_queue_zone_no(struct request_queue *q,
->>  	return div64_u64(sector, zone_sectors);
->>  }
->>
->> +static inline bool blk_queue_is_zone_start(struct request_queue *q, sector_t sec)
->> +{
->> +	sector_t zone_sectors = blk_queue_zone_sectors(q);
->> +	u64 remainder = 0;
->> +
->> +	if (!blk_queue_is_zoned(q))
->> +		return false;
->> +
->> +	if (is_power_of_2(zone_sectors))
->> +		return IS_ALIGNED(sec, zone_sectors);
->> +
->> +	div64_u64_rem(sec, zone_sectors, &remainder);
->> +	/* if there is a remainder, then the sector is not aligned */
->
-> Hmmm... Fairly obvious. Not sure this comment is useful.
->
-True. I will remove it.
-
->> +	return remainder == 0;
->> +}
->> +
->>  static inline bool blk_queue_zone_is_seq(struct request_queue *q,
->>  					 sector_t sector)
->>  {
->> @@ -732,6 +748,12 @@ static inline unsigned int blk_queue_zone_no(struct request_queue *q,
->>  {
->>  	return 0;
->>  }
->> +
->> +static inline bool blk_queue_is_zone_start(struct request_queue *q, sector_t sec)
->> +{
->> +	return false;
->> +}
->> +
->>  static inline unsigned int queue_max_open_zones(const struct request_queue *q)
->>  {
->>  	return 0;
->
->
+I just noticed that this makes set_mce_nospec() and clear_mce_nospec()
+x86_64-only. If / when more architectures add support for these
+helpers they will need to go back to the "#ifndef $symbol" scheme to
+allow asm/set_memory.h to indicate the availability of the arch-local
+helper.
 
 --
 dm-devel mailing list
