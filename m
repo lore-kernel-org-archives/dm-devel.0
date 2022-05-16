@@ -4,79 +4,132 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D3063C433FE
-	for <dm-devel@archiver.kernel.org>; Mon, 16 May 2022 18:52:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0AA25C433EF
+	for <dm-devel@archiver.kernel.org>; Mon, 16 May 2022 19:05:50 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-14-SSeboA1OPlK0miQG-r8f4w-1; Mon, 16 May 2022 14:52:04 -0400
-X-MC-Unique: SSeboA1OPlK0miQG-r8f4w-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-638-LFFfD6PfPWCH7NhqPnihWg-1; Mon, 16 May 2022 15:05:48 -0400
+X-MC-Unique: LFFfD6PfPWCH7NhqPnihWg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 320FB8C5A8E;
-	Mon, 16 May 2022 18:52:02 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 976D2811E76;
+	Mon, 16 May 2022 19:05:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 25E32492C14;
-	Mon, 16 May 2022 18:52:01 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 45B3EC15D67;
+	Mon, 16 May 2022 19:05:46 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 065FD1947059;
-	Mon, 16 May 2022 18:52:01 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0EBDB1947059;
+	Mon, 16 May 2022 19:05:46 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 3C24E1947055
- for <dm-devel@listman.corp.redhat.com>; Mon, 16 May 2022 18:51:59 +0000 (UTC)
+ ESMTP id 197961947055
+ for <dm-devel@listman.corp.redhat.com>; Mon, 16 May 2022 19:05:44 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 03861400DE5E; Mon, 16 May 2022 18:51:59 +0000 (UTC)
+ id 015371121315; Mon, 16 May 2022 19:05:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id F32F840CF8E2
- for <dm-devel@redhat.com>; Mon, 16 May 2022 18:51:58 +0000 (UTC)
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id F05701121314
+ for <dm-devel@redhat.com>; Mon, 16 May 2022 19:05:40 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D907A85A5BC
- for <dm-devel@redhat.com>; Mon, 16 May 2022 18:51:58 +0000 (UTC)
-Received: from mail-pf1-f169.google.com (mail-pf1-f169.google.com
- [209.85.210.169]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9C3203804522
+ for <dm-devel@redhat.com>; Mon, 16 May 2022 19:05:40 +0000 (UTC)
+Received: from mailout2.w1.samsung.com (mailout2.w1.samsung.com
+ [210.118.77.12]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-539-ezAFAQtOOveKOG69Ds0GrA-1; Mon, 16 May 2022 14:51:57 -0400
-X-MC-Unique: ezAFAQtOOveKOG69Ds0GrA-1
-Received: by mail-pf1-f169.google.com with SMTP id a11so14854151pff.1
- for <dm-devel@redhat.com>; Mon, 16 May 2022 11:51:56 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:date:from:to:cc:subject:message-id:references
- :mime-version:content-disposition:in-reply-to;
- bh=w/vXrhHYz4hayxXTpvluCRqtSLwMXWsi89GFr9tS/YQ=;
- b=g/cgoJadjDtbhvhML29yYgC2BZ3pzOIfMvbCQ8hghjch78cBr7pb2xDuYe01qrnsoJ
- DUkQjZvsrl9+z4G3ZQnEM5E83UqCCVlrXrjN1DNdyTYIe7cY1NUbDTO8AgCLnPlSsR1B
- uV8eOmEymm9CD1KExAuwDBM97r5z7jFRcXTzMASLH0TRx10npd0/39NA2oOnxolf0ySY
- Lfpfa0S0qL+wnUW9jwk4AqSTuEc2hd81V49BNup9LlIEXMGk/4n+1Jefeb/LE/ueecgP
- clcIgCxOuMCzcfm9ik0jJ+0f6VwZO/xDNKszro0gfid/OZJNXwuMa6wjNaQMnlFPzxWD
- qavA==
-X-Gm-Message-State: AOAM532d4u2ODblEEViTKs26X1wwXsL+vcp3xPI7h52gLsjlgSsV5592
- EUFQ7gUKUT4fOyOcFqNFZqUMI687IHgwIA==
-X-Google-Smtp-Source: ABdhPJymcURqRMGcWWF5SnA9wwUQk3JoOR0K/mUC0Yv15khQOmO0SNCL+Q4Njsx+FkSULBV01/EO0w==
-X-Received: by 2002:a63:4387:0:b0:3c6:9490:4e4b with SMTP id
- q129-20020a634387000000b003c694904e4bmr16157541pga.438.1652727116092; 
- Mon, 16 May 2022 11:51:56 -0700 (PDT)
-Received: from localhost ([2620:15c:11a:202:4ee0:ca4c:63fd:81d2])
- by smtp.gmail.com with UTF8SMTPSA id
- b2-20020a170902650200b0015e8d4eb264sm7480975plk.174.2022.05.16.11.51.55
- (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Mon, 16 May 2022 11:51:55 -0700 (PDT)
-Date: Mon, 16 May 2022 11:51:54 -0700
-From: Matthias Kaehlcke <mka@chromium.org>
-To: Kees Cook <keescook@chromium.org>
-Message-ID: <YoKdSrjVf/tHGoa5@google.com>
-References: <20220504195419.1143099-1-mka@chromium.org>
- <20220504125404.v3.1.I3e928575a23481121e73286874c4c2bdb403355d@changeid>
- <02028CEA-5704-4A51-8CAD-BEE53CEF7CCA@chromium.org>
+ us-mta-374-8dVp0gJUMEOpt4kYx_EtrA-1; Mon, 16 May 2022 15:05:38 -0400
+X-MC-Unique: 8dVp0gJUMEOpt4kYx_EtrA-1
+Received: from eucas1p1.samsung.com (unknown [182.198.249.206])
+ by mailout2.w1.samsung.com (KnoxPortal) with ESMTP id
+ 20220516190537euoutp020d8bf5a412c99c1f6dc9302d5c4e2b9c~vq013g8sZ1645916459euoutp02N
+ for <dm-devel@redhat.com>; Mon, 16 May 2022 19:05:37 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.w1.samsung.com
+ 20220516190537euoutp020d8bf5a412c99c1f6dc9302d5c4e2b9c~vq013g8sZ1645916459euoutp02N
+Received: from eusmges3new.samsung.com (unknown [203.254.199.245]) by
+ eucas1p1.samsung.com (KnoxPortal) with ESMTP id
+ 20220516190537eucas1p1827e4dc46edb0e9fd4eef7e9067f07a0~vq01ienVy2497024970eucas1p1I;
+ Mon, 16 May 2022 19:05:37 +0000 (GMT)
+Received: from eucas1p2.samsung.com ( [182.198.249.207]) by
+ eusmges3new.samsung.com (EUCPMTA) with SMTP id 07.CC.10260.080A2826; Mon, 16
+ May 2022 20:05:37 +0100 (BST)
+Received: from eusmtrp1.samsung.com (unknown [182.198.249.138]) by
+ eucas1p2.samsung.com (KnoxPortal) with ESMTPA id
+ 20220516190536eucas1p2ee3b60a2f6bc708919b76d35e69562a2~vq00_9hJ02269122691eucas1p28;
+ Mon, 16 May 2022 19:05:36 +0000 (GMT)
+Received: from eusmgms2.samsung.com (unknown [182.198.249.180]) by
+ eusmtrp1.samsung.com (KnoxPortal) with ESMTP id
+ 20220516190536eusmtrp14da1d7baf4a6dcff2f764c9908a67164~vq00_HXpd1633216332eusmtrp1D;
+ Mon, 16 May 2022 19:05:36 +0000 (GMT)
+X-AuditID: cbfec7f5-bddff70000002814-8b-6282a080c59a
+Received: from eusmtip2.samsung.com ( [203.254.199.222]) by
+ eusmgms2.samsung.com (EUCPMTA) with SMTP id D6.23.09404.080A2826; Mon, 16
+ May 2022 20:05:36 +0100 (BST)
+Received: from CAMSVWEXC01.scsc.local (unknown [106.1.227.71]) by
+ eusmtip2.samsung.com (KnoxPortal) with ESMTPA id
+ 20220516190536eusmtip2c5868c94ebcb947cde3c0db117dc5408~vq00zV-qZ2254722547eusmtip23;
+ Mon, 16 May 2022 19:05:36 +0000 (GMT)
+Received: from [192.168.8.130] (106.210.248.7) by CAMSVWEXC01.scsc.local
+ (2002:6a01:e347::6a01:e347) with Microsoft SMTP Server (TLS) id 15.0.1497.2;
+ Mon, 16 May 2022 20:05:34 +0100
+Message-ID: <b9a02707-8628-b7de-487b-a93697e8a2cb@samsung.com>
+Date: Mon, 16 May 2022 21:05:32 +0200
 MIME-Version: 1.0
-In-Reply-To: <02028CEA-5704-4A51-8CAD-BEE53CEF7CCA@chromium.org>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
+ Thunderbird/91.8.1
+To: <damien.lemoal@opensource.wdc.com>
+From: Pankaj Raghav <p.raghav@samsung.com>
+In-Reply-To: <20220516165416.171196-3-p.raghav@samsung.com>
+X-Originating-IP: [106.210.248.7]
+X-ClientProxiedBy: CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347) To
+ CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347)
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFrrEKsWRmVeSWpSXmKPExsWy7djP87qNC5qSDGa2MlmsvtvPZvH77Hlm
+ i73vZrNaXPjRyGSxcvVRJoueAx9YLPbe0ra49HgFu8WevSdZLC7vmsNmMX/ZU3aLGxOeMlqs
+ ufmUxYHX49+JNWweO2fdZfe4fLbUY9OqTjaPzUvqPXbfbAAKt95n9Xi/7yqbx/otV1k8Pm+S
+ C+CK4rJJSc3JLEst0rdL4MrY/uA0Y8EfuYrDCzYxNjAuk+hi5OSQEDCReLf0HUsXIxeHkMAK
+ RomN/X+YIJwvjBLvry1ih3A+M0r0nO1khmlZsf8xmC0ksJxRYv4qUbii6Y/2sEI4Oxklml98
+ ZwGp4hWwk/i2aQcriM0ioCqxedZ9Roi4oMTJmU/AakQFIiSmzTrDBmILC8RLfGlezw5iMwuI
+ S9x6Mh/oJg4OEQE1iQ8L60DmMwu8ZpKYPGUXM0icTUBLorETrJxTwFri8opGRohWTYnW7b+h
+ xshLbH87B+oBRYmbK3+xQdi1EmuPnWGHsC9xSpw4AQ0XF4krFyZA1QhLvDq+BapGRuL05B4W
+ CLta4umN38wg90gItDBK9O9czwZyjwTQEX1nciBqHCXmnbnHBBHmk7jxVhDiHD6JSdumM09g
+ VJ2FFBCzkDw8C8kHs5B8sICRZRWjeGppcW56arFxXmq5XnFibnFpXrpecn7uJkZgsjv97/jX
+ HYwrXn3UO8TIxMF4iFGCg1lJhNegoiFJiDclsbIqtSg/vqg0J7X4EKM0B4uSOG9y5oZEIYH0
+ xJLU7NTUgtQimCwTB6dUA5OSlPKnTTOmG6u0zZw9ddGzfB2e8i7tSrXzm89WCX/ZKlM4/czF
+ DQy1pzcXmO6qa5Y88Z5/z4zy2OyluySyrwm7P/bimaI94WCpw2UNSZeYZHEFSxO/hPu9p5pv
+ G4enOooleXd1LOg0mbaR5WWbtUmQy4LPlX4uC++rL33ReuHrvpiiNYxvXTIX/J74XF+E5bUF
+ y9rogK0ur/cITJujILV3tczx7G9nlz3+tIrj2NKSNdb7c7bvNr/Sb39mAufEG6FM/tpFy+sb
+ Kxm7ujYeuPHwnqdO49fY1N+9xoLPald3zp6kepFpc7rPkX99rk87g6dsn7tot3+gJ/PbuhBZ
+ 9V1fyg99df8WLNqUMSN84yQlluKMREMt5qLiRACLt3n95QMAAA==
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFupkleLIzCtJLcpLzFFi42I5/e/4Pd2GBU1JBs/uSVmsvtvPZvH77Hlm
+ i73vZrNaXPjRyGSxcvVRJoueAx9YLPbe0ra49HgFu8WevSdZLC7vmsNmMX/ZU3aLGxOeMlqs
+ ufmUxYHX49+JNWweO2fdZfe4fLbUY9OqTjaPzUvqPXbfbAAKt95n9Xi/7yqbx/otV1k8Pm+S
+ C+CK0rMpyi8tSVXIyC8usVWKNrQw0jO0tNAzMrHUMzQ2j7UyMlXSt7NJSc3JLEst0rdL0MvY
+ /uA0Y8EfuYrDCzYxNjAuk+hi5OSQEDCRWLH/MXMXIxeHkMBSRomN7VOYIBIyEp+ufGSHsIUl
+ /lzrYoMo+sgosWHxPSYIZyejxI1bD5hBqngF7CS+bdrBCmKzCKhKbJ51nxEiLihxcuYTFhBb
+ VCBC4sHus2A1wgLxEl+a14NtYBYQl7j1ZD7QUA4OEQE1iQ8L60DmMwu8ZpKYPGUX1Hn7GSV2
+ rG8FK2IT0JJo7ATr5RSwlri8opERYo6mROv231Az5SW2v53DDPGBosTNlb/YIOxaiVf3dzNO
+ YBSdheS8WUjOmIVk1CwkoxYwsqxiFEktLc5Nzy020itOzC0uzUvXS87P3cQITBPbjv3csoNx
+ 5auPeocYmTgYDzFKcDArifAaVDQkCfGmJFZWpRblxxeV5qQWH2I0BYbRRGYp0eR8YKLKK4k3
+ NDMwNTQxszQwtTQzVhLn9SzoSBQSSE8sSc1OTS1ILYLpY+LglGpgyjnx9+gPLaZLM8zrQ/ax
+ ywQENiyIvd067VKoaNRld+uMnRfds571ndjPYP5p1/n6gsak2YKp12Nefj55tSQz8MXbvYvb
+ Hs9dWOCx9Ox398nPJZd+PnKlSC9L4+zrOf5MfvdnJU16+jhK6jvjk0uTTspMXDNh59z/JyWi
+ /QsuOeWn2p92ZuKcrdXLcPl4RGHYnYO+yzac7SqOXGhw6O3OXnY+yYRfv+Yoa9rVRXpbbCi2
+ EFn8Sa1MJeL9lfM7Uv6tPLjo3/cLedtcTjc33BZ5YrV6MVdASiWfxf5p8rovZUzvLn2SvJy5
+ 8O1C5m06P86/O1pwcaPlRGOxtSUF8Rtr9d3nB15NnHb4aej6yFM/Ym8psRRnJBpqMRcVJwIA
+ 66Cj/pwDAAA=
+X-CMS-MailID: 20220516190536eucas1p2ee3b60a2f6bc708919b76d35e69562a2
+X-Msg-Generator: CA
+X-RootMTR: 20220516165421eucas1p2515446ac290987bdb9af24ffb835b287
+X-EPHeader: CA
+CMS-TYPE: 201P
+X-CMS-RootMailID: 20220516165421eucas1p2515446ac290987bdb9af24ffb835b287
+References: <20220516165416.171196-1-p.raghav@samsung.com>
+ <CGME20220516165421eucas1p2515446ac290987bdb9af24ffb835b287@eucas1p2.samsung.com>
+ <20220516165416.171196-3-p.raghav@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -84,8 +137,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-Subject: Re: [dm-devel] [PATCH v3 1/3] dm: Add verity helpers for LoadPin
+X-Mimecast-Spam-Signature: yes
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
+Subject: Re: [dm-devel] [PATCH v4 02/13] block: allow blk-zoned devices to
+ have non-power-of-2 zone size
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -97,185 +152,138 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-security-module@vger.kernel.org,
- Douglas Anderson <dianders@chromium.org>, Mike Snitzer <snitzer@kernel.org>,
- linux-kernel@vger.kernel.org, James Morris <jmorris@namei.org>,
- linux-raid@vger.kernel.org, Song Liu <song@kernel.org>, dm-devel@redhat.com,
- Alasdair Kergon <agk@redhat.com>, "Serge E . Hallyn" <serge@hallyn.com>
+Cc: axboe@kernel.dk, pankydev8@gmail.com, gost.dev@samsung.com,
+ jiangbo.365@bytedance.com, linux-nvme@lists.infradead.org,
+ linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dsterba@suse.com,
+ dm-devel@redhat.com, Luis Chamberlain <mcgrof@kernel.org>,
+ linux-fsdevel@vger.kernel.org, hch@lst.de, linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
+Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, May 13, 2022 at 03:15:53PM -0700, Kees Cook wrote:
-> 
-> 
-> On May 4, 2022 12:54:17 PM PDT, Matthias Kaehlcke <mka@chromium.org> wrote:
-> >LoadPin limits loading of kernel modules, firmware and certain
-> >other files to a 'pinned' file system (typically a read-only
-> >rootfs). To provide more flexibility LoadPin is being extended
-> >to also allow loading these files from trusted dm-verity
-> >devices. For that purpose LoadPin can be provided with a list
-> >of verity root digests that it should consider as trusted.
-> >
-> >Add a bunch of helpers to allow LoadPin to check whether a DM
-> >device is a trusted verity device. The new functions broadly
-> >fall in two categories: those that need access to verity
-> >internals (like the root digest), and the 'glue' between
-> >LoadPin and verity. The new file dm-verity-loadpin.c contains
-> >the glue functions.
-> >
-> >Signed-off-by: Matthias Kaehlcke <mka@chromium.org>
-> > [...]
-> >diff --git a/drivers/md/dm-verity-loadpin.c b/drivers/md/dm-verity-loadpin.c
-> >new file mode 100644
-> >index 000000000000..972ca93a2231
-> >--- /dev/null
-> >+++ b/drivers/md/dm-verity-loadpin.c
-> >@@ -0,0 +1,80 @@
-> >+// SPDX-License-Identifier: GPL-2.0-only
-> >+
-> >+#include <linux/list.h>
-> >+#include <linux/kernel.h>
-> >+#include <linux/dm-verity-loadpin.h>
-> >+
-> >+#include "dm.h"
-> >+#include "dm-verity.h"
-> >+
-> >+static struct list_head *trusted_root_digests;
-> 
-> Does this need to exist in two places? (i.e. why can't dm and loadpin share
-> this instead of needing dm_verity_loadpin_set_trusted_digests()?)
+Hi Damien,
+I copied your comments from the previous thread to avoid confusion.
 
-We could share it. Probably it should then be defined here, since this is
-the first patch of the series, we could add an extern declaration to
-dm-verity-loadpin.h.
 
-> >+
-> >+/*
-> >+ * Sets the root digests of verity devices which LoadPin considers as trusted.
-> >+ *
-> >+ * This function must only be called once.
-> >+ */
-> >+void dm_verity_loadpin_set_trusted_root_digests(struct list_head *digests)
-> >+{
-> >+	if (!trusted_root_digests)
-> >+		trusted_root_digests = digests;
-> >+	else
-> >+		pr_warn("verity root digests trusted by LoadPin are already set!!!\n");
-> >+}
-> >+
-> >+static bool is_trusted_verity_target(struct dm_target *ti)
-> >+{
-> >+	u8 *root_digest;
-> >+	unsigned int digest_size;
-> >+	struct trusted_root_digest *trd;
-> >+	bool trusted = false;
-> >+
-> >+	if (!dm_is_verity_target(ti))
-> >+		return false;
-> >+
-> >+	if (dm_verity_get_root_digest(ti, &root_digest, &digest_size))
-> >+		return false;
-> >+
-> >+	list_for_each_entry(trd, trusted_root_digests, node) {
-> >+		if ((trd->len == digest_size) &&
-> >+		    !memcmp(trd->data, root_digest, digest_size)) {
-> >+			trusted = true;
-> >+			break;
-> >+		}
-> >+	}
-> >+
-> >+	kfree(root_digest);
-> >+
-> >+	return trusted;
-> >+}
-> >+
-> >+/*
-> >+ * Determines whether a mapped device is a verity device that is trusted
-> >+ * by LoadPin.
-> >+ */
-> >+bool dm_verity_loadpin_is_md_trusted(struct mapped_device *md)
-> >+{
-> >+	int srcu_idx;
-> >+	struct dm_table *table;
-> >+	unsigned int num_targets;
-> >+	bool trusted = false;
-> >+	int i;
-> >+
-> >+	if (!trusted_root_digests || list_empty(trusted_root_digests))
-> >+		return false;
-> >+
-> >+	table = dm_get_live_table(md, &srcu_idx);
-> >+	num_targets = dm_table_get_num_targets(table);
-> >+	for (i = 0; i < num_targets; i++) {
-> >+		struct dm_target *ti = dm_table_get_target(table, i);
-> >+
-> >+		if (is_trusted_verity_target(ti)) {
-> >+			trusted = true;
-> >+			break;
-> >+		}
-> >+	}
-> 
-> Pardon my lack of dm vocabulary, but what is "target" vs "table" here?
-> I was only thinking of "whole device", so I must not understand what this is
-> examining.
+On 2022-05-16 16:00, Damien Le Moal wrote:
+> On 2022/05/16 15:39, Pankaj Raghav wrote:
+>> Checking if a given sector is aligned to a zone is a common
+>> operation that is performed for zoned devices. Add
+>> blk_queue_is_zone_start helper to check for this instead of opencoding it
+>> everywhere.
+>>
+>> Convert the calculations on zone size to be generic instead of relying on
+>> power_of_2 based logic in the block layer using the helpers wherever
+>> possible.
+>>
+>> @@ -490,14 +490,29 @@ static int blk_revalidate_zone_cb(struct blk_zone *zone, unsigned int idx,
+>>  	 * smaller last zone.
+>>  	 */
+>>  	if (zone->start == 0) {
+>> -		if (zone->len == 0 || !is_power_of_2(zone->len)) {
+>> -			pr_warn("%s: Invalid zoned device with non power of two zone size (%llu)\n",
+>> -				disk->disk_name, zone->len);
+>> +		if (zone->len == 0) {
+>> +			pr_warn("%s: Invalid zone size",
+>> +				disk->disk_name);
+>
+> This fits on one line, no ?
+>
+Yeah. I don't know why my formatter decided to do that. I will fix it. Thanks.
+>> +			return -ENODEV;
+>> +		}
+>> +
+>> +		/*
+>> +		 * Don't allow zoned device with non power_of_2 zone size with
+>> +		 * zone capacity less than zone size.
+>> +		 */
+>> +		if (!is_power_of_2(zone->len) &&
+>> +		    zone->capacity < zone->len) {
+>> +			pr_warn("%s: Invalid zoned size with non power of 2 zone size and zone capacity < zone size",
+>> +				disk->disk_name);
+>
+> Very long... What about:
+>
+> pr_warn("%s: Invalid zone capacity for non power of 2 zone size",
+> 	disk->disk_name);
+>
+This looks better. I will fix it up!
+>>  			return -ENODEV;
+>>  		}
+>>
+>>  		args->zone_sectors = zone->len;
+>> -		args->nr_zones = (capacity + zone->len - 1) >> ilog2(zone->len);
+>> +		/*
+>> +		 * Division is used to calculate nr_zones for both power_of_2
+>> +		 * and non power_of_2 zone sizes as it is not in the hot path.
+>> +		 */
+>
+> This comment is not very useful.
+>
 
-'targets' are different types of DM mappings like 'linear' or 'verity'. A
-device mapper table contains has one or more targets that define the mapping
-of the blocks of the mapped device.
+I also saw you mentioning the comment was not useful in nvme code for
+a similar scenario. Hannes brought up a point about making it
+explicit when we are not using any special path for power of 2 zone sizes as in
+most cases we do branching if the zone size is power of 2 to avoid division.
 
-Having spelled that out I realize that the above check is wrong. It would
-consider a device like this trusted:
+>> +		args->nr_zones = div64_u64(capacity + zone->len - 1, zone->len);
+>>  	} else if (zone->start + args->zone_sectors < capacity) {
+>>  		if (zone->len != args->zone_sectors) {
+>>  			pr_warn("%s: Invalid zoned device with non constant zone size\n",
+>> diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+>> index 22fe512ee..32d7bd7b1 100644
+>> --- a/include/linux/blkdev.h
+>> +++ b/include/linux/blkdev.h
+>> @@ -686,6 +686,22 @@ static inline unsigned int blk_queue_zone_no(struct request_queue *q,
+>>  	return div64_u64(sector, zone_sectors);
+>>  }
+>>
+>> +static inline bool blk_queue_is_zone_start(struct request_queue *q, sector_t sec)
+>> +{
+>> +	sector_t zone_sectors = blk_queue_zone_sectors(q);
+>> +	u64 remainder = 0;
+>> +
+>> +	if (!blk_queue_is_zoned(q))
+>> +		return false;
+>> +
+>> +	if (is_power_of_2(zone_sectors))
+>> +		return IS_ALIGNED(sec, zone_sectors);
+>> +
+>> +	div64_u64_rem(sec, zone_sectors, &remainder);
+>> +	/* if there is a remainder, then the sector is not aligned */
+>
+> Hmmm... Fairly obvious. Not sure this comment is useful.
+>
+True. I will remove it.
 
-0 10000000 linear 8:1
-10000000 10001000 verity <params>
-
-In the above case only a small part of the DM device would be backed by verity.
-
-I think we want a table with a single entry that is a verity target.
-
-> > [...]
-> >diff --git a/include/linux/dm-verity-loadpin.h b/include/linux/dm-verity-loadpin.h
-> >new file mode 100644
-> >index 000000000000..12a86911d05a
-> >--- /dev/null
-> >+++ b/include/linux/dm-verity-loadpin.h
-> >@@ -0,0 +1,27 @@
-> >+/* SPDX-License-Identifier: GPL-2.0 */
-> >+
-> >+#ifndef __LINUX_DM_VERITY_LOADPIN_H
-> >+#define __LINUX_DM_VERITY_LOADPIN_H
-> >+
-> >+#include <linux/list.h>
-> >+
-> >+struct mapped_device;
-> >+
-> >+struct trusted_root_digest {
-> >+	u8 *data;
-> >+	unsigned int len;
-> >+	struct list_head node;
-> >+};
-> 
-> To avoid the double-alloc in patch 2 (and save 1 pointer size of memory), this could just be:
-> 
-> struct trusted_root_digest {
-> 	struct list_head node;
-> 	unsigned int len;
-> 	u8 data[];
-> };
-
-Looks good to me, will change
-
-> Otherwise, looks good to me!
-
-Excellent, thanks for the review!
+>> +	return remainder == 0;
+>> +}
+>> +
+>>  static inline bool blk_queue_zone_is_seq(struct request_queue *q,
+>>  					 sector_t sector)
+>>  {
+>> @@ -732,6 +748,12 @@ static inline unsigned int blk_queue_zone_no(struct request_queue *q,
+>>  {
+>>  	return 0;
+>>  }
+>> +
+>> +static inline bool blk_queue_is_zone_start(struct request_queue *q, sector_t sec)
+>> +{
+>> +	return false;
+>> +}
+>> +
+>>  static inline unsigned int queue_max_open_zones(const struct request_queue *q)
+>>  {
+>>  	return 0;
+>
+>
 
 --
 dm-devel mailing list
