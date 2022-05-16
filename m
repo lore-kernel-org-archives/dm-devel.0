@@ -1,62 +1,143 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id A5A2EC433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 16 May 2022 12:40:45 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1652704844;
-	h=from:from:sender:sender:reply-to:subject:subject:date:date:
-	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
-	 content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references:list-id:list-help:
-	 list-unsubscribe:list-subscribe:list-post;
-	bh=FG3ISgCGLeEGgnniLZauFEgU0+QMsK0bjwxn4sMo5HY=;
-	b=XhV3FJ0F5hdYSD3PIfXZKXWuOVjxswzQYbwLu1i5s5ONyEy2F1LGALCye9jfCCw1EPWpsg
-	+4JMis01qxesu+QPwza1o0CqQZoAjix2em9SVz90sfDtFnBK/mnpXty3Qx7gVgjCnvUlYy
-	174SKxkBoH3W009VxHWN7Z/PLeg7HfM=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9D0BEC433F5
+	for <dm-devel@archiver.kernel.org>; Mon, 16 May 2022 13:39:33 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-64-64r4JNsQO6OhGjDn7O4l0g-1; Mon, 16 May 2022 08:40:41 -0400
-X-MC-Unique: 64r4JNsQO6OhGjDn7O4l0g-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-39-H8gIOg6qMNSXPG6yqbuf9w-1; Mon, 16 May 2022 09:39:31 -0400
+X-MC-Unique: H8gIOg6qMNSXPG6yqbuf9w-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A84691C00131;
-	Mon, 16 May 2022 12:40:38 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A6F20189FFF8;
+	Mon, 16 May 2022 13:39:29 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id CD57D400DFA0;
-	Mon, 16 May 2022 12:40:34 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 53415C15D5C;
+	Mon, 16 May 2022 13:39:29 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A24C8194704E;
-	Mon, 16 May 2022 12:40:34 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
- [10.11.54.5])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0D249194704E;
+	Mon, 16 May 2022 13:39:29 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D624B1947040
- for <dm-devel@listman.corp.redhat.com>; Mon, 16 May 2022 12:40:32 +0000 (UTC)
+ ESMTP id 81A8C1947040
+ for <dm-devel@listman.corp.redhat.com>; Mon, 16 May 2022 13:39:27 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id B434A7AE4; Mon, 16 May 2022 12:40:32 +0000 (UTC)
-Received: from horse.redhat.com (unknown [10.22.33.86])
- by smtp.corp.redhat.com (Postfix) with ESMTP id 7099E7C2A;
- Mon, 16 May 2022 12:40:09 +0000 (UTC)
-Received: by horse.redhat.com (Postfix, from userid 10451)
- id 28BC02208FA; Mon, 16 May 2022 08:40:09 -0400 (EDT)
-Date: Mon, 16 May 2022 08:40:09 -0400
-From: Vivek Goyal <vgoyal@redhat.com>
-To: Dan Williams <dan.j.williams@intel.com>
-Message-ID: <YoJGKRyzwT66726N@redhat.com>
-References: <20220422224508.440670-5-jane.chu@oracle.com>
- <165247892149.4131000.9240706498758561525.stgit@dwillia2-desk3.amr.corp.intel.com>
+ id 4D9B1C15D5C; Mon, 16 May 2022 13:39:27 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 4911AC15D67
+ for <dm-devel@redhat.com>; Mon, 16 May 2022 13:39:27 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2BBF8811E78
+ for <dm-devel@redhat.com>; Mon, 16 May 2022 13:39:27 +0000 (UTC)
+Received: from mailout1.w1.samsung.com (mailout1.w1.samsung.com
+ [210.118.77.11]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-444-rlziqrB2P_KZyKrQBXYcWg-1; Mon, 16 May 2022 09:39:25 -0400
+X-MC-Unique: rlziqrB2P_KZyKrQBXYcWg-1
+Received: from eucas1p1.samsung.com (unknown [182.198.249.206])
+ by mailout1.w1.samsung.com (KnoxPortal) with ESMTP id
+ 20220516133923euoutp01fd8bf2c99aa24a98a8f84469074c840b~vmYAoiB_31620516205euoutp01b
+ for <dm-devel@redhat.com>; Mon, 16 May 2022 13:39:23 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout1.w1.samsung.com
+ 20220516133923euoutp01fd8bf2c99aa24a98a8f84469074c840b~vmYAoiB_31620516205euoutp01b
+Received: from eusmges1new.samsung.com (unknown [203.254.199.242]) by
+ eucas1p1.samsung.com (KnoxPortal) with ESMTP id
+ 20220516133923eucas1p1e6ad1287605fcdf3b4acd055c7453b14~vmYAM7ZnU0242102421eucas1p1e;
+ Mon, 16 May 2022 13:39:23 +0000 (GMT)
+Received: from eucas1p1.samsung.com ( [182.198.249.206]) by
+ eusmges1new.samsung.com (EUCPMTA) with SMTP id 89.63.10009.B0452826; Mon, 16
+ May 2022 14:39:23 +0100 (BST)
+Received: from eusmtrp2.samsung.com (unknown [182.198.249.139]) by
+ eucas1p1.samsung.com (KnoxPortal) with ESMTPA id
+ 20220516133922eucas1p1c891cd1d82539b4e792acb5d1aa74444~vmX-tYuPk1348813488eucas1p1T;
+ Mon, 16 May 2022 13:39:22 +0000 (GMT)
+Received: from eusmgms2.samsung.com (unknown [182.198.249.180]) by
+ eusmtrp2.samsung.com (KnoxPortal) with ESMTP id
+ 20220516133922eusmtrp216e1fc6a08dca76cb8962e05fee8aecd~vmX-r5sSm2486924869eusmtrp2R;
+ Mon, 16 May 2022 13:39:22 +0000 (GMT)
+X-AuditID: cbfec7f2-e7fff70000002719-cd-6282540b846a
+Received: from eusmtip2.samsung.com ( [203.254.199.222]) by
+ eusmgms2.samsung.com (EUCPMTA) with SMTP id 7B.F8.09404.A0452826; Mon, 16
+ May 2022 14:39:22 +0100 (BST)
+Received: from CAMSVWEXC01.scsc.local (unknown [106.1.227.71]) by
+ eusmtip2.samsung.com (KnoxPortal) with ESMTPA id
+ 20220516133922eusmtip2166a95c27dd930a16ecf812a24156c40~vmX-ep-Cb2359623596eusmtip2B;
+ Mon, 16 May 2022 13:39:22 +0000 (GMT)
+Received: from localhost (106.110.32.130) by CAMSVWEXC01.scsc.local
+ (2002:6a01:e347::6a01:e347) with Microsoft SMTP Server (TLS) id 15.0.1497.2;
+ Mon, 16 May 2022 14:39:22 +0100
+From: Pankaj Raghav <p.raghav@samsung.com>
+To: <axboe@kernel.dk>, <naohiro.aota@wdc.com>,
+ <damien.lemoal@opensource.wdc.com>, <Johannes.Thumshirn@wdc.com>,
+ <snitzer@kernel.org>, <dsterba@suse.com>, <jaegeuk@kernel.org>, <hch@lst.de>
+Date: Mon, 16 May 2022 15:39:08 +0200
+Message-ID: <20220516133921.126925-1-p.raghav@samsung.com>
 MIME-Version: 1.0
-In-Reply-To: <165247892149.4131000.9240706498758561525.stgit@dwillia2-desk3.amr.corp.intel.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
-Subject: Re: [dm-devel] [PATCH v10 4/7] dax: introduce DAX_RECOVERY_WRITE
- dax access mode
+X-Originating-IP: [106.110.32.130]
+X-ClientProxiedBy: CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347) To
+ CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347)
+X-Brightmail-Tracker: H4sIAAAAAAAAA01Sf1CTdRzuu/fdu5fFuNfh4detEufVHWAoHdoXK8zK7tXdedn5o+uPbMLb
+ gGDYxojInRsozoEwCTMHJnBLUckFA44fIr+ObQQCMfAAExxILg1EB9lSJMZL5X/P8/k8z+ee
+ 53tfEhMWEyIyXpHCKBWyRAnBx2ts3u5Xn9+VsX+951YQsvxsw9D8FRuBLt3MI9C3014M5ed9
+ x0OPr/VgqHGqkIt6/9Jx0IVL7Rx022LCUE7zNI7mDCMLs8MuDD1xRSDXzDCO8luvAzQxYOKg
+ xuEw1DdexkNXGjtw5KwvItDZcxM8ZMyaxdAJu5WLLt+7jyPHsPhtEe3sl9JPHeUEfSJzikf3
+ jFTgtPOamq68eIygS7QnMdpqPkQ3DGkJ+njmFEHXHRnl0vevDhC0pWoAp43WCi7tqXyJPtqc
+ zfmA+pj/ZiyTGJ/KKNdFf8qPm7l+HhyofTetqNfM04LxDQbgR0IqEjp6jgAD4JNCqgzA5oZf
+ MJbMADja/j2XJR4AJ42PCAMgFy32kyp2fh7A478Xg/9Ef48cJVhSBWBPjhP4HAQVCnXHeL75
+ cqoFQG9vGcdHMCqDC2fGnvB8SQKpaHgjtw34ME69DEtNetyHBdQm+KuuCbBpV8HTfY94vqMY
+ FQIt9etYyTLYcfr2ohxbkGRWF2JsUgksdIazTg380da1mAFSF/hwzPsQYxfvwTndD0s4EN61
+ V/FY/AKcrzvLYfHXcGLwMcaaDwOYV2dZeoo3YG5XIgu3QHOflIUBcHByGZsmAObXnFpKI4D6
+ LCF78BVYm1ENjGCN6f8qpmeqmJ6pUgywi2AFo1YlyRlVhIL5MlwlS1KpFfLwmOSkSrDwiTuf
+ 2h/WgjN3H4S3Ag4JWgEkMclywfo07X6hIFb2VTqjTN6nVCcyqlYgJnHJCkFM/E8yISWXpTCf
+ M8wBRvnvlkP6ibQcsRBfKzWZdxhl9Lmw4aH0+qBPbnl2+Pe3lXR65zaurbhTvHrT+ze6u+JL
+ 5KmKLOdOl8j54pbNqaX6Pcxud0+FY1JacLMp0tqU4PgozVXjyRXvRNm2yN64t0hirJtoG3+Q
+ wtsokbg35FjdmhpvurBlVvNaWPaq2aDnRlcejKq2hQy1t5QXqT98x7NL1l7KrL6c8Nn2KMPo
+ 68VfECODmvnYAXetf8y0sXTbNwHbrbPxp4LdtkPjzijvH2Yy2q97z1VpliVkb7o9lFDpAzq1
+ 7om9IU1JwZYEh78hvMNacE8mX7mvIOtPQqQLVukTNFsPiocmd2/rL/+Nu7ku+U5DYaAEV8XJ
+ IkIxpUr2D9T6f30zBAAA
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFtrIKsWRmVeSWpSXmKPExsVy+t/xe7pcIU1JBusnmVisP3WM2eL/nmNs
+ Fqvv9rNZTPvwk9liUv8MdovfZ88zW+x9N5vV4sKPRiaLlauPMlk8WT+L2aLnwAcWi79d94Bi
+ LQ+ZLf48NLR4+OUWi8WkQ9cYLZ5encVksfeWtsWlxyvYLfbsPclicXnXHDaL+cuesltMaPvK
+ bDHx+GZWi3Wv37NYnLgl7SDlcfmKt8e/E2vYPCY2v2P3OH9vI4vH5bOlHptWdbJ5LGyYyuyx
+ eUm9x+6bDWwevc3v2Dx2tt5n9Xi/7yqbx/otV1k8JmzeyOrxeZOcR/uBbqYAgSg9m6L80pJU
+ hYz84hJbpWhDCyM9Q0sLPSMTSz1DY/NYKyNTJX07m5TUnMyy1CJ9uwS9jC/XljMW7HCumHNh
+ CXsD42PTLkYODgkBE4njU4u7GLk4hASWMkq0HT/O2MXICRSXkfh05SM7hC0s8edaFxuILSTw
+ kVHiydYciIYtjBIPH21kAxnEJqAl0djJDhIXETjIKPHzwgomEIdZoIlV4vibDrBuYQE7idt9
+ h8E2sAioSiya1cECYvMKWEncadwPtVleYual7+wgQ5kFNCXW79KHKBGUODnzCVg5M1BJ89bZ
+ zBAPKEnMvqwH0Vkr8er+bsYJjEKzEJpnIWmehaR5ASPzKkaR1NLi3PTcYiO94sTc4tK8dL3k
+ /NxNjMC0s+3Yzy07GFe++qh3iJGJg/EQowQHs5IIr0FFQ5IQb0piZVVqUX58UWlOavEhRlOg
+ ZyYyS4km5wMTX15JvKGZgamhiZmlgamlmbGSOK9nQUeikEB6YklqdmpqQWoRTB8TB6dUA5Pf
+ Sq0cTz3faXu570XmOPQuMzr12GH2jQrTWL3q/bqZMRxH/t38d+jLMd+zO1Smv6g9VqzMbjRZ
+ MS7C1u1eIVMDm4Xu0ajDMSzf+9McL81wKvvOHaH48iB/ezhndPiGnrXH31xIZFMOnLPl64af
+ HBEcC8zbLC3XvGRmMU89N4lf7VFOlbrxnegTKvZ3fyatrF/Xcr3qO5MVT9pSr9+yp++pnrjq
+ 7GLrLvep0XRB6p/NMoeTM59pshqtuLB/rZNQgtoFKdHPquum3NrxP33hcpGbgorvFfaf49nP
+ 3qRyQemIjkauWoOo0yalb9GH5vD0dHIXlzqzxpyZxnP1yPlHpfM3xAZqnP98uuyH/OsGZyWW
+ 4oxEQy3mouJEAJGsXffEAwAA
+X-CMS-MailID: 20220516133922eucas1p1c891cd1d82539b4e792acb5d1aa74444
+X-Msg-Generator: CA
+X-RootMTR: 20220516133922eucas1p1c891cd1d82539b4e792acb5d1aa74444
+X-EPHeader: CA
+CMS-TYPE: 201P
+X-CMS-RootMailID: 20220516133922eucas1p1c891cd1d82539b4e792acb5d1aa74444
+References: <CGME20220516133922eucas1p1c891cd1d82539b4e792acb5d1aa74444@eucas1p1.samsung.com>
+X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
+ Definition; Similar Internal Domain=false;
+ Similar Monitored External Domain=false; Custom External Domain=false;
+ Mimecast External Domain=false; Newly Observed Domain=false;
+ Internal User Name=false; Custom Display Name List=false;
+ Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
+ Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+Subject: [dm-devel] [PATCH v4 00/13] support non power of 2 zoned devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -68,465 +149,246 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jane Chu <jane.chu@oracle.com>, nvdimm@lists.linux.dev,
- Mike Snitzer <snitzer@redhat.com>, linux-kernel@vger.kernel.org,
- dm-devel@redhat.com, linux-fsdevel@vger.kernel.org,
- Christoph Hellwig <hch@lst.de>
+Cc: jiangbo.365@bytedance.com, Jens Axboe <axboe@fb.com>,
+ Chaitanya Kulkarni <kch@nvidia.com>, bvanassche@acm.org,
+ Chris Mason <clm@fb.com>, matias.bjorling@wdc.com, gost.dev@samsung.com,
+ Pankaj Raghav <p.raghav@samsung.com>, linux-kernel@vger.kernel.org,
+ linux-nvme@lists.infradead.org, Josef Bacik <josef@toxicpanda.com>,
+ linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ dm-devel@redhat.com, Alasdair Kergon <agk@redhat.com>,
+ jonathan.derrick@linux.dev, Keith Busch <kbusch@kernel.org>,
+ Johannes Thumshirn <jth@kernel.org>, linux-btrfs@vger.kernel.org,
+ Sagi Grimberg <sagi@grimberg.me>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Fri, May 13, 2022 at 02:55:59PM -0700, Dan Williams wrote:
-> From: Jane Chu <jane.chu@oracle.com>
-> 
-> Up till now, dax_direct_access() is used implicitly for normal
-> access, but for the purpose of recovery write, dax range with
-> poison is requested.  To make the interface clear, introduce
-> 	enum dax_access_mode {
-> 		DAX_ACCESS,
-> 		DAX_RECOVERY_WRITE,
-> 	}
-> where DAX_ACCESS is used for normal dax access, and
-> DAX_RECOVERY_WRITE is used for dax recovery write.
-> 
-> Suggested-by: Dan Williams <dan.j.williams@intel.com>
-> Signed-off-by: Jane Chu <jane.chu@oracle.com>
-> Reviewed-by: Christoph Hellwig <hch@lst.de>
-> Cc: Vivek Goyal <vgoyal@redhat.com>
-> Cc: Mike Snitzer <snitzer@redhat.com>
-> Signed-off-by: Dan Williams <dan.j.williams@intel.com>
-> ---
-> Changes since v9:
-> - fix a 0-day robot reported missed conversion of virtio_fs to the new
->   calling convention.
-> 
->  drivers/dax/super.c             |    5 +++--
->  drivers/md/dm-linear.c          |    5 +++--
->  drivers/md/dm-log-writes.c      |    5 +++--
->  drivers/md/dm-stripe.c          |    5 +++--
->  drivers/md/dm-target.c          |    4 +++-
->  drivers/md/dm-writecache.c      |    7 ++++---
->  drivers/md/dm.c                 |    5 +++--
->  drivers/nvdimm/pmem.c           |    8 +++++---
->  drivers/nvdimm/pmem.h           |    5 ++++-
->  drivers/s390/block/dcssblk.c    |    9 ++++++---
->  fs/dax.c                        |    9 +++++----
->  fs/fuse/dax.c                   |    4 ++--
->  fs/fuse/virtio_fs.c             |    6 ++++--
+- Background and Motivation:
 
-Looks fine to me from virtio_fs.c perspective. Simple change.
+The zone storage implementation in Linux, introduced since v4.10, first
+targetted SMR drives which have a power of 2 (po2) zone size alignment
+requirement. The po2 zone size was further imposed implicitly by the
+block layer's blk_queue_chunk_sectors(), used to prevent IO merging
+across chunks beyond the specified size, since v3.16 through commit
+762380ad9322 ("block: add notion of a chunk size for request merging").
+But this same general block layer po2 requirement for blk_queue_chunk_sectors()
+was removed on v5.10 through commit 07d098e6bbad ("block: allow 'chunk_sectors'
+to be non-power-of-2").
 
-Reviewed-by: Vivek Goyal <vgoyal@redhat.com>
+NAND, which is the media used in newer zoned storage devices, does not
+naturally align to po2. In these devices, zone cap is not the same as the
+po2 zone size. When the zone cap != zone size, then unmapped LBAs are
+introduced to cover the space between the zone cap and zone size. po2
+requirement does not make sense for these type of zone storage devices.
+This patch series aims to remove these unmapped LBAs for zoned devices when
+zone cap is npo2. This is done by relaxing the po2 zone size constraint
+in the kernel and allowing zoned device with npo2 zone sizes if zone cap
+== zone size.
 
-Thanks
-Vivek
+Removing the po2 requirement from zone storage should be possible
+now provided that no userspace regression and no performance regressions are
+introduced. Stop-gap patches have been already merged into f2fs-tools to
+proactively not allow npo2 zone sizes until proper support is added [0].
+Additional kernel stop-gap patches are provided in this series for dm-zoned.
+Support for npo2 zonefs and btrfs support is addressed in this series.
 
->  include/linux/dax.h             |    9 +++++++--
->  include/linux/device-mapper.h   |    4 +++-
->  tools/testing/nvdimm/pmem-dax.c |    3 ++-
->  16 files changed, 60 insertions(+), 33 deletions(-)
-> 
-> diff --git a/drivers/dax/super.c b/drivers/dax/super.c
-> index 0211e6f7b47a..5405eb553430 100644
-> --- a/drivers/dax/super.c
-> +++ b/drivers/dax/super.c
-> @@ -117,6 +117,7 @@ enum dax_device_flags {
->   * @dax_dev: a dax_device instance representing the logical memory range
->   * @pgoff: offset in pages from the start of the device to translate
->   * @nr_pages: number of consecutive pages caller can handle relative to @pfn
-> + * @mode: indicator on normal access or recovery write
->   * @kaddr: output parameter that returns a virtual address mapping of pfn
->   * @pfn: output parameter that returns an absolute pfn translation of @pgoff
->   *
-> @@ -124,7 +125,7 @@ enum dax_device_flags {
->   * pages accessible at the device relative @pgoff.
->   */
->  long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
-> -		void **kaddr, pfn_t *pfn)
-> +		enum dax_access_mode mode, void **kaddr, pfn_t *pfn)
->  {
->  	long avail;
->  
-> @@ -138,7 +139,7 @@ long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
->  		return -EINVAL;
->  
->  	avail = dax_dev->ops->direct_access(dax_dev, pgoff, nr_pages,
-> -			kaddr, pfn);
-> +			mode, kaddr, pfn);
->  	if (!avail)
->  		return -ERANGE;
->  	return min(avail, nr_pages);
-> diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-> index 76b486e4d2be..13e263299c9c 100644
-> --- a/drivers/md/dm-linear.c
-> +++ b/drivers/md/dm-linear.c
-> @@ -172,11 +172,12 @@ static struct dax_device *linear_dax_pgoff(struct dm_target *ti, pgoff_t *pgoff)
->  }
->  
->  static long linear_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
-> -		long nr_pages, void **kaddr, pfn_t *pfn)
-> +		long nr_pages, enum dax_access_mode mode, void **kaddr,
-> +		pfn_t *pfn)
->  {
->  	struct dax_device *dax_dev = linear_dax_pgoff(ti, &pgoff);
->  
-> -	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
-> +	return dax_direct_access(dax_dev, pgoff, nr_pages, mode, kaddr, pfn);
->  }
->  
->  static int linear_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
-> diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-> index c9d036d6bb2e..06bdbed65eb1 100644
-> --- a/drivers/md/dm-log-writes.c
-> +++ b/drivers/md/dm-log-writes.c
-> @@ -889,11 +889,12 @@ static struct dax_device *log_writes_dax_pgoff(struct dm_target *ti,
->  }
->  
->  static long log_writes_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
-> -					 long nr_pages, void **kaddr, pfn_t *pfn)
-> +		long nr_pages, enum dax_access_mode mode, void **kaddr,
-> +		pfn_t *pfn)
->  {
->  	struct dax_device *dax_dev = log_writes_dax_pgoff(ti, &pgoff);
->  
-> -	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
-> +	return dax_direct_access(dax_dev, pgoff, nr_pages, mode, kaddr, pfn);
->  }
->  
->  static int log_writes_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
-> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-> index c81d331d1afe..77d72900e997 100644
-> --- a/drivers/md/dm-stripe.c
-> +++ b/drivers/md/dm-stripe.c
-> @@ -315,11 +315,12 @@ static struct dax_device *stripe_dax_pgoff(struct dm_target *ti, pgoff_t *pgoff)
->  }
->  
->  static long stripe_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
-> -		long nr_pages, void **kaddr, pfn_t *pfn)
-> +		long nr_pages, enum dax_access_mode mode, void **kaddr,
-> +		pfn_t *pfn)
->  {
->  	struct dax_device *dax_dev = stripe_dax_pgoff(ti, &pgoff);
->  
-> -	return dax_direct_access(dax_dev, pgoff, nr_pages, kaddr, pfn);
-> +	return dax_direct_access(dax_dev, pgoff, nr_pages, mode, kaddr, pfn);
->  }
->  
->  static int stripe_dax_zero_page_range(struct dm_target *ti, pgoff_t pgoff,
-> diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
-> index 64dd0b34fcf4..8cd5184e62f0 100644
-> --- a/drivers/md/dm-target.c
-> +++ b/drivers/md/dm-target.c
-> @@ -10,6 +10,7 @@
->  #include <linux/init.h>
->  #include <linux/kmod.h>
->  #include <linux/bio.h>
-> +#include <linux/dax.h>
->  
->  #define DM_MSG_PREFIX "target"
->  
-> @@ -142,7 +143,8 @@ static void io_err_release_clone_rq(struct request *clone,
->  }
->  
->  static long io_err_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
-> -		long nr_pages, void **kaddr, pfn_t *pfn)
-> +		long nr_pages, enum dax_access_mode mode, void **kaddr,
-> +		pfn_t *pfn)
->  {
->  	return -EIO;
->  }
-> diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-> index 5630b470ba42..d74c5a7a0ab4 100644
-> --- a/drivers/md/dm-writecache.c
-> +++ b/drivers/md/dm-writecache.c
-> @@ -286,7 +286,8 @@ static int persistent_memory_claim(struct dm_writecache *wc)
->  
->  	id = dax_read_lock();
->  
-> -	da = dax_direct_access(wc->ssd_dev->dax_dev, offset, p, &wc->memory_map, &pfn);
-> +	da = dax_direct_access(wc->ssd_dev->dax_dev, offset, p, DAX_ACCESS,
-> +			&wc->memory_map, &pfn);
->  	if (da < 0) {
->  		wc->memory_map = NULL;
->  		r = da;
-> @@ -308,8 +309,8 @@ static int persistent_memory_claim(struct dm_writecache *wc)
->  		i = 0;
->  		do {
->  			long daa;
-> -			daa = dax_direct_access(wc->ssd_dev->dax_dev, offset + i, p - i,
-> -						NULL, &pfn);
-> +			daa = dax_direct_access(wc->ssd_dev->dax_dev, offset + i,
-> +					p - i, DAX_ACCESS, NULL, &pfn);
->  			if (daa <= 0) {
->  				r = daa ? daa : -EINVAL;
->  				goto err3;
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 82957bd460e8..9c452641c3d5 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -1093,7 +1093,8 @@ static struct dm_target *dm_dax_get_live_target(struct mapped_device *md,
->  }
->  
->  static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
-> -				 long nr_pages, void **kaddr, pfn_t *pfn)
-> +		long nr_pages, enum dax_access_mode mode, void **kaddr,
-> +		pfn_t *pfn)
->  {
->  	struct mapped_device *md = dax_get_private(dax_dev);
->  	sector_t sector = pgoff * PAGE_SECTORS;
-> @@ -1111,7 +1112,7 @@ static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
->  	if (len < 1)
->  		goto out;
->  	nr_pages = min(len, nr_pages);
-> -	ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
-> +	ret = ti->type->direct_access(ti, pgoff, nr_pages, mode, kaddr, pfn);
->  
->   out:
->  	dm_put_live_table(md, srcu_idx);
-> diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
-> index 4aa17132a557..47f34c50f944 100644
-> --- a/drivers/nvdimm/pmem.c
-> +++ b/drivers/nvdimm/pmem.c
-> @@ -239,7 +239,8 @@ static int pmem_rw_page(struct block_device *bdev, sector_t sector,
->  
->  /* see "strong" declaration in tools/testing/nvdimm/pmem-dax.c */
->  __weak long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
-> -		long nr_pages, void **kaddr, pfn_t *pfn)
-> +		long nr_pages, enum dax_access_mode mode, void **kaddr,
-> +		pfn_t *pfn)
->  {
->  	resource_size_t offset = PFN_PHYS(pgoff) + pmem->data_offset;
->  
-> @@ -278,11 +279,12 @@ static int pmem_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
->  }
->  
->  static long pmem_dax_direct_access(struct dax_device *dax_dev,
-> -		pgoff_t pgoff, long nr_pages, void **kaddr, pfn_t *pfn)
-> +		pgoff_t pgoff, long nr_pages, enum dax_access_mode mode,
-> +		void **kaddr, pfn_t *pfn)
->  {
->  	struct pmem_device *pmem = dax_get_private(dax_dev);
->  
-> -	return __pmem_direct_access(pmem, pgoff, nr_pages, kaddr, pfn);
-> +	return __pmem_direct_access(pmem, pgoff, nr_pages, mode, kaddr, pfn);
->  }
->  
->  static const struct dax_operations pmem_dax_ops = {
-> diff --git a/drivers/nvdimm/pmem.h b/drivers/nvdimm/pmem.h
-> index 1f51a2361429..392b0b38acb9 100644
-> --- a/drivers/nvdimm/pmem.h
-> +++ b/drivers/nvdimm/pmem.h
-> @@ -8,6 +8,8 @@
->  #include <linux/pfn_t.h>
->  #include <linux/fs.h>
->  
-> +enum dax_access_mode;
-> +
->  /* this definition is in it's own header for tools/testing/nvdimm to consume */
->  struct pmem_device {
->  	/* One contiguous memory region per device */
-> @@ -28,7 +30,8 @@ struct pmem_device {
->  };
->  
->  long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
-> -		long nr_pages, void **kaddr, pfn_t *pfn);
-> +		long nr_pages, enum dax_access_mode mode, void **kaddr,
-> +		pfn_t *pfn);
->  
->  #ifdef CONFIG_MEMORY_FAILURE
->  static inline bool test_and_clear_pmem_poison(struct page *page)
-> diff --git a/drivers/s390/block/dcssblk.c b/drivers/s390/block/dcssblk.c
-> index d614843caf6c..8d0d0eaa3059 100644
-> --- a/drivers/s390/block/dcssblk.c
-> +++ b/drivers/s390/block/dcssblk.c
-> @@ -32,7 +32,8 @@ static int dcssblk_open(struct block_device *bdev, fmode_t mode);
->  static void dcssblk_release(struct gendisk *disk, fmode_t mode);
->  static void dcssblk_submit_bio(struct bio *bio);
->  static long dcssblk_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
-> -		long nr_pages, void **kaddr, pfn_t *pfn);
-> +		long nr_pages, enum dax_access_mode mode, void **kaddr,
-> +		pfn_t *pfn);
->  
->  static char dcssblk_segments[DCSSBLK_PARM_LEN] = "\0";
->  
-> @@ -50,7 +51,8 @@ static int dcssblk_dax_zero_page_range(struct dax_device *dax_dev,
->  	long rc;
->  	void *kaddr;
->  
-> -	rc = dax_direct_access(dax_dev, pgoff, nr_pages, &kaddr, NULL);
-> +	rc = dax_direct_access(dax_dev, pgoff, nr_pages, DAX_ACCESS,
-> +			&kaddr, NULL);
->  	if (rc < 0)
->  		return rc;
->  	memset(kaddr, 0, nr_pages << PAGE_SHIFT);
-> @@ -927,7 +929,8 @@ __dcssblk_direct_access(struct dcssblk_dev_info *dev_info, pgoff_t pgoff,
->  
->  static long
->  dcssblk_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
-> -		long nr_pages, void **kaddr, pfn_t *pfn)
-> +		long nr_pages, enum dax_access_mode mode, void **kaddr,
-> +		pfn_t *pfn)
->  {
->  	struct dcssblk_dev_info *dev_info = dax_get_private(dax_dev);
->  
-> diff --git a/fs/dax.c b/fs/dax.c
-> index 67a08a32fccb..ef3103107104 100644
-> --- a/fs/dax.c
-> +++ b/fs/dax.c
-> @@ -721,7 +721,8 @@ static int copy_cow_page_dax(struct vm_fault *vmf, const struct iomap_iter *iter
->  	int id;
->  
->  	id = dax_read_lock();
-> -	rc = dax_direct_access(iter->iomap.dax_dev, pgoff, 1, &kaddr, NULL);
-> +	rc = dax_direct_access(iter->iomap.dax_dev, pgoff, 1, DAX_ACCESS,
-> +				&kaddr, NULL);
->  	if (rc < 0) {
->  		dax_read_unlock(id);
->  		return rc;
-> @@ -1013,7 +1014,7 @@ static int dax_iomap_pfn(const struct iomap *iomap, loff_t pos, size_t size,
->  
->  	id = dax_read_lock();
->  	length = dax_direct_access(iomap->dax_dev, pgoff, PHYS_PFN(size),
-> -				   NULL, pfnp);
-> +				   DAX_ACCESS, NULL, pfnp);
->  	if (length < 0) {
->  		rc = length;
->  		goto out;
-> @@ -1122,7 +1123,7 @@ static int dax_memzero(struct dax_device *dax_dev, pgoff_t pgoff,
->  	void *kaddr;
->  	long ret;
->  
-> -	ret = dax_direct_access(dax_dev, pgoff, 1, &kaddr, NULL);
-> +	ret = dax_direct_access(dax_dev, pgoff, 1, DAX_ACCESS, &kaddr, NULL);
->  	if (ret > 0) {
->  		memset(kaddr + offset, 0, size);
->  		dax_flush(dax_dev, kaddr + offset, size);
-> @@ -1247,7 +1248,7 @@ static loff_t dax_iomap_iter(const struct iomap_iter *iomi,
->  		}
->  
->  		map_len = dax_direct_access(dax_dev, pgoff, PHYS_PFN(size),
-> -				&kaddr, NULL);
-> +				DAX_ACCESS, &kaddr, NULL);
->  		if (map_len < 0) {
->  			ret = map_len;
->  			break;
-> diff --git a/fs/fuse/dax.c b/fs/fuse/dax.c
-> index d7d3a7f06862..10eb50cbf398 100644
-> --- a/fs/fuse/dax.c
-> +++ b/fs/fuse/dax.c
-> @@ -1241,8 +1241,8 @@ static int fuse_dax_mem_range_init(struct fuse_conn_dax *fcd)
->  	INIT_DELAYED_WORK(&fcd->free_work, fuse_dax_free_mem_worker);
->  
->  	id = dax_read_lock();
-> -	nr_pages = dax_direct_access(fcd->dev, 0, PHYS_PFN(dax_size), NULL,
-> -				     NULL);
-> +	nr_pages = dax_direct_access(fcd->dev, 0, PHYS_PFN(dax_size),
-> +			DAX_ACCESS, NULL, NULL);
->  	dax_read_unlock(id);
->  	if (nr_pages < 0) {
->  		pr_debug("dax_direct_access() returned %ld\n", nr_pages);
-> diff --git a/fs/fuse/virtio_fs.c b/fs/fuse/virtio_fs.c
-> index 86b7dbb6a0d4..8db53fa67359 100644
-> --- a/fs/fuse/virtio_fs.c
-> +++ b/fs/fuse/virtio_fs.c
-> @@ -752,7 +752,8 @@ static void virtio_fs_cleanup_vqs(struct virtio_device *vdev,
->   * offset.
->   */
->  static long virtio_fs_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
-> -				    long nr_pages, void **kaddr, pfn_t *pfn)
-> +				    long nr_pages, enum dax_access_mode mode,
-> +				    void **kaddr, pfn_t *pfn)
->  {
->  	struct virtio_fs *fs = dax_get_private(dax_dev);
->  	phys_addr_t offset = PFN_PHYS(pgoff);
-> @@ -772,7 +773,8 @@ static int virtio_fs_zero_page_range(struct dax_device *dax_dev,
->  	long rc;
->  	void *kaddr;
->  
-> -	rc = dax_direct_access(dax_dev, pgoff, nr_pages, &kaddr, NULL);
-> +	rc = dax_direct_access(dax_dev, pgoff, nr_pages, DAX_ACCESS, &kaddr,
-> +			       NULL);
->  	if (rc < 0)
->  		return rc;
->  	memset(kaddr, 0, nr_pages << PAGE_SHIFT);
-> diff --git a/include/linux/dax.h b/include/linux/dax.h
-> index 9fc5f99a0ae2..3f1339bce3c0 100644
-> --- a/include/linux/dax.h
-> +++ b/include/linux/dax.h
-> @@ -14,6 +14,11 @@ struct iomap_ops;
->  struct iomap_iter;
->  struct iomap;
->  
-> +enum dax_access_mode {
-> +	DAX_ACCESS,
-> +	DAX_RECOVERY_WRITE,
-> +};
-> +
->  struct dax_operations {
->  	/*
->  	 * direct_access: translate a device-relative
-> @@ -21,7 +26,7 @@ struct dax_operations {
->  	 * number of pages available for DAX at that pfn.
->  	 */
->  	long (*direct_access)(struct dax_device *, pgoff_t, long,
-> -			void **, pfn_t *);
-> +			enum dax_access_mode, void **, pfn_t *);
->  	/*
->  	 * Validate whether this device is usable as an fsdax backing
->  	 * device.
-> @@ -178,7 +183,7 @@ static inline void dax_read_unlock(int id)
->  bool dax_alive(struct dax_device *dax_dev);
->  void *dax_get_private(struct dax_device *dax_dev);
->  long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
-> -		void **kaddr, pfn_t *pfn);
-> +		enum dax_access_mode mode, void **kaddr, pfn_t *pfn);
->  size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
->  		size_t bytes, struct iov_iter *i);
->  size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
-> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-> index c2a3758c4aaa..acdedda0d12b 100644
-> --- a/include/linux/device-mapper.h
-> +++ b/include/linux/device-mapper.h
-> @@ -20,6 +20,7 @@ struct dm_table;
->  struct dm_report_zones_args;
->  struct mapped_device;
->  struct bio_vec;
-> +enum dax_access_mode;
->  
->  /*
->   * Type of table, mapped_device's mempool and request_queue
-> @@ -146,7 +147,8 @@ typedef int (*dm_busy_fn) (struct dm_target *ti);
->   * >= 0 : the number of bytes accessible at the address
->   */
->  typedef long (*dm_dax_direct_access_fn) (struct dm_target *ti, pgoff_t pgoff,
-> -		long nr_pages, void **kaddr, pfn_t *pfn);
-> +		long nr_pages, enum dax_access_mode node, void **kaddr,
-> +		pfn_t *pfn);
->  typedef int (*dm_dax_zero_page_range_fn)(struct dm_target *ti, pgoff_t pgoff,
->  		size_t nr_pages);
->  
-> diff --git a/tools/testing/nvdimm/pmem-dax.c b/tools/testing/nvdimm/pmem-dax.c
-> index af19c85558e7..dcc328eba811 100644
-> --- a/tools/testing/nvdimm/pmem-dax.c
-> +++ b/tools/testing/nvdimm/pmem-dax.c
-> @@ -8,7 +8,8 @@
->  #include <nd.h>
->  
->  long __pmem_direct_access(struct pmem_device *pmem, pgoff_t pgoff,
-> -		long nr_pages, void **kaddr, pfn_t *pfn)
-> +		long nr_pages, enum dax_access_mode mode, void **kaddr,
-> +		pfn_t *pfn)
->  {
->  	resource_size_t offset = PFN_PHYS(pgoff) + pmem->data_offset;
->  
-> 
+There was an effort previously [1] to add support to non po2 devices via
+device level emulation but that was rejected with a final conclusion
+to add support for non po2 zoned device in the complete stack[2].
+
+- Patchset description:
+This patchset aims at adding support to non power of 2 zoned devices in
+the block layer, nvme layer, null blk and adds support to btrfs and
+zonefs.
+
+This round of patches **will not** support DM layer for non
+power of 2 zoned devices. More about this in the future work section.
+
+Patches 1-2 deals with removing the po2 constraint from the
+block layer.
+
+Patches 3-4 deals with removing the constraint from nvme zns.
+
+Patches 5-9 adds support to btrfs for non po2 zoned devices.
+
+Patch 10 removes the po2 constraint in ZoneFS
+
+Patch 11-12 removes the po2 contraint in null blk
+
+Patches 13 adds conditions to not allow non power of 2 devices in
+DM.
+
+The patch series is based on linux-next tag: next-20220502
+
+- Performance:
+PO2 zone sizes utilizes log and shifts instead of division when
+determing alignment, zone number, etc. The same math cannot be used when
+using a zoned device with non po2 zone size. Hence, to avoid any performance
+regression on zoned devices with po2 zone sizes, the optimized math in the
+hot paths has been retained with branching.
+
+The performance was measured using null blk for regression
+and the results have been posted in the appropriate commit log. No
+performance regression was noticed.
+
+- Testing
+With respect to testing we need to tackle two things: one for regression
+on po2 zoned device and progression on non po2 zoned devices.
+
+kdevops (https://github.com/mcgrof/kdevops) was extensively used to
+automate the testing for blktests and (x)fstests for btrfs changes. The
+known failures were excluded during the test based on the baseline
+v5.17.0-rc7
+
+-- regression
+Emulated zoned device with zone size =128M , nr_zones = 10000
+
+Block and nvme zns:
+blktests were run with no new failures
+
+Btrfs:
+Changes were tested with the following profile in QEMU:
+[btrfs_simple_zns]
+TEST_DIR=<dir>
+SCRATCH_MNT=<mnt>
+FSTYP=btrfs
+MKFS_OPTIONS="-f -d single -m single"
+TEST_DEV=<dev>
+SCRATCH_DEV_POOL=<dev-pool>
+
+No new failures were observed in btrfs, generic and shared test suite
+
+ZoneFS:
+zonefs-tests-nullblk.sh and zonefs-tests.sh from zonefs-tools were run
+with no failures.
+
+nullblk:
+t/zbd/run-tests-against-nullb from fio was run with no failures.
+
+DM:
+It was verified if dm-zoned successfully mounts without any
+error.
+
+-- progression
+Emulated zoned device with zone size = 96M , nr_zones = 10000
+
+Block and nvme zns:
+blktests were run with no new failures
+
+Btrfs:
+Same profile as po2 zone size was used.
+
+Many tests in xfstests for btrfs included dm-flakey and some tests
+required dm-linear. As they are not supported at the moment for non
+po2 devices, those **tests were excluded for non po2 devices**.
+
+No new failures were observed in btrfs, generic and shared test suite
+
+ZoneFS:
+zonefs-tests.sh from zonefs-tools were run with no failures.
+
+nullblk:
+A new section was added to cover non po2 devices:
+
+section14()
+{
+       conv_pcnt=10
+       zone_size=3
+       zone_capacity=3
+       max_open=${set_max_open}
+       zbd_test_opts+=("-o ${max_open}")
+}
+t/zbd/run-tests-against-nullb from fio was run with no failures.
+
+DM:
+It was verified that dm-zoned does not mount.
+
+- Tools:
+Some tools had to be updated to support non po2 devices. Once these
+patches are accepted in the kernel, these tool updates will also be
+upstreamed.
+* btrfs-prog: https://github.com/Panky-codes/btrfs-progs/tree/remove-po2-btrfs
+* blkzone: https://github.com/Panky-codes/util-linux/tree/remove-po2
+* zonefs-tools: https://github.com/Panky-codes/zonefs-tools/tree/remove-po2
+
+- Future work
+To reduce the amount of changes and testing, support for DM was
+excluded in this round of patches. The plan is to add support to F2FS
+and DM in the forthcoming future.
+
+[0] https://git.kernel.org/pub/scm/linux/kernel/git/jaegeuk/f2fs-tools.git/commit/?h=dev-test&id=6afcf6493578e77528abe65ab8b12f3e1c16749f
+[1] https://lore.kernel.org/all/20220310094725.GA28499@lst.de/T/
+[2] https://lore.kernel.org/all/20220315135245.eqf4tqngxxb7ymqa@unifi/
+
+Changes since v1:
+- Put the function declaration and its usage in the same commit (Bart)
+- Remove bdev_zone_aligned function (Bart)
+- Change the name from blk_queue_zone_aligned to blk_queue_is_zone_start
+  (Damien)
+- q is never null in from bdev_get_queue (Damien)
+- Add condition during bringup and check for zsze == zcap for npo2
+  drives (Damien)
+- Rounddown operation should be made generic to work in 32 bits arch
+  (bart)
+- Add comments where generic calculation is directly used instead having
+  special handling for po2 zone sizes (Hannes)
+- Make the minimum zone size alignment requirement for btrfs to be 1M
+  instead of BTRFS_STRIPE_LEN(David)
+
+Changes since v2:
+- Minor formatting changes
+
+Changes since v3:
+- Make superblock mirror align with the existing superblock log offsets
+  (David)
+- DM change return value and remove extra newline (Damien and Mike)
+- Optimize null blk zone index lookup with shift for po2 zone size
+  (Damien)
+
+Luis Chamberlain (1):
+  dm-zoned: ensure only power of 2 zone sizes are allowed
+
+Pankaj Raghav (12):
+  block: make blkdev_nr_zones and blk_queue_zone_no generic for npo2
+    zsze
+  block: allow blk-zoned devices to have non-power-of-2 zone size
+  nvme: zns: Allow ZNS drives that have non-power_of_2 zone size
+  nvmet: Allow ZNS target to support non-power_of_2 zone sizes
+  btrfs: zoned: Cache superblock location in btrfs_zoned_device_info
+  btrfs: zoned: Make sb_zone_number function non power of 2 compatible
+  btrfs: zoned: use generic btrfs zone helpers to support npo2 zoned
+    devices
+  btrfs:zoned: make sb for npo2 zone devices align with sb log offsets
+  btrfs: zoned: relax the alignment constraint for zoned devices
+  zonefs: allow non power of 2 zoned devices
+  null_blk: allow non power of 2 zoned devices
+  null_blk: use zone_size_sects_shift for power of 2 zoned devices
+
+ block/blk-core.c                  |   3 +-
+ block/blk-zoned.c                 |  40 +++++--
+ drivers/block/null_blk/main.c     |   5 +-
+ drivers/block/null_blk/null_blk.h |   6 +
+ drivers/block/null_blk/zoned.c    |  20 ++--
+ drivers/md/dm-zone.c              |  12 ++
+ drivers/nvme/host/zns.c           |  24 ++--
+ drivers/nvme/target/zns.c         |   2 +-
+ fs/btrfs/volumes.c                |  24 ++--
+ fs/btrfs/zoned.c                  | 191 +++++++++++++++++++++---------
+ fs/btrfs/zoned.h                  |  44 ++++++-
+ fs/zonefs/super.c                 |   6 +-
+ fs/zonefs/zonefs.h                |   1 -
+ include/linux/blkdev.h            |  37 +++++-
+ 14 files changed, 303 insertions(+), 112 deletions(-)
+
+-- 
+2.25.1
+
 --
 dm-devel mailing list
 dm-devel@redhat.com
