@@ -1,81 +1,83 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 0C8B9C433F5
-	for <dm-devel@archiver.kernel.org>; Mon, 16 May 2022 22:02:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 16FBBC433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 17 May 2022 03:38:35 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-517-_FikipgWM8iV19HTHC-BaA-1; Mon, 16 May 2022 18:02:53 -0400
-X-MC-Unique: _FikipgWM8iV19HTHC-BaA-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-582-OCYvjg6iP3e4dH0agQGQwg-1; Mon, 16 May 2022 23:38:31 -0400
+X-MC-Unique: OCYvjg6iP3e4dH0agQGQwg-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 02F6D85A5BE;
-	Mon, 16 May 2022 22:02:52 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1050785A5BC;
+	Tue, 17 May 2022 03:38:30 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BB663154D8CF;
-	Mon, 16 May 2022 22:02:50 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 41FE0C27E83;
+	Tue, 17 May 2022 03:38:27 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 6FE0D1947059;
-	Mon, 16 May 2022 22:02:50 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2D57F1947060;
+	Tue, 17 May 2022 03:38:27 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.5])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id D70611947055
- for <dm-devel@listman.corp.redhat.com>; Mon, 16 May 2022 22:02:48 +0000 (UTC)
+ ESMTP id 600EE194705F
+ for <dm-devel@listman.corp.redhat.com>; Tue, 17 May 2022 03:38:25 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 96B8D154D8D8; Mon, 16 May 2022 22:02:48 +0000 (UTC)
+ id 178D97ADD; Tue, 17 May 2022 03:38:25 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 92CC0154D8CF
- for <dm-devel@redhat.com>; Mon, 16 May 2022 22:02:48 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 78C561C0F685
- for <dm-devel@redhat.com>; Mon, 16 May 2022 22:02:48 +0000 (UTC)
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-167-1dmQyOm1NPWmnV9nfFS5nQ-1; Mon, 16 May 2022 18:02:46 -0400
-X-MC-Unique: 1dmQyOm1NPWmnV9nfFS5nQ-1
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1387B7AD5
+ for <dm-devel@redhat.com>; Tue, 17 May 2022 03:38:19 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by smtp-out2.suse.de (Postfix) with ESMTPS id 795551F939;
- Mon, 16 May 2022 22:02:45 +0000 (UTC)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
- key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
- (No client certificate requested)
- by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 102A313ADC;
- Mon, 16 May 2022 22:02:45 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
- by imap2.suse-dmz.suse.de with ESMTPSA id w1/AAgXKgmLnQAAAMHmgww
- (envelope-from <dsterba@suse.cz>); Mon, 16 May 2022 22:02:45 +0000
-Date: Mon, 16 May 2022 23:58:26 +0200
-From: David Sterba <dsterba@suse.cz>
-To: Pankaj Raghav <p.raghav@samsung.com>
-Message-ID: <20220516215826.GZ18596@twin.jikos.cz>
-Mail-Followup-To: dsterba@suse.cz, Pankaj Raghav <p.raghav@samsung.com>,
- axboe@kernel.dk, damien.lemoal@opensource.wdc.com,
- pankydev8@gmail.com, dsterba@suse.com, hch@lst.de,
- linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org,
- linux-btrfs@vger.kernel.org, jiangbo.365@bytedance.com,
- linux-block@vger.kernel.org, gost.dev@samsung.com,
- linux-kernel@vger.kernel.org, dm-devel@redhat.com,
- Luis Chamberlain <mcgrof@kernel.org>
-References: <20220516165416.171196-1-p.raghav@samsung.com>
- <CGME20220516165425eucas1p29fcd11d7051d9d3a9a9efc17cd3b6999@eucas1p2.samsung.com>
- <20220516165416.171196-6-p.raghav@samsung.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3C16129ABA34
+ for <dm-devel@redhat.com>; Tue, 17 May 2022 03:38:19 +0000 (UTC)
+Received: from mail-pf1-f176.google.com (mail-pf1-f176.google.com
+ [209.85.210.176]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-595-avysIqgfMx6hMCxOatcw_w-1; Mon, 16 May 2022 23:38:15 -0400
+X-MC-Unique: avysIqgfMx6hMCxOatcw_w-1
+Received: by mail-pf1-f176.google.com with SMTP id i24so15770990pfa.7
+ for <dm-devel@redhat.com>; Mon, 16 May 2022 20:38:14 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+ :mime-version:content-disposition:in-reply-to;
+ bh=8rb5YAnT4q61r5OFUKyY8/kc8YnIY9p2tTz3G6h+GnI=;
+ b=Pr/EirS6HkG2rYjYbWVbilnJV0ZHjtvvEVkqwnc/KY5YYYl144Vj3da5NPaPcJhgz+
+ OotTo62FpHlPLzmgopFEaji9Zde9O88WFT5c0ECsIbxCbgGRFiZ4QR8oVHXFU1WC8674
+ Yhigaxbvb6+xkARJW8/1nu5garcS2K/7N8H0GfyaV/aMe5Sm6jIfX5SXTSEtUIgl1xqH
+ ANzDzbmxLwsM3V/8xSMQ1S6GZe+1hzblGkaHJ9z5u0OAer4Ymav4qZBEYPuDd4evTrWX
+ Bg8O/P/iFQr7GdfHVuLXFgYiDrhUB65a7S7obtjNySvUT5NKdAie5I+LpNb3df4DDjI4
+ V5Gg==
+X-Gm-Message-State: AOAM5315KlIGRSmoQ5uG13th/YxsxWyqeh6YPqSkNnAoNM6TTUz2vmUv
+ rDg4QaCvcHDbNUkk9FBmB7E79PiFhV7kgw==
+X-Google-Smtp-Source: ABdhPJyIsPDpWnvy/XwAKF70PpFSrTdafFUxvd2g6pCcfojmxhOeRGWOV4pPfIMZkiY5fzkbYDiRnA==
+X-Received: by 2002:a05:6a02:10d:b0:381:f4c8:ad26 with SMTP id
+ bg13-20020a056a02010d00b00381f4c8ad26mr17570035pgb.135.1652758693846; 
+ Mon, 16 May 2022 20:38:13 -0700 (PDT)
+Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
+ by smtp.gmail.com with ESMTPSA id
+ i7-20020a17090332c700b0015e8d4eb27esm7802065plr.200.2022.05.16.20.38.13
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Mon, 16 May 2022 20:38:13 -0700 (PDT)
+Date: Mon, 16 May 2022 20:38:12 -0700
+From: Kees Cook <keescook@chromium.org>
+To: Matthias Kaehlcke <mka@chromium.org>
+Message-ID: <202205162035.CABA5B2C6@keescook>
+References: <20220504195419.1143099-1-mka@chromium.org>
+ <20220504125404.v3.1.I3e928575a23481121e73286874c4c2bdb403355d@changeid>
+ <02028CEA-5704-4A51-8CAD-BEE53CEF7CCA@chromium.org>
+ <YoKdSrjVf/tHGoa5@google.com>
 MIME-Version: 1.0
-In-Reply-To: <20220516165416.171196-6-p.raghav@samsung.com>
-User-Agent: Mutt/1.5.23.1-rc1 (2014-03-12)
+In-Reply-To: <YoKdSrjVf/tHGoa5@google.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -83,9 +85,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-Subject: Re: [dm-devel] [PATCH v4 05/13] btrfs: zoned: Cache superblock
- location in btrfs_zoned_device_info
+X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+Subject: Re: [dm-devel] [PATCH v3 1/3] dm: Add verity helpers for LoadPin
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -97,16 +98,14 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Reply-To: dsterba@suse.cz
-Cc: axboe@kernel.dk, pankydev8@gmail.com, gost.dev@samsung.com,
- damien.lemoal@opensource.wdc.com, jiangbo.365@bytedance.com,
- linux-nvme@lists.infradead.org, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- dm-devel@redhat.com, Luis Chamberlain <mcgrof@kernel.org>, dsterba@suse.com,
- hch@lst.de, linux-btrfs@vger.kernel.org
+Cc: linux-security-module@vger.kernel.org,
+ Douglas Anderson <dianders@chromium.org>, Mike Snitzer <snitzer@kernel.org>,
+ linux-kernel@vger.kernel.org, James Morris <jmorris@namei.org>,
+ linux-raid@vger.kernel.org, Song Liu <song@kernel.org>, dm-devel@redhat.com,
+ Alasdair Kergon <agk@redhat.com>, "Serge E . Hallyn" <serge@hallyn.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -115,43 +114,29 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, May 16, 2022 at 06:54:08PM +0200, Pankaj Raghav wrote:
-> Instead of calculating the superblock location every time, cache the
-> superblock zone location in btrfs_zoned_device_info struct and use it to
-> locate the zone index.
+On Mon, May 16, 2022 at 11:51:54AM -0700, Matthias Kaehlcke wrote:
+> 'targets' are different types of DM mappings like 'linear' or 'verity'. A
+> device mapper table contains has one or more targets that define the mapping
+> of the blocks of the mapped device.
 > 
-> The functions such as btrfs_sb_log_location_bdev() and
-> btrfs_reset_sb_log_zones() which work directly on block_device shall
-> continue to use the sb_zone_number because btrfs_zoned_device_info
-> struct might not have been initialized at that point.
+> Having spelled that out I realize that the above check is wrong. It would
+> consider a device like this trusted:
 > 
-> This patch will enable non power-of-2 zoned devices to not perform
-> division to lookup superblock and its mirror location.
+> 0 10000000 linear 8:1
+> 10000000 10001000 verity <params>
 > 
-> Reviewed-by: Luis Chamberlain <mcgrof@kernel.org>
-> Signed-off-by: Pankaj Raghav <p.raghav@samsung.com>
-> ---
->  fs/btrfs/zoned.c | 13 +++++++++----
->  fs/btrfs/zoned.h |  1 +
->  2 files changed, 10 insertions(+), 4 deletions(-)
+> In the above case only a small part of the DM device would be backed by verity.
 > 
-> diff --git a/fs/btrfs/zoned.c b/fs/btrfs/zoned.c
-> index 06f22c021..e8c7cebb2 100644
-> --- a/fs/btrfs/zoned.c
-> +++ b/fs/btrfs/zoned.c
-> @@ -511,6 +511,11 @@ int btrfs_get_dev_zone_info(struct btrfs_device *device, bool populate_cache)
->  			   max_active_zones - nactive);
->  	}
->  
-> +	/* Cache the sb zone number */
-> +	for (i = 0; i < BTRFS_SUPER_MIRROR_MAX; ++i) {
-> +		zone_info->sb_zone_location[i] =
-> +			sb_zone_number(zone_info->zone_size_shift, i);
-> +	}
+> I think we want a table with a single entry that is a verity target.
 
-I don't think we need to cache the value right now, it's not in any hot
-path and call to bdev_zone_no is relatively cheap (only dereferencing a
-few pointers, all in-memory values).
+Ah-ha! Okay, that's what I was worried about. Yes, a device made up
+of only trusted verity targets should be the only trusted device. (So,
+technically it could be more than 1 verity target, but each would need
+to be trusted. Supporting that arrangement, though, may be overkill --
+I would expect a 1:1 mapping as you suggest.
+
+-- 
+Kees Cook
 
 --
 dm-devel mailing list
