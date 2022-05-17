@@ -1,79 +1,79 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id CD826C43219
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id CB200C43217
 	for <dm-devel@archiver.kernel.org>; Tue, 17 May 2022 23:35:15 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-219-7L2SIy7jN4yT3zmZ8T0Euw-1; Tue, 17 May 2022 19:35:11 -0400
-X-MC-Unique: 7L2SIy7jN4yT3zmZ8T0Euw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-662-M-uYo7z9Ny-6RCxym1UGsw-1; Tue, 17 May 2022 19:35:11 -0400
+X-MC-Unique: M-uYo7z9Ny-6RCxym1UGsw-1
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com [10.11.54.8])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CF73B804181;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E08DA80B71A;
 	Tue, 17 May 2022 23:35:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 2FF712026D07;
-	Tue, 17 May 2022 23:35:08 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CE04BC15D7D;
+	Tue, 17 May 2022 23:35:09 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BBCB9193F6D5;
-	Tue, 17 May 2022 23:35:07 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id B5EB219259D2;
+	Tue, 17 May 2022 23:35:09 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
  [10.11.54.9])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id ABD731949759
- for <dm-devel@listman.corp.redhat.com>; Tue, 17 May 2022 23:35:05 +0000 (UTC)
+ ESMTP id 889AF1949759
+ for <dm-devel@listman.corp.redhat.com>; Tue, 17 May 2022 23:35:06 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 67FBE492CA2; Tue, 17 May 2022 23:35:05 +0000 (UTC)
+ id 714B1492CA3; Tue, 17 May 2022 23:35:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 63BDE492C3B
- for <dm-devel@redhat.com>; Tue, 17 May 2022 23:35:05 +0000 (UTC)
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 6CD25492CA2
+ for <dm-devel@redhat.com>; Tue, 17 May 2022 23:35:06 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4C1862999B3E
- for <dm-devel@redhat.com>; Tue, 17 May 2022 23:35:05 +0000 (UTC)
-Received: from mail-pl1-f178.google.com (mail-pl1-f178.google.com
- [209.85.214.178]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5202485A5A8
+ for <dm-devel@redhat.com>; Tue, 17 May 2022 23:35:06 +0000 (UTC)
+Received: from mail-pf1-f179.google.com (mail-pf1-f179.google.com
+ [209.85.210.179]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-186-zobZ7iqQO0Ks8TOD2lljQA-1; Tue, 17 May 2022 19:35:03 -0400
-X-MC-Unique: zobZ7iqQO0Ks8TOD2lljQA-1
-Received: by mail-pl1-f178.google.com with SMTP id i8so184765plr.13
- for <dm-devel@redhat.com>; Tue, 17 May 2022 16:35:02 -0700 (PDT)
+ us-mta-646-6kbPezGfO_2vCZWhNdMPJA-1; Tue, 17 May 2022 19:35:04 -0400
+X-MC-Unique: 6kbPezGfO_2vCZWhNdMPJA-1
+Received: by mail-pf1-f179.google.com with SMTP id y199so508789pfb.9
+ for <dm-devel@redhat.com>; Tue, 17 May 2022 16:35:04 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=1e100.net; s=20210112;
  h=x-gm-message-state:from:to:cc:subject:date:message-id:in-reply-to
  :references:mime-version:content-transfer-encoding;
- bh=70QJz56WdWWmTL0B6emMjXbopnc6hlLXxIz6KUt2rIk=;
- b=dgrp1H++wQjTFWNTFAlgWgyi611byfL8Gj5ak6TG811Tm5CcSj5kfyR+t1VVChE6yw
- FRx6fY+jCEii+D8J9jmQfXIKGWEh9BHP2iRPDLd+4I5wTqXyk7ZejY9csdD9s1j6ELpw
- 4nzw9lAreoywfbXBv+LUDMVAeSIrPmDn0b6daxQx4N25S046DnQQKLAAJGLAqccf7ULW
- 91zmkcVlD83tSp3b493b1K4KIyptAIXg9qocePn4aYWLSR6hebnsUP0hkIZsRXMA6qfy
- fIuNhu/xn6KqPxeSocTpz2Qu+c56M+9rsmEh/guS6NV5kxRrp9luozkFwKoOVJvnIwvj
- /U2A==
-X-Gm-Message-State: AOAM533/aCv5J0JSldMQm6VHuQGnxyW+x64FPyv4PV+csmrWdcUHTiDZ
- j6ru4Fr4/z/ZKTNXuKPyGIgM2zx52HPahg==
-X-Google-Smtp-Source: ABdhPJz220+nzi3d4a1gLQVv2K14GMGqs/RIb4+jwX6pC6/HC0zH/+CzmRerWtH5qYEVhjVdlmJsEA==
-X-Received: by 2002:a17:90b:4c10:b0:1dc:8289:7266 with SMTP id
- na16-20020a17090b4c1000b001dc82897266mr39216091pjb.190.1652830501982; 
- Tue, 17 May 2022 16:35:01 -0700 (PDT)
+ bh=GNlOjZL47Vz4isvM0//7r28xwox/zDps46iBoN3MInI=;
+ b=qwUIEYPkuZV6B4Tyx3bs48xutK9e9JLpTewfIAzuAigAoOwBtEdB8rspdaCiTj3Zk+
+ ZGzWSi/ZXNYSd6g5ivX77b5jDD1FD9AoEZY+qI/AoSUfKOBl0H7d/l7pOxmxZFCRSRh1
+ M5UmQgKWqy8h59TReCtxc3lnsUD04DVBUnQDPc0hd2r/cvWFyiWqhrsykRH0rlpcVHX/
+ iHcsfztnwCHG5MMuCoDGt8PMGWYBd4NapzkUkyEa3/xyWl9TdJ23ePz/lx4xvcylqi5Z
+ uib4ktE9yR/CCKbRldN6WX6C3DIB6+T2q+yILLxS9xYtUBKObhMUmv4h2RPnMRCcNend
+ lUeQ==
+X-Gm-Message-State: AOAM532dIzz96mnrl+eWsODdTjOmeaXH4UhH4KPDfsg2Y2GarjHn2DBQ
+ Rkst7uD6DQpu8o7Ers1hnNFwLw==
+X-Google-Smtp-Source: ABdhPJwCoEpgwLkG3PBp3ELF3xXrzA2gpr5Pp6MElD+Fuxs/NTLQ5TDQ+eoDtGIE1K8WrB1xjIf98A==
+X-Received: by 2002:a65:6c12:0:b0:3db:8148:308b with SMTP id
+ y18-20020a656c12000000b003db8148308bmr21771531pgu.103.1652830503409; 
+ Tue, 17 May 2022 16:35:03 -0700 (PDT)
 Received: from localhost ([2620:15c:11a:202:a14:3166:4b67:b688])
  by smtp.gmail.com with UTF8SMTPSA id
- o3-20020a62cd03000000b0050e006279bfsm277942pfg.137.2022.05.17.16.35.01
+ a4-20020aa794a4000000b0050dc76281a7sm281255pfl.129.2022.05.17.16.35.02
  (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
- Tue, 17 May 2022 16:35:01 -0700 (PDT)
+ Tue, 17 May 2022 16:35:03 -0700 (PDT)
 From: Matthias Kaehlcke <mka@chromium.org>
 To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
  Kees Cook <keescook@chromium.org>, James Morris <jmorris@namei.org>,
  "Serge E . Hallyn" <serge@hallyn.com>
-Date: Tue, 17 May 2022 16:34:55 -0700
-Message-Id: <20220517163437.v4.1.I3e928575a23481121e73286874c4c2bdb403355d@changeid>
+Date: Tue, 17 May 2022 16:34:56 -0700
+Message-Id: <20220517163437.v4.2.I01c67af41d2f6525c6d023101671d7339a9bc8b5@changeid>
 In-Reply-To: <20220517233457.1123309-1-mka@chromium.org>
 References: <20220517233457.1123309-1-mka@chromium.org>
 MIME-Version: 1.0
@@ -85,7 +85,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
-Subject: [dm-devel] [PATCH v4 1/3] dm: Add verity helpers for LoadPin
+Subject: [dm-devel] [PATCH v4 2/3] LoadPin: Enable loading from trusted
+ dm-verity devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -103,7 +104,7 @@ Cc: dm-devel@redhat.com, Douglas Anderson <dianders@chromium.org>,
  Matthias Kaehlcke <mka@chromium.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -111,243 +112,346 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-LoadPin limits loading of kernel modules, firmware and certain
-other files to a 'pinned' file system (typically a read-only
-rootfs). To provide more flexibility LoadPin is being extended
-to also allow loading these files from trusted dm-verity
-devices. For that purpose LoadPin can be provided with a list
-of verity root digests that it should consider as trusted.
+Extend LoadPin to allow loading of kernel files from trusted dm-verity [1]
+devices.
 
-Add a bunch of helpers to allow LoadPin to check whether a DM
-device is a trusted verity device. The new functions broadly
-fall in two categories: those that need access to verity
-internals (like the root digest), and the 'glue' between
-LoadPin and verity. The new file dm-verity-loadpin.c contains
-the glue functions.
+This change adds the concept of trusted verity devices to LoadPin. LoadPin
+maintains a list of root digests of verity devices it considers trusted.
+Userspace can populate this list through an ioctl on the new LoadPin
+securityfs entry 'dm-verity'. The ioctl receives a file descriptor of
+a file with verity digests as parameter. Verity reads the digests from
+this file after confirming that the file is located on the pinned root.
+The digest file must contain one digest per line. The list of trusted
+digests can only be set up once, which is typically done at boot time.
+
+When a kernel file is read LoadPin first checks (as usual) whether the file
+is located on the pinned root, if so the file can be loaded. Otherwise, if
+the verity extension is enabled, LoadPin determines whether the file is
+located on a verity backed device and whether the root digest of that
+device is in the list of trusted digests. The file can be loaded if the
+verity device has a trusted root digest.
+
+Background:
+
+As of now LoadPin restricts loading of kernel files to a single pinned
+filesystem, typically the rootfs. This works for many systems, however it
+can result in a bloated rootfs (and OTA updates) on platforms where
+multiple boards with different hardware configurations use the same rootfs
+image. Especially when 'optional' files are large it may be preferable to
+download/install them only when they are actually needed by a given board.
+Chrome OS uses Downloadable Content (DLC) [2] to deploy certain 'packages'
+at runtime. As an example a DLC package could contain firmware for a
+peripheral that is not present on all boards. DLCs use dm-verity to verify
+the integrity of the DLC content.
+
+[1] https://www.kernel.org/doc/html/latest/admin-guide/device-mapper/verity.html
+[2] https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/dlcservice/docs/developer.md
 
 Signed-off-by: Matthias Kaehlcke <mka@chromium.org>
 ---
 
 Changes in v4:
-- a trusted verity device must have a single target of
-  type 'verity'
-- share list of verity digests with loadpin, deleted
-  dm_verity_loadpin_set_trusted_root_digests()
-- dm_verity_loadpin_is_md_trusted() is now dm_verity_loadpin_is_sb_trusted(),
-  it receives a super_block instead of mapped_device. Updated kernel doc.
-- changed struct trusted_root_digest to have an unsized
-  u8 array instead of a pointer
-- extend 'dm-verity-objs' instead of 'dm-mod-objs'
+- use newline as separator in digest file instead of comma
+- after reading an invalid/corrupt digest file deny further attempts
+  of setting up the list of digests
+- added comment to read_trusted_verity_root_digests() explaining that
+  an invalid digests entry invalidates the entire list of digests
+- refactored read_trusted_verity_root_digests() to avoid cast of 'data' at
+  assignment
+- add the format of the digest file and the path of the securityfs
+  attribute to the ioctl comment.
+- adapted to struct trusted_root_digest with unsized array 'data'
+- call dm_verity_loadpin_is_sb_trusted() instead of
+  loadpin_is_fs_trusted()
+- deleted loadpin_is_fs_trusted()
+- use '%ld' in format string for PTR_ERR()
+- added note about digest file format to the commit message
 
 Changes in v3:
-- none
+- added securityfs for LoadPin (currently only populated when
+  CONFIG_SECURITY_LOADPIN_VERITY=y)
+- added uapi include for LoadPin
+- changed the interface for setting up the list of trusted
+  digests from sysctl to ioctl on securityfs entry
+- added stub for loadpin_is_fs_trusted() to be used
+  CONFIG_SECURITY_LOADPIN_VERITY is not select
+- depend on CONFIG_SECURITYFS instead of CONFIG_SYSTCL
+- updated Kconfig help
+- minor changes in read_trusted_verity_root_digests()
+- updated commit message
 
 Changes in v2:
-- none
+- userspace now passes the path of the file with the verity digests
+  via systcl, instead of the digests themselves
+- renamed sysctl file to 'trusted_verity_root_digests_path'
+- have CONFIG_SECURITY_LOADPIN_VERITY depend on CONFIG_SYSCTL
+- updated Kconfig doc
+- updated commit message
 
- drivers/md/Makefile               |  6 +++
- drivers/md/dm-verity-loadpin.c    | 74 +++++++++++++++++++++++++++++++
- drivers/md/dm-verity-target.c     | 33 ++++++++++++++
- drivers/md/dm-verity.h            |  4 ++
- include/linux/dm-verity-loadpin.h | 27 +++++++++++
- 5 files changed, 144 insertions(+)
- create mode 100644 drivers/md/dm-verity-loadpin.c
- create mode 100644 include/linux/dm-verity-loadpin.h
+ include/uapi/linux/loadpin.h |  22 +++++
+ security/loadpin/Kconfig     |  16 ++++
+ security/loadpin/loadpin.c   | 167 ++++++++++++++++++++++++++++++++++-
+ 3 files changed, 204 insertions(+), 1 deletion(-)
+ create mode 100644 include/uapi/linux/loadpin.h
 
-diff --git a/drivers/md/Makefile b/drivers/md/Makefile
-index 0454b0885b01..71771901c823 100644
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
-@@ -108,6 +108,12 @@ ifeq ($(CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG),y)
- dm-verity-objs			+= dm-verity-verify-sig.o
- endif
- 
-+ifeq ($(CONFIG_DM_VERITY),y)
-+ifeq ($(CONFIG_SECURITY_LOADPIN),y)
-+dm-verity-objs			+= dm-verity-loadpin.o
-+endif
-+endif
-+
- ifeq ($(CONFIG_DM_AUDIT),y)
- dm-mod-objs			+= dm-audit.o
- endif
-diff --git a/drivers/md/dm-verity-loadpin.c b/drivers/md/dm-verity-loadpin.c
+diff --git a/include/uapi/linux/loadpin.h b/include/uapi/linux/loadpin.h
 new file mode 100644
-index 000000000000..3226fbe4a1fe
+index 000000000000..daa6dbb8bb02
 --- /dev/null
-+++ b/drivers/md/dm-verity-loadpin.c
-@@ -0,0 +1,74 @@
-+// SPDX-License-Identifier: GPL-2.0-only
++++ b/include/uapi/linux/loadpin.h
+@@ -0,0 +1,22 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++/*
++ * Copyright (c) 2022, Google LLC
++ */
 +
-+#include <linux/list.h>
-+#include <linux/kernel.h>
++#ifndef _UAPI_LINUX_LOOP_LOADPIN_H
++#define _UAPI_LINUX_LOOP_LOADPIN_H
++
++#define LOADPIN_IOC_MAGIC	'L'
++
++/**
++ * LOADPIN_IOC_SET_TRUSTED_VERITY_DIGESTS - Set up the root digests of verity devices
++ *                                          that loadpin should trust.
++ *
++ * Takes a file descriptor from which to read the root digests of trusted verity devices. The file
++ * is expected to contain a list of digests in ASCII format, with one line per digest. The ioctl
++ * must be issued on the securityfs attribute 'loadpin/dm-verity' (which can be typically found
++ * under /sys/kernel/security/loadpin/dm-verity).
++ */
++#define LOADPIN_IOC_SET_TRUSTED_VERITY_DIGESTS _IOW(LOADPIN_IOC_MAGIC, 0x00, unsigned int)
++
++#endif /* _UAPI_LINUX_LOOP_LOADPIN_H */
+diff --git a/security/loadpin/Kconfig b/security/loadpin/Kconfig
+index 91be65dec2ab..e319ca8e3f3d 100644
+--- a/security/loadpin/Kconfig
++++ b/security/loadpin/Kconfig
+@@ -18,3 +18,19 @@ config SECURITY_LOADPIN_ENFORCE
+ 	  If selected, LoadPin will enforce pinning at boot. If not
+ 	  selected, it can be enabled at boot with the kernel parameter
+ 	  "loadpin.enforce=1".
++
++config SECURITY_LOADPIN_VERITY
++	bool "Allow reading files from certain other filesystems that use dm-verity"
++	depends on DM_VERITY=y && SECURITYFS
++	help
++	  If selected LoadPin can allow reading files from filesystems
++	  that use dm-verity. LoadPin maintains a list of verity root
++	  digests it considers trusted. A verity backed filesystem is
++	  considered trusted if its root digest is found in the list
++	  of trusted digests.
++
++	  The list of trusted verity can be populated through an ioctl
++	  on the LoadPin securityfs entry 'dm-verity'. The ioctl
++	  expects a file descriptor of a file with verity digests as
++	  parameter. The file must be located on the pinned root and
++	  contain a comma separated list of digests.
+diff --git a/security/loadpin/loadpin.c b/security/loadpin/loadpin.c
+index b12f7d986b1e..67be496befaa 100644
+--- a/security/loadpin/loadpin.c
++++ b/security/loadpin/loadpin.c
+@@ -18,6 +18,8 @@
+ #include <linux/path.h>
+ #include <linux/sched.h>	/* current */
+ #include <linux/string_helpers.h>
 +#include <linux/dm-verity-loadpin.h>
++#include <uapi/linux/loadpin.h>
+ 
+ static void report_load(const char *origin, struct file *file, char *operation)
+ {
+@@ -43,6 +45,9 @@ static char *exclude_read_files[READING_MAX_ID];
+ static int ignore_read_file_id[READING_MAX_ID] __ro_after_init;
+ static struct super_block *pinned_root;
+ static DEFINE_SPINLOCK(pinned_root_spinlock);
++#ifdef CONFIG_SECURITY_LOADPIN_VERITY
++static bool deny_reading_verity_digests;
++#endif
+ 
+ #ifdef CONFIG_SYSCTL
+ 
+@@ -174,7 +179,8 @@ static int loadpin_read_file(struct file *file, enum kernel_read_file_id id,
+ 		spin_unlock(&pinned_root_spinlock);
+ 	}
+ 
+-	if (IS_ERR_OR_NULL(pinned_root) || load_root != pinned_root) {
++	if (IS_ERR_OR_NULL(pinned_root) ||
++	    ((load_root != pinned_root) && !dm_verity_loadpin_is_sb_trusted(load_root))) {
+ 		if (unlikely(!enforce)) {
+ 			report_load(origin, file, "pinning-ignored");
+ 			return 0;
+@@ -240,6 +246,7 @@ static int __init loadpin_init(void)
+ 		enforce ? "" : "not ");
+ 	parse_exclude();
+ 	security_add_hooks(loadpin_hooks, ARRAY_SIZE(loadpin_hooks), "loadpin");
 +
-+#include "dm.h"
-+#include "dm-verity.h"
+ 	return 0;
+ }
+ 
+@@ -248,6 +255,164 @@ DEFINE_LSM(loadpin) = {
+ 	.init = loadpin_init,
+ };
+ 
++#ifdef CONFIG_SECURITY_LOADPIN_VERITY
 +
-+#define DM_MSG_PREFIX	"verity-loadpin"
++enum loadpin_securityfs_interface_index {
++	LOADPIN_DM_VERITY,
++};
 +
-+LIST_HEAD(loadpin_trusted_verity_root_digests);
-+
-+static bool is_trusted_verity_target(struct dm_target *ti)
++static int read_trusted_verity_root_digests(unsigned int fd)
 +{
-+	u8 *root_digest;
-+	unsigned int digest_size;
-+	struct trusted_root_digest *trd;
-+	bool trusted = false;
++	struct fd f;
++	void *data;
++	int rc;
++	char *p, *d;
 +
-+	if (!dm_is_verity_target(ti))
-+		return false;
++	if (deny_reading_verity_digests)
++		return -EPERM;
 +
-+	if (dm_verity_get_root_digest(ti, &root_digest, &digest_size))
-+		return false;
++	/* The list of trusted root digests can only be set up once */
++	if (!list_empty(&loadpin_trusted_verity_root_digests))
++		return -EPERM;
 +
-+	list_for_each_entry(trd, &loadpin_trusted_verity_root_digests, node) {
-+		if ((trd->len == digest_size) &&
-+		    !memcmp(trd->data, root_digest, digest_size)) {
-+			trusted = true;
-+			break;
++	f = fdget(fd);
++	if (!f.file)
++		return -EINVAL;
++
++	data = kzalloc(SZ_4K, GFP_KERNEL);
++	if (!data) {
++		rc = -ENOMEM;
++		goto err;
++	}
++
++	rc = kernel_read_file(f.file, 0, (void **)&data, SZ_4K - 1, NULL, READING_POLICY);
++	if (rc < 0)
++		goto err;
++
++	p = data;
++	p[rc] = '\0';
++	p = strim(p);
++
++	p = strim(data);
++	while ((d = strsep(&p, "\n")) != NULL) {
++		int len = strlen(d);
++		struct trusted_root_digest *trd;
++
++		if (len % 2) {
++			rc = -EPROTO;
++			goto err;
++		}
++
++		len /= 2;
++
++		trd = kzalloc(struct_size(trd, data, len), GFP_KERNEL);
++		if (!trd) {
++			rc = -ENOMEM;
++			goto err;
++		}
++
++		if (hex2bin(trd->data, d, len)) {
++			kfree(trd);
++			rc = -EPROTO;
++			goto err;
++		}
++
++		trd->len = len;
++
++		list_add_tail(&trd->node, &loadpin_trusted_verity_root_digests);
++	}
++
++	if (list_empty(&loadpin_trusted_verity_root_digests)) {
++		rc = -EPROTO;
++		goto err;
++	}
++
++	kfree(data);
++	fdput(f);
++
++	return 0;
++
++err:
++	kfree(data);
++
++	/* any failure in loading/parsing invalidates the entire list */
++	{
++		struct trusted_root_digest *trd, *tmp;
++
++		list_for_each_entry_safe(trd, tmp, &loadpin_trusted_verity_root_digests, node) {
++			list_del(&trd->node);
++			kfree(trd);
 +		}
 +	}
 +
-+	kfree(root_digest);
++	/* disallow further attempts after reading a corrupt/invalid file */
++	deny_reading_verity_digests = true;
 +
-+	return trusted;
++	fdput(f);
++
++	return rc;
 +}
 +
-+/*
-+ * Determines whether the file system of a superblock is located on
-+ * a verity device that is trusted by LoadPin.
-+ */
-+bool dm_verity_loadpin_is_sb_trusted(struct super_block *sb)
++/******************************** securityfs ********************************/
++
++static long dm_verity_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 +{
-+	struct mapped_device *md;
-+	struct dm_table *table;
-+	struct dm_target *ti;
-+	int srcu_idx;
-+	bool trusted = false;
++	void __user *uarg = (void __user *)arg;
++	unsigned int fd;
++	int rc;
 +
-+	if (list_empty(&loadpin_trusted_verity_root_digests))
-+		return false;
++	switch (cmd) {
++	case LOADPIN_IOC_SET_TRUSTED_VERITY_DIGESTS:
++		rc = copy_from_user(&fd, uarg, sizeof(fd));
++		if (rc)
++			return rc;
 +
-+	md = dm_get_md(sb->s_bdev->bd_dev);
-+	if (!md)
-+		return false;
++		return read_trusted_verity_root_digests(fd);
 +
-+	table = dm_get_live_table(md, &srcu_idx);
-+
-+	if (dm_table_get_num_targets(table) != 1)
-+		goto out;
-+
-+	ti = dm_table_get_target(table, 0);
-+
-+	if (is_trusted_verity_target(ti))
-+		trusted = true;
-+
-+out:
-+	dm_put_live_table(md, srcu_idx);
-+	dm_put(md);
-+
-+	return trusted;
-+}
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 80133aae0db3..6f07b849fcb2 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -19,6 +19,7 @@
- #include <linux/module.h>
- #include <linux/reboot.h>
- #include <linux/scatterlist.h>
-+#include <linux/string.h>
- 
- #define DM_MSG_PREFIX			"verity"
- 
-@@ -1310,6 +1311,38 @@ static int verity_ctr(struct dm_target *ti, unsigned argc, char **argv)
- 	return r;
- }
- 
-+/*
-+ * Check whether a DM target is a verity target.
-+ */
-+bool dm_is_verity_target(struct dm_target *ti)
-+{
-+	return ti->type->module == THIS_MODULE;
-+}
-+EXPORT_SYMBOL_GPL(dm_is_verity_target);
-+
-+/*
-+ * Get the root digest of a verity target.
-+ *
-+ * Returns a copy of the root digest, the caller is responsible for
-+ * freeing the memory of the digest.
-+ */
-+int dm_verity_get_root_digest(struct dm_target *ti, u8 **root_digest, unsigned int *digest_size)
-+{
-+	struct dm_verity *v = ti->private;
-+
-+	if (!dm_is_verity_target(ti))
++	default:
 +		return -EINVAL;
++	}
++}
 +
-+	*root_digest = kmemdup(v->root_digest, v->digest_size, GFP_KERNEL);
-+	if (*root_digest == NULL)
-+		return -ENOMEM;
++static const struct file_operations loadpin_dm_verity_ops = {
++	.unlocked_ioctl = dm_verity_ioctl,
++	.compat_ioctl = compat_ptr_ioctl,
++};
 +
-+	*digest_size = v->digest_size;
++/**
++ * init_loadpin_securityfs - create the securityfs directory for LoadPin
++ *
++ * We can not put this method normally under the loadpin_init() code path since
++ * the security subsystem gets initialized before the vfs caches.
++ *
++ * Returns 0 if the securityfs directory creation was successful.
++ */
++static int __init init_loadpin_securityfs(void)
++{
++	struct dentry *loadpin_dir, *dentry;
++
++	loadpin_dir = securityfs_create_dir("loadpin", NULL);
++	if (IS_ERR(loadpin_dir)) {
++		pr_err("LoadPin: could not create securityfs dir: %ld\n",
++		       PTR_ERR(loadpin_dir));
++		return PTR_ERR(loadpin_dir);
++	}
++
++	dentry = securityfs_create_file("dm-verity", 0600, loadpin_dir,
++					(void *)LOADPIN_DM_VERITY, &loadpin_dm_verity_ops);
++	if (IS_ERR(dentry)) {
++		pr_err("LoadPin: could not create securityfs entry 'dm-verity': %ld\n",
++		       PTR_ERR(dentry));
++		return PTR_ERR(dentry);
++	}
 +
 +	return 0;
 +}
-+EXPORT_SYMBOL_GPL(dm_verity_get_root_digest);
 +
- static struct target_type verity_target = {
- 	.name		= "verity",
- 	.version	= {1, 8, 0},
-diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-index 4e769d13473a..c832cc3e3d24 100644
---- a/drivers/md/dm-verity.h
-+++ b/drivers/md/dm-verity.h
-@@ -129,4 +129,8 @@ extern int verity_hash(struct dm_verity *v, struct ahash_request *req,
- extern int verity_hash_for_block(struct dm_verity *v, struct dm_verity_io *io,
- 				 sector_t block, u8 *digest, bool *is_zero);
- 
-+extern bool dm_is_verity_target(struct dm_target *ti);
-+extern int dm_verity_get_root_digest(struct dm_target *ti, u8 **root_digest,
-+				     unsigned int *digest_size);
++fs_initcall(init_loadpin_securityfs);
 +
- #endif /* DM_VERITY_H */
-diff --git a/include/linux/dm-verity-loadpin.h b/include/linux/dm-verity-loadpin.h
-new file mode 100644
-index 000000000000..c2bfd2b9c651
---- /dev/null
-+++ b/include/linux/dm-verity-loadpin.h
-@@ -0,0 +1,27 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
++#endif /* CONFIG_SECURITY_LOADPIN_VERITY */
 +
-+#ifndef __LINUX_DM_VERITY_LOADPIN_H
-+#define __LINUX_DM_VERITY_LOADPIN_H
-+
-+#include <linux/list.h>
-+
-+struct super_block;
-+
-+extern struct list_head loadpin_trusted_verity_root_digests;
-+
-+struct trusted_root_digest {
-+	struct list_head node;
-+	unsigned int len;
-+	u8 data[];
-+};
-+
-+#if IS_ENABLED(CONFIG_SECURITY_LOADPIN) && IS_BUILTIN(CONFIG_DM_VERITY)
-+bool dm_verity_loadpin_is_sb_trusted(struct super_block *sb);
-+#else
-+static inline bool dm_verity_loadpin_is_sb_trusted(struct super_block *sb);
-+{
-+	return false;
-+}
-+#endif
-+
-+#endif /* __LINUX_DM_LOADPIN_H */
+ /* Should not be mutable after boot, so not listed in sysfs (perm == 0). */
+ module_param(enforce, int, 0);
+ MODULE_PARM_DESC(enforce, "Enforce module/firmware pinning");
 -- 
 2.36.0.550.gb090851708-goog
 
