@@ -1,83 +1,70 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 3E791C433FE
-	for <dm-devel@archiver.kernel.org>; Tue, 17 May 2022 03:44:53 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id CC53FC433EF
+	for <dm-devel@archiver.kernel.org>; Tue, 17 May 2022 04:13:21 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-546-WYJdXhnNNJS6BtMYcBFjtA-1; Mon, 16 May 2022 23:44:50 -0400
-X-MC-Unique: WYJdXhnNNJS6BtMYcBFjtA-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+ us-mta-453-jf65oFC1NDKGCvU3yTZX0A-1; Tue, 17 May 2022 00:13:17 -0400
+X-MC-Unique: jf65oFC1NDKGCvU3yTZX0A-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id F0C0086B8B2;
-	Tue, 17 May 2022 03:44:48 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5E18E3C138A0;
+	Tue, 17 May 2022 04:13:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9C96A40CF8F0;
-	Tue, 17 May 2022 03:44:48 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 0B3891121314;
+	Tue, 17 May 2022 04:13:15 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4A51A1947060;
-	Tue, 17 May 2022 03:44:48 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C9B0C1947060;
+	Tue, 17 May 2022 04:13:14 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 45AC3194705F
- for <dm-devel@listman.corp.redhat.com>; Tue, 17 May 2022 03:44:47 +0000 (UTC)
+ ESMTP id 15F42194705F
+ for <dm-devel@listman.corp.redhat.com>; Tue, 17 May 2022 04:13:12 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 2E48F2026D64; Tue, 17 May 2022 03:44:47 +0000 (UTC)
+ id C7BEA401E87; Tue, 17 May 2022 04:13:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 2A4E72026D6A
- for <dm-devel@redhat.com>; Tue, 17 May 2022 03:44:41 +0000 (UTC)
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id C3C4A492C14
+ for <dm-devel@redhat.com>; Tue, 17 May 2022 04:13:12 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
  [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B72673C0D18D
- for <dm-devel@redhat.com>; Tue, 17 May 2022 03:44:41 +0000 (UTC)
-Received: from mail-pj1-f45.google.com (mail-pj1-f45.google.com
- [209.85.216.45]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-464-eVwZla8JMOKtVRYn7B07_Q-1; Mon, 16 May 2022 23:44:40 -0400
-X-MC-Unique: eVwZla8JMOKtVRYn7B07_Q-1
-Received: by mail-pj1-f45.google.com with SMTP id gg20so6183764pjb.1
- for <dm-devel@redhat.com>; Mon, 16 May 2022 20:44:39 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=1e100.net; s=20210112;
- h=x-gm-message-state:date:from:to:cc:subject:message-id:references
- :mime-version:content-disposition:in-reply-to;
- bh=HiOpix41GB5BHq08iCoL+4J7NeWeXx9NRhdLIRrYo6M=;
- b=AdNpP1i7wZ6PJML7/LGjcAlPKzAswQo0h7D6oapBTUze1cFWIcwzoqRSR3JNUA2QfN
- IuGHxaO9b1c1/ZurNRkXpeIkfLl7gX8489zM1xFI6HdkdC5oVVzslS85mQaDihY/PVh5
- 9IYnYHKhyAvQheE74Vz8Jb49DuH0yBOGWl/W3pgh5EMlu8tH5F+KhecxyY6fhk4YZSHQ
- bYdkvC/mXU+lBqcr9cPFivwIdYVv8qX+lwVz7GOvoO5zQg7FZxMEI79i13uEXGaF9/PJ
- Jgv1iqu4/oD5OU/Pu5IitsQNCWzq2HJq3F9unnGO6PGK8a/e5TEK3o/W/Y1WtWRT+7bD
- Y3pQ==
-X-Gm-Message-State: AOAM530fkzNmtu8bQMWcyjG6TxeWn2fk00CrckA4oag9FGqEegnl9yg1
- G7Yef5lM1ulDbaHpY7QaGqqt6w==
-X-Google-Smtp-Source: ABdhPJw2bzLqlq4aNLrLxAfJaNPzwLT5uJMUgBJTkm3oE4Bw5SRZ+uHA67xhyevEZEYXntRBkoyFnw==
-X-Received: by 2002:a17:90b:33c6:b0:1dc:ba92:41bb with SMTP id
- lk6-20020a17090b33c600b001dcba9241bbmr22600450pjb.26.1652759078847; 
- Mon, 16 May 2022 20:44:38 -0700 (PDT)
-Received: from www.outflux.net (smtp.outflux.net. [198.145.64.163])
- by smtp.gmail.com with ESMTPSA id
- b8-20020a17090a990800b001df6216e89dsm458974pjp.28.2022.05.16.20.44.38
- (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
- Mon, 16 May 2022 20:44:38 -0700 (PDT)
-Date: Mon, 16 May 2022 20:44:37 -0700
-From: Kees Cook <keescook@chromium.org>
-To: Matthias Kaehlcke <mka@chromium.org>
-Message-ID: <202205162038.B2D1BBAB3@keescook>
-References: <20220504195419.1143099-1-mka@chromium.org>
- <20220504125404.v3.2.I01c67af41d2f6525c6d023101671d7339a9bc8b5@changeid>
- <B7FB2BE6-DF1C-414A-B4C2-0C15FD1CBF75@chromium.org>
- <YoKVSEJyHvFg/V9+@google.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AB75D381078A
+ for <dm-devel@redhat.com>; Tue, 17 May 2022 04:13:12 +0000 (UTC)
+Received: from mga01.intel.com (mga01.intel.com [192.55.52.88]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-356-GIEBq8H2NLOZXc0sX6j9nQ-1; Tue, 17 May 2022 00:13:09 -0400
+X-MC-Unique: GIEBq8H2NLOZXc0sX6j9nQ-1
+X-IronPort-AV: E=McAfee;i="6400,9594,10349"; a="296324055"
+X-IronPort-AV: E=Sophos;i="5.91,231,1647327600"; d="scan'208";a="296324055"
+Received: from orsmga004.jf.intel.com ([10.7.209.38])
+ by fmsmga101.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384;
+ 16 May 2022 21:13:08 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="5.91,231,1647327600"; d="scan'208";a="699868498"
+Received: from lkp-server02.sh.intel.com (HELO 242b25809ac7) ([10.239.97.151])
+ by orsmga004.jf.intel.com with ESMTP; 16 May 2022 21:13:04 -0700
+Received: from kbuild by 242b25809ac7 with local (Exim 4.95)
+ (envelope-from <lkp@intel.com>) id 1nqoZz-0000ap-DK;
+ Tue, 17 May 2022 04:13:03 +0000
+Date: Tue, 17 May 2022 12:12:42 +0800
+From: kernel test robot <lkp@intel.com>
+To: Pankaj Raghav <p.raghav@samsung.com>, axboe@kernel.dk,
+ damien.lemoal@opensource.wdc.com, pankydev8@gmail.com,
+ dsterba@suse.com, hch@lst.de
+Message-ID: <202205171251.o9RZslnw-lkp@intel.com>
+References: <20220516165416.171196-12-p.raghav@samsung.com>
 MIME-Version: 1.0
-In-Reply-To: <YoKVSEJyHvFg/V9+@google.com>
+In-Reply-To: <20220516165416.171196-12-p.raghav@samsung.com>
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -85,9 +72,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
-Subject: Re: [dm-devel] [PATCH v3 2/3] LoadPin: Enable loading from trusted
- dm-verity devices
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+Subject: Re: [dm-devel] [PATCH v4 11/13] null_blk: allow non power of 2
+ zoned devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -99,14 +86,14 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-security-module@vger.kernel.org,
- Douglas Anderson <dianders@chromium.org>, Mike Snitzer <snitzer@kernel.org>,
- linux-kernel@vger.kernel.org, James Morris <jmorris@namei.org>,
- linux-raid@vger.kernel.org, Song Liu <song@kernel.org>, dm-devel@redhat.com,
- Alasdair Kergon <agk@redhat.com>, "Serge E . Hallyn" <serge@hallyn.com>
+Cc: p.raghav@samsung.com, kbuild-all@lists.01.org, gost.dev@samsung.com,
+ jiangbo.365@bytedance.com, linux-nvme@lists.infradead.org,
+ linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Luis Chamberlain <mcgrof@kernel.org>, linux-fsdevel@vger.kernel.org,
+ linux-btrfs@vger.kernel.org
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -115,100 +102,44 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, May 16, 2022 at 11:17:44AM -0700, Matthias Kaehlcke wrote:
-> On Fri, May 13, 2022 at 03:36:26PM -0700, Kees Cook wrote:
-> > 
-> > 
-> > On May 4, 2022 12:54:18 PM PDT, Matthias Kaehlcke <mka@chromium.org> wrote:
-> > >Extend LoadPin to allow loading of kernel files from trusted dm-verity [1]
-> > >devices.
-> > >
-> > >This change adds the concept of trusted verity devices to LoadPin. LoadPin
-> > >maintains a list of root digests of verity devices it considers trusted.
-> > >Userspace can populate this list through an ioctl on the new LoadPin
-> > >securityfs entry 'dm-verity'. The ioctl receives a file descriptor of
-> > >a file with verity digests as parameter. Verity reads the digests from
-> > >this file after confirming that the file is located on the pinned root.
-> > >The list of trusted digests can only be set up once, which is typically
-> > >done at boot time.
-> > >
-> > >When a kernel file is read LoadPin first checks (as usual) whether the file
-> > >is located on the pinned root, if so the file can be loaded. Otherwise, if
-> > >the verity extension is enabled, LoadPin determines whether the file is
-> > >located on a verity backed device and whether the root digest of that
-> > 
-> > I think this should be "... on an already trusted device ..."
-> 
-> It's not entirely clear which part you want me to substitute. 'an already
-> trusted device' makes me wonder whether you are thinking about reading the
-> list of digests, and not the general case of reading a kernel file, which
-> this paragraph intends to describe.
+Hi Pankaj,
 
-Sorry, I think I confused myself while reading what you'd written. I
-think it's fine as is. I think I had skipped around in my mind thinking
-about the trusted verity hashes file coming from the pinned root, but
-you basically already said that. :) Nevermind!
+Thank you for the patch! Yet something to improve:
 
-> > >+static int read_trusted_verity_root_digests(unsigned int fd)
-> > >+{
-> > >+	struct fd f;
-> > >+	void *data;
-> > 
-> > Probably easier if this is u8 *?
-> 
-> Maybe slightly, it would then require a cast when passing it to
-> kernel_read_file()
+[auto build test ERROR on next-20220516]
+[also build test ERROR on v5.18-rc7]
+[cannot apply to axboe-block/for-next kdave/for-next device-mapper-dm/for-next linus/master v5.18-rc7 v5.18-rc6 v5.18-rc5]
+[If your patch is applied to the wrong git tree, kindly drop us a note.
+And when submitting patch, we suggest to use '--base' as documented in
+https://git-scm.com/docs/git-format-patch]
 
-Oh, good point. That is a kinda weird API.
+url:    https://github.com/intel-lab-lkp/linux/commits/Pankaj-Raghav/block-make-blkdev_nr_zones-and-blk_queue_zone_no-generic-for-npo2-zsze/20220517-015435
+base:    3f7bdc402fb06f897ff1f492a2d42e1f7c2efedb
+config: m68k-allyesconfig (https://download.01.org/0day-ci/archive/20220517/202205171251.o9RZslnw-lkp@intel.com/config)
+compiler: m68k-linux-gcc (GCC) 11.3.0
+reproduce (this is a W=1 build):
+        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # https://github.com/intel-lab-lkp/linux/commit/1fc6f61076425c29e51cfa376f8dee4dbf588ed1
+        git remote add linux-review https://github.com/intel-lab-lkp/linux
+        git fetch --no-tags linux-review Pankaj-Raghav/block-make-blkdev_nr_zones-and-blk_queue_zone_no-generic-for-npo2-zsze/20220517-015435
+        git checkout 1fc6f61076425c29e51cfa376f8dee4dbf588ed1
+        # save the config file
+        mkdir build_dir && cp config build_dir/.config
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-11.3.0 make.cross W=1 O=build_dir ARCH=m68k SHELL=/bin/bash
 
-> 
-> > >+	int rc;
-> > >+	char *p, *d;
-> > >+
-> > >+	/* The list of trusted root digests can only be set up once */
-> > >+	if (!list_empty(&trusted_verity_root_digests))
-> > >+		return -EPERM;
-> > >+
-> > >+	f = fdget(fd);
-> > >+	if (!f.file)
-> > >+		return -EINVAL;
-> > >+
-> > >+	data = kzalloc(SZ_4K, GFP_KERNEL);
-> > >+	if (!data) {
-> > >+		rc = -ENOMEM;
-> > >+		goto err;
-> > >+	}
-> > >+
-> > >+	rc = kernel_read_file(f.file, 0, &data, SZ_4K - 1, NULL, READING_POLICY);
-> > >+	if (rc < 0)
-> > >+		goto err;
+If you fix the issue, kindly add following tag as appropriate
+Reported-by: kernel test robot <lkp@intel.com>
 
-So maybe, here, you could do:
+All errors (new ones prefixed by >>):
 
-	p = data;
-	p[rc] '\0';
-	p = strim(p);
-
-etc... (the void * -> char * cast in the assignment should be accepted
-without warning?)
-
-> > >+
-> > >+	((char *)data)[rc] = '\0';
-> > >+
-> > >+	p = strim(data);
-> > >+	while ((d = strsep(&p, ",")) != NULL) {
-> > 
-> > Maybe be flexible and add newline as a separator too?
-> 
-> Sure, I can add that. I'd also be fine with just allowing a newline as
-> separator, which seems a reasonable format for a sysfs file.
-
-Yeah, that was my thinking too. And easier to parse for command line
-tools, etc. Not a requirement at all, but might make testing easier,
-etc.
+   m68k-linux-ld: drivers/block/null_blk/zoned.o: in function `null_init_zoned_dev':
+>> zoned.c:(.text+0x9c6): undefined reference to `__udivdi3'
+   `.exit.text' referenced in section `.data' of sound/soc/codecs/tlv320adc3xxx.o: defined in discarded section `.exit.text' of sound/soc/codecs/tlv320adc3xxx.o
 
 -- 
-Kees Cook
+0-DAY CI Kernel Test Service
+https://01.org/lkp
 
 --
 dm-devel mailing list
