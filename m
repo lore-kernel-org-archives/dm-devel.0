@@ -1,130 +1,128 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 78AEDC433FE
-	for <dm-devel@archiver.kernel.org>; Fri, 20 May 2022 07:02:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 475CDC433F5
+	for <dm-devel@archiver.kernel.org>; Fri, 20 May 2022 07:02:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-359-3wVYwFAqOWGbORGefF4w6Q-1; Fri, 20 May 2022 03:02:08 -0400
-X-MC-Unique: 3wVYwFAqOWGbORGefF4w6Q-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-348-DV3FohhGOKyeWBKWc4NFhg-1; Fri, 20 May 2022 03:02:10 -0400
+X-MC-Unique: DV3FohhGOKyeWBKWc4NFhg-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 25269185A79C;
-	Fri, 20 May 2022 07:02:06 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 285F68117B0;
+	Fri, 20 May 2022 07:02:08 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 0F9297AD5;
-	Fri, 20 May 2022 07:02:06 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CE4DA112131B;
+	Fri, 20 May 2022 07:02:07 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D0ED6194705A;
-	Fri, 20 May 2022 07:02:05 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 50B8D194EB8C;
+	Fri, 20 May 2022 07:02:07 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com
  [10.11.54.3])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 986B71947B8F
- for <dm-devel@listman.corp.redhat.com>; Thu, 19 May 2022 08:00:35 +0000 (UTC)
+ ESMTP id 18FF81947068
+ for <dm-devel@listman.corp.redhat.com>; Wed, 18 May 2022 20:24:48 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 785131121319; Thu, 19 May 2022 08:00:35 +0000 (UTC)
+ id EE8D41121314; Wed, 18 May 2022 20:24:47 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 733F41121314
- for <dm-devel@redhat.com>; Thu, 19 May 2022 08:00:35 +0000 (UTC)
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id E89FB1121315
+ for <dm-devel@redhat.com>; Wed, 18 May 2022 20:24:47 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 540C4801210
- for <dm-devel@redhat.com>; Thu, 19 May 2022 08:00:35 +0000 (UTC)
-Received: from esa1.hgst.iphmx.com (esa1.hgst.iphmx.com [68.232.141.245]) by
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CD165811E75
+ for <dm-devel@redhat.com>; Wed, 18 May 2022 20:24:47 +0000 (UTC)
+Received: from NAM11-BN8-obe.outbound.protection.outlook.com
+ (mail-bn8nam11on2078.outbound.protection.outlook.com [40.107.236.78]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-612-3us442dQPvSbGJ39egdJAw-1; Thu, 19 May 2022 04:00:33 -0400
-X-MC-Unique: 3us442dQPvSbGJ39egdJAw-1
-X-IronPort-AV: E=Sophos;i="5.91,237,1647273600"; d="scan'208";a="312747531"
-Received: from mail-dm6nam10lp2109.outbound.protection.outlook.com (HELO
- NAM10-DM6-obe.outbound.protection.outlook.com) ([104.47.58.109])
- by ob1.hgst.iphmx.com with ESMTP; 19 May 2022 15:59:29 +0800
-Received: from SJ0PR04MB7776.namprd04.prod.outlook.com (2603:10b6:a03:300::11)
- by CY4PR04MB0185.namprd04.prod.outlook.com (2603:10b6:903:39::10)
- with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5273.13; Thu, 19 May
- 2022 07:59:28 +0000
-Received: from SJ0PR04MB7776.namprd04.prod.outlook.com
- ([fe80::65d0:a39a:4bca:3eb5]) by SJ0PR04MB7776.namprd04.prod.outlook.com
- ([fe80::65d0:a39a:4bca:3eb5%6]) with mapi id 15.20.5273.016; Thu, 19 May 2022
- 07:59:28 +0000
-From: Naohiro Aota <Naohiro.Aota@wdc.com>
-To: Pankaj Raghav <p.raghav@samsung.com>
-Thread-Topic: [PATCH v4 08/13] btrfs:zoned: make sb for npo2 zone devices
- align with sb log offsets
-Thread-Index: AQHYaUWuK9pdWulqgUKkXVqwDmJuba0l2iwA
-Date: Thu, 19 May 2022 07:59:27 +0000
-Message-ID: <20220519075926.6h4ka3qbo3vv26ve@naota-xeon>
-References: <20220516165416.171196-1-p.raghav@samsung.com>
- <CGME20220516165429eucas1p272c8b4325a488675f08f2d7016aa6230@eucas1p2.samsung.com>
- <20220516165416.171196-9-p.raghav@samsung.com>
-In-Reply-To: <20220516165416.171196-9-p.raghav@samsung.com>
-Accept-Language: ja-JP, en-US
+ us-mta-592-IRUlQ2pcN0ql5bZ08HJ7bQ-1; Wed, 18 May 2022 16:24:46 -0400
+X-MC-Unique: IRUlQ2pcN0ql5bZ08HJ7bQ-1
+Received: from SN6PR06MB4495.namprd06.prod.outlook.com (2603:10b6:805:92::24)
+ by CO6PR06MB7748.namprd06.prod.outlook.com (2603:10b6:5:354::23) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.5273.14; Wed, 18 May
+ 2022 20:24:44 +0000
+Received: from SN6PR06MB4495.namprd06.prod.outlook.com
+ ([fe80::397c:6fd3:92be:8efe]) by SN6PR06MB4495.namprd06.prod.outlook.com
+ ([fe80::397c:6fd3:92be:8efe%3]) with mapi id 15.20.5273.014; Wed, 18 May 2022
+ 20:24:44 +0000
+From: "Schremmer, Steven" <Steve.Schremmer@netapp.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Thread-Topic: [PATCH 4/9] multipath-tools: add NetApp E-Series NVMe to
+ hardware table
+Thread-Index: AQHYZ+aiCmhVT7meYkS+M9Uf6jWdcq0lGSig
+Date: Wed, 18 May 2022 20:24:44 +0000
+Message-ID: <SN6PR06MB4495FAEC26D7A272C2DEDA498CD19@SN6PR06MB4495.namprd06.prod.outlook.com>
+References: <20220514230148.139675-1-xose.vazquez@gmail.com>
+ <20220514230148.139675-5-xose.vazquez@gmail.com>
+In-Reply-To: <20220514230148.139675-5-xose.vazquez@gmail.com>
+Accept-Language: en-US
 X-MS-Has-Attach: 
 X-MS-TNEF-Correlator: 
+dlp-product: dlpe-windows
+dlp-version: 11.6.500.17
+dlp-reaction: no-action
 x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: 9c1be9c4-5f5a-46ca-3042-08da396d7f96
-x-ms-traffictypediagnostic: CY4PR04MB0185:EE_
-x-microsoft-antispam-prvs: <CY4PR04MB0185D8F46F90B48A3E3ADE168CD09@CY4PR04MB0185.namprd04.prod.outlook.com>
-wdcipoutbound: EOP-TRUE
+x-ms-office365-filtering-correlation-id: 21dc5d59-6c43-460a-8cef-08da390c7212
+x-ms-traffictypediagnostic: CO6PR06MB7748:EE_
+x-microsoft-antispam-prvs: <CO6PR06MB7748701876B8B3001061DAEB8CD19@CO6PR06MB7748.namprd06.prod.outlook.com>
 x-ms-exchange-senderadcheck: 1
 x-ms-exchange-antispam-relay: 0
 x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: jPTtZvGaDzov0qmE/4snG3XCS2e5fV1ofS7DXxoeI6+0AwitSamPDucpBmvPaYHDt6s+qfd0jS4rL0ikasJn/fiTej9eKA3cFglKUSjmybLA4uV6WR6mHerY8cRmUJDLi4LMtnpSzyRL5I8dmdf89A2T3fH0/II4s9Hn0xmnhA6KhJX4Do9S00v59UBw24o8zR+9W7d2IkOJ1+ztNGd1HKpopVJAjbMhyFsHwBnj4NTlPcPH9ZXu7IOW1q8kwK9rqI1fxDzDTV/IY3II9jGL1KQvCD5G0WRtNJoosjhSH+Ms4ozp+6dPBp676hJX9NY7LrRxL3hEo9/FjAgh91OnH4EQZ0PykgQHPJ3wuzzvPtVBXmxDVHMn0j0vBVwNZJGSE2B7Y/I0yZ5FZtciyUnLv7uYJYApwifbl5vVzdXTnYA6UHZSEBsy7Xl4SYmFPXRCEt8FFPcdq+B39x3OHWh5OQUy3KGxBiLsaAYhsQGYoLV9v0XTVEn6kS2FGv/NoYq6YGniCtsjillU6vRKHGzWpO6KvUVLPleDkDJ2pUUh7D4KPJwKj2RnWeObxFpVLXbY7Cf4oqku/0f93Be+nRqccGUMPDGhunFThTrjgFaFaws86JRO/9bO0llDp24T1YbkKLZlx0P/PymOTvJOn+/LvshOaodManM1720lM849sPt7QUTHlLTwEwvYjRi+eOYeS8BFfxy17X9ny9+exMrzhQ==
+x-microsoft-antispam-message-info: cY6L3lslXjQe7VDIX3OEzYCj1j/RtQvXRU8XapbQ42LFZSQvirtjR/kYL941b8yWMGKdboOO8CTr4ndnDksWaUVT9ntw9Dy5g6cO+ETGnp3vlCBjaDQDwzYiebmDQzdpRDguMVcQ6pfJSYxbgJxCVK6aDh2AExlY6TD4rS0UKGpHALWHhz0MbYu9l/bljgMv6/2fYosf4mddDXv0FiIU0haRJMHZGjhi3LJsPDMlXl9EJriljDwp8pNMjh8lhiCeIqjyy31aNoi11pZbgsDdklzXjhwJJU9tFzshbRIiwGe7v5pxrGhorr+8XL6mNngPD+/C93EKqmAVDDjBOGvXUhbSjV6tMxBVKDTZ7BmromSqZU8NgMnKEKDsSUB0gvO6nzcLJy0TSJaejxXOFEpG2tlE9H2eIDw6RJPvfO9mE8oYZyBFl5+3RpaOGtjhj0WtEHsnQgnKDTDh5B/SVLf0Bqu3adFz8KP7BaMhqrC6JTmDTcCPlydfS/XN7F006WRI1wBaYHpS3nu8RQdHgRa78S4R7zV3OGgl+SIwrNDhPTOEiw1HIriyZpFHRKs472r+vyAhTLZoYmqTt4hbfElQiQLp1CiBmIc228C5TASETRe+KnFBYbqUGyhMjh8z0hyOkHEpc0dZb2jTQ9diX2zyUFkIfsqicA6/2GKsNoYZnoIUxIsY4Lt1wvZ5620Gnqx54I4jt3576Wq8euVqRbOBkQ==
 x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:SJ0PR04MB7776.namprd04.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230001)(7916004)(4636009)(366004)(2906002)(6486002)(316002)(8676002)(83380400001)(66556008)(4326008)(66476007)(38100700002)(82960400001)(71200400001)(6506007)(33716001)(91956017)(7416002)(76116006)(66446008)(66946007)(122000001)(508600001)(1076003)(186003)(6916009)(64756008)(26005)(6512007)(5660300002)(86362001)(38070700005)(54906003)(8936002)(9686003);
- DIR:OUT; SFP:1102
+ IPV:NLI; SFV:NSPM; H:SN6PR06MB4495.namprd06.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230001)(4636009)(366004)(6916009)(9686003)(54906003)(26005)(4744005)(86362001)(6506007)(316002)(186003)(52536014)(38100700002)(2906002)(76116006)(8676002)(64756008)(66556008)(66476007)(7696005)(8936002)(33656002)(38070700005)(122000001)(5660300002)(66446008)(4326008)(66946007)(71200400001)(55016003)(508600001);
+ DIR:OUT; SFP:1101
 x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?0XmuPBaHCfJ6a0hZb0AY6Beme9KkZ6YkZSdDbQpu9TtESSupukodetyobN3s?=
- =?us-ascii?Q?L+6zYJ12L7ZEhl6gOnaxQq279nrMK4vJB/6g2VF0GsMv8b7xfceuzSe8ZQyZ?=
- =?us-ascii?Q?TdQ9Fxas6klCiMMRtxg/CvYLaGYc34BWoHsv0a9FI9D/eXGx/UszgWImUPdA?=
- =?us-ascii?Q?zVd/cdXX1kg81fscOrX/qh1gMvhY6od6E22tUcXtXzZ0dKqxosrGDnySFEbU?=
- =?us-ascii?Q?oN4EoePDOgSG+AEi9/kYPMeaNKfPM+MqFcBwBYidYtXuE2aFp+nGfu2VzK8N?=
- =?us-ascii?Q?y6Cvk86TKWpoVmhPecPHNK7F+xqnnUJof6dja2f/1rJ6tydynzM1WbsnjKpO?=
- =?us-ascii?Q?YuQDjBmlQqgYyD+Arfm4/dWjzIIJF22ZIlFtOGsiGzaQn1P5qlwYRAzwyjS3?=
- =?us-ascii?Q?x1YdUCpUOsmDW3t/I97M1CyYqObUxOYhYC0Gi1ELgCR6ukaClPFIpLtkVRCH?=
- =?us-ascii?Q?0GdjADumknm58SjAQZ2nVSsgZbDQGEb8d3G52lebZPAhjEnLygHB3mPAmOa1?=
- =?us-ascii?Q?pW93L7h0rgZl8unQcZnj22Wc5KLM6pzuVzwLzAdBKe4L2gZtoeta9E6GzWF2?=
- =?us-ascii?Q?R5feTZyE7S09YaSZNhytoGbXLcsncL2XlCWS4/Hs5vf+TBMkRpjPJoof1+3t?=
- =?us-ascii?Q?89tOfwHQJ2LX1IPmpqAa3mwfEpphS3/DARC+wDoLdMbM6/VXKtyGKBQ0eAvF?=
- =?us-ascii?Q?Lg1qX+Xt97Hvzu0O9P2z18qnacKQ5e7Lz/HCf1eiJg1afog3guErVPrdkiqr?=
- =?us-ascii?Q?LGkJ25h6REGZ7uLLpe4BvcsjWbdsuSAvMYxoTKzZ6T/2ncjjoYMCTHxmmCmo?=
- =?us-ascii?Q?QuD9kWFFDD2rWYx0zB3j/M+DjdwEAg/CSriWw8L+1pQtfy5Z50Kve1cnWow7?=
- =?us-ascii?Q?D0Mq94NOcWhnUJqFSAqdNfWvulcwYDbUYKNQg0VOIsuyYqN/gXd2GnjwPPZk?=
- =?us-ascii?Q?mnSs82ZeqjGXHpiRADT1uug0SjDBFHIlVzCBhLiT/nPF6AiBC4LumHYSbU7+?=
- =?us-ascii?Q?bAkJ0VoR3wMZ7etEvkaDRPL3wu1cEPLo1ukVEpB2bFIoROHurFaKfacUqsjw?=
- =?us-ascii?Q?T+VbqI71j3ZRkLG/Irl/EoOVcOh88+3xD35XwYo2xTyNQJi5zp+QvWLJSYz2?=
- =?us-ascii?Q?1ql749EVevSKS6Kkfkh5BsZ1j4K+rJo+JgYWuIgI9lXs6AJlAhQ5IricsA5F?=
- =?us-ascii?Q?+0tT8OTTQ7QmXOJ4wfLsbSqhID2w2eIxXiwP+lcan8uV0aDuUqvIiF0DNKuD?=
- =?us-ascii?Q?16Gx2eVq9TJqNZhA8GwjKdvKf4J8mM1RDSq2yJw4jE7xk7NgGiv51FwnMkQG?=
- =?us-ascii?Q?gb3wo7T2mly9b8mRsW+ELccb3gZmZmReJTMBc6Qx75+9yjXItw62Mg46b4jt?=
- =?us-ascii?Q?LmyWAoolrcmh1e2OIzRth59nieUtcp6HBEd6x4bpXayJGf+rznSGiK4DWu6s?=
- =?us-ascii?Q?w2GldoP1fm8E2p1szoeaVbryZ2la4LT/K0bpLnYdhuLBlAUu+iq4aFiR+lCJ?=
- =?us-ascii?Q?QSJvlOzkW4a6IlcKKOB6Z6zQ7fgm+LiJ+FbPk6DPg86yCvLzoSPY8Z3BNL+Z?=
- =?us-ascii?Q?vl/7BxIr8rHPA7u7Vhdub2tQ0vtO5sfAwmuImXFIq8KXlQCFj7iLZFFFT8KQ?=
- =?us-ascii?Q?zhQZmN/sSZ+Ym4e/C5DIZITEBMYnGxp8cY4Au2IhE4pftPnKEb7UtqBwjVhS?=
- =?us-ascii?Q?wzjse+4UOuQY4n2DnIgpkmHSgG6WJzUTbpDa5R5KpCFYRftliaBjTwFgf5w1?=
- =?us-ascii?Q?zZm0P4kndXjiuBjgMjk0h+zy9dhEobw=3D?=
+x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?G5mIpTKDIz7lZ4kEc1m4WgegJhHtZJpMzpdl6NPvVneTW5mQPXUbbmXmLyv8?=
+ =?us-ascii?Q?bGPonJlcrx2SzOAQzpk4pYrb/vtFe45i/KU0sJm32LTigTw3QWFF0wGC63hN?=
+ =?us-ascii?Q?sKy2IPEu/t/w1qsjt6WBPf5ITGYWozy2lzaK1MwBvEsIlTqRym/u/WBsotxP?=
+ =?us-ascii?Q?83o+8ectBW5wpnQjnqMXD8RJMjNb/0jl7jLq+KGYHaNKTxSeKUmlK4Db00y4?=
+ =?us-ascii?Q?EHV+lOUV7vksu4PNmRvuYaTFdfbKxh3fdwhqPBARJz/ynjT5Gq98vVjCrwz6?=
+ =?us-ascii?Q?z0TXEI6YZ95d3LsLLrOFU3QKhXCDgFjcRcl51/WfJUz6WW6UqT0UM3BQF8y1?=
+ =?us-ascii?Q?QNGvB8tOUvuPGnVl4ikP/IEoDAHvTdzgSdhJvLS9ot24e7cMUc0FJwSSfYqB?=
+ =?us-ascii?Q?t/wB5Mzy2KaLEmZEHm/iezdSlfa/yl5ytRYxf5c5WpcqsMvlL9CSZ69kBt0W?=
+ =?us-ascii?Q?xQ1S0lmP3Ti7ayb5gz6jCr77W344kQAYIwELlVYegngOgr/8G5bLpMcwAnlR?=
+ =?us-ascii?Q?N1ewYeposuiY+46x3q7niCjOVAR/+FRDyPJngYaYUQX+kGP98iswU4X8u90k?=
+ =?us-ascii?Q?UwK7nZXAzojdA+mb7ntWhBk5ekgYwkFmkjVKUHpHMK9U18AQBDmy5gHTMFiq?=
+ =?us-ascii?Q?p21j4XEDZ+o2u/rHRAKNrIhJ6EHsTkSDSzaIR7/PpR27VnXdFEe1dU64q/cd?=
+ =?us-ascii?Q?gdXxQc4ZrEhpwdbQXzM2JdvRweoysY5SqjCTt1ty8rbAgBY6CdLcuyzdHoQV?=
+ =?us-ascii?Q?rhwr2y02Nop72rVTYjZzhAkUl+/o1+kSehRclbtqcNqfu5qPPBvhyf7ZMRTe?=
+ =?us-ascii?Q?u4IqIcU/TRAWgc9GK6punfUCXHjVAQEmTeiQz3GvYIP3uhbO56kQEBsU12VT?=
+ =?us-ascii?Q?sd1Cc+vgwjoZxlOKiqyAbTK7HG9vacvsv/Ln3CB1cWtwWqs+jTXMbPqdaX6o?=
+ =?us-ascii?Q?2mLTXfy4ivHW754ARIhWPwWDBvvfooGpSNnOA+MebnwbaB38GrqoQn2MN3K+?=
+ =?us-ascii?Q?H2SbnI/UsSVDO65juQlrIPTWdnZ6yXNdV97IB1ZsKHe1XJw+WzMA1lPStSmP?=
+ =?us-ascii?Q?31OXtnLzj6AHb67E0+lgaSuLw5MKLFCOYovgvFOE8E6sfsUQAH2FaXfygO/J?=
+ =?us-ascii?Q?kFDvs/8z+werUZ51zO3ohkANSX8PSWcJNDhiCkLOVdOl9d2rtzlJV0WwTnnp?=
+ =?us-ascii?Q?AK7z243avO03HYCfmBr4m1zDSg4dFPv3HXH9UCp6aKrQaBws+rOwBlOQbFFw?=
+ =?us-ascii?Q?pFI5NnB+xEA9Wxbz4ivGkRc1x9ejCz39EJpCtIcrfIyw4+/EWhcKuLv65sBB?=
+ =?us-ascii?Q?P88AncTkU9tot4sCJecUo8IvzJUB9IJFwlFYxx7tPnnT3OCKwlX6MvxmFQrA?=
+ =?us-ascii?Q?4FWgsbK/bA+zSns1qBs05bJmz0TFkoRwJPuBuwd/v8iaYmfwxhJbIZPmNg/X?=
+ =?us-ascii?Q?M0mn2hnSHBAe4ysfC0tjefRvoyh+ZAV9JWN75lgv3plXAoymrXOK5gRK6Xt6?=
+ =?us-ascii?Q?fPpGnbKusoXHMI0OXLnYX0QmuSv0nEKPh22Grjuj5lMfQcresRLNewh1NHbR?=
+ =?us-ascii?Q?ImZ3fzJBjs2gWgTN7ZdOz0/tG/DxXTmj6/RoB1aBeZtcPqG3xH3r+SsdkwRJ?=
+ =?us-ascii?Q?AkWsgWf5Shu0xVtlthbZ2P74WNtuHcPbEf+HY0sjycI07WjXEU4iB7vPOLbg?=
+ =?us-ascii?Q?LjljvSep/UPBc/eXe+ZwazsjA1iDqhO2i/+GuneyZLigrQ+VDB3fmIx/SZ8A?=
+ =?us-ascii?Q?rszkmo/LgQ=3D=3D?=
 MIME-Version: 1.0
-X-OriginatorOrg: wdc.com
+X-OriginatorOrg: netapp.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: SJ0PR04MB7776.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 9c1be9c4-5f5a-46ca-3042-08da396d7f96
-X-MS-Exchange-CrossTenant-originalarrivaltime: 19 May 2022 07:59:28.0645 (UTC)
+X-MS-Exchange-CrossTenant-AuthSource: SN6PR06MB4495.namprd06.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 21dc5d59-6c43-460a-8cef-08da390c7212
+X-MS-Exchange-CrossTenant-originalarrivaltime: 18 May 2022 20:24:44.2399 (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
+X-MS-Exchange-CrossTenant-id: 4b0911a0-929b-4715-944b-c03745165b3a
 X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: z2Zog4ru/vb4vmw93OTC8/MzTsV9ZvamhHuiG2Y3PXn/vnIcYCac56mdrjWVvYTZ8FsSeD6zmJwTktbWjq2m8Q==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: CY4PR04MB0185
+X-MS-Exchange-CrossTenant-userprincipalname: Y6ILr14iMTr5gODm7QvZsJibEePrlUQzNSbVW+p9/hIfGQnNDUFVc/3h0ydBlEFQzal++UEnELZQ9480wCCCVg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: CO6PR06MB7748
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -134,8 +132,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 X-Mailman-Approved-At: Fri, 20 May 2022 07:01:49 +0000
-Subject: Re: [dm-devel] [PATCH v4 08/13] btrfs:zoned: make sb for npo2 zone
- devices align with sb log offsets
+Subject: Re: [dm-devel] [PATCH 4/9] multipath-tools: add NetApp E-Series
+ NVMe to hardware table
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -147,172 +145,59 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>,
- "pankydev8@gmail.com" <pankydev8@gmail.com>,
- "gost.dev@samsung.com" <gost.dev@samsung.com>,
- "damien.lemoal@opensource.wdc.com" <damien.lemoal@opensource.wdc.com>,
- "jiangbo.365@bytedance.com" <jiangbo.365@bytedance.com>,
- "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
- "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>,
- "dsterba@suse.com" <dsterba@suse.com>, "hch@lst.de" <hch@lst.de>,
- "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
+Cc: ng-eseries-upstream-maintainers
+ <ng-eseries-upstream-maintainers@netapp.com>, Martin Wilck <mwilck@suse.com>,
+ DM-DEVEL ML <dm-devel@redhat.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-Content-ID: <0F953BA55E83C847B01213B4210A659D@namprd04.prod.outlook.com>
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Mon, May 16, 2022 at 06:54:11PM +0200, Pankaj Raghav wrote:
-> Superblocks for zoned devices are fixed as 2 zones at 0, 512GB and 4TB.
-> These are fixed at these locations so that recovery tools can reliably
-> retrieve the superblocks even if one of the mirror gets corrupted.
-> 
-> power of 2 zone sizes align at these offsets irrespective of their
-> value but non power of 2 zone sizes will not align.
-> 
-> To make sure the first zone at mirror 1 and mirror 2 align, write zero
-> operation is performed to move the write pointer of the first zone to
-> the expected offset. This operation is performed only after a zone reset
-> of the first zone, i.e., when the second zone that contains the sb is FULL.
-> 
-> Signed-off-by: Pankaj Raghav <p.raghav@samsung.com>
+> From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM-DEVEL ML <dm-devel@redhat.com>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 > ---
->  fs/btrfs/zoned.c | 68 ++++++++++++++++++++++++++++++++++++++++++++----
->  1 file changed, 63 insertions(+), 5 deletions(-)
+>  libmultipath/hwtable.c | 9 +++++++++
+>  1 file changed, 9 insertions(+)
 > 
-> diff --git a/fs/btrfs/zoned.c b/fs/btrfs/zoned.c
-> index 3023c871e..805aeaa76 100644
-> --- a/fs/btrfs/zoned.c
-> +++ b/fs/btrfs/zoned.c
-> @@ -760,11 +760,44 @@ int btrfs_check_mountopts_zoned(struct btrfs_fs_info *info)
->  	return 0;
->  }
->  
-> +static int fill_sb_wp_offset(struct block_device *bdev, struct blk_zone *zone,
-> +			     int mirror, u64 *wp_ret)
-> +{
-> +	u64 offset = 0;
-> +	int ret = 0;
-> +
-> +	ASSERT(!is_power_of_two_u64(zone->len));
-> +	ASSERT(zone->wp == zone->start);
-> +	ASSERT(mirror != 0);
-> +
-> +	switch (mirror) {
-> +	case 1:
-> +		div64_u64_rem(BTRFS_SB_LOG_FIRST_OFFSET >> SECTOR_SHIFT,
-> +			      zone->len, &offset);
-> +		break;
-> +	case 2:
-> +		div64_u64_rem(BTRFS_SB_LOG_SECOND_OFFSET >> SECTOR_SHIFT,
-> +			      zone->len, &offset);
-> +		break;
-> +	}
-> +
-> +	ret =  blkdev_issue_zeroout(bdev, zone->start, offset, GFP_NOFS, 0);
-> +	if (ret)
-> +		return ret;
-> +
-> +	zone->wp += offset;
-> +	zone->cond = BLK_ZONE_COND_IMP_OPEN;
-> +	*wp_ret = zone->wp << SECTOR_SHIFT;
-> +
-> +	return 0;
-> +}
-> +
->  static int sb_log_location(struct block_device *bdev, struct blk_zone *zones,
-> -			   int rw, u64 *bytenr_ret)
-> +			   int rw, int mirror, u64 *bytenr_ret)
->  {
->  	u64 wp;
->  	int ret;
-> +	bool zones_empty = false;
->  
->  	if (zones[0].type == BLK_ZONE_TYPE_CONVENTIONAL) {
->  		*bytenr_ret = zones[0].start << SECTOR_SHIFT;
-> @@ -775,13 +808,31 @@ static int sb_log_location(struct block_device *bdev, struct blk_zone *zones,
->  	if (ret != -ENOENT && ret < 0)
->  		return ret;
->  
-> +	if (ret == -ENOENT)
-> +		zones_empty = true;
-> +
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 814e727a..61a5aa16 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -845,6 +845,15 @@ static struct hwentry default_hw[] = {
+>                 .pgpolicy      = MULTIBUS,
+>                 .no_path_retry = NO_PATH_RETRY_QUEUE,
+>         },
+> +       {
+> +               /* E-Series NVMe */
+> +               .vendor        = "NVME",
+> +               .product       = "NetApp E-Series",
+> +               .pgpolicy      = GROUP_BY_PRIO,
+> +               .prio_name     = PRIO_ANA,
+> +               .pgfailback    = -FAILBACK_IMMEDIATE,
+> +               .no_path_retry = 30,
+> +       },
+>         /*
+>          * NEC
+>          */
+> --
+> 2.36.1
 
-I think, we don't need this. We need to issue the zeroout when
-zones[0]->cond == BLK_ZONE_COND_EMPTY && !is_power_of_2(...) after sending
-ZONE_RESET if necessary. No?
+Nak. NetApp E-Series only supports these settings in certain configurations, and we prefer to handle it via our installation documentation.
 
->  	if (rw == WRITE) {
->  		struct blk_zone *reset = NULL;
-> +		bool is_sb_offset_write_req = false;
-> +		u32 reset_zone_nr = -1;
->  
-> -		if (wp == zones[0].start << SECTOR_SHIFT)
-> +		if (wp == zones[0].start << SECTOR_SHIFT) {
->  			reset = &zones[0];
-> -		else if (wp == zones[1].start << SECTOR_SHIFT)
-> +			reset_zone_nr = 0;
-> +		} else if (wp == zones[1].start << SECTOR_SHIFT) {
->  			reset = &zones[1];
-> +			reset_zone_nr = 1;
-> +		}
-> +
-> +		/*
-> +		 * Non po2 zone sizes will not align naturally at
-> +		 * mirror 1 (512GB) and mirror 2 (4TB). The wp of the
-> +		 * 1st zone in those superblock mirrors need to be
-> +		 * moved to align at those offsets.
-> +		 */
-> +		is_sb_offset_write_req =
-> +			(zones_empty || (reset_zone_nr == 0)) && mirror &&
-> +			!is_power_of_2(zones[0].len);
->  
->  		if (reset && reset->cond != BLK_ZONE_COND_EMPTY) {
->  			ASSERT(sb_zone_is_full(reset));
-> @@ -795,6 +846,13 @@ static int sb_log_location(struct block_device *bdev, struct blk_zone *zones,
->  			reset->cond = BLK_ZONE_COND_EMPTY;
->  			reset->wp = reset->start;
->  		}
-> +
-> +		if (is_sb_offset_write_req) {
-> +			ret = fill_sb_wp_offset(bdev, &zones[0], mirror, &wp);
-> +			if (ret)
-> +				return ret;
-> +		}
-> +
->  	} else if (ret != -ENOENT) {
->  		/*
->  		 * For READ, we want the previous one. Move write pointer to
-> @@ -851,7 +909,7 @@ int btrfs_sb_log_location_bdev(struct block_device *bdev, int mirror, int rw,
->  	if (ret != BTRFS_NR_SB_LOG_ZONES)
->  		return -EIO;
->  
-> -	return sb_log_location(bdev, zones, rw, bytenr_ret);
-> +	return sb_log_location(bdev, zones, rw, mirror, bytenr_ret);
->  }
->  
->  int btrfs_sb_log_location(struct btrfs_device *device, int mirror, int rw,
-> @@ -877,7 +935,7 @@ int btrfs_sb_log_location(struct btrfs_device *device, int mirror, int rw,
->  
->  	return sb_log_location(device->bdev,
->  			       &zinfo->sb_zones[BTRFS_NR_SB_LOG_ZONES * mirror],
-> -			       rw, bytenr_ret);
-> +			       rw, mirror, bytenr_ret);
->  }
->  
->  static inline bool is_sb_log_zone(struct btrfs_zoned_device_info *zinfo,
-> -- 
-> 2.25.1
-> 
+Thanks,
+Steve
 
 --
 dm-devel mailing list
