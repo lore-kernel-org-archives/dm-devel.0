@@ -4,130 +4,71 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 215A5C433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 19 May 2022 07:57:40 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 15289C433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 19 May 2022 09:30:33 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-312-jRct85HbO9CVP1en5o_OvQ-1; Thu, 19 May 2022 03:57:36 -0400
-X-MC-Unique: jRct85HbO9CVP1en5o_OvQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-616-kOL-BKS7OdWUTN2NARy7dQ-1; Thu, 19 May 2022 05:30:29 -0400
+X-MC-Unique: kOL-BKS7OdWUTN2NARy7dQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id A85F7185A7B2;
-	Thu, 19 May 2022 07:57:34 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 509F87ADD;
-	Thu, 19 May 2022 07:57:34 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4BB8A3C1E32F;
+	Thu, 19 May 2022 09:30:28 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 46ADF1121314;
+	Thu, 19 May 2022 09:30:27 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id F20A01947B90;
-	Thu, 19 May 2022 07:57:33 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id E103A194975B;
+	Thu, 19 May 2022 09:30:26 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 25E941947B8F
- for <dm-devel@listman.corp.redhat.com>; Thu, 19 May 2022 07:57:32 +0000 (UTC)
+ ESMTP id 6C2E61947B91
+ for <dm-devel@listman.corp.redhat.com>; Thu, 19 May 2022 09:30:25 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 03FF4401E9D; Thu, 19 May 2022 07:57:32 +0000 (UTC)
+ id 398452166B2F; Thu, 19 May 2022 09:30:25 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id F2F29492C14
- for <dm-devel@redhat.com>; Thu, 19 May 2022 07:57:31 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C42811C05146
- for <dm-devel@redhat.com>; Thu, 19 May 2022 07:57:31 +0000 (UTC)
-Received: from esa1.hgst.iphmx.com (esa1.hgst.iphmx.com [68.232.141.245]) by
+ (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 34EEA2166B26
+ for <dm-devel@redhat.com>; Thu, 19 May 2022 09:30:25 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 176DC381079B
+ for <dm-devel@redhat.com>; Thu, 19 May 2022 09:30:25 +0000 (UTC)
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-440-2QzWhsUaPouc-OtyokIXHA-1; Thu, 19 May 2022 03:57:29 -0400
-X-MC-Unique: 2QzWhsUaPouc-OtyokIXHA-1
-X-IronPort-AV: E=Sophos;i="5.91,237,1647273600"; d="scan'208";a="312747372"
-Received: from mail-co1nam11lp2174.outbound.protection.outlook.com (HELO
- NAM11-CO1-obe.outbound.protection.outlook.com) ([104.47.56.174])
- by ob1.hgst.iphmx.com with ESMTP; 19 May 2022 15:57:27 +0800
-Received: from PH0PR04MB7416.namprd04.prod.outlook.com (2603:10b6:510:12::17)
- by DM5PR04MB1180.namprd04.prod.outlook.com (2603:10b6:3:a8::8) with
- Microsoft
- SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.5273.13; Thu, 19 May 2022 07:57:26 +0000
-Received: from PH0PR04MB7416.namprd04.prod.outlook.com
- ([fe80::81de:9644:6159:cb38]) by PH0PR04MB7416.namprd04.prod.outlook.com
- ([fe80::81de:9644:6159:cb38%4]) with mapi id 15.20.5273.016; Thu, 19 May 2022
- 07:57:26 +0000
-From: Johannes Thumshirn <Johannes.Thumshirn@wdc.com>
-To: Pankaj Raghav <p.raghav@samsung.com>, "dsterba@suse.cz" <dsterba@suse.cz>
-Thread-Topic: [PATCH v4 08/13] btrfs:zoned: make sb for npo2 zone devices
- align with sb log offsets
-Thread-Index: AQHYaUWvGG/TZMkJWESbmBi0yiTiyA==
-Date: Thu, 19 May 2022 07:57:26 +0000
-Message-ID: <PH0PR04MB7416FF84CE207FEC3ED8912F9BD09@PH0PR04MB7416.namprd04.prod.outlook.com>
-References: <20220516165416.171196-1-p.raghav@samsung.com>
- <CGME20220516165429eucas1p272c8b4325a488675f08f2d7016aa6230@eucas1p2.samsung.com>
- <20220516165416.171196-9-p.raghav@samsung.com>
- <20220517124257.GD18596@twin.jikos.cz>
- <717a2c83-0678-9310-4c75-9ad5da0472f6@samsung.com>
-Accept-Language: en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-ms-publictraffictype: Email
-x-ms-office365-filtering-correlation-id: f0f9f08f-566c-44b4-e64f-08da396d36ff
-x-ms-traffictypediagnostic: DM5PR04MB1180:EE_
-x-microsoft-antispam-prvs: <DM5PR04MB1180EEFE018F11138C5A7FF19BD09@DM5PR04MB1180.namprd04.prod.outlook.com>
-wdcipoutbound: EOP-TRUE
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam: BCL:0
-x-microsoft-antispam-message-info: waNJ/8nPr2Kwm7owvHFmTFigUuubmVSdf5TFO51Lx38kyphLIPpgqVUTMHAIjrA66sNy7lS56x2cnugpfmNVwbGsrWpBUT+xdJWBubI9LHUBmAFRpqfvsVJ61bGW+Vi6cXnGbZf9g8izhf20m5L7/NaKWil7hDTNvtUi18WZf+6+5eNXnwlN4P8zNu5jSNyob3LSRqH4AxqCRVXemuGEGK7rBaeDAwvSUGHXPXFNBMvI7d5zam5oGmEUESouFhT4F0X5BY7zN7sQwKWBVdIOF0uWLuRZb3AbRg+lN3nyqqy36FkVaZQC9KX6MY71J2mxMtDlS9GGdAiQ90CsS+xUrFyN4HxIIuz5zBQ4GcZyMgCDl3ksRR9NoJAOYIQbGFfzlvQqmT75ZIHubnKBUHroU2YGhEU9H01/rA4bDGovhyf1PmeZve4Z3vZiilw+fUOmdt0ssP6443j+ZMgJRMcHM3VlyHZEUPuyGk/yPoENugynyktjbPEZlUCRfb6og7G+JEFzAkMXgeujZmC2zDX6WdPRX1lHHwHhKQbgyTX1kKbwemzfSQjBX+/FK/iPdSKDE8UWoFo+gEJC3xWHetoxrqClv8jWpo1oV9XjvD0NzIE/r3aIH+zgEdAXOfQDNSFnxESovTxNm2H0qB+gzSjKrmJfcr0rMmLHx9l/97g7Q68sia0REWp+jxg/DMB9i+e77Rjvzi+vDrt/5IBU/7h8XQ==
-x-forefront-antispam-report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
- IPV:NLI; SFV:NSPM; H:PH0PR04MB7416.namprd04.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230001)(4636009)(366004)(66556008)(66446008)(4326008)(33656002)(6506007)(8676002)(7416002)(316002)(86362001)(110136005)(2906002)(7696005)(5660300002)(9686003)(122000001)(54906003)(64756008)(186003)(66476007)(66946007)(53546011)(38100700002)(82960400001)(71200400001)(55016003)(508600001)(38070700005)(76116006)(8936002)(91956017)(83380400001)(52536014);
- DIR:OUT; SFP:1102
-x-ms-exchange-antispam-messagedata-chunkcount: 2
-x-ms-exchange-antispam-messagedata-0: =?us-ascii?Q?reqlWfoca+h8Q2F/lukhGj4Ck/Yz8Js3BU7SLX2ytFDdzU+/uzUsiNyGgQPF?=
- =?us-ascii?Q?yx/3GT3fr91n8Dx+EoiS6zB81tgXilI+pQcxekXoEmDjMbgEIVDoU1eV8jVw?=
- =?us-ascii?Q?woFPMMJ2C2/O4GTN2Em6UF/2O2MtlMczj0UyVPb9TYUvWIlxCVPbvNP2R7+s?=
- =?us-ascii?Q?RFrHombrwDOOmIkP6acCpmNajmFLvqBzSPVUnWCKvJuJ2Dr272XPP5f9iSZe?=
- =?us-ascii?Q?ekf0AvOkPBleFoEJ9PacujeX4oB3TBzhfrUdfseQXT3AHmhDnFYRbRwulQs1?=
- =?us-ascii?Q?pIJwn1H56gS7VixIIdAuMxYMRox6hoNhlLi4sWC8j2vowwDFkRVigvyAdJkN?=
- =?us-ascii?Q?Rm6bGJ+duzFhpXWXL45/b7mYPb9K3YLw3gDNl/CIINnuEUyKOVq6YE0XkIja?=
- =?us-ascii?Q?y6sNtiJwir1B8tP9Swm9bybIWPVKk+/4/53HpGo6qnwFLTO7JgSt1iek7J6a?=
- =?us-ascii?Q?kWKFRxCGeqEed18ehjd1efrE5bV7J9nP+uGbbVdPetVJZoIs3bSSiH+IbBJC?=
- =?us-ascii?Q?LCSGZrhnsFckvHEST/zBhMeaZ93slrEDZSU5gMSDUnyeL91lH0AaisNpGXRR?=
- =?us-ascii?Q?ffzaH2yRSz6BsnsQO+xxwBHi+vg5sbjKti4SQps8JhVBymuGUVGTydIjiqfI?=
- =?us-ascii?Q?RPAGP8bGy5w/o4JoigKiNxc6dX8+EXoUgrklQ9sQFMA2uawXImpvE6deq7Tw?=
- =?us-ascii?Q?R3EkrQ7YvPK+ZcZ5L/eMgeTjJG1b+ISKG2UQ6J12oUFko9qPX6JwZ+PuM4g7?=
- =?us-ascii?Q?JURDIqgWrE+2tD0cwRXBdSeCtwqUC1prpplHgvODjwmnlCjjhbR0aXAfVRv1?=
- =?us-ascii?Q?tUeB4/IlR7ucYRip5Cb2oa9x1969x9+tYZHNk6jaRlr0vqNf1s0OOaELbDx2?=
- =?us-ascii?Q?3g3klBiIzboW+vu4SAgZWcXEB+15L/D8kRs/Pkoerz4d4NcQ8wI3XY+ovXfZ?=
- =?us-ascii?Q?Sc5t9z5aJzJOKUKdzA6+l0R1FIvpXQYrMG5h7uJLk11Ic4152s/DZv7B14p4?=
- =?us-ascii?Q?CtOPFWkU3NvQlUIG3OVYrWvWi4X7zg1MvZaBkVxGzn+WBZ3WZrLOh54r1XDr?=
- =?us-ascii?Q?8a7yrzrX01GjZk6TRV9rOPXb6wgttm+vauWnCl6rScIiJZ05pxuArHyP37T2?=
- =?us-ascii?Q?HKzm9404suMITCHPgDucHg3lEDOejZN+rZjSdehPAMxvXi2mrxVYG357zooT?=
- =?us-ascii?Q?qlzpqYJSw+fSEUz+Umtxpr8kmF+G/zeLbErtlwo6xkxJzFAz3B6TnOH//pbQ?=
- =?us-ascii?Q?V4v1lRwywKedAuVs33gEAuvN6inmQWqSlP9wA+P4OQvhKPFNVPz1w1FWY/U8?=
- =?us-ascii?Q?PfIbOYwYoszzheLFbVPEs+RdZtAKVLbcOJY1N9OY0Hc4OKiBwCm0Ka/4mb/+?=
- =?us-ascii?Q?YmS9kRwCsRTIAWZaI2a9/9x/LrEEVToEuTaHpt+iKAdWJ/H1aRQSmpzzf2sB?=
- =?us-ascii?Q?RxjX3JxzGoA7PDztKQzjfY5wC/dMA0GT5WvNsW1IYdXAmCKi6O6egEi8d3B9?=
- =?us-ascii?Q?FAI5FXKPL375ulR/NyTvaMoUhr/cmJObpE3SwBhTDNvfhgPB54kts82++bQQ?=
- =?us-ascii?Q?tkgoXf5kS4ceyk1XfyTuvqxxAaNPaBXMJjWj5D6fYNdSgTbxyb5xN4moX8Da?=
- =?us-ascii?Q?MuNGytFNI5xtc4LodDHsNmLrg66RsVQZb9i+K57786C6+8sbsGXfhsPzGvX8?=
- =?us-ascii?Q?1LDlUmYHCcTGAlEGDVByEtgNE+pTIpl7cbJXaDy/An4t5IWqPHZEvilVHjVQ?=
- =?us-ascii?Q?7glNvQ07L9zaL+hoiZ5NclsPa+ef2GqZkqWu7fsZ/ZG9f6lU1geMCCJglJ0I?=
-x-ms-exchange-antispam-messagedata-1: 3wsxfGTRpd/w+lvCmDa3nDbyOTPqNmmciagjxHpKh/Em1Yr+pJQW/DTm
+ us-mta-227-bLfxWIzlOKq9toGhAXUQ-Q-1; Thu, 19 May 2022 05:30:23 -0400
+X-MC-Unique: bLfxWIzlOKq9toGhAXUQ-Q-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by smtp-out2.suse.de (Postfix) with ESMTPS id F359E1F7AB;
+ Thu, 19 May 2022 09:30:21 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id A398413AF8;
+ Thu, 19 May 2022 09:30:21 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+ by imap2.suse-dmz.suse.de with ESMTPSA id Em0kJi0OhmKVLgAAMHmgww
+ (envelope-from <mwilck@suse.com>); Thu, 19 May 2022 09:30:21 +0000
+Message-ID: <e014a5ee6e313404bb4d1d29c1cd4791f9660c5e.camel@suse.com>
+From: Martin Wilck <mwilck@suse.com>
+To: "Schremmer, Steven" <Steve.Schremmer@netapp.com>, Xose Vazquez Perez
+ <xose.vazquez@gmail.com>
+Date: Thu, 19 May 2022 11:30:20 +0200
+In-Reply-To: <SN6PR06MB4495FAEC26D7A272C2DEDA498CD19@SN6PR06MB4495.namprd06.prod.outlook.com>
+References: <20220514230148.139675-1-xose.vazquez@gmail.com>
+ <20220514230148.139675-5-xose.vazquez@gmail.com>
+ <SN6PR06MB4495FAEC26D7A272C2DEDA498CD19@SN6PR06MB4495.namprd06.prod.outlook.com>
+User-Agent: Evolution 3.44.1
 MIME-Version: 1.0
-X-OriginatorOrg: wdc.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: PH0PR04MB7416.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: f0f9f08f-566c-44b4-e64f-08da396d36ff
-X-MS-Exchange-CrossTenant-originalarrivaltime: 19 May 2022 07:57:26.2992 (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: eWi1xnPp4MWOwR1HYrUoogbJUyQeffPr2QXBLcBSQyB2KDZKvq9YJCxalE84HKbdS49onoWEZujnoAyzM0QM3ZTsHlRJIRy/1txiHFChlGM=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM5PR04MB1180
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -135,9 +76,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
-Subject: Re: [dm-devel] [PATCH v4 08/13] btrfs:zoned: make sb for npo2 zone
- devices align with sb log offsets
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH 4/9] multipath-tools: add NetApp E-Series
+ NVMe to hardware table
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -149,71 +90,91 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>,
- "pankydev8@gmail.com" <pankydev8@gmail.com>,
- "gost.dev@samsung.com" <gost.dev@samsung.com>,
- "damien.lemoal@opensource.wdc.com" <damien.lemoal@opensource.wdc.com>,
- "jiangbo.365@bytedance.com" <jiangbo.365@bytedance.com>,
- "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
- "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
- "dm-devel@redhat.com" <dm-devel@redhat.com>,
- "dsterba@suse.com" <dsterba@suse.com>, "hch@lst.de" <hch@lst.de>,
- "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
+Cc: ng-eseries-upstream-maintainers
+ <ng-eseries-upstream-maintainers@netapp.com>,
+ DM-DEVEL ML <dm-devel@redhat.com>, Hannes Reinecke <hare@suse.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-On 18/05/2022 11:17, Pankaj Raghav wrote:
-> On 2022-05-17 14:42, David Sterba wrote:
->> On Mon, May 16, 2022 at 06:54:11PM +0200, Pankaj Raghav wrote:
->>> Superblocks for zoned devices are fixed as 2 zones at 0, 512GB and 4TB.
->>> These are fixed at these locations so that recovery tools can reliably
->>> retrieve the superblocks even if one of the mirror gets corrupted.
->>>
->>> power of 2 zone sizes align at these offsets irrespective of their
->>> value but non power of 2 zone sizes will not align.
->>>
->>> To make sure the first zone at mirror 1 and mirror 2 align, write zero
->>> operation is performed to move the write pointer of the first zone to
->>> the expected offset. This operation is performed only after a zone reset
->>> of the first zone, i.e., when the second zone that contains the sb is FULL.
->> Is it a good idea to do the "write zeros", instead of a plain "set write
->> pointer"? I assume setting write pointer is instant, while writing
->> potentially hundreds of megabytes may take significiant time. As the
->> functions may be called from random contexts, the increased time may
->> become a problem.
->>
-> Unfortunately it is not possible to just move the WP in zoned devices.
-> The only alternative that I could use is to do write zeroes which are
-> natively supported by some devices such as ZNS. It would be nice to know
-> if someone had a better solution to this instead of doing write zeroes
-> in zoned devices.
-> 
+Steve,
 
-I have another question. In case we need to pad the sb zone with a write
-zeros and have a power fail between the write-zeros and the regular 
-super-block write, what happens? I know this padding is only done for the
-backup super blocks, never the less it can happen and it can happen when
-the primary super block is also corrupted.
+On Wed, 2022-05-18 at 20:24 +0000, Schremmer, Steven wrote:
+> > From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> > Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+> > Cc: Martin Wilck <mwilck@suse.com>
+> > Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> > Cc: DM-DEVEL ML <dm-devel@redhat.com>
+> > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> > ---
+> > =A0libmultipath/hwtable.c | 9 +++++++++
+> > =A01 file changed, 9 insertions(+)
+> >=20
+> > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> > index 814e727a..61a5aa16 100644
+> > --- a/libmultipath/hwtable.c
+> > +++ b/libmultipath/hwtable.c
+> > @@ -845,6 +845,15 @@ static struct hwentry default_hw[] =3D {
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 .pgpolicy=A0=A0=A0=A0=A0 =
+=3D MULTIBUS,
+> > =A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 .no_path_retry =3D NO_PAT=
+H_RETRY_QUEUE,
+> > =A0=A0=A0=A0=A0=A0=A0 },
+> > +=A0=A0=A0=A0=A0=A0 {
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 /* E-Series NVMe */
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 .vendor=A0=A0=A0=A0=A0=A0=
+=A0 =3D "NVME",
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 .product=A0=A0=A0=A0=A0=A0 =
+=3D "NetApp E-Series",
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 .pgpolicy=A0=A0=A0=A0=A0 =
+=3D GROUP_BY_PRIO,
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 .prio_name=A0=A0=A0=A0 =3D =
+PRIO_ANA,
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 .pgfailback=A0=A0=A0 =3D -F=
+AILBACK_IMMEDIATE,
+> > +=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 .no_path_retry =3D 30,
+> > +=A0=A0=A0=A0=A0=A0 },
+> > =A0=A0=A0=A0=A0=A0=A0 /*
+> > =A0=A0=A0=A0=A0=A0=A0=A0 * NEC
+> > =A0=A0=A0=A0=A0=A0=A0=A0 */
+> > --
+> > 2.36.1
+>=20
+> Nak. NetApp E-Series only supports these settings in certain
+> configurations, and we prefer to handle it via our installation
+> documentation.
+>=20
 
-AFAIU we're then trying to reach out for a backup super block, look at the
-write pointer and it only contains zeros but no super block, as only the 
-write-zeros has reached the device and not the super block write.
+I don't follow. What harm is done to Netapp if these settings are
+included? People can still follow your documentation, the end result
+will be the same... no?
 
-How is this situation handled?
+AFAICS, the only setting above that would only be supported in certain
+configurations is PRIO_ANA, without which GROUP_BY_PRIO doesn't make
+much sense. If the array is configured not to support ANA, this
+configuration would lead to error messages and PRIO_UNDEF for all
+paths, and thus "imply" multibus topology. Not beautiful, but also no
+big harm done, IMO.=20
 
-Thanks,
-	Johannes
+If it's that you're concerned about, please provide the set of defaults
+you prefer for E-Series, or explictly state that you prefer to run with
+the generic NVMe defaults (const prio, failover policy).
 
+In general, if vendor-recommended settings are strongly dependent on
+storage configuration, host-side software defaults must try to match
+the storage array's defaults. We shoud do this for E-Series, too. If
+ANA needs to be explicitly enabled on the array by the admin, we
+shouldn't enable it by default; but otherwise, we should.
+
+Martin
 
 --
 dm-devel mailing list
