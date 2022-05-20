@@ -1,63 +1,101 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6ED0FC433EF
-	for <dm-devel@archiver.kernel.org>; Fri, 20 May 2022 14:26:37 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2731DC433F5
+	for <dm-devel@archiver.kernel.org>; Fri, 20 May 2022 17:23:05 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-600-nU-DJGDFN6ycEyTlVQbR-Q-1; Fri, 20 May 2022 10:26:34 -0400
-X-MC-Unique: nU-DJGDFN6ycEyTlVQbR-Q-1
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com [10.11.54.10])
+ us-mta-35-ZbD7VQpfMkyJFwTZ9kozmw-1; Fri, 20 May 2022 13:23:00 -0400
+X-MC-Unique: ZbD7VQpfMkyJFwTZ9kozmw-1
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com [10.11.54.2])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CF1D41C0CE6F;
-	Fri, 20 May 2022 14:26:31 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 87DA3185A7BA;
+	Fri, 20 May 2022 17:22:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BC536403152;
-	Fri, 20 May 2022 14:26:31 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 9CC3D40D2820;
+	Fri, 20 May 2022 17:22:55 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 78937194705A;
-	Fri, 20 May 2022 14:26:31 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 4A5921947052;
+	Fri, 20 May 2022 17:22:55 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.6])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 95BAB19451EF
- for <dm-devel@listman.corp.redhat.com>; Fri, 20 May 2022 14:26:29 +0000 (UTC)
+ ESMTP id 7DCE1194704C
+ for <dm-devel@listman.corp.redhat.com>; Fri, 20 May 2022 17:22:54 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 8960C1410DD9; Fri, 20 May 2022 14:26:29 +0000 (UTC)
+ id 64B5F2166B2F; Fri, 20 May 2022 17:22:54 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast08.extmail.prod.ext.rdu2.redhat.com [10.11.55.24])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 85B471410DD5
- for <dm-devel@redhat.com>; Fri, 20 May 2022 14:26:29 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6E07638C5C55
- for <dm-devel@redhat.com>; Fri, 20 May 2022 14:26:29 +0000 (UTC)
-Received: from mo4-p02-ob.smtp.rzone.de (mo4-p02-ob.smtp.rzone.de
- [85.215.255.80]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-73-IPeBC8xtPIScHsGukEq7-Q-1; Fri, 20 May 2022 10:26:27 -0400
-X-MC-Unique: IPeBC8xtPIScHsGukEq7-Q-1
-X-RZG-AUTH: ":PHkGeUmrW+uCZmxs998QJRUX30nOwJd7nOD9sw/xoauycprg5uef7cgCEpy7sPc="
-X-RZG-CLASS-ID: mo00
-Received: from USER-PC.fritz.box by smtp.strato.de (RZmta 47.42.2 DYNA|AUTH)
- with ESMTPSA id Y03eaey4KEQIQD8
- (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256 bits))
- (Client did not present a certificate);
- Fri, 20 May 2022 16:26:18 +0200 (CEST)
-From: Thore Sommer <public@thson.de>
-To: dm-devel@redhat.com, agk@redhat.com, snitzer@redhat.com,
- nramas@linux.microsoft.com
-Date: Fri, 20 May 2022 16:26:05 +0200
-Message-Id: <20220520142605.270625-4-public@thson.de>
-In-Reply-To: <20220520142605.270625-1-public@thson.de>
-References: <20220520142605.270625-1-public@thson.de>
+ (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 606E42166B25
+ for <dm-devel@redhat.com>; Fri, 20 May 2022 17:22:54 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4501B811E76
+ for <dm-devel@redhat.com>; Fri, 20 May 2022 17:22:54 +0000 (UTC)
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-641-jHS9urNyMhGtqw4mTtNAXg-1; Fri, 20 May 2022 13:22:52 -0400
+X-MC-Unique: jHS9urNyMhGtqw4mTtNAXg-1
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by smtp-out2.suse.de (Postfix) with ESMTPS id 050A01F899;
+ Fri, 20 May 2022 17:22:51 +0000 (UTC)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+ (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+ key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+ (No client certificate requested)
+ by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 83B7A13AF4;
+ Fri, 20 May 2022 17:22:50 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+ by imap2.suse-dmz.suse.de with ESMTPSA id 53QXH2rOh2KIPwAAMHmgww
+ (envelope-from <dsterba@suse.cz>); Fri, 20 May 2022 17:22:50 +0000
+Date: Fri, 20 May 2022 19:18:30 +0200
+From: David Sterba <dsterba@suse.cz>
+To: Pankaj Raghav <p.raghav@samsung.com>
+Message-ID: <20220520171830.GR18596@twin.jikos.cz>
+Mail-Followup-To: dsterba@suse.cz, Pankaj Raghav <p.raghav@samsung.com>,
+ Damien Le Moal <damien.lemoal@opensource.wdc.com>,
+ Javier =?iso-8859-1?Q?Gonz=E1lez?= <javier.gonz@samsung.com>,
+ Hannes Reinecke <hare@suse.de>,
+ Johannes Thumshirn <Johannes.Thumshirn@wdc.com>,
+ Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>,
+ Luis Chamberlain <mcgrof@kernel.org>, Theodore Ts'o <tytso@mit.edu>,
+ "axboe@kernel.dk" <axboe@kernel.dk>,
+ "pankydev8@gmail.com" <pankydev8@gmail.com>,
+ "gost.dev@samsung.com" <gost.dev@samsung.com>,
+ "jiangbo.365@bytedance.com" <jiangbo.365@bytedance.com>,
+ "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
+ "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+ "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+ "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+ "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ "dsterba@suse.com" <dsterba@suse.com>,
+ "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>,
+ Jaegeuk Kim <jaegeuk@kernel.org>, Keith Busch <kbusch@kernel.org>,
+ Adam Manzanares <a.manzanares@samsung.com>
+References: <YoPAnj9ufkt5nh1G@mit.edu>
+ <7f9cb19b-621b-75ea-7273-2d2769237851@opensource.wdc.com>
+ <20220519031237.sw45lvzrydrm7fpb@garbanzo>
+ <69f06f90-d31b-620b-9009-188d1d641562@opensource.wdc.com>
+ <PH0PR04MB74166C87F694B150A5AE0F009BD09@PH0PR04MB7416.namprd04.prod.outlook.com>
+ <4a8f0e1b-0acb-1ed4-8d7a-c9ba93fcfd02@opensource.wdc.com>
+ <16f3f9ee-7db7-2173-840c-534f67bcaf04@suse.de>
+ <20220520062720.wxdcp5lkscesppch@mpHalley-2.localdomain>
+ <be429864-09cb-e3fb-2afe-46a3453c4d73@opensource.wdc.com>
+ <aee22e8a-b89b-378c-3d5b-238c1215b01d@samsung.com>
 MIME-Version: 1.0
+In-Reply-To: <aee22e8a-b89b-378c-3d5b-238c1215b01d@samsung.com>
+User-Agent: Mutt/1.5.23.1-rc1 (2014-03-12)
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -65,8 +103,8 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
-Subject: [dm-devel] [PATCH 3/3] dm ima: add documentation target update event
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
+Subject: Re: [dm-devel] [PATCH v4 00/13] support non power of 2 zoned devices
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -78,80 +116,55 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-integrity@vger.kernel.org, Thore Sommer <public@thson.de>
+Reply-To: dsterba@suse.cz
+Cc: Mike Snitzer <snitzer@redhat.com>,
+ "jiangbo.365@bytedance.com" <jiangbo.365@bytedance.com>,
+ "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
+ "dsterba@suse.com" <dsterba@suse.com>,
+ "dm-devel@redhat.com" <dm-devel@redhat.com>,
+ Adam Manzanares <a.manzanares@samsung.com>, Christoph Hellwig <hch@lst.de>,
+ "pankydev8@gmail.com" <pankydev8@gmail.com>,
+ "gost.dev@samsung.com" <gost.dev@samsung.com>,
+ Damien Le Moal <damien.lemoal@opensource.wdc.com>,
+ "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+ Keith Busch <kbusch@kernel.org>, Jaegeuk Kim <jaegeuk@kernel.org>,
+ "axboe@kernel.dk" <axboe@kernel.dk>, Theodore Ts'o <tytso@mit.edu>,
+ Johannes Thumshirn <Johannes.Thumshirn@wdc.com>,
+ "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+ Luis Chamberlain <mcgrof@kernel.org>,
+ "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+ Javier =?iso-8859-1?Q?Gonz=E1lez?= <javier.gonz@samsung.com>,
+ "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The dm_target_update event can be triggered by targets to remeasure their
-state to reflect that change also in IMA.
+On Fri, May 20, 2022 at 11:30:09AM +0200, Pankaj Raghav wrote:
+> On 5/20/22 08:41, Damien Le Moal wrote:
+> >> Note that for F2FS there is no blocker. Jaegeuk picked the initial
+> >> patches, and he agreed to add native support.
+> > 
+> > And until that is done, f2fs will not work with these new !po2 devices...
+> > Having the new dm will avoid that support fragmentation which I personally
+> > really dislike. With the new dm, we can keep support for *all* zoned block
+> > devices, albeit needing a different setup depending on the device. That is
+> > not nice at all but at least there is a way to make things work continuously.
+> 
+> I see that many people in the community feel it is better to target the
+> dm layer for the initial support of npo2 devices. I can give it a shot
+> and maintain a native out-of-tree support for FSs for npo2 devices and
+> merge it upstream as we see fit later.
 
-This is event is currently only supported by verity.
-
-Signed-off-by: Thore Sommer <public@thson.de>
----
- .../admin-guide/device-mapper/dm-ima.rst      | 33 +++++++++++++++++++
- 1 file changed, 33 insertions(+)
-
-diff --git a/Documentation/admin-guide/device-mapper/dm-ima.rst b/Documentation/admin-guide/device-mapper/dm-ima.rst
-index a4aa50a828e0..ac9418ea99d3 100644
---- a/Documentation/admin-guide/device-mapper/dm-ima.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-ima.rst
-@@ -93,6 +93,7 @@ Following device state changes will trigger IMA measurements:
-  #. Device remove
-  #. Table clear
-  #. Device rename
-+ #. Target update
- 
- 1. Table load:
- ---------------
-@@ -321,6 +322,38 @@ The IMA measurement log has the following format for 'dm_device_rename':
-  new_name=linear\=2,new_uuid=1234-5678;
-  current_device_capacity=1024;
- 
-+6. Target update:
-+------------------
-+When a target changes updates its table it can trigger an remeasurement of that table.
-+
-+This is currently only implemented for 'verity' targets to detect measure corruption occurrences.
-+Note that the active table hash of the device does not get updated.
-+
-+The IMA measurement log has the following format for 'dm_target_update':
-+
-+::
-+
-+ EVENT_NAME := "dm_target_update"
-+ EVENT_DATA := <dm_version_str> ";" <device_active_metadata> ";" <target_data_row> ";"
-+
-+ dm_version_str := As described in the 'Table load' section above.
-+ device_active_metadata := Device metadata that reflects the currently loaded active table.
-+                           The format is same as 'device_metadata' described in the 'Table load' section above.
-+ target_data_row
-+ E.g: if a verity device gets corrupted then IMA ASCII measurement log will have an entry with:
-+ (converted from ASCII to text for readability)
-+
-+ 10 1cc9c660afb7fddd1b7167f0c4e997ebca8b1c09 ima-buf sha256:e991f7692724257701c8e652682bd3246837ed2d655407b9e9f5a5b469e6c75b
-+ dm_target_update
-+ dm_version=4.45.0;
-+ name=test,uuid=CRYPT-VERITY-e0d2a85fd61e41238174adaa32d296fe-test,major=253,minor=0,minor_count=1,num_targets=1;
-+ target_index=0,target_begin=0,target_len=8,target_name=verity,target_version=1.8.0,hash_failed=C,
-+ verity_version=1,data_device_name=7:1,hash_device_name=7:0,verity_algorithm=sha256,
-+ root_digest=8c2eff0b45fc9815b94350f7a913683ef34085c734229bcf1345c31b07ac61b8,
-+ salt=63010b7c63e28e6929a2f020dc71c97a0660a9f377a83c674a62feb01c5ca6b3,
-+ ignore_zero_blocks=n,check_at_most_once=n;
-+
-+
- Supported targets:
- ==================
- 
--- 
-2.36.0
+Some of the changes from your patchset are cleanups or abstracting the
+alignment and zone calculations, so this can be merged to minimize the
+out of tree code.
 
 --
 dm-devel mailing list
