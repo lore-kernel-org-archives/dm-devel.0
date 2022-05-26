@@ -4,103 +4,76 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id D0260C433EF
-	for <dm-devel@archiver.kernel.org>; Thu, 26 May 2022 08:25:34 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E19F3C433F5
+	for <dm-devel@archiver.kernel.org>; Thu, 26 May 2022 16:41:28 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-408-kcim04u8NAq4jCV6xRXzxQ-1; Thu, 26 May 2022 04:25:32 -0400
-X-MC-Unique: kcim04u8NAq4jCV6xRXzxQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-586-os3_SVgpNpGSV_qVQkiEMQ-1; Thu, 26 May 2022 12:41:24 -0400
+X-MC-Unique: os3_SVgpNpGSV_qVQkiEMQ-1
+Received: from smtp.corp.redhat.com (int-mx03.intmail.prod.int.rdu2.redhat.com [10.11.54.3])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 9A09638349B2;
-	Thu, 26 May 2022 08:25:30 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 7880B8287E;
-	Thu, 26 May 2022 08:25:30 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E83B7801E6B;
+	Thu, 26 May 2022 16:41:22 +0000 (UTC)
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 6B903112131B;
+	Thu, 26 May 2022 16:41:20 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5DCDF194EB91;
-	Thu, 26 May 2022 08:25:30 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
- [10.11.54.8])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 2BB4F1947052;
+	Thu, 26 May 2022 16:41:20 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A1D8A19466DF
- for <dm-devel@listman.corp.redhat.com>; Thu, 26 May 2022 08:25:28 +0000 (UTC)
+ ESMTP id B462F1947051
+ for <dm-devel@listman.corp.redhat.com>; Thu, 26 May 2022 16:41:19 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 922E9C15E71; Thu, 26 May 2022 08:25:28 +0000 (UTC)
+ id 94694400F3E8; Thu, 26 May 2022 16:41:19 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast05.extmail.prod.ext.rdu2.redhat.com [10.11.55.21])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8D416C159B3
- for <dm-devel@redhat.com>; Thu, 26 May 2022 08:25:28 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
- (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 7616D801E6B
- for <dm-devel@redhat.com>; Thu, 26 May 2022 08:25:28 +0000 (UTC)
-Received: from esa6.hgst.iphmx.com (esa6.hgst.iphmx.com [216.71.154.45]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-624-cAlPgR-tMPeAEOC_03AsKw-1; Thu, 26 May 2022 04:25:25 -0400
-X-MC-Unique: cAlPgR-tMPeAEOC_03AsKw-1
-X-IronPort-AV: E=Sophos;i="5.91,252,1647273600"; d="scan'208";a="202322012"
-Received: from uls-op-cesaip01.wdc.com (HELO uls-op-cesaep01.wdc.com)
- ([199.255.45.14])
- by ob1.hgst.iphmx.com with ESMTP; 26 May 2022 16:25:25 +0800
-IronPort-SDR: 9RBC1RBJNNqJDuHotH+bX8Cjyj35a87rBM0ZSpUVUtbcTNwNeDQC/tMOYgD2vZypw21DW4UHWw
- pmNNndmAmn2HgPDf+oBQxlD6O0VIlM6L1bptbH0kcAWktlWv47ZGkTacf010GuMYTqrG6620Au
- bvQ60I09f6e+YBRo04t01MXMa7yb4lNgly7bJpncDlSlOxO69K3axN52g2kQ/QvVyQqi60U7Pp
- qSYJ7tvT1yhEZ/Yx3nsBClQLhpG6vIo6WRL/+IPPDqPkWpgMwQBW4jcdAJH/0lrNQyoG5sUD/C
- b5UBRZZvxNMEpJgAECtNcVBu
-Received: from uls-op-cesaip02.wdc.com ([10.248.3.37])
- by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 26 May 2022 00:49:18 -0700
-IronPort-SDR: bQaP9MHe8KmGdnZkAmHa3TdRbVM+MqvO+QW18c+F9h0shEZ055Ly9mARvz35Tc+lgEM9FGPEdM
- YlOjzbs9wJg/r7tPlmocXtcAA+mKVEhFwXitGflSkNr/KEdx5keekvPe6l0JLiIE7MAKvaIKlD
- AmXGO9fZbIR8RcpGKxcgCV0+hAL4PzfRf4xoQL6GMiv7ZS4lrzNwGS1ozOAWlaTIxxpo9xhuQg
- fdK6NR+PxPggxgK/FUGhs4nTMrPhYqNr9zdTxAogG1PsQ7KJuYvtZEczqzUP2iEV8pmolrJN51
- I5U=
-WDCIronportException: Internal
-Received: from usg-ed-osssrv.wdc.com ([10.3.10.180])
- by uls-op-cesaip02.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256;
- 26 May 2022 01:25:24 -0700
-Received: from usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1])
- by usg-ed-osssrv.wdc.com (Postfix) with ESMTP id 4L81GC5NWtz1SHwl
- for <dm-devel@redhat.com>; Thu, 26 May 2022 01:25:23 -0700 (PDT)
-X-Virus-Scanned: amavisd-new at usg-ed-osssrv.wdc.com
-Received: from usg-ed-osssrv.wdc.com ([127.0.0.1])
- by usg-ed-osssrv.wdc.com (usg-ed-osssrv.wdc.com [127.0.0.1]) (amavisd-new,
- port 10026) with ESMTP id ZR4mi-jZC4b3 for <dm-devel@redhat.com>;
- Thu, 26 May 2022 01:25:21 -0700 (PDT)
-Received: from [10.225.54.48] (unknown [10.225.54.48])
- by usg-ed-osssrv.wdc.com (Postfix) with ESMTPSA id 4L81G76Gmcz1Rvlc;
- Thu, 26 May 2022 01:25:19 -0700 (PDT)
-Message-ID: <3c04e29f-2c99-c350-bc87-0c0633b4d19d@opensource.wdc.com>
-Date: Thu, 26 May 2022 17:25:18 +0900
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 902F340D282F
+ for <dm-devel@redhat.com>; Thu, 26 May 2022 16:41:18 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
+ bits)) (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 78416294EDC2
+ for <dm-devel@redhat.com>; Thu, 26 May 2022 16:41:18 +0000 (UTC)
+Received: from mail-qt1-f182.google.com (mail-qt1-f182.google.com
+ [209.85.160.182]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-595-QGQynRWIN8W7q9oP8q7WMg-1; Thu, 26 May 2022 12:41:16 -0400
+X-MC-Unique: QGQynRWIN8W7q9oP8q7WMg-1
+Received: by mail-qt1-f182.google.com with SMTP id s31so2276154qtc.3
+ for <dm-devel@redhat.com>; Thu, 26 May 2022 09:41:16 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:date:from:to:cc:subject:message-id:mime-version
+ :content-disposition;
+ bh=z+vKLXdt60QDKO4b9wBgGIXuJw5ArCpTgFr2gphTDQc=;
+ b=orKc2E5QWw7H447LVHZDApXn5d+KJYIlPkS7z9THM/rrWlFz8YbWhNqdKQKwQTfuxm
+ 2fmfngtPEJB2Z1Ej/dO+L10lYB3bx5ruSIxlj97GHxJCr5veOoRvXSpL7yhqiFukQpvr
+ t9ILBFsOOLpzDznqh88BOcADhC3NsUKfdwTwWpzb9zajRmlZR6nPYfSE51jGQ1tFoW02
+ 216nksW9cbu7UBubpN5Z4M6Db8KCD77EiAGkfPEoo07AJ+vtIirK+mxA03LmRagSuaKe
+ 9Y5OOjCkI2uHGcQ3cn5XkgnzP3pQ/1Wi0gMbem+7AB+li0jiAj0SyPcc1CD/5XFqB+n2
+ nFfQ==
+X-Gm-Message-State: AOAM531irEHANVCokFKVLvxcGxRPVmMVDMLfCI7WZwEI2qqUSw1RJp30
+ I7SBUbmz5Xs6rjz4DCaz6+61Xx8=
+X-Google-Smtp-Source: ABdhPJy95jqT31JGjEPtVMwTjrkY/rfbXKIerIVzATOcXvkzK5HGQljn97qXkoV5na7XMf+Bsbf25g==
+X-Received: by 2002:a05:6214:224f:b0:43f:d536:d014 with SMTP id
+ c15-20020a056214224f00b0043fd536d014mr31290972qvc.50.1653583276042; 
+ Thu, 26 May 2022 09:41:16 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+ [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+ w21-20020a05620a445500b0069fc13ce209sm1638370qkp.58.2022.05.26.09.41.15
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Thu, 26 May 2022 09:41:15 -0700 (PDT)
+Date: Thu, 26 May 2022 12:41:14 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <Yo+tqngHo5JCZTJc@redhat.com>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:91.0)
- Gecko/20100101 Thunderbird/91.9.1
-To: Pankaj Raghav <p.raghav@samsung.com>, axboe@kernel.dk,
- snitzer@redhat.com, Johannes.Thumshirn@wdc.com, hch@lst.de, hare@suse.de
-References: <20220525154957.393656-1-p.raghav@samsung.com>
- <CGME20220525155008eucas1p2c843cc9098f2920e961f80ffaf535789@eucas1p2.samsung.com>
- <20220525154957.393656-9-p.raghav@samsung.com>
- <9703ca4c-33cf-cb3a-b46b-6b0e5537cfd6@opensource.wdc.com>
- <0bb57f61-9a33-0273-4b89-2cdf042e56dd@samsung.com>
-From: Damien Le Moal <damien.lemoal@opensource.wdc.com>
-Organization: Western Digital Research
-In-Reply-To: <0bb57f61-9a33-0273-4b89-2cdf042e56dd@samsung.com>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-Subject: Re: [dm-devel] [PATCH v6 8/8] dm: ensure only power of 2 zone sizes
- are allowed
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
+Subject: [dm-devel] [git pull] device mapper changes for 5.19
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -112,94 +85,130 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: gost.dev@samsung.com, jiangbo.365@bytedance.com,
- linux-nvme@lists.infradead.org, linux-kernel@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@redhat.com, dsterba@suse.com,
- jaegeuk@kernel.org
+Cc: Guo Zhengkui <guozhengkui@vivo.com>, Ming Lei <ming.lei@redhat.com>,
+ linux-block@vger.kernel.org, dm-devel@redhat.com,
+ Mikulas Patocka <mpatocka@redhat.com>, Alasdair G Kergon <agk@redhat.com>,
+ Gabriel Krisman Bertazi <krisman@collabora.com>,
+ Dan Carpenter <dan.carpenter@oracle.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.79 on 10.11.54.5
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.3
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 2022/05/26 17:12, Pankaj Raghav wrote:
-> Hi Damien,
-> On 5/26/22 01:13, Damien Le Moal wrote:
->> On 5/26/22 00:49, Pankaj Raghav wrote:
->>> Ensure that only power of 2 zoned devices are enabled for dm targets that
->>> supports zoned devices. This constraint can be relaxed once non power of
->>> 2 zone size support is added to the DM layer.
->>>
->>> Signed-off-by: Pankaj Raghav <p.raghav@samsung.com>
->>> ---
->>>  drivers/md/dm-table.c | 6 ++++++
->>>  1 file changed, 6 insertions(+)
->>>
->>> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
->>> index 03541cfc2317..2a8af70d1d4a 100644
->>> --- a/drivers/md/dm-table.c
->>> +++ b/drivers/md/dm-table.c
->>> @@ -251,6 +251,12 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
->>>  	if (bdev_is_zoned(bdev)) {
->>>  		unsigned int zone_sectors = bdev_zone_sectors(bdev);
->>>  
->>> +		if (!is_power_of_2(zone_sectors)) {
->>> +			DMWARN("%s: %pg only power of two zone size supported",
->>> +			       dm_device_name(ti->table->md), bdev);
->>> +			return 1;
->>> +		}
->>> +
->>>  		if (start & (zone_sectors - 1)) {
->>>  			DMWARN("%s: start=%llu not aligned to h/w zone size %u of %pg",
->>>  			       dm_device_name(ti->table->md),
->>
->> I thought the agreed upon idea is be to add a dm-linear like target to
->> emulate power of 2 zone size so that we can keep btrfs and f2fs running on
->> this new class of device. So why this patch ?
->>
->> The entire series as is will fragment zoned block device support, which is
->> not a good thing at all. Without the new dm target, none of the current
->> kernel supported zone stuff will work.
->>
-> I have mentioned this in my cover letter:
-> The support is planned to be added in two phases:
-> - Add npo2 support to block, nvme layer and necessary stop gap patches
->   in the filesystems
-> - Add dm target for npo2 devices so that they are presented as a po2
->   device to filesystems
-> 
-> This series is targeting the first phase where we have stop gap patches
-> and add support to the block and nvme layer and in the next phase we
-> will add a dm linear like target for npo2 zone sizes which can be used
-> by all the filesystems. This patch makes sure that we can't use npo2
-> zoned devices without the proper support that will be added in the next
-> phase in the DM.
+Hi Linus,
 
-Personally, I do not want to see a kernel version where zone support is broken
-for some devices. So I definitely prefer everything in one go or nothing.
+These changes build on Jens' for-5.19 block tree because of various
+block changes that impacted DM and/or prereqs for these DM changes.
 
-> 
-> Even though we decided we would like to take the direction of DM, I am
-> still awaiting reply from Christoph who raised concerns about npo2 zoned
-> device support and Mike Snitzer about this approach. That is one of the
-> reason I split this effort into two phases.
->> The zonefs patch is also gone from the series. Why ? As is, zonefs will
->> break if it is passed a non power of 2 zone size drive.
->>
-> I think this was my mistake. If you agree with the above approach, then
-> I can add a stop gap patch also to zonefs npo2 zoned devices. This way
-> all the zone filesystem support goes via DM for npo2 zoned devices. I am
-> proposing this so that initially we always have only one way of
-> accessing a npo2 zoned device (via DM) from **filesystems** until we add
-> native support.
--- 
-Damien Le Moal
-Western Digital Research
+The following changes since commit 069adbac2cd85ae00252da6c5576cbf9b9d9ba6e:
+
+  block: improve the error message from bio_check_eod (2022-05-04 18:30:10 -0600)
+
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.19/dm-changes
+
+for you to fetch changes up to ca522482e3eafd005b8d4e8b1331c911505a58d5:
+
+  dm: pass NULL bdev to bio_alloc_clone (2022-05-11 13:58:52 -0400)
+
+Please pull, thanks.
+Mike
+
+----------------------------------------------------------------
+- Enable DM core bioset's per-cpu bio cache if QUEUE_FLAG_POLL
+  set. This change improves DM's hipri bio polling (REQ_POLLED)
+  performance by 7 - 20% depending on the system.
+
+- Update DM core to use jump_labels to further reduce cost of unlikely
+  branches for zoned block devices, dm-stats and swap_bios throttling.
+
+- Various DM core changes to reduce bio-based DM overhead and simplify
+  IO accounting.
+
+- Fundamental DM core improvements to dm_io reference counting and the
+  elimination of using bio_split()+bio_chain() -- instead DM's
+  bio-based IO accounting is updated to account that a split occurred.
+
+- Improve DM core's abnormal bio processing to do less work.
+
+- Improve DM core's hipri polling support to use a single list rather
+  than an hlist.
+
+- Update DM core to pass NULL bdev to bio_alloc_clone() so that
+  initialization that isn't useful for DM can be elided.
+
+- Add cond_resched to DM stats' various loops that loop over all
+  entries.
+
+- Fix incorrect error code return from DM integrity's constructor.
+
+- Make DM crypt's printing of the key constant-time.
+
+- Update bio-based DM multipath to provide high-resolution timer to
+  the Historical Service Time (HST) path selector.
+
+----------------------------------------------------------------
+Dan Carpenter (1):
+      dm integrity: fix error code in dm_integrity_ctr()
+
+Gabriel Krisman Bertazi (1):
+      dm mpath: provide high-resolution timer to HST for bio-based
+
+Guo Zhengkui (1):
+      dm cache metadata: remove unnecessary variable in __dump_mapping
+
+Mike Snitzer (14):
+      dm: conditionally enable BIOSET_PERCPU_CACHE for dm_io bioset
+      dm: factor out dm_io_set_error and __dm_io_dec_pending
+      dm: simplify dm_io access in dm_split_and_process_bio
+      dm: simplify dm_start_io_acct
+      dm: mark various branches unlikely
+      dm: add local variables to clone_endio and __map_bio
+      dm: move hot dm_io members to same cacheline as dm_target_io
+      dm: introduce dm_{get,put}_live_table_bio called from dm_submit_bio
+      dm: conditionally enable branching for less used features
+      dm: simplify basic targets
+      dm: use bio_sectors in dm_aceept_partial_bio
+      dm: simplify bio-based IO accounting further
+      dm: improve abnormal bio processing
+      dm: pass NULL bdev to bio_alloc_clone
+
+Mikulas Patocka (2):
+      dm stats: add cond_resched when looping over entries
+      dm crypt: make printing of the key constant-time
+
+Ming Lei (7):
+      dm: don't pass bio to __dm_start_io_acct and dm_end_io_acct
+      dm: pass dm_io instance to dm_io_acct directly
+      dm: switch to bdev based IO accounting interfaces
+      dm: improve bio splitting and associated IO accounting
+      dm: don't grab target io reference in dm_zone_map_bio
+      dm: improve dm_io reference counting
+      dm: put all polled dm_io instances into a single list
+
+ drivers/md/dm-cache-metadata.c             |   3 +-
+ drivers/md/dm-core.h                       |  38 +-
+ drivers/md/dm-crypt.c                      |  14 +-
+ drivers/md/dm-delay.c                      |   3 +-
+ drivers/md/dm-flakey.c                     |   4 +-
+ drivers/md/dm-integrity.c                  |   2 -
+ drivers/md/dm-linear.c                     |  11 +-
+ drivers/md/dm-mpath.c                      |   8 +-
+ drivers/md/dm-path-selector.h              |  15 +
+ drivers/md/dm-ps-historical-service-time.c |   1 +
+ drivers/md/dm-stats.c                      |  11 +
+ drivers/md/dm-table.c                      |  16 +-
+ drivers/md/dm-zone.c                       |  10 -
+ drivers/md/dm.c                            | 556 +++++++++++++++++------------
+ drivers/md/dm.h                            |   4 +-
+ 15 files changed, 409 insertions(+), 287 deletions(-)
 
 --
 dm-devel mailing list
