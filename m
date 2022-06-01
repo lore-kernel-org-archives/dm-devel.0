@@ -4,74 +4,97 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 70617C433F5
-	for <dm-devel@archiver.kernel.org>; Wed,  1 Jun 2022 07:10:30 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2EF7CC433EF
+	for <dm-devel@archiver.kernel.org>; Wed,  1 Jun 2022 14:13:48 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1654092827;
+	h=from:from:sender:sender:reply-to:subject:subject:date:date:
+	 message-id:message-id:to:to:cc:cc:mime-version:mime-version:
+	 content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references:list-id:list-help:
+	 list-unsubscribe:list-subscribe:list-post;
+	bh=RgNzym5BirkjBAaZ3vo0ILlMAyGrCjjrkQy6xqqUGOY=;
+	b=WQQWas4r+Pm+9f8hW0G1bskV2nYy3y1dxxN8uYiGrocfQAqh4DFv+VHHvqswPEiH8T3rWs
+	yLhRlFK45AZtBiwwy6AiZyVv8tQPpHR88xbdePfVLJ1ibr9iEGrPr8M6VCkri2w7Mwl79l
+	y2cYeJbHC2MgPlxGRhIY6/riBdSf2Wg=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-257-WJ32DfydOAm9tRwypwpibg-1; Wed, 01 Jun 2022 03:10:25 -0400
-X-MC-Unique: WJ32DfydOAm9tRwypwpibg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-395-rzPa6E_0Pc6K_2mMC0QIHA-1; Wed, 01 Jun 2022 10:13:45 -0400
+X-MC-Unique: rzPa6E_0Pc6K_2mMC0QIHA-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 007041857F02;
-	Wed,  1 Jun 2022 07:10:24 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 33720185A7B2;
+	Wed,  1 Jun 2022 14:13:43 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 87B2E1410DDB;
-	Wed,  1 Jun 2022 07:10:22 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 262162026D07;
+	Wed,  1 Jun 2022 14:13:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5012F194706E;
-	Wed,  1 Jun 2022 07:10:22 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
- [10.11.54.10])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D7EAD1947079;
+	Wed,  1 Jun 2022 14:13:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id F25B01947065
- for <dm-devel@listman.corp.redhat.com>; Tue, 31 May 2022 13:57:16 +0000 (UTC)
+ ESMTP id 711CB194706A
+ for <dm-devel@listman.corp.redhat.com>; Wed,  1 Jun 2022 14:13:39 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id CE4F9416362; Tue, 31 May 2022 13:57:16 +0000 (UTC)
+ id 5581540CFD0A; Wed,  1 Jun 2022 14:13:39 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id C9FC4492C3B
- for <dm-devel@redhat.com>; Tue, 31 May 2022 13:57:16 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 4F9CE40CF8EB
+ for <dm-devel@redhat.com>; Wed,  1 Jun 2022 14:13:39 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [205.139.110.61])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 681F8857FAD
- for <dm-devel@redhat.com>; Tue, 31 May 2022 13:57:16 +0000 (UTC)
-Received: from mx1.molgen.mpg.de (mx3.molgen.mpg.de [141.14.17.11]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-301-x3Fk3FepOYaxx9LbIIymZw-1; Tue, 31 May 2022 09:57:14 -0400
-X-MC-Unique: x3Fk3FepOYaxx9LbIIymZw-1
-Received: from theinternet.molgen.mpg.de (theinternet.molgen.mpg.de
- [141.14.31.7])
- (using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
- key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
- (No client certificate requested) (Authenticated sender: buczek)
- by mx.molgen.mpg.de (Postfix) with ESMTPSA id 0CE5C61EA1928;
- Tue, 31 May 2022 15:48:11 +0200 (CEST)
-To: Jan Kara <jack@suse.cz>
-References: <4e83fb26-4d4a-d482-640c-8104973b7ebf@molgen.mpg.de>
- <20220531103834.vhscyk3yzsocorco@quack3.lan>
-From: Donald Buczek <buczek@molgen.mpg.de>
-Message-ID: <3bfd0ad9-d378-9631-310f-0a1a80d8e482@molgen.mpg.de>
-Date: Tue, 31 May 2022 15:48:10 +0200
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101
- Thunderbird/68.12.1
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3245D804198
+ for <dm-devel@redhat.com>; Wed,  1 Jun 2022 14:13:39 +0000 (UTC)
+Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
+ [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-478-IXs2LHOCPzCyMMl5AORBQQ-1; Wed, 01 Jun 2022 10:13:36 -0400
+X-MC-Unique: IXs2LHOCPzCyMMl5AORBQQ-1
+Received: by mail-qk1-f200.google.com with SMTP id
+ s9-20020ae9f709000000b006a3e88115b7so1348225qkg.20
+ for <dm-devel@redhat.com>; Wed, 01 Jun 2022 07:13:36 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+ :mime-version:content-disposition:in-reply-to;
+ bh=/6cFmagpZS+hji6WNkFHLta2n7SzyuJJ+i8HVMquW3Y=;
+ b=7rRUWo/Bx7MEWqbPOHAqAchLI5OSNfc396Aw/OYVrmIBBkk7hFCaHfeit2MidyBdEY
+ ZD6c1N3B856tpOmtMoaKEVDFjzHvbJHzY4bewcv60/lnyW3qG/vN34qSk1y8ZQ8uoqQ2
+ 8zFeONJmeLmohDvLMHtxQUy0J9QmEXvSk646pQ8RRTzy4tCzIzVjMMYqGoULm/083N5j
+ Ac8LAUTe13hUssY4d/yPWhi2Q7SLWv0oj8706ILuRPFuA1oVcWa78Rov0+5iRAwev2cv
+ p3k5OYkpOGgteLrnpeQo1r80CDegNVBr5XuJqzN6sZbFuW65L3faOtAtFwFu6LXdxuz9
+ 4bNg==
+X-Gm-Message-State: AOAM533vp8aMHgh4yezfEdgWm5QdnRlxrSgGZHpQznBx9FOr7t9Adfb0
+ bI2NMdmD4iicygU8wrJoxdRKijmf1T0mq7UTo9bL3KhEiA559ihcU3XG1mn59wbDng1E0B4foE4
+ 03itBYGucoU6dnQ==
+X-Received: by 2002:a05:622a:14ca:b0:304:c23f:bf48 with SMTP id
+ u10-20020a05622a14ca00b00304c23fbf48mr44105qtx.250.1654092816394; 
+ Wed, 01 Jun 2022 07:13:36 -0700 (PDT)
+X-Google-Smtp-Source: ABdhPJyTtzbPjDv8fpmrGbyUXl2t6UMgh4OaBJ04+ZVxvQBYai7b7j9eAy3BavkBCtobjtfzDJlUqQ==
+X-Received: by 2002:a05:622a:14ca:b0:304:c23f:bf48 with SMTP id
+ u10-20020a05622a14ca00b00304c23fbf48mr44046qtx.250.1654092815837; 
+ Wed, 01 Jun 2022 07:13:35 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+ [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+ l186-20020a3789c3000000b006a37710ef89sm1404072qkd.115.2022.06.01.07.13.35
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 01 Jun 2022 07:13:35 -0700 (PDT)
+Date: Wed, 1 Jun 2022 10:13:34 -0400
+From: Mike Snitzer <snitzer@redhat.com>
+To: Christoph Hellwig <hch@infradead.org>
+Message-ID: <Ypd0DnmjvCoWj+1P@redhat.com>
+References: <YpK7m+14A+pZKs5k@casper.infradead.org>
+ <2523e5b0-d89c-552e-40a6-6d414418749d@kernel.dk>
+ <YpZlOCMept7wFjOw@redhat.com> <YpcBgY9MMgumEjTL@infradead.org>
 MIME-Version: 1.0
-In-Reply-To: <20220531103834.vhscyk3yzsocorco@quack3.lan>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
-X-Mailman-Approved-At: Wed, 01 Jun 2022 07:10:21 +0000
-Subject: Re: [dm-devel] ext4_writepages: jbd2_start: 5120 pages, ino 11;
- err -5
+In-Reply-To: <YpcBgY9MMgumEjTL@infradead.org>
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
+Subject: Re: [dm-devel] bioset_exit poison from dm_destroy
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -83,151 +106,43 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-fsdevel@vger.kernel.org, dm-devel@redhat.com,
- linux-ext4@vger.kernel.org,
- Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
- it+linux@molgen.mpg.de
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+ dm-devel@redhat.com, david@fromorbit.com, Matthew Wilcox <willy@infradead.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Content-Disposition: inline
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 
-On 5/31/22 12:38 PM, Jan Kara wrote:
-> Late reply but maybe it is still useful :)
+On Wed, Jun 01 2022 at  2:04P -0400,
+Christoph Hellwig <hch@infradead.org> wrote:
 
-That's very welcome!
-
-> On Thu 14-04-22 17:19:49, Donald Buczek wrote:
->> We have a cluster scheduler which provides each cluster job with a
->> private scratch filesystem (TMPDIR). These are created when a job starts
->> and removed when a job completes. The setup works by fallocate, losetup,
->> mkfs.ext4, mkdir, mount, "losetup -d", rm and the teardown just does a
->> umount and rmdir.
->>
->> This works but there is one nuisance: The systems usually have a lot of
->> memory and some jobs write a lot of data to their scratch filesystems. So
->> when a job finishes, there often is a lot to sync by umount which
->> sometimes takes many minutes and wastes a lot of I/O bandwidth.
->> Additionally, the reserved space can't be returned and reused until the
->> umount is finished and the backing file is deleted.
->>
->> So I was looking for a way to avoid that but didn't find something
->> straightforward. The workaround I've found so far is using a dm-device
->> (linear target) between the filesystem and the loop device and then use
->> this sequence for teardown:
->>
->> - fcntl EXT4_IOC_SHUTDOWN with EXT4_GOING_FLAGS_NOLOGFLUSH
->> - dmestup reload $dmname --table "0 $sectors zero"
->> - dmsetup resume $dmname --noflush
->> - umount $mountpoint
->> - dmsetup remove --deferred $dmname
->> - rmdir $mountpoint
->>
->> This seems to do what I want. The unnecessary flushing of the temporary data is redirected from the backing file into the zero target and it works really fast. There is one remaining problem though, which might be just a cosmetic one: Although ext4 is shut down to prevent it from writing, I sometimes get the error message from the subject in the logs:
->>
->> [2963044.462043] EXT4-fs (dm-1): mounted filesystem without journal. Opts: (null)
->> [2963044.686994] EXT4-fs (dm-0): mounted filesystem without journal. Opts: (null)
->> [2963044.728391] EXT4-fs (dm-2): mounted filesystem without journal. Opts: (null)
->> [2963055.585198] EXT4-fs (dm-2): shut down requested (2)
->> [2963064.821246] EXT4-fs (dm-2): mounted filesystem without journal. Opts: (null)
->> [2963074.838259] EXT4-fs (dm-2): shut down requested (2)
->> [2963095.979089] EXT4-fs (dm-0): shut down requested (2)
->> [2963096.066376] EXT4-fs (dm-0): ext4_writepages: jbd2_start: 5120 pages, ino 11; err -5
->> [2963108.636648] EXT4-fs (dm-0): mounted filesystem without journal. Opts: (null)
->> [2963125.194740] EXT4-fs (dm-0): shut down requested (2)
->> [2963166.708088] EXT4-fs (dm-1): shut down requested (2)
->> [2963169.334437] EXT4-fs (dm-0): mounted filesystem without journal. Opts: (null)
->> [2963227.515974] EXT4-fs (dm-0): shut down requested (2)
->> [2966222.515143] EXT4-fs (dm-0): mounted filesystem without journal. Opts: (null)
->> [2966222.523390] EXT4-fs (dm-1): mounted filesystem without journal. Opts: (null)
->> [2966222.598071] EXT4-fs (dm-2): mounted filesystem without journal. Opts: (null)
+> On Tue, May 31, 2022 at 02:58:00PM -0400, Mike Snitzer wrote:
+> > Yes, we need the above to fix the crash.  Does it also make sense to
+> > add this?
 > 
->>
->> So I'd like to ask a few questions:
->>
->> - Is this error message expected or is it a bug?
+> Can we just stop treating bio_sets so sloppily and make the callers
+> handle their lifetime properly?  No one should have to use
+> bioset_initialized (or double free bio_sets).
 > 
-> Well, shutdown is not 100% tuned for clean teardown. It is mostly a testing
-> / debugging aid.
-> 
->> - Can it be ignored or is there a leak or something on that error path.
-> 
-> The error recovery path should be cleaning up everything. If not, that
-> would be a bug :)
-> 
->> - Is there a better way to do what I want? Something I've overlooked?
-> 
-> Why not just rm -rf $mountpoint/*? That will remove all dirty data from
-> memory without writing it back. It will cost you more in terms of disk IOs
-> than the above dance with shutdown but unless you have many files, it
-> should be fast... And it is much more standard path than shutdown :).
 
-This is in fact what we are doing now, after I've rejected the above solution
-because of the fear of a leak on the probably not so well tested error path.
+Please take the time to look at the code and save your judgement until
+you do.  That said, I'm not in love with the complexity of how DM
+handles bioset initialization.  But both you and Jens keep taking
+shots at DM for doing things wrong without actually looking.
 
-You answer encourages me to maybe just try it. The problem is, that if a few pages
-or inodes keep hanging around only occasionally, the systems would probably need month
-and month until this manifest as a problem. So I'd never know when to declare the
-test as finished and trust the solution.
+DM uses bioset_init_from_src().  Yet you've both assumed double frees
+and such (while not entirely wrong your glossing over the detail that
+there is intervening reinitialization of DM's biosets between the
+bioset_exit()s)
 
-The "rm -r" does help a bit but not as much as I've hoped. It might take half
-the time for some workloads but it is still in the same order of magnitude
-for typical loads.
-
->> - I consider to create a new dm target or add an option to an existing
->> one, because I feel that "zero" underneath a filesystem asks for problems
->> because a filesystem expects to read back the data that it wrote, and the
->> "error" target would trigger lots of errors during the writeback
->> attempts. What I really want is a target which silently discard writes
->> and returns errors on reads. Any opinion about that?
->
->> - But to use devicemapper to eat away the I/O is also just a workaround
->> to the fact that we can't parse some flag to umount to say that we are
->> okay to lose all data and leave the filesystem in a corrupted state if
->> this was the last reference to it. Would this be a useful feature?
-> 
-> I think something like this might be useful if the "rm -rf" solution is too
-> slow. But it is a bit of a niche usecase ;).
-
-I've abandoned the "dm"-path as well, more or less for the same reason:
-This would trigger seldom used error paths in the filesystem.
-
-Aside from the already mentioned one, I could think of others usecases:
-
-- You've already unplugged a removable drive. Whatever happened to the data on
-the device already happened and you just want to make sure, the system releases
-all resources.
-
-- Anything which uses file system images where the final state of the image
-doesn't need to be kept (build systems, test systems).
-
-Another idea I've had is to add a ioctl for the block layer which just undirtyes all
-pages which go to that backing device. It would help for file data only, not for
-the metadata, but I guess that would be enough. I wouldn't need to mess with the
-layer under the filesystem. Good idea or bad idea?
-
-But I have the feeling this would be complicated taking all the required locking
-and possible in-flight states into account. This could well be over my level. And
-it would never be accepted upstream, so I'd need to forward-port that forever.
-
-
-Thanks!
-
-   Donald
-
-> 								Honza
-
-
--- 
-Donald Buczek
-buczek@molgen.mpg.de
-Tel: +49 30 8413 1433
+And it really can just be that the block code had a bug where it
+didn't clear bs->cache.  Doesn't need to be cause for attacks.
 
 --
 dm-devel mailing list
