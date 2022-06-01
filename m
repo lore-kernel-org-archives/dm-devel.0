@@ -4,57 +4,57 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id B26BBC433EF
-	for <dm-devel@archiver.kernel.org>; Wed,  1 Jun 2022 06:19:06 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id EE1DCC433FE
+	for <dm-devel@archiver.kernel.org>; Wed,  1 Jun 2022 06:59:03 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-160-2I6SZ_yjNNa4Oy7IN0oqPQ-1; Wed, 01 Jun 2022 02:19:02 -0400
-X-MC-Unique: 2I6SZ_yjNNa4Oy7IN0oqPQ-1
+ us-mta-202-FnBmOyn0MbiSlVJnLFP33g-1; Wed, 01 Jun 2022 02:58:59 -0400
+X-MC-Unique: FnBmOyn0MbiSlVJnLFP33g-1
 Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com [10.11.54.9])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id CF90C8027EE;
-	Wed,  1 Jun 2022 06:19:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2392A3C16191;
+	Wed,  1 Jun 2022 06:58:58 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 7CA2A492C3B;
-	Wed,  1 Jun 2022 06:19:00 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id C8169492C3B;
+	Wed,  1 Jun 2022 06:58:57 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 5F8CD1947070;
-	Wed,  1 Jun 2022 06:19:00 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 7ED8D194706E;
+	Wed,  1 Jun 2022 06:58:57 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
  [10.11.54.1])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 8C3C7194706A
- for <dm-devel@listman.corp.redhat.com>; Wed,  1 Jun 2022 06:18:59 +0000 (UTC)
+ ESMTP id 57104194706A
+ for <dm-devel@listman.corp.redhat.com>; Wed,  1 Jun 2022 06:58:56 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 5B943400F75F; Wed,  1 Jun 2022 06:18:59 +0000 (UTC)
+ id 2FE69400F75F; Wed,  1 Jun 2022 06:58:56 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 57E4340CFD0A
- for <dm-devel@redhat.com>; Wed,  1 Jun 2022 06:18:59 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-2.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 3FAD185A5B9
- for <dm-devel@redhat.com>; Wed,  1 Jun 2022 06:18:59 +0000 (UTC)
+ (mimecast02.extmail.prod.ext.rdu2.redhat.com [10.11.55.18])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 2C2DB406AD4A
+ for <dm-devel@redhat.com>; Wed,  1 Jun 2022 06:58:56 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 18F51801228
+ for <dm-devel@redhat.com>; Wed,  1 Jun 2022 06:58:56 +0000 (UTC)
 Received: from bombadil.infradead.org (bombadil.infradead.org
  [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-435-ycaCqBiLM7OdHkxbFPlBLw-1; Wed, 01 Jun 2022 02:18:57 -0400
-X-MC-Unique: ycaCqBiLM7OdHkxbFPlBLw-1
+ us-mta-650-HAq8mVrwOtqjqA7yoh7zZQ-1; Wed, 01 Jun 2022 02:58:52 -0400
+X-MC-Unique: HAq8mVrwOtqjqA7yoh7zZQ-1
 Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red
- Hat Linux)) id 1nwHgz-00E5mV-3C; Wed, 01 Jun 2022 06:18:53 +0000
-Date: Tue, 31 May 2022 23:18:53 -0700
+ Hat Linux)) id 1nwHTN-00E3XW-HC; Wed, 01 Jun 2022 06:04:49 +0000
+Date: Tue, 31 May 2022 23:04:49 -0700
 From: Christoph Hellwig <hch@infradead.org>
-To: Jens Axboe <axboe@kernel.dk>
-Message-ID: <YpcEzU11WS52gpmk@infradead.org>
+To: Mike Snitzer <snitzer@redhat.com>
+Message-ID: <YpcBgY9MMgumEjTL@infradead.org>
 References: <YpK7m+14A+pZKs5k@casper.infradead.org>
  <2523e5b0-d89c-552e-40a6-6d414418749d@kernel.dk>
- <YpZlOCMept7wFjOw@redhat.com> <YpcBgY9MMgumEjTL@infradead.org>
- <08625f5f-4781-52c5-46fc-d1250f70626c@kernel.dk>
+ <YpZlOCMept7wFjOw@redhat.com>
 MIME-Version: 1.0
-In-Reply-To: <08625f5f-4781-52c5-46fc-d1250f70626c@kernel.dk>
+In-Reply-To: <YpZlOCMept7wFjOw@redhat.com>
 X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
  bombadil.infradead.org. See http://www.infradead.org/rpr.html
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
@@ -77,9 +77,8 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: linux-block@vger.kernel.org, Mike Snitzer <snitzer@redhat.com>,
- david@fromorbit.com, Matthew Wilcox <willy@infradead.org>,
- Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+ dm-devel@redhat.com, david@fromorbit.com, Matthew Wilcox <willy@infradead.org>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
@@ -91,13 +90,13 @@ Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Jun 01, 2022 at 12:08:57AM -0600, Jens Axboe wrote:
-> Yes, that was my point in the previous email - get rid of
-> bioset_initialized() and just fixup dm, which is the only user of it.
-> There really should be no need to have this kind of conditional checking
-> and initialization.
+On Tue, May 31, 2022 at 02:58:00PM -0400, Mike Snitzer wrote:
+> Yes, we need the above to fix the crash.  Does it also make sense to
+> add this?
 
-dm and md, but yes, we should not really use this check anywhere.
+Can we just stop treating bio_sets so sloppily and make the callers
+handle their lifetime properly?  No one should have to use
+bioset_initialized (or double free bio_sets).
 
 --
 dm-devel mailing list
