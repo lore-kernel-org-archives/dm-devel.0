@@ -4,78 +4,79 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 65193C43334
-	for <dm-devel@archiver.kernel.org>; Wed,  1 Jun 2022 21:53:11 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id F00C1C43334
+	for <dm-devel@archiver.kernel.org>; Wed,  1 Jun 2022 23:10:47 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-563-fU6WIxbCNnWfA_rRarBMsA-1; Wed, 01 Jun 2022 17:53:07 -0400
-X-MC-Unique: fU6WIxbCNnWfA_rRarBMsA-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-369-T4yemuGCNl2D0tqBOf3Eow-1; Wed, 01 Jun 2022 19:10:43 -0400
+X-MC-Unique: T4yemuGCNl2D0tqBOf3Eow-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 44E4780159B;
-	Wed,  1 Jun 2022 21:53:05 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id D6C1929AB41F;
+	Wed,  1 Jun 2022 23:10:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id EAF3C2026D07;
-	Wed,  1 Jun 2022 21:53:04 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 2BCCD2166B26;
+	Wed,  1 Jun 2022 23:10:41 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id C612719452D8;
-	Wed,  1 Jun 2022 21:53:04 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx09.intmail.prod.int.rdu2.redhat.com
- [10.11.54.9])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id D70101947B88;
+	Wed,  1 Jun 2022 23:10:40 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx02.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.2])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id B4F4B194707F
- for <dm-devel@listman.corp.redhat.com>; Wed,  1 Jun 2022 21:53:03 +0000 (UTC)
+ ESMTP id 3248C194707F
+ for <dm-devel@listman.corp.redhat.com>; Wed,  1 Jun 2022 23:10:40 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 8DA3F492CA2; Wed,  1 Jun 2022 21:53:03 +0000 (UTC)
+ id 20D1340EC002; Wed,  1 Jun 2022 23:10:40 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8828D492C3B
- for <dm-devel@redhat.com>; Wed,  1 Jun 2022 21:53:03 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6DD7B294EDEB
- for <dm-devel@redhat.com>; Wed,  1 Jun 2022 21:53:03 +0000 (UTC)
-Received: from ams.source.kernel.org (ams.source.kernel.org [145.40.68.75])
- by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-141--N4e5-5aOm-jAEZ6OUlz1g-1; Wed, 01 Jun 2022 17:53:02 -0400
-X-MC-Unique: -N4e5-5aOm-jAEZ6OUlz1g-1
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+ (mimecast06.extmail.prod.ext.rdu2.redhat.com [10.11.55.22])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 1C5B440EC004
+ for <dm-devel@redhat.com>; Wed,  1 Jun 2022 23:10:40 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by ams.source.kernel.org (Postfix) with ESMTPS id B2295B8175B;
- Wed,  1 Jun 2022 21:53:00 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 53861C385B8;
- Wed,  1 Jun 2022 21:52:59 +0000 (UTC)
-Received: from aws-us-west-2-korg-oddjob-1.ci.codeaurora.org
- (localhost.localdomain [127.0.0.1])
- by aws-us-west-2-korg-oddjob-1.ci.codeaurora.org (Postfix) with ESMTP id
- 428C1F0394E; Wed,  1 Jun 2022 21:52:59 +0000 (UTC)
-From: pr-tracker-bot@kernel.org
-In-Reply-To: <YpfTQgw6RsEYxSFD@redhat.com>
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 03B17185A794
+ for <dm-devel@redhat.com>; Wed,  1 Jun 2022 23:10:40 +0000 (UTC)
+Received: from mail-qt1-f179.google.com (mail-qt1-f179.google.com
+ [209.85.160.179]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-658-XT6UAQPANWyBTJ8qsFkEJA-1; Wed, 01 Jun 2022 19:10:38 -0400
+X-MC-Unique: XT6UAQPANWyBTJ8qsFkEJA-1
+Received: by mail-qt1-f179.google.com with SMTP id k12so2296579qtx.13
+ for <dm-devel@redhat.com>; Wed, 01 Jun 2022 16:10:38 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=1e100.net; s=20210112;
+ h=x-gm-message-state:date:from:to:cc:subject:message-id:references
+ :mime-version:content-disposition:in-reply-to;
+ bh=3BL2j27uOeKUjZvjS9fDhhPdKAKOn2fyQ3uqHAJSWmw=;
+ b=nu0+QFnavkkWQG7XHq/BnavDcK6vOKhmZmgd0moBdNXvaM5Zfl1+GwwQ04ikz2NVPq
+ pBNCYalgviSBZuE/xsdXE/DiETEaXO58Gsvd/1ZxPyenEVToqJsSM2cBaN57cZBd83w4
+ a9ZxQgsh9spxeym3gRIWgrgBrSM0cN9fz9pVStMA19pjAYRw13XOBz0PISmcfk6B/C2n
+ zhEs0pnTZ9hMZjJZ2uU3ZW6X+CeOU8Ij6yhhpfqJr6nIc5g+vGWvLK+idwZyHuAmRCLv
+ gq4W+zg7WYdmWngV70YHPIot0uk92nzHsjpPZRLzlbAaSYVR6/4Bel5Hap61zd60CTo7
+ aeqg==
+X-Gm-Message-State: AOAM532TpMDKl3xsteTM8+W28qRxAyqVcLzqMv3jcXgl7DidYZZPE3eD
+ RjqNuezZNvEXdLilUWLqj5AsRf0V5tzSr4s=
+X-Google-Smtp-Source: ABdhPJxDP8Use9lg+iACzkQhLsjrYAfgKdP6/Xd1MUjR7GEHLk4x+Yr8dJBFQe84kuV1GR8lB+i1tQ==
+X-Received: by 2002:a05:622a:1452:b0:304:5453:fa43 with SMTP id
+ v18-20020a05622a145200b003045453fa43mr1722231qtx.297.1654125037749; 
+ Wed, 01 Jun 2022 16:10:37 -0700 (PDT)
+Received: from localhost (pool-68-160-176-52.bstnma.fios.verizon.net.
+ [68.160.176.52]) by smtp.gmail.com with ESMTPSA id
+ fb11-20020a05622a480b00b002fbf0114477sm1949883qtb.3.2022.06.01.16.10.37
+ (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+ Wed, 01 Jun 2022 16:10:37 -0700 (PDT)
+Date: Wed, 1 Jun 2022 19:10:36 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <Ypfx7MPYGehYdwCo@redhat.com>
 References: <YpfTQgw6RsEYxSFD@redhat.com>
-X-PR-Tracked-List-Id: <linux-block.vger.kernel.org>
-X-PR-Tracked-Message-Id: <YpfTQgw6RsEYxSFD@redhat.com>
-X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git
- tags/for-5.19/dm-fixes
-X-PR-Tracked-Commit-Id: 4caae58406f8ceb741603eee460d79bacca9b1b5
-X-PR-Merge-Tree: torvalds/linux.git
-X-PR-Merge-Refname: refs/heads/master
-X-PR-Merge-Commit-Id: fa78526accfd68966fb50a429439e9085f9c88d6
-Message-Id: <165412037926.5556.12163341138879689778.pr-tracker-bot@kernel.org>
-Date: Wed, 01 Jun 2022 21:52:59 +0000
-To: Mike Snitzer <snitzer@kernel.org>
-X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
- Definition; Similar Internal Domain=false;
- Similar Monitored External Domain=false; Custom External Domain=false;
- Mimecast External Domain=false; Newly Observed Domain=false;
- Internal User Name=false; Custom Display Name List=false;
- Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
- Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.9
+ <CAHk-=wjTOB7yuygFwz64xFHYthwdTOYoC=L2kM4k1GW2a80uNQ@mail.gmail.com>
+MIME-Version: 1.0
+In-Reply-To: <CAHk-=wjTOB7yuygFwz64xFHYthwdTOYoC=L2kM4k1GW2a80uNQ@mail.gmail.com>
+X-Scanned-By: MIMEDefang 2.84 on 10.11.54.2
 Subject: Re: [dm-devel] [git pull] device mapper fixes for 5.19-rc1
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
@@ -88,33 +89,87 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Kees Cook <keescook@chromium.org>,
- Sarthak Kukreti <sarthakkukreti@google.com>, linux-block@vger.kernel.org,
- dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>,
- Alasdair G Kergon <agk@redhat.com>
-MIME-Version: 1.0
+Cc: linux-block <linux-block@vger.kernel.org>,
+ Sarthak Kukreti <sarthakkukreti@google.com>,
+ device-mapper development <dm-devel@redhat.com>,
+ Kees Cook <keescook@chromium.org>, Alasdair G Kergon <agk@redhat.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
+Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-The pull request you sent on Wed, 1 Jun 2022 16:59:46 -0400:
+On Wed, Jun 01 2022 at  5:43P -0400,
+Linus Torvalds <torvalds@linux-foundation.org> wrote:
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-5.19/dm-fixes
+> On Wed, Jun 1, 2022 at 1:59 PM Mike Snitzer <snitzer@kernel.org> wrote:
+> >
+> > ----------------------------------------------------------------
+> > - Fix DM core's dm_table_supports_poll to return false if no data
+> >   devices.
+> 
+> So looking at that one (mainly because of the incomprehensible
+> explanation), I do note:
+> 
+>  (a) the caller does
+> 
+>         for (i = 0; i < t->num_targets; i++) {
+>                 ti = t->targets + i;
+> 
+>     while the callee does
+> 
+>         unsigned i = 0;
+> 
+>         while (i < dm_table_get_num_targets(t)) {
+>                 ti = dm_table_get_target(t, i++);
+> 
+> Now, those things are entirely equivalent, but that latter form is
+> likely to generate horribly bad code because those helper functions
+> aren't some kind of trivial inline, they are actually normal functions
+> that are defined later in that same source file.
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/fa78526accfd68966fb50a429439e9085f9c88d6
+Yes, that needs fixing.. but not urgently so.
+ 
+> Maybe a compiler will do optimizations within that source file even
+> for functions that haven't been defined yet. Traditionally not.
+> 
+> Whatever. Probably not a case where anybody cares about performance,
+> but it does strike me that the "use abstractions" version probably not
+> only generates worse code, it seems less legible too.
+> 
+> Very odd pattern.
 
-Thank you!
+OK, I can just nuke those wrappers.  But yeah, none of this setup code
+is fast path.
 
--- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/prtracker.html
+>  (b) The commit message (which is why I started looking at this) says
+> that it used to return true even if there are no data devices.
+> 
+>      But dm_table_supports_poll() actually _still_ returns true for at
+> least one case of no data devices: if the dm_table has no targets at
+> all.
+
+Right, I'm aware.. ugly but not a case that really matters (more below).
+
+> So I don't know. Maybe that is a "can't happen". But since I looked at
+> this, I thought I'd just point out the two oddities I found while
+> doing so.
+
+It can happen that someone loads a table without any targets but it
+isn't a case that matters given IO cannot be sent anywhere.  For that
+to happen the DM table will have been reloaded to have targets (at
+which point all will be setup properly, assuming no bugs like was
+fixed here).
+
+I do see you've since pulled the changes.
+
+Thanks,
+Mike
 
 --
 dm-devel mailing list
