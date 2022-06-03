@@ -4,158 +4,148 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 2BEDCCCA483
-	for <dm-devel@archiver.kernel.org>; Mon,  6 Jun 2022 06:46:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 24A76CCA473
+	for <dm-devel@archiver.kernel.org>; Mon,  6 Jun 2022 06:46:25 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-669-wr7TYsW3ODyIcXjVv3TGsQ-1; Mon, 06 Jun 2022 02:46:22 -0400
-X-MC-Unique: wr7TYsW3ODyIcXjVv3TGsQ-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-669-QiYQl3RYNeK05Fj5h_5_RQ-1; Mon, 06 Jun 2022 02:46:22 -0400
+X-MC-Unique: QiYQl3RYNeK05Fj5h_5_RQ-1
+Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1E4971C13941;
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2298029ABA2B;
 	Mon,  6 Jun 2022 06:46:20 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 38DCB1415102;
-	Mon,  6 Jun 2022 06:46:19 +0000 (UTC)
-Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 0F7A61947B90;
+	by smtp.corp.redhat.com (Postfix) with ESMTP id BF1FA2166B26;
 	Mon,  6 Jun 2022 06:46:18 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com
- [10.11.54.7])
+Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A557B19451EF;
+	Mon,  6 Jun 2022 06:46:17 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 6499E194704D
- for <dm-devel@listman.corp.redhat.com>; Fri,  3 Jun 2022 17:56:03 +0000 (UTC)
+ ESMTP id A7ACB1947040
+ for <dm-devel@listman.corp.redhat.com>; Fri,  3 Jun 2022 08:29:06 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 11F881410F37; Fri,  3 Jun 2022 17:56:03 +0000 (UTC)
+ id 86F71C27E92; Fri,  3 Jun 2022 08:29:06 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
  (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 0D1601410F36
- for <dm-devel@redhat.com>; Fri,  3 Jun 2022 17:56:03 +0000 (UTC)
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 81E4DC23DC9
+ for <dm-devel@redhat.com>; Fri,  3 Jun 2022 08:29:06 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [207.211.31.120])
+ [205.139.110.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E54D4811E75
- for <dm-devel@redhat.com>; Fri,  3 Jun 2022 17:56:02 +0000 (UTC)
-Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com
- [205.220.177.32]) by relay.mimecast.com with ESMTP with STARTTLS
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 66B83811E76
+ for <dm-devel@redhat.com>; Fri,  3 Jun 2022 08:29:06 +0000 (UTC)
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
+ [205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-195-t203n9UDOEuwIdM1YDRhPw-1; Fri, 03 Jun 2022 13:56:01 -0400
-X-MC-Unique: t203n9UDOEuwIdM1YDRhPw-1
-Received: from pps.filterd (m0246630.ppops.net [127.0.0.1])
- by mx0b-00069f02.pphosted.com (8.17.1.5/8.17.1.5) with ESMTP id 253FK45T017182;
- Fri, 3 Jun 2022 17:55:40 GMT
-Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com
- (iadpaimrmta02.appoci.oracle.com [147.154.18.20])
- by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3gfgmsgwd9-1
+ us-mta-386-fgBcR-4WMuiOL5jgpcT7hQ-1; Fri, 03 Jun 2022 04:29:04 -0400
+X-MC-Unique: fgBcR-4WMuiOL5jgpcT7hQ-1
+Received: from pps.filterd (m0246629.ppops.net [127.0.0.1])
+ by mx0b-00069f02.pphosted.com (8.17.1.5/8.17.1.5) with ESMTP id 2535egi5004301;
+ Fri, 3 Jun 2022 06:55:56 GMT
+Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com
+ (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
+ by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3gf08e198r-1
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 03 Jun 2022 17:55:39 +0000
+ Fri, 03 Jun 2022 06:55:55 +0000
 Received: from pps.filterd
- (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
- by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (8.16.1.2/8.16.1.2)
- with SMTP id 253Hiubf018458; Fri, 3 Jun 2022 17:55:39 GMT
-Received: from nam12-mw2-obe.outbound.protection.outlook.com
- (mail-mw2nam12lp2044.outbound.protection.outlook.com [104.47.66.44])
- by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com with ESMTP id
- 3gc8knu86u-1
+ (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+ by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.16.1.2/8.16.1.2)
+ with SMTP id 2536oJOK001834; Fri, 3 Jun 2022 06:55:55 GMT
+Received: from nam04-dm6-obe.outbound.protection.outlook.com
+ (mail-dm6nam04lp2048.outbound.protection.outlook.com [104.47.73.48])
+ by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com with ESMTP id
+ 3gc8hyxp2g-2
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 03 Jun 2022 17:55:39 +0000
+ Fri, 03 Jun 2022 06:55:55 +0000
 Received: from DM5PR10MB1466.namprd10.prod.outlook.com (2603:10b6:3:b::7) by
- BL3PR10MB5490.namprd10.prod.outlook.com (2603:10b6:208:33d::9) with Microsoft
+ BYAPR10MB2789.namprd10.prod.outlook.com (2603:10b6:a03:82::27) with Microsoft
  SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.5314.12; Fri, 3 Jun 2022 17:55:36 +0000
+ 15.20.5293.19; Fri, 3 Jun 2022 06:55:53 +0000
 Received: from DM5PR10MB1466.namprd10.prod.outlook.com
  ([fe80::f81d:b8ef:c5a4:9c9b]) by DM5PR10MB1466.namprd10.prod.outlook.com
  ([fe80::f81d:b8ef:c5a4:9c9b%3]) with mapi id 15.20.5293.019; Fri, 3 Jun 2022
- 17:55:35 +0000
-Message-ID: <2634b3ae-f63d-c711-36cd-bf8f56ecc43b@oracle.com>
-Date: Fri, 3 Jun 2022 12:55:33 -0500
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:91.0) Gecko/20100101
- Thunderbird/91.10.0
-To: Christoph Hellwig <hch@lst.de>
-References: <20220603065536.5641-1-michael.christie@oracle.com>
- <20220603114645.GA14309@lst.de>
+ 06:55:52 +0000
 From: Mike Christie <michael.christie@oracle.com>
-In-Reply-To: <20220603114645.GA14309@lst.de>
-X-ClientProxiedBy: DM5PR12CA0001.namprd12.prod.outlook.com (2603:10b6:4:1::11)
- To DM5PR10MB1466.namprd10.prod.outlook.com
+To: linux-block@vger.kernel.org, dm-devel@redhat.com, snitzer@kernel.org,
+ hch@lst.de, axboe@kernel.dk, martin.petersen@oracle.com,
+ james.bottomley@hansenpartnership.com, linux-scsi@vger.kernel.org,
+ target-devel@vger.kernel.org
+Date: Fri,  3 Jun 2022 01:55:33 -0500
+Message-Id: <20220603065536.5641-9-michael.christie@oracle.com>
+In-Reply-To: <20220603065536.5641-1-michael.christie@oracle.com>
+References: <20220603065536.5641-1-michael.christie@oracle.com>
+X-ClientProxiedBy: DM5PR16CA0012.namprd16.prod.outlook.com
+ (2603:10b6:3:c0::22) To DM5PR10MB1466.namprd10.prod.outlook.com
  (2603:10b6:3:b::7)
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: d14f32c5-61cc-427b-f303-08da458a42d8
-X-MS-TrafficTypeDiagnostic: BL3PR10MB5490:EE_
-X-Microsoft-Antispam-PRVS: <BL3PR10MB5490F0924F0FF8CE7353B730F1A19@BL3PR10MB5490.namprd10.prod.outlook.com>
+X-MS-Office365-Filtering-Correlation-Id: 562c0e60-29d6-4949-b5d8-08da452e199f
+X-MS-TrafficTypeDiagnostic: BYAPR10MB2789:EE_
+X-Microsoft-Antispam-PRVS: <BYAPR10MB27890E5A99C430B54125564EF1A19@BYAPR10MB2789.namprd10.prod.outlook.com>
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: QcEa1ejL2OB3/itfohEt1AaRiFwTF9rDvJRbZVX/pt6eK+42xjvRZkOf0Rw/jpyYshfbrP/r9BKQY9AeqPeMtmDJVVPkgVfYxHnjm+Sgnpika67uD5lPMMiJlR4tpOH4bFxD3dXT+bp3YYP3BXFFJjqSHnWqtzKhztNTpT4uc8W7/Koc+JhnN91Jqf3KCcQssv8A0uquYbNgTz9hnk4koAwobtOJQHIWjXL/LQTzSBNpeGkVD3YPZDuP6zPsRnrJVeadk3xgbSX2aoydRX2lLiHGMO8H6OAtoWOKxUj8GE7UJmmwjQgkT1o2kHxI3W1ok3Z2M1J3TavW1+19VCYt9mJHHX+xcoF2H4CwJf+DpQfRWulmap29cTiP0hrXk8Ugee4zyJSmGW6FdSAopMZiQyXYSIEsCbZKBlC91NWCtgqMiF2EITdsrYv3covpwJxAkgENUywGIoOkcouoqtRnYtfNzi366HDs7WIvww3JsC4qqZvKko6YVbTSa19dtKVUuXnmhs3Ci2Rh4NrgCdSZ2cg9J/jTwmwqOcoKNoHziILyKOdZVs/V0NAeWEbwOG3jTimdzJgx1sPX6XLF+r8ndgCXW+bfZZvkydh7D4O0kxiMc8YMZ+J9K2CH8P5U3FvQgagHjjHBmL63+2BQoR1fOH7CiWsiAXJvVlttLHd2R6+ndWaiOhogsMWYiPgMlhBHI+aG+/Ff1/khKoJTbJk79dEBUgr+O/kVYAxRLMlDCO/il56MMA1/dWvfSi8qCqGYKfS2wJ+xqdCj7gNxu4kUlqTRSjYkEoPW5R8pRcnEdkuTsB3/+I6wGvtzHUYV3k+ZgXU+sCmhzqJPBaj/JkIm4g==
+X-Microsoft-Antispam-Message-Info: wL3ybMrxn6e4NN776nsKhMa9Ll+GJWlMO49BjoJfkXqOZDuUjujg6rmXosjqWlIKuXt3fdOKYjZ9xigquW4Avm2OLB7yWGXyMsI8Iz0Mzxi8UR9wdZjzXSkx7bVGajPLNFOxp9W9rJoZFjy7Ahsi9CEkM02KvUV45S0Wl5MuNrbgC2ChMt0W0pdw+tVK3BPhkLMbONi8DtlJ2VHVrLCXHIDgNaYctkD7DFsc54tzmfAusK04x0IyrTMFnnr7iVgY6VDzkGkRNGUs7PduzWx/qC70BVPz0/JaHST1AMXOdPARSxFH17yPxkhifwdQvRlFOI1gsv7LfgSdYUXgRswVg9BnovJigecyBHk0tvEPYBaWT0r99Z6rIwXoR1Bt+isRVtzbPuCwtsG5tVlPSjTolVzVIDjMAkm00uAtP7FohnKI1PfpxnwWmMQGVHa7b5wJhGkeV/hbqmTegkOQJohlXLDudui8sdMUn3T+DJdlzf5gaiEa0bX2uYJxFMZSwS76LvFwYozEJeZEx628PKv+aEJ0UE7RBaCXPQfSycYPelbSQnI2PuRjArzlxZHBjRe7DjbCyr6ztLd3zh2B5Ju7pYDt5yINIXYt1xna7I3U5Nw1FvXVDa5nT8qCrNTYdfneVmQYv2Jq9v4NxBYiopBVlCabAaiLcRsZRLcP/wfa4XQZtwq2URWkHeSQkrHOEIvrr9x6CRhdvs92PJ0CEH3bzQ==
 X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
  IPV:NLI; SFV:NSPM; H:DM5PR10MB1466.namprd10.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230001)(366004)(186003)(36756003)(31696002)(53546011)(2616005)(31686004)(26005)(316002)(6512007)(6916009)(6506007)(86362001)(508600001)(2906002)(5660300002)(66476007)(83380400001)(38100700002)(8936002)(6486002)(66946007)(66556008)(4326008)(8676002)(966005)(43740500002)(45980500001);
+ SFS:(13230001)(366004)(66946007)(8676002)(38350700002)(38100700002)(66476007)(4326008)(66556008)(86362001)(83380400001)(36756003)(8936002)(107886003)(6486002)(2616005)(316002)(5660300002)(1076003)(6512007)(26005)(2906002)(6506007)(52116002)(186003)(30864003)(6666004)(508600001);
  DIR:OUT; SFP:1101
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?utf-8?B?RDlScERqTkt4UWFHZFZZMDFGMkZlQ0lVYUxpWnVGNm9ZejlrZTRBa1hhNjFr?=
- =?utf-8?B?RmdiS1N0U3IyMHZ6WHBYaDRSNXNxUzVaWkNpRnR4eFBQYXVwMmV4NllwRmUz?=
- =?utf-8?B?WWMwczJNcmhQeVl1M3JsWHNMazl4YTFNWHlnbnlWZS9YY0s0Rm9ucU5FbzVH?=
- =?utf-8?B?V1NIRnlZR3B1ck14anpuS1B4V0Nucmp6ejNCL0N0cWU2N2NJNUNIRmFZL3hR?=
- =?utf-8?B?YS9Sek40d1c5RDgwekJPZzJHaXFUMnhHMXV6UXNTZHI2b3pZVmxiM1dZcWFY?=
- =?utf-8?B?ZUw2d1R5QjZxRzNqSS92Zm1FSGxzY1RXcFlncDdhR3U4dzU4V0oycHBKb0NG?=
- =?utf-8?B?dEJLM29HWGZVL2lpVHlKL2txeUNsRWtaTldkN2l2emxhL3M0OC9MTEg1cS96?=
- =?utf-8?B?dWtqWlZMYmg3U3pzRlRsdHBHeHNSd05nekZ2MWlLVEM4dk9iSXJoNEtkOGhN?=
- =?utf-8?B?aDJlTEFmdmxlZUorVXFpOWZnMVI0dXhkQ1poekw0UFZxTXhGaHF5V0V6WUwz?=
- =?utf-8?B?TlZqTmZFQUlCUzlpNStiM0lTV3B2akJiazFaOUFkeXArSkRHL0VyL0RsSndi?=
- =?utf-8?B?cVpicm1OZi9PZ3V5TERuV2Y5RXN6RGZpSENBNEpYRnVucmFMSzNpRFkxalJF?=
- =?utf-8?B?WmJNZ3hxWHBvS3pkN25xQ1JYRUlWd1ArR2ZoNjFEUTBQUFZEMWpYMS84RXh3?=
- =?utf-8?B?ZVhrVTlqRC9ZdUxuL2YwcWZlbEQwZklmdFVSWUt2alVjZWlxSUgvSEttSjd2?=
- =?utf-8?B?eE95TC9scG5CYkpqT0c0eVdVZVJocGtXb2VqSTBRRzlTdjBKNitVNGxMSWhw?=
- =?utf-8?B?VXgrVCt0WGJMUW9wZnJ0OUJ3TFYrM3A5KzdNeGhhZ2srdlRuUWV2RGRPbzJj?=
- =?utf-8?B?M09QT3RXVDdpNUZnZm5maG91ZlZVNFdnRnBYdTFnQXNBbjA5RXRyR2lwbGNq?=
- =?utf-8?B?SkQ2czdqRDZsNEJTbjkxa3MvUVR4Wjg4em04NWtxMGdsZ0k4VjBBS0pBa1VH?=
- =?utf-8?B?Vjd4RVp6VFhkMlZ4bXoyUHlYWkNsVG16Q3Ztb2N4dHNaQjlyOXRxd1FUYXRO?=
- =?utf-8?B?ajFhbm80N3BkaVlGcDB6REliajlybDBLUnNsU0ZWV2kzZ2JzQWR6NTNLZ3RP?=
- =?utf-8?B?Um01YVJLczRBeW42a2JFb3JRNTc2UjgyUHJYaXNHcWlmcWdjZTg3Tm00ZktV?=
- =?utf-8?B?b29PaEd4VEJueFYxTGE4R0JLMGIrSFZGaGw5OWtoZys3WlFWNFdyNlBQNjZa?=
- =?utf-8?B?Z3EvVDV2N2tibzl5aFZmL1kxQW1NNGt4Qi9pVm5rNXEwbVFMTjgxQVFWWFFa?=
- =?utf-8?B?OVM5OGZJaWRjeTQxMDl1MUVzbmVyQVJBWUNtakhIZFRkRXNVdjJXWTZZWGZ2?=
- =?utf-8?B?S3R4SlAxWTBjS3MycnBkaVNVeDhNL1dsQ1J0T3lwSXRRREZNNXZIK1ZSYnBP?=
- =?utf-8?B?WnVVWUp1VUlMelNGZldDaE0rRHV2a3NDcXVLQVR2d0lxY1g4MWgrNmNvMkgy?=
- =?utf-8?B?OFdhTE14QWQ5SnQ2ZHpkZkUxN2pVMTBTTXhDQkx4eHIzcktKVy9CQ1RRMGYx?=
- =?utf-8?B?RGIvOThRS2Y0cnQvRnlPeUtqTUNUazlyODdSUFhBeXBuUzZaV3FoL0JhM1hz?=
- =?utf-8?B?VHVIK3NkczlDYUpMQXdibHdzMERJQk9sNitmRHRGWm9VZEpZRzRuTENBY1lE?=
- =?utf-8?B?cGF3OW0ydldONG93WEdDTlRHZVlrYnkyNDYzV0RVYmJVWmF1UUlFK2NTSDUr?=
- =?utf-8?B?VlcvWnRlcXV6dnlxWjI2SkRsbTFOUDlMTmcyL0hYSnlNc0pTNlVJeUlnMndw?=
- =?utf-8?B?cFArY0lTT1BZdDFHdzlEZ0R3d2cvbmRnbFpOY1FsT1d0cXNJK2hwb1hJei9L?=
- =?utf-8?B?T09oWjQydlhnQXl2dXlsOVk2ZWo3RnBmbmF0ekZMMTZGZ2NzN0t1aDc5ZWt1?=
- =?utf-8?B?eHpsdEhhWkdPV0Joa25NYTVJa0R3MUt3WFJzcDh6OUh3eTlOWndBUUl1a2c2?=
- =?utf-8?B?UWJTaEFOZUlYUlBFa09RekNJZkMwdytQRW5mbFRmdUJPNk5MQ2poSi9qVklv?=
- =?utf-8?B?QTZUdTNZRWhXZE1pVnV2RTQxT2dIaUd2ZUJhazkrRVh2cW9MeWVVK29obDMv?=
- =?utf-8?B?RWdXK1JvdzNzVnBaSWg1TFVCR1o4RUdQeS9vVmtMRFZhb1R1V2NyNEk2WGV5?=
- =?utf-8?B?U2Z4VFdVU3RXUkR0VGFyeGI0T1Y3OWoxKzdtUVFMSGxuSDVNSDBSMmN5RThX?=
- =?utf-8?B?VzNDZDdvYzcyRzJZOXQveWlQNGhvZGwwZ2RsK1F6N3NQM25jSWNacEhlckRk?=
- =?utf-8?B?QXh1bzY0ZXFoQXZLWjB3c204UTNXbGZ4MGVPd3ZKN0IxVnZpS3pLN3YzR0VB?=
- =?utf-8?Q?oeIVt27bwrGWMoik=3D?=
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?PhEbCTZIBl/sNqsOEH7fG1RIsrKnP0/n80gQxhNcatalRrU69ikAE9Zc01fz?=
+ =?us-ascii?Q?quiALZ/9kQs5wGclxcVgfRIFQytmSbuyeqwnfN/x25PVJpr9g1f60Gr/WYYH?=
+ =?us-ascii?Q?SfHjlQ8bfqkQiA7RUiF822IEEsDVTkMgEpQ/oN1ixBbt78i2R/qJWJT+SyQd?=
+ =?us-ascii?Q?fMXRd6z9PYSuzXSiv0j7L5iuZNtEGoAG82oOynVHd3xDaJLQYeVYNlaVNYdU?=
+ =?us-ascii?Q?wZCNAH3NV5wlYleO9sveD9VfsHYwsLSBDbdCJTcOc7u7BrsEGv4ZoiuevOmb?=
+ =?us-ascii?Q?Q6cykXqYz2n74Z+Ppqm0ZeNAQLno6U7alblPeyjO+MxpxnYl3g3RboxTRYgf?=
+ =?us-ascii?Q?Z2nRy8PPjk8142uzSvrohWyloOUrm0ea7ZSN4w2w+zXDn/D38LJL4+DfcZ6g?=
+ =?us-ascii?Q?v3ucYf7XYNK+8LIg+1sVoUhOZkIi0gwkpdIpBg/EPk1IORXqGZ+X9pcVUmu8?=
+ =?us-ascii?Q?BXLaW9eSiOo2ov6WDWzrRZGd8fPUklRSuQmYCVsNTBdg0+0+vQLbMbT4HulG?=
+ =?us-ascii?Q?WuPlXa9oiWr4Jn3wlvdJWnVYa/faIZQBtGsoDnk6LoeRzEZI5nvPclUKyjxa?=
+ =?us-ascii?Q?qhBM5/oNj9C0sXSeXXUmyVpXCyPa1dF7Axd6DmyQOL9yuFaZBNlt1HFPjZRF?=
+ =?us-ascii?Q?W+gdoWlZX6bpyXEw2FzcH0PY4VKDjk7okXWTwsi/fQ06JIcPbONLJjLris4c?=
+ =?us-ascii?Q?GK/+kJLcygJfy7JewsKdFErgJJg2RUXmz5bEuVIPv/jCk3zLFMb84DKjkdp8?=
+ =?us-ascii?Q?PLTIbG3bcBrZKiWNpQQs/E3XqxFgHrH1K3ZNAm4lK1nm66KTzZ6VNu+zthnZ?=
+ =?us-ascii?Q?1st0fkn9psQjQTK1yrcg7uzpdumMuytN07T/dsc2i6r3rJLCmSHqRjh3rb0i?=
+ =?us-ascii?Q?WklKbbklTuWP2euIObm/MmjBxJB+wQSC2CBTq1irgI7nUgwFWK+4BoM62mn9?=
+ =?us-ascii?Q?H/EH6zke71JLo97olAtOzcLFPfqleHXRhz154xWcSQydK674sqhQr+H7kkei?=
+ =?us-ascii?Q?uS77hSAr8BYUszq39jBMIJl9XcekoDtfs1G6U5DQ20YTnNqzNaCTj9yZg9Ev?=
+ =?us-ascii?Q?RExL78szz45cq5R2SfH4SacJ/7fLC1IHifgrav/jzZuHtGL1s84l2WMebfKJ?=
+ =?us-ascii?Q?MPdjRsNmVQ96yrXeNh1owIq/kcbJEYOSp7wZgWnSOB798g25mbAl/ofZV4aj?=
+ =?us-ascii?Q?0f78PWajX++hp3kyXC6rZU7E4jWJMXwGUtEp6ASe+tsuWJWsBQtLO1Wj8KPL?=
+ =?us-ascii?Q?4ENQgtz5JLYeAcbNG74n49puNE9PYFN+EagtbY1zN+DxNn9YGULsb2eUSbEC?=
+ =?us-ascii?Q?71H2OGYots417EIdhSHIw6BLQpI3O6Wr9kg8CqH4fZwPQ+O5+t3Eu9hOvjmS?=
+ =?us-ascii?Q?F71SnG3dO1YnCZqBIcbXVijkPfFv2N1jTt2q5xrGJJUm5HnWXXGdZ2yv+rJp?=
+ =?us-ascii?Q?Yq5UfFcVGoj6JNMJUKDCtSdgdcvTJqC6bVruX90/p+Lic/mlahas6Yldto+P?=
+ =?us-ascii?Q?nWAjXjZScboyWq1zrTrJYp0qPMRQmP9Ma9/6XqSHq30FY4F8p9MtC+o62Le/?=
+ =?us-ascii?Q?BupgyF15QLyRUvBra1kqnnDWpGVCXF9mWkPU/Xvns2n39+PQcuAix6nkE3Cb?=
+ =?us-ascii?Q?57rVXevhL+rItefnZA5BGFQuWUdecimpdBrsO5DO1Yjt1u6MJZAMiW4q9dxR?=
+ =?us-ascii?Q?XkyywGa3Ll4kH9jUmlpAzhU8SMLEOzZbMPtFd+A6aiC/jMF5kdvktQJdUac3?=
+ =?us-ascii?Q?oCSv6z3U3ZtU1vKmHFNutgq0sGMqask=3D?=
 X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: d14f32c5-61cc-427b-f303-08da458a42d8
+X-MS-Exchange-CrossTenant-Network-Message-Id: 562c0e60-29d6-4949-b5d8-08da452e199f
 X-MS-Exchange-CrossTenant-AuthSource: DM5PR10MB1466.namprd10.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 03 Jun 2022 17:55:35.7538 (UTC)
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 03 Jun 2022 06:55:52.9243 (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: cFCex/nFlwtOpqpCg1NsMK+MevmhGYKk6h9KNIbvP6FZmIeBt6yviPSzkp8yAPP0cUF0CwGhiwqcNlTjAL8h5NSFii88J5iV9Wndz+bcA+Q=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BL3PR10MB5490
+X-MS-Exchange-CrossTenant-UserPrincipalName: pTr4fCgLboqe5H3hj5NuJfVrIfjziOOEL8QdvIUFN7YN0U0EvQMD7lRI2phUm4A3+2C8IGPRGO7KLVcdJuoZ02tDv9HbFEXB8XkSewmAGpg=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR10MB2789
 X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.517, 18.0.874
- definitions=2022-06-03_06:2022-06-02,
+ definitions=2022-06-03_02:2022-06-02,
  2022-06-03 signatures=0
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 spamscore=0
- suspectscore=0
- malwarescore=0 mlxscore=0 mlxlogscore=859 adultscore=0 bulkscore=0
- phishscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.12.0-2204290000 definitions=main-2206030073
-X-Proofpoint-GUID: U_Xu2kgsliFV8H7fMoU_iFeTrXnzGJ1e
-X-Proofpoint-ORIG-GUID: U_Xu2kgsliFV8H7fMoU_iFeTrXnzGJ1e
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 phishscore=0
+ bulkscore=0 suspectscore=0
+ mlxlogscore=999 mlxscore=0 spamscore=0 adultscore=0 malwarescore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2204290000
+ definitions=main-2206030029
+X-Proofpoint-GUID: AFyugBDX9QtpPaGUSZV9DeJ0-Le7wSSU
+X-Proofpoint-ORIG-GUID: AFyugBDX9QtpPaGUSZV9DeJ0-Le7wSSU
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -163,9 +153,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
 X-Mailman-Approved-At: Mon, 06 Jun 2022 06:46:17 +0000
-Subject: Re: [dm-devel] [PATCH 0/8] Use block pr_ops in LIO
+Subject: [dm-devel] [PATCH 08/11] scsi: target: Add block PR support to
+ iblock.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -177,279 +168,385 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: axboe@kernel.dk, james.bottomley@hansenpartnership.com,
- linux-scsi@vger.kernel.org, martin.petersen@oracle.com, snitzer@kernel.org,
- linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
- dm-devel@redhat.com, target-devel@vger.kernel.org
+Cc: Mike Christie <michael.christie@oracle.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.6
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Language: en-US
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On 6/3/22 6:46 AM, Christoph Hellwig wrote:
-> From a highlevel POV this looks good.  I'll do a more detail review in
-> the next days once I find a little time.  Any chance you could also
-> wire up the new ops for nvme so that we know the abtractions work right
-> even for exporting nvme as SCSI?  No need to wire up nvmet for now, but
-> that would be the logical next step.
+This adds support for the block PR callouts to target_core_iblock. This
+patch doesn't attempt to implement the entire spec because there's no way
+to test it all. It only supports what's required for windows clustering
+right now.
 
-I forgot to cc nvme. Doing that now. For the nvme list developers here
-the patchset discussed in this thread:
+Signed-off-by: Mike Christie <michael.christie@oracle.com>
+---
+ drivers/target/target_core_iblock.c | 312 ++++++++++++++++++++++++++++
+ 1 file changed, 312 insertions(+)
 
-https://lore.kernel.org/linux-scsi/20220603114645.GA14309@lst.de/T/#t
-
-For the patchset in this thread I only did the simple SCSI commands
-READ_KEYS and READ_RESERVATION. For nvme-only people, those commands just
-return the registered keys and the reservation info like the key and
-type. There is no controller/host ID type of info like in nvme's
-report reservation command.
-
-I did the basic commands because the apps I need to support don't use the
-more advanced SCSI command READ_FULL_STATUS which returns the equivalent of
-nvme's controller and host ID. I also hit issues with SCSI targets not
-implementing the command correctly. For example, the linux scsi target just
-got fixed last year and it only works by accident in some cases where we have
-2 bugs that cancel each other out :)
-
-However, for nvme and for the interface we want to provide to userspace,
-do we want to implement an interface like READ_FULL_STATUS and report
-reservations where we report the host/controller/port info? If so, below
-is a patch I started.
-
-Notes:
-1. I hit some issues with SCSI targets not reporting the IDs sometimes or
-sometimes they report it incorrectly. For nvme, it seems easier. SCSI has 
-to handle a hand full of ways to report the ID where nvme has 2 ways to
-do the host ID.
-
-2. I couldn't find a nvme device to test. Qemu and nvmet don't seem to
-support reservations.
-
-3. The patch is only compile tested. It's based on a different patch I
-did. I'm just posting because you can see the pr_reservations_info data
-struct we could use for nvme and scsi if we want to report the ID info
-and keys/registrations in one command.
-
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index ca544dfc3210..161a715ab70a 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -3156,6 +3156,28 @@ static int dm_pr_read_reservation(struct block_device *bdev,
- 	return r;
+diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
+index 9b0d788f6744..e8cf201e59ca 100644
+--- a/drivers/target/target_core_iblock.c
++++ b/drivers/target/target_core_iblock.c
+@@ -23,13 +23,16 @@
+ #include <linux/file.h>
+ #include <linux/module.h>
+ #include <linux/scatterlist.h>
++#include <linux/pr.h>
+ #include <scsi/scsi_proto.h>
++#include <scsi/scsi_block_pr.h>
+ #include <asm/unaligned.h>
+ 
+ #include <target/target_core_base.h>
+ #include <target/target_core_backend.h>
+ 
+ #include "target_core_iblock.h"
++#include "target_core_pr.h"
+ 
+ #define IBLOCK_MAX_BIO_PER_TASK	 32	/* max # of bios to submit at a time */
+ #define IBLOCK_BIO_POOL_SIZE	128
+@@ -822,6 +825,295 @@ iblock_execute_rw(struct se_cmd *cmd, struct scatterlist *sgl, u32 sgl_nents,
+ 	return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
  }
  
-+static int dm_pr_report_reservation(struct block_device *bdev,
-+				    struct pr_reservation_info *rsv_info,
-+				    int rsv_regs_len)
++static sense_reason_t iblock_execute_pr_out(struct se_cmd *cmd, u8 sa, u64 key,
++					    u64 sa_key, u8 type, bool aptpl,
++					    bool all_tg_pt, bool spec_i_pt)
 +{
-+	struct mapped_device *md = bdev->bd_disk->private_data;
-+	const struct pr_ops *ops;
-+	int r, srcu_idx;
++	struct se_device *dev = cmd->se_dev;
++	struct iblock_dev *ib_dev = IBLOCK_DEV(dev);
++	struct block_device *bdev = ib_dev->ibd_bd;
++	const struct pr_ops *ops = bdev->bd_disk->fops->pr_ops;
++	int ret;
 +
-+	r = dm_prepare_ioctl(md, &srcu_idx, &bdev);
-+	if (r < 0)
-+		goto out;
-+
-+	ops = bdev->bd_disk->fops->pr_ops;
-+	if (ops && ops->pr_report_reservation)
-+		r = ops->pr_report_reservation(bdev, rsv_info, rsv_regs_len);
-+	else
-+		r = -EOPNOTSUPP;
-+out:
-+	dm_unprepare_ioctl(md, srcu_idx);
-+	return r;
-+}
-+
- static const struct pr_ops dm_pr_ops = {
- 	.pr_register	= dm_pr_register,
- 	.pr_reserve	= dm_pr_reserve,
-@@ -3163,7 +3185,8 @@ static const struct pr_ops dm_pr_ops = {
- 	.pr_preempt	= dm_pr_preempt,
- 	.pr_clear	= dm_pr_clear,
- 	.pr_read_keys	= dm_pr_read_keys,
--	.pr_read_reservation = dm_pr_read_reservation,
-+	.pr_read_reservation	= dm_pr_read_reservation,
-+	.pr_report_reservation	= dm_pr_report_reservation,
- };
- 
- static const struct block_device_operations dm_blk_dops = {
-diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
-index 71283aaf3e82..1f251b8f381d 100644
---- a/drivers/scsi/sd.c
-+++ b/drivers/scsi/sd.c
-@@ -1770,6 +1770,101 @@ static int sd_pr_read_reservation(struct block_device *bdev,
- 	return 0;
- }
- 
-+static int sd_pr_read_full_status(struct block_device *bdev,
-+				  struct pr_reservation_info *rsv_info,
-+				  int rsv_regs_len)
-+{
-+	int len, full_data_off, i, result, num_regs;
-+	struct pr_registration_info *reg_info;
-+	struct pr_keys keys_info;
-+	u8 *full_data;
-+
-+retry:
-+	result = sd_pr_read_keys(bdev, &keys_info, 0);
-+	if (result)
-+		return result;
-+
-+	if (!keys_info.num_keys)
-+		return 0;
-+
-+	len = keys_info.num_keys * sizeof(*reg_info);
-+	if (len >= rsv_regs_len)
-+		return -EOVERFLOW;
-+	len += 8;
-+
-+	full_data = kzalloc(len, GFP_KERNEL);
-+	if (!full_data)
-+		return -ENOMEM;
-+
-+	result = sd_pr_in_command(bdev, READ_FULL_STATUS, full_data, len);
-+	if (result) {
-+		/*
-+		 * TODO? - If it's not supported do we want to drop down
-+		 * to READ_KEYS/RESERVATION and just not fill out the port
-+		 * and transport ID info.
-+		 */
-+		return result;
++	if (!ops) {
++		pr_err("Block device does not support pr_ops but iblock device has been configured for PR passthrough.\n");
++		return TCM_UNSUPPORTED_SCSI_OPCODE;
 +	}
 +
-+	num_regs = get_unaligned_be32(&full_data[4]) / 8;
++	switch (sa) {
++	case PRO_REGISTER_AND_MOVE:
++		pr_err("PRO_REGISTER_AND_MOVE is not supported by iblock PR passthrough.\n");
++		return TCM_UNSUPPORTED_SCSI_OPCODE;
++	case PRO_REPLACE_LOST_RESERVATION:
++		pr_err("PRO_REPLACE_LOST_RESERVATION is not supported by iblock PR passthrough.\n");
++		return TCM_UNSUPPORTED_SCSI_OPCODE;
++	case PRO_REGISTER:
++	case PRO_REGISTER_AND_IGNORE_EXISTING_KEY:
++		if (!ops->pr_register) {
++			pr_err("block device does not support pr_register.\n");
++			return TCM_UNSUPPORTED_SCSI_OPCODE;
++		}
++
++		/*
++		 * We only support one target port. We don't know the target
++		 * port config at this level and the block layer has a
++		 * different view.
++		 */
++		if (spec_i_pt || all_tg_pt) {
++			pr_err("SPC-3 PR: SPEC_I_PT and ALL_TG_PT are not supported by PR passthrough.\n");
++
++			return TCM_UNSUPPORTED_SCSI_OPCODE;
++		}
++
++		/* The block layer pr ops always enables aptpl */
++		if (!aptpl)
++			pr_info("APTPL not set by initiator, but will be used.\n");
++
++		ret = ops->pr_register(bdev, key, sa_key,
++				sa == PRO_REGISTER ? 0 : PR_FL_IGNORE_KEY);
++		break;
++	case PRO_RESERVE:
++		if (!ops->pr_reserve) {
++			pr_err("block_device does not support pr_reserve.\n");
++			return TCM_UNSUPPORTED_SCSI_OPCODE;
++		}
++
++		switch (type) {
++		case PR_TYPE_WRITE_EXCLUSIVE_REGONLY:
++		case PR_TYPE_EXCLUSIVE_ACCESS_REGONLY:
++			break;
++		default:
++			return TCM_UNSUPPORTED_SCSI_OPCODE;
++		}
++
++		ret = ops->pr_reserve(bdev, key, scsi_pr_type_to_block(type), 0);
++		break;
++	case PRO_CLEAR:
++		if (!ops->pr_clear) {
++			pr_err("block_device does not support pr_clear.\n");
++			return TCM_UNSUPPORTED_SCSI_OPCODE;
++		}
++
++		ret = ops->pr_clear(bdev, key);
++		break;
++	case PRO_PREEMPT:
++	case PRO_PREEMPT_AND_ABORT:
++		if (!ops->pr_clear) {
++			pr_err("block_device does not support pr_preempt.\n");
++			return TCM_UNSUPPORTED_SCSI_OPCODE;
++		}
++
++		switch (type) {
++		case PR_TYPE_WRITE_EXCLUSIVE_REGONLY:
++		case PR_TYPE_EXCLUSIVE_ACCESS_REGONLY:
++			break;
++		default:
++			return TCM_UNSUPPORTED_SCSI_OPCODE;
++		}
++
++		ret = ops->pr_preempt(bdev, key, sa_key,
++				      scsi_pr_type_to_block(type),
++				      sa == PRO_PREEMPT ? false : true);
++		break;
++	default:
++		pr_err("Unknown PERSISTENT_RESERVE_OUT SA: 0x%02x\n", sa);
++		return TCM_UNSUPPORTED_SCSI_OPCODE;
++	}
++
++	if (ret)
++		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
++
++	return TCM_NO_SENSE;
++}
++
++static void iblock_pr_report_caps(unsigned char *param_data)
++{
++	u16 len = 8;
++
++	put_unaligned_be16(len, &param_data[0]);
 +	/*
-+	 * We can have fewer registrations if the target did the ALL_TG_PT
-+	 * format where it does not report every I_T nexus. If we now have
-+	 * more registrations then someone is doing PR out commands so try
-+	 * to get a bigger buffer.
++	 * When using the pr_ops passthrough method we only support exporting
++	 * the device through one target port because from the backend module
++	 * level we can't see the target port config. As a result we only
++	 * support registration directly from the I_T nexus the cmd is sent
++	 * through and do not set ATP_C here.
++	 *
++	 * The block layer pr_ops do not support passing in initiators so
++	 * we don't set SIP_C here.
 +	 */
-+	if (keys_info.num_keys < num_regs) {
-+		kfree(full_data);
-+		goto retry;
-+	}
-+
-+	rsv_info->generation = get_unaligned_be32(&full_data[0]);
-+	rsv_info->num_registrations = num_regs;
-+
-+	full_data_off = 8;
-+
-+	for (i = 0; i < num_regs; i++) {
-+		/* every reg should have the same type? */
-+		rsv_info->type = scsi_pr_type_to_block(full_data[13] & 0x0f);
-+
-+		reg_info = &rsv_info->registrations[i];
-+		reg_info->key = get_unaligned_be64(&full_data[0]);
-+
-+		if (full_data[12] & 0x01)
-+			reg_info->flags |= PR_REG_INFO_FL_HOLDER;
-+		if (full_data[12] & 0x02)
-+			reg_info->flags |= PR_REG_INFO_FL_ALL_TG_PT;
-+
-+		/* We use SCSI rel target port id for remote_id */
-+		reg_info->remote_id = get_unaligned_be16(&full_data[18]);
-+
-+		/* We use SCSI transport ID as the local_id */
-+		reg_info->local_id_len = get_unaligned_be32(&full_data[20]);
-+		if (!reg_info->local_id_len)
-+			continue;
-+
-+		/*
-+		 * TODO. Do we fail or operate like the SCSI spec and return
-+		 * what we have and user should know that they messed up
-+		 * and need to send a bigger buffer to get the rest of the
-+		 * data;
-+		 */
-+		full_data_off += 24;
-+		if (full_data_off + reg_info->local_id_len >= rsv_regs_len)
-+			return -EOVERFLOW;
-+		/*
-+		 * TODO - we should put this in a easier to use format for
-+		 * users.
-+		 */
-+		memcpy(reg_info->local_id, &full_data[full_data_off],
-+		       reg_info->local_id_len);
-+		full_data_off += reg_info->local_id_len;
-+	}
-+
-+	kfree(full_data);
-+	return 0;
++	/* PTPL_C: Persistence across Target Power Loss bit */
++	param_data[2] |= 0x01;
++	/*
++	 * We are filling in the PERSISTENT RESERVATION TYPE MASK below, so
++	 * set the TMV: Task Mask Valid bit.
++	 */
++	param_data[3] |= 0x80;
++	/*
++	 * Change ALLOW COMMANDs to 0x20 or 0x40 later from Table 166
++	 */
++	param_data[3] |= 0x10; /* ALLOW COMMANDs field 001b */
++	/*
++	 * PTPL_A: Persistence across Target Power Loss Active bit. The block
++	 * layer pr ops always enables this so report it active.
++	 */
++	param_data[3] |= 0x01;
++	/*
++	 * Setup the PERSISTENT RESERVATION TYPE MASK from Table 212 spc4r37.
++	 *
++	 * We are only supporting the following to simplify conversions we
++	 * may need to do between what the initiator sends us and what is
++	 * below us if there is a multipath device.
++	 */
++	param_data[4] |= 0x40; /* PR_TYPE_EXCLUSIVE_ACCESS_REGONLY */
++	param_data[4] |= 0x20; /* PR_TYPE_WRITE_EXCLUSIVE_REGONLY */
 +}
 +
- static int sd_pr_out_command(struct block_device *bdev, u8 sa,
- 		u64 key, u64 sa_key, u8 type, u8 flags)
++static int iblock_pr_read_keys(struct se_cmd *cmd, unsigned char *param_data)
++{
++	struct se_device *dev = cmd->se_dev;
++	struct iblock_dev *ib_dev = IBLOCK_DEV(dev);
++	struct block_device *bdev = ib_dev->ibd_bd;
++	const struct pr_ops *ops = bdev->bd_disk->fops->pr_ops;
++	int i, ret, len, paths, data_offset;
++	struct pr_keys *keys;
++
++	if (!ops) {
++		pr_err("Block device does not support pr_ops but iblock device has been configured for PR passthrough.\n");
++		return TCM_UNSUPPORTED_SCSI_OPCODE;
++	}
++
++	if (!ops->pr_read_keys) {
++		pr_err("Block device does not support read_keys.\n");
++		return TCM_UNSUPPORTED_SCSI_OPCODE;
++	}
++
++	/*
++	 * We don't know what's under us, but dm-multipath will register every
++	 * path with the same key, so start off with enough space for 16 paths.
++	 */
++	paths = 16;
++retry:
++	len = sizeof(*keys) + (8 * paths);
++
++	keys = kzalloc(len, GFP_KERNEL);
++	if (!keys)
++		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
++
++	ret = ops->pr_read_keys(bdev, keys, len);
++	if (ret == -EOVERFLOW) {
++		kfree(keys);
++		paths *= 2;
++		goto retry;
++	} else if (ret) {
++		ret = TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
++		goto free_keys;
++	}
++
++	ret = TCM_NO_SENSE;
++
++	put_unaligned_be32(keys->generation, &param_data[0]);
++	if (!keys->num_keys) {
++		put_unaligned_be32(0, &param_data[4]);
++		goto free_keys;
++	}
++
++	/*
++	 * We only support a single I_T Nexus so there should only be one
++	 * key. There might be a multipath device under us but the initiator
++	 * does not know this. So, here we make sure the registered keys are
++	 * the same and that we only return the one key to match what the
++	 * initiator had sent us.
++	 */
++	put_unaligned_be32(8, &param_data[4]);
++
++	data_offset = 8;
++	for (i = 0; i < keys->num_keys; i++) {
++		if (data_offset + 8 > cmd->data_length)
++			break;
++
++		if (i == 0) {
++			put_unaligned_be64(keys->keys[i],
++					   &param_data[data_offset]);
++		} else if (keys->keys[i] != keys->keys[i - 1]) {
++			pr_err("Detected mismatched keys 0x%016llx and 0x%016llx\n",
++			       keys->keys[i], keys->keys[i - 1]);
++			ret = TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
++			goto free_keys;
++		}
++
++		data_offset += 8;
++	}
++
++free_keys:
++	kfree(keys);
++	return ret;
++}
++
++static int iblock_pr_read_reservation(struct se_cmd *cmd,
++				      unsigned char *param_data)
++{
++	struct se_device *dev = cmd->se_dev;
++	struct iblock_dev *ib_dev = IBLOCK_DEV(dev);
++	struct block_device *bdev = ib_dev->ibd_bd;
++	const struct pr_ops *ops = bdev->bd_disk->fops->pr_ops;
++	struct pr_held_reservation rsv;
++
++	if (!ops) {
++		pr_err("Block device does not support pr_ops but iblock device has been configured for PR passthrough.\n");
++		return TCM_UNSUPPORTED_SCSI_OPCODE;
++	}
++
++	if (!ops->pr_read_reservation) {
++		pr_err("Block device does not support read_keys.\n");
++		return TCM_UNSUPPORTED_SCSI_OPCODE;
++	}
++
++	if (ops->pr_read_reservation(bdev, &rsv))
++		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
++
++	put_unaligned_be32(rsv.generation, &param_data[0]);
++	if (!rsv.key) {
++		put_unaligned_be32(0, &param_data[4]);
++		return TCM_NO_SENSE;
++	}
++
++	put_unaligned_be32(16, &param_data[4]);
++
++	if (cmd->data_length < 16)
++		return TCM_NO_SENSE;
++	put_unaligned_be64(rsv.key, &param_data[8]);
++
++	if (cmd->data_length < 22)
++		return TCM_NO_SENSE;
++	param_data[21] = block_pr_type_to_scsi(rsv.type);
++
++	return TCM_NO_SENSE;
++}
++
++static sense_reason_t iblock_execute_pr_in(struct se_cmd *cmd, u8 sa,
++					   unsigned char *param_data)
++{
++	sense_reason_t ret;
++
++	switch (sa) {
++	case PRI_REPORT_CAPABILITIES:
++		iblock_pr_report_caps(param_data);
++		break;
++	case PRI_READ_KEYS:
++		ret = iblock_pr_read_keys(cmd, param_data);
++		break;
++	case PRI_READ_RESERVATION:
++		ret = iblock_pr_read_reservation(cmd, param_data);
++		break;
++	case PRI_READ_FULL_STATUS:
++	default:
++		pr_err("Unknown PERSISTENT_RESERVE_IN SA: 0x%02x\n", sa);
++		return TCM_UNSUPPORTED_SCSI_OPCODE;
++	}
++
++	return ret;
++}
++
+ static sector_t iblock_get_blocks(struct se_device *dev)
  {
-@@ -1845,7 +1940,8 @@ static const struct pr_ops sd_pr_ops = {
- 	.pr_preempt	= sd_pr_preempt,
- 	.pr_clear	= sd_pr_clear,
- 	.pr_read_keys	= sd_pr_read_keys,
--	.pr_read_reservation = sd_pr_read_reservation,
-+	.pr_read_reservation	= sd_pr_read_reservation,
-+	.pr_report_reservation	= sd_pr_read_full_status,
+ 	struct iblock_dev *ib_dev = IBLOCK_DEV(dev);
+@@ -876,11 +1168,30 @@ static struct exec_cmd_ops iblock_exec_cmd_ops = {
+ 	.execute_sync_cache	= iblock_execute_sync_cache,
+ 	.execute_write_same	= iblock_execute_write_same,
+ 	.execute_unmap		= iblock_execute_unmap,
++	.execute_pr_out		= iblock_execute_pr_out,
++	.execute_pr_in		= iblock_execute_pr_in,
  };
  
- static void scsi_disk_free_disk(struct gendisk *disk)
-diff --git a/include/linux/pr.h b/include/linux/pr.h
-index 21a8eb8b34b5..ec325a0ed33c 100644
---- a/include/linux/pr.h
-+++ b/include/linux/pr.h
-@@ -30,6 +30,9 @@ struct pr_ops {
- 			    struct pr_keys *keys_info, int keys_info_len);
- 	int (*pr_read_reservation)(struct block_device *bdev,
- 				   struct pr_held_reservation *rsv);
-+	int (*pr_report_reservation)(struct block_device *bdev,
-+				     struct pr_reservation_info *rsv_info,
-+				     int rsv_regs_len);
- };
- 
- #endif /* LINUX_PR_H */
-diff --git a/include/uapi/linux/pr.h b/include/uapi/linux/pr.h
-index ccc78cbf1221..66028d37ac5d 100644
---- a/include/uapi/linux/pr.h
-+++ b/include/uapi/linux/pr.h
-@@ -39,6 +39,35 @@ struct pr_clear {
- 	__u32	__pad;
- };
- 
-+/* Is reservation holder */
-+#define PR_REG_INFO_FL_HOLDER		(1 << 0)
-+/*
-+ * Registration applies to all SCSI target ports accesed through initiator port
-+ * at local_id. remote_id is not set in this case.
-+ */
-+#define PR_REG_INFO_FL_ALL_TG_PT	(1 << 1)
+ static sense_reason_t
+ iblock_parse_cdb(struct se_cmd *cmd)
+ {
++	unsigned char *cdb = cmd->t_task_cdb;
++	struct se_device *dev = cmd->se_dev;
 +
-+struct pr_registration_info {
-+	__u64	key;
-+	__u8	flags;
-+	__u8	__pad;
-+	/* NVMe Controler ID or SCSI relative target port id */
-+	__u16	remote_id;
-+	__u32	__pad2;
-+	/* local_id size in bytes. */
-+	__u32	local_id_len;
-+	/* NVMe Host ID or SCSI Transport ID */
-+	char	local_id[];
-+};
++	switch (cdb[0]) {
++	case RESERVE:
++	case RESERVE_10:
++	case RELEASE:
++	case RELEASE_10:
++		/*
++		 * The block layer pr_ops don't support the old RESERVE/RELEASE
++		 * commands.
++		 */
++		if (dev->dev_attrib.emulate_pr &&
++		    (dev->transport_flags & TRANSPORT_FLAG_PASSTHROUGH_PGR))
++			return TCM_UNSUPPORTED_SCSI_OPCODE;
++	}
 +
-+struct pr_reservation_info {
-+	__u32	generation;
-+	__u16	num_registrations;
-+	__u8	type;
-+	__u8	__pad;
-+	struct pr_registration_info registrations[];
-+};
-+
- #define PR_FL_IGNORE_KEY	(1 << 0)	/* ignore existing key */
+ 	return sbc_parse_cdb(cmd, &iblock_exec_cmd_ops);
+ }
  
- #define IOC_PR_REGISTER		_IOW('p', 200, struct pr_registration)
+@@ -896,6 +1207,7 @@ static bool iblock_get_write_cache(struct se_device *dev)
+ static const struct target_backend_ops iblock_ops = {
+ 	.name			= "iblock",
+ 	.inquiry_prod		= "IBLOCK",
++	.transport_flags_changeable = TRANSPORT_FLAG_PASSTHROUGH_PGR,
+ 	.inquiry_rev		= IBLOCK_VERSION,
+ 	.owner			= THIS_MODULE,
+ 	.attach_hba		= iblock_attach_hba,
+-- 
+2.25.1
 
 --
 dm-devel mailing list
