@@ -4,59 +4,148 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 91EEEC43334
-	for <dm-devel@archiver.kernel.org>; Thu,  2 Jun 2022 08:51:31 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id F1FABC433EF
+	for <dm-devel@archiver.kernel.org>; Fri,  3 Jun 2022 07:18:03 +0000 (UTC)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-66-ni5uCXfcMnGKNI2Aarg-Lw-1; Thu, 02 Jun 2022 04:51:23 -0400
-X-MC-Unique: ni5uCXfcMnGKNI2Aarg-Lw-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+ us-mta-668-bb0BRRz8Noevn_VrV9AbRg-1; Fri, 03 Jun 2022 03:18:01 -0400
+X-MC-Unique: bb0BRRz8Noevn_VrV9AbRg-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id C5FD2802814;
-	Thu,  2 Jun 2022 08:51:21 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 50D461C0CE85;
+	Fri,  3 Jun 2022 07:18:00 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 75CDA1415100;
-	Thu,  2 Jun 2022 08:51:21 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id CE58F2026D07;
+	Fri,  3 Jun 2022 07:17:59 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 248091947040;
-	Thu,  2 Jun 2022 08:51:21 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com
- [10.11.54.1])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 23C0C1947060;
+	Fri,  3 Jun 2022 07:17:58 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id 0BCED19466DF
- for <dm-devel@listman.corp.redhat.com>; Thu,  2 Jun 2022 08:51:20 +0000 (UTC)
+ ESMTP id 95BF51947040
+ for <dm-devel@listman.corp.redhat.com>; Fri,  3 Jun 2022 06:58:12 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id D3DBC400DE5B; Thu,  2 Jun 2022 08:51:19 +0000 (UTC)
+ id 86AF9C27E92; Fri,  3 Jun 2022 06:58:12 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id CFFFB40CFD0A
- for <dm-devel@redhat.com>; Thu,  2 Jun 2022 08:51:19 +0000 (UTC)
-Received: from us-smtp-1.mimecast.com (us-smtp-1.mimecast.com [207.211.31.81])
- (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256
- bits)) (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B844585A5BC
- for <dm-devel@redhat.com>; Thu,  2 Jun 2022 08:51:19 +0000 (UTC)
-Received: from bombadil.infradead.org (bombadil.infradead.org
- [198.137.202.133]) by relay.mimecast.com with ESMTP with STARTTLS
+ (mimecast07.extmail.prod.ext.rdu2.redhat.com [10.11.55.23])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id 81A48C23DBF
+ for <dm-devel@redhat.com>; Fri,  3 Jun 2022 06:58:12 +0000 (UTC)
+Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
+ [207.211.31.120])
+ (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+ (No client certificate requested)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 654473C0F752
+ for <dm-devel@redhat.com>; Fri,  3 Jun 2022 06:58:12 +0000 (UTC)
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
+ [205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-99-5pkG_ftXO7eRaviYIfgTkg-1; Thu, 02 Jun 2022 04:51:18 -0400
-X-MC-Unique: 5pkG_ftXO7eRaviYIfgTkg-1
-Received: from hch by bombadil.infradead.org with local (Exim 4.94.2 #2 (Red
- Hat Linux)) id 1nwfwA-002Atb-MB; Thu, 02 Jun 2022 08:12:10 +0000
-Date: Thu, 2 Jun 2022 01:12:10 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Mike Snitzer <snitzer@redhat.com>
-Message-ID: <Yphw2n3ERoFsWgEe@infradead.org>
-References: <YpK7m+14A+pZKs5k@casper.infradead.org>
- <2523e5b0-d89c-552e-40a6-6d414418749d@kernel.dk>
- <YpZlOCMept7wFjOw@redhat.com> <YpcBgY9MMgumEjTL@infradead.org>
- <Ypd0DnmjvCoWj+1P@redhat.com>
+ us-mta-639-vkpyYbgdPzCVebOJG7vv3w-1; Fri, 03 Jun 2022 02:58:10 -0400
+X-MC-Unique: vkpyYbgdPzCVebOJG7vv3w-1
+Received: from pps.filterd (m0246627.ppops.net [127.0.0.1])
+ by mx0b-00069f02.pphosted.com (8.17.1.5/8.17.1.5) with ESMTP id 2531ZDGo019365;
+ Fri, 3 Jun 2022 06:56:02 GMT
+Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com
+ (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
+ by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3gf8rwrbf6-1
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+ Fri, 03 Jun 2022 06:56:02 +0000
+Received: from pps.filterd
+ (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+ by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.16.1.2/8.16.1.2)
+ with SMTP id 2536oJc4001837; Fri, 3 Jun 2022 06:56:02 GMT
+Received: from nam04-dm6-obe.outbound.protection.outlook.com
+ (mail-dm6nam04lp2040.outbound.protection.outlook.com [104.47.73.40])
+ by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com with ESMTP id
+ 3gc8hyxp4e-2
+ (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+ Fri, 03 Jun 2022 06:56:01 +0000
+Received: from DM5PR10MB1466.namprd10.prod.outlook.com (2603:10b6:3:b::7) by
+ BYAPR10MB2789.namprd10.prod.outlook.com (2603:10b6:a03:82::27) with Microsoft
+ SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.20.5293.19; Fri, 3 Jun 2022 06:56:00 +0000
+Received: from DM5PR10MB1466.namprd10.prod.outlook.com
+ ([fe80::f81d:b8ef:c5a4:9c9b]) by DM5PR10MB1466.namprd10.prod.outlook.com
+ ([fe80::f81d:b8ef:c5a4:9c9b%3]) with mapi id 15.20.5293.019; Fri, 3 Jun 2022
+ 06:56:00 +0000
+From: Mike Christie <michael.christie@oracle.com>
+To: linux-block@vger.kernel.org, dm-devel@redhat.com, snitzer@kernel.org,
+ hch@lst.de, axboe@kernel.dk, martin.petersen@oracle.com,
+ james.bottomley@hansenpartnership.com, linux-scsi@vger.kernel.org,
+ target-devel@vger.kernel.org
+Date: Fri,  3 Jun 2022 01:55:35 -0500
+Message-Id: <20220603065536.5641-11-michael.christie@oracle.com>
+In-Reply-To: <20220603065536.5641-1-michael.christie@oracle.com>
+References: <20220603065536.5641-1-michael.christie@oracle.com>
+X-ClientProxiedBy: DM5PR16CA0012.namprd16.prod.outlook.com
+ (2603:10b6:3:c0::22) To DM5PR10MB1466.namprd10.prod.outlook.com
+ (2603:10b6:3:b::7)
 MIME-Version: 1.0
-In-Reply-To: <Ypd0DnmjvCoWj+1P@redhat.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by
- bombadil.infradead.org. See http://www.infradead.org/rpr.html
+X-MS-PublicTrafficType: Email
+X-MS-Office365-Filtering-Correlation-Id: 40893671-3b67-41cd-ca12-08da452e1abd
+X-MS-TrafficTypeDiagnostic: BYAPR10MB2789:EE_
+X-Microsoft-Antispam-PRVS: <BYAPR10MB27890E76005763C6C042A202F1A19@BYAPR10MB2789.namprd10.prod.outlook.com>
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0
+X-Microsoft-Antispam-Message-Info: KeOR0yMzESPKEwLyGdKwcIyJyRSFo3O/kOlSst/HrjQgTOED4V0AV3Vh1IpwUpVWy3edHmvkkVimx7LHegAJeCBqUqh+oRUFEKreynpOl3NgqJzmwKQE+O6MmAt+O5mLVUhlxS940xtYsVwJwCpOExA5QQ8zGEDxNPNxU3Ho76PwIcPb/R9H22gQGu5QfzIIHo366kSpBfJDAs4eF4geOAKDIOG6G01XSEVuFPHpLYIDa9GFyn60cGObCPOo+c4gPxTzx8+slUC/gdoIX6NJV17e3HpSsyqrhu+hSX88xjGKxEKjsXWDC2pQoc+wSIzxJkAKv/HOG3MlYWuFiIbXuEwLWebGbgc9cMkHY4bly8f5syV928JkJT4mVybSinOVsRR00WX8+nqNwl7uhUS6BEZwku/VohsRje/+0HzBXybk3pih62y4R5s9TXz5qFXIAKsS6qmUonL/TYLKSDxws/AZ9rEAaf9qMRIzfAisbUCoRq8k5uVJxSqMDr6hxXUxHXkNIkGhL1w5TNybCP1rgaNSoxUoNlTYr2O0O2u7rKEP2+5137V980NPgdAfXhB/Dt6rxBFlwPC1yDJsrcjueDUEoa1LwUudsearXBxA37sIVr/Pk4tVq1ZspNyvpwzgpqAblvScETgGKtRjpwlbMSmHlP8QmC87jUR32DZtuTBMdxPvoUC+wATAXZwJfreMZJdtnlbbpxE4Qsd7SCHMNw==
+X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
+ IPV:NLI; SFV:NSPM; H:DM5PR10MB1466.namprd10.prod.outlook.com; PTR:; CAT:NONE;
+ SFS:(13230001)(366004)(66946007)(8676002)(38350700002)(38100700002)(66476007)(4326008)(66556008)(86362001)(83380400001)(36756003)(8936002)(107886003)(6486002)(2616005)(316002)(5660300002)(1076003)(6512007)(26005)(2906002)(6506007)(52116002)(186003)(6666004)(508600001);
+ DIR:OUT; SFP:1101
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?iPx+Rubzu6tnTqcVVEGg+KKIzIRu5Q5+tl1dJ4L1xpEaHP/5blRt+5coDOLu?=
+ =?us-ascii?Q?JUAhUetDytsORvIyB/xyOC70zZynssncQJWo2iOsoZNABqtqBBAPk8FasoVs?=
+ =?us-ascii?Q?rxUs6q6jOSSAymtk2fSEdVLkVzKOqAWhP3Pun/Sv2/JbjUhRMXvKYtO5QnHf?=
+ =?us-ascii?Q?0EtfvWkSuTqi/B7LS79E1KuxQ7waoER07L10gM9CMkvI7c6AYMteyVyAgY0o?=
+ =?us-ascii?Q?PXBJlfn/IXrYkZzRY9KYfzswjww/9bJqu35gJN1fMpOQj+hZzLJwX09Iqv7T?=
+ =?us-ascii?Q?QRGlb9prYUxcFD0/3IYfasww4LEdvQEMF9mOg76s4rVmnWCdYRPVfRQRLtJ/?=
+ =?us-ascii?Q?2wUI49gTBkxQCccSpT2WRt1SNeiikgWMbqMvz7cHyrodaww3Ksd4wjPx7Dc/?=
+ =?us-ascii?Q?ux/k1YUemcc/9N9VOgszSviPpbrMlmZGSL/cFHh4z0WON4mY/cCm5w3FaVrg?=
+ =?us-ascii?Q?EWt/HyRqCt4T6+jazAGckKvGxTPMJb225Iab7KzFiwr86yjgV2I7NeB3g0LI?=
+ =?us-ascii?Q?X+jmcILYYqWTxjMvlLNG+dUFPDJJ3He6iN6tpBZEOjJsViQ01mD+XgvV3HJT?=
+ =?us-ascii?Q?Sc93+K+WIZcuog2gAuQL8PNp7WOkpjY2HfqxIhXixrD3ORn6pXts2yapcBq8?=
+ =?us-ascii?Q?iv40nj+Co+ePpEKGAEvKmPOb8ozK50OuuPTbBQ5d3JVAh/Y84/Ci6EWtIW7+?=
+ =?us-ascii?Q?khp9rpKsPuxJBY4nCslkMLdnFuq67JDO3mXxQIVVNvSQcQSx8mHHalRxEE2E?=
+ =?us-ascii?Q?6s88vei5jXWe/jj6Rkt+WCSRormWvKUgUNCzPuEU0qP8BAvwKHhTghfNMfhS?=
+ =?us-ascii?Q?UsoLX7Wx0FUwrc1LKAgLiz8ap8ajkeCQgFzKWlxqnj4tEtTZoha8fki4nRAT?=
+ =?us-ascii?Q?BPVOy5x6qGTZLSP0Xzq9oufsfxQjk1y4jJVJhvRf2+JHNR/PAioH7Dw8qs5W?=
+ =?us-ascii?Q?gm3Fy2o9jvmdvQXoab9dn8/z0dUuVx8xn7jJY0CqACZLl9UIz+cQtNrjXZzJ?=
+ =?us-ascii?Q?BoGufQDmmq7SvhUXj7eBaJW/UGXhKV34TwnssOoLzSoeJ/lvqBs3xLG/UsGX?=
+ =?us-ascii?Q?yvab0jNUGTRFOIdFiRY0cXchr636DPCoxa8rXqK31I80WKDnXC0qRNDqPE6o?=
+ =?us-ascii?Q?Xb/cTgge6rZCi6q0Fw4MMBsmVUKkiJCn5Gd570TVELLPWsXXlYtMBDMQTHrC?=
+ =?us-ascii?Q?xjn/juAaipxN3RqEn66GPa2AiLPif+hnIoDFUYzYAeEMNmzPy6xqRxjwsuY2?=
+ =?us-ascii?Q?G+IOM18mXGcmAJnEV2bbXV7TDM3KTG9eg1E+d4+s9K39aOCrRmqCavx9m4Dc?=
+ =?us-ascii?Q?/Afa/jXfxMktyqW4sFQi535DKza1lwc5hh8SudVlTUEx3kkqJKECnDq0mPiJ?=
+ =?us-ascii?Q?f29XkYJVrk2mw8Mx2tQhQPb0Xp9r5XRgk4wrUUazHxbf9ERRb4/SrRMBWe5y?=
+ =?us-ascii?Q?UBcaWBNpjQ2H74TXHSuLoX/lP7/WVRuM2fNqrrz9Jwq9p46LR+vRacZaN9Xr?=
+ =?us-ascii?Q?yI45M6/07PaEVmYuGmZL3kFn8UD6PqCUQ/Iq9REAd+KQyCoPgdf1gOaXJQU2?=
+ =?us-ascii?Q?iiO0PD5EXXrMD/tY3nHnOxpcfXbe80XGsG2iNFZClKXKIUhLfs3Zqq95u7mK?=
+ =?us-ascii?Q?d5KL8+w6Pos7PvPhdGT5+3I6Da8RcUgywujVG6HKpdPB9X3Ogj9/giHyGgGK?=
+ =?us-ascii?Q?tEn23z3wnjAxfzDUEmpxqoKocXKFhI3EuY5JYkAyJrGtmTuFDi7nkHk/oEyP?=
+ =?us-ascii?Q?Rjn8DUZqZz2mCo+Mc8HlkQ/W7g6Ebwc=3D?=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 40893671-3b67-41cd-ca12-08da452e1abd
+X-MS-Exchange-CrossTenant-AuthSource: DM5PR10MB1466.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 03 Jun 2022 06:55:54.8460 (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: nWhfROPj0TPnSPVYZyqv23BD1YUTKIZZqB4r6XZwWB7/cvn/a/POqedg2y6GHqJe/Ld8jugdR4FUDDct71GPHC71CuSJhZjOxiTV7ve6pfc=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR10MB2789
+X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.517, 18.0.874
+ definitions=2022-06-03_02:2022-06-02,
+ 2022-06-03 signatures=0
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 phishscore=0
+ bulkscore=0 suspectscore=0
+ mlxlogscore=999 mlxscore=0 spamscore=0 adultscore=0 malwarescore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2204290000
+ definitions=main-2206030029
+X-Proofpoint-GUID: xyZOZP5iyoXz9InAwD2vOS8W45amKg3G
+X-Proofpoint-ORIG-GUID: xyZOZP5iyoXz9InAwD2vOS8W45amKg3G
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -64,8 +153,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.84 on 10.11.54.1
-Subject: Re: [dm-devel] bioset_exit poison from dm_destroy
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
+X-Mailman-Approved-At: Fri, 03 Jun 2022 07:17:56 +0000
+Subject: [dm-devel] [PATCH 10/11] scsi: Use BLK_STS_RSV_CONFLICT for
+ reservation conflicts
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -77,247 +168,71 @@ List-Post: <mailto:dm-devel@redhat.com>
 List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
 List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
  <mailto:dm-devel-request@redhat.com?subject=subscribe>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
- david@fromorbit.com, Matthew Wilcox <willy@infradead.org>,
- Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com
+Cc: Mike Christie <michael.christie@oracle.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
+X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
 X-Mimecast-Originator: redhat.com
-Content-Disposition: inline
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-On Wed, Jun 01, 2022 at 10:13:34AM -0400, Mike Snitzer wrote:
-> Please take the time to look at the code and save your judgement until
-> you do.  That said, I'm not in love with the complexity of how DM
-> handles bioset initialization.  But both you and Jens keep taking
-> shots at DM for doing things wrong without actually looking.
+This has scsi use BLK_STS_RSV_CONFLICT for reservation conflicts so upper
+layers like lio can distinguish this between a general nexus error and a
+reservation conflict. For the latter we can then report that error to VMs.
 
-I'm not taking shots.  I'm just saying we should kill this API.  In
-the worse case the caller can keep track of if a bioset is initialized,
-but in most cases we should be able to deduct it in a nicer way.
+Signed-off-by: Mike Christie <michael.christie@oracle.com>
+---
+ drivers/scsi/scsi_error.c |  1 -
+ drivers/scsi/scsi_lib.c   | 11 ++++++++---
+ 2 files changed, 8 insertions(+), 4 deletions(-)
 
-> DM uses bioset_init_from_src().  Yet you've both assumed double frees
-> and such (while not entirely wrong your glossing over the detail that
-> there is intervening reinitialization of DM's biosets between the
-> bioset_exit()s)
-
-And looking at the code, that use of bioset_init_from_src is completely
-broken.  It does not actually preallocated anything as intended by
-dm (maybe that isn't actually needed) but just uses the biosets in
-dm_md_mempools as an awkward way to carry parameters.  And completely
-loses bringing over the integrity allocations.  And no, this is not
-intended as a "cheap shot" against Jens who did that either..
-
-This is what I think should fix this, and will allow us to remove
-bioset_init_from_src which was a bad idea from the start:
-
-
-diff --git a/drivers/md/dm-core.h b/drivers/md/dm-core.h
-index d21648a923ea9..54c0473a51dde 100644
---- a/drivers/md/dm-core.h
-+++ b/drivers/md/dm-core.h
-@@ -33,6 +33,14 @@ struct dm_kobject_holder {
-  * access their members!
-  */
- 
-+/*
-+ * For mempools pre-allocation at the table loading time.
-+ */
-+struct dm_md_mempools {
-+	struct bio_set bs;
-+	struct bio_set io_bs;
-+};
-+
- struct mapped_device {
- 	struct mutex suspend_lock;
- 
-@@ -110,8 +118,7 @@ struct mapped_device {
- 	/*
- 	 * io objects are allocated from here.
- 	 */
--	struct bio_set io_bs;
--	struct bio_set bs;
-+	struct dm_md_mempools *mempools;
- 
- 	/* kobject and completion */
- 	struct dm_kobject_holder kobj_holder;
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 6087cdcaad46d..a83b98a8d2a99 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -319,7 +319,7 @@ static int setup_clone(struct request *clone, struct request *rq,
- {
- 	int r;
- 
--	r = blk_rq_prep_clone(clone, rq, &tio->md->bs, gfp_mask,
-+	r = blk_rq_prep_clone(clone, rq, &tio->md->mempools->bs, gfp_mask,
- 			      dm_rq_bio_constructor, tio);
- 	if (r)
- 		return r;
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 0e833a154b31d..a8b016d6bf16e 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1044,11 +1044,6 @@ void dm_table_free_md_mempools(struct dm_table *t)
- 	t->mempools = NULL;
- }
- 
--struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t)
--{
--	return t->mempools;
--}
--
- static int setup_indexes(struct dm_table *t)
- {
- 	int i;
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index dfb0a551bd880..8b21155d3c4f5 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -136,14 +136,6 @@ static int get_swap_bios(void)
- 	return latch;
- }
- 
--/*
-- * For mempools pre-allocation at the table loading time.
-- */
--struct dm_md_mempools {
--	struct bio_set bs;
--	struct bio_set io_bs;
--};
--
- struct table_device {
- 	struct list_head list;
- 	refcount_t count;
-@@ -581,7 +573,7 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
- 	struct dm_target_io *tio;
- 	struct bio *clone;
- 
--	clone = bio_alloc_clone(NULL, bio, GFP_NOIO, &md->io_bs);
-+	clone = bio_alloc_clone(NULL, bio, GFP_NOIO, &md->mempools->io_bs);
- 	/* Set default bdev, but target must bio_set_dev() before issuing IO */
- 	clone->bi_bdev = md->disk->part0;
- 
-@@ -628,7 +620,8 @@ static struct bio *alloc_tio(struct clone_info *ci, struct dm_target *ti,
- 	} else {
- 		struct mapped_device *md = ci->io->md;
- 
--		clone = bio_alloc_clone(NULL, ci->bio, gfp_mask, &md->bs);
-+		clone = bio_alloc_clone(NULL, ci->bio, gfp_mask,
-+					&md->mempools->bs);
- 		if (!clone)
- 			return NULL;
- 		/* Set default bdev, but target must bio_set_dev() before issuing IO */
-@@ -1876,8 +1869,7 @@ static void cleanup_mapped_device(struct mapped_device *md)
- {
- 	if (md->wq)
- 		destroy_workqueue(md->wq);
--	bioset_exit(&md->bs);
--	bioset_exit(&md->io_bs);
-+	dm_free_md_mempools(md->mempools);
- 
- 	if (md->dax_dev) {
- 		dax_remove_host(md->disk);
-@@ -2049,48 +2041,6 @@ static void free_dev(struct mapped_device *md)
- 	kvfree(md);
- }
- 
--static int __bind_mempools(struct mapped_device *md, struct dm_table *t)
--{
--	struct dm_md_mempools *p = dm_table_get_md_mempools(t);
--	int ret = 0;
--
--	if (dm_table_bio_based(t)) {
--		/*
--		 * The md may already have mempools that need changing.
--		 * If so, reload bioset because front_pad may have changed
--		 * because a different table was loaded.
--		 */
--		bioset_exit(&md->bs);
--		bioset_exit(&md->io_bs);
--
--	} else if (bioset_initialized(&md->bs)) {
--		/*
--		 * There's no need to reload with request-based dm
--		 * because the size of front_pad doesn't change.
--		 * Note for future: If you are to reload bioset,
--		 * prep-ed requests in the queue may refer
--		 * to bio from the old bioset, so you must walk
--		 * through the queue to unprep.
--		 */
--		goto out;
--	}
--
--	BUG_ON(!p ||
--	       bioset_initialized(&md->bs) ||
--	       bioset_initialized(&md->io_bs));
--
--	ret = bioset_init_from_src(&md->bs, &p->bs);
--	if (ret)
--		goto out;
--	ret = bioset_init_from_src(&md->io_bs, &p->io_bs);
--	if (ret)
--		bioset_exit(&md->bs);
--out:
--	/* mempool bind completed, no longer need any mempools in the table */
--	dm_table_free_md_mempools(t);
--	return ret;
--}
--
- /*
-  * Bind a table to the device.
-  */
-@@ -2144,12 +2094,28 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
- 		 * immutable singletons - used to optimize dm_mq_queue_rq.
- 		 */
- 		md->immutable_target = dm_table_get_immutable_target(t);
--	}
- 
--	ret = __bind_mempools(md, t);
--	if (ret) {
--		old_map = ERR_PTR(ret);
--		goto out;
-+		/*
-+		 * There is no need to reload with request-based dm because the
-+		 * size of front_pad doesn't change.
-+		 *
-+		 * Note for future: If you are to reload bioset, prep-ed
-+		 * requests in the queue may refer to bio from the old bioset,
-+		 * so you must walk through the queue to unprep.
-+		 */
-+		if (!md->mempools) {
-+			md->mempools = t->mempools;
-+			t->mempools = NULL;
-+		}
-+	} else {
-+		/*
-+		 * The md may already have mempools that need changing.
-+		 * If so, reload bioset because front_pad may have changed
-+		 * because a different table was loaded.
-+		 */
-+		dm_free_md_mempools(md->mempools);
-+		md->mempools = t->mempools;
-+		t->mempools = NULL;
+diff --git a/drivers/scsi/scsi_error.c b/drivers/scsi/scsi_error.c
+index cdaca13ac1f1..621627486e5c 100644
+--- a/drivers/scsi/scsi_error.c
++++ b/drivers/scsi/scsi_error.c
+@@ -1985,7 +1985,6 @@ enum scsi_disposition scsi_decide_disposition(struct scsi_cmnd *scmd)
+ 	case SAM_STAT_RESERVATION_CONFLICT:
+ 		sdev_printk(KERN_INFO, scmd->device,
+ 			    "reservation conflict\n");
+-		set_host_byte(scmd, DID_NEXUS_FAILURE);
+ 		return SUCCESS; /* causes immediate i/o error */
  	}
+ 	return FAILED;
+diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
+index 8d18cc7e510e..623dc1cee51e 100644
+--- a/drivers/scsi/scsi_lib.c
++++ b/drivers/scsi/scsi_lib.c
+@@ -597,7 +597,7 @@ static blk_status_t scsi_result_to_blk_status(struct scsi_cmnd *cmd, int result)
+ 	case DID_OK:
+ 		if (scsi_status_is_good(result))
+ 			return BLK_STS_OK;
+-		return BLK_STS_IOERR;
++		break;
+ 	case DID_TRANSPORT_FAILFAST:
+ 	case DID_TRANSPORT_MARGINAL:
+ 		return BLK_STS_TRANSPORT;
+@@ -613,9 +613,14 @@ static blk_status_t scsi_result_to_blk_status(struct scsi_cmnd *cmd, int result)
+ 	case DID_MEDIUM_ERROR:
+ 		set_host_byte(cmd, DID_OK);
+ 		return BLK_STS_MEDIUM;
+-	default:
+-		return BLK_STS_IOERR;
+ 	}
++
++	switch (get_status_byte(cmd)) {
++	case SAM_STAT_RESERVATION_CONFLICT:
++		return BLK_STS_RSV_CONFLICT;
++	}
++
++	return BLK_STS_IOERR;
+ }
  
- 	ret = dm_table_set_restrictions(t, md->queue, limits);
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 3f89664fea010..86642234d4adb 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -72,7 +72,6 @@ struct dm_target *dm_table_get_wildcard_target(struct dm_table *t);
- bool dm_table_bio_based(struct dm_table *t);
- bool dm_table_request_based(struct dm_table *t);
- void dm_table_free_md_mempools(struct dm_table *t);
--struct dm_md_mempools *dm_table_get_md_mempools(struct dm_table *t);
- 
- void dm_lock_md_type(struct mapped_device *md);
- void dm_unlock_md_type(struct mapped_device *md);
+ /**
+-- 
+2.25.1
 
 --
 dm-devel mailing list
