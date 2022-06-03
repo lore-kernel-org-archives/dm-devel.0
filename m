@@ -1,82 +1,82 @@
 Return-Path: <dm-devel-bounces@redhat.com>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 24A76CCA473
-	for <dm-devel@archiver.kernel.org>; Mon,  6 Jun 2022 06:46:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 6394CCCA485
+	for <dm-devel@archiver.kernel.org>; Mon,  6 Jun 2022 06:46:27 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-669-QiYQl3RYNeK05Fj5h_5_RQ-1; Mon, 06 Jun 2022 02:46:22 -0400
-X-MC-Unique: QiYQl3RYNeK05Fj5h_5_RQ-1
+ us-mta-618-foeRoiHAOMuLsoOQs2P1pQ-1; Mon, 06 Jun 2022 02:46:23 -0400
+X-MC-Unique: foeRoiHAOMuLsoOQs2P1pQ-1
 Received: from smtp.corp.redhat.com (int-mx06.intmail.prod.int.rdu2.redhat.com [10.11.54.6])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2298029ABA2B;
-	Mon,  6 Jun 2022 06:46:20 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 0D57E29ABA35;
+	Mon,  6 Jun 2022 06:46:21 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id BF1FA2166B26;
-	Mon,  6 Jun 2022 06:46:18 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id EE6702166B2A;
+	Mon,  6 Jun 2022 06:46:20 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A557B19451EF;
-	Mon,  6 Jun 2022 06:46:17 +0000 (UTC)
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id BFBA31947B93;
+	Mon,  6 Jun 2022 06:46:19 +0000 (UTC)
 Received: from smtp.corp.redhat.com (int-mx08.intmail.prod.int.rdu2.redhat.com
  [10.11.54.8])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A7ACB1947040
- for <dm-devel@listman.corp.redhat.com>; Fri,  3 Jun 2022 08:29:06 +0000 (UTC)
+ ESMTP id CF9C71947040
+ for <dm-devel@listman.corp.redhat.com>; Fri,  3 Jun 2022 07:58:44 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 86F71C27E92; Fri,  3 Jun 2022 08:29:06 +0000 (UTC)
+ id AC679C27E92; Fri,  3 Jun 2022 07:58:44 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast03.extmail.prod.ext.rdu2.redhat.com [10.11.55.19])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 81E4DC23DC9
- for <dm-devel@redhat.com>; Fri,  3 Jun 2022 08:29:06 +0000 (UTC)
+ (mimecast01.extmail.prod.ext.rdu2.redhat.com [10.11.55.17])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id A6982C27E8F
+ for <dm-devel@redhat.com>; Fri,  3 Jun 2022 07:58:44 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 66B83811E76
- for <dm-devel@redhat.com>; Fri,  3 Jun 2022 08:29:06 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 8841385A5B9
+ for <dm-devel@redhat.com>; Fri,  3 Jun 2022 07:58:44 +0000 (UTC)
 Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
  [205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-386-fgBcR-4WMuiOL5jgpcT7hQ-1; Fri, 03 Jun 2022 04:29:04 -0400
-X-MC-Unique: fgBcR-4WMuiOL5jgpcT7hQ-1
+ us-mta-445-Em0Ujhx4O-qgzjXt9NgBtw-1; Fri, 03 Jun 2022 03:58:43 -0400
+X-MC-Unique: Em0Ujhx4O-qgzjXt9NgBtw-1
 Received: from pps.filterd (m0246629.ppops.net [127.0.0.1])
- by mx0b-00069f02.pphosted.com (8.17.1.5/8.17.1.5) with ESMTP id 2535egi5004301;
- Fri, 3 Jun 2022 06:55:56 GMT
-Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com
- (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
- by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3gf08e198r-1
+ by mx0b-00069f02.pphosted.com (8.17.1.5/8.17.1.5) with ESMTP id 2535ehw2004306;
+ Fri, 3 Jun 2022 06:55:50 GMT
+Received: from iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com
+ (iadpaimrmta01.appoci.oracle.com [130.35.100.223])
+ by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3gf08e198j-1
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 03 Jun 2022 06:55:55 +0000
+ Fri, 03 Jun 2022 06:55:49 +0000
 Received: from pps.filterd
- (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
- by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.16.1.2/8.16.1.2)
- with SMTP id 2536oJOK001834; Fri, 3 Jun 2022 06:55:55 GMT
+ (iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
+ by iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (8.16.1.2/8.16.1.2)
+ with SMTP id 2536q0XS027501; Fri, 3 Jun 2022 06:55:48 GMT
 Received: from nam04-dm6-obe.outbound.protection.outlook.com
  (mail-dm6nam04lp2048.outbound.protection.outlook.com [104.47.73.48])
- by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com with ESMTP id
- 3gc8hyxp2g-2
+ by iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com with ESMTP id
+ 3gc8k25ntm-2
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 03 Jun 2022 06:55:55 +0000
+ Fri, 03 Jun 2022 06:55:48 +0000
 Received: from DM5PR10MB1466.namprd10.prod.outlook.com (2603:10b6:3:b::7) by
  BYAPR10MB2789.namprd10.prod.outlook.com (2603:10b6:a03:82::27) with Microsoft
  SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.5293.19; Fri, 3 Jun 2022 06:55:53 +0000
+ 15.20.5293.19; Fri, 3 Jun 2022 06:55:46 +0000
 Received: from DM5PR10MB1466.namprd10.prod.outlook.com
  ([fe80::f81d:b8ef:c5a4:9c9b]) by DM5PR10MB1466.namprd10.prod.outlook.com
  ([fe80::f81d:b8ef:c5a4:9c9b%3]) with mapi id 15.20.5293.019; Fri, 3 Jun 2022
- 06:55:52 +0000
+ 06:55:46 +0000
 From: Mike Christie <michael.christie@oracle.com>
 To: linux-block@vger.kernel.org, dm-devel@redhat.com, snitzer@kernel.org,
  hch@lst.de, axboe@kernel.dk, martin.petersen@oracle.com,
  james.bottomley@hansenpartnership.com, linux-scsi@vger.kernel.org,
  target-devel@vger.kernel.org
-Date: Fri,  3 Jun 2022 01:55:33 -0500
-Message-Id: <20220603065536.5641-9-michael.christie@oracle.com>
+Date: Fri,  3 Jun 2022 01:55:26 -0500
+Message-Id: <20220603065536.5641-2-michael.christie@oracle.com>
 In-Reply-To: <20220603065536.5641-1-michael.christie@oracle.com>
 References: <20220603065536.5641-1-michael.christie@oracle.com>
 X-ClientProxiedBy: DM5PR16CA0012.namprd16.prod.outlook.com
@@ -84,68 +84,68 @@ X-ClientProxiedBy: DM5PR16CA0012.namprd16.prod.outlook.com
  (2603:10b6:3:b::7)
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: 562c0e60-29d6-4949-b5d8-08da452e199f
+X-MS-Office365-Filtering-Correlation-Id: 8bb12f8c-d5f9-450d-33bc-08da452e15bb
 X-MS-TrafficTypeDiagnostic: BYAPR10MB2789:EE_
-X-Microsoft-Antispam-PRVS: <BYAPR10MB27890E5A99C430B54125564EF1A19@BYAPR10MB2789.namprd10.prod.outlook.com>
+X-Microsoft-Antispam-PRVS: <BYAPR10MB278934B16DCA53AFDE3AC298F1A19@BYAPR10MB2789.namprd10.prod.outlook.com>
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: wL3ybMrxn6e4NN776nsKhMa9Ll+GJWlMO49BjoJfkXqOZDuUjujg6rmXosjqWlIKuXt3fdOKYjZ9xigquW4Avm2OLB7yWGXyMsI8Iz0Mzxi8UR9wdZjzXSkx7bVGajPLNFOxp9W9rJoZFjy7Ahsi9CEkM02KvUV45S0Wl5MuNrbgC2ChMt0W0pdw+tVK3BPhkLMbONi8DtlJ2VHVrLCXHIDgNaYctkD7DFsc54tzmfAusK04x0IyrTMFnnr7iVgY6VDzkGkRNGUs7PduzWx/qC70BVPz0/JaHST1AMXOdPARSxFH17yPxkhifwdQvRlFOI1gsv7LfgSdYUXgRswVg9BnovJigecyBHk0tvEPYBaWT0r99Z6rIwXoR1Bt+isRVtzbPuCwtsG5tVlPSjTolVzVIDjMAkm00uAtP7FohnKI1PfpxnwWmMQGVHa7b5wJhGkeV/hbqmTegkOQJohlXLDudui8sdMUn3T+DJdlzf5gaiEa0bX2uYJxFMZSwS76LvFwYozEJeZEx628PKv+aEJ0UE7RBaCXPQfSycYPelbSQnI2PuRjArzlxZHBjRe7DjbCyr6ztLd3zh2B5Ju7pYDt5yINIXYt1xna7I3U5Nw1FvXVDa5nT8qCrNTYdfneVmQYv2Jq9v4NxBYiopBVlCabAaiLcRsZRLcP/wfa4XQZtwq2URWkHeSQkrHOEIvrr9x6CRhdvs92PJ0CEH3bzQ==
+X-Microsoft-Antispam-Message-Info: HAO8eR703Op82WTF3hb0uBbuFcuTwbbMtams+rV7omrEVIHwnknuaawx6GshvZI/rHJMyOsq7aQdSsmQFsGhBaCulzaZTKebGYhpNBamp2sS7277ezwnsJAQ+o09+0HO9M1jTA/WTZiNAleqB6VV8w1jSStSXM3ABALINMVxWISK78vlMz+RPhIJUdbDer0QdJ5W2HQMBak4OFrh7I89agQMRo/0py4RzXhHiAYW6/sIBYDtkKy0tDbp8tkGp569w2YZED2lgKW0bv3qzyo38t+o8QcQM+Vu+1BYVgOtq8CnHGBAXFfA7XyhsNISfFZzaA4kP43s0z+yG2ZUZ9Ip9zdkZqe/sYsrYVwrH9j0g65DVGO65yOFUVsgXFyUxNpUH9UFUUo1LBEgzNWcN/69syPAJLRb44dVGaR4ueWEXJ1rmivhfPLYHN22xGy/FzQOBV5QhdZ3cGgwskLJ48DTEosUNeCgcPUarcxmT6FtIotBuO9OiUx/kna325CDQm2gPPJ5yZyyXVd28KGyW7ukJ28wDE160eOa9zDoqWVu4G895DX5UtLW/LS//UJgDmH0ulQBdJCu6KBh/noru5LvuUIsHtObBCB3zOb1cr7XE6xEib3EMB97SOCRoUiATiHOYfaAw6+3iuvZ4OEIUfcFR+YLZhb4W24W67/VlUeDIpeorhwaDJXIwitbhM4257jqBnHNb2b1nXjkgf7WB/QFSg==
 X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
  IPV:NLI; SFV:NSPM; H:DM5PR10MB1466.namprd10.prod.outlook.com; PTR:; CAT:NONE;
- SFS:(13230001)(366004)(66946007)(8676002)(38350700002)(38100700002)(66476007)(4326008)(66556008)(86362001)(83380400001)(36756003)(8936002)(107886003)(6486002)(2616005)(316002)(5660300002)(1076003)(6512007)(26005)(2906002)(6506007)(52116002)(186003)(30864003)(6666004)(508600001);
+ SFS:(13230001)(366004)(66946007)(8676002)(38350700002)(38100700002)(66476007)(4326008)(66556008)(86362001)(83380400001)(36756003)(8936002)(107886003)(6486002)(2616005)(316002)(5660300002)(1076003)(6512007)(26005)(2906002)(6506007)(52116002)(186003)(6666004)(508600001);
  DIR:OUT; SFP:1101
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?PhEbCTZIBl/sNqsOEH7fG1RIsrKnP0/n80gQxhNcatalRrU69ikAE9Zc01fz?=
- =?us-ascii?Q?quiALZ/9kQs5wGclxcVgfRIFQytmSbuyeqwnfN/x25PVJpr9g1f60Gr/WYYH?=
- =?us-ascii?Q?SfHjlQ8bfqkQiA7RUiF822IEEsDVTkMgEpQ/oN1ixBbt78i2R/qJWJT+SyQd?=
- =?us-ascii?Q?fMXRd6z9PYSuzXSiv0j7L5iuZNtEGoAG82oOynVHd3xDaJLQYeVYNlaVNYdU?=
- =?us-ascii?Q?wZCNAH3NV5wlYleO9sveD9VfsHYwsLSBDbdCJTcOc7u7BrsEGv4ZoiuevOmb?=
- =?us-ascii?Q?Q6cykXqYz2n74Z+Ppqm0ZeNAQLno6U7alblPeyjO+MxpxnYl3g3RboxTRYgf?=
- =?us-ascii?Q?Z2nRy8PPjk8142uzSvrohWyloOUrm0ea7ZSN4w2w+zXDn/D38LJL4+DfcZ6g?=
- =?us-ascii?Q?v3ucYf7XYNK+8LIg+1sVoUhOZkIi0gwkpdIpBg/EPk1IORXqGZ+X9pcVUmu8?=
- =?us-ascii?Q?BXLaW9eSiOo2ov6WDWzrRZGd8fPUklRSuQmYCVsNTBdg0+0+vQLbMbT4HulG?=
- =?us-ascii?Q?WuPlXa9oiWr4Jn3wlvdJWnVYa/faIZQBtGsoDnk6LoeRzEZI5nvPclUKyjxa?=
- =?us-ascii?Q?qhBM5/oNj9C0sXSeXXUmyVpXCyPa1dF7Axd6DmyQOL9yuFaZBNlt1HFPjZRF?=
- =?us-ascii?Q?W+gdoWlZX6bpyXEw2FzcH0PY4VKDjk7okXWTwsi/fQ06JIcPbONLJjLris4c?=
- =?us-ascii?Q?GK/+kJLcygJfy7JewsKdFErgJJg2RUXmz5bEuVIPv/jCk3zLFMb84DKjkdp8?=
- =?us-ascii?Q?PLTIbG3bcBrZKiWNpQQs/E3XqxFgHrH1K3ZNAm4lK1nm66KTzZ6VNu+zthnZ?=
- =?us-ascii?Q?1st0fkn9psQjQTK1yrcg7uzpdumMuytN07T/dsc2i6r3rJLCmSHqRjh3rb0i?=
- =?us-ascii?Q?WklKbbklTuWP2euIObm/MmjBxJB+wQSC2CBTq1irgI7nUgwFWK+4BoM62mn9?=
- =?us-ascii?Q?H/EH6zke71JLo97olAtOzcLFPfqleHXRhz154xWcSQydK674sqhQr+H7kkei?=
- =?us-ascii?Q?uS77hSAr8BYUszq39jBMIJl9XcekoDtfs1G6U5DQ20YTnNqzNaCTj9yZg9Ev?=
- =?us-ascii?Q?RExL78szz45cq5R2SfH4SacJ/7fLC1IHifgrav/jzZuHtGL1s84l2WMebfKJ?=
- =?us-ascii?Q?MPdjRsNmVQ96yrXeNh1owIq/kcbJEYOSp7wZgWnSOB798g25mbAl/ofZV4aj?=
- =?us-ascii?Q?0f78PWajX++hp3kyXC6rZU7E4jWJMXwGUtEp6ASe+tsuWJWsBQtLO1Wj8KPL?=
- =?us-ascii?Q?4ENQgtz5JLYeAcbNG74n49puNE9PYFN+EagtbY1zN+DxNn9YGULsb2eUSbEC?=
- =?us-ascii?Q?71H2OGYots417EIdhSHIw6BLQpI3O6Wr9kg8CqH4fZwPQ+O5+t3Eu9hOvjmS?=
- =?us-ascii?Q?F71SnG3dO1YnCZqBIcbXVijkPfFv2N1jTt2q5xrGJJUm5HnWXXGdZ2yv+rJp?=
- =?us-ascii?Q?Yq5UfFcVGoj6JNMJUKDCtSdgdcvTJqC6bVruX90/p+Lic/mlahas6Yldto+P?=
- =?us-ascii?Q?nWAjXjZScboyWq1zrTrJYp0qPMRQmP9Ma9/6XqSHq30FY4F8p9MtC+o62Le/?=
- =?us-ascii?Q?BupgyF15QLyRUvBra1kqnnDWpGVCXF9mWkPU/Xvns2n39+PQcuAix6nkE3Cb?=
- =?us-ascii?Q?57rVXevhL+rItefnZA5BGFQuWUdecimpdBrsO5DO1Yjt1u6MJZAMiW4q9dxR?=
- =?us-ascii?Q?XkyywGa3Ll4kH9jUmlpAzhU8SMLEOzZbMPtFd+A6aiC/jMF5kdvktQJdUac3?=
- =?us-ascii?Q?oCSv6z3U3ZtU1vKmHFNutgq0sGMqask=3D?=
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?LL2JU0ZDPRD7ZuvjsiYQuzv91hsxt0wf+vceUSbD7gcEPeSW2F3jbWx3h8a6?=
+ =?us-ascii?Q?QmVNEKUZprrFNsdhe2mkR4Ebvl4TKEUDq/Stypu5IR5u91T97tUVlr1mJsK3?=
+ =?us-ascii?Q?UTzagPkZe+GU2myEAD1SFjDVXYg0vXXd2ZVxv2QuZcYhN2oZdlDzvkc643F8?=
+ =?us-ascii?Q?rx2iZFM6hWYYjHnFCVkBFrPh8gzkcXm6Ljt9iiBecIRoPNkCAdMKMMDbpbHD?=
+ =?us-ascii?Q?FQYMmJ9QvHgyGaKPLGKqwkQ9AK7ixg1MLp3AEd5e6fQxhAS8ZlH67D74a9HS?=
+ =?us-ascii?Q?xQRKMRR8AJ7dh3H42492ds8gvlKAzQ3pPKYZq/VQHSo1/EaRiR+5ZnhzNkCY?=
+ =?us-ascii?Q?sG4d15DXj3LR5GooPd5+xZzt6K0rvVt5MpMNMdNzP4Lod+xhx0lIFBO6O/tN?=
+ =?us-ascii?Q?LRruBqx6ZJOUOK6dCPt0Lp54nLnWc2Hgpg1FYCxx1jJoCSGk57zbkS0uI4Aw?=
+ =?us-ascii?Q?/UEUN4hWnnyPZK37EO/SZ2eU7Bh3HzVusVu6x1QKGyBd0ejL2+5097NmxD5K?=
+ =?us-ascii?Q?PuytXhcQw6iGQQXaKrxFwOASUByDDkNrzt9VdhU/HepG2/YZnJkqGtFeJ49W?=
+ =?us-ascii?Q?ReNzjVlmRuQyf9L+nsxiVUXxEJu1PE3b5jnr1UiuCOyk/addU0b3/L11LXv/?=
+ =?us-ascii?Q?j7HDyQYTx+og1aPikF/MbPgGX+fzZnY11bARdeJpY7ig91g4Uq+bvQOHSo9T?=
+ =?us-ascii?Q?T8Nnm7EkErrPqM587jNcgmCwrTp1ZazuKAJ2IZ0UaENy2UDnhl2QTMjEAJN/?=
+ =?us-ascii?Q?Lug44RKuPf0+a1/eckovDAydQ2L6dBYB/p+94Y2VwBp31+u/NGNyOvMYeXFu?=
+ =?us-ascii?Q?uP9YR3Dmr/7J/VM5ktgL1xeDdyt3F2jAcC0jlWx5/faVbSyPH1Edd2+6vhg9?=
+ =?us-ascii?Q?+Y+I41L0RjSFkBwGKlvAZssGIN1yAmQq3iJHjjLRGfVWeDe9c4dlrUpFJRUs?=
+ =?us-ascii?Q?w5e9T93ry6qEAaYZ/mkf/CAa5tx8MACNQZ4ZoeJAMUNEZAl8tmsckE0ogMnD?=
+ =?us-ascii?Q?93kFFYKSo4LZcq+t7gAFU952fu5hY49BzmJIIx9WI4f7/kEMn64ceeRglSwO?=
+ =?us-ascii?Q?sSjVnew00CbWmX1P6aJgt9qmWklZ8o5Xq/eVoJVWXRI01j7H0TMyuw35e+61?=
+ =?us-ascii?Q?jmT3jXILSIMnDzcdTvx6tZpMR55utdXe1xXzr7b2WRS6KyXTFwff7CezoBms?=
+ =?us-ascii?Q?uUvVCSuajGPGUE0AF/aCbWHPiWgmeeBfP0txBUxGQoFhnhjTBrnN0Z/jkChl?=
+ =?us-ascii?Q?DDGnM1VDYXNOMMafNhhSgaUkd3w6KDaD8Rk++ZG0Fx/0eeB1Y6nr8ilW+20U?=
+ =?us-ascii?Q?jTYon+ajA5LC/HPoqjsSVG6igZFMryfKNfIKNdPJs9gOQ9FY9hLtOHJ0u/a1?=
+ =?us-ascii?Q?jq9ekbTlTCc4lNREzB0hrzqoiVeyvxKEMqfeFY6CCBuLaedHfuygFoHmvEMm?=
+ =?us-ascii?Q?XOZ74vGvMNT1njKWKxNEIh6xgSuQq2MKwj+SpACXDnSac4XJbGnrseP29wbu?=
+ =?us-ascii?Q?B9kmAscWCZvY69ykUE0/g96+ouqy7ZbA3+zhMYPElea04yGysT1lkxt3VfPq?=
+ =?us-ascii?Q?nl7LyjpmND88qDlH8rrQXIepv5RpwvdzyR2KdLv3P9ucTHzsYE65ItHiYRMK?=
+ =?us-ascii?Q?NMqHzf9Gs0w4hOimI4g2X0yVXXTfv+2mZU8yUQEvC8m6IKz7Cgf+0eZOKyEK?=
+ =?us-ascii?Q?x36oJzAZ/9Jeyq+urQt/JJl1ZmCMEFM4rGsswvUUgdoI1cCDDNQH1pXvK+vS?=
+ =?us-ascii?Q?oTnsIwQqNRKGYn5fZUFWQeekoUa4URU=3D?=
 X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 562c0e60-29d6-4949-b5d8-08da452e199f
+X-MS-Exchange-CrossTenant-Network-Message-Id: 8bb12f8c-d5f9-450d-33bc-08da452e15bb
 X-MS-Exchange-CrossTenant-AuthSource: DM5PR10MB1466.namprd10.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 03 Jun 2022 06:55:52.9243 (UTC)
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 03 Jun 2022 06:55:46.4248 (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: pTr4fCgLboqe5H3hj5NuJfVrIfjziOOEL8QdvIUFN7YN0U0EvQMD7lRI2phUm4A3+2C8IGPRGO7KLVcdJuoZ02tDv9HbFEXB8XkSewmAGpg=
+X-MS-Exchange-CrossTenant-UserPrincipalName: EvZ2bhMeAuhbbvSmv6TrxtmoY/7BTDlTI0vcG+GFw00C2i4ULexosBMMrX0Oi8hGtQ/mB4PUOtdWhMzUdSupn0ppfEwcAopcfjU1ygp8qdc=
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR10MB2789
 X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.517, 18.0.874
  definitions=2022-06-03_02:2022-06-02,
  2022-06-03 signatures=0
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 phishscore=0
- bulkscore=0 suspectscore=0
- mlxlogscore=999 mlxscore=0 spamscore=0 adultscore=0 malwarescore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2204290000
- definitions=main-2206030029
-X-Proofpoint-GUID: AFyugBDX9QtpPaGUSZV9DeJ0-Le7wSSU
-X-Proofpoint-ORIG-GUID: AFyugBDX9QtpPaGUSZV9DeJ0-Le7wSSU
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 mlxlogscore=999
+ mlxscore=0
+ suspectscore=0 spamscore=0 phishscore=0 malwarescore=0 bulkscore=0
+ adultscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2204290000 definitions=main-2206030029
+X-Proofpoint-GUID: LFBZ-pwQHIw-Dvhm8RgRRGnsglZUq_l5
+X-Proofpoint-ORIG-GUID: LFBZ-pwQHIw-Dvhm8RgRRGnsglZUq_l5
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -154,9 +154,9 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
 X-Scanned-By: MIMEDefang 2.85 on 10.11.54.8
-X-Mailman-Approved-At: Mon, 06 Jun 2022 06:46:17 +0000
-Subject: [dm-devel] [PATCH 08/11] scsi: target: Add block PR support to
- iblock.
+X-Mailman-Approved-At: Mon, 06 Jun 2022 06:46:16 +0000
+Subject: [dm-devel] [PATCH 01/11] scsi: target: Rename sbc_ops to
+ exec_cmd_ops
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -179,372 +179,166 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-This adds support for the block PR callouts to target_core_iblock. This
-patch doesn't attempt to implement the entire spec because there's no way
-to test it all. It only supports what's required for windows clustering
-right now.
+The next patches allow us to call the block layer's pr_ops from the
+backends. This will require allowing the backends to hook into the cmd
+processing for SPC commands, so this renames sbc_ops to a more generic
+exec_cmd_ops.
 
 Signed-off-by: Mike Christie <michael.christie@oracle.com>
 ---
- drivers/target/target_core_iblock.c | 312 ++++++++++++++++++++++++++++
- 1 file changed, 312 insertions(+)
+ drivers/target/target_core_file.c    |  4 ++--
+ drivers/target/target_core_iblock.c  |  4 ++--
+ drivers/target/target_core_rd.c      |  4 ++--
+ drivers/target/target_core_sbc.c     | 13 +++++++------
+ include/target/target_core_backend.h |  4 ++--
+ 5 files changed, 15 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
-index 9b0d788f6744..e8cf201e59ca 100644
---- a/drivers/target/target_core_iblock.c
-+++ b/drivers/target/target_core_iblock.c
-@@ -23,13 +23,16 @@
- #include <linux/file.h>
- #include <linux/module.h>
- #include <linux/scatterlist.h>
-+#include <linux/pr.h>
- #include <scsi/scsi_proto.h>
-+#include <scsi/scsi_block_pr.h>
- #include <asm/unaligned.h>
- 
- #include <target/target_core_base.h>
- #include <target/target_core_backend.h>
- 
- #include "target_core_iblock.h"
-+#include "target_core_pr.h"
- 
- #define IBLOCK_MAX_BIO_PER_TASK	 32	/* max # of bios to submit at a time */
- #define IBLOCK_BIO_POOL_SIZE	128
-@@ -822,6 +825,295 @@ iblock_execute_rw(struct se_cmd *cmd, struct scatterlist *sgl, u32 sgl_nents,
- 	return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
+diff --git a/drivers/target/target_core_file.c b/drivers/target/target_core_file.c
+index 8190b840065f..4f00563c5016 100644
+--- a/drivers/target/target_core_file.c
++++ b/drivers/target/target_core_file.c
+@@ -900,7 +900,7 @@ static void fd_free_prot(struct se_device *dev)
+ 	fd_dev->fd_prot_file = NULL;
  }
  
-+static sense_reason_t iblock_execute_pr_out(struct se_cmd *cmd, u8 sa, u64 key,
-+					    u64 sa_key, u8 type, bool aptpl,
-+					    bool all_tg_pt, bool spec_i_pt)
-+{
-+	struct se_device *dev = cmd->se_dev;
-+	struct iblock_dev *ib_dev = IBLOCK_DEV(dev);
-+	struct block_device *bdev = ib_dev->ibd_bd;
-+	const struct pr_ops *ops = bdev->bd_disk->fops->pr_ops;
-+	int ret;
-+
-+	if (!ops) {
-+		pr_err("Block device does not support pr_ops but iblock device has been configured for PR passthrough.\n");
-+		return TCM_UNSUPPORTED_SCSI_OPCODE;
-+	}
-+
-+	switch (sa) {
-+	case PRO_REGISTER_AND_MOVE:
-+		pr_err("PRO_REGISTER_AND_MOVE is not supported by iblock PR passthrough.\n");
-+		return TCM_UNSUPPORTED_SCSI_OPCODE;
-+	case PRO_REPLACE_LOST_RESERVATION:
-+		pr_err("PRO_REPLACE_LOST_RESERVATION is not supported by iblock PR passthrough.\n");
-+		return TCM_UNSUPPORTED_SCSI_OPCODE;
-+	case PRO_REGISTER:
-+	case PRO_REGISTER_AND_IGNORE_EXISTING_KEY:
-+		if (!ops->pr_register) {
-+			pr_err("block device does not support pr_register.\n");
-+			return TCM_UNSUPPORTED_SCSI_OPCODE;
-+		}
-+
-+		/*
-+		 * We only support one target port. We don't know the target
-+		 * port config at this level and the block layer has a
-+		 * different view.
-+		 */
-+		if (spec_i_pt || all_tg_pt) {
-+			pr_err("SPC-3 PR: SPEC_I_PT and ALL_TG_PT are not supported by PR passthrough.\n");
-+
-+			return TCM_UNSUPPORTED_SCSI_OPCODE;
-+		}
-+
-+		/* The block layer pr ops always enables aptpl */
-+		if (!aptpl)
-+			pr_info("APTPL not set by initiator, but will be used.\n");
-+
-+		ret = ops->pr_register(bdev, key, sa_key,
-+				sa == PRO_REGISTER ? 0 : PR_FL_IGNORE_KEY);
-+		break;
-+	case PRO_RESERVE:
-+		if (!ops->pr_reserve) {
-+			pr_err("block_device does not support pr_reserve.\n");
-+			return TCM_UNSUPPORTED_SCSI_OPCODE;
-+		}
-+
-+		switch (type) {
-+		case PR_TYPE_WRITE_EXCLUSIVE_REGONLY:
-+		case PR_TYPE_EXCLUSIVE_ACCESS_REGONLY:
-+			break;
-+		default:
-+			return TCM_UNSUPPORTED_SCSI_OPCODE;
-+		}
-+
-+		ret = ops->pr_reserve(bdev, key, scsi_pr_type_to_block(type), 0);
-+		break;
-+	case PRO_CLEAR:
-+		if (!ops->pr_clear) {
-+			pr_err("block_device does not support pr_clear.\n");
-+			return TCM_UNSUPPORTED_SCSI_OPCODE;
-+		}
-+
-+		ret = ops->pr_clear(bdev, key);
-+		break;
-+	case PRO_PREEMPT:
-+	case PRO_PREEMPT_AND_ABORT:
-+		if (!ops->pr_clear) {
-+			pr_err("block_device does not support pr_preempt.\n");
-+			return TCM_UNSUPPORTED_SCSI_OPCODE;
-+		}
-+
-+		switch (type) {
-+		case PR_TYPE_WRITE_EXCLUSIVE_REGONLY:
-+		case PR_TYPE_EXCLUSIVE_ACCESS_REGONLY:
-+			break;
-+		default:
-+			return TCM_UNSUPPORTED_SCSI_OPCODE;
-+		}
-+
-+		ret = ops->pr_preempt(bdev, key, sa_key,
-+				      scsi_pr_type_to_block(type),
-+				      sa == PRO_PREEMPT ? false : true);
-+		break;
-+	default:
-+		pr_err("Unknown PERSISTENT_RESERVE_OUT SA: 0x%02x\n", sa);
-+		return TCM_UNSUPPORTED_SCSI_OPCODE;
-+	}
-+
-+	if (ret)
-+		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-+
-+	return TCM_NO_SENSE;
-+}
-+
-+static void iblock_pr_report_caps(unsigned char *param_data)
-+{
-+	u16 len = 8;
-+
-+	put_unaligned_be16(len, &param_data[0]);
-+	/*
-+	 * When using the pr_ops passthrough method we only support exporting
-+	 * the device through one target port because from the backend module
-+	 * level we can't see the target port config. As a result we only
-+	 * support registration directly from the I_T nexus the cmd is sent
-+	 * through and do not set ATP_C here.
-+	 *
-+	 * The block layer pr_ops do not support passing in initiators so
-+	 * we don't set SIP_C here.
-+	 */
-+	/* PTPL_C: Persistence across Target Power Loss bit */
-+	param_data[2] |= 0x01;
-+	/*
-+	 * We are filling in the PERSISTENT RESERVATION TYPE MASK below, so
-+	 * set the TMV: Task Mask Valid bit.
-+	 */
-+	param_data[3] |= 0x80;
-+	/*
-+	 * Change ALLOW COMMANDs to 0x20 or 0x40 later from Table 166
-+	 */
-+	param_data[3] |= 0x10; /* ALLOW COMMANDs field 001b */
-+	/*
-+	 * PTPL_A: Persistence across Target Power Loss Active bit. The block
-+	 * layer pr ops always enables this so report it active.
-+	 */
-+	param_data[3] |= 0x01;
-+	/*
-+	 * Setup the PERSISTENT RESERVATION TYPE MASK from Table 212 spc4r37.
-+	 *
-+	 * We are only supporting the following to simplify conversions we
-+	 * may need to do between what the initiator sends us and what is
-+	 * below us if there is a multipath device.
-+	 */
-+	param_data[4] |= 0x40; /* PR_TYPE_EXCLUSIVE_ACCESS_REGONLY */
-+	param_data[4] |= 0x20; /* PR_TYPE_WRITE_EXCLUSIVE_REGONLY */
-+}
-+
-+static int iblock_pr_read_keys(struct se_cmd *cmd, unsigned char *param_data)
-+{
-+	struct se_device *dev = cmd->se_dev;
-+	struct iblock_dev *ib_dev = IBLOCK_DEV(dev);
-+	struct block_device *bdev = ib_dev->ibd_bd;
-+	const struct pr_ops *ops = bdev->bd_disk->fops->pr_ops;
-+	int i, ret, len, paths, data_offset;
-+	struct pr_keys *keys;
-+
-+	if (!ops) {
-+		pr_err("Block device does not support pr_ops but iblock device has been configured for PR passthrough.\n");
-+		return TCM_UNSUPPORTED_SCSI_OPCODE;
-+	}
-+
-+	if (!ops->pr_read_keys) {
-+		pr_err("Block device does not support read_keys.\n");
-+		return TCM_UNSUPPORTED_SCSI_OPCODE;
-+	}
-+
-+	/*
-+	 * We don't know what's under us, but dm-multipath will register every
-+	 * path with the same key, so start off with enough space for 16 paths.
-+	 */
-+	paths = 16;
-+retry:
-+	len = sizeof(*keys) + (8 * paths);
-+
-+	keys = kzalloc(len, GFP_KERNEL);
-+	if (!keys)
-+		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-+
-+	ret = ops->pr_read_keys(bdev, keys, len);
-+	if (ret == -EOVERFLOW) {
-+		kfree(keys);
-+		paths *= 2;
-+		goto retry;
-+	} else if (ret) {
-+		ret = TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-+		goto free_keys;
-+	}
-+
-+	ret = TCM_NO_SENSE;
-+
-+	put_unaligned_be32(keys->generation, &param_data[0]);
-+	if (!keys->num_keys) {
-+		put_unaligned_be32(0, &param_data[4]);
-+		goto free_keys;
-+	}
-+
-+	/*
-+	 * We only support a single I_T Nexus so there should only be one
-+	 * key. There might be a multipath device under us but the initiator
-+	 * does not know this. So, here we make sure the registered keys are
-+	 * the same and that we only return the one key to match what the
-+	 * initiator had sent us.
-+	 */
-+	put_unaligned_be32(8, &param_data[4]);
-+
-+	data_offset = 8;
-+	for (i = 0; i < keys->num_keys; i++) {
-+		if (data_offset + 8 > cmd->data_length)
-+			break;
-+
-+		if (i == 0) {
-+			put_unaligned_be64(keys->keys[i],
-+					   &param_data[data_offset]);
-+		} else if (keys->keys[i] != keys->keys[i - 1]) {
-+			pr_err("Detected mismatched keys 0x%016llx and 0x%016llx\n",
-+			       keys->keys[i], keys->keys[i - 1]);
-+			ret = TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-+			goto free_keys;
-+		}
-+
-+		data_offset += 8;
-+	}
-+
-+free_keys:
-+	kfree(keys);
-+	return ret;
-+}
-+
-+static int iblock_pr_read_reservation(struct se_cmd *cmd,
-+				      unsigned char *param_data)
-+{
-+	struct se_device *dev = cmd->se_dev;
-+	struct iblock_dev *ib_dev = IBLOCK_DEV(dev);
-+	struct block_device *bdev = ib_dev->ibd_bd;
-+	const struct pr_ops *ops = bdev->bd_disk->fops->pr_ops;
-+	struct pr_held_reservation rsv;
-+
-+	if (!ops) {
-+		pr_err("Block device does not support pr_ops but iblock device has been configured for PR passthrough.\n");
-+		return TCM_UNSUPPORTED_SCSI_OPCODE;
-+	}
-+
-+	if (!ops->pr_read_reservation) {
-+		pr_err("Block device does not support read_keys.\n");
-+		return TCM_UNSUPPORTED_SCSI_OPCODE;
-+	}
-+
-+	if (ops->pr_read_reservation(bdev, &rsv))
-+		return TCM_LOGICAL_UNIT_COMMUNICATION_FAILURE;
-+
-+	put_unaligned_be32(rsv.generation, &param_data[0]);
-+	if (!rsv.key) {
-+		put_unaligned_be32(0, &param_data[4]);
-+		return TCM_NO_SENSE;
-+	}
-+
-+	put_unaligned_be32(16, &param_data[4]);
-+
-+	if (cmd->data_length < 16)
-+		return TCM_NO_SENSE;
-+	put_unaligned_be64(rsv.key, &param_data[8]);
-+
-+	if (cmd->data_length < 22)
-+		return TCM_NO_SENSE;
-+	param_data[21] = block_pr_type_to_scsi(rsv.type);
-+
-+	return TCM_NO_SENSE;
-+}
-+
-+static sense_reason_t iblock_execute_pr_in(struct se_cmd *cmd, u8 sa,
-+					   unsigned char *param_data)
-+{
-+	sense_reason_t ret;
-+
-+	switch (sa) {
-+	case PRI_REPORT_CAPABILITIES:
-+		iblock_pr_report_caps(param_data);
-+		break;
-+	case PRI_READ_KEYS:
-+		ret = iblock_pr_read_keys(cmd, param_data);
-+		break;
-+	case PRI_READ_RESERVATION:
-+		ret = iblock_pr_read_reservation(cmd, param_data);
-+		break;
-+	case PRI_READ_FULL_STATUS:
-+	default:
-+		pr_err("Unknown PERSISTENT_RESERVE_IN SA: 0x%02x\n", sa);
-+		return TCM_UNSUPPORTED_SCSI_OPCODE;
-+	}
-+
-+	return ret;
-+}
-+
- static sector_t iblock_get_blocks(struct se_device *dev)
+-static struct sbc_ops fd_sbc_ops = {
++static struct exec_cmd_ops fd_exec_cmd_ops = {
+ 	.execute_rw		= fd_execute_rw,
+ 	.execute_sync_cache	= fd_execute_sync_cache,
+ 	.execute_write_same	= fd_execute_write_same,
+@@ -910,7 +910,7 @@ static struct sbc_ops fd_sbc_ops = {
+ static sense_reason_t
+ fd_parse_cdb(struct se_cmd *cmd)
  {
- 	struct iblock_dev *ib_dev = IBLOCK_DEV(dev);
-@@ -876,11 +1168,30 @@ static struct exec_cmd_ops iblock_exec_cmd_ops = {
+-	return sbc_parse_cdb(cmd, &fd_sbc_ops);
++	return sbc_parse_cdb(cmd, &fd_exec_cmd_ops);
+ }
+ 
+ static const struct target_backend_ops fileio_ops = {
+diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
+index 87ede165ddba..9b0d788f6744 100644
+--- a/drivers/target/target_core_iblock.c
++++ b/drivers/target/target_core_iblock.c
+@@ -871,7 +871,7 @@ static unsigned int iblock_get_io_opt(struct se_device *dev)
+ 	return bdev_io_opt(bd);
+ }
+ 
+-static struct sbc_ops iblock_sbc_ops = {
++static struct exec_cmd_ops iblock_exec_cmd_ops = {
+ 	.execute_rw		= iblock_execute_rw,
  	.execute_sync_cache	= iblock_execute_sync_cache,
  	.execute_write_same	= iblock_execute_write_same,
- 	.execute_unmap		= iblock_execute_unmap,
-+	.execute_pr_out		= iblock_execute_pr_out,
-+	.execute_pr_in		= iblock_execute_pr_in,
- };
- 
+@@ -881,7 +881,7 @@ static struct sbc_ops iblock_sbc_ops = {
  static sense_reason_t
  iblock_parse_cdb(struct se_cmd *cmd)
  {
-+	unsigned char *cdb = cmd->t_task_cdb;
-+	struct se_device *dev = cmd->se_dev;
-+
-+	switch (cdb[0]) {
-+	case RESERVE:
-+	case RESERVE_10:
-+	case RELEASE:
-+	case RELEASE_10:
-+		/*
-+		 * The block layer pr_ops don't support the old RESERVE/RELEASE
-+		 * commands.
-+		 */
-+		if (dev->dev_attrib.emulate_pr &&
-+		    (dev->transport_flags & TRANSPORT_FLAG_PASSTHROUGH_PGR))
-+			return TCM_UNSUPPORTED_SCSI_OPCODE;
-+	}
-+
- 	return sbc_parse_cdb(cmd, &iblock_exec_cmd_ops);
+-	return sbc_parse_cdb(cmd, &iblock_sbc_ops);
++	return sbc_parse_cdb(cmd, &iblock_exec_cmd_ops);
  }
  
-@@ -896,6 +1207,7 @@ static bool iblock_get_write_cache(struct se_device *dev)
- static const struct target_backend_ops iblock_ops = {
- 	.name			= "iblock",
- 	.inquiry_prod		= "IBLOCK",
-+	.transport_flags_changeable = TRANSPORT_FLAG_PASSTHROUGH_PGR,
- 	.inquiry_rev		= IBLOCK_VERSION,
- 	.owner			= THIS_MODULE,
- 	.attach_hba		= iblock_attach_hba,
+ static bool iblock_get_write_cache(struct se_device *dev)
+diff --git a/drivers/target/target_core_rd.c b/drivers/target/target_core_rd.c
+index 6648c1c90e19..6f67cc09c2b5 100644
+--- a/drivers/target/target_core_rd.c
++++ b/drivers/target/target_core_rd.c
+@@ -643,14 +643,14 @@ static void rd_free_prot(struct se_device *dev)
+ 	rd_release_prot_space(rd_dev);
+ }
+ 
+-static struct sbc_ops rd_sbc_ops = {
++static struct exec_cmd_ops rd_exec_cmd_ops = {
+ 	.execute_rw		= rd_execute_rw,
+ };
+ 
+ static sense_reason_t
+ rd_parse_cdb(struct se_cmd *cmd)
+ {
+-	return sbc_parse_cdb(cmd, &rd_sbc_ops);
++	return sbc_parse_cdb(cmd, &rd_exec_cmd_ops);
+ }
+ 
+ static const struct target_backend_ops rd_mcp_ops = {
+diff --git a/drivers/target/target_core_sbc.c b/drivers/target/target_core_sbc.c
+index ca1b2312d6e7..e08d06dacbfc 100644
+--- a/drivers/target/target_core_sbc.c
++++ b/drivers/target/target_core_sbc.c
+@@ -192,7 +192,7 @@ EXPORT_SYMBOL(sbc_get_write_same_sectors);
+ static sense_reason_t
+ sbc_execute_write_same_unmap(struct se_cmd *cmd)
+ {
+-	struct sbc_ops *ops = cmd->protocol_data;
++	struct exec_cmd_ops *ops = cmd->protocol_data;
+ 	sector_t nolb = sbc_get_write_same_sectors(cmd);
+ 	sense_reason_t ret;
+ 
+@@ -279,7 +279,8 @@ static inline unsigned long long transport_lba_64_ext(unsigned char *cdb)
+ }
+ 
+ static sense_reason_t
+-sbc_setup_write_same(struct se_cmd *cmd, unsigned char flags, struct sbc_ops *ops)
++sbc_setup_write_same(struct se_cmd *cmd, unsigned char flags,
++		     struct exec_cmd_ops *ops)
+ {
+ 	struct se_device *dev = cmd->se_dev;
+ 	sector_t end_lba = dev->transport->get_blocks(dev) + 1;
+@@ -404,7 +405,7 @@ static sense_reason_t xdreadwrite_callback(struct se_cmd *cmd, bool success,
+ static sense_reason_t
+ sbc_execute_rw(struct se_cmd *cmd)
+ {
+-	struct sbc_ops *ops = cmd->protocol_data;
++	struct exec_cmd_ops *ops = cmd->protocol_data;
+ 
+ 	return ops->execute_rw(cmd, cmd->t_data_sg, cmd->t_data_nents,
+ 			       cmd->data_direction);
+@@ -620,7 +621,7 @@ static sense_reason_t compare_and_write_callback(struct se_cmd *cmd, bool succes
+ static sense_reason_t
+ sbc_compare_and_write(struct se_cmd *cmd)
+ {
+-	struct sbc_ops *ops = cmd->protocol_data;
++	struct exec_cmd_ops *ops = cmd->protocol_data;
+ 	struct se_device *dev = cmd->se_dev;
+ 	sense_reason_t ret;
+ 	int rc;
+@@ -818,7 +819,7 @@ sbc_check_dpofua(struct se_device *dev, struct se_cmd *cmd, unsigned char *cdb)
+ }
+ 
+ sense_reason_t
+-sbc_parse_cdb(struct se_cmd *cmd, struct sbc_ops *ops)
++sbc_parse_cdb(struct se_cmd *cmd, struct exec_cmd_ops *ops)
+ {
+ 	struct se_device *dev = cmd->se_dev;
+ 	unsigned char *cdb = cmd->t_task_cdb;
+@@ -1167,7 +1168,7 @@ EXPORT_SYMBOL(sbc_get_device_type);
+ static sense_reason_t
+ sbc_execute_unmap(struct se_cmd *cmd)
+ {
+-	struct sbc_ops *ops = cmd->protocol_data;
++	struct exec_cmd_ops *ops = cmd->protocol_data;
+ 	struct se_device *dev = cmd->se_dev;
+ 	unsigned char *buf, *ptr = NULL;
+ 	sector_t lba;
+diff --git a/include/target/target_core_backend.h b/include/target/target_core_backend.h
+index 675f3a1fe613..4e6cf1bf3b87 100644
+--- a/include/target/target_core_backend.h
++++ b/include/target/target_core_backend.h
+@@ -61,7 +61,7 @@ struct target_backend_ops {
+ 	struct configfs_attribute **tb_dev_action_attrs;
+ };
+ 
+-struct sbc_ops {
++struct exec_cmd_ops {
+ 	sense_reason_t (*execute_rw)(struct se_cmd *cmd, struct scatterlist *,
+ 				     u32, enum dma_data_direction);
+ 	sense_reason_t (*execute_sync_cache)(struct se_cmd *cmd);
+@@ -85,7 +85,7 @@ sense_reason_t	spc_emulate_report_luns(struct se_cmd *cmd);
+ sense_reason_t	spc_emulate_inquiry_std(struct se_cmd *, unsigned char *);
+ sense_reason_t	spc_emulate_evpd_83(struct se_cmd *, unsigned char *);
+ 
+-sense_reason_t	sbc_parse_cdb(struct se_cmd *cmd, struct sbc_ops *ops);
++sense_reason_t	sbc_parse_cdb(struct se_cmd *cmd, struct exec_cmd_ops *ops);
+ u32	sbc_get_device_rev(struct se_device *dev);
+ u32	sbc_get_device_type(struct se_device *dev);
+ sector_t	sbc_get_write_same_sectors(struct se_cmd *cmd);
 -- 
 2.25.1
 
