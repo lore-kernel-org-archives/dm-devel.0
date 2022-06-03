@@ -4,79 +4,79 @@ X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.lore.kernel.org (Postfix) with ESMTPS id 5130CC433EF
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E5FC1CCA473
 	for <dm-devel@archiver.kernel.org>; Fri,  3 Jun 2022 07:18:06 +0000 (UTC)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-168-_Am64D9GNiewtTecsZQsrg-1; Fri, 03 Jun 2022 03:18:02 -0400
-X-MC-Unique: _Am64D9GNiewtTecsZQsrg-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+ us-mta-206-_o-u4fdcOLyoPdJBqnRBOg-1; Fri, 03 Jun 2022 03:18:02 -0400
+X-MC-Unique: _o-u4fdcOLyoPdJBqnRBOg-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
 	(using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id AFE92811E81;
-	Fri,  3 Jun 2022 07:18:00 +0000 (UTC)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 243933C10155;
+	Fri,  3 Jun 2022 07:18:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (unknown [10.30.29.100])
-	by smtp.corp.redhat.com (Postfix) with ESMTP id 9AC3F2026D07;
-	Fri,  3 Jun 2022 07:18:00 +0000 (UTC)
+	by smtp.corp.redhat.com (Postfix) with ESMTP id 1097C1410DDB;
+	Fri,  3 Jun 2022 07:18:01 +0000 (UTC)
 Received: from mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (localhost [IPv6:::1])
-	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id 69A75194704A;
-	Fri,  3 Jun 2022 07:17:58 +0000 (UTC)
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com
- [10.11.54.4])
+	by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with ESMTP id A17991947051;
+	Fri,  3 Jun 2022 07:17:59 +0000 (UTC)
+Received: from smtp.corp.redhat.com (int-mx10.intmail.prod.int.rdu2.redhat.com
+ [10.11.54.10])
  by mm-prod-listman-01.mail-001.prod.us-east-1.aws.redhat.com (Postfix) with
- ESMTP id A4F3A194704A
- for <dm-devel@listman.corp.redhat.com>; Fri,  3 Jun 2022 06:58:12 +0000 (UTC)
+ ESMTP id 13D3A1947040
+ for <dm-devel@listman.corp.redhat.com>; Fri,  3 Jun 2022 06:58:10 +0000 (UTC)
 Received: by smtp.corp.redhat.com (Postfix)
- id 93B4F2026D07; Fri,  3 Jun 2022 06:58:12 +0000 (UTC)
+ id D7202403371; Fri,  3 Jun 2022 06:58:10 +0000 (UTC)
 Received: from mimecast-mx02.redhat.com
- (mimecast10.extmail.prod.ext.rdu2.redhat.com [10.11.55.26])
- by smtp.corp.redhat.com (Postfix) with ESMTPS id 8EF132026D64
- for <dm-devel@redhat.com>; Fri,  3 Jun 2022 06:58:12 +0000 (UTC)
+ (mimecast09.extmail.prod.ext.rdu2.redhat.com [10.11.55.25])
+ by smtp.corp.redhat.com (Postfix) with ESMTPS id D20FA492C3B
+ for <dm-devel@redhat.com>; Fri,  3 Jun 2022 06:58:10 +0000 (UTC)
 Received: from us-smtp-1.mimecast.com (us-smtp-delivery-1.mimecast.com
- [205.139.110.120])
+ [207.211.31.120])
  (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
  (No client certificate requested)
- by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 6F3AA1C05AE1
- for <dm-devel@redhat.com>; Fri,  3 Jun 2022 06:58:12 +0000 (UTC)
+ by mimecast-mx02.redhat.com (Postfix) with ESMTPS id B676529ABA18
+ for <dm-devel@redhat.com>; Fri,  3 Jun 2022 06:58:10 +0000 (UTC)
 Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com
  [205.220.165.32]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-394-iBEz3jDLOVWXiF89NiPQkg-1; Fri, 03 Jun 2022 02:58:10 -0400
-X-MC-Unique: iBEz3jDLOVWXiF89NiPQkg-1
-Received: from pps.filterd (m0246627.ppops.net [127.0.0.1])
- by mx0b-00069f02.pphosted.com (8.17.1.5/8.17.1.5) with ESMTP id 2534esIM016519;
- Fri, 3 Jun 2022 06:56:03 GMT
+ us-mta-167-E404Wy-PMieQaQkFBjOZNw-1; Fri, 03 Jun 2022 02:58:08 -0400
+X-MC-Unique: E404Wy-PMieQaQkFBjOZNw-1
+Received: from pps.filterd (m0246629.ppops.net [127.0.0.1])
+ by mx0b-00069f02.pphosted.com (8.17.1.5/8.17.1.5) with ESMTP id 2535ehw4004306;
+ Fri, 3 Jun 2022 06:56:02 GMT
 Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com
  (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
- by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3gf8rwrbf7-1
+ by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3gf08e1990-1
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 03 Jun 2022 06:56:03 +0000
+ Fri, 03 Jun 2022 06:56:02 +0000
 Received: from pps.filterd
  (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
  by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.16.1.2/8.16.1.2)
- with SMTP id 2536oJc5001837; Fri, 3 Jun 2022 06:56:02 GMT
+ with SMTP id 2536oJc3001837; Fri, 3 Jun 2022 06:56:01 GMT
 Received: from nam04-dm6-obe.outbound.protection.outlook.com
  (mail-dm6nam04lp2040.outbound.protection.outlook.com [104.47.73.40])
  by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com with ESMTP id
- 3gc8hyxp4e-3
+ 3gc8hyxp4e-1
  (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
- Fri, 03 Jun 2022 06:56:02 +0000
+ Fri, 03 Jun 2022 06:56:01 +0000
 Received: from DM5PR10MB1466.namprd10.prod.outlook.com (2603:10b6:3:b::7) by
  BYAPR10MB2789.namprd10.prod.outlook.com (2603:10b6:a03:82::27) with Microsoft
  SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.5293.19; Fri, 3 Jun 2022 06:56:00 +0000
+ 15.20.5293.19; Fri, 3 Jun 2022 06:55:59 +0000
 Received: from DM5PR10MB1466.namprd10.prod.outlook.com
  ([fe80::f81d:b8ef:c5a4:9c9b]) by DM5PR10MB1466.namprd10.prod.outlook.com
  ([fe80::f81d:b8ef:c5a4:9c9b%3]) with mapi id 15.20.5293.019; Fri, 3 Jun 2022
- 06:56:00 +0000
+ 06:55:53 +0000
 From: Mike Christie <michael.christie@oracle.com>
 To: linux-block@vger.kernel.org, dm-devel@redhat.com, snitzer@kernel.org,
  hch@lst.de, axboe@kernel.dk, martin.petersen@oracle.com,
  james.bottomley@hansenpartnership.com, linux-scsi@vger.kernel.org,
  target-devel@vger.kernel.org
-Date: Fri,  3 Jun 2022 01:55:36 -0500
-Message-Id: <20220603065536.5641-12-michael.christie@oracle.com>
+Date: Fri,  3 Jun 2022 01:55:34 -0500
+Message-Id: <20220603065536.5641-10-michael.christie@oracle.com>
 In-Reply-To: <20220603065536.5641-1-michael.christie@oracle.com>
 References: <20220603065536.5641-1-michael.christie@oracle.com>
 X-ClientProxiedBy: DM5PR16CA0012.namprd16.prod.outlook.com
@@ -84,57 +84,57 @@ X-ClientProxiedBy: DM5PR16CA0012.namprd16.prod.outlook.com
  (2603:10b6:3:b::7)
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id: f742ceaf-61b8-4ad6-bfbc-08da452e1b58
+X-MS-Office365-Filtering-Correlation-Id: 8e8d97fd-1afa-4bb2-e6de-08da452e1a35
 X-MS-TrafficTypeDiagnostic: BYAPR10MB2789:EE_
-X-Microsoft-Antispam-PRVS: <BYAPR10MB2789CAF8E8FE891466450D73F1A19@BYAPR10MB2789.namprd10.prod.outlook.com>
+X-Microsoft-Antispam-PRVS: <BYAPR10MB2789E4EBF2122B58EA9795CCF1A19@BYAPR10MB2789.namprd10.prod.outlook.com>
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam: BCL:0
-X-Microsoft-Antispam-Message-Info: SFNkQ189PXFW+x692fgbhBCfAZNnFG6StmyH/2RUW8lAucY4mX4qmARj2V3f9GF/r4yv99qBIZsA0ieWnHTWTJa4HVEF7Bl8kPNyahK2Vz8MOA3Sb34jG9yO9UP6cN7V/RkXwfTR/wik9HNEft1ersaRoKOYAS1M4CDM/Uh+55OvDcTq4LNxEEWs7gvEeGRsMErnVLxDkXkhXII6lt0fst1F51A6kggQkp7oVFvqdHHP0RFpARjTFSCzpBE+eL7tmJGVmmv/AKbcjocaha325Ci3vg3/90Ki0Yviv2FjkTdZ67T2wx4arK5TZjgihRkq2M8XTnPNBM3U86HMnA2hzEAnsMoCXX2u88pk4gAvER0pncKMM0ACSN/vNW2kZ/NatYhxFLx4KKsMhMxx5M2EgozTdL9qe6YUmT8ZQrRnJjmmbVqLPRUpsMQPbLi1fclyoKeFnaSEkN2qczILJThDxcocvvO2mD8zEkPx50a9Wj038Xcg8u7oHUQGJYBqz9zj/FfJejZHievA0Lok4WdA28xWdO+s7DOdw8HZw6rg1Qs6RzNbXX10d03MOy8QMLwai1Pn0ODpYqDr/0Y7yZFibMqBiUnSmxceQ5wuX2A+ktr6Kxg9nfjPx9HErEmNEdBmFKG4j9TPEfbSuLZJdhsRPktolDQIt3WUYOLCnYkOnVjBnPYRqe68daSvacf5qB1XPYX3Zx7X5kwsEXstfQwwxg==
+X-Microsoft-Antispam-Message-Info: aqkmLGh9hWMHx2Z5REmDpEPFab6u+AQcFa46AeRivwJ+vu5al5rhQuyptNBx9wM/0wUk7K0hzimWDi1qFIMTd4gCBF7fDu6Sq4gajNDrj/LC9QILMmaapunZtiwjkvDiHNl0aN9ZwhIdRQ6MYKRuQOus0OTAyl/1y4JMb8tIW59hPtg6J/EnDSLInoCbJg5QTIte3oqL8WsOArvX1pWPE9dfrb/HOgddKQDRAQ9yU7zG1ueFbYx7J0+Ue6iLEoShFcrIwVoHx0TLUlbQ4QjI7P12NBmcqeSHIyHekb5TagtTDflW+0fyeyFQ7142TA8DlbmeIq0xpcKB3oSAPe56qZDpZ7Vsi8Y+OEqm9K3s7o6f5BwNN3EpS1o0P1a1TooLPgpsBVPAxbDwJukCfndnVGPMd9Z99E1Q/yp5NPGt4WKnqoI8fDo6d4alDbdZ5Od0bjAsbXJsC/mqrUNLabkQP9i7FuhUiyvi7cXQpeM0y0LfUS9/V0VpZ+KK7IdWR0LzBXqN04Z9jglBvJ0L+yA0DXeBJ2tRAC00ZeQ8DP3VmHCozxO4CNcctHGp+EIA0ZGDYi9Xk9PcBUbHJHvsakno06a8HMVBB3NhqbgljCEOqamjwMQxmWDWcjO4HW58Y+2EbJjVjgfNZkW+O1/foVMUGyi1eVnhDiBR7mjdoxaxLv8hu03LbHriDqDpLb02VTZ32WfmZP7Xy0d1AyavVOLvMA==
 X-Forefront-Antispam-Report: CIP:255.255.255.255; CTRY:; LANG:en; SCL:1; SRV:;
  IPV:NLI; SFV:NSPM; H:DM5PR10MB1466.namprd10.prod.outlook.com; PTR:; CAT:NONE;
  SFS:(13230001)(366004)(66946007)(8676002)(38350700002)(38100700002)(66476007)(4326008)(66556008)(86362001)(83380400001)(36756003)(8936002)(107886003)(6486002)(2616005)(316002)(5660300002)(1076003)(6512007)(26005)(2906002)(6506007)(52116002)(186003)(6666004)(508600001);
  DIR:OUT; SFP:1101
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?EAjqUtGX5fjLP4Krt3fKksOWUgXtnlQH64/n+UrXyNuAfyDvkplnGQyyLb0R?=
- =?us-ascii?Q?AScf0+hvWNRad65URT2n3j4ZA0IK7h4QjonjpE7/TlVqc70jpkj7Rqclx9Kr?=
- =?us-ascii?Q?c3d8lSwKHi/WqH5ojw/73bwhDmzCTAUFJZymQS2sVjAFSRER+FdrXqJld2LM?=
- =?us-ascii?Q?FRzsZ8w/keZHek8waQp6mXXcw2k8vUtBRyQR3M9UJpyJWGpuah325C+Efw2q?=
- =?us-ascii?Q?MUT2Ji+9U3vOBrQ7HBEEUxiekxRrqeGLUz9+jhKBci74EPFnJI0ICU6KjU3t?=
- =?us-ascii?Q?sU7O/Yhn0uk7HL1AHA3jatUONRmmPEmlbhIQWQ0RBR9G3kntxgfR0Hly0SFP?=
- =?us-ascii?Q?oj0wJUEqSPeUYeH8FF4nfazuyN+pMuay20iZfsE37E4SZyfVjummB9FqFQJw?=
- =?us-ascii?Q?d5ujgtpC2mZ/DGrj9h+YRIJyKSrwXMQn4PZ9ChsqXCizSMHcJ0F33vX3122V?=
- =?us-ascii?Q?QxAGWXILvg7MFXZvqME75XLxaVuT6JcnGEFboBBA1DRotU2DEkQ/tjqU95Gf?=
- =?us-ascii?Q?Dk4RDhWY3i95odbCKvWNxZsdE4prjOoQVWikqAD0dJW4Yygz3zEbRe8pGA1v?=
- =?us-ascii?Q?hNd4aJy0silJDZw2A8ftOo0um8Tc76KCjZB0IclKX4uqsvY+OiyN7N33Bgh7?=
- =?us-ascii?Q?cQQNtf7KfIDUIre02qT7iw13EZtT+PcAf2upZplsGv2l1cS6ZweXQU8WVlux?=
- =?us-ascii?Q?R9gJFKrB8B7PZvbw1fNS7+7s049ZXo7s/Qic86kXb5ImWfQR4EXQCHk+ClPg?=
- =?us-ascii?Q?yqjMiVLJPI4L4EqAssg2gkk+Zy6AE3VBEwxvTHOMg31MWYBclGE2junSaFnI?=
- =?us-ascii?Q?dhnnKfcz/4u3TSgse8or/RhIZkaDz1k4lh8dmUebw4decgIkkWACo2JTJUNR?=
- =?us-ascii?Q?v5GApU2DB+ivy6YTnUnyDsRjT/RsZduyt1IWCJW0nY9c5WE0v2tm1SOp78V7?=
- =?us-ascii?Q?61cSWNEjqcp22wAKeYhsVy7kD1YozJMm2lo13N6IMbhyp0oxqjC/680M3V9o?=
- =?us-ascii?Q?+JvGTUi4RPB67c16tXz7OjYAAmV5tdp7Mg/lofw3Wiw3thu04Yb7dfRsEbUl?=
- =?us-ascii?Q?secJ8pVx7yHPc4IWfsgeBMH8voZNiJwE/EE28pIo/ZFBN0GCH09FYNLT2XmO?=
- =?us-ascii?Q?i6uvQnqJPXu2l3DGaBpkRiboTGZ5mItaCdsoiC4G6CdAGN5J5/esINGQrRU4?=
- =?us-ascii?Q?y3ENrocgB0yynxnmntD/7qjlsbIDx+zmjYCrzTr6hyykvGsa8t09f9nsLZVO?=
- =?us-ascii?Q?V2x5zsFPLy4/7KuGKhny17Xy7vEugbn7rR9s7hlJ/s4ZGMHUyP9UYJ78Hb3W?=
- =?us-ascii?Q?v43pDKLJZxf6anmdw1HHEqkmnVsQRzmfy+Ru8tqrS/es+RQsifC66p1x8FLf?=
- =?us-ascii?Q?OPbHRjOTyERv2+1K6BMTu5fajIBygNYKuog8rt6qdbJHWuPN9WDhJjTuXcm6?=
- =?us-ascii?Q?vYI6f1RMSAWhd6xeEtGh9T1hgz7CedgDFxqaPqLWN8oByBpYSNAccdB8HSn/?=
- =?us-ascii?Q?lgsp+mcKgNFDlWzH+J+mhQFtiCraTzOXe1MZyWPtWM5AjgQ5T1UxvqnjxS1g?=
- =?us-ascii?Q?eQ9gVZ/4bBrOQYZOTQCYczTXWyB5ZteaZ33KtZN8dxJhcrq77pjIGLIGM0Km?=
- =?us-ascii?Q?6YuQGjTzH6c0ZdP7tCuNFe4CVNblqisgyycpBuf/pWcOngWIJ2qbbi/pAfHw?=
- =?us-ascii?Q?NuSk2Yg7Ja53JI3C+oOgNMF0wl++oK0KJCT+zGVVzXlyhTurkqt45iHP0Ip/?=
- =?us-ascii?Q?CuzOoEI3Ghyj+scFgblRPNOLd8ahmC8=3D?=
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?r1NEaBwDYtDElM9m+5zo5xYYy6sOSDR0rI2L+9aFCHeQJQDeFWfBFK4NPiF5?=
+ =?us-ascii?Q?bA/kc4yibS1dy4KIteKrkwluV6g5uTWgwSn7BySK0on7AuIV/S9cYXNRJns+?=
+ =?us-ascii?Q?ChzKpzfQJdO13QD2eBRa+rEkjLMZMwzinS/ucTFSukPKNGVjKNlnPBRjG26n?=
+ =?us-ascii?Q?6Y/yv8MNW6jzr3Sz1Kj/1V/RNtt7H185RvSNrA6wRVhJ3MeUp+YBPJrcykaV?=
+ =?us-ascii?Q?QMhAJGFoVk5XW7nPdWvWQVIY0ltHoGcHOKVw9CoIJhGw/bro2Fe5L6d/egDn?=
+ =?us-ascii?Q?OjIDAfrpX01PxjhQtAdpCBL1ROOStzcc9paJCRbYltt/WoS5iFKA+b9beQLj?=
+ =?us-ascii?Q?MybwYo9V5vxy/d0OjX02/a4AV7wCyUJ9JdDJfFsL0l4REPcepyaafv0B8z0M?=
+ =?us-ascii?Q?eUwS29+RDSBc5ofmpXB4YgUIay1VevMJSGmp9nRySdJ+I8IaA4Is3HKkFkmr?=
+ =?us-ascii?Q?JVRYDICIbOst0VhjDUgyImtlefLlRHkFLZ0bfYTFnJIwbWayOlKZL9i8ytUK?=
+ =?us-ascii?Q?trhiJCWzGWWf6T0eQATATslfy0zjCKfHqmguldqB43wdpoM5anDCA9IIAk43?=
+ =?us-ascii?Q?AhaSHMD2IkcELGDAzqMa62lkslhNXYF+nP3H/8B6znqTuw6veokeHsSSQ7r1?=
+ =?us-ascii?Q?p9HoMtxceLI3ktgMgyliqLOHrp2rut6sphLZa3lgKXoPYaU93HQ43FOIrr/2?=
+ =?us-ascii?Q?ZgYXV9qPzWpgKUmND1YcrMtn5exp5gqQPUVo9H2JCaZlXGRjk0/znf9hQL/n?=
+ =?us-ascii?Q?ok5HVhKzA3EAI84mmsWqmUVXj6N3kq6a41g0MRtBnYx3/Vt2Idn1eFp4jyg5?=
+ =?us-ascii?Q?gvQtpXn0f42KPY0z8HE3pEAmI2v6t6hSfa3QW/IMu2mVksv0vuZ03p4xiB+J?=
+ =?us-ascii?Q?CTpbDabpuiAQA9mqfimy3oESMhtvd6+kMWAphgsBeFfI9VG5mtY9yY6/KH5M?=
+ =?us-ascii?Q?1gbpQ4xGe1aKfCmFSK9lAI+KntcaNO+j+XZ6fbPczffN9zEcV9ubsLhcesdC?=
+ =?us-ascii?Q?JaPSdRkhhS2GLYh5nZfkrSnPQjhzW4Jv9qJWGVaNyGiKprGrJXMjQ/xmEIoo?=
+ =?us-ascii?Q?QnEg2cUG5/OAqlqOKrHnkUuTjrfjUBZ7Fpw4ynUqYSMa5jUUdbBe7d3MbQUM?=
+ =?us-ascii?Q?p5InANQQjH4/kEF/2Mpy/9PoqFMiu4YQnB/8wgolvHt1ICCTZ7lU6QVAjDWl?=
+ =?us-ascii?Q?1deWU7xpeQVhVUi1e+dGZ4OQP6zfzDsvFUg9WjotLCI1LnDGzvkXC4086cvR?=
+ =?us-ascii?Q?VvgoghrUZhts5dNoBDYEIWYyM+xMXCGKWZoUsyRkicd+Xrs4O2crqEB9pZaA?=
+ =?us-ascii?Q?hQqHvty6fVNZWztZdY5CK49PZl0xV7RgxA6ZCQUpgr+v3Y3VUXRL/toiG5ag?=
+ =?us-ascii?Q?zst9jpyE4j+Oh2+9HOGXIiD+38NFKMQ5NoZgxjRdutWcwEtN8WH8XxN5/GJ8?=
+ =?us-ascii?Q?5GM55Yq+L/uE8hYQJD5mveMKevXUj9c1W/Vvm7VawULBabbMunpfbfeyv+Sw?=
+ =?us-ascii?Q?2EoG+47fiIfWl9tyTiNKd6+naScA/JYF09LGWX+LjGomUALT5b4EOjKR7nkn?=
+ =?us-ascii?Q?BVI/X1788SH+m6+DiLeyvZnnDnLOB4W0X/dul+fV1prbMsMsZh8PlUk8TAXL?=
+ =?us-ascii?Q?1kPicpHMyT17If6x+7Hliua59X5DU21SZt+5qsu6NnkXVg7SZzTBcdoD6jHG?=
+ =?us-ascii?Q?M7D+5YuvBBBZMt8hVgeua0pYKkXMFgGTedSnX+uZZxjWqtf1gc2pXF4NHlYc?=
+ =?us-ascii?Q?7arcKGMWK2PEejulX7IYA+iEI2dSkkA=3D?=
 X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: f742ceaf-61b8-4ad6-bfbc-08da452e1b58
+X-MS-Exchange-CrossTenant-Network-Message-Id: 8e8d97fd-1afa-4bb2-e6de-08da452e1a35
 X-MS-Exchange-CrossTenant-AuthSource: DM5PR10MB1466.namprd10.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 03 Jun 2022 06:55:55.8459 (UTC)
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 03 Jun 2022 06:55:53.8461 (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: 3mY2xzVm2VN945w7chvns6fBsMBqZrdb4GRoA6Pvbk3Gv/8Y54UHj0oHT7KVMFBG/GaIzeSstTOFeZKWd56y4wdu6mc6no3FuGKDTHDXjRg=
+X-MS-Exchange-CrossTenant-UserPrincipalName: SKB7cKR+b8LCcmthW93AyPOVyXceKJKAE0Zq2nPCc5JXSFh5flKstyk586SRrRx0VMUIwAA1PQIKBgrAWnxY44t7zT8qhh8ZbTFH6JBKXbE=
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: BYAPR10MB2789
 X-Proofpoint-Virus-Version: vendor=fsecure engine=2.50.10434:6.0.517, 18.0.874
  definitions=2022-06-03_02:2022-06-02,
@@ -144,8 +144,8 @@ X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 phishscore=0
  mlxlogscore=999 mlxscore=0 spamscore=0 adultscore=0 malwarescore=0
  classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2204290000
  definitions=main-2206030029
-X-Proofpoint-GUID: WuDPelidR2xkIuX7mJU-_LS-mhObuxqO
-X-Proofpoint-ORIG-GUID: WuDPelidR2xkIuX7mJU-_LS-mhObuxqO
+X-Proofpoint-GUID: zePY__pdhFrPldtr_SkdHA9SM-9WUb88
+X-Proofpoint-ORIG-GUID: zePY__pdhFrPldtr_SkdHA9SM-9WUb88
 X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Definition; Similar Internal Domain=false;
  Similar Monitored External Domain=false; Custom External Domain=false;
@@ -153,9 +153,10 @@ X-Mimecast-Impersonation-Protect: Policy=CLT - Impersonation Protection
  Internal User Name=false; Custom Display Name List=false;
  Reply-to Address Mismatch=false; Targeted Threat Dictionary=false;
  Mimecast Threat Dictionary=false; Custom Threat Dictionary=false
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.10
 X-Mailman-Approved-At: Fri, 03 Jun 2022 07:17:56 +0000
-Subject: [dm-devel] [PATCH 11/11] scsi: target: Handle BLK_STS_RSV_CONFLICT.
+Subject: [dm-devel] [PATCH 09/11] block,
+ nvme: Add error for reservation conflicts.
 X-BeenThere: dm-devel@redhat.com
 X-Mailman-Version: 2.1.29
 Precedence: list
@@ -170,7 +171,7 @@ List-Subscribe: <https://listman.redhat.com/mailman/listinfo/dm-devel>,
 Cc: Mike Christie <michael.christie@oracle.com>
 Errors-To: dm-devel-bounces@redhat.com
 Sender: "dm-devel" <dm-devel-bounces@redhat.com>
-X-Scanned-By: MIMEDefang 2.78 on 10.11.54.4
+X-Scanned-By: MIMEDefang 2.85 on 10.11.54.7
 Authentication-Results: relay.mimecast.com;
 	auth=pass smtp.auth=CUSA124A263 smtp.mailfrom=dm-devel-bounces@redhat.com
 X-Mimecast-Spam-Score: 0
@@ -178,74 +179,66 @@ X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 
-If we get a BLK_STS_RSV_CONFLICT report it to the initiator instead of
-using the SAM_STAT_CHECK_CONDITION which gets translated to a generic
-error that initiators don't know how to handle.
+BLK_STS_NEXUS is used for nvme/scsi reservation conflicts and also
+general nexus failures. For the pr_ops use we want to know if an IO failed
+for specifically a reservation conflict so we can report that error upwards
+to a VM. This patch adds a new error code for this case and converts nvme.
+The next patch converts scsi because it's a little more complicated.
 
 Signed-off-by: Mike Christie <michael.christie@oracle.com>
 ---
- drivers/target/target_core_iblock.c | 13 ++++++++-----
- 1 file changed, 8 insertions(+), 5 deletions(-)
+ block/blk-core.c          | 1 +
+ drivers/nvme/host/core.c  | 2 +-
+ include/linux/blk_types.h | 4 ++++
+ 3 files changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/target/target_core_iblock.c b/drivers/target/target_core_iblock.c
-index e8cf201e59ca..2a964b57303a 100644
---- a/drivers/target/target_core_iblock.c
-+++ b/drivers/target/target_core_iblock.c
-@@ -309,7 +309,7 @@ static unsigned long long iblock_emulate_read_cap_with_block_size(
- 	return blocks_long;
- }
+diff --git a/block/blk-core.c b/block/blk-core.c
+index bc0506772152..3908ac4a70b6 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -171,6 +171,7 @@ static const struct {
+ 	/* zone device specific errors */
+ 	[BLK_STS_ZONE_OPEN_RESOURCE]	= { -ETOOMANYREFS, "open zones exceeded" },
+ 	[BLK_STS_ZONE_ACTIVE_RESOURCE]	= { -EOVERFLOW, "active zones exceeded" },
++	[BLK_STS_RSV_CONFLICT]	= { -EBADE,	"resevation conflict" },
  
--static void iblock_complete_cmd(struct se_cmd *cmd)
-+static void iblock_complete_cmd(struct se_cmd *cmd, blk_status_t blk_status)
- {
- 	struct iblock_req *ibr = cmd->priv;
- 	u8 status;
-@@ -317,7 +317,9 @@ static void iblock_complete_cmd(struct se_cmd *cmd)
- 	if (!refcount_dec_and_test(&ibr->pending))
- 		return;
+ 	/* everything else not covered above: */
+ 	[BLK_STS_IOERR]		= { -EIO,	"I/O" },
+diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
+index e1846d04817f..9b77d8eb480c 100644
+--- a/drivers/nvme/host/core.c
++++ b/drivers/nvme/host/core.c
+@@ -268,7 +268,7 @@ static blk_status_t nvme_error_status(u16 status)
+ 	case NVME_SC_INVALID_PI:
+ 		return BLK_STS_PROTECTION;
+ 	case NVME_SC_RESERVATION_CONFLICT:
+-		return BLK_STS_NEXUS;
++		return BLK_STS_RSV_CONFLICT;
+ 	case NVME_SC_HOST_PATH_ERROR:
+ 		return BLK_STS_TRANSPORT;
+ 	case NVME_SC_ZONE_TOO_MANY_ACTIVE:
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index 1973ef9bd40f..927d9d30e1df 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -162,6 +162,9 @@ typedef u16 blk_short_t;
+  */
+ #define BLK_STS_OFFLINE		((__force blk_status_t)17)
  
--	if (atomic_read(&ibr->ib_bio_err_cnt))
-+	if (blk_status == BLK_STS_RSV_CONFLICT)
-+		status = SAM_STAT_RESERVATION_CONFLICT;
-+	else if (atomic_read(&ibr->ib_bio_err_cnt))
- 		status = SAM_STAT_CHECK_CONDITION;
- 	else
- 		status = SAM_STAT_GOOD;
-@@ -330,6 +332,7 @@ static void iblock_bio_done(struct bio *bio)
- {
- 	struct se_cmd *cmd = bio->bi_private;
- 	struct iblock_req *ibr = cmd->priv;
-+	blk_status_t blk_status = bio->bi_status;
- 
- 	if (bio->bi_status) {
- 		pr_err("bio error: %p,  err: %d\n", bio, bio->bi_status);
-@@ -342,7 +345,7 @@ static void iblock_bio_done(struct bio *bio)
- 
- 	bio_put(bio);
- 
--	iblock_complete_cmd(cmd);
-+	iblock_complete_cmd(cmd, blk_status);
- }
- 
- static struct bio *iblock_get_bio(struct se_cmd *cmd, sector_t lba, u32 sg_num,
-@@ -755,7 +758,7 @@ iblock_execute_rw(struct se_cmd *cmd, struct scatterlist *sgl, u32 sgl_nents,
- 
- 	if (!sgl_nents) {
- 		refcount_set(&ibr->pending, 1);
--		iblock_complete_cmd(cmd);
-+		iblock_complete_cmd(cmd, BLK_STS_OK);
- 		return 0;
++/* NVMe/SCSI reservation conflict. */
++#define BLK_STS_RSV_CONFLICT	((__force blk_status_t)18)
++
+ /**
+  * blk_path_error - returns true if error may be path related
+  * @error: status the request was completed with
+@@ -183,6 +186,7 @@ static inline bool blk_path_error(blk_status_t error)
+ 	case BLK_STS_NEXUS:
+ 	case BLK_STS_MEDIUM:
+ 	case BLK_STS_PROTECTION:
++	case BLK_STS_RSV_CONFLICT:
+ 		return false;
  	}
  
-@@ -813,7 +816,7 @@ iblock_execute_rw(struct se_cmd *cmd, struct scatterlist *sgl, u32 sgl_nents,
- 	}
- 
- 	iblock_submit_bios(&list);
--	iblock_complete_cmd(cmd);
-+	iblock_complete_cmd(cmd, BLK_STS_OK);
- 	return 0;
- 
- fail_put_bios:
 -- 
 2.25.1
 
